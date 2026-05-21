@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 describe("--user-agent flag", () => {
   test("custom user agent is sent in HTTP requests", async () => {
     const customUserAgent = "MyCustomUserAgent/1.0";
 
     const testScript = `
-const server = Bun.serve({
+const server = Fun.serve({
   port: 0,
   async fetch(request) {
     const userAgent = request.headers.get("User-Agent");
@@ -30,9 +30,9 @@ try {
       "test.js": testScript,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--user-agent", customUserAgent, "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--user-agent", customUserAgent, "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -42,12 +42,12 @@ try {
 
   test("default user agent is used when --user-agent is not specified", async () => {
     const testScript = `
-const server = Bun.serve({
+const server = Fun.serve({
   port: 0,
   async fetch(request) {
     const userAgent = request.headers.get("User-Agent");
-    // Default Bun user agent should contain "Bun/"
-    if (userAgent && userAgent.includes("Bun/")) {
+    // Default Fun user agent should contain "Fun/"
+    if (userAgent && userAgent.includes("Fun/")) {
       process.exit(0); // SUCCESS
     } else {
       process.exit(1); // FAIL
@@ -67,9 +67,9 @@ try {
       "test.js": testScript,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 

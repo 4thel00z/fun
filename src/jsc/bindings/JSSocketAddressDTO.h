@@ -1,4 +1,4 @@
-// The object returned by Bun.serve's .requestIP()
+// The object returned by Fun.serve's .requestIP()
 #pragma once
 #include "headers.h"
 #include "root.h"
@@ -7,13 +7,13 @@
 
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 namespace JSSocketAddressDTO {
 
 Structure* createStructure(VM& vm, JSGlobalObject* globalObject);
 JSObject* create(Zig::GlobalObject* globalObject, JSString* value, int port, bool isIPv6);
 
 } // namespace JSSocketAddress
-} // namespace Bun
+} // namespace Fun
 
 extern "C" JSC::EncodedJSValue JSSocketAddressDTO__create(JSGlobalObject* globalObject, EncodedJSValue address, uint16_t port, bool isIPv6);

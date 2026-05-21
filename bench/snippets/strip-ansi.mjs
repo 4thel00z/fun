@@ -1,12 +1,12 @@
 import npmStripAnsi from "strip-ansi";
 import { bench, run } from "../runner.mjs";
 
-let bunStripANSI = null;
+let funStripANSI = null;
 if (!process.env.FORCE_NPM) {
-  bunStripANSI = globalThis?.Bun?.stripANSI;
+  funStripANSI = globalThis?.Fun?.stripANSI;
 }
 
-const stripANSI = bunStripANSI || npmStripAnsi;
+const stripANSI = funStripANSI || npmStripAnsi;
 const formatter = new Intl.NumberFormat();
 const format = n => {
   return formatter.format(n);
@@ -22,14 +22,14 @@ const inputs = [
 const maxInputLength = Math.max(...inputs.map(([input]) => input.length));
 
 for (const [input, textLabel] of inputs) {
-  const label = bunStripANSI ? "Bun.stripANSI" : "npm/strip-ansi";
+  const label = funStripANSI ? "Fun.stripANSI" : "npm/strip-ansi";
   const name = `${label} ${format(input.length).padStart(format(maxInputLength).length, " ")} chars ${textLabel}`;
 
   bench(name, () => {
     stripANSI(input);
   });
 
-  if (bunStripANSI && bunStripANSI(input) !== npmStripAnsi(input)) {
+  if (funStripANSI && funStripANSI(input) !== npmStripAnsi(input)) {
     throw new Error("strip-ansi mismatch");
   }
 }

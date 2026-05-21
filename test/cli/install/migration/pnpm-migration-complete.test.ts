@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 describe("PNPM Migration Complete Test Suite", () => {
@@ -73,10 +73,10 @@ snapshots:
   js-tokens@4.0.0: {}`,
     });
 
-    const basicProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const basicProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: basicTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
@@ -85,7 +85,7 @@ snapshots:
     expect(basicExitCode).toBe(0);
     expect(basicStderr).toContain("migrated lockfile from pnpm-lock.yaml");
 
-    const basicLockfile = fs.readFileSync(join(basicTest, "bun.lock"), "utf8");
+    const basicLockfile = fs.readFileSync(join(basicTest, "fun.lock"), "utf8");
     expect(basicLockfile).toContain('"lodash": "^4.17.21"');
     expect(basicLockfile).toContain('"react": "^18.2.0"');
     expect(basicLockfile).toContain('"typescript": "^5.3.3"');
@@ -138,17 +138,17 @@ snapshots:
   scheduler@0.27.0-canary-a96a0f39-20250815: {}`,
     });
 
-    const canaryProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const canaryProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: canaryTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [canaryStderr, canaryExitCode] = await Promise.all([canaryProc.stderr.text(), canaryProc.exited]);
 
     expect(canaryExitCode).toBe(0);
-    const canaryLockfile = fs.readFileSync(join(canaryTest, "bun.lock"), "utf8");
+    const canaryLockfile = fs.readFileSync(join(canaryTest, "fun.lock"), "utf8");
 
     // Verify canary versions are preserved exactly
     expect(canaryLockfile).toContain('"react@19.2.0-canary-a96a0f39-20250815"');
@@ -222,17 +222,17 @@ snapshots:
   react@18.2.0: {}`,
     });
 
-    const monorepoProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const monorepoProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: monorepoTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [monorepoStderr, monorepoExitCode] = await Promise.all([monorepoProc.stderr.text(), monorepoProc.exited]);
 
     expect(monorepoExitCode).toBe(0);
-    const monorepoLockfile = fs.readFileSync(join(monorepoTest, "bun.lock"), "utf8");
+    const monorepoLockfile = fs.readFileSync(join(monorepoTest, "fun.lock"), "utf8");
 
     // Verify workspaces are created
     expect(monorepoLockfile).toContain('"packages/shared"');
@@ -299,17 +299,17 @@ snapshots:
   lodash@4.17.21(patch_hash=abc123): {}`,
     });
 
-    const patchesProc = Bun.spawn({
-      cmd: [bunExe(), "install", "--lockfile-only"],
+    const patchesProc = Fun.spawn({
+      cmd: [funExe(), "install", "--lockfile-only"],
       cwd: patchesTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [patchesStderr, patchesExitCode] = await Promise.all([patchesProc.stderr.text(), patchesProc.exited]);
 
     expect(patchesExitCode).toBe(0);
-    const patchesLockfile = fs.readFileSync(join(patchesTest, "bun.lock"), "utf8");
+    const patchesLockfile = fs.readFileSync(join(patchesTest, "fun.lock"), "utf8");
 
     expect(patchesLockfile).toContain('"patchedDependencies"');
     expect(patchesLockfile).toContain('"lodash@4.17.21": "patches/lodash@4.17.21.patch"');
@@ -361,17 +361,17 @@ snapshots:
 `,
     });
 
-    const fileLinksProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const fileLinksProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: fileLinksTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [fileLinksStderr, fileLinksExitCode] = await Promise.all([fileLinksProc.stderr.text(), fileLinksProc.exited]);
 
     expect(fileLinksExitCode).toBe(0);
-    const fileLinksLockfile = fs.readFileSync(join(fileLinksTest, "bun.lock"), "utf8");
+    const fileLinksLockfile = fs.readFileSync(join(fileLinksTest, "fun.lock"), "utf8");
 
     expect(fileLinksLockfile).toContain('"local-pkg": "file:./local-pkg"');
     expect(fileLinksLockfile).toContain('"config": "file:./shared/config"');
@@ -410,10 +410,10 @@ snapshots:
   lodash@4.17.21: {}`,
     });
 
-    const registriesProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const registriesProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: registriesTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
@@ -423,7 +423,7 @@ snapshots:
     ]);
 
     expect(registriesExitCode).toBe(0);
-    const registriesLockfile = fs.readFileSync(join(registriesTest, "bun.lock"), "utf8");
+    const registriesLockfile = fs.readFileSync(join(registriesTest, "fun.lock"), "utf8");
 
     expect(registriesLockfile).toContain('"@company/private-pkg": "^1.0.0"');
     // Registry URLs are stored in the package entries
@@ -516,17 +516,17 @@ snapshots:
       react: 18.2.0`,
     });
 
-    const peerDepsProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const peerDepsProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: peerDepsTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [peerDepsStderr, peerDepsExitCode] = await Promise.all([peerDepsProc.stderr.text(), peerDepsProc.exited]);
 
     expect(peerDepsExitCode).toBe(0);
-    const peerDepsLockfile = fs.readFileSync(join(peerDepsTest, "bun.lock"), "utf8");
+    const peerDepsLockfile = fs.readFileSync(join(peerDepsTest, "fun.lock"), "utf8");
 
     expect(peerDepsLockfile).toContain('"@mui/material": "^5.15.0"');
     expect(peerDepsLockfile).toContain('"react": "^18.2.0"');
@@ -600,10 +600,10 @@ snapshots:
   lodash@4.17.21: {}`,
     });
 
-    const duplicatesProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const duplicatesProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: duplicatesTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
@@ -613,7 +613,7 @@ snapshots:
     ]);
 
     expect(duplicatesExitCode).toBe(0);
-    const duplicatesLockfile = fs.readFileSync(join(duplicatesTest, "bun.lock"), "utf8");
+    const duplicatesLockfile = fs.readFileSync(join(duplicatesTest, "fun.lock"), "utf8");
 
     // Both versions of shared-dep should exist
     expect(duplicatesLockfile).toContain('"shared-dep@2.0.0"');
@@ -702,17 +702,17 @@ snapshots:
 `,
     });
 
-    const catalogsProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const catalogsProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: catalogsTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [catalogsStderr, catalogsExitCode] = await Promise.all([catalogsProc.stderr.text(), catalogsProc.exited]);
 
     expect(catalogsExitCode).toBe(0);
-    const catalogsLockfile = fs.readFileSync(join(catalogsTest, "bun.lock"), "utf8");
+    const catalogsLockfile = fs.readFileSync(join(catalogsTest, "fun.lock"), "utf8");
 
     // Catalogs are resolved to actual versions during migration
     expect(catalogsLockfile).toContain('"react": "18.2.0"');
@@ -756,17 +756,17 @@ snapshots:
   axios@1.6.7: {}`,
     });
 
-    const integrityProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const integrityProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: integrityTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [integrityStderr, integrityExitCode] = await Promise.all([integrityProc.stderr.text(), integrityProc.exited]);
 
     expect(integrityExitCode).toBe(0);
-    const integrityLockfile = fs.readFileSync(join(integrityTest, "bun.lock"), "utf8");
+    const integrityLockfile = fs.readFileSync(join(integrityTest, "fun.lock"), "utf8");
 
     // Check integrity hashes are preserved
     expect(integrityLockfile).toContain(
@@ -802,10 +802,10 @@ snapshots:
   package-with-zero@0.0.0: {}`,
     });
 
-    const versionZeroProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const versionZeroProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: versionZeroTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
@@ -815,7 +815,7 @@ snapshots:
     ]);
 
     expect(versionZeroExitCode).toBe(0);
-    const versionZeroLockfile = fs.readFileSync(join(versionZeroTest, "bun.lock"), "utf8");
+    const versionZeroLockfile = fs.readFileSync(join(versionZeroTest, "fun.lock"), "utf8");
 
     expect(versionZeroLockfile).toContain('"package-with-zero": "0.0.0"');
     expect(versionZeroLockfile).toContain('"package-with-zero@0.0.0"');
@@ -892,17 +892,17 @@ snapshots:
     optional: true`,
     });
 
-    const mixedDepsProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const mixedDepsProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: mixedDepsTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [mixedDepsStderr, mixedDepsExitCode] = await Promise.all([mixedDepsProc.stderr.text(), mixedDepsProc.exited]);
 
     expect(mixedDepsExitCode).toBe(0);
-    const mixedDepsLockfile = fs.readFileSync(join(mixedDepsTest, "bun.lock"), "utf8");
+    const mixedDepsLockfile = fs.readFileSync(join(mixedDepsTest, "fun.lock"), "utf8");
 
     // Dependencies version should win
     expect(mixedDepsLockfile).toContain('"typescript": "^4.0.0"');
@@ -983,17 +983,17 @@ snapshots:
   lodash@4.17.21: {}`,
     });
 
-    const circularProc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    const circularProc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: circularTest,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
     const [circularStderr, circularExitCode] = await Promise.all([circularProc.stderr.text(), circularProc.exited]);
 
     expect(circularExitCode).toBe(0);
-    const circularLockfile = fs.readFileSync(join(circularTest, "bun.lock"), "utf8");
+    const circularLockfile = fs.readFileSync(join(circularTest, "fun.lock"), "utf8");
 
     // All workspaces should be created despite circular dependencies
     expect(circularLockfile).toContain('"packages/pkg1"');

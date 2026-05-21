@@ -1,5 +1,5 @@
 import { render } from "svelte/server";
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import TodoApp from "./todo-list.svelte";
 
 expect(TodoApp).toBeTypeOf("function");

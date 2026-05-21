@@ -1,4 +1,4 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`lcov coverage reporter: lcov-coverage-reporter-output 1`] = `
 "TN:

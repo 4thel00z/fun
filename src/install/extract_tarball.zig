@@ -16,7 +16,7 @@ pub inline fn run(this: *const ExtractTarball, log: *logger.Log, bytes: []const 
             log.addErrorFmt(
                 null,
                 logger.Loc.Empty,
-                bun.default_allocator,
+                fun.default_allocator,
                 "Integrity check failed<r> for tarball: {s}",
                 .{this.name.slice()},
             ) catch unreachable;
@@ -122,14 +122,14 @@ pub fn buildURLWithPrinter(
     }
 }
 
-const tl_bufs = bun.ThreadlocalBuffers(struct {
-    final_path_buf: bun.PathBuffer = undefined,
-    folder_name_buf: bun.PathBuffer = undefined,
-    json_path_buf: bun.PathBuffer = undefined,
+const tl_bufs = fun.ThreadlocalBuffers(struct {
+    final_path_buf: fun.PathBuffer = undefined,
+    folder_name_buf: fun.PathBuffer = undefined,
+    json_path_buf: fun.PathBuffer = undefined,
 });
 
 pub fn usesStreamingExtraction() bool {
-    return !bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_STREAMING_INSTALL.get();
+    return !fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_STREAMING_INSTALL.get();
 }
 
 /// Derive the display name and a filesystem-safe basename for this
@@ -139,9 +139,9 @@ pub fn usesStreamingExtraction() bool {
 pub fn nameAndBasename(this: *const ExtractTarball) struct { []const u8, []const u8 } {
     const name = if (this.name.slice().len > 0) this.name.slice() else brk: {
         // Not sure where this case hits yet.
-        // BUN-2WQ
+        // FUN-2WQ
         Output.warn("Extracting nameless packages is not supported yet. Please open an issue on GitHub with reproduction steps.", .{});
-        bun.debugAssert(false);
+        fun.debugAssert(false);
         break :brk "unnamed-package";
     };
     const basename = brk: {
@@ -171,21 +171,21 @@ pub fn nameAndBasename(this: *const ExtractTarball) struct { []const u8, []const
 }
 
 fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8) !Install.ExtractData {
-    const tracer = bun.perf.trace("ExtractTarball.extract");
+    const tracer = fun.perf.trace("ExtractTarball.extract");
     defer tracer.end();
 
     const tmpdir = this.temp_dir;
-    var tmpname_buf: if (Environment.isWindows) bun.WPathBuffer else bun.PathBuffer = undefined;
+    var tmpname_buf: if (Environment.isWindows) fun.WPathBuffer else fun.PathBuffer = undefined;
     const name, const basename = this.nameAndBasename();
 
     var resolved: string = "";
-    const tmpname = try FileSystem.tmpname(basename[0..@min(basename.len, 32)], std.mem.asBytes(&tmpname_buf), bun.fastRandom());
+    const tmpname = try FileSystem.tmpname(basename[0..@min(basename.len, 32)], std.mem.asBytes(&tmpname_buf), fun.fastRandom());
     {
-        var extract_destination = bun.MakePath.makeOpenPath(tmpdir, tmpname, .{}) catch |err| {
+        var extract_destination = fun.MakePath.makeOpenPath(tmpdir, tmpname, .{}) catch |err| {
             log.addErrorFmt(
                 null,
                 logger.Loc.Empty,
-                bun.default_allocator,
+                fun.default_allocator,
                 "{s} when create temporary directory named \"{s}\" (while extracting \"{s}\")",
                 .{ @errorName(err), tmpname, name },
             ) catch unreachable;
@@ -194,7 +194,7 @@ fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8)
 
         defer extract_destination.close();
 
-        const Archiver = bun.libarchive.Archiver;
+        const Archiver = fun.libarchive.Archiver;
         const Zlib = @import("../zlib/zlib.zig");
         var zlib_pool = Npm.Registry.BodyPool.get(default_allocator);
         zlib_pool.data.reset();
@@ -202,7 +202,7 @@ fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8)
 
         var esimated_output_size: usize = 0;
 
-        const time_started_for_verbose_logs: u64 = if (PackageManager.verbose_install) bun.getRoughTickCount(.allow_mocked_time).ns() else 0;
+        const time_started_for_verbose_logs: u64 = if (PackageManager.verbose_install) fun.getRoughTickCount(.allow_mocked_time).ns() else 0;
 
         {
             // Last 4 bytes of a gzip-compressed file are the uncompressed size.
@@ -223,8 +223,8 @@ fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8)
         }
 
         var needs_to_decompress = true;
-        if (bun.FeatureFlags.isLibdeflateEnabled() and zlib_pool.data.list.capacity > 16 and esimated_output_size > 0) use_libdeflate: {
-            const decompressor = bun.libdeflate.Decompressor.alloc() orelse break :use_libdeflate;
+        if (fun.FeatureFlags.isLibdeflateEnabled() and zlib_pool.data.list.capacity > 16 and esimated_output_size > 0) use_libdeflate: {
+            const decompressor = fun.libdeflate.Decompressor.alloc() orelse break :use_libdeflate;
             defer decompressor.deinit();
 
             const result = decompressor.gzip(tgz_bytes, zlib_pool.data.list.allocatedSlice());
@@ -244,18 +244,18 @@ fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8)
                 log.addErrorFmt(
                     null,
                     logger.Loc.Empty,
-                    bun.default_allocator,
+                    fun.default_allocator,
                     "{s} decompressing \"{s}\" to \"{f}\"",
-                    .{ @errorName(err), name, bun.fmt.fmtPath(u8, tmpname, .{}) },
+                    .{ @errorName(err), name, fun.fmt.fmtPath(u8, tmpname, .{}) },
                 ) catch unreachable;
                 return error.InstallFailed;
             };
         }
 
         if (PackageManager.verbose_install) {
-            const decompressing_ended_at: u64 = bun.getRoughTickCount(.allow_mocked_time).ns();
+            const decompressing_ended_at: u64 = fun.getRoughTickCount(.allow_mocked_time).ns();
             const elapsed = decompressing_ended_at - time_started_for_verbose_logs;
-            Output.prettyErrorln("[{s}] Extract {s}<r> (decompressed {f} tgz file in {D})", .{ name, tmpname, bun.fmt.size(tgz_bytes.len, .{}), elapsed });
+            Output.prettyErrorln("[{s}] Extract {s}<r> (decompressed {f} tgz file in {D})", .{ name, tmpname, fun.fmt.size(tgz_bytes.len, .{}), elapsed });
         }
 
         switch (this.resolution.tag) {
@@ -264,7 +264,7 @@ fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8)
                     needs_first_dirname: bool = true,
                     outdirname: *[]const u8,
                     pub fn onFirstDirectoryName(dirname_reader: *@This(), first_dirname: []const u8) void {
-                        bun.assert(dirname_reader.needs_first_dirname);
+                        fun.assert(dirname_reader.needs_first_dirname);
                         dirname_reader.needs_first_dirname = false;
                         dirname_reader.outdirname.* = FileSystem.DirnameStore.instance.append([]const u8, first_dirname) catch unreachable;
                     }
@@ -290,10 +290,10 @@ fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8)
                 // installed from GitHub. package.json version becomes sort of
                 // meaningless in cases like this.
                 if (resolved.len > 0) insert_tag: {
-                    const gh_tag = extract_destination.createFileZ(".bun-tag", .{ .truncate = true }) catch break :insert_tag;
+                    const gh_tag = extract_destination.createFileZ(".fun-tag", .{ .truncate = true }) catch break :insert_tag;
                     defer gh_tag.close();
                     gh_tag.writeAll(resolved) catch {
-                        extract_destination.deleteFileZ(".bun-tag") catch {};
+                        extract_destination.deleteFileZ(".fun-tag") catch {};
                     };
                 }
             },
@@ -316,7 +316,7 @@ fn extract(this: *const ExtractTarball, log: *logger.Log, tgz_bytes: []const u8)
         }
 
         if (PackageManager.verbose_install) {
-            const elapsed = bun.getRoughTickCount(.allow_mocked_time).ns() - time_started_for_verbose_logs;
+            const elapsed = fun.getRoughTickCount(.allow_mocked_time).ns() - time_started_for_verbose_logs;
             Output.prettyErrorln("[{s}] Extracted to {s} ({D})<r>", .{ name, tmpname, elapsed });
             Output.flush();
         }
@@ -354,18 +354,18 @@ pub fn moveToCacheDirectory(
     // Now that we've extracted the archive, we rename.
     if (comptime Environment.isWindows) {
         var did_retry = false;
-        var path2_buf: bun.WPathBuffer = undefined;
-        const path2 = bun.strings.toWPathNormalized(&path2_buf, folder_name);
+        var path2_buf: fun.WPathBuffer = undefined;
+        const path2 = fun.strings.toWPathNormalized(&path2_buf, folder_name);
         if (create_subdir) {
-            if (bun.Dirname.dirname(u16, path2)) |folder| {
-                _ = bun.MakePath.makePath(u16, cache_dir, folder) catch {};
+            if (fun.Dirname.dirname(u16, path2)) |folder| {
+                _ = fun.MakePath.makePath(u16, cache_dir, folder) catch {};
             }
         }
 
         const path_to_use = path2;
 
         while (true) {
-            const dir_to_move = bun.sys.openDirAtWindowsA(.fromStdDir(this.temp_dir), tmpname, .{
+            const dir_to_move = fun.sys.openDirAtWindowsA(.fromStdDir(this.temp_dir), tmpname, .{
                 .can_rename_or_delete = true,
                 .iterable = false,
                 .read_only = true,
@@ -374,14 +374,14 @@ pub fn moveToCacheDirectory(
                 log.addErrorFmt(
                     null,
                     logger.Loc.Empty,
-                    bun.default_allocator,
+                    fun.default_allocator,
                     "moving \"{s}\" to cache dir failed\n{}\n From: {s}\n   To: {s}",
                     .{ name, err, tmpname, folder_name },
                 ) catch unreachable;
                 return error.InstallFailed;
             };
 
-            switch (bun.windows.moveOpenedFileAt(dir_to_move, .fromStdDir(cache_dir), path_to_use, true)) {
+            switch (fun.windows.moveOpenedFileAt(dir_to_move, .fromStdDir(cache_dir), path_to_use, true)) {
                 .err => |err| {
                     if (!did_retry) {
                         switch (err.getErrno()) {
@@ -396,11 +396,11 @@ pub fn moveToCacheDirectory(
                                 // we rename it back into the temp dir
                                 // and then delete that temp dir
                                 // The goal is to make it more difficult for an application to reach this folder
-                                var tempdest_buf: bun.PathBuffer = undefined;
+                                var tempdest_buf: fun.PathBuffer = undefined;
                                 @memcpy(tempdest_buf[0..tmpname.len], tmpname);
                                 tempdest_buf[tmpname.len..][0..4].* = .{ 't', 'm', 'p', 0 };
                                 const tempdest = tempdest_buf[0 .. tmpname.len + 3 :0];
-                                switch (bun.sys.renameat(
+                                switch (fun.sys.renameat(
                                     .fromStdDir(cache_dir),
                                     folder_name,
                                     .fromStdDir(tmpdir),
@@ -421,7 +421,7 @@ pub fn moveToCacheDirectory(
                     log.addErrorFmt(
                         null,
                         logger.Loc.Empty,
-                        bun.default_allocator,
+                        fun.default_allocator,
                         "moving \"{s}\" to cache dir failed\n{f}\n  From: {s}\n    To: {s}",
                         .{ name, err, tmpname, folder_name },
                     ) catch unreachable;
@@ -435,7 +435,7 @@ pub fn moveToCacheDirectory(
             break;
         }
     } else {
-        // Attempt to gracefully handle duplicate concurrent `bun install` calls
+        // Attempt to gracefully handle duplicate concurrent `fun install` calls
         //
         // By:
         // 1. Rename from temporary directory to cache directory and fail if it already exists
@@ -445,12 +445,12 @@ pub fn moveToCacheDirectory(
         //
 
         if (create_subdir) {
-            if (bun.Dirname.dirname(u8, folder_name)) |folder| {
-                bun.MakePath.makePath(u8, cache_dir, folder) catch {};
+            if (fun.Dirname.dirname(u8, folder_name)) |folder| {
+                fun.MakePath.makePath(u8, cache_dir, folder) catch {};
             }
         }
 
-        if (bun.sys.renameatConcurrently(
+        if (fun.sys.renameatConcurrently(
             .fromStdDir(tmpdir),
             tmpname,
             .fromStdDir(cache_dir),
@@ -460,7 +460,7 @@ pub fn moveToCacheDirectory(
             log.addErrorFmt(
                 null,
                 logger.Loc.Empty,
-                bun.default_allocator,
+                fun.default_allocator,
                 "moving \"{s}\" to cache dir failed: {f}\n  From: {s}\n    To: {s}",
                 .{ name, err, tmpname, folder_name },
             ) catch unreachable;
@@ -470,11 +470,11 @@ pub fn moveToCacheDirectory(
 
     // We return a resolved absolute absolute file path to the cache dir.
     // To get that directory, we open the directory again.
-    var final_dir = bun.openDir(cache_dir, folder_name) catch |err| {
+    var final_dir = fun.openDir(cache_dir, folder_name) catch |err| {
         log.addErrorFmt(
             null,
             logger.Loc.Empty,
-            bun.default_allocator,
+            fun.default_allocator,
             "failed to verify cache dir for \"{s}\": {s}",
             .{ name, @errorName(err) },
         ) catch unreachable;
@@ -482,14 +482,14 @@ pub fn moveToCacheDirectory(
     };
     defer final_dir.close();
     // and get the fd path
-    const final_path = bun.getFdPathZ(
+    const final_path = fun.getFdPathZ(
         .fromStdDir(final_dir),
         &bufs.final_path_buf,
     ) catch |err| {
         log.addErrorFmt(
             null,
             logger.Loc.Empty,
-            bun.default_allocator,
+            fun.default_allocator,
             "failed to resolve cache dir for \"{s}\": {s}",
             .{ name, @errorName(err) },
         ) catch unreachable;
@@ -506,10 +506,10 @@ pub fn moveToCacheDirectory(
         else => this.package_manager.lockfile.trusted_dependencies != null and
             this.package_manager.lockfile.trusted_dependencies.?.contains(@truncate(Semver.String.Builder.stringHash(name))),
     }) {
-        const json_file, json_buf = bun.sys.File.readFileFrom(
-            bun.FD.fromStdDir(cache_dir),
-            bun.path.joinZBuf(&bufs.json_path_buf, &[_]string{ folder_name, "package.json" }, .auto),
-            bun.default_allocator,
+        const json_file, json_buf = fun.sys.File.readFileFrom(
+            fun.FD.fromStdDir(cache_dir),
+            fun.path.joinZBuf(&bufs.json_path_buf, &[_]string{ folder_name, "package.json" }, .auto),
+            fun.default_allocator,
         ).unwrap() catch |err| {
             if (this.resolution.tag == .github and err == error.ENOENT) {
                 // allow git dependencies without package.json
@@ -522,7 +522,7 @@ pub fn moveToCacheDirectory(
             log.addErrorFmt(
                 null,
                 logger.Loc.Empty,
-                bun.default_allocator,
+                fun.default_allocator,
                 "\"package.json\" for \"{s}\" failed to open: {s}",
                 .{ name, @errorName(err) },
             ) catch unreachable;
@@ -535,7 +535,7 @@ pub fn moveToCacheDirectory(
             log.addErrorFmt(
                 null,
                 logger.Loc.Empty,
-                bun.default_allocator,
+                fun.default_allocator,
                 "\"package.json\" for \"{s}\" failed to resolve: {s}",
                 .{ name, @errorName(err) },
             ) catch unreachable;
@@ -543,7 +543,7 @@ pub fn moveToCacheDirectory(
         };
     }
 
-    if (!bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_INSTALL_INDEX.get()) {
+    if (!fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_INSTALL_INDEX.get()) {
         // create an index storing each version of a package installed
         if (strings.indexOfChar(basename, '/') == null) create_index: {
             const dest_name = switch (this.resolution.tag) {
@@ -554,12 +554,12 @@ pub fn moveToCacheDirectory(
             };
 
             if (comptime Environment.isWindows) {
-                bun.MakePath.makePath(u8, cache_dir, name) catch {
+                fun.MakePath.makePath(u8, cache_dir, name) catch {
                     break :create_index;
                 };
 
-                var dest_buf: bun.PathBuffer = undefined;
-                const dest_path = bun.path.joinAbsStringBufZ(
+                var dest_buf: fun.PathBuffer = undefined;
+                const dest_path = fun.path.joinAbsStringBufZ(
                     // only set once, should be fine to read not on main thread
                     this.package_manager.cache_directory_path,
                     &dest_buf,
@@ -567,14 +567,14 @@ pub fn moveToCacheDirectory(
                     .windows,
                 );
 
-                bun.sys.sys_uv.symlinkUV(final_path, dest_path, bun.windows.libuv.UV_FS_SYMLINK_JUNCTION).unwrap() catch {
+                fun.sys.sys_uv.symlinkUV(final_path, dest_path, fun.windows.libuv.UV_FS_SYMLINK_JUNCTION).unwrap() catch {
                     break :create_index;
                 };
             } else {
-                var index_dir = bun.FD.fromStdDir(bun.MakePath.makeOpenPath(cache_dir, name, .{}) catch break :create_index);
+                var index_dir = fun.FD.fromStdDir(fun.MakePath.makeOpenPath(cache_dir, name, .{}) catch break :create_index);
                 defer index_dir.close();
 
-                bun.sys.symlinkat(final_path, index_dir, dest_name).unwrap() catch break :create_index;
+                fun.sys.symlinkat(final_path, index_dir, dest_name).unwrap() catch break :create_index;
             }
         }
     }
@@ -603,11 +603,11 @@ const Install = @import("./install.zig");
 const DependencyID = Install.DependencyID;
 const PackageManager = Install.PackageManager;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const Semver = bun.Semver;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const Semver = fun.Semver;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;

@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import path from "path";
-import { bunExe } from "harness";
+import { funExe } from "harness";
 
 type Test = {
   file: string;
@@ -105,17 +105,17 @@ async function runBoth(test: Test): Promise<RunResult> {
   const nodeResult = await run("node", test);
   // console.log("Node.js Result:", nodeResult);
 
-  const bunResult = await run(bunExe(), test);
-  // console.log("Bun Result:", bunResult);
+  const funResult = await run(funExe(), test);
+  // console.log("Fun Result:", funResult);
 
-  expect(bunResult).toEqual(nodeResult);
-  return bunResult;
+  expect(funResult).toEqual(nodeResult);
+  return funResult;
 }
 
 describe("stdin", () => {
   it("pause allows process to exit", async () => {
-    // in node, raw stdin behaves differently than pty. run this test in bun only for now.
-    expect(await run(bunExe(), { file: "pause.fixture.js", stdin: ["abc\n", "pause\n", "def\n"], end: false }))
+    // in node, raw stdin behaves differently than pty. run this test in fun only for now.
+    expect(await run(funExe(), { file: "pause.fixture.js", stdin: ["abc\n", "pause\n", "def\n"], end: false }))
       .toMatchInlineSnapshot(`
       {
         "autoKilled": false,

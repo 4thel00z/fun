@@ -7,7 +7,7 @@
 
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 namespace JSReactElement {
 
 static constexpr PropertyOffset typeofOffset = 0;
@@ -68,7 +68,7 @@ Structure* createStructure(VM& vm, JSGlobalObject* globalObject)
 }
 
 } // namespace JSReactElement
-} // namespace Bun
+} // namespace Fun
 
 static JSC::Symbol* createTypeofSymbol(VM& vm, uint8_t reactVersion)
 {
@@ -87,11 +87,11 @@ extern "C" JSC::EncodedJSValue JSReactElement__create(
     VM& vm = global->vm();
 
     JSObject* element = constructEmptyObject(vm, global->JSReactElementStructure());
-    element->putDirectOffset(vm, Bun::JSReactElement::typeofOffset, createTypeofSymbol(vm, reactVersion));
-    element->putDirectOffset(vm, Bun::JSReactElement::typeOffset, JSValue::decode(type));
-    element->putDirectOffset(vm, Bun::JSReactElement::keyOffset, jsNull());
-    element->putDirectOffset(vm, Bun::JSReactElement::refOffset, jsNull());
-    element->putDirectOffset(vm, Bun::JSReactElement::propsOffset, JSValue::decode(props));
+    element->putDirectOffset(vm, Fun::JSReactElement::typeofOffset, createTypeofSymbol(vm, reactVersion));
+    element->putDirectOffset(vm, Fun::JSReactElement::typeOffset, JSValue::decode(type));
+    element->putDirectOffset(vm, Fun::JSReactElement::keyOffset, jsNull());
+    element->putDirectOffset(vm, Fun::JSReactElement::refOffset, jsNull());
+    element->putDirectOffset(vm, Fun::JSReactElement::propsOffset, JSValue::decode(props));
 
     return JSValue::encode(element);
 }
@@ -111,11 +111,11 @@ extern "C" JSC::EncodedJSValue JSReactElement__createFragment(
     props->putDirect(vm, JSC::Identifier::fromString(vm, "children"_s), JSValue::decode(children));
 
     JSObject* element = constructEmptyObject(vm, global->JSReactElementStructure());
-    element->putDirectOffset(vm, Bun::JSReactElement::typeofOffset, createTypeofSymbol(vm, reactVersion));
-    element->putDirectOffset(vm, Bun::JSReactElement::typeOffset, fragmentSymbol);
-    element->putDirectOffset(vm, Bun::JSReactElement::keyOffset, jsNull());
-    element->putDirectOffset(vm, Bun::JSReactElement::refOffset, jsNull());
-    element->putDirectOffset(vm, Bun::JSReactElement::propsOffset, props);
+    element->putDirectOffset(vm, Fun::JSReactElement::typeofOffset, createTypeofSymbol(vm, reactVersion));
+    element->putDirectOffset(vm, Fun::JSReactElement::typeOffset, fragmentSymbol);
+    element->putDirectOffset(vm, Fun::JSReactElement::keyOffset, jsNull());
+    element->putDirectOffset(vm, Fun::JSReactElement::refOffset, jsNull());
+    element->putDirectOffset(vm, Fun::JSReactElement::propsOffset, props);
 
     return JSValue::encode(element);
 }

@@ -5,7 +5,7 @@ const RunLoopTimer = opaque {
     }
 };
 
-/// A timer created by WTF code and invoked by Bun's event loop
+/// A timer created by WTF code and invoked by Fun's event loop
 const WTFTimer = @This();
 
 vm: *VirtualMachine,
@@ -13,10 +13,10 @@ run_loop_timer: *RunLoopTimer,
 event_loop_timer: EventLoopTimer,
 imminent: *std.atomic.Value(?*WTFTimer),
 repeat: bool,
-lock: bun.Mutex = .{},
-script_execution_context_id: bun.webcore.ScriptExecutionContext.Identifier,
+lock: fun.Mutex = .{},
+script_execution_context_id: fun.webcore.ScriptExecutionContext.Identifier,
 
-const new = bun.TrivialNew(WTFTimer);
+const new = fun.TrivialNew(WTFTimer);
 
 pub export fn WTFTimer__runIfImminent(vm: *VirtualMachine) void {
     vm.eventLoop().runImminentGCTimer();
@@ -49,7 +49,7 @@ pub fn update(this: *WTFTimer, seconds: f64, repeat: bool) void {
     const clamped = @min(seconds, @as(f64, std.math.maxInt(i32)));
 
     const modf = std.math.modf(clamped);
-    var interval = bun.timespec.now(.force_real_time);
+    var interval = fun.timespec.now(.force_real_time);
     interval.sec += @intFromFloat(modf.ipart);
     interval.nsec += @intFromFloat(modf.fpart * std.time.ns_per_s);
     if (interval.nsec >= std.time.ns_per_s) {
@@ -75,7 +75,7 @@ pub fn cancel(this: *WTFTimer) void {
     }
 }
 
-pub fn fire(this: *WTFTimer, _: *const bun.timespec, _: *VirtualMachine) void {
+pub fn fire(this: *WTFTimer, _: *const fun.timespec, _: *VirtualMachine) void {
     this.event_loop_timer.state = .FIRED;
     // Only clear imminent if this timer was the one that set it
     _ = this.imminent.cmpxchgStrong(this, null, .seq_cst, .seq_cst);
@@ -84,7 +84,7 @@ pub fn fire(this: *WTFTimer, _: *const bun.timespec, _: *VirtualMachine) void {
 
 pub fn deinit(this: *WTFTimer) void {
     this.cancel();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 export fn WTFTimer__create(run_loop_timer: *RunLoopTimer) ?*anyopaque {
@@ -133,7 +133,7 @@ export fn WTFTimer__secondsUntilTimer(this: *WTFTimer) f64 {
     this.lock.lock();
     defer this.lock.unlock();
     if (this.event_loop_timer.state == .ACTIVE) {
-        const until = this.event_loop_timer.next.duration(&bun.timespec.now(.force_real_time));
+        const until = this.event_loop_timer.next.duration(&fun.timespec.now(.force_real_time));
         const sec: f64, const nsec: f64 = .{ @floatFromInt(until.sec), @floatFromInt(until.nsec) };
         return sec + nsec / std.time.ns_per_s;
     }
@@ -144,8 +144,8 @@ extern fn WTFTimer__fire(this: *RunLoopTimer) void;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const EventLoopTimer = bun.api.Timer.EventLoopTimer;
+const fun = @import("fun");
+const EventLoopTimer = fun.api.Timer.EventLoopTimer;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;

@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 describe("console depth", () => {
   const deepObject = {
@@ -36,9 +36,9 @@ describe("console depth", () => {
       "test.js": testScript,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -66,9 +66,9 @@ describe("console depth", () => {
       "test.js": testScript,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--console-depth", "3", "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--console-depth", "3", "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -98,9 +98,9 @@ describe("console depth", () => {
       "test.js": testScript,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--console-depth", "10", "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--console-depth", "10", "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -137,15 +137,15 @@ describe("console depth", () => {
 `);
   });
 
-  test("bunfig.toml console.depth configuration", async () => {
-    const dir = tempDirWithFiles("console-depth-bunfig", {
+  test("funfig.toml console.depth configuration", async () => {
+    const dir = tempDirWithFiles("console-depth-funfig", {
       "test.js": testScript,
-      "bunfig.toml": `[console]\ndepth = 4`,
+      "funfig.toml": `[console]\ndepth = 4`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -172,15 +172,15 @@ describe("console depth", () => {
 `);
   });
 
-  test("CLI flag overrides bunfig.toml", async () => {
+  test("CLI flag overrides funfig.toml", async () => {
     const dir = tempDirWithFiles("console-depth-override", {
       "test.js": testScript,
-      "bunfig.toml": `[console]\ndepth = 6`,
+      "funfig.toml": `[console]\ndepth = 6`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--console-depth", "2", "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--console-depth", "2", "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -208,9 +208,9 @@ describe("console depth", () => {
       "test.js": testScript,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--console-depth", "invalid", "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--console-depth", "invalid", "test.js"],
+      env: funEnv,
       cwd: dir,
       stderr: "pipe",
       stdout: "pipe",
@@ -234,9 +234,9 @@ describe("console depth", () => {
       "test.js": testScript,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--console-depth", "0", "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--console-depth", "0", "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -273,15 +273,15 @@ describe("console depth", () => {
 `);
   });
 
-  test("bunfig.toml depth=0 should show infinite depth", async () => {
-    const dir = tempDirWithFiles("console-depth-bunfig-zero", {
+  test("funfig.toml depth=0 should show infinite depth", async () => {
+    const dir = tempDirWithFiles("console-depth-funfig-zero", {
       "test.js": testScript,
-      "bunfig.toml": `[console]\ndepth = 0`,
+      "funfig.toml": `[console]\ndepth = 0`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -330,9 +330,9 @@ describe("console depth", () => {
       "test.js": testScriptMultiple,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--console-depth", "2", "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--console-depth", "2", "test.js"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",

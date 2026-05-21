@@ -1,4 +1,4 @@
-//! Garbage Collection Controller for Bun's JavaScript runtime
+//! Garbage Collection Controller for Fun's JavaScript runtime
 //!
 //! This controller intelligently schedules garbage collection to run at optimal times,
 //! such as when HTTP requests complete, during idle periods, or when memory usage
@@ -12,8 +12,8 @@
 //!
 //! Key features:
 //! - Adaptive timing based on heap growth patterns
-//! - Configurable intervals via BUN_GC_TIMER_INTERVAL environment variable
-//! - Can be disabled via BUN_GC_TIMER_DISABLE for debugging/testing
+//! - Configurable intervals via FUN_GC_TIMER_INTERVAL environment variable
+//! - Can be disabled via FUN_GC_TIMER_DISABLE for debugging/testing
 //!
 //! Thread Safety: This type must be unique per JavaScript thread and is not
 //! thread-safe. Each VirtualMachine instance should have its own controller.
@@ -37,13 +37,13 @@ pub fn init(this: *GarbageCollectionController, vm: *VirtualMachine) void {
     actual.internal_loop_data.jsc_vm = vm.jsc_vm;
 
     if (comptime Environment.isDebug) {
-        if (bun.env_var.BUN_TRACK_LAST_FN_NAME.get()) {
+        if (fun.env_var.FUN_TRACK_LAST_FN_NAME.get()) {
             vm.eventLoop().debug.track_last_fn_name = true;
         }
     }
 
     var gc_timer_interval: i32 = 1000;
-    if (vm.transpiler.env.get("BUN_GC_TIMER_INTERVAL")) |timer| {
+    if (vm.transpiler.env.get("FUN_GC_TIMER_INTERVAL")) |timer| {
         if (std.fmt.parseInt(i32, timer, 10)) |parsed| {
             if (parsed > 0) {
                 gc_timer_interval = parsed;
@@ -52,15 +52,15 @@ pub fn init(this: *GarbageCollectionController, vm: *VirtualMachine) void {
     }
     this.gc_timer_interval = gc_timer_interval;
 
-    if (vm.transpiler.env.get("BUN_GC_RUNS_UNTIL_SKIP_RELEASE_ACCESS")) |val| {
+    if (vm.transpiler.env.get("FUN_GC_RUNS_UNTIL_SKIP_RELEASE_ACCESS")) |val| {
         if (std.fmt.parseInt(c_int, val, 10)) |parsed| {
             if (parsed >= 0) {
-                VirtualMachine.Bun__defaultRemainingRunsUntilSkipReleaseAccess = parsed;
+                VirtualMachine.Fun__defaultRemainingRunsUntilSkipReleaseAccess = parsed;
             }
         } else |_| {}
     }
 
-    this.disabled = vm.transpiler.env.has("BUN_GC_TIMER_DISABLE");
+    this.disabled = vm.transpiler.env.has("FUN_GC_TIMER_DISABLE");
 
     if (!this.disabled)
         this.gc_repeating_timer.set(this, onGCRepeatingTimer, gc_timer_interval, gc_timer_interval);
@@ -76,7 +76,7 @@ pub fn scheduleGCTimer(this: *GarbageCollectionController) void {
     this.gc_timer.set(this, onGCTimer, 16, 0);
 }
 
-pub fn bunVM(this: *GarbageCollectionController) *VirtualMachine {
+pub fn funVM(this: *GarbageCollectionController) *VirtualMachine {
     return @alignCast(@fieldParentPtr("gc_controller", this));
 }
 
@@ -87,7 +87,7 @@ pub fn onGCTimer(timer: *uws.Timer) callconv(.c) void {
 }
 
 // We want to always run GC once in awhile
-// But if you have a long-running instance of Bun, you don't want the
+// But if you have a long-running instance of Fun, you don't want the
 // program constantly using CPU doing GC for no reason
 //
 // So we have two settings for this GC timer:
@@ -128,7 +128,7 @@ pub fn onGCRepeatingTimer(timer: *uws.Timer) callconv(.c) void {
 
 pub fn processGCTimer(this: *GarbageCollectionController) void {
     if (this.disabled) return;
-    var vm = this.bunVM().jsc_vm;
+    var vm = this.funVM().jsc_vm;
     this.processGCTimerWithHeapSize(vm, vm.blockBytesAllocated());
 }
 
@@ -169,7 +169,7 @@ fn processGCTimerWithHeapSize(this: *GarbageCollectionController, vm: *jsc.VM, t
 
 pub fn performGC(this: *GarbageCollectionController) void {
     if (this.disabled) return;
-    var vm = this.bunVM().jsc_vm;
+    var vm = this.funVM().jsc_vm;
     vm.collectAsync();
     this.gc_last_heap_size = vm.blockBytesAllocated();
 }
@@ -182,9 +182,9 @@ pub const GCTimerState = enum {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const uws = bun.uws;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const uws = fun.uws;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;

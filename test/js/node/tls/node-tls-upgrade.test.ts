@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "events";
 import { tls as certs } from "harness";
 import net from "net";

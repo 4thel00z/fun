@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 // When emitDecoratorMetadata is true in tsconfig but experimentalDecorators is
-// absent, Bun should use legacy decorator semantics (not TC39 standard).
+// absent, Fun should use legacy decorator semantics (not TC39 standard).
 // emitDecoratorMetadata only makes sense with legacy decorators.
 test("legacy decorators work when emitDecoratorMetadata is true without experimentalDecorators", async () => {
   using dir = tempDir("issue-27526", {
@@ -34,9 +34,9 @@ console.log(new Foo().hello());
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -77,9 +77,9 @@ console.log(new Foo().hello());
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

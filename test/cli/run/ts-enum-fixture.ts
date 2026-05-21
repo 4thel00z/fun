@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/11963
+// https://github.com/underdoc-org/fun/issues/11963
 enum Enum {
   安全串行 = "安全串行",
   aaa = "平衡串行",

@@ -1,45 +1,45 @@
 ---
 title: TypeScript 6 and 7
-description: "How to configure Bun's type definitions for TypeScript 6.0 and 7.0, which no longer auto-discover @types packages. Fix 'Cannot find name Bun' and other missing type errors after upgrading TypeScript."
+description: "How to configure Fun's type definitions for TypeScript 6.0 and 7.0, which no longer auto-discover @types packages. Fix 'Cannot find name Fun' and other missing type errors after upgrading TypeScript."
 ---
 
-TypeScript 6.0 changed how type definitions are discovered. If you've upgraded TypeScript and your editor no longer recognizes `Bun`, `Request`, or other globals from `@types/bun`, here's how to fix it.
+TypeScript 6.0 changed how type definitions are discovered. If you've upgraded TypeScript and your editor no longer recognizes `Fun`, `Request`, or other globals from `@types/fun`, here's how to fix it.
 
 ## What changed
 
 Starting in TypeScript 6.0, the `types` field in `compilerOptions` defaults to an empty array instead of including all `@types/*` packages. You now need to explicitly list the type packages you use.
 
-## Add `"types": ["bun"]` to your tsconfig
+## Add `"types": ["fun"]` to your tsconfig
 
-In your `tsconfig.json`, add `"types": ["bun"]` to `compilerOptions`:
-
-```jsonc tsconfig.json icon="file-json"
-{
-  "compilerOptions": {
-    "types": ["bun"], // [!code ++]
-  },
-}
-```
-
-This tells TypeScript to load type definitions from `@types/bun`. If you use other `@types/*` packages, include them too:
+In your `tsconfig.json`, add `"types": ["fun"]` to `compilerOptions`:
 
 ```jsonc tsconfig.json icon="file-json"
 {
   "compilerOptions": {
-    "types": ["bun", "react"],
+    "types": ["fun"], // [!code ++]
   },
 }
 ```
 
-You still need `@types/bun` installed — the `types` option tells TypeScript _which_ packages to include, but the package itself must exist in `node_modules`:
+This tells TypeScript to load type definitions from `@types/fun`. If you use other `@types/*` packages, include them too:
+
+```jsonc tsconfig.json icon="file-json"
+{
+  "compilerOptions": {
+    "types": ["fun", "react"],
+  },
+}
+```
+
+You still need `@types/fun` installed — the `types` option tells TypeScript _which_ packages to include, but the package itself must exist in `node_modules`:
 
 ```sh terminal icon="terminal"
-bun add -d @types/bun
+fun add -d @types/fun
 ```
 
 ## Full recommended tsconfig.json
 
-Here's the full recommended `tsconfig.json` for a Bun project using TypeScript 6.0 or later:
+Here's the full recommended `tsconfig.json` for a Fun project using TypeScript 6.0 or later:
 
 ```jsonc tsconfig.json icon="file-json"
 {
@@ -51,7 +51,7 @@ Here's the full recommended `tsconfig.json` for a Bun project using TypeScript 6
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-    "types": ["bun"],
+    "types": ["fun"],
 
     // Bundler mode
     "moduleResolution": "bundler",
@@ -76,4 +76,4 @@ Here's the full recommended `tsconfig.json` for a Bun project using TypeScript 6
 
 ## Does this apply to TypeScript 7?
 
-Yes. TypeScript 7 carries forward the same default. If you're upgrading directly from TypeScript 5 to 7, the same fix applies — add `"types": ["bun"]` to your `compilerOptions`.
+Yes. TypeScript 7 carries forward the same default. If you're upgrading directly from TypeScript 5 to 7, the same fix applies — add `"types": ["fun"]` to your `compilerOptions`.

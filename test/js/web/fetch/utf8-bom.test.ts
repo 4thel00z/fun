@@ -1,4 +1,4 @@
-import { describe, expect, it, test } from "bun:test";
+import { describe, expect, it, test } from "fun:test";
 
 describe("UTF-8 BOM should be ignored", () => {
   test("handles empty strings", async () => {
@@ -101,24 +101,24 @@ describe("UTF-8 BOM should be ignored", () => {
   });
 
   describe("readable stream", () => {
-    it("in Bun.readableStreamToText()", async () => {
+    it("in Fun.readableStreamToText()", async () => {
       const stream = new ReadableStream({
         start(controller) {
           controller.enqueue(Buffer.from("\uFEFFHello, World!"));
           controller.close();
         },
       });
-      expect(await Bun.readableStreamToText(stream)).toBe("Hello, World!");
+      expect(await Fun.readableStreamToText(stream)).toBe("Hello, World!");
     });
 
-    it("in Bun.readableStreamToJSON()", async () => {
+    it("in Fun.readableStreamToJSON()", async () => {
       const stream = new ReadableStream({
         start(controller) {
           controller.enqueue(Buffer.from('\uFEFF{"hello":"World"}'));
           controller.close();
         },
       });
-      expect(await Bun.readableStreamToJSON(stream)).toEqual({ "hello": "World" } as any);
+      expect(await Fun.readableStreamToJSON(stream)).toEqual({ "hello": "World" } as any);
     });
 
     it("in ReadableStream.prototype.text()", async () => {
@@ -141,25 +141,25 @@ describe("UTF-8 BOM should be ignored", () => {
       expect(await stream.json()).toEqual({ "hello": "World" });
     });
 
-    it("in Bun.readableStreamToFormData()", async () => {
+    it("in Fun.readableStreamToFormData()", async () => {
       const stream = new ReadableStream({
         start(controller) {
           controller.enqueue(Buffer.from("\uFEFFhello=world"));
           controller.close();
         },
       });
-      const formData = await Bun.readableStreamToFormData(stream);
+      const formData = await Fun.readableStreamToFormData(stream);
       expect(formData.get("hello")).toBe("world");
     });
 
-    it("in Bun.readableStreamToBlob()", async () => {
+    it("in Fun.readableStreamToBlob()", async () => {
       const stream = new ReadableStream({
         start(controller) {
           controller.enqueue(Buffer.from("\uFEFFHello, World!"));
           controller.close();
         },
       });
-      const blob = await Bun.readableStreamToBlob(stream);
+      const blob = await Fun.readableStreamToBlob(stream);
       expect(await blob.text()).toBe("Hello, World!");
     });
 

@@ -23,7 +23,7 @@
 
 // Flags: --expose-internals
 const common = require('../common');
-common.skip("skipped because it tests node internals irrelevant to bun");
+common.skip("skipped because it tests node internals irrelevant to fun");
 
 const assert = require('assert');
 const L = require('internal/linkedlist');

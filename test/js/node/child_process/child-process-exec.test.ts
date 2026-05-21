@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import { bunExe, isWindows } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funExe, isWindows } from "harness";
 import { exec } from "node:child_process";
 
 const SIZE = 262145;
 
-// https://github.com/oven-sh/bun/issues/5319
+// https://github.com/underdoc-org/fun/issues/5319
 describe.concurrent("child_process.exec", () => {
-  const shell = Bun.which(isWindows ? "powershell" : "bash");
+  const shell = Fun.which(isWindows ? "powershell" : "bash");
 
   describe.each(["stdout", "stderr"])("%s", io => {
     let script;
@@ -108,7 +108,7 @@ test.concurrent("exec with verbatim arguments", async () => {
   const { resolve, reject, promise } = Promise.withResolvers();
 
   const fixture = require.resolve("./fixtures/child-process-echo-argv.js");
-  const child = exec(`${bunExe()} ${fixture} tasklist /FI "IMAGENAME eq chrome.exe"`, (err, stdout, stderr) => {
+  const child = exec(`${funExe()} ${fixture} tasklist /FI "IMAGENAME eq chrome.exe"`, (err, stdout, stderr) => {
     if (err) return reject(err);
     return resolve({ stdout, stderr });
   });

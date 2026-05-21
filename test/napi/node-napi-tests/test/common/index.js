@@ -170,7 +170,7 @@ const defaultAutoSelectFamilyAttemptTimeout = net.getDefaultAutoSelectFamilyAtte
 // Always use Node-API modules built in debug mode so that we get better errors
 const buildType = 'Debug';
 
-global.gc = () => Bun.gc(true);
+global.gc = () => Fun.gc(true);
 
 // If env var is set then enable async_hook hooks for all tests.
 if (process.env.NODE_TEST_WITH_ASYNC_HOOKS) {
@@ -338,7 +338,7 @@ let knownGlobals = [
   WebSocket,
 ];
 
-if (typeof Bun === "object") {
+if (typeof Fun === "object") {
   knownGlobals.push(
     addEventListener,
     alert,
@@ -347,7 +347,7 @@ if (typeof Bun === "object") {
     postMessage,
     prompt,
     removeEventListener,
-    Bun,
+    Fun,
     reportError,
     BuildError,
     BuildMessage,
@@ -459,14 +459,14 @@ if (process.env.NODE_TEST_KNOWN_GLOBALS !== '0') {
     return leaked;
   }
 
-  // --- Commmented out for Bun ---
+  // --- Commmented out for Fun ---
   // process.on('exit', function () {
   //   const leaked = leakedGlobals();
   //   if (leaked.length > 0) {
   //     assert.fail(`Unexpected global(s) found: ${leaked.join(', ')}`);
   //   }
   // });
-  // --- Commmented out for Bun ---
+  // --- Commmented out for Fun ---
 }
 
 const mustCallChecks = [];
@@ -598,7 +598,7 @@ function canCreateSymLink() {
   return true;
 }
 
-// Remove when Bun adds util.getCallSites
+// Remove when Fun adds util.getCallSites
 function getCallSite(top) {
   const originalStackFormatter = Error.prepareStackTrace;
   Error.prepareStackTrace = (err, stack) =>
@@ -699,7 +699,7 @@ function nodeProcessAborted(exitCode, signal) {
   // (ii) Otherwise, _exit(134) which is called in place of abort() due to
   // raising SIGABRT exiting with ambiguous exit code '3' by default
   if (isWindows)
-    expectedExitCodes = [0x80000003, 134, 3]; // BUN: crash handler calls std.posix.abort() resulting in code 3
+    expectedExitCodes = [0x80000003, 134, 3]; // FUN: crash handler calls std.posix.abort() resulting in code 3
 
   // When using --abort-on-uncaught-exception, V8 will use
   // base::OS::Abort to terminate the process.

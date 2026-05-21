@@ -1,5 +1,5 @@
 // Hot tests ensure that the `import.meta.hot` interface is functional
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { devTest, emptyHtmlFile } from "../bake-harness";
 
@@ -19,7 +19,7 @@ devTest("import.meta.hot.accept basic", {
       await dev.write(
         "index.ts",
         `
-          console.log("Hello, Bun!");
+          console.log("Hello, Fun!");
           import.meta.hot.accept(newModule => {
             console.log(Object.keys(newModule));
             console.log(newModule.method());
@@ -27,19 +27,19 @@ devTest("import.meta.hot.accept basic", {
         `,
       );
     });
-    await c.expectMessage("Hello, Bun!");
+    await c.expectMessage("Hello, Fun!");
     await dev.write(
       "index.ts",
       `
         export function method() {
-          return "Bun";
+          return "Fun";
         }
         import.meta.hot.accept(newModule => {
           console.log(Object.keys(newModule));
         });
       `,
     );
-    await c.expectMessage(["method"], "Bun");
+    await c.expectMessage(["method"], "Fun");
     await dev.write(
       "index.ts",
       `

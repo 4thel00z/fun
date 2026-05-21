@@ -2,8 +2,8 @@
 //! `S3CredentialsWithOptions`. Lives in `runtime/webcore/s3/` because it walks
 //! a `jsc.JSValue`; `s3_signing/` is JSC-free.
 
-pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPartUploadOptions, options: ?jsc.JSValue, default_acl: ?ACL, default_storage_class: ?StorageClass, default_request_payer: bool, globalObject: *jsc.JSGlobalObject) bun.JSError!S3CredentialsWithOptions {
-    bun.analytics.Features.s3 += 1;
+pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPartUploadOptions, options: ?jsc.JSValue, default_acl: ?ACL, default_storage_class: ?StorageClass, default_request_payer: bool, globalObject: *jsc.JSGlobalObject) fun.JSError!S3CredentialsWithOptions {
+    fun.analytics.Features.s3 += 1;
     // get ENV config
     var new_credentials = S3CredentialsWithOptions{
         .credentials = this,
@@ -21,10 +21,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "accessKeyId")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._accessKeyIdSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._accessKeyIdSlice = str.toUTF8(fun.default_allocator);
                             new_credentials.credentials.accessKeyId = new_credentials._accessKeyIdSlice.?.slice();
                             new_credentials.changed_credentials = true;
                         }
@@ -36,10 +36,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "secretAccessKey")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._secretAccessKeySlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._secretAccessKeySlice = str.toUTF8(fun.default_allocator);
                             new_credentials.credentials.secretAccessKey = new_credentials._secretAccessKeySlice.?.slice();
                             new_credentials.changed_credentials = true;
                         }
@@ -51,10 +51,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "region")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._regionSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._regionSlice = str.toUTF8(fun.default_allocator);
                             new_credentials.credentials.region = new_credentials._regionSlice.?.slice();
                             new_credentials.changed_credentials = true;
                         }
@@ -66,12 +66,12 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "endpoint")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._endpointSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._endpointSlice = str.toUTF8(fun.default_allocator);
                             const endpoint = new_credentials._endpointSlice.?.slice();
-                            const url = bun.URL.parse(endpoint);
+                            const url = fun.URL.parse(endpoint);
                             const normalized_endpoint = url.hostWithPath();
                             if (normalized_endpoint.len > 0) {
                                 new_credentials.credentials.endpoint = normalized_endpoint;
@@ -94,10 +94,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "bucket")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._bucketSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._bucketSlice = str.toUTF8(fun.default_allocator);
                             new_credentials.credentials.bucket = new_credentials._bucketSlice.?.slice();
                             new_credentials.changed_credentials = true;
                         }
@@ -115,10 +115,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "sessionToken")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._sessionTokenSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._sessionTokenSlice = str.toUTF8(fun.default_allocator);
                             new_credentials.credentials.sessionToken = new_credentials._sessionTokenSlice.?.slice();
                             new_credentials.changed_credentials = true;
                         }
@@ -184,10 +184,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "contentDisposition")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._contentDispositionSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._contentDispositionSlice = str.toUTF8(fun.default_allocator);
                             const slice = new_credentials._contentDispositionSlice.?.slice();
                             if (containsNewlineOrCR(slice)) {
                                 return globalObject.throwInvalidArguments("contentDisposition must not contain newline characters (CR/LF)", .{});
@@ -203,10 +203,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "type")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._contentTypeSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._contentTypeSlice = str.toUTF8(fun.default_allocator);
                             const slice = new_credentials._contentTypeSlice.?.slice();
                             if (containsNewlineOrCR(slice)) {
                                 return globalObject.throwInvalidArguments("type must not contain newline characters (CR/LF)", .{});
@@ -222,10 +222,10 @@ pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPart
             if (try opts.getTruthyComptime(globalObject, "contentEncoding")) |js_value| {
                 if (!js_value.isEmptyOrUndefinedOrNull()) {
                     if (js_value.isString()) {
-                        const str = try bun.String.fromJS(js_value, globalObject);
+                        const str = try fun.String.fromJS(js_value, globalObject);
                         defer str.deref();
                         if (str.tag != .Empty and str.tag != .Dead) {
-                            new_credentials._contentEncodingSlice = str.toUTF8(bun.default_allocator);
+                            new_credentials._contentEncodingSlice = str.toUTF8(fun.default_allocator);
                             const slice = new_credentials._contentEncodingSlice.?.slice();
                             if (containsNewlineOrCR(slice)) {
                                 return globalObject.throwInvalidArguments("contentEncoding must not contain newline characters (CR/LF)", .{});
@@ -253,11 +253,11 @@ fn containsNewlineOrCR(value: []const u8) bool {
 const std = @import("std");
 const MultiPartUploadOptions = @import("./multipart_options.zig").MultiPartUploadOptions;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const strings = bun.strings;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const strings = fun.strings;
 
-const ACL = bun.S3.ACL;
-const S3Credentials = bun.S3.S3Credentials;
-const S3CredentialsWithOptions = bun.S3.S3CredentialsWithOptions;
-const StorageClass = bun.S3.StorageClass;
+const ACL = fun.S3.ACL;
+const S3Credentials = fun.S3.S3Credentials;
+const S3CredentialsWithOptions = fun.S3.S3CredentialsWithOptions;
+const StorageClass = fun.S3.StorageClass;

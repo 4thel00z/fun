@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDirWithFiles } from "harness";
 import { readFileSync } from "node:fs";
 import path from "path";
 
@@ -9,10 +9,10 @@ test("coverage crash", () => {
   #hello
 }`,
   });
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: ["inherit", "inherit", "inherit"],
   });
@@ -43,16 +43,16 @@ export class Y {
 };
     `,
   });
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage", "--coverage-reporter", "lcov", "./demo2.ts"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage", "--coverage-reporter", "lcov", "./demo2.ts"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: ["inherit", "inherit", "inherit"],
   });
   expect(result.exitCode).toBe(0);
   expect(result.signalCode).toBeUndefined();
-  expect(normalizeBunSnapshot(readFileSync(path.join(dir, "coverage", "lcov.info"), "utf-8"), dir)).toMatchSnapshot(
+  expect(normalizeFunSnapshot(readFileSync(path.join(dir, "coverage", "lcov.info"), "utf-8"), dir)).toMatchSnapshot(
     "lcov-coverage-reporter-output",
   );
 });
@@ -67,10 +67,10 @@ test("coverage excludes node_modules directory", () => {
     console.log(pi);
     `,
   });
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
@@ -82,7 +82,7 @@ test("coverage excludes node_modules directory", () => {
 
 test("coveragePathIgnorePatterns - single pattern string", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = "ignore-me.ts"
 coverageSkipTestFiles = false
@@ -98,7 +98,7 @@ export function ignoreMe() {
 }
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { includeMe } from "./include-me";
 import { ignoreMe } from "./ignore-me";
 
@@ -109,17 +109,17 @@ test("should call both functions", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "test.test.ts:
@@ -142,7 +142,7 @@ Ran 1 test across 1 file."
 
 test("coveragePathIgnorePatterns - partial coverage without nan", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = "ignore-me.ts"
 coverageSkipTestFiles = false
@@ -162,7 +162,7 @@ export function ignoreMe() {
 }
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { includeMe } from "./include-me";
 import { ignoreMe } from "./ignore-me";
 
@@ -174,17 +174,17 @@ test("should call only some functions", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "test.test.ts:
@@ -207,7 +207,7 @@ Ran 1 test across 1 file."
 
 test("coveragePathIgnorePatterns - array of patterns", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = ["utils/**", "*.config.ts"]
 coverageSkipTestFiles = false
@@ -226,7 +226,7 @@ export function helper() {
 export const config = { build: true };
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { main } from "./src/main";
 import { helper } from "./utils/helper";
 import { config } from "./build.config";
@@ -239,17 +239,17 @@ test("should call all functions", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "test.test.ts:
@@ -272,7 +272,7 @@ Ran 1 test across 1 file."
 
 test("coveragePathIgnorePatterns - glob patterns", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = ["**/*.spec.ts", "test-utils/**"]
 coverageSkipTestFiles = false
@@ -293,7 +293,7 @@ export function testUtils() {
 }
 `,
     "main.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { feature } from "./src/feature";
 import { featureSpec } from "./src/feature.spec";
 import { testUtils } from "./test-utils";
@@ -306,17 +306,17 @@ test("should call all functions", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "main.test.ts:
@@ -341,7 +341,7 @@ Ran 1 test across 2 files."
 
 test("coveragePathIgnorePatterns - lcov reporter", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = "ignore-me.ts"
 coverageSkipTestFiles = false
@@ -357,7 +357,7 @@ export function ignoreMe() {
 }
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { includeMe } from "./include-me";
 import { ignoreMe } from "./ignore-me";
 
@@ -368,17 +368,17 @@ test("should call both functions", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage", "--coverage-reporter", "lcov"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage", "--coverage-reporter", "lcov"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let lcovContent = readFileSync(path.join(dir, "coverage", "lcov.info"), "utf-8");
   // Normalize LCOV content for cross-platform consistency
-  lcovContent = normalizeBunSnapshot(lcovContent, dir);
+  lcovContent = normalizeFunSnapshot(lcovContent, dir);
 
   expect(lcovContent).toMatchInlineSnapshot(`
 "TN:
@@ -410,13 +410,13 @@ end_of_record"
 
 test("coveragePathIgnorePatterns - invalid config type", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = 123
 coverageSkipTestFiles = false
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("should pass", () => {
   expect(true).toBe(true);
@@ -424,38 +424,38 @@ test("should pass", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize error output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "3 | coveragePathIgnorePatterns = 123
                                  ^
 error: coveragePathIgnorePatterns must be a string or array of strings
-    at <dir>/bunfig.toml:3:30
+    at <dir>/funfig.toml:3:30
 
-Invalid Bunfig: failed to load bunfig"
+Invalid Funfig: failed to load funfig"
 `);
   expect(result.exitCode).toBe(1);
 });
 
 test("coveragePathIgnorePatterns - invalid array item", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = ["valid-pattern", 123]
 coverageSkipTestFiles = false
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("should pass", () => {
   expect(true).toBe(true);
@@ -463,32 +463,32 @@ test("should pass", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize error output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "3 | coveragePathIgnorePatterns = ["valid-pattern", 123]
                                                    ^
 error: coveragePathIgnorePatterns array must contain only strings
-    at <dir>/bunfig.toml:3:48
+    at <dir>/funfig.toml:3:48
 
-Invalid Bunfig: failed to load bunfig"
+Invalid Funfig: failed to load funfig"
 `);
   expect(result.exitCode).toBe(1);
 });
 
 test("coveragePathIgnorePatterns - empty array", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = []
 coverageSkipTestFiles = false
@@ -499,7 +499,7 @@ export function includeMe() {
 }
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { includeMe } from "./include-me";
 
 test("should call function", () => {
@@ -508,17 +508,17 @@ test("should call function", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "test.test.ts:
@@ -541,7 +541,7 @@ Ran 1 test across 1 file."
 
 test("coveragePathIgnorePatterns - ignore all files", () => {
   const dir = tempDirWithFiles("cov", {
-    "bunfig.toml": `
+    "funfig.toml": `
 [test]
 coveragePathIgnorePatterns = "**"
 coverageSkipTestFiles = false
@@ -552,7 +552,7 @@ export function includeMe() {
 }
 `,
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { includeMe } from "./include-me";
 
 test("should call function", () => {
@@ -561,17 +561,17 @@ test("should call function", () => {
 `,
   });
 
-  const result = Bun.spawnSync([bunExe(), "test", "--coverage"], {
+  const result = Fun.spawnSync([funExe(), "test", "--coverage"], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     stdio: [null, null, "pipe"],
   });
 
   let stderr = result.stderr.toString("utf-8");
   // Normalize output for cross-platform consistency
-  stderr = normalizeBunSnapshot(stderr, dir);
+  stderr = normalizeFunSnapshot(stderr, dir);
 
   expect(stderr).toMatchInlineSnapshot(`
 "test.test.ts:

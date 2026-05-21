@@ -1,5 +1,5 @@
 // Test that napi_reference_unref can be called from a finalizer
-// This is a regression test for https://github.com/oven-sh/bun/issues/22596
+// This is a regression test for https://github.com/underdoc-org/fun/issues/22596
 
 #include <assert.h>
 #include <js_native_api.h>

@@ -1,11 +1,11 @@
 ---
 title: "Plugins"
-description: "Universal plugin API for extending Bun's runtime and bundler"
+description: "Universal plugin API for extending Fun's runtime and bundler"
 ---
 
-Bun provides a universal plugin API that can be used to extend both the _runtime_ and _bundler_.
+Fun provides a universal plugin API that can be used to extend both the _runtime_ and _bundler_.
 
-Plugins intercept imports and perform custom loading logic: reading files, transpiling code, etc. They can be used to add support for additional file types, like `.scss` or `.yaml`. In the context of Bun's bundler, plugins can be used to implement framework-level features like CSS extraction, macros, and client-server code co-location.
+Plugins intercept imports and perform custom loading logic: reading files, transpiling code, etc. They can be used to add support for additional file types, like `.scss` or `.yaml`. In the context of Fun's bundler, plugins can be used to implement framework-level features like CSS extraction, macros, and client-server code co-location.
 
 ## Lifecycle hooks
 
@@ -18,7 +18,7 @@ Plugins can register callbacks to be run at various points in the lifecycle of a
 
 ### Reference
 
-A rough overview of the types (please refer to Bun's `bun.d.ts` for the full type definitions):
+A rough overview of the types (please refer to Fun's `fun.d.ts` for the full type definitions):
 
 ```ts Plugin Types icon="/icons/typescript.svg"
 type PluginBuilder = {
@@ -64,9 +64,9 @@ type Loader =
 A plugin is defined as a JavaScript object containing a `name` property and a `setup` function.
 
 ```tsx myPlugin.ts icon="/icons/typescript.svg"
-import type { BunPlugin } from "bun";
+import type { FunPlugin } from "fun";
 
-const myPlugin: BunPlugin = {
+const myPlugin: FunPlugin = {
   name: "Custom loader",
   setup(build) {
     // implementation
@@ -74,10 +74,10 @@ const myPlugin: BunPlugin = {
 };
 ```
 
-This plugin can be passed into the `plugins` array when calling `Bun.build`.
+This plugin can be passed into the `plugins` array when calling `Fun.build`.
 
 ```ts index.ts icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./app.ts"],
   outdir: "./out",
   plugins: [myPlugin],
@@ -96,7 +96,7 @@ The default namespace is `"file"` and it is not necessary to specify it, for ins
 
 Other common namespaces are:
 
-- `"bun"`: for Bun-specific modules (e.g. `"bun:test"`, `"bun:sqlite"`)
+- `"fun"`: for Fun-specific modules (e.g. `"fun:test"`, `"fun:sqlite"`)
 - `"node"`: for Node.js modules (e.g. `"node:fs"`, `"node:path"`)
 
 ### `onStart`
@@ -108,7 +108,7 @@ onStart(callback: () => void): Promise<void> | void;
 Registers a callback to be run when the bundler starts a new bundle.
 
 ```ts index.ts icon="/icons/typescript.svg"
-import { plugin } from "bun";
+import { plugin } from "fun";
 
 plugin({
   name: "onStart example",
@@ -126,7 +126,7 @@ The callback can return a `Promise`. After the bundle process has initialized, t
 For example:
 
 ```ts index.ts icon="/icons/typescript.svg"
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints: ["./app.ts"],
   outdir: "./dist",
   sourcemap: "external",
@@ -135,7 +135,7 @@ const result = await Bun.build({
       name: "Sleep for 10 seconds",
       setup(build) {
         build.onStart(async () => {
-          await Bunlog.sleep(10_000);
+          await Funlog.sleep(10_000);
         });
       },
     },
@@ -144,7 +144,7 @@ const result = await Bun.build({
       setup(build) {
         build.onStart(async () => {
           const now = Date.now();
-          await Bun.$`echo ${now} > bundle-time.txt`;
+          await Fun.$`echo ${now} > bundle-time.txt`;
         });
       },
     },
@@ -152,7 +152,7 @@ const result = await Bun.build({
 });
 ```
 
-In the above example, Bun will wait until the first `onStart()` (sleeping for 10 seconds) has completed, _as well as_ the second `onStart()` (writing the bundle time to a file).
+In the above example, Fun will wait until the first `onStart()` (sleeping for 10 seconds) has completed, _as well as_ the second `onStart()` (writing the bundle time to a file).
 
 Note that `onStart()` callbacks (like every other lifecycle callback) do not have the ability to modify the `build.config` object. If you want to mutate `build.config`, you must do so directly in the `setup()` function.
 
@@ -168,20 +168,20 @@ onResolve(
 ): void;
 ```
 
-To bundle your project, Bun walks down the dependency tree of all modules in your project. For each imported module, Bun actually has to find and read that module. The "finding" part is known as "resolving" a module.
+To bundle your project, Fun walks down the dependency tree of all modules in your project. For each imported module, Fun actually has to find and read that module. The "finding" part is known as "resolving" a module.
 
 The `onResolve()` plugin lifecycle callback allows you to configure how a module is resolved.
 
 The first argument to `onResolve()` is an object with a `filter` and [`namespace`](#what-is-a-namespace) property. The filter is a regular expression which is run on the import string. Effectively, these allow you to filter which modules your custom resolution logic will apply to.
 
-The second argument to `onResolve()` is a callback which is run for each module import Bun finds that matches the `filter` and `namespace` defined in the first argument.
+The second argument to `onResolve()` is a callback which is run for each module import Fun finds that matches the `filter` and `namespace` defined in the first argument.
 
-The callback receives as input the _path_ to the matching module. The callback can return a _new path_ for the module. Bun will read the contents of the _new path_ and parse it as a module.
+The callback receives as input the _path_ to the matching module. The callback can return a _new path_ for the module. Fun will read the contents of the _new path_ and parse it as a module.
 
 For example, redirecting all imports to `images/` to `./public/images/`:
 
 ```ts index.ts icon="/icons/typescript.svg"
-import { plugin } from "bun";
+import { plugin } from "fun";
 
 plugin({
   name: "onResolve example",
@@ -211,13 +211,13 @@ onLoad(
 ): void;
 ```
 
-After Bun's bundler has resolved a module, it needs to read the contents of the module and parse it.
+After Fun's bundler has resolved a module, it needs to read the contents of the module and parse it.
 
-The `onLoad()` plugin lifecycle callback allows you to modify the _contents_ of a module before it is read and parsed by Bun.
+The `onLoad()` plugin lifecycle callback allows you to modify the _contents_ of a module before it is read and parsed by Fun.
 
 Like `onResolve()`, the first argument to `onLoad()` allows you to filter which modules this invocation of `onLoad()` will apply to.
 
-The second argument to `onLoad()` is a callback which is run for each matching module _before_ Bun loads the contents of the module into memory.
+The second argument to `onLoad()` is a callback which is run for each matching module _before_ Fun loads the contents of the module into memory.
 
 This callback receives as input the _path_ to the matching module, the _importer_ of the module (the module that imported the module), the _namespace_ of the module, and the _kind_ of the module.
 
@@ -226,9 +226,9 @@ The callback can return a new `contents` string for the module as well as a new 
 For example:
 
 ```ts index.ts icon="/icons/typescript.svg"
-import { plugin } from "bun";
+import { plugin } from "fun";
 
-const envPlugin: BunPlugin = {
+const envPlugin: FunPlugin = {
   name: "env plugin",
   setup(build) {
     build.onLoad({ filter: /env/, namespace: "file" }, args => {
@@ -240,7 +240,7 @@ const envPlugin: BunPlugin = {
   },
 });
 
-Bun.build({
+Fun.build({
   entrypoints: ["./app.ts"],
   outdir: "./dist",
   plugins: [envPlugin],
@@ -263,19 +263,19 @@ This is useful for returning contents of a module that depends on other modules.
 ##### Example: tracking and reporting unused exports
 
 ```ts index.ts icon="/icons/typescript.svg"
-import { plugin } from "bun";
+import { plugin } from "fun";
 
 plugin({
   name: "track imports",
   setup(build) {
-    const transpiler = new Bun.Transpiler();
+    const transpiler = new Fun.Transpiler();
 
     let trackedImports: Record<string, number> = {};
 
     // Each module that goes through this onLoad callback
     // will record its imports in `trackedImports`
     build.onLoad({ filter: /\.ts/ }, async ({ path }) => {
-      const contents = await Bun.file(path).arrayBuffer();
+      const contents = await Fun.file(path).arrayBuffer();
 
       const imports = transpiler.scanImports(contents);
 
@@ -306,7 +306,7 @@ Note that the `.defer()` function currently has the limitation that it can only 
 
 ## Native plugins
 
-One of the reasons why Bun's bundler is so fast is that it is written in native code and leverages multi-threading to load and parse modules in parallel.
+One of the reasons why Fun's bundler is so fast is that it is written in native code and leverages multi-threading to load and parse modules in parallel.
 
 However, one limitation of plugins written in JavaScript is that JavaScript itself is single-threaded.
 
@@ -316,7 +316,7 @@ In addition, native plugins can skip unnecessary work such as the UTF-8 -> UTF-1
 
 These are the following lifecycle hooks which are available to native plugins:
 
-- [`onBeforeParse()`](#onbeforeparse): Called on any thread before a file is parsed by Bun's bundler.
+- [`onBeforeParse()`](#onbeforeparse): Called on any thread before a file is parsed by Fun's bundler.
 
 Native plugins are NAPI modules which expose lifecycle hooks as C ABI functions.
 
@@ -329,36 +329,36 @@ Native plugins are NAPI modules which expose lifecycle hooks as C ABI functions.
 To create a native plugin, you must export a C ABI function which matches the signature of the native lifecycle hook you want to implement.
 
 ```bash terminal icon="terminal"
-bun add -g @napi-rs/cli
+fun add -g @napi-rs/cli
 napi new
 ```
 
 Then install this crate:
 
 ```bash terminal icon="terminal"
-cargo add bun-native-plugin
+cargo add fun-native-plugin
 ```
 
-Now, inside the `lib.rs` file, we'll use the `bun_native_plugin::bun` proc macro to define a function which
+Now, inside the `lib.rs` file, we'll use the `fun_native_plugin::fun` proc macro to define a function which
 will implement our native plugin.
 
 Here's an example implementing the `onBeforeParse` hook:
 
 ```rs lib.rs icon="/icons/rust.svg"
-use bun_native_plugin::{define_bun_plugin, OnBeforeParse, bun, Result, anyhow, BunLoader};
+use fun_native_plugin::{define_fun_plugin, OnBeforeParse, fun, Result, anyhow, FunLoader};
 use napi_derive::napi;
 
 /// Define the plugin and its name
-define_bun_plugin!("replace-foo-with-bar");
+define_fun_plugin!("replace-foo-with-bar");
 
 /// Here we'll implement `onBeforeParse` with code that replaces all occurrences of
 /// `foo` with `bar`.
 ///
-/// We use the #[bun] macro to generate some of the boilerplate code.
+/// We use the #[fun] macro to generate some of the boilerplate code.
 ///
 /// The argument of the function (`handle: &mut OnBeforeParse`) tells
 /// the macro that this function implements the `onBeforeParse` hook.
-#[bun]
+#[fun]
 pub fn replace_foo_with_bar(handle: &mut OnBeforeParse) -> Result<()> {
   // Fetch the input source code.
   let input_source_code = handle.input_source_code()?;
@@ -369,17 +369,17 @@ pub fn replace_foo_with_bar(handle: &mut OnBeforeParse) -> Result<()> {
 
   let output_source_code = input_source_code.replace("foo", "bar");
 
-  handle.set_output_source_code(output_source_code, BunLoader::BUN_LOADER_JSX);
+  handle.set_output_source_code(output_source_code, FunLoader::FUN_LOADER_JSX);
 
   Ok(())
 }
 ```
 
-And to use it in Bun.build():
+And to use it in Fun.build():
 
 ```typescript
 import myNativeAddon from "./my-native-addon";
-Bun.build({
+Fun.build({
   entrypoints: ["./app.tsx"],
   plugins: [
     {
@@ -412,7 +412,7 @@ onBeforeParse(
 ): void;
 ```
 
-This lifecycle callback is run immediately before a file is parsed by Bun's bundler.
+This lifecycle callback is run immediately before a file is parsed by Fun's bundler.
 
 As input, it receives the file's contents and can optionally return new source code.
 

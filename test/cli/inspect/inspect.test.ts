@@ -1,7 +1,7 @@
-import { Subprocess, spawn } from "bun";
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
+import { Subprocess, spawn } from "fun";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, isPosix, randomPort, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isPosix, randomPort, tempDirWithFiles } from "harness";
 import { join } from "node:path";
 import stripAnsi from "strip-ansi";
 import { WebSocket } from "ws";
@@ -220,11 +220,11 @@ describe("websocket", () => {
   ];
 
   for (const { args, url: expected } of tests) {
-    test(`bun ${args.join(" ")}`, async () => {
+    test(`fun ${args.join(" ")}`, async () => {
       inspectee = spawn({
         cwd: import.meta.dir,
-        cmd: [bunExe(), ...args, "inspectee.js"],
-        env: bunEnv,
+        cmd: [funExe(), ...args, "inspectee.js"],
+        env: funEnv,
         stdout: "ignore",
         stderr: "pipe",
       });
@@ -292,8 +292,8 @@ describe("websocket", () => {
     });
   }
 
-  // FIXME: Depends on https://github.com/oven-sh/bun/pull/4649
-  test.todo("bun --inspect=ws+unix:///tmp/inspect.sock");
+  // FIXME: Depends on https://github.com/underdoc-org/fun/pull/4649
+  test.todo("fun --inspect=ws+unix:///tmp/inspect.sock");
 
   afterEach(() => {
     inspectee?.kill();
@@ -316,7 +316,7 @@ describe("unix domain socket without websocket", () => {
   });
 
   if (isPosix) {
-    async function runTest(path: string, args: string[], env = bunEnv) {
+    async function runTest(path: string, args: string[], env = funEnv) {
       let { promise, resolve, reject } = Promise.withResolvers();
 
       const framer = new SocketFramer(message => {
@@ -325,7 +325,7 @@ describe("unix domain socket without websocket", () => {
 
       let sock;
 
-      using listener = Bun.listen({
+      using listener = Fun.listen({
         unix: path,
         socket: {
           open: socket => {
@@ -340,7 +340,7 @@ describe("unix domain socket without websocket", () => {
       });
 
       const inspectee = spawn({
-        cmd: [bunExe(), ...args, join(import.meta.dir, "inspectee.js")],
+        cmd: [funExe(), ...args, join(import.meta.dir, "inspectee.js")],
         env,
         stdout: "inherit",
         stderr: "inherit",
@@ -357,25 +357,25 @@ describe("unix domain socket without websocket", () => {
       sock?.end?.();
     }
 
-    test("bun --inspect=unix://", async () => {
+    test("fun --inspect=unix://", async () => {
       const path = randomSocketPath();
       const url = new URL(`unix://${path}`);
       await runTest(path, ["--inspect=" + url.href]);
     });
 
-    test("bun --inspect=unix:", async () => {
+    test("fun --inspect=unix:", async () => {
       const path = randomSocketPath();
       await runTest(path, ["--inspect=unix:" + path]);
     });
 
-    test("BUN_INSPECT=' unix://' bun --inspect", async () => {
+    test("FUN_INSPECT=' unix://' fun --inspect", async () => {
       const path = randomSocketPath();
-      await runTest(path, [], { ...bunEnv, BUN_INSPECT: "unix://" + path });
+      await runTest(path, [], { ...funEnv, FUN_INSPECT: "unix://" + path });
     });
 
-    test("BUN_INSPECT='unix:' bun --inspect", async () => {
+    test("FUN_INSPECT='unix:' fun --inspect", async () => {
       const path = randomSocketPath();
-      await runTest(path, [], { ...bunEnv, BUN_INSPECT: "unix:" + path });
+      await runTest(path, [], { ...funEnv, FUN_INSPECT: "unix:" + path });
     });
   }
 });
@@ -391,12 +391,12 @@ test.todo("junit reporter", async () => {
       {
         "type": "module",
         "scripts": {
-          "test": "bun a.test.js"
+          "test": "fun a.test.js"
         }
       }
     `,
     "a.test.js": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       test("fail", () => {
         expect(1).toBe(2);
       });
@@ -411,8 +411,8 @@ test.todo("junit reporter", async () => {
   const [socket, subprocess] = await Promise.all([
     connect(`unix://${path}`, resolve),
     spawn({
-      cmd: [bunExe(), "--inspect-wait=unix:" + path, "test", join(tempdir, "a.test.js")],
-      env: bunEnv,
+      cmd: [funExe(), "--inspect-wait=unix:" + path, "test", join(tempdir, "a.test.js")],
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
       stdin: "inherit",
@@ -449,7 +449,7 @@ test.todo("junit reporter", async () => {
   expect(stripAnsi(report)).toMatchSnapshot();
 });
 
-// This test is checking that Bun.inspect || console.log on an Error instance is
+// This test is checking that Fun.inspect || console.log on an Error instance is
 // ~the same whether you did `error.stack` or not.
 //
 // Since the 2nd time around, we parse the error.stack getter, we need to make sure
@@ -484,7 +484,7 @@ test("error.stack doesnt lose frames", () => {
   Object.defineProperty(top, "name", { value: "IGNORE_ME_BEFORE_THIS_LINE" });
   Object.defineProperty(bottom, "name", { value: "IGNORE_ME_AFTER_THIS_LINE" });
 
-  let yes = Bun.inspect(bottom(true));
+  let yes = Fun.inspect(bottom(true));
   yes = yes.slice(yes.indexOf("^") + 1);
   yes = yes.slice(yes.indexOf("\n"));
   yes = yes
@@ -492,7 +492,7 @@ test("error.stack doesnt lose frames", () => {
     .replaceAll("\\", "/")
     .replace(/\d+/gim, "<num>");
 
-  let no = Bun.inspect(bottom(false));
+  let no = Fun.inspect(bottom(false));
   no = no.slice(no.indexOf("^") + 1);
   no = no.slice(no.indexOf("\n"));
   no = no
@@ -511,7 +511,7 @@ test("error.stack doesnt lose frames", () => {
     "
   `);
 
-  // In Bun v1.2.20 and lower, we would only have the first frame here.
+  // In Fun v1.2.20 and lower, we would only have the first frame here.
   expect(yes).toMatchInlineSnapshot(`
     "
     error: test

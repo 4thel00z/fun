@@ -1,12 +1,12 @@
 import ioredis from "ioredis";
 
 const redis = process.argv.includes("--redis=native")
-  ? Bun.redis
+  ? Fun.redis
   : new ioredis("redis://localhost:6379", {
       enableAutoPipelining: true,
     });
 
-const isBun = globalThis.Bun && redis === Bun.redis;
+const isFun = globalThis.Fun && redis === Fun.redis;
 for (let count of [100, 1000]) {
   function iterate() {
     const promises = new Array(count);
@@ -17,7 +17,7 @@ for (let count of [100, 1000]) {
     return Promise.all(promises);
   }
 
-  const label = isBun ? `Bun.redis` : `ioredis`;
+  const label = isFun ? `Fun.redis` : `ioredis`;
   console.time(`GET 'greeting' batches of ${count} - ${label} (${count} iterations)`);
   for (let i = 0; i < 1000; i++) {
     await iterate();

@@ -1,5 +1,5 @@
-import { Database } from "bun:sqlite";
-import { expect, test } from "bun:test";
+import { Database } from "fun:sqlite";
+import { expect, test } from "fun:test";
 
 test("db.close(true) works after db.transaction()", () => {
   const db = new Database(":memory:");

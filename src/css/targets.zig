@@ -26,9 +26,9 @@ pub const Targets = struct {
     }
 
     fn parseDebugTarget(val_: []const u8) ?u32 {
-        const val = bun.strings.trim(val_, " \n\r\t");
+        const val = fun.strings.trim(val_, " \n\r\t");
         if (val.len == 0) return null;
-        if (bun.strings.eqlCaseInsensitiveASCII(val, "null", true)) return null;
+        if (fun.strings.eqlCaseInsensitiveASCII(val, "null", true)) return null;
 
         var lhs: u32 = 0;
         var rhs: u32 = 0;
@@ -61,14 +61,14 @@ pub const Targets = struct {
         return lhs << @intCast(rhs);
     }
 
-    pub fn forBundlerTarget(target: bun.transpiler.options.Target) Targets {
-        if (comptime bun.Environment.isDebug) {
+    pub fn forBundlerTarget(target: fun.transpiler.options.Target) Targets {
+        if (comptime fun.Environment.isDebug) {
             var browsers: Browsers = .{};
             const browser_fields = std.meta.fields(Browsers);
             var has_any = false;
             inline for (browser_fields) |field| {
-                const env_var = "BUN_DEBUG_CSS_TARGET_" ++ field.name;
-                if (bun.getenvZAnyCase(env_var)) |val| {
+                const env_var = "FUN_DEBUG_CSS_TARGET_" ++ field.name;
+                if (fun.getenvZAnyCase(env_var)) |val| {
                     @field(browsers, field.name) = parseDebugTarget(val);
                     has_any = true;
                 }
@@ -78,8 +78,8 @@ pub const Targets = struct {
             }
         }
         return switch (target) {
-            .node, .bun => runtimeDefault(),
-            .browser, .bun_macro, .bake_server_components_ssr => browserDefault(),
+            .node, .fun => runtimeDefault(),
+            .browser, .fun_macro, .bake_server_components_ssr => browserDefault(),
         };
     }
 
@@ -115,8 +115,8 @@ pub const Targets = struct {
     }
 
     pub fn shouldCompileSelectors(this: *const Targets) bool {
-        return bun.bits.intersects(Features, this.include, Features.selectors) or
-            (!bun.bits.intersects(Features, this.exclude, Features.selectors) and this.browsers != null);
+        return fun.bits.intersects(Features, this.include, Features.selectors) or
+            (!fun.bits.intersects(Features, this.exclude, Features.selectors) and this.browsers != null);
     }
 
     pub fn isCompatible(this: *const Targets, feature: css.compat.Feature) bool {
@@ -232,7 +232,7 @@ pub const Browsers = struct {
             };
 
             for_loop: for (entries_without_es) |entry| {
-                if (bun.strings.eql(entry, "esnext")) continue;
+                if (fun.strings.eql(entry, "esnext")) continue;
                 const maybe_idx: ?usize = maybe_idx: {
                     for (entry, 0..) |c, i| {
                         if (std.ascii.isDigit(c)) break :maybe_idx i;
@@ -251,7 +251,7 @@ pub const Browsers = struct {
                         safari,
                         no_mapping,
                     };
-                    const Map = bun.ComptimeStringMap(Browser, .{
+                    const Map = fun.ComptimeStringMap(Browser, .{
                         .{ "chrome", Browser.chrome },
                         .{ "edge", Browser.edge },
                         .{ "firefox", Browser.firefox },
@@ -345,5 +345,5 @@ pub const Features = packed struct(u32) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const bits = bun.bits;
+const fun = @import("fun");
+const bits = fun.bits;

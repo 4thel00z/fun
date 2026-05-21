@@ -144,7 +144,7 @@ export const zlib: Dependency = {
       // arch kernels compile but are never selected.
       WITH_OPTIM: true,
       // zlib-ng 340f2f6e moved infback.c's distance-too-far-back check behind
-      // INFLATE_STRICT (default OFF). Upstream zlib has it unconditional. Bun
+      // INFLATE_STRICT (default OFF). Upstream zlib has it unconditional. Fun
       // doesn't call inflateBack(), but anything in-process linking the same
       // lib could read adjacent heap on a malicious raw-deflate stream with
       // windowBits<15. Hardens at zero perf cost to inflate() proper.
@@ -236,7 +236,7 @@ export const zlib: Dependency = {
   },
 
   // The substituted zlib.h / zconf.h land in the build dir, not the source
-  // tree, so consumers (libarchive, bun's own bindings) include from there.
+  // tree, so consumers (libarchive, fun's own bindings) include from there.
   provides: cfg => ({
     libs: [],
     includes: [depBuildDir(cfg, "zlib")],

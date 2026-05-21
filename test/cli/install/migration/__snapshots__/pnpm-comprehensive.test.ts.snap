@@ -1,4 +1,4 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`pnpm comprehensive migration tests large single package with many dependencies: large-single-package 1`] = `
 "{

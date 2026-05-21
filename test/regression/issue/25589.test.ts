@@ -8,10 +8,10 @@
  * Root cause: Server was enforcing localSettings.initialWindowSize immediately
  * instead of waiting for SETTINGS_ACK from client (per RFC 7540 Section 6.5.1).
  *
- * @see https://github.com/oven-sh/bun/issues/25589
+ * @see https://github.com/underdoc-org/fun/issues/25589
  */
 
-import { afterAll, beforeAll, describe, test } from "bun:test";
+import { afterAll, beforeAll, describe, test } from "fun:test";
 import assert from "node:assert";
 import { readFileSync } from "node:fs";
 import http2 from "node:http2";

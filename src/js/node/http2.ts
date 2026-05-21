@@ -34,8 +34,8 @@ const net = require("node:net");
 const fs = require("node:fs");
 const { $data } = require("node:fs/promises");
 const FileHandle = $data.FileHandle;
-const bunTLSConnectOptions = Symbol.for("::buntlsconnectoptions::");
-const bunSocketServerOptions = Symbol.for("::bunnetserveroptions::");
+const funTLSConnectOptions = Symbol.for("::funtlsconnectoptions::");
+const funSocketServerOptions = Symbol.for("::funnetserveroptions::");
 const kInfoHeaders = Symbol("sent-info-headers");
 const kProxySocket = Symbol("proxySocket");
 const kSessions = Symbol("sessions");
@@ -310,17 +310,17 @@ function getUnpackedSettings(buf?: any, options?: any): any {
 }
 
 const sensitiveHeaders = Symbol.for("nodejs.http2.sensitiveHeaders");
-const bunHTTP2Native = Symbol.for("::bunhttp2native::");
+const funHTTP2Native = Symbol.for("::funhttp2native::");
 
-const bunHTTP2Socket = Symbol.for("::bunhttp2socket::");
-const bunHTTP2OriginSet = Symbol("::bunhttp2originset::");
-const bunHTTP2StreamFinal = Symbol.for("::bunHTTP2StreamFinal::");
-const bunHTTP2WaitForTrailers = Symbol("::bunhttp2waitfortrailers::");
+const funHTTP2Socket = Symbol.for("::funhttp2socket::");
+const funHTTP2OriginSet = Symbol("::funhttp2originset::");
+const funHTTP2StreamFinal = Symbol.for("::funHTTP2StreamFinal::");
+const funHTTP2WaitForTrailers = Symbol("::funhttp2waitfortrailers::");
 
-const bunHTTP2StreamStatus = Symbol.for("::bunhttp2StreamStatus::");
+const funHTTP2StreamStatus = Symbol.for("::funhttp2StreamStatus::");
 
-const bunHTTP2Session = Symbol.for("::bunhttp2session::");
-const bunHTTP2Headers = Symbol.for("::bunhttp2headers::");
+const funHTTP2Session = Symbol.for("::funhttp2session::");
+const funHTTP2Headers = Symbol.for("::funhttp2headers::");
 
 const ReflectGetPrototypeOf = Reflect.getPrototypeOf;
 
@@ -741,7 +741,7 @@ class Http2ServerResponse extends Stream {
     // This is compatible with http1 which removes socket reference
     // only from ServerResponse but not IncomingMessage
     if (this[kState].closed) return undefined;
-    return this[kStream]?.[bunHTTP2Session]?.socket;
+    return this[kStream]?.[funHTTP2Session]?.socket;
   }
 
   get connection() {
@@ -1165,7 +1165,7 @@ function onServerStream(Http2ServerRequest, Http2ServerResponse, stream, headers
 
 const proxyCompatSocketHandler = {
   has(stream, prop) {
-    const ref = stream.session !== undefined ? stream.session[bunHTTP2Socket] : stream;
+    const ref = stream.session !== undefined ? stream.session[funHTTP2Socket] : stream;
     return prop in stream || prop in ref;
   },
 
@@ -1196,14 +1196,14 @@ const proxyCompatSocketHandler = {
       case "resume":
         throw $ERR_HTTP2_NO_SOCKET_MANIPULATION();
       default: {
-        const ref = stream.session !== undefined ? stream.session[bunHTTP2Socket] : stream;
+        const ref = stream.session !== undefined ? stream.session[funHTTP2Socket] : stream;
         const value = ref[prop];
         return typeof value === "function" ? value.bind(ref) : value;
       }
     }
   },
   getPrototypeOf(stream) {
-    if (stream.session !== undefined) return ReflectGetPrototypeOf(stream.session[bunHTTP2Socket]);
+    if (stream.session !== undefined) return ReflectGetPrototypeOf(stream.session[funHTTP2Socket]);
     return ReflectGetPrototypeOf(stream);
   },
   set(stream, prop, value) {
@@ -1230,7 +1230,7 @@ const proxyCompatSocketHandler = {
       case "resume":
         throw $ERR_HTTP2_NO_SOCKET_MANIPULATION();
       default: {
-        const ref = stream.session !== undefined ? stream.session[bunHTTP2Socket] : stream;
+        const ref = stream.session !== undefined ? stream.session[funHTTP2Socket] : stream;
         ref[prop] = value;
         return true;
       }
@@ -1256,7 +1256,7 @@ const proxySocketHandler = {
       case "setNoDelay":
         throw $ERR_HTTP2_NO_SOCKET_MANIPULATION();
       default: {
-        const socket = session[bunHTTP2Socket];
+        const socket = session[funHTTP2Socket];
         if (!socket) {
           throw $ERR_HTTP2_SOCKET_UNBOUND();
         }
@@ -1266,7 +1266,7 @@ const proxySocketHandler = {
     }
   },
   getPrototypeOf(session) {
-    const socket = session[bunHTTP2Socket];
+    const socket = session[funHTTP2Socket];
     if (!socket) {
       throw $ERR_HTTP2_SOCKET_UNBOUND();
     }
@@ -1291,7 +1291,7 @@ const proxySocketHandler = {
       case "setNoDelay":
         throw $ERR_HTTP2_NO_SOCKET_MANIPULATION();
       default: {
-        const socket = session[bunHTTP2Socket];
+        const socket = session[funHTTP2Socket];
         if (!socket) {
           throw $ERR_HTTP2_SOCKET_UNBOUND();
         }
@@ -1878,8 +1878,8 @@ type Settings = {
 };
 
 class Http2Session extends EventEmitter {
-  [bunHTTP2Socket]: TLSSocket | Socket | null;
-  [bunHTTP2OriginSet]: Set<string> | undefined = undefined;
+  [funHTTP2Socket]: TLSSocket | Socket | null;
+  [funHTTP2OriginSet]: Set<string> | undefined = undefined;
   [EventEmitter.captureRejectionSymbol](err, event, ...args) {
     switch (event) {
       case "stream": {
@@ -1916,7 +1916,7 @@ function assertSession(session) {
 hideFromStack(assertSession);
 
 function pushToStream(stream, data) {
-  if (data && stream[bunHTTP2StreamStatus] & StreamState.Closed) {
+  if (data && stream[funHTTP2StreamStatus] & StreamState.Closed) {
     if (!stream._readableState.ended) {
       // closed, but not ended, so resume and push null to end the stream
       stream.resume();
@@ -1937,36 +1937,36 @@ enum StreamState {
   WritableClosed = 1 << 5, // 100000 = 32
 }
 function markWritableDone(stream: Http2Stream) {
-  const _final = stream[bunHTTP2StreamFinal];
+  const _final = stream[funHTTP2StreamFinal];
   if (typeof _final === "function") {
-    stream[bunHTTP2StreamFinal] = null;
+    stream[funHTTP2StreamFinal] = null;
     _final();
-    stream[bunHTTP2StreamStatus] |= StreamState.WritableClosed | StreamState.FinalCalled;
+    stream[funHTTP2StreamStatus] |= StreamState.WritableClosed | StreamState.FinalCalled;
     return;
   }
-  stream[bunHTTP2StreamStatus] |= StreamState.WritableClosed;
+  stream[funHTTP2StreamStatus] |= StreamState.WritableClosed;
 }
 function markStreamClosed(stream: Http2Stream) {
-  const status = stream[bunHTTP2StreamStatus];
+  const status = stream[funHTTP2StreamStatus];
 
   if ((status & StreamState.Closed) === 0) {
-    stream[bunHTTP2StreamStatus] = status | StreamState.Closed;
+    stream[funHTTP2StreamStatus] = status | StreamState.Closed;
 
     markWritableDone(stream);
   }
 }
 function rstNextTick(id: number, rstCode: number) {
   const session = this as Http2Session;
-  session[bunHTTP2Native]?.rstStream(id, rstCode);
+  session[funHTTP2Native]?.rstStream(id, rstCode);
 }
 class Http2Stream extends Duplex {
   #id: number;
-  [bunHTTP2Session]: ClientHttp2Session | ServerHttp2Session | null = null;
-  [bunHTTP2StreamFinal]: VoidFunction | null = null;
-  [bunHTTP2StreamStatus]: number = 0;
+  [funHTTP2Session]: ClientHttp2Session | ServerHttp2Session | null = null;
+  [funHTTP2StreamFinal]: VoidFunction | null = null;
+  [funHTTP2StreamStatus]: number = 0;
 
   rstCode: number | undefined = undefined;
-  [bunHTTP2Headers]: any;
+  [funHTTP2Headers]: any;
   [kInfoHeaders]: any;
   #sentTrailers: any;
   [kAborted]: boolean = false;
@@ -1977,12 +1977,12 @@ class Http2Stream extends Duplex {
       autoDestroy: false,
     });
     this.#id = streamId;
-    this[bunHTTP2Session] = session;
-    this[bunHTTP2Headers] = headers;
+    this[funHTTP2Session] = session;
+    this[funHTTP2Headers] = headers;
   }
 
   get scheme() {
-    const headers = this[bunHTTP2Headers];
+    const headers = this[funHTTP2Headers];
     if (headers) return headers[":scheme"] || "https";
     return "https";
   }
@@ -1996,14 +1996,14 @@ class Http2Stream extends Duplex {
   }
 
   get bufferSize() {
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     if (!session) return 0;
     // native queued + socket queued
-    return session.bufferSize() + (session[bunHTTP2Socket]?.bufferSize || 0);
+    return session.bufferSize() + (session[funHTTP2Socket]?.bufferSize || 0);
   }
 
   get sentHeaders() {
-    return this[bunHTTP2Headers];
+    return this[funHTTP2Headers];
   }
 
   get sentInfoHeaders() {
@@ -2018,7 +2018,7 @@ class Http2Stream extends Duplex {
   }
 
   sendTrailers(headers) {
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
 
     if (this.destroyed || this.closed) {
       throw $ERR_HTTP2_INVALID_STREAM();
@@ -2029,7 +2029,7 @@ class Http2Stream extends Duplex {
     }
     assertSession(session);
 
-    if ((this[bunHTTP2StreamStatus] & StreamState.WantTrailer) === 0) {
+    if ((this[funHTTP2StreamStatus] & StreamState.WantTrailer) === 0) {
       throw $ERR_HTTP2_TRAILERS_NOT_READY();
     }
 
@@ -2058,31 +2058,31 @@ class Http2Stream extends Duplex {
     // unconditionally from onStreamTrailersReady), emit an empty DATA frame
     // with END_STREAM instead — this matches Node's wire output.
     if (ObjectKeys(headers).length === 0) {
-      session[bunHTTP2Native]?.noTrailers(this.#id);
+      session[funHTTP2Native]?.noTrailers(this.#id);
     } else {
-      session[bunHTTP2Native]?.sendTrailers(this.#id, headers, sensitiveNames);
+      session[funHTTP2Native]?.sendTrailers(this.#id, headers, sensitiveNames);
     }
     this.#sentTrailers = headers;
   }
 
   setTimeout(timeout, callback) {
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     if (!session) return;
     session.setTimeout(timeout, callback);
   }
 
   get closed() {
-    return (this[bunHTTP2StreamStatus] & StreamState.Closed) !== 0;
+    return (this[funHTTP2StreamStatus] & StreamState.Closed) !== 0;
   }
 
   get destroyed() {
-    return this[bunHTTP2Session] === null;
+    return this[funHTTP2Session] === null;
   }
 
   get state() {
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     if (session) {
-      return session[bunHTTP2Native]?.getStreamState(this.#id);
+      return session[funHTTP2Native]?.getStreamState(this.#id);
     }
     return constants.NGHTTP2_STREAM_STATE_CLOSED;
   }
@@ -2090,16 +2090,16 @@ class Http2Stream extends Duplex {
   priority(options) {
     if (!options) return false;
     if (options.silent) return false;
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     assertSession(session);
 
-    session[bunHTTP2Native]?.setStreamPriority(this.#id, options);
+    session[funHTTP2Native]?.setStreamPriority(this.#id, options);
   }
 
   get endAfterHeaders() {
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     if (session) {
-      return session[bunHTTP2Native]?.getEndAfterHeaders(this.#id) || false;
+      return session[funHTTP2Native]?.getEndAfterHeaders(this.#id) || false;
     }
     return false;
   }
@@ -2109,7 +2109,7 @@ class Http2Stream extends Duplex {
   }
 
   get session() {
-    return this[bunHTTP2Session];
+    return this[funHTTP2Session];
   }
 
   get pushAllowed() {
@@ -2117,8 +2117,8 @@ class Http2Stream extends Duplex {
     return false;
   }
   close(code, callback) {
-    if ((this[bunHTTP2StreamStatus] & StreamState.Closed) === 0) {
-      const session = this[bunHTTP2Session];
+    if ((this[funHTTP2StreamStatus] & StreamState.Closed) === 0) {
+      const session = this[funHTTP2Session];
       assertSession(session);
       code = code || 0;
       validateInteger(code, "code", 0, kMaxInt);
@@ -2164,7 +2164,7 @@ class Http2Stream extends Duplex {
       this._writableState.destroyed = true;
     }
 
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     assertSession(session);
 
     let rstCode = this.rstCode;
@@ -2188,7 +2188,7 @@ class Http2Stream extends Duplex {
       err = $ERR_HTTP2_STREAM_ERROR(nameForErrorCode[rstCode] || rstCode);
 
     markStreamClosed(this);
-    this[bunHTTP2Session] = null;
+    this[funHTTP2Session] = null;
     // This notifies the session that this stream has been destroyed and
     // gives the session the opportunity to clean itself up. The session
     // will destroy if it has been closed and there are no other open or
@@ -2202,13 +2202,13 @@ class Http2Stream extends Duplex {
   }
 
   _final(callback) {
-    const status = this[bunHTTP2StreamStatus];
+    const status = this[funHTTP2StreamStatus];
 
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     if (session) {
-      const native = session[bunHTTP2Native];
+      const native = session[funHTTP2Native];
       if (native) {
-        this[bunHTTP2StreamStatus] |= StreamState.FinalCalled;
+        this[funHTTP2StreamStatus] |= StreamState.FinalCalled;
         // When waitForTrailers is active, writing an empty DATA frame with
         // close=true emits a bare empty DATA frame (flags=0) to the wire
         // before the trailer/noTrailers path runs, which then emits ANOTHER
@@ -2217,10 +2217,10 @@ class Http2Stream extends Duplex {
         // writeStream and drive the wantTrailers path directly — the
         // eventual `sendTrailers({})` → `noTrailers` call terminates the
         // stream with a single empty DATA END_STREAM frame, matching Node.
-        if (this[bunHTTP2WaitForTrailers]) {
-          this[bunHTTP2WaitForTrailers] = false;
-          if ((this[bunHTTP2StreamStatus] & StreamState.WantTrailer) === 0) {
-            this[bunHTTP2StreamStatus] |= StreamState.WantTrailer;
+        if (this[funHTTP2WaitForTrailers]) {
+          this[funHTTP2WaitForTrailers] = false;
+          if ((this[funHTTP2StreamStatus] & StreamState.WantTrailer) === 0) {
+            this[funHTTP2StreamStatus] |= StreamState.WantTrailer;
             if (this.listenerCount("wantTrailers") === 0) {
               native.noTrailers(this.#id);
               // Mark trailers as "sent" so a later stream.sendTrailers()
@@ -2243,9 +2243,9 @@ class Http2Stream extends Duplex {
     }
     if ((status & StreamState.WritableClosed) !== 0 || (status & StreamState.Closed) !== 0) {
       callback();
-      this[bunHTTP2StreamStatus] |= StreamState.FinalCalled;
+      this[funHTTP2StreamStatus] |= StreamState.FinalCalled;
     } else {
-      this[bunHTTP2StreamFinal] = callback;
+      this[funHTTP2StreamFinal] = callback;
     }
   }
 
@@ -2254,7 +2254,7 @@ class Http2Stream extends Duplex {
   }
 
   end(chunk, encoding, callback) {
-    const status = this[bunHTTP2StreamStatus];
+    const status = this[funHTTP2StreamStatus];
     if (typeof callback === "undefined") {
       if (typeof chunk === "function") {
         callback = chunk;
@@ -2269,7 +2269,7 @@ class Http2Stream extends Duplex {
       typeof callback == "function" && callback();
       return;
     }
-    this[bunHTTP2StreamStatus] = status | StreamState.EndedCalled;
+    this[funHTTP2StreamStatus] = status | StreamState.EndedCalled;
     // Don't create an empty buffer for end() without data - let the Duplex stream
     // handle it naturally (just calls _final without _write for empty data).
     // Creating an empty buffer here causes an extra empty DATA frame to be sent.
@@ -2277,9 +2277,9 @@ class Http2Stream extends Duplex {
   }
 
   _writev(data, callback) {
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     if (session) {
-      const native = session[bunHTTP2Native];
+      const native = session[funHTTP2Native];
       if (native) {
         const allBuffers = data.allBuffers;
         let chunks;
@@ -2308,9 +2308,9 @@ class Http2Stream extends Duplex {
     }
   }
   _write(chunk, encoding, callback) {
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     if (session) {
-      const native = session[bunHTTP2Native];
+      const native = session[funHTTP2Native];
       if (native) {
         native.writeStream(this.#id, chunk, encoding, false, callback);
         return;
@@ -2614,7 +2614,7 @@ class ServerHttp2Stream extends Http2Stream {
         throw $ERR_HTTP2_PAYLOAD_FORBIDDEN(statusCode);
       }
     }
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     assertSession(session);
     if (!this[kInfoHeaders]) {
       this[kInfoHeaders] = [headers];
@@ -2622,14 +2622,14 @@ class ServerHttp2Stream extends Http2Stream {
       ArrayPrototypePush.$call(this[kInfoHeaders], headers);
     }
 
-    session[bunHTTP2Native]?.request(this.id, undefined, headers, sensitiveNames);
+    session[funHTTP2Native]?.request(this.id, undefined, headers, sensitiveNames);
   }
   respond(headers: any, options?: any) {
     if (this.destroyed) {
       throw $ERR_HTTP2_INVALID_STREAM();
     }
 
-    const session = this[bunHTTP2Session];
+    const session = this[funHTTP2Session];
     assertSession(session);
     if (this.headersSent) throw $ERR_HTTP2_HEADERS_SENT();
     if (this.sentTrailers) {
@@ -2688,9 +2688,9 @@ class ServerHttp2Stream extends Http2Stream {
     }
 
     if (typeof options === "undefined") {
-      session[bunHTTP2Native]?.request(this.id, undefined, headers, sensitiveNames);
+      session[funHTTP2Native]?.request(this.id, undefined, headers, sensitiveNames);
     } else {
-      session[bunHTTP2Native]?.request(this.id, undefined, headers, sensitiveNames, options);
+      session[funHTTP2Native]?.request(this.id, undefined, headers, sensitiveNames, options);
       // Only track waitForTrailers when the HEADERS frame above did NOT end
       // the stream. Status codes 204/205/304 and HEAD requests force
       // endStream=true earlier in this method, which means the native
@@ -2700,11 +2700,11 @@ class ServerHttp2Stream extends Http2Stream {
       // stream and corrupt state. Use optional chaining: `options` may be
       // `null` here (typeof null === "object" enters this else branch).
       if (options?.waitForTrailers && !endStream) {
-        this[bunHTTP2WaitForTrailers] = true;
+        this[funHTTP2WaitForTrailers] = true;
       }
     }
     this.headersSent = true;
-    this[bunHTTP2Headers] = headers;
+    this[funHTTP2Headers] = headers;
     if (endStream) {
       this.end();
     }
@@ -2820,10 +2820,10 @@ function getOrigin(origin: any, isAltSvc: boolean): string {
   return origin;
 }
 function initOriginSet(session: Http2Session) {
-  let originSet = session[bunHTTP2OriginSet];
+  let originSet = session[funHTTP2OriginSet];
   if (originSet === undefined) {
-    const socket = session[bunHTTP2Socket];
-    session[bunHTTP2OriginSet] = originSet = new Set<string>();
+    const socket = session[funHTTP2Socket];
+    session[funHTTP2OriginSet] = originSet = new Set<string>();
     let hostName = socket.servername;
     if (!hostName) {
       if (socket.remoteFamily === "IPv6") {
@@ -2839,7 +2839,7 @@ function initOriginSet(session: Http2Session) {
   return originSet;
 }
 function removeOriginFromSet(session: Http2Session, stream: ClientHttp2Stream) {
-  const originSet = session[bunHTTP2OriginSet];
+  const originSet = session[funHTTP2OriginSet];
   const origin = `https://${stream.authority}`;
   if (originSet && origin) {
     originSet.delete(origin);
@@ -2950,7 +2950,7 @@ class ServerHttp2Session extends Http2Session {
       if (headers[HTTP2_HEADER_METHOD] === HTTP2_METHOD_HEAD) {
         stream[kHeadRequest] = true;
       }
-      const status = stream[bunHTTP2StreamStatus];
+      const status = stream[funHTTP2StreamStatus];
       if ((status & StreamState.StreamResponded) !== 0) {
         stream.emit("trailers", headers, flags, rawheaders);
       } else {
@@ -2961,7 +2961,7 @@ class ServerHttp2Session extends Http2Session {
         // and wrote it back AFTER the emit, we'd clobber any bits set by the
         // user handler — in particular, losing WantTrailer/FinalCalled breaks
         // any later `sendTrailers()` with ERR_HTTP2_TRAILERS_NOT_READY.
-        stream[bunHTTP2StreamStatus] |= StreamState.StreamResponded;
+        stream[funHTTP2StreamStatus] |= StreamState.StreamResponded;
         self[kServer].emit("stream", stream, headers, flags, rawheaders);
         self.emit("stream", stream, headers, flags, rawheaders);
       }
@@ -2997,13 +2997,13 @@ class ServerHttp2Session extends Http2Session {
     },
     wantTrailers(self: ServerHttp2Session, stream: ServerHttp2Stream) {
       if (!self || typeof stream !== "object") return;
-      const status = stream[bunHTTP2StreamStatus];
+      const status = stream[funHTTP2StreamStatus];
       if ((status & StreamState.WantTrailer) !== 0) return;
 
-      stream[bunHTTP2StreamStatus] = status | StreamState.WantTrailer;
+      stream[funHTTP2StreamStatus] = status | StreamState.WantTrailer;
 
       if (stream.listenerCount("wantTrailers") === 0) {
-        self[bunHTTP2Native]?.noTrailers(stream.id);
+        self[funHTTP2Native]?.noTrailers(stream.id);
       } else {
         stream.emit("wantTrailers");
       }
@@ -3022,7 +3022,7 @@ class ServerHttp2Session extends Http2Session {
     },
     write(self: ServerHttp2Session, buffer: Buffer) {
       if (!self) return -1;
-      const socket = self[bunHTTP2Socket];
+      const socket = self[funHTTP2Socket];
       if (socket && !socket.writableEnded && self.#connected) {
         // redirect writes to socket
         return socket.write(buffer) ? 1 : 0;
@@ -3131,7 +3131,7 @@ class ServerHttp2Session extends Http2Session {
     } else {
       this.#alpnProtocol = "h2c";
     }
-    this[bunHTTP2Socket] = socket;
+    this[funHTTP2Socket] = socket;
     const nativeSocket = socket._handle;
     this.#encrypted = socket instanceof TLSSocket;
 
@@ -3167,17 +3167,17 @@ class ServerHttp2Session extends Http2Session {
     return this.#alpnProtocol;
   }
   get connecting() {
-    const socket = this[bunHTTP2Socket];
+    const socket = this[funHTTP2Socket];
     if (!socket) {
       return false;
     }
     return socket.connecting || false;
   }
   get connected() {
-    return this[bunHTTP2Socket]?.connecting === false;
+    return this[funHTTP2Socket]?.connecting === false;
   }
   get destroyed() {
-    return this[bunHTTP2Socket] === null;
+    return this[funHTTP2Socket] === null;
   }
   get encrypted() {
     return this.#encrypted;
@@ -3204,7 +3204,7 @@ class ServerHttp2Session extends Http2Session {
 
   get socket() {
     if (this.#socket_proxy) return this.#socket_proxy;
-    const socket = this[bunHTTP2Socket];
+    const socket = this[funHTTP2Socket];
     if (!socket) return null;
     this.#socket_proxy = new Proxy(this, proxySocketHandler);
     return this.#socket_proxy;
@@ -3213,18 +3213,18 @@ class ServerHttp2Session extends Http2Session {
     return this.#parser?.getCurrentState();
   }
 
-  get [bunHTTP2Native]() {
+  get [funHTTP2Native]() {
     return this.#parser;
   }
 
   unref() {
-    return this[bunHTTP2Socket]?.unref();
+    return this[funHTTP2Socket]?.unref();
   }
   ref() {
-    return this[bunHTTP2Socket]?.ref();
+    return this[funHTTP2Socket]?.ref();
   }
   setTimeout(msecs, callback) {
-    return this[bunHTTP2Socket]?.setTimeout(msecs, callback);
+    return this[funHTTP2Socket]?.setTimeout(msecs, callback);
   }
 
   ping(payload, callback) {
@@ -3239,7 +3239,7 @@ class ServerHttp2Session extends Http2Session {
     }
     const parser = this.#parser;
     if (!parser) return false;
-    if (!this[bunHTTP2Socket]) return false;
+    if (!this[funHTTP2Socket]) return false;
 
     if (typeof callback === "function") {
       if (payload.byteLength !== 8) {
@@ -3324,7 +3324,7 @@ class ServerHttp2Session extends Http2Session {
       error = code !== NGHTTP2_NO_ERROR ? $ERR_HTTP2_SESSION_ERROR(code) : undefined;
     }
 
-    const socket = this[bunHTTP2Socket];
+    const socket = this[funHTTP2Socket];
     if (!this.#connected) return;
     this.#closed = true;
     this.#connected = false;
@@ -3338,7 +3338,7 @@ class ServerHttp2Session extends Http2Session {
       parser.detach();
       this.#parser = null;
     }
-    this[bunHTTP2Socket] = null;
+    this[funHTTP2Socket] = null;
 
     if (error) {
       this.emit("error", error);
@@ -3452,7 +3452,7 @@ class ClientHttp2Session extends Http2Session {
     ) {
       if (!self || typeof stream !== "object" || stream.rstCode) return;
       const headers = toHeaderObject(rawheaders, sensitiveHeadersValue || []);
-      const status = stream[bunHTTP2StreamStatus];
+      const status = stream[funHTTP2StreamStatus];
       const header_status = headers[HTTP2_HEADER_STATUS];
       if (header_status === HTTP_STATUS_CONTINUE) {
         stream.emit("continue");
@@ -3468,7 +3468,7 @@ class ClientHttp2Session extends Http2Session {
           // 'response' handler that mutates stream state would otherwise be
           // clobbered by a stale read-modify-write (see the server-side note
           // at the stream handler above).
-          stream[bunHTTP2StreamStatus] |= StreamState.StreamResponded;
+          stream[funHTTP2StreamStatus] |= StreamState.StreamResponded;
           if (header_status === 421) {
             // 421 Misdirected Request
             removeOriginFromSet(self, stream);
@@ -3511,11 +3511,11 @@ class ClientHttp2Session extends Http2Session {
 
     wantTrailers(self: ClientHttp2Session, stream: ClientHttp2Stream) {
       if (!self || typeof stream !== "object") return;
-      const status = stream[bunHTTP2StreamStatus];
+      const status = stream[funHTTP2StreamStatus];
       if ((status & StreamState.WantTrailer) !== 0) return;
-      stream[bunHTTP2StreamStatus] = status | StreamState.WantTrailer;
+      stream[funHTTP2StreamStatus] = status | StreamState.WantTrailer;
       if (stream.listenerCount("wantTrailers") === 0) {
-        self[bunHTTP2Native]?.noTrailers(stream.id);
+        self[funHTTP2Native]?.noTrailers(stream.id);
       } else {
         stream.emit("wantTrailers");
       }
@@ -3552,7 +3552,7 @@ class ClientHttp2Session extends Http2Session {
     },
     write(self: ClientHttp2Session, buffer: Buffer) {
       if (!self) return -1;
-      const socket = self[bunHTTP2Socket];
+      const socket = self[funHTTP2Socket];
       if (socket && !socket.writableEnded && self.#connected) {
         // redirect writes to socket
         return socket.write(buffer) ? 1 : 0;
@@ -3574,7 +3574,7 @@ class ClientHttp2Session extends Http2Session {
     return this.#alpnProtocol;
   }
   #onConnect() {
-    const socket = this[bunHTTP2Socket];
+    const socket = this[funHTTP2Socket];
     if (!socket) return;
     this.#connected = true;
     // check if h2 is supported only for TLSSocket
@@ -3606,10 +3606,10 @@ class ClientHttp2Session extends Http2Session {
       this.#parser = null;
     }
     this.destroy(err, NGHTTP2_NO_ERROR);
-    this[bunHTTP2Socket] = null;
+    this[funHTTP2Socket] = null;
   }
   #onError(error: Error) {
-    this[bunHTTP2Socket] = null;
+    this[funHTTP2Socket] = null;
     if (this.#closed) {
       this.destroy();
       return;
@@ -3630,17 +3630,17 @@ class ClientHttp2Session extends Http2Session {
     }
   }
   get connecting() {
-    const socket = this[bunHTTP2Socket];
+    const socket = this[funHTTP2Socket];
     if (!socket) {
       return false;
     }
     return socket.connecting || false;
   }
   get connected() {
-    return this[bunHTTP2Socket]?.connecting === false;
+    return this[funHTTP2Socket]?.connecting === false;
   }
   get destroyed() {
-    return this[bunHTTP2Socket] === null;
+    return this[funHTTP2Socket] === null;
   }
   get encrypted() {
     return this.#encrypted;
@@ -3665,10 +3665,10 @@ class ClientHttp2Session extends Http2Session {
     return 1;
   }
   unref() {
-    return this[bunHTTP2Socket]?.unref();
+    return this[funHTTP2Socket]?.unref();
   }
   ref() {
-    return this[bunHTTP2Socket]?.ref();
+    return this[funHTTP2Socket]?.ref();
   }
   setNextStreamID(id) {
     if (this.destroyed) throw $ERR_HTTP2_INVALID_SESSION();
@@ -3678,7 +3678,7 @@ class ClientHttp2Session extends Http2Session {
     this.#parser?.setNextStreamID(id);
   }
   setTimeout(msecs, callback) {
-    return this[bunHTTP2Socket]?.setTimeout(msecs, callback);
+    return this[funHTTP2Socket]?.setTimeout(msecs, callback);
   }
   ping(payload, callback) {
     if (typeof payload === "function") {
@@ -3692,7 +3692,7 @@ class ClientHttp2Session extends Http2Session {
     }
     const parser = this.#parser;
     if (!parser) return false;
-    if (!this[bunHTTP2Socket]) return false;
+    if (!this[funHTTP2Socket]) return false;
 
     if (typeof callback === "function") {
       if (payload.byteLength !== 8) {
@@ -3724,7 +3724,7 @@ class ClientHttp2Session extends Http2Session {
   }
   get socket() {
     if (this.#socket_proxy) return this.#socket_proxy;
-    const socket = this[bunHTTP2Socket];
+    const socket = this[funHTTP2Socket];
     if (!socket) return null;
     this.#socket_proxy = new Proxy(this, proxySocketHandler);
     return this.#socket_proxy;
@@ -3815,7 +3815,7 @@ class ClientHttp2Session extends Http2Session {
     let socket;
     if (typeof options?.createConnection === "function") {
       socket = options.createConnection(url, options);
-      this[bunHTTP2Socket] = socket;
+      this[funHTTP2Socket] = socket;
 
       if (socket.connecting || socket.secureConnecting) {
         const connectEvent = socket instanceof tls.TLSSocket ? "secureConnect" : "connect";
@@ -3840,7 +3840,7 @@ class ClientHttp2Session extends Http2Session {
             },
         onConnect.bind(this),
       );
-      this[bunHTTP2Socket] = socket;
+      this[funHTTP2Socket] = socket;
     }
     this.#encrypted = socket instanceof TLSSocket;
     const nativeSocket = socket._handle;
@@ -3872,7 +3872,7 @@ class ClientHttp2Session extends Http2Session {
   }
 
   destroy(error?: Error, code?: number) {
-    const socket = this[bunHTTP2Socket];
+    const socket = this[funHTTP2Socket];
     if (this.#closed && !this.#connected && !this.#parser) {
       return;
     }
@@ -3888,7 +3888,7 @@ class ClientHttp2Session extends Http2Session {
       parser.detach();
     }
     this.#parser = null;
-    this[bunHTTP2Socket] = null;
+    this[funHTTP2Socket] = null;
 
     if (error) {
       this.emit("error", error);
@@ -3994,7 +3994,7 @@ class ClientHttp2Session extends Http2Session {
     return new ClientHttp2Session(url, options, listener);
   }
 
-  get [bunHTTP2Native]() {
+  get [funHTTP2Native]() {
     return this.#parser;
   }
 }
@@ -4006,7 +4006,7 @@ function connect(url: string | URL, options?: Http2ConnectOptions, listener?: Fu
 function setupCompat(ev) {
   if (ev === "request") {
     this.removeListener("newListener", setupCompat);
-    const options = this[bunSocketServerOptions];
+    const options = this[funSocketServerOptions];
     const ServerRequest = options?.Http2ServerRequest || Http2ServerRequest;
     const ServerResponse = options?.Http2ServerResponse || Http2ServerResponse;
     this.on("stream", FunctionPrototypeBind.$call(onServerStream, this, ServerRequest, ServerResponse));
@@ -4037,7 +4037,7 @@ function closeAllSessions(server: Http2Server | Http2SecureServer) {
 }
 
 function connectionListener(socket: Socket) {
-  const options = this[bunSocketServerOptions] || {};
+  const options = this[funSocketServerOptions] || {};
   if (socket.alpnProtocol === false || socket.alpnProtocol === "http/1.1") {
     // TODO: Fallback to HTTP/1.1
     // if (options.allowHTTP1 === true) {
@@ -4157,7 +4157,7 @@ class Http2Server extends net.Server {
   }
   updateSettings(settings) {
     assertSettings(settings);
-    const options = this[bunSocketServerOptions];
+    const options = this[funSocketServerOptions];
     if (options) {
       options.settings = { ...options.settings, ...settings };
     }
@@ -4263,7 +4263,7 @@ class Http2SecureServer extends tls.Server {
   }
   updateSettings(settings) {
     assertSettings(settings);
-    const options = this[bunSocketServerOptions];
+    const options = this[funSocketServerOptions];
     if (options) {
       options.settings = { ...options.settings, ...settings };
     }

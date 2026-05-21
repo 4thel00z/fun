@@ -11,23 +11,23 @@ fn isOomOnlyError(comptime ErrorUnionOrSet: type) bool {
     return true;
 }
 
-/// If `error_union_or_set` is `error.OutOfMemory`, calls `bun.outOfMemory`. Otherwise:
+/// If `error_union_or_set` is `error.OutOfMemory`, calls `fun.outOfMemory`. Otherwise:
 ///
 /// * If that was the only possible error, returns the non-error payload for error unions, or
 ///   `noreturn` for error sets.
 /// * If other errors are possible, returns the same error union or set, but without
 ///   `error.OutOfMemory` in the error set.
 ///
-/// Prefer this method over `catch bun.outOfMemory()`, since that could mistakenly catch
+/// Prefer this method over `catch fun.outOfMemory()`, since that could mistakenly catch
 /// non-OOM-related errors.
 ///
 /// There are two ways to use this function:
 ///
 /// ```
 /// // option 1:
-/// const thing = bun.handleOom(allocateThing());
+/// const thing = fun.handleOom(allocateThing());
 /// // option 2:
-/// const thing = allocateThing() catch |err| bun.handleOom(err);
+/// const thing = allocateThing() catch |err| fun.handleOom(err);
 /// ```
 pub fn handleOom(error_union_or_set: anytype) return_type: {
     const ArgType = @TypeOf(error_union_or_set);
@@ -55,12 +55,12 @@ pub fn handleOom(error_union_or_set: anytype) return_type: {
         else => unreachable,
     };
     return if (comptime isOomOnlyError(ArgType))
-        bun.outOfMemory()
+        fun.outOfMemory()
     else switch (err) {
-        error.OutOfMemory => bun.outOfMemory(),
+        error.OutOfMemory => fun.outOfMemory(),
         else => |other_error| other_error,
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

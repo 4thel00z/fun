@@ -14,12 +14,12 @@ pub fn fromCallbackAutoDeinit(ptr: anytype, comptime fieldName: [:0]const u8) *A
         wrapped: *Ptr,
         pub fn function(this: *anyopaque, extra: *anyopaque) void {
             const that: *@This() = @ptrCast(@alignCast(this));
-            defer bun.default_allocator.destroy(that);
+            defer fun.default_allocator.destroy(that);
             const ctx = that.wrapped;
             @field(Ptr, fieldName)(ctx, extra);
         }
     };
-    const task = bun.handleOom(bun.default_allocator.create(Wrapper));
+    const task = fun.handleOom(fun.default_allocator.create(Wrapper));
     task.* = Wrapper{
         .any_task = AnyTaskWithExtraContext{
             .callback = &Wrapper.function,
@@ -54,7 +54,7 @@ pub fn New(comptime Type: type, comptime ContextType: type, comptime Callback: a
 
         pub fn wrap(this: ?*anyopaque, extra: ?*anyopaque) void {
             @call(
-                bun.callmod_inline,
+                fun.callmod_inline,
                 Callback,
                 .{
                     @as(*Type, @ptrCast(@alignCast(this.?))),
@@ -65,8 +65,8 @@ pub fn New(comptime Type: type, comptime ContextType: type, comptime Callback: a
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const Task = jsc.Task;

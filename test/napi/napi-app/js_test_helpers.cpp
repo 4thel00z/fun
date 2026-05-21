@@ -151,7 +151,7 @@ static napi_value create_and_throw_error(const Napi::CallbackInfo &info) {
   // asserts that napi_typeof succeeded
   if (!js_msg || get_typeof(env, js_msg) != napi_string ||
       (js_code && get_typeof(env, js_code) != napi_string)) {
-    // bun and node may return different errors here depending on in what order
+    // fun and node may return different errors here depending on in what order
     // the parameters are checked, but what's important is that there is an
     // error
     NODE_API_ASSERT(env, create_status == napi_string_expected ||

@@ -851,19 +851,19 @@ pub fn Package(comptime SemverIntType: type) type {
                                     break :update_mapping false;
                                 };
 
-                                var package_json_path: bun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
+                                var package_json_path: fun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
                                 defer package_json_path.deinit();
 
                                 package_json_path.append(workspace_path.slice(to_lockfile.buffers.string_bytes.items));
                                 package_json_path.append("package.json");
 
-                                const source = &(bun.sys.File.toSource(package_json_path.sliceZ(), allocator, .{}).unwrap() catch {
+                                const source = &(fun.sys.File.toSource(package_json_path.sliceZ(), allocator, .{}).unwrap() catch {
                                     break :update_mapping false;
                                 });
 
                                 var workspace_pkg: PackageType = .{};
 
-                                const json = pm.workspace_package_json_cache.getWithSource(bun.default_allocator, log, source, .{}).unwrap() catch {
+                                const json = pm.workspace_package_json_cache.getWithSource(fun.default_allocator, log, source, .{}).unwrap() catch {
                                     break :update_mapping false;
                                 };
 
@@ -943,7 +943,7 @@ pub fn Package(comptime SemverIntType: type) type {
         };
 
         pub fn hash(name: string, version: Semver.Version) u64 {
-            var hasher = bun.Wyhash.init(0);
+            var hasher = fun.Wyhash.init(0);
             hasher.update(name);
             hasher.update(std.mem.asBytes(&version));
             return hasher.final();
@@ -1004,12 +1004,12 @@ pub fn Package(comptime SemverIntType: type) type {
                         .workspace, .folder, .symlink, .tarball => {
                             if (String.canInline(version)) {
                                 var copy = string_builder.append(String, version);
-                                bun.path.dangerouslyConvertPathToPosixInPlace(u8, &copy.bytes);
+                                fun.path.dangerouslyConvertPathToPosixInPlace(u8, &copy.bytes);
                                 break :brk copy;
                             } else {
                                 const str_ = string_builder.append(String, version);
                                 const ptr = str_.ptr();
-                                bun.path.dangerouslyConvertPathToPosixInPlace(u8, lockfile.buffers.string_bytes.items[ptr.off..][0..ptr.len]);
+                                fun.path.dangerouslyConvertPathToPosixInPlace(u8, lockfile.buffers.string_bytes.items[ptr.off..][0..ptr.len]);
                                 break :brk str_;
                             }
                         },
@@ -1044,14 +1044,14 @@ pub fn Package(comptime SemverIntType: type) type {
                         if (at > 0) {
                             workspace_range = Semver.Query.parse(allocator, input[at + 1 ..], sliced) catch |err| {
                                 switch (err) {
-                                    error.OutOfMemory => bun.outOfMemory(),
+                                    error.OutOfMemory => fun.outOfMemory(),
                                 }
                             };
                             break :brk String.Builder.stringHash(input[0..at]);
                         }
                         workspace_range = Semver.Query.parse(allocator, input, sliced) catch |err| {
                             switch (err) {
-                                error.OutOfMemory => bun.outOfMemory(),
+                                error.OutOfMemory => fun.outOfMemory(),
                             }
                         };
                     }
@@ -1068,7 +1068,7 @@ pub fn Package(comptime SemverIntType: type) type {
             }
 
             if (comptime tag != null) {
-                bun.assert(dependency_version.tag != .npm and dependency_version.tag != .dist_tag);
+                fun.assert(dependency_version.tag != .npm and dependency_version.tag != .dist_tag);
             }
 
             switch (dependency_version.tag) {
@@ -1157,7 +1157,7 @@ pub fn Package(comptime SemverIntType: type) type {
                     } else {
                         const workspace = dependency_version.value.workspace.slice(buf);
                         const path = string_builder.append(String, if (strings.eqlComptime(workspace, "*")) "*" else brk: {
-                            var buf2: bun.PathBuffer = undefined;
+                            var buf2: fun.PathBuffer = undefined;
                             const rel = Path.relativePlatform(
                                 FileSystem.instance.top_level_dir,
                                 Path.joinAbsStringBuf(
@@ -1173,7 +1173,7 @@ pub fn Package(comptime SemverIntType: type) type {
                                 false,
                             );
                             if (comptime Environment.isWindows) {
-                                bun.path.dangerouslyConvertPathToPosixInPlace(u8, Path.relative_to_common_path_buf()[0..rel.len]);
+                                fun.path.dangerouslyConvertPathToPosixInPlace(u8, Path.relative_to_common_path_buf()[0..rel.len]);
                             }
                             break :brk rel;
                         });
@@ -1454,7 +1454,7 @@ pub fn Package(comptime SemverIntType: type) type {
                                 log.addErrorFmt(source, dependencies_q.loc, allocator,
                                     \\{0s} expects a map of specifiers, e.g.
                                     \\  <r><green>"{0s}"<r>: {{
-                                    \\    <green>"bun"<r>: <green>"latest"<r>
+                                    \\    <green>"fun"<r>: <green>"latest"<r>
                                     \\  }}
                                 , .{group.prop}) catch {};
                                 return error.InvalidPackageJSON;
@@ -1513,7 +1513,7 @@ pub fn Package(comptime SemverIntType: type) type {
                                         // TODO: what if we could comptime call the syntax highlighter
                                         \\{0s} expects a map of specifiers, e.g.
                                         \\  <r><green>"{0s}"<r>: {{
-                                        \\    <green>"bun"<r>: <green>"latest"<r>
+                                        \\    <green>"fun"<r>: <green>"latest"<r>
                                         \\  }}
                                     , .{group.prop}) catch {};
                                     return error.InvalidPackageJSON;
@@ -1524,7 +1524,7 @@ pub fn Package(comptime SemverIntType: type) type {
 
                                 // If it's a folder or workspace, pessimistically assume we will need a maximum path
                                 switch (Dependency.Version.Tag.infer(value)) {
-                                    .folder, .workspace => string_builder.cap += bun.MAX_PATH_BYTES,
+                                    .folder, .workspace => string_builder.cap += fun.MAX_PATH_BYTES,
                                     else => {},
                                 }
                             }
@@ -1543,7 +1543,7 @@ pub fn Package(comptime SemverIntType: type) type {
                                 log.addErrorFmt(source, dependencies_q.loc, allocator,
                                     \\{0s} expects a map of specifiers, e.g.
                                     \\  <r><green>"{0s}"<r>: {{
-                                    \\    <green>"bun"<r>: <green>"latest"<r>
+                                    \\    <green>"fun"<r>: <green>"latest"<r>
                                     \\  }}
                                 , .{group.prop}) catch {};
                             }
@@ -1758,7 +1758,7 @@ pub fn Package(comptime SemverIntType: type) type {
                 try lockfile.scratch.duplicate_checker_map.ensureTotalCapacity(total_dependencies_count);
             }
 
-            var bundled_deps = bun.StringSet.init(allocator);
+            var bundled_deps = fun.StringSet.init(allocator);
             defer bundled_deps.deinit();
             var bundle_all_deps = false;
             if (comptime ResolverContext != void and ResolverContext.checkBundledDependencies()) {
@@ -1791,8 +1791,8 @@ pub fn Package(comptime SemverIntType: type) type {
                             // this path does alot of extra work to format the error message
                             // but this is ok because the install is going to fail anyways, so this
                             // has zero effect on the happy path.
-                            var cwd_buf: bun.PathBuffer = undefined;
-                            const cwd = try bun.getcwd(&cwd_buf);
+                            var cwd_buf: fun.PathBuffer = undefined;
+                            const cwd = try fun.getcwd(&cwd_buf);
 
                             const num_notes = count: {
                                 var i: usize = 0;
@@ -1808,9 +1808,9 @@ pub fn Package(comptime SemverIntType: type) type {
                                 for (workspace_names.values(), workspace_names.keys()) |value, note_path| {
                                     if (note_path.ptr == path.ptr) continue;
                                     if (strings.eqlLong(value.name, entry.name, true)) {
-                                        const note_abs_path = bun.handleOom(allocator.dupeZ(u8, Path.joinAbsStringZ(cwd, &.{ note_path, "package.json" }, .auto)));
+                                        const note_abs_path = fun.handleOom(allocator.dupeZ(u8, Path.joinAbsStringZ(cwd, &.{ note_path, "package.json" }, .auto)));
 
-                                        const note_src = bun.sys.File.toSource(note_abs_path, allocator, .{}).unwrap() catch logger.Source.initEmptyFile(note_abs_path);
+                                        const note_src = fun.sys.File.toSource(note_abs_path, allocator, .{}).unwrap() catch logger.Source.initEmptyFile(note_abs_path);
 
                                         notes[i] = .{
                                             .text = "Package name is also declared here",
@@ -1824,7 +1824,7 @@ pub fn Package(comptime SemverIntType: type) type {
 
                             const abs_path = Path.joinAbsStringZ(cwd, &.{ path, "package.json" }, .auto);
 
-                            const src = bun.sys.File.toSource(abs_path, allocator, .{}).unwrap() catch logger.Source.initEmptyFile(abs_path);
+                            const src = fun.sys.File.toSource(abs_path, allocator, .{}).unwrap() catch logger.Source.initEmptyFile(abs_path);
 
                             log.addRangeErrorFmtWithNotes(
                                 &src,
@@ -2015,7 +2015,7 @@ pub fn Package(comptime SemverIntType: type) type {
             string_builder.clamp();
         }
 
-        pub const List = bun.MultiArrayList(PackageType);
+        pub const List = fun.MultiArrayList(PackageType);
 
         pub const Serializer = struct {
             pub const sizes = blk: {
@@ -2226,7 +2226,7 @@ pub fn Package(comptime SemverIntType: type) type {
                         @memcpy(bytes, stream.buffer[stream.pos..][0..bytes.len]);
                         stream.pos = end_pos;
                         if (comptime strings.eqlComptime(field.name, "meta")) {
-                            // need to check if any values were created from an older version of bun
+                            // need to check if any values were created from an older version of fun
                             // (currently just `has_install_script`). If any are found, the values need
                             // to be updated before saving the lockfile.
                             for (value) |*meta| {
@@ -2253,32 +2253,32 @@ const std = @import("std");
 const ResolutionType = @import("../resolution.zig").ResolutionType;
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const ArrayIdentityContext = bun.ArrayIdentityContext;
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const Output = bun.Output;
-const PackageJSON = bun.PackageJSON;
-const Path = bun.path;
-const assert = bun.assert;
-const logger = bun.logger;
-const strings = bun.strings;
-const Expr = bun.ast.Expr;
-const FileSystem = bun.fs.FileSystem;
+const fun = @import("fun");
+const ArrayIdentityContext = fun.ArrayIdentityContext;
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const Output = fun.Output;
+const PackageJSON = fun.PackageJSON;
+const Path = fun.path;
+const assert = fun.assert;
+const logger = fun.logger;
+const strings = fun.strings;
+const Expr = fun.ast.Expr;
+const FileSystem = fun.fs.FileSystem;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const ExternalString = Semver.ExternalString;
 const String = Semver.String;
 
-const install = bun.install;
+const install = fun.install;
 const Aligner = install.Aligner;
 const Bin = install.Bin;
 const ExternalStringList = install.ExternalStringList;
 const ExternalStringMap = install.ExternalStringMap;
 const Features = install.Features;
 const Npm = install.Npm;
-const PackageID = bun.install.PackageID;
+const PackageID = fun.install.PackageID;
 const PackageManager = install.PackageManager;
 const PackageNameHash = install.PackageNameHash;
 const Repository = install.Repository;
@@ -2286,7 +2286,7 @@ const TruncatedPackageNameHash = install.TruncatedPackageNameHash;
 const initializeStore = install.initializeStore;
 const invalid_package_id = install.invalid_package_id;
 
-const Dependency = bun.install.Dependency;
+const Dependency = fun.install.Dependency;
 const Behavior = Dependency.Behavior;
 
 const Lockfile = install.Lockfile;

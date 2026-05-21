@@ -1,7 +1,7 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
-import { bunEnv, bunExe, tmpdirSync } from "../../harness.js";
+import { funEnv, funExe, tmpdirSync } from "../../harness.js";
 
 describe.concurrent("issue/00631", () => {
   it("JSON strings escaped properly", async () => {
@@ -17,9 +17,9 @@ describe.concurrent("issue/00631", () => {
     // Attempt to add a package, causing the package file to be parsed, modified,
     //  written, and reparsed.  This verifies that escaped backslashes in JSON
     //  survive the roundtrip
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "add", "left-pad"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "add", "left-pad"],
+      env: funEnv,
       cwd: testDir,
       stdout: "pipe",
       stderr: "pipe",

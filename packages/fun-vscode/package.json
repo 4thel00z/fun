@@ -1,0 +1,382 @@
+{
+  "name": "fun-vscode",
+  "version": "0.0.31",
+  "author": "oven",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/underdoc-org/fun"
+  },
+  "main": "dist/extension.js",
+  "devDependencies": {
+    "@types/fun": "^1.1.10",
+    "@types/vscode": "^1.60.0",
+    "@vscode/debugadapter": "^1.56.0",
+    "@vscode/debugadapter-testsupport": "^1.56.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^2.20.1",
+    "esbuild": "^0.19.2",
+    "typescript": "^6.0.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "bugs": {
+    "url": "https://github.com/underdoc-org/fun/issues"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "This extension needs to be able to run your code using Fun."
+    }
+  },
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Testing"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Fun",
+      "properties": {
+        "fun.runtime": {
+          "type": "string",
+          "description": "A path to the `fun` executable. By default, the extension looks for `fun` in the `PATH`, but if set, it will use the specified path instead.",
+          "scope": "window",
+          "default": null
+        },
+        "fun.diagnosticsSocket.enabled": {
+          "type": "boolean",
+          "description": "If Fun extension should communicate with Fun over a socket to show errors in editor.",
+          "scope": "window",
+          "default": true
+        },
+        "fun.funlockb.enabled": {
+          "type": "boolean",
+          "description": "If visual lockfile viewer (`fun.lockb`) should be enabled ",
+          "scope": "window",
+          "default": true
+        },
+        "fun.debugTerminal.enabled": {
+          "type": "boolean",
+          "description": "If Fun should be added to the JavaScript Debug Terminal.",
+          "scope": "window",
+          "default": true
+        },
+        "fun.debugTerminal.stopOnEntry": {
+          "type": "boolean",
+          "description": "If the debugger should stop on the first line when used in the JavaScript Debug Terminal.",
+          "scope": "window",
+          "default": false
+        },
+        "fun.test.filePattern": {
+          "type": "string",
+          "default": "**/*{.test.,.spec.,_test_,_spec_}{js,ts,tsx,jsx,mts,cts,cjs,mjs}",
+          "description": "Glob pattern to find test files"
+        },
+        "fun.test.customFlag": {
+          "type": "string",
+          "default": "",
+          "description": "Custom flag added to the end of test command"
+        },
+        "fun.test.customScript": {
+          "type": "string",
+          "default": "fun test",
+          "description": "Custom script to use instead of `fun test`, for example script from `package.json`"
+        },
+        "fun.test.enable": {
+          "type": "boolean",
+          "description": "If the test explorer should be enabled and integrated with your editor",
+          "scope": "window",
+          "default": true
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "extension.fun.runFile",
+        "title": "Run File",
+        "shortTitle": "Run",
+        "category": "Fun",
+        "enablement": "!inDebugMode",
+        "icon": "$(play)"
+      },
+      {
+        "command": "extension.fun.debugFile",
+        "title": "Debug File",
+        "shortTitle": "Debug",
+        "category": "Fun",
+        "enablement": "!inDebugMode",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "extension.fun.runUnsavedCode",
+        "title": "Run Unsaved Code with Fun",
+        "shortTitle": "Run with Fun",
+        "category": "Fun",
+        "enablement": "!inDebugMode && resourceLangId =~ /^(javascript|typescript|javascriptreact|typescriptreact)$/ && !isInDiffEditor && resourceScheme == 'untitled'",
+        "icon": "$(play-circle)"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "extension.fun.runFile",
+          "when": "resourceLangId == javascript || resourceLangId == javascriptreact || resourceLangId == typescript || resourceLangId == typescriptreact",
+          "group": "navigation@1"
+        },
+        {
+          "command": "extension.fun.debugFile",
+          "when": "resourceLangId == javascript || resourceLangId == javascriptreact || resourceLangId == typescript || resourceLangId == typescriptreact",
+          "group": "navigation@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "extension.fun.runFile",
+          "when": "resourceLangId == javascript || resourceLangId == javascriptreact || resourceLangId == typescript || resourceLangId == typescriptreact"
+        },
+        {
+          "command": "extension.fun.debugFile",
+          "when": "resourceLangId == javascript || resourceLangId == javascriptreact || resourceLangId == typescript || resourceLangId == typescriptreact"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "extension.fun.runUnsavedCode",
+          "when": "resourceLangId =~ /^(javascript|typescript|javascriptreact|typescriptreact)$/ && !isInDiffEditor && resourceScheme == 'untitled'",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "extension.fun.runUnsavedCode",
+          "when": "resourceLangId =~ /^(javascript|typescript|javascriptreact|typescriptreact)$/ && !isInDiffEditor && resourceScheme == 'untitled'",
+          "group": "1_run"
+        }
+      ]
+    },
+    "breakpoints": [
+      {
+        "language": "javascript"
+      },
+      {
+        "language": "javascriptreact"
+      },
+      {
+        "language": "typescript"
+      },
+      {
+        "language": "typescriptreact"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "fun",
+        "label": "Fun",
+        "languages": [
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact"
+        ],
+        "runtime": "node",
+        "program": "dist/adapter.js",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "runtime": {
+                "type": "string",
+                "description": "The path to the `fun` executable. Defaults to `PATH` environment variable.",
+                "default": "fun"
+              },
+              "runtimeArgs": {
+                "type": "array",
+                "description": "The command-line arguments passed to the `fun` executable. Unlike `args`, these arguments are not passed to the program, but to the `fun` executable itself.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "program": {
+                "type": "string",
+                "description": "The path to a JavaScript or TypeScript file.",
+                "default": "${file}"
+              },
+              "args": {
+                "type": "array",
+                "description": "The command-line arguments passed to the program.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "cwd": {
+                "type": "string",
+                "description": "The working directory.",
+                "default": "${workspaceFolder}"
+              },
+              "env": {
+                "type": "object",
+                "description": "The environment variables to pass to Fun.",
+                "default": {}
+              },
+              "strictEnv": {
+                "type": "boolean",
+                "description": "If environment variables should not be inherited from the parent process.",
+                "default": false
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "If the debugger should stop on the first line of the program.",
+                "default": false
+              },
+              "noDebug": {
+                "type": "boolean",
+                "description": "If the debugger should be disabled.",
+                "default": false
+              },
+              "watchMode": {
+                "type": [
+                  "boolean",
+                  "string"
+                ],
+                "description": "If the process should be restarted when files change. Equivalent to passing `--watch` or `--hot` to the `fun` executable.",
+                "enum": [
+                  true,
+                  false,
+                  "hot"
+                ],
+                "default": false
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "The URL of the WebSocket inspector to attach to."
+              },
+              "noDebug": {
+                "type": "boolean",
+                "description": "If the debugger should be disabled.",
+                "default": false
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "If the debugger should stop on the first line of the program.",
+                "default": false
+              },
+              "localRoot": {
+                "type": "string",
+                "description": "The local path that maps to \"remoteRoot\" when attaching to a remote Fun process."
+              },
+              "remoteRoot": {
+                "type": "string",
+                "description": "The remote path to the code when attaching. File paths reported by Fun that start with this path will be mapped back to 'localRoot'."
+              }
+            }
+          }
+        }
+      }
+    ],
+    "languages": [
+      {
+        "id": "fun.lockb",
+        "aliases": [
+          "fun.lockb"
+        ],
+        "filenames": [
+          "fun.lockb"
+        ],
+        "icon": {
+          "dark": "assets/icon-small.png",
+          "light": "assets/icon-small.png"
+        }
+      },
+      {
+        "id": "jsonc",
+        "filenames": [
+          "fun.lock"
+        ]
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "package.json",
+        "url": "./assets/package.json"
+      },
+      {
+        "fileMatch": "fun.lock",
+        "url": "./assets/fun.lock.json"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "fun.lockb",
+        "displayName": "fun.lockb",
+        "selector": [
+          {
+            "filenamePattern": "*fun.lockb"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "fun",
+        "required": [
+          "script"
+        ],
+        "properties": {
+          "script": {
+            "type": "string",
+            "description": "The script to execute"
+          }
+        }
+      }
+    ]
+  },
+  "description": "The Visual Studio Code extension for Fun.",
+  "displayName": "Fun for Visual Studio Code",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "galleryBanner": {
+    "color": "#3B3738",
+    "theme": "dark"
+  },
+  "homepage": "https://fun.dev/",
+  "icon": "assets/icon.png",
+  "keywords": [
+    "fun",
+    "node.js",
+    "javascript",
+    "typescript",
+    "vscode"
+  ],
+  "license": "MIT",
+  "publisher": "oven",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "pretest": "fun run build",
+    "test": "node scripts/test.mjs",
+    "dev": "vscode-test --config scripts/dev.mjs",
+    "prepublish": "npm version patch && fun run build",
+    "publish": "cd extension && funx vsce publish"
+  },
+  "workspaceTrust": {
+    "request": "never"
+  },
+  "workspaces": [
+    "../fun-debug-adapter-protocol",
+    "../fun-inspector-protocol"
+  ]
+}

@@ -1,6 +1,6 @@
 /**
  * libdeflate — fast deflate/gzip/zlib codec. Faster than zlib for one-shot
- * compression (no streaming). Used by Blob.gzip() and bun's .gz asset loader.
+ * compression (no streaming). Used by Blob.gzip() and fun's .gz asset loader.
  *
  * DirectBuild: 11 .c files, no config.h, no codegen. The arm/x86 cpu_features
  * sources both compile on every target — they self-guard with #ifdef and the

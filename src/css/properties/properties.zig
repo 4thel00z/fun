@@ -183,13 +183,13 @@ pub const CSSWideKeyword = enum {
 //         }
 
 //         pub fn propertyIdFromStr(name: []const u8) PropertyId {
-//             const prefix, const name_ref = if (bun.strings.startsWithCaseInsensitiveAscii(name, "-webkit-"))
+//             const prefix, const name_ref = if (fun.strings.startsWithCaseInsensitiveAscii(name, "-webkit-"))
 //                 .{ css.VendorPrefix.webkit, name[8..] }
-//             else if (bun.strings.startsWithCaseInsensitiveAscii(name, "-moz-"))
+//             else if (fun.strings.startsWithCaseInsensitiveAscii(name, "-moz-"))
 //                 .{ css.VendorPrefix.moz, name[5..] }
-//             else if (bun.strings.startsWithCaseInsensitiveAscii(name, "-o-"))
+//             else if (fun.strings.startsWithCaseInsensitiveAscii(name, "-o-"))
 //                 .{ css.VendorPrefix.moz, name[3..] }
-//             else if (bun.strings.startsWithCaseInsensitiveAscii(name, "-ms-"))
+//             else if (fun.strings.startsWithCaseInsensitiveAscii(name, "-ms-"))
 //                 .{ css.VendorPrefix.moz, name[4..] }
 //             else
 //                 .{ css.VendorPrefix.none, name };
@@ -205,13 +205,13 @@ pub const CSSWideKeyword = enum {
 //                 // TODO: actual source just returns empty Err(())
 //                 return Error.InvalidPropertyName;
 //             }
-//             const lower = bun.strings.copyLowercase(name, buffer[0..name.len]);
+//             const lower = fun.strings.copyLowercase(name, buffer[0..name.len]);
 //             inline for (std.meta.fields(PropertyIdT)) |field_| {
 //                 const field: std.builtin.Type.EnumField = field_;
 //                 // skip custom
-//                 if (bun.strings.eql(field.name, "custom")) continue;
+//                 if (fun.strings.eql(field.name, "custom")) continue;
 
-//                 if (bun.strings.eql(lower, field.name)) {
+//                 if (fun.strings.eql(lower, field.name)) {
 //                     const prop = @field(properties, field.name);
 //                     const allowed_prefixes = allowed_prefixes: {
 //                         var prefixes: css.VendorPrefix = if (@hasField(@TypeOf(prop), "unprefixed") and !prop.unprefixed)
@@ -1875,7 +1875,7 @@ pub const CSSWideKeyword = enum {
 //     },
 // });
 
-const bun = @import("bun");
+const fun = @import("fun");
 const generated = @import("./properties_generated.zig");
 
 const css = @import("../css_parser.zig");

@@ -1,13 +1,13 @@
-import { file } from "bun";
-import { describe, expect, test } from "bun:test";
+import { file } from "fun";
+import { describe, expect, test } from "fun:test";
 import { rm } from "fs/promises";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
-// Each test uses its own BUN_INSTALL_CACHE_DIR inside the temp dir for full
+// Each test uses its own FUN_INSTALL_CACHE_DIR inside the temp dir for full
 // isolation.  This avoids interfering with the global cache or other tests.
 function envWithCache(dir: string) {
-  return { ...bunEnv, BUN_INSTALL_CACHE_DIR: join(String(dir), ".bun-cache") };
+  return { ...funEnv, FUN_INSTALL_CACHE_DIR: join(String(dir), ".fun-cache") };
 }
 
 describe.concurrent("GitHub tarball integrity", () => {
@@ -23,8 +23,8 @@ describe.concurrent("GitHub tarball integrity", () => {
 
     const env = envWithCache(dir);
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
       env,
       stdout: "pipe",
@@ -36,7 +36,7 @@ describe.concurrent("GitHub tarball integrity", () => {
     expect(stderr).toContain("Saved lockfile");
     expect(exitCode).toBe(0);
 
-    const lockfileContent = await file(join(String(dir), "bun.lock")).text();
+    const lockfileContent = await file(join(String(dir), "fun.lock")).text();
 
     // The lockfile should contain a sha512 integrity hash for the GitHub dependency
     expect(lockfileContent).toContain("sha512-");
@@ -59,8 +59,8 @@ describe.concurrent("GitHub tarball integrity", () => {
     const env = envWithCache(dir);
 
     // First install to generate lockfile with correct integrity
-    await using proc1 = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using proc1 = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
       env,
       stdout: "pipe",
@@ -73,17 +73,17 @@ describe.concurrent("GitHub tarball integrity", () => {
 
     // Read the generated lockfile and extract the integrity hash adjacent to
     // the GitHub resolved entry to avoid accidentally matching an npm hash.
-    const lockfileContent = await file(join(String(dir), "bun.lock")).text();
+    const lockfileContent = await file(join(String(dir), "fun.lock")).text();
     const integrityMatch = lockfileContent.match(/"jonschlinkert-is-number-98e8ff1",\s*"(sha512-[A-Za-z0-9+/]+=*)"/);
     expect(integrityMatch).not.toBeNull();
     const integrityHash = integrityMatch![1];
 
     // Clear cache and node_modules, then re-install with the same lockfile
-    await rm(join(String(dir), ".bun-cache"), { recursive: true, force: true });
+    await rm(join(String(dir), ".fun-cache"), { recursive: true, force: true });
     await rm(join(String(dir), "node_modules"), { recursive: true, force: true });
 
-    await using proc2 = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using proc2 = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
       env,
       stdout: "pipe",
@@ -97,7 +97,7 @@ describe.concurrent("GitHub tarball integrity", () => {
     expect(exitCode2).toBe(0);
 
     // Lockfile should still contain the same integrity hash
-    const lockfileContent2 = await file(join(String(dir), "bun.lock")).text();
+    const lockfileContent2 = await file(join(String(dir), "fun.lock")).text();
     expect(lockfileContent2).toContain(integrityHash);
   });
 
@@ -110,7 +110,7 @@ describe.concurrent("GitHub tarball integrity", () => {
         },
       }),
       // Pre-create a lockfile with an invalid integrity hash (valid base64, 64 zero bytes)
-      "bun.lock": JSON.stringify({
+      "fun.lock": JSON.stringify({
         lockfileVersion: 1,
         configVersion: 1,
         workspaces: {
@@ -135,8 +135,8 @@ describe.concurrent("GitHub tarball integrity", () => {
     // Fresh per-test cache ensures the tarball must be downloaded from the network
     const env = envWithCache(dir);
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
       env,
       stdout: "pipe",
@@ -158,7 +158,7 @@ describe.concurrent("GitHub tarball integrity", () => {
         },
       }),
       // Pre-create a lockfile in the old format (no integrity hash)
-      "bun.lock": JSON.stringify({
+      "fun.lock": JSON.stringify({
         lockfileVersion: 1,
         configVersion: 1,
         workspaces: {
@@ -178,8 +178,8 @@ describe.concurrent("GitHub tarball integrity", () => {
     // Fresh per-test cache ensures the tarball must be downloaded
     const env = envWithCache(dir);
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
       env,
       stdout: "pipe",
@@ -196,7 +196,7 @@ describe.concurrent("GitHub tarball integrity", () => {
     expect(exitCode).toBe(0);
 
     // Verify the lockfile now contains the integrity hash
-    const lockfileContent = await file(join(String(dir), "bun.lock")).text();
+    const lockfileContent = await file(join(String(dir), "fun.lock")).text();
     expect(lockfileContent).toContain("sha512-");
     expect(lockfileContent).toMatch(/"jonschlinkert-is-number-98e8ff1",\s*"sha512-/);
   });
@@ -215,8 +215,8 @@ describe.concurrent("GitHub tarball integrity", () => {
     const env = envWithCache(dir);
 
     // First install warms the per-test cache
-    await using proc1 = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using proc1 = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
       env,
       stdout: "pipe",
@@ -232,13 +232,13 @@ describe.concurrent("GitHub tarball integrity", () => {
 
     // Strip the integrity from the lockfile to simulate an old-format lockfile
     // that should still work when the cache already has the package
-    const lockfileContent = await file(join(String(dir), "bun.lock")).text();
+    const lockfileContent = await file(join(String(dir), "fun.lock")).text();
     const stripped = lockfileContent.replace(/,\s*"sha512-[^"]*"/, "");
-    await Bun.write(join(String(dir), "bun.lock"), stripped);
+    await Fun.write(join(String(dir), "fun.lock"), stripped);
 
     // Second install should hit the cache and succeed without re-downloading
-    await using proc2 = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using proc2 = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
       env,
       stdout: "pipe",

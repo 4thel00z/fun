@@ -11,7 +11,7 @@
 #include <semaphore.h>
 #endif
 
-namespace Bun {
+namespace Fun {
 
 class Semaphore {
 public:
@@ -31,4 +31,4 @@ private:
 #endif
 };
 
-} // namespace Bun
+} // namespace Fun

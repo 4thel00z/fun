@@ -1,10 +1,10 @@
-const isBun = typeof globalThis?.Bun?.sql !== "undefined";
+const isFun = typeof globalThis?.Fun?.sql !== "undefined";
 import postgres from "postgres";
-const sql = isBun ? Bun.sql : postgres();
+const sql = isFun ? Fun.sql : postgres();
 
 // Create the table if it doesn't exist
 await sql`
-    CREATE TABLE IF NOT EXISTS "users_bun_bench" (
+    CREATE TABLE IF NOT EXISTS "users_fun_bench" (
       id SERIAL PRIMARY KEY,
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL, 
@@ -14,7 +14,7 @@ await sql`
   `;
 
 // Check if users already exist
-const existingUsers = await sql`SELECT COUNT(*) as count FROM "users_bun_bench"`;
+const existingUsers = await sql`SELECT COUNT(*) as count FROM "users_fun_bench"`;
 
 if (+(existingUsers?.[0]?.count ?? existingUsers?.count) < 100) {
   // Generate 100 users if none exist
@@ -28,14 +28,14 @@ if (+(existingUsers?.[0]?.count ?? existingUsers?.count) < 100) {
   }));
 
   // Insert all users
-  await sql`INSERT INTO users_bun_bench ${sql(users)}`;
+  await sql`INSERT INTO users_fun_bench ${sql(users)}`;
 }
 
-const type = isBun ? "Bun.sql" : "postgres";
+const type = isFun ? "Fun.sql" : "postgres";
 console.time(type);
 let promises = [];
 for (let i = 0; i < 100_000; i++) {
-  promises.push(sql`SELECT * FROM "users_bun_bench" LIMIT 100`);
+  promises.push(sql`SELECT * FROM "users_fun_bench" LIMIT 100`);
   if (i % 100 === 0 && promises.length > 1) {
     await Promise.all(promises);
     promises.length = 0;

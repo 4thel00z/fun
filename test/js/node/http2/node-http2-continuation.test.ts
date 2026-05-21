@@ -6,7 +6,7 @@
  * into HEADERS + CONTINUATION frames.
  *
  * Works with both:
- * - bun bd test test/js/node/http2/node-http2-continuation.test.ts
+ * - fun bd test test/js/node/http2/node-http2-continuation.test.ts
  * - node --experimental-strip-types --test test/js/node/http2/node-http2-continuation.test.ts
  */
 import assert from "node:assert";
@@ -37,15 +37,15 @@ const H2_CLIENT_OPTIONS = {
   settings: {
     // Allow receiving up to 256KB of header data
     maxHeaderListSize: 256 * 1024,
-    // Bun reads maxHeaderListPairs from settings
+    // Fun reads maxHeaderListPairs from settings
     maxHeaderListPairs: 2000,
   },
 };
 
 // Helper to get node executable
 function getNodeExecutable(): string {
-  if (typeof Bun !== "undefined") {
-    return Bun.which("node") || "node";
+  if (typeof Fun !== "undefined") {
+    return Fun.which("node") || "node";
   }
   return process.execPath.includes("node") ? process.execPath : "node";
 }
@@ -225,7 +225,7 @@ describe("HTTP/2 CONTINUATION frames - Client Side", () => {
     const client = http2.connect(server.url, H2_CLIENT_OPTIONS);
 
     try {
-      // Use 100 headers to stay within Bun's default maxHeaderListPairs limit (~108 after pseudo-headers)
+      // Use 100 headers to stay within Fun's default maxHeaderListPairs limit (~108 after pseudo-headers)
       const headers: http2.OutgoingHttpHeaders = {
         ":method": "GET",
         ":path": "/",
@@ -272,15 +272,15 @@ describe("HTTP/2 CONTINUATION frames - Client Side", () => {
   });
 });
 
-// Server-side tests (when Bun acts as HTTP/2 server)
-// These test that Bun can SEND large headers via CONTINUATION frames
+// Server-side tests (when Fun acts as HTTP/2 server)
+// These test that Fun can SEND large headers via CONTINUATION frames
 describe("HTTP/2 CONTINUATION frames - Server Side", () => {
-  let bunServer: http2.Http2SecureServer;
+  let funServer: http2.Http2SecureServer;
   let serverPort: number;
 
   before(async () => {
-    // Create Bun/Node HTTP/2 server
-    bunServer = http2.createSecureServer({
+    // Create Fun/Node HTTP/2 server
+    funServer = http2.createSecureServer({
       key: TLS_CERT.key,
       cert: TLS_CERT.cert,
       // Allow up to 2000 header pairs (default is 128)
@@ -290,7 +290,7 @@ describe("HTTP/2 CONTINUATION frames - Server Side", () => {
       },
     });
 
-    bunServer.on("stream", (stream, headers) => {
+    funServer.on("stream", (stream, headers) => {
       const path = headers[":path"] || "/";
 
       // Count received headers (excluding pseudo-headers)
@@ -327,13 +327,13 @@ describe("HTTP/2 CONTINUATION frames - Server Side", () => {
       }
     });
 
-    bunServer.on("error", err => {
-      console.error("Bun server error:", err.message);
+    funServer.on("error", err => {
+      console.error("Fun server error:", err.message);
     });
 
     await new Promise<void>(resolve => {
-      bunServer.listen(0, "127.0.0.1", () => {
-        const addr = bunServer.address();
+      funServer.listen(0, "127.0.0.1", () => {
+        const addr = funServer.address();
         serverPort = typeof addr === "object" && addr ? addr.port : 0;
         resolve();
       });
@@ -341,14 +341,14 @@ describe("HTTP/2 CONTINUATION frames - Server Side", () => {
   });
 
   after(() => {
-    bunServer?.close();
+    funServer?.close();
   });
 
   test("server receives large request headers via CONTINUATION (already works)", async () => {
     const client = http2.connect(`https://127.0.0.1:${serverPort}`, H2_CLIENT_OPTIONS);
 
     try {
-      // Use 120 headers to stay within Bun's default maxHeaderListPairs (128)
+      // Use 120 headers to stay within Fun's default maxHeaderListPairs (128)
       const headers: http2.OutgoingHttpHeaders = {
         ":method": "GET",
         ":path": "/",
@@ -382,7 +382,7 @@ describe("HTTP/2 CONTINUATION frames - Server Side", () => {
       assert.ok(response.data, "Should receive response data");
 
       // Count response headers starting with x-response-header-
-      // Note: Bun server sends 150 but client receives up to 120 due to maxHeaderListPairs default
+      // Note: Fun server sends 150 but client receives up to 120 due to maxHeaderListPairs default
       const responseHeaderCount = Object.keys(response.headers).filter(h => h.startsWith("x-response-header-")).length;
 
       // Server can send via CONTINUATION, but client has receiving limit

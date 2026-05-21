@@ -360,7 +360,7 @@ async function doBuildkiteAgent(action, cliOptions = {}) {
     };
 
     if (cloud) {
-      const requiredTags = ["robobun", "robobun2"];
+      const requiredTags = ["robofun", "robobun2"];
       for (const tag of requiredTags) {
         const value = await getCloudMetadataTag(tag);
         if (typeof value === "string") {

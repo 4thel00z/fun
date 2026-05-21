@@ -56,9 +56,9 @@ pub fn takeWebsocketRequestBuf(self: *WebSocketProxy) []u8 {
 
 /// Clean up all allocated resources
 pub fn deinit(self: *WebSocketProxy) void {
-    bun.default_allocator.free(self.#target_host);
+    fun.default_allocator.free(self.#target_host);
     if (self.#websocket_request_buf.len > 0) {
-        bun.default_allocator.free(self.#websocket_request_buf);
+        fun.default_allocator.free(self.#websocket_request_buf);
     }
     if (self.#tunnel) |tunnel| {
         self.#tunnel = null;
@@ -68,4 +68,4 @@ pub fn deinit(self: *WebSocketProxy) void {
 }
 
 const WebSocketProxyTunnel = @import("./WebSocketProxyTunnel.zig");
-const bun = @import("bun");
+const fun = @import("fun");

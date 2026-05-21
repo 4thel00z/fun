@@ -323,20 +323,20 @@ describe("tls.createServer", () => {
           expect(cert.subject).toBeDefined();
           expect(cert.subject).toMatchObject({
             C: "US",
-            CN: "server-bun",
+            CN: "server-fun",
             L: "San Francisco",
             O: "Oven",
-            OU: "Team Bun",
+            OU: "Team Fun",
             ST: "CA",
           });
 
           expect(cert.issuer).toBeDefined();
           expect(cert.issuer).toMatchObject({
             C: "US",
-            CN: "server-bun",
+            CN: "server-fun",
             L: "San Francisco",
             O: "Oven",
-            OU: "Team Bun",
+            OU: "Team Fun",
             ST: "CA",
           });
 
@@ -421,7 +421,7 @@ describe("tls.createServer events", () => {
 
     server.on("error", closeAndFail);
 
-    // First `Bun.connect({tls:true})` of the process triggers the once-only
+    // First `Fun.connect({tls:true})` of the process triggers the once-only
     // bundled-root-store build (`us_get_shared_default_ca_store`, ~150 ms in
     // debug+ASAN) so SSL_get_verify_result is real instead of the false
     // X509_V_OK VERIFY_NONE used to report. The condition assertion is the
@@ -431,7 +431,7 @@ describe("tls.createServer events", () => {
     server.listen(
       mustCall(async () => {
         const address = server.address() as AddressInfo;
-        client = await Bun.connect({
+        client = await Fun.connect({
           tls: true,
           hostname: address.address,
           port: address.port,
@@ -473,7 +473,7 @@ describe("tls.createServer events", () => {
     };
     server.on("error", closeAndFail);
 
-    // First `Bun.connect({tls:true})` of the process triggers the once-only
+    // First `Fun.connect({tls:true})` of the process triggers the once-only
     // bundled-root-store build (`us_get_shared_default_ca_store`, ~150 ms in
     // debug+ASAN) so SSL_get_verify_result is real instead of the false
     // X509_V_OK VERIFY_NONE used to report. The condition assertion is the
@@ -483,7 +483,7 @@ describe("tls.createServer events", () => {
     server.listen(
       mustCall(async () => {
         const address = server.address() as AddressInfo;
-        await Bun.connect({
+        await Fun.connect({
           tls: true,
           hostname: address.address,
           port: address.port,
@@ -550,7 +550,7 @@ describe("tls.createServer events", () => {
         const address = server.address() as AddressInfo;
 
         async function spawnClient() {
-          await Bun.connect({
+          await Fun.connect({
             tls: true,
             port: address?.port,
             hostname: address?.address,
@@ -629,7 +629,7 @@ describe("tls.createServer events", () => {
 
     server.on("error", closeAndFail);
 
-    // First `Bun.connect({tls:true})` of the process triggers the once-only
+    // First `Fun.connect({tls:true})` of the process triggers the once-only
     // bundled-root-store build (`us_get_shared_default_ca_store`, ~150 ms in
     // debug+ASAN) so SSL_get_verify_result is real instead of the false
     // X509_V_OK VERIFY_NONE used to report. The condition assertion is the
@@ -639,7 +639,7 @@ describe("tls.createServer events", () => {
     server.listen(
       mustCall(async () => {
         const address = server.address() as AddressInfo;
-        client = await Bun.connect({
+        client = await Fun.connect({
           tls: true,
           hostname: address.address,
           port: address.port,
@@ -688,11 +688,11 @@ it("connectionListener should emit the right amount of times, and with alpnProto
   const server: Server = createServer(
     {
       ...COMMON_CERT,
-      ALPNProtocols: ["bun"],
+      ALPNProtocols: ["fun"],
     },
     socket => {
       count++;
-      expect(socket.alpnProtocol).toBe("bun");
+      expect(socket.alpnProtocol).toBe("fun");
       socket.end();
     },
   );
@@ -709,7 +709,7 @@ it("connectionListener should emit the right amount of times, and with alpnProto
         rejectUnauthorized: false,
         port: server.address().port,
         host: "127.0.0.1",
-        ALPNProtocols: ["bun"],
+        ALPNProtocols: ["fun"],
       },
       () => {
         socket.on("close", resolve);

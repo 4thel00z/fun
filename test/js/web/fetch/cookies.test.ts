@@ -1,6 +1,6 @@
 "use strict";
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "node:events";
 import { createServer } from "node:http";
 

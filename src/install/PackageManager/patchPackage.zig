@@ -11,15 +11,15 @@ pub const PatchCommitResult = struct {
 /// - Run install to install newly patched pkg
 pub fn doPatchCommit(
     manager: *PackageManager,
-    pathbuf: *bun.PathBuffer,
+    pathbuf: *fun.PathBuffer,
     log_level: Options.LogLevel,
 ) !?PatchCommitResult {
-    var folder_path_buf: bun.PathBuffer = undefined;
+    var folder_path_buf: fun.PathBuffer = undefined;
     var lockfile: *Lockfile = try manager.allocator.create(Lockfile);
     defer lockfile.deinit();
     switch (lockfile.loadFromCwd(manager, manager.allocator, manager.log, true)) {
         .not_found => {
-            Output.errGeneric("Cannot find lockfile. Install packages with `<cyan>bun install<r>` before patching them.", .{});
+            Output.errGeneric("Cannot find lockfile. Install packages with `<cyan>fun install<r>` before patching them.", .{});
             Global.crash();
         },
         .err => |cause| {
@@ -59,7 +59,7 @@ pub fn doPatchCommit(
     var free_argument = false;
     argument = if (arg_kind == .path and
         not_in_workspace_root and
-        (!bun.path.Platform.posix.isAbsolute(argument) or (bun.Environment.isWindows and !bun.path.Platform.windows.isAbsolute(argument))))
+        (!fun.path.Platform.posix.isAbsolute(argument) or (fun.Environment.isWindows and !fun.path.Platform.windows.isAbsolute(argument))))
     brk: {
         if (pathArgumentRelativeToRootWorkspacePackage(manager, lockfile, argument)) |rel_path| {
             free_argument = true;
@@ -70,7 +70,7 @@ pub fn doPatchCommit(
     defer if (free_argument) manager.allocator.free(argument);
 
     // Attempt to open the existing node_modules folder
-    var root_node_modules = switch (bun.sys.openatOSPath(bun.FD.cwd(), bun.OSPathLiteral("node_modules"), bun.O.DIRECTORY | bun.O.RDONLY, 0o755)) {
+    var root_node_modules = switch (fun.sys.openatOSPath(fun.FD.cwd(), fun.OSPathLiteral("node_modules"), fun.O.DIRECTORY | fun.O.RDONLY, 0o755)) {
         .result => |fd| std.fs.Dir{ .fd = fd.cast() },
         .err => |e| {
             Output.prettyError(
@@ -87,12 +87,12 @@ pub fn doPatchCommit(
     const _cache_dir: std.fs.Dir, const _cache_dir_subpath: stringZ, const _changes_dir: []const u8, const _pkg: Package = switch (arg_kind) {
         .path => result: {
             const package_json_source: *const logger.Source = &brk: {
-                const package_json_path = bun.path.joinZ(&[_][]const u8{ argument, "package.json" }, .auto);
+                const package_json_path = fun.path.joinZ(&[_][]const u8{ argument, "package.json" }, .auto);
 
-                switch (bun.sys.File.toSource(package_json_path, manager.allocator, .{})) {
+                switch (fun.sys.File.toSource(package_json_path, manager.allocator, .{})) {
                     .result => |s| break :brk s,
                     .err => |e| {
-                        Output.err(e, "failed to read {f}", .{bun.fmt.quote(package_json_path)});
+                        Output.err(e, "failed to read {f}", .{fun.fmt.quote(package_json_path)});
                         Global.crash();
                     },
                 }
@@ -124,7 +124,7 @@ pub fn doPatchCommit(
             const name = lockfile.str(&package.name);
             const actual_package = switch (lockfile.package_index.get(package.name_hash) orelse {
                 Output.prettyError(
-                    "<r><red>error<r>: failed to find package in lockfile package index, this is a bug in Bun. Please file a GitHub issue.<r>\n",
+                    "<r><red>error<r>: failed to find package in lockfile package index, this is a bug in Fun. Please file a GitHub issue.<r>\n",
                     .{},
                 );
                 Global.crash();
@@ -162,7 +162,7 @@ pub fn doPatchCommit(
             const name, const version = Dependency.splitNameAndMaybeVersion(argument);
             const pkg_id, const node_modules = pkgInfoForNameAndVersion(lockfile, &iterator, argument, name, version);
 
-            const changes_dir = bun.path.joinZBuf(pathbuf[0..], &[_][]const u8{
+            const changes_dir = fun.path.joinZBuf(pathbuf[0..], &[_][]const u8{
                 node_modules.relative_path,
                 name,
             }, .auto);
@@ -191,23 +191,23 @@ pub fn doPatchCommit(
 
     const patchfile_contents = brk: {
         const new_folder = changes_dir;
-        var buf2: bun.PathBuffer = undefined;
-        var buf3: bun.PathBuffer = undefined;
+        var buf2: fun.PathBuffer = undefined;
+        var buf3: fun.PathBuffer = undefined;
         const old_folder = old_folder: {
-            const cache_dir_path = switch (bun.sys.getFdPath(.fromStdDir(cache_dir), &buf2)) {
+            const cache_dir_path = switch (fun.sys.getFdPath(.fromStdDir(cache_dir), &buf2)) {
                 .result => |s| s,
                 .err => |e| {
                     Output.err(e, "failed to read from cache", .{});
                     Global.crash();
                 },
             };
-            break :old_folder bun.path.join(&[_][]const u8{
+            break :old_folder fun.path.join(&[_][]const u8{
                 cache_dir_path,
                 cache_dir_subpath,
             }, .posix);
         };
 
-        const random_tempdir = bun.fs.FileSystem.tmpname("node_modules_tmp", buf2[0..], bun.fastRandom()) catch |e| {
+        const random_tempdir = fun.fs.FileSystem.tmpname("node_modules_tmp", buf2[0..], fun.fastRandom()) catch |e| {
             Output.err(e, "failed to make tempdir", .{});
             Global.crash();
         };
@@ -224,7 +224,7 @@ pub fn doPatchCommit(
             };
             defer new_folder_handle.close();
 
-            if (bun.sys.renameatConcurrently(
+            if (fun.sys.renameatConcurrently(
                 .fromStdDir(new_folder_handle),
                 "node_modules",
                 .fromStdDir(root_node_modules),
@@ -235,23 +235,23 @@ pub fn doPatchCommit(
             break :has_nested_node_modules true;
         };
 
-        const patch_tag_tmpname = bun.fs.FileSystem.tmpname("patch_tmp", buf3[0..], bun.fastRandom()) catch |e| {
+        const patch_tag_tmpname = fun.fs.FileSystem.tmpname("patch_tmp", buf3[0..], fun.fastRandom()) catch |e| {
             Output.err(e, "failed to make tempdir", .{});
             Global.crash();
         };
 
-        var bunpatchtagbuf: BuntagHashBuf = undefined;
-        // If the package was already patched then it might have a ".bun-tag-XXXXXXXX"
+        var funpatchtagbuf: FuntagHashBuf = undefined;
+        // If the package was already patched then it might have a ".fun-tag-XXXXXXXX"
         // we need to rename this out and back too.
-        const bun_patch_tag: ?[:0]const u8 = has_bun_patch_tag: {
+        const fun_patch_tag: ?[:0]const u8 = has_fun_patch_tag: {
             const name_and_version_hash = String.Builder.stringHash(resolution_label);
             const patch_tag = patch_tag: {
                 if (lockfile.patched_dependencies.get(name_and_version_hash)) |patchdep| {
                     if (patchdep.patchfileHash()) |hash| {
-                        break :patch_tag buntaghashbuf_make(&bunpatchtagbuf, hash);
+                        break :patch_tag funtaghashbuf_make(&funpatchtagbuf, hash);
                     }
                 }
-                break :has_bun_patch_tag null;
+                break :has_fun_patch_tag null;
             };
             var new_folder_handle = std.fs.cwd().openDir(new_folder, .{}) catch |e| {
                 Output.err(e, "failed to open directory <b>{s}<r>", .{new_folder});
@@ -259,20 +259,20 @@ pub fn doPatchCommit(
             };
             defer new_folder_handle.close();
 
-            if (bun.sys.renameatConcurrently(
+            if (fun.sys.renameatConcurrently(
                 .fromStdDir(new_folder_handle),
                 patch_tag,
                 .fromStdDir(root_node_modules),
                 patch_tag_tmpname,
                 .{ .move_fallback = true },
             ).asErr()) |e| {
-                Output.warn("failed renaming the bun patch tag, this may cause issues: {f}", .{e});
-                break :has_bun_patch_tag null;
+                Output.warn("failed renaming the fun patch tag, this may cause issues: {f}", .{e});
+                break :has_fun_patch_tag null;
             }
-            break :has_bun_patch_tag patch_tag;
+            break :has_fun_patch_tag patch_tag;
         };
         defer {
-            if (has_nested_node_modules or bun_patch_tag != null) {
+            if (has_nested_node_modules or fun_patch_tag != null) {
                 var new_folder_handle = std.fs.cwd().openDir(new_folder, .{}) catch |e| {
                     Output.prettyError(
                         "<r><red>error<r>: failed to open directory <b>{s}<r> {s}<r>\n",
@@ -283,7 +283,7 @@ pub fn doPatchCommit(
                 defer new_folder_handle.close();
 
                 if (has_nested_node_modules) {
-                    if (bun.sys.renameatConcurrently(
+                    if (fun.sys.renameatConcurrently(
                         .fromStdDir(root_node_modules),
                         random_tempdir,
                         .fromStdDir(new_folder_handle),
@@ -294,22 +294,22 @@ pub fn doPatchCommit(
                     }
                 }
 
-                if (bun_patch_tag) |patch_tag| {
-                    if (bun.sys.renameatConcurrently(
+                if (fun_patch_tag) |patch_tag| {
+                    if (fun.sys.renameatConcurrently(
                         .fromStdDir(root_node_modules),
                         patch_tag_tmpname,
                         .fromStdDir(new_folder_handle),
                         patch_tag,
                         .{ .move_fallback = true },
                     ).asErr()) |e| {
-                        Output.warn("failed renaming the bun patch tag, this may cause issues: {f}", .{e});
+                        Output.warn("failed renaming the fun patch tag, this may cause issues: {f}", .{e});
                     }
                 }
             }
         }
 
-        var cwdbuf: bun.PathBuffer = undefined;
-        const cwd = switch (bun.sys.getcwdZ(&cwdbuf)) {
+        var cwdbuf: fun.PathBuffer = undefined;
+        const cwd = switch (fun.sys.getcwdZ(&cwdbuf)) {
             .result => |fd| fd,
             .err => |e| {
                 Output.prettyError(
@@ -319,18 +319,18 @@ pub fn doPatchCommit(
                 Global.crash();
             },
         };
-        var gitbuf: bun.PathBuffer = undefined;
-        const git = bun.which(&gitbuf, bun.env_var.PATH.get() orelse "", cwd, "git") orelse {
+        var gitbuf: fun.PathBuffer = undefined;
+        const git = fun.which(&gitbuf, fun.env_var.PATH.get() orelse "", cwd, "git") orelse {
             Output.prettyError(
-                "<r><red>error<r>: git must be installed to use `bun patch --commit` <r>\n",
+                "<r><red>error<r>: git must be installed to use `fun patch --commit` <r>\n",
                 .{},
             );
             Global.crash();
         };
-        const paths = bun.patch.gitDiffPreprocessPaths(bun.default_allocator, old_folder, new_folder, false);
-        const opts = bun.patch.spawnOpts(paths[0], paths[1], cwd, git, &manager.event_loop);
+        const paths = fun.patch.gitDiffPreprocessPaths(fun.default_allocator, old_folder, new_folder, false);
+        const opts = fun.patch.spawnOpts(paths[0], paths[1], cwd, git, &manager.event_loop);
 
-        var spawn_result = switch (bun.spawnSync(&opts) catch |e| {
+        var spawn_result = switch (fun.spawnSync(&opts) catch |e| {
             Output.prettyError(
                 "<r><red>error<r>: failed to make diff {s}<r>\n",
                 .{@errorName(e)},
@@ -347,7 +347,7 @@ pub fn doPatchCommit(
             },
         };
 
-        const contents = switch (bun.patch.diffPostProcess(&spawn_result, paths[0], paths[1]) catch |e| {
+        const contents = switch (fun.patch.diffPostProcess(&spawn_result, paths[0], paths[1]) catch |e| {
             Output.prettyError(
                 "<r><red>error<r>: failed to make diff {s}<r>\n",
                 .{@errorName(e)},
@@ -393,12 +393,12 @@ pub fn doPatchCommit(
 
     // write the patch contents to temp file then rename
     var tmpname_buf: [1024]u8 = undefined;
-    const tempfile_name = try bun.fs.FileSystem.tmpname("tmp", &tmpname_buf, bun.fastRandom());
+    const tempfile_name = try fun.fs.FileSystem.tmpname("tmp", &tmpname_buf, fun.fastRandom());
     const tmpdir = manager.getTemporaryDirectory().handle;
-    const tmpfd = switch (bun.sys.openat(
+    const tmpfd = switch (fun.sys.openat(
         .fromStdDir(tmpdir),
         tempfile_name,
-        bun.O.RDWR | bun.O.CREAT,
+        fun.O.RDWR | fun.O.CREAT,
         0o666,
     )) {
         .result => |fd| fd,
@@ -409,7 +409,7 @@ pub fn doPatchCommit(
     };
     defer tmpfd.close();
 
-    if (bun.sys.File.writeAll(.{ .handle = tmpfd }, patchfile_contents.items).asErr()) |e| {
+    if (fun.sys.File.writeAll(.{ .handle = tmpfd }, patchfile_contents.items).asErr()) |e| {
         Output.err(e, "failed to write patch to temp file", .{});
         Global.crash();
     }
@@ -423,7 +423,7 @@ pub fn doPatchCommit(
     }
     defer if (deinit) manager.allocator.free(patch_filename);
 
-    const path_in_patches_dir = bun.path.joinZ(
+    const path_in_patches_dir = fun.path.joinZ(
         &[_][]const u8{
             manager.options.patch_features.commit.patches_dir,
             patch_filename,
@@ -431,20 +431,20 @@ pub fn doPatchCommit(
         .posix,
     );
 
-    var nodefs = bun.jsc.Node.fs.NodeFS{};
-    const args = bun.jsc.Node.fs.Arguments.Mkdir{
-        .path = .{ .string = bun.PathString.init(manager.options.patch_features.commit.patches_dir) },
+    var nodefs = fun.jsc.Node.fs.NodeFS{};
+    const args = fun.jsc.Node.fs.Arguments.Mkdir{
+        .path = .{ .string = fun.PathString.init(manager.options.patch_features.commit.patches_dir) },
     };
     if (nodefs.mkdirRecursive(args).asErr()) |e| {
-        Output.err(e, "failed to make patches dir {f}", .{bun.fmt.quote(args.path.slice())});
+        Output.err(e, "failed to make patches dir {f}", .{fun.fmt.quote(args.path.slice())});
         Global.crash();
     }
 
     // rename to patches dir
-    if (bun.sys.renameatConcurrently(
+    if (fun.sys.renameatConcurrently(
         .fromStdDir(tmpdir),
         tempfile_name,
-        bun.FD.cwd(),
+        fun.FD.cwd(),
         path_in_patches_dir,
         .{ .move_fallback = true },
     ).asErr()) |e| {
@@ -452,9 +452,9 @@ pub fn doPatchCommit(
         Global.crash();
     }
 
-    const patch_key = bun.handleOom(std.fmt.allocPrint(manager.allocator, "{s}", .{resolution_label}));
-    const patchfile_path = bun.handleOom(manager.allocator.dupe(u8, path_in_patches_dir));
-    _ = bun.sys.unlink(bun.path.joinZ(&[_][]const u8{ changes_dir, ".bun-patch-tag" }, .auto));
+    const patch_key = fun.handleOom(std.fmt.allocPrint(manager.allocator, "{s}", .{resolution_label}));
+    const patchfile_path = fun.handleOom(manager.allocator.dupe(u8, path_in_patches_dir));
+    _ = fun.sys.unlink(fun.path.joinZ(&[_][]const u8{ changes_dir, ".fun-patch-tag" }, .auto));
 
     return .{
         .patch_key = patch_key,
@@ -466,18 +466,18 @@ pub fn doPatchCommit(
 fn patchCommitGetVersion(
     buf: *[1024]u8,
     patch_tag_path: [:0]const u8,
-) bun.sys.Maybe(string) {
-    const patch_tag_fd = switch (bun.sys.open(patch_tag_path, bun.O.RDONLY, 0)) {
+) fun.sys.Maybe(string) {
+    const patch_tag_fd = switch (fun.sys.open(patch_tag_path, fun.O.RDONLY, 0)) {
         .result => |fd| fd,
         .err => |e| return .{ .err = e },
     };
     defer {
         patch_tag_fd.close();
         // we actually need to delete this
-        _ = bun.sys.unlink(patch_tag_path);
+        _ = fun.sys.unlink(patch_tag_path);
     }
 
-    const version = switch (bun.sys.File.readFillBuf(.{ .handle = patch_tag_fd }, buf[0..])) {
+    const version = switch (fun.sys.File.readFillBuf(.{ .handle = patch_tag_fd }, buf[0..])) {
         .result => |v| v,
         .err => |e| return .{ .err = e },
     };
@@ -525,7 +525,7 @@ fn escapePatchFilename(allocator: std.mem.Allocator, name: []const u8) ?[]const 
     var count: usize = 0;
     for (name) |c| count += if (ESCAPE_TABLE[c].escaped()) |e| e.len else 1;
     if (count == name.len) return null;
-    var buf = bun.handleOom(allocator.alloc(u8, count));
+    var buf = fun.handleOom(allocator.alloc(u8, count));
     var i: usize = 0;
     for (name) |c| {
         const e = ESCAPE_TABLE[c].escaped() orelse &[_]u8{c};
@@ -547,17 +547,17 @@ pub fn preparePatch(manager: *PackageManager) !void {
 
     const arg_kind: PatchArgKind = PatchArgKind.fromArg(argument);
 
-    var folder_path_buf: bun.PathBuffer = undefined;
+    var folder_path_buf: fun.PathBuffer = undefined;
     var iterator = Lockfile.Tree.Iterator(.node_modules).init(manager.lockfile);
     var resolution_buf: [1024]u8 = undefined;
 
-    var win_normalizer: if (bun.Environment.isWindows) bun.PathBuffer else struct {} = undefined;
+    var win_normalizer: if (fun.Environment.isWindows) fun.PathBuffer else struct {} = undefined;
 
     const not_in_workspace_root = manager.root_package_id.get(manager.lockfile, manager.workspace_name_hash) != 0;
     var free_argument = false;
     argument = if (arg_kind == .path and
         not_in_workspace_root and
-        (!bun.path.Platform.posix.isAbsolute(argument) or (bun.Environment.isWindows and !bun.path.Platform.windows.isAbsolute(argument))))
+        (!fun.path.Platform.posix.isAbsolute(argument) or (fun.Environment.isWindows and !fun.path.Platform.windows.isAbsolute(argument))))
     brk: {
         if (pathArgumentRelativeToRootWorkspacePackage(manager, manager.lockfile, argument)) |rel_path| {
             free_argument = true;
@@ -572,12 +572,12 @@ pub fn preparePatch(manager: *PackageManager) !void {
             var lockfile = manager.lockfile;
 
             const package_json_source: *const logger.Source = &src: {
-                const package_json_path = bun.path.joinZ(&[_][]const u8{ argument, "package.json" }, .auto);
+                const package_json_path = fun.path.joinZ(&[_][]const u8{ argument, "package.json" }, .auto);
 
-                switch (bun.sys.File.toSource(package_json_path, manager.allocator, .{})) {
+                switch (fun.sys.File.toSource(package_json_path, manager.allocator, .{})) {
                     .result => |s| break :src s,
                     .err => |e| {
-                        Output.err(e, "failed to read {f}", .{bun.fmt.quote(package_json_path)});
+                        Output.err(e, "failed to read {f}", .{fun.fmt.quote(package_json_path)});
                         Global.crash();
                     },
                 }
@@ -609,7 +609,7 @@ pub fn preparePatch(manager: *PackageManager) !void {
             const name = lockfile.str(&package.name);
             const actual_package = switch (lockfile.package_index.get(package.name_hash) orelse {
                 Output.prettyError(
-                    "<r><red>error<r>: failed to find package in lockfile package index, this is a bug in Bun. Please file a GitHub issue.<r>\n",
+                    "<r><red>error<r>: failed to find package in lockfile package index, this is a bug in Fun. Please file a GitHub issue.<r>\n",
                     .{},
                 );
                 Global.crash();
@@ -651,7 +651,7 @@ pub fn preparePatch(manager: *PackageManager) !void {
             const cache_dir = cache_result.cache_dir;
             const cache_dir_subpath = cache_result.cache_dir_subpath;
 
-            const buf = if (comptime bun.Environment.isWindows) bun.path.pathToPosixBuf(u8, argument, win_normalizer[0..]) else argument;
+            const buf = if (comptime fun.Environment.isWindows) fun.path.pathToPosixBuf(u8, argument, win_normalizer[0..]) else argument;
 
             break :brk .{
                 cache_dir,
@@ -690,8 +690,8 @@ pub fn preparePatch(manager: *PackageManager) !void {
             const cache_dir = cache_result.cache_dir;
             const cache_dir_subpath = cache_result.cache_dir_subpath;
 
-            const module_folder_ = bun.path.join(&[_][]const u8{ folder.relative_path, name }, .auto);
-            const buf = if (comptime bun.Environment.isWindows) bun.path.pathToPosixBuf(u8, module_folder_, win_normalizer[0..]) else module_folder_;
+            const module_folder_ = fun.path.join(&[_][]const u8{ folder.relative_path, name }, .auto);
+            const buf = if (comptime fun.Environment.isWindows) fun.path.pathToPosixBuf(u8, module_folder_, win_normalizer[0..]) else module_folder_;
 
             break :brk .{
                 cache_dir,
@@ -708,7 +708,7 @@ pub fn preparePatch(manager: *PackageManager) !void {
     // So we will overwrite the folder by directly copying the package in cache into it
     //
     // With the isolated linker's global virtual store, `module_folder` is
-    // reached *through* a `node_modules/.bun/<storepath>` symlink that points
+    // reached *through* a `node_modules/.fun/<storepath>` symlink that points
     // into `<cache>/links/`. `deleteTree(module_folder)` would follow that
     // symlink and wipe the shared global entry (and its dep symlinks)
     // underneath every other project, then FileCopier would write the user's
@@ -726,12 +726,12 @@ pub fn preparePatch(manager: *PackageManager) !void {
     };
 
     if (not_in_workspace_root) {
-        var bufn: bun.PathBuffer = undefined;
-        Output.pretty("\nTo patch <b>{s}<r>, edit the following folder:\n\n  <cyan>{s}<r>\n", .{ pkg_name, bun.path.joinStringBuf(bufn[0..], &[_][]const u8{ bun.fs.FileSystem.instance.topLevelDirWithoutTrailingSlash(), module_folder }, .posix) });
-        Output.pretty("\nOnce you're done with your changes, run:\n\n  <cyan>bun patch --commit '{s}'<r>\n", .{bun.path.joinStringBuf(bufn[0..], &[_][]const u8{ bun.fs.FileSystem.instance.topLevelDirWithoutTrailingSlash(), module_folder }, .posix)});
+        var bufn: fun.PathBuffer = undefined;
+        Output.pretty("\nTo patch <b>{s}<r>, edit the following folder:\n\n  <cyan>{s}<r>\n", .{ pkg_name, fun.path.joinStringBuf(bufn[0..], &[_][]const u8{ fun.fs.FileSystem.instance.topLevelDirWithoutTrailingSlash(), module_folder }, .posix) });
+        Output.pretty("\nOnce you're done with your changes, run:\n\n  <cyan>fun patch --commit '{s}'<r>\n", .{fun.path.joinStringBuf(bufn[0..], &[_][]const u8{ fun.fs.FileSystem.instance.topLevelDirWithoutTrailingSlash(), module_folder }, .posix)});
     } else {
         Output.pretty("\nTo patch <b>{s}<r>, edit the following folder:\n\n  <cyan>{s}<r>\n", .{ pkg_name, module_folder });
-        Output.pretty("\nOnce you're done with your changes, run:\n\n  <cyan>bun patch --commit '{s}'<r>\n", .{module_folder});
+        Output.pretty("\nOnce you're done with your changes, run:\n\n  <cyan>fun patch --commit '{s}'<r>\n", .{module_folder});
     }
 
     return;
@@ -742,15 +742,15 @@ fn detachModuleFolderFromSharedStore(module_folder: []const u8) void {
     // platform (see `pathToPosixBuf` in `preparePatch`). Re-normalise to the
     // platform separator so `undo()`/`basename()` walk the path correctly on
     // Windows and the lstat/getFileAttributes calls below see a native path.
-    var native_buf: bun.PathBuffer = undefined;
+    var native_buf: fun.PathBuffer = undefined;
     const native = if (comptime Environment.isWindows) native: {
         @memcpy(native_buf[0..module_folder.len], module_folder);
         const slice = native_buf[0..module_folder.len];
-        bun.path.posixToPlatformInPlace(u8, slice);
+        fun.path.posixToPlatformInPlace(u8, slice);
         break :native slice;
     } else module_folder;
 
-    var path: bun.Path(.{ .sep = .auto }) = .from(native);
+    var path: fun.Path(.{ .sep = .auto }) = .from(native);
     defer path.deinit();
     var components: usize = 1;
     for (native) |c| {
@@ -759,8 +759,8 @@ fn detachModuleFolderFromSharedStore(module_folder: []const u8) void {
     var depth: usize = 0;
     while (depth < components) : (depth += 1) {
         const is_symlink = if (comptime Environment.isWindows)
-            (bun.sys.getFileAttributes(path.sliceZ()) orelse return).is_reparse_point
-        else if (bun.sys.lstat(path.sliceZ()).asValue()) |st|
+            (fun.sys.getFileAttributes(path.sliceZ()) orelse return).is_reparse_point
+        else if (fun.sys.lstat(path.sliceZ()).asValue()) |st|
             std.posix.S.ISLNK(@intCast(st.mode))
         else
             return;
@@ -771,12 +771,12 @@ fn detachModuleFolderFromSharedStore(module_folder: []const u8) void {
             // `deleteTree` + `FileCopier` would follow it into the shared
             // global-store entry — so fail loudly here rather than silently
             // corrupting the cache.
-            const remove_err: ?bun.sys.Error = if (comptime Environment.isWindows) remove: {
-                if (bun.sys.rmdir(path.sliceZ()).asErr()) |_| {
-                    if (bun.sys.unlink(path.sliceZ()).asErr()) |e| break :remove if (e.getErrno() == .NOENT) null else e;
+            const remove_err: ?fun.sys.Error = if (comptime Environment.isWindows) remove: {
+                if (fun.sys.rmdir(path.sliceZ()).asErr()) |_| {
+                    if (fun.sys.unlink(path.sliceZ()).asErr()) |e| break :remove if (e.getErrno() == .NOENT) null else e;
                 }
                 break :remove null;
-            } else if (bun.sys.unlink(path.sliceZ()).asErr()) |e|
+            } else if (fun.sys.unlink(path.sliceZ()).asErr()) |e|
                 if (e.getErrno() == .NOENT) null else e
             else
                 null;
@@ -786,7 +786,7 @@ fn detachModuleFolderFromSharedStore(module_folder: []const u8) void {
             }
             // Re-create the now-missing path segments below the removed
             // symlink so `module_folder`'s parent exists for the copy.
-            const parent = bun.path.dirname(native, .auto);
+            const parent = fun.path.dirname(native, .auto);
             if (parent.len > 0) {
                 FD.cwd().makePath(u8, parent) catch {};
             }
@@ -803,15 +803,15 @@ fn overwritePackageInNodeModulesFolder(
 ) !void {
     FD.cwd().deleteTree(node_modules_folder_path) catch {};
 
-    var dest_subpath: bun.Path(.{ .sep = .auto, .unit = .os }) = .from(node_modules_folder_path);
+    var dest_subpath: fun.Path(.{ .sep = .auto, .unit = .os }) = .from(node_modules_folder_path);
     defer dest_subpath.deinit();
 
-    const src_path: bun.AbsPath(.{ .sep = .auto, .unit = .os }) = src_path: {
+    const src_path: fun.AbsPath(.{ .sep = .auto, .unit = .os }) = src_path: {
         if (comptime Environment.isWindows) {
-            var path_buf: bun.WPathBuffer = undefined;
-            const abs_path = try bun.getFdPathW(.fromStdDir(cache_dir), &path_buf);
+            var path_buf: fun.WPathBuffer = undefined;
+            const abs_path = try fun.getFdPathW(.fromStdDir(cache_dir), &path_buf);
 
-            var src_path: bun.AbsPath(.{ .sep = .auto, .unit = .os }) = .from(abs_path);
+            var src_path: fun.AbsPath(.{ .sep = .auto, .unit = .os }) = .from(abs_path);
             src_path.append(cache_dir_subpath);
 
             break :src_path src_path;
@@ -825,13 +825,13 @@ fn overwritePackageInNodeModulesFolder(
     var cached_package_folder = try cache_dir.openDir(cache_dir_subpath, .{ .iterate = true });
     defer cached_package_folder.close();
 
-    const ignore_directories: []const bun.OSPathSlice = &.{
-        comptime bun.OSPathLiteral("node_modules"),
-        comptime bun.OSPathLiteral(".git"),
-        comptime bun.OSPathLiteral("CMakeFiles"),
+    const ignore_directories: []const fun.OSPathSlice = &.{
+        comptime fun.OSPathLiteral("node_modules"),
+        comptime fun.OSPathLiteral(".git"),
+        comptime fun.OSPathLiteral("CMakeFiles"),
     };
 
-    var copier: bun.install.FileCopier = try .init(
+    var copier: fun.install.FileCopier = try .init(
         .fromStdDir(cached_package_folder),
         src_path,
         dest_subpath,
@@ -871,7 +871,7 @@ fn pkgInfoForNameAndVersion(
     version: ?[]const u8,
 ) struct { PackageID, Lockfile.Tree.Iterator(.node_modules).Next } {
     var sfb = std.heap.stackFallback(@sizeOf(IdPair) * 4, lockfile.allocator);
-    var pairs = bun.handleOom(std.array_list.Managed(IdPair).initCapacity(sfb.get(), 8));
+    var pairs = fun.handleOom(std.array_list.Managed(IdPair).initCapacity(sfb.get(), 8));
     defer pairs.deinit();
 
     const name_hash = String.Builder.stringHash(name);
@@ -889,10 +889,10 @@ fn pkgInfoForNameAndVersion(
         if (version) |v| {
             const label = std.fmt.bufPrint(buf[0..], "{f}", .{pkg.resolution.fmt(strbuf, .posix)}) catch @panic("Resolution name too long");
             if (std.mem.eql(u8, label, v)) {
-                bun.handleOom(pairs.append(.{ @intCast(dep_id), pkg_id }));
+                fun.handleOom(pairs.append(.{ @intCast(dep_id), pkg_id }));
             }
         } else {
-            bun.handleOom(pairs.append(.{ @intCast(dep_id), pkg_id }));
+            fun.handleOom(pairs.append(.{ @intCast(dep_id), pkg_id }));
         }
     }
 
@@ -1016,7 +1016,7 @@ fn pathArgumentRelativeToRootWorkspacePackage(manager: *PackageManager, lockfile
     if (workspace_package_id == 0) return null;
     const workspace_res = lockfile.packages.items(.resolution)[workspace_package_id];
     const rel_path: []const u8 = workspace_res.value.workspace.slice(lockfile.buffers.string_bytes.items);
-    return bun.handleOom(bun.default_allocator.dupe(u8, bun.path.join(&[_][]const u8{ rel_path, argument }, .posix)));
+    return fun.handleOom(fun.default_allocator.dupe(u8, fun.path.join(&[_][]const u8{ rel_path, argument }, .posix)));
 }
 
 const PatchArgKind = enum {
@@ -1024,8 +1024,8 @@ const PatchArgKind = enum {
     name_and_version,
 
     pub fn fromArg(argument: []const u8) PatchArgKind {
-        if (bun.strings.containsComptime(argument, "node_modules/")) return .path;
-        if (bun.Environment.isWindows and bun.strings.hasPrefix(argument, "node_modules\\")) return .path;
+        if (fun.strings.containsComptime(argument, "node_modules/")) return .path;
+        if (fun.Environment.isWindows and fun.strings.hasPrefix(argument, "node_modules\\")) return .path;
         return .name_and_version;
     }
 };
@@ -1035,36 +1035,36 @@ const stringZ = [:0]const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const Global = bun.Global;
-const JSON = bun.json;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const File = bun.sys.File;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const Global = fun.Global;
+const JSON = fun.json;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const File = fun.sys.File;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const BuntagHashBuf = bun.install.BuntagHashBuf;
-const Dependency = bun.install.Dependency;
-const DependencyID = bun.install.DependencyID;
-const Features = bun.install.Features;
-const PackageID = bun.install.PackageID;
-const Resolution = bun.install.Resolution;
-const buntaghashbuf_make = bun.install.buntaghashbuf_make;
-const initializeStore = bun.install.initializeStore;
-const invalid_package_id = bun.install.invalid_package_id;
+const FuntagHashBuf = fun.install.FuntagHashBuf;
+const Dependency = fun.install.Dependency;
+const DependencyID = fun.install.DependencyID;
+const Features = fun.install.Features;
+const PackageID = fun.install.PackageID;
+const Resolution = fun.install.Resolution;
+const funtaghashbuf_make = fun.install.funtaghashbuf_make;
+const initializeStore = fun.install.initializeStore;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const Options = PackageManager.Options;

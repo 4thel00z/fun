@@ -2,19 +2,19 @@
 
 #include "root.h"
 
-#include "BunBuiltinNames.h"
-#include "BunClientData.h"
+#include "FunBuiltinNames.h"
+#include "FunClientData.h"
 #include "ZigGlobalObject.h"
 
 #include "JSDOMWrapperCache.h"
 
 extern "C" JSC_DECLARE_HOST_FUNCTION(functionImportMeta__resolveSync);
 extern "C" JSC_DECLARE_HOST_FUNCTION(functionImportMeta__resolveSyncPrivate);
-extern "C" JSC::EncodedJSValue Bun__resolve(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, JSC::EncodedJSValue from, bool is_esm);
-extern "C" JSC::EncodedJSValue Bun__resolveSync(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, JSC::EncodedJSValue from, bool is_esm, bool isUserRequireResolve);
-extern "C" JSC::EncodedJSValue Bun__resolveSyncWithPaths(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, JSC::EncodedJSValue from, bool is_esm, bool isUserRequireResolve, const BunString* paths, size_t paths_len);
-extern "C" JSC::EncodedJSValue Bun__resolveSyncWithSource(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, BunString* from, bool is_esm, bool isUserRequireResolve);
-extern "C" JSC::EncodedJSValue Bun__resolveSyncWithStrings(JSC::JSGlobalObject* global, BunString* specifier, BunString* from, bool is_esm);
+extern "C" JSC::EncodedJSValue Fun__resolve(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, JSC::EncodedJSValue from, bool is_esm);
+extern "C" JSC::EncodedJSValue Fun__resolveSync(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, JSC::EncodedJSValue from, bool is_esm, bool isUserRequireResolve);
+extern "C" JSC::EncodedJSValue Fun__resolveSyncWithPaths(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, JSC::EncodedJSValue from, bool is_esm, bool isUserRequireResolve, const FunString* paths, size_t paths_len);
+extern "C" JSC::EncodedJSValue Fun__resolveSyncWithSource(JSC::JSGlobalObject* global, JSC::EncodedJSValue specifier, FunString* from, bool is_esm, bool isUserRequireResolve);
+extern "C" JSC::EncodedJSValue Fun__resolveSyncWithStrings(JSC::JSGlobalObject* global, FunString* specifier, FunString* from, bool is_esm);
 
 namespace Zig {
 
@@ -46,10 +46,10 @@ public:
     /// caveat: It is impossible to have a module with a `?` in it's file name.
     ///
     /// Fixing this means adjusting a lot of how the module resolver works to operate and handle URL
-    /// escaping, see https://github.com/oven-sh/bun/issues/8640 for more details.
+    /// escaping, see https://github.com/underdoc-org/fun/issues/8640 for more details.
     ///
     /// The above rules get a best estimate bandage to solve the problems
-    /// stated in https://github.com/oven-sh/bun/pull/9399
+    /// stated in https://github.com/underdoc-org/fun/pull/9399
     static ImportMetaObject* createFromSpecifier(JSC::JSGlobalObject* globalObject, const String& specifier);
 
     static ImportMetaObject* createRequireFunction(VM& vm, JSGlobalObject* lexicalGlobalObject, const WTF::String& pathString);

@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 describe("--sql-preconnect", () => {
   test("should attempt to preconnect to PostgreSQL on startup", async () => {
     let connectionAttempts = 0;
     const { promise, resolve } = Promise.withResolvers<void>();
 
-    await using server = Bun.listen({
+    await using server = Fun.listen({
       port: 0,
       hostname: "127.0.0.1",
       socket: {
@@ -26,10 +26,10 @@ describe("--sql-preconnect", () => {
       "index.js": `console.log("Script executed");`,
     });
 
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "--sql-preconnect", "index.js"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "--sql-preconnect", "index.js"],
       env: {
-        ...bunEnv,
+        ...funEnv,
         DATABASE_URL: `postgres://127.0.0.1:${server.port}/MY_DATABASE`,
       },
       cwd: testDir,
@@ -45,7 +45,7 @@ describe("--sql-preconnect", () => {
   test("should not connect when flag is not used", async () => {
     let connectionAttempts = 0;
 
-    await using server = Bun.listen({
+    await using server = Fun.listen({
       port: 0,
       hostname: "127.0.0.1",
       socket: {
@@ -62,10 +62,10 @@ describe("--sql-preconnect", () => {
       "index.js": `console.log("Normal script executed");`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.js"],
       env: {
-        ...bunEnv,
+        ...funEnv,
         DATABASE_URL: `postgres://127.0.0.1:${server.port}/MY_DATABASE`,
       },
       cwd: testDir,

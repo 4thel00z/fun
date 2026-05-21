@@ -71,7 +71,7 @@ pub const HoistDependencyResult = union(enum) {
 pub const SubtreeError = OOM || error{DependencyLoop};
 
 // max number of node_modules folders
-pub const max_depth = (bun.MAX_PATH_BYTES / "node_modules".len) + 1;
+pub const max_depth = (fun.MAX_PATH_BYTES / "node_modules".len) + 1;
 
 pub const DepthBuf = [max_depth]Id;
 
@@ -87,7 +87,7 @@ const IteratorPathStyle = enum {
 pub fn Iterator(comptime path_style: IteratorPathStyle) type {
     return struct {
         tree_id: Id,
-        path_buf: bun.PathBuffer = undefined,
+        path_buf: fun.PathBuffer = undefined,
 
         lockfile: *const Lockfile,
 
@@ -166,7 +166,7 @@ pub fn Iterator(comptime path_style: IteratorPathStyle) type {
 pub fn relativePathAndDepth(
     lockfile: *const Lockfile,
     tree_id: Id,
-    path_buf: *bun.PathBuffer,
+    path_buf: *fun.PathBuffer,
     depth_buf: *DepthBuf,
     comptime path_style: IteratorPathStyle,
 ) struct { stringZ, usize } {
@@ -240,7 +240,7 @@ pub const BuilderMethod = enum {
 pub fn Builder(comptime method: BuilderMethod) type {
     return struct {
         allocator: Allocator,
-        list: bun.MultiArrayList(Entry) = .{},
+        list: fun.MultiArrayList(Entry) = .{},
         resolutions: []PackageID,
         dependencies: []const Dependency,
         resolution_lists: []const Lockfile.DependencyIDSlice,
@@ -325,7 +325,7 @@ pub fn Builder(comptime method: BuilderMethod) type {
             // take over the `builder.list` pointer for only trees
             if (@intFromPtr(trees.ptr) != @intFromPtr(list_ptr)) {
                 var new: [*]Tree = @ptrCast(list_ptr);
-                bun.copy(Tree, new[0..trees.len], trees);
+                fun.copy(Tree, new[0..trees.len], trees);
                 trees = new[0..trees.len];
             }
 
@@ -408,7 +408,7 @@ pub fn isFilteredDependencyOrWorkspace(
     var workspace_matched = workspace_filters.len == 0;
 
     for (workspace_filters) |filter| {
-        var filter_path: bun.AbsPath(.{ .sep = .posix }) = .initTopLevelDir();
+        var filter_path: fun.AbsPath(.{ .sep = .posix }) = .initTopLevelDir();
         defer filter_path.deinit();
 
         const pattern, const name_or_path = switch (filter) {
@@ -431,7 +431,7 @@ pub fn isFilteredDependencyOrWorkspace(
             },
         };
 
-        switch (bun.glob.match(pattern, name_or_path)) {
+        switch (fun.glob.match(pattern, name_or_path)) {
             .match, .negate_match => workspace_matched = true,
 
             .negate_no_match => {
@@ -583,11 +583,11 @@ pub fn processSubtree(
             .dependency_loop, .hoisted => continue,
 
             .resolve => |res_id| {
-                bun.debugAssert(pkg_id == invalid_package_id);
-                bun.debugAssert(res_id != invalid_package_id);
+                fun.debugAssert(pkg_id == invalid_package_id);
+                fun.debugAssert(res_id != invalid_package_id);
                 builder.resolutions[dep_id] = res_id;
                 if (comptime Environment.allow_assert) {
-                    bun.debugAssert(!builder.pending_optional_peers.contains(dependency.name_hash));
+                    fun.debugAssert(!builder.pending_optional_peers.contains(dependency.name_hash));
                 }
 
                 if (builder.pending_optional_peers.fetchSwapRemove(dependency.name_hash)) |entry| {
@@ -595,20 +595,20 @@ pub fn processSubtree(
                     defer peers.deinit();
                     for (peers.keys()) |unresolved_dep_id| {
                         // the dependency should be either unresolved or the same dependency as above
-                        bun.debugAssert(unresolved_dep_id == dep_id or builder.resolutions[unresolved_dep_id] == invalid_package_id);
+                        fun.debugAssert(unresolved_dep_id == dep_id or builder.resolutions[unresolved_dep_id] == invalid_package_id);
                         builder.resolutions[unresolved_dep_id] = res_id;
                     }
                 }
             },
             .resolve_replace => |replace| {
-                bun.debugAssert(pkg_id != invalid_package_id);
+                fun.debugAssert(pkg_id != invalid_package_id);
                 builder.resolutions[replace.dep_id] = pkg_id;
                 if (builder.pending_optional_peers.fetchSwapRemove(dependency.name_hash)) |entry| {
                     var peers = entry.value;
                     defer peers.deinit();
                     for (peers.keys()) |unresolved_dep_id| {
                         // the dependency should be either unresolved or the same dependency as above
-                        bun.debugAssert(unresolved_dep_id == replace.dep_id or builder.resolutions[unresolved_dep_id] == invalid_package_id);
+                        fun.debugAssert(unresolved_dep_id == replace.dep_id or builder.resolutions[unresolved_dep_id] == invalid_package_id);
                         builder.resolutions[unresolved_dep_id] = pkg_id;
                     }
                 }
@@ -637,7 +637,7 @@ pub fn processSubtree(
                 try entry.value_ptr.put(dep_id, {});
             },
             .placement => |dest| {
-                bun.handleOom(dependency_lists[dest.id].append(builder.allocator, dep_id));
+                fun.handleOom(dependency_lists[dest.id].append(builder.allocator, dep_id));
                 trees[dest.id].dependencies.len += 1;
                 if (pkg_id != invalid_package_id and builder.resolution_lists[pkg_id].len > 0) {
                     try builder.queue.writeItem(.{
@@ -682,21 +682,21 @@ fn hoistDependency(
         const res_id = builder.resolutions[dep_id];
 
         if (res_id == invalid_package_id and package_id == invalid_package_id) {
-            bun.debugAssert(dep.behavior.isOptionalPeer());
-            bun.debugAssert(dependency.behavior.isOptionalPeer());
+            fun.debugAssert(dep.behavior.isOptionalPeer());
+            fun.debugAssert(dependency.behavior.isOptionalPeer());
             // both optional peers will need to be resolved if they can resolve later.
             // remember input package_id and dependency for later
             return .resolve_later;
         }
 
         if (res_id == invalid_package_id) {
-            bun.debugAssert(dep.behavior.isOptionalPeer());
+            fun.debugAssert(dep.behavior.isOptionalPeer());
             return .{ .resolve_replace = .{ .id = this.id, .dep_id = dep_id } };
         }
 
         if (package_id == invalid_package_id) {
-            bun.debugAssert(dependency.behavior.isOptionalPeer());
-            bun.debugAssert(res_id != invalid_package_id);
+            fun.debugAssert(dependency.behavior.isOptionalPeer());
+            fun.debugAssert(res_id != invalid_package_id);
             // resolve optional peer to `builder.resolutions[dep_id]`
             return .{ .resolve = res_id }; // 1
         }
@@ -778,7 +778,7 @@ pub const FillItem = struct {
     hoist_root_id: Tree.Id,
 };
 
-pub const TreeFiller = bun.LinearFifo(FillItem, .Dynamic);
+pub const TreeFiller = fun.LinearFifo(FillItem, .Dynamic);
 
 const string = []const u8;
 const stringZ = [:0]const u8;
@@ -786,17 +786,17 @@ const stringZ = [:0]const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const Path = bun.path;
-const assert = bun.assert;
-const logger = bun.logger;
-const Bitset = bun.bit_set.DynamicBitSetUnmanaged;
-const String = bun.Semver.String;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const Path = fun.path;
+const assert = fun.assert;
+const logger = fun.logger;
+const Bitset = fun.bit_set.DynamicBitSetUnmanaged;
+const String = fun.Semver.String;
 
-const install = bun.install;
+const install = fun.install;
 const Dependency = install.Dependency;
 const DependencyID = install.DependencyID;
 const PackageID = install.PackageID;
@@ -809,5 +809,5 @@ const Lockfile = install.Lockfile;
 const DependencyIDList = Lockfile.DependencyIDList;
 const ExternalSlice = Lockfile.ExternalSlice;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const WorkspaceFilter = install.PackageManager.WorkspaceFilter;

@@ -15,7 +15,7 @@ columns_for_non_ascii: BabyList(i32) = .{},
 byte_offset_to_first_non_ascii: u32 = 0,
 byte_offset_to_start_of_line: u32 = 0,
 
-pub const List = bun.MultiArrayList(LineOffsetTable);
+pub const List = fun.MultiArrayList(LineOffsetTable);
 
 pub fn findLine(byte_offsets_to_start_of_line: []const u32, loc: Logger.Loc) i32 {
     assert(loc.start > -1); // checked by caller
@@ -225,8 +225,8 @@ pub fn generate(allocator: std.mem.Allocator, contents: []const u8, approximate_
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const Logger = bun.logger;
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const Logger = fun.logger;
+const assert = fun.assert;
+const strings = fun.strings;

@@ -46,7 +46,7 @@ pub fn init(
 
 pub fn start(this: *Binary) Yield {
     log("binary start {x} ({s})", .{ @intFromPtr(this), @tagName(this.node.op) });
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.left == null);
         assert(this.right == null);
         assert(this.currently_executing == null);
@@ -57,7 +57,7 @@ pub fn start(this: *Binary) Yield {
         this.currently_executing = this.makeChild(false);
         this.left = 0;
     }
-    bun.assert(this.currently_executing != null);
+    fun.assert(this.currently_executing != null);
     return this.currently_executing.?.start();
 }
 
@@ -92,7 +92,7 @@ fn makeChild(this: *Binary, left: bool) ?ChildPtr {
                     return ChildPtr.init(subshell);
                 },
                 .err => |e| {
-                    this.base.throw(&bun.shell.ShellErr.newSys(e));
+                    this.base.throw(&fun.shell.ShellErr.newSys(e));
                     return null;
                 },
             }
@@ -113,7 +113,7 @@ fn makeChild(this: *Binary, left: bool) ?ChildPtr {
 }
 
 pub fn childDone(this: *Binary, child: ChildPtr, exit_code: ExitCode) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.left == null or this.right == null);
         assert(this.currently_executing != null);
     }
@@ -150,25 +150,25 @@ pub fn deinit(this: *Binary) void {
     this.parent.allocator().destroy(this);
 }
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Assigns = bun.shell.Interpreter.Assigns;
-const Async = bun.shell.Interpreter.Async;
-const Cmd = bun.shell.Interpreter.Cmd;
-const CondExpr = bun.shell.Interpreter.CondExpr;
-const IO = bun.shell.Interpreter.IO;
-const If = bun.shell.Interpreter.If;
-const Pipeline = bun.shell.Interpreter.Pipeline;
+const Interpreter = fun.shell.Interpreter;
+const Assigns = fun.shell.Interpreter.Assigns;
+const Async = fun.shell.Interpreter.Async;
+const Cmd = fun.shell.Interpreter.Cmd;
+const CondExpr = fun.shell.Interpreter.CondExpr;
+const IO = fun.shell.Interpreter.IO;
+const If = fun.shell.Interpreter.If;
+const Pipeline = fun.shell.Interpreter.Pipeline;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
-const Subshell = bun.shell.Interpreter.Subshell;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
+const Subshell = fun.shell.Interpreter.Subshell;
 
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

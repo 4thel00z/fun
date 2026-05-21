@@ -57,8 +57,8 @@ pub const UseDirective = enum(u2) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Flags = js_ast.Flags;

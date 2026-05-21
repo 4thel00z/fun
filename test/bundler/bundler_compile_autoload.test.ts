@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -77,7 +77,7 @@ describe("bundler", () => {
     },
   });
 
-  // Test that bunfig.toml is loaded by default (preload is executed)
+  // Test that funfig.toml is loaded by default (preload is executed)
   itBundled("compile/AutoloadBunfigDefault", {
     compile: true,
     files: {
@@ -86,7 +86,7 @@ describe("bundler", () => {
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -99,7 +99,7 @@ console.log("PRELOAD");
     },
   });
 
-  // Test that bunfig.toml can be disabled with autoloadBunfig: false
+  // Test that funfig.toml can be disabled with autoloadBunfig: false
   itBundled("compile/AutoloadBunfigDisabled", {
     compile: {
       autoloadBunfig: false,
@@ -110,7 +110,7 @@ console.log("PRELOAD");
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -118,13 +118,13 @@ console.log("PRELOAD");
       `,
     },
     run: {
-      // When bunfig is disabled, preload should NOT execute
+      // When funfig is disabled, preload should NOT execute
       stdout: "ENTRY",
       setCwd: true,
     },
   });
 
-  // Test that bunfig.toml can be explicitly enabled with autoloadBunfig: true
+  // Test that funfig.toml can be explicitly enabled with autoloadBunfig: true
   itBundled("compile/AutoloadBunfigEnabled", {
     compile: {
       autoloadBunfig: true,
@@ -135,7 +135,7 @@ console.log("PRELOAD");
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -234,7 +234,7 @@ console.log("PRELOAD");
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -259,7 +259,7 @@ console.log("PRELOAD");
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -286,7 +286,7 @@ console.log("PRELOAD");
     },
     runtimeFiles: {
       "/.env": `TEST_VAR=from_dotenv`,
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -488,7 +488,7 @@ console.log("PRELOAD");
   });
 
   // Test that autoloadBunfig: false works with execArgv (regression test for #25640)
-  // When execArgv is present, bunfig should still be disabled if autoloadBunfig: false
+  // When execArgv is present, funfig should still be disabled if autoloadBunfig: false
   itBundled("compile/AutoloadBunfigDisabledWithExecArgv", {
     compile: {
       autoloadBunfig: false,
@@ -500,7 +500,7 @@ console.log("PRELOAD");
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -508,7 +508,7 @@ console.log("PRELOAD");
       `,
     },
     run: {
-      // When bunfig is disabled, preload should NOT execute even with execArgv
+      // When funfig is disabled, preload should NOT execute even with execArgv
       stdout: "ENTRY",
       setCwd: true,
     },
@@ -527,7 +527,7 @@ console.log("PRELOAD");
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `
@@ -540,7 +540,7 @@ console.log("PRELOAD");
     },
   });
 
-  // Test that autoloadBunfig: true with execArgv still loads bunfig
+  // Test that autoloadBunfig: true with execArgv still loads funfig
   itBundled("compile/AutoloadBunfigEnabledWithExecArgv", {
     compile: {
       autoloadBunfig: true,
@@ -552,7 +552,7 @@ console.log("PRELOAD");
       `,
     },
     runtimeFiles: {
-      "/bunfig.toml": `
+      "/funfig.toml": `
 preload = ["./preload.ts"]
       `,
       "/preload.ts": `

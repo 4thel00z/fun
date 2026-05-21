@@ -1,6 +1,6 @@
 //! JS code for bake
 /// <reference path="../../bake/bake.d.ts" />
-import type { Bake } from "bun";
+import type { Bake } from "fun";
 
 type FrameworkPrerender = Bake.ServerEntryPoint["prerender"];
 type FrameworkGetParams = Bake.ServerEntryPoint["getParams"];
@@ -67,7 +67,7 @@ export async function renderRoutesForProdStatic(
     }
     if (typeof results !== "object") {
       throw new Error(
-        `Rendering route ${JSON.stringify(sourceRouteFiles[i])} did not return an object, got ${Bun.inspect(results)}. This is a bug in the framework.`,
+        `Rendering route ${JSON.stringify(sourceRouteFiles[i])} did not return an object, got ${Fun.inspect(results)}. This is a bug in the framework.`,
       );
     }
     const { files } = results;
@@ -82,9 +82,9 @@ export async function renderRoutesForProdStatic(
           const newKey = patterns[i].replace(/:(\w+)/g, (_, p1) =>
             typeof params[p1] === "string" ? params[p1] : params[p1].join("/"),
           );
-          return Bun.write(pathJoin(outBase, newKey + key), value);
+          return Fun.write(pathJoin(outBase, newKey + key), value);
         }
-        return Bun.write(pathJoin(outBase, patterns[i] + key), value);
+        return Fun.write(pathJoin(outBase, patterns[i] + key), value);
       }),
     );
   }

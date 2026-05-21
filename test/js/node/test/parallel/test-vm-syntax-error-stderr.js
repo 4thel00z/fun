@@ -6,7 +6,7 @@ const fixtures = require('../common/fixtures');
 
 const wrong_script = fixtures.path('keys/rsa_cert.crt');
 
-const p = typeof Bun === 'undefined' ? child_process.spawn(process.execPath, [
+const p = typeof Fun === 'undefined' ? child_process.spawn(process.execPath, [
   '-e',
   'require(process.argv[1]);',
   wrong_script,
@@ -19,7 +19,7 @@ let output = '';
 p.stderr.on('data', (data) => output += data);
 
 p.stderr.on('end', common.mustCall(() => {
-  if (typeof Bun === 'undefined') {
+  if (typeof Fun === 'undefined') {
     assert.match(output, /BEGIN CERT/);
     assert.match(output, /^\s+\^/m);
     assert.match(output, /Invalid left-hand side expression in prefix operation/);

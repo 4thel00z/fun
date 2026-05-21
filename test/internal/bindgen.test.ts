@@ -1,4 +1,4 @@
-import { bindgen } from "bun:internal-for-testing";
+import { bindgen } from "fun:internal-for-testing";
 
 it("bindgen add example", () => {
   // Simple cases

@@ -88,9 +88,9 @@ pub fn decodeInternal(this: *ColumnDefinition41, comptime Context: type, reader:
 
 pub const decode = decoderWrap(ColumnDefinition41, decodeInternal).decode;
 
-const debug = bun.Output.scoped(.ColumnDefinition41, .hidden);
+const debug = fun.Output.scoped(.ColumnDefinition41, .hidden);
 
-const bun = @import("bun");
+const fun = @import("fun");
 const types = @import("../MySQLTypes.zig");
 const ColumnIdentifier = @import("../../shared/ColumnIdentifier.zig").ColumnIdentifier;
 const Data = @import("../../shared/Data.zig").Data;

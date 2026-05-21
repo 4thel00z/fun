@@ -1,12 +1,12 @@
 const FFIObject = @This();
 
-pub fn newCString(globalThis: *JSGlobalObject, value: JSValue, byteOffset: ?JSValue, lengthValue: ?JSValue) bun.JSError!jsc.JSValue {
+pub fn newCString(globalThis: *JSGlobalObject, value: JSValue, byteOffset: ?JSValue, lengthValue: ?JSValue) fun.JSError!jsc.JSValue {
     switch (FFIObject.getPtrSlice(globalThis, value, byteOffset, lengthValue)) {
         .err => |err| {
             return err;
         },
         .slice => |slice| {
-            return bun.String.createUTF8ForJS(globalThis, slice);
+            return fun.String.createUTF8ForJS(globalThis, slice);
         },
     }
 }
@@ -16,7 +16,7 @@ pub const dom_call = DOMCall("FFI", @This(), "ptr", DOMEffect.forRead(.TypedArra
 pub fn toJS(globalObject: *jsc.JSGlobalObject) jsc.JSValue {
     const object = jsc.JSValue.createEmptyObject(globalObject, comptime std.meta.fieldNames(@TypeOf(fields)).len + 2);
     inline for (comptime std.meta.fieldNames(@TypeOf(fields))) |field| {
-        if (comptime bun.strings.eqlComptime(field, "CString")) {
+        if (comptime fun.strings.eqlComptime(field, "CString")) {
             // CString needs to be callable as a constructor for backward compatibility.
             // Pass the same function as the constructor so `new CString(ptr)` works.
             const func = jsc.toJSHostFn(@field(fields, field));
@@ -70,7 +70,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -82,7 +82,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -94,7 +94,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -106,7 +106,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -118,7 +118,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -130,7 +130,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -142,7 +142,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -154,7 +154,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -167,7 +167,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -180,7 +180,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -193,7 +193,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -206,7 +206,7 @@ pub const Reader = struct {
         globalObject: *JSGlobalObject,
         _: JSValue,
         arguments: []const JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         if (arguments.len == 0 or !arguments[0].isNumber()) {
             return globalObject.throwInvalidArguments("Expected a pointer", .{});
         }
@@ -380,7 +380,7 @@ fn ptr_(
 
     var addr: usize = @intFromPtr(array_buffer.ptr);
     // const Sizes = @import("../../jsc/sizes.zig");
-    // assert(addr == @intFromPtr(value.asEncoded().ptr) + Sizes.Bun_FFI_PointerOffsetToTypedArrayVector);
+    // assert(addr == @intFromPtr(value.asEncoded().ptr) + Sizes.Fun_FFI_PointerOffsetToTypedArrayVector);
 
     if (byteOffset) |off| {
         if (!off.isEmptyOrUndefinedOrNull()) {
@@ -410,7 +410,7 @@ fn ptr_(
     }
 
     if (addr == 0xDEADBEEF or addr == 0xaaaaaaaa or addr == 0xAAAAAAAA) {
-        return globalThis.toInvalidArguments("ptr to invalid memory, that would segfault Bun :(", .{});
+        return globalThis.toInvalidArguments("ptr to invalid memory, that would segfault Fun :(", .{});
     }
 
     if (comptime Environment.allow_assert) {
@@ -432,7 +432,7 @@ pub fn getPtrSlice(globalThis: *JSGlobalObject, value: JSValue, byteOffset: ?JSV
 
     const num = value.asPtrAddress();
     if (num == 0) {
-        return .{ .err = globalThis.toInvalidArguments("ptr cannot be zero, that would segfault Bun :(", .{}) };
+        return .{ .err = globalThis.toInvalidArguments("ptr cannot be zero, that would segfault Fun :(", .{}) };
     }
 
     // if (!std.math.isFinite(num)) {
@@ -451,7 +451,7 @@ pub fn getPtrSlice(globalThis: *JSGlobalObject, value: JSValue, byteOffset: ?JSV
             }
 
             if (addr == 0) {
-                return .{ .err = globalThis.toInvalidArguments("ptr cannot be zero, that would segfault Bun :(", .{}) };
+                return .{ .err = globalThis.toInvalidArguments("ptr cannot be zero, that would segfault Fun :(", .{}) };
             }
 
             if (!std.math.isFinite(byte_off.asNumber())) {
@@ -465,7 +465,7 @@ pub fn getPtrSlice(globalThis: *JSGlobalObject, value: JSValue, byteOffset: ?JSV
     }
 
     if (addr == 0xDEADBEEF or addr == 0xaaaaaaaa or addr == 0xAAAAAAAA) {
-        return .{ .err = globalThis.toInvalidArguments("ptr to invalid memory, that would segfault Bun :(", .{}) };
+        return .{ .err = globalThis.toInvalidArguments("ptr to invalid memory, that would segfault Fun :(", .{}) };
     }
 
     if (byteLength) |valueLength| {
@@ -492,7 +492,7 @@ pub fn getPtrSlice(globalThis: *JSGlobalObject, value: JSValue, byteOffset: ?JSV
         }
     }
 
-    return .{ .slice = bun.span(@as([*:0]u8, @ptrFromInt(addr))) };
+    return .{ .slice = fun.span(@as([*:0]u8, @ptrFromInt(addr))) };
 }
 
 fn getCPtr(value: JSValue) ?usize {
@@ -517,7 +517,7 @@ pub fn toArrayBuffer(
     valueLength: ?JSValue,
     finalizationCtxOrPtr: ?JSValue,
     finalizationCallback: ?JSValue,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     switch (getPtrSlice(globalThis, value, byteOffset, valueLength)) {
         .err => |erro| {
             return erro;
@@ -559,7 +559,7 @@ pub fn toBuffer(
     valueLength: ?JSValue,
     finalizationCtxOrPtr: ?JSValue,
     finalizationCallback: ?JSValue,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     switch (getPtrSlice(globalThis, value, byteOffset, valueLength)) {
         .err => |err| {
             return err;
@@ -622,29 +622,29 @@ pub fn getter(
 }
 
 const fields = .{
-    .viewSource = jsc.host_fn.wrapStaticMethod(bun.api.FFI, "print", false),
-    .dlopen = jsc.host_fn.wrapStaticMethod(bun.api.FFI, "open", false),
-    .callback = jsc.host_fn.wrapStaticMethod(bun.api.FFI, "callback", false),
-    .linkSymbols = jsc.host_fn.wrapStaticMethod(bun.api.FFI, "linkSymbols", false),
+    .viewSource = jsc.host_fn.wrapStaticMethod(fun.api.FFI, "print", false),
+    .dlopen = jsc.host_fn.wrapStaticMethod(fun.api.FFI, "open", false),
+    .callback = jsc.host_fn.wrapStaticMethod(fun.api.FFI, "callback", false),
+    .linkSymbols = jsc.host_fn.wrapStaticMethod(fun.api.FFI, "linkSymbols", false),
     .toBuffer = jsc.host_fn.wrapStaticMethod(@This(), "toBuffer", false),
     .toArrayBuffer = jsc.host_fn.wrapStaticMethod(@This(), "toArrayBuffer", false),
-    .closeCallback = jsc.host_fn.wrapStaticMethod(bun.api.FFI, "closeCallback", false),
-    .CString = jsc.host_fn.wrapStaticMethod(bun.api.FFIObject, "newCString", false),
+    .closeCallback = jsc.host_fn.wrapStaticMethod(fun.api.FFI, "closeCallback", false),
+    .CString = jsc.host_fn.wrapStaticMethod(fun.api.FFIObject, "newCString", false),
 };
 const max_addressable_memory = std.math.maxInt(u56);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSObject = jsc.JSObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;
-const Bun = jsc.API.Bun;
+const Fun = jsc.API.Fun;
 
 const DOMCall = jsc.host_fn.DOMCall;
 const DOMEffect = jsc.host_fn.DOMEffect;

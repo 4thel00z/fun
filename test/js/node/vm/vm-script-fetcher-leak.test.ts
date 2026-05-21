@@ -1,5 +1,5 @@
-import { heapStats } from "bun:jsc";
-import { describe, expect, test } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { describe, expect, test } from "fun:test";
 import { expectMaxObjectTypeCount } from "harness";
 import vm from "node:vm";
 

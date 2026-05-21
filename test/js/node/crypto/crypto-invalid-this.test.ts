@@ -1,6 +1,6 @@
 // Native crypto prototype methods must not segfault when called with an invalid `this`.
 // Before these fixes, jsDynamicCast returned null and the code dereferenced it anyway.
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { createHmac, getDiffieHellman } from "node:crypto";
 
 function getNativeHandle(obj: any) {

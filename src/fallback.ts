@@ -14,11 +14,11 @@ function getFallbackInfo(): FallbackMessageContainer {
   return decodeFallbackMessageContainer(new ByteBuffer(bytes));
 }
 
-globalThis.__BUN_DATA__ = getFallbackInfo();
+globalThis.__FUN_DATA__ = getFallbackInfo();
 // It's probably better to remove potentially large content from the DOM when not in use
 if ("requestIdleCallback" in globalThis) {
   globalThis.requestIdleCallback(() => {
     document.getElementById("__bunfallback")?.remove();
-    document.getElementById("__bun_fallback_script")?.remove();
+    document.getElementById("__fun_fallback_script")?.remove();
   });
 }

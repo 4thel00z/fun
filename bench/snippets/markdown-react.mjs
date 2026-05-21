@@ -56,22 +56,22 @@ Some final paragraph with ~~strikethrough~~ text and more **formatting**.
 `;
 
 // Verify outputs are roughly the same
-const bunHtml = renderToString(Bun.markdown.react(markdown));
+const funHtml = renderToString(Fun.markdown.react(markdown));
 const reactMarkdownHtml = renderToString(React.createElement(ReactMarkdown, { children: markdown }));
 
-console.log("=== Bun.markdown.react output ===");
-console.log(bunHtml.slice(0, 500));
-console.log(`... (${bunHtml.length} chars total)\n`);
+console.log("=== Fun.markdown.react output ===");
+console.log(funHtml.slice(0, 500));
+console.log(`... (${funHtml.length} chars total)\n`);
 
 console.log("=== react-markdown output ===");
 console.log(reactMarkdownHtml.slice(0, 500));
 console.log(`... (${reactMarkdownHtml.length} chars total)\n`);
 
-const server = Bun.serve({
+const server = Fun.serve({
   port: 0,
   routes: {
-    "/bun-markdown": () => {
-      return new Response(renderToString(Bun.markdown.react(markdown)), {
+    "/fun-markdown": () => {
+      return new Response(renderToString(Fun.markdown.react(markdown)), {
         headers: { "Content-Type": "text/html" },
       });
     },
@@ -84,9 +84,9 @@ const server = Bun.serve({
 });
 
 console.log(`Server listening on ${server.url}`);
-console.log(`  ${server.url}bun-markdown`);
+console.log(`  ${server.url}fun-markdown`);
 console.log(`  ${server.url}react-markdown`);
 console.log();
 console.log("Run:");
-console.log(`  oha -c 20 -z 5s ${server.url}bun-markdown`);
+console.log(`  oha -c 20 -z 5s ${server.url}fun-markdown`);
 console.log(`  oha -c 20 -z 5s ${server.url}react-markdown`);

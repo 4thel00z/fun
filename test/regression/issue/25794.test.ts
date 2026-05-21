@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 test("CSS logical properties should not be stripped when nested rules are present", async () => {
   // Test for regression of issue #25794: CSS logical properties (e.g., inset-inline-end)
@@ -21,9 +21,9 @@ test("CSS logical properties should not be stripped when nested rules are presen
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "input.css", "--outdir", "out"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "input.css", "--outdir", "out"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -32,7 +32,7 @@ test("CSS logical properties should not be stripped when nested rules are presen
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
   // Verify the output CSS contains the logical property fallbacks
-  const outputContent = await Bun.file(`${dir}/out/input.css`).text();
+  const outputContent = await Fun.file(`${dir}/out/input.css`).text();
 
   // Helper function to normalize CSS output for snapshots
   function normalizeCSSOutput(output: string): string {

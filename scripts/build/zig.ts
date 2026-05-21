@@ -1,7 +1,7 @@
 /**
  * Zig toolchain download + zig build step.
  *
- * Bun uses a FORK of zig at a pinned commit (oven-sh/zig). The compiler
+ * Fun uses a FORK of zig at a pinned commit (oven-sh/zig). The compiler
  * is downloaded as a prebuilt binary from releases (same pattern as WebKit).
  * The downloaded zig includes its own stdlib (vendor/zig/lib/) — we don't
  * rely on any system zig.
@@ -76,8 +76,8 @@ export const CI_ASAN_CODEGEN_THREADS = 8;
 export function zigObjectPaths(cfg: Config): string[] {
   const cg = codegenThreads(cfg);
   return cg > 1
-    ? Array.from({ length: cg }, (_, i) => resolve(cfg.buildDir, `bun-zig.${i}.o`))
-    : [resolve(cfg.buildDir, "bun-zig.o")];
+    ? Array.from({ length: cg }, (_, i) => resolve(cfg.buildDir, `fun-zig.${i}.o`))
+    : [resolve(cfg.buildDir, "fun-zig.o")];
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ function crossLibcArgs(cfg: Config): string[] {
  * Zig optimize level.
  *
  * The Windows ReleaseFast → ReleaseSafe downgrade is intentional: since
- * Bun 1.1, Windows builds use ReleaseSafe because it caught more crashes.
+ * Fun 1.1, Windows builds use ReleaseSafe because it caught more crashes.
  * This is a load-bearing workaround; don't "fix" it.
  */
 export function zigOptimize(cfg: Config): "Debug" | "ReleaseFast" | "ReleaseSafe" | "ReleaseSmall" {
@@ -202,7 +202,7 @@ export function zigCpu(cfg: Config): string {
 
 /**
  * Whether to download the ReleaseSafe build of the zig COMPILER itself
- * (not bun's zig code — this is about the compiler binary).
+ * (not fun's zig code — this is about the compiler binary).
  *
  * CI defaults to yes (better error messages on compiler crashes). EXCEPT
  * windows-arm64 HOST, where the ReleaseSafe compiler has an LLVM SEH
@@ -230,14 +230,14 @@ export function codegenEmbed(cfg: Config): boolean {
  * Where zig lives. Defaults to vendor/zig (gitignored), shared across
  * profiles — the commit pin is global and changing it affects everything.
  *
- * Override via $BUN_ZIG_PATH to point at an existing zig install (e.g.
+ * Override via $FUN_ZIG_PATH to point at an existing zig install (e.g.
  * share one compiler across worktrees, test a zig fork build, or pre-fetch
  * in an air-gapped environment). When set, the fetch edge is skipped and
  * the path must already contain a zig/ + lib/ layout. Mirrors the
- * $BUN_WEBKIT_PATH override.
+ * $FUN_WEBKIT_PATH override.
  */
 function zigPath(cfg: Config): string {
-  const env = process.env.BUN_ZIG_PATH;
+  const env = process.env.FUN_ZIG_PATH;
   if (!env) return resolve(cfg.vendorDir, "zig");
   // Shells don't expand ~ inside quotes; handle it here so a quoted export works.
   if (env === "~" || env.startsWith("~/") || env.startsWith("~\\")) return join(homedir(), env.slice(1));
@@ -278,10 +278,10 @@ export function zigDownloadUrl(cfg: Config, safe: boolean): string {
     osAbi = "windows-gnu";
   } else if (cfg.host.os === "freebsd") {
     // oven-sh/zig has no FreeBSD-hosted prebuilt; native builds must use a
-    // system zig via $BUN_ZIG_PATH. Cross-compile from Linux is the
+    // system zig via $FUN_ZIG_PATH. Cross-compile from Linux is the
     // expected path (host.os === "linux" → linux-musl below).
     throw new BuildError(
-      "No prebuilt zig compiler for FreeBSD hosts — set $BUN_ZIG_PATH to a system zig, or cross-compile from Linux",
+      "No prebuilt zig compiler for FreeBSD hosts — set $FUN_ZIG_PATH to a system zig, or cross-compile from Linux",
     );
   } else {
     // linux: always musl for the compiler binary (static).
@@ -310,8 +310,8 @@ export function registerZigRules(n: Ninja, cfg: Config): void {
     restat: true,
   });
 
-  // Zig build — the big one. One invocation produces bun-zig.o (or
-  // bun-zig.{0..N-1}.o when codegenThreads()>1). Zig's own build system
+  // Zig build — the big one. One invocation produces fun-zig.o (or
+  // fun-zig.{0..N-1}.o when codegenThreads()>1). Zig's own build system
   // handles per-file tracking; restat prunes downstream when zig's cache
   // says nothing changed.
   //
@@ -387,8 +387,8 @@ export interface ZigBuildInputs {
 /**
  * Emit the zig download + zig build steps. Returns the output object file(s).
  *
- * Single `bun-zig.o` when codegenThreads()<=1 (non-ASAN CI, Windows
- * targets); `bun-zig.{0..N-1}.o` shards otherwise (ASAN CI, local dev).
+ * Single `fun-zig.o` when codegenThreads()<=1 (non-ASAN CI, Windows
+ * targets); `fun-zig.{0..N-1}.o` shards otherwise (ASAN CI, local dev).
  * The link step spreads the returned array into its inputs either way.
  */
 export function emitZig(n: Ninja, cfg: Config, inputs: ZigBuildInputs): string[] {
@@ -398,15 +398,15 @@ export function emitZig(n: Ninja, cfg: Config, inputs: ZigBuildInputs): string[]
   // ─── Download compiler ───
   const zigDest = zigPath(cfg);
   const zigExe = zigExecutable(cfg);
-  const envOverride = process.env.BUN_ZIG_PATH;
+  const envOverride = process.env.FUN_ZIG_PATH;
   if (envOverride) {
     // User-provided compiler — no fetch edge. Validate at configure time
     // that the path has a usable layout; commit mismatch is the user's
     // problem. zig build will error loudly if the compiler is too old.
-    assert(existsSync(zigExe), `BUN_ZIG_PATH='${envOverride}' but no zig executable at ${zigExe}`, {
-      hint: "Point $BUN_ZIG_PATH at an extracted zig install (the dir containing zig + lib/), or unset it to use the bundled compiler",
+    assert(existsSync(zigExe), `FUN_ZIG_PATH='${envOverride}' but no zig executable at ${zigExe}`, {
+      hint: "Point $FUN_ZIG_PATH at an extracted zig install (the dir containing zig + lib/), or unset it to use the bundled compiler",
     });
-    assert(existsSync(resolve(zigDest, "lib")), `BUN_ZIG_PATH='${envOverride}' but no lib/ dir at ${zigDest}`, {
+    assert(existsSync(resolve(zigDest, "lib")), `FUN_ZIG_PATH='${envOverride}' but no lib/ dir at ${zigDest}`, {
       hint: "zig needs its bundled stdlib at <path>/lib/ — make sure the extract wasn't partial",
     });
   } else {
@@ -439,8 +439,8 @@ export function emitZig(n: Ninja, cfg: Config, inputs: ZigBuildInputs): string[]
   // ─── Build ───
   const cacheDirs = zigCacheDirs(cfg);
   // With the parallel compiler at >1 codegen threads, build.zig sets
-  // `llvm_no_merge_shards` and installs `bun-zig.{i}.o` per shard instead
-  // of one merged `bun-zig.o` (zig's single-threaded ELF -r merge of the
+  // `llvm_no_merge_shards` and installs `fun-zig.{i}.o` per shard instead
+  // of one merged `fun-zig.o` (zig's single-threaded ELF -r merge of the
   // shards dominated wall time). Declare every shard so ninja tracks them
   // and the link step gets all of them; lld merges in parallel.
   const outputs = zigObjectPaths(cfg);
@@ -458,10 +458,10 @@ export function emitZig(n: Ninja, cfg: Config, inputs: ZigBuildInputs): string[]
       args: quoteArgs(args, cfg.host.os === "windows"),
       zig_local_cache: cacheDirs.local,
       zig_global_cache: cacheDirs.global,
-      label: outputs.length > 1 ? `bun-zig.{0..${outputs.length - 1}}.o` : "bun-zig.o",
+      label: outputs.length > 1 ? `fun-zig.{0..${outputs.length - 1}}.o` : "fun-zig.o",
     },
   });
-  n.phony("bun-zig", outputs);
+  n.phony("fun-zig", outputs);
   n.blank();
 
   return outputs;
@@ -507,7 +507,7 @@ function zigBuildArgs(cfg: Config): string[] {
     `-Denable_valgrind=${bool(cfg.valgrind)}`,
     `-Denable_tinycc=${bool(cfg.tinycc)}`,
     `-Dlto=${bool(cfg.lto)}`,
-    // Always ON — bun uses mimalloc as its default allocator. The flag
+    // Always ON — fun uses mimalloc as its default allocator. The flag
     // exists for experimentation; in practice it's never OFF.
     `-Duse_mimalloc=true`,
     // Sharded LLVM codegen — one shard per host core on the parallel
@@ -577,7 +577,7 @@ function zigBuildOrderOnlyInputs(inputs: ZigBuildInputs): string[] {
 
 /**
  * `zig build` check steps exposed as ninja targets. Each becomes a phony
- * `zig-<step>` plus a stamp file, invokable via `bun bd --target=zig-check`
+ * `zig-<step>` plus a stamp file, invokable via `fun bd --target=zig-check`
  * (etc.). See build.zig for what each step covers.
  *
  * `check` type-checks the current platform (uses -Dtarget/-Dcpu). The
@@ -600,7 +600,7 @@ const CHECK_STEPS = [
 /**
  * Emit one ninja edge per `zig build check[-*]` step. Each depends on
  * the same codegen + zig source set as the obj build, so users can run
- * `bun bd --target=zig-check` and ninja will rebuild any stale codegen
+ * `fun bd --target=zig-check` and ninja will rebuild any stale codegen
  * before invoking zig. Output is a stamp file (stream.ts --stamp writes
  * it on exit 0); restat lets the no-op case prune downstream.
  *

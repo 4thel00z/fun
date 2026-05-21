@@ -126,7 +126,7 @@ pub const ModuleInfoDeserialized = struct {
     /// Returns `null` instead of panicking on corrupt/truncated data.
     pub fn createFromCachedRecord(source: []const u8, gpa: std.mem.Allocator) ?*ModuleInfoDeserialized {
         return create(source, gpa) catch |e| switch (e) {
-            error.OutOfMemory => bun.outOfMemory(),
+            error.OutOfMemory => fun.outOfMemory(),
             error.BadModuleInfo => null,
         };
     }
@@ -163,7 +163,7 @@ pub const StringContext = struct {
         return @as(u32, @truncate(std.hash.Wyhash.hash(0, s)));
     }
     pub fn eql(self: @This(), fetch_key: []const u8, item_key: StringMapKey, item_i: usize) bool {
-        return bun.strings.eqlLong(fetch_key, self.strings_buf[@intFromEnum(item_key)..][0..self.strings_lens[item_i]], true);
+        return fun.strings.eqlLong(fetch_key, self.strings_buf[@intFromEnum(item_key)..][0..self.strings_lens[item_i]], true);
     }
 };
 
@@ -184,7 +184,7 @@ pub const ModuleInfo = struct {
     _deserialized: ModuleInfoDeserialized,
 
     pub fn asDeserialized(self: *ModuleInfo) *ModuleInfoDeserialized {
-        bun.assert(self.finalized);
+        fun.assert(self.finalized);
         return &self._deserialized;
     }
 
@@ -208,8 +208,8 @@ pub const ModuleInfo = struct {
     }
 
     fn _addRecord(self: *ModuleInfo, kind: RecordKind, data: []const StringID) !void {
-        bun.assert(!self.finalized);
-        bun.assert(data.len == kind.len() catch unreachable);
+        fun.assert(!self.finalized);
+        fun.assert(data.len == kind.len() catch unreachable);
         try self.record_kinds.append(self.gpa, kind);
         try self.buffer.appendSlice(self.gpa, data);
     }
@@ -303,7 +303,7 @@ pub const ModuleInfo = struct {
     /// Replace all occurrences of old_id with new_id in records and requested_modules.
     /// Used to fix up cross-chunk import specifiers after final paths are computed.
     pub fn replaceStringID(self: *ModuleInfo, old_id: StringID, new_id: StringID) void {
-        bun.assert(!self.finalized);
+        fun.assert(!self.finalized);
         // Replace in record buffer
         for (self.buffer.items) |*item| {
             if (item.* == old_id) item.* = new_id;
@@ -317,8 +317,8 @@ pub const ModuleInfo = struct {
 
     /// find any exports marked as 'local' that are actually 'indirect' and fix them
     pub fn finalize(self: *ModuleInfo) !void {
-        bun.assert(!self.finalized);
-        var local_name_to_module_name = std.AutoArrayHashMap(StringID, struct { module_name: StringID, import_name: StringID, record_kinds_idx: usize, is_namespace: bool }).init(bun.default_allocator);
+        fun.assert(!self.finalized);
+        var local_name_to_module_name = std.AutoArrayHashMap(StringID, struct { module_name: StringID, import_name: StringID, record_kinds_idx: usize, is_namespace: bool }).init(fun.default_allocator);
         defer local_name_to_module_name.deinit();
         {
             var i: usize = 0;
@@ -390,8 +390,8 @@ export fn zig__ModuleInfoDeserialized__deinit(info: *ModuleInfoDeserialized) voi
 }
 
 export fn zig_log(msg: [*:0]const u8) void {
-    bun.Output.errorWriter().print("{s}\n", .{std.mem.span(msg)}) catch {};
+    fun.Output.errorWriter().print("{s}\n", .{std.mem.span(msg)}) catch {};
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

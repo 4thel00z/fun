@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDirWithFiles } from "harness";
 
 test("issue #17327: extra bracket in error message with colors enabled", async () => {
   const dir = tempDirWithFiles("17327", {
@@ -13,9 +13,9 @@ throw err;
   });
 
   // Test with colors enabled
-  await using coloredProc = Bun.spawn({
-    cmd: [bunExe(), "test.ts"],
-    env: { ...bunEnv, FORCE_COLOR: "1" },
+  await using coloredProc = Fun.spawn({
+    cmd: [funExe(), "test.ts"],
+    env: { ...funEnv, FORCE_COLOR: "1" },
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -29,9 +29,9 @@ throw err;
   const coloredOutput = coloredStdout + coloredStderr;
 
   // Test with colors disabled
-  await using plainProc = Bun.spawn({
-    cmd: [bunExe(), "test.ts"],
-    env: { ...bunEnv, NO_COLOR: "1" },
+  await using plainProc = Fun.spawn({
+    cmd: [funExe(), "test.ts"],
+    env: { ...funEnv, NO_COLOR: "1" },
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -54,8 +54,8 @@ throw err;
   expect(coloredOutput).not.toMatch(/JSON\.stringify\([^)]*\)\s*}/);
 
   // Both outputs should contain the same essential error information
-  expect(normalizeBunSnapshot(coloredOutput)).toContain('error: {"success":false}');
-  expect(normalizeBunSnapshot(plainOutput)).toContain('error: {"success":false}');
+  expect(normalizeFunSnapshot(coloredOutput)).toContain('error: {"success":false}');
+  expect(normalizeFunSnapshot(plainOutput)).toContain('error: {"success":false}');
 });
 
 test("issue #17327: template literal syntax highlighting edge cases", async () => {
@@ -71,9 +71,9 @@ throw new Error(\`Array: \${JSON.stringify(arr)}\`);
   });
 
   for (const file of ["nested.ts", "array.ts"]) {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), file],
-      env: { ...bunEnv, FORCE_COLOR: "1" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), file],
+      env: { ...funEnv, FORCE_COLOR: "1" },
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",

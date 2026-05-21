@@ -1,5 +1,5 @@
-//! Bake is Bun's toolkit for building client+server web applications. It
-//! combines `Bun.build` and `Bun.serve`, providing a hot-reloading development
+//! Bake is Fun's toolkit for building client+server web applications. It
+//! combines `Fun.build` and `Fun.serve`, providing a hot-reloading development
 //! server, server components, and other integrations. Instead of taking the
 //! role as a framework, Bake is tool for frameworks to build on top of.
 pub const production = @import("./production.zig");
@@ -27,7 +27,7 @@ pub const UserOptions = struct {
 
     /// Currently, this function must run at the top of the event loop.
     pub fn fromJS(config: JSValue, global: *jsc.JSGlobalObject) !UserOptions {
-        var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+        var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
         errdefer arena.deinit();
         const alloc = arena.allocator();
 
@@ -38,13 +38,13 @@ pub const UserOptions = struct {
         if (!config.isObject()) {
             // Allow users to do `export default { app: 'react' }` for convenience
             if (config.isString()) {
-                const bunstr = try config.toBunString(global);
-                defer bunstr.deref();
-                const utf8_string = bunstr.toUTF8(bun.default_allocator);
+                const funstr = try config.toFunString(global);
+                defer funstr.deref();
+                const utf8_string = funstr.toUTF8(fun.default_allocator);
                 defer utf8_string.deinit();
 
-                if (bun.strings.eql(utf8_string.byteSlice(), "react")) {
-                    const root = bun.getcwdAlloc(alloc) catch |err| switch (err) {
+                if (fun.strings.eql(utf8_string.byteSlice(), "react")) {
+                    const root = fun.getcwdAlloc(alloc) catch |err| switch (err) {
                         error.OutOfMemory => {
                             return global.throwOutOfMemory();
                         },
@@ -92,7 +92,7 @@ pub const UserOptions = struct {
         const root = if (try config.getOptional(global, "root", ZigString.Slice)) |slice|
             allocations.track(slice)
         else
-            bun.getcwdAlloc(alloc) catch |err| switch (err) {
+            fun.getcwdAlloc(alloc) catch |err| switch (err) {
                 error.OutOfMemory => {
                     return global.throwOutOfMemory();
                 },
@@ -122,13 +122,13 @@ pub const StringRefList = struct {
     pub const empty: StringRefList = .{ .strings = .{} };
 
     pub fn track(al: *StringRefList, str: ZigString.Slice) []const u8 {
-        bun.handleOom(al.strings.append(bun.default_allocator, str));
+        fun.handleOom(al.strings.append(fun.default_allocator, str));
         return str.slice();
     }
 
     pub fn free(al: *StringRefList) void {
         for (al.strings.items) |item| item.deinit();
-        al.strings.clearAndFree(bun.default_allocator);
+        al.strings.clearAndFree(fun.default_allocator);
     }
 };
 
@@ -145,8 +145,8 @@ pub const SplitBundlerOptions = struct {
         .ssr = .{},
     };
 
-    pub fn parsePluginArray(opts: *SplitBundlerOptions, plugin_array: JSValue, global: *jsc.JSGlobalObject) bun.JSError!void {
-        const plugin = opts.plugin orelse Plugin.create(global, .bun);
+    pub fn parsePluginArray(opts: *SplitBundlerOptions, plugin_array: JSValue, global: *jsc.JSGlobalObject) fun.JSError!void {
+        const plugin = opts.plugin orelse Plugin.create(global, .fun);
         opts.plugin = plugin;
         const empty_object = JSValue.createEmptyObject(global, 0);
 
@@ -173,7 +173,7 @@ pub const SplitBundlerOptions = struct {
                 promise.setHandled(global.vm());
                 // TODO: remove this call, replace with a promise list that must
                 // be resolved before the first bundle task can begin.
-                global.bunVM().waitForPromise(promise);
+                global.funVM().waitForPromise(promise);
                 switch (promise.unwrap(global.vm(), .mark_handled)) {
                     .pending => unreachable,
                     .fulfilled => |val| {
@@ -189,29 +189,29 @@ pub const SplitBundlerOptions = struct {
 };
 
 const BuildConfigSubset = struct {
-    loader: ?bun.schema.api.LoaderMap = null,
+    loader: ?fun.schema.api.LoaderMap = null,
     ignoreDCEAnnotations: ?bool = null,
-    conditions: bun.StringArrayHashMapUnmanaged(void) = .{},
-    drop: bun.StringArrayHashMapUnmanaged(void) = .{},
-    env: bun.schema.api.DotEnvBehavior = ._none,
+    conditions: fun.StringArrayHashMapUnmanaged(void) = .{},
+    drop: fun.StringArrayHashMapUnmanaged(void) = .{},
+    env: fun.schema.api.DotEnvBehavior = ._none,
     env_prefix: ?[]const u8 = null,
-    define: bun.schema.api.StringMap = .{ .keys = &.{}, .values = &.{} },
-    source_map: bun.schema.api.SourceMapMode = .external,
+    define: fun.schema.api.StringMap = .{ .keys = &.{}, .values = &.{} },
+    source_map: fun.schema.api.SourceMapMode = .external,
 
     minify_syntax: ?bool = null,
     minify_identifiers: ?bool = null,
     minify_whitespace: ?bool = null,
 
-    pub fn fromJS(global: *jsc.JSGlobalObject, js_options: JSValue) bun.JSError!BuildConfigSubset {
+    pub fn fromJS(global: *jsc.JSGlobalObject, js_options: JSValue) fun.JSError!BuildConfigSubset {
         var options = BuildConfigSubset{};
 
         if (try js_options.getOptional(global, "sourcemap", JSValue)) |val| brk: {
-            if (try bun.schema.api.SourceMapMode.fromJS(global, val)) |sourcemap| {
+            if (try fun.schema.api.SourceMapMode.fromJS(global, val)) |sourcemap| {
                 options.source_map = sourcemap;
                 break :brk;
             }
 
-            return bun.jsc.Node.validators.throwErrInvalidArgType(global, "sourcemap", .{}, "\"inline\" | \"external\" | \"linked\"", val);
+            return fun.jsc.Node.validators.throwErrInvalidArgType(global, "sourcemap", .{}, "\"inline\" | \"external\" | \"linked\"", val);
         }
 
         if (try js_options.getOptional(global, "minify", JSValue)) |minify_options| brk: {
@@ -249,26 +249,26 @@ pub const Framework = struct {
     // static_routers: [][]const u8,
     server_components: ?ServerComponents = null,
     react_fast_refresh: ?ReactFastRefresh = null,
-    built_in_modules: bun.StringArrayHashMapUnmanaged(BuiltInModule) = .{},
+    built_in_modules: fun.StringArrayHashMapUnmanaged(BuiltInModule) = .{},
 
-    /// Bun provides built-in support for using React as a framework.
+    /// Fun provides built-in support for using React as a framework.
     /// Depends on externally provided React
     ///
-    /// $ bun i react@experimental react-dom@experimental react-refresh@experimental react-server-dom-bun
+    /// $ fun i react@experimental react-dom@experimental react-refresh@experimental react-server-dom-fun
     pub fn react(arena: std.mem.Allocator) !Framework {
         return .{
             .is_built_in_react = true,
             .server_components = .{
                 .separate_ssr_graph = true,
-                .server_runtime_import = "react-server-dom-bun/server",
+                .server_runtime_import = "react-server-dom-fun/server",
             },
             .react_fast_refresh = .{},
             .file_system_router_types = try arena.dupe(FileSystemRouterType, &.{
                 .{
                     .root = "pages",
                     .prefix = "/",
-                    .entry_client = "bun-framework-react/client.tsx",
-                    .entry_server = "bun-framework-react/server.tsx",
+                    .entry_client = "fun-framework-react/client.tsx",
+                    .entry_server = "fun-framework-react/server.tsx",
                     .ignore_underscores = true,
                     .ignore_dirs = &.{ "node_modules", ".git" },
                     .extensions = &.{ ".tsx", ".jsx" },
@@ -277,20 +277,20 @@ pub const Framework = struct {
                 },
             }),
             // .static_routers = try arena.dupe([]const u8, &.{"public"}),
-            .built_in_modules = bun.StringArrayHashMapUnmanaged(BuiltInModule).init(arena, &.{
-                "bun-framework-react/client.tsx",
-                "bun-framework-react/server.tsx",
-                "bun-framework-react/ssr.tsx",
+            .built_in_modules = fun.StringArrayHashMapUnmanaged(BuiltInModule).init(arena, &.{
+                "fun-framework-react/client.tsx",
+                "fun-framework-react/server.tsx",
+                "fun-framework-react/ssr.tsx",
             }, if (Environment.codegen_embed) &.{
-                .{ .code = @embedFile("./bun-framework-react/client.tsx") },
-                .{ .code = @embedFile("./bun-framework-react/server.tsx") },
-                .{ .code = @embedFile("./bun-framework-react/ssr.tsx") },
+                .{ .code = @embedFile("./fun-framework-react/client.tsx") },
+                .{ .code = @embedFile("./fun-framework-react/server.tsx") },
+                .{ .code = @embedFile("./fun-framework-react/ssr.tsx") },
             } else &.{
                 // Cannot use .import because resolution must happen from the user's POV
-                .{ .code = bun.runtimeEmbedFile(.src, "bake/bun-framework-react/client.tsx") },
-                .{ .code = bun.runtimeEmbedFile(.src, "bake/bun-framework-react/server.tsx") },
-                .{ .code = bun.runtimeEmbedFile(.src, "bake/bun-framework-react/ssr.tsx") },
-            }) catch |err| bun.handleOom(err),
+                .{ .code = fun.runtimeEmbedFile(.src, "bake/fun-framework-react/client.tsx") },
+                .{ .code = fun.runtimeEmbedFile(.src, "bake/fun-framework-react/server.tsx") },
+                .{ .code = fun.runtimeEmbedFile(.src, "bake/fun-framework-react/ssr.tsx") },
+            }) catch |err| fun.handleOom(err),
         };
     }
 
@@ -303,7 +303,7 @@ pub const Framework = struct {
     /// The provided allocator is not stored.
     pub fn auto(
         arena: std.mem.Allocator,
-        resolver: *bun.resolver.Resolver,
+        resolver: *fun.resolver.Resolver,
         file_system_router_types: []FileSystemRouterType,
     ) !Framework {
         var fw: Framework = Framework.none;
@@ -324,7 +324,7 @@ pub const Framework = struct {
                 if (Environment.codegen_embed)
                     .{ .code = @embedFile("node-fallbacks/react-refresh.js") }
                 else
-                    .{ .code = bun.runtimeEmbedFile(.codegen, "node-fallbacks/react-refresh.js") },
+                    .{ .code = fun.runtimeEmbedFile(.codegen, "node-fallbacks/react-refresh.js") },
             );
         }
 
@@ -370,12 +370,12 @@ pub const Framework = struct {
         import_source: []const u8 = "react-refresh/runtime",
     };
 
-    pub const react_install_command = "bun i react@experimental react-dom@experimental react-server-dom-bun react-refresh@experimental";
+    pub const react_install_command = "fun i react@experimental react-dom@experimental react-server-dom-fun react-refresh@experimental";
 
-    pub fn addReactInstallCommandNote(log: *bun.logger.Log) !void {
+    pub fn addReactInstallCommandNote(log: *fun.logger.Log) !void {
         try log.addMsg(.{
             .kind = .note,
-            .data = try bun.logger.rangeData(null, bun.logger.Range.none, "Install the built in react integration with \"" ++ react_install_command ++ "\"")
+            .data = try fun.logger.rangeData(null, fun.logger.Range.none, "Install the built in react integration with \"" ++ react_install_command ++ "\"")
                 .cloneLineText(log.clone_line_text, log.msgs.allocator),
         });
     }
@@ -385,7 +385,7 @@ pub const Framework = struct {
     ///
     /// All resolution errors will happen before returning error.ModuleNotFound
     /// Errors written into `r.log`
-    pub fn resolve(f: Framework, server: *bun.resolver.Resolver, client: *bun.resolver.Resolver, arena: Allocator) !Framework {
+    pub fn resolve(f: Framework, server: *fun.resolver.Resolver, client: *fun.resolver.Resolver, arena: Allocator) !Framework {
         var clone = f;
         var had_errors: bool = false;
 
@@ -399,7 +399,7 @@ pub const Framework = struct {
         }
 
         for (clone.file_system_router_types) |*fsr| {
-            fsr.root = try arena.dupe(u8, bun.path.joinAbs(server.fs.top_level_dir, .auto, fsr.root));
+            fsr.root = try arena.dupe(u8, fun.path.joinAbs(server.fs.top_level_dir, .auto, fsr.root));
             if (fsr.entry_client) |*entry_client| f.resolveHelper(client, entry_client, &had_errors, "client side entrypoint");
             f.resolveHelper(client, &fsr.entry_server, &had_errors, "server side entrypoint");
         }
@@ -409,7 +409,7 @@ pub const Framework = struct {
         return clone;
     }
 
-    inline fn resolveHelper(f: *const Framework, r: *bun.resolver.Resolver, path: *[]const u8, had_errors: *bool, desc: []const u8) void {
+    inline fn resolveHelper(f: *const Framework, r: *fun.resolver.Resolver, path: *[]const u8, had_errors: *bool, desc: []const u8) void {
         if (f.built_in_modules.get(path.*)) |mod| {
             switch (mod) {
                 .import => |p| path.* = p,
@@ -419,14 +419,14 @@ pub const Framework = struct {
         }
 
         var result = r.resolve(r.fs.top_level_dir, path.*, .stmt) catch |err| {
-            bun.Output.err(err, "Failed to resolve '{s}' for framework ({s})", .{ path.*, desc });
+            fun.Output.err(err, "Failed to resolve '{s}' for framework ({s})", .{ path.*, desc });
             had_errors.* = true;
             return;
         };
         path.* = result.path().?.text;
     }
 
-    inline fn resolveOrNull(r: *bun.resolver.Resolver, path: []const u8) ?[]const u8 {
+    inline fn resolveOrNull(r: *fun.resolver.Resolver, path: []const u8) ?[]const u8 {
         return (r.resolve(r.fs.top_level_dir, path, .stmt) catch {
             r.log.reset();
             return null;
@@ -439,14 +439,14 @@ pub const Framework = struct {
         refs: *StringRefList,
         bundler_options: *SplitBundlerOptions,
         arena: Allocator,
-    ) bun.JSError!Framework {
+    ) fun.JSError!Framework {
         if (opts.isString()) {
-            const str = try opts.toBunString(global);
+            const str = try opts.toFunString(global);
             defer str.deref();
 
             // Deprecated
             if (str.eqlComptime("react-server-components")) {
-                bun.Output.warn("deprecation notice: 'react-server-components' will be renamed to 'react'", .{});
+                fun.Output.warn("deprecation notice: 'react-server-components' will be renamed to 'react'", .{});
                 return Framework.react(arena);
             }
 
@@ -460,10 +460,10 @@ pub const Framework = struct {
         }
 
         if (try opts.get(global, "serverEntryPoint") != null) {
-            bun.Output.warn("deprecation notice: 'framework.serverEntryPoint' has been replaced with 'fileSystemRouterTypes[n].serverEntryPoint'", .{});
+            fun.Output.warn("deprecation notice: 'framework.serverEntryPoint' has been replaced with 'fileSystemRouterTypes[n].serverEntryPoint'", .{});
         }
         if (try opts.get(global, "clientEntryPoint") != null) {
-            bun.Output.warn("deprecation notice: 'framework.clientEntryPoint' has been replaced with 'fileSystemRouterTypes[n].clientEntryPoint'", .{});
+            fun.Output.warn("deprecation notice: 'framework.clientEntryPoint' has been replaced with 'fileSystemRouterTypes[n].clientEntryPoint'", .{});
         }
 
         const react_fast_refresh: ?ReactFastRefresh = brk: {
@@ -481,7 +481,7 @@ pub const Framework = struct {
                 return global.throwInvalidArguments("'framework.reactFastRefresh' is missing 'importSource'", .{});
             };
 
-            const str = try prop.toBunString(global);
+            const str = try prop.toFunString(global);
             defer str.deref();
 
             break :brk .{
@@ -522,12 +522,12 @@ pub const Framework = struct {
                     "registerClientReference",
             };
         };
-        const built_in_modules: bun.StringArrayHashMapUnmanaged(BuiltInModule) = built_in_modules: {
+        const built_in_modules: fun.StringArrayHashMapUnmanaged(BuiltInModule) = built_in_modules: {
             const array = try opts.getArray(global, "builtInModules") orelse
                 break :built_in_modules .{};
 
             const len = try array.getLength(global);
-            var files: bun.StringArrayHashMapUnmanaged(BuiltInModule) = .{};
+            var files: fun.StringArrayHashMapUnmanaged(BuiltInModule) = .{};
             try files.ensureTotalCapacity(arena, len);
 
             var it = try array.arrayIterator(global);
@@ -587,7 +587,7 @@ pub const Framework = struct {
                     if (exts_js.isString()) {
                         const str = try exts_js.toSlice(global, arena);
                         defer str.deinit();
-                        if (bun.strings.eqlComptime(str.slice(), "*")) {
+                        if (fun.strings.eqlComptime(str.slice(), "*")) {
                             break :exts &.{};
                         }
                     } else if (exts_js.isArray()) {
@@ -596,7 +596,7 @@ pub const Framework = struct {
                         const extensions = try arena.alloc([]const u8, try exts_js.getLength(global));
                         while (try it_2.next()) |array_item| : (i_2 += 1) {
                             const slice = refs.track(try array_item.toSlice(global, arena));
-                            if (bun.strings.eqlComptime(slice, "*"))
+                            if (fun.strings.eqlComptime(slice, "*"))
                                 return global.throwInvalidArguments("'extensions' cannot include \"*\" as an extension. Pass \"*\" instead of the array.", .{});
 
                             if (slice.len == 0) {
@@ -663,13 +663,13 @@ pub const Framework = struct {
     pub fn initTranspiler(
         framework: *Framework,
         arena: std.mem.Allocator,
-        log: *bun.logger.Log,
+        log: *fun.logger.Log,
         mode: Mode,
         renderer: Graph,
-        out: *bun.transpiler.Transpiler,
+        out: *fun.transpiler.Transpiler,
         bundler_options: *const BuildConfigSubset,
     ) !void {
-        const source_map: bun.options.SourceMapOption = switch (mode) {
+        const source_map: fun.options.SourceMapOption = switch (mode) {
             // Source maps must always be external, as DevServer special cases
             // the linking and part of the generation of these. It also relies
             // on source maps always being enabled.
@@ -696,17 +696,17 @@ pub const Framework = struct {
     pub fn initTranspilerWithOptions(
         framework: *Framework,
         arena: std.mem.Allocator,
-        log: *bun.logger.Log,
+        log: *fun.logger.Log,
         mode: Mode,
         renderer: Graph,
-        out: *bun.transpiler.Transpiler,
+        out: *fun.transpiler.Transpiler,
         bundler_options: *const BuildConfigSubset,
-        source_map: bun.options.SourceMapOption,
+        source_map: fun.options.SourceMapOption,
         minify_whitespace: ?bool,
         minify_syntax: ?bool,
         minify_identifiers: ?bool,
     ) !void {
-        const JSAst = bun.ast;
+        const JSAst = fun.ast;
 
         var ast_memory_allocator: JSAst.ASTMemoryAllocator = undefined;
         ast_memory_allocator.initWithoutStack(arena);
@@ -717,16 +717,16 @@ pub const Framework = struct {
         ast_scope.enter();
         defer ast_scope.exit();
 
-        out.* = try bun.Transpiler.init(
+        out.* = try fun.Transpiler.init(
             arena,
             log,
-            std.mem.zeroes(bun.schema.api.TransformOptions),
+            std.mem.zeroes(fun.schema.api.TransformOptions),
             null,
         );
 
         out.options.target = switch (renderer) {
             .client => .browser,
-            .server, .ssr => .bun,
+            .server, .ssr => .fun,
         };
         out.options.public_path = switch (renderer) {
             .client => DevServer.client_prefix,
@@ -738,7 +738,7 @@ pub const Framework = struct {
             .development => .internal_bake_dev,
             .production_dynamic, .production_static => .esm,
         };
-        out.options.out_extensions = bun.StringHashMap([]const u8).init(out.allocator);
+        out.options.out_extensions = fun.StringHashMap([]const u8).init(out.allocator);
         out.options.hot_module_reloading = mode == .development;
         out.options.code_splitting = mode != .development;
 
@@ -750,7 +750,7 @@ pub const Framework = struct {
         out.options.react_fast_refresh = mode == .development and renderer == .client and framework.react_fast_refresh != null;
         out.options.server_components = framework.server_components != null;
 
-        out.options.conditions = try bun.options.ESMConditions.init(
+        out.options.conditions = try fun.options.ESMConditions.init(
             arena,
             out.options.target.defaultConditions(),
             out.options.target.isServerSide(),
@@ -799,13 +799,13 @@ pub const Framework = struct {
 
         if ((bundler_options.define.keys.len + bundler_options.drop.count()) > 0) {
             for (bundler_options.define.keys, bundler_options.define.values) |k, v| {
-                const parsed = try bun.options.Define.Data.parse(k, v, false, false, log, arena);
+                const parsed = try fun.options.Define.Data.parse(k, v, false, false, log, arena);
                 try out.options.define.insert(arena, k, parsed);
             }
 
             for (bundler_options.drop.keys()) |drop_item| {
                 if (drop_item.len > 0) {
-                    const parsed = try bun.options.Define.Data.parse(drop_item, "", true, true, log, arena);
+                    const parsed = try fun.options.Define.Data.parse(drop_item, "", true, true, log, arena);
                     try out.options.define.insert(arena, drop_item, parsed);
                 }
             }
@@ -813,9 +813,9 @@ pub const Framework = struct {
 
         if (mode != .development) {
             // Hide information about the source repository, at the cost of debugging quality.
-            out.options.entry_naming = "_bun/[hash].[ext]";
-            out.options.chunk_naming = "_bun/[hash].[ext]";
-            out.options.asset_naming = "_bun/[hash].[ext]";
+            out.options.entry_naming = "_fun/[hash].[ext]";
+            out.options.chunk_naming = "_fun/[hash].[ext]";
+            out.options.asset_naming = "_fun/[hash].[ext]";
         }
 
         out.resolver.opts = out.options;
@@ -833,7 +833,7 @@ fn getOptionalString(
         return null;
     if (value.isUndefinedOrNull())
         return null;
-    const str = try value.toBunString(global);
+    const str = try value.toFunString(global);
     return allocations.track(str.toUTF8(arena));
 }
 
@@ -852,7 +852,7 @@ pub const HmrRuntime = struct {
     }
 };
 
-pub fn getHmrRuntime(side: Side) callconv(bun.callconv_inline) HmrRuntime {
+pub fn getHmrRuntime(side: Side) callconv(fun.callconv_inline) HmrRuntime {
     return if (Environment.codegen_embed)
         switch (side) {
             .client => .init(@embedFile("bake-codegen/bake.client.js")),
@@ -860,9 +860,9 @@ pub fn getHmrRuntime(side: Side) callconv(bun.callconv_inline) HmrRuntime {
         }
     else
         .init(switch (side) {
-            .client => bun.runtimeEmbedFile(.codegen_eager, "bake.client.js"),
+            .client => fun.runtimeEmbedFile(.codegen_eager, "bake.client.js"),
             // server runtime is loaded once, so it is pointless to make this eager.
-            .server => bun.runtimeEmbedFile(.codegen, "bake.server.js"),
+            .server => fun.runtimeEmbedFile(.codegen, "bake.server.js"),
         });
 }
 
@@ -891,11 +891,11 @@ pub const Graph = enum(u2) {
 
 pub fn addImportMetaDefines(
     allocator: std.mem.Allocator,
-    define: *bun.options.Define,
+    define: *fun.options.Define,
     mode: Mode,
     side: Side,
 ) !void {
-    const Define = bun.options.Define;
+    const Define = fun.options.Define;
 
     // The following are from Vite: https://vitejs.dev/guide/env-and-mode
     // Note that it is not currently possible to have mixed
@@ -933,31 +933,31 @@ pub fn addImportMetaDefines(
     );
 }
 
-pub const server_virtual_source: bun.logger.Source = .{
-    .path = bun.fs.Path.initForKitBuiltIn("bun", "bake/server"),
+pub const server_virtual_source: fun.logger.Source = .{
+    .path = fun.fs.Path.initForKitBuiltIn("fun", "bake/server"),
     .contents = "", // Virtual
-    .index = bun.ast.Index.bake_server_data,
+    .index = fun.ast.Index.bake_server_data,
 };
 
-pub const client_virtual_source: bun.logger.Source = .{
-    .path = bun.fs.Path.initForKitBuiltIn("bun", "bake/client"),
+pub const client_virtual_source: fun.logger.Source = .{
+    .path = fun.fs.Path.initForKitBuiltIn("fun", "bake/client"),
     .contents = "", // Virtual
-    .index = bun.ast.Index.bake_client_data,
+    .index = fun.ast.Index.bake_client_data,
 };
 
 /// Stack-allocated structure that is written to from end to start.
 /// Used as a staging area for building pattern strings.
 pub const PatternBuffer = struct {
-    bytes: bun.PathBuffer,
-    i: std.math.IntFittingRange(0, @sizeOf(bun.PathBuffer)),
+    bytes: fun.PathBuffer,
+    i: std.math.IntFittingRange(0, @sizeOf(fun.PathBuffer)),
 
     pub const empty: PatternBuffer = .{
         .bytes = undefined,
-        .i = @sizeOf(bun.PathBuffer),
+        .i = @sizeOf(fun.PathBuffer),
     };
 
     pub fn prepend(pb: *PatternBuffer, chunk: []const u8) void {
-        bun.assert(pb.i >= chunk.len);
+        fun.assert(pb.i >= chunk.len);
         pb.i -= @intCast(chunk.len);
         @memcpy(pb.slice()[0..chunk.len], chunk);
     }
@@ -965,7 +965,7 @@ pub const PatternBuffer = struct {
     pub fn prependPart(pb: *PatternBuffer, part: FrameworkRouter.Part) void {
         switch (part) {
             .text => |text| {
-                bun.assert(text.len == 0 or text[0] != '/');
+                fun.assert(text.len == 0 or text[0] != '/');
                 pb.prepend(text);
                 pb.prepend("/");
             },
@@ -984,25 +984,25 @@ pub const PatternBuffer = struct {
 
 pub fn printWarning() void {
     // Silence this for the test suite
-    if (bun.env_var.BUN_DEV_SERVER_TEST_RUNNER.get() == null) {
-        bun.Output.warn(
-            \\Be advised that Bun Bake is highly experimental, and its API
+    if (fun.env_var.FUN_DEV_SERVER_TEST_RUNNER.get() == null) {
+        fun.Output.warn(
+            \\Be advised that Fun Bake is highly experimental, and its API
             \\will have breaking changes. Join the <magenta>#bake<r> Discord
-            \\channel to help us find bugs: <blue>https://bun.com/discord<r>
+            \\channel to help us find bugs: <blue>https://fun.dev/discord<r>
             \\
             \\
         , .{});
-        bun.Output.flush();
+        fun.Output.flush();
     }
 }
 
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;
 const Plugin = jsc.API.JSBundler.Plugin;

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import http2 from "node:http2";
 
 test("http2 write() + end() pattern should only send two DATA frames (local server)", async () => {

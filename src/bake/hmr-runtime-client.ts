@@ -26,7 +26,7 @@ import { td } from "./shared";
 
 const consoleErrorWithoutInspector = console.error;
 
-if (typeof IS_BUN_DEVELOPMENT !== "boolean") {
+if (typeof IS_FUN_DEVELOPMENT !== "boolean") {
   throw new Error("DCE is configured incorrectly");
 }
 
@@ -35,7 +35,7 @@ let shouldPerformAnotherRouteReload = false;
 let currentRouteIndex: number = -1;
 
 async function performRouteReload() {
-  console.info("[Bun] Server-side code changed, reloading!");
+  console.info("[Fun] Server-side code changed, reloading!");
   if (isPerformingRouteReload) {
     shouldPerformAnotherRouteReload = true;
     return;
@@ -65,7 +65,7 @@ async function performRouteReload() {
 // HMR payloads are script tags that call this internal function.
 // A previous version of this runtime used `eval`, but browser support around
 // mapping stack traces of eval'd frames is poor (the case the error overlay).
-const pendingScriptSymbol = Symbol.for("bun:hmr:pendingScripts");
+const pendingScriptSymbol = Symbol.for("fun:hmr:pendingScripts");
 type PendingHmrScript = {
   script: HTMLScriptElement;
   size: number;
@@ -77,7 +77,7 @@ const scriptTags: Map<string, PendingHmrQueue> =
   new Map<string, PendingHmrQueue>();
 (globalThis as any)[pendingScriptSymbol] = scriptTags;
 
-globalThis[Symbol.for("bun:hmr")] = (modules: any, id: string) => {
+globalThis[Symbol.for("fun:hmr")] = (modules: any, id: string) => {
   const queue = scriptTags.get(id);
   let entry = queue?.shift() ?? null;
   if (queue && queue.length === 0) {
@@ -126,7 +126,7 @@ const handlers = {
     ws.sendBuffered("she"); // IncomingMessageId.subscribe with hot_update and errors
     ws.sendBuffered("n" + location.pathname); // IncomingMessageId.set_url
 
-    const fn = globalThis[Symbol.for("bun:loadData")];
+    const fn = globalThis[Symbol.for("fun:loadData")];
     if (fn) {
       document.removeEventListener("visibilitychange", fn);
       ws.send("i" + config.generation);
@@ -212,13 +212,13 @@ const handlers = {
       } else {
         scriptTags.set(sourceMapId, [entry]);
       }
-      script.className = "bun-hmr-script";
+      script.className = "fun-hmr-script";
       script.src = url;
       script.onerror = onHmrLoadError;
       document.head.appendChild(script);
     } else {
       // Needed for testing.
-      emitEvent("bun:afterUpdate", null);
+      emitEvent("fun:afterUpdate", null);
     }
   },
   [MessageId.set_url_response](view) {
@@ -229,7 +229,7 @@ const handlers = {
 };
 const ws = initWebSocket(handlers, {
   onStatusChange(connected) {
-    emitEvent(connected ? "bun:ws:connect" : "bun:ws:disconnect", null);
+    emitEvent(connected ? "fun:ws:connect" : "fun:ws:disconnect", null);
   },
 });
 
@@ -269,7 +269,7 @@ window.addEventListener("error", event => {
   const value = event.error || event.message;
   if (!value) {
     console.log(
-      "[Bun] The HMR client detected a runtime error, but no useful value was found. Below is the full error event:",
+      "[Fun] The HMR client detected a runtime error, but no useful value was found. Below is the full error event:",
     );
     console.log(event);
   }
@@ -281,9 +281,9 @@ window.addEventListener("unhandledrejection", event => {
 });
 
 {
-  let reloadError: any = sessionStorage?.getItem?.("bun:hmr:message");
+  let reloadError: any = sessionStorage?.getItem?.("fun:hmr:message");
   if (reloadError) {
-    sessionStorage.removeItem("bun:hmr:message");
+    sessionStorage.removeItem("fun:hmr:message");
     reloadError = JSON.parse(reloadError);
     if (reloadError.kind === "warn") {
       console.warn(reloadError.message);
@@ -295,7 +295,7 @@ window.addEventListener("unhandledrejection", event => {
 
 // This implements streaming console.log and console.error from the browser to the server.
 //
-//   Bun.serve({
+//   Fun.serve({
 //     development: {
 //       console: true,
 //       ^^^^^^^^^^^^^^^^
@@ -344,7 +344,7 @@ if (config.console) {
 
 // The following API may be altered at any point.
 // Thankfully, you can just call `import.meta.hot.on`
-let testingHook = globalThis[Symbol.for("bun testing api, may change at any time")];
+let testingHook = globalThis[Symbol.for("fun testing api, may change at any time")];
 testingHook?.({
   configureSourceMapGCSize,
   clearDisconnectedSourceMaps,
@@ -360,7 +360,7 @@ try {
 
   await loadModuleAsync(config.main, false, null);
 
-  emitEvent("bun:ready", null);
+  emitEvent("fun:ready", null);
 } catch (e) {
   // Use consoleErrorWithoutInspector to avoid double-reporting errors.
   consoleErrorWithoutInspector(e);

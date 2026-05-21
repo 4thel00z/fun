@@ -1,19 +1,19 @@
-// https://github.com/oven-sh/bun/issues/21654
+// https://github.com/underdoc-org/fun/issues/21654
 //
-// When paused at a debugger breakpoint, BunInspectorConnection::runWhilePaused
+// When paused at a debugger breakpoint, FunInspectorConnection::runWhilePaused
 // used a busy spin loop that pinned one CPU core at 100%. This test attaches a
 // WebSocket inspector client, pauses at a `debugger;` statement, leaves the
 // process paused for a couple of seconds, then resumes and asserts that the
 // child process consumed very little CPU time while paused.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, tempDir } from "harness";
 
 // The WebSocket inspector transport is known to be unreliable under the CI
 // ASAN build (see test/expectations.txt: `cli/inspect/inspect.test.ts`), so
 // skip there. The condvar fix being tested is in C++ and behaves identically
 // with or without ASAN; it is still exercised on every other lane and on the
-// local debug build (which is built with ASAN but named `bun-debug`).
+// local debug build (which is built with ASAN but named `fun-debug`).
 test.skipIf(isASAN)(
   "does not spin at 100% CPU while paused at a breakpoint",
   async () => {
@@ -32,9 +32,9 @@ test.skipIf(isASAN)(
     `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--inspect-wait=ws://127.0.0.1:0/bun21654", "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--inspect-wait=ws://127.0.0.1:0/bun21654", "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -154,7 +154,7 @@ test.skipIf(isASAN)(
       expect(paused.reason).toBe("DebuggerStatement");
 
       // Stay paused. In the buggy implementation this busy-loops at 100% CPU.
-      await Bun.sleep(sampleMs);
+      await Fun.sleep(sampleMs);
 
       // Verify the debugger is still responsive while paused, and measure how
       // long a round-trip takes. The paused thread must wake promptly when the

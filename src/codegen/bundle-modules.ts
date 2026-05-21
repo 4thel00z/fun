@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 // This script is run when you change anything in src/js/*
 //
 // Documentation is in src/js/README.md
@@ -5,7 +7,7 @@
 // Originally, the builtin bundler only supported function files, but then the module files were
 // added to this, which has made this entire setup extremely convoluted and a mess.
 //
-// One day, this entire setup should be rewritten, but also it would be cool if Bun natively
+// One day, this entire setup should be rewritten, but also it would be cool if Fun natively
 // supported macros that aren't json value -> json value. Otherwise, I'd use a real JS parser/ast
 // library, instead of RegExp hacks.
 import fs from "fs";
@@ -28,7 +30,7 @@ const timeString = 'Bundled "src/js" for ' + (debug ? "development" : "productio
 console.time(timeString);
 
 if (!CMAKE_BUILD_ROOT) {
-  console.error("Usage: bun bundle-modules.ts --debug=[OFF|ON] <CMAKE_WORK_DIR>");
+  console.error("Usage: fun bundle-modules.ts --debug=[OFF|ON] <CMAKE_WORK_DIR>");
   process.exit(1);
 }
 
@@ -39,10 +41,10 @@ const TMP_DIR = path.join(CMAKE_BUILD_ROOT, "tmp_modules");
 const CODEGEN_DIR = path.join(CMAKE_BUILD_ROOT, "codegen");
 const JS_DIR = path.join(CMAKE_BUILD_ROOT, "js");
 
-const t = new Bun.Transpiler({ loader: "tsx" });
+const t = new Fun.Transpiler({ loader: "tsx" });
 
 let start = performance.now();
-const silent = process.env.BUN_SILENT === "1" || process.env.CLAUDECODE;
+const silent = process.env.FUN_SILENT === "1" || process.env.CLAUDECODE;
 function markVerbose(log: string) {
   const now = performance.now();
   console.log(`${log} (${(now - start).toFixed(0)}ms)`);
@@ -59,7 +61,7 @@ globalThis.requireTransformer = requireTransformer;
 // work, so i have lot of debug logs that blow up the console because not sure what is going on.
 // that is also the reason for using `retry` when theoretically writing a file the first time
 // should actually write the file.
-const verbose = Bun.env.VERBOSE ? console.log : () => {};
+const verbose = Fun.env.VERBOSE ? console.log : () => {};
 async function retry(n, fn) {
   var err;
   while (n > 0) {
@@ -69,13 +71,13 @@ async function retry(n, fn) {
     } catch (e) {
       err = e;
       n--;
-      await Bun.sleep(5);
+      await Fun.sleep(5);
     }
   }
   throw err;
 }
 
-const bunRepoRoot = path.join(CMAKE_BUILD_ROOT, "..", "..");
+const funRepoRoot = path.join(CMAKE_BUILD_ROOT, "..", "..");
 
 // Preprocess builtins
 const bundledEntryPoints: string[] = [];
@@ -91,7 +93,7 @@ for (let i = 0; i < nativeStartIndex; i++) {
         );
       } else {
         throw new Error(
-          `Internal modules must have at least one ESM export statement in '${path.relative(bunRepoRoot, file)}' — see src/js/README.md`,
+          `Internal modules must have at least one ESM export statement in '${path.relative(funRepoRoot, file)}' — see src/js/README.md`,
         );
       }
     }
@@ -113,7 +115,7 @@ for (let i = 0; i < nativeStartIndex; i++) {
           const err = new Error(
             `Cannot use ESM import statement within builtin modules. Use require("${imp.path}") instead. See src/js/README.md (from ${moduleList[i]})`,
           );
-          err.name = "BunError";
+          err.name = "FunError";
           err["fileName"] = moduleList[i];
           throw err;
         }
@@ -124,7 +126,7 @@ for (let i = 0; i < nativeStartIndex; i++) {
       const err = new Error(
         `Using \`export default\` AND named exports together in builtin modules is unsupported. See src/js/README.md (from ${moduleList[i]})`,
       );
-      err.name = "BunError";
+      err.name = "FunError";
       err["fileName"] = moduleList[i];
       throw err;
     }
@@ -214,14 +216,14 @@ const config_cli = [
     .map(x => [`--define`, `${x}=${define[x]}`])
     .flat(),
   "--define",
-  `IS_BUN_DEVELOPMENT=${String(!!debug)}`,
+  `IS_FUN_DEVELOPMENT=${String(!!debug)}`,
   "--define",
   `__intrinsic__debug=${debug ? "$debug_log_enabled" : "false"}`,
   "--outdir",
   path.join(TMP_DIR, "modules_out"),
 ];
 verbose("running: ", config_cli);
-const out = Bun.spawnSync({
+const out = Fun.spawnSync({
   cmd: config_cli,
   cwd: process.cwd(),
   env: process.env,
@@ -238,9 +240,9 @@ const outputs = new Map();
 
 for (const entrypoint of bundledEntryPoints) {
   const file_path = entrypoint.slice(TMP_DIR.length + 1).replace(/\.ts$/, ".js");
-  const file = Bun.file(path.join(TMP_DIR, "modules_out", file_path));
+  const file = Fun.file(path.join(TMP_DIR, "modules_out", file_path));
   const output = await file.text();
-  let captured = `(function (){${output.replace("// @bun\n", "").trim()}})`;
+  let captured = `(function (){${output.replace("// @fun\n", "").trim()}})`;
   let usesDebug = output.includes("$debug_log");
   let usesAssert = output.includes("$assert");
   captured =
@@ -260,10 +262,10 @@ for (const entrypoint of bundledEntryPoints) {
       (usesDebug
         ? createLogClientJS(
             file_path.replace(".js", ""),
-            idToPublicSpecifierOrEnumName(file_path).replace(/^node:|^bun:/, ""),
+            idToPublicSpecifierOrEnumName(file_path).replace(/^node:|^fun:/, ""),
           )
         : "") +
-      (usesAssert ? createAssertClientJS(idToPublicSpecifierOrEnumName(file_path).replace(/^node:|^bun:/, "")) : ""),
+      (usesAssert ? createAssertClientJS(idToPublicSpecifierOrEnumName(file_path).replace(/^node:|^fun:/, "")) : ""),
   );
   const errors = [...captured.matchAll(/@bundleError\((.*)\)/g)];
   if (errors.length) {
@@ -288,12 +290,12 @@ function idToEnumName(id: string) {
 }
 
 function idToPublicSpecifierOrEnumName(id: string) {
-  if (id === "internal-for-testing.ts") return "bun:internal-for-testing"; // not in the `bun/` folder because it's added conditionally
+  if (id === "internal-for-testing.ts") return "fun:internal-for-testing"; // not in the `fun/` folder because it's added conditionally
   id = id.replace(/\.[mc]?[tj]s$/, "");
   if (id.startsWith("node/")) {
     return "node:" + id.slice(5).replaceAll(".", "/");
-  } else if (id.startsWith("bun/")) {
-    return "bun:" + id.slice(4).replaceAll(".", "/");
+  } else if (id.startsWith("fun/")) {
+    return "fun:" + id.slice(4).replaceAll(".", "/");
   } else if (id.startsWith("internal/")) {
     return "internal:" + id.slice(9).replaceAll(".", "/");
   } else if (id.startsWith("thirdparty/")) {
@@ -311,8 +313,8 @@ mark("Bundle Functions");
 // This is a file with a single macro that is used in defining InternalModuleRegistry.h
 writeIfNotChanged(
   path.join(CODEGEN_DIR, "InternalModuleRegistry+numberOfModules.h"),
-  `#define BUN_INTERNAL_MODULE_COUNT ${moduleList.length}
-#define BUN_NATIVE_MODULE_START_INDEX ${nativeStartIndex}
+  `#define FUN_INTERNAL_MODULE_COUNT ${moduleList.length}
+#define FUN_NATIVE_MODULE_START_INDEX ${nativeStartIndex}
 `,
 );
 
@@ -372,7 +374,7 @@ if (!debug) {
     `// clang-format off
 #pragma once
 
-namespace Bun {
+namespace Fun {
 namespace InternalModuleRegistryConstants {
   ${moduleList
     .slice(0, nativeStartIndex)
@@ -394,7 +396,7 @@ namespace InternalModuleRegistryConstants {
     `// clang-format off
 #pragma once
 
-namespace Bun {
+namespace Fun {
 namespace InternalModuleRegistryConstants {
   ${moduleList
     .slice(0, nativeStartIndex)
@@ -508,9 +510,9 @@ declare module "module" {
 
 `;
 
-    dts += `        (id: "bun"): typeof import("bun");\n`;
-    dts += `        (id: "bun:test"): typeof import("bun:test");\n`;
-    dts += `        (id: "bun:jsc"): typeof import("bun:jsc");\n`;
+    dts += `        (id: "fun"): typeof import("fun");\n`;
+    dts += `        (id: "fun:test"): typeof import("fun:test");\n`;
+    dts += `        (id: "fun:jsc"): typeof import("fun:jsc");\n`;
 
     for (let i = 0; i < nativeStartIndex; i++) {
       const id = moduleList[i];
@@ -541,11 +543,11 @@ declare module "module" {
 
 mark("Generate Code");
 
-const evalFiles = new Bun.Glob(path.join(BASE, "eval", "*.ts")).scanSync();
+const evalFiles = new Fun.Glob(path.join(BASE, "eval", "*.ts")).scanSync();
 for (const file of evalFiles) {
   const {
     outputs: [output],
-  } = await Bun.build({
+  } = await Fun.build({
     entrypoints: [file],
 
     // Shrink it.

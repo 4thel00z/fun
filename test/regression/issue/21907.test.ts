@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 test("CSS parser should handle extremely large floating-point values without crashing", async () => {
   // Test for regression of issue #21907: "integer part of floating point value out of bounds"
@@ -55,9 +55,9 @@ test("CSS parser should handle extremely large floating-point values without cra
   });
 
   // This would previously crash with "integer part of floating point value out of bounds"
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "input.css", "--outdir", "out"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "input.css", "--outdir", "out"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -71,7 +71,7 @@ test("CSS parser should handle extremely large floating-point values without cra
   expect(stderr).not.toContain("integer part of floating point value out of bounds");
 
   // Verify the output CSS is properly processed with intFromFloat conversions
-  const outputContent = await Bun.file(`${dir}/out/input.css`).text();
+  const outputContent = await Fun.file(`${dir}/out/input.css`).text();
 
   // Helper function to normalize CSS output for snapshots
   function normalizeCSSOutput(output: string): string {

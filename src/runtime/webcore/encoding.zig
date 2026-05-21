@@ -1,7 +1,7 @@
 //! Contains helpers for C++ to do TextEncoder/Decoder like operations.
-//! Also contains the code used by `bun.String.encode` and `bun.String.encodeInto`
+//! Also contains the code used by `fun.String.encode` and `fun.String.encodeInto`
 
-export fn Bun__encoding__writeLatin1(input: [*]const u8, len: usize, to: [*]u8, to_len: usize, encoding: u8) usize {
+export fn Fun__encoding__writeLatin1(input: [*]const u8, len: usize, to: [*]u8, to_len: usize, encoding: u8) usize {
     return switch (@as(Encoding, @enumFromInt(encoding))) {
         .utf8 => writeU8(input, len, to, to_len, .utf8),
         .latin1 => writeU8(input, len, to, to_len, .latin1),
@@ -15,7 +15,7 @@ export fn Bun__encoding__writeLatin1(input: [*]const u8, len: usize, to: [*]u8, 
     } catch 0;
 }
 
-export fn Bun__encoding__writeUTF16(input: [*]const u16, len: usize, to: [*]u8, to_len: usize, encoding: u8) usize {
+export fn Fun__encoding__writeUTF16(input: [*]const u16, len: usize, to: [*]u8, to_len: usize, encoding: u8) usize {
     return switch (@as(Encoding, @enumFromInt(encoding))) {
         .utf8 => writeU16(input, len, to, to_len, .utf8, false),
         .latin1 => writeU16(input, len, to, to_len, .ascii, false),
@@ -30,57 +30,57 @@ export fn Bun__encoding__writeUTF16(input: [*]const u16, len: usize, to: [*]u8, 
 }
 
 // TODO(@190n) handle unpaired surrogates
-export fn Bun__encoding__byteLengthLatin1AsUTF8(input: [*]const u8, len: usize) usize {
+export fn Fun__encoding__byteLengthLatin1AsUTF8(input: [*]const u8, len: usize) usize {
     return byteLengthU8(input, len, .utf8);
 }
 
 // TODO(@190n) handle unpaired surrogates
-export fn Bun__encoding__byteLengthUTF16AsUTF8(input: [*]const u16, len: usize) usize {
+export fn Fun__encoding__byteLengthUTF16AsUTF8(input: [*]const u16, len: usize) usize {
     return strings.elementLengthUTF16IntoUTF8(input[0..len]);
 }
 
-export fn Bun__encoding__constructFromLatin1(globalObject: *JSGlobalObject, input: [*]const u8, len: usize, encoding: u8) JSValue {
+export fn Fun__encoding__constructFromLatin1(globalObject: *JSGlobalObject, input: [*]const u8, len: usize, encoding: u8) JSValue {
     const slice = switch (@as(Encoding, @enumFromInt(encoding))) {
-        .hex => constructFromU8(input, len, bun.default_allocator, .hex),
-        .ascii => constructFromU8(input, len, bun.default_allocator, .ascii),
-        .base64url => constructFromU8(input, len, bun.default_allocator, .base64url),
-        .utf16le => constructFromU8(input, len, bun.default_allocator, .utf16le),
-        .ucs2 => constructFromU8(input, len, bun.default_allocator, .utf16le),
-        .utf8 => constructFromU8(input, len, bun.default_allocator, .utf8),
-        .base64 => constructFromU8(input, len, bun.default_allocator, .base64),
+        .hex => constructFromU8(input, len, fun.default_allocator, .hex),
+        .ascii => constructFromU8(input, len, fun.default_allocator, .ascii),
+        .base64url => constructFromU8(input, len, fun.default_allocator, .base64url),
+        .utf16le => constructFromU8(input, len, fun.default_allocator, .utf16le),
+        .ucs2 => constructFromU8(input, len, fun.default_allocator, .utf16le),
+        .utf8 => constructFromU8(input, len, fun.default_allocator, .utf8),
+        .base64 => constructFromU8(input, len, fun.default_allocator, .base64),
         else => unreachable,
     };
     return jsc.JSValue.createBuffer(globalObject, slice);
 }
 
-export fn Bun__encoding__constructFromUTF16(globalObject: *JSGlobalObject, input: [*]const u16, len: usize, encoding: u8) JSValue {
+export fn Fun__encoding__constructFromUTF16(globalObject: *JSGlobalObject, input: [*]const u16, len: usize, encoding: u8) JSValue {
     const slice = switch (@as(Encoding, @enumFromInt(encoding))) {
-        .base64 => constructFromU16(input, len, bun.default_allocator, .base64),
-        .hex => constructFromU16(input, len, bun.default_allocator, .hex),
-        .base64url => constructFromU16(input, len, bun.default_allocator, .base64url),
-        .utf16le => constructFromU16(input, len, bun.default_allocator, .utf16le),
-        .ucs2 => constructFromU16(input, len, bun.default_allocator, .utf16le),
-        .utf8 => constructFromU16(input, len, bun.default_allocator, .utf8),
-        .ascii => constructFromU16(input, len, bun.default_allocator, .ascii),
-        .latin1 => constructFromU16(input, len, bun.default_allocator, .latin1),
+        .base64 => constructFromU16(input, len, fun.default_allocator, .base64),
+        .hex => constructFromU16(input, len, fun.default_allocator, .hex),
+        .base64url => constructFromU16(input, len, fun.default_allocator, .base64url),
+        .utf16le => constructFromU16(input, len, fun.default_allocator, .utf16le),
+        .ucs2 => constructFromU16(input, len, fun.default_allocator, .utf16le),
+        .utf8 => constructFromU16(input, len, fun.default_allocator, .utf8),
+        .ascii => constructFromU16(input, len, fun.default_allocator, .ascii),
+        .latin1 => constructFromU16(input, len, fun.default_allocator, .latin1),
         else => unreachable,
     };
     return jsc.JSValue.createBuffer(globalObject, slice);
 }
 
 // for SQL statement
-export fn Bun__encoding__toStringUTF8(input: [*]const u8, len: usize, globalObject: *jsc.JSGlobalObject) JSValue {
+export fn Fun__encoding__toStringUTF8(input: [*]const u8, len: usize, globalObject: *jsc.JSGlobalObject) JSValue {
     return toStringComptime(input[0..len], globalObject, .utf8) catch return .zero;
 }
 
-export fn Bun__encoding__toString(input: [*]const u8, len: usize, globalObject: *jsc.JSGlobalObject, encoding: u8) JSValue {
+export fn Fun__encoding__toString(input: [*]const u8, len: usize, globalObject: *jsc.JSGlobalObject, encoding: u8) JSValue {
     return toString(input[0..len], globalObject, @enumFromInt(encoding)) catch return .zero;
 }
 
 // pub fn writeUTF16AsUTF8(utf16: [*]const u16, len: usize, to: [*]u8, to_len: usize) callconv(.c) i32 {
 //     return @intCast(i32, strings.copyUTF16IntoUTF8(to[0..to_len], []const u16, utf16[0..len]).written);
 // }
-pub fn toString(input: []const u8, globalObject: *JSGlobalObject, encoding: Encoding) bun.JSError!JSValue {
+pub fn toString(input: []const u8, globalObject: *JSGlobalObject, encoding: Encoding) fun.JSError!JSValue {
     return switch (encoding) {
         // treat buffer as utf8
         // callers are expected to check that before constructing `Buffer` objects
@@ -90,18 +90,18 @@ pub fn toString(input: []const u8, globalObject: *JSGlobalObject, encoding: Enco
     };
 }
 
-pub fn toBunStringFromOwnedSlice(input: []u8, encoding: Encoding) bun.String {
+pub fn toFunStringFromOwnedSlice(input: []u8, encoding: Encoding) fun.String {
     if (input.len == 0)
-        return bun.String.empty;
+        return fun.String.empty;
 
     switch (encoding) {
         .ascii => {
             if (strings.isAllASCII(input)) {
-                return bun.String.createExternalGloballyAllocated(.latin1, input);
+                return fun.String.createExternalGloballyAllocated(.latin1, input);
             }
 
-            const str, const chars = bun.String.createUninitialized(.latin1, input.len);
-            defer bun.default_allocator.free(input);
+            const str, const chars = fun.String.createUninitialized(.latin1, input.len);
+            defer fun.default_allocator.free(input);
             if (str.tag == .Dead) {
                 return str;
             }
@@ -109,38 +109,38 @@ pub fn toBunStringFromOwnedSlice(input: []u8, encoding: Encoding) bun.String {
             return str;
         },
         .latin1 => {
-            return bun.String.createExternalGloballyAllocated(.latin1, input);
+            return fun.String.createExternalGloballyAllocated(.latin1, input);
         },
         .buffer, .utf8 => {
-            const converted = strings.toUTF16Alloc(bun.default_allocator, input, false, false) catch {
-                bun.default_allocator.free(input);
-                return bun.String.dead;
+            const converted = strings.toUTF16Alloc(fun.default_allocator, input, false, false) catch {
+                fun.default_allocator.free(input);
+                return fun.String.dead;
             };
 
             if (converted) |utf16| {
-                defer bun.default_allocator.free(input);
-                return bun.String.createExternalGloballyAllocated(.utf16, utf16);
+                defer fun.default_allocator.free(input);
+                return fun.String.createExternalGloballyAllocated(.utf16, utf16);
             }
 
             // If we get here, it means we can safely assume the string is 100% ASCII characters
-            return bun.String.createExternalGloballyAllocated(.latin1, input);
+            return fun.String.createExternalGloballyAllocated(.latin1, input);
         },
         .ucs2, .utf16le => {
             // Avoid incomplete characters - if input length is 0 or odd, handle gracefully
             const usable_len = if (input.len % 2 != 0) input.len - 1 else input.len;
 
             if (usable_len == 0) {
-                bun.default_allocator.free(input);
-                return bun.String.empty;
+                fun.default_allocator.free(input);
+                return fun.String.empty;
             }
 
             const as_u16 = std.mem.bytesAsSlice(u16, input[0..usable_len]);
-            return bun.String.createExternalGloballyAllocated(.utf16, @alignCast(as_u16));
+            return fun.String.createExternalGloballyAllocated(.utf16, @alignCast(as_u16));
         },
 
         .hex => {
-            defer bun.default_allocator.free(input);
-            const str, const chars = bun.String.createUninitialized(.latin1, input.len * 2);
+            defer fun.default_allocator.free(input);
+            const str, const chars = fun.String.createUninitialized(.latin1, input.len * 2);
 
             if (str.tag == .Dead) {
                 return str;
@@ -151,7 +151,7 @@ pub fn toBunStringFromOwnedSlice(input: []u8, encoding: Encoding) bun.String {
             // Return an empty string in this case, just like node.
             if (wrote < chars.len) {
                 str.deref();
-                return bun.String.empty;
+                return fun.String.empty;
             }
 
             return str;
@@ -161,42 +161,42 @@ pub fn toBunStringFromOwnedSlice(input: []u8, encoding: Encoding) bun.String {
         // be addressed separately because constructFromU8's base64url also
         // appears inconsistent with Node.js.
         .base64url => {
-            defer bun.default_allocator.free(input);
-            const out, const chars = bun.String.createUninitialized(.latin1, bun.base64.urlSafeEncodeLen(input));
+            defer fun.default_allocator.free(input);
+            const out, const chars = fun.String.createUninitialized(.latin1, fun.base64.urlSafeEncodeLen(input));
             if (out.tag != .Dead) {
-                _ = bun.base64.encodeURLSafe(chars, input);
+                _ = fun.base64.encodeURLSafe(chars, input);
             }
             return out;
         },
 
         .base64 => {
-            defer bun.default_allocator.free(input);
-            const to_len = bun.base64.encodeLen(input);
-            const to = bun.default_allocator.alloc(u8, to_len) catch return bun.String.dead;
-            const wrote = bun.base64.encode(to, input);
-            return bun.String.createExternalGloballyAllocated(.latin1, to[0..wrote]);
+            defer fun.default_allocator.free(input);
+            const to_len = fun.base64.encodeLen(input);
+            const to = fun.default_allocator.alloc(u8, to_len) catch return fun.String.dead;
+            const wrote = fun.base64.encode(to, input);
+            return fun.String.createExternalGloballyAllocated(.latin1, to[0..wrote]);
         },
     }
 }
 
-pub fn toStringComptime(input: []const u8, global: *JSGlobalObject, comptime encoding: Encoding) bun.JSError!JSValue {
-    var bun_string = toBunStringComptime(input, encoding);
-    return try bun_string.transferToJS(global);
+pub fn toStringComptime(input: []const u8, global: *JSGlobalObject, comptime encoding: Encoding) fun.JSError!JSValue {
+    var fun_string = toFunStringComptime(input, encoding);
+    return try fun_string.transferToJS(global);
 }
 
-pub fn toBunString(input: []const u8, encoding: Encoding) bun.String {
+pub fn toFunString(input: []const u8, encoding: Encoding) fun.String {
     return switch (encoding) {
-        inline else => |enc| toBunStringComptime(input, enc),
+        inline else => |enc| toFunStringComptime(input, enc),
     };
 }
 
-pub fn toBunStringComptime(input: []const u8, comptime encoding: Encoding) bun.String {
+pub fn toFunStringComptime(input: []const u8, comptime encoding: Encoding) fun.String {
     if (input.len == 0)
-        return bun.String.empty;
+        return fun.String.empty;
 
     switch (comptime encoding) {
         .ascii => {
-            const str, const chars = bun.String.createUninitialized(.latin1, input.len);
+            const str, const chars = fun.String.createUninitialized(.latin1, input.len);
             if (str.tag == .Dead) {
                 return str;
             }
@@ -204,7 +204,7 @@ pub fn toBunStringComptime(input: []const u8, comptime encoding: Encoding) bun.S
             return str;
         },
         .latin1 => {
-            const str, const chars = bun.String.createUninitialized(.latin1, input.len);
+            const str, const chars = fun.String.createUninitialized(.latin1, input.len);
             if (str.tag == .Dead) {
                 return str;
             }
@@ -212,20 +212,20 @@ pub fn toBunStringComptime(input: []const u8, comptime encoding: Encoding) bun.S
             return str;
         },
         .buffer, .utf8 => {
-            const converted = strings.toUTF16Alloc(bun.default_allocator, input, false, false) catch return bun.String.dead;
+            const converted = strings.toUTF16Alloc(fun.default_allocator, input, false, false) catch return fun.String.dead;
             if (converted) |utf16| {
-                return bun.String.createExternalGloballyAllocated(.utf16, utf16);
+                return fun.String.createExternalGloballyAllocated(.utf16, utf16);
             }
 
             // If we get here, it means we can safely assume the string is 100% ASCII characters
             // For this, we rely on WebKit to manage the memory.
-            return bun.String.cloneLatin1(input);
+            return fun.String.cloneLatin1(input);
         },
         .ucs2, .utf16le => {
             // Avoid incomplete characters
-            if (input.len / 2 == 0) return bun.String.empty;
+            if (input.len / 2 == 0) return fun.String.empty;
 
-            const str, const chars = bun.String.createUninitialized(.utf16, input.len / 2);
+            const str, const chars = fun.String.createUninitialized(.utf16, input.len / 2);
             if (str.tag == .Dead) {
                 return str;
             }
@@ -237,28 +237,28 @@ pub fn toBunStringComptime(input: []const u8, comptime encoding: Encoding) bun.S
         },
 
         .hex => {
-            const str, const chars = bun.String.createUninitialized(.latin1, input.len * 2);
+            const str, const chars = fun.String.createUninitialized(.latin1, input.len * 2);
             if (str.tag == .Dead) {
                 return str;
             }
 
             const wrote = strings.encodeBytesToHex(chars, input);
-            bun.assert(wrote == chars.len);
+            fun.assert(wrote == chars.len);
             return str;
         },
 
         .base64url => {
-            const to_len = bun.base64.urlSafeEncodeLen(input);
-            const to = bun.default_allocator.alloc(u8, to_len) catch return bun.String.dead;
-            const wrote = bun.base64.encodeURLSafe(to, input);
-            return bun.String.createExternalGloballyAllocated(.latin1, to[0..wrote]);
+            const to_len = fun.base64.urlSafeEncodeLen(input);
+            const to = fun.default_allocator.alloc(u8, to_len) catch return fun.String.dead;
+            const wrote = fun.base64.encodeURLSafe(to, input);
+            return fun.String.createExternalGloballyAllocated(.latin1, to[0..wrote]);
         },
 
         .base64 => {
-            const to_len = bun.base64.encodeLen(input);
-            const to = bun.default_allocator.alloc(u8, to_len) catch return bun.String.dead;
-            const wrote = bun.base64.encode(to, input);
-            return bun.String.createExternalGloballyAllocated(.latin1, to[0..wrote]);
+            const to_len = fun.base64.encodeLen(input);
+            const to = fun.default_allocator.alloc(u8, to_len) catch return fun.String.dead;
+            const wrote = fun.base64.encode(to, input);
+            return fun.String.createExternalGloballyAllocated(.latin1, to[0..wrote]);
         },
     }
 }
@@ -287,7 +287,7 @@ pub fn writeU8(input: [*]const u8, len: usize, to_ptr: [*]u8, to_len: usize, com
             const to = to_ptr[0..written];
             var remain = input[0..written];
 
-            if (bun.simdutf.validate.ascii(remain)) {
+            if (fun.simdutf.validate.ascii(remain)) {
                 @memcpy(to_ptr[0..written], remain[0..written]);
             } else {
                 strings.copyLatin1IntoASCII(to, remain);
@@ -324,7 +324,7 @@ pub fn writeU8(input: [*]const u8, len: usize, to_ptr: [*]u8, to_len: usize, com
         },
 
         .base64, .base64url => {
-            return bun.base64.decode(to_ptr[0..to_len], input[0..len]).count;
+            return fun.base64.decode(to_ptr[0..to_len], input[0..len]).count;
         },
     }
 }
@@ -351,7 +351,7 @@ pub fn byteLengthU8(input: [*]const u8, len: usize, comptime encoding: Encoding)
         },
 
         .base64, .base64url => {
-            return bun.base64.decodeLen(input[0..len]);
+            return fun.base64.decodeLen(input[0..len]);
         },
         // else => return &[_]u8{};
     }
@@ -388,7 +388,7 @@ pub fn writeU16(input: [*]const u16, len: usize, to: [*]u8, to_len: usize, compt
                 const bytes_input_len = len * 2;
                 const written = @min(bytes_input_len, to_len);
                 const input_u8 = @as([*]const u8, @ptrCast(input));
-                bun.memmove(to[0..written], input_u8[0..written]);
+                fun.memmove(to[0..written], input_u8[0..written]);
                 return written;
             } else {
                 const bytes_input_len = len * 2;
@@ -397,7 +397,7 @@ pub fn writeU16(input: [*]const u16, len: usize, to: [*]u8, to_len: usize, compt
 
                 const fixed_len = (written / 2) * 2;
                 const input_u8 = @as([*]const u8, @ptrCast(input));
-                bun.memmove(to[0..written], input_u8[0..fixed_len]);
+                fun.memmove(to[0..written], input_u8[0..fixed_len]);
                 return fixed_len;
             }
         },
@@ -412,8 +412,8 @@ pub fn writeU16(input: [*]const u16, len: usize, to: [*]u8, to_len: usize, compt
 
             // very very slow case!
             // shouldn't really happen though
-            const transcoded = strings.toUTF8Alloc(bun.default_allocator, input[0..len]) catch return 0;
-            defer bun.default_allocator.free(transcoded);
+            const transcoded = strings.toUTF8Alloc(fun.default_allocator, input[0..len]) catch return 0;
+            defer fun.default_allocator.free(transcoded);
             return writeU8(transcoded.ptr, transcoded.len, to, to_len, encoding);
         },
         // else => return &[_]u8{};
@@ -474,10 +474,10 @@ pub fn constructFromU8(input: [*]const u8, len: usize, allocator: std.mem.Alloca
             const slice = strings.trim(input[0..len], "\r\n\t " ++ [_]u8{std.ascii.control_code.vt});
             if (slice.len == 0) return &[_]u8{};
 
-            const outlen = bun.base64.decodeLen(slice);
+            const outlen = fun.base64.decodeLen(slice);
             const to = allocator.alloc(u8, outlen) catch return &[_]u8{};
 
-            const wrote = bun.base64.decode(to[0..outlen], slice).count;
+            const wrote = fun.base64.decode(to[0..outlen], slice).count;
             if (wrote == 0) {
                 allocator.free(to);
                 return &[_]u8{};
@@ -531,24 +531,24 @@ pub fn constructFromU16(input: [*]const u16, len: usize, allocator: std.mem.Allo
 }
 
 comptime {
-    _ = &Bun__encoding__writeLatin1;
-    _ = &Bun__encoding__writeUTF16;
-    _ = &Bun__encoding__byteLengthLatin1AsUTF8;
-    _ = &Bun__encoding__byteLengthUTF16AsUTF8;
-    _ = &Bun__encoding__toString;
-    _ = &Bun__encoding__toStringUTF8;
-    _ = &Bun__encoding__constructFromLatin1;
-    _ = &Bun__encoding__constructFromUTF16;
+    _ = &Fun__encoding__writeLatin1;
+    _ = &Fun__encoding__writeUTF16;
+    _ = &Fun__encoding__byteLengthLatin1AsUTF8;
+    _ = &Fun__encoding__byteLengthUTF16AsUTF8;
+    _ = &Fun__encoding__toString;
+    _ = &Fun__encoding__toStringUTF8;
+    _ = &Fun__encoding__constructFromLatin1;
+    _ = &Fun__encoding__constructFromUTF16;
 }
 
 const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const Encoding = jsc.Node.Encoding;

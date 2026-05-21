@@ -29,13 +29,13 @@ pub const AnyPromise = union(enum) {
         }
     }
 
-    pub fn resolve(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) bun.JSTerminated!void {
+    pub fn resolve(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) fun.JSTerminated!void {
         switch (this) {
             inline else => |promise| try promise.resolve(globalThis, value),
         }
     }
 
-    pub fn reject(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) bun.JSTerminated!void {
+    pub fn reject(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) fun.JSTerminated!void {
         switch (this) {
             inline else => |promise| try promise.reject(globalThis, value),
         }
@@ -45,7 +45,7 @@ pub const AnyPromise = union(enum) {
     /// await chain to the error. Use when rejecting from native code at the
     /// top of the event loop. JSInternalPromise subclasses JSPromise in C++,
     /// so both variants are handled.
-    pub fn rejectWithAsyncStack(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) bun.JSTerminated!void {
+    pub fn rejectWithAsyncStack(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) fun.JSTerminated!void {
         value.attachAsyncStackFromPromise(globalThis, this.asJSPromise());
         try this.reject(globalThis, value);
     }
@@ -59,7 +59,7 @@ pub const AnyPromise = union(enum) {
         };
     }
 
-    pub fn rejectAsHandled(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) bun.JSTerminated!void {
+    pub fn rejectAsHandled(this: AnyPromise, globalThis: *JSGlobalObject, value: JSValue) fun.JSTerminated!void {
         switch (this) {
             inline else => |promise| try promise.rejectAsHandled(globalThis, value),
         }
@@ -78,7 +78,7 @@ pub const AnyPromise = union(enum) {
         globalObject: *JSGlobalObject,
         comptime Function: anytype,
         args: std.meta.ArgsTuple(@TypeOf(Function)),
-    ) bun.JSTerminated!void {
+    ) fun.JSTerminated!void {
         const Args = std.meta.ArgsTuple(@TypeOf(Function));
         const Fn = Function;
         const Wrapper = struct {
@@ -98,12 +98,12 @@ pub const AnyPromise = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const JSInternalPromise = @import("./JSInternalPromise.zig").JSInternalPromise;
 const JSPromise = @import("./JSPromise.zig").JSPromise;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VM = jsc.VM;

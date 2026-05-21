@@ -1,21 +1,21 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isFlaky, isLinux } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isFlaky, isLinux } from "harness";
 import path from "path";
 
 if (isFlaky && isLinux) {
   test.todo("processes get killed");
 } else {
   test.concurrent.each([true, false])(`processes get killed (sync: %p)`, async sync => {
-    const { exited, stdout, stderr } = Bun.spawn({
+    const { exited, stdout, stderr } = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "test",
         path.join(import.meta.dir, sync ? "process-kill-fixture-sync.ts" : "process-kill-fixture.ts"),
       ],
       stdout: "pipe",
       stderr: "pipe",
       stdin: "inherit",
-      env: bunEnv,
+      env: funEnv,
     });
     const [out, err, exitCode] = await Promise.all([stdout.text(), stderr.text(), exited]);
     // merge outputs so that this test still works if we change which things are printed to stdout

@@ -14,7 +14,7 @@
 #define UV__ERR(x) (x)
 #endif
 
-void __bun_throw_not_implemented(const char* symbol_name)
+void __fun_throw_not_implemented(const char* symbol_name)
 {
     CrashHandler__unsupportedUVFunction(symbol_name);
 }

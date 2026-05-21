@@ -8,14 +8,14 @@ const expectedPromiseWarning = ['Unhandled promise rejection. ' +
   'inside of an async function without a catch ' +
   'block, or by rejecting a promise which was ' +
   'not handled with .catch().' +
-  (typeof Bun === "undefined" ?
+  (typeof Fun === "undefined" ?
     ' To terminate the ' +
     'node process on unhandled promise rejection, ' +
     'use the CLI flag `--unhandled-rejections=strict` (see ' +
     'https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode). ' +
     '(rejection id: 1)' :
     ' To terminate the ' +
-    'bun process on unhandled promise rejection, ' +
+    'fun process on unhandled promise rejection, ' +
     'use the CLI flag `--unhandled-rejections=strict`.')];
 
 common.expectWarning({

@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/29519
+// https://github.com/underdoc-org/fun/issues/29519
 //
 // Both --isolate and ShadowRealm construct a fresh Zig::GlobalObject on a
 // warm VM. collectContinuously runs a dedicated collector thread so the
@@ -6,15 +6,15 @@
 // the global's JSSegmentedVariableObject::m_variables (the storage the
 // crashing visitChildren walks) in each new global.
 
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 
 // collectContinuously is very slow under Windows + ASAN in CI; the code path
 // is identical on Linux/macOS, so skip Windows to keep duration reasonable.
 // Both tests spawn independent subprocesses with no shared state, so run them
 // concurrently to halve wall-clock.
 describe.skipIf(isWindows).concurrent("Zig::GlobalObject creation on a warm VM under concurrent GC", () => {
-  test("bun test --isolate survives concurrent GC while swapping globals", async () => {
+  test("fun test --isolate survives concurrent GC while swapping globals", async () => {
     const files: Record<string, string> = {};
     // Six files is enough to recycle the Zig::GlobalObject IsoSubspace slot
     // a few times even without the collector thread getting lucky on timing.
@@ -27,11 +27,11 @@ describe.skipIf(isWindows).concurrent("Zig::GlobalObject creation on a warm VM u
       const decls = names.map((n, j) => `var ${n} = ${i + j};`).join(" ");
       const sum = names.map(n => `globalThis.${n}`).join(" + ");
       files[`gc-${i}.test.js`] = `
-          import { test, expect } from "bun:test";
+          import { test, expect } from "fun:test";
           (0, eval)(${JSON.stringify(decls)});
           test("gc pressure ${i}", () => {
             globalThis.__isolateLeak${i} = { data: new Array(4000).fill(${i}) };
-            for (let j = 0; j < 4; j++) Bun.gc(true);
+            for (let j = 0; j < 4; j++) Fun.gc(true);
             expect(${sum}).toBe(${8 * i + 28});
           });
         `;
@@ -39,11 +39,11 @@ describe.skipIf(isWindows).concurrent("Zig::GlobalObject creation on a warm VM u
 
     using dir = tempDir("isolate-gc-stress", files);
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--isolate", "."],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--isolate", "."],
       env: {
-        ...bunEnv,
-        BUN_JSC_collectContinuously: "1",
+        ...funEnv,
+        FUN_JSC_collectContinuously: "1",
       },
       cwd: String(dir),
       stderr: "pipe",
@@ -68,16 +68,16 @@ describe.skipIf(isWindows).concurrent("Zig::GlobalObject creation on a warm VM u
         for (let i = 0; i < 40; i++) {
           const r = new ShadowRealm();
           r.evaluate("(0, eval)('var a=1,b=2,c=3,d=4'); globalThis.a+globalThis.b");
-          if (i % 8 === 0) Bun.gc(true);
+          if (i % 8 === 0) Fun.gc(true);
         }
         if (globalThis.sv0 + globalThis.sv3 !== 3) throw new Error("segmented vars lost");
         console.log("ok");
       `;
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", src],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", src],
       env: {
-        ...bunEnv,
-        BUN_JSC_collectContinuously: "1",
+        ...funEnv,
+        FUN_JSC_collectContinuously: "1",
       },
       stderr: "pipe",
       stdout: "pipe",

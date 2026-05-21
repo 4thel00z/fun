@@ -2,8 +2,8 @@
 
 #include "JavaScriptCore/LazyClassStructure.h"
 
-namespace Bun {
+namespace Fun {
 
 void initJSDirentClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

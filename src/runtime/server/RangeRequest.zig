@@ -44,17 +44,17 @@ pub const Raw = union(enum) {
 /// optional whitespace before "=". https://fetch.spec.whatwg.org/#simple-range-header-value
 pub fn parseRaw(header: []const u8) Raw {
     var rest = header;
-    if (rest.len < 5 or !bun.strings.eqlCaseInsensitiveASCII(rest[0..5], "bytes", false)) return .none;
-    rest = bun.strings.trim(rest[5..], " \t");
+    if (rest.len < 5 or !fun.strings.eqlCaseInsensitiveASCII(rest[0..5], "bytes", false)) return .none;
+    rest = fun.strings.trim(rest[5..], " \t");
     if (rest.len == 0 or rest[0] != '=') return .none;
     rest = rest[1..];
 
     // Multi-range — not supported, fall through to full body.
-    if (bun.strings.indexOfChar(rest, ',') != null) return .none;
+    if (fun.strings.indexOfChar(rest, ',') != null) return .none;
 
-    const dash = bun.strings.indexOfChar(rest, '-') orelse return .none;
-    const start_s = bun.strings.trim(rest[0..dash], " \t");
-    const end_s = bun.strings.trim(rest[dash + 1 ..], " \t");
+    const dash = fun.strings.indexOfChar(rest, '-') orelse return .none;
+    const start_s = fun.strings.trim(rest[0..dash], " \t");
+    const end_s = fun.strings.trim(rest[dash + 1 ..], " \t");
 
     if (start_s.len == 0) {
         const n = std.fmt.parseUnsigned(u64, end_s, 10) catch return .none;
@@ -82,5 +82,5 @@ pub fn rawFromRequest(req: uws.AnyRequest) Raw {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const uws = bun.uws;
+const fun = @import("fun");
+const uws = fun.uws;

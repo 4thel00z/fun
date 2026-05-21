@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 
 test("require() with trailing slash", () => {

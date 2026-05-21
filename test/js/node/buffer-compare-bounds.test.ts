@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("Buffer.compare bounds validation", () => {
   // Ensure out-of-range end offsets throw ERR_OUT_OF_RANGE, matching Node.js behavior

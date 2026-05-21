@@ -1,7 +1,9 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 // The binding generator to rule them all.
 // Converts binding definition files (.bind.ts) into C++ and Zig code.
 //
-// Generated bindings are available in `bun.generated.<basename>.*` in Zig,
+// Generated bindings are available in `fun.generated.<basename>.*` in Zig,
 // or `Generated::<basename>::*` in C++ from including `Generated<basename>.h`.
 import assert from "node:assert";
 import fs from "node:fs";
@@ -188,7 +190,7 @@ function emitCppCallToVariant(name: string, variant: Variant, dispatchFunctionNa
   }
 
   // Hoist all WTF::String temps to the dispatch scope so they outlive any
-  // BunString values that reference them. Bun::toString() does not ref the
+  // FunString values that reference them. Fun::toString() does not ref the
   // StringImpl, so the WTF::String must stay alive until the dispatch call.
   const hoistedTemps = collectStringTemps(variant.args);
   for (const temps of hoistedTemps.values()) {
@@ -450,7 +452,7 @@ function getSimpleIdlType(type: TypeImpl): string | undefined {
       if (max === "abi") max = abiMax;
 
       headers.add("BindgenCustomEnforceRange.h");
-      entry = `Bun::BindgenCustomEnforceRange<${cAbiTypeName(type.kind as CAbiType)}, ${min}, ${max}, Bun::BindgenCustomEnforceRangeKind::${
+      entry = `Fun::BindgenCustomEnforceRange<${cAbiTypeName(type.kind as CAbiType)}, ${min}, ${max}, Fun::BindgenCustomEnforceRangeKind::${
         nodeValidator ? "Node" : "Web"
       }>`;
     } else {
@@ -538,7 +540,7 @@ function emitConvertValue(
         if (decl === "declare") {
           cpp.add(`${type.cppName()} `);
         }
-        cpp.line(`${storageLocation} = Bun::toString(${temp});`);
+        cpp.line(`${storageLocation} = Fun::toString(${temp});`);
         break;
       }
       case "UTF8String": {
@@ -553,7 +555,7 @@ function emitConvertValue(
         if (decl === "declare") {
           cpp.add(`${type.cppName()} `);
         }
-        cpp.line(`${storageLocation} = Bun::toString(${temp});`);
+        cpp.line(`${storageLocation} = Fun::toString(${temp});`);
         break;
       }
       case "dictionary": {
@@ -686,12 +688,12 @@ function emitConvertDictionaryFunction(type: TypeImpl) {
     cpp.line(`} else {`);
     headers.add("ObjectBindings.h");
     cpp.line(
-      `    propValue = Bun::getIfPropertyExistsPrototypePollutionMitigation(vm, global, object, JSC::Identifier::fromString(vm, ${str(key)}_s));`,
+      `    propValue = Fun::getIfPropertyExistsPrototypePollutionMitigation(vm, global, object, JSC::Identifier::fromString(vm, ${str(key)}_s));`,
     );
     cpp.line(`    RETURN_IF_EXCEPTION(throwScope, false);`);
     cpp.line(`}`);
     // For string fields, use the caller-owned WTF::String& ref so the
-    // string data outlives this function and the BunString in the result.
+    // string data outlives this function and the FunString in the result.
     const hoistedTemp = fieldType.isStringType() ? `${key}_str` : undefined;
     cpp.line(`if (!propValue.isUndefined()) {`);
     cpp.indent();
@@ -881,7 +883,7 @@ function zigTypeNameInner(type: TypeImpl): string {
     case "DOMString":
     case "ByteString":
     case "UTF8String":
-      return "bun.String";
+      return "fun.String";
     case "boolean":
       return "bool";
     case "usize":
@@ -910,7 +912,7 @@ function returnStrategyCppType(strategy: ReturnStrategy): string {
       return "JSC::EncodedJSValue";
     default:
       throw new Error(
-        `TODO: returnStrategyCppType for ${Bun.inspect(strategy satisfies never, { colors: Bun.enableANSIColors })}`,
+        `TODO: returnStrategyCppType for ${Fun.inspect(strategy satisfies never, { colors: Fun.enableANSIColors })}`,
       );
   }
 }
@@ -924,7 +926,7 @@ function returnStrategyZigType(strategy: ReturnStrategy): string {
       return "jsc.JSValue";
     default:
       throw new Error(
-        `TODO: returnStrategyZigType for ${Bun.inspect(strategy satisfies never, { colors: Bun.enableANSIColors })}`,
+        `TODO: returnStrategyZigType for ${Fun.inspect(strategy satisfies never, { colors: Fun.enableANSIColors })}`,
       );
   }
 }
@@ -1212,8 +1214,8 @@ const cpp = new CodeWriter();
 const cppInternal = new CodeWriter();
 const headers = new Set<string>();
 
-zig.line('const bun = @import("bun");');
-zig.line("const jsc = bun.jsc;");
+zig.line('const fun = @import("fun");');
+zig.line("const jsc = fun.jsc;");
 zig.line("const JSHostFunctionType = jsc.JSHostFn;\n");
 
 zigInternal.line("const binding_internals = struct {");
@@ -1443,7 +1445,7 @@ for (const [filename, { functions, typedefs }] of files) {
 
       for (const arg of vari.args) {
         if (arg.type.kind === "UTF8String") {
-          zigInternal.line(`const ${arg.zigMappedName}_utf8 = ${arg.zigMappedName}.toUTF8(bun.default_allocator);`);
+          zigInternal.line(`const ${arg.zigMappedName}_utf8 = ${arg.zigMappedName}.toUTF8(fun.default_allocator);`);
           zigInternal.line(`defer ${arg.zigMappedName}_utf8.deinit();`);
         }
       }
@@ -1453,10 +1455,10 @@ for (const [filename, { functions, typedefs }] of files) {
           zigInternal.add(`return jsc.toJSHostCall(${globalObjectArg}, @src(), `);
           break;
         case "basic-out-param":
-          zigInternal.add(`out.* = @as(bun.JSError!${returnStrategy.abiType}, `);
+          zigInternal.add(`out.* = @as(fun.JSError!${returnStrategy.abiType}, `);
           break;
         case "void":
-          zigInternal.add(`@as(bun.JSError!void, `);
+          zigInternal.add(`@as(fun.JSError!void, `);
           break;
       }
 
@@ -1475,7 +1477,7 @@ for (const [filename, { functions, typedefs }] of files) {
         if (arg.type.isVirtualArgument()) {
           switch (arg.type.kind) {
             case "zigVirtualMachine":
-              zigInternal.line(`${argName}.bunVM(),`);
+              zigInternal.line(`${argName}.funVM(),`);
               break;
             case "globalObject":
               zigInternal.line(`${argName},`);
@@ -1577,7 +1579,7 @@ zigInternal.dedent();
 zigInternal.line("};");
 zigInternal.line();
 zigInternal.line("comptime {");
-zigInternal.line(`    if (bun.Environment.export_cpp_apis) {`);
+zigInternal.line(`    if (fun.Environment.export_cpp_apis) {`);
 zigInternal.line('        for (@typeInfo(binding_internals).@"struct".decls) |decl| {');
 zigInternal.line("            _ = &@field(binding_internals, decl.name);");
 zigInternal.line("        }");

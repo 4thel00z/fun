@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 test("lifecycle script should handle directory deletion gracefully", async () => {
   const dir = tempDirWithFiles("lifecycle-crash-test", {
@@ -13,11 +13,11 @@ test("lifecycle script should handle directory deletion gracefully", async () =>
     }),
   });
 
-  // Run bun install and expect it to handle the directory deletion gracefully
+  // Run fun install and expect it to handle the directory deletion gracefully
   // without crashing with assertions
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "install"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "install"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -67,11 +67,11 @@ test("lifecycle script with optional dependency should handle directory deletion
     }),
   });
 
-  // Run bun install and expect it to handle the optional dependency
+  // Run fun install and expect it to handle the optional dependency
   // directory deletion gracefully
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "install"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "install"],
+    env: funEnv,
     cwd: mainDir,
     stdout: "pipe",
     stderr: "pipe",

@@ -1,4 +1,4 @@
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 
 let monitorCalled = false;
 setTimeout(() => {
@@ -33,7 +33,7 @@ process.on("uncaughtException", err => {
     process.exit(1);
   }
 
-  expect(Bun.inspect(err)).toContain(hello);
+  expect(Fun.inspect(err)).toContain(hello);
 });
 
 setTimeout(() => {

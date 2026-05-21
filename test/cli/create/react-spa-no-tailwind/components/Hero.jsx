@@ -6,14 +6,14 @@ export default function Hero() {
     <div className="hero">
       <div className={classNames("logo", "animate-bounce")}>🥟</div>
       <h1>
-        Welcome to <span className="gradient-text">Bun</span>
+        Welcome to <span className="gradient-text">Fun</span>
       </h1>
       <p className="description">
         The all-in-one JavaScript runtime & toolkit designed for speed
       </p>
       <div className="cta-buttons">
         <a
-          href="https://bun.com"
+          href="https://fun.dev"
           className={classNames("button", "primary")}
           target="_blank"
           rel="noopener noreferrer"
@@ -21,7 +21,7 @@ export default function Hero() {
           Get Started
         </a>
         <a
-          href="https://github.com/oven-sh/bun"
+          href="https://github.com/underdoc-org/fun"
           className={classNames("button", "secondary")}
           target="_blank"
           rel="noopener noreferrer"
@@ -32,7 +32,7 @@ export default function Hero() {
       <div className="stats">
         <div className="stat">
           <span className="stat-value">3x</span>
-          <span className="stat-label">Bun Bun Bun</span>
+          <span className="stat-label">Fun Fun Fun</span>
         </div>
         <div className="stat">
           <span className="stat-value">0.5s</span>

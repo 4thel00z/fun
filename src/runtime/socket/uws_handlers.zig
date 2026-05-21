@@ -4,11 +4,11 @@
 //! methods already expect.
 //!
 //! This is the *only* call-site coupling between the dispatcher and the rest
-//! of Bun — everything below here is unchanged consumer code. It replaces the
+//! of Fun — everything below here is unchanged consumer code. It replaces the
 //! old `NewSocketHandler.configure`/`unsafeConfigure` machinery, which built
 //! the same trampolines at runtime per `us_socket_context_t`.
 
-/// Some consumer methods are `bun.JSError!void` (they can throw into JS),
+/// Some consumer methods are `fun.JSError!void` (they can throw into JS),
 /// some are plain `void`. The old `configure()` trampolines hand-unrolled the
 /// catch per call site; here we do it once. JS errors are already on the
 /// pending-exception slot — there's nowhere for the C event loop to propagate
@@ -86,7 +86,7 @@ fn PtrHandler(comptime T: type, comptime ssl: bool) type {
             if (@hasDecl(T, "onConnectError"))
                 swallow(this.onConnectError(S.fromConnecting(c), code));
         }
-        pub fn onHandshake(ext: Ext, s: *us_socket_t, ok: bool, err: uws.us_bun_verify_error_t) void {
+        pub fn onHandshake(ext: Ext, s: *us_socket_t, ok: bool, err: uws.us_fun_verify_error_t) void {
             const this = ext.* orelse return;
             if (@hasDecl(T, "onHandshake")) swallow(this.onHandshake(wrap(s), @intFromBool(ok), err));
         }
@@ -97,17 +97,17 @@ fn PtrHandler(comptime T: type, comptime ssl: bool) type {
     };
 }
 
-// ── Bun.connect / Bun.listen ────────────────────────────────────────────────
-pub fn BunSocket(comptime ssl: bool) type {
+// ── Fun.connect / Fun.listen ────────────────────────────────────────────────
+pub fn FunSocket(comptime ssl: bool) type {
     return PtrHandler(api.NewSocket(ssl), ssl);
 }
 
 /// Listener accept path: the ext is uninitialised at on_open time (the C accept
 /// loop just calloc'd it), so we read the `*Listener` off `group->ext` and let
 /// `onCreate` allocate the `NewSocket` and stash it in the ext. After that the
-/// socket is re-stamped as `.bun_socket_{tcp,tls}` and routes through
-/// `BunSocket` above.
-pub fn BunListener(comptime ssl: bool) type {
+/// socket is re-stamped as `.fun_socket_{tcp,tls}` and routes through
+/// `FunSocket` above.
+pub fn FunListener(comptime ssl: bool) type {
     const S = uws.NewSocketHandler(ssl);
     const NS = api.NewSocket(ssl);
     return struct {
@@ -115,7 +115,7 @@ pub fn BunListener(comptime ssl: bool) type {
         pub fn onOpen(s: *us_socket_t, _: bool, _: []const u8) void {
             const listener = s.group().owner(api.Listener);
             // onCreate allocates the NewSocket, stashes it in ext, and
-            // restamps kind → .bun_socket_*. Fire the user `open` handler
+            // restamps kind → .fun_socket_*. Fire the user `open` handler
             // (markActive, ALPN, JS callback) before returning so the same
             // dispatch tick that accepted the fd sees an open socket — the
             // old `configure({onCreate, onOpen})` path did this in one
@@ -123,7 +123,7 @@ pub fn BunListener(comptime ssl: bool) type {
             const ns = api.Listener.onCreate(ssl, listener, S.from(s));
             swallow(ns.onOpen(S.from(s)));
         }
-        // Accepted sockets reach the remaining events as `.bun_socket_*` once
+        // Accepted sockets reach the remaining events as `.fun_socket_*` once
         // onCreate has restamped them; if anything fires before that, route to
         // the freshly stashed NewSocket.
         pub fn onClose(s: *us_socket_t, code: i32, reason: ?*anyopaque) void {
@@ -141,7 +141,7 @@ pub fn BunListener(comptime ssl: bool) type {
         pub fn onTimeout(s: *us_socket_t) void {
             if (s.ext(?*NS).*) |ns| swallow(ns.onTimeout(S.from(s)));
         }
-        pub fn onHandshake(s: *us_socket_t, ok: bool, err: uws.us_bun_verify_error_t) void {
+        pub fn onHandshake(s: *us_socket_t, ok: bool, err: uws.us_fun_verify_error_t) void {
             if (s.ext(?*NS).*) |ns| swallow(ns.onHandshake(S.from(s), @intFromBool(ok), err));
         }
     };
@@ -199,7 +199,7 @@ fn NsHandler(comptime Owner: type, comptime H: type, comptime ssl: bool) type {
             if (@hasDecl(H, "onConnectError"))
                 swallow(H.onConnectError(this, S.fromConnecting(c), code));
         }
-        pub fn onHandshake(ext: Ext, s: *us_socket_t, ok: bool, err: uws.us_bun_verify_error_t) void {
+        pub fn onHandshake(ext: Ext, s: *us_socket_t, ok: bool, err: uws.us_fun_verify_error_t) void {
             const this = ext.* orelse return;
             if (@hasDecl(H, "onHandshake") and @TypeOf(H.onHandshake) != @TypeOf(null))
                 swallow(H.onHandshake(this, wrap(s), @intFromBool(ok), err));
@@ -210,14 +210,14 @@ fn NsHandler(comptime Owner: type, comptime H: type, comptime ssl: bool) type {
 // ── HTTP client thread (fetch) ──────────────────────────────────────────────
 //
 // Unlike every other consumer the fetch ext slot does NOT hold a `*Owner`. It
-// holds an `ActiveSocket` — a `bun.TaggedPointerUnion` *value* packed into one
+// holds an `ActiveSocket` — a `fun.TaggedPointerUnion` *value* packed into one
 // word (`.ptr()` → `*anyopaque` with the tag in the high bits). Dereferencing
 // it as a real pointer is UB; `Handler.on*` decode it via `ActiveSocket.from`.
 // This adapter just lifts the word out of the slot, so the `*anyopaque` here
 // is intentional and irreducible — it IS the tagged-pointer encoding, not a
 // type we forgot to name.
 pub fn HTTPClient(comptime ssl: bool) type {
-    const H = bun.http.NewHTTPContext(ssl).Handler;
+    const H = fun.http.NewHTTPContext(ssl).Handler;
     const S = uws.NewSocketHandler(ssl);
     return struct {
         pub const Ext = *?*anyopaque;
@@ -261,7 +261,7 @@ pub fn HTTPClient(comptime ssl: bool) type {
             if (@hasDecl(H, "onConnectError"))
                 swallow(H.onConnectError(cs.ext(?*anyopaque).* orelse return, S.fromConnecting(cs), code));
         }
-        pub fn onHandshake(ext: Ext, s: *us_socket_t, ok: bool, err: uws.us_bun_verify_error_t) void {
+        pub fn onHandshake(ext: Ext, s: *us_socket_t, ok: bool, err: uws.us_fun_verify_error_t) void {
             fwd(ext, "onHandshake", .{ wrap(s), @as(i32, @intFromBool(ok)), err });
         }
     };
@@ -277,7 +277,7 @@ pub fn WSClient(comptime ssl: bool) type {
 
 // ── SQL drivers ─────────────────────────────────────────────────────────────
 pub fn Postgres(comptime ssl: bool) type {
-    const C = bun.api.Postgres.PostgresSQLConnection;
+    const C = fun.api.Postgres.PostgresSQLConnection;
     return NsHandler(C, C.SocketHandler(ssl), ssl);
 }
 pub fn MySQL(comptime ssl: bool) type {
@@ -287,9 +287,9 @@ pub fn Valkey(comptime ssl: bool) type {
     return NsHandler(js_valkey.JSValkeyClient, js_valkey.SocketHandler(ssl), ssl);
 }
 
-// ── Bun.spawn IPC / process.send() ──────────────────────────────────────────
+// ── Fun.spawn IPC / process.send() ──────────────────────────────────────────
 // Ext is `*IPC.SendQueue` for both child-side `process.send` and parent-side
-// `Bun.spawn({ipc})`. Handlers live in `ipc.zig` as free functions, not
+// `Fun.spawn({ipc})`. Handlers live in `ipc.zig` as free functions, not
 // methods on SendQueue, so we adapt manually instead of via PtrHandler.
 pub const SpawnIPC = struct {
     const H = IPC.IPCHandlers.PosixSocket;
@@ -322,9 +322,9 @@ const mysql = @import("../../sql_jsc/mysql.zig");
 const websocket_client = @import("../../http_jsc/websocket_client.zig");
 const websocket_upgrade_client = @import("../../http_jsc/websocket_client/WebSocketUpgradeClient.zig");
 
-const bun = @import("bun");
-const api = bun.jsc.API;
+const fun = @import("fun");
+const api = fun.jsc.API;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const ConnectingSocket = uws.ConnectingSocket;
 const us_socket_t = uws.us_socket_t;

@@ -31,7 +31,7 @@ fn taskCallbackWrap(thread_pool_task: *ThreadPoolLib.Task) void {
     defer worker.unget();
     var log = Logger.Log.init(worker.allocator);
 
-    const result = bun.handleOom(bun.default_allocator.create(ParseTask.Result));
+    const result = fun.handleOom(fun.default_allocator.create(ParseTask.Result));
     result.* = .{
         .ctx = task.ctx,
         .task = undefined,
@@ -43,7 +43,7 @@ fn taskCallbackWrap(thread_pool_task: *ThreadPoolLib.Task) void {
         )) |success|
             .{ .success = success }
         else |err| switch (err) {
-            error.OutOfMemory => bun.outOfMemory(),
+            error.OutOfMemory => fun.outOfMemory(),
         },
 
         .watcher_data = .none,
@@ -69,7 +69,7 @@ fn taskCallback(
     task: *ServerComponentParseTask,
     log: *Logger.Log,
     allocator: std.mem.Allocator,
-) bun.OOM!ParseTask.Result.Success {
+) fun.OOM!ParseTask.Result.Success {
     var ab = try AstBuilder.init(allocator, &task.source, task.ctx.transpiler.options.hot_module_reloading);
 
     switch (task.data) {
@@ -131,13 +131,13 @@ fn generateClientReferenceProxy(task: *ServerComponentParseTask, data: Data.Refe
             data.other_source.path.pretty
         else
             try std.fmt.allocPrint(b.allocator, "{f}S{d:0>8}", .{
-                bun.fmt.hexIntLower(task.ctx.unique_key),
+                fun.fmt.hexIntLower(task.ctx.unique_key),
                 data.other_source.index.get(),
             }),
     });
 
     for (client_named_exports.keys()) |key| {
-        const is_default = bun.strings.eqlComptime(key, "default");
+        const is_default = fun.strings.eqlComptime(key, "default");
 
         // This error message is taken from
         // https://github.com/facebook/react/blob/c5b9375767e2c4102d7e5559d383523736f1c902/packages/react-server-dom-webpack/src/ReactFlightWebpackNodeLoader.js#L323-L354
@@ -209,13 +209,13 @@ fn generateClientReferenceProxy(task: *ServerComponentParseTask, data: Data.Refe
     }
 }
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const options = @import("./options.zig");
 const std = @import("std");
@@ -223,16 +223,16 @@ const std = @import("std");
 const Logger = @import("../logger/logger.zig");
 const Loc = Logger.Loc;
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const ThreadPoolLib = bun.ThreadPool;
-const default_allocator = bun.default_allocator;
-const js_parser = bun.js_parser;
-const jsc = bun.jsc;
-const strings = bun.strings;
-const BabyList = bun.collections.BabyList;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const ThreadPoolLib = fun.ThreadPool;
+const default_allocator = fun.default_allocator;
+const js_parser = fun.js_parser;
+const jsc = fun.jsc;
+const strings = fun.strings;
+const BabyList = fun.collections.BabyList;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -242,6 +242,6 @@ const JSAst = js_ast.BundledAst;
 const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const AstBuilder = bundler.AstBuilder;
 const BundleV2 = bundler.BundleV2;

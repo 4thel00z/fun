@@ -1,5 +1,5 @@
 import assert from "assert/strict";
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("assert.deepStrictEqual() should compare Number wrapper object values - issue #24045", () => {
   // Different values should throw

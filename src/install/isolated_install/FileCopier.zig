@@ -1,13 +1,13 @@
 pub const FileCopier = struct {
-    src_path: bun.AbsPath(.{ .sep = .auto, .unit = .os }),
-    dest_subpath: bun.Path(.{ .sep = .auto, .unit = .os }),
+    src_path: fun.AbsPath(.{ .sep = .auto, .unit = .os }),
+    dest_subpath: fun.Path(.{ .sep = .auto, .unit = .os }),
     walker: Walker,
 
     pub fn init(
         src_dir: FD,
-        src_path: bun.AbsPath(.{ .sep = .auto, .unit = .os }),
-        dest_subpath: bun.Path(.{ .sep = .auto, .unit = .os }),
-        skip_dirnames: []const bun.OSPathSlice,
+        src_path: fun.AbsPath(.{ .sep = .auto, .unit = .os }),
+        dest_subpath: fun.Path(.{ .sep = .auto, .unit = .os }),
+        skip_dirnames: []const fun.OSPathSlice,
     ) OOM!FileCopier {
         return .{
             .src_path = src_path,
@@ -15,7 +15,7 @@ pub const FileCopier = struct {
             .walker = walker: {
                 var w = try Walker.walk(
                     src_dir,
-                    bun.default_allocator,
+                    fun.default_allocator,
                     &.{},
                     skip_dirnames,
                 );
@@ -30,9 +30,9 @@ pub const FileCopier = struct {
     }
 
     pub fn copy(this: *FileCopier) sys.Maybe(void) {
-        var dest_dir = bun.MakePath.makeOpenPath(FD.cwd().stdDir(), this.dest_subpath.sliceZ(), .{}) catch |err| {
-            // TODO: remove the need for this and implement openDir makePath makeOpenPath in bun
-            var errno: bun.sys.E = switch (@as(anyerror, err)) {
+        var dest_dir = fun.MakePath.makeOpenPath(FD.cwd().stdDir(), this.dest_subpath.sliceZ(), .{}) catch |err| {
+            // TODO: remove the need for this and implement openDir makePath makeOpenPath in fun
+            var errno: fun.sys.E = switch (@as(anyerror, err)) {
                 error.AccessDenied => .PERM,
                 error.FileTooBig => .FBIG,
                 error.SymLinkLoop => .LOOP,
@@ -65,11 +65,11 @@ pub const FileCopier = struct {
                 errno = .NOENT;
             }
 
-            return .{ .err = bun.sys.Error.fromCode(errno, .copyfile) };
+            return .{ .err = fun.sys.Error.fromCode(errno, .copyfile) };
         };
         defer dest_dir.close();
 
-        var copy_file_state: bun.CopyFileState = .{};
+        var copy_file_state: fun.CopyFileState = .{};
 
         while (switch (this.walker.next()) {
             .result => |res| res,
@@ -93,12 +93,12 @@ pub const FileCopier = struct {
 
                 switch (entry.kind) {
                     .directory => {
-                        if (bun.windows.CreateDirectoryExW(this.src_path.sliceZ(), this.dest_subpath.sliceZ(), null) == 0) {
-                            bun.MakePath.makePath(u16, dest_dir, entry.path) catch {};
+                        if (fun.windows.CreateDirectoryExW(this.src_path.sliceZ(), this.dest_subpath.sliceZ(), null) == 0) {
+                            fun.MakePath.makePath(u16, dest_dir, entry.path) catch {};
                         }
                     },
                     .file => {
-                        switch (bun.copyFile(this.src_path.sliceZ(), this.dest_subpath.sliceZ())) {
+                        switch (fun.copyFile(this.src_path.sliceZ(), this.dest_subpath.sliceZ())) {
                             .result => {},
                             .err => |first_err| {
                                 // Retry after creating the parent directory.
@@ -111,11 +111,11 @@ pub const FileCopier = struct {
                                 // continuing here would let a staged
                                 // global-store entry be renamed into place
                                 // with files missing.
-                                const entry_dirname = bun.Dirname.dirname(u16, entry.path) orelse {
+                                const entry_dirname = fun.Dirname.dirname(u16, entry.path) orelse {
                                     return .initErr(first_err);
                                 };
-                                bun.MakePath.makePath(u16, dest_dir, entry_dirname) catch {};
-                                switch (bun.copyFile(this.src_path.sliceZ(), this.dest_subpath.sliceZ())) {
+                                fun.MakePath.makePath(u16, dest_dir, entry_dirname) catch {};
+                                switch (fun.copyFile(this.src_path.sliceZ(), this.dest_subpath.sliceZ())) {
                                     .result => {},
                                     .err => |err| {
                                         return .initErr(err);
@@ -131,7 +131,7 @@ pub const FileCopier = struct {
                     continue;
                 }
 
-                const src = switch (entry.dir.openat(entry.basename, bun.O.RDONLY, 0)) {
+                const src = switch (entry.dir.openat(entry.basename, fun.O.RDONLY, 0)) {
                     .result => |fd| fd,
                     .err => |err| {
                         return .initErr(err);
@@ -140,12 +140,12 @@ pub const FileCopier = struct {
                 defer src.close();
 
                 var dest = dest_dir.createFileZ(entry.path, .{}) catch dest: {
-                    if (bun.Dirname.dirname(bun.OSPathChar, entry.path)) |entry_dirname| {
-                        bun.MakePath.makePath(bun.OSPathChar, dest_dir, entry_dirname) catch {};
+                    if (fun.Dirname.dirname(fun.OSPathChar, entry.path)) |entry_dirname| {
+                        fun.MakePath.makePath(fun.OSPathChar, dest_dir, entry_dirname) catch {};
                     }
 
                     break :dest dest_dir.createFileZ(entry.path, .{}) catch |err| {
-                        Output.prettyErrorln("<r><red>{s}<r>: copy file {f}", .{ @errorName(err), bun.fmt.fmtOSPath(entry.path, .{}) });
+                        Output.prettyErrorln("<r><red>{s}<r>: copy file {f}", .{ @errorName(err), fun.fmt.fmtOSPath(entry.path, .{}) });
                         Global.exit(1);
                     };
                 };
@@ -153,10 +153,10 @@ pub const FileCopier = struct {
 
                 if (comptime Environment.isPosix) {
                     const stat = src.stat().unwrap() catch continue;
-                    _ = bun.c.fchmod(dest.handle, @intCast(stat.mode));
+                    _ = fun.c.fchmod(dest.handle, @intCast(stat.mode));
                 }
 
-                switch (bun.copyFileWithState(src, .fromStdFile(dest), &copy_file_state)) {
+                switch (fun.copyFileWithState(src, .fromStdFile(dest), &copy_file_state)) {
                     .result => {},
                     .err => |err| {
                         return .initErr(err);
@@ -171,10 +171,10 @@ pub const FileCopier = struct {
 
 const Walker = @import("../../sys/walker_skippable.zig");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const Global = bun.Global;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const sys = bun.sys;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const Global = fun.Global;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const sys = fun.sys;

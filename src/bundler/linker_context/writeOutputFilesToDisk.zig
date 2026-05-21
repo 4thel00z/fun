@@ -5,18 +5,18 @@ pub fn writeOutputFilesToDisk(
     output_files: *OutputFileListBuilder,
     standalone_chunk_contents: ?[]const ?[]const u8,
 ) !void {
-    const trace = bun.perf.trace("Bundler.writeOutputFilesToDisk");
+    const trace = fun.perf.trace("Bundler.writeOutputFilesToDisk");
     defer trace.end();
     var root_dir = std.fs.cwd().makeOpenPath(root_path, .{}) catch |err| {
         if (err == error.NotDir) {
-            c.log.addErrorFmt(null, Logger.Loc.Empty, bun.default_allocator, "Failed to create output directory {f} is a file. Please choose a different outdir or delete {f}", .{
-                bun.fmt.quote(root_path),
-                bun.fmt.quote(root_path),
+            c.log.addErrorFmt(null, Logger.Loc.Empty, fun.default_allocator, "Failed to create output directory {f} is a file. Please choose a different outdir or delete {f}", .{
+                fun.fmt.quote(root_path),
+                fun.fmt.quote(root_path),
             }) catch unreachable;
         } else {
-            c.log.addErrorFmt(null, Logger.Loc.Empty, bun.default_allocator, "Failed to create output directory {s} {f}", .{
+            c.log.addErrorFmt(null, Logger.Loc.Empty, fun.default_allocator, "Failed to create output directory {s} {f}", .{
                 @errorName(err),
-                bun.fmt.quote(root_path),
+                fun.fmt.quote(root_path),
             }) catch unreachable;
         }
 
@@ -24,22 +24,22 @@ pub fn writeOutputFilesToDisk(
     };
     defer root_dir.close();
     // Optimization: when writing to disk, we can re-use the memory
-    var max_heap_allocator: bun.MaxHeapAllocator = undefined;
+    var max_heap_allocator: fun.MaxHeapAllocator = undefined;
     defer max_heap_allocator.deinit();
 
-    const code_allocator = max_heap_allocator.init(bun.default_allocator);
+    const code_allocator = max_heap_allocator.init(fun.default_allocator);
 
-    var max_heap_allocator_source_map: bun.MaxHeapAllocator = undefined;
+    var max_heap_allocator_source_map: fun.MaxHeapAllocator = undefined;
     defer max_heap_allocator_source_map.deinit();
 
-    const source_map_allocator = max_heap_allocator_source_map.init(bun.default_allocator);
+    const source_map_allocator = max_heap_allocator_source_map.init(fun.default_allocator);
 
-    var max_heap_allocator_inline_source_map: bun.MaxHeapAllocator = undefined;
+    var max_heap_allocator_inline_source_map: fun.MaxHeapAllocator = undefined;
     defer max_heap_allocator_inline_source_map.deinit();
 
-    const code_with_inline_source_map_allocator = max_heap_allocator_inline_source_map.init(bun.default_allocator);
+    const code_with_inline_source_map_allocator = max_heap_allocator_inline_source_map.init(fun.default_allocator);
 
-    var pathbuf: bun.PathBuffer = undefined;
+    var pathbuf: fun.PathBuffer = undefined;
     const bv2: *bundler.BundleV2 = @fieldParentPtr("linker", c);
 
     for (chunks, 0..) |*chunk, chunk_index_in_chunks_list| {
@@ -66,7 +66,7 @@ pub fn writeOutputFilesToDisk(
             continue;
         }
 
-        const trace2 = bun.perf.trace("Bundler.writeChunkToDisk");
+        const trace2 = fun.perf.trace("Bundler.writeChunkToDisk");
         defer trace2.end();
         defer max_heap_allocator.reset();
 
@@ -74,10 +74,10 @@ pub fn writeOutputFilesToDisk(
         if (std.fs.path.dirnamePosix(rel_path)) |rel_parent| {
             if (rel_parent.len > 0) {
                 root_dir.makePath(rel_parent) catch |err| {
-                    c.log.addErrorFmt(null, Logger.Loc.Empty, bun.default_allocator, "{s} creating outdir {f} while saving chunk {f}", .{
+                    c.log.addErrorFmt(null, Logger.Loc.Empty, fun.default_allocator, "{s} creating outdir {f} while saving chunk {f}", .{
                         @errorName(err),
-                        bun.fmt.quote(rel_parent),
-                        bun.fmt.quote(chunk.final_rel_path),
+                        fun.fmt.quote(rel_parent),
+                        fun.fmt.quote(chunk.final_rel_path),
                     }) catch unreachable;
                     return err;
                 };
@@ -101,7 +101,7 @@ pub fn writeOutputFilesToDisk(
                 false,
                 false,
                 scc,
-            ) catch |err| bun.Output.panic("Failed to create output chunk: {s}", .{@errorName(err)})
+            ) catch |err| fun.Output.panic("Failed to create output chunk: {s}", .{@errorName(err)})
         else
             chunk.intermediate_output.code(
                 code_allocator,
@@ -113,11 +113,11 @@ pub fn writeOutputFilesToDisk(
                 &display_size,
                 c.resolver.opts.compile and !chunk.flags.is_browser_chunk_from_server_build,
                 chunk.content.sourcemap(c.options.source_maps) != .none,
-            ) catch |err| bun.Output.panic("Failed to create output chunk: {s}", .{@errorName(err)});
+            ) catch |err| fun.Output.panic("Failed to create output chunk: {s}", .{@errorName(err)});
 
         var source_map_output_file: ?options.OutputFile = null;
 
-        const input_path = try bun.default_allocator.dupe(
+        const input_path = try fun.default_allocator.dupe(
             u8,
             if (chunk.entry_point.is_entry_point)
                 c.parse_graph.input_files.items(.source)[chunk.entry_point.source_index].path.text
@@ -154,7 +154,7 @@ pub fn writeOutputFilesToDisk(
                     &pathbuf,
                     .{
                         .data = jsc.Node.StringOrBuffer{
-                            .buffer = bun.api.node.Buffer{
+                            .buffer = fun.api.node.Buffer{
                                 .buffer = .{
                                     .ptr = @constCast(output_source_map.ptr),
                                     // TODO: handle > 4 GB files
@@ -167,14 +167,14 @@ pub fn writeOutputFilesToDisk(
                         .dirfd = .fromStdDir(root_dir),
                         .file = .{
                             .path = .{
-                                .string = bun.PathString.init(source_map_final_rel_path),
+                                .string = fun.PathString.init(source_map_final_rel_path),
                             },
                         },
                     },
                 )) {
                     .err => |err| {
-                        try c.log.addSysError(bun.default_allocator, err, "writing sourcemap for chunk {f}", .{
-                            bun.fmt.quote(chunk.final_rel_path),
+                        try c.log.addSysError(fun.default_allocator, err, "writing sourcemap for chunk {f}", .{
+                            fun.fmt.quote(chunk.final_rel_path),
                         });
                         return error.WriteFailed;
                     },
@@ -183,7 +183,7 @@ pub fn writeOutputFilesToDisk(
 
                 source_map_output_file = options.OutputFile.init(.{
                     .output_path = source_map_final_rel_path,
-                    .input_path = try strings.concat(bun.default_allocator, &.{ input_path, ".map" }),
+                    .input_path = try strings.concat(fun.default_allocator, &.{ input_path, ".map" }),
                     .loader = .json,
                     .input_loader = .file,
                     .output_kind = .sourcemap,
@@ -227,19 +227,19 @@ pub fn writeOutputFilesToDisk(
                 if (loader.isJavaScriptLike()) {
                     jsc.VirtualMachine.is_bundler_thread_for_bytecode_cache = true;
                     jsc.initialize(false);
-                    var fdpath: bun.PathBuffer = undefined;
-                    var source_provider_url = try bun.String.createFormat("{s}" ++ bun.bytecode_extension, .{chunk.final_rel_path});
+                    var fdpath: fun.PathBuffer = undefined;
+                    var source_provider_url = try fun.String.createFormat("{s}" ++ fun.bytecode_extension, .{chunk.final_rel_path});
                     source_provider_url.ref();
 
                     defer source_provider_url.deref();
 
                     if (jsc.CachedBytecode.generate(c.options.output_format, code_result.buffer, &source_provider_url)) |result| {
-                        const source_provider_url_str = source_provider_url.toSlice(bun.default_allocator);
+                        const source_provider_url_str = source_provider_url.toSlice(fun.default_allocator);
                         defer source_provider_url_str.deinit();
                         const bytecode, const cached_bytecode = result;
-                        debug("Bytecode cache generated {s}: {f}", .{ source_provider_url_str.slice(), bun.fmt.size(bytecode.len, .{ .space_between_number_and_unit = true }) });
+                        debug("Bytecode cache generated {s}: {f}", .{ source_provider_url_str.slice(), fun.fmt.size(bytecode.len, .{ .space_between_number_and_unit = true }) });
                         @memcpy(fdpath[0..chunk.final_rel_path.len], chunk.final_rel_path);
-                        fdpath[chunk.final_rel_path.len..][0..bun.bytecode_extension.len].* = bun.bytecode_extension.*;
+                        fdpath[chunk.final_rel_path.len..][0..fun.bytecode_extension.len].* = fun.bytecode_extension.*;
                         defer cached_bytecode.deref();
                         switch (jsc.Node.fs.NodeFS.writeFileWithPathBuffer(
                             &pathbuf,
@@ -259,26 +259,26 @@ pub fn writeOutputFilesToDisk(
                                 .dirfd = .fromStdDir(root_dir),
                                 .file = .{
                                     .path = .{
-                                        .string = bun.PathString.init(fdpath[0 .. chunk.final_rel_path.len + bun.bytecode_extension.len]),
+                                        .string = fun.PathString.init(fdpath[0 .. chunk.final_rel_path.len + fun.bytecode_extension.len]),
                                     },
                                 },
                             },
                         )) {
                             .result => {},
                             .err => |err| {
-                                c.log.addErrorFmt(null, Logger.Loc.Empty, bun.default_allocator, "{f} writing bytecode for chunk {f}", .{
+                                c.log.addErrorFmt(null, Logger.Loc.Empty, fun.default_allocator, "{f} writing bytecode for chunk {f}", .{
                                     err,
-                                    bun.fmt.quote(chunk.final_rel_path),
+                                    fun.fmt.quote(chunk.final_rel_path),
                                 }) catch unreachable;
                                 return error.WriteFailed;
                             },
                         }
 
                         break :brk options.OutputFile.init(.{
-                            .output_path = bun.default_allocator.dupe(u8, source_provider_url_str.slice()) catch unreachable,
-                            .input_path = std.fmt.allocPrint(bun.default_allocator, "{s}" ++ bun.bytecode_extension, .{chunk.final_rel_path}) catch unreachable,
+                            .output_path = fun.default_allocator.dupe(u8, source_provider_url_str.slice()) catch unreachable,
+                            .input_path = std.fmt.allocPrint(fun.default_allocator, "{s}" ++ fun.bytecode_extension, .{chunk.final_rel_path}) catch unreachable,
                             .input_loader = .file,
-                            .hash = if (chunk.template.placeholder.hash != null) bun.hash(bytecode) else null,
+                            .hash = if (chunk.template.placeholder.hash != null) fun.hash(bytecode) else null,
                             .output_kind = .bytecode,
                             .loader = .file,
                             .size = @as(u32, @truncate(bytecode.len)),
@@ -316,14 +316,14 @@ pub fn writeOutputFilesToDisk(
                 .dirfd = .fromStdDir(root_dir),
                 .file = .{
                     .path = jsc.Node.PathLike{
-                        .string = bun.PathString.init(rel_path),
+                        .string = fun.PathString.init(rel_path),
                     },
                 },
             },
         )) {
             .err => |err| {
-                try c.log.addSysError(bun.default_allocator, err, "writing chunk {f}", .{
-                    bun.fmt.quote(chunk.final_rel_path),
+                try c.log.addSysError(fun.default_allocator, err, "writing chunk {f}", .{
+                    fun.fmt.quote(chunk.final_rel_path),
                 });
                 return error.WriteFailed;
             },
@@ -348,7 +348,7 @@ pub fn writeOutputFilesToDisk(
             .chunk;
 
         const chunk_index = output_files.insertForChunk(options.OutputFile.init(.{
-            .output_path = bun.default_allocator.dupe(u8, chunk.final_rel_path) catch unreachable,
+            .output_path = fun.default_allocator.dupe(u8, chunk.final_rel_path) catch unreachable,
             .input_path = input_path,
             .input_loader = if (chunk.entry_point.is_entry_point)
                 c.parse_graph.input_files.items(.loader)[chunk.entry_point.source_index]
@@ -376,7 +376,7 @@ pub fn writeOutputFilesToDisk(
             else
                 null,
             .referenced_css_chunks = switch (chunk.content) {
-                .javascript => |js| @ptrCast(try bun.default_allocator.dupe(u32, js.css_chunks)),
+                .javascript => |js| @ptrCast(try fun.default_allocator.dupe(u32, js.css_chunks)),
                 .css => &.{},
                 .html => &.{},
             },
@@ -385,7 +385,7 @@ pub fn writeOutputFilesToDisk(
         // We want the chunk index to remain the same in `output_files` so the indices in `OutputFile.referenced_css_chunks` work.
         // In standalone mode, non-HTML chunks are skipped so this invariant doesn't apply.
         if (standalone_chunk_contents == null)
-            bun.assertf(chunk_index == chunk_index_in_chunks_list, "chunk_index ({d}) != chunk_index_in_chunks_list ({d})", .{ chunk_index, chunk_index_in_chunks_list });
+            fun.assertf(chunk_index == chunk_index_in_chunks_list, "chunk_index ({d}) != chunk_index_in_chunks_list ({d})", .{ chunk_index, chunk_index_in_chunks_list });
     }
 
     // In standalone mode, additional output files (assets) are inlined into the HTML.
@@ -405,10 +405,10 @@ pub fn writeOutputFilesToDisk(
             if (std.fs.path.dirname(src.dest_path)) |rel_parent| {
                 if (rel_parent.len > 0) {
                     root_dir.makePath(rel_parent) catch |err| {
-                        c.log.addErrorFmt(null, Logger.Loc.Empty, bun.default_allocator, "{s} creating outdir {f} while saving file {f}", .{
+                        c.log.addErrorFmt(null, Logger.Loc.Empty, fun.default_allocator, "{s} creating outdir {f} while saving file {f}", .{
                             @errorName(err),
-                            bun.fmt.quote(rel_parent),
-                            bun.fmt.quote(src.dest_path),
+                            fun.fmt.quote(rel_parent),
+                            fun.fmt.quote(src.dest_path),
                         }) catch unreachable;
                         return err;
                     };
@@ -431,14 +431,14 @@ pub fn writeOutputFilesToDisk(
                     .dirfd = .fromStdDir(root_dir),
                     .file = .{
                         .path = jsc.Node.PathLike{
-                            .string = bun.PathString.init(src.dest_path),
+                            .string = fun.PathString.init(src.dest_path),
                         },
                     },
                 },
             )) {
                 .err => |err| {
-                    c.log.addSysError(bun.default_allocator, err, "writing file {f}", .{
-                        bun.fmt.quote(src.src_path.text),
+                    c.log.addSysError(fun.default_allocator, err, "writing file {f}", .{
+                        fun.fmt.quote(src.src_path.text),
                     }) catch unreachable;
                     return error.WriteFailed;
                 },
@@ -454,30 +454,30 @@ pub fn writeOutputFilesToDisk(
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Loader = bun.Loader;
-const Output = bun.Output;
-const base64 = bun.base64;
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const options = bun.options;
-const strings = bun.strings;
+const fun = @import("fun");
+const Loader = fun.Loader;
+const Output = fun.Output;
+const base64 = fun.base64;
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const options = fun.options;
+const strings = fun.strings;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const cheapPrefixNormalizer = bundler.cheapPrefixNormalizer;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const OutputFileListBuilder = bun.bundle_v2.LinkerContext.OutputFileListBuilder;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const OutputFileListBuilder = fun.bundle_v2.LinkerContext.OutputFileListBuilder;
 const debug = LinkerContext.debug;
 
-const Logger = bun.logger;
+const Logger = fun.logger;
 const Loc = Logger.Loc;

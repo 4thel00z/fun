@@ -1,7 +1,7 @@
 #pragma once
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -34,4 +34,4 @@ private:
     }
 };
 
-} // namespace Bun
+} // namespace Fun

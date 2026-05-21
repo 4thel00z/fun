@@ -1,9 +1,9 @@
 ---
 title: CSS
-description: Bun's bundler has built-in support for CSS with modern features
+description: Fun's bundler has built-in support for CSS with modern features
 ---
 
-Bun's bundler has built-in support for CSS with the following features:
+Fun's bundler has built-in support for CSS with the following features:
 
 - Transpiling modern/future features to work on all browsers (including vendor prefixing)
 - Minification
@@ -12,15 +12,15 @@ Bun's bundler has built-in support for CSS with the following features:
 
 ## Transpiling
 
-Bun's CSS bundler lets you use modern/future CSS features without having to worry about browser compatibility — all thanks to its transpiling and vendor prefixing features which are enabled by default.
+Fun's CSS bundler lets you use modern/future CSS features without having to worry about browser compatibility — all thanks to its transpiling and vendor prefixing features which are enabled by default.
 
-Bun's CSS parser and bundler is a direct Rust → Zig port of LightningCSS, with a bundling approach inspired by esbuild. The transpiler converts modern CSS syntax into backwards-compatible equivalents that work across browsers.
+Fun's CSS parser and bundler is a direct Rust → Zig port of LightningCSS, with a bundling approach inspired by esbuild. The transpiler converts modern CSS syntax into backwards-compatible equivalents that work across browsers.
 
 <Note>A huge thanks goes to the amazing work from the authors of LightningCSS and esbuild.</Note>
 
 ## Browser Compatibility
 
-By default, Bun's CSS bundler targets the following browsers:
+By default, Fun's CSS bundler targets the following browsers:
 
 - ES2020
 - Edge 88+
@@ -51,7 +51,7 @@ The CSS Nesting specification allows you to write more concise and intuitive sty
 }
 ```
 
-Bun's CSS bundler automatically converts this nested syntax into traditional flat CSS that works in all browsers:
+Fun's CSS bundler automatically converts this nested syntax into traditional flat CSS that works in all browsers:
 
 ```css title="styles.css" icon="file-code"
 /* Compiled output */
@@ -112,7 +112,7 @@ The `color-mix()` function blends two colors together according to a specified r
 }
 ```
 
-Bun's CSS bundler evaluates these color mixes at build time when all color values are known (not CSS variables), generating static color values that work in all browsers:
+Fun's CSS bundler evaluates these color mixes at build time when all color values are known (not CSS variables), generating static color values that work in all browsers:
 
 ```css title="styles.css" icon="file-code"
 .button {
@@ -141,7 +141,7 @@ CSS allows you to modify individual components of a color using relative color s
 }
 ```
 
-Bun's CSS bundler computes these relative color modifications at build time (when not using CSS variables) and generates static color values for browser compatibility:
+Fun's CSS bundler computes these relative color modifications at build time (when not using CSS variables) and generates static color values for browser compatibility:
 
 ```css
 .theme-color {
@@ -166,7 +166,7 @@ Modern CSS supports perceptually uniform color spaces like LAB, LCH, OKLAB, and 
 }
 ```
 
-Bun's CSS bundler automatically converts these advanced color formats to backwards-compatible alternatives for browsers that don't yet support them:
+Fun's CSS bundler automatically converts these advanced color formats to backwards-compatible alternatives for browsers that don't yet support them:
 
 ```css title="styles.css" icon="file-code"
 .vibrant-element {
@@ -198,7 +198,7 @@ The `color()` function provides a standardized way to specify colors in various 
 }
 ```
 
-For browsers that don't support these advanced color functions yet, Bun's CSS bundler provides appropriate RGB fallbacks:
+For browsers that don't support these advanced color functions yet, Fun's CSS bundler provides appropriate RGB fallbacks:
 
 ```css title="styles.css" icon="file-code"
 .vivid-element {
@@ -234,7 +234,7 @@ The HWB (Hue, Whiteness, Blackness) color model expresses colors based on how mu
 }
 ```
 
-Bun's CSS bundler automatically converts HWB colors to RGB for compatibility with all browsers:
+Fun's CSS bundler automatically converts HWB colors to RGB for compatibility with all browsers:
 
 ```css title="styles.css" icon="file-code"
 .easy-theming {
@@ -267,7 +267,7 @@ Modern CSS has introduced more concise ways to express colors. Space-separated c
 }
 ```
 
-Bun's CSS bundler automatically converts these modern color formats to ensure compatibility with older browsers:
+Fun's CSS bundler automatically converts these modern color formats to ensure compatibility with older browsers:
 
 ```css title="styles.css" icon="file-code"
 .modern-styling {
@@ -313,7 +313,7 @@ The `light-dark()` function implements color schemes that respect the user's sys
 }
 ```
 
-For browsers that don't support this feature yet, Bun's CSS bundler converts it to use CSS variables with proper fallbacks:
+For browsers that don't support this feature yet, Fun's CSS bundler converts it to use CSS variables with proper fallbacks:
 
 ```css title="styles.css" icon="file-code"
 :root {
@@ -371,7 +371,7 @@ CSS logical properties let you define layout, spacing, and sizing relative to th
 }
 ```
 
-For browsers that don't fully support logical properties, Bun's CSS bundler compiles them to physical properties with appropriate directional adjustments:
+For browsers that don't fully support logical properties, Fun's CSS bundler compiles them to physical properties with appropriate directional adjustments:
 
 ```css title="styles.css" icon="file-code"
 /* For left-to-right languages */
@@ -421,7 +421,7 @@ The `:dir()` pseudo-class selector allows you to style elements based on their t
 }
 ```
 
-For browsers that don't support the `:dir()` selector yet, Bun's CSS bundler converts it to the more widely supported `:lang()` selector with appropriate language mappings:
+For browsers that don't support the `:dir()` selector yet, Fun's CSS bundler converts it to the more widely supported `:lang()` selector with appropriate language mappings:
 
 ```css title="styles.css" icon="file-code"
 /* Converted to use language-based selectors as fallback */
@@ -465,7 +465,7 @@ blockquote:lang(de, nl, da, sv) {
 }
 ```
 
-For browsers that don't support multiple arguments in the `:lang()` selector, Bun's CSS bundler converts this syntax to use the `:is()` selector to maintain the same behavior:
+For browsers that don't support multiple arguments in the `:lang()` selector, Fun's CSS bundler converts this syntax to use the `:is()` selector to maintain the same behavior:
 
 ```css title="styles.css" icon="file-code"
 /* Multiple languages grouped with :is() for better browser support */
@@ -483,7 +483,7 @@ blockquote:is(:lang(de), :lang(nl), :lang(da), :lang(sv)) {
 }
 ```
 
-If needed, Bun can provide additional fallbacks for `:is()` as well, ensuring your language-specific styles work across all browsers. This approach simplifies creating internationalized designs with distinct typographic and styling rules for different language groups.
+If needed, Fun can provide additional fallbacks for `:is()` as well, ensuring your language-specific styles work across all browsers. This approach simplifies creating internationalized designs with distinct typographic and styling rules for different language groups.
 
 ### :is() selector
 
@@ -510,7 +510,7 @@ The `:is()` pseudo-class function (formerly `:matches()`) allows you to create m
 }
 ```
 
-For browsers that don't support `:is()`, Bun's CSS bundler provides fallbacks using vendor-prefixed alternatives:
+For browsers that don't support `:is()`, Fun's CSS bundler provides fallbacks using vendor-prefixed alternatives:
 
 ```css
 /* Fallback using -webkit-any */
@@ -544,7 +544,7 @@ For browsers that don't support `:is()`, Bun's CSS bundler provides fallbacks us
 
 <Warning>
   The vendor-prefixed versions have some limitations compared to the standardized `:is()` selector, particularly with
-  complex selectors. Bun handles these limitations intelligently, only using prefixed versions when they'll work
+  complex selectors. Fun handles these limitations intelligently, only using prefixed versions when they'll work
   correctly.
 </Warning>
 
@@ -565,7 +565,7 @@ h2:not(.sidebar *, footer *) {
 }
 ```
 
-For browsers that don't support multiple arguments in `:not()`, Bun's CSS bundler converts this syntax to a more compatible form while preserving the same behavior:
+For browsers that don't support multiple arguments in `:not()`, Fun's CSS bundler converts this syntax to a more compatible form while preserving the same behavior:
 
 ```css title="styles.css" icon="file-code"
 /* Converted to use :not with :is() for compatibility */
@@ -579,7 +579,7 @@ h2:not(:is(.sidebar *, footer *)) {
 }
 ```
 
-And if `:is()` isn't supported, Bun can generate further fallbacks:
+And if `:is()` isn't supported, Fun can generate further fallbacks:
 
 ```css title="styles.css" icon="file-code"
 /* Even more fallbacks for maximum compatibility */
@@ -622,7 +622,7 @@ CSS now includes a rich set of mathematical functions that let you perform compl
 }
 ```
 
-Bun's CSS bundler evaluates these mathematical expressions at build time when all values are known constants (not variables), resulting in optimized output:
+Fun's CSS bundler evaluates these mathematical expressions at build time when all values are known constants (not variables), resulting in optimized output:
 
 ```css title="styles.css" icon="file-code"
 .dynamic-sizing {
@@ -663,7 +663,7 @@ Modern CSS supports range syntax for media queries, allowing you to specify brea
 }
 ```
 
-Bun's CSS bundler converts these modern range queries to traditional media query syntax for compatibility with all browsers:
+Fun's CSS bundler converts these modern range queries to traditional media query syntax for compatibility with all browsers:
 
 ```css title="styles.css" icon="file-code"
 /* Converted to traditional min/max syntax */
@@ -690,7 +690,7 @@ This lets you write more readable media queries while ensuring your stylesheets 
 
 ### Shorthands
 
-CSS has introduced several modern shorthand properties that improve code readability and maintainability. Bun's CSS bundler ensures these convenient shorthands work on all browsers by converting them to their longhand equivalents when needed.
+CSS has introduced several modern shorthand properties that improve code readability and maintainability. Fun's CSS bundler ensures these convenient shorthands work on all browsers by converting them to their longhand equivalents when needed.
 
 ```css title="styles.css" icon="file-code"
 /* Alignment shorthands */
@@ -726,7 +726,7 @@ CSS has introduced several modern shorthand properties that improve code readabi
 }
 ```
 
-For browsers that don't support these modern shorthands, Bun converts them to their component longhand properties:
+For browsers that don't support these modern shorthands, Fun converts them to their component longhand properties:
 
 ```css title="styles.css" icon="file-code"
 .flex-container {
@@ -796,7 +796,7 @@ The double position gradient syntax is a modern CSS feature that allows you to c
 }
 ```
 
-For browsers that don't support this syntax, Bun's CSS bundler automatically converts it to the traditional format by duplicating color stops:
+For browsers that don't support this syntax, Fun's CSS bundler automatically converts it to the traditional format by duplicating color stops:
 
 ```css title="styles.css" icon="file-code"
 .striped-background {
@@ -845,7 +845,7 @@ The `system-ui` generic font family lets you use the device's native UI font, cr
 }
 ```
 
-For browsers that don't support `system-ui`, Bun's CSS bundler automatically expands it to a comprehensive cross-platform font stack:
+For browsers that don't support `system-ui`, Fun's CSS bundler automatically expands it to a comprehensive cross-platform font stack:
 
 ```css title="styles.css" icon="file-code"
 .native-interface {
@@ -882,7 +882,7 @@ This approach gives you the simplicity of writing just `system-ui` in your sourc
 
 ## CSS Modules
 
-Bun's bundler also supports bundling CSS modules in addition to regular CSS with support for the following features:
+Fun's bundler also supports bundling CSS modules in addition to regular CSS with support for the following features:
 
 - Automatically detecting CSS module files (`.module.css`) with zero configuration
 - Composition (`composes` property)
@@ -891,7 +891,7 @@ Bun's bundler also supports bundling CSS modules in addition to regular CSS with
 
 A CSS module is a CSS file (with the `.module.css` extension) where are all class names and animations are scoped to the file. This helps you avoid class name collisions as CSS declarations are globally scoped by default.
 
-Under the hood, Bun's bundler transforms locally scoped class names into unique identifiers.
+Under the hood, Fun's bundler transforms locally scoped class names into unique identifiers.
 
 ### Getting started
 

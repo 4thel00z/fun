@@ -1,16 +1,16 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import { join } from "path";
 
 test.if(isWindows)("standalone worker does not crash when autoloadDotenv is disabled and .env exists", async () => {
-  const target = process.arch === "arm64" ? "bun-windows-aarch64" : "bun-windows-x64";
+  const target = process.arch === "arm64" ? "fun-windows-aarch64" : "fun-windows-x64";
 
   using dir = tempDir("issue-27431", {
     ".env": "TEST_VAR=from_dotenv\n",
     "entry.ts": 'console.log(process.env.TEST_VAR || "not found")\nnew Worker("./worker.ts")\n',
     "worker.ts": "",
     "build.ts": `
-      await Bun.build({
+      await Fun.build({
         entrypoints: ["./entry.ts", "./worker.ts"],
         compile: {
           autoloadDotenv: false,
@@ -21,9 +21,9 @@ test.if(isWindows)("standalone worker does not crash when autoloadDotenv is disa
     `,
   });
 
-  await using build = Bun.spawn({
-    cmd: [bunExe(), join(String(dir), "build.ts")],
-    env: bunEnv,
+  await using build = Fun.spawn({
+    cmd: [funExe(), join(String(dir), "build.ts")],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -34,9 +34,9 @@ test.if(isWindows)("standalone worker does not crash when autoloadDotenv is disa
   expect(buildExitCode).toBe(0);
   expect(buildStderr).toBe("");
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [join(String(dir), "app.exe")],
-    env: bunEnv,
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

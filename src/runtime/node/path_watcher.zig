@@ -1,15 +1,15 @@
 //! POSIX backend for `fs.watch()`.
 //!
-//! This is deliberately independent of `bun.Watcher` (the bundler/--watch/--hot
-//! watcher). `bun.Watcher` is shaped around a module graph — its WatchItem carries
-//! `options.Loader`, `*PackageJSON`, a `*bun.fs.FileSystem`, and on Windows is pinned
+//! This is deliberately independent of `fun.Watcher` (the bundler/--watch/--hot
+//! watcher). `fun.Watcher` is shaped around a module graph — its WatchItem carries
+//! `options.Loader`, `*PackageJSON`, a `*fun.fs.FileSystem`, and on Windows is pinned
 //! to `top_level_dir`. None of that applies to `fs.watch()`, and routing `fs.watch()`
 //! through it required a 1k-line shim (the old version of this file) full of
 //! lock-ordering workarounds, a WorkPool directory crawler, and a bolted-on FSEvents
 //! side-channel.
 //!
 //! The Windows backend (`win_watcher.zig`, libuv `uv_fs_event`) never went through
-//! `bun.Watcher` and is a quarter of the size; this file gives Linux/macOS/FreeBSD
+//! `fun.Watcher` and is a quarter of the size; this file gives Linux/macOS/FreeBSD
 //! the same shape:
 //!
 //!   PathWatcherManager        process-global, lazy, owns the OS resource
@@ -41,13 +41,13 @@ pub const PathWatcherManager = struct {
     /// Dedup map: dedup key → PathWatcher. The key is the resolved path with a one-byte
     /// suffix encoding `recursive` (so `fs.watch(p)` and `fs.watch(p, {recursive:true})`
     /// don't share — they want different OS registrations on every platform).
-    watchers: bun.StringArrayHashMapUnmanaged(*PathWatcher) = .{},
+    watchers: fun.StringArrayHashMapUnmanaged(*PathWatcher) = .{},
 
     /// Platform-specific state (inotify fd / kqueue fd + dispatch maps + thread).
     /// On macOS this is empty — FSEvents owns its own thread via `fs_events.zig`.
     platform: Platform = .{},
 
-    pub fn get() bun.sys.Maybe(*PathWatcherManager) {
+    pub fn get() fun.sys.Maybe(*PathWatcherManager) {
         // No unlocked fast path: `default_manager` is a plain global and an unsynchronized
         // read here would be textbook broken DCLP (a concurrent Worker's first `fs.watch()`
         // on ARM64 could observe the non-null pointer before `m.* = .{}` is visible and
@@ -57,11 +57,11 @@ pub const PathWatcherManager = struct {
         defer default_manager_mutex.unlock();
         if (default_manager) |m| return .{ .result = m };
 
-        const m = bun.handleOom(bun.default_allocator.create(PathWatcherManager));
+        const m = fun.handleOom(fun.default_allocator.create(PathWatcherManager));
         m.* = .{};
         switch (Platform.init(m)) {
             .err => |e| {
-                bun.default_allocator.destroy(m);
+                fun.default_allocator.destroy(m);
                 return .{ .err = e };
             },
             .result => {},
@@ -80,7 +80,7 @@ pub const PathWatcherManager = struct {
     /// Remove `watcher` from the dedup map. Caller holds `mutex`.
     fn unlinkWatcherLocked(this: *PathWatcherManager, watcher: *PathWatcher) void {
         if (std.mem.indexOfScalar(*PathWatcher, this.watchers.values(), watcher)) |i| {
-            bun.default_allocator.free(this.watchers.keys()[i]);
+            fun.default_allocator.free(this.watchers.keys()[i]);
             this.watchers.swapRemoveAt(i);
         }
     }
@@ -104,7 +104,7 @@ pub const PathWatcher = struct {
     /// Per-platform per-watch state (inotify wds, kqueue fds, or the FSEventsWatcher).
     platform: Platform.Watch = .{},
 
-    pub const new = bun.TrivialNew(PathWatcher);
+    pub const new = fun.TrivialNew(PathWatcher);
 
     pub const EventType = enum {
         rename,
@@ -151,7 +151,7 @@ pub const PathWatcher = struct {
     /// `rel_path` is borrowed — `onPathUpdatePosix` dupes it before enqueuing.
     fn emit(this: *PathWatcher, event_type: EventType, rel_path: []const u8, is_file: bool) void {
         const timestamp = std.time.milliTimestamp();
-        const hash = bun.hash(rel_path);
+        const hash = fun.hash(rel_path);
         for (this.handlers.keys(), this.handlers.values()) |ctx, *last| {
             if (last.shouldEmit(hash, timestamp, event_type)) {
                 onPathUpdateFn(ctx, event_type.toEvent(rel_path), is_file);
@@ -159,7 +159,7 @@ pub const PathWatcher = struct {
         }
     }
 
-    fn emitError(this: *PathWatcher, err: bun.sys.Error) void {
+    fn emitError(this: *PathWatcher, err: fun.sys.Error) void {
         for (this.handlers.keys()) |ctx| {
             onPathUpdateFn(ctx, .{ .@"error" = err }, false);
         }
@@ -216,10 +216,10 @@ pub const PathWatcher = struct {
     }
 
     fn destroy(this: *PathWatcher) void {
-        this.handlers.deinit(bun.default_allocator);
+        this.handlers.deinit(fun.default_allocator);
         Platform.Watch.deinit(&this.platform);
-        bun.default_allocator.free(this.path);
-        bun.destroy(this);
+        fun.default_allocator.free(this.path);
+        fun.destroy(this);
     }
 };
 
@@ -230,11 +230,11 @@ pub fn watch(
     comptime callback: PathWatcher.Callback,
     comptime updateEnd: PathWatcher.UpdateEndCallback,
     ctx: *anyopaque,
-) bun.sys.Maybe(*PathWatcher) {
+) fun.sys.Maybe(*PathWatcher) {
     // The callback/updateEnd are comptime so the emit path can call them directly
     // without an indirect-call-per-event; assert they're what node_fs_watcher passes.
-    comptime bun.assert(callback == onPathUpdateFn);
-    comptime bun.assert(updateEnd == onUpdateEndFn);
+    comptime fun.assert(callback == onPathUpdateFn);
+    comptime fun.assert(updateEnd == onUpdateEndFn);
     _ = vm;
 
     const manager = switch (PathWatcherManager.get()) {
@@ -250,21 +250,21 @@ pub fn watch(
     // resulting fd feeds `getFdPath` for the realpath. One or two syscalls instead
     // of lstat + open + (stat) in the old code. `O.PATH` is 0 on macOS (degrades to
     // O_RDONLY, which is what F_GETPATH needs anyway).
-    const resolve_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(resolve_buf);
+    const resolve_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(resolve_buf);
     var is_file = false;
-    const probe_fd: bun.FD = switch (bun.sys.open(path, bun.O.PATH | bun.O.DIRECTORY | bun.O.CLOEXEC, 0)) {
+    const probe_fd: fun.FD = switch (fun.sys.open(path, fun.O.PATH | fun.O.DIRECTORY | fun.O.CLOEXEC, 0)) {
         .result => |f| f,
         .err => |e| if (e.getErrno() == .NOTDIR) retry: {
             is_file = true;
-            break :retry switch (bun.sys.open(path, bun.O.PATH | bun.O.CLOEXEC, 0)) {
+            break :retry switch (fun.sys.open(path, fun.O.PATH | fun.O.CLOEXEC, 0)) {
                 .result => |f| f,
                 .err => |e2| return .{ .err = e2.withoutPath() },
             };
         } else return .{ .err = e.withoutPath() },
     };
     defer probe_fd.close();
-    const resolved: [:0]const u8 = switch (bun.sys.getFdPath(probe_fd, resolve_buf)) {
+    const resolved: [:0]const u8 = switch (fun.sys.getFdPath(probe_fd, resolve_buf)) {
         .err => path, // fall back to the caller's path; best effort
         .result => |r| brk: {
             resolve_buf[r.len] = 0;
@@ -272,29 +272,29 @@ pub fn watch(
         },
     };
 
-    const key_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(key_buf);
+    const key_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(key_buf);
     const key = PathWatcherManager.makeKey(key_buf, resolved, recursive);
 
     manager.mutex.lock();
 
-    const gop = bun.handleOom(manager.watchers.getOrPut(bun.default_allocator, key));
+    const gop = fun.handleOom(manager.watchers.getOrPut(fun.default_allocator, key));
     if (gop.found_existing) {
         const existing = gop.value_ptr.*;
-        bun.handleOom(existing.handlers.put(bun.default_allocator, ctx, .{}));
+        fun.handleOom(existing.handlers.put(fun.default_allocator, ctx, .{}));
         manager.mutex.unlock();
         return .{ .result = existing };
     }
 
     // New watcher: own the key and path.
-    gop.key_ptr.* = bun.handleOom(bun.default_allocator.dupe(u8, key));
+    gop.key_ptr.* = fun.handleOom(fun.default_allocator.dupe(u8, key));
     const watcher = PathWatcher.new(.{
         .manager = manager,
-        .path = bun.handleOom(bun.default_allocator.dupeZ(u8, resolved)),
+        .path = fun.handleOom(fun.default_allocator.dupeZ(u8, resolved)),
         .recursive = recursive,
         .is_file = is_file,
     });
-    bun.handleOom(watcher.handlers.put(bun.default_allocator, ctx, .{}));
+    fun.handleOom(watcher.handlers.put(fun.default_allocator, ctx, .{}));
     gop.value_ptr.* = watcher;
 
     // Linux/FreeBSD: `addWatch` mutates the platform dispatch maps (wd_map/entries)
@@ -358,8 +358,8 @@ pub fn watch(
 /// subdirectories. When `dirs_only`, non-directory entries are skipped entirely
 /// (inotify delivers file events on the parent dir's wd so we only need a watch
 /// per directory; kqueue needs an fd per file too). Best-effort — an unreadable
-/// subdirectory just stops that branch (matches Node). Uses `bun.sys` /
-/// `bun.DirIterator` / `bun.path` throughout; no std.fs.
+/// subdirectory just stops that branch (matches Node). Uses `fun.sys` /
+/// `fun.DirIterator` / `fun.path` throughout; no std.fs.
 fn walkSubtree(
     abs_dir: [:0]const u8,
     rel_dir: []const u8,
@@ -367,16 +367,16 @@ fn walkSubtree(
     ctx: anytype,
     comptime cb: fn (ctx: @TypeOf(ctx), abs: [:0]const u8, rel: []const u8, is_file: bool) void,
 ) void {
-    const dfd = switch (bun.sys.open(abs_dir, bun.O.RDONLY | bun.O.DIRECTORY | bun.O.CLOEXEC, 0)) {
+    const dfd = switch (fun.sys.open(abs_dir, fun.O.RDONLY | fun.O.DIRECTORY | fun.O.CLOEXEC, 0)) {
         .err => return,
         .result => |f| f,
     };
     defer dfd.close();
-    var it = bun.DirIterator.iterate(dfd, .u8);
-    const abs_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(abs_buf);
-    const rel_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(rel_buf);
+    var it = fun.DirIterator.iterate(dfd, .u8);
+    const abs_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(abs_buf);
+    const rel_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(rel_buf);
     while (switch (it.next()) {
         .err => return,
         .result => |r| r,
@@ -384,11 +384,11 @@ fn walkSubtree(
         const child_is_file = entry.kind != .directory;
         if (dirs_only and child_is_file) continue;
         const name = entry.name.slice();
-        const child_abs = bun.path.joinZBuf(abs_buf, &[_][]const u8{ abs_dir, name }, .posix);
+        const child_abs = fun.path.joinZBuf(abs_buf, &[_][]const u8{ abs_dir, name }, .posix);
         const child_rel: []const u8 = if (rel_dir.len == 0)
             name
         else
-            bun.path.joinStringBuf(rel_buf, &[_][]const u8{ rel_dir, name }, .posix);
+            fun.path.joinStringBuf(rel_buf, &[_][]const u8{ rel_dir, name }, .posix);
         cb(ctx, child_abs, child_rel, child_is_file);
         if (!child_is_file) walkSubtree(child_abs, child_rel, dirs_only, ctx, cb);
     }
@@ -405,11 +405,11 @@ const Platform = switch (Environment.os) {
         pub const Watch = struct {
             pub fn deinit(_: *@This()) void {}
         };
-        fn init(_: *PathWatcherManager) bun.sys.Maybe(void) {
-            return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.NOTSUP), .syscall = .watch } };
+        fn init(_: *PathWatcherManager) fun.sys.Maybe(void) {
+            return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.NOTSUP), .syscall = .watch } };
         }
-        fn addWatch(_: *PathWatcherManager, _: *PathWatcher) bun.sys.Maybe(void) {
-            return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.NOTSUP), .syscall = .watch } };
+        fn addWatch(_: *PathWatcherManager, _: *PathWatcher) fun.sys.Maybe(void) {
+            return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.NOTSUP), .syscall = .watch } };
         }
         fn removeWatch(_: *PathWatcherManager, _: *PathWatcher) void {}
     },
@@ -420,7 +420,7 @@ const Platform = switch (Environment.os) {
 /// Recursive watches are implemented by walking the tree at subscribe time and adding
 /// a wd per directory, then adding new subdirectories as they appear (IN_CREATE|IN_ISDIR).
 const Linux = struct {
-    fd: bun.FD = bun.invalid_fd,
+    fd: fun.FD = fun.invalid_fd,
     running: std.atomic.Value(bool) = .init(true),
     /// wd → list of owners. `inotify_add_watch` returns the same wd for the same
     /// inode on a given inotify fd, so two PathWatchers whose roots overlap (e.g.
@@ -442,7 +442,7 @@ const Linux = struct {
         wds: std.ArrayListUnmanaged(i32) = .{},
 
         pub fn deinit(this: *Watch) void {
-            this.wds.deinit(bun.default_allocator);
+            this.wds.deinit(fun.default_allocator);
         }
     };
 
@@ -451,22 +451,22 @@ const Linux = struct {
     const watch_dir_mask: u32 = IN.MODIFY | IN.ATTRIB | IN.CREATE | IN.DELETE | IN.DELETE_SELF |
         IN.MOVED_FROM | IN.MOVED_TO | IN.MOVE_SELF | IN.ONLYDIR;
 
-    fn init(manager: *PathWatcherManager) bun.sys.Maybe(void) {
-        const rc = bun.sys.syscall.inotify_init1(IN.CLOEXEC);
-        if (bun.sys.Maybe(void).errnoSys(rc, .watch)) |err| return err;
+    fn init(manager: *PathWatcherManager) fun.sys.Maybe(void) {
+        const rc = fun.sys.syscall.inotify_init1(IN.CLOEXEC);
+        if (fun.sys.Maybe(void).errnoSys(rc, .watch)) |err| return err;
         manager.platform.fd = .fromNative(@intCast(rc));
         // The manager is process-global and never torn down, so the reader thread is
         // a daemon — detach it instead of stashing a handle we'd never join.
         var thread = std.Thread.spawn(.{}, threadMain, .{manager}) catch {
             manager.platform.fd.close();
-            return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.NOMEM), .syscall = .watch } };
+            return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.NOMEM), .syscall = .watch } };
         };
         thread.detach();
         return .success;
     }
 
     /// Caller holds `manager.mutex`.
-    fn addWatch(manager: *PathWatcherManager, watcher: *PathWatcher) bun.sys.Maybe(void) {
+    fn addWatch(manager: *PathWatcherManager, watcher: *PathWatcher) fun.sys.Maybe(void) {
         switch (addOne(manager, watcher, watcher.path, "")) {
             .err => |e| return .{ .err = e },
             .result => {},
@@ -483,17 +483,17 @@ const Linux = struct {
         watcher: *PathWatcher,
         abs_path: [:0]const u8,
         subpath: []const u8,
-    ) bun.sys.Maybe(void) {
+    ) fun.sys.Maybe(void) {
         const plat = &manager.platform;
         const mask: u32 = if (watcher.is_file and subpath.len == 0) watch_file_mask else watch_dir_mask;
-        const rc = bun.sys.syscall.inotify_add_watch(plat.fd.cast(), abs_path, mask);
-        if (bun.sys.Maybe(void).errnoSysP(rc, .watch, abs_path)) |err| {
+        const rc = fun.sys.syscall.inotify_add_watch(plat.fd.cast(), abs_path, mask);
+        if (fun.sys.Maybe(void).errnoSysP(rc, .watch, abs_path)) |err| {
             // ENOTDIR/ENOENT during a recursive walk just means we raced; skip.
             if (subpath.len > 0) return .success;
             return err;
         }
         const wd: i32 = @intCast(rc);
-        const gop = bun.handleOom(plat.wd_map.getOrPut(bun.default_allocator, wd));
+        const gop = fun.handleOom(plat.wd_map.getOrPut(fun.default_allocator, wd));
         if (!gop.found_existing) gop.value_ptr.* = .{};
         // This wd may already have this watcher as an owner:
         //   - IN_CREATE raced the initial walk (same subpath → the reassign is a no-op)
@@ -504,19 +504,19 @@ const Linux = struct {
         //     not `.sym_link`), so this can't pick a longer alias via a cycle.
         for (gop.value_ptr.items) |*o| {
             if (o.watcher == watcher) {
-                if (!bun.strings.eql(o.subpath, subpath)) {
+                if (!fun.strings.eql(o.subpath, subpath)) {
                     const old = o.subpath;
-                    o.subpath = bun.handleOom(bun.default_allocator.dupeZ(u8, subpath));
-                    bun.default_allocator.free(old);
+                    o.subpath = fun.handleOom(fun.default_allocator.dupeZ(u8, subpath));
+                    fun.default_allocator.free(old);
                 }
                 return .success;
             }
         }
-        bun.handleOom(gop.value_ptr.append(bun.default_allocator, .{
+        fun.handleOom(gop.value_ptr.append(fun.default_allocator, .{
             .watcher = watcher,
-            .subpath = bun.handleOom(bun.default_allocator.dupeZ(u8, subpath)),
+            .subpath = fun.handleOom(fun.default_allocator.dupeZ(u8, subpath)),
         }));
-        bun.handleOom(watcher.platform.wds.append(bun.default_allocator, wd));
+        fun.handleOom(watcher.platform.wds.append(fun.default_allocator, wd));
         log("inotify_add_watch({s}) → wd={d} sub='{s}' owners={d}", .{ abs_path, wd, subpath, gop.value_ptr.items.len });
         return .success;
     }
@@ -541,14 +541,14 @@ const Linux = struct {
             var j: usize = 0;
             while (j < owners.items.len) {
                 if (owners.items[j].watcher == watcher) {
-                    bun.default_allocator.free(owners.items[j].subpath);
+                    fun.default_allocator.free(owners.items[j].subpath);
                     _ = owners.swapRemove(j);
                 } else j += 1;
             }
             if (owners.items.len == 0) {
-                owners.deinit(bun.default_allocator);
+                owners.deinit(fun.default_allocator);
                 _ = plat.wd_map.remove(wd);
-                _ = bun.sys.syscall.inotify_rm_watch(plat.fd.cast(), wd);
+                _ = fun.sys.syscall.inotify_rm_watch(plat.fd.cast(), wd);
             }
         }
         watcher.platform.wds.clearRetainingCapacity();
@@ -563,16 +563,16 @@ const Linux = struct {
         const plat = &manager.platform;
         // Large enough for a burst of events; inotify guarantees whole events per read.
         var buf: [64 * 1024]u8 align(@alignOf(InotifyEvent)) = undefined;
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
 
         while (plat.running.load(.acquire)) {
-            const rc = bun.sys.syscall.read(plat.fd.cast(), &buf, buf.len);
-            switch (bun.sys.getErrno(rc)) {
+            const rc = fun.sys.syscall.read(plat.fd.cast(), &buf, buf.len);
+            switch (fun.sys.getErrno(rc)) {
                 .SUCCESS => {},
                 .AGAIN, .INTR => continue,
                 else => |errno| {
                     // Fatal: surface to every watcher, then exit the thread.
-                    const err: bun.sys.Error = .{
+                    const err: fun.sys.Error = .{
                         .errno = @truncate(@intFromEnum(errno)),
                         .syscall = .read,
                     };
@@ -591,7 +591,7 @@ const Linux = struct {
             manager.mutex.lock();
             // Track which PathWatchers got at least one event so we flush() each once.
             var touched: std.AutoArrayHashMapUnmanaged(*PathWatcher, void) = .{};
-            defer touched.deinit(bun.default_allocator);
+            defer touched.deinit(fun.default_allocator);
 
             var i: usize = 0;
             while (i < n) {
@@ -603,12 +603,12 @@ const Linux = struct {
                 if (ev.mask & IN.IGNORED != 0) {
                     if (plat.wd_map.getPtr(wd)) |owners| {
                         for (owners.items) |o| {
-                            bun.default_allocator.free(o.subpath);
+                            fun.default_allocator.free(o.subpath);
                             if (std.mem.indexOfScalar(i32, o.watcher.platform.wds.items, wd)) |idx| {
                                 _ = o.watcher.platform.wds.swapRemove(idx);
                             }
                         }
-                        owners.deinit(bun.default_allocator);
+                        owners.deinit(fun.default_allocator);
                         _ = plat.wd_map.remove(wd);
                     }
                     continue;
@@ -618,7 +618,7 @@ const Linux = struct {
 
                 const name: []const u8 = if (ev.name_len > 0) blk: {
                     const name_ptr: [*:0]const u8 = @ptrCast(buf[i - ev.name_len ..].ptr);
-                    break :blk bun.sliceTo(name_ptr, 0);
+                    break :blk fun.sliceTo(name_ptr, 0);
                 } else "";
 
                 const is_dir_child = ev.mask & IN.ISDIR != 0;
@@ -645,25 +645,25 @@ const Linux = struct {
 
                     // Build the path relative to this owner's root.
                     const rel: []const u8 = if (watcher.is_file)
-                        bun.path.basename(watcher.path)
+                        fun.path.basename(watcher.path)
                     else if (owner.subpath.len == 0)
                         name
                     else if (name.len == 0)
                         owner.subpath
                     else
-                        bun.path.joinStringBuf(&path_buf, &[_][]const u8{ owner.subpath, name }, .posix);
+                        fun.path.joinStringBuf(&path_buf, &[_][]const u8{ owner.subpath, name }, .posix);
 
                     watcher.emit(event_type, rel, !is_dir_child and !(ev.mask & (IN.DELETE_SELF | IN.MOVE_SELF) != 0 and !watcher.is_file));
-                    _ = bun.handleOom(touched.getOrPut(bun.default_allocator, watcher));
+                    _ = fun.handleOom(touched.getOrPut(fun.default_allocator, watcher));
 
                     // Recursive: a new directory appeared under this owner's tree —
                     // start watching it so future events inside it are delivered.
                     // This is what makes `{recursive: true}` track structure changes
                     // after the initial crawl (#15939/#15085).
                     if (watcher.recursive and is_dir_child and (ev.mask & (IN.CREATE | IN.MOVED_TO) != 0) and name.len > 0) {
-                        const abs_buf = bun.path_buffer_pool.get();
-                        defer bun.path_buffer_pool.put(abs_buf);
-                        const child_abs = bun.path.joinZBuf(abs_buf, &[_][]const u8{ watcher.path, owner.subpath, name }, .posix);
+                        const abs_buf = fun.path_buffer_pool.get();
+                        defer fun.path_buffer_pool.put(abs_buf);
+                        const child_abs = fun.path.joinZBuf(abs_buf, &[_][]const u8{ watcher.path, owner.subpath, name }, .posix);
                         // These may rehash `wd_map`; `owners` is re-fetched next iteration.
                         _ = addOne(manager, watcher, child_abs, rel);
                         walkAndAdd(manager, watcher, child_abs, rel);
@@ -697,7 +697,7 @@ const Darwin = struct {
         }
     };
 
-    fn init(_: *PathWatcherManager) bun.sys.Maybe(void) {
+    fn init(_: *PathWatcherManager) fun.sys.Maybe(void) {
         return .success;
     }
 
@@ -705,7 +705,7 @@ const Darwin = struct {
     /// loop mutex, and the CF thread holds that while calling `onFSEvent` (which
     /// takes `manager.mutex`). Keeping this call outside `manager.mutex` makes the
     /// lock order one-way: fsevents_loop.mutex → manager.mutex.
-    fn addWatch(_: *PathWatcherManager, watcher: *PathWatcher) bun.sys.Maybe(void) {
+    fn addWatch(_: *PathWatcherManager, watcher: *PathWatcher) fun.sys.Maybe(void) {
         watcher.platform.fsevents = FSEvents.watch(
             watcher.path,
             watcher.recursive,
@@ -714,8 +714,8 @@ const Darwin = struct {
             @ptrCast(watcher),
         ) catch |e| return .{ .err = .{
             .errno = @intFromEnum(switch (e) {
-                error.FailedToCreateCoreFoudationSourceLoop => bun.sys.E.INVAL,
-                else => bun.sys.E.NOMEM,
+                error.FailedToCreateCoreFoudationSourceLoop => fun.sys.E.INVAL,
+                else => fun.sys.E.NOMEM,
             }),
             .syscall = .watch,
         } };
@@ -773,7 +773,7 @@ const Darwin = struct {
 /// no filenames, so directory events surface as a bare `rename` with an empty path —
 /// same behaviour as libuv on FreeBSD; callers are expected to re-scan.
 const Kqueue = struct {
-    kq: bun.FD = bun.invalid_fd,
+    kq: fun.FD = fun.invalid_fd,
     running: std.atomic.Value(bool) = .init(true),
     /// ident (fd number) → entry (by value — avoids a per-entry heap alloc for
     /// recursive trees). `udata` on the kevent carries a monotonic generation number
@@ -784,7 +784,7 @@ const Kqueue = struct {
 
     const KqEntry = struct {
         watcher: *PathWatcher,
-        fd: bun.FD,
+        fd: fun.FD,
         /// Relative to watcher.path; empty for the root. Owned.
         subpath: [:0]const u8,
         gen: usize,
@@ -795,25 +795,25 @@ const Kqueue = struct {
         fds: std.ArrayListUnmanaged(i32) = .{},
 
         pub fn deinit(this: *Watch) void {
-            this.fds.deinit(bun.default_allocator);
+            this.fds.deinit(fun.default_allocator);
         }
     };
 
-    fn init(manager: *PathWatcherManager) bun.sys.Maybe(void) {
-        const rc = bun.sys.syscall.kqueue();
-        if (bun.sys.Maybe(void).errnoSys(rc, .kqueue)) |err| return err;
+    fn init(manager: *PathWatcherManager) fun.sys.Maybe(void) {
+        const rc = fun.sys.syscall.kqueue();
+        if (fun.sys.Maybe(void).errnoSys(rc, .kqueue)) |err| return err;
         manager.platform.kq = .fromNative(rc);
         // Daemon reader — the manager is process-global and never torn down.
         var thread = std.Thread.spawn(.{}, threadMain, .{manager}) catch {
             manager.platform.kq.close();
-            return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.NOMEM), .syscall = .watch } };
+            return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.NOMEM), .syscall = .watch } };
         };
         thread.detach();
         return .success;
     }
 
     /// Caller holds `manager.mutex`.
-    fn addWatch(manager: *PathWatcherManager, watcher: *PathWatcher) bun.sys.Maybe(void) {
+    fn addWatch(manager: *PathWatcherManager, watcher: *PathWatcher) fun.sys.Maybe(void) {
         switch (addOne(manager, watcher, watcher.path, "", watcher.is_file)) {
             .err => |e| return .{ .err = e },
             .result => {},
@@ -836,11 +836,11 @@ const Kqueue = struct {
         abs_path: [:0]const u8,
         subpath: []const u8,
         is_file: bool,
-    ) bun.sys.Maybe(void) {
+    ) fun.sys.Maybe(void) {
         const plat = &manager.platform;
         // O_EVTONLY: we only need the fd for kevent registration, never for I/O.
         // (No-op on FreeBSD where EVTONLY is 0; semantic here for kqueue-on-macOS.)
-        const fd = switch (bun.sys.open(abs_path, bun.O.EVTONLY | bun.O.RDONLY | bun.O.CLOEXEC, 0)) {
+        const fd = switch (fun.sys.open(abs_path, fun.O.EVTONLY | fun.O.RDONLY | fun.O.CLOEXEC, 0)) {
             .err => |e| {
                 if (subpath.len > 0) return .success; // best-effort on children
                 return .{ .err = e.withoutPath() };
@@ -859,24 +859,24 @@ const Kqueue = struct {
             std.c.NOTE.EXTEND | std.c.NOTE.ATTRIB | std.c.NOTE.LINK | std.c.NOTE.REVOKE;
         kev.udata = gen;
         var changes = [_]std.c.Kevent{kev};
-        const krc = bun.sys.syscall.kevent(plat.kq.native(), &changes, 1, &changes, 0, null);
+        const krc = fun.sys.syscall.kevent(plat.kq.native(), &changes, 1, &changes, 0, null);
         if (krc < 0) {
             // Registration failed (ENOMEM/EINVAL on a bad fd, etc.). Don't leave a
             // dead entry in the map that will never deliver events.
-            const errno = bun.sys.getErrno(krc);
+            const errno = fun.sys.getErrno(krc);
             fd.close();
             if (subpath.len > 0) return .success; // best-effort on children
             return .{ .err = .{ .errno = @truncate(@intFromEnum(errno)), .syscall = .kevent } };
         }
 
-        bun.handleOom(plat.entries.put(bun.default_allocator, @intCast(fd.native()), .{
+        fun.handleOom(plat.entries.put(fun.default_allocator, @intCast(fd.native()), .{
             .watcher = watcher,
             .fd = fd,
-            .subpath = bun.handleOom(bun.default_allocator.dupeZ(u8, subpath)),
+            .subpath = fun.handleOom(fun.default_allocator.dupeZ(u8, subpath)),
             .gen = gen,
             .is_file = is_file,
         }));
-        bun.handleOom(watcher.platform.fds.append(bun.default_allocator, @intCast(fd.native())));
+        fun.handleOom(watcher.platform.fds.append(fun.default_allocator, @intCast(fd.native())));
         return .success;
     }
 
@@ -887,7 +887,7 @@ const Kqueue = struct {
             if (plat.entries.fetchSwapRemove(ident)) |kv| {
                 // Closing the fd auto-removes the kevent.
                 kv.value.fd.close();
-                bun.default_allocator.free(kv.value.subpath);
+                fun.default_allocator.free(kv.value.subpath);
             }
         }
         watcher.platform.fds.clearRetainingCapacity();
@@ -898,12 +898,12 @@ const Kqueue = struct {
         const plat = &manager.platform;
         var events: [128]std.c.Kevent = undefined;
         while (plat.running.load(.acquire)) {
-            const count = bun.sys.syscall.kevent(plat.kq.native(), &events, 0, &events, events.len, null);
+            const count = fun.sys.syscall.kevent(plat.kq.native(), &events, 0, &events, events.len, null);
             if (count <= 0) continue;
 
             manager.mutex.lock();
             var touched: std.AutoArrayHashMapUnmanaged(*PathWatcher, void) = .{};
-            defer touched.deinit(bun.default_allocator);
+            defer touched.deinit(fun.default_allocator);
 
             for (events[0..@intCast(count)]) |kev| {
                 // Validate via the map — the entry may have been freed by a racing
@@ -926,12 +926,12 @@ const Kqueue = struct {
                 // kqueue has no filenames. For a file watch, report the basename; for a
                 // directory, report the subpath (empty for root → caller re-scans).
                 const rel: []const u8 = if (entry.is_file and entry.subpath.len == 0)
-                    bun.path.basename(watcher.path)
+                    fun.path.basename(watcher.path)
                 else
                     entry.subpath;
 
                 watcher.emit(event_type, rel, entry.is_file);
-                _ = bun.handleOom(touched.getOrPut(bun.default_allocator, watcher));
+                _ = fun.handleOom(touched.getOrPut(fun.default_allocator, watcher));
             }
 
             for (touched.keys()) |w| w.flush();
@@ -944,15 +944,15 @@ const FSEvents = if (Environment.isMac) @import("./fs_events.zig") else struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Mutex = bun.Mutex;
-const Output = bun.Output;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Mutex = fun.Mutex;
+const Output = fun.Output;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;
 
-const FSWatcher = bun.jsc.Node.fs.Watcher;
+const FSWatcher = fun.jsc.Node.fs.Watcher;
 const Event = FSWatcher.Event;
 const onPathUpdateFn = FSWatcher.onPathUpdate;
 const onUpdateEndFn = FSWatcher.onUpdateEnd;

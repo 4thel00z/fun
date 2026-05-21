@@ -100,7 +100,7 @@ if (testName.startsWith("test/parallel/")) {
 }
 
 if (!testName) {
-  console.error("Usage: bun scripts/fetch-node-test.ts <test-name>");
+  console.error("Usage: fun scripts/fetch-node-test.ts <test-name>");
   process.exit(1);
 }
 

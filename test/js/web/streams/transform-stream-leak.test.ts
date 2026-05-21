@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // Spawning a debug/ASAN child plus two synchronous full GCs is slow.
 const timeout = 60_000;
@@ -16,7 +16,7 @@ test(
   "dropped TransformStream is collectable",
   async () => {
     const src = `
-    const { heapStats } = require("bun:jsc");
+    const { heapStats } = require("fun:jsc");
 
     const count = type => heapStats().objectTypeCounts[type] || 0;
 
@@ -29,9 +29,9 @@ test(
     // microtask queue, then collect.
     await Promise.resolve();
     await Promise.resolve();
-    Bun.gc(true);
-    await Bun.sleep(1);
-    Bun.gc(true);
+    Fun.gc(true);
+    await Fun.sleep(1);
+    Fun.gc(true);
 
     console.log(JSON.stringify({
       WritableStream: count("WritableStream"),
@@ -39,9 +39,9 @@ test(
     }));
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", src],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", src],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -64,7 +64,7 @@ test(
   "dropped WritableStream is collectable",
   async () => {
     const src = `
-    const { heapStats } = require("bun:jsc");
+    const { heapStats } = require("fun:jsc");
 
     const count = type => heapStats().objectTypeCounts[type] || 0;
 
@@ -75,18 +75,18 @@ test(
 
     await Promise.resolve();
     await Promise.resolve();
-    Bun.gc(true);
-    await Bun.sleep(1);
-    Bun.gc(true);
+    Fun.gc(true);
+    await Fun.sleep(1);
+    Fun.gc(true);
 
     console.log(JSON.stringify({
       WritableStream: count("WritableStream"),
     }));
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", src],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", src],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -108,9 +108,9 @@ test(
   async () => {
     const src = `
     const ws = new WritableStream();
-    Bun.gc(true);
-    await Bun.sleep(1);
-    Bun.gc(true);
+    Fun.gc(true);
+    await Fun.sleep(1);
+    Fun.gc(true);
     // If the internal stream object were collected, .locked would
     // misbehave (throw or return a bogus value) and getWriter() would
     // fail to set up the writer<->stream link.
@@ -121,9 +121,9 @@ test(
 
     const received = [];
     const ws2 = new WritableStream({ write(chunk) { received.push(chunk); } });
-    Bun.gc(true);
-    await Bun.sleep(1);
-    Bun.gc(true);
+    Fun.gc(true);
+    await Fun.sleep(1);
+    Fun.gc(true);
     const w2 = ws2.getWriter();
     await w2.write("a");
     await w2.write("b");
@@ -133,9 +133,9 @@ test(
     console.log("ok");
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", src],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", src],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

@@ -1,18 +1,18 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir, tls } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir, tls } from "harness";
 
-test("--parallel: each worker has a unique JEST_WORKER_ID and BUN_TEST_WORKER_ID", async () => {
+test("--parallel: each worker has a unique JEST_WORKER_ID and FUN_TEST_WORKER_ID", async () => {
   // Sleep so worker 0 is busy when workers 1/2 come online and pick up the
   // remaining files; otherwise one fast worker handles all three.
-  const fixture = `import {test} from "bun:test"; test("t", async () => { await Bun.sleep(200); console.log("WID="+process.env.JEST_WORKER_ID+" "+process.env.BUN_TEST_WORKER_ID); });`;
+  const fixture = `import {test} from "fun:test"; test("t", async () => { await Fun.sleep(200); console.log("WID="+process.env.JEST_WORKER_ID+" "+process.env.FUN_TEST_WORKER_ID); });`;
   using dir = tempDir("parallel-worker-id", {
     "a.test.js": fixture,
     "b.test.js": fixture,
     "c.test.js": fixture,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=3"],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=3"],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -20,7 +20,7 @@ test("--parallel: each worker has a unique JEST_WORKER_ID and BUN_TEST_WORKER_ID
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
   const out = stdout + stderr;
   expect(out).not.toContain("WID=undefined");
-  // 1-indexed; JEST_WORKER_ID and BUN_TEST_WORKER_ID always match.
+  // 1-indexed; JEST_WORKER_ID and FUN_TEST_WORKER_ID always match.
   const seen = [...out.matchAll(/WID=(\d+) (\d+)/g)].map(m => {
     expect(m[1]).toBe(m[2]);
     return m[1];
@@ -31,9 +31,9 @@ test("--parallel: each worker has a unique JEST_WORKER_ID and BUN_TEST_WORKER_ID
   // K<=1 serial-fallback (single file, or --parallel=1) still sets WORKER_ID=1
   // so tests can rely on it whenever --parallel is passed (matches Jest).
   using single = tempDir("parallel-worker-id-single", { "a.test.js": fixture });
-  await using p2 = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=5"],
-    env: bunEnv,
+  await using p2 = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=5"],
+    env: funEnv,
     cwd: String(single),
     stderr: "pipe",
     stdout: "pipe",
@@ -46,15 +46,15 @@ test("--parallel: each worker has a unique JEST_WORKER_ID and BUN_TEST_WORKER_ID
 
 test("--parallel runs files across workers and aggregates totals", async () => {
   using dir = tempDir("parallel-basic", {
-    "a.test.js": `import {test,expect} from "bun:test"; test("a1",()=>expect(1).toBe(1)); test("a2",()=>expect(1).toBe(1));`,
-    "b.test.js": `import {test,expect} from "bun:test"; test("b1",()=>expect(1).toBe(1));`,
-    "c.test.js": `import {test,expect} from "bun:test"; test("c1",()=>expect(1).toBe(1)); test("c2",()=>expect(1).toBe(1)); test("c3",()=>expect(1).toBe(1));`,
-    "d.test.js": `import {test,expect} from "bun:test"; test("d1",()=>expect(1).toBe(1));`,
+    "a.test.js": `import {test,expect} from "fun:test"; test("a1",()=>expect(1).toBe(1)); test("a2",()=>expect(1).toBe(1));`,
+    "b.test.js": `import {test,expect} from "fun:test"; test("b1",()=>expect(1).toBe(1));`,
+    "c.test.js": `import {test,expect} from "fun:test"; test("c1",()=>expect(1).toBe(1)); test("c2",()=>expect(1).toBe(1)); test("c3",()=>expect(1).toBe(1));`,
+    "d.test.js": `import {test,expect} from "fun:test"; test("d1",()=>expect(1).toBe(1));`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -72,19 +72,19 @@ test("--parallel runs files across workers and aggregates totals", async () => {
   expect(stderr).toContain("7 pass");
   expect(stderr).toContain("0 fail");
   expect(stderr).toContain("Ran 7 tests across 4 files.");
-  expect(normalizeBunSnapshot(stdout, dir)).toMatchInlineSnapshot(`"bun test <version> (<revision>) 2x PARALLEL"`);
+  expect(normalizeFunSnapshot(stdout, dir)).toMatchInlineSnapshot(`"fun test <version> (<revision>) 2x PARALLEL"`);
   expect(exitCode).toBe(0);
 });
 
 test("--parallel surfaces failures and exits non-zero", async () => {
   using dir = tempDir("parallel-fail", {
-    "ok.test.js": `import {test,expect} from "bun:test"; test("ok",()=>expect(1).toBe(1));`,
-    "bad.test.js": `import {test,expect} from "bun:test"; test("bad",()=>expect(1).toBe(2));`,
+    "ok.test.js": `import {test,expect} from "fun:test"; test("ok",()=>expect(1).toBe(1));`,
+    "bad.test.js": `import {test,expect} from "fun:test"; test("bad",()=>expect(1).toBe(2));`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -100,14 +100,14 @@ test("--parallel surfaces failures and exits non-zero", async () => {
 
 test("--parallel marks a file whose worker exits mid-run as failed (no retry)", async () => {
   using dir = tempDir("parallel-crash", {
-    "a.test.js": `import {test,expect} from "bun:test"; test("a",()=>expect(1).toBe(1));`,
-    "b.test.js": `import {test,expect} from "bun:test"; test("b",()=>expect(1).toBe(1));`,
-    "boom.test.js": `import {test} from "bun:test"; test("boom",()=>process.exit(7));`,
+    "a.test.js": `import {test,expect} from "fun:test"; test("a",()=>expect(1).toBe(1));`,
+    "b.test.js": `import {test,expect} from "fun:test"; test("b",()=>expect(1).toBe(1));`,
+    "boom.test.js": `import {test} from "fun:test"; test("boom",()=>process.exit(7));`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -133,12 +133,12 @@ test("--parallel marks a file whose worker exits mid-run as failed (no retry)", 
 
 test("--parallel without N is accepted and runs all files", async () => {
   using dir = tempDir("parallel-default", {
-    "a.test.js": `import {test,expect} from "bun:test"; test("a",()=>expect(1).toBe(1));`,
-    "b.test.js": `import {test,expect} from "bun:test"; test("b",()=>expect(1).toBe(1));`,
+    "a.test.js": `import {test,expect} from "fun:test"; test("a",()=>expect(1).toBe(1));`,
+    "b.test.js": `import {test,expect} from "fun:test"; test("b",()=>expect(1).toBe(1));`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -151,15 +151,15 @@ test("--parallel without N is accepted and runs all files", async () => {
 
 test("--parallel forwards -t to workers", async () => {
   using dir = tempDir("parallel-filter", {
-    "a.test.js": `import {test,expect} from "bun:test"; test("keep_a",()=>expect(1).toBe(1)); test("drop_a",()=>expect(1).toBe(2));`,
-    "b.test.js": `import {test,expect} from "bun:test"; test("drop_b",()=>expect(1).toBe(2));`,
-    "c.test.js": `import {test,expect} from "bun:test"; test("keep_c",()=>expect(1).toBe(1));`,
-    "d.test.js": `import {test,expect} from "bun:test"; test("drop_d",()=>expect(1).toBe(2));`,
+    "a.test.js": `import {test,expect} from "fun:test"; test("keep_a",()=>expect(1).toBe(1)); test("drop_a",()=>expect(1).toBe(2));`,
+    "b.test.js": `import {test,expect} from "fun:test"; test("drop_b",()=>expect(1).toBe(2));`,
+    "c.test.js": `import {test,expect} from "fun:test"; test("keep_c",()=>expect(1).toBe(1));`,
+    "d.test.js": `import {test,expect} from "fun:test"; test("drop_d",()=>expect(1).toBe(2));`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "-t", "keep"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "-t", "keep"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -178,13 +178,13 @@ test("--parallel --bail stops dispatching new files after threshold", async () =
   // trigger bail before any third file is dispatched. Order-independent.
   const files: Record<string, string> = {};
   for (const f of ["a", "b", "c", "d", "e", "f"]) {
-    files[`${f}.test.js`] = `import {test,expect} from "bun:test"; test("${f}",()=>expect(1).toBe(2));`;
+    files[`${f}.test.js`] = `import {test,expect} from "fun:test"; test("${f}",()=>expect(1).toBe(2));`;
   }
   using dir = tempDir("parallel-bail", files);
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--bail=1"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--bail=1"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -202,16 +202,16 @@ test("--parallel --bail stops dispatching new files after threshold", async () =
 
 test("--parallel prints per-test lines under their file's header", async () => {
   using dir = tempDir("parallel-output", {
-    "a.test.js": `import {test,expect} from "bun:test";
+    "a.test.js": `import {test,expect} from "fun:test";
       test("alpha-one",()=>expect(1).toBe(1));
       test("alpha-two",()=>expect(1).toBe(1));`,
-    "b.test.js": `import {test,expect} from "bun:test";
+    "b.test.js": `import {test,expect} from "fun:test";
       test("bravo-one",()=>expect(1).toBe(1));
       test("bravo-two",()=>expect(1).toBe(1));`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -244,16 +244,16 @@ test("--parallel streams test results in realtime, not buffered per-file", async
   // would withhold output until ~600ms; per-test streaming surfaces the fast
   // results within the worker spawn + first-tick latency.
   using dir = tempDir("parallel-realtime", {
-    "a.test.js": `import {test,expect} from "bun:test";
+    "a.test.js": `import {test,expect} from "fun:test";
        test("a-fast",()=>expect(1).toBe(1));
-       test("a-slow",async()=>{await Bun.sleep(600);expect(1).toBe(1);});`,
-    "b.test.js": `import {test,expect} from "bun:test";
+       test("a-slow",async()=>{await Fun.sleep(600);expect(1).toBe(1);});`,
+    "b.test.js": `import {test,expect} from "fun:test";
        test("b-fast",()=>expect(1).toBe(1));
-       test("b-slow",async()=>{await Bun.sleep(600);expect(1).toBe(1);});`,
+       test("b-slow",async()=>{await Fun.sleep(600);expect(1).toBe(1);});`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -285,14 +285,14 @@ test("--parallel aggregates failure summary across workers", async () => {
   // 25+ passes so the end-of-run "N tests failed:" repeat section prints.
   const files: Record<string, string> = {};
   for (let i = 0; i < 24; i++) {
-    files[`ok${i}.test.js`] = `import {test,expect} from "bun:test"; test("ok${i}",()=>expect(1).toBe(1));`;
+    files[`ok${i}.test.js`] = `import {test,expect} from "fun:test"; test("ok${i}",()=>expect(1).toBe(1));`;
   }
-  files["bad.test.js"] = `import {test,expect} from "bun:test"; test("uniquefail",()=>expect(1).toBe(2));`;
+  files["bad.test.js"] = `import {test,expect} from "fun:test"; test("uniquefail",()=>expect(1).toBe(2));`;
   using dir = tempDir("parallel-repeat", files);
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=4"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=4"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -310,13 +310,13 @@ test("--parallel aggregates failure summary across workers", async () => {
 
 test("--parallel --reporter=junit produces a merged report covering all files", async () => {
   using dir = tempDir("parallel-junit", {
-    "a.test.js": `import {test,expect} from "bun:test"; test("ta",()=>expect(1).toBe(1));`,
-    "b.test.js": `import {test,expect} from "bun:test"; test("tb",()=>expect(1).toBe(1));`,
-    "c.test.js": `import {test,expect} from "bun:test"; test("tc",()=>expect(1).toBe(2));`,
+    "a.test.js": `import {test,expect} from "fun:test"; test("ta",()=>expect(1).toBe(1));`,
+    "b.test.js": `import {test,expect} from "fun:test"; test("tb",()=>expect(1).toBe(1));`,
+    "c.test.js": `import {test,expect} from "fun:test"; test("tc",()=>expect(1).toBe(2));`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--reporter=junit", "--reporter-outfile=out.xml"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--reporter=junit", "--reporter-outfile=out.xml"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -324,8 +324,8 @@ test("--parallel --reporter=junit produces a merged report covering all files", 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
   expect(stdout).toContain("PARALLEL");
 
-  const xml = await Bun.file(String(dir) + "/out.xml").text();
-  expect(xml).toContain('<testsuites name="bun test"');
+  const xml = await Fun.file(String(dir) + "/out.xml").text();
+  expect(xml).toContain('<testsuites name="fun test"');
   expect(xml).toContain("</testsuites>");
   // All three files' suites present.
   expect(xml).toContain("a.test.js");
@@ -345,13 +345,13 @@ test("--parallel --coverage merges LCOV across workers", async () => {
   using dir = tempDir("parallel-coverage-lcov", {
     "shared.js": `export function hit() { return 1; }\nexport function miss() { return 2; }\n`,
     "only-a.js": `export function fa() { return 1; }\n`,
-    "a.test.js": `import {test,expect} from "bun:test"; import {hit} from "./shared.js"; import {fa} from "./only-a.js"; test("a",()=>expect(hit()+fa()).toBe(2));`,
-    "b.test.js": `import {test,expect} from "bun:test"; import {hit} from "./shared.js"; test("b",()=>expect(hit()).toBe(1));`,
+    "a.test.js": `import {test,expect} from "fun:test"; import {hit} from "./shared.js"; import {fa} from "./only-a.js"; test("a",()=>expect(hit()+fa()).toBe(2));`,
+    "b.test.js": `import {test,expect} from "fun:test"; import {hit} from "./shared.js"; test("b",()=>expect(hit()).toBe(1));`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--coverage", "--coverage-reporter=lcov", "--coverage-dir=./cov"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--coverage", "--coverage-reporter=lcov", "--coverage-dir=./cov"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -360,7 +360,7 @@ test("--parallel --coverage merges LCOV across workers", async () => {
   expect(stdout).toContain("PARALLEL");
   expect(stderr).not.toContain("not yet aggregated");
 
-  const lcov = await Bun.file(String(dir) + "/cov/lcov.info").text();
+  const lcov = await Fun.file(String(dir) + "/cov/lcov.info").text();
   // Both source files present, each exactly once (merged, not duplicated per worker).
   expect(lcov.match(/^SF:shared\.js$/gm)?.length).toBe(1);
   expect(lcov.match(/^SF:only-a\.js$/gm)?.length).toBe(1);
@@ -380,13 +380,13 @@ test("--parallel --coverage prints merged text table", async () => {
   using dir = tempDir("parallel-coverage-text", {
     "lib-a.js": `export function used() { return 1; }\nexport function unused() { return 2; }\n`,
     "lib-b.js": `export function go() { return 3; }\n`,
-    "a.test.js": `import {test,expect} from "bun:test"; import {used} from "./lib-a.js"; test("a",()=>expect(used()).toBe(1));`,
-    "b.test.js": `import {test,expect} from "bun:test"; import {go} from "./lib-b.js"; test("b",()=>expect(go()).toBe(3));`,
+    "a.test.js": `import {test,expect} from "fun:test"; import {used} from "./lib-a.js"; test("a",()=>expect(used()).toBe(1));`,
+    "b.test.js": `import {test,expect} from "fun:test"; import {go} from "./lib-b.js"; test("b",()=>expect(go()).toBe(3));`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--coverage", "--coverage-reporter=text"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--coverage", "--coverage-reporter=text"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -405,16 +405,16 @@ test("--parallel --coverage prints merged text table", async () => {
 
 test("--parallel --coverage enforces coverageThreshold with lcov-only reporter", async () => {
   using dir = tempDir("parallel-coverage-threshold", {
-    "bunfig.toml": `[test]\ncoverageThreshold = 0.9\ncoverageSkipTestFiles = true\n`,
+    "funfig.toml": `[test]\ncoverageThreshold = 0.9\ncoverageSkipTestFiles = true\n`,
     "lib.js": `export function used() { return 1; }\nexport function unused() { return 2; }\nexport function alsoUnused() { return 3; }\n`,
-    "a.test.js": `import {test,expect} from "bun:test"; import {used} from "./lib.js"; test("a",()=>expect(used()).toBe(1));`,
-    "b.test.js": `import {test,expect} from "bun:test"; import {used} from "./lib.js"; test("b",()=>expect(used()).toBe(1));`,
+    "a.test.js": `import {test,expect} from "fun:test"; import {used} from "./lib.js"; test("a",()=>expect(used()).toBe(1));`,
+    "b.test.js": `import {test,expect} from "fun:test"; import {used} from "./lib.js"; test("b",()=>expect(used()).toBe(1));`,
   });
 
   for (const reporter of ["lcov", "text"] as const) {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--parallel=2", "--coverage", `--coverage-reporter=${reporter}`, "--coverage-dir=./cov"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--parallel=2", "--coverage", `--coverage-reporter=${reporter}`, "--coverage-dir=./cov"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -429,20 +429,20 @@ test("--parallel --coverage enforces coverageThreshold with lcov-only reporter",
 
 test("--parallel --dots prints one status character per test", async () => {
   using dir = tempDir("parallel-dots", {
-    "a.test.js": `import {test,expect} from "bun:test";
+    "a.test.js": `import {test,expect} from "fun:test";
       test("a1",()=>expect(1).toBe(1));
       test("a2",()=>expect(1).toBe(1));
       test.skip("a3",()=>{});
       test("a4",()=>expect(1).toBe(2));`,
-    "b.test.js": `import {test,expect} from "bun:test";
+    "b.test.js": `import {test,expect} from "fun:test";
       test("b1",()=>expect(1).toBe(1));
       test("b2",()=>expect(1).toBe(1));
       test("b3",()=>expect(1).toBe(1));
       test("b4",()=>expect(1).toBe(1));`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--dots"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--dots"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -467,13 +467,13 @@ test("--parallel never interleaves console output across files", async () => {
   // time to also log. Buffered-per-test flush means a MARK line is always
   // immediately followed by its own (pass) line, never another file's MARK.
   const body = (tag: string) =>
-    `import {test,expect} from "bun:test"; import {appendFileSync} from "fs";
-     for (let i=0;i<3;i++) test("${tag}"+i, async()=>{ appendFileSync(process.env.PIDS, process.pid+"\\n"); console.error("MARK-${tag}-"+i); await Bun.sleep(300); expect(1).toBe(1); });`;
+    `import {test,expect} from "fun:test"; import {appendFileSync} from "fs";
+     for (let i=0;i<3;i++) test("${tag}"+i, async()=>{ appendFileSync(process.env.PIDS, process.pid+"\\n"); console.error("MARK-${tag}-"+i); await Fun.sleep(300); expect(1).toBe(1); });`;
   using dir = tempDir("parallel-no-interleave", { "a.test.js": body("a"), "b.test.js": body("b") });
   const pids = String(dir) + "/pids.txt";
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: { ...bunEnv, PIDS: pids, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: { ...funEnv, PIDS: pids, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -482,7 +482,7 @@ test("--parallel never interleaves console output across files", async () => {
 
   // Serial execution would trivially avoid interleaving; assert the two files
   // actually ran in different processes so the test proves something.
-  expect(new Set((await Bun.file(pids).text()).trim().split("\n")).size).toBe(2);
+  expect(new Set((await Fun.file(pids).text()).trim().split("\n")).size).toBe(2);
 
   for (let i = 0; i < 3; i++) {
     expect(stderr).toContain(`MARK-a-${i}`);
@@ -506,8 +506,8 @@ test("--parallel never interleaves console output across files", async () => {
 test("--parallel lazily scales workers based on file duration", async () => {
   // Each test file appends its PID so we can count distinct worker processes.
   const body = (sleepMs: number) =>
-    `import {test,expect} from "bun:test"; import {appendFileSync} from "fs";
-     test("t", async()=>{ appendFileSync(process.env.PIDS, process.pid+"\\n"); await Bun.sleep(${sleepMs}); expect(1).toBe(1); });`;
+    `import {test,expect} from "fun:test"; import {appendFileSync} from "fs";
+     test("t", async()=>{ appendFileSync(process.env.PIDS, process.pid+"\\n"); await Fun.sleep(${sleepMs}); expect(1).toBe(1); });`;
   const fixture = (sleepMs: number) => ({
     "a.test.js": body(sleepMs),
     "b.test.js": body(sleepMs),
@@ -516,15 +516,15 @@ test("--parallel lazily scales workers based on file duration", async () => {
   });
   const run = async (dir: string, scaleMs: number) => {
     const pids = dir + "/pids.txt";
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--parallel=4"],
-      env: { ...bunEnv, PIDS: pids, BUN_TEST_PARALLEL_SCALE_MS: String(scaleMs) },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--parallel=4"],
+      env: { ...funEnv, PIDS: pids, FUN_TEST_PARALLEL_SCALE_MS: String(scaleMs) },
       cwd: dir,
       stderr: "pipe",
       stdout: "pipe",
     });
     const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
-    return { stderr, exitCode, pids: new Set((await Bun.file(pids).text()).trim().split("\n")) };
+    return { stderr, exitCode, pids: new Set((await Fun.file(pids).text()).trim().split("\n")) };
   };
 
   // Fast: 4 files × 0ms with a 250ms threshold. Each file (load + run +
@@ -559,19 +559,19 @@ test("--parallel partitions by directory and steals from the end", async () => {
   // exhausts its own chunk. With K=4 each worker's initial chunk is one
   // directory; the assertion is that each directory's first-dispatched file
   // ran on a distinct PID (i.e. files were not round-robined across workers).
-  const body = `import {test,expect} from "bun:test"; import {appendFileSync} from "fs";
+  const body = `import {test,expect} from "fun:test"; import {appendFileSync} from "fs";
     test("t", async () => {
       appendFileSync(process.env.LOG, JSON.stringify({pid: process.pid, file: import.meta.path}) + "\\n");
-      await Bun.sleep(150);
+      await Fun.sleep(150);
       expect(1).toBe(1);
     });`;
   const files: Record<string, string> = {};
   for (const d of ["a", "b", "c", "d"]) for (let i = 0; i < 4; i++) files[`${d}/${d}${i}.test.js`] = body;
   using dir = tempDir("parallel-affinity", files);
   const log = String(dir) + "/log.ndjson";
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=4"],
-    env: { ...bunEnv, LOG: log, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=4"],
+    env: { ...funEnv, LOG: log, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -581,7 +581,7 @@ test("--parallel partitions by directory and steals from the end", async () => {
   expect(stderr).toContain("16 pass");
 
   type Row = { pid: number; file: string };
-  const rows: Row[] = (await Bun.file(log).text())
+  const rows: Row[] = (await Fun.file(log).text())
     .trim()
     .split("\n")
     .map(l => JSON.parse(l));
@@ -603,9 +603,9 @@ test("--parallel work-stealing balances an uneven directory split", async () => 
   // worker 3 owns the three fast files and finishes first. It then steals
   // from the back of the largest a-range. Assertions: all 11 complete, and the
   // PID that ran d/ also ran at least one a/ file (the steal).
-  const slow = `import {test,expect} from "bun:test"; import {appendFileSync} from "fs";
-    test("t", async () => { appendFileSync(process.env.LOG, JSON.stringify({pid: process.pid, file: import.meta.path}) + "\\n"); await Bun.sleep(250); expect(1).toBe(1); });`;
-  const fast = `import {test,expect} from "bun:test"; import {appendFileSync} from "fs";
+  const slow = `import {test,expect} from "fun:test"; import {appendFileSync} from "fs";
+    test("t", async () => { appendFileSync(process.env.LOG, JSON.stringify({pid: process.pid, file: import.meta.path}) + "\\n"); await Fun.sleep(250); expect(1).toBe(1); });`;
+  const fast = `import {test,expect} from "fun:test"; import {appendFileSync} from "fs";
     test("t", () => { appendFileSync(process.env.LOG, JSON.stringify({pid: process.pid, file: import.meta.path}) + "\\n"); expect(1).toBe(1); });`;
   const files: Record<string, string> = {};
   for (let i = 0; i < 8; i++) files[`a/a${i}.test.js`] = slow;
@@ -614,9 +614,9 @@ test("--parallel work-stealing balances an uneven directory split", async () => 
   files["d/d0.test.js"] = fast;
   using dir = tempDir("parallel-steal", files);
   const log = String(dir) + "/log.ndjson";
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=4"],
-    env: { ...bunEnv, LOG: log, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=4"],
+    env: { ...funEnv, LOG: log, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -627,7 +627,7 @@ test("--parallel work-stealing balances an uneven directory split", async () => 
   expect(stderr).toContain("0 fail");
 
   type Row = { pid: number; file: string };
-  const rows: Row[] = (await Bun.file(log).text())
+  const rows: Row[] = (await Fun.file(log).text())
     .trim()
     .split("\n")
     .map(l => JSON.parse(l));
@@ -643,7 +643,7 @@ test("--parallel work-stealing balances an uneven directory split", async () => 
 
 test("--parallel writes new snapshots from every worker", async () => {
   const body = (n: number) =>
-    `import {test,expect} from "bun:test"; test("snap",()=>expect("value-${n}").toMatchSnapshot());`;
+    `import {test,expect} from "fun:test"; test("snap",()=>expect("value-${n}").toMatchSnapshot());`;
   using dir = tempDir("parallel-snapshots", {
     "a.test.js": body(1),
     "b.test.js": body(2),
@@ -653,9 +653,9 @@ test("--parallel writes new snapshots from every worker", async () => {
 
   // First run creates snapshots; with 4 workers each worker's only file is its
   // last file, so this exercises the explicit flush before worker exit.
-  await using first = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=4", "--update-snapshots"],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0", CI: "false" },
+  await using first = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=4", "--update-snapshots"],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0", CI: "false" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -667,13 +667,13 @@ test("--parallel writes new snapshots from every worker", async () => {
 
   for (const f of ["a", "b", "c", "d"]) {
     const snap = `${dir}/__snapshots__/${f}.test.js.snap`;
-    expect(await Bun.file(snap).exists()).toBe(true);
+    expect(await Fun.file(snap).exists()).toBe(true);
   }
 
   // Second run must pass against the snapshots written by the first.
-  await using second = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=4"],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0", CI: "false" },
+  await using second = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=4"],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0", CI: "false" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -690,19 +690,19 @@ test("--parallel: a test producing a >64MB result line is truncated, not treated
   // itself exceeds it. The encoder must truncate so the receiver doesn't drop
   // the channel and mark the whole file as crashed.
   using dir = tempDir("parallel-huge-frame", {
-    "huge.test.js": `import {test,expect} from "bun:test"; test("X".repeat(68_000_000),()=>expect(1).toBe(2));`,
-    "ok.test.js": `import {test,expect} from "bun:test"; test("ok",()=>expect(1).toBe(1));`,
+    "huge.test.js": `import {test,expect} from "fun:test"; test("X".repeat(68_000_000),()=>expect(1).toBe(2));`,
+    "ok.test.js": `import {test,expect} from "fun:test"; test("ok",()=>expect(1).toBe(1));`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
   });
   const result = await Promise.race([
     Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]),
-    Bun.sleep(60000).then(() => "TIMEOUT" as const),
+    Fun.sleep(60000).then(() => "TIMEOUT" as const),
   ]);
   expect(result).not.toBe("TIMEOUT");
   const [stdout, stderr, exitCode] = result as [string, string, number];
@@ -718,20 +718,20 @@ test("--parallel: a test producing a >64MB result line is truncated, not treated
 
 test("--parallel: a test writing garbage to fd 3 does not hang the coordinator", async () => {
   using dir = tempDir("parallel-hostile-fd3", {
-    "ok.test.js": `import {test,expect} from "bun:test"; test("ok",()=>expect(1).toBe(1));`,
-    "bad.test.js": `import {test} from "bun:test"; import {writeSync} from "fs";
+    "ok.test.js": `import {test,expect} from "fun:test"; test("ok",()=>expect(1).toBe(1));`,
+    "bad.test.js": `import {test} from "fun:test"; import {writeSync} from "fs";
       test("bad",()=>{ writeSync(3, Buffer.from([0xff,0xff,0xff,0xff,0x42])); });`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2"],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2"],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
   });
   const result = await Promise.race([
     Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]),
-    Bun.sleep(15000).then(() => "TIMEOUT" as const),
+    Fun.sleep(15000).then(() => "TIMEOUT" as const),
   ]);
   expect(result).not.toBe("TIMEOUT");
   const [stdout, stderr, exitCode] = result as [string, string, number];
@@ -747,7 +747,7 @@ test("--parallel: a test writing garbage to fd 3 does not hang the coordinator",
 
 test("--parallel --randomize without --seed is reproducible via the printed seed", async () => {
   const mk = (tag: string) =>
-    `import {test,expect} from "bun:test";\n` +
+    `import {test,expect} from "fun:test";\n` +
     "abcdefgh"
       .split("")
       .map(n => `test("${n}",()=>{console.error("ORDER:${tag}:${n}");expect(1).toBe(1);});`)
@@ -755,9 +755,9 @@ test("--parallel --randomize without --seed is reproducible via the printed seed
   using dir = tempDir("parallel-randomize-seed", { "a.test.ts": mk("a"), "b.test.ts": mk("b") });
 
   const run = async (extra: string[]) => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--parallel=2", "--randomize", ...extra, "./a.test.ts", "./b.test.ts"],
-      env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--parallel=2", "--randomize", ...extra, "./a.test.ts", "./b.test.ts"],
+      env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -782,11 +782,11 @@ test("--parallel --randomize without --seed is reproducible via the printed seed
 });
 
 test("--parallel forwards --experimental-http2-fetch to workers", async () => {
-  // The worker's Bun.argv/execArgv are rewritten to look like `bun <file>`, so
+  // The worker's Fun.argv/execArgv are rewritten to look like `fun <file>`, so
   // assert the *effect*: an h2-only server (allowHTTP1:false) replies 200 only
   // when ALPN offered h2; without the flag the worker would see 403 "Missing
   // ALPN Protocol".
-  const fixture = `import {test,expect} from "bun:test";
+  const fixture = `import {test,expect} from "fun:test";
     import {createSecureServer} from "node:http2";
     import {once} from "node:events";
     test("h2", async () => {
@@ -800,9 +800,9 @@ test("--parallel forwards --experimental-http2-fetch to workers", async () => {
       } finally { s.close(); }
     });`;
   using dir = tempDir("parallel-h2-flag", { "a.test.js": fixture, "b.test.js": fixture });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--experimental-http2-fetch"],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0", H2_TLS: JSON.stringify(tls) },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--experimental-http2-fetch"],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0", H2_TLS: JSON.stringify(tls) },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -822,12 +822,12 @@ test("--parallel forwards --conditions to workers", async () => {
     }),
     "node_modules/condpkg/dev.js": `export const variant = "dev";`,
     "node_modules/condpkg/prod.js": `export const variant = "prod";`,
-    "a.test.ts": `import {test,expect} from "bun:test"; import {variant} from "condpkg"; test("a",()=>expect(variant).toBe("dev"));`,
-    "b.test.ts": `import {test,expect} from "bun:test"; import {variant} from "condpkg"; test("b",()=>expect(variant).toBe("dev"));`,
+    "a.test.ts": `import {test,expect} from "fun:test"; import {variant} from "condpkg"; test("a",()=>expect(variant).toBe("dev"));`,
+    "b.test.ts": `import {test,expect} from "fun:test"; import {variant} from "condpkg"; test("b",()=>expect(variant).toBe("dev"));`,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--conditions=development"],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--conditions=development"],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -841,20 +841,20 @@ test("--parallel forwards --conditions to workers", async () => {
 
 test("--parallel --reporter=junit emits a synthetic suite for crashed files", async () => {
   using dir = tempDir("parallel-junit-crash", {
-    "ok.test.js": `import {test,expect} from "bun:test"; test("ok",()=>expect(1).toBe(1));`,
-    "crash.test.js": `import {test} from "bun:test"; test("boom",()=>process.kill(process.pid, "SIGKILL"));`,
+    "ok.test.js": `import {test,expect} from "fun:test"; test("ok",()=>expect(1).toBe(1));`,
+    "crash.test.js": `import {test} from "fun:test"; test("boom",()=>process.kill(process.pid, "SIGKILL"));`,
   });
   const out = String(dir) + "/out.xml";
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--reporter=junit", `--reporter-outfile=${out}`],
-    env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--reporter=junit", `--reporter-outfile=${out}`],
+    env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
   });
   const [, , exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
   expect(exitCode).not.toBe(0);
-  const xml = await Bun.file(out).text();
+  const xml = await Fun.file(out).text();
 
   // The crashed file gets a synthetic suite so outer totals == sum of children.
   expect(xml).toContain('<testsuite name="crash.test.js"');
@@ -873,10 +873,10 @@ test("--parallel: SIGTERM on coordinator kills workers and their grandchildren",
     setTimeout(() => {}, 8000);
   `;
   const fixture = `
-    import { test } from "bun:test";
+    import { test } from "fun:test";
     import { appendFileSync } from "fs";
     test("slow", async () => {
-      const child = Bun.spawn({
+      const child = Fun.spawn({
         cmd: [process.execPath, "grandchild.cjs"],
         env: process.env,
         stdout: "ignore",
@@ -884,7 +884,7 @@ test("--parallel: SIGTERM on coordinator kills workers and their grandchildren",
       });
       appendFileSync(process.env.PIDS, "worker=" + process.pid + "\\n");
       appendFileSync(process.env.PIDS, "spawned=" + child.pid + "\\n");
-      await Bun.sleep(60000);
+      await Fun.sleep(60000);
     });
   `;
   using dir = tempDir("parallel-deathsig", {
@@ -894,9 +894,9 @@ test("--parallel: SIGTERM on coordinator kills workers and their grandchildren",
   });
   const pids = String(dir) + "/pids.txt";
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--parallel=2", "--parallel-delay=0"],
-    env: { ...bunEnv, PIDS: pids },
+  const proc = Fun.spawn({
+    cmd: [funExe(), "test", "--parallel=2", "--parallel-delay=0"],
+    env: { ...funEnv, PIDS: pids },
     cwd: String(dir),
     stdout: "ignore",
     stderr: "ignore",
@@ -905,15 +905,15 @@ test("--parallel: SIGTERM on coordinator kills workers and their grandchildren",
   // Wait for both workers and both grandchildren to log their PIDs.
   const wanted = (re: RegExp, n: number) =>
     (
-      Bun.file(pids)
+      Fun.file(pids)
         .text()
         .catch(() => "") as Promise<string>
     ).then(t => [...t.matchAll(re)].length >= n);
   for (let i = 0; i < 200; i++) {
     if ((await wanted(/^worker=/gm, 2)) && (await wanted(/^grandchild=/gm, 2))) break;
-    await Bun.sleep(25);
+    await Fun.sleep(25);
   }
-  const log = await Bun.file(pids).text();
+  const log = await Fun.file(pids).text();
   const workers = [...log.matchAll(/^worker=(\d+)/gm)].map(m => Number(m[1]));
   const grandchildren = [...log.matchAll(/^grandchild=(\d+)/gm)].map(m => Number(m[1]));
   expect(workers.length).toBeGreaterThanOrEqual(2);
@@ -938,7 +938,7 @@ test("--parallel: SIGTERM on coordinator kills workers and their grandchildren",
   for (let i = 0; i < 100; i++) {
     outstanding = [...workers, ...grandchildren].filter(alive);
     if (outstanding.length === 0) break;
-    await Bun.sleep(25);
+    await Fun.sleep(25);
   }
   // Clean up survivors so a failing run doesn't leak processes.
   for (const pid of outstanding)

@@ -50,24 +50,24 @@ console.log('util.js loaded');
         console.log(`Cycle ${i + 1}/10`);
 
         // Delete util.js which is imported by multiple files
-        await Bun.write(dev.join("util.js"), "");
-        await Bun.sleep(10);
+        await Fun.write(dev.join("util.js"), "");
+        await Fun.sleep(10);
 
         // Recreate it
-        await Bun.write(
+        await Fun.write(
           dev.join("util.js"),
           `
 export const util = '!';
 console.log('util.js loaded');
         `.trim(),
         );
-        await Bun.sleep(10);
+        await Fun.sleep(10);
 
         // Delete and recreate one of the importers
-        await Bun.write(dev.join("a.js"), "");
-        await Bun.sleep(10);
+        await Fun.write(dev.join("a.js"), "");
+        await Fun.sleep(10);
 
-        await Bun.write(
+        await Fun.write(
           dev.join("a.js"),
           `
 import { util } from './util.js';
@@ -75,7 +75,7 @@ export const a = 'A' + util;
 console.log('a.js loaded');
         `.trim(),
         );
-        await Bun.sleep(10);
+        await Fun.sleep(10);
       }
     });
 

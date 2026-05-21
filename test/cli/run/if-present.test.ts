@@ -1,6 +1,6 @@
-import { spawnSync } from "bun";
-import { beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { spawnSync } from "fun";
+import { beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 let cwd: string;
 
@@ -16,12 +16,12 @@ beforeAll(() => {
   });
 });
 
-describe("bun", () => {
+describe("fun", () => {
   test("should error with missing script", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "notpresent"],
-      env: bunEnv,
+      cmd: [funExe(), "notpresent"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -32,8 +32,8 @@ describe("bun", () => {
   test("should error with missing module", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "./notpresent.js"],
-      env: bunEnv,
+      cmd: [funExe(), "./notpresent.js"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -44,8 +44,8 @@ describe("bun", () => {
   test("should error with missing file", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "/path/to/notpresent.txt"],
-      env: bunEnv,
+      cmd: [funExe(), "/path/to/notpresent.txt"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -55,12 +55,12 @@ describe("bun", () => {
   });
 });
 
-describe("bun --if-present", () => {
+describe("fun --if-present", () => {
   test("should not error with missing script", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "--if-present", "notpresent"],
-      env: bunEnv,
+      cmd: [funExe(), "--if-present", "notpresent"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -71,8 +71,8 @@ describe("bun --if-present", () => {
   test("should not error with missing module", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "--if-present", "./notpresent.js"],
-      env: bunEnv,
+      cmd: [funExe(), "--if-present", "./notpresent.js"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -83,8 +83,8 @@ describe("bun --if-present", () => {
   test("should not error with missing file", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "--if-present", "/path/to/notpresent.txt"],
-      env: bunEnv,
+      cmd: [funExe(), "--if-present", "/path/to/notpresent.txt"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -95,8 +95,8 @@ describe("bun --if-present", () => {
   test("should run present script", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "run", "present"],
-      env: bunEnv,
+      cmd: [funExe(), "run", "present"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -107,8 +107,8 @@ describe("bun --if-present", () => {
   test("should run present module", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "run", "present.js"],
-      env: bunEnv,
+      cmd: [funExe(), "run", "present.js"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

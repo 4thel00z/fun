@@ -1,7 +1,7 @@
 ## CLI Usage
 
 ```bash
-bun build <entry points>
+fun build <entry points>
 ```
 
 ### General Configuration
@@ -15,7 +15,7 @@ bun build <entry points>
 </ParamField>
 
 <ParamField path="--target" type="string" default="browser">
-  Intended execution environment for the bundle. One of <code>browser</code>, <code>bun</code>, or <code>node</code>
+  Intended execution environment for the bundle. One of <code>browser</code>, <code>fun</code>, or <code>node</code>
 </ParamField>
 
 <ParamField path="--conditions" type="string">
@@ -46,7 +46,7 @@ bun build <entry points>
 </ParamField>
 
 <ParamField path="--footer" type="string">
-  Add a footer to the output (e.g. <code>// built with bun!</code>)
+  Add a footer to the output (e.g. <code>// built with fun!</code>)
 </ParamField>
 
 <ParamField path="--format" type="string" default="esm">
@@ -141,7 +141,7 @@ bun build <entry points>
 ### Standalone Executables
 
 <ParamField path="--compile" type="boolean">
-  Generate a standalone Bun executable containing the bundle. Implies <code>--production</code>
+  Generate a standalone Fun executable containing the bundle. Implies <code>--production</code>
 </ParamField>
 
 <ParamField path="--compile-exec-argv" type="string">
@@ -181,7 +181,7 @@ bun build <entry points>
 ### Experimental & App Building
 
 <ParamField path="--app" type="boolean">
-  <b>(EXPERIMENTAL)</b> Build a web app for production using Bun Bake
+  <b>(EXPERIMENTAL)</b> Build a web app for production using Fun Bake
 </ParamField>
 
 <ParamField path="--server-components" type="boolean">

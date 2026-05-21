@@ -17,7 +17,7 @@
 
 import grpc, { Server, ServerCredentials, ServerUnaryCall, ServiceError, sendUnaryData } from "@grpc/grpc-js";
 import { ServiceClientConstructor } from "@grpc/grpc-js/build/src/make-client";
-import { afterAll, beforeAll, beforeEach, describe, it } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, it } from "fun:test";
 import assert from "node:assert";
 import * as path from "path";
 

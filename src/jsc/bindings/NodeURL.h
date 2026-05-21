@@ -1,8 +1,8 @@
 #include "config.h"
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC::JSValue createNodeURLBinding(Zig::GlobalObject*);
 
-} // namespace Bun
+} // namespace Fun

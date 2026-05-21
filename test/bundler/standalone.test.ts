@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { existsSync } from "node:fs";
 
 describe("compile --target=browser", () => {
@@ -14,7 +14,7 @@ describe("compile --target=browser", () => {
       "app.js": `console.log("hello");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -42,7 +42,7 @@ describe("compile --target=browser", () => {
       "app.js": `console.log("module");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -61,7 +61,7 @@ describe("compile --target=browser", () => {
 console.log(data);`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -80,7 +80,7 @@ console.log(data);`,
 console.log(x);`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -103,7 +103,7 @@ console.log(x);`,
       "style.css": `body::after { content: "</style>"; }`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -165,7 +165,7 @@ export function createStore(initial) {
 export const APP_VERSION = "1.0.0";`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -205,7 +205,7 @@ console.log("app with css");`,
 .btn-primary { background: #007bff; color: white; }`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -245,7 +245,7 @@ body { color: blue; }`,
       "reset.css": `html, body { margin: 0; padding: 0; }`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -262,7 +262,7 @@ body { color: blue; }`,
     expect(html).not.toContain("@import");
   });
 
-  test("Bun.build() with outdir writes files to disk", async () => {
+  test("Fun.build() with outdir writes files to disk", async () => {
     using dir = tempDir("compile-browser-outdir", {
       "index.html": `<!DOCTYPE html>
 <html><head><link rel="stylesheet" href="./style.css"></head>
@@ -272,7 +272,7 @@ body { color: blue; }`,
     });
 
     const outdir = `${dir}/dist`;
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -285,14 +285,14 @@ body { color: blue; }`,
     // Verify the file was actually written to disk
     expect(existsSync(`${outdir}/index.html`)).toBe(true);
 
-    const html = await Bun.file(`${outdir}/index.html`).text();
+    const html = await Fun.file(`${outdir}/index.html`).text();
     expect(html).toContain("<style>");
     expect(html).toContain("font-weight: bold");
     expect(html).toContain('<script type="module">');
     expect(html).toContain('console.log("outdir test")');
   });
 
-  test("Bun.build() with outdir and image assets", async () => {
+  test("Fun.build() with outdir and image assets", async () => {
     const pixel = Buffer.from(
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4DwAAAQEABRjYTgAAAABJRU5ErkJggg==",
       "base64",
@@ -306,7 +306,7 @@ body { color: blue; }`,
     });
 
     const outdir = `${dir}/dist`;
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -318,7 +318,7 @@ body { color: blue; }`,
 
     expect(existsSync(`${outdir}/index.html`)).toBe(true);
 
-    const html = await Bun.file(`${outdir}/index.html`).text();
+    const html = await Fun.file(`${outdir}/index.html`).text();
     expect(html).toContain('src="data:image/png;base64,');
     expect(html).toContain('console.log("outdir with assets")');
   });
@@ -337,7 +337,7 @@ body { color: blue; }`,
       "app.js": `console.log("with image");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -364,7 +364,7 @@ body { color: blue; }`,
       "bg.png": pixel,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -382,8 +382,8 @@ body { color: blue; }`,
     });
 
     // compile: true + target: "browser" with non-HTML entrypoints should
-    // fall back to normal bun executable compile (not standalone HTML)
-    const result = await Bun.build({
+    // fall back to normal fun executable compile (not standalone HTML)
+    const result = await Fun.build({
       entrypoints: [`${dir}/app.js`],
       compile: true,
       target: "browser",
@@ -397,15 +397,15 @@ body { color: blue; }`,
       "app.js": `console.log("test");`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", "--target=browser", `${dir}/app.js`],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", "--target=browser", `${dir}/app.js`],
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });
 
     const [_stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
-    // Non-HTML entrypoints with --compile --target=browser should fall back to normal bun compile
+    // Non-HTML entrypoints with --compile --target=browser should fall back to normal fun compile
     expect(exitCode).toBe(0);
   });
 
@@ -416,7 +416,7 @@ body { color: blue; }`,
     });
 
     expect(() =>
-      Bun.build({
+      Fun.build({
         entrypoints: [`${dir}/index.html`],
         compile: true,
         target: "browser",
@@ -436,9 +436,9 @@ body { color: blue; }`,
 
     const outdir = `${dir}/out`;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", "--target=browser", `${dir}/index.html`, "--outdir", outdir],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", "--target=browser", `${dir}/index.html`, "--outdir", outdir],
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });
@@ -446,12 +446,12 @@ body { color: blue; }`,
     const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
     // Check only HTML file exists in output
-    const glob = new Bun.Glob("**/*");
+    const glob = new Fun.Glob("**/*");
     const files = Array.from(glob.scanSync({ cwd: outdir }));
     expect(files).toEqual(["index.html"]);
 
     // Verify content
-    const html = await Bun.file(`${outdir}/index.html`).text();
+    const html = await Fun.file(`${outdir}/index.html`).text();
     expect(html).toContain("<style>");
     expect(html).toContain("font-weight: bold");
     expect(html).toContain('<script type="module">');
@@ -470,7 +470,7 @@ body { color: blue; }`,
       "app.js": `console.log("malformed html");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",
@@ -501,7 +501,7 @@ body { color: blue; }`,
 console.log(message);`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.html`],
       compile: true,
       target: "browser",

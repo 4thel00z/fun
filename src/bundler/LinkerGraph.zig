@@ -63,10 +63,10 @@ pub fn generateNewSymbol(this: *LinkerGraph, source_index: u32, kind: Symbol.Kin
             .kind = kind,
             .original_name = original_name,
         },
-    ) catch |err| bun.handleOom(err);
+    ) catch |err| fun.handleOom(err);
 
     this.ast.items(.module_scope)[source_index].generated.append(this.allocator, ref) catch |err|
-        bun.handleOom(err);
+        fun.handleOom(err);
     return ref;
 }
 
@@ -76,7 +76,7 @@ pub fn generateRuntimeSymbolImportAndUse(
     entry_point_part_index: Index,
     name: []const u8,
     count: u32,
-) bun.OOM!void {
+) fun.OOM!void {
     if (count == 0) return;
     debug("generateRuntimeSymbolImportAndUse({s}) for {d}", .{ name, source_index });
 
@@ -94,7 +94,7 @@ pub fn addPartToFile(
     graph: *LinkerGraph,
     id: u32,
     part: Part,
-) bun.OOM!u32 {
+) fun.OOM!u32 {
     var parts: *Part.List = &graph.ast.items(.parts)[id];
     const part_id = @as(u32, @truncate(parts.len));
     try parts.append(graph.allocator, part);
@@ -128,10 +128,10 @@ pub fn addPartToFile(
 
                     entry.value_ptr.* = .fromOwnedSlice(list.items);
                 } else {
-                    entry.value_ptr.* = BabyList(u32).fromSlice(self.graph.allocator, &.{self.part_id}) catch |err| bun.handleOom(err);
+                    entry.value_ptr.* = BabyList(u32).fromSlice(self.graph.allocator, &.{self.part_id}) catch |err| fun.handleOom(err);
                 }
             } else {
-                bun.handleOom(entry.value_ptr.append(self.graph.allocator, self.part_id));
+                fun.handleOom(entry.value_ptr.append(self.graph.allocator, self.part_id));
             }
         }
     };
@@ -155,7 +155,7 @@ pub fn generateSymbolImportAndUse(
     ref: Ref,
     use_count: u32,
     source_index_to_import_from: Index,
-) bun.OOM!void {
+) fun.OOM!void {
     if (use_count == 0) return;
 
     var parts_list = g.ast.items(.parts)[source_index].slice();
@@ -183,7 +183,7 @@ pub fn generateSymbolImportAndUse(
     }
 
     // null ref shouldn't be there.
-    bun.assert(!ref.isEmpty());
+    fun.assert(!ref.isEmpty());
 
     // Track that this specific symbol was imported
     if (source_index_to_import_from.get() != source_index) {
@@ -250,7 +250,7 @@ pub fn load(
         this.entry_points.len = entry_points.len;
         const source_indices = this.entry_points.items(.source_index);
 
-        const path_strings: []bun.PathString = this.entry_points.items(.output_path);
+        const path_strings: []fun.PathString = this.entry_points.items(.output_path);
         {
             const output_was_auto_generated = std.mem.sliceAsBytes(this.entry_points.items(.output_path_was_auto_generated));
             @memset(output_was_auto_generated, 0);
@@ -259,22 +259,22 @@ pub fn load(
         for (entry_points, path_strings, source_indices) |i, *path_string, *source_index| {
             const source = sources[i.get()];
             if (comptime Environment.allow_assert) {
-                bun.assert(source.index.get() == i.get());
+                fun.assert(source.index.get() == i.get());
             }
             entry_point_kinds[source.index.get()] = EntryPoint.Kind.user_specified;
 
             // Check if this entry point has an original name (from virtual entry resolution)
             if (entry_point_original_names.get(i.get())) |original_name| {
-                path_string.* = bun.PathString.init(original_name);
+                path_string.* = fun.PathString.init(original_name);
             } else {
-                path_string.* = bun.PathString.init(source.path.text);
+                path_string.* = fun.PathString.init(source.path.text);
             }
 
             source_index.* = source.index.get();
         }
 
         for (dynamic_import_entry_points) |id| {
-            bun.assert(this.code_splitting); // this should never be a thing without code splitting
+            fun.assert(this.code_splitting); // this should never be a thing without code splitting
 
             if (entry_point_kinds[id] != .none) {
                 // You could dynamic import a file that is already an entry point
@@ -286,7 +286,7 @@ pub fn load(
 
             this.entry_points.appendAssumeCapacity(.{
                 .source_index = id,
-                .output_path = bun.PathString.init(source.path.text),
+                .output_path = fun.PathString.init(source.path.text),
                 .output_path_was_auto_generated = true,
             });
         }
@@ -309,7 +309,7 @@ pub fn load(
                         this.is_scb_bitset.set(ref_id);
                     },
                     .server => {
-                        bun.todoPanic(@src(), "um", .{});
+                        fun.todoPanic(@src(), "um", .{});
                     },
                 }
             }
@@ -321,7 +321,7 @@ pub fn load(
                         // Only rewrite if this is an original SCB file, not a reference file
                         if (scb.getReferenceSourceIndex(import_record.source_index.get())) |ref_index| {
                             import_record.source_index = Index.init(ref_index);
-                            bun.assert(import_record.source_index.isValid()); // did not generate
+                            fun.assert(import_record.source_index.isValid()); // did not generate
                         }
                         // If it's already a reference file, leave it as-is
                     }
@@ -354,9 +354,9 @@ pub fn load(
         var input_symbols = js_ast.Symbol.Map.initList(
             js_ast.Symbol.NestedList.fromBorrowedSliceDangerous(this.ast.items(.symbols)),
         );
-        var symbols = bun.handleOom(input_symbols.symbols_for_source.clone(this.allocator));
+        var symbols = fun.handleOom(input_symbols.symbols_for_source.clone(this.allocator));
         for (symbols.slice(), input_symbols.symbols_for_source.slice()) |*dest, src| {
-            dest.* = bun.handleOom(src.clone(this.allocator));
+            dest.* = fun.handleOom(src.clone(this.allocator));
         }
         this.symbols = js_ast.Symbol.Map.initList(symbols);
     }
@@ -417,8 +417,8 @@ pub fn load(
 /// This is valid only if all allocators are `MimallocArena`s.
 pub fn takeAstOwnership(this: *LinkerGraph) void {
     const ast = this.ast.slice();
-    const heap: bun.allocators.MimallocArena.Borrowed = .downcast(this.allocator);
-    if (comptime !bun.collections.baby_list.safety_checks) return;
+    const heap: fun.allocators.MimallocArena.Borrowed = .downcast(this.allocator);
+    if (comptime !fun.collections.baby_list.safety_checks) return;
     for (ast.items(.import_records)) |*import_records| {
         import_records.transferOwnership(heap);
     }
@@ -456,7 +456,7 @@ pub const File = struct {
     /// a Source.Index to its output path inb reakOutputIntoPieces
     entry_point_chunk_index: u32 = std.math.maxInt(u32),
 
-    line_offset_table: bun.SourceMap.LineOffsetTable.List = .empty,
+    line_offset_table: fun.SourceMap.LineOffsetTable.List = .empty,
     quoted_source_contents: Owned(?[]u8) = .initNull(),
 
     pub fn isEntryPoint(this: *const File) bool {
@@ -472,7 +472,7 @@ pub const File = struct {
 
 pub fn propagateAsyncDependencies(this: *LinkerGraph) !void {
     const State = struct {
-        visited: bun.collections.AutoBitSet,
+        visited: fun.collections.AutoBitSet,
         import_records: []const ImportRecord.List,
         flags: []JSMeta.Flags,
 
@@ -524,11 +524,11 @@ pub fn propagateAsyncDependencies(this: *LinkerGraph) !void {
     };
 
     var state: State = .{
-        .visited = try .initEmpty(bun.default_allocator, this.ast.len),
+        .visited = try .initEmpty(fun.default_allocator, this.ast.len),
         .import_records = this.ast.items(.import_records),
         .flags = this.meta.items(.flags),
     };
-    defer state.visited.deinit(bun.default_allocator);
+    defer state.visited.deinit(fun.default_allocator);
     state.visitAll();
 }
 
@@ -536,28 +536,28 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const Environment = bun.Environment;
-const ImportRecord = bun.ImportRecord;
-const MultiArrayList = bun.MultiArrayList;
-const Output = bun.Output;
-const Owned = bun.ptr.Owned;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const Environment = fun.Environment;
+const ImportRecord = fun.ImportRecord;
+const MultiArrayList = fun.MultiArrayList;
+const Output = fun.Output;
+const Owned = fun.ptr.Owned;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Symbol = js_ast.Symbol;
 
-const AutoBitSet = bun.bit_set.AutoBitSet;
-const BitSet = bun.bit_set.DynamicBitSetUnmanaged;
+const AutoBitSet = fun.bit_set.AutoBitSet;
+const BitSet = fun.bit_set.DynamicBitSetUnmanaged;
 
-const EntryPoint = bun.bundle_v2.EntryPoint;
-const Index = bun.bundle_v2.Index;
-const IndexStringMap = bun.bundle_v2.IndexStringMap;
-const JSAst = bun.bundle_v2.JSAst;
-const JSMeta = bun.bundle_v2.JSMeta;
-const Logger = bun.bundle_v2.Logger;
-const Part = bun.bundle_v2.Part;
-const Ref = bun.bundle_v2.Ref;
-const ResolvedExports = bun.bundle_v2.ResolvedExports;
-const ServerComponentBoundary = bun.bundle_v2.ServerComponentBoundary;
-const TopLevelSymbolToParts = bun.bundle_v2.TopLevelSymbolToParts;
+const EntryPoint = fun.bundle_v2.EntryPoint;
+const Index = fun.bundle_v2.Index;
+const IndexStringMap = fun.bundle_v2.IndexStringMap;
+const JSAst = fun.bundle_v2.JSAst;
+const JSMeta = fun.bundle_v2.JSMeta;
+const Logger = fun.bundle_v2.Logger;
+const Part = fun.bundle_v2.Part;
+const Ref = fun.bundle_v2.Ref;
+const ResolvedExports = fun.bundle_v2.ResolvedExports;
+const ServerComponentBoundary = fun.bundle_v2.ServerComponentBoundary;
+const TopLevelSymbolToParts = fun.bundle_v2.TopLevelSymbolToParts;

@@ -1,15 +1,15 @@
-import { file, spawn } from "bun";
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { file, spawn } from "fun";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "node:path";
 
 it("should log to console correctly", async () => {
   const { stdout, stderr, exited } = spawn({
-    cmd: [bunExe(), join(import.meta.dir, "console-log.js")],
+    cmd: [funExe(), join(import.meta.dir, "console-log.js")],
     stdin: "inherit",
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
   const exitCode = await exited;
   const err = (await stderr.text()).replaceAll("\r\n", "\n");
@@ -38,9 +38,9 @@ it("should log to console correctly", async () => {
 });
 
 it("long arrays get cutoff", () => {
-  const proc = Bun.spawnSync({
-    cmd: [bunExe(), "-e", `console.log(Array(1000).fill(0))`],
-    env: bunEnv,
+  const proc = Fun.spawnSync({
+    cmd: [funExe(), "-e", `console.log(Array(1000).fill(0))`],
+    env: funEnv,
     stdio: ["inherit", "pipe", "pipe"],
   });
   expect(proc.exitCode).toBe(0);
@@ -59,9 +59,9 @@ it("long arrays get cutoff", () => {
 
 it("console.group", async () => {
   const filepath = join(import.meta.dir, "console-group.fixture.js").replaceAll("\\", "/");
-  const proc = Bun.spawnSync({
-    cmd: [bunExe(), filepath],
-    env: { ...bunEnv, "BUN_JSC_showPrivateScriptsInStackTraces": "0" },
+  const proc = Fun.spawnSync({
+    cmd: [funExe(), filepath],
+    env: { ...funEnv, "FUN_JSC_showPrivateScriptsInStackTraces": "0" },
     stdio: ["inherit", "pipe", "pipe"],
   });
   expect(proc.exitCode).toBe(0);
@@ -151,9 +151,9 @@ NamedError: console.error a named error
 });
 
 it("console.log with SharedArrayBuffer", () => {
-  const proc = Bun.spawnSync({
+  const proc = Fun.spawnSync({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       console.log(new ArrayBuffer(0));
@@ -162,7 +162,7 @@ it("console.log with SharedArrayBuffer", () => {
       console.log(new SharedArrayBuffer(3));
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdio: ["inherit", "pipe", "pipe"],
   });
   expect(proc.stderr.toString("utf8")).toBeEmpty();

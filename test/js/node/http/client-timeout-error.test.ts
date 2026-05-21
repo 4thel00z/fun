@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { once } from "node:events";
 import { createServer, request } from "node:http";
 

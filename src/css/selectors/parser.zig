@@ -221,7 +221,7 @@ pub const Specificity = struct {
     }
 
     pub fn fromU32(value: u32) Specificity {
-        bun.assert(value <= MAX_10BIT << 20 | MAX_10BIT << 10 | MAX_10BIT);
+        fun.assert(value <= MAX_10BIT << 20 | MAX_10BIT << 10 | MAX_10BIT);
         return Specificity{
             .id_selectors = value >> 20,
             .class_like_selectors = (value >> 10) & MAX_10BIT,
@@ -258,7 +258,7 @@ fn compute_simple_selector_specificity(
 ) void {
     switch (simple_selector.*) {
         .combinator => {
-            bun.unreachablePanic("Found combinator in simple selectors vector?", .{});
+            fun.unreachablePanic("Found combinator in simple selectors vector?", .{});
         },
         .part, .pseudo_element, .local_name => {
             specificity.element_selectors += 1;
@@ -1028,9 +1028,9 @@ pub const SelectorParser = struct {
 
     pub fn newLocalIdentifier(_: *SelectorParser, input: *css.Parser, tag: css.CssRef.Tag, raw: []const u8, loc: usize) Impl.SelectorImpl.LocalIdentifier {
         if (input.flags.css_modules) {
-            return Impl.SelectorImpl.LocalIdentifier.fromRef(input.addSymbolForName(raw, tag, bun.logger.Loc{
+            return Impl.SelectorImpl.LocalIdentifier.fromRef(input.addSymbolForName(raw, tag, fun.logger.Loc{
                 .start = @intCast(loc),
-            }), if (comptime bun.Environment.isDebug) .{ raw, input.allocator() } else {});
+            }), if (comptime fun.Environment.isDebug) .{ raw, input.allocator() } else {});
         }
         return Impl.SelectorImpl.LocalIdentifier.fromIdent(.{ .v = raw });
     }
@@ -1050,15 +1050,15 @@ pub const SelectorParser = struct {
             @"view-transition-new",
         };
 
-        const Map = bun.ComptimeEnumMap(Enum);
+        const Map = fun.ComptimeEnumMap(Enum);
         if (Map.get(name)) |v| {
             return switch (v) {
                 .cue => .{ .result = .{ .cue_function = .{ .selector = switch (Selector.parse(this, input)) {
-                    .result => |a| bun.create(input.allocator(), Selector, a),
+                    .result => |a| fun.create(input.allocator(), Selector, a),
                     .err => |e| return .{ .err = e },
                 } } } },
                 .@"cue-region" => .{ .result = .{ .cue_region_function = .{ .selector = switch (Selector.parse(this, input)) {
-                    .result => |a| bun.create(input.allocator(), Selector, a),
+                    .result => |a| fun.create(input.allocator(), Selector, a),
                     .err => |e| return .{ .err = e },
                 } } } },
                 .@"view-transition-group" => .{ .result = .{ .view_transition_group = .{ .part_name = switch (ViewTransitionPartName.parse(input)) {
@@ -1079,7 +1079,7 @@ pub const SelectorParser = struct {
                 } } } },
             };
         } else {
-            if (!bun.strings.startsWith(name, "-")) {
+            if (!fun.strings.startsWith(name, "-")) {
                 this.options.warn(input.newCustomError(SelectorParseErrorKind.intoDefaultParserError(.{
                     .unsupported_pseudo_class_or_element = name,
                 })));
@@ -1102,7 +1102,7 @@ pub const SelectorParser = struct {
 
     /// Whether the given function name is an alias for the `:is()` function.
     fn parseAnyPrefix(_: *const SelectorParser, name: []const u8) ?css.VendorPrefix {
-        const Map = comptime bun.ComptimeStringMap(css.VendorPrefix, .{
+        const Map = comptime fun.ComptimeStringMap(css.VendorPrefix, .{
             .{ "-webkit-any", css.VendorPrefix{ .webkit = true } },
             .{ "-moz-any", css.VendorPrefix{ .moz = true } },
         });
@@ -1117,7 +1117,7 @@ pub const SelectorParser = struct {
     ) Result(PseudoClass) {
         // @compileError(css.todo_stuff.match_ignore_ascii_case);
         const pseudo_class: PseudoClass = pseudo_class: {
-            const Map = comptime bun.ComptimeStringMap(PseudoClass, .{
+            const Map = comptime fun.ComptimeStringMap(PseudoClass, .{
                 // https://drafts.csswg.org/selectors-4/#useraction-pseudos
                 .{ "hover", PseudoClass{ .hover = {} } },
                 .{ "active", PseudoClass{ .active = {} } },
@@ -1212,9 +1212,9 @@ pub const SelectorParser = struct {
             if (Map.getAnyCase(name)) |pseudo| {
                 break :pseudo_class pseudo;
             } else {
-                if (bun.strings.startsWithChar(name, '_')) {
+                if (fun.strings.startsWithChar(name, '_')) {
                     this.options.warn(loc.newCustomError(SelectorParseErrorKind{ .unsupported_pseudo_class_or_element = name }));
-                } else if (this.options.css_modules != null and bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "local") or bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "global")) {
+                } else if (this.options.css_modules != null and fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "local") or fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "global")) {
                     return .{ .err = loc.newCustomError(SelectorParseErrorKind{ .ambiguous_css_module_class = name }) };
                 }
                 return .{ .result = PseudoClass{ .custom = .{ .name = name } } };
@@ -1236,7 +1236,7 @@ pub const SelectorParser = struct {
 
         // todo_stuff.match_ignore_ascii_case
         const pseudo_class = pseudo_class: {
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "lang")) {
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "lang")) {
                 const languages = switch (parser.parseCommaSeparated([]const u8, css.Parser.expectIdentOrString)) {
                     .err => |e| return .{ .err = e },
                     .result => |v| v,
@@ -1244,7 +1244,7 @@ pub const SelectorParser = struct {
                 return .{ .result = PseudoClass{
                     .lang = .{ .languages = languages },
                 } };
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "dir")) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "dir")) {
                 break :pseudo_class PseudoClass{
                     .dir = .{
                         .direction = switch (Direction.parse(parser)) {
@@ -1253,7 +1253,7 @@ pub const SelectorParser = struct {
                         },
                     },
                 };
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "local") and this.options.css_modules != null) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "local") and this.options.css_modules != null) {
                 break :pseudo_class PseudoClass{
                     .local = .{
                         .selector = brk: {
@@ -1262,11 +1262,11 @@ pub const SelectorParser = struct {
                                 .result => |v| v,
                             };
 
-                            break :brk bun.create(this.allocator, Selector, selector);
+                            break :brk fun.create(this.allocator, Selector, selector);
                         },
                     },
                 };
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "global") and this.options.css_modules != null) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "global") and this.options.css_modules != null) {
                 break :pseudo_class PseudoClass{
                     .global = .{
                         .selector = brk: {
@@ -1275,12 +1275,12 @@ pub const SelectorParser = struct {
                                 .result => |v| v,
                             };
 
-                            break :brk bun.create(this.allocator, Selector, selector);
+                            break :brk fun.create(this.allocator, Selector, selector);
                         },
                     },
                 };
             } else {
-                if (!bun.strings.startsWithChar(name, '-')) {
+                if (!fun.strings.startsWithChar(name, '-')) {
                     this.options.warn(parser.newCustomError(SelectorParseErrorKind.intoDefaultParserError(.{ .unsupported_pseudo_class_or_element = name })));
                 }
                 var args = ArrayList(css.css_properties.custom.TokenOrValue){};
@@ -1330,7 +1330,7 @@ pub const SelectorParser = struct {
     }
 
     pub fn parsePseudoElement(this: *SelectorParser, loc: css.SourceLocation, name: []const u8) Result(PseudoElement) {
-        const Map = comptime bun.ComptimeStringMap(PseudoElement, .{
+        const Map = comptime fun.ComptimeStringMap(PseudoElement, .{
             .{ "before", PseudoElement.before },
             .{ "after", PseudoElement.after },
             .{ "first-line", PseudoElement.first_line },
@@ -1359,8 +1359,8 @@ pub const SelectorParser = struct {
             .{ "view-transition", PseudoElement.view_transition },
         });
 
-        const pseudo_element = Map.getCaseInsensitiveWithEql(name, bun.strings.eqlComptimeIgnoreLen) orelse brk: {
-            if (!bun.strings.startsWithChar(name, '-')) {
+        const pseudo_element = Map.getCaseInsensitiveWithEql(name, fun.strings.eqlComptimeIgnoreLen) orelse brk: {
+            if (!fun.strings.startsWithChar(name, '-')) {
                 this.options.warn(loc.newCustomError(SelectorParseErrorKind{ .unsupported_pseudo_class_or_element = name }));
             }
             break :brk PseudoElement{ .custom = .{ .name = name } };
@@ -1384,7 +1384,7 @@ pub fn GenericSelectorList(comptime Impl: type) type {
             this: *const This,
 
             pub fn format(this: @This(), writer: *std.Io.Writer) std.Io.Writer.Error!void {
-                if (comptime !bun.Environment.isDebug) return;
+                if (comptime !fun.Environment.isDebug) return;
                 try writer.print("SelectorList[\n", .{});
                 const last = this.this.v.len() -| 1;
                 for (this.this.v.slice(), 0..) |*sel, i| {
@@ -1506,7 +1506,7 @@ pub fn GenericSelectorList(comptime Impl: type) type {
                     if (input.next().asValue()) |tok| {
                         if (tok.* == .comma) break;
                         // Shouldn't have got a selector if getting here.
-                        bun.debugAssert(!was_ok);
+                        fun.debugAssert(!was_ok);
                     }
                     return .{ .result = .{ .v = values } };
                 }
@@ -1566,7 +1566,7 @@ pub fn GenericSelectorList(comptime Impl: type) type {
                     if (input.next().asValue()) |tok| {
                         if (tok.* == .comma) break;
                         // Shouldn't have got a selector if getting here.
-                        bun.debugAssert(!was_ok);
+                        fun.debugAssert(!was_ok);
                     }
                     return .{ .result = .{ .v = values } };
                 }
@@ -1621,14 +1621,14 @@ pub fn GenericSelector(comptime Impl: type) type {
             this: *const This,
 
             pub fn format(this: @This(), writer: *std.Io.Writer) !void {
-                if (comptime !bun.Environment.isDebug) return;
+                if (comptime !fun.Environment.isDebug) return;
                 try writer.print("Selector(", .{});
-                var arraylist = std.Io.Writer.Allocating.init(bun.default_allocator);
+                var arraylist = std.Io.Writer.Allocating.init(fun.default_allocator);
                 const w = &arraylist.writer;
                 defer arraylist.deinit();
-                const symbols = bun.ast.Symbol.Map{};
+                const symbols = fun.ast.Symbol.Map{};
                 const P = css.Printer;
-                var printer = P.new(bun.default_allocator, std.array_list.Managed(u8).init(bun.default_allocator), w, css.PrinterOptions.default(), null, null, &symbols);
+                var printer = P.new(fun.default_allocator, std.array_list.Managed(u8).init(fun.default_allocator), w, css.PrinterOptions.default(), null, null, &symbols);
                 defer printer.deinit();
                 P.in_debug_fmt = true;
                 defer P.in_debug_fmt = false;
@@ -1664,7 +1664,7 @@ pub fn GenericSelector(comptime Impl: type) type {
                 }
                 break :index this.components.items.len;
             };
-            bun.handleOom(this.components.insert(allocator, index, component));
+            fun.handleOom(this.components.insert(allocator, index, component));
         }
 
         pub fn deepClone(this: *const @This(), allocator: Allocator) This {
@@ -2590,7 +2590,7 @@ pub fn parse_type_selector(
             const url = namespace.explicit_namespace[1];
             const component: GenericComponent(Impl) = component: {
                 if (parser.defaultNamespace()) |default_url| {
-                    if (bun.strings.eql(url, default_url)) {
+                    if (fun.strings.eql(url, default_url)) {
                         break :component .{ .default_namespace = url };
                     }
                 }
@@ -2622,7 +2622,7 @@ pub fn parse_type_selector(
             sink.pushSimpleSelector(.explicit_any_namespace);
         },
         .implicit_no_namespace => {
-            bun.unreachablePanic("Should not be returned with in_attr_selector = false", .{});
+            fun.unreachablePanic("Should not be returned with in_attr_selector = false", .{});
         },
     }
 
@@ -2631,7 +2631,7 @@ pub fn parse_type_selector(
             .local_name = LocalName(Impl){
                 .lower_name = brk: {
                     var lowercase = parser.allocator.alloc(u8, name.len) catch unreachable; // PERF: check if it's already lowercase
-                    break :brk .{ .v = bun.strings.copyLowercase(name, lowercase[0..]) };
+                    break :brk .{ .v = fun.strings.copyLowercase(name, lowercase[0..]) };
                 },
                 .name = .{ .v = name },
             },
@@ -2724,7 +2724,7 @@ pub fn parse_one_simple_selector(
                     return .{ .err = input.newCustomError(SelectorParseErrorKind.intoDefaultParserError(.invalid_state)) };
                 }
                 const pseudo_element: Impl.SelectorImpl.PseudoElement = if (is_functional) pseudo_element: {
-                    if (parser.parsePart() and bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "part")) {
+                    if (parser.parsePart() and fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "part")) {
                         if (!state.allowsPart()) {
                             return .{ .err = input.newCustomError(SelectorParseErrorKind.intoDefaultParserError(.invalid_state)) };
                         }
@@ -2772,7 +2772,7 @@ pub fn parse_one_simple_selector(
                         return .{ .result = .{ .part_pseudo = names } };
                     }
 
-                    if (parser.parseSlotted() and bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "slotted")) {
+                    if (parser.parseSlotted() and fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "slotted")) {
                         if (!state.allowsSlotted()) {
                             return .{ .err = input.newCustomError(SelectorParseErrorKind.intoDefaultParserError(.invalid_state)) };
                         }
@@ -2897,7 +2897,7 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
             .none => |t| return .{ .err = input.newCustomError(SelectorParseErrorKind.intoDefaultParserError(.{ .no_qualified_name_in_attribute_selector = t })) },
             .some => |qname| {
                 if (qname[1] == null) {
-                    bun.unreachablePanic("", .{});
+                    fun.unreachablePanic("", .{});
                 }
                 const ns: QNamePrefix(Impl) = qname[0];
                 const ln = qname[1].?;
@@ -2907,7 +2907,7 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
                         .explicit_namespace => |x| .{ .specific = .{ .prefix = x[0], .url = x[1] } },
                         .explicit_any_namespace => .any,
                         .implicit_any_namespace, .implicit_default_namespace => {
-                            bun.unreachablePanic("Not returned with in_attr_selector = true", .{});
+                            fun.unreachablePanic("Not returned with in_attr_selector = true", .{});
                         },
                     },
                     ln,
@@ -2924,7 +2924,7 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
                 // [foo]
                 const local_name_lower = local_name_lower: {
                     const lower = parser.allocator.alloc(u8, local_name.len) catch unreachable;
-                    _ = bun.strings.copyLowercase(local_name, lower);
+                    _ = fun.strings.copyLowercase(local_name, lower);
                     break :local_name_lower lower;
                 };
                 if (namespace) |ns| {
@@ -2936,7 +2936,7 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
                         .operation = .exists,
                     };
                     return .{
-                        .result = .{ .attribute_other = bun.create(parser.allocator, attrs.AttrSelectorWithOptionalNamespace(Impl), x) },
+                        .result = .{ .attribute_other = fun.create(parser.allocator, attrs.AttrSelectorWithOptionalNamespace(Impl), x) },
                     };
                 } else {
                     return .{ .result = .{
@@ -2985,7 +2985,7 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
     };
     const never_matches = switch (operator) {
         .equal, .dash_match => false,
-        .includes => value_str.len == 0 or bun.strings.indexOfAny(value_str, SELECTOR_WHITESPACE) != null,
+        .includes => value_str.len == 0 or fun.strings.indexOfAny(value_str, SELECTOR_WHITESPACE) != null,
         .prefix, .substring, .suffix => value_str.len == 0,
     };
 
@@ -3004,7 +3004,7 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
         }) |first_uppercase| {
             const str = local_name[first_uppercase..];
             const lower = parser.allocator.alloc(u8, str.len) catch unreachable;
-            break :brk .{ .{ .v = bun.strings.copyLowercase(str, lower) }, false };
+            break :brk .{ .{ .v = fun.strings.copyLowercase(str, lower) }, false };
         } else {
             break :brk .{ .{ .v = local_name }, true };
         }
@@ -3026,7 +3026,7 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
                         },
                     },
                 };
-                break :brk bun.create(parser.allocator, @TypeOf(x), x);
+                break :brk fun.create(parser.allocator, @TypeOf(x), x);
             },
         } };
     } else {
@@ -3048,10 +3048,10 @@ pub fn parse_attribute_selector(comptime Impl: type, parser: *SelectorParser, in
 pub fn is_css2_pseudo_element(name: []const u8) bool {
     // ** Do not add to this list! **
     // TODO: todo_stuff.match_ignore_ascii_case
-    return bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "before") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "after") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "first-line") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "first-letter");
+    return fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "before") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "after") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "first-line") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "first-letter");
 }
 
 /// Parses one compound selector suitable for nested stuff like :-moz-any, etc.
@@ -3097,7 +3097,7 @@ pub fn parse_functional_pseudo_class(
         host,
         not,
     };
-    const Map = bun.ComptimeEnumMap(FunctionalPseudoClass);
+    const Map = fun.ComptimeEnumMap(FunctionalPseudoClass);
 
     if (Map.getASCIIICaseInsensitive(name)) |functional_pseudo_class| {
         switch (functional_pseudo_class) {
@@ -3140,7 +3140,7 @@ pub fn parse_functional_pseudo_class(
 }
 
 const TreeStructuralPseudoClass = enum { @"first-child", @"last-child", @"only-child", root, empty, scope, host, @"first-of-type", @"last-of-type", @"only-of-type" };
-const TreeStructuralPseudoClassMap = bun.ComptimeEnumMap(TreeStructuralPseudoClass);
+const TreeStructuralPseudoClassMap = fun.ComptimeEnumMap(TreeStructuralPseudoClass);
 
 pub fn parse_simple_pseudo_class(
     comptime Impl: type,
@@ -3173,7 +3173,7 @@ pub fn parse_simple_pseudo_class(
     // The view-transition pseudo elements accept the :only-child pseudo class.
     // https://w3c.github.io/csswg-drafts/css-view-transitions-1/#pseudo-root
     if (state.after_view_transition) {
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "only-child")) {
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "only-child")) {
             return .{ .result = .{ .nth = NthSelectorData.only(false) } };
         }
     }
@@ -3265,7 +3265,7 @@ pub fn parse_is_or_where(
     comptime func: anytype,
     args_: anytype,
 ) Result(GenericComponent(Impl)) {
-    bun.debugAssert(parser.parseIsAndWhere());
+    fun.debugAssert(parser.parseIsAndWhere());
     // https://drafts.csswg.org/selectors/#matches-pseudo:
     //
     //     Pseudo-elements cannot be represented by the matches-any
@@ -3571,7 +3571,7 @@ pub const AttributeFlags = enum {
                     axis,
                     readonly,
                 };
-                const Map = comptime bun.ComptimeEnumMap(AsciiCaseInsensitiveHtmlAttributes);
+                const Map = comptime fun.ComptimeEnumMap(AsciiCaseInsensitiveHtmlAttributes);
                 if (!have_namespace and Map.has(local_name)) return .ascii_case_insensitive_if_in_html_element_in_html_document;
                 return .case_sensitive;
             },
@@ -3644,9 +3644,9 @@ pub fn parse_attribute_flags(input: *css.Parser) Result(AttributeFlags) {
 
     const ident = if (token.* == .ident) token.ident else return .{ .err = location.newBasicUnexpectedTokenError(token.*) };
 
-    if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "i")) {
+    if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "i")) {
         return .{ .result = AttributeFlags.ascii_case_insensitive };
-    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "s")) {
+    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "s")) {
         return .{ .result = AttributeFlags.case_sensitive };
     } else {
         return .{ .err = location.newBasicUnexpectedTokenError(token.*) };
@@ -3656,8 +3656,8 @@ pub fn parse_attribute_flags(input: *css.Parser) Result(AttributeFlags) {
 const selector_builder = @import("./builder.zig");
 const SelectorBuilder = selector_builder.SelectorBuilder;
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

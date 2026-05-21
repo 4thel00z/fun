@@ -52,7 +52,7 @@ class JSCStackTrace;
 using JSC::EncodedJSValue;
 using JSC::PropertyName;
 
-namespace Bun {
+namespace Fun {
 
 // Constants
 constexpr size_t DEFAULT_ERROR_STACK_TRACE_LIMIT = 10;
@@ -80,10 +80,10 @@ JSC_DECLARE_CUSTOM_GETTER(errorInstanceLazyStackCustomGetter);
 JSC_DECLARE_CUSTOM_SETTER(errorInstanceLazyStackCustomSetter);
 
 // Internal wrapper functions for JSC error info callbacks
-WTF::String computeErrorInfoWrapperToString(JSC::VM& vm, WTF::Vector<JSC::StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, WTF::String& sourceURL, void* bunErrorData);
-JSC::JSValue computeErrorInfoWrapperToJSValue(JSC::VM& vm, WTF::Vector<JSC::StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, WTF::String& sourceURL, JSC::JSObject* errorInstance, void* bunErrorData);
+WTF::String computeErrorInfoWrapperToString(JSC::VM& vm, WTF::Vector<JSC::StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, WTF::String& sourceURL, void* funErrorData);
+JSC::JSValue computeErrorInfoWrapperToJSValue(JSC::VM& vm, WTF::Vector<JSC::StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, WTF::String& sourceURL, JSC::JSObject* errorInstance, void* funErrorData);
 void computeLineColumnWithSourcemap(JSC::VM& vm, JSC::SourceProvider* _Nonnull sourceProvider, JSC::LineColumn& lineColumn, WTF::String& remappedSourceURL);
-} // namespace Bun
+} // namespace Fun
 
 namespace Zig {
 

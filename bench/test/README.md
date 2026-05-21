@@ -1,22 +1,22 @@
-# `bun test --parallel` and `--isolate` benchmarks
+# `fun test --parallel` and `--isolate` benchmarks
 
 Two synthetic suites that show where each flag pays off. The fixture files use
-global `test`/`expect` (no `bun:test` import) so the same suite runs under
+global `test`/`expect` (no `fun:test` import) so the same suite runs under
 vitest for comparison.
 
 ```sh
 cd bench/test
-bun install                       # for vitest
-bun parallel/setup.ts
-bun isolate-cache/setup.ts
+fun install                       # for vitest
+fun parallel/setup.ts
+fun isolate-cache/setup.ts
 ```
 
 ## `--parallel`: many independent files
 
 ```sh
 hyperfine --warmup 1 \
-  'bun test ./parallel/suite' \
-  'bun test --parallel ./parallel/suite' \
+  'fun test ./parallel/suite' \
+  'fun test --parallel ./parallel/suite' \
   'npx vitest run parallel/suite'
 ```
 
@@ -28,8 +28,8 @@ file triggers scale-up). Vitest runs files in worker threads by default.
 
 ```sh
 hyperfine --warmup 1 \
-  -n 'bun --isolate (cache off)' 'BUN_FEATURE_FLAG_DISABLE_ISOLATION_SOURCE_CACHE=1 bun test --isolate ./isolate-cache/suite' \
-  -n 'bun --isolate (cache on)'  'bun test --isolate ./isolate-cache/suite' \
+  -n 'fun --isolate (cache off)' 'FUN_FEATURE_FLAG_DISABLE_ISOLATION_SOURCE_CACHE=1 fun test --isolate ./isolate-cache/suite' \
+  -n 'fun --isolate (cache on)'  'fun test --isolate ./isolate-cache/suite' \
   -n 'vitest'                    'npx vitest run isolate-cache/suite'
 ```
 

@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { isBroken, isWindows } from "harness";
 import { join } from "node:path";
 import { itBundled } from "./expectBundled";
@@ -34,7 +34,7 @@ describe("bundler", () => {
         module.exports = require('path')
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: join("a", "b"),
     },
@@ -67,13 +67,13 @@ describe("bundler", () => {
     },
     run: true,
   });
-  itBundled("edgecase/BunPluginTreeShakeImport", {
+  itBundled("edgecase/FunPluginTreeShakeImport", {
     todo: true,
-    // This only appears at runtime and not with bun build, even with --no-bundle
+    // This only appears at runtime and not with fun build, even with --no-bundle
     files: {
       "/entry.ts": /* js */ `
         import { A, B } from "./somewhere-else";
-        import { plugin } from "bun";
+        import { plugin } from "fun";
 
         plugin(B());
 
@@ -91,7 +91,7 @@ describe("bundler", () => {
       `,
     },
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
     run: { file: "/entry.ts" },
   });
   itBundled("edgecase/TemplateStringIssue622", {
@@ -102,9 +102,9 @@ describe("bundler", () => {
       `,
     },
     capture: ["`?`", "hello`\\?`"],
-    target: "bun",
+    target: "fun",
   });
-  // https://github.com/oven-sh/bun/issues/2699
+  // https://github.com/underdoc-org/fun/issues/2699
   itBundled("edgecase/ImportNamedFromExportStarCJS", {
     files: {
       "/entry.js": /* js */ `
@@ -279,7 +279,7 @@ describe("bundler", () => {
       ".cool": "wtf",
     },
     bundleErrors: {
-      "<bun>": ['invalid loader "wtf", expected one of:'],
+      "<fun>": ['invalid loader "wtf", expected one of:'],
     },
   });
   itBundled("edgecase/ScriptTagEscape", {
@@ -515,7 +515,7 @@ describe("bundler", () => {
         console.log(a);
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: `1`,
     },
@@ -531,7 +531,7 @@ describe("bundler", () => {
         console.log(a);
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: `1`,
     },
@@ -547,7 +547,7 @@ describe("bundler", () => {
         console.log(a);
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: `1`,
     },
@@ -591,7 +591,7 @@ describe("bundler", () => {
         console.log(B);
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: `
         1
@@ -639,7 +639,7 @@ describe("bundler", () => {
         console.log(c);
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: `
         1
@@ -649,7 +649,7 @@ describe("bundler", () => {
       `,
     },
   });
-  // https://github.com/oven-sh/bun/issues/30271
+  // https://github.com/underdoc-org/fun/issues/30271
   //
   // When dead-code elimination prunes an if/else body, the scaffolding
   // itself only collapses with --minify-syntax. Even so, the empty `else {}`
@@ -665,7 +665,7 @@ describe("bundler", () => {
         }
       `,
     },
-    target: "bun",
+    target: "fun",
     onAfterBundle(api) {
       const out = api.readFile("/out.js");
       // The dead branch body is gone...
@@ -691,7 +691,7 @@ describe("bundler", () => {
         else console.log("outer-else");
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "outer-else",
     },
@@ -704,7 +704,7 @@ describe("bundler", () => {
     },
     entryPointsRaw: ["/entry.js"],
     bundleErrors: {
-      "<bun>": ['ModuleNotFound resolving "/entry.js" (entry point)'],
+      "<fun>": ['ModuleNotFound resolving "/entry.js" (entry point)'],
     },
   });
   itBundled("edgecase/AssetEntryPoint", {
@@ -736,7 +736,7 @@ describe("bundler", () => {
         export const a = 1;
       `,
     },
-    target: "bun",
+    target: "fun",
   });
   itBundled("edgecase/RuntimeExternalRequire", {
     files: {
@@ -745,7 +745,7 @@ describe("bundler", () => {
       `,
     },
     external: ["hello-1"],
-    target: "bun",
+    target: "fun",
     runtimeFiles: {
       "/node_modules/hello-1/require.js": `export const type = "require";`,
       "/node_modules/hello-1/package.json": /* json */ `
@@ -781,29 +781,29 @@ describe("bundler", () => {
       `,
     },
     external: ["hello-1", "hello-2", "hello-3"],
-    target: "bun",
+    target: "fun",
     runtimeFiles: {
       "/node_modules/hello-1/node.js": `export const type = "node";`,
-      "/node_modules/hello-1/bun.js": `export const type = "bun";`,
+      "/node_modules/hello-1/fun.js": `export const type = "fun";`,
       "/node_modules/hello-1/package.json": /* json */ `
         {
           "type": "module",
           "exports": {
             ".": {
               "node": "./node.js",
-              "bun": "./bun.js"
+              "fun": "./fun.js"
             }
           }
         }
       `,
       "/node_modules/hello-2/node.js": `export const type = "node";`,
-      "/node_modules/hello-2/bun.js": `export const type = "bun";`,
+      "/node_modules/hello-2/fun.js": `export const type = "fun";`,
       "/node_modules/hello-2/package.json": /* json */ `
         {
           "type": "module",
           "exports": {
             ".": {
-              "bun": "./bun.js",
+              "fun": "./fun.js",
               "node": "./node.js"
             }
           }
@@ -825,8 +825,8 @@ describe("bundler", () => {
     },
     run: {
       stdout: `
-        bun bun import
-        bun bun import
+        fun fun import
+        fun fun import
       `,
     },
   });
@@ -839,7 +839,7 @@ describe("bundler", () => {
       `,
     },
     external: ["hello"],
-    target: "bun",
+    target: "fun",
     runtimeFiles: {
       "/node_modules/hello/index.js": /* js */ `
         export const hello = "Hello World";
@@ -891,7 +891,7 @@ describe("bundler", () => {
         exports.version = '0.6.0';
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: `0.6.0`,
     },
@@ -909,7 +909,7 @@ describe("bundler", () => {
     },
     outdir: "/",
     bundleErrors: {
-      "<bun>": ['Refusing to overwrite input file "/entry.js"'],
+      "<fun>": ['Refusing to overwrite input file "/entry.js"'],
     },
   });
   itBundled("edgecase/OverwriteInputWithOutfile", {
@@ -925,7 +925,7 @@ describe("bundler", () => {
     },
     outfile: "/entry.js",
     bundleErrors: {
-      "<bun>": ['Refusing to overwrite input file "/entry.js"'],
+      "<fun>": ['Refusing to overwrite input file "/entry.js"'],
     },
   });
   itBundled("edgecase/OverwriteInputNonEntrypoint", {
@@ -941,7 +941,7 @@ describe("bundler", () => {
     },
     outfile: "/entry.js",
     bundleErrors: {
-      "<bun>": ['Refusing to overwrite input file "/entry.js"'],
+      "<fun>": ['Refusing to overwrite input file "/entry.js"'],
     },
   });
   itBundled("edgecase/ModuleExportsFunctionIssue2911", {
@@ -1101,20 +1101,20 @@ describe("bundler", () => {
   itBundled("edgecase/UsingWithSixImports", {
     files: {
       "/entry.js": /* js */ `
-        import { Database } from 'bun:sqlite';
+        import { Database } from 'fun:sqlite';
 
-        import 'bun';
-        import 'bun:ffi';
-        import 'bun:jsc';
+        import 'fun';
+        import 'fun:ffi';
+        import 'fun:jsc';
         import 'node:assert';
-        import 'bun:test';
+        import 'fun:test';
 
         using a = new Database();
 
         export { a };
       `,
     },
-    target: "bun",
+    target: "fun",
   });
   itBundled("edgecase/EmitInvalidSourceMap1", {
     files: {
@@ -1128,11 +1128,11 @@ describe("bundler", () => {
         export default "swag";
       `,
       "/src/third.mts": /* ts */ `
-        export default "bun";
+        export default "fun";
       `,
     },
     outdir: "/out",
-    target: "bun",
+    target: "fun",
     sourceMap: "external",
     minifySyntax: true,
     minifyIdentifiers: true,
@@ -1272,7 +1272,7 @@ describe("bundler", () => {
     },
     dce: true,
     external: ["ext"],
-    target: "bun",
+    target: "fun",
   });
   itBundled("edgecase/ConstantFoldingShiftOperations", {
     files: {
@@ -1381,7 +1381,7 @@ describe("bundler", () => {
     files: {
       "entry.js": `import * as aws from ${JSON.stringify(require.resolve("aws-cdk-lib"))}; aws;`,
     },
-    target: "bun",
+    target: "fun",
     run: true,
     todo: isBroken && isWindows,
     timeoutScale: 5,
@@ -1394,7 +1394,7 @@ describe("bundler", () => {
       `,
     },
     packages: "external",
-    target: "bun",
+    target: "fun",
     runtimeFiles: {
       "/node_modules/foo/index.js": `export const a = "Hello World";`,
       "/node_modules/foo/package.json": /* json */ `
@@ -1429,7 +1429,7 @@ describe("bundler", () => {
       `,
     },
     packages: "external",
-    target: "bun",
+    target: "fun",
     runtimeFiles: {
       "/node_modules/foo/index.js": `export const a = "Hello World";`,
       "/node_modules/foo/package.json": /* json */ `
@@ -1472,7 +1472,7 @@ describe("bundler", () => {
     },
     packages: "external",
     external: ["@/src/*"],
-    target: "bun",
+    target: "fun",
     onAfterBundle(api) {
       // If this regresses, `add` gets inlined from src/adder.ts.
       api.expectFile("/out.js").toContain(`from "@/src/adder"`);
@@ -1492,7 +1492,7 @@ describe("bundler", () => {
     root: "/src",
     entryPointsRaw: ["src/entry.ts"],
     packages: "external",
-    target: "bun",
+    target: "fun",
     run: {
       file: "/src/entry.ts",
       stdout: `
@@ -1972,7 +1972,7 @@ describe("bundler", () => {
         "测试"
       `,
     },
-    target: "bun",
+    target: "fun",
     run: { stdout: `测试a` },
   });
   itBundled("edgecase/Latin1StringInImportedJSONBrowser", {
@@ -1998,7 +1998,7 @@ describe("bundler", () => {
         {"测试a" : 123}
       `,
     },
-    target: "bun",
+    target: "fun",
     run: { stdout: `123` },
   });
   itBundled("edgecase/Latin1StringKeyBrowser", {
@@ -2199,14 +2199,14 @@ describe("bundler", () => {
     },
     generateOutput: true,
     bundleErrors: {
-      "<bun>": ["cannot write multiple output files without an output directory"],
+      "<fun>": ["cannot write multiple output files without an output directory"],
     },
     run: true,
   });
 
   // TODO(@paperclover): test every case of this. I had already tested it manually, but it may break later
   const requireTranspilationListESM = [
-    // input, output:bun, output:node
+    // input, output:fun, output:node
     ["require", "import.meta.require", "__require"],
     ["typeof require", "import.meta.require", "typeof __require"],
     ["typeof require", "import.meta.require", "typeof __require"],
@@ -2357,7 +2357,7 @@ describe("bundler", () => {
       }`,
     },
     bundleErrors: {
-      "/entry.ts": ['Could not resolve: "invalid/module". Maybe you need to "bun install"?'],
+      "/entry.ts": ['Could not resolve: "invalid/module". Maybe you need to "fun install"?'],
     },
   });
 
@@ -2397,12 +2397,12 @@ describe("bundler", () => {
     },
     minifySyntax: true,
     minifyIdentifiers: true,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "success",
     },
   });
-  // https://github.com/oven-sh/bun/issues/14585
+  // https://github.com/underdoc-org/fun/issues/14585
   itBundled("identifiers/SameNameDifferentModulesWithMinifyIdentifiersDisabled", {
     files: {
       "/foo.js": `
@@ -2439,19 +2439,19 @@ describe("bundler", () => {
         import * as hello from "node:test";
         import * as world from "node:fs";
         import * as etc from "console";
-        import * as blah from "bun:jsc";
+        import * as blah from "fun:jsc";
         +[hello,world,etc,blah];
       `,
     },
-    target: "bun",
+    target: "fun",
     onAfterBundle(api) {
       api.expectFile("out.js").toMatchInlineSnapshot(`
-        "// @bun
+        "// @fun
         // entry.ts
         import * as hello from "node:test";
         import * as world from "fs";
         import * as etc from "console";
-        import * as blah from "bun:jsc";
+        import * as blah from "fun:jsc";
         +[hello, world, etc, blah];
         "
       `);

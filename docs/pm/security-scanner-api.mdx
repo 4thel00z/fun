@@ -3,20 +3,20 @@ title: Security Scanner API
 description:
 ---
 
-Bun's package manager can scan packages for security vulnerabilities before installation, helping protect your applications from supply chain attacks and known vulnerabilities.
+Fun's package manager can scan packages for security vulnerabilities before installation, helping protect your applications from supply chain attacks and known vulnerabilities.
 
 ---
 
 ## Quick Start
 
-Configure a security scanner in your `bunfig.toml`:
+Configure a security scanner in your `funfig.toml`:
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.security]
-scanner = "@acme/bun-security-scanner"
+scanner = "@acme/fun-security-scanner"
 ```
 
-When configured, Bun will:
+When configured, Fun will:
 
 - Scan all packages before installation
 - Display security warnings and advisories
@@ -27,7 +27,7 @@ When configured, Bun will:
 
 ## How It Works
 
-Security scanners analyze packages during `bun install`, `bun add`, and other package operations. They can detect:
+Security scanners analyze packages during `fun install`, `fun add`, and other package operations. They can detect:
 
 - Known security vulnerabilities (CVEs)
 - Malicious packages
@@ -45,28 +45,28 @@ Scanners report issues at two severity levels:
 
 ## Using Pre-built Scanners
 
-Many security companies publish Bun security scanners as npm packages that you can install and use immediately.
+Many security companies publish Fun security scanners as npm packages that you can install and use immediately.
 
 ### Installing a Scanner
 
 Install a security scanner from npm:
 
 ```bash terminal icon="terminal"
-bun add -d @acme/bun-security-scanner
+fun add -d @acme/fun-security-scanner
 ```
 
 <Note>
   Consult your security scanner's documentation for their specific package name and installation instructions. Most
-  scanners will be installed with `bun add`.
+  scanners will be installed with `fun add`.
 </Note>
 
 ### Configuring the Scanner
 
-After installation, configure it in your `bunfig.toml`:
+After installation, configure it in your `funfig.toml`:
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.security]
-scanner = "@acme/bun-security-scanner"
+scanner = "@acme/fun-security-scanner"
 ```
 
 ### Enterprise Configuration
@@ -78,7 +78,7 @@ Some enterprise scanners might support authentication and/or configuration throu
 export SECURITY_API_KEY="your-api-key"
 
 # The scanner will now use these credentials automatically
-bun install
+fun install
 ```
 
 Consult your security scanner's documentation to learn which environment variables to set and if any additional configuration is required.
@@ -90,6 +90,6 @@ For a complete example with tests and CI setup, see the official template:
 
 ## Related
 
-- [Configuration (bunfig.toml)](/runtime/bunfig#install-security-scanner)
+- [Configuration (funfig.toml)](/runtime/funfig#install-security-scanner)
 - [Package Manager](/installation)
 - [Security Scanner Template](https://github.com/oven-sh/security-scanner-template)

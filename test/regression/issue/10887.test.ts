@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 test("does not segfault", () => {
   const dir = tempDirWithFiles("10887", {
@@ -28,10 +28,10 @@ test("does not segfault", () => {
     `,
   });
 
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "index.ts"],
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "index.ts"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

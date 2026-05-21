@@ -10,9 +10,9 @@
 #include "openssl/base.h"
 #include "openssl/bio.h"
 #include "openssl/x509.h"
-#include "../../packages/bun-usockets/src/crypto/root_certs_header.h"
+#include "../../packages/fun-usockets/src/crypto/root_certs_header.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -131,17 +131,17 @@ JSC_DEFINE_HOST_FUNCTION(getSystemCACertificates, (JSC::JSGlobalObject * globalO
     RELEASE_AND_RETURN(scope, JSValue::encode(JSC::objectConstructorFreeze(globalObject, rootCertificates)));
 }
 
-extern "C" JSC::EncodedJSValue Bun__getTLSDefaultCiphers(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame);
-extern "C" JSC::EncodedJSValue Bun__setTLSDefaultCiphers(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame);
+extern "C" JSC::EncodedJSValue Fun__getTLSDefaultCiphers(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame);
+extern "C" JSC::EncodedJSValue Fun__setTLSDefaultCiphers(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame);
 
 JSC_DEFINE_HOST_FUNCTION(getDefaultCiphers, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
-    return Bun__getTLSDefaultCiphers(globalObject, callFrame);
+    return Fun__getTLSDefaultCiphers(globalObject, callFrame);
 }
 
 JSC_DEFINE_HOST_FUNCTION(setDefaultCiphers, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
-    return Bun__setTLSDefaultCiphers(globalObject, callFrame);
+    return Fun__setTLSDefaultCiphers(globalObject, callFrame);
 }
 
-} // namespace Bun
+} // namespace Fun

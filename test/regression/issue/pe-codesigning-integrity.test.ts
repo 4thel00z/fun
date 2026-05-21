@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "fun:test";
 import { readFileSync, unlinkSync } from "fs";
-import { bunEnv, bunExe, isArm64, isWindows, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isArm64, isWindows, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 describe.if(isWindows)("PE codesigning integrity", () => {
@@ -111,36 +111,36 @@ describe.if(isWindows)("PE codesigning integrity", () => {
       return sections;
     }
 
-    // Find and validate .bun section
-    findBunSection(sections: any[]) {
-      const bunSection = sections.find(s => s.name === ".bun");
-      if (!bunSection) return null;
+    // Find and validate .fun section
+    findFunSection(sections: any[]) {
+      const funSection = sections.find(s => s.name === ".fun");
+      if (!funSection) return null;
 
-      // Read the .bun section data
-      const sectionData = new Uint8Array(this.buffer, bunSection.pointerToRawData, bunSection.sizeOfRawData);
+      // Read the .fun section data
+      const sectionData = new Uint8Array(this.buffer, funSection.pointerToRawData, funSection.sizeOfRawData);
 
       // First 8 bytes should be the data size (u64 for 8-byte alignment)
-      const dataSize = Number(new DataView(sectionData.buffer, bunSection.pointerToRawData).getBigUint64(0, true));
+      const dataSize = Number(new DataView(sectionData.buffer, funSection.pointerToRawData).getBigUint64(0, true));
 
       // Validate the size is reasonable - it should match or be close to virtual size
-      if (dataSize > bunSection.sizeOfRawData || dataSize === 0) {
-        throw new Error(`Invalid .bun section: data size ${dataSize} vs section size ${bunSection.sizeOfRawData}`);
+      if (dataSize > funSection.sizeOfRawData || dataSize === 0) {
+        throw new Error(`Invalid .fun section: data size ${dataSize} vs section size ${funSection.sizeOfRawData}`);
       }
 
       // The virtual size should match the data size (plus some alignment)
-      if (dataSize > bunSection.virtualSize + 16) {
+      if (dataSize > funSection.virtualSize + 16) {
         // Allow some padding
-        throw new Error(`Invalid .bun section: data size ${dataSize} exceeds virtual size ${bunSection.virtualSize}`);
+        throw new Error(`Invalid .fun section: data size ${dataSize} exceeds virtual size ${funSection.virtualSize}`);
       }
 
       // Extract the actual embedded data (skip the 8-byte size header)
       const embeddedData = sectionData.slice(8, 8 + dataSize);
 
       return {
-        section: bunSection,
+        section: funSection,
         dataSize,
         embeddedData,
-        isValid: dataSize > 0 && dataSize <= bunSection.virtualSize,
+        isValid: dataSize > 0 && dataSize <= funSection.virtualSize,
       };
     }
 
@@ -159,20 +159,20 @@ describe.if(isWindows)("PE codesigning integrity", () => {
       const sectionsOffset = optionalHeaderOffset + pe.sizeOfOptionalHeader;
       const sections = this.parseSectionHeaders(sectionsOffset, pe.numberOfSections);
 
-      const bunSection = this.findBunSection(sections);
-      if (!bunSection) throw new Error(".bun section not found");
+      const funSection = this.findFunSection(sections);
+      if (!funSection) throw new Error(".fun section not found");
 
       return {
         dos,
         pe,
         optional,
         sections,
-        bunSection,
+        funSection,
       };
     }
   }
 
-  it("should create valid PE executable with .bun section", async () => {
+  it("should create valid PE executable with .fun section", async () => {
     const testContent = `
 console.log("Hello from PE codesigning test!");
 console.log("Testing PE file integrity with DataView");
@@ -188,12 +188,12 @@ console.log("Test data:", JSON.stringify(data));
 
     // Write test file
     const testFile = join(tempDir, "test-pe-simple.js");
-    await Bun.write(testFile, testContent);
+    await Fun.write(testFile, testContent);
 
     // Compile to Windows PE executable
-    const result = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", testFile],
-      env: bunEnv,
+    const result = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", testFile],
+      env: funEnv,
       cwd: tempDir,
     });
 
@@ -227,21 +227,21 @@ console.log("Test data:", JSON.stringify(data));
     expect(validation.sections.length).toBeGreaterThan(0);
     expect(validation.sections.every(s => s.isValid)).toBe(true);
 
-    // Validate .bun section
-    expect(validation.bunSection).not.toBeNull();
-    expect(validation.bunSection!.isValid).toBe(true);
-    expect(validation.bunSection!.dataSize).toBeGreaterThan(0);
+    // Validate .fun section
+    expect(validation.funSection).not.toBeNull();
+    expect(validation.funSection!.isValid).toBe(true);
+    expect(validation.funSection!.dataSize).toBeGreaterThan(0);
 
     // Validate embedded data contains our test content
     // The embedded data is in StandaloneModuleGraph format, which includes:
-    // - Virtual path (B:/~BUN/root/filename)
+    // - Virtual path (B:/~FUN/root/filename)
     // - JavaScript source code
     // - Binary metadata and trailer
-    const embeddedText = new TextDecoder().decode(validation.bunSection!.embeddedData);
-    expect(embeddedText).toContain("B:/~BUN/root/"); // Windows virtual path
+    const embeddedText = new TextDecoder().decode(validation.funSection!.embeddedData);
+    expect(embeddedText).toContain("B:/~FUN/root/"); // Windows virtual path
     expect(embeddedText).toContain("Hello from PE codesigning test!");
     expect(embeddedText).toContain("PE integrity test");
-    expect(embeddedText).toContain("---- Bun! ----"); // Trailer signature
+    expect(embeddedText).toContain("---- Fun! ----"); // Trailer signature
   });
 
   it("should handle large embedded data correctly", async () => {
@@ -261,11 +261,11 @@ console.log("Large data length:", JSON.stringify(largeData).length);
     `.trim();
 
     const testFile = join(tempDir, "test-pe-large.js");
-    await Bun.write(testFile, largeContent);
+    await Fun.write(testFile, largeContent);
 
-    const result = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", testFile],
-      env: bunEnv,
+    const result = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", testFile],
+      env: funEnv,
       cwd: tempDir,
     });
 
@@ -284,24 +284,24 @@ console.log("Large data length:", JSON.stringify(largeData).length);
     expect(validation.pe.isValid).toBe(true);
     expect(validation.optional.isValid).toBe(true);
 
-    // .bun section should contain the larger data
-    expect(validation.bunSection).not.toBeNull();
-    expect(validation.bunSection!.dataSize).toBeGreaterThan(1000); // Should be substantial
+    // .fun section should contain the larger data
+    expect(validation.funSection).not.toBeNull();
+    expect(validation.funSection!.dataSize).toBeGreaterThan(1000); // Should be substantial
 
-    const embeddedText = new TextDecoder().decode(validation.bunSection!.embeddedData);
-    expect(embeddedText).toContain("B:/~BUN/root/"); // Virtual path
+    const embeddedText = new TextDecoder().decode(validation.funSection!.embeddedData);
+    expect(embeddedText).toContain("B:/~FUN/root/"); // Virtual path
     expect(embeddedText).toContain("Large PE test");
     expect(embeddedText).toContain("Large data test");
-    expect(embeddedText).toContain("---- Bun! ----"); // Trailer
+    expect(embeddedText).toContain("---- Fun! ----"); // Trailer
   });
 
   it("should align sections properly", async () => {
     const testFile = join(tempDir, "test-pe-alignment.js");
-    await Bun.write(testFile, 'console.log("Alignment test");');
+    await Fun.write(testFile, 'console.log("Alignment test");');
 
-    const result = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", testFile],
-      env: bunEnv,
+    const result = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", testFile],
+      env: funEnv,
       cwd: tempDir,
     });
 
@@ -326,10 +326,10 @@ console.log("Large data length:", JSON.stringify(largeData).length);
       expect(section.virtualAddress % sectionAlignment).toBe(0);
     }
 
-    // .bun section should also be properly aligned
-    const bunSection = validation.bunSection!.section;
-    expect(bunSection.pointerToRawData % fileAlignment).toBe(0);
-    expect(bunSection.virtualAddress % sectionAlignment).toBe(0);
+    // .fun section should also be properly aligned
+    const funSection = validation.funSection!.section;
+    expect(funSection.pointerToRawData % fileAlignment).toBe(0);
+    expect(funSection.virtualAddress % sectionAlignment).toBe(0);
 
     // Cleanup
     unlinkSync(testFile);
@@ -338,11 +338,11 @@ console.log("Large data length:", JSON.stringify(largeData).length);
 
   it("should have correct section characteristics", async () => {
     const testFile = join(tempDir, "test-pe-characteristics.js");
-    await Bun.write(testFile, 'console.log("Characteristics test");');
+    await Fun.write(testFile, 'console.log("Characteristics test");');
 
-    const result = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", testFile],
-      env: bunEnv,
+    const result = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", testFile],
+      env: funEnv,
       cwd: tempDir,
     });
 
@@ -355,19 +355,19 @@ console.log("Large data length:", JSON.stringify(largeData).length);
     const parser = new PEParser(peData);
     const validation = parser.validatePE();
 
-    // Find .bun section and check its characteristics
-    const bunSection = validation.bunSection!.section;
+    // Find .fun section and check its characteristics
+    const funSection = validation.funSection!.section;
 
-    // .bun section should have IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ
+    // .fun section should have IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ
     const IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040;
     const IMAGE_SCN_MEM_READ = 0x40000000;
     const expectedCharacteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
 
-    expect(bunSection.characteristics & expectedCharacteristics).toBe(expectedCharacteristics);
+    expect(funSection.characteristics & expectedCharacteristics).toBe(expectedCharacteristics);
 
     // Should NOT have execute permissions
     const IMAGE_SCN_MEM_EXECUTE = 0x20000000;
-    expect(bunSection.characteristics & IMAGE_SCN_MEM_EXECUTE).toBe(0);
+    expect(funSection.characteristics & IMAGE_SCN_MEM_EXECUTE).toBe(0);
 
     // Cleanup
     unlinkSync(testFile);

@@ -1,7 +1,7 @@
-// Regression test for https://github.com/oven-sh/bun/issues/18159
+// Regression test for https://github.com/underdoc-org/fun/issues/18159
 // When setTimeout is called without a delay argument, it should not emit a TimeoutNaNWarning
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("setTimeout() without delay should not emit TimeoutNaNWarning", done => {
   process.on("warning", warning => {

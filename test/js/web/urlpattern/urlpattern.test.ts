@@ -1,6 +1,6 @@
 // Test data from Web Platform Tests
 // https://github.com/web-platform-tests/wpt/blob/master/LICENSE.md
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import testData from "./urlpatterntestdata.json";
 
 const kComponents = ["protocol", "username", "password", "hostname", "port", "pathname", "search", "hash"] as const;

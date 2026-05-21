@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("utf16-le buffer", () => {
   const twoByteString = new Array(16)

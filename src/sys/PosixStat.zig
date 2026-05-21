@@ -14,13 +14,13 @@ pub const PosixStat = extern struct {
     blocks: u64,
 
     /// Access time
-    atim: bun.timespec,
+    atim: fun.timespec,
     /// Modification time
-    mtim: bun.timespec,
+    mtim: fun.timespec,
     /// Change time (metadata)
-    ctim: bun.timespec,
+    ctim: fun.timespec,
     /// Birth time (creation time) - may be zero if not supported
-    birthtim: bun.timespec,
+    birthtim: fun.timespec,
 
     /// C's implicit integer → `uint64_t` conversion, i.e. what libuv does
     /// when copying platform `struct stat` fields into `uv_stat_t`.
@@ -31,13 +31,13 @@ pub const PosixStat = extern struct {
         };
     }
 
-    /// Convert platform-specific bun.Stat to PosixStat
-    pub fn init(stat_: *const bun.Stat) PosixStat {
+    /// Convert platform-specific fun.Stat to PosixStat
+    pub fn init(stat_: *const fun.Stat) PosixStat {
         const atime_val = stat_.atime();
         const mtime_val = stat_.mtime();
         const ctime_val = stat_.ctime();
         const birthtime_val = if (Environment.isLinux)
-            bun.timespec.epoch
+            fun.timespec.epoch
         else
             stat_.birthtime();
 
@@ -59,22 +59,22 @@ pub const PosixStat = extern struct {
         };
     }
 
-    pub fn atime(self: *const PosixStat) bun.timespec {
+    pub fn atime(self: *const PosixStat) fun.timespec {
         return self.atim;
     }
 
-    pub fn mtime(self: *const PosixStat) bun.timespec {
+    pub fn mtime(self: *const PosixStat) fun.timespec {
         return self.mtim;
     }
 
-    pub fn ctime(self: *const PosixStat) bun.timespec {
+    pub fn ctime(self: *const PosixStat) fun.timespec {
         return self.ctim;
     }
 
-    pub fn birthtime(self: *const PosixStat) bun.timespec {
+    pub fn birthtime(self: *const PosixStat) fun.timespec {
         return self.birthtim;
     }
 };
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

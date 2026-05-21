@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import crypto from "node:crypto";
 
 test("crypto.Sign should handle JWK EC keys with ieee-p1363 encoding", () => {

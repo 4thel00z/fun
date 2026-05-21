@@ -13,7 +13,7 @@ const pkg = JSON.parse(json);
 // 		const [path, query] = id.split('?');
 // 		if (query != 'raw-hex') return null;
 
-// 		const data = await Bun.file(path).bytes();
+// 		const data = await Fun.file(path).bytes();
 // 		const hex = data.toHex();
 
 // 		return `export default '${hex}';`;

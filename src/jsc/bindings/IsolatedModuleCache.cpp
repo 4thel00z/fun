@@ -1,15 +1,15 @@
 #include "IsolatedModuleCache.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ModuleLoader.h"
 #include "ZigSourceProvider.h"
 
-namespace Bun {
+namespace Fun {
 
-bool IsolatedModuleCache::canUse(JSC::VM&, void* bunVM, const BunString* typeAttribute)
+bool IsolatedModuleCache::canUse(JSC::VM&, void* funVM, const FunString* typeAttribute)
 {
-    if (!isBunTest)
+    if (!isFunTest)
         return false;
-    if (!Bun__VM__useIsolationSourceProviderCache(bunVM))
+    if (!Fun__VM__useIsolationSourceProviderCache(funVM))
         return false;
     if (typeAttribute && !typeAttribute->isEmpty())
         return false;
@@ -45,4 +45,4 @@ void IsolatedModuleCache::clear(JSC::VM& vm)
     WebCore::clientData(vm)->isolationSourceProviderCache.clear();
 }
 
-} // namespace Bun
+} // namespace Fun

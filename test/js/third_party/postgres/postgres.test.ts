@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { getSecret } from "harness";
 import postgres from "postgres";
 
@@ -46,16 +46,16 @@ describe.skipIf(!databaseUrl)("postgres", () => {
             username VARCHAR ( 50 ) NOT NULL
         );`;
 
-      const [{ user_id, username }] = await sql`insert into usernames (username) values ('bun') returning *`;
-      expect(username).toBe("bun");
+      const [{ user_id, username }] = await sql`insert into usernames (username) values ('fun') returning *`;
+      expect(username).toBe("fun");
 
       const [{ user_id: user_id2, username: username2 }] =
         await sql`select * from usernames where user_id = ${user_id}`;
-      expect(username2).toBe("bun");
+      expect(username2).toBe("fun");
       expect(user_id2).toBe(user_id);
 
       const [{ username: username3 }] = await sql`delete from usernames where user_id = ${user_id} returning *`;
-      expect(username3).toBe("bun");
+      expect(username3).toBe("fun");
     } finally {
       sql.end();
     }

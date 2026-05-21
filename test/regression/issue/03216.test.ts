@@ -1,7 +1,7 @@
-// https://github.com/oven-sh/bun/issues/3216
-import { describe, expect, test } from "bun:test";
+// https://github.com/underdoc-org/fun/issues/3216
+import { describe, expect, test } from "fun:test";
 import { writeFileSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 describe.concurrent("issue/03216", () => {
@@ -41,10 +41,10 @@ try {
 `,
     );
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", join(tmp, "index.ts")],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", join(tmp, "index.ts")],
       cwd: tmp,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

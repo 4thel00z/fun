@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import path from "node:path";
 
 // Calling ws.close() on a wss:// WebSocket that is connecting through an HTTP
@@ -12,9 +12,9 @@ import path from "node:path";
 // The re-entrancy requires synchronous us_socket_close → on_close dispatch, which
 // only happens on POSIX; libuv defers the close callback on Windows.
 test.skipIf(isWindows)("ws.close() during proxy TLS handshake does not double-free", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), path.join(import.meta.dir, "websocket-proxy-close-reentrancy-fixture.ts")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), path.join(import.meta.dir, "websocket-proxy-close-reentrancy-fixture.ts")],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

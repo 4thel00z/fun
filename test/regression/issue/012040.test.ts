@@ -1,8 +1,8 @@
-import { test } from "bun:test";
+import { test } from "fun:test";
 import { createServer } from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
 
-// https://github.com/oven-sh/bun/issues/12040
+// https://github.com/underdoc-org/fun/issues/12040
 test("ws.send callback works as expected", async () => {
   const httpServer = createServer();
   const { promise, resolve } = Promise.withResolvers();

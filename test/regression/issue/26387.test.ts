@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
-// https://github.com/oven-sh/bun/issues/26387
+// https://github.com/underdoc-org/fun/issues/26387
 // Request.text() fails with "TypeError: undefined is not a function" after ~4500 requests
 test("Request.text() should work after many requests", async () => {
   // Create a server that reads the request body using req.text()
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       try {
@@ -40,7 +40,7 @@ test("Request.text() should work after many requests", async () => {
 
     // Periodically run GC to increase likelihood of triggering the bug
     if (i % 500 === 0) {
-      Bun.gc(true);
+      Fun.gc(true);
     }
   }
 }, 60000);

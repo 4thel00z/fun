@@ -16,7 +16,7 @@
  */
 
 import { experimental } from "@grpc/grpc-js";
-import { describe, it } from "bun:test";
+import { describe, it } from "fun:test";
 import assert from "node:assert";
 
 import parseLoadBalancingConfig = experimental.parseLoadBalancingConfig;

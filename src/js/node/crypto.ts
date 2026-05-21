@@ -3,7 +3,7 @@ const StringDecoder = require("node:string_decoder").StringDecoder;
 const LazyTransform = require("internal/streams/lazy_transform");
 const { defineCustomPromisifyArgs } = require("internal/promisify");
 const Writable = require("internal/streams/writable");
-const { CryptoHasher } = Bun;
+const { CryptoHasher } = Fun;
 
 const {
   getCurves,

@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "../../harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "../../harness";
 
-const cleanEnv = { ...bunEnv };
+const cleanEnv = { ...funEnv };
 delete cleanEnv.GITHUB_ACTIONS;
 delete cleanEnv.GITLAB_CI;
 delete cleanEnv.CIRCLECI;
@@ -12,8 +12,8 @@ delete cleanEnv.BUILD_ID;
 delete cleanEnv.CI;
 
 async function performTest(env: Record<string, string | undefined>, result: "deny-only" | "allow-only") {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "./ci-info.fixture.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "./ci-info.fixture.ts"],
     env,
     cwd: import.meta.dir,
     stdout: "pipe",

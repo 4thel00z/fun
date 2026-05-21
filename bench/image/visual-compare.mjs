@@ -1,4 +1,4 @@
-// Visual side-by-side: Sharp vs Bun.Image, on real photos.
+// Visual side-by-side: Sharp vs Fun.Image, on real photos.
 //
 // Pulls a fixed set of CC0 photos from picsum.photos (deterministic by ID) +
 // two synthetic torture patterns (zone plate, checker — the only place
@@ -7,9 +7,9 @@
 // split-screen PNG, and writes a comparison.md that just lists those.
 //
 // Run with the release build:
-//   build/release/bun bench/image/visual-compare.mjs
+//   build/release/fun bench/image/visual-compare.mjs
 // Then:
-//   cd bench/image/out && gh gist create -d "Bun.Image vs Sharp visual" comparison.md cmp_*.png src_*.jpg
+//   cd bench/image/out && gh gist create -d "Fun.Image vs Sharp visual" comparison.md cmp_*.png src_*.jpg
 
 import sharp from "sharp";
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
@@ -126,7 +126,7 @@ const formats = [
 const sharpKernel = { lanczos3: "lanczos3", mitchell: "mitchell", mks2013: "mks2013", nearest: "nearest" };
 
 // ─── compose helper ─────────────────────────────────────────────────────────
-async function compose(sharpOut, bunOut, sharpSize, bunSize) {
+async function compose(sharpOut, funOut, sharpSize, funSize) {
   // Display tiles capped at 320; checker underlay; label strip below.
   const sMeta = await sharp(sharpOut).metadata();
   const tile = Math.min(320, sMeta.width);
@@ -138,10 +138,10 @@ async function compose(sharpOut, bunOut, sharpSize, bunSize) {
       <text x="${tile / 2}" y="${tile + 19}" fill="#888" font-family="monospace"
             font-size="12" text-anchor="middle">sharp · ${(sharpSize / 1024).toFixed(1)} KB</text>
       <text x="${tile + gutter + tile / 2}" y="${tile + 19}" fill="#fff" font-family="monospace"
-            font-size="12" text-anchor="middle" font-weight="bold">Bun.Image · ${(bunSize / 1024).toFixed(1)} KB</text>
+            font-size="12" text-anchor="middle" font-weight="bold">Fun.Image · ${(funSize / 1024).toFixed(1)} KB</text>
     </svg>`);
   const sT = await sharp(sharpOut).resize(tile, tile, { fit: "inside" }).png().toBuffer();
-  const bT = await sharp(bunOut).resize(tile, tile, { fit: "inside" }).png().toBuffer();
+  const bT = await sharp(funOut).resize(tile, tile, { fit: "inside" }).png().toBuffer();
   const sM = await sharp(sT).metadata();
   const top = Math.floor((tile - sM.height) / 2);
   return sharp(svg)
@@ -177,7 +177,7 @@ for (const src of sources) {
       n++;
       process.stderr.write(`[${n}/${total}] ${stem}      \r`);
 
-      const bunOut = await new Bun.Image(src.bytes)
+      const funOut = await new Fun.Image(src.bytes)
         .resize(rz.w, rz.h, { filter: rz.filter, fit: rz.fit ?? "fill" })
         [fmt.enc](fmt.opts)
         .bytes();
@@ -186,7 +186,7 @@ for (const src of sources) {
         [fmt.enc](fmt.opts)
         .toBuffer();
 
-      const cmp = await compose(sharpOut, bunOut, sharpOut.length, bunOut.length);
+      const cmp = await compose(sharpOut, funOut, sharpOut.length, funOut.length);
       writeFileSync(OUT + `cmp_${stem}.png`, cmp);
 
       rows.push({
@@ -194,7 +194,7 @@ for (const src of sources) {
         rz: rz.name,
         fmt: fmt.name,
         stem,
-        bunSize: bunOut.length,
+        funSize: funOut.length,
         sharpSize: sharpOut.length,
       });
     }
@@ -203,11 +203,11 @@ for (const src of sources) {
 process.stderr.write("\n");
 
 // ─── markdown ───────────────────────────────────────────────────────────────
-let md = `# Bun.Image vs Sharp — visual comparison
+let md = `# Fun.Image vs Sharp — visual comparison
 
 ${PICS.length} CC0 photos from [picsum.photos](https://picsum.photos) (2400×1600
 source) + 2 synthetic torture patterns. Every pair is **left = sharp, right =
-Bun.Image**, with the encoded byte size under each. Bun.Image runs the i16
+Fun.Image**, with the encoded byte size under each. Fun.Image runs the i16
 fixed-point Highway path; sharp is libvips ${sharp.versions.vips}.
 
 `;
@@ -218,7 +218,7 @@ for (const src of sources) {
     md += `### ${rz.name.replaceAll("_", " ")}\n\n`;
     for (const fmt of formats) {
       const r = rows.find(x => x.src === src.name && x.rz === rz.name && x.fmt === fmt.name);
-      const ds = (((r.bunSize - r.sharpSize) / r.sharpSize) * 100).toFixed(0);
+      const ds = (((r.funSize - r.sharpSize) / r.sharpSize) * 100).toFixed(0);
       md += `**${fmt.name}** (Δ ${ds > 0 ? "+" : ""}${ds}%)  \n![](cmp_${r.stem}.png)\n\n`;
     }
   }
@@ -228,5 +228,5 @@ writeFileSync(OUT + "comparison.md", md);
 const cmpCount = rows.length;
 console.log(`\nWrote ${cmpCount} composites + ${sources.length} source thumbs + comparison.md to ${OUT}`);
 console.log(
-  `\nUpload as a private gist:\n  cd ${OUT} && gh gist create -d "Bun.Image vs Sharp visual" comparison.md src_*.jpg cmp_*.png\n`,
+  `\nUpload as a private gist:\n  cd ${OUT} && gh gist create -d "Fun.Image vs Sharp visual" comparison.md src_*.jpg cmp_*.png\n`,
 );

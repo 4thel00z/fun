@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tls as tlsCerts } from "harness";
 import http from "node:http";
 import net from "node:net";
@@ -15,7 +15,7 @@ test("bidirectional ping/pong through TLS proxy", async () => {
     intervals.length = 0;
   };
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     tls: { key: tlsCerts.key, cert: tlsCerts.cert },
     fetch(req, server) {

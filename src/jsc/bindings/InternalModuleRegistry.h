@@ -2,11 +2,11 @@
 #include "root.h"
 #include <JavaScriptCore/JSInternalFieldObjectImpl.h>
 #include <JavaScriptCore/JSInternalFieldObjectImplInlines.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "InternalModuleRegistry+numberOfModules.h"
 #include "_NativeModule.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 // Internal module registry is an array of lazily initialized "modules". Module
@@ -17,9 +17,9 @@ using namespace JSC;
 // Modules come from two sources:
 // - some are written in JS (src/js, there is a readme file that explain those files more.
 // - others are native code (src/jsc/modules), see _NativeModule.h in there.
-class InternalModuleRegistry : public JSInternalFieldObjectImpl<BUN_INTERNAL_MODULE_COUNT> {
+class InternalModuleRegistry : public JSInternalFieldObjectImpl<FUN_INTERNAL_MODULE_COUNT> {
 public:
-    using Base = JSInternalFieldObjectImpl<BUN_INTERNAL_MODULE_COUNT>;
+    using Base = JSInternalFieldObjectImpl<FUN_INTERNAL_MODULE_COUNT>;
 
     DECLARE_EXPORT_INFO;
 
@@ -63,4 +63,4 @@ private:
     void finishCreation(VM&);
 };
 
-} // namespace Bun
+} // namespace Fun

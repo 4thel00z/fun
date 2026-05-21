@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 const CURVE_CONFIGS = [
   { curve: "P-256", expectedLength: 43 }, // 32 bytes = 43 base64url characters

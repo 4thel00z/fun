@@ -1,4 +1,4 @@
-// Bun.Image resize / rotate kernels.
+// Fun.Image resize / rotate kernels.
 //
 // Highway gives runtime SIMD dispatch the same way highway_strings.cpp does:
 // this file is re-included once per target ISA via foreach_target.h, each pass
@@ -32,9 +32,9 @@
 #include <cstdlib>
 #include <cstring>
 
-#ifndef BUN_IMAGE_SPAN_DEFINED
-#define BUN_IMAGE_SPAN_DEFINED
-namespace bun_image {
+#ifndef FUN_IMAGE_SPAN_DEFINED
+#define FUN_IMAGE_SPAN_DEFINED
+namespace fun_image {
 // One contribution span: for output pixel `i`, sum src[start..start+n) * w[..n).
 // Defined outside HWY_NAMESPACE so HorizPass/VertPass have the same signature
 // across every dispatch target (HWY_EXPORT builds a single function-pointer
@@ -43,23 +43,23 @@ struct Span {
     int32_t start;
     int32_t n;
 };
-} // namespace bun_image
+} // namespace fun_image
 #endif
 
 HWY_BEFORE_NAMESPACE();
-namespace bun_image {
+namespace fun_image {
 namespace HWY_NAMESPACE {
 
 namespace hn = hwy::HWY_NAMESPACE;
-using bun_image::Span;
+using fun_image::Span;
 
 // `__builtin_assume` lets clang drop the loop's zero-trip check / sign-extend
 // when we know a bound is positive — `s.n` is always ≥ 1 (buildWeights ensures
 // at least one tap) and ≤ wstride. Dimensions are all > 0 (checked at entry).
 #if defined(__clang__)
-#define BUN_ASSUME(x) __builtin_assume(x)
+#define FUN_ASSUME(x) __builtin_assume(x)
 #else
-#define BUN_ASSUME(x) ((void)0)
+#define FUN_ASSUME(x) ((void)0)
 #endif
 
 // Fixed-point shift. Weights are i16 with Σw = 1<<kFixShift; products go into
@@ -91,7 +91,7 @@ static void HorizPass(const uint8_t* HWY_RESTRICT src, size_t src_w, size_t src_
     const hn::Repartition<int16_t, D32> di16; // 8× i16 over the same 128 bits
     const hn::Rebind<uint8_t, D32> du8; // 4× u8
 
-    BUN_ASSUME(src_w > 0 && src_h > 0 && dst_w > 0);
+    FUN_ASSUME(src_w > 0 && src_h > 0 && dst_w > 0);
     const size_t src_row = src_w * 4;
     const size_t dst_row = dst_w * 4;
     const auto vround = hn::Set(di32, kFixRound);
@@ -102,8 +102,8 @@ static void HorizPass(const uint8_t* HWY_RESTRICT src, size_t src_w, size_t src_
         uint8_t* dp = drow;
         for (size_t x = 0; x < dst_w; x++, w += wstride, dp += 4) {
             const Span s = spans[x];
-            BUN_ASSUME(s.n > 0);
-            BUN_ASSUME(s.start >= 0);
+            FUN_ASSUME(s.n > 0);
+            FUN_ASSUME(s.start >= 0);
             // sp is the only place that still needs a multiply (s.start is
             // non-monotone in x); it's one shift+add per output pixel.
             const uint8_t* sp = srow + static_cast<size_t>(s.start) * 4;
@@ -141,13 +141,13 @@ static void VertPass(const uint8_t* HWY_RESTRICT src, size_t src_h, size_t dst_w
     const auto vround = hn::Set(di32, kFixRound);
     (void)src_h;
 
-    BUN_ASSUME(dst_w > 0 && dst_h > 0);
+    FUN_ASSUME(dst_w > 0 && dst_h > 0);
     uint8_t* drow = dst;
     const int16_t* w = weights;
     for (size_t y = 0; y < dst_h; y++, drow += row_bytes, w += wstride) {
         const Span s = spans[y];
-        BUN_ASSUME(s.n > 0);
-        BUN_ASSUME(s.start >= 0);
+        FUN_ASSUME(s.n > 0);
+        FUN_ASSUME(s.start >= 0);
         // One multiply per output row to anchor the column window; everything
         // inside is `+= row_bytes` / `+= N`.
         const uint8_t* col0 = src + static_cast<size_t>(s.start) * row_bytes;
@@ -183,7 +183,7 @@ static void VertPass(const uint8_t* HWY_RESTRICT src, size_t src_h, size_t dst_w
 // strides are constants, zero multiplies inside the loops.
 static void Rotate90Impl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, uint8_t* HWY_RESTRICT dst)
 {
-    BUN_ASSUME(w > 0 && h > 0);
+    FUN_ASSUME(w > 0 && h > 0);
     const size_t dst_row = h * 4;
     const uint8_t* sp = src;
     // y=0 column lands at dst x = h-1.
@@ -197,7 +197,7 @@ static void Rotate90Impl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, ui
 
 static void Rotate180Impl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, uint8_t* HWY_RESTRICT dst)
 {
-    BUN_ASSUME(w > 0 && h > 0);
+    FUN_ASSUME(w > 0 && h > 0);
     const size_t total = w * h;
     const uint8_t* sp = src;
     uint8_t* dp = dst + (total - 1) * 4;
@@ -207,7 +207,7 @@ static void Rotate180Impl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, u
 
 static void Rotate270Impl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, uint8_t* HWY_RESTRICT dst)
 {
-    BUN_ASSUME(w > 0 && h > 0);
+    FUN_ASSUME(w > 0 && h > 0);
     const size_t dst_row = h * 4;
     const uint8_t* sp = src;
     uint8_t* dcol = dst;
@@ -220,7 +220,7 @@ static void Rotate270Impl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, u
 
 static void FlipHImpl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, uint8_t* HWY_RESTRICT dst)
 {
-    BUN_ASSUME(w > 0 && h > 0);
+    FUN_ASSUME(w > 0 && h > 0);
     const size_t row = w * 4;
     const uint8_t* srow = src;
     uint8_t* drow = dst;
@@ -234,7 +234,7 @@ static void FlipHImpl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, uint8
 
 static void FlipVImpl(const uint8_t* HWY_RESTRICT src, size_t w, size_t h, uint8_t* HWY_RESTRICT dst)
 {
-    BUN_ASSUME(w > 0 && h > 0);
+    FUN_ASSUME(w > 0 && h > 0);
     const size_t row = w * 4;
     const uint8_t* sp = src + (h - 1) * row;
     uint8_t* dp = dst;
@@ -307,11 +307,11 @@ static void ModulateImpl(uint8_t* HWY_RESTRICT buf, size_t len, float brightness
 }
 
 } // namespace HWY_NAMESPACE
-} // namespace bun_image
+} // namespace fun_image
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace bun_image {
+namespace fun_image {
 
 HWY_EXPORT(HorizPass);
 HWY_EXPORT(VertPass);
@@ -503,18 +503,18 @@ struct ScratchLayout {
 extern "C" {
 
 // How many bytes of scratch the resize needs. Caller (Zig) allocates this
-// alongside the output in ONE bun.default_allocator block — zero mallocs in
+// alongside the output in ONE fun.default_allocator block — zero mallocs in
 // this TU.
-size_t bun_image_resize_scratch_size(int32_t src_w, int32_t src_h, int32_t dst_w, int32_t dst_h, int32_t filter_kind)
+size_t fun_image_resize_scratch_size(int32_t src_w, int32_t src_h, int32_t dst_w, int32_t dst_h, int32_t filter_kind)
 {
     if (src_w <= 0 || src_h <= 0 || dst_w <= 0 || dst_h <= 0) return 0;
     return ScratchLayout(src_w, src_h, dst_w, dst_h, filter_kind).total;
 }
 
-// Resize RGBA8. `scratch` must be at least `bun_image_resize_scratch_size(...)`
+// Resize RGBA8. `scratch` must be at least `fun_image_resize_scratch_size(...)`
 // bytes; partitioned into tmp | xspans | yspans | xw | yw. Returns 0 on
 // success, -1 on bad dimensions.
-int bun_image_resize_rgba8(const uint8_t* src, int32_t src_w, int32_t src_h,
+int fun_image_resize_rgba8(const uint8_t* src, int32_t src_w, int32_t src_h,
     uint8_t* dst, int32_t dst_w, int32_t dst_h, int32_t filter_kind, uint8_t* scratch)
 {
     if (src_w <= 0 || src_h <= 0 || dst_w <= 0 || dst_h <= 0 || !scratch) return -1;
@@ -534,7 +534,7 @@ int bun_image_resize_rgba8(const uint8_t* src, int32_t src_w, int32_t src_h,
 }
 
 // degrees ∈ {90, 180, 270}. dst dims swap for 90/270; caller allocates.
-void bun_image_rotate_rgba8(const uint8_t* src, int32_t w, int32_t h, uint8_t* dst, int32_t degrees)
+void fun_image_rotate_rgba8(const uint8_t* src, int32_t w, int32_t h, uint8_t* dst, int32_t degrees)
 {
     switch (degrees) {
     case 90:
@@ -551,7 +551,7 @@ void bun_image_rotate_rgba8(const uint8_t* src, int32_t w, int32_t h, uint8_t* d
     }
 }
 
-void bun_image_flip_rgba8(const uint8_t* src, int32_t w, int32_t h, uint8_t* dst, int32_t horizontal)
+void fun_image_flip_rgba8(const uint8_t* src, int32_t w, int32_t h, uint8_t* dst, int32_t horizontal)
 {
     if (horizontal)
         HWY_DYNAMIC_DISPATCH(FlipHImpl)(src, w, h, dst);
@@ -559,12 +559,12 @@ void bun_image_flip_rgba8(const uint8_t* src, int32_t w, int32_t h, uint8_t* dst
         HWY_DYNAMIC_DISPATCH(FlipVImpl)(src, w, h, dst);
 }
 
-void bun_image_modulate_rgba8(uint8_t* buf, size_t len, float brightness, float saturation)
+void fun_image_modulate_rgba8(uint8_t* buf, size_t len, float brightness, float saturation)
 {
     HWY_DYNAMIC_DISPATCH(ModulateImpl)(buf, len, brightness, saturation);
 }
 
-uint32_t bun_image_nearest_palette(const uint8_t* palette, uint32_t k,
+uint32_t fun_image_nearest_palette(const uint8_t* palette, uint32_t k,
     int32_t r, int32_t g, int32_t b, int32_t a)
 {
     return HWY_DYNAMIC_DISPATCH(NearestPaletteImpl)(palette, k, r, g, b, a);
@@ -572,5 +572,5 @@ uint32_t bun_image_nearest_palette(const uint8_t* palette, uint32_t k,
 
 } // extern "C"
 
-} // namespace bun_image
+} // namespace fun_image
 #endif // HWY_ONCE

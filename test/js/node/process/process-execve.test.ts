@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 
 describe.concurrent("process.execve", () => {
   test("is a function", () => {
@@ -25,9 +25,9 @@ describe.concurrent("process.execve", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -64,9 +64,9 @@ describe.concurrent("process.execve", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -80,13 +80,13 @@ describe.concurrent("process.execve", () => {
   });
 
   test.skipIf(isWindows)("aborts with ENOENT when the path does not exist", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `process.execve(process.execPath + "_does_not_exist", [process.execPath], { ...process.env });`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -123,9 +123,9 @@ describe.concurrent("process.execve", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -139,9 +139,9 @@ describe.concurrent("process.execve", () => {
   });
 
   test.skipIf(isWindows)("validates arguments", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const codes = [];
@@ -156,7 +156,7 @@ describe.concurrent("process.execve", () => {
           console.log(JSON.stringify(codes));
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

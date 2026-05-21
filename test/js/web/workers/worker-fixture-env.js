@@ -1,4 +1,4 @@
-Bun.inspect(process.env);
+Fun.inspect(process.env);
 
 onmessage = () => {
   postMessage({

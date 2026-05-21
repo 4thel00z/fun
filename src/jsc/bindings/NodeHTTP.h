@@ -1,6 +1,6 @@
 #include "config.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsHTTPAssignHeaders);
 JSC_DECLARE_HOST_FUNCTION(jsHTTPGetHeader);

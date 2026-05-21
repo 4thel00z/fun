@@ -634,7 +634,7 @@ test("no assertion failures 2", () => {
     const err = new Error("foo");
     const err2 = new Error("foo\nbar");
     assert.strictEqual(util.inspect(err, { compact: true }), "[Error: foo]");
-    //assert(err.stack); //! skipped test, broken in bun
+    //assert(err.stack); //! skipped test, broken in fun
     delete err.stack;
     assert(!err.stack);
     assert.strictEqual(util.inspect(err, { compact: true }), "[Error: foo]");
@@ -1854,7 +1854,7 @@ test("no assertion failures 3", () => {
   ].forEach(([Class, message], i) => {
     const foo = new Class(message);
     const extra = Class.name.includes("Error") ? "" : ` [${foo.name}]`;
-    // TODO: Bun messes with `Error.stack` and this causes this to fail
+    // TODO: Fun messes with `Error.stack` and this causes this to fail
     // assert(
     //   util.inspect(foo).startsWith(`${Class.name}${extra}${message ? `: ${message}` : "\n"}`),
     //   util.inspect(foo) + "\n...did not start with: " + `${Class.name}${extra}${message ? `: ${message}` : "\n"}`,
@@ -1871,7 +1871,7 @@ test("no assertion failures 3", () => {
       `Expected to start with: "[This is a stack]"\nFound: "${util.inspect(foo)}"`,
     );
     foo.stack = stack;
-    // TODO: Bun messes with `Error.stack` and this causes this to fail
+    // TODO: Fun messes with `Error.stack` and this causes this to fail
     // assert(
     //   util.inspect(foo).startsWith(`${Class.name} [WOW]${extra}${message ? `: ${message}` : "\n"}`),
     //   util.inspect(foo),
@@ -2763,7 +2763,7 @@ test("no assertion failures 3", () => {
     const sl = isWindows ? "\\" : "/";
 
     // Use a fake stack to verify the expected colored outcome.
-    //? Something goes wrong with these file URLs but Bun doesn't use those in errors anyway so it's fine (for now at least)
+    //? Something goes wrong with these file URLs but Fun doesn't use those in errors anyway so it's fine (for now at least)
     err.stack =
       "Error: ESM and CJS mixed are both grayed out!\n" +
       //?`    at ${encodedCwd}/test/parallel/test-esm.mjs:2760:12\n` +
@@ -2816,7 +2816,7 @@ test("no assertion failures 3", () => {
       const trace = require("trace_events").createTracing({ categories: ["fo"] });
       const actualDepth0 = util.inspect({ trace }, { depth: 0 });
       assert.strictEqual(actualDepth0, "{ trace: [Tracing] }");
-      //! bun's tracing_events implementation is buggy/incomplete (?)
+      //! fun's tracing_events implementation is buggy/incomplete (?)
       //const actualDepth1 = util.inspect({ trace }, { depth: 1 });
       //assert.strictEqual(
       //  actualDepth1,

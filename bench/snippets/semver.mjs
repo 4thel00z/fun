@@ -113,9 +113,9 @@ bench("semver.satisfies x " + tests.length, () => {
   }
 });
 
-if (typeof Bun !== "undefined") {
-  const satisfies = Bun.semver.satisfies;
-  bench("Bun.semver.satisfies x " + tests.length, () => {
+if (typeof Fun !== "undefined") {
+  const satisfies = Fun.semver.satisfies;
+  bench("Fun.semver.satisfies x " + tests.length, () => {
     for (const [range, version, expected] of tests) {
       if (satisfies(version, range) !== expected) {
         throw new Error("Unexpected result for " + range + " " + version);
@@ -130,9 +130,9 @@ bench("semver.satisfies", () => {
     throw new Error("Unexpected result for " + range + " " + version);
   }
 });
-if (typeof Bun !== "undefined") {
-  const satisfies = Bun.semver.satisfies;
-  bench("Bun.semver.satisfies", () => {
+if (typeof Fun !== "undefined") {
+  const satisfies = Fun.semver.satisfies;
+  bench("Fun.semver.satisfies", () => {
     const [range, version, expected] = tests[0];
     if (satisfies(version, range) !== expected) {
       throw new Error("Unexpected result for " + range + " " + version);

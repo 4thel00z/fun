@@ -8,7 +8,7 @@ import http from "node:http";
 import path from "node:path";
 import { tls as tlsCerts } from "../../../harness";
 
-const wss = Bun.serve({
+const wss = Fun.serve({
   port: 0,
   tls: { cert: tlsCerts.cert, key: tlsCerts.key },
   fetch(req, server) {

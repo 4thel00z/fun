@@ -291,7 +291,7 @@ pub fn VisitStmt(
                         if (p.current_scope.parent == null and p.will_wrap_module_in_try_catch_for_using) {
                             try stmts.ensureUnusedCapacity(2);
 
-                            const decls = bun.handleOom(p.allocator.alloc(G.Decl, 1));
+                            const decls = fun.handleOom(p.allocator.alloc(G.Decl, 1));
                             decls[0] = .{
                                 .binding = p.b(B.Identifier{ .ref = data.default_name.ref.? }, data.default_name.loc),
                                 .value = data.value.expr,
@@ -299,7 +299,7 @@ pub fn VisitStmt(
                             stmts.appendAssumeCapacity(p.s(S.Local{
                                 .decls = G.Decl.List.fromOwnedSlice(decls),
                             }, stmt.loc));
-                            const items = bun.handleOom(p.allocator.alloc(js_ast.ClauseItem, 1));
+                            const items = fun.handleOom(p.allocator.alloc(js_ast.ClauseItem, 1));
                             items[0] = js_ast.ClauseItem{
                                 .alias = "default",
                                 .alias_loc = data.default_name.loc,
@@ -347,7 +347,7 @@ pub fn VisitStmt(
                             }
 
                             if (react_hook_data) |*hook| {
-                                bun.handleOom(stmts.append(p.getReactRefreshHookSignalDecl(hook.signature_cb)));
+                                fun.handleOom(stmts.append(p.getReactRefreshHookSignalDecl(hook.signature_cb)));
 
                                 data.value = .{
                                     .expr = p.getReactRefreshHookSignalInit(hook, p.newExpr(
@@ -368,7 +368,7 @@ pub fn VisitStmt(
                             }
 
                             if (p.options.features.react_fast_refresh and
-                                (ReactRefresh.isComponentishName(name) or bun.strings.eqlComptime(name, "default")))
+                                (ReactRefresh.isComponentishName(name) or fun.strings.eqlComptime(name, "default")))
                             {
                                 // If server components or react refresh had wrapped the value (convert to .expr)
                                 // then a temporary variable must be emitted.
@@ -406,7 +406,7 @@ pub fn VisitStmt(
                                                 .value = data.value.expr,
                                             },
                                         }),
-                                    }, stmt.loc)) catch |err| bun.handleOom(err);
+                                    }, stmt.loc)) catch |err| fun.handleOom(err);
 
                                     data.value = .{ .expr = .initIdentifier(ref_to_use, stmt.loc) };
 
@@ -522,7 +522,7 @@ pub fn VisitStmt(
                 data.func = p.visitFunc(data.func, data.func.open_parens_loc);
 
                 const name_ref = data.func.name.?.ref.?;
-                bun.assert(name_ref.tag == .symbol);
+                fun.assert(name_ref.tag == .symbol);
                 const name_symbol = &p.symbols.items[name_ref.innerIndex()];
                 const original_name = name_symbol.original_name;
 
@@ -530,8 +530,8 @@ pub fn VisitStmt(
                 if (data.func.flags.contains(.is_export) and p.enclosing_namespace_arg_ref != null) {
                     data.func.flags.remove(.is_export);
 
-                    const enclosing_namespace_arg_ref = p.enclosing_namespace_arg_ref orelse bun.outOfMemory();
-                    bun.handleOom(stmts.ensureUnusedCapacity(3));
+                    const enclosing_namespace_arg_ref = p.enclosing_namespace_arg_ref orelse fun.outOfMemory();
+                    fun.handleOom(stmts.ensureUnusedCapacity(3));
                     stmts.appendAssumeCapacity(stmt.*);
                     stmts.appendAssumeCapacity(Stmt.assign(
                         p.newExpr(E.Dot{
@@ -563,7 +563,7 @@ pub fn VisitStmt(
                             }}),
                         }, stmt.loc));
                     } else {
-                        bun.handleOom(stmts.append(stmt.*));
+                        fun.handleOom(stmts.append(stmt.*));
                     }
                 } else if (mark_as_dead) {
                     if (p.options.features.replace_exports.getPtr(original_name)) |replacement| {
@@ -1232,7 +1232,7 @@ pub fn VisitStmt(
                         const first = p.s(S.Local{
                             .kind = init2.kind,
                             .decls = bindings: {
-                                const decls = bun.handleOom(p.allocator.alloc(G.Decl, 1));
+                                const decls = fun.handleOom(p.allocator.alloc(G.Decl, 1));
                                 decls[0] = .{
                                     .binding = p.b(B.Identifier{ .ref = id.ref }, loc),
                                     .value = p.newExpr(E.Identifier{ .ref = temp_ref }, loc),
@@ -1242,7 +1242,7 @@ pub fn VisitStmt(
                         }, loc);
 
                         const length = if (data.body.data == .s_block) data.body.data.s_block.stmts.len else 1;
-                        const statements = bun.handleOom(p.allocator.alloc(Stmt, 1 + length));
+                        const statements = fun.handleOom(p.allocator.alloc(Stmt, 1 + length));
                         statements[0] = first;
                         if (data.body.data == .s_block) {
                             @memcpy(statements[1..], data.body.data.s_block.stmts);
@@ -1405,7 +1405,7 @@ pub fn VisitStmt(
                                     p.allocator,
                                     value.ref,
                                     .{ .enum_number = num.value },
-                                ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err);
 
                                 next_numeric_value = num.value + 1.0;
                             },
@@ -1418,7 +1418,7 @@ pub fn VisitStmt(
                                     p.allocator,
                                     value.ref,
                                     .{ .enum_string = str },
-                                ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err);
                             },
                             else => {
                                 if (visited.knownPrimitive() == .string) {
@@ -1441,12 +1441,12 @@ pub fn VisitStmt(
                             p.allocator,
                             value.ref,
                             .{ .enum_number = num },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     } else {
                         value.value = p.newExpr(E.Undefined{}, value.loc);
                     }
 
-                    const is_assign_target = p.options.features.minify_syntax and bun.js_lexer.isIdentifier(value.name);
+                    const is_assign_target = p.options.features.minify_syntax and fun.js_lexer.isIdentifier(value.name);
 
                     const name_as_e_string = if (!is_assign_target or !has_string_value)
                         p.newExpr(value.nameAsEString(allocator), value.loc)
@@ -1483,7 +1483,7 @@ pub fn VisitStmt(
 
                     // String-valued enums do not form a two-way map
                     if (has_string_value) {
-                        bun.handleOom(value_exprs.append(assign_target));
+                        fun.handleOom(value_exprs.append(assign_target));
                     } else {
                         // "Enum[assignTarget] = 'Name'"
                         value_exprs.append(
@@ -1497,7 +1497,7 @@ pub fn VisitStmt(
                                 }, value.loc),
                                 name_as_e_string.?,
                             ),
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         p.recordUsage(data.arg);
                     }
                 }
@@ -1569,13 +1569,13 @@ pub fn VisitStmt(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const assert = fun.assert;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -1586,7 +1586,7 @@ const Stmt = js_ast.Stmt;
 const G = js_ast.G;
 const Decl = G.Decl;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const JSXTransformType = js_parser.JSXTransformType;
 const Prefill = js_parser.Prefill;
 const PrependTempRefsOpts = js_parser.PrependTempRefsOpts;

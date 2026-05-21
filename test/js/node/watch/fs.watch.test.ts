@@ -1,9 +1,9 @@
-import { pathToFileURL } from "bun";
-import { bunEnv, bunExe, bunRun, bunRunAsScript, isMacOS, isWindows, tempDir, tempDirWithFiles } from "harness";
+import { pathToFileURL } from "fun";
+import { funEnv, funExe, funRun, funRunAsScript, isMacOS, isWindows, tempDir, tempDirWithFiles } from "harness";
 import fs, { FSWatcher } from "node:fs";
 import path from "path";
 
-import { describe, expect, mock, test } from "bun:test";
+import { describe, expect, mock, test } from "fun:test";
 // Because macOS (and possibly other operating systems) can return a watcher
 // before it is actually watching, we need to repeat the operation to avoid
 // a race condition.
@@ -31,7 +31,7 @@ describe("fs.watch", () => {
   test("non-persistent watcher should not block the event loop", done => {
     try {
       // https://github.com/joyent/node/issues/2293 - non-persistent watcher should not block the event loop
-      bunRun(path.join(import.meta.dir, "fixtures", "persistent.js"));
+      funRun(path.join(import.meta.dir, "fixtures", "persistent.js"));
       done();
     } catch (e: any) {
       done(e);
@@ -40,7 +40,7 @@ describe("fs.watch", () => {
 
   test("watcher should close and not block the event loop", done => {
     try {
-      bunRun(path.join(import.meta.dir, "fixtures", "close.js"));
+      funRun(path.join(import.meta.dir, "fixtures", "close.js"));
       done();
     } catch (e: any) {
       done(e);
@@ -49,7 +49,7 @@ describe("fs.watch", () => {
 
   test("unref watcher should not block the event loop", done => {
     try {
-      bunRun(path.join(import.meta.dir, "fixtures", "unref.js"));
+      funRun(path.join(import.meta.dir, "fixtures", "unref.js"));
       done();
     } catch (e: any) {
       done(e);
@@ -58,7 +58,7 @@ describe("fs.watch", () => {
 
   test("should work with relative files", done => {
     try {
-      bunRunAsScript(testDir, path.join(import.meta.dir, "fixtures", "relative.js"));
+      funRunAsScript(testDir, path.join(import.meta.dir, "fixtures", "relative.js"));
       done();
     } catch (e: any) {
       done(e);
@@ -72,7 +72,7 @@ describe("fs.watch", () => {
         fs.mkdirSync(myrelativedir);
       } catch {}
       fs.writeFileSync(path.join(myrelativedir, "relative.txt"), "hello");
-      bunRunAsScript(testDir, path.join(import.meta.dir, "fixtures", "relative_dir.js"));
+      funRunAsScript(testDir, path.join(import.meta.dir, "fixtures", "relative_dir.js"));
       done();
     } catch (e: any) {
       done(e);
@@ -126,7 +126,7 @@ describe("fs.watch", () => {
     watcher.on("close", fn);
     controller.abort(new Error("potato"));
 
-    await Bun.sleep(10);
+    await Fun.sleep(10);
     expect(fn).toHaveBeenCalledTimes(2);
     expect(fn.mock.calls[0][0].message).toBe("potato");
   });
@@ -199,7 +199,7 @@ describe("fs.watch", () => {
     });
   });
 
-  // https://github.com/oven-sh/bun/issues/5442
+  // https://github.com/underdoc-org/fun/issues/5442
   test("should work with paths with trailing slashes", done => {
     const testsubdir = tempDirWithFiles("subdir", {
       "trailing.txt": "hello",
@@ -425,7 +425,7 @@ describe("fs.watch", () => {
       watcher.once("error", err => (err.message === "The operation was aborted." ? resolve(undefined) : reject(err)));
       watcher.once("close", () => reject());
     });
-    await Bun.sleep(10);
+    await Fun.sleep(10);
     ac.abort();
     await promise;
   });
@@ -609,7 +609,7 @@ describe("fs.promises.watch", () => {
         expect(e.message).toBe("The operation was aborted.");
       }
     })();
-    await Bun.sleep(10);
+    await Fun.sleep(10);
     ac.abort();
     await promise;
   });
@@ -755,16 +755,16 @@ describe("closed FSWatcher is collectable", () => {
 
         (async () => {
           for (let i = 0; i < 30 && collected < ITERS; i++) {
-            Bun.gc(true);
-            await Bun.sleep(10);
+            Fun.gc(true);
+            await Fun.sleep(10);
           }
           console.log(JSON.stringify({ collected, iters: ITERS }));
         })();
       `;
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", fixture],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", fixture],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -787,9 +787,9 @@ describe("closed FSWatcher is collectable", () => {
 // fs.watch() on the same path collided with the poisoned entry, returned the garbage value
 // as a *PathWatcher, and segfaulted at 0xFFFFFFFFFFFFFFFF calling .handlers.put() on it.
 //
-// https://github.com/oven-sh/bun/issues/26254
-// https://github.com/oven-sh/bun/issues/20203
-// https://github.com/oven-sh/bun/issues/19635
+// https://github.com/underdoc-org/fun/issues/26254
+// https://github.com/underdoc-org/fun/issues/20203
+// https://github.com/underdoc-org/fun/issues/19635
 //
 // Must run in a subprocess: on an unpatched build this segfaults the whole runtime.
 test.skipIf(!isWindows)("retrying a failed fs.watch does not crash (windows)", async () => {
@@ -827,10 +827,10 @@ test.skipIf(!isWindows)("retrying a failed fs.watch does not crash (windows)", a
     console.log("OK");
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", fixture],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", fixture],
     cwd: base,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -857,9 +857,9 @@ test.skipIf(!isMacOS)("fs.watch(dir) on macOS does not leak the resolved FSEvent
   });
   const watchDir = path.join(String(dir), seg, seg, seg);
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "--smol",
       "-e",
       /* ts */ `
@@ -869,7 +869,7 @@ test.skipIf(!isMacOS)("fs.watch(dir) on macOS does not leak the resolved FSEvent
         // Warm up: let the FSEvents loop thread, mimalloc pools, and the
         // PathWatcherManager fd cache reach steady state.
         for (let i = 0; i < 1000; i++) fs.watch(dir, () => {}).close();
-        Bun.gc(true);
+        Fun.gc(true);
         const before = process.memoryUsage.rss();
 
         // With a ~700-byte resolved path, 5000 leaked dupeZ buffers is
@@ -877,7 +877,7 @@ test.skipIf(!isMacOS)("fs.watch(dir) on macOS does not leak the resolved FSEvent
         // low enough that rapid FSEventStream recreate doesn't exhaust the
         // kernel queue (FSEventStreamCreate -> NULL).
         for (let i = 0; i < 5000; i++) fs.watch(dir, () => {}).close();
-        Bun.gc(true);
+        Fun.gc(true);
         const after = process.memoryUsage.rss();
 
         const growthMB = (after - before) / 1024 / 1024;
@@ -888,7 +888,7 @@ test.skipIf(!isMacOS)("fs.watch(dir) on macOS does not leak the resolved FSEvent
       `,
       watchDir,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

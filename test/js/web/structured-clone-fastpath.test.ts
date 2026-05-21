@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("Structured Clone Fast Path", () => {
   test("structuredClone should work with empty object", () => {
@@ -61,12 +61,12 @@ describe("Structured Clone Fast Path", () => {
     for (let i = 0; i < 100; i++) {
       clones.push(structuredClone(largeString));
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const rss = process.memoryUsage.rss();
     for (let i = 0; i < 10000; i++) {
       clones.push(structuredClone(largeString));
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const rss2 = process.memoryUsage.rss();
     const delta = rss2 - rss;
     expect(delta).toBeLessThan(1024 * 1024 * 8);
@@ -79,12 +79,12 @@ describe("Structured Clone Fast Path", () => {
     for (let i = 0; i < 100; i++) {
       structuredClone(largeValue);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const rss = process.memoryUsage.rss();
     for (let i = 0; i < 10000; i++) {
       structuredClone(largeValue);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const rss2 = process.memoryUsage.rss();
     const delta = rss2 - rss;
     expect(delta).toBeLessThan(1024 * 1024);
@@ -412,7 +412,7 @@ describe("Structured Clone Fast Path", () => {
     for (let i = 0; i < 100; i++) {
       expect(structuredClone(largeValue)).toStrictEqual(largeValue);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     for (let i = 0; i < 100; i++) {
       expect(structuredClone(largeValue)).toStrictEqual(largeValue);
     }
@@ -752,9 +752,9 @@ describe("Structured Clone Fast Path", () => {
     const clones: any[] = [];
     for (let i = 0; i < 50; i++) {
       clones.push(structuredClone(input));
-      if (i % 10 === 0) Bun.gc(true);
+      if (i % 10 === 0) Fun.gc(true);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     // Verify all clones are still valid after GC
     for (const clone of clones) {
       expect(clone.length).toBe(100);
@@ -772,7 +772,7 @@ describe("Structured Clone Fast Path", () => {
     for (let i = 0; i < 200; i++) {
       const cloned = structuredClone(input);
       expect(cloned.length).toBe(50);
-      if (i % 20 === 0) Bun.gc(true);
+      if (i % 20 === 0) Fun.gc(true);
     }
   });
 

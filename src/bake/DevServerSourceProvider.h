@@ -10,8 +10,8 @@ namespace Bake {
 class DevServerSourceProvider;
 
 // Function to be implemented in Zig to register the source provider
-extern "C" void Bun__addDevServerSourceProvider(void* bun_vm, DevServerSourceProvider* opaque_source_provider, BunString* specifier);
-extern "C" void Bun__removeDevServerSourceProvider(void* bun_vm, DevServerSourceProvider* opaque_source_provider, BunString* specifier);
+extern "C" void Fun__addDevServerSourceProvider(void* fun_vm, DevServerSourceProvider* opaque_source_provider, FunString* specifier);
+extern "C" void Fun__removeDevServerSourceProvider(void* fun_vm, DevServerSourceProvider* opaque_source_provider, FunString* specifier);
 
 class DevServerSourceProvider final : public JSC::StringSourceProvider {
 public:
@@ -27,10 +27,10 @@ public:
     {
         auto provider = adoptRef(*new DevServerSourceProvider(source, sourceMapJSONPtr, sourceMapJSONLength, sourceOrigin, WTF::move(sourceURL), startPosition, sourceType));
         auto* zigGlobalObject = uncheckedDowncast<::Zig::GlobalObject>(globalObject);
-        auto specifier = Bun::toString(provider->sourceURL());
+        auto specifier = Fun::toString(provider->sourceURL());
         provider->m_globalObject = zigGlobalObject;
         provider->m_specifier = specifier;
-        Bun__addDevServerSourceProvider(zigGlobalObject->bunVM(), provider.ptr(), &specifier);
+        Fun__addDevServerSourceProvider(zigGlobalObject->funVM(), provider.ptr(), &specifier);
         return provider;
     }
 
@@ -62,13 +62,13 @@ private:
     ~DevServerSourceProvider()
     {
         if (m_globalObject) {
-            Bun__removeDevServerSourceProvider(m_globalObject->bunVM(), this, &m_specifier);
+            Fun__removeDevServerSourceProvider(m_globalObject->funVM(), this, &m_specifier);
         }
     }
 
     MiString m_sourceMapJSON;
     Zig::GlobalObject* m_globalObject;
-    BunString m_specifier;
+    FunString m_specifier;
 };
 
 } // namespace Bake

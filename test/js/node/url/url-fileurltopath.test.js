@@ -1,4 +1,4 @@
-import { describe, test } from "bun:test";
+import { describe, test } from "fun:test";
 import { isWindows } from "harness";
 import assert from "node:assert";
 import url, { URL } from "node:url";

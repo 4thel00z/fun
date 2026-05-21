@@ -2,5 +2,5 @@ pub const Dir = struct {
     fd: FD,
 };
 
-const bun = @import("bun");
-const FD = bun.FD;
+const fun = @import("fun");
+const FD = fun.FD;

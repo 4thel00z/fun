@@ -3,10 +3,10 @@
 #include "NodeValidator.h"
 #include "ncrypto.h"
 
-using namespace Bun;
+using namespace Fun;
 using namespace JSC;
 
-extern "C" void Bun__EcKeyPairJobCtx__deinit(EcKeyPairJobCtx* ctx)
+extern "C" void Fun__EcKeyPairJobCtx__deinit(EcKeyPairJobCtx* ctx)
 {
     ctx->deinit();
 }
@@ -16,7 +16,7 @@ void EcKeyPairJobCtx::deinit()
     delete this;
 }
 
-extern "C" void Bun__EcKeyPairJobCtx__runTask(EcKeyPairJobCtx* ctx, JSGlobalObject* globalObject)
+extern "C" void Fun__EcKeyPairJobCtx__runTask(EcKeyPairJobCtx* ctx, JSGlobalObject* globalObject)
 {
     ncrypto::EVPKeyCtxPointer keyCtx = ctx->setup();
     if (!keyCtx) {
@@ -25,29 +25,29 @@ extern "C" void Bun__EcKeyPairJobCtx__runTask(EcKeyPairJobCtx* ctx, JSGlobalObje
     ctx->runTask(globalObject, keyCtx);
 }
 
-extern "C" void Bun__EcKeyPairJobCtx__runFromJS(EcKeyPairJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
+extern "C" void Fun__EcKeyPairJobCtx__runFromJS(EcKeyPairJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
 {
     ctx->runFromJS(globalObject, JSValue::decode(callback));
 }
 
-extern "C" EcKeyPairJob* Bun__EcKeyPairJob__create(JSGlobalObject* globalObject, EcKeyPairJobCtx* ctx, EncodedJSValue callback);
+extern "C" EcKeyPairJob* Fun__EcKeyPairJob__create(JSGlobalObject* globalObject, EcKeyPairJobCtx* ctx, EncodedJSValue callback);
 EcKeyPairJob* EcKeyPairJob::create(JSGlobalObject* globalObject, EcKeyPairJobCtx&& ctx, JSValue callback)
 {
     EcKeyPairJobCtx* ctxCopy = new EcKeyPairJobCtx(WTF::move(ctx));
-    return Bun__EcKeyPairJob__create(globalObject, ctxCopy, JSValue::encode(callback));
+    return Fun__EcKeyPairJob__create(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
-extern "C" void Bun__EcKeyPairJob__schedule(EcKeyPairJob* job);
+extern "C" void Fun__EcKeyPairJob__schedule(EcKeyPairJob* job);
 void EcKeyPairJob::schedule()
 {
-    Bun__EcKeyPairJob__schedule(this);
+    Fun__EcKeyPairJob__schedule(this);
 }
 
-extern "C" void Bun__EcKeyPairJob__createAndSchedule(JSGlobalObject* globalObject, EcKeyPairJobCtx* ctx, EncodedJSValue callback);
+extern "C" void Fun__EcKeyPairJob__createAndSchedule(JSGlobalObject* globalObject, EcKeyPairJobCtx* ctx, EncodedJSValue callback);
 void EcKeyPairJob::createAndSchedule(JSGlobalObject* globalObject, EcKeyPairJobCtx&& ctx, JSValue callback)
 {
     EcKeyPairJobCtx* ctxCopy = new EcKeyPairJobCtx(WTF::move(ctx));
-    Bun__EcKeyPairJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
+    Fun__EcKeyPairJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
 ncrypto::EVPKeyCtxPointer EcKeyPairJobCtx::setup()

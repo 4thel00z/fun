@@ -1,18 +1,18 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isPosix } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isPosix } from "harness";
 import { join } from "path";
 
-// https://github.com/oven-sh/bun/issues/5828
-test.if(isPosix)("bun bun.lockb handles BrokenPipe gracefully", async () => {
+// https://github.com/underdoc-org/fun/issues/5828
+test.if(isPosix)("fun fun.lockb handles BrokenPipe gracefully", async () => {
   // Use an existing lockfile that has enough content to trigger the BrokenPipe
   // The sharp integration test has a lockfile with many dependencies
-  const lockfilePath = join(import.meta.dir, "../../integration/sharp/bun.lockb");
+  const lockfilePath = join(import.meta.dir, "../../integration/sharp/fun.lockb");
 
   // Simulate piping to a command that closes stdin immediately (like `true`)
-  // This tests that `bun bun.lockb` doesn't crash with BrokenPipe error
-  await using proc = Bun.spawn({
-    cmd: ["sh", "-c", `${bunExe()} ${lockfilePath} | true`],
-    env: bunEnv,
+  // This tests that `fun fun.lockb` doesn't crash with BrokenPipe error
+  await using proc = Fun.spawn({
+    cmd: ["sh", "-c", `${funExe()} ${lockfilePath} | true`],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

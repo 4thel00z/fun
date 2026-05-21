@@ -15,7 +15,7 @@
 // IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import { unsortedPrereleases } from "./semver-fixture.js";
-const { satisfies, order } = Bun.semver;
+const { satisfies, order } = Fun.semver;
 
 function testSatisfiesExact(left: any, right: any, expected: boolean) {
   expect(satisfies(left, right)).toBe(expected);
@@ -39,7 +39,7 @@ function testSatisfies(right: any, left: any, expected: boolean) {
   expect(satisfies(left, rightBuffer)).toBe(expected);
 }
 
-describe("Bun.semver.order()", () => {
+describe("Fun.semver.order()", () => {
   test("whitespace bug fix", () => {
     expect(
       order(
@@ -105,7 +105,7 @@ describe("Bun.semver.order()", () => {
     }
   });
 
-  // not supported by semver, but supported by Bun
+  // not supported by semver, but supported by Fun
   test.each([
     ["0", "0.0"],
     ["1", "1.0"],
@@ -179,7 +179,7 @@ describe("Bun.semver.order()", () => {
   });
 });
 
-describe("Bun.semver.satisfies()", () => {
+describe("Fun.semver.satisfies()", () => {
   test("expected errors", () => {
     expect(satisfies).toBeInstanceOf(Function);
     expect(() => {
@@ -225,7 +225,7 @@ describe("Bun.semver.satisfies()", () => {
         expect().fail("Expected false");
       }
     }
-    Bun.gc(true);
+    Fun.gc(true);
   });
 
   test("exact versions", () => {
@@ -608,7 +608,7 @@ describe("Bun.semver.satisfies()", () => {
 
       // [">=1.0.0 <=1.1.0", "1.1.0-pre", { includePrerelease: true }],
 
-      // https://github.com/oven-sh/bun/issues/8040
+      // https://github.com/underdoc-org/fun/issues/8040
       [">=3.3.0-beta.1 <3.4.0-beta.3", "3.3.1"],
       ["^3.3.0-beta.1", "3.4.0"],
     ];
@@ -725,7 +725,7 @@ describe("Bun.semver.satisfies()", () => {
 
       ["== 1.0.0 || foo", "2.0.0"],
 
-      // https://github.com/oven-sh/bun/issues/8040
+      // https://github.com/underdoc-org/fun/issues/8040
       [">=3.3.0-beta.1 <3.4.0-beta.3", "3.4.5"],
     ];
 
@@ -735,6 +735,6 @@ describe("Bun.semver.satisfies()", () => {
   });
 
   test("pre-release snapshot", () => {
-    expect(unsortedPrereleases.sort(Bun.semver.order)).toMatchSnapshot();
+    expect(unsortedPrereleases.sort(Fun.semver.order)).toMatchSnapshot();
   });
 });

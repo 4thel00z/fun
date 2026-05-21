@@ -27,7 +27,7 @@
 #include "config.h"
 #include "MessagePort.h"
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "EventNames.h"
 #include "MessageEvent.h"
 #include "MessagePortPipe.h"
@@ -36,7 +36,7 @@
 #include "WebCoreOpaqueRoot.h"
 #include <wtf/TZoneMallocInlines.h>
 
-extern "C" void Bun__eventLoop__incrementRefConcurrently(void* bunVM, int delta);
+extern "C" void Fun__eventLoop__incrementRefConcurrently(void* funVM, int delta);
 
 namespace WebCore {
 
@@ -341,7 +341,7 @@ void MessagePort::jsRef(JSGlobalObject* lexicalGlobalObject)
     if (!m_hasRef) {
         m_hasRef = true;
         ref();
-        Bun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->bunVM, 1);
+        Fun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->funVM, 1);
     }
 }
 
@@ -350,7 +350,7 @@ void MessagePort::jsUnref(JSGlobalObject* lexicalGlobalObject)
     if (m_hasRef) {
         m_hasRef = false;
         deref();
-        Bun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->bunVM, -1);
+        Fun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->funVM, -1);
     }
 }
 

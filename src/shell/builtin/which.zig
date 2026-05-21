@@ -31,8 +31,8 @@ pub fn start(this: *Which) Yield {
     }
 
     if (this.bltn().stdout.needsIO() == null) {
-        const path_buf = bun.path_buffer_pool.get();
-        defer bun.path_buffer_pool.put(path_buf);
+        const path_buf = fun.path_buffer_pool.get();
+        defer fun.path_buffer_pool.put(path_buf);
         const PATH = this.bltn().parentCmd().base.shell.export_env.get(EnvStr.initSlice("PATH")) orelse EnvStr.initSlice("");
         defer PATH.deref();
         var had_not_found = false;
@@ -70,8 +70,8 @@ pub fn next(this: *Which) Yield {
     const arg_raw = multiargs.args_slice[multiargs.arg_idx];
     const arg = arg_raw[0..std.mem.len(arg_raw)];
 
-    const path_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(path_buf);
+    const path_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(path_buf);
     const PATH = this.bltn().parentCmd().base.shell.export_env.get(EnvStr.initSlice("PATH")) orelse EnvStr.initSlice("");
     defer PATH.deref();
 
@@ -98,7 +98,7 @@ pub fn next(this: *Which) Yield {
 }
 
 fn argComplete(this: *Which) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .multi_args and this.state.multi_args.state == .waiting_write);
     }
 
@@ -108,7 +108,7 @@ fn argComplete(this: *Which) Yield {
 }
 
 pub fn onIOWriterChunk(this: *Which, _: usize, e: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .one_arg or
             (this.state == .multi_args and this.state.multi_args.state == .waiting_write));
     }
@@ -137,7 +137,7 @@ pub inline fn bltn(this: *Which) *Builtin {
 }
 
 // --
-const log = bun.Output.scoped(.which, .hidden);
+const log = fun.Output.scoped(.which, .hidden);
 
 const std = @import("std");
 
@@ -147,10 +147,10 @@ const EnvStr = interpreter.EnvStr;
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
-const which = bun.which;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
+const which = fun.which;
 
-const shell = bun.shell;
-const Yield = bun.shell.Yield;
+const shell = fun.shell;
+const Yield = fun.shell.Yield;

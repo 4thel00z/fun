@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { isWindows } from "harness";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";

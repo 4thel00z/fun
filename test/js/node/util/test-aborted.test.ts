@@ -1,7 +1,7 @@
 // Most of this test was copied from
 // https://github.com/nodejs/node/blob/2eff28fb7a93d3f672f80b582f664a7c701569fb/test/parallel/test-aborted-util.js#L1-L60
-// and then translated to bun:test using Claude.
-import { expect, test } from "bun:test";
+// and then translated to fun:test using Claude.
+import { expect, test } from "fun:test";
 import { getEventListeners } from "events";
 import { aborted } from "util";
 
@@ -21,12 +21,12 @@ test("aborted works when provided a resource that was not already aborted", asyn
   globalThis.strong = strong;
   const abortedPromise = aborted(ac.signal, strong);
   expect(getEventListeners(ac.signal, "abort").length).toBe(1);
-  const sleepy = Bun.sleep(10).then(() => {
+  const sleepy = Fun.sleep(10).then(() => {
     ac.abort();
   });
   await 42;
   expect(ac.signal.aborted).toBe(false);
-  expect(Bun.peek.status(abortedPromise)).toBe("pending");
+  expect(Fun.peek.status(abortedPromise)).toBe("pending");
   await sleepy;
   await abortedPromise;
   expect(ac.signal.aborted).toBe(true);
@@ -57,7 +57,7 @@ test("aborted with gc cleanup", async () => {
   // wait for the object to be GC'd by ticking the event loop and forcing garbage collection
   while (!finalized) {
     await new Promise(resolve => setImmediate(resolve));
-    Bun.gc(true);
+    Fun.gc(true);
   }
   ac.abort();
 

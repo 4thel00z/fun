@@ -120,7 +120,7 @@ pub fn decodeUtf8(text: []const u8, off: usize) Utf8DecodeResult {
     const b0 = text[off];
     if (b0 < 0x80) return .{ .codepoint = b0, .len = 1 };
 
-    const seq_len = bun.strings.codepointSize(u8, b0);
+    const seq_len = fun.strings.codepointSize(u8, b0);
     if (seq_len == 0) return .{ .codepoint = 0xFFFD, .len = 1 };
     const remaining = text.len - off;
     if (remaining < seq_len) return .{ .codepoint = 0xFFFD, .len = 1 };
@@ -129,7 +129,7 @@ pub fn decodeUtf8(text: []const u8, off: usize) Utf8DecodeResult {
     const n: usize = @intCast(seq_len);
     @memcpy(buf[0..n], text[off..][0..n]);
 
-    const cp = bun.strings.decodeWTF8RuneT(&buf, seq_len, u21, 0xFFFD);
+    const cp = fun.strings.decodeWTF8RuneT(&buf, seq_len, u21, 0xFFFD);
     return .{ .codepoint = cp, .len = @intCast(seq_len) };
 }
 
@@ -151,7 +151,7 @@ pub fn decodeUtf8Backward(text: []const u8, off: usize) Utf8DecodeResult {
 
 /// Encode a Unicode codepoint as UTF-8.
 pub fn encodeUtf8(codepoint: u21, buf: *[4]u8) u3 {
-    return @intCast(bun.strings.encodeWTF8RuneT(buf, u21, codepoint));
+    return @intCast(fun.strings.encodeWTF8RuneT(buf, u21, codepoint));
 }
 
 /// Skip UTF-8 BOM if present at the start of the text.
@@ -164,7 +164,7 @@ pub fn skipUtf8Bom(text: []const u8) []const u8 {
 
 /// Case-insensitive ASCII comparison.
 pub fn asciiCaseEql(a: []const u8, b: []const u8) bool {
-    return bun.strings.eqlCaseInsensitiveASCIIICheckLength(a, b);
+    return fun.strings.eqlCaseInsensitiveASCIIICheckLength(a, b);
 }
 
 /// Find an HTML entity starting at `start` (which must point to '&').
@@ -349,7 +349,7 @@ pub fn decodeEntityToUtf8(entity_text: []const u8, out: *[8]u8) ?[]const u8 {
 /// Modifies text_buf in-place. Uses slug_counts for -N deduplication.
 pub fn generateSlug(
     text_buf: *std.ArrayListUnmanaged(u8),
-    slug_counts: *bun.StringHashMapUnmanaged(u32),
+    slug_counts: *fun.StringHashMapUnmanaged(u32),
     allocator: Allocator,
 ) []const u8 {
     const text_items = text_buf.items;
@@ -422,7 +422,7 @@ pub const HeadingIdTracker = struct {
     enabled: bool,
     in_heading: bool = false,
     text_buf: std.ArrayListUnmanaged(u8) = .{},
-    slug_counts: bun.StringHashMapUnmanaged(u32) = .{},
+    slug_counts: fun.StringHashMapUnmanaged(u32) = .{},
 
     pub fn init(enabled: bool) HeadingIdTracker {
         return .{ .enabled = enabled };
@@ -472,7 +472,7 @@ pub const HeadingIdTracker = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const entity_mod = @import("./entity.zig");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

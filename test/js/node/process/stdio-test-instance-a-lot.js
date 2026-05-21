@@ -1,4 +1,4 @@
-import { ArrayBufferSink } from "bun";
+import { ArrayBufferSink } from "fun";
 
 const sink = new ArrayBufferSink();
 

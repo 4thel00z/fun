@@ -521,7 +521,7 @@ pub fn CreateBinaryExpressionVisitor(
                         if (e_.left.data.as(.e_dot)) |dot| {
                             if (dot.target.data.as(.e_object)) |obj| {
                                 if (obj.properties.len == 0) {
-                                    if (!bun.strings.eqlComptime(dot.name, "__proto__"))
+                                    if (!fun.strings.eqlComptime(dot.name, "__proto__"))
                                         return e_.right;
                                 }
                             }
@@ -577,18 +577,18 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const Symbol = js_ast.Symbol;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const ExprIn = js_parser.ExprIn;
 const JSXTransformType = js_parser.JSXTransformType;
 const Prefill = js_parser.Prefill;

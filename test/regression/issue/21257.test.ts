@@ -1,8 +1,8 @@
 // Regression test for GitHub Issue #21257
-// https://github.com/oven-sh/bun/issues/21257
+// https://github.com/underdoc-org/fun/issues/21257
 // `Response.json()` should throw with top level value of `function` `symbol` `undefined` (node compatibility)
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("Response.json() throws TypeError for non-JSON serializable top-level values", () => {
   // These should throw "Value is not JSON serializable"

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { ChildProcess, exec } from "child_process";
 import { createServer } from "http";
 import { join } from "path";

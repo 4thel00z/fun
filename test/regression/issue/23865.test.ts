@@ -1,10 +1,10 @@
-import { bunEnv, bunExe, normalizeBunSnapshot } from "harness";
+import { funEnv, funExe, normalizeFunSnapshot } from "harness";
 
 // the test should time out, not crash
 test("23865", async () => {
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "test", "./23865.fixture.ts"],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "test", "./23865.fixture.ts"],
+    env: funEnv,
     cwd: import.meta.dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -13,8 +13,8 @@ test("23865", async () => {
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
   expect(exitCode).not.toBe(0);
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`"bun test <version> (<revision>)"`);
-  expect(normalizeBunSnapshot(stderr)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`"fun test <version> (<revision>)"`);
+  expect(normalizeFunSnapshot(stderr)).toMatchInlineSnapshot(`
     "23865.fixture.ts:
     (fail) abc
       ^ this test timed out after 50ms.

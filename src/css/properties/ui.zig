@@ -23,7 +23,7 @@ pub const ColorScheme = packed struct(u8) {
         return a == b;
     }
 
-    const Map = bun.ComptimeEnumMap(enum { normal, only, light, dark });
+    const Map = fun.ComptimeEnumMap(enum { normal, only, light, dark });
 
     pub fn parse(input: *css.Parser) css.Result(ColorScheme) {
         var res = ColorScheme{};
@@ -158,29 +158,29 @@ pub const ColorSchemeHandler = struct {
                     if (color_scheme.light) {
                         dest.append(
                             context.allocator,
-                            defineVar(context.allocator, "--buncss-light", .{ .ident = "initial" }),
-                        ) catch |err| bun.handleOom(err);
+                            defineVar(context.allocator, "--funcss-light", .{ .ident = "initial" }),
+                        ) catch |err| fun.handleOom(err);
                         dest.append(
                             context.allocator,
-                            defineVar(context.allocator, "--buncss-dark", .{ .whitespace = " " }),
-                        ) catch |err| bun.handleOom(err);
+                            defineVar(context.allocator, "--funcss-dark", .{ .whitespace = " " }),
+                        ) catch |err| fun.handleOom(err);
 
                         if (color_scheme.dark) {
                             context.addDarkRule(
                                 context.allocator,
-                                defineVar(context.allocator, "--buncss-light", .{ .whitespace = " " }),
+                                defineVar(context.allocator, "--funcss-light", .{ .whitespace = " " }),
                             );
                             context.addDarkRule(
                                 context.allocator,
-                                defineVar(context.allocator, "--buncss-dark", .{ .ident = "initial" }),
+                                defineVar(context.allocator, "--funcss-dark", .{ .ident = "initial" }),
                             );
                         }
                     } else if (color_scheme.dark) {
-                        bun.handleOom(dest.append(context.allocator, defineVar(context.allocator, "--buncss-light", .{ .whitespace = " " })));
-                        bun.handleOom(dest.append(context.allocator, defineVar(context.allocator, "--buncss-dark", .{ .ident = "initial" })));
+                        fun.handleOom(dest.append(context.allocator, defineVar(context.allocator, "--funcss-light", .{ .whitespace = " " })));
+                        fun.handleOom(dest.append(context.allocator, defineVar(context.allocator, "--funcss-dark", .{ .ident = "initial" })));
                     }
                 }
-                bun.handleOom(dest.append(context.allocator, property.deepClone(context.allocator)));
+                fun.handleOom(dest.append(context.allocator, property.deepClone(context.allocator)));
                 return true;
             },
             else => return false,
@@ -197,7 +197,7 @@ fn defineVar(allocator: Allocator, name: []const u8, value: css.Token) css.Prope
             .value = css.TokenList{
                 .v = brk: {
                     var list = ArrayList(css.css_properties.custom.TokenOrValue){};
-                    bun.handleOom(list.append(allocator, css.css_properties.custom.TokenOrValue{ .token = value }));
+                    fun.handleOom(list.append(allocator, css.css_properties.custom.TokenOrValue{ .token = value }));
                     break :brk list;
                 },
             },
@@ -205,7 +205,7 @@ fn defineVar(allocator: Allocator, name: []const u8, value: css.Token) css.Prope
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

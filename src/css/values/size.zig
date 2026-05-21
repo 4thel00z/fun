@@ -48,7 +48,7 @@ pub fn Size2D(comptime T: type) type {
             };
         }
 
-        pub fn isCompatible(this: *const @This(), browsers: bun.css.targets.Browsers) bool {
+        pub fn isCompatible(this: *const @This(), browsers: fun.css.targets.Browsers) bool {
             return this.a.isCompatible(browsers) and this.b.isCompatible(browsers);
         }
 
@@ -72,5 +72,5 @@ pub fn Size2D(comptime T: type) type {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

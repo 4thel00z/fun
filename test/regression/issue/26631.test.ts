@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { existsSync, statSync } from "node:fs";
 import { exists, stat } from "node:fs/promises";
 
-// https://github.com/oven-sh/bun/issues/26631
+// https://github.com/underdoc-org/fun/issues/26631
 // Path resolution fails for current directory '.' on Windows
 
 test("existsSync('.') should return true", () => {

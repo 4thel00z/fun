@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { getSecret } from "harness";
 import { MongoClient } from "mongodb";
 
@@ -11,14 +11,14 @@ describe.skipIf(!databaseUrl)("mongodb", () => {
     const clientConnection = await client.connect();
 
     try {
-      const db = client.db("bun");
+      const db = client.db("fun");
 
-      const schema = db.collection("bun");
+      const schema = db.collection("fun");
 
       await schema.insertOne({ name: "bunny", version: 1.0 });
       const result = await schema.find();
       await schema.deleteOne({ name: "bunny" });
-      const text = Bun.inspect(result);
+      const text = Fun.inspect(result);
 
       expect(text).toBeDefined();
     } finally {

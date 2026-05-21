@@ -3,7 +3,7 @@ const ConsoleObject = @This();
 const ScriptArguments = opaque {};
 
 /// Default depth for console.log object inspection
-/// Only --console-depth CLI flag and console.depth bunfig option should modify this
+/// Only --console-depth CLI flag and console.depth funfig option should modify this
 const DEFAULT_CONSOLE_LOG_DEPTH: u16 = 2;
 
 const Counter = std.AutoHashMapUnmanaged(u64, u32);
@@ -68,8 +68,8 @@ pub const MessageType = enum(u32) {
     _,
 };
 
-var stderr_mutex: bun.Mutex = .{};
-var stdout_mutex: bun.Mutex = .{};
+var stderr_mutex: fun.Mutex = .{};
+var stdout_mutex: fun.Mutex = .{};
 
 threadlocal var stderr_lock_count: u16 = 0;
 threadlocal var stdout_lock_count: u16 = 0;
@@ -84,7 +84,7 @@ pub fn messageWithTypeAndLevel(
     vals: [*]const JSValue,
     len: usize,
 ) callconv(jsc.conv) void {
-    messageWithTypeAndLevel_(ctype, message_type, level, global, vals, len) catch |err| bun.jsc.host_fn.voidFromJSError(err, global);
+    messageWithTypeAndLevel_(ctype, message_type, level, global, vals, len) catch |err| fun.jsc.host_fn.voidFromJSError(err, global);
 }
 fn messageWithTypeAndLevel_(
     //console_: *ConsoleObject,
@@ -95,8 +95,8 @@ fn messageWithTypeAndLevel_(
     global: *JSGlobalObject,
     vals: [*]const JSValue,
     len: usize,
-) bun.JSError!void {
-    var console = global.bunVM().console;
+) fun.JSError!void {
+    var console = global.funVM().console;
     defer console.default_indent +|= @as(u16, @intFromBool(message_type == .StartGroup));
 
     if (message_type == .StartGroup and len == 0) {
@@ -167,12 +167,12 @@ fn messageWithTypeAndLevel_(
         console.writer;
     const Writer = @TypeOf(writer);
 
-    if (bun.jsc.Jest.Jest.runner) |runner| {
-        runner.bun_test_root.onBeforePrint();
+    if (fun.jsc.Jest.Jest.runner) |runner| {
+        runner.fun_test_root.onBeforePrint();
     }
 
     var print_length = len;
-    // Get console depth from CLI options or bunfig, fallback to default
+    // Get console depth from CLI options or funfig, fallback to default
     const cli_context = CLI.get();
     const console_depth = cli_context.runtime_options.console_depth orelse DEFAULT_CONSOLE_LOG_DEPTH;
 
@@ -284,7 +284,7 @@ pub const TablePrinter = struct {
         level: MessageLevel,
         tabular_data: JSValue,
         properties: JSValue,
-    ) bun.JSError!TablePrinter {
+    ) fun.JSError!TablePrinter {
         return TablePrinter{
             .level = level,
             .globalObject = globalObject,
@@ -300,7 +300,7 @@ pub const TablePrinter = struct {
                 .single_line = true,
                 .max_depth = 5,
                 .can_throw_stack_overflow = true,
-                .stack_check = bun.StackCheck.init(),
+                .stack_check = fun.StackCheck.init(),
             },
         };
     }
@@ -327,7 +327,7 @@ pub const TablePrinter = struct {
     };
 
     /// Compute how much horizontal space will take a JSValue when printed
-    fn getWidthForValue(this: *TablePrinter, value: JSValue) bun.JSError!u32 {
+    fn getWidthForValue(this: *TablePrinter, value: JSValue) fun.JSError!u32 {
         var width: usize = 0;
         var old_writer = VisibleCharacterCounter.Writer{
             .context = .{
@@ -350,18 +350,18 @@ pub const TablePrinter = struct {
         ) catch {}; // TODO:
 
         adapted_writer.new_interface.flush() catch |e| switch (e) {
-            error.WriteFailed => if (Environment.ci_assert) bun.assert(false), // VisibleCharacterCounter write cannot fail
+            error.WriteFailed => if (Environment.ci_assert) fun.assert(false), // VisibleCharacterCounter write cannot fail
         };
 
         return @truncate(width);
     }
 
     /// Update the sizes of the columns for the values of a given row, and create any additional columns as needed
-    fn updateColumnsForRow(this: *TablePrinter, columns: *std.array_list.Managed(Column), row_key: RowKey, row_value: JSValue) bun.JSError!void {
+    fn updateColumnsForRow(this: *TablePrinter, columns: *std.array_list.Managed(Column), row_key: RowKey, row_value: JSValue) fun.JSError!void {
         // update size of "(index)" column
         const row_key_len: u32 = switch (row_key) {
             .str => |value| @intCast(value.visibleWidthExcludeANSIColors(false)),
-            .num => |value| @truncate(bun.fmt.fastDigitCount(value)),
+            .num => |value| @truncate(fun.fmt.fastDigitCount(value)),
         };
         columns.items[0].width = @max(columns.items[0].width, row_key_len);
 
@@ -446,7 +446,7 @@ pub const TablePrinter = struct {
         {
             const len: u32 = switch (row_key) {
                 .str => |value| @truncate(value.visibleWidthExcludeANSIColors(false)),
-                .num => |value| @truncate(bun.fmt.fastDigitCount(value)),
+                .num => |value| @truncate(fun.fmt.fastDigitCount(value)),
             };
             const needed = columns.items[0].width -| len;
 
@@ -549,7 +549,7 @@ pub const TablePrinter = struct {
             var properties_iter = try jsc.JSArrayIterator.init(this.properties, globalObject);
             while (try properties_iter.next()) |value| {
                 try columns.append(.{
-                    .name = try value.toBunString(globalObject),
+                    .name = try value.toFunString(globalObject),
                 });
             }
         }
@@ -722,7 +722,7 @@ pub const FormatOptions = struct {
         full,
 
         const Formatter = struct {
-            name: bun.String,
+            name: fun.String,
             level: ErrorDisplayLevel,
             enable_colors: bool,
             colon: Colon,
@@ -759,7 +759,7 @@ pub const FormatOptions = struct {
         };
 
         pub const Colon = enum { include_colon, exclude_colon };
-        pub fn formatter(this: ErrorDisplayLevel, error_name: bun.String, enable_colors: bool, colon: Colon) ErrorDisplayLevel.Formatter {
+        pub fn formatter(this: ErrorDisplayLevel, error_name: fun.String, enable_colors: bool, colon: Colon) ErrorDisplayLevel.Formatter {
             return .{
                 .name = error_name,
                 .level = this,
@@ -769,7 +769,7 @@ pub const FormatOptions = struct {
         }
     };
 
-    pub fn fromJS(formatOptions: *FormatOptions, globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSValue) bun.JSError!void {
+    pub fn fromJS(formatOptions: *FormatOptions, globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSValue) fun.JSError!void {
         const arg1 = arguments[0];
 
         if (arg1.isObject()) {
@@ -831,7 +831,7 @@ pub fn format2(
     len: usize,
     writer: *std.Io.Writer,
     options: FormatOptions,
-) bun.JSError!void {
+) fun.JSError!void {
     if (len == 1) {
         // initialized later in this function.
         var fmt = ConsoleObject.Formatter{
@@ -842,7 +842,7 @@ pub fn format2(
             .max_depth = options.max_depth,
             .single_line = options.single_line,
             .indent = options.default_indent,
-            .stack_check = bun.StackCheck.init(),
+            .stack_check = fun.StackCheck.init(),
             .can_throw_stack_overflow = true,
             .error_display_level = options.error_display_level,
         };
@@ -923,7 +923,7 @@ pub fn format2(
         .max_depth = options.max_depth,
         .single_line = options.single_line,
         .indent = options.default_indent,
-        .stack_check = bun.StackCheck.init(),
+        .stack_check = fun.StackCheck.init(),
         .can_throw_stack_overflow = true,
         .error_display_level = options.error_display_level,
     };
@@ -1006,7 +1006,7 @@ pub const Formatter = struct {
     ordered_properties: bool = false,
     custom_formatted_object: CustomFormattedObject = .{},
     disable_inspect_custom: bool = false,
-    stack_check: bun.StackCheck = .{ .cached_stack_end = std.math.maxInt(usize) },
+    stack_check: fun.StackCheck = .{ .cached_stack_end = std.math.maxInt(usize) },
     can_throw_stack_overflow: bool = false,
     error_display_level: FormatOptions.ErrorDisplayLevel = .full,
     /// If ArrayBuffer-like objects contain ascii text, the buffer is printed as a string.
@@ -1014,7 +1014,7 @@ pub const Formatter = struct {
     format_buffer_as_text: bool = false,
 
     pub fn deinit(this: *Formatter) void {
-        if (bun.take(&this.map_node)) |node| {
+        if (fun.take(&this.map_node)) |node| {
             node.data = this.map;
             if (node.data.capacity() > 512) {
                 node.data.clearAndFree();
@@ -1052,13 +1052,13 @@ pub const Formatter = struct {
                 self.formatter.remaining_values = &[_]JSValue{};
             }
             self.formatter.format(
-                Tag.get(self.value, self.formatter.globalThis) catch |e| return bun.deprecated.jsErrorToWriteError(e),
+                Tag.get(self.value, self.formatter.globalThis) catch |e| return fun.deprecated.jsErrorToWriteError(e),
                 @TypeOf(writer),
                 writer,
                 self.value,
                 self.formatter.globalThis,
                 false,
-            ) catch |e| return bun.deprecated.jsErrorToWriteError(e);
+            ) catch |e| return fun.deprecated.jsErrorToWriteError(e);
         }
     };
 
@@ -1187,7 +1187,7 @@ pub const Formatter = struct {
             cell: JSValue.JSType = JSValue.JSType.Cell,
         };
 
-        pub fn get(value: JSValue, globalThis: *JSGlobalObject) bun.JSError!Result {
+        pub fn get(value: JSValue, globalThis: *JSGlobalObject) fun.JSError!Result {
             return getAdvanced(value, globalThis, .{ .hide_global = false });
         }
 
@@ -1197,7 +1197,7 @@ pub const Formatter = struct {
             disable_inspect_custom: bool = false,
         };
 
-        pub fn getAdvanced(value: JSValue, globalThis: *JSGlobalObject, opts: Options) bun.JSError!Result {
+        pub fn getAdvanced(value: JSValue, globalThis: *JSGlobalObject, opts: Options) fun.JSError!Result {
             switch (value) {
                 .zero, .js_undefined => return Result{
                     .tag = .{ .Undefined = {} },
@@ -1303,7 +1303,7 @@ pub const Formatter = struct {
                 if (try value.getOwnTruthy(globalThis, "$$typeof")) |typeof_symbol| {
                     // React 18 and below
                     var react_element_legacy = ZigString.init("react.element");
-                    // For React 19 - https://github.com/oven-sh/bun/issues/17223
+                    // For React 19 - https://github.com/underdoc-org/fun/issues/17223
                     var react_element_transitional = ZigString.init("react.transitional.element");
                     var react_fragment = ZigString.init("react.fragment");
 
@@ -1434,7 +1434,7 @@ pub const Formatter = struct {
         slice_: Slice,
         global: *JSGlobalObject,
         comptime enable_ansi_colors: bool,
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         var writer = WrappedWriter(Writer){
             .ctx = writer_,
             .estimated_line_length = &this.estimated_line_length,
@@ -1547,7 +1547,7 @@ pub const Formatter = struct {
                             if (int < std.math.maxInt(u32)) {
                                 const is_negative = int < 0;
                                 const digits = if (i != 0)
-                                    bun.fmt.fastDigitCount(@as(u64, @intCast(@abs(int)))) + @as(u64, @intFromBool(is_negative))
+                                    fun.fmt.fastDigitCount(@as(u64, @intCast(@abs(int)))) + @as(u64, @intFromBool(is_negative))
                                 else
                                     1;
                                 this.addForNewLine(digits);
@@ -1565,7 +1565,7 @@ pub const Formatter = struct {
                                     const int = next_value.asInt32();
                                     const is_negative = int < 0;
                                     const digits = if (i != 0)
-                                        bun.fmt.fastDigitCount(@as(u64, @intCast(@abs(int)))) + @as(u64, @intFromBool(is_negative))
+                                        fun.fmt.fastDigitCount(@as(u64, @intCast(@abs(int)))) + @as(u64, @intFromBool(is_negative))
                                     else
                                         1;
                                     this.addForNewLine(digits);
@@ -1600,7 +1600,7 @@ pub const Formatter = struct {
                                 writer.writeAll("Infinity");
                             } else {
                                 var buf: [124]u8 = undefined;
-                                const formatted = bun.fmt.FormatDouble.dtoa(&buf, converted);
+                                const formatted = fun.fmt.FormatDouble.dtoa(&buf, converted);
                                 this.addForNewLine(formatted.len);
                                 writer.print("{s}", .{formatted});
                             }
@@ -1628,7 +1628,7 @@ pub const Formatter = struct {
 
                         .j => {
                             // JSON.stringify the value using FastStringifier for SIMD optimization
-                            var str = bun.String.empty;
+                            var str = fun.String.empty;
                             defer str.deref();
 
                             try next_value.jsonStringifyFast(global, &str);
@@ -1743,7 +1743,7 @@ pub const Formatter = struct {
             }
 
             pub inline fn write16Bit(self: *@This(), input: []const u16) void {
-                bun.fmt.formatUTF16Type(input, self.ctx) catch {
+                fun.fmt.formatUTF16Type(input, self.ctx) catch {
                     self.failed = true;
                 };
             }
@@ -1775,7 +1775,7 @@ pub const Formatter = struct {
             writer: Writer,
             count: usize = 0,
             pub fn forEach(_: *jsc.VM, globalObject: *JSGlobalObject, ctx: ?*anyopaque, nextValue: JSValue) callconv(.c) void {
-                var this: *@This() = bun.cast(*@This(), ctx orelse return);
+                var this: *@This() = fun.cast(*@This(), ctx orelse return);
                 if (this.formatter.failed) return;
                 if (single_line and this.count > 0) {
                     this.formatter.printComma(Writer, this.writer, enable_ansi_colors) catch unreachable;
@@ -1849,7 +1849,7 @@ pub const Formatter = struct {
             writer: Writer,
             is_first: bool = true,
             pub fn forEach(_: *jsc.VM, globalObject: *JSGlobalObject, ctx: ?*anyopaque, nextValue: JSValue) callconv(.c) void {
-                var this: *@This() = bun.cast(*@This(), ctx orelse return);
+                var this: *@This() = fun.cast(*@This(), ctx orelse return);
                 if (this.formatter.failed) return;
                 if (single_line) {
                     if (!this.is_first) {
@@ -1890,7 +1890,7 @@ pub const Formatter = struct {
             always_newline: bool = false,
             parent: JSValue,
             const enable_ansi_colors = enable_ansi_colors_;
-            pub fn handleFirstProperty(this: *@This(), globalThis: *jsc.JSGlobalObject, value: JSValue) bun.JSError!void {
+            pub fn handleFirstProperty(this: *@This(), globalThis: *jsc.JSGlobalObject, value: JSValue) fun.JSError!void {
                 if (value.isCell() and !value.jsType().isFunction()) {
                     var writer = WrappedWriter(Writer){
                         .ctx = this.writer,
@@ -1927,7 +1927,7 @@ pub const Formatter = struct {
             ) callconv(.c) void {
                 if (key.eqlComptime("constructor")) return;
 
-                var ctx: *@This() = bun.cast(*@This(), ctx_ptr orelse return);
+                var ctx: *@This() = fun.cast(*@This(), ctx_ptr orelse return);
                 var this = ctx.formatter;
                 if (this.failed) return;
                 const writer_ = ctx.writer;
@@ -2005,7 +2005,7 @@ pub const Formatter = struct {
 
                         writer.print(
                             comptime Output.prettyFmt("<r><green>{f}<r><d>:<r> ", enable_ansi_colors),
-                            .{bun.fmt.formatJSONStringLatin1(key.slice())},
+                            .{fun.fmt.formatJSONStringLatin1(key.slice())},
                         );
                     }
                 } else if (Environment.isDebug and is_private_symbol) {
@@ -2042,7 +2042,7 @@ pub const Formatter = struct {
         };
     }
 
-    fn getObjectName(globalThis: *jsc.JSGlobalObject, value: JSValue) bun.JSError!?ZigString {
+    fn getObjectName(globalThis: *jsc.JSGlobalObject, value: JSValue) fun.JSError!?ZigString {
         var name_str = ZigString.init("");
         try value.getClassName(globalThis, &name_str);
         if (!name_str.eqlComptime("Object")) {
@@ -2070,7 +2070,7 @@ pub const Formatter = struct {
         value: JSValue,
         jsType: JSValue.JSType,
         comptime enable_ansi_colors: bool,
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         if (this.failed)
             return;
         if (this.globalThis.hasException()) {
@@ -2123,7 +2123,7 @@ pub const Formatter = struct {
 
         switch (comptime Format) {
             .StringPossiblyFormatted => {
-                var str = try value.toSlice(this.globalThis, bun.default_allocator);
+                var str = try value.toSlice(this.globalThis, fun.default_allocator);
                 defer str.deinit();
                 this.addForNewLine(str.len);
                 const slice = str.slice();
@@ -2131,7 +2131,7 @@ pub const Formatter = struct {
             },
             .String => {
                 // This is called from the '%s' formatter, so it can actually be any value
-                const str: bun.String = try bun.String.fromJS(value, this.globalThis);
+                const str: fun.String = try fun.String.fromJS(value, this.globalThis);
                 defer str.deref();
                 this.addForNewLine(str.length());
 
@@ -2189,9 +2189,9 @@ pub const Formatter = struct {
                     writer.writeAll(slice);
                 } else if (!str.isEmpty()) {
                     // slow path
-                    const buf = strings.allocateLatin1IntoUTF8(bun.default_allocator, str.latin1()) catch &[_]u8{};
+                    const buf = strings.allocateLatin1IntoUTF8(fun.default_allocator, str.latin1()) catch &[_]u8{};
                     if (buf.len > 0) {
-                        defer bun.default_allocator.free(buf);
+                        defer fun.default_allocator.free(buf);
                         writer.writeAll(buf);
                     }
                 }
@@ -2209,7 +2209,7 @@ pub const Formatter = struct {
                         i = -i;
                     }
                     const digits = if (i != 0)
-                        bun.fmt.fastDigitCount(@as(usize, @intCast(i))) + @as(usize, @intFromBool(is_negative))
+                        fun.fmt.fastDigitCount(@as(usize, @intCast(i))) + @as(usize, @intFromBool(is_negative))
                     else
                         1;
                     this.addForNewLine(digits);
@@ -2262,7 +2262,7 @@ pub const Formatter = struct {
                     writer.print(comptime Output.prettyFmt("<r><yellow>NaN<r>", enable_ansi_colors), .{});
                 } else {
                     var buf: [124]u8 = undefined;
-                    const formatted = bun.fmt.FormatDouble.dtoaWithNegativeZero(&buf, num);
+                    const formatted = fun.fmt.FormatDouble.dtoaWithNegativeZero(&buf, num);
                     this.addForNewLine(formatted.len);
                     writer.print(comptime Output.prettyFmt("<r><yellow>{s}<r>", enable_ansi_colors), .{formatted});
                 }
@@ -2278,7 +2278,7 @@ pub const Formatter = struct {
             .CustomFormattedObject => {
                 // Call custom inspect function. Will return the error if there is one
                 // we'll need to pass the callback through to the "this" value in here
-                const result = try bun.jsc.fromJSHostCall(this.globalThis, @src(), JSC__JSValue__callCustomInspectFunction, .{
+                const result = try fun.jsc.fromJSHostCall(this.globalThis, @src(), JSC__JSValue__callCustomInspectFunction, .{
                     this.globalThis,
                     this.custom_formatted_object.function,
                     this.custom_formatted_object.this,
@@ -2341,7 +2341,7 @@ pub const Formatter = struct {
                 // render as `[class X extends Function]` and is noise.
                 const proto = value.getPrototype(this.globalThis);
                 const proto_is_class = !proto.isEmptyOrUndefinedOrNull() and proto.isCell() and proto.isClass(this.globalThis);
-                var printable_proto: bun.String = if (proto_is_class) try proto.getName(this.globalThis) else bun.String.empty;
+                var printable_proto: fun.String = if (proto_is_class) try proto.getName(this.globalThis) else fun.String.empty;
                 defer printable_proto.deref();
                 this.addForNewLine(printable_proto.length());
 
@@ -2511,7 +2511,7 @@ pub const Formatter = struct {
                             if (empty_count == 1) {
                                 writer.pretty("<r><d>empty item<r>", enable_ansi_colors, .{});
                             } else {
-                                this.estimated_line_length += bun.fmt.fastDigitCount(empty_count);
+                                this.estimated_line_length += fun.fmt.fastDigitCount(empty_count);
                                 writer.pretty("<r><d>{d} x empty items<r>", enable_ansi_colors, .{empty_count});
                             }
                             empty_start = null;
@@ -2558,7 +2558,7 @@ pub const Formatter = struct {
                         if (empty_count == 1) {
                             writer.pretty("<r><d>empty item<r>", enable_ansi_colors, .{});
                         } else {
-                            this.estimated_line_length += bun.fmt.fastDigitCount(empty_count);
+                            this.estimated_line_length += fun.fmt.fastDigitCount(empty_count);
                             writer.pretty("<r><d>{d} x empty items<r>", enable_ansi_colors, .{empty_count});
                         }
                     }
@@ -2609,7 +2609,7 @@ pub const Formatter = struct {
                 } else if (value.as(jsc.API.Archive)) |archive| {
                     archive.writeFormat(ConsoleObject.Formatter, this, writer_, enable_ansi_colors) catch {};
                     return;
-                } else if (value.as(bun.webcore.FetchHeaders) != null) {
+                } else if (value.as(fun.webcore.FetchHeaders) != null) {
                     if (try value.get(this.globalThis, "toJSON")) |toJSONFunction| {
                         this.addForNewLine("Headers ".len);
                         writer.writeAll(comptime Output.prettyFmt("<r>Headers ", enable_ansi_colors));
@@ -2646,10 +2646,10 @@ pub const Formatter = struct {
 
                     // this case should never happen
                     return try this.printAs(.Undefined, Writer, writer_, .js_undefined, .Cell, enable_ansi_colors);
-                } else if (value.as(bun.api.Timer.TimeoutObject)) |timer| {
-                    this.addForNewLine("Timeout(# ) ".len + bun.fmt.fastDigitCount(@as(u64, @intCast(@max(timer.internals.id, 0)))));
+                } else if (value.as(fun.api.Timer.TimeoutObject)) |timer| {
+                    this.addForNewLine("Timeout(# ) ".len + fun.fmt.fastDigitCount(@as(u64, @intCast(@max(timer.internals.id, 0)))));
                     if (timer.internals.flags.kind == .setInterval) {
-                        this.addForNewLine("repeats ".len + bun.fmt.fastDigitCount(@as(u64, @intCast(@max(timer.internals.id, 0)))));
+                        this.addForNewLine("repeats ".len + fun.fmt.fastDigitCount(@as(u64, @intCast(@max(timer.internals.id, 0)))));
                         writer.print(comptime Output.prettyFmt("<r><blue>Timeout<r> <d>(#<yellow>{d}<r><d>, repeats)<r>", enable_ansi_colors), .{
                             timer.internals.id,
                         });
@@ -2660,17 +2660,17 @@ pub const Formatter = struct {
                     }
 
                     return;
-                } else if (value.as(bun.api.Timer.ImmediateObject)) |immediate| {
-                    this.addForNewLine("Immediate(# ) ".len + bun.fmt.fastDigitCount(@as(u64, @intCast(@max(immediate.internals.id, 0)))));
+                } else if (value.as(fun.api.Timer.ImmediateObject)) |immediate| {
+                    this.addForNewLine("Immediate(# ) ".len + fun.fmt.fastDigitCount(@as(u64, @intCast(@max(immediate.internals.id, 0)))));
                     writer.print(comptime Output.prettyFmt("<r><blue>Immediate<r> <d>(#<yellow>{d}<r><d>)<r>", enable_ansi_colors), .{
                         immediate.internals.id,
                     });
 
                     return;
-                } else if (value.as(bun.api.BuildMessage)) |build_log| {
+                } else if (value.as(fun.api.BuildMessage)) |build_log| {
                     build_log.msg.writeFormat(writer_, enable_ansi_colors) catch {};
                     return;
-                } else if (value.as(bun.api.ResolveMessage)) |resolve_log| {
+                } else if (value.as(fun.api.ResolveMessage)) |resolve_log| {
                     resolve_log.msg.writeFormat(writer_, enable_ansi_colors) catch {};
                     return;
                 } else if (try JestPrettyFormat.printAsymmetricMatcher(this, Format, &writer, writer_, name_buf, value, enable_ansi_colors)) {
@@ -2923,7 +2923,7 @@ pub const Formatter = struct {
                 writer.writeAll("{}");
             },
             .JSON => {
-                var str = bun.String.empty;
+                var str = fun.String.empty;
                 defer str.deref();
 
                 try value.jsonStringify(this.globalThis, this.indent, &str);
@@ -3308,7 +3308,7 @@ pub const Formatter = struct {
                 writer.writeAll(" />");
             },
             .Object => {
-                bun.assert(value.isCell());
+                fun.assert(value.isCell());
                 const prev_quote_strings = this.quote_strings;
                 this.quote_strings = true;
                 defer this.quote_strings = prev_quote_strings;
@@ -3400,7 +3400,7 @@ pub const Formatter = struct {
                 const arrayBuffer = value.asArrayBuffer(this.globalThis).?;
                 const slice = arrayBuffer.byteSlice();
 
-                if (this.format_buffer_as_text and jsType == .Uint8Array and bun.strings.isValidUTF8(slice)) {
+                if (this.format_buffer_as_text and jsType == .Uint8Array and fun.strings.isValidUTF8(slice)) {
                     if (comptime enable_ansi_colors) {
                         writer.writeAll(Output.prettyFmt("<r><green>", true));
                     }
@@ -3418,7 +3418,7 @@ pub const Formatter = struct {
                     else if (arrayBuffer.typed_array_type == .ArrayBuffer and arrayBuffer.shared)
                         "SharedArrayBuffer"
                     else
-                        bun.asByteSlice(@tagName(arrayBuffer.typed_array_type)),
+                        fun.asByteSlice(@tagName(arrayBuffer.typed_array_type)),
                 );
                 if (slice.len == 0) {
                     writer.print("({d}) []", .{arrayBuffer.len});
@@ -3515,7 +3515,7 @@ pub const Formatter = struct {
                 const target = value.getProxyInternalField(.target);
                 if (Environment.allow_assert) {
                     // Proxy does not allow non-objects here.
-                    bun.assert(target.isCell());
+                    fun.assert(target.isCell());
                 }
                 // TODO: if (options.showProxy), print like `Proxy { target: ..., handlers: ... }`
                 // this is default off so it is not used.
@@ -3537,7 +3537,7 @@ pub const Formatter = struct {
             "<r><d>, ... {d} more<r>";
 
         writer.print(comptime Output.prettyFmt(fmt_, enable_ansi_colors), .{
-            if (@typeInfo(Number) == .float) bun.fmt.double(@floatCast(slice[0])) else slice[0],
+            if (@typeInfo(Number) == .float) fun.fmt.double(@floatCast(slice[0])) else slice[0],
         });
         var leftover = slice[1..];
         const max = 512;
@@ -3547,7 +3547,7 @@ pub const Formatter = struct {
             writer.space();
 
             writer.print(comptime Output.prettyFmt(fmt_, enable_ansi_colors), .{
-                if (@typeInfo(Number) == .float) bun.fmt.double(@floatCast(el)) else el,
+                if (@typeInfo(Number) == .float) fun.fmt.double(@floatCast(el)) else el,
             });
         }
 
@@ -3556,7 +3556,7 @@ pub const Formatter = struct {
         }
     }
 
-    pub fn format(this: *ConsoleObject.Formatter, result: Tag.Result, comptime Writer: type, writer: *std.Io.Writer, value: JSValue, globalThis: *JSGlobalObject, comptime enable_ansi_colors: bool) bun.JSError!void {
+    pub fn format(this: *ConsoleObject.Formatter, result: Tag.Result, comptime Writer: type, writer: *std.Io.Writer, value: JSValue, globalThis: *JSGlobalObject, comptime enable_ansi_colors: bool) fun.JSError!void {
         const prevGlobalThis = this.globalThis;
         defer this.globalThis = prevGlobalThis;
         this.globalThis = globalThis;
@@ -3586,9 +3586,9 @@ pub fn count(
     // len
     len: usize,
 ) callconv(jsc.conv) void {
-    var this = globalThis.bunVM().console;
+    var this = globalThis.funVM().console;
     const slice = ptr[0..len];
-    const hash = bun.hash(slice);
+    const hash = fun.hash(slice);
     // we don't want to store these strings, it will take too much memory
     const counter = this.counts.getOrPut(globalThis.allocator(), hash) catch unreachable;
     const current = @as(u32, if (counter.found_existing) counter.value_ptr.* else @as(u32, 0)) + 1;
@@ -3611,9 +3611,9 @@ pub fn countReset(
     // len
     len: usize,
 ) callconv(jsc.conv) void {
-    var this = globalThis.bunVM().console;
+    var this = globalThis.funVM().console;
     const slice = ptr[0..len];
-    const hash = bun.hash(slice);
+    const hash = fun.hash(slice);
     // we don't delete it because deleting is implemented via tombstoning
     const entry = this.counts.getEntry(hash) orelse return;
     entry.value_ptr.* = 0;
@@ -3631,7 +3631,7 @@ pub fn time(
     chars: [*]const u8,
     len: usize,
 ) callconv(jsc.conv) void {
-    const id = bun.hash(chars[0..len]);
+    const id = fun.hash(chars[0..len]);
     if (!pending_time_logs_loaded) {
         pending_time_logs = PendingTimers.init(default_allocator);
         pending_time_logs_loaded = true;
@@ -3655,7 +3655,7 @@ pub fn timeEnd(
         return;
     }
 
-    const id = bun.hash(chars[0..len]);
+    const id = fun.hash(chars[0..len]);
     const result = (pending_time_logs.fetchPut(id, null) catch null) orelse return;
     var value: std.time.Timer = result.value orelse return;
     // get the duration in microseconds
@@ -3686,7 +3686,7 @@ pub fn timeLog(
         return;
     }
 
-    const id = bun.hash(chars[0..len]);
+    const id = fun.hash(chars[0..len]);
     var value: std.time.Timer = (pending_time_logs.get(id) orelse return) orelse return;
     // get the duration in microseconds
     // then display it in milliseconds
@@ -3707,10 +3707,10 @@ pub fn timeLog(
             const cli_context = CLI.get();
             break :blk cli_context.runtime_options.console_depth orelse DEFAULT_CONSOLE_LOG_DEPTH;
         },
-        .stack_check = bun.StackCheck.init(),
+        .stack_check = fun.StackCheck.init(),
         .can_throw_stack_overflow = true,
     };
-    const console = global.bunVM().console;
+    const console = global.funVM().console;
     const writer = console.error_writer;
     const Writer = @TypeOf(writer);
     for (args[0..args_len]) |arg| {
@@ -3793,19 +3793,19 @@ pub fn screenshot(
 ) callconv(jsc.conv) void {}
 
 comptime {
-    @export(&messageWithTypeAndLevel, .{ .name = "Bun__ConsoleObject__messageWithTypeAndLevel" });
-    @export(&count, .{ .name = "Bun__ConsoleObject__count" });
-    @export(&countReset, .{ .name = "Bun__ConsoleObject__countReset" });
-    @export(&time, .{ .name = "Bun__ConsoleObject__time" });
-    @export(&timeLog, .{ .name = "Bun__ConsoleObject__timeLog" });
-    @export(&timeEnd, .{ .name = "Bun__ConsoleObject__timeEnd" });
-    @export(&profile, .{ .name = "Bun__ConsoleObject__profile" });
-    @export(&profileEnd, .{ .name = "Bun__ConsoleObject__profileEnd" });
-    @export(&takeHeapSnapshot, .{ .name = "Bun__ConsoleObject__takeHeapSnapshot" });
-    @export(&timeStamp, .{ .name = "Bun__ConsoleObject__timeStamp" });
-    @export(&record, .{ .name = "Bun__ConsoleObject__record" });
-    @export(&recordEnd, .{ .name = "Bun__ConsoleObject__recordEnd" });
-    @export(&screenshot, .{ .name = "Bun__ConsoleObject__screenshot" });
+    @export(&messageWithTypeAndLevel, .{ .name = "Fun__ConsoleObject__messageWithTypeAndLevel" });
+    @export(&count, .{ .name = "Fun__ConsoleObject__count" });
+    @export(&countReset, .{ .name = "Fun__ConsoleObject__countReset" });
+    @export(&time, .{ .name = "Fun__ConsoleObject__time" });
+    @export(&timeLog, .{ .name = "Fun__ConsoleObject__timeLog" });
+    @export(&timeEnd, .{ .name = "Fun__ConsoleObject__timeEnd" });
+    @export(&profile, .{ .name = "Fun__ConsoleObject__profile" });
+    @export(&profileEnd, .{ .name = "Fun__ConsoleObject__profileEnd" });
+    @export(&takeHeapSnapshot, .{ .name = "Fun__ConsoleObject__takeHeapSnapshot" });
+    @export(&timeStamp, .{ .name = "Fun__ConsoleObject__timeStamp" });
+    @export(&record, .{ .name = "Fun__ConsoleObject__record" });
+    @export(&recordEnd, .{ .name = "Fun__ConsoleObject__recordEnd" });
+    @export(&screenshot, .{ .name = "Fun__ConsoleObject__screenshot" });
 }
 
 const string = []const u8;
@@ -3814,16 +3814,16 @@ const std = @import("std");
 const CLI = @import("../cli/cli.zig").Command;
 const JestPrettyFormat = @import("../test_runner/pretty_format.zig").JestPrettyFormat;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const JSLexer = bun.js_lexer;
-const JSPrinter = bun.js_printer;
-const Output = bun.Output;
-const String = bun.String;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const JSLexer = fun.js_lexer;
+const JSPrinter = fun.js_printer;
+const Output = fun.Output;
+const String = fun.String;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const EventType = jsc.EventType;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSPromise = jsc.JSPromise;

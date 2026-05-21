@@ -1,7 +1,7 @@
-import { spawn } from "bun";
-import { beforeEach, expect, it } from "bun:test";
+import { spawn } from "fun";
+import { beforeEach, expect, it } from "fun:test";
 import { copyFileSync, cpSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from "fs";
-import { bunEnv, bunExe, isDebug, tmpdirSync, waitForFileToExist } from "harness";
+import { funEnv, funExe, isDebug, tmpdirSync, waitForFileToExist } from "harness";
 import { join } from "path";
 
 const timeout = isDebug ? Infinity : 10_000;
@@ -98,8 +98,8 @@ beforeEach(() => {
 it("preload not found should exit with code 1 and not time out", async () => {
   const root = hotRunnerRoot;
   const runner = spawn({
-    cmd: [bunExe(), "--preload=/dev/foobarbarbar", "--hot", root],
-    env: bunEnv,
+    cmd: [funExe(), "--preload=/dev/foobarbarbar", "--hot", root],
+    env: funEnv,
     stdout: "inherit",
     stderr: "pipe",
     stdin: "ignore",
@@ -116,8 +116,8 @@ it(
     const root = hotRunnerRoot;
     try {
       var runner = spawn({
-        cmd: [bunExe(), "--hot", "run", root],
-        env: bunEnv,
+        cmd: [funExe(), "--hot", "run", root],
+        env: funEnv,
         cwd,
         stdout: "pipe",
         stderr: "inherit",
@@ -172,8 +172,8 @@ it.each(["hot-file-loader.file", "hot-file-loader.css"])(
     const target = join(cwd, targetFilename);
     try {
       var runner = spawn({
-        cmd: [bunExe(), "--hot", "run", root],
-        env: bunEnv,
+        cmd: [funExe(), "--hot", "run", root],
+        env: funEnv,
         cwd,
         stdout: "pipe",
         stderr: "inherit",
@@ -227,8 +227,8 @@ it(
     const root = hotRunnerRoot;
     try {
       var runner = spawn({
-        cmd: [bunExe(), "--hot", "run", root],
-        env: bunEnv,
+        cmd: [funExe(), "--hot", "run", root],
+        env: funEnv,
         cwd,
         stdout: "pipe",
         stderr: "pipe",
@@ -311,8 +311,8 @@ it(
     const root = hotRunnerRoot;
     try {
       var runner = spawn({
-        cmd: [bunExe(), "--hot", "run", root],
-        env: bunEnv,
+        cmd: [funExe(), "--hot", "run", root],
+        env: funEnv,
         cwd,
         stdout: "pipe",
         stderr: "inherit",
@@ -327,7 +327,7 @@ it(
       }
       var finished = false;
       await Promise.race([
-        Bun.sleep(200),
+        Fun.sleep(200),
         (async () => {
           if (finished) {
             return;
@@ -377,8 +377,8 @@ it(
       const root = hotRunnerRoot + ".tmp.js";
       copyFileSync(hotRunnerRoot, root);
       var runner = spawn({
-        cmd: [bunExe(), "--hot", "run", root],
-        env: bunEnv,
+        cmd: [funExe(), "--hot", "run", root],
+        env: funEnv,
         cwd,
         stdout: "pipe",
         stderr: "inherit",
@@ -435,8 +435,8 @@ it(
     copyFileSync(hotRunnerRoot, root);
     try {
       var runner = spawn({
-        cmd: [bunExe(), "--hot", "run", root],
-        env: bunEnv,
+        cmd: [funExe(), "--hot", "run", root],
+        env: funEnv,
         cwd,
         stdout: "pipe",
         stderr: "inherit",
@@ -504,8 +504,8 @@ ${comment_spam}
 throw new Error('0');`,
     );
     await using runner = spawn({
-      cmd: [bunExe(), "--smol", "--hot", "run", hotRunnerRoot],
-      env: bunEnv,
+      cmd: [funExe(), "--smol", "--hot", "run", hotRunnerRoot],
+      env: funEnv,
       cwd,
       stdout: "ignore",
       stderr: "pipe",
@@ -558,8 +558,8 @@ ${Buffer.alloc(counter * 2, " ").toString()}throw new Error('${counter}');`,
       );
     writeFull(0);
     await using runner = spawn({
-      cmd: [bunExe(), "--smol", "--hot", "run", hotRunnerRoot],
-      env: bunEnv,
+      cmd: [funExe(), "--smol", "--hot", "run", hotRunnerRoot],
+      env: funEnv,
       cwd,
       stdout: "ignore",
       stderr: "pipe",
@@ -595,8 +595,8 @@ it(
 throw new Error('0');`,
     );
     await using bundler = spawn({
-      cmd: [bunExe(), "build", "--watch", bundleIn, "--target=bun", "--sourcemap=inline", "--outfile", hotRunnerRoot],
-      env: bunEnv,
+      cmd: [funExe(), "build", "--watch", bundleIn, "--target=fun", "--sourcemap=inline", "--outfile", hotRunnerRoot],
+      env: funEnv,
       cwd,
       stdout: "ignore",
       stderr: "ignore",
@@ -604,8 +604,8 @@ throw new Error('0');`,
     });
     waitForFileToExist(hotRunnerRoot, 20);
     await using runner = spawn({
-      cmd: [bunExe(), "--hot", "run", hotRunnerRoot],
-      env: bunEnv,
+      cmd: [funExe(), "--hot", "run", hotRunnerRoot],
+      env: funEnv,
       cwd,
       stdout: "ignore",
       stderr: "pipe",
@@ -663,16 +663,16 @@ throw new Error('0');`,
     await using bundler = spawn({
       cmd: [
         //
-        bunExe(),
+        funExe(),
         "build",
         "--watch",
         bundleIn,
-        "--target=bun",
+        "--target=fun",
         "--sourcemap=inline",
         "--outfile",
         hotRunnerRoot,
       ],
-      env: bunEnv,
+      env: funEnv,
       cwd,
       stdout: "ignore",
       stderr: "ignore",
@@ -682,12 +682,12 @@ throw new Error('0');`,
     await using runner = spawn({
       cmd: [
         //
-        bunExe(),
+        funExe(),
         "--hot",
         "run",
         hotRunnerRoot,
       ],
-      env: bunEnv,
+      env: funEnv,
       cwd,
       stdout: "ignore",
       stderr: "pipe",
@@ -725,7 +725,7 @@ ${Buffer.alloc(counter * 2, " ").toString()}throw new Error(${counter});`,
     expect(reloadCounter).toBe(50);
     bundler.kill();
     await runner.exited;
-    // TODO: bun has a memory leak when --hot is used on very large files
+    // TODO: fun has a memory leak when --hot is used on very large files
   },
   longTimeout,
 );

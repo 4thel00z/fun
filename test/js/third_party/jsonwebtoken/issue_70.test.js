@@ -1,4 +1,4 @@
-import { describe, it } from "bun:test";
+import { describe, it } from "fun:test";
 import jwt from "jsonwebtoken";
 
 describe("issue 70 - public key start with BEING PUBLIC KEY", function () {

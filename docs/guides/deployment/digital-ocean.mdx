@@ -1,17 +1,17 @@
 ---
-title: Deploy a Bun application on DigitalOcean
+title: Deploy a Fun application on DigitalOcean
 sidebarTitle: Deploy on DigitalOcean
 mode: center
 ---
 
 [DigitalOcean](https://www.digitalocean.com/) is a cloud platform that provides a range of services for building and deploying applications.
 
-In this guide, we will deploy a Bun HTTP server to DigitalOcean using a `Dockerfile`.
+In this guide, we will deploy a Fun HTTP server to DigitalOcean using a `Dockerfile`.
 
 <Note>
 	Before continuing, make sure you have:
 
-    - A Bun application ready for deployment
+    - A Fun application ready for deployment
     - A [DigitalOcean account](https://www.digitalocean.com/)
     - [DigitalOcean CLI](https://docs.digitalocean.com/reference/doctl/how-to/install/#step-1-install-doctl) installed and configured
     - [Docker](https://docs.docker.com/get-started/get-docker/) installed and added to your `PATH`
@@ -37,11 +37,11 @@ In this guide, we will deploy a Bun HTTP server to DigitalOcean using a `Dockerf
     		<Tab title="Through the DigitalOcean CLI">
 
     			```bash terminal icon="terminal"
-    			doctl registry create bun-digitalocean-demo
+    			doctl registry create fun-digitalocean-demo
     			```
     			```txt
     			Name                     Endpoint                                           Region slug
-    			bun-digitalocean-demo    registry.digitalocean.com/bun-digitalocean-demo    sfo2
+    			fun-digitalocean-demo    registry.digitalocean.com/fun-digitalocean-demo    sfo2
     			```
 
     		</Tab>
@@ -57,17 +57,17 @@ In this guide, we will deploy a Bun HTTP server to DigitalOcean using a `Dockerf
     	Make sure you're in the directory containing your project, then create a new `Dockerfile` in the root of your project. This file contains the instructions to initialize the container, copy your local project files into it, install dependencies, and start the application.
 
     	```docker Dockerfile icon="docker"
-    	# Use the official Bun image to run the application
-    	FROM oven/bun:debian
+    	# Use the official Fun image to run the application
+    	FROM underdoc-org/fun:debian
 
     	# Set the work directory to `/app`
     	WORKDIR /app
 
-    	# Copy the package.json and bun.lock into the container
-    	COPY package.json bun.lock ./
+    	# Copy the package.json and fun.lock into the container
+    	COPY package.json fun.lock ./
 
     	# Install the dependencies
-    	RUN bun install --production --frozen-lockfile
+    	RUN fun install --production --frozen-lockfile
 
     	# Copy the rest of the application into the container
     	COPY . .
@@ -76,13 +76,13 @@ In this guide, we will deploy a Bun HTTP server to DigitalOcean using a `Dockerf
     	EXPOSE 8080
 
     	# Run the application
-    	CMD ["bun", "index.ts"]
+    	CMD ["fun", "index.ts"]
     	```
 
     	<Note>
-    		Make sure that the start command corresponds to your application's entry point. This can also be `CMD ["bun", "run", "start"]` if you have a start script in your `package.json`.
+    		Make sure that the start command corresponds to your application's entry point. This can also be `CMD ["fun", "run", "start"]` if you have a start script in your `package.json`.
 
-    		This image installs dependencies and runs your app with Bun inside a container. If your app doesn't have dependencies, you can omit the `RUN bun install --production --frozen-lockfile` line.
+    		This image installs dependencies and runs your app with Fun inside a container. If your app doesn't have dependencies, you can omit the `RUN fun install --production --frozen-lockfile` line.
     	</Note>
 
     	Create a new `.dockerignore` file in the root of your project. This file contains the files and directories that should be _excluded_ from the container image, such as `node_modules`. This makes your builds faster and smaller:
@@ -118,7 +118,7 @@ In this guide, we will deploy a Bun HTTP server to DigitalOcean using a `Dockerf
     	Make sure you're in the directory containing your `Dockerfile`, then build and push the Docker image to the DigitalOcean registry in one command:
 
     	```bash terminal icon="terminal"
-    	docker buildx build --platform=linux/amd64 -t registry.digitalocean.com/bun-digitalocean-demo/bun-digitalocean-demo:latest --push .
+    	docker buildx build --platform=linux/amd64 -t registry.digitalocean.com/fun-digitalocean-demo/fun-digitalocean-demo:latest --push .
     	```
 
     	<Note>

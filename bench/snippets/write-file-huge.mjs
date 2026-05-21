@@ -13,7 +13,7 @@ bench(
     unitDisplay: "narrow",
   }).format(humongousFile.byteLength / 1024 / 1024)}`,
   async () => {
-    await writeFile("/tmp/bun.bench-out.humongousFile.txt" + ((Math.random() * 65432) | 0).toString(16), humongousFile);
+    await writeFile("/tmp/fun.bench-out.humongousFile.txt" + ((Math.random() * 65432) | 0).toString(16), humongousFile);
   },
 );
 
@@ -24,7 +24,7 @@ bench(
     unitDisplay: "narrow",
   }).format(hugeFile.byteLength / 1024 / 1024)}`,
   async () => {
-    await writeFile("/tmp/bun.bench-out.huge.txt" + ((Math.random() * 65432) | 0).toString(16), hugeFile);
+    await writeFile("/tmp/fun.bench-out.huge.txt" + ((Math.random() * 65432) | 0).toString(16), hugeFile);
   },
 );
 
@@ -35,7 +35,7 @@ bench(
     unitDisplay: "narrow",
   }).format(medFile.byteLength / 1024 / 1024)}`,
   async () => {
-    await writeFile("/tmp/bun.bench-out.medium.txt" + ((Math.random() * 65432) | 0).toString(16), medFile);
+    await writeFile("/tmp/fun.bench-out.medium.txt" + ((Math.random() * 65432) | 0).toString(16), medFile);
   },
 );
 

@@ -1,14 +1,14 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/26142
-// When exporting a Server object from Bun.serve() as the default export,
-// Bun's entry point wrapper should not try to call Bun.serve() on it again.
+// https://github.com/underdoc-org/fun/issues/26142
+// When exporting a Server object from Fun.serve() as the default export,
+// Fun's entry point wrapper should not try to call Fun.serve() on it again.
 
 test("exporting server as default export should not error", async () => {
   using dir = tempDir("issue-26142", {
     "server.js": `
-const server = Bun.serve({
+const server = Fun.serve({
   port: 0,
   routes: {
     "/": { GET: () => Response.json({ message: "Hello" }) },
@@ -24,14 +24,14 @@ console.log("Server running on port " + server.port);
 server.stop();
 
 // This export was causing the issue - entry point wrapper would try to
-// call Bun.serve() on the already-running server
+// call Fun.serve() on the already-running server
 export default server;
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "server.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "server.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -65,9 +65,9 @@ export default {
 `,
   });
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "server.js"],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "server.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

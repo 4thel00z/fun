@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 // dirInfoForResolution stored DirInfo.abs_path as a slice into the threadlocal
@@ -13,7 +13,7 @@ import { join } from "path";
 // valid. A debug assertion in dirInfoUncached additionally guards the invariant.
 //
 // Kept in its own file because the sibling run-autoinstall.test.ts cases mutate the
-// shared bunEnv and routinely time out on debug/ASAN builds when hitting the live
+// shared funEnv and routinely time out on debug/ASAN builds when hitting the live
 // registry, which would otherwise mask this test's pass/fail signal.
 test("auto-install: DirInfo.abs_path survives threadlocal buffer reuse across resolutions", async () => {
   using dir = tempDir("autoinstall-abs-path", {
@@ -39,18 +39,18 @@ test("auto-install: DirInfo.abs_path survives threadlocal buffer reuse across re
     `,
   });
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     // Deliberately no -i / --install flag: default .auto prevents the auto-install
     // fallback from masking the corrupted abs_path.
-    cmd: [bunExe(), "index.js"],
+    cmd: [funExe(), "index.js"],
     cwd: String(dir),
     // Use a per-test cache dir: a shared cache can be left half-populated (extracted dir
     // present, name/version symlink missing) if a prior run is killed mid-install, which
     // makes pathForCachedNPMPath's readlinkat return ENOENT before auto-install kicks in.
     env: {
-      ...bunEnv,
-      BUN_INSTALL: undefined,
-      BUN_INSTALL_CACHE_DIR: join(String(dir), "cache"),
+      ...funEnv,
+      FUN_INSTALL: undefined,
+      FUN_INSTALL_CACHE_DIR: join(String(dir), "cache"),
     },
     stdout: "pipe",
     stderr: "pipe",
@@ -62,6 +62,6 @@ test("auto-install: DirInfo.abs_path survives threadlocal buffer reuse across re
   expect(stdout.trim()).toBe("resolved");
   expect(exitCode).toBe(0);
   // Cold-cache download of two packages from the live registry on a debug/ASAN build
-  // routinely exceeds the 5s default; other registry-hitting tests (bun-add.test.ts,
-  // bun-create.test.ts) use the same pattern.
+  // routinely exceeds the 5s default; other registry-hitting tests (fun-add.test.ts,
+  // fun-create.test.ts) use the same pattern.
 }, 30_000);

@@ -1,19 +1,19 @@
-import { spawn } from "bun";
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, withoutAggressiveGC } from "harness";
+import { spawn } from "fun";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, withoutAggressiveGC } from "harness";
 import { join } from "path";
 
 const arg0 = process.argv[0];
 const arg1 = join(import.meta.dir, "print-process-args.js");
 
 async function run(args, isRun) {
-  const exe = bunExe();
+  const exe = funExe();
 
   const { stdout } = spawn([exe, ...(isRun ? ["run"] : []), arg1, ...args], {
     cwd: import.meta.dir,
     stderr: "inherit",
     stdin: "ignore",
-    env: bunEnv,
+    env: funEnv,
   });
   return await new Response(stdout).json();
 }

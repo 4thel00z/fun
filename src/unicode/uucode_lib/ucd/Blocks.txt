@@ -145,7 +145,7 @@
 30A0..30FF; Katakana
 3100..312F; Bopomofo
 3130..318F; Hangul Compatibility Jamo
-3190..319F; Kanbun
+3190..319F; Kanfun
 31A0..31BF; Bopomofo Extended
 31C0..31EF; CJK Strokes
 31F0..31FF; Katakana Phonetic Extensions

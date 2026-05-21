@@ -75,7 +75,7 @@ pub const SyntaxString = union(enum) {
             return .{ .err = {} };
         }
 
-        if (bun.strings.eqlComptime(trimmed_input, "*")) {
+        if (fun.strings.eqlComptime(trimmed_input, "*")) {
             return .{ .result = SyntaxString.universal };
         }
 
@@ -90,14 +90,14 @@ pub const SyntaxString = union(enum) {
             components.append(
                 allocator,
                 component,
-            ) catch |err| bun.handleOom(err);
+            ) catch |err| fun.handleOom(err);
 
             trimmed_input = std.mem.trimLeft(u8, trimmed_input, SPACE_CHARACTERS);
             if (trimmed_input.len == 0) {
                 break;
             }
 
-            if (bun.strings.startsWithChar(trimmed_input, '|')) {
+            if (fun.strings.startsWithChar(trimmed_input, '|')) {
                 trimmed_input = trimmed_input[1..];
                 continue;
             }
@@ -197,7 +197,7 @@ pub const SyntaxString = union(enum) {
                                             .result => |v| v,
                                             .err => |e| return .{ .err = e },
                                         };
-                                        if (!bun.strings.eql(ident, value)) {
+                                        if (!fun.strings.eql(ident, value)) {
                                             return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
                                         }
                                         break :blk ParsedComponent{ .literal = .{ .v = ident } };
@@ -211,7 +211,7 @@ pub const SyntaxString = union(enum) {
                             switch (component.multiplier) {
                                 .none => return .{ .result = value },
                                 .space => {
-                                    bun.handleOom(parsed.append(input.allocator(), value));
+                                    fun.handleOom(parsed.append(input.allocator(), value));
                                     if (input.isExhausted()) {
                                         return .{ .result = ParsedComponent{ .repeated = .{
                                             .components = parsed,
@@ -220,7 +220,7 @@ pub const SyntaxString = union(enum) {
                                     }
                                 },
                                 .comma => {
-                                    bun.handleOom(parsed.append(input.allocator(), value));
+                                    fun.handleOom(parsed.append(input.allocator(), value));
                                     if (input.next().asValue()) |token| {
                                         if (token.* == .comma) continue;
                                         break;
@@ -270,10 +270,10 @@ pub const SyntaxComponent = struct {
         }
 
         var multiplier: Multiplier = .none;
-        if (bun.strings.startsWithChar(input.*, '+')) {
+        if (fun.strings.startsWithChar(input.*, '+')) {
             input.* = input.*[1..];
             multiplier = .space;
-        } else if (bun.strings.startsWithChar(input.*, '#')) {
+        } else if (fun.strings.startsWithChar(input.*, '#')) {
             input.* = input.*[1..];
             multiplier = .comma;
         }
@@ -331,38 +331,38 @@ pub const SyntaxComponentKind = union(enum) {
     pub fn parseString(input: *[]const u8) css.Maybe(SyntaxComponentKind, void) {
         // https://drafts.css-houdini.org/css-properties-values-api/#consume-syntax-component
         input.* = std.mem.trimLeft(u8, input.*, SPACE_CHARACTERS);
-        if (bun.strings.startsWithChar(input.*, '<')) {
+        if (fun.strings.startsWithChar(input.*, '<')) {
             // https://drafts.css-houdini.org/css-properties-values-api/#consume-data-type-name
             const end_idx = std.mem.indexOfScalar(u8, input.*, '>') orelse return .{ .err = {} };
             const name = input.*[1..end_idx];
             // todo_stuff.match_ignore_ascii_case
-            const component: SyntaxComponentKind = if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "length"))
+            const component: SyntaxComponentKind = if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "length"))
                 .length
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "number"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "number"))
                 .number
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "percentage"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "percentage"))
                 .percentage
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "length-percentage"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "length-percentage"))
                 .length_percentage
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "color"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "color"))
                 .color
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "image"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "image"))
                 .image
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "url"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "url"))
                 .url
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "integer"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "integer"))
                 .integer
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "angle"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "angle"))
                 .angle
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "time"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "time"))
                 .time
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "resolution"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "resolution"))
                 .resolution
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "transform-function"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "transform-function"))
                 .transform_function
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "transform-list"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "transform-list"))
                 .transform_list
-            else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "custom-ident"))
+            else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "custom-ident"))
                 .custom_ident
             else
                 return .{ .err = {} };
@@ -374,7 +374,7 @@ pub const SyntaxComponentKind = union(enum) {
             var end_idx: usize = 0;
             while (end_idx < input.len and
                 isNameCodePoint(input.*[end_idx])) : (end_idx +=
-                bun.strings.utf8ByteSequenceLengthUnsafe(input.*[end_idx]))
+                fun.strings.utf8ByteSequenceLengthUnsafe(input.*[end_idx]))
             {}
             const literal = input.*[0..end_idx];
             input.* = input.*[end_idx..];
@@ -518,7 +518,7 @@ pub const Multiplier = enum {
     comma,
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

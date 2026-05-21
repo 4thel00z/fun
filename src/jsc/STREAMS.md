@@ -1,4 +1,4 @@
-# **Bun Streams Architecture: High-Performance I/O in JavaScript**
+# **Fun Streams Architecture: High-Performance I/O in JavaScript**
 
 ### **Table of Contents**
 
@@ -22,21 +22,21 @@
 
 ## 1. Overview & Core Philosophy
 
-Streams in Bun makes I/O performance in JavaScript competitive with lower-level languages like Go, Rust, and C, while presenting a fully WHATWG-compliant API.
+Streams in Fun makes I/O performance in JavaScript competitive with lower-level languages like Go, Rust, and C, while presenting a fully WHATWG-compliant API.
 
-The core philosophy is **"native-first, JS-fallback"**. Bun assumes that for many high-performance use cases, the JavaScript layer should act as a high-level controller for system-level I/O operations. We try to execute I/O operations with minimal abstraction cost, bypassing the JavaScript virtual machine entirely for performance-critical paths.
+The core philosophy is **"native-first, JS-fallback"**. Fun assumes that for many high-performance use cases, the JavaScript layer should act as a high-level controller for system-level I/O operations. We try to execute I/O operations with minimal abstraction cost, bypassing the JavaScript virtual machine entirely for performance-critical paths.
 
 This document details the specific architectural patterns, from the JS/native boundary down to the I/O layer, that enable this level of performance.
 
 ## 2. Foundational Concepts
 
-To understand Bun's stream optimizations, two foundational concepts must be understood first: the tagging system and the `Body` mixin's role as a state machine.
+To understand Fun's stream optimizations, two foundational concepts must be understood first: the tagging system and the `Body` mixin's role as a state machine.
 
 ### 2.1. The Stream Tagging System: Enabling Optimization
 
 Identifying the _source_ of a `ReadableStream` at the native level unlocks many optimization opportunities. This is achieved by "tagging" the stream object internally.
 
-- **Mechanism:** Every `ReadableStream` in Bun holds a private field, `bunNativePtr`, which can point to a native Zig struct representing the stream's underlying source.
+- **Mechanism:** Every `ReadableStream` in Fun holds a private field, `funNativePtr`, which can point to a native Zig struct representing the stream's underlying source.
 - **Identification:** A C++ binding, `ReadableStreamTag__tagged` (from `ReadableStream.zig`), is the primary entry point for this identification. When native code needs to consume a stream (e.g., when sending a `Response` body), it calls this function on the JS `ReadableStream` object to determine its origin.
 
 ```zig
@@ -55,7 +55,7 @@ This tag is the key that unlocks all subsequent optimizations. It allows the run
 
 ### 2.2. The `Body` Mixin: An Intelligent Gateway
 
-The `Body` mixin (used by `Request` and `Response`) is not merely a stream container; it's a sophisticated state machine and the primary API gateway to Bun's optimization paths. A `Body`'s content is represented by the `Body.Value` union in Zig, which can be a static buffer (`.InternalBlob`, `.WTFStringImpl`) or a live stream (`.Locked`).
+The `Body` mixin (used by `Request` and `Response`) is not merely a stream container; it's a sophisticated state machine and the primary API gateway to Fun's optimization paths. A `Body`'s content is represented by the `Body.Value` union in Zig, which can be a static buffer (`.InternalBlob`, `.WTFStringImpl`) or a live stream (`.Locked`).
 
 Methods like `.text()`, `.json()`, and `.arrayBuffer()` are not simple stream consumers. They are entry points to a decision tree that aggressively seeks the fastest possible way to fulfill the request.
 
@@ -111,7 +111,7 @@ This is the most impactful optimization for a vast number of common API and data
 
 **The Conventional Problem:** In other JavaScript runtimes, consuming a response body with `.text()` is an inherently asynchronous, multi-step process involving the creation of multiple streams, readers, and promises, which incurs significant overhead.
 
-**Bun's fast path:** Bun correctly assumes that for many real-world scenarios (e.g., small JSON API responses), the entire response body is already available in a single, contiguous memory buffer when the consuming method is called. It therefore **bypasses the entire stream processing model** and returns the buffer directly.
+**Fun's fast path:** Fun correctly assumes that for many real-world scenarios (e.g., small JSON API responses), the entire response body is already available in a single, contiguous memory buffer when the consuming method is called. It therefore **bypasses the entire stream processing model** and returns the buffer directly.
 
 **Implementation Architecture & Data Flow:**
 
@@ -169,7 +169,7 @@ This optimization targets high-throughput scenarios like serving files or proxyi
 
 **The Conventional Problem:** Piping a file to an HTTP response in other runtimes involves a costly per-chunk round trip through the JavaScript layer: `Native (read) -> JS (chunk as Uint8Array) -> JS (response.write) -> Native (socket)`.
 
-**Bun's direct path:** Bun's runtime inspects the source and sink of a pipe. If it identifies a compatible native pair, it establishes a direct data channel between them entirely within the native layer.
+**Fun's direct path:** Fun's runtime inspects the source and sink of a pipe. If it identifies a compatible native pair, it establishes a direct data channel between them entirely within the native layer.
 
 **Implementation Architecture & Data Flow:**
 
@@ -204,11 +204,11 @@ graph TD
 
 **Diagram 3: Direct Path for File Serving**
 
-1.  **Scenario:** A server handler returns `new Response(Bun.file("video.mp4").stream())`.
-2.  **Tagging:** The stream is created with a `File` tag, and its `bunNativePtr` points to a native `webcore.FileReader` struct. The HTTP server's response sink is a native `HTTPSResponseSink`.
+1.  **Scenario:** A server handler returns `new Response(Fun.file("video.mp4").stream())`.
+2.  **Tagging:** The stream is created with a `File` tag, and its `funNativePtr` points to a native `webcore.FileReader` struct. The HTTP server's response sink is a native `HTTPSResponseSink`.
 3.  **Connection via `assignToStream`:** The server's internal logic triggers `assignToStream` (`ReadableStreamInternals.ts`). This function detects the native source via its tag and dispatches to `readDirectStream`.
 4.  **Native Handoff:** `readDirectStream` calls the C++ binding `$startDirectStream`, which passes pointers to the native `FileReader` (source) and `HTTPSResponseSink` (sink) to the Zig engine.
-5.  **Zero-Copy Native Data Flow:** The Zig layer takes over. The `FileReader` reads a chunk from the disk. It yields a `streams.Result.temporary` variant, which is a **zero-copy view** into a shared read buffer. This view is passed directly to the `HTTPSResponseSink.write()` method, which appends it to its internal socket write buffer. When possible, Bun will skip the FileReader and use the `sendfile` system call for even less system call interactions.
+5.  **Zero-Copy Native Data Flow:** The Zig layer takes over. The `FileReader` reads a chunk from the disk. It yields a `streams.Result.temporary` variant, which is a **zero-copy view** into a shared read buffer. This view is passed directly to the `HTTPSResponseSink.write()` method, which appends it to its internal socket write buffer. When possible, Fun will skip the FileReader and use the `sendfile` system call for even less system call interactions.
 
 **Architectural Impact:**
 
@@ -218,11 +218,11 @@ graph TD
 
 ### 3.3. Optimization 3: `readMany()` - Efficient Async Iteration
 
-Bun optimizes the standard `for-await-of` loop syntax for streams.
+Fun optimizes the standard `for-await-of` loop syntax for streams.
 
 **The Conventional Problem:** A naive `[Symbol.asyncIterator]` implementation calls `await reader.read()` for every chunk, which is inefficient if many small chunks arrive in quick succession.
 
-**Bun's Solution:** Bun provides a custom, non-standard `reader.readMany()` method that synchronously drains the stream's entire internal buffer into a JavaScript array.
+**Fun's Solution:** Fun provides a custom, non-standard `reader.readMany()` method that synchronously drains the stream's entire internal buffer into a JavaScript array.
 
 **Implementation Architecture & Data Flow:**
 
@@ -240,7 +240,7 @@ flowchart TB
         T1 --> T2 --> T3 --> T4 --> T5 --> T6 --> T7
     end
 
-    subgraph bun["Bun's readMany() Optimization"]
+    subgraph fun["Fun's readMany() Optimization"]
         direction TB
         B1["🚀 for await (chunks of stream)"]
         B2["readMany()"]
@@ -259,10 +259,10 @@ flowchart TB
     end
 
     trad --> P1["❌ Performance Impact<br/>• Promise per chunk<br/>• await per chunk<br/>• High overhead"]
-    bun --> P2["✅ Performance Win<br/>• Batch processing<br/>• Minimal promises<br/>• Low overhead"]
+    fun --> P2["✅ Performance Win<br/>• Batch processing<br/>• Minimal promises<br/>• Low overhead"]
 
     style trad fill:#fee2e2,stroke:#7f1d1d,stroke-width:3px
-    style bun fill:#dcfce7,stroke:#14532d,stroke-width:3px
+    style fun fill:#dcfce7,stroke:#14532d,stroke-width:3px
     style T2 fill:#ef4444,stroke:#7f1d1d,color:#ffffff
     style T4 fill:#ef4444,stroke:#7f1d1d,color:#ffffff
     style T6 fill:#ef4444,stroke:#7f1d1d,color:#ffffff
@@ -285,8 +285,8 @@ The high-level optimizations are made possible by a robust and carefully designe
 The entire native architecture is built upon a set of generic, powerful Zig primitives that define the contracts for data flow.
 
 - **`streams.Result` Union:** This is the universal data-carrying type for all native stream reads. Its variants are not just data containers; they are crucial signals from the source to the sink.
-  - `owned: bun.ByteList`: Represents a heap-allocated buffer. The receiver is now responsible for freeing this memory. This is used when data must outlive the current scope.
-  - `temporary: bun.ByteList`: A borrowed, read-only view into a source's internal buffer. This is the key to **zero-copy reads**, as the sink can process the data without taking ownership or performing a copy. It is only valid for the duration of the function call.
+  - `owned: fun.ByteList`: Represents a heap-allocated buffer. The receiver is now responsible for freeing this memory. This is used when data must outlive the current scope.
+  - `temporary: fun.ByteList`: A borrowed, read-only view into a source's internal buffer. This is the key to **zero-copy reads**, as the sink can process the data without taking ownership or performing a copy. It is only valid for the duration of the function call.
   - `owned_and_done` / `temporary_and_done`: These variants bundle the final data chunk with the end-of-stream signal. This is a critical latency optimization, as it collapses two distinct events (data and close) into one, saving an I/O round trip.
   - `into_array`: Used for BYOB (Bring-Your-Own-Buffer) readers. It contains a handle to the JS-provided `ArrayBufferView` (`value: JSValue`) and the number of bytes written (`len`). This confirms a zero-copy write directly into JS-managed memory.
   - `pending: *Pending`: A handle to a future/promise, used to signal that the result is not yet available and the operation should be suspended.
@@ -299,9 +299,9 @@ The entire native architecture is built upon a set of generic, powerful Zig prim
 
 #### **4.2. Native Sink In-Depth: `HTTPSResponseSink` and Buffering**
 
-The `HTTPServerWritable` struct (instantiated as `HTTPSResponseSink` in `streams.zig`) is part of what makes Bun's HTTP server fast.
+The `HTTPServerWritable` struct (instantiated as `HTTPSResponseSink` in `streams.zig`) is part of what makes Fun's HTTP server fast.
 
-- **Intelligent Write Buffering:** The `write` method (`writeBytes`, `writeLatin1`, etc.) does not immediately issue a `write` syscall. It appends the incoming `streams.Result` slice to its internal `buffer: bun.ByteList`. This coalesces multiple small, high-frequency writes (common in streaming LLM responses or SSE) into a single, larger, more efficient syscall.
+- **Intelligent Write Buffering:** The `write` method (`writeBytes`, `writeLatin1`, etc.) does not immediately issue a `write` syscall. It appends the incoming `streams.Result` slice to its internal `buffer: fun.ByteList`. This coalesces multiple small, high-frequency writes (common in streaming LLM responses or SSE) into a single, larger, more efficient syscall.
 
 - **Backpressure Logic (`send` method):** The `send` method attempts to write the buffer to the underlying `uWebSockets` socket.
   - It uses the optimized `res.tryEnd()` for the final chunk.
@@ -325,10 +325,10 @@ When a consuming method like `.text()` is called on a body that cannot be resolv
 
 #### **4.4. Memory and String Optimizations**
 
-- **`Blob` and `Blob.Store` (`Blob.zig`):** A `Blob` is a lightweight handle to a `Blob.Store`. The store can be backed by memory (`.bytes`), a file (`.file`), or an S3 object (`.s3`). This allows Bun to implement optimized operations based on the blob's backing store (e.g., `Bun.write(file1, file2)` becomes a native file copy via `copy_file.zig`).
+- **`Blob` and `Blob.Store` (`Blob.zig`):** A `Blob` is a lightweight handle to a `Blob.Store`. The store can be backed by memory (`.bytes`), a file (`.file`), or an S3 object (`.s3`). This allows Fun to implement optimized operations based on the blob's backing store (e.g., `Fun.write(file1, file2)` becomes a native file copy via `copy_file.zig`).
 - **`Blob.slice()` as a Zero-Copy View:** `blob.slice()` is a constant-time operation that creates a new `Blob` handle pointing to the same store but with a different `offset` and `size`, avoiding any data duplication.
 - **`is_all_ascii` Flag:** `Blob`s and `ByteStream`s track whether their content is known to be pure ASCII. This allows `.text()` to skip expensive UTF-8 validation and decoding for a large class of text-based data, treating the Latin-1 bytes directly as a string.
-- **`WTFStringImpl` Integration:** Bun avoids copying JS strings by default, instead storing a pointer to WebKit's internal `WTF::StringImpl` (`Body.Value.WTFStringImpl`). The conversion to a UTF-8 byte buffer is deferred until it's absolutely necessary (e.g., writing to a socket), avoiding copies for string-based operations that might never touch the network.
+- **`WTFStringImpl` Integration:** Fun avoids copying JS strings by default, instead storing a pointer to WebKit's internal `WTF::StringImpl` (`Body.Value.WTFStringImpl`). The conversion to a UTF-8 byte buffer is deferred until it's absolutely necessary (e.g., writing to a socket), avoiding copies for string-based operations that might never touch the network.
 
 ## 5. The Unified System: A Complete Data Flow Example
 
@@ -379,7 +379,7 @@ graph TD
 **Diagram 5: Unified Consumption Flow**
 
 1.  User calls `response.text()`.
-2.  Bun checks if the body is already fully buffered in memory.
+2.  Fun checks if the body is already fully buffered in memory.
 3.  **Path 1 (Fastest):** If yes, it performs the **Synchronous Coercion** optimization and returns a resolved promise.
 4.  **Path 2 (Fast):** If no, it checks the stream's tag. If it's a native source (`File`, `Bytes`), it uses the **Direct Path** to pipe the stream to a native `Body.ValueBufferer`.
 5.  **Path 3 (Slowest):** If it's a generic `JavaScript` stream, it falls back to a JS-based `read()` loop that pushes chunks to the `Body.ValueBufferer`.
@@ -387,10 +387,10 @@ graph TD
 
 ## 6. Conclusion
 
-Streams in Bun aggressively optimize common paths, while providing a fully WHATWG-compliant API.
+Streams in Fun aggressively optimize common paths, while providing a fully WHATWG-compliant API.
 
 - **Key Architectural Principle:** Dispatching between generic and optimized paths based on runtime type information (tagging) is the central strategy.
 - **Primary Optimizations:** The **Synchronous Coercion Fast Path** and the **Direct Native Piping Path** are the two most significant innovations, eliminating entire layers of abstraction for common use cases.
 - **Supporting Optimizations:** Efficient async iteration (`readMany`), intelligent sink-side buffering (`AutoFlusher`), and careful memory management (`owned` vs. `temporary` buffers, object pooling) contribute to a system that is fast at every level.
 
-This deep integration between the native and JavaScript layers allows Bun to deliver performance that rivals, and in many cases exceeds, that of systems written in lower-level languages, without sacrificing the productivity and ecosystem of JavaScript.
+This deep integration between the native and JavaScript layers allows Fun to deliver performance that rivals, and in many cases exceeds, that of systems written in lower-level languages, without sacrificing the productivity and ecosystem of JavaScript.

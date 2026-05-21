@@ -30,7 +30,7 @@ pub const Array = struct {
         allocator: std.mem.Allocator,
         estimated_count: usize,
     ) !ExprNodeList {
-        var out: bun.BabyList(Expr) = try .initCapacity(
+        var out: fun.BabyList(Expr) = try .initCapacity(
             allocator,
             // This over-allocates a little but it's fine
             estimated_count + @as(usize, this.items.len),
@@ -74,7 +74,7 @@ pub const Array = struct {
     pub fn alphabetizeStrings(this: *Array) void {
         if (comptime Environment.allow_assert) {
             for (this.items.slice()) |item| {
-                bun.assert(item.data == .e_string);
+                fun.assert(item.data == .e_string);
             }
         }
         std.sort.pdq(Expr, this.items.slice(), {}, Sorter.isLessThan);
@@ -102,7 +102,7 @@ pub const Unary = struct {
         ///
         /// Note that there *is* actually a case where "typeof x" can throw an error:
         /// when "x" is being referenced inside of its TDZ (temporal dead zone). TDZ
-        /// checks are not yet handled correctly by Bun, so this possibility is
+        /// checks are not yet handled correctly by Fun, so this possibility is
         /// currently ignored.
         was_originally_typeof_identifier: bool = false,
 
@@ -461,7 +461,7 @@ pub const Number = struct {
 
         if (Environment.isNative) {
             var buf: [124]u8 = undefined;
-            return bun.handleOom(allocator.dupe(u8, bun.fmt.FormatDouble.dtoa(&buf, value)));
+            return fun.handleOom(allocator.dupe(u8, fun.fmt.FormatDouble.dtoa(&buf, value)));
         } else {
             // do not attempt to implement the spec here, it would be error prone.
         }
@@ -748,7 +748,7 @@ pub const Object = struct {
     pub fn alphabetizeProperties(this: *Object) void {
         if (comptime Environment.isDebug) {
             for (this.properties.slice()) |prop| {
-                bun.assert(prop.key.?.data == .e_string);
+                fun.assert(prop.key.?.data == .e_string);
             }
         }
         std.sort.pdq(G.Property, this.properties.slice(), {}, Sorter.isLessThan);
@@ -837,17 +837,17 @@ pub const String = struct {
 
     pub fn isIdentifier(this: *String, allocator: std.mem.Allocator) bool {
         if (!this.isUTF8()) {
-            return bun.js_lexer.isIdentifierUTF16(this.slice16());
+            return fun.js_lexer.isIdentifierUTF16(this.slice16());
         }
 
-        return bun.js_lexer.isIdentifier(this.slice(allocator));
+        return fun.js_lexer.isIdentifier(this.slice(allocator));
     }
 
     pub const class = E.String{ .data = "class" };
 
     pub fn push(this: *String, other: *String) void {
-        bun.assert(this.isUTF8());
-        bun.assert(other.isUTF8());
+        fun.assert(this.isUTF8());
+        fun.assert(other.isUTF8());
 
         if (other.rope_len == 0) {
             other.rope_len = @truncate(other.data.len);
@@ -910,32 +910,32 @@ pub const String = struct {
     }
 
     /// E.String containing non-ascii characters may not fully work.
-    /// https://github.com/oven-sh/bun/issues/11963
+    /// https://github.com/underdoc-org/fun/issues/11963
     /// More investigation is needed.
     pub fn initReEncodeUTF8(utf8: []const u8, allocator: std.mem.Allocator) String {
-        return if (bun.strings.isAllASCII(utf8))
+        return if (fun.strings.isAllASCII(utf8))
             init(utf8)
         else
-            init(bun.handleOom(bun.strings.toUTF16AllocForReal(allocator, utf8, false, false)));
+            init(fun.handleOom(fun.strings.toUTF16AllocForReal(allocator, utf8, false, false)));
     }
 
     pub fn slice8(this: *const String) []const u8 {
-        bun.assert(!this.is_utf16);
+        fun.assert(!this.is_utf16);
         return this.data;
     }
 
     pub fn slice16(this: *const String) []const u16 {
-        bun.assert(this.is_utf16);
+        fun.assert(this.is_utf16);
         return @as([*]const u16, @ptrCast(@alignCast(this.data.ptr)))[0..this.data.len];
     }
 
     pub fn resolveRopeIfNeeded(this: *String, allocator: std.mem.Allocator) void {
         if (this.next == null or !this.isUTF8()) return;
-        var bytes = bun.handleOom(std.array_list.Managed(u8).initCapacity(allocator, this.rope_len));
+        var bytes = fun.handleOom(std.array_list.Managed(u8).initCapacity(allocator, this.rope_len));
         bytes.appendSliceAssumeCapacity(this.data);
         var str = this.next;
         while (str) |part| {
-            bun.handleOom(bytes.appendSlice(part.data));
+            fun.handleOom(bytes.appendSlice(part.data));
             str = part.next;
         }
         this.data = bytes.items;
@@ -944,7 +944,7 @@ pub const String = struct {
 
     pub fn slice(this: *String, allocator: std.mem.Allocator) []const u8 {
         this.resolveRopeIfNeeded(allocator);
-        return bun.handleOom(this.string(allocator));
+        return fun.handleOom(this.string(allocator));
     }
 
     fn stringCompareForJavaScript(comptime T: type, a: []const T, b: []const T) std.math.Order {
@@ -962,7 +962,7 @@ pub const String = struct {
     /// Compares two strings lexicographically for JavaScript semantics.
     /// Both strings must share the same encoding (UTF-8 vs UTF-16).
     pub inline fn order(this: *const String, other: *const String) std.math.Order {
-        bun.debugAssert(this.isUTF8() == other.isUTF8());
+        fun.debugAssert(this.isUTF8() == other.isUTF8());
 
         if (this.isUTF8()) {
             return stringCompareForJavaScript(u8, this.data, other.data);
@@ -1069,7 +1069,7 @@ pub const String = struct {
 
     pub fn eqlComptime(s: *const String, comptime value: []const u8) bool {
         if (!s.isUTF8()) {
-            bun.assertf(s.next == null, "transpiler: utf-16 string is a rope", .{}); // utf-16 strings are not ropes
+            fun.assertf(s.next == null, "transpiler: utf-16 string is a rope", .{}); // utf-16 strings are not ropes
             return strings.eqlComptimeUTF16(s.slice16(), value);
         }
         if (s.next == null) {
@@ -1081,7 +1081,7 @@ pub const String = struct {
         return eql8Rope(s, value);
     }
     fn eql8Rope(s: *const String, value: []const u8) bool {
-        bun.assertf(s.next != null and s.isUTF8(), "transpiler: bad call to eql8Rope", .{});
+        fun.assertf(s.next != null and s.isUTF8(), "transpiler: bad call to eql8Rope", .{});
         if (s.rope_len != value.len) return false;
         var i: usize = 0;
         var next: ?*const String = s;
@@ -1089,8 +1089,8 @@ pub const String = struct {
             if (!strings.eqlLong(current.data, value[i..][0..current.data.len], false)) return false;
             i += current.data.len;
         }
-        bun.assertf(i == value.len, "transpiler: rope string length mismatch 1", .{});
-        bun.assertf(i == s.rope_len, "transpiler: rope string length mismatch 2", .{});
+        fun.assertf(i == value.len, "transpiler: rope string length mismatch 1", .{});
+        fun.assertf(i == s.rope_len, "transpiler: rope string length mismatch 2", .{});
         return true;
     }
 
@@ -1133,10 +1133,10 @@ pub const String = struct {
 
         if (s.isUTF8()) {
             // hash utf-8
-            return bun.hash(s.data);
+            return fun.hash(s.data);
         } else {
             // hash utf-16
-            return bun.hash(@as([*]const u8, @ptrCast(s.slice16().ptr))[0 .. s.slice16().len * 2]);
+            return fun.hash(@as([*]const u8, @ptrCast(s.slice16().ptr))[0 .. s.slice16().len * 2]);
         }
     }
 
@@ -1157,7 +1157,7 @@ pub const String = struct {
             if (s.isUTF8()) {
                 try writer.print("\"{s}\"", .{s.data});
             } else {
-                try writer.print("\"{f}\"", .{bun.fmt.utf16(s.slice16())});
+                try writer.print("\"{f}\"", .{fun.fmt.utf16(s.slice16())});
             }
             try writer.writeAll(")");
         } else {
@@ -1167,7 +1167,7 @@ pub const String = struct {
                 if (part.isUTF8()) {
                     try writer.print("\"{s}\"", .{part.data});
                 } else {
-                    try writer.print("\"{f}\"", .{bun.fmt.utf16(part.slice16())});
+                    try writer.print("\"{f}\"", .{fun.fmt.utf16(part.slice16())});
                 }
                 it = part.next;
                 if (it != null) try writer.writeAll(" ");
@@ -1231,7 +1231,7 @@ pub const Template = struct {
             };
         }
 
-        bun.assert(this.head == .cooked);
+        fun.assert(this.head == .cooked);
 
         if (this.parts.len == 0) {
             return Expr.init(E.String, this.head.cooked, loc);
@@ -1241,7 +1241,7 @@ pub const Template = struct {
         var head = Expr.init(E.String, this.head.cooked, loc);
         for (this.parts) |part_src| {
             var part = part_src;
-            bun.assert(part.tail == .cooked);
+            fun.assert(part.tail == .cooked);
 
             part.value = part.value.unwrapInlined();
 
@@ -1282,7 +1282,7 @@ pub const Template = struct {
                     continue;
                 } else {
                     var prev_part = &parts.items[parts.items.len - 1];
-                    bun.assert(prev_part.tail == .cooked);
+                    fun.assert(prev_part.tail == .cooked);
 
                     if (prev_part.tail.cooked.isUTF8()) {
                         if (part.value.data.e_string.len() > 0) {
@@ -1414,7 +1414,7 @@ pub const Import = struct {
         return this.import_record_index == std.math.maxInt(u32);
     }
 
-    pub fn importRecordLoader(import: *const Import) ?bun.options.Loader {
+    pub fn importRecordLoader(import: *const Import) ?fun.options.Loader {
         // This logic is duplicated in js_printer.zig fn parsePath()
         const obj = import.options.data.as(.e_object) orelse
             return null;
@@ -1426,7 +1426,7 @@ pub const Import = struct {
             return null).data.as(.e_string) orelse
             return null;
 
-        if (!str.is_utf16) if (bun.options.Loader.fromString(str.data)) |loader| {
+        if (!str.is_utf16) if (fun.options.Loader.fromString(str.data)) |loader| {
             if (loader == .sqlite) {
                 const embed = with_obj.get("embed") orelse return loader;
                 const embed_str = embed.data.as(.e_string) orelse return loader;
@@ -1448,17 +1448,17 @@ const stringZ = [:0]const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const ComptimeStringMap = bun.ComptimeStringMap;
-const Environment = bun.Environment;
-const ImportRecord = bun.ImportRecord;
-const OOM = bun.OOM;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const Loader = bun.options.Loader;
+const fun = @import("fun");
+const ComptimeStringMap = fun.ComptimeStringMap;
+const Environment = fun.Environment;
+const ImportRecord = fun.ImportRecord;
+const OOM = fun.OOM;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const Loader = fun.options.Loader;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const ExprNodeIndex = js_ast.ExprNodeIndex;

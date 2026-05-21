@@ -15,8 +15,8 @@ class DOMIsoSubspaces {
 
 public:
     DOMIsoSubspaces() = default;
-    /*-- BUN --*/
-    std::unique_ptr<IsoSubspace> m_subspaceForBunClassConstructor;
+    /*-- FUN --*/
+    std::unique_ptr<IsoSubspace> m_subspaceForFunClassConstructor;
     std::unique_ptr<IsoSubspace> m_subspaceForBufferList;
     std::unique_ptr<IsoSubspace> m_subspaceForFFIFunction;
     std::unique_ptr<IsoSubspace> m_subspaceForWrappingFunction;
@@ -50,7 +50,7 @@ public:
     std::unique_ptr<IsoSubspace> m_subspaceForProcessObject;
     std::unique_ptr<IsoSubspace> m_subspaceForInternalModuleRegistry;
     std::unique_ptr<IsoSubspace> m_subspaceForErrorCodeCache;
-    std::unique_ptr<IsoSubspace> m_subspaceForBunInspectorConnection;
+    std::unique_ptr<IsoSubspace> m_subspaceForFunInspectorConnection;
     std::unique_ptr<IsoSubspace> m_subspaceForJSNextTickQueue;
     std::unique_ptr<IsoSubspace> m_subspaceForNAPIFunction;
     std::unique_ptr<IsoSubspace> m_subspaceForTTYWrapObject;
@@ -73,7 +73,7 @@ public:
     std::unique_ptr<IsoSubspace> m_subspaceForWasmStreamingCompiler;
     std::unique_ptr<IsoSubspace> m_subspaceForJSWebView;
 #include "ZigGeneratedClasses+DOMIsoSubspaces.h"
-    /*-- BUN --*/
+    /*-- FUN --*/
 
     // std::unique_ptr<IsoSubspace> m_subspaceForTouch;
     // std::unique_ptr<IsoSubspace> m_subspaceForTouchEvent;
@@ -946,7 +946,7 @@ public:
     std::unique_ptr<IsoSubspace> m_subspaceForJSHmac;
     std::unique_ptr<IsoSubspace> m_subspaceForJSHash;
     std::unique_ptr<IsoSubspace> m_subspaceForServerRouteList;
-    std::unique_ptr<IsoSubspace> m_subspaceForBunRequest;
+    std::unique_ptr<IsoSubspace> m_subspaceForFunRequest;
     std::unique_ptr<IsoSubspace> m_subspaceForBakeResponse;
     std::unique_ptr<IsoSubspace> m_subspaceForJSDiffieHellman;
     std::unique_ptr<IsoSubspace> m_subspaceForJSDiffieHellmanGroup;

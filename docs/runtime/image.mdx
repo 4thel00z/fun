@@ -3,36 +3,36 @@ title: Image
 description: Decode, transform, and encode images with a fast native pipeline
 ---
 
-`Bun.Image` is a chainable image pipeline for decoding, resizing, rotating, and re-encoding JPEG, PNG, WebP, HEIC, and AVIF — built on libjpeg-turbo, spng, libwebp, and SIMD geometry kernels, with zero npm dependencies and no native addon build step.
+`Fun.Image` is a chainable image pipeline for decoding, resizing, rotating, and re-encoding JPEG, PNG, WebP, HEIC, and AVIF — built on libjpeg-turbo, spng, libwebp, and SIMD geometry kernels, with zero npm dependencies and no native addon build step.
 
 ```ts
-await Bun.file("photo.jpg").image().resize(400, 400, { fit: "inside" }).webp({ quality: 80 }).write("thumb.webp");
+await Fun.file("photo.jpg").image().resize(400, 400, { fit: "inside" }).webp({ quality: 80 }).write("thumb.webp");
 ```
 
 The API is shaped after [Sharp](https://sharp.pixelplumbing.com/): construct from an input, chain transforms, pick an output format, then `await` a terminal method. Nothing runs until the terminal is awaited, and the work executes off the JavaScript thread.
 
 ## Input
 
-The constructor accepts a path, bytes, or a `Blob` — including `Bun.file()` and `Bun.s3()`. `Blob#image()` is shorthand for `new Bun.Image(blob)`:
+The constructor accepts a path, bytes, or a `Blob` — including `Fun.file()` and `Fun.s3()`. `Blob#image()` is shorthand for `new Fun.Image(blob)`:
 
 ```ts
-new Bun.Image("./photo.jpg"); // file path
-new Bun.Image(buffer); // Buffer / ArrayBuffer / TypedArray
-new Bun.Image(Bun.file("photo.jpg")); // BunFile (read lazily, off-thread)
-Bun.file("photo.jpg").image(); // same as above
-Bun.s3("bucket/photo.jpg").image(); // S3File
+new Fun.Image("./photo.jpg"); // file path
+new Fun.Image(buffer); // Buffer / ArrayBuffer / TypedArray
+new Fun.Image(Fun.file("photo.jpg")); // FunFile (read lazily, off-thread)
+Fun.file("photo.jpg").image(); // same as above
+Fun.s3("bucket/photo.jpg").image(); // S3File
 ```
 
 The format is sniffed from the bytes — extensions and `Content-Type` are ignored.
 
-**Path strings are filesystem paths.** Don't pass user-controlled strings directly to the constructor — that's an arbitrary-file-read primitive. Read untrusted input into a `Buffer` (e.g. via `fetch`/`Bun.file` with your own validation) and pass the bytes.
+**Path strings are filesystem paths.** Don't pass user-controlled strings directly to the constructor — that's an arbitrary-file-read primitive. Read untrusted input into a `Buffer` (e.g. via `fetch`/`Fun.file` with your own validation) and pass the bytes.
 
 When passing a `TypedArray`/`ArrayBuffer`, don't mutate it while a terminal is pending — decode runs off-thread and borrows the bytes. `SharedArrayBuffer` and resizable buffers are refused; use `buf.slice()` to pass a fixed view.
 
 A second `options` argument guards against decompression bombs and controls EXIF handling:
 
 ```ts
-new Bun.Image(input, {
+new Fun.Image(input, {
   // Reject if width*height > this. Checked after reading the header,
   // before allocating the pixel buffer. Default matches Sharp (~268 MP).
   maxPixels: 4096 * 4096,
@@ -46,7 +46,7 @@ new Bun.Image(input, {
 Read `width`, `height`, and `format` without decoding pixel data:
 
 ```ts
-const { width, height, format } = await new Bun.Image(input).metadata();
+const { width, height, format } = await new Fun.Image(input).metadata();
 // => { width: 1920, height: 1080, format: "jpeg" }
 ```
 
@@ -124,17 +124,17 @@ await img.blob(); // Blob with .type set to the output MIME
 await img.toBase64(); // string
 await img.dataurl(); // "data:image/png;base64,…"
 await img.write("out.webp"); // number (bytes written)
-await img.write(Bun.s3("bucket/out.webp"));
+await img.write(Fun.s3("bucket/out.webp"));
 ```
 
-`.write()` accepts the same destinations as `Bun.write` — a path string, `Bun.file()`, `Bun.s3()`, or an fd. If you didn't chain a format method and the destination is a path string, the extension picks one (`.jpg`/`.png`/`.webp`/`.heic`/`.avif`).
+`.write()` accepts the same destinations as `Fun.write` — a path string, `Fun.file()`, `Fun.s3()`, or an fd. If you didn't chain a format method and the destination is a path string, the extension picks one (`.jpg`/`.png`/`.webp`/`.heic`/`.avif`).
 
 ## Placeholders
 
 For a low-quality placeholder to inline in HTML before the real image loads, `.placeholder()` returns a [ThumbHash](https://evanw.github.io/thumbhash/)-rendered ≤32px blur as a `data:` URL — ~400–700 bytes, no client-side decoder needed:
 
 ```ts
-const lqip = await Bun.file("hero.jpg").image().placeholder();
+const lqip = await Fun.file("hero.jpg").image().placeholder();
 // <img src={lqip} … /> — then swap to the real URL on load.
 ```
 
@@ -146,17 +146,17 @@ img.jpeg({ progressive: true });
 
 After the first terminal resolves, `img.width` and `img.height` reflect the _output_ dimensions (they're `-1` before).
 
-## `Bun.serve` integration
+## `Fun.serve` integration
 
-A `Bun.Image` pipeline is a valid `Response` body and sets `Content-Type` automatically. To keep the encode off the JS thread in a server handler, await a terminal first:
+A `Fun.Image` pipeline is a valid `Response` body and sets `Content-Type` automatically. To keep the encode off the JS thread in a server handler, await a terminal first:
 
 ```ts
-Bun.serve({
+Fun.serve({
   routes: {
     "/avatar/:id": async req => {
       // Validate before touching the filesystem (see the Input note above).
       if (!/^[a-z0-9]+$/.test(req.params.id)) return new Response(null, { status: 400 });
-      const out = await Bun.file(`avatars/${req.params.id}.png`).image().resize(128, 128).webp().blob();
+      const out = await Fun.file(`avatars/${req.params.id}.png`).image().resize(128, 128).webp().blob();
       return new Response(out);
     },
   },
@@ -168,7 +168,7 @@ Passing the pipeline directly (`new Response(img)`) also works, but currently ru
 ## Clipboard
 
 ```ts
-const img = Bun.Image.fromClipboard();
+const img = Fun.Image.fromClipboard();
 if (img) {
   const png = await img.resize(800, 800, { fit: "inside" }).png().bytes();
 }
@@ -207,5 +207,5 @@ const out = await img
 Formats handled by the system backend (TIFF, HEIC, AVIF, clipboard) inherit the **OS's** patch level — keep macOS / Windows updated. JPEG, PNG, and WebP go through the same statically-linked codecs on every platform, so encoded output is byte-identical across Linux, macOS, and Windows. To force the portable Highway path for geometry too — e.g. for golden-image tests — set the process-global backend:
 
 ```ts
-Bun.Image.backend = "bun"; // default is "system" on macOS/Windows
+Fun.Image.backend = "fun"; // default is "system" on macOS/Windows
 ```

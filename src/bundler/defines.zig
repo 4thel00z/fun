@@ -13,9 +13,9 @@ const Globals = struct {
 };
 
 const defines_path = fs.Path.initWithNamespace("defines.json", "internal");
-pub const RawDefines = bun.StringArrayHashMap(string);
-pub const UserDefines = bun.StringHashMap(DefineData);
-pub const UserDefinesArray = bun.StringArrayHashMap(DefineData);
+pub const RawDefines = fun.StringArrayHashMap(string);
+pub const UserDefines = fun.StringHashMap(DefineData);
+pub const UserDefinesArray = fun.StringArrayHashMap(DefineData);
 
 pub const DefineData = struct {
     value: js_ast.Expr.Data,
@@ -245,8 +245,8 @@ pub const DotDefine = struct {
 const nan_val = js_ast.E.Number{ .value = std.math.nan(f64) };
 
 pub const Define = struct {
-    identifiers: bun.StringHashMap(IdentifierDefine),
-    dots: bun.StringHashMap([]DotDefine),
+    identifiers: fun.StringHashMap(IdentifierDefine),
+    dots: fun.StringHashMap([]DotDefine),
     drop_debugger: bool,
     allocator: std.mem.Allocator,
 
@@ -342,13 +342,13 @@ pub const Define = struct {
         }
     }
 
-    pub fn init(allocator: std.mem.Allocator, _user_defines: ?UserDefines, string_defines: ?UserDefinesArray, drop_debugger: bool, omit_unused_global_calls: bool) bun.OOM!*@This() {
+    pub fn init(allocator: std.mem.Allocator, _user_defines: ?UserDefines, string_defines: ?UserDefinesArray, drop_debugger: bool, omit_unused_global_calls: bool) fun.OOM!*@This() {
         const define = try allocator.create(Define);
         errdefer allocator.destroy(define);
         define.* = .{
             .allocator = allocator,
-            .identifiers = bun.StringHashMap(IdentifierDefine).init(allocator),
-            .dots = bun.StringHashMap([]DotDefine).init(allocator),
+            .identifiers = fun.StringHashMap(IdentifierDefine).init(allocator),
+            .dots = fun.StringHashMap([]DotDefine).init(allocator),
             .drop_debugger = drop_debugger,
         };
         try define.dots.ensureTotalCapacity(124);
@@ -419,11 +419,11 @@ const table = @import("./defines-table.zig");
 const global_no_side_effect_function_calls_safe_for_to_string = table.global_no_side_effect_function_calls_safe_for_to_string;
 const global_no_side_effect_property_accesses = table.global_no_side_effect_property_accesses;
 
-const bun = @import("bun");
-const js_lexer = bun.js_lexer;
-const json_parser = bun.json;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const js_lexer = fun.js_lexer;
+const json_parser = fun.json;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
-const Ref = bun.ast.Ref;
+const js_ast = fun.ast;
+const Ref = fun.ast.Ref;

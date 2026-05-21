@@ -1,0 +1,11 @@
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
+
+exports[`funfig.toml test options randomize with seed produces consistent order 1`] = `
+[
+  "bravo",
+  "echo",
+  "alpha",
+  "delta",
+  "charlie",
+]
+`;

@@ -1,10 +1,10 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "aspen",
-  "name": "Bun",
+  "name": "Fun",
   "seo": {
     "metatags": {
-      "canonical": "https://bun.com/docs"
+      "canonical": "https://fun.dev/docs"
     }
   },
   "colors": {
@@ -15,7 +15,7 @@
   "background": {
     "decoration": "gradient"
   },
-  "favicon": "/logo/bun.png",
+  "favicon": "/logo/fun.png",
   "icons": {
     "library": "lucide"
   },
@@ -36,8 +36,8 @@
   "navbar": {
     "links": [
       {
-        "label": "Install Bun",
-        "href": "https://www.bun.com/docs/installation",
+        "label": "Install Fun",
+        "href": "https://www.fun.dev/docs/installation",
         "icon": "download",
         "primary": true
       }
@@ -76,7 +76,7 @@
           {
             "group": "Core Runtime",
             "icon": "cog",
-            "pages": ["/runtime/index", "/runtime/watch-mode", "/runtime/debugger", "/runtime/repl", "/runtime/bunfig"]
+            "pages": ["/runtime/index", "/runtime/watch-mode", "/runtime/debugger", "/runtime/repl", "/runtime/funfig"]
           },
           {
             "group": "File & Module System",
@@ -174,7 +174,7 @@
           {
             "group": "Standards & Compatibility",
             "icon": "badge-check",
-            "pages": ["/runtime/globals", "/runtime/bun-apis", "/runtime/web-apis", "/runtime/nodejs-compat"]
+            "pages": ["/runtime/globals", "/runtime/fun-apis", "/runtime/web-apis", "/runtime/nodejs-compat"]
           },
           {
             "group": "Contributing",
@@ -197,7 +197,7 @@
           {
             "group": "Core Commands",
             "icon": "terminal",
-            "pages": ["/pm/cli/install", "/pm/cli/add", "/pm/cli/remove", "/pm/cli/update", "/pm/bunx"]
+            "pages": ["/pm/cli/install", "/pm/cli/add", "/pm/cli/remove", "/pm/cli/update", "/pm/funx"]
           },
           {
             "group": "Publishing & Analysis",
@@ -342,7 +342,7 @@
             "icon": "wrench",
             "pages": [
               "/guides/util/upgrade",
-              "/guides/util/detect-bun",
+              "/guides/util/detect-fun",
               "/guides/util/version",
               "/guides/util/hash-a-password",
               "/guides/util/javascript-uuid",
@@ -412,7 +412,7 @@
               "/guides/http/fetch-unix",
               "/guides/http/stream-iterator",
               "/guides/http/sse",
-              "/guides/http/stream-node-streams-in-bun"
+              "/guides/http/stream-node-streams-in-fun"
             ]
           },
           {
@@ -462,8 +462,8 @@
               "/guides/install/jfrog-artifactory",
               "/guides/install/trusted",
               "/guides/install/yarnlock",
-              "/guides/install/from-npm-install-to-bun-install",
-              "/guides/install/git-diff-bun-lockfile",
+              "/guides/install/from-npm-install-to-fun-install",
+              "/guides/install/git-diff-fun-lockfile",
               "/guides/install/cicd"
             ]
           },
@@ -621,12 +621,12 @@
       {
         "tab": "Reference",
         "icon": "book",
-        "href": "https://bun.com/reference"
+        "href": "https://fun.dev/reference"
       },
       {
         "tab": "Blog",
         "icon": "newspaper",
-        "href": "https://bun.com/blog"
+        "href": "https://fun.dev/blog"
       },
       {
         "tab": "Feedback",
@@ -637,10 +637,10 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/bunjavascript",
-      "github": "https://github.com/oven-sh/bun",
-      "discord": "https://bun.com/discord",
-      "youtube": "https://www.youtube.com/@bunjs"
+      "x": "https://x.com/funjavascript",
+      "github": "https://github.com/underdoc-org/fun",
+      "discord": "https://fun.dev/discord",
+      "youtube": "https://www.youtube.com/@funjs"
     }
   }
 }

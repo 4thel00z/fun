@@ -1,5 +1,5 @@
-import { SQL } from "bun";
-import { beforeEach, expect, test } from "bun:test";
+import { SQL } from "fun";
+import { beforeEach, expect, test } from "fun:test";
 import { describeWithContainer } from "harness";
 
 describeWithContainer(
@@ -14,7 +14,7 @@ describeWithContainer(
     let databaseUrl: string;
     beforeEach(async () => {
       await container.ready;
-      databaseUrl = `postgres://bun_sql_test@${container.host}:${container.port}/bun_sql_test`;
+      databaseUrl = `postgres://fun_sql_test@${container.host}:${container.port}/fun_sql_test`;
     });
     const postgres = (...args) => new SQL(...args);
 

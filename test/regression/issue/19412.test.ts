@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/19412
+// https://github.com/underdoc-org/fun/issues/19412
 // The top-level node:test test() ignored {skip, todo, only} options.
 import assert from "node:assert";
 import { test } from "node:test";

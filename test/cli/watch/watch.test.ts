@@ -1,7 +1,7 @@
-import type { Subprocess } from "bun";
-import { spawn } from "bun";
-import { afterEach, expect, it } from "bun:test";
-import { bunEnv, bunExe, isBroken, isWindows, tmpdirSync } from "harness";
+import type { Subprocess } from "fun";
+import { spawn } from "fun";
+import { afterEach, expect, it } from "fun:test";
+import { funEnv, funExe, isBroken, isWindows, tmpdirSync } from "harness";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 
@@ -15,16 +15,16 @@ for (const dir of ["dir", "©️"]) {
       const path = join(cwd, "watchee.js");
 
       const updateFile = async (i: number) => {
-        await Bun.write(path, `console.log(${i}, __dirname);`);
+        await Fun.write(path, `console.log(${i}, __dirname);`);
       };
 
       let i = 0;
       await updateFile(i);
-      await Bun.sleep(1000);
+      await Fun.sleep(1000);
       watchee = spawn({
         cwd,
-        cmd: [bunExe(), "--watch", "watchee.js"],
-        env: bunEnv,
+        cmd: [funExe(), "--watch", "watchee.js"],
+        env: funEnv,
         stdout: "pipe",
         stderr: "inherit",
         stdin: "ignore",

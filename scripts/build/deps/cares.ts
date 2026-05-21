@@ -1,6 +1,6 @@
 /**
  * c-ares — async DNS resolver. Backs node:dns and the Happy Eyeballs logic
- * in bun's HTTP client. Async is the point — libc's getaddrinfo blocks.
+ * in fun's HTTP client. Async is the point — libc's getaddrinfo blocks.
  *
  * DirectBuild: cmake's configure step runs ~130 try_compile probes to fill
  * ares_config.h (libc function/header presence + the exact prototypes of
@@ -91,7 +91,7 @@ export const cares: Dependency = {
     },
   }),
 
-  // ares_build.h is generated into the build dir; consumers (bun's bindings,
+  // ares_build.h is generated into the build dir; consumers (fun's bindings,
   // node:dns) include it via <ares.h> → "ares_build.h".
   provides: cfg => ({
     libs: [],

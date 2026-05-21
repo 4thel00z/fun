@@ -4,7 +4,7 @@
 #include "JavaScriptCore/LazyClassStructure.h"
 #include "JavaScriptCore/LazyClassStructureInlines.h"
 #include "JavaScriptCore/VMTrapsInlines.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "JavaScriptCore/ArgList.h"
 #include "JavaScriptCore/JSType.h"
 #include "JavaScriptCore/ObjectInitializationScope.h"
@@ -19,7 +19,7 @@
 #include <JavaScriptCore/PropertyNameArray.h>
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSStatFSPrototype;
 class JSBigIntStatFSPrototype;
@@ -249,7 +249,7 @@ JSC::Structure* createJSBigIntStatFSObjectStructure(JSC::VM& vm, JSC::JSGlobalOb
     return structure;
 }
 
-extern "C" JSC::EncodedJSValue Bun__createJSStatFSObject(Zig::GlobalObject* globalObject,
+extern "C" JSC::EncodedJSValue Fun__createJSStatFSObject(Zig::GlobalObject* globalObject,
     int64_t fstype,
     int64_t bsize,
     int64_t blocks,
@@ -282,7 +282,7 @@ extern "C" JSC::EncodedJSValue Bun__createJSStatFSObject(Zig::GlobalObject* glob
     return JSC::JSValue::encode(object);
 }
 
-extern "C" JSC::EncodedJSValue Bun__createJSBigIntStatFSObject(Zig::GlobalObject* globalObject,
+extern "C" JSC::EncodedJSValue Fun__createJSBigIntStatFSObject(Zig::GlobalObject* globalObject,
     int64_t fstype,
     int64_t bsize,
     int64_t blocks,
@@ -417,12 +417,12 @@ JSC_DEFINE_HOST_FUNCTION(callBigIntStatFS, (JSC::JSGlobalObject * lexicalGlobalO
     return JSValue::encode(callJSStatFSFunction<true>(lexicalGlobalObject, callFrame));
 }
 
-extern "C" JSC::EncodedJSValue Bun__JSBigIntStatFSObjectConstructor(Zig::GlobalObject* globalobject)
+extern "C" JSC::EncodedJSValue Fun__JSBigIntStatFSObjectConstructor(Zig::GlobalObject* globalobject)
 {
     return JSValue::encode(globalobject->m_JSStatFSBigIntClassStructure.constructor(globalobject));
 }
 
-extern "C" JSC::EncodedJSValue Bun__JSStatFSObjectConstructor(Zig::GlobalObject* globalobject)
+extern "C" JSC::EncodedJSValue Fun__JSStatFSObjectConstructor(Zig::GlobalObject* globalobject)
 {
     return JSValue::encode(globalobject->m_JSStatFSClassStructure.constructor(globalobject));
 }
@@ -461,4 +461,4 @@ void initJSBigIntStatFSClassStructure(JSC::LazyClassStructure::Initializer& init
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

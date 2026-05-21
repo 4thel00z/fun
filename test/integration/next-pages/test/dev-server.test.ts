@@ -1,11 +1,11 @@
-import { Subprocess } from "bun";
-import { install_test_helpers } from "bun:internal-for-testing";
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { Subprocess } from "fun";
+import { install_test_helpers } from "fun:internal-for-testing";
+import { afterAll, beforeAll, expect, test } from "fun:test";
 import { copyFileSync } from "fs";
 import { cp, rm } from "fs/promises";
 import { join } from "path";
 import { StringDecoder } from "string_decoder";
-import { bunEnv, bunExe, isCI, isWindows, tmpdirSync, toMatchNodeModulesAt } from "../../../harness";
+import { funEnv, funExe, isCI, isWindows, tmpdirSync, toMatchNodeModulesAt } from "../../../harness";
 const { parseLockfile } = install_test_helpers;
 
 expect.extend({ toMatchNodeModulesAt });
@@ -24,10 +24,10 @@ let baseUrl: string;
 let dev_server_pid: number | undefined = undefined;
 async function getDevServerURL() {
   console.log("Starting Next.js dev server");
-  dev_server = Bun.spawn([bunExe(), "--bun", "run", "next", "dev", "--port=0"], {
+  dev_server = Fun.spawn([funExe(), "--fun", "run", "next", "dev", "--port=0"], {
     cwd: root,
     env: {
-      ...bunEnv,
+      ...funEnv,
       NEXT_TELEMETRY_DISABLED: "1",
       // Print lots of debug logs in next.js:
       // "DEBUG": "*",
@@ -90,9 +90,9 @@ async function getDevServerURL() {
 beforeAll(async () => {
   copyFileSync(join(root, "src/Counter1.txt"), join(root, "src/Counter.tsx"));
 
-  const install = Bun.spawnSync([bunExe(), "i"], {
+  const install = Fun.spawnSync([funExe(), "i"], {
     cwd: root,
-    env: { ...bunEnv, BUN_INSTALL_CACHE_DIR: join(root, ".bun-install") },
+    env: { ...funEnv, FUN_INSTALL_CACHE_DIR: join(root, ".fun-install") },
     stdout: "inherit",
     stderr: "inherit",
     stdin: "inherit",
@@ -124,7 +124,7 @@ afterAll(() => {
 // https://github.com/puppeteer/puppeteer/issues/7740
 const puppeteer_unsupported = process.platform === "linux" && process.arch === "arm64";
 
-// https://github.com/oven-sh/bun/issues/11255
+// https://github.com/underdoc-org/fun/issues/11255
 test.skipIf(puppeteer_unsupported || (isWindows && isCI))(
   "hot reloading works on the client (+ tailwind hmr)",
   async () => {
@@ -148,9 +148,9 @@ test.skipIf(puppeteer_unsupported || (isWindows && isCI))(
       }
     }, 90000).unref();
 
-    ({ exited, pid } = Bun.spawn([bunExe(), "test/dev-server-puppeteer.ts", baseUrl], {
+    ({ exited, pid } = Fun.spawn([funExe(), "test/dev-server-puppeteer.ts", baseUrl], {
       cwd: root,
-      env: bunEnv,
+      env: funEnv,
       stdio: ["ignore", "inherit", "inherit"],
     }));
 

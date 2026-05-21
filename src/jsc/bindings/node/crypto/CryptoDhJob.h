@@ -4,7 +4,7 @@
 #include "KeyObject.h"
 #include "CryptoUtil.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsDiffieHellman);
 
@@ -45,4 +45,4 @@ struct DhJob {
     void schedule();
 };
 
-} // namespace Bun
+} // namespace Fun

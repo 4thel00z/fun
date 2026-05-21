@@ -435,7 +435,7 @@ fn ___tracy_emit_frame_mark(name: ?[*:0]const u8) void {
 }
 
 pub fn init() bool {
-    if (comptime !bun.Environment.isNative) {
+    if (comptime !fun.Environment.isNative) {
         return false;
     }
 
@@ -450,7 +450,7 @@ pub fn init() bool {
 }
 
 pub fn isConnected() bool {
-    if (comptime !bun.Environment.isNative) {
+    if (comptime !fun.Environment.isNative) {
         return false;
     }
 
@@ -462,7 +462,7 @@ pub fn isConnected() bool {
 }
 
 pub fn initThread(comptime name: [:0]const u8) void {
-    if (comptime !bun.Environment.isNative) {
+    if (comptime !fun.Environment.isNative) {
         return;
     }
 
@@ -481,13 +481,13 @@ const ___tracy_source_location_data = extern struct {
 };
 
 fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
-    if (comptime !bun.Environment.isNative) {
+    if (comptime !fun.Environment.isNative) {
         return null;
     }
 
-    if (comptime bun.Environment.isLinux) {
+    if (comptime fun.Environment.isLinux) {
         // use LD_PRELOAD on linux
-        if (bun.C.dlsym(Type, symbol)) |val| {
+        if (fun.C.dlsym(Type, symbol)) |val| {
             return val;
         }
     }
@@ -501,7 +501,7 @@ fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
 
     get: {
         if (Handle.handle == null) {
-            const paths_to_try = if (bun.Environment.isMac) .{
+            const paths_to_try = if (fun.Environment.isMac) .{
                 "/usr/local/opt/tracy/lib/libtracy.dylib",
                 "/usr/local/lib/libtracy.dylib",
                 "/opt/homebrew/lib/libtracy.so",
@@ -511,7 +511,7 @@ fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
                 "libtracy.so",
                 "libTracyClient.dylib",
                 "libTracyClient.so",
-            } else if (bun.Environment.isLinux) .{
+            } else if (fun.Environment.isLinux) .{
                 "/usr/local/lib/libtracy.so",
                 "/usr/local/opt/tracy/lib/libtracy.so",
                 "/opt/tracy/lib/libtracy.so",
@@ -522,21 +522,21 @@ fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
                 "/usr/lib/libTracyClient.so",
                 "libtracy.so",
                 "libTracyClient.so",
-            } else if (bun.Environment.isWindows) .{
+            } else if (fun.Environment.isWindows) .{
                 "tracy.dll",
             } else .{};
 
-            const RLTD: std.c.RTLD = if (bun.Environment.isMac) @bitCast(@as(i32, -2)) else if (bun.Environment.isLinux) .{} else {};
+            const RLTD: std.c.RTLD = if (fun.Environment.isMac) @bitCast(@as(i32, -2)) else if (fun.Environment.isLinux) .{} else {};
 
-            if (bun.env_var.BUN_TRACY_PATH.get()) |path| {
-                const handle = bun.sys.dlopen(&(std.posix.toPosixPath(path) catch unreachable), RLTD);
+            if (fun.env_var.FUN_TRACY_PATH.get()) |path| {
+                const handle = fun.sys.dlopen(&(std.posix.toPosixPath(path) catch unreachable), RLTD);
                 if (handle != null) {
                     Handle.handle = handle;
                     break :get;
                 }
             }
             inline for (comptime paths_to_try) |path| {
-                const handle = bun.sys.dlopen(path, RLTD);
+                const handle = fun.sys.dlopen(path, RLTD);
                 if (handle != null) {
                     Handle.handle = handle;
                     break;
@@ -548,11 +548,11 @@ fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
         }
     }
 
-    return bun.C.dlsymWithHandle(Type, symbol, Handle.getter);
+    return fun.C.dlsymWithHandle(Type, symbol, Handle.getter);
 }
 
 const builtin = @import("builtin");
-const bun = @import("bun");
+const fun = @import("fun");
 
 const build_options = @import("build_options");
 const callstack_depth = build_options.tracy_callstack_depth;

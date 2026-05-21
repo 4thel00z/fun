@@ -329,7 +329,7 @@ def btjs(debugger, command, result, internal_dict):
     addressFormat = '#0{width}x'.format(width=target.GetAddressByteSize() * 2 + 2)
     process = target.GetProcess()
     thread = process.GetSelectedThread()
-    jscModule = target.module["JavaScriptCore"] or target.module["bun"] or target.module["bun-debug"]
+    jscModule = target.module["JavaScriptCore"] or target.module["fun"] or target.module["fun-debug"]
 
     if jscModule.FindSymbol("JSC::CallFrame::describeFrame").GetSize() or jscModule.FindSymbol("_ZN3JSC9CallFrame13describeFrameEv").GetSize():
         annotateJSFrames = True

@@ -1,15 +1,15 @@
 const string = []const u8;
 
 pub const HardcodedModule = enum {
-    bun,
+    fun,
     @"abort-controller",
-    @"bun:app",
-    @"bun:ffi",
-    @"bun:jsc",
-    @"bun:main",
-    @"bun:test",
-    @"bun:wrap",
-    @"bun:sqlite",
+    @"fun:app",
+    @"fun:ffi",
+    @"fun:jsc",
+    @"fun:main",
+    @"fun:test",
+    @"fun:wrap",
+    @"fun:sqlite",
     @"node:assert",
     @"node:assert/strict",
     @"node:async_hooks",
@@ -84,22 +84,22 @@ pub const HardcodedModule = enum {
     @"node:_http_outgoing",
     @"node:_http_server",
     /// This is gated behind '--expose-internals'
-    @"bun:internal-for-testing",
+    @"fun:internal-for-testing",
 
     /// The module loader first uses `Aliases` to get a single string during
     /// resolution, then maps that single string to the actual module.
     /// Do not include aliases here; Those go in `Aliases`.
-    pub const map = bun.ComptimeStringMap(HardcodedModule, [_]struct { []const u8, HardcodedModule }{
-        // Bun
-        .{ "bun", .bun },
-        .{ "bun:app", .@"bun:app" },
-        .{ "bun:ffi", .@"bun:ffi" },
-        .{ "bun:jsc", .@"bun:jsc" },
-        .{ "bun:main", .@"bun:main" },
-        .{ "bun:test", .@"bun:test" },
-        .{ "bun:sqlite", .@"bun:sqlite" },
-        .{ "bun:wrap", .@"bun:wrap" },
-        .{ "bun:internal-for-testing", .@"bun:internal-for-testing" },
+    pub const map = fun.ComptimeStringMap(HardcodedModule, [_]struct { []const u8, HardcodedModule }{
+        // Fun
+        .{ "fun", .fun },
+        .{ "fun:app", .@"fun:app" },
+        .{ "fun:ffi", .@"fun:ffi" },
+        .{ "fun:jsc", .@"fun:jsc" },
+        .{ "fun:main", .@"fun:main" },
+        .{ "fun:test", .@"fun:test" },
+        .{ "fun:sqlite", .@"fun:sqlite" },
+        .{ "fun:wrap", .@"fun:wrap" },
+        .{ "fun:internal-for-testing", .@"fun:internal-for-testing" },
         // Node.js
         .{ "node:assert", .@"node:assert" },
         .{ "node:assert/strict", .@"node:assert/strict" },
@@ -209,7 +209,7 @@ pub const HardcodedModule = enum {
             return .{ path, .{ .path = path } };
         }
 
-        // Applied to both --target=bun and --target=node
+        // Applied to both --target=fun and --target=node
         const common_alias_kvs = [_]struct { string, Alias }{
             nodeEntry("node:assert"),
             nodeEntry("node:assert/strict"),
@@ -359,17 +359,17 @@ pub const HardcodedModule = enum {
             .{ "_tls_common", .{ .path = "node:_tls_common", .node_builtin = true } },
         };
 
-        const bun_extra_alias_kvs = [_]struct { string, Alias }{
-            .{ "bun", .{ .path = "bun", .tag = .bun } },
-            .{ "bun:test", .{ .path = "bun:test" } },
-            .{ "bun:app", .{ .path = "bun:app" } },
-            .{ "bun:ffi", .{ .path = "bun:ffi" } },
-            .{ "bun:jsc", .{ .path = "bun:jsc" } },
-            .{ "bun:main", .{ .path = "bun:main" } },
-            .{ "bun:sqlite", .{ .path = "bun:sqlite" } },
-            .{ "bun:wrap", .{ .path = "bun:wrap" } },
-            .{ "bun:internal-for-testing", .{ .path = "bun:internal-for-testing" } },
-            .{ "ffi", .{ .path = "bun:ffi" } },
+        const fun_extra_alias_kvs = [_]struct { string, Alias }{
+            .{ "fun", .{ .path = "fun", .tag = .fun } },
+            .{ "fun:test", .{ .path = "fun:test" } },
+            .{ "fun:app", .{ .path = "fun:app" } },
+            .{ "fun:ffi", .{ .path = "fun:ffi" } },
+            .{ "fun:jsc", .{ .path = "fun:jsc" } },
+            .{ "fun:main", .{ .path = "fun:main" } },
+            .{ "fun:sqlite", .{ .path = "fun:sqlite" } },
+            .{ "fun:wrap", .{ .path = "fun:wrap" } },
+            .{ "fun:internal-for-testing", .{ .path = "fun:internal-for-testing" } },
+            .{ "ffi", .{ .path = "fun:ffi" } },
 
             // Thirdparty packages we override
             .{ "@vercel/fetch", .{ .path = "@vercel/fetch" } },
@@ -390,14 +390,14 @@ pub const HardcodedModule = enum {
             .{ "next/dist/compiled/undici", .{ .path = "undici" } },
         };
 
-        const bun_test_extra_alias_kvs = [_]struct { string, Alias }{
-            .{ "@jest/globals", .{ .path = "bun:test" } },
-            .{ "vitest", .{ .path = "bun:test" } },
+        const fun_test_extra_alias_kvs = [_]struct { string, Alias }{
+            .{ "@jest/globals", .{ .path = "fun:test" } },
+            .{ "vitest", .{ .path = "fun:test" } },
         };
 
-        const node_aliases = bun.ComptimeStringMap(Alias, common_alias_kvs);
-        pub const bun_aliases = bun.ComptimeStringMap(Alias, common_alias_kvs ++ bun_extra_alias_kvs);
-        const bun_test_aliases = bun.ComptimeStringMap(Alias, common_alias_kvs ++ bun_extra_alias_kvs ++ bun_test_extra_alias_kvs);
+        const node_aliases = fun.ComptimeStringMap(Alias, common_alias_kvs);
+        pub const fun_aliases = fun.ComptimeStringMap(Alias, common_alias_kvs ++ fun_extra_alias_kvs);
+        const fun_test_aliases = fun.ComptimeStringMap(Alias, common_alias_kvs ++ fun_extra_alias_kvs ++ fun_test_extra_alias_kvs);
 
         const Cfg = struct { rewrite_jest_for_tests: bool = false };
         pub fn has(name: []const u8, target: options.Target, cfg: Cfg) bool {
@@ -405,11 +405,11 @@ pub const HardcodedModule = enum {
         }
 
         pub fn get(name: []const u8, target: options.Target, cfg: Cfg) ?Alias {
-            if (target.isBun()) {
+            if (target.isFun()) {
                 if (cfg.rewrite_jest_for_tests) {
-                    return bun_test_aliases.get(name);
+                    return fun_test_aliases.get(name);
                 } else {
-                    return bun_aliases.get(name);
+                    return fun_aliases.get(name);
                 }
             } else if (target.isNode()) {
                 return node_aliases.get(name);
@@ -419,7 +419,7 @@ pub const HardcodedModule = enum {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const options = @import("../bundler/options.zig");
 const std = @import("std");
 

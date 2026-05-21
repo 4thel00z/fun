@@ -1,5 +1,5 @@
 import { ServiceBusClient } from "@azure/service-bus";
-import { describe, test } from "bun:test";
+import { describe, test } from "fun:test";
 import { getSecret } from "harness";
 
 const azureCredentials = getSecret("TEST_INFO_AZURE_SERVICE_BUS");

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { createConnection, createServer } from "node:net";
 
 test("client socket can write Uint8Array (issue #22481)", async () => {

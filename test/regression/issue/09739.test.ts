@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 const node_js_shim = require("./abort-controller-fixture");
 
 test("AbortController from abort-controller fixture works when used with ESM -> CJS -> ESM", () => {

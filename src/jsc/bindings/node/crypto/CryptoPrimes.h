@@ -4,7 +4,7 @@
 #include "helpers.h"
 #include "ncrypto.h"
 
-namespace Bun {
+namespace Fun {
 
 struct CheckPrimeJobCtx {
     CheckPrimeJobCtx(ncrypto::BignumPointer candidate, int32_t checks);
@@ -63,4 +63,4 @@ JSC_DECLARE_HOST_FUNCTION(jsCheckPrimeSync);
 JSC_DECLARE_HOST_FUNCTION(jsGeneratePrime);
 JSC_DECLARE_HOST_FUNCTION(jsGeneratePrimeSync);
 
-} // namespace Bun
+} // namespace Fun

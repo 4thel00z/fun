@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, describeWithContainer, isDockerEnabled } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, describeWithContainer, isDockerEnabled } from "harness";
 import path from "path";
 
 // Regression: MySQLQuery.bind() allocates `params` sized to the prepared
@@ -13,9 +13,9 @@ import path from "path";
 const fixture = path.join(import.meta.dir, "sql-mysql-bind-oob.fixture.ts");
 
 async function runFixture(url: string, caPath = "") {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), fixture],
-    env: { ...bunEnv, MYSQL_URL: url, CA_PATH: caPath },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), fixture],
+    env: { ...funEnv, MYSQL_URL: url, CA_PATH: caPath },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -47,7 +47,7 @@ if (isDockerEnabled()) {
   describeWithContainer("mysql", { image: "mysql_plain" }, container => {
     test("bind() does not OOB when the params array grows during binding", async () => {
       await container.ready;
-      const url = `mysql://root@${container.host}:${container.port}/bun_sql_test`;
+      const url = `mysql://root@${container.host}:${container.port}/fun_sql_test`;
       const { stdout, stderr, exitCode } = await runFixture(url);
       assertFixtureOutput(stdout, stderr, exitCode);
     });
@@ -56,7 +56,7 @@ if (isDockerEnabled()) {
   // No docker daemon (e.g. local/sandboxed environments). If a MySQL server
   // is reachable at MYSQL_URL or the conventional local address, exercise the
   // fixture there so the regression is still covered.
-  const url = process.env.MYSQL_URL || "mysql://bun@127.0.0.1:3306/bun_sql_test";
+  const url = process.env.MYSQL_URL || "mysql://fun@127.0.0.1:3306/fun_sql_test";
 
   describe("mysql (local)", () => {
     test("bind() does not OOB when the params array grows during binding", async () => {

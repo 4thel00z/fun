@@ -110,14 +110,14 @@ pub const AstBuilder = struct {
     }
 
     pub fn getSymbol(p: *AstBuilder, ref: Ref) *Symbol {
-        bun.assert(ref.source_index == p.source.index.get());
+        fun.assert(ref.source_index == p.source.index.get());
         return &p.symbols.items[ref.inner_index];
     }
 
     pub fn addImportRecord(p: *AstBuilder, path: []const u8, kind: ImportKind) !u32 {
         const index = p.import_records.items.len;
         try p.import_records.append(p.allocator, .{
-            .path = bun.fs.Path.init(path),
+            .path = fun.fs.Path.init(path),
             .kind = kind,
             .range = .{},
         });
@@ -133,7 +133,7 @@ pub const AstBuilder = struct {
 
         const record = try p.addImportRecord(path, .stmt);
 
-        var path_name = bun.fs.PathName.init(path);
+        var path_name = fun.fs.PathName.init(path);
         const name = try strings.append(p.allocator, "import_", try path_name.nonUniqueNameString(p.allocator));
         const namespace_ref = try p.newSymbol(.other, name);
 
@@ -191,7 +191,7 @@ pub const AstBuilder = struct {
 
     pub fn toBundledAst(p: *AstBuilder, target: options.Target) !js_ast.BundledAst {
         // TODO: missing import scanner
-        bun.assert(p.scopes.items.len == 0);
+        fun.assert(p.scopes.items.len == 0);
         const module_scope = p.current_scope;
 
         var parts = try Part.List.initCapacity(p.allocator, 2);
@@ -252,7 +252,7 @@ pub const AstBuilder = struct {
             const new_parts = parts.slice();
             // preserve original capacity
             parts.len = @intCast(new_parts.len);
-            bun.assert(new_parts.ptr == parts.ptr);
+            fun.assert(new_parts.ptr == parts.ptr);
         } else {
             const result = try js_parser.ImportScanner.scan(AstBuilder, p, p.stmts.items, false, false, {});
             parts.mut(1).stmts = result.stmts;
@@ -290,7 +290,7 @@ pub const AstBuilder = struct {
     // stub methods for ImportScanner duck typing
 
     pub fn generateTempRef(ab: *AstBuilder, name: ?[]const u8) Ref {
-        return bun.handleOom(ab.newSymbol(.other, name orelse "temp"));
+        return fun.handleOom(ab.newSymbol(.other, name orelse "temp"));
     }
 
     pub fn recordExport(p: *AstBuilder, _: Logger.Loc, alias: []const u8, ref: Ref) !void {
@@ -339,13 +339,13 @@ pub const AstBuilder = struct {
     }
 };
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const string = []const u8;
 
@@ -355,16 +355,16 @@ const std = @import("std");
 const Logger = @import("../logger/logger.zig");
 const Loc = Logger.Loc;
 
-const bun = @import("bun");
-const ImportKind = bun.ImportKind;
-const ImportRecord = bun.ImportRecord;
-const Output = bun.Output;
-const js_parser = bun.js_parser;
-const renamer = bun.renamer;
-const strings = bun.strings;
-const BabyList = bun.collections.BabyList;
+const fun = @import("fun");
+const ImportKind = fun.ImportKind;
+const ImportRecord = fun.ImportRecord;
+const Output = fun.Output;
+const js_parser = fun.js_parser;
+const renamer = fun.renamer;
+const strings = fun.strings;
+const BabyList = fun.collections.BabyList;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
 const Expr = js_ast.Expr;

@@ -15,7 +15,7 @@ state: union(enum) {
     },
     waiting_stat,
     stat_complete: struct {
-        stat: Maybe(bun.Stat),
+        stat: Maybe(fun.Stat),
     },
     waiting_write_err,
     done,
@@ -25,9 +25,9 @@ args: std.array_list.Managed([:0]const u8),
 pub const ShellCondExprStatTask = struct {
     task: ShellTask(@This(), runFromThreadPool, runFromMainThread, log),
     condexpr: *CondExpr,
-    result: ?Maybe(bun.Stat) = null,
+    result: ?Maybe(fun.Stat) = null,
     path: [:0]const u8,
-    cwdfd: bun.FD,
+    cwdfd: fun.FD,
 
     pub fn runFromThreadPool(this: *ShellCondExprStatTask) void {
         this.result = ShellSyscall.statat(this.cwdfd, this.path);
@@ -45,7 +45,7 @@ pub const ShellCondExprStatTask = struct {
     }
 
     pub fn deinit(this: *ShellCondExprStatTask) void {
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
@@ -100,7 +100,7 @@ pub fn next(this: *CondExpr) Yield {
                     return this.commandImplStart();
                 }
 
-                bun.handleOom(this.args.ensureUnusedCapacity(1));
+                fun.handleOom(this.args.ensureUnusedCapacity(1));
                 Expansion.init(
                     this.base.interpreter,
                     this.base.shell,
@@ -119,45 +119,45 @@ pub fn next(this: *CondExpr) Yield {
             .stat_complete => {
                 switch (this.node.op) {
                     .@"-f" => {
-                        const st: bun.Stat = switch (this.state.stat_complete.stat) {
+                        const st: fun.Stat = switch (this.state.stat_complete.stat) {
                             .result => |st| st,
                             .err => {
                                 // It seems that bash always gives exit code 1
                                 return this.parent.childDone(this, 1);
                             },
                         };
-                        return this.parent.childDone(this, if (bun.S.ISREG(@intCast(st.mode))) 0 else 1);
+                        return this.parent.childDone(this, if (fun.S.ISREG(@intCast(st.mode))) 0 else 1);
                     },
                     .@"-d" => {
-                        const st: bun.Stat = switch (this.state.stat_complete.stat) {
+                        const st: fun.Stat = switch (this.state.stat_complete.stat) {
                             .result => |st| st,
                             .err => {
                                 // It seems that bash always gives exit code 1
                                 return this.parent.childDone(this, 1);
                             },
                         };
-                        return this.parent.childDone(this, if (bun.S.ISDIR(@intCast(st.mode))) 0 else 1);
+                        return this.parent.childDone(this, if (fun.S.ISDIR(@intCast(st.mode))) 0 else 1);
                     },
                     .@"-c" => {
-                        const st: bun.Stat = switch (this.state.stat_complete.stat) {
+                        const st: fun.Stat = switch (this.state.stat_complete.stat) {
                             .result => |st| st,
                             .err => {
                                 // It seems that bash always gives exit code 1
                                 return this.parent.childDone(this, 1);
                             },
                         };
-                        return this.parent.childDone(this, if (bun.S.ISCHR(@intCast(st.mode))) 0 else 1);
+                        return this.parent.childDone(this, if (fun.S.ISCHR(@intCast(st.mode))) 0 else 1);
                     },
-                    .@"-z", .@"-n", .@"==", .@"!=" => @panic("This conditional expression op does not need `stat()`. This indicates a bug in Bun. Please file a GitHub issue."),
+                    .@"-z", .@"-n", .@"==", .@"!=" => @panic("This conditional expression op does not need `stat()`. This indicates a bug in Fun. Please file a GitHub issue."),
                     else => {
-                        if (bun.Environment.allow_assert) {
+                        if (fun.Environment.allow_assert) {
                             inline for (ast.CondExpr.Op.SUPPORTED) |supported| {
                                 if (supported == this.node.op) {
                                     @panic("DEV: You did not support the \"" ++ @tagName(supported) ++ "\" conditional expression operation here.");
                                 }
                             }
                         }
-                        @panic("Invalid conditional expression op, this indicates a bug in Bun. Please file a GithHub issue.");
+                        @panic("Invalid conditional expression op, this indicates a bug in Fun. Please file a GithHub issue.");
                     },
                 }
             },
@@ -185,16 +185,16 @@ fn commandImplStart(this: *CondExpr) Yield {
         .@"-z" => return this.parent.childDone(this, if (this.args.items.len == 0 or this.args.items[0].len == 0) 0 else 1),
         .@"-n" => return this.parent.childDone(this, if (this.args.items.len > 0 and this.args.items[0].len != 0) 0 else 1),
         .@"==" => {
-            const is_eq = this.args.items.len == 0 or (this.args.items.len >= 2 and bun.strings.eql(this.args.items[0], this.args.items[1]));
+            const is_eq = this.args.items.len == 0 or (this.args.items.len >= 2 and fun.strings.eql(this.args.items[0], this.args.items[1]));
             return this.parent.childDone(this, if (is_eq) 0 else 1);
         },
         .@"!=" => {
-            const is_neq = this.args.items.len >= 2 and !bun.strings.eql(this.args.items[0], this.args.items[1]);
+            const is_neq = this.args.items.len >= 2 and !fun.strings.eql(this.args.items[0], this.args.items[1]);
             return this.parent.childDone(this, if (is_neq) 0 else 1);
         },
-        // else => @panic("Invalid node op: " ++ @tagName(this.node.op) ++ ", this indicates a bug in Bun. Please file a GithHub issue."),
+        // else => @panic("Invalid node op: " ++ @tagName(this.node.op) ++ ", this indicates a bug in Fun. Please file a GithHub issue."),
         else => {
-            if (bun.Environment.allow_assert) {
+            if (fun.Environment.allow_assert) {
                 inline for (ast.CondExpr.Op.SUPPORTED) |supported| {
                     if (supported == this.node.op) {
                         @panic("DEV: You did not support the \"" ++ @tagName(supported) ++ "\" conditional expression operation here.");
@@ -202,13 +202,13 @@ fn commandImplStart(this: *CondExpr) Yield {
                 }
             }
 
-            @panic("Invalid cond expression op, this indicates a bug in Bun. Please file a GithHub issue.");
+            @panic("Invalid cond expression op, this indicates a bug in Fun. Please file a GithHub issue.");
         },
     }
 }
 
 fn doStat(this: *CondExpr) Yield {
-    const stat_task = bun.new(ShellCondExprStatTask, .{
+    const stat_task = fun.new(ShellCondExprStatTask, .{
         .task = .{
             .event_loop = this.base.eventLoop(),
             .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.base.eventLoop()),
@@ -235,7 +235,7 @@ pub fn childDone(this: *CondExpr, child: ChildPtr, exit_code: ExitCode) Yield {
     if (child.ptr.is(Expansion)) {
         if (exit_code != 0) {
             const err = this.state.expanding_args.expansion.state.err;
-            defer err.deinit(bun.default_allocator);
+            defer err.deinit(fun.default_allocator);
             this.state.expanding_args.expansion.deinit();
             return this.writeFailingError("{f}\n", .{err});
         }
@@ -243,11 +243,11 @@ pub fn childDone(this: *CondExpr, child: ChildPtr, exit_code: ExitCode) Yield {
         return this.next();
     }
 
-    @panic("Invalid child to cond expression, this indicates a bug in Bun. Please file a report on Github.");
+    @panic("Invalid child to cond expression, this indicates a bug in Fun. Please file a report on Github.");
 }
 
-pub fn onStatTaskComplete(this: *CondExpr, result: Maybe(bun.Stat)) void {
-    if (bun.Environment.allow_assert) assert(this.state == .waiting_stat);
+pub fn onStatTaskComplete(this: *CondExpr, result: Maybe(fun.Stat)) void {
+    if (fun.Environment.allow_assert) assert(this.state == .waiting_stat);
 
     this.state = .{
         .stat_complete = .{ .stat = result },
@@ -275,32 +275,32 @@ pub fn onIOWriterChunk(this: *CondExpr, _: usize, err: ?jsc.SystemError) Yield {
         return this.parent.childDone(this, 1);
     }
 
-    bun.shell.unreachableState("CondExpr.onIOWriterChunk", @tagName(this.state));
+    fun.shell.unreachableState("CondExpr.onIOWriterChunk", @tagName(this.state));
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
-const Maybe = bun.sys.Maybe;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
+const Maybe = fun.sys.Maybe;
 
-const shell = bun.shell;
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const shell = fun.shell;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Async = bun.shell.Interpreter.Async;
-const Binary = bun.shell.Interpreter.Binary;
-const Expansion = bun.shell.Interpreter.Expansion;
-const IO = bun.shell.Interpreter.IO;
-const Pipeline = bun.shell.Interpreter.Pipeline;
+const Interpreter = fun.shell.Interpreter;
+const Async = fun.shell.Interpreter.Async;
+const Binary = fun.shell.Interpreter.Binary;
+const Expansion = fun.shell.Interpreter.Expansion;
+const IO = fun.shell.Interpreter.IO;
+const Pipeline = fun.shell.Interpreter.Pipeline;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
 
-const ShellSyscall = bun.shell.interpret.ShellSyscall;
-const ShellTask = bun.shell.interpret.ShellTask;
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const ShellSyscall = fun.shell.interpret.ShellSyscall;
+const ShellTask = fun.shell.interpret.ShellTask;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

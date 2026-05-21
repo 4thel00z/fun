@@ -3,7 +3,7 @@
 //! `CharacterSet`/`FieldType` enums without `JSValue` references.
 
 pub const fieldTypeFromJS = struct {
-    pub fn call(globalObject: *JSC.JSGlobalObject, value: JSValue, unsigned: *bool) bun.JSError!FieldType {
+    pub fn call(globalObject: *JSC.JSGlobalObject, value: JSValue, unsigned: *bool) fun.JSError!FieldType {
         if (value.isEmptyOrUndefinedOrNull()) {
             return .MYSQL_TYPE_NULL;
         }
@@ -173,7 +173,7 @@ pub const Value = union(enum) {
             .bytes => |b| return if (b.slice.len > 0) Data{ .temporary = b.slice.slice() } else Data{ .empty = {} },
         }
 
-        return try Data.create(buffer[0..stream.pos], bun.default_allocator);
+        return try Data.create(buffer[0..stream.pos], fun.default_allocator);
     }
 
     pub fn fromJS(value: JSC.JSValue, globalObject: *JSC.JSGlobalObject, field_type: FieldType, unsigned: bool, roots: *JSC.MarkedArgumentBuffer) AnyMySQLError.Error!Value {
@@ -219,7 +219,7 @@ pub const Value = union(enum) {
                         // detached / null
                         0 => Value{ .bytes = .{} },
                         // FastTypedArray — tiny, GC-movable vector; dupe.
-                        1 => Value{ .bytes = .{ .slice = try JSC.ZigString.Slice.initDupe(bun.default_allocator, ptr[0..len]) } },
+                        1 => Value{ .bytes = .{ .slice = try JSC.ZigString.Slice.initDupe(fun.default_allocator, ptr[0..len]) } },
                         // Oversize/Wasteful/DataView/JSArrayBuffer — pinned
                         // by the helper. Root the wrapper so GC can't
                         // collect it (and free the backing store despite
@@ -246,27 +246,27 @@ pub const Value = union(enum) {
                 }
 
                 if (value.isString()) {
-                    const str = try bun.String.fromJS(value, globalObject);
+                    const str = try fun.String.fromJS(value, globalObject);
                     defer str.deref();
-                    return Value{ .string = str.toUTF8(bun.default_allocator) };
+                    return Value{ .string = str.toUTF8(fun.default_allocator) };
                 }
 
                 return globalObject.throwInvalidArguments("Expected a string, blob, or array buffer", .{});
             },
 
             .MYSQL_TYPE_JSON => {
-                var str: bun.String = bun.String.empty;
+                var str: fun.String = fun.String.empty;
                 // Use jsonStringifyFast for SIMD-optimized serialization
                 try value.jsonStringifyFast(globalObject, &str);
                 defer str.deref();
-                return Value{ .string = str.toUTF8(bun.default_allocator) };
+                return Value{ .string = str.toUTF8(fun.default_allocator) };
             },
 
             //   .MYSQL_TYPE_VARCHAR, .MYSQL_TYPE_VAR_STRING, .MYSQL_TYPE_STRING => {
             else => {
-                const str = try bun.String.fromJS(value, globalObject);
+                const str = try fun.String.fromJS(value, globalObject);
                 defer str.deref();
-                return Value{ .string = str.toUTF8(bun.default_allocator) };
+                return Value{ .string = str.toUTF8(fun.default_allocator) };
             },
         };
     }
@@ -333,7 +333,7 @@ pub const Value = union(enum) {
                         .microsecond = std.mem.readInt(u32, val[7..11], .little),
                     };
                 },
-                else => bun.Output.panic("Invalid datetime length: {d}", .{val.len}),
+                else => fun.Output.panic("Invalid datetime length: {d}", .{val.len}),
             }
         }
 
@@ -370,7 +370,7 @@ pub const Value = union(enum) {
             }
         }
 
-        pub fn toJSTimestamp(this: *const DateTime, globalObject: *JSC.JSGlobalObject) bun.JSError!f64 {
+        pub fn toJSTimestamp(this: *const DateTime, globalObject: *JSC.JSGlobalObject) fun.JSError!f64 {
             return globalObject.gregorianDateTimeToMS(
                 this.year,
                 this.month,
@@ -552,7 +552,7 @@ pub const Value = union(enum) {
         }
 
         pub fn toJS(this: Decimal, globalObject: *JSC.JSGlobalObject) JSValue {
-            var stack = std.heap.stackFallback(64, bun.default_allocator);
+            var stack = std.heap.stackFallback(64, fun.default_allocator);
             var str = std.array_list.Managed(u8).init(stack.get());
             defer str.deinit();
 
@@ -568,11 +568,11 @@ pub const Value = union(enum) {
                 str.append(digit + '0') catch return JSValue.jsNumber(0);
             }
 
-            return bun.String.createUTF8ForJS(globalObject, str.items) catch .zero;
+            return fun.String.createUTF8ForJS(globalObject, str.items) catch .zero;
         }
 
         pub fn toBinary(_: Decimal, _: FieldType) !Data {
-            bun.todoPanic(@src(), "Decimal.toBinary not implemented", .{});
+            fun.todoPanic(@src(), "Decimal.toBinary not implemented", .{});
         }
 
         // pub fn fromData(data: *const Data) !Decimal {
@@ -580,7 +580,7 @@ pub const Value = union(enum) {
         // }
 
         // pub fn fromBinary(_: []const u8) Decimal {
-        //     bun.todoPanic(@src(), "Decimal.toBinary not implemented", .{});
+        //     fun.todoPanic(@src(), "Decimal.toBinary not implemented", .{});
         // }
     };
 };
@@ -637,9 +637,9 @@ const Data = @import("../../sql/shared/Data.zig").Data;
 const types = @import("../../sql/mysql/MySQLTypes.zig");
 const FieldType = types.FieldType;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const JSC = bun.jsc;
+const JSC = fun.jsc;
 const JSValue = JSC.JSValue;
 const ZigString = JSC.ZigString;

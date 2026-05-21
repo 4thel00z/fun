@@ -1,5 +1,5 @@
 #include "root.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "headers-handwritten.h"
 
 static_assert(sizeof(WTF::StringBuilder) == 24, "StringBuilder.zig assumes WTF::StringBuilder is 24 bytes");
@@ -40,7 +40,7 @@ extern "C" void StringBuilder__appendUsize(WTF::StringBuilder* builder, size_t n
     builder->append(num);
 }
 
-extern "C" void StringBuilder__appendString(WTF::StringBuilder* builder, BunString str)
+extern "C" void StringBuilder__appendString(WTF::StringBuilder* builder, FunString str)
 {
     str.appendToBuilder(*builder);
 }
@@ -55,9 +55,9 @@ extern "C" void StringBuilder__appendUChar(WTF::StringBuilder* builder, UChar c)
     builder->append(c);
 }
 
-extern "C" void StringBuilder__appendQuotedJsonString(WTF::StringBuilder* builder, BunString str)
+extern "C" void StringBuilder__appendQuotedJsonString(WTF::StringBuilder* builder, FunString str)
 {
-    auto string = str.toWTFString(BunString::ZeroCopy);
+    auto string = str.toWTFString(FunString::ZeroCopy);
     builder->appendQuotedJSONString(string);
 }
 

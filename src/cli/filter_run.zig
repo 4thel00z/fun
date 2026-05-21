@@ -15,7 +15,7 @@ const ScriptConfig = struct {
     elide_count: ?usize,
 
     fn cmp(_: void, a: @This(), b: @This()) bool {
-        return bun.strings.cmpStringsAsc({}, a.package_name, b.package_name);
+        return fun.strings.cmpStringsAsc({}, a.package_name, b.package_name);
     }
 };
 
@@ -25,21 +25,21 @@ pub const ProcessHandle = struct {
     config: *ScriptConfig,
     state: *State,
 
-    stdout: bun.io.BufferedReader = bun.io.BufferedReader.init(This),
-    stderr: bun.io.BufferedReader = bun.io.BufferedReader.init(This),
-    buffer: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(bun.default_allocator),
+    stdout: fun.io.BufferedReader = fun.io.BufferedReader.init(This),
+    stderr: fun.io.BufferedReader = fun.io.BufferedReader.init(This),
+    buffer: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(fun.default_allocator),
 
     process: ?struct {
-        ptr: *bun.spawn.Process,
-        status: bun.spawn.Status = .running,
+        ptr: *fun.spawn.Process,
+        status: fun.spawn.Status = .running,
     } = null,
-    options: bun.spawn.SpawnOptions,
+    options: fun.spawn.SpawnOptions,
 
     start_time: ?std.time.Instant = null,
     end_time: ?std.time.Instant = null,
 
     remaining_dependencies: usize = 0,
-    dependents: std.array_list.Managed(*This) = std.array_list.Managed(*This).init(bun.default_allocator),
+    dependents: std.array_list.Managed(*This) = std.array_list.Managed(*This).init(fun.default_allocator),
     visited: bool = false,
     visiting: bool = false,
 
@@ -50,19 +50,19 @@ pub const ProcessHandle = struct {
         var argv = [_:null]?[*:0]const u8{ this.state.shell_bin, if (Environment.isPosix) "-c" else "exec", this.config.combined, null };
 
         this.start_time = std.time.Instant.now() catch null;
-        var spawned: bun.spawn.process.SpawnProcessResult = brk: {
+        var spawned: fun.spawn.process.SpawnProcessResult = brk: {
 
             // Get the envp with the PATH configured
             // There's probably a more optimal way to do this where you have a std.ArrayList shared
             // instead of creating a new one for each process
-            var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+            var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
             defer arena.deinit();
             const original_path = this.state.env.map.get("PATH") orelse "";
-            bun.handleOom(this.state.env.map.put("PATH", this.config.PATH));
-            defer bun.handleOom(this.state.env.map.put("PATH", original_path));
+            fun.handleOom(this.state.env.map.put("PATH", this.config.PATH));
+            defer fun.handleOom(this.state.env.map.put("PATH", original_path));
             const envp = try this.state.env.map.createNullDelimitedEnvMap(arena.allocator());
 
-            break :brk try (try bun.spawn.spawnProcess(&this.options, argv[0..], envp)).unwrap();
+            break :brk try (try fun.spawn.spawnProcess(&this.options, argv[0..], envp)).unwrap();
         };
         var process = spawned.toProcess(this.state.event_loop, false);
 
@@ -76,11 +76,11 @@ pub const ProcessHandle = struct {
 
         if (Environment.isPosix) {
             if (spawned.stdout) |stdout| {
-                _ = bun.sys.setNonblocking(stdout);
+                _ = fun.sys.setNonblocking(stdout);
                 try handle.stdout.start(stdout, true).unwrap();
             }
             if (spawned.stderr) |stderr| {
-                _ = bun.sys.setNonblocking(stderr);
+                _ = fun.sys.setNonblocking(stderr);
                 try handle.stderr.start(stderr, true).unwrap();
             }
         } else {
@@ -95,12 +95,12 @@ pub const ProcessHandle = struct {
             .result => {},
             .err => |err| {
                 if (!process.hasExited())
-                    process.onExit(.{ .err = err }, &std.mem.zeroes(bun.spawn.Rusage));
+                    process.onExit(.{ .err = err }, &std.mem.zeroes(fun.spawn.Rusage));
             },
         }
     }
 
-    pub fn onReadChunk(this: *This, chunk: []const u8, hasMore: bun.io.ReadState) bool {
+    pub fn onReadChunk(this: *This, chunk: []const u8, hasMore: fun.io.ReadState) bool {
         _ = hasMore;
         this.state.readChunk(this, chunk) catch {};
         return true;
@@ -110,12 +110,12 @@ pub const ProcessHandle = struct {
         _ = this;
     }
 
-    pub fn onReaderError(this: *This, err: bun.sys.Error) void {
+    pub fn onReaderError(this: *This, err: fun.sys.Error) void {
         _ = this;
         _ = err;
     }
 
-    pub fn onProcessExit(this: *This, proc: *bun.spawn.Process, status: bun.spawn.Status, _: *const bun.spawn.Rusage) void {
+    pub fn onProcessExit(this: *This, proc: *fun.spawn.Process, status: fun.spawn.Status, _: *const fun.spawn.Rusage) void {
         this.process.?.status = status;
         this.end_time = std.time.Instant.now() catch null;
         // We just leak the process because we're going to exit anyway after all processes are done
@@ -123,12 +123,12 @@ pub const ProcessHandle = struct {
         this.state.processExit(this) catch {};
     }
 
-    pub fn eventLoop(this: *This) *bun.jsc.MiniEventLoop {
+    pub fn eventLoop(this: *This) *fun.jsc.MiniEventLoop {
         return this.state.event_loop;
     }
 
-    pub fn loop(this: *This) *bun.Async.Loop {
-        if (comptime bun.Environment.isWindows) {
+    pub fn loop(this: *This) *fun.Async.Loop {
+        if (comptime fun.Environment.isWindows) {
             return this.state.event_loop.loop.uv_loop;
         } else {
             return this.state.event_loop.loop;
@@ -144,15 +144,15 @@ const State = struct {
     const This = @This();
 
     handles: []ProcessHandle,
-    event_loop: *bun.jsc.MiniEventLoop,
+    event_loop: *fun.jsc.MiniEventLoop,
     remaining_scripts: usize = 0,
     // buffer for batched output
-    draw_buf: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(bun.default_allocator),
+    draw_buf: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(fun.default_allocator),
     last_lines_written: usize = 0,
     pretty_output: bool,
     shell_bin: [:0]const u8,
     aborted: bool = false,
-    env: *bun.DotEnv.Loader,
+    env: *fun.DotEnv.Loader,
 
     pub fn isDone(this: *This) bool {
         return this.remaining_scripts == 0;
@@ -165,7 +165,7 @@ const State = struct {
 
     fn readChunk(this: *This, handle: *ProcessHandle, chunk: []const u8) !void {
         if (this.pretty_output) {
-            bun.handleOom(handle.buffer.appendSlice(chunk));
+            fun.handleOom(handle.buffer.appendSlice(chunk));
             this.redraw(false) catch {};
         } else {
             var content = chunk;
@@ -391,14 +391,14 @@ const AbortHandler = struct {
 
     pub fn install() void {
         if (Environment.isPosix) {
-            const action = bun.sys.Sigaction{
+            const action = fun.sys.Sigaction{
                 .handler = .{ .sigaction = AbortHandler.posixSignalHandler },
-                .mask = bun.sys.sigemptyset(),
+                .mask = fun.sys.sigemptyset(),
                 .flags = std.posix.SA.SIGINFO | std.posix.SA.RESTART | std.posix.SA.RESETHAND,
             };
-            bun.sys.sigaction(std.posix.SIG.INT, &action, null);
+            fun.sys.sigaction(std.posix.SIG.INT, &action, null);
         } else {
-            const res = bun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.TRUE);
+            const res = fun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.TRUE);
             if (res == 0) {
                 if (Environment.isDebug) {
                     Output.warn("Failed to set abort handler\n", .{});
@@ -411,14 +411,14 @@ const AbortHandler = struct {
         // only necessary on Windows, as on posix we pass the SA_RESETHAND flag
         if (Environment.isWindows) {
             // restores default Ctrl+C behavior
-            _ = bun.c.SetConsoleCtrlHandler(null, std.os.windows.FALSE);
+            _ = fun.c.SetConsoleCtrlHandler(null, std.os.windows.FALSE);
         }
     }
 };
 
 fn windowsIsTerminal() bool {
-    const res = bun.windows.GetFileType(bun.FD.stdout().native());
-    return res == bun.windows.FILE_TYPE_CHAR;
+    const res = fun.windows.GetFileType(fun.FD.stdout().native());
+    return res == fun.windows.FILE_TYPE_CHAR;
 }
 
 pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
@@ -434,7 +434,7 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
     @memcpy(post_script_name[0..4], "post");
     @memcpy(post_script_name[4..], script_name);
 
-    const fsinstance = try bun.fs.FileSystem.init(null);
+    const fsinstance = try fun.fs.FileSystem.init(null);
 
     // these things are leaked because we are going to exit
     // When --workspaces is set, we want to match all workspace packages
@@ -449,7 +449,7 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
     var patterns = std.array_list.Managed([]u8).init(ctx.allocator);
 
     // Find package.json at workspace root
-    var root_buf: bun.PathBuffer = undefined;
+    var root_buf: fun.PathBuffer = undefined;
     const resolve_root = try FilterArg.getCandidatePackagePatterns(ctx.allocator, ctx.log, &patterns, fsinstance.top_level_dir, &root_buf);
 
     var this_transpiler: transpiler.Transpiler = undefined;
@@ -463,14 +463,14 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
     // var scripts = std.ArrayHashMap([]const u8, ScriptConfig).init(ctx.allocator);
     while (try package_json_iter.next()) |package_json_path| {
         const dirpath = std.fs.path.dirname(package_json_path) orelse Global.crash();
-        const path = bun.strings.withoutTrailingSlash(dirpath);
+        const path = fun.strings.withoutTrailingSlash(dirpath);
 
         // When using --workspaces, skip the root package to prevent recursion
         if (ctx.workspaces and strings.eql(path, resolve_root)) {
             continue;
         }
 
-        const pkgjson = bun.PackageJSON.parse(&this_transpiler.resolver, dirpath, .invalid, null, .include_scripts, .main) orelse {
+        const pkgjson = fun.PackageJSON.parse(&this_transpiler.resolver, dirpath, .invalid, null, .include_scripts, .main) orelse {
             Output.warn("Failed to read package.json\n", .{});
             continue;
         };
@@ -480,7 +480,7 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
         if (!filter_instance.matches(path, pkgjson.name))
             continue;
 
-        const PATH = try RunCommand.configurePathForRunWithPackageJsonDir(ctx, dirpath, &this_transpiler, null, dirpath, ctx.debug.run_in_bun);
+        const PATH = try RunCommand.configurePathForRunWithPackageJsonDir(ctx, dirpath, &this_transpiler, null, dirpath, ctx.debug.run_in_fun);
 
         for (&[3][]const u8{ pre_script_name, script_name, post_script_name }, 0..) |name, i| {
             const original_content = pkgscripts.get(name) orelse {
@@ -502,8 +502,8 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
 
             for (ctx.passthrough) |part| {
                 try copy_script.append(' ');
-                if (bun.shell.needsEscapeUtf8AsciiLatin1(part)) {
-                    try bun.shell.escape8Bit(part, &copy_script, true);
+                if (fun.shell.needsEscapeUtf8AsciiLatin1(part)) {
+                    try fun.shell.escape8Bit(part, &copy_script, true);
                 } else {
                     try copy_script.appendSlice(part);
                 }
@@ -536,15 +536,15 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
         Global.exit(1);
     }
 
-    const event_loop = bun.jsc.MiniEventLoop.initGlobal(this_transpiler.env, null);
+    const event_loop = fun.jsc.MiniEventLoop.initGlobal(this_transpiler.env, null);
     // --no-orphans: register the macOS kqueue parent watch on this MiniEventLoop
     // (the VirtualMachine.init path is never reached for --filter). Linux is
     // already covered by prctl in enable() + linux_pdeathsig on each spawn.
-    bun.ParentDeathWatchdog.installOnEventLoop(bun.jsc.EventLoopHandle.init(event_loop));
+    fun.ParentDeathWatchdog.installOnEventLoop(fun.jsc.EventLoopHandle.init(event_loop));
     const shell_bin: [:0]const u8 = if (Environment.isPosix)
         RunCommand.findShell(this_transpiler.env.get("PATH") orelse "", fsinstance.top_level_dir) orelse return error.MissingShell
     else
-        bun.selfExePath() catch return error.MissingShell;
+        fun.selfExePath() catch return error.MissingShell;
 
     var state = State{
         .handles = try ctx.allocator.alloc(ProcessHandle, scripts.items.len),
@@ -555,17 +555,17 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
     };
 
     // initialize the handles
-    var map = bun.StringHashMap(std.array_list.Managed(*ProcessHandle)).init(ctx.allocator);
+    var map = fun.StringHashMap(std.array_list.Managed(*ProcessHandle)).init(ctx.allocator);
     for (scripts.items, 0..) |*script, i| {
         state.handles[i] = ProcessHandle{
             .state = &state,
             .config = script,
             .options = .{
                 .stdin = .ignore,
-                .stdout = if (Environment.isPosix) .buffer else .{ .buffer = bun.new(bun.windows.libuv.Pipe, std.mem.zeroes(bun.windows.libuv.Pipe)) },
-                .stderr = if (Environment.isPosix) .buffer else .{ .buffer = bun.new(bun.windows.libuv.Pipe, std.mem.zeroes(bun.windows.libuv.Pipe)) },
+                .stdout = if (Environment.isPosix) .buffer else .{ .buffer = fun.new(fun.windows.libuv.Pipe, std.mem.zeroes(fun.windows.libuv.Pipe)) },
+                .stderr = if (Environment.isPosix) .buffer else .{ .buffer = fun.new(fun.windows.libuv.Pipe, std.mem.zeroes(fun.windows.libuv.Pipe)) },
                 .cwd = std.fs.path.dirname(script.package_json_path) orelse "",
-                .windows = if (Environment.isWindows) .{ .loop = bun.jsc.EventLoopHandle.init(event_loop) },
+                .windows = if (Environment.isWindows) .{ .loop = fun.jsc.EventLoopHandle.init(event_loop) },
                 .stream = true,
             },
         };
@@ -615,7 +615,7 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
     // set up dependencies between pre/post scripts
     // this is done after the cycle check because we don't want these to be removed if there is a cycle
     for (0..state.handles.len - 1) |i| {
-        if (bun.strings.eql(state.handles[i].config.package_name, state.handles[i + 1].config.package_name)) {
+        if (fun.strings.eql(state.handles[i].config.package_name, state.handles[i + 1].config.package_name)) {
             try state.handles[i].dependents.append(&state.handles[i + 1]);
             state.handles[i + 1].remaining_dependencies += 1;
         }
@@ -671,12 +671,12 @@ const std = @import("std");
 const DependencyMap = @import("../resolver/package_json.zig").DependencyMap;
 const RunCommand = @import("./run_command.zig").RunCommand;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const strings = bun.strings;
-const transpiler = bun.transpiler;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const strings = fun.strings;
+const transpiler = fun.transpiler;
 
-const CLI = bun.cli;
+const CLI = fun.cli;
 const Command = CLI.Command;

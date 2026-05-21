@@ -23,7 +23,7 @@
 //!   pub fn onFd(ext, *us_socket_t, fd: c_int) void
 //!   pub fn onConnectError(ext, *us_socket_t, code: i32) void
 //!   pub fn onConnectingError(*ConnectingSocket, code: i32) void
-//!   pub fn onHandshake(ext, *us_socket_t, ok: bool, err: us_bun_verify_error_t) void
+//!   pub fn onHandshake(ext, *us_socket_t, ok: bool, err: us_fun_verify_error_t) void
 
 /// Produce a `*const VTable` for `H`. The result is a comptime address into
 /// `.rodata`; safe to store in any number of `SocketGroup`s.
@@ -50,7 +50,7 @@ pub fn make(comptime H: type) *const VTable {
 /// per-kind without going through the vtable pointer at all.
 pub fn Trampolines(comptime H: type) type {
     // `Ext` is optional. Handlers that work entirely from `*us_socket_t` (e.g.
-    // BunListener — owner comes from `s.group().owner(T)`) omit it and take
+    // FunListener — owner comes from `s.group().owner(T)`) omit it and take
     // `(s, …)` instead of `(ext, s, …)`.
     const has_ext = @hasDecl(H, "Ext");
     const E = if (has_ext) H.Ext else void;
@@ -104,15 +104,15 @@ pub fn Trampolines(comptime H: type) type {
             H.onConnectingError(cs, code);
             return cs;
         }
-        pub fn on_handshake(s: *us_socket_t, ok: c_int, err: uws.us_bun_verify_error_t, _: ?*anyopaque) callconv(.c) void {
+        pub fn on_handshake(s: *us_socket_t, ok: c_int, err: uws.us_fun_verify_error_t, _: ?*anyopaque) callconv(.c) void {
             call(s, H.onHandshake, .{ ok != 0, err });
         }
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const uws = bun.uws;
+const uws = fun.uws;
 const ConnectingSocket = uws.ConnectingSocket;
 const us_socket_t = uws.us_socket_t;
 const VTable = uws.SocketGroup.VTable;

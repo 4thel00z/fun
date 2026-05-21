@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 // When `crypto.scrypt` fails to allocate the output buffer (OOM for a huge
 // `keylen`), `CryptoJob.init` takes the error path. Previously the `errdefer`
@@ -17,10 +17,10 @@ test("scrypt async does not leak callback/buffers when output allocation fails",
   using dir = tempDir("scrypt-oom-leak", {
     "check.js": `
       const crypto = require("node:crypto");
-      const { heapStats } = require("bun:jsc");
+      const { heapStats } = require("fun:jsc");
 
       function protectedCounts() {
-        Bun.gc(true);
+        Fun.gc(true);
         const counts = heapStats().protectedObjectTypeCounts;
         return {
           Function: counts.Function ?? 0,
@@ -46,9 +46,9 @@ test("scrypt async does not leak callback/buffers when output allocation fails",
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "check.js"],
-    env: { ...bunEnv, BUN_FEATURE_FLAG_SYNTHETIC_MEMORY_LIMIT: String(16 * 1024 * 1024) },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "check.js"],
+    env: { ...funEnv, FUN_FEATURE_FLAG_SYNTHETIC_MEMORY_LIMIT: String(16 * 1024 * 1024) },
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

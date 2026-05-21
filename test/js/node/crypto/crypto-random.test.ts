@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { randomBytes, randomFill, randomFillSync, randomInt } from "crypto";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 
 describe("randomInt args validation", () => {
   it("default min is 0 so max should be greater than 0", () => {
@@ -69,9 +69,9 @@ describe("randomFill bounds checking", () => {
   // check and release writes past the allocation. Run in a subprocess so the test
   // runner survives and records a clean failure either way.
   it("randomFillSync rejects size + offset > length when offset exceeds 2**24", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `const { randomFillSync } = require("crypto");
          const length = 2 ** 24 + 2; // 16777218
@@ -84,7 +84,7 @@ describe("randomFill bounds checking", () => {
            console.log(e.code);
          }`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -105,9 +105,9 @@ describe("randomFill bounds checking", () => {
     // Validation errors are thrown synchronously even for the async API. Without the
     // fix the check passes and the threadpool writes past the end of the buffer, so
     // run in a subprocess.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `const { randomFill } = require("crypto");
          try {
@@ -117,7 +117,7 @@ describe("randomFill bounds checking", () => {
            console.log(e.code);
          }`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -143,9 +143,9 @@ describe("randomFill default size with multi-byte typed arrays", () => {
   // either underflowed (panic in debug) or under-filled the buffer.
   it("randomFill(Float64Array, offset, cb) does not underflow when byte offset > element count", async () => {
     // Without the fix this underflows usize and panics in debug, so run in a subprocess.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `const { randomFill } = require("crypto");
          // 80 bytes, 10 elements; offset 2 elements = 16 bytes.
@@ -155,7 +155,7 @@ describe("randomFill default size with multi-byte typed arrays", () => {
            console.log("OK", buf[0], buf[1]);
          });`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

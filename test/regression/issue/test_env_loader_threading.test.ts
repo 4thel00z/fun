@@ -1,23 +1,23 @@
-import { spawn } from "bun";
-import { expect, test } from "bun:test";
-import { bunExe, tempDirWithFiles } from "harness";
+import { spawn } from "fun";
+import { expect, test } from "fun:test";
+import { funExe, tempDirWithFiles } from "harness";
 
-test("env_loader should not have allocator threading issues with BUN_INSPECT_CONNECT_TO", async () => {
+test("env_loader should not have allocator threading issues with FUN_INSPECT_CONNECT_TO", async () => {
   const dir = tempDirWithFiles("env-loader-threading", {
     ".env": "TEST_ENV_VAR=hello_world",
     "index.js": `console.log(process.env.TEST_ENV_VAR || 'undefined');`,
   });
 
-  // This test verifies that when BUN_INSPECT_CONNECT_TO is set,
+  // This test verifies that when FUN_INSPECT_CONNECT_TO is set,
   // the debugger thread creates its own env_loader with proper allocator isolation
   // and doesn't cause threading violations when accessing environment files.
 
   // First, test normal execution without inspector to establish baseline
   const normalProc = spawn({
-    cmd: [bunExe(), "index.js"],
+    cmd: [funExe(), "index.js"],
     cwd: dir,
     env: {
-      ...Bun.env,
+      ...Fun.env,
       TEST_ENV_VAR: undefined, // Remove from process env to test .env loading
     },
     stdio: ["inherit", "pipe", "pipe"],
@@ -29,14 +29,14 @@ test("env_loader should not have allocator threading issues with BUN_INSPECT_CON
   expect(normalResult).toBe(0);
   expect(normalStdout.trim()).toBe("hello_world");
 
-  // Now test with BUN_INSPECT_CONNECT_TO set to a non-existent socket
+  // Now test with FUN_INSPECT_CONNECT_TO set to a non-existent socket
   // This should trigger the debugger thread creation without actually connecting
   const inspectorProc = spawn({
-    cmd: [bunExe(), "index.js"],
+    cmd: [funExe(), "index.js"],
     cwd: dir,
     env: {
-      ...Bun.env,
-      BUN_INSPECT_CONNECT_TO: "/tmp/non-existent-debug-socket",
+      ...Fun.env,
+      FUN_INSPECT_CONNECT_TO: "/tmp/non-existent-debug-socket",
       TEST_ENV_VAR: undefined, // Remove from process env to test .env loading
     },
     stdio: ["inherit", "pipe", "pipe"],

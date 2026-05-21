@@ -5,7 +5,7 @@ pub inline fn getCacheDirectory(this: *PackageManager) std.fs.Dir {
     };
 }
 
-pub inline fn getCacheDirectoryAndAbsPath(this: *PackageManager) struct { FD, bun.AbsPath(.{}) } {
+pub inline fn getCacheDirectoryAndAbsPath(this: *PackageManager) struct { FD, fun.AbsPath(.{}) } {
     const cache_dir = this.getCacheDirectory();
     return .{ .fromStdDir(cache_dir), .from(this.cache_directory_path) };
 }
@@ -20,7 +20,7 @@ const TemporaryDirectory = struct {
     name: []const u8,
 };
 
-var getTemporaryDirectoryOnce = bun.once(struct {
+var getTemporaryDirectoryOnce = fun.once(struct {
     // We need a temporary directory that can be rename()
     // This is important for extracting files.
     //
@@ -33,33 +33,33 @@ var getTemporaryDirectoryOnce = bun.once(struct {
         const temp_dir_name = Fs.FileSystem.RealFS.getDefaultTempDir();
 
         var tried_dot_tmp = false;
-        var tempdir: std.fs.Dir = bun.MakePath.makeOpenPath(std.fs.cwd(), temp_dir_name, .{}) catch brk: {
+        var tempdir: std.fs.Dir = fun.MakePath.makeOpenPath(std.fs.cwd(), temp_dir_name, .{}) catch brk: {
             tried_dot_tmp = true;
-            break :brk bun.MakePath.makeOpenPath(cache_directory, bun.pathLiteral(".tmp"), .{}) catch |err| {
-                Output.prettyErrorln("<r><red>error<r>: bun is unable to access tempdir: {s}", .{@errorName(err)});
+            break :brk fun.MakePath.makeOpenPath(cache_directory, fun.pathLiteral(".tmp"), .{}) catch |err| {
+                Output.prettyErrorln("<r><red>error<r>: fun is unable to access tempdir: {s}", .{@errorName(err)});
                 Global.crash();
             };
         };
-        var tmpbuf: bun.PathBuffer = undefined;
-        const tmpname = Fs.FileSystem.tmpname("hm", &tmpbuf, bun.fastRandom()) catch unreachable;
+        var tmpbuf: fun.PathBuffer = undefined;
+        const tmpname = Fs.FileSystem.tmpname("hm", &tmpbuf, fun.fastRandom()) catch unreachable;
         var timer: std.time.Timer = if (manager.options.log_level != .silent) std.time.Timer.start() catch unreachable else undefined;
         brk: while (true) {
             var file = tempdir.createFileZ(tmpname, .{ .truncate = true }) catch |err2| {
                 if (!tried_dot_tmp) {
                     tried_dot_tmp = true;
 
-                    tempdir = bun.MakePath.makeOpenPath(cache_directory, bun.pathLiteral(".tmp"), .{}) catch |err| {
-                        Output.prettyErrorln("<r><red>error<r>: bun is unable to access tempdir: {s}", .{@errorName(err)});
+                    tempdir = fun.MakePath.makeOpenPath(cache_directory, fun.pathLiteral(".tmp"), .{}) catch |err| {
+                        Output.prettyErrorln("<r><red>error<r>: fun is unable to access tempdir: {s}", .{@errorName(err)});
                         Global.crash();
                     };
 
                     if (PackageManager.verbose_install) {
-                        Output.prettyErrorln("<r><yellow>warn<r>: bun is unable to access tempdir: {s}, using fallback", .{@errorName(err2)});
+                        Output.prettyErrorln("<r><yellow>warn<r>: fun is unable to access tempdir: {s}, using fallback", .{@errorName(err2)});
                     }
 
                     continue :brk;
                 }
-                Output.prettyErrorln("<r><red>error<r>: {s} accessing temporary directory. Please set <b>$BUN_TMPDIR<r> or <b>$BUN_INSTALL<r>", .{
+                Output.prettyErrorln("<r><red>error<r>: {s} accessing temporary directory. Please set <b>$FUN_TMPDIR<r> or <b>$FUN_INSTALL<r>", .{
                     @errorName(err2),
                 });
                 Global.crash();
@@ -70,7 +70,7 @@ var getTemporaryDirectoryOnce = bun.once(struct {
                 if (!tried_dot_tmp) {
                     tried_dot_tmp = true;
                     tempdir = cache_directory.makeOpenPath(".tmp", .{}) catch |err2| {
-                        Output.prettyErrorln("<r><red>error<r>: bun is unable to write files to tempdir: {s}", .{@errorName(err2)});
+                        Output.prettyErrorln("<r><red>error<r>: fun is unable to write files to tempdir: {s}", .{@errorName(err2)});
                         Global.crash();
                     };
 
@@ -81,7 +81,7 @@ var getTemporaryDirectoryOnce = bun.once(struct {
                     continue :brk;
                 }
 
-                Output.prettyErrorln("<r><red>error<r>: {s} accessing temporary directory. Please set <b>$BUN_TMPDIR<r> or <b>$BUN_INSTALL<r>", .{
+                Output.prettyErrorln("<r><red>error<r>: {s} accessing temporary directory. Please set <b>$FUN_TMPDIR<r> or <b>$FUN_INSTALL<r>", .{
                     @errorName(err),
                 });
                 Global.crash();
@@ -95,17 +95,17 @@ var getTemporaryDirectoryOnce = bun.once(struct {
         if (manager.options.log_level != .silent) {
             const elapsed = timer.read();
             if (elapsed > std.time.ns_per_ms * 100) {
-                var path_buf: bun.PathBuffer = undefined;
-                const cache_dir_path = bun.getFdPath(.fromStdDir(cache_directory), &path_buf) catch "it";
+                var path_buf: fun.PathBuffer = undefined;
+                const cache_dir_path = fun.getFdPath(.fromStdDir(cache_directory), &path_buf) catch "it";
                 Output.prettyErrorln(
-                    "<r><yellow>warn<r>: Slow filesystem detected. If {s} is a network drive, consider setting $BUN_INSTALL_CACHE_DIR to a local folder.",
+                    "<r><yellow>warn<r>: Slow filesystem detected. If {s} is a network drive, consider setting $FUN_INSTALL_CACHE_DIR to a local folder.",
                     .{cache_dir_path},
                 );
             }
         }
 
-        var buf: bun.PathBuffer = undefined;
-        const temp_dir_path = bun.getFdPathZ(.fromStdDir(tempdir), &buf) catch |err| {
+        var buf: fun.PathBuffer = undefined;
+        const temp_dir_path = fun.getFdPathZ(.fromStdDir(tempdir), &buf) catch |err| {
             Output.err(err, "Failed to read temporary directory path: '{s}'", .{temp_dir_name});
             Global.exit(1);
         };
@@ -113,7 +113,7 @@ var getTemporaryDirectoryOnce = bun.once(struct {
         return .{
             .handle = tempdir,
             .name = temp_dir_name,
-            .path = bun.handleOom(bun.default_allocator.dupeZ(u8, temp_dir_path)),
+            .path = fun.handleOom(fun.default_allocator.dupeZ(u8, temp_dir_path)),
         };
     }
 }.run);
@@ -122,7 +122,7 @@ noinline fn ensureCacheDirectory(this: *PackageManager) std.fs.Dir {
     loop: while (true) {
         if (this.options.enable.cache) {
             const cache_dir = fetchCacheDirectoryPath(this.env, &this.options);
-            this.cache_directory_path = bun.handleOom(this.allocator.dupeZ(u8, cache_dir.path));
+            this.cache_directory_path = fun.handleOom(this.allocator.dupeZ(u8, cache_dir.path));
 
             return std.fs.cwd().makeOpenPath(cache_dir.path, .{}) catch {
                 this.options.enable.cache = false;
@@ -138,10 +138,10 @@ noinline fn ensureCacheDirectory(this: *PackageManager) std.fs.Dir {
                 ".cache",
             },
             .auto,
-        )) catch |err| bun.handleOom(err);
+        )) catch |err| fun.handleOom(err);
 
         return std.fs.cwd().makeOpenPath("node_modules/.cache", .{}) catch |err| {
-            Output.prettyErrorln("<r><red>error<r>: bun is unable to write files: {s}", .{@errorName(err)});
+            Output.prettyErrorln("<r><red>error<r>: fun is unable to write files: {s}", .{@errorName(err)});
             Global.crash();
         };
     }
@@ -150,7 +150,7 @@ noinline fn ensureCacheDirectory(this: *PackageManager) std.fs.Dir {
 
 const CacheDir = struct { path: string, is_node_modules: bool };
 pub fn fetchCacheDirectoryPath(env: *DotEnv.Loader, options: ?*const Options) CacheDir {
-    if (env.get("BUN_INSTALL_CACHE_DIR")) |dir| {
+    if (env.get("FUN_INSTALL_CACHE_DIR")) |dir| {
         return CacheDir{ .path = Fs.FileSystem.instance.abs(&[_]string{dir}), .is_node_modules = false };
     }
 
@@ -160,22 +160,22 @@ pub fn fetchCacheDirectoryPath(env: *DotEnv.Loader, options: ?*const Options) Ca
         }
     }
 
-    if (env.get("BUN_INSTALL")) |dir| {
+    if (env.get("FUN_INSTALL")) |dir| {
         var parts = [_]string{ dir, "install/", "cache/" };
         return CacheDir{ .path = Fs.FileSystem.instance.abs(&parts), .is_node_modules = false };
     }
 
-    if (bun.env_var.XDG_CACHE_HOME.get()) |dir| {
-        var parts = [_]string{ dir, ".bun/", "install/", "cache/" };
+    if (fun.env_var.XDG_CACHE_HOME.get()) |dir| {
+        var parts = [_]string{ dir, ".fun/", "install/", "cache/" };
         return CacheDir{ .path = Fs.FileSystem.instance.abs(&parts), .is_node_modules = false };
     }
 
-    if (bun.env_var.HOME.get()) |dir| {
-        var parts = [_]string{ dir, ".bun/", "install/", "cache/" };
+    if (fun.env_var.HOME.get()) |dir| {
+        var parts = [_]string{ dir, ".fun/", "install/", "cache/" };
         return CacheDir{ .path = Fs.FileSystem.instance.abs(&parts), .is_node_modules = false };
     }
 
-    var fallback_parts = [_]string{"node_modules/.bun-cache"};
+    var fallback_parts = [_]string{"node_modules/.fun-cache"};
     return CacheDir{ .is_node_modules = true, .path = Fs.FileSystem.instance.abs(&fallback_parts) };
 }
 
@@ -244,14 +244,14 @@ pub fn cachedNPMPackageFolderNamePrint(this: *const PackageManager, buf: []u8, n
     const include_version_number = false;
     const basename = cachedNPMPackageFolderPrintBasename(buf, name, version, null, include_version_number);
 
-    const spanned = bun.span(basename);
+    const spanned = fun.span(basename);
     const available = buf[spanned.len..];
     var end: []u8 = undefined;
     if (scope.url.hostname.len > 32 or available.len < 64) {
         const visible_hostname = scope.url.hostname[0..@min(scope.url.hostname.len, 12)];
         end = std.fmt.bufPrint(available, "@@{s}__{f}{f}{f}", .{
             visible_hostname,
-            bun.fmt.hexIntLower(String.Builder.stringHash(scope.url.href)),
+            fun.fmt.hexIntLower(String.Builder.stringHash(scope.url.href)),
             CacheVersion.Formatter{ .version_number = CacheVersion.current },
             PatchHashFmt{ .hash = patch_hash },
         }) catch unreachable;
@@ -303,8 +303,8 @@ pub fn cachedNPMPackageFolderPrintBasename(
                     version.major,
                     version.minor,
                     version.patch,
-                    bun.fmt.hexIntLower(version.tag.pre.hash),
-                    bun.fmt.hexIntUpper(version.tag.build.hash),
+                    fun.fmt.hexIntLower(version.tag.pre.hash),
+                    fun.fmt.hexIntUpper(version.tag.build.hash),
                     CacheVersion.Formatter{ .version_number = if (include_cache_version) CacheVersion.current else null },
                     PatchHashFmt{ .hash = patch_hash },
                 },
@@ -318,7 +318,7 @@ pub fn cachedNPMPackageFolderPrintBasename(
                 version.major,
                 version.minor,
                 version.patch,
-                bun.fmt.hexIntLower(version.tag.pre.hash),
+                fun.fmt.hexIntLower(version.tag.pre.hash),
                 CacheVersion.Formatter{ .version_number = if (include_cache_version) CacheVersion.current else null },
                 PatchHashFmt{ .hash = patch_hash },
             },
@@ -333,7 +333,7 @@ pub fn cachedNPMPackageFolderPrintBasename(
                 version.major,
                 version.minor,
                 version.patch,
-                bun.fmt.hexIntUpper(version.tag.build.hash),
+                fun.fmt.hexIntUpper(version.tag.build.hash),
                 CacheVersion.Formatter{ .version_number = if (include_cache_version) CacheVersion.current else null },
                 PatchHashFmt{ .hash = patch_hash },
             },
@@ -351,7 +351,7 @@ pub fn cachedNPMPackageFolderPrintBasename(
 
 pub fn cachedTarballFolderNamePrint(buf: []u8, url: string, patch_hash: ?u64) stringZ {
     return std.fmt.bufPrintZ(buf, "@T@{f}{f}{f}", .{
-        bun.fmt.hexIntLower(String.Builder.stringHash(url)),
+        fun.fmt.hexIntLower(String.Builder.stringHash(url)),
         CacheVersion.Formatter{ .version_number = CacheVersion.current },
         PatchHashFmt{ .hash = patch_hash },
     }) catch unreachable;
@@ -362,13 +362,13 @@ pub fn cachedTarballFolderName(this: *const PackageManager, url: String, patch_h
 }
 
 pub fn isFolderInCache(this: *PackageManager, folder_path: stringZ) bool {
-    return bun.sys.directoryExistsAt(.fromStdDir(this.getCacheDirectory()), folder_path).unwrap() catch false;
+    return fun.sys.directoryExistsAt(.fromStdDir(this.getCacheDirectory()), folder_path).unwrap() catch false;
 }
 
 pub fn setupGlobalDir(manager: *PackageManager, ctx: Command.Context) !void {
     manager.options.global_bin_dir = try Options.openGlobalBinDir(ctx.install);
-    var out_buffer: bun.PathBuffer = undefined;
-    const result = try bun.getFdPathZ(.fromStdDir(manager.options.global_bin_dir), &out_buffer);
+    var out_buffer: fun.PathBuffer = undefined;
+    const result = try fun.getFdPathZ(.fromStdDir(manager.options.global_bin_dir), &out_buffer);
     const path = try FileSystem.instance.dirname_store.append([:0]u8, result);
     manager.options.bin_path = path.ptr[0..path.len :0];
 }
@@ -390,12 +390,12 @@ pub fn globalLinkDir(this: *PackageManager) std.fs.Dir {
             Output.err(err, "failed to open global link dir node_modules at '{f}'", .{FD.fromStdDir(global_dir)});
             Global.exit(1);
         };
-        var buf: bun.PathBuffer = undefined;
-        const _path = bun.getFdPath(.fromStdDir(this.global_link_dir.?), &buf) catch |err| {
+        var buf: fun.PathBuffer = undefined;
+        const _path = fun.getFdPath(.fromStdDir(this.global_link_dir.?), &buf) catch |err| {
             Output.err(err, "failed to get the full path of the global directory", .{});
             Global.exit(1);
         };
-        this.global_link_dir_path = bun.handleOom(Fs.FileSystem.DirnameStore.instance.append([]const u8, _path));
+        this.global_link_dir_path = fun.handleOom(Fs.FileSystem.DirnameStore.instance.append([]const u8, _path));
         break :brk this.global_link_dir.?;
     };
 }
@@ -412,27 +412,27 @@ pub fn globalLinkDirAndPath(this: *PackageManager) struct { std.fs.Dir, []const 
 
 pub fn pathForCachedNPMPath(
     this: *PackageManager,
-    buf: *bun.PathBuffer,
+    buf: *fun.PathBuffer,
     package_name: []const u8,
     version: Semver.Version,
 ) ![]u8 {
-    var cache_path_buf: bun.PathBuffer = undefined;
+    var cache_path_buf: fun.PathBuffer = undefined;
 
     const cache_path = this.cachedNPMPackageFolderNamePrint(&cache_path_buf, package_name, version, null);
 
     if (comptime Environment.allow_assert) {
-        bun.assertWithLocation(cache_path[package_name.len] == '@', @src());
+        fun.assertWithLocation(cache_path[package_name.len] == '@', @src());
     }
 
     cache_path_buf[package_name.len] = std.fs.path.sep;
 
-    const cache_dir: bun.FD = .fromStdDir(this.getCacheDirectory());
+    const cache_dir: fun.FD = .fromStdDir(this.getCacheDirectory());
 
     if (comptime Environment.isWindows) {
-        var path_buf: bun.PathBuffer = undefined;
-        const joined = bun.path.joinAbsStringBufZ(this.cache_directory_path, &path_buf, &[_]string{cache_path}, .windows);
-        return bun.sys.readlink(joined, buf).unwrap() catch |err| {
-            _ = bun.sys.unlink(joined);
+        var path_buf: fun.PathBuffer = undefined;
+        const joined = fun.path.joinAbsStringBufZ(this.cache_directory_path, &path_buf, &[_]string{cache_path}, .windows);
+        return fun.sys.readlink(joined, buf).unwrap() catch |err| {
+            _ = fun.sys.unlink(joined);
             return err;
         };
     }
@@ -449,7 +449,7 @@ pub fn pathForResolution(
     this: *PackageManager,
     package_id: PackageID,
     resolution: Resolution,
-    buf: *bun.PathBuffer,
+    buf: *fun.PathBuffer,
 ) ![]u8 {
     // const folder_name = this.cachedNPMPackageFolderName(name, version);
     switch (resolution.tag) {
@@ -470,7 +470,7 @@ pub fn computeCacheDirAndSubpath(
     manager: *PackageManager,
     pkg_name: string,
     resolution: *const Resolution,
-    folder_path_buf: *bun.PathBuffer,
+    folder_path_buf: *fun.PathBuffer,
     patch_hash: ?u64,
 ) struct { cache_dir: std.fs.Dir, cache_dir_subpath: stringZ } {
     const name = pkg_name;
@@ -598,9 +598,9 @@ pub fn saveLockfile(
                 .ok => |ok| ok.format,
             };
 
-            bun.sys.unlinkat(
+            fun.sys.unlinkat(
                 FD.cwd(),
-                if (delete_format == .text) comptime bun.OSPathLiteral("bun.lock") else comptime bun.OSPathLiteral("bun.lockb"),
+                if (delete_format == .text) comptime fun.OSPathLiteral("fun.lock") else comptime fun.OSPathLiteral("fun.lockb"),
             ).unwrap() catch |err| {
                 // we don't care
                 if (err == error.ENOENT) {
@@ -640,7 +640,7 @@ pub fn saveLockfile(
 
     // delete binary lockfile if saving text lockfile
     if (save_format == .text and load_result.loadedFromBinaryLockfile()) {
-        _ = bun.sys.unlinkat(FD.cwd(), comptime bun.OSPathLiteral("bun.lockb"));
+        _ = fun.sys.unlinkat(FD.cwd(), comptime fun.OSPathLiteral("fun.lockb"));
     }
 
     if (comptime Environment.allow_assert) {
@@ -714,7 +714,7 @@ pub fn writeYarnLock(this: *PackageManager) !void {
     try writer.flush();
 
     if (comptime Environment.isPosix) {
-        _ = bun.c.fchmod(
+        _ = fun.c.fchmod(
             tmpfile.fd.cast(),
             // chmod 666,
             0o0000040 | 0o0000004 | 0o0000002 | 0o0000400 | 0o0000200 | 0o0000020,
@@ -754,30 +754,30 @@ const stringZ = [:0]const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const DotEnv = bun.DotEnv;
-const Environment = bun.Environment;
-const FD = bun.FD;
-const Global = bun.Global;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const Path = bun.path;
-const Progress = bun.Progress;
-const default_allocator = bun.default_allocator;
-const Command = bun.cli.Command;
-const File = bun.sys.File;
+const fun = @import("fun");
+const DotEnv = fun.DotEnv;
+const Environment = fun.Environment;
+const FD = fun.FD;
+const Global = fun.Global;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const Path = fun.path;
+const Progress = fun.Progress;
+const default_allocator = fun.default_allocator;
+const Command = fun.cli.Command;
+const File = fun.sys.File;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const Lockfile = bun.install.Lockfile;
-const PackageID = bun.install.PackageID;
-const Repository = bun.install.Repository;
-const Resolution = bun.install.Resolution;
+const Lockfile = fun.install.Lockfile;
+const PackageID = fun.install.PackageID;
+const Repository = fun.install.Repository;
+const Resolution = fun.install.Resolution;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const Options = PackageManager.Options;
 const ProgressStrings = PackageManager.ProgressStrings;

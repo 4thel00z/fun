@@ -1,4 +1,4 @@
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "JSDOMWrapper.h"
 #include "JSEventTarget.h"
 #include "JavaScriptCore/TopExceptionScope.h"
@@ -40,7 +40,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionIsExternal,
         JSC::CallFrame* callframe))
 {
     GET_FIRST_VALUE
-    return JSValue::encode(jsBoolean(value.inherits<Bun::NapiExternal>()));
+    return JSValue::encode(jsBoolean(value.inherits<Fun::NapiExternal>()));
 }
 JSC_DEFINE_HOST_FUNCTION(jsFunctionIsDate, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
@@ -156,7 +156,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionIsNativeError,
         if (cell->type() == ErrorInstanceType)
             return JSValue::encode(jsBoolean(true));
 
-        // Workaround for https://github.com/oven-sh/bun/issues/11780
+        // Workaround for https://github.com/underdoc-org/fun/issues/11780
         // They have code that does
         //      assert(util.types.isNativeError(resolveMessage))
         // FIXME: delete this once ResolveMessage and BuildMessage extend Error
@@ -444,7 +444,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionIsKeyObject,
         JSC::CallFrame* callframe))
 {
     GET_FIRST_CELL
-    return JSValue::encode(jsBoolean(cell->inherits<Bun::JSKeyObject>()));
+    return JSValue::encode(jsBoolean(cell->inherits<Fun::JSKeyObject>()));
 }
 JSC_DEFINE_HOST_FUNCTION(jsFunctionIsCryptoKey,
     (JSC::JSGlobalObject * globalObject,

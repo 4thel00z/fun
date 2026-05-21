@@ -3,10 +3,10 @@
   "scripts": {
     "deps": "exit 0",
     "build": "exit 0",
-    "bench:bun": "bun bun.js",
+    "bench:fun": "fun fun.js",
     "bench:node": "node node.mjs",
     "bench:deno": "deno run -A --unstable deno.js",
-    "bench": "bun run bench:bun && bun run bench:node && bun run bench:deno"
+    "bench": "fun run bench:fun && fun run bench:node && fun run bench:deno"
   },
   "dependencies": {
     "@babel/standalone": "7.24.10"

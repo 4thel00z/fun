@@ -1,9 +1,9 @@
 ---
 title: "JSX"
-description: "Built-in JSX and TSX support in Bun with configurable transpilation options"
+description: "Built-in JSX and TSX support in Fun with configurable transpilation options"
 ---
 
-Bun supports `.jsx` and `.tsx` files out of the box. Bun's internal transpiler converts JSX syntax into vanilla JavaScript before execution.
+Fun supports `.jsx` and `.tsx` files out of the box. Fun's internal transpiler converts JSX syntax into vanilla JavaScript before execution.
 
 ```ts react.tsx icon="/icons/typescript.svg"
 function Component(props: {message: string}) {
@@ -19,7 +19,7 @@ console.log(<Component message="Hello world!" />);
 
 ## Configuration
 
-Bun reads your `tsconfig.json` or `jsconfig.json` configuration files to determines how to perform the JSX transform internally. To avoid using either of these, the following options can also be defined in [`bunfig.toml`](/runtime/bunfig).
+Fun reads your `tsconfig.json` or `jsconfig.json` configuration files to determines how to perform the JSX transform internally. To avoid using either of these, the following options can also be defined in [`funfig.toml`](/runtime/funfig).
 
 The following compiler options are respected.
 
@@ -36,7 +36,7 @@ How JSX constructs are transformed into vanilla JavaScript internally. The table
 | `json<br/>{<br/>  "jsx": "react"<br/>}<br/>`        | `tsx<br/>import { createElement } from "react";<br/>createElement("Box", { width: 5 }, "Hello");<br/>`                                                                                                                                                                                                                                                                                                                                                                    |
 | `json<br/>{<br/>  "jsx": "react-jsx"<br/>}<br/>`    | `tsx<br/>import { jsx } from "react/jsx-runtime";<br/>jsx("Box", { width: 5 }, "Hello");<br/>`                                                                                                                                                                                                                                                                                                                                                                            |
 | `json<br/>{<br/>  "jsx": "react-jsxdev"<br/>}<br/>` | `tsx<br/>import { jsxDEV } from "react/jsx-dev-runtime";<br/>jsxDEV(<br/>  "Box",<br/>  { width: 5, children: "Hello" },<br/>  undefined,<br/>  false,<br/>  undefined,<br/>  this,<br/>);<br/>`<br/><br/>The `jsxDEV` variable name is a convention used by React. The `DEV` suffix is a visible way to indicate that the code is intended for use in development. The development version of React is slower and includes additional validity checks & debugging tools. |
-| `json<br/>{<br/>  "jsx": "preserve"<br/>}<br/>`     | `tsx<br/>// JSX is not transpiled<br/>// "preserve" is not supported by Bun currently<br/><Box width={5}>Hello</Box><br/>`                                                                                                                                                                                                                                                                                                                                                |
+| `json<br/>{<br/>  "jsx": "preserve"<br/>}<br/>`     | `tsx<br/>// JSX is not transpiled<br/>// "preserve" is not supported by Fun currently<br/><Box width={5}>Hello</Box><br/>`                                                                                                                                                                                                                                                                                                                                                |
 
 ### [`jsxFactory`](https://www.typescriptlang.org/tsconfig#jsxFactory)
 
@@ -82,7 +82,7 @@ All of these values can be set on a per-file basis using _pragmas_. A pragma is 
 
 ## Logging
 
-Bun implements special logging for JSX to make debugging easier. Given the following file:
+Fun implements special logging for JSX to make debugging easier. Given the following file:
 
 ```tsx index.tsx icon="/icons/typescript.svg"
 import { Stack, UserCard } from "./components";
@@ -95,13 +95,13 @@ console.log(
 );
 ```
 
-Bun will pretty-print the component tree when logged:
+Fun will pretty-print the component tree when logged:
 
-<Frame>![JSX logging output](https://github.com/oven-sh/bun/assets/3084745/d29db51d-6837-44e2-b8be-84fc1b9e9d97)</Frame>
+<Frame>![JSX logging output](https://github.com/underdoc-org/fun/assets/3084745/d29db51d-6837-44e2-b8be-84fc1b9e9d97)</Frame>
 
 ## Prop punning
 
-The Bun runtime also supports "prop punning" for JSX. This is a shorthand syntax useful for assigning a variable to a prop with the same name.
+The Fun runtime also supports "prop punning" for JSX. This is a shorthand syntax useful for assigning a variable to a prop with the same name.
 
 ```tsx react.tsx icon="/icons/typescript.svg"
 function Div(props: {className: string;}) {

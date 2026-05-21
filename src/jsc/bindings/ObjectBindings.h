@@ -1,7 +1,7 @@
 #pragma once
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
 /**
  * This is `JSObject::getIfPropertyExists`, except it stops when it reaches globalObject->objectPrototype().

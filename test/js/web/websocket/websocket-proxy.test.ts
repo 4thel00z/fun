@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import * as harness from "harness";
 import { tls as tlsCerts } from "harness";
 import type { HttpsProxyAgent as HttpsProxyAgentType } from "https-proxy-agent";
@@ -13,15 +13,15 @@ const { HttpsProxyAgent } = require("https-proxy-agent") as {
 // Use docker-compose infrastructure for squid proxy
 
 const gc = harness.gc;
-const bunExe = harness.bunExe;
-const bunEnv = harness.bunEnv;
+const funExe = harness.funExe;
+const funEnv = harness.funEnv;
 const isDockerEnabled = harness.isDockerEnabled;
 
 // HTTP CONNECT proxy server for WebSocket tunneling
 let proxy: net.Server;
 let authProxy: net.Server;
-let wsServer: ReturnType<typeof Bun.serve>;
-let wssServer: ReturnType<typeof Bun.serve>;
+let wsServer: ReturnType<typeof Fun.serve>;
+let wssServer: ReturnType<typeof Fun.serve>;
 let proxyPort: number;
 let authProxyPort: number;
 let wsPort: number;
@@ -37,7 +37,7 @@ beforeAll(async () => {
   authProxyPort = await startProxy(authProxy);
 
   // Create WebSocket echo server
-  wsServer = Bun.serve({
+  wsServer = Fun.serve({
     port: 0,
     fetch(req, server) {
       if (server.upgrade(req)) {
@@ -58,7 +58,7 @@ beforeAll(async () => {
   wsPort = wsServer.port;
 
   // Create secure WebSocket echo server (wss://)
-  wssServer = Bun.serve({
+  wssServer = Fun.serve({
     port: 0,
     tls: {
       key: tlsCerts.key,
@@ -406,7 +406,7 @@ describe("WebSocket wss:// through HTTP proxy (TLS tunnel)", () => {
     // through proxy_tunnel). Detached sockets return true for isClosed(), so
     // sendPong would immediately dispatch a 1006 close instead of sending the
     // pong through the tunnel.
-    using pingServer = Bun.serve({
+    using pingServer = Fun.serve({
       port: 0,
       tls: {
         key: tlsCerts.key,
@@ -603,7 +603,7 @@ describe.skipIf(!isDockerEnabled())("WebSocket through Squid proxy (Docker)", ()
   }, 120_000);
 
   afterAll(async () => {
-    if (!process.env.BUN_KEEP_DOCKER) {
+    if (!process.env.FUN_KEEP_DOCKER) {
       await dockerCompose.down();
     }
   }, 30_000);
@@ -620,7 +620,7 @@ describe.skipIf(!isDockerEnabled())("WebSocket through Squid proxy (Docker)", ()
     const receivedMessages: string[] = [];
 
     ws.onopen = () => {
-      ws.send("hello from bun via squid");
+      ws.send("hello from fun via squid");
     };
 
     ws.onmessage = event => {
@@ -640,7 +640,7 @@ describe.skipIf(!isDockerEnabled())("WebSocket through Squid proxy (Docker)", ()
 
     const messages = await promise;
     expect(messages).toContain("connected");
-    expect(messages).toContain("hello from bun via squid");
+    expect(messages).toContain("hello from fun via squid");
     gc();
   }, 30_000);
 
@@ -659,7 +659,7 @@ describe.skipIf(!isDockerEnabled())("WebSocket through Squid proxy (Docker)", ()
     const receivedMessages: string[] = [];
 
     ws.onopen = () => {
-      ws.send("hello wss from bun via squid");
+      ws.send("hello wss from fun via squid");
     };
 
     ws.onmessage = event => {
@@ -679,7 +679,7 @@ describe.skipIf(!isDockerEnabled())("WebSocket through Squid proxy (Docker)", ()
 
     const messages = await promise;
     expect(messages).toContain("connected");
-    expect(messages).toContain("hello wss from bun via squid");
+    expect(messages).toContain("hello wss from fun via squid");
     gc();
   }, 30_000);
 });
@@ -729,15 +729,15 @@ describe.concurrent("WebSocket NO_PROXY bypass", () => {
     // authProxy requires credentials; if NO_PROXY works, the WebSocket bypasses
     // the proxy and connects directly. If NO_PROXY doesn't work, the proxy
     // rejects with 407 and the WebSocket errors.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `const ws = new WebSocket("ws://127.0.0.1:${wsPort}", { proxy: "http://127.0.0.1:${authProxyPort}" });
          ws.onopen = () => { ws.close(); process.exit(0); };
          ws.onerror = () => { process.exit(1); };`,
       ],
-      env: { ...bunEnv, NO_PROXY: "127.0.0.1" },
+      env: { ...funEnv, NO_PROXY: "127.0.0.1" },
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -748,15 +748,15 @@ describe.concurrent("WebSocket NO_PROXY bypass", () => {
   });
 
   test("NO_PROXY matching host:port bypasses proxy for ws://", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `const ws = new WebSocket("ws://127.0.0.1:${wsPort}", { proxy: "http://127.0.0.1:${authProxyPort}" });
          ws.onopen = () => { ws.close(); process.exit(0); };
          ws.onerror = () => { process.exit(1); };`,
       ],
-      env: { ...bunEnv, NO_PROXY: `127.0.0.1:${wsPort}` },
+      env: { ...funEnv, NO_PROXY: `127.0.0.1:${wsPort}` },
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -769,15 +769,15 @@ describe.concurrent("WebSocket NO_PROXY bypass", () => {
   test("NO_PROXY not matching still uses proxy (auth fails)", async () => {
     // NO_PROXY doesn't match the target, so the WebSocket should go through
     // the auth proxy without credentials, which rejects with 407.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `const ws = new WebSocket("ws://127.0.0.1:${wsPort}", { proxy: "http://127.0.0.1:${authProxyPort}" });
          ws.onopen = () => { process.exit(1); };
          ws.onerror = () => { process.exit(0); };`,
       ],
-      env: { ...bunEnv, NO_PROXY: "other.host.com" },
+      env: { ...funEnv, NO_PROXY: "other.host.com" },
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -788,15 +788,15 @@ describe.concurrent("WebSocket NO_PROXY bypass", () => {
   });
 
   test("NO_PROXY=* bypasses all proxies", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `const ws = new WebSocket("ws://127.0.0.1:${wsPort}", { proxy: "http://127.0.0.1:${authProxyPort}" });
          ws.onopen = () => { ws.close(); process.exit(0); };
          ws.onerror = () => { process.exit(1); };`,
       ],
-      env: { ...bunEnv, NO_PROXY: "*" },
+      env: { ...funEnv, NO_PROXY: "*" },
       stdout: "pipe",
       stderr: "pipe",
     });

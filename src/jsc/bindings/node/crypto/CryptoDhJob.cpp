@@ -6,9 +6,9 @@
 using namespace JSC;
 using namespace ncrypto;
 
-namespace Bun {
+namespace Fun {
 
-extern "C" void Bun__DhJobCtx__deinit(DhJobCtx* ctx)
+extern "C" void Fun__DhJobCtx__deinit(DhJobCtx* ctx)
 {
     ctx->deinit();
 }
@@ -17,7 +17,7 @@ void DhJobCtx::deinit()
     delete this;
 }
 
-extern "C" void Bun__DhJobCtx__runTask(DhJobCtx* ctx, JSGlobalObject* globalObject)
+extern "C" void Fun__DhJobCtx__runTask(DhJobCtx* ctx, JSGlobalObject* globalObject)
 {
     ctx->runTask(globalObject);
 }
@@ -36,7 +36,7 @@ void DhJobCtx::runTask(JSGlobalObject* globalObject)
     m_result = ByteSource::allocated(dp.release());
 }
 
-extern "C" void Bun__DhJobCtx__runFromJS(DhJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
+extern "C" void Fun__DhJobCtx__runFromJS(DhJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
 {
     ctx->runFromJS(globalObject, JSValue::decode(callback));
 }
@@ -47,13 +47,13 @@ void DhJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback)
 
     if (!m_result) {
         JSObject* err = createError(lexicalGlobalObject, ErrorCode::ERR_CRYPTO_OPERATION_FAILED, "diffieHellman failed"_s);
-        Bun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
+        Fun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
         return;
     }
 
     JSValue result = WebCore::createBuffer(lexicalGlobalObject, m_result.span());
 
-    Bun__EventLoop__runCallback2(
+    Fun__EventLoop__runCallback2(
         lexicalGlobalObject,
         JSValue::encode(callback),
         JSValue::encode(jsUndefined()),
@@ -61,24 +61,24 @@ void DhJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback)
         JSValue::encode(result));
 }
 
-extern "C" DhJob* Bun__DhJob__create(JSGlobalObject* globalObject, DhJobCtx* ctx, EncodedJSValue callback);
+extern "C" DhJob* Fun__DhJob__create(JSGlobalObject* globalObject, DhJobCtx* ctx, EncodedJSValue callback);
 DhJob* DhJob::create(JSGlobalObject* globalObject, DhJobCtx&& ctx, JSValue callback)
 {
     DhJobCtx* ctxCopy = new DhJobCtx(WTF::move(ctx));
-    return Bun__DhJob__create(globalObject, ctxCopy, JSValue::encode(callback));
+    return Fun__DhJob__create(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
-extern "C" void Bun__DhJob__schedule(DhJob* job);
+extern "C" void Fun__DhJob__schedule(DhJob* job);
 void DhJob::schedule()
 {
-    Bun__DhJob__schedule(this);
+    Fun__DhJob__schedule(this);
 }
 
-extern "C" void Bun__DhJob__createAndSchedule(JSGlobalObject* globalObject, DhJobCtx* ctx, EncodedJSValue callback);
+extern "C" void Fun__DhJob__createAndSchedule(JSGlobalObject* globalObject, DhJobCtx* ctx, EncodedJSValue callback);
 void DhJob::createAndSchedule(JSGlobalObject* globalObject, DhJobCtx&& ctx, JSValue callback)
 {
     DhJobCtx* ctxCopy = new DhJobCtx(WTF::move(ctx));
-    Bun__DhJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
+    Fun__DhJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
 std::optional<DhJobCtx> DhJobCtx::fromJS(JSGlobalObject* globalObject, ThrowScope& scope, JSC::JSObject* options)
@@ -165,4 +165,4 @@ JSC_DEFINE_HOST_FUNCTION(jsDiffieHellman, (JSGlobalObject * lexicalGlobalObject,
     RELEASE_AND_RETURN(scope, JSValue::encode(WebCore::createBuffer(lexicalGlobalObject, ctx->m_result.span())));
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 test("Invalid escape sequence \\x in identifier shows helpful error message", async () => {
@@ -7,9 +7,9 @@ test("Invalid escape sequence \\x in identifier shows helpful error message", as
     "test.js": `const \\x41 = 1;`,
   });
 
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), join(dir, "test.js")],
-    env: bunEnv,
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), join(dir, "test.js")],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
     cwd: String(dir),
@@ -27,9 +27,9 @@ test("Invalid escaped double quote in identifier shows helpful error message", a
     "test.js": `const \\" = 1;`,
   });
 
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), join(dir, "test.js")],
-    env: bunEnv,
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), join(dir, "test.js")],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
     cwd: String(dir),
@@ -47,9 +47,9 @@ test("Invalid escaped single quote in identifier shows helpful error message", a
     "test.js": `const \\' = 1;`,
   });
 
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), join(dir, "test.js")],
-    env: bunEnv,
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), join(dir, "test.js")],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
     cwd: String(dir),
@@ -67,9 +67,9 @@ test("Invalid escaped backtick in identifier shows helpful error message", async
     "test.js": `const \\\` = 1;`,
   });
 
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), join(dir, "test.js")],
-    env: bunEnv,
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), join(dir, "test.js")],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
     cwd: String(dir),
@@ -87,9 +87,9 @@ test("Invalid escaped backslash in identifier shows helpful error message", asyn
     "test.js": `const \\\\ = 1;`,
   });
 
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), join(dir, "test.js")],
-    env: bunEnv,
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), join(dir, "test.js")],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
     cwd: String(dir),
@@ -107,9 +107,9 @@ test("Invalid escaped z in identifier shows helpful error message", async () => 
     "test.js": `const \\z = 1;`,
   });
 
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), join(dir, "test.js")],
-    env: bunEnv,
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), join(dir, "test.js")],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
     cwd: String(dir),
@@ -129,9 +129,9 @@ test("Valid unicode escapes in identifiers should work", async () => {
       "valid1.js": `const \\u0041 = 1; console.log(A);`,
     });
 
-    const { stdout, exitCode } = Bun.spawnSync({
-      cmd: [bunExe(), join(dir, "valid1.js")],
-      env: bunEnv,
+    const { stdout, exitCode } = Fun.spawnSync({
+      cmd: [funExe(), join(dir, "valid1.js")],
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
       cwd: String(dir),
@@ -147,9 +147,9 @@ test("Valid unicode escapes in identifiers should work", async () => {
       "valid2.js": `const \\u{41} = 2; console.log(A);`,
     });
 
-    const { stdout, exitCode } = Bun.spawnSync({
-      cmd: [bunExe(), join(dir, "valid2.js")],
-      env: bunEnv,
+    const { stdout, exitCode } = Fun.spawnSync({
+      cmd: [funExe(), join(dir, "valid2.js")],
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
       cwd: String(dir),

@@ -19,7 +19,7 @@ module_info_index: u32 = std.math.maxInt(u32),
 output_kind: jsc.API.BuildArtifact.OutputKind,
 /// Relative
 dest_path: []const u8 = "",
-side: ?bun.bake.Side,
+side: ?fun.bake.Side,
 /// This is only set for the JS bundle, and not files associated with an
 /// entrypoint like sourcemaps and bytecode
 entry_point_index: ?u32,
@@ -42,14 +42,14 @@ pub const BakeExtra = struct {
     bake_is_runtime: bool = false,
 };
 
-pub const Index = bun.GenericIndex(u32, OutputFile);
+pub const Index = fun.GenericIndex(u32, OutputFile);
 
 pub fn deinit(this: *OutputFile) void {
     this.value.deinit();
 
-    bun.default_allocator.free(this.src_path.text);
-    bun.default_allocator.free(this.dest_path);
-    bun.default_allocator.free(this.referenced_css_chunks);
+    fun.default_allocator.free(this.src_path.text);
+    fun.default_allocator.free(this.dest_path);
+    fun.default_allocator.free(this.referenced_css_chunks);
 }
 
 // Depending on:
@@ -59,14 +59,14 @@ pub fn deinit(this: *OutputFile) void {
 // We may use a different system call
 pub const FileOperation = struct {
     pathname: string,
-    fd: FileDescriptorType = bun.invalid_fd,
-    dir: FileDescriptorType = bun.invalid_fd,
+    fd: FileDescriptorType = fun.invalid_fd,
+    dir: FileDescriptorType = fun.invalid_fd,
     is_tmpdir: bool = false,
     is_outdir: bool = false,
     close_handle_on_complete: bool = false,
     autowatch: bool = true,
 
-    pub fn fromFile(fd: bun.FD, pathname: string) FileOperation {
+    pub fn fromFile(fd: fun.FD, pathname: string) FileOperation {
         return .{
             .fd = fd,
             .pathname = pathname,
@@ -125,9 +125,9 @@ pub const Value = union(Kind) {
         };
     }
 
-    pub fn toBunString(v: Value) bun.String {
+    pub fn toFunString(v: Value) fun.String {
         return switch (v) {
-            .noop => bun.String.empty,
+            .noop => fun.String.empty,
             .buffer => |buf| {
                 // Use ExternalStringImpl to avoid cloning the string, at
                 // the cost of allocating space to remember the allocator.
@@ -136,19 +136,19 @@ pub const Value = union(Kind) {
 
                     fn onFree(ctx: *@This(), buffer: *anyopaque, len: u32) callconv(.c) void {
                         ctx.allocator.free(@as([*]u8, @ptrCast(buffer))[0..len]);
-                        bun.destroy(ctx);
+                        fun.destroy(ctx);
                     }
                 };
-                return bun.String.createExternal(
+                return fun.String.createExternal(
                     *FreeContext,
                     buf.bytes,
                     true,
-                    bun.new(FreeContext, .{ .allocator = buf.allocator }),
+                    fun.new(FreeContext, .{ .allocator = buf.allocator }),
                     FreeContext.onFree,
                 );
             },
             .pending => unreachable,
-            else => |tag| bun.todoPanic(@src(), "handle .{s}", .{@tagName(tag)}),
+            else => |tag| fun.todoPanic(@src(), "handle .{s}", .{@tagName(tag)}),
         };
     }
 };
@@ -205,7 +205,7 @@ pub const Options = struct {
         },
         saved: usize,
     },
-    side: ?bun.bake.Side,
+    side: ?fun.bake.Side,
     entry_point_index: ?u32,
     referenced_css_chunks: []const Index = &.{},
     bake_extra: BakeExtra = .{},
@@ -265,7 +265,7 @@ pub fn writeToDisk(f: OutputFile, root_dir: std.fs.Dir, root_dir_path: []const u
                 }
             }
 
-            var path_buf: bun.PathBuffer = undefined;
+            var path_buf: fun.PathBuffer = undefined;
             _ = try jsc.Node.fs.NodeFS.writeFileWithPathBuffer(&path_buf, .{
                 .data = .{ .buffer = .{
                     .buffer = .{
@@ -278,7 +278,7 @@ pub fn writeToDisk(f: OutputFile, root_dir: std.fs.Dir, root_dir_path: []const u
                 .mode = if (f.is_executable) 0o755 else 0o644,
                 .dirfd = .fromStdDir(root_dir),
                 .file = .{ .path = .{
-                    .string = bun.PathString.init(rel_path),
+                    .string = fun.PathString.init(rel_path),
                 } },
             }).unwrap();
         },
@@ -293,18 +293,18 @@ pub fn writeToDisk(f: OutputFile, root_dir: std.fs.Dir, root_dir_path: []const u
 }
 
 pub fn moveTo(file: *const OutputFile, _: string, rel_path: []const u8, dir: FileDescriptorType) !void {
-    try bun.sys.moveFileZ(file.value.move.dir, bun.sliceTo(&(try std.posix.toPosixPath(file.value.move.getPathname())), 0), dir, bun.sliceTo(&(try std.posix.toPosixPath(rel_path)), 0));
+    try fun.sys.moveFileZ(file.value.move.dir, fun.sliceTo(&(try std.posix.toPosixPath(file.value.move.getPathname())), 0), dir, fun.sliceTo(&(try std.posix.toPosixPath(rel_path)), 0));
 }
 
 pub fn copyTo(file: *const OutputFile, _: string, rel_path: []const u8, dir: FileDescriptorType) !void {
-    const fd_out = bun.FD.fromStdFile(try dir.stdDir().createFile(rel_path, .{}));
+    const fd_out = fun.FD.fromStdFile(try dir.stdDir().createFile(rel_path, .{}));
     var do_close = false;
-    const fd_in = bun.FD.fromStdFile(try std.fs.cwd().openFile(file.src_path.text, .{ .mode = .read_only }));
+    const fd_in = fun.FD.fromStdFile(try std.fs.cwd().openFile(file.src_path.text, .{ .mode = .read_only }));
 
     if (Environment.isWindows) {
         do_close = Fs.FileSystem.instance.fs.needToCloseFiles();
 
-        // use paths instead of bun.getFdPathW()
+        // use paths instead of fun.getFdPathW()
         @panic("TODO windows");
     }
 
@@ -315,7 +315,7 @@ pub fn copyTo(file: *const OutputFile, _: string, rel_path: []const u8, dir: Fil
         }
     }
 
-    try bun.copyFile(fd_in, fd_out).unwrap();
+    try fun.copyFile(fd_in, fd_out).unwrap();
 }
 
 pub const toJS = @import("../bundler_jsc/output_file_jsc.zig").toJS;
@@ -329,8 +329,8 @@ const resolver = @import("../resolver/resolver.zig");
 const std = @import("std");
 const Loader = @import("./options.zig").Loader;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FileDescriptorType = bun.FD;
-const Fs = bun.fs;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FileDescriptorType = fun.FD;
+const Fs = fun.fs;
+const jsc = fun.jsc;

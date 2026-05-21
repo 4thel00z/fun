@@ -1,14 +1,14 @@
 ---
-title: Configure a private registry for an organization scope with bun install
+title: Configure a private registry for an organization scope with fun install
 sidebarTitle: Configure a scoped registry
 mode: center
 ---
 
-Private registries can be configured using either [`.npmrc`](/pm/npmrc) or [`bunfig.toml`](/runtime/bunfig#install-registry). While both are supported, we recommend using **bunfig.toml** for enhanced flexibility and Bun-specific options.
+Private registries can be configured using either [`.npmrc`](/pm/npmrc) or [`funfig.toml`](/runtime/funfig#install-registry). While both are supported, we recommend using **funfig.toml** for enhanced flexibility and Fun-specific options.
 
 To configure a registry for a particular npm scope:
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.scopes]
 # as a string
 "@myorg1" = "https://usertitle:password@registry.myorg.com/"
@@ -28,13 +28,13 @@ To configure a registry for a particular npm scope:
 
 ---
 
-Your `bunfig.toml` can reference environment variables. Bun automatically loads environment variables from `.env.local`, `.env.[NODE_ENV]`, and `.env`. See [Docs > Environment variables](/runtime/environment-variables) for more information.
+Your `funfig.toml` can reference environment variables. Fun automatically loads environment variables from `.env.local`, `.env.[NODE_ENV]`, and `.env`. See [Docs > Environment variables](/runtime/environment-variables) for more information.
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.scopes]
 "@myorg3" = { token = "$npm_token", url = "https://registry.myorg.com/" }
 ```
 
 ---
 
-See [Docs > Package manager](/pm/cli/install) for complete documentation of Bun's package manager.
+See [Docs > Package manager](/pm/cli/install) for complete documentation of Fun's package manager.

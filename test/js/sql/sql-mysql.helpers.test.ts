@@ -1,5 +1,5 @@
-import { SQL, randomUUIDv7 } from "bun";
-import { beforeEach, expect, test } from "bun:test";
+import { SQL, randomUUIDv7 } from "fun";
+import { beforeEach, expect, test } from "fun:test";
 import { describeWithContainer } from "harness";
 
 describeWithContainer(
@@ -13,7 +13,7 @@ describeWithContainer(
   container => {
     // Use a getter to avoid reading port/host at define time
     const getOptions = () => ({
-      url: `mysql://root@${container.host}:${container.port}/bun_sql_test`,
+      url: `mysql://root@${container.host}:${container.port}/fun_sql_test`,
       max: 1,
       bigint: true,
     });
@@ -187,7 +187,7 @@ describeWithContainer(
       )
     `;
 
-      const data = { id: 1, foo: "hello", email: "bunny@bun.com" };
+      const data = { id: 1, foo: "hello", email: "bunny@fun.dev" };
       await sql`
       INSERT INTO ${sql(random_name)} ${sql(data)}
       ON DUPLICATE KEY UPDATE ${sql(data)}
@@ -197,12 +197,12 @@ describeWithContainer(
         const result = await sql`SELECT * FROM ${sql(random_name)}`;
         expect(result[0].id).toBeDefined();
         expect(result[0].foo).toBe("hello");
-        expect(result[0].email).toBe("bunny@bun.com");
+        expect(result[0].email).toBe("bunny@fun.dev");
         id = result.lastInsertRowid;
       }
 
       {
-        const data = { foo: "hello2", email: "bunny2@bun.com" };
+        const data = { foo: "hello2", email: "bunny2@fun.dev" };
         await sql`
       INSERT INTO ${sql(random_name)} ${sql({ id, ...data })}
       ON DUPLICATE KEY UPDATE ${sql(data)}
@@ -210,11 +210,11 @@ describeWithContainer(
         const result = await sql`SELECT * FROM ${sql(random_name)}`;
         expect(result[0].id).toBeDefined();
         expect(result[0].foo).toBe("hello2");
-        expect(result[0].email).toBe("bunny2@bun.com");
+        expect(result[0].email).toBe("bunny2@fun.dev");
       }
 
       {
-        const data = { foo: "hello3", email: "bunny2@bun.com" };
+        const data = { foo: "hello3", email: "bunny2@fun.dev" };
         await sql`
       INSERT INTO ${sql(random_name)} ${sql({ id, ...data })}
       ON DUPLICATE KEY UPDATE ${sql(data)}
@@ -222,7 +222,7 @@ describeWithContainer(
         const result = await sql`SELECT * FROM ${sql(random_name)}`;
         expect(result[0].id).toBeDefined();
         expect(result[0].foo).toBe("hello3");
-        expect(result[0].email).toBe("bunny2@bun.com");
+        expect(result[0].email).toBe("bunny2@fun.dev");
       }
     });
     test("update helper with IN and column name", async () => {

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("process.stdin should work after pause() and resume()", async () => {
   const script = `
@@ -10,9 +10,9 @@ process.stdin.pause();
 process.stdin.resume();
 `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
@@ -45,9 +45,9 @@ process.stdin.on("end", () => {
 });
 `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",

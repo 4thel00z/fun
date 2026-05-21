@@ -1,14 +1,14 @@
 import micromatch from "micromatch";
 import { bench, run } from "../runner.mjs";
 
-const Glob = typeof Bun !== "undefined" ? Bun.Glob : undefined;
-const doMatch = typeof Bun === "undefined" ? micromatch.isMatch : (a, b) => new Glob(b).match(a);
+const Glob = typeof Fun !== "undefined" ? Fun.Glob : undefined;
+const doMatch = typeof Fun === "undefined" ? micromatch.isMatch : (a, b) => new Glob(b).match(a);
 
-bench((Glob ? "Bun.Glob - " : "micromatch - ") + "**/*.js", () => {
+bench((Glob ? "Fun.Glob - " : "micromatch - ") + "**/*.js", () => {
   doMatch("foo/bar.js", "**/*.js");
 });
 
-bench((Glob ? "Bun.Glob - " : "micromatch - ") + "*.js", () => {
+bench((Glob ? "Fun.Glob - " : "micromatch - ") + "*.js", () => {
   doMatch("bar.js", "*.js");
 });
 

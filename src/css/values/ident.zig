@@ -76,7 +76,7 @@ pub const DashedIdent = struct {
                     return std.array_hash_map.hashString(s.v);
                 }
                 pub fn eql(_: @This(), a: DashedIdent, b: DashedIdent, _: usize) bool {
-                    return bun.strings.eql(a, b);
+                    return fun.strings.eql(a, b);
                 }
             },
             false,
@@ -89,7 +89,7 @@ pub const DashedIdent = struct {
             .result => |vv| vv,
             .err => |e| return .{ .err = e },
         };
-        if (!bun.strings.startsWith(ident, "--")) return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
+        if (!fun.strings.startsWith(ident, "--")) return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
 
         return .{ .result = .{ .v = ident } };
     }
@@ -155,10 +155,10 @@ pub const IdentOrRef = packed struct(u128) {
         ref,
     };
 
-    const DebugIdent = if (bun.Environment.isDebug) struct { []const u8, Allocator } else void;
+    const DebugIdent = if (fun.Environment.isDebug) struct { []const u8, Allocator } else void;
 
     pub fn debugIdent(this: @This()) []const u8 {
-        if (comptime !bun.Environment.isDebug) {
+        if (comptime !fun.Environment.isDebug) {
             @compileError("debugIdent is only available in debug mode");
         }
 
@@ -186,14 +186,14 @@ pub const IdentOrRef = packed struct(u128) {
         };
     }
 
-    pub fn fromRef(ref: bun.bundle_v2.Ref, debug_ident: DebugIdent) @This() {
+    pub fn fromRef(ref: fun.bundle_v2.Ref, debug_ident: DebugIdent) @This() {
         var this = @This(){
             .__len = @bitCast(ref),
             .__ref_bit = true,
         };
 
-        if (comptime bun.Environment.isDebug) {
-            const heap_ptr: *[]const u8 = bun.handleOom(debug_ident[1].create([]const u8));
+        if (comptime fun.Environment.isDebug) {
+            const heap_ptr: *[]const u8 = fun.handleOom(debug_ident[1].create([]const u8));
             heap_ptr.* = debug_ident[0];
             this.__ptrbits = @intCast(@intFromPtr(heap_ptr));
         }
@@ -217,15 +217,15 @@ pub const IdentOrRef = packed struct(u128) {
         return null;
     }
 
-    pub inline fn asRef(this: @This()) ?bun.bundle_v2.Ref {
+    pub inline fn asRef(this: @This()) ?fun.bundle_v2.Ref {
         if (this.__ref_bit) {
-            const out: bun.bundle_v2.Ref = @bitCast(this.__len);
+            const out: fun.bundle_v2.Ref = @bitCast(this.__len);
             return out;
         }
         return null;
     }
 
-    pub fn asStr(this: @This(), map: *const bun.ast.Symbol.Map, local_names: ?*const css.LocalsResultsMap) ?[]const u8 {
+    pub fn asStr(this: @This(), map: *const fun.ast.Symbol.Map, local_names: ?*const css.LocalsResultsMap) ?[]const u8 {
         if (this.isIdent()) return this.asIdent().?.v;
         const ref = this.asRef().?;
         const final_ref = map.follow(ref);
@@ -250,7 +250,7 @@ pub const IdentOrRef = packed struct(u128) {
 
     pub fn eql(this: *const @This(), other: *const @This()) bool {
         if (this.isIdent() and other.isIdent()) {
-            return bun.strings.eql(this.asIdent().?.v, other.asIdent().?.v);
+            return fun.strings.eql(this.asIdent().?.v, other.asIdent().?.v);
         } else if (this.isRef() and other.isRef()) {
             const a = this.asRef().?;
             const b = other.asRef().?;
@@ -275,12 +275,12 @@ pub const CustomIdent = struct {
             .err => |e| return .{ .err = e },
         };
         // css.todo_stuff.match_ignore_ascii_case
-        const valid = !(bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "initial") or
-            bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "inherit") or
-            bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "unset") or
-            bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "default") or
-            bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "revert") or
-            bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "revert-layer"));
+        const valid = !(fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "initial") or
+            fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "inherit") or
+            fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "unset") or
+            fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "default") or
+            fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "revert") or
+            fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "revert-layer"));
 
         if (!valid) return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
         return .{ .result = .{ .v = ident } };
@@ -318,7 +318,7 @@ pub const CustomIdent = struct {
 /// A list of CSS [`<custom-ident>`](https://www.w3.org/TR/css-values-4/#custom-idents) values.
 pub const CustomIdentList = css.SmallList(CustomIdent, 1);
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const Symbol = bun.ast.Symbol;
+const Symbol = fun.ast.Symbol;

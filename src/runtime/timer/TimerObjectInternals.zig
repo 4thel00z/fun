@@ -6,7 +6,7 @@ id: i32 = -1,
 interval: u31 = 0,
 this_value: jsc.JSRef = .empty(),
 flags: Flags = .{},
-/// `bun test --isolate` generation this timer was created in. If it no
+/// `fun test --isolate` generation this timer was created in. If it no
 /// longer matches `vm.test_isolation_generation` at fire time, the timer
 /// is dropped without invoking its callback.
 generation: u32 = 0,
@@ -71,7 +71,7 @@ fn deref(this: *TimerObjectInternals) void {
     }
 }
 
-extern "c" fn Bun__JSTimeout__call(globalObject: *jsc.JSGlobalObject, timer: JSValue, callback: JSValue, arguments: JSValue) bool;
+extern "c" fn Fun__JSTimeout__call(globalObject: *jsc.JSGlobalObject, timer: JSValue, callback: JSValue, arguments: JSValue) bool;
 
 /// returns true if an exception was thrown
 pub fn runImmediateTask(this: *TimerObjectInternals, vm: *VirtualMachine) bool {
@@ -269,9 +269,9 @@ pub fn fire(this: *TimerObjectInternals, _: *const timespec, vm: *jsc.VirtualMac
 }
 
 fn convertToInterval(this: *TimerObjectInternals, global: *JSGlobalObject, timer: JSValue, repeat: JSValue) void {
-    bun.debugAssert(this.flags.kind == .setTimeout);
+    fun.debugAssert(this.flags.kind == .setTimeout);
 
-    const vm = global.bunVM();
+    const vm = global.funVM();
 
     const new_interval: u31 = if (repeat.getNumber()) |num| if (num < 1 or num > std.math.maxInt(u31)) 1 else @intFromFloat(num) else 1;
 
@@ -294,10 +294,10 @@ pub fn run(this: *TimerObjectInternals, globalThis: *jsc.JSGlobalObject, timer: 
         }
     }
 
-    // Bun__JSTimeout__call handles exceptions.
+    // Fun__JSTimeout__call handles exceptions.
     this.flags.in_callback = true;
     defer this.flags.in_callback = false;
-    return Bun__JSTimeout__call(globalThis, timer, callback, arguments);
+    return Fun__JSTimeout__call(globalThis, timer, callback, arguments);
 }
 
 pub fn init(
@@ -310,7 +310,7 @@ pub fn init(
     callback: JSValue,
     arguments: JSValue,
 ) void {
-    const vm = global.bunVM();
+    const vm = global.funVM();
     this.* = .{
         .id = id,
         .flags = .{ .kind = kind, .epoch = vm.timer.epoch },
@@ -467,11 +467,11 @@ pub fn hasRef(this: *TimerObjectInternals) JSValue {
     return JSValue.jsBoolean(this.flags.is_keeping_event_loop_alive);
 }
 
-pub fn toPrimitive(this: *TimerObjectInternals) bun.JSError!JSValue {
+pub fn toPrimitive(this: *TimerObjectInternals) fun.JSError!JSValue {
     if (!this.flags.has_accessed_primitive) {
         this.flags.has_accessed_primitive = true;
         const vm = VirtualMachine.get();
-        try vm.timer.maps.get(this.flags.kind).put(bun.default_allocator, this.id, this.eventLoopTimer());
+        try vm.timer.maps.get(this.flags.kind).put(fun.default_allocator, this.id, this.eventLoopTimer());
     }
     return JSValue.jsNumber(this.id);
 }
@@ -515,7 +515,7 @@ pub fn deinit(this: *TimerObjectInternals) void {
             const allocated_bytes = map.capacity() * @sizeOf(TimeoutMap.Data);
             const used_bytes = map.count() * @sizeOf(TimeoutMap.Data);
             if (allocated_bytes - used_bytes > 256 * 1024) {
-                map.shrinkAndFree(bun.default_allocator, map.count() + 8);
+                map.shrinkAndFree(fun.default_allocator, map.count() + 8);
             }
         }
     }
@@ -530,12 +530,12 @@ pub fn deinit(this: *TimerObjectInternals) void {
 const Debugger = @import("../../jsc/Debugger.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const timespec = bun.timespec;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const timespec = fun.timespec;
 
-const Timer = bun.api.Timer;
+const Timer = fun.api.Timer;
 const EventLoopTimer = Timer.EventLoopTimer;
 const ID = Timer.ID;
 const ImmediateObject = Timer.ImmediateObject;
@@ -543,7 +543,7 @@ const Kind = Timer.Kind;
 const TimeoutMap = Timer.TimeoutMap;
 const TimeoutObject = Timer.TimeoutObject;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VirtualMachine = jsc.VirtualMachine;

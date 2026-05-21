@@ -68,8 +68,8 @@ async function validateWrongSignalParam() {
 
 }
 
-// Bun: patching process.binding('fs') wont have the correct effect.
-// there are tests in Bun that check that `stat()` lying will not
+// Fun: patching process.binding('fs') wont have the correct effect.
+// there are tests in Fun that check that `stat()` lying will not
 // break the readFile() operation
 // async function validateZeroByteLiar() {
 //   const originalFStat = fsBinding.fstat;

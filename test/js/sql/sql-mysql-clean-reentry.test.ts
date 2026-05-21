@@ -9,8 +9,8 @@
 //
 // Uses a minimal mock MySQL server so it can run without Docker.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug, tempDir } from "harness";
 
 // The failure mode is a debug assert in LinearFifo.discard() (and a UAF under
 // ASAN); in release builds the underflow is UB and may not crash, so only run
@@ -21,7 +21,7 @@ test.skipIf(!isDebug && !isASAN)(
     using dir = tempDir("mysql-clean-reentry", {
       "fixture.js": /* js */ `
       const net = require("net");
-      const { SQL } = require("bun");
+      const { SQL } = require("fun");
 
       function u16le(n) { return Buffer.from([n & 0xff, (n >> 8) & 0xff]); }
       function u24le(n) { return Buffer.from([n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff]); }
@@ -126,14 +126,14 @@ test.skipIf(!isDebug && !isASAN)(
     `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "fixture.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "fixture.js"],
       env: {
-        ...bunEnv,
+        ...funEnv,
         // A crash here writes a multi-GB core dump that outlives the default
         // test timeout; the stderr panic trace is the useful signal.
         ASAN_OPTIONS: "allow_user_segv_handler=1:disable_coredump=1",
-        BUN_ENABLE_CRASH_REPORTING: "0",
+        FUN_ENABLE_CRASH_REPORTING: "0",
       },
       cwd: String(dir),
       stdout: "pipe",

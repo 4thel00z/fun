@@ -1,9 +1,9 @@
-import { pathToFileURL } from "bun";
-import { bunEnv, bunExe, isWindows, tempDirWithFiles } from "harness";
+import { pathToFileURL } from "fun";
+import { funEnv, funExe, isWindows, tempDirWithFiles } from "harness";
 import fs from "node:fs";
 import path from "path";
 
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "fun:test";
 // Because macOS (and possibly other operating systems) can return a watcher
 // before it is actually watching, we need to repeat the operation to avoid
 // a race condition.
@@ -132,7 +132,7 @@ describe("fs.watchFile", () => {
       called = true;
     });
     fs.readFileSync(file);
-    await Bun.sleep(100);
+    await Fun.sleep(100);
     fs.unwatchFile(file);
     expect(called).toBe(false);
   });
@@ -200,7 +200,7 @@ describe("fs.watchFile", () => {
     }
   }, 20000);
 
-  // https://github.com/oven-sh/bun/issues/28027
+  // https://github.com/underdoc-org/fun/issues/28027
   // The old code held a jsc.Strong (last_jsvalue) and relied on an indirect
   // chain to keep the JS wrapper alive. finalize() did not clear the Strong,
   // so when the WorkPool scheduler later called deref() -> deinit(),
@@ -241,25 +241,25 @@ describe("fs.watchFile", () => {
       // runs on the JS thread, allocates the Strong (last_jsvalue.set), and
       // appends the watcher to the scheduler queue (ref_count now 2:
       // construction + scheduler). Idle GC may also run during this sleep.
-      await Bun.sleep(100);
+      await Fun.sleep(100);
 
       // On the broken build: finalize() sets closed=true, deref (2->1).
       // Timer fires, workPoolCallback sees closed=true, deref on WorkPool
       // (1->0), deinit() calls last_jsvalue.deinit() on the WorkPool thread.
       // On the fixed build: JSRef initStrong keeps wrappers rooted, none of
       // this runs, the GC calls below are no-ops.
-      Bun.gc(true);
-      await Bun.sleep(200);
-      Bun.gc(true);
-      await Bun.sleep(100);
-      Bun.gc(true);
+      Fun.gc(true);
+      await Fun.sleep(200);
+      Fun.gc(true);
+      await Fun.sleep(100);
+      Fun.gc(true);
 
       console.log("OK");
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", fixture],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", fixture],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

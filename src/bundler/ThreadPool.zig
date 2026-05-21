@@ -7,8 +7,8 @@ pub const ThreadPool = struct {
     io_pool: *ThreadPoolLib,
     worker_pool: *ThreadPoolLib,
     worker_pool_is_owned: bool = false,
-    workers_assignments: std.AutoArrayHashMap(std.Thread.Id, *Worker) = std.AutoArrayHashMap(std.Thread.Id, *Worker).init(bun.default_allocator),
-    workers_assignments_lock: bun.Mutex = .{},
+    workers_assignments: std.AutoArrayHashMap(std.Thread.Id, *Worker) = std.AutoArrayHashMap(std.Thread.Id, *Worker).init(fun.default_allocator),
+    workers_assignments_lock: fun.Mutex = .{},
     v2: *BundleV2,
 
     const debug = Output.scoped(.ThreadPool, .visible);
@@ -16,7 +16,7 @@ pub const ThreadPool = struct {
     const IOThreadPool = struct {
         var thread_pool: ThreadPoolLib = undefined;
         // Protects initialization and deinitialization of the IO thread pool.
-        var mutex = bun.threading.Mutex{};
+        var mutex = fun.threading.Mutex{};
         // 0 means not initialized. 1 means initialized but not used.
         // N > 1 means N-1 `ThreadPool`s are using the IO thread pool.
         var ref_count = std.atomic.Value(usize).init(0);
@@ -43,7 +43,7 @@ pub const ThreadPool = struct {
             // indicate the thread pool is initialized) is guarded by the mutex.
             if (ref_count.load(.monotonic) != 0) return &thread_pool;
             thread_pool = .init(.{
-                .max_threads = @max(@min(bun.getThreadCount(), 4), 2),
+                .max_threads = @max(@min(fun.getThreadCount(), 4), 2),
                 // Use a much smaller stack size for the IO thread pool
                 .stack_size = 512 * 1024,
             });
@@ -54,7 +54,7 @@ pub const ThreadPool = struct {
 
         pub fn release() void {
             const old = ref_count.fetchSub(1, .release);
-            bun.assertf(old > 1, "IOThreadPool: too many calls to release()", .{});
+            fun.assertf(old > 1, "IOThreadPool: too many calls to release()", .{});
         }
 
         pub fn shutdown() bool {
@@ -81,7 +81,7 @@ pub const ThreadPool = struct {
 
     pub fn init(v2: *BundleV2, worker_pool: ?*ThreadPoolLib) !ThreadPool {
         const pool = worker_pool orelse blk: {
-            const cpu_count = bun.getThreadCount();
+            const cpu_count = fun.getThreadCount();
             const pool = try v2.allocator().create(ThreadPoolLib);
             pool.* = .init(.{ .max_threads = cpu_count });
             debug("{d} workers", .{cpu_count});
@@ -118,19 +118,19 @@ pub const ThreadPool = struct {
     }
 
     pub fn usesIOPool() bool {
-        if (bun.feature_flag.BUN_FEATURE_FLAG_FORCE_IO_POOL.get()) {
+        if (fun.feature_flag.FUN_FEATURE_FLAG_FORCE_IO_POOL.get()) {
             // For testing.
             return true;
         }
 
-        if (bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_IO_POOL.get()) {
+        if (fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_IO_POOL.get()) {
             // For testing.
             return false;
         }
 
         if (Environment.isMac or Environment.isWindows) {
             // 4 was the sweet spot on macOS. Didn't check the sweet spot on Windows.
-            return bun.getThreadCount() > 3;
+            return fun.getThreadCount() > 3;
         }
 
         return false;
@@ -148,7 +148,7 @@ pub const ThreadPool = struct {
             parse_task.stage = .{
                 .needs_parse = .{
                     .contents = parse_task.contents_or_fd.contents,
-                    .fd = bun.invalid_fd,
+                    .fd = fun.invalid_fd,
                 },
             };
         }
@@ -187,7 +187,7 @@ pub const ThreadPool = struct {
                 return entry.value_ptr.*;
             }
 
-            worker = bun.default_allocator.create(Worker) catch unreachable;
+            worker = fun.default_allocator.create(Worker) catch unreachable;
             entry.value_ptr.* = worker;
         }
 
@@ -220,7 +220,7 @@ pub const ThreadPool = struct {
 
         deinit_task: ThreadPoolLib.Task = .{ .callback = deinitCallback },
 
-        temporary_arena: bun.ArenaAllocator = undefined,
+        temporary_arena: fun.ArenaAllocator = undefined,
         stmt_list: LinkerContext.StmtList = undefined,
 
         pub fn deinitCallback(task: *ThreadPoolLib.Task) void {
@@ -240,7 +240,7 @@ pub const ThreadPool = struct {
                 this.heap.deinit();
             }
 
-            bun.default_allocator.destroy(this);
+            fun.default_allocator.destroy(this);
         }
 
         pub fn get(ctx: *BundleV2) *Worker {
@@ -278,7 +278,7 @@ pub const ThreadPool = struct {
         }
 
         fn create(this: *Worker, ctx: *BundleV2) void {
-            const trace = bun.perf.trace("Bundler.Worker.create");
+            const trace = fun.perf.trace("Bundler.Worker.create");
             defer trace.end();
 
             this.has_created = true;
@@ -292,12 +292,12 @@ pub const ThreadPool = struct {
             this.ast_memory_allocator.reset();
 
             this.data = WorkerData{
-                .log = bun.handleOom(allocator.create(Logger.Log)),
+                .log = fun.handleOom(allocator.create(Logger.Log)),
                 .transpiler = undefined,
             };
             this.data.log.* = Logger.Log.init(allocator);
             this.ctx = ctx;
-            this.temporary_arena = bun.ArenaAllocator.init(this.allocator);
+            this.temporary_arena = fun.ArenaAllocator.init(this.allocator);
             this.stmt_list = LinkerContext.StmtList.init(this.allocator);
             this.initializeTranspiler(&this.data.transpiler, ctx.transpiler, allocator);
 
@@ -314,7 +314,7 @@ pub const ThreadPool = struct {
             transpiler.resolver.caches = CacheSet.Set.init(allocator);
         }
 
-        pub fn transpilerForTarget(this: *Worker, target: bun.options.Target) *Transpiler {
+        pub fn transpilerForTarget(this: *Worker, target: fun.options.Target) *Transpiler {
             if (target == .browser and this.data.transpiler.options.target != target) {
                 const other_transpiler = if (this.data.other_transpiler) |*other|
                     other
@@ -324,7 +324,7 @@ pub const ThreadPool = struct {
                     this.initializeTranspiler(other, this.ctx.client_transpiler.?, this.allocator);
                     break :blk other;
                 };
-                bun.debugAssert(other_transpiler.options.target == target);
+                fun.debugAssert(other_transpiler.options.target == target);
                 return other_transpiler;
             }
 
@@ -339,26 +339,26 @@ pub const ThreadPool = struct {
     };
 };
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
 const Logger = @import("../logger/logger.zig");
 const linker = @import("./linker.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const Output = bun.Output;
-const ThreadPoolLib = bun.ThreadPool;
-const Transpiler = bun.Transpiler;
-const default_allocator = bun.default_allocator;
-const js_ast = bun.ast;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const Output = fun.Output;
+const ThreadPoolLib = fun.ThreadPool;
+const Transpiler = fun.Transpiler;
+const default_allocator = fun.default_allocator;
+const js_ast = fun.ast;
 
-const allocators = bun.allocators;
-const ThreadLocalArena = bun.allocators.MimallocArena;
+const allocators = fun.allocators;
+const ThreadLocalArena = fun.allocators.MimallocArena;
 
-const BundleV2 = bun.bundle_v2.BundleV2;
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const ParseTask = bun.bundle_v2.ParseTask;
+const BundleV2 = fun.bundle_v2.BundleV2;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const ParseTask = fun.bundle_v2.ParseTask;

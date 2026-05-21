@@ -1,7 +1,7 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import crypto from "crypto";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe, gc, tempDir, tls } from "harness";
+import { funEnv, funExe, gc, tempDir, tls } from "harness";
 import { createServer } from "net";
 import { join } from "path";
 import process from "process";
@@ -10,7 +10,7 @@ const COMMON_CERT = { ...tls };
 
 describe.concurrent("WebSocket", () => {
   it("should connect", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req, server) {
         if (server.upgrade(req)) {
@@ -36,7 +36,7 @@ describe.concurrent("WebSocket", () => {
     });
     ws.close();
     await closed;
-    Bun.gc(true);
+    Fun.gc(true);
   });
 
   it("should connect over https", async () => {
@@ -51,12 +51,12 @@ describe.concurrent("WebSocket", () => {
 
     ws.close();
     await closed;
-    Bun.gc(true);
+    Fun.gc(true);
   });
 
   it("should connect many times over https", async () => {
     {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         tls: COMMON_CERT,
         fetch(req, server) {
@@ -95,17 +95,17 @@ describe.concurrent("WebSocket", () => {
           }
         }
         await Promise.all(batch);
-        Bun.gc(true);
+        Fun.gc(true);
       }
     }
     // test GC after all connections are closed
-    Bun.gc(true);
+    Fun.gc(true);
     // wait to make sure all connections are closed/freed
-    await Bun.sleep(10);
+    await Fun.sleep(10);
   });
 
   it("rejectUnauthorized should reject self-sign certs when true/default", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: COMMON_CERT,
       fetch(req, server) {
@@ -122,7 +122,7 @@ describe.concurrent("WebSocket", () => {
         }, // a message is received
         open(ws) {
           // a socket is opened
-          ws.send("Hello from Bun!");
+          ws.send("Hello from Fun!");
         },
       },
     });
@@ -153,7 +153,7 @@ describe.concurrent("WebSocket", () => {
         const client = new WebSocket(url);
         const { result, messages, errorFired } = await testClient(client);
         expect(errorFired).toBe(true); // Error event should fire
-        expect(["Hello from Bun!", "Hello from client!"]).not.toEqual(messages);
+        expect(["Hello from Fun!", "Hello from client!"]).not.toEqual(messages);
         expect(result.code).toBe(1015);
         expect(result.reason).toBe("TLS handshake failed");
       }
@@ -163,7 +163,7 @@ describe.concurrent("WebSocket", () => {
         const client = new WebSocket(url, { tls: { rejectUnauthorized: true } });
         const { result, messages, errorFired } = await testClient(client);
         expect(errorFired).toBe(true); // Error event should fire
-        expect(["Hello from Bun!", "Hello from client!"]).not.toEqual(messages);
+        expect(["Hello from Fun!", "Hello from client!"]).not.toEqual(messages);
         expect(result.code).toBe(1015);
         expect(result.reason).toBe("TLS handshake failed");
       }
@@ -171,7 +171,7 @@ describe.concurrent("WebSocket", () => {
   });
 
   it("rejectUnauthorized should NOT reject self-sign certs when false", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: COMMON_CERT,
       fetch(req, server) {
@@ -188,7 +188,7 @@ describe.concurrent("WebSocket", () => {
         }, // a message is received
         open(ws) {
           // a socket is opened
-          ws.send("Hello from Bun!");
+          ws.send("Hello from Fun!");
         },
       },
     });
@@ -215,7 +215,7 @@ describe.concurrent("WebSocket", () => {
         // should allow self-signed certs when rejectUnauthorized is false
         const client = new WebSocket(url, { tls: { rejectUnauthorized: false } });
         const { result, messages } = await testClient(client);
-        expect(["Hello from Bun!", "Hello from client!"]).toEqual(messages);
+        expect(["Hello from Fun!", "Hello from client!"]).toEqual(messages);
         expect(result.code).toBe(1000);
       }
     }
@@ -228,7 +228,7 @@ describe.concurrent("WebSocket", () => {
       passphrase: "123123123",
     };
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: UNTRUSTED_CERT,
       fetch(req, server) {
@@ -245,7 +245,7 @@ describe.concurrent("WebSocket", () => {
         }, // a message is received
         open(ws) {
           // a socket is opened
-          ws.send("Hello from Bun!");
+          ws.send("Hello from Fun!");
         },
       },
     });
@@ -275,7 +275,7 @@ describe.concurrent("WebSocket", () => {
         const client = new WebSocket(url);
         const { result, messages, errorFired } = await testClient(client);
         expect(errorFired).toBe(true); // Error event should fire
-        expect(["Hello from Bun!", "Hello from client!"]).not.toEqual(messages);
+        expect(["Hello from Fun!", "Hello from client!"]).not.toEqual(messages);
         expect(result.code).toBe(1015);
         expect(result.reason).toBe("TLS handshake failed");
       }
@@ -283,7 +283,7 @@ describe.concurrent("WebSocket", () => {
   });
 
   it("supports headers", done => {
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 0,
       fetch(req, server) {
         expect(req.headers.get("X-Hello")).toBe("World");
@@ -307,7 +307,7 @@ describe.concurrent("WebSocket", () => {
   });
 
   it("should FAIL to connect over http when the status code is invalid", done => {
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 0,
       fetch(req, server) {
         server.stop();
@@ -333,7 +333,7 @@ describe.concurrent("WebSocket", () => {
   });
 
   it("should connect over http ", done => {
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 0,
       fetch(req, server) {
         server.upgrade(req);
@@ -360,7 +360,7 @@ describe.concurrent("WebSocket", () => {
   });
   describe("nodebuffer", () => {
     it("should support 'nodebuffer' binaryType", done => {
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         fetch(req, server) {
           if (server.upgrade(req)) {
@@ -378,20 +378,20 @@ describe.concurrent("WebSocket", () => {
       const ws = new WebSocket(`http://${server.hostname}:${server.port}`, {});
       ws.binaryType = "nodebuffer";
       expect(ws.binaryType).toBe("nodebuffer");
-      Bun.gc(true);
+      Fun.gc(true);
       ws.onmessage = ({ data }) => {
         ws.close();
         expect(Buffer.isBuffer(data)).toBe(true);
         expect(data).toEqual(new Uint8Array([1, 2, 3]));
         server.stop(true);
-        Bun.gc(true);
+        Fun.gc(true);
         done();
       };
     });
 
     it("should support 'nodebuffer' binaryType when the handler is not immediately provided", done => {
       var client;
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         fetch(req, server) {
           if (server.upgrade(req)) {
@@ -513,7 +513,7 @@ describe.concurrent("WebSocket", () => {
   });
 
   it("should be able to send big messages", async () => {
-    using serve = Bun.serve({
+    using serve = Fun.serve({
       port: 0,
       tls,
       fetch(req, server) {
@@ -600,7 +600,7 @@ describe.concurrent("WebSocket", () => {
       const address = server.address();
       const ws = new WebSocket(`ws://localhost:${address.port}`, {
         headers: {
-          Origin: "https://bun.sh",
+          Origin: "https://fun.dev",
           MyCustomHeader: "Hello, World!",
           Custom_Header_2: "Hello, World!",
           "Custom-Header-3": "Hello, World!",
@@ -640,7 +640,7 @@ describe.concurrent("WebSocket", () => {
 describe.concurrent("websocket in subprocess", () => {
   it.concurrent("should exit", async () => {
     let messageReceived = false;
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req, server) {
         if (server.upgrade(req)) {
@@ -660,12 +660,12 @@ describe.concurrent("websocket in subprocess", () => {
         close(ws) {},
       },
     });
-    await using subprocess = Bun.spawn({
-      cmd: [bunExe(), import.meta.dir + "/websocket-subprocess.ts", `http://${server.hostname}:${server.port}`],
+    await using subprocess = Fun.spawn({
+      cmd: [funExe(), import.meta.dir + "/websocket-subprocess.ts", `http://${server.hostname}:${server.port}`],
       stderr: "inherit",
       stdin: "inherit",
       stdout: "inherit",
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await subprocess.exited).toBe(0);
@@ -678,7 +678,7 @@ describe.concurrent("websocket in subprocess", () => {
   process.nextTick = function (arg) {
     console.log(arg)
   }
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     fetch() { return new Response(); },
     websocket: { message() {} },
@@ -688,9 +688,9 @@ describe.concurrent("websocket in subprocess", () => {
 }`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -700,12 +700,12 @@ describe.concurrent("websocket in subprocess", () => {
   });
 
   it("should exit after killed", async () => {
-    await using subprocess = Bun.spawn({
-      cmd: [bunExe(), import.meta.dir + "/websocket-subprocess.ts", TEST_WEBSOCKET_HOST],
+    await using subprocess = Fun.spawn({
+      cmd: [funExe(), import.meta.dir + "/websocket-subprocess.ts", TEST_WEBSOCKET_HOST],
       stderr: "inherit",
       stdin: "inherit",
       stdout: "inherit",
-      env: bunEnv,
+      env: funEnv,
     });
 
     subprocess.kill();
@@ -716,12 +716,12 @@ describe.concurrent("websocket in subprocess", () => {
   });
 
   it("should exit with invalid url", async () => {
-    await using subprocess = Bun.spawn({
-      cmd: [bunExe(), import.meta.dir + "/websocket-subprocess.ts", "invalid url"],
+    await using subprocess = Fun.spawn({
+      cmd: [funExe(), import.meta.dir + "/websocket-subprocess.ts", "invalid url"],
       stderr: "inherit",
       stdin: "inherit",
       stdout: "inherit",
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await subprocess.exited).toBe(1);
@@ -731,7 +731,7 @@ describe.concurrent("websocket in subprocess", () => {
     let messageReceived = false;
     let start = 0;
     let end = 0;
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req, server) {
         if (server.upgrade(req)) {
@@ -753,12 +753,12 @@ describe.concurrent("websocket in subprocess", () => {
         close(ws) {},
       },
     });
-    await using subprocess = Bun.spawn({
-      cmd: [bunExe(), join(import.meta.dir, "websocket-subprocess.ts"), server.url.href],
+    await using subprocess = Fun.spawn({
+      cmd: [funExe(), join(import.meta.dir, "websocket-subprocess.ts"), server.url.href],
       stderr: "inherit",
       stdin: "inherit",
       stdout: "inherit",
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await subprocess.exited).toBe(0);
@@ -768,7 +768,7 @@ describe.concurrent("websocket in subprocess", () => {
 
   it("should exit after server stop and 0 messages", async () => {
     const { promise, resolve } = Promise.withResolvers();
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 0,
       fetch(req, server) {
         if (server.upgrade(req)) {
@@ -786,12 +786,12 @@ describe.concurrent("websocket in subprocess", () => {
       },
     });
 
-    await using subprocess = Bun.spawn({
-      cmd: [bunExe(), import.meta.dir + "/websocket-subprocess.ts", `http://${server.hostname}:${server.port}`],
+    await using subprocess = Fun.spawn({
+      cmd: [funExe(), import.meta.dir + "/websocket-subprocess.ts", `http://${server.hostname}:${server.port}`],
       stderr: "inherit",
       stdin: "inherit",
       stdout: "inherit",
-      env: bunEnv,
+      env: funEnv,
     });
     await promise;
     server.stop(true);
@@ -811,15 +811,15 @@ it.serial("instances should be finalized when GC'd", async () => {
   let current_websocket_count = 0;
   let initial_websocket_count = 0;
   function getWebSocketCount() {
-    Bun.gc(true);
-    const objectTypeCounts = require("bun:jsc").heapStats().objectTypeCounts || {
+    Fun.gc(true);
+    const objectTypeCounts = require("fun:jsc").heapStats().objectTypeCounts || {
       WebSocket: 0,
     };
     return objectTypeCounts.WebSocket || 0;
   }
 
   async function run() {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req, server) {
         return server.upgrade(req);
@@ -859,7 +859,7 @@ it.serial("instances should be finalized when GC'd", async () => {
   await run();
 
   // wait next tick to run the last time
-  await Bun.sleep(100);
+  await Fun.sleep(100);
   current_websocket_count = getWebSocketCount();
   console.log({ current_websocket_count, initial_websocket_count });
   // expect that current and initial websocket be close to the same (normaly 1 or 2 difference)
@@ -905,11 +905,11 @@ describe("WebSocket tls option does not leak SSLConfig on error paths", () => {
 
     // Warm up so one-off allocations (ICU, resolver caches, JIT) settle.
     for (let i = 0; i < 100; i++) hit();
-    Bun.gc(true);
+    Fun.gc(true);
     const baseline = process.memoryUsage.rss();
 
     for (let i = 0; i < iterations; i++) hit();
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
 
     const growthMiB = (after - baseline) / (1024 * 1024);
@@ -922,9 +922,9 @@ describe("WebSocket tls option does not leak SSLConfig on error paths", () => {
   `;
 
   it("bounded RSS growth across throwing-option and connect-failure paths", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--smol", "-e", fixture],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--smol", "-e", fixture],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

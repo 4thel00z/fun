@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
 test("JSXElement with mismatched closing tags produces a syntax error", async () => {
@@ -9,11 +9,11 @@ test("JSXElement with mismatched closing tags produces a syntax error", async ()
 
   const bakery = fixtures.map(
     fixture =>
-      Bun.spawn({
-        cmd: [bunExe(), fixture],
+      Fun.spawn({
+        cmd: [funExe(), fixture],
         cwd: import.meta.dir,
         stdio: ["inherit", "inherit", "inherit"],
-        env: bunEnv,
+        env: funEnv,
       }).exited,
   );
 

@@ -1,5 +1,5 @@
 "use strict";
-// usage: bun/node main.js <name of test function to run> [JSON array of arguments] [JSON `this` value] [debug]
+// usage: fun/node main.js <name of test function to run> [JSON array of arguments] [JSON `this` value] [debug]
 
 const buildMode = process.argv[5];
 

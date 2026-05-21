@@ -50,7 +50,7 @@ fn onConnClose(qs: *quic.Socket) callconv(.c) void {
         // lsquic fires on_stream_close for every bound stream before
         // on_conn_closed, so anything still here never got a qstream.
         const stream = session.pending.items[0];
-        bun.debugAssert(stream.qstream == null);
+        fun.debugAssert(stream.qstream == null);
         session.retryOrFail(stream, if (session.handshake_done)
             error.ConnectionClosed
         else
@@ -88,7 +88,7 @@ fn onStreamHeaders(s: *quic.Stream) callconv(.c) void {
     const n = s.headerCount();
 
     stream.decoded_headers.clearRetainingCapacity();
-    bun.handleOom(stream.decoded_headers.ensureTotalCapacity(bun.default_allocator, n));
+    fun.handleOom(stream.decoded_headers.ensureTotalCapacity(fun.default_allocator, n));
     var status: u16 = 0;
     var i: c_uint = 0;
     while (i < n) : (i += 1) {
@@ -119,7 +119,7 @@ fn onStreamHeaders(s: *quic.Stream) callconv(.c) void {
 fn onStreamData(s: *quic.Stream, data: [*]const u8, len: c_uint, fin: c_int) callconv(.c) void {
     const stream = s.ext(Stream).* orelse return;
     if (len > 0) {
-        bun.handleOom(stream.body_buffer.appendSlice(bun.default_allocator, data[0..len]));
+        fun.handleOom(stream.body_buffer.appendSlice(fun.default_allocator, data[0..len]));
     }
     stream.session.deliver(stream, fin != 0);
 }
@@ -137,7 +137,7 @@ fn onStreamClose(s: *quic.Stream) callconv(.c) void {
     stream.session.deliver(stream, true);
 }
 
-const log = bun.Output.scoped(.h3_client, .hidden);
+const log = fun.Output.scoped(.h3_client, .hidden);
 
 const ClientContext = @import("./ClientContext.zig");
 const ClientSession = @import("./ClientSession.zig");
@@ -146,6 +146,6 @@ const Stream = @import("./Stream.zig");
 const encode = @import("./encode.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
-const quic = bun.uws.quic;
+const fun = @import("fun");
+const strings = fun.strings;
+const quic = fun.uws.quic;

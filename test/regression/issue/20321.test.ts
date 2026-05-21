@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { spawnSync } from "child_process";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 test("spawnSync should not crash when stdout is set to process.stderr (issue #20321)", () => {
   // Test with process.stderr as stdout
-  const proc1 = spawnSync(bunExe(), ["-e", 'console.log("hello")'], {
+  const proc1 = spawnSync(funExe(), ["-e", 'console.log("hello")'], {
     encoding: "utf-8",
     stdio: ["ignore", process.stderr, "inherit"],
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(proc1.error).toBeUndefined();
@@ -18,10 +18,10 @@ test("spawnSync should not crash when stdout is set to process.stderr (issue #20
 
 test("spawnSync should not crash when stderr is set to process.stdout", () => {
   // Test with process.stdout as stderr
-  const proc2 = spawnSync(bunExe(), ["-e", 'console.log("hello")'], {
+  const proc2 = spawnSync(funExe(), ["-e", 'console.log("hello")'], {
     encoding: "utf-8",
     stdio: ["ignore", "pipe", process.stdout],
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(proc2.error).toBeUndefined();
@@ -33,10 +33,10 @@ test("spawnSync should not crash when stderr is set to process.stdout", () => {
 
 test("spawnSync should handle process.stdin/stdout/stderr in stdio array", () => {
   // Test with all process streams
-  const proc3 = spawnSync(bunExe(), ["-e", 'console.log("test")'], {
+  const proc3 = spawnSync(funExe(), ["-e", 'console.log("test")'], {
     encoding: "utf-8",
     stdio: [process.stdin, process.stdout, process.stderr],
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(proc3.error).toBeUndefined();
@@ -48,10 +48,10 @@ test("spawnSync should handle process.stdin/stdout/stderr in stdio array", () =>
 
 test("spawnSync with mixed stdio options including process streams", () => {
   // Mix of different stdio options
-  const proc4 = spawnSync(bunExe(), ["-e", 'console.log("mixed")'], {
+  const proc4 = spawnSync(funExe(), ["-e", 'console.log("mixed")'], {
     encoding: "utf-8",
     stdio: ["pipe", process.stderr, "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(proc4.error).toBeUndefined();
@@ -64,10 +64,10 @@ test("spawnSync with mixed stdio options including process streams", () => {
 
 test("spawnSync should work with file descriptors directly", () => {
   // Test with raw file descriptors (same as what process.stderr resolves to)
-  const proc5 = spawnSync(bunExe(), ["-e", 'console.log("fd-test")'], {
+  const proc5 = spawnSync(funExe(), ["-e", 'console.log("fd-test")'], {
     encoding: "utf-8",
     stdio: ["ignore", 2, "inherit"], // 2 is stderr fd
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(proc5.error).toBeUndefined();
@@ -81,11 +81,11 @@ test("spawnSync should handle the AWS CDK use case", () => {
     "test.js": `console.log("CDK output");`,
   });
 
-  const proc = spawnSync(bunExe(), ["test.js"], {
+  const proc = spawnSync(funExe(), ["test.js"], {
     encoding: "utf-8",
     stdio: ["ignore", process.stderr, "inherit"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(proc.error).toBeUndefined();

@@ -1141,7 +1141,7 @@ pub fn SkipTypescript(
                 p.lexer.is_log_disabled = true;
                 defer p.lexer.is_log_disabled = old_log_disabled;
                 var backtrack = false;
-                const FnReturnType = bun.meta.ReturnOf(func);
+                const FnReturnType = fun.meta.ReturnOf(func);
                 const result = func(p) catch |err| brk: {
                     switch (err) {
                         error.Backtrack => {
@@ -1187,7 +1187,7 @@ pub fn SkipTypescript(
 
                 defer p.lexer.is_log_disabled = old_log_disabled;
                 var backtrack = false;
-                const FnReturnType = bun.meta.ReturnOf(func);
+                const FnReturnType = fun.meta.ReturnOf(func);
                 const result = @call(.auto, func, args) catch |err| brk: {
                     switch (err) {
                         error.Backtrack => {
@@ -1290,21 +1290,21 @@ pub fn SkipTypescript(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const logger = bun.logger;
+const fun = @import("fun");
+const assert = fun.assert;
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const E = js_ast.E;
 
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const JSXTransformType = js_parser.JSXTransformType;
 const ParseStatementOptions = js_parser.ParseStatementOptions;
 const Ref = js_parser.Ref;

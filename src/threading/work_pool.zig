@@ -4,12 +4,12 @@ pub const Task = ThreadPool.Task;
 pub const WorkPool = struct {
     var pool: ThreadPool = undefined;
 
-    var createOnce = bun.once(
+    var createOnce = fun.once(
         struct {
             pub fn create() void {
                 @branchHint(.cold);
                 pool = ThreadPool.init(.{
-                    .max_threads = bun.getThreadCount(),
+                    .max_threads = fun.getThreadCount(),
                     .stack_size = ThreadPool.default_thread_stack_size,
                 });
             }
@@ -54,5 +54,5 @@ pub const WorkPool = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const ThreadPool = bun.ThreadPool;
+const fun = @import("fun");
+const ThreadPool = fun.ThreadPool;

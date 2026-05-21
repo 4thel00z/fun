@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // Fuzzer found a flaky SIGILL when a RedisClient is constructed, a command
 // throws during argument validation (before any connection attempt), and the
@@ -12,7 +12,7 @@ test.concurrent("RedisClient survives GC after a command throws during argument 
   const src = `
     let threw = 0;
     for (let i = 0; i < 200; i++) {
-      const c = new Bun.RedisClient();
+      const c = new Fun.RedisClient();
       try {
         // BigUint64Array (a constructor function) is not a valid argument,
         // so this throws before send() / connect() is ever called.
@@ -22,15 +22,15 @@ test.concurrent("RedisClient survives GC after a command throws during argument 
       }
     }
     if (threw !== 200) throw new Error("expected zrangebylex to throw on every call, got " + threw);
-    Bun.gc(true);
+    Fun.gc(true);
     await 1;
-    Bun.gc(true);
+    Fun.gc(true);
     console.log("OK");
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", src],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", src],
+    env: funEnv,
     stdout: "pipe",
     stderr: "inherit",
   });
@@ -45,17 +45,17 @@ test.concurrent("RedisClient survives GC after a command throws during argument 
 test.concurrent("RedisClient survives GC across many short-lived instances", async () => {
   const src = `
     for (let i = 0; i < 1000; i++) {
-      new Bun.RedisClient();
+      new Fun.RedisClient();
     }
-    Bun.gc(true);
+    Fun.gc(true);
     await 1;
-    Bun.gc(true);
+    Fun.gc(true);
     console.log("OK");
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", src],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", src],
+    env: funEnv,
     stdout: "pipe",
     stderr: "inherit",
   });

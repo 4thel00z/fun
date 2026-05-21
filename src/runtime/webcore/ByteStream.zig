@@ -1,7 +1,7 @@
 const ByteStream = @This();
 
 buffer: std.array_list.Managed(u8) = .{
-    .allocator = bun.default_allocator,
+    .allocator = fun.default_allocator,
     .items = &.{},
     .capacity = 0,
 },
@@ -44,7 +44,7 @@ pub fn onStart(this: *@This()) streams.Start {
 
     if (this.has_received_last_chunk) {
         var buffer = this.buffer.moveToUnmanaged();
-        return .{ .owned_and_done = bun.ByteList.moveFromList(&buffer) };
+        return .{ .owned_and_done = fun.ByteList.moveFromList(&buffer) };
     }
 
     if (this.highWaterMark == 0) {
@@ -80,7 +80,7 @@ pub fn onData(
     this: *@This(),
     stream: streams.Result,
     allocator: std.mem.Allocator,
-) bun.JSTerminated!void {
+) fun.JSTerminated!void {
     jsc.markBinding(@src());
     if (this.done) {
         if (stream.isDone() and (stream == .owned or stream == .owned_and_done)) {
@@ -94,7 +94,7 @@ pub fn onData(
         return;
     }
 
-    bun.assert(!this.has_received_last_chunk or stream == .err);
+    fun.assert(!this.has_received_last_chunk or stream == .err);
     this.has_received_last_chunk = stream.isDone();
 
     if (this.pipe.ctx) |ctx| {
@@ -133,7 +133,7 @@ pub fn onData(
             if (this.buffer.capacity == 0 and stream == .owned_and_done) {
                 log("ByteStream.onData owned_and_done and action.fulfill()", .{});
 
-                this.buffer = std.array_list.Managed(u8).fromOwnedSlice(bun.default_allocator, @constCast(chunk));
+                this.buffer = std.array_list.Managed(u8).fromOwnedSlice(fun.default_allocator, @constCast(chunk));
                 var blob = this.toAnyBlob().?;
                 try action.fulfill(this.parent().globalThis, &blob);
                 return;
@@ -145,12 +145,12 @@ pub fn onData(
             }
             log("ByteStream.onData appendSlice and action.fulfill()", .{});
 
-            bun.handleOom(this.buffer.appendSlice(chunk));
+            fun.handleOom(this.buffer.appendSlice(chunk));
             var blob = this.toAnyBlob().?;
             try action.fulfill(this.parent().globalThis, &blob);
             return;
         } else {
-            bun.handleOom(this.buffer.appendSlice(chunk));
+            fun.handleOom(this.buffer.appendSlice(chunk));
 
             if (stream == .owned_and_done or stream == .owned) {
                 allocator.free(stream.slice());
@@ -161,10 +161,10 @@ pub fn onData(
     }
 
     if (this.pending.state == .pending) {
-        bun.assert(this.buffer.items.len == 0);
+        fun.assert(this.buffer.items.len == 0);
         const to_copy = this.pending_buffer[0..@min(chunk.len, this.pending_buffer.len)];
         const pending_buffer_len = this.pending_buffer.len;
-        bun.assert(to_copy.ptr != chunk.ptr);
+        fun.assert(to_copy.ptr != chunk.ptr);
         @memcpy(to_copy, chunk[0..to_copy.len]);
         this.pending_buffer = &.{};
 
@@ -237,7 +237,7 @@ pub fn append(
                 this.offset += offset;
             },
             .temporary_and_done, .temporary => {
-                this.buffer = try std.array_list.Managed(u8).initCapacity(bun.default_allocator, chunk.len);
+                this.buffer = try std.array_list.Managed(u8).initCapacity(fun.default_allocator, chunk.len);
                 this.buffer.appendSliceAssumeCapacity(chunk);
             },
             .err => {
@@ -283,11 +283,11 @@ pub fn parent(this: *@This()) *Source {
 
 pub fn onPull(this: *@This(), buffer: []u8, view: jsc.JSValue) streams.Result {
     jsc.markBinding(@src());
-    bun.assert(buffer.len > 0);
-    bun.debugAssert(this.buffer_action == null);
+    fun.assert(buffer.len > 0);
+    fun.debugAssert(this.buffer_action == null);
 
     if (this.buffer.items.len > 0) {
-        bun.assert(this.value() == .zero);
+        fun.assert(this.value() == .zero);
         const to_write = @min(
             this.buffer.items.len - this.offset,
             buffer.len,
@@ -387,9 +387,9 @@ pub fn deinit(this: *@This()) void {
     this.parent().deinit();
 }
 
-pub fn drain(this: *@This()) bun.ByteList {
+pub fn drain(this: *@This()) fun.ByteList {
     if (this.buffer.items.len > 0) {
-        return bun.ByteList.moveFromList(&this.buffer);
+        return fun.ByteList.moveFromList(&this.buffer);
     }
     return .{};
 }
@@ -398,7 +398,7 @@ pub fn toAnyBlob(this: *@This()) ?Blob.Any {
     if (this.has_received_last_chunk) {
         const buffer = this.buffer;
         this.buffer = .{
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
             .items = &.{},
             .capacity = 0,
         };
@@ -415,7 +415,7 @@ pub fn toAnyBlob(this: *@This()) ?Blob.Any {
     return null;
 }
 
-pub fn toBufferedValue(this: *@This(), globalThis: *jsc.JSGlobalObject, action: streams.BufferAction.Tag) bun.JSError!jsc.JSValue {
+pub fn toBufferedValue(this: *@This(), globalThis: *jsc.JSGlobalObject, action: streams.BufferAction.Tag) fun.JSError!jsc.JSValue {
     if (this.buffer_action != null) {
         return globalThis.throw("Cannot buffer value twice", .{});
     }
@@ -446,13 +446,13 @@ pub fn toBufferedValue(this: *@This(), globalThis: *jsc.JSGlobalObject, action: 
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Output = bun.Output;
+const fun = @import("fun");
+const Output = fun.Output;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 
-const webcore = bun.webcore;
+const webcore = fun.webcore;
 const Blob = webcore.Blob;
 const Pipe = webcore.Pipe;
 

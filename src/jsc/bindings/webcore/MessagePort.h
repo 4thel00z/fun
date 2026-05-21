@@ -36,7 +36,7 @@
 // reverts src/ to origin/main (leaving MessagePortPipe.{h,cpp} behind as new
 // untracked files), the pipe's translation unit compiles to nothing instead
 // of referencing symbols that only exist on this branch's MessagePort.
-#define BUN_MESSAGEPORT_USES_PIPE 1
+#define FUN_MESSAGEPORT_USES_PIPE 1
 
 #include "ContextDestructionObserver.h"
 #include "EventTarget.h"

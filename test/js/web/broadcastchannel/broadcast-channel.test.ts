@@ -34,7 +34,7 @@ test("broadcast channel properties", () => {
 test("broadcast channel worker wait", done => {
   var worker = new Worker(new URL("broadcast-channel-worker-simple.ts", import.meta.url).href);
   worker.ref();
-  Bun.sleepSync(500);
+  Fun.sleepSync(500);
   var bc = new BroadcastChannel("sleep");
   bc.onmessage = (e: MessageEvent) => {
     expect(e.data).toBe("done!");

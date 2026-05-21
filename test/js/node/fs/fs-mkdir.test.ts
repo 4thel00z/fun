@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "fun:test";
 import { tmpdirSync } from "harness";
 import fs from "node:fs";
 import path from "node:path";
@@ -12,7 +12,7 @@ function nextdir() {
 function getTmpDir() {
   const tempDir = path.join(
     tmpdirSync("mkdir-test"),
-    `bun-fs-mkdir-test-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    `fun-fs-mkdir-test-${Date.now()}-${Math.random().toString(16).slice(2)}`,
   );
 
   // Create the temp dir if it doesn't exist

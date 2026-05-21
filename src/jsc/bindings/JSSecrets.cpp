@@ -15,7 +15,7 @@
 #include <mutex>
 #include "ObjectBindings.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WTF;
@@ -125,13 +125,13 @@ struct SecretsJobOptions {
 
         const auto fromOptionsObject = [&]() -> bool {
             if (args.size() < 1) {
-                Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected options to be an object"_s);
+                Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected options to be an object"_s);
                 return false;
             }
 
             JSObject* options = args.at(0).getObject();
             if (!options) {
-                Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected options to be an object"_s);
+                Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected options to be an object"_s);
                 return false;
             }
 
@@ -142,7 +142,7 @@ struct SecretsJobOptions {
             RETURN_IF_EXCEPTION(scope, false);
 
             if (!serviceValue.isString() || !nameValue.isString()) {
-                Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected service and name to be strings"_s);
+                Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected service and name to be strings"_s);
                 return false;
             }
 
@@ -154,10 +154,10 @@ struct SecretsJobOptions {
                     password = passwordValue.toWTFString(globalObject);
                     RETURN_IF_EXCEPTION(scope, false);
                 } else if (passwordValue.isUndefined() || passwordValue.isNull()) {
-                    Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected 'value' to be a string. To delete the secret, call secrets.delete instead."_s);
+                    Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected 'value' to be a string. To delete the secret, call secrets.delete instead."_s);
                     return false;
                 } else {
-                    Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected 'value' to be a string"_s);
+                    Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected 'value' to be a string"_s);
                     return false;
                 }
 
@@ -226,7 +226,7 @@ struct SecretsJobOptions {
         scope.assertNoException();
 
         if (service.isEmpty() || name.isEmpty()) {
-            Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected service and name to not be empty"_s);
+            Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "Expected service and name to not be empty"_s);
             RELEASE_AND_RETURN(scope, nullptr);
         }
 
@@ -238,7 +238,7 @@ struct SecretsJobOptions {
 extern "C" {
 
 // Runs on the threadpool - does the actual platform API work
-void Bun__SecretsJobOptions__runTask(SecretsJobOptions* opts, JSGlobalObject* global)
+void Fun__SecretsJobOptions__runTask(SecretsJobOptions* opts, JSGlobalObject* global)
 {
     // Already have CString fields, pass them directly to platform APIs
     switch (opts->op) {
@@ -262,7 +262,7 @@ void Bun__SecretsJobOptions__runTask(SecretsJobOptions* opts, JSGlobalObject* gl
 }
 
 // Runs on the main thread after threadpool completes - resolves the promise
-void Bun__SecretsJobOptions__runFromJS(SecretsJobOptions* opts, JSGlobalObject* global, EncodedJSValue promiseValue)
+void Fun__SecretsJobOptions__runFromJS(SecretsJobOptions* opts, JSGlobalObject* global, EncodedJSValue promiseValue)
 {
     auto& vm = global->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -310,13 +310,13 @@ void Bun__SecretsJobOptions__runFromJS(SecretsJobOptions* opts, JSGlobalObject* 
     }
 }
 
-void Bun__SecretsJobOptions__deinit(SecretsJobOptions* opts)
+void Fun__SecretsJobOptions__deinit(SecretsJobOptions* opts)
 {
     delete opts;
 }
 
 // Zig binding exports
-void Bun__Secrets__scheduleJob(JSGlobalObject* global, SecretsJobOptions* opts, EncodedJSValue promise);
+void Fun__Secrets__scheduleJob(JSGlobalObject* global, SecretsJobOptions* opts, EncodedJSValue promise);
 
 } // extern "C"
 
@@ -326,7 +326,7 @@ JSC_DEFINE_HOST_FUNCTION(secretsGet, (JSGlobalObject * globalObject, CallFrame* 
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     if (callFrame->argumentCount() < 1) {
-        Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "secrets.get requires an options object"_s);
+        Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "secrets.get requires an options object"_s);
         return JSValue::encode(jsUndefined());
     }
 
@@ -335,7 +335,7 @@ JSC_DEFINE_HOST_FUNCTION(secretsGet, (JSGlobalObject * globalObject, CallFrame* 
     ASSERT(options);
 
     JSPromise* promise = JSPromise::create(vm, globalObject->promiseStructure());
-    Bun__Secrets__scheduleJob(globalObject, options, JSValue::encode(promise));
+    Fun__Secrets__scheduleJob(globalObject, options, JSValue::encode(promise));
 
     return JSValue::encode(promise);
 }
@@ -350,7 +350,7 @@ JSC_DEFINE_HOST_FUNCTION(secretsSet, (JSGlobalObject * globalObject, CallFrame* 
     ASSERT(options);
 
     JSPromise* promise = JSPromise::create(vm, globalObject->promiseStructure());
-    Bun__Secrets__scheduleJob(globalObject, options, JSValue::encode(promise));
+    Fun__Secrets__scheduleJob(globalObject, options, JSValue::encode(promise));
 
     return JSValue::encode(promise);
 }
@@ -361,7 +361,7 @@ JSC_DEFINE_HOST_FUNCTION(secretsDelete, (JSGlobalObject * globalObject, CallFram
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     if (callFrame->argumentCount() < 1) {
-        Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "secrets.delete requires an options object"_s);
+        Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "secrets.delete requires an options object"_s);
         return JSValue::encode(jsUndefined());
     }
 
@@ -370,7 +370,7 @@ JSC_DEFINE_HOST_FUNCTION(secretsDelete, (JSGlobalObject * globalObject, CallFram
     ASSERT(options);
 
     JSPromise* promise = JSPromise::create(vm, globalObject->promiseStructure());
-    Bun__Secrets__scheduleJob(globalObject, options, JSValue::encode(promise));
+    Fun__Secrets__scheduleJob(globalObject, options, JSValue::encode(promise));
 
     return JSValue::encode(promise);
 }
@@ -394,4 +394,4 @@ JSObject* createSecretsObject(VM& vm, JSGlobalObject* globalObject)
     return object;
 }
 
-} // namespace Bun
+} // namespace Fun

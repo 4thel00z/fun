@@ -61,12 +61,12 @@ pub const FetchTasklet = struct {
 
     pub fn ref(this: *FetchTasklet) void {
         const count = this.ref_count.fetchAdd(1, .monotonic);
-        bun.debugAssert(count > 0);
+        fun.debugAssert(count > 0);
     }
 
     pub fn deref(this: *FetchTasklet) void {
         const count = this.ref_count.fetchSub(1, .monotonic);
-        bun.debugAssert(count > 0);
+        fun.debugAssert(count > 0);
 
         if (count == 1) {
             this.deinit() catch |err| switch (err) {};
@@ -75,7 +75,7 @@ pub const FetchTasklet = struct {
 
     pub fn derefFromThread(this: *FetchTasklet) void {
         const count = this.ref_count.fetchSub(1, .monotonic);
-        bun.debugAssert(count > 0);
+        fun.debugAssert(count > 0);
 
         if (count == 1) {
             if (this.javascript_vm.isShuttingDown()) {
@@ -125,7 +125,7 @@ pub const FetchTasklet = struct {
             }
         }
 
-        pub fn fromJS(globalThis: *JSGlobalObject, value: JSValue) bun.JSError!HTTPRequestBody {
+        pub fn fromJS(globalThis: *JSGlobalObject, value: JSValue) fun.JSError!HTTPRequestBody {
             var body_value = try Body.Value.fromJS(globalThis, value);
             if (body_value == .Used or (body_value == .Locked and (body_value.Locked.action != .none or body_value.Locked.isDisturbed2(globalThis)))) {
                 return globalThis.ERR(.BODY_ALREADY_USED, "body already used", .{}).throw();
@@ -198,7 +198,7 @@ pub const FetchTasklet = struct {
 
     fn clearData(this: *FetchTasklet) void {
         log("clearData ", .{});
-        const allocator = bun.default_allocator;
+        const allocator = fun.default_allocator;
         if (this.url_proxy_buffer.len > 0) {
             allocator.free(this.url_proxy_buffer);
             this.url_proxy_buffer.len = 0;
@@ -210,7 +210,7 @@ pub const FetchTasklet = struct {
         }
 
         if (this.result.certificate_info) |*certificate| {
-            certificate.deinit(bun.default_allocator);
+            certificate.deinit(fun.default_allocator);
             this.result.certificate_info = null;
         }
 
@@ -252,15 +252,15 @@ pub const FetchTasklet = struct {
         this.clearSink();
     }
 
-    // XXX: 'fn (*FetchTasklet) error{}!void' coerces to 'fn (*FetchTasklet) bun.JSError!void' but 'fn (*FetchTasklet) void' does not
+    // XXX: 'fn (*FetchTasklet) error{}!void' coerces to 'fn (*FetchTasklet) fun.JSError!void' but 'fn (*FetchTasklet) void' does not
     pub fn deinit(this: *FetchTasklet) error{}!void {
         log("deinit", .{});
 
-        bun.assert(this.ref_count.load(.monotonic) == 0);
+        fun.assert(this.ref_count.load(.monotonic) == 0);
 
         this.clearData();
 
-        const allocator = bun.default_allocator;
+        const allocator = fun.default_allocator;
 
         if (this.http) |http_| {
             this.http = null;
@@ -287,7 +287,7 @@ pub const FetchTasklet = struct {
 
     pub fn startRequestStream(this: *FetchTasklet) void {
         this.is_waiting_request_stream_start = false;
-        bun.assert(this.request_body == .ReadableStream);
+        fun.assert(this.request_body == .ReadableStream);
         if (this.request_body.ReadableStream.get(this.global_this)) |stream| {
             if (this.signal) |signal| {
                 if (signal.aborted()) {
@@ -304,7 +304,7 @@ pub const FetchTasklet = struct {
         }
     }
 
-    pub fn onBodyReceived(this: *FetchTasklet) bun.JSTerminated!void {
+    pub fn onBodyReceived(this: *FetchTasklet) fun.JSTerminated!void {
         const success = this.result.isSuccess();
         const globalThis = this.global_this;
         // reset the buffer if we are streaming or if we are not waiting for bufferig anymore
@@ -330,7 +330,7 @@ pub const FetchTasklet = struct {
                         .{
                             .err = .{ .JSValue = js_err },
                         },
-                        bun.default_allocator,
+                        fun.default_allocator,
                     );
                 }
             }
@@ -363,9 +363,9 @@ pub const FetchTasklet = struct {
                 if (this.result.has_more) {
                     try readable.ptr.Bytes.onData(
                         .{
-                            .temporary = bun.ByteList.fromBorrowedSliceDangerous(chunk),
+                            .temporary = fun.ByteList.fromBorrowedSliceDangerous(chunk),
                         },
-                        bun.default_allocator,
+                        fun.default_allocator,
                     );
                 } else {
                     this.clearStreamCancelHandler();
@@ -376,9 +376,9 @@ pub const FetchTasklet = struct {
 
                     try readable.ptr.Bytes.onData(
                         .{
-                            .temporary_and_done = bun.ByteList.fromBorrowedSliceDangerous(chunk),
+                            .temporary_and_done = fun.ByteList.fromBorrowedSliceDangerous(chunk),
                         },
-                        bun.default_allocator,
+                        fun.default_allocator,
                     );
                 }
                 return;
@@ -399,18 +399,18 @@ pub const FetchTasklet = struct {
                     if (this.result.has_more) {
                         try readable.ptr.Bytes.onData(
                             .{
-                                .temporary = bun.ByteList.fromBorrowedSliceDangerous(chunk),
+                                .temporary = fun.ByteList.fromBorrowedSliceDangerous(chunk),
                             },
-                            bun.default_allocator,
+                            fun.default_allocator,
                         );
                     } else {
                         readable.value.ensureStillAlive();
                         response.detachReadableStream(globalThis);
                         try readable.ptr.Bytes.onData(
                             .{
-                                .temporary_and_done = bun.ByteList.fromBorrowedSliceDangerous(chunk),
+                                .temporary_and_done = fun.ByteList.fromBorrowedSliceDangerous(chunk),
                             },
-                            bun.default_allocator,
+                            fun.default_allocator,
                         );
                     }
 
@@ -427,14 +427,14 @@ pub const FetchTasklet = struct {
                 var old = body.*;
                 const body_value = Body.Value{
                     .InternalBlob = .{
-                        .bytes = scheduled_response_buffer.toManaged(bun.default_allocator),
+                        .bytes = scheduled_response_buffer.toManaged(fun.default_allocator),
                     },
                 };
                 body.* = body_value;
                 log("onBodyReceived body_value length={}", .{body_value.InternalBlob.bytes.items.len});
 
                 this.scheduled_response_buffer = .{
-                    .allocator = bun.default_allocator,
+                    .allocator = fun.default_allocator,
                     .list = .{
                         .items = &.{},
                         .capacity = 0,
@@ -449,7 +449,7 @@ pub const FetchTasklet = struct {
         }
     }
 
-    pub fn onProgressUpdate(this: *FetchTasklet) bun.JSTerminated!void {
+    pub fn onProgressUpdate(this: *FetchTasklet) fun.JSTerminated!void {
         jsc.markBinding(@src());
         log("onProgressUpdate", .{});
         this.mutex.lock();
@@ -533,7 +533,7 @@ pub const FetchTasklet = struct {
 
         if (this.result.certificate_info) |certificate_info| {
             this.result.certificate_info = null;
-            defer certificate_info.deinit(bun.default_allocator);
+            defer certificate_info.deinit(fun.default_allocator);
 
             // we receive some error
             if (this.reject_unauthorized and !this.checkServerIdentity(certificate_info)) {
@@ -592,9 +592,9 @@ pub const FetchTasklet = struct {
             globalObject: *jsc.JSGlobalObject,
             task: jsc.AnyTask,
 
-            pub fn resolve(self: *@This()) bun.JSTerminated!void {
+            pub fn resolve(self: *@This()) fun.JSTerminated!void {
                 // cleanup
-                defer bun.default_allocator.destroy(self);
+                defer fun.default_allocator.destroy(self);
                 defer self.held.deinit();
                 defer self.promise.deinit();
                 // resolve the promise
@@ -604,9 +604,9 @@ pub const FetchTasklet = struct {
                 try prom.resolve(self.globalObject, res);
             }
 
-            pub fn reject(self: *@This()) bun.JSTerminated!void {
+            pub fn reject(self: *@This()) fun.JSTerminated!void {
                 // cleanup
-                defer bun.default_allocator.destroy(self);
+                defer fun.default_allocator.destroy(self);
                 defer self.held.deinit();
                 defer self.promise.deinit();
 
@@ -617,7 +617,7 @@ pub const FetchTasklet = struct {
                 try prom.rejectWithAsyncStack(self.globalObject, res);
             }
         };
-        var holder = bun.handleOom(bun.default_allocator.create(Holder));
+        var holder = fun.handleOom(fun.default_allocator.create(Holder));
         holder.* = .{
             .held = result,
             // we need the promise to be alive until the task is done
@@ -660,7 +660,7 @@ pub const FetchTasklet = struct {
                         this.result.fail = error.ERR_TLS_CERT_ALTNAME_INVALID;
                         return false;
                     };
-                    var hostname: bun.String = bun.String.cloneUTF8(certificate_info.hostname);
+                    var hostname: fun.String = fun.String.cloneUTF8(certificate_info.hostname);
                     defer hostname.deref();
                     const js_hostname = hostname.toJS(globalObject) catch |err| {
                         switch (err) {
@@ -738,7 +738,7 @@ pub const FetchTasklet = struct {
     }
 
     pub fn onReject(this: *FetchTasklet) Body.Value.ValueError {
-        bun.assert(this.result.fail != null);
+        fun.assert(this.result.fail != null);
         log("onReject", .{});
 
         if (this.getAbortError()) |err| {
@@ -754,102 +754,102 @@ pub const FetchTasklet = struct {
         // SystemError below is still a plain Error for backwards compat.
         switch (this.result.fail.?) {
             error.RequestBodyNotReusable => return .{
-                .TypeError = bun.String.static("Request body is a ReadableStream and cannot be replayed for this redirect"),
+                .TypeError = fun.String.static("Request body is a ReadableStream and cannot be replayed for this redirect"),
             },
             else => {},
         }
 
         // some times we don't have metadata so we also check http.url
         const path = if (this.metadata) |metadata|
-            bun.String.cloneUTF8(metadata.url)
+            fun.String.cloneUTF8(metadata.url)
         else if (this.http) |http_|
-            bun.String.cloneUTF8(http_.url.href)
+            fun.String.cloneUTF8(http_.url.href)
         else
-            bun.String.empty;
+            fun.String.empty;
 
         const fetch_error = jsc.SystemError{
-            .code = bun.String.static(switch (this.result.fail.?) {
+            .code = fun.String.static(switch (this.result.fail.?) {
                 error.ConnectionClosed => "ECONNRESET",
                 else => |e| @errorName(e),
             }),
             .message = switch (this.result.fail.?) {
-                error.ConnectionClosed => bun.String.static("The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()"),
-                error.FailedToOpenSocket => bun.String.static("Was there a typo in the url or port?"),
-                error.TooManyRedirects => bun.String.static("The response redirected too many times. For more information, pass `verbose: true` in the second argument to fetch()"),
-                error.ConnectionRefused => bun.String.static("Unable to connect. Is the computer able to access the url?"),
-                error.RedirectURLInvalid => bun.String.static("Redirect URL in Location header is invalid."),
+                error.ConnectionClosed => fun.String.static("The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()"),
+                error.FailedToOpenSocket => fun.String.static("Was there a typo in the url or port?"),
+                error.TooManyRedirects => fun.String.static("The response redirected too many times. For more information, pass `verbose: true` in the second argument to fetch()"),
+                error.ConnectionRefused => fun.String.static("Unable to connect. Is the computer able to access the url?"),
+                error.RedirectURLInvalid => fun.String.static("Redirect URL in Location header is invalid."),
 
-                error.UNABLE_TO_GET_ISSUER_CERT => bun.String.static("unable to get issuer certificate"),
-                error.UNABLE_TO_GET_CRL => bun.String.static("unable to get certificate CRL"),
-                error.UNABLE_TO_DECRYPT_CERT_SIGNATURE => bun.String.static("unable to decrypt certificate's signature"),
-                error.UNABLE_TO_DECRYPT_CRL_SIGNATURE => bun.String.static("unable to decrypt CRL's signature"),
-                error.UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY => bun.String.static("unable to decode issuer public key"),
-                error.CERT_SIGNATURE_FAILURE => bun.String.static("certificate signature failure"),
-                error.CRL_SIGNATURE_FAILURE => bun.String.static("CRL signature failure"),
-                error.CERT_NOT_YET_VALID => bun.String.static("certificate is not yet valid"),
-                error.CRL_NOT_YET_VALID => bun.String.static("CRL is not yet valid"),
-                error.CERT_HAS_EXPIRED => bun.String.static("certificate has expired"),
-                error.CRL_HAS_EXPIRED => bun.String.static("CRL has expired"),
-                error.ERROR_IN_CERT_NOT_BEFORE_FIELD => bun.String.static("format error in certificate's notBefore field"),
-                error.ERROR_IN_CERT_NOT_AFTER_FIELD => bun.String.static("format error in certificate's notAfter field"),
-                error.ERROR_IN_CRL_LAST_UPDATE_FIELD => bun.String.static("format error in CRL's lastUpdate field"),
-                error.ERROR_IN_CRL_NEXT_UPDATE_FIELD => bun.String.static("format error in CRL's nextUpdate field"),
-                error.OUT_OF_MEM => bun.String.static("out of memory"),
-                error.DEPTH_ZERO_SELF_SIGNED_CERT => bun.String.static("self signed certificate"),
-                error.SELF_SIGNED_CERT_IN_CHAIN => bun.String.static("self signed certificate in certificate chain"),
-                error.UNABLE_TO_GET_ISSUER_CERT_LOCALLY => bun.String.static("unable to get local issuer certificate"),
-                error.UNABLE_TO_VERIFY_LEAF_SIGNATURE => bun.String.static("unable to verify the first certificate"),
-                error.CERT_CHAIN_TOO_LONG => bun.String.static("certificate chain too long"),
-                error.CERT_REVOKED => bun.String.static("certificate revoked"),
-                error.INVALID_CA => bun.String.static("invalid CA certificate"),
-                error.INVALID_NON_CA => bun.String.static("invalid non-CA certificate (has CA markings)"),
-                error.PATH_LENGTH_EXCEEDED => bun.String.static("path length constraint exceeded"),
-                error.PROXY_PATH_LENGTH_EXCEEDED => bun.String.static("proxy path length constraint exceeded"),
-                error.PROXY_CERTIFICATES_NOT_ALLOWED => bun.String.static("proxy certificates not allowed, please set the appropriate flag"),
-                error.INVALID_PURPOSE => bun.String.static("unsupported certificate purpose"),
-                error.CERT_UNTRUSTED => bun.String.static("certificate not trusted"),
-                error.CERT_REJECTED => bun.String.static("certificate rejected"),
-                error.APPLICATION_VERIFICATION => bun.String.static("application verification failure"),
-                error.SUBJECT_ISSUER_MISMATCH => bun.String.static("subject issuer mismatch"),
-                error.AKID_SKID_MISMATCH => bun.String.static("authority and subject key identifier mismatch"),
-                error.AKID_ISSUER_SERIAL_MISMATCH => bun.String.static("authority and issuer serial number mismatch"),
-                error.KEYUSAGE_NO_CERTSIGN => bun.String.static("key usage does not include certificate signing"),
-                error.UNABLE_TO_GET_CRL_ISSUER => bun.String.static("unable to get CRL issuer certificate"),
-                error.UNHANDLED_CRITICAL_EXTENSION => bun.String.static("unhandled critical extension"),
-                error.KEYUSAGE_NO_CRL_SIGN => bun.String.static("key usage does not include CRL signing"),
-                error.KEYUSAGE_NO_DIGITAL_SIGNATURE => bun.String.static("key usage does not include digital signature"),
-                error.UNHANDLED_CRITICAL_CRL_EXTENSION => bun.String.static("unhandled critical CRL extension"),
-                error.INVALID_EXTENSION => bun.String.static("invalid or inconsistent certificate extension"),
-                error.INVALID_POLICY_EXTENSION => bun.String.static("invalid or inconsistent certificate policy extension"),
-                error.NO_EXPLICIT_POLICY => bun.String.static("no explicit policy"),
-                error.DIFFERENT_CRL_SCOPE => bun.String.static("Different CRL scope"),
-                error.UNSUPPORTED_EXTENSION_FEATURE => bun.String.static("Unsupported extension feature"),
-                error.UNNESTED_RESOURCE => bun.String.static("RFC 3779 resource not subset of parent's resources"),
-                error.PERMITTED_VIOLATION => bun.String.static("permitted subtree violation"),
-                error.EXCLUDED_VIOLATION => bun.String.static("excluded subtree violation"),
-                error.SUBTREE_MINMAX => bun.String.static("name constraints minimum and maximum not supported"),
-                error.UNSUPPORTED_CONSTRAINT_TYPE => bun.String.static("unsupported name constraint type"),
-                error.UNSUPPORTED_CONSTRAINT_SYNTAX => bun.String.static("unsupported or invalid name constraint syntax"),
-                error.UNSUPPORTED_NAME_SYNTAX => bun.String.static("unsupported or invalid name syntax"),
-                error.CRL_PATH_VALIDATION_ERROR => bun.String.static("CRL path validation error"),
-                error.SUITE_B_INVALID_VERSION => bun.String.static("Suite B: certificate version invalid"),
-                error.SUITE_B_INVALID_ALGORITHM => bun.String.static("Suite B: invalid public key algorithm"),
-                error.SUITE_B_INVALID_CURVE => bun.String.static("Suite B: invalid ECC curve"),
-                error.SUITE_B_INVALID_SIGNATURE_ALGORITHM => bun.String.static("Suite B: invalid signature algorithm"),
-                error.SUITE_B_LOS_NOT_ALLOWED => bun.String.static("Suite B: curve not allowed for this LOS"),
-                error.SUITE_B_CANNOT_SIGN_P_384_WITH_P_256 => bun.String.static("Suite B: cannot sign P-384 with P-256"),
-                error.HOSTNAME_MISMATCH => bun.String.static("Hostname mismatch"),
-                error.EMAIL_MISMATCH => bun.String.static("Email address mismatch"),
-                error.IP_ADDRESS_MISMATCH => bun.String.static("IP address mismatch"),
-                error.INVALID_CALL => bun.String.static("Invalid certificate verification context"),
-                error.STORE_LOOKUP => bun.String.static("Issuer certificate lookup error"),
-                error.NAME_CONSTRAINTS_WITHOUT_SANS => bun.String.static("Issuer has name constraints but leaf has no SANs"),
-                error.UNKNOWN_CERTIFICATE_VERIFICATION_ERROR => bun.String.static("unknown certificate verification error"),
+                error.UNABLE_TO_GET_ISSUER_CERT => fun.String.static("unable to get issuer certificate"),
+                error.UNABLE_TO_GET_CRL => fun.String.static("unable to get certificate CRL"),
+                error.UNABLE_TO_DECRYPT_CERT_SIGNATURE => fun.String.static("unable to decrypt certificate's signature"),
+                error.UNABLE_TO_DECRYPT_CRL_SIGNATURE => fun.String.static("unable to decrypt CRL's signature"),
+                error.UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY => fun.String.static("unable to decode issuer public key"),
+                error.CERT_SIGNATURE_FAILURE => fun.String.static("certificate signature failure"),
+                error.CRL_SIGNATURE_FAILURE => fun.String.static("CRL signature failure"),
+                error.CERT_NOT_YET_VALID => fun.String.static("certificate is not yet valid"),
+                error.CRL_NOT_YET_VALID => fun.String.static("CRL is not yet valid"),
+                error.CERT_HAS_EXPIRED => fun.String.static("certificate has expired"),
+                error.CRL_HAS_EXPIRED => fun.String.static("CRL has expired"),
+                error.ERROR_IN_CERT_NOT_BEFORE_FIELD => fun.String.static("format error in certificate's notBefore field"),
+                error.ERROR_IN_CERT_NOT_AFTER_FIELD => fun.String.static("format error in certificate's notAfter field"),
+                error.ERROR_IN_CRL_LAST_UPDATE_FIELD => fun.String.static("format error in CRL's lastUpdate field"),
+                error.ERROR_IN_CRL_NEXT_UPDATE_FIELD => fun.String.static("format error in CRL's nextUpdate field"),
+                error.OUT_OF_MEM => fun.String.static("out of memory"),
+                error.DEPTH_ZERO_SELF_SIGNED_CERT => fun.String.static("self signed certificate"),
+                error.SELF_SIGNED_CERT_IN_CHAIN => fun.String.static("self signed certificate in certificate chain"),
+                error.UNABLE_TO_GET_ISSUER_CERT_LOCALLY => fun.String.static("unable to get local issuer certificate"),
+                error.UNABLE_TO_VERIFY_LEAF_SIGNATURE => fun.String.static("unable to verify the first certificate"),
+                error.CERT_CHAIN_TOO_LONG => fun.String.static("certificate chain too long"),
+                error.CERT_REVOKED => fun.String.static("certificate revoked"),
+                error.INVALID_CA => fun.String.static("invalid CA certificate"),
+                error.INVALID_NON_CA => fun.String.static("invalid non-CA certificate (has CA markings)"),
+                error.PATH_LENGTH_EXCEEDED => fun.String.static("path length constraint exceeded"),
+                error.PROXY_PATH_LENGTH_EXCEEDED => fun.String.static("proxy path length constraint exceeded"),
+                error.PROXY_CERTIFICATES_NOT_ALLOWED => fun.String.static("proxy certificates not allowed, please set the appropriate flag"),
+                error.INVALID_PURPOSE => fun.String.static("unsupported certificate purpose"),
+                error.CERT_UNTRUSTED => fun.String.static("certificate not trusted"),
+                error.CERT_REJECTED => fun.String.static("certificate rejected"),
+                error.APPLICATION_VERIFICATION => fun.String.static("application verification failure"),
+                error.SUBJECT_ISSUER_MISMATCH => fun.String.static("subject issuer mismatch"),
+                error.AKID_SKID_MISMATCH => fun.String.static("authority and subject key identifier mismatch"),
+                error.AKID_ISSUER_SERIAL_MISMATCH => fun.String.static("authority and issuer serial number mismatch"),
+                error.KEYUSAGE_NO_CERTSIGN => fun.String.static("key usage does not include certificate signing"),
+                error.UNABLE_TO_GET_CRL_ISSUER => fun.String.static("unable to get CRL issuer certificate"),
+                error.UNHANDLED_CRITICAL_EXTENSION => fun.String.static("unhandled critical extension"),
+                error.KEYUSAGE_NO_CRL_SIGN => fun.String.static("key usage does not include CRL signing"),
+                error.KEYUSAGE_NO_DIGITAL_SIGNATURE => fun.String.static("key usage does not include digital signature"),
+                error.UNHANDLED_CRITICAL_CRL_EXTENSION => fun.String.static("unhandled critical CRL extension"),
+                error.INVALID_EXTENSION => fun.String.static("invalid or inconsistent certificate extension"),
+                error.INVALID_POLICY_EXTENSION => fun.String.static("invalid or inconsistent certificate policy extension"),
+                error.NO_EXPLICIT_POLICY => fun.String.static("no explicit policy"),
+                error.DIFFERENT_CRL_SCOPE => fun.String.static("Different CRL scope"),
+                error.UNSUPPORTED_EXTENSION_FEATURE => fun.String.static("Unsupported extension feature"),
+                error.UNNESTED_RESOURCE => fun.String.static("RFC 3779 resource not subset of parent's resources"),
+                error.PERMITTED_VIOLATION => fun.String.static("permitted subtree violation"),
+                error.EXCLUDED_VIOLATION => fun.String.static("excluded subtree violation"),
+                error.SUBTREE_MINMAX => fun.String.static("name constraints minimum and maximum not supported"),
+                error.UNSUPPORTED_CONSTRAINT_TYPE => fun.String.static("unsupported name constraint type"),
+                error.UNSUPPORTED_CONSTRAINT_SYNTAX => fun.String.static("unsupported or invalid name constraint syntax"),
+                error.UNSUPPORTED_NAME_SYNTAX => fun.String.static("unsupported or invalid name syntax"),
+                error.CRL_PATH_VALIDATION_ERROR => fun.String.static("CRL path validation error"),
+                error.SUITE_B_INVALID_VERSION => fun.String.static("Suite B: certificate version invalid"),
+                error.SUITE_B_INVALID_ALGORITHM => fun.String.static("Suite B: invalid public key algorithm"),
+                error.SUITE_B_INVALID_CURVE => fun.String.static("Suite B: invalid ECC curve"),
+                error.SUITE_B_INVALID_SIGNATURE_ALGORITHM => fun.String.static("Suite B: invalid signature algorithm"),
+                error.SUITE_B_LOS_NOT_ALLOWED => fun.String.static("Suite B: curve not allowed for this LOS"),
+                error.SUITE_B_CANNOT_SIGN_P_384_WITH_P_256 => fun.String.static("Suite B: cannot sign P-384 with P-256"),
+                error.HOSTNAME_MISMATCH => fun.String.static("Hostname mismatch"),
+                error.EMAIL_MISMATCH => fun.String.static("Email address mismatch"),
+                error.IP_ADDRESS_MISMATCH => fun.String.static("IP address mismatch"),
+                error.INVALID_CALL => fun.String.static("Invalid certificate verification context"),
+                error.STORE_LOOKUP => fun.String.static("Issuer certificate lookup error"),
+                error.NAME_CONSTRAINTS_WITHOUT_SANS => fun.String.static("Issuer has name constraints but leaf has no SANs"),
+                error.UNKNOWN_CERTIFICATE_VERIFICATION_ERROR => fun.String.static("unknown certificate verification error"),
 
-                else => |e| bun.String.createFormat("{s} fetching \"{f}\". For more information, pass `verbose: true` in the second argument to fetch()", .{
+                else => |e| fun.String.createFormat("{s} fetching \"{f}\". For more information, pass `verbose: true` in the second argument to fetch()", .{
                     @errorName(e),
                     path,
-                }) catch |err| bun.handleOom(err),
+                }) catch |err| fun.handleOom(err),
             },
             .path = path,
         };
@@ -858,12 +858,12 @@ pub const FetchTasklet = struct {
     }
 
     pub fn onReadableStreamAvailable(ctx: *anyopaque, globalThis: *jsc.JSGlobalObject, readable: jsc.WebCore.ReadableStream) void {
-        const this = bun.cast(*FetchTasklet, ctx);
+        const this = fun.cast(*FetchTasklet, ctx);
         this.readable_stream_ref = jsc.WebCore.ReadableStream.Strong.init(readable, globalThis);
     }
 
     pub fn onStartStreamingHTTPResponseBodyCallback(ctx: *anyopaque) jsc.WebCore.DrainResult {
-        const this = bun.cast(*FetchTasklet, ctx);
+        const this = fun.cast(*FetchTasklet, ctx);
         if (this.signal_store.aborted.load(.monotonic)) {
             return jsc.WebCore.DrainResult{
                 .aborted = {},
@@ -877,7 +877,7 @@ pub const FetchTasklet = struct {
             // and if the server doesn't close the connection by itself
             // and doesn't send any follow-up data
             // then we must make sure the HTTP thread flushes.
-            bun.http.http_thread.scheduleResponseBodyDrain(http_.async_http_id);
+            fun.http.http_thread.scheduleResponseBodyDrain(http_.async_http_id);
         }
 
         this.mutex.lock();
@@ -888,7 +888,7 @@ pub const FetchTasklet = struct {
         // This means we have received part of the body but not the whole thing
         if (scheduled_response_buffer.items.len > 0) {
             this.scheduled_response_buffer = .{
-                .allocator = bun.default_allocator,
+                .allocator = fun.default_allocator,
                 .list = .{
                     .items = &.{},
                     .capacity = 0,
@@ -897,7 +897,7 @@ pub const FetchTasklet = struct {
 
             return .{
                 .owned = .{
-                    .list = scheduled_response_buffer.toManaged(bun.default_allocator),
+                    .list = scheduled_response_buffer.toManaged(fun.default_allocator),
                     .size_hint = size_hint,
                 },
             };
@@ -930,7 +930,7 @@ pub const FetchTasklet = struct {
     }
 
     fn onStreamCancelledCallback(ctx: ?*anyopaque) void {
-        const this = bun.cast(*FetchTasklet, ctx.?);
+        const this = fun.cast(*FetchTasklet, ctx.?);
         if (this.ignore_data) return;
         this.ignoreRemainingResponseBody();
     }
@@ -956,11 +956,11 @@ pub const FetchTasklet = struct {
         var scheduled_response_buffer = this.scheduled_response_buffer.list;
         const response = Body.Value{
             .InternalBlob = .{
-                .bytes = scheduled_response_buffer.toManaged(bun.default_allocator),
+                .bytes = scheduled_response_buffer.toManaged(fun.default_allocator),
             },
         };
         this.scheduled_response_buffer = .{
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
             .list = .{
                 .items = &.{},
                 .capacity = 0,
@@ -972,7 +972,7 @@ pub const FetchTasklet = struct {
 
     fn toResponse(this: *FetchTasklet) Response {
         log("toResponse", .{});
-        bun.assert(this.metadata != null);
+        fun.assert(this.metadata != null);
         // at this point we always should have metadata
         const metadata = this.metadata.?;
         const http_response = metadata.response;
@@ -981,12 +981,12 @@ pub const FetchTasklet = struct {
             .{
                 .headers = FetchHeaders.createFromPicoHeaders(http_response.headers),
                 .status_code = @as(u16, @truncate(http_response.status_code)),
-                .status_text = bun.String.createAtomIfPossible(http_response.status),
+                .status_text = fun.String.createAtomIfPossible(http_response.status),
             },
             Body{
                 .value = this.toBodyValue(),
             },
-            bun.String.createAtomIfPossible(metadata.url),
+            fun.String.createAtomIfPossible(metadata.url),
             this.result.redirected,
         );
     }
@@ -1014,7 +1014,7 @@ pub const FetchTasklet = struct {
         this.ignore_data = true;
     }
 
-    export fn Bun__FetchResponse_finalize(this: *FetchTasklet) callconv(.c) void {
+    export fn Fun__FetchResponse_finalize(this: *FetchTasklet) callconv(.c) void {
         log("onResponseFinalize", .{});
         if (this.native_response) |response| {
             const body = response.getBodyValue();
@@ -1044,12 +1044,12 @@ pub const FetchTasklet = struct {
         }
     }
     comptime {
-        _ = Bun__FetchResponse_finalize;
+        _ = Fun__FetchResponse_finalize;
     }
 
     pub fn onResolve(this: *FetchTasklet) JSValue {
         log("onResolve", .{});
-        const response = bun.new(Response, this.toResponse());
+        const response = fun.new(Response, this.toResponse());
         const response_js = Response.makeMaybePooled(@as(*jsc.JSGlobalObject, this.global_this), response);
         response_js.ensureStillAlive();
         this.response = jsc.Weak(FetchTasklet).create(response_js, this.global_this, .FetchResponse, this);
@@ -1063,20 +1063,20 @@ pub const FetchTasklet = struct {
         fetch_options: *const FetchOptions,
         promise: jsc.JSPromise.Strong,
     ) !*FetchTasklet {
-        var jsc_vm = globalThis.bunVM();
+        var jsc_vm = globalThis.funVM();
         var fetch_tasklet = try allocator.create(FetchTasklet);
 
         fetch_tasklet.* = .{
             .mutex = .{},
             .scheduled_response_buffer = .{
-                .allocator = bun.default_allocator,
+                .allocator = fun.default_allocator,
                 .list = .{
                     .items = &.{},
                     .capacity = 0,
                 },
             },
             .response_buffer = MutableString{
-                .allocator = bun.default_allocator,
+                .allocator = fun.default_allocator,
                 .list = .{
                     .items = &.{},
                     .capacity = 0,
@@ -1125,9 +1125,9 @@ pub const FetchTasklet = struct {
                 // `fetch(url, { proxy: "..." })` option.
                 if (env_proxy.href.len > 0) {
                     const old_url_len = url.href.len;
-                    const new_buffer = try std.fmt.allocPrint(bun.default_allocator, "{s}{s}", .{ fetch_tasklet.url_proxy_buffer, env_proxy.href });
+                    const new_buffer = try std.fmt.allocPrint(fun.default_allocator, "{s}{s}", .{ fetch_tasklet.url_proxy_buffer, env_proxy.href });
                     if (fetch_tasklet.url_proxy_buffer.len > 0) {
-                        bun.default_allocator.free(fetch_tasklet.url_proxy_buffer);
+                        fun.default_allocator.free(fetch_tasklet.url_proxy_buffer);
                     }
                     fetch_tasklet.url_proxy_buffer = new_buffer;
                     url = ZigURL.parse(new_buffer[0..old_url_len]);
@@ -1146,7 +1146,7 @@ pub const FetchTasklet = struct {
 
         // This task gets queued on the HTTP thread.
         fetch_tasklet.http.?.* = http.AsyncHTTP.init(
-            bun.default_allocator,
+            fun.default_allocator,
             fetch_options.method,
             url,
             fetch_options.headers.entries,
@@ -1201,8 +1201,8 @@ pub const FetchTasklet = struct {
         fetch_tasklet.signal_store.header_progress.store(true, .monotonic);
 
         if (fetch_tasklet.request_body == .Sendfile) {
-            bun.assert(url.isHTTP());
-            bun.assert(fetch_options.proxy == null);
+            fun.assert(url.isHTTP());
+            fun.assert(fetch_options.proxy == null);
             fetch_tasklet.http.?.request_body = .{ .sendfile = fetch_tasklet.request_body.Sendfile };
         }
 
@@ -1243,7 +1243,7 @@ pub const FetchTasklet = struct {
     }
 
     /// This is ALWAYS called from the main thread
-    // XXX: 'fn (*FetchTasklet) error{}!void' coerces to 'fn (*FetchTasklet) bun.JSError!void' but 'fn (*FetchTasklet) void' does not
+    // XXX: 'fn (*FetchTasklet) error{}!void' coerces to 'fn (*FetchTasklet) fun.JSError!void' but 'fn (*FetchTasklet) void' does not
     pub fn resumeRequestDataStream(this: *FetchTasklet) error{}!void {
         // deref when done because we ref inside onWriteRequestDataDrain
         defer this.deref();
@@ -1290,7 +1290,7 @@ pub const FetchTasklet = struct {
         // if we have backpressure the onWritable will drain the buffer
         needs_schedule = stream_buffer.isEmpty();
         if (this.skipChunkedFraming()) {
-            bun.handleOom(stream_buffer.write(data));
+            fun.handleOom(stream_buffer.write(data));
         } else {
             //16 is the max size of a hex number size that represents 64 bits + 2 for the \r\n
             var formated_size_buffer: [18]u8 = undefined;
@@ -1301,7 +1301,7 @@ pub const FetchTasklet = struct {
             ) catch |err| switch (err) {
                 error.NoSpaceLeft => unreachable,
             };
-            bun.handleOom(stream_buffer.ensureUnusedCapacity(formated_size.len + data.len + 2));
+            fun.handleOom(stream_buffer.ensureUnusedCapacity(formated_size.len + data.len + 2));
             stream_buffer.writeAssumeCapacity(formated_size);
             stream_buffer.writeAssumeCapacity(data);
             stream_buffer.writeAssumeCapacity("\r\n");
@@ -1328,7 +1328,7 @@ pub const FetchTasklet = struct {
                 const thread_safe_stream_buffer = this.request_body_streaming_buffer orelse return;
                 const stream_buffer = thread_safe_stream_buffer.acquire();
                 defer thread_safe_stream_buffer.release();
-                bun.handleOom(stream_buffer.write(http.end_of_chunked_http1_1_encoding_response_body));
+                fun.handleOom(stream_buffer.write(http.end_of_chunked_http1_1_encoding_response_body));
             }
             if (this.http) |http_| {
                 http.http_thread.scheduleRequestWrite(http_, .end);
@@ -1386,9 +1386,9 @@ pub const FetchTasklet = struct {
             promise,
         );
 
-        var batch = bun.ThreadPool.Batch{};
+        var batch = fun.ThreadPool.Batch{};
         node.http.?.schedule(allocator, &batch);
-        node.poll_ref.ref(global.bunVM());
+        node.poll_ref.ref(global.funVM());
 
         // increment ref so we can keep it alive until the http client is done
         node.ref();
@@ -1449,7 +1449,7 @@ pub const FetchTasklet = struct {
             if (task.scheduled_response_buffer.list.capacity > 0) {
                 task.scheduled_response_buffer.deinit();
                 task.scheduled_response_buffer = .{
-                    .allocator = bun.default_allocator,
+                    .allocator = fun.default_allocator,
                     .list = .{
                         .items = &.{},
                         .capacity = 0,
@@ -1462,7 +1462,7 @@ pub const FetchTasklet = struct {
             }
         } else {
             if (success) {
-                _ = bun.handleOom(task.scheduled_response_buffer.write(task.response_buffer.list.items));
+                _ = fun.handleOom(task.scheduled_response_buffer.write(task.response_buffer.list.items));
             }
             // reset for reuse
             task.response_buffer.reset();
@@ -1479,25 +1479,25 @@ pub const FetchTasklet = struct {
     }
 };
 
-const X509 = @import("../../api/bun/x509.zig");
+const X509 = @import("../../api/fun/x509.zig");
 const std = @import("std");
 const Method = @import("../../../http_types/Method.zig").Method;
 const ZigURL = @import("../../../url/url.zig").URL;
 
-const bun = @import("bun");
-const Async = bun.Async;
-const MutableString = bun.MutableString;
-const Mutex = bun.Mutex;
-const Output = bun.Output;
-const BoringSSL = bun.BoringSSL.c;
-const FetchHeaders = bun.webcore.FetchHeaders;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const Async = fun.Async;
+const MutableString = fun.MutableString;
+const Mutex = fun.Mutex;
+const Output = fun.Output;
+const BoringSSL = fun.BoringSSL.c;
+const FetchHeaders = fun.webcore.FetchHeaders;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
-const http = bun.http;
+const http = fun.http;
 const FetchRedirect = http.FetchRedirect;
-const Headers = bun.http.Headers;
+const Headers = fun.http.Headers;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSPromise = jsc.JSPromise;
 const JSValue = jsc.JSValue;

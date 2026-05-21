@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "fun:test";
 import fs from "fs";
 import { gcTick, tls, tmpdirSync } from "harness";
 import path, { join } from "path";
@@ -70,7 +70,7 @@ describe("HTMLRewriter", () => {
       new HTMLRewriter()
         .on("div", {
           async element(element) {
-            await Bun.sleep(1);
+            await Fun.sleep(1);
             throw new Error("test");
           },
         })
@@ -105,11 +105,11 @@ describe("HTMLRewriter", () => {
     expect(() => new HTMLRewriter().transform(Symbol("ok"))).toThrow();
   });
 
-  it("HTMLRewriter: async replacement using fetch + Bun.serve", async () => {
+  it("HTMLRewriter: async replacement using fetch + Fun.serve", async () => {
     await gcTick();
     let content;
     {
-      using contentServer = Bun.serve({
+      using contentServer = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response("<h1>Hello from content server</h1>", {
@@ -118,7 +118,7 @@ describe("HTMLRewriter", () => {
         },
       });
 
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new HTMLRewriter()
@@ -160,8 +160,8 @@ describe("HTMLRewriter", () => {
       },
     });
     const filePath = join(tmpdirSync(), "html-rewriter.txt.js");
-    await Bun.write(filePath, "<div>hello</div>");
-    var output = rewriter.transform(new Response(Bun.file(filePath)));
+    await Fun.write(filePath, "<div>hello</div>");
+    var output = rewriter.transform(new Response(Fun.file(filePath)));
     expect(await output.text()).toBe("<div><blink>it worked!</blink></div>");
   });
 
@@ -455,7 +455,7 @@ describe("HTMLRewriter", () => {
       await new HTMLRewriter()
         .on("div", {
           element(elem) {
-            // https://github.com/oven-sh/bun/issues/2323
+            // https://github.com/underdoc-org/fun/issues/2323
             elem.setInnerContent("");
           },
         })
@@ -469,7 +469,7 @@ describe("HTMLRewriter", () => {
       await new HTMLRewriter()
         .on("div", {
           element(elem) {
-            // https://github.com/oven-sh/bun/issues/2323
+            // https://github.com/underdoc-org/fun/issues/2323
             elem.setInnerContent("", { html: true });
           },
         })
@@ -551,7 +551,7 @@ it("#3334 regression", async () => {
       .text();
     expect(result).toEqual("<div>new</div>");
   }
-  Bun.gc(true);
+  Fun.gc(true);
 });
 
 it("#3489", async () => {
@@ -629,15 +629,15 @@ function getStream(type, fixture) {
   return new ReadableStream({
     async pull(controller) {
       controller.enqueue(data.slice(0, half));
-      await Bun.sleep(15);
+      await Fun.sleep(15);
       controller.enqueue(data.slice(half));
-      await Bun.sleep(15);
+      await Fun.sleep(15);
       controller.close();
     },
   });
 }
 function createServer(tls) {
-  return Bun.serve({
+  return Fun.serve({
     port: 0,
     tls,
     async fetch(req) {
@@ -651,7 +651,7 @@ function createServer(tls) {
           payload = getStream("default", is_compressed ? "gz" : "default");
         }
       } else if (req.url.indexOf("file") !== -1) {
-        payload = is_compressed ? Bun.file(fixture_html_gz) : Bun.file(fixture_html);
+        payload = is_compressed ? Fun.file(fixture_html_gz) : Fun.file(fixture_html);
       } else {
         payload = is_compressed ? fixture_html_gz_content : fixture_html_content;
       }
@@ -722,7 +722,7 @@ const payloads = [
   },
   {
     name: "file",
-    data: Bun.file(fixture_html),
+    data: Fun.file(fixture_html),
     test: it,
   },
   {

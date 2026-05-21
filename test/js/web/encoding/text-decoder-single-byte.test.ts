@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("TextDecoder - IBM866 encoding", () => {
   const decoder = new TextDecoder("ibm866");

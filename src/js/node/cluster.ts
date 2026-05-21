@@ -15,6 +15,6 @@ function initializeClusterIPC() {
   }
 }
 
-if (Bun.isMainThread) {
+if (Fun.isMainThread) {
   initializeClusterIPC();
 }

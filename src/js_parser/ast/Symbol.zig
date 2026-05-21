@@ -139,8 +139,8 @@ remove_overwritten_function_declaration: bool = false,
 has_been_assigned_to: bool = false,
 
 comptime {
-    bun.assert_eql(@sizeOf(Symbol), 88);
-    bun.assert_eql(@alignOf(Symbol), @alignOf([]const u8));
+    fun.assert_eql(@sizeOf(Symbol), 88);
+    fun.assert_eql(@alignOf(Symbol), @alignOf([]const u8));
 }
 
 const invalid_chunk_index = std.math.maxInt(u32);
@@ -437,7 +437,7 @@ pub const Map = struct {
     }
 
     pub fn followAll(symbols: *Map) void {
-        const trace = bun.perf.trace("Symbols.followAll");
+        const trace = fun.perf.trace("Symbols.followAll");
         defer trace.end();
         for (symbols.symbols_for_source.slice()) |list| {
             for (list.slice()) |*symbol| {
@@ -475,11 +475,11 @@ pub const isKindPrivate = Symbol.Kind.isPrivate;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const Output = bun.Output;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const Output = fun.Output;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const DeclaredSymbol = js_ast.DeclaredSymbol;
 const G = js_ast.G;
 const ImportItemStatus = js_ast.ImportItemStatus;

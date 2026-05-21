@@ -1,4 +1,4 @@
-//! libspng decode/encode for `Bun.Image`. Indexed-PNG encode quantises via
+//! libspng decode/encode for `Fun.Image`. Indexed-PNG encode quantises via
 //! `quantize.zig`. Dispatch lives in codecs.zig; this file is the codec body.
 
 const spng_ctx = opaque {};
@@ -78,8 +78,8 @@ pub fn decode(bytes: []const u8, max_pixels: u64) codecs.Error!codecs.Decoded {
     try codecs.guard(ihdr.width, ihdr.height, max_pixels);
     var size: usize = 0;
     if (spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &size) != 0) return error.DecodeFailed;
-    const out = try bun.default_allocator.alloc(u8, size);
-    errdefer bun.default_allocator.free(out);
+    const out = try fun.default_allocator.alloc(u8, size);
+    errdefer fun.default_allocator.free(out);
     if (spng_decode_image(ctx, out.ptr, out.len, SPNG_FMT_RGBA8, SPNG_DECODE_TRNS) != 0)
         return error.DecodeFailed;
 
@@ -93,7 +93,7 @@ pub fn decode(bytes: []const u8, max_pixels: u64) codecs.Error!codecs.Decoded {
     // colour shift, which is the exact bug #30197 is about.
     var iccp: Iccp = std.mem.zeroes(Iccp);
     const icc: ?[]u8 = if (spng_get_iccp(ctx, &iccp) == 0 and iccp.profile_len > 0 and iccp.profile != null)
-        try bun.default_allocator.dupe(u8, iccp.profile.?[0..iccp.profile_len])
+        try fun.default_allocator.dupe(u8, iccp.profile.?[0..iccp.profile_len])
     else
         null;
     return .{ .rgba = out, .width = ihdr.width, .height = ihdr.height, .icc_profile = icc };
@@ -191,7 +191,7 @@ pub fn encodeIndexed(rgba: []const u8, w: u32, h: u32, level: i8, colors: u16, d
     return .{ .bytes = buf[0..len], .free = codecs.Encoded.wrap(std.c.free) };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const codecs = @import("./codecs.zig");
 const quantize = @import("./quantize.zig");
 const std = @import("std");

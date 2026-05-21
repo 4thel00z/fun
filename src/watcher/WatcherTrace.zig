@@ -1,18 +1,18 @@
 /// Optional trace file for debugging watcher events
-var trace_file: ?bun.sys.File = null;
+var trace_file: ?fun.sys.File = null;
 
-/// Initialize trace file if BUN_WATCHER_TRACE env var is set.
+/// Initialize trace file if FUN_WATCHER_TRACE env var is set.
 /// Only checks once on first call.
 pub fn init() void {
     if (trace_file != null) return;
 
-    if (bun.env_var.BUN_WATCHER_TRACE.get()) |trace_path| {
+    if (fun.env_var.FUN_WATCHER_TRACE.get()) |trace_path| {
         if (trace_path.len > 0) {
-            const flags = bun.O.WRONLY | bun.O.CREAT | bun.O.APPEND;
+            const flags = fun.O.WRONLY | fun.O.CREAT | fun.O.APPEND;
             const mode = 0o644;
-            switch (bun.sys.openA(trace_path, flags, mode)) {
+            switch (fun.sys.openA(trace_path, flags, mode)) {
                 .result => |fd| {
-                    trace_file = bun.sys.File{ .handle = fd };
+                    trace_file = fun.sys.File{ .handle = fd };
                 },
                 .err => {
                     // Silently ignore errors opening trace file
@@ -31,7 +31,7 @@ pub fn writeEvents(watcher: *Watcher, events: []Watcher.WatchEvent, changed_file
     var buffer: [4096]u8 = undefined;
     var buffered = file.writer().adaptToNewApi(&buffer);
     defer buffered.new_interface.flush() catch |err| {
-        bun.Output.err(err, "Failed to flush watcher trace file", .{});
+        fun.Output.err(err, "Failed to flush watcher trace file", .{});
     };
     const writer = &buffered.new_interface;
 
@@ -55,7 +55,7 @@ pub fn writeEvents(watcher: *Watcher, events: []Watcher.WatchEvent, changed_file
         first_file = false;
 
         // Write path as key
-        writer.print("{f}", .{bun.fmt.formatJSONStringUTF8(file_path, .{})}) catch return;
+        writer.print("{f}", .{fun.fmt.formatJSONStringUTF8(file_path, .{})}) catch return;
         writer.writeAll(":{\"events\":[") catch return;
 
         // Write array of event types using comptime reflection
@@ -87,7 +87,7 @@ pub fn writeEvents(watcher: *Watcher, events: []Watcher.WatchEvent, changed_file
                 if (name_opt) |name| {
                     if (!first) writer.writeAll(",") catch return;
                     first = false;
-                    writer.print("{f}", .{bun.fmt.formatJSONStringUTF8(name, .{})}) catch return;
+                    writer.print("{f}", .{fun.fmt.formatJSONStringUTF8(name, .{})}) catch return;
                 }
             }
             writer.writeAll("]") catch return;
@@ -108,5 +108,5 @@ pub fn deinit() void {
 }
 
 const Watcher = @import("./Watcher.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

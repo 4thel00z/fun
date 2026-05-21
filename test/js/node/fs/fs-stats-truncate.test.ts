@@ -1,10 +1,10 @@
-// BUN-2C1
+// FUN-2C1
 //   const value = @field(this, @tagName(field));
 //  if (comptime (Big and @typeInfo(@TypeOf(value)) == .Int)) {
 //    return JSC.JSValue.fromInt64NoTruncate(globalObject, @intCast(value));
 //  }
-import { createStatsForIno } from "bun:internal-for-testing";
-import { expect, test } from "bun:test";
+import { createStatsForIno } from "fun:internal-for-testing";
+import { expect, test } from "fun:test";
 import { Stats, statSync } from "node:fs";
 
 test("fs.stats truncate", async () => {

@@ -1,11 +1,11 @@
 import { PGlite } from "@electric-sql/pglite";
-import { SQL, randomUUIDv7 } from "bun";
-import { expect, test } from "bun:test";
+import { SQL, randomUUIDv7 } from "fun";
+import { expect, test } from "fun:test";
 import { once } from "events";
 import net, { AddressInfo } from "node:net";
 import { fromNodeSocket } from "pg-gateway/node";
 
-test("pglite should be able to query using pg-gateway and Bun.SQL", async () => {
+test("pglite should be able to query using pg-gateway and Fun.SQL", async () => {
   const name = "test_" + randomUUIDv7("hex").replaceAll("-", "");
   const dataDir = `memory://${name}`;
   const db = new PGlite(dataDir);

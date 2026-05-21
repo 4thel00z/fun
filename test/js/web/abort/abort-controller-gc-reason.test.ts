@@ -1,13 +1,13 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // https://bugs.webkit.org/show_bug.cgi?id=293319
 // AbortController.signal.reason is lost after garbage collection
 describe("AbortController GC", () => {
   test("signal.reason survives GC when only controller is retained", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           function createAbortedController(message) {
@@ -22,7 +22,7 @@ describe("AbortController GC", () => {
           // Force GC multiple times to trigger collection of signal.reason
           // if it's not properly marked by JSAbortController::visitChildren
           for (let i = 0; i < 10; i++) {
-            Bun.gc(true);
+            Fun.gc(true);
           }
 
           if (controller.signal.reason?.message !== errorMessage) {
@@ -32,7 +32,7 @@ describe("AbortController GC", () => {
           console.log("PASS");
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -45,9 +45,9 @@ describe("AbortController GC", () => {
   });
 
   test("signal.reason survives GC with many controllers", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const controllers = [];
@@ -58,7 +58,7 @@ describe("AbortController GC", () => {
           }
 
           for (let i = 0; i < 10; i++) {
-            Bun.gc(true);
+            Fun.gc(true);
           }
 
           for (let i = 0; i < 100; i++) {
@@ -71,7 +71,7 @@ describe("AbortController GC", () => {
           console.log("PASS");
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

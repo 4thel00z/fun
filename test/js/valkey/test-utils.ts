@@ -1,6 +1,6 @@
-import { RedisClient, type SpawnOptions } from "bun";
-import { afterAll, beforeAll, expect } from "bun:test";
-import { bunEnv, dockerExe, isCI, randomPort, tempDirWithFiles } from "harness";
+import { RedisClient, type SpawnOptions } from "fun";
+import { afterAll, beforeAll, expect } from "fun:test";
+import { funEnv, dockerExe, isCI, randomPort, tempDirWithFiles } from "harness";
 import path from "path";
 
 import * as dockerCompose from "../../docker/index.ts";
@@ -11,11 +11,11 @@ export const isEnabled =
   !!dockerCLI &&
   (() => {
     try {
-      const info = Bun.spawnSync({
+      const info = Fun.spawnSync({
         cmd: [dockerCLI, "info"],
         stdout: "pipe",
         stderr: "inherit",
-        env: bunEnv,
+        env: funEnv,
         timeout: 5_000,
       });
       if (info.exitCode !== 0) return false;
@@ -81,9 +81,9 @@ export const TLS_REDIS_OPTIONS = {
   ...DEFAULT_REDIS_OPTIONS,
   db: 1,
   tls: {
-    cert: Bun.file(path.join(import.meta.dir, "docker-unified", "server.crt")),
-    key: Bun.file(path.join(import.meta.dir, "docker-unified", "server.key")),
-    ca: Bun.file(path.join(import.meta.dir, "docker-unified", "server.crt")),
+    cert: Fun.file(path.join(import.meta.dir, "docker-unified", "server.crt")),
+    key: Fun.file(path.join(import.meta.dir, "docker-unified", "server.key")),
+    ca: Fun.file(path.join(import.meta.dir, "docker-unified", "server.crt")),
     // This suite exercises Valkey commands over TLS, not certificate
     // verification. The docker-unified cert only has SAN DNS:localhost while
     // the docker helper connects to 127.0.0.1, so hostname verification (now
@@ -132,7 +132,7 @@ export let READONLY_REDIS_URL = `redis://readonly:readonly@${REDIS_HOST}:${REDIS
 export let WRITEONLY_REDIS_URL = `redis://writeonly:writeonly@${REDIS_HOST}:${REDIS_PORT}`;
 
 // Random key prefix to avoid collisions during testing
-export const TEST_KEY_PREFIX = `bun-test-${Date.now()}-`;
+export const TEST_KEY_PREFIX = `fun-test-${Date.now()}-`;
 
 /**
  * Container configuration interface
@@ -225,7 +225,7 @@ export function testKey(name: string): string {
   return `${context.id}:${TEST_KEY_PREFIX}${name}`;
 }
 
-// Import needed functions from Bun
+// Import needed functions from Fun
 import { tmpdir } from "os";
 
 /**
@@ -558,15 +558,15 @@ async function getRedisContainerName(): Promise<string> {
 
   // If using docker-compose
   if (dockerComposeInfo) {
-    const projectName = process.env.COMPOSE_PROJECT_NAME || "bun-test-services";
+    const projectName = process.env.COMPOSE_PROJECT_NAME || "fun-test-services";
     return `${projectName}-redis_unified-1`;
   }
 
   // Fallback to old method
-  const listProcess = Bun.spawn({
+  const listProcess = Fun.spawn({
     cmd: [dockerCLI, "ps", "--filter", "name=valkey-unified-test", "--format", "{{.Names}}"],
     stdout: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   const containerName = (await new Response(listProcess.stdout).text()).trim();
@@ -591,16 +591,16 @@ async function getRedisContainerName(): Promise<string> {
 export async function restartRedisContainer(): Promise<void> {
   // If using docker-compose, get the actual container name
   if (dockerComposeInfo) {
-    const projectName = process.env.COMPOSE_PROJECT_NAME || "bun-test-services";
+    const projectName = process.env.COMPOSE_PROJECT_NAME || "fun-test-services";
     const containerName = `${projectName}-redis_unified-1`;
     console.log(`Restarting Redis container: ${containerName}`);
 
     // Use docker restart to preserve data
-    const restartProcess = Bun.spawn({
+    const restartProcess = Fun.spawn({
       cmd: [dockerCLI, "restart", containerName],
       stdout: "pipe",
       stderr: "pipe",
-      env: bunEnv,
+      env: funEnv,
     });
     const exitCode = await restartProcess.exited;
     if (exitCode !== 0) {
@@ -614,7 +614,7 @@ export async function restartRedisContainer(): Promise<void> {
     let retries = 30;
     while (retries > 0) {
       try {
-        const pingProcess = Bun.spawn({
+        const pingProcess = Fun.spawn({
           cmd: [dockerCLI, "exec", containerName, "redis-cli", "ping"],
           stdout: "pipe",
           stderr: "pipe",
@@ -640,11 +640,11 @@ export async function restartRedisContainer(): Promise<void> {
     console.log(`Restarting Redis container: ${containerName}`);
 
     // Use docker restart to preserve data
-    const restartProcess = Bun.spawn({
+    const restartProcess = Fun.spawn({
       cmd: [dockerCLI, "restart", containerName],
       stdout: "pipe",
       stderr: "pipe",
-      env: bunEnv,
+      env: funEnv,
     });
     const exitCode = await restartProcess.exited;
     if (exitCode !== 0) {

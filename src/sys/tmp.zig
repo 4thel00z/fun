@@ -4,15 +4,15 @@ const allow_tmpfile = false;
 // To be used with files
 // not folders!
 pub const Tmpfile = struct {
-    destination_dir: bun.FD = bun.invalid_fd,
+    destination_dir: fun.FD = fun.invalid_fd,
     tmpfilename: [:0]const u8 = "",
-    fd: bun.FD = bun.invalid_fd,
+    fd: fun.FD = fun.invalid_fd,
     using_tmpfile: bool = allow_tmpfile,
 
     pub fn create(
-        destination_dir: bun.FD,
+        destination_dir: fun.FD,
         tmpfilename: [:0]const u8,
-    ) bun.sys.Maybe(Tmpfile) {
+    ) fun.sys.Maybe(Tmpfile) {
         const perm = 0o644;
         var tmpfile = Tmpfile{
             .destination_dir = destination_dir,
@@ -21,9 +21,9 @@ pub const Tmpfile = struct {
 
         open: while (true) {
             if (comptime allow_tmpfile) {
-                switch (bun.sys.openat(destination_dir, ".", O.WRONLY | O.TMPFILE | O.CLOEXEC, perm)) {
+                switch (fun.sys.openat(destination_dir, ".", O.WRONLY | O.TMPFILE | O.CLOEXEC, perm)) {
                     .result => |fd| {
-                        tmpfile.fd = switch (bun.sys.makeLibUVOwnedFD(fd, .open, .close_on_fail)) {
+                        tmpfile.fd = switch (fun.sys.makeLibUVOwnedFD(fd, .open, .close_on_fail)) {
                             .result => |owned_fd| owned_fd,
                             .err => |err| return .{ .err = err },
                         };
@@ -40,7 +40,7 @@ pub const Tmpfile = struct {
                 }
             }
 
-            tmpfile.fd = switch (bun.sys.openat(destination_dir, tmpfilename, O.CREAT | O.CLOEXEC | O.WRONLY, perm)) {
+            tmpfile.fd = switch (fun.sys.openat(destination_dir, tmpfilename, O.CREAT | O.CLOEXEC | O.WRONLY, perm)) {
                 .result => |fd| switch (fd.makeLibUVOwnedForSyscall(.open, .close_on_fail)) {
                     .result => |owned_fd| owned_fd,
                     .err => |err| return .{ .err = err },
@@ -59,14 +59,14 @@ pub const Tmpfile = struct {
                 var retry = true;
                 const basename: [:0]const u8 = @ptrCast(std.fs.path.basename(destname));
                 while (retry) {
-                    const ret = bun.sys.linkatTmpfile(this.fd, this.destination_dir, basename);
+                    const ret = fun.sys.linkatTmpfile(this.fd, this.destination_dir, basename);
                     switch (ret) {
                         .result => {
                             return;
                         },
                         .err => |err| {
                             if (err.getErrno() == .EXIST and retry) {
-                                _ = bun.sys.unlinkat(this.destination_dir, basename);
+                                _ = fun.sys.unlinkat(this.destination_dir, basename);
                                 retry = false;
                                 continue;
                             } else {
@@ -79,11 +79,11 @@ pub const Tmpfile = struct {
             }
         }
 
-        try bun.sys.moveFileZWithHandle(this.fd, this.destination_dir, this.tmpfilename, this.destination_dir, destname);
+        try fun.sys.moveFileZWithHandle(this.fd, this.destination_dir, this.tmpfilename, this.destination_dir, destname);
     }
 };
 
 const std = @import("std");
 
-const bun = @import("bun");
-const O = bun.O;
+const fun = @import("fun");
+const O = fun.O;

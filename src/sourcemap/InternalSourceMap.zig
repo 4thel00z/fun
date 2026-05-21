@@ -1,4 +1,4 @@
-//! InternalSourceMap is Bun's private, in-process source-map storage format.
+//! InternalSourceMap is Fun's private, in-process source-map storage format.
 //! It exists because the standard pipeline is a bad fit when both the producer
 //! (`js_printer`) and the consumer (stack remapping, coverage) are us:
 //!
@@ -48,7 +48,7 @@
 //!
 //! ## What this is not
 //!
-//! Not a .map file format. Nothing outside Bun reads these bytes. When the
+//! Not a .map file format. Nothing outside Fun reads these bytes. When the
 //! inspector or `node:module`.findSourceMap() needs a real source map, we
 //! re-encode on demand via `appendVLQTo()`. Names (the optional 5th VLQ field)
 //! are not stored: the runtime transpiler never emits them and stack remapping
@@ -111,7 +111,7 @@ pub const SyncEntry = extern struct {
     source_index: i32,
 
     comptime {
-        bun.assert(@sizeOf(SyncEntry) == 24);
+        fun.assert(@sizeOf(SyncEntry) == 24);
     }
 
     inline fn lessOrEqual(sp: SyncEntry, line: i32, col: i32) bool {
@@ -163,7 +163,7 @@ pub inline fn stream(self: InternalSourceMap) []const u8 {
 /// entries in `SavedSourceMap`). Do NOT call on views over the standalone
 /// module graph section or any other borrowed memory.
 pub fn deinit(self: InternalSourceMap) void {
-    bun.default_allocator.free(@constCast(self.data[0..self.totalLen()]));
+    fun.default_allocator.free(@constCast(self.data[0..self.totalLen()]));
 }
 
 pub fn memoryCost(self: InternalSourceMap) usize {
@@ -204,12 +204,12 @@ const State = struct {
     fn toMapping(self: State) Mapping {
         return .{
             .generated = .{
-                .lines = bun.Ordinal.fromZeroBased(self.generated_line),
-                .columns = bun.Ordinal.fromZeroBased(self.generated_column),
+                .lines = fun.Ordinal.fromZeroBased(self.generated_line),
+                .columns = fun.Ordinal.fromZeroBased(self.generated_column),
             },
             .original = .{
-                .lines = bun.Ordinal.fromZeroBased(self.original_line),
-                .columns = bun.Ordinal.fromZeroBased(self.original_column),
+                .lines = fun.Ordinal.fromZeroBased(self.original_line),
+                .columns = fun.Ordinal.fromZeroBased(self.original_column),
             },
             .source_index = self.source_index,
             .name_index = -1,
@@ -465,7 +465,7 @@ fn seedWindow(self: InternalSourceMap, sync_idx: u32, state: *State, reader: *Wi
     reader.parse(self.stream(), se.byte_offset);
 }
 
-pub fn findWithCache(self: InternalSourceMap, line: bun.Ordinal, column: bun.Ordinal, set: *FindCache) ?Mapping {
+pub fn findWithCache(self: InternalSourceMap, line: fun.Ordinal, column: fun.Ordinal, set: *FindCache) ?Mapping {
     const target_line = line.zeroBased();
     const target_col = column.zeroBased();
 
@@ -509,7 +509,7 @@ pub fn findWithCache(self: InternalSourceMap, line: bun.Ordinal, column: bun.Ord
 
 /// Matches the semantics of `Mapping.List.find`: returns the last mapping with
 /// generated position `<= (line, column)` whose generated line equals `line`.
-pub fn find(self: InternalSourceMap, line: bun.Ordinal, column: bun.Ordinal) ?Mapping {
+pub fn find(self: InternalSourceMap, line: fun.Ordinal, column: fun.Ordinal) ?Mapping {
     const target_line = line.zeroBased();
     const target_col = column.zeroBased();
 
@@ -550,7 +550,7 @@ pub const Cursor = struct {
         return .{ .map = map, .state = .{}, .peek = null, .reader = undefined, .sync_idx = 0, .has_state = false };
     }
 
-    pub fn moveTo(self: *Cursor, line: bun.Ordinal, column: bun.Ordinal) ?Mapping {
+    pub fn moveTo(self: *Cursor, line: fun.Ordinal, column: fun.Ordinal) ?Mapping {
         const target_line = line.zeroBased();
         const target_col = column.zeroBased();
 
@@ -630,7 +630,7 @@ pub fn appendVLQTo(self: InternalSourceMap, out: *MutableString) void {
 
 fn emitVLQ(state: *const State, prev: *SourceMapState, generated_line: *i32, out: *MutableString) void {
     while (generated_line.* < state.generated_line) : (generated_line.* += 1) {
-        out.appendChar(';') catch |err| bun.handleOom(err);
+        out.appendChar(';') catch |err| fun.handleOom(err);
         prev.generated_column = 0;
     }
     const current: SourceMapState = .{
@@ -704,7 +704,7 @@ pub const Builder = struct {
             .original_line = seed.original_line,
             .original_column = seed.original_column,
             .source_index = seed.source_index,
-        }) catch |err| bun.handleOom(err);
+        }) catch |err| fun.handleOom(err);
 
         const n_deltas: usize = n - 1;
         var deltas: [sync_interval - 1]Delta = undefined;
@@ -726,7 +726,7 @@ pub const Builder = struct {
         if (flags & flag_has_gen_line_exceptions != 0) cap += n_deltas * (1 + max_varint_len) + 1;
         if (flags & flag_has_src_idx != 0) cap += 8 + n_deltas * max_varint_len;
 
-        self.win_stream.ensureUnusedCapacity(self.allocator, cap) catch |err| bun.handleOom(err);
+        self.win_stream.ensureUnusedCapacity(self.allocator, cap) catch |err| fun.handleOom(err);
         const base = self.win_stream.items.len;
         self.win_stream.items.len += cap;
         const buf = self.win_stream.items[base..][0..cap];
@@ -803,7 +803,7 @@ pub const Builder = struct {
         const total: usize = stream_offset + self.win_stream.items.len + stream_tail_pad;
 
         var out = MutableString.initEmpty(self.allocator);
-        out.list.resize(self.allocator, total) catch |err| bun.handleOom(err);
+        out.list.resize(self.allocator, total) catch |err| fun.handleOom(err);
         const blob = out.list.items;
 
         @memset(blob[0..24], 0);
@@ -824,7 +824,7 @@ pub const Builder = struct {
 };
 
 /// Decode a standard VLQ "mappings" string and re-encode it as an
-/// InternalSourceMap blob. Used by `bun build --compile` to convert the
+/// InternalSourceMap blob. Used by `fun build --compile` to convert the
 /// bundler's JSON sourcemap once at build time so the standalone executable
 /// can remap stack traces without ever materializing a `Mapping.List`.
 ///
@@ -909,7 +909,7 @@ pub fn fromVLQ(
     blob[8..16].* = @bitCast(mapping_count);
     blob[16..24].* = @bitCast(input_lines);
 
-    const owned = out.list.toOwnedSlice(allocator) catch |err| bun.handleOom(err);
+    const owned = out.list.toOwnedSlice(allocator) catch |err| fun.handleOom(err);
     builder.finalized = null;
     return owned;
 }
@@ -923,5 +923,5 @@ const Mapping = SourceMap.Mapping;
 const SourceMapState = SourceMap.SourceMapState;
 const VLQ = SourceMap.VLQ;
 
-const bun = @import("bun");
-const MutableString = bun.MutableString;
+const fun = @import("fun");
+const MutableString = fun.MutableString;

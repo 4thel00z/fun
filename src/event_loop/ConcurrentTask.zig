@@ -70,8 +70,8 @@ comptime {
 }
 
 pub const Queue = UnboundedQueue(ConcurrentTask, .next);
-pub const new = bun.TrivialNew(@This());
-pub const deinit = bun.TrivialDeinit(@This());
+pub const new = fun.TrivialNew(@This());
+pub const deinit = fun.TrivialDeinit(@This());
 
 pub const AutoDeinit = enum {
     manual_deinit,
@@ -113,9 +113,9 @@ pub fn autoDelete(this: *const ConcurrentTask) bool {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const UnboundedQueue = bun.UnboundedQueue;
+const fun = @import("fun");
+const UnboundedQueue = fun.UnboundedQueue;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ManagedTask = jsc.ManagedTask;
 const Task = jsc.Task;

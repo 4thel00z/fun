@@ -1,5 +1,5 @@
-import { Socket } from "bun";
-import { describe, expect, it } from "bun:test";
+import { Socket } from "fun";
+import { describe, expect, it } from "fun:test";
 import { createReadStream, readFileSync } from "fs";
 import { gcTick, isWindows, tempDirWithFilesAnon } from "harness";
 import http from "http";
@@ -31,14 +31,14 @@ describe.concurrent("fetch() with streaming", () => {
     // This test is flaky.
     // Sometimes, we don't throw if signal.abort(). We need to fix that.
     it.todo(`should be able to fail properly when reading from readable stream with timeout ${timeout}`, async () => {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         async fetch(req) {
           return new Response(
             new ReadableStream({
               async start(controller) {
                 controller.enqueue("Hello, World!");
-                await Bun.sleep(1000);
+                await Fun.sleep(1000);
                 controller.enqueue("Hello, World!");
                 controller.close();
               },
@@ -80,20 +80,20 @@ describe.concurrent("fetch() with streaming", () => {
   });
 
   it(`should be locked after start buffering`, async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response(
           new ReadableStream({
             async start(controller) {
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.close();
             },
           }),
@@ -114,20 +114,20 @@ describe.concurrent("fetch() with streaming", () => {
   });
 
   it(`should be locked after start buffering when calling getReader`, async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response(
           new ReadableStream({
             async start(controller) {
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.enqueue("Hello, World!");
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               controller.close();
             },
           }),
@@ -151,7 +151,7 @@ describe.concurrent("fetch() with streaming", () => {
 
   it("can deflate with and without headers #4478", async () => {
     {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           if (req.url.endsWith("/with_headers")) {
@@ -216,7 +216,7 @@ describe.concurrent("fetch() with streaming", () => {
           if (len <= 0) {
             throw new Error("Request length is 0");
           }
-          await Bun.sleep(50);
+          await Fun.sleep(50);
         }
 
         expect(true).toBe(true);
@@ -229,7 +229,7 @@ describe.concurrent("fetch() with streaming", () => {
   it("stream still works after response get out of scope", async () => {
     {
       const content = "Hello, world!\n".repeat(5);
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -240,13 +240,13 @@ describe.concurrent("fetch() with streaming", () => {
                 const size = data.byteLength / 5;
                 controller.write(data.slice(0, size));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size, size * 2));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 2, size * 3));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 3, size * 5));
                 await controller.flush();
 
@@ -285,8 +285,8 @@ describe.concurrent("fetch() with streaming", () => {
 
   it("response inspected size should reflect stream state", async () => {
     {
-      const content = "Bun!\n".repeat(4);
-      using server = Bun.serve({
+      const content = "Fun!\n".repeat(4);
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -297,13 +297,13 @@ describe.concurrent("fetch() with streaming", () => {
                 const size = data.byteLength / 5;
                 controller.write(data.slice(0, size));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size, size * 2));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 2, size * 3));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 3, size * 4));
                 await controller.flush();
 
@@ -317,7 +317,7 @@ describe.concurrent("fetch() with streaming", () => {
 
       function inspectBytes(response: Response) {
         const match = /Response \(([0-9]+ )bytes\)/g.exec(
-          Bun.inspect(response, {
+          Fun.inspect(response, {
             depth: 0,
           }),
         );
@@ -350,7 +350,7 @@ describe.concurrent("fetch() with streaming", () => {
   it("can handle multiple simultaneos requests", async () => {
     {
       const content = "Hello, world!\n".repeat(5);
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -361,13 +361,13 @@ describe.concurrent("fetch() with streaming", () => {
                 const size = data.byteLength / 5;
                 controller.write(data.slice(0, size));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size, size * 2));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 2, size * 3));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 3, size * 5));
                 await controller.flush();
 
@@ -386,7 +386,7 @@ describe.concurrent("fetch() with streaming", () => {
 
       const server_url = `http://${server.hostname}:${server.port}`;
       async function doRequest() {
-        await Bun.sleep(10);
+        await Fun.sleep(10);
         const res = await fetch(server_url);
         const reader = res.body?.getReader();
         let buffer = Buffer.alloc(0);
@@ -414,7 +414,7 @@ describe.concurrent("fetch() with streaming", () => {
   it(`can handle transforms`, async () => {
     {
       const content = "Hello, world!\n".repeat(5);
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -425,13 +425,13 @@ describe.concurrent("fetch() with streaming", () => {
                 const size = data.byteLength / 5;
                 controller.write(data.slice(0, size));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size, size * 2));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 2, size * 3));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 3, size * 5));
                 await controller.flush();
 
@@ -477,7 +477,7 @@ describe.concurrent("fetch() with streaming", () => {
 
   it(`can handle gz images`, async () => {
     {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           const data = fixtures["fixture.png.gz"];
@@ -512,11 +512,11 @@ describe.concurrent("fetch() with streaming", () => {
     }
   });
 
-  it(`can proxy fetch with Bun.serve`, async () => {
+  it(`can proxy fetch with Fun.serve`, async () => {
     {
       const content = "a".repeat(64 * 1024);
 
-      using server_original = Bun.serve({
+      using server_original = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -527,13 +527,13 @@ describe.concurrent("fetch() with streaming", () => {
                 const size = data.byteLength / 5;
                 controller.write(data.slice(0, size));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size, size * 2));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 2, size * 3));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 3, size * 5));
                 await controller.flush();
 
@@ -550,11 +550,11 @@ describe.concurrent("fetch() with streaming", () => {
         },
       });
 
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         async fetch(req) {
           const response = await fetch(`http://${server_original.hostname}:${server_original.port}`, {});
-          await Bun.sleep(10);
+          await Fun.sleep(10);
           return new Response(response.body, {
             status: 200,
             headers: {
@@ -606,7 +606,7 @@ describe.concurrent("fetch() with streaming", () => {
           //@ts-ignore
           const data_b = fixtureb.data;
           const content = Buffer.concat([data, data_b]);
-          using server = Bun.serve({
+          using server = Fun.serve({
             port: 0,
             fetch(req) {
               return new Response(
@@ -615,7 +615,7 @@ describe.concurrent("fetch() with streaming", () => {
                   async pull(controller) {
                     controller.write(data);
                     await controller.flush();
-                    await Bun.sleep(100);
+                    await Fun.sleep(100);
                     controller.write(data_b);
                     await controller.flush();
                     controller.close();
@@ -666,13 +666,13 @@ describe.concurrent("fetch() with streaming", () => {
     switch (compression) {
       case "gzip-libdeflate":
       case "gzip":
-        return Bun.gzipSync(data, {
+        return Fun.gzipSync(data, {
           library: compression === "gzip-libdeflate" ? "libdeflate" : "zlib",
           level: 1, // fastest compression
         });
       case "deflate-libdeflate":
       case "deflate":
-        return Bun.deflateSync(data, {
+        return Fun.deflateSync(data, {
           library: compression === "deflate-libdeflate" ? "libdeflate" : "zlib",
           level: 1, // fastest compression
         });
@@ -700,7 +700,7 @@ describe.concurrent("fetch() with streaming", () => {
 
     test(`with invalid utf8 with ${compression} compression`, async () => {
       const content = Buffer.concat([invalid, Buffer.from("Hello, world!\n".repeat(5), "utf8"), invalid]);
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -711,13 +711,13 @@ describe.concurrent("fetch() with streaming", () => {
                 const size = data.byteLength / 4;
                 controller.write(data.slice(0, size));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size, size * 2));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 2, size * 3));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 3, size * 4));
                 await controller.flush();
 
@@ -758,7 +758,7 @@ describe.concurrent("fetch() with streaming", () => {
 
     test(`chunked response works (single chunk) with ${compression} compression`, async () => {
       const content = "Hello, world!\n".repeat(5);
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -813,7 +813,7 @@ describe.concurrent("fetch() with streaming", () => {
 
     test(`chunked response works (multiple chunks) with ${compression} compression`, async () => {
       const content = "Hello, world!\n".repeat(5);
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(
@@ -824,13 +824,13 @@ describe.concurrent("fetch() with streaming", () => {
                 const size = data.byteLength / 5;
                 controller.write(data.slice(0, size));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size, size * 2));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 2, size * 3));
                 await controller.flush();
-                await Bun.sleep(100);
+                await Fun.sleep(100);
                 controller.write(data.slice(size * 3, size * 5));
                 await controller.flush();
 
@@ -879,7 +879,7 @@ describe.concurrent("fetch() with streaming", () => {
 
     test(`Content-Length response works (single part) with ${compression} compression`, async () => {
       const content = "a".repeat(1024);
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(req) {
           return new Response(compress(compression, Buffer.from(content)), {
@@ -931,7 +931,7 @@ describe.concurrent("fetch() with streaming", () => {
 
       const data = compress(compression, contentBuffer);
       var onReceivedHeaders = Promise.withResolvers();
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         async fetch(req) {
           return new Response(
@@ -947,7 +947,7 @@ describe.concurrent("fetch() with streaming", () => {
                     await onReceivedHeaders.promise;
                   }
                   remaining = remaining.subarray(chunk.length);
-                  await Bun.sleep(1);
+                  await Fun.sleep(1);
                 }
                 controller.close();
               },
@@ -1018,7 +1018,7 @@ describe.concurrent("fetch() with streaming", () => {
     test(`Extra data should be ignored on streaming (multiple chunks, TCP server) with ${compression} compression`, async () => {
       const parts = 5;
       const content = "Hello".repeat(parts);
-      using server = Bun.listen({
+      using server = Fun.listen({
         port: 0,
         hostname: "0.0.0.0",
         socket: {
@@ -1090,7 +1090,7 @@ describe.concurrent("fetch() with streaming", () => {
     test(`Missing data should timeout on streaming (multiple chunks, TCP server) with ${compression} compression`, async () => {
       const parts = 5;
       const content = "Hello".repeat(parts);
-      using server = Bun.listen({
+      using server = Fun.listen({
         port: 0,
         hostname: "0.0.0.0",
         socket: {
@@ -1168,7 +1168,7 @@ describe.concurrent("fetch() with streaming", () => {
         {
           const parts = 5;
           const content = "Hello".repeat(parts);
-          using server = Bun.listen({
+          using server = Fun.listen({
             port: 0,
             hostname: "0.0.0.0",
             socket: {
@@ -1264,7 +1264,7 @@ describe.concurrent("fetch() with streaming", () => {
       const parts = 5;
       const content = "Hello".repeat(parts);
       const { promise, resolve: resolveSocket } = Promise.withResolvers<Socket>();
-      using server = Bun.listen({
+      using server = Fun.listen({
         port: 0,
         hostname: "0.0.0.0",
         socket: {
@@ -1358,14 +1358,14 @@ describe.concurrent("fetch() with streaming", () => {
     // to drain pending response body bytes. If the server sent headers + first chunk,
     // then stopped sending data (but kept connection open), the read would hang forever.
     //
-    // We use a C server with blocking sockets instead of Bun.listen because Bun's sockets
+    // We use a C server with blocking sockets instead of Fun.listen because Fun's sockets
     // are non-blocking and event-driven, which makes it difficult to reliably reproduce
     // the exact timing conditions needed to trigger this bug. The C server uses blocking
     // write() calls that ensure data is buffered in the kernel before the server stops
     // sending, forcing the HTTP client to drain the response body from the HTTP thread.
     const dir = tempDirWithFilesAnon({ "a": "// a" });
     {
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
           "cc",
           "-Wno-error",
@@ -1382,7 +1382,7 @@ describe.concurrent("fetch() with streaming", () => {
       expect(await proc.exited).toBe(0);
     }
 
-    await using server = Bun.spawn({
+    await using server = Fun.spawn({
       cmd: [path.join(dir, "http-chunked-server")],
       stdout: "pipe",
       stderr: "inherit",

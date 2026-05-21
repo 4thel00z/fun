@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "node:events";
 import { connect, createServer } from "node:net";
 
-// https://github.com/oven-sh/bun/issues/29283
-// https://github.com/oven-sh/bun/issues/12306
+// https://github.com/underdoc-org/fun/issues/29283
+// https://github.com/underdoc-org/fun/issues/12306
 //
 // `socket.setTimeout()` is an inactivity timer in Node.js: it must be
 // reset by any socket activity, including incoming data. Before this
-// fix, Bun only refreshed the timer in `_write()`, so a socket that
+// fix, Fun only refreshed the timer in `_write()`, so a socket that
 // was actively receiving data but not writing would incorrectly emit
 // `timeout` after the configured interval.
 test("Socket.setTimeout resets on incoming data", async () => {

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("Module._extensions override should not allow TypeScript syntax in .js files", async () => {
   using dir = tempDir("module-extensions-ts-in-js", {
@@ -28,9 +28,9 @@ test("Module._extensions override should not allow TypeScript syntax in .js file
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -70,9 +70,9 @@ test("Module._extensions override should not allow JSX syntax in .js files", asy
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -164,9 +164,9 @@ test("Module._extensions override should preserve loader type for each extension
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -213,9 +213,9 @@ test("Module._extensions override with custom function should not affect loader 
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -268,9 +268,9 @@ test("Module._extensions override should handle cross-assignment correctly", asy
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -318,9 +318,9 @@ test("Module._extensions override chain should preserve correct loader", async (
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -390,9 +390,9 @@ test("Module._extensions override should handle .mjs and .cjs correctly", async 
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -439,9 +439,9 @@ test("Module._extensions override should not affect JSON parsing", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

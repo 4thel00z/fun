@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 for (let backend of ["api", "cli"] as const) {

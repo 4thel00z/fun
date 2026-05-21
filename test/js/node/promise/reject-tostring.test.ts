@@ -1,17 +1,17 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("reject does not call toString", () => {
-  const node_result = Bun.spawnSync({
+  const node_result = Fun.spawnSync({
     cmd: ["node", "--unhandled-rejections=throw", import.meta.dir + "/reject-tostring.js"],
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const bun_result = Bun.spawnSync({
-    cmd: [bunExe(), "--unhandled-rejections=throw", import.meta.dir + "/reject-tostring.js"],
+  const fun_result = Fun.spawnSync({
+    cmd: [funExe(), "--unhandled-rejections=throw", import.meta.dir + "/reject-tostring.js"],
     stdio: ["ignore", "pipe", "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
-  expect(bun_result.stderr.toString().split("\n")).toEqual(node_result.stderr.toString().split("\n"));
-  expect(bun_result.exitCode).toBe(node_result.exitCode);
-  expect(bun_result.stdout.toString().split("\n")).toEqual(node_result.stdout.toString().split("\n"));
+  expect(fun_result.stderr.toString().split("\n")).toEqual(node_result.stderr.toString().split("\n"));
+  expect(fun_result.exitCode).toBe(node_result.exitCode);
+  expect(fun_result.stdout.toString().split("\n")).toEqual(node_result.stdout.toString().split("\n"));
 });

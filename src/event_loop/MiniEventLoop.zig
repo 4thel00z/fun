@@ -2,8 +2,8 @@
 //!
 //! This is a simplified version of jsc.EventLoop that provides event loop functionality
 //! without requiring a JavaScript runtime. It enables code reuse between JavaScript-enabled
-//! contexts (like `bun run`) and JavaScript-free contexts (like `bun build`, `bun install`,
-//! and the Bun Shell).
+//! contexts (like `fun run`) and JavaScript-free contexts (like `fun build`, `fun install`,
+//! and the Fun Shell).
 //!
 //! Key characteristics:
 //! - Wraps the uSockets event loop, same as jsc.EventLoop
@@ -16,7 +16,7 @@
 //! - Build processes that need async I/O without JavaScript execution
 //! - Package installation with concurrent network requests
 //! - Shell command execution with proper I/O handling
-//! - Any Bun subsystem that needs event-driven architecture without JS overhead
+//! - Any Fun subsystem that needs event-driven architecture without JS overhead
 //!
 
 const MiniEventLoop = @This();
@@ -26,13 +26,13 @@ concurrent_tasks: ConcurrentTaskQueue = .{},
 loop: *uws.Loop,
 allocator: std.mem.Allocator,
 file_polls_: ?*Async.FilePoll.Store = null,
-env: ?*bun.DotEnv.Loader = null,
+env: ?*fun.DotEnv.Loader = null,
 top_level_dir: []const u8 = "",
 after_event_loop_callback_ctx: ?*anyopaque = null,
 after_event_loop_callback: ?jsc.OpaqueCallback = null,
 pipe_read_buffer: ?*PipeReadBuffer = null,
-stdout_store: ?*bun.webcore.Blob.Store = null,
-stderr_store: ?*bun.webcore.Blob.Store = null,
+stdout_store: ?*fun.webcore.Blob.Store = null,
+stderr_store: ?*fun.webcore.Blob.Store = null,
 const PipeReadBuffer = [256 * 1024]u8;
 
 pub threadlocal var globalInitialized: bool = false;
@@ -40,18 +40,18 @@ pub threadlocal var global: *MiniEventLoop = undefined;
 
 pub const ConcurrentTaskQueue = UnboundedQueue(AnyTaskWithExtraContext, .next);
 
-pub fn initGlobal(env: ?*bun.DotEnv.Loader, cwd: ?[]const u8) *MiniEventLoop {
+pub fn initGlobal(env: ?*fun.DotEnv.Loader, cwd: ?[]const u8) *MiniEventLoop {
     if (globalInitialized) return global;
-    const loop = MiniEventLoop.init(bun.default_allocator);
-    global = bun.handleOom(bun.default_allocator.create(MiniEventLoop));
+    const loop = MiniEventLoop.init(fun.default_allocator);
+    global = fun.handleOom(fun.default_allocator.create(MiniEventLoop));
     global.* = loop;
-    global.loop.internal_loop_data.setParentEventLoop(bun.jsc.EventLoopHandle.init(global));
-    global.env = env orelse bun.DotEnv.instance orelse env_loader: {
-        const map = bun.handleOom(bun.default_allocator.create(bun.DotEnv.Map));
-        map.* = bun.DotEnv.Map.init(bun.default_allocator);
+    global.loop.internal_loop_data.setParentEventLoop(fun.jsc.EventLoopHandle.init(global));
+    global.env = env orelse fun.DotEnv.instance orelse env_loader: {
+        const map = fun.handleOom(fun.default_allocator.create(fun.DotEnv.Map));
+        map.* = fun.DotEnv.Map.init(fun.default_allocator);
 
-        const loader = bun.handleOom(bun.default_allocator.create(bun.DotEnv.Loader));
-        loader.* = bun.DotEnv.Loader.init(map, bun.default_allocator);
+        const loader = fun.handleOom(fun.default_allocator.create(fun.DotEnv.Loader));
+        loader.* = fun.DotEnv.Loader.init(map, fun.default_allocator);
         break :env_loader loader;
     };
 
@@ -59,10 +59,10 @@ pub fn initGlobal(env: ?*bun.DotEnv.Loader, cwd: ?[]const u8) *MiniEventLoop {
     if (cwd) |dir| {
         global.top_level_dir = dir;
     } else if (global.top_level_dir.len == 0) {
-        var buf: bun.PathBuffer = undefined;
-        switch (bun.sys.getcwd(&buf)) {
+        var buf: fun.PathBuffer = undefined;
+        switch (fun.sys.getcwd(&buf)) {
             .result => |p| {
-                global.top_level_dir = bun.default_allocator.dupe(u8, p) catch "";
+                global.top_level_dir = fun.default_allocator.dupe(u8, p) catch "";
             },
             .err => {
                 global.top_level_dir = "";
@@ -74,7 +74,7 @@ pub fn initGlobal(env: ?*bun.DotEnv.Loader, cwd: ?[]const u8) *MiniEventLoop {
     return global;
 }
 
-const Queue = bun.LinearFifo(*AnyTaskWithExtraContext, .Dynamic);
+const Queue = fun.LinearFifo(*AnyTaskWithExtraContext, .Dynamic);
 
 pub const Task = AnyTaskWithExtraContext;
 
@@ -82,14 +82,14 @@ pub inline fn getVmImpl(this: *MiniEventLoop) *MiniEventLoop {
     return this;
 }
 
-pub fn throwError(_: *MiniEventLoop, err: bun.sys.Error) void {
-    bun.Output.prettyErrorln("{}", .{err});
-    bun.Output.flush();
+pub fn throwError(_: *MiniEventLoop, err: fun.sys.Error) void {
+    fun.Output.prettyErrorln("{}", .{err});
+    fun.Output.flush();
 }
 
 pub fn pipeReadBuffer(this: *MiniEventLoop) []u8 {
     return this.pipe_read_buffer orelse {
-        this.pipe_read_buffer = bun.handleOom(this.allocator.create(PipeReadBuffer));
+        this.pipe_read_buffer = fun.handleOom(this.allocator.create(PipeReadBuffer));
         return this.pipe_read_buffer.?;
     };
 }
@@ -105,7 +105,7 @@ pub fn onAfterEventLoop(this: *MiniEventLoop) void {
 
 pub fn filePolls(this: *MiniEventLoop) *Async.FilePoll.Store {
     return this.file_polls_ orelse {
-        this.file_polls_ = bun.handleOom(this.allocator.create(Async.FilePoll.Store));
+        this.file_polls_ = fun.handleOom(this.allocator.create(Async.FilePoll.Store));
         this.file_polls_.?.* = Async.FilePoll.Store.init();
         return this.file_polls_.?;
     };
@@ -123,7 +123,7 @@ pub fn init(
 
 pub fn deinit(this: *MiniEventLoop) void {
     this.tasks.deinit();
-    bun.assert(this.concurrent_tasks.isEmpty());
+    fun.assert(this.concurrent_tasks.isEmpty());
 }
 
 pub fn tickConcurrentWithCount(this: *MiniEventLoop) usize {
@@ -239,10 +239,10 @@ pub fn enqueueTaskConcurrentWithExtraCtx(
 
 pub fn stderr(this: *MiniEventLoop) *jsc.WebCore.Blob.Store {
     return this.stderr_store orelse brk: {
-        var mode: bun.Mode = 0;
-        const fd = bun.FD.fromUV(2);
+        var mode: fun.Mode = 0;
+        const fd = fun.FD.fromUV(2);
 
-        switch (bun.sys.fstat(fd)) {
+        switch (fun.sys.fstat(fd)) {
             .result => |stat| {
                 mode = @intCast(stat.mode);
             },
@@ -251,13 +251,13 @@ pub fn stderr(this: *MiniEventLoop) *jsc.WebCore.Blob.Store {
 
         const store = jsc.WebCore.Blob.Store.new(.{
             .ref_count = std.atomic.Value(u32).init(2),
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
             .data = .{
                 .file = .{
                     .pathlike = .{
                         .fd = fd,
                     },
-                    .is_atty = bun.Output.stderr_descriptor_type == .terminal,
+                    .is_atty = fun.Output.stderr_descriptor_type == .terminal,
                     .mode = mode,
                 },
             },
@@ -270,10 +270,10 @@ pub fn stderr(this: *MiniEventLoop) *jsc.WebCore.Blob.Store {
 
 pub fn stdout(this: *MiniEventLoop) *jsc.WebCore.Blob.Store {
     return this.stdout_store orelse brk: {
-        var mode: bun.Mode = 0;
-        const fd = bun.FD.stdout();
+        var mode: fun.Mode = 0;
+        const fd = fun.FD.stdout();
 
-        switch (bun.sys.fstat(fd)) {
+        switch (fun.sys.fstat(fd)) {
             .result => |stat| {
                 mode = @intCast(stat.mode);
             },
@@ -282,13 +282,13 @@ pub fn stdout(this: *MiniEventLoop) *jsc.WebCore.Blob.Store {
 
         const store = jsc.WebCore.Blob.Store.new(.{
             .ref_count = std.atomic.Value(u32).init(2),
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
             .data = .{
                 .file = .{
                     .pathlike = .{
                         .fd = fd,
                     },
-                    .is_atty = bun.Output.stdout_descriptor_type == .terminal,
+                    .is_atty = fun.Output.stdout_descriptor_type == .terminal,
                     .mode = mode,
                 },
             },
@@ -312,7 +312,7 @@ pub const JsVM = struct {
         return this.vm.event_loop;
     }
 
-    pub inline fn allocFilePoll(this: @This()) *bun.Async.FilePoll {
+    pub inline fn allocFilePoll(this: @This()) *fun.Async.FilePoll {
         return this.vm.rareData().filePolls(this.vm).get();
     }
 
@@ -342,7 +342,7 @@ pub const MiniVM = struct {
         return this.mini;
     }
 
-    pub inline fn allocFilePoll(this: @This()) *bun.Async.FilePoll {
+    pub inline fn allocFilePoll(this: @This()) *fun.Async.FilePoll {
         return this.mini.filePolls().get();
     }
 
@@ -401,13 +401,13 @@ pub fn AbstractVM(inner: anytype) switch (@TypeOf(inner)) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
-const uws = bun.uws;
-const UnboundedQueue = bun.threading.UnboundedQueue;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;
+const uws = fun.uws;
+const UnboundedQueue = fun.threading.UnboundedQueue;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const AnyTaskWithExtraContext = jsc.AnyTaskWithExtraContext;
 const EventLoop = jsc.EventLoop;
 const VirtualMachine = jsc.VirtualMachine;

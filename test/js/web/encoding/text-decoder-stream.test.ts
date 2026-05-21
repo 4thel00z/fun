@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { readableStreamFromArray } from "harness";
 
 {
@@ -24,7 +24,7 @@ import { readableStreamFromArray } from "harness";
       async () => {
         const input = readableStreamFromArray([inputChunk]);
         const output = input.pipeThrough(new TextDecoderStream());
-        const array = await Bun.readableStreamToArray(output);
+        const array = await Fun.readableStreamToArray(output);
         expect(array, "the output should be in one chunk").toEqual([expectedOutputString]);
       },
     );
@@ -32,21 +32,21 @@ import { readableStreamFromArray } from "harness";
     test("decoding an empty chunk should give no output chunks - " + arrayBufferOrSharedArrayBuffer.name, async () => {
       const input = readableStreamFromArray([emptyChunk]);
       const output = input.pipeThrough(new TextDecoderStream());
-      const array = await Bun.readableStreamToArray(output);
+      const array = await Fun.readableStreamToArray(output);
       expect(array, "no chunks should be output").toEqual([]);
     });
 
     test("an initial empty chunk should be ignored - " + arrayBufferOrSharedArrayBuffer.name, async () => {
       const input = readableStreamFromArray([emptyChunk, inputChunk]);
       const output = input.pipeThrough(new TextDecoderStream());
-      const array = await Bun.readableStreamToArray(output);
+      const array = await Fun.readableStreamToArray(output);
       expect(array, "the output should be in one chunk").toEqual([expectedOutputString]);
     });
 
     test("a trailing empty chunk should be ignored - " + arrayBufferOrSharedArrayBuffer.name, async () => {
       const input = readableStreamFromArray([inputChunk, emptyChunk]);
       const output = input.pipeThrough(new TextDecoderStream());
-      const array = await Bun.readableStreamToArray(output);
+      const array = await Fun.readableStreamToArray(output);
       expect(array, "the output should be in one chunk").toEqual([expectedOutputString]);
     });
 
@@ -55,7 +55,7 @@ import { readableStreamFromArray } from "harness";
       chunk.set([0xf0, 0x9f, 0x92]);
       const input = readableStreamFromArray([chunk]);
       const output = input.pipeThrough(new TextDecoderStream());
-      const array = await Bun.readableStreamToArray(output);
+      const array = await Fun.readableStreamToArray(output);
       expect(array).toEqual(["\uFFFD"]);
     });
   });
@@ -67,7 +67,7 @@ import { readableStreamFromArray } from "harness";
     new MessageChannel().port1.postMessage(buffer, [buffer]);
     const input = readableStreamFromArray([view]);
     const output = input.pipeThrough(new TextDecoderStream());
-    const array = await Bun.readableStreamToArray(output);
+    const array = await Fun.readableStreamToArray(output);
     expect(array, "no chunks should be output").toEqual([]);
   });
 
@@ -76,7 +76,7 @@ import { readableStreamFromArray } from "harness";
     new MessageChannel().port1.postMessage(buffer, [buffer]);
     const input = readableStreamFromArray([buffer]);
     const output = input.pipeThrough(new TextDecoderStream());
-    const array = await Bun.readableStreamToArray(output);
+    const array = await Fun.readableStreamToArray(output);
     expect(array, "no chunks should be output").toEqual([]);
   });
 }

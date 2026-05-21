@@ -2,7 +2,7 @@
  * Node.js headers — for N-API compatibility.
  *
  * Downloaded from nodejs.org releases. Headers-only (no libs). After
- * extraction we delete `openssl/` and `uv/` subdirs — bun uses BoringSSL
+ * extraction we delete `openssl/` and `uv/` subdirs — fun uses BoringSSL
  * (not OpenSSL) and its own libuv, and the bundled headers conflict.
  */
 

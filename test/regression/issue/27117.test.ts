@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("CSS bundler should not drop :root rule before @property", async () => {
   using dir = tempDir("css-property-root-dedup", {
@@ -19,9 +19,9 @@ test("CSS bundler should not drop :root rule before @property", async () => {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "input.css", "--outdir", "out"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "input.css", "--outdir", "out"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -29,7 +29,7 @@ test("CSS bundler should not drop :root rule before @property", async () => {
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  const output = await Bun.file(`${dir}/out/input.css`).text();
+  const output = await Fun.file(`${dir}/out/input.css`).text();
 
   // Both :root blocks must be preserved — they cannot be merged across the @property boundary
   expect(output).toContain("--bar: 1");

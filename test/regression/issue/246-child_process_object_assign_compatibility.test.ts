@@ -1,7 +1,7 @@
 // Regression test for https://github.com/microlinkhq/youtube-dl-exec/issues/246
 // Child process stdio properties should be enumerable for Object.assign() compatibility
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { spawn } from "child_process";
 
 test("child process stdio properties should be enumerable for Object.assign()", () => {
@@ -46,7 +46,7 @@ test("tinyspawn-like library usage should work", () => {
     childProcess.on("exit", () => resolve(childProcess));
   });
 
-  // This is the critical line that was failing in Bun
+  // This is the critical line that was failing in Fun
   const subprocess = Object.assign(promise, childProcess);
 
   // Should have stdio properties immediately after Object.assign

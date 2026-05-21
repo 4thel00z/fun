@@ -61,7 +61,7 @@ fn next(this: *Ls) Yield {
                 if (paths) |p| {
                     const print_directory = p.len > 1;
                     for (p) |path_raw| {
-                        const path = bun.handleOom(this.alloc_scope.allocator().dupeZ(u8, path_raw[0..std.mem.len(path_raw) :0]));
+                        const path = fun.handleOom(this.alloc_scope.allocator().dupeZ(u8, path_raw[0..std.mem.len(path_raw) :0]));
                         var task = ShellLsTask.create(
                             this,
                             this.opts,
@@ -132,7 +132,7 @@ pub fn onShellLsTaskDone(this: *Ls, task: *ShellLsTask) void {
     var output = task.takeOutput();
 
     // TODO: Reuse the *ShellLsTask allocation
-    const output_task: *ShellLsOutputTask = bun.new(ShellLsOutputTask, .{
+    const output_task: *ShellLsOutputTask = fun.new(ShellLsOutputTask, .{
         .parent = this,
         .output = .{
             .arrlist = brk: {
@@ -211,7 +211,7 @@ const ShellLsOutputTaskVTable = struct {
 };
 
 pub const ShellLsTask = struct {
-    const debug = bun.Output.scoped(.ShellLsTask, .hidden);
+    const debug = fun.Output.scoped(.ShellLsTask, .hidden);
     ls: *Ls,
     opts: Opts,
 
@@ -219,7 +219,7 @@ pub const ShellLsTask = struct {
     owned_string: bool,
     task_count: *std.atomic.Value(usize),
 
-    cwd: bun.FD,
+    cwd: fun.FD,
     path: [:0]const u8 = &[0:0]u8{},
     output: std.array_list.Managed(u8),
     is_absolute: bool = false,
@@ -241,7 +241,7 @@ pub const ShellLsTask = struct {
         ls: *Ls,
         opts: Opts,
         task_count: *std.atomic.Value(usize),
-        cwd: bun.FD,
+        cwd: fun.FD,
         path: [:0]const u8,
         owned_string: bool,
         event_loop: jsc.EventLoopHandle,
@@ -250,7 +250,7 @@ pub const ShellLsTask = struct {
         // scope and NOT a string literal or other string we don't own.
         if (owned_string) ls.alloc_scope.assertInScope(path);
 
-        const task = bun.handleOom(ls.alloc_scope.allocator().create(@This()));
+        const task = fun.handleOom(ls.alloc_scope.allocator().create(@This()));
         task.* = @This(){
             .ls = ls,
             .opts = opts,
@@ -287,10 +287,10 @@ pub const ShellLsTask = struct {
         if (!is_absolute) {
             // If relative paths enabled, stdlib join is preferred over
             // ResolvePath.joinBuf because it doesn't try to normalize the path
-            return bun.handleOom(std.fs.path.joinZ(alloc, subdir_parts));
+            return fun.handleOom(std.fs.path.joinZ(alloc, subdir_parts));
         }
 
-        const out = bun.handleOom(alloc.dupeZ(u8, bun.path.join(subdir_parts, .auto)));
+        const out = fun.handleOom(alloc.dupeZ(u8, fun.path.join(subdir_parts, .auto)));
 
         return out;
     }
@@ -301,7 +301,7 @@ pub const ShellLsTask = struct {
             this.#now_secs = @intCast(std.time.timestamp());
         }
 
-        const fd = switch (ShellSyscall.openat(this.cwd, this.path, bun.O.RDONLY | bun.O.DIRECTORY, 0)) {
+        const fd = switch (ShellSyscall.openat(this.cwd, this.path, fun.O.RDONLY | fun.O.DIRECTORY, 0)) {
             .err => |e| {
                 switch (e.getErrno()) {
                     .NOENT => {
@@ -328,7 +328,7 @@ pub const ShellLsTask = struct {
         if (!this.opts.list_directories) {
             if (this.print_directory) {
                 const writer = this.output.writer();
-                bun.handleOom(writer.print("{s}:\n", .{this.path}));
+                fun.handleOom(writer.print("{s}:\n", .{this.path}));
             }
 
             var iterator = DirIterator.iterate(fd, .u8);
@@ -356,7 +356,7 @@ pub const ShellLsTask = struct {
         }
 
         const writer = this.output.writer();
-        bun.handleOom(writer.print("{s}\n", .{this.path}));
+        fun.handleOom(writer.print("{s}\n", .{this.path}));
         return;
     }
 
@@ -366,16 +366,16 @@ pub const ShellLsTask = struct {
         // Show all directory entries whose name begin with a dot (`.`), EXCEPT
         // `.` and `..`
         if (this.opts.show_almost_all) {
-            if (bun.strings.eqlComptime(name, ".") or bun.strings.eqlComptime(name, "..")) return true;
+            if (fun.strings.eqlComptime(name, ".") or fun.strings.eqlComptime(name, "..")) return true;
         } else {
-            if (bun.strings.startsWith(name, ".")) return true;
+            if (fun.strings.startsWith(name, ".")) return true;
         }
 
         return false;
     }
 
     // TODO more complex output like multi-column
-    fn addEntry(this: *@This(), name: [:0]const u8, dir_fd: bun.FD) void {
+    fn addEntry(this: *@This(), name: [:0]const u8, dir_fd: fun.FD) void {
         const skip = this.shouldSkipEntry(name);
         debug("Entry: (skip={}) {s} :: {s}", .{ skip, this.path, name });
         if (skip) return;
@@ -383,20 +383,20 @@ pub const ShellLsTask = struct {
         if (this.opts.long_listing) {
             this.addEntryLong(name, dir_fd);
         } else {
-            bun.handleOom(this.output.ensureUnusedCapacity(name.len + 1));
-            bun.handleOom(this.output.appendSlice(name));
-            bun.handleOom(this.output.append('\n'));
+            fun.handleOom(this.output.ensureUnusedCapacity(name.len + 1));
+            fun.handleOom(this.output.appendSlice(name));
+            fun.handleOom(this.output.append('\n'));
         }
     }
 
-    fn addEntryLong(this: *@This(), name: [:0]const u8, dir_fd: bun.FD) void {
+    fn addEntryLong(this: *@This(), name: [:0]const u8, dir_fd: fun.FD) void {
         // Use lstatat to not follow symlinks (so symlinks show as 'l' type)
         const stat_result = Syscall.lstatat(dir_fd, name);
         const stat = switch (stat_result) {
             .err => {
                 // If stat fails, just output the name with placeholders
                 const writer = this.output.writer();
-                bun.handleOom(writer.print("?????????? ? ? ? ?            ? {s}\n", .{name}));
+                fun.handleOom(writer.print("?????????? ? ? ? ?            ? {s}\n", .{name}));
                 return;
             },
             .result => |s| s,
@@ -423,7 +423,7 @@ pub const ShellLsTask = struct {
         const mtime = stat.mtime();
         const time_str = formatTime(@intCast(mtime.sec), this.#now_secs);
 
-        bun.handleOom(writer.print("{c}{s} {d: >3} {d: >5} {d: >5} {d: >8} {s} {s}\n", .{
+        fun.handleOom(writer.print("{c}{s} {d: >3} {d: >5} {d: >5} {d: >8} {s} {s}\n", .{
             file_type,
             &perms,
             nlink,
@@ -436,14 +436,14 @@ pub const ShellLsTask = struct {
     }
 
     fn getFileTypeChar(mode: u32) u8 {
-        const file_type = mode & bun.S.IFMT;
+        const file_type = mode & fun.S.IFMT;
         return switch (file_type) {
-            bun.S.IFDIR => 'd',
-            bun.S.IFLNK => 'l',
-            bun.S.IFBLK => 'b',
-            bun.S.IFCHR => 'c',
-            bun.S.IFIFO => 'p',
-            bun.S.IFSOCK => 's',
+            fun.S.IFDIR => 'd',
+            fun.S.IFLNK => 'l',
+            fun.S.IFBLK => 'b',
+            fun.S.IFCHR => 'c',
+            fun.S.IFIFO => 'p',
+            fun.S.IFSOCK => 's',
             else => '-', // IFREG or unknown
         };
     }
@@ -451,33 +451,33 @@ pub const ShellLsTask = struct {
     fn formatPermissions(mode: u32) [9]u8 {
         var perms: [9]u8 = undefined;
         // Owner permissions
-        perms[0] = if (mode & bun.S.IRUSR != 0) 'r' else '-';
-        perms[1] = if (mode & bun.S.IWUSR != 0) 'w' else '-';
+        perms[0] = if (mode & fun.S.IRUSR != 0) 'r' else '-';
+        perms[1] = if (mode & fun.S.IWUSR != 0) 'w' else '-';
         // Owner execute with setuid handling
-        const owner_exec = mode & bun.S.IXUSR != 0;
-        const setuid = mode & bun.S.ISUID != 0;
+        const owner_exec = mode & fun.S.IXUSR != 0;
+        const setuid = mode & fun.S.ISUID != 0;
         perms[2] = if (setuid)
             (if (owner_exec) 's' else 'S')
         else
             (if (owner_exec) 'x' else '-');
 
         // Group permissions
-        perms[3] = if (mode & bun.S.IRGRP != 0) 'r' else '-';
-        perms[4] = if (mode & bun.S.IWGRP != 0) 'w' else '-';
+        perms[3] = if (mode & fun.S.IRGRP != 0) 'r' else '-';
+        perms[4] = if (mode & fun.S.IWGRP != 0) 'w' else '-';
         // Group execute with setgid handling
-        const group_exec = mode & bun.S.IXGRP != 0;
-        const setgid = mode & bun.S.ISGID != 0;
+        const group_exec = mode & fun.S.IXGRP != 0;
+        const setgid = mode & fun.S.ISGID != 0;
         perms[5] = if (setgid)
             (if (group_exec) 's' else 'S')
         else
             (if (group_exec) 'x' else '-');
 
         // Other permissions
-        perms[6] = if (mode & bun.S.IROTH != 0) 'r' else '-';
-        perms[7] = if (mode & bun.S.IWOTH != 0) 'w' else '-';
+        perms[6] = if (mode & fun.S.IROTH != 0) 'r' else '-';
+        perms[7] = if (mode & fun.S.IWOTH != 0) 'w' else '-';
         // Other execute with sticky bit handling
-        const other_exec = mode & bun.S.IXOTH != 0;
-        const sticky = mode & bun.S.ISVTX != 0;
+        const other_exec = mode & fun.S.IXOTH != 0;
+        const sticky = mode & fun.S.ISVTX != 0;
         perms[8] = if (sticky)
             (if (other_exec) 't' else 'T')
         else
@@ -531,7 +531,7 @@ pub const ShellLsTask = struct {
         return buf;
     }
 
-    fn addDotEntriesIfNeeded(this: *@This(), dir_fd: bun.FD) void {
+    fn addDotEntriesIfNeeded(this: *@This(), dir_fd: fun.FD) void {
         // `.addEntry()` already checks will check if we can add "." and ".." to
         // the result
         this.addEntry(".", dir_fd);
@@ -540,7 +540,7 @@ pub const ShellLsTask = struct {
 
     fn errorWithPath(this: *@This(), err: Syscall.Error, path: [:0]const u8) Syscall.Error {
         debug("Ls(0x{x}).errorWithPath({s})", .{ @intFromPtr(this), path });
-        return err.withPath(bun.handleOom(this.ls.alloc_scope.allocator().dupeZ(u8, path[0..path.len])));
+        return err.withPath(fun.handleOom(this.ls.alloc_scope.allocator().dupeZ(u8, path[0..path.len])));
     }
 
     pub fn workPoolCallback(task: *jsc.WorkPoolTask) void {
@@ -1001,7 +1001,7 @@ pub inline fn bltn(this: *Ls) *Builtin {
     return @fieldParentPtr("impl", impl);
 }
 
-const log = bun.Output.scoped(.ls, .hidden);
+const log = fun.Output.scoped(.ls, .hidden);
 
 const std = @import("std");
 const Allocator = std.mem.Allocator;
@@ -1016,11 +1016,11 @@ const ShellSyscall = interpreter.ShellSyscall;
 const Builtin = Interpreter.Builtin;
 const Result = Interpreter.Builtin.Result;
 
-const bun = @import("bun");
-const DirIterator = bun.DirIterator;
-const Syscall = bun.sys;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const DirIterator = fun.DirIterator;
+const Syscall = fun.sys;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
-const Yield = bun.shell.Yield;
+const Yield = fun.shell.Yield;

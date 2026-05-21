@@ -1,7 +1,7 @@
-// Regression test for https://github.com/oven-sh/bun/issues/24593
+// Regression test for https://github.com/underdoc-org/fun/issues/24593
 // WebSocket server.publish() crashes on Windows with perMessageDeflate enabled for large messages
-import { serve } from "bun";
-import { describe, expect, test } from "bun:test";
+import { serve } from "fun";
+import { describe, expect, test } from "fun:test";
 
 // Generate a realistic ~109KB JSON message similar to the original reproduction
 function generateLargeMessage(): string {

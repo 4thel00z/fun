@@ -26,7 +26,7 @@ pub const Decompressor = union(enum) {
                         buffer,
                         &body_out_str.list,
                         body_out_str.allocator,
-                        bun.http.default_allocator,
+                        fun.http.default_allocator,
                         .{
                             // zlib.MAX_WBITS = 15
                             // to (de-)compress deflate format, use wbits = -zlib.MAX_WBITS
@@ -53,7 +53,7 @@ pub const Decompressor = union(enum) {
                         buffer,
                         &body_out_str.list,
                         body_out_str.allocator,
-                        bun.http.default_allocator,
+                        fun.http.default_allocator,
                     );
                     this.* = .{ .zstd = reader };
                     return;
@@ -64,7 +64,7 @@ pub const Decompressor = union(enum) {
 
         switch (this.*) {
             .zlib => |reader| {
-                bun.assert(reader.zlib.avail_in == 0);
+                fun.assert(reader.zlib.avail_in == 0);
                 reader.zlib.next_in = buffer.ptr;
                 reader.zlib.avail_in = @as(u32, @truncate(buffer.len));
 
@@ -113,7 +113,7 @@ pub const Decompressor = union(enum) {
 const Zlib = @import("../zlib/zlib.zig");
 const Encoding = @import("../http_types/Encoding.zig").Encoding;
 
-const bun = @import("bun");
-const Brotli = bun.brotli;
-const MutableString = bun.MutableString;
-const zstd = bun.zstd;
+const fun = @import("fun");
+const Brotli = fun.brotli;
+const MutableString = fun.MutableString;
+const zstd = fun.zstd;

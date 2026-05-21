@@ -1,7 +1,7 @@
-import { file, serve } from "bun";
-import { describe, expect, test } from "bun:test";
+import { file, serve } from "fun";
+import { describe, expect, test } from "fun:test";
 
-describe("Bun.serve()", () => {
+describe("Fun.serve()", () => {
   const tls = {
     cert: file(new URL("../fixtures/cert.pem", import.meta.url)),
     key: file(new URL("../fixtures/cert.key", import.meta.url)),

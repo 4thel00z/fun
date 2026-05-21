@@ -13,18 +13,18 @@
 #include "wtf/Forward.h"
 
 #include "NativeModuleImpl.h"
-namespace Bun {
+namespace Fun {
 
-extern "C" bool BunTest__shouldGenerateCodeCoverage(BunString sourceURL);
-extern "C" void ByteRangeMapping__generate(BunString sourceURL, BunString code, int sourceID);
+extern "C" bool FunTest__shouldGenerateCodeCoverage(FunString sourceURL);
+extern "C" void ByteRangeMapping__generate(FunString sourceURL, FunString code, int sourceID);
 
 static void maybeAddCodeCoverage(JSC::VM& vm, const JSC::SourceCode& code)
 {
 #if ASSERT_ENABLED
     bool isCodeCoverageEnabled = !!vm.controlFlowProfiler();
-    bool shouldGenerateCodeCoverage = isCodeCoverageEnabled && BunTest__shouldGenerateCodeCoverage(Bun::toString(code.provider()->sourceURL()));
+    bool shouldGenerateCodeCoverage = isCodeCoverageEnabled && FunTest__shouldGenerateCodeCoverage(Fun::toString(code.provider()->sourceURL()));
     if (shouldGenerateCodeCoverage) {
-        ByteRangeMapping__generate(Bun::toString(code.provider()->sourceURL()), Bun::toString(code.provider()->source().toStringWithoutCopying()), code.provider()->asID());
+        ByteRangeMapping__generate(Fun::toString(code.provider()->sourceURL()), Fun::toString(code.provider()->source().toStringWithoutCopying()), code.provider()->asID());
     }
 #endif
 }
@@ -68,7 +68,7 @@ JSC::JSValue generateModule(JSC::JSGlobalObject* globalObject, JSC::VM& vm, cons
     RETURN_IF_EXCEPTION(throwScope, {});
     ASSERT(
         result && result.isCell() && dynamicDowncast<JSObject>(result),
-        "Expected \"%s\" to export a JSObject. Bun is going to crash.",
+        "Expected \"%s\" to export a JSObject. Fun is going to crash.",
         moduleName.utf8().span().data());
     return result;
 }
@@ -97,16 +97,16 @@ ALWAYS_INLINE JSC::JSValue generateNativeModule(
     return defaultValue;
 }
 
-#ifdef BUN_DYNAMIC_JS_LOAD_PATH
+#ifdef FUN_DYNAMIC_JS_LOAD_PATH
 JSValue initializeInternalModuleFromDisk(JSGlobalObject* globalObject, VM& vm, const WTF::String& moduleName, WTF::String fileBase, const WTF::String& urlString)
 {
-    WTF::String file = makeString(ASCIILiteral::fromLiteralUnsafe(BUN_DYNAMIC_JS_LOAD_PATH), "/"_s, WTF::move(fileBase));
+    WTF::String file = makeString(ASCIILiteral::fromLiteralUnsafe(FUN_DYNAMIC_JS_LOAD_PATH), "/"_s, WTF::move(fileBase));
     if (auto contents = WTF::FileSystemImpl::readEntireFile(file)) {
         auto string = WTF::String::fromUTF8(contents.value());
         return generateModule(globalObject, vm, string, moduleName, urlString);
     } else {
-        printf("\nFATAL: bun-debug failed to load bundled version of \"%s\" at \"%s\" (was it deleted?)\n"
-               "Please re-compile Bun to continue.\n\n",
+        printf("\nFATAL: fun-debug failed to load bundled version of \"%s\" at \"%s\" (was it deleted?)\n"
+               "Please re-compile Fun to continue.\n\n",
             moduleName.utf8().span().data(), file.utf8().span().data());
         CRASH();
     }
@@ -126,7 +126,7 @@ InternalModuleRegistry::InternalModuleRegistry(VM& vm, Structure* structure)
 {
     // Initialize all internal fields to jsUndefined() using setWithoutWriteBarrier
     // to avoid triggering write barriers during construction
-    for (uint8_t i = 0; i < BUN_INTERNAL_MODULE_COUNT; i++) {
+    for (uint8_t i = 0; i < FUN_INTERNAL_MODULE_COUNT; i++) {
         this->internalField(static_cast<Field>(i)).setWithoutWriteBarrier(jsUndefined());
     }
 }
@@ -189,6 +189,6 @@ JSC_DEFINE_HOST_FUNCTION(InternalModuleRegistry::jsCreateInternalModuleById, (JS
     return JSValue::encode(mod);
 }
 
-} // namespace Bun
+} // namespace Fun
 
 #undef INTERNAL_MODULE_REGISTRY_GENERATE

@@ -24,16 +24,16 @@ const arena_vtable = blk: {
 /// Returns true if `alloc` definitely has a valid `.ptr`.
 fn hasPtr(alloc: Allocator) bool {
     return alloc.vtable == arena_vtable or
-        bun.allocators.allocation_scope.isInstance(alloc) or
-        ((comptime bun.Environment.isLinux) and LinuxMemFdAllocator.isInstance(alloc)) or
-        bun.MaxHeapAllocator.isInstance(alloc) or
-        alloc.vtable == bun.allocators.c_allocator.vtable or
-        alloc.vtable == bun.allocators.z_allocator.vtable or
+        fun.allocators.allocation_scope.isInstance(alloc) or
+        ((comptime fun.Environment.isLinux) and LinuxMemFdAllocator.isInstance(alloc)) or
+        fun.MaxHeapAllocator.isInstance(alloc) or
+        alloc.vtable == fun.allocators.c_allocator.vtable or
+        alloc.vtable == fun.allocators.z_allocator.vtable or
         MimallocArena.isInstance(alloc) or
-        bun.jsc.CachedBytecode.isInstance(alloc) or
-        bun.bundle_v2.allocatorHasPointer(alloc) or
-        ((comptime bun.heap_breakdown.enabled) and bun.heap_breakdown.Zone.isInstance(alloc)) or
-        bun.String.isWTFAllocator(alloc);
+        fun.jsc.CachedBytecode.isInstance(alloc) or
+        fun.bundle_v2.allocatorHasPointer(alloc) or
+        ((comptime fun.heap_breakdown.enabled) and fun.heap_breakdown.Zone.isInstance(alloc)) or
+        fun.String.isWTFAllocator(alloc);
 }
 
 /// Returns true if the allocators are definitely different.
@@ -62,7 +62,7 @@ pub fn assertEqFmt(
     if (comptime !enabled) return;
     blk: {
         if (alloc1.vtable != alloc2.vtable) {
-            bun.Output.err(
+            fun.Output.err(
                 "allocator mismatch",
                 "vtables differ: {*} and {*}",
                 .{ alloc1.vtable, alloc2.vtable },
@@ -72,13 +72,13 @@ pub fn assertEqFmt(
         const ptr1 = if (hasPtr(alloc1)) alloc1.ptr else return;
         const ptr2 = if (hasPtr(alloc2)) alloc2.ptr else return;
         if (ptr1 == ptr2) return;
-        bun.Output.err(
+        fun.Output.err(
             "allocator mismatch",
             "vtables are both {*} but pointers differ: {*} and {*}",
             .{ alloc1.vtable, ptr1, ptr2 },
         );
     }
-    bun.assertf(false, format, args);
+    fun.assertf(false, format, args);
 }
 
 /// Use this in unmanaged containers to ensure multiple allocators aren't being used with the same
@@ -115,25 +115,25 @@ pub const CheckedAllocator = struct {
         const old_alloc = self.#allocator.get() orelse return;
         if (!guaranteedMismatch(old_alloc, alloc)) return;
 
-        bun.Output.err(
+        fun.Output.err(
             "allocator mismatch",
             "cannot use multiple allocators with the same collection",
             .{},
         );
         if (comptime traces_enabled) {
-            bun.Output.err(
+            fun.Output.err(
                 "allocator mismatch",
                 "collection first used here, with a different allocator:",
                 .{},
             );
             var trace = self.#trace;
-            bun.crash_handler.dumpStackTrace(
+            fun.crash_handler.dumpStackTrace(
                 trace.trace(),
                 .{ .frame_count = 10, .stop_at_jsc_llint = true },
             );
         }
         // Assertion will always fail. We want the error message.
-        bun.safety.alloc.assertEq(old_alloc, alloc);
+        fun.safety.alloc.assertEq(old_alloc, alloc);
     }
 
     /// Transfers ownership of the collection to a new allocator.
@@ -165,9 +165,9 @@ pub const CheckedAllocator = struct {
         if (MimallocArena.isInstance(old_allocator)) return;
 
         if (comptime traces_enabled) {
-            bun.Output.errGeneric("collection first used here:", .{});
+            fun.Output.errGeneric("collection first used here:", .{});
             var trace = self.#trace;
-            bun.crash_handler.dumpStackTrace(
+            fun.crash_handler.dumpStackTrace(
                 trace.trace(),
                 .{ .frame_count = 10, .stop_at_jsc_llint = true },
             );
@@ -179,14 +179,14 @@ pub const CheckedAllocator = struct {
     }
 };
 
-pub const enabled = bun.Environment.ci_assert;
+pub const enabled = fun.Environment.ci_assert;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const StoredTrace = bun.crash_handler.StoredTrace;
-const traces_enabled = bun.Environment.isDebug;
+const StoredTrace = fun.crash_handler.StoredTrace;
+const traces_enabled = fun.Environment.isDebug;
 
-const LinuxMemFdAllocator = bun.allocators.LinuxMemFdAllocator;
-const MimallocArena = bun.allocators.MimallocArena;
-const NullableAllocator = bun.allocators.NullableAllocator;
+const LinuxMemFdAllocator = fun.allocators.LinuxMemFdAllocator;
+const MimallocArena = fun.allocators.MimallocArena;
+const NullableAllocator = fun.allocators.NullableAllocator;

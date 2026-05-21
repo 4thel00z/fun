@@ -4,8 +4,8 @@
 // pending payload *before* the reassignment. When it isn't, the optional reads back as
 // null (or garbage, depending on build mode) and the DevServer is never told that
 // plugin loading finished, so the request it deferred to `next_bundle` waits forever.
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 const indexHtml = /* html */ `<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head>
@@ -17,7 +17,7 @@ const indexHtml = /* html */ `<!DOCTYPE html>
 // the load failed.
 test.concurrent("DevServer is notified when [serve.static] plugin setup rejects", async () => {
   using dir = tempDir("serve-plugins-devserver-reject", {
-    "bunfig.toml": `[serve.static]\nplugins = ["./plugin.ts"]\n`,
+    "funfig.toml": `[serve.static]\nplugins = ["./plugin.ts"]\n`,
     "plugin.ts": `
       export default {
         name: "boom-plugin",
@@ -33,7 +33,7 @@ test.concurrent("DevServer is notified when [serve.static] plugin setup rejects"
     "entry.ts": `console.log("unused");`,
     "server.ts": `
       import html from "./index.html";
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         development: true,
         routes: { "/": html },
@@ -58,9 +58,9 @@ test.concurrent("DevServer is notified when [serve.static] plugin setup rejects"
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "server.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "server.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -85,7 +85,7 @@ test.concurrent("DevServer is notified when [serve.static] plugin setup rejects"
 // must be handed the resolved plugin so its bundle actually goes through it.
 test.concurrent("DevServer is notified when [serve.static] plugin setup resolves", async () => {
   using dir = tempDir("serve-plugins-devserver-resolve", {
-    "bunfig.toml": `[serve.static]\nplugins = ["./plugin.ts"]\n`,
+    "funfig.toml": `[serve.static]\nplugins = ["./plugin.ts"]\n`,
     "plugin.ts": `
       export default {
         name: "marker-plugin",
@@ -102,7 +102,7 @@ test.concurrent("DevServer is notified when [serve.static] plugin setup resolves
     "entry.ts": `console.log("ORIGINAL_MARKER");`,
     "server.ts": `
       import html from "./index.html";
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         development: true,
         routes: { "/": html },
@@ -122,9 +122,9 @@ test.concurrent("DevServer is notified when [serve.static] plugin setup resolves
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "server.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "server.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

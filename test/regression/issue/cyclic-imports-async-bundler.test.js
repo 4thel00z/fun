@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 test("cyclic imports with async dependencies should generate async wrappers", async () => {
   const dir = tempDirWithFiles("cyclic-imports-async", {
     "build.ts": `
-      import { build } from "bun";
+      import { build } from "fun";
       build({
         entrypoints: ["src/entryBuild.ts"],
         outdir: "dist",
@@ -76,9 +76,9 @@ test("cyclic imports with async dependencies should generate async wrappers", as
   });
 
   // Build the project
-  const buildResult = await Bun.spawn({
-    cmd: [bunExe(), "build.ts"],
-    env: bunEnv,
+  const buildResult = await Fun.spawn({
+    cmd: [funExe(), "build.ts"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -88,7 +88,7 @@ test("cyclic imports with async dependencies should generate async wrappers", as
 
   // Read the bundled output
   const bundledPath = join(dir, "dist", "entryBuild.js");
-  const bundled = await Bun.file(bundledPath).text();
+  const bundled = await Fun.file(bundledPath).text();
 
   expect(bundled).toMatchInlineSnapshot(`
     "var __defProp = Object.defineProperty;
@@ -208,9 +208,9 @@ test("cyclic imports with async dependencies should generate async wrappers", as
   }
 
   // Also verify the bundled code can execute without syntax errors
-  const runResult = await Bun.spawn({
-    cmd: [bunExe(), bundledPath],
-    env: bunEnv,
+  const runResult = await Fun.spawn({
+    cmd: [funExe(), bundledPath],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",

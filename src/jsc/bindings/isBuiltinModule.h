@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Bun {
+namespace Fun {
 bool isBuiltinModule(const String& namePossiblyWithNodePrefix);
 String isUnprefixedNodeBuiltin(const String& name);
-} // namespace Bun
+} // namespace Fun

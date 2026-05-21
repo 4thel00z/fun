@@ -1,4 +1,4 @@
-import type { ServerWebSocket, Socket, WebSocketHandler, Server as WebSocketServer } from "bun";
+import type { ServerWebSocket, Socket, WebSocketHandler, Server as WebSocketServer } from "fun";
 const enum FramerState {
   WaitingForLength,
   WaitingForMessage,
@@ -122,24 +122,24 @@ export default function (
     if (debug.url) {
       const { protocol, href, host, pathname } = debug.url;
       if (!protocol.includes("unix")) {
-        Bun.write(Bun.stderr, dim("--------------------- Bun Inspector ---------------------") + reset() + "\n");
-        Bun.write(Bun.stderr, `Listening:\n  ${dim(href)}\n`);
+        Fun.write(Fun.stderr, dim("--------------------- Fun Inspector ---------------------") + reset() + "\n");
+        Fun.write(Fun.stderr, `Listening:\n  ${dim(href)}\n`);
         if (protocol.includes("ws")) {
-          Bun.write(Bun.stderr, `Inspect in browser:\n  ${link(`https://debug.bun.sh/#${host}${pathname}`)}\n`);
+          Fun.write(Fun.stderr, `Inspect in browser:\n  ${link(`https://debug.fun.dev/#${host}${pathname}`)}\n`);
         }
-        Bun.write(Bun.stderr, dim("--------------------- Bun Inspector ---------------------") + reset() + "\n");
+        Fun.write(Fun.stderr, dim("--------------------- Fun Inspector ---------------------") + reset() + "\n");
       }
     } else {
-      Bun.write(Bun.stderr, dim("--------------------- Bun Inspector ---------------------") + reset() + "\n");
-      Bun.write(Bun.stderr, `Listening on ${dim(url)}\n`);
-      Bun.write(Bun.stderr, dim("--------------------- Bun Inspector ---------------------") + reset() + "\n");
+      Fun.write(Fun.stderr, dim("--------------------- Fun Inspector ---------------------") + reset() + "\n");
+      Fun.write(Fun.stderr, `Listening on ${dim(url)}\n`);
+      Fun.write(Fun.stderr, dim("--------------------- Fun Inspector ---------------------") + reset() + "\n");
     }
   }
 
-  const notifyUrl = process.env["BUN_INSPECT_NOTIFY"] || "";
+  const notifyUrl = process.env["FUN_INSPECT_NOTIFY"] || "";
   if (notifyUrl) {
     // Only send this once.
-    process.env["BUN_INSPECT_NOTIFY"] = "";
+    process.env["FUN_INSPECT_NOTIFY"] = "";
 
     if (notifyUrl.startsWith("unix://")) {
       const path = require("node:path");
@@ -233,7 +233,7 @@ class Debugger {
     const { protocol, hostname, port, pathname } = this.#url!;
 
     if (protocol === "ws:" || protocol === "wss:" || protocol === "ws+tcp:") {
-      const server = Bun.serve({
+      const server = Fun.serve({
         hostname,
         port,
         fetch: this.#fetch.bind(this),
@@ -246,7 +246,7 @@ class Debugger {
     }
 
     if (protocol === "ws+unix:") {
-      Bun.serve({
+      Fun.serve({
         unix: pathname,
         fetch: this.#fetch.bind(this),
         websocket: this.#websocket,
@@ -259,7 +259,7 @@ class Debugger {
 
   #connectOverSocket(networkOptions) {
     let backend;
-    return Bun.connect<{ framer: SocketFramer; backend: Backend }>({
+    return Fun.connect<{ framer: SocketFramer; backend: Backend }>({
       ...networkOptions,
       socket: {
         open: socket => {
@@ -446,7 +446,7 @@ async function connectToUnixServer(
     return;
   }
 
-  const socket = await Bun.connect<{ framer: SocketFramer; backend: Backend }>({
+  const socket = await Fun.connect<{ framer: SocketFramer; backend: Backend }>({
     ...connectionOptions,
     socket: {
       open: socket => {
@@ -510,11 +510,11 @@ async function connectToUnixServer(
 function versionInfo(): unknown {
   return {
     "Protocol-Version": "1.3",
-    "Browser": "Bun",
+    "Browser": "Fun",
     "User-Agent": navigator.userAgent,
     "WebKit-Version": process.versions.webkit,
-    "Bun-Version": Bun.version,
-    "Bun-Revision": Bun.revision,
+    "Fun-Version": Fun.version,
+    "Fun-Revision": Fun.revision,
   };
 }
 
@@ -594,7 +594,7 @@ function randomId() {
   return Math.random().toString(36).slice(2);
 }
 
-const { enableANSIColors } = Bun;
+const { enableANSIColors } = Fun;
 
 function dim(string: string): string {
   if (enableANSIColors) {
@@ -618,7 +618,7 @@ function reset(): string {
 }
 
 function notify(options): void {
-  Bun.connect({
+  Fun.connect({
     ...options,
     socket: {
       open: socket => {

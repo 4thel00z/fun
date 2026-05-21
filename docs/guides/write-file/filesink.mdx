@@ -4,12 +4,12 @@ sidebarTitle: Incremental write
 mode: center
 ---
 
-Bun provides an API for incrementally writing to a file. This is useful for writing large files, or for writing to a file over a long period of time.
+Fun provides an API for incrementally writing to a file. This is useful for writing large files, or for writing to a file over a long period of time.
 
-Call `.writer()` on a `BunFile` to retrieve a `FileSink` instance. This instance can be used to efficiently buffer data and periodically "flush" it to disk. You can write & flush many times.
+Call `.writer()` on a `FunFile` to retrieve a `FileSink` instance. This instance can be used to efficiently buffer data and periodically "flush" it to disk. You can write & flush many times.
 
 ```ts
-const file = Bun.file("/path/to/file.txt");
+const file = Fun.file("/path/to/file.txt");
 const writer = file.writer();
 
 writer.write("lorem");
@@ -37,7 +37,7 @@ writer.flush();
 The `FileSink` will also auto-flush when its internal buffer is full. You can configure the buffer size with the `highWaterMark` option.
 
 ```ts
-const file = Bun.file("/path/to/file.txt");
+const file = Fun.file("/path/to/file.txt");
 const writer = file.writer({ highWaterMark: 1024 * 1024 }); // 1MB
 ```
 

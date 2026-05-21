@@ -37,7 +37,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             }
 
             if (socket.ext(**anyopaque)) |ctx| {
-                ctx.* = bun.cast(**anyopaque, ActiveSocket.init(dead_socket).ptr());
+                ctx.* = fun.cast(**anyopaque, ActiveSocket.init(dead_socket).ptr());
             }
         }
 
@@ -69,7 +69,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             return ActiveSocket.init(dead_socket);
         }
 
-        pub const PooledSocketHiveAllocator = bun.HiveArray(PooledSocket, pool_size);
+        pub const PooledSocketHiveAllocator = fun.HiveArray(PooledSocket, pool_size);
 
         /// Heap-allocated custom-SSL contexts only. The cache entry in
         /// custom_ssl_context_map holds 1; each in-flight HTTPClient that set
@@ -77,7 +77,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
         /// ref but the context survives until the last client releases it,
         /// so deinit() never runs while a request is mid-flight. The global
         /// http_context/https_context start at 1 and are never deref'd.
-        const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+        const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
         pub const ref = RefCount.ref;
         pub const deref = RefCount.deref;
 
@@ -86,7 +86,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
         /// Embedded sweep/iteration list-head for every socket this context
         /// owns (active clients + pooled keepalive). Address-stable: this
         /// struct is either a `http_thread.{http,https}_context` static or a
-        /// `bun.default_allocator.create()` for custom-SSL entries.
+        /// `fun.default_allocator.create()` for custom-SSL entries.
         group: uws.SocketGroup = .{},
         /// `SSL_CTX*` built from this context's SSLConfig (or the default
         /// `request_cert=1` opts). One owned ref; `SSL_CTX_free` on deinit.
@@ -106,9 +106,9 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
 
         pub fn context() *@This() {
             if (comptime ssl) {
-                return &bun.http.http_thread.https_context;
+                return &fun.http.http_thread.https_context;
             } else {
-                return &bun.http.http_thread.http_context;
+                return &fun.http.http_thread.http_context;
             }
         }
 
@@ -133,7 +133,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             if (session.registry_index != std.math.maxInt(u32)) return;
             session.ref();
             session.registry_index = @intCast(this.active_h2_sessions.items.len);
-            bun.handleOom(this.active_h2_sessions.append(bun.default_allocator, session));
+            fun.handleOom(this.active_h2_sessions.append(fun.default_allocator, session));
         }
 
         /// Called from drainQueuedShutdowns when the abort-tracker lookup
@@ -160,7 +160,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             if (idx == std.math.maxInt(u32)) return;
             session.registry_index = std.math.maxInt(u32);
             const list = &this.active_h2_sessions;
-            bun.debugAssert(idx < list.items.len and list.items[idx] == session);
+            fun.debugAssert(idx < list.items.len and list.items[idx] == session);
             _ = list.swapRemove(idx);
             if (idx < list.items.len) list.items[idx].registry_index = idx;
             session.deref();
@@ -168,7 +168,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
 
         pub fn tagAsH2(socket: HTTPSocket, session: *H2.ClientSession) void {
             if (socket.ext(**anyopaque)) |ctx| {
-                ctx.* = bun.cast(**anyopaque, ActiveSocket.init(session).ptr());
+                ctx.* = fun.cast(**anyopaque, ActiveSocket.init(session).ptr());
             }
         }
 
@@ -206,7 +206,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                     }
                     pooled.proxy_tunnel = null;
                     if (pooled.target_hostname.len > 0) {
-                        bun.default_allocator.free(pooled.target_hostname);
+                        fun.default_allocator.free(pooled.target_hostname);
                         pooled.target_hostname = "";
                     }
                     if (pooled.h2_session) |s| s.deref();
@@ -215,9 +215,9 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                 }
             }
 
-            this.active_h2_sessions.deinit(bun.default_allocator);
+            this.active_h2_sessions.deinit(fun.default_allocator);
             for (this.pending_h2_connects.items) |pc| pc.deinit();
-            this.pending_h2_connects.deinit(bun.default_allocator);
+            this.pending_h2_connects.deinit(fun.default_allocator);
 
             // Force-close any remaining sockets before unlinking the group so
             // the loop never dereferences a freed `*Context` via `group->ext`.
@@ -226,7 +226,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             if (comptime ssl) {
                 if (this.secure) |c| BoringSSL.SSL_CTX_free(c);
             }
-            bun.default_allocator.destroy(this);
+            fun.default_allocator.destroy(this);
         }
 
         pub fn initWithClientConfig(this: *@This(), client: *HTTPClient) InitError!void {
@@ -235,9 +235,9 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             try this.initWithOpts(&opts);
         }
 
-        fn initWithOpts(this: *@This(), opts: *const uws.SocketContext.BunSocketContextOptions) InitError!void {
+        fn initWithOpts(this: *@This(), opts: *const uws.SocketContext.FunSocketContextOptions) InitError!void {
             if (!comptime ssl) @compileError("ssl only");
-            var err: uws.create_bun_socket_error_t = .none;
+            var err: uws.create_fun_socket_error_t = .none;
             this.secure = opts.createSSLContext(&err) orelse return switch (err) {
                 .load_ca_file => error.LoadCAFile,
                 .invalid_ca_file => error.InvalidCAFile,
@@ -245,12 +245,12 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                 else => error.FailedToOpenSocket,
             };
             this.sslCtx().setup();
-            this.group.init(bun.http.http_thread.loop.loop, null, this);
+            this.group.init(fun.http.http_thread.loop.loop, null, this);
         }
 
         pub fn initWithThreadOpts(this: *@This(), init_opts: *const HTTPThread.InitOpts) InitError!void {
             if (!comptime ssl) @compileError("ssl only");
-            var opts: uws.SocketContext.BunSocketContextOptions = .{
+            var opts: uws.SocketContext.FunSocketContextOptions = .{
                 .ca = if (init_opts.ca.len > 0) @ptrCast(init_opts.ca) else null,
                 .ca_count = @intCast(init_opts.ca.len),
                 .ca_file_name = if (init_opts.abs_ca_file_name.len > 0) init_opts.abs_ca_file_name else null,
@@ -260,10 +260,10 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
         }
 
         pub fn init(this: *@This()) void {
-            this.group.init(bun.http.http_thread.loop.loop, null, this);
+            this.group.init(fun.http.http_thread.loop.loop, null, this);
             if (comptime ssl) {
-                var err: uws.create_bun_socket_error_t = .none;
-                this.secure = (uws.SocketContext.BunSocketContextOptions{
+                var err: uws.create_fun_socket_error_t = .none;
+                this.secure = (uws.SocketContext.FunSocketContextOptions{
                     // we request the cert so we load root certs and can verify it
                     .request_cert = 1,
                     // we manually abort the connection if the hostname doesn't match
@@ -297,7 +297,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             proxy_auth_hash: u64,
             h2_session: ?*H2.ClientSession,
         ) void {
-            // log("releaseSocket(0x{f})", .{bun.fmt.hexIntUpper(@intFromPtr(socket.socket))});
+            // log("releaseSocket(0x{f})", .{fun.fmt.hexIntUpper(@intFromPtr(socket.socket))});
 
             if (comptime Environment.allow_assert) {
                 assert(!socket.isClosed());
@@ -313,7 +313,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             {
                 if (this.pending_sockets.get()) |pending| {
                     if (socket.ext(**anyopaque)) |ctx| {
-                        ctx.* = bun.cast(**anyopaque, ActiveSocket.init(pending).ptr());
+                        ctx.* = fun.cast(**anyopaque, ActiveSocket.init(pending).ptr());
                     }
                     socket.flush();
                     socket.timeout(0);
@@ -333,7 +333,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                     pending.proxy_tunnel = if (tunnel) |t| .takeRef(t) else null;
                     pending.proxy_auth_hash = proxy_auth_hash;
                     pending.target_hostname = if (tunnel != null and target_hostname.len > 0)
-                        bun.handleOom(bun.default_allocator.dupe(u8, target_hostname))
+                        fun.handleOom(fun.default_allocator.dupe(u8, target_hostname))
                     else
                         "";
                     pending.target_port = target_port;
@@ -383,14 +383,14 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                 ptr: *anyopaque,
                 socket: HTTPSocket,
                 success: i32,
-                ssl_error: uws.us_bun_verify_error_t,
+                ssl_error: uws.us_fun_verify_error_t,
             ) void {
                 const handshake_success = if (success == 1) true else false;
 
                 const handshake_error = HTTPCertError{
                     .error_no = ssl_error.error_no,
-                    .code = if (ssl_error.code == null) "" else ssl_error.code[0..bun.len(ssl_error.code) :0],
-                    .reason = if (ssl_error.code == null) "" else ssl_error.reason[0..bun.len(ssl_error.reason) :0],
+                    .code = if (ssl_error.code == null) "" else ssl_error.code[0..fun.len(ssl_error.code) :0],
+                    .reason = if (ssl_error.code == null) "" else ssl_error.reason[0..fun.len(ssl_error.reason) :0],
                 };
 
                 const active = getTagged(ptr);
@@ -474,7 +474,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                 }
                 pooled.proxy_tunnel = null;
                 if (pooled.target_hostname.len > 0) {
-                    bun.default_allocator.free(pooled.target_hostname);
+                    fun.default_allocator.free(pooled.target_hostname);
                     pooled.target_hostname = "";
                 }
                 if (pooled.h2_session) |s| s.deref();
@@ -517,7 +517,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                     }
 
                     // trailing zero is fine to ignore
-                    if (strings.eqlComptime(buf, bun.http.end_of_chunked_http1_1_encoding_response_body)) {
+                    if (strings.eqlComptime(buf, fun.http.end_of_chunked_http1_1_encoding_response_body)) {
                         return;
                     }
 
@@ -706,7 +706,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                     const tunnel: ?*ProxyTunnel = if (socket.proxy_tunnel) |*rp| rp.leak() else null;
                     socket.proxy_tunnel = null;
                     if (socket.target_hostname.len > 0) {
-                        bun.default_allocator.free(socket.target_hostname);
+                        fun.default_allocator.free(socket.target_hostname);
                         socket.target_hostname = "";
                     }
                     const h2_session = socket.h2_session;
@@ -753,7 +753,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                     }
                     for (this.pending_h2_connects.items) |pc| {
                         if (pc.matches(hostname, port, SSLConfig.rawPtr(client.tls_props))) {
-                            bun.handleOom(pc.waiters.append(bun.default_allocator, client));
+                            fun.handleOom(pc.waiters.append(fun.default_allocator, client));
                             return null;
                         }
                     }
@@ -781,7 +781,7 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
                 )) |found| {
                     const sock = found.socket;
                     if (sock.ext(**anyopaque)) |ctx| {
-                        ctx.* = bun.cast(**anyopaque, ActiveSocket.init(client).ptr());
+                        ctx.* = fun.cast(**anyopaque, ActiveSocket.init(client).ptr());
                     }
                     client.allow_retry = true;
                     if (found.h2_session) |session| {
@@ -825,11 +825,11 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
             if (comptime ssl) {
                 if (client.canOfferH2()) {
                     const pc = H2.PendingConnect.new(.{
-                        .hostname = bun.handleOom(bun.default_allocator.dupe(u8, hostname)),
+                        .hostname = fun.handleOom(fun.default_allocator.dupe(u8, hostname)),
                         .port = port,
                         .ssl_config = SSLConfig.rawPtr(client.tls_props),
                     });
-                    bun.handleOom(this.pending_h2_connects.append(bun.default_allocator, pc));
+                    fun.handleOom(this.pending_h2_connects.append(fun.default_allocator, pc));
                     client.pending_h2 = pc;
                 }
             }
@@ -841,12 +841,12 @@ pub fn NewHTTPContext(comptime ssl: bool) type {
 const DeadSocket = struct {
     garbage: u8 = 0,
     /// Must be aligned to `@alignOf(usize)` so that tagged pointer values
-    /// embedding this address pass the `@alignCast` in `bun.cast`.
+    /// embedding this address pass the `@alignCast` in `fun.cast`.
     pub var dead_socket: DeadSocket align(@alignOf(usize)) = .{};
 };
 
 var dead_socket = &DeadSocket.dead_socket;
-const log = bun.Output.scoped(.HTTPContext, .hidden);
+const log = fun.Output.scoped(.HTTPContext, .hidden);
 
 const HTTPCertError = @import("./HTTPCertError.zig");
 const HTTPThread = @import("./HTTPThread.zig");
@@ -854,15 +854,15 @@ const ProxyTunnel = @import("./ProxyTunnel.zig");
 const std = @import("std");
 const TaggedPointerUnion = @import("../ptr/ptr.zig").TaggedPointerUnion;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const assert = bun.assert;
-const strings = bun.strings;
-const uws = bun.uws;
-const BoringSSL = bun.BoringSSL.c;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const assert = fun.assert;
+const strings = fun.strings;
+const uws = fun.uws;
+const BoringSSL = fun.BoringSSL.c;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
-const HTTPClient = bun.http;
-const H2 = bun.http.H2;
+const HTTPClient = fun.http;
+const H2 = fun.http.H2;
 const InitError = HTTPClient.InitError;

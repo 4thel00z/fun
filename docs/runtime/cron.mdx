@@ -1,16 +1,16 @@
 ---
 title: Cron
-description: Schedule and parse cron jobs with Bun
+description: Schedule and parse cron jobs with Fun
 ---
 
-Bun has built-in support for cron — parse expressions, run a callback on a schedule inside your process, or register OS-level jobs that survive restarts.
+Fun has built-in support for cron — parse expressions, run a callback on a schedule inside your process, or register OS-level jobs that survive restarts.
 
 ## Quickstart
 
 **Run a callback on a schedule in the current process:**
 
 ```ts
-Bun.cron("0 * * * *", async () => {
+Fun.cron("0 * * * *", async () => {
   await cleanupTempFiles();
 });
 ```
@@ -19,23 +19,23 @@ Bun.cron("0 * * * *", async () => {
 
 ```ts
 // Next weekday at 9:30 AM UTC
-const next = Bun.cron.parse("30 9 * * MON-FRI");
+const next = Fun.cron.parse("30 9 * * MON-FRI");
 ```
 
 **Register an OS-level cron job that runs a script on a schedule:**
 
 ```ts
-await Bun.cron("./worker.ts", "30 2 * * MON", "weekly-report");
+await Fun.cron("./worker.ts", "30 2 * * MON", "weekly-report");
 ```
 
 ---
 
-## `Bun.cron.parse()`
+## `Fun.cron.parse()`
 
 Parse a cron expression and return the next matching `Date` in UTC.
 
 ```ts
-const next = Bun.cron.parse("*/15 * * * *");
+const next = Fun.cron.parse("*/15 * * * *");
 console.log(next); // => next quarter-hour boundary
 ```
 
@@ -57,7 +57,7 @@ Call `parse()` repeatedly to get a sequence of upcoming times:
 ```ts
 let cursor: Date | number = Date.now();
 for (let i = 0; i < 3; i++) {
-  cursor = Bun.cron.parse("0 * * * *", cursor)!;
+  cursor = Fun.cron.parse("0 * * * *", cursor)!;
   console.log(cursor.toLocaleString()); // next three top-of-hour boundaries
 }
 ```
@@ -91,12 +91,12 @@ Month and weekday fields accept case-insensitive names:
 
 ```ts
 // 3-letter abbreviations
-Bun.cron.parse("0 9 * * MON-FRI"); // weekdays
-Bun.cron.parse("0 0 1 JAN,JUN *"); // January and June
+Fun.cron.parse("0 9 * * MON-FRI"); // weekdays
+Fun.cron.parse("0 0 1 JAN,JUN *"); // January and June
 
 // Full names
-Bun.cron.parse("0 9 * * Monday-Friday");
-Bun.cron.parse("0 0 1 January *");
+Fun.cron.parse("0 9 * * Monday-Friday");
+Fun.cron.parse("0 0 1 January *");
 ```
 
 Both `0` and `7` mean Sunday in the weekday field.
@@ -112,15 +112,15 @@ Both `0` and `7` mean Sunday in the weekday field.
 | `@hourly`               | `0 * * * *` | Once an hour              |
 
 ```ts
-const next = Bun.cron.parse("@daily");
+const next = Fun.cron.parse("@daily");
 console.log(next); // => next UTC midnight
 ```
 
 ### Time zone
 
-`Bun.cron.parse()` and the in-process `Bun.cron(schedule, handler)` interpret schedules in **UTC**. There is no DST to handle — `0 9 * * *` always means 9:00 UTC.
+`Fun.cron.parse()` and the in-process `Fun.cron(schedule, handler)` interpret schedules in **UTC**. There is no DST to handle — `0 9 * * *` always means 9:00 UTC.
 
-The OS-level `Bun.cron(path, schedule, title)` uses the **system's local time zone**, because that's how crontab, launchd, and Windows Task Scheduler work. To make the two forms agree, run the process with `TZ=UTC`.
+The OS-level `Fun.cron(path, schedule, title)` uses the **system's local time zone**, because that's how crontab, launchd, and Windows Task Scheduler work. To make the two forms agree, run the process with `TZ=UTC`.
 
 ### Day-of-month and day-of-week interaction
 
@@ -128,26 +128,26 @@ When **both** day-of-month and day-of-week are specified (neither is `*`), the e
 
 ```ts
 // Fires on the 15th of every month OR every Friday
-Bun.cron.parse("0 0 15 * FRI");
+Fun.cron.parse("0 0 15 * FRI");
 ```
 
 When only one is specified (the other is `*`), only that field is used for matching.
 
 ---
 
-## `Bun.cron(schedule, handler)` — in-process
+## `Fun.cron(schedule, handler)` — in-process
 
 Run a callback on a cron schedule inside the current process.
 
 ```ts
-const job = Bun.cron("*/5 * * * *", async () => {
+const job = Fun.cron("*/5 * * * *", async () => {
   await syncToDatabase();
 });
 ```
 
 This is the lightweight option for long-running servers and workers — no system cron daemon required, works the same on every platform, and shares state (database pools, caches, module-level variables) between invocations.
 
-|                              | In-process                       | [OS-level](#bun-cron-path-schedule-title-os-level) |
+|                              | In-process                       | [OS-level](#fun-cron-path-schedule-title-os-level) |
 | ---------------------------- | -------------------------------- | -------------------------------------------------- |
 | Survives process exit/reboot | No                               | Yes                                                |
 | Shared state between runs    | Yes                              | No (fresh process each time)                       |
@@ -180,19 +180,19 @@ Without a listener, the process exits with code `1`. With a listener, the job ke
 ```ts
 process.on("unhandledRejection", err => log.error("cron failed:", err));
 
-Bun.cron("* * * * *", async () => {
+Fun.cron("* * * * *", async () => {
   await mightThrow(); // logged and retried next minute
 });
 ```
 
-### `bun --hot`
+### `fun --hot`
 
-Under `bun --hot`, all in-process cron jobs are stopped immediately before the module graph re-evaluates. Every `Bun.cron()` call still in your source then re-registers. Editing the schedule, editing the handler, or deleting the line entirely all take effect on save without leaking timers.
+Under `fun --hot`, all in-process cron jobs are stopped immediately before the module graph re-evaluates. Every `Fun.cron()` call still in your source then re-registers. Editing the schedule, editing the handler, or deleting the line entirely all take effect on save without leaking timers.
 
 ### The `CronJob` handle
 
 ```ts
-using job = Bun.cron("0 * * * *", () => {});
+using job = Fun.cron("0 * * * *", () => {});
 
 job.cron; // => "0 * * * *"
 job.stop(); // cancel — the handler will not fire again
@@ -200,7 +200,7 @@ job.unref(); // allow the process to exit even while scheduled
 job.ref(); // keep the process alive (default)
 ```
 
-`CronJob` is [`Disposable`](https://github.com/tc39/proposal-explicit-resource-management) — `using job = Bun.cron(...)` auto-stops at scope exit. `stop()`, `ref()`, and `unref()` all return the job for chaining.
+`CronJob` is [`Disposable`](https://github.com/tc39/proposal-explicit-resource-management) — `using job = Fun.cron(...)` auto-stops at scope exit. `stop()`, `ref()`, and `unref()` all return the job for chaining.
 
 ### Fake timers
 
@@ -208,12 +208,12 @@ In-process cron is anchored to the real wall clock. `jest.useFakeTimers()`, `set
 
 ---
 
-## `Bun.cron(path, schedule, title)` — OS-level
+## `Fun.cron(path, schedule, title)` — OS-level
 
 Register an OS-level cron job that runs a JavaScript/TypeScript module on a schedule.
 
 ```ts
-await Bun.cron("./worker.ts", "30 2 * * MON", "weekly-report");
+await Fun.cron("./worker.ts", "30 2 * * MON", "weekly-report");
 ```
 
 ### Parameters
@@ -227,8 +227,8 @@ await Bun.cron("./worker.ts", "30 2 * * MON", "weekly-report");
 Re-registering with the same `title` overwrites the existing job in-place — the old schedule is replaced, not duplicated.
 
 ```ts
-await Bun.cron("./worker.ts", "0 * * * *", "my-job"); // every hour
-await Bun.cron("./worker.ts", "*/15 * * * *", "my-job"); // replaces: every 15 min
+await Fun.cron("./worker.ts", "0 * * * *", "my-job"); // every hour
+await Fun.cron("./worker.ts", "*/15 * * * *", "my-job"); // replaces: every 15 min
 ```
 
 ### The `scheduled()` handler
@@ -237,7 +237,7 @@ The registered script must export a default object with a `scheduled()` method, 
 
 ```ts worker.ts
 export default {
-  scheduled(controller: Bun.CronController) {
+  scheduled(controller: Fun.CronController) {
     console.log(controller.cron); // "30 2 * * 1"
     console.log(controller.type); // "scheduled"
     console.log(controller.scheduledTime); // 1737340201847 (Date.now() at invocation)
@@ -245,7 +245,7 @@ export default {
 };
 ```
 
-The handler can be `async`. Bun waits for the returned promise to settle before exiting.
+The handler can be `async`. Fun waits for the returned promise to settle before exiting.
 
 ---
 
@@ -253,15 +253,15 @@ The handler can be `async`. Bun waits for the returned promise to settle before 
 
 ### Linux
 
-Bun uses [crontab](https://man7.org/linux/man-pages/man5/crontab.5.html) to register jobs. Each job is stored as a line in your user's crontab with a `# bun-cron: <title>` marker comment above it.
+Fun uses [crontab](https://man7.org/linux/man-pages/man5/crontab.5.html) to register jobs. Each job is stored as a line in your user's crontab with a `# fun-cron: <title>` marker comment above it.
 
 The crontab entry looks like:
 
 ```
-<schedule> '<bun-path>' run --cron-title=<title> --cron-period='<schedule>' '<script-path>'
+<schedule> '<fun-path>' run --cron-title=<title> --cron-period='<schedule>' '<script-path>'
 ```
 
-When the cron daemon fires the job, Bun imports your module and calls the `scheduled()` handler.
+When the cron daemon fires the job, Fun imports your module and calls the `scheduled()` handler.
 
 **Viewing registered jobs:**
 
@@ -285,61 +285,61 @@ To capture stdout/stderr to a file, redirect output in the crontab entry directl
 **Manually uninstalling without code:**
 
 ```sh
-# Edit your crontab and remove the "# bun-cron: <title>" comment
+# Edit your crontab and remove the "# fun-cron: <title>" comment
 # and the command line below it
 crontab -e
 
-# Or remove ALL bun cron jobs at once by filtering them out:
-crontab -l | grep -v "# bun-cron:" | grep -v "\-\-cron-title=" | crontab -
+# Or remove ALL fun cron jobs at once by filtering them out:
+crontab -l | grep -v "# fun-cron:" | grep -v "\-\-cron-title=" | crontab -
 ```
 
 ### macOS
 
-Bun uses [launchd](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html) to register jobs. Each job is installed as a plist file at:
+Fun uses [launchd](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html) to register jobs. Each job is installed as a plist file at:
 
 ```
-~/Library/LaunchAgents/bun.cron.<title>.plist
+~/Library/LaunchAgents/fun.cron.<title>.plist
 ```
 
-The plist uses `StartCalendarInterval` to define the schedule. Complex patterns with ranges, lists, or steps are supported — Bun expands them into multiple `StartCalendarInterval` dicts via Cartesian product.
+The plist uses `StartCalendarInterval` to define the schedule. Complex patterns with ranges, lists, or steps are supported — Fun expands them into multiple `StartCalendarInterval` dicts via Cartesian product.
 
 **Viewing registered jobs:**
 
 ```sh
-launchctl list | grep bun.cron
+launchctl list | grep fun.cron
 ```
 
 **Logs:** stdout and stderr are written to:
 
 ```
-/tmp/bun.cron.<title>.stdout.log
-/tmp/bun.cron.<title>.stderr.log
+/tmp/fun.cron.<title>.stdout.log
+/tmp/fun.cron.<title>.stderr.log
 ```
 
 For example, a job titled `weekly-report`:
 
 ```sh
-cat /tmp/bun.cron.weekly-report.stdout.log
-tail -f /tmp/bun.cron.weekly-report.stderr.log
+cat /tmp/fun.cron.weekly-report.stdout.log
+tail -f /tmp/fun.cron.weekly-report.stderr.log
 ```
 
 **Manually uninstalling without code:**
 
 ```sh
 # Unload the job from launchd
-launchctl bootout gui/$(id -u)/bun.cron.<title>
+launchctl bootout gui/$(id -u)/fun.cron.<title>
 
 # Delete the plist file
-rm ~/Library/LaunchAgents/bun.cron.<title>.plist
+rm ~/Library/LaunchAgents/fun.cron.<title>.plist
 
 # Example for a job titled "weekly-report":
-launchctl bootout gui/$(id -u)/bun.cron.weekly-report
-rm ~/Library/LaunchAgents/bun.cron.weekly-report.plist
+launchctl bootout gui/$(id -u)/fun.cron.weekly-report
+rm ~/Library/LaunchAgents/fun.cron.weekly-report.plist
 ```
 
 ### Windows
 
-Bun uses [Windows Task Scheduler](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-start-page) with XML-based task definitions. Each job is registered as a scheduled task named `bun-cron-<title>` using [`CalendarTrigger`](https://learn.microsoft.com/en-us/windows/win32/taskschd/taskschedulerschema-calendartrigger-triggergroup-element) elements and [`Repetition`](https://learn.microsoft.com/en-us/windows/win32/taskschd/taskschedulerschema-repetition-triggerbasetype-element) patterns.
+Fun uses [Windows Task Scheduler](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-start-page) with XML-based task definitions. Each job is registered as a scheduled task named `fun-cron-<title>` using [`CalendarTrigger`](https://learn.microsoft.com/en-us/windows/win32/taskschd/taskschedulerschema-calendartrigger-triggergroup-element) elements and [`Repetition`](https://learn.microsoft.com/en-us/windows/win32/taskschd/taskschedulerschema-repetition-triggerbasetype-element) patterns.
 
 Most cron expressions are fully supported, including `@daily`, `@weekly`, `@monthly`, `@yearly`, ranges (`1-5`), lists (`1,15`), named days/months, and day-of-month patterns.
 
@@ -349,7 +349,7 @@ Tasks are registered using [`S4U` (Service-for-User)](https://learn.microsoft.co
 
 TCP/IP networking (`fetch()`, HTTP, WebSocket, database connections) works normally. The only restriction is that S4U tasks cannot access [Windows-authenticated network resources](https://learn.microsoft.com/en-us/windows/win32/taskschd/security-contexts-for-running-tasks) (SMB file shares, mapped drives, Kerberos/NTLM services).
 
-On headless servers and CI environments where the current user's [Security Identifier (SID)](https://learn.microsoft.com/en-us/windows/security/identity-protection/access-control/security-identifiers) cannot be resolved — such as service accounts created by [NSSM](https://nssm.cc/) or similar tools — `Bun.cron()` will fail with an error explaining the issue. To work around this, either run Bun as a regular user account, or create the scheduled task manually with `schtasks /create /xml <file> /tn <name> /ru SYSTEM /f`.
+On headless servers and CI environments where the current user's [Security Identifier (SID)](https://learn.microsoft.com/en-us/windows/security/identity-protection/access-control/security-identifiers) cannot be resolved — such as service accounts created by [NSSM](https://nssm.cc/) or similar tools — `Fun.cron()` will fail with an error explaining the issue. To work around this, either run Fun as a regular user account, or create the scheduled task manually with `schtasks /create /xml <file> /tn <name> /ru SYSTEM /f`.
 
 #### Trigger limit
 
@@ -359,7 +359,7 @@ On headless servers and CI environments where the current user's [Security Ident
   `CalendarTrigger` element has
   [`maxOccurs="48"`](https://learn.microsoft.com/en-us/windows/win32/taskschd/taskschedulerschema-calendartrigger-triggergroup-element)).
   Some cron expressions that work on Linux and macOS exceed this limit on Windows. When a pattern exceeds the limit,
-  `Bun.cron()` rejects it with an error message.
+  `Fun.cron()` rejects it with an error message.
 </Warning>
 
 **Expressions that work on all platforms:**
@@ -390,53 +390,53 @@ To work around it, simplify the expression or restrict the hour range:
 
 ```ts
 // ❌ Fails on Windows: */7 with all hours = 216 triggers
-await Bun.cron("./job.ts", "*/7 * * * *", "my-job");
+await Fun.cron("./job.ts", "*/7 * * * *", "my-job");
 
 // ✅ Works: restrict to specific hours (9 values × 5 hours = 45 triggers)
-await Bun.cron("./job.ts", "*/7 9-13 * * *", "my-job");
+await Fun.cron("./job.ts", "*/7 9-13 * * *", "my-job");
 
 // ✅ Works: use a divisor of 60 instead (Repetition, 1 trigger)
-await Bun.cron("./job.ts", "*/5 * * * *", "my-job");
+await Fun.cron("./job.ts", "*/5 * * * *", "my-job");
 ```
 
 #### Windows containers
 
 <Warning>
-  `Bun.cron()` is not supported in Windows Docker containers. The Task Scheduler service is not running in `servercore`
+  `Fun.cron()` is not supported in Windows Docker containers. The Task Scheduler service is not running in `servercore`
   or `nanoserver` images. Use an in-process scheduler for containerized workloads.
 </Warning>
 
 **Viewing registered jobs:**
 
 ```powershell
-schtasks /query /tn "bun-cron-<title>"
+schtasks /query /tn "fun-cron-<title>"
 
-# List all bun cron tasks
-schtasks /query | findstr "bun-cron-"
+# List all fun cron tasks
+schtasks /query | findstr "fun-cron-"
 ```
 
 **Manually uninstalling without code:**
 
 ```powershell
-schtasks /delete /tn "bun-cron-<title>" /f
+schtasks /delete /tn "fun-cron-<title>" /f
 
 # Example:
-schtasks /delete /tn "bun-cron-weekly-report" /f
+schtasks /delete /tn "fun-cron-weekly-report" /f
 ```
 
-Or open **Task Scheduler** (taskschd.msc), find the task named `bun-cron-<title>`, right-click, and delete it.
+Or open **Task Scheduler** (taskschd.msc), find the task named `fun-cron-<title>`, right-click, and delete it.
 
 ---
 
-## `Bun.cron.remove()`
+## `Fun.cron.remove()`
 
 Remove a previously registered cron job by its title. Works on all platforms.
 
 ```ts
-await Bun.cron.remove("weekly-report");
+await Fun.cron.remove("weekly-report");
 ```
 
-This reverses what `Bun.cron()` did:
+This reverses what `Fun.cron()` did:
 
 | Platform | What `remove()` does                                     |
 | -------- | -------------------------------------------------------- |

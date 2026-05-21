@@ -5,7 +5,7 @@ next: timespec,
 state: State = .PENDING,
 tag: Tag,
 /// Internal heap fields.
-heap: bun.io.heap.IntrusiveField(Self) = .{},
+heap: fun.io.heap.IntrusiveField(Self) = .{},
 in_heap: enum { none, regular, fake } = .none,
 
 pub fn initPaused(tag: Tag) Self {
@@ -68,7 +68,7 @@ pub const Tag = enum {
     DevServerMemoryVisualizerTick,
     AbortSignalTimeout,
     DateHeaderTimer,
-    BunTest,
+    FunTest,
     EventLoopDelayMonitor,
     CronJob,
 
@@ -91,19 +91,19 @@ pub const Tag = enum {
             .ValkeyConnectionTimeout => jsc.API.Valkey,
             .DevServerSweepSourceMaps,
             .DevServerMemoryVisualizerTick,
-            => bun.bake.DevServer,
+            => fun.bake.DevServer,
             .AbortSignalTimeout => jsc.WebCore.AbortSignal.Timeout,
             .DateHeaderTimer => jsc.API.Timer.DateHeaderTimer,
-            .BunTest => jsc.Jest.bun_test.BunTest,
+            .FunTest => jsc.Jest.fun_test.FunTest,
             .EventLoopDelayMonitor => jsc.API.Timer.EventLoopDelayMonitor,
-            .CronJob => bun.api.cron.CronJob,
+            .CronJob => fun.api.cron.CronJob,
         };
     }
 
     pub fn allowFakeTimers(self: Tag) bool {
         return switch (self) {
             .WTFTimer, // internal
-            .BunTest, // for test timeouts
+            .FunTest, // for test timeouts
             .EventLoopDelayMonitor, // probably important
             .StatWatcherScheduler,
             .CronJob, // calendar-anchored to real wall clock
@@ -116,7 +116,7 @@ pub const Tag = enum {
 const UnreachableTimer = struct {
     event_loop_timer: Self,
     fn callback(_: *UnreachableTimer, _: *UnreachableTimer) void {
-        if (Environment.ci_assert) bun.assert(false);
+        if (Environment.ci_assert) fun.assert(false);
     }
 };
 
@@ -175,8 +175,8 @@ pub fn fire(self: *Self, now: *const timespec, vm: *VirtualMachine) void {
         .MySQLConnectionMaxLifetime => @as(*api.MySQL.MySQLConnection, @alignCast(@fieldParentPtr("max_lifetime_timer", self))).onMaxLifetimeTimeout(),
         .ValkeyConnectionTimeout => @as(*api.Valkey, @alignCast(@fieldParentPtr("timer", self))).onConnectionTimeout(),
         .ValkeyConnectionReconnect => @as(*api.Valkey, @alignCast(@fieldParentPtr("reconnect_timer", self))).onReconnectTimer(),
-        .DevServerMemoryVisualizerTick => bun.bake.DevServer.emitMemoryVisualizerMessageTimer(self, now),
-        .DevServerSweepSourceMaps => bun.bake.DevServer.SourceMapStore.sweepWeakRefs(self, now),
+        .DevServerMemoryVisualizerTick => fun.bake.DevServer.emitMemoryVisualizerMessageTimer(self, now),
+        .DevServerSweepSourceMaps => fun.bake.DevServer.SourceMapStore.sweepWeakRefs(self, now),
         .AbortSignalTimeout => {
             const timeout = @as(*jsc.WebCore.AbortSignal.Timeout, @fieldParentPtr("event_loop_timer", self));
             timeout.run(vm);
@@ -185,17 +185,17 @@ pub fn fire(self: *Self, now: *const timespec, vm: *VirtualMachine) void {
             const date_header_timer = @as(*jsc.API.Timer.DateHeaderTimer, @fieldParentPtr("event_loop_timer", self));
             date_header_timer.run(vm);
         },
-        .BunTest => {
-            var container_strong = jsc.Jest.bun_test.BunTestPtr.cloneFromRawUnsafe(@fieldParentPtr("timer", self));
+        .FunTest => {
+            var container_strong = jsc.Jest.fun_test.FunTestPtr.cloneFromRawUnsafe(@fieldParentPtr("timer", self));
             defer container_strong.deinit();
-            jsc.Jest.bun_test.BunTest.bunTestTimeoutCallback(container_strong, now, vm);
+            jsc.Jest.fun_test.FunTest.funTestTimeoutCallback(container_strong, now, vm);
         },
         .EventLoopDelayMonitor => {
             const monitor = @as(*jsc.API.Timer.EventLoopDelayMonitor, @fieldParentPtr("event_loop_timer", self));
             monitor.onFire(vm, now);
         },
         .CronJob => {
-            const job = @as(*bun.api.cron.CronJob, @fieldParentPtr("event_loop_timer", self));
+            const job = @as(*fun.api.cron.CronJob, @fieldParentPtr("event_loop_timer", self));
             job.onTimerFire(vm);
         },
         inline else => |t| {
@@ -224,22 +224,22 @@ pub fn fire(self: *Self, now: *const timespec, vm: *VirtualMachine) void {
     }
 }
 
-/// A timer created by WTF code and invoked by Bun's event loop
-const WTFTimer = bun.api.Timer.WTFTimer;
+/// A timer created by WTF code and invoked by Fun's event loop
+const WTFTimer = fun.api.Timer.WTFTimer;
 
 const std = @import("std");
 const StatWatcherScheduler = @import("../runtime/node/node_fs_stat_watcher.zig").StatWatcherScheduler;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const timespec = bun.timespec;
-const uws = bun.uws;
-const DNSResolver = bun.api.dns.Resolver;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const timespec = fun.timespec;
+const uws = fun.uws;
+const DNSResolver = fun.api.dns.Resolver;
 
-const ImmediateObject = bun.api.Timer.ImmediateObject;
-const TimeoutObject = bun.api.Timer.TimeoutObject;
-const TimerObjectInternals = bun.api.Timer.TimerObjectInternals;
+const ImmediateObject = fun.api.Timer.ImmediateObject;
+const TimeoutObject = fun.api.Timer.TimeoutObject;
+const TimerObjectInternals = fun.api.Timer.TimerObjectInternals;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;
 const api = jsc.API;

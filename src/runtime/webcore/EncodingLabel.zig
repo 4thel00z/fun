@@ -59,7 +59,7 @@ pub const EncodingLabel = enum {
 
     pub const latin1 = EncodingLabel.@"windows-1252";
 
-    const string_map = bun.ComptimeStringMap(EncodingLabel, .{
+    const string_map = fun.ComptimeStringMap(EncodingLabel, .{
         // Windows-1252 (Latin1) aliases
         .{ "l1", latin1 },
         .{ "ascii", latin1 },
@@ -235,5 +235,5 @@ const string = []const u8;
 
 const encoding = @import("./encoding.zig");
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;

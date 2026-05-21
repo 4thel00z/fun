@@ -1,16 +1,16 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import path from "path";
 
 describe.concurrent("hashbang-still-works", () => {
   test("hashbang still works after bounds check fix", async () => {
     const dir = tempDirWithFiles("hashbang", {
-      "script.js": "#!/usr/bin/env bun\nconsole.log('hello');",
+      "script.js": "#!/usr/bin/env fun\nconsole.log('hello');",
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--bun", "script.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--fun", "script.js"],
+      env: funEnv,
       cwd: dir,
     });
 
@@ -29,15 +29,15 @@ describe.concurrent("hashbang-still-works", () => {
       "single-hash.js": "#",
     });
 
-    // Using Bun.build to exercise the lexer directly
+    // Using Fun.build to exercise the lexer directly
     try {
-      await Bun.build({
+      await Fun.build({
         entrypoints: [path.join(dir, "single-hash.js")],
         target: "node",
       });
       expect.unreachable();
     } catch (e: any) {
-      const errorMessage = Bun.inspect((e as AggregateError).errors[0]);
+      const errorMessage = Fun.inspect((e as AggregateError).errors[0]);
       expect(errorMessage).toContain("error: Syntax Error");
     }
   });
@@ -47,9 +47,9 @@ describe.concurrent("hashbang-still-works", () => {
       "single-hash.js": "#",
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "single-hash.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "single-hash.js"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",

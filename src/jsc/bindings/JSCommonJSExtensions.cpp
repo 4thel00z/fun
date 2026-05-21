@@ -1,29 +1,29 @@
 #include "JSCommonJSExtensions.h"
 #include "ZigGlobalObject.h"
-#include "BunProcess.h"
+#include "FunProcess.h"
 #include "ModuleLoader.h"
 #include "JSCommonJSModule.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 const JSC::ClassInfo JSCommonJSExtensions::s_info = { "CommonJSExtensions"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSCommonJSExtensions) };
 
-JSC::EncodedJSValue builtinLoader(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame, BunLoaderType loaderType);
+JSC::EncodedJSValue builtinLoader(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame, FunLoaderType loaderType);
 
 // These functions are separate so that assigning one to the other can be
 // detected and use the corresponding loader.
 JSC_DEFINE_HOST_FUNCTION(jsLoaderJS, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
-    return builtinLoader(globalObject, callFrame, BunLoaderTypeJS);
+    return builtinLoader(globalObject, callFrame, FunLoaderTypeJS);
 }
 JSC_DEFINE_HOST_FUNCTION(jsLoaderTS, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
-    return builtinLoader(globalObject, callFrame, BunLoaderTypeTS);
+    return builtinLoader(globalObject, callFrame, FunLoaderTypeTS);
 }
 JSC_DEFINE_HOST_FUNCTION(jsLoaderJSON, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
-    return builtinLoader(globalObject, callFrame, BunLoaderTypeJSON);
+    return builtinLoader(globalObject, callFrame, FunLoaderTypeJSON);
 }
 #define jsLoaderNode Process_functionDlopen
 
@@ -45,7 +45,7 @@ JSC_DEFINE_HOST_FUNCTION(jsLoaderJSON, (JSC::JSGlobalObject * globalObject, JSC:
 //         }
 //     };
 //
-// These sorts of hooks don't do their intended purpose. Since Bun has always
+// These sorts of hooks don't do their intended purpose. Since Fun has always
 // supported requiring ESM+TypeScript+JSX, errors are never thrown. This
 // is just asking to make the developer experience worse.
 //
@@ -70,7 +70,7 @@ bool isAllowedToMutateExtensions(JSC::JSGlobalObject* globalObject)
 
     // When adding to this list, please comment why the package is using extensions incorrectly.
     if (CHECK_PATH(url, "dist/build/next-config-ts/"_s, "dist\\build\\next-config-ts\\"_s))
-        return false; // Next.js adds SWC support to add features Bun already has.
+        return false; // Next.js adds SWC support to add features Fun already has.
     if (CHECK_PATH(url, "@meteorjs/babel"_s, "@meteorjs\\babel"_s))
         return false; // Wraps existing loaders to use Babel.
     // NOTE: @babel/core is not on this list because it checks if extensions[".ts"] exists
@@ -137,36 +137,36 @@ void JSCommonJSExtensions::finishCreation(JSC::VM& vm)
 
 extern "C" void NodeModuleModule__onRequireExtensionModify(
     Zig::GlobalObject* globalObject,
-    const BunString* key,
-    BunLoaderType loader,
+    const FunString* key,
+    FunLoaderType loader,
     JSC::JSValue value);
 
 extern "C" void NodeModuleModule__onRequireExtensionModifyNonFunction(
     Zig::GlobalObject* globalObject,
-    const BunString* key);
+    const FunString* key);
 
 void onAssign(Zig::GlobalObject* globalObject, JSC::PropertyName propertyName, JSC::JSValue value)
 {
     if (propertyName.isSymbol()) return;
     auto* name = propertyName.publicName();
     if (!name->startsWith('.')) return;
-    BunString ext = Bun::toString(name);
+    FunString ext = Fun::toString(name);
     JSC::CallData callData = JSC::getCallData(value);
     if (callData.type == JSC::CallData::Type::None) {
         return NodeModuleModule__onRequireExtensionModifyNonFunction(globalObject, &ext);
     }
 
-    BunLoaderType loader = BunLoaderTypeNone;
+    FunLoaderType loader = FunLoaderTypeNone;
     if (callData.type == JSC::CallData::Type::Native) {
         auto* untaggedPtr = callData.native.function.untaggedPtr();
         if (untaggedPtr == &jsLoaderJS) {
-            loader = BunLoaderTypeJS;
+            loader = FunLoaderTypeJS;
         } else if (untaggedPtr == &jsLoaderJSON) {
-            loader = BunLoaderTypeJSON;
+            loader = FunLoaderTypeJSON;
         } else if (untaggedPtr == &jsLoaderNode) {
-            loader = BunLoaderTypeNAPI;
+            loader = FunLoaderTypeNAPI;
         } else if (untaggedPtr == &jsLoaderTS) {
-            loader = BunLoaderTypeTS;
+            loader = FunLoaderTypeTS;
         }
     }
     NodeModuleModule__onRequireExtensionModify(globalObject, &ext, loader, value);
@@ -240,7 +240,7 @@ extern "C" uint32_t JSCommonJSExtensions__swapRemove(Zig::GlobalObject* globalOb
 // - Evaluates the module
 //     - Calls `module._compile(code, filename)`, which is often overridden.
 // - Returns `undefined`
-JSC::EncodedJSValue builtinLoader(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame, BunLoaderType loaderType)
+JSC::EncodedJSValue builtinLoader(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame, FunLoaderType loaderType)
 {
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     Zig::GlobalObject* global = defaultGlobalObject(globalObject);
@@ -249,7 +249,7 @@ JSC::EncodedJSValue builtinLoader(JSC::JSGlobalObject* globalObject, JSC::CallFr
         throwTypeError(globalObject, scope, "Module._extensions['.js'] must be called with a CommonJS module object"_s);
         return {};
     }
-    Bun::JSCommonJSModule* mod = dynamicDowncast<Bun::JSCommonJSModule>(modValue);
+    Fun::JSCommonJSModule* mod = dynamicDowncast<Fun::JSCommonJSModule>(modValue);
     if (!mod) {
         throwTypeError(globalObject, scope, "Module._extensions['.js'] must be called with a CommonJS module object"_s);
         return {};
@@ -257,18 +257,18 @@ JSC::EncodedJSValue builtinLoader(JSC::JSGlobalObject* globalObject, JSC::CallFr
     JSC::JSValue specifier = callFrame->argument(1);
     WTF::String specifierWtfString = specifier.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
-    BunString specifierBunString = Bun::toString(specifierWtfString);
-    BunString empty = BunStringEmpty;
+    FunString specifierFunString = Fun::toString(specifierWtfString);
+    FunString empty = FunStringEmpty;
     JSC::VM& vm = globalObject->vm();
     ErrorableResolvedSource res;
     res.success = false;
     memset(&res.result, 0, sizeof res.result);
 
     JSValue result = fetchCommonJSModuleNonBuiltin<true>(
-        global->bunVM(),
+        global->funVM(),
         vm,
         global,
-        &specifierBunString,
+        &specifierFunString,
         specifier,
         &empty,
         &empty,
@@ -310,4 +310,4 @@ void JSCommonJSExtensions::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 
 DEFINE_VISIT_CHILDREN(JSCommonJSExtensions);
 
-} // namespace Bun
+} // namespace Fun

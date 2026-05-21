@@ -52,7 +52,7 @@ pub const Row = struct {
         debug("parseValueAndSetCell: {s} {s}", .{ @tagName(column.column_type), value.slice() });
         return switch (column.column_type) {
             .MYSQL_TYPE_FLOAT, .MYSQL_TYPE_DOUBLE => {
-                const val: f64 = bun.parseDouble(value.slice()) catch std.math.nan(f64);
+                const val: f64 = fun.parseDouble(value.slice()) catch std.math.nan(f64);
                 cell.* = SQLDataCell{ .tag = .float8, .value = .{ .float8 = val } };
             },
             .MYSQL_TYPE_TINY, .MYSQL_TYPE_SHORT => {
@@ -106,21 +106,21 @@ pub const Row = struct {
                 }
 
                 const slice = value.slice();
-                cell.* = SQLDataCell{ .tag = .string, .value = .{ .string = if (slice.len > 0) bun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
+                cell.* = SQLDataCell{ .tag = .string, .value = .{ .string = if (slice.len > 0) fun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
             },
             .MYSQL_TYPE_JSON => {
                 const slice = value.slice();
-                cell.* = SQLDataCell{ .tag = .json, .value = .{ .json = if (slice.len > 0) bun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
+                cell.* = SQLDataCell{ .tag = .json, .value = .{ .json = if (slice.len > 0) fun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
             },
 
             .MYSQL_TYPE_TIME => {
                 // lets handle TIME special case as string
                 // -838:59:50 to 838:59:59 is valid
                 const slice = value.slice();
-                cell.* = SQLDataCell{ .tag = .string, .value = .{ .string = if (slice.len > 0) bun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
+                cell.* = SQLDataCell{ .tag = .string, .value = .{ .string = if (slice.len > 0) fun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
             },
             .MYSQL_TYPE_DATE, .MYSQL_TYPE_DATETIME, .MYSQL_TYPE_TIMESTAMP => {
-                var str = bun.String.init(value.slice());
+                var str = fun.String.init(value.slice());
                 defer str.deref();
                 const date = brk: {
                     break :brk str.parseDate(this.globalObject) catch |err| {
@@ -148,7 +148,7 @@ pub const Row = struct {
                     cell.* = SQLDataCell.raw(value);
                 } else {
                     const slice = value.slice();
-                    cell.* = SQLDataCell{ .tag = .string, .value = .{ .string = if (slice.len > 0) bun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
+                    cell.* = SQLDataCell{ .tag = .string, .value = .{ .string = if (slice.len > 0) fun.String.cloneUTF8(slice).value.WTFStringImpl else null }, .free_value = 1 };
                 }
             },
         };
@@ -254,12 +254,12 @@ pub const Row = struct {
     pub const decode = decoderWrap(Row, decodeInternal).decodeAllocator;
 };
 
-const debug = bun.Output.scoped(.MySQLResultSet, .visible);
+const debug = fun.Output.scoped(.MySQLResultSet, .visible);
 
 const AnyMySQLError = @import("../../../sql/mysql/protocol/AnyMySQLError.zig");
 const CachedStructure = @import("../../shared/CachedStructure.zig");
 const ColumnDefinition41 = @import("../../../sql/mysql/protocol/ColumnDefinition41.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Data = @import("../../../sql/shared/Data.zig").Data;
 const SQLDataCell = @import("../../shared/SQLDataCell.zig").SQLDataCell;
@@ -272,5 +272,5 @@ const decoderWrap = @import("../../../sql/mysql/protocol/NewReader.zig").decoder
 const DecodeBinaryValue = @import("./DecodeBinaryValue.zig");
 const decodeBinaryValue = DecodeBinaryValue.decodeBinaryValue;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

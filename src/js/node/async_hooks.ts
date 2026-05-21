@@ -1,5 +1,5 @@
 // Hardcoded module "node:async_hooks"
-// Bun is only going to implement AsyncLocalStorage and AsyncResource (partial).
+// Fun is only going to implement AsyncLocalStorage and AsyncResource (partial).
 // The other functions are deprecated anyways, and would impact performance too much.
 // API: https://nodejs.org/api/async_hooks.html
 //
@@ -20,7 +20,7 @@
 //
 // AsyncContextData is an immutable array managed in here, formatted [key, value, key, value] where
 // each key is an AsyncLocalStorage object and the value is the associated value. There are a ton of
-// calls to $assert which will verify this invariant (only during bun-debug)
+// calls to $assert which will verify this invariant (only during fun-debug)
 //
 const setAsyncHooksEnabled = $newCppFunction("NodeAsyncHooks.cpp", "jsSetAsyncHooksEnabled", 1);
 const cleanupLater = $newCppFunction("NodeAsyncHooks.cpp", "jsCleanupLater", 0);
@@ -34,12 +34,12 @@ function assertValidAsyncContextArray(array: unknown): array is ReadonlyArray<an
   $assert(
     Array.isArray(array),
     "AsyncContextData must be an array or undefined, got",
-    Bun.inspect(array, { depth: 1 }),
+    Fun.inspect(array, { depth: 1 }),
   );
   // the array has to be even
-  $assert(array.length % 2 === 0, "AsyncContextData should be even-length, got", Bun.inspect(array, { depth: 1 }));
+  $assert(array.length % 2 === 0, "AsyncContextData should be even-length, got", Fun.inspect(array, { depth: 1 }));
   // if it is zero-length, use undefined instead
-  $assert(array.length > 0, "AsyncContextData should be undefined if empty, got", Bun.inspect(array, { depth: 1 }));
+  $assert(array.length > 0, "AsyncContextData should be undefined if empty, got", Fun.inspect(array, { depth: 1 }));
   for (var i = 0; i < array.length; i += 2) {
     $assert(
       array[i] instanceof AsyncLocalStorage,
@@ -80,9 +80,9 @@ class AsyncLocalStorage {
     setAsyncHooksEnabled(true);
 
     // In debug mode assign every AsyncLocalStorage a unique ID
-    if (IS_BUN_DEVELOPMENT) {
+    if (IS_FUN_DEVELOPMENT) {
       const uid = Math.random().toString(36).slice(2, 8);
-      const source = require("bun:jsc").callerSourceOrigin();
+      const source = require("fun:jsc").callerSourceOrigin();
 
       (this as any).__id__ = uid + "@" + require("node:path").basename(source);
 
@@ -196,7 +196,7 @@ class AsyncLocalStorage {
         $assert(
           this.getStore() === previous_value,
           "run: previous_value",
-          Bun.inspect(previous_value),
+          Fun.inspect(previous_value),
           "was not restored, i see",
           this.getStore(),
         );
@@ -234,19 +234,19 @@ class AsyncLocalStorage {
     }
   }
 
-  // Node.js internal function. In Bun's implementation, calling this is not
+  // Node.js internal function. In Fun's implementation, calling this is not
   // observable from outside the AsyncLocalStorage implementation.
   _enable() {}
 
-  // Node.js internal function. In Bun's implementation, calling this is not
+  // Node.js internal function. In Fun's implementation, calling this is not
   // observable from outside the AsyncLocalStorage implementation.
   _propagate(_resource, _triggerResource, _type) {}
 }
 
-if (IS_BUN_DEVELOPMENT) {
-  AsyncLocalStorage.prototype[Bun.inspect.custom] = function (depth, options) {
-    if (depth < 0) return `AsyncLocalStorage { ${Bun.inspect((this as any).__id__, options)} }`;
-    return `AsyncLocalStorage { [${options.stylize("debug id", "special")}]: ${Bun.inspect(
+if (IS_FUN_DEVELOPMENT) {
+  AsyncLocalStorage.prototype[Fun.inspect.custom] = function (depth, options) {
+    if (depth < 0) return `AsyncLocalStorage { ${Fun.inspect((this as any).__id__, options)} }`;
+    return `AsyncLocalStorage { [${options.stylize("debug id", "special")}]: ${Fun.inspect(
       (this as any).__id__,
       options,
     )} }`;
@@ -324,7 +324,7 @@ class AsyncResource {
 function createWarning(message, isCreateHook?: boolean) {
   let warned = false;
   var wrapped = function (arg1?) {
-    if (warned || (!Bun.env.BUN_FEATURE_FLAG_VERBOSE_WARNINGS && (warned = true))) return;
+    if (warned || (!Fun.env.FUN_FEATURE_FLAG_VERBOSE_WARNINGS && (warned = true))) return;
 
     const known_supported_modules = [
       // the following do not actually need async_hooks to work properly
@@ -337,7 +337,7 @@ function createWarning(message, isCreateHook?: boolean) {
       // this block is to specifically filter out react-server, which is often
       // times bundled into a framework or application. Their use defines three
       // handlers which are all TODO stubs. for more info see this comment:
-      // https://github.com/oven-sh/bun/issues/13866#issuecomment-2397896065
+      // https://github.com/underdoc-org/fun/issues/13866#issuecomment-2397896065
       if (typeof arg1 === "object") {
         const { init, promiseResolve, destroy } = arg1;
         if (init && promiseResolve && destroy) {
@@ -347,7 +347,7 @@ function createWarning(message, isCreateHook?: boolean) {
     }
 
     warned = true;
-    console.warn("[bun] Warning:", message);
+    console.warn("[fun] Warning:", message);
   };
   return wrapped;
 }
@@ -360,7 +360,7 @@ function isEmptyFunction(f: Function) {
 }
 
 const createHookNotImpl = createWarning(
-  "async_hooks.createHook is not implemented in Bun. Hooks can still be created but will never be called.",
+  "async_hooks.createHook is not implemented in Fun. Hooks can still be created but will never be called.",
   true,
 );
 
@@ -389,7 +389,7 @@ function createHook(hook) {
 }
 
 const executionAsyncIdNotImpl = createWarning(
-  "async_hooks.executionAsyncId/triggerAsyncId are not implemented in Bun. It will return 0 every time.",
+  "async_hooks.executionAsyncId/triggerAsyncId are not implemented in Fun. It will return 0 every time.",
 );
 function executionAsyncId() {
   executionAsyncIdNotImpl();
@@ -401,7 +401,7 @@ function triggerAsyncId() {
 }
 
 const executionAsyncResourceWarning = createWarning(
-  "async_hooks.executionAsyncResource is not implemented in Bun. It returns a reference to process.stdin every time.",
+  "async_hooks.executionAsyncResource is not implemented in Fun. It returns a reference to process.stdin every time.",
 );
 function executionAsyncResource() {
   executionAsyncResourceWarning();

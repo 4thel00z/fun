@@ -2,14 +2,14 @@
  * Test for GitHub Issue #20875: gRPC regression - DEADLINE_EXCEEDED errors
  * with streaming calls when using @grpc/grpc-js
  *
- * This test verifies that Bun's HTTP/2 client correctly handles:
+ * This test verifies that Fun's HTTP/2 client correctly handles:
  * 1. Server streaming gRPC calls (like BatchGetDocuments)
  * 2. Proper handling of streams in HALF_CLOSED_LOCAL state
  */
 
 import * as grpc from "@grpc/grpc-js";
 import * as loader from "@grpc/proto-loader";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 

@@ -33,7 +33,7 @@ pub const PmPkgCommand = struct {
     }
 
     fn printHelp() void {
-        Output.prettyln("<r><b>bun pm pkg<r> <d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+        Output.prettyln("<r><b>fun pm pkg<r> <d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
         const help_text =
             \\  Manage data in package.json
             \\
@@ -45,16 +45,16 @@ pub const PmPkgCommand = struct {
             \\  <cyan>fix<r>                    Auto-correct common package.json errors
             \\
             \\<b>Examples<r>:
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>get<r> <blue>name version<r>
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>set<r> <blue>description="My awesome package"<r>
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>set<r> <blue>keywords='["test","demo","example"]'<r> <cyan>--json<r>
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>set<r> <blue>config='{{"port":3000,"debug":true}}'<r> <cyan>--json<r>
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>set<r> <blue>scripts.test="bun test"<r>
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>set<r> <blue>bin.mycli=cli.js<r>
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>delete<r> <blue>scripts.test devDependencies.webpack<r>
-            \\  <d>$<r> <b><green>bun pm pkg<r> <cyan>fix<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>get<r> <blue>name version<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>set<r> <blue>description="My awesome package"<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>set<r> <blue>keywords='["test","demo","example"]'<r> <cyan>--json<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>set<r> <blue>config='{{"port":3000,"debug":true}}'<r> <cyan>--json<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>set<r> <blue>scripts.test="fun test"<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>set<r> <blue>bin.mycli=cli.js<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>delete<r> <blue>scripts.test devDependencies.webpack<r>
+            \\  <d>$<r> <b><green>fun pm pkg<r> <cyan>fix<r>
             \\
-            \\<b>More info<r>: <magenta>https://bun.com/docs/cli/pm#pkg<r>
+            \\<b>More info<r>: <magenta>https://fun.dev/docs/cli/pm#pkg<r>
             \\
         ;
         Output.pretty(help_text, .{});
@@ -62,16 +62,16 @@ pub const PmPkgCommand = struct {
     }
 
     fn findPackageJson(allocator: std.mem.Allocator, cwd: []const u8) ![]const u8 {
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
         var current_dir = cwd;
 
         while (true) {
-            const pkg_path = bun.path.joinAbsStringBufZ(current_dir, &path_buf, &.{"package.json"}, .auto);
-            if (bun.sys.existsZ(pkg_path)) {
+            const pkg_path = fun.path.joinAbsStringBufZ(current_dir, &path_buf, &.{"package.json"}, .auto);
+            if (fun.sys.existsZ(pkg_path)) {
                 return try allocator.dupe(u8, pkg_path);
             }
 
-            const parent = bun.path.dirname(current_dir, .auto);
+            const parent = fun.path.dirname(current_dir, .auto);
             if (strings.eql(parent, current_dir)) {
                 break;
             }
@@ -90,7 +90,7 @@ pub const PmPkgCommand = struct {
     };
 
     fn loadPackageJson(ctx: Command.Context, allocator: std.mem.Allocator, path: []const u8) !PackageJson {
-        const contents = bun.sys.File.readFrom(bun.FD.cwd(), path, allocator).unwrap() catch |err| {
+        const contents = fun.sys.File.readFrom(fun.FD.cwd(), path, allocator).unwrap() catch |err| {
             Output.errGeneric("Failed to read package.json: {s}", .{@errorName(err)});
             Global.exit(1);
         };
@@ -139,7 +139,7 @@ pub const PmPkgCommand = struct {
             return;
         }
 
-        var results = bun.StringArrayHashMap([]const u8).init(ctx.allocator);
+        var results = fun.StringArrayHashMap([]const u8).init(ctx.allocator);
         defer {
             for (results.values()) |val| ctx.allocator.free(val);
             results.deinit();
@@ -183,7 +183,7 @@ pub const PmPkgCommand = struct {
 
     fn execSet(ctx: Command.Context, pm: *PackageManager, args: []const string, cwd: []const u8) !void {
         if (args.len == 0) {
-            Output.errGeneric("<blue>bun pm pkg set<r> expects a key=value pair of args", .{});
+            Output.errGeneric("<blue>fun pm pkg set<r> expects a key=value pair of args", .{});
             Global.exit(1);
         }
 
@@ -233,7 +233,7 @@ pub const PmPkgCommand = struct {
     fn execDelete(ctx: Command.Context, pm: *PackageManager, args: []const string, cwd: []const u8) !void {
         _ = pm;
         if (args.len == 0) {
-            Output.errGeneric("<blue>bun pm pkg <b>delete<r> expects key args", .{});
+            Output.errGeneric("<blue>fun pm pkg <b>delete<r> expects key args", .{});
             Global.exit(1);
         }
 
@@ -304,12 +304,12 @@ pub const PmPkgCommand = struct {
                     switch (value.data) {
                         .e_string => |str| {
                             const bin_path = str.slice(ctx.allocator);
-                            var pkg_dir = bun.path.dirname(path, .auto);
+                            var pkg_dir = fun.path.dirname(path, .auto);
                             if (pkg_dir.len == 0) pkg_dir = cwd;
-                            var buf: bun.PathBuffer = undefined;
-                            const full_path = bun.path.joinAbsStringBufZ(pkg_dir, &buf, &.{bin_path}, .auto);
+                            var buf: fun.PathBuffer = undefined;
+                            const full_path = fun.path.joinAbsStringBufZ(pkg_dir, &buf, &.{bin_path}, .auto);
 
-                            if (!bun.sys.existsZ(full_path)) {
+                            if (!fun.sys.existsZ(full_path)) {
                                 Output.warn("No bin file found at {s}", .{bin_path});
                             }
                         },
@@ -713,7 +713,7 @@ pub const PmPkgCommand = struct {
         }
 
         if (!found) return false;
-        var new_props: bun.BabyList(js_ast.G.Property) = try .initCapacity(allocator, old_props.len - 1);
+        var new_props: fun.BabyList(js_ast.G.Property) = try .initCapacity(allocator, old_props.len - 1);
         for (old_props) |prop| {
             if (prop.key) |k| {
                 switch (k.data) {
@@ -770,13 +770,13 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Global = bun.Global;
-const JSON = bun.json;
-const JSPrinter = bun.js_printer;
-const Output = bun.Output;
-const js_ast = bun.ast;
-const logger = bun.logger;
-const strings = bun.strings;
-const Command = bun.cli.Command;
-const PackageManager = bun.install.PackageManager;
+const fun = @import("fun");
+const Global = fun.Global;
+const JSON = fun.json;
+const JSPrinter = fun.js_printer;
+const Output = fun.Output;
+const js_ast = fun.ast;
+const logger = fun.logger;
+const strings = fun.strings;
+const Command = fun.cli.Command;
+const PackageManager = fun.install.PackageManager;

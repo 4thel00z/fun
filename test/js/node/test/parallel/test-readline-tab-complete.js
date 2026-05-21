@@ -6,7 +6,7 @@ const common = require('../common');
 const readline = require('readline');
 const assert = require('assert');
 const EventEmitter = require('events').EventEmitter;
-const { utils: {getStringWidth} } = readline[Symbol.for("__BUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
+const { utils: {getStringWidth} } = readline[Symbol.for("__FUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
 
 common.skipIfDumbTerminal();
 
@@ -95,7 +95,7 @@ common.skipIfDumbTerminal();
   rli.on('line', common.mustNotCall());
   fi.emit('data', '\t');
   queueMicrotask(() => {
-    assert.match(output, /^Tab completion error:[^]+error: message/); // modified to match bun's error message
+    assert.match(output, /^Tab completion error:[^]+error: message/); // modified to match fun's error message
     output = '';
   });
   rli.close();

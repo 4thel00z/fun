@@ -1,26 +1,26 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("issue #8768: describe.todo() doesn't fail when todo test passes", async () => {
   using dir = tempDir("issue-08768", {
     "describe-todo.test.js": `
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "fun:test";
 
 describe.todo("E", () => {
     test("E", () => { expect("hello").toBe("hello") })
 });
     `.trim(),
     "test-todo.test.js": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test.todo("E", () => { expect("hello").toBe("hello") });
     `.trim(),
   });
 
   // Run describe.todo() with --todo flag
-  await using proc1 = Bun.spawn({
-    cmd: [bunExe(), "test", "--todo", "describe-todo.test.js"],
-    env: bunEnv,
+  await using proc1 = Fun.spawn({
+    cmd: [funExe(), "test", "--todo", "describe-todo.test.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -29,9 +29,9 @@ test.todo("E", () => { expect("hello").toBe("hello") });
   const [stdout1, stderr1, exitCode1] = await Promise.all([proc1.stdout.text(), proc1.stderr.text(), proc1.exited]);
 
   // Run test.todo() with --todo flag for comparison
-  await using proc2 = Bun.spawn({
-    cmd: [bunExe(), "test", "--todo", "test-todo.test.js"],
-    env: bunEnv,
+  await using proc2 = Fun.spawn({
+    cmd: [funExe(), "test", "--todo", "test-todo.test.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

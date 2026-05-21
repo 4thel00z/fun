@@ -9,11 +9,11 @@
 // The fix makes `drainEvents` fail-fast any queued task whose `aborted` signal
 // is already set, regardless of whether a slot is free.
 //
-// Runs in a child process so we can set BUN_CONFIG_MAX_HTTP_REQUESTS without
+// Runs in a child process so we can set FUN_CONFIG_MAX_HTTP_REQUESTS without
 // affecting the rest of the test suite.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 const fixture = /* js */ `
   import { createServer } from "net";
@@ -72,9 +72,9 @@ const fixture = /* js */ `
 `;
 
 test("aborting a fetch that is queued behind max_simultaneous_requests rejects the promise", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", fixture],
-    env: { ...bunEnv, BUN_CONFIG_MAX_HTTP_REQUESTS: "1" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", fixture],
+    env: { ...funEnv, FUN_CONFIG_MAX_HTTP_REQUESTS: "1" },
     stdout: "pipe",
     stderr: "pipe",
   });

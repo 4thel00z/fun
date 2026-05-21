@@ -17,7 +17,7 @@ pub fn openURL(url: stringZ) void {
     const args_buf: []const stringZ = if (comptime Environment.isAndroid) &am_args else &two_args;
 
     maybe_fallback: {
-        switch (bun.spawnSync(&.{
+        switch (fun.spawnSync(&.{
             .argv = args_buf,
 
             .envp = null,
@@ -27,7 +27,7 @@ pub fn openURL(url: stringZ) void {
             .stdin = .inherit,
 
             .windows = if (Environment.isWindows) .{
-                .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+                .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
             },
         }) catch break :maybe_fallback) {
             // don't fallback:
@@ -55,7 +55,7 @@ pub const Editor = enum(u8) {
     const StringMap = std.EnumMap(Editor, string);
     const StringArrayMap = std.EnumMap(Editor, []const [:0]const u8);
 
-    const name_map = bun.ComptimeStringMap(Editor, .{
+    const name_map = fun.ComptimeStringMap(Editor, .{
         .{ "sublime", .sublime },
         .{ "subl", .sublime },
         .{ "vscode", .vscode },
@@ -95,13 +95,13 @@ pub const Editor = enum(u8) {
     }
 
     const which = @import("../which/which.zig").which;
-    pub fn byPATH(env: *DotEnv.Loader, buf: *bun.PathBuffer, cwd: string, out: *[]const u8) ?Editor {
+    pub fn byPATH(env: *DotEnv.Loader, buf: *fun.PathBuffer, cwd: string, out: *[]const u8) ?Editor {
         const PATH = env.get("PATH") orelse return null;
 
         inline for (default_preference_list) |editor| {
             if (bin_name.get(editor)) |path| {
                 if (which(buf, PATH, cwd, path)) |bin| {
-                    out.* = bun.asByteSlice(bin);
+                    out.* = fun.asByteSlice(bin);
                     return editor;
                 }
             }
@@ -110,13 +110,13 @@ pub const Editor = enum(u8) {
         return null;
     }
 
-    pub fn byPATHForEditor(env: *DotEnv.Loader, editor: Editor, buf: *bun.PathBuffer, cwd: string, out: *[]const u8) bool {
+    pub fn byPATHForEditor(env: *DotEnv.Loader, editor: Editor, buf: *fun.PathBuffer, cwd: string, out: *[]const u8) bool {
         const PATH = env.get("PATH") orelse return false;
 
         if (bin_name.get(editor)) |path| {
             if (path.len > 0) {
                 if (which(buf, PATH, cwd, path)) |bin| {
-                    out.* = bun.asByteSlice(bin);
+                    out.* = fun.asByteSlice(bin);
                     return true;
                 }
             }
@@ -131,7 +131,7 @@ pub const Editor = enum(u8) {
                 if (std.fs.cwd().openFile(path, .{})) |opened| {
                     opened.close();
                     if (out != null) {
-                        out.?.* = bun.asByteSlice(path);
+                        out.?.* = fun.asByteSlice(path);
                     }
                     return true;
                 } else |_| {}
@@ -141,7 +141,7 @@ pub const Editor = enum(u8) {
         return false;
     }
 
-    pub fn byFallback(env: *DotEnv.Loader, buf: *bun.PathBuffer, cwd: string, out: *[]const u8) ?Editor {
+    pub fn byFallback(env: *DotEnv.Loader, buf: *fun.PathBuffer, cwd: string, out: *[]const u8) ?Editor {
         inline for (default_preference_list) |editor| {
             if (byPATHForEditor(env, editor, buf, cwd, out)) {
                 return editor;
@@ -321,13 +321,13 @@ pub const Editor = enum(u8) {
         thread.detach();
     }
     const SpawnedEditorContext = struct {
-        file_path_buf: [1024 + bun.MAX_PATH_BYTES]u8 = undefined,
+        file_path_buf: [1024 + fun.MAX_PATH_BYTES]u8 = undefined,
         buf: [10]string = undefined,
         child_process: std.process.Child = undefined,
     };
 
     fn autoClose(spawned: *SpawnedEditorContext) void {
-        defer bun.default_allocator.destroy(spawned);
+        defer fun.default_allocator.destroy(spawned);
 
         Global.setThreadName("Open Editor");
         spawned.child_process.spawn() catch return;
@@ -354,8 +354,8 @@ pub const EditorContext = struct {
     fn _openInEditor(path: string, editor_: Editor, blob: []const u8, id: string, tmpdir: std.fs.Dir, line: string, column: string) !void {
         var basename_buf: [512]u8 = undefined;
         var basename = std.fs.path.basename(id);
-        if (strings.endsWith(basename, ".bun") and basename.len < 499) {
-            bun.copy(u8, &basename_buf, basename);
+        if (strings.endsWith(basename, ".fun") and basename.len < 499) {
+            fun.copy(u8, &basename_buf, basename);
             basename_buf[basename.len..][0..3].* = ".js".*;
             basename = basename_buf[0 .. basename.len + 3];
         }
@@ -364,10 +364,10 @@ pub const EditorContext = struct {
 
         var opened = try tmpdir.openFile(basename, .{});
         defer opened.close();
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
         try editor_.open(
             path,
-            try bun.getFdPath(opened.handle, &path_buf),
+            try fun.getFdPath(opened.handle, &path_buf),
             line,
             column,
             default_allocator,
@@ -380,7 +380,7 @@ pub const EditorContext = struct {
         }
     }
     pub fn detectEditor(this: *EditorContext, env: *DotEnv.Loader) void {
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
 
         var out: string = "";
         // first: choose from user preference
@@ -442,9 +442,9 @@ const stringZ = [:0]const u8;
 const DotEnv = @import("../dotenv/env_loader.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;

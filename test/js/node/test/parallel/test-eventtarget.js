@@ -4,7 +4,7 @@
 const common = require('../common');
 let defineEventHandler;
 let kWeakHandler;
-if (typeof Bun === "undefined") {
+if (typeof Fun === "undefined") {
   ({
     defineEventHandler,
     kWeakHandler,
@@ -321,7 +321,7 @@ let asyncTest = Promise.resolve();
     throws(() => target.dispatchEvent(i), {
       code: 'ERR_INVALID_ARG_TYPE',
       name: 'TypeError',
-      message: typeof Bun === "undefined" ? 'The "event" argument must be an instance of Event.' +
+      message: typeof Fun === "undefined" ? 'The "event" argument must be an instance of Event.' +
                common.invalidArgTypeHelper(i) : 'Argument 1 (\'event\') to EventTarget.dispatchEvent must be an instance of Event',
     });
   });
@@ -329,7 +329,7 @@ let asyncTest = Promise.resolve();
   const err = (arg) => ({
     code: 'ERR_INVALID_ARG_TYPE',
     name: 'TypeError',
-    ...typeof Bun === "undefined" ? {message: 'The "listener" argument must be an instance of EventListener.' +
+    ...typeof Fun === "undefined" ? {message: 'The "listener" argument must be an instance of EventListener.' +
              common.invalidArgTypeHelper(arg)} : {},
   });
 
@@ -432,20 +432,20 @@ let asyncTest = Promise.resolve();
   strictEqual(event.toString(), '[object Event]');
 }
 
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo');
   target.onfoo = common.mustCall();
   target.dispatchEvent(new Event('foo'));
 }
 
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo');
   strictEqual(target.onfoo, null);
 }
 
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo');
   let count = 0;
@@ -454,7 +454,7 @@ if (typeof Bun === "undefined") { // Node internal
   target.dispatchEvent(new Event('foo'));
   strictEqual(count, 1);
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo');
   let count = 0;
@@ -463,7 +463,7 @@ if (typeof Bun === "undefined") { // Node internal
   target.dispatchEvent(new Event('foo'));
   strictEqual(count, 2);
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo');
   const fn = common.mustNotCall();
@@ -486,7 +486,7 @@ if (typeof Bun === "undefined") { // Node internal
     {},
     [],
     1,
-    ...(typeof Bun === "undefined" ? [
+    ...(typeof Fun === "undefined" ? [
       // In the web standard, EventTarget.prototype.dispatchEvent === globalThis.dispatchEvent, and calling with this as null or undefined will call it on the global object
       // Node does not have globalThis.dispatchEvent.
       null,
@@ -606,14 +606,14 @@ if (typeof Bun === "undefined") { // Node internal
   }));
   target.dispatchEvent(new Event('foo'));
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo');
   const descriptor = Object.getOwnPropertyDescriptor(target, 'onfoo');
   strictEqual(descriptor.configurable, true);
   strictEqual(descriptor.enumerable, true);
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo');
   const output = [];
@@ -625,7 +625,7 @@ if (typeof Bun === "undefined") { // Node internal
   target.dispatchEvent(new Event('foo'));
   deepStrictEqual(output, [1, 2, 3, 4]);
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   const target = new EventTarget();
   defineEventHandler(target, 'foo', 'bar');
   const output = [];
@@ -649,7 +649,7 @@ if (typeof Bun === "undefined") { // Node internal
   const evConstructorName = inspect(ev, {
     depth: -1,
   });
-  if (typeof Bun === "undefined") {
+  if (typeof Fun === "undefined") {
     strictEqual(evConstructorName, 'Event');
   } else {
     strictEqual(evConstructorName, '[Event]');
@@ -676,14 +676,14 @@ if (typeof Bun === "undefined") { // Node internal
   const et = new EventTarget();
   strictEqual(et.constructor.name, 'EventTarget');
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   // Weak event listeners work
   const et = new EventTarget();
   const listener = common.mustCall();
   et.addEventListener('foo', listener, { [kWeakHandler]: et });
   et.dispatchEvent(new Event('foo'));
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   // Weak event listeners can be removed and weakness is not part of the key
   const et = new EventTarget();
   const listener = common.mustNotCall();
@@ -691,7 +691,7 @@ if (typeof Bun === "undefined") { // Node internal
   et.removeEventListener('foo', listener);
   et.dispatchEvent(new Event('foo'));
 }
-if (typeof Bun === "undefined") { // Node internal
+if (typeof Fun === "undefined") { // Node internal
   // Test listeners are held weakly
   const et = new EventTarget();
   et.addEventListener('foo', common.mustNotCall(), { [kWeakHandler]: {} });

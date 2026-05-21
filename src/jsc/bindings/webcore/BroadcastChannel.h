@@ -24,7 +24,7 @@
  */
 
 // BroadcastChannel is a thin EventTarget over the process-global
-// BunBroadcastChannelRegistry.
+// FunBroadcastChannelRegistry.
 //
 // The registry is directly thread-safe; posting never bounces through the
 // main thread. Each (message, subscriber) pair becomes one task on the
@@ -80,7 +80,7 @@ public:
     void jsUnref(JSGlobalObject*);
 
 private:
-    friend class BunBroadcastChannelRegistry;
+    friend class FunBroadcastChannelRegistry;
 
     BroadcastChannel(ScriptExecutionContext&, const String& name);
 

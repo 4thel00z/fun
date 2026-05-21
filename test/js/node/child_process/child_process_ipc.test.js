@@ -1,8 +1,8 @@
-import { $ } from "bun";
-import { bunExe } from "harness";
+import { $ } from "fun";
+import { funExe } from "harness";
 
 test("child_process ipc", async () => {
-  const output = await $`${bunExe()} ${import.meta.dir}/fixtures/ipc_fixture.js`.text();
+  const output = await $`${funExe()} ${import.meta.dir}/fixtures/ipc_fixture.js`.text();
   // node (v23.4.0) has identical output
   expect(output).toMatchInlineSnapshot(`
     "Parent received: {"status":"Child process started"}

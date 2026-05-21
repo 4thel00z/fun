@@ -1,13 +1,13 @@
 pub fn toJS(this: ErrorResponse, globalObject: *jsc.JSGlobalObject) JSValue {
-    var b = bun.StringBuilder{};
-    defer b.deinit(bun.default_allocator);
+    var b = fun.StringBuilder{};
+    defer b.deinit(fun.default_allocator);
 
     for (this.messages.items) |*msg| {
         b.cap += switch (msg.*) {
             inline else => |m| m.utf8ByteLength(),
         } + 1;
     }
-    b.allocate(bun.default_allocator) catch {};
+    b.allocate(fun.default_allocator) catch {};
 
     var severity: String = String.dead;
     var code: String = String.dead;
@@ -125,8 +125,8 @@ pub fn toJS(this: ErrorResponse, globalObject: *jsc.JSGlobalObject) JSValue {
 const ErrorResponse = @import("../../../sql/postgres/protocol/ErrorResponse.zig");
 const createPostgresError = @import("../error_jsc.zig").createPostgresError;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

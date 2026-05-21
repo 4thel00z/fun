@@ -59,7 +59,7 @@ export function enumeration(
       return name;
     }
     get idlType() {
-      return `::Bun::Bindgen::Generated::IDL${name}`;
+      return `::Fun::Bindgen::Generated::IDL${name}`;
     }
     get bindgenType() {
       return `bindgen_generated.internal.${name}`;
@@ -72,7 +72,7 @@ export function enumeration(
       if (index == null) {
         throw RangeError(`not a member of ${name}: ${util.inspect(value)}`);
       }
-      return `::Bun::Bindgen::Generated::${name}::${cppMembers[index]}`;
+      return `::Fun::Bindgen::Generated::${name}::${cppMembers[index]}`;
     }
 
     get hasCppHeader() {
@@ -97,7 +97,7 @@ export function enumeration(
         #include "Bindgen/ExternTraits.h"
         #include "JSDOMConvertEnumeration.h"
 
-        namespace Bun {
+        namespace Fun {
         namespace Bindgen {
         namespace Generated {
         enum class ${name} : ::std::uint32_t {
@@ -118,12 +118,12 @@ export function enumeration(
         };
         }
 
-        template<> std::optional<Bun::Bindgen::Generated::${name}>
-        WebCore::parseEnumerationFromString<Bun::Bindgen::Generated::${name}>(
+        template<> std::optional<Fun::Bindgen::Generated::${name}>
+        WebCore::parseEnumerationFromString<Fun::Bindgen::Generated::${name}>(
           const WTF::String&);
 
-        template<> std::optional<Bun::Bindgen::Generated::${name}>
-        WebCore::parseEnumeration<Bun::Bindgen::Generated::${name}>(
+        template<> std::optional<Fun::Bindgen::Generated::${name}>
+        WebCore::parseEnumeration<Fun::Bindgen::Generated::${name}>(
           JSC::JSGlobalObject& globalObject,
           JSC::JSValue value);
       `);
@@ -133,7 +133,7 @@ export function enumeration(
       return true;
     }
     get cppSource() {
-      const qualifiedName = "Bun::Bindgen::Generated::" + name;
+      const qualifiedName = "Fun::Bindgen::Generated::" + name;
       const pairType = `::std::pair<::WTF::ComparableASCIILiteral, ::${qualifiedName}>`;
       return reindent(`
         #include "root.h"
@@ -187,8 +187,8 @@ export function enumeration(
         };
 
         pub const Bindgen${name} = bindgen.BindgenTrivial(${name});
-        const bun = @import("bun");
-        const bindgen = bun.bun_js.bindgen;
+        const fun = @import("fun");
+        const bindgen = fun.fun_js.bindgen;
       `);
     }
   })();

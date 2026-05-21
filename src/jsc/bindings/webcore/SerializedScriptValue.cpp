@@ -26,7 +26,7 @@
 
 #include "config.h"
 #include "SerializedScriptValue.h"
-#include "BunString.h"
+#include "FunString.h"
 // #include "BlobRegistry.h"
 // #include "ByteArrayPixelBuffer.h"
 #include "CryptoKeyAES.h"
@@ -143,7 +143,7 @@
 namespace WebCore {
 
 using namespace JSC;
-using namespace Bun;
+using namespace Fun;
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(SerializedScriptValue);
 
@@ -246,12 +246,12 @@ enum SerializationTag {
     ResizableArrayBufferTag = 54,
     ErrorInstanceTag = 55,
 
-    Bun__BlobTag = 254,
-    // bun types start at 254 and decrease with each addition
-    Bun__X509CertificateTag = 253,
-    Bun__KeyObjectTag = 252,
-    Bun__nodenet_BlockList = 251,
-    Bun__NodePerformanceHooksHistogramTag = 250,
+    Fun__BlobTag = 254,
+    // fun types start at 254 and decrease with each addition
+    Fun__X509CertificateTag = 253,
+    Fun__KeyObjectTag = 252,
+    Fun__nodenet_BlockList = 251,
+    Fun__NodePerformanceHooksHistogramTag = 250,
 
     ErrorTag = 255
 };
@@ -1964,7 +1964,7 @@ private:
             }
 #endif
 
-            // write bun types
+            // write fun types
             auto _cloneable = StructuredCloneableSerialize::fromJS(value);
             if (_cloneable) {
                 auto cloneable = _cloneable.value();
@@ -1981,8 +1981,8 @@ private:
                 return true;
             }
 
-            if (auto* x509 = dynamicDowncast<Bun::JSX509Certificate>(obj)) {
-                write(Bun__X509CertificateTag);
+            if (auto* x509 = dynamicDowncast<Fun::JSX509Certificate>(obj)) {
+                write(Fun__X509CertificateTag);
                 X509* cert = x509->m_x509.get();
 
                 // Get the size needed for the DER encoding
@@ -2007,8 +2007,8 @@ private:
                 return true;
             }
 
-            if (auto* keyObject = dynamicDowncast<Bun::JSKeyObject>(obj)) {
-                write(Bun__KeyObjectTag);
+            if (auto* keyObject = dynamicDowncast<Fun::JSKeyObject>(obj)) {
+                write(Fun__KeyObjectTag);
 
                 auto& handle = keyObject->handle();
 
@@ -2056,7 +2056,7 @@ private:
                 }
             }
 
-            if (auto* histogram = dynamicDowncast<Bun::JSNodePerformanceHooksHistogram>(obj)) {
+            if (auto* histogram = dynamicDowncast<Fun::JSNodePerformanceHooksHistogram>(obj)) {
                 if (m_context != SerializationContext::WorkerPostMessage && m_context != SerializationContext::WindowPostMessage) {
                     // Don't allow cloning of histograms if it's not a simple .postMessage().
                     code = SerializationReturnCode::DataCloneError;
@@ -2071,7 +2071,7 @@ private:
                     return true;
                 }
 
-                write(Bun__NodePerformanceHooksHistogramTag);
+                write(Fun__NodePerformanceHooksHistogramTag);
                 // TODO: write the index into the histograms vector on SerializedScriptValue
                 // make it ThreadSafeRefCounted
                 // and then we can just write the index
@@ -2592,7 +2592,7 @@ private:
     SerializationForCrossProcessTransfer m_forTransfer;
 };
 
-SYSV_ABI void SerializedScriptValue::writeBytesForBun(CloneSerializer* ctx, const uint8_t* data, uint32_t size)
+SYSV_ABI void SerializedScriptValue::writeBytesForFun(CloneSerializer* ctx, const uint8_t* data, uint32_t size)
 {
     ctx->write(data, size);
 }
@@ -4575,7 +4575,7 @@ private:
         }
 
         if (buffer.size() == 0) {
-            return Bun::JSX509Certificate::create(m_lexicalGlobalObject->vm(), defaultGlobalObject(m_globalObject)->m_JSX509CertificateClassStructure.get(m_globalObject));
+            return Fun::JSX509Certificate::create(m_lexicalGlobalObject->vm(), defaultGlobalObject(m_globalObject)->m_JSX509CertificateClassStructure.get(m_globalObject));
         }
         ncrypto::ClearErrorOnReturn clear_error_on_return;
         X509* ptr = nullptr;
@@ -4589,7 +4589,7 @@ private:
 
         auto cert_ptr = ncrypto::X509Pointer(cert);
         auto* domGlobalObject = defaultGlobalObject(m_globalObject);
-        auto* cert_obj = Bun::JSX509Certificate::create(m_lexicalGlobalObject->vm(), domGlobalObject->m_JSX509CertificateClassStructure.get(domGlobalObject), m_globalObject, WTF::move(cert_ptr));
+        auto* cert_obj = Fun::JSX509Certificate::create(m_lexicalGlobalObject->vm(), domGlobalObject->m_JSX509CertificateClassStructure.get(domGlobalObject), m_globalObject, WTF::move(cert_ptr));
         m_gcBuffer.appendWithCrashOnOverflow(cert_obj);
 
         return cert_obj;
@@ -4756,7 +4756,7 @@ private:
         // if (!isTypeExposedToGlobalObject(*m_globalObject, tag))
         //     return JSValue();
 
-        // read bun types
+        // read fun types
         if (auto value = StructuredCloneableDeserialize::fromTagDeserialize(tag, m_lexicalGlobalObject, m_ptr, m_end)) {
             JSValue deserialized = JSValue::decode(value.value());
             if (deserialized.isEmpty()) {
@@ -5212,13 +5212,13 @@ private:
         case DOMExceptionTag:
             return readDOMException();
 
-        case Bun__X509CertificateTag:
+        case Fun__X509CertificateTag:
             return readX509Certificate();
 
-        case Bun__KeyObjectTag:
+        case Fun__KeyObjectTag:
             return readKeyObject();
 
-            // case Bun__NodePerformanceHooksHistogramTag:
+            // case Fun__NodePerformanceHooksHistogramTag:
             // ?
 
         default:
@@ -6023,7 +6023,7 @@ ExceptionOr<Ref<SerializedScriptValue>> SerializedScriptValue::create(JSGlobalOb
                         auto* str = asString(elem);
                         String strValue = str->value(&lexicalGlobalObject);
                         RETURN_IF_EXCEPTION(scope, Exception { ExistingExceptionError });
-                        elements.append(Bun::toCrossThreadShareable(strValue));
+                        elements.append(Fun::toCrossThreadShareable(strValue));
                     } else if (elem.isObject()) {
                         auto* obj = elem.getObject();
                         // Shared references can't be preserved in the fast path,
@@ -6055,7 +6055,7 @@ ExceptionOr<Ref<SerializedScriptValue>> SerializedScriptValue::create(JSGlobalOb
                                     return false;
                                 }
                                 properties.append({ entry.key()->isolatedCopy(),
-                                    Bun::toCrossThreadShareable(stringValue) });
+                                    Fun::toCrossThreadShareable(stringValue) });
                             } else {
                                 properties.append({ entry.key()->isolatedCopy(), propValue });
                             }
@@ -6136,7 +6136,7 @@ ExceptionOr<Ref<SerializedScriptValue>> SerializedScriptValue::create(JSGlobalOb
                         canUseObjectFastPath = false;
                         return false;
                     }
-                    properties.append({ entry.key()->isolatedCopy(), Bun::toCrossThreadShareable(stringValue) });
+                    properties.append({ entry.key()->isolatedCopy(), Fun::toCrossThreadShareable(stringValue) });
                 } else {
                     // Primitive values are safe to share across threads.
                     properties.append({ entry.key()->isolatedCopy(), value });
@@ -6370,7 +6370,7 @@ RefPtr<SerializedScriptValue> SerializedScriptValue::create(StringView string)
 
 Ref<SerializedScriptValue> SerializedScriptValue::createStringFastPath(const String& string)
 {
-    return adoptRef(*new SerializedScriptValue(Bun::toCrossThreadShareable(string)));
+    return adoptRef(*new SerializedScriptValue(Fun::toCrossThreadShareable(string)));
 }
 
 Ref<SerializedScriptValue> SerializedScriptValue::createObjectFastPath(WTF::FixedVector<SimpleInMemoryPropertyTableEntry>&& object)

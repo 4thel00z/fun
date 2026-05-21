@@ -3,18 +3,18 @@ title: C Compiler
 description: Compile and run C from JavaScript with low overhead
 ---
 
-`bun:ffi` has experimental support for compiling and running C from JavaScript with low overhead.
+`fun:ffi` has experimental support for compiling and running C from JavaScript with low overhead.
 
 ---
 
-## Usage (cc in `bun:ffi`)
+## Usage (cc in `fun:ffi`)
 
-See the [introduction blog post](https://bun.com/blog/compile-and-run-c-in-js) for more information.
+See the [introduction blog post](https://fun.dev/blog/compile-and-run-c-in-js) for more information.
 
 JavaScript:
 
 ```ts hello.ts icon="file-code"
-import { cc } from "bun:ffi";
+import { cc } from "fun:ffi";
 import source from "./hello.c" with { type: "file" };
 
 const {
@@ -43,7 +43,7 @@ int hello() {
 When you run `hello.js`, it will print:
 
 ```sh terminal icon="terminal"
-bun hello.js
+fun hello.js
 What is the answer to the universe? 42
 ```
 
@@ -88,7 +88,7 @@ You can also pass a `napi_env` to receive the N-API environment used to call the
 For example, if you have a string in C, you can return it to JavaScript like this:
 
 ```ts hello.ts
-import { cc } from "bun:ffi";
+import { cc } from "fun:ffi";
 import source from "./hello.c" with { type: "file" };
 
 const {
@@ -163,7 +163,7 @@ type Symbols = {
 The `source` is a file path to the C code that should be compiled and linked with the JavaScript runtime.
 
 ```ts
-type Source = string | URL | BunFile;
+type Source = string | URL | FunFile;
 
 cc({
   source: "hello.c",

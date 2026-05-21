@@ -1,10 +1,10 @@
 //! The interpreter for the shell language
 //!
-//! There are several constraints on the Bun shell language that make this
+//! There are several constraints on the Fun shell language that make this
 //! interpreter implementation unique:
 //!
-//! 1. We try to keep everything in the Bun process as much as possible for
-//!    performance reasons and also to leverage Bun's existing IO/FS code
+//! 1. We try to keep everything in the Fun process as much as possible for
+//!    performance reasons and also to leverage Fun's existing IO/FS code
 //! 2. We try to use non-blocking IO operations as much as possible so the
 //!    shell does not block the main JS thread
 //! 3. Zig does not have coroutines (yet)
@@ -12,7 +12,7 @@
 //! The idea is that this is a tree-walking interpreter. Except it's not.
 //!
 //! Why not? Because 99% of operations in the shell are IO, and we need to do
-//! non-blocking IO because Bun is a JS runtime.
+//! non-blocking IO because Fun is a JS runtime.
 //!
 //! So what do we do? Instead of iteratively walking the AST like in a traditional
 //! tree-walking interpreter, we're also going to build up a tree of state-machines
@@ -36,9 +36,9 @@
 //! enabled) and helps us catch memory leaks.
 //!
 //! The underlying parent allocator that every `AllocationScope` uses in the
-//! shell is `bun.default_allocator`. This means in builds of Bun which do not
+//! shell is `fun.default_allocator`. This means in builds of Fun which do not
 //! have `AllocationScope` enabled, every allocation just goes straight through
-//! to `bun.default_allocator`.
+//! to `fun.default_allocator`.
 //!
 //! Usually every state machine node ends up creating a new allocation scope,
 //! so an `AllocationScope` is stored in the base header struct (see `Base.zig`)
@@ -60,27 +60,27 @@
 const string = []const u8;
 pub const Arena = std.heap.ArenaAllocator;
 pub const Braces = @import("../shell_parser/braces.zig");
-pub const Syscall = bun.sys;
+pub const Syscall = fun.sys;
 pub const WorkPoolTask = jsc.WorkPoolTask;
 pub const WorkPool = jsc.WorkPool;
 
-pub const Pipe = [2]bun.FD;
+pub const Pipe = [2]fun.FD;
 pub const SmolList = shell.SmolList;
 
-pub const GlobWalker = bun.glob.BunGlobWalkerZ;
+pub const GlobWalker = fun.glob.FunGlobWalkerZ;
 
 pub const stdin_no = 0;
 pub const stdout_no = 1;
 pub const stderr_no = 2;
 
 pub fn OOM(e: anyerror) noreturn {
-    if (comptime bun.Environment.allow_assert) {
-        if (e != error.OutOfMemory) bun.outOfMemory();
+    if (comptime fun.Environment.allow_assert) {
+        if (e != error.OutOfMemory) fun.outOfMemory();
     }
-    bun.outOfMemory();
+    fun.outOfMemory();
 }
 
-pub const log = bun.Output.scoped(.SHELL, .visible);
+pub const log = fun.Output.scoped(.SHELL, .visible);
 
 /// This is a zero-sized type returned by `.needsIO()`, designed to ensure
 /// functions which rely on IO are not called when they do don't need it.
@@ -136,14 +136,14 @@ pub const StateKind = enum(u8) {
 ///
 /// If you want to write to the file descriptor, you call `.write()`, if `being_written` is true it will duplicate the file descriptor.
 pub const CowFd = struct {
-    __fd: bun.FD,
+    __fd: fun.FD,
     refcount: u32 = 1,
     being_used: bool = false,
 
-    const debug = bun.Output.scoped(.CowFd, .hidden);
+    const debug = fun.Output.scoped(.CowFd, .hidden);
 
-    pub fn init(fd: bun.FD) *CowFd {
-        const this = bun.handleOom(bun.default_allocator.create(CowFd));
+    pub fn init(fd: fun.FD) *CowFd {
+        const this = fun.handleOom(fun.default_allocator.create(CowFd));
         this.* = .{
             .__fd = fd,
         };
@@ -152,8 +152,8 @@ pub const CowFd = struct {
     }
 
     pub fn dup(this: *CowFd) Maybe(*CowFd) {
-        const new = bun.new(CowFd, .{
-            .fd = bun.sys.dup(this.fd),
+        const new = fun.new(CowFd, .{
+            .fd = fun.sys.dup(this.fd),
             .writercount = 1,
         });
         debug("dup(0x{x}, fd={f}) = (0x{x}, fd={f})", .{ @intFromPtr(this), this.fd, new, new.fd });
@@ -192,7 +192,7 @@ pub const CowFd = struct {
     pub fn deinit(this: *CowFd) void {
         assert(this.refcount == 0);
         this.__fd.close();
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 };
 
@@ -209,11 +209,11 @@ pub const ParsedShellScript = @import("./ParsedShellScript.zig");
 pub const ShellArgs = struct {
     /// This is the arena used to allocate the input shell script's AST nodes,
     /// tokens, and a string pool used to store all strings.
-    __arena: *bun.ArenaAllocator,
+    __arena: *fun.ArenaAllocator,
     /// Root ast node
     script_ast: ast.Script = .{ .stmts = &[_]ast.Stmt{} },
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn arena_allocator(this: *ShellArgs) std.mem.Allocator {
         return this.__arena.allocator();
@@ -221,12 +221,12 @@ pub const ShellArgs = struct {
 
     pub fn deinit(this: *ShellArgs) void {
         this.__arena.deinit();
-        bun.destroy(this.__arena);
-        bun.destroy(this);
+        fun.destroy(this.__arena);
+        fun.destroy(this);
     }
 
     pub fn init() *ShellArgs {
-        const arena = bun.new(bun.ArenaAllocator, bun.ArenaAllocator.init(bun.default_allocator));
+        const arena = fun.new(fun.ArenaAllocator, fun.ArenaAllocator.init(fun.default_allocator));
         return ShellArgs.new(.{
             .__arena = arena,
             .script_ast = undefined,
@@ -248,7 +248,7 @@ pub const Interpreter = struct {
     pub const fromJS = js.fromJS;
     pub const fromJSDirect = js.fromJSDirect;
 
-    command_ctx: bun.cli.Command.Context,
+    command_ctx: fun.cli.Command.Context,
     event_loop: jsc.EventLoopHandle,
     /// This is the allocator used to allocate interpreter state
     allocator: Allocator,
@@ -265,7 +265,7 @@ pub const Interpreter = struct {
     has_pending_activity: std.atomic.Value(u32) = std.atomic.Value(u32).init(0),
     started: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
     // Necessary for builtin commands.
-    keep_alive: bun.Async.KeepAlive = .{},
+    keep_alive: fun.Async.KeepAlive = .{},
 
     vm_args_utf8: std.array_list.Managed(jsc.ZigString.Slice),
     async_commands_executing: u32 = 0,
@@ -291,7 +291,7 @@ pub const Interpreter = struct {
         runtime_cleaned,
     } = .needs_full_cleanup,
 
-    __alloc_scope: if (bun.Environment.enableAllocScopes) bun.AllocationScope else void,
+    __alloc_scope: if (fun.Environment.enableAllocScopes) fun.AllocationScope else void,
     estimated_size_for_gc: usize = 0,
 
     /// Side-channel for `try_()`: lets init/setup paths use `try`/`errdefer` for cleanup
@@ -398,7 +398,7 @@ pub const Interpreter = struct {
         ///
         /// It changes when a cmd substitution is run.
         ///
-        /// These MUST use the `bun.default_allocator` Allocator
+        /// These MUST use the `fun.default_allocator` Allocator
         _buffered_stdout: Bufio = .{ .owned = .{} },
         _buffered_stderr: Bufio = .{ .owned = .{} },
 
@@ -415,17 +415,17 @@ pub const Interpreter = struct {
         /// Always has zero-sentinel
         __prev_cwd: std.array_list.Managed(u8),
         __cwd: std.array_list.Managed(u8),
-        cwd_fd: bun.FD,
+        cwd_fd: fun.FD,
 
         async_pids: SmolList(pid_t, 4) = SmolList(pid_t, 4).zeroes,
 
-        __alloc_scope: if (bun.Environment.enableAllocScopes) *bun.AllocationScope else void,
+        __alloc_scope: if (fun.Environment.enableAllocScopes) *fun.AllocationScope else void,
 
-        const pid_t = if (bun.Environment.isPosix) std.posix.pid_t else uv.uv_pid_t;
+        const pid_t = if (fun.Environment.isPosix) std.posix.pid_t else uv.uv_pid_t;
 
         const Bufio = union(enum) {
-            owned: bun.ByteList,
-            borrowed: *bun.ByteList,
+            owned: fun.ByteList,
+            borrowed: *fun.ByteList,
             pub fn memoryCost(this: *const @This()) usize {
                 return switch (this.*) {
                     .owned => |*owned| owned.memoryCost(),
@@ -442,8 +442,8 @@ pub const Interpreter = struct {
         };
 
         pub fn allocator(this: *ShellExecEnv) std.mem.Allocator {
-            if (comptime bun.Environment.enableAllocScopes) return this.__alloc_scope.allocator();
-            return bun.default_allocator;
+            if (comptime fun.Environment.enableAllocScopes) return this.__alloc_scope.allocator();
+            return fun.default_allocator;
         }
 
         pub fn memoryCost(this: *const ShellExecEnv) usize {
@@ -459,14 +459,14 @@ pub const Interpreter = struct {
             return size;
         }
 
-        pub fn buffered_stdout(this: *ShellExecEnv) *bun.ByteList {
+        pub fn buffered_stdout(this: *ShellExecEnv) *fun.ByteList {
             return switch (this._buffered_stdout) {
                 .owned => &this._buffered_stdout.owned,
                 .borrowed => this._buffered_stdout.borrowed,
             };
         }
 
-        pub fn buffered_stderr(this: *ShellExecEnv) *bun.ByteList {
+        pub fn buffered_stderr(this: *ShellExecEnv) *fun.ByteList {
             return switch (this._buffered_stderr) {
                 .owned => &this._buffered_stderr.owned,
                 .borrowed => this._buffered_stderr.borrowed,
@@ -507,10 +507,10 @@ pub const Interpreter = struct {
 
             if (comptime free_buffered_io) {
                 if (this._buffered_stdout == .owned) {
-                    this._buffered_stdout.owned.clearAndFree(bun.default_allocator);
+                    this._buffered_stdout.owned.clearAndFree(fun.default_allocator);
                 }
                 if (this._buffered_stderr == .owned) {
-                    this._buffered_stderr.owned.clearAndFree(bun.default_allocator);
+                    this._buffered_stderr.owned.clearAndFree(fun.default_allocator);
                 }
             }
 
@@ -526,12 +526,12 @@ pub const Interpreter = struct {
 
         pub fn dupeForSubshell(
             this: *ShellExecEnv,
-            alloc_scope: if (bun.Environment.enableAllocScopes) *bun.AllocationScope else void,
+            alloc_scope: if (fun.Environment.enableAllocScopes) *fun.AllocationScope else void,
             alloc: Allocator,
             io: IO,
             kind: Kind,
         ) Maybe(*ShellExecEnv) {
-            const duped = bun.handleOom(alloc.create(ShellExecEnv));
+            const duped = fun.handleOom(alloc.create(ShellExecEnv));
 
             const dupedfd = switch (Syscall.dup(this.cwd_fd)) {
                 .err => |err| {
@@ -573,8 +573,8 @@ pub const Interpreter = struct {
                 .cmd_local_env = EnvMap.init(alloc),
                 .export_env = this.export_env.clone(),
 
-                .__prev_cwd = bun.handleOom(this.__prev_cwd.clone()),
-                .__cwd = bun.handleOom(this.__cwd.clone()),
+                .__prev_cwd = fun.handleOom(this.__prev_cwd.clone()),
+                .__cwd = fun.handleOom(this.__cwd.clone()),
                 // TODO probably need to use os.dup here
                 .cwd_fd = dupedfd,
                 .__alloc_scope = alloc_scope,
@@ -640,7 +640,7 @@ pub const Interpreter = struct {
                 }, .auto);
 
                 // remove trailing separator
-                if (bun.Environment.isWindows) {
+                if (fun.Environment.isWindows) {
                     const sep = '\\';
                     if (cwd_str.len > 1 and cwd_str[cwd_str.len - 1] == sep) {
                         ResolvePath.join_buf[cwd_str.len - 1] = 0;
@@ -658,7 +658,7 @@ pub const Interpreter = struct {
             const new_cwd_fd = switch (ShellSyscall.openat(
                 this.cwd_fd,
                 new_cwd,
-                bun.O.DIRECTORY | bun.O.RDONLY,
+                fun.O.DIRECTORY | fun.O.RDONLY,
                 0,
             )) {
                 .result => |fd| fd,
@@ -669,12 +669,12 @@ pub const Interpreter = struct {
             _ = this.cwd_fd.closeAllowingBadFileDescriptor(null);
 
             this.__prev_cwd.clearRetainingCapacity();
-            bun.handleOom(this.__prev_cwd.appendSlice(this.__cwd.items[0..]));
+            fun.handleOom(this.__prev_cwd.appendSlice(this.__cwd.items[0..]));
 
             this.__cwd.clearRetainingCapacity();
-            bun.handleOom(this.__cwd.appendSlice(new_cwd[0 .. new_cwd.len + 1]));
+            fun.handleOom(this.__cwd.appendSlice(new_cwd[0 .. new_cwd.len + 1]));
 
-            if (comptime bun.Environment.isDebug) {
+            if (comptime fun.Environment.isDebug) {
                 assert(this.__cwd.items[this.__cwd.items.len -| 1] == 0);
                 assert(this.__prev_cwd.items[this.__prev_cwd.items.len -| 1] == 0);
             }
@@ -691,10 +691,10 @@ pub const Interpreter = struct {
 
         pub fn getHomedir(self: *ShellExecEnv) EnvStr {
             const env_var: ?EnvStr = brk: {
-                const static_str = if (comptime bun.Environment.isWindows) EnvStr.initSlice("USERPROFILE") else EnvStr.initSlice("HOME");
+                const static_str = if (comptime fun.Environment.isWindows) EnvStr.initSlice("USERPROFILE") else EnvStr.initSlice("HOME");
                 break :brk self.shell_env.get(static_str) orelse self.export_env.get(static_str);
             };
-            return env_var orelse EnvStr.initSlice(if (comptime bun.Environment.isAndroid) "/data/local/tmp" else "");
+            return env_var orelse EnvStr.initSlice(if (comptime fun.Environment.isAndroid) "/data/local/tmp" else "");
         }
 
         pub fn writeFailingErrorFmt(
@@ -711,8 +711,8 @@ pub const Interpreter = struct {
                     return x.writer.enqueueFmt(ctx, x.captured, fmt, args);
                 },
                 .pipe => {
-                    const bufio: *bun.ByteList = this.buffered_stderr();
-                    bun.handleOom(bufio.appendFmt(bun.default_allocator, fmt, args));
+                    const bufio: *fun.ByteList = this.buffered_stderr();
+                    fun.handleOom(bufio.appendFmt(fun.default_allocator, fmt, args));
                     return ctx.parent.childDone(ctx, 1);
                 },
                 // FIXME: This is not correct? This would just make the entire shell hang I think?
@@ -744,7 +744,7 @@ pub const Interpreter = struct {
         fn toJS(this: ShellErrorCtx, globalThis: *JSGlobalObject) JSValue {
             return switch (this) {
                 .syscall => |err| err.toJS(globalThis),
-                .other => |err| bun.jsc.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
+                .other => |err| fun.jsc.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
             };
         }
     };
@@ -770,10 +770,10 @@ pub const Interpreter = struct {
         return this.estimated_size_for_gc;
     }
 
-    pub fn createShellInterpreter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
-        const allocator = bun.default_allocator;
+    pub fn createShellInterpreter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
+        const allocator = fun.default_allocator;
         const arguments_ = callframe.arguments_old(3);
-        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments_.slice());
 
         const resolve = arguments.nextEat() orelse return globalThis.throw("shell: expected 3 arguments, got 0", .{});
 
@@ -786,10 +786,10 @@ pub const Interpreter = struct {
         var shargs: *ShellArgs = undefined;
         var jsobjs: std.array_list.Managed(JSValue) = std.array_list.Managed(JSValue).init(allocator);
         var quiet: bool = false;
-        var cwd: ?bun.String = null;
+        var cwd: ?fun.String = null;
         var export_env: ?EnvMap = null;
 
-        if (parsed_shell_script.args == null) return globalThis.throw("shell: shell args is null, this is a bug in Bun. Please file a GitHub issue.", .{});
+        if (parsed_shell_script.args == null) return globalThis.throw("shell: shell args is null, this is a bug in Fun. Please file a GitHub issue.", .{});
 
         parsed_shell_script.take(
             globalThis,
@@ -801,14 +801,14 @@ pub const Interpreter = struct {
         );
 
         defer if (cwd) |*cc| cc.deref();
-        const cwd_string: ?bun.jsc.ZigString.Slice = if (cwd) |c| brk: {
-            break :brk c.toUTF8(bun.default_allocator);
+        const cwd_string: ?fun.jsc.ZigString.Slice = if (cwd) |c| brk: {
+            break :brk c.toUTF8(fun.default_allocator);
         } else null;
         defer if (cwd_string) |c| c.deinit();
 
         const interpreter: *Interpreter = switch (ThisInterpreter.init(
             undefined, // command_ctx, unused when event_loop is .js
-            .{ .js = globalThis.bunVM().event_loop },
+            .{ .js = globalThis.funVM().event_loop },
             allocator,
             shargs,
             jsobjs.items[0..],
@@ -820,7 +820,7 @@ pub const Interpreter = struct {
                 jsobjs.deinit();
                 // export_env is consumed by init() on both success and failure.
                 shargs.deinit();
-                return try throwShellErr(e, .{ .js = globalThis.bunVM().event_loop });
+                return try throwShellErr(e, .{ .js = globalThis.funVM().event_loop });
             },
         };
 
@@ -837,7 +837,7 @@ pub const Interpreter = struct {
         interpreter.globalThis = globalThis;
         interpreter.estimated_size_for_gc = interpreter.#computeEstimatedSizeForGC();
 
-        const js_value = Bun__createShellInterpreter(
+        const js_value = Fun__createShellInterpreter(
             globalThis,
             interpreter,
             parsed_shell_script_js,
@@ -845,29 +845,29 @@ pub const Interpreter = struct {
             reject,
         );
         interpreter.this_jsvalue = js_value;
-        interpreter.keep_alive.ref(globalThis.bunVM());
-        bun.analytics.Features.shell += 1;
+        interpreter.keep_alive.ref(globalThis.funVM());
+        fun.analytics.Features.shell += 1;
         return js_value;
     }
 
-    extern fn Bun__createShellInterpreter(globalThis: *jsc.JSGlobalObject, ptr: *Interpreter, parsed_shell_script: JSValue, resolve: JSValue, reject: JSValue) callconv(jsc.conv) JSValue;
+    extern fn Fun__createShellInterpreter(globalThis: *jsc.JSGlobalObject, ptr: *Interpreter, parsed_shell_script: JSValue, resolve: JSValue, reject: JSValue) callconv(jsc.conv) JSValue;
 
     pub fn parse(
         arena_allocator: std.mem.Allocator,
         script: []const u8,
         jsobjs: []JSValue,
-        jsstrings_to_escape: []bun.String,
-        out_parser: *?bun.shell.Parser,
+        jsstrings_to_escape: []fun.String,
+        out_parser: *?fun.shell.Parser,
         out_lex_result: *?shell.LexResult,
     ) !ast.Script {
         const jsobjs_len: u32 = @intCast(jsobjs.len);
         const lex_result = brk: {
-            if (bun.strings.isAllASCII(script)) {
-                var lexer = bun.shell.LexerAscii.new(arena_allocator, script, jsstrings_to_escape, jsobjs_len);
+            if (fun.strings.isAllASCII(script)) {
+                var lexer = fun.shell.LexerAscii.new(arena_allocator, script, jsstrings_to_escape, jsobjs_len);
                 try lexer.lex();
                 break :brk lexer.get_result();
             }
-            var lexer = bun.shell.LexerUnicode.new(arena_allocator, script, jsstrings_to_escape, jsobjs_len);
+            var lexer = fun.shell.LexerUnicode.new(arena_allocator, script, jsstrings_to_escape, jsobjs_len);
             try lexer.lex();
             break :brk lexer.get_result();
         };
@@ -877,8 +877,8 @@ pub const Interpreter = struct {
             return shell.ParseError.Lex;
         }
 
-        if (comptime bun.Environment.isDebug) {
-            const debug = bun.Output.scoped(.ShellTokens, .hidden);
+        if (comptime fun.Environment.isDebug) {
+            const debug = fun.Output.scoped(.ShellTokens, .hidden);
             var test_tokens = std.array_list.Managed(shell.Test.TestToken).initCapacity(arena_allocator, lex_result.tokens.len) catch @panic("OOPS");
             defer test_tokens.deinit();
             for (lex_result.tokens) |tok| {
@@ -886,12 +886,12 @@ pub const Interpreter = struct {
                 test_tokens.append(test_tok) catch @panic("OOPS");
             }
 
-            const str = bun.handleOom(std.fmt.allocPrint(bun.default_allocator, "{f}", .{std.json.fmt(test_tokens.items[0..], .{})}));
-            defer bun.default_allocator.free(str);
+            const str = fun.handleOom(std.fmt.allocPrint(fun.default_allocator, "{f}", .{std.json.fmt(test_tokens.items[0..], .{})}));
+            defer fun.default_allocator.free(str);
             debug("Tokens: {s}", .{str});
         }
 
-        out_parser.* = try bun.shell.Parser.new(arena_allocator, lex_result, jsobjs);
+        out_parser.* = try fun.shell.Parser.new(arena_allocator, lex_result, jsobjs);
 
         const script_ast = try out_parser.*.?.parse();
         return script_ast;
@@ -900,7 +900,7 @@ pub const Interpreter = struct {
     /// If all initialization allocations succeed, the arena will be copied
     /// into the interpreter struct, so it is not a stale reference and safe to call `arena.deinit()` on error.
     pub fn init(
-        ctx: bun.cli.Command.Context,
+        ctx: fun.cli.Command.Context,
         event_loop: jsc.EventLoopHandle,
         allocator: Allocator,
         shargs: *ShellArgs,
@@ -910,8 +910,8 @@ pub const Interpreter = struct {
     ) shell.Result(*ThisInterpreter) {
         // Hoisted so the catch boundary's toShellSystemError() can read err.path
         // (which borrows from this buffer) before it's returned to the pool.
-        const pathbuf = bun.path_buffer_pool.get();
-        defer bun.path_buffer_pool.put(pathbuf);
+        const pathbuf = fun.path_buffer_pool.get();
+        defer fun.path_buffer_pool.put(pathbuf);
 
         var sys: Catch = .{};
         const interpreter = initImpl(&sys, ctx, event_loop, allocator, shargs, jsobjs, export_env_, pathbuf) catch {
@@ -923,31 +923,31 @@ pub const Interpreter = struct {
                 const sys_err = e.toShellSystemError();
                 interpreter.root_io.deref();
                 interpreter.root_shell.deinitImpl(false, true);
-                if (comptime bun.Environment.enableAllocScopes) interpreter.__alloc_scope.deinit();
+                if (comptime fun.Environment.enableAllocScopes) interpreter.__alloc_scope.deinit();
                 allocator.destroy(interpreter);
                 return .{ .err = .{ .sys = sys_err } };
             }
         }
 
-        interpreter.root_shell.__alloc_scope = if (bun.Environment.enableAllocScopes) &interpreter.__alloc_scope else {};
+        interpreter.root_shell.__alloc_scope = if (fun.Environment.enableAllocScopes) &interpreter.__alloc_scope else {};
 
         return .{ .result = interpreter };
     }
 
     fn initImpl(
         sys: *Catch,
-        ctx: bun.cli.Command.Context,
+        ctx: fun.cli.Command.Context,
         event_loop: jsc.EventLoopHandle,
         allocator: Allocator,
         shargs: *ShellArgs,
         jsobjs: []JSValue,
         export_env_: ?EnvMap,
-        pathbuf: *bun.PathBuffer,
+        pathbuf: *fun.PathBuffer,
     ) error{Sys}!*ThisInterpreter {
         var export_env = brk: {
             if (event_loop == .js) break :brk if (export_env_) |e| e else EnvMap.init(allocator);
 
-            var env_loader: *bun.DotEnv.Loader = env_loader: {
+            var env_loader: *fun.DotEnv.Loader = env_loader: {
                 if (event_loop == .js) {
                     break :env_loader event_loop.js.virtual_machine.transpiler.env;
                 }
@@ -973,24 +973,24 @@ pub const Interpreter = struct {
 
         const cwd: [:0]const u8 = try sys.try_(Syscall.getcwdZ(pathbuf));
 
-        const cwd_fd = try sys.try_(Syscall.open(cwd, bun.O.DIRECTORY | bun.O.RDONLY, 0));
+        const cwd_fd = try sys.try_(Syscall.open(cwd, fun.O.DIRECTORY | fun.O.RDONLY, 0));
         errdefer cwd_fd.close();
 
-        var cwd_arr = bun.handleOom(std.array_list.Managed(u8).initCapacity(bun.default_allocator, cwd.len + 1));
-        bun.handleOom(cwd_arr.appendSlice(cwd[0 .. cwd.len + 1]));
+        var cwd_arr = fun.handleOom(std.array_list.Managed(u8).initCapacity(fun.default_allocator, cwd.len + 1));
+        fun.handleOom(cwd_arr.appendSlice(cwd[0 .. cwd.len + 1]));
         errdefer cwd_arr.deinit();
 
-        if (comptime bun.Environment.isDebug) {
+        if (comptime fun.Environment.isDebug) {
             assert(cwd_arr.items[cwd_arr.items.len -| 1] == 0);
         }
 
         log("Duping stdin", .{});
-        const stdin_fd = try sys.try_(if (bun.Output.Source.Stdio.isStdinNull()) bun.sys.openNullDevice() else ShellSyscall.dup(shell.STDIN_FD));
+        const stdin_fd = try sys.try_(if (fun.Output.Source.Stdio.isStdinNull()) fun.sys.openNullDevice() else ShellSyscall.dup(shell.STDIN_FD));
 
         const stdin_reader = IOReader.init(stdin_fd, event_loop);
         errdefer stdin_reader.deref();
 
-        const interpreter = bun.handleOom(allocator.create(ThisInterpreter));
+        const interpreter = fun.handleOom(allocator.create(ThisInterpreter));
         interpreter.* = .{
             .command_ctx = ctx,
             .event_loop = event_loop,
@@ -1005,7 +1005,7 @@ pub const Interpreter = struct {
                 .export_env = export_env,
 
                 .__cwd = cwd_arr,
-                .__prev_cwd = bun.handleOom(cwd_arr.clone()),
+                .__prev_cwd = fun.handleOom(cwd_arr.clone()),
                 .cwd_fd = cwd_fd,
 
                 .__alloc_scope = undefined,
@@ -1023,41 +1023,41 @@ pub const Interpreter = struct {
                 .stderr = .pipe,
             },
 
-            .vm_args_utf8 = std.array_list.Managed(jsc.ZigString.Slice).init(bun.default_allocator),
-            .__alloc_scope = if (bun.Environment.enableAllocScopes) bun.AllocationScope.init(allocator) else {},
+            .vm_args_utf8 = std.array_list.Managed(jsc.ZigString.Slice).init(fun.default_allocator),
+            .__alloc_scope = if (fun.Environment.enableAllocScopes) fun.AllocationScope.init(allocator) else {},
             .globalThis = undefined,
         };
 
         return interpreter;
     }
 
-    pub fn initAndRunFromFile(ctx: bun.cli.Command.Context, mini: *jsc.MiniEventLoop, path: []const u8) !bun.shell.ExitCode {
+    pub fn initAndRunFromFile(ctx: fun.cli.Command.Context, mini: *jsc.MiniEventLoop, path: []const u8) !fun.shell.ExitCode {
         var shargs = ShellArgs.init();
         const src = try std.fs.cwd().readFileAlloc(shargs.arena_allocator(), path, std.math.maxInt(u32));
         defer shargs.deinit();
 
         const jsobjs: []JSValue = &[_]JSValue{};
-        var out_parser: ?bun.shell.Parser = null;
-        var out_lex_result: ?bun.shell.LexResult = null;
+        var out_parser: ?fun.shell.Parser = null;
+        var out_lex_result: ?fun.shell.LexResult = null;
         const script = ThisInterpreter.parse(
             shargs.arena_allocator(),
             src,
             jsobjs,
-            &[_]bun.String{},
+            &[_]fun.String{},
             &out_parser,
             &out_lex_result,
         ) catch |err| {
-            if (err == bun.shell.ParseError.Lex) {
+            if (err == fun.shell.ParseError.Lex) {
                 assert(out_lex_result != null);
                 const str = out_lex_result.?.combineErrors(shargs.arena_allocator());
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed to run <b>{s}<r> due to error <b>{s}<r>", .{ std.fs.path.basename(path), str });
-                bun.Global.exit(1);
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed to run <b>{s}<r> due to error <b>{s}<r>", .{ std.fs.path.basename(path), str });
+                fun.Global.exit(1);
             }
 
             if (out_parser) |*p| {
                 const errstr = p.combineErrors();
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed to run <b>{s}<r> due to error <b>{s}<r>", .{ std.fs.path.basename(path), errstr });
-                bun.Global.exit(1);
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed to run <b>{s}<r> due to error <b>{s}<r>", .{ std.fs.path.basename(path), errstr });
+                fun.Global.exit(1);
             }
 
             return err;
@@ -1066,7 +1066,7 @@ pub const Interpreter = struct {
         var interp = switch (ThisInterpreter.init(
             ctx,
             .{ .mini = mini },
-            bun.default_allocator,
+            fun.default_allocator,
             shargs,
             jsobjs,
             null,
@@ -1084,7 +1084,7 @@ pub const Interpreter = struct {
             interp: *const Interpreter,
 
             fn isDone(this: *anyopaque) bool {
-                const asdlfk = bun.cast(*const @This(), this);
+                const asdlfk = fun.cast(*const @This(), this);
                 return asdlfk.interp.flags.done;
             }
         };
@@ -1095,8 +1095,8 @@ pub const Interpreter = struct {
         switch (try interp.run()) {
             .err => |e| {
                 interp.#deinitFromExec();
-                bun.Output.err(e, "Failed to run script <b>{s}<r>", .{std.fs.path.basename(path)});
-                bun.Global.exit(1);
+                fun.Output.err(e, "Failed to run script <b>{s}<r>", .{std.fs.path.basename(path)});
+                fun.Global.exit(1);
                 return 1;
             },
             else => {},
@@ -1107,26 +1107,26 @@ pub const Interpreter = struct {
         return code;
     }
 
-    pub fn initAndRunFromSource(ctx: bun.cli.Command.Context, mini: *jsc.MiniEventLoop, path_for_errors: []const u8, src: []const u8, cwd: ?[]const u8) !ExitCode {
-        bun.analytics.Features.standalone_shell += 1;
+    pub fn initAndRunFromSource(ctx: fun.cli.Command.Context, mini: *jsc.MiniEventLoop, path_for_errors: []const u8, src: []const u8, cwd: ?[]const u8) !ExitCode {
+        fun.analytics.Features.standalone_shell += 1;
         var shargs = ShellArgs.init();
         defer shargs.deinit();
 
         const jsobjs: []JSValue = &[_]JSValue{};
-        var out_parser: ?bun.shell.Parser = null;
-        var out_lex_result: ?bun.shell.LexResult = null;
-        const script = ThisInterpreter.parse(shargs.arena_allocator(), src, jsobjs, &[_]bun.String{}, &out_parser, &out_lex_result) catch |err| {
-            if (err == bun.shell.ParseError.Lex) {
+        var out_parser: ?fun.shell.Parser = null;
+        var out_lex_result: ?fun.shell.LexResult = null;
+        const script = ThisInterpreter.parse(shargs.arena_allocator(), src, jsobjs, &[_]fun.String{}, &out_parser, &out_lex_result) catch |err| {
+            if (err == fun.shell.ParseError.Lex) {
                 assert(out_lex_result != null);
                 const str = out_lex_result.?.combineErrors(shargs.arena_allocator());
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed to run script <b>{s}<r> due to error <b>{s}<r>", .{ path_for_errors, str });
-                bun.Global.exit(1);
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed to run script <b>{s}<r> due to error <b>{s}<r>", .{ path_for_errors, str });
+                fun.Global.exit(1);
             }
 
             if (out_parser) |*p| {
                 const errstr = p.combineErrors();
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed to run script <b>{s}<r> due to error <b>{s}<r>", .{ path_for_errors, errstr });
-                bun.Global.exit(1);
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed to run script <b>{s}<r> due to error <b>{s}<r>", .{ path_for_errors, errstr });
+                fun.Global.exit(1);
             }
 
             return err;
@@ -1135,7 +1135,7 @@ pub const Interpreter = struct {
         var interp: *ThisInterpreter = switch (ThisInterpreter.init(
             ctx,
             .{ .mini = mini },
-            bun.default_allocator,
+            fun.default_allocator,
             shargs,
             jsobjs,
             null,
@@ -1150,7 +1150,7 @@ pub const Interpreter = struct {
             interp: *const Interpreter,
 
             fn isDone(this: *anyopaque) bool {
-                const asdlfk = bun.cast(*const @This(), this);
+                const asdlfk = fun.cast(*const @This(), this);
                 return asdlfk.interp.flags.done;
             }
         };
@@ -1162,8 +1162,8 @@ pub const Interpreter = struct {
         switch (try interp.run()) {
             .err => |e| {
                 interp.#deinitFromExec();
-                bun.Output.err(e, "Failed to run script <b>{s}<r>", .{path_for_errors});
-                bun.Global.exit(1);
+                fun.Output.err(e, "Failed to run script <b>{s}<r>", .{path_for_errors});
+                fun.Global.exit(1);
                 return 1;
             },
             else => {},
@@ -1183,11 +1183,11 @@ pub const Interpreter = struct {
             const event_loop = this.event_loop;
 
             log("Duping stdout", .{});
-            const stdout_fd = try this.try_(if (bun.Output.Source.Stdio.isStdoutNull()) bun.sys.openNullDevice() else ShellSyscall.dup(.stdout()));
+            const stdout_fd = try this.try_(if (fun.Output.Source.Stdio.isStdoutNull()) fun.sys.openNullDevice() else ShellSyscall.dup(.stdout()));
             errdefer stdout_fd.close();
 
             log("Duping stderr", .{});
-            const stderr_fd = try this.try_(if (bun.Output.Source.Stdio.isStderrNull()) bun.sys.openNullDevice() else ShellSyscall.dup(.stderr()));
+            const stderr_fd = try this.try_(if (fun.Output.Source.Stdio.isStderrNull()) fun.sys.openNullDevice() else ShellSyscall.dup(.stderr()));
             errdefer stderr_fd.close();
 
             const stdout_writer = IOWriter.init(
@@ -1235,14 +1235,14 @@ pub const Interpreter = struct {
         return .success;
     }
 
-    pub fn runFromJS(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn runFromJS(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
         log("Interpreter(0x{x}) runFromJS", .{@intFromPtr(this)});
         _ = callframe; // autofix
 
         if (this.setupIOBeforeRun().asErr()) |e| {
             defer this.#derefRootShellAndIOIfNeeded(true);
-            const shellerr = bun.shell.ShellErr.newSys(e);
-            return try throwShellErr(&shellerr, .{ .js = globalThis.bunVM().event_loop });
+            const shellerr = fun.shell.ShellErr.newSys(e);
+            return try throwShellErr(&shellerr, .{ .js = globalThis.funVM().event_loop });
         }
         incrPendingActivityFlag(&this.has_pending_activity);
 
@@ -1254,11 +1254,11 @@ pub const Interpreter = struct {
         return .js_undefined;
     }
 
-    fn ioToJSValue(globalThis: *JSGlobalObject, buf: *bun.ByteList) JSValue {
+    fn ioToJSValue(globalThis: *JSGlobalObject, buf: *fun.ByteList) JSValue {
         const bytelist = buf.*;
         buf.* = .{};
         const buffer: jsc.Node.Buffer = .{
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
             .buffer = jsc.ArrayBuffer.fromBytes(@constCast(bytelist.slice()), .Uint8Array),
         };
         return buffer.toNodeBuffer(globalThis);
@@ -1327,10 +1327,10 @@ pub const Interpreter = struct {
         if (free_buffered_io) {
             // Can safely be called multiple times.
             if (this.root_shell._buffered_stderr == .owned) {
-                this.root_shell._buffered_stderr.owned.clearAndFree(bun.default_allocator);
+                this.root_shell._buffered_stderr.owned.clearAndFree(fun.default_allocator);
             }
             if (this.root_shell._buffered_stdout == .owned) {
-                this.root_shell._buffered_stdout.owned.clearAndFree(bun.default_allocator);
+                this.root_shell._buffered_stdout.owned.clearAndFree(fun.default_allocator);
             }
         }
 
@@ -1385,18 +1385,18 @@ pub const Interpreter = struct {
         this.allocator.destroy(this);
     }
 
-    pub fn setQuiet(this: *ThisInterpreter, _: *JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn setQuiet(this: *ThisInterpreter, _: *JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         log("Interpreter(0x{x}) setQuiet()", .{@intFromPtr(this)});
         this.flags.quiet = true;
         return .js_undefined;
     }
 
-    pub fn setCwd(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn setCwd(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const value = callframe.argument(0);
-        const str = try bun.String.fromJS(value, globalThis);
+        const str = try fun.String.fromJS(value, globalThis);
         defer str.deref();
 
-        const slice = str.toUTF8(bun.default_allocator);
+        const slice = str.toUTF8(fun.default_allocator);
         defer slice.deinit();
         switch (this.root_shell.changeCwd(this, slice.slice())) {
             .err => |e| {
@@ -1407,7 +1407,7 @@ pub const Interpreter = struct {
         return .js_undefined;
     }
 
-    pub fn setEnv(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn setEnv(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const value1 = callframe.argument(0);
         if (!value1.isObject()) {
             return globalThis.throwInvalidArguments("env must be an object", .{});
@@ -1428,10 +1428,10 @@ pub const Interpreter = struct {
         while (object_iter.next()) |key| {
             var value = object_iter.value;
             if (value.isUndefined()) continue;
-            const keyslice = bun.handleOom(key.toOwnedSlice(bun.default_allocator));
+            const keyslice = fun.handleOom(key.toOwnedSlice(fun.default_allocator));
 
             const value_str = value.getZigString(globalThis);
-            const slice = bun.handleOom(value_str.toOwnedSlice(bun.default_allocator));
+            const slice = fun.handleOom(value_str.toOwnedSlice(fun.default_allocator));
             const keyref = EnvStr.initRefCounted(keyslice);
             defer keyref.deref();
             const valueref = EnvStr.initRefCounted(slice);
@@ -1443,11 +1443,11 @@ pub const Interpreter = struct {
         return .js_undefined;
     }
 
-    pub fn isRunning(this: *ThisInterpreter, _: *JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn isRunning(this: *ThisInterpreter, _: *JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         return jsc.JSValue.jsBoolean(this.hasPendingActivity());
     }
 
-    pub fn getStarted(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn getStarted(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         _ = globalThis; // autofix
         _ = callframe; // autofix
 
@@ -1487,9 +1487,9 @@ pub const Interpreter = struct {
 
     pub fn getVmArgsUtf8(this: *Interpreter, argv: []const *WTFStringImplStruct, idx: u8) []const u8 {
         if (this.vm_args_utf8.items.len != argv.len) {
-            bun.handleOom(this.vm_args_utf8.ensureTotalCapacity(argv.len));
+            fun.handleOom(this.vm_args_utf8.ensureTotalCapacity(argv.len));
             for (argv) |arg| {
-                bun.handleOom(this.vm_args_utf8.append(arg.toUTF8(bun.default_allocator)));
+                fun.handleOom(this.vm_args_utf8.append(arg.toUTF8(fun.default_allocator)));
             }
         }
         return this.vm_args_utf8.items[idx].slice();
@@ -1539,8 +1539,8 @@ pub fn StatePtrUnion(comptime TypesValue: anytype) type {
             return Type.ChildPtr;
         }
 
-        pub fn scopedAllocator(this: @This()) if (bun.Environment.enableAllocScopes) *bun.AllocationScope else void {
-            if (comptime !bun.Environment.enableAllocScopes) return;
+        pub fn scopedAllocator(this: @This()) if (fun.Environment.enableAllocScopes) *fun.AllocationScope else void {
+            if (comptime !fun.Environment.enableAllocScopes) return;
 
             const tags = comptime std.meta.fields(Ptr.Tag);
             inline for (tags) |tag| {
@@ -1565,8 +1565,8 @@ pub fn StatePtrUnion(comptime TypesValue: anytype) type {
                     Ptr.assert_type(Ty);
                     var casted = this.as(Ty);
                     if (comptime Ty == Interpreter) {
-                        if (bun.Environment.enableAllocScopes) return casted.__alloc_scope.allocator();
-                        return bun.default_allocator;
+                        if (fun.Environment.enableAllocScopes) return casted.__alloc_scope.allocator();
+                        return fun.default_allocator;
                     }
                     return casted.base.allocator();
                 }
@@ -1575,17 +1575,17 @@ pub fn StatePtrUnion(comptime TypesValue: anytype) type {
         }
 
         pub fn create(this: @This(), comptime Ty: type) *Ty {
-            if (comptime bun.Environment.enableAllocScopes) {
-                return bun.handleOom(this.allocator().create(Ty));
+            if (comptime fun.Environment.enableAllocScopes) {
+                return fun.handleOom(this.allocator().create(Ty));
             }
-            return bun.handleOom(bun.default_allocator.create(Ty));
+            return fun.handleOom(fun.default_allocator.create(Ty));
         }
 
         pub fn destroy(this: @This(), ptr: anytype) void {
-            if (comptime bun.Environment.enableAllocScopes) {
+            if (comptime fun.Environment.enableAllocScopes) {
                 this.allocator().destroy(ptr);
             } else {
-                bun.default_allocator.destroy(ptr);
+                fun.default_allocator.destroy(ptr);
             }
         }
 
@@ -1639,7 +1639,7 @@ pub fn StatePtrUnion(comptime TypesValue: anytype) type {
         }
 
         pub fn unknownTag(tag: Ptr.TagInt) noreturn {
-            return bun.Output.panic("Unknown tag for shell state node: {d}\n", .{tag});
+            return fun.Output.panic("Unknown tag for shell state node: {d}\n", .{tag});
         }
 
         pub fn tagInt(this: @This()) Ptr.TagInt {
@@ -1675,15 +1675,15 @@ pub fn MaybeChild(comptime T: type) type {
     };
 }
 
-pub fn closefd(fd: bun.FD) void {
+pub fn closefd(fd: fun.FD) void {
     if (fd.closeAllowingBadFileDescriptor(null)) |err| {
         log("ERR closefd: {f}\n", .{err});
     }
 }
 
 const CmdEnvIter = struct {
-    env: *const bun.StringArrayHashMap([:0]const u8),
-    iter: bun.StringArrayHashMap([:0]const u8).Iterator,
+    env: *const fun.StringArrayHashMap([:0]const u8),
+    iter: fun.StringArrayHashMap([:0]const u8).Iterator,
 
     const Entry = struct {
         key: Key,
@@ -1706,11 +1706,11 @@ const CmdEnvIter = struct {
         }
 
         pub fn eqlComptime(this: Key, comptime str: []const u8) bool {
-            return bun.strings.eqlComptime(this.val, str);
+            return fun.strings.eqlComptime(this.val, str);
         }
     };
 
-    pub fn fromEnv(env: *const bun.StringArrayHashMap([:0]const u8)) CmdEnvIter {
+    pub fn fromEnv(env: *const fun.StringArrayHashMap([:0]const u8)) CmdEnvIter {
         const iter = env.iterator();
         return .{
             .env = env,
@@ -1743,13 +1743,13 @@ pub fn ShellTask(
     /// Function that is called on the main thread, once the event loop
     /// processes that the task is done
     comptime runFromMainThread_: fn (*Ctx) void,
-    comptime debug: bun.Output.LogFunction,
+    comptime debug: fun.Output.LogFunction,
 ) type {
     return struct {
         task: WorkPoolTask = .{ .callback = &runFromThreadPool },
         event_loop: jsc.EventLoopHandle,
         // This is a poll because we want it to enter the uSockets loop
-        ref: bun.Async.KeepAlive = .{},
+        ref: fun.Async.KeepAlive = .{},
         concurrent_task: jsc.EventLoopTask,
 
         pub const InnerShellTask = @This();
@@ -1799,7 +1799,7 @@ inline fn errnocast(errno: anytype) u16 {
 
 /// 'js' event loop will always return JSError
 /// 'mini' event loop will always return noreturn and exit 1
-pub fn throwShellErr(e: *const bun.shell.ShellErr, event_loop: jsc.EventLoopHandle) bun.JSError!noreturn {
+pub fn throwShellErr(e: *const fun.shell.ShellErr, event_loop: jsc.EventLoopHandle) fun.JSError!noreturn {
     return switch (event_loop) {
         .mini => e.throwMini(),
         .js => e.throwJS(event_loop.js.global),
@@ -1820,14 +1820,14 @@ pub const IOWriterChildPtr = Interpreter.IOWriter.ChildPtr;
 pub const ShellSyscall = struct {
     pub const unlinkatWithFlags = Syscall.unlinkatWithFlags;
     pub const rmdirat = Syscall.rmdirat;
-    pub fn getPath(dirfd: anytype, to: [:0]const u8, buf: *bun.PathBuffer) Maybe([:0]const u8) {
-        if (bun.Environment.isPosix) @compileError("Don't use this");
-        if (bun.strings.eqlComptime(to[0..to.len], "/dev/null")) {
+    pub fn getPath(dirfd: anytype, to: [:0]const u8, buf: *fun.PathBuffer) Maybe([:0]const u8) {
+        if (fun.Environment.isPosix) @compileError("Don't use this");
+        if (fun.strings.eqlComptime(to[0..to.len], "/dev/null")) {
             return .{ .result = shell.WINDOWS_DEV_NULL };
         }
         if (ResolvePath.Platform.posix.isAbsolute(to[0..to.len])) {
             const dirpath = brk: {
-                if (@TypeOf(dirfd) == bun.FD) break :brk switch (Syscall.getFdPath(dirfd, buf)) {
+                if (@TypeOf(dirfd) == fun.FD) break :brk switch (Syscall.getFdPath(dirfd, buf)) {
                     .result => |path| path,
                     .err => |e| return .{ .err = e.withFd(dirfd) },
                 };
@@ -1842,7 +1842,7 @@ pub const ShellSyscall = struct {
         if (ResolvePath.Platform.isAbsolute(.windows, to[0..to.len])) return .{ .result = to };
 
         const dirpath = brk: {
-            if (@TypeOf(dirfd) == bun.FD) break :brk switch (Syscall.getFdPath(dirfd, buf)) {
+            if (@TypeOf(dirfd) == fun.FD) break :brk switch (Syscall.getFdPath(dirfd, buf)) {
                 .result => |path| path,
                 .err => |e| return .{ .err = e.withFd(dirfd) },
             };
@@ -1858,10 +1858,10 @@ pub const ShellSyscall = struct {
         return .{ .result = joined };
     }
 
-    pub fn statat(dir: bun.FD, path_: [:0]const u8) Maybe(bun.Stat) {
-        if (bun.Environment.isWindows) {
-            const buf: *bun.PathBuffer = bun.path_buffer_pool.get();
-            defer bun.path_buffer_pool.put(buf);
+    pub fn statat(dir: fun.FD, path_: [:0]const u8) Maybe(fun.Stat) {
+        if (fun.Environment.isWindows) {
+            const buf: *fun.PathBuffer = fun.path_buffer_pool.get();
+            defer fun.path_buffer_pool.put(buf);
             const path = switch (getPath(dir, path_, buf)) {
                 .err => |e| return .{ .err = e },
                 .result => |p| p,
@@ -1876,61 +1876,61 @@ pub const ShellSyscall = struct {
         return Syscall.fstatat(dir, path_);
     }
 
-    /// Same thing as bun.sys.openat on posix
+    /// Same thing as fun.sys.openat on posix
     /// On windows it will convert paths for us
-    pub fn openat(dir: bun.FD, path: [:0]const u8, flags: i32, perm: bun.Mode) Maybe(bun.FD) {
-        if (bun.Environment.isWindows) {
-            if (flags & bun.O.DIRECTORY != 0) {
+    pub fn openat(dir: fun.FD, path: [:0]const u8, flags: i32, perm: fun.Mode) Maybe(fun.FD) {
+        if (fun.Environment.isWindows) {
+            if (flags & fun.O.DIRECTORY != 0) {
                 if (ResolvePath.Platform.posix.isAbsolute(path[0..path.len])) {
-                    const buf: *bun.PathBuffer = bun.path_buffer_pool.get();
-                    defer bun.path_buffer_pool.put(buf);
+                    const buf: *fun.PathBuffer = fun.path_buffer_pool.get();
+                    defer fun.path_buffer_pool.put(buf);
                     const p = switch (getPath(dir, path, buf)) {
                         .result => |p| p,
                         .err => |e| return .{ .err = e },
                     };
-                    return switch (Syscall.openDirAtWindowsA(dir, p, .{ .iterable = true, .no_follow = flags & bun.O.NOFOLLOW != 0 })) {
+                    return switch (Syscall.openDirAtWindowsA(dir, p, .{ .iterable = true, .no_follow = flags & fun.O.NOFOLLOW != 0 })) {
                         .result => |fd| fd.makeLibUVOwnedForSyscall(.open, .close_on_fail),
                         .err => |e| .{ .err = e.withPath(path) },
                     };
                 }
-                return switch (Syscall.openDirAtWindowsA(dir, path, .{ .iterable = true, .no_follow = flags & bun.O.NOFOLLOW != 0 })) {
+                return switch (Syscall.openDirAtWindowsA(dir, path, .{ .iterable = true, .no_follow = flags & fun.O.NOFOLLOW != 0 })) {
                     .result => |fd| fd.makeLibUVOwnedForSyscall(.open, .close_on_fail),
                     .err => |e| .{ .err = e.withPath(path) },
                 };
             }
 
-            const buf: *bun.PathBuffer = bun.path_buffer_pool.get();
-            defer bun.path_buffer_pool.put(buf);
+            const buf: *fun.PathBuffer = fun.path_buffer_pool.get();
+            defer fun.path_buffer_pool.put(buf);
             const p = switch (getPath(dir, path, buf)) {
                 .result => |p| p,
                 .err => |e| return .{ .err = e },
             };
-            return bun.sys.open(p, flags, perm);
+            return fun.sys.open(p, flags, perm);
         }
 
         const fd = switch (Syscall.openat(dir, path, flags, perm)) {
             .result => |fd| fd,
             .err => |e| return .{ .err = e.withPath(path) },
         };
-        if (bun.Environment.isWindows) {
+        if (fun.Environment.isWindows) {
             return fd.makeLibUVOwnedForSyscall(.open, .close_on_fail);
         }
         return .{ .result = fd };
     }
 
-    pub fn open(file_path: [:0]const u8, flags: bun.Mode, perm: bun.Mode) Maybe(bun.FD) {
+    pub fn open(file_path: [:0]const u8, flags: fun.Mode, perm: fun.Mode) Maybe(fun.FD) {
         const fd = switch (Syscall.open(file_path, flags, perm)) {
             .result => |fd| fd,
             .err => |e| return .{ .err = e },
         };
-        if (bun.Environment.isWindows) {
+        if (fun.Environment.isWindows) {
             return fd.makeLibUVOwnedForSyscall(.open, .close_on_fail);
         }
         return .{ .result = fd };
     }
 
-    pub fn dup(fd: bun.FD) Maybe(bun.FD) {
-        if (bun.Environment.isWindows) {
+    pub fn dup(fd: fun.FD) Maybe(fun.FD) {
+        if (fun.Environment.isWindows) {
             return switch (Syscall.dup(fd)) {
                 .result => |duped_fd| duped_fd.makeLibUVOwnedForSyscall(.dup, .close_on_fail),
                 .err => |e| .{ .err = e },
@@ -1961,9 +1961,9 @@ pub fn OutputTask(
         },
 
         pub fn deinit(this: *@This()) Yield {
-            if (comptime bun.Environment.allow_assert) assert(this.state == .done);
+            if (comptime fun.Environment.allow_assert) assert(this.state == .done);
             log("OutputTask({s}, 0x{x}) deinit", .{ @typeName(Parent), @intFromPtr(this) });
-            defer bun.destroy(this);
+            defer fun.destroy(this);
             defer this.output.deinit();
             return vtable.onDone(this.parent);
         }
@@ -2027,7 +2027,7 @@ pub fn OutputTask(
     };
 }
 
-/// All owned memory is assumed to be allocated with `bun.default_allocator`
+/// All owned memory is assumed to be allocated with `fun.default_allocator`
 pub const OutputSrc = union(enum) {
     arrlist: std.ArrayListUnmanaged(u8),
     owned_buf: []const u8,
@@ -2044,10 +2044,10 @@ pub const OutputSrc = union(enum) {
     pub fn deinit(this: *OutputSrc) void {
         switch (this.*) {
             .arrlist => {
-                this.arrlist.deinit(bun.default_allocator);
+                this.arrlist.deinit(fun.default_allocator);
             },
             .owned_buf => {
-                bun.default_allocator.free(this.owned_buf);
+                fun.default_allocator.free(this.owned_buf);
             },
             .borrowed_buf => {},
         }
@@ -2066,7 +2066,7 @@ pub fn unsupportedFlag(comptime name: []const u8) []const u8 {
 pub const ParseFlagResult = union(enum) { continue_parsing, done, illegal_option: []const u8, unsupported: []const u8, show_usage };
 pub fn FlagParser(comptime Opts: type) type {
     return struct {
-        pub const Result = @import("../bun_core/result.zig").Result;
+        pub const Result = @import("../fun_core/result.zig").Result;
 
         pub fn parseFlags(opts: Opts, args: []const [*:0]const u8) Result(?[]const [*:0]const u8, ParseError) {
             var idx: usize = 0;
@@ -2113,8 +2113,8 @@ pub fn FlagParser(comptime Opts: type) type {
     };
 }
 
-pub fn isPollable(fd: bun.FD, mode: bun.Mode) bool {
-    return switch (bun.Environment.os) {
+pub fn isPollable(fd: fun.FD, mode: fun.Mode) bool {
+    return switch (fun.Environment.os) {
         .windows, .wasm => false,
         .linux, .freebsd => posix.S.ISFIFO(mode) or posix.S.ISSOCK(mode) or posix.isatty(fd.native()),
         // macos DOES allow regular files to be pollable, but we don't want that because
@@ -2123,8 +2123,8 @@ pub fn isPollable(fd: bun.FD, mode: bun.Mode) bool {
     };
 }
 
-pub fn isPollableFromMode(mode: bun.Mode) bool {
-    return switch (bun.Environment.os) {
+pub fn isPollableFromMode(mode: fun.Mode) bool {
+    return switch (fun.Environment.os) {
         .windows, .wasm => false,
         .linux, .freebsd => posix.S.ISFIFO(mode) or posix.S.ISSOCK(mode),
         // macos DOES allow regular files to be pollable, but we don't want that because
@@ -2135,28 +2135,28 @@ pub fn isPollableFromMode(mode: bun.Mode) bool {
 
 pub fn unreachableState(context: []const u8, state: []const u8) noreturn {
     @branchHint(.cold);
-    return bun.Output.panic("Bun shell has reached an unreachable state \"{s}\" in the {s} context. This indicates a bug, please open a GitHub issue.", .{ state, context });
+    return fun.Output.panic("Fun shell has reached an unreachable state \"{s}\" in the {s} context. This indicates a bug, please open a GitHub issue.", .{ state, context });
 }
 
 const builtin = @import("builtin");
 const WTFStringImplStruct = @import("../string/string.zig").WTFStringImplStruct;
 
-const bun = @import("bun");
-const ResolvePath = bun.path;
-const TaggedPointerUnion = bun.TaggedPointerUnion;
-const assert = bun.assert;
-const which = bun.which;
-const Maybe = bun.sys.Maybe;
+const fun = @import("fun");
+const ResolvePath = fun.path;
+const TaggedPointerUnion = fun.TaggedPointerUnion;
+const assert = fun.assert;
+const which = fun.which;
+const Maybe = fun.sys.Maybe;
 
-const jsc = bun.jsc;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const Yield = shell.Yield;
 const ast = shell.AST;
 
-const windows = bun.windows;
+const windows = fun.windows;
 const uv = windows.libuv;
 
 const std = @import("std");

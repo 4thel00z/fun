@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { existsSync } from "fs";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import path from "path";
 import { tempDirWithBakeDeps } from "../bake-harness";
 
@@ -33,7 +33,7 @@ describe("production", () => {
       exitCode: buildExitCode,
       stdout: buildStdout,
       stderr: buildStderr,
-    } = await Bun.$`${bunExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
+    } = await Fun.$`${funExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
 
     // The build should fail due to the runtime error during SSG
     expect(buildExitCode).toBe(1);
@@ -91,24 +91,24 @@ export default function TestPage() {
     });
 
     // Run the build command
-    const buildProc = await Bun.$`${bunExe()} build --app ./src/index.tsx --outdir ./dist`
+    const buildProc = await Fun.$`${funExe()} build --app ./src/index.tsx --outdir ./dist`
       .cwd(dir)
-      .env(bunEnv)
+      .env(funEnv)
       .throws(false);
 
     expect(buildProc.exitCode).toBe(0);
 
     // Check that the build output contains the generated files
-    const distFiles = await Bun.$`ls -la dist/`.cwd(dir).text();
+    const distFiles = await Fun.$`ls -la dist/`.cwd(dir).text();
     expect(distFiles).toContain("index.html");
-    expect(distFiles).toContain("_bun");
+    expect(distFiles).toContain("_fun");
 
     // In production SSG, the import.meta values are inlined during build time
     // and rendered into the static HTML. The values should appear in the HTML output.
 
     // Check the generated static HTML files
-    const indexHtml = await Bun.file(path.join(dir, "dist", "index.html")).text();
-    const apiTestHtml = await Bun.file(path.join(dir, "dist", "api", "test", "index.html")).text();
+    const indexHtml = await Fun.file(path.join(dir, "dist", "index.html")).text();
+    const apiTestHtml = await Fun.file(path.join(dir, "dist", "api", "test", "index.html")).text();
 
     // The HTML output should contain the rendered import.meta values
     // Check for the presence of the expected values in the HTML
@@ -170,7 +170,7 @@ export async function getStaticPaths() {
   return {
     paths: [
       { params: { slug: ['2024', 'hello-world'] } },
-      { params: { slug: ['2024', 'tech', 'bun-framework'] } },
+      { params: { slug: ['2024', 'tech', 'fun-framework'] } },
       { params: { slug: ['tutorials', 'getting-started'] } },
     ],
     fallback: false,
@@ -235,22 +235,22 @@ export default function GettingStarted() {
     console.error("DIR", dir);
 
     // Run the build command
-    const buildProc = await Bun.$`${bunExe()} build --app ./src/index.tsx --outdir ./dist`
+    const buildProc = await Fun.$`${funExe()} build --app ./src/index.tsx --outdir ./dist`
       .cwd(dir)
-      .env(bunEnv)
+      .env(funEnv)
       .throws(false);
 
     expect(buildProc.exitCode).toBe(0);
 
     // Check that the build output contains the generated files
-    const htmlFiles = Array.from(new Bun.Glob("dist/**/*.html").scanSync(dir))
+    const htmlFiles = Array.from(new Fun.Glob("dist/**/*.html").scanSync(dir))
       .sort()
       .map(p => normalizePath(p));
 
     // Should have generated all the static paths
     // Note: React's routing may flatten the paths
     expect(htmlFiles).toContain("dist/blog/2024/hello-world/index.html");
-    expect(htmlFiles).toContain("dist/blog/2024/tech/bun-framework/index.html");
+    expect(htmlFiles).toContain("dist/blog/2024/tech/fun-framework/index.html");
     expect(htmlFiles).toContain("dist/blog/tutorials/getting-started/index.html");
     expect(htmlFiles).toContain("dist/docs/api/reference/index.html");
     expect(htmlFiles).toContain("dist/docs/guides/advanced/optimization/index.html");
@@ -258,15 +258,15 @@ export default function GettingStarted() {
     expect(htmlFiles).toContain("dist/docs/getting-started/index.html");
 
     // Check blog post with multiple segments
-    const blogPostHtml = await Bun.file(
-      path.join(dir, "dist", "blog", "2024", "tech", "bun-framework", "index.html"),
+    const blogPostHtml = await Fun.file(
+      path.join(dir, "dist", "blog", "2024", "tech", "fun-framework", "index.html"),
     ).text();
 
     // Verify the content is rendered (may include HTML comments)
     expect(blogPostHtml).toContain("Blog Post:");
-    expect(blogPostHtml).toContain("2024 / tech / bun-framework");
+    expect(blogPostHtml).toContain("2024 / tech / fun-framework");
     expect(blogPostHtml).toContain("You are reading:");
-    expect(blogPostHtml).toContain("2024/tech/bun-framework");
+    expect(blogPostHtml).toContain("2024/tech/fun-framework");
 
     // Check that import.meta values are inlined in the HTML
     expect(blogPostHtml).toContain('data-file="[...slug].tsx"');
@@ -276,7 +276,7 @@ export default function GettingStarted() {
     expect(blogPostHtml).toContain(platformPath('/pages/blog/[...slug].tsx"'));
 
     // Check docs catch-all route
-    const docsHtml = await Bun.file(
+    const docsHtml = await Fun.file(
       path.join(dir, "dist", "docs", "guides", "advanced", "optimization", "index.html"),
     ).text();
 
@@ -286,7 +286,7 @@ export default function GettingStarted() {
     expect(docsHtml).toContain(platformPath('/pages/docs/[...path].tsx"'));
 
     // Check that the static getting-started page uses its own file name, not the catch-all
-    const staticHtml = await Bun.file(path.join(dir, "dist", "docs", "getting-started", "index.html")).text();
+    const staticHtml = await Fun.file(path.join(dir, "dist", "docs", "getting-started", "index.html")).text();
 
     expect(staticHtml).toContain("Getting Started");
     expect(staticHtml).toContain("This is a static page");
@@ -295,7 +295,7 @@ export default function GettingStarted() {
     expect(staticHtml).not.toContain("[...path].tsx");
 
     // Verify that import.meta values are consistent across all catch-all instances
-    const blogIndex = await Bun.file(
+    const blogIndex = await Fun.file(
       path.join(dir, "dist", "blog", "tutorials", "getting-started", "index.html"),
     ).text();
     expect(blogIndex).toContain('data-file="[...slug].tsx"');
@@ -316,7 +316,7 @@ export default function GettingStarted() {
     });
 
     // Run the build command - should not crash even with no pages
-    const { exitCode, stderr } = await Bun.$`${bunExe()} build --app ./app.ts`.cwd(dir).throws(false);
+    const { exitCode, stderr } = await Fun.$`${funExe()} build --app ./app.ts`.cwd(dir).throws(false);
 
     // The build should complete successfully (or fail gracefully, not crash)
     // We're testing that it doesn't crash with the StringBuilder assertion
@@ -359,7 +359,7 @@ export default function Client() {
     });
 
     // Run the build command
-    const { exitCode, stderr } = await Bun.$`${bunExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
+    const { exitCode, stderr } = await Fun.$`${funExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
 
     expect(exitCode).toBe(0);
 
@@ -367,7 +367,7 @@ export default function Client() {
     const htmlPage = path.join(dir, "dist", "index.html");
     expect(existsSync(htmlPage)).toBe(true);
 
-    const htmlContent = await Bun.file(htmlPage).text();
+    const htmlContent = await Fun.file(htmlPage).text();
 
     // Verify the static content is rendered
     expect(htmlContent).toContain("<title>LMAO</title>");
@@ -400,7 +400,7 @@ export default function IndexPage() {
     });
 
     // Run the build command
-    const { exitCode, stderr } = await Bun.$`${bunExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
+    const { exitCode, stderr } = await Fun.$`${funExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
 
     // The build should succeed - client components should support default imports
     expect(stderr.toString()).toContain(
@@ -455,7 +455,7 @@ export default function Counter() {
     });
 
     // Run the build command
-    const { exitCode, stderr } = await Bun.$`${bunExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
+    const { exitCode, stderr } = await Fun.$`${funExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
 
     // The build should succeed - client components CAN use useState
     expect(stderr.toString()).not.toContain("useState");
@@ -465,32 +465,32 @@ export default function Counter() {
     const htmlPage = path.join(dir, "dist", "index.html");
     expect(existsSync(htmlPage)).toBe(true);
 
-    const htmlContent = await Bun.file(htmlPage).text();
+    const htmlContent = await Fun.file(htmlPage).text();
 
     // Verify the static content is rendered
     expect(htmlContent).toContain("<h1>Counter Example</h1>");
 
     // Verify client component script tags exist
     expect(htmlContent).toContain("<script");
-    expect(htmlContent).toContain("/_bun/");
+    expect(htmlContent).toContain("/_fun/");
 
     // Extract the JS bundle filename from the HTML
-    const scriptMatch = htmlContent.match(/src="[/]_bun[/]([a-z0-9]+\.js)"/);
+    const scriptMatch = htmlContent.match(/src="[/]_fun[/]([a-z0-9]+\.js)"/);
     expect(scriptMatch).toBeTruthy();
     const bundleFilename = scriptMatch![1];
 
     // Check that the client bundle was created
-    const clientBundle = path.join(dir, "dist", "_bun", bundleFilename);
+    const clientBundle = path.join(dir, "dist", "_fun", bundleFilename);
     expect(existsSync(clientBundle)).toBe(true);
 
     // Also check for component-specific bundle by looking for all JS files
-    const bundles = await Bun.$`ls ${path.join(dir, "dist", "_bun")}/*.js`.cwd(dir).text();
+    const bundles = await Fun.$`ls ${path.join(dir, "dist", "_fun")}/*.js`.cwd(dir).text();
     const bundleFiles = bundles.trim().split("\n").filter(Boolean);
 
     // Read all bundles to find the one with our component code
     let foundCounterBundle = false;
     for (const bundleFile of bundleFiles) {
-      const content = await Bun.file(bundleFile).text();
+      const content = await Fun.file(bundleFile).text();
       if (content.includes("useState") && content.includes("setCount") && content.includes("Click me")) {
         foundCounterBundle = true;
         break;
@@ -522,7 +522,7 @@ export default function IndexPage() {
     });
 
     // Run the build command
-    const { exitCode, stderr } = await Bun.$`${bunExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
+    const { exitCode, stderr } = await Fun.$`${funExe()} build --app ./src/index.tsx`.cwd(dir).throws(false);
 
     // The build should succeed
     // expect(stderr.toString()).toBe("");
@@ -532,7 +532,7 @@ export default function IndexPage() {
     const htmlPage = path.join(dir, "dist", "index.html");
     expect(existsSync(htmlPage)).toBe(true);
 
-    const htmlContent = await Bun.file(htmlPage).text();
+    const htmlContent = await Fun.file(htmlPage).text();
 
     // Verify the content is rendered
     expect(htmlContent).toContain("Hello World");

@@ -18,7 +18,7 @@ extern "C" {
 // 2. Run perf record -e ftrace:print -a -- your_program
 // 3. Run perf report
 
-// Bun trace events will appear in the trace as:
+// Fun trace events will appear in the trace as:
 // C|PID|EventName|DurationInNs
 //
 // Where 'C' means counter/complete events with end timestamps
@@ -29,7 +29,7 @@ extern "C" {
 static int trace_fd = -1;
 
 // Initialize the tracing system
-int Bun__linux_trace_init()
+int Fun__linux_trace_init()
 {
     if (trace_fd != -1) {
         return 1; // Already initialized
@@ -40,7 +40,7 @@ int Bun__linux_trace_init()
 }
 
 // Close the trace file descriptor
-void Bun__linux_trace_close()
+void Fun__linux_trace_close()
 {
     if (trace_fd != -1) {
         close(trace_fd);
@@ -50,7 +50,7 @@ void Bun__linux_trace_close()
 
 // Write a trace event to the trace marker
 // Format: "C|PID|EventName|DurationInNs"
-int Bun__linux_trace_emit(const char* event_name, int64_t duration_ns)
+int Fun__linux_trace_emit(const char* event_name, int64_t duration_ns)
 {
     if (trace_fd == -1) {
         return 0;

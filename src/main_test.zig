@@ -1,19 +1,19 @@
-pub const bun = @import("./bun.zig");
+pub const fun = @import("./fun.zig");
 
-const Output = bun.Output;
-const Environment = bun.Environment;
+const Output = fun.Output;
+const Environment = fun.Environment;
 
-// pub const panic = bun.crash_handler.panic;
+// pub const panic = fun.crash_handler.panic;
 pub const panic = recover.panic;
 pub const std_options = std.Options{
     .enable_segfault_handler = false,
-    .cryptoRandomSeed = bun.csprng,
+    .cryptoRandomSeed = fun.csprng,
 };
 
 pub const io_mode = .blocking;
 
 comptime {
-    bun.assert(builtin.target.cpu.arch.endian() == .little);
+    fun.assert(builtin.target.cpu.arch.endian() == .little);
 }
 
 pub extern "C" var _environ: ?*anyopaque;
@@ -23,25 +23,25 @@ pub fn main() void {
     // This should appear before we make any calls at all to libuv.
     // So it's safest to put it very early in the main function.
     if (Environment.isWindows) {
-        _ = bun.windows.libuv.uv_replace_allocator(
-            @ptrCast(&bun.mimalloc.mi_malloc),
-            @ptrCast(&bun.mimalloc.mi_realloc),
-            @ptrCast(&bun.mimalloc.mi_calloc),
-            @ptrCast(&bun.mimalloc.mi_free),
+        _ = fun.windows.libuv.uv_replace_allocator(
+            @ptrCast(&fun.mimalloc.mi_malloc),
+            @ptrCast(&fun.mimalloc.mi_realloc),
+            @ptrCast(&fun.mimalloc.mi_calloc),
+            @ptrCast(&fun.mimalloc.mi_free),
         );
         environ = @ptrCast(std.os.environ.ptr);
         _environ = @ptrCast(std.os.environ.ptr);
     }
 
-    bun.initArgv() catch |err| {
+    fun.initArgv() catch |err| {
         Output.panic("Failed to initialize argv: {s}\n", .{@errorName(err)});
     };
 
     Output.Source.Stdio.init();
     defer Output.flush();
-    bun.StackCheck.configureThread();
+    fun.StackCheck.configureThread();
     const exit_code = runTests();
-    bun.Global.exit(exit_code);
+    fun.Global.exit(exit_code);
 }
 
 const Stats = struct {
@@ -173,7 +173,7 @@ pub const overrides = struct {
             }
 
             if (comptime T == u8 and sentinel == 0) {
-                return bun.C.strlen(p);
+                return fun.C.strlen(p);
             }
 
             var i: usize = 0;
@@ -185,16 +185,16 @@ pub const overrides = struct {
     };
 };
 
-pub export fn Bun__panic(msg: [*]const u8, len: usize) noreturn {
+pub export fn Fun__panic(msg: [*]const u8, len: usize) noreturn {
     Output.panic("{s}", .{msg[0..len]});
 }
 
 comptime {
-    _ = bun.bake.production.BakeProdResolve;
-    _ = bun.bake.production.BakeProdLoad;
+    _ = fun.bake.production.BakeProdResolve;
+    _ = fun.bake.production.BakeProdLoad;
 
-    _ = bun.bun_js.Bun__onRejectEntryPointResult;
-    _ = bun.bun_js.Bun__onResolveEntryPointResult;
+    _ = fun.fun_js.Fun__onRejectEntryPointResult;
+    _ = fun.fun_js.Fun__onResolveEntryPointResult;
     _ = &@import("./runtime/node/buffer.zig").BufferVectorized;
     @import("./cli/upgrade_command.zig").@"export"();
     @import("./cli/test_command.zig").@"export"();

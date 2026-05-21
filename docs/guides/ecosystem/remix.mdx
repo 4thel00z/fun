@@ -1,12 +1,12 @@
 ---
-title: Build an app with Remix and Bun
-sidebarTitle: Remix with Bun
+title: Build an app with Remix and Fun
+sidebarTitle: Remix with Fun
 mode: center
 ---
 
 <Note>
-  Currently the Remix development server (`remix dev`) relies on Node.js APIs that Bun does not yet implement. The guide
-  below uses Bun to initialize a project and install dependencies, but it uses Node.js to run the dev server.
+  Currently the Remix development server (`remix dev`) relies on Node.js APIs that Fun does not yet implement. The guide
+  below uses Fun to initialize a project and install dependencies, but it uses Node.js to run the dev server.
 </Note>
 
 ---
@@ -14,7 +14,7 @@ mode: center
 Initialize a Remix app with `create-remix`.
 
 ```sh terminal icon="terminal"
-bun create remix
+fun create remix
 ```
 
 ```txt
@@ -29,7 +29,7 @@ bun create remix
    git   Initialize a new git repository?
          Yes
 
-  deps   Install dependencies with bun?
+  deps   Install dependencies with fun?
          Yes
 
       ✔  Dependencies installed
@@ -42,11 +42,11 @@ bun create remix
 
 ---
 
-To start the dev server, run `bun run dev` from the project root. This will start the dev server using the `remix dev` command. Note that Node.js will be used to run the dev server.
+To start the dev server, run `fun run dev` from the project root. This will start the dev server using the `remix dev` command. Note that Node.js will be used to run the dev server.
 
 ```sh terminal icon="terminal"
 cd my-app
-bun run dev
+fun run dev
 ```
 
 ```txt
@@ -64,15 +64,15 @@ Remix App Server started at http://localhost:3000 (http://172.20.0.143:3000)
 Open [http://localhost:3000](http://localhost:3000) to see the app. Any changes you make to `app/routes/_index.tsx` will be hot-reloaded in the browser.
 
 <Frame>
-  ![Remix app running on localhost](https://github.com/oven-sh/bun/assets/3084745/c26f1059-a5d4-4c0b-9a88-d9902472fd77)
+  ![Remix app running on localhost](https://github.com/underdoc-org/fun/assets/3084745/c26f1059-a5d4-4c0b-9a88-d9902472fd77)
 </Frame>
 
 ---
 
-To build and start your app, run `bun run build`
+To build and start your app, run `fun run build`
 
 ```sh terminal icon="terminal"
-bun run build
+fun run build
 ```
 
 ```txt
@@ -81,10 +81,10 @@ info  building... (NODE_ENV=production)
 info  built (158ms)
 ```
 
-Then `bun run start` from the project root.
+Then `fun run start` from the project root.
 
 ```sh terminal icon="terminal"
-bun start
+fun start
 ```
 
 ```txt

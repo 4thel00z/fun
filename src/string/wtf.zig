@@ -46,7 +46,7 @@ pub const WTFStringImplStruct = extern struct {
     }
 
     pub fn isThreadSafe(this: WTFStringImpl) bool {
-        return bun.cpp.WTFStringImpl__isThreadSafe(this);
+        return fun.cpp.WTFStringImpl__isThreadSafe(this);
     }
 
     pub fn byteSlice(this: WTFStringImpl) []const u8 {
@@ -62,19 +62,19 @@ pub const WTFStringImplStruct = extern struct {
     }
 
     pub inline fn utf16Slice(self: WTFStringImpl) []const u16 {
-        bun.assert(!is8Bit(self));
+        fun.assert(!is8Bit(self));
         return self.m_ptr.utf16[0..length(self)];
     }
 
     pub inline fn latin1Slice(self: WTFStringImpl) []const u8 {
-        bun.assert(is8Bit(self));
+        fun.assert(is8Bit(self));
         return self.m_ptr.latin1[0..length(self)];
     }
 
     /// Caller must ensure that the string is 8-bit and ASCII.
     pub inline fn utf8Slice(self: WTFStringImpl) []const u8 {
-        if (comptime bun.Environment.allow_assert)
-            bun.assert(canUseAsUTF8(self));
+        if (comptime fun.Environment.allow_assert)
+            fun.assert(canUseAsUTF8(self));
         return self.m_ptr.latin1[0..length(self)];
     }
 
@@ -89,11 +89,11 @@ pub const WTFStringImplStruct = extern struct {
     pub inline fn deref(self: WTFStringImpl) void {
         jsc.markBinding(@src());
         const current_count = self.refCount();
-        bun.assert(self.hasAtLeastOneRef()); // do not use current_count, it breaks for static strings
-        bun.cpp.Bun__WTFStringImpl__deref(self);
-        if (comptime bun.Environment.allow_assert) {
+        fun.assert(self.hasAtLeastOneRef()); // do not use current_count, it breaks for static strings
+        fun.cpp.Fun__WTFStringImpl__deref(self);
+        if (comptime fun.Environment.allow_assert) {
             if (current_count > 1) {
-                bun.assert(self.refCount() < current_count or self.isStatic());
+                fun.assert(self.refCount() < current_count or self.isStatic());
             }
         }
     }
@@ -101,9 +101,9 @@ pub const WTFStringImplStruct = extern struct {
     pub inline fn ref(self: WTFStringImpl) void {
         jsc.markBinding(@src());
         const current_count = self.refCount();
-        bun.assert(self.hasAtLeastOneRef()); // do not use current_count, it breaks for static strings
-        bun.cpp.Bun__WTFStringImpl__ref(self);
-        bun.assert(self.refCount() > current_count or self.isStatic());
+        fun.assert(self.hasAtLeastOneRef()); // do not use current_count, it breaks for static strings
+        fun.cpp.Fun__WTFStringImpl__ref(self);
+        fun.assert(self.refCount() > current_count or self.isStatic());
     }
 
     pub inline fn hasAtLeastOneRef(self: WTFStringImpl) bool {
@@ -119,12 +119,12 @@ pub const WTFStringImplStruct = extern struct {
     /// Compute the hash() if necessary
     pub fn ensureHash(this: WTFStringImpl) void {
         jsc.markBinding(@src());
-        bun.cpp.Bun__WTFStringImpl__ensureHash(this);
+        fun.cpp.Fun__WTFStringImpl__ensureHash(this);
     }
 
     pub fn toUTF8(this: WTFStringImpl, allocator: std.mem.Allocator) ZigString.Slice {
         if (this.is8Bit()) {
-            if (bun.handleOom(bun.strings.toUTF8FromLatin1(allocator, this.latin1Slice()))) |utf8| {
+            if (fun.handleOom(fun.strings.toUTF8FromLatin1(allocator, this.latin1Slice()))) |utf8| {
                 return ZigString.Slice.init(allocator, utf8.items);
             }
 
@@ -133,7 +133,7 @@ pub const WTFStringImplStruct = extern struct {
 
         return ZigString.Slice.init(
             allocator,
-            bun.handleOom(bun.strings.toUTF8Alloc(allocator, this.utf16Slice())),
+            fun.handleOom(fun.strings.toUTF8Alloc(allocator, this.utf16Slice())),
         );
     }
 
@@ -141,7 +141,7 @@ pub const WTFStringImplStruct = extern struct {
 
     pub fn toUTF8WithoutRef(this: WTFStringImpl, allocator: std.mem.Allocator) ZigString.Slice {
         if (this.is8Bit()) {
-            if (bun.handleOom(bun.strings.toUTF8FromLatin1(allocator, this.latin1Slice()))) |utf8| {
+            if (fun.handleOom(fun.strings.toUTF8FromLatin1(allocator, this.latin1Slice()))) |utf8| {
                 return ZigString.Slice.init(allocator, utf8.items);
             }
 
@@ -150,24 +150,24 @@ pub const WTFStringImplStruct = extern struct {
 
         return ZigString.Slice.init(
             allocator,
-            bun.handleOom(bun.strings.toUTF8Alloc(allocator, this.utf16Slice())),
+            fun.handleOom(fun.strings.toUTF8Alloc(allocator, this.utf16Slice())),
         );
     }
 
     pub fn toOwnedSliceZ(this: WTFStringImpl, allocator: std.mem.Allocator) [:0]u8 {
         if (this.is8Bit()) {
-            if (bun.handleOom(bun.strings.toUTF8FromLatin1Z(allocator, this.latin1Slice()))) |utf8| {
+            if (fun.handleOom(fun.strings.toUTF8FromLatin1Z(allocator, this.latin1Slice()))) |utf8| {
                 return utf8.items[0 .. utf8.items.len - 1 :0];
             }
 
-            return bun.handleOom(allocator.dupeZ(u8, this.latin1Slice()));
+            return fun.handleOom(allocator.dupeZ(u8, this.latin1Slice()));
         }
-        return bun.handleOom(bun.strings.toUTF8AllocZ(allocator, this.utf16Slice()));
+        return fun.handleOom(fun.strings.toUTF8AllocZ(allocator, this.utf16Slice()));
     }
 
     pub fn toUTF8IfNeeded(this: WTFStringImpl, allocator: std.mem.Allocator) ?ZigString.Slice {
         if (this.is8Bit()) {
-            if (bun.handleOom(bun.strings.toUTF8FromLatin1(allocator, this.latin1Slice()))) |utf8| {
+            if (fun.handleOom(fun.strings.toUTF8FromLatin1(allocator, this.latin1Slice()))) |utf8| {
                 return ZigString.Slice.init(allocator, utf8.items);
             }
 
@@ -176,14 +176,14 @@ pub const WTFStringImplStruct = extern struct {
 
         return ZigString.Slice.init(
             allocator,
-            bun.handleOom(bun.strings.toUTF8Alloc(allocator, this.utf16Slice())),
+            fun.handleOom(fun.strings.toUTF8Alloc(allocator, this.utf16Slice())),
         );
     }
 
     /// Avoid using this in code paths that are about to get the string as a UTF-8
     /// In that case, use toUTF8IfNeeded instead.
     pub fn canUseAsUTF8(this: WTFStringImpl) bool {
-        return this.is8Bit() and bun.strings.isAllASCII(this.latin1Slice());
+        return this.is8Bit() and fun.strings.isAllASCII(this.latin1Slice());
     }
 
     pub fn utf16ByteLength(this: WTFStringImpl) usize {
@@ -200,7 +200,7 @@ pub const WTFStringImplStruct = extern struct {
             return if (input.len > 0) jsc.WebCore.encoding.byteLengthU8(input.ptr, input.len, .utf8) else 0;
         } else {
             const input = this.utf16Slice();
-            return if (input.len > 0) bun.strings.elementLengthUTF16IntoUTF8(input) else 0;
+            return if (input.len > 0) fun.strings.elementLengthUTF16IntoUTF8(input) else 0;
         }
     }
 
@@ -215,7 +215,7 @@ pub const WTFStringImplStruct = extern struct {
     }
 
     pub fn hasPrefix(self: WTFStringImpl, text: []const u8) bool {
-        return bun.cpp.Bun__WTFStringImpl__hasPrefix(self, text.ptr, text.len);
+        return fun.cpp.Fun__WTFStringImpl__hasPrefix(self, text.ptr, text.len);
     }
 
     pub const external_shared_descriptor = struct {
@@ -225,11 +225,11 @@ pub const WTFStringImplStruct = extern struct {
 };
 
 /// Behaves like `WTF::Ref<WTF::StringImpl>`.
-pub const WTFString = bun.ptr.ExternalShared(WTFStringImplStruct);
+pub const WTFString = fun.ptr.ExternalShared(WTFStringImplStruct);
 
 pub const StringImplAllocator = struct {
     fn alloc(ptr: *anyopaque, len: usize, _: std.mem.Alignment, _: usize) ?[*]u8 {
-        var this = bun.cast(WTFStringImpl, ptr);
+        var this = fun.cast(WTFStringImpl, ptr);
         const len_ = this.byteLength();
 
         if (len_ != len) {
@@ -249,9 +249,9 @@ pub const StringImplAllocator = struct {
         _: std.mem.Alignment,
         _: usize,
     ) void {
-        var this = bun.cast(WTFStringImpl, ptr);
-        bun.assert(this.latin1Slice().ptr == buf.ptr);
-        bun.assert(this.latin1Slice().len == buf.len);
+        var this = fun.cast(WTFStringImpl, ptr);
+        fun.assert(this.latin1Slice().ptr == buf.ptr);
+        fun.assert(this.latin1Slice().len == buf.len);
         this.deref();
     }
 
@@ -265,8 +265,8 @@ pub const StringImplAllocator = struct {
     pub const VTablePtr = &VTable;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
-const ZigString = bun.jsc.ZigString;
+const jsc = fun.jsc;
+const ZigString = fun.jsc.ZigString;

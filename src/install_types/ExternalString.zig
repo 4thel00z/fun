@@ -16,7 +16,7 @@ pub const ExternalString = extern struct {
     pub inline fn from(in: string) ExternalString {
         return ExternalString{
             .value = String.init(in, in),
-            .hash = bun.Wyhash.hash(0, in),
+            .hash = fun.Wyhash.hash(0, in),
         };
     }
 
@@ -46,6 +46,6 @@ pub const ExternalString = extern struct {
 
 const string = []const u8;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
-const String = bun.Semver.String;
+const String = fun.Semver.String;

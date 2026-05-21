@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tls } from "harness";
 import http from "http";
 import type { AutoRequestOptions } from "http2-wrapper";
@@ -30,7 +30,7 @@ async function doRequest(options: AutoRequestOptions) {
 
 test("should allow http/1.1 when using http2-wrapper", async () => {
   {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         return new Response(
@@ -59,7 +59,7 @@ test("should allow http/1.1 when using http2-wrapper", async () => {
   }
 
   {
-    using server = Bun.serve({
+    using server = Fun.serve({
       tls,
       port: 0,
       hostname: "localhost",

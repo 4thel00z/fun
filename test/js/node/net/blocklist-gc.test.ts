@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // BlockList structured-clone serialize writes the native pointer and takes a
 // single ref. When the same SerializedScriptValue is deserialized more than
@@ -9,9 +9,9 @@ import { bunEnv, bunExe } from "harness";
 // next GC's visitChildren -> estimatedSize then read freed memory, hitting
 // ASAN use-after-poison or SIGFPE (ref_count divisor read back as 0).
 test("BlockList survives GC after BroadcastChannel fan-out clone", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
         const { BlockList } = require("node:net");
@@ -39,11 +39,11 @@ test("BlockList survives GC after BroadcastChannel fan-out clone", async () => {
         let kept = received[1];
         bl = null;
         received.length = 0;
-        Bun.gc(true);
-        Bun.gc(true);
+        Fun.gc(true);
+        Fun.gc(true);
 
         // Must not be a dangling pointer: visitChildren/estimatedSize runs here.
-        Bun.gc(true);
+        Fun.gc(true);
         if (kept.rules.length !== 1) throw new Error("clone lost its rules");
 
         sender.close();
@@ -52,7 +52,7 @@ test("BlockList survives GC after BroadcastChannel fan-out clone", async () => {
         console.log("ok");
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

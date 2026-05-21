@@ -1,5 +1,5 @@
-import { describe, test, it } from "bun:test";
-import { beforeAll, beforeEach, afterAll, afterEach } from "bun:test";
+import { describe, test, it } from "fun:test";
+import { beforeAll, beforeEach, afterAll, afterEach } from "fun:test";
 
 function set(name: string, value: unknown): void {
   // @ts-expect-error

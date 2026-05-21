@@ -18,7 +18,7 @@
 import * as resolver from "@grpc/grpc-js/build/src/resolver";
 import * as uriParser from "@grpc/grpc-js/build/src/uri-parser";
 import assert from "assert";
-import { describe, it } from "bun:test";
+import { describe, it } from "fun:test";
 
 describe("URI Parser", function () {
   describe("parseUri", function () {

@@ -1,6 +1,6 @@
-import type { Server } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir } from "harness";
+import type { Server } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir } from "harness";
 
 /**
  * Comprehensive test suite for the minimum-release-age security feature.
@@ -69,12 +69,12 @@ describe("minimum-release-age", () => {
     tarSize += 1024;
 
     const tarball = Buffer.concat(entries, tarSize);
-    return Bun.gzipSync(tarball);
+    return Fun.gzipSync(tarball);
   };
 
   beforeAll(async () => {
     // Start mock registry server
-    mockRegistryServer = Bun.serve({
+    mockRegistryServer = Fun.serve({
       port: 0,
       async fetch(req) {
         const url = new URL(req.url);
@@ -827,17 +827,17 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
 
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("regular-package@2.1.0");
       expect(lockfile).not.toContain("regular-package@3.0.0");
     });
@@ -850,10 +850,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${9.5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${9.5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -862,7 +862,7 @@ describe("minimum-release-age", () => {
       expect(exitCode).toBe(0);
 
       // Should install 2.0.0 (10 days old) not 2.1.0 (6 days) or 3.0.0 (1 day)
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("regular-package@2.0.0");
       expect(lockfile).not.toContain("regular-package@2.1.0");
       expect(lockfile).not.toContain("regular-package@3.0.0");
@@ -876,10 +876,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -904,10 +904,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${1.8 * SECONDS_PER_DAY}`, "--verbose"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${1.8 * SECONDS_PER_DAY}`, "--verbose"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -925,7 +925,7 @@ describe("minimum-release-age", () => {
       // - 1.0.1 (2.5d): PASSES age gate, gap to 1.0.2 = 1d < 1.8d → UNSTABLE
       // - 1.0.0 (8d): PASSES age gate, within search limit, gap to 1.0.1 = 5.5d >= 1.8d → STABLE!
       // - Should select 1.0.0 (skips unstable 1.0.1)
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("bugfix-package@1.0.0");
       expect(lockfile).not.toContain("bugfix-package@1.0.1");
       expect(lockfile).not.toContain("bugfix-package@1.0.2");
@@ -944,10 +944,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${1.8 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${1.8 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -956,7 +956,7 @@ describe("minimum-release-age", () => {
       expect(exitCode).toBe(0);
 
       // Same logic as semver test, but using dist-tag resolution path
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("bugfix-package@1.0.0");
       expect(lockfile).not.toContain("bugfix-package@1.0.1");
       expect(lockfile).not.toContain("bugfix-package@1.0.2");
@@ -983,10 +983,10 @@ describe("minimum-release-age", () => {
       // - 1.0.0 (20d) is beyond search_limit (12d) → GIVE UP
       //
       // Result: Selects 1.0.6 (gave up finding stable version)
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -994,7 +994,7 @@ describe("minimum-release-age", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Should select 1.0.6 after giving up search
       expect(lockfile).toContain("search-limit-package@1.0.6");
       expect(lockfile).not.toContain("search-limit-package@1.0.0");
@@ -1010,10 +1010,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1022,7 +1022,7 @@ describe("minimum-release-age", () => {
       expect(exitCode).toBe(0);
 
       // Should select canary.3 (5 days old), not canary.4 (2 days) or canary.5 (0.5 days)
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("canary-package@2.0.0-canary.3");
       expect(lockfile).not.toContain("canary.5");
     });
@@ -1038,10 +1038,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1050,7 +1050,7 @@ describe("minimum-release-age", () => {
       expect(exitCode).toBe(0);
 
       // Should install a canary version (2.0.0-canary.3 with 3-day filter)
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("2.0.0-canary");
       expect(lockfile).not.toContain("beta");
     });
@@ -1063,10 +1063,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${10 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${10 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1075,7 +1075,7 @@ describe("minimum-release-age", () => {
       expect(exitCode).toBe(0);
 
       // latest dist-tag points to 1.0.0 (stable), should install that
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("canary-package@1.0.0");
       expect(lockfile).not.toContain("2.0.0-canary");
     });
@@ -1094,10 +1094,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1107,7 +1107,7 @@ describe("minimum-release-age", () => {
       // Should succeed by finding 1.1.0 (first version beyond search window)
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Should not have 2.0.0 (too recent)
       expect(lockfile).not.toContain("old-package@2.0.0");
       // Should have 1.1.0 (old but stable, beyond the search window)
@@ -1126,10 +1126,10 @@ describe("minimum-release-age", () => {
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1137,7 +1137,7 @@ describe("minimum-release-age", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Should get exactly version 1.7.0 (3 days old) - the latest that meets minimum age of 3 days
       expect(lockfile).toContain("daily-release-package@1.7.0");
 
@@ -1179,10 +1179,10 @@ describe("minimum-release-age", () => {
       // - 2.0.0 (2 days): BLOCKED
       // - 1.1.0 (15 days): PASSES age gate, but beyond search window (3 + 7 = 10 days)
       // - Should return 1.1.0 as best_version before breaking, not error!
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${3 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1190,7 +1190,7 @@ describe("minimum-release-age", () => {
       const [stderr, exitCode] = await Promise.all([proc.stderr.text(), proc.exited]);
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Should install 1.1.0 (old but stable)
       expect(lockfile).toContain("old-package@1.1.0");
       // Should NOT error with "No version matching"
@@ -1200,24 +1200,24 @@ describe("minimum-release-age", () => {
   });
 
   describe("exclusions", () => {
-    test("excludes packages from filtering via bunfig", async () => {
-      using dir = tempDir("exclusions-bunfig", {
+    test("excludes packages from filtering via funfig", async () => {
+      using dir = tempDir("exclusions-funfig", {
         "package.json": JSON.stringify({
           dependencies: {
             "excluded-package": "*",
             "regular-package": "*",
           },
         }),
-        "bunfig.toml": `[install]
+        "funfig.toml": `[install]
 minimumReleaseAge = ${5 * SECONDS_PER_DAY}
 minimumReleaseAgeExcludes = ["excluded-package"]
 registry = "${mockRegistryUrl}"`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1225,7 +1225,7 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
 
       // excluded-package should get latest despite being 12 hours old
       expect(lockfile).toContain("excluded-package@1.0.1");
@@ -1236,20 +1236,20 @@ registry = "${mockRegistryUrl}"`,
   });
 
   describe("configuration", () => {
-    test("bunfig.toml configuration works", async () => {
-      using dir = tempDir("bunfig-config", {
+    test("funfig.toml configuration works", async () => {
+      using dir = tempDir("funfig-config", {
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "*" },
         }),
-        "bunfig.toml": `[install]
+        "funfig.toml": `[install]
 minimumReleaseAge = ${5 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1257,26 +1257,26 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("regular-package@2.1.0");
       expect(lockfile).not.toContain("regular-package@3.0.0");
     });
 
-    test("CLI flag overrides bunfig.toml", async () => {
+    test("CLI flag overrides funfig.toml", async () => {
       using dir = tempDir("cli-override", {
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "*" },
         }),
-        "bunfig.toml": `[install]
+        "funfig.toml": `[install]
 minimumReleaseAge = ${10 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
-      // CLI says 5 days, bunfig says 10 days
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      // CLI says 5 days, funfig says 10 days
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1284,7 +1284,7 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // With 5 days, should get 2.1.0
       expect(lockfile).toContain("regular-package@2.1.0");
       // With 10 days, would have gotten 2.0.0
@@ -1296,15 +1296,15 @@ registry = "${mockRegistryUrl}"`,
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "*" },
         }),
-        "bunfig.toml": `[install]
+        "funfig.toml": `[install]
 minimumReleaseAge = ${10 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", "0"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", "0"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1312,32 +1312,32 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // With 0, should get latest
       expect(lockfile).toContain("regular-package@3.0.0");
     });
 
-    test("global bunfig.toml configuration works", async () => {
-      // Create a fake home directory with global bunfig
+    test("global funfig.toml configuration works", async () => {
+      // Create a fake home directory with global funfig
       using globalConfigDir = tempDir("global-config", {
-        ".bunfig.toml": `[install]
+        ".funfig.toml": `[install]
 minimumReleaseAge = ${5 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
-      // Create project directory (no local bunfig)
+      // Create project directory (no local funfig)
       using dir = tempDir("project-with-global-config", {
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "*" },
         }),
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
         env: {
-          ...bunEnv,
-          // XDG_CONFIG_HOME works on all platforms in Bun as an override
+          ...funEnv,
+          // XDG_CONFIG_HOME works on all platforms in Fun as an override
           XDG_CONFIG_HOME: String(globalConfigDir),
         },
         stdout: "pipe",
@@ -1347,36 +1347,36 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
-      // Should respect global bunfig setting (5 days)
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
+      // Should respect global funfig setting (5 days)
       expect(lockfile).toContain("regular-package@2.1.0");
       expect(lockfile).not.toContain("regular-package@3.0.0");
     });
 
-    test("local bunfig overrides global bunfig", async () => {
-      // Create a fake home directory with global bunfig
+    test("local funfig overrides global funfig", async () => {
+      // Create a fake home directory with global funfig
       using globalConfigDir = tempDir("global-config-override", {
-        ".bunfig.toml": `[install]
+        ".funfig.toml": `[install]
 minimumReleaseAge = ${10 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
-      // Create project directory with local bunfig
+      // Create project directory with local funfig
       using dir = tempDir("project-overrides-global", {
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "*" },
         }),
-        "bunfig.toml": `[install]
+        "funfig.toml": `[install]
 minimumReleaseAge = ${5 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
         env: {
-          ...bunEnv,
-          // XDG_CONFIG_HOME works on all platforms in Bun as an override
+          ...funEnv,
+          // XDG_CONFIG_HOME works on all platforms in Fun as an override
           XDG_CONFIG_HOME: String(globalConfigDir),
         },
         stdout: "pipe",
@@ -1386,8 +1386,8 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
-      // Should use local bunfig setting (5 days), not global (10 days)
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
+      // Should use local funfig setting (5 days), not global (10 days)
       expect(lockfile).toContain("regular-package@2.1.0");
       // With 10 days, would have gotten 2.0.0
       expect(lockfile).not.toContain("regular-package@2.0.0");
@@ -1406,10 +1406,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--verbose"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--verbose"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1439,10 +1439,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1470,10 +1470,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1496,15 +1496,15 @@ registry = "${mockRegistryUrl}"`,
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "*" },
         }),
-        "bunfig.toml": `[install]
+        "funfig.toml": `[install]
 minimumReleaseAge = ${5 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1530,10 +1530,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1542,7 +1542,7 @@ registry = "${mockRegistryUrl}"`,
       expect(exitCode).toBe(0);
 
       // All packages should use the same timestamp for filtering
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
 
       // Consistent filtering across all packages
       expect(lockfile).toContain("regular-package@2.1.0");
@@ -1560,10 +1560,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--dry-run"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--dry-run"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1577,11 +1577,11 @@ registry = "${mockRegistryUrl}"`,
       expect(stdout).toContain("regular-package");
 
       // Should not create lockfile
-      const lockfileExists = await Bun.file(`${dir}/bun.lock`).exists();
+      const lockfileExists = await Fun.file(`${dir}/fun.lock`).exists();
       expect(lockfileExists).toBe(false);
     });
 
-    test("works with bun update", async () => {
+    test("works with fun update", async () => {
       using dir = tempDir("update-command", {
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "^2.0.0" },
@@ -1590,20 +1590,20 @@ registry = "${mockRegistryUrl}"`,
       });
 
       // First install
-      let proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      let proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
       await proc.exited;
 
       // Now update with minimum-release-age
-      proc = Bun.spawn({
-        cmd: [bunExe(), "update", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      proc = Fun.spawn({
+        cmd: [funExe(), "update", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1611,39 +1611,39 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
 
       // Should update to 2.1.0, not 3.0.0
       expect(lockfile).toContain("regular-package@2.1.0");
       expect(lockfile).not.toContain("regular-package@3.0.0");
     });
 
-    test("works with bun outdated", async () => {
+    test("works with fun outdated", async () => {
       using dir = tempDir("outdated-command", {
         "package.json": JSON.stringify({
           dependencies: { "regular-package": "^2.0.0" },
         }),
         ".npmrc": `registry=${mockRegistryUrl}`,
-        "bunfig.toml": `[install]
+        "funfig.toml": `[install]
 minimumReleaseAge = ${5 * SECONDS_PER_DAY}
 registry = "${mockRegistryUrl}"`,
       });
 
       // First install
-      let proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      let proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
       await proc.exited;
 
       // Check outdated
-      proc = Bun.spawn({
-        cmd: [bunExe(), "outdated"],
+      proc = Fun.spawn({
+        cmd: [funExe(), "outdated"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1678,10 +1678,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1689,7 +1689,7 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Direct dependency should be filtered
       expect(lockfile).toContain("regular-package@2.1.0");
     });
@@ -1709,10 +1709,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1720,7 +1720,7 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Regular package should be filtered
       expect(lockfile).toContain("regular-package@2.1.0");
     });
@@ -1744,10 +1744,10 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1755,7 +1755,7 @@ registry = "${mockRegistryUrl}"`,
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Regular package should be filtered
       expect(lockfile).toContain("regular-package@2.1.0");
       // File dependencies should work normally (path will be in lockfile)
@@ -1774,17 +1774,17 @@ registry = "${mockRegistryUrl}"`,
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
 
       expect(proc.exited).resolves.toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Scoped package should be filtered (1.5.0 not 2.0.0)
       expect(lockfile).toContain("@scope/scoped-package@1.5.0");
       expect(lockfile).not.toContain("@scope/scoped-package@2.0.0");
@@ -1806,10 +1806,10 @@ registry = "${mockRegistryUrl}"`,
       });
 
       // First install without minimum-release-age to get latest
-      let proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      let proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1817,14 +1817,14 @@ registry = "${mockRegistryUrl}"`,
       let exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("regular-package@3.0.0"); // Latest version
 
       // Now try with frozen lockfile and minimum-release-age
       // Frozen lockfile means no changes to lockfile - versions stay as-is
-      proc = Bun.spawn({
+      proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "install",
           "--frozen-lockfile",
           "--minimum-release-age",
@@ -1832,7 +1832,7 @@ registry = "${mockRegistryUrl}"`,
           "--no-verify",
         ],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1843,7 +1843,7 @@ registry = "${mockRegistryUrl}"`,
       expect(exitCode2).toBe(0);
 
       // Lockfile should remain unchanged
-      const lockfileAfter = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfileAfter = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfileAfter).toContain("regular-package@3.0.0");
     });
 
@@ -1858,10 +1858,10 @@ registry = "${mockRegistryUrl}"`,
       });
 
       // First install to create lockfile
-      let proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      let proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1870,9 +1870,9 @@ registry = "${mockRegistryUrl}"`,
       expect(exitCode).toBe(0);
 
       // Install with frozen lockfile and minimum-release-age
-      proc = Bun.spawn({
+      proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "install",
           "--frozen-lockfile",
           "--minimum-release-age",
@@ -1880,7 +1880,7 @@ registry = "${mockRegistryUrl}"`,
           "--no-verify",
         ],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1888,7 +1888,7 @@ registry = "${mockRegistryUrl}"`,
       exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("regular-package@2.1.0");
     });
   });
@@ -1900,7 +1900,7 @@ registry = "${mockRegistryUrl}"`,
           name: "my-monorepo",
           workspaces: ["packages/*"],
         }),
-        "bunfig.toml": `
+        "funfig.toml": `
 [install]
 linker = "${linker}"
 `,
@@ -1941,10 +1941,10 @@ linker = "${linker}"
       // - @scope/scoped-package (^1.0.0): 2.0.0 too new → select 1.5.0 (8 days old)
       // - stable-package (latest): 3.2.0 is 30 days old → select 3.2.0 (passes gate, is latest)
       // - stable-package (3.0.0): pinned to 3.0.0 (legacy workspace - no age check on exact versions)
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1952,7 +1952,7 @@ linker = "${linker}"
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
 
       // Verify each package selected the correct version
       expect(lockfile).toContain("regular-package@2.1.0");
@@ -1976,7 +1976,7 @@ linker = "${linker}"
 
       // Normalize the lockfile to remove dynamic port numbers
       const normalizedLockfile = lockfile.replace(/http:\/\/localhost:\d+/g, "http://localhost:<port>");
-      expect(normalizeBunSnapshot(normalizedLockfile, dir)).toMatchInlineSnapshot(`
+      expect(normalizeFunSnapshot(normalizedLockfile, dir)).toMatchInlineSnapshot(`
           "{
             "lockfileVersion": 1,
             "configVersion": 1,
@@ -2046,10 +2046,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", "-1"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", "-1"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2069,10 +2069,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", "abc"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", "abc"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2094,10 +2094,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2107,7 +2107,7 @@ linker = "${linker}"
       // Should succeed - packages without time field should skip filtering
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("no-time-package@1.0.0");
     });
 
@@ -2119,10 +2119,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2132,7 +2132,7 @@ linker = "${linker}"
       // Should succeed - invalid timestamps should be skipped gracefully
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       expect(lockfile).toContain("bad-timestamp-package@1.0.0");
     });
   });
@@ -2146,10 +2146,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2158,7 +2158,7 @@ linker = "${linker}"
 
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Should install 2.0.0 (exactly at threshold = passes)
       expect(lockfile).toContain("exact-threshold-package@2.0.0");
     });
@@ -2175,10 +2175,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2186,7 +2186,7 @@ linker = "${linker}"
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // devDependencies should also be filtered
       expect(lockfile).toContain("regular-package@2.1.0");
       expect(lockfile).not.toContain("regular-package@3.0.0");
@@ -2202,10 +2202,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2213,7 +2213,7 @@ linker = "${linker}"
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // optionalDependencies should also be filtered
       expect(lockfile).toContain("regular-package@2.1.0");
       expect(lockfile).not.toContain("regular-package@3.0.0");
@@ -2235,10 +2235,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2246,7 +2246,7 @@ linker = "${linker}"
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // All dependency types should be filtered
       expect(lockfile).toContain("regular-package@2.1.0");
       expect(lockfile).toContain("bugfix-package@1.0.0");
@@ -2263,10 +2263,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2275,7 +2275,7 @@ linker = "${linker}"
 
       expect(exitCode).toBe(0);
 
-      const lockfile = await Bun.file(`${dir}/bun.lock`).text();
+      const lockfile = await Fun.file(`${dir}/fun.lock`).text();
       // Future timestamps should be treated as "too recent", fallback to 1.0.0
       expect(lockfile).toContain("future-package@1.0.0");
       expect(lockfile).not.toContain("future-package@2.0.0");
@@ -2289,10 +2289,10 @@ linker = "${linker}"
         ".npmrc": `registry=${mockRegistryUrl}`,
       });
 
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2311,7 +2311,7 @@ linker = "${linker}"
       // Normalize extraConfig to ensure proper newline separation
       const normalizedExtra = extraConfig ? (extraConfig.endsWith("\n") ? extraConfig : extraConfig + "\n") : "";
       return {
-        "bunfig.toml": `
+        "funfig.toml": `
 [install]
 cache = false
 registry = "${mockRegistryUrl}"
@@ -2325,7 +2325,7 @@ scanner = "./scanner.ts"
 export const scanner = {
   version: "1",
   scan: async ({ packages }) => {
-    await Bun.write("./received-packages.json", JSON.stringify(packages, null, 2));
+    await Fun.write("./received-packages.json", JSON.stringify(packages, null, 2));
     return [];
   },
 };
@@ -2344,10 +2344,10 @@ export const scanner = {
         ...createScannerConfig(),
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2356,7 +2356,7 @@ export const scanner = {
       expect(exitCode).toBe(0);
 
       // Read what packages the scanner received
-      const receivedPackagesFile = Bun.file(`${dir}/received-packages.json`);
+      const receivedPackagesFile = Fun.file(`${dir}/received-packages.json`);
       expect(await receivedPackagesFile.exists()).toBe(true);
 
       const receivedPackages = await receivedPackagesFile.json();
@@ -2377,10 +2377,10 @@ export const scanner = {
         ...createScannerConfig(),
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${1.8 * SECONDS_PER_DAY}`, "--no-verify"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${1.8 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2388,7 +2388,7 @@ export const scanner = {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const receivedPackages = await Bun.file(`${dir}/received-packages.json`).json();
+      const receivedPackages = await Fun.file(`${dir}/received-packages.json`).json();
 
       // With stability checks, should select 1.0.0 (stable) instead of unstable versions
       const bugfixPkg = receivedPackages.find((p: { name: string }) => p.name === "bugfix-package");
@@ -2424,10 +2424,10 @@ export const scanner = {
         ...createScannerConfig("", advisoryScannerImpl),
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install", "--minimum-release-age", `${5 * SECONDS_PER_DAY}`, "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2454,10 +2454,10 @@ minimumReleaseAgeExcludes = ["regular-package"]
 `),
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--no-verify"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install", "--no-verify"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -2465,7 +2465,7 @@ minimumReleaseAgeExcludes = ["regular-package"]
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const receivedPackages = await Bun.file(`${dir}/received-packages.json`).json();
+      const receivedPackages = await Fun.file(`${dir}/received-packages.json`).json();
 
       // Since regular-package is excluded from age filtering, it should get 3.0.0 (latest)
       const regularPkg = receivedPackages.find((p: { name: string }) => p.name === "regular-package");

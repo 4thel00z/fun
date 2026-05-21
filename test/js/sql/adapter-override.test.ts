@@ -1,5 +1,5 @@
-import { SQL } from "bun";
-import { describe, expect, test } from "bun:test";
+import { SQL } from "fun";
+import { describe, expect, test } from "fun:test";
 
 describe("Adapter Override", () => {
   test("postgres:// URL with adapter='sqlite' uses SQLite", async () => {

@@ -6,7 +6,7 @@ pub fn toJS(
     value: *Data,
 ) AnyPostgresError!JSValue {
     defer value.deinit();
-    var str = bun.String.borrowUTF8(value.slice());
+    var str = fun.String.borrowUTF8(value.slice());
     defer str.deref();
     const parse_result = JSValue.parse(str.toJS(globalObject), globalObject);
     if (parse_result.AnyPostgresError()) {
@@ -16,12 +16,12 @@ pub fn toJS(
     return parse_result;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const AnyPostgresError = @import("../../../sql/postgres/AnyPostgresError.zig").AnyPostgresError;
 const Data = @import("../../../sql/shared/Data.zig").Data;
 
 const int_types = @import("../../../sql/postgres/types/int_types.zig");
 const short = int_types.short;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

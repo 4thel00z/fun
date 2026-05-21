@@ -1,6 +1,6 @@
 #include "Semaphore.h"
 
-namespace Bun {
+namespace Fun {
 
 Semaphore::Semaphore(unsigned int value)
 {
@@ -48,4 +48,4 @@ bool Semaphore::wait()
 #endif
 }
 
-} // namespace Bun
+} // namespace Fun

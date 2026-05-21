@@ -1,9 +1,9 @@
 const ProxyTunnel = @This();
 
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", ProxyTunnel.deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", ProxyTunnel.deinit, .{});
 pub const ref = ProxyTunnel.RefCount.ref;
 pub const deref = ProxyTunnel.RefCount.deref;
-pub const RefPtr = bun.ptr.RefPtr(@This());
+pub const RefPtr = fun.ptr.RefPtr(@This());
 
 wrapper: ?ProxyTunnelWrapper = null,
 shutdown_err: anyerror = error.ConnectionClosed,
@@ -13,7 +13,7 @@ socket: union(enum) {
     ssl: NewHTTPContext(true).HTTPSocket,
     none: void,
 } = .{ .none = {} },
-write_buffer: bun.io.StreamBuffer = .{},
+write_buffer: fun.io.StreamBuffer = .{},
 /// Property of the inner TLS session, not the owning client. Captured from
 /// the client in detachOwner() and restored to the next client in adopt()
 /// so the pool's did_have_handshaking_error_while_reject_unauthorized_is_false
@@ -33,7 +33,7 @@ const ProxyTunnelWrapper = SSLWrapper(*HTTPClient);
 
 fn onOpen(this: *HTTPClient) void {
     log("ProxyTunnel onOpen", .{});
-    bun.analytics.Features.http_client_proxy += 1;
+    fun.analytics.Features.http_client_proxy += 1;
     this.state.response_stage = .proxy_handshake;
     this.state.request_stage = .proxy_handshake;
     if (this.proxy_tunnel) |proxy| {
@@ -46,17 +46,17 @@ fn onOpen(this: *HTTPClient) void {
             var hostname: [:0]const u8 = "";
             var hostname_needs_free = false;
             if (!strings.isIPAddress(_hostname)) {
-                if (_hostname.len < bun.http.temp_hostname.len) {
-                    @memcpy(bun.http.temp_hostname[0.._hostname.len], _hostname);
-                    bun.http.temp_hostname[_hostname.len] = 0;
-                    hostname = bun.http.temp_hostname[0.._hostname.len :0];
+                if (_hostname.len < fun.http.temp_hostname.len) {
+                    @memcpy(fun.http.temp_hostname[0.._hostname.len], _hostname);
+                    fun.http.temp_hostname[_hostname.len] = 0;
+                    hostname = fun.http.temp_hostname[0.._hostname.len :0];
                 } else {
-                    hostname = bun.default_allocator.dupeZ(u8, _hostname) catch unreachable;
+                    hostname = fun.default_allocator.dupeZ(u8, _hostname) catch unreachable;
                     hostname_needs_free = true;
                 }
             }
 
-            defer if (hostname_needs_free) bun.default_allocator.free(hostname);
+            defer if (hostname_needs_free) fun.default_allocator.free(hostname);
             ssl_ptr.configureHTTPClient(hostname);
         }
     }
@@ -80,10 +80,10 @@ fn onData(this: *HTTPClient, decoded_data: []const u8) void {
                 if (report_progress) {
                     switch (proxy.socket) {
                         .ssl => |socket| {
-                            this.progressUpdate(true, &bun.http.http_thread.https_context, socket);
+                            this.progressUpdate(true, &fun.http.http_thread.https_context, socket);
                         },
                         .tcp => |socket| {
-                            this.progressUpdate(false, &bun.http.http_thread.http_context, socket);
+                            this.progressUpdate(false, &fun.http.http_thread.http_context, socket);
                         },
                         .none => {},
                     }
@@ -101,10 +101,10 @@ fn onData(this: *HTTPClient, decoded_data: []const u8) void {
                 if (report_progress) {
                     switch (proxy.socket) {
                         .ssl => |socket| {
-                            this.progressUpdate(true, &bun.http.http_thread.https_context, socket);
+                            this.progressUpdate(true, &fun.http.http_thread.https_context, socket);
                         },
                         .tcp => |socket| {
-                            this.progressUpdate(false, &bun.http.http_thread.http_context, socket);
+                            this.progressUpdate(false, &fun.http.http_thread.http_context, socket);
                         },
                         .none => {},
                     }
@@ -115,10 +115,10 @@ fn onData(this: *HTTPClient, decoded_data: []const u8) void {
                 log("ProxyTunnel onData proxy_headers", .{});
                 switch (proxy.socket) {
                     .ssl => |socket| {
-                        this.handleOnDataHeaders(true, decoded_data, &bun.http.http_thread.https_context, socket);
+                        this.handleOnDataHeaders(true, decoded_data, &fun.http.http_thread.https_context, socket);
                     },
                     .tcp => |socket| {
-                        this.handleOnDataHeaders(false, decoded_data, &bun.http.http_thread.http_context, socket);
+                        this.handleOnDataHeaders(false, decoded_data, &fun.http.http_thread.http_context, socket);
                     },
                     .none => {},
                 }
@@ -132,7 +132,7 @@ fn onData(this: *HTTPClient, decoded_data: []const u8) void {
     }
 }
 
-fn onHandshake(this: *HTTPClient, handshake_success: bool, ssl_error: uws.us_bun_verify_error_t) void {
+fn onHandshake(this: *HTTPClient, handshake_success: bool, ssl_error: uws.us_fun_verify_error_t) void {
     if (this.proxy_tunnel) |proxy| {
         log("ProxyTunnel onHandshake", .{});
         proxy.ref();
@@ -142,8 +142,8 @@ fn onHandshake(this: *HTTPClient, handshake_success: bool, ssl_error: uws.us_bun
         this.state.request_sent_len = 0;
         const handshake_error = HTTPCertError{
             .error_no = ssl_error.error_no,
-            .code = if (ssl_error.code == null) "" else ssl_error.code[0..bun.len(ssl_error.code) :0],
-            .reason = if (ssl_error.code == null) "" else ssl_error.reason[0..bun.len(ssl_error.reason) :0],
+            .code = if (ssl_error.code == null) "" else ssl_error.code[0..fun.len(ssl_error.code) :0],
+            .reason = if (ssl_error.code == null) "" else ssl_error.reason[0..fun.len(ssl_error.reason) :0],
         };
         if (handshake_success) {
             log("ProxyTunnel onHandshake success", .{});
@@ -157,7 +157,7 @@ fn onHandshake(this: *HTTPClient, handshake_success: bool, ssl_error: uws.us_bun
                 }
 
                 // if checkServerIdentity returns false, we dont call open this means that the connection was rejected
-                bun.assert(proxy.wrapper != null);
+                fun.assert(proxy.wrapper != null);
                 const ssl_ptr = proxy.wrapper.?.ssl orelse return;
 
                 switch (proxy.socket) {
@@ -211,7 +211,7 @@ pub fn writeEncrypted(this: *HTTPClient, encoded_data: []const u8) void {
         // Preserve TLS record ordering: if any encrypted bytes are buffered,
         // enqueue new bytes and flush them in FIFO via onWritable.
         if (proxy.write_buffer.isNotEmpty()) {
-            bun.handleOom(proxy.write_buffer.write(encoded_data));
+            fun.handleOom(proxy.write_buffer.write(encoded_data));
             return;
         }
         const written = switch (proxy.socket) {
@@ -222,7 +222,7 @@ pub fn writeEncrypted(this: *HTTPClient, encoded_data: []const u8) void {
         const pending = encoded_data[@intCast(written)..];
         if (pending.len > 0) {
             // lets flush when we are truly writable
-            bun.handleOom(proxy.write_buffer.write(pending));
+            fun.handleOom(proxy.write_buffer.write(pending));
         }
     }
 }
@@ -242,7 +242,7 @@ fn onClose(this: *HTTPClient) void {
                         this.state.flags.received_last_chunk = true;
                         progressUpdateForProxySocket(this, proxy);
                         // Drop our temporary ref asynchronously to avoid freeing within callback
-                        bun.http.http_thread.scheduleProxyDeref(proxy);
+                        fun.http.http_thread.scheduleProxyDeref(proxy);
                         return;
                     },
                     else => {},
@@ -251,7 +251,7 @@ fn onClose(this: *HTTPClient) void {
                 this.state.flags.received_last_chunk = true;
                 progressUpdateForProxySocket(this, proxy);
                 // Balance the ref we took asynchronously
-                bun.http.http_thread.scheduleProxyDeref(proxy);
+                fun.http.http_thread.scheduleProxyDeref(proxy);
                 return;
             }
         }
@@ -269,20 +269,20 @@ fn onClose(this: *HTTPClient) void {
         }
         proxy.detachSocket();
         // Deref after returning to the event loop to avoid lifetime hazards.
-        bun.http.http_thread.scheduleProxyDeref(proxy);
+        fun.http.http_thread.scheduleProxyDeref(proxy);
     }
 }
 
 fn progressUpdateForProxySocket(this: *HTTPClient, proxy: *ProxyTunnel) void {
     switch (proxy.socket) {
-        .ssl => |socket| this.progressUpdate(true, &bun.http.http_thread.https_context, socket),
-        .tcp => |socket| this.progressUpdate(false, &bun.http.http_thread.http_context, socket),
+        .ssl => |socket| this.progressUpdate(true, &fun.http.http_thread.https_context, socket),
+        .tcp => |socket| this.progressUpdate(false, &fun.http.http_thread.http_context, socket),
         .none => {},
     }
 }
 
 pub fn start(this: *HTTPClient, comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket, ssl_options: jsc.API.ServerConfig.SSLConfig, start_payload: []const u8) void {
-    const proxy_tunnel = bun.new(ProxyTunnel, .{
+    const proxy_tunnel = fun.new(ProxyTunnel, .{
         .ref_count = .init(),
     });
 
@@ -297,7 +297,7 @@ pub fn start(this: *HTTPClient, comptime is_ssl: bool, socket: NewHTTPContext(is
         .ctx = this,
     }) catch |err| {
         if (err == error.OutOfMemory) {
-            bun.outOfMemory();
+            fun.outOfMemory();
         }
 
         // invalid TLS Options
@@ -434,19 +434,19 @@ fn deinit(this: *ProxyTunnel) void {
         this.wrapper = null;
     }
     this.write_buffer.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
-const log = bun.Output.scoped(.http_proxy_tunnel, .visible);
+const log = fun.Output.scoped(.http_proxy_tunnel, .visible);
 
 const HTTPCertError = @import("./HTTPCertError.zig");
 const SSLWrapper = @import("../runtime/socket/ssl_wrapper.zig").SSLWrapper;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const strings = bun.strings;
-const uws = bun.uws;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const strings = fun.strings;
+const uws = fun.uws;
+const BoringSSL = fun.BoringSSL.c;
 
-const HTTPClient = bun.http;
-const NewHTTPContext = bun.http.NewHTTPContext;
+const HTTPClient = fun.http;
+const NewHTTPContext = fun.http.NewHTTPContext;

@@ -1,5 +1,5 @@
-import { SQL, randomUUIDv7 } from "bun";
-import { beforeEach, expect, test } from "bun:test";
+import { SQL, randomUUIDv7 } from "fun";
+import { beforeEach, expect, test } from "fun:test";
 import { describeWithContainer } from "harness";
 
 describeWithContainer(
@@ -12,7 +12,7 @@ describeWithContainer(
   container => {
     // Use a getter to avoid reading port/host at define time
     const getOptions = () => ({
-      url: `mysql://root@${container.host}:${container.port}/bun_sql_test`,
+      url: `mysql://root@${container.host}:${container.port}/fun_sql_test`,
       max: 1,
       bigint: true,
     });

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -26,9 +26,9 @@ testFn("path.posix.resolve with long CWD and relative path doesn't crash", () =>
   // Relative path long enough that CWD + path > PATH_SIZE on all platforms.
   const relativePath = "b".repeat(4000);
 
-  const proc = Bun.spawnSync({
+  const proc = Fun.spawnSync({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `const path = require("node:path");
        const result = path.posix.resolve(${JSON.stringify(relativePath)});
@@ -44,7 +44,7 @@ testFn("path.posix.resolve with long CWD and relative path doesn't crash", () =>
        }
        console.log("OK:" + result.length);`,
     ],
-    env: bunEnv,
+    env: funEnv,
     cwd: currentDir,
   });
 
@@ -67,9 +67,9 @@ testFn("path.posix.resolve with long CWD and multiple relative paths doesn't cra
   const pathB = "e".repeat(2000);
   const pathC = "f".repeat(2000);
 
-  const proc = Bun.spawnSync({
+  const proc = Fun.spawnSync({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `const path = require("node:path");
        const result = path.posix.resolve(${JSON.stringify(pathA)}, ${JSON.stringify(pathB)}, ${JSON.stringify(pathC)});
@@ -85,7 +85,7 @@ testFn("path.posix.resolve with long CWD and multiple relative paths doesn't cra
        }
        console.log("OK:" + result.length);`,
     ],
-    env: bunEnv,
+    env: funEnv,
     cwd: currentDir,
   });
 
@@ -107,9 +107,9 @@ testFn("path.posix.relative with long CWD and relative paths doesn't crash", () 
   const fromPath = "x".repeat(2000);
   const toPath = "y".repeat(2000);
 
-  const proc = Bun.spawnSync({
+  const proc = Fun.spawnSync({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `const path = require("node:path");
        const result = path.posix.relative(${JSON.stringify(fromPath)}, ${JSON.stringify(toPath)});
@@ -123,7 +123,7 @@ testFn("path.posix.relative with long CWD and relative paths doesn't crash", () 
        }
        console.log("OK:" + result.length);`,
     ],
-    env: bunEnv,
+    env: funEnv,
     cwd: currentDir,
   });
 

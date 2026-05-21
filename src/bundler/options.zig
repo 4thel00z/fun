@@ -64,7 +64,7 @@ pub const AllowUnresolved = union(enum) {
     /// [] → .none, contains "*" → .all, else → .patterns
     pub fn fromStrings(strs: []const string) AllowUnresolved {
         if (strs.len == 0) return .none;
-        for (strs) |s| if (bun.strings.eqlComptime(s, "*")) return .all;
+        for (strs) |s| if (fun.strings.eqlComptime(s, "*")) return .all;
         return .{ .patterns = strs };
     }
 
@@ -74,7 +74,7 @@ pub const AllowUnresolved = union(enum) {
             .all => true,
             .none => false,
             .patterns => |pats| for (pats) |p| {
-                if (bun.glob.match(p, shape).matches()) break true;
+                if (fun.glob.match(p, shape).matches()) break true;
             } else false,
         };
     }
@@ -91,12 +91,12 @@ pub const ExternalModules = struct {
     };
 
     pub fn isNodeBuiltin(str: string) bool {
-        return bun.jsc.ModuleLoader.HardcodedModule.Alias.has(str, .node, .{});
+        return fun.jsc.ModuleLoader.HardcodedModule.Alias.has(str, .node, .{});
     }
 
     const default_wildcard_patterns = &[_]WildcardPattern{
         .{
-            .prefix = "/bun:",
+            .prefix = "/fun:",
             .suffix = "",
         },
         // .{
@@ -131,11 +131,11 @@ pub const ExternalModules = struct {
                     result.node_modules.insert(pattern) catch unreachable;
                 }
             },
-            .bun => {
+            .fun => {
 
                 // // TODO: fix this stupid copy
-                // result.node_modules.hash_map.ensureTotalCapacity(BunNodeBuiltinPatternsCompat.len) catch unreachable;
-                // for (BunNodeBuiltinPatternsCompat) |pattern| {
+                // result.node_modules.hash_map.ensureTotalCapacity(FunNodeBuiltinPatternsCompat.len) catch unreachable;
+                // for (FunNodeBuiltinPatternsCompat) |pattern| {
                 //     result.node_modules.insert(pattern) catch unreachable;
                 // }
             },
@@ -172,7 +172,7 @@ pub const ExternalModules = struct {
             }
         }
 
-        result.patterns = bun.handleOom(patterns.toOwnedSlice());
+        result.patterns = fun.handleOom(patterns.toOwnedSlice());
 
         return result;
     }
@@ -245,7 +245,7 @@ pub const ExternalModules = struct {
         break :brk builtins;
     };
 
-    pub const BunNodeBuiltinPatternsCompat = [_]string{
+    pub const FunNodeBuiltinPatternsCompat = [_]string{
         "_http_agent",
         "_http_client",
         "_http_common",
@@ -303,7 +303,7 @@ pub const ExternalModules = struct {
         "zlib",
     };
 
-    pub const NodeBuiltinsMap = bun.ComptimeStringMap(void, .{
+    pub const NodeBuiltinsMap = fun.ComptimeStringMap(void, .{
         .{ "_http_agent", {} },
         .{ "_http_client", {} },
         .{ "_http_common", {} },
@@ -370,7 +370,7 @@ pub const ModuleType = enum {
     cjs,
     esm,
 
-    pub const List = bun.ComptimeStringMap(ModuleType, .{
+    pub const List = fun.ComptimeStringMap(ModuleType, .{
         .{ "commonjs", ModuleType.cjs },
         .{ "module", ModuleType.esm },
     });
@@ -378,18 +378,18 @@ pub const ModuleType = enum {
 
 pub const Target = enum {
     browser,
-    bun,
-    bun_macro,
+    fun,
+    fun_macro,
     node,
 
     /// This is used by bake.Framework.ServerComponents.separate_ssr_graph
     bake_server_components_ssr,
 
-    pub const Map = bun.ComptimeStringMap(Target, .{
+    pub const Map = fun.ComptimeStringMap(Target, .{
         .{ "browser", .browser },
-        .{ "bun", .bun },
-        .{ "bun_macro", .bun_macro },
-        .{ "macro", .bun_macro },
+        .{ "fun", .fun },
+        .{ "fun_macro", .fun_macro },
+        .{ "macro", .fun_macro },
         .{ "node", .node },
     });
 
@@ -399,21 +399,21 @@ pub const Target = enum {
         return switch (this) {
             .node => .node,
             .browser => .browser,
-            .bun, .bake_server_components_ssr => .bun,
-            .bun_macro => .bun_macro,
+            .fun, .bake_server_components_ssr => .fun,
+            .fun_macro => .fun_macro,
         };
     }
 
     pub inline fn isServerSide(this: Target) bool {
         return switch (this) {
-            .bun_macro, .node, .bun, .bake_server_components_ssr => true,
+            .fun_macro, .node, .fun, .bake_server_components_ssr => true,
             else => false,
         };
     }
 
-    pub inline fn isBun(this: Target) bool {
+    pub inline fn isFun(this: Target) bool {
         return switch (this) {
-            .bun_macro, .bun, .bake_server_components_ssr => true,
+            .fun_macro, .fun, .bake_server_components_ssr => true,
             else => false,
         };
     }
@@ -432,16 +432,16 @@ pub const Target = enum {
         };
     }
 
-    pub fn bakeGraph(target: Target) bun.bake.Graph {
+    pub fn bakeGraph(target: Target) fun.bake.Graph {
         return switch (target) {
             .browser => .client,
             .bake_server_components_ssr => .ssr,
-            .bun_macro, .bun, .node => .server,
+            .fun_macro, .fun, .node => .server,
         };
     }
 
-    pub fn outExtensions(target: Target, allocator: std.mem.Allocator) bun.StringHashMap(string) {
-        var exts = bun.StringHashMap(string).init(allocator);
+    pub fn outExtensions(target: Target, allocator: std.mem.Allocator) fun.StringHashMap(string) {
+        var exts = fun.StringHashMap(string).init(allocator);
 
         const out_extensions_list = [_][]const u8{ ".js", ".cjs", ".mts", ".cts", ".ts", ".tsx", ".jsx", ".json" };
 
@@ -466,8 +466,8 @@ pub const Target = enum {
         return switch (plat orelse api.Target._none) {
             .node => .node,
             .browser => .browser,
-            .bun => .bun,
-            .bun_macro => .bun_macro,
+            .fun => .fun,
+            .fun_macro => .fun_macro,
             else => .browser,
         };
     }
@@ -512,8 +512,8 @@ pub const Target = enum {
         const listd = [_]string{ MAIN_FIELD_NAMES[1], MAIN_FIELD_NAMES[2], MAIN_FIELD_NAMES[3] };
 
         array.set(Target.browser, &listc);
-        array.set(Target.bun, &listd);
-        array.set(Target.bun_macro, &listd);
+        array.set(Target.fun, &listd);
+        array.set(Target.fun_macro, &listd);
         array.set(Target.bake_server_components_ssr, &listd);
 
         // Original comment:
@@ -535,17 +535,17 @@ pub const Target = enum {
             "browser",
             "module",
         });
-        array.set(Target.bun, &.{
-            "bun",
+        array.set(Target.fun, &.{
+            "fun",
             "node",
         });
         array.set(Target.bake_server_components_ssr, &.{
-            "bun",
+            "fun",
             "node",
         });
-        array.set(Target.bun_macro, &.{
+        array.set(Target.fun_macro, &.{
             "macro",
-            "bun",
+            "fun",
             "node",
         });
 
@@ -563,7 +563,7 @@ pub const WindowsOptions = @import("../options_types/BundleEnums.zig").WindowsOp
 
 // The max integer value in this enum can only be appended to.
 // It has dependencies in several places:
-// - bun-native-bundler-plugin-api/bundler_plugin.h
+// - fun-native-bundler-plugin-api/bundler_plugin.h
 // - src/jsc/bindings/headers-handwritten.h
 pub const Loader = enum(u8) {
     jsx = 0,
@@ -580,7 +580,7 @@ pub const Loader = enum(u8) {
     base64 = 11,
     dataurl = 12,
     text = 13,
-    bunsh = 14,
+    funsh = 14,
     sqlite = 15,
     sqlite_embedded = 16,
     html = 17,
@@ -595,7 +595,7 @@ pub const Loader = enum(u8) {
             return if (opt == .none) null else @enumFromInt(@intFromEnum(opt));
         }
 
-        pub fn fromAPI(loader: bun.schema.api.Loader) Optional {
+        pub fn fromAPI(loader: fun.schema.api.Loader) Optional {
             if (loader == ._none) {
                 return .none;
             }
@@ -651,13 +651,13 @@ pub const Loader = enum(u8) {
         };
     }
 
-    pub fn toMimeType(this: Loader, paths: []const []const u8) bun.http.MimeType {
+    pub fn toMimeType(this: Loader, paths: []const []const u8) fun.http.MimeType {
         return switch (this) {
-            .jsx, .js, .ts, .tsx => bun.http.MimeType.javascript,
-            .css => bun.http.MimeType.css,
-            .toml, .yaml, .json, .jsonc, .json5 => bun.http.MimeType.json,
-            .wasm => bun.http.MimeType.wasm,
-            .html, .md => bun.http.MimeType.html,
+            .jsx, .js, .ts, .tsx => fun.http.MimeType.javascript,
+            .css => fun.http.MimeType.css,
+            .toml, .yaml, .json, .jsonc, .json5 => fun.http.MimeType.json,
+            .wasm => fun.http.MimeType.wasm,
+            .html, .md => fun.http.MimeType.html,
             else => {
                 for (paths) |path| {
                     var extname = std.fs.path.extension(path);
@@ -665,18 +665,18 @@ pub const Loader = enum(u8) {
                         extname = extname[1..];
                     }
                     if (extname.len > 0) {
-                        if (bun.http.MimeType.byExtensionNoDefault(extname)) |mime| {
+                        if (fun.http.MimeType.byExtensionNoDefault(extname)) |mime| {
                             return mime;
                         }
                     }
                 }
 
-                return bun.http.MimeType.other;
+                return fun.http.MimeType.other;
             },
         };
     }
 
-    pub const HashTable = bun.StringArrayHashMap(Loader);
+    pub const HashTable = fun.StringArrayHashMap(Loader);
 
     pub fn canHaveSourceMap(this: Loader) bool {
         return switch (this) {
@@ -685,9 +685,9 @@ pub const Loader = enum(u8) {
         };
     }
 
-    pub fn canBeRunByBun(this: Loader) bool {
+    pub fn canBeRunByFun(this: Loader) bool {
         return switch (this) {
-            .jsx, .js, .ts, .tsx, .wasm, .bunsh => true,
+            .jsx, .js, .ts, .tsx, .wasm, .funsh => true,
             else => false,
         };
     }
@@ -708,7 +708,7 @@ pub const Loader = enum(u8) {
         map.set(.wasm, "input.wasm");
         map.set(.napi, "input.node");
         map.set(.text, "input.txt");
-        map.set(.bunsh, "input.sh");
+        map.set(.funsh, "input.sh");
         map.set(.html, "input.html");
         map.set(.md, "input.md");
         break :brk map;
@@ -720,7 +720,7 @@ pub const Loader = enum(u8) {
 
     pub const fromJS = @import("../bundler_jsc/options_jsc.zig").loaderFromJS;
 
-    pub const names = bun.ComptimeStringMap(Loader, .{
+    pub const names = fun.ComptimeStringMap(Loader, .{
         .{ "js", .js },
         .{ "mjs", .js },
         .{ "cjs", .js },
@@ -743,7 +743,7 @@ pub const Loader = enum(u8) {
         .{ "base64", .base64 },
         .{ "txt", .text },
         .{ "text", .text },
-        .{ "sh", .bunsh },
+        .{ "sh", .funsh },
         .{ "sqlite", .sqlite },
         .{ "sqlite_embedded", .sqlite_embedded },
         .{ "html", .html },
@@ -751,7 +751,7 @@ pub const Loader = enum(u8) {
         .{ "markdown", .md },
     });
 
-    pub const api_names = bun.ComptimeStringMap(api.Loader, .{
+    pub const api_names = fun.ComptimeStringMap(api.Loader, .{
         .{ "js", .js },
         .{ "mjs", .js },
         .{ "cjs", .js },
@@ -804,7 +804,7 @@ pub const Loader = enum(u8) {
             .tsx => .tsx,
             .css => .css,
             .html => .html,
-            .file, .bunsh => .file,
+            .file, .funsh => .file,
             .json => .json,
             .jsonc => .json,
             .toml => .toml,
@@ -839,7 +839,7 @@ pub const Loader = enum(u8) {
             .base64 => .base64,
             .dataurl => .dataurl,
             .text => .text,
-            .bunsh => .bunsh,
+            .funsh => .funsh,
             .html => .html,
             .sqlite => .sqlite,
             .sqlite_embedded => .sqlite_embedded,
@@ -881,14 +881,14 @@ pub const Loader = enum(u8) {
         return obj.get(ext);
     }
 
-    pub fn sideEffects(this: Loader) bun.resolver.SideEffects {
+    pub fn sideEffects(this: Loader) fun.resolver.SideEffects {
         return switch (this) {
-            .text, .json, .jsonc, .toml, .yaml, .json5, .file, .md => bun.resolver.SideEffects.no_side_effects__pure_data,
-            else => bun.resolver.SideEffects.has_side_effects,
+            .text, .json, .jsonc, .toml, .yaml, .json5, .file, .md => fun.resolver.SideEffects.no_side_effects__pure_data,
+            else => fun.resolver.SideEffects.has_side_effects,
         };
     }
 
-    pub fn fromMimeType(mime_type: bun.http.MimeType) Loader {
+    pub fn fromMimeType(mime_type: fun.http.MimeType) Loader {
         if (strings.hasPrefixComptime(mime_type.value, "application/javascript-jsx")) {
             return .jsx;
         } else if (strings.hasPrefixComptime(mime_type.value, "application/typescript-jsx")) {
@@ -913,7 +913,7 @@ pub const Loader = enum(u8) {
 };
 
 pub fn normalizeSpecifier(
-    jsc_vm: *bun.jsc.VirtualMachine,
+    jsc_vm: *fun.jsc.VirtualMachine,
     slice_: string,
 ) struct { string, string, string } {
     var slice = slice_;
@@ -969,11 +969,11 @@ pub fn getLoaderAndVirtualSource(
     var virtual_source: ?*logger.Source = null;
 
     if (jsc_vm.module_loader.eval_source) |eval_source| {
-        if (strings.endsWithComptime(specifier, bun.pathLiteral("/[eval]"))) {
+        if (strings.endsWithComptime(specifier, fun.pathLiteral("/[eval]"))) {
             virtual_source = eval_source;
             loader = .tsx;
         }
-        if (strings.endsWithComptime(specifier, bun.pathLiteral("/[stdin]"))) {
+        if (strings.endsWithComptime(specifier, fun.pathLiteral("/[stdin]"))) {
             virtual_source = eval_source;
             loader = .tsx;
         }
@@ -989,7 +989,7 @@ pub fn getLoaderAndVirtualSource(
             if (blob.getFileName()) |filename| {
                 const current_path = Fs.Path.init(filename);
 
-                // Only treat it as a file if is a Bun.file()
+                // Only treat it as a file if is a Fun.file()
                 if (blob.needsToReadFile()) {
                     path = current_path;
                 }
@@ -1010,7 +1010,7 @@ pub fn getLoaderAndVirtualSource(
     if (strings.eqlComptime(query, "?raw")) {
         loader = .text;
     }
-    if (type_attribute_str) |attr_str| if (bun.options.Loader.fromString(attr_str)) |attr_loader| {
+    if (type_attribute_str) |attr_str| if (fun.options.Loader.fromString(attr_str)) |attr_loader| {
         loader = attr_loader;
     };
 
@@ -1067,11 +1067,11 @@ const default_loaders_posix = .{
     .{ ".markdown", .md },
 };
 const default_loaders_win32 = default_loaders_posix ++ .{
-    .{ ".sh", .bunsh },
+    .{ ".sh", .funsh },
 };
 
 const default_loaders = if (Environment.isWindows) default_loaders_win32 else default_loaders_posix;
-pub const defaultLoaders = bun.ComptimeStringMap(Loader, default_loaders);
+pub const defaultLoaders = fun.ComptimeStringMap(Loader, default_loaders);
 
 // https://webpack.js.org/guides/package-exports/#reference-syntax
 pub const ESMConditions = struct {
@@ -1080,7 +1080,7 @@ pub const ESMConditions = struct {
     require: ConditionsMap,
     style: ConditionsMap,
 
-    pub fn init(allocator: std.mem.Allocator, defaults: []const string, allow_addons: bool, conditions: []const string) bun.OOM!ESMConditions {
+    pub fn init(allocator: std.mem.Allocator, defaults: []const string, allow_addons: bool, conditions: []const string) fun.OOM!ESMConditions {
         var default_condition_amp = ConditionsMap.init(allocator);
 
         var import_condition_map = ConditionsMap.init(allocator);
@@ -1148,7 +1148,7 @@ pub const ESMConditions = struct {
         };
     }
 
-    pub fn appendSlice(self: *ESMConditions, conditions: []const string) bun.OOM!void {
+    pub fn appendSlice(self: *ESMConditions, conditions: []const string) fun.OOM!void {
         try self.default.ensureUnusedCapacity(conditions.len);
         try self.import.ensureUnusedCapacity(conditions.len);
         try self.require.ensureUnusedCapacity(conditions.len);
@@ -1162,7 +1162,7 @@ pub const ESMConditions = struct {
         }
     }
 
-    pub fn append(self: *ESMConditions, condition: string) bun.OOM!void {
+    pub fn append(self: *ESMConditions, condition: string) fun.OOM!void {
         try self.default.put(condition, {});
         try self.import.put(condition, {});
         try self.require.put(condition, {});
@@ -1176,7 +1176,7 @@ pub const JSX = struct {
         development: ?bool,
     };
 
-    pub const RuntimeMap = bun.ComptimeStringMap(RuntimeDevelopmentPair, .{
+    pub const RuntimeMap = fun.ComptimeStringMap(RuntimeDevelopmentPair, .{
         .{ "classic", RuntimeDevelopmentPair{ .runtime = .classic, .development = null } },
         .{ "automatic", RuntimeDevelopmentPair{ .runtime = .automatic, .development = true } },
         .{ "react", RuntimeDevelopmentPair{ .runtime = .classic, .development = null } },
@@ -1403,7 +1403,7 @@ pub fn definesFromTransformOptions(
         const framework = framework_env orelse break :load_env;
 
         if (Environment.allow_assert) {
-            bun.assert(framework.behavior != ._none);
+            fun.assert(framework.behavior != ._none);
         }
 
         behavior = framework.behavior;
@@ -1452,7 +1452,7 @@ pub fn definesFromTransformOptions(
             quoted_node_env,
         );
         _ = try user_defines.getOrPutValue(
-            "process.env.BUN_ENV",
+            "process.env.FUN_ENV",
             quoted_node_env,
         );
 
@@ -1463,7 +1463,7 @@ pub fn definesFromTransformOptions(
         }
     }
 
-    if (target.isBun()) {
+    if (target.isFun()) {
         if (!user_defines.contains("window")) {
             _ = try environment_defines.getOrPutValue("window", .init(.{
                 .valueless = true,
@@ -1488,7 +1488,7 @@ pub fn definesFromTransformOptions(
     );
 }
 
-const default_loader_ext_bun = [_]string{ ".node", ".html" };
+const default_loader_ext_fun = [_]string{ ".node", ".html" };
 const default_loader_ext = [_]string{
     ".jsx",   ".json",
     ".js",    ".mjs",
@@ -1546,7 +1546,7 @@ pub const ResolveFileExtensions = struct {
         };
     }
 
-    pub fn kind(this: *const ResolveFileExtensions, kind_: bun.ImportKind, is_node_modules: bool) []const string {
+    pub fn kind(this: *const ResolveFileExtensions, kind_: fun.ImportKind, is_node_modules: bool) []const string {
         return switch (kind_) {
             .stmt, .entry_point_build, .entry_point_run, .dynamic => this.group(is_node_modules).esm,
             else => this.group(is_node_modules).default,
@@ -1559,7 +1559,7 @@ pub const ResolveFileExtensions = struct {
     };
 };
 
-pub fn loadersFromTransformOptions(allocator: std.mem.Allocator, _loaders: ?api.LoaderMap, target: Target) std.mem.Allocator.Error!bun.StringArrayHashMap(Loader) {
+pub fn loadersFromTransformOptions(allocator: std.mem.Allocator, _loaders: ?api.LoaderMap, target: Target) std.mem.Allocator.Error!fun.StringArrayHashMap(Loader) {
     const input_loaders = _loaders orelse std.mem.zeroes(api.LoaderMap);
     const loader_values = try allocator.alloc(Loader, input_loaders.loaders.len);
     defer allocator.free(loader_values);
@@ -1569,10 +1569,10 @@ pub fn loadersFromTransformOptions(allocator: std.mem.Allocator, _loaders: ?api.
     }
 
     var loaders = try stringHashMapFromArrays(
-        bun.StringArrayHashMap(Loader),
+        fun.StringArrayHashMap(Loader),
         allocator,
         input_loaders.extensions.len +
-            if (target.isBun()) default_loader_ext_bun.len else 0 +
+            if (target.isFun()) default_loader_ext_fun.len else 0 +
                 if (target == .browser) default_loader_ext_browser.len else 0 +
                     default_loader_ext.len,
         input_loaders.extensions,
@@ -1584,8 +1584,8 @@ pub fn loadersFromTransformOptions(allocator: std.mem.Allocator, _loaders: ?api.
         _ = try loaders.getOrPutValue(ext, defaultLoaders.get(ext).?);
     }
 
-    if (target.isBun()) {
-        inline for (default_loader_ext_bun) |ext| {
+    if (target.isFun()) {
+        inline for (default_loader_ext_fun) |ext| {
             _ = try loaders.getOrPutValue(ext, defaultLoaders.get(ext).?);
         }
     }
@@ -1632,7 +1632,7 @@ pub const SourceMapOption = enum {
         };
     }
 
-    pub const Map = bun.ComptimeStringMap(SourceMapOption, .{
+    pub const Map = fun.ComptimeStringMap(SourceMapOption, .{
         .{ "none", .none },
         .{ "inline", .@"inline" },
         .{ "external", .external },
@@ -1659,7 +1659,7 @@ pub const PackagesOption = enum {
         };
     }
 
-    pub const Map = bun.ComptimeStringMap(PackagesOption, .{
+    pub const Map = fun.ComptimeStringMap(PackagesOption, .{
         .{ "external", .external },
         .{ "bundle", .bundle },
     });
@@ -1672,9 +1672,9 @@ pub const BundleOptions = struct {
     banner: string = "",
     define: *defines.Define,
     drop: []const []const u8 = &.{},
-    /// Set of enabled feature flags for dead-code elimination via `import { feature } from "bun:bundle"`.
+    /// Set of enabled feature flags for dead-code elimination via `import { feature } from "fun:bundle"`.
     /// Initialized once from the CLI --feature flags.
-    bundler_feature_flags: *const bun.StringSet = &Runtime.Features.empty_bundler_feature_flags,
+    bundler_feature_flags: *const fun.StringSet = &Runtime.Features.empty_bundler_feature_flags,
     loaders: Loader.HashTable,
     resolve_dir: string = "/",
     jsx: JSX.Pragma = JSX.Pragma{},
@@ -1724,7 +1724,7 @@ pub const BundleOptions = struct {
     /// This list applies to all extension resolution cases. The runtime uses
     /// this for implementing `require.extensions`
     extra_cjs_extensions: []const []const u8 = &.{},
-    out_extensions: bun.StringHashMap(string),
+    out_extensions: fun.StringHashMap(string),
     import_path_format: ImportPathFormat = ImportPathFormat.relative,
     defines_loaded: bool = false,
     env: Env = Env{},
@@ -1750,7 +1750,7 @@ pub const BundleOptions = struct {
     global_cache: GlobalCache = .disable,
     prefer_offline_install: bool = false,
     prefer_latest_install: bool = false,
-    install: ?*api.BunInstall = null,
+    install: ?*api.FunInstall = null,
 
     inlining: bool = false,
     inline_entrypoint_import_meta_main: bool = false,
@@ -1775,18 +1775,18 @@ pub const BundleOptions = struct {
     compile: bool = false,
     compile_to_standalone_html: bool = false,
     metafile: bool = false,
-    /// Path to write JSON metafile (for Bun.build API)
+    /// Path to write JSON metafile (for Fun.build API)
     metafile_json_path: []const u8 = "",
-    /// Path to write markdown metafile (for Bun.build API)
+    /// Path to write markdown metafile (for Fun.build API)
     metafile_markdown_path: []const u8 = "",
 
     /// Set when bake.DevServer is bundling.
-    dev_server: ?*bun.bake.DevServer = null,
+    dev_server: ?*fun.bake.DevServer = null,
     /// Set when Bake is bundling. Affects module resolution.
-    framework: ?*bun.bake.Framework = null,
+    framework: ?*fun.bake.Framework = null,
 
     serve_plugins: ?[]const []const u8 = null,
-    bunfig_path: string = "",
+    funfig_path: string = "",
 
     /// This is a list of packages which even when require() is used, we will
     /// instead convert to ESM import statements.
@@ -1810,7 +1810,7 @@ pub const BundleOptions = struct {
     /// When set, barrel files from these packages will only load submodules
     /// that are actually imported. Also, any file with sideEffects: false
     /// in its package.json is automatically a barrel candidate.
-    optimize_imports: ?*const bun.StringSet = null,
+    optimize_imports: ?*const fun.StringSet = null,
 
     pub const ForceNodeEnv = enum {
         unspecified,
@@ -1865,7 +1865,7 @@ pub const BundleOptions = struct {
             env,
             node_env: {
                 if (loader_) |e|
-                    if (e.map.get("BUN_ENV") orelse e.map.get("NODE_ENV")) |env_| break :node_env env_;
+                    if (e.map.get("FUN_ENV") orelse e.map.get("NODE_ENV")) |env_| break :node_env env_;
 
                 if (this.isTest()) {
                     break :node_env "\"test\"";
@@ -1997,7 +1997,7 @@ pub const BundleOptions = struct {
         analytics.Features.loaders += @as(usize, @intFromBool(transform.loaders != null));
 
         opts.serve_plugins = transform.serve_plugins;
-        opts.bunfig_path = transform.bunfig_path;
+        opts.funfig_path = transform.funfig_path;
 
         if (transform.env_files.len > 0) {
             opts.env.files = transform.env_files;
@@ -2040,7 +2040,7 @@ pub const BundleOptions = struct {
                 opts.import_path_format = .relative;
                 opts.allow_runtime = false;
             },
-            .bun => {
+            .fun => {
                 opts.import_path_format = if (opts.import_path_format == .absolute_url) .absolute_url else .absolute_path;
 
                 opts.env.behavior = .load_all;
@@ -2064,7 +2064,7 @@ pub const BundleOptions = struct {
 
         opts.packages = PackagesOption.fromApi(transform.packages orelse .bundle);
 
-        opts.tree_shaking = opts.target.isBun() or opts.production;
+        opts.tree_shaking = opts.target.isFun() or opts.production;
         opts.inlining = opts.tree_shaking;
         if (opts.inlining)
             opts.minify_syntax = true;
@@ -2084,7 +2084,7 @@ pub const BundleOptions = struct {
             opts.tsconfig_override = tsconfig;
         }
 
-        analytics.Features.macros += @as(usize, @intFromBool(opts.target == .bun_macro));
+        analytics.Features.macros += @as(usize, @intFromBool(opts.target == .fun_macro));
         analytics.Features.external += @as(usize, @intFromBool(transform.external.len > 0));
         return opts;
     }
@@ -2108,7 +2108,7 @@ pub fn openOutputDir(output_dir: string) !std.fs.Dir {
 pub const TransformOptions = struct {
     footer: string = "",
     banner: string = "",
-    define: bun.StringHashMap(string),
+    define: fun.StringHashMap(string),
     loader: Loader = Loader.js,
     resolve_dir: string = "/",
     jsx: ?JSX.Pragma,
@@ -2133,10 +2133,10 @@ pub const TransformOptions = struct {
 
         var cwd: string = "/";
         if (Environment.isWasi or Environment.isWindows) {
-            cwd = try bun.getcwdAlloc(allocator);
+            cwd = try fun.getcwdAlloc(allocator);
         }
 
-        var define = bun.StringHashMap(string).init(allocator);
+        var define = fun.StringHashMap(string).init(allocator);
         try define.ensureTotalCapacity(1);
 
         define.putAssumeCapacity("process.env.NODE_ENV", "development");
@@ -2210,7 +2210,7 @@ pub const Env = struct {
     /// List of explicit env files to load (e..g specified by --env-file args)
     files: []const []const u8 = &[_][]u8{},
 
-    /// If true, disable loading of default .env files (from --no-env-file flag or bunfig)
+    /// If true, disable loading of default .env files (from --no-env-file flag or funfig)
     disable_default_env_files: bool = false,
 
     pub fn init(
@@ -2333,7 +2333,7 @@ pub const EntryPoint = struct {
     }
 
     fn normalizedPath(this: *const EntryPoint, allocator: std.mem.Allocator, toplevel_path: string) !string {
-        bun.assert(std.fs.path.isAbsolute(this.path));
+        fun.assert(std.fs.path.isAbsolute(this.path));
         var str = this.path;
         if (strings.indexOf(str, toplevel_path)) |top| {
             str = str[top + toplevel_path.len ..];
@@ -2348,7 +2348,7 @@ pub const EntryPoint = struct {
             var out = try allocator.alloc(u8, str.len + 2);
             out[0] = '.';
             out[1] = '/';
-            bun.copy(u8, out[2..], str);
+            fun.copy(u8, out[2..], str);
             return out;
         }
     }
@@ -2545,7 +2545,7 @@ pub const PathTemplate = struct {
 
                 if (count == 0) {
                     end_len = @intFromPtr(c) - @intFromPtr(remain.ptr);
-                    bun.assert(end_len <= remain.len);
+                    fun.assert(end_len <= remain.len);
                     break;
                 }
             }
@@ -2564,7 +2564,7 @@ pub const PathTemplate = struct {
                 .ext => try writeReplacingSlashesOnWindows(writer, self.placeholder.ext),
                 .hash => {
                     if (self.placeholder.hash) |hash| {
-                        try writer.print("{f}", .{bun.fmt.truncatedHash32(hash)});
+                        try writer.print("{f}", .{fun.fmt.truncatedHash32(hash)});
                     }
                 },
                 .target => try writeReplacingSlashesOnWindows(writer, self.placeholder.target),
@@ -2582,7 +2582,7 @@ pub const PathTemplate = struct {
         hash: ?u64 = null,
         target: []const u8 = "",
 
-        pub const map = bun.ComptimeStringMap(std.meta.FieldEnum(Placeholder), .{
+        pub const map = fun.ComptimeStringMap(std.meta.FieldEnum(Placeholder), .{
             .{ "dir", .dir },
             .{ "name", .name },
             .{ "ext", .ext },
@@ -2642,13 +2642,13 @@ const MacroRemap = @import("../resolver/package_json.zig").MacroMap;
 const PackageJSON = @import("../resolver/package_json.zig").PackageJSON;
 const ConditionsMap = @import("../resolver/package_json.zig").ESModule.ConditionsMap;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const analytics = bun.analytics;
-const assert = bun.assert;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const analytics = fun.analytics;
+const assert = fun.assert;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const api = fun.schema.api;

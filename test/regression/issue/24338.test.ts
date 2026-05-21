@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { test } from "node:test";
 
-// https://github.com/oven-sh/bun/issues/24338
+// https://github.com/underdoc-org/fun/issues/24338
 // assert.partialDeepStrictEqual should support Map subset checking
 
 test("partialDeepStrictEqual with Map subset - basic case", () => {

@@ -29,7 +29,7 @@ describe("net.createServer(connectionListener)", () => {
     expect(address).not.toBeTypeOf("string");
     await using client = net.createConnection(address as net.AddressInfo, resolve);
     await promise;
-    await Bun.sleep(1); // next event loop cycle
+    await Fun.sleep(1); // next event loop cycle
     expect(onListen).toHaveBeenCalled();
   });
 });

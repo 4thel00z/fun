@@ -15,12 +15,12 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorHTTPServerAgent);
 
 // Zig bindings implementation
 extern "C" {
-void Bun__HTTPServerAgent__setEnabled(Inspector::InspectorHTTPServerAgent* agent);
+void Fun__HTTPServerAgent__setEnabled(Inspector::InspectorHTTPServerAgent* agent);
 
-// void Bun__HTTPServerAgentStartListening(Inspector::InspectorHTTPServerAgent* agent, int serverId);
-// void Bun__HTTPServerAgentStopListening(Inspector::InspectorHTTPServerAgent* agent, int serverId);
-// void Bun__HTTPServerAgentGetRequestBody(Inspector::InspectorHTTPServerAgent* agent, int requestId, int serverId);
-// void Bun__HTTPServerAgentGetResponseBody(Inspector::InspectorHTTPServerAgent* agent, int requestId, int serverId);
+// void Fun__HTTPServerAgentStartListening(Inspector::InspectorHTTPServerAgent* agent, int serverId);
+// void Fun__HTTPServerAgentStopListening(Inspector::InspectorHTTPServerAgent* agent, int serverId);
+// void Fun__HTTPServerAgentGetRequestBody(Inspector::InspectorHTTPServerAgent* agent, int requestId, int serverId);
+// void Fun__HTTPServerAgentGetResponseBody(Inspector::InspectorHTTPServerAgent* agent, int requestId, int serverId);
 }
 
 InspectorHTTPServerAgent::InspectorHTTPServerAgent(JSC::JSGlobalObject& globalObject)
@@ -34,7 +34,7 @@ InspectorHTTPServerAgent::InspectorHTTPServerAgent(JSC::JSGlobalObject& globalOb
 InspectorHTTPServerAgent::~InspectorHTTPServerAgent()
 {
     if (m_enabled) {
-        Bun__HTTPServerAgent__setEnabled(nullptr);
+        Fun__HTTPServerAgent__setEnabled(nullptr);
     }
 }
 
@@ -54,7 +54,7 @@ Protocol::ErrorStringOr<void> InspectorHTTPServerAgent::enable()
         return {};
 
     m_enabled = true;
-    Bun__HTTPServerAgent__setEnabled(this);
+    Fun__HTTPServerAgent__setEnabled(this);
     return {};
 }
 
@@ -64,7 +64,7 @@ Protocol::ErrorStringOr<void> InspectorHTTPServerAgent::disable()
         return {};
 
     m_enabled = false;
-    Bun__HTTPServerAgent__setEnabled(nullptr);
+    Fun__HTTPServerAgent__setEnabled(nullptr);
     return {};
 }
 
@@ -82,7 +82,7 @@ Protocol::ErrorStringOr<void> InspectorHTTPServerAgent::stopListening(int server
         return {};
 
     // TODO:
-    // Bun__HTTPServerAgentStopListening(this, serverId);
+    // Fun__HTTPServerAgentStopListening(this, serverId);
     return {};
 }
 
@@ -92,7 +92,7 @@ Protocol::ErrorStringOr<void> InspectorHTTPServerAgent::getRequestBody(int reque
         return {};
 
     // TODO:
-    // Bun__HTTPServerAgentGetRequestBody(this, requestId, serverId);
+    // Fun__HTTPServerAgentGetRequestBody(this, requestId, serverId);
     return {};
 }
 
@@ -101,7 +101,7 @@ Protocol::ErrorStringOr<void> InspectorHTTPServerAgent::getResponseBody(int requ
     if (!m_enabled)
         return {};
     // TODO:
-    // Bun__HTTPServerAgentGetResponseBody(this, requestId, serverId);
+    // Fun__HTTPServerAgentGetResponseBody(this, requestId, serverId);
     return {};
 }
 
@@ -187,13 +187,13 @@ typedef int HotReloadId;
 typedef int RouteId;
 typedef int RequestId;
 
-[[ZIG_EXPORT(nothrow)]] void Bun__HTTPServerAgent__notifyServerStarted(Inspector::InspectorHTTPServerAgent* agent, ServerId serverId, HotReloadId hotReloadId, const BunString* address, double startTime, void* serverInstance)
+[[ZIG_EXPORT(nothrow)]] void Fun__HTTPServerAgent__notifyServerStarted(Inspector::InspectorHTTPServerAgent* agent, ServerId serverId, HotReloadId hotReloadId, const FunString* address, double startTime, void* serverInstance)
 {
 
     agent->serverStarted(serverId, address->toWTFString(), startTime, serverInstance);
 }
 
-[[ZIG_EXPORT(nothrow)]] void Bun__HTTPServerAgent__notifyServerStopped(Inspector::InspectorHTTPServerAgent* agent, ServerId serverId, double timestamp)
+[[ZIG_EXPORT(nothrow)]] void Fun__HTTPServerAgent__notifyServerStopped(Inspector::InspectorHTTPServerAgent* agent, ServerId serverId, double timestamp)
 {
 
     agent->serverStopped(serverId, timestamp);
@@ -209,17 +209,17 @@ struct Route {
     };
 
     int route_id;
-    BunString path;
+    FunString path;
     Type type;
     int script_line;
-    BunString* param_names;
+    FunString* param_names;
     size_t param_names_len;
-    BunString file_path;
-    BunString script_id;
-    BunString script_url;
+    FunString file_path;
+    FunString script_id;
+    FunString script_url;
 };
 
-[[ZIG_EXPORT(nothrow)]] void Bun__HTTPServerAgent__notifyServerRoutesUpdated(Inspector::InspectorHTTPServerAgent* agent, ServerId serverId, HotReloadId hotReloadId,
+[[ZIG_EXPORT(nothrow)]] void Fun__HTTPServerAgent__notifyServerRoutesUpdated(Inspector::InspectorHTTPServerAgent* agent, ServerId serverId, HotReloadId hotReloadId,
     Route* routes_ptr, size_t routes_len)
 {
 

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-This directory contains Bun's integration with the [uucode](https://github.com/jacobsandlund/uucode) Unicode library (vendored at `src/deps/uucode/`). It generates the lookup tables that power Bun's grapheme cluster breaking — including GB9c (Indic Conjunct Break) support.
+This directory contains Fun's integration with the [uucode](https://github.com/jacobsandlund/uucode) Unicode library (vendored at `src/deps/uucode/`). It generates the lookup tables that power Fun's grapheme cluster breaking — including GB9c (Indic Conjunct Break) support.
 
 The runtime code lives in `src/string/immutable/grapheme.zig`. This directory only contains **build-time** code for regenerating tables.
 
@@ -35,7 +35,7 @@ The break algorithm (including GB9c Indic, GB11 Emoji ZWJ, GB12/13 Regional Indi
 
 ### Key Types
 
-- `GraphemeBreakNoControl` — `enum(u5)` with 17 values (the "no control" variant strips CR/LF/Control since Bun handles those externally)
+- `GraphemeBreakNoControl` — `enum(u5)` with 17 values (the "no control" variant strips CR/LF/Control since Fun handles those externally)
 - `BreakState` — `enum(u3)` with 5 states: `default`, `regional_indicator`, `extended_pictographic`, `indic_conjunct_break_consonant`, `indic_conjunct_break_linker`
 - `Properties` — `packed struct` with `width: u2`, `grapheme_break: GraphemeBreakNoControl`, `emoji_vs_base: bool`
 
@@ -57,7 +57,7 @@ Run this when updating the vendored uucode (e.g., for a new Unicode version):
 zig build generate-grapheme-tables
 ```
 
-This uses Bun's vendored zig at `vendor/zig/zig`. The generated file is committed at `src/string/immutable/grapheme_tables.zig`.
+This uses Fun's vendored zig at `vendor/zig/zig`. The generated file is committed at `src/string/immutable/grapheme_tables.zig`.
 
 **Normal builds never run the generator** — they just compile the committed `grapheme_tables.zig`.
 
@@ -82,14 +82,14 @@ Manual steps if needed:
 
 1. Update `src/deps/uucode/` with the new uucode release (which includes new UCD data)
 2. Run `vendor/zig/zig build generate-grapheme-tables`
-3. Verify: `bun bd test test/js/bun/util/stringWidth.test.ts`
+3. Verify: `fun bd test test/js/fun/util/stringWidth.test.ts`
 4. Commit the updated `src/deps/uucode/` and `src/string/immutable/grapheme_tables.zig`
 
 ## Relationship to Ghostty
 
 This implementation mirrors [Ghostty's approach](https://github.com/ghostty-org/ghostty/tree/main/src/unicode) (same author as uucode). Key correspondences:
 
-| Ghostty                        | Bun                                        |
+| Ghostty                        | Fun                                        |
 | ------------------------------ | ------------------------------------------ |
 | `src/unicode/grapheme.zig`     | `src/string/immutable/grapheme.zig`        |
 | `src/unicode/lut.zig`          | `src/unicode/uucode/lut.zig`               |
@@ -97,7 +97,7 @@ This implementation mirrors [Ghostty's approach](https://github.com/ghostty-org/
 | `src/unicode/props_table.zig`  | `src/string/immutable/grapheme_tables.zig` |
 | `src/build/uucode_config.zig`  | `src/unicode/uucode/uucode_config.zig`     |
 
-Differences: Ghostty generates tables every build; Bun pre-generates and commits them. Bun's `grapheme.zig` is fully self-contained with no runtime uucode import.
+Differences: Ghostty generates tables every build; Fun pre-generates and commits them. Fun's `grapheme.zig` is fully self-contained with no runtime uucode import.
 
 ## What `uucode_config.zig` Controls
 

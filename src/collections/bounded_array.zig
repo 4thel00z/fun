@@ -298,8 +298,8 @@ pub fn BoundedArrayAligned(
     };
 }
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
 const std = @import("std");
 const testing = std.testing;

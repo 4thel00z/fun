@@ -47,7 +47,7 @@ pub fn processLeafBlock(self: *Parser, block_lines: []const VerbatimLine, trim_t
 
 pub fn processInlineContent(self: *Parser, content: []const u8, base_off: OFF) Parser.Error!void {
     if (!self.stack_check.isSafeToRecurse()) {
-        return bun.throwStackOverflow();
+        return fun.throwStackOverflow();
     }
 
     // Phase 1: Collect and resolve emphasis delimiters
@@ -297,22 +297,22 @@ pub fn processInlineContent(self: *Parser, content: []const u8, base_off: OFF) P
     }
 }
 
-pub fn enterSpan(self: *Parser, span_type: SpanType) bun.JSError!void {
+pub fn enterSpan(self: *Parser, span_type: SpanType) fun.JSError!void {
     if (self.image_nesting_level > 0) return;
     try self.renderer.enterSpan(span_type, .{});
 }
 
-pub fn leaveSpan(self: *Parser, span_type: SpanType) bun.JSError!void {
+pub fn leaveSpan(self: *Parser, span_type: SpanType) fun.JSError!void {
     if (self.image_nesting_level > 0) return;
     try self.renderer.leaveSpan(span_type);
 }
 
-pub fn emitText(self: *Parser, text_type: TextType, content: []const u8) bun.JSError!void {
+pub fn emitText(self: *Parser, text_type: TextType, content: []const u8) fun.JSError!void {
     try self.renderer.text(text_type, content);
 }
 
 /// Emit emphasis opening tags (outermost to innermost).
-pub fn emitEmphOpenTags(self: *Parser, sizes: []const u2) bun.JSError!void {
+pub fn emitEmphOpenTags(self: *Parser, sizes: []const u2) fun.JSError!void {
     // First match = innermost, so emit in reverse (outermost first in HTML)
     for (0..sizes.len) |idx| {
         const j = sizes.len - 1 - idx;
@@ -322,7 +322,7 @@ pub fn emitEmphOpenTags(self: *Parser, sizes: []const u2) bun.JSError!void {
 
 /// Emit emphasis closing tags (innermost to outermost).
 /// First entry in sizes was matched first (innermost), emit in forward order.
-pub fn emitEmphCloseTags(self: *Parser, sizes: []const u2) bun.JSError!void {
+pub fn emitEmphCloseTags(self: *Parser, sizes: []const u2) fun.JSError!void {
     for (sizes) |size| {
         if (size == 2) try self.leaveSpan(.strong) else try self.leaveSpan(.em);
     }
@@ -340,7 +340,7 @@ pub fn countBackticks(content: []const u8, start: usize) usize {
 pub fn findCodeSpanEnd(self: *const Parser, content: []const u8, start: usize, count: usize) ?usize {
     _ = self;
     var pos = start;
-    while (bun.strings.indexOfCharPos(content, '`', pos)) |backtick_pos| {
+    while (fun.strings.indexOfCharPos(content, '`', pos)) |backtick_pos| {
         pos = backtick_pos + 1;
         while (pos < content.len and content[pos] == '`') pos += 1;
         if (pos - backtick_pos == count) {
@@ -730,7 +730,7 @@ pub fn findHtmlTag(self: *const Parser, content: []const u8, start: usize) ?usiz
     return null;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const helpers = @import("./helpers.zig");
 const std = @import("std");
 

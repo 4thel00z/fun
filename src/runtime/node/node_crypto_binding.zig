@@ -11,19 +11,19 @@ fn ExternCryptoJob(comptime name: []const u8) type {
         const Ctx = opaque {
             const ctx_name = name ++ "Ctx";
 
-            pub const runTask = @extern(*const fn (*Ctx, *JSGlobalObject) callconv(.c) void, .{ .name = "Bun__" ++ ctx_name ++ "__runTask" }).*;
+            pub const runTask = @extern(*const fn (*Ctx, *JSGlobalObject) callconv(.c) void, .{ .name = "Fun__" ++ ctx_name ++ "__runTask" }).*;
 
-            pub fn runFromJS(self: *Ctx, global: *JSGlobalObject, callback: JSValue) bun.JSError!void {
-                const __runFromJS = @extern(*const fn (*Ctx, *JSGlobalObject, JSValue) callconv(.c) void, .{ .name = "Bun__" ++ ctx_name ++ "__runFromJS" }).*;
-                return bun.jsc.fromJSHostCallGeneric(global, @src(), __runFromJS, .{ self, global, callback });
+            pub fn runFromJS(self: *Ctx, global: *JSGlobalObject, callback: JSValue) fun.JSError!void {
+                const __runFromJS = @extern(*const fn (*Ctx, *JSGlobalObject, JSValue) callconv(.c) void, .{ .name = "Fun__" ++ ctx_name ++ "__runFromJS" }).*;
+                return fun.jsc.fromJSHostCallGeneric(global, @src(), __runFromJS, .{ self, global, callback });
             }
 
-            pub const deinit = @extern(*const fn (*Ctx) callconv(.c) void, .{ .name = "Bun__" ++ ctx_name ++ "__deinit" }).*;
+            pub const deinit = @extern(*const fn (*Ctx) callconv(.c) void, .{ .name = "Fun__" ++ ctx_name ++ "__deinit" }).*;
         };
 
         pub fn create(global: *JSGlobalObject, ctx: *Ctx, callback: JSValue) callconv(.c) *@This() {
-            const vm = global.bunVM();
-            const job = bun.new(@This(), .{
+            const vm = global.funVM();
+            const job = fun.new(@This(), .{
                 .vm = vm,
                 .task = .{
                     .callback = &runTask,
@@ -70,7 +70,7 @@ fn ExternCryptoJob(comptime name: []const u8) type {
             this.ctx.deinit();
             this.poll.unref(this.vm);
             this.callback.deinit();
-            bun.destroy(this);
+            fun.destroy(this);
         }
 
         pub fn schedule(this: *@This()) callconv(.c) void {
@@ -79,9 +79,9 @@ fn ExternCryptoJob(comptime name: []const u8) type {
         }
 
         comptime {
-            @export(&create, .{ .name = "Bun__" ++ name ++ "__create" });
-            @export(&schedule, .{ .name = "Bun__" ++ name ++ "__schedule" });
-            @export(&createAndSchedule, .{ .name = "Bun__" ++ name ++ "__createAndSchedule" });
+            @export(&create, .{ .name = "Fun__" ++ name ++ "__create" });
+            @export(&schedule, .{ .name = "Fun__" ++ name ++ "__schedule" });
+            @export(&createAndSchedule, .{ .name = "Fun__" ++ name ++ "__createAndSchedule" });
         }
     };
 }
@@ -125,8 +125,8 @@ fn CryptoJob(comptime Ctx: type) type {
         ctx: Ctx,
 
         pub fn init(global: *JSGlobalObject, callback: JSValue, ctx: *const Ctx) JSError!*@This() {
-            const vm = global.bunVM();
-            const job = bun.new(@This(), .{
+            const vm = global.funVM();
+            const job = fun.new(@This(), .{
                 .vm = vm,
                 .task = .{
                     .callback = &runTask,
@@ -176,7 +176,7 @@ fn CryptoJob(comptime Ctx: type) type {
             this.ctx.deinit();
             this.poll.unref(this.vm);
             this.callback.deinit();
-            bun.destroy(this);
+            fun.destroy(this);
         }
 
         pub fn schedule(this: *@This()) callconv(.c) void {
@@ -200,11 +200,11 @@ const random = struct {
         }
 
         fn runTask(this: *JobCtx, _: void) void {
-            bun.csprng(this.bytes[this.offset..][0..this.length]);
+            fun.csprng(this.bytes[this.offset..][0..this.length]);
         }
 
         fn runFromJS(this: *JobCtx, global: *JSGlobalObject, callback: JSValue) void {
-            const vm = global.bunVM();
+            const vm = global.funVM();
             vm.eventLoop().runCallback(callback, global, .js_undefined, &.{ .null, this.value });
         }
 
@@ -218,7 +218,7 @@ const random = struct {
     const max_possible_length = @min(jsc.ArrayBuffer.max_size, std.math.maxInt(i32));
     const max_range = 0xffff_ffff_ffff;
 
-    fn randomInt(global: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    fn randomInt(global: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         var min_value, var max_value, var callback = callFrame.argumentsAsArray(3);
 
         var min_specified = true;
@@ -286,7 +286,7 @@ const random = struct {
         const uuid = if (disable_entropy_cache)
             UUID.init()
         else
-            global.bunVM().rareData().nextUUID();
+            global.funVM().rareData().nextUUID();
 
         uuid.print(bytes[0..36]);
         return str.transferToJS(global);
@@ -333,7 +333,7 @@ const random = struct {
 
         if (callback.isUndefined()) {
             // sync
-            bun.csprng(bytes);
+            fun.csprng(bytes);
             return result;
         }
 
@@ -373,7 +373,7 @@ const random = struct {
             return buf_value;
         }
 
-        bun.csprng(buf.slice()[offset..][0..size]);
+        fun.csprng(buf.slice()[offset..][0..size]);
 
         return buf_value;
     }
@@ -427,14 +427,14 @@ const random = struct {
     }
 };
 
-fn pbkdf2(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn pbkdf2(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const data = try PBKDF2.fromJS(globalThis, callFrame, true);
 
     const job = PBKDF2.Job.create(jsc.VirtualMachine.get(), globalThis, &data);
     return job.promise.value();
 }
 
-fn pbkdf2Sync(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn pbkdf2Sync(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     var data = try PBKDF2.fromJS(globalThis, callFrame, false);
     defer data.deinit();
     const out_arraybuffer = try jsc.JSValue.createBufferFromLength(globalThis, @intCast(data.length));
@@ -491,12 +491,12 @@ pub fn setEngine(global: *JSGlobalObject, _: *jsc.CallFrame) JSError!JSValue {
 
 fn forEachHash(_: *const BoringSSL.EVP_MD, maybe_from: ?[*:0]const u8, _: ?[*:0]const u8, ctx: *anyopaque) callconv(.c) void {
     const from = maybe_from orelse return;
-    const hashes: *bun.CaseInsensitiveASCIIStringArrayHashMap(void) = @ptrCast(@alignCast(ctx));
-    bun.handleOom(hashes.put(bun.span(from), {}));
+    const hashes: *fun.CaseInsensitiveASCIIStringArrayHashMap(void) = @ptrCast(@alignCast(ctx));
+    fun.handleOom(hashes.put(fun.span(from), {}));
 }
 
 fn getHashes(global: *JSGlobalObject, _: *jsc.CallFrame) JSError!JSValue {
-    var hashes: bun.CaseInsensitiveASCIIStringArrayHashMap(void) = .init(bun.default_allocator);
+    var hashes: fun.CaseInsensitiveASCIIStringArrayHashMap(void) = .init(fun.default_allocator);
     defer hashes.deinit();
 
     // TODO(dylan-conway): cache the names
@@ -539,7 +539,7 @@ const Scrypt = struct {
             }
         }
 
-        const password = try Node.StringOrBuffer.fromJSMaybeAsync(global, bun.default_allocator, password_value, is_async, true) orelse {
+        const password = try Node.StringOrBuffer.fromJSMaybeAsync(global, fun.default_allocator, password_value, is_async, true) orelse {
             return global.throwInvalidArgumentTypeValue("password", "string, ArrayBuffer, Buffer, TypedArray, or DataView", password_value);
         };
 
@@ -551,7 +551,7 @@ const Scrypt = struct {
             }
         }
 
-        const salt = try Node.StringOrBuffer.fromJSMaybeAsync(global, bun.default_allocator, salt_value, is_async, true) orelse {
+        const salt = try Node.StringOrBuffer.fromJSMaybeAsync(global, fun.default_allocator, salt_value, is_async, true) orelse {
             return global.throwInvalidArgumentTypeValue("salt", "string, ArrayBuffer, Buffer, TypedArray, or DataView", salt_value);
         };
 
@@ -721,7 +721,7 @@ const Scrypt = struct {
     }
 
     fn runFromJS(this: *Scrypt, global: *JSGlobalObject, callback: JSValue) void {
-        const vm = global.bunVM();
+        const vm = global.funVM();
 
         if (this.err) |err| {
             if (err != 0) {
@@ -798,18 +798,18 @@ const string = []const u8;
 const std = @import("std");
 const validators = @import("./util/validators.zig");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const JSError = bun.JSError;
-const String = bun.String;
-const UUID = bun.UUID;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const Async = fun.Async;
+const JSError = fun.JSError;
+const String = fun.String;
+const UUID = fun.UUID;
+const BoringSSL = fun.BoringSSL.c;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const Node = jsc.Node;
-const Crypto = jsc.API.Bun.Crypto;
+const Crypto = jsc.API.Fun.Crypto;
 
 const EVP = Crypto.EVP;
 const PBKDF2 = EVP.PBKDF2;

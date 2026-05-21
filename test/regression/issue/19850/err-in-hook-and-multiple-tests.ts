@@ -1,4 +1,4 @@
-import { beforeEach, test } from "bun:test";
+import { beforeEach, test } from "fun:test";
 
 beforeEach(() => {
   throw new Error("beforeEach");

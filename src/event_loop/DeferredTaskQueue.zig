@@ -33,7 +33,7 @@ pub const DeferredRepeatingTask = *const (fn (*anyopaque) bool);
 map: std.AutoArrayHashMapUnmanaged(?*anyopaque, DeferredRepeatingTask) = .{},
 
 pub fn postTask(this: *DeferredTaskQueue, ctx: ?*anyopaque, task: DeferredRepeatingTask) bool {
-    const existing = bun.handleOom(this.map.getOrPutValue(bun.default_allocator, ctx, task));
+    const existing = fun.handleOom(this.map.getOrPutValue(fun.default_allocator, ctx, task));
     return existing.found_existing;
 }
 
@@ -61,8 +61,8 @@ pub fn run(this: *DeferredTaskQueue) void {
 }
 
 pub fn deinit(this: *DeferredTaskQueue) void {
-    this.map.deinit(bun.default_allocator);
+    this.map.deinit(fun.default_allocator);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

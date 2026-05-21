@@ -88,12 +88,12 @@ pub const KeyframesName = union(enum) {
             pub fn eql(_: @This(), a: KeyframesName, b: KeyframesName, _: usize) bool {
                 return switch (a) {
                     .ident => switch (b) {
-                        .ident => bun.strings.eql(a.ident.v, b.ident.v),
+                        .ident => fun.strings.eql(a.ident.v, b.ident.v),
                         .custom => false,
                     },
                     .custom => switch (b) {
                         .ident => false,
-                        .custom => bun.strings.eql(a.custom, b.custom),
+                        .custom => fun.strings.eql(a.custom, b.custom),
                     },
                 };
             }
@@ -108,13 +108,13 @@ pub const KeyframesName = union(enum) {
             .ident => |s| {
                 // todo_stuff.match_ignore_ascii_case
                 // CSS-wide keywords without quotes throws an error.
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "none") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "initial") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "inherit") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "unset") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "default") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert-layer"))
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "none") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "initial") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "inherit") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "unset") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "default") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert-layer"))
                 {
                     return .{ .err = input.newUnexpectedTokenError(.{ .ident = s }) };
                 } else {
@@ -138,13 +138,13 @@ pub const KeyframesName = union(enum) {
             .custom => |s| {
                 // todo_stuff.match_ignore_ascii_case
                 // CSS-wide keywords and `none` cannot remove quotes.
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "none") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "initial") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "inherit") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "unset") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "default") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert-layer"))
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "none") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "initial") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "inherit") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "unset") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "default") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(s, "revert-layer"))
                 {
                     css.serializer.serializeString(s, dest) catch return dest.addFmtError();
                 } else {
@@ -297,7 +297,7 @@ pub const KeyframesRule = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 import crypto from "node:crypto";
 
@@ -15,7 +15,7 @@ test("createHmac works with various algorithm names", () => {
     "sha256",
     "sha512",
     "md5",
-    ...Bun.CryptoHasher.algorithms,
+    ...Fun.CryptoHasher.algorithms,
   ];
 
   const toRemove = [

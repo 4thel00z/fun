@@ -2,9 +2,9 @@ import net from "net";
 import { parse } from "url";
 import http from "http";
 import next from "next";
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 function test(port) {
-  const payload = Buffer.from(JSON.stringify({ message: "bun" }));
+  const payload = Buffer.from(JSON.stringify({ message: "fun" }));
 
   function sendRequest(socket) {
     const { promise, resolve } = Promise.withResolvers();

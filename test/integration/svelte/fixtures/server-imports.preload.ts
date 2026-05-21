@@ -1,2 +1,2 @@
-import { SveltePlugin } from "bun-plugin-svelte";
-Bun.plugin(SveltePlugin({ development: process.env.NODE_ENV === "development" }));
+import { SveltePlugin } from "fun-plugin-svelte";
+Fun.plugin(SveltePlugin({ development: process.env.NODE_ENV === "development" }));

@@ -1,5 +1,5 @@
-import { describe, expect, it, jest } from "bun:test";
-import { bunEnv, bunExe, isGlibcVersionAtLeast, isMacOS, tmpdirSync } from "harness";
+import { describe, expect, it, jest } from "fun:test";
+import { funEnv, funExe, isGlibcVersionAtLeast, isMacOS, tmpdirSync } from "harness";
 import { createReadStream, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { Duplex, PassThrough, Readable, Stream, Transform, Writable } from "node:stream";
@@ -318,10 +318,10 @@ describe("process.stdin", () => {
     const ARRAY_SIZE = 8_388_628;
     const typedArray = new Uint8Array(ARRAY_SIZE).fill(97);
 
-    const { stdout, exited, stdin } = Bun.spawn({
-      cmd: [bunExe(), "process-stdin-test.js"],
+    const { stdout, exited, stdin } = Fun.spawn({
+      cmd: [funExe(), "process-stdin-test.js"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "inherit",
@@ -336,13 +336,13 @@ describe("process.stdin", () => {
 });
 
 it.if(isMacOS || isGlibcVersionAtLeast("2.36.0"))("TTY streams", () => {
-  const { stdout, stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "test", join(import.meta.dir, "tty-streams.fixture.js")],
-    env: bunEnv,
+  const { stdout, stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "test", join(import.meta.dir, "tty-streams.fixture.js")],
+    env: funEnv,
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  expect(stdout.toString()).toEqual(expect.stringContaining("bun test v1."));
+  expect(stdout.toString()).toEqual(expect.stringContaining("fun test v1."));
   try {
     expect(stderr.toString()).toContain("0 fail");
   } catch (error) {
@@ -415,7 +415,7 @@ it("should send Readable events in the right order", async () => {
   const package_dir = tmpdirSync();
   const fixture_path = join(package_dir, "fixture.js");
 
-  await Bun.write(
+  await Fun.write(
     fixture_path,
     String.raw`
     function patchEmitter(emitter, prefix) {
@@ -445,12 +445,12 @@ it("should send Readable events in the right order", async () => {
     `,
   );
 
-  const { stdout, stderr } = Bun.spawn({
-    cmd: [bunExe(), "run", fixture_path],
+  const { stdout, stderr } = Fun.spawn({
+    cmd: [funExe(), "run", fixture_path],
     stdout: "pipe",
     stdin: "ignore",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
   const err = await stderr.text();
   expect(err).toBeEmpty();

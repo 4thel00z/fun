@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
-// https://github.com/oven-sh/bun/issues/27575
-// Bun.Transpiler ignored experimentalDecorators: true from tsconfig,
+// https://github.com/underdoc-org/fun/issues/27575
+// Fun.Transpiler ignored experimentalDecorators: true from tsconfig,
 // always emitting TC39-style decorators instead of legacy TypeScript decorators.
 
-test("Bun.Transpiler respects experimentalDecorators: true from tsconfig", () => {
-  const transpiler = new Bun.Transpiler({
+test("Fun.Transpiler respects experimentalDecorators: true from tsconfig", () => {
+  const transpiler = new Fun.Transpiler({
     loader: "ts",
     target: "browser",
     tsconfig: JSON.stringify({
@@ -34,8 +34,8 @@ class Foo {
   expect(result).toContain("__legacyDecorateClassTS");
 });
 
-test("Bun.Transpiler respects emitDecoratorMetadata: true from tsconfig", () => {
-  const transpiler = new Bun.Transpiler({
+test("Fun.Transpiler respects emitDecoratorMetadata: true from tsconfig", () => {
+  const transpiler = new Fun.Transpiler({
     loader: "ts",
     target: "browser",
     tsconfig: JSON.stringify({
@@ -62,8 +62,8 @@ class Foo {
   expect(result).toContain("__legacyMetadataTS");
 });
 
-test("Bun.Transpiler emits TC39 decorators when experimentalDecorators is not set", () => {
-  const transpiler = new Bun.Transpiler({
+test("Fun.Transpiler emits TC39 decorators when experimentalDecorators is not set", () => {
+  const transpiler = new Fun.Transpiler({
     loader: "ts",
     target: "browser",
     tsconfig: JSON.stringify({
@@ -86,8 +86,8 @@ class Foo {
   expect(result).not.toContain("__legacyDecorateClassTS");
 });
 
-test("Bun.Transpiler.transform (async) respects experimentalDecorators: true", async () => {
-  const transpiler = new Bun.Transpiler({
+test("Fun.Transpiler.transform (async) respects experimentalDecorators: true", async () => {
+  const transpiler = new Fun.Transpiler({
     loader: "ts",
     target: "browser",
     tsconfig: JSON.stringify({

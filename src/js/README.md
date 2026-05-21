@@ -1,9 +1,9 @@
 # JS Modules
 
-**TLDR**: If anything here changes, re-run `bun run build`.
+**TLDR**: If anything here changes, re-run `fun run build`.
 
 - `./node` contains all `node:*` modules
-- `./bun` contains all `bun:*` modules
+- `./fun` contains all `fun:*` modules
 - `./thirdparty` contains npm modules we replace like `ws`
 - `./internal` contains modules that aren't assigned to the module resolver
 
@@ -38,17 +38,17 @@ On top of this, we have some special functions that are handled by the builtin p
 
 - `require` works, but it must be passed a **string literal** that resolves to a module within `src/js`. This call gets replaced with `$getInternalField($internalModuleRegistry, <number>)`, which directly loads the module by its generated numerical ID, skipping the resolver for inter-internal modules.
 
-- `$debug()` is exactly like console.log, but is stripped in release builds. It is disabled by default, requiring you to pass one of: `BUN_DEBUG_MODULE_NAME=1`, `BUN_DEBUG_JS=1`, or `BUN_DEBUG_ALL=1`. You can also do `if($debug) {}` to check if debug env var is set.
+- `$debug()` is exactly like console.log, but is stripped in release builds. It is disabled by default, requiring you to pass one of: `FUN_DEBUG_MODULE_NAME=1`, `FUN_DEBUG_JS=1`, or `FUN_DEBUG_ALL=1`. You can also do `if($debug) {}` to check if debug env var is set.
 
 - `$assert()` in debug builds will assert the condition, but it is stripped in release builds. If an assertion fails, the program continues to run, but an error is logged in the console containing the original source condition and any extra messages specified.
 
-- `IS_BUN_DEVELOPMENT` is inlined to be `true` in all development builds.
+- `IS_FUN_DEVELOPMENT` is inlined to be `true` in all development builds.
 
 - `process.platform` and `process.arch` is properly inlined and DCE'd. Do use this to run different code on different platforms.
 
 ## Builtin Modules
 
-Files in `node`, `bun`, `thirdparty`, and `internal` are all bundled as "modules". These go through the preprocessor to construct a JS function, where `export default`/`export function`/etc are converted into a `return` statement. Due to this, non-type `import` statements are not supported.
+Files in `node`, `fun`, `thirdparty`, and `internal` are all bundled as "modules". These go through the preprocessor to construct a JS function, where `export default`/`export function`/etc are converted into a `return` statement. Due to this, non-type `import` statements are not supported.
 
 By using `export default`, this controls the result of using `require` to import the module. When ESM imports this module (userland), all properties on this object are available as named exports. Named exports are preprocessed into properties on this default object.
 
@@ -85,15 +85,15 @@ object->putDirectBuiltinFunction(
 
 ## Building
 
-Run `bun run build` to bundle all the builtins. The output is placed in `build/debug/js`, where these files are loaded dynamically by `bun-debug` (an exact filepath is inlined into the binary pointing at where you cloned bun, so moving the binary to another machine may not work). In a release build, these get minified and inlined into the binary (Please commit those generated headers).
+Run `fun run build` to bundle all the builtins. The output is placed in `build/debug/js`, where these files are loaded dynamically by `fun-debug` (an exact filepath is inlined into the binary pointing at where you cloned fun, so moving the binary to another machine may not work). In a release build, these get minified and inlined into the binary (Please commit those generated headers).
 
-If you change the list of files or functions, you will have to run `bun run build`.
+If you change the list of files or functions, you will have to run `fun run build`.
 
 ## Notes on how the build process works
 
 _This isn't really required knowledge to use it, but a rough overview of how ./\_codegen/\* works_
 
-The build process is built on top of Bun's bundler. The first step is scanning all modules and assigning each a numerical ID. The order is determined by an A-Z sort.
+The build process is built on top of Fun's bundler. The first step is scanning all modules and assigning each a numerical ID. The order is determined by an A-Z sort.
 
 The `$` for private names is actually a lie, and in JSC it actually uses `@`; though that is a syntax error in regular JS/TS, so we opted for better IDE support. So first we have to pre-process the files to spot all instances of `$` at the start of an identifier and we convert it to `__intrinsic__`. We also scan for `require(string)` and replace it with `$requireId(n)` after resolving it to the integer id, which is defined in `./functions/Module.ts`. `export default` is transformed into `return ...;`, however this transform is a little more complicated that a string replace because it supports that not being the final statement, and access to the underlying variable `$exports`, etc.
 

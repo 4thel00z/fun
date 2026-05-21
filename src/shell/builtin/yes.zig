@@ -30,7 +30,7 @@ pub fn start(this: *@This()) Yield {
         bufalloc = BUFSIZ;
     }
 
-    this.buffer = bun.handleOom(this.alloc_scope.allocator().alloc(u8, bufalloc));
+    this.buffer = fun.handleOom(this.alloc_scope.allocator().alloc(u8, bufalloc));
 
     // Fill buffer with one copy of the output
     this.buffer_used = 0;
@@ -124,7 +124,7 @@ pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?jsc.SystemError) Yiel
     if (this.state == .waiting_write_err) {
         return this.bltn().done(1);
     }
-    bun.assert(this.bltn().stdout.needsIO() != null);
+    fun.assert(this.bltn().stdout.needsIO() != null);
     return this.bltn().stdout.enqueue(this, this.buffer[0..this.buffer_used], .output_needs_io);
 }
 
@@ -173,9 +173,9 @@ const std = @import("std");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const IO = shell.IO;
-const Yield = bun.shell.Yield;
+const Yield = fun.shell.Yield;

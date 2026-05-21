@@ -1,6 +1,6 @@
-import { beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { beforeAll, expect, setDefaultTimeout, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import path from "path";
 
 let cwd = tmpdirSync();
@@ -40,8 +40,8 @@ beforeAll(() => {
 });
 
 test("the install succeeds", async () => {
-  var subprocess = Bun.spawn([bunExe(), "reset.ts"], {
-    env: bunEnv,
+  var subprocess = Fun.spawn([funExe(), "reset.ts"], {
+    env: funEnv,
     cwd,
     stdio: ["inherit", "inherit", "inherit"],
   });
@@ -51,8 +51,8 @@ test("the install succeeds", async () => {
     throw new Error("Failed to install");
   }
 
-  subprocess = Bun.spawn([bunExe(), "install"], {
-    env: bunEnv,
+  subprocess = Fun.spawn([funExe(), "install"], {
+    env: funEnv,
     cwd,
     stdio: ["inherit", "inherit", "inherit"],
   });
@@ -64,12 +64,12 @@ test("the install succeeds", async () => {
   }
 });
 
-// bun-types
-validate("node_modules/bun-types", "1.0.0");
-mustExist("node_modules/bun-types/isfake.txt");
+// fun-types
+validate("node_modules/fun-types", "1.0.0");
+mustExist("node_modules/fun-types/isfake.txt");
 // NOTE: ???
-// validate("node_modules/bun-types/node_modules/bun-types", "1.0.0");
-mustNotExist("node_modules/bun-types/node_modules/bun-types/isfake.txt");
+// validate("node_modules/fun-types/node_modules/fun-types", "1.0.0");
+mustNotExist("node_modules/fun-types/node_modules/fun-types/isfake.txt");
 
 // svelte
 validate("node_modules/svelte", "4.1.2");
@@ -94,10 +94,10 @@ mustNotExist("packages/second/node_modules/hello/version.txt");
 // body parser
 validate("node_modules/body-parser", "200.0.0");
 validate("node_modules/not-body-parser", "200.0.0", "body-parser");
-// NOTE: bun install doesnt properly handle npm aliased dependencies
+// NOTE: fun install doesnt properly handle npm aliased dependencies
 // validate("packages/second/node_modules/connect", "200.0.0", "body-parser");
 validate("packages/second/node_modules/body-parser", "3.21.2", "express");
-// NOTE: bun does not hoist this properly, but it is extremely unlikely to be a real use case
+// NOTE: fun does not hoist this properly, but it is extremely unlikely to be a real use case
 // validate("packages/second/node_modules/body-parser/node_modules/body-parser", "1.13.3", "body-parser");
 
 // connect

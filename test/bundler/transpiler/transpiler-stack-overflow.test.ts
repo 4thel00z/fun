@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "path";
 
@@ -8,13 +8,13 @@ test("long chain of expressions does not cause stack overflow", () => {
   const temp_dir = tmpdirSync();
   mkdirSync(temp_dir, { recursive: true });
   writeFileSync(join(temp_dir, "index.js"), chain, "utf-8");
-  const { exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "build", "--no-bundle", join(temp_dir, "index.js")],
+  const { exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "build", "--no-bundle", join(temp_dir, "index.js")],
     cwd: import.meta.dir,
-    env: bunEnv,
+    env: funEnv,
     stderr: "inherit",
-    stdout: Bun.file("/dev/null"),
-    stdin: Bun.file("/dev/null"),
+    stdout: Fun.file("/dev/null"),
+    stdin: Fun.file("/dev/null"),
   });
 
   expect(exitCode).toBe(0);

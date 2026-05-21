@@ -772,8 +772,8 @@ test "SortedHashMap: collision test" {
     try testing.expectEqual(@as(usize, 2), map.delete(prefix ++ [_]u8{2}).?);
 }
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
 const std = @import("std");
 const math = std.math;

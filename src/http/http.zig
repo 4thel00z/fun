@@ -6,7 +6,7 @@ pub var default_arena: Arena = undefined;
 pub var http_thread: HTTPThread = undefined;
 
 //TODO: this needs to be freed when Worker Threads are implemented
-pub var socket_async_http_abort_tracker = std.AutoArrayHashMap(u32, uws.AnySocket).init(bun.default_allocator);
+pub var socket_async_http_abort_tracker = std.AutoArrayHashMap(u32, uws.AnySocket).init(fun.default_allocator);
 pub var async_http_id_monotonic: std.atomic.Value(u32) = std.atomic.Value(u32).init(0);
 
 /// Set once at startup from `--experimental-http2-fetch` (before the HTTP
@@ -20,14 +20,14 @@ const MAX_REDIRECT_URL_LENGTH = 128 * 1024;
 
 pub var max_http_header_size: usize = 16 * 1024;
 comptime {
-    @export(&max_http_header_size, .{ .name = "BUN_DEFAULT_MAX_HTTP_HEADER_SIZE" });
+    @export(&max_http_header_size, .{ .name = "FUN_DEFAULT_MAX_HTTP_HEADER_SIZE" });
 }
 
 /// Idle timeout for HTTP client sockets, in seconds. The timer is armed in
 /// `onOpen` (so it covers the TLS handshake) and re-armed on every read/write;
 /// if no bytes move in either direction for this long the request fails with
 /// `error.Timeout`. 0 disables the timer (matching `disable_timeout = true`).
-/// Overridable via `BUN_CONFIG_HTTP_IDLE_TIMEOUT`. Default is 5 minutes — the
+/// Overridable via `FUN_CONFIG_HTTP_IDLE_TIMEOUT`. Default is 5 minutes — the
 /// previous hard-coded value — so unchanged environments see identical
 /// behaviour except that the handshake phase is now also covered. Values
 /// above 240s are served by uSockets' minute-granularity long timer (see
@@ -66,7 +66,7 @@ fn getTlsHostname(client: *const HTTPClient, allowProxyUrl: bool) []const u8 {
     // Prefer the explicit TLS server_name (e.g. from Node.js servername option)
     if (client.tls_props) |props| {
         if (props.get().server_name) |sn| {
-            const sn_slice = bun.sliceTo(sn, 0);
+            const sn_slice = fun.sliceTo(sn, 0);
             if (sn_slice.len > 0) return sn_slice;
         }
     }
@@ -114,18 +114,18 @@ pub fn checkServerIdentity(
                 if (client.signals.get(.cert_errors)) {
                     // clone the relevant data
                     const cert_size = BoringSSL.i2d_X509(x509, null);
-                    const cert = bun.handleOom(bun.default_allocator.alloc(u8, @intCast(cert_size)));
+                    const cert = fun.handleOom(fun.default_allocator.alloc(u8, @intCast(cert_size)));
                     var cert_ptr = cert.ptr;
                     const result_size = BoringSSL.i2d_X509(x509, &cert_ptr);
                     assert(result_size == cert_size);
 
                     client.state.certificate_info = .{
                         .cert = cert,
-                        .hostname = bun.handleOom(bun.default_allocator.dupe(u8, hostname)),
+                        .hostname = fun.handleOom(fun.default_allocator.dupe(u8, hostname)),
                         .cert_error = .{
                             .error_no = certError.error_no,
-                            .code = bun.handleOom(bun.default_allocator.dupeZ(u8, certError.code)),
-                            .reason = bun.handleOom(bun.default_allocator.dupeZ(u8, certError.reason)),
+                            .code = fun.handleOom(fun.default_allocator.dupeZ(u8, certError.code)),
+                            .reason = fun.handleOom(fun.default_allocator.dupeZ(u8, certError.reason)),
                         },
                     };
 
@@ -136,7 +136,7 @@ pub fn checkServerIdentity(
                 } else {
                     // we check with native code if the cert is valid
                     // fast path
-                    if (bun.BoringSSL.checkX509ServerIdentity(x509, hostname)) {
+                    if (fun.BoringSSL.checkX509ServerIdentity(x509, hostname)) {
                         return true;
                     }
                 }
@@ -189,10 +189,10 @@ pub fn onOpen(
     // Arm the idle timer immediately so a stalled TLS handshake (server
     // accepts TCP but never answers ClientHello, or a NAT/middlebox silently
     // drops the flow under load) eventually fails with error.Timeout instead
-    // of leaving the request — and for `bun install`, the whole process —
+    // of leaving the request — and for `fun install`, the whole process —
     // blocked in epoll_wait forever. Previously the first `setTimeout` call
     // was inside `onWritable`, which only runs *after* the handshake
-    // completes. See https://github.com/oven-sh/bun/issues/30325.
+    // completes. See https://github.com/underdoc-org/fun/issues/30325.
     client.setTimeout(socket);
 
     // Enable TCP keepalive so a half-open connection (peer closed but the
@@ -238,12 +238,12 @@ pub fn onOpen(
                     temp_hostname[_hostname.len] = 0;
                     hostname = temp_hostname[0.._hostname.len :0];
                 } else {
-                    hostname = bun.default_allocator.dupeZ(u8, _hostname) catch unreachable;
+                    hostname = fun.default_allocator.dupeZ(u8, _hostname) catch unreachable;
                     hostname_needs_free = true;
                 }
             }
 
-            defer if (hostname_needs_free) bun.default_allocator.free(hostname);
+            defer if (hostname_needs_free) fun.default_allocator.free(hostname);
 
             ssl_ptr.configureHTTPClientWithALPN(hostname, client.alpnOffer());
         }
@@ -255,7 +255,7 @@ pub fn onOpen(
 /// Whether to advertise "h2" in the TLS ALPN list. Restricted to request
 /// shapes the HTTP/2 path currently handles end-to-end (no proxy/Upgrade,
 /// no sendfile). Enabled by `--experimental-http2-fetch`, the
-/// `BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT` env var, or
+/// `FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT` env var, or
 /// `protocol: "http2"` on the fetch options.
 pub fn canOfferH2(client: *const HTTPClient) bool {
     if (client.flags.force_http1) return false;
@@ -265,7 +265,7 @@ pub fn canOfferH2(client: *const HTTPClient) bool {
     if (client.state.original_request_body == .sendfile) return false;
     return client.flags.force_http2 or
         experimental_http2_client_from_cli or
-        bun.feature_flag.BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT.get();
+        fun.feature_flag.FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT.get();
 }
 
 pub fn alpnOffer(client: *const HTTPClient) BoringSSL.SSL.AlpnOffer {
@@ -279,7 +279,7 @@ pub fn alpnOffer(client: *const HTTPClient) BoringSSL.SSL.AlpnOffer {
 /// `force_http1`) still carries an authoritative Alt-Svc for the origin.
 pub fn h3AltSvcEnabled() bool {
     return experimental_http3_client_from_cli or
-        bun.feature_flag.BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT.get();
+        fun.feature_flag.FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT.get();
 }
 
 /// Whether this request shape is eligible to *use* a cached Alt-Svc h3
@@ -348,7 +348,7 @@ pub fn retryAfterH2Coalesce(this: *HTTPClient) void {
 /// for `.bytes` bodies (replayable).
 pub const max_h2_retries: u8 = 5;
 pub fn retryFromH2(this: *HTTPClient) void {
-    bun.debugAssert(this.h2 == null);
+    fun.debugAssert(this.h2 == null);
     this.unregisterAbortTracker();
     this.flags.protocol = .http1_1;
     this.h2_retries += 1;
@@ -363,8 +363,8 @@ pub fn retryFromH2(this: *HTTPClient) void {
 /// GOAWAY, abort, decode error). The socket stays up for sibling streams, so
 /// only the request fails.
 pub fn failFromH2(this: *HTTPClient, err: anyerror) void {
-    bun.debugAssert(this.h2 == null);
-    bun.debugAssert(this.h3 == null);
+    fun.debugAssert(this.h2 == null);
+    fun.debugAssert(this.h3 == null);
     this.unregisterAbortTracker();
     if (this.state.stage != .done and this.state.stage != .fail) {
         this.state.request_stage = .fail;
@@ -727,11 +727,11 @@ unix_socket_path: jsc.ZigString.Slice = jsc.ZigString.Slice.empty,
 
 pub fn deinit(this: *HTTPClient) void {
     if (this.redirect.len > 0) {
-        bun.default_allocator.free(this.redirect);
+        fun.default_allocator.free(this.redirect);
         this.redirect = &.{};
     }
     if (this.prev_redirect.len > 0) {
-        bun.default_allocator.free(this.prev_redirect);
+        fun.default_allocator.free(this.prev_redirect);
         this.prev_redirect = &.{};
     }
     if (this.proxy_authorization) |auth| {
@@ -748,7 +748,7 @@ pub fn deinit(this: *HTTPClient) void {
     }
     // The session detaches `h2` before any terminal callback, so this should
     // be null by the time the result callback's deinit path runs.
-    bun.debugAssert(this.h2 == null);
+    fun.debugAssert(this.h2 == null);
     // Release our strong ref on the interned SSLConfig
     if (this.tls_props) |*tls| tls.deinit();
     this.tls_props = null;
@@ -803,7 +803,7 @@ pub fn proxyAuthHash(this: *const HTTPClient) u64 {
                 strings.copyLowercase(sni, name_lower_buf[0..sni.len])
             else
                 sni;
-            combined +%= bun.hash(sni_lower);
+            combined +%= fun.hash(sni_lower);
             any = true;
         }
     }
@@ -1182,7 +1182,7 @@ pub fn doRedirect(
     // connected_url was the last borrower of the previous hop's URL buffer
     // (handleResponseMetadata already repointed this.url at the new one).
     if (this.prev_redirect.len > 0) {
-        bun.default_allocator.free(this.prev_redirect);
+        fun.default_allocator.free(this.prev_redirect);
         this.prev_redirect = &.{};
     }
 
@@ -1306,7 +1306,7 @@ fn start_(this: *HTTPClient, comptime is_ssl: bool) void {
     }
 
     var socket = (http_thread.connect(this, is_ssl) catch |err| {
-        bun.handleErrorReturnTrace(err, @errorReturnTrace());
+        fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
         this.fail(err);
         return;
@@ -1325,7 +1325,7 @@ fn start_(this: *HTTPClient, comptime is_ssl: bool) void {
     // If we haven't already called onOpen(), then that means we need to
     // register the abort tracker. We need to do this in cases where the
     // connection takes a long time to happen such as when it's not routable.
-    // See test/js/bun/io/fetch/fetch-abort-slow-connect.test.ts.
+    // See test/js/fun/io/fetch/fetch-abort-slow-connect.test.ts.
     //
     // We have to be careful here because if .connect() had finished
     // synchronously, then this socket is on longer valid and the pointer points
@@ -1529,16 +1529,16 @@ fn writeToSocket(comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocke
 }
 
 /// Write data to the socket and buffer the unwritten data if there is backpressure
-fn writeToSocketWithBufferFallback(comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket, buffer: *bun.io.StreamBuffer, data: []const u8) !usize {
+fn writeToSocketWithBufferFallback(comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket, buffer: *fun.io.StreamBuffer, data: []const u8) !usize {
     const amount = try writeToSocket(is_ssl, socket, data);
     if (amount < data.len) {
-        bun.handleOom(buffer.write(data[@intCast(amount)..]));
+        fun.handleOom(buffer.write(data[@intCast(amount)..]));
     }
     return amount;
 }
 
 /// Write buffered data to the socket returning true if there is backpressure
-fn writeToStreamUsingBuffer(this: *HTTPClient, comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket, buffer: *bun.io.StreamBuffer, data: []const u8) !bool {
+fn writeToStreamUsingBuffer(this: *HTTPClient, comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket, buffer: *fun.io.StreamBuffer, data: []const u8) !bool {
     const to_send = buffer.slice();
     if (to_send.len > 0) {
         const amount = try writeToSocket(is_ssl, socket, to_send);
@@ -1547,7 +1547,7 @@ fn writeToStreamUsingBuffer(this: *HTTPClient, comptime is_ssl: bool, socket: Ne
         if (amount < to_send.len) {
             // we could not send all pending data so we need to buffer the extra data
             if (data.len > 0) {
-                bun.handleOom(buffer.write(data));
+                fun.handleOom(buffer.write(data));
             }
             // failed to send everything so we have backpressure
             return true;
@@ -1772,7 +1772,7 @@ pub fn onWritable(this: *HTTPClient, comptime is_first_call: bool, comptime is_s
             log("send proxy headers", .{});
             if (this.proxy_tunnel) |proxy| {
                 this.setTimeout(socket);
-                var stack_buffer = std.heap.stackFallback(1024 * 16, bun.default_allocator);
+                var stack_buffer = std.heap.stackFallback(1024 * 16, fun.default_allocator);
                 const allocator = stack_buffer.get();
                 var temporary_send_buffer = std.array_list.Managed(u8).fromOwnedSlice(allocator, &stack_buffer.buffer);
                 temporary_send_buffer.items.len = 0;
@@ -1874,7 +1874,7 @@ inline fn handleShortRead(
 
         if (to_copy.len > 0) {
             // this one will probably be another chunk, so we leave a little extra room
-            bun.handleOom(this.state.response_message_buffer.append(to_copy));
+            fun.handleOom(this.state.response_message_buffer.append(to_copy));
         }
     }
 
@@ -1893,7 +1893,7 @@ pub fn handleOnDataHeaders(
     var needs_move = true;
     if (this.state.response_message_buffer.list.items.len > 0) {
         // this one probably won't be another chunk, so we use appendSliceExact() to avoid over-allocating
-        bun.handleOom(this.state.response_message_buffer.appendSliceExact(incoming_data));
+        fun.handleOom(this.state.response_message_buffer.appendSliceExact(incoming_data));
         to_read = this.state.response_message_buffer.list.items;
         needs_move = false;
     }
@@ -2239,7 +2239,7 @@ pub fn cloneMetadata(this: *HTTPClient) void {
 
 pub fn setTimeout(this: *HTTPClient, socket: anytype) void {
     // Duration comes from `idle_timeout_seconds` (tunable via
-    // `BUN_CONFIG_HTTP_IDLE_TIMEOUT`, set low in tests) and is normalised once
+    // `FUN_CONFIG_HTTP_IDLE_TIMEOUT`, set low in tests) and is normalised once
     // in `HTTPThread.onStart` — clamped to the uSockets long-timer bound and
     // rounded up to a whole minute above 240s — so this is a plain
     // pass-through. `socket.setTimeout` picks the short-tick timer for values
@@ -2370,7 +2370,7 @@ fn sendProgressUpdateWithoutStageCheck(this: *HTTPClient, comptime is_ssl: bool,
 /// release/close. Used by HTTP/2 and HTTP/3, whose session owns the
 /// transport, so there is no `ctx`/`socket` to hand back to the pool here.
 fn sendProgressUpdateMultiplexed(this: *HTTPClient) void {
-    bun.debugAssert(this.flags.protocol != .http1_1);
+    fun.debugAssert(this.flags.protocol != .http1_1);
     const out_str = this.state.body_out_str.?;
     const body = out_str.*;
     const result = this.toResult();
@@ -2393,7 +2393,7 @@ fn sendProgressUpdateMultiplexed(this: *HTTPClient) void {
 /// detached the stream before calling this; `start()` re-enters the normal
 /// connect path for the redirect target.
 fn doRedirectMultiplexed(this: *HTTPClient) void {
-    bun.debugAssert(this.flags.protocol != .http1_1);
+    fun.debugAssert(this.flags.protocol != .http1_1);
     log("doRedirectMultiplexed", .{});
     if (this.state.original_request_body == .stream) {
         this.flags.is_streaming_request_body = false;
@@ -2412,7 +2412,7 @@ fn doRedirectMultiplexed(this: *HTTPClient) void {
     this.unregisterAbortTracker();
     this.connected_url = URL{};
     if (this.prev_redirect.len > 0) {
-        bun.default_allocator.free(this.prev_redirect);
+        fun.default_allocator.free(this.prev_redirect);
         this.prev_redirect = &.{};
     }
     if (this.remaining_redirect_count == 0) {
@@ -2426,7 +2426,7 @@ fn doRedirectMultiplexed(this: *HTTPClient) void {
 }
 
 pub fn progressUpdateH3(this: *HTTPClient) void {
-    bun.debugAssert(this.flags.protocol == .http3);
+    fun.debugAssert(this.flags.protocol == .http3);
     if (this.state.stage == .done or this.state.stage == .fail) return;
     if (this.state.flags.is_redirect_pending and this.state.fail == null) {
         if (this.state.isDone()) this.doRedirectMultiplexed();
@@ -2436,7 +2436,7 @@ pub fn progressUpdateH3(this: *HTTPClient) void {
 }
 
 pub fn doRedirectH3(this: *HTTPClient) void {
-    bun.debugAssert(this.flags.protocol == .http3);
+    fun.debugAssert(this.flags.protocol == .http3);
     this.doRedirectMultiplexed();
 }
 
@@ -2525,7 +2525,7 @@ pub const HTTPClientResult = struct {
 
                 pub fn wrapped_callback(ptr: *anyopaque, async_http: *AsyncHTTP, result: HTTPClientResult) void {
                     const casted = @as(Type, @ptrCast(@alignCast(ptr)));
-                    @call(bun.callmod_inline, callback, .{ casted, async_http, result });
+                    @call(fun.callmod_inline, callback, .{ casted, async_http, result });
                 }
             };
         }
@@ -3002,12 +3002,12 @@ pub fn handleResponseMetadata(
                     var is_same_origin = true;
 
                     {
-                        var url_arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+                        var url_arena = std.heap.ArenaAllocator.init(fun.default_allocator);
                         defer url_arena.deinit();
                         var fba = std.heap.stackFallback(4096, url_arena.allocator());
                         const url_allocator = fba.get();
                         if (strings.indexOf(location, "://")) |i| {
-                            var string_builder = bun.StringBuilder{};
+                            var string_builder = fun.StringBuilder{};
 
                             const is_protocol_relative = i == 0;
                             const protocol_name = if (is_protocol_relative) this.url.displayProtocol() else location[0..i];
@@ -3045,13 +3045,13 @@ pub fn handleResponseMetadata(
                             if (comptime Environment.allow_assert)
                                 assert(string_builder.cap == string_builder.len);
 
-                            const normalized_url = jsc.URL.hrefFromString(bun.String.fromBytes(string_builder.allocatedSlice()));
+                            const normalized_url = jsc.URL.hrefFromString(fun.String.fromBytes(string_builder.allocatedSlice()));
                             defer normalized_url.deref();
                             if (normalized_url.tag == .Dead) {
                                 // URL__getHref failed, dont pass dead tagged string to toOwnedSlice.
                                 return error.RedirectURLInvalid;
                             }
-                            const normalized_url_str = try normalized_url.toOwnedSlice(bun.default_allocator);
+                            const normalized_url_str = try normalized_url.toOwnedSlice(fun.default_allocator);
 
                             const new_url = URL.parse(normalized_url_str);
                             is_same_origin = strings.eqlCaseInsensitiveASCII(strings.withoutTrailingSlash(new_url.origin), strings.withoutTrailingSlash(this.url.origin), true);
@@ -3059,11 +3059,11 @@ pub fn handleResponseMetadata(
                             // connected_url still borrows from the previous hop's buffer
                             // until doRedirect releases the socket, so park it in
                             // prev_redirect for doRedirect to free instead of leaking it.
-                            bun.debugAssert(this.prev_redirect.len == 0);
+                            fun.debugAssert(this.prev_redirect.len == 0);
                             this.prev_redirect = this.redirect;
                             this.redirect = normalized_url_str;
                         } else if (strings.hasPrefixComptime(location, "//")) {
-                            var string_builder = bun.StringBuilder{};
+                            var string_builder = fun.StringBuilder{};
 
                             const protocol_name = this.url.displayProtocol();
 
@@ -3094,22 +3094,22 @@ pub fn handleResponseMetadata(
                             if (comptime Environment.allow_assert)
                                 assert(string_builder.cap == string_builder.len);
 
-                            const normalized_url = jsc.URL.hrefFromString(bun.String.fromBytes(string_builder.allocatedSlice()));
+                            const normalized_url = jsc.URL.hrefFromString(fun.String.fromBytes(string_builder.allocatedSlice()));
                             defer normalized_url.deref();
-                            const normalized_url_str = try normalized_url.toOwnedSlice(bun.default_allocator);
+                            const normalized_url_str = try normalized_url.toOwnedSlice(fun.default_allocator);
 
                             const new_url = URL.parse(normalized_url_str);
                             is_same_origin = strings.eqlCaseInsensitiveASCII(strings.withoutTrailingSlash(new_url.origin), strings.withoutTrailingSlash(this.url.origin), true);
                             this.url = new_url;
-                            bun.debugAssert(this.prev_redirect.len == 0);
+                            fun.debugAssert(this.prev_redirect.len == 0);
                             this.prev_redirect = this.redirect;
                             this.redirect = normalized_url_str;
                         } else {
                             const original_url = this.url;
 
-                            const new_url_ = bun.jsc.URL.join(
-                                bun.String.fromBytes(original_url.href),
-                                bun.String.fromBytes(location),
+                            const new_url_ = fun.jsc.URL.join(
+                                fun.String.fromBytes(original_url.href),
+                                fun.String.fromBytes(location),
                             );
                             defer new_url_.deref();
 
@@ -3117,12 +3117,12 @@ pub fn handleResponseMetadata(
                                 return error.InvalidRedirectURL;
                             }
 
-                            const new_url = new_url_.toOwnedSlice(bun.default_allocator) catch {
+                            const new_url = new_url_.toOwnedSlice(fun.default_allocator) catch {
                                 return error.RedirectURLTooLong;
                             };
                             this.url = URL.parse(new_url);
                             is_same_origin = strings.eqlCaseInsensitiveASCII(strings.withoutTrailingSlash(this.url.origin), strings.withoutTrailingSlash(original_url.origin), true);
-                            bun.debugAssert(this.prev_redirect.len == 0);
+                            fun.debugAssert(this.prev_redirect.len == 0);
                             this.prev_redirect = this.redirect;
                             this.redirect = new_url;
                         }
@@ -3138,7 +3138,7 @@ pub fn handleResponseMetadata(
                         // - Set request’s method to `GET` and request’s body to null.
                         this.method = .GET;
 
-                        // https://github.com/oven-sh/bun/issues/6053
+                        // https://github.com/underdoc-org/fun/issues/6053
                         if (this.header_entries.len > 0) {
                             // A request-body-header name is a header name that is a byte-case-insensitive match for one of:
                             // - `Content-Encoding`
@@ -3253,8 +3253,8 @@ pub fn handleResponseMetadata(
 
 // Exists for heap stats reasons.
 pub const ThreadlocalAsyncHTTP = struct {
-    pub const new = bun.TrivialNew(@This());
-    pub const deinit = bun.TrivialDeinit(@This());
+    pub const new = fun.TrivialNew(@This());
+    pub const deinit = fun.TrivialDeinit(@This());
 
     async_http: AsyncHTTP,
 };
@@ -3291,23 +3291,23 @@ const ProxyTunnel = @import("./ProxyTunnel.zig");
 const std = @import("std");
 const URL = @import("../url/url.zig").URL;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const Global = bun.Global;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const Progress = bun.Progress;
-const StringBuilder = bun.StringBuilder;
-const assert = bun.assert;
-const jsc = bun.jsc;
-const picohttp = bun.picohttp;
-const strings = bun.strings;
-const uws = bun.uws;
-const Arena = bun.allocators.MimallocArena;
-const BoringSSL = bun.BoringSSL.c;
-const api = bun.schema.api;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const Global = fun.Global;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const Progress = fun.Progress;
+const StringBuilder = fun.StringBuilder;
+const assert = fun.assert;
+const jsc = fun.jsc;
+const picohttp = fun.picohttp;
+const strings = fun.strings;
+const uws = fun.uws;
+const Arena = fun.allocators.MimallocArena;
+const BoringSSL = fun.BoringSSL.c;
+const api = fun.schema.api;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
 const posix = std.posix;
 const SOCK = posix.SOCK;

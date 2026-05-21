@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { openSync } from "fs";
-import { bunEnv, bunExe, normalizeBunSnapshot } from "harness";
+import { funEnv, funExe, normalizeFunSnapshot } from "harness";
 import tty from "tty";
 
 test("tty.ReadStream should have ref/unref methods when opened on /dev/tty", () => {
@@ -86,12 +86,12 @@ test("tty.ReadStream ref/unref should behave like Node.js", async () => {
   const path = require("path");
   const os = require("os");
   const tempFile = path.join(os.tmpdir(), "test-tty-ref-unref-" + Date.now() + ".js");
-  await Bun.write(tempFile, script);
+  await Fun.write(tempFile, script);
 
-  // Run the script with bun
-  const proc = Bun.spawn({
-    cmd: [bunExe(), tempFile],
-    env: bunEnv,
+  // Run the script with fun
+  const proc = Fun.spawn({
+    cmd: [funExe(), tempFile],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -105,5 +105,5 @@ test("tty.ReadStream ref/unref should behave like Node.js", async () => {
 
   expect(stderr).toBe("");
   expect(exitCode).toBe(0);
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`"SUCCESS"`);
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`"SUCCESS"`);
 });

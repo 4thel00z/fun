@@ -44,7 +44,7 @@ pub const Gradient = union(enum) {
                 closure: Closure,
                 input_: *css.Parser,
             ) Result(Gradient) {
-                const Map = comptime bun.ComptimeEnumMap(enum {
+                const Map = comptime fun.ComptimeEnumMap(enum {
                     @"linear-gradient",
                     @"repeating-linear-gradient",
                     @"radial-gradient",
@@ -329,17 +329,17 @@ pub const Gradient = union(enum) {
         switch (this.*) {
             .linear, .repeating_linear => |*linear| {
                 for (linear.items.items) |*item| {
-                    bun.bits.insert(css.ColorFallbackKind, &fallbacks, item.getNecessaryFallbacks(targets));
+                    fun.bits.insert(css.ColorFallbackKind, &fallbacks, item.getNecessaryFallbacks(targets));
                 }
             },
             .radial, .repeating_radial => |*radial| {
                 for (radial.items.items) |*item| {
-                    bun.bits.insert(css.ColorFallbackKind, &fallbacks, item.getNecessaryFallbacks(targets));
+                    fun.bits.insert(css.ColorFallbackKind, &fallbacks, item.getNecessaryFallbacks(targets));
                 }
             },
             .conic, .repeating_conic => |*conic| {
                 for (conic.items.items) |*item| {
-                    bun.bits.insert(css.ColorFallbackKind, &fallbacks, item.getNecessaryFallbacks(targets));
+                    fun.bits.insert(css.ColorFallbackKind, &fallbacks, item.getNecessaryFallbacks(targets));
                 }
             },
             .@"webkit-gradient" => {},
@@ -396,7 +396,7 @@ pub const LinearGradient = struct {
             var flipped_items = ArrayList(GradientItem(LengthPercentage)).initCapacity(
                 dest.allocator,
                 this.items.items.len,
-            ) catch |err| bun.handleOom(err);
+            ) catch |err| fun.handleOom(err);
             defer flipped_items.deinit(dest.allocator);
 
             var i: usize = this.items.items.len;
@@ -405,7 +405,7 @@ pub const LinearGradient = struct {
                 const item = &this.items.items[i];
                 switch (item.*) {
                     .hint => |*h| switch (h.*) {
-                        .percentage => |p| bun.handleOom(flipped_items.append(dest.allocator, .{ .hint = .{ .percentage = .{ .v = 1.0 - p.v } } })),
+                        .percentage => |p| fun.handleOom(flipped_items.append(dest.allocator, .{ .hint = .{ .percentage = .{ .v = 1.0 - p.v } } })),
                         else => unreachable,
                     },
                     .color_stop => |*cs| flipped_items.append(dest.allocator, .{
@@ -416,7 +416,7 @@ pub const LinearGradient = struct {
                                 else => unreachable,
                             } else null,
                         },
-                    }) catch |err| bun.handleOom(err),
+                    }) catch |err| fun.handleOom(err),
                 }
             }
 
@@ -449,7 +449,7 @@ pub const LinearGradient = struct {
     }
 
     pub fn getFallback(this: *const @This(), allocator: std.mem.Allocator, kind: css.ColorFallbackKind) LinearGradient {
-        var fallback_items = bun.handleOom(ArrayList(GradientItem(LengthPercentage)).initCapacity(allocator, this.items.items.len));
+        var fallback_items = fun.handleOom(ArrayList(GradientItem(LengthPercentage)).initCapacity(allocator, this.items.items.len));
         fallback_items.items.len = this.items.items.len;
         for (fallback_items.items, this.items.items) |*out, *in| {
             out.* = in.getFallback(allocator, kind);
@@ -537,7 +537,7 @@ pub const RadialGradient = struct {
     }
 
     pub fn getFallback(this: *const RadialGradient, allocator: Allocator, kind: css.ColorFallbackKind) RadialGradient {
-        var items = bun.handleOom(ArrayList(GradientItem(LengthPercentage)).initCapacity(allocator, this.items.items.len));
+        var items = fun.handleOom(ArrayList(GradientItem(LengthPercentage)).initCapacity(allocator, this.items.items.len));
         items.items.len = this.items.items.len;
         for (items.items, this.items.items) |*out, *in| {
             out.* = in.getFallback(allocator, kind);
@@ -630,7 +630,7 @@ pub const ConicGradient = struct {
     }
 
     pub fn getFallback(this: *const @This(), allocator: Allocator, kind: css.ColorFallbackKind) ConicGradient {
-        var items = bun.handleOom(ArrayList(GradientItem(AnglePercentage)).initCapacity(allocator, this.items.items.len));
+        var items = fun.handleOom(ArrayList(GradientItem(AnglePercentage)).initCapacity(allocator, this.items.items.len));
         items.items.len = this.items.items.len;
         for (items.items, this.items.items) |*out, *in| {
             out.* = in.getFallback(allocator, kind);
@@ -702,7 +702,7 @@ pub const WebKitGradient = union(enum) {
         if (input.expectComma().asErr()) |e| return .{ .err = e };
 
         // todo_stuff.match_ignore_ascii_case
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "linear")) {
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "linear")) {
             // todo_stuff.depth
             const from = switch (WebKitGradientPoint.parse(input)) {
                 .result => |vv| vv,
@@ -723,7 +723,7 @@ pub const WebKitGradient = union(enum) {
                 .to = to,
                 .stops = stops,
             } } };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "radial")) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "radial")) {
             const from = switch (WebKitGradientPoint.parse(input)) {
                 .result => |vv| vv,
                 .err => |e| return .{ .err = e },
@@ -798,7 +798,7 @@ pub const WebKitGradient = union(enum) {
         var stops: ArrayList(WebKitColorStop) = .{};
         switch (this.*) {
             .linear => |linear| {
-                stops = bun.handleOom(ArrayList(WebKitColorStop).initCapacity(allocator, linear.stops.items.len));
+                stops = fun.handleOom(ArrayList(WebKitColorStop).initCapacity(allocator, linear.stops.items.len));
                 stops.items.len = linear.stops.items.len;
                 for (stops.items, linear.stops.items) |*out, *in| {
                     out.* = in.getFallback(allocator, kind);
@@ -812,7 +812,7 @@ pub const WebKitGradient = union(enum) {
                 };
             },
             .radial => |radial| {
-                stops = bun.handleOom(ArrayList(WebKitColorStop).initCapacity(allocator, radial.stops.items.len));
+                stops = fun.handleOom(ArrayList(WebKitColorStop).initCapacity(allocator, radial.stops.items.len));
                 stops.items.len = radial.stops.items.len;
                 for (stops.items, radial.stops.items) |*out, *in| {
                     out.* = in.getFallback(allocator, kind);
@@ -1248,16 +1248,16 @@ pub const WebKitColorStop = struct {
                     i: *css.Parser,
                 ) Result(WebKitColorStop) {
                     // todo_stuff.match_ignore_ascii_case
-                    const position: f32 = if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "color-stop")) position: {
+                    const position: f32 = if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "color-stop")) position: {
                         const p: NumberOrPercentage = switch (@call(.auto, @field(NumberOrPercentage, "parse"), .{i})) {
                             .result => |vv| vv,
                             .err => |e| return .{ .err = e },
                         };
                         if (i.expectComma().asErr()) |e| return .{ .err = e };
                         break :position p.intoF32();
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "from")) position: {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "from")) position: {
                         break :position 0.0;
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "to")) position: {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "to")) position: {
                         break :position 1.0;
                     } else {
                         return .{ .err = closure.loc.newUnexpectedTokenError(.{ .ident = closure.function }) };
@@ -1539,7 +1539,7 @@ pub fn parseItems(comptime D: type, input: *css.Parser) Result(ArrayList(Gradien
                     if (closure.seen_stop.*) {
                         if (i.tryParse(comptime css.generic.parseFor(D), .{}).asValue()) |hint| {
                             closure.seen_stop.* = false;
-                            bun.handleOom(closure.items.append(i.allocator(), .{ .hint = hint }));
+                            fun.handleOom(closure.items.append(i.allocator(), .{ .hint = hint }));
                             return .success;
                         }
                     }
@@ -1551,13 +1551,13 @@ pub fn parseItems(comptime D: type, input: *css.Parser) Result(ArrayList(Gradien
 
                     if (i.tryParse(comptime css.generic.parseFor(D), .{}).asValue()) |position| {
                         const color = stop.color.deepClone(i.allocator());
-                        bun.handleOom(closure.items.append(i.allocator(), .{ .color_stop = stop }));
+                        fun.handleOom(closure.items.append(i.allocator(), .{ .color_stop = stop }));
                         closure.items.append(i.allocator(), .{ .color_stop = .{
                             .color = color,
                             .position = position,
-                        } }) catch |err| bun.handleOom(err);
+                        } }) catch |err| fun.handleOom(err);
                     } else {
-                        bun.handleOom(closure.items.append(i.allocator(), .{ .color_stop = stop }));
+                        fun.handleOom(closure.items.append(i.allocator(), .{ .color_stop = stop }));
                     }
 
                     closure.seen_stop.* = true;
@@ -1568,7 +1568,7 @@ pub fn parseItems(comptime D: type, input: *css.Parser) Result(ArrayList(Gradien
 
         if (input.next().asValue()) |tok| {
             if (tok.* == .comma) continue;
-            bun.unreachablePanic("expected a comma after parsing a gradient", .{});
+            fun.unreachablePanic("expected a comma after parsing a gradient", .{});
         } else {
             break;
         }
@@ -1616,7 +1616,7 @@ pub fn serializeItems(
 }
 
 pub fn convertStopsToWebkit(allocator: Allocator, items: *const ArrayList(GradientItem(LengthPercentage))) ?ArrayList(WebKitColorStop) {
-    var stops: ArrayList(WebKitColorStop) = bun.handleOom(ArrayList(WebKitColorStop).initCapacity(allocator, items.items.len));
+    var stops: ArrayList(WebKitColorStop) = fun.handleOom(ArrayList(WebKitColorStop).initCapacity(allocator, items.items.len));
     for (items.items, 0..) |*item, i| {
         switch (item.*) {
             .color_stop => |*stop| {
@@ -1650,7 +1650,7 @@ pub fn convertStopsToWebkit(allocator: Allocator, items: *const ArrayList(Gradie
     return stops;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

@@ -1,9 +1,9 @@
-// https://github.com/oven-sh/bun/issues/24385
+// https://github.com/underdoc-org/fun/issues/24385
 // Test for Redis client import regression
 
 import { cartesianProduct } from "_util/collection";
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test.concurrent.each(
   cartesianProduct(
@@ -19,11 +19,11 @@ test.concurrent.each(
     ],
   ).map(([k, v]) => ({ key: k, value: v })),
 )("Redis loads with $key=$value", async ({ key, value }) => {
-  const env = { ...bunEnv, [key]: value };
+  const env = { ...funEnv, [key]: value };
 
-  await using proc = Bun.spawn({
-    // We need to call redis.duplicate() since Bun lazily imports redis.
-    cmd: [bunExe(), "-e", 'import { redis } from "bun"; const d = redis.duplicate(); console.log("success");'],
+  await using proc = Fun.spawn({
+    // We need to call redis.duplicate() since Fun lazily imports redis.
+    cmd: [funExe(), "-e", 'import { redis } from "fun"; const d = redis.duplicate(); console.log("success");'],
     env,
     stderr: "pipe",
     stdout: "pipe",

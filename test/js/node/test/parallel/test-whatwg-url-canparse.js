@@ -6,7 +6,7 @@ const common = require('../common');
 const { URL } = require('url');
 const assert = require('assert');
 
-// NOTE: This is an internal Node API that Bun does not support.
+// NOTE: This is an internal Node API that Fun does not support.
 // const { internalBinding } = require('internal/test/binding');
 
 // One argument is required

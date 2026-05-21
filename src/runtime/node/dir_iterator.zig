@@ -34,7 +34,7 @@ pub const Iterator = NewIterator(false);
 pub const IteratorW = NewIterator(true);
 
 pub fn NewIterator(comptime use_windows_ospath: bool) type {
-    return switch (bun.Environment.os) {
+    return switch (fun.Environment.os) {
         .mac => struct {
             dir: FD,
             seek: i64,
@@ -69,7 +69,7 @@ pub fn NewIterator(comptime use_windows_ospath: bool) type {
                         // the extra syscall.
                         // https://github.com/apple-oss-distributions/xnu/blob/94d3b452840153a99b38a3a9659680b2a006908e/bsd/vfs/vfs_syscalls.c#L10444-L10470
                         const GETDIRENTRIES64_EXTENDED_BUFSIZE = 1024;
-                        comptime bun.assert(@sizeOf(@TypeOf(self.buf)) >= GETDIRENTRIES64_EXTENDED_BUFSIZE);
+                        comptime fun.assert(@sizeOf(@TypeOf(self.buf)) >= GETDIRENTRIES64_EXTENDED_BUFSIZE);
                         self.received_eof = false;
                         // Always zero the bytes where the flag will be written
                         // so we don't confuse garbage with EOF.
@@ -306,10 +306,10 @@ pub fn NewIterator(comptime use_windows_ospath: bool) type {
 
                         // If the handle is not a directory, we'll get STATUS_INVALID_PARAMETER.
                         if (rc == .INVALID_PARAMETER) {
-                            bun.sys.syslog("NtQueryDirectoryFile({f}) = {s}", .{ self.dir, @tagName(rc) });
+                            fun.sys.syslog("NtQueryDirectoryFile({f}) = {s}", .{ self.dir, @tagName(rc) });
                             return .{
                                 .err = .{
-                                    .errno = @intFromEnum(bun.sys.SystemErrno.ENOTDIR),
+                                    .errno = @intFromEnum(fun.sys.SystemErrno.ENOTDIR),
                                     .syscall = .NtQueryDirectoryFile,
                                 },
                             };
@@ -318,14 +318,14 @@ pub fn NewIterator(comptime use_windows_ospath: bool) type {
                         // NO_SUCH_FILE is returned on the first call when a FileName filter
                         // matches nothing; NO_MORE_FILES on subsequent calls. Both mean "done".
                         if (rc == .NO_MORE_FILES or rc == .NO_SUCH_FILE) {
-                            bun.sys.syslog("NtQueryDirectoryFile({f}) = {s}", .{ self.dir, @tagName(rc) });
+                            fun.sys.syslog("NtQueryDirectoryFile({f}) = {s}", .{ self.dir, @tagName(rc) });
                             return .{ .result = null };
                         }
 
                         if (rc != .SUCCESS) {
-                            bun.sys.syslog("NtQueryDirectoryFile({f}) = {s}", .{ self.dir, @tagName(rc) });
+                            fun.sys.syslog("NtQueryDirectoryFile({f}) = {s}", .{ self.dir, @tagName(rc) });
 
-                            if ((bun.windows.Win32Error.fromNTStatus(rc).toSystemErrno())) |errno| {
+                            if ((fun.windows.Win32Error.fromNTStatus(rc).toSystemErrno())) |errno| {
                                 return .{
                                     .err = .{
                                         .errno = @intFromEnum(errno),
@@ -336,20 +336,20 @@ pub fn NewIterator(comptime use_windows_ospath: bool) type {
 
                             return .{
                                 .err = .{
-                                    .errno = @intFromEnum(bun.sys.SystemErrno.EUNKNOWN),
+                                    .errno = @intFromEnum(fun.sys.SystemErrno.EUNKNOWN),
                                     .syscall = .NtQueryDirectoryFile,
                                 },
                             };
                         }
 
                         if (io.Information == 0) {
-                            bun.sys.syslog("NtQueryDirectoryFile({f}) = 0", .{self.dir});
+                            fun.sys.syslog("NtQueryDirectoryFile({f}) = 0", .{self.dir});
                             return .{ .result = null };
                         }
                         self.index = 0;
                         self.end_index = io.Information;
 
-                        bun.sys.syslog("NtQueryDirectoryFile({f}) = {d}", .{ self.dir, self.end_index });
+                        fun.sys.syslog("NtQueryDirectoryFile({f}) = {d}", .{ self.dir, self.end_index });
                     }
 
                     const entry_offset = self.index;
@@ -500,7 +500,7 @@ pub fn NewWrappedIterator(comptime path_type: PathType) type {
 
         pub fn init(dir: FD) Self {
             return Self{
-                .iter = switch (bun.Environment.os) {
+                .iter = switch (fun.Environment.os) {
                     .mac,
                     => IteratorType{
                         .dir = dir,
@@ -535,7 +535,7 @@ pub fn NewWrappedIterator(comptime path_type: PathType) type {
         }
 
         pub fn setNameFilter(self: *Self, filter: ?[]const u16) void {
-            if (comptime !bun.Environment.isWindows) return;
+            if (comptime !fun.Environment.isWindows) return;
             self.iter.name_filter = filter;
         }
     };
@@ -550,12 +550,12 @@ pub fn iterate(self: FD, comptime path_type: PathType) NewWrappedIterator(path_t
 
 const builtin = @import("builtin");
 
-const bun = @import("bun");
-const FD = bun.FD;
-const PathString = bun.PathString;
-const jsc = bun.jsc;
-const strings = bun.strings;
-const Maybe = bun.sys.Maybe;
+const fun = @import("fun");
+const FD = fun.FD;
+const PathString = fun.PathString;
+const jsc = fun.jsc;
+const strings = fun.strings;
+const Maybe = fun.sys.Maybe;
 const Entry = jsc.Node.Dirent;
 
 const std = @import("std");

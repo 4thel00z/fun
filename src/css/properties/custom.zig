@@ -114,12 +114,12 @@ pub const TokenList = struct {
                     .delim => |d| {
                         if (d == '+' or d == '-') {
                             try dest.writeChar(' ');
-                            bun.assert(d <= 0x7F);
+                            fun.assert(d <= 0x7F);
                             try dest.writeChar(@intCast(d));
                             try dest.writeChar(' ');
                         } else {
                             const ws_before = !has_whitespace and (d == '/' or d == '*');
-                            bun.assert(d <= 0x7F);
+                            fun.assert(d <= 0x7F);
                             try dest.delim(@intCast(d), ws_before);
                         }
                         has_whitespace = true;
@@ -354,7 +354,7 @@ pub const TokenList = struct {
                         ) catch unreachable;
                         last_is_delim = false;
                         last_is_whitespace = false;
-                    } else if (bun.strings.eql(f, "url")) {
+                    } else if (fun.strings.eql(f, "url")) {
                         input.reset(&state);
                         tokens.append(
                             input.allocator(),
@@ -365,7 +365,7 @@ pub const TokenList = struct {
                         ) catch unreachable;
                         last_is_delim = false;
                         last_is_whitespace = false;
-                    } else if (bun.strings.eql(f, "var")) {
+                    } else if (fun.strings.eql(f, "var")) {
                         const Closure = struct {
                             options: *const css.ParserOptions,
                             depth: usize,
@@ -393,7 +393,7 @@ pub const TokenList = struct {
                         ) catch unreachable;
                         last_is_delim = true;
                         last_is_whitespace = false;
-                    } else if (bun.strings.eql(f, "env")) {
+                    } else if (fun.strings.eql(f, "env")) {
                         const Closure = struct {
                             options: *const css.ParserOptions,
                             depth: usize,
@@ -492,7 +492,7 @@ pub const TokenList = struct {
                     continue;
                 },
                 .ident => |name| {
-                    if (bun.strings.startsWith(name, "--")) {
+                    if (fun.strings.startsWith(name, "--")) {
                         tokens.append(input.allocator(), .{ .dashed_ident = .{ .v = name } }) catch unreachable;
                         last_is_delim = false;
                         last_is_whitespace = false;
@@ -594,7 +594,7 @@ pub const TokenList = struct {
 
     pub fn getFallback(this: *const TokenList, allocator: Allocator, kind: ColorFallbackKind) @This() {
         var tokens = TokenList{};
-        bun.handleOom(tokens.v.ensureTotalCapacity(allocator, this.v.items.len));
+        fun.handleOom(tokens.v.ensureTotalCapacity(allocator, this.v.items.len));
         tokens.v.items.len = this.v.items.len;
         for (this.v.items, tokens.v.items[0..this.v.items.len]) |*old, *new| {
             new.* = switch (old.*) {
@@ -615,7 +615,7 @@ pub const TokenList = struct {
         // the original declaration. The remaining fallbacks need to be added as @supports rules.
         var fallbacks = this.getNecessaryFallbacks(targets);
         const lowest_fallback = fallbacks.lowest();
-        bun.bits.remove(ColorFallbackKind, &fallbacks, lowest_fallback);
+        fun.bits.remove(ColorFallbackKind, &fallbacks, lowest_fallback);
 
         var res = css.SmallList(Fallbacks, 2){};
         if (fallbacks.p3) {
@@ -664,19 +664,19 @@ pub const TokenList = struct {
         for (this.v.items) |*token_or_value| {
             switch (token_or_value.*) {
                 .color => |*color| {
-                    bun.bits.insert(ColorFallbackKind, &fallbacks, color.getPossibleFallbacks(targets));
+                    fun.bits.insert(ColorFallbackKind, &fallbacks, color.getPossibleFallbacks(targets));
                 },
                 .function => |*f| {
-                    bun.bits.insert(ColorFallbackKind, &fallbacks, f.arguments.getNecessaryFallbacks(targets));
+                    fun.bits.insert(ColorFallbackKind, &fallbacks, f.arguments.getNecessaryFallbacks(targets));
                 },
                 .@"var" => |*v| {
                     if (v.fallback) |*fallback| {
-                        bun.bits.insert(ColorFallbackKind, &fallbacks, fallback.getNecessaryFallbacks(targets));
+                        fun.bits.insert(ColorFallbackKind, &fallbacks, fallback.getNecessaryFallbacks(targets));
                     }
                 },
                 .env => |*v| {
                     if (v.fallback) |*fallback| {
-                        bun.bits.insert(ColorFallbackKind, &fallbacks, fallback.getNecessaryFallbacks(targets));
+                        fun.bits.insert(ColorFallbackKind, &fallbacks, fallback.getNecessaryFallbacks(targets));
                     }
                 },
                 else => {},
@@ -791,7 +791,7 @@ pub const UnresolvedColor = union(enum) {
     ) PrintErr!void {
         const Helper = struct {
             pub fn conv(c: f32) i32 {
-                return bun.intFromFloat(i32, bun.clamp(@round(c * 255.0), 0.0, 255.0));
+                return fun.intFromFloat(i32, fun.clamp(@round(c * 255.0), 0.0, 255.0));
             }
         };
 
@@ -849,12 +849,12 @@ pub const UnresolvedColor = union(enum) {
                 const dark: *const TokenList = &ld.dark;
 
                 if (!dest.targets.isCompatible(.light_dark)) {
-                    try dest.writeStr("var(--buncss-light");
+                    try dest.writeStr("var(--funcss-light");
                     try dest.delim(',', false);
                     try light.toCss(dest, is_custom_property);
                     try dest.writeChar(')');
                     try dest.whitespace();
-                    try dest.writeStr("var(--buncss-dark");
+                    try dest.writeStr("var(--funcss-dark");
                     try dest.delim(',', false);
                     try dark.toCss(dest, is_custom_property);
                     return dest.writeChar(')');
@@ -876,7 +876,7 @@ pub const UnresolvedColor = union(enum) {
     ) Result(UnresolvedColor) {
         var parser = ComponentParser.new(false);
         // css.todo_stuff.match_ignore_ascii_case
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "rgb")) {
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "rgb")) {
             const Closure = struct {
                 options: *const css.ParserOptions,
                 parser: *ComponentParser,
@@ -911,7 +911,7 @@ pub const UnresolvedColor = union(enum) {
                 .parser = &parser,
             };
             return input.parseNestedBlock(UnresolvedColor, &closure, Closure.parsefn);
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hsl")) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hsl")) {
             const Closure = struct {
                 options: *const css.ParserOptions,
                 parser: *ComponentParser,
@@ -946,7 +946,7 @@ pub const UnresolvedColor = union(enum) {
                 .parser = &parser,
             };
             return input.parseNestedBlock(UnresolvedColor, &closure, Closure.parsefn);
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "light-dark")) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "light-dark")) {
             const Closure = struct {
                 options: *const css.ParserOptions,
                 parser: *ComponentParser,
@@ -991,10 +991,10 @@ pub const UnresolvedColor = union(enum) {
     }
 
     pub fn lightDarkOwned(allocator: Allocator, light: UnresolvedColor, dark: UnresolvedColor) UnresolvedColor {
-        var lightlist = bun.handleOom(ArrayList(TokenOrValue).initCapacity(allocator, 1));
-        bun.handleOom(lightlist.append(allocator, TokenOrValue{ .unresolved_color = light }));
-        var darklist = bun.handleOom(ArrayList(TokenOrValue).initCapacity(allocator, 1));
-        bun.handleOom(darklist.append(allocator, TokenOrValue{ .unresolved_color = dark }));
+        var lightlist = fun.handleOom(ArrayList(TokenOrValue).initCapacity(allocator, 1));
+        fun.handleOom(lightlist.append(allocator, TokenOrValue{ .unresolved_color = light }));
+        var darklist = fun.handleOom(ArrayList(TokenOrValue).initCapacity(allocator, 1));
+        fun.handleOom(darklist.append(allocator, TokenOrValue{ .unresolved_color = dark }));
         return UnresolvedColor{
             .light_dark = .{
                 .light = css.TokenList{ .v = lightlist },
@@ -1165,7 +1165,7 @@ pub const EnvironmentVariable = struct {
     pub fn getFallback(this: *const EnvironmentVariable, allocator: Allocator, kind: ColorFallbackKind) @This() {
         return EnvironmentVariable{
             .name = this.name,
-            .indices = bun.handleOom(this.indices.clone(allocator)),
+            .indices = fun.handleOom(this.indices.clone(allocator)),
             .fallback = if (this.fallback) |*fallback| fallback.getFallback(allocator, kind) else null,
         };
     }
@@ -1181,7 +1181,7 @@ pub const EnvironmentVariable = struct {
     pub fn deepClone(this: *const EnvironmentVariable, allocator: Allocator) EnvironmentVariable {
         return .{
             .name = this.name,
-            .indices = bun.handleOom(this.indices.clone(allocator)),
+            .indices = fun.handleOom(this.indices.clone(allocator)),
             .fallback = if (this.fallback) |*fallback| fallback.deepClone(allocator) else null,
         };
     }
@@ -1501,7 +1501,7 @@ pub const CustomPropertyName = union(enum) {
     }
 
     pub fn fromStr(name: []const u8) CustomPropertyName {
-        if (bun.strings.startsWith(name, "--")) return .{ .custom = .{ .v = name } };
+        if (fun.strings.startsWith(name, "--")) return .{ .custom = .{ .v = name } };
         return .{ .unknown = .{ .v = name } };
     }
 
@@ -1523,18 +1523,18 @@ pub const CustomPropertyName = union(enum) {
 
 pub fn tryParseColorToken(f: []const u8, state: *const css.ParserState, input: *css.Parser) ?CssColor {
     // css.todo_stuff.match_ignore_ascii_case
-    if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "rgb") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "rgba") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hsl") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hsla") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hwb") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "lab") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "lch") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "oklab") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "oklch") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "color") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "color-mix") or
-        bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "light-dark"))
+    if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "rgb") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "rgba") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hsl") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hsla") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "hwb") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "lab") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "lch") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "oklab") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "oklch") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "color") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "color-mix") or
+        fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "light-dark"))
     {
         const s = input.state();
         input.reset(state);
@@ -1547,7 +1547,7 @@ pub fn tryParseColorToken(f: []const u8, state: *const css.ParserState, input: *
     return null;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

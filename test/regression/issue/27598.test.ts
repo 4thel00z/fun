@@ -1,5 +1,5 @@
-import { cssInternals } from "bun:internal-for-testing";
-import { expect, test } from "bun:test";
+import { cssInternals } from "fun:internal-for-testing";
+import { expect, test } from "fun:test";
 
 const { minifyTest, testWithOptions } = cssInternals;
 

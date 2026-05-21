@@ -23,7 +23,7 @@ static napi_value constructor(napi_env env, napi_callback_info info) {
                          env, new_target_string, new_target_c_string,
                          sizeof new_target_c_string, nullptr));
 
-  // node and bun output different whitespace when stringifying a function,
+  // node and fun output different whitespace when stringifying a function,
   // which we don't want the test to fail for
   // so we attempt to delete everything in between {}
   auto *open_brace = reinterpret_cast<char *>(

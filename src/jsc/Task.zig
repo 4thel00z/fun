@@ -12,8 +12,8 @@ pub const Task = TaggedPointerUnion(.{
     AsyncGlobWalkTask,
     AsyncImageTask,
     AsyncTransformTask,
-    bun.bake.DevServer.HotReloadEvent,
-    bun.bundle_v2.DeferredBatchTask,
+    fun.bake.DevServer.HotReloadEvent,
+    fun.bundle_v2.DeferredBatchTask,
     shell.Interpreter.Builtin.Yes.YesTask,
     Chmod,
     Chown,
@@ -100,14 +100,14 @@ pub const Task = TaggedPointerUnion(.{
     Writev,
 });
 
-pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, counter: *u32) bun.JSTerminated!void {
+pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, counter: *u32) fun.JSTerminated!void {
     var global = this.global;
     const global_vm = global.vm();
 
     if (comptime Environment.isDebug) {
         if (this.debug.js_call_count_outside_tick_queue > this.debug.drain_microtasks_count_outside_tick_queue) {
             if (this.debug.track_last_fn_name) {
-                bun.Output.panic(
+                fun.Output.panic(
                     \\<b>{d} JavaScript functions<r> were called outside of the microtask queue without draining microtasks.
                     \\
                     \\Last function name: {f}
@@ -122,8 +122,8 @@ pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, co
                     },
                 );
             } else {
-                bun.Output.panic(
-                    \\<b>{d} JavaScript functions<r> were called outside of the microtask queue without draining microtasks. To track the last function name, set the BUN_TRACK_LAST_FN_NAME environment variable.
+                fun.Output.panic(
+                    \\<b>{d} JavaScript functions<r> were called outside of the microtask queue without draining microtasks. To track the last function name, set the FUN_TRACK_LAST_FN_NAME environment variable.
                     \\
                     \\Use EventLoop.runCallback() to run JavaScript functions outside of the microtask queue.
                     \\
@@ -248,8 +248,8 @@ pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, co
                 defer transform_task.deinit();
                 try transform_task.runFromJS();
             },
-            @field(Task.Tag, @typeName(bun.api.napi.napi_async_work)) => {
-                const transform_task: *bun.api.napi.napi_async_work = task.get(bun.api.napi.napi_async_work).?;
+            @field(Task.Tag, @typeName(fun.api.napi.napi_async_work)) => {
+                const transform_task: *fun.api.napi.napi_async_work = task.get(fun.api.napi.napi_async_work).?;
                 transform_task.runFromJS(virtual_machine, global);
             },
             @field(Task.Tag, @typeName(ThreadSafeFunction)) => {
@@ -280,8 +280,8 @@ pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, co
                 counter.* = 0;
                 return;
             },
-            @field(Task.Tag, @typeName(bun.bake.DevServer.HotReloadEvent)) => {
-                const hmr_task: *bun.bake.DevServer.HotReloadEvent = task.get(bun.bake.DevServer.HotReloadEvent).?;
+            @field(Task.Tag, @typeName(fun.bake.DevServer.HotReloadEvent)) => {
+                const hmr_task: *fun.bake.DevServer.HotReloadEvent = task.get(fun.bake.DevServer.HotReloadEvent).?;
                 hmr_task.run();
             },
             @field(Task.Tag, @typeName(FSWatchTask)) => {
@@ -487,7 +487,7 @@ pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, co
                 any.runFromJSThread();
             },
             @field(Task.Tag, @typeName(ProcessWaiterThreadTask)) => {
-                bun.markPosixOnly();
+                fun.markPosixOnly();
                 var any: *ProcessWaiterThreadTask = task.get(ProcessWaiterThreadTask).?;
                 any.runFromJSThread();
             },
@@ -499,8 +499,8 @@ pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, co
                 var any: *ServerAllConnectionsClosedTask = task.get(ServerAllConnectionsClosedTask).?;
                 try any.runFromJSThread(virtual_machine);
             },
-            @field(Task.Tag, @typeName(bun.bundle_v2.DeferredBatchTask)) => {
-                var any: *bun.bundle_v2.DeferredBatchTask = task.get(bun.bundle_v2.DeferredBatchTask).?;
+            @field(Task.Tag, @typeName(fun.bundle_v2.DeferredBatchTask)) => {
+                var any: *fun.bundle_v2.DeferredBatchTask = task.get(fun.bundle_v2.DeferredBatchTask).?;
                 any.runOnJSThread();
             },
             @field(Task.Tag, @typeName(PosixSignalTask)) => {
@@ -532,7 +532,7 @@ pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, co
             // instead of explicit `.@"<typeName>"` arms avoids hard-coding
             // path-derived `@typeName(T)` strings that change when files move.
             else => {
-                bun.Output.panic("Unexpected Task tag: {d}", .{@intFromEnum(task.tag())});
+                fun.Output.panic("Unexpected Task tag: {d}", .{@intFromEnum(task.tag())});
             },
         }
 
@@ -542,7 +542,7 @@ pub fn tickQueueWithCount(this: *EventLoop, virtual_machine: *VirtualMachine, co
     this.tasks.head = if (this.tasks.count == 0) 0 else this.tasks.head;
 }
 
-pub fn reportErrorOrTerminate(global: *jsc.JSGlobalObject, proof: bun.JSError) bun.JSTerminated!void {
+pub fn reportErrorOrTerminate(global: *jsc.JSGlobalObject, proof: fun.JSError) fun.JSTerminated!void {
     @branchHint(.cold);
     if (proof == error.JSTerminated) return error.JSTerminated;
     const vm = global.vm();
@@ -555,9 +555,9 @@ pub fn reportErrorOrTerminate(global: *jsc.JSGlobalObject, proof: bun.JSError) b
 // const PromiseTask = JSInternalPromise.Completion.PromiseTask;
 
 // const ShellIOReaderAsyncDeinit = shell.Interpreter.IOReader.AsyncDeinit;
-const ProcessWaiterThreadTask = if (Environment.isPosix) bun.spawn.process.WaiterThread.ProcessQueue.ResultTask else opaque {};
+const ProcessWaiterThreadTask = if (Environment.isPosix) fun.spawn.process.WaiterThread.ProcessQueue.ResultTask else opaque {};
 
-const log = bun.Output.scoped(.Task, .hidden);
+const log = fun.Output.scoped(.Task, .hidden);
 
 const JSCScheduler = @import("../jsc/JSCScheduler.zig");
 const JSCDeferredWorkTask = JSCScheduler.JSCDeferredWorkTask;
@@ -565,29 +565,29 @@ const JSCDeferredWorkTask = JSCScheduler.JSCDeferredWorkTask;
 const Fetch = @import("../runtime/webcore/fetch.zig");
 const FetchTasklet = Fetch.FetchTasklet;
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
-const TaggedPointerUnion = bun.TaggedPointerUnion;
-const shell = bun.shell;
-const FlushPendingFileSinkTask = bun.webcore.FileSink.FlushPendingTask;
-const ServerAllConnectionsClosedTask = bun.api.server.ServerAllConnectionsClosedTask;
-const CopyFilePromiseTask = bun.webcore.Blob.copy_file.CopyFilePromiseTask;
-const GetAddrInfoRequestTask = bun.api.dns.GetAddrInfoRequest.Task;
-const ReadFileTask = bun.webcore.Blob.read_file.ReadFileTask;
-const WriteFileTask = bun.webcore.Blob.write_file.WriteFileTask;
-const FSWatchTask = bun.api.node.fs.Watcher.FSWatchTask;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;
+const TaggedPointerUnion = fun.TaggedPointerUnion;
+const shell = fun.shell;
+const FlushPendingFileSinkTask = fun.webcore.FileSink.FlushPendingTask;
+const ServerAllConnectionsClosedTask = fun.api.server.ServerAllConnectionsClosedTask;
+const CopyFilePromiseTask = fun.webcore.Blob.copy_file.CopyFilePromiseTask;
+const GetAddrInfoRequestTask = fun.api.dns.GetAddrInfoRequest.Task;
+const ReadFileTask = fun.webcore.Blob.read_file.ReadFileTask;
+const WriteFileTask = fun.webcore.Blob.write_file.WriteFileTask;
+const FSWatchTask = fun.api.node.fs.Watcher.FSWatchTask;
 const ShellGlobTask = shell.interpret.Interpreter.Expansion.ShellGlobTask;
 
-const S3 = bun.S3;
+const S3 = fun.S3;
 const S3HttpDownloadStreamingTask = S3.S3HttpDownloadStreamingTask;
 const S3HttpSimpleTask = S3.S3HttpSimpleTask;
 
-const NapiFinalizerTask = bun.api.napi.NapiFinalizerTask;
-const ThreadSafeFunction = bun.api.napi.ThreadSafeFunction;
-const napi_async_work = bun.api.napi.napi_async_work;
+const NapiFinalizerTask = fun.api.napi.NapiFinalizerTask;
+const ThreadSafeFunction = fun.api.napi.ThreadSafeFunction;
+const napi_async_work = fun.api.napi.napi_async_work;
 
-const AsyncFS = bun.api.node.fs.Async;
+const AsyncFS = fun.api.node.fs.Async;
 const Access = AsyncFS.access;
 const AppendFile = AsyncFS.appendFile;
 const Chmod = AsyncFS.chmod;
@@ -631,7 +631,7 @@ const Write = AsyncFS.write;
 const WriteFile = AsyncFS.writeFile;
 const Writev = AsyncFS.writev;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const AnyTask = jsc.AnyTask;
 const CppTask = jsc.CppTask;
 const EventLoop = jsc.EventLoop;

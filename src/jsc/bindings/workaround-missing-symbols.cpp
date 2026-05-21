@@ -51,7 +51,7 @@ extern "C" int kill(int pid, int sig)
 
 #if defined(__FreeBSD__) && !ASSERT_ENABLED
 // WTF references this counter from text/StringCommon.h under STRING_STATS;
-// Debug WebKit defines it (StringView.cpp); Release doesn't, but Bun's
+// Debug WebKit defines it (StringView.cpp); Release doesn't, but Fun's
 // StringView.h usage still emits a reference.
 #include <atomic>
 namespace WTF::Detail {
@@ -117,24 +117,24 @@ __asm__(".symver powf,powf@GLIBC_2.17");
 #endif
 
 #if defined(__x86_64__) || defined(__aarch64__)
-#define BUN_WRAP_GLIBC_SYMBOL(symbol) __wrap_##symbol
+#define FUN_WRAP_GLIBC_SYMBOL(symbol) __wrap_##symbol
 #else
-#define BUN_WRAP_GLIBC_SYMBOL(symbol) symbol
+#define FUN_WRAP_GLIBC_SYMBOL(symbol) symbol
 #endif
 
 extern "C" {
 
-double BUN_WRAP_GLIBC_SYMBOL(exp)(double);
-double BUN_WRAP_GLIBC_SYMBOL(exp2)(double);
-float BUN_WRAP_GLIBC_SYMBOL(expf)(float);
-float BUN_WRAP_GLIBC_SYMBOL(log2f)(float);
-float BUN_WRAP_GLIBC_SYMBOL(logf)(float);
-float BUN_WRAP_GLIBC_SYMBOL(powf)(float, float);
-double BUN_WRAP_GLIBC_SYMBOL(pow)(double, double);
-double BUN_WRAP_GLIBC_SYMBOL(log)(double);
-double BUN_WRAP_GLIBC_SYMBOL(log2)(double);
-int BUN_WRAP_GLIBC_SYMBOL(fcntl64)(int, int, ...);
-ssize_t BUN_WRAP_GLIBC_SYMBOL(getrandom)(void*, size_t, unsigned int);
+double FUN_WRAP_GLIBC_SYMBOL(exp)(double);
+double FUN_WRAP_GLIBC_SYMBOL(exp2)(double);
+float FUN_WRAP_GLIBC_SYMBOL(expf)(float);
+float FUN_WRAP_GLIBC_SYMBOL(log2f)(float);
+float FUN_WRAP_GLIBC_SYMBOL(logf)(float);
+float FUN_WRAP_GLIBC_SYMBOL(powf)(float, float);
+double FUN_WRAP_GLIBC_SYMBOL(pow)(double, double);
+double FUN_WRAP_GLIBC_SYMBOL(log)(double);
+double FUN_WRAP_GLIBC_SYMBOL(log2)(double);
+int FUN_WRAP_GLIBC_SYMBOL(fcntl64)(int, int, ...);
+ssize_t FUN_WRAP_GLIBC_SYMBOL(getrandom)(void*, size_t, unsigned int);
 
 float __wrap_expf(float x) { return expf(x); }
 float __wrap_powf(float x, float y) { return powf(x, y); }
@@ -389,10 +389,10 @@ void std::__libcpp_verbose_abort(char const* format, ...) noexcept
     size_t len = vsnprintf(buffer, sizeof(buffer), format, list);
     va_end(list);
 
-    Bun__panic(buffer, len);
+    Fun__panic(buffer, len);
 }
 
-#undef BUN_VERBOSE_ABORT_NOEXCEPT
+#undef FUN_VERBOSE_ABORT_NOEXCEPT
 
 #endif
 

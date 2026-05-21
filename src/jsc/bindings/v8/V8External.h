@@ -9,8 +9,8 @@ namespace v8 {
 
 class External : public Value {
 public:
-    BUN_EXPORT static Local<External> New(Isolate* isolate, void* value);
-    BUN_EXPORT void* Value() const;
+    FUN_EXPORT static Local<External> New(Isolate* isolate, void* value);
+    FUN_EXPORT void* Value() const;
 };
 
 } // namespace v8

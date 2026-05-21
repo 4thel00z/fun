@@ -1,0 +1,3 @@
+[serve.static]
+plugins = ["fun-plugin-tailwind"]
+env = "FUN_PUBLIC_*"

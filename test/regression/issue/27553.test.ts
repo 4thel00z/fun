@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("String.raw preserves null bytes in tagged template literals", async () => {
   // Create a source file with a literal null byte (0x00) inside a tagged template literal.
@@ -14,9 +14,9 @@ test("String.raw preserves null bytes in tagged template literals", async () => 
     "test.js": source,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -40,9 +40,9 @@ test("null bytes in untagged template literals are preserved", async () => {
     "test.js": source,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -66,9 +66,9 @@ test("null bytes in String.raw with surrounding content", async () => {
     "test.js": source,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

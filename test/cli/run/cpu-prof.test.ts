@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { readdirSync, readFileSync } from "fs";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 // Every workload below is time-bounded for 100ms. On Windows JSC's
@@ -20,15 +20,15 @@ describe.concurrent("--cpu-prof", () => {
 
         const now = performance.now();
         while (now + 100 > performance.now()) {
-            Bun.inspect(fibonacci(20));
+            Fun.inspect(fibonacci(20));
         }
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof", "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof", "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -110,10 +110,10 @@ describe.concurrent("--cpu-prof", () => {
 
     const customName = "my-profile.cpuprofile";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof", "--cpu-prof-name", customName, "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof", "--cpu-prof-name", customName, "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -137,10 +137,10 @@ describe.concurrent("--cpu-prof", () => {
       "profiles": {},
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof", "--cpu-prof-dir", "profiles", "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof", "--cpu-prof-dir", "profiles", "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -171,10 +171,10 @@ describe.concurrent("--cpu-prof", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof", "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof", "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -206,7 +206,7 @@ describe.concurrent("--cpu-prof", () => {
         function main() {
           const now = performance.now();
           while (now + 100 > performance.now()) {
-            Bun.inspect(fibonacci(20));
+            Fun.inspect(fibonacci(20));
           }
         }
 
@@ -214,10 +214,10 @@ describe.concurrent("--cpu-prof", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof", "--cpu-prof-md", "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof", "--cpu-prof-md", "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -264,10 +264,10 @@ describe.concurrent("--cpu-prof", () => {
     const customName = "my-profile.md";
 
     // --cpu-prof-md works standalone, no need for --cpu-prof
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof-md", "--cpu-prof-name", customName, "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof-md", "--cpu-prof-name", customName, "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -308,10 +308,10 @@ describe.concurrent("--cpu-prof", () => {
     });
 
     // --cpu-prof-md works standalone
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof-md", "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof-md", "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -347,10 +347,10 @@ describe.concurrent("--cpu-prof", () => {
     });
 
     // Use ONLY --cpu-prof-md without --cpu-prof
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof-md", "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof-md", "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -381,10 +381,10 @@ describe.concurrent("--cpu-prof", () => {
     });
 
     // Use both flags together
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--cpu-prof", "--cpu-prof-md", "test.js"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--cpu-prof", "--cpu-prof-md", "test.js"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });

@@ -1,4 +1,4 @@
-import type { Bake } from "bun";
+import type { Bake } from "fun";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import * as svelte from "svelte/compiler";

@@ -94,7 +94,7 @@ pub fn indexOfChar(haystack: string, needle: u8) ?usize {
         return null;
     }
 
-    bun.debugAssert(haystack[result] == needle);
+    fun.debugAssert(haystack[result] == needle);
 
     return result;
 }
@@ -118,7 +118,7 @@ pub fn indexOfInterestingCharacterInStringLiteral(slice: string, quote_type: u8)
 }
 
 pub fn indexOfNewlineOrNonASCII(haystack: string) ?usize {
-    bun.debugAssert(haystack.len > 0);
+    fun.debugAssert(haystack.len > 0);
 
     const result = highway_index_of_newline_or_non_ascii(
         haystack.ptr,
@@ -139,7 +139,7 @@ pub fn indexOfNewlineOrNonASCII(haystack: string) ?usize {
 }
 
 pub fn indexOfNewlineOrNonASCIIOrANSI(haystack: string) ?usize {
-    bun.debugAssert(haystack.len > 0);
+    fun.debugAssert(haystack.len > 0);
 
     const result = highway_index_of_newline_or_non_ascii_or_ansi(
         haystack.ptr,
@@ -302,6 +302,6 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const strings = fun.strings;

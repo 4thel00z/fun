@@ -1,12 +1,12 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { WebSocket } from "ws";
 
 describe("ws.once() multiple calls", () => {
-  let server: Bun.Server;
+  let server: Fun.Server;
   let port: number;
 
   beforeAll(() => {
-    server = Bun.serve({
+    server = Fun.serve({
       port: 0,
       fetch(req, server) {
         if (server.upgrade(req)) {
@@ -19,7 +19,7 @@ describe("ws.once() multiple calls", () => {
           ws.send(message);
         },
         ping(ws, data) {
-          // Bun automatically responds with pong
+          // Fun automatically responds with pong
         },
       },
     });

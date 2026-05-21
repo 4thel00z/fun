@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "node:events";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import net from "node:net";
 
-// Test for https://github.com/oven-sh/bun/issues/25862
+// Test for https://github.com/underdoc-org/fun/issues/25862
 // Pipelined data sent immediately after CONNECT request headers should be
 // delivered to the `head` parameter of the 'connect' event handler.
 

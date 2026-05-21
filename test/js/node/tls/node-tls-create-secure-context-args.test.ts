@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import * as tls from "node:tls";
 
 describe("tls.createSecureContext extra arguments test", () => {

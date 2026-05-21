@@ -1,11 +1,11 @@
-import { heapStats } from "bun:jsc";
-import { expect } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { expect } from "fun:test";
 
 let abortEventCount = 0;
 let onAbortHandler = () => {};
 let onRequestContinuePromise = Promise.withResolvers();
 let onRequestContinueHandler = () => {};
-export const server = Bun.serve({
+export const server = Fun.serve({
   port: 0,
   // Set it to a long number so this test will time out if it's actually the idleTimeout.
   idleTimeout: 254,
@@ -36,7 +36,7 @@ export const server = Bun.serve({
 
 function checkForLeaks(batchSize) {
   // AbortSignal often doesn't get cleaned up until the next full GC.
-  Bun.gc(true);
+  Fun.gc(true);
 
   const { objectTypeCounts } = heapStats();
   console.log(objectTypeCounts);
@@ -71,7 +71,7 @@ export async function testReqSignalGetter() {
       controller.abort();
     }
 
-    Bun.gc();
+    Fun.gc();
     await Promise.allSettled(promises);
   }
 
@@ -122,7 +122,7 @@ export async function testReqSignalAbortEvent() {
     }
 
     await waitForRequests.promise;
-    await Bun.sleep(1);
+    await Fun.sleep(1);
 
     for (const controller of controllers) {
       controller.abort();
@@ -131,7 +131,7 @@ export async function testReqSignalAbortEvent() {
 
     await onRequestContinuePromise.promise;
 
-    Bun.gc();
+    Fun.gc();
     await Promise.allSettled(promises);
   }
   await batch();
@@ -170,8 +170,8 @@ export async function testReqSignalAbortEventNeverResolves() {
     }
 
     await onRequestContinuePromise.promise;
-    await Bun.sleep(1);
-    Bun.gc();
+    await Fun.sleep(1);
+    Fun.gc();
     await Promise.allSettled(promises);
   }
 

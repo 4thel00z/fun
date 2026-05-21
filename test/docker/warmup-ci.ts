@@ -1,11 +1,11 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 /**
  * Background-start the docker-compose services a given test shard needs.
  *
  * Called from scripts/runner.node.mjs before tests run, with the shard's test
  * paths on argv. Looks up which services each path uses, dedupes, and runs one
  * `docker compose up -d <services>` (no --wait) so containers initialize while
- * the runner is still downloading the bun binary and installing vendor deps.
+ * the runner is still downloading the fun binary and installing vendor deps.
  * Each test's own ensure() then finds its container already healthy.
  *
  * The path→service map below is hand-maintained. Prefix match — every test
@@ -27,7 +27,7 @@ const map: Record<string, readonly string[]> = {
   "js/sql/sql.test": ["postgres_plain"],
   "js/sql/sql-prepare-false": ["postgres_plain"],
   "js/valkey/": ["redis_unified"],
-  "js/bun/s3/": ["minio"],
+  "js/fun/s3/": ["minio"],
   "js/web/websocket/autobahn": ["autobahn"],
   "js/web/websocket/websocket-proxy": ["squid"],
   "integration/mysql2/": ["mysql_plain", "mysql_native_password"],
@@ -61,7 +61,7 @@ console.log(`warmup-ci: starting ${services.join(", ")}`);
 // via prepare-ci.ts, and a missing one will be built on-demand by ensure().
 const r = spawnSync(
   "docker",
-  ["compose", "-p", "bun-test-services", "-f", composeFile, "up", "-d", "--no-recreate", "--quiet-pull", ...services],
+  ["compose", "-p", "fun-test-services", "-f", composeFile, "up", "-d", "--no-recreate", "--quiet-pull", ...services],
   { stdio: "inherit" },
 );
 process.exit(r.status ?? 1);

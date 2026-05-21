@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, test } from "fun:test";
 
 const Response = globalThis.Response;
 const Request = globalThis.Request;

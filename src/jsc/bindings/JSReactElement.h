@@ -6,13 +6,13 @@
 
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 namespace JSReactElement {
 
 Structure* createStructure(VM& vm, JSGlobalObject* globalObject);
 
 } // namespace JSReactElement
-} // namespace Bun
+} // namespace Fun
 
 extern "C" JSC::EncodedJSValue JSReactElement__create(
     JSGlobalObject* globalObject,

@@ -3,10 +3,10 @@ title: Standalone HTML
 description: Bundle a single-page app into a single self-contained .html file with no external dependencies
 ---
 
-Bun can bundle your entire frontend into a **single `.html` file** with zero external dependencies. JavaScript, TypeScript, JSX, CSS, images, fonts, videos, WASM — everything gets inlined into one file.
+Fun can bundle your entire frontend into a **single `.html` file** with zero external dependencies. JavaScript, TypeScript, JSX, CSS, images, fonts, videos, WASM — everything gets inlined into one file.
 
 ```bash terminal icon="terminal"
-bun build --compile --target=browser ./index.html --outdir=dist
+fun build --compile --target=browser ./index.html --outdir=dist
 ```
 
 The output is a completely self-contained HTML document. No relative paths. No external files. No server required. Just one `.html` file that works anywhere a browser can open it.
@@ -70,14 +70,14 @@ body {
 </CodeGroup>
 
 ```bash terminal icon="terminal"
-bun build --compile --target=browser ./index.html --outdir=dist
+fun build --compile --target=browser ./index.html --outdir=dist
 ```
 
 Open `dist/index.html` — the React app works with no server.
 
 ## Everything gets inlined
 
-Bun inlines every local asset it finds in your HTML. If it has a relative path, it gets embedded into the output file. This isn't limited to images and stylesheets — it works with any file type.
+Fun inlines every local asset it finds in your HTML. If it has a relative path, it gets embedded into the output file. This isn't limited to images and stylesheets — it works with any file type.
 
 ### What gets inlined
 
@@ -104,10 +104,10 @@ External URLs (like CDN links or absolute URLs) are left untouched.
 
 ## Using with React
 
-React apps work out of the box. Bun handles JSX transpilation and npm package resolution automatically.
+React apps work out of the box. Fun handles JSX transpilation and npm package resolution automatically.
 
 ```bash terminal icon="terminal"
-bun install react react-dom
+fun install react react-dom
 ```
 
 <CodeGroup>
@@ -157,7 +157,7 @@ export function Counter() {
 </CodeGroup>
 
 ```bash terminal icon="terminal"
-bun build --compile --target=browser ./index.html --outdir=dist
+fun build --compile --target=browser ./index.html --outdir=dist
 ```
 
 All of React, your components, and your CSS are bundled into `dist/index.html`. Upload that one file anywhere and it works.
@@ -167,7 +167,7 @@ All of React, your components, and your CSS are bundled into `dist/index.html`. 
 Install the plugin and reference Tailwind in your HTML or CSS:
 
 ```bash terminal icon="terminal"
-bun install --dev bun-plugin-tailwind
+fun install --dev fun-plugin-tailwind
 ```
 
 <CodeGroup>
@@ -206,24 +206,24 @@ createRoot(document.getElementById("root")!).render(<App />);
 Build with the plugin using the JavaScript API:
 
 ```ts build.ts icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./index.html"],
   compile: true,
   target: "browser",
   outdir: "./dist",
-  plugins: [require("bun-plugin-tailwind")],
+  plugins: [require("fun-plugin-tailwind")],
 });
 ```
 
 ```bash terminal icon="terminal"
-bun run build.ts
+fun run build.ts
 ```
 
 The generated Tailwind CSS is inlined directly into the HTML file as a `<style>` tag.
 
 ## How it works
 
-When you pass `--compile --target=browser` with an HTML entrypoint, Bun:
+When you pass `--compile --target=browser` with an HTML entrypoint, Fun:
 
 1. Parses the HTML and discovers all `<script>`, `<link>`, `<img>`, `<video>`, `<audio>`, `<source>`, and other asset references
 2. Bundles all JavaScript/TypeScript/JSX into a single module
@@ -238,13 +238,13 @@ When you pass `--compile --target=browser` with an HTML entrypoint, Bun:
 Add `--minify` to minify the JavaScript and CSS:
 
 ```bash terminal icon="terminal"
-bun build --compile --target=browser --minify ./index.html --outdir=dist
+fun build --compile --target=browser --minify ./index.html --outdir=dist
 ```
 
 Or via the API:
 
 ```ts build.ts icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./index.html"],
   compile: true,
   target: "browser",
@@ -255,10 +255,10 @@ await Bun.build({
 
 ## JavaScript API
 
-You can use `Bun.build()` to produce standalone HTML programmatically:
+You can use `Fun.build()` to produce standalone HTML programmatically:
 
 ```ts build.ts icon="/icons/typescript.svg"
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints: ["./index.html"],
   compile: true,
   target: "browser",
@@ -279,14 +279,14 @@ if (!result.success) {
 When `outdir` is omitted, the output is available as a `BuildArtifact` in `result.outputs`:
 
 ```ts icon="/icons/typescript.svg"
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints: ["./index.html"],
   compile: true,
   target: "browser",
 });
 
 const html = await result.outputs[0].text();
-await Bun.write("output.html", html);
+await Fun.write("output.html", html);
 ```
 
 ## Multiple HTML files
@@ -294,7 +294,7 @@ await Bun.write("output.html", html);
 You can pass multiple HTML files as entrypoints. Each produces its own standalone HTML file:
 
 ```bash terminal icon="terminal"
-bun build --compile --target=browser ./index.html ./about.html --outdir=dist
+fun build --compile --target=browser ./index.html ./about.html --outdir=dist
 ```
 
 ## Environment variables
@@ -302,7 +302,7 @@ bun build --compile --target=browser ./index.html ./about.html --outdir=dist
 Use `--env` to inline environment variables into the bundled JavaScript:
 
 ```bash terminal icon="terminal"
-API_URL=https://api.example.com bun build --compile --target=browser --env=inline ./index.html --outdir=dist
+API_URL=https://api.example.com fun build --compile --target=browser --env=inline ./index.html --outdir=dist
 ```
 
 References to `process.env.API_URL` in your JavaScript are replaced with the literal value at build time.

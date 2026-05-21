@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UTF-16", stream => {
   test("single unpaired high surrogate (D800)", async () => {
@@ -11,9 +11,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -39,9 +39,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -71,9 +71,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -106,9 +106,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -136,9 +136,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -166,9 +166,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -198,9 +198,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -230,9 +230,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -266,9 +266,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -304,9 +304,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -345,9 +345,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -384,9 +384,9 @@ describe.concurrent.each(["stdout", "stderr"])("process.%s.write with invalid UT
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",

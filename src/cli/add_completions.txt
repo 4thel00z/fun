@@ -1029,7 +1029,7 @@ builtins
 bull
 bull-arena
 bulma
-bun
+fun
 bundle-loader
 bundlewatch
 bunyan

@@ -28,12 +28,12 @@ pub fn escapeHTMLForLatin1Input(allocator: std.mem.Allocator, latin1: []const u8
             break :brk values;
         };
 
-        fn appendString(buf: [*]u8, comptime str: []const u8) callconv(bun.callconv_inline) usize {
+        fn appendString(buf: [*]u8, comptime str: []const u8) callconv(fun.callconv_inline) usize {
             buf[0..str.len].* = str[0..str.len].*;
             return str.len;
         }
 
-        pub fn append(buf: [*]u8, char: u8) callconv(bun.callconv_inline) usize {
+        pub fn append(buf: [*]u8, char: u8) callconv(fun.callconv_inline) usize {
             if (lengths[char] == 1) {
                 buf[0] = char;
                 return 1;
@@ -49,7 +49,7 @@ pub fn escapeHTMLForLatin1Input(allocator: std.mem.Allocator, latin1: []const u8
             };
         }
 
-        pub fn push(comptime len: anytype, chars_: *const [len]u8, allo: std.mem.Allocator) callconv(bun.callconv_inline) Escaped(u8) {
+        pub fn push(comptime len: anytype, chars_: *const [len]u8, allo: std.mem.Allocator) callconv(fun.callconv_inline) Escaped(u8) {
             const chars = chars_.*;
             var total: usize = 0;
 
@@ -67,7 +67,7 @@ pub fn escapeHTMLForLatin1Input(allocator: std.mem.Allocator, latin1: []const u8
 
             const output = allo.alloc(u8, total) catch unreachable;
             var head = output.ptr;
-            inline for (comptime bun.range(0, len)) |i| {
+            inline for (comptime fun.range(0, len)) |i| {
                 head += @This().append(head, chars[i]);
             }
 
@@ -392,8 +392,8 @@ pub fn escapeHTMLForUTF16Input(allocator: std.mem.Allocator, utf16: []const u16)
             }
 
             var buf = allocator.alloc(u16, first_16.len + second_16.len) catch unreachable;
-            bun.copy(u16, buf, first_16);
-            bun.copy(u16, buf[first_16.len..], second_16);
+            fun.copy(u16, buf, first_16);
+            fun.copy(u16, buf[first_16.len..], second_16);
             return Escaped(u16){ .allocated = buf };
         },
 
@@ -627,11 +627,11 @@ pub fn escapeHTMLForUTF16Input(allocator: std.mem.Allocator, utf16: []const u16)
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
 
-const strings = bun.strings;
+const strings = fun.strings;
 const AsciiU16Vector = strings.AsciiU16Vector;
 const AsciiVector = strings.AsciiVector;
 const AsciiVectorU1 = strings.AsciiVectorU1;

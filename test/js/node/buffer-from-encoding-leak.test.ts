@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 // JSBuffer__bufferFromPointerAndLengthAndDeinit used to skip the deallocator entirely
 // when the resulting length was 0. Buffer.from(<string with no valid hex>, "hex") would
@@ -20,11 +20,11 @@ describe("Buffer.from(string, encoding) does not leak when decoded length is 0",
 
     // warm up so any one-time allocations (JIT tiers, caches) don't count
     for (let i = 0; i < 1000; i++) Buffer.from(str, "hex");
-    Bun.gc(true);
+    Fun.gc(true);
     const before = process.memoryUsage.rss();
 
     for (let i = 0; i < iterations; i++) Buffer.from(str, "hex");
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
 
     const growthMB = (after - before) / 1024 / 1024;

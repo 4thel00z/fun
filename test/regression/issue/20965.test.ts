@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/20965
+// https://github.com/underdoc-org/fun/issues/20965
 // StreamTransfer.onAborted set has_ended_response=true before finish(), so
 // route.onResponseComplete() was skipped and pending_requests was never
 // decremented — server.stop() would hang after any aborted file stream.
@@ -15,9 +15,9 @@ test("aborting a streaming file response mid-transfer does not leak pending_requ
       const big = join(import.meta.dir, "big.bin");
       writeFileSync(big, Buffer.alloc(5 * 1024 * 1024));
 
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
-        routes: { "/big": new Response(Bun.file(big)) },
+        routes: { "/big": new Response(Fun.file(big)) },
         fetch: () => new Response("unreachable"),
       });
 
@@ -37,16 +37,16 @@ test("aborting a streaming file response mid-transfer does not leak pending_requ
 
       const result = await Promise.race([
         server.stop().then(() => "stopped"),
-        Bun.sleep(2000).then(() => "HUNG: pending_requests was never decremented"),
+        Fun.sleep(2000).then(() => "HUNG: pending_requests was never decremented"),
       ]);
       console.log(result);
       process.exit(result === "stopped" ? 0 : 1);
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "fixture.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "fixture.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -54,6 +54,6 @@ test("aborting a streaming file response mid-transfer does not leak pending_requ
 
   const [stdout, , exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  expect(normalizeBunSnapshot(stdout)).toBe("stopped");
+  expect(normalizeFunSnapshot(stdout)).toBe("stopped");
   expect(exitCode).toBe(0);
 });

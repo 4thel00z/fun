@@ -23,14 +23,14 @@ pub const TransformList = struct {
         input.skipWhitespace();
         var results = ArrayList(Transform){};
         switch (Transform.parse(input)) {
-            .result => |first| bun.handleOom(results.append(input.allocator(), first)),
+            .result => |first| fun.handleOom(results.append(input.allocator(), first)),
             .err => |e| return .{ .err = e },
         }
 
         while (true) {
             input.skipWhitespace();
             if (input.tryParse(Transform.parse, .{}).asValue()) |item| {
-                bun.handleOom(results.append(input.allocator(), item));
+                fun.handleOom(results.append(input.allocator(), item));
             } else {
                 return .{ .result = .{ .v = results } };
             }
@@ -212,7 +212,7 @@ pub const Transform = union(enum) {
             struct {
                 fn parse(closure: Closure, i: *css.Parser) css.Result(Transform) {
                     const location = i.currentSourceLocation();
-                    if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "matrix")) {
+                    if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "matrix")) {
                         const a = switch (css.CSSNumberFns.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -243,7 +243,7 @@ pub const Transform = union(enum) {
                             .err => |ee| return .{ .err = ee },
                         };
                         return .{ .result = .{ .matrix = .{ .a = a, .b = b, .c = c, .d = d, .e = e, .f = f } } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "matrix3d")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "matrix3d")) {
                         const m11 = switch (css.CSSNumberFns.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -341,7 +341,7 @@ pub const Transform = union(enum) {
                             .m43 = m43,
                             .m44 = m44,
                         } } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translate")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translate")) {
                         const x = switch (LengthPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -359,25 +359,25 @@ pub const Transform = union(enum) {
                         } else {
                             return .{ .result = .{ .translate = .{ .x = x, .y = LengthPercentage.zero() } } };
                         }
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translatex")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translatex")) {
                         const x = switch (LengthPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .translate_x = x } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translatey")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translatey")) {
                         const y = switch (LengthPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .translate_y = y } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translatez")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translatez")) {
                         const z = switch (Length.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .translate_z = z } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translate3d")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "translate3d")) {
                         const x = switch (LengthPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -393,7 +393,7 @@ pub const Transform = union(enum) {
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .translate_3d = .{ .x = x, .y = y, .z = z } } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scale")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scale")) {
                         const x = switch (NumberOrPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -411,25 +411,25 @@ pub const Transform = union(enum) {
                         } else {
                             return .{ .result = .{ .scale = .{ .x = x, .y = x.deepClone(i.allocator()) } } };
                         }
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scalex")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scalex")) {
                         const x = switch (NumberOrPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .scale_x = x } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scaley")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scaley")) {
                         const y = switch (NumberOrPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .scale_y = y } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scalez")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scalez")) {
                         const z = switch (NumberOrPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .scale_z = z } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scale3d")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "scale3d")) {
                         const x = switch (NumberOrPercentage.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -445,31 +445,31 @@ pub const Transform = union(enum) {
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .scale_3d = .{ .x = x, .y = y, .z = z } } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotate")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotate")) {
                         const angle = switch (Angle.parseWithUnitlessZero(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .rotate = angle } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotatex")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotatex")) {
                         const angle = switch (Angle.parseWithUnitlessZero(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .rotate_x = angle } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotatey")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotatey")) {
                         const angle = switch (Angle.parseWithUnitlessZero(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .rotate_y = angle } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotatez")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotatez")) {
                         const angle = switch (Angle.parseWithUnitlessZero(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .rotate_z = angle } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotate3d")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "rotate3d")) {
                         const x = switch (css.CSSNumberFns.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -490,7 +490,7 @@ pub const Transform = union(enum) {
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .rotate_3d = .{ .x = x, .y = y, .z = z, .angle = angle } } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "skew")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "skew")) {
                         const x = switch (Angle.parseWithUnitlessZero(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -508,19 +508,19 @@ pub const Transform = union(enum) {
                         } else {
                             return .{ .result = .{ .skew = .{ .x = x, .y = Angle{ .deg = 0.0 } } } };
                         }
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "skewx")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "skewx")) {
                         const angle = switch (Angle.parseWithUnitlessZero(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .skew_x = angle } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "skewy")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "skewy")) {
                         const angle = switch (Angle.parseWithUnitlessZero(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
                         };
                         return .{ .result = .{ .skew_y = angle } };
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "perspective")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(closure.function, "perspective")) {
                         const len = switch (Length.parse(i)) {
                             .result => |v| v,
                             .err => |e| return .{ .err = e },
@@ -1016,11 +1016,11 @@ pub const Rotate = struct {
                     .result => |v| v,
                     .err => |e| return .{ .err = e },
                 };
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "x")) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "x")) {
                     return .{ .result = .{ .x = 1.0, .y = 0.0, .z = 0.0 } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "y")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "y")) {
                     return .{ .result = .{ .x = 0.0, .y = 1.0, .z = 0.0 } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "z")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "z")) {
                     return .{ .result = .{ .x = 0.0, .y = 0.0, .z = 1.0 } };
                 }
                 return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
@@ -1202,7 +1202,7 @@ pub const TransformHandler = struct {
         const individualProperty = struct {
             fn individualProperty(self: *TransformHandler, allocator: std.mem.Allocator, comptime field: []const u8, val: anytype) void {
                 if (self.transform) |*transform| {
-                    bun.handleOom(transform.*[0].v.append(allocator, val.toTransform(allocator)));
+                    fun.handleOom(transform.*[0].v.append(allocator, val.toTransform(allocator)));
                 } else {
                     @field(self, field) = val.deepClone(allocator);
                     self.has_any = true;
@@ -1219,14 +1219,14 @@ pub const TransformHandler = struct {
                 // If two vendor prefixes for the same property have different
                 // values, we need to flush what we have immediately to preserve order.
                 if (this.transform) |current| {
-                    if (!current[0].eql(&transform_val) and !bun.bits.contains(css.VendorPrefix, current[1], vp)) {
+                    if (!current[0].eql(&transform_val) and !fun.bits.contains(css.VendorPrefix, current[1], vp)) {
                         this.flush(allocator, dest, context);
                     }
                 }
 
                 // Otherwise, update the value and add the prefix.
                 if (this.transform) |*transform| {
-                    transform.* = .{ transform_val.deepClone(allocator), bun.bits.@"or"(css.VendorPrefix, transform.*[1], vp) };
+                    transform.* = .{ transform_val.deepClone(allocator), fun.bits.@"or"(css.VendorPrefix, transform.*[1], vp) };
                 } else {
                     this.transform = .{ transform_val.deepClone(allocator), vp };
                     this.has_any = true;
@@ -1250,7 +1250,7 @@ pub const TransformHandler = struct {
                         Property{ .unparsed = unparsed.getPrefixed(allocator, context.targets, css.prefixes.Feature.transform) }
                     else
                         property.deepClone(allocator);
-                    bun.handleOom(dest.append(allocator, prop));
+                    fun.handleOom(dest.append(allocator, prop));
                 } else return false;
             },
             else => return false,
@@ -1268,31 +1268,31 @@ pub const TransformHandler = struct {
 
         this.has_any = false;
 
-        const transform = bun.take(&this.transform);
-        const translate = bun.take(&this.translate);
-        const rotate = bun.take(&this.rotate);
-        const scale = bun.take(&this.scale);
+        const transform = fun.take(&this.transform);
+        const translate = fun.take(&this.translate);
+        const rotate = fun.take(&this.rotate);
+        const scale = fun.take(&this.scale);
 
         if (transform) |t| {
             const prefix = context.targets.prefixes(t[1], css.prefixes.Feature.transform);
-            bun.handleOom(dest.append(allocator, Property{ .transform = .{ t[0], prefix } }));
+            fun.handleOom(dest.append(allocator, Property{ .transform = .{ t[0], prefix } }));
         }
 
         if (translate) |t| {
-            bun.handleOom(dest.append(allocator, Property{ .translate = t }));
+            fun.handleOom(dest.append(allocator, Property{ .translate = t }));
         }
 
         if (rotate) |r| {
-            bun.handleOom(dest.append(allocator, Property{ .rotate = r }));
+            fun.handleOom(dest.append(allocator, Property{ .rotate = r }));
         }
 
         if (scale) |s| {
-            bun.handleOom(dest.append(allocator, Property{ .scale = s }));
+            fun.handleOom(dest.append(allocator, Property{ .scale = s }));
         }
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

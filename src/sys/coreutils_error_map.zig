@@ -358,13 +358,13 @@ pub const coreutils_error_map = brk: {
     }
 
     // sanity check
-    bun.assert(std.mem.eql(u8, map.get(SystemErrno.ENOENT).?, "No such file or directory"));
+    fun.assert(std.mem.eql(u8, map.get(SystemErrno.ENOENT).?, "No such file or directory"));
 
     break :brk map;
 };
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const SystemErrno = bun.sys.SystemErrno;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const SystemErrno = fun.sys.SystemErrno;

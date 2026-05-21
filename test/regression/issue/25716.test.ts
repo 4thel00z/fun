@@ -1,10 +1,10 @@
-// https://github.com/oven-sh/bun/issues/25716
-// Expose `--react-fast-refresh` option in `Bun.build` JS API
-import { expect, test } from "bun:test";
+// https://github.com/underdoc-org/fun/issues/25716
+// Expose `--react-fast-refresh` option in `Fun.build` JS API
+import { expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 import { join } from "path";
 
-test.each(["browser", "bun"] as const)("Bun.build reactFastRefresh works with target: %s", async target => {
+test.each(["browser", "fun"] as const)("Fun.build reactFastRefresh works with target: %s", async target => {
   const dir = tempDirWithFiles("react-fast-refresh-test", {
     "component.tsx": `
       import { useState } from "react";
@@ -21,7 +21,7 @@ test.each(["browser", "bun"] as const)("Bun.build reactFastRefresh works with ta
   });
 
   // With reactFastRefresh: true, output should contain $RefreshReg$ and $RefreshSig$
-  const buildEnabled = await Bun.build({
+  const buildEnabled = await Fun.build({
     entrypoints: [join(dir, "component.tsx")],
     reactFastRefresh: true,
     target,
@@ -36,7 +36,7 @@ test.each(["browser", "bun"] as const)("Bun.build reactFastRefresh works with ta
   expect(outputEnabled).toContain("$RefreshSig$");
 
   // Without reactFastRefresh (default), output should NOT contain refresh calls
-  const buildDisabled = await Bun.build({
+  const buildDisabled = await Fun.build({
     entrypoints: [join(dir, "component.tsx")],
     target,
     external: ["react"],

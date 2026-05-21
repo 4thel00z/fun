@@ -1,5 +1,5 @@
 // to run this:
-//  NODE_ENV=production bun react-hello-world.jsx
+//  NODE_ENV=production fun react-hello-world.jsx
 
 // Make sure you're using react-dom@18.3.0 or later.
 // Currently that is available at react-dom@next (which is installed in this repository)
@@ -20,7 +20,7 @@ const App = () => (
 );
 
 const port = Number(process.env.PORT || 3001);
-Bun.serve({
+Fun.serve({
   port,
   async fetch(req) {
     return new Response(await renderToReadableStream(<App />), headers);

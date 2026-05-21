@@ -1,16 +1,16 @@
-import { spawnSync } from "bun";
-import { describe, expect, setDefaultTimeout, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir, tmpdirSync } from "harness";
+import { spawnSync } from "fun";
+import { describe, expect, setDefaultTimeout, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir, tmpdirSync } from "harness";
 import { appendFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Each case spawns a full `bun test` process; give the concurrent group
+// Each case spawns a full `fun test` process; give the concurrent group
 // headroom on slow ASAN/CI machines.
 setDefaultTimeout(30_000);
 
 // Keep git from reading the developer's global config and make commits
 // deterministic across machines. Used both for the `git` helper below and
-// for every spawned `bun test --changed` process, since that process
+// for every spawned `fun test --changed` process, since that process
 // itself shells out to git and would otherwise inherit the developer's
 // excludes/config.
 //
@@ -20,7 +20,7 @@ setDefaultTimeout(30_000);
 const emptyGitConfig = join(tmpdirSync(), "empty.gitconfig");
 writeFileSync(emptyGitConfig, "");
 const gitEnv = {
-  ...bunEnv,
+  ...funEnv,
   GIT_CONFIG_NOSYSTEM: "1",
   GIT_CONFIG_GLOBAL: emptyGitConfig,
   GIT_AUTHOR_NAME: "Test",
@@ -50,8 +50,8 @@ async function runTestChanged(
   cwd: string,
   extra: string[] = [],
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--changed", ...extra],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--changed", ...extra],
     cwd,
     env: gitEnv,
     stdout: "pipe",
@@ -63,25 +63,25 @@ async function runTestChanged(
 }
 
 /** Which of the given test-file basenames were executed (appear as a file
- *  header in bun test's stderr). */
+ *  header in fun test's stderr). */
 function ranFiles(stderr: string, names: string[]): string[] {
   return names.filter(n => stderr.includes(n + ":")).sort();
 }
 
 // The --watch test at the end is the slow one; everything else is independent
 // git repos so run them concurrently.
-describe.concurrent("bun test --changed", () => {
+describe.concurrent("fun test --changed", () => {
   const fixture = {
     "package.json": JSON.stringify({ name: "changed-test", type: "module" }),
     // a.test.ts -> util.ts -> helper.ts (transitive, two levels)
     "src/helper.ts": `export const helper = () => 1;\n`,
     "src/util.ts": `import { helper } from "./helper";\nexport const util = () => helper() + 1;\n`,
-    "a.test.ts": `import { test, expect } from "bun:test";\nimport { util } from "./src/util";\ntest("a", () => expect(util()).toBe(2));\n`,
+    "a.test.ts": `import { test, expect } from "fun:test";\nimport { util } from "./src/util";\ntest("a", () => expect(util()).toBe(2));\n`,
     // b.test.ts -> other.ts (independent subgraph)
     "src/other.ts": `export const other = () => 9;\n`,
-    "b.test.ts": `import { test, expect } from "bun:test";\nimport { other } from "./src/other";\ntest("b", () => expect(other()).toBe(9));\n`,
+    "b.test.ts": `import { test, expect } from "fun:test";\nimport { other } from "./src/other";\ntest("b", () => expect(other()).toBe(9));\n`,
     // c.test.ts has no local imports
-    "c.test.ts": `import { test, expect } from "bun:test";\ntest("c", () => expect(1).toBe(1));\n`,
+    "c.test.ts": `import { test, expect } from "fun:test";\ntest("c", () => expect(1).toBe(1));\n`,
     // non-source file that nothing imports
     "README.md": "hello\n",
   };
@@ -159,9 +159,9 @@ describe.concurrent("bun test --changed", () => {
     using dir = tempDir("test-changed-shared", {
       "package.json": JSON.stringify({ name: "shared", type: "module" }),
       "shared.ts": `export const v = 1;\n`,
-      "one.test.ts": `import { test, expect } from "bun:test";\nimport { v } from "./shared";\ntest("one", () => expect(v).toBe(1));\n`,
-      "two.test.ts": `import { test, expect } from "bun:test";\nimport { v } from "./shared";\ntest("two", () => expect(v).toBe(1));\n`,
-      "three.test.ts": `import { test, expect } from "bun:test";\ntest("three", () => expect(1).toBe(1));\n`,
+      "one.test.ts": `import { test, expect } from "fun:test";\nimport { v } from "./shared";\ntest("one", () => expect(v).toBe(1));\n`,
+      "two.test.ts": `import { test, expect } from "fun:test";\nimport { v } from "./shared";\ntest("two", () => expect(v).toBe(1));\n`,
+      "three.test.ts": `import { test, expect } from "fun:test";\ntest("three", () => expect(1).toBe(1));\n`,
     });
     initRepo(String(dir));
     appendFileSync(join(String(dir), "shared.ts"), "// touched\n");
@@ -189,7 +189,7 @@ describe.concurrent("bun test --changed", () => {
 
     writeFileSync(
       join(String(dir), "new.test.ts"),
-      `import { test, expect } from "bun:test";\ntest("new", () => expect(1).toBe(1));\n`,
+      `import { test, expect } from "fun:test";\ntest("new", () => expect(1).toBe(1));\n`,
     );
 
     const { stderr, exitCode } = await runTestChanged(String(dir));
@@ -214,8 +214,8 @@ describe.concurrent("bun test --changed", () => {
     }
 
     // Against HEAD~1, helper.ts changed -> a.test.ts is selected.
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--changed=HEAD~1"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--changed=HEAD~1"],
       cwd: String(dir),
       env: gitEnv,
       stdout: "pipe",
@@ -242,11 +242,11 @@ describe.concurrent("bun test --changed", () => {
     // `git diff --name-only HEAD~1` never lists untracked files.
     writeFileSync(
       join(String(dir), "new.test.ts"),
-      `import { test, expect } from "bun:test";\ntest("new", () => expect(1).toBe(1));\n`,
+      `import { test, expect } from "fun:test";\ntest("new", () => expect(1).toBe(1));\n`,
     );
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--changed=HEAD~1"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--changed=HEAD~1"],
       cwd: String(dir),
       env: gitEnv,
       stdout: "pipe",
@@ -269,7 +269,7 @@ describe.concurrent("bun test --changed", () => {
         main: "index.js",
       }),
       "node_modules/fake-pkg/index.js": `module.exports = { value: 1 };\n`,
-      "pkg.test.ts": `import { test, expect } from "bun:test";\nimport pkg from "fake-pkg";\ntest("pkg", () => expect(pkg.value).toBe(1));\n`,
+      "pkg.test.ts": `import { test, expect } from "fun:test";\nimport pkg from "fake-pkg";\ntest("pkg", () => expect(pkg.value).toBe(1));\n`,
     });
     initRepo(String(dir));
 
@@ -287,14 +287,14 @@ describe.concurrent("bun test --changed", () => {
       "package.json": JSON.stringify({ name: "root" }),
       "app/package.json": JSON.stringify({ name: "app", type: "module" }),
       "app/dep.ts": `export const x = 1;\n`,
-      "app/sub.test.ts": `import { test, expect } from "bun:test";\nimport { x } from "./dep";\ntest("sub", () => expect(x).toBe(1));\n`,
-      "app/untouched.test.ts": `import { test, expect } from "bun:test";\ntest("untouched", () => expect(1).toBe(1));\n`,
+      "app/sub.test.ts": `import { test, expect } from "fun:test";\nimport { x } from "./dep";\ntest("sub", () => expect(x).toBe(1));\n`,
+      "app/untouched.test.ts": `import { test, expect } from "fun:test";\ntest("untouched", () => expect(1).toBe(1));\n`,
     });
     initRepo(String(dir));
     appendFileSync(join(String(dir), "app", "dep.ts"), "// touched\n");
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--changed"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--changed"],
       cwd: join(String(dir), "app"),
       env: gitEnv,
       stdout: "pipe",
@@ -312,16 +312,16 @@ describe.concurrent("bun test --changed", () => {
     using dir = tempDir("test-changed-subdir-untracked", {
       "package.json": JSON.stringify({ name: "root" }),
       "app/package.json": JSON.stringify({ name: "app", type: "module" }),
-      "app/base.test.ts": `import { test, expect } from "bun:test";\ntest("base", () => expect(1).toBe(1));\n`,
+      "app/base.test.ts": `import { test, expect } from "fun:test";\ntest("base", () => expect(1).toBe(1));\n`,
     });
     initRepo(String(dir));
     writeFileSync(
       join(String(dir), "app", "brand-new.test.ts"),
-      `import { test, expect } from "bun:test";\ntest("brand-new", () => expect(1).toBe(1));\n`,
+      `import { test, expect } from "fun:test";\ntest("brand-new", () => expect(1).toBe(1));\n`,
     );
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--changed"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--changed"],
       cwd: join(String(dir), "app"),
       env: gitEnv,
       stdout: "pipe",
@@ -336,13 +336,13 @@ describe.concurrent("bun test --changed", () => {
   test("errors helpfully outside a git repo", async () => {
     using dir = tempDir("test-changed-nogit", {
       "package.json": JSON.stringify({ name: "nogit" }),
-      "only.test.ts": `import { test } from "bun:test";\ntest("only", () => {});\n`,
+      "only.test.ts": `import { test } from "fun:test";\ntest("only", () => {});\n`,
     });
 
     // Ensure git cannot discover a parent repository above the temp dir
     // (CI checkouts sometimes place /tmp inside the repo's worktree).
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--changed"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--changed"],
       cwd: String(dir),
       env: { ...gitEnv, GIT_CEILING_DIRECTORIES: String(dir), GIT_DIR: join(String(dir), "no-such-git-dir") },
       stdout: "pipe",
@@ -360,8 +360,8 @@ describe.concurrent("bun test --changed", () => {
     using dir = tempDir("test-changed-parseerr", {
       "package.json": JSON.stringify({ name: "pe", type: "module" }),
       "good.ts": `export const g = 1;\n`,
-      "good.test.ts": `import { test, expect } from "bun:test";\nimport { g } from "./good";\ntest("good", () => expect(g).toBe(1));\n`,
-      "bad.test.ts": `import { test } from "bun:test";\nimport { nope } from "./does-not-exist";\ntest("bad", () => {});\n`,
+      "good.test.ts": `import { test, expect } from "fun:test";\nimport { g } from "./good";\ntest("good", () => expect(g).toBe(1));\n`,
+      "bad.test.ts": `import { test } from "fun:test";\nimport { nope } from "./does-not-exist";\ntest("bad", () => {});\n`,
     });
     initRepo(String(dir));
     appendFileSync(join(String(dir), "good.ts"), "// touched\n");
@@ -372,7 +372,7 @@ describe.concurrent("bun test --changed", () => {
     expect(exitCode).toBe(0);
   });
 
-  // https://github.com/oven-sh/bun/issues/29590: a tsconfig `paths` alias
+  // https://github.com/underdoc-org/fun/issues/29590: a tsconfig `paths` alias
   // like "@/*" must be followed when building the module graph.
   test("tsconfig paths alias is followed when computing the module graph", async () => {
     using dir = tempDir("test-changed-tsconfig-paths", {
@@ -381,9 +381,9 @@ describe.concurrent("bun test --changed", () => {
         compilerOptions: { baseUrl: ".", paths: { "@/*": ["./*"] } },
       }),
       "src/adder.ts": `export const add = (a: number, b: number) => a + b;\n`,
-      "tests/alias.test.ts": `import { test, expect } from "bun:test";\nimport { add } from "@/src/adder";\ntest("alias", () => expect(add(1, 2)).toBe(3));\n`,
-      "tests/relative.test.ts": `import { test, expect } from "bun:test";\nimport { add } from "../src/adder";\ntest("relative", () => expect(add(1, 2)).toBe(3));\n`,
-      "tests/unrelated.test.ts": `import { test, expect } from "bun:test";\ntest("unrelated", () => expect(1).toBe(1));\n`,
+      "tests/alias.test.ts": `import { test, expect } from "fun:test";\nimport { add } from "@/src/adder";\ntest("alias", () => expect(add(1, 2)).toBe(3));\n`,
+      "tests/relative.test.ts": `import { test, expect } from "fun:test";\nimport { add } from "../src/adder";\ntest("relative", () => expect(add(1, 2)).toBe(3));\n`,
+      "tests/unrelated.test.ts": `import { test, expect } from "fun:test";\ntest("unrelated", () => expect(1).toBe(1));\n`,
     });
     initRepo(String(dir));
     appendFileSync(join(String(dir), "src", "adder.ts"), "// touched\n");
@@ -395,24 +395,24 @@ describe.concurrent("bun test --changed", () => {
   });
 });
 
-// On Windows, `bun test --watch` runs as a parent watcher-manager that
+// On Windows, `fun test --watch` runs as a parent watcher-manager that
 // respawns a child process on change (rather than exec()-in-place), which
 // makes this test's stderr-stream sync points racy there. The 15 cases
 // above fully cover the --changed filtering logic on Windows; this case
 // only verifies composition with --watch.
-describe.skipIf(isWindows)("bun test --changed --watch", () => {
+describe.skipIf(isWindows)("fun test --changed --watch", () => {
   test("restarts and reruns only affected tests when a dependency changes", async () => {
     using dir = tempDir("test-changed-watch", {
       "package.json": JSON.stringify({ name: "watch", type: "module" }),
       "dep-a.ts": `export const A = 1;\n`,
       "dep-b.ts": `export const B = 2;\n`,
-      "wa.test.ts": `import { test, expect } from "bun:test";\nimport { A } from "./dep-a";\ntest("wa", () => expect(A).toBe(1));\n`,
-      "wb.test.ts": `import { test, expect } from "bun:test";\nimport { B } from "./dep-b";\ntest("wb", () => expect(B).toBe(2));\n`,
+      "wa.test.ts": `import { test, expect } from "fun:test";\nimport { A } from "./dep-a";\ntest("wa", () => expect(A).toBe(1));\n`,
+      "wb.test.ts": `import { test, expect } from "fun:test";\nimport { B } from "./dep-b";\ntest("wb", () => expect(B).toBe(2));\n`,
     });
     initRepo(String(dir));
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--changed", "--watch", "--no-clear-screen"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--changed", "--watch", "--no-clear-screen"],
       cwd: String(dir),
       env: gitEnv,
       stdout: "ignore",
@@ -466,16 +466,16 @@ describe.skipIf(isWindows)("bun test --changed --watch", () => {
   test("editing one of several dirty test files reruns only that one", async () => {
     using dir = tempDir("test-changed-watch-narrow", {
       "package.json": JSON.stringify({ name: "watch", type: "module" }),
-      "wa.test.ts": `import { test, expect } from "bun:test";\ntest("wa", () => expect(1).toBe(1));\n`,
-      "wb.test.ts": `import { test, expect } from "bun:test";\ntest("wb", () => expect(2).toBe(2));\n`,
+      "wa.test.ts": `import { test, expect } from "fun:test";\ntest("wa", () => expect(1).toBe(1));\n`,
+      "wb.test.ts": `import { test, expect } from "fun:test";\ntest("wb", () => expect(2).toBe(2));\n`,
     });
     initRepo(String(dir));
     // Make both test files dirty (uncommitted) before starting the watcher.
     appendFileSync(join(String(dir), "wa.test.ts"), "// dirty\n");
     appendFileSync(join(String(dir), "wb.test.ts"), "// dirty\n");
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--changed", "--watch", "--no-clear-screen"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--changed", "--watch", "--no-clear-screen"],
       cwd: String(dir),
       env: gitEnv,
       stdout: "ignore",

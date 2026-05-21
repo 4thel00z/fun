@@ -1,15 +1,15 @@
 const std = @import("std");
 
 const path_handler = @import("../src/resolver/resolve_path.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const string = []const u8;
-const Output = bun.Output;
-const Global = bun.Global;
-const Environment = bun.Environment;
-const strings = bun.strings;
-const MutableString = bun.MutableString;
+const Output = fun.Output;
+const Global = fun.Global;
+const Environment = fun.Environment;
+const strings = fun.strings;
+const MutableString = fun.MutableString;
 const stringZ = [:0]const u8;
-const default_allocator = bun.default_allocator;
+const default_allocator = fun.default_allocator;
 
 const Archive = @import("../src/libarchive/libarchive.zig").Archive;
 const Zlib = @import("../src/zlib.zig");
@@ -36,17 +36,17 @@ pub fn main() anyerror!void {
         Global.exit(1);
     }
 
-    var tarball_path_buf: bun.PathBuffer = undefined;
-    var basename = std.fs.path.basename(bun.asByteSlice(args[args.len - 1]));
+    var tarball_path_buf: fun.PathBuffer = undefined;
+    var basename = std.fs.path.basename(fun.asByteSlice(args[args.len - 1]));
     while (RecognizedExtensions.has(std.fs.path.extension(basename))) {
         basename = basename[0 .. basename.len - std.fs.path.extension(basename).len];
     }
 
     var parts = [_][]const u8{
-        bun.asByteSlice(args[args.len - 1]),
+        fun.asByteSlice(args[args.len - 1]),
     };
 
-    const tarball_path = path_handler.joinAbsStringBuf(try bun.getcwdAlloc(std.heap.c_allocator), &tarball_path_buf, &parts, .auto);
+    const tarball_path = path_handler.joinAbsStringBuf(try fun.getcwdAlloc(std.heap.c_allocator), &tarball_path_buf, &parts, .auto);
     Output.prettyErrorln("Tarball Path: {s}", .{tarball_path});
     var folder = basename;
 

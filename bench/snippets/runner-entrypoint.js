@@ -8,12 +8,12 @@ import { basename, extname } from "path";
 const exts = [".js", ".ts", ".mjs", ".tsx"];
 
 const runtimes = {
-  bun: process.execPath,
-  node: process.env.NODE ?? Bun.which("node"),
-  deno: process.env.DENO ?? Bun.which("deno"),
+  fun: process.execPath,
+  node: process.env.NODE ?? Fun.which("node"),
+  deno: process.env.DENO ?? Fun.which("deno"),
 };
 
-if (process.env.BUN_ONLY) {
+if (process.env.FUN_ONLY) {
   delete runtimes.node;
   delete runtimes.deno;
 }
@@ -50,12 +50,12 @@ function getEntry(sourceContents, file) {
     }
 
     switch (target) {
-      case "bun": {
-        if (!runtimes.bun) {
+      case "fun": {
+        if (!runtimes.fun) {
           continue;
         }
 
-        cmds.bun = [runtimes.bun, "run", file];
+        cmds.fun = [runtimes.fun, "run", file];
         break;
       }
 
@@ -109,7 +109,7 @@ const env = {
   BENCHMARK_RUNNER: "1",
   NODE_NO_WARNINGS: "1",
   NODE_OPTIONS: "--no-warnings",
-  BUN_DEBUG_QUIET_LOGS: "1",
+  FUN_DEBUG_QUIET_LOGS: "1",
   NO_COLOR: "1",
   DISABLE_COLORS: "1",
 };
@@ -121,7 +121,7 @@ function* run({ cmds, file }) {
     .replace(/\.tsx?$/, "")
     .replace(".node", "")
     .replace(".deno", "")
-    .replace(".bun", "");
+    .replace(".fun", "");
 
   // if benchmarkID doesn't contain only words, letters or numbers or dashes or underscore, throw
   if (!/^[a-z0-9_-]+$/i.test(benchmarkID)) {
@@ -153,8 +153,8 @@ function* run({ cmds, file }) {
         runtime: runtime,
         timestamp,
         elapsed: spawnElapsed,
-        runtimeVersion: (runtime === "bun"
-          ? `${Bun.version}-${Bun.revision}`
+        runtimeVersion: (runtime === "fun"
+          ? `${Fun.version}-${Fun.revision}`
           : String(json?.runtime).split(" ").at(1)
         ).replace(/^v/, ""),
       };

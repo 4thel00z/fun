@@ -25,7 +25,7 @@
 *.bc
 *.big
 *.blob
-*.bun
+*.fun
 *.crash
 *.database
 *.db
@@ -54,7 +54,7 @@
 /.cache
 /.webkit-cache
 /build-*/
-/bun-webkit
+/fun-webkit
 /kcov-out
 /test-report.json
 /test-report.md
@@ -65,12 +65,12 @@
 /build/
 cmake/sources
 build.ninja
-bun-binary
-bun-mimalloc
-bun-nomimalloc
-bun-singlehtreaded
-bun-test-scratch
-bun-zigld
+fun-binary
+fun-mimalloc
+fun-nomimalloc
+fun-singlehtreaded
+fun-test-scratch
+fun-zigld
 cmake_install.cmake
 CMakeCache.txt
 CMakeFiles
@@ -82,9 +82,9 @@ coverage
 coverv
 dist
 esbuilddir
-examples/lotta-modules/bun-nofscache
-examples/lotta-modules/bun-old
-examples/lotta-modules/bun-yday
+examples/lotta-modules/fun-nofscache
+examples/lotta-modules/fun-old
+examples/lotta-modules/fun-yday
 failing-tests.txt
 github
 make-dev-stats.csv
@@ -100,19 +100,19 @@ outcss
 outdir
 outdir/
 packages/*/*.wasm
-packages/bun-*/*.o
-packages/bun-*/bun
-packages/bun-*/bun-profile
-packages/bun-*/debug-bun
-packages/bun-cli/bin/*
-packages/bun-cli/postinstall.js
-packages/bun-wasm/*.cjs
-packages/bun-wasm/*.d.cts
-packages/bun-wasm/*.d.mts
-packages/bun-wasm/*.d.ts
-packages/bun-wasm/*.js
-packages/bun-wasm/*.map
-packages/bun-wasm/*.mjs
+packages/fun-*/*.o
+packages/fun-*/fun
+packages/fun-*/fun-profile
+packages/fun-*/debug-fun
+packages/fun-cli/bin/*
+packages/fun-cli/postinstall.js
+packages/fun-wasm/*.cjs
+packages/fun-wasm/*.d.cts
+packages/fun-wasm/*.d.mts
+packages/fun-wasm/*.d.ts
+packages/fun-wasm/*.js
+packages/fun-wasm/*.map
+packages/fun-wasm/*.mjs
 packages/debug-*
 parceldist
 pnpm-lock.yaml
@@ -127,7 +127,7 @@ src/generated_enum_extractor.zig
 src/jsc/bindings-obj
 src/jsc/bindings/GeneratedJS2Native.zig
 src/jsc/bindings/GeneratedBindings.zig
-src/bun.js/debug-bindings-obj
+src/fun.js/debug-bindings-obj
 src/deps/zig-clap/.gitattributes
 src/deps/zig-clap/.github
 src/deps/zig-clap/example
@@ -142,7 +142,7 @@ src/node-fallbacks/out/*
 src/runtime.version
 src/tests.zig
 test.txt
-test/js/bun/glob/fixtures
+test/js/fun/glob/fixtures
 test/node.js/upstream
 tsconfig.tsbuildinfo
 txt.js
@@ -166,7 +166,7 @@ codegen-for-zig-team.tar.gz
 
 # Dependencies (before CMake)
 # These can be removed in the far future
-/src/bun.js/WebKit
+/src/fun.js/WebKit
 /src/deps/boringssl
 /src/deps/brotli
 /src/deps/c*ares
@@ -189,9 +189,9 @@ codegen-for-zig-team.tar.gz
 *.sock
 scratch*.{js,ts,tsx,cjs,mjs}
 
-*.bun-build
+*.fun-build
 
 scripts/lldb-inline
 
-test/integration/bun-types/fixture/bun.lock
+test/integration/fun-types/fixture/fun.lock
 .claude/scheduled_tasks.lock

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tls as options } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tls as options } from "harness";
 import https from "https";
 import type { AddressInfo } from "node:net";
 import tls from "tls";
@@ -12,7 +12,7 @@ test.concurrent("WebSocket upgrade should unref poll_ref from response", async (
   const script = /* js */ `
     const http = require("http");
     const { WebSocketServer } = require("ws");
-    const { getEventLoopStats } = require("bun:internal-for-testing");
+    const { getEventLoopStats } = require("fun:internal-for-testing");
 
     const server = http.createServer();
     const wsServer = new WebSocketServer({ server });
@@ -44,9 +44,9 @@ test.concurrent("WebSocket upgrade should unref poll_ref from response", async (
     });
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

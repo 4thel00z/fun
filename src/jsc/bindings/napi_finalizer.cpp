@@ -3,7 +3,7 @@
 #include "napi.h"
 #include "napi_macros.h"
 
-namespace Bun {
+namespace Fun {
 
 void NapiFinalizer::call(WTF::RefPtr<NapiEnv> env, void* data, bool immediate)
 {
@@ -23,4 +23,4 @@ void NapiFinalizer::clear()
     m_hint = nullptr;
 }
 
-} // namespace Bun
+} // namespace Fun

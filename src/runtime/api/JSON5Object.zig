@@ -16,7 +16,7 @@ pub fn create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
 pub fn stringify(
     global: *jsc.JSGlobalObject,
     callFrame: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     const value, const replacer, const space_value = callFrame.argumentsAsArray(3);
 
     value.ensureStillAlive();
@@ -43,12 +43,12 @@ pub fn stringify(
 pub fn parse(
     global: *jsc.JSGlobalObject,
     callFrame: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
-    var arena: bun.ArenaAllocator = .init(bun.default_allocator);
+) fun.JSError!jsc.JSValue {
+    var arena: fun.ArenaAllocator = .init(fun.default_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var ast_memory_allocator = bun.handleOom(allocator.create(ast.ASTMemoryAllocator));
+    var ast_memory_allocator = fun.handleOom(allocator.create(ast.ASTMemoryAllocator));
     var ast_scope = ast_memory_allocator.enter(allocator);
     defer ast_scope.exit();
 
@@ -60,13 +60,13 @@ pub fn parse(
 
     const input: jsc.Node.BlobOrStringOrBuffer =
         try jsc.Node.BlobOrStringOrBuffer.fromJS(global, allocator, input_value) orelse input: {
-            var str = try input_value.toBunString(global);
+            var str = try input_value.toFunString(global);
             defer str.deref();
             break :input .{ .string_or_buffer = .{ .string = str.toSlice(allocator) } };
         };
     defer input.deinit();
 
-    var log = logger.Log.init(bun.default_allocator);
+    var log = logger.Log.init(fun.default_allocator);
     defer log.deinit();
 
     const source = &logger.Source.initPathString("input.json5", input.slice());
@@ -93,21 +93,21 @@ pub fn parse(
 }
 
 const Stringifier = struct {
-    stack_check: bun.StackCheck,
+    stack_check: fun.StackCheck,
     builder: wtf.StringBuilder,
     indent: usize,
     space: Space,
     visiting: std.AutoHashMapUnmanaged(JSValue, void),
     allocator: std.mem.Allocator,
 
-    const StringifyError = bun.JSError || bun.StackOverflow;
+    const StringifyError = fun.JSError || fun.StackOverflow;
 
     const Space = union(enum) {
         minified,
         number: u32,
-        str: bun.String,
+        str: fun.String,
 
-        pub fn init(global: *jsc.JSGlobalObject, space_value: JSValue) bun.JSError!Space {
+        pub fn init(global: *jsc.JSGlobalObject, space_value: JSValue) fun.JSError!Space {
             const space = try space_value.unwrapBoxedPrimitive(global);
             if (space.isNumber()) {
                 // Clamp on the float to match the spec's min(10, ToIntegerOrInfinity(space)).
@@ -117,7 +117,7 @@ const Stringifier = struct {
                 return .{ .number = if (num_f > 10) 10 else @intFromFloat(num_f) };
             }
             if (space.isString()) {
-                const str = try space.toBunString(global);
+                const str = try space.toFunString(global);
                 if (str.length() == 0) {
                     str.deref();
                     return .minified;
@@ -135,14 +135,14 @@ const Stringifier = struct {
         }
     };
 
-    pub fn init(global: *jsc.JSGlobalObject, space_value: JSValue) bun.JSError!Stringifier {
+    pub fn init(global: *jsc.JSGlobalObject, space_value: JSValue) fun.JSError!Stringifier {
         return .{
             .stack_check = .init(),
             .builder = .init(),
             .indent = 0,
             .space = try Space.init(global, space_value),
             .visiting = .empty,
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
         };
     }
 
@@ -192,7 +192,7 @@ const Stringifier = struct {
         }
 
         if (unwrapped.isString()) {
-            const str = try unwrapped.toBunString(global);
+            const str = try unwrapped.toFunString(global);
             defer str.deref();
             this.appendQuotedString(str);
             return;
@@ -312,12 +312,12 @@ const Stringifier = struct {
         this.builder.append(.lchar, '}');
     }
 
-    fn appendKey(this: *Stringifier, name: bun.String) void {
+    fn appendKey(this: *Stringifier, name: fun.String) void {
         const is_identifier = is_identifier: {
             if (name.length() == 0) break :is_identifier false;
-            if (!bun.js_lexer.isIdentifierStart(@intCast(name.charAt(0)))) break :is_identifier false;
+            if (!fun.js_lexer.isIdentifierStart(@intCast(name.charAt(0)))) break :is_identifier false;
             for (1..name.length()) |i| {
-                if (!bun.js_lexer.isIdentifierContinue(@intCast(name.charAt(i)))) break :is_identifier false;
+                if (!fun.js_lexer.isIdentifierContinue(@intCast(name.charAt(i)))) break :is_identifier false;
             }
             break :is_identifier true;
         };
@@ -329,7 +329,7 @@ const Stringifier = struct {
         }
     }
 
-    fn appendQuotedString(this: *Stringifier, str: bun.String) void {
+    fn appendQuotedString(this: *Stringifier, str: fun.String) void {
         this.builder.append(.lchar, '\'');
         for (0..str.length()) |i| {
             const c = str.charAt(i);
@@ -385,13 +385,13 @@ const Stringifier = struct {
     }
 };
 
-fn exprToJS(expr: Expr, global: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+fn exprToJS(expr: Expr, global: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     switch (expr.data) {
         .e_null => return .null,
         .e_boolean => |boolean| return .jsBoolean(boolean.value),
         .e_number => |number| return .jsNumber(number.value),
         .e_string => |str| {
-            return str.toJS(bun.default_allocator, global);
+            return str.toJS(fun.default_allocator, global);
         },
         .e_array => |arr| {
             var js_arr = try JSValue.createEmptyArray(global, arr.items.len);
@@ -408,7 +408,7 @@ fn exprToJS(expr: Expr, global: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
                 const key_expr = prop.key.?;
                 const value = try exprToJS(prop.value.?, global);
                 const key_js = try exprToJS(key_expr, global);
-                const key_str = try key_js.toBunString(global);
+                const key_str = try key_js.toFunString(global);
                 defer key_str.deref();
                 try js_obj.putMayBeIndex(global, &key_str, value);
             }
@@ -420,14 +420,14 @@ fn exprToJS(expr: Expr, global: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const logger = bun.logger;
-const json5 = bun.interchange.json5;
+const fun = @import("fun");
+const logger = fun.logger;
+const json5 = fun.interchange.json5;
 
-const ast = bun.ast;
+const ast = fun.ast;
 const Expr = ast.Expr;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;
 const wtf = jsc.wtf;

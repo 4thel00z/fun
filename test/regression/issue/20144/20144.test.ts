@@ -1,4 +1,4 @@
-import { it } from "bun:test";
+import { it } from "fun:test";
 import assert from "node:assert";
 import { spawn } from "node:child_process";
 

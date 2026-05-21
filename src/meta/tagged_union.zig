@@ -1,6 +1,6 @@
 fn deinitImpl(comptime Union: type, value: *Union) void {
     switch (std.meta.activeTag(value.*)) {
-        inline else => |tag| bun.memory.deinit(&@field(value, @tagName(tag))),
+        inline else => |tag| fun.memory.deinit(&@field(value, @tagName(tag))),
     }
     value.* = undefined;
 }
@@ -232,5 +232,5 @@ pub fn TaggedUnion(comptime field_types: []const type) type {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

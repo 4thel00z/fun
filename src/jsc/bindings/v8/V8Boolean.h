@@ -7,9 +7,9 @@ namespace v8 {
 
 class Boolean : public Primitive {
 public:
-    BUN_EXPORT bool Value() const;
+    FUN_EXPORT bool Value() const;
     // usually inlined
-    BUN_EXPORT static Local<Boolean> New(Isolate* isolate, bool value);
+    FUN_EXPORT static Local<Boolean> New(Isolate* isolate, bool value);
 };
 
 } // namespace v8

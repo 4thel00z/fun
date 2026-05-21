@@ -1,6 +1,6 @@
 const Mapping = @This();
 
-const debug = bun.Output.scoped(.SourceMap, .visible);
+const debug = fun.Output.scoped(.SourceMap, .visible);
 
 generated: LineColumnOffset,
 original: LineColumnOffset,
@@ -25,12 +25,12 @@ pub const MappingWithoutName = struct {
 
 pub const List = struct {
     impl: Value = .{ .without_names = .{} },
-    names: []const bun.Semver.String = &[_]bun.Semver.String{},
-    names_buffer: bun.ByteList = .{},
+    names: []const fun.Semver.String = &[_]fun.Semver.String{},
+    names_buffer: fun.ByteList = .{},
 
     pub const Value = union(enum) {
-        without_names: bun.MultiArrayList(MappingWithoutName),
-        with_names: bun.MultiArrayList(Mapping),
+        without_names: fun.MultiArrayList(MappingWithoutName),
+        with_names: fun.MultiArrayList(Mapping),
 
         pub fn memoryCost(this: *const Value) usize {
             return switch (this.*) {
@@ -50,7 +50,7 @@ pub const List = struct {
         if (this.impl == .with_names) return;
 
         var without_names = this.impl.without_names;
-        var with_names = bun.MultiArrayList(Mapping){};
+        var with_names = fun.MultiArrayList(Mapping){};
         try with_names.ensureTotalCapacity(allocator, without_names.len);
         defer without_names.deinit(allocator);
 
@@ -66,7 +66,7 @@ pub const List = struct {
         this.impl = .{ .with_names = with_names };
     }
 
-    fn findIndexFromGenerated(line_column_offsets: []const LineColumnOffset, line: bun.Ordinal, column: bun.Ordinal) ?usize {
+    fn findIndexFromGenerated(line_column_offsets: []const LineColumnOffset, line: fun.Ordinal, column: fun.Ordinal) ?usize {
         var count = line_column_offsets.len;
         var index: usize = 0;
         while (count > 0) {
@@ -90,7 +90,7 @@ pub const List = struct {
         return null;
     }
 
-    pub fn findIndex(this: *const List, line: bun.Ordinal, column: bun.Ordinal) ?usize {
+    pub fn findIndex(this: *const List, line: fun.Ordinal, column: fun.Ordinal) ?usize {
         switch (this.impl) {
             inline else => |*list| {
                 if (findIndexFromGenerated(list.items(.generated), line, column)) |i| {
@@ -140,7 +140,7 @@ pub const List = struct {
         }
     }
 
-    pub fn find(this: *const List, line: bun.Ordinal, column: bun.Ordinal) ?Mapping {
+    pub fn find(this: *const List, line: fun.Ordinal, column: fun.Ordinal) ?Mapping {
         switch (this.impl) {
             inline else => |*list, tag| {
                 if (findIndexFromGenerated(list.items(.generated), line, column)) |i| {
@@ -195,7 +195,7 @@ pub const List = struct {
         if (i >= this.names.len) return null;
 
         if (this.impl == .with_names) {
-            const str: *const bun.Semver.String = &this.names[i];
+            const str: *const fun.Semver.String = &this.names[i];
             return str.slice(this.names_buffer.slice());
         }
 
@@ -204,7 +204,7 @@ pub const List = struct {
 
     pub fn memoryCost(this: *const List) usize {
         return this.impl.memoryCost() + this.names_buffer.memoryCost() +
-            (this.names.len * @sizeOf(bun.Semver.String));
+            (this.names.len * @sizeOf(fun.Semver.String));
     }
 
     pub fn ensureTotalCapacity(this: *List, allocator: std.mem.Allocator, count: usize) !void {
@@ -221,12 +221,12 @@ pub const Lookup = struct {
 
     name: ?[]const u8 = null,
 
-    /// This creates a bun.String if the source remap *changes* the source url,
+    /// This creates a fun.String if the source remap *changes* the source url,
     /// which is only possible if the executed file differs from the source file:
     ///
-    /// - `bun build --sourcemap`, it is another file on disk
-    /// - `bun build --compile --sourcemap`, it is an embedded file.
-    pub fn displaySourceURLIfNeeded(lookup: Lookup, base_filename: []const u8) ?bun.String {
+    /// - `fun build --sourcemap`, it is another file on disk
+    /// - `fun build --compile --sourcemap`, it is an embedded file.
+    pub fn displaySourceURLIfNeeded(lookup: Lookup, base_filename: []const u8) ?fun.String {
         const source_map = lookup.source_map orelse return null;
         // See doc comment on `external_source_names`
         if (source_map.external_source_names.len == 0)
@@ -237,15 +237,15 @@ pub const Lookup = struct {
         const name = source_map.external_source_names[@intCast(lookup.mapping.source_index)];
 
         if (source_map.is_standalone_module_graph) {
-            return bun.String.cloneUTF8(name);
+            return fun.String.cloneUTF8(name);
         }
 
         if (std.fs.path.isAbsolute(base_filename)) {
-            const dir = bun.path.dirname(base_filename, .auto);
-            return bun.String.cloneUTF8(bun.path.joinAbs(dir, .auto, name));
+            const dir = fun.path.dirname(base_filename, .auto);
+            return fun.String.cloneUTF8(fun.path.joinAbs(dir, .auto, name));
         }
 
-        return bun.String.init(name);
+        return fun.String.init(name);
     }
 
     /// Only valid if `lookup.source_map.isExternal()`
@@ -253,7 +253,7 @@ pub const Lookup = struct {
     ///
     /// This data is freed after printed on the assumption that printing
     /// errors to the console are rare (this isnt used for error.stack)
-    pub fn getSourceCode(lookup: Lookup, base_filename: []const u8) ?bun.jsc.ZigString.Slice {
+    pub fn getSourceCode(lookup: Lookup, base_filename: []const u8) ?fun.jsc.ZigString.Slice {
         const bytes = bytes: {
             if (lookup.prefetched_source_code) |code| {
                 break :bytes code;
@@ -276,7 +276,7 @@ pub const Lookup = struct {
 
                 const code = serialized.sourceFileContents(@intCast(index));
 
-                return bun.jsc.ZigString.Slice.fromUTF8NeverFree(code orelse return null);
+                return fun.jsc.ZigString.Slice.fromUTF8NeverFree(code orelse return null);
             }
 
             if (provider.getSourceMap(
@@ -292,24 +292,24 @@ pub const Lookup = struct {
 
             const name = source_map.external_source_names[@intCast(index)];
 
-            var buf: bun.PathBuffer = undefined;
-            const normalized = bun.path.joinAbsStringBufZ(
-                bun.path.dirname(base_filename, .auto),
+            var buf: fun.PathBuffer = undefined;
+            const normalized = fun.path.joinAbsStringBufZ(
+                fun.path.dirname(base_filename, .auto),
                 &buf,
                 &.{name},
                 .loose,
             );
-            switch (bun.sys.File.readFrom(
+            switch (fun.sys.File.readFrom(
                 std.fs.cwd(),
                 normalized,
-                bun.default_allocator,
+                fun.default_allocator,
             )) {
                 .result => |r| break :bytes r,
                 .err => return null,
             }
         };
 
-        return bun.jsc.ZigString.Slice.init(bun.default_allocator, bytes);
+        return fun.jsc.ZigString.Slice.init(fun.default_allocator, bytes);
     }
 };
 
@@ -365,8 +365,8 @@ pub fn parse(
         };
     }
 
-    var generated = LineColumnOffset{ .lines = bun.Ordinal.start, .columns = bun.Ordinal.start };
-    var original = LineColumnOffset{ .lines = bun.Ordinal.start, .columns = bun.Ordinal.start };
+    var generated = LineColumnOffset{ .lines = fun.Ordinal.start, .columns = fun.Ordinal.start };
+    var original = LineColumnOffset{ .lines = fun.Ordinal.start, .columns = fun.Ordinal.start };
     var name_index: i32 = 0;
     var source_index: i32 = 0;
     var needs_sort = false;
@@ -374,7 +374,7 @@ pub fn parse(
     var has_names = false;
     while (remain.len > 0) {
         if (remain[0] == ';') {
-            generated.columns = bun.Ordinal.start;
+            generated.columns = fun.Ordinal.start;
 
             while (strings.hasPrefixComptime(
                 remain,
@@ -578,7 +578,7 @@ pub fn parse(
             .original = original,
             .source_index = source_index,
             .name_index = name_index,
-        }) catch |err| bun.handleOom(err);
+        }) catch |err| fun.handleOom(err);
     }
 
     if (needs_sort and options.sort) {
@@ -600,6 +600,6 @@ const ParseResult = SourceMap.ParseResult;
 const ParsedSourceMap = SourceMap.ParsedSourceMap;
 const decodeVLQ = SourceMap.VLQ.decode;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const assert = fun.assert;
+const strings = fun.strings;

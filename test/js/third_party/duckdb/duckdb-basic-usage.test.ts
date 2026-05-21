@@ -8,7 +8,7 @@ if (process.platform === "win32" && process.arch === "arm64") {
   process.exit(0);
 }
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 // Must be CJS require so that the above code can exit before we attempt to import DuckDB
 const { Database } = require("duckdb");
 

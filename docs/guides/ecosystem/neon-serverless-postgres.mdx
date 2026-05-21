@@ -1,6 +1,6 @@
 ---
-title: Use Neon's Serverless Postgres with Bun
-sidebarTitle: Neon Serverless Postgres with Bun
+title: Use Neon's Serverless Postgres with Fun
+sidebarTitle: Neon Serverless Postgres with Fun
 mode: center
 ---
 
@@ -8,13 +8,13 @@ mode: center
 
 ---
 
-Get started by creating a project directory, initializing the directory using `bun init`, and adding the [Neon serverless driver](https://github.com/neondatabase/serverless/) as a project dependency.
+Get started by creating a project directory, initializing the directory using `fun init`, and adding the [Neon serverless driver](https://github.com/neondatabase/serverless/) as a project dependency.
 
 ```sh terminal icon="terminal"
-mkdir bun-neon-postgres
-cd bun-neon-postgres
-bun init -y
-bun add @neondatabase/serverless
+mkdir fun-neon-postgres
+cd fun-neon-postgres
+fun init -y
+fun add @neondatabase/serverless
 ```
 
 ---
@@ -32,8 +32,8 @@ Paste the following code into your project's `index.ts` file.
 ```ts index.ts icon="/icons/typescript.svg"
 import { neon } from "@neondatabase/serverless";
 
-// Bun automatically loads the DATABASE_URL from .env.local
-// Refer to: https://bun.com/docs/runtime/environment-variables for more information
+// Fun automatically loads the DATABASE_URL from .env.local
+// Refer to: https://fun.dev/docs/runtime/environment-variables for more information
 const sql = neon(process.env.DATABASE_URL);
 
 const rows = await sql`SELECT version()`;
@@ -43,10 +43,10 @@ console.log(rows[0].version);
 
 ---
 
-Start the program using `bun ./index.ts`. The Postgres version should be printed to the console.
+Start the program using `fun ./index.ts`. The Postgres version should be printed to the console.
 
 ```sh terminal icon="terminal"
-bun ./index.ts
+fun ./index.ts
 ```
 
 ```txt

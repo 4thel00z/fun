@@ -1,13 +1,13 @@
-import { Database } from "bun:sqlite";
-import { describe, expect, test } from "bun:test";
+import { Database } from "fun:sqlite";
+import { describe, expect, test } from "fun:test";
 import { rmSync } from "fs";
-import { bunEnv, bunExe, isWindows, tempDir, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isWindows, tempDir, tempDirWithFiles } from "harness";
 import { join } from "path";
 import { BundlerTestInput, itBundled as itBundledBase } from "./expectBundled";
 
 // Default to the CLI backend. We intentionally use plain `describe` here
 // (not `describe.concurrent`): since the ELF-section inject path was added,
-// each `bun build --compile` on Linux reads + rewrites the full executable
+// each `fun build --compile` on Linux reads + rewrites the full executable
 // (~500MB for profile builds). Running 20 of these concurrently exhausts CI
 // memory/IO and causes subprocess timeouts — see build #40193 failures.
 const itBundled = (id: string, opts: BundlerTestInput) => itBundledBase(id, { backend: "cli", ...opts });
@@ -22,22 +22,22 @@ describe("bundler", () => {
     },
     run: { stdout: "Hello, world!" },
   });
-  itBundled("compile/HelloWorldWithProcessVersionsBun", {
+  itBundled("compile/HelloWorldWithProcessVersionsFun", {
     compile: true,
     files: {
       "/entry.ts": /* js */ `
         process.exitCode = 1;
-        process.versions.bun = "bun!";
-        if (process.versions.bun === "bun!") throw new Error("fail");
-        if (require("./${process.platform}-${process.arch}.js") === "${Bun.version.replaceAll("-debug", "")}") {
+        process.versions.fun = "fun!";
+        if (process.versions.fun === "fun!") throw new Error("fail");
+        if (require("./${process.platform}-${process.arch}.js") === "${Fun.version.replaceAll("-debug", "")}") {
           process.exitCode = 0;
         }
       `,
-      [`/${process.platform}-${process.arch}.js`]: "module.exports = process.versions.bun;",
+      [`/${process.platform}-${process.arch}.js`]: "module.exports = process.versions.fun;",
     },
     run: { exitCode: 0 },
   });
-  itBundled("compile/HelloWorldWithProcessVersionsBunAPI", {
+  itBundled("compile/HelloWorldWithProcessVersionsFunAPI", {
     compile: true,
     backend: "api",
     outfile: "dist/out",
@@ -46,14 +46,14 @@ describe("bundler", () => {
         import { foo } from "hello:world";
         if (foo !== "bar") throw new Error("fail");
         process.exitCode = 1;
-        process.versions.bun = "bun!";
-        if (process.versions.bun === "bun!") throw new Error("fail");
+        process.versions.fun = "fun!";
+        if (process.versions.fun === "fun!") throw new Error("fail");
         const another = require("./${process.platform}-${process.arch}.js").replaceAll("-debug", "");
-        if (another === "${Bun.version.replaceAll("-debug", "")}") {
+        if (another === "${Fun.version.replaceAll("-debug", "")}") {
           process.exitCode = 0;
         }
       `,
-      [`/${process.platform}-${process.arch}.js`]: "module.exports = process.versions.bun;",
+      [`/${process.platform}-${process.arch}.js`]: "module.exports = process.versions.fun;",
     },
     run: { exitCode: 0, stdout: "hello world" },
     plugins: [
@@ -89,11 +89,11 @@ describe("bundler", () => {
       stderr: [
         "[Disk Cache] Cache hit for sourceCode",
 
-        // TODO: remove this line once bun:main is removed.
+        // TODO: remove this line once fun:main is removed.
         "[Disk Cache] Cache miss for sourceCode",
       ].join("\n"),
       env: {
-        BUN_JSC_verboseDiskCache: "1",
+        FUN_JSC_verboseDiskCache: "1",
       },
     },
   });
@@ -226,13 +226,13 @@ describe("bundler", () => {
       setCwd: true,
     },
   });
-  // https://github.com/oven-sh/bun/issues/8697
+  // https://github.com/underdoc-org/fun/issues/8697
   itBundled("compile/EmbeddedFileOutfile", {
     compile: true,
     files: {
       "/entry.ts": /* js */ `
         import bar from './foo.file' with {type: "file"};
-        if ((await Bun.file(bar).text()).trim() !== "abcd") throw "fail";
+        if ((await Fun.file(bar).text()).trim() !== "abcd") throw "fail";
         console.log("Hello, world!");
       `,
       "/foo.file": /* js */ `
@@ -306,20 +306,20 @@ describe("bundler", () => {
       stderr: [
         "[Disk Cache] Cache hit for sourceCode",
 
-        // TODO: remove this line once bun:main is removed.
+        // TODO: remove this line once fun:main is removed.
         "[Disk Cache] Cache miss for sourceCode",
 
         "[Disk Cache] Cache hit for sourceCode",
 
-        // TODO: remove this line once bun:main is removed.
+        // TODO: remove this line once fun:main is removed.
         "[Disk Cache] Cache miss for sourceCode",
       ].join("\n"),
       env: {
-        BUN_JSC_verboseDiskCache: "1",
+        FUN_JSC_verboseDiskCache: "1",
       },
     },
   });
-  itBundled("compile/Bun.embeddedFiles", {
+  itBundled("compile/Fun.embeddedFiles", {
     compile: true,
     // TODO: this shouldn't be necessary, or we should add a map aliasing files.
     assetNaming: "[name].[ext]",
@@ -340,20 +340,20 @@ describe("bundler", () => {
           "foo.file": "foo.file",
         }
         // We want to verify it omits source code.
-        for (let f of Bun.embeddedFiles) {
+        for (let f of Fun.embeddedFiles) {
           const name = f.name;
           if (!names[name]) {
             throw new Error("Unexpected embedded file: " + name);
           }
         }
 
-        if (Bun.embeddedFiles.length !== 3) throw "fail";
-        if ((await Bun.file(createRequire(import.meta.url).resolve('./1.embed')).text()).trim() !== "abcd") throw "fail";
-        if ((await Bun.file(createRequire(import.meta.url).resolve('./2.embed')).text()).trim() !== "abcd") throw "fail";
-        if ((await Bun.file(createRequire(import.meta.url).resolve('./foo.file')).text()).trim() !== "abcd") throw "fail";
-        if ((await Bun.file(import.meta.require.resolve('./1.embed')).text()).trim() !== "abcd") throw "fail";
-        if ((await Bun.file(import.meta.require.resolve('./2.embed')).text()).trim() !== "abcd") throw "fail";
-        if ((await Bun.file(import.meta.require.resolve('./foo.file')).text()).trim() !== "abcd") throw "fail";
+        if (Fun.embeddedFiles.length !== 3) throw "fail";
+        if ((await Fun.file(createRequire(import.meta.url).resolve('./1.embed')).text()).trim() !== "abcd") throw "fail";
+        if ((await Fun.file(createRequire(import.meta.url).resolve('./2.embed')).text()).trim() !== "abcd") throw "fail";
+        if ((await Fun.file(createRequire(import.meta.url).resolve('./foo.file')).text()).trim() !== "abcd") throw "fail";
+        if ((await Fun.file(import.meta.require.resolve('./1.embed')).text()).trim() !== "abcd") throw "fail";
+        if ((await Fun.file(import.meta.require.resolve('./2.embed')).text()).trim() !== "abcd") throw "fail";
+        if ((await Fun.file(import.meta.require.resolve('./foo.file')).text()).trim() !== "abcd") throw "fail";
         console.log("Hello, world!");
       `,
       "/1.embed": /* js */ `
@@ -379,7 +379,7 @@ describe("bundler", () => {
       import {rmSync} from 'fs';
         import './foo.file';
         rmSync('./foo.file', {force: true});
-        if ((await Bun.file(import.meta.require.resolve('./foo.file')).text()).trim() !== "abcd") throw "fail";
+        if ((await Fun.file(import.meta.require.resolve('./foo.file')).text()).trim() !== "abcd") throw "fail";
         console.log("Hello, world!");
       `,
       "/foo.file": /* js */ `
@@ -393,7 +393,7 @@ describe("bundler", () => {
     compile: true,
     files: {
       "/entry.ts": /* js */ `
-        import {pathToFileURL, fileURLToPath} from 'bun';
+        import {pathToFileURL, fileURLToPath} from 'fun';
         console.log(pathToFileURL(import.meta.path).href + " " + fileURLToPath(import.meta.url));
         if (fileURLToPath(import.meta.url) !== import.meta.path) throw "fail";
         if (pathToFileURL(import.meta.path).href !== import.meta.url) throw "fail";
@@ -402,31 +402,31 @@ describe("bundler", () => {
     run: {
       stdout:
         process.platform !== "win32"
-          ? `file:///$bunfs/root/out /$bunfs/root/out`
-          : `file:///B:/~BUN/root/out B:\\~BUN\\root\\out`,
+          ? `file:///$funfs/root/out /$funfs/root/out`
+          : `file:///B:/~FUN/root/out B:\\~FUN\\root\\out`,
       setCwd: true,
     },
   });
-  itBundled("compile/VariousBunAPIs", {
+  itBundled("compile/VariousFunAPIs", {
     todo: isWindows, // TODO(@paperclover)
     compile: true,
     files: {
       "/entry.ts": `
-        // testing random features of bun
+        // testing random features of fun
         import 'node:process';
         import 'process';
         import 'fs';
 
-        import { Database } from "bun:sqlite";
-        import { serve } from 'bun';
-        import { getRandomSeed } from 'bun:jsc';
+        import { Database } from "fun:sqlite";
+        import { serve } from 'fun';
+        import { getRandomSeed } from 'fun:jsc';
         const db = new Database("test.db");
         const query = db.query(\`select "Hello world" as message\`);
         if (query.get().message !== "Hello world") throw "fail from sqlite";
         const icon = new Uint8Array(256);
         for (let i = 0; i < 256; i++) icon[i] = i;
         if(icon.byteLength < 100) throw "fail from icon";
-        if (typeof getRandomSeed() !== 'number') throw "fail from bun:jsc";
+        if (typeof getRandomSeed() !== 'number') throw "fail from fun:jsc";
         const server = serve({
           fetch() {
             return new Response("Hello world");
@@ -489,7 +489,7 @@ describe("bundler", () => {
 
         async function main() {
           const port = 0;
-          using server = Bun.serve({
+          using server = Fun.serve({
             port,
             async fetch(req) {
               return new Response(await renderToReadableStream(<App />), headers);
@@ -510,7 +510,7 @@ describe("bundler", () => {
           : undefined,
         env: bytecode
           ? {
-              BUN_JSC_verboseDiskCache: "1",
+              FUN_JSC_verboseDiskCache: "1",
             }
           : undefined,
       },
@@ -601,7 +601,7 @@ describe("bundler", () => {
   for (const minify of [true, false] as const) {
     itBundled("compile/platform-specific-binary" + (minify ? "-minify" : ""), {
       minifySyntax: minify,
-      target: "bun",
+      target: "fun",
       compile: true,
       files: {
         "/entry.ts": /* js */ `
@@ -612,12 +612,12 @@ describe("bundler", () => {
       run: { stdout: `${process.platform} ${process.arch}` },
     });
     for (const sourceMap of ["external", "inline", "none"] as const) {
-      // https://github.com/oven-sh/bun/issues/10344
+      // https://github.com/underdoc-org/fun/issues/10344
       itBundled("compile/10344+sourcemap=" + sourceMap + (minify ? "+minify" : ""), {
         minifyIdentifiers: minify,
         minifySyntax: minify,
         minifyWhitespace: minify,
-        target: "bun",
+        target: "fun",
         sourceMap,
         compile: true,
         files: {
@@ -626,13 +626,13 @@ describe("bundler", () => {
         import small from './generated.small.binary' with {type: "file"};
         import fs from 'fs';
         fs.readFileSync(big).toString("hex");
-        await Bun.file(big).arrayBuffer();
+        await Fun.file(big).arrayBuffer();
         fs.readFileSync(small).toString("hex");
         if ((await fs.promises.readFile(small)).length !== 31) throw "fail readFile";
         if (fs.statSync(small).size !== 31) throw "fail statSync";
         if (fs.statSync(big).size !== (4096 + (32 - 2))) throw "fail statSync";
         if (((await fs.promises.stat(big)).size) !== (4096 + (32 - 2))) throw "fail stat";
-        await Bun.file(small).arrayBuffer();
+        await Fun.file(small).arrayBuffer();
         console.log("PASS");
       `,
           "/generated.big.binary": (() => {
@@ -717,7 +717,7 @@ describe("bundler", () => {
     run: { stdout: new Array(7).fill("true").join("\n") },
   });
   itBundled("compile/SourceMap", {
-    target: "bun",
+    target: "fun",
     compile: true,
     files: {
       "/entry.ts": /* js */ `
@@ -753,7 +753,7 @@ error: Hello World`,
     },
   });
   itBundled("compile/SourceMapBigFile", {
-    target: "bun",
+    target: "fun",
     compile: true,
     files: {
       "/entry.ts": /* js */ `import * as ReactDom from ${JSON.stringify(require.resolve("react-dom/server"))};
@@ -790,7 +790,7 @@ error: Hello World`,
       },
     },
   });
-  itBundled("compile/BunBeBunEnvVar", {
+  itBundled("compile/FunBeFunEnvVar", {
     compile: true,
     files: {
       "/entry.ts": /* js */ `
@@ -802,7 +802,7 @@ error: Hello World`,
         stdout: "This is compiled code",
       },
       {
-        env: { BUN_BE_BUN: "1" },
+        env: { FUN_BE_FUN: "1" },
         validate({ stdout }) {
           expect(stdout).not.toContain("This is compiled code");
         },
@@ -818,7 +818,7 @@ error: Hello World`,
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bun + React</title>
+    <title>Fun + React</title>
     <script type="module" src="./frontend.tsx" async></script>
   </head>
   <body>
@@ -826,7 +826,7 @@ error: Hello World`,
   </body>
 </html>
         `,
-      "index.tsx": `import { serve } from "bun";
+      "index.tsx": `import { serve } from "fun";
 import index from "./index.html";
 
 const server = serve({
@@ -869,10 +869,10 @@ const server = serve({
 `,
     });
 
-    // Step 2: Run bun build with compile, minify, sourcemap, and bytecode
-    await Bun.$`${bunExe()} build ./index.tsx --compile --minify --sourcemap --bytecode`
+    // Step 2: Run fun build with compile, minify, sourcemap, and bytecode
+    await Fun.$`${funExe()} build ./index.tsx --compile --minify --sourcemap --bytecode`
       .cwd(dir)
-      .env(bunEnv)
+      .env(funEnv)
       .throws(true);
   }, 30_000);
 
@@ -888,9 +888,9 @@ const server = serve({
     const outfile = join(String(dir), `app${ext}`);
 
     // Build with ESM + bytecode
-    await using build = Bun.spawn({
+    await using build = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "build",
         "--compile",
         "--bytecode",
@@ -899,7 +899,7 @@ const server = serve({
         "--outfile",
         outfile,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -910,9 +910,9 @@ const server = serve({
     expect(buildExitCode).toBe(0);
 
     // Run with verbose disk cache to verify bytecode is loaded
-    await using exe = Bun.spawn({
+    await using exe = Fun.spawn({
       cmd: [outfile],
-      env: { ...bunEnv, BUN_JSC_verboseDiskCache: "1" },
+      env: { ...funEnv, FUN_JSC_verboseDiskCache: "1" },
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -938,9 +938,9 @@ const server = serve({
       "assets/file-8": "",
     });
 
-    await Bun.$`${bunExe()} build --compile app.js assets/* --outfile app`.cwd(dir).env(bunEnv).throws(true);
+    await Fun.$`${funExe()} build --compile app.js assets/* --outfile app`.cwd(dir).env(funEnv).throws(true);
 
-    const result = await Bun.$`./app`.cwd(dir).env(bunEnv).nothrow();
+    const result = await Fun.$`./app`.cwd(dir).env(funEnv).nothrow();
     expect(result.stdout.toString().trim()).toBe("IT WORKS");
   }, 30_000);
 });

@@ -59,7 +59,7 @@
 
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 
 JSC_DEFINE_HOST_FUNCTION(jsGetCurves, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callFrame))
 {
@@ -136,7 +136,7 @@ JSC_DEFINE_HOST_FUNCTION(jsCertVerifySpkac, (JSC::JSGlobalObject * lexicalGlobal
 
     auto buffer = input.value();
     if (buffer.size() > std::numeric_limits<int32_t>().max()) {
-        return Bun::ERR::OUT_OF_RANGE(scope, lexicalGlobalObject, "spkac"_s, 0, std::numeric_limits<int32_t>().max(), jsNumber(buffer.size()));
+        return Fun::ERR::OUT_OF_RANGE(scope, lexicalGlobalObject, "spkac"_s, 0, std::numeric_limits<int32_t>().max(), jsNumber(buffer.size()));
     }
 
     bool result = ncrypto::VerifySpkac(reinterpret_cast<const char*>(buffer.data()), buffer.size());
@@ -155,7 +155,7 @@ JSC_DEFINE_HOST_FUNCTION(jsCertExportPublicKey, (JSC::JSGlobalObject * lexicalGl
 
     auto buffer = input.value();
     if (buffer.size() > std::numeric_limits<int32_t>().max()) {
-        return Bun::ERR::OUT_OF_RANGE(scope, lexicalGlobalObject, "spkac"_s, 0, std::numeric_limits<int32_t>().max(), jsNumber(buffer.size()));
+        return Fun::ERR::OUT_OF_RANGE(scope, lexicalGlobalObject, "spkac"_s, 0, std::numeric_limits<int32_t>().max(), jsNumber(buffer.size()));
     }
 
     auto bio = ncrypto::ExportPublicKey(reinterpret_cast<const char*>(buffer.data()), buffer.size());
@@ -184,7 +184,7 @@ JSC_DEFINE_HOST_FUNCTION(jsCertExportChallenge, (JSC::JSGlobalObject * lexicalGl
 
     auto buffer = input.value();
     if (buffer.size() > std::numeric_limits<int32_t>().max()) {
-        return Bun::ERR::OUT_OF_RANGE(scope, lexicalGlobalObject, "spkac"_s, 0, std::numeric_limits<int32_t>().max(), jsNumber(buffer.size()));
+        return Fun::ERR::OUT_OF_RANGE(scope, lexicalGlobalObject, "spkac"_s, 0, std::numeric_limits<int32_t>().max(), jsNumber(buffer.size()));
     }
 
     auto cert = ncrypto::ExportChallenge(reinterpret_cast<const char*>(buffer.data()), buffer.size());
@@ -212,10 +212,10 @@ JSC_DEFINE_HOST_FUNCTION(jsGetCipherInfo, (JSC::JSGlobalObject * lexicalGlobalOb
 
     JSValue nameOrNid = callFrame->argument(0);
     if (nameOrNid.isNumber()) {
-        Bun::V::validateInt32(scope, lexicalGlobalObject, nameOrNid, "nameOrNid"_s, jsUndefined(), jsUndefined());
+        Fun::V::validateInt32(scope, lexicalGlobalObject, nameOrNid, "nameOrNid"_s, jsUndefined(), jsUndefined());
         RETURN_IF_EXCEPTION(scope, {});
     } else if (!nameOrNid.isString()) {
-        return Bun::ERR::INVALID_ARG_TYPE(scope, lexicalGlobalObject, "nameOrNid"_s, "string or number"_s, nameOrNid);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, lexicalGlobalObject, "nameOrNid"_s, "string or number"_s, nameOrNid);
     }
 
     JSValue options = callFrame->argument(1);
@@ -424,4 +424,4 @@ JSValue createNodeCryptoBinding(Zig::GlobalObject* globalObject)
     return obj;
 }
 
-} // namespace Bun
+} // namespace Fun

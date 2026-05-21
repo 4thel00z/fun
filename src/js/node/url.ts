@@ -26,7 +26,7 @@
 "use strict";
 
 const { URL, URLSearchParams } = globalThis;
-const [domainToASCII, domainToUnicode] = $cpp("NodeURL.cpp", "Bun::createNodeURLBinding");
+const [domainToASCII, domainToUnicode] = $cpp("NodeURL.cpp", "Fun::createNodeURLBinding");
 const { urlToHttpOptions } = require("internal/url");
 const { validateString } = require("internal/validators");
 
@@ -872,7 +872,7 @@ Url.prototype.parseHost = function parseHost() {
 };
 
 // function fileURLToPath(...args) {
-//   // Since we use WTF::URL::fileSystemPath directly in Bun.fileURLToPath, we don't get invalid windows
+//   // Since we use WTF::URL::fileSystemPath directly in Fun.fileURLToPath, we don't get invalid windows
 //   // path checking. We patch this in to `node:url` for compatibility. Note that
 //   // this behavior is missing from WATWG URL.
 //   if (process.platform === "win32") {
@@ -892,7 +892,7 @@ Url.prototype.parseHost = function parseHost() {
 //       }
 //     }
 //   }
-//   return Bun.fileURLToPath.$call(args);
+//   return Fun.fileURLToPath.$call(args);
 // }
 
 /**
@@ -928,8 +928,8 @@ export default {
   Url,
   URLSearchParams,
   URL,
-  pathToFileURL: Bun.pathToFileURL,
-  fileURLToPath: Bun.fileURLToPath,
+  pathToFileURL: Fun.pathToFileURL,
+  fileURLToPath: Fun.fileURLToPath,
   urlToHttpOptions,
   domainToASCII,
   domainToUnicode,

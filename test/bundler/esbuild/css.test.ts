@@ -1,11 +1,11 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { join } from "node:path";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_css_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/css
+// For debug, all files are written to $TEMP/fun-bundle-tests/css
 
 describe("bundler", () => {
   itBundled("css/CSSEntryPoint", {
@@ -39,7 +39,7 @@ describe("bundler", () => {
   });
 
   itBundled("css/CSSNesting", {
-    target: "bun",
+    target: "fun",
     files: {
       "/entry.css": /* css */ `
   body {
@@ -1518,7 +1518,7 @@ c {
     },
   });
 
-  // This tests that bun correctly clones the import records for all import
+  // This tests that fun correctly clones the import records for all import
   // condition tokens. If they aren't cloned correctly, then something will
   // likely crash with an out-of-bounds error.
   itBundled("css/CSSAtImportConditionsWithImportRecordsBundle", {
@@ -1634,7 +1634,7 @@ c {
   ];
 
   // From: https://github.com/romainmenke/css-import-tests. These test cases just
-  // serve to document any changes in bun's behavior. Any changes in behavior
+  // serve to document any changes in fun's behavior. Any changes in behavior
   // should be tested to ensure they don't cause any regressions. The easiest way
   // to test the changes is to bundle https://github.com/evanw/css-import-tests
   // and visually inspect a browser's rendering of the resulting CSS file.
@@ -2076,8 +2076,8 @@ c {
     outfile: "/out.css",
     bundleErrors: {
       "/entry.css": [
-        `Could not resolve: "foo/bar.png?baz". Maybe you need to "bun install"?`,
-        `Could not resolve: "foo/bar.png#baz". Maybe you need to "bun install"?`,
+        `Could not resolve: "foo/bar.png?baz". Maybe you need to "fun install"?`,
+        `Could not resolve: "foo/bar.png#baz". Maybe you need to "fun install"?`,
       ],
     },
   });

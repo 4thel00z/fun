@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { execSync } from "child_process";
 import { existsSync } from "fs";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import { join } from "path";
 
 describe.if(isWindows)("compile --outfile with subdirectories", () => {
@@ -13,9 +13,9 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
     // Use forward slash in outfile
     const outfile = "subdir/nested/app.exe";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -31,9 +31,9 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
     expect(existsSync(expectedPath)).toBe(true);
 
     // Run the executable to verify it works
-    await using exe = Bun.spawn({
+    await using exe = Fun.spawn({
       cmd: [expectedPath],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
     });
 
@@ -49,9 +49,9 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
     // Use backslash in outfile
     const outfile = "subdir\\nested\\app.exe";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -75,9 +75,9 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
     // Use a deep nested path that doesn't exist yet
     const outfile = "a/b/c/d/e/app.exe";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -98,9 +98,9 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
 
     const outfile = "output/bin/app.exe";
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "build",
         "--compile",
         join(String(dir), "app.js"),
@@ -113,7 +113,7 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
         "--windows-description",
         "App in a subdirectory",
       ],
-      env: bunEnv,
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -152,9 +152,9 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
     // Try to use blocked/app.exe where blocked is a file
     const outfile = "blocked/app.exe";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", join(String(dir), "app.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -175,9 +175,9 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
     // Use relative path with . and ..
     const outfile = "./output/../output/./app.exe";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", join(String(dir), "src", "app.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", join(String(dir), "src", "app.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -192,13 +192,13 @@ describe.if(isWindows)("compile --outfile with subdirectories", () => {
   });
 });
 
-describe("Bun.build() compile with subdirectories", () => {
+describe("Fun.build() compile with subdirectories", () => {
   test.if(isWindows)("places executable in subdirectory via API", async () => {
     using dir = tempDir("api-compile-subdir", {
       "app.js": `console.log("API subdirectory test!");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [join(String(dir), "app.js")],
       compile: {
         outfile: "dist/bin/app.exe",
@@ -223,7 +223,7 @@ describe("Bun.build() compile with subdirectories", () => {
       "app.js": `console.log("API with metadata!");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [join(String(dir), "app.js")],
       compile: {
         outfile: "build/release/app.exe",

@@ -1,5 +1,5 @@
 import {
-__HMRClient as Bun
+__HMRClient as Fun
 } from "http://localhost:8080/__runtime.js";
 import {
 __require as require
@@ -14,7 +14,7 @@ import * as $3b6c9f54 from "http://localhost:8080/node_modules/styled-components
 var { default: styled} = require($3b6c9f54);
 import * as $bbcd215f from "http://localhost:8080/node_modules/react/index.js";
 var { default: React} = require($bbcd215f);
-Bun.activate(false);
+Fun.activate(false);
 
 var hmr = new HMR(2972367994, "styled-components-output.js"), exports = hmr.exports;
 (hmr._load = function() {

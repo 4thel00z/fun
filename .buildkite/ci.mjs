@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Build and test Bun on macOS, Linux, and Windows.
+ * Build and test Fun on macOS, Linux, and Windows.
  * @link https://buildkite.com/docs/pipelines/defining-steps
  */
 
@@ -314,7 +314,7 @@ function getEc2Agent(platform, options, ec2Options) {
     abi,
     distro,
     release,
-    robobun: true,
+    robofun: true,
     robobun2: true,
     "image-name": getImageName(platform, options),
     "instance-type": instanceType,
@@ -350,7 +350,7 @@ function getCppAgent(platform, options) {
  * @param {PipelineOptions} options
  * @returns {string}
  */
-function getLinkBunAgent(platform, options) {
+function getLinkFunAgent(platform, options) {
   const { os, arch } = platform;
 
   if (os === "darwin") {
@@ -368,7 +368,7 @@ function getLinkBunAgent(platform, options) {
   }
 
   return getEc2Agent(platform, options, {
-    // Full LTO with bun-zig.o as bitcode peaks >31 GiB on aarch64; xlarge OOMs.
+    // Full LTO with fun-zig.o as bitcode peaks >31 GiB on aarch64; xlarge OOMs.
     instanceType: arch === "aarch64" ? "r8g.2xlarge" : "r7i.2xlarge",
   });
 }
@@ -542,8 +542,8 @@ function getBuildCommand(target, options, mode) {
   // 25+; drop once CI bumps past the ABI-141 blocker).
   //
   // Windows ARM64 node v24 intermittently fastfails (0xC0000409) in
-  // fetch-cli.ts; run build.ts under bun there instead.
-  const runtime = target.os === "windows" && target.arch === "aarch64" ? "bun" : "node --experimental-strip-types";
+  // fetch-cli.ts; run build.ts under fun there instead.
+  const runtime = target.os === "windows" && target.arch === "aarch64" ? "fun" : "node --experimental-strip-types";
   return `${runtime} scripts/build.ts ${getBuildArgs(target, options, mode)}`;
 }
 
@@ -559,9 +559,9 @@ function getBuildCppStep(platform, options) {
     agents: getCppAgent(platform, options),
     retry: getRetry(),
     cancel_on_build_failing: isMergeQueue(),
-    // cpp-only builds deps + bun's C++ in one ninja graph (ninja pulls
+    // cpp-only builds deps + fun's C++ in one ninja graph (ninja pulls
     // everything the archive transitively needs). The old two-command
-    // split (--target bun, --target dependencies) was a cmake artifact.
+    // split (--target fun, --target dependencies) was a cmake artifact.
     command: getBuildCommand(platform, options, "cpp-only"),
   };
 }
@@ -590,12 +590,12 @@ function getBuildZigStep(platform, options) {
  * @param {PipelineOptions} options
  * @returns {Step}
  */
-function getLinkBunStep(platform, options) {
+function getLinkFunStep(platform, options) {
   return {
-    key: `${getTargetKey(platform)}-build-bun`,
-    label: `${getTargetLabel(platform)} - build-bun`,
+    key: `${getTargetKey(platform)}-build-fun`,
+    label: `${getTargetLabel(platform)} - build-fun`,
     depends_on: [`${getTargetKey(platform)}-build-cpp`, `${getTargetKey(platform)}-build-zig`],
-    agents: getLinkBunAgent(platform, options),
+    agents: getLinkFunAgent(platform, options),
     retry: getRetry(),
     cancel_on_build_failing: isMergeQueue(),
     env: {
@@ -610,14 +610,14 @@ function getLinkBunStep(platform, options) {
 }
 
 /**
- * Returns the artifact triplet for a platform, e.g. "bun-linux-aarch64" or "bun-linux-x64-musl-baseline".
- * Matches the naming convention in cmake/targets/BuildBun.cmake.
+ * Returns the artifact triplet for a platform, e.g. "fun-linux-aarch64" or "fun-linux-x64-musl-baseline".
+ * Matches the naming convention in cmake/targets/BuildFun.cmake.
  * @param {Platform} platform
  * @returns {string}
  */
 function getTargetTriplet(platform) {
   const { os, arch, abi, baseline } = platform;
-  let triplet = `bun-${os}-${arch}`;
+  let triplet = `fun-${os}-${arch}`;
   if (abi === "musl") {
     triplet += "-musl";
   }
@@ -682,18 +682,18 @@ function getVerifyBaselineStep(platform, options) {
   const emulator = getEmulatorBinary(platform);
   const jitStressFlag = hasWebKitChanges(options) ? " --jit-stress" : "";
 
-  // Scan bun-profile, not bun. The stripped binary has no .symtab (ELF) and
+  // Scan fun-profile, not fun. The stripped binary has no .symtab (ELF) and
   // no companion .pdb (PE) — the static scanner would emit <no-symbol@addr>
-  // for everything and none of the allowlist entries would match. bun-profile
+  // for everything and none of the allowlist entries would match. fun-profile
   // has identical .text so violation results are the same, just attributable.
   const profileDir = `${triplet}-profile`;
-  const profileExe = os === "windows" ? "bun-profile.exe" : "bun-profile";
+  const profileExe = os === "windows" ? "fun-profile.exe" : "fun-profile";
 
   const setupCommands =
     os === "windows"
       ? [
           `echo Downloading build artifacts...`,
-          `buildkite-agent artifact download ${profileDir}.zip . --step ${targetKey}-build-bun`,
+          `buildkite-agent artifact download ${profileDir}.zip . --step ${targetKey}-build-fun`,
           `echo Extracting ${profileDir}.zip...`,
           `tar -xf ${profileDir}.zip`,
           `echo Downloading Intel SDE...`,
@@ -704,7 +704,7 @@ function getVerifyBaselineStep(platform, options) {
           `ren sde-external-${SDE_VERSION}-win sde-external`,
         ]
       : [
-          `buildkite-agent artifact download '${profileDir}.zip' . --step ${targetKey}-build-bun`,
+          `buildkite-agent artifact download '${profileDir}.zip' . --step ${targetKey}-build-fun`,
           `unzip -o '${profileDir}.zip'`,
           `chmod +x ${profileDir}/${profileExe}`,
         ];
@@ -712,15 +712,15 @@ function getVerifyBaselineStep(platform, options) {
   return {
     key: `${targetKey}-verify-baseline`,
     label: `${getTargetLabel(platform)} - verify-baseline`,
-    depends_on: [`${targetKey}-build-bun`],
-    agents: getLinkBunAgent(platform, options),
+    depends_on: [`${targetKey}-build-fun`],
+    agents: getLinkFunAgent(platform, options),
     retry: getRetry(),
     cancel_on_build_failing: isMergeQueue(),
     timeout_in_minutes: hasWebKitChanges(options) ? 30 : 10,
     command: [
       ...setupCommands,
       `cargo build --release --manifest-path scripts/verify-baseline-static/Cargo.toml`,
-      `bun scripts/verify-baseline.ts --binary ${profileDir}/${profileExe} --emulator ${emulator}${jitStressFlag}`,
+      `fun scripts/verify-baseline.ts --binary ${profileDir}/${profileExe} --emulator ${emulator}${jitStressFlag}`,
     ],
   };
 }
@@ -738,11 +738,11 @@ function getVerifyBaselineStep(platform, options) {
  * @param {TestOptions} [testOptions]
  * @returns {Step}
  */
-function getTestBunStep(platform, options, testOptions = {}) {
+function getTestFunStep(platform, options, testOptions = {}) {
   const { os, profile } = platform;
   const { buildId, testFiles } = testOptions;
 
-  const args = [`--step=${getTargetKey(platform)}-build-bun`];
+  const args = [`--step=${getTargetKey(platform)}-build-fun`];
   if (buildId) {
     args.push(`--build-id=${buildId}`);
   }
@@ -750,18 +750,18 @@ function getTestBunStep(platform, options, testOptions = {}) {
   if (testFiles?.length) {
     args.push(...testFiles.map(testFile => `--include=${testFile}`));
   } else {
-    // platform-independent tsc check; runs in .github/workflows/bun-types.yml instead
-    args.push("--exclude=integration/bun-types");
+    // platform-independent tsc check; runs in .github/workflows/fun-types.yml instead
+    args.push("--exclude=integration/fun-types");
   }
 
   const depends = [];
   if (!buildId) {
-    depends.push(`${getTargetKey(platform)}-build-bun`);
+    depends.push(`${getTargetKey(platform)}-build-fun`);
   }
 
   return {
-    key: `${getPlatformKey(platform)}-test-bun`,
-    label: `${getPlatformLabel(platform)} - test-bun`,
+    key: `${getPlatformKey(platform)}-test-fun`,
+    label: `${getPlatformLabel(platform)} - test-fun`,
     depends_on: depends,
     agents: getTestAgent(platform, options),
     retry: getRetry(),
@@ -836,12 +836,12 @@ function getBuildImageStep(platform, options) {
  * @returns {Step}
  */
 function getWindowsSignStep(windowsPlatforms, options) {
-  // Each build-bun step produces two zips: <triplet>-profile.zip and <triplet>.zip
+  // Each build-fun step produces two zips: <triplet>-profile.zip and <triplet>.zip
   const artifacts = [];
   const buildSteps = [];
   for (const platform of windowsPlatforms) {
     const triplet = getTargetTriplet(platform);
-    const stepKey = `${getTargetKey(platform)}-build-bun`;
+    const stepKey = `${getTargetKey(platform)}-build-fun`;
     artifacts.push(`${triplet}-profile.zip`, `${triplet}.zip`);
     buildSteps.push(stepKey, stepKey);
   }
@@ -852,7 +852,7 @@ function getWindowsSignStep(windowsPlatforms, options) {
   return {
     key: "windows-sign",
     label: `${getBuildkiteEmoji("windows")} sign`,
-    depends_on: windowsPlatforms.map(p => `${getTargetKey(p)}-build-bun`),
+    depends_on: windowsPlatforms.map(p => `${getTargetKey(p)}-build-fun`),
     agents: getEc2Agent(signPlatform, options, {
       instanceType: getAzureVmSize("windows", "x64", "test"),
     }),
@@ -891,7 +891,7 @@ function getBinarySizeStep(releasePlatforms, options, { recordOnly = false } = {
       options,
       { instanceType: "c8g.large" },
     ),
-    depends_on: releasePlatforms.map(p => `${getTargetKey(p)}-build-bun`),
+    depends_on: releasePlatforms.map(p => `${getTargetKey(p)}-build-fun`),
     allow_dependency_failure: true,
     soft_fail: !!options.skipSizeCheck,
     retry: {
@@ -899,7 +899,7 @@ function getBinarySizeStep(releasePlatforms, options, { recordOnly = false } = {
       automatic: [{ exit_status: "*", limit: 2 }],
     },
     cancel_on_build_failing: isMergeQueue(),
-    command: `bun scripts/binary-size.ts ${args.join(" ")}`,
+    command: `fun scripts/binary-size.ts ${args.join(" ")}`,
   };
 }
 
@@ -918,8 +918,8 @@ function getReleaseStep(buildPlatforms, options, { signed = false } = {}) {
   // When signing ran, depend on windows-sign instead of the raw Windows builds
   // so we wait for signed artifacts before releasing.
   const depends_on = signed
-    ? [...buildPlatforms.filter(p => p.os !== "windows").map(p => `${getTargetKey(p)}-build-bun`), "windows-sign"]
-    : buildPlatforms.map(platform => `${getTargetKey(platform)}-build-bun`);
+    ? [...buildPlatforms.filter(p => p.os !== "windows").map(p => `${getTargetKey(p)}-build-fun`), "windows-sign"]
+    : buildPlatforms.map(platform => `${getTargetKey(platform)}-build-fun`);
 
   return {
     key: "release",
@@ -1387,7 +1387,7 @@ async function getPipeline(options = {}) {
         const steps = [];
         steps.push(getBuildCppStep(target, options));
         steps.push(getBuildZigStep(target, options));
-        steps.push(getLinkBunStep(target, options));
+        steps.push(getLinkFunStep(target, options));
 
         if (needsBaselineVerification(target)) {
           steps.push(getVerifyBaselineStep(target, options));
@@ -1412,7 +1412,7 @@ async function getPipeline(options = {}) {
         ...testPlatforms.map(target => ({
           key: getTargetKey(target),
           group: getTargetLabel(target),
-          steps: [getTestBunStep(target, options, { testFiles, buildId })],
+          steps: [getTestFunStep(target, options, { testFiles, buildId })],
         })),
       );
     }
@@ -1483,7 +1483,7 @@ async function main() {
       const { BUILDKITE_PULL_REQUEST } = process.env;
       for (let i = 1; i <= 10; i++) {
         const res = await fetch(
-          `https://api.github.com/repos/oven-sh/bun/pulls/${BUILDKITE_PULL_REQUEST}/files?per_page=${per_page}&page=${i}`,
+          `https://api.github.com/repos/underdoc-org/fun/pulls/${BUILDKITE_PULL_REQUEST}/files?per_page=${per_page}&page=${i}`,
           { headers: { Authorization: `Bearer ${getSecret("GITHUB_TOKEN")}` } },
         );
         const doc = await res.json();

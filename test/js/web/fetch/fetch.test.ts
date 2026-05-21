@@ -1,9 +1,9 @@
-import { AnyFunction, serve, ServeOptions, Server, sleep, TCPSocketListener } from "bun";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import { AnyFunction, serve, ServeOptions, Server, sleep, TCPSocketListener } from "fun";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "fun:test";
 import { chmodSync, rmSync, writeFileSync } from "fs";
 import {
-  bunEnv,
-  bunExe,
+  funEnv,
+  funExe,
   exampleSite,
   exampleHtml as fixture,
   gc,
@@ -354,10 +354,10 @@ describe("AbortSignal", () => {
     const signal = AbortSignal.timeout(10);
 
     try {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         async fetch() {
-          await Bun.sleep(100);
+          await Fun.sleep(100);
           return new Response("Hello");
         },
       });
@@ -451,12 +451,12 @@ describe("Headers", () => {
     const headers = new Headers([
       ["Set-Cookie", "foo=bar"],
       ["Set-Cookie", "bar=baz"],
-      ["X-bun", "abc"],
-      ["X-bun", "def"],
+      ["X-fun", "abc"],
+      ["X-fun", "def"],
     ]);
     const actual = [...headers];
     expect(actual).toEqual([
-      ["x-bun", "abc, def"],
+      ["x-fun", "abc, def"],
       ["set-cookie", "foo=bar"],
       ["set-cookie", "bar=baz"],
     ]);
@@ -467,11 +467,11 @@ describe("Headers", () => {
     const headers = new Headers([
       ["Set-Cookie", "foo=bar"],
       ["Set-Cookie", "bar=baz"],
-      ["X-bun", "abc"],
-      ["X-bun", "def"],
+      ["X-fun", "abc"],
+      ["X-fun", "def"],
     ]).toJSON();
     expect(headers).toEqual({
-      "x-bun": "abc, def",
+      "x-fun": "abc, def",
       "set-cookie": ["foo=bar", "bar=baz"],
     });
   });
@@ -479,16 +479,16 @@ describe("Headers", () => {
   it("Headers append multiple", () => {
     const headers = new Headers([
       ["Set-Cookie", "foo=bar"],
-      ["X-bun", "foo"],
+      ["X-fun", "foo"],
     ]);
     headers.append("Set-Cookie", "bar=baz");
-    headers.append("x-bun", "bar");
+    headers.append("x-fun", "bar");
     const actual = [...headers];
 
     // we do not preserve the order
     // which is kind of bad
     expect(actual).toEqual([
-      ["x-bun", "foo, bar"],
+      ["x-fun", "foo, bar"],
       ["set-cookie", "foo=bar"],
       ["set-cookie", "bar=baz"],
     ]);
@@ -557,7 +557,7 @@ describe("fetch", () => {
   }
 
   it.concurrent('redirect: "manual"', async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response(null, {
@@ -577,14 +577,14 @@ describe("fetch", () => {
   });
 
   it.concurrent('redirect: "follow"', async () => {
-    using target = Bun.serve({
+    using target = Fun.serve({
       port: 0,
       tls,
       fetch() {
         return new Response("redirected!");
       },
     });
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response(null, {
@@ -605,7 +605,7 @@ describe("fetch", () => {
   });
 
   it.concurrent('redirect: "error" #2819', async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response(null, {
@@ -629,7 +629,7 @@ describe("fetch", () => {
   it.concurrent("should properly redirect to another port #7793", async () => {
     var socket: net.Server | null = null;
     try {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         tls,
         fetch() {
@@ -663,7 +663,7 @@ describe("fetch", () => {
   });
 
   it.concurrent("provide body", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response(req.body);
@@ -673,22 +673,22 @@ describe("fetch", () => {
 
     // POST with body
     const url = `http://${server.hostname}:${server.port}`;
-    const response = await fetch(url, { method: "POST", body: "buntastic" });
+    const response = await fetch(url, { method: "POST", body: "funtastic" });
     expect(response.status).toBe(200);
-    expect(await response.text()).toBe("buntastic");
+    expect(await response.text()).toBe("funtastic");
   });
 
   ["GET", "HEAD", "OPTIONS"].forEach(method =>
     it.concurrent(`fail on ${method} with body`, async () => {
       const url = `http://${server.hostname}:${server.port}`;
       expect(async () => {
-        await fetch(url, { body: "buntastic" });
+        await fetch(url, { body: "funtastic" });
       }).toThrow("fetch() request with GET/HEAD/OPTIONS method cannot have body.");
     }),
   );
 
   it.concurrent("content length is inferred", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response(req.headers.get("content-length"));
@@ -698,7 +698,7 @@ describe("fetch", () => {
 
     // POST with body
     const url = `http://${server.hostname}:${server.port}`;
-    const response = await fetch(url, { method: "POST", body: "buntastic" });
+    const response = await fetch(url, { method: "POST", body: "funtastic" });
     expect(response.status).toBe(200);
     expect(await response.text()).toBe("9");
 
@@ -708,7 +708,7 @@ describe("fetch", () => {
   });
 
   it.concurrent("should work with ipv6 localhost", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         return new Response("Pass!");
@@ -742,7 +742,7 @@ it.concurrent("simultaneous HTTPS fetch", async () => {
 });
 
 it.concurrent("website with tlsextname", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     tls,
     fetch() {
@@ -947,14 +947,14 @@ function testBlobInterface(blobbyConstructor: { (..._: any[]): any }, hasBlobFn?
   }
 }
 
-describe.concurrent("Bun.file", () => {
+describe.concurrent("Fun.file", () => {
   let count = 0;
   testBlobInterface(data => {
     const blob = new Blob([data]);
-    const buffer = Bun.peek(blob.arrayBuffer()) as ArrayBuffer;
+    const buffer = Fun.peek(blob.arrayBuffer()) as ArrayBuffer;
     const path = join(tmp_dir, `tmp-${count++}.bytes`);
     writeFileSync(path, buffer);
-    const file = Bun.file(path);
+    const file = Fun.file(path);
     expect(blob.size).toBe(file.size);
     expect(file.lastModified).toBeGreaterThan(0);
     return file;
@@ -964,7 +964,7 @@ describe.concurrent("Bun.file", () => {
   it.skipIf(isWindows)("size is Infinity on a fifo", () => {
     const path = join(tmp_dir, "test-fifo");
     mkfifo(path);
-    const { size } = Bun.file(path);
+    const { size } = Fun.file(path);
     expect(size).toBe(Infinity);
   });
 
@@ -979,12 +979,12 @@ describe.concurrent("Bun.file", () => {
   describe.skipIf(isWindows)("bad permissions throws", () => {
     const path = join(tmp_dir, "my-new-file");
     beforeAll(async () => {
-      await Bun.write(path, "hey");
+      await Fun.write(path, "hey");
       chmodSync(path, 0x000);
     });
 
     forEachMethod(m => () => {
-      const file = Bun.file(path);
+      const file = Fun.file(path);
       expect(async () => await file[m]()).toThrow("permission denied");
     });
 
@@ -997,7 +997,7 @@ describe.concurrent("Bun.file", () => {
     const path = join(tmp_dir, "does-not-exist");
 
     forEachMethod(m => async () => {
-      const file = Bun.file(path);
+      const file = Fun.file(path);
       expect(async () => await file[m]()).toThrow("no such file or directory");
     });
   });
@@ -1406,14 +1406,14 @@ describe("Response", () => {
         await response.blob();
       }).toThrow("Body already used");
     });
-    it("with Bun.file() streams", async () => {
-      var stream = Bun.file(join(import.meta.dir, "fixtures/file.txt")).stream();
+    it("with Fun.file() streams", async () => {
+      var stream = Fun.file(join(import.meta.dir, "fixtures/file.txt")).stream();
       expect(stream instanceof ReadableStream).toBe(true);
       var input = new Response((await new Response(stream).blob()).stream()).arrayBuffer();
-      var output = Bun.file(join(import.meta.dir, "/fixtures/file.txt")).arrayBuffer();
+      var output = Fun.file(join(import.meta.dir, "/fixtures/file.txt")).arrayBuffer();
       expect(await input).toEqual(await output);
     });
-    it("with Bun.file() with request/response", async () => {
+    it("with Fun.file() with request/response", async () => {
       startServer({
         async fetch(request: Request) {
           var text = await request.text();
@@ -1426,10 +1426,10 @@ describe("Response", () => {
 
       var response = await fetch(server.url, {
         method: "POST",
-        body: await Bun.file(import.meta.dir + "/fixtures/file.txt").arrayBuffer(),
+        body: await Fun.file(import.meta.dir + "/fixtures/file.txt").arrayBuffer(),
       });
       const input = await response.bytes();
-      var output = await Bun.file(import.meta.dir + "/fixtures/file.txt").stream();
+      var output = await Fun.file(import.meta.dir + "/fixtures/file.txt").stream();
       let chunks: Uint8Array[] = [];
       const reader = output.getReader();
       while (true) {
@@ -1603,7 +1603,7 @@ it("#874", () => {
 
 it("#2794", () => {
   expect(typeof globalThis.fetch.bind).toBe("function");
-  expect(typeof Bun.fetch.bind).toBe("function");
+  expect(typeof Fun.fetch.bind).toBe("function");
 });
 
 it("#3545", () => {
@@ -1636,20 +1636,20 @@ it("new Request(https://example.com, otherRequest) uses url from left instead of
 });
 
 it("fetch() file:// works", async () => {
-  expect(await (await fetch(import.meta.url)).text()).toEqual(await Bun.file(import.meta.path).text());
+  expect(await (await fetch(import.meta.url)).text()).toEqual(await Fun.file(import.meta.path).text());
   expect(await (await fetch(new URL("fetch.test.ts", import.meta.url))).text()).toEqual(
-    await Bun.file(Bun.fileURLToPath(new URL("fetch.test.ts", import.meta.url))).text(),
+    await Fun.file(Fun.fileURLToPath(new URL("fetch.test.ts", import.meta.url))).text(),
   );
   gc(true);
   var fileResponse = await fetch(new URL("file with space in the name.txt", import.meta.url));
   gc(true);
   var fileResponseText = await fileResponse.text();
   gc(true);
-  var bunFile = Bun.file(Bun.fileURLToPath(new URL("file with space in the name.txt", import.meta.url)));
+  var funFile = Fun.file(Fun.fileURLToPath(new URL("file with space in the name.txt", import.meta.url)));
   gc(true);
-  var bunFileText = await bunFile.text();
+  var funFileText = await funFile.text();
   gc(true);
-  expect(fileResponseText).toEqual(bunFileText);
+  expect(fileResponseText).toEqual(funFileText);
   gc(true);
 });
 it("cloned response headers are independent before accessing", () => {
@@ -1739,7 +1739,7 @@ it("should work with http 100 continue on the same buffer", async () => {
 
 describe("should strip headers", () => {
   it("status code 303", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(request: Request) {
         if (request.url.endsWith("/redirect")) {
@@ -1773,7 +1773,7 @@ describe("should strip headers", () => {
   });
 
   it("cross-origin status code 302", async () => {
-    await using server1 = Bun.serve({
+    await using server1 = Fun.serve({
       port: 0,
       async fetch(request: Request) {
         if (request.url.endsWith("/redirect")) {
@@ -1792,7 +1792,7 @@ describe("should strip headers", () => {
       },
     });
 
-    await using server2 = Bun.serve({
+    await using server2 = Fun.serve({
       port: 0,
       async fetch(request: Request, server) {
         if (request.url.endsWith("/redirect")) {
@@ -1828,7 +1828,7 @@ describe("should strip headers", () => {
 });
 
 it("same-origin status code 302 should not strip headers", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(request: Request, server) {
       if (request.url.endsWith("/redirect")) {
@@ -1866,7 +1866,7 @@ it("same-origin status code 302 should not strip headers", async () => {
 describe("should handle relative location in the redirect, issue#5635", () => {
   let server: Server;
   beforeAll(async () => {
-    server = Bun.serve({
+    server = Fun.serve({
       port: 0,
       async fetch(request: Request) {
         return new Response("Not Found", {
@@ -1925,7 +1925,7 @@ describe("should handle relative location in the redirect, issue#5635", () => {
 
 it.concurrent("should allow very long redirect URLS", async () => {
   const Location = "/" + "B".repeat(7 * 1024);
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(request: Request) {
       gc();
@@ -1952,7 +1952,7 @@ it.concurrent("should allow very long redirect URLS", async () => {
 });
 
 it.concurrent("304 not modified with missing content-length does not cause a request timeout", async () => {
-  const server = await Bun.listen({
+  const server = await Fun.listen({
     socket: {
       open(socket) {
         socket.write("HTTP/1.1 304 Not Modified\r\n\r\n");
@@ -1975,7 +1975,7 @@ it.concurrent("304 not modified with missing content-length does not cause a req
 });
 
 it("304 not modified with missing content-length and connection close does not cause a request timeout", async () => {
-  const server = await Bun.listen({
+  const server = await Fun.listen({
     socket: {
       open(socket) {
         socket.write("HTTP/1.1 304 Not Modified\r\nConnection: close\r\n\r\n");
@@ -1998,7 +1998,7 @@ it("304 not modified with missing content-length and connection close does not c
 });
 
 it("304 not modified with content-length 0 and connection close does not cause a request timeout", async () => {
-  const server = await Bun.listen({
+  const server = await Fun.listen({
     socket: {
       open(socket) {
         socket.write("HTTP/1.1 304 Not Modified\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
@@ -2021,7 +2021,7 @@ it("304 not modified with content-length 0 and connection close does not cause a
 });
 
 it("304 not modified with 0 content-length does not cause a request timeout", async () => {
-  const server = await Bun.listen({
+  const server = await Fun.listen({
     socket: {
       open(socket) {
         socket.write("HTTP/1.1 304 Not Modified\r\nContent-Length: 0\r\n\r\n");
@@ -2048,7 +2048,7 @@ describe("http/1.1 response body length", () => {
 
   let server: TCPSocketListener | undefined;
   beforeAll(async () => {
-    server = Bun.listen({
+    server = Fun.listen({
       socket: {
         open(socket) {
           setTimeout(() => {
@@ -2152,49 +2152,49 @@ describe("fetch Response life cycle", () => {
   // 2054 |       stderr: "inherit",
   // 2055 |       stdout: "inherit",
   // 2056 |       stdin: "inherit",
-  // 2057 |       env: bunEnv,
+  // 2057 |       env: funEnv,
   // 2058 |     });
   // 2059 |     expect(await clientProcess.exited).toBe(0);
   //                                               ^
   // error: expect(received).toBe(expected)
   // Expected: 0
   // Received: 1
-  //       at <anonymous> (/opt/homebrew/etc/buildkite-agent/builds/macOS-13-aarch64-1/bun/bun/test/js/web/fetch/fetch.test.ts:2059:40)
+  //       at <anonymous> (/opt/homebrew/etc/buildkite-agent/builds/macOS-13-aarch64-1/fun/fun/test/js/web/fetch/fetch.test.ts:2059:40)
   // ✗ fetch Response life cycle > should not keep Response alive if not consumed [205.17ms]
   it.skipIf(isFlaky && isMacOS)("should not keep Response alive if not consumed", async () => {
     let deferred = Promise.withResolvers<string>();
 
-    await using serverProcess = Bun.spawn({
-      cmd: [bunExe(), "--smol", fetchFixture3],
+    await using serverProcess = Fun.spawn({
+      cmd: [funExe(), "--smol", fetchFixture3],
       stderr: "inherit",
       stdout: "inherit",
       stdin: "inherit",
-      env: bunEnv,
+      env: funEnv,
       ipc(message) {
         deferred.resolve(message);
       },
     });
 
     const serverUrl = await deferred.promise;
-    await using clientProcess = Bun.spawn({
-      cmd: [bunExe(), "--smol", fetchFixture4, serverUrl],
+    await using clientProcess = Fun.spawn({
+      cmd: [funExe(), "--smol", fetchFixture4, serverUrl],
       stderr: "inherit",
       stdout: "inherit",
       stdin: "inherit",
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await clientProcess.exited).toBe(0);
   });
   it("should allow to get promise result after response is GC'd", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(request: Request) {
         return new Response(
           new ReadableStream({
             async pull(controller) {
-              await Bun.sleep(100);
+              await Fun.sleep(100);
               controller.enqueue(new TextEncoder().encode("Hello, World!"));
-              await Bun.sleep(100);
+              await Fun.sleep(100);
               controller.close();
             },
           }),
@@ -2209,7 +2209,7 @@ describe("fetch Response life cycle", () => {
     }
     try {
       const response_promise = fetchResponse();
-      Bun.gc(true);
+      Fun.gc(true);
       expect(await response_promise).toBe("Hello, World!");
     } finally {
       server.stop(true);
@@ -2219,7 +2219,7 @@ describe("fetch Response life cycle", () => {
 
 describe("fetch should allow duplex", () => {
   it("should allow duplex streaming", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         return new Response(req.body);
@@ -2273,7 +2273,7 @@ describe("fetch should allow duplex", () => {
       }
     }
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         return new Response(req.body);
@@ -2307,7 +2307,7 @@ describe("fetch should allow duplex", () => {
       }
     }
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         return new Response(req.body);
@@ -2323,7 +2323,7 @@ describe("fetch should allow duplex", () => {
   });
 
   it("should allow duplex using async iterator (async)", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         return new Response(req.body);
@@ -2332,9 +2332,9 @@ describe("fetch should allow duplex", () => {
     const response = await fetch(server.url, {
       body: async function* iter() {
         yield "Hello";
-        await Bun.sleep(20);
+        await Fun.sleep(20);
         yield " ";
-        await Bun.sleep(20);
+        await Fun.sleep(20);
         yield "World!";
       },
       method: "POST",
@@ -2345,7 +2345,7 @@ describe("fetch should allow duplex", () => {
   });
 
   it("should fail in redirects .follow when using duplex", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         if (req.url.indexOf("/redirect") === -1) {
@@ -2359,9 +2359,9 @@ describe("fetch should allow duplex", () => {
       const response = await fetch(server.url, {
         body: async function* iter() {
           yield "Hello";
-          await Bun.sleep(20);
+          await Fun.sleep(20);
           yield " ";
-          await Bun.sleep(20);
+          await Fun.sleep(20);
           yield "World!";
         },
         method: "POST",
@@ -2373,7 +2373,7 @@ describe("fetch should allow duplex", () => {
   });
 
   it("should work in redirects .manual when using duplex", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       idleTimeout: 0,
       async fetch(req) {
@@ -2388,9 +2388,9 @@ describe("fetch should allow duplex", () => {
       const response = await fetch(server.url, {
         body: async function* iter() {
           yield "Hello";
-          await Bun.sleep(20);
+          await Fun.sleep(20);
           yield " ";
-          await Bun.sleep(20);
+          await Fun.sleep(20);
           yield "World!";
         },
         method: "POST",
@@ -2424,12 +2424,12 @@ it("should allow to follow redirect if connection is closed, abort should work e
               setTimeout(() => {
                 if (!socket.destroyed)
                   socket.end(
-                    "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nHello Bun",
+                    "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nHello Fun",
                   );
               }, 200);
             } else {
               socket.end(
-                "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nHello Bun",
+                "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nHello Fun",
               );
             }
           }
@@ -2451,7 +2451,7 @@ it("should allow to follow redirect if connection is closed, abort should work e
         expect.unreachable();
       } else {
         expect(response.status).toBe(200);
-        expect(await response.text()).toBe("Hello Bun");
+        expect(await response.text()).toBe("Hello Fun");
       }
     } catch (err) {
       if (type === "delay") {

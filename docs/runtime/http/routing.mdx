@@ -1,16 +1,16 @@
 ---
 title: Routing
-description: Define routes in `Bun.serve` using static paths, parameters, and wildcards
+description: Define routes in `Fun.serve` using static paths, parameters, and wildcards
 ---
 
-You can add routes to `Bun.serve()` by using the `routes` property (for static paths, parameters, and wildcards) or by handling unmatched requests with the [`fetch`](#fetch) method.
+You can add routes to `Fun.serve()` by using the `routes` property (for static paths, parameters, and wildcards) or by handling unmatched requests with the [`fetch`](#fetch) method.
 
-`Bun.serve()`'s router builds on top uWebSocket's [tree-based approach](https://github.com/oven-sh/bun/blob/0d1a00fa0f7830f8ecd99c027fce8096c9d459b6/packages/bun-uws/src/HttpRouter.h#L57-L64) to add [SIMD-accelerated route parameter decoding](https://github.com/oven-sh/bun/blob/main/src/jsc/bindings/decodeURIComponentSIMD.cpp#L21-L271) and [JavaScriptCore structure caching](https://github.com/oven-sh/bun/blob/main/src/jsc/bindings/ServerRouteList.cpp#L100-L101) to push the performance limits of what modern hardware allows.
+`Fun.serve()`'s router builds on top uWebSocket's [tree-based approach](https://github.com/underdoc-org/fun/blob/0d1a00fa0f7830f8ecd99c027fce8096c9d459b6/packages/fun-uws/src/HttpRouter.h#L57-L64) to add [SIMD-accelerated route parameter decoding](https://github.com/underdoc-org/fun/blob/main/src/jsc/bindings/decodeURIComponentSIMD.cpp#L21-L271) and [JavaScriptCore structure caching](https://github.com/underdoc-org/fun/blob/main/src/jsc/bindings/ServerRouteList.cpp#L100-L101) to push the performance limits of what modern hardware allows.
 
 ## Basic Setup
 
 ```ts title="server.ts" icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   routes: {
     "/": () => new Response("Home"),
     "/api": () => Response.json({ success: true }),
@@ -22,11 +22,11 @@ Bun.serve({
 });
 ```
 
-Routes in `Bun.serve()` receive a `BunRequest` (which extends [`Request`](https://developer.mozilla.org/en-US/docs/Web/API/Request)) and return a [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) or `Promise<Response>`. This makes it easier to use the same code for both sending & receiving HTTP requests.
+Routes in `Fun.serve()` receive a `FunRequest` (which extends [`Request`](https://developer.mozilla.org/en-US/docs/Web/API/Request)) and return a [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) or `Promise<Response>`. This makes it easier to use the same code for both sending & receiving HTTP requests.
 
 ```ts
 // Simplified for brevity
-interface BunRequest<T extends string> extends Request {
+interface FunRequest<T extends string> extends Request {
   params: Record<T, string>;
   readonly cookies: CookieMap;
 }
@@ -39,7 +39,7 @@ interface BunRequest<T extends string> extends Request {
 You can use async/await in route handlers to return a `Promise<Response>`.
 
 ```ts
-import { sql, serve } from "bun";
+import { sql, serve } from "fun";
 
 serve({
   port: 3001,
@@ -57,7 +57,7 @@ serve({
 You can also return a `Promise<Response>` from a route handler.
 
 ```ts
-import { sql, serve } from "bun";
+import { sql, serve } from "fun";
 
 serve({
   routes: {
@@ -85,7 +85,7 @@ Routes are matched in order of specificity:
 4. Global catch-all (`/*`)
 
 ```ts
-Bun.serve({
+Fun.serve({
   routes: {
     // Most specific first
     "/api/users/me": () => new Response("Current user"),
@@ -103,9 +103,9 @@ Bun.serve({
 TypeScript parses route parameters when passed as a string literal, so that your editor will show autocomplete when accessing `request.params`.
 
 ```ts title="index.ts" icon="/icons/typescript.svg"
-import type { BunRequest } from "bun";
+import type { FunRequest } from "fun";
 
-Bun.serve({
+Fun.serve({
   routes: {
     // TypeScript knows the shape of params when passed as a string literal
     "/orgs/:orgId/repos/:repoId": req => {
@@ -114,8 +114,8 @@ Bun.serve({
     },
 
     "/orgs/:orgId/repos/:repoId/settings": (
-      // optional: you can explicitly pass a type to BunRequest:
-      req: BunRequest<"/orgs/:orgId/repos/:repoId/settings">,
+      // optional: you can explicitly pass a type to FunRequest:
+      req: FunRequest<"/orgs/:orgId/repos/:repoId/settings">,
     ) => {
       const { orgId, repoId } = req.params;
       return Response.json({ orgId, repoId });
@@ -128,10 +128,10 @@ Percent-encoded route parameter values are automatically decoded. Unicode charac
 
 ### Static responses
 
-Routes can also be `Response` objects (without the handler function). Bun.serve() optimizes it for zero-allocation dispatch - perfect for health checks, redirects, and fixed content:
+Routes can also be `Response` objects (without the handler function). Fun.serve() optimizes it for zero-allocation dispatch - perfect for health checks, redirects, and fixed content:
 
 ```ts
-Bun.serve({
+Fun.serve({
   routes: {
     // Health checks
     "/health": new Response("OK"),
@@ -143,7 +143,7 @@ Bun.serve({
     }),
 
     // Redirects
-    "/blog": Response.redirect("https://bun.com/blog"),
+    "/blog": Response.redirect("https://fun.dev/blog"),
 
     // API responses
     "/api/config": Response.json({
@@ -163,13 +163,13 @@ Static route responses are cached for the lifetime of the server object. To relo
 When serving files in routes, there are two distinct behaviors depending on whether you buffer the file content or serve it directly:
 
 ```ts
-Bun.serve({
+Fun.serve({
   routes: {
     // Static route - content is buffered in memory at startup
-    "/logo.png": new Response(await Bun.file("./logo.png").bytes()),
+    "/logo.png": new Response(await Fun.file("./logo.png").bytes()),
 
     // File route - content is read from filesystem on each request
-    "/download.zip": new Response(Bun.file("./download.zip")),
+    "/download.zip": new Response(Fun.file("./download.zip")),
   },
 });
 ```
@@ -183,7 +183,7 @@ Bun.serve({
 - **Memory usage** - Full file content stored in RAM
 - **Best for**: Small static assets, API responses, frequently accessed files
 
-**File routes** (`new Response(Bun.file(path))`) read from filesystem per request:
+**File routes** (`new Response(Fun.file(path))`) read from filesystem per request:
 
 - **Filesystem reads** on each request - checks file existence and reads content
 - **Built-in 404 handling** - Returns `404 Not Found` if file doesn't exist or becomes inaccessible
@@ -198,25 +198,25 @@ Bun.serve({
 
 ## Streaming files
 
-To stream a file, return a `Response` object with a `BunFile` object as the body.
+To stream a file, return a `Response` object with a `FunFile` object as the body.
 
 ```ts
-Bun.serve({
+Fun.serve({
   fetch(req) {
-    return new Response(Bun.file("./hello.txt"));
+    return new Response(Fun.file("./hello.txt"));
   },
 });
 ```
 
 <Info>
-  ⚡️ **Speed** — Bun automatically uses the [`sendfile(2)`](https://man7.org/linux/man-pages/man2/sendfile.2.html)
+  ⚡️ **Speed** — Fun automatically uses the [`sendfile(2)`](https://man7.org/linux/man-pages/man2/sendfile.2.html)
   system call when possible, enabling zero-copy file transfers in the kernel—the fastest way to send files.
 </Info>
 
-You can send part of a file using the [`slice(start, end)`](https://developer.mozilla.org/en-US/docs/Web/API/Blob/slice) method on the `Bun.file` object. This automatically sets the `Content-Range` and `Content-Length` headers on the `Response` object.
+You can send part of a file using the [`slice(start, end)`](https://developer.mozilla.org/en-US/docs/Web/API/Blob/slice) method on the `Fun.file` object. This automatically sets the `Content-Range` and `Content-Length` headers on the `Response` object.
 
 ```ts
-Bun.serve({
+Fun.serve({
   fetch(req) {
     // parse `Range` header
     const [start = 0, end = Infinity] = req.headers
@@ -227,7 +227,7 @@ Bun.serve({
       .map(Number); // [0, 100]
 
     // return a slice of the file
-    const bigFile = Bun.file("./big-video.mp4");
+    const bigFile = Fun.file("./big-video.mp4");
     return new Response(bigFile.slice(start, end));
   },
 });
@@ -240,7 +240,7 @@ Bun.serve({
 The `fetch` handler handles incoming requests that weren't matched by any route. It receives a [`Request`](https://developer.mozilla.org/en-US/docs/Web/API/Request) object and returns a [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) or [`Promise<Response>`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
 
 ```ts
-Bun.serve({
+Fun.serve({
   fetch(req) {
     const url = new URL(req.url);
     if (url.pathname === "/") return new Response("Home page!");
@@ -253,7 +253,7 @@ Bun.serve({
 The `fetch` handler supports async/await:
 
 ```ts
-import { sleep, serve } from "bun";
+import { sleep, serve } from "fun";
 
 serve({
   async fetch(req) {
@@ -268,7 +268,7 @@ serve({
 Promise-based responses are also supported:
 
 ```ts
-Bun.serve({
+Fun.serve({
   fetch(req) {
     // Forward the request to another server.
     return fetch("https://example.com");
@@ -280,7 +280,7 @@ You can also access the `Server` object from the `fetch` handler. It's the secon
 
 ```ts
 // `server` is passed in as the second argument to `fetch`.
-const server = Bun.serve({
+const server = Fun.serve({
   fetch(req, server) {
     const ip = server.requestIP(req);
     return new Response(`Your IP is ${ip.address}`);

@@ -1,4 +1,6 @@
-// Verify that a Bun binary doesn't use CPU instructions beyond its baseline target.
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
+// Verify that a Fun binary doesn't use CPU instructions beyond its baseline target.
 //
 // Detects the platform and chooses the appropriate emulator:
 //   Linux x64:    QEMU with Nehalem CPU (no AVX)
@@ -6,8 +8,8 @@
 //   Windows x64:  Intel SDE with -nhm (no AVX)
 //
 // Usage:
-//   bun scripts/verify-baseline.ts --binary ./bun --emulator /usr/bin/qemu-x86_64
-//   bun scripts/verify-baseline.ts --binary ./bun.exe --emulator ./sde.exe
+//   fun scripts/verify-baseline.ts --binary ./fun --emulator /usr/bin/qemu-x86_64
+//   fun scripts/verify-baseline.ts --binary ./fun.exe --emulator ./sde.exe
 
 import { readdirSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
@@ -27,11 +29,11 @@ const { values } = parseArgs({
 const binary = resolve(values.binary!);
 
 function resolveEmulator(name: string): string {
-  const found = Bun.which(name);
+  const found = Fun.which(name);
   if (found) return found;
   // Try without -static suffix (e.g. qemu-aarch64 instead of qemu-aarch64-static)
   if (name.endsWith("-static")) {
-    const fallback = Bun.which(name.slice(0, -"-static".length));
+    const fallback = Fun.which(name.slice(0, -"-static".length));
     if (fallback) return fallback;
   }
   // Last resort: resolve as a relative path (e.g. sde-external/sde.exe)
@@ -42,9 +44,9 @@ const emulatorPath = resolveEmulator(values.emulator!);
 
 const scriptDir = dirname(import.meta.path);
 const repoRoot = resolve(scriptDir, "..");
-const fixturesDir = join(repoRoot, "test", "js", "bun", "jsc-stress", "fixtures");
+const fixturesDir = join(repoRoot, "test", "js", "fun", "jsc-stress", "fixtures");
 const wasmFixturesDir = join(fixturesDir, "wasm");
-const preloadPath = join(repoRoot, "test", "js", "bun", "jsc-stress", "preload.js");
+const preloadPath = join(repoRoot, "test", "js", "fun", "jsc-stress", "preload.js");
 
 // Platform detection
 const isWindows = process.platform === "win32";
@@ -109,7 +111,7 @@ async function runTest(label: string, binaryArgs: string[], options?: RunTestOpt
 
   const start = performance.now();
   const live = options?.live ?? false;
-  const proc = Bun.spawn([...config.runnerCmd, binary, ...binaryArgs], {
+  const proc = Fun.spawn([...config.runnerCmd, binary, ...binaryArgs], {
     // config.cwd takes priority — SDE on Windows must run from its own directory for Pin DLL resolution
     cwd: config.cwd ?? options?.cwd,
     stdout: "pipe",
@@ -177,10 +179,10 @@ const staticAllowlistName = isWindows
 const staticAllowlist = join(scriptDir, "verify-baseline-static", staticAllowlistName);
 let staticViolations = "";
 
-if (await Bun.file(staticChecker).exists()) {
+if (await Fun.file(staticChecker).exists()) {
   console.log("+++ Static instruction scan");
   const start = performance.now();
-  const proc = Bun.spawn([staticChecker, "--binary", binary, "--allowlist", staticAllowlist], {
+  const proc = Fun.spawn([staticChecker, "--binary", binary, "--allowlist", staticAllowlist], {
     stdout: "pipe",
     stderr: "inherit",
   });
@@ -210,7 +212,7 @@ if (await Bun.file(staticChecker).exists()) {
 }
 
 // Phase 1: SIMD code path verification (always runs)
-const simdTestPath = join(repoRoot, "test", "js", "bun", "jsc-stress", "fixtures", "simd-baseline.test.ts");
+const simdTestPath = join(repoRoot, "test", "js", "fun", "jsc-stress", "fixtures", "simd-baseline.test.ts");
 await runTest("SIMD baseline tests", ["test", simdTestPath], { live: true });
 
 // Phase 2: JIT stress fixtures (only with --jit-stress, e.g. on WebKit changes)
@@ -287,7 +289,7 @@ if (instructionFailures > 0) {
   parts.push(`</details>`);
   const annotation = parts.join("\n");
 
-  Bun.spawnSync(["buildkite-agent", "annotate", "--append", "--style", "error", "--context", "verify-baseline"], {
+  Fun.spawnSync(["buildkite-agent", "annotate", "--append", "--style", "error", "--context", "verify-baseline"], {
     stdin: new Blob([annotation]),
   });
 

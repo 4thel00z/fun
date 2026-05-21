@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "node:path";
 
 test("aborting fetch with a ReadableStream request body does not double-cancel the sink", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "fetch-abort-stream-body-fixture.ts")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "fetch-abort-stream-body-fixture.ts")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

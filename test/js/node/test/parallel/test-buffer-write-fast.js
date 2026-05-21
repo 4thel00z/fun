@@ -2,7 +2,7 @@
 'use strict';
 
 const common = require('../common');
-if ('Bun' in globalThis) common.skip('uses internals');
+if ('Fun' in globalThis) common.skip('uses internals');
 const assert = require('assert');
 
 function testFastUtf8Write() {

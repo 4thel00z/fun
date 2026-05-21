@@ -1,9 +1,9 @@
 ---
 title: HTML & static sites
-description: Build static sites, landing pages, and web applications with Bun's bundler
+description: Build static sites, landing pages, and web applications with Fun's bundler
 ---
 
-Bun's bundler has first-class support for HTML. Build static sites, landing pages, and web applications with zero configuration. Just point Bun at your HTML file and it handles everything else.
+Fun's bundler has first-class support for HTML. Build static sites, landing pages, and web applications with zero configuration. Just point Fun at your HTML file and it handles everything else.
 
 ```html title="index.html" icon="file-code"
 <!doctype html>
@@ -18,20 +18,20 @@ Bun's bundler has first-class support for HTML. Build static sites, landing page
 </html>
 ```
 
-To get started, pass HTML files to `bun`.
+To get started, pass HTML files to `fun`.
 
 ```bash terminal icon="terminal"
-bun ./index.html
+fun ./index.html
 ```
 
 ```
-Bun v1.3.3
+Fun v1.3.3
 ready in 6.62ms
 → http://localhost:3000/
 Press h + Enter to show shortcuts
 ```
 
-Bun's development server provides powerful features with zero configuration:
+Fun's development server provides powerful features with zero configuration:
 
 - **Automatic Bundling** - Bundles and serves your HTML, JavaScript, and CSS
 - **Multi-Entry Support** - Handles multiple HTML entry points and glob entry points
@@ -44,14 +44,14 @@ Bun's development server provides powerful features with zero configuration:
 
 ## Single Page Apps (SPA)
 
-When you pass a single `.html` file to Bun, Bun will use it as a fallback route for all paths. This makes it perfect for single page apps that use client-side routing:
+When you pass a single `.html` file to Fun, Fun will use it as a fallback route for all paths. This makes it perfect for single page apps that use client-side routing:
 
 ```bash terminal icon="terminal"
-bun index.html
+fun index.html
 ```
 
 ```
-Bun v1.3.3
+Fun v1.3.3
 ready in 6.62ms
 → http://localhost:3000/
 Press h + Enter to show shortcuts
@@ -74,14 +74,14 @@ Your React or other SPA will work out of the box — no configuration needed. Al
 
 ## Multi-page apps (MPA)
 
-Some projects have several separate routes or HTML files as entry points. To support multiple entry points, pass them all to `bun`:
+Some projects have several separate routes or HTML files as entry points. To support multiple entry points, pass them all to `fun`:
 
 ```bash terminal icon="terminal"
-bun ./index.html ./about.html
+fun ./index.html ./about.html
 ```
 
 ```txt
-Bun v1.3.3
+Fun v1.3.3
 ready in 6.62ms
 → http://localhost:3000/
 Routes:
@@ -100,11 +100,11 @@ This will serve:
 To specify multiple files, you can use glob patterns that end in `.html`:
 
 ```bash terminal icon="terminal"
-bun ./**/*.html
+fun ./**/*.html
 ```
 
 ```
-Bun v1.3.3
+Fun v1.3.3
 ready in 6.62ms
 → http://localhost:3000/
 Routes:
@@ -118,11 +118,11 @@ Press h + Enter to show shortcuts
 The base path is chosen from the longest common prefix among all the files.
 
 ```bash terminal icon="terminal"
-bun ./index.html ./about/index.html ./about/foo/index.html
+fun ./index.html ./about/index.html ./about/foo/index.html
 ```
 
 ```
-Bun v1.3.3
+Fun v1.3.3
 ready in 6.62ms
 → http://localhost:3000/
 Routes:
@@ -134,21 +134,21 @@ Press h + Enter to show shortcuts
 
 ## JavaScript, TypeScript, and JSX
 
-Bun's transpiler natively implements JavaScript, TypeScript, and JSX support. Learn more about loaders in Bun.
+Fun's transpiler natively implements JavaScript, TypeScript, and JSX support. Learn more about loaders in Fun.
 
-<Note>Bun's transpiler is also used at runtime.</Note>
+<Note>Fun's transpiler is also used at runtime.</Note>
 
 ### ES Modules & CommonJS
 
-You can use ESM and CJS in your JavaScript, TypeScript, and JSX files. Bun will handle the transpilation and bundling automatically.
+You can use ESM and CJS in your JavaScript, TypeScript, and JSX files. Fun will handle the transpilation and bundling automatically.
 
 There is no pre-build or separate optimization step. It's all done at the same time.
 
-Learn more about module resolution in Bun.
+Learn more about module resolution in Fun.
 
 ## CSS
 
-Bun's CSS parser is also natively implemented (clocking in around 58,000 lines of Zig).
+Fun's CSS parser is also natively implemented (clocking in around 58,000 lines of Zig).
 
 It's also a CSS bundler. You can use `@import` in your CSS files to import other CSS files.
 
@@ -219,18 +219,18 @@ The dev server supports plugins.
 
 ### Tailwind CSS
 
-To use TailwindCSS, install the `bun-plugin-tailwind` plugin:
+To use TailwindCSS, install the `fun-plugin-tailwind` plugin:
 
 ```bash terminal icon="terminal"
 # Or any npm client
-bun install --dev bun-plugin-tailwind
+fun install --dev fun-plugin-tailwind
 ```
 
-Then, add the plugin to your `bunfig.toml`:
+Then, add the plugin to your `funfig.toml`:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [serve.static]
-plugins = ["bun-plugin-tailwind"]
+plugins = ["fun-plugin-tailwind"]
 ```
 
 Then, reference TailwindCSS in your HTML via `<link>` tag, `@import` in CSS, or import in JavaScript.
@@ -264,13 +264,13 @@ Then, reference TailwindCSS in your HTML via `<link>` tag, `@import` in CSS, or 
 
 ## Inline environment variables
 
-Bun can replace `process.env.*` references in your JavaScript and TypeScript with their actual values at build time. This is useful for injecting configuration like API URLs or feature flags into your frontend code.
+Fun can replace `process.env.*` references in your JavaScript and TypeScript with their actual values at build time. This is useful for injecting configuration like API URLs or feature flags into your frontend code.
 
 ### Dev server (runtime)
 
-To inline environment variables when using `bun ./index.html`, configure the `env` option in your `bunfig.toml`:
+To inline environment variables when using `fun ./index.html`, configure the `env` option in your `funfig.toml`:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [serve.static]
 env = "PUBLIC_*"  # only inline env vars starting with PUBLIC_ (recommended)
 # env = "inline"  # inline all environment variables
@@ -289,7 +289,7 @@ If an environment variable is not set, you may see runtime errors like `Referenc
 Then run the dev server:
 
 ```bash terminal icon="terminal"
-PUBLIC_API_URL=https://api.example.com bun ./index.html
+PUBLIC_API_URL=https://api.example.com fun ./index.html
 ```
 
 ### Build for production
@@ -300,24 +300,24 @@ When building static HTML for production, use the `env` option to inline environ
   <Tab title="CLI">
     ```bash terminal icon="terminal"
     # Inline all environment variables
-    bun build ./index.html --outdir=dist --env=inline
+    fun build ./index.html --outdir=dist --env=inline
 
     # Only inline env vars with a specific prefix (recommended)
-    bun build ./index.html --outdir=dist --env=PUBLIC_*
+    fun build ./index.html --outdir=dist --env=PUBLIC_*
     ```
 
   </Tab>
   <Tab title="API">
     ```ts title="build.ts" icon="/icons/typescript.svg"
     // Inline all environment variables
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.html"],
       outdir: "./dist",
       env: "inline", // [!code highlight]
     });
 
     // Only inline env vars with a specific prefix (recommended)
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.html"],
       outdir: "./dist",
       env: "PUBLIC_*", // [!code highlight]
@@ -339,7 +339,7 @@ console.log(`API URL: ${apiUrl}`);
 And running with `PUBLIC_API_URL=https://api.example.com`:
 
 ```bash terminal icon="terminal"
-PUBLIC_API_URL=https://api.example.com bun build ./index.html --outdir=dist --env=PUBLIC_*
+PUBLIC_API_URL=https://api.example.com fun build ./index.html --outdir=dist --env=PUBLIC_*
 ```
 
 The bundled output will contain:
@@ -351,16 +351,16 @@ console.log(`API URL: ${apiUrl}`);
 
 ## Echo console logs from browser to terminal
 
-Bun's dev server supports streaming console logs from the browser to the terminal.
+Fun's dev server supports streaming console logs from the browser to the terminal.
 
 To enable, pass the `--console` CLI flag.
 
 ```bash terminal icon="terminal"
-bun ./index.html --console
+fun ./index.html --console
 ```
 
 ```
-Bun v1.3.3
+Fun v1.3.3
 ready in 6.62ms
 → http://localhost:3000/
 Press h + Enter to show shortcuts
@@ -372,7 +372,7 @@ Internally, this reuses the existing WebSocket connection from hot module reload
 
 ## Edit files in the browser
 
-Bun's frontend dev server has support for Automatic Workspace Folders in Chrome DevTools, which lets you save edits to files in the browser.
+Fun's frontend dev server has support for Automatic Workspace Folders in Chrome DevTools, which lets you save edits to files in the browser.
 
 ## Keyboard Shortcuts
 
@@ -384,17 +384,17 @@ While the server is running:
 
 ## Build for Production
 
-When you're ready to deploy, use `bun build` to create optimized production bundles:
+When you're ready to deploy, use `fun build` to create optimized production bundles:
 
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.html --minify --outdir=dist
+    fun build ./index.html --minify --outdir=dist
     ```
   </Tab>
   <Tab title="API">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.html"],
       outdir: "./dist",
       minify: true,
@@ -404,22 +404,22 @@ When you're ready to deploy, use `bun build` to create optimized production bund
 </Tabs>
 
 <Warning>
-  Currently, plugins are only supported through `Bun.build`'s API or through `bunfig.toml` with the frontend dev server
-  - not yet supported in `bun build`'s CLI.
+  Currently, plugins are only supported through `Fun.build`'s API or through `funfig.toml` with the frontend dev server
+  - not yet supported in `fun build`'s CLI.
 </Warning>
 
 ### Watch Mode
 
-You can run `bun build --watch` to watch for changes and rebuild automatically. This works nicely for library development.
+You can run `fun build --watch` to watch for changes and rebuild automatically. This works nicely for library development.
 
 <Info>You've never seen a watch mode this fast.</Info>
 
 ## Plugin API
 
-Need more control? Configure the bundler through the JavaScript API and use Bun's builtin `HTMLRewriter` to preprocess HTML.
+Need more control? Configure the bundler through the JavaScript API and use Fun's builtin `HTMLRewriter` to preprocess HTML.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./index.html"],
   outdir: "./dist",
   minify: true,
@@ -439,10 +439,10 @@ await Bun.build({
         });
 
         onLoad({ filter: /\.html$/ }, async args => {
-          const html = await Bun.file(args.path).text();
+          const html = await Fun.file(args.path).text();
 
           return {
-            // Bun's bundler will scan the HTML for <script> tags, <link rel="stylesheet"> tags, and other assets
+            // Fun's bundler will scan the HTML for <script> tags, <link rel="stylesheet"> tags, and other assets
             // and bundle them automatically
             contents: rewriter.transform(html),
             loader: "html",
@@ -456,10 +456,10 @@ await Bun.build({
 
 ## What Gets Processed?
 
-Bun automatically handles all common web assets:
+Fun automatically handles all common web assets:
 
-- **Scripts** (`<script src>`) are run through Bun's JavaScript/TypeScript/JSX bundler
-- **Stylesheets** (`<link rel="stylesheet">`) are run through Bun's CSS parser & bundler
+- **Scripts** (`<script src>`) are run through Fun's JavaScript/TypeScript/JSX bundler
+- **Stylesheets** (`<link rel="stylesheet">`) are run through Fun's CSS parser & bundler
 - **Images** (`<img>`, `<picture>`) are copied and hashed
 - **Media** (`<video>`, `<audio>`, `<source>`) are copied and hashed
 - Any `<link>` tag with an `href` attribute pointing to a local file is rewritten to the new path, and hashed
@@ -473,26 +473,26 @@ All paths are resolved relative to your HTML file, so you can organize your proj
 - Need a way to configure CORS, headers, etc.
 
 {/* todo: find the correct link to link to as this 404's and there isn't any similar files */}
-{/* If you want to submit a PR, most of the code is [here](https://github.com/oven-sh/bun/blob/main/src/runtime/api/bun/html-rewriter.ts). You could even copy paste that file into your project and use it as a starting point. */}
+{/* If you want to submit a PR, most of the code is [here](https://github.com/underdoc-org/fun/blob/main/src/runtime/api/fun/html-rewriter.ts). You could even copy paste that file into your project and use it as a starting point. */}
 
 </Warning>
 
 ## How this works
 
-This is a small wrapper around Bun's support for HTML imports in JavaScript.
+This is a small wrapper around Fun's support for HTML imports in JavaScript.
 
 ## Standalone HTML
 
 You can bundle your entire frontend into a **single self-contained `.html` file** with no external dependencies using `--compile --target=browser`. All JavaScript, CSS, and images are inlined directly into the HTML.
 
 ```bash terminal icon="terminal"
-bun build --compile --target=browser ./index.html --outdir=dist
+fun build --compile --target=browser ./index.html --outdir=dist
 ```
 
 Learn more in the [Standalone HTML docs](/bundler/standalone-html).
 
 ## Adding a backend to your frontend
 
-To add a backend to your frontend, you can use the "routes" option in `Bun.serve`.
+To add a backend to your frontend, you can use the "routes" option in `Fun.serve`.
 
 Learn more in the full-stack docs.

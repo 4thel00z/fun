@@ -1,13 +1,13 @@
 {
-  description = "Bun - A fast all-in-one JavaScript runtime";
+  description = "Fun - A fast all-in-one JavaScript runtime";
 
   # Uncomment this when you set up Cachix to enable automatic binary cache
   # nixConfig = {
   #   extra-substituters = [
-  #     "https://bun-dev.cachix.org"
+  #     "https://fun-dev.cachix.org"
   #   ];
   #   extra-trusted-public-keys = [
-  #     "bun-dev.cachix.org-1:REPLACE_WITH_YOUR_PUBLIC_KEY"
+  #     "fun-dev.cachix.org-1:REPLACE_WITH_YOUR_PUBLIC_KEY"
   #   ];
   # };
 
@@ -51,8 +51,8 @@
           pkgs.cargo
           pkgs.go
 
-          # Bun itself (for running build scripts via `bun bd`)
-          pkgs.bun
+          # Fun itself (for running build scripts via `fun bd`)
+          pkgs.fun
 
           # Node.js - version pinned to 24
           nodejs
@@ -153,17 +153,17 @@
 
             # Print welcome message
             echo "====================================="
-            echo "Bun Development Environment"
+            echo "Fun Development Environment"
             echo "====================================="
             echo "Node.js: $(node --version 2>/dev/null || echo 'not found')"
-            echo "Bun: $(bun --version 2>/dev/null || echo 'not found')"
+            echo "Fun: $(fun --version 2>/dev/null || echo 'not found')"
             echo "Clang: $(clang --version 2>/dev/null | head -n1 || echo 'not found')"
             echo "CMake: $(cmake --version 2>/dev/null | head -n1 || echo 'not found')"
             echo "LLVM: ${llvm.version}"
             echo ""
             echo "Quick start:"
-            echo "  bun bd                    # Build debug binary"
-            echo "  bun bd test <test-file>   # Run tests"
+            echo "  fun bd                    # Build debug binary"
+            echo "  fun bd test <test-file>   # Run tests"
             echo "====================================="
           '';
 

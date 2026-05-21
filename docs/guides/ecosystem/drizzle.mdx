@@ -1,28 +1,28 @@
 ---
-title: Use Drizzle ORM with Bun
-sidebarTitle: Drizzle with Bun
+title: Use Drizzle ORM with Fun
+sidebarTitle: Drizzle with Fun
 mode: center
 ---
 
-Drizzle is an ORM that supports both a SQL-like "query builder" API and an ORM-like [Queries API](https://orm.drizzle.team/docs/rqb). It supports the `bun:sqlite` built-in module.
+Drizzle is an ORM that supports both a SQL-like "query builder" API and an ORM-like [Queries API](https://orm.drizzle.team/docs/rqb). It supports the `fun:sqlite` built-in module.
 
 ---
 
-Let's get started by creating a fresh project with `bun init` and installing Drizzle.
+Let's get started by creating a fresh project with `fun init` and installing Drizzle.
 
 ```sh terminal icon="terminal"
-bun init -y
-bun add drizzle-orm
-bun add -D drizzle-kit
+fun init -y
+fun add drizzle-orm
+fun add -D drizzle-kit
 ```
 
 ---
 
-Then we'll connect to a SQLite database using the `bun:sqlite` module and create the Drizzle database instance.
+Then we'll connect to a SQLite database using the `fun:sqlite` module and create the Drizzle database instance.
 
 ```ts db.ts icon="/icons/typescript.svg"
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/fun-sqlite";
+import { Database } from "fun:sqlite";
 
 const sqlite = new Database("sqlite.db");
 export const db = drizzle(sqlite);
@@ -43,10 +43,10 @@ console.log(result);
 
 ---
 
-Then run `index.ts` with Bun. Bun will automatically create `sqlite.db` and execute the query.
+Then run `index.ts` with Fun. Fun will automatically create `sqlite.db` and execute the query.
 
 ```sh terminal icon="terminal"
-bun run index.ts
+fun run index.ts
 ```
 
 ```txt
@@ -74,7 +74,7 @@ export const movies = sqliteTable("movies", {
 We can use the `drizzle-kit` CLI to generate an initial SQL migration.
 
 ```sh terminal icon="terminal"
-bunx drizzle-kit generate --dialect sqlite --schema ./schema.ts
+funx drizzle-kit generate --dialect sqlite --schema ./schema.ts
 ```
 
 ---
@@ -96,10 +96,10 @@ We can execute these migrations with a `migrate.ts` script.
 This script creates a new connection to a SQLite database that writes to `sqlite.db`, then executes all unexecuted migrations in the `drizzle` directory.
 
 ```ts migrate.ts icon="/icons/typescript.svg"
-import { migrate } from "drizzle-orm/bun-sqlite/migrator";
+import { migrate } from "drizzle-orm/fun-sqlite/migrator";
 
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/fun-sqlite";
+import { Database } from "fun:sqlite";
 
 const sqlite = new Database("sqlite.db");
 const db = drizzle(sqlite);
@@ -108,10 +108,10 @@ migrate(db, { migrationsFolder: "./drizzle" });
 
 ---
 
-We can run this script with `bun` to execute the migration.
+We can run this script with `fun` to execute the migration.
 
 ```sh terminal icon="terminal"
-bun run migrate.ts
+fun run migrate.ts
 ```
 
 ---
@@ -145,7 +145,7 @@ console.log(`Seeding complete.`);
 Then run this file.
 
 ```sh terminal icon="terminal"
-bun run seed.ts
+fun run seed.ts
 ```
 
 ```txt
@@ -169,7 +169,7 @@ console.log(result);
 Then run the file. You should see the three movies we inserted.
 
 ```sh terminal icon="terminal"
-bun run index.ts
+fun run index.ts
 ```
 
 ```txt

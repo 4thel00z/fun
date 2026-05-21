@@ -1,18 +1,18 @@
 pub const WriteFileResultType = SystemError.Maybe(SizeType);
-pub const WriteFileOnWriteFileCallback = *const fn (ctx: *anyopaque, count: WriteFileResultType) bun.JSTerminated!void;
+pub const WriteFileOnWriteFileCallback = *const fn (ctx: *anyopaque, count: WriteFileResultType) fun.JSTerminated!void;
 pub const WriteFileTask = jsc.WorkTask(WriteFile);
 
 pub const WriteFile = struct {
     file_blob: Blob,
     bytes_blob: Blob,
 
-    opened_fd: bun.FD = invalid_fd,
+    opened_fd: fun.FD = invalid_fd,
     system_error: ?jsc.SystemError = null,
     errno: ?anyerror = null,
-    task: bun.ThreadPool.Task = undefined,
+    task: fun.ThreadPool.Task = undefined,
     io_task: ?*WriteFileTask = null,
-    io_poll: bun.io.Poll = .{},
-    io_request: bun.io.Request = .{ .callback = &onRequestWritable },
+    io_poll: fun.io.Poll = .{},
+    io_request: fun.io.Request = .{ .callback = &onRequestWritable },
     state: std.atomic.Value(ClosingState) = std.atomic.Value(ClosingState).init(.running),
 
     onCompleteCtx: *anyopaque = undefined,
@@ -28,7 +28,7 @@ pub const WriteFile = struct {
     pub const getFd = FileOpener(@This()).getFd;
     pub const doClose = FileCloser(WriteFile).doClose;
 
-    pub const open_flags = bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC | bun.O.NONBLOCK;
+    pub const open_flags = fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC | fun.O.NONBLOCK;
 
     pub fn onWritable(request: *io.Request) void {
         var this: *WriteFile = @fieldParentPtr("io_request", request);
@@ -41,9 +41,9 @@ pub const WriteFile = struct {
         jsc.WorkPool.schedule(&this.task);
     }
 
-    pub fn onIOError(this: *WriteFile, err: bun.sys.Error) void {
+    pub fn onIOError(this: *WriteFile, err: fun.sys.Error) void {
         bloblog("WriteFile.onIOError()", .{});
-        this.errno = bun.errnoToZigErr(err.errno);
+        this.errno = fun.errnoToZigErr(err.errno);
         this.system_error = err.toSystemError();
         this.task = .{ .callback = &doWriteLoopTask };
         jsc.WorkPool.schedule(&this.task);
@@ -78,7 +78,7 @@ pub const WriteFile = struct {
         onCompleteCallback: WriteFileOnWriteFileCallback,
         mkdirp_if_not_exists: bool,
     ) !*WriteFile {
-        const write_file = bun.new(WriteFile, WriteFile{
+        const write_file = fun.new(WriteFile, WriteFile{
             .file_blob = file_blob,
             .bytes_blob = bytes_blob,
             .onCompleteCtx = onWriteFileContext,
@@ -96,12 +96,12 @@ pub const WriteFile = struct {
         bytes_blob: Blob,
         comptime Context: type,
         context: Context,
-        comptime callback: fn (ctx: Context, bytes: WriteFileResultType) bun.JSTerminated!void,
+        comptime callback: fn (ctx: Context, bytes: WriteFileResultType) fun.JSTerminated!void,
         mkdirp_if_not_exists: bool,
     ) !*WriteFile {
         const Handler = struct {
-            pub fn run(ptr: *anyopaque, bytes: WriteFileResultType) bun.JSTerminated!void {
-                try callback(bun.cast(Context, ptr), bytes);
+            pub fn run(ptr: *anyopaque, bytes: WriteFileResultType) fun.JSTerminated!void {
+                try callback(fun.cast(Context, ptr), bytes);
             }
         };
 
@@ -120,15 +120,15 @@ pub const WriteFile = struct {
         wrote: *usize,
     ) bool {
         const fd = this.opened_fd;
-        bun.assert(fd != invalid_fd);
+        fun.assert(fd != invalid_fd);
 
-        const result: bun.sys.Maybe(usize) =
+        const result: fun.sys.Maybe(usize) =
             // We do not use pwrite() because the file may not be
             // seekable (such as stdout)
             //
             // On macOS, it is an error to use pwrite() on a
             // non-seekable file.
-            bun.sys.write(fd, buffer);
+            fun.sys.write(fd, buffer);
 
         while (true) {
             switch (result) {
@@ -138,7 +138,7 @@ pub const WriteFile = struct {
                 },
                 .err => |err| {
                     switch (err.getErrno()) {
-                        bun.io.retry => {
+                        fun.io.retry => {
                             if (!this.could_block) {
                                 // regular files cannot use epoll.
                                 // this is fine on kqueue, but not on epoll.
@@ -148,7 +148,7 @@ pub const WriteFile = struct {
                             return false;
                         },
                         else => {
-                            this.errno = bun.errnoToZigErr(err.getErrno());
+                            this.errno = fun.errnoToZigErr(err.getErrno());
                             this.system_error = err.toSystemError();
                             return false;
                         },
@@ -161,7 +161,7 @@ pub const WriteFile = struct {
         return true;
     }
 
-    pub fn then(this: *WriteFile, _: *jsc.JSGlobalObject) bun.JSTerminated!void {
+    pub fn then(this: *WriteFile, _: *jsc.JSGlobalObject) fun.JSTerminated!void {
         const cb = this.onCompleteCallback;
         const cb_ctx = this.onCompleteCtx;
 
@@ -169,13 +169,13 @@ pub const WriteFile = struct {
         this.file_blob.store.?.deref();
 
         if (this.system_error) |err| {
-            bun.destroy(this);
+            fun.destroy(this);
             try cb(cb_ctx, .{ .err = err });
             return;
         }
 
         const wrote = this.total_written;
-        bun.destroy(this);
+        fun.destroy(this);
         try cb(cb_ctx, .{ .result = @as(SizeType, @truncate(wrote)) });
     }
 
@@ -210,7 +210,7 @@ pub const WriteFile = struct {
         }
     }
 
-    fn runWithFD(this: *WriteFile, fd_: bun.FD) void {
+    fn runWithFD(this: *WriteFile, fd_: fun.FD) void {
         if (fd_ == invalid_fd or this.errno != null) {
             this.onFinish();
             return;
@@ -224,8 +224,8 @@ pub const WriteFile = struct {
                     // If seekable was set, then so was mode
                     if (store.data.file.seekable != null) {
                         // This is mostly to handle pipes which were passsed to the process somehow
-                        // such as stderr, stdout. Bun.stdin and Bun.stderr will automatically set `mode` for us.
-                        break :brk !bun.isRegularFile(store.data.file.mode);
+                        // such as stderr, stdout. Fun.stdin and Fun.stderr will automatically set `mode` for us.
+                        break :brk !fun.isRegularFile(store.data.file.mode);
                     }
                 }
             }
@@ -237,7 +237,7 @@ pub const WriteFile = struct {
             break :brk false;
         };
 
-        // We have never supported offset in Bun.write().
+        // We have never supported offset in Fun.write().
         // and properly adding support means we need to also support it
         // with splice, sendfile, and the other cases.
         //
@@ -245,16 +245,16 @@ pub const WriteFile = struct {
         //     // if we start at an offset in the file
         //     // example code:
         //     //
-        //     //    Bun.write(Bun.file("/tmp/lol.txt").slice(10), "hello world");
+        //     //    Fun.write(Fun.file("/tmp/lol.txt").slice(10), "hello world");
         //     //
         //     // it should write "hello world" to /tmp/lol.txt starting at offset 10
-        //     switch (bun.sys.setFileOffset(fd, this.file_blob.offset)) {
+        //     switch (fun.sys.setFileOffset(fd, this.file_blob.offset)) {
         //         // we ignore errors because it should continue to work even if its a pipe
         //         .err, .result => {},
         //     }
         // }
 
-        if (this.could_block and bun.isWritable(fd) == .not_ready) {
+        if (this.could_block and fun.isWritable(fd) == .not_ready) {
             this.waitForWritable();
             return;
         }
@@ -267,7 +267,7 @@ pub const WriteFile = struct {
             // seemed to have zero performance impact in
             // microbenchmarks.
             if (!this.could_block and this.bytes_blob.sharedView().len > 1024) {
-                bun.sys.preallocate_file(
+                fun.sys.preallocate_file(
                     fd.cast(),
                     0,
                     @intCast(this.bytes_blob.sharedView().len),
@@ -313,7 +313,7 @@ pub const WriteFile = struct {
                 }
 
                 // Do not immediately attempt to write again if it's not a regular file.
-                if (this.could_block and bun.isWritable(this.opened_fd) == .not_ready) {
+                if (this.could_block and fun.isWritable(this.opened_fd) == .not_ready) {
                     this.waitForWritable();
                     return;
                 }
@@ -344,21 +344,21 @@ pub const WriteFileWindows = struct {
     uv_bufs: [1]uv.uv_buf_t,
 
     fd: uv.uv_file = -1,
-    err: ?bun.sys.Error = null,
+    err: ?fun.sys.Error = null,
     total_written: usize = 0,
     event_loop: *jsc.EventLoop,
-    poll_ref: bun.Async.KeepAlive = .{},
+    poll_ref: fun.Async.KeepAlive = .{},
 
     owned_fd: bool = false,
 
-    const log = bun.Output.scoped(.WriteFile, .hidden);
+    const log = fun.Output.scoped(.WriteFile, .hidden);
 
     pub const WriteFileWindowsError = error{ WriteFileWindowsDeinitialized, JSTerminated };
 
     pub fn createWithCtx(
         file_blob: Blob,
         bytes_blob: Blob,
-        event_loop: *bun.jsc.EventLoop,
+        event_loop: *fun.jsc.EventLoop,
         onWriteFileContext: *anyopaque,
         onCompleteCallback: WriteFileOnWriteFileCallback,
         mkdirp_if_not_exists: bool,
@@ -417,8 +417,8 @@ pub const WriteFileWindows = struct {
             this.loop(),
             &this.io_request,
             &(std.posix.toPosixPath(path) catch {
-                return this.throw(bun.sys.Error{
-                    .errno = @intFromEnum(bun.sys.E.NAMETOOLONG),
+                return this.throw(fun.sys.Error{
+                    .errno = @intFromEnum(fun.sys.E.NAMETOOLONG),
                     .syscall = .open,
                 });
             }),
@@ -429,7 +429,7 @@ pub const WriteFileWindows = struct {
 
         // libuv always returns 0 when a callback is specified
         if (rc.errEnum()) |err| {
-            bun.assert(err != .NOENT);
+            fun.assert(err != .NOENT);
 
             return this.throw(.{
                 .errno = @intFromEnum(err),
@@ -443,7 +443,7 @@ pub const WriteFileWindows = struct {
 
     pub fn onOpen(req: *uv.fs_t) callconv(.c) void {
         var this: *WriteFileWindows = @fieldParentPtr("io_request", req);
-        bun.assert(this == @as(*WriteFileWindows, @ptrCast(@alignCast(req.data.?))));
+        fun.assert(this == @as(*WriteFileWindows, @ptrCast(@alignCast(req.data.?))));
         const rc = this.io_request.result;
         if (comptime Environment.allow_assert)
             log("onOpen({s}) = {f}", .{ this.file_blob.store.?.data.file.pathlike.path.slice(), rc });
@@ -486,7 +486,7 @@ pub const WriteFileWindows = struct {
         jsc.Node.fs.Async.AsyncMkdirp.new(.{
             .completion = @ptrCast(&onMkdirpCompleteConcurrent),
             .completion_ctx = this,
-            .path = bun.Dirname.dirname(u8, path)
+            .path = fun.Dirname.dirname(u8, path)
             // this shouldn't happen
             orelse path,
         }).schedule();
@@ -496,7 +496,7 @@ pub const WriteFileWindows = struct {
         const err = this.err;
         this.err = null;
         if (err) |err_| {
-            defer bun.default_allocator.free(err_.path);
+            defer fun.default_allocator.free(err_.path);
             switch (this.throw(err_)) {
                 error.WriteFileWindowsDeinitialized => {},
                 error.JSTerminated => {}, // TODO: properly propagate exception upwards
@@ -510,16 +510,16 @@ pub const WriteFileWindows = struct {
         };
     }
 
-    fn onMkdirpCompleteConcurrent(this: *WriteFileWindows, err_: bun.sys.Maybe(void)) void {
+    fn onMkdirpCompleteConcurrent(this: *WriteFileWindows, err_: fun.sys.Maybe(void)) void {
         log("mkdirp complete", .{});
-        bun.assert(this.err == null);
+        fun.assert(this.err == null);
         this.err = if (err_ == .err) err_.err else null;
         this.event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.create(jsc.ManagedTask.New(WriteFileWindows, onMkdirpComplete).init(this)));
     }
 
     fn onWriteComplete(req: *uv.fs_t) callconv(.c) void {
         var this: *WriteFileWindows = @fieldParentPtr("io_request", req);
-        bun.assert(this == @as(*WriteFileWindows, @ptrCast(@alignCast(req.data.?))));
+        fun.assert(this == @as(*WriteFileWindows, @ptrCast(@alignCast(req.data.?))));
         const rc = this.io_request.result;
         if (rc.errno()) |err| {
             switch (this.throw(.{
@@ -564,8 +564,8 @@ pub const WriteFileWindows = struct {
         return error.WriteFileWindowsDeinitialized;
     }
 
-    pub fn throw(this: *WriteFileWindows, err: bun.sys.Error) WriteFileWindowsError {
-        bun.assert(this.err == null);
+    pub fn throw(this: *WriteFileWindows, err: fun.sys.Error) WriteFileWindowsError {
+        fun.assert(this.err == null);
         this.err = err;
         return this.onFinish();
     }
@@ -609,21 +609,21 @@ pub const WriteFileWindows = struct {
             });
         }
 
-        if (rc.int() != 0) bun.Output.panic("unexpected return code from uv_fs_write: {d}", .{rc.int()});
+        if (rc.int() != 0) fun.Output.panic("unexpected return code from uv_fs_write: {d}", .{rc.int()});
     }
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn deinit(this: *@This()) void {
         const fd = this.fd;
         if (fd > 0 and this.owned_fd) {
-            bun.Async.Closer.close(.fromUV(fd), this.io_request.loop);
+            fun.Async.Closer.close(.fromUV(fd), this.io_request.loop);
         }
         this.file_blob.store.?.deref();
         this.bytes_blob.store.?.deref();
         this.poll_ref.disable();
         uv.uv_fs_req_cleanup(&this.io_request);
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     pub fn create(
@@ -632,7 +632,7 @@ pub const WriteFileWindows = struct {
         bytes_blob: Blob,
         comptime Context: type,
         context: Context,
-        comptime callback: *const fn (ctx: Context, bytes: WriteFileResultType) bun.JSTerminated!void,
+        comptime callback: *const fn (ctx: Context, bytes: WriteFileResultType) fun.JSTerminated!void,
         mkdirp_if_not_exists: bool,
     ) WriteFileWindowsError!*WriteFileWindows {
         return try WriteFileWindows.createWithCtx(
@@ -649,10 +649,10 @@ pub const WriteFileWindows = struct {
 pub const WriteFilePromise = struct {
     promise: JSPromise.Strong = .{},
     globalThis: *JSGlobalObject,
-    pub fn run(handler: *@This(), count: WriteFileResultType) bun.JSTerminated!void {
+    pub fn run(handler: *@This(), count: WriteFileResultType) fun.JSTerminated!void {
         var promise = handler.promise.swap();
         const globalThis = handler.globalThis;
-        bun.destroy(handler);
+        fun.destroy(handler);
         const value = promise.toJS();
         value.ensureStillAlive();
         switch (count) {
@@ -673,10 +673,10 @@ pub const WriteFileWaitFromLockedValueTask = struct {
     mkdirp_if_not_exists: bool = false,
 
     pub fn thenWrap(this: *anyopaque, value: *Body.Value) void {
-        then(bun.cast(*WriteFileWaitFromLockedValueTask, this), value) catch {}; // TODO: properly propagate exception upwards
+        then(fun.cast(*WriteFileWaitFromLockedValueTask, this), value) catch {}; // TODO: properly propagate exception upwards
     }
 
-    pub fn then(this: *WriteFileWaitFromLockedValueTask, value: *Body.Value) bun.JSTerminated!void {
+    pub fn then(this: *WriteFileWaitFromLockedValueTask, value: *Body.Value) fun.JSTerminated!void {
         var promise = this.promise.get();
         var globalThis = this.globalThis;
         var file_blob = this.file_blob;
@@ -685,14 +685,14 @@ pub const WriteFileWaitFromLockedValueTask = struct {
                 file_blob.detach();
                 _ = value.use();
                 this.promise.deinit();
-                bun.destroy(this);
+                fun.destroy(this);
                 try promise.rejectWithAsyncStack(globalThis, err_ref.toJS(globalThis));
             },
             .Used => {
                 file_blob.detach();
                 _ = value.use();
                 this.promise.deinit();
-                bun.destroy(this);
+                fun.destroy(this);
                 try promise.reject(globalThis, ZigString.init("Body was used after it was consumed").toErrorInstance(globalThis));
             },
             .WTFStringImpl,
@@ -706,12 +706,12 @@ pub const WriteFileWaitFromLockedValueTask = struct {
                 const new_promise = Blob.writeFileWithSourceDestination(globalThis, &blob, &file_blob, .{ .mkdirp_if_not_exists = this.mkdirp_if_not_exists }) catch |err| {
                     file_blob.detach();
                     this.promise.deinit();
-                    bun.destroy(this);
+                    fun.destroy(this);
                     try promise.reject(globalThis, err);
                     return;
                 };
 
-                defer bun.destroy(this);
+                defer fun.destroy(this);
                 defer this.promise.deinit();
                 defer file_blob.detach();
 
@@ -733,17 +733,17 @@ pub const WriteFileWaitFromLockedValueTask = struct {
     }
 };
 
-const bloblog = bun.Output.scoped(.WriteFile, .hidden);
+const bloblog = fun.Output.scoped(.WriteFile, .hidden);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const invalid_fd = bun.invalid_fd;
-const io = bun.io;
-const uv = bun.windows.libuv;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const invalid_fd = fun.invalid_fd;
+const io = fun.io;
+const uv = fun.windows.libuv;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSPromise = jsc.JSPromise;
 const SystemError = jsc.SystemError;

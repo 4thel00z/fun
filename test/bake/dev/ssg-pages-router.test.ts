@@ -1,5 +1,5 @@
 // Test SSG pages router functionality
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { devTest } from "../bake-harness";
 
 devTest("SSG pages router - multiple static pages", {
@@ -31,9 +31,9 @@ devTest("SSG pages router - dynamic routes with [slug]", {
   framework: "react",
   files: {
     "pages/[slug].tsx": `
-      type Props = Bun.SSGProps;
+      type Props = Fun.SSGProps;
 
-      const Page: Bun.SSGPage = async ({ params }) => {
+      const Page: Fun.SSGPage = async ({ params }) => {
         return (
           <div>
             <h1>Dynamic Page: {params.slug}</h1>
@@ -44,7 +44,7 @@ devTest("SSG pages router - dynamic routes with [slug]", {
 
       export default Page;
 
-      export const getStaticPaths: Bun.GetStaticPaths = async () => {
+      export const getStaticPaths: Fun.GetStaticPaths = async () => {
         return {
           paths: [
             { params: { slug: "first-post" } },
@@ -78,13 +78,13 @@ devTest("SSG pages router - nested routes", {
       }
     `,
     "pages/blog/[id].tsx": `
-      const BlogPost: Bun.SSGPage = ({ params }) => {
+      const BlogPost: Fun.SSGPage = ({ params }) => {
         return <h1>Blog Post {params.id}</h1>;
       };
 
       export default BlogPost;
 
-      export const getStaticPaths: Bun.GetStaticPaths = async () => {
+      export const getStaticPaths: Fun.GetStaticPaths = async () => {
         return {
           paths: [
             { params: { id: "1" } },
@@ -94,13 +94,13 @@ devTest("SSG pages router - nested routes", {
       };
     `,
     "pages/blog/categories/[category].tsx": `
-      const CategoryPage: Bun.SSGPage = ({ params }) => {
+      const CategoryPage: Fun.SSGPage = ({ params }) => {
         return <h1>Category: {params.category}</h1>;
       };
 
       export default CategoryPage;
 
-      export const getStaticPaths: Bun.GetStaticPaths = async () => {
+      export const getStaticPaths: Fun.GetStaticPaths = async () => {
         return {
           paths: [
             { params: { category: "tech" } },
@@ -203,7 +203,7 @@ devTest("SSG pages router - multiple dynamic segments", {
   framework: "react",
   files: {
     "pages/[category]/[year]/[slug].tsx": `
-      const ArticlePage: Bun.SSGPage = ({ params }) => {
+      const ArticlePage: Fun.SSGPage = ({ params }) => {
         return (
           <div>
             <h1>{params.slug}</h1>
@@ -215,10 +215,10 @@ devTest("SSG pages router - multiple dynamic segments", {
 
       export default ArticlePage;
 
-      export const getStaticPaths: Bun.GetStaticPaths = async () => {
+      export const getStaticPaths: Fun.GetStaticPaths = async () => {
         return {
           paths: [
-            { params: { category: "tech", year: "2024", slug: "bun-release" } },
+            { params: { category: "tech", year: "2024", slug: "fun-release" } },
             { params: { category: "news", year: "2024", slug: "breaking-story" } },
             { params: { category: "tech", year: "2023", slug: "year-review" } },
           ],
@@ -228,8 +228,8 @@ devTest("SSG pages router - multiple dynamic segments", {
   },
   async test(dev) {
     // Test first path
-    await using c1 = await dev.client("/tech/2024/bun-release");
-    expect(await c1.elemText("h1")).toBe("bun-release");
+    await using c1 = await dev.client("/tech/2024/fun-release");
+    expect(await c1.elemText("h1")).toBe("fun-release");
     expect(await c1.elemsText("p")).toEqual(["Category: <!-- -->tech", "Year: <!-- -->2024"]);
 
     // Test second path
@@ -244,15 +244,15 @@ devTest("SSG pages router - multiple dynamic segments", {
   },
 });
 
-devTest("SSG pages router - file loading with Bun.file", {
+devTest("SSG pages router - file loading with Fun.file", {
   framework: "react",
   fixture: "ssg-pages-router",
   files: {
     "pages/[slug].tsx": `
       import { join } from "path";
 
-      const PostPage: Bun.SSGPage = async ({ params }) => {
-        const content = await Bun.file(
+      const PostPage: Fun.SSGPage = async ({ params }) => {
+        const content = await Fun.file(
           join(process.cwd(), "posts", params.slug + ".txt")
         ).text();
 
@@ -266,8 +266,8 @@ devTest("SSG pages router - file loading with Bun.file", {
 
       export default PostPage;
 
-      export const getStaticPaths: Bun.GetStaticPaths = async () => {
-        const glob = new Bun.Glob("**/*.txt");
+      export const getStaticPaths: Fun.GetStaticPaths = async () => {
+        const glob = new Fun.Glob("**/*.txt");
         const paths = [];
 
         for (const file of Array.from(glob.scanSync({ cwd: join(process.cwd(), "posts") }))) {
@@ -329,7 +329,7 @@ devTest("SSG pages router - catch-all routes [...slug]", {
   framework: "react",
   files: {
     "pages/[...slug].tsx": `
-      const CatchAllPage: Bun.SSGPage = ({ params }) => {
+      const CatchAllPage: Fun.SSGPage = ({ params }) => {
         return (
           <div>
             <h1>Catch-all Route</h1>
@@ -349,7 +349,7 @@ devTest("SSG pages router - catch-all routes [...slug]", {
 
       export default CatchAllPage;
 
-      export const getStaticPaths: Bun.GetStaticPaths = async () => {
+      export const getStaticPaths: Fun.GetStaticPaths = async () => {
         return {
           paths: [
             { params: { slug: ["docs"] } },

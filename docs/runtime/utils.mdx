@@ -1,43 +1,43 @@
 ---
 title: Utils
-description: Use Bun's utility functions to work with the runtime
+description: Use Fun's utility functions to work with the runtime
 ---
 
-## `Bun.version`
+## `Fun.version`
 
-A `string` containing the version of the `bun` CLI that is currently running.
+A `string` containing the version of the `fun` CLI that is currently running.
 
 ```ts terminal icon="terminal"
-Bun.version;
+Fun.version;
 // => "1.3.3"
 ```
 
-## `Bun.revision`
+## `Fun.revision`
 
-The git commit of [Bun](https://github.com/oven-sh/bun) that was compiled to create the current `bun` CLI.
+The git commit of [Fun](https://github.com/underdoc-org/fun) that was compiled to create the current `fun` CLI.
 
 ```ts terminal icon="terminal"
-Bun.revision;
+Fun.revision;
 // => "f02561530fda1ee9396f51c8bc99b38716e38296"
 ```
 
-## `Bun.env`
+## `Fun.env`
 
 An alias for `process.env`.
 
-## `Bun.main`
+## `Fun.main`
 
-An absolute path to the entrypoint of the current program (the file that was executed with `bun run`).
+An absolute path to the entrypoint of the current program (the file that was executed with `fun run`).
 
 ```ts script.ts
-Bun.main;
+Fun.main;
 // /path/to/script.ts
 ```
 
 This is particular useful for determining whether a script is being directly executed, as opposed to being imported by another script.
 
 ```ts
-if (import.meta.path === Bun.main) {
+if (import.meta.path === Fun.main) {
   // this script is being directly executed
 } else {
   // this file is being imported from another script
@@ -46,15 +46,15 @@ if (import.meta.path === Bun.main) {
 
 This is analogous to the [`require.main = module` trick](https://stackoverflow.com/questions/6398196/detect-if-called-through-require-or-directly-by-command-line) in Node.js.
 
-## `Bun.sleep()`
+## `Fun.sleep()`
 
-`Bun.sleep(ms: number)`
+`Fun.sleep(ms: number)`
 
 Returns a `Promise` that resolves after the given number of milliseconds.
 
 ```ts
 console.log("hello");
-await Bun.sleep(1000);
+await Fun.sleep(1000);
 console.log("hello one second later!");
 ```
 
@@ -64,37 +64,37 @@ Alternatively, pass a `Date` object to receive a `Promise` that resolves at that
 const oneSecondInFuture = new Date(Date.now() + 1000);
 
 console.log("hello");
-await Bun.sleep(oneSecondInFuture);
+await Fun.sleep(oneSecondInFuture);
 console.log("hello one second later!");
 ```
 
-## `Bun.sleepSync()`
+## `Fun.sleepSync()`
 
-`Bun.sleepSync(ms: number)`
+`Fun.sleepSync(ms: number)`
 
-A blocking synchronous version of `Bun.sleep`.
+A blocking synchronous version of `Fun.sleep`.
 
 ```ts
 console.log("hello");
-Bun.sleepSync(1000); // blocks thread for one second
+Fun.sleepSync(1000); // blocks thread for one second
 console.log("hello one second later!");
 ```
 
-## `Bun.which()`
+## `Fun.which()`
 
-`Bun.which(bin: string)`
+`Fun.which(bin: string)`
 
 Returns the path to an executable, similar to typing `which` in your terminal.
 
 ```ts
-const ls = Bun.which("ls");
+const ls = Fun.which("ls");
 console.log(ls); // "/usr/bin/ls"
 ```
 
-By default Bun looks at the current `PATH` environment variable to determine the path. To configure `PATH`:
+By default Fun looks at the current `PATH` environment variable to determine the path. To configure `PATH`:
 
 ```ts
-const ls = Bun.which("ls", {
+const ls = Fun.which("ls", {
   PATH: "/usr/local/bin:/usr/bin:/bin",
 });
 console.log(ls); // "/usr/bin/ls"
@@ -103,7 +103,7 @@ console.log(ls); // "/usr/bin/ls"
 Pass a `cwd` option to resolve for executable from within a specific directory.
 
 ```ts
-const ls = Bun.which("ls", {
+const ls = Fun.which("ls", {
   cwd: "/tmp",
   PATH: "",
 });
@@ -113,12 +113,12 @@ console.log(ls); // null
 
 You can think of this as a builtin alternative to the [`which`](https://www.npmjs.com/package/which) npm package.
 
-## `Bun.randomUUIDv7()`
+## `Fun.randomUUIDv7()`
 
-`Bun.randomUUIDv7()` returns a [UUID v7](https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-01.html#name-uuidv7-layout-and-bit-order), which is monotonic and suitable for sorting and databases.
+`Fun.randomUUIDv7()` returns a [UUID v7](https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-01.html#name-uuidv7-layout-and-bit-order), which is monotonic and suitable for sorting and databases.
 
 ```ts
-import { randomUUIDv7 } from "bun";
+import { randomUUIDv7 } from "fun";
 
 const id = randomUUIDv7();
 // => "0192ce11-26d5-7dc3-9305-1426de888c5a"
@@ -126,12 +126,12 @@ const id = randomUUIDv7();
 
 A UUID v7 is a 128-bit value that encodes the current timestamp, a random value, and a counter. The timestamp is encoded using the lowest 48 bits, and the random value and counter are encoded using the remaining bits.
 
-The `timestamp` parameter defaults to the current time in milliseconds. When the timestamp changes, the counter is reset to a pseudo-random integer wrapped to 4096. This counter is atomic and threadsafe, meaning that using `Bun.randomUUIDv7()` in many Workers within the same process running at the same timestamp will not have colliding counter values.
+The `timestamp` parameter defaults to the current time in milliseconds. When the timestamp changes, the counter is reset to a pseudo-random integer wrapped to 4096. This counter is atomic and threadsafe, meaning that using `Fun.randomUUIDv7()` in many Workers within the same process running at the same timestamp will not have colliding counter values.
 
 The final 8 bytes of the UUID are a cryptographically secure random value. It uses the same random number generator used by `crypto.randomUUID()` (which comes from BoringSSL, which in turn comes from the platform-specific system random number generator usually provided by the underlying hardware).
 
 ```ts
-namespace Bun {
+namespace Fun {
   function randomUUIDv7(encoding?: "hex" | "base64" | "base64url" = "hex", timestamp?: number = Date.now()): string;
   /**
    * If you pass "buffer", you get a 16-byte buffer instead of a string.
@@ -146,24 +146,24 @@ namespace Bun {
 You can optionally set encoding to `"buffer"` to get a 16-byte buffer instead of a string. This can sometimes avoid string conversion overhead.
 
 ```ts buffer.ts
-const buffer = Bun.randomUUIDv7("buffer");
+const buffer = Fun.randomUUIDv7("buffer");
 ```
 
 `base64` and `base64url` encodings are also supported when you want a slightly shorter string.
 
 ```ts base64.ts
-const base64 = Bun.randomUUIDv7("base64");
-const base64url = Bun.randomUUIDv7("base64url");
+const base64 = Fun.randomUUIDv7("base64");
+const base64url = Fun.randomUUIDv7("base64url");
 ```
 
-## `Bun.peek()`
+## `Fun.peek()`
 
-`Bun.peek(prom: Promise)`
+`Fun.peek(prom: Promise)`
 
 Reads a promise's result without `await` or `.then`, but only if the promise has already fulfilled or rejected.
 
 ```ts
-import { peek } from "bun";
+import { peek } from "fun";
 
 const promise = Promise.resolve("hi");
 
@@ -175,8 +175,8 @@ console.log(result); // "hi"
 This is important when attempting to reduce the number of extraneous microticks in performance-sensitive code. It's an advanced API — review the examples below before using it in production.
 
 ```ts
-import { peek } from "bun";
-import { expect, test } from "bun:test";
+import { peek } from "fun";
+import { expect, test } from "fun:test";
 
 test("peek", () => {
   const promise = Promise.resolve(true);
@@ -207,8 +207,8 @@ test("peek", () => {
 The `peek.status` function lets you read the status of a promise without resolving it.
 
 ```ts
-import { peek } from "bun";
-import { expect, test } from "bun:test";
+import { peek } from "fun";
+import { expect, test } from "fun:test";
 
 test("peek.status", () => {
   const promise = Promise.resolve(true);
@@ -222,18 +222,18 @@ test("peek.status", () => {
 });
 ```
 
-## `Bun.openInEditor()`
+## `Fun.openInEditor()`
 
-Opens a file in your default editor. Bun auto-detects your editor via the `$VISUAL` or `$EDITOR` environment variables.
+Opens a file in your default editor. Fun auto-detects your editor via the `$VISUAL` or `$EDITOR` environment variables.
 
 ```ts
 const currentFile = import.meta.url;
-Bun.openInEditor(currentFile);
+Fun.openInEditor(currentFile);
 ```
 
-You can override this via the `debug.editor` setting in your [`bunfig.toml`](/runtime/bunfig).
+You can override this via the `debug.editor` setting in your [`funfig.toml`](/runtime/funfig).
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [debug] # [!code ++]
 editor = "code" # [!code ++]
 ```
@@ -241,25 +241,25 @@ editor = "code" # [!code ++]
 Or specify an editor with the `editor` param. You can also specify a line and column number.
 
 ```ts
-Bun.openInEditor(import.meta.url, {
+Fun.openInEditor(import.meta.url, {
   editor: "vscode", // or "subl"
   line: 10,
   column: 5,
 });
 ```
 
-## `Bun.deepEquals()`
+## `Fun.deepEquals()`
 
-Recursively checks if two objects are equivalent. `expect().toEqual()` in `bun:test` uses this internally.
+Recursively checks if two objects are equivalent. `expect().toEqual()` in `fun:test` uses this internally.
 
 ```ts
 const foo = { a: 1, b: 2, c: { d: 3 } };
 
 // true
-Bun.deepEquals(foo, { a: 1, b: 2, c: { d: 3 } });
+Fun.deepEquals(foo, { a: 1, b: 2, c: { d: 3 } });
 
 // false
-Bun.deepEquals(foo, { a: 1, b: 2, c: { d: 4 } });
+Fun.deepEquals(foo, { a: 1, b: 2, c: { d: 4 } });
 ```
 
 Pass a third boolean parameter to enable "strict" mode. `expect().toStrictEqual()` in the test runner uses this.
@@ -268,32 +268,32 @@ Pass a third boolean parameter to enable "strict" mode. `expect().toStrictEqual(
 const a = { entries: [1, 2] };
 const b = { entries: [1, 2], extra: undefined };
 
-Bun.deepEquals(a, b); // => true
-Bun.deepEquals(a, b, true); // => false
+Fun.deepEquals(a, b); // => true
+Fun.deepEquals(a, b, true); // => false
 ```
 
 In strict mode, the following are considered unequal:
 
 ```ts
 // undefined values
-Bun.deepEquals({}, { a: undefined }, true); // false
+Fun.deepEquals({}, { a: undefined }, true); // false
 
 // undefined in arrays
-Bun.deepEquals(["asdf"], ["asdf", undefined], true); // false
+Fun.deepEquals(["asdf"], ["asdf", undefined], true); // false
 
 // sparse arrays
-Bun.deepEquals([, 1], [undefined, 1], true); // false
+Fun.deepEquals([, 1], [undefined, 1], true); // false
 
 // object literals vs instances w/ same properties
 class Foo {
   a = 1;
 }
-Bun.deepEquals(new Foo(), { a: 1 }, true); // false
+Fun.deepEquals(new Foo(), { a: 1 }, true); // false
 ```
 
-## `Bun.escapeHTML()`
+## `Fun.escapeHTML()`
 
-`Bun.escapeHTML(value: string | object | number | boolean): string`
+`Fun.escapeHTML(value: string | object | number | boolean): string`
 
 Escapes the following characters from an input string:
 
@@ -307,7 +307,7 @@ This function is optimized for large input. On an M1X, it processes 480 MB/s -
 20 GB/s, depending on how much data is being escaped and whether there is non-ascii
 text. Non-string types will be converted to a string before escaping.
 
-## `Bun.stringWidth()`
+## `Fun.stringWidth()`
 
 <Note>~6,756x faster `string-width` alternative</Note>
 
@@ -317,9 +317,9 @@ Supports ANSI escape codes, emoji, and wide characters.
 Example usage:
 
 ```ts
-Bun.stringWidth("hello"); // => 5
-Bun.stringWidth("\u001b[31mhello\u001b[0m"); // => 5
-Bun.stringWidth("\u001b[31mhello\u001b[0m", { countAnsiEscapeCodes: true }); // => 12
+Fun.stringWidth("hello"); // => 5
+Fun.stringWidth("\u001b[31mhello\u001b[0m"); // => 5
+Fun.stringWidth("\u001b[31mhello\u001b[0m", { countAnsiEscapeCodes: true }); // => 12
 ```
 
 This is useful for:
@@ -329,18 +329,18 @@ This is useful for:
 - Measuring the width of a string in a terminal
 
 This API is designed to match the popular "string-width" package, so that
-existing code can be ported to Bun and vice versa.
+existing code can be ported to Fun and vice versa.
 
-[In this benchmark](https://github.com/oven-sh/bun/blob/5147c0ba7379d85d4d1ed0714b84d6544af917eb/bench/snippets/string-width.mjs#L13), `Bun.stringWidth` is a ~6,756x faster than the `string-width` npm package for input larger than about 500 characters. Big thanks to [sindresorhus](https://github.com/sindresorhus) for their work on `string-width`!
+[In this benchmark](https://github.com/underdoc-org/fun/blob/5147c0ba7379d85d4d1ed0714b84d6544af917eb/bench/snippets/string-width.mjs#L13), `Fun.stringWidth` is a ~6,756x faster than the `string-width` npm package for input larger than about 500 characters. Big thanks to [sindresorhus](https://github.com/sindresorhus) for their work on `string-width`!
 
 ```ts
-❯ bun string-width.mjs
+❯ fun string-width.mjs
 cpu: 13th Gen Intel(R) Core(TM) i9-13900
-runtime: bun 1.0.29 (x64-linux)
+runtime: fun 1.0.29 (x64-linux)
 
 benchmark                                          time (avg)             (min … max)       p75       p99      p995
 ------------------------------------------------------------------------------------- -----------------------------
-Bun.stringWidth     500 chars ascii              37.09 ns/iter   (36.77 ns … 41.11 ns)  37.07 ns  38.84 ns  38.99 ns
+Fun.stringWidth     500 chars ascii              37.09 ns/iter   (36.77 ns … 41.11 ns)  37.07 ns  38.84 ns  38.99 ns
 
 ❯ node string-width.mjs
 
@@ -349,7 +349,7 @@ benchmark                                          time (avg)             (min �
 npm/string-width    500 chars ascii             249,710 ns/iter (239,970 ns … 293,180 ns) 250,930 ns  276,700 ns 281,450 ns
 ```
 
-To make `Bun.stringWidth` fast, we've implemented it in Zig using optimized SIMD instructions, accounting for Latin1, UTF-16, and UTF-8 encodings. It passes `string-width`'s tests.
+To make `Fun.stringWidth` fast, we've implemented it in Zig using optimized SIMD instructions, accounting for Latin1, UTF-16, and UTF-8 encodings. It passes `string-width`'s tests.
 
 <Accordion title="View full benchmark">
 
@@ -362,32 +362,32 @@ As a reminder, 1 nanosecond (ns) is 1 billionth of a second. Here's a reference 
 | ms   | 1             |
 
 ```bash terminal icon="terminal"
-❯ bun string-width.mjs
+❯ fun string-width.mjs
 cpu: 13th Gen Intel(R) Core(TM) i9-13900
-runtime: bun 1.0.29 (x64-linux)
+runtime: fun 1.0.29 (x64-linux)
 
 benchmark                                          time (avg)             (min … max)       p75       p99      p995
 ------------------------------------------------------------------------------------- -----------------------------
-Bun.stringWidth      5 chars ascii              16.45 ns/iter   (16.27 ns … 19.71 ns)  16.48 ns  16.93 ns  17.21 ns
-Bun.stringWidth     50 chars ascii              19.42 ns/iter   (18.61 ns … 27.85 ns)  19.35 ns   21.7 ns  22.31 ns
-Bun.stringWidth    500 chars ascii              37.09 ns/iter   (36.77 ns … 41.11 ns)  37.07 ns  38.84 ns  38.99 ns
-Bun.stringWidth  5,000 chars ascii              216.9 ns/iter  (215.8 ns … 228.54 ns) 216.23 ns 228.52 ns 228.53 ns
-Bun.stringWidth 25,000 chars ascii               1.01 µs/iter     (1.01 µs … 1.01 µs)   1.01 µs   1.01 µs   1.01 µs
-Bun.stringWidth      7 chars ascii+emoji         54.2 ns/iter   (53.36 ns … 58.19 ns)  54.23 ns  57.55 ns  57.94 ns
-Bun.stringWidth     70 chars ascii+emoji       354.26 ns/iter (350.51 ns … 363.96 ns) 355.93 ns 363.11 ns 363.96 ns
-Bun.stringWidth    700 chars ascii+emoji          3.3 µs/iter      (3.27 µs … 3.4 µs)    3.3 µs    3.4 µs    3.4 µs
-Bun.stringWidth  7,000 chars ascii+emoji        32.69 µs/iter   (32.22 µs … 45.27 µs)   32.7 µs  34.57 µs  34.68 µs
-Bun.stringWidth 35,000 chars ascii+emoji       163.35 µs/iter (161.17 µs … 170.79 µs) 163.82 µs 169.66 µs 169.93 µs
-Bun.stringWidth      8 chars ansi+emoji         66.15 ns/iter   (65.17 ns … 69.97 ns)  66.12 ns   69.8 ns  69.87 ns
-Bun.stringWidth     80 chars ansi+emoji        492.95 ns/iter  (488.05 ns … 499.5 ns)  494.8 ns 498.58 ns  499.5 ns
-Bun.stringWidth    800 chars ansi+emoji          4.73 µs/iter     (4.71 µs … 4.88 µs)   4.72 µs   4.88 µs   4.88 µs
-Bun.stringWidth  8,000 chars ansi+emoji         47.02 µs/iter   (46.37 µs … 67.44 µs)  46.96 µs  49.57 µs  49.63 µs
-Bun.stringWidth 40,000 chars ansi+emoji        234.45 µs/iter (231.78 µs … 240.98 µs) 234.92 µs 236.34 µs 236.62 µs
-Bun.stringWidth     19 chars ansi+emoji+ascii  135.46 ns/iter (133.67 ns … 143.26 ns) 135.32 ns 142.55 ns 142.77 ns
-Bun.stringWidth    190 chars ansi+emoji+ascii    1.17 µs/iter     (1.16 µs … 1.17 µs)   1.17 µs   1.17 µs   1.17 µs
-Bun.stringWidth  1,900 chars ansi+emoji+ascii   11.45 µs/iter   (11.26 µs … 20.41 µs)  11.45 µs  12.08 µs  12.11 µs
-Bun.stringWidth 19,000 chars ansi+emoji+ascii  114.06 µs/iter (112.86 µs … 120.06 µs) 114.25 µs 115.86 µs 116.15 µs
-Bun.stringWidth 95,000 chars ansi+emoji+ascii  572.69 µs/iter (565.52 µs … 607.22 µs) 572.45 µs 604.86 µs 605.21 µs
+Fun.stringWidth      5 chars ascii              16.45 ns/iter   (16.27 ns … 19.71 ns)  16.48 ns  16.93 ns  17.21 ns
+Fun.stringWidth     50 chars ascii              19.42 ns/iter   (18.61 ns … 27.85 ns)  19.35 ns   21.7 ns  22.31 ns
+Fun.stringWidth    500 chars ascii              37.09 ns/iter   (36.77 ns … 41.11 ns)  37.07 ns  38.84 ns  38.99 ns
+Fun.stringWidth  5,000 chars ascii              216.9 ns/iter  (215.8 ns … 228.54 ns) 216.23 ns 228.52 ns 228.53 ns
+Fun.stringWidth 25,000 chars ascii               1.01 µs/iter     (1.01 µs … 1.01 µs)   1.01 µs   1.01 µs   1.01 µs
+Fun.stringWidth      7 chars ascii+emoji         54.2 ns/iter   (53.36 ns … 58.19 ns)  54.23 ns  57.55 ns  57.94 ns
+Fun.stringWidth     70 chars ascii+emoji       354.26 ns/iter (350.51 ns … 363.96 ns) 355.93 ns 363.11 ns 363.96 ns
+Fun.stringWidth    700 chars ascii+emoji          3.3 µs/iter      (3.27 µs … 3.4 µs)    3.3 µs    3.4 µs    3.4 µs
+Fun.stringWidth  7,000 chars ascii+emoji        32.69 µs/iter   (32.22 µs … 45.27 µs)   32.7 µs  34.57 µs  34.68 µs
+Fun.stringWidth 35,000 chars ascii+emoji       163.35 µs/iter (161.17 µs … 170.79 µs) 163.82 µs 169.66 µs 169.93 µs
+Fun.stringWidth      8 chars ansi+emoji         66.15 ns/iter   (65.17 ns … 69.97 ns)  66.12 ns   69.8 ns  69.87 ns
+Fun.stringWidth     80 chars ansi+emoji        492.95 ns/iter  (488.05 ns … 499.5 ns)  494.8 ns 498.58 ns  499.5 ns
+Fun.stringWidth    800 chars ansi+emoji          4.73 µs/iter     (4.71 µs … 4.88 µs)   4.72 µs   4.88 µs   4.88 µs
+Fun.stringWidth  8,000 chars ansi+emoji         47.02 µs/iter   (46.37 µs … 67.44 µs)  46.96 µs  49.57 µs  49.63 µs
+Fun.stringWidth 40,000 chars ansi+emoji        234.45 µs/iter (231.78 µs … 240.98 µs) 234.92 µs 236.34 µs 236.62 µs
+Fun.stringWidth     19 chars ansi+emoji+ascii  135.46 ns/iter (133.67 ns … 143.26 ns) 135.32 ns 142.55 ns 142.77 ns
+Fun.stringWidth    190 chars ansi+emoji+ascii    1.17 µs/iter     (1.16 µs … 1.17 µs)   1.17 µs   1.17 µs   1.17 µs
+Fun.stringWidth  1,900 chars ansi+emoji+ascii   11.45 µs/iter   (11.26 µs … 20.41 µs)  11.45 µs  12.08 µs  12.11 µs
+Fun.stringWidth 19,000 chars ansi+emoji+ascii  114.06 µs/iter (112.86 µs … 120.06 µs) 114.25 µs 115.86 µs 116.15 µs
+Fun.stringWidth 95,000 chars ansi+emoji+ascii  572.69 µs/iter (565.52 µs … 607.22 µs) 572.45 µs 604.86 µs 605.21 µs
 ```
 
 ```bash terminal icon="terminal"
@@ -424,7 +424,7 @@ npm/string-width 95,000 chars ansi+emoji+ascii     3.68 s/iter        (3.66 s �
 TypeScript definition:
 
 ```ts expandable
-namespace Bun {
+namespace Fun {
   export function stringWidth(
     /**
      * The string to measure
@@ -450,35 +450,35 @@ namespace Bun {
 
 ---
 
-## `Bun.fileURLToPath()`
+## `Fun.fileURLToPath()`
 
 Converts a `file://` URL to an absolute path.
 
 ```ts
-const path = Bun.fileURLToPath(new URL("file:///foo/bar.txt"));
+const path = Fun.fileURLToPath(new URL("file:///foo/bar.txt"));
 console.log(path); // "/foo/bar.txt"
 ```
 
 ---
 
-## `Bun.pathToFileURL()`
+## `Fun.pathToFileURL()`
 
 Converts an absolute path to a `file://` URL.
 
 ```ts
-const url = Bun.pathToFileURL("/foo/bar.txt");
+const url = Fun.pathToFileURL("/foo/bar.txt");
 console.log(url); // "file:///foo/bar.txt"
 ```
 
 ---
 
-## `Bun.gzipSync()`
+## `Fun.gzipSync()`
 
 Compresses a `Uint8Array` using zlib's GZIP algorithm.
 
 ```ts
 const buf = Buffer.from("hello".repeat(100)); // Buffer extends Uint8Array
-const compressed = Bun.gzipSync(buf);
+const compressed = Fun.gzipSync(buf);
 
 buf; // => Uint8Array(500)
 compressed; // => Uint8Array(30)
@@ -563,55 +563,55 @@ export type ZlibCompressionOptions = {
 
 ---
 
-## `Bun.gunzipSync()`
+## `Fun.gunzipSync()`
 
 Decompresses a `Uint8Array` using zlib's GUNZIP algorithm.
 
 ```ts
 const buf = Buffer.from("hello".repeat(100)); // Buffer extends Uint8Array
-const compressed = Bun.gzipSync(buf);
+const compressed = Fun.gzipSync(buf);
 
 const dec = new TextDecoder();
-const uncompressed = Bun.gunzipSync(compressed);
+const uncompressed = Fun.gunzipSync(compressed);
 dec.decode(uncompressed);
 // => "hellohellohello..."
 ```
 
 ---
 
-## `Bun.deflateSync()`
+## `Fun.deflateSync()`
 
 Compresses a `Uint8Array` using zlib's DEFLATE algorithm.
 
 ```ts
 const buf = Buffer.from("hello".repeat(100));
-const compressed = Bun.deflateSync(buf);
+const compressed = Fun.deflateSync(buf);
 
 buf; // => Buffer(500)
 compressed; // => Uint8Array(12)
 ```
 
-The second argument supports the same set of configuration options as [`Bun.gzipSync`](#bun-gzipsync).
+The second argument supports the same set of configuration options as [`Fun.gzipSync`](#fun-gzipsync).
 
 ---
 
-## `Bun.inflateSync()`
+## `Fun.inflateSync()`
 
 Decompresses a `Uint8Array` using zlib's INFLATE algorithm.
 
 ```ts
 const buf = Buffer.from("hello".repeat(100));
-const compressed = Bun.deflateSync(buf);
+const compressed = Fun.deflateSync(buf);
 
 const dec = new TextDecoder();
-const decompressed = Bun.inflateSync(compressed);
+const decompressed = Fun.inflateSync(compressed);
 dec.decode(decompressed);
 // => "hellohellohello..."
 ```
 
 ---
 
-## `Bun.zstdCompress()` / `Bun.zstdCompressSync()`
+## `Fun.zstdCompress()` / `Fun.zstdCompressSync()`
 
 Compresses a `Uint8Array` using the Zstandard algorithm.
 
@@ -619,26 +619,26 @@ Compresses a `Uint8Array` using the Zstandard algorithm.
 const buf = Buffer.from("hello".repeat(100));
 
 // Synchronous
-const compressedSync = Bun.zstdCompressSync(buf);
+const compressedSync = Fun.zstdCompressSync(buf);
 // Asynchronous
-const compressedAsync = await Bun.zstdCompress(buf);
+const compressedAsync = await Fun.zstdCompress(buf);
 
 // With compression level (1-22, default: 3)
-const compressedLevel = Bun.zstdCompressSync(buf, { level: 6 });
+const compressedLevel = Fun.zstdCompressSync(buf, { level: 6 });
 ```
 
-## `Bun.zstdDecompress()` / `Bun.zstdDecompressSync()`
+## `Fun.zstdDecompress()` / `Fun.zstdDecompressSync()`
 
 Decompresses a `Uint8Array` using the Zstandard algorithm.
 
 ```ts
 const buf = Buffer.from("hello".repeat(100));
-const compressed = Bun.zstdCompressSync(buf);
+const compressed = Fun.zstdCompressSync(buf);
 
 // Synchronous
-const decompressedSync = Bun.zstdDecompressSync(compressed);
+const decompressedSync = Fun.zstdDecompressSync(compressed);
 // Asynchronous
-const decompressedAsync = await Bun.zstdDecompress(compressed);
+const decompressedAsync = await Fun.zstdDecompress(compressed);
 
 const dec = new TextDecoder();
 dec.decode(decompressedSync);
@@ -647,27 +647,27 @@ dec.decode(decompressedSync);
 
 ---
 
-## `Bun.inspect()`
+## `Fun.inspect()`
 
 Serializes an object to a `string` exactly as it would be printed by `console.log`.
 
 ```ts
 const obj = { foo: "bar" };
-const str = Bun.inspect(obj);
+const str = Fun.inspect(obj);
 // => '{\nfoo: "bar" \n}'
 
 const arr = new Uint8Array([1, 2, 3]);
-const str = Bun.inspect(arr);
+const str = Fun.inspect(arr);
 // => "Uint8Array(3) [ 1, 2, 3 ]"
 ```
 
-### `Bun.inspect.custom`
+### `Fun.inspect.custom`
 
-This is the symbol that Bun uses to implement `Bun.inspect`. You can override this to customize how your objects are printed. It is identical to `util.inspect.custom` in Node.js.
+This is the symbol that Fun uses to implement `Fun.inspect`. You can override this to customize how your objects are printed. It is identical to `util.inspect.custom` in Node.js.
 
 ```ts
 class Foo {
-  [Bun.inspect.custom]() {
+  [Fun.inspect.custom]() {
     return "foo";
   }
 }
@@ -676,13 +676,13 @@ const foo = new Foo();
 console.log(foo); // => "foo"
 ```
 
-### `Bun.inspect.table(tabularData, properties, options)`
+### `Fun.inspect.table(tabularData, properties, options)`
 
 Format tabular data into a string. Like [`console.table`](https://developer.mozilla.org/en-US/docs/Web/API/console/table_static), except it returns a string rather than printing to the console.
 
 ```ts
 console.log(
-  Bun.inspect.table([
+  Fun.inspect.table([
     { a: 1, b: 2, c: 3 },
     { a: 4, b: 5, c: 6 },
     { a: 7, b: 8, c: 9 },
@@ -702,7 +702,7 @@ Additionally, you can pass an array of property names to display only a subset o
 
 ```ts
 console.log(
-  Bun.inspect.table(
+  Fun.inspect.table(
     [
       { a: 1, b: 2, c: 3 },
       { a: 4, b: 5, c: 6 },
@@ -723,7 +723,7 @@ You can also conditionally enable ANSI colors by passing `{ colors: true }`.
 
 ```ts
 console.log(
-  Bun.inspect.table(
+  Fun.inspect.table(
     [
       { a: 1, b: 2, c: 3 },
       { a: 4, b: 5, c: 6 },
@@ -737,120 +737,120 @@ console.log(
 
 ---
 
-## `Bun.nanoseconds()`
+## `Fun.nanoseconds()`
 
-Returns the number of nanoseconds since the current `bun` process started, as a `number`. Useful for high-precision timing and benchmarking.
+Returns the number of nanoseconds since the current `fun` process started, as a `number`. Useful for high-precision timing and benchmarking.
 
 ```ts
-Bun.nanoseconds();
+Fun.nanoseconds();
 // => 7288958
 ```
 
 ---
 
-## `Bun.readableStreamTo*()`
+## `Fun.readableStreamTo*()`
 
-Bun implements a set of convenience functions for asynchronously consuming the body of a `ReadableStream` and converting it to various binary formats.
+Fun implements a set of convenience functions for asynchronously consuming the body of a `ReadableStream` and converting it to various binary formats.
 
 ```ts
-const stream = (await fetch("https://bun.com")).body;
+const stream = (await fetch("https://fun.dev")).body;
 stream; // => ReadableStream
 
-await Bun.readableStreamToArrayBuffer(stream);
+await Fun.readableStreamToArrayBuffer(stream);
 // => ArrayBuffer
 
-await Bun.readableStreamToBytes(stream);
+await Fun.readableStreamToBytes(stream);
 // => Uint8Array
 
-await Bun.readableStreamToBlob(stream);
+await Fun.readableStreamToBlob(stream);
 // => Blob
 
-await Bun.readableStreamToJSON(stream);
+await Fun.readableStreamToJSON(stream);
 // => object
 
-await Bun.readableStreamToText(stream);
+await Fun.readableStreamToText(stream);
 // => string
 
 // returns all chunks as an array
-await Bun.readableStreamToArray(stream);
+await Fun.readableStreamToArray(stream);
 // => unknown[]
 
 // returns all chunks as a FormData object (encoded as x-www-form-urlencoded)
-await Bun.readableStreamToFormData(stream);
+await Fun.readableStreamToFormData(stream);
 
 // returns all chunks as a FormData object (encoded as multipart/form-data)
-await Bun.readableStreamToFormData(stream, multipartFormBoundary);
+await Fun.readableStreamToFormData(stream, multipartFormBoundary);
 ```
 
 ---
 
-## `Bun.resolveSync()`
+## `Fun.resolveSync()`
 
-Resolves a file path or module specifier using Bun's internal module resolution algorithm. The first argument is the path to resolve, and the second argument is the "root". If no match is found, an `Error` is thrown.
+Resolves a file path or module specifier using Fun's internal module resolution algorithm. The first argument is the path to resolve, and the second argument is the "root". If no match is found, an `Error` is thrown.
 
 ```ts
-Bun.resolveSync("./foo.ts", "/path/to/project");
+Fun.resolveSync("./foo.ts", "/path/to/project");
 // => "/path/to/project/foo.ts"
 
-Bun.resolveSync("zod", "/path/to/project");
+Fun.resolveSync("zod", "/path/to/project");
 // => "/path/to/project/node_modules/zod/index.ts"
 ```
 
 To resolve relative to the current working directory, pass `process.cwd()` or `"."` as the root.
 
 ```ts
-Bun.resolveSync("./foo.ts", process.cwd());
-Bun.resolveSync("./foo.ts", "/path/to/project");
+Fun.resolveSync("./foo.ts", process.cwd());
+Fun.resolveSync("./foo.ts", "/path/to/project");
 ```
 
 To resolve relative to the directory containing the current file, pass `import.meta.dir`.
 
 ```ts
-Bun.resolveSync("./foo.ts", import.meta.dir);
+Fun.resolveSync("./foo.ts", import.meta.dir);
 ```
 
 ---
 
-## `Bun.stripANSI()`
+## `Fun.stripANSI()`
 
 <Note>~6-57x faster `strip-ansi` alternative</Note>
 
-`Bun.stripANSI(text: string): string`
+`Fun.stripANSI(text: string): string`
 
 Strip ANSI escape codes from a string. This is useful for removing colors and formatting from terminal output.
 
 ```ts
 const coloredText = "\u001b[31mHello\u001b[0m \u001b[32mWorld\u001b[0m";
-const plainText = Bun.stripANSI(coloredText);
+const plainText = Fun.stripANSI(coloredText);
 console.log(plainText); // => "Hello World"
 
 // Works with various ANSI codes
 const formatted = "\u001b[1m\u001b[4mBold and underlined\u001b[0m";
-console.log(Bun.stripANSI(formatted)); // => "Bold and underlined"
+console.log(Fun.stripANSI(formatted)); // => "Bold and underlined"
 ```
 
-`Bun.stripANSI` is significantly faster than the popular [`strip-ansi`](https://www.npmjs.com/package/strip-ansi) npm package:
+`Fun.stripANSI` is significantly faster than the popular [`strip-ansi`](https://www.npmjs.com/package/strip-ansi) npm package:
 
 ```bash terminal icon="terminal"
-bun bench/snippets/strip-ansi.mjs
+fun bench/snippets/strip-ansi.mjs
 ```
 
 ```txt
 cpu: Apple M3 Max
-runtime: bun 1.2.21 (arm64-darwin)
+runtime: fun 1.2.21 (arm64-darwin)
 
 benchmark                               avg (min … max) p75 / p99
 ------------------------------------------------------- ----------
-Bun.stripANSI      11 chars no-ansi        8.13 ns/iter   8.27 ns
+Fun.stripANSI      11 chars no-ansi        8.13 ns/iter   8.27 ns
                                    (7.45 ns … 33.59 ns)  10.29 ns
 
-Bun.stripANSI      13 chars ansi          51.68 ns/iter  52.51 ns
+Fun.stripANSI      13 chars ansi          51.68 ns/iter  52.51 ns
                                  (46.16 ns … 113.71 ns)  57.71 ns
 
-Bun.stripANSI  16,384 chars long-no-ansi 298.39 ns/iter 305.44 ns
+Fun.stripANSI  16,384 chars long-no-ansi 298.39 ns/iter 305.44 ns
                                 (281.50 ns … 331.65 ns) 320.70 ns
 
-Bun.stripANSI 212,992 chars long-ansi    227.65 µs/iter 234.50 µs
+Fun.stripANSI 212,992 chars long-ansi    227.65 µs/iter 234.50 µs
                                 (216.46 µs … 401.92 µs) 262.25 µs
 ```
 
@@ -880,28 +880,28 @@ npm/strip-ansi 212,992 chars long-ansi      1.36 ms/iter   1.38 ms
 
 ---
 
-## `Bun.wrapAnsi()`
+## `Fun.wrapAnsi()`
 
 <Note>Drop-in replacement for `wrap-ansi` npm package</Note>
 
-`Bun.wrapAnsi(input: string, columns: number, options?: WrapAnsiOptions): string`
+`Fun.wrapAnsi(input: string, columns: number, options?: WrapAnsiOptions): string`
 
 Wrap text to a specified column width while preserving ANSI escape codes, hyperlinks, and handling Unicode/emoji width correctly. This is a native, high-performance alternative to the popular [`wrap-ansi`](https://www.npmjs.com/package/wrap-ansi) npm package.
 
 ```ts
 // Basic wrapping at 20 columns
-Bun.wrapAnsi("The quick brown fox jumps over the lazy dog", 20);
+Fun.wrapAnsi("The quick brown fox jumps over the lazy dog", 20);
 // => "The quick brown fox\njumps over the lazy\ndog"
 
 // Preserves ANSI escape codes
-Bun.wrapAnsi("\u001b[31mThe quick brown fox jumps over the lazy dog\u001b[0m", 20);
+Fun.wrapAnsi("\u001b[31mThe quick brown fox jumps over the lazy dog\u001b[0m", 20);
 // => "\u001b[31mThe quick brown fox\njumps over the lazy\ndog\u001b[0m"
 ```
 
 ### Options
 
 ```ts
-Bun.wrapAnsi("Hello World", 5, {
+Fun.wrapAnsi("Hello World", 5, {
   hard: true, // Break words that exceed column width (default: false)
   wordWrap: true, // Wrap at word boundaries (default: true)
   trim: true, // Trim leading/trailing whitespace per line (default: true)
@@ -919,7 +919,7 @@ Bun.wrapAnsi("Hello World", 5, {
 TypeScript definition:
 
 ```ts expandable
-namespace Bun {
+namespace Fun {
   export function wrapAnsi(
     /**
      * The string to wrap
@@ -968,12 +968,12 @@ namespace Bun {
 
 ---
 
-## `serialize` & `deserialize` in `bun:jsc`
+## `serialize` & `deserialize` in `fun:jsc`
 
-To save a JavaScript value into an ArrayBuffer & back, use `serialize` and `deserialize` from the `"bun:jsc"` module.
+To save a JavaScript value into an ArrayBuffer & back, use `serialize` and `deserialize` from the `"fun:jsc"` module.
 
 ```js
-import { serialize, deserialize } from "bun:jsc";
+import { serialize, deserialize } from "fun:jsc";
 
 const buf = serialize({ foo: "bar" });
 const obj = deserialize(buf);
@@ -984,12 +984,12 @@ Internally, [`structuredClone`](https://developer.mozilla.org/en-US/docs/Web/API
 
 ---
 
-## `estimateShallowMemoryUsageOf` in `bun:jsc`
+## `estimateShallowMemoryUsageOf` in `fun:jsc`
 
-The `estimateShallowMemoryUsageOf` function returns a best-effort estimate of the memory usage of an object in bytes, excluding the memory usage of properties or other objects it references. For accurate per-object memory usage, use `Bun.generateHeapSnapshot`.
+The `estimateShallowMemoryUsageOf` function returns a best-effort estimate of the memory usage of an object in bytes, excluding the memory usage of properties or other objects it references. For accurate per-object memory usage, use `Fun.generateHeapSnapshot`.
 
 ```js
-import { estimateShallowMemoryUsageOf } from "bun:jsc";
+import { estimateShallowMemoryUsageOf } from "fun:jsc";
 
 const obj = { foo: "bar" };
 const usage = estimateShallowMemoryUsageOf(obj);
@@ -999,7 +999,7 @@ const buffer = Buffer.alloc(1024 * 1024);
 estimateShallowMemoryUsageOf(buffer);
 // => 1048624
 
-const req = new Request("https://bun.com");
+const req = new Request("https://fun.dev");
 estimateShallowMemoryUsageOf(req);
 // => 167
 

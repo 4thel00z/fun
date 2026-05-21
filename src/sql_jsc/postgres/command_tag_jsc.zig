@@ -1,6 +1,6 @@
 //! CommandTag.toJSTag / toJSNumber.
 
-pub fn toJSTag(this: CommandTag, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn toJSTag(this: CommandTag, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     return switch (this) {
         .INSERT => JSValue.jsNumber(1),
         .DELETE => JSValue.jsNumber(2),
@@ -10,7 +10,7 @@ pub fn toJSTag(this: CommandTag, globalObject: *jsc.JSGlobalObject) bun.JSError!
         .MOVE => JSValue.jsNumber(6),
         .FETCH => JSValue.jsNumber(7),
         .COPY => JSValue.jsNumber(8),
-        .other => |tag| bun.String.createUTF8ForJS(globalObject, tag),
+        .other => |tag| fun.String.createUTF8ForJS(globalObject, tag),
     };
 }
 
@@ -23,8 +23,8 @@ pub fn toJSNumber(this: CommandTag) JSValue {
 
 const CommandTag = @import("../../sql/postgres/CommandTag.zig").CommandTag;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

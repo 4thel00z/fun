@@ -1,19 +1,19 @@
 ---
 title: Use Neon Postgres through Drizzle ORM
-sidebarTitle: Neon Drizzle with Bun
+sidebarTitle: Neon Drizzle with Fun
 mode: center
 ---
 
-[Neon](https://neon.tech/) is a fully managed serverless Postgres, separating compute and storage to offer features like autoscaling, branching and bottomless storage. Neon can be used from Bun directly using the `@neondatabase/serverless` driver or through an ORM like `Drizzle`.
+[Neon](https://neon.tech/) is a fully managed serverless Postgres, separating compute and storage to offer features like autoscaling, branching and bottomless storage. Neon can be used from Fun directly using the `@neondatabase/serverless` driver or through an ORM like `Drizzle`.
 
-Drizzle ORM supports both a SQL-like "query builder" API and an ORM-like [Queries API](https://orm.drizzle.team/docs/rqb). Get started by creating a project directory, initializing the directory using `bun init`, and installing Drizzle and the [Neon serverless driver](https://github.com/neondatabase/serverless/).
+Drizzle ORM supports both a SQL-like "query builder" API and an ORM-like [Queries API](https://orm.drizzle.team/docs/rqb). Get started by creating a project directory, initializing the directory using `fun init`, and installing Drizzle and the [Neon serverless driver](https://github.com/neondatabase/serverless/).
 
 ```sh terminal icon="terminal"
-mkdir bun-drizzle-neon
-cd bun-drizzle-neon
-bun init -y
-bun add drizzle-orm @neondatabase/serverless
-bun add -D drizzle-kit
+mkdir fun-drizzle-neon
+cd fun-drizzle-neon
+fun init -y
+fun add drizzle-orm @neondatabase/serverless
+fun add -D drizzle-kit
 ```
 
 ---
@@ -32,8 +32,8 @@ We will connect to the Neon database using the Neon serverless driver, wrapped i
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 
-// Bun automatically loads the DATABASE_URL from .env.local
-// Refer to: https://bun.com/docs/runtime/environment-variables for more information
+// Fun automatically loads the DATABASE_URL from .env.local
+// Refer to: https://fun.dev/docs/runtime/environment-variables for more information
 const sql = neon(process.env.DATABASE_URL!);
 
 export const db = drizzle(sql);
@@ -54,10 +54,10 @@ console.log(result.rows);
 
 ---
 
-Then run `index.ts` with Bun.
+Then run `index.ts` with Fun.
 
 ```sh terminal icon="terminal"
-bun run index.ts
+fun run index.ts
 ```
 
 ```txt
@@ -88,7 +88,7 @@ export const authors = pgTable("authors", {
 We then use the `drizzle-kit` CLI to generate an initial SQL migration.
 
 ```sh
-bunx drizzle-kit generate --dialect postgresql --schema ./schema.ts --out ./drizzle
+funx drizzle-kit generate --dialect postgresql --schema ./schema.ts --out ./drizzle
 ```
 
 ---
@@ -126,10 +126,10 @@ main();
 
 ---
 
-We can run this script with `bun` to execute the migration.
+We can run this script with `fun` to execute the migration.
 
 ```sh terminal icon="terminal"
-bun run migrate.ts
+fun run migrate.ts
 ```
 
 ```txt
@@ -179,7 +179,7 @@ main();
 Then run this file.
 
 ```sh terminal icon="terminal"
-bun run seed.ts
+fun run seed.ts
 ```
 
 ```txt
@@ -203,7 +203,7 @@ console.log(result);
 Then run the file. You should see the three authors we inserted.
 
 ```sh terminal icon="terminal"
-bun run index.ts
+fun run index.ts
 ```
 
 ```txt

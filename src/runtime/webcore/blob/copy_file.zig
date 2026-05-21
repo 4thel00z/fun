@@ -7,8 +7,8 @@ pub const CopyFile = struct {
     offset: SizeType = 0,
     size: SizeType = 0,
     max_length: SizeType = Blob.max_size,
-    destination_fd: bun.FD = bun.invalid_fd,
-    source_fd: bun.FD = bun.invalid_fd,
+    destination_fd: fun.FD = fun.invalid_fd,
+    source_fd: fun.FD = fun.invalid_fd,
 
     system_error: ?SystemError = null,
 
@@ -18,7 +18,7 @@ pub const CopyFile = struct {
     globalThis: *JSGlobalObject,
 
     mkdirp_if_not_exists: bool = false,
-    destination_mode: ?bun.Mode = null,
+    destination_mode: ?fun.Mode = null,
 
     pub const ResultType = anyerror!SizeType;
 
@@ -32,9 +32,9 @@ pub const CopyFile = struct {
         max_len: SizeType,
         globalThis: *JSGlobalObject,
         mkdirp_if_not_exists: bool,
-        destination_mode: ?bun.Mode,
+        destination_mode: ?fun.Mode,
     ) *CopyFilePromiseTask {
-        const read_file = bun.new(CopyFile, CopyFile{
+        const read_file = fun.new(CopyFile, CopyFile{
             .store = store,
             .source_store = source_store,
             .offset = off,
@@ -56,23 +56,23 @@ pub const CopyFile = struct {
     pub fn deinit(this: *CopyFile) void {
         if (this.source_file_store.pathlike == .path) {
             if (this.source_file_store.pathlike.path == .string and this.system_error == null) {
-                bun.default_allocator.free(@constCast(this.source_file_store.pathlike.path.slice()));
+                fun.default_allocator.free(@constCast(this.source_file_store.pathlike.path.slice()));
             }
         }
         this.store.?.deref();
 
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
-    pub fn reject(this: *CopyFile, promise: *jsc.JSPromise) bun.JSTerminated!void {
+    pub fn reject(this: *CopyFile, promise: *jsc.JSPromise) fun.JSTerminated!void {
         const globalThis = this.globalThis;
         var system_error: SystemError = this.system_error orelse SystemError{ .message = .empty };
         if (this.source_file_store.pathlike == .path and system_error.path.isEmpty()) {
-            system_error.path = bun.String.cloneUTF8(this.source_file_store.pathlike.path.slice());
+            system_error.path = fun.String.cloneUTF8(this.source_file_store.pathlike.path.slice());
         }
 
         if (system_error.message.isEmpty()) {
-            system_error.message = bun.String.static("Failed to copy file");
+            system_error.message = fun.String.static("Failed to copy file");
         }
 
         const instance = system_error.toErrorInstanceWithAsyncStack(this.globalThis, promise);
@@ -82,7 +82,7 @@ pub const CopyFile = struct {
         try promise.reject(globalThis, instance);
     }
 
-    pub fn then(this: *CopyFile, promise: *jsc.JSPromise) bun.JSTerminated!void {
+    pub fn then(this: *CopyFile, promise: *jsc.JSPromise) fun.JSTerminated!void {
         this.source_store.?.deref();
 
         if (this.system_error != null) {
@@ -98,8 +98,8 @@ pub const CopyFile = struct {
     }
 
     pub fn doClose(this: *CopyFile) void {
-        const close_input = this.destination_file_store.pathlike != .fd and this.destination_fd != bun.invalid_fd;
-        const close_output = this.source_file_store.pathlike != .fd and this.source_fd != bun.invalid_fd;
+        const close_input = this.destination_file_store.pathlike != .fd and this.destination_fd != fun.invalid_fd;
+        const close_output = this.source_file_store.pathlike != .fd and this.source_fd != fun.invalid_fd;
 
         // Apply destination mode using fchmod before closing (for POSIX platforms)
         // This ensures mode is applied even when overwriting existing files, since
@@ -108,8 +108,8 @@ pub const CopyFile = struct {
         // On Windows, this is handled via async uv_fs_chmod.
         if (comptime !Environment.isWindows) {
             if (this.destination_mode) |mode| {
-                if (this.destination_fd != bun.invalid_fd and this.system_error == null) {
-                    switch (bun.sys.fchmod(this.destination_fd, mode)) {
+                if (this.destination_fd != fun.invalid_fd and this.system_error == null) {
+                    switch (fun.sys.fchmod(this.destination_fd, mode)) {
                         .err => |err| {
                             this.system_error = err.toSystemError();
                         },
@@ -145,16 +145,16 @@ pub const CopyFile = struct {
         }
     }
 
-    const O = bun.O;
+    const O = fun.O;
     const open_destination_flags = O.CLOEXEC | O.CREAT | O.WRONLY | O.TRUNC;
     const open_source_flags = O.CLOEXEC | O.RDONLY;
 
     pub fn doOpenFile(this: *CopyFile, comptime which: IOWhich) !void {
-        var path_buf1: bun.PathBuffer = undefined;
+        var path_buf1: fun.PathBuffer = undefined;
         // open source file first
         // if it fails, we don't want the extra destination file hanging out
         if (which == .both or which == .source) {
-            this.source_fd = switch (bun.sys.open(
+            this.source_fd = switch (fun.sys.open(
                 this.source_file_store.pathlike.path.sliceZ(&path_buf1),
                 open_source_flags,
                 0,
@@ -163,12 +163,12 @@ pub const CopyFile = struct {
                     .result => |result_fd| result_fd,
                     .err => |errno| {
                         this.system_error = errno.toSystemError();
-                        return bun.errnoToZigErr(errno.errno);
+                        return fun.errnoToZigErr(errno.errno);
                     },
                 },
                 .err => |errno| {
                     this.system_error = errno.toSystemError();
-                    return bun.errnoToZigErr(errno.errno);
+                    return fun.errnoToZigErr(errno.errno);
                 },
             };
         }
@@ -177,7 +177,7 @@ pub const CopyFile = struct {
             while (true) {
                 const dest = this.destination_file_store.pathlike.path.sliceZ(&path_buf1);
                 const mode = this.destination_mode orelse jsc.Node.fs.default_permission;
-                this.destination_fd = switch (bun.sys.open(
+                this.destination_fd = switch (fun.sys.open(
                     dest,
                     open_destination_flags,
                     mode,
@@ -186,7 +186,7 @@ pub const CopyFile = struct {
                         .result => |result_fd| result_fd,
                         .err => |errno| {
                             this.system_error = errno.toSystemError();
-                            return bun.errnoToZigErr(errno.errno);
+                            return fun.errnoToZigErr(errno.errno);
                         },
                     },
                     .err => |errno| {
@@ -197,7 +197,7 @@ pub const CopyFile = struct {
                                     this.source_fd.close();
                                     this.source_fd = .invalid;
                                 }
-                                return bun.errnoToZigErr(errno.errno);
+                                return fun.errnoToZigErr(errno.errno);
                             },
                             .no => {},
                         }
@@ -208,7 +208,7 @@ pub const CopyFile = struct {
                         }
 
                         this.system_error = errno.withPath(this.destination_file_store.pathlike.path.slice()).toSystemError();
-                        return bun.errnoToZigErr(errno.errno);
+                        return fun.errnoToZigErr(errno.errno);
                     },
                 };
                 break;
@@ -221,7 +221,7 @@ pub const CopyFile = struct {
         copy_file_range,
         splice,
 
-        pub const tag = std.EnumMap(TryWith, bun.sys.Tag).init(.{
+        pub const tag = std.EnumMap(TryWith, fun.sys.Tag).init(.{
             .sendfile = .sendfile,
             .copy_file_range = .copy_file_range,
             .splice = .splice,
@@ -255,11 +255,11 @@ pub const CopyFile = struct {
 
         // If they can't use copy_file_range, they probably also can't
         // use sendfile() or splice()
-        if (!bun.canUseCopyFileRangeSyscall()) {
+        if (!fun.canUseCopyFileRangeSyscall()) {
             switch (jsc.Node.fs.NodeFS.copyFileUsingReadWriteLoop("", "", src_fd, dest_fd, if (unknown_size) 0 else remain, &total_written)) {
                 .err => |err| {
                     this.system_error = err.toSystemError();
-                    return bun.errnoToZigErr(err.errno);
+                    return fun.errnoToZigErr(err.errno);
                 },
                 .result => {
                     _ = linux.ftruncate(dest_fd.cast(), @as(std.posix.off_t, @intCast(total_written)));
@@ -273,10 +273,10 @@ pub const CopyFile = struct {
             const written = switch (comptime use) {
                 .copy_file_range => linux.copy_file_range(src_fd.cast(), null, dest_fd.cast(), null, remain, 0),
                 .sendfile => linux.sendfile(dest_fd.cast(), src_fd.cast(), null, remain),
-                .splice => bun.linux.splice(src_fd.cast(), null, dest_fd.cast(), null, remain, 0),
+                .splice => fun.linux.splice(src_fd.cast(), null, dest_fd.cast(), null, remain, 0),
             };
 
-            switch (bun.sys.getErrno(written)) {
+            switch (fun.sys.getErrno(written)) {
                 .SUCCESS => {},
 
                 // XDEV: cross-device copy not supported
@@ -287,7 +287,7 @@ pub const CopyFile = struct {
                     switch (jsc.Node.fs.NodeFS.copyFileUsingReadWriteLoop("", "", src_fd, dest_fd, if (unknown_size) 0 else remain, &total_written)) {
                         .err => |err| {
                             this.system_error = err.toSystemError();
-                            return bun.errnoToZigErr(err.errno);
+                            return fun.errnoToZigErr(err.errno);
                         },
                         .result => {
                             _ = linux.ftruncate(dest_fd.cast(), @as(std.posix.off_t, @intCast(total_written)));
@@ -322,7 +322,7 @@ pub const CopyFile = struct {
                         switch (jsc.Node.fs.NodeFS.copyFileUsingReadWriteLoop("", "", src_fd, dest_fd, if (unknown_size) 0 else remain, &total_written)) {
                             .err => |err| {
                                 this.system_error = err.toSystemError();
-                                return bun.errnoToZigErr(err.errno);
+                                return fun.errnoToZigErr(err.errno);
                             },
                             .result => {
                                 _ = linux.ftruncate(dest_fd.cast(), @as(std.posix.off_t, @intCast(total_written)));
@@ -331,18 +331,18 @@ pub const CopyFile = struct {
                         }
                     }
 
-                    this.system_error = (bun.sys.Error{
-                        .errno = @as(bun.sys.Error.Int, @intCast(@intFromEnum(linux.E.INVAL))),
+                    this.system_error = (fun.sys.Error{
+                        .errno = @as(fun.sys.Error.Int, @intCast(@intFromEnum(linux.E.INVAL))),
                         .syscall = TryWith.tag.get(use).?,
                     }).toSystemError();
-                    return bun.errnoToZigErr(linux.E.INVAL);
+                    return fun.errnoToZigErr(linux.E.INVAL);
                 },
                 else => |errno| {
-                    this.system_error = (bun.sys.Error{
-                        .errno = @as(bun.sys.Error.Int, @intCast(@intFromEnum(errno))),
+                    this.system_error = (fun.sys.Error{
+                        .errno = @as(fun.sys.Error.Int, @intCast(@intFromEnum(errno))),
                         .syscall = TryWith.tag.get(use).?,
                     }).toSystemError();
-                    return bun.errnoToZigErr(errno);
+                    return fun.errnoToZigErr(errno);
                 },
             }
 
@@ -354,13 +354,13 @@ pub const CopyFile = struct {
     }
 
     pub fn doFCopyFileWithReadWriteLoopFallback(this: *CopyFile) anyerror!void {
-        switch (bun.sys.fcopyfile(this.source_fd, this.destination_fd, posix.system.COPYFILE{ .DATA = true })) {
+        switch (fun.sys.fcopyfile(this.source_fd, this.destination_fd, posix.system.COPYFILE{ .DATA = true })) {
             .err => |errno| {
                 switch (errno.getErrno()) {
                     // If the file type doesn't support seeking, it may return EBADF
                     // Example case:
                     //
-                    // bun test bun-write.test | xargs echo
+                    // fun test fun-write.test | xargs echo
                     //
                     .BADF => {
                         var total_written: u64 = 0;
@@ -369,7 +369,7 @@ pub const CopyFile = struct {
                         switch (jsc.Node.fs.NodeFS.copyFileUsingReadWriteLoop("", "", this.source_fd, this.destination_fd, 0, &total_written)) {
                             .err => |err| {
                                 this.system_error = err.toSystemError();
-                                return bun.errnoToZigErr(err.errno);
+                                return fun.errnoToZigErr(err.errno);
                             },
                             .result => {},
                         }
@@ -377,7 +377,7 @@ pub const CopyFile = struct {
                     else => {
                         this.system_error = errno.toSystemError();
 
-                        return bun.errnoToZigErr(errno.errno);
+                        return fun.errnoToZigErr(errno.errno);
                     },
                 }
             },
@@ -386,14 +386,14 @@ pub const CopyFile = struct {
     }
 
     pub fn doClonefile(this: *CopyFile) anyerror!void {
-        var source_buf: bun.PathBuffer = undefined;
-        var dest_buf: bun.PathBuffer = undefined;
+        var source_buf: fun.PathBuffer = undefined;
+        var dest_buf: fun.PathBuffer = undefined;
 
         while (true) {
             const dest = this.destination_file_store.pathlike.path.sliceZ(
                 &dest_buf,
             );
-            switch (bun.sys.clonefile(
+            switch (fun.sys.clonefile(
                 this.source_file_store.pathlike.path.sliceZ(&source_buf),
                 dest,
             )) {
@@ -404,7 +404,7 @@ pub const CopyFile = struct {
                         .no => {},
                     }
                     this.system_error = errno.toSystemError();
-                    return bun.errnoToZigErr(errno.errno);
+                    return fun.errnoToZigErr(errno.errno);
                 },
                 .result => {},
             }
@@ -416,7 +416,7 @@ pub const CopyFile = struct {
         if (Environment.isWindows) return; //why
         // defer task.onFinish();
 
-        var stat_: ?bun.Stat = null;
+        var stat_: ?fun.Stat = null;
 
         if (this.destination_file_store.pathlike == .fd) {
             this.destination_fd = this.destination_file_store.pathlike.fd;
@@ -427,18 +427,18 @@ pub const CopyFile = struct {
         }
 
         // Do we need to open both files?
-        if (this.destination_fd == bun.invalid_fd and this.source_fd == bun.invalid_fd) {
+        if (this.destination_fd == fun.invalid_fd and this.source_fd == fun.invalid_fd) {
 
             // First, we attempt to clonefile() on macOS
             // This is the fastest way to copy a file.
             if (comptime Environment.isMac) {
                 if (this.offset == 0 and this.source_file_store.pathlike == .path and this.destination_file_store.pathlike == .path) {
                     do_clonefile: {
-                        var path_buf: bun.PathBuffer = undefined;
+                        var path_buf: fun.PathBuffer = undefined;
 
                         // stat the output file, make sure it:
                         // 1. Exists
-                        switch (bun.sys.stat(this.source_file_store.pathlike.path.sliceZ(&path_buf))) {
+                        switch (fun.sys.stat(this.source_file_store.pathlike.path.sliceZ(&path_buf))) {
                             .result => |result| {
                                 stat_ = result;
 
@@ -460,7 +460,7 @@ pub const CopyFile = struct {
                         if (this.doClonefile()) {
                             if (this.max_length != Blob.max_size and this.max_length < @as(SizeType, @intCast(stat_.?.size))) {
                                 // If this fails...well, there's not much we can do about it.
-                                _ = bun.c.truncate(
+                                _ = fun.c.truncate(
                                     this.destination_file_store.pathlike.path.sliceZ(&path_buf),
                                     @as(std.posix.off_t, @intCast(this.max_length)),
                                 );
@@ -470,7 +470,7 @@ pub const CopyFile = struct {
                             }
                             // Apply destination mode if specified (clonefile copies source permissions)
                             if (this.destination_mode) |mode| {
-                                switch (bun.sys.chmod(this.destination_file_store.pathlike.path.sliceZ(&path_buf), mode)) {
+                                switch (fun.sys.chmod(this.destination_file_store.pathlike.path.sliceZ(&path_buf), mode)) {
                                     .err => |err| {
                                         this.system_error = err.toSystemError();
                                         return;
@@ -493,12 +493,12 @@ pub const CopyFile = struct {
 
             this.doOpenFile(.both) catch return;
             // Do we need to open only one file?
-        } else if (this.destination_fd == bun.invalid_fd) {
+        } else if (this.destination_fd == fun.invalid_fd) {
             this.source_fd = this.source_file_store.pathlike.fd;
 
             this.doOpenFile(.destination) catch return;
             // Do we need to open only one file?
-        } else if (this.source_fd == bun.invalid_fd) {
+        } else if (this.source_fd == fun.invalid_fd) {
             this.destination_fd = this.destination_file_store.pathlike.fd;
 
             this.doOpenFile(.source) catch return;
@@ -513,7 +513,7 @@ pub const CopyFile = struct {
 
         if (this.destination_file_store.pathlike == .fd) {}
 
-        const stat: bun.Stat = stat_ orelse switch (bun.sys.fstat(this.source_fd)) {
+        const stat: fun.Stat = stat_ orelse switch (fun.sys.fstat(this.source_fd)) {
             .result => |result| result,
             .err => |err| {
                 this.doClose();
@@ -535,18 +535,18 @@ pub const CopyFile = struct {
                 return;
             }
 
-            if (bun.sys.preallocate_supported and
+            if (fun.sys.preallocate_supported and
                 posix.S.ISREG(stat.mode) and
-                this.max_length > bun.sys.preallocate_length and
+                this.max_length > fun.sys.preallocate_length and
                 this.max_length != Blob.max_size)
             {
-                bun.sys.preallocate_file(this.destination_fd.cast(), 0, this.max_length) catch {};
+                fun.sys.preallocate_file(this.destination_fd.cast(), 0, this.max_length) catch {};
             }
         }
 
         if (comptime Environment.isLinux) {
 
-            // Bun.write(Bun.file("a"), Bun.file("b"))
+            // Fun.write(Fun.file("a"), Fun.file("b"))
             if (posix.S.ISREG(stat.mode) and (posix.S.ISREG(this.destination_file_store.mode) or this.destination_file_store.mode == 0)) {
                 if (this.destination_file_store.is_atty orelse false) {
                     this.doCopyFileRange(.copy_file_range, true) catch {};
@@ -558,7 +558,7 @@ pub const CopyFile = struct {
                 return;
             }
 
-            // $ bun run foo.js | bun run bar.js
+            // $ fun run foo.js | fun run bar.js
             if (posix.S.ISFIFO(stat.mode) and posix.S.ISFIFO(this.destination_file_store.mode)) {
                 if (this.destination_file_store.is_atty orelse false) {
                     this.doCopyFileRange(.splice, true) catch {};
@@ -608,7 +608,7 @@ pub const CopyFile = struct {
                 .result => {},
             }
             if (stat.size != 0 and @as(SizeType, @intCast(stat.size)) > this.max_length) {
-                _ = bun.sys.ftruncate(this.destination_fd, @intCast(this.max_length));
+                _ = fun.sys.ftruncate(this.destination_fd, @intCast(this.max_length));
                 this.read_len = @truncate(@min(total_written, @as(u64, this.max_length)));
             } else {
                 this.read_len = @truncate(total_written);
@@ -627,7 +627,7 @@ pub const CopyFileWindows = struct {
     io_request: libuv.fs_t = std.mem.zeroes(libuv.fs_t),
     promise: jsc.JSPromise.Strong = .{},
     mkdirp_if_not_exists: bool = false,
-    destination_mode: ?bun.Mode = null,
+    destination_mode: ?fun.Mode = null,
     event_loop: *jsc.EventLoop,
 
     size: Blob.SizeType = Blob.max_size,
@@ -636,27 +636,27 @@ pub const CopyFileWindows = struct {
     written_bytes: usize = 0,
 
     /// For mkdirp
-    err: ?bun.sys.Error = null,
+    err: ?fun.sys.Error = null,
 
     /// When we are unable to get the original file path, we do a read-write loop that uses libuv.
     read_write_loop: ReadWriteLoop = .{},
 
     pub const ReadWriteLoop = struct {
-        source_fd: bun.FD = bun.invalid_fd,
+        source_fd: fun.FD = fun.invalid_fd,
         must_close_source_fd: bool = false,
-        destination_fd: bun.FD = bun.invalid_fd,
+        destination_fd: fun.FD = fun.invalid_fd,
         must_close_destination_fd: bool = false,
         written: usize = 0,
-        read_buf: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(bun.default_allocator),
+        read_buf: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(fun.default_allocator),
         uv_buf: libuv.uv_buf_t = .{ .base = undefined, .len = 0 },
 
-        pub fn start(read_write_loop: *ReadWriteLoop, this: *CopyFileWindows) bun.sys.Maybe(void) {
-            bun.handleOom(read_write_loop.read_buf.ensureTotalCapacityPrecise(64 * 1024));
+        pub fn start(read_write_loop: *ReadWriteLoop, this: *CopyFileWindows) fun.sys.Maybe(void) {
+            fun.handleOom(read_write_loop.read_buf.ensureTotalCapacityPrecise(64 * 1024));
 
             return read(read_write_loop, this);
         }
 
-        pub fn read(read_write_loop: *ReadWriteLoop, this: *CopyFileWindows) bun.sys.Maybe(void) {
+        pub fn read(read_write_loop: *ReadWriteLoop, this: *CopyFileWindows) fun.sys.Maybe(void) {
             read_write_loop.read_buf.items.len = 0;
             read_write_loop.uv_buf = libuv.uv_buf_t.init(read_write_loop.read_buf.allocatedSlice());
             const loop = this.event_loop.virtual_machine.event_loop_handle.?;
@@ -685,7 +685,7 @@ pub const CopyFileWindows = struct {
 
         fn onRead(req: *libuv.fs_t) callconv(.c) void {
             var this: *CopyFileWindows = @fieldParentPtr("io_request", req);
-            bun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
+            fun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
 
             const source_fd = this.read_write_loop.source_fd;
             const destination_fd = this.read_write_loop.destination_fd;
@@ -695,7 +695,7 @@ pub const CopyFileWindows = struct {
 
             const rc = req.result;
 
-            bun.sys.syslog("uv_fs_read({f}, {d}) = {d}", .{ source_fd, read_buf.len, rc.int() });
+            fun.sys.syslog("uv_fs_read({f}, {d}) = {d}", .{ source_fd, read_buf.len, rc.int() });
             if (rc.toError(.read)) |err| {
                 this.err = err;
                 this.onReadWriteLoopComplete();
@@ -733,14 +733,14 @@ pub const CopyFileWindows = struct {
 
         fn onWrite(req: *libuv.fs_t) callconv(.c) void {
             var this: *CopyFileWindows = @fieldParentPtr("io_request", req);
-            bun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
+            fun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
             const buf = &this.read_write_loop.read_buf.items;
 
             const destination_fd = this.read_write_loop.destination_fd;
 
             const rc = req.result;
 
-            bun.sys.syslog("uv_fs_write({f}, {d}) = {d}", .{ destination_fd, buf.len, rc.int() });
+            fun.sys.syslog("uv_fs_write({f}, {d}) = {d}", .{ destination_fd, buf.len, rc.int() });
 
             if (rc.toError(.write)) |err| {
                 this.err = err;
@@ -796,28 +796,28 @@ pub const CopyFileWindows = struct {
         pub fn close(this: *ReadWriteLoop) void {
             if (this.must_close_source_fd) {
                 if (this.source_fd.makeLibUVOwned()) |fd| {
-                    bun.Async.Closer.close(
+                    fun.Async.Closer.close(
                         fd,
-                        bun.Async.Loop.get(),
+                        fun.Async.Loop.get(),
                     );
                 } else |_| {
                     this.source_fd.close();
                 }
                 this.must_close_source_fd = false;
-                this.source_fd = bun.invalid_fd;
+                this.source_fd = fun.invalid_fd;
             }
 
             if (this.must_close_destination_fd) {
                 if (this.destination_fd.makeLibUVOwned()) |fd| {
-                    bun.Async.Closer.close(
+                    fun.Async.Closer.close(
                         fd,
-                        bun.Async.Loop.get(),
+                        fun.Async.Loop.get(),
                     );
                 } else |_| {
                     this.destination_fd.close();
                 }
                 this.must_close_destination_fd = false;
-                this.destination_fd = bun.invalid_fd;
+                this.destination_fd = fun.invalid_fd;
             }
 
             this.read_buf.clearAndFree();
@@ -836,7 +836,7 @@ pub const CopyFileWindows = struct {
         this.onComplete(this.read_write_loop.written);
     }
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn init(
         destination_file_store: *Store,
@@ -844,7 +844,7 @@ pub const CopyFileWindows = struct {
         event_loop: *jsc.EventLoop,
         mkdirp_if_not_exists: bool,
         size_: Blob.SizeType,
-        destination_mode: ?bun.Mode,
+        destination_mode: ?fun.Mode,
     ) jsc.JSValue {
         destination_file_store.ref();
         source_file_store.ref();
@@ -867,23 +867,23 @@ pub const CopyFileWindows = struct {
         return promise;
     }
 
-    fn preparePathlike(pathlike: *jsc.Node.PathOrFileDescriptor, must_close: *bool, is_reading: bool) bun.sys.Maybe(bun.FD) {
+    fn preparePathlike(pathlike: *jsc.Node.PathOrFileDescriptor, must_close: *bool, is_reading: bool) fun.sys.Maybe(fun.FD) {
         if (pathlike.* == .path) {
-            const fd = switch (bun.sys.openatWindowsT(
+            const fd = switch (fun.sys.openatWindowsT(
                 u8,
-                bun.invalid_fd,
+                fun.invalid_fd,
                 pathlike.path.slice(),
                 if (is_reading)
-                    bun.O.RDONLY
+                    fun.O.RDONLY
                 else
-                    bun.O.WRONLY | bun.O.CREAT,
+                    fun.O.WRONLY | fun.O.CREAT,
                 0,
             )) {
                 .result => |result| result.makeLibUVOwned() catch {
                     result.close();
                     return .{
                         .err = .{
-                            .errno = @as(c_int, @intCast(@intFromEnum(bun.sys.SystemErrno.EMFILE))),
+                            .errno = @as(c_int, @intCast(@intFromEnum(fun.sys.SystemErrno.EMFILE))),
                             .syscall = .open,
                             .path = pathlike.path.slice(),
                         },
@@ -941,13 +941,13 @@ pub const CopyFileWindows = struct {
 
     fn copyfile(this: *CopyFileWindows) void {
         // This is for making it easier for us to test this code path
-        if (bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_UV_FS_COPYFILE.get()) {
+        if (fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_UV_FS_COPYFILE.get()) {
             this.prepareReadWriteLoop();
             return;
         }
 
-        var pathbuf1: bun.PathBuffer = undefined;
-        var pathbuf2: bun.PathBuffer = undefined;
+        var pathbuf1: fun.PathBuffer = undefined;
+        var pathbuf2: fun.PathBuffer = undefined;
         var destination_file_store = &this.destination_file_store.data.file;
         var source_file_store = &this.source_file_store.data.file;
 
@@ -957,7 +957,7 @@ pub const CopyFileWindows = struct {
                     break :brk destination_file_store.pathlike.path.sliceZ(&pathbuf1);
                 },
                 .fd => |fd| {
-                    switch (bun.sys.File.from(fd).kind()) {
+                    switch (fun.sys.File.from(fd).kind()) {
                         .err => |err| {
                             this.throw(err);
                             return;
@@ -965,7 +965,7 @@ pub const CopyFileWindows = struct {
                         .result => |kind| {
                             switch (kind) {
                                 .directory => {
-                                    this.throw(bun.sys.Error.fromCode(.ISDIR, .open));
+                                    this.throw(fun.sys.Error.fromCode(.ISDIR, .open));
                                     return;
                                 },
                                 .character_device => {
@@ -973,10 +973,10 @@ pub const CopyFileWindows = struct {
                                     return;
                                 },
                                 else => {
-                                    const out = bun.getFdPath(fd, &pathbuf1) catch {
+                                    const out = fun.getFdPath(fd, &pathbuf1) catch {
                                         // This case can happen when either:
                                         // - NUL device
-                                        // - Pipe. `cat foo.txt | bun bar.ts`
+                                        // - Pipe. `cat foo.txt | fun bar.ts`
                                         this.prepareReadWriteLoop();
                                         return;
                                     };
@@ -995,7 +995,7 @@ pub const CopyFileWindows = struct {
                     break :brk source_file_store.pathlike.path.sliceZ(&pathbuf2);
                 },
                 .fd => |fd| {
-                    switch (bun.sys.File.from(fd).kind()) {
+                    switch (fun.sys.File.from(fd).kind()) {
                         .err => |err| {
                             this.throw(err);
                             return;
@@ -1003,7 +1003,7 @@ pub const CopyFileWindows = struct {
                         .result => |kind| {
                             switch (kind) {
                                 .directory => {
-                                    this.throw(bun.sys.Error.fromCode(.ISDIR, .open));
+                                    this.throw(fun.sys.Error.fromCode(.ISDIR, .open));
                                     return;
                                 },
                                 .character_device => {
@@ -1011,10 +1011,10 @@ pub const CopyFileWindows = struct {
                                     return;
                                 },
                                 else => {
-                                    const out = bun.getFdPath(fd, &pathbuf2) catch {
+                                    const out = fun.getFdPath(fd, &pathbuf2) catch {
                                         // This case can happen when either:
                                         // - NUL device
-                                        // - Pipe. `cat foo.txt | bun bar.ts`
+                                        // - Pipe. `cat foo.txt | fun bar.ts`
                                         this.prepareReadWriteLoop();
                                         return;
                                     };
@@ -1042,8 +1042,8 @@ pub const CopyFileWindows = struct {
         if (rc.errno()) |errno| {
             this.throw(.{
                 // #6336
-                .errno = if (errno == @intFromEnum(bun.sys.SystemErrno.EPERM))
-                    @as(c_int, @intCast(@intFromEnum(bun.sys.SystemErrno.ENOENT)))
+                .errno = if (errno == @intFromEnum(fun.sys.SystemErrno.EPERM))
+                    @as(c_int, @intCast(@intFromEnum(fun.sys.SystemErrno.ENOENT)))
                 else
                     errno,
                 .syscall = .copyfile,
@@ -1054,7 +1054,7 @@ pub const CopyFileWindows = struct {
         this.event_loop.refConcurrently();
     }
 
-    pub fn throw(this: *CopyFileWindows, err: bun.sys.Error) void {
+    pub fn throw(this: *CopyFileWindows, err: fun.sys.Error) void {
         const globalThis = this.event_loop.global;
         const promise = this.promise.swap();
         const err_instance = err.toJSWithAsyncStack(globalThis, promise);
@@ -1068,20 +1068,20 @@ pub const CopyFileWindows = struct {
 
     fn onCopyFile(req: *libuv.fs_t) callconv(.c) void {
         var this: *CopyFileWindows = @fieldParentPtr("io_request", req);
-        bun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
+        fun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
 
         var event_loop = this.event_loop;
         event_loop.unrefConcurrently();
         const rc = req.result;
 
-        bun.sys.syslog("uv_fs_copyfile() = {f}", .{rc});
+        fun.sys.syslog("uv_fs_copyfile() = {f}", .{rc});
         if (rc.errEnum()) |errno| {
             if (this.mkdirp_if_not_exists and errno == .NOENT) {
                 req.deinit();
                 this.mkdirp();
                 return;
             } else {
-                var err = bun.sys.Error.fromCode(
+                var err = fun.sys.Error.fromCode(
                     // #6336
                     if (errno == .PERM) .NOENT else errno,
 
@@ -1115,7 +1115,7 @@ pub const CopyFileWindows = struct {
         if (this.destination_mode) |mode| {
             if (this.destination_file_store.data.file.pathlike == .path) {
                 this.written_bytes = written;
-                var pathbuf: bun.PathBuffer = undefined;
+                var pathbuf: fun.PathBuffer = undefined;
                 const path = this.destination_file_store.data.file.pathlike.path.sliceZ(&pathbuf);
                 const loop = this.event_loop.virtual_machine.event_loop_handle.?;
                 this.io_request.deinit();
@@ -1132,7 +1132,7 @@ pub const CopyFileWindows = struct {
 
                 if (rc.errno()) |errno| {
                     // chmod failed to start - reject the promise to report the error
-                    var err = bun.sys.Error.fromCode(@enumFromInt(errno), .chmod);
+                    var err = fun.sys.Error.fromCode(@enumFromInt(errno), .chmod);
                     const destination = &this.destination_file_store.data.file;
                     if (destination.pathlike == .path) {
                         err = err.withPath(destination.pathlike.path.slice());
@@ -1150,14 +1150,14 @@ pub const CopyFileWindows = struct {
 
     fn onChmod(req: *libuv.fs_t) callconv(.c) void {
         var this: *CopyFileWindows = @fieldParentPtr("io_request", req);
-        bun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
+        fun.assert(req.data == @as(?*anyopaque, @ptrCast(this)));
 
         var event_loop = this.event_loop;
         event_loop.unrefConcurrently();
 
         const rc = req.result;
         if (rc.errEnum()) |errno| {
-            var err = bun.sys.Error.fromCode(errno, .chmod);
+            var err = fun.sys.Error.fromCode(errno, .chmod);
             const destination = &this.destination_file_store.data.file;
             if (destination.pathlike == .path) {
                 err = err.withPath(destination.pathlike.path.slice());
@@ -1200,18 +1200,18 @@ pub const CopyFileWindows = struct {
         this.source_file_store.deref();
         this.promise.deinit();
         this.io_request.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     fn mkdirp(
         this: *CopyFileWindows,
     ) void {
-        bun.sys.syslog("mkdirp", .{});
+        fun.sys.syslog("mkdirp", .{});
         this.mkdirp_if_not_exists = false;
         var destination = &this.destination_file_store.data.file;
         if (destination.pathlike != .path) {
             this.throw(.{
-                .errno = @as(c_int, @intCast(@intFromEnum(bun.sys.SystemErrno.EINVAL))),
+                .errno = @as(c_int, @intCast(@intFromEnum(fun.sys.SystemErrno.EINVAL))),
                 .syscall = .mkdir,
             });
             return;
@@ -1221,7 +1221,7 @@ pub const CopyFileWindows = struct {
         jsc.Node.fs.Async.AsyncMkdirp.new(.{
             .completion = @ptrCast(&onMkdirpCompleteConcurrent),
             .completion_ctx = this,
-            .path = bun.Dirname.dirname(u8, destination.pathlike.path.slice())
+            .path = fun.Dirname.dirname(u8, destination.pathlike.path.slice())
             // this shouldn't happen
             orelse destination.pathlike.path.slice(),
         }).schedule();
@@ -1230,7 +1230,7 @@ pub const CopyFileWindows = struct {
     fn onMkdirpComplete(this: *CopyFileWindows) void {
         this.event_loop.unrefConcurrently();
 
-        if (bun.take(&this.err)) |err| {
+        if (fun.take(&this.err)) |err| {
             this.throw(err);
             var err2 = err;
             err2.deinit();
@@ -1240,8 +1240,8 @@ pub const CopyFileWindows = struct {
         this.copyfile();
     }
 
-    fn onMkdirpCompleteConcurrent(this: *CopyFileWindows, err_: bun.sys.Maybe(void)) void {
-        bun.sys.syslog("mkdirp complete", .{});
+    fn onMkdirpCompleteConcurrent(this: *CopyFileWindows, err_: fun.sys.Maybe(void)) void {
+        fun.sys.syslog("mkdirp complete", .{});
         assert(this.err == null);
         this.err = if (err_ == .err) err_.err else null;
         this.event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.create(jsc.ManagedTask.New(CopyFileWindows, onMkdirpComplete).init(this)));
@@ -1255,14 +1255,14 @@ pub const IOWhich = enum {
 };
 
 const unsupported_directory_error = SystemError{
-    .errno = @as(c_int, @intCast(@intFromEnum(bun.sys.SystemErrno.EISDIR))),
-    .message = bun.String.static("That doesn't work on folders"),
-    .syscall = bun.String.static("fstat"),
+    .errno = @as(c_int, @intCast(@intFromEnum(fun.sys.SystemErrno.EISDIR))),
+    .message = fun.String.static("That doesn't work on folders"),
+    .syscall = fun.String.static("fstat"),
 };
 const unsupported_non_regular_file_error = SystemError{
-    .errno = @as(c_int, @intCast(@intFromEnum(bun.sys.SystemErrno.ENOTSUP))),
-    .message = bun.String.static("Non-regular files aren't supported yet"),
-    .syscall = bun.String.static("fstat"),
+    .errno = @as(c_int, @intCast(@intFromEnum(fun.sys.SystemErrno.ENOTSUP))),
+    .message = fun.String.static("Non-regular files aren't supported yet"),
+    .syscall = fun.String.static("fstat"),
 };
 
 pub const CopyFilePromiseTask = jsc.ConcurrentPromiseTask(CopyFile);
@@ -1270,13 +1270,13 @@ pub const CopyFilePromiseTaskEventLoopTask = CopyFilePromiseTask.EventLoopTask;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const webcore = bun.webcore;
-const libuv = bun.windows.libuv;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const webcore = fun.webcore;
+const libuv = fun.windows.libuv;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const SystemError = jsc.SystemError;

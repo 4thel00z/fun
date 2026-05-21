@@ -115,8 +115,8 @@ smol ResolveMode {
 smol Target {
   browser = 1;
   node = 2;
-  bun = 3;
-  bun_macro = 4;
+  fun = 3;
+  fun_macro = 4;
 }
 
 smol CSSInJSBehavior {
@@ -569,7 +569,7 @@ struct NPMRegistryMap {
   NPMRegistry[] registries;
 }
 
-message BunInstall {
+message FunInstall {
   NPMRegistry default_registry = 1;
   NPMRegistryMap scoped = 2;
   string lockfile_path = 3;

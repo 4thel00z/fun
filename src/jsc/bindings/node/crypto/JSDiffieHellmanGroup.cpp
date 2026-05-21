@@ -10,7 +10,7 @@
 #include <JavaScriptCore/FunctionPrototype.h>
 #include <JavaScriptCore/ObjectPrototype.h>
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsDiffieHellmanGroupGetter_verifyError);
 
@@ -72,4 +72,4 @@ JSC_DEFINE_HOST_FUNCTION(jsDiffieHellmanGroupGetter_verifyError, (JSC::JSGlobalO
     return JSValue::encode(JSC::jsNumber(static_cast<int>(result)));
 }
 
-} // namespace Bun
+} // namespace Fun

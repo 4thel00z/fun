@@ -18,7 +18,7 @@
 import grpc from "@grpc/grpc-js";
 import { OutlierDetectionLoadBalancingConfig } from "@grpc/grpc-js/build/src/load-balancer-outlier-detection";
 import assert from "assert";
-import { afterAll as after, beforeAll as before, describe, it } from "bun:test";
+import { afterAll as after, beforeAll as before, describe, it } from "fun:test";
 import * as path from "path";
 import { loadProtoFile } from "./common";
 

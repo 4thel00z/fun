@@ -13,7 +13,7 @@
 #include <JavaScriptCore/JSCJSValueInlines.h>
 #include <JavaScriptCore/ThrowScope.h>
 
-namespace Bun {
+namespace Fun {
 
 // Declare host function prototypes
 JSC_DECLARE_HOST_FUNCTION(jsECDHProtoFuncComputeSecret);
@@ -85,7 +85,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncComputeSecret, (JSC::JSGlobalObject * gl
     JSC::JSValue outputEncodingValue = callFrame->argument(2);
 
     // Get the arguments - use the input encoding if provided
-    auto* keyBuffer = Bun::getArrayBufferOrView(globalObject, scope, keyValue, "key"_s, inputEncodingValue);
+    auto* keyBuffer = Fun::getArrayBufferOrView(globalObject, scope, keyValue, "key"_s, inputEncodingValue);
     RETURN_IF_EXCEPTION(scope, {});
 
     if (!keyBuffer) {
@@ -96,13 +96,13 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncComputeSecret, (JSC::JSGlobalObject * gl
     // Validate that we have a valid key pair
     ncrypto::MarkPopErrorOnReturn markPopErrorOnReturn;
     if (!ecdh->m_key.checkKey()) {
-        return Bun::ERR::CRYPTO_INVALID_KEYPAIR(scope, globalObject);
+        return Fun::ERR::CRYPTO_INVALID_KEYPAIR(scope, globalObject);
     }
 
     // Create an EC_POINT from the buffer
     auto pubPoint = ncrypto::ECPointPointer::New(ecdh->m_group);
     if (!pubPoint) {
-        return Bun::ERR::CRYPTO_ECDH_INVALID_PUBLIC_KEY(scope, globalObject);
+        return Fun::ERR::CRYPTO_ECDH_INVALID_PUBLIC_KEY(scope, globalObject);
     }
 
     // Set the point from the buffer
@@ -113,7 +113,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncComputeSecret, (JSC::JSGlobalObject * gl
     };
 
     if (!pubPoint.setFromBuffer(buffer, ecdh->m_group)) {
-        return Bun::ERR::CRYPTO_ECDH_INVALID_PUBLIC_KEY(scope, globalObject);
+        return Fun::ERR::CRYPTO_ECDH_INVALID_PUBLIC_KEY(scope, globalObject);
     }
 
     // Compute the field size
@@ -128,11 +128,11 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncComputeSecret, (JSC::JSGlobalObject * gl
 
     // Compute the shared secret
     if (!ECDH_compute_key(secret.begin(), secret.size(), pubPoint, ecdh->m_key.get(), nullptr)) {
-        return Bun::ERR::CRYPTO_OPERATION_FAILED(scope, globalObject, "Failed to compute ECDH key"_s);
+        return Fun::ERR::CRYPTO_OPERATION_FAILED(scope, globalObject, "Failed to compute ECDH key"_s);
     }
 
     // Handle output encoding if provided
-    BufferEncodingType outputEncodingType = Bun::getEncodingDefaultBuffer(globalObject, scope, outputEncodingValue);
+    BufferEncodingType outputEncodingType = Fun::getEncodingDefaultBuffer(globalObject, scope, outputEncodingValue);
     RETURN_IF_EXCEPTION(scope, {});
 
     // Return the encoded result
@@ -196,7 +196,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncGetPrivateKey, (JSC::JSGlobalObject * gl
     }
 
     // Handle encoding parameter if provided
-    BufferEncodingType encodingType = Bun::getEncodingDefaultBuffer(globalObject, scope, callFrame->argument(0));
+    BufferEncodingType encodingType = Fun::getEncodingDefaultBuffer(globalObject, scope, callFrame->argument(0));
     RETURN_IF_EXCEPTION(scope, {});
 
     // Create a span from the result data for encoding
@@ -226,7 +226,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncSetPublicKey, (JSC::JSGlobalObject * glo
     JSC::JSValue encodingValue = callFrame->argument(1);
 
     // Convert the input to a buffer with encoding if provided
-    auto* bufferValue = Bun::getArrayBufferOrView(globalObject, scope, keyValue, "key"_s, encodingValue);
+    auto* bufferValue = Fun::getArrayBufferOrView(globalObject, scope, keyValue, "key"_s, encodingValue);
     RETURN_IF_EXCEPTION(scope, {});
 
     if (!bufferValue) {
@@ -285,7 +285,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncSetPrivateKey, (JSC::JSGlobalObject * gl
     JSC::JSValue encodingValue = callFrame->argument(1);
 
     // Convert the input to a buffer with encoding if provided
-    auto* bufferValue = Bun::getArrayBufferOrView(globalObject, scope, keyValue, "key"_s, encodingValue);
+    auto* bufferValue = Fun::getArrayBufferOrView(globalObject, scope, keyValue, "key"_s, encodingValue);
     RETURN_IF_EXCEPTION(scope, {});
 
     if (!bufferValue) {
@@ -303,7 +303,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncSetPrivateKey, (JSC::JSGlobalObject * gl
 
     // Validate the key is valid for the curve
     if (!isKeyValidForCurve(ecdh->m_group, privateKey)) {
-        return Bun::ERR::CRYPTO_INVALID_KEYTYPE(scope, globalObject, "Private key is not valid for specified curve"_s);
+        return Fun::ERR::CRYPTO_INVALID_KEYTYPE(scope, globalObject, "Private key is not valid for specified curve"_s);
     }
 
     // Clone the existing key
@@ -353,4 +353,4 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHProtoFuncSetPrivateKey, (JSC::JSGlobalObject * gl
     return JSValue::encode(callFrame->thisValue());
 }
 
-} // namespace Bun
+} // namespace Fun

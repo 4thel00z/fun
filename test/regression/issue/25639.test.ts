@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 // GitHub Issue #25639: setTimeout Timeout object missing _idleStart property
 // Next.js 16 uses _idleStart to coordinate timers for Cache Components
@@ -52,7 +52,7 @@ test("_idleStart is writable (Next.js modifies it to coordinate timers)", () => 
 test("timers created at different times have different _idleStart values", async () => {
   const timer1 = setTimeout(() => {}, 100);
   // Wait a bit to ensure different timestamp
-  await Bun.sleep(10);
+  await Fun.sleep(10);
   const timer2 = setTimeout(() => {}, 100);
 
   try {

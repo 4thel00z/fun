@@ -1,25 +1,25 @@
 ---
-title: Skip tests with the Bun test runner
+title: Skip tests with the Fun test runner
 sidebarTitle: Skip tests
 mode: center
 ---
 
-To skip a test with the Bun test runner, use the `test.skip` function.
+To skip a test with the Fun test runner, use the `test.skip` function.
 
 ```ts test.ts icon="/icons/typescript.svg"
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test.skip("unimplemented feature", () => {
-  expect(Bun.isAwesome()).toBe(true);
+  expect(Fun.isAwesome()).toBe(true);
 });
 ```
 
 ---
 
-Running `bun test` will not execute this test. It will be marked as skipped in the terminal output.
+Running `fun test` will not execute this test. It will be marked as skipped in the terminal output.
 
 ```sh terminal icon="terminal"
-bun test
+fun test
 ```
 
 ```txt

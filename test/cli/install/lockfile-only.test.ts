@@ -1,7 +1,7 @@
-import { spawn } from "bun";
-import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from "bun:test";
+import { spawn } from "fun";
+import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from "fun:test";
 import { access, writeFile } from "fs/promises";
-import { bunExe, bunEnv as env } from "harness";
+import { funExe, funEnv as env } from "harness";
 import { join } from "path";
 import {
   dummyAfterAll,
@@ -22,8 +22,8 @@ beforeEach(async () => {
 });
 afterEach(dummyAfterEach);
 
-it.each(["bun.lockb", "bun.lock"])("should not download tarballs with --lockfile-only using %s", async lockfile => {
-  const isLockb = lockfile === "bun.lockb";
+it.each(["fun.lockb", "fun.lock"])("should not download tarballs with --lockfile-only using %s", async lockfile => {
+  const isLockb = lockfile === "fun.lockb";
 
   const urls: string[] = [];
   const registry = { "0.0.1": { as: "0.0.1" }, latest: "0.0.1" };
@@ -40,13 +40,13 @@ it.each(["bun.lockb", "bun.lock"])("should not download tarballs with --lockfile
     }),
   );
 
-  const cmd = [bunExe(), "install", "--lockfile-only"];
+  const cmd = [funExe(), "install", "--lockfile-only"];
 
   if (!isLockb) {
     // the default beforeEach disables --save-text-lockfile in the dummy registry, so we should restore
     // default behaviour
     await writeFile(
-      join(package_dir, "bunfig.toml"),
+      join(package_dir, "funfig.toml"),
       `
       [install]
       cache = false
@@ -71,7 +71,7 @@ it.each(["bun.lockb", "bun.lock"])("should not download tarballs with --lockfile
 
   const out = await stdout.text();
   expect(out.replace(/\s*\[[0-9\.]+m?s\]\s*$/, "").split(/\r?\n/)).toEqual([
-    expect.stringContaining("bun install v1."),
+    expect.stringContaining("fun install v1."),
     "",
     expect.stringContaining(`Saved ${lockfile}`),
   ]);

@@ -1,4 +1,4 @@
-export function createBunShellTemplateFunction(createShellInterpreter_, createParsedShellScript_) {
+export function createFunShellTemplateFunction(createShellInterpreter_, createParsedShellScript_) {
   const createShellInterpreter = createShellInterpreter_ as (
     resolve: (code: number, stdout: Buffer, stderr: Buffer) => void,
     reject: (code: number, stdout: Buffer, stderr: Buffer) => void,
@@ -299,13 +299,13 @@ export function createBunShellTemplateFunction(createShellInterpreter_, createPa
     }
   }
 
-  var BunShell = function BunShell(first, ...rest) {
+  var FunShell = function FunShell(first, ...rest) {
     if (first?.raw === undefined) throw new Error("Please use '$' as a tagged template function: $`cmd arg1 arg2`");
     const parsed_shell_script = createParsedShellScript(first.raw, rest);
 
-    const cwd = BunShell[cwdSymbol];
-    const env = BunShell[envSymbol];
-    const throws = BunShell[throwsSymbol];
+    const cwd = FunShell[cwdSymbol];
+    const env = FunShell[envSymbol];
+    const throws = FunShell[throwsSymbol];
 
     // cwd must be set before env or else it will be injected into env as "PWD=/"
     if (cwd) parsed_shell_script.setCwd(cwd);
@@ -342,13 +342,13 @@ export function createBunShellTemplateFunction(createShellInterpreter_, createPa
 
   Shell.prototype = ShellPrototype.prototype;
   Object.setPrototypeOf(Shell, ShellPrototype);
-  Object.setPrototypeOf(BunShell, ShellPrototype.prototype);
+  Object.setPrototypeOf(FunShell, ShellPrototype.prototype);
 
-  BunShell[cwdSymbol] = defaultCwd;
-  BunShell[envSymbol] = defaultEnv;
-  BunShell[throwsSymbol] = true;
+  FunShell[cwdSymbol] = defaultCwd;
+  FunShell[envSymbol] = defaultEnv;
+  FunShell[throwsSymbol] = true;
 
-  Object.defineProperties(BunShell, {
+  Object.defineProperties(FunShell, {
     Shell: {
       value: Shell,
       enumerable: true,
@@ -363,5 +363,5 @@ export function createBunShellTemplateFunction(createShellInterpreter_, createPa
     },
   });
 
-  return BunShell;
+  return FunShell;
 }

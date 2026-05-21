@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import zlib from "node:zlib";
 
 describe("zstd compression with larger inputs", () => {
@@ -10,7 +10,7 @@ describe("zstd compression with larger inputs", () => {
         else resolve(result);
       });
     });
-    const decompressed = Bun.zstdDecompressSync(compressed);
+    const decompressed = Fun.zstdDecompressSync(compressed);
     expect(decompressed.toString()).toBe(input);
   });
 
@@ -22,7 +22,7 @@ describe("zstd compression with larger inputs", () => {
         else resolve(result);
       });
     });
-    const decompressed = Bun.zstdDecompressSync(compressed);
+    const decompressed = Fun.zstdDecompressSync(compressed);
     expect(decompressed.toString()).toBe(input.toString());
   });
 
@@ -34,7 +34,7 @@ describe("zstd compression with larger inputs", () => {
         else resolve(result);
       });
     });
-    const decompressed = Bun.zstdDecompressSync(compressed);
+    const decompressed = Fun.zstdDecompressSync(compressed);
     expect(decompressed.toString()).toBe(input);
   });
 });

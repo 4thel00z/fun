@@ -17,7 +17,7 @@ pub const EventLoopHandle = union(EventLoopKind) {
         };
     }
 
-    pub fn bunVM(this: EventLoopHandle) ?*VirtualMachine {
+    pub fn funVM(this: EventLoopHandle) ?*VirtualMachine {
         if (this == .js) {
             return this.js.virtual_machine;
         }
@@ -65,7 +65,7 @@ pub const EventLoopHandle = union(EventLoopKind) {
         };
     }
 
-    pub fn filePolls(this: EventLoopHandle) *bun.Async.FilePoll.Store {
+    pub fn filePolls(this: EventLoopHandle) *fun.Async.FilePoll.Store {
         return switch (this) {
             .js => this.js.virtual_machine.rareData().filePolls(this.js.virtual_machine),
             .mini => this.mini.filePolls(),
@@ -90,7 +90,7 @@ pub const EventLoopHandle = union(EventLoopKind) {
         }
     }
 
-    pub fn loop(this: EventLoopHandle) *bun.uws.Loop {
+    pub fn loop(this: EventLoopHandle) *fun.uws.Loop {
         return switch (this) {
             .js => this.js.usocketsLoop(),
             .mini => this.mini.loop,
@@ -135,7 +135,7 @@ pub const EventLoopHandle = union(EventLoopKind) {
         };
     }
 
-    pub inline fn env(this: EventLoopHandle) *bun.DotEnv.Loader {
+    pub inline fn env(this: EventLoopHandle) *fun.DotEnv.Loader {
         return switch (this) {
             .js => this.js.virtual_machine.transpiler.env,
             .mini => this.mini.env.?,
@@ -170,10 +170,10 @@ pub const EventLoopTaskPtr = union {
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Async = bun.Async;
+const fun = @import("fun");
+const Async = fun.Async;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const AnyEventLoop = jsc.AnyEventLoop;
 const EventLoopKind = jsc.EventLoopKind;
 const MiniEventLoop = jsc.MiniEventLoop;

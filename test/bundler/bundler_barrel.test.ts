@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -610,7 +610,7 @@ describe("bundler", () => {
     },
     splitting: true,
     format: "esm",
-    target: "bun",
+    target: "fun",
     outdir: "/out",
     run: {
       stdout: "A\nB",
@@ -653,7 +653,7 @@ describe("bundler", () => {
     entryPoints: ["/static-user.js", "/dynamic-user.js"],
     splitting: true,
     format: "esm",
-    target: "bun",
+    target: "fun",
     outdir: "/out",
     run: [
       { file: "/out/static-user.js", stdout: "A" },
@@ -1585,7 +1585,7 @@ describe("bundler", () => {
         export function used() { return 'ok'; }
       `,
     },
-    target: "bun",
+    target: "fun",
     format: "esm",
     bytecode: true,
     compile: true,

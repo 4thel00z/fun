@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test("importing empty files in the async transpiler does not crash", async () => {
   const promises = new Array(10);

@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 type Vendor = {
   name: string;
   constant: string;
@@ -395,7 +397,7 @@ const vendors: Vendor[] = [
 
 function genEnvCondition(env: EnvMatch): string {
   if (typeof env === "string") {
-    return `bun.getenvZ(${JSON.stringify(env)}) != null`;
+    return `fun.getenvZ(${JSON.stringify(env)}) != null`;
   } else if (Array.isArray(env)) {
     return env
       .map(itm => {
@@ -406,14 +408,14 @@ function genEnvCondition(env: EnvMatch): string {
       .join(" and ");
   } else if (typeof env === "object") {
     if ("env" in env) {
-      return `bun.strings.containsComptime(bun.getenvZ(${JSON.stringify(env.env)}) orelse "", ${JSON.stringify(env.includes)})`;
+      return `fun.strings.containsComptime(fun.getenvZ(${JSON.stringify(env.env)}) orelse "", ${JSON.stringify(env.includes)})`;
     } else if ("any" in env) {
       return (env.any as string[]).map(genEnvCondition).join(" or ");
     } else {
       return Object.entries(env)
         .map(
           ([key, value]) =>
-            `bun.strings.eqlComptime(bun.getenvZ(${JSON.stringify(key)}) orelse "", ${JSON.stringify(value)})`,
+            `fun.strings.eqlComptime(fun.getenvZ(${JSON.stringify(key)}) orelse "", ${JSON.stringify(value)})`,
         )
         .join(" and ");
     }
@@ -440,14 +442,14 @@ for (const vendor of vendors) {
 codegen.push(`    return null;\n`);
 codegen.push(`}\n`);
 codegen.push(`\n`);
-codegen.push(`const bun = @import("bun");\n`);
+codegen.push(`const fun = @import("fun");\n`);
 const result = codegen.join("");
 
 if (import.meta.main) {
   const args = process.argv.slice(2);
   const out = args[0];
   if (out) {
-    await Bun.write(out, result);
+    await Fun.write(out, result);
   } else {
     console.log(result);
   }

@@ -8,7 +8,7 @@ fn PathBufferPoolT(comptime T: type) type {
 
         pub fn get() *T {
             // use a thread-local allocator so mimalloc deletes it on thread deinit.
-            return &Pool.get(bun.threadLocalAllocator()).data;
+            return &Pool.get(fun.threadLocalAllocator()).data;
         }
 
         pub fn put(buffer: *const T) void {
@@ -27,8 +27,8 @@ pub const path_buffer_pool = PathBufferPoolT(PathBuffer);
 pub const w_path_buffer_pool = PathBufferPoolT(WPathBuffer);
 pub const os_path_buffer_pool = if (Environment.isWindows) w_path_buffer_pool else path_buffer_pool;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const ObjectPool = bun.ObjectPool;
-const PathBuffer = bun.PathBuffer;
-const WPathBuffer = bun.WPathBuffer;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const ObjectPool = fun.ObjectPool;
+const PathBuffer = fun.PathBuffer;
+const WPathBuffer = fun.WPathBuffer;

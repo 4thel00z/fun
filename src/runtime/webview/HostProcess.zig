@@ -16,33 +16,33 @@
 
 const HostProcess = @This();
 
-process: *bun.spawn.Process,
+process: *fun.spawn.Process,
 var instance: ?*HostProcess = null;
 
 /// Called from WebView.closeAll() and dispatchOnExit. Socket EOF handles
-/// normal parent-death (including SIGKILL of Bun — kernel closes fds, child
+/// normal parent-death (including SIGKILL of Fun — kernel closes fds, child
 /// reads 0, CFRunLoopStop). This catches the clean-exit path where the child
 /// hasn't yet noticed EOF before we return from main(). WKWebView's own
 /// WebContent/GPU/Network helpers are XPC-connected to the child — when the
 /// child dies they get connection-invalidated and exit.
-pub export fn Bun__WebViewHost__kill() void {
+pub export fn Fun__WebViewHost__kill() void {
     if (instance) |i| {
         _ = i.process.kill(9);
     }
 }
 
-/// Lazy: first `new Bun.WebView()` calls this via C++. Returns the parent
+/// Lazy: first `new Fun.WebView()` calls this via C++. Returns the parent
 /// socket fd (C++ adopts into usockets and owns it from then on), or -1.
 /// C++'s HostClient::ensureSpawned checks its own sock before calling here,
 /// so instance-already-exists → -1 means "you already have the fd, this is
 /// a bug" not "spawn failed". We deliberately don't store the fd — usockets
 /// owns it; re-returning a fd usockets may have already closed would be a
 /// use-after-close. Zig only owns process lifetime (watch + kill).
-pub export fn Bun__WebViewHost__ensure(global: *jsc.JSGlobalObject, stdoutInherit: bool, stderrInherit: bool) i32 {
-    if (comptime !bun.Environment.isMac) return -1;
+pub export fn Fun__WebViewHost__ensure(global: *jsc.JSGlobalObject, stdoutInherit: bool, stderrInherit: bool) i32 {
+    if (comptime !fun.Environment.isMac) return -1;
     if (instance != null) return -1; // C++ already holds the fd
 
-    const fd = spawn(global.bunVM(), stdoutInherit, stderrInherit) catch |err| {
+    const fd = spawn(global.funVM(), stdoutInherit, stderrInherit) catch |err| {
         log("spawn failed: {s}", .{@errorName(err)});
         return -1;
     };
@@ -52,25 +52,25 @@ pub export fn Bun__WebViewHost__ensure(global: *jsc.JSGlobalObject, stdoutInheri
 /// Child died (EVFILT_PROC fired). Socket onClose may have fired already
 /// (clean FIN) or may not have (SIGKILL, SIGSEGV). Tell C++ to reject any
 /// pending promises and mark the host dead.
-pub fn onProcessExit(this: *HostProcess, _: *bun.spawn.Process, status: bun.spawn.Status, _: *const bun.spawn.Rusage) void {
+pub fn onProcessExit(this: *HostProcess, _: *fun.spawn.Process, status: fun.spawn.Status, _: *const fun.spawn.Rusage) void {
     log("child exited: {f}", .{status});
     const signo: i32 = if (status.signalCode()) |sig| @intFromEnum(sig) else 0;
-    Bun__WebViewHost__childDied(signo);
+    Fun__WebViewHost__childDied(signo);
     this.process.deref();
-    bun.destroy(this);
+    fun.destroy(this);
     instance = null;
 }
 
-fn spawn(vm: *jsc.VirtualMachine, stdoutInherit: bool, stderrInherit: bool) !bun.FD {
-    if (comptime !bun.Environment.isMac) return error.Unsupported;
+fn spawn(vm: *jsc.VirtualMachine, stdoutInherit: bool, stderrInherit: bool) !fun.FD {
+    if (comptime !fun.Environment.isMac) return error.Unsupported;
 
-    var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+    var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
 
     // Both ends nonblocking — parent uses usockets; child sets O_NONBLOCK
     // again after dup2 (socketpair flags are per-fd, not per-pair).
-    const fds = try bun.sys.socketpair(
+    const fds = try fun.sys.socketpair(
         std.posix.AF.UNIX,
         std.posix.SOCK.STREAM,
         0,
@@ -79,21 +79,21 @@ fn spawn(vm: *jsc.VirtualMachine, stdoutInherit: bool, stderrInherit: bool) !bun
     errdefer fds[0].close();
     // fds[1] is closed by spawnProcess after dup2 into the child.
 
-    const exe = try bun.selfExePath();
+    const exe = try fun.selfExePath();
 
     // Child sees fd 3 (first extra_fd → 3+0). The env var is the only
-    // signal; no argv changes so `ps` shows a normal `bun` invocation.
-    // Same pattern as NODE_CHANNEL_FD in js_bun_spawn_bindings.zig.
+    // signal; no argv changes so `ps` shows a normal `fun` invocation.
+    // Same pattern as NODE_CHANNEL_FD in js_fun_spawn_bindings.zig.
     var env: std.ArrayListUnmanaged(?[*:0]const u8) = .{};
     const base = try vm.transpiler.env.map.createNullDelimitedEnvMap(alloc);
     try env.ensureTotalCapacity(alloc, base.len + 2);
     env.appendSliceAssumeCapacity(@ptrCast(base));
-    env.appendAssumeCapacity("BUN_INTERNAL_WEBVIEW_HOST=3");
+    env.appendAssumeCapacity("FUN_INTERNAL_WEBVIEW_HOST=3");
     env.appendAssumeCapacity(null);
 
     var argv = [_:null]?[*:0]const u8{exe.ptr};
 
-    var opts: bun.spawn.SpawnOptions = .{
+    var opts: fun.spawn.SpawnOptions = .{
         .stdin = .ignore,
         // Default ignore — the child runs no JS or user code, so output is
         // only panics/NSLog from WebKit. Opt-in via backend.stderr when
@@ -104,13 +104,13 @@ fn spawn(vm: *jsc.VirtualMachine, stdoutInherit: bool, stderrInherit: bool) !bun
         .argv0 = exe.ptr,
     };
 
-    var spawned = try (try bun.spawn.spawnProcess(
+    var spawned = try (try fun.spawn.spawnProcess(
         &opts,
         @ptrCast(&argv),
         @ptrCast(env.items.ptr),
     )).unwrap();
 
-    const self = bun.new(HostProcess, .{
+    const self = fun.new(HostProcess, .{
         .process = spawned.toProcess(vm.eventLoop(), false),
     });
     self.process.setExitHandler(self);
@@ -120,13 +120,13 @@ fn spawn(vm: *jsc.VirtualMachine, stdoutInherit: bool, stderrInherit: bool) !bun
             // child gets socket EOF and exits, EVFILT_PROC fires into a
             // dead process (kernel discards). If we ref'd, parent would
             // stay alive forever waiting on a child that is waiting on us.
-            // dispatchOnExit also SIGKILLs via Bun__WebViewHost__kill.
+            // dispatchOnExit also SIGKILLs via Fun__WebViewHost__kill.
             self.process.disableKeepingEventLoopAlive();
         },
         .err => |e| {
             log("watch failed: {f}", .{e});
             self.process.deref();
-            bun.destroy(self);
+            fun.destroy(self);
             // errdefer at the top closes fds[0]; don't double-close here.
             return error.WatchFailed;
         },
@@ -140,11 +140,11 @@ fn spawn(vm: *jsc.VirtualMachine, stdoutInherit: bool, stderrInherit: bool) !bun
 // Implemented in WebKitBackend.cpp. Rejects all pending promises, marks the
 // host socket dead. `signo` is the signal that killed the child (0 if it
 // exited cleanly).
-extern fn Bun__WebViewHost__childDied(signo: i32) void;
+extern fn Fun__WebViewHost__childDied(signo: i32) void;
 
-const log = bun.Output.scoped(.WebViewHost, .hidden);
+const log = fun.Output.scoped(.WebViewHost, .hidden);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

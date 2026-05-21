@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { generateKeyPairSync } from "crypto";
 import jwt from "jsonwebtoken";
 import jws from "jws";

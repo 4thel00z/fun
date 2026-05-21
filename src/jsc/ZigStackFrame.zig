@@ -41,7 +41,7 @@ pub const ZigStackFrame = extern struct {
     }
 
     pub const SourceURLFormatter = struct {
-        source_url: bun.String,
+        source_url: fun.String,
         position: ZigStackFramePosition,
         enable_color: bool,
         origin: ?*const ZigURL,
@@ -54,7 +54,7 @@ pub const ZigStackFrame = extern struct {
                 try writer.writeAll(Output.prettyFmt("<r><cyan>", true));
             }
 
-            var source_slice_ = this.source_url.toUTF8(bun.default_allocator);
+            var source_slice_ = this.source_url.toUTF8(fun.default_allocator);
             var source_slice = source_slice_.slice();
             defer source_slice_.deinit();
 
@@ -74,7 +74,7 @@ pub const ZigStackFrame = extern struct {
                 try writer.writeAll(source_slice);
             } else {
                 if (this.enable_color) {
-                    const not_root = if (comptime bun.Environment.isWindows) this.root_path.len > "C:\\".len else this.root_path.len > "/".len;
+                    const not_root = if (comptime fun.Environment.isWindows) this.root_path.len > "C:\\".len else this.root_path.len > "/".len;
                     if (not_root and strings.startsWith(source_slice, this.root_path)) {
                         const root_path = strings.withoutTrailingSlash(this.root_path);
                         const relative_path = strings.withoutLeadingPathSeparator(source_slice[this.root_path.len..]);
@@ -241,12 +241,12 @@ pub const ZigStackFrame = extern struct {
 const std = @import("std");
 const ZigURL = @import("../url/url.zig").URL;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const String = bun.String;
-const strings = bun.strings;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Output = fun.Output;
+const String = fun.String;
+const strings = fun.strings;
+const api = fun.schema.api;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ZigStackFrameCode = jsc.ZigStackFrameCode;
 const ZigStackFramePosition = jsc.ZigStackFramePosition;

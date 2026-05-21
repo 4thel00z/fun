@@ -30,20 +30,20 @@ pub const DecodedJSValue = extern struct {
 
     /// Equivalent to `JSC::JSValue::asCell`.
     pub fn asCell(self: Self) ?*jsc.JSCell {
-        bun.assertf(self.isCell(), "not a cell: 0x{x}", .{self.asU64()});
+        fun.assertf(self.isCell(), "not a cell: 0x{x}", .{self.asU64()});
         return self.u.ptr;
     }
 };
 
 comptime {
-    bun.assertf(@sizeOf(usize) == 8, "EncodedValueDescriptor assumes a 64-bit system", .{});
-    bun.assertf(
+    fun.assertf(@sizeOf(usize) == 8, "EncodedValueDescriptor assumes a 64-bit system", .{});
+    fun.assertf(
         @import("builtin").target.cpu.arch.endian() == .little,
         "EncodedValueDescriptor.asBits assumes a little-endian system",
         .{},
     );
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const ffi = @import("./FFI.zig");
-const jsc = bun.bun_js.jsc;
+const jsc = fun.fun_js.jsc;

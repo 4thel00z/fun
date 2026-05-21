@@ -21,13 +21,13 @@ const PackageInfo = struct {
 };
 
 const AuditResult = struct {
-    vulnerable_packages: bun.StringHashMap(PackageInfo),
+    vulnerable_packages: fun.StringHashMap(PackageInfo),
     all_vulnerabilities: std.array_list.Managed(VulnerabilityInfo),
     allocator: std.mem.Allocator,
 
     pub fn init(allocator: std.mem.Allocator) AuditResult {
         return AuditResult{
-            .vulnerable_packages = bun.StringHashMap(PackageInfo).init(allocator),
+            .vulnerable_packages = fun.StringHashMap(PackageInfo).init(allocator),
             .all_vulnerabilities = std.array_list.Managed(VulnerabilityInfo).init(allocator),
             .allocator = allocator,
         };
@@ -52,13 +52,13 @@ pub const AuditCommand = struct {
         const cli = try PackageManager.CommandLineArguments.parse(ctx.allocator, .audit);
         const manager, _ = PackageManager.init(ctx, cli, .audit) catch |err| {
             if (err == error.MissingPackageJSON) {
-                var cwd_buf: bun.PathBuffer = undefined;
-                if (bun.getcwd(&cwd_buf)) |cwd| {
+                var cwd_buf: fun.PathBuffer = undefined;
+                if (fun.getcwd(&cwd_buf)) |cwd| {
                     Output.errGeneric("No package.json was found for directory \"{s}\"", .{cwd});
                 } else |_| {
                     Output.errGeneric("No package.json was found", .{});
                 }
-                Output.note("Run \"bun init\" to initialize a project", .{});
+                Output.note("Run \"fun init\" to initialize a project", .{});
                 Global.exit(1);
             }
 
@@ -72,8 +72,8 @@ pub const AuditCommand = struct {
     /// Returns the exit code of the command. 0 if no vulnerabilities were found, 1 if vulnerabilities were found.
     /// The exception is when you pass --json, it will simply return 0 as that was considered a successful "request
     /// for the audit information"
-    pub fn audit(ctx: Command.Context, pm: *PackageManager, json_output: bool, audit_level: ?AuditLevel, audit_prod_only: bool, ignore_list: []const []const u8) bun.OOM!u32 {
-        Output.prettyError(comptime Output.prettyFmt("<r><b>bun audit <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", true), .{});
+    pub fn audit(ctx: Command.Context, pm: *PackageManager, json_output: bool, audit_level: ?AuditLevel, audit_prod_only: bool, ignore_list: []const []const u8) fun.OOM!u32 {
+        Output.prettyError(comptime Output.prettyFmt("<r><b>fun audit <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", true), .{});
         Output.flush();
 
         const load_lockfile = pm.lockfile.loadFromCwd(pm, ctx.allocator, ctx.log, true);
@@ -103,7 +103,7 @@ pub const AuditCommand = struct {
                 var log = logger.Log.init(ctx.allocator);
                 defer log.deinit();
 
-                const expr = bun.json.parse(source, &log, ctx.allocator, true) catch {
+                const expr = fun.json.parse(source, &log, ctx.allocator, true) catch {
                     Output.prettyErrorln("<red>error<r>: audit request failed to parse json. Is the registry down?", .{});
                     return 1; // If we can't parse then safe to assume a similar failure
                 };
@@ -152,8 +152,8 @@ fn printSkippedPackages(skipped_packages: std.array_list.Managed([]const u8)) vo
     }
 }
 
-fn buildDependencyTree(allocator: std.mem.Allocator, pm: *PackageManager) bun.OOM!bun.StringHashMap(std.array_list.Managed([]const u8)) {
-    var dependency_tree = bun.StringHashMap(std.array_list.Managed([]const u8)).init(allocator);
+fn buildDependencyTree(allocator: std.mem.Allocator, pm: *PackageManager) fun.OOM!fun.StringHashMap(std.array_list.Managed([]const u8)) {
+    var dependency_tree = fun.StringHashMap(std.array_list.Managed([]const u8)).init(allocator);
 
     const packages = pm.lockfile.packages.slice();
     const pkg_names = packages.items(.name);
@@ -188,7 +188,7 @@ fn buildDependencyTree(allocator: std.mem.Allocator, pm: *PackageManager) bun.OO
     return dependency_tree;
 }
 
-fn buildProductionPackageSet(allocator: std.mem.Allocator, pm: *PackageManager, prod_set: *bun.StringHashMap(void)) bun.OOM!void {
+fn buildProductionPackageSet(allocator: std.mem.Allocator, pm: *PackageManager, prod_set: *fun.StringHashMap(void)) fun.OOM!void {
     const packages = pm.lockfile.packages.slice();
     const pkg_names = packages.items(.name);
     const pkg_dependencies = packages.items(.dependencies);
@@ -198,7 +198,7 @@ fn buildProductionPackageSet(allocator: std.mem.Allocator, pm: *PackageManager, 
     const resolutions = pm.lockfile.buffers.resolutions.items;
     const root_id = pm.root_package_id.get(pm.lockfile, pm.workspace_name_hash);
 
-    var queue = bun.LinearFifo(u32, .Dynamic).init(allocator);
+    var queue = fun.LinearFifo(u32, .Dynamic).init(allocator);
     defer queue.deinit();
 
     const root_deps = pkg_dependencies[root_id];
@@ -232,7 +232,7 @@ fn buildProductionPackageSet(allocator: std.mem.Allocator, pm: *PackageManager, 
     }
 }
 
-fn collectPackagesForAudit(allocator: std.mem.Allocator, pm: *PackageManager, prod_only: bool) bun.OOM!struct { audit_body: []u8, skipped_packages: std.array_list.Managed([]const u8) } {
+fn collectPackagesForAudit(allocator: std.mem.Allocator, pm: *PackageManager, prod_only: bool) fun.OOM!struct { audit_body: []u8, skipped_packages: std.array_list.Managed([]const u8) } {
     const packages = pm.lockfile.packages.slice();
     const pkg_names = packages.items(.name);
     const pkg_resolutions = packages.items(.resolution);
@@ -256,11 +256,11 @@ fn collectPackagesForAudit(allocator: std.mem.Allocator, pm: *PackageManager, pr
 
     var skipped_packages = std.array_list.Managed([]const u8).init(allocator);
 
-    var prod_packages: ?bun.StringHashMap(void) = null;
+    var prod_packages: ?fun.StringHashMap(void) = null;
     defer if (prod_packages) |*map| map.deinit();
 
     if (prod_only) {
-        prod_packages = bun.StringHashMap(void).init(allocator);
+        prod_packages = fun.StringHashMap(void).init(allocator);
         try buildProductionPackageSet(allocator, pm, &prod_packages.?);
     }
 
@@ -341,7 +341,7 @@ fn collectPackagesForAudit(allocator: std.mem.Allocator, pm: *PackageManager, pr
     };
 }
 
-fn sendAuditRequest(allocator: std.mem.Allocator, pm: *PackageManager, body: []const u8) bun.OOM![]u8 {
+fn sendAuditRequest(allocator: std.mem.Allocator, pm: *PackageManager, body: []const u8) fun.OOM![]u8 {
     libdeflate.load();
     var compressor = libdeflate.Compressor.alloc(6) orelse return error.OutOfMemory;
     defer compressor.deinit();
@@ -406,7 +406,7 @@ fn sendAuditRequest(allocator: std.mem.Allocator, pm: *PackageManager, body: []c
     return try allocator.dupe(u8, response_buf.slice());
 }
 
-fn parseVulnerability(allocator: std.mem.Allocator, package_name: []const u8, vuln: bun.ast.Expr) bun.OOM!VulnerabilityInfo {
+fn parseVulnerability(allocator: std.mem.Allocator, package_name: []const u8, vuln: fun.ast.Expr) fun.OOM!VulnerabilityInfo {
     var vulnerability = VulnerabilityInfo{
         .severity = "moderate",
         .title = "Vulnerability found",
@@ -453,9 +453,9 @@ fn parseVulnerability(allocator: std.mem.Allocator, package_name: []const u8, vu
 fn findDependencyPaths(
     allocator: std.mem.Allocator,
     target_package: []const u8,
-    dependency_tree: *const bun.StringHashMap(std.array_list.Managed([]const u8)),
+    dependency_tree: *const fun.StringHashMap(std.array_list.Managed([]const u8)),
     pm: *PackageManager,
-) bun.OOM!std.array_list.Managed(PackageInfo.DependencyPath) {
+) fun.OOM!std.array_list.Managed(PackageInfo.DependencyPath) {
     var paths = std.array_list.Managed(PackageInfo.DependencyPath).init(allocator);
 
     const packages = pm.lockfile.packages.slice();
@@ -504,11 +504,11 @@ fn findDependencyPaths(
         }
     }
 
-    var queue: bun.LinearFifo([]const u8, .Dynamic) = bun.LinearFifo([]const u8, .Dynamic).init(allocator);
+    var queue: fun.LinearFifo([]const u8, .Dynamic) = fun.LinearFifo([]const u8, .Dynamic).init(allocator);
     defer queue.deinit();
-    var visited = bun.StringHashMap(void).init(allocator);
+    var visited = fun.StringHashMap(void).init(allocator);
     defer visited.deinit();
-    var parent_map = bun.StringHashMap([]const u8).init(allocator);
+    var parent_map = fun.StringHashMap([]const u8).init(allocator);
     defer parent_map.deinit();
 
     if (dependency_tree.get(target_package)) |dependents| {
@@ -525,7 +525,7 @@ fn findDependencyPaths(
         var is_root_dep = false;
         for (dep_slice) |*dependency| {
             const dep_name = dependency.name.slice(buf);
-            if (bun.strings.eql(dep_name, current.*)) {
+            if (fun.strings.eql(dep_name, current.*)) {
                 is_root_dep = true;
                 break;
             }
@@ -538,7 +538,7 @@ fn findDependencyPaths(
             const workspace_dep_slice = workspace_deps.get(dependencies);
             for (workspace_dep_slice) |*dependency| {
                 const dep_name = dependency.name.slice(buf);
-                if (bun.strings.eql(dep_name, current.*)) {
+                if (fun.strings.eql(dep_name, current.*)) {
                     workspace_name_for_dep = pkg_name.slice(buf);
                     break;
                 }
@@ -553,7 +553,7 @@ fn findDependencyPaths(
             };
 
             var trace = current.*;
-            var seen_in_trace = bun.StringHashMap(void).init(allocator);
+            var seen_in_trace = fun.StringHashMap(void).init(allocator);
             defer seen_in_trace.deinit();
 
             while (true) {
@@ -600,15 +600,15 @@ fn printEnhancedAuditReport(
     allocator: std.mem.Allocator,
     response_text: []const u8,
     pm: *PackageManager,
-    dependency_tree: *const bun.StringHashMap(std.array_list.Managed([]const u8)),
+    dependency_tree: *const fun.StringHashMap(std.array_list.Managed([]const u8)),
     audit_level: ?AuditLevel,
     ignore_list: []const []const u8,
-) bun.OOM!u32 {
+) fun.OOM!u32 {
     const source = &logger.Source.initPathString("audit-response.json", response_text);
     var log = logger.Log.init(allocator);
     defer log.deinit();
 
-    const expr = bun.json.parse(source, &log, allocator, true) catch {
+    const expr = fun.json.parse(source, &log, allocator, true) catch {
         Output.writer().writeAll(response_text) catch {};
         Output.writer().writeByte('\n') catch {};
         return 1;
@@ -765,9 +765,9 @@ fn printEnhancedAuditReport(
                 }
 
                 // if (is_direct_dependency) {
-                //     Output.prettyln("  To fix: <green>`bun update {s}`<r>", .{package_info.name});
+                //     Output.prettyln("  To fix: <green>`fun update {s}`<r>", .{package_info.name});
                 // } else {
-                //     Output.prettyln("  To fix: <green>`bun update --latest`<r><d> (may be a breaking change)<r>", .{});
+                //     Output.prettyln("  To fix: <green>`fun update --latest`<r><d> (may be a breaking change)<r>", .{});
                 // }
 
                 Output.prettyln("", .{});
@@ -801,10 +801,10 @@ fn printEnhancedAuditReport(
 
             Output.prettyln("", .{});
             Output.prettyln("To update all dependencies to the latest compatible versions:", .{});
-            Output.prettyln("  <green>bun update<r>", .{});
+            Output.prettyln("  <green>fun update<r>", .{});
             Output.prettyln("", .{});
             Output.prettyln("To update all dependencies to the latest versions (including breaking changes):", .{});
-            Output.prettyln("  <green>bun update --latest<r>", .{});
+            Output.prettyln("  <green>fun update --latest<r>", .{});
             Output.prettyln("", .{});
         }
 
@@ -826,12 +826,12 @@ const Command = @import("./cli.zig").Command;
 const PackageManager = @import("../install/install.zig").PackageManager;
 const URL = @import("../url/url.zig").URL;
 
-const bun = @import("bun");
-const Global = bun.Global;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Global = fun.Global;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const http = bun.http;
+const http = fun.http;
 const HeaderBuilder = http.HeaderBuilder;

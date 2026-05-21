@@ -14,7 +14,7 @@ The `format.yml` workflow runs code formatters (Prettier, clang-format, and Zig 
 
 - **Purpose**: Formats C++ source and header files
 - **What it does**:
-  - Globs C++ files via `bun scripts/glob-sources.ts cxx`
+  - Globs C++ files via `fun scripts/glob-sources.ts cxx`
   - Finds all header files in `src/` and `packages/`
   - Excludes third-party directories (libuv, napi, deps, vendor, sqlite, etc.)
   - Requires specific clang-format version (no fallbacks)

@@ -44,7 +44,7 @@ class CallFrame;
 
 namespace WebCore {
 
-using WorkQueue = Bun::PhonyWorkQueue;
+using WorkQueue = Fun::PhonyWorkQueue;
 
 struct JsonWebKey;
 

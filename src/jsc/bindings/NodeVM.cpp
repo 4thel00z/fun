@@ -7,7 +7,7 @@
 #include <JavaScriptCore/SourceOrigin.h>
 #include <JavaScriptCore/SourceProvider.h>
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "NodeVM.h"
 #include "NodeVMScript.h"
 #include "NodeVMModule.h"
@@ -63,7 +63,7 @@
 
 #include "JavaScriptCore/GetterSetter.h"
 
-namespace Bun {
+namespace Fun {
 using namespace WebCore;
 
 static JSPromise* moduleLoaderImportModuleInner(NodeVMGlobalObject* globalObject, JSC::JSModuleLoader* moduleLoader, JSC::JSString* moduleName, RefPtr<JSC::ScriptFetchParameters> parameters, const JSC::SourceOrigin& sourceOrigin);
@@ -1850,4 +1850,4 @@ bool CompileFunctionOptions::fromJS(JSC::JSGlobalObject* globalObject, JSC::VM& 
     return any;
 }
 
-} // namespace Bun
+} // namespace Fun

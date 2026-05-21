@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/25609
+// https://github.com/underdoc-org/fun/issues/25609
 test("empty object in spread with DCE does not produce invalid syntax", async () => {
   using dir = tempDir("25609", {
     "chunk.js": `module.exports=()=>{var a,b=({...a,x:{}},0)};`,
@@ -9,10 +9,10 @@ test("empty object in spread with DCE does not produce invalid syntax", async ()
   });
 
   // This should not throw a syntax error when requiring the module
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

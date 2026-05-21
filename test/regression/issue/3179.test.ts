@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/3179
+// https://github.com/underdoc-org/fun/issues/3179
 // Legal comments (/*!...*/) should not prevent the module.exports = require() redirect optimization
 
 test("legal comments do not break module.exports = require() redirect", async () => {
@@ -38,18 +38,18 @@ console.log(express());
   });
 
   // Bundle both variants
-  await using procWith = Bun.spawn({
-    cmd: [bunExe(), "build", "entry-with.js", "--outfile=out-with.js"],
+  await using procWith = Fun.spawn({
+    cmd: [funExe(), "build", "entry-with.js", "--outfile=out-with.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
 
-  await using procWithout = Bun.spawn({
-    cmd: [bunExe(), "build", "entry-without.js", "--outfile=out-without.js"],
+  await using procWithout = Fun.spawn({
+    cmd: [funExe(), "build", "entry-without.js", "--outfile=out-without.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -70,8 +70,8 @@ console.log(express());
   expect(exitCodeWithout).toBe(0);
 
   // Read the generated bundles
-  const outWith = await Bun.file(`${dir}/out-with.js`).text();
-  const outWithout = await Bun.file(`${dir}/out-without.js`).text();
+  const outWith = await Fun.file(`${dir}/out-with.js`).text();
+  const outWithout = await Fun.file(`${dir}/out-without.js`).text();
 
   // Both bundles should have the same number of "// " module comment markers
   // If the redirect optimization is working, neither should create a wrapper function
@@ -101,10 +101,10 @@ console.log(wrapper.foo);
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "entry.js", "--outfile=out.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "entry.js", "--outfile=out.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -113,7 +113,7 @@ console.log(wrapper.foo);
 
   expect(exitCode).toBe(0);
 
-  const out = await Bun.file(`${dir}/out.js`).text();
+  const out = await Fun.file(`${dir}/out.js`).text();
 
   // Should not contain a wrapper function - the redirect optimization should work
   expect(out).not.toContain("require_wrapper");
@@ -140,10 +140,10 @@ console.log(fn());
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "entry.js", "--outfile=out.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "entry.js", "--outfile=out.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -152,7 +152,7 @@ console.log(fn());
 
   expect(exitCode).toBe(0);
 
-  const out = await Bun.file(`${dir}/out.js`).text();
+  const out = await Fun.file(`${dir}/out.js`).text();
 
   // Should not contain a wrapper function
   expect(out).not.toContain("require_wrapper");

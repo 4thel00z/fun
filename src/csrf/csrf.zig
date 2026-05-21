@@ -1,4 +1,4 @@
-/// CSRF Token implementation for Bun
+/// CSRF Token implementation for Fun
 /// It provides protection against Cross-Site Request Forgery attacks
 /// by generating and validating tokens using HMAC signatures
 pub const CSRF = @This();
@@ -7,7 +7,7 @@ pub const CSRF = @This();
 pub const DEFAULT_EXPIRATION_MS: u64 = 24 * 60 * 60 * 1000;
 
 /// Default HMAC algorithm used for token signing
-pub const DEFAULT_ALGORITHM: jsc.API.Bun.Crypto.EVP.Algorithm = .sha256;
+pub const DEFAULT_ALGORITHM: jsc.API.Fun.Crypto.EVP.Algorithm = .sha256;
 
 /// Error types for CSRF operations
 pub const Error = error{
@@ -26,7 +26,7 @@ pub const GenerateOptions = struct {
     /// Format to encode the token in
     encoding: TokenFormat = .base64url,
     /// Algorithm to use for signing
-    algorithm: jsc.API.Bun.Crypto.EVP.Algorithm = DEFAULT_ALGORITHM,
+    algorithm: jsc.API.Fun.Crypto.EVP.Algorithm = DEFAULT_ALGORITHM,
 };
 
 /// Options for validating CSRF tokens
@@ -40,7 +40,7 @@ pub const VerifyOptions = struct {
     /// Encoding to use for the token
     encoding: TokenFormat = .base64url,
     /// Algorithm to use for signing
-    algorithm: jsc.API.Bun.Crypto.EVP.Algorithm = DEFAULT_ALGORITHM,
+    algorithm: jsc.API.Fun.Crypto.EVP.Algorithm = DEFAULT_ALGORITHM,
 };
 
 /// Token encoding format
@@ -71,7 +71,7 @@ pub fn generate(
 ) ![]u8 {
     // Generate nonce from entropy
     var nonce: [16]u8 = .{0} ** 16;
-    bun.csprng(&nonce);
+    fun.csprng(&nonce);
 
     // Current timestamp in milliseconds
     const timestamp = std.time.milliTimestamp();
@@ -125,12 +125,12 @@ pub fn verify(options: VerifyOptions) bool {
         // shares same decoder but encoder is different see encoding.zig
         .base64url, .base64 => {
             // do the same as Buffer.from(token, "base64url" | "base64")
-            const slice = bun.strings.trim(token, "\r\n\t " ++ [_]u8{std.ascii.control_code.vt});
+            const slice = fun.strings.trim(token, "\r\n\t " ++ [_]u8{std.ascii.control_code.vt});
             if (slice.len == 0) return false;
 
-            const outlen = bun.base64.decodeLen(slice);
+            const outlen = fun.base64.decodeLen(slice);
             if (outlen > buf.len) return false;
-            const wrote = bun.base64.decode(buf[0..outlen], slice).count;
+            const wrote = fun.base64.decode(buf[0..outlen], slice).count;
             break :brk buf[0..wrote];
         },
         .hex => {
@@ -138,7 +138,7 @@ pub fn verify(options: VerifyOptions) bool {
             // decoded len
             const decoded_len = token.len / 2;
             if (decoded_len > buf.len) return false;
-            const result = bun.strings.decodeHexToBytesTruncate(buf[0..decoded_len], u8, token);
+            const result = fun.strings.decodeHexToBytesTruncate(buf[0..decoded_len], u8, token);
             if (result == decoded_len) {
                 break :brk buf[0..decoded_len];
             }
@@ -215,6 +215,6 @@ const hmac = @import("../sha_hmac/hmac.zig");
 const std = @import("std");
 const string = @import("../string/string.zig");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const boring = bun.BoringSSL.c;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const boring = fun.BoringSSL.c;

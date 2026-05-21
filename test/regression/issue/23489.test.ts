@@ -1,6 +1,6 @@
-import { YAML } from "bun";
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { YAML } from "fun";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("YAML double-quoted strings with ... should not trigger document end error - issue #23489", () => {
   // Test the original failing case with Arabic text and emoji
@@ -42,9 +42,9 @@ test("YAML import with double-quoted strings containing ... - issue #23489", asy
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

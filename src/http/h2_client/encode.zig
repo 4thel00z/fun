@@ -35,7 +35,7 @@ const RequestHeader = enum {
     /// Forwarded with HPACK never-index so they don't enter the dynamic table.
     sensitive,
 
-    const map = bun.ComptimeStringMap(RequestHeader, .{
+    const map = fun.ComptimeStringMap(RequestHeader, .{
         .{ "connection", .drop },
         .{ "keep-alive", .drop },
         .{ "proxy-connection", .drop },
@@ -58,7 +58,7 @@ pub fn writeRequest(session: *ClientSession, client: *HTTPClient, stream: *Strea
     if (session.pending_hpack_enc_capacity) |cap| {
         session.pending_hpack_enc_capacity = null;
         session.hpack.setEncoderMaxCapacity(cap);
-        try encoded.ensureUnusedCapacity(bun.default_allocator, 8);
+        try encoded.ensureUnusedCapacity(fun.default_allocator, 8);
         encodeHpackTableSizeUpdate(encoded, cap);
     }
 
@@ -83,11 +83,11 @@ pub fn writeRequest(session: *ClientSession, client: *HTTPClient, stream: *Strea
         // names+values >64KiB anyway, so the heap fallback only ever holds a
         // few hundred bytes.
         var heap: ?[]u8 = null;
-        defer if (heap) |buf| bun.default_allocator.free(buf);
+        defer if (heap) |buf| fun.default_allocator.free(buf);
         const name = if (h.name.len <= lower_buf.len)
             strings.copyLowercaseIfNeeded(h.name, &lower_buf)
         else blk: {
-            heap = bun.handleOom(bun.default_allocator.alloc(u8, h.name.len));
+            heap = fun.handleOom(fun.default_allocator.alloc(u8, h.name.len));
             break :blk strings.copyLowercaseIfNeeded(h.name, heap.?);
         };
         var never_index = false;
@@ -108,7 +108,7 @@ pub fn writeRequest(session: *ClientSession, client: *HTTPClient, stream: *Strea
     if (has_expect_continue and (has_inline_body or is_streaming)) stream.awaiting_continue = true;
 
     writeHeaderBlock(session, stream.id, encoded.items, !has_inline_body and !is_streaming);
-    if (encoded.capacity > 64 * 1024) encoded.clearAndFree(bun.default_allocator);
+    if (encoded.capacity > 64 * 1024) encoded.clearAndFree(fun.default_allocator);
     if (has_inline_body) {
         stream.pending_body = body;
         drainSendBody(session, stream, std.math.maxInt(usize));
@@ -218,7 +218,7 @@ pub fn drainSendBodies(session: *ClientSession) void {
 
 pub fn encodeHeader(session: *ClientSession, encoded: *std.ArrayListUnmanaged(u8), name: []const u8, value: []const u8, never_index: bool) !void {
     const required = encoded.items.len + name.len + value.len + 32;
-    try encoded.ensureTotalCapacity(bun.default_allocator, required);
+    try encoded.ensureTotalCapacity(fun.default_allocator, required);
     const written = try session.hpack.encode(name, value, never_index, encoded.allocatedSlice(), encoded.items.len);
     encoded.items.len += written;
 }
@@ -249,7 +249,7 @@ const local_initial_window_size = H2.local_initial_window_size;
 const local_max_header_list_size = H2.local_max_header_list_size;
 const write_buffer_high_water = H2.write_buffer_high_water;
 
-const bun = @import("bun");
-const HTTPClient = bun.http;
-const picohttp = bun.picohttp;
-const strings = bun.strings;
+const fun = @import("fun");
+const HTTPClient = fun.http;
+const picohttp = fun.picohttp;
+const strings = fun.strings;

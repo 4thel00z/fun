@@ -10,7 +10,7 @@
 #include "openssl/bn.h"
 #include "openssl/err.h"
 #include "ncrypto.h"
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSDiffieHellmanConstructor::s_info = { "DiffieHellman"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSDiffieHellmanConstructor) };
 
@@ -37,11 +37,11 @@ JSC_DEFINE_HOST_FUNCTION(constructDiffieHellman, (JSC::JSGlobalObject * globalOb
     JSValue sizeOrKey = callFrame->argument(0);
 
     if (!sizeOrKey.isNumber() && !sizeOrKey.isString() && !isArrayBufferOrView(sizeOrKey)) {
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "sizeOrKey"_s, "number, string, ArrayBuffer, Buffer, TypedArray, or DataView"_s, sizeOrKey);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "sizeOrKey"_s, "number, string, ArrayBuffer, Buffer, TypedArray, or DataView"_s, sizeOrKey);
     }
 
     if (sizeOrKey.isNumber()) {
-        Bun::V::validateInt32(scope, globalObject, sizeOrKey, "sizeOrKey"_s, jsUndefined(), jsUndefined());
+        Fun::V::validateInt32(scope, globalObject, sizeOrKey, "sizeOrKey"_s, jsUndefined(), jsUndefined());
         RETURN_IF_EXCEPTION(scope, {});
     }
 
@@ -74,10 +74,10 @@ JSC_DEFINE_HOST_FUNCTION(constructDiffieHellman, (JSC::JSGlobalObject * globalOb
     if (generatorValue.pureToBoolean() == TriState::False) {
         generatorValue = jsNumber(2);
     } else if (generatorValue.isNumber()) {
-        Bun::V::validateInt32(scope, globalObject, generatorValue, "generator"_s, jsUndefined(), jsUndefined());
+        Fun::V::validateInt32(scope, globalObject, generatorValue, "generator"_s, jsUndefined(), jsUndefined());
         RETURN_IF_EXCEPTION(scope, {});
     } else if (!generatorValue.isString() && !isArrayBufferOrView(generatorValue)) {
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "generator"_s, "number, string, ArrayBuffer, Buffer, TypedArray, or DataView"_s, generatorValue);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "generator"_s, "number, string, ArrayBuffer, Buffer, TypedArray, or DataView"_s, generatorValue);
     }
 
     ncrypto::DHPointer dh;
@@ -173,4 +173,4 @@ JSC_DEFINE_HOST_FUNCTION(constructDiffieHellman, (JSC::JSGlobalObject * globalOb
     return JSC::JSValue::encode(JSDiffieHellman::create(vm, structure, globalObject, WTF::move(dh)));
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -1,9 +1,9 @@
-// https://github.com/oven-sh/bun/issues/24817
+// https://github.com/underdoc-org/fun/issues/24817
 // Unicode not working with static route
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("static routes should handle unicode correctly", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     routes: {
       "/dynamic": () => new Response("▲"),
@@ -44,7 +44,7 @@ test("static routes should handle unicode correctly", async () => {
 });
 
 test("static routes with explicit content-type should not override", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     routes: {
       "/custom": new Response("▲", { headers: { "content-type": "text/html" } }),

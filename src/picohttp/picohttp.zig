@@ -100,10 +100,10 @@ pub const Request = struct {
         fn isPrintableBody(content_type: []const u8) bool {
             if (content_type.len == 0) return false;
 
-            return bun.strings.hasPrefixComptime(content_type, "text/") or
-                bun.strings.hasPrefixComptime(content_type, "application/json") or
-                bun.strings.containsComptime(content_type, "json") or
-                bun.strings.hasPrefixComptime(content_type, "application/x-www-form-urlencoded");
+            return fun.strings.hasPrefixComptime(content_type, "text/") or
+                fun.strings.hasPrefixComptime(content_type, "application/json") or
+                fun.strings.containsComptime(content_type, "json") or
+                fun.strings.hasPrefixComptime(content_type, "application/x-www-form-urlencoded");
         }
 
         pub fn format(self: @This(), writer: *std.Io.Writer) !void {
@@ -116,7 +116,7 @@ pub const Request = struct {
                 try writer.print("curl --http1.1 \"{s}\"", .{request.path});
             }
 
-            if (!bun.strings.eqlComptime(request.method, "GET")) {
+            if (!fun.strings.eqlComptime(request.method, "GET")) {
                 try writer.print(" -X {s}", .{request.method});
             }
 
@@ -129,21 +129,21 @@ pub const Request = struct {
             for (request.headers) |*header| {
                 _ = try writer.writeAll(" ");
                 if (content_type.len == 0) {
-                    if (bun.strings.eqlCaseInsensitiveASCII("content-type", header.name, true)) {
+                    if (fun.strings.eqlCaseInsensitiveASCII("content-type", header.name, true)) {
                         content_type = header.value;
                     }
                 }
 
                 try header.curl().format(writer);
 
-                if (bun.strings.eqlCaseInsensitiveASCII("accept-encoding", header.name, true)) {
+                if (fun.strings.eqlCaseInsensitiveASCII("accept-encoding", header.name, true)) {
                     _ = try writer.writeAll(" --compressed");
                 }
             }
 
             if (self.body.len > 0 and isPrintableBody(content_type)) {
                 _ = try writer.writeAll(" --data-raw ");
-                try bun.js_printer.writeJSONString(self.body, @TypeOf(writer), writer, .utf8);
+                try fun.js_printer.writeJSONString(self.body, @TypeOf(writer), writer, .utf8);
             }
         }
     };
@@ -378,9 +378,9 @@ const string = []const u8;
 const c = @import("../picohttp_sys/picohttpparser.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const StringBuilder = bun.StringBuilder;
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const StringBuilder = fun.StringBuilder;
+const assert = fun.assert;
+const strings = fun.strings;

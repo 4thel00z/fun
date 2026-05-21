@@ -16,7 +16,7 @@
 
 #include "JSS3File.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 using namespace WebCore;
 
@@ -40,7 +40,7 @@ static JSC_DEFINE_CUSTOM_GETTER(getterS3File_bucket, (JSC::JSGlobalObject * glob
 
     auto* thisObject = dynamicDowncast<JSS3File>(JSValue::decode(thisValue));
     if (!thisObject) {
-        Bun::throwError(globalObject, scope, Bun::ErrorCode::ERR_INVALID_THIS, "Expected a S3File instance"_s);
+        Fun::throwError(globalObject, scope, Fun::ErrorCode::ERR_INVALID_THIS, "Expected a S3File instance"_s);
         return {};
     }
 
@@ -169,7 +169,7 @@ JSC_DEFINE_HOST_FUNCTION(functionS3File_presign, (JSGlobalObject * globalObject,
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
     if (!thisObject) {
-        Bun::throwError(globalObject, scope, Bun::ErrorCode::ERR_INVALID_THIS, "Expected a S3File instance"_s);
+        Fun::throwError(globalObject, scope, Fun::ErrorCode::ERR_INVALID_THIS, "Expected a S3File instance"_s);
         return {};
     }
 
@@ -182,7 +182,7 @@ JSC_DEFINE_HOST_FUNCTION(functionS3File_stat, (JSGlobalObject * globalObject, Ca
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
     if (!thisObject) {
-        Bun::throwError(globalObject, scope, Bun::ErrorCode::ERR_INVALID_THIS, "Expected a S3File instance"_s);
+        Fun::throwError(globalObject, scope, Fun::ErrorCode::ERR_INVALID_THIS, "Expected a S3File instance"_s);
         return {};
     }
     return JSS3File__stat(thisObject->wrapped(), globalObject, callframe);
@@ -192,12 +192,12 @@ const JSC::ClassInfo JSS3FilePrototype::s_info = { "S3File"_s, &Base::s_info, nu
 const JSC::ClassInfo JSS3File::s_info = { "S3File"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSS3File) };
 
 extern "C" {
-SYSV_ABI EncodedJSValue BUN__createJSS3File(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callframe)
+SYSV_ABI EncodedJSValue FUN__createJSS3File(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callframe)
 {
     return JSValue::encode(constructS3File(globalObject, callframe));
 };
 
-SYSV_ABI EncodedJSValue BUN__createJSS3FileUnsafely(JSC::JSGlobalObject* globalObject, void* ptr)
+SYSV_ABI EncodedJSValue FUN__createJSS3FileUnsafely(JSC::JSGlobalObject* globalObject, void* ptr)
 {
     return JSValue::encode(constructS3FileInternal(globalObject, ptr));
 };

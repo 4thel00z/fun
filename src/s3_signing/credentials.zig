@@ -1,5 +1,5 @@
 pub const S3Credentials = struct {
-    const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+    const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
 
@@ -39,35 +39,35 @@ pub const S3Credentials = struct {
     pub const getCredentialsWithOptions = @import("../runtime/webcore/s3/credentials_jsc.zig").getCredentialsWithOptions;
 
     pub fn dupe(this: *const @This()) *S3Credentials {
-        return bun.new(S3Credentials, .{
+        return fun.new(S3Credentials, .{
             .ref_count = .init(),
             .accessKeyId = if (this.accessKeyId.len > 0)
-                bun.handleOom(bun.default_allocator.dupe(u8, this.accessKeyId))
+                fun.handleOom(fun.default_allocator.dupe(u8, this.accessKeyId))
             else
                 "",
 
             .secretAccessKey = if (this.secretAccessKey.len > 0)
-                bun.handleOom(bun.default_allocator.dupe(u8, this.secretAccessKey))
+                fun.handleOom(fun.default_allocator.dupe(u8, this.secretAccessKey))
             else
                 "",
 
             .region = if (this.region.len > 0)
-                bun.handleOom(bun.default_allocator.dupe(u8, this.region))
+                fun.handleOom(fun.default_allocator.dupe(u8, this.region))
             else
                 "",
 
             .endpoint = if (this.endpoint.len > 0)
-                bun.handleOom(bun.default_allocator.dupe(u8, this.endpoint))
+                fun.handleOom(fun.default_allocator.dupe(u8, this.endpoint))
             else
                 "",
 
             .bucket = if (this.bucket.len > 0)
-                bun.handleOom(bun.default_allocator.dupe(u8, this.bucket))
+                fun.handleOom(fun.default_allocator.dupe(u8, this.bucket))
             else
                 "",
 
             .sessionToken = if (this.sessionToken.len > 0)
-                bun.handleOom(bun.default_allocator.dupe(u8, this.sessionToken))
+                fun.handleOom(fun.default_allocator.dupe(u8, this.sessionToken))
             else
                 "",
 
@@ -77,27 +77,27 @@ pub const S3Credentials = struct {
     }
     fn deinit(this: *@This()) void {
         if (this.accessKeyId.len > 0) {
-            bun.default_allocator.free(this.accessKeyId);
+            fun.default_allocator.free(this.accessKeyId);
         }
         if (this.secretAccessKey.len > 0) {
-            bun.default_allocator.free(this.secretAccessKey);
+            fun.default_allocator.free(this.secretAccessKey);
         }
         if (this.region.len > 0) {
-            bun.default_allocator.free(this.region);
+            fun.default_allocator.free(this.region);
         }
         if (this.endpoint.len > 0) {
-            bun.default_allocator.free(this.endpoint);
+            fun.default_allocator.free(this.endpoint);
         }
         if (this.bucket.len > 0) {
-            bun.default_allocator.free(this.bucket);
+            fun.default_allocator.free(this.bucket);
         }
         if (this.sessionToken.len > 0) {
-            bun.default_allocator.free(this.sessionToken);
+            fun.default_allocator.free(this.sessionToken);
         }
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
-    const log = bun.Output.scoped(.AWS, .visible);
+    const log = fun.Output.scoped(.AWS, .visible);
 
     const DateResult = struct {
         // numeric representation of year, month and day (excluding time components)
@@ -138,7 +138,7 @@ pub const S3Credentials = struct {
                 hours,
                 minutes,
                 seconds,
-            }) catch |err| bun.handleOom(err),
+            }) catch |err| fun.handleOom(err),
         };
     }
 
@@ -189,35 +189,35 @@ pub const S3Credentials = struct {
 
         pub fn deinit(this: *const @This()) void {
             if (this.amz_date.len > 0) {
-                bun.freeSensitive(bun.default_allocator, this.amz_date);
+                fun.freeSensitive(fun.default_allocator, this.amz_date);
             }
 
             if (this.session_token.len > 0) {
-                bun.freeSensitive(bun.default_allocator, this.session_token);
+                fun.freeSensitive(fun.default_allocator, this.session_token);
             }
 
             if (this.content_disposition.len > 0) {
-                bun.freeSensitive(bun.default_allocator, this.content_disposition);
+                fun.freeSensitive(fun.default_allocator, this.content_disposition);
             }
 
             if (this.content_encoding.len > 0) {
-                bun.freeSensitive(bun.default_allocator, this.content_encoding);
+                fun.freeSensitive(fun.default_allocator, this.content_encoding);
             }
 
             if (this.host.len > 0) {
-                bun.freeSensitive(bun.default_allocator, this.host);
+                fun.freeSensitive(fun.default_allocator, this.host);
             }
 
             if (this.authorization.len > 0) {
-                bun.freeSensitive(bun.default_allocator, this.authorization);
+                fun.freeSensitive(fun.default_allocator, this.authorization);
             }
 
             if (this.url.len > 0) {
-                bun.freeSensitive(bun.default_allocator, this.url);
+                fun.freeSensitive(fun.default_allocator, this.url);
             }
 
             if (this.content_md5.len > 0) {
-                bun.default_allocator.free(this.content_md5);
+                fun.default_allocator.free(this.content_md5);
             }
         }
     };
@@ -227,7 +227,7 @@ pub const S3Credentials = struct {
     };
     pub const SignOptions = struct {
         path: []const u8,
-        method: bun.http.Method,
+        method: fun.http.Method,
         content_hash: ?[]const u8 = null,
         content_md5: ?[]const u8 = null,
         search_params: ?[]const u8 = null,
@@ -333,9 +333,9 @@ pub const S3Credentials = struct {
         var content_md5 = signOptions.content_md5;
 
         if (content_md5) |content_md5_val| {
-            const len = bun.base64.encodeLen(content_md5_val);
-            const content_md5_as_base64 = bun.handleOom(bun.default_allocator.alloc(u8, len));
-            content_md5 = content_md5_as_base64[0..bun.base64.encode(content_md5_as_base64, content_md5_val)];
+            const len = fun.base64.encodeLen(content_md5_val);
+            const content_md5_as_base64 = fun.handleOom(fun.default_allocator.alloc(u8, len));
+            content_md5 = content_md5_as_base64[0..fun.base64.encode(content_md5_as_base64, content_md5_val)];
         }
 
         const search_params = signOptions.search_params;
@@ -424,12 +424,12 @@ pub const S3Credentials = struct {
             if (this.endpoint.len > 0) {
                 if (this.endpoint.len >= 2048) return error.InvalidEndpoint;
                 var host = this.endpoint;
-                if (bun.strings.indexOf(this.endpoint, "/")) |index| {
+                if (fun.strings.indexOf(this.endpoint, "/")) |index| {
                     host = this.endpoint[0..index];
                     extra_path = this.endpoint[index..];
                 }
                 // only the host part is needed here
-                break :brk_host try bun.default_allocator.dupe(u8, host);
+                break :brk_host try fun.default_allocator.dupe(u8, host);
             } else {
                 if (this.virtual_hosted_style) {
                     // virtual hosted style requires a bucket name if an endpoint is not provided
@@ -437,14 +437,14 @@ pub const S3Credentials = struct {
                         return error.InvalidEndpoint;
                     }
                     // default to https://<BUCKET_NAME>.s3.<REGION>.amazonaws.com/
-                    endpoint = try std.fmt.allocPrint(bun.default_allocator, "{s}.s3.{s}.amazonaws.com", .{ bucket, region });
+                    endpoint = try std.fmt.allocPrint(fun.default_allocator, "{s}.s3.{s}.amazonaws.com", .{ bucket, region });
                     break :brk_host endpoint;
                 }
-                endpoint = try std.fmt.allocPrint(bun.default_allocator, "s3.{s}.amazonaws.com", .{region});
+                endpoint = try std.fmt.allocPrint(fun.default_allocator, "s3.{s}.amazonaws.com", .{region});
                 break :brk_host endpoint;
             }
         };
-        errdefer bun.default_allocator.free(host);
+        errdefer fun.default_allocator.free(host);
         const normalizedPath = brk: {
             if (this.virtual_hosted_style) {
                 break :brk std.fmt.bufPrint(&normalized_path_buffer, "{s}/{s}", .{ extra_path, path }) catch return error.InvalidPath;
@@ -453,9 +453,9 @@ pub const S3Credentials = struct {
             }
         };
 
-        const date_result = getAMZDate(bun.default_allocator);
+        const date_result = getAMZDate(fun.default_allocator);
         const amz_date = date_result.date;
-        errdefer bun.default_allocator.free(amz_date);
+        errdefer fun.default_allocator.free(amz_date);
 
         const amz_day = amz_date[0..8];
         const request_payer = signOptions.request_payer;
@@ -477,8 +477,8 @@ pub const S3Credentials = struct {
 
         const authorization = brk: {
             // we hash the hash so we need 2 buffers
-            var hmac_sig_service: [bun.BoringSSL.c.EVP_MAX_MD_SIZE]u8 = undefined;
-            var hmac_sig_service2: [bun.BoringSSL.c.EVP_MAX_MD_SIZE]u8 = undefined;
+            var hmac_sig_service: [fun.BoringSSL.c.EVP_MAX_MD_SIZE]u8 = undefined;
+            var hmac_sig_service2: [fun.BoringSSL.c.EVP_MAX_MD_SIZE]u8 = undefined;
 
             const sigDateRegionServiceReq = brk_sign: {
                 const key = try std.fmt.bufPrint(&tmp_buffer, "{s}{s}{s}", .{ region, service_name, this.secretAccessKey });
@@ -487,10 +487,10 @@ pub const S3Credentials = struct {
                     break :brk_sign cached;
                 }
                 // not cached yet lets generate a new one
-                const sigDate = bun.hmac.generate(try std.fmt.bufPrint(&tmp_buffer, "AWS4{s}", .{this.secretAccessKey}), amz_day, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
-                const sigDateRegion = bun.hmac.generate(sigDate, region, .sha256, &hmac_sig_service2) orelse return error.FailedToGenerateSignature;
-                const sigDateRegionService = bun.hmac.generate(sigDateRegion, service_name, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
-                const result = bun.hmac.generate(sigDateRegionService, "aws4_request", .sha256, &hmac_sig_service2) orelse return error.FailedToGenerateSignature;
+                const sigDate = fun.hmac.generate(try std.fmt.bufPrint(&tmp_buffer, "AWS4{s}", .{this.secretAccessKey}), amz_day, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
+                const sigDateRegion = fun.hmac.generate(sigDate, region, .sha256, &hmac_sig_service2) orelse return error.FailedToGenerateSignature;
+                const sigDateRegionService = fun.hmac.generate(sigDateRegion, service_name, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
+                const result = fun.hmac.generate(sigDateRegionService, "aws4_request", .sha256, &hmac_sig_service2) orelse return error.FailedToGenerateSignature;
 
                 cache.set(date_result.numeric_day, key, hmac_sig_service2[0..DIGESTED_HMAC_256_LEN].*);
                 break :brk_sign result;
@@ -524,9 +524,9 @@ pub const S3Credentials = struct {
 
                 // Build query parameters in alphabetical order for AWS Signature V4 canonical request
                 const canonical = brk_canonical: {
-                    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+                    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
                     const allocator = stack_fallback.get();
-                    var query_parts: bun.BoundedArray([]const u8, 13) = .{};
+                    var query_parts: fun.BoundedArray([]const u8, 13) = .{};
 
                     // Add parameters in alphabetical order: Content-MD5, X-Amz-Acl, X-Amz-Algorithm, X-Amz-Credential, X-Amz-Date, X-Amz-Expires, X-Amz-Security-Token, X-Amz-SignedHeaders, response-content-disposition, response-content-type, x-amz-request-payer, x-amz-storage-class
 
@@ -579,17 +579,17 @@ pub const S3Credentials = struct {
 
                     break :brk_canonical try std.fmt.bufPrint(&tmp_buffer, "{s}\n{s}\n{s}\nhost:{s}\n\nhost\n{s}", .{ method_name, normalizedPath, query_string.items, host, aws_content_hash });
                 };
-                var sha_digest = std.mem.zeroes(bun.sha.SHA256.Digest);
-                bun.sha.SHA256.hash(canonical, &sha_digest, jsc.VirtualMachine.get().rareData().boringEngine());
+                var sha_digest = std.mem.zeroes(fun.sha.SHA256.Digest);
+                fun.sha.SHA256.hash(canonical, &sha_digest, jsc.VirtualMachine.get().rareData().boringEngine());
 
-                const signValue = try std.fmt.bufPrint(&tmp_buffer, "AWS4-HMAC-SHA256\n{s}\n{s}/{s}/{s}/aws4_request\n{s}", .{ amz_date, amz_day, region, service_name, std.fmt.bytesToHex(sha_digest[0..bun.sha.SHA256.digest], .lower) });
+                const signValue = try std.fmt.bufPrint(&tmp_buffer, "AWS4-HMAC-SHA256\n{s}\n{s}/{s}/{s}/aws4_request\n{s}", .{ amz_date, amz_day, region, service_name, std.fmt.bytesToHex(sha_digest[0..fun.sha.SHA256.digest], .lower) });
 
-                const signature = bun.hmac.generate(sigDateRegionServiceReq, signValue, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
+                const signature = fun.hmac.generate(sigDateRegionServiceReq, signValue, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
 
                 // Build final URL with query parameters in alphabetical order to match canonical request
-                var url_stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+                var url_stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
                 const url_allocator = url_stack_fallback.get();
-                var url_query_parts: bun.BoundedArray([]const u8, 14) = .{};
+                var url_query_parts: fun.BoundedArray([]const u8, 14) = .{};
 
                 // Add parameters in alphabetical order: Content-MD5, X-Amz-Acl, X-Amz-Algorithm, X-Amz-Credential, X-Amz-Date, X-Amz-Expires, X-Amz-Security-Token, X-Amz-Signature, X-Amz-SignedHeaders, response-content-disposition, response-content-type, x-amz-request-payer, x-amz-storage-class
 
@@ -642,7 +642,7 @@ pub const S3Credentials = struct {
                     url_allocator.free(part);
                 }
 
-                break :brk try std.fmt.allocPrint(bun.default_allocator, "{s}://{s}{s}?{s}", .{ protocol, host, normalizedPath, url_query_string.items });
+                break :brk try std.fmt.allocPrint(fun.default_allocator, "{s}://{s}{s}?{s}", .{ protocol, host, normalizedPath, url_query_string.items });
             } else {
                 const canonical = try CanonicalRequest.format(
                     &tmp_buffer,
@@ -661,25 +661,25 @@ pub const S3Credentials = struct {
                     storage_class,
                     signed_headers,
                 );
-                var sha_digest = std.mem.zeroes(bun.sha.SHA256.Digest);
-                bun.sha.SHA256.hash(canonical, &sha_digest, jsc.VirtualMachine.get().rareData().boringEngine());
+                var sha_digest = std.mem.zeroes(fun.sha.SHA256.Digest);
+                fun.sha.SHA256.hash(canonical, &sha_digest, jsc.VirtualMachine.get().rareData().boringEngine());
 
-                const signValue = try std.fmt.bufPrint(&tmp_buffer, "AWS4-HMAC-SHA256\n{s}\n{s}/{s}/{s}/aws4_request\n{s}", .{ amz_date, amz_day, region, service_name, std.fmt.bytesToHex(sha_digest[0..bun.sha.SHA256.digest], .lower) });
+                const signValue = try std.fmt.bufPrint(&tmp_buffer, "AWS4-HMAC-SHA256\n{s}\n{s}/{s}/{s}/aws4_request\n{s}", .{ amz_date, amz_day, region, service_name, std.fmt.bytesToHex(sha_digest[0..fun.sha.SHA256.digest], .lower) });
 
-                const signature = bun.hmac.generate(sigDateRegionServiceReq, signValue, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
+                const signature = fun.hmac.generate(sigDateRegionServiceReq, signValue, .sha256, &hmac_sig_service) orelse return error.FailedToGenerateSignature;
 
                 break :brk try std.fmt.allocPrint(
-                    bun.default_allocator,
+                    fun.default_allocator,
                     "AWS4-HMAC-SHA256 Credential={s}/{s}/{s}/{s}/aws4_request, SignedHeaders={s}, Signature={s}",
                     .{ this.accessKeyId, amz_day, region, service_name, signed_headers, std.fmt.bytesToHex(signature[0..DIGESTED_HMAC_256_LEN], .lower) },
                 );
             }
         };
-        errdefer bun.default_allocator.free(authorization);
+        errdefer fun.default_allocator.free(authorization);
 
         if (signQuery) {
-            defer bun.default_allocator.free(host);
-            defer bun.default_allocator.free(amz_date);
+            defer fun.default_allocator.free(host);
+            defer fun.default_allocator.free(amz_date);
 
             return SignResult{
                 .amz_date = "",
@@ -698,7 +698,7 @@ pub const S3Credentials = struct {
             .acl = signOptions.acl,
             .storage_class = signOptions.storage_class,
             .request_payer = request_payer,
-            .url = try std.fmt.allocPrint(bun.default_allocator, "{s}://{s}{s}{s}", .{ protocol, host, normalizedPath, if (search_params) |s| s else "" }),
+            .url = try std.fmt.allocPrint(fun.default_allocator, "{s}://{s}{s}{s}", .{ protocol, host, normalizedPath, if (search_params) |s| s else "" }),
             ._headers = [_]picohttp.Header{
                 .{ .name = "x-amz-content-sha256", .value = aws_content_hash },
                 .{ .name = "x-amz-date", .value = amz_date },
@@ -721,7 +721,7 @@ pub const S3Credentials = struct {
         }
 
         if (session_token) |token| {
-            const session_token_value = bun.handleOom(bun.default_allocator.dupe(u8, token));
+            const session_token_value = fun.handleOom(fun.default_allocator.dupe(u8, token));
             result.session_token = session_token_value;
             result._headers[result._headers_len] = .{ .name = "x-amz-security-token", .value = session_token_value };
             result._headers_len += 1;
@@ -732,21 +732,21 @@ pub const S3Credentials = struct {
         }
 
         if (content_disposition) |cd| {
-            const content_disposition_value = bun.handleOom(bun.default_allocator.dupe(u8, cd));
+            const content_disposition_value = fun.handleOom(fun.default_allocator.dupe(u8, cd));
             result.content_disposition = content_disposition_value;
             result._headers[result._headers_len] = .{ .name = "content-disposition", .value = content_disposition_value };
             result._headers_len += 1;
         }
 
         if (content_encoding) |ce| {
-            const content_encoding_value = bun.handleOom(bun.default_allocator.dupe(u8, ce));
+            const content_encoding_value = fun.handleOom(fun.default_allocator.dupe(u8, ce));
             result.content_encoding = content_encoding_value;
             result._headers[result._headers_len] = .{ .name = "content-encoding", .value = content_encoding_value };
             result._headers_len += 1;
         }
 
         if (content_md5) |c_md5| {
-            const content_md5_value = bun.handleOom(bun.default_allocator.dupe(u8, c_md5));
+            const content_md5_value = fun.handleOom(fun.default_allocator.dupe(u8, c_md5));
             result.content_md5 = content_md5_value;
             result._headers[result._headers_len] = .{ .name = "content-md5", .value = content_md5_value };
             result._headers_len += 1;
@@ -933,7 +933,7 @@ const ACL = @import("./acl.zig").ACL;
 const MultiPartUploadOptions = @import("../runtime/webcore/s3/multipart_options.zig").MultiPartUploadOptions;
 const StorageClass = @import("./storage_class.zig").StorageClass;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const picohttp = bun.picohttp;
-const strings = bun.strings;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const picohttp = fun.picohttp;
+const strings = fun.strings;

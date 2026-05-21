@@ -1,6 +1,6 @@
 test("boundary does not have quotes (#7917)", async () => {
   // for `content-type: multipart/form-data; boundary=...` / https://datatracker.ietf.org/doc/html/rfc2046#section-5.1
-  // the spec states that the boundary parameter accepts quotes, and both node and bun accept quotes when parsing
+  // the spec states that the boundary parameter accepts quotes, and both node and fun accept quotes when parsing
   // the form data. however, some websites do not accept quotes and node does not quote it. this test ensures that the
   // boundary is not quoted.
 

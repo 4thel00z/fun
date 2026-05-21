@@ -7,7 +7,7 @@ const {
   setRawMode: ttySetMode,
   isatty,
   getWindowSize: _getWindowSize,
-} = $cpp("ProcessBindingTTYWrap.cpp", "createBunTTYFunctions");
+} = $cpp("ProcessBindingTTYWrap.cpp", "createFunTTYFunctions");
 
 const { validateInteger } = require("internal/validators");
 const fs = require("internal/fs/streams");
@@ -31,7 +31,7 @@ Object.defineProperty(ReadStream, "prototype", {
     // where TTY streams have socket-like behavior
     Prototype.ref = function () {
       // Get the underlying native stream source if available
-      const source = this.$bunNativePtr;
+      const source = this.$funNativePtr;
       if (source?.updateRef) {
         source.updateRef(true);
       }
@@ -40,7 +40,7 @@ Object.defineProperty(ReadStream, "prototype", {
 
     Prototype.unref = function () {
       // Get the underlying native stream source if available
-      const source = this.$bunNativePtr;
+      const source = this.$funNativePtr;
       if (source?.updateRef) {
         source.updateRef(false);
       }
@@ -65,7 +65,7 @@ Object.defineProperty(ReadStream, "prototype", {
             return this;
           }
         } else {
-          const handle = this.$bunNativePtr;
+          const handle = this.$funNativePtr;
           if (!handle) {
             this.emit("error", new Error("setRawMode failed because it was called on something that is not a TTY"));
             return this;

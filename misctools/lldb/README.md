@@ -1,18 +1,18 @@
-# LLDB Pretty Printers for Bun
+# LLDB Pretty Printers for Fun
 
-This directory contains LLDB pretty printers for various Bun data structures to improve the debugging experience.
+This directory contains LLDB pretty printers for various Fun data structures to improve the debugging experience.
 
 ## Files
 
-- `bun_pretty_printer.py` - Pretty printers for Bun-specific types (bun.String, WTFStringImpl, ZigString, BabyList, etc.)
+- `fun_pretty_printer.py` - Pretty printers for Fun-specific types (fun.String, WTFStringImpl, ZigString, BabyList, etc.)
 - `lldb_pretty_printers.py` - Pretty printers for Zig language types from the Zig project
 - `lldb_webkit.py` - Pretty printers for WebKit/JavaScriptCore types
 - `init.lldb` - LLDB initialization commands
 
 ## Supported Types
 
-### bun.String Types
-- `bun.String` (or just `String`) - The main Bun string type
+### fun.String Types
+- `fun.String` (or just `String`) - The main Fun string type
 - `WTFStringImpl` - WebKit string implementation (Latin1/UTF16)
 - `ZigString` - Zig string type (UTF8/Latin1/UTF16 with pointer tagging)
 
@@ -21,7 +21,7 @@ This directory contains LLDB pretty printers for various Bun data structures to 
 The pretty printers show string content directly, with additional metadata:
 
 ```
-# bun.String examples:
+# fun.String examples:
 "Hello, World!" [latin1]          # Regular ZigString
 "UTF-8 String 🎉" [utf8]          # UTF-8 encoded
 "Static content" [latin1 static]  # Static string
@@ -41,35 +41,35 @@ The pretty printers show string content directly, with additional metadata:
 ### Option 1: Manual Loading
 In your LLDB session:
 ```lldb
-command script import /path/to/bun/misctools/lldb/bun_pretty_printer.py
+command script import /path/to/fun/misctools/lldb/fun_pretty_printer.py
 ```
 
 ### Option 2: Add to ~/.lldbinit
 Add the following line to your `~/.lldbinit` file to load automatically:
 ```lldb
-command script import /path/to/bun/misctools/lldb/bun_pretty_printer.py
+command script import /path/to/fun/misctools/lldb/fun_pretty_printer.py
 ```
 
 ### Option 3: Use init.lldb
 ```lldb
-command source /path/to/bun/misctools/lldb/init.lldb
+command source /path/to/fun/misctools/lldb/init.lldb
 ```
 
 ## Testing
 
 To test the pretty printers:
 
-1. Build a debug version of Bun:
+1. Build a debug version of Fun:
 ```bash
-bun bd
+fun bd
 ```
 
-2. Create a test file that uses bun.String types
+2. Create a test file that uses fun.String types
 
 3. Debug with LLDB:
 ```bash
-lldb ./build/debug/bun-debug
-(lldb) command script import misctools/lldb/bun_pretty_printer.py
+lldb ./build/debug/fun-debug
+(lldb) command script import misctools/lldb/fun_pretty_printer.py
 (lldb) breakpoint set --file your_test.zig --line <line_number>
 (lldb) run your_test.zig
 (lldb) frame variable
@@ -89,8 +89,8 @@ The pretty printer automatically detects and handles these tags.
 WTFStringImpl uses flags in `m_hashAndFlags`:
 - Bit 2 (s_hashFlag8BitBuffer): 1 = Latin1, 0 = UTF16
 
-### bun.String Tag Union
-bun.String is a tagged union with these variants:
+### fun.String Tag Union
+fun.String is a tagged union with these variants:
 - Dead (0): Invalid/freed string
 - WTFStringImpl (1): WebKit string
 - ZigString (2): Regular Zig string
@@ -111,9 +111,9 @@ If the pretty printers don't work:
 (lldb) type category list
 ```
 
-3. Enable the Bun category manually:
+3. Enable the Fun category manually:
 ```lldb
-(lldb) type category enable bun
+(lldb) type category enable fun
 ```
 
 4. For debugging the pretty printer itself, check for exceptions:

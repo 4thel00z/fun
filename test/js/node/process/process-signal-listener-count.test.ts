@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, normalizeBunSnapshot } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, normalizeFunSnapshot } from "harness";
 
 // When multiple listeners are registered for the same signal, removing one
 // listener must NOT uninstall the underlying OS signal handler while other
@@ -40,9 +40,9 @@ test.skipIf(isWindows)("removing one of multiple signal listeners keeps the hand
     console.log("done");
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -50,7 +50,7 @@ test.skipIf(isWindows)("removing one of multiple signal listeners keeps the hand
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
   expect(stderr).toBe("");
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`
 "handlerB fired 1
 handlerB fired 2
 done"
@@ -81,9 +81,9 @@ test.skipIf(isWindows)("removing all signal listeners uninstalls the handler (de
     process.kill(process.pid, "SIGUSR2");
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -118,9 +118,9 @@ test.skipIf(isWindows)("re-adding a listener after removing all reinstalls the h
     console.log("done");
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -128,7 +128,7 @@ test.skipIf(isWindows)("re-adding a listener after removing all reinstalls the h
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
   expect(stderr).toBe("");
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`
 "handlerB fired
 done"
 `);

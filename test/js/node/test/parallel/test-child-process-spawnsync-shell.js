@@ -1,8 +1,8 @@
-// This test is modified to not test node internals, only public APIs. It is also modified to use `-p` rather than `-pe` because Bun does not support `-pe`.
+// This test is modified to not test node internals, only public APIs. It is also modified to use `-p` rather than `-pe` because Fun does not support `-pe`.
 
 'use strict';
 const common = require('../common');
-if (common.isWindows) return; // TODO: BUN
+if (common.isWindows) return; // TODO: FUN
 const assert = require('assert');
 const cp = require('child_process');
 

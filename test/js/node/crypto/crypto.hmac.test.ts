@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { Hmac, createHmac, createSecretKey } from "crypto";
 import { PassThrough } from "stream";
 

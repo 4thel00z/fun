@@ -22,8 +22,8 @@ pub fn lock(self: *Self) void {
     const current = Thread.getCurrentId();
     if (self.owning_thread != invalid_thread_id) {
         if (comptime traces_enabled) {
-            bun.Output.err("assertion failure", "`ThreadLock` was already locked here:", .{});
-            bun.crash_handler.dumpStackTrace(
+            fun.Output.err("assertion failure", "`ThreadLock` was already locked here:", .{});
+            fun.crash_handler.dumpStackTrace(
                 self.locked_at.trace(),
                 .{ .frame_count = 10, .stop_at_jsc_llint = true },
             );
@@ -47,9 +47,9 @@ pub fn unlock(self: *Self) void {
 
 pub fn assertLocked(self: *const Self) void {
     if (comptime !enabled) return;
-    bun.assertf(self.owning_thread != invalid_thread_id, "`ThreadLock` is not locked", .{});
+    fun.assertf(self.owning_thread != invalid_thread_id, "`ThreadLock` is not locked", .{});
     const current = Thread.getCurrentId();
-    bun.assertf(
+    fun.assertf(
         self.owning_thread == current,
         "`ThreadLock` is locked by thread {}, not thread {}",
         .{ self.owning_thread, current },
@@ -67,12 +67,12 @@ pub fn lockOrAssert(self: *Self) void {
     }
 }
 
-pub const enabled = bun.Environment.ci_assert;
+pub const enabled = fun.Environment.ci_assert;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const invalid_thread_id = @import("./thread_id.zig").invalid;
-const StoredTrace = bun.crash_handler.StoredTrace;
-const traces_enabled = bun.Environment.isDebug;
+const StoredTrace = fun.crash_handler.StoredTrace;
+const traces_enabled = fun.Environment.isDebug;
 
 const std = @import("std");
 const Thread = std.Thread;

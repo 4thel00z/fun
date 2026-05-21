@@ -5,7 +5,7 @@ const common = require('../common');
 const assert = require('assert');
 const readline = require('readline');
 const { Writable } = require('stream');
-const { CSI } = readline[Symbol.for("__BUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
+const { CSI } = readline[Symbol.for("__FUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
 
 {
   assert(CSI);

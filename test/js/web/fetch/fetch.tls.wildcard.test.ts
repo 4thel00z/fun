@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 // This test verifies that wildcard certificate hostname matching follows RFC 6125 Section 6.4.3:
 // - Wildcards must match exactly one label (not multiple labels)
@@ -67,7 +67,7 @@ describe.concurrent("TLS wildcard hostname verification", () => {
 
   it("should reject multi-label wildcard match (sub.foo.example.com vs *.example.com)", async () => {
     // Create a server with the wildcard cert, then try to connect with a multi-label servername
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: wildcardExampleComTls,
       fetch() {
@@ -98,7 +98,7 @@ describe.concurrent("TLS wildcard hostname verification", () => {
   });
 
   it("should accept valid single-label wildcard match (foo.example.com vs *.example.com)", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: wildcardExampleComTls,
       fetch() {
@@ -133,7 +133,7 @@ describe.concurrent("TLS wildcard hostname verification", () => {
   });
 
   it("should reject bare domain for wildcard cert (example.com vs *.example.com)", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: wildcardExampleComTls,
       fetch() {
@@ -163,7 +163,7 @@ describe.concurrent("TLS wildcard hostname verification", () => {
   });
 
   it("should accept exact match for wildcard labels (bar.example.com vs *.example.com)", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: wildcardExampleComTls,
       fetch() {
@@ -198,7 +198,7 @@ describe.concurrent("TLS wildcard hostname verification", () => {
   });
 
   it("should reject deeply nested subdomain (a.b.c.example.com vs *.example.com)", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: wildcardExampleComTls,
       fetch() {
@@ -229,7 +229,7 @@ describe.concurrent("TLS wildcard hostname verification", () => {
 
   it("should accept case-insensitive wildcard match (FOO.EXAMPLE.COM vs *.example.com)", async () => {
     // RFC 4343: DNS names are case-insensitive
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: wildcardExampleComTls,
       fetch() {
@@ -265,7 +265,7 @@ describe.concurrent("TLS wildcard hostname verification", () => {
 
   it("should accept mixed-case wildcard match (FoO.ExAmPlE.cOm vs *.example.com)", async () => {
     // RFC 4343: DNS names are case-insensitive
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: wildcardExampleComTls,
       fetch() {

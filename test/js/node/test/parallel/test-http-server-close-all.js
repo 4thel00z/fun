@@ -57,5 +57,5 @@ server.listen(0, function() {
 
   client1.on('error', () => {});
 
-  client1.write('GET / HTTP/1.1\r\nHost: example.com\r\n\r\n'); // Bun only reports connect after headers are received
+  client1.write('GET / HTTP/1.1\r\nHost: example.com\r\n\r\n'); // Fun only reports connect after headers are received
 });

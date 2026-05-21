@@ -4,7 +4,7 @@ setTimeout(() => {
 }, 100);
 for (let i = 0; i < 3; i++) {
   try {
-    const sql = new Bun.SQL({
+    const sql = new Fun.SQL({
       url: "postgres://-invalid-:1234/postgres",
       max: 1,
       idleTimeout: 1,
@@ -14,6 +14,6 @@ for (let i = 0; i < 3; i++) {
     await sql.connect();
   } catch {
   } finally {
-    Bun.gc(true);
+    Fun.gc(true);
   }
 }

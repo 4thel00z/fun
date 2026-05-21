@@ -2,9 +2,9 @@
 ///
 const JSSourceMap = @This();
 
-sourcemap: *bun.SourceMap.ParsedSourceMap,
-sources: []bun.String = &.{},
-names: []bun.String = &.{},
+sourcemap: *fun.SourceMap.ParsedSourceMap,
+sources: []fun.String = &.{},
+names: []fun.String = &.{},
 
 /// TODO: when we implement --enable-source-map CLI flag, set this to true.
 pub var @"--enable-source-maps" = false;
@@ -12,9 +12,9 @@ pub var @"--enable-source-maps" = false;
 fn findSourceMap(
     globalObject: *JSGlobalObject,
     callFrame: *CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     // Node.js doesn't enable source maps by default.
-    // In Bun, we do use them for almost all files since we transpile almost all files
+    // In Fun, we do use them for almost all files since we transpile almost all files
     // If we enable this by default, we don't have a `payload` object since we don't internally create one.
     // This causes Next.js to emit errors like the below on start:
     //       .next/server/chunks/ssr/[root-of-the-server]__012ba519._.js: Invalid source map. Only conformant source maps can be used to filter stack frames. Cause: TypeError: payload is not an Object. (evaluating '"sections" in payload')
@@ -27,20 +27,20 @@ fn findSourceMap(
         return .js_undefined;
     }
 
-    var source_url_string = try bun.String.fromJS(source_url_value, globalObject);
+    var source_url_string = try fun.String.fromJS(source_url_value, globalObject);
     defer source_url_string.deref();
 
-    var source_url_slice = source_url_string.toUTF8(bun.default_allocator);
+    var source_url_slice = source_url_string.toUTF8(fun.default_allocator);
     defer source_url_slice.deinit();
 
     var source_url = source_url_slice.slice();
-    if (bun.strings.hasPrefix(source_url, "node:") or bun.strings.hasPrefix(source_url, "bun:") or bun.strings.hasPrefix(source_url, "data:")) {
+    if (fun.strings.hasPrefix(source_url, "node:") or fun.strings.hasPrefix(source_url, "fun:") or fun.strings.hasPrefix(source_url, "data:")) {
         return .js_undefined;
     }
 
-    if (bun.strings.indexOf(source_url, "://")) |source_url_index| {
-        if (bun.strings.eqlComptime(source_url[0..source_url_index], "file")) {
-            const path = bun.jsc.URL.pathFromFileURL(source_url_string);
+    if (fun.strings.indexOf(source_url, "://")) |source_url_index| {
+        if (fun.strings.eqlComptime(source_url[0..source_url_index], "file")) {
+            const path = fun.jsc.URL.pathFromFileURL(source_url_string);
 
             if (path.tag == .Dead) {
                 return globalObject.ERR(.INVALID_URL, "Invalid URL: {s}", .{source_url}).throw();
@@ -50,17 +50,17 @@ fn findSourceMap(
             source_url_string.deref();
             source_url_slice.deinit();
             source_url_string = path;
-            source_url_slice = path.toUTF8(bun.default_allocator);
+            source_url_slice = path.toUTF8(fun.default_allocator);
             source_url = source_url_slice.slice();
         }
     }
 
-    const vm = globalObject.bunVM();
+    const vm = globalObject.funVM();
     const source_map = vm.source_mappings.get(source_url) orelse return .js_undefined;
-    const fake_sources_array = bun.default_allocator.alloc(bun.String, 1) catch return globalObject.throwOutOfMemory();
+    const fake_sources_array = fun.default_allocator.alloc(fun.String, 1) catch return globalObject.throwOutOfMemory();
     fake_sources_array[0] = source_url_string.dupeRef();
 
-    const this = bun.new(JSSourceMap, .{
+    const this = fun.new(JSSourceMap, .{
         .sourcemap = source_map,
         .sources = fake_sources_array,
         .names = &.{},
@@ -73,7 +73,7 @@ pub fn constructor(
     globalObject: *JSGlobalObject,
     callFrame: *CallFrame,
     thisValue: JSValue,
-) bun.JSError!*JSSourceMap {
+) fun.JSError!*JSSourceMap {
     const payload_arg = callFrame.argument(0);
     const options_arg = callFrame.argument(1);
 
@@ -90,7 +90,7 @@ pub fn constructor(
     }
 
     // Parse the payload to create a proper sourcemap
-    var arena = bun.ArenaAllocator.init(bun.default_allocator);
+    var arena = fun.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
     const arena_allocator = arena.allocator();
 
@@ -103,7 +103,7 @@ pub fn constructor(
     const mappings_str = mappings_value.toUTF8(arena_allocator);
     defer mappings_str.deinit();
 
-    var names = std.array_list.Managed(bun.String).init(bun.default_allocator);
+    var names = std.array_list.Managed(fun.String).init(fun.default_allocator);
     errdefer {
         for (names.items) |*str| {
             str.deref();
@@ -111,7 +111,7 @@ pub fn constructor(
         names.deinit();
     }
 
-    var sources = std.array_list.Managed(bun.String).init(bun.default_allocator);
+    var sources = std.array_list.Managed(fun.String).init(fun.default_allocator);
     errdefer {
         for (sources.items) |*str| {
             str.deref();
@@ -122,7 +122,7 @@ pub fn constructor(
     if (try payload_arg.getArray(globalObject, "sources")) |sources_value| {
         var iter = try sources_value.arrayIterator(globalObject);
         while (try iter.next()) |source| {
-            const source_str = try source.toBunString(globalObject);
+            const source_str = try source.toFunString(globalObject);
             try sources.append(source_str);
         }
     }
@@ -130,14 +130,14 @@ pub fn constructor(
     if (try payload_arg.getArray(globalObject, "names")) |names_value| {
         var iter = try names_value.arrayIterator(globalObject);
         while (try iter.next()) |name| {
-            const name_str = try name.toBunString(globalObject);
+            const name_str = try name.toFunString(globalObject);
             try names.append(name_str);
         }
     }
 
     // Parse the VLQ mappings
-    const parse_result = bun.SourceMap.Mapping.parse(
-        bun.default_allocator,
+    const parse_result = fun.SourceMap.Mapping.parse(
+        fun.default_allocator,
         mappings_str.slice(),
         null, // estimated_mapping_count
         @intCast(sources.items.len), // sources_count
@@ -155,8 +155,8 @@ pub fn constructor(
         },
     };
 
-    const source_map = bun.new(JSSourceMap, .{
-        .sourcemap = bun.new(bun.SourceMap.ParsedSourceMap, mapping_list),
+    const source_map = fun.new(JSSourceMap, .{
+        .sourcemap = fun.new(fun.SourceMap.ParsedSourceMap, mapping_list),
         .sources = sources.items,
         .names = names.items,
     });
@@ -172,7 +172,7 @@ pub fn constructor(
 }
 
 pub fn memoryCost(this: *const JSSourceMap) usize {
-    return @sizeOf(JSSourceMap) + this.sources.len * @sizeOf(bun.String) + this.sourcemap.memoryCost();
+    return @sizeOf(JSSourceMap) + this.sources.len * @sizeOf(fun.String) + this.sourcemap.memoryCost();
 }
 
 pub fn estimatedSize(this: *JSSourceMap) usize {
@@ -189,7 +189,7 @@ pub fn getLineLengths(_: *JSSourceMap, _: *JSGlobalObject) JSValue {
     return .js_undefined;
 }
 
-fn getLineColumn(globalObject: *JSGlobalObject, callFrame: *CallFrame) bun.JSError![2]i32 {
+fn getLineColumn(globalObject: *JSGlobalObject, callFrame: *CallFrame) fun.JSError![2]i32 {
     const line_number_value = callFrame.argument(0);
     const column_number_value = callFrame.argument(1);
 
@@ -200,11 +200,11 @@ fn getLineColumn(globalObject: *JSGlobalObject, callFrame: *CallFrame) bun.JSErr
     };
 }
 
-fn mappingNameToJS(this: *const JSSourceMap, globalObject: *JSGlobalObject, mapping: *const bun.SourceMap.Mapping) bun.JSError!JSValue {
+fn mappingNameToJS(this: *const JSSourceMap, globalObject: *JSGlobalObject, mapping: *const fun.SourceMap.Mapping) fun.JSError!JSValue {
     const name_index = mapping.nameIndex();
     if (name_index >= 0) {
         if (this.sourcemap.mappings.getName(name_index)) |name| {
-            return bun.String.createUTF8ForJS(globalObject, name);
+            return fun.String.createUTF8ForJS(globalObject, name);
         } else {
             const index: usize = @intCast(name_index);
             if (index < this.names.len) {
@@ -215,7 +215,7 @@ fn mappingNameToJS(this: *const JSSourceMap, globalObject: *JSGlobalObject, mapp
     return .js_undefined;
 }
 
-fn sourceNameToJS(this: *const JSSourceMap, globalObject: *JSGlobalObject, mapping: *const bun.SourceMap.Mapping) bun.JSError!JSValue {
+fn sourceNameToJS(this: *const JSSourceMap, globalObject: *JSGlobalObject, mapping: *const fun.SourceMap.Mapping) fun.JSError!JSValue {
     const source_index = mapping.sourceIndex();
     if (source_index >= 0 and source_index < @as(i32, @intCast(this.sources.len))) {
         return this.sources[@intCast(source_index)].toJS(globalObject);
@@ -224,7 +224,7 @@ fn sourceNameToJS(this: *const JSSourceMap, globalObject: *JSGlobalObject, mappi
     return .js_undefined;
 }
 
-extern fn Bun__createNodeModuleSourceMapOriginObject(
+extern fn Fun__createNodeModuleSourceMapOriginObject(
     globalObject: *JSGlobalObject,
     name: JSValue,
     line: JSValue,
@@ -232,7 +232,7 @@ extern fn Bun__createNodeModuleSourceMapOriginObject(
     source: JSValue,
 ) JSValue;
 
-extern fn Bun__createNodeModuleSourceMapEntryObject(
+extern fn Fun__createNodeModuleSourceMapEntryObject(
     globalObject: *JSGlobalObject,
     generatedLine: JSValue,
     generatedColumn: JSValue,
@@ -242,13 +242,13 @@ extern fn Bun__createNodeModuleSourceMapEntryObject(
     name: JSValue,
 ) JSValue;
 
-pub fn findOrigin(this: *JSSourceMap, globalObject: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn findOrigin(this: *JSSourceMap, globalObject: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     const line_number, const column_number = try getLineColumn(globalObject, callFrame);
 
     const mapping = this.sourcemap.findMapping(.fromZeroBased(line_number), .fromZeroBased(column_number)) orelse return jsc.JSValue.createEmptyObject(globalObject, 0);
     const name = try mappingNameToJS(this, globalObject, &mapping);
     const source = try sourceNameToJS(this, globalObject, &mapping);
-    return Bun__createNodeModuleSourceMapOriginObject(
+    return Fun__createNodeModuleSourceMapOriginObject(
         globalObject,
         name,
         jsc.JSValue.jsNumber(mapping.originalLine()),
@@ -257,14 +257,14 @@ pub fn findOrigin(this: *JSSourceMap, globalObject: *JSGlobalObject, callFrame: 
     );
 }
 
-pub fn findEntry(this: *JSSourceMap, globalObject: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn findEntry(this: *JSSourceMap, globalObject: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     const line_number, const column_number = try getLineColumn(globalObject, callFrame);
 
     const mapping = this.sourcemap.findMapping(.fromZeroBased(line_number), .fromZeroBased(column_number)) orelse return jsc.JSValue.createEmptyObject(globalObject, 0);
 
     const name = try mappingNameToJS(this, globalObject, &mapping);
     const source = try sourceNameToJS(this, globalObject, &mapping);
-    return Bun__createNodeModuleSourceMapEntryObject(
+    return Fun__createNodeModuleSourceMapEntryObject(
         globalObject,
         jsc.JSValue.jsNumber(mapping.generatedLine()),
         jsc.JSValue.jsNumber(mapping.generatedColumn()),
@@ -279,16 +279,16 @@ pub fn deinit(this: *JSSourceMap) void {
     for (this.sources) |*str| {
         str.deref();
     }
-    bun.default_allocator.free(this.sources);
+    fun.default_allocator.free(this.sources);
 
     for (this.names) |*name| {
         name.deref();
     }
 
-    bun.default_allocator.free(this.names);
+    fun.default_allocator.free(this.names);
 
     this.sourcemap.deref();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn finalize(this: *JSSourceMap) void {
@@ -297,7 +297,7 @@ pub fn finalize(this: *JSSourceMap) void {
 
 comptime {
     const jsFunctionFindSourceMap = jsc.toJSHostFn(findSourceMap);
-    @export(&jsFunctionFindSourceMap, .{ .name = "Bun__JSSourceMap__find" });
+    @export(&jsFunctionFindSourceMap, .{ .name = "Fun__JSSourceMap__find" });
 }
 
 pub const js = jsc.Codegen.JSSourceMap;
@@ -307,10 +307,10 @@ pub const toJS = js.toJS;
 
 const string = []const u8;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

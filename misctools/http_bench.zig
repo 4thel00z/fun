@@ -1,13 +1,13 @@
 const std = @import("std");
-const bun = @import("bun");
+const fun = @import("fun");
 const string = []const u8;
-const Output = bun.Output;
-const Global = bun.Global;
-const Environment = bun.Environment;
-const strings = bun.strings;
-const MutableString = bun.MutableString;
+const Output = fun.Output;
+const Global = fun.Global;
+const Environment = fun.Environment;
+const strings = fun.strings;
+const MutableString = fun.MutableString;
 const stringZ = [:0]const u8;
-const default_allocator = bun.default_allocator;
+const default_allocator = fun.default_allocator;
 const clap = @import("../src/deps/zig-clap/clap.zig");
 
 const URL = @import("../src/url.zig").URL;
@@ -60,8 +60,8 @@ const MethodNames = std.ComptimeStringMap(Method, .{
     .{ "head", Method.HEAD },
 });
 
-var file_path_buf: bun.PathBuffer = undefined;
-var cwd_buf: bun.PathBuffer = undefined;
+var file_path_buf: fun.PathBuffer = undefined;
+var cwd_buf: fun.PathBuffer = undefined;
 
 pub const Arguments = struct {
     url: URL,
@@ -169,7 +169,7 @@ pub const Arguments = struct {
     }
 };
 
-const HTTP = bun.http;
+const HTTP = fun.http;
 const NetworkThread = HTTP.NetworkThread;
 
 var stdout_: std.fs.File = undefined;
@@ -195,7 +195,7 @@ pub fn main() anyerror!void {
         response_body: MutableString = undefined,
         context: HTTP.HTTPChannelContext = undefined,
     };
-    const Batch = bun.ThreadPool.Batch;
+    const Batch = fun.ThreadPool.Batch;
     var groups = try default_allocator.alloc(Group, args.count);
     var repeat_i: usize = 0;
     while (repeat_i < args.repeat + 1) : (repeat_i += 1) {

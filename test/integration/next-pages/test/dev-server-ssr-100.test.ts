@@ -1,12 +1,12 @@
-import { Subprocess } from "bun";
-import { install_test_helpers } from "bun:internal-for-testing";
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { Subprocess } from "fun";
+import { install_test_helpers } from "fun:internal-for-testing";
+import { afterAll, beforeAll, expect, test } from "fun:test";
 import { copyFileSync } from "fs";
 import { cp, rm } from "fs/promises";
 import PQueue from "p-queue";
 import { join } from "path";
 import { StringDecoder } from "string_decoder";
-import { bunEnv, bunExe, tmpdirSync, toMatchNodeModulesAt } from "../../../harness";
+import { funEnv, funExe, tmpdirSync, toMatchNodeModulesAt } from "../../../harness";
 const { parseLockfile } = install_test_helpers;
 
 expect.extend({ toMatchNodeModulesAt });
@@ -25,10 +25,10 @@ let baseUrl: string;
 let dev_server_pid: number | undefined = undefined;
 async function getDevServerURL() {
   console.log("Starting dev server");
-  dev_server = Bun.spawn([bunExe(), "--bun", "run", "next", "dev", "--port=0"], {
+  dev_server = Fun.spawn([funExe(), "--fun", "run", "next", "dev", "--port=0"], {
     cwd: root,
     env: {
-      ...bunEnv,
+      ...funEnv,
       NEXT_TELEMETRY_DISABLED: "1",
       // Print lots of debug logs in next.js:
       // "DEBUG": "*",
@@ -91,9 +91,9 @@ async function getDevServerURL() {
 async function startDevServer() {
   copyFileSync(join(root, "src/Counter1.txt"), join(root, "src/Counter.tsx"));
 
-  const install = Bun.spawnSync([bunExe(), "i"], {
+  const install = Fun.spawnSync([funExe(), "i"], {
     cwd: root,
-    env: { ...bunEnv, BUN_INSTALL_CACHE_DIR: join(root, "bunstall") },
+    env: { ...funEnv, FUN_INSTALL_CACHE_DIR: join(root, "funstall") },
     stdout: "inherit",
     stderr: "inherit",
     stdin: "inherit",
@@ -127,7 +127,7 @@ function stopDevServer() {
 
 afterAll(stopDevServer);
 
-const timeout = Bun.version.includes("debug") ? 1_000_000 : 100_000;
+const timeout = Fun.version.includes("debug") ? 1_000_000 : 100_000;
 test(
   "ssr works for 100-ish requests",
   async () => {
@@ -153,7 +153,7 @@ test(
       expect(x.status).toBe(200);
       const text = await x.text();
       console.count("Completed request");
-      expect(text).toContain(`>${Bun.version}</code>`);
+      expect(text).toContain(`>${Fun.version}</code>`);
     }
 
     for (let i = 0; i < 100; i++) {

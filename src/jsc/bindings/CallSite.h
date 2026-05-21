@@ -8,7 +8,7 @@
 #include "ErrorStackTrace.h"
 
 #include <JavaScriptCore/JSObject.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "wtf/text/OrdinalNumber.h"
 
 using namespace JSC;

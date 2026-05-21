@@ -76,7 +76,7 @@ export abstract class NamedType extends Type {
 
 export function validateName(name: string): void {
   const reservedPrefixes = ["IDL", "Bindgen", "Extern", "Generated", "MemberType"];
-  const reservedNames = ["Bun", "WTF", "JSC", "WebCore", "Self"];
+  const reservedNames = ["Fun", "WTF", "JSC", "WebCore", "Self"];
   if (!/^[A-Z]/.test(name)) {
     throw RangeError(`name must start with a capital letter: ${name}`);
   }

@@ -4,8 +4,8 @@
 // and the server's sessions are torn down, the native ClientSession/Stream
 // counters return to zero and JS-side Response objects collect.
 
-import { fetchH2Internals } from "bun:internal-for-testing";
-import { heapStats } from "bun:jsc";
+import { fetchH2Internals } from "fun:internal-for-testing";
+import { heapStats } from "fun:jsc";
 
 const { liveCounts } = fetchH2Internals;
 
@@ -121,11 +121,11 @@ await fetch(SERVER + "/__destroy_sessions", h2).catch(() => {});
 // instead of sleeping a fixed amount.
 let counts = liveCounts();
 for (let i = 0; i < 200 && (counts.sessions > 0 || counts.streams > 0); i++) {
-  await Bun.sleep(10);
+  await Fun.sleep(10);
   counts = liveCounts();
 }
 
-Bun.gc(true);
+Fun.gc(true);
 const responses = heapStats().objectTypeCounts.Response ?? 0;
 console.log(JSON.stringify({ scenario: SCENARIO, count: COUNT, bytes, ...counts, responses }));
 

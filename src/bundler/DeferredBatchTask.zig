@@ -8,19 +8,19 @@ pub const DeferredBatchTask = @This();
 running: if (Environment.isDebug) bool else u0 = if (Environment.isDebug) false else 0,
 
 pub fn init(this: *DeferredBatchTask) void {
-    if (comptime Environment.isDebug) bun.debugAssert(!this.running);
+    if (comptime Environment.isDebug) fun.debugAssert(!this.running);
     this.* = .{
         .running = if (comptime Environment.isDebug) false else 0,
     };
 }
 
-pub fn getBundleV2(this: *DeferredBatchTask) *bun.BundleV2 {
+pub fn getBundleV2(this: *DeferredBatchTask) *fun.BundleV2 {
     return @alignCast(@fieldParentPtr("drain_defer_task", this));
 }
 
 pub fn schedule(this: *DeferredBatchTask) void {
     if (comptime Environment.isDebug) {
-        bun.assert(!this.running);
+        fun.assert(!this.running);
         this.running = false;
     }
     this.getBundleV2().jsLoopForPlugins().enqueueTaskConcurrent(jsc.ConcurrentTask.create(jsc.Task.init(this)));
@@ -43,10 +43,10 @@ pub fn runOnJSThread(this: *DeferredBatchTask) void {
     ) catch return;
 }
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;

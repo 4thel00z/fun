@@ -2,7 +2,7 @@ const string = []const u8;
 
 /// Represents a JavaScript stack trace
 pub const ZigStackTrace = extern struct {
-    source_lines_ptr: [*]bun.String,
+    source_lines_ptr: [*]fun.String,
     source_lines_numbers: [*]i32,
     source_lines_len: u8,
     source_lines_to_collect: u8,
@@ -17,7 +17,7 @@ pub const ZigStackTrace = extern struct {
 
     pub fn fromFrames(frames_slice: []ZigStackFrame) ZigStackTrace {
         return .{
-            .source_lines_ptr = &[0]bun.String{},
+            .source_lines_ptr = &[0]fun.String{},
             .source_lines_numbers = &[0]i32{},
             .source_lines_len = 0,
             .source_lines_to_collect = 0,
@@ -51,7 +51,7 @@ pub const ZigStackTrace = extern struct {
                 while (source_lines_iter.next()) |source| {
                     const text = source.text.slice();
                     defer source.text.deinit();
-                    bun.copy(
+                    fun.copy(
                         u8,
                         remain_buf,
                         text,
@@ -120,7 +120,7 @@ pub const ZigStackTrace = extern struct {
             const source_line = this.trace.source_lines_ptr[@as(usize, @intCast(this.i))];
             const result = SourceLine{
                 .line = this.trace.source_lines_numbers[@as(usize, @intCast(this.i))],
-                .text = source_line.toUTF8(bun.default_allocator),
+                .text = source_line.toUTF8(fun.default_allocator),
             };
             this.i -= 1;
             return result;
@@ -141,10 +141,10 @@ pub const ZigStackTrace = extern struct {
 const std = @import("std");
 const ZigURL = @import("../url/url.zig").URL;
 
-const bun = @import("bun");
-const api = bun.schema.api;
+const fun = @import("fun");
+const api = fun.schema.api;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const SourceProvider = jsc.SourceProvider;
 const ZigStackFrame = jsc.ZigStackFrame;
 const ZigString = jsc.ZigString;

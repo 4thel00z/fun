@@ -13,7 +13,7 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include "JavaScriptCore/JSCJSValue.h"
 #include "AsyncContextFrame.h"
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 static bool call(JSGlobalObject* globalObject, JSValue timerObject, JSValue callbackValue, JSValue argumentsValue)
@@ -32,7 +32,7 @@ static bool call(JSGlobalObject* globalObject, JSValue timerObject, JSValue call
     }
 
     if (auto* promise = dynamicDowncast<JSPromise>(callbackValue)) {
-        // This was a Bun.sleep() call
+        // This was a Fun.sleep() call
         promise->resolve(globalObject, vm, jsUndefined());
     } else {
         auto callData = JSC::getCallData(callbackValue);
@@ -74,7 +74,7 @@ static bool call(JSGlobalObject* globalObject, JSValue timerObject, JSValue call
 }
 
 // Returns true if an exception was thrown.
-extern "C" bool Bun__JSTimeout__call(JSGlobalObject* globalObject, EncodedJSValue timerObject, EncodedJSValue callbackValue, EncodedJSValue argumentsValue)
+extern "C" bool Fun__JSTimeout__call(JSGlobalObject* globalObject, EncodedJSValue timerObject, EncodedJSValue callbackValue, EncodedJSValue argumentsValue)
 {
     auto& vm = globalObject->vm();
     if (vm.hasPendingTerminationException()) [[unlikely]] {

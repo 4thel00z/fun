@@ -5,7 +5,7 @@ platform=$(uname -ms)
 
 if [[ ${OS:-} = Windows_NT ]]; then
   if [[ $platform != MINGW64* ]]; then
-    powershell -c "irm bun.sh/install.ps1|iex"
+    powershell -c "irm fun.dev/install.ps1|iex"
     exit $?
   fi
 fi
@@ -54,10 +54,10 @@ success() {
 }
 
 command -v unzip >/dev/null ||
-    error 'unzip is required to install bun'
+    error 'unzip is required to install fun'
 
 if [[ $# -gt 2 ]]; then
-    error 'Too many arguments, only 2 are allowed. The first can be a specific tag of bun to install. (e.g. "bun-v0.1.4") The second can be a build variant of bun to install. (e.g. "debug-info")'
+    error 'Too many arguments, only 2 are allowed. The first can be a specific tag of fun to install. (e.g. "fun-v0.1.4") The second can be a build variant of fun to install. (e.g. "debug-info")'
 fi
 
 case $platform in
@@ -97,13 +97,13 @@ if [[ $target = darwin-x64 ]]; then
     # redirect stderr to devnull to avoid error message when not running in Rosetta
     if [[ $(sysctl -n sysctl.proc_translated 2>/dev/null) = 1 ]]; then
         target=darwin-aarch64
-        info "Your shell is running in Rosetta 2. Downloading bun for $target instead"
+        info "Your shell is running in Rosetta 2. Downloading fun for $target instead"
     fi
 fi
 
 GITHUB=${GITHUB-"https://github.com"}
 
-github_repo="$GITHUB/oven-sh/bun"
+github_repo="$GITHUB/underdoc-org/fun"
 
 # If AVX2 isn't supported, use the -baseline build
 case "$target" in
@@ -120,45 +120,45 @@ case "$target" in
     ;;
 esac
 
-exe_name=bun
+exe_name=fun
 
 if [[ $# = 2 && $2 = debug-info ]]; then
     target=$target-profile
-    exe_name=bun-profile
-    info "You requested a debug build of bun. More information will be shown if a crash occurs."
+    exe_name=fun-profile
+    info "You requested a debug build of fun. More information will be shown if a crash occurs."
 fi
 
 if [[ $# = 0 ]]; then
-    bun_uri=$github_repo/releases/latest/download/bun-$target.zip
+    fun_uri=$github_repo/releases/latest/download/fun-$target.zip
 else
-    bun_uri=$github_repo/releases/download/$1/bun-$target.zip
+    fun_uri=$github_repo/releases/download/$1/fun-$target.zip
 fi
 
-install_env=BUN_INSTALL
+install_env=FUN_INSTALL
 bin_env=\$$install_env/bin
 
-install_dir=${!install_env:-$HOME/.bun}
+install_dir=${!install_env:-$HOME/.fun}
 bin_dir=$install_dir/bin
-exe=$bin_dir/bun
+exe=$bin_dir/fun
 
 if [[ ! -d $bin_dir ]]; then
     mkdir -p "$bin_dir" ||
         error "Failed to create install directory \"$bin_dir\""
 fi
 
-curl --fail --location --progress-bar --output "$exe.zip" "$bun_uri" ||
-    error "Failed to download bun from \"$bun_uri\""
+curl --fail --location --progress-bar --output "$exe.zip" "$fun_uri" ||
+    error "Failed to download fun from \"$fun_uri\""
 
 unzip -oqd "$bin_dir" "$exe.zip" ||
-    error 'Failed to extract bun'
+    error 'Failed to extract fun'
 
-mv "$bin_dir/bun-$target/$exe_name" "$exe" ||
-    error 'Failed to move extracted bun to destination'
+mv "$bin_dir/fun-$target/$exe_name" "$exe" ||
+    error 'Failed to move extracted fun to destination'
 
 chmod +x "$exe" ||
-    error 'Failed to set permissions on bun executable'
+    error 'Failed to set permissions on fun executable'
 
-rm -r "$bin_dir/bun-$target" "$exe.zip"
+rm -r "$bin_dir/fun-$target" "$exe.zip"
 
 tildify() {
     if [[ $1 = $HOME/* ]]; then
@@ -170,13 +170,13 @@ tildify() {
     fi
 }
 
-success "bun was installed successfully to $Bold_Green$(tildify "$exe")"
+success "fun was installed successfully to $Bold_Green$(tildify "$exe")"
 
-if command -v bun >/dev/null; then
+if command -v fun >/dev/null; then
     # Install completions, but we don't care if it fails
-    IS_BUN_AUTO_UPDATE=true $exe completions &>/dev/null || :
+    IS_FUN_AUTO_UPDATE=true $exe completions &>/dev/null || :
 
-    echo "Run 'bun --help' to get started"
+    echo "Run 'fun --help' to get started"
     exit
 fi
 
@@ -194,7 +194,7 @@ echo
 case $(basename "$SHELL") in
 fish)
     # Install completions, but we don't care if it fails
-    IS_BUN_AUTO_UPDATE=true SHELL=fish $exe completions &>/dev/null || :
+    IS_FUN_AUTO_UPDATE=true SHELL=fish $exe completions &>/dev/null || :
 
     commands=(
         "set --export $install_env $quoted_install_dir"
@@ -206,7 +206,7 @@ fish)
 
     if [[ -w $fish_config ]]; then
         {
-            echo -e '\n# bun'
+            echo -e '\n# fun'
 
             for command in "${commands[@]}"; do
                 echo "$command"
@@ -226,7 +226,7 @@ fish)
     ;;
 zsh)
     # Install completions, but we don't care if it fails
-    IS_BUN_AUTO_UPDATE=true SHELL=zsh $exe completions &>/dev/null || :
+    IS_FUN_AUTO_UPDATE=true SHELL=zsh $exe completions &>/dev/null || :
 
     commands=(
         "export $install_env=$quoted_install_dir"
@@ -238,7 +238,7 @@ zsh)
 
     if [[ -w $zsh_config ]]; then
         {
-            echo -e '\n# bun'
+            echo -e '\n# fun'
 
             for command in "${commands[@]}"; do
                 echo "$command"
@@ -258,7 +258,7 @@ zsh)
     ;;
 bash)
     # Install completions, but we don't care if it fails
-    IS_BUN_AUTO_UPDATE=true SHELL=bash $exe completions &>/dev/null || :
+    IS_FUN_AUTO_UPDATE=true SHELL=bash $exe completions &>/dev/null || :
 
     commands=(
         "export $install_env=$quoted_install_dir"
@@ -285,7 +285,7 @@ bash)
 
         if [[ -w $bash_config ]]; then
             {
-                echo -e '\n# bun'
+                echo -e '\n# fun'
 
                 for command in "${commands[@]}"; do
                     echo "$command"
@@ -323,4 +323,4 @@ if [[ $refresh_command ]]; then
     info_bold "  $refresh_command"
 fi
 
-info_bold "  bun --help"
+info_bold "  fun --help"

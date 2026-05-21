@@ -1,13 +1,13 @@
 ---
-title: Mock functions in `bun test`
+title: Mock functions in `fun test`
 sidebarTitle: Mock functions
 mode: center
 ---
 
-Create mocks with the `mock` function from `bun:test`.
+Create mocks with the `mock` function from `fun:test`.
 
 ```ts test.ts icon="/icons/typescript.svg"
-import { test, expect, mock } from "bun:test";
+import { test, expect, mock } from "fun:test";
 
 const random = mock(() => Math.random());
 ```
@@ -17,7 +17,7 @@ const random = mock(() => Math.random());
 The mock function can accept arguments.
 
 ```ts test.ts icon="/icons/typescript.svg"
-import { test, expect, mock } from "bun:test";
+import { test, expect, mock } from "fun:test";
 
 const random = mock((multiplier: number) => multiplier * Math.random());
 ```
@@ -27,7 +27,7 @@ const random = mock((multiplier: number) => multiplier * Math.random());
 The result of `mock()` is a new function that's been decorated with some additional properties.
 
 ```ts test.ts icon="/icons/typescript.svg"
-import { mock } from "bun:test";
+import { mock } from "fun:test";
 
 const random = mock((multiplier: number) => multiplier * Math.random());
 
@@ -49,7 +49,7 @@ random.mock.results;
 These extra properties make it possible to write `expect` assertions about usage of the mock function, including how many times it was called, the arguments, and the return values.
 
 ```ts test.ts icon="/icons/typescript.svg"
-import { test, expect, mock } from "bun:test";
+import { test, expect, mock } from "fun:test";
 
 const random = mock((multiplier: number) => multiplier * Math.random());
 
@@ -67,4 +67,4 @@ test("random", async () => {
 
 ---
 
-See [Docs > Test Runner > Mocks](/test/mocks) for complete documentation on mocking with the Bun test runner.
+See [Docs > Test Runner > Mocks](/test/mocks) for complete documentation on mocking with the Fun test runner.

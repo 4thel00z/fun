@@ -1,8 +1,8 @@
 --- a/src/liblsquic/lsquic_gquic_stubs.c
 +++ b/src/liblsquic/lsquic_gquic_stubs.c
 @@ -0,0 +1,108 @@
-+/* Bun: gQUIC (Google QUIC) is unreachable — Bun.serve and the H3 client only
-+ * negotiate IETF QUIC versions (see packages/bun-usockets/src/quic.c, which
++/* Fun: gQUIC (Google QUIC) is unreachable — Fun.serve and the H3 client only
++ * negotiate IETF QUIC versions (see packages/fun-usockets/src/quic.c, which
 + * masks es_versions with LSQUIC_IETF_VERSIONS). The real gQUIC sources pull
 + * in ~130 KB of common_cert_set tables plus the legacy handshake/parser. We
 + * compile this stub instead so the few unconditional references from

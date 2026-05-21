@@ -87,7 +87,7 @@ pub const Method = enum(u8) {
         return Map.get(str);
     }
 
-    const Map = bun.ComptimeStringMap(Method, .{
+    const Map = fun.ComptimeStringMap(Method, .{
         .{ "ACL", Method.ACL },
         .{ "BIND", Method.BIND },
         .{ "CHECKOUT", Method.CHECKOUT },
@@ -198,14 +198,14 @@ pub const Method = enum(u8) {
     };
 };
 
-export fn Bun__HTTPMethod__from(str: [*]const u8, len: usize) i16 {
+export fn Fun__HTTPMethod__from(str: [*]const u8, len: usize) i16 {
     const method: Method = Method.find(str[0..len]) orelse return -1;
     return @intFromEnum(method);
 }
 
 comptime {
-    _ = Bun__HTTPMethod__from;
+    _ = Fun__HTTPMethod__from;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

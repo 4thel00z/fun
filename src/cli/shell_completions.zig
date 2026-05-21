@@ -70,6 +70,6 @@ pub fn print(this: @This()) void {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Output = bun.Output;
-const strings = bun.strings;
+const fun = @import("fun");
+const Output = fun.Output;
+const strings = fun.strings;

@@ -1,4 +1,4 @@
-/// Call Frame for JavaScript -> Native function calls. In Bun, it is
+/// Call Frame for JavaScript -> Native function calls. In Fun, it is
 /// preferred to use the bindings generator instead of directly decoding
 /// arguments. See `docs/project/bindgen.md`
 pub const CallFrame = opaque {
@@ -148,7 +148,7 @@ pub const CallFrame = opaque {
     /// arguments(n).mut() -> `var args = argumentsAsArray(n); &args`
     pub fn arguments_old(self: *const CallFrame, comptime max: usize) Arguments(max) {
         const slice = self.arguments();
-        comptime bun.assert(max <= 15);
+        comptime fun.assert(max <= 15);
         return switch (@as(u4, @min(slice.len, max))) {
             0 => .{ .ptr = @splat(.zero), .len = 0 },
             inline 1...15 => |count| Arguments(max).init(comptime @min(count, max), slice.ptr),
@@ -159,7 +159,7 @@ pub const CallFrame = opaque {
     /// argumentsAsArray(n)
     pub fn argumentsUndef(self: *const CallFrame, comptime max: usize) Arguments(max) {
         const slice = self.arguments();
-        comptime bun.assert(max <= 9);
+        comptime fun.assert(max <= 9);
         return switch (@as(u4, @min(slice.len, max))) {
             0 => .{ .ptr = @splat(.js_undefined), .len = 0 },
             inline 1...9 => |count| Arguments(max).initUndef(@min(count, max), slice.ptr),
@@ -167,20 +167,20 @@ pub const CallFrame = opaque {
         };
     }
 
-    extern fn Bun__CallFrame__isFromBunMain(*const CallFrame, *const VM) bool;
-    pub const isFromBunMain = Bun__CallFrame__isFromBunMain;
+    extern fn Fun__CallFrame__isFromFunMain(*const CallFrame, *const VM) bool;
+    pub const isFromFunMain = Fun__CallFrame__isFromFunMain;
 
-    extern fn Bun__CallFrame__getCallerSrcLoc(*const CallFrame, *JSGlobalObject, *bun.String, *c_uint, *c_uint) void;
+    extern fn Fun__CallFrame__getCallerSrcLoc(*const CallFrame, *JSGlobalObject, *fun.String, *c_uint, *c_uint) void;
     pub const CallerSrcLoc = struct {
-        str: bun.String,
+        str: fun.String,
         line: c_uint,
         column: c_uint,
     };
     pub fn getCallerSrcLoc(call_frame: *const CallFrame, globalThis: *JSGlobalObject) CallerSrcLoc {
-        var str: bun.String = undefined;
+        var str: fun.String = undefined;
         var line: c_uint = undefined;
         var column: c_uint = undefined;
-        Bun__CallFrame__getCallerSrcLoc(call_frame, globalThis, &str, &line, &column);
+        Fun__CallFrame__getCallerSrcLoc(call_frame, globalThis, &str, &line, &column);
         return .{
             .str = str,
             .line = line,
@@ -188,9 +188,9 @@ pub const CallFrame = opaque {
         };
     }
 
-    extern fn Bun__CallFrame__describeFrame(*const CallFrame) [*:0]const u8;
+    extern fn Fun__CallFrame__describeFrame(*const CallFrame) [*:0]const u8;
     pub fn describeFrame(self: *const CallFrame) [:0]const u8 {
-        return std.mem.span(Bun__CallFrame__describeFrame(self));
+        return std.mem.span(Fun__CallFrame__describeFrame(self));
     }
 
     pub const Iterator = struct {
@@ -211,10 +211,10 @@ pub const CallFrame = opaque {
     pub const ArgumentsSlice = struct {
         remaining: []const jsc.JSValue,
         vm: *jsc.VirtualMachine,
-        arena: bun.ArenaAllocator = bun.ArenaAllocator.init(bun.default_allocator),
+        arena: fun.ArenaAllocator = fun.ArenaAllocator.init(fun.default_allocator),
         all: []const jsc.JSValue,
         threw: bool = false,
-        protected: bun.bit_set.IntegerBitSet(32) = bun.bit_set.IntegerBitSet(32).initEmpty(),
+        protected: fun.bit_set.IntegerBitSet(32) = fun.bit_set.IntegerBitSet(32).initEmpty(),
         will_be_async: bool = false,
 
         pub fn unprotect(slice: *ArgumentsSlice) void {
@@ -222,7 +222,7 @@ pub const CallFrame = opaque {
             while (iter.next()) |i| {
                 slice.all[i].unprotect();
             }
-            slice.protected = bun.bit_set.IntegerBitSet(32).initEmpty();
+            slice.protected = fun.bit_set.IntegerBitSet(32).initEmpty();
         }
 
         pub fn deinit(slice: *ArgumentsSlice) void {
@@ -251,16 +251,16 @@ pub const CallFrame = opaque {
                 .remaining = slice,
                 .vm = vm,
                 .all = slice,
-                .arena = bun.ArenaAllocator.init(vm.allocator),
+                .arena = fun.ArenaAllocator.init(vm.allocator),
             };
         }
 
         pub fn initAsync(vm: *jsc.VirtualMachine, slice: []const jsc.JSValue) ArgumentsSlice {
             return ArgumentsSlice{
-                .remaining = bun.default_allocator.dupe(jsc.JSValue, slice),
+                .remaining = fun.default_allocator.dupe(jsc.JSValue, slice),
                 .vm = vm,
                 .all = slice,
-                .arena = bun.ArenaAllocator.init(bun.default_allocator),
+                .arena = fun.ArenaAllocator.init(fun.default_allocator),
             };
         }
 
@@ -295,10 +295,10 @@ pub const CallFrame = opaque {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const VM = @import("./VM.zig").VM;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("error.stack getter that throws should not crash", async () => {
   using dir = tempDir("throwing-stack-getter", {
@@ -15,9 +15,9 @@ test("error.stack getter that throws should not crash", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -45,9 +45,9 @@ test("error.stack getter returning circular reference", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -81,9 +81,9 @@ test("error with multiple throwing getters", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

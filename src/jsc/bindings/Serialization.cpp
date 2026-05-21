@@ -22,7 +22,7 @@ enum class SerializedFlags : uint8_t {
 };
 
 /// Returns a "slice" that also contains a pointer to the SerializedScriptValue. Must be freed by the caller
-extern "C" SerializedValueSlice Bun__serializeJSValue(JSGlobalObject* globalObject, EncodedJSValue encodedValue, const SerializedFlags flags)
+extern "C" SerializedValueSlice Fun__serializeJSValue(JSGlobalObject* globalObject, EncodedJSValue encodedValue, const SerializedFlags flags)
 {
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -52,14 +52,14 @@ extern "C" SerializedValueSlice Bun__serializeJSValue(JSGlobalObject* globalObje
     };
 }
 
-extern "C" void Bun__SerializedScriptSlice__free(SerializedScriptValue* value)
+extern "C" void Fun__SerializedScriptSlice__free(SerializedScriptValue* value)
 {
     // Use deref() instead of delete to properly handle CHECK_REF_COUNTED_LIFECYCLE.
     // The value was leaked via leakRef() which leaves refcount at 1, so deref() will delete it.
     value->deref();
 }
 
-extern "C" EncodedJSValue Bun__JSValue__deserialize(JSGlobalObject* globalObject, const uint8_t* bytes, size_t size)
+extern "C" EncodedJSValue Fun__JSValue__deserialize(JSGlobalObject* globalObject, const uint8_t* bytes, size_t size)
 {
     Vector<uint8_t> vector(std::span { bytes, size });
     /// ?! did i just give ownership of these bytes to JSC?

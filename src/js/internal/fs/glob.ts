@@ -1,4 +1,4 @@
-import type { GlobScanOptions } from "bun";
+import type { GlobScanOptions } from "fun";
 const { validateObject, validateString, validateFunction, validateArray } = require("internal/validators");
 const { sep } = require("node:path");
 
@@ -19,11 +19,11 @@ async function* glob(pattern: string | string[], options?: GlobOptions): AsyncGe
   const globOptions = mapOptions(options || {});
   const exclude = globOptions.exclude;
   const excludeGlobs = Array.isArray(exclude)
-    ? exclude.flatMap(pattern => [new Bun.Glob(pattern), new Bun.Glob(pattern.replace(/\/+$/, "") + "/**")])
+    ? exclude.flatMap(pattern => [new Fun.Glob(pattern), new Fun.Glob(pattern.replace(/\/+$/, "") + "/**")])
     : null;
 
   for (const pat of patterns) {
-    for await (const ent of new Bun.Glob(pat).scan(globOptions)) {
+    for await (const ent of new Fun.Glob(pat).scan(globOptions)) {
       if (typeof exclude === "function") {
         if (exclude(ent)) continue;
       } else if (excludeGlobs) {
@@ -42,11 +42,11 @@ function* globSync(pattern: string | string[], options?: GlobOptions): Generator
   const globOptions = mapOptions(options || {});
   const exclude = globOptions.exclude;
   const excludeGlobs = Array.isArray(exclude)
-    ? exclude.flatMap(pattern => [new Bun.Glob(pattern), new Bun.Glob(pattern.replace(/\/+$/, "") + "/**")])
+    ? exclude.flatMap(pattern => [new Fun.Glob(pattern), new Fun.Glob(pattern.replace(/\/+$/, "") + "/**")])
     : null;
 
   for (const pat of patterns) {
-    for (const ent of new Bun.Glob(pat).scanSync(globOptions)) {
+    for (const ent of new Fun.Glob(pat).scanSync(globOptions)) {
       if (typeof exclude === "function") {
         if (exclude(ent)) continue;
       } else if (excludeGlobs) {
@@ -93,11 +93,11 @@ function mapOptions(options: GlobOptions): GlobScanOptions & { exclude: GlobOpti
   return {
     // NOTE: this is subtly different from Glob's default behavior.
     // `process.cwd()` may be overridden by JS code, but native code will used the
-    // cached `getcwd` on BunProcess.
+    // cached `getcwd` on FunProcess.
     cwd: options?.cwd ?? process.cwd(),
     // https://github.com/nodejs/node/blob/a9546024975d0bfb0a8ae47da323b10fb5cbb88b/lib/internal/fs/glob.js#L655
     followSymlinks: true,
-    // https://github.com/oven-sh/bun/issues/20507
+    // https://github.com/underdoc-org/fun/issues/20507
     onlyFiles: false,
     exclude,
   };

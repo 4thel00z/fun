@@ -1,4 +1,4 @@
-const { test, expect } = require("bun:test");
+const { test, expect } = require("fun:test");
 
 test("SourceMap is available from node:module", () => {
   const module = require("node:module");

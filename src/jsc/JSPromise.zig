@@ -103,21 +103,21 @@ pub const JSPromise = opaque {
             (this.strong.get() orelse return).asPromise().?.resolve(globalThis, val);
         }
 
-        pub fn reject(this: *Strong, globalThis: *jsc.JSGlobalObject, val: JSError!jsc.JSValue) bun.JSTerminated!void {
+        pub fn reject(this: *Strong, globalThis: *jsc.JSGlobalObject, val: JSError!jsc.JSValue) fun.JSTerminated!void {
             try this.swap().reject(globalThis, val catch globalThis.tryTakeException().?);
         }
 
         /// Like `reject` but first attaches async stack frames from this
         /// promise's await chain to the error. Use when rejecting from native
         /// code at the top of the event loop (threadpool callback).
-        pub fn rejectWithAsyncStack(this: *Strong, globalThis: *jsc.JSGlobalObject, val: JSError!jsc.JSValue) bun.JSTerminated!void {
+        pub fn rejectWithAsyncStack(this: *Strong, globalThis: *jsc.JSGlobalObject, val: JSError!jsc.JSValue) fun.JSTerminated!void {
             const err = val catch return this.reject(globalThis, val);
             err.attachAsyncStackFromPromise(globalThis, this.get());
             try this.swap().reject(globalThis, err);
         }
 
         /// Like `reject`, except it drains microtasks at the end of the current event loop iteration.
-        pub fn rejectTask(this: *Strong, globalThis: *jsc.JSGlobalObject, val: jsc.JSValue) bun.JSTerminated!void {
+        pub fn rejectTask(this: *Strong, globalThis: *jsc.JSGlobalObject, val: jsc.JSValue) fun.JSTerminated!void {
             const loop = jsc.VirtualMachine.get().eventLoop();
             loop.enter();
             defer loop.exit();
@@ -126,12 +126,12 @@ pub const JSPromise = opaque {
 
         pub const rejectOnNextTick = @compileError("Either use an event loop task, or you're draining microtasks when you shouldn't be.");
 
-        pub fn resolve(this: *Strong, globalThis: *jsc.JSGlobalObject, val: jsc.JSValue) bun.JSTerminated!void {
+        pub fn resolve(this: *Strong, globalThis: *jsc.JSGlobalObject, val: jsc.JSValue) fun.JSTerminated!void {
             try this.swap().resolve(globalThis, val);
         }
 
         /// Like `resolve`, except it drains microtasks at the end of the current event loop iteration.
-        pub fn resolveTask(this: *Strong, globalThis: *jsc.JSGlobalObject, val: jsc.JSValue) bun.JSTerminated!void {
+        pub fn resolveTask(this: *Strong, globalThis: *jsc.JSGlobalObject, val: jsc.JSValue) fun.JSTerminated!void {
             const loop = jsc.VirtualMachine.get().eventLoop();
             loop.enter();
             defer loop.exit();
@@ -188,7 +188,7 @@ pub const JSPromise = opaque {
         globalObject: *JSGlobalObject,
         comptime Function: anytype,
         args: std.meta.ArgsTuple(@TypeOf(Function)),
-    ) bun.JSTerminated!JSValue {
+    ) fun.JSTerminated!JSValue {
         const Args = std.meta.ArgsTuple(@TypeOf(Function));
         const Fn = Function;
         const Wrapper = struct {
@@ -227,19 +227,19 @@ pub const JSPromise = opaque {
     }
 
     pub fn status(this: *const JSPromise) Status {
-        return @enumFromInt(bun.cpp.JSC__JSPromise__status(this));
+        return @enumFromInt(fun.cpp.JSC__JSPromise__status(this));
     }
 
     pub fn result(this: *JSPromise, vm: *VM) JSValue {
-        return bun.cpp.JSC__JSPromise__result(this, vm);
+        return fun.cpp.JSC__JSPromise__result(this, vm);
     }
 
     pub fn isHandled(this: *const JSPromise) bool {
-        return bun.cpp.JSC__JSPromise__isHandled(this);
+        return fun.cpp.JSC__JSPromise__isHandled(this);
     }
 
     pub fn setHandled(this: *JSPromise) void {
-        bun.cpp.JSC__JSPromise__setHandled(this);
+        fun.cpp.JSC__JSPromise__setHandled(this);
     }
 
     /// Create a new resolved promise resolving to a given value.
@@ -273,8 +273,8 @@ pub const JSPromise = opaque {
     /// Fulfill an existing promise with the value
     /// The value can be another Promise
     /// If you want to create a new Promise that is already resolved, see JSPromise.resolvedPromiseValue
-    pub fn resolve(this: *JSPromise, globalThis: *JSGlobalObject, value: JSValue) bun.JSTerminated!void {
-        if (comptime bun.Environment.isDebug) {
+    pub fn resolve(this: *JSPromise, globalThis: *JSGlobalObject, value: JSValue) fun.JSTerminated!void {
+        if (comptime fun.Environment.isDebug) {
             const loop = jsc.VirtualMachine.get().eventLoop();
             loop.debug.js_call_count_outside_tick_queue += @as(usize, @intFromBool(!loop.debug.is_inside_tick_queue));
             if (loop.debug.track_last_fn_name and !loop.debug.is_inside_tick_queue) {
@@ -282,11 +282,11 @@ pub const JSPromise = opaque {
             }
         }
 
-        bun.cpp.JSC__JSPromise__resolve(this, globalThis, value) catch return error.JSTerminated;
+        fun.cpp.JSC__JSPromise__resolve(this, globalThis, value) catch return error.JSTerminated;
     }
 
-    pub fn reject(this: *JSPromise, globalThis: *JSGlobalObject, value: JSError!JSValue) bun.JSTerminated!void {
-        if (comptime bun.Environment.isDebug) {
+    pub fn reject(this: *JSPromise, globalThis: *JSGlobalObject, value: JSError!JSValue) fun.JSTerminated!void {
+        if (comptime fun.Environment.isDebug) {
             const loop = jsc.VirtualMachine.get().eventLoop();
             loop.debug.js_call_count_outside_tick_queue += @as(usize, @intFromBool(!loop.debug.is_inside_tick_queue));
             if (loop.debug.track_last_fn_name and !loop.debug.is_inside_tick_queue) {
@@ -308,18 +308,18 @@ pub const JSPromise = opaque {
             },
         };
 
-        bun.cpp.JSC__JSPromise__reject(this, globalThis, err) catch return error.JSTerminated;
+        fun.cpp.JSC__JSPromise__reject(this, globalThis, err) catch return error.JSTerminated;
     }
 
-    pub fn rejectAsHandled(this: *JSPromise, globalThis: *JSGlobalObject, value: JSValue) bun.JSTerminated!void {
-        bun.cpp.JSC__JSPromise__rejectAsHandled(this, globalThis, value) catch return error.JSTerminated;
+    pub fn rejectAsHandled(this: *JSPromise, globalThis: *JSGlobalObject, value: JSValue) fun.JSTerminated!void {
+        fun.cpp.JSC__JSPromise__rejectAsHandled(this, globalThis, value) catch return error.JSTerminated;
     }
 
     /// Like `reject` but first attaches async stack frames from this promise's
     /// await chain to the error. Use when rejecting from native code at the top
     /// of the event loop (threadpool callback) where the error would otherwise
     /// have an empty stack trace.
-    pub fn rejectWithAsyncStack(this: *JSPromise, globalThis: *JSGlobalObject, value: JSError!JSValue) bun.JSTerminated!void {
+    pub fn rejectWithAsyncStack(this: *JSPromise, globalThis: *JSGlobalObject, value: JSError!JSValue) fun.JSTerminated!void {
         const err = value catch return this.reject(globalThis, value);
         err.attachAsyncStackFromPromise(globalThis, this);
         return this.reject(globalThis, err);
@@ -362,11 +362,11 @@ pub const JSPromise = opaque {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const String = bun.String;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VM = jsc.VM;

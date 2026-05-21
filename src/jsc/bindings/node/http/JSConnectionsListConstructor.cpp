@@ -3,7 +3,7 @@
 #include "ZigGlobalObject.h"
 #include <JavaScriptCore/JSSet.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -31,4 +31,4 @@ JSC_DEFINE_HOST_FUNCTION(constructConnectionsList, (JSGlobalObject * lexicalGlob
     return JSValue::encode(JSConnectionsList::create(vm, globalObject, structure, allConnections, activeConnections));
 }
 
-} // namespace Bun
+} // namespace Fun

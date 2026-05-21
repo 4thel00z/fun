@@ -18,7 +18,7 @@
 #include <JavaScriptCore/IteratorOperations.h>
 #include <JavaScriptCore/JSMapIterator.h>
 #include <JavaScriptCore/IterationKind.h>
-#include "BunProcess.h"
+#include "FunProcess.h"
 #include "headers.h"
 
 namespace Inspector {
@@ -28,15 +28,15 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorLifecycleAgent);
 // Zig bindings implementation
 extern "C" {
 
-void Bun__LifecycleAgentEnable(Inspector::InspectorLifecycleAgent* agent);
-void Bun__LifecycleAgentDisable(Inspector::InspectorLifecycleAgent* agent);
+void Fun__LifecycleAgentEnable(Inspector::InspectorLifecycleAgent* agent);
+void Fun__LifecycleAgentDisable(Inspector::InspectorLifecycleAgent* agent);
 
-void Bun__LifecycleAgentReportReload(Inspector::InspectorLifecycleAgent* agent)
+void Fun__LifecycleAgentReportReload(Inspector::InspectorLifecycleAgent* agent)
 {
     agent->reportReload();
 }
 
-void Bun__LifecycleAgentReportError(Inspector::InspectorLifecycleAgent* agent, ZigException* exception)
+void Fun__LifecycleAgentReportError(Inspector::InspectorLifecycleAgent* agent, ZigException* exception)
 {
     ASSERT(exception);
     ASSERT(agent);
@@ -44,8 +44,8 @@ void Bun__LifecycleAgentReportError(Inspector::InspectorLifecycleAgent* agent, Z
     agent->reportError(*exception);
 }
 
-void Bun__LifecycleAgentPreventExit(Inspector::InspectorLifecycleAgent* agent);
-void Bun__LifecycleAgentStopPreventingExit(Inspector::InspectorLifecycleAgent* agent);
+void Fun__LifecycleAgentPreventExit(Inspector::InspectorLifecycleAgent* agent);
+void Fun__LifecycleAgentStopPreventingExit(Inspector::InspectorLifecycleAgent* agent);
 }
 
 InspectorLifecycleAgent::InspectorLifecycleAgent(JSC::JSGlobalObject& globalObject)
@@ -59,7 +59,7 @@ InspectorLifecycleAgent::InspectorLifecycleAgent(JSC::JSGlobalObject& globalObje
 InspectorLifecycleAgent::~InspectorLifecycleAgent()
 {
     if (m_enabled) {
-        Bun__LifecycleAgentDisable(this);
+        Fun__LifecycleAgentDisable(this);
     }
 }
 
@@ -78,7 +78,7 @@ Protocol::ErrorStringOr<void> InspectorLifecycleAgent::enable()
         return {};
 
     m_enabled = true;
-    Bun__LifecycleAgentEnable(this);
+    Fun__LifecycleAgentEnable(this);
     return {};
 }
 
@@ -88,7 +88,7 @@ Protocol::ErrorStringOr<void> InspectorLifecycleAgent::disable()
         return {};
 
     m_enabled = false;
-    Bun__LifecycleAgentDisable(this);
+    Fun__LifecycleAgentDisable(this);
     return {};
 }
 
@@ -192,8 +192,8 @@ Protocol::ErrorStringOr<ModuleGraph> InspectorLifecycleAgent::getModuleGraph()
 
     String main;
     {
-        auto& builtinNames = Bun::builtinNames(vm);
-        auto value = global->bunObject()->get(global, builtinNames.mainPublicName());
+        auto& builtinNames = Fun::builtinNames(vm);
+        auto value = global->funObject()->get(global, builtinNames.mainPublicName());
         RETURN_IF_EXCEPTION(scope, makeUnexpected(ErrorString("Failed to get main"_s)));
         main = value.toWTFString(global);
         RETURN_IF_EXCEPTION(scope, makeUnexpected(ErrorString("Failed to convert value to string"_s)));
@@ -201,7 +201,7 @@ Protocol::ErrorStringOr<ModuleGraph> InspectorLifecycleAgent::getModuleGraph()
 
     String cwd;
     {
-        auto cwdValue = JSC::JSValue::decode(Bun__Process__getCwd(&m_globalObject));
+        auto cwdValue = JSC::JSValue::decode(Fun__Process__getCwd(&m_globalObject));
         RETURN_IF_EXCEPTION(scope, makeUnexpected(ErrorString("Failed to get cwd"_s)));
         cwd = cwdValue.toWTFString(global);
         RETURN_IF_EXCEPTION(scope, makeUnexpected(ErrorString("Failed to convert value to string"_s)));

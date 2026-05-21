@@ -1,7 +1,7 @@
 // Microbench for the InternalSourceMap stack-trace remapping path. Compare
 // against a baseline build by running:
 //
-//   bun run build:release bench/sourcemap/internal-sourcemap-bench.ts
+//   fun run build:release bench/sourcemap/internal-sourcemap-bench.ts
 //
 // On first run this generates a ~150k-line .ts module next to this file so the
 // stack frames being remapped live inside a large SavedSourceMap entry.

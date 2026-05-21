@@ -1,8 +1,8 @@
-const tl_bufs = bun.ThreadlocalBuffers(struct {
-    final_path_buf: bun.PathBuffer = undefined,
-    ssh_path_buf: bun.PathBuffer = undefined,
-    folder_name_buf: bun.PathBuffer = undefined,
-    json_path_buf: bun.PathBuffer = undefined,
+const tl_bufs = fun.ThreadlocalBuffers(struct {
+    final_path_buf: fun.PathBuffer = undefined,
+    ssh_path_buf: fun.PathBuffer = undefined,
+    folder_name_buf: fun.PathBuffer = undefined,
+    json_path_buf: fun.PathBuffer = undefined,
 });
 
 const SloppyGlobalGitConfig = struct {
@@ -18,18 +18,18 @@ const SloppyGlobalGitConfig = struct {
     }
 
     pub fn loadAndParse() void {
-        const home_dir = bun.env_var.HOME.get() orelse return;
+        const home_dir = fun.env_var.HOME.get() orelse return;
 
-        var config_file_path_buf: bun.PathBuffer = undefined;
-        const config_file_path = bun.path.joinAbsStringBufZ(home_dir, &config_file_path_buf, &.{".gitconfig"}, .auto);
-        var stack_fallback = std.heap.stackFallback(4096, bun.default_allocator);
+        var config_file_path_buf: fun.PathBuffer = undefined;
+        const config_file_path = fun.path.joinAbsStringBufZ(home_dir, &config_file_path_buf, &.{".gitconfig"}, .auto);
+        var stack_fallback = std.heap.stackFallback(4096, fun.default_allocator);
         const allocator = stack_fallback.get();
         const source = File.toSource(config_file_path, allocator, .{ .convert_bom = true }).unwrap() catch {
             return;
         };
         defer allocator.free(source.contents);
 
-        var remaining = bun.strings.split(source.contents, "\n");
+        var remaining = fun.strings.split(source.contents, "\n");
         var found_askpass = false;
         var found_ssh_command = false;
         var @"[core]" = false;
@@ -118,19 +118,19 @@ pub const Repository = extern struct {
                 // A value can still be entered, but we need to find a workaround
                 // so the user can see what is being prompted. By default the settings
                 // below will cause no prompt and throw instead.
-                var cloned = bun.handleOom(other.map.cloneWithAllocator(allocator));
+                var cloned = fun.handleOom(other.map.cloneWithAllocator(allocator));
 
                 if (cloned.get("GIT_ASKPASS") == null) {
                     const config = SloppyGlobalGitConfig.get();
                     if (!config.has_askpass) {
-                        bun.handleOom(cloned.put("GIT_ASKPASS", "echo"));
+                        fun.handleOom(cloned.put("GIT_ASKPASS", "echo"));
                     }
                 }
 
                 if (cloned.get("GIT_SSH_COMMAND") == null) {
                     const config = SloppyGlobalGitConfig.get();
                     if (!config.has_ssh_command) {
-                        bun.handleOom(cloned.put("GIT_SSH_COMMAND", "ssh -oStrictHostKeyChecking=accept-new"));
+                        fun.handleOom(cloned.put("GIT_SSH_COMMAND", "ssh -oStrictHostKeyChecking=accept-new"));
                     }
                 }
 
@@ -140,7 +140,7 @@ pub const Repository = extern struct {
         }
     } = .{};
 
-    pub const Hosts = bun.ComptimeStringMap(string, .{
+    pub const Hosts = fun.ComptimeStringMap(string, .{
         .{ "bitbucket", ".org" },
         .{ "github", ".com" },
         .{ "gitlab", ".com" },
@@ -220,15 +220,15 @@ pub const Repository = extern struct {
 
         if (name.len == 0) {
             const version_literal = dep.version.literal.slice(buf);
-            const name_buf = bun.handleOom(allocator.alloc(u8, bun.sha.EVP.SHA1.digest));
-            var sha1 = bun.sha.SHA1.init();
+            const name_buf = fun.handleOom(allocator.alloc(u8, fun.sha.EVP.SHA1.digest));
+            var sha1 = fun.sha.SHA1.init();
             defer sha1.deinit();
             sha1.update(version_literal);
-            sha1.final(name_buf[0..bun.sha.SHA1.digest]);
-            return name_buf[0..bun.sha.SHA1.digest];
+            sha1.final(name_buf[0..fun.sha.SHA1.digest]);
+            return name_buf[0..fun.sha.SHA1.digest];
         }
 
-        return bun.handleOom(allocator.dupe(u8, name));
+        return fun.handleOom(allocator.dupe(u8, name));
     }
 
     pub fn order(lhs: *const Repository, rhs: *const Repository, lhs_buf: []const u8, rhs_buf: []const u8) std.math.Order {
@@ -324,7 +324,7 @@ pub const Repository = extern struct {
         buf: []const u8,
         repository: *const Repository,
         pub fn format(formatter: Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-            if (comptime Environment.allow_assert) bun.assert(formatter.label.len > 0);
+            if (comptime Environment.allow_assert) fun.assert(formatter.label.len > 0);
             try writer.writeAll(formatter.label);
 
             const repo = formatter.repository.repo.slice(formatter.buf);
@@ -415,7 +415,7 @@ pub const Repository = extern struct {
                 .protocol = .{ .well_formed = .git_plus_ssh },
             };
 
-            var corrected = hosted_git_info.correctUrl(&pair, bun.default_allocator) catch {
+            var corrected = hosted_git_info.correctUrl(&pair, fun.default_allocator) catch {
                 return url; // If correction fails, return original
             };
             defer corrected.deinit();
@@ -423,7 +423,7 @@ pub const Repository = extern struct {
             // Copy corrected URL to thread-local buffer
             const corrected_str = corrected.urlSlice();
             const result = ssh_path_buf[0..corrected_str.len];
-            bun.copy(u8, result, corrected_str);
+            fun.copy(u8, result, corrected_str);
             return result;
         }
 
@@ -436,16 +436,16 @@ pub const Repository = extern struct {
             if (colon_index) |colon| {
                 // make sure known hosts have `.com` or `.org`
                 if (Hosts.get(url[0..colon])) |tld| {
-                    bun.copy(u8, rest, url[0..colon]);
-                    bun.copy(u8, rest[colon..], tld);
+                    fun.copy(u8, rest, url[0..colon]);
+                    fun.copy(u8, rest[colon..], tld);
                     rest[colon + tld.len] = '/';
-                    bun.copy(u8, rest[colon + tld.len + 1 ..], url[colon + 1 ..]);
+                    fun.copy(u8, rest[colon + tld.len + 1 ..], url[colon + 1 ..]);
                     const out = ssh_path_buf[0 .. url.len + "ssh://git@".len + tld.len];
                     return out;
                 }
             }
 
-            bun.copy(u8, rest, url);
+            fun.copy(u8, rest, url);
             if (colon_index) |colon| rest[colon] = '/';
             const final = ssh_path_buf[0 .. url.len + "ssh://".len];
             return final;
@@ -462,7 +462,7 @@ pub const Repository = extern struct {
 
         if (strings.hasPrefixComptime(url, "ssh://")) {
             final_path_buf[0.."https".len].* = "https".*;
-            bun.copy(u8, final_path_buf["https".len..], url["ssh".len..]);
+            fun.copy(u8, final_path_buf["https".len..], url["ssh".len..]);
             const out = final_path_buf[0 .. url.len - "ssh".len + "https".len];
             return out;
         }
@@ -476,16 +476,16 @@ pub const Repository = extern struct {
             if (colon_index) |colon| {
                 // make sure known hosts have `.com` or `.org`
                 if (Hosts.get(url[0..colon])) |tld| {
-                    bun.copy(u8, rest, url[0..colon]);
-                    bun.copy(u8, rest[colon..], tld);
+                    fun.copy(u8, rest, url[0..colon]);
+                    fun.copy(u8, rest[colon..], tld);
                     rest[colon + tld.len] = '/';
-                    bun.copy(u8, rest[colon + tld.len + 1 ..], url[colon + 1 ..]);
+                    fun.copy(u8, rest[colon + tld.len + 1 ..], url[colon + 1 ..]);
                     const out = final_path_buf[0 .. url.len + "https://".len + tld.len];
                     return out;
                 }
             }
 
-            bun.copy(u8, rest, url);
+            fun.copy(u8, rest, url);
             if (colon_index) |colon| rest[colon] = '/';
             return final_path_buf[0 .. url.len + "https://".len];
         }
@@ -503,9 +503,9 @@ pub const Repository = extern struct {
         url: string,
         attempt: u8,
     ) !std.fs.Dir {
-        bun.analytics.Features.git_dependencies += 1;
+        fun.analytics.Features.git_dependencies += 1;
         const folder_name = try std.fmt.bufPrintZ(&tl_bufs.get().folder_name_buf, "{f}.git", .{
-            bun.fmt.hexIntLower(task_id.get()),
+            fun.fmt.hexIntLower(task_id.get()),
         });
 
         return if (cache_dir.openDirZ(folder_name, .{})) |dir| fetch: {
@@ -567,7 +567,7 @@ pub const Repository = extern struct {
         task_id: Install.Task.Id,
     ) !string {
         const path = Path.joinAbsString(PackageManager.get().cache_directory_path, &.{try std.fmt.bufPrint(&tl_bufs.get().folder_name_buf, "{f}.git", .{
-            bun.fmt.hexIntLower(task_id.get()),
+            fun.fmt.hexIntLower(task_id.get()),
         })}, .auto);
 
         _ = repo_dir;
@@ -601,11 +601,11 @@ pub const Repository = extern struct {
         url: string,
         resolved: string,
     ) !ExtractData {
-        bun.analytics.Features.git_dependencies += 1;
+        fun.analytics.Features.git_dependencies += 1;
         const bufs = tl_bufs.get();
         const folder_name = PackageManager.cachedGitFolderNamePrint(&bufs.folder_name_buf, resolved, null);
 
-        var package_dir = bun.openDir(cache_dir, folder_name) catch |not_found| brk: {
+        var package_dir = fun.openDir(cache_dir, folder_name) catch |not_found| brk: {
             if (not_found != error.ENOENT) return not_found;
 
             const target = Path.joinAbsString(PackageManager.get().cache_directory_path, &.{folder_name}, .auto);
@@ -617,7 +617,7 @@ pub const Repository = extern struct {
                 "core.longpaths=true",
                 "--quiet",
                 "--no-checkout",
-                try bun.getFdPath(.fromStdDir(repo_dir), &bufs.final_path_buf),
+                try fun.getFdPath(.fromStdDir(repo_dir), &bufs.final_path_buf),
                 target,
             }) catch |err| {
                 log.addErrorFmt(
@@ -642,14 +642,14 @@ pub const Repository = extern struct {
                 ) catch unreachable;
                 return err;
             };
-            var dir = try bun.openDir(cache_dir, folder_name);
+            var dir = try fun.openDir(cache_dir, folder_name);
             dir.deleteTree(".git") catch {};
 
             if (resolved.len > 0) insert_tag: {
-                const git_tag = dir.createFileZ(".bun-tag", .{ .truncate = true }) catch break :insert_tag;
+                const git_tag = dir.createFileZ(".fun-tag", .{ .truncate = true }) catch break :insert_tag;
                 defer git_tag.close();
                 git_tag.writeAll(resolved) catch {
-                    dir.deleteFileZ(".bun-tag") catch {};
+                    dir.deleteFileZ(".fun-tag") catch {};
                 };
             }
 
@@ -657,7 +657,7 @@ pub const Repository = extern struct {
         };
         defer package_dir.close();
 
-        const json_file, const json_buf = bun.sys.File.readFileFrom(package_dir, "package.json", allocator).unwrap() catch |err| {
+        const json_file, const json_buf = fun.sys.File.readFileFrom(package_dir, "package.json", allocator).unwrap() catch |err| {
             if (err == error.ENOENT) {
                 // allow git dependencies without package.json
                 return .{
@@ -706,7 +706,7 @@ const string = []const u8;
 
 const Dependency = @import("./dependency.zig");
 const DotEnv = @import("../dotenv/env_loader.zig");
-const Environment = @import("../bun_core/env.zig");
+const Environment = @import("../fun_core/env.zig");
 const hosted_git_info = @import("./hosted_git_info.zig");
 const std = @import("std");
 const FileSystem = @import("../resolver/fs.zig").FileSystem;
@@ -715,12 +715,12 @@ const Install = @import("./install.zig");
 const ExtractData = Install.ExtractData;
 const PackageManager = Install.PackageManager;
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const Path = bun.path;
-const logger = bun.logger;
-const strings = bun.strings;
-const File = bun.sys.File;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const Path = fun.path;
+const logger = fun.logger;
+const strings = fun.strings;
+const File = fun.sys.File;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;

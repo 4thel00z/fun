@@ -1,5 +1,5 @@
-import { heapStats } from "bun:jsc";
-import { describe, expect, test } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { describe, expect, test } from "fun:test";
 import { expectMaxObjectTypeCount } from "harness";
 
 describe("ReadableStream.pipeTo with AbortSignal", () => {
@@ -31,7 +31,7 @@ describe("ReadableStream.pipeTo with AbortSignal", () => {
     }
 
     // Allow microtasks to settle before GC.
-    await Bun.sleep(0);
+    await Fun.sleep(0);
 
     // Allow some slack for GC timing, but nowhere near `iterations`.
     await expectMaxObjectTypeCount(expect, "AbortSignal", baseline + 20);
@@ -58,7 +58,7 @@ describe("ReadableStream.pipeTo with AbortSignal", () => {
       await iteration();
     }
 
-    await Bun.sleep(0);
+    await Fun.sleep(0);
     await expectMaxObjectTypeCount(expect, "AbortSignal", baseline + 20);
   });
 });

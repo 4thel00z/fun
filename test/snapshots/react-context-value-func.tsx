@@ -1,6 +1,6 @@
 import {
 __require as require
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import * as $a77976b9 from "http://localhost:8080/node_modules/react/jsx-dev-runtime.js";
 var JSX = require($a77976b9);
 var jsx = require(JSX).jsxDEV;

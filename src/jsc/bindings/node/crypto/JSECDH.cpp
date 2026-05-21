@@ -12,7 +12,7 @@
 #include "BufferEncodingType.h"
 #include "CryptoUtil.h"
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSECDH::s_info = { "ECDH"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSECDH) };
 
@@ -44,7 +44,7 @@ point_conversion_form_t JSECDH::getFormat(JSC::JSGlobalObject* globalObject, JSC
         }
 
         if (formatString != "uncompressed"_s) {
-            Bun::ERR::CRYPTO_ECDH_INVALID_FORMAT(scope, globalObject, formatString);
+            Fun::ERR::CRYPTO_ECDH_INVALID_FORMAT(scope, globalObject, formatString);
         }
     }
     return POINT_CONVERSION_UNCOMPRESSED;
@@ -110,4 +110,4 @@ void setupECDHClassStructure(JSC::LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

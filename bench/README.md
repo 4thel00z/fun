@@ -1,13 +1,13 @@
 ```bash
 npm install
 
-bun run ffi
-bun run log
-bun run gzip
-bun run async
-bun run sqlite
+fun run ffi
+fun run log
+fun run gzip
+fun run async
+fun run sqlite
 
-# to use custom version of bun/deno/node binary
-BUN=path/to/bun bun run ffi
+# to use custom version of fun/deno/node binary
+FUN=path/to/fun fun run ffi
 # or edit .env file
 ```

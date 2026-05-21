@@ -39,7 +39,7 @@ pub fn Visit(
         }
 
         pub fn recordDeclaredSymbol(noalias p: *P, ref: Ref) anyerror!void {
-            bun.assert(ref.isSymbol());
+            fun.assert(ref.isSymbol());
             try p.declared_symbols.append(p.allocator, DeclaredSymbol{
                 .ref = ref,
                 .is_top_level = p.current_scope == p.module_scope,
@@ -126,7 +126,7 @@ pub fn Visit(
             // functions which have simple parameter lists and which are not defined in
             // strict mode code."
             if (opts.is_unique_formal_parameters or strict_loc != null or !has_simple_args or p.isStrictMode()) {
-                duplicate_args_check = StringVoidMap.get(bun.default_allocator);
+                duplicate_args_check = StringVoidMap.get(fun.default_allocator);
             }
 
             const duplicate_args_check_ptr: ?*StringVoidMap = if (duplicate_args_check != null)
@@ -726,7 +726,7 @@ pub fn Visit(
                                             )) catch unreachable;
                                             // O(N)
                                             class_body.items.len += 1;
-                                            bun.copy(G.Property, class_body.items[j + 1 ..], class_body.items[j .. class_body.items.len - 1]);
+                                            fun.copy(G.Property, class_body.items[j + 1 ..], class_body.items[j .. class_body.items.len - 1]);
                                             // Copy the argument name symbol to prevent the class field declaration from being renamed
                                             // but not the constructor argument.
                                             const field_symbol_ref = p.declareSymbol(.other, arg.binding.loc, name) catch id.ref;
@@ -894,11 +894,11 @@ pub fn Visit(
                                         // Merge the two identifiers back into a single one
                                         p.symbols.items[hoisted_ref.innerIndex()].link = name_ref;
                                     }
-                                    bun.handleOom(non_fn_stmts.append(stmt));
+                                    fun.handleOom(non_fn_stmts.append(stmt));
                                     continue;
                                 }
 
-                                const gpe = bun.handleOom(fn_stmts.getOrPut(name_ref));
+                                const gpe = fun.handleOom(fn_stmts.getOrPut(name_ref));
                                 var index = gpe.value_ptr.*;
                                 if (!gpe.found_existing) {
                                     index = @as(u32, @intCast(let_decls.items.len));
@@ -923,7 +923,7 @@ pub fn Visit(
                                                 },
                                                 data.func.name.?.loc,
                                             ),
-                                        }) catch |err| bun.handleOom(err);
+                                        }) catch |err| fun.handleOom(err);
                                     }
                                 }
 
@@ -1214,7 +1214,7 @@ pub fn Visit(
                                 prev_stmt.data.s_local.decls.appendSlice(
                                     p.allocator,
                                     local.decls.slice(),
-                                ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err);
                                 continue;
                             }
                         }
@@ -1257,7 +1257,7 @@ pub fn Visit(
                                     if (decl.binding.data == .b_identifier and
                                         decl.binding.data.b_identifier.ref.eql(bin_assign.left.data.e_identifier.ref) and
                                         // If the value was assigned, we shouldn't merge it incase it was used in the current statement
-                                        // https://github.com/oven-sh/bun/issues/2948
+                                        // https://github.com/underdoc-org/fun/issues/2948
                                         // We don't have a more granular way to check symbol usage so this is the best we can do
                                         decl.value == null)
                                     {
@@ -1363,15 +1363,15 @@ pub fn fnBodyContainsUseStrict(body: []Stmt) ?logger.Loc {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const BindingNodeIndex = js_ast.BindingNodeIndex;
@@ -1391,7 +1391,7 @@ const Arg = G.Arg;
 const Decl = G.Decl;
 const Property = G.Property;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const ExprIn = js_parser.ExprIn;
 const FnOnlyDataVisit = js_parser.FnOnlyDataVisit;
 const FnOrArrowDataVisit = js_parser.FnOrArrowDataVisit;

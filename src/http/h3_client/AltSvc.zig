@@ -1,6 +1,6 @@
 //! Alt-Svc (RFC 7838) header handling for the HTTP/3 client.
 //!
-//! When `--experimental-http3-fetch` / `BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT`
+//! When `--experimental-http3-fetch` / `FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT`
 //! is on, `handleResponseMetadata` calls `record()` for every `Alt-Svc` header
 //! and `start_()` calls `lookup()` before opening a TCP socket: if the origin
 //! previously advertised `h3`, the request is routed onto the QUIC engine
@@ -80,7 +80,7 @@ const Record = struct {
     expires_at: i64,
 };
 
-var cache: bun.StringHashMapUnmanaged(Record) = .{};
+var cache: fun.StringHashMapUnmanaged(Record) = .{};
 
 /// Hard cap on cached origins. When reached, `record()` first sweeps expired
 /// entries and then refuses the new insert if still full — bounded memory for
@@ -99,7 +99,7 @@ fn sweepExpired(now: i64) void {
         if (now >= kv.value_ptr.expires_at) {
             const owned = kv.key_ptr.*;
             cache.removeByPtr(kv.key_ptr);
-            bun.default_allocator.free(owned);
+            fun.default_allocator.free(owned);
             // Unmanaged hash-map iteration is not removal-safe; restart.
             it = cache.iterator();
         }
@@ -116,7 +116,7 @@ pub fn record(origin_host: []const u8, origin_port: u16, field_value: []const u8
 
     const entry = parse(field_value) catch {
         // `clear`
-        if (cache.fetchRemove(k)) |kv| bun.default_allocator.free(kv.key);
+        if (cache.fetchRemove(k)) |kv| fun.default_allocator.free(kv.key);
         log("alt-svc clear {s}", .{k});
         return;
     } orelse return;
@@ -126,9 +126,9 @@ pub fn record(origin_host: []const u8, origin_port: u16, field_value: []const u8
         sweepExpired(now);
         if (cache.count() >= max_entries) return;
     }
-    const gop = bun.handleOom(cache.getOrPut(bun.default_allocator, k));
+    const gop = fun.handleOom(cache.getOrPut(fun.default_allocator, k));
     if (!gop.found_existing) {
-        gop.key_ptr.* = bun.handleOom(bun.default_allocator.dupe(u8, k));
+        gop.key_ptr.* = fun.handleOom(fun.default_allocator.dupe(u8, k));
     }
     gop.value_ptr.* = .{
         .h3_port = entry.port,
@@ -146,15 +146,15 @@ pub fn lookup(origin_host: []const u8, origin_port: u16) ?u16 {
     const k = key(&buf, origin_host, origin_port);
     const rec = cache.get(k) orelse return null;
     if (std.time.timestamp() >= rec.expires_at) {
-        if (cache.fetchRemove(k)) |kv| bun.default_allocator.free(kv.key);
+        if (cache.fetchRemove(k)) |kv| fun.default_allocator.free(kv.key);
         return null;
     }
     return rec.h3_port;
 }
 
-const log = bun.Output.scoped(.h3_client, .hidden);
+const log = fun.Output.scoped(.h3_client, .hidden);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;

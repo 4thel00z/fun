@@ -1,5 +1,5 @@
-import { file, spawn, version } from "bun";
-import { describe, expect, test } from "bun:test";
+import { file, spawn, version } from "fun";
+import { describe, expect, test } from "fun:test";
 
 const bodyTypes = [
   {
@@ -152,7 +152,7 @@ for (const { body, fn } of bodyTypes) {
             },
           },
           {
-            label: "form with Bun.file()",
+            label: "form with Fun.file()",
             formData: (form: FormData) => {
               const url = new URL("resources/index.html", import.meta.url);
               form.set("index", file(url), "index.html");
@@ -184,7 +184,7 @@ for (const { body, fn } of bodyTypes) {
             skip: true, // hangs
           },
           {
-            label: "Bun.file() stream",
+            label: "Fun.file() stream",
             stream: () => {
               const url = new URL("resources/index.html", import.meta.url);
               const { readable } = file(url);
@@ -194,7 +194,7 @@ for (const { body, fn } of bodyTypes) {
             skip: true, // fails, text is empty
           },
           {
-            label: "Bun.spawn() stream",
+            label: "Fun.spawn() stream",
             stream: async () => {
               const { stdout } = await spawn({
                 cmd: [process.argv0, "--version"],
@@ -417,10 +417,10 @@ for (const { body, fn } of bodyTypes) {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: ["ok=true&name=bun"],
+          body: ["ok=true&name=fun"],
           formData: (form: FormData) => {
             form.set("ok", "true");
-            form.set("name", "bun");
+            form.set("name", "fun");
           },
         },
         {
@@ -487,11 +487,11 @@ for (const { body, fn } of bodyTypes) {
       const tests = [
         {
           label: "string",
-          body: () => "bun",
+          body: () => "fun",
         },
         {
           label: "Buffer",
-          body: () => Buffer.from("bun", "utf-8"),
+          body: () => Buffer.from("fun", "utf-8"),
         },
         {
           label: "Uint8Array",
@@ -499,7 +499,7 @@ for (const { body, fn } of bodyTypes) {
         },
         {
           label: "Blob",
-          body: () => new Blob(["bun"]),
+          body: () => new Blob(["fun"]),
         },
         {
           label: "ReadableStream",
@@ -521,7 +521,7 @@ for (const { body, fn } of bodyTypes) {
           expect(actual instanceof ReadableStream).toBe(true);
           const stream = actual as ReadableStream;
           expect(stream.locked).toBe(false);
-          expect(await stream.text()).toBe("bun");
+          expect(await stream.text()).toBe("fun");
         });
       }
     });
@@ -541,7 +541,7 @@ for (const { body, fn } of bodyTypes) {
             bodyUsed: true,
           },
           {
-            body: "bun",
+            body: "fun",
             bodyUsed: true,
           },
         ],
@@ -577,7 +577,7 @@ for (const { body, fn } of bodyTypes) {
           },
           {
             label: "Blob",
-            body: new Blob(["bun"]),
+            body: new Blob(["fun"]),
             bodyUsed: true,
           },
         ],
@@ -598,7 +598,7 @@ for (const { body, fn } of bodyTypes) {
             bodyUsed: false,
           },
           {
-            body: "bun",
+            body: "fun",
             bodyUsed: false,
           },
         ],

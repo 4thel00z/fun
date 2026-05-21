@@ -1,4 +1,4 @@
-//! Tested in test/js/bun/test/printing/diffexample.test.ts. If modified, the snapshots will need to be updated.
+//! Tested in test/js/fun/test/printing/diffexample.test.ts. If modified, the snapshots will need to be updated.
 
 const DMP = diff_match_patch.DMP(u8);
 const DMPUsize = diff_match_patch.DMP(usize);
@@ -55,14 +55,14 @@ pub fn printDiffMain(arena: std.mem.Allocator, not: bool, received_slice: []cons
 
     var dmp = DMPUsize.default;
     dmp.config.diff_timeout = 200;
-    const linesToChars = bun.handleOom(DMP.diffLinesToChars(arena, expected_slice, received_slice));
-    const charDiffs = bun.handleOom(dmp.diff(arena, linesToChars.chars_1, linesToChars.chars_2, false));
-    const diffs = bun.handleOom(DMP.diffCharsToLines(arena, &charDiffs, linesToChars.line_array.items));
+    const linesToChars = fun.handleOom(DMP.diffLinesToChars(arena, expected_slice, received_slice));
+    const charDiffs = fun.handleOom(dmp.diff(arena, linesToChars.chars_1, linesToChars.chars_2, false));
+    const diffs = fun.handleOom(DMP.diffCharsToLines(arena, &charDiffs, linesToChars.line_array.items));
 
     var diff_segments = std.array_list.Managed(DiffSegment).init(arena);
     for (diffs.items) |diff| {
         if (diff.operation == .delete) {
-            bun.handleOom(diff_segments.append(DiffSegment{
+            fun.handleOom(diff_segments.append(DiffSegment{
                 .removed = diff.text,
                 .inserted = "",
                 .mode = .removed,
@@ -72,14 +72,14 @@ pub fn printDiffMain(arena: std.mem.Allocator, not: bool, received_slice: []cons
                 diff_segments.items[diff_segments.items.len - 1].inserted = diff.text;
                 diff_segments.items[diff_segments.items.len - 1].mode = .modified;
             } else {
-                bun.handleOom(diff_segments.append(DiffSegment{
+                fun.handleOom(diff_segments.append(DiffSegment{
                     .removed = "",
                     .inserted = diff.text,
                     .mode = .inserted,
                 }));
             }
         } else if (diff.operation == .equal) {
-            bun.handleOom(diff_segments.append(DiffSegment{
+            fun.handleOom(diff_segments.append(DiffSegment{
                 .removed = diff.text,
                 .inserted = diff.text,
                 .mode = .equal,
@@ -102,7 +102,7 @@ pub fn printDiffMain(arena: std.mem.Allocator, not: bool, received_slice: []cons
             if (diff_segment.mode == .equal) {
                 var split = std.mem.splitScalar(u8, diff_segment.removed, '\n');
                 while (split.next()) |line| {
-                    bun.handleOom(new_diff_segments.append(DiffSegment{
+                    fun.handleOom(new_diff_segments.append(DiffSegment{
                         .removed = line,
                         .inserted = line,
                         .mode = .equal,
@@ -110,7 +110,7 @@ pub fn printDiffMain(arena: std.mem.Allocator, not: bool, received_slice: []cons
                     }));
                 }
             } else {
-                bun.handleOom(new_diff_segments.append(diff_segment));
+                fun.handleOom(new_diff_segments.append(diff_segment));
             }
         }
 
@@ -418,8 +418,8 @@ fn printModifiedSegment(
         return printModifiedSegmentWithoutDiffdiff(writer, config, segment, modified_style);
     }
 
-    var char_diff = bun.handleOom(DMP.default.diff(arena, segment.removed, segment.inserted, true));
-    bun.handleOom(DMP.diffCleanupSemantic(arena, &char_diff));
+    var char_diff = fun.handleOom(DMP.default.diff(arena, segment.removed, segment.inserted, true));
+    fun.handleOom(DMP.diffCleanupSemantic(arena, &char_diff));
 
     var deleted_highlighted_length: usize = 0;
     var inserted_highlighted_length: usize = 0;
@@ -438,7 +438,7 @@ fn printModifiedSegment(
     }
 
     const is_valid_utf_8 = for (char_diff.items) |item| {
-        if (!bun.strings.isValidUTF8(item.text)) {
+        if (!fun.strings.isValidUTF8(item.text)) {
             break false;
         }
     } else true;
@@ -580,6 +580,6 @@ pub fn printDiff(
     try printDiffFooter(writer, config, removed_diff_lines, inserted_diff_lines);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const diff_match_patch = @import("./diff_match_patch.zig");
 const std = @import("std");

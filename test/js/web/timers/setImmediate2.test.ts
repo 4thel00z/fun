@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("setImmediate doesn't block the event loop", async () => {
   const incomingTimestamps = [];
   var hasResponded = false;
   var expectedTime = "";
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       await new Promise(resolve => setTimeout(resolve, 1500).unref());

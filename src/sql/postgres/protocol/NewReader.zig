@@ -32,7 +32,7 @@ pub fn NewReaderWrap(
 
             var input = try readFn(this.wrapped, msg.len);
             defer input.deinit();
-            if (bun.strings.eqlComptime(input.slice(), msg)) return;
+            if (fun.strings.eqlComptime(input.slice(), msg)) return;
             return error.InvalidMessage;
         }
 
@@ -99,10 +99,10 @@ pub fn NewReaderWrap(
 
         pub const bytes = read;
 
-        pub fn String(this: @This()) !bun.String {
+        pub fn String(this: @This()) !fun.String {
             var result = try this.readZ();
             defer result.deinit();
-            return bun.String.borrowUTF8(result.slice());
+            return fun.String.borrowUTF8(result.slice());
         }
     };
 }
@@ -111,7 +111,7 @@ pub fn NewReader(comptime Context: type) type {
     return NewReaderWrap(Context, Context.markMessageStart, Context.peek, Context.skip, Context.ensureLength, Context.read, Context.readZ);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const AnyPostgresError = @import("../AnyPostgresError.zig").AnyPostgresError;
 const Data = @import("../../shared/Data.zig").Data;
 

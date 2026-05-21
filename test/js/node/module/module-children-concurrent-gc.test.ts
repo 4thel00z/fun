@@ -19,8 +19,8 @@
 // site (append, setter clear, getter clear) under concurrent GC and asserts
 // the program still runs to completion with correct output.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 
 // collectContinuously is very slow on Windows in CI and the code path is
 // identical across platforms; skip there (same rationale as issue 29519).
@@ -53,11 +53,11 @@ test.skipIf(isWindows)(
 
     using dir = tempDir("cjs-children-concurrent-gc", files);
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "entry.cjs"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "entry.cjs"],
       env: {
-        ...bunEnv,
-        BUN_JSC_collectContinuously: "1",
+        ...funEnv,
+        FUN_JSC_collectContinuously: "1",
       },
       cwd: String(dir),
       stderr: "pipe",

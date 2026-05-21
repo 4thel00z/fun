@@ -53,7 +53,7 @@ fn generateCompileResultForHTMLChunkImpl(worker: *ThreadPool.Worker, c: *LinkerC
         added_body_script: bool,
 
         pub fn onWriteHTML(this: *@This(), bytes: []const u8) void {
-            bun.handleOom(this.output.appendSlice(bytes));
+            fun.handleOom(this.output.appendSlice(bytes));
         }
 
         pub fn onHTMLParseError(_: *@This(), err: []const u8) void {
@@ -147,7 +147,7 @@ fn generateCompileResultForHTMLChunkImpl(worker: *ThreadPool.Worker, c: *LinkerC
             if (this.added_head_tags) return;
             this.added_head_tags = true;
 
-            var html_appender = std.heap.stackFallback(256, bun.default_allocator);
+            var html_appender = std.heap.stackFallback(256, fun.default_allocator);
             const allocator = html_appender.get();
             const slices = this.getHeadTags(allocator);
             defer for (slices.slice()) |slice|
@@ -161,32 +161,32 @@ fn generateCompileResultForHTMLChunkImpl(worker: *ThreadPool.Worker, c: *LinkerC
             if (this.added_body_script) return;
             this.added_body_script = true;
 
-            var html_appender = std.heap.stackFallback(256, bun.default_allocator);
+            var html_appender = std.heap.stackFallback(256, fun.default_allocator);
             const allocator = html_appender.get();
             if (this.chunk.getJSChunkForHTML(this.chunks)) |js_chunk| {
-                const script = bun.handleOom(std.fmt.allocPrintSentinel(allocator, "<script type=\"module\">{s}</script>", .{js_chunk.unique_key}, 0));
+                const script = fun.handleOom(std.fmt.allocPrintSentinel(allocator, "<script type=\"module\">{s}</script>", .{js_chunk.unique_key}, 0));
                 defer allocator.free(script);
                 try endTag.before(script, true);
             }
         }
 
-        fn getHeadTags(this: *@This(), allocator: std.mem.Allocator) bun.BoundedArray([]const u8, 2) {
-            var array: bun.BoundedArray([]const u8, 2) = .{};
+        fn getHeadTags(this: *@This(), allocator: std.mem.Allocator) fun.BoundedArray([]const u8, 2) {
+            var array: fun.BoundedArray([]const u8, 2) = .{};
             if (this.compile_to_standalone_html) {
                 // In standalone HTML mode, only put CSS in <head>; JS goes before </body>
                 if (this.chunk.getCSSChunkForHTML(this.chunks)) |css_chunk| {
-                    const style_tag = bun.handleOom(std.fmt.allocPrintSentinel(allocator, "<style>{s}</style>", .{css_chunk.unique_key}, 0));
+                    const style_tag = fun.handleOom(std.fmt.allocPrintSentinel(allocator, "<style>{s}</style>", .{css_chunk.unique_key}, 0));
                     array.appendAssumeCapacity(style_tag);
                 }
             } else {
                 // Put CSS before JS to reduce chances of flash of unstyled content
                 if (this.chunk.getCSSChunkForHTML(this.chunks)) |css_chunk| {
-                    const link_tag = bun.handleOom(std.fmt.allocPrintSentinel(allocator, "<link rel=\"stylesheet\" crossorigin href=\"{s}\">", .{css_chunk.unique_key}, 0));
+                    const link_tag = fun.handleOom(std.fmt.allocPrintSentinel(allocator, "<link rel=\"stylesheet\" crossorigin href=\"{s}\">", .{css_chunk.unique_key}, 0));
                     array.appendAssumeCapacity(link_tag);
                 }
                 if (this.chunk.getJSChunkForHTML(this.chunks)) |js_chunk| {
                     // type="module" scripts do not block rendering, so it is okay to put them in head
-                    const script = bun.handleOom(std.fmt.allocPrintSentinel(allocator, "<script type=\"module\" crossorigin src=\"{s}\"></script>", .{js_chunk.unique_key}, 0));
+                    const script = fun.handleOom(std.fmt.allocPrintSentinel(allocator, "<script type=\"module\" crossorigin src=\"{s}\"></script>", .{js_chunk.unique_key}, 0));
                     array.appendAssumeCapacity(script);
                 }
             }
@@ -270,11 +270,11 @@ fn generateCompileResultForHTMLChunkImpl(worker: *ThreadPool.Worker, c: *LinkerC
     // along the lines of having a self-closing tag for a non-self closing
     // element. In this case, head_end_tag_index will be 0, and a simple
     // search through the page is done to find the "</head>"
-    // See https://github.com/oven-sh/bun/issues/17554
+    // See https://github.com/underdoc-org/fun/issues/17554
     const script_injection_offset: u32 = if (c.dev_server != null) brk: {
         if (html_loader.end_tag_indices.head) |head|
             break :brk head;
-        if (bun.strings.indexOf(html_loader.output.items, "</head>")) |head|
+        if (fun.strings.indexOf(html_loader.output.items, "</head>")) |head|
             break :brk @intCast(head);
         if (html_loader.end_tag_indices.body) |body|
             break :brk body;
@@ -284,12 +284,12 @@ fn generateCompileResultForHTMLChunkImpl(worker: *ThreadPool.Worker, c: *LinkerC
     } else brk: {
         if (!html_loader.added_head_tags or !html_loader.added_body_script) {
             @branchHint(.cold); // this is if the document is missing all head, body, and html elements.
-            var html_appender = std.heap.stackFallback(256, bun.default_allocator);
+            var html_appender = std.heap.stackFallback(256, fun.default_allocator);
             const allocator = html_appender.get();
             if (!html_loader.added_head_tags) {
                 const slices = html_loader.getHeadTags(allocator);
                 for (slices.slice()) |slice| {
-                    bun.handleOom(html_loader.output.appendSlice(slice));
+                    fun.handleOom(html_loader.output.appendSlice(slice));
                     allocator.free(slice);
                 }
                 html_loader.added_head_tags = true;
@@ -297,9 +297,9 @@ fn generateCompileResultForHTMLChunkImpl(worker: *ThreadPool.Worker, c: *LinkerC
             if (!html_loader.added_body_script) {
                 if (html_loader.compile_to_standalone_html) {
                     if (html_loader.chunk.getJSChunkForHTML(html_loader.chunks)) |js_chunk| {
-                        const script = bun.handleOom(std.fmt.allocPrintSentinel(allocator, "<script type=\"module\">{s}</script>", .{js_chunk.unique_key}, 0));
+                        const script = fun.handleOom(std.fmt.allocPrintSentinel(allocator, "<script type=\"module\">{s}</script>", .{js_chunk.unique_key}, 0));
                         defer allocator.free(script);
-                        bun.handleOom(html_loader.output.appendSlice(script));
+                        fun.handleOom(html_loader.output.appendSlice(script));
                     }
                 }
                 html_loader.added_body_script = true;
@@ -315,30 +315,30 @@ fn generateCompileResultForHTMLChunkImpl(worker: *ThreadPool.Worker, c: *LinkerC
     } };
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const ImportKind = bun.ImportKind;
-const ImportRecord = bun.ImportRecord;
-const Loader = bun.Loader;
-const Logger = bun.logger;
-const Output = bun.Output;
-const ThreadPoolLib = bun.ThreadPool;
-const default_allocator = bun.default_allocator;
-const lol = bun.LOLHTML;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const ImportKind = fun.ImportKind;
+const ImportRecord = fun.ImportRecord;
+const Loader = fun.Loader;
+const Logger = fun.logger;
+const Output = fun.Output;
+const ThreadPoolLib = fun.ThreadPool;
+const default_allocator = fun.default_allocator;
+const lol = fun.LOLHTML;
+const strings = fun.strings;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const CompileResult = bundler.CompileResult;
-const HTMLScanner = bun.bundle_v2.HTMLScanner;
-const Index = bun.bundle_v2.Index;
+const HTMLScanner = fun.bundle_v2.HTMLScanner;
+const Index = fun.bundle_v2.Index;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const PendingPartRange = LinkerContext.PendingPartRange;
 const debug = LinkerContext.debug;

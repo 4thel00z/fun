@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { isLinux, tempDirWithFiles } from "harness";
 import { chmodSync, closeSync, fstatSync, lstatSync, openSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -30,7 +30,7 @@ describe.skipIf(!isLinux)("birthtime", () => {
     expect(birthtime).toBeGreaterThan(0);
 
     // Wait a bit to ensure timestamps would differ
-    Bun.sleepSync(10);
+    Fun.sleepSync(10);
 
     // Modify content (updates mtime and ctime)
     writeFileSync(filepath, "modified");
@@ -40,7 +40,7 @@ describe.skipIf(!isLinux)("birthtime", () => {
     expect(afterModify.mtimeMs).toBeGreaterThan(initialStats.mtimeMs);
 
     // Wait again
-    Bun.sleepSync(10);
+    Fun.sleepSync(10);
 
     // Change permissions (updates ctime)
     chmodSync(filepath, 0o755);

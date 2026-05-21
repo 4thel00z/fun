@@ -1,7 +1,7 @@
-import { file, spawn } from "bun";
-import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from "bun:test";
+import { file, spawn } from "fun";
+import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from "fun:test";
 import { access, writeFile } from "fs/promises";
-import { bunExe, bunEnv as env, readdirSorted } from "harness";
+import { funExe, funEnv as env, readdirSorted } from "harness";
 import { join } from "path";
 import {
   dummyAfterAll,
@@ -41,7 +41,7 @@ it("should install vendored node_modules with hardlink", async () => {
     }),
   );
   const { stdout, stderr, exited } = spawn({
-    cmd: [bunExe(), "install", "--backend", "hardlink", "--linker=hoisted"],
+    cmd: [funExe(), "install", "--backend", "hardlink", "--linker=hoisted"],
     cwd: package_dir,
     stdout: "pipe",
     stdin: "pipe",
@@ -77,5 +77,5 @@ it("should install vendored node_modules with hardlink", async () => {
     name: "vendor-baz",
     version: "0.0.1",
   });
-  await access(join(package_dir, "bun.lockb"));
+  await access(join(package_dir, "fun.lockb"));
 });

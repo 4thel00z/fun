@@ -1,8 +1,8 @@
 //! ## IMPORTANT NOTE
 //!
-//! Do _NOT_ import from "bun" in this file! Do _NOT_ use the Bun object in this file!
+//! Do _NOT_ import from "fun" in this file! Do _NOT_ use the Fun object in this file!
 //!
-//! This file has tests defined in it which _cannot_ be run if `@import("bun")` is used!
+//! This file has tests defined in it which _cannot_ be run if `@import("fun")` is used!
 //!
 //! Run tests with `:zig test %`
 
@@ -119,14 +119,14 @@ pub fn DifferWithEql(comptime Line: type, comptime opts: Options, comptime areLi
         /// ## References
         /// - [Node- `myers_diff.js`](https://github.com/nodejs/node/blob/main/lib/internal/assert/myers_diff.js)
         /// - [An O(ND) Difference Algorithm and Its Variations](http://www.xmailserver.org/diff2.pdf)
-        pub fn diff(bun_allocator: Allocator, actual: []const Line, expected: []const Line) Error!DiffList(Line) {
+        pub fn diff(fun_allocator: Allocator, actual: []const Line, expected: []const Line) Error!DiffList(Line) {
 
             // Edit graph's allocator
-            var graph_stack_alloc = stackFallback(graph_initial_size, bun_allocator);
+            var graph_stack_alloc = stackFallback(graph_initial_size, fun_allocator);
             const graph_alloc = graph_stack_alloc.get();
 
             // Match point trace's allocator
-            var trace_stack_alloc = stackFallback(opts.initial_trace_capacity, bun_allocator);
+            var trace_stack_alloc = stackFallback(opts.initial_trace_capacity, fun_allocator);
             const trace_alloc = trace_stack_alloc.get();
 
             // const MAX \in [0, M+N]
@@ -207,7 +207,7 @@ pub fn DifferWithEql(comptime Line: type, comptime opts: Options, comptime areLi
                     graph[k] = @intCast(x);
                     if (x >= actual.len and y >= expected.len) {
                         // todo: arena
-                        return backtrack(bun_allocator, &trace, actual, expected);
+                        return backtrack(fun_allocator, &trace, actual, expected);
                     }
                 }
             }
@@ -422,13 +422,13 @@ test areLinesEqual {
     // strings w/o comma check
     try t.expect(areLinesEqual([]const u8, "", "", false));
     try t.expect(areLinesEqual([]const u8, "a", "a", false));
-    try t.expect(areLinesEqual([]const u8, "Bun", "Bun", false));
+    try t.expect(areLinesEqual([]const u8, "Fun", "Fun", false));
     try t.expect(areLinesEqual([]const u8, "😤", "😤", false));
     // not equal
     try t.expect(!areLinesEqual([]const u8, "", "a", false));
     try t.expect(!areLinesEqual([]const u8, "", " ", false));
     try t.expect(!areLinesEqual([]const u8, "\n", "\t", false));
-    try t.expect(!areLinesEqual([]const u8, "bun", "Bun", false));
+    try t.expect(!areLinesEqual([]const u8, "fun", "Fun", false));
     try t.expect(!areLinesEqual([]const u8, "😤", "😩", false));
 
     // strings w/ comma check
@@ -442,10 +442,10 @@ test areLinesEqual {
     // try t.expect(areLinesEqual([]const u8, "😤", "😤,", false));
     // try t.expect(areLinesEqual([]const u8, "😤,", "😤", false));
     // not equal
-    try t.expect(!areLinesEqual([]const u8, "", "Bun", true));
-    try t.expect(!areLinesEqual([]const u8, "bun", "Bun", true));
-    try t.expect(!areLinesEqual([]const u8, ",Bun", "Bun", true));
-    try t.expect(!areLinesEqual([]const u8, "Bun", ",Bun", true));
+    try t.expect(!areLinesEqual([]const u8, "", "Fun", true));
+    try t.expect(!areLinesEqual([]const u8, "fun", "Fun", true));
+    try t.expect(!areLinesEqual([]const u8, ",Fun", "Fun", true));
+    try t.expect(!areLinesEqual([]const u8, "Fun", ",Fun", true));
     try t.expect(!areLinesEqual([]const u8, "", " ,", true));
     try t.expect(!areLinesEqual([]const u8, " ", " , ", true));
     try t.expect(!areLinesEqual([]const u8, "I, am speed", "I am speed", true));

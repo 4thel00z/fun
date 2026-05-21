@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 // Regression test for PathWatcherManager self-deadlock / UAF.
 //
@@ -31,9 +31,9 @@ test("rapid create/close of recursive fs.watch does not deadlock", async () => {
     "k/l/f10.txt": "x",
   });
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       const fs = require("fs");
@@ -57,7 +57,7 @@ test("rapid create/close of recursive fs.watch does not deadlock", async () => {
       `,
       String(dir),
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

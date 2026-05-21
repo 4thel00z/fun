@@ -25,7 +25,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// config.h removed - not needed in Bun
+// config.h removed - not needed in Fun
 #include "TextCodecReplacement.h"
 
 #include <wtf/Function.h>

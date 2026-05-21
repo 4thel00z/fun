@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { normalizeBunSnapshot } from "harness";
+import { describe, expect, test } from "fun:test";
+import { normalizeFunSnapshot } from "harness";
 
 test("zero args returns an otherwise empty 200 response", () => {
   const response = new Response();
@@ -47,7 +47,7 @@ describe("2-arg form", () => {
 });
 
 test("print size", () => {
-  expect(normalizeBunSnapshot(Bun.inspect(new Response(Bun.file(import.meta.filename)))), import.meta.dir)
+  expect(normalizeFunSnapshot(Fun.inspect(new Response(Fun.file(import.meta.filename)))), import.meta.dir)
     .toMatchInlineSnapshot(`
     "Response (5.83 KB) {
       ok: true,

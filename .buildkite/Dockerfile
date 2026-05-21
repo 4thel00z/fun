@@ -1,6 +1,6 @@
 ARG LLVM_VERSION="21"
 ARG REPORTED_LLVM_VERSION="21.1.8"
-ARG OLD_BUN_VERSION="1.3.13"
+ARG OLD_FUN_VERSION="1.3.13"
 ARG BUILDKITE_AGENT_TAGS="queue=linux,os=linux,arch=${TARGETARCH}"
 
 FROM --platform=$BUILDPLATFORM ubuntu:20.04 as base-arm64
@@ -8,7 +8,7 @@ FROM --platform=$BUILDPLATFORM ubuntu:20.04 as base-amd64
 FROM base-$TARGETARCH as base
 
 ARG LLVM_VERSION
-ARG OLD_BUN_VERSION
+ARG OLD_FUN_VERSION
 ARG TARGETARCH
 ARG REPORTED_LLVM_VERSION
 
@@ -56,7 +56,7 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 130 \
    --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-13
 
 RUN echo "ARCH_PATH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64-linux-gnu" || echo "x86_64-linux-gnu")" >> /etc/environment \
-   && echo "BUN_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x64")" >> /etc/environment
+   && echo "FUN_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x64")" >> /etc/environment
 
 ENV LD_LIBRARY_PATH=/usr/lib/gcc/${ARCH_PATH}/13:/usr/lib/${ARCH_PATH} \
    LIBRARY_PATH=/usr/lib/gcc/${ARCH_PATH}/13:/usr/lib/${ARCH_PATH} \
@@ -95,11 +95,11 @@ RUN --mount=type=tmpfs,target=/tmp \
    bash -c '\
       set -euxo pipefail && \
       source /etc/environment && \
-      echo "Downloading bun-v${OLD_BUN_VERSION}/bun-linux-$BUN_ARCH.zip from https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/bun-v${OLD_BUN_VERSION}/bun-linux-$BUN_ARCH.zip" && \
-      curl -fsSL https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/bun-v${OLD_BUN_VERSION}/bun-linux-$BUN_ARCH.zip -o /tmp/bun.zip && \
-      unzip /tmp/bun.zip -d /tmp/bun && \
-      mv /tmp/bun/*/bun /usr/bin/bun && \
-      chmod +x /usr/bin/bun'
+      echo "Downloading fun-v${OLD_FUN_VERSION}/fun-linux-$FUN_ARCH.zip from https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/fun-v${OLD_FUN_VERSION}/fun-linux-$FUN_ARCH.zip" && \
+      curl -fsSL https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/fun-v${OLD_FUN_VERSION}/fun-linux-$FUN_ARCH.zip -o /tmp/fun.zip && \
+      unzip /tmp/fun.zip -d /tmp/fun && \
+      mv /tmp/fun/*/fun /usr/bin/fun && \
+      chmod +x /usr/bin/fun'
 
 # Node — build scripts run under node (see scripts/build.ts). Version must
 # match scripts/bootstrap.sh nodejs_version_exact() so container and bare-
@@ -179,23 +179,23 @@ RUN ARCH=$(if [ "$TARGETARCH" = "arm64" ]; then echo "arm64"; else echo "amd64";
     tar -xzf /tmp/buildkite-agent.tar.gz -C /tmp/buildkite-agent && \
     mv /tmp/buildkite-agent/buildkite-agent /usr/bin/buildkite-agent
 
-RUN mkdir -p /var/cache/buildkite-agent /var/log/buildkite-agent /var/run/buildkite-agent /etc/buildkite-agent /var/lib/buildkite-agent/cache/bun
+RUN mkdir -p /var/cache/buildkite-agent /var/log/buildkite-agent /var/run/buildkite-agent /etc/buildkite-agent /var/lib/buildkite-agent/cache/fun
 
-# Warm BUN_BUILD_PREFETCH_DIR (consulted by scripts/build/download.ts before
+# Warm FUN_BUILD_PREFETCH_DIR (consulted by scripts/build/download.ts before
 # any network fetch). Content-addressed by URL/identity, so a dep version bump
 # in scripts/build/deps/ just misses the cache for that one dep — no image
 # rebuild needed. The clone is only for scripts/prefetch-deps.ts + its
 # scripts/build/ imports, which aren't in the docker context.
-ARG BUN_REPO_REF=main
+ARG FUN_REPO_REF=main
 RUN set -e; \
-    if git clone --depth=1 --branch ${BUN_REPO_REF} https://github.com/oven-sh/bun.git /tmp/bun-clone \
-       && [ -f /tmp/bun-clone/scripts/prefetch-deps.ts ]; then \
-         (cd /tmp/bun-clone && bun scripts/prefetch-deps.ts /opt/bun-prefetch); \
+    if git clone --depth=1 --branch ${FUN_REPO_REF} https://github.com/underdoc-org/fun.git /tmp/fun-clone \
+       && [ -f /tmp/fun-clone/scripts/prefetch-deps.ts ]; then \
+         (cd /tmp/fun-clone && fun scripts/prefetch-deps.ts /opt/fun-prefetch); \
        else \
-         echo "warning: prefetch-deps.ts unavailable at ${BUN_REPO_REF}; skipping warm cache"; \
+         echo "warning: prefetch-deps.ts unavailable at ${FUN_REPO_REF}; skipping warm cache"; \
        fi; \
-    rm -rf /tmp/bun-clone
-ENV BUN_BUILD_PREFETCH_DIR=/opt/bun-prefetch
+    rm -rf /tmp/fun-clone
+ENV FUN_BUILD_PREFETCH_DIR=/opt/fun-prefetch
 
 # The following is necessary to configure buildkite to use a stable
 # checkout directory for ccache to be effective.
@@ -205,30 +205,30 @@ RUN mkdir -p -m 755 /var/lib/buildkite-agent/hooks && \
 set -efu
 
 export BUILDKITE_BUILD_CHECKOUT_PATH=/var/lib/buildkite-agent/build
-export BUN_BUILD_PREFETCH_DIR=/opt/bun-prefetch
+export FUN_BUILD_PREFETCH_DIR=/opt/fun-prefetch
 EOF
 
 RUN chmod 744 /var/lib/buildkite-agent/hooks/environment
 
-COPY  ../*/agent.mjs /var/bun/scripts/
+COPY  ../*/agent.mjs /var/fun/scripts/
 
-ENV BUN_INSTALL_CACHE=/var/lib/buildkite-agent/cache/bun
+ENV FUN_INSTALL_CACHE=/var/lib/buildkite-agent/cache/fun
 ENV BUILDKITE_AGENT_TAGS=${BUILDKITE_AGENT_TAGS}
 
 
-WORKDIR /var/bun/scripts
+WORKDIR /var/fun/scripts
 
 ENV PATH=/root/.cargo/bin:$PATH
 
 
-CMD ["bun", "/var/bun/scripts/agent.mjs", "start"]
+CMD ["fun", "/var/fun/scripts/agent.mjs", "start"]
 
-FROM --platform=$BUILDPLATFORM base as bun-build-linux-local
+FROM --platform=$BUILDPLATFORM base as fun-build-linux-local
 
 ARG LLVM_VERSION
-WORKDIR /workspace/bun
+WORKDIR /workspace/fun
 
-COPY . /workspace/bun
+COPY . /workspace/fun
 
 
 # Install Rust nightly
@@ -245,8 +245,8 @@ ENV PATH=/root/.cargo/bin:$PATH
 ENV LLVM_VERSION=${REPORTED_LLVM_VERSION}
 
 
-RUN --mount=type=tmpfs,target=/workspace/bun/build \
+RUN --mount=type=tmpfs,target=/workspace/fun/build \
     ls -la \
-    && bun run build:release \
+    && fun run build:release \
     && mkdir -p /target \
-    && cp -r /workspace/bun/build/release/bun /target/bun
+    && cp -r /workspace/fun/build/release/fun /target/fun

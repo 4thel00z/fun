@@ -1,5 +1,5 @@
-import { RedisClient } from "bun";
-import { describe, expect, test } from "bun:test";
+import { RedisClient } from "fun";
+import { describe, expect, test } from "fun:test";
 import { isIPv6, isWindows, tls as localhostTls, tempDir } from "harness";
 import { once } from "node:events";
 import fs from "node:fs";

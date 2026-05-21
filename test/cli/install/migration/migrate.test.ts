@@ -1,6 +1,6 @@
-import { beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { beforeAll, expect, setDefaultTimeout, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, tempDirWithFiles, tmpdirSync } from "harness";
+import { funEnv, funExe, tempDirWithFiles, tmpdirSync } from "harness";
 import { join } from "path";
 
 beforeAll(() => {
@@ -21,8 +21,8 @@ function testMigration(lockfile: string) {
   );
   fs.cpSync(join(import.meta.dir, lockfile), join(testDir, "package-lock.json"));
 
-  Bun.spawnSync([bunExe(), "add", "lodash@4.17.21"], {
-    env: bunEnv,
+  Fun.spawnSync([funExe(), "add", "lodash@4.17.21"], {
+    env: funEnv,
     cwd: testDir,
   });
 
@@ -35,22 +35,22 @@ function testMigration(lockfile: string) {
   expect(lodash_version).toBe("4.17.21");
 }
 
-test("migrate from npm during `bun add`", () => {
+test("migrate from npm during `fun add`", () => {
   testMigration("add-while-migrate-fixture.json");
 });
 
-test("migrate from npm lockfile v2 during `bun add`", () => {
+test("migrate from npm lockfile v2 during `fun add`", () => {
   testMigration("migrate-from-lockfilev2-fixture.json");
 });
 
 // Currently this upgrades svelte :(
-test.todo("migrate workspace from npm during `bun add`", async () => {
+test.todo("migrate workspace from npm during `fun add`", async () => {
   const testDir = tmpdirSync();
 
   fs.cpSync(join(import.meta.dir, "add-while-migrate-workspace"), testDir, { recursive: true });
 
-  Bun.spawnSync([bunExe(), "add", "lodash@4.17.21"], {
-    env: bunEnv,
+  Fun.spawnSync([funExe(), "add", "lodash@4.17.21"], {
+    env: funEnv,
     cwd: join(testDir, "packages", "a"),
   });
 
@@ -68,8 +68,8 @@ test("migrate package with dependency on root package", async () => {
 
   fs.cpSync(join(import.meta.dir, "migrate-package-with-dependency-on-root"), testDir, { recursive: true });
 
-  const { stdout } = Bun.spawnSync([bunExe(), "install"], {
-    env: bunEnv,
+  const { stdout } = Fun.spawnSync([funExe(), "install"], {
+    env: funEnv,
     cwd: join(testDir),
     stdout: "pipe",
   });
@@ -83,14 +83,14 @@ test("migrate package with npm dependency that resolves to a git package", async
 
   fs.cpSync(join(import.meta.dir, "npm-version-to-git-resolution"), testDir, { recursive: true });
 
-  const { exitCode } = Bun.spawnSync([bunExe(), "install"], {
-    env: bunEnv,
+  const { exitCode } = Fun.spawnSync([funExe(), "install"], {
+    env: funEnv,
     cwd: testDir,
     stdout: "pipe",
   });
 
   expect(exitCode).toBe(0);
-  expect(await Bun.file(join(testDir, "node_modules", "jquery", "package.json")).json()).toHaveProperty(
+  expect(await Fun.file(join(testDir, "node_modules", "jquery", "package.json")).json()).toHaveProperty(
     "name",
     "install-test",
   );
@@ -101,13 +101,13 @@ test("migrate from npm lockfile that is missing `resolved` properties", async ()
 
   fs.cpSync(join(import.meta.dir, "missing-resolved-properties"), testDir, { recursive: true });
 
-  const { exitCode } = Bun.spawnSync([bunExe(), "install"], {
-    env: bunEnv,
+  const { exitCode } = Fun.spawnSync([funExe(), "install"], {
+    env: funEnv,
     cwd: testDir,
   });
 
   expect(fs.existsSync(join(testDir, "node_modules/lodash"))).toBeTrue();
-  expect(await Bun.file(join(testDir, "node_modules/lodash/package.json")).json()).toHaveProperty("version", "4.17.21");
+  expect(await Fun.file(join(testDir, "node_modules/lodash/package.json")).json()).toHaveProperty("version", "4.17.21");
   expect(exitCode).toBe(0);
 });
 
@@ -115,8 +115,8 @@ test("npm lockfile with relative workspaces", async () => {
   const testDir = tmpdirSync();
   console.log(join(import.meta.dir, "lockfile-with-workspaces"), testDir, { recursive: true });
   fs.cpSync(join(import.meta.dir, "lockfile-with-workspaces"), testDir, { recursive: true });
-  const { exitCode, stderr } = Bun.spawnSync([bunExe(), "install"], {
-    env: bunEnv,
+  const { exitCode, stderr } = Fun.spawnSync([funExe(), "install"], {
+    env: funEnv,
     cwd: testDir,
   });
   const err = stderr.toString();
@@ -124,7 +124,7 @@ test("npm lockfile with relative workspaces", async () => {
 
   expect(err).not.toContain("InvalidNPMLockfile");
   for (let i = 0; i < 4; i++) {
-    expect(await Bun.file(join(testDir, "node_modules", "pkg" + i, "package.json")).json()).toEqual({
+    expect(await Fun.file(join(testDir, "node_modules", "pkg" + i, "package.json")).json()).toEqual({
       "name": "pkg" + i,
     });
   }
@@ -135,7 +135,7 @@ test("npm lockfile with relative workspaces", async () => {
 const lockfiles = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"];
 
 for (const lockfile of lockfiles) {
-  test(`should create bun.lock if ${lockfile} migration fails`, async () => {
+  test(`should create fun.lock if ${lockfile} migration fails`, async () => {
     const testDir = tempDirWithFiles("migration-failure", {
       "package.json": JSON.stringify({
         name: "pkg",
@@ -149,8 +149,8 @@ for (const lockfile of lockfiles) {
       }),
     });
 
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: testDir,
       stderr: "ignore",
       stdout: "ignore",
@@ -160,8 +160,8 @@ for (const lockfile of lockfiles) {
 
     expect(
       await Promise.all([
-        fs.promises.exists(join(testDir, "bun.lock")),
-        fs.promises.exists(join(testDir, "bun.lockb")),
+        fs.promises.exists(join(testDir, "fun.lock")),
+        fs.promises.exists(join(testDir, "fun.lockb")),
       ]),
     ).toEqual([true, false]);
   });

@@ -4,11 +4,11 @@
 #include "headers-handwritten.h"
 
 #include <JavaScriptCore/JSCInlines.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 
-BUN_DECLARE_HOST_FUNCTION(jsFunctionOnLoadObjectResultResolve);
-BUN_DECLARE_HOST_FUNCTION(jsFunctionOnLoadObjectResultReject);
-BUN_DECLARE_HOST_FUNCTION(jsFunctionEvictIsolationSourceProviderCache);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionOnLoadObjectResultResolve);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionOnLoadObjectResultReject);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionEvictIsolationSourceProviderCache);
 
 namespace Zig {
 class GlobalObject;
@@ -18,7 +18,7 @@ namespace JSC {
 class JSPromise;
 }
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 class JSCommonJSModule;
@@ -32,7 +32,7 @@ const OnLoadResultType OnLoadResultTypePromise = 3;
 struct CodeString {
     ZigString string;
     JSC::JSValue value;
-    BunLoaderType loader;
+    FunLoaderType loader;
 };
 
 union OnLoadResultValue {
@@ -48,7 +48,7 @@ struct OnLoadResult {
     bool wasMock;
 };
 
-extern "C" bool isBunTest;
+extern "C" bool isFunTest;
 
 class PendingVirtualModuleResult : public JSC::JSInternalFieldObjectImpl<3> {
 public:
@@ -95,48 +95,48 @@ JSValue fetchESMSourceCodeSync(
     Zig::GlobalObject* globalObject,
     JSString* spceifierJS,
     ErrorableResolvedSource* res,
-    BunString* specifier,
-    BunString* referrer,
-    BunString* typeAttribute);
+    FunString* specifier,
+    FunString* referrer,
+    FunString* typeAttribute);
 
 JSValue fetchESMSourceCodeAsync(
     Zig::GlobalObject* globalObject,
     JSString* spceifierJS,
     ErrorableResolvedSource* res,
-    BunString* specifier,
-    BunString* referrer,
-    BunString* typeAttribute);
+    FunString* specifier,
+    FunString* referrer,
+    FunString* typeAttribute);
 
 JSValue fetchCommonJSModule(
     Zig::GlobalObject* globalObject,
     JSCommonJSModule* moduleObject,
     JSValue specifierValue,
     String specifier,
-    BunString* referrer,
-    BunString* typeAttribute);
+    FunString* referrer,
+    FunString* typeAttribute);
 
 template<bool isExtension>
 JSValue fetchCommonJSModuleNonBuiltin(
-    void* bunVM,
+    void* funVM,
     JSC::VM& vm,
     Zig::GlobalObject* globalObject,
-    BunString* specifier,
+    FunString* specifier,
     JSC::JSValue specifierValue,
-    BunString* referrer,
-    BunString* typeAttribute,
+    FunString* referrer,
+    FunString* typeAttribute,
     ErrorableResolvedSource* res,
     JSCommonJSModule* target,
     String specifierWtfString,
-    BunLoaderType forceLoaderType,
+    FunLoaderType forceLoaderType,
     JSC::ThrowScope& scope);
 
 JSValue resolveAndFetchBuiltinModule(
     Zig::GlobalObject* globalObject,
-    BunString* specifier);
+    FunString* specifier);
 
 JSValue fetchBuiltinModuleWithoutResolution(
     Zig::GlobalObject* globalObject,
-    BunString* specifier,
+    FunString* specifier,
     ErrorableResolvedSource* res);
 
-} // namespace Bun
+} // namespace Fun

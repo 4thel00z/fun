@@ -1,24 +1,24 @@
 ---
-title: bun create
-description: Create a new Bun project from a React component, a `create-<template>` npm package, a GitHub repo, or a local template
+title: fun create
+description: Create a new Fun project from a React component, a `create-<template>` npm package, a GitHub repo, or a local template
 ---
 
 <Note>
-  `bun create` is optional — Bun works without any configuration. This command exists to make getting started faster.
+  `fun create` is optional — Fun works without any configuration. This command exists to make getting started faster.
 </Note>
 
 ---
 
-Template a new Bun project with `bun create`. This is a flexible command that can be used to create a new project from a React component, a `create-<template>` npm package, a GitHub repo, or a local template.
+Template a new Fun project with `fun create`. This is a flexible command that can be used to create a new project from a React component, a `create-<template>` npm package, a GitHub repo, or a local template.
 
-If you're looking to create a brand new empty project, use [`bun init`](/runtime/templating/init).
+If you're looking to create a brand new empty project, use [`fun init`](/runtime/templating/init).
 
 ## From a React component
 
-`bun create ./MyComponent.tsx` turns an existing React component into a complete dev environment with hot reload and production builds in one command.
+`fun create ./MyComponent.tsx` turns an existing React component into a complete dev environment with hot reload and production builds in one command.
 
 ```bash
-bun create ./MyComponent.jsx # .tsx also supported
+fun create ./MyComponent.jsx # .tsx also supported
 ```
 
 <Frame>
@@ -30,7 +30,7 @@ bun create ./MyComponent.jsx # .tsx also supported
     playsInline
   >
     <source
-      src="/images/bun-create-shadcn.mp4"
+      src="/images/fun-create-shadcn.mp4"
       style={{ width: "100%", height: "100%", objectFit: "contain" }}
       type="video/mp4"
     />
@@ -38,44 +38,44 @@ bun create ./MyComponent.jsx # .tsx also supported
 </Frame>
 
 <Note>
-🚀 **Create React App Successor** — `bun create <component>` provides everything developers loved about Create React App, but with modern tooling, faster builds, and backend support.
+🚀 **Create React App Successor** — `fun create <component>` provides everything developers loved about Create React App, but with modern tooling, faster builds, and backend support.
 </Note>
 
 #### How this works
 
-When you run `bun create <component>`, Bun:
+When you run `fun create <component>`, Fun:
 
-1. Uses [Bun's JavaScript bundler](/bundler) to analyze your module graph.
+1. Uses [Fun's JavaScript bundler](/bundler) to analyze your module graph.
 2. Collects all the dependencies needed to run the component.
 3. Scans the exports of the entry point for a React component.
 4. Generates a `package.json` file with the dependencies and scripts needed to run the component.
-5. Installs any missing dependencies using [`bun install --only-missing`](/pm/cli/install).
+5. Installs any missing dependencies using [`fun install --only-missing`](/pm/cli/install).
 6. Generates the following files:
    - `${component}.html`
    - `${component}.client.tsx` (entry point for the frontend)
    - `${component}.css` (css file)
 7. Starts a frontend dev server automatically.
 
-### Using TailwindCSS with Bun
+### Using TailwindCSS with Fun
 
 [TailwindCSS](https://tailwindcss.com/) is an extremely popular utility-first CSS framework used to style web applications.
 
-When you run `bun create <component>`, Bun scans your JSX/TSX file for TailwindCSS class names (and any files it imports). If it detects TailwindCSS class names, it will add the following dependencies to your `package.json`:
+When you run `fun create <component>`, Fun scans your JSX/TSX file for TailwindCSS class names (and any files it imports). If it detects TailwindCSS class names, it will add the following dependencies to your `package.json`:
 
 ```json package.json icon="file-json"
 {
   "dependencies": {
     "tailwindcss": "^4",
-    "bun-plugin-tailwind": "latest"
+    "fun-plugin-tailwind": "latest"
   }
 }
 ```
 
-We also configure `bunfig.toml` to use Bun's TailwindCSS plugin with `Bun.serve()`
+We also configure `funfig.toml` to use Fun's TailwindCSS plugin with `Fun.serve()`
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [serve.static]
-plugins = ["bun-plugin-tailwind"]
+plugins = ["fun-plugin-tailwind"]
 ```
 
 And a `${component}.css` file with `@import "tailwindcss";` at the top:
@@ -84,41 +84,41 @@ And a `${component}.css` file with `@import "tailwindcss";` at the top:
 @import "tailwindcss";
 ```
 
-### Using `shadcn/ui` with Bun
+### Using `shadcn/ui` with Fun
 
 [`shadcn/ui`](https://ui.shadcn.com/) is an extremely popular component library tool for building web applications.
 
-`bun create <component>` scans for any shadcn/ui components imported from `@/components/ui`.
+`fun create <component>` scans for any shadcn/ui components imported from `@/components/ui`.
 
 If it finds any, it runs:
 
 ```bash terminal icon="terminal"
-# Assuming bun detected imports to @/components/ui/accordion and @/components/ui/button
-bunx shadcn@canary add accordion button # and any other components
+# Assuming fun detected imports to @/components/ui/accordion and @/components/ui/button
+funx shadcn@canary add accordion button # and any other components
 ```
 
-Since `shadcn/ui` itself uses TailwindCSS, `bun create` also adds the necessary TailwindCSS dependencies to your `package.json` and configures `bunfig.toml` to use Bun's TailwindCSS plugin with `Bun.serve()` as described above.
+Since `shadcn/ui` itself uses TailwindCSS, `fun create` also adds the necessary TailwindCSS dependencies to your `package.json` and configures `funfig.toml` to use Fun's TailwindCSS plugin with `Fun.serve()` as described above.
 
 Additionally, we setup the following:
 
 - `tsconfig.json` to alias `"@/*"` to `"src/*"` or `.` (depending on if there is a `src/` directory)
 - `components.json` so that shadcn/ui knows its a shadcn/ui project
 - `styles/globals.css` file that configures Tailwind v4 in the way that shadcn/ui expects
-- `${component}.build.ts` file that builds the component for production with `bun-plugin-tailwind` configured
+- `${component}.build.ts` file that builds the component for production with `fun-plugin-tailwind` configured
 
-`bun create ./MyComponent.jsx` is one of the easiest ways to run code generated from LLMs like [Claude](https://claude.ai) or ChatGPT locally.
+`fun create ./MyComponent.jsx` is one of the easiest ways to run code generated from LLMs like [Claude](https://claude.ai) or ChatGPT locally.
 
 ## From `npm`
 
 ```sh terminal icon="terminal"
-bun create <template> [<destination>]
+fun create <template> [<destination>]
 ```
 
 Assuming you don't have a [local template](#from-a-local-template) with the same name, this command will download and execute the `create-<template>` package from npm. The following two commands will behave identically:
 
 ```sh terminal icon="terminal"
-bun create remix
-bunx create-remix
+fun create remix
+funx create-remix
 ```
 
 Refer to the documentation of the associated `create-<template>` package for complete documentation and usage instructions.
@@ -128,45 +128,45 @@ Refer to the documentation of the associated `create-<template>` package for com
 This will download the contents of the GitHub repo to disk.
 
 ```bash terminal icon="terminal"
-bun create <user>/<repo>
-bun create github.com/<user>/<repo>
+fun create <user>/<repo>
+fun create github.com/<user>/<repo>
 ```
 
 Optionally specify a name for the destination folder. If no destination is specified, the repo name will be used.
 
 ```bash terminal icon="terminal"
-bun create <user>/<repo> mydir
-bun create github.com/<user>/<repo> mydir
+fun create <user>/<repo> mydir
+fun create github.com/<user>/<repo> mydir
 ```
 
-Bun will perform the following steps:
+Fun will perform the following steps:
 
 - Download the template
 - Copy all template files into the destination folder
-- Install dependencies with `bun install`.
+- Install dependencies with `fun install`.
 - Initialize a fresh Git repo. Opt out with the `--no-git` flag.
 - Run the template's configured `start` script, if defined.
 
-<Note>By default Bun will _not overwrite_ any existing files. Use the `--force` flag to overwrite existing files.</Note>
+<Note>By default Fun will _not overwrite_ any existing files. Use the `--force` flag to overwrite existing files.</Note>
 
 ## From a local template
 
 <Warning>
-  Unlike remote templates, running `bun create` with a local template will delete the entire destination folder if it
+  Unlike remote templates, running `fun create` with a local template will delete the entire destination folder if it
   already exists! Be careful.
 </Warning>
 
-Bun's templater can be extended to support custom templates defined on your local file system. These templates should live in one of the following directories:
+Fun's templater can be extended to support custom templates defined on your local file system. These templates should live in one of the following directories:
 
-- `$HOME/.bun-create/<name>`: global templates
-- `<project root>/.bun-create/<name>`: project-specific templates
+- `$HOME/.fun-create/<name>`: global templates
+- `<project root>/.fun-create/<name>`: project-specific templates
 
-<Note>You can customize the global template path by setting the `BUN_CREATE_DIR` environment variable.</Note>
+<Note>You can customize the global template path by setting the `FUN_CREATE_DIR` environment variable.</Note>
 
-To create a local template, navigate to `$HOME/.bun-create` and create a new directory with the desired name of your template.
+To create a local template, navigate to `$HOME/.fun-create` and create a new directory with the desired name of your template.
 
 ```bash
-cd $HOME/.bun-create
+cd $HOME/.fun-create
 mkdir foo
 cd foo
 ```
@@ -179,25 +179,25 @@ Then, create a `package.json` file in that directory with the following contents
 }
 ```
 
-You can run `bun create foo` elsewhere on your file system to verify that Bun is correctly finding your local template.
+You can run `fun create foo` elsewhere on your file system to verify that Fun is correctly finding your local template.
 
 #### Setup logic
 
-You can specify pre- and post-install setup scripts in the `"bun-create"` section of your local template's `package.json`.
+You can specify pre- and post-install setup scripts in the `"fun-create"` section of your local template's `package.json`.
 
 ```json package.json icon="file-json"
 {
-  "name": "@bun-examples/simplereact",
+  "name": "@fun-examples/simplereact",
   "version": "0.0.1",
   "main": "index.js",
   "dependencies": {
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
   },
-  "bun-create": {
+  "fun-create": {
     "preinstall": "echo 'Installing...'", // a single command
     "postinstall": ["echo 'Done!'"], // an array of commands
-    "start": "bun run echo 'Hello world!'"
+    "start": "fun run echo 'Hello world!'"
   }
 }
 ```
@@ -209,7 +209,7 @@ The following fields are supported. Each of these can correspond to a string or 
 | `postinstall` | runs after installing dependencies  |
 | `preinstall`  | runs before installing dependencies |
 
-After cloning a template, `bun create` will automatically remove the `"bun-create"` section from `package.json` before writing it to the destination folder.
+After cloning a template, `fun create` will automatically remove the `"fun-create"` section from `package.json` before writing it to the destination folder.
 
 ## Reference
 
@@ -226,17 +226,17 @@ After cloning a template, `bun create` will automatically remove the `"bun-creat
 
 | Name                                      | Description                                                                                                                                          |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GITHUB_API_DOMAIN`                       | If you're using a GitHub enterprise or a proxy, you can customize the GitHub domain Bun pings for downloads                                          |
-| `GITHUB_TOKEN` (or `GITHUB_ACCESS_TOKEN`) | This lets `bun create` work with private repositories or if you get rate-limited. `GITHUB_TOKEN` is chosen over `GITHUB_ACCESS_TOKEN` if both exist. |
+| `GITHUB_API_DOMAIN`                       | If you're using a GitHub enterprise or a proxy, you can customize the GitHub domain Fun pings for downloads                                          |
+| `GITHUB_TOKEN` (or `GITHUB_ACCESS_TOKEN`) | This lets `fun create` work with private repositories or if you get rate-limited. `GITHUB_TOKEN` is chosen over `GITHUB_ACCESS_TOKEN` if both exist. |
 
-<Accordion title={<span>How <code>bun create</code> works</span>}>
+<Accordion title={<span>How <code>fun create</code> works</span>}>
 
-When you run `bun create ${template} ${destination}`, here’s what happens:
+When you run `fun create ${template} ${destination}`, here’s what happens:
 
 IF remote template
 
-1. GET `registry.npmjs.org/@bun-examples/${template}/latest` and parse it
-2. GET `registry.npmjs.org/@bun-examples/${template}/-/${template}-${latestVersion}.tgz`
+1. GET `registry.npmjs.org/@fun-examples/${template}/latest` and parse it
+2. GET `registry.npmjs.org/@fun-examples/${template}/-/${template}-${latestVersion}.tgz`
 3. Decompress & extract `${template}-${latestVersion}.tgz` into `${destination}`
    - If there are files that would overwrite, warn and exit unless `--force` is passed
 
@@ -252,14 +252,14 @@ ELSE IF local template
 2. Delete destination directory recursively
 3. Copy files recursively using the fastest system calls available (on macOS `fcopyfile` and Linux, `copy_file_range`). Do not copy or traverse into `node_modules` folder if exists (this alone makes it faster than `cp`)
 
-4. Parse the `package.json` (again!), update `name` to be `${basename(destination)}`, remove the `bun-create` section from the `package.json` and save the updated `package.json` to disk.
-   - IF Next.js is detected, add `bun-framework-next` to the list of dependencies
+4. Parse the `package.json` (again!), update `name` to be `${basename(destination)}`, remove the `fun-create` section from the `package.json` and save the updated `package.json` to disk.
+   - IF Next.js is detected, add `fun-framework-next` to the list of dependencies
    - IF Create React App is detected, add the entry point in `/src/index.{js,jsx,ts,tsx}` to `public/index.html`
-   - IF Relay is detected, add `bun-macro-relay` so that Relay works
+   - IF Relay is detected, add `fun-macro-relay` so that Relay works
 5. Auto-detect the npm client, preferring `pnpm`, `yarn` (v1), and lastly `npm`
-6. Run any tasks defined in `"bun-create": { "preinstall" }` with the npm client
+6. Run any tasks defined in `"fun-create": { "preinstall" }` with the npm client
 7. Run `${npmClient} install` unless `--no-install` is passed OR no dependencies are in package.json
-8. Run any tasks defined in `"bun-create": { "postinstall" }` with the npm client
+8. Run any tasks defined in `"fun-create": { "postinstall" }` with the npm client
 9. Run `git init; git add -A .; git commit -am "Initial Commit";`
    - Rename `gitignore` to `.gitignore`. NPM automatically removes `.gitignore` files from appearing in packages.
    - If there are dependencies, this runs in a separate thread concurrently while node_modules are being installed

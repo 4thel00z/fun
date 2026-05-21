@@ -1,4 +1,4 @@
-# `bun build` tests using `expectBundled`
+# `fun build` tests using `expectBundled`
 
 Most bundler tests were ported [from esbuild][1], located in `test/bundler/esbuild`. Our own tests are in `bundler_*.test.ts`. Not all esbuild tests were fully ported, check for `// GENERATED` to see which are missing.
 
@@ -8,7 +8,7 @@ Most bundler tests were ported [from esbuild][1], located in `test/bundler/esbui
 
 Call `expectBundled` within a test to test the bundler. The `id` passed as the first argument must be unique across the all tests, and generally uses the format `file/TestName`. The second parameter is an options object.
 
-All bundle entry files, their outputs, and other helpful files are written to disk at: `$TEMP/bun-build-tests/{run_id}/{id}`. This can be used to inspect and debug bundles, as they are not deleted after runtime.
+All bundle entry files, their outputs, and other helpful files are written to disk at: `$TEMP/fun-build-tests/{run_id}/{id}`. This can be used to inspect and debug bundles, as they are not deleted after runtime.
 
 In addition to comparing the bundle outputs against snapshots, **most test cases execute the bundle and have additional checks to assert the intended logic is happening properly**. This allows the bundler to change exactly how it writes files (optimizations / variable renaming), and still have concrete tests that ensure what the bundler creates will function properly. Snapshots are also taken, but these are used to check for regressions and not necessarily check accuracy.
 
@@ -18,12 +18,12 @@ These two functions have many options you can pass to it, check the examples bel
 
 ## Running tests
 
-You can use `bun test` as normal, but `expectBundled` looks for these environment variables:
+You can use `fun test` as normal, but `expectBundled` looks for these environment variables:
 
-- `BUN_BUNDLER_TEST_USE_ESBUILD` - Use `esbuild` instead of `bun build`.
-- `BUN_BUNDLER_TEST_DEBUG` - Write extra files to disk and log extra info.
-- `BUN_BUNDLER_TEST_FILTER` - Set this to the exact id of a test to only run that test.
-- `BUN_EXE` - Override the path to the `bun` executable.
+- `FUN_FUNDLER_TEST_USE_ESBUILD` - Use `esbuild` instead of `fun build`.
+- `FUN_FUNDLER_TEST_DEBUG` - Write extra files to disk and log extra info.
+- `FUN_FUNDLER_TEST_FILTER` - Set this to the exact id of a test to only run that test.
+- `FUN_EXE` - Override the path to the `fun` executable.
 
 There is also a helper CLI that sets these variables:
 
@@ -32,11 +32,11 @@ $ ./run-single-bundler-test.sh default/ExportMissingES6
 $ ./run-single-bundler-test.sh default/ExportMissingES6 e
 ```
 
-Passing the second argument at all will use `esbuild` instead of `bun build`. It also creates a symlink `./out` to the output directory, for faster inspection. I have this aliased to `tb` (test bun) in my shell for fast usage.
+Passing the second argument at all will use `esbuild` instead of `fun build`. It also creates a symlink `./out` to the output directory, for faster inspection. I have this aliased to `tb` (test fun) in my shell for fast usage.
 
 ## Basic Examples and Common Patterns
 
-At the start of test files, use `testForFile` instead of importing from `bun:test`:
+At the start of test files, use `testForFile` instead of importing from `fun:test`:
 
 ```ts
 import { itBundled, testForFile } from "./expectBundled";
@@ -87,7 +87,7 @@ itBundled("importstar/ExportSelfES6", {
   runtimeFiles: {
     "/test.js": /* js */ `
       import * as foo from './out.js'
-      // Try avoiding relying on Bun's object formatter, instead use JSON.stringify when possible
+      // Try avoiding relying on Fun's object formatter, instead use JSON.stringify when possible
       // This will avoid any changes to how these objects are formatted.
       console.log(JSON.stringify(foo));
     `,

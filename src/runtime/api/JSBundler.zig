@@ -1,20 +1,20 @@
-const debug = bun.Output.scoped(.Transpiler, .visible);
+const debug = fun.Output.scoped(.Transpiler, .visible);
 
 pub const JSBundler = struct {
-    const OwnedString = bun.MutableString;
+    const OwnedString = fun.MutableString;
 
     /// A map of file paths to their in-memory contents.
     /// This allows bundling with virtual files that may not exist on disk.
     pub const FileMap = struct {
-        map: bun.StringHashMapUnmanaged(jsc.Node.BlobOrStringOrBuffer) = .empty,
+        map: fun.StringHashMapUnmanaged(jsc.Node.BlobOrStringOrBuffer) = .empty,
 
         pub fn deinitAndUnprotect(self: *FileMap) void {
             var iter = self.map.iterator();
             while (iter.next()) |entry| {
                 entry.value_ptr.deinitAndUnprotect();
-                bun.default_allocator.free(entry.key_ptr.*);
+                fun.default_allocator.free(entry.key_ptr.*);
             }
-            self.map.deinit(bun.default_allocator);
+            self.map.deinit(fun.default_allocator);
         }
 
         /// Resolve a specifier against the file map.
@@ -24,16 +24,16 @@ pub const JSBundler = struct {
         pub fn get(self: *const FileMap, specifier: []const u8) ?[]const u8 {
             if (self.map.count() == 0) return null;
 
-            if (comptime !bun.Environment.isWindows) {
+            if (comptime !fun.Environment.isWindows) {
                 const entry = self.map.get(specifier) orelse return null;
                 return entry.slice();
             }
 
             // Normalize backslashes to forward slashes for consistent lookup
             // Map keys are stored with forward slashes (normalized in fromJS)
-            const buf = bun.path_buffer_pool.get();
-            defer bun.path_buffer_pool.put(buf);
-            const normalized = bun.path.pathToPosixBuf(u8, specifier, buf);
+            const buf = fun.path_buffer_pool.get();
+            defer fun.path_buffer_pool.put(buf);
+            const normalized = fun.path.pathToPosixBuf(u8, specifier, buf);
             const entry = self.map.get(normalized) orelse return null;
             return entry.slice();
         }
@@ -42,14 +42,14 @@ pub const JSBundler = struct {
         pub fn contains(self: *const FileMap, specifier: []const u8) bool {
             if (self.map.count() == 0) return false;
 
-            if (comptime !bun.Environment.isWindows) {
+            if (comptime !fun.Environment.isWindows) {
                 return self.map.contains(specifier);
             }
 
             // Normalize backslashes to forward slashes for consistent lookup
-            const buf = bun.path_buffer_pool.get();
-            defer bun.path_buffer_pool.put(buf);
-            const normalized = bun.path.pathToPosixBuf(u8, specifier, buf);
+            const buf = fun.path_buffer_pool.get();
+            defer fun.path_buffer_pool.put(buf);
+            const normalized = fun.path.pathToPosixBuf(u8, specifier, buf);
             return self.map.contains(normalized);
         }
 
@@ -64,7 +64,7 @@ pub const JSBundler = struct {
 
             // Check if the specifier is directly in the map
             // Must use getKey to return the map's owned key, not the parameter
-            if (comptime !bun.Environment.isWindows) {
+            if (comptime !fun.Environment.isWindows) {
                 if (self.map.getKey(specifier)) |key| {
                     return _resolver.Result{
                         .path_pair = .{
@@ -74,9 +74,9 @@ pub const JSBundler = struct {
                     };
                 }
             } else {
-                const buf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(buf);
-                const normalized_specifier = bun.path.pathToPosixBuf(u8, specifier, buf);
+                const buf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(buf);
+                const normalized_specifier = fun.path.pathToPosixBuf(u8, specifier, buf);
 
                 if (self.map.getKey(normalized_specifier)) |key| {
                     return _resolver.Result{
@@ -95,8 +95,8 @@ pub const JSBundler = struct {
             {
                 // First, ensure source_file is absolute. It may be relative (e.g., "../../Windows/Temp/...")
                 // on Windows when the bundler stores paths relative to cwd.
-                const abs_source_buf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(abs_source_buf);
+                const abs_source_buf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(abs_source_buf);
                 const abs_source_file = if (isAbsolutePath(source_file))
                     source_file
                 else
@@ -105,16 +105,16 @@ pub const JSBundler = struct {
                 // Normalize source_file to use forward slashes (for Windows compatibility)
                 // On Windows, source_file may have backslashes from the real filesystem
                 // Use pathToPosixBuf which always converts \ to / regardless of platform
-                const source_file_buf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(source_file_buf);
-                const normalized_source_file = bun.path.pathToPosixBuf(u8, abs_source_file, source_file_buf);
+                const source_file_buf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(source_file_buf);
+                const normalized_source_file = fun.path.pathToPosixBuf(u8, abs_source_file, source_file_buf);
 
                 // Extract directory from source_file using posix path handling
                 // For "/entry.js", we want "/"; for "/src/index.js", we want "/src/"
                 // For "C:/foo/bar.js", we want "C:/foo"
-                const buf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(buf);
-                const source_dir = bun.path.dirname(normalized_source_file, .posix);
+                const buf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(buf);
+                const source_dir = fun.path.dirname(normalized_source_file, .posix);
                 // If dirname returns empty but path starts with drive letter, extract the drive + root
                 const effective_source_dir = if (source_dir.len == 0)
                     (if (normalized_source_file.len >= 3 and normalized_source_file[1] == ':' and normalized_source_file[2] == '/')
@@ -126,9 +126,9 @@ pub const JSBundler = struct {
                 else
                     source_dir;
                 // Use .loose to preserve Windows drive letters, then normalize in-place on Windows
-                const joined_len = bun.path.joinAbsStringBuf(effective_source_dir, buf, &.{specifier}, .loose).len;
-                if (bun.Environment.isWindows) {
-                    bun.path.platformToPosixInPlace(u8, buf[0..joined_len]);
+                const joined_len = fun.path.joinAbsStringBuf(effective_source_dir, buf, &.{specifier}, .loose).len;
+                if (fun.Environment.isWindows) {
+                    fun.path.platformToPosixInPlace(u8, buf[0..joined_len]);
                 }
                 const joined = buf[0..joined_len];
                 // Must use getKey to return the map's owned key, not the temporary buffer
@@ -181,25 +181,25 @@ pub const JSBundler = struct {
             }).init(globalThis, files_obj);
             defer files_iter.deinit();
 
-            try self.map.ensureTotalCapacity(bun.default_allocator, @intCast(files_iter.len));
+            try self.map.ensureTotalCapacity(fun.default_allocator, @intCast(files_iter.len));
 
             while (try files_iter.next()) |prop| {
                 const property_value = files_iter.value;
 
                 // Parse the value as BlobOrStringOrBuffer using async mode for thread safety
-                var blob_or_string = try jsc.Node.BlobOrStringOrBuffer.fromJSAsync(globalThis, bun.default_allocator, property_value) orelse {
+                var blob_or_string = try jsc.Node.BlobOrStringOrBuffer.fromJSAsync(globalThis, fun.default_allocator, property_value) orelse {
                     return globalThis.throwInvalidArguments("Expected file content to be a string, Blob, File, TypedArray, or ArrayBuffer", .{});
                 };
                 errdefer blob_or_string.deinitAndUnprotect();
 
                 // Clone the key since we need to own it
-                const key = try prop.toOwnedSlice(bun.default_allocator);
+                const key = try prop.toOwnedSlice(fun.default_allocator);
 
                 // Normalize backslashes to forward slashes for cross-platform consistency
                 // This ensures Windows paths like "C:\foo\bar.js" become "C:/foo/bar.js"
                 // Use dangerouslyConvertPathToPosixInPlace which always converts \ to /
                 // (uses sep_windows constant, not sep which varies by target)
-                bun.path.dangerouslyConvertPathToPosixInPlace(u8, key);
+                fun.path.dangerouslyConvertPathToPosixInPlace(u8, key);
 
                 self.map.putAssumeCapacity(key, blob_or_string);
             }
@@ -210,14 +210,14 @@ pub const JSBundler = struct {
 
     pub const Config = struct {
         target: Target = Target.browser,
-        entry_points: bun.StringSet = bun.StringSet.init(bun.default_allocator),
+        entry_points: fun.StringSet = fun.StringSet.init(fun.default_allocator),
         hot: bool = false,
         react_fast_refresh: bool = false,
-        define: bun.StringMap = bun.StringMap.init(bun.default_allocator, false),
+        define: fun.StringMap = fun.StringMap.init(fun.default_allocator, false),
         loaders: ?api.LoaderMap = null,
-        dir: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-        outdir: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-        rootdir: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+        dir: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+        outdir: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+        rootdir: OwnedString = OwnedString.initEmpty(fun.default_allocator),
         serve: Serve = .{},
         jsx: api.Jsx = .{
             .factory = "",
@@ -233,28 +233,28 @@ pub const JSBundler = struct {
         ignore_dce_annotations: bool = false,
         emit_dce_annotations: ?bool = null,
         names: Names = .{},
-        external: bun.StringSet = bun.StringSet.init(bun.default_allocator),
-        allow_unresolved: ?bun.StringSet = null,
+        external: fun.StringSet = fun.StringSet.init(fun.default_allocator),
+        allow_unresolved: ?fun.StringSet = null,
         source_map: options.SourceMapOption = .none,
-        public_path: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-        conditions: bun.StringSet = bun.StringSet.init(bun.default_allocator),
+        public_path: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+        conditions: fun.StringSet = fun.StringSet.init(fun.default_allocator),
         packages: options.PackagesOption = .bundle,
         format: options.Format = .esm,
         bytecode: bool = false,
-        banner: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-        footer: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+        banner: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+        footer: OwnedString = OwnedString.initEmpty(fun.default_allocator),
         /// Path to write JSON metafile (if specified via metafile object) - TEST: moved here
-        metafile_json_path: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+        metafile_json_path: OwnedString = OwnedString.initEmpty(fun.default_allocator),
         /// Path to write markdown metafile (if specified via metafile object) - TEST: moved here
-        metafile_markdown_path: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+        metafile_markdown_path: OwnedString = OwnedString.initEmpty(fun.default_allocator),
         css_chunking: bool = false,
-        drop: bun.StringSet = bun.StringSet.init(bun.default_allocator),
-        features: bun.StringSet = bun.StringSet.init(bun.default_allocator),
+        drop: fun.StringSet = fun.StringSet.init(fun.default_allocator),
+        features: fun.StringSet = fun.StringSet.init(fun.default_allocator),
         has_any_on_before_parse: bool = false,
         throw_on_error: bool = true,
         env_behavior: api.DotEnvBehavior = .disable,
-        env_prefix: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-        tsconfig_override: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+        env_prefix: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+        tsconfig_override: OwnedString = OwnedString.initEmpty(fun.default_allocator),
         compile: ?CompileOptions = null,
         /// In-memory files that can be used as entrypoints or imported.
         /// These files do not need to exist on disk.
@@ -264,20 +264,20 @@ pub const JSBundler = struct {
         /// Package names whose barrel files should be optimized.
         /// Named imports from these packages will only load the submodules
         /// that are actually used instead of parsing all re-exported submodules.
-        optimize_imports: bun.StringSet = bun.StringSet.init(bun.default_allocator),
+        optimize_imports: fun.StringSet = fun.StringSet.init(fun.default_allocator),
 
         pub const CompileOptions = struct {
             compile_target: CompileTarget = .{},
-            exec_argv: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            executable_path: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+            exec_argv: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            executable_path: OwnedString = OwnedString.initEmpty(fun.default_allocator),
             windows_hide_console: bool = false,
-            windows_icon_path: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            windows_title: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            windows_publisher: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            windows_version: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            windows_description: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            windows_copyright: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            outfile: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+            windows_icon_path: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            windows_title: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            windows_publisher: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            windows_version: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            windows_description: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            windows_copyright: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            outfile: OwnedString = OwnedString.initEmpty(fun.default_allocator),
             autoload_dotenv: bool = true,
             autoload_bunfig: bool = true,
             autoload_tsconfig: bool = false,
@@ -324,7 +324,7 @@ pub const JSBundler = struct {
                     var iter = try exec_argv.arrayIterator(globalThis);
                     var is_first = true;
                     while (try iter.next()) |arg| {
-                        var slice = try arg.toSlice(globalThis, bun.default_allocator);
+                        var slice = try arg.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
                         if (is_first) {
                             is_first = false;
@@ -337,10 +337,10 @@ pub const JSBundler = struct {
                 }
 
                 if (try object.getOwn(globalThis, "executablePath")) |executable_path| {
-                    var slice = try executable_path.toSlice(globalThis, bun.default_allocator);
+                    var slice = try executable_path.toSlice(globalThis, fun.default_allocator);
                     defer slice.deinit();
-                    if (bun.sys.existsAtType(bun.FD.cwd(), slice.slice()).unwrapOr(.directory) != .file) {
-                        return globalThis.throwInvalidArguments("executablePath must be a valid path to a Bun executable", .{});
+                    if (fun.sys.existsAtType(fun.FD.cwd(), slice.slice()).unwrapOr(.directory) != .file) {
+                        return globalThis.throwInvalidArguments("executablePath must be a valid path to a Fun executable", .{});
                     }
 
                     try this.executable_path.appendSliceExact(slice.slice());
@@ -356,9 +356,9 @@ pub const JSBundler = struct {
                     }
 
                     if (try windows.getOwn(globalThis, "icon")) |windows_icon_path| {
-                        var slice = try windows_icon_path.toSlice(globalThis, bun.default_allocator);
+                        var slice = try windows_icon_path.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
-                        if (bun.sys.existsAtType(bun.FD.cwd(), slice.slice()).unwrapOr(.directory) != .file) {
+                        if (fun.sys.existsAtType(fun.FD.cwd(), slice.slice()).unwrapOr(.directory) != .file) {
                             return globalThis.throwInvalidArguments("windows.icon must be a valid path to an ico file", .{});
                         }
 
@@ -366,38 +366,38 @@ pub const JSBundler = struct {
                     }
 
                     if (try windows.getOwn(globalThis, "title")) |windows_title| {
-                        var slice = try windows_title.toSlice(globalThis, bun.default_allocator);
+                        var slice = try windows_title.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
                         try this.windows_title.appendSliceExact(slice.slice());
                     }
 
                     if (try windows.getOwn(globalThis, "publisher")) |windows_publisher| {
-                        var slice = try windows_publisher.toSlice(globalThis, bun.default_allocator);
+                        var slice = try windows_publisher.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
                         try this.windows_publisher.appendSliceExact(slice.slice());
                     }
 
                     if (try windows.getOwn(globalThis, "version")) |windows_version| {
-                        var slice = try windows_version.toSlice(globalThis, bun.default_allocator);
+                        var slice = try windows_version.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
                         try this.windows_version.appendSliceExact(slice.slice());
                     }
 
                     if (try windows.getOwn(globalThis, "description")) |windows_description| {
-                        var slice = try windows_description.toSlice(globalThis, bun.default_allocator);
+                        var slice = try windows_description.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
                         try this.windows_description.appendSliceExact(slice.slice());
                     }
 
                     if (try windows.getOwn(globalThis, "copyright")) |windows_copyright| {
-                        var slice = try windows_copyright.toSlice(globalThis, bun.default_allocator);
+                        var slice = try windows_copyright.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
                         try this.windows_copyright.appendSliceExact(slice.slice());
                     }
                 }
 
                 if (try object.getOwn(globalThis, "outfile")) |outfile| {
-                    var slice = try outfile.toSlice(globalThis, bun.default_allocator);
+                    var slice = try outfile.toSlice(globalThis, fun.default_allocator);
                     defer slice.deinit();
                     try this.outfile.appendSliceExact(slice.slice());
                 }
@@ -434,14 +434,14 @@ pub const JSBundler = struct {
             }
         };
 
-        pub const List = bun.StringArrayHashMapUnmanaged(Config);
+        pub const List = fun.StringArrayHashMapUnmanaged(Config);
 
         pub fn fromJS(globalThis: *jsc.JSGlobalObject, config: jsc.JSValue, plugins: *?*Plugin, allocator: std.mem.Allocator) JSError!Config {
             var this = Config{
-                .entry_points = bun.StringSet.init(allocator),
-                .external = bun.StringSet.init(allocator),
-                .optimize_imports = bun.StringSet.init(allocator),
-                .define = bun.StringMap.init(allocator, true),
+                .entry_points = fun.StringSet.init(allocator),
+                .external = fun.StringSet.init(allocator),
+                .optimize_imports = fun.StringSet.init(allocator),
+                .define = fun.StringMap.init(allocator, true),
                 .dir = OwnedString.initEmpty(allocator),
                 .outdir = OwnedString.initEmpty(allocator),
                 .rootdir = OwnedString.initEmpty(allocator),
@@ -457,7 +457,7 @@ pub const JSBundler = struct {
             var did_set_target = false;
             if (try config.getOptional(globalThis, "target", ZigString.Slice)) |slice| {
                 defer slice.deinit();
-                if (strings.hasPrefixComptime(slice.slice(), "bun-")) {
+                if (strings.hasPrefixComptime(slice.slice(), "fun-")) {
                     this.compile = .{
                         .compile_target = try CompileTarget.fromSlice(globalThis, slice.slice()),
                         .exec_argv = OwnedString.initEmpty(allocator),
@@ -470,11 +470,11 @@ pub const JSBundler = struct {
                         .windows_copyright = OwnedString.initEmpty(allocator),
                         .outfile = OwnedString.initEmpty(allocator),
                     };
-                    this.target = .bun;
+                    this.target = .fun;
                     did_set_target = true;
                 } else {
                     this.target = options.Target.Map.get(slice.slice()) orelse {
-                        return globalThis.throwInvalidArguments("Expected target to be one of 'browser', 'node', 'bun', 'macro', or 'bun-<target>', got {s}", .{slice.slice()});
+                        return globalThis.throwInvalidArguments("Expected target to be one of 'browser', 'node', 'fun', 'macro', or 'fun-<target>', got {s}", .{slice.slice()});
                     };
                     did_set_target = true;
                 }
@@ -504,12 +504,12 @@ pub const JSBundler = struct {
                         return globalThis.throwInvalidArguments("Expected plugin to have a setup() function", .{});
                     };
 
-                    var bun_plugins: *Plugin = plugins.* orelse brk: {
+                    var fun_plugins: *Plugin = plugins.* orelse brk: {
                         plugins.* = Plugin.create(
                             globalThis,
                             switch (this.target) {
-                                .bun, .bun_macro => jsc.JSGlobalObject.BunPluginTarget.bun,
-                                .node => jsc.JSGlobalObject.BunPluginTarget.node,
+                                .fun, .fun_macro => jsc.JSGlobalObject.FunPluginTarget.fun,
+                                .node => jsc.JSGlobalObject.FunPluginTarget.node,
                                 else => .browser,
                             },
                         );
@@ -517,12 +517,12 @@ pub const JSBundler = struct {
                     };
 
                     const is_last = i == length - 1;
-                    var plugin_result = try bun_plugins.addPlugin(function, config, onstart_promise_array, is_last, false);
+                    var plugin_result = try fun_plugins.addPlugin(function, config, onstart_promise_array, is_last, false);
 
                     if (!plugin_result.isEmptyOrUndefinedOrNull()) {
                         if (plugin_result.asAnyPromise()) |promise| {
                             promise.setHandled(globalThis.vm());
-                            globalThis.bunVM().waitForPromise(promise);
+                            globalThis.funVM().waitForPromise(promise);
                             switch (promise.unwrap(globalThis.vm(), .mark_handled)) {
                                 .pending => unreachable,
                                 .fulfilled => |val| {
@@ -555,10 +555,10 @@ pub const JSBundler = struct {
                 if (bytecode) {
                     // Default to CJS for bytecode, since esm doesn't really work yet.
                     this.format = .cjs;
-                    if (did_set_target and this.target != .bun and this.bytecode) {
-                        return globalThis.throwInvalidArguments("target must be 'bun' when bytecode is true", .{});
+                    if (did_set_target and this.target != .fun and this.bytecode) {
+                        return globalThis.throwInvalidArguments("target must be 'fun' when bytecode is true", .{});
                     }
-                    this.target = .bun;
+                    this.target = .fun;
                 }
             }
 
@@ -607,7 +607,7 @@ pub const JSBundler = struct {
                     } else if (env == .true or (env.isNumber() and env.asNumber() == 1)) {
                         this.env_behavior = .load_all;
                     } else if (env.isString()) {
-                        const slice = try env.toSlice(globalThis, bun.default_allocator);
+                        const slice = try env.toSlice(globalThis, fun.default_allocator);
                         defer slice.deinit();
                         if (strings.eqlComptime(slice.slice(), "inline")) {
                             this.env_behavior = .load_all;
@@ -786,12 +786,12 @@ pub const JSBundler = struct {
 
                 defer path.deinit();
 
-                var dir = bun.FD.fromStdDir(std.fs.cwd().openDir(path.slice(), .{}) catch |err| {
+                var dir = fun.FD.fromStdDir(std.fs.cwd().openDir(path.slice(), .{}) catch |err| {
                     return globalThis.throwPretty("{s}: failed to open root directory: {s}", .{ @errorName(err), path.slice() });
                 });
                 defer dir.close();
 
-                var rootdir_buf: bun.PathBuffer = undefined;
+                var rootdir_buf: fun.PathBuffer = undefined;
                 const rootdir = dir.getFdPath(&rootdir_buf) catch |err| {
                     return globalThis.throwPretty("{s}: failed to get full root directory path: {s}", .{ @errorName(err), path.slice() });
                 };
@@ -812,7 +812,7 @@ pub const JSBundler = struct {
                     if (!allow_unresolved_val.jsTypeLoose().isArray()) {
                         return globalThis.throwInvalidArguments("allowUnresolved must be an array", .{});
                     }
-                    this.allow_unresolved = bun.StringSet.init(bun.default_allocator);
+                    this.allow_unresolved = fun.StringSet.init(fun.default_allocator);
                     if (try allow_unresolved_val.getLength(globalThis) > 0) {
                         var iter = try allow_unresolved_val.arrayIterator(globalThis);
                         while (try iter.next()) |entry| {
@@ -855,7 +855,7 @@ pub const JSBundler = struct {
             //     defer slice.deinit();
             //     this.appendSliceExact(slice.slice()) catch unreachable;
             // } else {
-            //     this.appendSliceExact(globalThis.bunVM().transpiler.fs.top_level_dir) catch unreachable;
+            //     this.appendSliceExact(globalThis.funVM().transpiler.fs.top_level_dir) catch unreachable;
             // }
 
             if (try config.getOptional(globalThis, "publicPath", ZigString.Slice)) |slice| {
@@ -926,10 +926,10 @@ pub const JSBundler = struct {
                         val = jsc.ZigString.fromUTF8("\"\"");
                     }
 
-                    const key = try prop.toOwnedSlice(bun.default_allocator);
+                    const key = try prop.toOwnedSlice(fun.default_allocator);
 
                     // value is always cloned
-                    const value = val.toSlice(bun.default_allocator);
+                    const value = val.toSlice(fun.default_allocator);
                     defer value.deinit();
 
                     // .insert clones the value, but not the key
@@ -951,7 +951,7 @@ pub const JSBundler = struct {
                 // exactly what was appended.
                 var loader_names: std.ArrayListUnmanaged(string) = .{};
                 errdefer {
-                    for (loader_names.items) |name| bun.default_allocator.free(name);
+                    for (loader_names.items) |name| fun.default_allocator.free(name);
                     loader_names.deinit(allocator);
                 }
                 var loader_values: std.ArrayListUnmanaged(api.Loader) = .{};
@@ -971,7 +971,7 @@ pub const JSBundler = struct {
                         api.Loader,
                         options.Loader.api_names,
                     ));
-                    loader_names.appendAssumeCapacity(try prop.toOwnedSlice(bun.default_allocator));
+                    loader_names.appendAssumeCapacity(try prop.toOwnedSlice(fun.default_allocator));
                 }
 
                 this.loaders = api.LoaderMap{
@@ -991,7 +991,7 @@ pub const JSBundler = struct {
                 } else if (metafile_value.isString()) {
                     // metafile: "path/to/meta.json" - shorthand for { json: "..." }
                     this.metafile = true;
-                    const slice = try metafile_value.toSlice(globalThis, bun.default_allocator);
+                    const slice = try metafile_value.toSlice(globalThis, fun.default_allocator);
                     defer slice.deinit();
                     try this.metafile_json_path.appendSliceExact(slice.slice());
                 } else if (metafile_value.isObject()) {
@@ -1013,7 +1013,7 @@ pub const JSBundler = struct {
             if (try CompileOptions.fromJS(
                 globalThis,
                 config,
-                bun.default_allocator,
+                fun.default_allocator,
                 if (this.compile) |*compile| compile.compile_target else null,
             )) |compile| {
                 this.compile = compile;
@@ -1021,7 +1021,7 @@ pub const JSBundler = struct {
 
             if (this.compile) |*compile| {
                 // When compile + target=browser + all HTML entrypoints, produce standalone HTML.
-                // Otherwise, default to bun executable compile.
+                // Otherwise, default to fun executable compile.
                 const has_all_html_entrypoints = brk: {
                     if (this.entry_points.count() == 0) break :brk false;
                     for (this.entry_points.keys()) |ep| {
@@ -1031,7 +1031,7 @@ pub const JSBundler = struct {
                 };
                 const is_standalone_html = this.target == .browser and has_all_html_entrypoints;
                 if (!is_standalone_html) {
-                    this.target = .bun;
+                    this.target = .fun;
 
                     const define_keys = compile.compile_target.defineKeys();
                     const define_values = compile.compile_target.defineValues();
@@ -1039,7 +1039,7 @@ pub const JSBundler = struct {
                         try this.define.insert(key, value);
                     }
 
-                    const base_public_path = bun.StandaloneModuleGraph.targetBasePublicPath(this.compile.?.compile_target.os, "root/");
+                    const base_public_path = fun.StandaloneModuleGraph.targetBasePublicPath(this.compile.?.compile_target.os, "root/");
                     try this.public_path.append(base_public_path);
 
                     // When using --compile, only `external` sourcemaps work, as we do not
@@ -1060,13 +1060,13 @@ pub const JSBundler = struct {
                             outfile = std.fs.path.basename(std.fs.path.dirname(entry_point) orelse "index");
                         }
 
-                        if (strings.eqlComptime(outfile, "bun")) {
-                            outfile = std.fs.path.basename(std.fs.path.dirname(entry_point) orelse "bun");
+                        if (strings.eqlComptime(outfile, "fun")) {
+                            outfile = std.fs.path.basename(std.fs.path.dirname(entry_point) orelse "fun");
                         }
 
-                        // If argv[0] is "bun" or "bunx", we don't check if the binary is standalone
-                        if (strings.eqlComptime(outfile, "bun") or strings.eqlComptime(outfile, "bunx")) {
-                            return globalThis.throwInvalidArguments("cannot use compile with an output file named 'bun' because bun won't realize it's a standalone executable. Please choose a different name for compile.outfile", .{});
+                        // If argv[0] is "fun" or "funx", we don't check if the binary is standalone
+                        if (strings.eqlComptime(outfile, "fun") or strings.eqlComptime(outfile, "funx")) {
+                            return globalThis.throwInvalidArguments("cannot use compile with an output file named 'fun' because fun won't realize it's a standalone executable. Please choose a different name for compile.outfile", .{});
                         }
 
                         try compile.outfile.appendSliceExact(outfile);
@@ -1099,12 +1099,12 @@ pub const JSBundler = struct {
         }
 
         pub const Names = struct {
-            owned_entry_point: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+            owned_entry_point: OwnedString = OwnedString.initEmpty(fun.default_allocator),
             entry_point: options.PathTemplate = options.PathTemplate.file,
-            owned_chunk: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+            owned_chunk: OwnedString = OwnedString.initEmpty(fun.default_allocator),
             chunk: options.PathTemplate = options.PathTemplate.chunk,
 
-            owned_asset: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+            owned_asset: OwnedString = OwnedString.initEmpty(fun.default_allocator),
             asset: options.PathTemplate = options.PathTemplate.asset,
 
             pub fn deinit(self: *Names) void {
@@ -1122,8 +1122,8 @@ pub const JSBundler = struct {
         };
 
         pub const Serve = struct {
-            handler_path: OwnedString = OwnedString.initEmpty(bun.default_allocator),
-            prefix: OwnedString = OwnedString.initEmpty(bun.default_allocator),
+            handler_path: OwnedString = OwnedString.initEmpty(fun.default_allocator),
+            prefix: OwnedString = OwnedString.initEmpty(fun.default_allocator),
 
             pub fn deinit(self: *Serve, allocator: std.mem.Allocator) void {
                 _ = allocator;
@@ -1141,10 +1141,10 @@ pub const JSBundler = struct {
             self.serve.deinit(allocator);
             if (self.loaders) |loaders| {
                 for (loaders.extensions) |ext| {
-                    bun.default_allocator.free(ext);
+                    fun.default_allocator.free(ext);
                 }
-                bun.default_allocator.free(loaders.loaders);
-                bun.default_allocator.free(loaders.extensions);
+                fun.default_allocator.free(loaders.loaders);
+                fun.default_allocator.free(loaders.extensions);
             }
             // Free JSX allocated strings
             if (self.jsx.factory.len > 0) {
@@ -1183,50 +1183,50 @@ pub const JSBundler = struct {
     fn build(
         globalThis: *jsc.JSGlobalObject,
         arguments: []const jsc.JSValue,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         if (arguments.len == 0 or !arguments[0].isObject()) {
-            return globalThis.throwInvalidArguments("Expected a config object to be passed to Bun.build", .{});
+            return globalThis.throwInvalidArguments("Expected a config object to be passed to Fun.build", .{});
         }
 
-        const vm = globalThis.bunVM();
+        const vm = globalThis.funVM();
 
-        // Detect and prevent calling Bun.build from within a macro during bundling.
+        // Detect and prevent calling Fun.build from within a macro during bundling.
         // This would cause a deadlock because:
-        // 1. The bundler thread (singleton) is processing the outer Bun.build
+        // 1. The bundler thread (singleton) is processing the outer Fun.build
         // 2. During parsing, it encounters a macro and evaluates it
-        // 3. The macro calls Bun.build, which tries to enqueue to the same singleton thread
+        // 3. The macro calls Fun.build, which tries to enqueue to the same singleton thread
         // 4. The singleton thread is blocked waiting for the macro to complete -> deadlock
         if (vm.macro_mode) {
             return globalThis.throw(
-                \\Bun.build cannot be called from within a macro during bundling.
+                \\Fun.build cannot be called from within a macro during bundling.
                 \\
                 \\This would cause a deadlock because the bundler is waiting for the macro to complete,
-                \\but the macro's Bun.build call is waiting for the bundler.
+                \\but the macro's Fun.build call is waiting for the bundler.
                 \\
-                \\To bundle code at compile time in a macro, use Bun.spawnSync to invoke the CLI:
-                \\  const result = Bun.spawnSync(["bun", "build", entrypoint, "--format=esm"]);
+                \\To bundle code at compile time in a macro, use Fun.spawnSync to invoke the CLI:
+                \\  const result = Fun.spawnSync(["fun", "build", entrypoint, "--format=esm"]);
             ,
                 .{},
             );
         }
 
         var plugins: ?*Plugin = null;
-        const config = try Config.fromJS(globalThis, arguments[0], &plugins, bun.default_allocator);
+        const config = try Config.fromJS(globalThis, arguments[0], &plugins, fun.default_allocator);
 
-        return bun.BundleV2.generateFromJavaScript(
+        return fun.BundleV2.generateFromJavaScript(
             config,
             plugins,
             globalThis,
             vm.eventLoop(),
-            bun.default_allocator,
+            fun.default_allocator,
         );
     }
 
-    /// `Bun.build(config)`
+    /// `Fun.build(config)`
     pub fn buildFn(
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         const arguments = callframe.arguments_old(1);
         return build(globalThis, arguments.slice());
     }
@@ -1240,7 +1240,7 @@ pub const JSBundler = struct {
         task: jsc.AnyEventLoop.Task,
 
         pub const MiniImportRecord = struct {
-            kind: bun.ImportKind,
+            kind: fun.ImportKind,
             source_file: string = "",
             namespace: string = "",
             specifier: string = "",
@@ -1254,7 +1254,7 @@ pub const JSBundler = struct {
             // }
         };
 
-        pub fn init(bv2: *bun.BundleV2, record: MiniImportRecord) Resolve {
+        pub fn init(bv2: *fun.BundleV2, record: MiniImportRecord) Resolve {
             return .{
                 .bv2 = bv2,
                 .import_record = record,
@@ -1273,8 +1273,8 @@ pub const JSBundler = struct {
                 external: bool = false,
 
                 pub fn deinit(this: *@This()) void {
-                    bun.default_allocator.free(this.path);
-                    bun.default_allocator.free(this.namespace);
+                    fun.default_allocator.free(this.path);
+                    fun.default_allocator.free(this.namespace);
                 }
             },
             no_match,
@@ -1293,7 +1293,7 @@ pub const JSBundler = struct {
                         success.deinit();
                     },
                     .err => |*err| {
-                        err.deinit(bun.default_allocator);
+                        err.deinit(fun.default_allocator);
                     },
                     .no_match, .pending, .consumed => {},
                 }
@@ -1303,7 +1303,7 @@ pub const JSBundler = struct {
 
         pub fn deinit(this: *Resolve) void {
             this.value.deinit();
-            bun.default_allocator.destroy(this);
+            fun.default_allocator.destroy(this);
         }
 
         const AnyTask = jsc.AnyTask.New(@This(), runOnJSThread);
@@ -1334,8 +1334,8 @@ pub const JSBundler = struct {
                 resolve.value = .{ .no_match = {} };
             } else {
                 const global = resolve.bv2.plugins.?.globalObject();
-                const path = path_value.toSliceCloneWithAllocator(global, bun.default_allocator) catch @panic("Unexpected: path is not a string");
-                const namespace = namespace_value.toSliceCloneWithAllocator(global, bun.default_allocator) catch @panic("Unexpected: namespace is not a string");
+                const path = path_value.toSliceCloneWithAllocator(global, fun.default_allocator) catch @panic("Unexpected: path is not a string");
+                const namespace = namespace_value.toSliceCloneWithAllocator(global, fun.default_allocator) catch @panic("Unexpected: namespace is not a string");
                 resolve.value = .{
                     .success = .{
                         .path = path.slice(),
@@ -1353,7 +1353,7 @@ pub const JSBundler = struct {
         }
     };
 
-    const DeferredTask = bun.bundle_v2.DeferredTask;
+    const DeferredTask = fun.bundle_v2.DeferredTask;
 
     pub const Load = struct {
         bv2: *BundleV2,
@@ -1366,15 +1366,15 @@ pub const JSBundler = struct {
         value: Value,
         js_task: jsc.AnyTask,
         task: jsc.AnyEventLoop.Task,
-        parse_task: *bun.ParseTask,
+        parse_task: *fun.ParseTask,
         /// Faster path: skip the extra threadpool dispatch when the file is not found
         was_file: bool,
         /// Defer may only be called once
         called_defer: bool,
 
-        const debug_deferred = bun.Output.scoped(.BUNDLER_DEFERRED, .hidden);
+        const debug_deferred = fun.Output.scoped(.FUNDLER_DEFERRED, .hidden);
 
-        pub fn init(bv2: *bun.BundleV2, parse: *bun.bundle_v2.ParseTask) Load {
+        pub fn init(bv2: *fun.BundleV2, parse: *fun.bundle_v2.ParseTask) Load {
             return .{
                 .bv2 = bv2,
                 .parse_task = parse,
@@ -1390,7 +1390,7 @@ pub const JSBundler = struct {
             };
         }
 
-        pub fn bakeGraph(load: *const Load) bun.bake.Graph {
+        pub fn bakeGraph(load: *const Load) fun.bake.Graph {
             return load.parse_task.known_target.bakeGraph();
         }
 
@@ -1408,10 +1408,10 @@ pub const JSBundler = struct {
             pub fn deinit(this: *Value) void {
                 switch (this.*) {
                     .success => |success| {
-                        bun.default_allocator.free(success.source_code);
+                        fun.default_allocator.free(success.source_code);
                     },
                     .err => |*err| {
-                        err.deinit(bun.default_allocator);
+                        err.deinit(fun.default_allocator);
                     },
                     .no_match, .pending, .consumed => {},
                 }
@@ -1454,7 +1454,7 @@ pub const JSBundler = struct {
         export fn JSBundlerPlugin__onDefer(load: *Load, global: *jsc.JSGlobalObject) JSValue {
             return jsc.toJSHostCall(global, @src(), Load.onDefer, .{ load, global });
         }
-        fn onDefer(this: *Load, globalObject: *jsc.JSGlobalObject) bun.JSError!JSValue {
+        fn onDefer(this: *Load, globalObject: *jsc.JSGlobalObject) fun.JSError!JSValue {
             if (this.called_defer) {
                 return globalObject.throw("Can't call .defer() more than once within an onLoad plugin", .{});
             }
@@ -1494,17 +1494,17 @@ pub const JSBundler = struct {
 
                 if (this.was_file) {
                     // Faster path: skip the extra threadpool dispatch
-                    this.bv2.graph.pool.worker_pool.schedule(bun.ThreadPool.Batch.from(&this.parse_task.task));
+                    this.bv2.graph.pool.worker_pool.schedule(fun.ThreadPool.Batch.from(&this.parse_task.task));
                     this.deinit();
                     return;
                 }
             } else {
                 const loader: api.Loader = @enumFromInt(loader_as_int.to(u8));
                 const global = this.bv2.plugins.?.globalObject();
-                const source_code = jsc.Node.StringOrBuffer.fromJSToOwnedSlice(global, source_code_value, bun.default_allocator) catch |err| {
+                const source_code = jsc.Node.StringOrBuffer.fromJSToOwnedSlice(global, source_code_value, fun.default_allocator) catch |err| {
                     switch (err) {
                         error.OutOfMemory => {
-                            bun.outOfMemory();
+                            fun.outOfMemory();
                         },
                         error.JSError => {},
                         error.JSTerminated => {},
@@ -1529,8 +1529,8 @@ pub const JSBundler = struct {
     };
 
     pub const Plugin = opaque {
-        extern fn JSBundlerPlugin__create(*jsc.JSGlobalObject, jsc.JSGlobalObject.BunPluginTarget) *Plugin;
-        pub fn create(global: *jsc.JSGlobalObject, target: jsc.JSGlobalObject.BunPluginTarget) *Plugin {
+        extern fn JSBundlerPlugin__create(*jsc.JSGlobalObject, jsc.JSGlobalObject.FunPluginTarget) *Plugin;
+        pub fn create(global: *jsc.JSGlobalObject, target: jsc.JSGlobalObject.FunPluginTarget) *Plugin {
             jsc.markBinding(@src());
             const plugin = JSBundlerPlugin__create(global, target);
             jsc.JSValue.fromCell(plugin).protect();
@@ -1539,7 +1539,7 @@ pub const JSBundler = struct {
 
         extern fn JSBundlerPlugin__callOnBeforeParsePlugins(
             *Plugin,
-            bun_context: *anyopaque,
+            fun_context: *anyopaque,
             namespace: *const String,
             path: *const String,
             on_before_parse_args: ?*anyopaque,
@@ -1559,7 +1559,7 @@ pub const JSBundler = struct {
         extern fn JSBundlerPlugin__tombstone(*Plugin) void;
         extern fn JSBundlerPlugin__runOnEndCallbacks(*Plugin, jsc.JSValue, jsc.JSValue, jsc.JSValue) jsc.JSValue;
 
-        pub fn runOnEndCallbacks(this: *Plugin, globalThis: *jsc.JSGlobalObject, build_promise: *jsc.JSPromise, build_result: jsc.JSValue, rejection: bun.JSError!jsc.JSValue) bun.JSError!jsc.JSValue {
+        pub fn runOnEndCallbacks(this: *Plugin, globalThis: *jsc.JSGlobalObject, build_promise: *jsc.JSPromise, build_result: jsc.JSValue, rejection: fun.JSError!jsc.JSValue) fun.JSError!jsc.JSValue {
             jsc.markBinding(@src());
 
             const rejection_value = rejection catch |err| switch (err) {
@@ -1628,14 +1628,14 @@ pub const JSBundler = struct {
             is_onLoad: bool,
         ) bool {
             jsc.markBinding(@src());
-            const tracer = bun.perf.trace("JSBundler.hasAnyMatches");
+            const tracer = fun.perf.trace("JSBundler.hasAnyMatches");
             defer tracer.end();
 
             const namespace_string = if (path.isFile())
-                bun.String.empty
+                fun.String.empty
             else
-                bun.String.cloneUTF8(path.namespace);
-            const path_string = bun.String.cloneUTF8(path.text);
+                fun.String.cloneUTF8(path.namespace);
+            const path_string = fun.String.cloneUTF8(path.text);
             defer namespace_string.deref();
             defer path_string.deref();
             return JSBundlerPlugin__anyMatches(this, &namespace_string, &path_string, is_onLoad);
@@ -1650,14 +1650,14 @@ pub const JSBundler = struct {
             is_server_side: bool,
         ) void {
             jsc.markBinding(@src());
-            const tracer = bun.perf.trace("JSBundler.matchOnLoad");
+            const tracer = fun.perf.trace("JSBundler.matchOnLoad");
             defer tracer.end();
             debug("JSBundler.matchOnLoad(0x{x}, {s}, {s})", .{ @intFromPtr(this), namespace, path });
             const namespace_string = if (namespace.len == 0)
-                bun.String.static("file")
+                fun.String.static("file")
             else
-                bun.String.cloneUTF8(namespace);
-            const path_string = bun.String.cloneUTF8(path);
+                fun.String.cloneUTF8(namespace);
+            const path_string = fun.String.cloneUTF8(path);
             defer namespace_string.deref();
             defer path_string.deref();
             JSBundlerPlugin__matchOnLoad(this, &namespace_string, &path_string, context, @intFromEnum(default_loader), is_server_side);
@@ -1669,17 +1669,17 @@ pub const JSBundler = struct {
             namespace: []const u8,
             importer: []const u8,
             context: *anyopaque,
-            import_record_kind: bun.ImportKind,
+            import_record_kind: fun.ImportKind,
         ) void {
             jsc.markBinding(@src());
-            const tracer = bun.perf.trace("JSBundler.matchOnResolve");
+            const tracer = fun.perf.trace("JSBundler.matchOnResolve");
             defer tracer.end();
             const namespace_string = if (strings.eqlComptime(namespace, "file"))
-                bun.String.empty
+                fun.String.empty
             else
-                bun.String.cloneUTF8(namespace);
-            const path_string = bun.String.cloneUTF8(path);
-            const importer_string = bun.String.cloneUTF8(importer);
+                fun.String.cloneUTF8(namespace);
+            const path_string = fun.String.cloneUTF8(path);
+            const importer_string = fun.String.cloneUTF8(importer);
             defer namespace_string.deref();
             defer path_string.deref();
             defer importer_string.deref();
@@ -1695,9 +1695,9 @@ pub const JSBundler = struct {
             is_bake: bool,
         ) !JSValue {
             jsc.markBinding(@src());
-            const tracer = bun.perf.trace("JSBundler.addPlugin");
+            const tracer = fun.perf.trace("JSBundler.addPlugin");
             defer tracer.end();
-            return bun.jsc.fromJSHostCall(globalObject(this), @src(), JSBundlerPlugin__runSetupFunction, .{
+            return fun.jsc.fromJSHostCall(globalObject(this), @src(), JSBundlerPlugin__runSetupFunction, .{
                 this,
                 object,
                 config,
@@ -1707,8 +1707,8 @@ pub const JSBundler = struct {
             });
         }
 
-        pub fn drainDeferred(this: *Plugin, rejected: bool) bun.JSError!void {
-            return bun.jsc.fromJSHostCallGeneric(this.globalObject(), @src(), JSBundlerPlugin__drainDeferred, .{ this, rejected });
+        pub fn drainDeferred(this: *Plugin, rejected: bool) fun.JSError!void {
+            return fun.jsc.fromJSHostCallGeneric(this.globalObject(), @src(), JSBundlerPlugin__drainDeferred, .{ this, rejected });
         }
 
         pub fn setConfig(this: *Plugin, config: *anyopaque) void {
@@ -1735,13 +1735,13 @@ pub const JSBundler = struct {
         ) void {
             switch (which.to(i32)) {
                 0 => {
-                    const resolve: *JSBundler.Resolve = bun.cast(*Resolve, ctx);
+                    const resolve: *JSBundler.Resolve = fun.cast(*Resolve, ctx);
                     const msg = msgFromJS(plugin, resolve.import_record.source_file, exception);
                     resolve.value = .{ .err = msg };
                     resolve.bv2.onResolveAsync(resolve);
                 },
                 1 => {
-                    const load: *Load = bun.cast(*Load, ctx);
+                    const load: *Load = fun.cast(*Load, ctx);
                     const msg = msgFromJS(plugin, load.path, exception);
                     load.value = .{ .err = msg };
                     load.bv2.onLoadAsync(load);
@@ -1754,15 +1754,15 @@ pub const JSBundler = struct {
         /// (e.g. `Symbol.toPrimitive` on the thrown object throws), clear that secondary
         /// exception and return a generic fallback message so `onResolveAsync`/`onLoadAsync`
         /// is still called and the bundler's pending-item counter is decremented. Returning
-        /// early here would cause `Bun.build` to hang forever waiting on the counter.
+        /// early here would cause `Fun.build` to hang forever waiting on the counter.
         fn msgFromJS(plugin: *Plugin, file: []const u8, exception: JSValue) logger.Msg {
             return logger.Msg.fromJS(
-                bun.default_allocator,
+                fun.default_allocator,
                 plugin.globalObject(),
                 file,
                 exception,
             ) catch |err| switch (err) {
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 error.JSError, error.JSTerminated => {
                     // We are already producing a build error for the original plugin
                     // exception; the secondary exception from string conversion is not
@@ -1770,7 +1770,7 @@ pub const JSBundler = struct {
                     _ = plugin.globalObject().clearExceptionExceptTermination();
                     return .{
                         .data = .{
-                            .text = bun.handleOom(bun.default_allocator.dupe(
+                            .text = fun.handleOom(fun.default_allocator.dupe(
                                 u8,
                                 "A bundler plugin threw a value that could not be converted to a string",
                             )),
@@ -1815,51 +1815,51 @@ pub const BuildArtifact = struct {
         this.blob.deinit();
         this.sourcemap.deinit();
 
-        bun.default_allocator.free(this.path);
+        fun.default_allocator.free(this.path);
     }
 
     pub fn getText(
         this: *BuildArtifact,
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
-        return @call(bun.callmod_inline, Blob.getText, .{ &this.blob, globalThis, callframe });
+    ) fun.JSError!jsc.JSValue {
+        return @call(fun.callmod_inline, Blob.getText, .{ &this.blob, globalThis, callframe });
     }
 
     pub fn getJSON(
         this: *BuildArtifact,
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
-        return @call(bun.callmod_inline, Blob.getJSON, .{ &this.blob, globalThis, callframe });
+    ) fun.JSError!jsc.JSValue {
+        return @call(fun.callmod_inline, Blob.getJSON, .{ &this.blob, globalThis, callframe });
     }
     pub fn getArrayBuffer(
         this: *BuildArtifact,
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!JSValue {
-        return @call(bun.callmod_inline, Blob.getArrayBuffer, .{ &this.blob, globalThis, callframe });
+    ) fun.JSError!JSValue {
+        return @call(fun.callmod_inline, Blob.getArrayBuffer, .{ &this.blob, globalThis, callframe });
     }
     pub fn getSlice(
         this: *BuildArtifact,
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
-        return @call(bun.callmod_inline, Blob.getSlice, .{ &this.blob, globalThis, callframe });
+    ) fun.JSError!jsc.JSValue {
+        return @call(fun.callmod_inline, Blob.getSlice, .{ &this.blob, globalThis, callframe });
     }
     pub fn getType(
         this: *BuildArtifact,
         globalThis: *jsc.JSGlobalObject,
     ) JSValue {
-        return @call(bun.callmod_inline, Blob.getType, .{ &this.blob, globalThis });
+        return @call(fun.callmod_inline, Blob.getType, .{ &this.blob, globalThis });
     }
 
     pub fn getStream(
         this: *BuildArtifact,
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!JSValue {
-        return @call(bun.callmod_inline, Blob.getStream, .{
+    ) fun.JSError!JSValue {
+        return @call(fun.callmod_inline, Blob.getStream, .{
             &this.blob,
             globalThis,
             callframe,
@@ -1885,16 +1885,16 @@ pub const BuildArtifact = struct {
         globalThis: *jsc.JSGlobalObject,
     ) JSValue {
         var buf: [512]u8 = undefined;
-        const out = std.fmt.bufPrint(&buf, "{f}", .{bun.fmt.truncatedHash32(this.hash)}) catch @panic("Unexpected");
+        const out = std.fmt.bufPrint(&buf, "{f}", .{fun.fmt.truncatedHash32(this.hash)}) catch @panic("Unexpected");
         return ZigString.init(out).toJS(globalThis);
     }
 
     pub fn getSize(this: *BuildArtifact, globalObject: *jsc.JSGlobalObject) JSValue {
-        return @call(bun.callmod_inline, Blob.getSize, .{ &this.blob, globalObject });
+        return @call(fun.callmod_inline, Blob.getSize, .{ &this.blob, globalObject });
     }
 
     pub fn getMimeType(this: *BuildArtifact, globalObject: *jsc.JSGlobalObject) JSValue {
-        return @call(bun.callmod_inline, Blob.getType, .{ &this.blob, globalObject });
+        return @call(fun.callmod_inline, Blob.getType, .{ &this.blob, globalObject });
     }
 
     pub fn getOutputKind(this: *BuildArtifact, globalObject: *jsc.JSGlobalObject) JSValue {
@@ -1912,7 +1912,7 @@ pub const BuildArtifact = struct {
     pub fn finalize(this: *BuildArtifact) callconv(.c) void {
         this.deinit();
 
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 
     pub fn writeFormat(this: *BuildArtifact, comptime Formatter: type, formatter: *Formatter, writer: anytype, comptime enable_ansi_colors: bool) !void {
@@ -1969,7 +1969,7 @@ pub const BuildArtifact = struct {
                         "<r>hash<r>: <green>\"{f}\"<r>",
                         enable_ansi_colors,
                     ),
-                    .{bun.fmt.truncatedHash32(this.hash)},
+                    .{fun.fmt.truncatedHash32(this.hash)},
                 );
             }
 
@@ -2031,20 +2031,20 @@ const options = @import("../../bundler/options.zig");
 const Loader = options.Loader;
 const Target = options.Target;
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const Output = bun.Output;
-const String = bun.String;
-const Transpiler = bun.transpiler;
-const WebCore = bun.webcore;
-const logger = bun.logger;
-const strings = bun.strings;
-const BundleV2 = bun.bundle_v2.BundleV2;
-const Index = bun.ast.Index;
-const api = bun.schema.api;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const Output = fun.Output;
+const String = fun.String;
+const Transpiler = fun.transpiler;
+const WebCore = fun.webcore;
+const logger = fun.logger;
+const strings = fun.strings;
+const BundleV2 = fun.bundle_v2.BundleV2;
+const Index = fun.ast.Index;
+const api = fun.schema.api;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const JSValue = fun.jsc.JSValue;
 const ZigString = jsc.ZigString;
 const Blob = jsc.WebCore.Blob;

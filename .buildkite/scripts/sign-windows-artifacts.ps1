@@ -1,7 +1,7 @@
-# Batch Windows code signing for all bun-windows-*.zip Buildkite artifacts.
+# Batch Windows code signing for all fun-windows-*.zip Buildkite artifacts.
 #
 # This runs as a dedicated pipeline step on a Windows x64 agent after all
-# Windows build-bun steps complete. Signing is done here instead of inline
+# Windows build-fun steps complete. Signing is done here instead of inline
 # during each build because DigiCert smctl is x64-only and silently fails
 # under ARM64 emulation.
 #
@@ -108,7 +108,7 @@ function Install-KeyLocker {
     }
 
     # smctl is x64-only; this script must run on an x64 agent
-    $msiUrl = "https://bun-ci-assets.bun.sh/Keylockertools-windows-x64.msi"
+    $msiUrl = "https://fun-ci-assets.fun.dev/Keylockertools-windows-x64.msi"
     $msiPath = Join-Path $env:TEMP "Keylockertools-windows-x64.msi"
 
     Log-Info "Downloading KeyLocker MSI from $msiUrl"
@@ -232,7 +232,7 @@ function Sign-Artifact {
 
     Log-Info "Re-packing $ZipName"
     Remove-Item $ZipName -Force
-    # Use the same zip command as the build-bun step (scripts/build/ci.ts makeZip)
+    # Use the same zip command as the build-fun step (scripts/build/ci.ts makeZip)
     # so the signed archive's entry layout matches the original: forward-slash
     # paths and a directory entry. Compress-Archive writes backslash separators,
     # which violates the ZIP spec and triggers warnings in non-Windows unzip.

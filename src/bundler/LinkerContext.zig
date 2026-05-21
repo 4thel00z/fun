@@ -43,7 +43,7 @@ pub const LinkerContext = struct {
     has_any_css_locals: std.atomic.Value(u32) = std.atomic.Value(u32).init(0),
 
     /// Used by Bake to extract []CompileResult before it is joined
-    dev_server: ?*bun.bake.DevServer = null,
+    dev_server: ?*fun.bake.DevServer = null,
     framework: ?*const bake.Framework = null,
 
     mangled_props: MangledProps = .{},
@@ -73,9 +73,9 @@ pub const LinkerContext = struct {
         target: options.Target = .browser,
         compile: bool = false,
         metafile: bool = false,
-        /// Path to write JSON metafile (for Bun.build API)
+        /// Path to write JSON metafile (for Fun.build API)
         metafile_json_path: []const u8 = "",
-        /// Path to write markdown metafile (for Bun.build API)
+        /// Path to write markdown metafile (for Fun.build API)
         metafile_markdown_path: []const u8 = "",
 
         mode: Mode = .bundle,
@@ -137,7 +137,7 @@ pub const LinkerContext = struct {
 
         pub fn computeLineOffsets(this: *LinkerContext, alloc: std.mem.Allocator, source_index: Index.Int) void {
             debug("Computing LineOffsetTable: {d}", .{source_index});
-            const line_offset_table: *bun.SourceMap.LineOffsetTable.List = &this.graph.files.items(.line_offset_table)[source_index];
+            const line_offset_table: *fun.SourceMap.LineOffsetTable.List = &this.graph.files.items(.line_offset_table)[source_index];
 
             const source: *const Logger.Source = &this.parse_graph.input_files.items(.source)[source_index];
             const loader: options.Loader = this.parse_graph.input_files.items(.loader)[source_index];
@@ -150,7 +150,7 @@ pub const LinkerContext = struct {
 
             const approximate_line_count = this.graph.ast.items(.approximate_newline_count)[source_index];
 
-            line_offset_table.* = bun.SourceMap.LineOffsetTable.generate(
+            line_offset_table.* = fun.SourceMap.LineOffsetTable.generate(
                 alloc,
                 source.contents,
 
@@ -170,8 +170,8 @@ pub const LinkerContext = struct {
             }
 
             const source: *const Logger.Source = &this.parse_graph.input_files.items(.source)[source_index];
-            var mutable = MutableString.initEmpty(bun.default_allocator);
-            bun.handleOom(js_printer.quoteForJSON(source.contents, &mutable, false));
+            var mutable = MutableString.initEmpty(fun.default_allocator);
+            fun.handleOom(js_printer.quoteForJSON(source.contents, &mutable, false));
             var mutableOwned = mutable.toDefaultOwned();
             quoted_source_contents.* = mutableOwned.toOptional();
         }
@@ -207,7 +207,7 @@ pub const LinkerContext = struct {
         server_component_boundaries: ServerComponentBoundary.List,
         reachable: []Index,
     ) !void {
-        const trace = bun.perf.trace("Bundler.CloneLinkerGraph");
+        const trace = fun.perf.trace("Bundler.CloneLinkerGraph");
         defer trace.end();
         this.parse_graph = &bundle.graph;
 
@@ -266,7 +266,7 @@ pub const LinkerContext = struct {
         this: *LinkerContext,
         reachable: []const Index.Int,
     ) void {
-        bun.assert(this.options.source_maps != .none);
+        fun.assert(this.options.source_maps != .none);
         this.source_maps.line_offset_wait_group = .initWithCount(reachable.len);
         this.source_maps.quoted_contents_wait_group = .initWithCount(reachable.len);
         this.source_maps.line_offset_tasks = this.allocator().alloc(SourceMapData.Task, reachable.len) catch unreachable;
@@ -319,7 +319,7 @@ pub const LinkerContext = struct {
                     @panic("Assertion failed: HTML import file not found in pathToSourceIndexMap");
                 };
 
-                bun.handleOom(html_source_indices.append(this.allocator(), source_index));
+                fun.handleOom(html_source_indices.append(this.allocator(), source_index));
 
                 // S.LazyExport is a call to __jsonParse.
                 const original_ref = parts[html_import]
@@ -343,7 +343,7 @@ pub const LinkerContext = struct {
                     actual_ref,
                     1,
                     Index.runtime,
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             }
         }
     }
@@ -384,7 +384,7 @@ pub const LinkerContext = struct {
             const tla_checks = this.parse_graph.ast.items(.tla_check);
             const input_files = this.parse_graph.input_files.items(.source);
             const flags: []JSMeta.Flags = this.graph.meta.items(.flags);
-            const css_asts: []?*bun.css.BundlerStyleSheet = this.graph.ast.items(.css);
+            const css_asts: []?*fun.css.BundlerStyleSheet = this.graph.ast.items(.css);
 
             // Process all files in source index order, like esbuild does
             var source_index: u32 = 0;
@@ -459,7 +459,7 @@ pub const LinkerContext = struct {
     pub const findImportedFilesInCSSOrder = @import("./linker_context/findImportedFilesInCSSOrder.zig").findImportedFilesInCSSOrder;
     pub const findImportedCSSFilesInJSOrder = @import("./linker_context/findImportedCSSFilesInJSOrder.zig").findImportedCSSFilesInJSOrder;
 
-    pub fn generateNamedExportInFile(this: *LinkerContext, source_index: Index.Int, module_ref: Ref, name: []const u8, alias: []const u8) bun.OOM!struct { Ref, u32 } {
+    pub fn generateNamedExportInFile(this: *LinkerContext, source_index: Index.Int, module_ref: Ref, name: []const u8, alias: []const u8) fun.OOM!struct { Ref, u32 } {
         const ref = this.graph.generateNewSymbol(source_index, .other, name);
         const part_index = try this.graph.addPartToFile(source_index, .{
             .declared_symbols = try js_ast.DeclaredSymbol.List.fromSlice(
@@ -498,7 +498,7 @@ pub const LinkerContext = struct {
         file_source_index: u32,
         file_import_records: []ImportRecord,
         // slices from Graph
-        css_asts: []const ?*bun.css.BundlerStyleSheet,
+        css_asts: []const ?*fun.css.BundlerStyleSheet,
         sources: []const Logger.Source,
         loaders: []const Loader,
         log: *Logger.Log,
@@ -518,9 +518,9 @@ pub const LinkerContext = struct {
                                 this.allocator(),
                                 "Cannot import a \".{s}\" file into a CSS file",
                                 .{@tagName(loader)},
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
                         },
-                        .css, .file, .toml, .wasm, .base64, .dataurl, .text, .bunsh => {},
+                        .css, .file, .toml, .wasm, .base64, .dataurl, .text, .funsh => {},
                     }
                 }
             }
@@ -567,7 +567,7 @@ pub const LinkerContext = struct {
     }
 
     pub fn treeShakingAndCodeSplitting(c: *LinkerContext) OOM!void {
-        const trace = bun.perf.trace("Bundler.treeShakingAndCodeSplitting");
+        const trace = fun.perf.trace("Bundler.treeShakingAndCodeSplitting");
         defer trace.end();
 
         const parts = c.graph.ast.items(.parts);
@@ -579,7 +579,7 @@ pub const LinkerContext = struct {
         const distances = c.graph.files.items(.distance_from_entry_point);
 
         {
-            const trace2 = bun.perf.trace("Bundler.markFileLiveForTreeShaking");
+            const trace2 = fun.perf.trace("Bundler.markFileLiveForTreeShaking");
             defer trace2.end();
 
             // Tree shaking: Each entry point marks all files reachable from itself
@@ -596,7 +596,7 @@ pub const LinkerContext = struct {
         }
 
         {
-            const trace2 = bun.perf.trace("Bundler.markFileReachableForCodeSplitting");
+            const trace2 = fun.perf.trace("Bundler.markFileReachableForCodeSplitting");
             defer trace2.end();
 
             const file_entry_bits: []AutoBitSet = c.graph.files.items(.entry_bits);
@@ -607,7 +607,7 @@ pub const LinkerContext = struct {
                 }
             } else if (file_entry_bits.len > 0) {
                 // assert that the tag is correct
-                bun.assert(file_entry_bits[0] == .static);
+                fun.assert(file_entry_bits[0] == .static);
             }
 
             // Code splitting: Determine which entry points can reach which files. This
@@ -695,7 +695,7 @@ pub const LinkerContext = struct {
         chunk_abs_dir: string,
         can_have_shifts: bool,
     ) !SourceMap.SourceMapPieces {
-        const trace = bun.perf.trace("Bundler.generateSourceMapForChunk");
+        const trace = fun.perf.trace("Bundler.generateSourceMapForChunk");
         defer trace.end();
 
         var j = StringJoiner{ .allocator = worker.allocator };
@@ -729,7 +729,7 @@ pub const LinkerContext = struct {
                 try source_id_map.putNoClobber(index, 0);
 
                 if (path.isFile()) {
-                    const rel_path = try bun.path.relativeAlloc(worker.allocator, chunk_abs_dir, path.text);
+                    const rel_path = try fun.path.relativeAlloc(worker.allocator, chunk_abs_dir, path.text);
                     path.pretty = rel_path;
                 }
 
@@ -749,7 +749,7 @@ pub const LinkerContext = struct {
                 var path = sources[index].path;
 
                 if (path.isFile()) {
-                    const rel_path = try bun.path.relativeAlloc(worker.allocator, chunk_abs_dir, path.text);
+                    const rel_path = try fun.path.relativeAlloc(worker.allocator, chunk_abs_dir, path.text);
                     path.pretty = rel_path;
                 }
 
@@ -818,7 +818,7 @@ pub const LinkerContext = struct {
         if (comptime FeatureFlags.source_map_debug_id) {
             j.pushStatic("\",\n  \"debugId\": \"");
             j.push(
-                try std.fmt.allocPrint(worker.allocator, "{f}", .{bun.SourceMap.DebugIDFormatter{ .id = isolated_hash }}),
+                try std.fmt.allocPrint(worker.allocator, "{f}", .{fun.SourceMap.DebugIDFormatter{ .id = isolated_hash }}),
                 worker.allocator,
             );
             j.pushStatic("\",\n  \"names\": []\n}");
@@ -827,7 +827,7 @@ pub const LinkerContext = struct {
         }
 
         const done = try j.done(worker.allocator);
-        bun.assert(done[0] == '{');
+        fun.assert(done[0] == '{');
 
         var pieces = SourceMap.SourceMapPieces.init(worker.allocator);
         if (can_have_shifts) {
@@ -842,7 +842,7 @@ pub const LinkerContext = struct {
     }
 
     pub fn generateIsolatedHash(c: *LinkerContext, chunk: *const Chunk) u64 {
-        const trace = bun.perf.trace("Bundler.generateIsolatedHash");
+        const trace = fun.perf.trace("Bundler.generateIsolatedHash");
         defer trace.end();
 
         var hasher = ContentHasher{};
@@ -861,7 +861,7 @@ pub const LinkerContext = struct {
                         // Use the pretty path as the file name since it should be platform-
                         // independent (relative paths and the "/" path separator)
                         if (source.path.text.ptr == source.path.pretty.ptr) {
-                            source.path = bun.handleOom(c.pathWithPrettyInitialized(source.path));
+                            source.path = fun.handleOom(c.pathWithPrettyInitialized(source.path));
                         }
                         source.path.assertPrettyIsValid();
 
@@ -952,7 +952,7 @@ pub const LinkerContext = struct {
         input_files: []const Logger.Source,
         import_records: []const ImportRecord,
         meta_flags: []JSMeta.Flags,
-        ast_import_records: []const bun.BabyList(ImportRecord),
+        ast_import_records: []const fun.BabyList(ImportRecord),
     ) OOM!js_ast.TlaCheck {
         var result_tla_check: *js_ast.TlaCheck = &tla_checks[source_index];
 
@@ -1002,9 +1002,9 @@ pub const LinkerContext = struct {
                                 const source = &input_files[other_source_index];
                                 tla_pretty_path = source.path.pretty;
                                 notes.append(Logger.Data{
-                                    .text = bun.handleOom(std.fmt.allocPrint(c.allocator(), "The top-level await in {s} is here:", .{tla_pretty_path})),
+                                    .text = fun.handleOom(std.fmt.allocPrint(c.allocator(), "The top-level await in {s} is here:", .{tla_pretty_path})),
                                     .location = .initOrNull(source, parent_result_tla_keyword),
-                                }) catch |err| bun.handleOom(err);
+                                }) catch |err| fun.handleOom(err);
                                 break;
                             }
 
@@ -1313,7 +1313,7 @@ pub const LinkerContext = struct {
         to_commonjs_ref: Ref,
         runtime_require_ref: ?Ref,
         source_index: Index,
-        source: *const bun.logger.Source,
+        source: *const fun.logger.Source,
     ) js_printer.PrintResult {
         const parts_to_print = &[_]Part{
             .{ .stmts = out_stmts },
@@ -1429,14 +1429,14 @@ pub const LinkerContext = struct {
     pub fn mangleLocalCss(c: *LinkerContext) void {
         if (c.has_any_css_locals.load(.monotonic) == 0) return;
 
-        const all_css_asts: []?*bun.css.BundlerStyleSheet = c.graph.ast.items(.css);
+        const all_css_asts: []?*fun.css.BundlerStyleSheet = c.graph.ast.items(.css);
         const all_symbols: []Symbol.List = c.graph.ast.items(.symbols);
         const all_sources: []Logger.Source = c.parse_graph.input_files.items(.source);
 
         // Collect all local css names
         var sfb = std.heap.stackFallback(512, c.allocator());
         const alloc = sfb.get();
-        var local_css_names = std.AutoHashMap(bun.bundle_v2.Ref, void).init(alloc);
+        var local_css_names = std.AutoHashMap(fun.bundle_v2.Ref, void).init(alloc);
         defer local_css_names.deinit();
 
         for (all_css_asts, 0..) |maybe_css_ast, source_index| {
@@ -1456,13 +1456,13 @@ pub const LinkerContext = struct {
                             break :ref ref;
                         };
 
-                        const entry = bun.handleOom(local_css_names.getOrPut(ref));
+                        const entry = fun.handleOom(local_css_names.getOrPut(ref));
                         if (entry.found_existing) continue;
 
                         const source = all_sources[ref.source_index];
 
                         const original_name = symbol.original_name;
-                        const path_hash = bun.css.css_modules.hash(
+                        const path_hash = fun.css.css_modules.hash(
                             alloc,
                             "{s}",
                             // use path relative to cwd for determinism
@@ -1470,8 +1470,8 @@ pub const LinkerContext = struct {
                             false,
                         );
 
-                        const final_generated_name = bun.handleOom(std.fmt.allocPrint(c.allocator(), "{s}_{s}", .{ original_name, path_hash }));
-                        bun.handleOom(c.mangled_props.put(c.allocator(), ref, final_generated_name));
+                        const final_generated_name = fun.handleOom(std.fmt.allocPrint(c.allocator(), "{s}_{s}", .{ original_name, path_hash }));
+                        fun.handleOom(c.mangled_props.put(c.allocator(), ref, final_generated_name));
                     }
                 }
             }
@@ -1518,11 +1518,11 @@ pub const LinkerContext = struct {
 
                     const source_index = piece.query.index;
                     const additional_files: []AdditionalFile = c.parse_graph.input_files.items(.additional_files)[source_index].slice();
-                    bun.assert(additional_files.len > 0);
+                    fun.assert(additional_files.len > 0);
                     switch (additional_files[0]) {
                         .output_file => |output_file_id| {
                             const path = c.parse_graph.additional_output_files.items[output_file_id].dest_path;
-                            hash.write(bun.path.relativePlatform(from_chunk_dir, path, .posix, false));
+                            hash.write(fun.path.relativePlatform(from_chunk_dir, path, .posix, false));
                         },
                         .source_index => {},
                     }
@@ -1576,10 +1576,10 @@ pub const LinkerContext = struct {
         entry_points_count: usize,
         distances: []u32,
         distance: u32,
-        parts: []bun.BabyList(Part),
-        import_records: []bun.BabyList(bun.ImportRecord),
+        parts: []fun.BabyList(Part),
+        import_records: []fun.BabyList(fun.ImportRecord),
         file_entry_bits: []AutoBitSet,
-        css_reprs: []?*bun.css.BundlerStyleSheet,
+        css_reprs: []?*fun.css.BundlerStyleSheet,
     ) void {
         if (!c.graph.files_live.isSet(source_index))
             return;
@@ -1599,7 +1599,7 @@ pub const LinkerContext = struct {
 
         bits.set(entry_points_count);
 
-        if (comptime bun.Environment.enable_logs)
+        if (comptime fun.Environment.enable_logs)
             debugTreeShake(
                 "markFileReachableForCodeSplitting(entry: {d}): {s} {s} ({d})",
                 .{
@@ -1666,12 +1666,12 @@ pub const LinkerContext = struct {
         c: *LinkerContext,
         source_index: Index.Int,
         side_effects: []_resolver.SideEffects,
-        parts: []bun.BabyList(Part),
-        import_records: []bun.BabyList(bun.ImportRecord),
+        parts: []fun.BabyList(Part),
+        import_records: []fun.BabyList(fun.ImportRecord),
         entry_point_kinds: []EntryPoint.Kind,
-        css_reprs: []?*bun.css.BundlerStyleSheet,
+        css_reprs: []?*fun.css.BundlerStyleSheet,
     ) void {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             debugTreeShake("markFileLiveForTreeShaking({d}, {s} {s}) = {s}", .{
                 source_index,
                 c.parse_graph.input_files.get(source_index).source.path.pretty,
@@ -1688,7 +1688,7 @@ pub const LinkerContext = struct {
         c.graph.files_live.set(source_index);
 
         if (source_index >= c.graph.ast.len) {
-            bun.assert(false);
+            fun.assert(false);
             return;
         }
 
@@ -1801,10 +1801,10 @@ pub const LinkerContext = struct {
         part_index: Index.Int,
         source_index: Index.Int,
         side_effects: []_resolver.SideEffects,
-        parts: []bun.BabyList(Part),
-        import_records: []bun.BabyList(bun.ImportRecord),
+        parts: []fun.BabyList(Part),
+        import_records: []fun.BabyList(fun.ImportRecord),
         entry_point_kinds: []EntryPoint.Kind,
-        css_reprs: []?*bun.css.BundlerStyleSheet,
+        css_reprs: []?*fun.css.BundlerStyleSheet,
     ) void {
         const part: *Part = &parts[source_index].slice()[part_index];
 
@@ -1814,7 +1814,7 @@ pub const LinkerContext = struct {
         }
         part.is_live = true;
 
-        if (comptime bun.Environment.isDebug) {
+        if (comptime fun.Environment.isDebug) {
             debugTreeShake("markPartLiveForTreeShaking({d}): {s}:{d} = {d}, {s}", .{
                 source_index,
                 c.parse_graph.input_files.get(source_index).source.path.pretty,
@@ -1901,7 +1901,7 @@ pub const LinkerContext = struct {
             }
 
             const prev_source_index = tracker.source_index.get();
-            bun.handleOom(c.cycle_detector.append(tracker));
+            fun.handleOom(c.cycle_detector.append(tracker));
 
             // Resolve the import by one step
             const advanced = c.advanceImportTracker(&tracker);
@@ -2006,7 +2006,7 @@ pub const LinkerContext = struct {
                         // "undefined" instead of emitting an error.
                         symbol.import_item_status = .missing;
 
-                        if (c.resolver.opts.target == .browser and jsc.ModuleLoader.HardcodedModule.Alias.has(next_source.path.pretty, .bun, .{})) {
+                        if (c.resolver.opts.target == .browser and jsc.ModuleLoader.HardcodedModule.Alias.has(next_source.path.pretty, .fun, .{})) {
                             c.log.addRangeWarningFmtWithNote(
                                 source,
                                 r,
@@ -2016,7 +2016,7 @@ pub const LinkerContext = struct {
                                     next_source.path.pretty,
                                     named_import.alias.?,
                                 },
-                                "Bun's bundler defaults to browser builds instead of node or bun builds. If you want to use node or bun builds, you can set the target to \"node\" or \"bun\" in the transpiler options.",
+                                "Fun's bundler defaults to browser builds instead of node or fun builds. If you want to use node or fun builds, you can set the target to \"node\" or \"fun\" in the transpiler options.",
                                 .{},
                                 r,
                             ) catch unreachable;
@@ -2032,7 +2032,7 @@ pub const LinkerContext = struct {
                                 },
                             ) catch unreachable;
                         }
-                    } else if (c.resolver.opts.target == .browser and bun.strings.hasPrefixComptime(next_source.path.text, NodeFallbackModules.import_path)) {
+                    } else if (c.resolver.opts.target == .browser and fun.strings.hasPrefixComptime(next_source.path.text, NodeFallbackModules.import_path)) {
                         c.log.addRangeErrorFmtWithNote(
                             source,
                             r,
@@ -2042,7 +2042,7 @@ pub const LinkerContext = struct {
                                 next_source.path.pretty,
                                 named_import.alias.?,
                             },
-                            "Bun's bundler defaults to browser builds instead of node or bun builds. If you want to use node or bun builds, you can set the target to \"node\" or \"bun\" in the transpiler options.",
+                            "Fun's bundler defaults to browser builds instead of node or fun builds. If you want to use node or fun builds, you can set the target to \"node\" or \"fun\" in the transpiler options.",
                             .{},
                             r,
                         ) catch unreachable;
@@ -2191,7 +2191,7 @@ pub const LinkerContext = struct {
 
                 // Generate a dummy part that depends on the "__commonJS" symbol.
                 const dependencies: []js_ast.Dependency = if (c.options.output_format != .internal_bake_dev) brk: {
-                    const dependencies = bun.handleOom(c.allocator().alloc(js_ast.Dependency, common_js_parts.len));
+                    const dependencies = fun.handleOom(c.allocator().alloc(js_ast.Dependency, common_js_parts.len));
                     for (common_js_parts, dependencies) |part, *cjs| {
                         cjs.* = .{
                             .part_index = part,
@@ -2201,7 +2201,7 @@ pub const LinkerContext = struct {
                     break :brk dependencies;
                 } else &.{};
                 var symbol_uses: Part.SymbolUseMap = .empty;
-                bun.handleOom(symbol_uses.put(c.allocator(), wrapper_ref, .{ .count_estimate = 1 }));
+                fun.handleOom(symbol_uses.put(c.allocator(), wrapper_ref, .{ .count_estimate = 1 }));
                 const part_index = c.graph.addPartToFile(
                     source_index,
                     .{
@@ -2218,7 +2218,7 @@ pub const LinkerContext = struct {
                         .dependencies = Dependency.List.fromOwnedSlice(dependencies),
                     },
                 ) catch unreachable;
-                bun.assert(part_index != js_ast.namespace_export_part_index);
+                fun.assert(part_index != js_ast.namespace_export_part_index);
                 wrapper_part_index.* = Index.part(part_index);
 
                 // Bake uses a wrapping approach that does not use __commonJS
@@ -2294,7 +2294,7 @@ pub const LinkerContext = struct {
                 }
 
                 var symbol_uses: Part.SymbolUseMap = .empty;
-                bun.handleOom(symbol_uses.put(c.allocator(), wrapper_ref, .{ .count_estimate = 1 }));
+                fun.handleOom(symbol_uses.put(c.allocator(), wrapper_ref, .{ .count_estimate = 1 }));
                 const part_index = c.graph.addPartToFile(
                     source_index,
                     .{
@@ -2305,7 +2305,7 @@ pub const LinkerContext = struct {
                         .dependencies = Dependency.List.fromOwnedSlice(dependencies),
                     },
                 ) catch unreachable;
-                bun.assert(part_index != js_ast.namespace_export_part_index);
+                fun.assert(part_index != js_ast.namespace_export_part_index);
                 wrapper_part_index.* = Index.part(part_index);
                 if (wrapper_ref.isValid() and c.options.output_format != .internal_bake_dev) {
                     c.graph.generateSymbolImportAndUse(
@@ -2314,7 +2314,7 @@ pub const LinkerContext = struct {
                         c.esm_runtime_ref,
                         1,
                         Index.runtime,
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
 
                     // Only mark __promiseAll as used if we have multiple async dependencies
                     if (needs_promise_all) {
@@ -2324,7 +2324,7 @@ pub const LinkerContext = struct {
                             c.promise_all_runtime_ref,
                             1,
                             Index.runtime,
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     }
                 }
             },
@@ -2474,7 +2474,7 @@ pub const LinkerContext = struct {
         imports_to_bind: *RefImportData,
         source_index: Index.Int,
     ) void {
-        var named_imports = bun.handleOom(named_imports_ptr.clone(c.allocator()));
+        var named_imports = fun.handleOom(named_imports_ptr.clone(c.allocator()));
         defer named_imports_ptr.* = named_imports;
 
         const Sorter = struct {
@@ -2510,7 +2510,7 @@ pub const LinkerContext = struct {
                         c.allocator(),
                         import_ref,
                         .{
-                            .re_exports = bun.BabyList(js_ast.Dependency).fromOwnedSlice(re_exports.items),
+                            .re_exports = fun.BabyList(js_ast.Dependency).fromOwnedSlice(re_exports.items),
                             .data = .{
                                 .source_index = Index.source(result.source_index),
                                 .import_ref = result.ref,
@@ -2529,7 +2529,7 @@ pub const LinkerContext = struct {
                         c.allocator(),
                         import_ref,
                         .{
-                            .re_exports = bun.BabyList(js_ast.Dependency).fromOwnedSlice(re_exports.items),
+                            .re_exports = fun.BabyList(js_ast.Dependency).fromOwnedSlice(re_exports.items),
                             .data = .{
                                 .source_index = Index.source(result.source_index),
                                 .import_ref = result.ref,
@@ -2604,7 +2604,7 @@ pub const LinkerContext = struct {
         j: *StringJoiner,
         count: u32,
     ) !Chunk.IntermediateOutput {
-        const trace = bun.perf.trace("Bundler.breakOutputIntoPieces");
+        const trace = fun.perf.trace("Bundler.breakOutputIntoPieces");
         defer trace.end();
 
         const OutputPiece = Chunk.OutputPiece;
@@ -2645,8 +2645,8 @@ pub const LinkerContext = struct {
                 'S' => .scb,
                 'H' => .html_import,
                 else => {
-                    if (bun.Environment.isDebug)
-                        bun.Output.debugWarn("Invalid output piece boundary", .{});
+                    if (fun.Environment.isDebug)
+                        fun.Output.debugWarn("Invalid output piece boundary", .{});
                     break;
                 },
             };
@@ -2654,8 +2654,8 @@ pub const LinkerContext = struct {
             var index: usize = 0;
             for (output[start..][1..9].*) |char| {
                 if (char < '0' or char > '9') {
-                    if (bun.Environment.isDebug)
-                        bun.Output.debugWarn("Invalid output piece boundary", .{});
+                    if (fun.Environment.isDebug)
+                        fun.Output.debugWarn("Invalid output piece boundary", .{});
                     break :outer;
                 }
 
@@ -2665,18 +2665,18 @@ pub const LinkerContext = struct {
             // Validate the boundary
             switch (kind) {
                 .asset, .scb => if (index >= c.graph.files.len) {
-                    if (bun.Environment.isDebug)
-                        bun.Output.debugWarn("Invalid output piece boundary", .{});
+                    if (fun.Environment.isDebug)
+                        fun.Output.debugWarn("Invalid output piece boundary", .{});
                     break;
                 },
                 .chunk => if (index >= count) {
-                    if (bun.Environment.isDebug)
-                        bun.Output.debugWarn("Invalid output piece boundary", .{});
+                    if (fun.Environment.isDebug)
+                        fun.Output.debugWarn("Invalid output piece boundary", .{});
                     break;
                 },
                 .html_import => if (index >= c.parse_graph.html_imports.server_source_indices.len) {
-                    if (bun.Environment.isDebug)
-                        bun.Output.debugWarn("Invalid output piece boundary", .{});
+                    if (fun.Environment.isDebug)
+                        fun.Output.debugWarn("Invalid output piece boundary", .{});
                     break;
                 },
                 else => unreachable,
@@ -2692,21 +2692,21 @@ pub const LinkerContext = struct {
         try pieces.append(OutputPiece.init(output, OutputPiece.Query.none));
 
         return .{
-            .pieces = bun.BabyList(Chunk.OutputPiece).fromOwnedSlice(pieces.items),
+            .pieces = fun.BabyList(Chunk.OutputPiece).fromOwnedSlice(pieces.items),
         };
     }
 };
 
-pub const Ref = bun.ast.Ref;
-pub const ThreadPoolLib = bun.ThreadPool;
+pub const Ref = fun.ast.Ref;
+pub const ThreadPoolLib = fun.ThreadPool;
 pub const Fs = @import("../resolver/fs.zig");
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 const debugTreeShake = Output.scoped(.TreeShake, .hidden);
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const string = []const u8;
 
@@ -2726,25 +2726,25 @@ const Resolver = _resolver.Resolver;
 const options = @import("./options.zig");
 const Loader = options.Loader;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const ImportRecord = bun.ImportRecord;
-const MultiArrayList = bun.MultiArrayList;
-const MutableString = bun.MutableString;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const SourceMap = bun.SourceMap;
-const StringJoiner = bun.StringJoiner;
-const bake = bun.bake;
-const base64 = bun.base64;
-const renamer = bun.renamer;
-const strings = bun.strings;
-const sync = bun.threading;
-const AutoBitSet = bun.bit_set.AutoBitSet;
-const BabyList = bun.collections.BabyList;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const ImportRecord = fun.ImportRecord;
+const MultiArrayList = fun.MultiArrayList;
+const MutableString = fun.MutableString;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const SourceMap = fun.SourceMap;
+const StringJoiner = fun.StringJoiner;
+const bake = fun.bake;
+const base64 = fun.base64;
+const renamer = fun.renamer;
+const strings = fun.strings;
+const sync = fun.threading;
+const AutoBitSet = fun.bit_set.AutoBitSet;
+const BabyList = fun.collections.BabyList;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const Dependency = js_ast.Dependency;
@@ -2757,7 +2757,7 @@ const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 const Symbol = js_ast.Symbol;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const AdditionalFile = bundler.AdditionalFile;
 const BundleV2 = bundler.BundleV2;
 const Chunk = bundler.Chunk;
@@ -2778,5 +2778,5 @@ const WrapKind = bundler.WrapKind;
 const genericPathWithPrettyInitialized = bundler.genericPathWithPrettyInitialized;
 const logPartDependencyTree = bundler.logPartDependencyTree;
 
-const jsc = bun.jsc;
-const EventLoop = bun.jsc.AnyEventLoop;
+const jsc = fun.jsc;
+const EventLoop = fun.jsc.AnyEventLoop;

@@ -9,7 +9,7 @@ libraries/headers it provides.
 1. Copy `hdrhistogram.ts` (the simplest direct dep) to `<name>.ts`
 2. Fill in `name`, `repo`, `commit`, `sources`, `includes`, `provides.includes`
 3. Add `import { <name> } from "./<name>.ts"` + entry in `allDeps` array in `index.ts`
-4. `bun run scripts/build/phase3-test.ts` to verify it builds
+4. `fun run scripts/build/phase3-test.ts` to verify it builds
 
 That's it. For most deps you're done. If the dep's build is too entangled
 to list sources by hand (zlib-ng's per-file SIMD flags are about the
@@ -61,7 +61,7 @@ export const mydep: Dependency = {
   // because its clone is too slow to automate), `in-tree` (source in src/).
   source: () => ({ kind: "github-archive", repo: "owner/repo", commit: "..." }),
 
-  // Optional: macro name for bun_dependency_versions.h (process.versions).
+  // Optional: macro name for fun_dependency_versions.h (process.versions).
   // Omit if this dep shouldn't appear there.
   versionMacro: "MYDEP",
 
@@ -75,7 +75,7 @@ export const mydep: Dependency = {
 
   // How to build. `direct` lists sources explicitly; emitDirect compiles
   // each as a first-class cc/cxx edge and the resulting .o's go straight
-  // into bun's link line. See `DirectBuild` in ../source.ts for all
+  // into fun's link line. See `DirectBuild` in ../source.ts for all
   // optional fields (lang/pic/defines/headers/codegen).
   build: cfg => ({
     kind: "direct",
@@ -86,13 +86,13 @@ export const mydep: Dependency = {
     // headers: { "config.h": "..." },   // Hand-written config.h.
   }),
 
-  // What this dep exposes to bun's own compile. `libs` is ignored for
+  // What this dep exposes to fun's own compile. `libs` is ignored for
   // direct builds (the .o's are already on the link line); `includes`
   // are relative to the SOURCE dir.
   provides: cfg => ({
     libs: [],
     includes: ["include"],
-    // defines: ["MY_DEP_STATIC=1"],  // Preprocessor defines for bun's compile.
+    // defines: ["MY_DEP_STATIC=1"],  // Preprocessor defines for fun's compile.
   }),
 
   // Optional: skip this dep on some platforms.
@@ -107,7 +107,7 @@ export const mydep: Dependency = {
   no configure-time codegen we can't replicate. See `DirectBuild` in
   `../source.ts`. Prefer this over `nested-cmake` when feasible: it skips a
   cmake configure (often 5–20s of try_compile probes) and lets LTO see
-  across the dep boundary into bun's call sites.
+  across the dep boundary into fun's call sites.
 - **`nested-cmake`**: Runs `cmake --fresh -B ...` then `cmake --build`.
   See `NestedCmakeBuild` in `../source.ts` for all fields.
 - **`cargo`**: Rust deps (currently just lolhtml). See `CargoBuild` in `../source.ts`.

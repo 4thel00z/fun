@@ -3,7 +3,7 @@
 // child_process' stderr/out streams go through less hoops.
 //
 // Normally, Readable.fromWeb will wrap the ReadableStream in JavaScript. In
-// Bun, `fromWeb` is able to check if the stream is backed by a native handle,
+// Fun, `fromWeb` is able to check if the stream is backed by a native handle,
 // to which it will take this path.
 const Readable = require("internal/streams/readable");
 const transferToNativeReadable = $newCppFunction("ReadableStream.cpp", "jsFunctionTransferToNativeReadableStream", 1);
@@ -19,14 +19,14 @@ const kRemainingChunk = Symbol("remainingChunk");
 
 const MIN_BUFFER_SIZE = 512;
 let dynamicallyAdjustChunkSize = (_?) => (
-  (_ = process.env.BUN_DISABLE_DYNAMIC_CHUNK_SIZE !== "1"),
+  (_ = process.env.FUN_DISABLE_DYNAMIC_CHUNK_SIZE !== "1"),
   (dynamicallyAdjustChunkSize = () => _)
 );
 
 type NativeReadable = typeof import("node:stream").Readable &
   typeof import("node:stream").Stream & {
     push: (chunk: any) => void;
-    $bunNativePtr?: NativePtr;
+    $funNativePtr?: NativePtr;
     [kRefCount]: number;
     [kCloseState]: [boolean];
     [kPendingRead]: boolean;
@@ -50,8 +50,8 @@ let debugId = 0;
 
 function constructNativeReadable(readableStream: ReadableStream, options): NativeReadable {
   $assert(typeof readableStream === "object" && readableStream instanceof ReadableStream, "Invalid readable stream");
-  const bunNativePtr = (readableStream as any).$bunNativePtr;
-  $assert(typeof bunNativePtr === "object", "Invalid native ptr");
+  const funNativePtr = (readableStream as any).$funNativePtr;
+  $assert(typeof funNativePtr === "object", "Invalid native ptr");
 
   const stream = new Readable(options);
   stream._read = read;
@@ -61,7 +61,7 @@ function constructNativeReadable(readableStream: ReadableStream, options): Nativ
     stream.debugId = ++debugId;
   }
 
-  stream.$bunNativePtr = bunNativePtr;
+  stream.$funNativePtr = funNativePtr;
   stream[kRefCount] = 0;
   stream[kConstructed] = false;
   stream[kPendingRead] = false;
@@ -81,8 +81,8 @@ function constructNativeReadable(readableStream: ReadableStream, options): Nativ
     stream.$start = ensureConstructed;
   }
 
-  // https://github.com/oven-sh/bun/pull/12801
-  // https://github.com/oven-sh/bun/issues/9555
+  // https://github.com/underdoc-org/fun/pull/12801
+  // https://github.com/underdoc-org/fun/issues/9555
   // There may be a ReadableStream.Strong handle to the ReadableStream.
   // We can't update those handles to point to the NativeReadable from JS
   // So we instead mark it as no longer usable, and create a new NativeReadable
@@ -97,7 +97,7 @@ function ensureConstructed(this: NativeReadable, cb: null | (() => void)) {
   $debug(`[${this.debugId}] ensureConstructed`);
   if (this[kConstructed]) return;
   this[kConstructed] = true;
-  const ptr = this.$bunNativePtr;
+  const ptr = this.$funNativePtr;
   if (!ptr) return;
   $assert(typeof ptr.start === "function", "NativeReadable.start is not a function");
   ptr.start(this[kHighWaterMark]);
@@ -124,7 +124,7 @@ function read(this: NativeReadable, maxToRead: number) {
   if (this[kPendingRead]) {
     return;
   }
-  var ptr = this.$bunNativePtr;
+  var ptr = this.$funNativePtr;
   if (!ptr) {
     $debug(`[${this.debugId}] read, no ptr`);
     this.push(null);
@@ -231,7 +231,7 @@ function adjustHighWaterMark(stream: NativeReadable) {
 }
 
 function destroy(this: NativeReadable, error: any, cb: () => void) {
-  const ptr = this.$bunNativePtr;
+  const ptr = this.$funNativePtr;
   if (ptr) {
     ptr.cancel(error);
   }
@@ -241,7 +241,7 @@ function destroy(this: NativeReadable, error: any, cb: () => void) {
 }
 
 function ref(this: NativeReadable) {
-  const ptr = this.$bunNativePtr;
+  const ptr = this.$funNativePtr;
   if (ptr === undefined) return;
   if (this[kRefCount]++ === 0) {
     ptr.updateRef(true);
@@ -249,7 +249,7 @@ function ref(this: NativeReadable) {
 }
 
 function unref(this: NativeReadable) {
-  const ptr = this.$bunNativePtr;
+  const ptr = this.$funNativePtr;
   if (ptr === undefined) return;
   if (this[kRefCount]-- === 1) {
     ptr.updateRef(false);

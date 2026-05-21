@@ -24,9 +24,9 @@ pub fn deinit(this: *@This()) void {
         for (fields) |*name| {
             name.deinit();
         }
-        bun.default_allocator.free(fields);
+        fun.default_allocator.free(fields);
     }
 }
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

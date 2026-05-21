@@ -2,7 +2,7 @@
 'use strict';
 
 const common = require('../common');
-if (common.isWindows) return; // TODO: BUN
+if (common.isWindows) return; // TODO: FUN
 
 if (common.isSunOS)
   common.skip(`Unsupported platform [${process.platform}]`);

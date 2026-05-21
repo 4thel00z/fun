@@ -12,10 +12,10 @@ console.log(braces(complexPattern, { expand: true }));
 function benchPattern(pattern, name) {
   const _name = `${name} pattern: "${pattern}"`;
   group({ name: _name, summary: true }, () => {
-    if (typeof Bun !== "undefined")
-      bench(`Bun (${_name})`, () => {
+    if (typeof Fun !== "undefined")
+      bench(`Fun (${_name})`, () => {
         for (let i = 0; i < iterations; i++) {
-          Bun.$.braces(pattern);
+          Fun.$.braces(pattern);
         }
       });
 

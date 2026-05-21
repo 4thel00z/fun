@@ -313,7 +313,7 @@ export interface PostgresDotZig {
     password: string,
     databae: string,
     sslmode: SSLMode,
-    tls: Bun.TLSOptions | boolean | null | Bun.BunFile, // boolean true => empty TLSOptions object `{}`, boolean false or null => nothing
+    tls: Fun.TLSOptions | boolean | null | Fun.FunFile, // boolean true => empty TLSOptions object `{}`, boolean false or null => nothing
     query: string,
     path: string,
     onConnected: (err: Error | null, connection: $ZigGeneratedClasses.PostgresSQLConnection) => void,
@@ -450,7 +450,7 @@ function onQueryFinish(this: PooledPostgresConnection, onClose: (err: Error) => 
 
 class PooledPostgresConnection {
   private static async createConnection(
-    options: Bun.SQL.__internal.DefinedPostgresOrMySQLOptions,
+    options: Fun.SQL.__internal.DefinedPostgresOrMySQLOptions,
     onConnected: (err: Error | null, connection: $ZigGeneratedClasses.PostgresSQLConnection) => void,
     onClose: (err: Error | null) => void,
   ): Promise<$ZigGeneratedClasses.PostgresSQLConnection | null> {
@@ -469,7 +469,7 @@ class PooledPostgresConnection {
       path,
     } = options;
 
-    let password: Bun.MaybePromise<string> | string | undefined | (() => Bun.MaybePromise<string>) = options.password;
+    let password: Fun.MaybePromise<string> | string | undefined | (() => Fun.MaybePromise<string>) = options.password;
 
     try {
       if (typeof password === "function") {
@@ -513,7 +513,7 @@ class PooledPostgresConnection {
   storedError: Error | null = null;
   queries: Set<(err: Error) => void> = new Set();
   onFinish: ((err: Error | null) => void) | null = null;
-  connectionInfo: Bun.SQL.__internal.DefinedPostgresOrMySQLOptions;
+  connectionInfo: Fun.SQL.__internal.DefinedPostgresOrMySQLOptions;
   flags: number = 0;
   /// queryCount is used to indicate the number of queries using the connection, if a connection is reserved or if its a transaction queryCount will be 1 independently of the number of queries
   queryCount: number = 0;
@@ -580,7 +580,7 @@ class PooledPostgresConnection {
     this.adapter.release(this, true);
   }
 
-  constructor(connectionInfo: Bun.SQL.__internal.DefinedPostgresOrMySQLOptions, adapter: PostgresAdapter) {
+  constructor(connectionInfo: Fun.SQL.__internal.DefinedPostgresOrMySQLOptions, adapter: PostgresAdapter) {
     this.state = PooledConnectionState.pending;
     this.adapter = adapter;
     this.connectionInfo = connectionInfo;
@@ -664,7 +664,7 @@ class PostgresAdapter
       $ZigGeneratedClasses.PostgresSQLQuery
     >
 {
-  public readonly connectionInfo: Bun.SQL.__internal.DefinedPostgresOrMySQLOptions;
+  public readonly connectionInfo: Fun.SQL.__internal.DefinedPostgresOrMySQLOptions;
 
   public readonly connections: PooledPostgresConnection[];
   public readonly readyConnections: Set<PooledPostgresConnection>;
@@ -677,7 +677,7 @@ class PostgresAdapter
   public totalQueries: number = 0;
   public onAllQueriesFinished: (() => void) | null = null;
 
-  constructor(connectionInfo: Bun.SQL.__internal.DefinedPostgresOrMySQLOptions) {
+  constructor(connectionInfo: Fun.SQL.__internal.DefinedPostgresOrMySQLOptions) {
     this.connectionInfo = connectionInfo;
     this.connections = new Array(connectionInfo.max);
     this.readyConnections = new Set();

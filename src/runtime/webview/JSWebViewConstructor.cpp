@@ -1,4 +1,4 @@
-// JSWebViewConstructor: `new Bun.WebView({ ... })` options parsing.
+// JSWebViewConstructor: `new Fun.WebView({ ... })` options parsing.
 // Host spawn + viewId registration + Create frame write all happen in
 // JSWebView::createAndSend (JSWebView.cpp).
 
@@ -10,7 +10,7 @@
 #include <JavaScriptCore/InternalFunction.h>
 #include <JavaScriptCore/FunctionPrototype.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -18,9 +18,9 @@ static JSC_DECLARE_HOST_FUNCTION(callWebView);
 static JSC_DECLARE_HOST_FUNCTION(constructWebView);
 static JSC_DECLARE_HOST_FUNCTION(jsWebViewConstructorCloseAll);
 
-extern "C" void Bun__WebView__closeAllForTermination();
-extern "C" size_t Bun__Feature__webview_chrome;
-extern "C" size_t Bun__Feature__webview_webkit;
+extern "C" void Fun__WebView__closeAllForTermination();
+extern "C" size_t Fun__Feature__webview_chrome;
+extern "C" size_t Fun__Feature__webview_webkit;
 
 class JSWebViewConstructor final : public JSC::InternalFunction {
 public:
@@ -65,10 +65,10 @@ const ClassInfo JSWebViewConstructor::s_info = { "WebView"_s, &Base::s_info, nul
 
 InternalFunction* createJSWebViewConstructor(VM& vm, JSGlobalObject* globalObject, JSObject* prototype)
 {
-    // Bun.WebView.__proto__ === EventTarget (constructor chain, not instance
+    // Fun.WebView.__proto__ === EventTarget (constructor chain, not instance
     // prototype). Matches DOM convention: BroadcastChannel.__proto__ ===
     // EventTarget. Lets static-method lookup fall through, and `extends
-    // Bun.WebView` in user code transitively picks up EventTarget's own
+    // Fun.WebView` in user code transitively picks up EventTarget's own
     // static Symbol.hasInstance-less instanceof behavior.
     auto* etCtor = WebCore::JSEventTarget::getConstructor(vm, globalObject).getObject();
     auto* structure = JSWebViewConstructor::createStructure(vm, globalObject, etCtor);
@@ -81,18 +81,18 @@ JSC_DEFINE_HOST_FUNCTION(callWebView, (JSGlobalObject * globalObject, CallFrame*
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
-    return Bun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR,
+    return Fun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR,
         "Class constructor WebView cannot be invoked without 'new'"_s);
 }
 
 // SIGKILLs both browser subprocesses. The onProcessExit path (EVFILT_PROC →
-// Bun__Chrome__died / Bun__WebViewHost__childDied) rejects pending promises
+// Fun__Chrome__died / Fun__WebViewHost__childDied) rejects pending promises
 // and marks transports dead on the next event loop tick — we don't touch JS
 // state here. Calling on an already-dead process is a no-op (kill(9) returns
 // ESRCH, discarded).
 JSC_DEFINE_HOST_FUNCTION(jsWebViewConstructorCloseAll, (JSGlobalObject*, CallFrame*))
 {
-    Bun__WebView__closeAllForTermination();
+    Fun__WebView__closeAllForTermination();
     return JSValue::encode(jsUndefined());
 }
 
@@ -138,7 +138,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
         JSValue headless = opts->get(globalObject, Identifier::fromString(vm, "headless"_s));
         RETURN_IF_EXCEPTION(scope, {});
         if (headless.isBoolean() && !headless.asBoolean()) {
-            return Bun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
+            return Fun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
                 "headless: false is not yet implemented"_s);
         }
 
@@ -157,7 +157,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
                 backend = WebViewBackend::WebKit;
                 return true;
             }
-            Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+            Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                 "backend.type must be \"webkit\" or \"chrome\""_s);
             return false;
         };
@@ -170,7 +170,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
             JSValue type = beObj->get(globalObject, Identifier::fromString(vm, "type"_s));
             RETURN_IF_EXCEPTION(scope, {});
             if (!type.isString()) {
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                     "backend.type must be a string"_s);
             }
             if (!parseBackendType(type.toWTFString(globalObject))) return {};
@@ -182,7 +182,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
                 chromePath = path.toWTFString(globalObject);
                 RETURN_IF_EXCEPTION(scope, {});
             } else if (!path.isUndefined()) {
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                     "backend.path must be a string"_s);
             }
 
@@ -199,18 +199,18 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
             RETURN_IF_EXCEPTION(scope, {});
             if (urlOpt.isString()) {
                 if (backend != WebViewBackend::Chrome)
-                    return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+                    return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                         "backend.url requires type: \"chrome\""_s);
                 chromeWsUrl = urlOpt.toWTFString(globalObject);
                 RETURN_IF_EXCEPTION(scope, {});
                 if (!chromeWsUrl.startsWith("ws://"_s) && !chromeWsUrl.startsWith("wss://"_s))
-                    return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+                    return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                         "backend.url must be a ws:// URL (read DevToolsActivePort from Chrome's profile dir, "
                         "or omit url to auto-detect)"_s);
             } else if (urlOpt.isFalse()) {
                 chromeSkipAutoDetect = true;
             } else if (!urlOpt.isUndefined()) {
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                     "backend.url must be a ws:// string or false"_s);
             }
 
@@ -222,23 +222,23 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
                     JSValue item = arr->get(globalObject, i);
                     RETURN_IF_EXCEPTION(scope, {});
                     if (!item.isString()) {
-                        return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                        return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                             "backend.argv entries must be strings"_s);
                     }
                     chromeArgv.append(item.toWTFString(globalObject));
                     RETURN_IF_EXCEPTION(scope, {});
                 }
             } else if (!argvVal.isUndefined()) {
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                     "backend.argv must be an array of strings"_s);
             }
 
             if (!chromeWsUrl.isEmpty() && (!chromePath.isEmpty() || !chromeArgv.isEmpty()))
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                     "backend.url (connect mode) cannot be combined with backend.path or backend.argv (spawn mode)"_s);
 
             // stdout/stderr: "inherit" | "ignore" — whether the subprocess's
-            // streams flow to Bun's. Chrome is chatty on stderr (GCM
+            // streams flow to Fun's. Chrome is chatty on stderr (GCM
             // registration errors, updater noise, font-config warnings) even
             // with our flag suite; default ignore keeps test output clean.
             // "inherit" is useful when Chrome crashes silently (the crash
@@ -249,7 +249,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
                 RETURN_IF_EXCEPTION(scope, false);
                 if (v.isUndefined()) return true;
                 if (!v.isString()) {
-                    Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                    Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                         makeString("backend."_s, key, " must be \"inherit\" or \"ignore\""_s));
                     return false;
                 }
@@ -260,7 +260,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
                     return true;
                 }
                 if (s == "ignore"_s) return true;
-                Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+                Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                     makeString("backend."_s, key, " must be \"inherit\" or \"ignore\""_s));
                 return false;
             };
@@ -279,7 +279,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
             initialUrl = url.toWTFString(globalObject);
             RETURN_IF_EXCEPTION(scope, {});
         } else if (!url.isUndefined()) {
-            return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+            return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                 "url must be a string"_s);
         }
 
@@ -298,7 +298,7 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
             } else if (consoleOpt.isCallable()) {
                 consoleCallback = consoleOpt.getObject();
             } else {
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                     "console must be globalThis.console or a function"_s);
             }
         }
@@ -312,23 +312,23 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
                 persistDir = dir.toWTFString(globalObject);
                 RETURN_IF_EXCEPTION(scope, {});
             } else {
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                     "dataStore.directory must be a string"_s);
             }
         } else if (dataStore.isString()) {
             WTF::String s = dataStore.toWTFString(globalObject);
             RETURN_IF_EXCEPTION(scope, {});
             if (s != "ephemeral"_s) {
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                     "dataStore must be \"ephemeral\" or { directory: string }"_s);
             }
         }
     }
 
     if (width == 0 || width > 16384)
-        return Bun::ERR::OUT_OF_RANGE(scope, globalObject, "width"_s, 1, 16384, jsNumber(width));
+        return Fun::ERR::OUT_OF_RANGE(scope, globalObject, "width"_s, 1, 16384, jsNumber(width));
     if (height == 0 || height > 16384)
-        return Bun::ERR::OUT_OF_RANGE(scope, globalObject, "height"_s, 1, 16384, jsNumber(height));
+        return Fun::ERR::OUT_OF_RANGE(scope, globalObject, "height"_s, 1, 16384, jsNumber(height));
 
     Structure* structure = zigGlobalObject->m_JSWebViewClassStructure.get(zigGlobalObject);
     JSValue newTarget = callFrame->newTarget();
@@ -341,14 +341,14 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
     }
 
     if (backend == WebViewBackend::Chrome) {
-        Bun__Feature__webview_chrome += 1;
+        Fun__Feature__webview_chrome += 1;
         JSWebView* view = JSWebView::createChrome(globalObject, structure, width, height,
             persistDir, chromePath, chromeArgv, stdoutInherit, stderrInherit, chromeWsUrl,
             chromeSkipAutoDetect);
         if (!view) {
-            return Bun::throwError(globalObject, scope, ErrorCode::ERR_DLOPEN_FAILED,
+            return Fun::throwError(globalObject, scope, ErrorCode::ERR_DLOPEN_FAILED,
                 chromeWsUrl.isEmpty()
-                    ? "Failed to spawn Chrome (set BUN_CHROME_PATH, backend.path, or install Chrome/Chromium)"_s
+                    ? "Failed to spawn Chrome (set FUN_CHROME_PATH, backend.path, or install Chrome/Chromium)"_s
                     : "Failed to connect to Chrome (check backend.url is a valid ws:// debugger endpoint)"_s);
         }
         view->m_consoleIsGlobal = consoleIsGlobal;
@@ -358,14 +358,14 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
     }
 
 #if !OS(DARWIN)
-    return Bun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
-        "Bun.WebView with backend \"webkit\" is only available on macOS; use backend: \"chrome\""_s);
+    return Fun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
+        "Fun.WebView with backend \"webkit\" is only available on macOS; use backend: \"chrome\""_s);
 #else
-    Bun__Feature__webview_webkit += 1;
+    Fun__Feature__webview_webkit += 1;
     JSWebView* view = JSWebView::createAndSend(globalObject, structure, width, height, persistDir,
         stdoutInherit, stderrInherit);
     if (!view) {
-        return Bun::throwError(globalObject, scope, ErrorCode::ERR_DLOPEN_FAILED,
+        return Fun::throwError(globalObject, scope, ErrorCode::ERR_DLOPEN_FAILED,
             "Failed to spawn WebView host process"_s);
     }
     view->m_consoleIsGlobal = consoleIsGlobal;
@@ -382,4 +382,4 @@ JSC_DEFINE_HOST_FUNCTION(constructWebView, (JSGlobalObject * globalObject, CallF
 #endif
 }
 
-} // namespace Bun
+} // namespace Fun

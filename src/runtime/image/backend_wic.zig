@@ -1,4 +1,4 @@
-//! Windows system codec backend for `Bun.Image`, via the Windows Imaging
+//! Windows system codec backend for `Fun.Image`, via the Windows Imaging
 //! Component (WIC).
 //!
 //! WIC is COM: there is no flat C API to dlsym, so "lazy load" here means
@@ -26,7 +26,7 @@
 //!          → GetHGlobalFromStream → GlobalLock → dupe to default_allocator
 //!
 //! Thread-safety: WIC requires COM to be initialised on the calling thread.
-//! Bun's image work runs on `WorkPool` threads with no prior COM init, so we
+//! Fun's image work runs on `WorkPool` threads with no prior COM init, so we
 //! call `CoInitializeEx(COINIT_MULTITHREADED)` once per thread via a
 //! threadlocal flag; MTA is fine for WIC and means the factory pointer can be
 //! shared across pool threads.
@@ -78,8 +78,8 @@ pub fn decode(bytes: []const u8, max_pixels: u64) BackendError!codecs.Decoded {
     const out_len: u64 = stride * h;
     // CopyPixels takes UINT byte-count + UINT stride — same DWORD ceiling.
     if (out_len > std.math.maxInt(u32)) return error.TooManyPixels;
-    const out = try bun.default_allocator.alloc(u8, @intCast(out_len));
-    errdefer bun.default_allocator.free(out);
+    const out = try fun.default_allocator.alloc(u8, @intCast(out_len));
+    errdefer fun.default_allocator.free(out);
     if (conv.?.vt.CopyPixels(conv.?, null, @intCast(stride), @intCast(out_len), out.ptr) < 0)
         return error.DecodeFailed;
 
@@ -94,7 +94,7 @@ pub fn encode(rgba: []const u8, width: u32, height: u32, opts: codecs.EncodeOpti
     // codecs.encode() only routes .heic/.avif here; jpeg/png/webp use the
     // static codecs unconditionally so output (and the quality scale) is
     // identical across platforms.
-    bun.debugAssert(opts.format == .heic or opts.format == .avif);
+    fun.debugAssert(opts.format == .heic or opts.format == .avif);
     // WritePixels/WriteSource take a UINT byte count — same DWORD ceiling
     // as CopyPixels (maxPixels-raised edge).
     if (rgba.len > std.math.maxInt(u32)) return error.BackendUnavailable;
@@ -130,9 +130,9 @@ pub fn encode(rgba: []const u8, width: u32, height: u32, opts: codecs.EncodeOpti
     // the option (pre-21H2 encoder, or AV1 extension missing) and we surface
     // BackendUnavailable → UnsupportedOnPlatform instead of risking the
     // wrong container.
-    _ = bun_wic_propbag_write_f32(props, bun.strings.literal(u16, "ImageQuality"), @as(f32, @floatFromInt(opts.quality)) / 100);
+    _ = fun_wic_propbag_write_f32(props, fun.strings.literal(u16, "ImageQuality"), @as(f32, @floatFromInt(opts.quality)) / 100);
     const method: u8 = if (opts.format == .avif) WICHeifCompressionAV1 else WICHeifCompressionHEVC;
-    if (bun_wic_propbag_write_u8(props, bun.strings.literal(u16, "HeifCompressionMethod"), method) == 0)
+    if (fun_wic_propbag_write_u8(props, fun.strings.literal(u16, "HeifCompressionMethod"), method) == 0)
         return error.BackendUnavailable;
     if (frame.?.vt.Initialize(frame.?, props) < 0) return error.EncodeFailed;
     if (frame.?.vt.SetSize(frame.?, width, height) < 0) return error.EncodeFailed;
@@ -176,7 +176,7 @@ pub fn encode(rgba: []const u8, width: u32, height: u32, opts: codecs.EncodeOpti
     if (GetHGlobalFromStream(stream.?, &hg) < 0 or hg == null) return error.EncodeFailed;
     const ptr: [*]const u8 = @ptrCast(GlobalLock(hg.?) orelse return error.EncodeFailed);
     defer _ = GlobalUnlock(hg.?);
-    return try bun.default_allocator.dupe(u8, ptr[0..@intCast(pos)]);
+    return try fun.default_allocator.dupe(u8, ptr[0..@intCast(pos)]);
 }
 
 // ───────────────────────────── COM scaffolding ──────────────────────────────
@@ -199,8 +199,8 @@ const IUnknown = extern struct { vt: *const IUnknownVTable };
 /// VARIANT/PROPBAG2 layout is fiddly enough (union padding, BRECORD/DECIMAL
 /// arms) that hand-rolling it as `extern struct` is asking for an ABI drift.
 /// The C++ shim uses the SDK's own headers; we just hand it the bag pointer.
-extern fn bun_wic_propbag_write_f32(props: ?*anyopaque, name: [*:0]const u16, value: f32) i32;
-extern fn bun_wic_propbag_write_u8(props: ?*anyopaque, name: [*:0]const u16, value: u8) i32;
+extern fn fun_wic_propbag_write_f32(props: ?*anyopaque, name: [*:0]const u16, value: f32) i32;
+extern fn fun_wic_propbag_write_u8(props: ?*anyopaque, name: [*:0]const u16, value: u8) i32;
 
 /// WICHeifCompressionOption — the encoder defaults to `DontCare` (= picks
 /// whichever codec extension is installed), so without this `.avif()` could
@@ -403,8 +403,8 @@ fn factory() error{BackendUnavailable}!*IWICImagingFactory {
 fn loadFactory() void {
     // Resolve the one flat C export first; if windowscodecs.dll isn't present
     // we never attempt CoCreateInstance and the whole backend stays disabled.
-    const dll = bun.windows.LoadLibraryA("windowscodecs.dll") orelse return;
-    const sym = bun.windows.GetProcAddressA(dll, "WICConvertBitmapSource") orelse return;
+    const dll = fun.windows.LoadLibraryA("windowscodecs.dll") orelse return;
+    const sym = fun.windows.GetProcAddressA(dll, "WICConvertBitmapSource") orelse return;
     wicConvertBitmapSource = @ptrCast(@alignCast(sym));
 
     var out: ?*anyopaque = null;
@@ -419,7 +419,7 @@ fn loadFactory() void {
 // HGLOBAL hand-off. We prefer the registered "PNG" format (Chrome/Edge/
 // Snipping Tool put it; no transcode loss) and fall back to CF_DIBV5/CF_DIB,
 // which we re-wrap as a BMP file by prepending the 14-byte BITMAPFILEHEADER
-// the clipboard omits. Either way the result is bytes the regular Bun.Image
+// the clipboard omits. Either way the result is bytes the regular Fun.Image
 // decoder understands; nothing is decoded here.
 
 extern "user32" fn OpenClipboard(hwnd: ?*anyopaque) callconv(.winapi) c_int;
@@ -471,7 +471,7 @@ pub fn clipboard() error{ BackendUnavailable, OutOfMemory }!?[]u8 {
     for ([_]c_uint{ CF_DIBV5, CF_DIB }) |cf| {
         if (GetClipboardData(cf)) |h| if (try dupGlobal(h, 14)) |buf| {
             if (buf.len < 14 + 40 or buf.len > std.math.maxInt(u32)) {
-                bun.default_allocator.free(buf);
+                fun.default_allocator.free(buf);
                 continue;
             }
             // BITMAPFILEHEADER: 'BM' · u32 file-size · 2×u16 reserved ·
@@ -483,7 +483,7 @@ pub fn clipboard() error{ BackendUnavailable, OutOfMemory }!?[]u8 {
             const masks: u64 = if (ih_size == 40 and compression == 3) 12 else 0;
             const off = 14 + ih_size + masks;
             if (ih_size < 40 or off > buf.len) {
-                bun.default_allocator.free(buf);
+                fun.default_allocator.free(buf);
                 continue;
             }
             buf[0] = 'B';
@@ -497,18 +497,18 @@ pub fn clipboard() error{ BackendUnavailable, OutOfMemory }!?[]u8 {
     return null;
 }
 
-/// Copy a clipboard HGLOBAL into bun.default_allocator, optionally leaving
+/// Copy a clipboard HGLOBAL into fun.default_allocator, optionally leaving
 /// `prefix` zero bytes at the front for the caller to fill (BITMAPFILEHEADER).
 fn dupGlobal(h: *anyopaque, comptime prefix: usize) error{OutOfMemory}!?[]u8 {
     const size = GlobalSize(h);
     if (size == 0) return null;
     const ptr: [*]const u8 = @ptrCast(GlobalLock(h) orelse return null);
     defer _ = GlobalUnlock(h);
-    const out = try bun.default_allocator.alloc(u8, prefix + size);
+    const out = try fun.default_allocator.alloc(u8, prefix + size);
     @memcpy(out[prefix..], ptr[0..size]);
     return out;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const codecs = @import("./codecs.zig");
 const std = @import("std");

@@ -1,13 +1,13 @@
 import {
-__HMRClient as Bun
-} from "http://localhost:8080/bun:wrap";
-Bun.activate(true);
+__HMRClient as Fun
+} from "http://localhost:8080/fun:wrap";
+Fun.activate(true);
 import {
 __HMRModule as HMR
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
 __decorateClass as __decorateClass_4b4920c627822e1f
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {LitElement, html, css} from "http://localhost:8080/node_modules/lit/index.js";
 import {customElement, property, eventOptions} from "http://localhost:8080/node_modules/lit/decorators.js";
 var hmr = new HMR(350135693, "simple-lit-example.ts"), exports = hmr.exports;

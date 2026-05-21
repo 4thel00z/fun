@@ -1,12 +1,12 @@
-using server2 = Bun.serve({
+using server2 = Fun.serve({
   port: 0,
   async fetch() {
-    await Bun.sleep(1000);
+    await Fun.sleep(1000);
     return new Response("test");
   },
 });
 
-using server = Bun.serve({
+using server = Fun.serve({
   port: 0,
   error(error) {
     return new Response(error.message, { status: 500 });

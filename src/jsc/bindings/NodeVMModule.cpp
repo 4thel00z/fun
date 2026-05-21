@@ -9,7 +9,7 @@
 
 #include "../vm/SigintWatcher.h"
 
-namespace Bun {
+namespace Fun {
 
 NodeVMModuleRequest::NodeVMModuleRequest(WTF::String specifier, WTF::HashMap<WTF::String, WTF::String> importAttributes)
     : m_specifier(WTF::move(specifier))
@@ -464,7 +464,7 @@ JSC_DEFINE_HOST_FUNCTION(jsNodeVmModuleSetExport, (JSC::JSGlobalObject * globalO
     if (auto* thisObject = dynamicDowncast<NodeVMSyntheticModule>(callFrame->thisValue())) {
         JSValue nameValue = callFrame->argument(0);
         if (!nameValue.isString()) {
-            Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "name"_str, "string"_s, nameValue);
+            Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "name"_str, "string"_s, nameValue);
             return {};
         }
         JSValue exportValue = callFrame->argument(1);
@@ -567,4 +567,4 @@ const JSC::ClassInfo NodeVMModule::s_info = { "NodeVMModule"_s, &Base::s_info, n
 const JSC::ClassInfo NodeVMModulePrototype::s_info = { "NodeVMModule"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(NodeVMModulePrototype) };
 const JSC::ClassInfo NodeVMModuleConstructor::s_info = { "Module"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(NodeVMModuleConstructor) };
 
-} // namespace Bun
+} // namespace Fun

@@ -1,9 +1,9 @@
 // Comprehensive zlib benchmark: sync, async, streaming, realistic payloads.
-// Designed to compare cloudflare-zlib vs zlib-ng on the workloads Bun cares about:
+// Designed to compare cloudflare-zlib vs zlib-ng on the workloads Fun cares about:
 //   - HTTP gzip response encoding (streaming, level 1/6)
 //   - npm tarball gunzip (streaming inflate, ~10-500KB inputs)
 //   - fetch() Content-Encoding: gzip decoding
-//   - Bun.gzipSync / node:zlib one-shot
+//   - Fun.gzipSync / node:zlib one-shot
 
 import { bench, group, run } from "../runner.mjs";
 import zlib from "node:zlib";

@@ -1,9 +1,9 @@
 (function () {
   function normalizeInternalLinks() {
     const selectors = [
-      'a[href*="bun.com/docs/installation"]',
-      'a[href="https://bun.com/reference"]',
-      'a[href="https://bun.com/blog"]',
+      'a[href*="fun.dev/docs/installation"]',
+      'a[href="https://fun.dev/reference"]',
+      'a[href="https://fun.dev/blog"]',
     ];
 
     selectors.forEach(selector => {

@@ -2,7 +2,7 @@
 
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
 // The object returned from process.binding('http_parser')
 class ProcessBindingHTTPParser final : public JSC::JSNonFinalObject {
@@ -30,4 +30,4 @@ private:
     }
 };
 
-} // namespace Bun
+} // namespace Fun

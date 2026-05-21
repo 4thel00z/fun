@@ -1,12 +1,12 @@
 ---
 title: SQLite
-description: Bun natively implements a high-performance SQLite3 driver.
+description: Fun natively implements a high-performance SQLite3 driver.
 ---
 
-Bun natively implements a high-performance [SQLite3](https://www.sqlite.org/) driver. To use it import from the built-in `bun:sqlite` module.
+Fun natively implements a high-performance [SQLite3](https://www.sqlite.org/) driver. To use it import from the built-in `fun:sqlite` module.
 
 ```ts db.ts icon="/icons/typescript.svg"
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const db = new Database(":memory:");
 const query = db.query("select 'Hello world' as message;");
@@ -17,7 +17,7 @@ query.get();
 { message: "Hello world" }
 ```
 
-The API is synchronous and fast. Credit to [better-sqlite3](https://github.com/JoshuaWise/better-sqlite3) and its contributors for inspiring the API of `bun:sqlite`.
+The API is synchronous and fast. Credit to [better-sqlite3](https://github.com/JoshuaWise/better-sqlite3) and its contributors for inspiring the API of `fun:sqlite`.
 
 Features include:
 
@@ -30,10 +30,10 @@ Features include:
 - `bigint` support
 - Multi-query statements (e.g. `SELECT 1; SELECT 2;`) in a single call to database.run(query)
 
-The `bun:sqlite` module is roughly 3-6x faster than `better-sqlite3` and 8-9x faster than `deno.land/x/sqlite` for read queries. Each driver was benchmarked against the [Northwind Traders](https://github.com/jpwhite3/northwind-SQLite3/blob/46d5f8a64f396f87cd374d1600dbf521523980e8/Northwind_large.sqlite.zip) dataset. View and run the [benchmark source](https://github.com/oven-sh/bun/tree/main/bench/sqlite).
+The `fun:sqlite` module is roughly 3-6x faster than `better-sqlite3` and 8-9x faster than `deno.land/x/sqlite` for read queries. Each driver was benchmarked against the [Northwind Traders](https://github.com/jpwhite3/northwind-SQLite3/blob/46d5f8a64f396f87cd374d1600dbf521523980e8/Northwind_large.sqlite.zip) dataset. View and run the [benchmark source](https://github.com/underdoc-org/fun/tree/main/bench/sqlite).
 
 <Frame caption="Benchmarked on an M1 MacBook Pro (64GB) running macOS 12.3.1">
-  ![SQLite benchmarks for Bun, better-sqlite3, and
+  ![SQLite benchmarks for Fun, better-sqlite3, and
   deno.land/x/sqlite](https://user-images.githubusercontent.com/709451/168459263-8cd51ca3-a924-41e9-908d-cf3478a3b7f3.png)
 </Frame>
 
@@ -44,7 +44,7 @@ The `bun:sqlite` module is roughly 3-6x faster than `better-sqlite3` and 8-9x fa
 To open or create a SQLite3 database:
 
 ```ts db.ts icon="/icons/typescript.svg"
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const db = new Database("mydb.sqlite");
 ```
@@ -52,7 +52,7 @@ const db = new Database("mydb.sqlite");
 To open an in-memory database:
 
 ```ts db.ts icon="/icons/typescript.svg"
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 // all of these do the same thing
 const db = new Database(":memory:");
@@ -63,25 +63,25 @@ const db = new Database("");
 To open in `readonly` mode:
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={2}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 const db = new Database("mydb.sqlite", { readonly: true });
 ```
 
 To create the database if the file doesn't exist:
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={2}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 const db = new Database("mydb.sqlite", { create: true });
 ```
 
 ### Strict mode
 
-By default, `bun:sqlite` requires binding parameters to include the `$`, `:`, or `@` prefix, and does not throw an error if a parameter is missing.
+By default, `fun:sqlite` requires binding parameters to include the `$`, `:`, or `@` prefix, and does not throw an error if a parameter is missing.
 
 To instead throw an error when a parameter is missing and allow binding without a prefix, set `strict: true` on the `Database` constructor:
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={3}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const strict = new Database(":memory:", { strict: true });
 
@@ -106,7 +106,7 @@ console.log(db.query("select * from users LIMIT 1").get());
 This is equivalent to the following:
 
 ```ts db.ts icon="/icons/typescript.svg"
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 const db = new Database("./mydb.sqlite");
 ```
 
@@ -138,7 +138,7 @@ db.close(true);
 You can use the `using` statement to ensure that a database connection is closed when the `using` block is exited.
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={4, 5}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 {
   using db = new Database("mydb.sqlite");
@@ -153,7 +153,7 @@ import { Database } from "bun:sqlite";
 
 ### `.serialize()`
 
-`bun:sqlite` supports SQLite's built-in mechanism for [serializing](https://www.sqlite.org/c3ref/serialize.html) and [deserializing](https://www.sqlite.org/c3ref/deserialize.html) databases to and from memory.
+`fun:sqlite` supports SQLite's built-in mechanism for [serializing](https://www.sqlite.org/c3ref/serialize.html) and [deserializing](https://www.sqlite.org/c3ref/deserialize.html) databases to and from memory.
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={2}
 const olddb = new Database("mydb.sqlite");
@@ -174,7 +174,7 @@ const query = db.query(`select "Hello world" as message`);
 <Note>
 **What does "cached" mean?**
 
-The caching refers to the **compiled prepared statement** (the SQL bytecode), not the query results. When you call `db.query()` with the same SQL string multiple times, Bun returns the same cached `Statement` object instead of recompiling the SQL.
+The caching refers to the **compiled prepared statement** (the SQL bytecode), not the query results. When you call `db.query()` with the same SQL string multiple times, Fun returns the same cached `Statement` object instead of recompiling the SQL.
 
 It is completely safe to reuse a cached statement with different parameter values:
 
@@ -217,13 +217,13 @@ db.run("PRAGMA journal_mode = WAL;");
 
 When using WAL mode with a file-based database, SQLite creates two sidecar files alongside your database: a write-ahead log (`-wal`) and a shared-memory index (`-shm`). Whether these files are automatically removed after `.close()` depends on your platform:
 
-- **macOS**: Bun uses the system-provided SQLite, which Apple builds with persistent WAL enabled. The `-wal` and `-shm` files **will persist** after close. This is not a bug — it is how Apple configured the system SQLite.
-- **Linux** and **Windows**: Bun statically links its own SQLite build, which follows upstream defaults. The sidecar files are **typically removed** after close when no other connections are open.
+- **macOS**: Fun uses the system-provided SQLite, which Apple builds with persistent WAL enabled. The `-wal` and `-shm` files **will persist** after close. This is not a bug — it is how Apple configured the system SQLite.
+- **Linux** and **Windows**: Fun statically links its own SQLite build, which follows upstream defaults. The sidecar files are **typically removed** after close when no other connections are open.
 
 To ensure sidecar files are cleaned up on all platforms, disable WAL persistence and run a truncating checkpoint before closing:
 
 ```ts db.ts icon="/icons/typescript.svg"
-import { Database, constants } from "bun:sqlite";
+import { Database, constants } from "fun:sqlite";
 
 const db = new Database("mydb.sqlite");
 db.run("PRAGMA journal_mode = WAL;");
@@ -280,7 +280,7 @@ query.all("Hello world");
 By default, the `$`, `:`, and `@` prefixes are **included** when binding values to named parameters. To bind without these prefixes, use the `strict` option in the `Database` constructor.
 
 ```ts db.ts icon="/icons/typescript.svg"
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const db = new Database(":memory:", {
   // bind values without prefixes
@@ -433,7 +433,7 @@ query.finalize();
 Calling `toString()` on a `Statement` instance prints the expanded SQL query. This is useful for debugging.
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={6, 9, 12}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 // setup
 const query = db.query("SELECT $param;");
@@ -486,16 +486,16 @@ const results = query.all("hello", "goodbye");
 
 sqlite supports signed 64 bit integers, but JavaScript only supports signed 52 bit integers or arbitrary precision integers with `bigint`.
 
-`bigint` input is supported everywhere, but by default `bun:sqlite` returns integers as `number` types. If you need to handle integers larger than 2^53, set `safeIntegers` option to `true` when creating a `Database` instance. This also validates that `bigint` passed to `bun:sqlite` do not exceed 64 bits.
+`bigint` input is supported everywhere, but by default `fun:sqlite` returns integers as `number` types. If you need to handle integers larger than 2^53, set `safeIntegers` option to `true` when creating a `Database` instance. This also validates that `bigint` passed to `fun:sqlite` do not exceed 64 bits.
 
-By default, `bun:sqlite` returns integers as `number` types. If you need to handle integers larger than 2^53, you can use the `bigint` type.
+By default, `fun:sqlite` returns integers as `number` types. If you need to handle integers larger than 2^53, you can use the `bigint` type.
 
 ### `safeIntegers: true`
 
-When `safeIntegers` is `true`, `bun:sqlite` will return integers as `bigint` types:
+When `safeIntegers` is `true`, `fun:sqlite` will return integers as `bigint` types:
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={3}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const db = new Database(":memory:", { safeIntegers: true });
 const query = db.query(`SELECT ${BigInt(Number.MAX_SAFE_INTEGER) + 102n} as max_int`);
@@ -508,10 +508,10 @@ console.log(result.max_int);
 9007199254741093n
 ```
 
-When `safeIntegers` is `true`, `bun:sqlite` will throw an error if a `bigint` value in a bound parameter exceeds 64 bits:
+When `safeIntegers` is `true`, `fun:sqlite` will throw an error if a `bigint` value in a bound parameter exceeds 64 bits:
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={3}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const db = new Database(":memory:", { safeIntegers: true });
 db.run("CREATE TABLE test (id INTEGER PRIMARY KEY, value INTEGER)");
@@ -531,10 +531,10 @@ BigInt value '81129638414606663681390495662081' is out of range
 
 ### `safeIntegers: false` (default)
 
-When `safeIntegers` is `false`, `bun:sqlite` will return integers as `number` types and truncate any bits beyond 53:
+When `safeIntegers` is `false`, `fun:sqlite` will return integers as `number` types and truncate any bits beyond 53:
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={3}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const db = new Database(":memory:", { safeIntegers: false });
 const query = db.query(`SELECT ${BigInt(Number.MAX_SAFE_INTEGER) + 102n} as max_int`);
@@ -584,7 +584,7 @@ The driver will automatically [`begin`](https://www.sqlite.org/lang_transaction.
 
 ```ts db.ts icon="/icons/typescript.svg"
 // setup
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 const db = Database.open(":memory:");
 db.run("CREATE TABLE expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, note TEXT, dollars INTEGER);");
 db.run("CREATE TABLE cats (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, age INTEGER)");
@@ -623,7 +623,7 @@ insertCats.exclusive(cats); // uses "BEGIN EXCLUSIVE"
 To load a [SQLite extension](https://www.sqlite.org/loadext.html), call `.loadExtension(name)` on your `Database` instance
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={4}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 const db = new Database();
 db.loadExtension("myext");
@@ -637,10 +637,10 @@ brew install sqlite
 which sqlite # get path to binary
 ```
 
-To point `bun:sqlite` to the new build, call `Database.setCustomSQLite(path)` before creating any `Database` instances. (On other operating systems, this is a no-op.) Pass a path to the SQLite `.dylib` file, _not_ the executable. With recent versions of Homebrew this is something like `/opt/homebrew/Cellar/sqlite/<version>/libsqlite3.dylib`.
+To point `fun:sqlite` to the new build, call `Database.setCustomSQLite(path)` before creating any `Database` instances. (On other operating systems, this is a no-op.) Pass a path to the SQLite `.dylib` file, _not_ the executable. With recent versions of Homebrew this is something like `/opt/homebrew/Cellar/sqlite/<version>/libsqlite3.dylib`.
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={3}
-import { Database } from "bun:sqlite";
+import { Database } from "fun:sqlite";
 
 Database.setCustomSQLite("/path/to/libsqlite.dylib");
 
@@ -655,7 +655,7 @@ db.loadExtension("myext");
 To use the advanced `sqlite3_file_control` API, call `.fileControl(cmd, value)` on your `Database` instance. See [WAL sidecar file cleanup](#wal-sidecar-file-cleanup) for a practical example.
 
 ```ts db.ts icon="/icons/typescript.svg" highlight={6}
-import { Database, constants } from "bun:sqlite";
+import { Database, constants } from "fun:sqlite";
 
 const db = new Database();
 // Ensure WAL mode is NOT persistent

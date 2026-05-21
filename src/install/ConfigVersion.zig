@@ -4,7 +4,7 @@ pub const ConfigVersion = enum {
 
     pub const current: ConfigVersion = .v1;
 
-    pub fn fromExpr(expr: bun.ast.Expr) ?ConfigVersion {
+    pub fn fromExpr(expr: fun.ast.Expr) ?ConfigVersion {
         if (expr.data != .e_number) {
             return null;
         }
@@ -42,4 +42,4 @@ pub const ConfigVersion = enum {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

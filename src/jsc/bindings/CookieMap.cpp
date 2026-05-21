@@ -1,13 +1,13 @@
 #include "CookieMap.h"
 #include "JSCookieMap.h"
-#include <bun-uws/src/App.h>
-#include <bun-uws/src/Http3Response.h>
+#include <fun-uws/src/App.h>
+#include <fun-uws/src/Http3Response.h>
 #include "helpers.h"
 #include <wtf/text/ParsingUtilities.h>
 #include <JavaScriptCore/ObjectConstructor.h>
 #include "HTTPParsers.h"
 #include "decodeURIComponentSIMD.h"
-#include "BunString.h"
+#include "FunString.h"
 #include <wtf/HashSet.h>
 namespace WebCore {
 
@@ -113,15 +113,15 @@ ExceptionOr<Ref<CookieMap>> CookieMap::create(std::variant<Vector<Vector<String>
                 }
 
                 if (hasAnyPercentEncoded) {
-                    Bun::UTF8View utf8View(nameView);
-                    name = Bun::decodeURIComponentSIMD(utf8View.bytes());
+                    Fun::UTF8View utf8View(nameView);
+                    name = Fun::decodeURIComponentSIMD(utf8View.bytes());
                 } else {
                     name = nameView.toString();
                 }
 
                 if (hasAnyPercentEncoded) {
-                    Bun::UTF8View utf8View(valueView);
-                    value = Bun::decodeURIComponentSIMD(utf8View.bytes());
+                    Fun::UTF8View utf8View(valueView);
+                    value = Fun::decodeURIComponentSIMD(utf8View.bytes());
                 } else {
                     value = valueView.toString();
                 }

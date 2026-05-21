@@ -1,12 +1,12 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-test("issue #12548: TypeScript syntax should work with 'ts' loader in BunPlugin", async () => {
+test("issue #12548: TypeScript syntax should work with 'ts' loader in FunPlugin", async () => {
   using dir = tempDir("issue-12548", {
     "index.js": `
       import plugin from "./plugin.js";
 
-      Bun.plugin(plugin);
+      Fun.plugin(plugin);
 
       // This should work with 'ts' loader
       console.log(require('virtual-ts-module'));
@@ -23,9 +23,9 @@ test("issue #12548: TypeScript syntax should work with 'ts' loader in BunPlugin"
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -41,7 +41,7 @@ test("issue #12548: TypeScript syntax should work with 'ts' loader in BunPlugin"
 test("issue #12548: TypeScript type imports work with 'ts' loader", async () => {
   using dir = tempDir("issue-12548-type-imports", {
     "index.js": `
-      Bun.plugin({
+      Fun.plugin({
         setup(build) {
           build.module('test-module', () => ({
             contents: \`
@@ -60,9 +60,9 @@ test("issue #12548: TypeScript type imports work with 'ts' loader", async () => 
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

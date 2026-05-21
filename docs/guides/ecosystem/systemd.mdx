@@ -1,6 +1,6 @@
 ---
-title: Run Bun as a daemon with systemd
-sidebarTitle: "systemd with Bun"
+title: Run Fun as a daemon with systemd
+sidebarTitle: "systemd with Fun"
 mode: center
 ---
 
@@ -8,7 +8,7 @@ mode: center
 
 ---
 
-To run a Bun application as a daemon using **systemd** you'll need to create a _service file_ in `/lib/systemd/system/`.
+To run a Fun application as a daemon using **systemd** you'll need to create a _service file_ in `/lib/systemd/system/`.
 
 ```sh terminal icon="terminal"
 cd /lib/systemd/system
@@ -38,7 +38,7 @@ User=YOUR_USER
 WorkingDirectory=/home/YOUR_USER/path/to/my-app
 # the command to start the app
 # requires absolute paths
-ExecStart=/home/YOUR_USER/.bun/bin/bun run index.ts
+ExecStart=/home/YOUR_USER/.fun/bin/fun run index.ts
 # restart policy
 # one of {no|on-success|on-failure|on-abnormal|on-watchdog|on-abort|always}
 Restart=always
@@ -50,10 +50,10 @@ WantedBy=multi-user.target
 
 ---
 
-If your application starts a webserver, note that non-`root` users are not able to listen on ports 80 or 443 by default. To permanently allow Bun to listen on these ports when executed by a non-`root` user, use the following command. This step isn't necessary when running as `root`.
+If your application starts a webserver, note that non-`root` users are not able to listen on ports 80 or 443 by default. To permanently allow Fun to listen on these ports when executed by a non-`root` user, use the following command. This step isn't necessary when running as `root`.
 
 ```bash terminal icon="terminal"
-setcap CAP_NET_BIND_SERVICE=+eip ~/.bun/bin/bun
+setcap CAP_NET_BIND_SERVICE=+eip ~/.fun/bin/fun
 ```
 
 ---
@@ -84,12 +84,12 @@ systemctl status my-app
 ● my-app.service - My App
      Loaded: loaded (/lib/systemd/system/my-app.service; enabled; preset: enabled)
      Active: active (running) since Thu 2023-10-12 11:34:08 UTC; 1h 8min ago
-   Main PID: 309641 (bun)
+   Main PID: 309641 (fun)
       Tasks: 3 (limit: 503)
      Memory: 40.9M
         CPU: 1.093s
      CGroup: /system.slice/my-app.service
-             └─309641 /home/YOUR_USER/.bun/bin/bun run /home/YOUR_USER/application/index.ts
+             └─309641 /home/YOUR_USER/.fun/bin/fun run /home/YOUR_USER/application/index.ts
 ```
 
 ---

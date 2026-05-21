@@ -23,5 +23,5 @@ const paths = @import("./Path.zig");
 const pools = @import("./path_buffer_pool.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

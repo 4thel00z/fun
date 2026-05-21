@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
-// This is a script that runs `bun test` to test Bun itself.
+// This is a script that runs `fun test` to test Fun itself.
 // It is not intended to be used as a test runner for other projects.
 //
-// - It runs each `bun test` in a separate process, to catch crashes.
-// - It cannot use Bun APIs, since it is run using Node.js.
+// - It runs each `fun test` in a separate process, to catch crashes.
+// - It cannot use Fun APIs, since it is run using Node.js.
 // - It does not import dependencies, so it's faster to start.
 
 import { spawn, spawnSync } from "node:child_process";
@@ -73,7 +73,7 @@ const cwd = import.meta.dirname ? dirname(import.meta.dirname) : process.cwd();
 const testsPath = join(cwd, "test");
 
 const spawnTimeout = 5_000;
-const spawnBunTimeout = 20_000; // when running with ASAN/LSAN bun can take a bit longer to exit, not a bug.
+const spawnFunTimeout = 20_000; // when running with ASAN/LSAN fun can take a bit longer to exit, not a bug.
 const testTimeout = 3 * 60_000;
 const integrationTimeout = 5 * 60_000;
 
@@ -96,10 +96,10 @@ const { values: options, positionals: filters } = parseArgs({
       type: "boolean",
       default: false,
     },
-    /** Path to bun binary */
+    /** Path to fun binary */
     ["exec-path"]: {
       type: "string",
-      default: "bun",
+      default: "fun",
     },
     ["step"]: {
       type: "string",
@@ -216,7 +216,7 @@ if (isBuildkite) {
       const { BUILDKITE_PULL_REQUEST } = process.env;
       for (let i = 1; i <= 10; i++) {
         const res = await fetch(
-          `https://api.github.com/repos/oven-sh/bun/pulls/${BUILDKITE_PULL_REQUEST}/files?per_page=${per_page}&page=${i}`,
+          `https://api.github.com/repos/underdoc-org/fun/pulls/${BUILDKITE_PULL_REQUEST}/files?per_page=${per_page}&page=${i}`,
           { headers: { Authorization: `Bearer ${getSecret("GITHUB_TOKEN")}` } },
         );
         const doc = await res.json();
@@ -244,7 +244,7 @@ if (isBuildkite) {
 let coresDir;
 
 if (options["coredump-upload"]) {
-  // this sysctl is set in bootstrap.sh to /var/bun-cores-$distro-$release-$arch
+  // this sysctl is set in bootstrap.sh to /var/fun-cores-$distro-$release-$arch
   const sysctl = await spawnSafe({ command: "sysctl", args: ["-n", "kernel.core_pattern"] });
   coresDir = sysctl.stdout;
   if (sysctl.ok) {
@@ -372,7 +372,7 @@ const shouldValidateLeakSan = test => {
 function getTestModifiers(testPath) {
   const ext = extname(testPath);
   const filename = basename(testPath, ext);
-  const modifiers = filename.split("-").filter(value => value !== "bun");
+  const modifiers = filename.split("-").filter(value => value !== "fun");
 
   const os = getOs();
   const arch = getArch();
@@ -419,7 +419,7 @@ async function runTests() {
   } else {
     execPath = getExecPath(options["exec-path"]);
   }
-  !isQuiet && console.log("Bun:", execPath);
+  !isQuiet && console.log("Fun:", execPath);
 
   const expectations = getTestExpectations();
   const modifiers = getTestModifiers(execPath);
@@ -567,14 +567,14 @@ async function runTests() {
   if (!isQuiet) {
     for (const path of [cwd, testsPath]) {
       const title = relative(cwd, join(path, "package.json")).replace(/\\/g, "/");
-      await runTest(title, async () => spawnBunInstall(execPath, { cwd: path }));
+      await runTest(title, async () => spawnFunInstall(execPath, { cwd: path }));
     }
   }
 
   if (!failedResults.length) {
     // TODO: remove windows exclusion here
     if (isCI && !isWindows) {
-      // bun install has succeeded
+      // fun install has succeeded
       const { promise: portPromise, resolve: portResolve } = Promise.withResolvers();
       const { promise: errorPromise, resolve: errorResolve } = Promise.withResolvers();
       console.log("run in", cwd);
@@ -583,7 +583,7 @@ async function runTests() {
       const server = spawn(execPath, ["run", "--silent", "ci-remap-server", execPath, cwd, getCommit()], {
         stdio: ["ignore", "pipe", "inherit"],
         cwd, // run in main repo
-        env: { ...process.env, BUN_DEBUG_QUIET_LOGS: "1", NO_COLOR: "1" },
+        env: { ...process.env, FUN_DEBUG_QUIET_LOGS: "1", NO_COLOR: "1" },
       });
       server.unref();
       server.on("error", errorResolve);
@@ -620,33 +620,33 @@ async function runTests() {
           const title = relative(cwd, absoluteTestPath).replaceAll(sep, "/");
           if (isNodeTest(testPath)) {
             const testContent = readFileSync(absoluteTestPath, "utf-8");
-            let runWithBunTest = title.includes("needs-test") || testContent.includes("node:test");
-            // don't wanna have a filter for includes("bun:test") but these need our mocks
-            runWithBunTest ||= title === "test/js/node/test/parallel/test-fs-append-file-flush.js";
-            runWithBunTest ||= title === "test/js/node/test/parallel/test-fs-write-file-flush.js";
-            runWithBunTest ||= title === "test/js/node/test/parallel/test-fs-write-stream-flush.js";
-            const subcommand = runWithBunTest ? "test" : "run";
+            let runWithFunTest = title.includes("needs-test") || testContent.includes("node:test");
+            // don't wanna have a filter for includes("fun:test") but these need our mocks
+            runWithFunTest ||= title === "test/js/node/test/parallel/test-fs-append-file-flush.js";
+            runWithFunTest ||= title === "test/js/node/test/parallel/test-fs-write-file-flush.js";
+            runWithFunTest ||= title === "test/js/node/test/parallel/test-fs-write-stream-flush.js";
+            const subcommand = runWithFunTest ? "test" : "run";
             const env = {
               FORCE_COLOR: "0",
               NO_COLOR: "1",
-              BUN_DEBUG_QUIET_LOGS: "1",
+              FUN_DEBUG_QUIET_LOGS: "1",
             };
             if ((basename(execPath).includes("asan") || !isCI) && shouldValidateExceptions(testPath)) {
-              env.BUN_JSC_validateExceptionChecks = "1";
-              env.BUN_JSC_dumpSimulatedThrows = "1";
+              env.FUN_JSC_validateExceptionChecks = "1";
+              env.FUN_JSC_dumpSimulatedThrows = "1";
             }
             if ((basename(execPath).includes("asan") || !isCI) && shouldValidateLeakSan(testPath)) {
-              env.BUN_DESTRUCT_VM_ON_EXIT = "1";
+              env.FUN_DESTRUCT_VM_ON_EXIT = "1";
               env.ASAN_OPTIONS = "allow_user_segv_handler=1:disable_coredump=0:detect_leaks=1:abort_on_error=1";
               // prettier-ignore
               env.LSAN_OPTIONS = `malloc_context_size=100:print_suppressions=0:suppressions=${process.cwd()}/test/leaksan.supp`;
             }
             return runTest(title, async () => {
-              const { ok, error, stdout, crashes } = await spawnBun(execPath, {
+              const { ok, error, stdout, crashes } = await spawnFun(execPath, {
                 cwd: cwd,
                 args: [
                   subcommand,
-                  "--config=" + join(import.meta.dirname, "../bunfig.node-test.toml"),
+                  "--config=" + join(import.meta.dirname, "../funfig.node-test.toml"),
                   absoluteTestPath,
                 ],
                 timeout: getNodeParallelTestTimeout(title),
@@ -670,7 +670,7 @@ async function runTests() {
             });
           } else {
             return runTest(title, async () =>
-              spawnBunTest(execPath, join("test", testPath), {
+              spawnFunTest(execPath, join("test", testPath), {
                 cwd,
                 stdout: parallelism > 1 ? () => {} : chunk => pipeTestStdout(process.stdout, chunk),
                 stderr: parallelism > 1 ? () => {} : chunk => pipeTestStdout(process.stderr, chunk),
@@ -689,8 +689,8 @@ async function runTests() {
       }
 
       const packageJson = join(relative(cwd, vendorPath), "package.json").replace(/\\/g, "/");
-      if (packageManager === "bun") {
-        const { ok } = await runTest(packageJson, () => spawnBunInstall(execPath, { cwd: vendorPath }));
+      if (packageManager === "fun") {
+        const { ok } = await runTest(packageJson, () => spawnFunInstall(execPath, { cwd: vendorPath }));
         if (!ok) {
           continue;
         }
@@ -699,7 +699,7 @@ async function runTests() {
       }
 
       // build
-      const buildResult = await spawnBun(execPath, {
+      const buildResult = await spawnFun(execPath, {
         cwd: vendorPath,
         args: ["run", "build"],
         timeout: 60_000,
@@ -711,9 +711,9 @@ async function runTests() {
       for (const testPath of testPaths) {
         const title = join(relative(cwd, vendorPath), testPath).replace(/\\/g, "/");
 
-        if (testRunner === "bun") {
+        if (testRunner === "fun") {
           await runTest(title, index =>
-            spawnBunTest(execPath, testPath, { cwd: vendorPath, env: { TEST_SERIAL_ID: index } }),
+            spawnFunTest(execPath, testPath, { cwd: vendorPath, env: { TEST_SERIAL_ID: index } }),
           );
         } else {
           const testRunnerPath = join(cwd, "test", "runners", `${testRunner}.ts`);
@@ -721,7 +721,7 @@ async function runTests() {
             throw new Error(`Unsupported test runner: ${testRunner}`);
           }
           await runTest(title, () =>
-            spawnBunTest(execPath, testPath, {
+            spawnFunTest(execPath, testPath, {
               cwd: vendorPath,
               args: ["--preload", testRunnerPath],
             }),
@@ -745,36 +745,36 @@ async function runTests() {
     const junitTempDir = options["junit-temp-dir"];
     mkdirSync(junitTempDir, { recursive: true });
 
-    // Generate JUnit reports for tests that don't use bun test
-    const nonBunTestResults = [...okResults, ...flakyResults, ...failedResults].filter(result => {
-      // Check if this is a test that wasn't run with bun test
+    // Generate JUnit reports for tests that don't use fun test
+    const nonFunTestResults = [...okResults, ...flakyResults, ...failedResults].filter(result => {
+      // Check if this is a test that wasn't run with fun test
       const isNodeTest =
         isJavaScript(result.testPath) && !isTestStrict(result.testPath) && !result.testPath.includes("vendor");
       return isNodeTest;
     });
 
-    // If we have tests not covered by bun test JUnit reports, generate a report for them
-    if (nonBunTestResults.length > 0) {
-      const nonBunTestJunitPath = join(junitTempDir, "non-bun-test-results.xml");
-      generateJUnitReport(nonBunTestJunitPath, nonBunTestResults);
+    // If we have tests not covered by fun test JUnit reports, generate a report for them
+    if (nonFunTestResults.length > 0) {
+      const nonFunTestJunitPath = join(junitTempDir, "non-fun-test-results.xml");
+      generateJUnitReport(nonFunTestJunitPath, nonFunTestResults);
       !isQuiet &&
         console.log(
-          `Generated JUnit report for ${nonBunTestResults.length} non-bun test results at ${nonBunTestJunitPath}`,
+          `Generated JUnit report for ${nonFunTestResults.length} non-fun test results at ${nonFunTestJunitPath}`,
         );
 
       // Upload this report immediately if we're on BuildKite
       if (isBuildkite && options["junit-upload"]) {
-        const uploadSuccess = await uploadJUnitToBuildKite(nonBunTestJunitPath);
+        const uploadSuccess = await uploadJUnitToBuildKite(nonFunTestJunitPath);
         if (uploadSuccess) {
           // Delete the file after successful upload to prevent redundant uploads
           try {
-            unlinkSync(nonBunTestJunitPath);
-            !isQuiet && console.log(`Uploaded and deleted non-bun test JUnit report`);
+            unlinkSync(nonFunTestJunitPath);
+            !isQuiet && console.log(`Uploaded and deleted non-fun test JUnit report`);
           } catch (unlinkError) {
-            !isQuiet && console.log(`Uploaded but failed to delete non-bun test JUnit report: ${unlinkError.message}`);
+            !isQuiet && console.log(`Uploaded but failed to delete non-fun test JUnit report: ${unlinkError.message}`);
           }
         } else {
-          !isQuiet && console.log(`Failed to upload non-bun test JUnit report to BuildKite`);
+          !isQuiet && console.log(`Failed to upload non-fun test JUnit report to BuildKite`);
         }
       }
     }
@@ -783,9 +783,9 @@ async function runTests() {
     // Since we're deleting files after upload, any remaining files need to be uploaded
     if (isBuildkite && options["junit-upload"]) {
       try {
-        // Only process XML files and skip the non-bun test results which we've already uploaded
+        // Only process XML files and skip the non-fun test results which we've already uploaded
         const allJunitFiles = readdirSync(junitTempDir).filter(
-          file => file.endsWith(".xml") && file !== "non-bun-test-results.xml",
+          file => file.endsWith(".xml") && file !== "non-fun-test-results.xml",
         );
 
         if (allJunitFiles.length > 0) {
@@ -850,13 +850,13 @@ async function runTests() {
         const outfileName = `${coresDirName}.tar.gz.age`;
         const outfileAbs = join(outdir, outfileName);
 
-        // This matches an age identity known by Bun employees. Core dumps from CI have to be kept
+        // This matches an age identity known by Fun employees. Core dumps from CI have to be kept
         // secret since they will contain API keys.
         const ageRecipient = "age1eunsrgxwjjpzr48hm0y98cw2vn5zefjagt4r0qj4503jg2nxedqqkmz6fu"; // reject external PRs changing this, see above
 
         // Run tar in the parent directory of coresDir so that it creates archive entries with
         // coresDirName in them. This way when you extract the tarball you get a folder named
-        // bun-cores-XYZ containing core files, instead of a bunch of core files strewn in your
+        // fun-cores-XYZ containing core files, instead of a bunch of core files strewn in your
         // current directory
         const before = Date.now();
         const zipAndEncrypt = await spawnSafe({
@@ -1093,7 +1093,7 @@ async function spawnSafe(options) {
     (error = /(Internal assertion failure)/i.exec(buffer)) ||
     (error = /(Illegal instruction) at address/i.exec(buffer)) ||
     (error = /panic: (.*) at address/i.exec(buffer)) ||
-    (error = /oh no: Bun has crashed/i.exec(buffer)) ||
+    (error = /oh no: Fun has crashed/i.exec(buffer)) ||
     (error = /(ERROR: AddressSanitizer)/.exec(buffer)) ||
     (error = /(SIGABRT)/.exec(buffer))
   ) {
@@ -1142,11 +1142,11 @@ let _combinedPath = "";
 function getCombinedPath(execPath) {
   if (!_combinedPath) {
     _combinedPath = addPath(realpathSync(dirname(execPath)), process.env.PATH);
-    // If we're running bun-profile.exe, try to make a symlink to bun.exe so
-    // that anything looking for "bun" will find it
-    if (isCI && basename(execPath, extname(execPath)).toLowerCase() !== "bun") {
+    // If we're running fun-profile.exe, try to make a symlink to fun.exe so
+    // that anything looking for "fun" will find it
+    if (isCI && basename(execPath, extname(execPath)).toLowerCase() !== "fun") {
       const existingPath = execPath;
-      const newPath = join(dirname(execPath), "bun" + extname(execPath));
+      const newPath = join(dirname(execPath), "fun" + extname(execPath));
       try {
         // On Windows, we might run into permissions issues with symlinks.
         // If that happens, fall back to a regular hardlink.
@@ -1155,7 +1155,7 @@ function getCombinedPath(execPath) {
         try {
           linkSync(existingPath, newPath);
         } catch (error) {
-          console.warn(`Failed to link bun`, error);
+          console.warn(`Failed to link fun`, error);
         }
       }
     }
@@ -1164,61 +1164,61 @@ function getCombinedPath(execPath) {
 }
 
 /**
- * @typedef {object} SpawnBunResult
+ * @typedef {object} SpawnFunResult
  * @extends SpawnResult
  * @property {string} [crashes]
  */
 
 /**
- * @param {string} execPath Path to bun binary
+ * @param {string} execPath Path to fun binary
  * @param {SpawnOptions} options
- * @returns {Promise<SpawnBunResult>}
+ * @returns {Promise<SpawnFunResult>}
  */
-async function spawnBun(execPath, { args, cwd, timeout, env, stdout, stderr }) {
+async function spawnFun(execPath, { args, cwd, timeout, env, stdout, stderr }) {
   const path = getCombinedPath(execPath);
-  const tmpdirPath = mkdtempSync(join(tmpdir(), "buntmp-"));
+  const tmpdirPath = mkdtempSync(join(tmpdir(), "funtmp-"));
   const { username, homedir } = userInfo();
   const shellPath = getShell();
-  const bunEnv = {
+  const funEnv = {
     ...process.env,
     PATH: path,
     TMPDIR: tmpdirPath,
-    BUN_TMPDIR: tmpdirPath,
+    FUN_TMPDIR: tmpdirPath,
     USER: username,
     HOME: homedir,
     SHELL: shellPath,
     FORCE_COLOR: "1",
-    BUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
-    BUN_DEBUG_QUIET_LOGS: "1",
-    BUN_GARBAGE_COLLECTOR_LEVEL: "1",
-    BUN_JSC_randomIntegrityAuditRate: "1.0",
-    BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
-    BUN_INSTALL_CACHE_DIR: tmpdirPath,
+    FUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
+    FUN_DEBUG_QUIET_LOGS: "1",
+    FUN_GARBAGE_COLLECTOR_LEVEL: "1",
+    FUN_JSC_randomIntegrityAuditRate: "1.0",
+    FUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
+    FUN_INSTALL_CACHE_DIR: tmpdirPath,
     SHELLOPTS: isWindows ? "igncr" : undefined, // ignore "\r" on Windows
     TEST_TMPDIR: tmpdirPath, // Used in Node.js tests.
     ...(typeof remapPort == "number"
-      ? { BUN_CRASH_REPORT_URL: `http://localhost:${remapPort}` }
-      : { BUN_ENABLE_CRASH_REPORTING: "0" }),
+      ? { FUN_CRASH_REPORT_URL: `http://localhost:${remapPort}` }
+      : { FUN_ENABLE_CRASH_REPORTING: "0" }),
   };
 
-  if (isWindows && bunEnv.Path) {
-    delete bunEnv.Path;
+  if (isWindows && funEnv.Path) {
+    delete funEnv.Path;
   }
 
   if (env) {
-    Object.assign(bunEnv, env);
+    Object.assign(funEnv, env);
   }
 
   if (isWindows) {
-    delete bunEnv["PATH"];
-    bunEnv["Path"] = path;
+    delete funEnv["PATH"];
+    funEnv["Path"] = path;
     for (const tmpdir of ["TMPDIR", "TEMP", "TEMPDIR", "TMP"]) {
-      delete bunEnv[tmpdir];
+      delete funEnv[tmpdir];
     }
-    bunEnv["TEMP"] = tmpdirPath;
+    funEnv["TEMP"] = tmpdirPath;
   }
   if (timeout === undefined) {
-    timeout = spawnBunTimeout;
+    timeout = spawnFunTimeout;
   }
   try {
     const existingCores = options["coredump-upload"] ? readdirSync(coresDir) : [];
@@ -1227,7 +1227,7 @@ async function spawnBun(execPath, { args, cwd, timeout, env, stdout, stderr }) {
       args,
       cwd,
       timeout,
-      env: bunEnv,
+      env: funEnv,
       stdout,
       stderr,
     });
@@ -1274,11 +1274,11 @@ async function spawnBun(execPath, { args, cwd, timeout, env, stdout, stderr }) {
       }
     }
 
-    // Skip this if the remap server didn't work or if Bun exited normally
+    // Skip this if the remap server didn't work or if Fun exited normally
     // (tests in which a subprocess crashed should at least set exit code 1)
     if (typeof remapPort == "number" && result.exitCode !== 0) {
       try {
-        // When Bun crashes, it exits before the subcommand it runs to upload the crash report has necessarily finished.
+        // When Fun crashes, it exits before the subcommand it runs to upload the crash report has necessarily finished.
         // So wait a little bit to make sure that the crash report has at least started uploading
         // (once the server sees the /ack request then /traces will wait for any crashes to finish processing)
         // There is a bug that if a test causes crash reports but exits with code 0, the crash reports will instead
@@ -1362,7 +1362,7 @@ async function spawnBun(execPath, { args, cwd, timeout, env, stdout, stderr }) {
  * @param {object} [opts.env]
  * @returns {Promise<TestResult>}
  */
-async function spawnBunTest(execPath, testPath, opts = { cwd }) {
+async function spawnFunTest(execPath, testPath, opts = { cwd }) {
   const timeout = getTestTimeout(testPath);
   const perTestTimeout = Math.ceil(timeout / 2);
   const absPath = join(opts["cwd"], testPath);
@@ -1396,17 +1396,17 @@ async function spawnBunTest(execPath, testPath, opts = { cwd }) {
     ...opts["env"],
   };
   if ((basename(execPath).includes("asan") || !isCI) && shouldValidateExceptions(relative(cwd, absPath))) {
-    env.BUN_JSC_validateExceptionChecks = "1";
-    env.BUN_JSC_dumpSimulatedThrows = "1";
+    env.FUN_JSC_validateExceptionChecks = "1";
+    env.FUN_JSC_dumpSimulatedThrows = "1";
   }
   if ((basename(execPath).includes("asan") || !isCI) && shouldValidateLeakSan(relative(cwd, absPath))) {
-    env.BUN_DESTRUCT_VM_ON_EXIT = "1";
+    env.FUN_DESTRUCT_VM_ON_EXIT = "1";
     env.ASAN_OPTIONS = "allow_user_segv_handler=1:disable_coredump=0:detect_leaks=1:abort_on_error=1";
     // prettier-ignore
     env.LSAN_OPTIONS = `malloc_context_size=100:print_suppressions=0:suppressions=${process.cwd()}/test/leaksan.supp`;
   }
 
-  const { ok, error, stdout, crashes } = await spawnBun(execPath, {
+  const { ok, error, stdout, crashes } = await spawnFun(execPath, {
     args: isReallyTest ? testArgs : [...args, absPath],
     cwd: opts["cwd"],
     timeout: isReallyTest ? timeout : 30_000,
@@ -1442,7 +1442,7 @@ async function spawnBunTest(execPath, testPath, opts = { cwd }) {
  * @returns {number}
  */
 function getTestTimeout(testPath) {
-  if (/integration|3rd_party|docker|bun-install-registry|v8|bundler_compile/i.test(testPath)) {
+  if (/integration|3rd_party|docker|fun-install-registry|v8|bundler_compile/i.test(testPath)) {
     return integrationTimeout;
   }
   return testTimeout;
@@ -1586,8 +1586,8 @@ function parseTestStdout(stdout, testPath) {
  * @param {SpawnOptions} options
  * @returns {Promise<TestResult>}
  */
-async function spawnBunInstall(execPath, options) {
-  let { ok, error, stdout, duration, crashes } = await spawnBun(execPath, {
+async function spawnFunInstall(execPath, options) {
+  let { ok, error, stdout, duration, crashes } = await spawnFun(execPath, {
     args: ["install"],
     timeout: testTimeout,
     ...options,
@@ -1605,7 +1605,7 @@ async function spawnBunInstall(execPath, options) {
     tests: [
       {
         file: testPath,
-        test: "bun install",
+        test: "fun install",
         status,
         duration: parseDuration(duration),
       },
@@ -1647,7 +1647,7 @@ function isNodeTest(path) {
   return (
     unixPath.includes("js/node/test/parallel/") ||
     unixPath.includes("js/node/test/sequential/") ||
-    unixPath.includes("js/bun/test/parallel/")
+    unixPath.includes("js/fun/test/parallel/")
   );
 }
 
@@ -1835,8 +1835,8 @@ async function getVendorTests(cwd) {
 
         return {
           cwd: vendorPath,
-          packageManager: packageManager || "bun",
-          testRunner: testRunner || "bun",
+          packageManager: packageManager || "fun",
+          testRunner: testRunner || "fun",
           testPaths,
         };
       },
@@ -1974,19 +1974,19 @@ function getRelevantTests(cwd, testModifiers, testExpectations) {
 }
 
 /**
- * @param {string} bunExe
+ * @param {string} funExe
  * @returns {string}
  */
-function getExecPath(bunExe) {
+function getExecPath(funExe) {
   let execPath;
   let error;
   try {
-    const { error, stdout } = spawnSync(bunExe, ["--print", "process.argv[0]"], {
+    const { error, stdout } = spawnSync(funExe, ["--print", "process.argv[0]"], {
       encoding: "utf-8",
       timeout: spawnTimeout,
       env: {
         PATH: process.env.PATH,
-        BUN_DEBUG_QUIET_LOGS: 1,
+        FUN_DEBUG_QUIET_LOGS: 1,
       },
     });
     if (error) {
@@ -2004,7 +2004,7 @@ function getExecPath(bunExe) {
     error = new Error(`File is not an executable: ${execPath}`);
   }
 
-  throw new Error(`Could not find executable: ${bunExe}`, { cause: error });
+  throw new Error(`Could not find executable: ${funExe}`, { cause: error });
 }
 
 /**
@@ -2040,7 +2040,7 @@ async function getExecPathFromBuildKite(target, buildId) {
     }
 
     zipPath = readdirSync(releasePath, { recursive: true, encoding: "utf-8" })
-      .filter(filename => /^bun.*\.zip$/i.test(filename))
+      .filter(filename => /^fun.*\.zip$/i.test(filename))
       .map(filename => join(releasePath, filename))
       .sort((a, b) => b.includes("profile") - a.includes("profile"))
       .at(0);
@@ -2062,7 +2062,7 @@ async function getExecPathFromBuildKite(target, buildId) {
   const releaseFiles = readdirSync(releasePath, { recursive: true, encoding: "utf-8" });
   for (const entry of releaseFiles) {
     const execPath = join(releasePath, entry);
-    if (/bun(?:-[a-z]+)?(?:\.exe)?$/i.test(entry) && statSync(execPath).isFile()) {
+    if (/fun(?:-[a-z]+)?(?:\.exe)?$/i.test(entry) && statSync(execPath).isFile()) {
       return execPath;
     }
   }
@@ -2082,7 +2082,7 @@ function getRevision(execPath) {
       timeout: spawnTimeout,
       env: {
         PATH: process.env.PATH,
-        BUN_DEBUG_QUIET_LOGS: 1,
+        FUN_DEBUG_QUIET_LOGS: 1,
       },
     });
     if (error) {
@@ -2110,7 +2110,7 @@ function addPath(...paths) {
  * @returns {string | undefined}
  */
 function getTestLabel() {
-  return getBuildLabel()?.replace(" - test-bun", "");
+  return getBuildLabel()?.replace(" - test-fun", "");
 }
 
 /**
@@ -2421,7 +2421,7 @@ function generateJUnitReport(outfile, results) {
   }, 0);
 
   // Create a unique package name to identify this run
-  const packageName = `bun.internal.${process.env.BUILDKITE_PIPELINE_SLUG || "tests"}`;
+  const packageName = `fun.internal.${process.env.BUILDKITE_PIPELINE_SLUG || "tests"}`;
 
   xml += `<testsuites name="${escapeXml(packageName)}" tests="${totalTests}" failures="${totalFailures}" time="${totalTime.toFixed(3)}" timestamp="${timestamp}">\n`;
 
@@ -2501,7 +2501,7 @@ function generateJUnitReport(outfile, results) {
         suite.tests.push(testCase);
       }
     } else {
-      // For test suites without granular test information (e.g., bun install tests)
+      // For test suites without granular test information (e.g., fun install tests)
       suite.time += duration / 1000; // Convert to seconds
 
       const testCase = {
@@ -2630,12 +2630,12 @@ async function uploadJUnitToBuildKite(junitFile) {
     if (message) formData.append("run_env[message]", message);
 
     // Add custom tags
-    formData.append("tags[runtime]", "bun");
+    formData.append("tags[runtime]", "fun");
     formData.append("tags[suite]", testId);
 
     // Add additional context information specific to this run
     formData.append("run_env[source]", "junit-import");
-    formData.append("run_env[collector]", "bun-runner");
+    formData.append("run_env[collector]", "fun-runner");
 
     const url = "https://analytics-api.buildkite.com/v1/uploads";
     const response = await fetch(url, {
@@ -2694,7 +2694,7 @@ export async function main() {
 
   // FIXME: Some DNS tests hang unless we set the DNS server to 8.8.8.8
   // It also appears to hang on 1.1.1.1, which could explain this issue:
-  // https://github.com/oven-sh/bun/issues/11136
+  // https://github.com/underdoc-org/fun/issues/11136
   if (isWindows && isCI) {
     await spawn("pwsh", [
       "-Command",

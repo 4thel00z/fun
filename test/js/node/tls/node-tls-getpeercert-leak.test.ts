@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import { once } from "events";
 import { readFileSync } from "fs";
 import { isASAN, isDebug } from "harness";
@@ -58,8 +58,8 @@ it("server-side getPeerCertificate() should not leak", async () => {
         serverSocket.getPeerCertificate();
         serverSocket.getPeerCertificate(false);
       }
-      Bun.gc(true);
-      Bun.gc(true);
+      Fun.gc(true);
+      Fun.gc(true);
     }
 
     // Run in fixed-size rounds with a GC after each so the steady-state

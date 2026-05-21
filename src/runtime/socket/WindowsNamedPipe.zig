@@ -21,16 +21,16 @@ const WindowsNamedPipe = @This();
 
 wrapper: ?WrapperType,
 pipe: if (Environment.isWindows) ?*uv.Pipe else void, // any duplex
-vm: *bun.jsc.VirtualMachine, //TODO: create a timeout version that dont need the jsc VM
+vm: *fun.jsc.VirtualMachine, //TODO: create a timeout version that dont need the jsc VM
 
-writer: bun.io.StreamingWriter(WindowsNamedPipe, .{
+writer: fun.io.StreamingWriter(WindowsNamedPipe, .{
     .onClose = onClose,
     .onWritable = onWritable,
     .onError = onError,
     .onWrite = onWrite,
 }) = .{},
 
-incoming: bun.ByteList = .{}, // Maybe we should use IPCBuffer here as well
+incoming: fun.ByteList = .{}, // Maybe we should use IPCBuffer here as well
 ssl_error: CertError = .{},
 handlers: Handlers,
 connect_req: uv.uv_connect_t = std.mem.zeroes(uv.uv_connect_t),
@@ -54,12 +54,12 @@ pub const Handlers = struct {
     ref_ctx: *const fn (*anyopaque) void,
     deref_ctx: *const fn (*anyopaque) void,
     onOpen: *const fn (*anyopaque) void,
-    onHandshake: *const fn (*anyopaque, bool, uws.us_bun_verify_error_t) void,
+    onHandshake: *const fn (*anyopaque, bool, uws.us_fun_verify_error_t) void,
     onData: *const fn (*anyopaque, []const u8) void,
     onClose: *const fn (*anyopaque) void,
     onEnd: *const fn (*anyopaque) void,
     onWritable: *const fn (*anyopaque) void,
-    onError: *const fn (*anyopaque, bun.sys.Error) void,
+    onError: *const fn (*anyopaque, fun.sys.Error) void,
     onTimeout: *const fn (*anyopaque) void,
 };
 
@@ -83,7 +83,7 @@ fn onPipeClose(this: *WindowsNamedPipe) void {
 fn onReadAlloc(this: *WindowsNamedPipe, suggested_size: usize) []u8 {
     var available = this.incoming.unusedCapacitySlice();
     if (available.len < suggested_size) {
-        bun.handleOom(this.incoming.ensureUnusedCapacity(bun.default_allocator, suggested_size));
+        fun.handleOom(this.incoming.ensureUnusedCapacity(fun.default_allocator, suggested_size));
         available = this.incoming.unusedCapacitySlice();
     }
     return available.ptr[0..suggested_size];
@@ -92,8 +92,8 @@ fn onReadAlloc(this: *WindowsNamedPipe, suggested_size: usize) []u8 {
 fn onRead(this: *WindowsNamedPipe, buffer: []const u8) void {
     log("onRead ({})", .{buffer.len});
     this.incoming.len += @as(u32, @truncate(buffer.len));
-    bun.assert(this.incoming.len <= this.incoming.cap);
-    bun.assert(bun.isSliceInBuffer(buffer, this.incoming.allocatedSlice()));
+    fun.assert(this.incoming.len <= this.incoming.cap);
+    fun.assert(fun.isSliceInBuffer(buffer, this.incoming.allocatedSlice()));
 
     const data = this.incoming.slice();
 
@@ -107,7 +107,7 @@ fn onRead(this: *WindowsNamedPipe, buffer: []const u8) void {
     this.incoming.len = 0;
 }
 
-fn onWrite(this: *WindowsNamedPipe, amount: usize, status: bun.io.WriteStatus) void {
+fn onWrite(this: *WindowsNamedPipe, amount: usize, status: fun.io.WriteStatus) void {
     log("onWrite {d} {}", .{ amount, status });
 
     switch (status) {
@@ -125,18 +125,18 @@ fn onWrite(this: *WindowsNamedPipe, amount: usize, status: bun.io.WriteStatus) v
     }
 }
 
-fn onReadError(this: *WindowsNamedPipe, err: bun.sys.E) void {
+fn onReadError(this: *WindowsNamedPipe, err: fun.sys.E) void {
     log("onReadError", .{});
     if (err == .EOF) {
         // we received FIN but we dont allow half-closed connections right now
         this.handlers.onEnd(this.handlers.ctx);
     } else {
-        this.onError(bun.sys.Error.fromCode(err, .read));
+        this.onError(fun.sys.Error.fromCode(err, .read));
     }
     this.writer.close();
 }
 
-fn onError(this: *WindowsNamedPipe, err: bun.sys.Error) void {
+fn onError(this: *WindowsNamedPipe, err: fun.sys.Error) void {
     log("onError", .{});
     this.handlers.onError(this.handlers.ctx, err);
     this.close();
@@ -152,13 +152,13 @@ fn onData(this: *WindowsNamedPipe, decoded_data: []const u8) void {
     this.handlers.onData(this.handlers.ctx, decoded_data);
 }
 
-fn onHandshake(this: *WindowsNamedPipe, handshake_success: bool, ssl_error: uws.us_bun_verify_error_t) void {
+fn onHandshake(this: *WindowsNamedPipe, handshake_success: bool, ssl_error: uws.us_fun_verify_error_t) void {
     log("onHandshake", .{});
 
     this.ssl_error = .{
         .error_no = ssl_error.error_no,
-        .code = if (ssl_error.code == null or ssl_error.error_no == 0) "" else bun.handleOom(bun.default_allocator.dupeZ(u8, ssl_error.code[0..bun.len(ssl_error.code) :0])),
-        .reason = if (ssl_error.reason == null or ssl_error.error_no == 0) "" else bun.handleOom(bun.default_allocator.dupeZ(u8, ssl_error.reason[0..bun.len(ssl_error.reason) :0])),
+        .code = if (ssl_error.code == null or ssl_error.error_no == 0) "" else fun.handleOom(fun.default_allocator.dupeZ(u8, ssl_error.code[0..fun.len(ssl_error.code) :0])),
+        .reason = if (ssl_error.reason == null or ssl_error.error_no == 0) "" else fun.handleOom(fun.default_allocator.dupeZ(u8, ssl_error.reason[0..fun.len(ssl_error.reason) :0])),
     };
     this.handlers.onHandshake(this.handlers.ctx, handshake_success, ssl_error);
 }
@@ -181,7 +181,7 @@ fn callWriteOrEnd(this: *WindowsNamedPipe, data: ?[]const u8, msg_more: bool) vo
             }
             if (this.flags.disconnected) {
                 // enqueue to be sent after connecting
-                bun.handleOom(this.writer.outgoing.write(bytes));
+                fun.handleOom(this.writer.outgoing.write(bytes));
             } else {
                 // write will enqueue the data if it cannot be sent
                 _ = this.writer.write(bytes);
@@ -307,8 +307,8 @@ fn onConnect(this: *WindowsNamedPipe, status: uv.ReturnCode) void {
     this.flush();
 }
 
-pub fn getAcceptedBy(this: *WindowsNamedPipe, server: *uv.Pipe, ssl_ctx: ?*BoringSSL.SSL_CTX) bun.sys.Maybe(void) {
-    bun.assert(this.pipe != null);
+pub fn getAcceptedBy(this: *WindowsNamedPipe, server: *uv.Pipe, ssl_ctx: ?*BoringSSL.SSL_CTX) fun.sys.Maybe(void) {
+    fun.assert(this.pipe != null);
     this.flags.disconnected = true;
 
     if (ssl_ctx) |tls| {
@@ -323,7 +323,7 @@ pub fn getAcceptedBy(this: *WindowsNamedPipe, server: *uv.Pipe, ssl_ctx: ?*Borin
         }) catch {
             return .{
                 .err = .{
-                    .errno = @intFromEnum(bun.sys.E.PIPE),
+                    .errno = @intFromEnum(fun.sys.E.PIPE),
                     .syscall = .connect,
                 },
             };
@@ -355,8 +355,8 @@ pub fn getAcceptedBy(this: *WindowsNamedPipe, server: *uv.Pipe, ssl_ctx: ?*Borin
     }
     return .success;
 }
-pub fn open(this: *WindowsNamedPipe, fd: bun.FD, ssl_options: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX) bun.sys.Maybe(void) {
-    bun.assert(this.pipe != null);
+pub fn open(this: *WindowsNamedPipe, fd: fun.FD, ssl_options: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX) fun.sys.Maybe(void) {
+    fun.assert(this.pipe != null);
     this.flags.disconnected = true;
 
     if (this.initTLSWrapper(ssl_options, owned_ctx)) |result| {
@@ -377,8 +377,8 @@ pub fn open(this: *WindowsNamedPipe, fd: bun.FD, ssl_options: ?jsc.API.ServerCon
     return .success;
 }
 
-pub fn connect(this: *WindowsNamedPipe, path: []const u8, ssl_options: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX) bun.sys.Maybe(void) {
-    bun.assert(this.pipe != null);
+pub fn connect(this: *WindowsNamedPipe, path: []const u8, ssl_options: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX) fun.sys.Maybe(void) {
+    fun.assert(this.pipe != null);
     this.flags.disconnected = true;
     // ref because we are connecting
     _ = this.pipe.?.ref();
@@ -403,11 +403,11 @@ pub fn connect(this: *WindowsNamedPipe, path: []const u8, ssl_options: ?jsc.API.
 /// Set up the in-process SSL wrapper for `connect`/`open`. Prefers a prebuilt
 /// `SSL_CTX` (one ref ADOPTED — held by `wrapper` on success, freed here on
 /// failure) so a memoised `tls.createSecureContext` reaches this path with its
-/// CA bundle intact; on this branch `[buntls]` returns `{secureContext}` and no
+/// CA bundle intact; on this branch `[funtls]` returns `{secureContext}` and no
 /// longer spreads `{ca,cert,key}`, so the `SSLConfig` fallback alone would build
 /// a CTX with an empty trust store and fail `DEPTH_ZERO_SELF_SIGNED_CERT`.
 /// Returns null when neither input requested TLS.
-fn initTLSWrapper(this: *WindowsNamedPipe, ssl_options: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX) ?bun.sys.Maybe(void) {
+fn initTLSWrapper(this: *WindowsNamedPipe, ssl_options: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX) ?fun.sys.Maybe(void) {
     const handlers: WrapperType.Handlers = .{
         .ctx = this,
         .onOpen = WindowsNamedPipe.onOpen,
@@ -420,14 +420,14 @@ fn initTLSWrapper(this: *WindowsNamedPipe, ssl_options: ?jsc.API.ServerConfig.SS
         this.flags.is_ssl = true;
         this.wrapper = WrapperType.initWithCTX(ctx, true, handlers) catch {
             BoringSSL.SSL_CTX_free(ctx);
-            return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.PIPE), .syscall = .connect } };
+            return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.PIPE), .syscall = .connect } };
         };
         return .success;
     }
     if (ssl_options) |tls| {
         this.flags.is_ssl = true;
         this.wrapper = WrapperType.init(tls, true, handlers) catch {
-            return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.PIPE), .syscall = .connect } };
+            return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.PIPE), .syscall = .connect } };
         };
         return .success;
     }
@@ -463,7 +463,7 @@ pub fn start(this: *WindowsNamedPipe, is_client: bool) bool {
         return false;
     }
     const stream = this.writer.getStream() orelse {
-        this.onError(bun.sys.Error.fromCode(bun.sys.E.PIPE, .read));
+        this.onError(fun.sys.Error.fromCode(fun.sys.E.PIPE, .read));
         return false;
     };
 
@@ -479,7 +479,7 @@ pub fn isTLS(this: *WindowsNamedPipe) bool {
     return this.flags.is_ssl;
 }
 
-pub fn loop(this: *WindowsNamedPipe) *bun.Async.Loop {
+pub fn loop(this: *WindowsNamedPipe) *fun.Async.Loop {
     return this.vm.uvLoop();
 }
 
@@ -547,7 +547,7 @@ pub fn ssl(this: *WindowsNamedPipe) ?*BoringSSL.SSL {
     return null;
 }
 
-pub fn sslError(this: *WindowsNamedPipe) us_bun_verify_error_t {
+pub fn sslError(this: *WindowsNamedPipe) us_fun_verify_error_t {
     return .{
         .error_no = this.ssl_error.error_no,
         .code = @ptrCast(this.ssl_error.code.ptr),
@@ -570,7 +570,7 @@ pub fn setTimeoutInMilliseconds(this: *WindowsNamedPipe, ms: c_uint) void {
     }
 
     // reschedule the timer
-    this.event_loop_timer.next = bun.timespec.msFromNow(.allow_mocked_time, ms);
+    this.event_loop_timer.next = fun.timespec.msFromNow(.allow_mocked_time, ms);
     this.vm.timer.insert(&this.event_loop_timer);
 }
 pub fn setTimeout(this: *WindowsNamedPipe, seconds: c_uint) void {
@@ -597,18 +597,18 @@ pub fn deinit(this: *WindowsNamedPipe) void {
 
 pub const CertError = UpgradedDuplex.CertError;
 const WrapperType = SSLWrapper(*WindowsNamedPipe);
-const log = bun.Output.scoped(.WindowsNamedPipe, .visible);
+const log = fun.Output.scoped(.WindowsNamedPipe, .visible);
 
 const std = @import("std");
 const SSLWrapper = @import("./ssl_wrapper.zig").SSLWrapper;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
-const BoringSSL = bun.BoringSSL.c;
-const uv = bun.windows.libuv;
-const EventLoopTimer = bun.api.Timer.EventLoopTimer;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;
+const BoringSSL = fun.BoringSSL.c;
+const uv = fun.windows.libuv;
+const EventLoopTimer = fun.api.Timer.EventLoopTimer;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const UpgradedDuplex = uws.UpgradedDuplex;
-const us_bun_verify_error_t = uws.us_bun_verify_error_t;
+const us_fun_verify_error_t = uws.us_fun_verify_error_t;

@@ -6,7 +6,7 @@ const { _ReadableFromWeb: ReadableFromWeb } = require("internal/webstreams_adapt
 const ObjectCreate = Object.create;
 const kEmptyObject = ObjectCreate(null);
 
-var fetch = Bun.fetch;
+var fetch = Fun.fetch;
 const bindings = $cpp("Undici.cpp", "createUndiciInternalBinding");
 const Response = bindings[0];
 const Request = bindings[1];
@@ -32,7 +32,7 @@ class FileReader extends EventTarget {
 }
 
 function notImplemented() {
-  throw new Error("This function is not yet implemented in Bun");
+  throw new Error("This function is not yet implemented in Fun");
 }
 
 /**

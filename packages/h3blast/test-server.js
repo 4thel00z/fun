@@ -1,5 +1,5 @@
-// Minimal Bun HTTP/3 hello-world target for h3blast.
-// Usage: bun test-server.js [port]
+// Minimal Fun HTTP/3 hello-world target for h3blast.
+// Usage: fun test-server.js [port]
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -28,7 +28,7 @@ spawnSync(
   { stdio: "ignore" },
 );
 
-const server = Bun.serve({
+const server = Fun.serve({
   port: Number(process.argv[2] ?? process.env.PORT ?? 3443),
   http3: true,
   http1: false,

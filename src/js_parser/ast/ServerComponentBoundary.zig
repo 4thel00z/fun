@@ -52,7 +52,7 @@ pub const List = struct {
             source_index,
             Adapter{ .list = m.list.slice() },
         );
-        bun.assert(!gop.found_existing);
+        fun.assert(!gop.found_existing);
     }
 
     /// Can only be called on the bundler thread.
@@ -85,12 +85,12 @@ pub const List = struct {
                 real_source_index,
                 Adapter{ .list = l.list },
             ) orelse return null;
-            bun.unsafeAssert(l.list.capacity > 0); // optimize MultiArrayList.Slice.items
+            fun.unsafeAssert(l.list.capacity > 0); // optimize MultiArrayList.Slice.items
             return l.list.items(.reference_source_index)[i];
         }
 
-        pub fn bitSet(scbs: Slice, alloc: std.mem.Allocator, input_file_count: usize) !bun.bit_set.DynamicBitSetUnmanaged {
-            var scb_bitset = try bun.bit_set.DynamicBitSetUnmanaged.initEmpty(alloc, input_file_count);
+        pub fn bitSet(scbs: Slice, alloc: std.mem.Allocator, input_file_count: usize) !fun.bit_set.DynamicBitSetUnmanaged {
+            var scb_bitset = try fun.bit_set.DynamicBitSetUnmanaged.initEmpty(alloc, input_file_count);
             for (scbs.list.items(.source_index)) |source_index| {
                 scb_bitset.set(source_index);
             }
@@ -106,16 +106,16 @@ pub const List = struct {
         }
 
         pub fn eql(adapt: Adapter, a: Index.Int, _: void, b_index: usize) bool {
-            bun.unsafeAssert(adapt.list.capacity > 0); // optimize MultiArrayList.Slice.items
+            fun.unsafeAssert(adapt.list.capacity > 0); // optimize MultiArrayList.Slice.items
             return a == adapt.list.items(.source_index)[b_index];
         }
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Index = js_ast.Index;
 const ServerComponentBoundary = js_ast.ServerComponentBoundary;
 const UseDirective = js_ast.UseDirective;

@@ -1,17 +1,17 @@
 const NotificationResponse = @This();
 
 pid: int4 = 0,
-channel: bun.ByteList = .{},
-payload: bun.ByteList = .{},
+channel: fun.ByteList = .{},
+payload: fun.ByteList = .{},
 
 pub fn deinit(this: *@This()) void {
-    this.channel.clearAndFree(bun.default_allocator);
-    this.payload.clearAndFree(bun.default_allocator);
+    this.channel.clearAndFree(fun.default_allocator);
+    this.payload.clearAndFree(fun.default_allocator);
 }
 
 pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReader(Container)) !void {
     const length = try reader.length();
-    bun.assert(length >= 4);
+    fun.assert(length >= 4);
 
     this.* = .{
         .pid = try reader.int4(),
@@ -22,7 +22,7 @@ pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReade
 
 pub const decode = DecoderWrap(NotificationResponse, decodeInternal).decode;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const DecoderWrap = @import("./DecoderWrap.zig").DecoderWrap;
 const NewReader = @import("./NewReader.zig").NewReader;
 

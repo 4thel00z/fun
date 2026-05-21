@@ -4,7 +4,7 @@
 #include <JavaScriptCore/CallData.h>
 #include <JavaScriptCore/ObjectConstructor.h>
 
-namespace Bun {
+namespace Fun {
 
 class JSKeyObjectPrototype : public JSC::JSNonFinalObject {
 public:
@@ -41,4 +41,4 @@ public:
     void finishCreation(JSC::VM&);
 };
 
-} // namespace Bun
+} // namespace Fun

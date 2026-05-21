@@ -7,9 +7,9 @@
 #include <JavaScriptCore/WeakInlines.h>
 #include <wtf/Scope.h>
 
-namespace Bun {
+namespace Fun {
 
-// The presence of this class in a JSFunction's sourceOrigin indicates that the function was compiled by Bun's node:vm implementation.
+// The presence of this class in a JSFunction's sourceOrigin indicates that the function was compiled by Fun's node:vm implementation.
 class NodeVMScriptFetcher : public JSC::ScriptFetcher {
 public:
     static Ref<NodeVMScriptFetcher> create(JSC::VM& vm, JSC::JSValue dynamicImportCallback, JSC::JSValue owner) { return adoptRef(*new NodeVMScriptFetcher(vm, dynamicImportCallback, owner)); }

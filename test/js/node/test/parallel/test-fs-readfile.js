@@ -53,7 +53,7 @@ for (const e of fileInfo) {
 }
 
 // readFile() and readFileSync() should fail if the file is too big.
-// Bun supports much larger buffers, so this is extremely hard, if possible, to test.
+// Fun supports much larger buffers, so this is extremely hard, if possible, to test.
 // {
 //   const kIoMaxLength = 2 ** 31 - 1;
 //

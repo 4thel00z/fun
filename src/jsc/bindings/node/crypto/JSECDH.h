@@ -6,9 +6,9 @@
 #include <JavaScriptCore/JSTypedArrays.h>
 #include <wtf/text/WTFString.h>
 #include "ncrypto.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSECDH final : public JSC::JSDestructibleObject {
 public:
@@ -65,4 +65,4 @@ private:
 
 void setupECDHClassStructure(JSC::LazyClassStructure::Initializer&);
 
-} // namespace Bun
+} // namespace Fun

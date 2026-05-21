@@ -43,7 +43,7 @@ pub fn Parse(
 
         pub fn parseExprCommon(p: *P, level: Level, errors: ?*DeferredErrors, flags: Expr.EFlags, expr: *Expr) anyerror!void {
             if (!p.stack_check.isSafeToRecurse()) {
-                try bun.throwStackOverflow();
+                try fun.throwStackOverflow();
             }
 
             const had_pure_comment_before = p.lexer.has_pure_comment_before and !p.options.ignore_dce_annotations;
@@ -1069,7 +1069,7 @@ pub fn Parse(
                 const SupportedAttribute = enum {
                     type,
                     embed,
-                    bunBakeGraph,
+                    funBakeGraph,
                 };
 
                 var has_seen_embed_true = false;
@@ -1109,7 +1109,7 @@ pub fn Parse(
                                 const type_attr = string_literal_text;
                                 if (strings.eqlComptime(type_attr, "macro")) {
                                     path.is_macro = true;
-                                } else if (bun.options.Loader.fromString(type_attr)) |loader| {
+                                } else if (fun.options.Loader.fromString(type_attr)) |loader| {
                                     path.loader = loader;
                                     if (loader == .sqlite and has_seen_embed_true) path.loader = .sqlite_embedded;
                                 } else {
@@ -1124,11 +1124,11 @@ pub fn Parse(
                                     }
                                 }
                             },
-                            .bunBakeGraph => {
+                            .funBakeGraph => {
                                 if (strings.eqlComptime(string_literal_text, "ssr")) {
                                     path.import_tag = .bake_resolve_to_ssr_graph;
                                 } else {
-                                    try p.lexer.addRangeError(p.lexer.range(), "'bunBakeGraph' can only be set to 'ssr'", .{}, true);
+                                    try p.lexer.addRangeError(p.lexer.range(), "'funBakeGraph' can only be set to 'ssr'", .{}, true);
                                 }
                             },
                         }
@@ -1352,13 +1352,13 @@ pub fn Parse(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -1379,10 +1379,10 @@ const Property = G.Property;
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const AwaitOrYield = js_parser.AwaitOrYield;
 const DeferredArrowArgErrors = js_parser.DeferredArrowArgErrors;
 const DeferredErrors = js_parser.DeferredErrors;

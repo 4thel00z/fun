@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/25628
+// https://github.com/underdoc-org/fun/issues/25628
 // Bug: Lazy code-splitting chunks are not accessible via frontend.files in fullstack builds
 // when using --splitting with --compile. The chunks are physically written to disk and embedded
 // in the executable, but they're filtered out when accessing the embedded files array.
@@ -49,10 +49,10 @@ test("lazy chunks from code splitting should appear in frontend.files", { timeou
   });
 
   // Build with splitting and compile
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "--compile", "server.ts", "--splitting", "--outfile", "server"],
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "--compile", "server.ts", "--splitting", "--outfile", "server"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -68,10 +68,10 @@ test("lazy chunks from code splitting should appear in frontend.files", { timeou
 
   // Run the compiled executable
   const serverPath = isWindows ? "server.exe" : "./server";
-  await using runProc = Bun.spawn({
+  await using runProc = Fun.spawn({
     cmd: [serverPath],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

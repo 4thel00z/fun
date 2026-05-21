@@ -43,11 +43,11 @@ pub const CommandTag = union(enum) {
         FETCH,
         COPY,
 
-        pub const Map = bun.ComptimeEnumMap(KnownCommand);
+        pub const Map = fun.ComptimeEnumMap(KnownCommand);
     };
 
     pub fn init(tag: []const u8) CommandTag {
-        const first_space_index = bun.strings.indexOfChar(tag, ' ') orelse return .{ .other = tag };
+        const first_space_index = fun.strings.indexOfChar(tag, ' ') orelse return .{ .other = tag };
         const cmd = KnownCommand.Map.get(tag[0..first_space_index]) orelse return .{
             .other = tag,
         };
@@ -56,7 +56,7 @@ pub const CommandTag = union(enum) {
             switch (cmd) {
                 .INSERT => {
                     var remaining = tag[@min(first_space_index + 1, tag.len)..];
-                    const second_space = bun.strings.indexOfChar(remaining, ' ') orelse return .{ .other = tag };
+                    const second_space = fun.strings.indexOfChar(remaining, ' ') orelse return .{ .other = tag };
                     remaining = remaining[@min(second_space + 1, remaining.len)..];
                     break :brk std.fmt.parseInt(u64, remaining, 0) catch |err| {
                         debug("CommandTag failed to parse number: {s}", .{@errorName(err)});
@@ -79,7 +79,7 @@ pub const CommandTag = union(enum) {
     }
 };
 
-const debug = bun.Output.scoped(.Postgres, .visible);
+const debug = fun.Output.scoped(.Postgres, .visible);
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

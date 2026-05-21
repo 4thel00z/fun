@@ -110,7 +110,7 @@ export type Source =
     }
   | {
       /**
-       * Source lives in the bun repo itself, not vendor/. Used for sqlite
+       * Source lives in the fun repo itself, not vendor/. Used for sqlite
        * (src/jsc/bindings/sqlite/). The path IS the source dir — no fetch,
        * build output still goes to buildDir/deps/<name>/.
        */
@@ -372,7 +372,7 @@ export interface CargoBuild {
 }
 
 /**
- * What a dependency provides to bun's build: libraries to link, headers to
+ * What a dependency provides to fun's build: libraries to link, headers to
  * include, defines to set. All paths are resolved to absolute during
  * `resolveDep`.
  */
@@ -388,13 +388,13 @@ export interface Provides {
   libs: string[];
   /** Include directories. Paths relative to the dep's SOURCE directory. */
   includes: string[];
-  /** Preprocessor defines to add to bun's compilation. */
+  /** Preprocessor defines to add to fun's compilation. */
   defines?: string[];
   /**
-   * Source files (relative to the SOURCE dir) that bun compiles directly
+   * Source files (relative to the SOURCE dir) that fun compiles directly
    * into its own binary — no nested build producing a `.a`. Declared as
    * implicit outputs of the fetch rule so ninja knows where they come from;
-   * bun.ts adds them to its C/C++ source lists.
+   * fun.ts adds them to its C/C++ source lists.
    *
    * Most deps provide `.a` files via `libs`. This is for the rare case of
    * a single-file dep with no build system (picohttpparser: one .c file).
@@ -441,7 +441,7 @@ export interface Dependency {
   /** How to build. */
   build: (cfg: Config) => BuildSpec;
 
-  /** What the dep provides to bun's build. */
+  /** What the dep provides to fun's build. */
   provides: (cfg: Config) => Provides;
 
   /**
@@ -451,13 +451,13 @@ export interface Dependency {
   enabled?: (cfg: Config) => boolean;
 
   /**
-   * Macro name suffix for `bun_dependency_versions.h` — becomes
-   * `BUN_DEP_<macro>` / `BUN_VERSION_<macro>`. The value is derived from
+   * Macro name suffix for `fun_dependency_versions.h` — becomes
+   * `FUN_DEP_<macro>` / `FUN_VERSION_<macro>`. The value is derived from
    * `source(cfg)`: `github-archive.commit`, `prebuilt.identity`, etc.
    *
    * Omit for deps that shouldn't appear in `process.versions` (e.g.
    * nodejs-headers — they're build-time only). The naming is constrained
-   * by what BunProcess.cpp already expects; some have `_HASH` suffix for
+   * by what FunProcess.cpp already expects; some have `_HASH` suffix for
    * historical reasons.
    */
   versionMacro?: string;
@@ -476,7 +476,7 @@ export interface ResolvedDep {
   /**
    * Absolute paths to .o/.obj files for link(). Populated by `direct` deps
    * when `cfg.archiveDeps` is off (the default) — the dep's sources are
-   * compiled in our graph and the resulting objects go straight into bun's
+   * compiled in our graph and the resulting objects go straight into fun's
    * link line / cpp-only archive instead of an intermediate `.a`.
    */
   objects: string[];
@@ -484,7 +484,7 @@ export interface ResolvedDep {
   includes: string[];
   defines: string[];
   /**
-   * Absolute paths to .c/.cpp files bun compiles directly (from
+   * Absolute paths to .c/.cpp files fun compiles directly (from
    * Provides.sources). Empty for most deps — they provide .a files.
    */
   sources: string[];
@@ -711,7 +711,7 @@ export function resolveDep(
     return emitPrebuilt(n, cfg, dep.name, source, provides);
   }
 
-  // Source directory. For in-tree deps (sqlite), this points into the bun
+  // Source directory. For in-tree deps (sqlite), this points into the fun
   // repo instead of vendor/. Local deps can override via `path` to point
   // outside the worktree. Everything else is vendor/<name>/.
   const srcDir =
@@ -725,7 +725,7 @@ export function resolveDep(
   // we don't want patches changing between emitFetch and the hash check.
   const patches = dep.patches === undefined ? [] : typeof dep.patches === "function" ? dep.patches(cfg) : dep.patches;
 
-  // Sources bun compiles directly (from Provides.sources). Resolved to
+  // Sources fun compiles directly (from Provides.sources). Resolved to
   // absolute paths for (a) the ResolvedDep return and (b) declaring as
   // implicit outputs of fetch so ninja knows where they come from.
   const resolvedSources = (provides.sources ?? []).map(s => resolve(srcDir, s));
@@ -838,7 +838,7 @@ export function resolveDep(
     outputs = result.headerOutputs;
   } else {
     // No build step. Source stamp is the only output. For deps with
-    // provides.sources (picohttpparser), emitBun adds a phony pointing at
+    // provides.sources (picohttpparser), emitFun adds a phony pointing at
     // the compiled .o files so `--target <name>` actually compiles them.
     libs = [];
     outputs = [sourceStamp];
@@ -920,7 +920,7 @@ export function computeDepLibs(cfg: Config, dep: Dependency): string[] {
   }
 
   // direct: single lib<name>.a when archiveDeps; otherwise the dep's .o
-  // files are folded into libbun.a in cpp-only and there's no separate
+  // files are folded into libfun.a in cpp-only and there's no separate
   // artifact for link-only to fetch.
   if (buildSpec.kind === "direct") {
     if (!cfg.archiveDeps) return [];
@@ -969,7 +969,7 @@ function emitFetch(
 
   n.build({
     outputs: [refStamp],
-    // Source files bun compiles directly (picohttpparser.c). Declaring
+    // Source files fun compiles directly (picohttpparser.c). Declaring
     // them as outputs tells ninja "fetch creates these" — otherwise ninja
     // errors "missing and no known rule to make it" on fresh checkouts.
     ...(compiledSources.length > 0 && { implicitOutputs: compiledSources }),
@@ -1114,7 +1114,7 @@ function emitNestedCmake(
   // them — `\U` in `C:\Users\...` becomes an invalid escape. CMake
   // normalizes CMAKE_C_COMPILER itself but not RC/MT/LINKER.
 
-  // Toolchain forwarding — same compiler/archiver as bun.
+  // Toolchain forwarding — same compiler/archiver as fun.
   args.push(`-DCMAKE_C_COMPILER=${slash(cfg.cc)}`);
   args.push(`-DCMAKE_CXX_COMPILER=${slash(cfg.cxx)}`);
   args.push(`-DCMAKE_AR=${slash(cfg.ar)}`);
@@ -1178,7 +1178,7 @@ function emitNestedCmake(
 
   // Compiler flags — GLOBAL flags only. These are the dep-safe subset:
   // CPU target, optimization level, debug info, visibility, sections.
-  // NO -Werror, NO bun-specific constexpr limits.
+  // NO -Werror, NO fun-specific constexpr limits.
   const depFlags = computeDepFlags(cfg);
   let cflags = depFlags.cflags.join(" ");
   let cxxflags = depFlags.cxxflags.join(" ");
@@ -1520,7 +1520,7 @@ function emitDirect(
     const toolOut = resolve(buildDir, `codegen-tool${cfg.host.exeSuffix}`);
 
     // Host tool: runs at build time to generate headers, so it must target
-    // the BUILD host, not the bun target. cc()/link() add cfg's target/arch
+    // the BUILD host, not the fun target. cc()/link() add cfg's target/arch
     // flags which break cross-compiles (musl CI: "file format not
     // recognized"). Emit a bare clang invocation instead — no opt, no
     // target triple, just the tool defines and -w. Compile+link in one go
@@ -1584,7 +1584,7 @@ function emitDirect(
     return isC || isAsm ? cc(n, cfg, abs, opts) : cxx(n, cfg, abs, opts);
   });
 
-  // Default: hand the objects straight to bun's link line — no intermediate
+  // Default: hand the objects straight to fun's link line — no intermediate
   // archive. With cfg.archiveDeps the old per-dep .a is produced instead
   // (useful for bisecting duplicate-symbol issues, since a .a only
   // contributes members the linker actually pulls).

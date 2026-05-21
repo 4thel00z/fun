@@ -2,12 +2,12 @@
  * This file is loaded in every test file in the repository.
  *
  * Avoid adding external dependencies here so that we can still run some tests
- * without always needing to run `bun install` in development.
+ * without always needing to run `fun install` in development.
  */
 
-import { gc as bunGC, sleepSync, spawnSync, unsafe, which, write } from "bun";
-import { heapStats } from "bun:jsc";
-import { beforeAll, describe, expect } from "bun:test";
+import { gc as funGC, sleepSync, spawnSync, unsafe, which, write } from "fun";
+import { heapStats } from "fun:jsc";
+import { beforeAll, describe, expect } from "fun:test";
 import { ChildProcess, execSync, fork } from "child_process";
 import { readdir, rm, writeFile } from "fs/promises";
 import fs, { closeSync, openSync, rmSync } from "node:fs";
@@ -15,7 +15,7 @@ import os from "node:os";
 import { dirname, isAbsolute, join } from "path";
 import * as numeric from "_util/numeric.ts";
 
-export const BREAKING_CHANGES_BUN_1_2 = false;
+export const BREAKING_CHANGES_FUN_1_2 = false;
 
 export const isMacOS = process.platform === "darwin";
 export const isLinux = process.platform === "linux";
@@ -24,7 +24,7 @@ export const isPosix = isMacOS || isLinux || isFreeBSD;
 export const isWindows = process.platform === "win32";
 export const isIntelMacOS = isMacOS && process.arch === "x64";
 export const isArm64 = process.arch === "arm64";
-export const isDebug = Bun.version.includes("debug");
+export const isDebug = Fun.version.includes("debug");
 export const isCI = process.env.CI !== undefined;
 export const libcFamily: "glibc" | "musl" =
   process.platform !== "linux"
@@ -45,65 +45,65 @@ export const isVerbose = process.env.DEBUG === "1";
 // test.todoIf(isFlaky && isMacOS)("this test is flaky");
 export const isFlaky = isCI;
 export const isBroken = isCI;
-export const isASAN = basename(process.execPath).includes("bun-asan");
+export const isASAN = basename(process.execPath).includes("fun-asan");
 
-export const bunEnv: NodeJS.Dict<string> = {
+export const funEnv: NodeJS.Dict<string> = {
   ...process.env,
   // Strip ad-hoc JSC debug options that may be set on CI agents — they leak
   // a "WARNING: failed to parse" line to stderr that breaks snapshot tests.
   JSC_useJIT: undefined,
   GITHUB_ACTIONS: "false",
-  BUN_DEBUG_QUIET_LOGS: "1",
+  FUN_DEBUG_QUIET_LOGS: "1",
   NO_COLOR: "1",
   FORCE_COLOR: undefined,
   TZ: "Etc/UTC",
   CI: "1",
-  BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
-  BUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
-  BUN_GARBAGE_COLLECTOR_LEVEL: process.env.BUN_GARBAGE_COLLECTOR_LEVEL || "0",
-  BUN_FEATURE_FLAG_EXPERIMENTAL_BAKE: "1",
-  BUN_DEBUG_linkerctx: "0",
+  FUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
+  FUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
+  FUN_GARBAGE_COLLECTOR_LEVEL: process.env.FUN_GARBAGE_COLLECTOR_LEVEL || "0",
+  FUN_FEATURE_FLAG_EXPERIMENTAL_BAKE: "1",
+  FUN_DEBUG_linkerctx: "0",
   WANTS_LOUD: "0",
   AGENT: "false",
 };
 
-const ciEnv = { ...bunEnv };
+const ciEnv = { ...funEnv };
 
 if (isASAN) {
-  bunEnv.ASAN_OPTIONS ??= "allow_user_segv_handler=1:disable_coredump=0";
+  funEnv.ASAN_OPTIONS ??= "allow_user_segv_handler=1:disable_coredump=0";
 }
 
 if (isWindows) {
-  bunEnv.SHELLOPTS = "igncr"; // Ignore carriage return
+  funEnv.SHELLOPTS = "igncr"; // Ignore carriage return
 }
 
-for (let key in bunEnv) {
-  if (bunEnv[key] === undefined) {
+for (let key in funEnv) {
+  if (funEnv[key] === undefined) {
     delete ciEnv[key];
-    delete bunEnv[key];
+    delete funEnv[key];
   }
 
-  if (key.startsWith("BUN_DEBUG_") && key !== "BUN_DEBUG_QUIET_LOGS") {
+  if (key.startsWith("FUN_DEBUG_") && key !== "FUN_DEBUG_QUIET_LOGS") {
     delete ciEnv[key];
-    delete bunEnv[key];
+    delete funEnv[key];
   }
 
   if (key.startsWith("BUILDKITE")) {
-    delete bunEnv[key];
+    delete funEnv[key];
     delete process.env[key];
   }
 }
 
-delete bunEnv.BUN_INSPECT_CONNECT_TO;
-delete bunEnv.NODE_ENV;
+delete funEnv.FUN_INSPECT_CONNECT_TO;
+delete funEnv.NODE_ENV;
 
 if (isDebug) {
   // This makes debug build memory leak tests more reliable.
   // The code for dumping out the debug build transpiled source code has leaks.
-  bunEnv.BUN_DEBUG_NO_DUMP = "1";
+  funEnv.FUN_DEBUG_NO_DUMP = "1";
 }
 
-export function bunExe() {
+export function funExe() {
   if (isWindows) return process.execPath.replaceAll("\\", "/");
   return process.execPath;
 }
@@ -117,7 +117,7 @@ export function shellExe(): string {
 }
 
 export function gc(force = true) {
-  bunGC(force);
+  funGC(force);
 }
 
 /**
@@ -134,19 +134,19 @@ export function gc(force = true) {
  * @returns
  */
 export async function expectMaxObjectTypeCount(
-  expect: typeof import("bun:test").expect,
+  expect: typeof import("fun:test").expect,
   type: string,
   count: number,
   maxWait = 1000,
 ) {
-  var { heapStats } = require("bun:jsc");
+  var { heapStats } = require("fun:jsc");
 
   gc();
   if ((heapStats().objectTypeCounts[type] ?? 0) <= count) return;
   gc(true);
   for (const wait = 20; maxWait > 0; maxWait -= wait) {
     if ((heapStats().objectTypeCounts[type] ?? 0) <= count) break;
-    await Bun.sleep(wait);
+    await Fun.sleep(wait);
     gc();
   }
   expect(heapStats().objectTypeCounts[type] ?? 0).toBeLessThanOrEqual(count);
@@ -158,7 +158,7 @@ export function gcTick(trace = false) {
   trace && console.trace("");
   // console.trace("hello");
   gc();
-  return Bun.sleep(0);
+  return Fun.sleep(0);
 }
 
 export function withoutAggressiveGC(block: () => unknown) {
@@ -175,7 +175,7 @@ export function withoutAggressiveGC(block: () => unknown) {
 
 export function hideFromStackTrace(block: CallableFunction) {
   Object.defineProperty(block, "name", {
-    value: "::bunternal::",
+    value: "::funternal::",
     configurable: true,
     enumerable: true,
     writable: true,
@@ -187,7 +187,7 @@ export type DirectoryTree = {
     | string
     | Buffer
     | DirectoryTree
-    | ((opts: { root: string }) => Bun.MaybePromise<string | Buffer | DirectoryTree>);
+    | ((opts: { root: string }) => Fun.MaybePromise<string | Buffer | DirectoryTree>);
 };
 
 export async function makeTree(base: string, tree: DirectoryTree) {
@@ -293,12 +293,12 @@ export function tempDirWithFilesAnon(filesOrAbsolutePathToCopyFolderFrom: Direct
   return base;
 }
 
-export function bunRun(file: string, env?: Record<string, string> | NodeJS.ProcessEnv, dump = false) {
+export function funRun(file: string, env?: Record<string, string> | NodeJS.ProcessEnv, dump = false) {
   var path = require("path");
-  const result = Bun.spawnSync([bunExe(), file], {
+  const result = Fun.spawnSync([funExe(), file], {
     cwd: path.dirname(file),
     env: {
-      ...bunEnv,
+      ...funEnv,
       NODE_ENV: undefined,
       ...env,
     },
@@ -320,12 +320,12 @@ export function bunRun(file: string, env?: Record<string, string> | NodeJS.Proce
   };
 }
 
-export function bunTest(file: string, env?: Record<string, string>) {
+export function funTest(file: string, env?: Record<string, string>) {
   var path = require("path");
-  const result = Bun.spawnSync([bunExe(), "test", path.basename(file)], {
+  const result = Fun.spawnSync([funExe(), "test", path.basename(file)], {
     cwd: path.dirname(file),
     env: {
-      ...bunEnv,
+      ...funEnv,
       NODE_ENV: undefined,
       ...env,
     },
@@ -337,16 +337,16 @@ export function bunTest(file: string, env?: Record<string, string>) {
   };
 }
 
-export function bunRunAsScript(
+export function funRunAsScript(
   dir: string,
   script: string,
   env?: Record<string, string | undefined>,
   execArgv?: string[],
 ) {
-  const result = Bun.spawnSync([bunExe(), ...(execArgv ?? []), `run`, `${script}`], {
+  const result = Fun.spawnSync([funExe(), ...(execArgv ?? []), `run`, `${script}`], {
     cwd: dir,
     env: {
-      ...bunEnv,
+      ...funEnv,
       NODE_ENV: undefined,
       ...env,
     },
@@ -402,10 +402,10 @@ export async function runWithErrorPromise(cb: () => unknown): Promise<Error | un
 
 export function fakeNodeRun(dir: string, file: string | string[], env?: Record<string, string>) {
   var path = require("path");
-  const result = Bun.spawnSync([bunExe(), "--bun", "node", ...(Array.isArray(file) ? file : [file])], {
+  const result = Fun.spawnSync([funExe(), "--fun", "node", ...(Array.isArray(file) ? file : [file])], {
     cwd: dir ?? path.dirname(file),
     env: {
-      ...bunEnv,
+      ...funEnv,
       NODE_ENV: undefined,
       ...env,
     },
@@ -501,9 +501,9 @@ if (expect.extend)
       }
     },
     toRun(cmds: string[], optionalStdout?: string, expectedCode: number = 0) {
-      const result = Bun.spawnSync({
-        cmd: [bunExe(), ...cmds],
-        env: bunEnv,
+      const result = Fun.spawnSync({
+        cmd: [funExe(), ...cmds],
+        env: funEnv,
         stdio: ["inherit", "pipe", "inherit"],
       });
 
@@ -664,8 +664,8 @@ export async function toMatchNodeModulesAt(lockfile: any, root: string) {
 
       switch (treePkg.resolution.tag) {
         case "npm":
-          const onDisk = await Bun.file(join(treeDepPath, "package.json")).json();
-          if (!Bun.deepMatch({ name: treePkg.name, version: treePkg.resolution.value }, onDisk)) {
+          const onDisk = await Fun.file(join(treeDepPath, "package.json")).json();
+          if (!Fun.deepMatch({ name: treePkg.name, version: treePkg.resolution.value }, onDisk)) {
             return {
               pass: false,
               message: () => `
@@ -682,18 +682,18 @@ Received ${JSON.stringify({ name: onDisk.name, version: onDisk.version })}`,
             if (shouldSkip(pkg, dep)) continue;
 
             try {
-              const resolved = await Bun.file(Bun.resolveSync(join(dep.name, "package.json"), treeDepPath)).json();
+              const resolved = await Fun.file(Fun.resolveSync(join(dep.name, "package.json"), treeDepPath)).json();
               switch (pkg.resolution.tag) {
                 case "npm":
                   const name = dep.is_alias ? dep.npm.name : dep.name;
-                  if (!Bun.deepMatch({ name, version: pkg.resolution.value }, resolved)) {
+                  if (!Fun.deepMatch({ name, version: pkg.resolution.value }, resolved)) {
                     if (dep.literal === "*") {
                       // allow any version, just needs to be resolvable
                       continue;
                     }
                     if (dep.behavior.peer && dep.npm) {
                       // allow peer dependencies to not match exactly, but still satisfy
-                      if (Bun.semver.satisfies(pkg.resolution.value, dep.npm.version)) continue;
+                      if (Fun.semver.satisfies(pkg.resolution.value, dep.npm.version)) continue;
                     }
                     return {
                       pass: false,
@@ -725,11 +725,11 @@ Received ${JSON.stringify({ name: onDisk.name, version: onDisk.version })}`,
             const pkg = lockfile.packages[dep.package_id];
             if (shouldSkip(pkg, dep)) continue;
             try {
-              const resolved = await Bun.file(Bun.resolveSync(join(dep.name, "package.json"), treeDepPath)).json();
+              const resolved = await Fun.file(Fun.resolveSync(join(dep.name, "package.json"), treeDepPath)).json();
               switch (pkg.resolution.tag) {
                 case "npm":
                   const name = dep.is_alias ? dep.npm.name : dep.name;
-                  if (!Bun.deepMatch({ name, version: pkg.resolution.value }, resolved)) {
+                  if (!Fun.deepMatch({ name, version: pkg.resolution.value }, resolved)) {
                     if (dep.literal === "*") {
                       // allow any version, just needs to be resolvable
                       continue;
@@ -738,7 +738,7 @@ Received ${JSON.stringify({ name: onDisk.name, version: onDisk.version })}`,
                     if (treePkg.resolution.tag === "workspace" && !resolved.version) continue;
                     if (dep.behavior.peer && dep.npm) {
                       // allow peer dependencies to not match exactly, but still satisfy
-                      if (Bun.semver.satisfies(pkg.resolution.value, dep.npm.version)) continue;
+                      if (Fun.semver.satisfies(pkg.resolution.value, dep.npm.version)) continue;
                     }
                     return {
                       pass: false,
@@ -785,7 +785,7 @@ export function toBeValidBin(actual: string, expectedLinkPath: string) {
   const message = () => `Expected ${actual} to be a link to ${expectedLinkPath}`;
 
   if (isWindows) {
-    const contents = fs.readFileSync(actual + ".bunx", "utf16le");
+    const contents = fs.readFileSync(actual + ".funx", "utf16le");
     const expected = expectedLinkPath.slice(3);
     return { pass: contents.includes(expected), message };
   }
@@ -851,18 +851,18 @@ export function getMaxFD(): number {
 declare global {
   interface Buffer {
     /**
-     * **INTERNAL USE ONLY, NOT An API IN BUN**
+     * **INTERNAL USE ONLY, NOT An API IN FUN**
      */
     toUnixString(): string;
   }
 
   interface String {
     /**
-     * **INTERNAL USE ONLY, NOT An API IN BUN**
+     * **INTERNAL USE ONLY, NOT An API IN FUN**
      */
     isLatin1(): boolean;
     /**
-     * **INTERNAL USE ONLY, NOT An API IN BUN**
+     * **INTERNAL USE ONLY, NOT An API IN FUN**
      */
     isUTF16(): boolean;
   }
@@ -905,7 +905,7 @@ export async function waitForPort(port: number, timeout: number = 60_000): Promi
   let error: unknown;
   while (Date.now() < deadline) {
     error = await new Promise(resolve => {
-      Bun.connect({
+      Fun.connect({
         hostname: "localhost",
         port,
         socket: {
@@ -920,7 +920,7 @@ export async function waitForPort(port: number, timeout: number = 60_000): Promi
       });
     });
     if (error) {
-      await Bun.sleep(1000);
+      await Fun.sleep(1000);
     } else {
       return;
     }
@@ -951,7 +951,7 @@ export async function describeWithContainer(
     return;
   }
 
-  (concurrent && Bun.version !== "1.2.22" ? describe.concurrent : describe)(label, () => {
+  (concurrent && Fun.version !== "1.2.22" ? describe.concurrent : describe)(label, () => {
     // Check if this is one of our docker-compose services
     const services: Record<string, number> = {
       "postgres_plain": 5432,
@@ -973,8 +973,8 @@ export async function describeWithContainer(
       // Map mysql:8 and mysql:9 based on environment variables
       let actualService = image;
       if (image === "mysql:8" || image === "mysql:9") {
-        if (env.MYSQL_ROOT_PASSWORD === "bun") {
-          actualService = "mysql_native_password"; // Has password "bun"
+        if (env.MYSQL_ROOT_PASSWORD === "fun") {
+          actualService = "mysql_native_password"; // Has password "fun"
         } else if (env.MYSQL_ALLOW_EMPTY_PASSWORD === "yes") {
           actualService = "mysql_plain"; // No password
         } else {
@@ -1193,20 +1193,20 @@ export function joinP(...paths: string[]) {
 
 /**
  * TODO: see if this is the default behavior of node child_process APIs if so,
- * we need to do case-insensitive stuff within our Bun.spawn implementation
+ * we need to do case-insensitive stuff within our Fun.spawn implementation
  *
  * Windows has case-insensitive environment variables, so sometimes an
- * object like { Path: "...", PATH: "..." } will be passed. Bun lets
+ * object like { Path: "...", PATH: "..." } will be passed. Fun lets
  * the first one win, but we really want the LAST one to win.
  *
  * This is mostly needed if you want to override env vars, such like:
  *   env: {
- *     ...bunEnv,
+ *     ...funEnv,
  *     PATH: "my path override here",
  *   }
  * becomes
  *   env: mergeWindowEnvs([
- *     bunEnv,
+ *     funEnv,
  *     {
  *       PATH: "my path override here",
  *     },
@@ -1225,11 +1225,11 @@ export function mergeWindowEnvs(envs: Record<string, string | undefined>[]) {
   return flat;
 }
 
-export function tmpdirSync(pattern: string = "bun.test."): string {
+export function tmpdirSync(pattern: string = "fun.test."): string {
   return fs.mkdtempSync(join(fs.realpathSync.native(os.tmpdir()), pattern));
 }
 
-export async function runBunInstall(
+export async function runFunInstall(
   env: NodeJS.Dict<string>,
   cwd: string,
   options: {
@@ -1245,7 +1245,7 @@ export async function runBunInstall(
   } = {},
 ) {
   const production = options?.production ?? false;
-  const args = [bunExe(), "install"];
+  const args = [funExe(), "install"];
   if (options?.packages) {
     args.push(...options.packages);
   }
@@ -1261,7 +1261,7 @@ export async function runBunInstall(
   if (options?.verbose) {
     args.push("--verbose");
   }
-  const { stdout, stderr, exited } = Bun.spawn({
+  const { stdout, stderr, exited } = Fun.spawn({
     cmd: args,
     cwd,
     stdout: "pipe",
@@ -1292,13 +1292,13 @@ export function stderrForInstall(err: string) {
   return err.replace(/warn: Slow filesystem.*/g, "");
 }
 
-export async function runBunUpdate(
+export async function runFunUpdate(
   env: NodeJS.ProcessEnv,
   cwd: string,
   args?: string[],
 ): Promise<{ out: string[]; err: string; exitCode: number }> {
-  const { stdout, stderr, exited } = Bun.spawn({
-    cmd: [bunExe(), "update", ...(args ?? [])],
+  const { stdout, stderr, exited } = Fun.spawn({
+    cmd: [funExe(), "update", ...(args ?? [])],
     cwd,
     stdout: "pipe",
     stdin: "ignore",
@@ -1312,15 +1312,15 @@ export async function runBunUpdate(
   if (exitCode !== 0) {
     console.log("stdout:", out);
     console.log("stderr:", err);
-    expect().fail("bun update failed");
+    expect().fail("fun update failed");
   }
 
   return { out: out.replace(/\s*\[[0-9\.]+m?s\]\s*$/, "").split(/\r?\n/), err, exitCode };
 }
 
 export async function pack(cwd: string, env: NodeJS.Dict<string>, ...args: string[]) {
-  const { stdout, stderr, exited } = Bun.spawn({
-    cmd: [bunExe(), "pm", "pack", ...args],
+  const { stdout, stderr, exited } = Fun.spawn({
+    cmd: [funExe(), "pm", "pack", ...args],
     cwd,
     stdout: "pipe",
     stderr: "pipe",
@@ -1352,7 +1352,7 @@ export const expiredTls = Object.freeze({
 // openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
 // -keyout localhost.key \
 // -out localhost.crt \
-// -subj "/C=US/ST=CA/L=San Francisco/O=Oven/OU=Team Bun/CN=server-bun" \
+// -subj "/C=US/ST=CA/L=San Francisco/O=Oven/OU=Team Fun/CN=server-fun" \
 // -addext "subjectAltName = DNS:localhost,IP:127.0.0.1,IP:::1"
 // notAfter=Sep  4 03:00:49 2035 GMT
 export const tls = Object.freeze({
@@ -1366,23 +1366,23 @@ export const invalidTls = Object.freeze({
 });
 
 export function disableAggressiveGCScope() {
-  const gc = Bun.unsafe.gcAggressionLevel(0);
+  const gc = Fun.unsafe.gcAggressionLevel(0);
   return {
     [Symbol.dispose]() {
-      Bun.unsafe.gcAggressionLevel(gc);
+      Fun.unsafe.gcAggressionLevel(gc);
     },
   };
 }
 
 String.prototype.isLatin1 = function () {
-  return require("bun:internal-for-testing").jscInternals.isLatin1String(this);
+  return require("fun:internal-for-testing").jscInternals.isLatin1String(this);
 };
 
 String.prototype.isUTF16 = function () {
-  return require("bun:internal-for-testing").jscInternals.isUTF16String(this);
+  return require("fun:internal-for-testing").jscInternals.isUTF16String(this);
 };
 
-interface BunHarnessTestMatchers {
+interface FunHarnessTestMatchers {
   toBeLatin1String(): void;
   toBeUTF16String(): void;
   toHaveTestTimedOutAfter(expected: number): void;
@@ -1392,9 +1392,9 @@ interface BunHarnessTestMatchers {
   toThrowWithCodeAsync(cls: CallableFunction, code: string): Promise<void>;
 }
 
-declare module "bun:test" {
-  interface Matchers<T> extends BunHarnessTestMatchers {}
-  interface AsymmetricMatchers extends BunHarnessTestMatchers {}
+declare module "fun:test" {
+  interface Matchers<T> extends FunHarnessTestMatchers {}
+  interface AsymmetricMatchers extends FunHarnessTestMatchers {}
 }
 
 /**
@@ -1460,7 +1460,7 @@ export function isGlibcVersionAtLeast(version: string): boolean {
   if (!glibcVersion) {
     return false;
   }
-  return Bun.semver.satisfies(glibcVersion, `>=${version}`);
+  return Fun.semver.satisfies(glibcVersion, `>=${version}`);
 }
 
 let macOSVersion: string | undefined;
@@ -1470,7 +1470,7 @@ export function getMacOSVersion(): string | undefined {
     return macOSVersion;
   }
   try {
-    const { stdout } = Bun.spawnSync({
+    const { stdout } = Fun.spawnSync({
       cmd: ["sw_vers", "-productVersion"],
     });
     return (macOSVersion = stdout.toString().trim());
@@ -1579,7 +1579,7 @@ https://buildkite.com/docs/pipelines/security/secrets/buildkite-secrets`;
 }
 
 export function assertManifestsPopulated(absCachePath: string, registryUrl: string) {
-  const { npm_manifest_test_helpers } = require("bun:internal-for-testing");
+  const { npm_manifest_test_helpers } = require("fun:internal-for-testing");
   const { parseManifest } = npm_manifest_test_helpers;
 
   for (const file of fs.readdirSync(absCachePath)) {
@@ -1592,7 +1592,7 @@ export function assertManifestsPopulated(absCachePath: string, registryUrl: stri
 
 // Make it easier to run some node tests.
 Object.defineProperty(globalThis, "gc", {
-  value: Bun.gc,
+  value: Fun.gc,
   writable: true,
   enumerable: false,
   configurable: true,
@@ -1663,10 +1663,10 @@ export class VerdaccioRegistry {
     await rm(join(dirname(this.configPath), "htpasswd"), { force: true });
     this.process = fork(require.resolve("verdaccio/bin/verdaccio"), ["-c", this.configPath, "-l", `${this.port}`], {
       silent,
-      // Prefer using a release build of Bun since it's faster
-      execPath: isCI ? bunExe() : Bun.which("bun") || bunExe(),
+      // Prefer using a release build of Fun since it's faster
+      execPath: isCI ? funExe() : Fun.which("fun") || funExe(),
       env: {
-        ...(bunEnv as any),
+        ...(funEnv as any),
         NODE_NO_WARNINGS: "1",
       },
     });
@@ -1749,8 +1749,8 @@ export class VerdaccioRegistry {
   }
 
   async createTestDir(
-    opts: { bunfigOpts?: BunfigOpts; files?: DirectoryTree | string } = {
-      bunfigOpts: { linker: "hoisted" },
+    opts: { funfigOpts?: FunfigOpts; files?: DirectoryTree | string } = {
+      funfigOpts: { linker: "hoisted" },
       files: {},
     },
   ) {
@@ -1758,41 +1758,41 @@ export class VerdaccioRegistry {
     await rm(join(this.packagesPath, "private-pkg-dont-touch"), { force: true });
     const packageDir = tempDir("verdaccio-test-", opts.files ?? {});
     const packageJson = join(packageDir, "package.json");
-    await this.writeBunfig(packageDir, opts.bunfigOpts);
+    await this.writeBunfig(packageDir, opts.funfigOpts);
     this.users = {};
     return { packageDir: String(packageDir), packageJson };
   }
 
-  async writeBunfig(dir: string, opts: BunfigOpts = {}) {
-    let bunfig = `
+  async writeBunfig(dir: string, opts: FunfigOpts = {}) {
+    let funfig = `
 [install]
-cache = "${join(dir, ".bun-cache").replaceAll("\\", "\\\\")}"
+cache = "${join(dir, ".fun-cache").replaceAll("\\", "\\\\")}"
 `;
     if ("saveTextLockfile" in opts) {
-      bunfig += `saveTextLockfile = ${opts.saveTextLockfile}
+      funfig += `saveTextLockfile = ${opts.saveTextLockfile}
 `;
     }
     if (!opts.npm) {
-      bunfig += `registry = "${this.registryUrl()}"\n`;
+      funfig += `registry = "${this.registryUrl()}"\n`;
     }
     if (opts.linker) {
-      bunfig += `linker = "${opts.linker}"\n`;
+      funfig += `linker = "${opts.linker}"\n`;
     }
     if (opts.globalStore !== undefined) {
-      bunfig += `globalStore = ${opts.globalStore}\n`;
+      funfig += `globalStore = ${opts.globalStore}\n`;
     }
     if (opts.publicHoistPattern) {
       if (typeof opts.publicHoistPattern === "string") {
-        bunfig += `publicHoistPattern = "${opts.publicHoistPattern}"`;
+        funfig += `publicHoistPattern = "${opts.publicHoistPattern}"`;
       } else {
-        bunfig += `publicHoistPattern = [${opts.publicHoistPattern.map(p => `"${p}"`).join(", ")}]`;
+        funfig += `publicHoistPattern = [${opts.publicHoistPattern.map(p => `"${p}"`).join(", ")}]`;
       }
     }
-    await write(join(dir, "bunfig.toml"), bunfig);
+    await write(join(dir, "funfig.toml"), funfig);
   }
 }
 
-type BunfigOpts = {
+type FunfigOpts = {
   saveTextLockfile?: boolean;
   npm?: boolean;
   linker?: "isolated" | "hoisted";
@@ -1844,7 +1844,7 @@ export function lazyPromiseLike<T>(fn: () => Promise<T>): PromiseLike<T> {
 
 export async function gunzipJsonRequest(req: Request) {
   const buf = await req.arrayBuffer();
-  const inflated = Bun.gunzipSync(buf);
+  const inflated = Fun.gunzipSync(buf);
   const body = JSON.parse(Buffer.from(inflated).toString("utf-8"));
   return body;
 }
@@ -1878,7 +1878,7 @@ export const exampleHtml = Buffer.from(
  * ```
  */
 export function exampleSite(protocol: "https" | "http" = "https") {
-  const server = Bun.serve({
+  const server = Fun.serve({
     port: 0,
     tls: protocol === "https" ? tls : undefined,
     hostname: "127.0.0.1",
@@ -1902,7 +1902,7 @@ export function exampleSite(protocol: "https" | "http" = "https") {
     },
   };
 }
-export function normalizeBunSnapshot(snapshot: string, optionalDir?: string) {
+export function normalizeFunSnapshot(snapshot: string, optionalDir?: string) {
   if (optionalDir) {
     snapshot = snapshot
       .replaceAll(fs.realpathSync.native(optionalDir).replaceAll("\\", "/"), "<dir>")
@@ -1925,12 +1925,12 @@ export function normalizeBunSnapshot(snapshot: string, optionalDir?: string) {
       // line numbers in stack traces like at FunctionName (NN:NN)
       // it must specifically look at the stacktrace format
       .replace(/^\s+at (.*?)\(.*?:\d+(?::\d+)?\)/gm, "    at $1(file:NN:NN)")
-      // Handle version strings in error messages like "Bun v1.2.21+revision (platform arch)"
+      // Handle version strings in error messages like "Fun v1.2.21+revision (platform arch)"
       // This needs to come before the other version replacements
-      .replace(/Bun v[\d.]+(?:-[\w.]+)?(?:\+[\w]+)?(?:\s+\([^)]+\))?/g, "Bun v<bun-version>")
-      .replaceAll(Bun.version_with_sha, "<version> (<revision>)")
-      .replaceAll(Bun.version, "<bun-version>")
-      .replaceAll(Bun.revision, "<revision>")
+      .replace(/Fun v[\d.]+(?:-[\w.]+)?(?:\+[\w]+)?(?:\s+\([^)]+\))?/g, "Fun v<fun-version>")
+      .replaceAll(Fun.version_with_sha, "<version> (<revision>)")
+      .replaceAll(Fun.version, "<fun-version>")
+      .replaceAll(Fun.revision, "<revision>")
       .trim()
   );
 }
@@ -1946,8 +1946,8 @@ export function nodeModulesPackages(nodeModulesPath: string): string {
         const fullPath = join(dir, entry.name);
 
         if (entry.isDirectory()) {
-          if (entry.name === ".bun-cache") {
-            // Skip .bun-cache directories
+          if (entry.name === ".fun-cache") {
+            // Skip .fun-cache directories
             continue;
           }
 

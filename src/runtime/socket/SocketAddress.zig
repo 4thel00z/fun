@@ -12,7 +12,7 @@ pub const toJS = js.toJS;
 pub const fromJS = js.fromJS;
 pub const fromJSDirect = js.fromJSDirect;
 
-pub const new = bun.TrivialNew(SocketAddress);
+pub const new = fun.TrivialNew(SocketAddress);
 
 // NOTE: not std.net.Address b/c .un is huge and we don't use it.
 // NOTE: not C.sockaddr_storage b/c it's _huge_. we need >= 28 bytes for sockaddr_in6,
@@ -26,25 +26,25 @@ _addr: sockaddr,
 /// - `.Empty` is used for default ipv4 and ipv6 addresses (`127.0.0.1` and `::`, respectively).
 ///
 /// @internal
-_presentation: bun.String = .dead,
+_presentation: fun.String = .dead,
 
 pub const Options = struct {
     family: AF = AF.INET,
     /// When `null`, default is determined by address family.
     /// - `127.0.0.1` for IPv4
     /// - `::1` for IPv6
-    address: ?bun.String = null,
+    address: ?fun.String = null,
     port: u16 = 0,
     /// IPv6 flow label. JS getters for v4 addresses always return `0`.
     flowlabel: ?u32 = null,
 
     /// NOTE: assumes options object has been normalized and validated by JS code.
-    pub fn fromJS(global: *jsc.JSGlobalObject, obj: JSValue) bun.JSError!Options {
+    pub fn fromJS(global: *jsc.JSGlobalObject, obj: JSValue) fun.JSError!Options {
         if (!obj.isObject()) return global.throwInvalidArgumentTypeValue("options", "object", obj);
 
-        const address_str: ?bun.String = if (try obj.get(global, "address")) |a| addr: {
+        const address_str: ?fun.String = if (try obj.get(global, "address")) |a| addr: {
             if (!a.isString()) return global.throwInvalidArgumentTypeValue("options.address", "string", a);
-            break :addr try bun.String.fromJS(a, global);
+            break :addr try fun.String.fromJS(a, global);
         } else null;
 
         const _family: AF = if (try obj.get(global, "family")) |fam| blk: {
@@ -80,7 +80,7 @@ pub const Options = struct {
         };
     }
 
-    fn throwBadPort(global: *jsc.JSGlobalObject, port_: jsc.JSValue) bun.JSError {
+    fn throwBadPort(global: *jsc.JSGlobalObject, port_: jsc.JSValue) fun.JSError {
         const ty = global.determineSpecificType(port_) catch {
             return global.ERR(.SOCKET_BAD_PORT, "The \"options.port\" argument must be a valid IP port number.", .{}).throw();
         };
@@ -96,21 +96,21 @@ pub const Options = struct {
 /// ### `SocketAddress.parse(input: string): SocketAddress | undefined`
 /// Parse an address string (with an optional `:port`) into a `SocketAddress`.
 /// Returns `undefined` if the input is invalid.
-pub fn parse(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn parse(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const input = blk: {
         const input_arg = callframe.argument(0);
         if (!input_arg.isString()) return global.throwInvalidArgumentTypeValue("input", "string", input_arg);
-        break :blk try bun.String.fromJS(input_arg, global);
+        break :blk try fun.String.fromJS(input_arg, global);
     };
     defer input.deref();
 
     const prefix = "http://";
     const url_str = switch (input.is8Bit()) {
         inline else => |is_8_bit| with_prefix: {
-            const enc: bun.String.WTFEncoding = if (is_8_bit) .latin1 else .utf16;
+            const enc: fun.String.WTFEncoding = if (is_8_bit) .latin1 else .utf16;
             const from_chars = if (is_8_bit) input.latin1() else input.utf16();
-            const str, const to_chars = bun.String.createUninitialized(enc, from_chars.len + prefix.len);
-            @memcpy(to_chars[0..prefix.len], bun.strings.literal(enc.Byte(), prefix));
+            const str, const to_chars = fun.String.createUninitialized(enc, from_chars.len + prefix.len);
+            @memcpy(to_chars[0..prefix.len], fun.strings.literal(enc.Byte(), prefix));
             @memcpy(to_chars[prefix.len..], from_chars);
             break :with_prefix str;
         },
@@ -124,8 +124,8 @@ pub fn parse(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError
         const port32 = url.port();
         break :blk if (port32 > std.math.maxInt(u16)) 0 else @intCast(port32);
     };
-    bun.assert(host.tag != .Dead);
-    bun.debugAssert(host.length() >= 2);
+    fun.assert(host.tag != .Dead);
+    fun.debugAssert(host.length() >= 2);
 
     // NOTE: parsed host cannot be used as presentation string. e.g.
     // - "[::1]" -> "::1"
@@ -145,7 +145,7 @@ pub fn parse(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError
 /// ### `SocketAddress.isSocketAddress(value: unknown): value is SocketAddress`
 /// Returns `true` if `value` is a `SocketAddress`. Subclasses and similarly-shaped
 /// objects are not considered `SocketAddress`s.
-pub fn isSocketAddress(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn isSocketAddress(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     const value = callframe.argument(0);
     return JSValue.jsBoolean(value.isCell() and SocketAddress.fromJSDirect(value) != null);
 }
@@ -162,13 +162,13 @@ pub fn isSocketAddress(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
 ///
 /// ## References
 /// - [Node docs](https://nodejs.org/api/net.html#new-netsocketaddressoptions)
-pub fn constructor(global: *jsc.JSGlobalObject, frame: *jsc.CallFrame) bun.JSError!*SocketAddress {
+pub fn constructor(global: *jsc.JSGlobalObject, frame: *jsc.CallFrame) fun.JSError!*SocketAddress {
     const options_obj = frame.argument(0);
     if (options_obj.isUndefined()) return SocketAddress.new(.{
         ._addr = sockaddr.@"127.0.0.1",
         ._presentation = .empty,
         // ._presentation = WellKnownAddress.@"127.0.0.1"(),
-        // ._presentation = bun.String.fromJS(global.commonStrings().@"127.0.0.1"()) catch unreachable,
+        // ._presentation = fun.String.fromJS(global.commonStrings().@"127.0.0.1"()) catch unreachable,
     });
     options_obj.ensureStillAlive();
 
@@ -186,9 +186,9 @@ pub fn constructor(global: *jsc.JSGlobalObject, frame: *jsc.CallFrame) bun.JSErr
     return SocketAddress.create(global, options);
 }
 
-pub fn initFromAddrFamily(global: *jsc.JSGlobalObject, address_js: JSValue, family_js: JSValue) bun.JSError!SocketAddress {
+pub fn initFromAddrFamily(global: *jsc.JSGlobalObject, address_js: JSValue, family_js: JSValue) fun.JSError!SocketAddress {
     if (!address_js.isString()) return global.throwInvalidArgumentTypeValue("options.address", "string", address_js);
-    const address_: bun.String = try .fromJS(address_js, global);
+    const address_: fun.String = try .fromJS(address_js, global);
     const family_: AF = try .fromJS(global, family_js);
     return .initJS(global, .{
         .address = address_,
@@ -202,16 +202,16 @@ pub fn initFromAddrFamily(global: *jsc.JSGlobalObject, address_js: JSValue, fami
 /// ## Safety
 /// - `options.address` gets moved, much like `adoptRef`. Do not `deref` it
 ///   after passing it in.
-pub fn create(global: *jsc.JSGlobalObject, options: Options) bun.JSError!*SocketAddress {
+pub fn create(global: *jsc.JSGlobalObject, options: Options) fun.JSError!*SocketAddress {
     return .new(try .initJS(global, options));
 }
 
-pub fn initJS(global: *jsc.JSGlobalObject, options: Options) bun.JSError!SocketAddress {
-    var presentation: bun.String = .empty;
+pub fn initJS(global: *jsc.JSGlobalObject, options: Options) fun.JSError!SocketAddress {
+    var presentation: fun.String = .empty;
 
     // We need a zero-terminated cstring for `ares_inet_pton`, which forces us to
     // copy the string.
-    var stackfb = std.heap.stackFallback(64, bun.default_allocator);
+    var stackfb = std.heap.stackFallback(64, fun.default_allocator);
     const alloc = stackfb.get();
 
     // NOTE: `zig translate-c` creates semantically invalid code for `C.ntohs`.
@@ -226,7 +226,7 @@ pub fn initJS(global: *jsc.JSGlobalObject, options: Options) bun.JSError!SocketA
             };
             if (options.address) |address_str| {
                 presentation = address_str;
-                const slice = bun.handleOom(address_str.toOwnedSliceZ(alloc));
+                const slice = fun.handleOom(address_str.toOwnedSliceZ(alloc));
                 defer alloc.free(slice);
                 try pton(global, inet.AF_INET, slice, &sin.addr);
             } else {
@@ -244,7 +244,7 @@ pub fn initJS(global: *jsc.JSGlobalObject, options: Options) bun.JSError!SocketA
             };
             if (options.address) |address_str| {
                 presentation = address_str;
-                const slice = bun.handleOom(address_str.toOwnedSliceZ(alloc));
+                const slice = fun.handleOom(address_str.toOwnedSliceZ(alloc));
                 defer alloc.free(slice);
                 try pton(global, inet.AF_INET6, slice, &sin6.addr);
             } else {
@@ -305,7 +305,7 @@ pub fn initIPv6(addr: [16]u8, port_: u16, flowinfo: u32, scope_id: u32) SocketAd
 fn deinit(this: *SocketAddress) void {
     // .deref() on dead strings is a no-op.
     this._presentation.deref();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn finalize(this: *SocketAddress) void {
@@ -327,7 +327,7 @@ pub fn finalize(this: *SocketAddress) void {
 /// This method is slightly faster if you are creating a lot of socket addresses
 /// that will not be around for very long. `createDTO` is even faster, but
 /// requires callers to already have a presentation-formatted address.
-pub fn intoDTO(this: *SocketAddress, global: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn intoDTO(this: *SocketAddress, global: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     var addr_str = this.address();
     defer this._presentation = .dead;
     return JSSocketAddressDTO__create(global, try addr_str.transferToJS(global), this.port(), this.family() == AF.INET6);
@@ -339,19 +339,19 @@ pub fn intoDTO(this: *SocketAddress, global: *jsc.JSGlobalObject) bun.JSError!js
 ///
 /// - The address string is assumed to be ASCII and a valid IP address (either v4 or v6).
 /// - Port is a valid `in_port_t` (between 0 and 2^16) in host byte order.
-pub fn createDTO(globalObject: *jsc.JSGlobalObject, addr_: []const u8, port_: u16, is_ipv6: bool) bun.JSError!jsc.JSValue {
-    if (comptime bun.Environment.isDebug) {
-        bun.assertWithLocation(addr_.len > 0, @src());
+pub fn createDTO(globalObject: *jsc.JSGlobalObject, addr_: []const u8, port_: u16, is_ipv6: bool) fun.JSError!jsc.JSValue {
+    if (comptime fun.Environment.isDebug) {
+        fun.assertWithLocation(addr_.len > 0, @src());
     }
 
-    return JSSocketAddressDTO__create(globalObject, try bun.String.createUTF8ForJS(globalObject, addr_), port_, is_ipv6);
+    return JSSocketAddressDTO__create(globalObject, try fun.String.createUTF8ForJS(globalObject, addr_), port_, is_ipv6);
 }
 
 extern "c" fn JSSocketAddressDTO__create(globalObject: *jsc.JSGlobalObject, address_: jsc.JSValue, port_: u16, is_ipv6: bool) jsc.JSValue;
 
 // =============================================================================
 
-pub fn getAddress(this: *SocketAddress, global: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn getAddress(this: *SocketAddress, global: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     // toJS increments ref count
     const addr_ = this.address();
     return switch (addr_.tag) {
@@ -372,12 +372,12 @@ pub fn getAddress(this: *SocketAddress, global: *jsc.JSGlobalObject) bun.JSError
 /// ### TODO
 /// - replace `addressToString` in `dns.zig` w this
 /// - use this impl in server.zig
-pub fn address(this: *SocketAddress) bun.String {
+pub fn address(this: *SocketAddress) fun.String {
     if (this._presentation.tag != .Dead) return this._presentation;
     var buf: [inet.INET6_ADDRSTRLEN]u8 = undefined;
     const formatted = this._addr.fmt(&buf);
-    const presentation = jsc.WebCore.encoding.toBunStringComptime(formatted, .latin1);
-    bun.debugAssert(presentation.tag != .Dead);
+    const presentation = jsc.WebCore.encoding.toFunStringComptime(formatted, .latin1);
+    fun.debugAssert(presentation.tag != .Dead);
     this._presentation = presentation;
     return presentation;
 }
@@ -387,9 +387,9 @@ pub fn address(this: *SocketAddress) bun.String {
 /// Returns a string representation of this address' family. Use `getAddrFamily`
 /// for the numeric value.
 ///
-/// NOTE: node's `net.SocketAddress` wants `"ipv4"` and `"ipv6"` while Bun's APIs
+/// NOTE: node's `net.SocketAddress` wants `"ipv4"` and `"ipv6"` while Fun's APIs
 /// use `"IPv4"` and `"IPv6"`. This is annoying.
-pub fn getFamily(this: *SocketAddress, global: *jsc.JSGlobalObject) bun.JSError!JSValue {
+pub fn getFamily(this: *SocketAddress, global: *jsc.JSGlobalObject) fun.JSError!JSValue {
     return switch (this.family()) {
         AF.INET => global.commonStrings().ipv4(),
         AF.INET6 => global.commonStrings().ipv6(),
@@ -448,7 +448,7 @@ pub fn estimatedSize(this: *SocketAddress) usize {
     return @sizeOf(SocketAddress) + this._presentation.estimatedSize();
 }
 
-pub fn toJSON(this: *SocketAddress, global: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn toJSON(this: *SocketAddress, global: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return (try jsc.JSObject.create(.{
         .address = try this.getAddress(global),
         .family = try this.getFamily(global),
@@ -457,7 +457,7 @@ pub fn toJSON(this: *SocketAddress, global: *jsc.JSGlobalObject, _: *jsc.CallFra
     }, global)).toJS();
 }
 
-fn pton(global: *jsc.JSGlobalObject, comptime af: c_int, addr: [:0]const u8, dst: *anyopaque) bun.JSError!void {
+fn pton(global: *jsc.JSGlobalObject, comptime af: c_int, addr: [:0]const u8, dst: *anyopaque) fun.JSError!void {
     return switch (ares.ares_inet_pton(af, addr.ptr, dst)) {
         0 => global.throwSysError(.{ .code = .ERR_INVALID_IP_ADDRESS }, "Invalid socket address", .{}),
 
@@ -473,12 +473,12 @@ fn pton(global: *jsc.JSGlobalObject, comptime af: c_int, addr: [:0]const u8, dst
 }
 
 inline fn asV4(this: *const SocketAddress) *const inet.sockaddr_in {
-    bun.debugAssert(this.family() == AF.INET);
+    fun.debugAssert(this.family() == AF.INET);
     return &this._addr.sin;
 }
 
 inline fn asV6(this: *const SocketAddress) *const inet.sockaddr_in6 {
-    bun.debugAssert(this.family() == AF.INET6);
+    fun.debugAssert(this.family() == AF.INET6);
     return &this._addr.sin6;
 }
 
@@ -489,8 +489,8 @@ inline fn asV6(this: *const SocketAddress) *const inet.sockaddr_in6 {
 // bindings though.
 extern "c" const IPv4: StaticStringImpl;
 extern "c" const IPv6: StaticStringImpl;
-const ipv4: bun.String = .{ .tag = .WTFStringImpl, .value = .{ .WTFStringImpl = IPv4 } };
-const ipv6: bun.String = .{ .tag = .WTFStringImpl, .value = .{ .WTFStringImpl = IPv6 } };
+const ipv4: fun.String = .{ .tag = .WTFStringImpl, .value = .{ .WTFStringImpl = IPv4 } };
+const ipv6: fun.String = .{ .tag = .WTFStringImpl, .value = .{ .WTFStringImpl = IPv6 } };
 
 // FIXME: c-headers-for-zig casts AF_* and PF_* to `c_int` when it should be `comptime_int`
 pub const AF = enum(inet.sa_family_t) {
@@ -503,7 +503,7 @@ pub const AF = enum(inet.sa_family_t) {
 
     pub fn fromJS(global: *jsc.JSGlobalObject, value: JSValue) !AF {
         if (value.isString()) {
-            const fam_str = try bun.String.fromJS(value, global);
+            const fam_str = try fun.String.fromJS(value, global);
             defer fam_str.deref();
             if (fam_str.length() != 4) return global.throwInvalidArgumentPropertyValue("options.family", "'ipv4' or 'ipv6'", value);
 
@@ -596,7 +596,7 @@ pub const sockaddr = extern union {
         const formatted = std.mem.sliceTo(ares.ares_inet_ntop(self.family().int(), addr_src, buf, buf.len) orelse {
             std.debug.panic("Invariant violation: SocketAddress created with invalid IPv6 address", .{});
         }, 0);
-        if (comptime bun.Environment.isDebug) bun.assertWithLocation(bun.strings.isAllASCII(formatted), @src());
+        if (comptime fun.Environment.isDebug) fun.assertWithLocation(fun.strings.isAllASCII(formatted), @src());
         return formatted;
     }
 
@@ -613,13 +613,13 @@ pub const sockaddr = extern union {
 const WellKnownAddress = struct {
     extern "c" const INET_LOOPBACK: StaticStringImpl;
     extern "c" const INET6_ANY: StaticStringImpl;
-    inline fn @"127.0.0.1"() bun.String {
+    inline fn @"127.0.0.1"() fun.String {
         return .{
             .tag = .WTFStringImpl,
             .value = .{ .WTFStringImpl = INET_LOOPBACK },
         };
     }
-    inline fn @"::"() bun.String {
+    inline fn @"::"() fun.String {
         return .{
             .tag = .WTFStringImpl,
             .value = .{ .WTFStringImpl = INET6_ANY },
@@ -632,8 +632,8 @@ const WellKnownAddress = struct {
 // The same types are defined in a bunch of different places. We should probably unify them.
 comptime {
     // Windows doesn't have c.socklen_t. because of course it doesn't.
-    const other_socklens = if (@hasDecl(bun.c, "socklen_t"))
-        .{ std.posix.socklen_t, bun.c.socklen_t }
+    const other_socklens = if (@hasDecl(fun.c, "socklen_t"))
+        .{ std.posix.socklen_t, fun.c.socklen_t }
     else
         .{std.posix.socklen_t};
     for (other_socklens) |other_socklen| {
@@ -644,7 +644,7 @@ comptime {
     std.debug.assert(AF.INET6.int() == ares.AF.INET6);
 }
 
-pub const inet = if (bun.Environment.isWindows)
+pub const inet = if (fun.Environment.isWindows)
 win: {
     const ws2 = std.os.windows.ws2_32;
     break :win struct {
@@ -660,7 +660,7 @@ win: {
         pub const sockaddr_in6 = std.posix.sockaddr.in6;
     };
 } else posix: {
-    const C = bun.c;
+    const C = fun.c;
     break :posix struct {
         pub const IN4ADDR_LOOPBACK = C.IN4ADDR_LOOPBACK;
         pub const INET6_ADDRSTRLEN = C.INET6_ADDRSTRLEN;
@@ -678,14 +678,14 @@ win: {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const ares = bun.c_ares;
-const StaticStringImpl = bun.WTF.StringImpl;
+const fun = @import("fun");
+const ares = fun.c_ares;
+const StaticStringImpl = fun.WTF.StringImpl;
 
-const Environment = bun.Environment;
-const isDebug = bun.Environment.isDebug;
+const Environment = fun.Environment;
+const isDebug = fun.Environment.isDebug;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSValue = jsc.JSValue;
 

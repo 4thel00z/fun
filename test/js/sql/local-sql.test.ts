@@ -1,6 +1,6 @@
-import { SQL } from "bun";
-import { afterAll, expect, test } from "bun:test";
-import { bunEnv, bunExe, dockerExe, isDockerEnabled, tempDirWithFiles } from "harness";
+import { SQL } from "fun";
+import { afterAll, expect, test } from "fun:test";
+import { funEnv, funExe, dockerExe, isDockerEnabled, tempDirWithFiles } from "harness";
 import path from "path";
 const postgres = (...args) => new SQL(...args);
 
@@ -27,12 +27,12 @@ async function waitForPostgres(port) {
   // bound that only held when the agent was otherwise idle.
   for (let i = 0; i < 30; i++) {
     try {
-      const sql = new SQL(`postgres://bun_sql_test@localhost:${port}/bun_sql_test`, {
+      const sql = new SQL(`postgres://fun_sql_test@localhost:${port}/fun_sql_test`, {
         idleTimeout: 1,
         connectionTimeout: 1,
         maxLifetime: 1,
         tls: {
-          ca: Bun.file(path.join(import.meta.dir, "docker-tls", "server.crt")),
+          ca: Fun.file(path.join(import.meta.dir, "docker-tls", "server.crt")),
         },
       });
 
@@ -88,7 +88,7 @@ if (isDockerEnabled()) {
     } catch (error) {}
   });
 
-  const connectionString = `postgres://bun_sql_test@localhost:${container.port}/bun_sql_test?sslmode=verify-full`;
+  const connectionString = `postgres://fun_sql_test@localhost:${container.port}/fun_sql_test?sslmode=verify-full`;
   test("Connects using connection string", async () => {
     // we need at least the usename and port
     await using sql = postgres(connectionString, {
@@ -96,7 +96,7 @@ if (isDockerEnabled()) {
       idleTimeout: 1,
       connectionTimeout: 1,
       tls: {
-        ca: Bun.file(path.join(import.meta.dir, "docker-tls", "server.crt")),
+        ca: Fun.file(path.join(import.meta.dir, "docker-tls", "server.crt")),
       },
     });
 
@@ -180,7 +180,7 @@ if (isDockerEnabled()) {
 
     const dir = tempDirWithFiles("import-meta-no-inline", {
       "index.ts": `
-       import { SQL } from "bun";
+       import { SQL } from "fun";
 
       const db = new SQL({
         url: process.env.DATABASE_URL,
@@ -188,15 +188,15 @@ if (isDockerEnabled()) {
         idleTimeout: 60 * 5,
         maxLifetime: 60 * 15,
         tls: {
-          ca: Bun.file(process.env.DATABASE_CA as string),
+          ca: Fun.file(process.env.DATABASE_CA as string),
         },
       });
       await db.connect();
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         fetch: async (req) => {
           try{
-            await Bun.sleep(100);
+            await Fun.sleep(100);
             let fragment = db\`\`;
 
               const searchs = await db\`
@@ -247,14 +247,14 @@ if (isDockerEnabled()) {
     let failed = false;
     function spawnServer(controller) {
       return new Promise(async (resolve, reject) => {
-        const server = Bun.spawn([bunExe(), "index.ts"], {
+        const server = Fun.spawn([funExe(), "index.ts"], {
           stdin: "ignore",
           stdout: "pipe",
           stderr: "pipe",
           cwd: dir,
           env: {
-            ...bunEnv,
-            BUN_DEBUG_QUIET_LOGS: "1",
+            ...funEnv,
+            FUN_DEBUG_QUIET_LOGS: "1",
             DATABASE_URL: connectionString,
             DATABASE_CA: path.join(import.meta.dir, "docker-tls", "server.crt"),
           },
@@ -299,8 +299,8 @@ if (isDockerEnabled()) {
     }
     async function spawnRestarts(controller) {
       for (let i = 0; i < 20 && !controller.signal.aborted; i++) {
-        await Bun.$`${dockerCLI} restart ${container.containerName}`.nothrow().quiet();
-        await Bun.sleep(500);
+        await Fun.$`${dockerCLI} restart ${container.containerName}`.nothrow().quiet();
+        await Fun.sleep(500);
       }
 
       try {
@@ -321,7 +321,7 @@ if (isDockerEnabled()) {
 
     bombardier(server.url, 100, controller.signal);
 
-    await Bun.sleep(1000);
+    await Fun.sleep(1000);
     spawnRestarts(controller);
     await promise;
   }, 30_000);

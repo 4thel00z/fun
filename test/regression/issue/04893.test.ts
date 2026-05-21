@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { mkdirSync, rmSync, writeFileSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 describe.concurrent("issue/04893", () => {
@@ -14,9 +14,9 @@ describe.concurrent("issue/04893", () => {
     mkdirSync(testDir, { recursive: true });
     writeFileSync(join(testDir, "crlf.js"), '"a\\\r\nb"');
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", join(testDir, "crlf.js")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", join(testDir, "crlf.js")],
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });

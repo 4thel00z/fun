@@ -1,18 +1,18 @@
 ---
-title: Upgrade Bun to the latest version
-sidebarTitle: Upgrade Bun
+title: Upgrade Fun to the latest version
+sidebarTitle: Upgrade Fun
 mode: center
 ---
 
-Bun can upgrade itself using the built-in `bun upgrade` command. This is the fastest way to get the latest features and bug fixes.
+Fun can upgrade itself using the built-in `fun upgrade` command. This is the fastest way to get the latest features and bug fixes.
 
 ```bash terminal icon="terminal"
-bun upgrade
+fun upgrade
 ```
 
-This downloads and installs the latest stable version of Bun, replacing the currently installed version.
+This downloads and installs the latest stable version of Fun, replacing the currently installed version.
 
-<Note>To see the current version of Bun, run `bun --version`.</Note>
+<Note>To see the current version of Fun, run `fun --version`.</Note>
 
 ---
 
@@ -21,11 +21,11 @@ This downloads and installs the latest stable version of Bun, replacing the curr
 After upgrading, verify the new version:
 
 ```bash terminal icon="terminal"
-bun --version
+fun --version
 # Output: 1.x.y
 
-# See the exact commit of the Bun binary
-bun --revision
+# See the exact commit of the Fun binary
+fun --revision
 # Output: 1.x.y+abc123def
 ```
 
@@ -36,7 +36,7 @@ bun --revision
 Canary builds are automatically released on every commit to the `main` branch. These are untested but useful for trying new features or verifying bug fixes before they're released.
 
 ```bash terminal icon="terminal"
-bun upgrade --canary
+fun upgrade --canary
 ```
 
 <Warning>Canary builds are not recommended for production use. They may contain bugs or breaking changes.</Warning>
@@ -48,24 +48,24 @@ bun upgrade --canary
 If you're on a canary build and want to return to the latest stable release:
 
 ```bash terminal icon="terminal"
-bun upgrade --stable
+fun upgrade --stable
 ```
 
 ---
 
 ## Install a specific version
 
-To install a specific version of Bun, use the install script with a version tag:
+To install a specific version of Fun, use the install script with a version tag:
 
 <Tabs>
   <Tab title="macOS & Linux">
     ```bash terminal icon="terminal"
-    curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
+    curl -fsSL https://fun.dev/install | bash -s "fun-v1.3.3"
     ```
   </Tab>
   <Tab title="Windows">
     ```powershell PowerShell icon="windows"
-    iex "& {$(irm https://bun.sh/install.ps1)} -Version 1.3.3"
+    iex "& {$(irm https://fun.dev/install.ps1)} -Version 1.3.3"
     ```
   </Tab>
 </Tabs>
@@ -74,14 +74,14 @@ To install a specific version of Bun, use the install script with a version tag:
 
 ## Package manager users
 
-If you installed Bun via a package manager, use that package manager to upgrade instead of `bun upgrade` to avoid conflicts.
+If you installed Fun via a package manager, use that package manager to upgrade instead of `fun upgrade` to avoid conflicts.
 
 <Tip>
 **Homebrew users** <br />
-To avoid conflicts with Homebrew, use `brew upgrade bun` instead.
+To avoid conflicts with Homebrew, use `brew upgrade fun` instead.
 
 **Scoop users** <br />
-To avoid conflicts with Scoop, use `scoop update bun` instead.
+To avoid conflicts with Scoop, use `scoop update fun` instead.
 
 </Tip>
 
@@ -89,5 +89,5 @@ To avoid conflicts with Scoop, use `scoop update bun` instead.
 
 ## See also
 
-- [Installation](/installation) — Install Bun for the first time
+- [Installation](/installation) — Install Fun for the first time
 - [Update packages](/pm/cli/update) — Update dependencies to latest versions

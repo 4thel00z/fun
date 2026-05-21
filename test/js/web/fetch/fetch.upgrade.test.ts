@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { decodeFrames, encodeCloseFrame, encodeTextFrame, upgradeHeaders } from "./websocket.helpers";
 
 describe("fetch upgrade", () => {
@@ -6,7 +6,7 @@ describe("fetch upgrade", () => {
     const serverMessages: string[] = [];
     const serverClosed = Promise.withResolvers<void>();
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req) {
         if (server.upgrade(req)) return;

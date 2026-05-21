@@ -1,5 +1,5 @@
-import { build, file } from "bun";
-import { expect, test } from "bun:test";
+import { build, file } from "fun";
+import { expect, test } from "fun:test";
 import { tempDir } from "harness";
 import { join } from "path";
 

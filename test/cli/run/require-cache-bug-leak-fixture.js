@@ -1,18 +1,18 @@
 const dest = require.resolve("./require-cache-bug-leak-fixture-large-ast.js");
 
-if (typeof Bun !== "undefined") Bun.gc(true);
+if (typeof Fun !== "undefined") Fun.gc(true);
 for (let i = 0; i < 5; i++) {
   delete require.cache[dest];
   require(dest);
 }
-if (typeof Bun !== "undefined") Bun.gc(true);
+if (typeof Fun !== "undefined") Fun.gc(true);
 const baseline = process.memoryUsage.rss();
 
 for (let i = 0; i < 50; i++) {
   delete require.cache[dest];
   require(dest);
 }
-if (typeof Bun !== "undefined") Bun.gc(true);
+if (typeof Fun !== "undefined") Fun.gc(true);
 
 setTimeout(() => {
   let diff = process.memoryUsage.rss() - baseline;

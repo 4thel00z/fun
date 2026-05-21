@@ -1,24 +1,24 @@
 ---
 title: TOML
-description: Use Bun's built-in support for TOML files through both runtime APIs and bundler integration
+description: Use Fun's built-in support for TOML files through both runtime APIs and bundler integration
 ---
 
-In Bun, TOML is a first-class citizen alongside JSON, JSON5, and YAML. You can:
+In Fun, TOML is a first-class citizen alongside JSON, JSON5, and YAML. You can:
 
-- Parse TOML strings with `Bun.TOML.parse`
+- Parse TOML strings with `Fun.TOML.parse`
 - `import` & `require` TOML files as modules at runtime (including hot reloading & watch mode support)
-- `import` & `require` TOML files in frontend apps via Bun's bundler
+- `import` & `require` TOML files in frontend apps via Fun's bundler
 
 ---
 
 ## Runtime API
 
-### `Bun.TOML.parse()`
+### `Fun.TOML.parse()`
 
 Parse a TOML string into a JavaScript object.
 
 ```ts
-import { TOML } from "bun";
+import { TOML } from "fun";
 const text = `
 name = "my-app"
 version = "1.0.0"
@@ -45,7 +45,7 @@ console.log(data);
 
 #### Supported TOML Features
 
-Bun's TOML parser supports the [TOML v1.0 specification](https://toml.io/en/v1.0.0), including:
+Fun's TOML parser supports the [TOML v1.0 specification](https://toml.io/en/v1.0.0), including:
 
 - **Strings**: basic (`"..."`) and literal (`'...'`), including multi-line
 - **Integers**: decimal, hex (`0x`), octal (`0o`), and binary (`0b`)
@@ -58,7 +58,7 @@ Bun's TOML parser supports the [TOML v1.0 specification](https://toml.io/en/v1.0
 - **Comments**: using `#`
 
 ```ts
-const data = Bun.TOML.parse(`
+const data = Fun.TOML.parse(`
 # Application config
 title = "My App"
 
@@ -82,11 +82,11 @@ role = "backend"
 
 #### Error Handling
 
-`Bun.TOML.parse()` throws if the TOML is invalid:
+`Fun.TOML.parse()` throws if the TOML is invalid:
 
 ```ts
 try {
-  Bun.TOML.parse("invalid = = =");
+  Fun.TOML.parse("invalid = = =");
 } catch (error) {
   console.error("Failed to parse TOML:", error.message);
 }
@@ -176,7 +176,7 @@ console.log(database.port); // 5432
 
 ## Hot Reloading with TOML
 
-When you run your application with `bun --hot`, changes to TOML files are automatically detected and reloaded without restarting:
+When you run your application with `fun --hot`, changes to TOML files are automatically detected and reloaded without restarting:
 
 ```toml config.toml
 [server]
@@ -193,7 +193,7 @@ import { server, features } from "./config.toml";
 
 console.log(`Starting server on ${server.host}:${server.port}`);
 
-Bun.serve({
+Fun.serve({
   port: server.port,
   hostname: server.host,
   fetch(req) {
@@ -208,7 +208,7 @@ Bun.serve({
 Run with hot reloading:
 
 ```bash terminal icon="terminal"
-bun --hot server.ts
+fun --hot server.ts
 ```
 
 Now when you modify `config.toml`, the changes are immediately reflected in your running application.
@@ -217,10 +217,10 @@ Now when you modify `config.toml`, the changes are immediately reflected in your
 
 ## Bundler Integration
 
-When you import TOML files and bundle with Bun, the TOML is parsed at build time and included as a JavaScript module:
+When you import TOML files and bundle with Fun, the TOML is parsed at build time and included as a JavaScript module:
 
 ```bash terminal icon="terminal"
-bun build app.ts --outdir=dist
+fun build app.ts --outdir=dist
 ```
 
 This means:

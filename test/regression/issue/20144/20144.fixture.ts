@@ -1,4 +1,4 @@
-import { cc } from "bun:ffi";
+import { cc } from "fun:ffi";
 import assert from "node:assert";
 
 assert.ok(process.send);

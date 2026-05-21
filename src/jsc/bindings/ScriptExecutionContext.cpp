@@ -5,9 +5,9 @@
 
 #include "libusockets.h"
 #include "_libusockets.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "EventLoopTask.h"
-extern "C" void Bun__startLoop(us_loop_t* loop);
+extern "C" void Fun__startLoop(us_loop_t* loop);
 
 namespace WebCore {
 static constexpr ScriptExecutionContextIdentifier INITIAL_IDENTIFIER_INTERNAL = 1;
@@ -73,15 +73,15 @@ JSGlobalObject* ScriptExecutionContext::globalObject()
     return m_globalObject;
 }
 
-extern "C" void Bun__eventLoop__incrementRefConcurrently(void* bunVM, int delta);
+extern "C" void Fun__eventLoop__incrementRefConcurrently(void* funVM, int delta);
 
 void ScriptExecutionContext::refEventLoop()
 {
-    Bun__eventLoop__incrementRefConcurrently(WebCore::clientData(vm())->bunVM, 1);
+    Fun__eventLoop__incrementRefConcurrently(WebCore::clientData(vm())->funVM, 1);
 }
 void ScriptExecutionContext::unrefEventLoop()
 {
-    Bun__eventLoop__incrementRefConcurrently(WebCore::clientData(vm())->bunVM, -1);
+    Fun__eventLoop__incrementRefConcurrently(WebCore::clientData(vm())->funVM, -1);
 }
 
 ScriptExecutionContext::~ScriptExecutionContext()
@@ -137,12 +137,12 @@ bool ScriptExecutionContext::isJSExecutionForbidden()
     return !m_vm || m_vm->executionForbidden();
 }
 
-extern "C" void* Bun__getVM();
+extern "C" void* Fun__getVM();
 
 bool ScriptExecutionContext::isContextThread()
 {
     auto clientData = WebCore::clientData(vm());
-    return clientData && clientData->bunVM == Bun__getVM();
+    return clientData && clientData->funVM == Fun__getVM();
 }
 
 bool ScriptExecutionContext::ensureOnContextThread(ScriptExecutionContextIdentifier identifier, Function<void(ScriptExecutionContext&)>&& task)

@@ -11,7 +11,7 @@ const SslContextCacheEntry = struct {
 };
 const ssl_context_cache_max_size = 60;
 const ssl_context_cache_ttl_ns = 30 * std.time.ns_per_min;
-var custom_ssl_context_map = std.AutoArrayHashMap(*SSLConfig, SslContextCacheEntry).init(bun.default_allocator);
+var custom_ssl_context_map = std.AutoArrayHashMap(*SSLConfig, SslContextCacheEntry).init(fun.default_allocator);
 
 loop: *jsc.MiniEventLoop,
 http_context: NewHTTPContext(false),
@@ -35,9 +35,9 @@ queued_shutdowns: std.ArrayListUnmanaged(ShutdownMessage) = std.ArrayListUnmanag
 queued_writes: std.ArrayListUnmanaged(WriteMessage) = std.ArrayListUnmanaged(WriteMessage){},
 queued_response_body_drains: std.ArrayListUnmanaged(DrainMessage) = std.ArrayListUnmanaged(DrainMessage){},
 
-queued_shutdowns_lock: bun.Mutex = .{},
-queued_writes_lock: bun.Mutex = .{},
-queued_response_body_drains_lock: bun.Mutex = .{},
+queued_shutdowns_lock: fun.Mutex = .{},
+queued_writes_lock: fun.Mutex = .{},
+queued_response_body_drains_lock: fun.Mutex = .{},
 
 queued_threadlocal_proxy_derefs: std.ArrayListUnmanaged(*ProxyTunnel) = std.ArrayListUnmanaged(*ProxyTunnel){},
 
@@ -50,8 +50,8 @@ pub const HeapRequestBodyBuffer = struct {
     buffer: [512 * 1024]u8 = undefined,
     fixed_buffer_allocator: std.heap.FixedBufferAllocator,
 
-    pub const new = bun.TrivialNew(@This());
-    pub const deinit = bun.TrivialDeinit(@This());
+    pub const new = fun.TrivialNew(@This());
+    pub const deinit = fun.TrivialDeinit(@This());
 
     pub fn init() *@This() {
         var this = HeapRequestBodyBuffer.new(.{
@@ -62,9 +62,9 @@ pub const HeapRequestBodyBuffer = struct {
     }
 
     pub fn put(this: *@This()) void {
-        if (bun.http.http_thread.lazy_request_body_buffer == null) {
+        if (fun.http.http_thread.lazy_request_body_buffer == null) {
             this.fixed_buffer_allocator.reset();
-            bun.http.http_thread.lazy_request_body_buffer = this;
+            fun.http.http_thread.lazy_request_body_buffer = this;
         } else {
             // This case hypothetically should never happen
             this.deinit();
@@ -122,14 +122,14 @@ const ShutdownMessage = struct {
 };
 
 pub const LibdeflateState = struct {
-    decompressor: *bun.libdeflate.Decompressor = undefined,
+    decompressor: *fun.libdeflate.Decompressor = undefined,
     shared_buffer: [512 * 1024]u8 = undefined,
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn deinit(this: *@This()) void {
         this.decompressor.deinit();
-        bun.TrivialDeinit(@This())(this);
+        fun.TrivialDeinit(@This())(this);
     }
 };
 
@@ -144,17 +144,17 @@ pub inline fn getRequestBodySendBuffer(this: *@This(), estimated_size: usize) Re
             };
         }
 
-        return .{ .heap = bun.take(&this.lazy_request_body_buffer).? };
+        return .{ .heap = fun.take(&this.lazy_request_body_buffer).? };
     }
     return .{
-        .stack = std.heap.stackFallback(request_body_send_stack_buffer_size, bun.default_allocator),
+        .stack = std.heap.stackFallback(request_body_send_stack_buffer_size, fun.default_allocator),
     };
 }
 
 pub fn deflater(this: *@This()) *LibdeflateState {
     if (this.lazy_libdeflater == null) {
         this.lazy_libdeflater = LibdeflateState.new(.{
-            .decompressor = bun.libdeflate.Decompressor.alloc() orelse bun.outOfMemory(),
+            .decompressor = fun.libdeflate.Decompressor.alloc() orelse fun.outOfMemory(),
         });
     }
 
@@ -164,7 +164,7 @@ pub fn deflater(this: *@This()) *LibdeflateState {
 fn onInitErrorNoop(err: InitError, opts: InitOpts) noreturn {
     switch (err) {
         error.LoadCAFile => {
-            if (!bun.sys.existsZ(opts.abs_ca_file_name)) {
+            if (!fun.sys.existsZ(opts.abs_ca_file_name)) {
                 Output.err("HTTPThread", "failed to find CA file: '{s}'", .{opts.abs_ca_file_name});
             } else {
                 Output.err("HTTPThread", "failed to load CA file: '{s}'", .{opts.abs_ca_file_name});
@@ -192,7 +192,7 @@ pub const InitOpts = struct {
 };
 
 fn initOnce(opts: *const InitOpts) void {
-    bun.http.http_thread = .{
+    fun.http.http_thread = .{
         .loop = undefined,
         .http_context = .{
             .ref_count = .init(),
@@ -204,17 +204,17 @@ fn initOnce(opts: *const InitOpts) void {
         },
         .timer = std.time.Timer.start() catch unreachable,
     };
-    bun.libdeflate.load();
+    fun.libdeflate.load();
     const thread = std.Thread.spawn(
         .{
-            .stack_size = bun.default_thread_stack_size,
+            .stack_size = fun.default_thread_stack_size,
         },
         onStart,
         .{opts.*},
     ) catch |err| Output.panic("Failed to start HTTP Client thread: {s}", .{@errorName(err)});
     thread.detach();
 }
-var init_once = bun.once(initOnce);
+var init_once = fun.once(initOnce);
 
 pub fn init(opts: *const InitOpts) void {
     init_once.call(.{opts});
@@ -222,11 +222,11 @@ pub fn init(opts: *const InitOpts) void {
 
 pub fn onStart(opts: InitOpts) void {
     Output.Source.configureNamedThread("HTTP Client");
-    bun.http.default_arena = Arena.init();
-    bun.http.default_allocator = bun.http.default_arena.allocator();
+    fun.http.default_arena = Arena.init();
+    fun.http.default_allocator = fun.http.default_arena.allocator();
 
     // uSockets' long-timeout counter is `% 240` minutes (see
-    // `us_socket_long_timeout` in packages/bun-usockets/src/socket.c), so
+    // `us_socket_long_timeout` in packages/fun-usockets/src/socket.c), so
     // values above 239 min wrap around and fire early. Clamp here — it's the
     // only assignment — so the underlying timer can't wrap, and round values
     // above 240s up to a whole minute so `socket.setTimeout`'s floor-to-
@@ -234,23 +234,23 @@ pub fn onStart(opts: InitOpts) void {
     // Normalising once here keeps the h1 (`HTTPClient.setTimeout`) and h2
     // (`ClientSession.rearmTimeout`) paths identical without duplicating the
     // math at each call site.
-    const raw: u64 = @min(bun.env_var.BUN_CONFIG_HTTP_IDLE_TIMEOUT.get(), 239 * 60);
-    bun.http.idle_timeout_seconds = @intCast(if (raw > 240) ((raw + 59) / 60) * 60 else raw);
+    const raw: u64 = @min(fun.env_var.FUN_CONFIG_HTTP_IDLE_TIMEOUT.get(), 239 * 60);
+    fun.http.idle_timeout_seconds = @intCast(if (raw > 240) ((raw + 59) / 60) * 60 else raw);
 
-    const loop = bun.jsc.MiniEventLoop.initGlobal(null, null);
+    const loop = fun.jsc.MiniEventLoop.initGlobal(null, null);
 
     if (Environment.isWindows) {
-        _ = std.process.getenvW(comptime bun.strings.w("SystemRoot")) orelse {
-            bun.Output.errGeneric("The %SystemRoot% environment variable is not set. Bun needs this set in order for network requests to work.", .{});
+        _ = std.process.getenvW(comptime fun.strings.w("SystemRoot")) orelse {
+            fun.Output.errGeneric("The %SystemRoot% environment variable is not set. Fun needs this set in order for network requests to work.", .{});
             Global.crash();
         };
     }
 
-    bun.http.http_thread.loop = loop;
-    bun.http.http_thread.http_context.init();
-    bun.http.http_thread.https_context.initWithThreadOpts(&opts) catch |err| opts.onInitError(err, opts);
-    bun.http.http_thread.has_awoken.store(true, .monotonic);
-    bun.http.http_thread.processEvents();
+    fun.http.http_thread.loop = loop;
+    fun.http.http_thread.http_context.init();
+    fun.http.http_thread.https_context.initWithThreadOpts(&opts) catch |err| opts.onInitError(err, opts);
+    fun.http.http_thread.has_awoken.store(true, .monotonic);
+    fun.http.http_thread.processEvents();
 }
 
 pub fn connect(this: *@This(), client: *HTTPClient, comptime is_ssl: bool) !?NewHTTPContext(is_ssl).HTTPSocket {
@@ -280,13 +280,13 @@ pub fn connect(this: *@This(), client: *HTTPClient, comptime is_ssl: bool) !?New
             }
 
             // Cache miss - create new SSL context
-            var custom_context = try bun.default_allocator.create(NewHTTPContext(is_ssl));
+            var custom_context = try fun.default_allocator.create(NewHTTPContext(is_ssl));
             custom_context.* = .{
                 .ref_count = .init(),
                 .pending_sockets = NewHTTPContext(is_ssl).PooledSocketHiveAllocator.empty,
             };
             custom_context.initWithClientConfig(client) catch |err| {
-                bun.default_allocator.destroy(custom_context);
+                fun.default_allocator.destroy(custom_context);
 
                 return switch (err) {
                     error.FailedToOpenSocket => |e| e,
@@ -297,7 +297,7 @@ pub fn connect(this: *@This(), client: *HTTPClient, comptime is_ssl: bool) !?New
             };
 
             const now = this.timer.read();
-            bun.handleOom(custom_ssl_context_map.put(requested_config, .{
+            fun.handleOom(custom_ssl_context_map.put(requested_config, .{
                 .ctx = custom_context,
                 .last_used_ns = now,
                 // Clone a strong ref for the cache entry; client.tls_props keeps its own.
@@ -322,7 +322,7 @@ pub fn connect(this: *@This(), client: *HTTPClient, comptime is_ssl: bool) !?New
     }
     if (client.http_proxy) |url| {
         if (url.href.len > 0) {
-            // https://github.com/oven-sh/bun/issues/11343
+            // https://github.com/underdoc-org/fun/issues/11343
             if (url.protocol.len == 0 or strings.eqlComptime(url.protocol, "https") or strings.eqlComptime(url.protocol, "http")) {
                 return try this.context(is_ssl).connect(client, url.hostname, url.getPortAuto());
             }
@@ -388,10 +388,10 @@ fn drainQueuedShutdowns(this: *@This()) void {
             this.queued_shutdowns = .{};
             break :brk shutdowns;
         };
-        defer queued_shutdowns.deinit(bun.default_allocator);
+        defer queued_shutdowns.deinit(fun.default_allocator);
 
         for (queued_shutdowns.items) |http| {
-            if (bun.http.socket_async_http_abort_tracker.fetchSwapRemove(http.async_http_id)) |socket_ptr| {
+            if (fun.http.socket_async_http_abort_tracker.fetchSwapRemove(http.async_http_id)) |socket_ptr| {
                 switch (socket_ptr.value) {
                     inline .SocketTLS, .SocketTCP => |socket, tag| {
                         const is_tls = tag == .SocketTLS;
@@ -405,7 +405,7 @@ fn drainQueuedShutdowns(this: *@This()) void {
                             client.closeAndAbort(comptime is_tls, socket);
                             continue;
                         }
-                        if (tagged.get(bun.http.H2.ClientSession)) |session| {
+                        if (tagged.get(fun.http.H2.ClientSession)) |session| {
                             session.abortByHttpId(http.async_http_id);
                             continue;
                         }
@@ -420,7 +420,7 @@ fn drainQueuedShutdowns(this: *@This()) void {
                 if (this.abortPendingH2Waiter(http.async_http_id)) continue;
                 // Or it's on an HTTP/3 session, which has no TCP socket to
                 // register in the tracker.
-                if (bun.http.H3.ClientContext.abortByHttpId(http.async_http_id)) continue;
+                if (fun.http.H3.ClientContext.abortByHttpId(http.async_http_id)) continue;
                 // Otherwise the request either hasn't started yet (still in
                 // `queued_tasks`/`deferred_tasks`) or has already completed.
                 // Flag it so `drainEvents` knows to scan the queue for
@@ -445,12 +445,12 @@ fn drainQueuedWrites(this: *@This()) void {
             this.queued_writes = .{};
             break :brk writes;
         };
-        defer queued_writes.deinit(bun.default_allocator);
+        defer queued_writes.deinit(fun.default_allocator);
         for (queued_writes.items) |write| {
             const message = write.message_type;
             const ended = message == .end;
 
-            if (bun.http.socket_async_http_abort_tracker.get(write.async_http_id)) |socket_ptr| {
+            if (fun.http.socket_async_http_abort_tracker.get(write.async_http_id)) |socket_ptr| {
                 switch (socket_ptr) {
                     inline .SocketTLS, .SocketTCP => |socket, tag| {
                         const is_tls = tag == .SocketTLS;
@@ -466,13 +466,13 @@ fn drainQueuedWrites(this: *@This()) void {
                                 client.flushStream(is_tls, socket);
                             }
                         }
-                        if (tagged.get(bun.http.H2.ClientSession)) |session| {
+                        if (tagged.get(fun.http.H2.ClientSession)) |session| {
                             session.streamBodyByHttpId(write.async_http_id, ended);
                         }
                     },
                 }
             } else {
-                bun.http.H3.ClientContext.streamBodyByHttpId(write.async_http_id, ended);
+                fun.http.H3.ClientContext.streamBodyByHttpId(write.async_http_id, ended);
             }
         }
         if (queued_writes.items.len == 0) {
@@ -493,10 +493,10 @@ fn drainQueuedHTTPResponseBodyDrains(this: *@This()) void {
             this.queued_response_body_drains = .{};
             break :brk drains;
         };
-        defer queued_response_body_drains.deinit(bun.default_allocator);
+        defer queued_response_body_drains.deinit(fun.default_allocator);
 
         for (queued_response_body_drains.items) |drain| {
-            if (bun.http.socket_async_http_abort_tracker.get(drain.async_http_id)) |socket_ptr| {
+            if (fun.http.socket_async_http_abort_tracker.get(drain.async_http_id)) |socket_ptr| {
                 switch (socket_ptr) {
                     inline .SocketTLS, .SocketTCP => |socket, tag| {
                         const is_tls = tag == .SocketTLS;
@@ -505,7 +505,7 @@ fn drainQueuedHTTPResponseBodyDrains(this: *@This()) void {
                         if (tagged.get(HTTPClient)) |client| {
                             client.drainResponseBody(comptime is_tls, socket);
                         }
-                        if (tagged.get(bun.http.H2.ClientSession)) |session| {
+                        if (tagged.get(fun.http.H2.ClientSession)) |session| {
                             session.drainResponseBodyByHttpId(drain.async_http_id);
                         }
                     },
@@ -524,7 +524,7 @@ fn drainEvents(this: *@This()) void {
     this.drainQueuedHTTPResponseBodyDrains();
     this.drainQueuedWrites();
     this.drainQueuedShutdowns();
-    bun.http.H3.PendingConnect.drainResolved();
+    fun.http.H3.PendingConnect.drainResolved();
 
     for (this.queued_threadlocal_proxy_derefs.items) |http| {
         http.deref();
@@ -573,14 +573,14 @@ fn drainEvents(this: *@This()) void {
     {
         var pending = this.deferred_tasks;
         this.deferred_tasks = .{};
-        defer pending.deinit(bun.default_allocator);
+        defer pending.deinit(fun.default_allocator);
         for (pending.items) |http| {
             if (http.client.signals.get(.aborted) or active < max) {
                 startQueuedTask(http);
                 if (comptime Environment.allow_assert) count += 1;
                 active = AsyncHTTP.active_requests_count.load(.monotonic);
             } else {
-                bun.handleOom(this.deferred_tasks.append(bun.default_allocator, http));
+                fun.handleOom(this.deferred_tasks.append(fun.default_allocator, http));
             }
         }
     }
@@ -590,7 +590,7 @@ fn drainEvents(this: *@This()) void {
             // Can't start this one yet. Defer it (preserves FIFO relative to
             // later pops) and keep draining — there may be aborted tasks
             // behind it that we can fail-fast right now.
-            bun.handleOom(this.deferred_tasks.append(bun.default_allocator, http));
+            fun.handleOom(this.deferred_tasks.append(fun.default_allocator, http));
             continue;
         }
         startQueuedTask(http);
@@ -600,7 +600,7 @@ fn drainEvents(this: *@This()) void {
 }
 
 fn startQueuedTask(http: *AsyncHTTP) void {
-    var cloned = bun.http.ThreadlocalAsyncHTTP.new(.{
+    var cloned = fun.http.ThreadlocalAsyncHTTP.new(.{
         .async_http = http.*,
     });
     cloned.async_http.real = http;
@@ -624,11 +624,11 @@ fn processEvents(this: *@This()) noreturn {
 
     while (true) {
         this.drainEvents();
-        if (comptime Environment.isDebug and bun.asan.enabled) {
-            for (bun.http.socket_async_http_abort_tracker.keys(), bun.http.socket_async_http_abort_tracker.values()) |http_id, socket| {
+        if (comptime Environment.isDebug and fun.asan.enabled) {
+            for (fun.http.socket_async_http_abort_tracker.keys(), fun.http.socket_async_http_abort_tracker.values()) |http_id, socket| {
                 if (socket.socket().get()) |usocket| {
                     _ = http_id;
-                    bun.asan.assertUnpoisoned(usocket);
+                    fun.asan.assertUnpoisoned(usocket);
                 }
             }
         }
@@ -643,11 +643,11 @@ fn processEvents(this: *@This()) noreturn {
         this.loop.loop.tick();
         this.loop.loop.dec();
 
-        if (comptime Environment.isDebug and bun.asan.enabled) {
-            for (bun.http.socket_async_http_abort_tracker.keys(), bun.http.socket_async_http_abort_tracker.values()) |http_id, socket| {
+        if (comptime Environment.isDebug and fun.asan.enabled) {
+            for (fun.http.socket_async_http_abort_tracker.keys(), fun.http.socket_async_http_abort_tracker.values()) |http_id, socket| {
                 if (socket.socket().get()) |usocket| {
                     _ = http_id;
-                    bun.asan.assertUnpoisoned(usocket);
+                    fun.asan.assertUnpoisoned(usocket);
                 }
             }
         }
@@ -665,9 +665,9 @@ pub fn scheduleResponseBodyDrain(this: *@This(), async_http_id: u32) void {
     {
         this.queued_response_body_drains_lock.lock();
         defer this.queued_response_body_drains_lock.unlock();
-        this.queued_response_body_drains.append(bun.default_allocator, .{
+        this.queued_response_body_drains.append(fun.default_allocator, .{
             .async_http_id = async_http_id,
-        }) catch |err| bun.handleOom(err);
+        }) catch |err| fun.handleOom(err);
     }
     if (this.has_awoken.load(.monotonic))
         this.loop.loop.wakeup();
@@ -678,9 +678,9 @@ pub fn scheduleShutdown(this: *@This(), http: *AsyncHTTP) void {
     {
         this.queued_shutdowns_lock.lock();
         defer this.queued_shutdowns_lock.unlock();
-        this.queued_shutdowns.append(bun.default_allocator, .{
+        this.queued_shutdowns.append(fun.default_allocator, .{
             .async_http_id = http.async_http_id,
-        }) catch |err| bun.handleOom(err);
+        }) catch |err| fun.handleOom(err);
     }
     if (this.has_awoken.load(.monotonic))
         this.loop.loop.wakeup();
@@ -690,10 +690,10 @@ pub fn scheduleRequestWrite(this: *@This(), http: *AsyncHTTP, messageType: Write
     {
         this.queued_writes_lock.lock();
         defer this.queued_writes_lock.unlock();
-        this.queued_writes.append(bun.default_allocator, .{
+        this.queued_writes.append(fun.default_allocator, .{
             .async_http_id = http.async_http_id,
             .message_type = messageType,
-        }) catch |err| bun.handleOom(err);
+        }) catch |err| fun.handleOom(err);
     }
     if (this.has_awoken.load(.monotonic))
         this.loop.loop.wakeup();
@@ -701,7 +701,7 @@ pub fn scheduleRequestWrite(this: *@This(), http: *AsyncHTTP, messageType: Write
 
 pub fn scheduleProxyDeref(this: *@This(), proxy: *ProxyTunnel) void {
     // this is always called on the http thread,
-    bun.handleOom(this.queued_threadlocal_proxy_derefs.append(bun.default_allocator, proxy));
+    fun.handleOom(this.queued_threadlocal_proxy_derefs.append(fun.default_allocator, proxy));
     if (this.has_awoken.load(.monotonic))
         this.loop.loop.wakeup();
 }
@@ -736,18 +736,18 @@ const stringZ = [:0]const u8;
 const ProxyTunnel = @import("./ProxyTunnel.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const jsc = bun.jsc;
-const strings = bun.strings;
-const Arena = bun.allocators.MimallocArena;
-const Batch = bun.ThreadPool.Batch;
-const UnboundedQueue = bun.threading.UnboundedQueue;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const jsc = fun.jsc;
+const strings = fun.strings;
+const Arena = fun.allocators.MimallocArena;
+const Batch = fun.ThreadPool.Batch;
+const UnboundedQueue = fun.threading.UnboundedQueue;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
-const HTTPClient = bun.http;
-const AsyncHTTP = bun.http.AsyncHTTP;
+const HTTPClient = fun.http;
+const AsyncHTTP = fun.http.AsyncHTTP;
 const InitError = HTTPClient.InitError;
-const NewHTTPContext = bun.http.NewHTTPContext;
+const NewHTTPContext = fun.http.NewHTTPContext;

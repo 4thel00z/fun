@@ -1,33 +1,33 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-test("Bun.build works multiple times after FileSystemRouter is created", async () => {
+test("Fun.build works multiple times after FileSystemRouter is created", async () => {
   using dir = tempDir("issue-18242", {
-    "pages/index.ts": `console.log("Hello via Bun!");`,
+    "pages/index.ts": `console.log("Hello via Fun!");`,
     "build.ts": `
 import path from "path";
 
 const PAGES_DIR = path.resolve(process.cwd(), "pages");
 
-const srcRouter = new Bun.FileSystemRouter({
+const srcRouter = new Fun.FileSystemRouter({
   dir: PAGES_DIR,
   style: "nextjs",
 });
 
 const entrypoints = Object.values(srcRouter.routes);
 
-const result1 = await Bun.build({
+const result1 = await Fun.build({
   entrypoints,
   outdir: "dist/browser",
 });
 
-const result2 = await Bun.build({
+const result2 = await Fun.build({
   entrypoints,
-  outdir: "dist/bun",
-  target: "bun",
+  outdir: "dist/fun",
+  target: "fun",
 });
 
-const result3 = await Bun.build({
+const result3 = await Fun.build({
   entrypoints,
   outdir: "dist/third",
 });
@@ -42,9 +42,9 @@ console.log(JSON.stringify({
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });

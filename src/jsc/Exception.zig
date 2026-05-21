@@ -12,9 +12,9 @@ pub const Exception = opaque {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const ZigStackTrace = @import("./ZigStackTrace.zig").ZigStackTrace;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

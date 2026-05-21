@@ -1,9 +1,9 @@
-import { SQL } from "bun";
-import { afterAll, beforeEach, describe, expect, test } from "bun:test";
+import { SQL } from "fun";
+import { afterAll, beforeEach, describe, expect, test } from "fun:test";
 import { isWindows } from "harness";
 import { unlinkSync } from "js/node/fs/export-star-from";
 
-declare module "bun" {
+declare module "fun" {
   namespace SQL {
     export interface PostgresOrMySQLOptions {
       sslMode?: number;
@@ -30,41 +30,41 @@ describe("SQL adapter environment variable precedence", () => {
   ];
 
   beforeEach(() => {
-    for (const key of Object.keys(process.env).concat(...Object.keys(Bun.env), ...Object.keys(import.meta.env))) {
+    for (const key of Object.keys(process.env).concat(...Object.keys(Fun.env), ...Object.keys(import.meta.env))) {
       delete process.env[key];
-      delete Bun.env[key];
+      delete Fun.env[key];
       delete import.meta.env[key];
     }
 
     for (const key in originalEnv) {
       process.env[key] = originalEnv[key];
-      Bun.env[key] = originalEnv[key];
+      Fun.env[key] = originalEnv[key];
       import.meta.env[key] = originalEnv[key];
     }
 
     for (const key of SQL_ENV_VARS) {
       delete process.env[key];
-      delete Bun.env[key];
+      delete Fun.env[key];
       delete import.meta.env[key];
     }
   });
 
   afterAll(() => {
-    for (const key of Object.keys(process.env).concat(...Object.keys(Bun.env), ...Object.keys(import.meta.env))) {
+    for (const key of Object.keys(process.env).concat(...Object.keys(Fun.env), ...Object.keys(import.meta.env))) {
       delete process.env[key];
-      delete Bun.env[key];
+      delete Fun.env[key];
       delete import.meta.env[key];
     }
 
     for (const key in originalEnv) {
       process.env[key] = originalEnv[key];
-      Bun.env[key] = originalEnv[key];
+      Fun.env[key] = originalEnv[key];
       import.meta.env[key] = originalEnv[key];
     }
 
     for (const key of SQL_ENV_VARS) {
       delete process.env[key];
-      delete Bun.env[key];
+      delete Fun.env[key];
       delete import.meta.env[key];
     }
   });
@@ -308,7 +308,7 @@ describe("SQL adapter environment variable precedence", () => {
     });
 
     test.skipIf(isWindows)("should work with unix:// protocol and explicit adapter", () => {
-      using sock = Bun.listen({
+      using sock = Fun.listen({
         unix: "/tmp/thisisacoolmysql.sock",
         socket: {
           data: console.log,

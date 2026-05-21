@@ -311,7 +311,7 @@ pub const Block = enum(u9) {
     kana_extended_a,
     kana_extended_b,
     kana_supplement,
-    kanbun,
+    kanfun,
     kangxi_radicals,
     kannada,
     katakana,

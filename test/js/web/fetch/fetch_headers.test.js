@@ -1,11 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "fun:test";
 let url = `http://localhost:0`;
 let server;
 
 describe("Headers", async () => {
   // Start up a single server and reuse it between tests
   beforeAll(() => {
-    server = Bun.serve({
+    server = Fun.serve({
       fetch(req) {
         const hdr = req.headers.get("x-test");
         return new Response(hdr);

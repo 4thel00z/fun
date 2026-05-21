@@ -1,19 +1,19 @@
-import { spawnSync } from "bun";
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { spawnSync } from "fun";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import { join } from "path";
 
-// https://github.com/oven-sh/bun/issues/18239
+// https://github.com/underdoc-org/fun/issues/18239
 test.skipIf(isWindows)("TTY stdin buffering should work correctly", async () => {
   const dataGeneratorPath = join(import.meta.dir, "data-generator.sh");
   const fixturePath = join(import.meta.dir, "18239.fixture.ts");
 
   // Run the data generator piped into our TTY test fixture
   const result = spawnSync({
-    cmd: ["bash", "-c", `"${dataGeneratorPath}" | "${bunExe()}" "${fixturePath}"`],
+    cmd: ["bash", "-c", `"${dataGeneratorPath}" | "${funExe()}" "${fixturePath}"`],
     env: {
-      ...bunEnv,
-      BUN_DEBUG_QUIET_LOGS: "1",
+      ...funEnv,
+      FUN_DEBUG_QUIET_LOGS: "1",
     },
     stderr: "pipe",
     stdout: "pipe",

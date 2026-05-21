@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 // Tests for bounds checking on native zlib handle write/writeSync methods.
 // These verify that user-controlled offset/length parameters are validated

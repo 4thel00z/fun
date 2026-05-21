@@ -4,7 +4,7 @@
 
 // https://github.com/WebKit/WebKit/blob/443e796d1538654c34f2690e39600c70c8052b63/LayoutTests/imported/w3c/web-platform-tests/encoding/streams/encode-bad-chunks.any.js#L5
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { readableStreamFromArray } from "harness";
 
 const error1 = new Error("error1");
@@ -67,7 +67,7 @@ for (const input of oddInputs) {
     const outputReadable = readableStreamFromArray([input.value])
       .pipeThrough(new TextEncoderStream())
       .pipeThrough(new TextDecoderStream());
-    const output = await Bun.readableStreamToArray(outputReadable);
+    const output = await Fun.readableStreamToArray(outputReadable);
     expect(output.length, "output should contain one chunk").toBe(1);
     expect(output[0], "output should be correct").toBe(input.expected);
   });

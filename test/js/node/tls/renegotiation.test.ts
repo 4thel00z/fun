@@ -1,17 +1,17 @@
-import type { Subprocess } from "bun";
-import { afterAll, beforeAll, expect, it } from "bun:test";
-import { bunEnv, bunExe, tls } from "harness";
+import type { Subprocess } from "fun";
+import { afterAll, beforeAll, expect, it } from "fun:test";
+import { funEnv, funExe, tls } from "harness";
 import type { IncomingMessage } from "http";
 import { join } from "path";
 let url: URL;
 let process: Subprocess<"ignore", "pipe", "ignore"> | null = null;
 beforeAll(async () => {
-  process = Bun.spawn(["node", join(import.meta.dir, "renegotiation-feature.js")], {
+  process = Fun.spawn(["node", join(import.meta.dir, "renegotiation-feature.js")], {
     stdout: "pipe",
     stderr: "inherit",
     stdin: "ignore",
     env: {
-      ...bunEnv,
+      ...funEnv,
       SERVER_CERT: tls.cert,
       SERVER_KEY: tls.key,
     },
@@ -138,16 +138,16 @@ it("should not crash when socket is closed inside the renegotiation handshake ca
   // is freed (s->ssl = NULL) and the loop must not continue into SSL_read(NULL, ...).
   // Run in a subprocess so a NULL-deref SIGSEGV shows up as a non-zero exit instead of
   // taking down the test runner.
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", renegotiationCloseInHandshakeFixture],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", renegotiationCloseInHandshakeFixture],
     env: {
-      ...bunEnv,
+      ...funEnv,
       SERVER_HOST: url.hostname,
       SERVER_PORT: url.port,
       // If the subprocess segfaults in an ASAN build, symbolizing a ~1 GB
       // binary can take longer than the test timeout. We only need the exit
       // code / signal to assert that it did not crash.
-      ASAN_OPTIONS: ((bunEnv.ASAN_OPTIONS ?? "") + ":symbolize=0").replace(/^:/, ""),
+      ASAN_OPTIONS: ((funEnv.ASAN_OPTIONS ?? "") + ":symbolize=0").replace(/^:/, ""),
     },
     stdout: "pipe",
     stderr: "pipe",
@@ -165,7 +165,7 @@ it("should not crash when socket is closed inside the renegotiation handshake ca
 const renegotiationCloseInHandshakeFixture = /* js */ `
 const { promise: done, resolve } = Promise.withResolvers();
 let handshakes = 0;
-const socket = await Bun.connect({
+const socket = await Fun.connect({
   hostname: process.env.SERVER_HOST,
   port: Number(process.env.SERVER_PORT),
   tls: { rejectUnauthorized: false },

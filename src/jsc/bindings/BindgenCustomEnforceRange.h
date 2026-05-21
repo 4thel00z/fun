@@ -4,7 +4,7 @@
 #include "JSDOMConvertBase.h"
 #include "ErrorCode.h"
 
-namespace Bun {
+namespace Fun {
 
 enum class BindgenCustomEnforceRangeKind {
     Node,
@@ -37,15 +37,15 @@ template<
     typename NumericType,
     NumericType Min,
     NumericType Max,
-    Bun::BindgenCustomEnforceRangeKind Kind>
-struct Converter<Bun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>>
-    : DefaultConverter<Bun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>> {
+    Fun::BindgenCustomEnforceRangeKind Kind>
+struct Converter<Fun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>>
+    : DefaultConverter<Fun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>> {
     template<typename ExceptionThrower = DefaultExceptionThrower>
     static inline NumericType convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, ExceptionThrower&& exceptionThrower = ExceptionThrower())
     {
         auto scope = DECLARE_THROW_SCOPE(lexicalGlobalObject.vm());
         double unrestricted;
-        if constexpr (Kind == Bun::BindgenCustomEnforceRangeKind::Node) {
+        if constexpr (Kind == Fun::BindgenCustomEnforceRangeKind::Node) {
             // In Node.js, `validateNumber`, `validateInt32`, `validateUint32`,
             // and `validateInteger` all start with the following
             //
@@ -53,7 +53,7 @@ struct Converter<Bun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>>
             //         throw new ERR_INVALID_ARG_TYPE(name, 'number', value);
             //
             if (!value.isNumber()) {
-                Bun::ERR::INVALID_ARG_TYPE(scope, &lexicalGlobalObject, exceptionThrower(), "number"_s, value);
+                Fun::ERR::INVALID_ARG_TYPE(scope, &lexicalGlobalObject, exceptionThrower(), "number"_s, value);
                 return 0;
             }
             unrestricted = value.asNumber();
@@ -62,7 +62,7 @@ struct Converter<Bun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>>
             if constexpr (std::is_integral_v<NumericType>) {
                 if (unrestricted != std::round(unrestricted)) {
                     // ERR_OUT_OF_RANGE "an integer"
-                    Bun::ERR::OUT_OF_RANGE(scope, &lexicalGlobalObject, exceptionThrower(), "an integer"_s, value);
+                    Fun::ERR::OUT_OF_RANGE(scope, &lexicalGlobalObject, exceptionThrower(), "an integer"_s, value);
                     return 0;
                 }
             } else {
@@ -70,7 +70,7 @@ struct Converter<Bun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>>
                 // Node also throws on NaN being out of range
                 if (std::isnan(unrestricted)) {
                     // ERR_OUT_OF_RANGE `>= ${min} && <= ${max}`
-                    Bun::ERR::OUT_OF_RANGE(scope, &lexicalGlobalObject, exceptionThrower(), Min, Max, value);
+                    Fun::ERR::OUT_OF_RANGE(scope, &lexicalGlobalObject, exceptionThrower(), Min, Max, value);
                     return 0;
                 }
             }
@@ -94,8 +94,8 @@ struct Converter<Bun::BindgenCustomEnforceRange<NumericType, Min, Max, Kind>>
 
         bool inRange = unrestricted >= Min && unrestricted <= Max;
         if (!inRange) {
-            if constexpr (Kind == Bun::BindgenCustomEnforceRangeKind::Node) {
-                Bun::ERR::OUT_OF_RANGE(scope, &lexicalGlobalObject, exceptionThrower(), Min, Max, value);
+            if constexpr (Kind == Fun::BindgenCustomEnforceRangeKind::Node) {
+                Fun::ERR::OUT_OF_RANGE(scope, &lexicalGlobalObject, exceptionThrower(), Min, Max, value);
             } else {
                 // WebKit range exception
                 throwTypeError(&lexicalGlobalObject, scope, rangeErrorString(unrestricted, Min, Max));

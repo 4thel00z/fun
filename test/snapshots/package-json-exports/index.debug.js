@@ -1,6 +1,6 @@
 import {
 __require as require_ab102cbd93061951
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import * as $a4de9925 from "http://localhost:8080/package-json-exports/node_modules/inexact/browser/index.js";
 var InexactRoot = require_ab102cbd93061951($a4de9925);
 import * as $725c641 from "http://localhost:8080/package-json-exports/node_modules/inexact/browser/dir/file.js";

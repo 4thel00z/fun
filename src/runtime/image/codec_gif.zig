@@ -1,4 +1,4 @@
-//! GIF89a/87a first-frame decode for `Bun.Image`.
+//! GIF89a/87a first-frame decode for `Fun.Image`.
 //!
 //! LZW is inherently serial — each code's expansion depends on the dictionary
 //! built from all prior codes — so the bitstream decode is scalar by
@@ -96,7 +96,7 @@ const Dict = struct {
             // strictly decreases. Hostile streams can't break that — `code >
             // avail` is rejected before emit() is called. Asserted so a future
             // edit that loosens the rejection trips loudly.
-            bun.debugAssert(n < 4096);
+            fun.debugAssert(n < 4096);
             scratch[n] = self.suffix[code];
             code = self.prefix[code];
         }
@@ -187,12 +187,12 @@ fn decodeFrame(bytes: []const u8, lzw_off: usize, w: u32, h: u32, interlace: boo
     var avail: u16 = eoi + 1;
     var prev: ?u16 = null;
 
-    var dict = bun.default_allocator.create(Dict) catch return error.OutOfMemory;
-    defer bun.default_allocator.destroy(dict);
+    var dict = fun.default_allocator.create(Dict) catch return error.OutOfMemory;
+    defer fun.default_allocator.destroy(dict);
     var scratch: [4096]u8 = undefined;
 
-    const idx = try bun.default_allocator.alloc(u8, npix);
-    defer bun.default_allocator.free(idx);
+    const idx = try fun.default_allocator.alloc(u8, npix);
+    defer fun.default_allocator.free(idx);
     var written: usize = 0;
 
     var bits: Bits = .{ .src = bytes, .i = lzw_off };
@@ -251,8 +251,8 @@ fn decodeFrame(bytes: []const u8, lzw_off: usize, w: u32, h: u32, interlace: boo
     // from 4, every 4th from 2, every 2nd from 1). The decoded `idx` is in
     // pass order; remap to scan order while expanding so we don't allocate a
     // second index buffer.
-    const out = try bun.default_allocator.alloc(u8, npix * 4);
-    errdefer bun.default_allocator.free(out);
+    const out = try fun.default_allocator.alloc(u8, npix * 4);
+    errdefer fun.default_allocator.free(out);
 
     var pal: [256][4]u8 = .{.{ 0, 0, 0, 255 }} ** 256;
     for (0..ct.len / 3) |c| pal[c] = .{ ct[c * 3], ct[c * 3 + 1], ct[c * 3 + 2], 255 };
@@ -282,6 +282,6 @@ inline fn expandRow(idx: []const u8, out: []u8, pal: *const [256][4]u8) void {
     for (idx, 0..) |c, x| @memcpy(out[x * 4 ..][0..4], &pal[c]);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const codecs = @import("./codecs.zig");
 const std = @import("std");

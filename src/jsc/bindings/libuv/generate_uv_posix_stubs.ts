@@ -47,7 +47,7 @@ async function generate(symbol_name: string): Promise<[stub: string, symbol_name
 
   const HEADER_PATH = import.meta.dir;
 
-  const output = await Bun.$`rg -n ${symbol_name + "\\("}`.cwd(HEADER_PATH).text();
+  const output = await Fun.$`rg -n ${symbol_name + "\\("}`.cwd(HEADER_PATH).text();
 
   if (!output.includes("UV_EXTERN")) {
     console.error("Symbol not found!");
@@ -70,7 +70,7 @@ async function generate(symbol_name: string): Promise<[stub: string, symbol_name
       matches.push({ filename, lineNumber, rest });
     } else {
       const absoluteFilepath = join(HEADER_PATH, filename);
-      const fileContents = await Bun.file(absoluteFilepath).text();
+      const fileContents = await Fun.file(absoluteFilepath).text();
       console.log(absoluteFilepath, "Found multi-liner!", lineNumber);
       const fileLines = fileContents.split("\n");
       let found = false;
@@ -247,11 +247,11 @@ async function generate(symbol_name: string): Promise<[stub: string, symbol_name
     console.log(decl_without_semicolon);
 
     const contents = `${decl_without_semicolon} {
-  __bun_throw_not_implemented("${symbolName}");
+  __fun_throw_not_implemented("${symbolName}");
   __builtin_unreachable();
 }`;
 
-    // await Bun.write(stubPath, contents);
+    // await Fun.write(stubPath, contents);
     return [contents, symbolName, types];
   }
 
@@ -275,7 +275,7 @@ async function generate(symbol_name: string): Promise<[stub: string, symbol_name
 
 // const symbols = ["uv_async_init"];
 
-if (!Bun.which("rg")) {
+if (!Fun.which("rg")) {
   console.error("You need ripgrep bro");
   process.exit(1);
 }
@@ -296,9 +296,9 @@ ${parts.map(([stub, _]) => stub).join("\n\n")}
 
 `;
 
-await Bun.write(join(import.meta.dir, "../", "uv-posix-stubs.c"), final_contents);
-if (Bun.which("clang-format")) {
-  await Bun.$`clang-format -i ${join(import.meta.dir, "../", "uv-posix-stubs.c")}`;
+await Fun.write(join(import.meta.dir, "../", "uv-posix-stubs.c"), final_contents);
+if (Fun.which("clang-format")) {
+  await Fun.$`clang-format -i ${join(import.meta.dir, "../", "uv-posix-stubs.c")}`;
 }
 
 const test_plugin_contents = ` // GENERATED CODE ... NO TOUCHY!!
@@ -385,10 +385,10 @@ NAPI_MODULE(NODE_GYP_MODULE_NAME, Init)
 `;
 
 const plugin_path_ = join(import.meta.dir, "../", "../", "../", "../", "test", "napi", "uv-stub-stuff", "plugin.c");
-await Bun.write(plugin_path_, test_plugin_contents);
+await Fun.write(plugin_path_, test_plugin_contents);
 
-if (Bun.which("clang-format")) {
-  await Bun.$`clang-format -i ${plugin_path_}`.quiet();
+if (Fun.which("clang-format")) {
+  await Fun.$`clang-format -i ${plugin_path_}`.quiet();
 }
 
 // for (const symbol of symbols) {

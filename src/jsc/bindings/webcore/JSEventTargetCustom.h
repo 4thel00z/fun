@@ -77,7 +77,7 @@ public:
         if (thisObject.isNull()) [[unlikely]]
             return throwThisTypeError(lexicalGlobalObject, throwScope, "EventTarget", operationName);
 
-        // Note: WebKit Ref-protects thisObject.wrapped() here, but Bun's req.signal lifecycle
+        // Note: WebKit Ref-protects thisObject.wrapped() here, but Fun's req.signal lifecycle
         // depends on exact ref-counting; the JS cell already keeps wrapped alive via JSDOMWrapper.
         RELEASE_AND_RETURN(throwScope, (operation(&lexicalGlobalObject, &callFrame, &thisObject)));
     }

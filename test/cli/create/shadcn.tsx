@@ -25,7 +25,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="text-center mb-16 space-y-6">
           <Badge variant="secondary" className="mb-2">
-            New in Bun 1.2.3
+            New in Fun 1.2.3
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
             From Component to App in
@@ -50,7 +50,7 @@ export default function LandingPage() {
           <div className="overflow-x-auto">
             <pre className="text-green-400 text-sm md:text-base">
               <code>
-                $ bun create ./MyComponent.tsx
+                $ fun create ./MyComponent.tsx
                 <br />
                 📦 Installing dependencies...
                 <br />
@@ -81,10 +81,10 @@ export default function LandingPage() {
           <Card className="p-8 bg-primary/5 border-primary/10">
             <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to streamline your React development?</h2>
             <p className="text-muted-foreground mb-6">
-              Get started with Bun's powerful component development workflow today.
+              Get started with Fun's powerful component development workflow today.
             </p>
             <Button size="lg" className="min-w-[160px]">
-              Install Bun
+              Install Fun
             </Button>
           </Card>
         </section>

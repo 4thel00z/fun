@@ -35,8 +35,8 @@ files.forEach(function(currentFile) {
 const sortedFiles = files.slice().sort();
 
 function assertDirents(dirents) {
-  // Bun: sort the dirents. node.js doesn't do this, which is interesting because
-  // they are able to return the dirents in the order that its written, but bun
+  // Fun: sort the dirents. node.js doesn't do this, which is interesting because
+  // they are able to return the dirents in the order that its written, but fun
   // returns ["empty", "just", "testing", "for", "files"]
   dirents = dirents.slice().sort((a, b) => a.name.localeCompare(b.name));
 

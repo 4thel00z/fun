@@ -11,9 +11,9 @@ var env_converted: if (Environment.ci_assert) bool else void = if (Environment.c
 /// access the environment runs.
 ///
 /// This function is Windows-only.
-pub fn convertEnvToWTF8() bun.OOM!void {
+pub fn convertEnvToWTF8() fun.OOM!void {
     if (comptime Environment.ci_assert) {
-        bun.assertf(!env_converted, "convertEnvToWTF8 may only be called once", .{});
+        fun.assertf(!env_converted, "convertEnvToWTF8 may only be called once", .{});
         env_converted = true;
     }
     errdefer if (comptime Environment.ci_assert) {
@@ -22,8 +22,8 @@ pub fn convertEnvToWTF8() bun.OOM!void {
 
     var num_vars: usize = 0;
     const wtf8_buf: []u8 = blk: {
-        var wtf16_buf: [*:0]u16 = try bun.windows.GetEnvironmentStringsW();
-        defer bun.windows.FreeEnvironmentStringsW(wtf16_buf);
+        var wtf16_buf: [*:0]u16 = try fun.windows.GetEnvironmentStringsW();
+        defer fun.windows.FreeEnvironmentStringsW(wtf16_buf);
         var len: usize = 0;
         while (true) {
             const str_len = std.mem.len(wtf16_buf[len..]);
@@ -31,12 +31,12 @@ pub fn convertEnvToWTF8() bun.OOM!void {
             if (str_len == 0) break; // array ends with empty null-terminated string
             num_vars += 1;
         }
-        break :blk try bun.strings.toUTF8AllocWithType(bun.default_allocator, wtf16_buf[0..len]);
+        break :blk try fun.strings.toUTF8AllocWithType(fun.default_allocator, wtf16_buf[0..len]);
     };
-    errdefer bun.default_allocator.free(wtf8_buf);
+    errdefer fun.default_allocator.free(wtf8_buf);
     var len: usize = 0;
 
-    var envp: bun.collections.ArrayListDefault(?[*:0]u8) = try .initCapacity(num_vars + 1);
+    var envp: fun.collections.ArrayListDefault(?[*:0]u8) = try .initCapacity(num_vars + 1);
     errdefer envp.deinit();
     while (true) {
         const str_len = std.mem.indexOfScalar(u8, wtf8_buf[len..], 0).?;
@@ -56,5 +56,5 @@ pub fn convertEnvToWTF8() bun.OOM!void {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

@@ -11,8 +11,8 @@ const mixed_decoder = brk: {
     break :brk decoder;
 };
 
-pub fn decode(destination: []u8, source: []const u8) bun.simdutf.SIMDUTFResult {
-    const result = bun.simdutf.base64.decode(source, destination, false);
+pub fn decode(destination: []u8, source: []const u8) fun.simdutf.SIMDUTFResult {
+    const result = fun.simdutf.base64.decode(source, destination, false);
 
     if (!result.isSuccessful()) {
         // The input does not follow the WHATWG forgiving-base64 specification
@@ -42,10 +42,10 @@ pub fn decodeAlloc(allocator: std.mem.Allocator, input: []const u8) ![]u8 {
 }
 
 pub fn encode(destination: []u8, source: []const u8) usize {
-    return bun.simdutf.base64.encode(source, destination, false);
+    return fun.simdutf.base64.encode(source, destination, false);
 }
 
-pub fn encodeAlloc(allocator: std.mem.Allocator, source: []const u8) !bun.ByteList {
+pub fn encodeAlloc(allocator: std.mem.Allocator, source: []const u8) !fun.ByteList {
     const len = encodeLen(source);
     const destination = try allocator.alloc(u8, len);
     const encoded_len = encode(destination, source);
@@ -57,7 +57,7 @@ pub fn encodeAlloc(allocator: std.mem.Allocator, source: []const u8) !bun.ByteLi
 }
 
 pub fn simdutfEncodeLenUrlSafe(source_len: usize) usize {
-    return bun.simdutf.base64.encode_len(source_len, true);
+    return fun.simdutf.base64.encode_len(source_len, true);
 }
 
 /// Encode with the following differences from regular `encode` function:
@@ -67,7 +67,7 @@ pub fn simdutfEncodeLenUrlSafe(source_len: usize) usize {
 ///
 /// See the documentation for simdutf's `binary_to_base64` function for more details (simdutf_impl.h).
 pub fn simdutfEncodeUrlSafe(destination: []u8, source: []const u8) usize {
-    return bun.simdutf.base64.encode(source, destination, true);
+    return fun.simdutf.base64.encode(source, destination, true);
 }
 
 pub fn decodeLenUpperBound(len: usize) usize {
@@ -99,12 +99,12 @@ pub fn urlSafeEncodeLen(source: anytype) usize {
 }
 extern fn WTF__base64URLEncode(input: [*]const u8, input_len: usize, output: [*]u8, output_len: usize) usize;
 pub fn encodeURLSafe(dest: []u8, source: []const u8) usize {
-    bun.jsc.markBinding(@src());
+    fun.jsc.markBinding(@src());
     return WTF__base64URLEncode(source.ptr, source.len, dest.ptr, dest.len);
 }
 
 const zig_base64 = struct {
-    const assert = bun.assert;
+    const assert = fun.assert;
     const testing = std.testing;
     const mem = std.mem;
 
@@ -554,5 +554,5 @@ const zig_base64 = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

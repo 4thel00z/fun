@@ -10,9 +10,9 @@
 // (`_mi_heap_realloc_zero`) during `std.fmt.allocPrint`.
 //
 // The fix migrates the WebSocket upgrade client FFI from ZigString to
-// BunString and decodes every input with `bun.String.toUTF8(allocator)`.
+// FunString and decodes every input with `fun.String.toUTF8(allocator)`.
 
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "fun:test";
 import { once } from "node:events";
 import net from "node:net";
 

@@ -1,4 +1,4 @@
-import jsc from "bun:jsc";
+import jsc from "fun:jsc";
 import { createServer, Server } from "node:http";
 import { URL } from "node:url";
 import zlib from "node:zlib";
@@ -30,12 +30,12 @@ var server = createServer(async (req, res) => {
   gz.pipe(res);
 
   for (let i = 0; i < 10; i++) gz.write(data);
-  await Bun.sleep(10);
+  await Fun.sleep(10);
   for (let i = 0; i < 10; i++) gz.write(data);
-  await Bun.sleep(10);
+  await Fun.sleep(10);
   for (let i = 0; i < 10; i++) gz.write(data);
   for (let i = 0; i < 10; i++) gz.write(data);
-  await Bun.sleep(10);
+  await Fun.sleep(10);
   for (let i = 0; i < 10; i++) gz.write(data);
   for (let i = 0; i < 10; i++) gz.write(data);
   for (let i = 0; i < 10; i++) gz.write(data);
@@ -43,11 +43,11 @@ var server = createServer(async (req, res) => {
 
   count += 1;
   if (count % 1000 === 0) {
-    Bun.gc(true);
+    Fun.gc(true);
     console.log("count", count, process.memoryUsage.rss());
   }
   if (count == 10_000) {
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
     console.log("heapStats", jsc.heapStats());
     process.send({ baseline, after });

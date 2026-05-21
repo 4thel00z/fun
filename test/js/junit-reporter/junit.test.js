@@ -1,6 +1,6 @@
-import { file, spawn } from "bun";
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { file, spawn } from "fun";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 const xml2js = require("xml2js");
 
@@ -62,7 +62,7 @@ describe("junit reporter", () => {
       `,
     });
 
-    let env = bunEnv;
+    let env = funEnv;
 
     if (withCIEnvironmentVariables) {
       env = {
@@ -73,7 +73,7 @@ describe("junit reporter", () => {
     }
 
     const junitPath = `${tmpDir}/junit.xml`;
-    const proc = spawn([bunExe(), "test", "--reporter=junit", "--reporter-outfile", junitPath], {
+    const proc = spawn([funExe(), "test", "--reporter=junit", "--reporter-outfile", junitPath], {
       cwd: tmpDir,
       env,
       stdout: "pipe",
@@ -153,7 +153,7 @@ describe("junit reporter", () => {
     const tmpDir = tempDirWithFiles("junit-comprehensive", {
       "package.json": "{}",
       "comprehensive.test.js": `
-        import { test, expect, describe } from "bun:test";
+        import { test, expect, describe } from "fun:test";
 
         describe("comprehensive test suite", () => {
           describe.each([
@@ -245,9 +245,9 @@ describe("junit reporter", () => {
     console.log(tmpDir);
 
     const junitPath1 = `${tmpDir}/junit-all.xml`;
-    const proc1 = spawn([bunExe(), "test", "--reporter=junit", "--reporter-outfile", junitPath1], {
+    const proc1 = spawn([funExe(), "test", "--reporter=junit", "--reporter-outfile", junitPath1], {
       cwd: tmpDir,
-      env: { ...bunEnv, BUN_DEBUG_QUIET_LOGS: "1" },
+      env: { ...funEnv, FUN_DEBUG_QUIET_LOGS: "1" },
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -271,10 +271,10 @@ describe("junit reporter", () => {
 
     const junitPath2 = `${tmpDir}/junit-filtered.xml`;
     const proc2 = spawn(
-      [bunExe(), "test", "-t", "should match", "--reporter=junit", "--reporter-outfile", junitPath2],
+      [funExe(), "test", "-t", "should match", "--reporter=junit", "--reporter-outfile", junitPath2],
       {
         cwd: tmpDir,
-        env: { ...bunEnv, BUN_DEBUG_QUIET_LOGS: "1" },
+        env: { ...funEnv, FUN_DEBUG_QUIET_LOGS: "1" },
         stdout: "pipe",
         stderr: "pipe",
       },
@@ -319,7 +319,7 @@ describe("junit reporter", () => {
     const tmpDir = tempDirWithFiles("junit-retry", {
       "package.json": "{}",
       "flaky.test.js": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         let attempt = 0;
         test("flaky test", { retry: 3 }, () => {
           attempt++;
@@ -336,9 +336,9 @@ describe("junit reporter", () => {
     });
 
     const junitPath = `${tmpDir}/junit.xml`;
-    await using proc = spawn([bunExe(), "test", "--reporter=junit", "--reporter-outfile", junitPath], {
+    await using proc = spawn([funExe(), "test", "--reporter=junit", "--reporter-outfile", junitPath], {
       cwd: tmpDir,
-      env: { ...bunEnv, BUN_DEBUG_QUIET_LOGS: "1" },
+      env: { ...funEnv, FUN_DEBUG_QUIET_LOGS: "1" },
       stdout: "pipe",
       stderr: "pipe",
     });

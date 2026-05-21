@@ -1,7 +1,7 @@
-import { file } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { file } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { exists } from "fs/promises";
-import { VerdaccioRegistry, bunEnv, bunEnv as env, runBunInstall } from "harness";
+import { VerdaccioRegistry, funEnv, funEnv as env, runFunInstall } from "harness";
 import { join } from "path";
 
 var registry = new VerdaccioRegistry();
@@ -27,17 +27,17 @@ describe("configVersion", () => {
       },
     });
 
-    await runBunInstall(env, packageDir);
+    await runFunInstall(env, packageDir);
 
     expect(
       await Promise.all([
-        exists(join(packageDir, "node_modules/.bun")),
+        exists(join(packageDir, "node_modules/.fun")),
         file(join(packageDir, "node_modules/no-deps/package.json")).json(),
       ]),
     ).toEqual([false, { name: "no-deps", version: "1.0.0" }]);
 
     const lockfile = await (
-      await file(join(packageDir, "bun.lock")).text()
+      await file(join(packageDir, "fun.lock")).text()
     ).replaceAll(/localhost:\d+/g, "localhost:1234");
     expect(lockfile).toMatchInlineSnapshot(`
       "{
@@ -75,17 +75,17 @@ describe("configVersion", () => {
       },
     });
 
-    await runBunInstall(env, packageDir);
+    await runFunInstall(env, packageDir);
 
     expect(
       await Promise.all([
         exists(join(packageDir, "packages/pkg1/node_modules/no-deps")),
-        file(join(packageDir, "node_modules/.bun/no-deps@1.0.0/node_modules/no-deps/package.json")).json(),
+        file(join(packageDir, "node_modules/.fun/no-deps@1.0.0/node_modules/no-deps/package.json")).json(),
       ]),
     ).toEqual([true, { name: "no-deps", version: "1.0.0" }]);
 
     const lockfile = await (
-      await file(join(packageDir, "bun.lock")).text()
+      await file(join(packageDir, "fun.lock")).text()
     ).replaceAll(/localhost:\d+/g, "localhost:1234");
     expect(lockfile).toMatchInlineSnapshot(`
       "{
@@ -125,7 +125,7 @@ describe("configVersion", () => {
         "packages/pkg1/package.json": JSON.stringify({
           "name": "pkg1",
         }),
-        "bun.lock": JSON.stringify({
+        "fun.lock": JSON.stringify({
           "lockfileVersion": 1,
           "workspaces": {
             "": {
@@ -145,18 +145,18 @@ describe("configVersion", () => {
       },
     });
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     // should be hoisted install
     expect(
       await Promise.all([
-        exists(join(packageDir, "node_modules/.bun")),
+        exists(join(packageDir, "node_modules/.fun")),
         file(join(packageDir, "node_modules/pkg1/package.json")).json(),
       ]),
     ).toEqual([false, { name: "pkg1" }]);
 
     const lockfile = await (
-      await file(join(packageDir, "bun.lock")).text()
+      await file(join(packageDir, "fun.lock")).text()
     ).replaceAll(/localhost:\d+/g, "localhost:1234");
     expect(lockfile).toMatchInlineSnapshot(`
       "{

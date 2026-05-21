@@ -1,6 +1,6 @@
-import { $ } from "bun";
-import { expect, test } from "bun:test";
-import { bunExe, tempDirWithFiles } from "harness";
+import { $ } from "fun";
+import { expect, test } from "fun:test";
+import { funExe, tempDirWithFiles } from "harness";
 import * as i from "./import_target";
 import { mile𐃘add1 as m, mile𐃘add1 } from "./import_target";
 
@@ -22,9 +22,9 @@ test("more unicode imports", async () => {
       export const nထme = "𐃘1";
     `,
   });
-  expect((await $`${bunExe()} run ${dir}/mod_importer.ts`.text()).trim()).toBe("𐃘1 𐃘1");
-  console.log(await $`${bunExe()} build --target=bun ${dir}/mod_importer.ts`.text());
-  console.log(await $`${bunExe()} build --target=node ${dir}/mod_importer.ts`.text());
+  expect((await $`${funExe()} run ${dir}/mod_importer.ts`.text()).trim()).toBe("𐃘1 𐃘1");
+  console.log(await $`${funExe()} build --target=fun ${dir}/mod_importer.ts`.text());
+  console.log(await $`${funExe()} build --target=node ${dir}/mod_importer.ts`.text());
 });
 
 // prettier-ignore
@@ -34,10 +34,10 @@ test("escaped unicode variable name", () => {
   expect(mile\u{100d8}value).toBe(36);
 });
 
-test("bun build --target=bun outputs only ascii", async () => {
-  const build_result = await Bun.build({
+test("fun build --target=fun outputs only ascii", async () => {
+  const build_result = await Fun.build({
     entrypoints: [import.meta.dirname + "/import_target.ts"],
-    target: "bun",
+    target: "fun",
   });
   expect(build_result.success).toBe(true);
   expect(build_result.outputs.length).toBe(1);

@@ -76,7 +76,7 @@
   // JavaScript
   "prettier.enable": true,
   "prettier.configPath": ".prettierrc",
-  "eslint.workingDirectories": ["${workspaceFolder}/packages/bun-types"],
+  "eslint.workingDirectories": ["${workspaceFolder}/packages/fun-types"],
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
@@ -151,7 +151,7 @@
     "array": "cpp",
     "ios": "cpp",
     "oxlint.json": "jsonc",
-    "bun.lock": "jsonc",
+    "fun.lock": "jsonc",
   },
   "C_Cpp.files.exclude": {
     "**/.vscode": true,
@@ -172,5 +172,5 @@
     "WebKit/WebInspectorUI": true,
   },
   "git.detectSubmodules": false,
-  "bun.test.customScript": "./build/debug/bun-debug test",
+  "fun.test.customScript": "./build/debug/fun-debug test",
 }

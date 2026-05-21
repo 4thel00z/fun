@@ -6,14 +6,14 @@
 using namespace JSC;
 using namespace JSC::Yarr;
 
-extern "C" RegularExpression* Yarr__RegularExpression__init(BunString pattern, uint16_t flags)
+extern "C" RegularExpression* Yarr__RegularExpression__init(FunString pattern, uint16_t flags)
 {
     // TODO: Remove this, we technically are accessing options before we finalize them.
-    // This means you cannot use BUN_JSC_dumpCompiledRegExpPatterns on the flag passed to `bun test -t`
+    // This means you cannot use FUN_JSC_dumpCompiledRegExpPatterns on the flag passed to `fun test -t`
     // NOLINTBEGIN
     Options::AllowUnfinalizedAccessScope scope {};
     // NOLINTEND
-    return new RegularExpression(pattern.toWTFString(BunString::ZeroCopy), OptionSet<Flags>(static_cast<Flags>(flags)));
+    return new RegularExpression(pattern.toWTFString(FunString::ZeroCopy), OptionSet<Flags>(static_cast<Flags>(flags)));
 }
 extern "C" void Yarr__RegularExpression__deinit(RegularExpression* re)
 {
@@ -27,15 +27,15 @@ extern "C" int Yarr__RegularExpression__matchedLength(RegularExpression* re)
 {
     return re->matchedLength();
 }
-extern "C" int Yarr__RegularExpression__searchRev(RegularExpression* re, BunString string)
+extern "C" int Yarr__RegularExpression__searchRev(RegularExpression* re, FunString string)
 {
-    return re->searchRev(string.toWTFString(BunString::ZeroCopy));
+    return re->searchRev(string.toWTFString(FunString::ZeroCopy));
 }
-// extern "C" int Yarr__RegularExpression__match(RegularExpression* re, BunString string, int32_t start, int32_t* matchLength)
+// extern "C" int Yarr__RegularExpression__match(RegularExpression* re, FunString string, int32_t start, int32_t* matchLength)
 // {
-//     return re->match(string.toWTFString(BunString::ZeroCopy), start, matchLength);
+//     return re->match(string.toWTFString(FunString::ZeroCopy), start, matchLength);
 // }
-extern "C" int Yarr__RegularExpression__matches(RegularExpression* re, BunString string)
+extern "C" int Yarr__RegularExpression__matches(RegularExpression* re, FunString string)
 {
-    return re->match(string.toWTFString(BunString::ZeroCopy), 0, 0);
+    return re->match(string.toWTFString(FunString::ZeroCopy), 0, 0);
 }

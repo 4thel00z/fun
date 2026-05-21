@@ -283,9 +283,9 @@ pub const Table = brk: {
 
 const string = []const u8;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const AssignTarget = js_ast.AssignTarget;
 const Op = js_ast.Op;

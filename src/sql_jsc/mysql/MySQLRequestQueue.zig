@@ -32,7 +32,7 @@ pub inline fn markAsPrepared(this: *@This()) void {
     }
 }
 pub inline fn canPipeline(this: *@This(), connection: *MySQLConnection) bool {
-    if (bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_SQL_AUTO_PIPELINING.get()) {
+    if (fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_SQL_AUTO_PIPELINING.get()) {
         @branchHint(.unlikely);
         return false;
     }
@@ -144,7 +144,7 @@ pub fn advance(this: *@This(), connection: *MySQLConnection) void {
 }
 
 pub fn init() @This() {
-    return .{ .#requests = Queue.init(bun.default_allocator) };
+    return .{ .#requests = Queue.init(fun.default_allocator) };
 }
 
 pub fn isEmpty(this: *@This()) bool {
@@ -166,7 +166,7 @@ pub fn add(this: *@This(), request: *JSMySQLQuery) void {
         }
     }
     request.ref();
-    bun.handleOom(this.#requests.writeItem(request));
+    fun.handleOom(this.#requests.writeItem(request));
 }
 
 pub inline fn current(this: *const @This()) ?*JSMySQLQuery {
@@ -183,7 +183,7 @@ pub fn clean(this: *@This(), reason: ?JSValue, queries_array: JSValue) void {
     // into a local first so the re-entrant call sees an empty queue instead of
     // deref()'ing + discard()'ing the same requests out from under us.
     var requests = this.#requests;
-    this.#requests = Queue.init(bun.default_allocator);
+    this.#requests = Queue.init(fun.default_allocator);
     this.#pipelined_requests = 0;
     this.#nonpipelinable_requests = 0;
     this.#waiting_to_prepare = false;
@@ -215,13 +215,13 @@ pub fn deinit(this: *@This()) void {
     this.#requests.deinit();
 }
 
-const Queue = bun.LinearFifo(*JSMySQLQuery, .Dynamic);
+const Queue = fun.LinearFifo(*JSMySQLQuery, .Dynamic);
 
-const debug = bun.Output.scoped(.MySQLRequestQueue, .visible);
+const debug = fun.Output.scoped(.MySQLRequestQueue, .visible);
 
 const JSMySQLQuery = @import("./JSMySQLQuery.zig");
 const MySQLConnection = @import("./JSMySQLConnection.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

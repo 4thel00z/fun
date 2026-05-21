@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Bun {
+namespace Fun {
 
 JSC::JSValue createUndiciInternalBinding(Zig::GlobalObject* globalObject);
 

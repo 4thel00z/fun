@@ -28,7 +28,7 @@ to_update: bool = false,
 subcommand: Subcommand,
 update_requests: []UpdateRequest = &[_]UpdateRequest{},
 
-/// Only set in `bun pm`
+/// Only set in `fun pm`
 root_package_json_name_at_time_of_init: []const u8 = "",
 
 root_package_json_file: std.fs.File,
@@ -53,7 +53,7 @@ manifests: PackageManifestMap = .{},
 folders: FolderResolution.Map = .{},
 git_repositories: RepositoryMap = .{},
 
-network_dedupe_map: NetworkTask.DedupeMap = .init(bun.default_allocator),
+network_dedupe_map: NetworkTask.DedupeMap = .init(fun.default_allocator),
 async_network_task_queue: AsyncNetworkTaskQueue = .{},
 network_tarball_batch: ThreadPool.Batch = .{},
 network_resolve_batch: ThreadPool.Batch = .{},
@@ -96,9 +96,9 @@ global_dir: ?std.fs.Dir = null,
 global_link_dir_path: string = "",
 
 onWake: WakeHandler = .{},
-ci_mode: bun.LazyBool(computeIsContinuousIntegration, @This(), "ci_mode") = .{},
+ci_mode: fun.LazyBool(computeIsContinuousIntegration, @This(), "ci_mode") = .{},
 
-peer_dependencies: bun.LinearFifo(DependencyID, .Dynamic) = .init(default_allocator),
+peer_dependencies: fun.LinearFifo(DependencyID, .Dynamic) = .init(default_allocator),
 
 // name hash from alias package name -> aliased package dependency version info
 known_npm_aliases: NpmAliasMap = .{},
@@ -123,11 +123,11 @@ workspace_name_hash: ?PackageNameHash = null,
 workspace_package_json_cache: WorkspacePackageJSONCache = .{},
 
 // normally we have `UpdateRequests` to work with for adding/deleting/updating packages, but
-// if `bun update` is used without any package names we need a way to keep information for
+// if `fun update` is used without any package names we need a way to keep information for
 // the original packages that are updating.
 //
 // dependency name -> original version information
-updating_packages: bun.StringArrayHashMapUnmanaged(PackageUpdateInfo) = .{},
+updating_packages: fun.StringArrayHashMapUnmanaged(PackageUpdateInfo) = .{},
 
 patched_dependencies_to_remove: std.ArrayHashMapUnmanaged(PackageNameAndVersionHash, void, ArrayIdentityContext.U64, false) = .{},
 
@@ -223,7 +223,7 @@ pub const WorkspaceFilter = union(enum) {
         const is_path = remain.len > 0 and remain[0] == '.';
 
         const filter = if (is_path)
-            strings.withoutTrailingSlash(bun.path.joinAbsStringBuf(cwd, path_buf, &.{remain}, .posix))
+            strings.withoutTrailingSlash(fun.path.joinAbsStringBuf(cwd, path_buf, &.{remain}, .posix))
         else
             remain;
 
@@ -285,12 +285,12 @@ const TrackInstalledBin = union(enum) {
 
 pub var verbose_install = false;
 
-pub const PatchTaskQueue = bun.UnboundedQueue(PatchTask, .next);
-pub const AsyncNetworkTaskQueue = bun.UnboundedQueue(NetworkTask, .next);
+pub const PatchTaskQueue = fun.UnboundedQueue(PatchTask, .next);
+pub const AsyncNetworkTaskQueue = fun.UnboundedQueue(NetworkTask, .next);
 
 pub const ScriptRunEnvironment = struct {
     root_dir_info: *DirInfo,
-    transpiler: bun.Transpiler,
+    transpiler: fun.Transpiler,
 };
 
 const TimePasser = struct {
@@ -311,11 +311,11 @@ pub fn configureEnvForScripts(this: *PackageManager, ctx: Command.Context, log_l
     return configureEnvForScriptsOnce.call(.{ this, ctx, log_level });
 }
 
-pub var configureEnvForScriptsOnce = bun.once(struct {
+pub var configureEnvForScriptsOnce = fun.once(struct {
     pub fn run(this: *PackageManager, ctx: Command.Context, log_level: Options.LogLevel) !transpiler.Transpiler {
 
         // We need to figure out the PATH and other environment variables
-        // to do that, we re-use the code from bun run
+        // to do that, we re-use the code from fun run
         // this is expensive, it traverses the entire directory tree going up to the root
         // so we really only want to do it when strictly necessary
         var this_transpiler: transpiler.Transpiler = undefined;
@@ -341,28 +341,28 @@ pub var configureEnvForScriptsOnce = bun.once(struct {
         {
             // Run node-gyp jobs in parallel.
             // https://github.com/nodejs/node-gyp/blob/7d883b5cf4c26e76065201f85b0be36d5ebdcc0e/lib/build.js#L150-L184
-            const thread_count = bun.getThreadCount();
+            const thread_count = fun.getThreadCount();
             if (thread_count > 2) {
                 if (!this_transpiler.env.has("JOBS")) {
                     var int_buf: [10]u8 = undefined;
                     const jobs_str = std.fmt.bufPrint(&int_buf, "{d}", .{thread_count}) catch unreachable;
-                    this_transpiler.env.map.putAllocValue(bun.default_allocator, "JOBS", jobs_str) catch unreachable;
+                    this_transpiler.env.map.putAllocValue(fun.default_allocator, "JOBS", jobs_str) catch unreachable;
                 }
             }
         }
 
         {
-            var node_path: bun.PathBuffer = undefined;
+            var node_path: fun.PathBuffer = undefined;
             if (this.env.getNodePath(this_transpiler.fs, &node_path)) |node_pathZ| {
-                _ = try this.env.loadNodeJSConfig(this_transpiler.fs, bun.handleOom(bun.default_allocator.dupe(u8, node_pathZ)));
+                _ = try this.env.loadNodeJSConfig(this_transpiler.fs, fun.handleOom(fun.default_allocator.dupe(u8, node_pathZ)));
             } else brk: {
                 const current_path = this.env.get("PATH") orelse "";
-                var PATH = try std.array_list.Managed(u8).initCapacity(bun.default_allocator, current_path.len);
+                var PATH = try std.array_list.Managed(u8).initCapacity(fun.default_allocator, current_path.len);
                 try PATH.appendSlice(current_path);
-                var bun_path: string = "";
-                RunCommand.createFakeTemporaryNodeExecutable(&PATH, &bun_path) catch break :brk;
+                var fun_path: string = "";
+                RunCommand.createFakeTemporaryNodeExecutable(&PATH, &fun_path) catch break :brk;
                 try this.env.map.put("PATH", PATH.items);
-                _ = try this.env.loadNodeJSConfig(this_transpiler.fs, bun.handleOom(bun.default_allocator.dupe(u8, bun_path)));
+                _ = try this.env.loadNodeJSConfig(this_transpiler.fs, fun.handleOom(fun.default_allocator.dupe(u8, fun_path)));
             }
         }
 
@@ -394,11 +394,11 @@ pub const WakeHandler = struct {
     context: ?*anyopaque = null,
 
     pub inline fn getHandler(t: @This()) *const fn (ctx: *anyopaque, pm: *PackageManager) void {
-        return bun.cast(*const fn (ctx: *anyopaque, pm: *PackageManager) void, t.handler);
+        return fun.cast(*const fn (ctx: *anyopaque, pm: *PackageManager) void, t.handler);
     }
 
     pub inline fn getonDependencyError(t: @This()) *const fn (ctx: *anyopaque, Dependency, DependencyID, anyerror) void {
-        return bun.cast(*const fn (ctx: *anyopaque, Dependency, DependencyID, anyerror) void, t.handler);
+        return fun.cast(*const fn (ctx: *anyopaque, Dependency, DependencyID, anyerror) void, t.handler);
     }
 };
 
@@ -426,8 +426,8 @@ pub fn sleepUntil(this: *PackageManager, closure: anytype, comptime isDoneFn: an
     this.event_loop.tick(closure, isDoneFn);
 }
 
-const cached_package_folder_name_bufs = bun.ThreadlocalBuffers(struct { buf: bun.PathBuffer = undefined });
-pub inline fn cached_package_folder_name_buf() *bun.PathBuffer {
+const cached_package_folder_name_bufs = fun.ThreadlocalBuffers(struct { buf: fun.PathBuffer = undefined });
+pub inline fn cached_package_folder_name_buf() *fun.PathBuffer {
     return &cached_package_folder_name_bufs.get().buf;
 }
 
@@ -436,7 +436,7 @@ const Holder = struct {
 };
 
 pub fn allocatePackageManager() void {
-    Holder.ptr = bun.handleOom(bun.default_allocator.create(PackageManager));
+    Holder.ptr = fun.handleOom(fun.default_allocator.create(PackageManager));
 }
 
 pub fn get() *PackageManager {
@@ -452,12 +452,12 @@ pub fn ensureTempNodeGypScript(this: *PackageManager) !void {
     return ensureTempNodeGypScriptOnce.call(.{this});
 }
 
-var ensureTempNodeGypScriptOnce = bun.once(struct {
+var ensureTempNodeGypScriptOnce = fun.once(struct {
     pub fn run(manager: *PackageManager) !void {
         if (manager.node_gyp_tempdir_name.len > 0) return;
 
         const tempdir = manager.getTemporaryDirectory();
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
         const node_gyp_tempdir_name = try Fs.FileSystem.tmpname("node-gyp", &path_buf, 12345);
 
         // used later for adding to path for scripts
@@ -492,7 +492,7 @@ var ensureTempNodeGypScriptOnce = bun.once(struct {
         const content = switch (Environment.os) {
             .windows =>
             \\if not defined npm_config_node_gyp (
-            \\  bun x --silent node-gyp %*
+            \\  fun x --silent node-gyp %*
             \\) else (
             \\  node "%npm_config_node_gyp%" %*
             \\)
@@ -500,7 +500,7 @@ var ensureTempNodeGypScriptOnce = bun.once(struct {
             ,
             else => (if (Environment.isAndroid) "#!/system/bin/sh\n" else "#!/bin/sh\n") ++
                 \\if [ "x$npm_config_node_gyp" = "x" ]; then
-                \\  bun x --silent node-gyp $@
+                \\  fun x --silent node-gyp $@
                 \\else
                 \\  "$npm_config_node_gyp" $@
                 \\fi
@@ -515,7 +515,7 @@ var ensureTempNodeGypScriptOnce = bun.once(struct {
 
         // Add our node-gyp tempdir to the path
         const existing_path = manager.env.get("PATH") orelse "";
-        var PATH = try std.array_list.Managed(u8).initCapacity(bun.default_allocator, existing_path.len + 1 + tempdir.name.len + 1 + manager.node_gyp_tempdir_name.len);
+        var PATH = try std.array_list.Managed(u8).initCapacity(fun.default_allocator, existing_path.len + 1 + tempdir.name.len + 1 + manager.node_gyp_tempdir_name.len);
         try PATH.appendSlice(existing_path);
         if (existing_path.len > 0 and existing_path[existing_path.len - 1] != std.fs.path.delimiter)
             try PATH.append(std.fs.path.delimiter);
@@ -533,16 +533,16 @@ var ensureTempNodeGypScriptOnce = bun.once(struct {
         });
 
         const node_gyp_abs_dir = std.fs.path.dirname(npm_config_node_gyp).?;
-        try manager.env.map.putAllocKeyAndValue(manager.allocator, "BUN_WHICH_IGNORE_CWD", node_gyp_abs_dir);
+        try manager.env.map.putAllocKeyAndValue(manager.allocator, "FUN_WHICH_IGNORE_CWD", node_gyp_abs_dir);
     }
 }.run);
 
 fn httpThreadOnInitError(err: HTTP.InitError, opts: HTTP.HTTPThread.InitOpts) noreturn {
     switch (err) {
         error.LoadCAFile => {
-            var normalizer: bun.path.PosixToWinNormalizer = .{};
+            var normalizer: fun.path.PosixToWinNormalizer = .{};
             const normalized = normalizer.resolveZ(FileSystem.instance.top_level_dir, opts.abs_ca_file_name);
-            if (!bun.sys.existsZ(normalized)) {
+            if (!fun.sys.existsZ(normalized)) {
                 Output.err("HTTPThread", "could not find CA file: '{s}'", .{opts.abs_ca_file_name});
             } else {
                 Output.err("HTTPThread", "invalid CA file: '{s}'", .{opts.abs_ca_file_name});
@@ -582,18 +582,18 @@ pub fn init(
     } else {
         // Avoid memcpy alias when source and dest are the same
         if (cwd_buf[0..].ptr != top_level_dir_no_trailing_slash.ptr) {
-            bun.copy(u8, cwd_buf[0..top_level_dir_no_trailing_slash.len], top_level_dir_no_trailing_slash);
+            fun.copy(u8, cwd_buf[0..top_level_dir_no_trailing_slash.len], top_level_dir_no_trailing_slash);
         }
     }
 
-    var original_package_json_path_buf = bun.handleOom(std.ArrayListUnmanaged(u8).initCapacity(ctx.allocator, top_level_dir_no_trailing_slash.len + "/package.json".len + 1));
+    var original_package_json_path_buf = fun.handleOom(std.ArrayListUnmanaged(u8).initCapacity(ctx.allocator, top_level_dir_no_trailing_slash.len + "/package.json".len + 1));
     original_package_json_path_buf.appendSliceAssumeCapacity(top_level_dir_no_trailing_slash);
     original_package_json_path_buf.appendSliceAssumeCapacity(std.fs.path.sep_str ++ "package.json");
     original_package_json_path_buf.appendAssumeCapacity(0);
 
     var original_package_json_path: stringZ = original_package_json_path_buf.items[0 .. top_level_dir_no_trailing_slash.len + "/package.json".len :0];
     const original_cwd = strings.withoutSuffixComptime(original_package_json_path, std.fs.path.sep_str ++ "package.json");
-    const original_cwd_clone = bun.handleOom(ctx.allocator.dupe(u8, original_cwd));
+    const original_cwd_clone = fun.handleOom(ctx.allocator.dupe(u8, original_cwd));
 
     var workspace_names = Package.WorkspaceMap.init(ctx.allocator);
     var workspace_package_json_cache: WorkspacePackageJSONCache = .{
@@ -610,7 +610,7 @@ pub fn init(
         var this_cwd: string = original_cwd;
         var created_package_json = false;
         const child_json = child: {
-            // if we are only doing `bun install` (no args), then we can open as read_only
+            // if we are only doing `fun install` (no args), then we can open as read_only
             // in all other cases we will need to write new data later.
             // this is relevant because it allows us to succeed an install if package.json
             // is readable but not writable
@@ -620,7 +620,7 @@ pub fn init(
             const need_write = subcommand != .install or cli.positionals.len > 1;
 
             while (true) {
-                var package_json_path_buf: bun.PathBuffer = undefined;
+                var package_json_path_buf: fun.PathBuffer = undefined;
                 @memcpy(package_json_path_buf[0..this_cwd.len], this_cwd);
                 package_json_path_buf[this_cwd.len..package_json_path_buf.len][0.."/package.json".len].* = "/package.json".*;
                 package_json_path_buf[this_cwd.len + "/package.json".len] = 0;
@@ -660,7 +660,7 @@ pub fn init(
 
             if (subcommand == .install) {
                 if (cli.positionals.len > 1) {
-                    // this is `bun add <package>`.
+                    // this is `fun add <package>`.
                     //
                     // create the package json instead of return error. this works around
                     // a zig bug where continuing control flow through a catch seems to
@@ -674,7 +674,7 @@ pub fn init(
             return error.MissingPackageJSON;
         };
 
-        bun.assertWithLocation(strings.eqlLong(original_package_json_path_buf.items[0..this_cwd.len], this_cwd, true), @src());
+        fun.assertWithLocation(strings.eqlLong(original_package_json_path_buf.items[0..this_cwd.len], this_cwd, true), @src());
         original_package_json_path_buf.items.len = this_cwd.len;
         original_package_json_path_buf.appendSliceAssumeCapacity(std.fs.path.sep_str ++ "package.json");
         original_package_json_path_buf.appendAssumeCapacity(0);
@@ -688,7 +688,7 @@ pub fn init(
             if (!created_package_json) {
                 while (std.fs.path.dirname(this_cwd)) |parent| : (this_cwd = parent) {
                     const parent_without_trailing_slash = strings.withoutTrailingSlash(parent);
-                    var parent_path_buf: bun.PathBuffer = undefined;
+                    var parent_path_buf: fun.PathBuffer = undefined;
                     @memcpy(parent_path_buf[0..parent_without_trailing_slash.len], parent_without_trailing_slash);
                     parent_path_buf[parent_without_trailing_slash.len..parent_path_buf.len][0.."/package.json".len].* = "/package.json".*;
                     parent_path_buf[parent_without_trailing_slash.len + "/package.json".len] = 0;
@@ -704,7 +704,7 @@ pub fn init(
                     const json_buf = try ctx.allocator.alloc(u8, json_stat_size + 64);
                     defer ctx.allocator.free(json_buf);
                     const json_len = try json_file.preadAll(json_buf, 0);
-                    const json_path = try bun.getFdPath(.fromStdFile(json_file), &root_package_json_path_buf);
+                    const json_path = try fun.getFdPath(.fromStdFile(json_file), &root_package_json_path_buf);
                     const json_source = logger.Source.initPathString(json_path, json_buf[0..json_len]);
                     initializeStore();
                     const json = try JSON.parsePackageJSONUTF8(&json_source, ctx.log, ctx.allocator);
@@ -739,16 +739,16 @@ pub fn init(
                             const child_path = if (std.fs.path.isAbsolute(path))
                                 child_cwd
                             else
-                                bun.path.relativeNormalized(json_source.path.name.dir, child_cwd, .auto, true);
+                                fun.path.relativeNormalized(json_source.path.name.dir, child_cwd, .auto, true);
 
                             const maybe_workspace_path = if (comptime Environment.isWindows) brk: {
                                 @memcpy(parent_path_buf[0..child_path.len], child_path);
-                                bun.path.dangerouslyConvertPathToPosixInPlace(u8, parent_path_buf[0..child_path.len]);
+                                fun.path.dangerouslyConvertPathToPosixInPlace(u8, parent_path_buf[0..child_path.len]);
                                 break :brk parent_path_buf[0..child_path.len];
                             } else child_path;
 
                             if (strings.eqlLong(maybe_workspace_path, path, true)) {
-                                fs.top_level_dir = try bun.default_allocator.dupeZ(u8, parent);
+                                fs.top_level_dir = try fun.default_allocator.dupeZ(u8, parent);
                                 found = true;
                                 child_json.close();
                                 if (comptime Environment.isWindows) {
@@ -765,16 +765,16 @@ pub fn init(
             }
         }
 
-        fs.top_level_dir = try bun.default_allocator.dupeZ(u8, child_cwd);
+        fs.top_level_dir = try fun.default_allocator.dupeZ(u8, child_cwd);
         break :root_package_json_file child_json;
     };
 
-    try bun.sys.chdir(fs.top_level_dir, fs.top_level_dir).unwrap();
-    try BunArguments.loadConfig(ctx.allocator, cli.config, ctx, .InstallCommand);
-    bun.copy(u8, &cwd_buf, fs.top_level_dir);
+    try fun.sys.chdir(fs.top_level_dir, fs.top_level_dir).unwrap();
+    try FunArguments.loadConfig(ctx.allocator, cli.config, ctx, .InstallCommand);
+    fun.copy(u8, &cwd_buf, fs.top_level_dir);
     cwd_buf[fs.top_level_dir.len] = 0;
     fs.top_level_dir = cwd_buf[0..fs.top_level_dir.len :0];
-    root_package_json_path = try bun.getFdPathZ(.fromStdFile(root_package_json_file), &root_package_json_path_buf);
+    root_package_json_path = try fun.getFdPathZ(.fromStdFile(root_package_json_file), &root_package_json_path_buf);
 
     const entries_option = try fs.fs.readDirectory(fs.top_level_dir, null, 0, true);
     if (entries_option.* == .err) {
@@ -795,15 +795,15 @@ pub fn init(
 
     initializeStore();
 
-    if (bun.env_var.XDG_CONFIG_HOME.get() orelse bun.env_var.HOME.get()) |data_dir| {
-        var buf: bun.PathBuffer = undefined;
+    if (fun.env_var.XDG_CONFIG_HOME.get() orelse fun.env_var.HOME.get()) |data_dir| {
+        var buf: fun.PathBuffer = undefined;
         var parts = [_]string{
             "./.npmrc",
         };
 
-        bun.ini.loadNpmrcConfig(ctx.allocator, ctx.install orelse brk: {
-            const install_ = bun.handleOom(ctx.allocator.create(Api.BunInstall));
-            install_.* = std.mem.zeroes(Api.BunInstall);
+        fun.ini.loadNpmrcConfig(ctx.allocator, ctx.install orelse brk: {
+            const install_ = fun.handleOom(ctx.allocator.create(Api.FunInstall));
+            install_.* = std.mem.zeroes(Api.FunInstall);
             ctx.install = install_;
             break :brk install_;
         }, env, true, &[_][:0]const u8{ Path.joinAbsStringBufZ(
@@ -813,30 +813,30 @@ pub fn init(
             .auto,
         ), ".npmrc" });
     } else {
-        bun.ini.loadNpmrcConfig(ctx.allocator, ctx.install orelse brk: {
-            const install_ = bun.handleOom(ctx.allocator.create(Api.BunInstall));
-            install_.* = std.mem.zeroes(Api.BunInstall);
+        fun.ini.loadNpmrcConfig(ctx.allocator, ctx.install orelse brk: {
+            const install_ = fun.handleOom(ctx.allocator.create(Api.FunInstall));
+            install_.* = std.mem.zeroes(Api.FunInstall);
             ctx.install = install_;
             break :brk install_;
         }, env, true, &[_][:0]const u8{".npmrc"});
     }
-    const cpu_count = bun.getThreadCount();
+    const cpu_count = fun.getThreadCount();
 
     const options = Options{
         .global = cli.global,
         .max_concurrent_lifecycle_scripts = cli.concurrent_scripts orelse cpu_count * 2,
     };
 
-    if (env.get("BUN_INSTALL_VERBOSE") != null) {
+    if (env.get("FUN_INSTALL_VERBOSE") != null) {
         PackageManager.verbose_install = true;
     }
 
-    if (env.get("BUN_FEATURE_FLAG_FORCE_WAITER_THREAD") != null) {
-        bun.spawn.process.WaiterThread.setShouldUseWaiterThread();
+    if (env.get("FUN_FEATURE_FLAG_FORCE_WAITER_THREAD") != null) {
+        fun.spawn.process.WaiterThread.setShouldUseWaiterThread();
     }
 
-    if (bun.feature_flag.BUN_FEATURE_FLAG_FORCE_WINDOWS_JUNCTIONS.get()) {
-        bun.sys.WindowsSymlinkOptions.has_failed_to_create_symlink = true;
+    if (fun.feature_flag.FUN_FEATURE_FLAG_FORCE_WINDOWS_JUNCTIONS.get()) {
+        fun.sys.WindowsSymlinkOptions.has_failed_to_create_symlink = true;
     }
 
     if (PackageManager.verbose_install) {
@@ -851,8 +851,8 @@ pub fn init(
     // var progress = Progress{};
     // var node = progress.start(name: []const u8, estimated_total_items: usize)
     manager.* = PackageManager{
-        .preallocated_network_tasks = .init(bun.default_allocator),
-        .preallocated_resolve_tasks = .init(bun.default_allocator),
+        .preallocated_network_tasks = .init(fun.default_allocator),
+        .preallocated_resolve_tasks = .init(fun.default_allocator),
         .options = options,
         .active_lifecycle_scripts = .{
             .context = manager,
@@ -872,7 +872,7 @@ pub fn init(
         .root_package_json_file = root_package_json_file,
         // .progress
         .event_loop = .{
-            .mini = jsc.MiniEventLoop.init(bun.default_allocator),
+            .mini = jsc.MiniEventLoop.init(fun.default_allocator),
         },
         .original_package_json_path = original_package_json_path,
         .workspace_package_json_cache = workspace_package_json_cache,
@@ -880,12 +880,12 @@ pub fn init(
         .subcommand = subcommand,
         .root_package_json_name_at_time_of_init = root_package_json_name_at_time_of_init,
     };
-    manager.event_loop.loop().internal_loop_data.setParentEventLoop(bun.jsc.EventLoopHandle.init(&manager.event_loop));
+    manager.event_loop.loop().internal_loop_data.setParentEventLoop(fun.jsc.EventLoopHandle.init(&manager.event_loop));
     manager.lockfile = try ctx.allocator.create(Lockfile);
 
     {
         // make sure folder packages can find the root package without creating a new one
-        var normalized: bun.AbsPath(.{ .sep = .posix }) = .from(root_package_json_path);
+        var normalized: fun.AbsPath(.{ .sep = .posix }) = .from(root_package_json_path);
         defer normalized.deinit();
         try manager.folders.put(manager.allocator, FolderResolution.hash(normalized.slice()), .{ .package_id = 0 });
     }
@@ -896,7 +896,7 @@ pub fn init(
         manager.options.enable.manifest_cache_control = false;
     }
 
-    if (env.get("BUN_MANIFEST_CACHE")) |manifest_cache| {
+    if (env.get("FUN_MANIFEST_CACHE")) |manifest_cache| {
         if (strings.eqlComptime(manifest_cache, "1")) {
             manager.options.enable.manifest_cache = true;
             manager.options.enable.manifest_cache_control = false;
@@ -932,8 +932,8 @@ pub fn init(
         if (std.fs.path.isAbsolute(manager.options.ca_file_name)) {
             abs_ca_file_name = try manager.allocator.dupeZ(u8, manager.options.ca_file_name);
         } else {
-            var path_buf: bun.PathBuffer = undefined;
-            abs_ca_file_name = try manager.allocator.dupeZ(u8, bun.path.joinAbsStringBuf(
+            var path_buf: fun.PathBuffer = undefined;
+            abs_ca_file_name = try manager.allocator.dupeZ(u8, fun.path.joinAbsStringBuf(
                 original_cwd_clone,
                 &path_buf,
                 &.{manager.options.ca_file_name},
@@ -949,10 +949,10 @@ pub fn init(
 
         // If any HTTP proxy is set, use a diferent limit
         if (env.has("http_proxy") or env.has("https_proxy") or env.has("HTTPS_PROXY") or env.has("HTTP_PROXY")) {
-            break :brk default_max_simultaneous_requests_for_bun_install_for_proxies;
+            break :brk default_max_simultaneous_requests_for_fun_install_for_proxies;
         }
 
-        break :brk default_max_simultaneous_requests_for_bun_install;
+        break :brk default_max_simultaneous_requests_for_fun_install;
     }, .monotonic);
 
     HTTP.HTTPThread.init(&.{
@@ -962,8 +962,8 @@ pub fn init(
     });
 
     manager.timestamp_for_manifest_cache_control = brk: {
-        if (comptime bun.Environment.allow_assert) {
-            if (env.get("BUN_CONFIG_MANIFEST_CACHE_CONTROL_TIMESTAMP")) |cache_control| {
+        if (comptime fun.Environment.allow_assert) {
+            if (env.get("FUN_CONFIG_MANIFEST_CACHE_CONTROL_TIMESTAMP")) |cache_control| {
                 if (std.fmt.parseInt(u32, cache_control, 10)) |int| {
                     break :brk int;
                 } else |_| {}
@@ -980,14 +980,14 @@ pub fn init(
 
 pub fn initWithRuntime(
     log: *logger.Log,
-    bun_install: ?*Api.BunInstall,
+    fun_install: ?*Api.FunInstall,
     allocator: std.mem.Allocator,
     cli: CommandLineArguments,
     env: *DotEnv.Loader,
 ) *PackageManager {
     init_with_runtime_once.call(.{
         log,
-        bun_install,
+        fun_install,
         allocator,
         cli,
         env,
@@ -995,20 +995,20 @@ pub fn initWithRuntime(
     return PackageManager.get();
 }
 
-var init_with_runtime_once = bun.once(initWithRuntimeOnce);
+var init_with_runtime_once = fun.once(initWithRuntimeOnce);
 
 pub fn initWithRuntimeOnce(
     log: *logger.Log,
-    bun_install: ?*Api.BunInstall,
+    fun_install: ?*Api.FunInstall,
     allocator: std.mem.Allocator,
     cli: CommandLineArguments,
     env: *DotEnv.Loader,
 ) void {
-    if (env.get("BUN_INSTALL_VERBOSE") != null) {
+    if (env.get("FUN_INSTALL_VERBOSE") != null) {
         PackageManager.verbose_install = true;
     }
 
-    const cpu_count = bun.getThreadCount();
+    const cpu_count = fun.getThreadCount();
     PackageManager.allocatePackageManager();
     const manager = PackageManager.get();
     var root_dir = Fs.FileSystem.instance.fs.readDirectory(
@@ -1024,13 +1024,13 @@ pub fn initWithRuntimeOnce(
     // var progress = Progress{};
     // var node = progress.start(name: []const u8, estimated_total_items: usize)
     const top_level_dir_no_trailing_slash = strings.withoutTrailingSlash(Fs.FileSystem.instance.top_level_dir);
-    var original_package_json_path = bun.handleOom(allocator.allocSentinel(u8, top_level_dir_no_trailing_slash.len + "/package.json".len, 0));
+    var original_package_json_path = fun.handleOom(allocator.allocSentinel(u8, top_level_dir_no_trailing_slash.len + "/package.json".len, 0));
     @memcpy(original_package_json_path[0..top_level_dir_no_trailing_slash.len], top_level_dir_no_trailing_slash);
     @memcpy(original_package_json_path[top_level_dir_no_trailing_slash.len..][0.."/package.json".len], "/package.json");
 
     manager.* = PackageManager{
-        .preallocated_network_tasks = .init(bun.default_allocator),
-        .preallocated_resolve_tasks = .init(bun.default_allocator),
+        .preallocated_network_tasks = .init(fun.default_allocator),
+        .preallocated_resolve_tasks = .init(fun.default_allocator),
         .options = .{
             .max_concurrent_lifecycle_scripts = cli.concurrent_scripts orelse cpu_count * 2,
         },
@@ -1054,7 +1054,7 @@ pub fn initWithRuntimeOnce(
         .original_package_json_path = original_package_json_path[0..original_package_json_path.len :0],
         .subcommand = .install,
     };
-    manager.lockfile = bun.handleOom(allocator.create(Lockfile));
+    manager.lockfile = fun.handleOom(allocator.create(Lockfile));
 
     if (Output.enable_ansi_colors_stderr) {
         manager.progress = Progress{};
@@ -1069,7 +1069,7 @@ pub fn initWithRuntimeOnce(
         manager.options.enable.manifest_cache_control = false;
     }
 
-    if (env.get("BUN_MANIFEST_CACHE")) |manifest_cache| {
+    if (env.get("FUN_MANIFEST_CACHE")) |manifest_cache| {
         if (strings.eqlComptime(manifest_cache, "1")) {
             manager.options.enable.manifest_cache = true;
             manager.options.enable.manifest_cache_control = false;
@@ -1087,11 +1087,11 @@ pub fn initWithRuntimeOnce(
         log,
         env,
         cli,
-        bun_install,
+        fun_install,
         .install,
     ) catch |err| {
         switch (err) {
-            error.OutOfMemory => bun.outOfMemory(),
+            error.OutOfMemory => fun.outOfMemory(),
         }
     };
 
@@ -1104,11 +1104,11 @@ pub fn initWithRuntimeOnce(
                 0,
             )),
         )),
-        // When using "bun install", we check for updates with a 300 second cache.
-        // When using bun, we only do staleness checks once per day
+        // When using "fun install", we check for updates with a 300 second cache.
+        // When using fun, we only do staleness checks once per day
     ) -| std.time.s_per_day;
 
-    if (root_dir.entries.hasComptimeQuery("bun.lockb")) {
+    if (root_dir.entries.hasComptimeQuery("fun.lockb")) {
         switch (manager.lockfile.loadFromCwd(
             manager,
             allocator,
@@ -1122,30 +1122,30 @@ pub fn initWithRuntimeOnce(
         manager.lockfile.initEmpty(allocator);
     }
 }
-var cwd_buf: bun.PathBuffer = undefined;
-var root_package_json_path_buf: bun.PathBuffer = undefined;
+var cwd_buf: fun.PathBuffer = undefined;
+var root_package_json_path_buf: fun.PathBuffer = undefined;
 pub var root_package_json_path: [:0]const u8 = "";
 
-// Default to a maximum of 64 simultaneous HTTP requests for bun install if no proxy is specified
+// Default to a maximum of 64 simultaneous HTTP requests for fun install if no proxy is specified
 // if a proxy IS specified, default to 64. We have different values because we might change this in the future.
 // https://github.com/npm/cli/issues/7072
 // https://pnpm.io/npmrc#network-concurrency (pnpm defaults to 16)
 // https://yarnpkg.com/configuration/yarnrc#networkConcurrency (defaults to 50)
-const default_max_simultaneous_requests_for_bun_install = 64;
-const default_max_simultaneous_requests_for_bun_install_for_proxies = 64;
+const default_max_simultaneous_requests_for_fun_install = 64;
+const default_max_simultaneous_requests_for_fun_install_for_proxies = 64;
 
 pub const TaskCallbackList = std.ArrayListUnmanaged(TaskCallbackContext);
 const TaskDependencyQueue = std.HashMapUnmanaged(Task.Id, TaskCallbackList, IdentityContext(Task.Id), 80);
 
-const PreallocatedTaskStore = bun.HiveArray(Task, 64).Fallback;
-const PreallocatedNetworkTasks = bun.HiveArray(NetworkTask, 128).Fallback;
-const ResolveTaskQueue = bun.UnboundedQueue(Task, .next);
+const PreallocatedTaskStore = fun.HiveArray(Task, 64).Fallback;
+const PreallocatedNetworkTasks = fun.HiveArray(NetworkTask, 128).Fallback;
+const ResolveTaskQueue = fun.UnboundedQueue(Task, .next);
 
-const RepositoryMap = std.HashMapUnmanaged(Task.Id, bun.FD, IdentityContext(Task.Id), 80);
+const RepositoryMap = std.HashMapUnmanaged(Task.Id, fun.FD, IdentityContext(Task.Id), 80);
 const NpmAliasMap = std.HashMapUnmanaged(PackageNameHash, Dependency.Version, IdentityContext(u64), 80);
 
-const NetworkQueue = bun.LinearFifo(*NetworkTask, .{ .Static = 32 });
-const PatchTaskFifo = bun.LinearFifo(*PatchTask, .{ .Static = 32 });
+const NetworkQueue = fun.LinearFifo(*NetworkTask, .{ .Static = 32 });
+const PatchTaskFifo = fun.LinearFifo(*PatchTask, .{ .Static = 32 });
 
 // pub const ensureTempNodeGypScript = directories.ensureTempNodeGypScript;
 
@@ -1272,57 +1272,57 @@ const updatePackageJSONAndInstall = @import("./PackageManager/updatePackageJSONA
 const lifecycle = @import("./PackageManager/PackageManagerLifecycle.zig");
 const LifecycleScriptTimeLog = lifecycle.LifecycleScriptTimeLog;
 
-const bun = @import("bun");
-const DotEnv = bun.DotEnv;
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const Path = bun.path;
-const Progress = bun.Progress;
-const RunCommand = bun.RunCommand;
-const ThreadPool = bun.ThreadPool;
-const URL = bun.URL;
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const transpiler = bun.transpiler;
-const Api = bun.schema.api;
-const File = bun.sys.File;
+const fun = @import("fun");
+const DotEnv = fun.DotEnv;
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const Path = fun.path;
+const Progress = fun.Progress;
+const RunCommand = fun.RunCommand;
+const ThreadPool = fun.ThreadPool;
+const URL = fun.URL;
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const transpiler = fun.transpiler;
+const Api = fun.schema.api;
+const File = fun.sys.File;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const BunArguments = bun.cli.Arguments;
-const Command = bun.cli.Command;
+const FunArguments = fun.cli.Arguments;
+const Command = fun.cli.Command;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const HTTP = bun.http;
+const HTTP = fun.http;
 const AsyncHTTP = HTTP.AsyncHTTP;
 
-const ArrayIdentityContext = bun.install.ArrayIdentityContext;
-const Dependency = bun.install.Dependency;
-const DependencyID = bun.install.DependencyID;
-const Features = bun.install.Features;
-const FolderResolution = bun.install.FolderResolution;
-const IdentityContext = bun.install.IdentityContext;
-const LifecycleScriptSubprocess = bun.install.LifecycleScriptSubprocess;
-const NetworkTask = bun.install.NetworkTask;
-const PackageID = bun.install.PackageID;
-const PackageManager = bun.install.PackageManager;
-const PackageManifestMap = bun.install.PackageManifestMap;
-const PackageNameAndVersionHash = bun.install.PackageNameAndVersionHash;
-const PackageNameHash = bun.install.PackageNameHash;
-const PatchTask = bun.install.PatchTask;
-const PostinstallOptimizer = bun.install.PostinstallOptimizer;
-const PreinstallState = bun.install.PreinstallState;
-const Task = bun.install.Task;
-const TaskCallbackContext = bun.install.TaskCallbackContext;
-const initializeStore = bun.install.initializeStore;
+const ArrayIdentityContext = fun.install.ArrayIdentityContext;
+const Dependency = fun.install.Dependency;
+const DependencyID = fun.install.DependencyID;
+const Features = fun.install.Features;
+const FolderResolution = fun.install.FolderResolution;
+const IdentityContext = fun.install.IdentityContext;
+const LifecycleScriptSubprocess = fun.install.LifecycleScriptSubprocess;
+const NetworkTask = fun.install.NetworkTask;
+const PackageID = fun.install.PackageID;
+const PackageManager = fun.install.PackageManager;
+const PackageManifestMap = fun.install.PackageManifestMap;
+const PackageNameAndVersionHash = fun.install.PackageNameAndVersionHash;
+const PackageNameHash = fun.install.PackageNameHash;
+const PatchTask = fun.install.PatchTask;
+const PostinstallOptimizer = fun.install.PostinstallOptimizer;
+const PreinstallState = fun.install.PreinstallState;
+const Task = fun.install.Task;
+const TaskCallbackContext = fun.install.TaskCallbackContext;
+const initializeStore = fun.install.initializeStore;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;

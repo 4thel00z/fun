@@ -28,7 +28,7 @@ export const enum Loader {
   base64 = 12,
   dataurl = 13,
   text = 14,
-  bunsh = 15,
+  funsh = 15,
   sqlite = 16,
   sqlite_embedded = 17,
   html = 18,
@@ -49,7 +49,7 @@ export const LoaderKeys: {
   12: "base64";
   13: "dataurl";
   14: "text";
-  15: "bunsh";
+  15: "funsh";
   16: "sqlite";
   17: "sqlite_embedded";
   18: "html";
@@ -68,7 +68,7 @@ export const LoaderKeys: {
   base64: 12;
   dataurl: 13;
   text: 14;
-  bunsh: 15;
+  funsh: 15;
   sqlite: 16;
   sqlite_embedded: 17;
   html: 18;
@@ -156,18 +156,18 @@ export const ResolveModeKeys: {
 export const enum Target {
   browser = 1,
   node = 2,
-  bun = 3,
-  bun_macro = 4,
+  fun = 3,
+  fun_macro = 4,
 }
 export const TargetKeys: {
   1: "browser";
   browser: "browser";
   2: "node";
   node: "node";
-  3: "bun";
-  bun: "bun";
-  4: "bun_macro";
-  bun_macro: "bun_macro";
+  3: "fun";
+  fun: "fun";
+  4: "fun_macro";
+  fun_macro: "fun_macro";
 };
 export const enum CSSInJSBehavior {
   facade = 1,
@@ -714,7 +714,7 @@ export interface NPMRegistryMap {
   registries: NPMRegistry[];
 }
 
-export interface BunInstall {
+export interface FunInstall {
   default_registry?: NPMRegistry;
   scoped?: NPMRegistryMap;
   lockfile_path?: string;
@@ -882,8 +882,8 @@ export declare function encodeNPMRegistry(message: NPMRegistry, bb: ByteBuffer):
 export declare function decodeNPMRegistry(buffer: ByteBuffer): NPMRegistry;
 export declare function encodeNPMRegistryMap(message: NPMRegistryMap, bb: ByteBuffer): void;
 export declare function decodeNPMRegistryMap(buffer: ByteBuffer): NPMRegistryMap;
-export declare function encodeBunInstall(message: BunInstall, bb: ByteBuffer): void;
-export declare function decodeBunInstall(buffer: ByteBuffer): BunInstall;
+export declare function encodeFunInstall(message: FunInstall, bb: ByteBuffer): void;
+export declare function decodeFunInstall(buffer: ByteBuffer): FunInstall;
 export declare function encodeClientServerModule(message: ClientServerModule, bb: ByteBuffer): void;
 export declare function decodeClientServerModule(buffer: ByteBuffer): ClientServerModule;
 export declare function encodeClientServerModuleManifest(message: ClientServerModuleManifest, bb: ByteBuffer): void;

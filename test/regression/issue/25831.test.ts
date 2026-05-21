@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("ls -l shows long listing format", async () => {
   // Create temp directory with test files
@@ -12,18 +12,18 @@ test("ls -l shows long listing format", async () => {
   });
 
   // Run ls -l in the temp directory
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
-      import { $ } from "bun";
+      import { $ } from "fun";
       $.cwd("${String(dir).replace(/\\/g, "\\\\")}");
       const result = await $\`ls -l\`.text();
       console.log(result);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -62,18 +62,18 @@ test("ls without -l shows short format", async () => {
     "file2.txt": "content2",
   });
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
-      import { $ } from "bun";
+      import { $ } from "fun";
       $.cwd("${String(dir).replace(/\\/g, "\\\\")}");
       const result = await $\`ls\`.text();
       console.log(result);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -97,18 +97,18 @@ test("ls -al shows hidden files in long format", async () => {
     "visible.txt": "visible content",
   });
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
-      import { $ } from "bun";
+      import { $ } from "fun";
       $.cwd("${String(dir).replace(/\\/g, "\\\\")}");
       const result = await $\`ls -al\`.text();
       console.log(result);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -139,18 +139,18 @@ test("ls -l shows directory type indicator", async () => {
     },
   });
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
-      import { $ } from "bun";
+      import { $ } from "fun";
       $.cwd("${String(dir).replace(/\\/g, "\\\\")}");
       const result = await $\`ls -l\`.text();
       console.log(result);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

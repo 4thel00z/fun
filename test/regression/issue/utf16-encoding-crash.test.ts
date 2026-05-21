@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import fs from "fs";
 import { tempDirWithFiles } from "harness";
 
-// Test cases that verify Bun's UTF-16le behavior matches Node.js exactly
+// Test cases that verify Fun's UTF-16le behavior matches Node.js exactly
 const testCases = [
   {
     name: "1 byte",

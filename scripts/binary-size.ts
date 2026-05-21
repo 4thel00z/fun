@@ -1,9 +1,11 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 // Measure stripped binary sizes for every release platform and compare them
 // against the latest finished `main` build ("canary").
 //
-// CI mode (invoked from .buildkite/ci.mjs after all *-build-bun jobs finish):
-//   bun scripts/binary-size.ts \
-//     --targets '[{"triplet":"bun-darwin-aarch64"},...]' \
+// CI mode (invoked from .buildkite/ci.mjs after all *-build-fun jobs finish):
+//   fun scripts/binary-size.ts \
+//     --targets '[{"triplet":"fun-darwin-aarch64"},...]' \
 //     --threshold-mb 0.5 \
 //     [--no-fail] [--release]
 //
@@ -14,7 +16,7 @@
 //   makes ci.mjs set soft_fail on this step (it still runs and annotates).
 //
 // Local mode (no args):
-//   bun scripts/binary-size.ts
+//   fun scripts/binary-size.ts
 //
 //   Compares the current `canary` GitHub release against the latest tagged
 //   release by reading uncompressed binary sizes straight from each zip's
@@ -46,26 +48,26 @@ const noFail = values["no-fail"];
 const isRelease = values.release;
 const buildKind = isRelease ? "release" : "canary";
 
-const org = process.env.BUILDKITE_ORGANIZATION_SLUG || "bun";
-const pipeline = process.env.BUILDKITE_PIPELINE_SLUG || "bun";
+const org = process.env.BUILDKITE_ORGANIZATION_SLUG || "fun";
+const pipeline = process.env.BUILDKITE_PIPELINE_SLUG || "fun";
 const buildNumber = process.env.BUILDKITE_BUILD_NUMBER;
 const branch = process.env.BUILDKITE_BRANCH;
 
 function agent(args: string[], opts: { quiet?: boolean } = {}): string | undefined {
-  const { exitCode, stdout } = Bun.spawnSync(["buildkite-agent", ...args], {
+  const { exitCode, stdout } = Fun.spawnSync(["buildkite-agent", ...args], {
     stderr: opts.quiet ? "ignore" : "inherit",
   });
   return exitCode === 0 ? stdout.toString().trim() : undefined;
 }
 
 async function getSecret(name: string): Promise<string | undefined> {
-  const { exitCode, stdout } = Bun.spawnSync(["buildkite-agent", "secret", "get", name], { stderr: "ignore" });
+  const { exitCode, stdout } = Fun.spawnSync(["buildkite-agent", "secret", "get", name], { stderr: "ignore" });
   if (exitCode !== 0) return undefined;
   return stdout.toString().trim() || undefined;
 }
 
 // ─── Collect current build's sizes from meta-data ───
-// Each *-build-bun job sets `binary-size:<triplet>` after stripping
+// Each *-build-fun job sets `binary-size:<triplet>` after stripping
 // (scripts/build/ci.ts).
 
 console.log("--- Reading sizes from build meta-data");
@@ -80,7 +82,7 @@ for (const { triplet } of targets) {
   console.log(`  ${triplet.padEnd(30)} ${fmtBytes(sizes[triplet]).padStart(10)}`);
 }
 
-await Bun.write(
+await Fun.write(
   "binary-sizes.json",
   JSON.stringify({ build: buildNumber, branch, release: isRelease, sizes }, null, 2),
 );
@@ -94,7 +96,7 @@ const ghToken = (await getSecret("GITHUB_TOKEN")) ?? process.env.GITHUB_TOKEN;
 const ghHeaders: Record<string, string> = ghToken ? { Authorization: `Bearer ${ghToken}` } : {};
 
 async function githubJson<T>(path: string): Promise<T> {
-  const res = await fetch(`https://api.github.com/repos/oven-sh/bun/${path}`, { headers: ghHeaders });
+  const res = await fetch(`https://api.github.com/repos/underdoc-org/fun/${path}`, { headers: ghHeaders });
   if (!res.ok) throw new Error(`github ${path}: ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -117,7 +119,7 @@ async function sizesFromBuild(n: number): Promise<{ sizes: Sizes; release?: bool
   mkdirSync(dir, { recursive: true });
   const ok = agent(["artifact", "download", "binary-sizes.json", dir, "--build", id], { quiet: true });
   if (ok === undefined) return;
-  return (await Bun.file(`${dir}/binary-sizes.json`).json()) as { sizes: Sizes; release?: boolean };
+  return (await Fun.file(`${dir}/binary-sizes.json`).json()) as { sizes: Sizes; release?: boolean };
 }
 
 async function baselineFromCommit(sha: string, label: (n: number) => string): Promise<Baseline | undefined> {
@@ -215,7 +217,7 @@ ${tableRows}
 ${failed ? `<p>Add <code>[skip size check]</code> to the commit message if this increase is intentional.</p>` : ""}
 </details>`;
 
-Bun.spawnSync(
+Fun.spawnSync(
   [
     "buildkite-agent",
     "annotate",
@@ -257,7 +259,7 @@ type GithubRelease = { tag_name: string; assets: { name: string; browser_downloa
 async function compareGithubReleases() {
   const auth = process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : undefined;
   const gh = (p: string) =>
-    fetch(`https://api.github.com/repos/oven-sh/bun/${p}`, { headers: auth }).then(r => {
+    fetch(`https://api.github.com/repos/underdoc-org/fun/${p}`, { headers: auth }).then(r => {
       if (!r.ok) throw new Error(`github ${p}: ${r.status} ${r.statusText}`);
       return r.json() as Promise<GithubRelease>;
     });
@@ -265,9 +267,9 @@ async function compareGithubReleases() {
   const [latest, canary] = await Promise.all([gh("releases/latest"), gh("releases/tags/canary")]);
 
   // The release zips we care about are the stripped runtime binaries:
-  // bun-<os>-<arch>[-musl][-baseline].zip. Skip -profile (unstripped) and
+  // fun-<os>-<arch>[-musl][-baseline].zip. Skip -profile (unstripped) and
   // anything that isn't a single-binary zip.
-  const isBinaryZip = (n: string) => /^bun-[a-z0-9-]+\.zip$/.test(n) && !n.includes("-profile");
+  const isBinaryZip = (n: string) => /^fun-[a-z0-9-]+\.zip$/.test(n) && !n.includes("-profile");
   const assetMap = (r: GithubRelease) =>
     new Map(r.assets.filter(a => isBinaryZip(a.name)).map(a => [a.name.replace(/\.zip$/, ""), a.browser_download_url]));
 
@@ -313,7 +315,7 @@ async function sizesFromZips(triplets: string[], urls: Map<string, string>): Pro
 // Read the uncompressed size of the binary inside a release zip without
 // downloading the whole archive. The central directory + EOCD live at the end
 // of the file; a 64 KB Range request is more than enough for our two-entry
-// (`<triplet>/` + `<triplet>/bun[.exe]`) zips.
+// (`<triplet>/` + `<triplet>/fun[.exe]`) zips.
 async function zipBinarySize(url: string): Promise<number> {
   const head = await fetch(url, { method: "HEAD" });
   if (!head.ok) throw new Error(`HEAD ${url}: ${head.status}`);

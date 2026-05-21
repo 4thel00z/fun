@@ -13,7 +13,7 @@ class InspectorConsoleAgent;
 class InspectorDebuggerAgent;
 class InspectorScriptProfilerAgent;
 } // namespace Inspector
-namespace Bun {
+namespace Fun {
 using InspectorConsoleAgent = Inspector::InspectorConsoleAgent;
 using InspectorDebuggerAgent = Inspector::InspectorDebuggerAgent;
 using InspectorScriptProfilerAgent = Inspector::InspectorScriptProfilerAgent;

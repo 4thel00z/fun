@@ -1,7 +1,7 @@
-import { beforeEach, test } from "bun:test";
+import { beforeEach, test } from "fun:test";
 
 beforeEach(() => {
-  Bun.sleepSync(50);
+  Fun.sleepSync(50);
   throw new Error("beforeEach");
 });
 

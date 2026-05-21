@@ -1,9 +1,9 @@
 ---
 title: Bindgen
-description: Bindgen for Bun
+description: Bindgen for Fun
 ---
 
-<Note>This document is for maintainers and contributors to Bun, and describes internal implementation details.</Note>
+<Note>This document is for maintainers and contributors to Fun, and describes internal implementation details.</Note>
 
 The new bindings generator, introduced to the codebase in Dec 2024, scans for
 `*.bind.ts` to find function and class definition, and generates glue code to
@@ -30,11 +30,11 @@ pub fn add(global: *jsc.JSGlobalObject, a: i32, b: i32) !i32 {
     };
 }
 
-const gen = bun.gen.math; // "math" being this file's basename
+const gen = fun.gen.math; // "math" being this file's basename
 
 const std = @import("std");
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 ```
 
 Then describe the API schema using a `.bind.ts` function. The binding file goes next to the Zig file.
@@ -62,22 +62,22 @@ This function declaration is equivalent to:
 declare function add(a: number, b: number = 1): number;
 ```
 
-The code generator will provide `bun.gen.math.jsAdd`, which is the native
+The code generator will provide `fun.gen.math.jsAdd`, which is the native
 function implementation. To pass to JavaScript, use
-`bun.gen.math.createAddCallback(global)`. JS files in `src/js/` may use
+`fun.gen.math.createAddCallback(global)`. JS files in `src/js/` may use
 `$bindgenFn("math.bind.ts", "add")` to get a handle to the implementation.
 
 ## Strings
 
-The type for receiving strings is one of [`t.DOMString`](https://webidl.spec.whatwg.org/#idl-DOMString), [`t.ByteString`](https://webidl.spec.whatwg.org/#idl-ByteString), and [`t.USVString`](https://webidl.spec.whatwg.org/#idl-USVString). These map directly to their WebIDL counterparts, and have slightly different conversion logic. Bindgen will pass BunString to native code in all cases.
+The type for receiving strings is one of [`t.DOMString`](https://webidl.spec.whatwg.org/#idl-DOMString), [`t.ByteString`](https://webidl.spec.whatwg.org/#idl-ByteString), and [`t.USVString`](https://webidl.spec.whatwg.org/#idl-USVString). These map directly to their WebIDL counterparts, and have slightly different conversion logic. Bindgen will pass FunString to native code in all cases.
 
 When in doubt, use DOMString.
 
-`t.UTF8String` can be used in place of `t.DOMString`, but will call `bun.String.toUTF8`. The native callback gets `[]const u8` (WTF-8 data) passed to native code, freeing it after the function returns.
+`t.UTF8String` can be used in place of `t.DOMString`, but will call `fun.String.toUTF8`. The native callback gets `[]const u8` (WTF-8 data) passed to native code, freeing it after the function returns.
 
 TLDRs from WebIDL spec:
 
-- ByteString can only contain valid latin1 characters. It is not safe to assume bun.String is already in 8-bit format, but it is extremely likely.
+- ByteString can only contain valid latin1 characters. It is not safe to assume fun.String is already in 8-bit format, but it is extremely likely.
 - USVString will not contain invalid surrogate pairs, aka text that can be represented correctly in UTF-8.
 - DOMString is the loosest but also most recommended strategy.
 
@@ -113,7 +113,7 @@ fn action1(a: i32) i32 {
   return a;
 }
 
-fn action2(a: bun.String) bun.String {
+fn action2(a: fun.String) fun.String {
   return a;
 }
 ```
@@ -129,7 +129,7 @@ To use [WebIDL's enumeration](https://webidl.spec.whatwg.org/#idl-enums) type, u
 - `t.stringEnum`: Create and codegen a new enum type.
 - `t.zigEnum`: Derive a bindgen type off of an existing enum in the codebase.
 
-An example of `stringEnum` as used in `fmt.zig` / `bun:internal-for-testing`
+An example of `stringEnum` as used in `fmt.zig` / `fun:internal-for-testing`
 
 ```ts
 export const Formatter = t.stringEnum("highlight-javascript", "escape-powershell");

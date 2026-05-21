@@ -7,7 +7,7 @@ const os = require('os');
 const {
   monitorEventLoopDelay
 } = require('perf_hooks');
-const sleep = typeof Bun === 'object' ? Bun.sleepSync : require('internal/util').sleep;
+const sleep = typeof Fun === 'object' ? Fun.sleepSync : require('internal/util').sleep;
 
 {
   const histogram = monitorEventLoopDelay();

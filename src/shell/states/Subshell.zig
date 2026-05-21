@@ -57,7 +57,7 @@ pub fn initDupeShellState(
     node: *const ast.Subshell,
     parent: ParentPtr,
     io: IO,
-) bun.sys.Maybe(*Subshell) {
+) fun.sys.Maybe(*Subshell) {
     const subshell = parent.create(Subshell);
     subshell.* = .{
         .base = State.initWithNewAllocScope(.subshell, interpreter, shell_state),
@@ -144,7 +144,7 @@ pub fn childDone(this: *Subshell, child_ptr: ChildPtr, exit_code: ExitCode) Yiel
     if (child_ptr.ptr.is(Expansion) and exit_code != 0) {
         if (exit_code != 0) {
             const err = this.state.expanding_redirect.expansion.state.err;
-            defer err.deinit(bun.default_allocator);
+            defer err.deinit(fun.default_allocator);
             this.state.expanding_redirect.expansion.deinit();
             return this.writeFailingError("{f}\n", .{err});
         }
@@ -157,11 +157,11 @@ pub fn childDone(this: *Subshell, child_ptr: ChildPtr, exit_code: ExitCode) Yiel
         return this.parent.childDone(this, exit_code);
     }
 
-    bun.shell.unreachableState("Subshell.childDone", "expected Script or Expansion");
+    fun.shell.unreachableState("Subshell.childDone", "expected Script or Expansion");
 }
 
 pub fn onIOWriterChunk(this: *Subshell, _: usize, err: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .wait_write_err);
     }
 
@@ -192,24 +192,24 @@ pub fn writeFailingError(this: *Subshell, comptime fmt: []const u8, args: anytyp
 
 const std = @import("std");
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const shell = fun.shell;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Binary = bun.shell.Interpreter.Binary;
-const Expansion = bun.shell.Interpreter.Expansion;
-const IO = bun.shell.Interpreter.IO;
-const Pipeline = bun.shell.Interpreter.Pipeline;
-const Script = bun.shell.Interpreter.Script;
+const Interpreter = fun.shell.Interpreter;
+const Binary = fun.shell.Interpreter.Binary;
+const Expansion = fun.shell.Interpreter.Expansion;
+const IO = fun.shell.Interpreter.IO;
+const Pipeline = fun.shell.Interpreter.Pipeline;
+const Script = fun.shell.Interpreter.Script;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
 
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

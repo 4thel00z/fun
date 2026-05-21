@@ -21,7 +21,7 @@ fn formatUnsignedIntegerBetween(comptime len: u16, buf: *[len]u8, val: u64) void
 }
 
 pub fn writeModuleId(comptime Writer: type, writer: Writer, module_id: u32) void {
-    bun.assert(module_id != 0); // either module_id is forgotten or it should be disabled
+    fun.assert(module_id != 0); // either module_id is forgotten or it should be disabled
     _ = writer.writeAll("$") catch unreachable;
     std.fmt.formatInt(module_id, 16, .lower, .{}, writer) catch unreachable;
 }
@@ -390,11 +390,11 @@ pub const Options = struct {
     allocator: std.mem.Allocator = default_allocator,
     source_map_allocator: ?std.mem.Allocator = null,
     source_map_handler: ?SourceMapHandler = null,
-    source_map_builder: ?*bun.SourceMap.Chunk.Builder = null,
+    source_map_builder: ?*fun.SourceMap.Chunk.Builder = null,
     css_import_behavior: api.CssInJsBehavior = api.CssInJsBehavior.facade,
     target: options.Target = .browser,
 
-    runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = null,
+    runtime_transpiler_cache: ?*fun.jsc.RuntimeTranspilerCache = null,
     module_info: ?*analyze_transpiled_module.ModuleInfo = null,
     input_files_for_dev_server: ?[]logger.Source = null,
 
@@ -428,7 +428,7 @@ pub const Options = struct {
     // us do binary search on to figure out what line a given AST node came from
     line_offset_tables: ?SourceMap.LineOffsetTable.List = null,
 
-    mangled_props: ?*const bun.bundle_v2.MangledProps,
+    mangled_props: ?*const fun.bundle_v2.MangledProps,
 
     // Default indentation is 2 spaces
     pub const Indentation = struct {
@@ -476,7 +476,7 @@ pub const RequireOrImportMeta = struct {
             ctx: *Type,
         ) Callback {
             return Callback{
-                .ctx = bun.cast(*anyopaque, ctx),
+                .ctx = fun.cast(*anyopaque, ctx),
                 .callback = @as(*const Fn, @ptrCast(&callback)),
             };
         }
@@ -600,7 +600,7 @@ fn NewPrinter(
     comptime ascii_only: bool,
     comptime Writer: type,
     comptime rewrite_esm_to_cjs: bool,
-    comptime is_bun_platform: bool,
+    comptime is_fun_platform: bool,
     comptime is_json: bool,
     comptime generate_source_map: bool,
 ) type {
@@ -637,7 +637,7 @@ fn NewPrinter(
 
         const Printer = @This();
 
-        const may_have_module_info = is_bun_platform and !rewrite_esm_to_cjs;
+        const may_have_module_info = is_fun_platform and !rewrite_esm_to_cjs;
         const TopLevelAndIsExport = if (!may_have_module_info) struct {} else struct {
             is_export: bool = false,
             is_top_level: ?analyze_transpiled_module.ModuleInfo.VarKind = null,
@@ -867,14 +867,14 @@ fn NewPrinter(
 
         fn fmt(p: *Printer, comptime str: string, args: anytype) !void {
             const len = @call(
-                bun.callmod_inline,
+                fun.callmod_inline,
                 std.fmt.count,
                 .{ str, args },
             );
             var ptr = try p.writer.reserve(len);
 
             const written = @call(
-                bun.callmod_inline,
+                fun.callmod_inline,
                 std.fmt.bufPrint,
                 .{ ptr[0..len], str, args },
             ) catch unreachable;
@@ -968,13 +968,13 @@ fn NewPrinter(
             }
         }
 
-        fn printGlobalBunImportStatement(p: *Printer, import: S.Import) void {
-            if (comptime !is_bun_platform) unreachable;
-            printInternalBunImport(p, import, @TypeOf("globalThis.Bun"), "globalThis.Bun");
+        fn printGlobalFunImportStatement(p: *Printer, import: S.Import) void {
+            if (comptime !is_fun_platform) unreachable;
+            printInternalFunImport(p, import, @TypeOf("globalThis.Fun"), "globalThis.Fun");
         }
 
-        fn printInternalBunImport(p: *Printer, import: S.Import, comptime Statement: type, statement: Statement) void {
-            if (comptime !is_bun_platform) unreachable;
+        fn printInternalFunImport(p: *Printer, import: S.Import, comptime Statement: type, statement: Statement) void {
+            if (comptime !is_fun_platform) unreachable;
 
             if (import.star_name_loc != null) {
                 p.print("var ");
@@ -1068,21 +1068,21 @@ fn NewPrinter(
                 p.printSemicolonAfterStatement();
             }
 
-            // Record var declarations for module_info. printGlobalBunImportStatement
+            // Record var declarations for module_info. printGlobalFunImportStatement
             // bypasses printDeclStmt/printBinding, so we must record vars explicitly.
             if (may_have_module_info) {
                 if (p.moduleInfo()) |mi| {
                     if (import.star_name_loc != null) {
                         const name = p.renamer.nameForSymbol(import.namespace_ref);
-                        bun.handleOom(mi.addVar(bun.handleOom(mi.str(name)), .declared));
+                        fun.handleOom(mi.addVar(fun.handleOom(mi.str(name)), .declared));
                     }
                     if (import.default_name) |default| {
                         const name = p.renamer.nameForSymbol(default.ref.?);
-                        bun.handleOom(mi.addVar(bun.handleOom(mi.str(name)), .declared));
+                        fun.handleOom(mi.addVar(fun.handleOom(mi.str(name)), .declared));
                     }
                     for (import.items) |item| {
                         const name = p.renamer.nameForSymbol(item.name.ref.?);
-                        bun.handleOom(mi.addVar(bun.handleOom(mi.str(name)), .declared));
+                        fun.handleOom(mi.addVar(fun.handleOom(mi.str(name)), .declared));
                     }
                 }
             }
@@ -1250,13 +1250,13 @@ fn NewPrinter(
                         p.temporary_bindings = .{};
                         defer {
                             if (p.temporary_bindings.capacity > 0) {
-                                temp_bindings.deinit(bun.default_allocator);
+                                temp_bindings.deinit(fun.default_allocator);
                             } else {
                                 temp_bindings.clearRetainingCapacity();
                                 p.temporary_bindings = temp_bindings;
                             }
                         }
-                        temp_bindings.ensureUnusedCapacity(bun.default_allocator, 2) catch unreachable;
+                        temp_bindings.ensureUnusedCapacity(fun.default_allocator, 2) catch unreachable;
                         temp_bindings.appendAssumeCapacity(.{
                             .key = Expr.init(E.String, E.String.init(target_e_dot.name), target_e_dot.name_loc),
                             .value = decls[0].binding,
@@ -1284,7 +1284,7 @@ fn NewPrinter(
                                 break;
                             }
 
-                            temp_bindings.append(bun.default_allocator, .{
+                            temp_bindings.append(fun.default_allocator, .{
                                 .key = Expr.init(E.String, E.String.init(e_dot.name), e_dot.name_loc),
                                 .value = decl.binding,
                             }) catch unreachable;
@@ -1345,7 +1345,7 @@ fn NewPrinter(
             }
             // TODO: esbuild does this to make the source map more accurate with E.NameOfSymbol
             // if (printer.symbols().get(printer.symbols().follow(ref))) |original_symbol| {
-            //     if (!bun.strings.eql( original_symbol.original_name, name)) {
+            //     if (!fun.strings.eql( original_symbol.original_name, name)) {
             //         printer.source_map_builder.addSourceMapping(location, originalName);
             //         return;
             //     }
@@ -1354,13 +1354,13 @@ fn NewPrinter(
         }
 
         pub fn printSymbol(p: *Printer, ref: Ref) void {
-            bun.assert(!ref.isNull()); // Invalid Symbol
+            fun.assert(!ref.isNull()); // Invalid Symbol
             const name = p.renamer.nameForSymbol(ref);
 
             p.printIdentifier(name);
         }
         pub fn printClauseAlias(p: *Printer, alias: string) void {
-            bun.assert(alias.len > 0);
+            fun.assert(alias.len > 0);
 
             if (!strings.containsNonBmpCodePointOrIsInvalidIdentifier(alias)) {
                 p.printSpaceBeforeIdentifier();
@@ -1660,24 +1660,24 @@ fn NewPrinter(
             const record = p.importRecord(import_record_index);
             const module_type = p.options.module_type;
 
-            if (comptime is_bun_platform) {
-                // "bun" is not a real module. It's just globalThis.Bun.
+            if (comptime is_fun_platform) {
+                // "fun" is not a real module. It's just globalThis.Fun.
                 //
                 //  transform from:
-                //      const foo = await import("bun")
-                //      const bar = require("bun")
+                //      const foo = await import("fun")
+                //      const bar = require("fun")
                 //
                 //  transform to:
-                //      const foo = await Promise.resolve(globalThis.Bun)
-                //      const bar = globalThis.Bun
+                //      const foo = await Promise.resolve(globalThis.Fun)
+                //      const bar = globalThis.Fun
                 //
                 switch (record.tag) {
-                    .bun => {
+                    .fun => {
                         if (record.kind == .dynamic) {
-                            p.print("Promise.resolve(globalThis.Bun)");
+                            p.print("Promise.resolve(globalThis.Fun)");
                             return;
                         } else if (record.kind == .require or record.kind == .stmt) {
-                            p.print("globalThis.Bun");
+                            p.print("globalThis.Fun");
                             return;
                         }
                     },
@@ -1738,7 +1738,7 @@ fn NewPrinter(
                 }
 
                 if (p.options.input_files_for_dev_server) |input_files| {
-                    bun.assert(module_type == .internal_bake_dev);
+                    fun.assert(module_type == .internal_bake_dev);
                     p.printSpaceBeforeIdentifier();
                     p.printSymbol(p.options.hmr_ref);
                     p.print(".require(");
@@ -2086,7 +2086,7 @@ fn NewPrinter(
                     p.printSpaceBeforeIdentifier();
                     p.addSourceMapping(expr.loc);
                     if (p.options.module_type == .internal_bake_dev) {
-                        bun.assert(p.options.hmr_ref.isValid());
+                        fun.assert(p.options.hmr_ref.isValid());
                         p.printSymbol(p.options.hmr_ref);
                         p.print(".importMeta");
                     } else if (!p.options.import_meta_ref.isValid()) {
@@ -2097,11 +2097,11 @@ fn NewPrinter(
                         // Note: The bundler will not hit this code path. The bundler will replace
                         // the ImportMeta AST node with a regular Identifier AST node.
                         //
-                        // This is currently only used in Bun's runtime for CommonJS modules
+                        // This is currently only used in Fun's runtime for CommonJS modules
                         // referencing import.meta
                         //
                         // TODO: This assertion trips when using `import.meta` with `--format=cjs`
-                        bun.debugAssert(p.options.module_type == .cjs);
+                        fun.debugAssert(p.options.module_type == .cjs);
 
                         p.printSymbol(p.options.import_meta_ref);
                     }
@@ -2120,7 +2120,7 @@ fn NewPrinter(
                         if (p.moduleInfo()) |mi| mi.flags.contains_import_meta = true;
                         p.print("import.meta.main");
                     } else {
-                        bun.debugAssert(p.options.module_type != .internal_bake_dev);
+                        fun.debugAssert(p.options.module_type != .internal_bake_dev);
 
                         p.printSpaceBeforeIdentifier();
                         p.addSourceMapping(expr.loc);
@@ -2167,31 +2167,31 @@ fn NewPrinter(
                         }
                     },
                     .hot_enabled => {
-                        bun.debugAssert(p.options.module_type == .internal_bake_dev);
+                        fun.debugAssert(p.options.module_type == .internal_bake_dev);
                         p.printSymbol(p.options.hmr_ref);
                         p.print(".indirectHot");
                     },
                     .hot_data => {
-                        bun.debugAssert(p.options.module_type == .internal_bake_dev);
+                        fun.debugAssert(p.options.module_type == .internal_bake_dev);
                         p.printSymbol(p.options.hmr_ref);
                         p.print(".data");
                     },
                     .hot_accept => {
-                        bun.debugAssert(p.options.module_type == .internal_bake_dev);
+                        fun.debugAssert(p.options.module_type == .internal_bake_dev);
                         p.printSymbol(p.options.hmr_ref);
                         p.print(".accept");
                     },
                     .hot_accept_visited => {
-                        bun.debugAssert(p.options.module_type == .internal_bake_dev);
+                        fun.debugAssert(p.options.module_type == .internal_bake_dev);
                         p.printSymbol(p.options.hmr_ref);
                         p.print(".acceptSpecifiers");
                     },
                     .hot_disabled => {
-                        bun.debugAssert(p.options.module_type != .internal_bake_dev);
+                        fun.debugAssert(p.options.module_type != .internal_bake_dev);
                         p.printExpr(.{ .data = .e_undefined, .loc = expr.loc }, level, in_flags);
                     },
                     .resolved_specifier_string => |index| {
-                        bun.debugAssert(p.options.module_type == .internal_bake_dev);
+                        fun.debugAssert(p.options.module_type == .internal_bake_dev);
                         p.printStringLiteralUTF8(p.importRecord(index.get()).path.pretty, true);
                     },
                 },
@@ -2824,12 +2824,12 @@ fn NewPrinter(
 
                             if (inlined_value) |value| {
                                 if (replaced.items.len == 0) {
-                                    bun.handleOom(replaced.appendSlice(e.parts[0..i]));
+                                    fun.handleOom(replaced.appendSlice(e.parts[0..i]));
                                 }
                                 part.value = value;
-                                bun.handleOom(replaced.append(part));
+                                fun.handleOom(replaced.append(part));
                             } else if (replaced.items.len > 0) {
-                                bun.handleOom(replaced.append(part));
+                                fun.handleOom(replaced.append(part));
                             }
                         }
 
@@ -2940,7 +2940,7 @@ fn NewPrinter(
                         e.ref;
                     const symbol = p.symbols().get(ref).?;
 
-                    // if (bun.strings.eql(symbol.original_name, "registerClientReference")) {
+                    // if (fun.strings.eql(symbol.original_name, "registerClientReference")) {
                     //     @breakpoint();
                     // }
 
@@ -3146,7 +3146,7 @@ fn NewPrinter(
                         }
 
                         // Only allocate heap memory on the stack for nested binary expressions
-                        bun.handleOom(p.binary_expression_stack.append(v));
+                        fun.handleOom(p.binary_expression_stack.append(v));
                         v = BinaryExpressionVisitor{
                             .e = left_binary.?,
                             .level = v.left_level,
@@ -3252,7 +3252,7 @@ fn NewPrinter(
                 p.print(" ");
             }
 
-            if (comptime is_bun_platform) {
+            if (comptime is_fun_platform) {
                 // Translate any non-ASCII to unicode escape sequences
                 var ascii_start: usize = 0;
                 var is_ascii = false;
@@ -3569,7 +3569,7 @@ fn NewPrinter(
 
             if (item.kind != .normal and item.kind != .auto_accessor) {
                 if (comptime is_json) {
-                    bun.unreachablePanic("item.kind must be normal in json", .{});
+                    fun.unreachablePanic("item.kind must be normal in json", .{});
                 }
 
                 switch (item.value.?.data) {
@@ -3599,7 +3599,7 @@ fn NewPrinter(
             }
 
             if (comptime is_json) {
-                bun.assert(item.initializer == null);
+                fun.assert(item.initializer == null);
             }
 
             if (item.initializer) |initial| {
@@ -3624,9 +3624,9 @@ fn NewPrinter(
                     if (may_have_module_info) {
                         if (p.moduleInfo()) |mi| {
                             const local_name = p.renamer.nameForSymbol(b.ref);
-                            const name_id = bun.handleOom(mi.str(local_name));
-                            if (tlm.is_top_level) |vk| bun.handleOom(mi.addVar(name_id, vk));
-                            if (tlm.is_export) bun.handleOom(mi.addExportInfoLocal(name_id, name_id));
+                            const name_id = fun.handleOom(mi.str(local_name));
+                            if (tlm.is_top_level) |vk| fun.handleOom(mi.addVar(name_id, vk));
+                            if (tlm.is_export) fun.handleOom(mi.addExportInfoLocal(name_id, name_id));
                         }
                     }
                 },
@@ -3729,9 +3729,9 @@ fn NewPrinter(
                                                         if (str.eql(string, p.renamer.nameForSymbol(id.ref))) {
                                                             if (may_have_module_info) {
                                                                 if (p.moduleInfo()) |mi| {
-                                                                    const name_id = bun.handleOom(mi.str(str.data));
-                                                                    if (tlm.is_top_level) |vk| bun.handleOom(mi.addVar(name_id, vk));
-                                                                    if (tlm.is_export) bun.handleOom(mi.addExportInfoLocal(name_id, name_id));
+                                                                    const name_id = fun.handleOom(mi.str(str.data));
+                                                                    if (tlm.is_top_level) |vk| fun.handleOom(mi.addVar(name_id, vk));
+                                                                    if (tlm.is_export) fun.handleOom(mi.addExportInfoLocal(name_id, name_id));
                                                                 }
                                                             }
                                                             p.maybePrintDefaultBindingValue(property);
@@ -3754,9 +3754,9 @@ fn NewPrinter(
                                                         if (may_have_module_info) {
                                                             if (p.moduleInfo()) |mi| {
                                                                 const str8 = str.slice(p.options.allocator);
-                                                                const name_id = bun.handleOom(mi.str(str8));
-                                                                if (tlm.is_top_level) |vk| bun.handleOom(mi.addVar(name_id, vk));
-                                                                if (tlm.is_export) bun.handleOom(mi.addExportInfoLocal(name_id, name_id));
+                                                                const name_id = fun.handleOom(mi.str(str8));
+                                                                if (tlm.is_top_level) |vk| fun.handleOom(mi.addVar(name_id, vk));
+                                                                if (tlm.is_export) fun.handleOom(mi.addExportInfoLocal(name_id, name_id));
                                                             }
                                                         }
                                                         p.maybePrintDefaultBindingValue(property);
@@ -3847,11 +3847,11 @@ fn NewPrinter(
 
                     if (may_have_module_info) {
                         if (p.moduleInfo()) |mi| {
-                            const name_id = bun.handleOom(mi.str(local_name));
+                            const name_id = fun.handleOom(mi.str(local_name));
                             // function declarations are lexical (block-scoped in modules);
                             // only record at true top-level, not inside blocks.
-                            if (tlmtlo.is_top_level == .yes) bun.handleOom(mi.addVar(name_id, .lexical));
-                            if (s.func.flags.contains(.is_export)) bun.handleOom(mi.addExportInfoLocal(name_id, name_id));
+                            if (tlmtlo.is_top_level == .yes) fun.handleOom(mi.addVar(name_id, .lexical));
+                            if (s.func.flags.contains(.is_export)) fun.handleOom(mi.addExportInfoLocal(name_id, name_id));
                         }
                     }
 
@@ -3887,11 +3887,11 @@ fn NewPrinter(
 
                     if (may_have_module_info) {
                         if (p.moduleInfo()) |mi| {
-                            const name_id = bun.handleOom(mi.str(nameStr));
+                            const name_id = fun.handleOom(mi.str(nameStr));
                             // class declarations are lexical (block-scoped in modules);
                             // only record at true top-level, not inside blocks.
-                            if (tlmtlo.is_top_level == .yes) bun.handleOom(mi.addVar(name_id, .lexical));
-                            if (s.is_export) bun.handleOom(mi.addExportInfoLocal(name_id, name_id));
+                            if (tlmtlo.is_top_level == .yes) fun.handleOom(mi.addVar(name_id, .lexical));
+                            if (s.is_export) fun.handleOom(mi.addExportInfoLocal(name_id, name_id));
                         }
                     }
 
@@ -3933,8 +3933,8 @@ fn NewPrinter(
 
                             if (may_have_module_info) {
                                 if (p.moduleInfo()) |mi| {
-                                    bun.handleOom(mi.addExportInfoLocal(bun.handleOom(mi.str("default")), .star_default));
-                                    bun.handleOom(mi.addVar(.star_default, .lexical));
+                                    fun.handleOom(mi.addExportInfoLocal(fun.handleOom(mi.str("default")), .star_default));
+                                    fun.handleOom(mi.addVar(.star_default, .lexical));
                                 }
                             }
                             return;
@@ -3966,9 +3966,9 @@ fn NewPrinter(
 
                                     if (may_have_module_info) {
                                         if (p.moduleInfo()) |mi| {
-                                            const local_name: analyze_transpiled_module.StringID = if (func_name) |f| bun.handleOom(mi.str(f)) else .star_default;
-                                            bun.handleOom(mi.addExportInfoLocal(bun.handleOom(mi.str("default")), local_name));
-                                            bun.handleOom(mi.addVar(local_name, .lexical));
+                                            const local_name: analyze_transpiled_module.StringID = if (func_name) |f| fun.handleOom(mi.str(f)) else .star_default;
+                                            fun.handleOom(mi.addExportInfoLocal(fun.handleOom(mi.str("default")), local_name));
+                                            fun.handleOom(mi.addVar(local_name, .lexical));
                                         }
                                     }
 
@@ -3989,9 +3989,9 @@ fn NewPrinter(
 
                                     if (may_have_module_info) {
                                         if (p.moduleInfo()) |mi| {
-                                            const local_name: analyze_transpiled_module.StringID = if (class_name) |f| bun.handleOom(mi.str(f)) else .star_default;
-                                            bun.handleOom(mi.addExportInfoLocal(bun.handleOom(mi.str("default")), local_name));
-                                            bun.handleOom(mi.addVar(local_name, .lexical));
+                                            const local_name: analyze_transpiled_module.StringID = if (class_name) |f| fun.handleOom(mi.str(f)) else .star_default;
+                                            fun.handleOom(mi.addExportInfoLocal(fun.handleOom(mi.str("default")), local_name));
+                                            fun.handleOom(mi.addVar(local_name, .lexical));
                                         }
                                     }
 
@@ -4031,12 +4031,12 @@ fn NewPrinter(
 
                     if (may_have_module_info) {
                         if (p.moduleInfo()) |mi| {
-                            const irp_id = bun.handleOom(mi.str(irp));
-                            bun.handleOom(mi.requestModule(irp_id, .none));
+                            const irp_id = fun.handleOom(mi.str(irp));
+                            fun.handleOom(mi.requestModule(irp_id, .none));
                             if (s.alias) |alias| {
-                                bun.handleOom(mi.addExportInfoNamespace(bun.handleOom(mi.str(alias.original_name)), irp_id));
+                                fun.handleOom(mi.addExportInfoNamespace(fun.handleOom(mi.str(alias.original_name)), irp_id));
                             } else {
-                                bun.handleOom(mi.addExportInfoStar(irp_id));
+                                fun.handleOom(mi.addExportInfoStar(irp_id));
                             }
                         }
                     }
@@ -4194,7 +4194,7 @@ fn NewPrinter(
 
                         if (may_have_module_info) {
                             if (p.moduleInfo()) |mi| {
-                                bun.handleOom(mi.addExportInfoLocal(bun.handleOom(mi.str(item.alias)), bun.handleOom(mi.str(name))));
+                                fun.handleOom(mi.addExportInfoLocal(fun.handleOom(mi.str(item.alias)), fun.handleOom(mi.str(name))));
                             }
                         }
                     }
@@ -4255,11 +4255,11 @@ fn NewPrinter(
 
                     if (may_have_module_info) {
                         if (p.moduleInfo()) |mi| {
-                            const irp_id = bun.handleOom(mi.str(irp));
-                            bun.handleOom(mi.requestModule(irp_id, .none));
+                            const irp_id = fun.handleOom(mi.str(irp));
+                            fun.handleOom(mi.requestModule(irp_id, .none));
                             for (s.items) |item| {
                                 const name = p.renamer.nameForSymbol(item.name.ref.?);
-                                bun.handleOom(mi.addExportInfoIndirect(bun.handleOom(mi.str(item.alias)), bun.handleOom(mi.str(name)), irp_id));
+                                fun.handleOom(mi.addExportInfoIndirect(fun.handleOom(mi.str(item.alias)), fun.handleOom(mi.str(name)), irp_id));
                             }
                         }
                     }
@@ -4506,18 +4506,18 @@ fn NewPrinter(
                     p.needs_semicolon = false;
                 },
                 .s_import => |s| {
-                    bun.assert(s.import_record_index < p.import_records.len);
-                    bun.debugAssert(p.options.module_type != .internal_bake_dev);
+                    fun.assert(s.import_record_index < p.import_records.len);
+                    fun.debugAssert(p.options.module_type != .internal_bake_dev);
 
                     const record: *const ImportRecord = p.importRecord(s.import_record_index);
                     p.printIndent();
                     p.printSpaceBeforeIdentifier();
                     p.addSourceMapping(stmt.loc);
 
-                    if (comptime is_bun_platform) {
+                    if (comptime is_fun_platform) {
                         switch (record.tag) {
-                            .bun => {
-                                p.printGlobalBunImportStatement(s.*);
+                            .fun => {
+                                p.printGlobalFunImportStatement(s.*);
                                 return;
                             },
                             else => {},
@@ -4661,7 +4661,7 @@ fn NewPrinter(
                     p.printImportRecordPath(record);
 
                     // backwards compatibility: previously, we always stripped type
-                    if (comptime is_bun_platform) if (record.loader) |loader| switch (loader) {
+                    if (comptime is_fun_platform) if (record.loader) |loader| switch (loader) {
                         .jsx => p.printWhitespacer(ws(" with { type: \"jsx\" }")),
                         .js => p.printWhitespacer(ws(" with { type: \"js\" }")),
                         .ts => p.printWhitespacer(ws(" with { type: \"ts\" }")),
@@ -4678,7 +4678,7 @@ fn NewPrinter(
                         .base64 => p.printWhitespacer(ws(" with { type: \"base64\" }")),
                         .dataurl => p.printWhitespacer(ws(" with { type: \"dataurl\" }")),
                         .text => p.printWhitespacer(ws(" with { type: \"text\" }")),
-                        .bunsh => p.printWhitespacer(ws(" with { type: \"sh\" }")),
+                        .funsh => p.printWhitespacer(ws(" with { type: \"sh\" }")),
                         .sqlite, .sqlite_embedded => p.printWhitespacer(ws(" with { type: \"sqlite\" }")),
                         .html => p.printWhitespacer(ws(" with { type: \"html\" }")),
                         .md => p.printWhitespacer(ws(" with { type: \"md\" }")),
@@ -4688,52 +4688,52 @@ fn NewPrinter(
                     if (may_have_module_info) {
                         if (p.moduleInfo()) |mi| {
                             const import_record_path = record.path.text;
-                            const irp_id = bun.handleOom(mi.str(import_record_path));
-                            const fetch_parameters: analyze_transpiled_module.ModuleInfo.FetchParameters = if (comptime is_bun_platform) (if (record.loader) |loader| switch (loader) {
+                            const irp_id = fun.handleOom(mi.str(import_record_path));
+                            const fetch_parameters: analyze_transpiled_module.ModuleInfo.FetchParameters = if (comptime is_fun_platform) (if (record.loader) |loader| switch (loader) {
                                 .json => .json,
-                                .jsx => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("jsx"))),
-                                .js => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("js"))),
-                                .ts => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("ts"))),
-                                .tsx => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("tsx"))),
-                                .css => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("css"))),
-                                .file => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("file"))),
-                                .jsonc => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("jsonc"))),
-                                .toml => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("toml"))),
-                                .yaml => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("yaml"))),
-                                .wasm => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("wasm"))),
-                                .napi => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("napi"))),
-                                .base64 => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("base64"))),
-                                .dataurl => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("dataurl"))),
-                                .text => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("text"))),
-                                .bunsh => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("sh"))),
-                                .sqlite, .sqlite_embedded => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("sqlite"))),
-                                .html => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("html"))),
-                                .json5 => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("json5"))),
-                                .md => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(bun.handleOom(mi.str("md"))),
+                                .jsx => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("jsx"))),
+                                .js => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("js"))),
+                                .ts => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("ts"))),
+                                .tsx => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("tsx"))),
+                                .css => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("css"))),
+                                .file => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("file"))),
+                                .jsonc => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("jsonc"))),
+                                .toml => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("toml"))),
+                                .yaml => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("yaml"))),
+                                .wasm => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("wasm"))),
+                                .napi => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("napi"))),
+                                .base64 => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("base64"))),
+                                .dataurl => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("dataurl"))),
+                                .text => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("text"))),
+                                .funsh => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("sh"))),
+                                .sqlite, .sqlite_embedded => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("sqlite"))),
+                                .html => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("html"))),
+                                .json5 => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("json5"))),
+                                .md => analyze_transpiled_module.ModuleInfo.FetchParameters.hostDefined(fun.handleOom(mi.str("md"))),
                             } else .none) else .none;
-                            bun.handleOom(mi.requestModule(irp_id, fetch_parameters));
+                            fun.handleOom(mi.requestModule(irp_id, fetch_parameters));
 
                             if (s.default_name) |name| {
                                 const local_name = p.renamer.nameForSymbol(name.ref.?);
-                                const local_name_id = bun.handleOom(mi.str(local_name));
-                                bun.handleOom(mi.addVar(local_name_id, .lexical));
-                                bun.handleOom(mi.addImportInfoSingle(irp_id, bun.handleOom(mi.str("default")), local_name_id, false));
+                                const local_name_id = fun.handleOom(mi.str(local_name));
+                                fun.handleOom(mi.addVar(local_name_id, .lexical));
+                                fun.handleOom(mi.addImportInfoSingle(irp_id, fun.handleOom(mi.str("default")), local_name_id, false));
                             }
 
                             for (s.items) |item| {
                                 const local_name = p.renamer.nameForSymbol(item.name.ref.?);
-                                const local_name_id = bun.handleOom(mi.str(local_name));
-                                bun.handleOom(mi.addVar(local_name_id, .lexical));
+                                const local_name_id = fun.handleOom(mi.str(local_name));
+                                fun.handleOom(mi.addVar(local_name_id, .lexical));
                                 // In bundled output, all surviving imports are value imports
                                 // (tree-shaking already removed type-only ones). The finalize()
                                 // step handles re-export type-script conversion separately.
-                                bun.handleOom(mi.addImportInfoSingle(irp_id, bun.handleOom(mi.str(item.alias)), local_name_id, false));
+                                fun.handleOom(mi.addImportInfoSingle(irp_id, fun.handleOom(mi.str(item.alias)), local_name_id, false));
                             }
 
                             if (record.flags.contains_import_star) {
                                 const local_name = p.renamer.nameForSymbol(s.namespace_ref);
-                                bun.handleOom(mi.addVar(bun.handleOom(mi.str(local_name)), .lexical));
-                                bun.handleOom(mi.addImportInfoNamespace(irp_id, bun.handleOom(mi.str(local_name))));
+                                fun.handleOom(mi.addVar(fun.handleOom(mi.str(local_name)), .lexical));
+                                fun.handleOom(mi.addImportInfoNamespace(irp_id, fun.handleOom(mi.str(local_name))));
                             }
                         }
                     }
@@ -4910,7 +4910,7 @@ fn NewPrinter(
                         p.printSymbol(default_name.ref.?);
                         p.@"print = "();
 
-                        if (!is_bun_platform) {
+                        if (!is_fun_platform) {
                             p.print("(");
                             p.printSymbol(s.namespace_ref);
                             p.printWhitespacer(ws(" && \"default\" in "));
@@ -4959,7 +4959,7 @@ fn NewPrinter(
                 return;
             }
 
-            @call(bun.callmod_inline, printModuleId, .{ p, p.importRecord(import_record_index).module_id });
+            @call(fun.callmod_inline, printModuleId, .{ p, p.importRecord(import_record_index).module_id });
         }
 
         pub fn printCallModuleID(p: *Printer, module_id: u32) void {
@@ -4968,7 +4968,7 @@ fn NewPrinter(
         }
 
         inline fn printModuleId(p: *Printer, module_id: u32) void {
-            bun.assert(module_id != 0); // either module_id is forgotten or it should be disabled
+            fun.assert(module_id != 0); // either module_id is forgotten or it should be disabled
             p.printModuleIdAssumeEnabled(module_id);
         }
 
@@ -5185,7 +5185,7 @@ fn NewPrinter(
 
             if (!p.options.minify_whitespace and !p.options.minify_identifiers) {
                 // TODO: rewrite this to handle </script>
-                if (!bun.strings.containsComptime(comment, "*/")) {
+                if (!fun.strings.containsComptime(comment, "*/")) {
                     p.print(" /* ");
                     p.print(comment);
                     p.print(" */");
@@ -5444,7 +5444,7 @@ fn NewPrinter(
             writer: Writer,
             import_records: []const ImportRecord,
             opts: Options,
-            renamer: bun.renamer.Renamer,
+            renamer: fun.renamer.Renamer,
             source_map_builder: SourceMap.Chunk.Builder,
         ) Printer {
             var printer = Printer{
@@ -5494,7 +5494,7 @@ fn NewPrinter(
                         .data = func.body.stmts[0].data.s_lazy_export.*,
                         .loc = func.body.stmts[0].loc,
                     }, .comma, .{});
-                    p.print("; // bun .s_lazy_export\n");
+                    p.print("; // fun .s_lazy_export\n");
                     p.unindent();
                 }
                 p.printIndent();
@@ -5593,7 +5593,7 @@ fn NewPrinter(
                 p.print(if (!ast.top_level_await_keyword.isEmpty()) "true" else "false");
                 p.print("],\n");
             } else {
-                bun.assert(ast.exports_kind == .cjs);
+                fun.assert(ast.exports_kind == .cjs);
                 p.printFunc(func);
                 p.print(",\n");
             }
@@ -5677,11 +5677,11 @@ pub fn NewWriter(
         }
 
         pub inline fn prevChar(writer: *const Self) u8 {
-            return @call(bun.callmod_inline, getLastByte, .{&writer.ctx});
+            return @call(fun.callmod_inline, getLastByte, .{&writer.ctx});
         }
 
         pub inline fn prevPrevChar(writer: *const Self) u8 {
-            return @call(bun.callmod_inline, getLastLastByte, .{&writer.ctx});
+            return @call(fun.callmod_inline, getLastLastByte, .{&writer.ctx});
         }
 
         pub fn reserve(writer: *Self, count: u64) anyerror![*]u8 {
@@ -5827,7 +5827,7 @@ pub const BufferWriter = struct {
     }
 
     pub fn advanceBy(ctx: *BufferWriter, count: u64) void {
-        if (comptime Environment.isDebug) bun.assert(ctx.buffer.list.items.len + count <= ctx.buffer.list.capacity);
+        if (comptime Environment.isDebug) fun.assert(ctx.buffer.list.items.len + count <= ctx.buffer.list.capacity);
 
         ctx.buffer.list.items = ctx.buffer.list.items.ptr[0 .. ctx.buffer.list.items.len + count];
 
@@ -5887,7 +5887,7 @@ pub const Format = enum {
     esm,
     cjs,
 
-    // bun.js must escape non-latin1 identifiers in the output This is because
+    // fun.js must escape non-latin1 identifiers in the output This is because
     // we load JavaScript as a UTF-8 buffer instead of a UTF-16 buffer
     // JavaScriptCore does not support UTF-8 identifiers when the source code
     // string is loaded as const char* We don't want to double the size of code
@@ -5903,7 +5903,7 @@ const GenerateSourceMap = enum {
 };
 pub fn getSourceMapBuilder(
     comptime generate_source_map: GenerateSourceMap,
-    comptime is_bun_platform: bool,
+    comptime is_fun_platform: bool,
     opts: Options,
     source: *const logger.Source,
     tree: *const Ast,
@@ -5914,11 +5914,11 @@ pub fn getSourceMapBuilder(
     return .{
         .source_map = .init(
             opts.source_map_allocator orelse opts.allocator,
-            is_bun_platform and generate_source_map == .lazy,
+            is_fun_platform and generate_source_map == .lazy,
         ),
         .cover_lines_without_mappings = true,
         .approximate_input_line_count = tree.approximate_newline_count,
-        .prepend_count = is_bun_platform and generate_source_map == .lazy,
+        .prepend_count = is_fun_platform and generate_source_map == .lazy,
         .line_offset_tables = opts.line_offset_tables orelse brk: {
             if (generate_source_map == .lazy) break :brk SourceMap.LineOffsetTable.generate(
                 opts.source_map_allocator orelse opts.allocator,
@@ -6021,7 +6021,7 @@ pub fn printAst(
         ascii_only,
         Writer,
         false,
-        // if it's ascii_only, it is also bun
+        // if it's ascii_only, it is also fun
         ascii_only,
         false,
         generate_source_map,
@@ -6044,23 +6044,23 @@ pub fn printAst(
     if (PrinterType.may_have_module_info) {
         printer.module_info = opts.module_info;
     }
-    var bin_stack_heap = std.heap.stackFallback(1024, bun.default_allocator);
+    var bin_stack_heap = std.heap.stackFallback(1024, fun.default_allocator);
     printer.binary_expression_stack = std.array_list.Managed(PrinterType.BinaryExpressionVisitor).init(bin_stack_heap.get());
     defer printer.binary_expression_stack.clearAndFree();
 
     if (!opts.bundling and
         tree.uses_require_ref and
         tree.exports_kind == .esm and
-        opts.target == .bun)
+        opts.target == .fun)
     {
         // Hoist the `var {require}=import.meta;` declaration. Previously,
         // `import.meta.require` was inlined into transpiled files, which
         // meant calling `func.toString()` on a function with `require`
         // would observe `import.meta.require` inside of the source code.
-        // Normally, Bun doesn't guarantee `Function.prototype.toString`
+        // Normally, Fun doesn't guarantee `Function.prototype.toString`
         // will match the untranspiled source code, but in this case the new
         // code is not valid outside of an ES module (eg, in `new Function`)
-        // https://github.com/oven-sh/bun/issues/15738#issuecomment-2574283514
+        // https://github.com/underdoc-org/fun/issues/15738#issuecomment-2574283514
         //
         // This is never a symbol collision because `uses_require_ref` means
         // `require` must be an unbound variable.
@@ -6069,7 +6069,7 @@ pub fn printAst(
         if (PrinterType.may_have_module_info) {
             if (printer.moduleInfo()) |mi| {
                 mi.flags.contains_import_meta = true;
-                bun.handleOom(mi.addVar(bun.handleOom(mi.str("require")), .declared));
+                fun.handleOom(mi.addVar(fun.handleOom(mi.str("require")), .declared));
             }
         }
     }
@@ -6099,7 +6099,7 @@ pub fn printAst(
     defer if (source_maps_chunk) |*chunk| chunk.deinit();
 
     if (opts.runtime_transpiler_cache) |cache| {
-        var srlz_res = std.array_list.Managed(u8).init(bun.default_allocator);
+        var srlz_res = std.array_list.Managed(u8).init(fun.default_allocator);
         defer srlz_res.deinit();
         if (have_module_info) try opts.module_info.?.asDeserialized().serialize(srlz_res.writer());
         cache.put(printer.writer.ctx.getWritten(), if (source_maps_chunk) |chunk| chunk.buffer.list.items else "", srlz_res.items);
@@ -6143,7 +6143,7 @@ pub fn printJSON(
         renamer.toRenamer(),
         undefined,
     );
-    var bin_stack_heap = std.heap.stackFallback(1024, bun.default_allocator);
+    var bin_stack_heap = std.heap.stackFallback(1024, fun.default_allocator);
     printer.binary_expression_stack = std.array_list.Managed(PrinterType.BinaryExpressionVisitor).init(bin_stack_heap.get());
     defer printer.binary_expression_stack.clearAndFree();
 
@@ -6164,10 +6164,10 @@ pub fn print(
     opts: Options,
     import_records: []const ImportRecord,
     parts: []const js_ast.Part,
-    renamer: bun.renamer.Renamer,
+    renamer: fun.renamer.Renamer,
     comptime generate_source_maps: bool,
 ) PrintResult {
-    const trace = bun.perf.trace("JSPrinter.print");
+    const trace = fun.perf.trace("JSPrinter.print");
     defer trace.end();
 
     const buffer_writer = BufferWriter.init(allocator);
@@ -6196,14 +6196,14 @@ pub fn printWithWriter(
     opts: Options,
     import_records: []const ImportRecord,
     parts: []const js_ast.Part,
-    renamer: bun.renamer.Renamer,
+    renamer: fun.renamer.Renamer,
     comptime generate_source_maps: bool,
 ) PrintResult {
-    return switch (target.isBun()) {
-        inline else => |is_bun| printWithWriterAndPlatform(
+    return switch (target.isFun()) {
+        inline else => |is_fun| printWithWriterAndPlatform(
             Writer,
             writer,
-            is_bun,
+            is_fun,
             ast,
             source,
             opts,
@@ -6219,25 +6219,25 @@ pub fn printWithWriter(
 pub fn printWithWriterAndPlatform(
     comptime Writer: type,
     writer: Writer,
-    comptime is_bun_platform: bool,
+    comptime is_fun_platform: bool,
     ast: Ast,
     source: *const logger.Source,
     opts: Options,
     import_records: []const ImportRecord,
     parts: []const js_ast.Part,
-    renamer: bun.renamer.Renamer,
+    renamer: fun.renamer.Renamer,
     comptime generate_source_maps: bool,
 ) PrintResult {
-    const prev_action = bun.crash_handler.current_action;
-    defer bun.crash_handler.current_action = prev_action;
-    bun.crash_handler.current_action = .{ .print = source.path.text };
+    const prev_action = fun.crash_handler.current_action;
+    defer fun.crash_handler.current_action = prev_action;
+    fun.crash_handler.current_action = .{ .print = source.path.text };
 
     const PrinterType = NewPrinter(
-        // if it's bun, it is also ascii_only
-        is_bun_platform,
+        // if it's fun, it is also ascii_only
+        is_fun_platform,
         Writer,
         false,
-        is_bun_platform,
+        is_fun_platform,
         false,
         generate_source_maps,
     );
@@ -6246,17 +6246,17 @@ pub fn printWithWriterAndPlatform(
         import_records,
         opts,
         renamer,
-        getSourceMapBuilder(if (generate_source_maps) .eager else .disable, is_bun_platform, opts, source, &ast),
+        getSourceMapBuilder(if (generate_source_maps) .eager else .disable, is_fun_platform, opts, source, &ast),
     );
     printer.was_lazy_export = ast.has_lazy_export;
     if (PrinterType.may_have_module_info) {
         printer.module_info = opts.module_info;
     }
-    var bin_stack_heap = std.heap.stackFallback(1024, bun.default_allocator);
+    var bin_stack_heap = std.heap.stackFallback(1024, fun.default_allocator);
     printer.binary_expression_stack = std.array_list.Managed(PrinterType.BinaryExpressionVisitor).init(bin_stack_heap.get());
     defer printer.binary_expression_stack.clearAndFree();
 
-    defer printer.temporary_bindings.deinit(bun.default_allocator);
+    defer printer.temporary_bindings.deinit(fun.default_allocator);
     defer writer.* = printer.writer.*;
 
     if (opts.module_type == .internal_bake_dev and !source.index.isRuntime()) {
@@ -6320,9 +6320,9 @@ pub fn printCommonJS(
     opts: Options,
     comptime generate_source_map: bool,
 ) !usize {
-    const prev_action = bun.crash_handler.current_action;
-    defer bun.crash_handler.current_action = prev_action;
-    bun.crash_handler.current_action = .{ .print = source.path.text };
+    const prev_action = fun.crash_handler.current_action;
+    defer fun.crash_handler.current_action = prev_action;
+    fun.crash_handler.current_action = .{ .print = source.path.text };
 
     const PrinterType = NewPrinter(ascii_only, Writer, true, false, false, generate_source_map);
     const writer = _writer;
@@ -6334,7 +6334,7 @@ pub fn printCommonJS(
         renamer.toRenamer(),
         getSourceMapBuilder(if (generate_source_map) .lazy else .disable, false, opts, source, &tree),
     );
-    var bin_stack_heap = std.heap.stackFallback(1024, bun.default_allocator);
+    var bin_stack_heap = std.heap.stackFallback(1024, fun.default_allocator);
     printer.binary_expression_stack = std.array_list.Managed(PrinterType.BinaryExpressionVisitor).init(bin_stack_heap.get());
     defer printer.binary_expression_stack.clearAndFree();
 
@@ -6365,7 +6365,7 @@ pub fn printCommonJS(
 }
 
 /// Serializes ModuleInfo to an owned byte slice. Returns null on failure.
-/// The caller is responsible for freeing the returned slice with bun.default_allocator.
+/// The caller is responsible for freeing the returned slice with fun.default_allocator.
 pub fn serializeModuleInfo(module_info: ?*analyze_transpiled_module.ModuleInfo) ?[]const u8 {
     const mi = module_info orelse return null;
     if (!mi.finalized) {
@@ -6373,9 +6373,9 @@ pub fn serializeModuleInfo(module_info: ?*analyze_transpiled_module.ModuleInfo) 
     }
     const deserialized = mi.asDeserialized();
     var buf: std.ArrayList(u8) = .empty;
-    defer buf.deinit(bun.default_allocator);
-    deserialized.serialize(buf.writer(bun.default_allocator)) catch return null;
-    return buf.toOwnedSlice(bun.default_allocator) catch null;
+    defer buf.deinit(fun.default_allocator);
+    deserialized.serialize(buf.writer(fun.default_allocator)) catch return null;
+    return buf.toOwnedSlice(fun.default_allocator) catch null;
 }
 
 const string = []const u8;
@@ -6389,28 +6389,28 @@ const rename = @import("./renamer.zig");
 const runtime = @import("../js_parser/runtime.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const FeatureFlags = bun.FeatureFlags;
-const FileDescriptorType = bun.FD;
-const ImportRecord = bun.ImportRecord;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const FeatureFlags = fun.FeatureFlags;
+const FileDescriptorType = fun.FD;
+const ImportRecord = fun.ImportRecord;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const api = fun.schema.api;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Ast = js_ast.Ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const G = js_ast.G;
-const Ref = bun.ast.Ref;
+const Ref = fun.ast.Ref;
 const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 const Symbol = js_ast.Symbol;
@@ -6418,5 +6418,5 @@ const Symbol = js_ast.Symbol;
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const strings = bun.strings;
-const CodepointIterator = bun.strings.UnsignedCodepointIterator;
+const strings = fun.strings;
+const CodepointIterator = fun.strings.UnsignedCodepointIterator;

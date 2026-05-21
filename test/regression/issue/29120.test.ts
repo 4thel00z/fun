@@ -1,5 +1,5 @@
-// `bun build --compile --target=bun-darwin-arm64` must produce a mach-o binary
-// whose `LC_CODE_SIGNATURE.datasize` matches the actual signature blob bun's
+// `fun build --compile --target=fun-darwin-arm64` must produce a mach-o binary
+// whose `LC_CODE_SIGNATURE.datasize` matches the actual signature blob fun's
 // in-process `MachoSigner` writes. Previously, `writeSection` in `src/macho.zig`
 // grew the LINKEDIT segment by just `num_new_pages * HASH_SIZE`, but `MachoSigner`
 // computes its SuperBlob size from the page count up to the (shifted) signature
@@ -7,7 +7,7 @@
 // resulting file had `datasize < SuperBlob.length`, which macOS (SIP/dyld) then
 // rejects with "code object is not signed at all" and kills the process.
 //
-// This test runs only on darwin-arm64 hosts, where the current bun binary
+// This test runs only on darwin-arm64 hosts, where the current fun binary
 // IS the cross-compile template (isDefault() in src/compile_target.zig), so
 // the real MachoSigner path executes without any network. On every other
 // host the template must be downloaded from npm for the canary version
@@ -18,11 +18,11 @@
 // unrelated download edge case). The darwin-arm64 lanes give us reliable
 // regression coverage of the actual mach-o writer change.
 //
-// https://github.com/oven-sh/bun/issues/29120
+// https://github.com/underdoc-org/fun/issues/29120
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe, isArm64, isMacOS, tempDir } from "harness";
+import { funEnv, funExe, isArm64, isMacOS, tempDir } from "harness";
 import { join } from "path";
 
 // Mach-O load command ID we care about.
@@ -39,7 +39,7 @@ type CodeSig = {
 };
 
 // Read the LC_CODE_SIGNATURE load command and the SuperBlob it points at.
-// Assumes a little-endian 64-bit mach-o (what --target=bun-darwin-arm64 emits).
+// Assumes a little-endian 64-bit mach-o (what --target=fun-darwin-arm64 emits).
 // All offsets are validated against `buf.length` so a malformed/truncated
 // binary surfaces as `null`, never as an OOB read or infinite loop on a
 // zero `cmdsize`.
@@ -79,11 +79,11 @@ function readCodeSignature(buf: Buffer): CodeSig | null {
 }
 
 // Two bundle sizes:
-//  - "tiny"  fits inside the template's 16 KiB __BUN slot → size_diff == 0 in
+//  - "tiny"  fits inside the template's 16 KiB __FUN slot → size_diff == 0 in
 //    macho.zig (the linkedit/datasize resize must not be gated on size_diff)
 //  - "large" exceeds 16 KiB → size_diff > 0, exercises the offset-shift path
 const bundles = {
-  tiny: `console.log("hi from cross-compiled bun");`,
+  tiny: `console.log("hi from cross-compiled fun");`,
   large: `console.log("${Buffer.alloc(32 * 1024, "a").toString()}");`,
 };
 
@@ -91,7 +91,7 @@ const bundles = {
 // from npm and canary builds don't have it published, bringing back the same
 // fetcher-flakiness the skip was supposed to eliminate.
 test.skipIf(!isMacOS || !isArm64).each(Object.entries(bundles))(
-  "bun build --compile --target=bun-darwin-arm64 produces a valid code signature (%s bundle)",
+  "fun build --compile --target=fun-darwin-arm64 produces a valid code signature (%s bundle)",
   async (label, source) => {
     using dir = tempDir(`issue-29120-${label}`, {
       "app.ts": source,
@@ -99,9 +99,9 @@ test.skipIf(!isMacOS || !isArm64).each(Object.entries(bundles))(
     const cwd = String(dir);
     const out = join(cwd, "app-darwin-arm64");
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", "--target=bun-darwin-arm64", join(cwd, "app.ts"), "--outfile", out],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", "--target=fun-darwin-arm64", join(cwd, "app.ts"), "--outfile", out],
+      env: funEnv,
       cwd,
       stdout: "pipe",
       stderr: "pipe",

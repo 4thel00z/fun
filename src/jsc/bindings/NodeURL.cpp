@@ -2,7 +2,7 @@
 #include "wtf/URLParser.h"
 #include <unicode/uidna.h>
 
-namespace Bun {
+namespace Fun {
 
 JSC_DEFINE_HOST_FUNCTION(jsDomainToASCII, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
@@ -165,4 +165,4 @@ JSC::JSValue createNodeURLBinding(Zig::GlobalObject* globalObject)
     return binding;
 }
 
-} // namespace Bun
+} // namespace Fun

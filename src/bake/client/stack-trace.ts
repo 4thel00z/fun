@@ -51,7 +51,7 @@ export function parseStackTrace(error: Error | any): null | Frame[] {
 function parseV8OrIE(stack: string): Frame[] {
   return stack
     .split("\n")
-    .filter(line => !!line.match(CHROME_IE_STACK_REGEXP) && !line.includes("Bun HMR Runtime"))
+    .filter(line => !!line.match(CHROME_IE_STACK_REGEXP) && !line.includes("Fun HMR Runtime"))
     .map(function (line) {
       let sanitizedLine = line
         .replace(/^\s+/, "")
@@ -127,7 +127,7 @@ function remapFileName(fileName: string) {
   if (fileName.startsWith("blob:")) {
     const sourceMapURL = blobToSourceMap.get(fileName);
     if (sourceMapURL) {
-      return location.origin + "/_bun/client/hmr-" + sourceMapURL.id + ".js";
+      return location.origin + "/_fun/client/hmr-" + sourceMapURL.id + ".js";
     }
   }
   return fileName;

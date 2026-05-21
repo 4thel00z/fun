@@ -1,4 +1,4 @@
-/// DateHeaderTimer manages the periodic updating of the "Date" header in Bun.serve().
+/// DateHeaderTimer manages the periodic updating of the "Date" header in Fun.serve().
 ///
 /// This timer ensures that HTTP responses include an up-to-date Date header by
 /// updating the date every second when there are active connections.
@@ -24,8 +24,8 @@ event_loop_timer: jsc.API.Timer.EventLoopTimer = .{
 /// The logic handles two scenarios:
 /// 1. If the timer was recently updated (< 1 second ago), just reschedule it
 /// 2. If the timer is stale (> 1 second since last update), update the date immediately and reschedule
-pub fn enable(this: *DateHeaderTimer, vm: *VirtualMachine, now: *const bun.timespec) void {
-    bun.debugAssert(this.event_loop_timer.state != .ACTIVE);
+pub fn enable(this: *DateHeaderTimer, vm: *VirtualMachine, now: *const fun.timespec) void {
+    fun.debugAssert(this.event_loop_timer.state != .ACTIVE);
 
     const last_update = this.event_loop_timer.next;
     const elapsed = now.duration(&last_update).ms();
@@ -49,7 +49,7 @@ pub fn enable(this: *DateHeaderTimer, vm: *VirtualMachine, now: *const bun.times
 pub fn run(this: *DateHeaderTimer, vm: *VirtualMachine) void {
     this.event_loop_timer.state = .FIRED;
     const loop = vm.uwsLoop();
-    const now = bun.timespec.now(.allow_mocked_time);
+    const now = fun.timespec.now(.allow_mocked_time);
 
     // Record when we last ran it.
     this.event_loop_timer.next = now;
@@ -65,18 +65,18 @@ pub fn run(this: *DateHeaderTimer, vm: *VirtualMachine) void {
     }
 }
 
-pub export fn Bun__internal_ensureDateHeaderTimerIsEnabled(loop: *uws.Loop) callconv(.c) void {
+pub export fn Fun__internal_ensureDateHeaderTimerIsEnabled(loop: *uws.Loop) callconv(.c) void {
     if (jsc.VirtualMachine.getOrNull()) |vm| {
         vm.timer.updateDateHeaderTimerIfNecessary(loop, vm);
     }
 }
 
-const log = bun.Output.scoped(.DateHeaderTimer, .visible);
+const log = fun.Output.scoped(.DateHeaderTimer, .visible);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const uws = bun.uws;
+const fun = @import("fun");
+const uws = fun.uws;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;

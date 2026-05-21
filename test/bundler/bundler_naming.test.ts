@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { ESBUILD, itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -15,7 +15,7 @@ describe("bundler", () => {
     entryPointsRaw: ["./a/entry.js", "./b/entry.js"],
     bundleErrors: {
       // expectBundled does not support newlines.
-      "<bun>": [`Multiple files share the same output path`],
+      "<fun>": [`Multiple files share the same output path`],
     },
   });
   itBundled("naming/ImplicitOutbase1", {
@@ -213,7 +213,7 @@ describe("bundler", () => {
       ".file": "file",
     },
     bundleErrors: {
-      "<bun>": ['Multiple files share the same output path: "same-filename.txt"'],
+      "<fun>": ['Multiple files share the same output path: "same-filename.txt"'],
     },
   });
   itBundled("naming/AssetFileLoaderPath1", {
@@ -250,7 +250,7 @@ describe("bundler", () => {
     root: "/lib",
     entryPointsRaw: ["./src/entry.js"],
     bundleErrors: {
-      // "<bun>": [`FileNotFound: failed to open root directory: ${root}/lib`],
+      // "<fun>": [`FileNotFound: failed to open root directory: ${root}/lib`],
     },
   }));
   itBundled("naming/EntrypointOutsideOfRoot", {

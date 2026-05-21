@@ -2,7 +2,7 @@
 //
 // This server uses blocking sockets to send an HTTP response with chunked
 // encoding, then keeps the connection open without sending more data. This
-// reproduces a bug where Bun's HTTP client wasn't draining pending response
+// reproduces a bug where Fun's HTTP client wasn't draining pending response
 // body bytes from the HTTP thread when the server stopped sending data but
 // kept the connection alive.
 //

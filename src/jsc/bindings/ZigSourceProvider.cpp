@@ -3,7 +3,7 @@
 #include "helpers.h"
 
 #include "ZigSourceProvider.h"
-#include "BunAnalyzeTranspiledModule.h"
+#include "FunAnalyzeTranspiledModule.h"
 
 #include <JavaScriptCore/BytecodeCacheError.h>
 #include "ZigGlobalObject.h"
@@ -38,8 +38,8 @@ SourceOrigin toSourceOrigin(const String& sourceURL, bool isBuiltin)
     if (isBuiltin) {
         if (sourceURL.startsWith("node:"_s)) {
             return SourceOrigin(WTF::URL(makeString("builtin://node/"_s, sourceURL.substring(5))));
-        } else if (sourceURL.startsWith("bun:"_s)) {
-            return SourceOrigin(WTF::URL(makeString("builtin://bun/"_s, sourceURL.substring(4))));
+        } else if (sourceURL.startsWith("fun:"_s)) {
+            return SourceOrigin(WTF::URL(makeString("builtin://fun/"_s, sourceURL.substring(4))));
         } else {
             return SourceOrigin(WTF::URL(makeString("builtin://"_s, sourceURL)));
         }
@@ -47,28 +47,28 @@ SourceOrigin toSourceOrigin(const String& sourceURL, bool isBuiltin)
     return SourceOrigin(WTF::URL::fileURLWithFileSystemPath(sourceURL));
 }
 
-extern "C" int ByteRangeMapping__getSourceID(void* mappings, BunString sourceURL);
-extern "C" void* ByteRangeMapping__find(BunString sourceURL);
+extern "C" int ByteRangeMapping__getSourceID(void* mappings, FunString sourceURL);
+extern "C" void* ByteRangeMapping__find(FunString sourceURL);
 void* sourceMappingForSourceURL(const WTF::String& sourceURL)
 {
-    return ByteRangeMapping__find(Bun::toString(sourceURL));
+    return ByteRangeMapping__find(Fun::toString(sourceURL));
 }
 
-extern "C" void ByteRangeMapping__generate(BunString sourceURL, BunString code, int sourceID);
+extern "C" void ByteRangeMapping__generate(FunString sourceURL, FunString code, int sourceID);
 
 JSC::SourceID sourceIDForSourceURL(const WTF::String& sourceURL)
 {
-    void* mappings = ByteRangeMapping__find(Bun::toString(sourceURL));
+    void* mappings = ByteRangeMapping__find(Fun::toString(sourceURL));
     if (!mappings) {
         return 0;
     }
 
-    return ByteRangeMapping__getSourceID(mappings, Bun::toString(sourceURL));
+    return ByteRangeMapping__getSourceID(mappings, Fun::toString(sourceURL));
 }
 
-extern "C" bool BunTest__shouldGenerateCodeCoverage(BunString sourceURL);
-extern "C" void Bun__addSourceProviderSourceMap(void* bun_vm, SourceProvider* opaque_source_provider, BunString* specifier);
-extern "C" void Bun__removeSourceProviderSourceMap(void* bun_vm, SourceProvider* opaque_source_provider, BunString* specifier);
+extern "C" bool FunTest__shouldGenerateCodeCoverage(FunString sourceURL);
+extern "C" void Fun__addSourceProviderSourceMap(void* fun_vm, SourceProvider* opaque_source_provider, FunString* specifier);
+extern "C" void Fun__removeSourceProviderSourceMap(void* fun_vm, SourceProvider* opaque_source_provider, FunString* specifier);
 
 Ref<SourceProvider> SourceProvider::create(
     Zig::GlobalObject* globalObject,
@@ -84,12 +84,12 @@ Ref<SourceProvider> SourceProvider::create(
         sourceType = JSC::SourceProviderSourceType::BunTranspiledModule;
     }
 
-    auto string = resolvedSource.source_code.toWTFString(BunString::ZeroCopy);
-    auto sourceURLString = resolvedSource.source_url.toWTFString(BunString::ZeroCopy);
+    auto string = resolvedSource.source_code.toWTFString(FunString::ZeroCopy);
+    auto sourceURLString = resolvedSource.source_url.toWTFString(FunString::ZeroCopy);
 
     bool isCodeCoverageEnabled = !!globalObject->vm().controlFlowProfiler();
 
-    bool shouldGenerateCodeCoverage = isCodeCoverageEnabled && !isBuiltin && BunTest__shouldGenerateCodeCoverage(resolvedSource.source_url);
+    bool shouldGenerateCodeCoverage = isCodeCoverageEnabled && !isBuiltin && FunTest__shouldGenerateCodeCoverage(resolvedSource.source_url);
 
     if (resolvedSource.needsDeref && !isBuiltin) {
         resolvedSource.needsDeref = false;
@@ -97,14 +97,14 @@ Ref<SourceProvider> SourceProvider::create(
         // Do not deref either source_url or specifier
         // Specifier's lifetime is the JSValue, mostly
         // source_url is owned by the string above
-        // https://github.com/oven-sh/bun/issues/9521
+        // https://github.com/underdoc-org/fun/issues/9521
     }
 
     // Compute source origin: use explicit bytecode_origin_path if provided, otherwise derive from source_url.
     // bytecode_origin_path is used for bytecode cache validation where the origin must match
     // exactly what was used at build time.
     const auto getSourceOrigin = [&]() -> SourceOrigin {
-        auto bytecodeOriginPath = resolvedSource.bytecode_origin_path.toWTFString(BunString::ZeroCopy);
+        auto bytecodeOriginPath = resolvedSource.bytecode_origin_path.toWTFString(FunString::ZeroCopy);
         if (!bytecodeOriginPath.isNull() && !bytecodeOriginPath.isEmpty()) {
             // Convert file path to file:// URL (same as build time)
             return SourceOrigin(WTF::URL::fileURLWithFileSystemPath(bytecodeOriginPath));
@@ -118,7 +118,7 @@ Ref<SourceProvider> SourceProvider::create(
                 mi_free(const_cast<void*>(ptr));
             };
             const auto destructorNoOp = [](const void* ptr) {
-                // no-op, for bun build --compile.
+                // no-op, for fun build --compile.
             };
             const auto destructor = resolvedSource.needsDeref ? destructorPtr : destructorNoOp;
 
@@ -126,7 +126,7 @@ Ref<SourceProvider> SourceProvider::create(
 
             Ref<JSC::CachedBytecode> bytecode = JSC::CachedBytecode::create(std::span<uint8_t>(resolvedSource.bytecode_cache, resolvedSource.bytecode_cache_size), destructor, {});
             auto provider = adoptRef(*new SourceProvider(
-                globalObject->bunVM(),
+                globalObject->funVM(),
                 resolvedSource,
                 string.isNull() ? *StringImpl::empty() : *string.impl(),
                 JSC::SourceTaintedOrigin::Untainted,
@@ -138,7 +138,7 @@ Ref<SourceProvider> SourceProvider::create(
         }
 
         return adoptRef(*new SourceProvider(
-            globalObject->bunVM(),
+            globalObject->funVM(),
             resolvedSource,
             string.isNull() ? *StringImpl::empty() : *string.impl(),
             JSC::SourceTaintedOrigin::Untainted,
@@ -150,11 +150,11 @@ Ref<SourceProvider> SourceProvider::create(
     auto provider = getProvider();
 
     if (shouldGenerateCodeCoverage) {
-        ByteRangeMapping__generate(Bun::toString(provider->sourceURL()), Bun::toString(provider->source().toStringWithoutCopying()), provider->asID());
+        ByteRangeMapping__generate(Fun::toString(provider->sourceURL()), Fun::toString(provider->source().toStringWithoutCopying()), provider->asID());
     }
 
     if (resolvedSource.already_bundled) {
-        Bun__addSourceProviderSourceMap(globalObject->bunVM(), provider.ptr(), &resolvedSource.source_url);
+        Fun__addSourceProviderSourceMap(globalObject->funVM(), provider.ptr(), &resolvedSource.source_url);
     }
 
     return provider;
@@ -168,11 +168,11 @@ StringView SourceProvider::source() const
 SourceProvider::~SourceProvider()
 {
     if (m_resolvedSource.already_bundled) {
-        BunString str = Bun::toString(sourceURL());
-        Bun__removeSourceProviderSourceMap(m_bunVM, this, &str);
+        FunString str = Fun::toString(sourceURL());
+        Fun__removeSourceProviderSourceMap(m_funVM, this, &str);
     }
     if (m_resolvedSource.module_info != nullptr) {
-        zig__ModuleInfoDeserialized__deinit(static_cast<bun_ModuleInfoDeserialized*>(m_resolvedSource.module_info));
+        zig__ModuleInfoDeserialized__deinit(static_cast<fun_ModuleInfoDeserialized*>(m_resolvedSource.module_info));
         m_resolvedSource.module_info = nullptr;
     }
 }
@@ -195,7 +195,7 @@ static JSC::VM& getVMForBytecodeCache()
     return *vmForBytecodeCache;
 }
 
-extern "C" bool generateCachedModuleByteCodeFromSourceCode(BunString* sourceProviderURL, const Latin1Character* inputSourceCode, size_t inputSourceCodeSize, const uint8_t** outputByteCode, size_t* outputByteCodeSize, JSC::CachedBytecode** cachedBytecodePtr)
+extern "C" bool generateCachedModuleByteCodeFromSourceCode(FunString* sourceProviderURL, const Latin1Character* inputSourceCode, size_t inputSourceCodeSize, const uint8_t** outputByteCode, size_t* outputByteCodeSize, JSC::CachedBytecode** cachedBytecodePtr)
 {
     std::span<const Latin1Character> sourceCodeSpan(inputSourceCode, inputSourceCodeSize);
     JSC::SourceCode sourceCode = JSC::makeSource(WTF::String(sourceCodeSpan), toSourceOrigin(sourceProviderURL->toWTFString(), false), JSC::SourceTaintedOrigin::Untainted);
@@ -230,7 +230,7 @@ extern "C" bool generateCachedModuleByteCodeFromSourceCode(BunString* sourceProv
     return true;
 }
 
-extern "C" bool generateCachedCommonJSProgramByteCodeFromSourceCode(BunString* sourceProviderURL, const Latin1Character* inputSourceCode, size_t inputSourceCodeSize, const uint8_t** outputByteCode, size_t* outputByteCodeSize, JSC::CachedBytecode** cachedBytecodePtr)
+extern "C" bool generateCachedCommonJSProgramByteCodeFromSourceCode(FunString* sourceProviderURL, const Latin1Character* inputSourceCode, size_t inputSourceCodeSize, const uint8_t** outputByteCode, size_t* outputByteCodeSize, JSC::CachedBytecode** cachedBytecodePtr)
 {
     std::span<const Latin1Character> sourceCodeSpan(inputSourceCode, inputSourceCodeSize);
 
@@ -391,9 +391,9 @@ int SourceProvider::readCache(JSC::VM& vm, const JSC::SourceCode& sourceCode)
     // }
 }
 
-extern "C" BunString ZigSourceProvider__getSourceSlice(SourceProvider* provider)
+extern "C" FunString ZigSourceProvider__getSourceSlice(SourceProvider* provider)
 {
-    return Bun::toStringView(provider->source());
+    return Fun::toStringView(provider->source());
 }
 
 }; // namespace Zig

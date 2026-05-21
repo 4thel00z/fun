@@ -1,11 +1,11 @@
-// https://github.com/oven-sh/bun/issues/29684
+// https://github.com/underdoc-org/fun/issues/29684
 //
 // ws default is to advertise `Sec-WebSocket-Extensions: permessage-deflate;
 // client_max_window_bits` on the upgrade request. With `perMessageDeflate:
-// false`, both upstream `ws` and Node.js suppress the extension offer. Bun
+// false`, both upstream `ws` and Node.js suppress the extension offer. Fun
 // was ignoring the option and always sending the header, which broke some
 // gateway paths.
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import crypto from "node:crypto";
 import { AddressInfo, connect, createServer as createNetServer } from "node:net";
 import WebSocket from "ws";
@@ -85,8 +85,8 @@ describe("perMessageDeflate upgrade header", () => {
 
   it("omits Sec-WebSocket-Extensions for native WebSocket with perMessageDeflate: false", async () => {
     const request = await captureUpgradeRequest(url => {
-      // globalThis.WebSocket is Bun's native client, separate from the `ws`
-      // package's BunWebSocket wrapper — verify the option is threaded all
+      // globalThis.WebSocket is Fun's native client, separate from the `ws`
+      // package's FunWebSocket wrapper — verify the option is threaded all
       // the way through to the native upgrade builder.
       const ws = new (globalThis as any).WebSocket(url, { perMessageDeflate: false });
       ws.addEventListener("open", () => ws.close());

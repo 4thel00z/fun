@@ -1,5 +1,5 @@
 /// https://github.com/llvm/llvm-project/blob/main/compiler-rt/include/sanitizer/asan_interface.h
-const c = if (bun.Environment.enable_asan) struct {
+const c = if (fun.Environment.enable_asan) struct {
     extern fn __asan_poison_memory_region(ptr: *const anyopaque, size: usize) void;
     extern fn __asan_unpoison_memory_region(ptr: *const anyopaque, size: usize) void;
     extern fn __asan_address_is_poisoned(ptr: *const anyopaque) bool;
@@ -44,12 +44,12 @@ const c = if (bun.Environment.enable_asan) struct {
     pub fn unregisterRootRegion(_: *const anyopaque, _: usize) void {}
 };
 
-pub const enabled = bun.Environment.enable_asan;
+pub const enabled = fun.Environment.enable_asan;
 
 comptime {
     if (enabled) {
-        // Defined here (in bun-zig.o, a direct link input) rather than in C: in CI's
-        // split build the C objects are archived into libbun.a, and clang places the
+        // Defined here (in fun-zig.o, a direct link input) rather than in C: in CI's
+        // split build the C objects are archived into libfun.a, and clang places the
         // ASAN runtime — which already weak-defines __asan_default_options — before
         // user inputs, so an archive member that only provides this symbol is never
         // extracted and the override silently doesn't apply.
@@ -141,4 +141,4 @@ pub fn assertUnpoisoned(ptr: *const anyopaque) void {
     }
 }
 
-const bun = @import("bun");
+const fun = @import("fun");

@@ -28,7 +28,7 @@ const request = new Request("https://www.google.com/", {
   method: "GET",
 });
 
-// const server = Bun.serve({
+// const server = Fun.serve({
 //   port: 8080,
 //   async fetch(request) {
 //     // bench("new IncomingMessage()", b => {

@@ -19,15 +19,15 @@ pub const CssModule = struct {
     ) CssModule {
         // TODO: this is BAAAAAAAAAAD we are going to remove it
         const hashes = hashes: {
-            var hashes = bun.handleOom(ArrayList([]const u8).initCapacity(allocator, sources.items.len));
+            var hashes = fun.handleOom(ArrayList([]const u8).initCapacity(allocator, sources.items.len));
             for (sources.items) |path| {
                 var alloced = false;
                 const source = source: {
                     // Make paths relative to project root so hashes are stable
                     if (project_root) |root| {
-                        if (bun.path.Platform.auto.isAbsolute(root)) {
+                        if (fun.path.Platform.auto.isAbsolute(root)) {
                             alloced = true;
-                            break :source bun.handleOom(allocator.dupe(u8, bun.path.relative(root, path)));
+                            break :source fun.handleOom(allocator.dupe(u8, fun.path.relative(root, path)));
                         }
                     }
                     break :source path;
@@ -43,7 +43,7 @@ pub const CssModule = struct {
             break :hashes hashes;
         };
         const exports_by_source_index = exports_by_source_index: {
-            var exports_by_source_index = bun.handleOom(ArrayList(CssModuleExports).initCapacity(allocator, sources.items.len));
+            var exports_by_source_index = fun.handleOom(ArrayList(CssModuleExports).initCapacity(allocator, sources.items.len));
             exports_by_source_index.appendNTimesAssumeCapacity(CssModuleExports{}, sources.items.len);
             break :exports_by_source_index exports_by_source_index;
         };
@@ -62,7 +62,7 @@ pub const CssModule = struct {
     }
 
     pub fn getReference(this: *CssModule, allocator: Allocator, name: []const u8, source_index: u32) void {
-        const gop = bun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, name));
+        const gop = fun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, name));
         if (gop.found_existing) {
             gop.value_ptr.is_referenced = true;
         } else {
@@ -98,12 +98,12 @@ pub const CssModule = struct {
             },
         } else {
             // Local export. Mark as used.
-            const gop = bun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, name));
+            const gop = fun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, name));
             if (gop.found_existing) {
                 gop.value_ptr.is_referenced = true;
             } else {
                 var res = ArrayList(u8){};
-                bun.handleOom(res.appendSlice(allocator, "--"));
+                fun.handleOom(res.appendSlice(allocator, "--"));
                 gop.value_ptr.* = CssModuleExport{
                     .name = this.config.pattern.writeToString(
                         allocator,
@@ -123,9 +123,9 @@ pub const CssModule = struct {
 
         this.references.put(
             allocator,
-            bun.handleOom(std.fmt.allocPrint(allocator, "--{s}", .{the_hash})),
+            fun.handleOom(std.fmt.allocPrint(allocator, "--{s}", .{the_hash})),
             reference,
-        ) catch |err| bun.handleOom(err);
+        ) catch |err| fun.handleOom(err);
 
         return the_hash;
     }
@@ -151,7 +151,7 @@ pub const CssModule = struct {
     }
 
     pub fn addDashed(this: *CssModule, allocator: Allocator, local: []const u8, source_index: u32) void {
-        const gop = bun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, local));
+        const gop = fun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, local));
         if (!gop.found_existing) {
             gop.value_ptr.* = CssModuleExport{
                 // todo_stuff.depth
@@ -169,7 +169,7 @@ pub const CssModule = struct {
     }
 
     pub fn addLocal(this: *CssModule, allocator: Allocator, exported: []const u8, local: []const u8, source_index: u32) void {
-        const gop = bun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, exported));
+        const gop = fun.handleOom(this.exports_by_source_index.items[source_index].getOrPut(allocator, exported));
         if (!gop.found_existing) {
             gop.value_ptr.* = CssModuleExport{
                 // todo_stuff.depth
@@ -263,10 +263,10 @@ pub const Pattern = struct {
             &closure,
             struct {
                 pub fn writefn(self: *Closure, slice: []const u8, replace_dots: bool) void {
-                    bun.handleOom(self.res.appendSlice(self.allocator, prefix));
+                    fun.handleOom(self.res.appendSlice(self.allocator, prefix));
                     if (replace_dots) {
                         const start = self.res.items.len;
-                        bun.handleOom(self.res.appendSlice(self.allocator, slice));
+                        fun.handleOom(self.res.appendSlice(self.allocator, slice));
                         const end = self.res.items.len;
                         for (self.res.items[start..end]) |*c| {
                             if (c.* == '.') {
@@ -275,7 +275,7 @@ pub const Pattern = struct {
                         }
                         return;
                     }
-                    bun.handleOom(self.res.appendSlice(self.allocator, slice));
+                    fun.handleOom(self.res.appendSlice(self.allocator, slice));
                 }
             }.writefn,
         );
@@ -302,7 +302,7 @@ pub const Pattern = struct {
                 pub fn writefn(self: *Closure, slice: []const u8, replace_dots: bool) void {
                     if (replace_dots) {
                         const start = self.res.items.len;
-                        bun.handleOom(self.res.appendSlice(self.allocator, slice));
+                        fun.handleOom(self.res.appendSlice(self.allocator, slice));
                         const end = self.res.items.len;
                         for (self.res.items[start..end]) |*c| {
                             if (c.* == '.') {
@@ -311,7 +311,7 @@ pub const Pattern = struct {
                         }
                         return;
                     }
-                    bun.handleOom(self.res.appendSlice(self.allocator, slice));
+                    fun.handleOom(self.res.appendSlice(self.allocator, slice));
                     return;
                 }
             }.writefn,
@@ -382,35 +382,35 @@ pub const CssModuleReference = union(enum) {
         if (@intFromEnum(this.*) != @intFromEnum(other.*)) return false;
 
         return switch (this.*) {
-            .local => |v| bun.strings.eql(v.name, other.local.name),
-            .global => |v| bun.strings.eql(v.name, other.global.name),
-            // .dependency => |v| bun.strings.eql(v.name, other.dependency.name) and bun.strings.eql(v.specifier, other.dependency.specifier),
-            .dependency => |v| bun.strings.eql(v.name, other.dependency.name) and bun.strings.eql(v.specifier, other.dependency.specifier),
+            .local => |v| fun.strings.eql(v.name, other.local.name),
+            .global => |v| fun.strings.eql(v.name, other.global.name),
+            // .dependency => |v| fun.strings.eql(v.name, other.dependency.name) and fun.strings.eql(v.specifier, other.dependency.specifier),
+            .dependency => |v| fun.strings.eql(v.name, other.dependency.name) and fun.strings.eql(v.specifier, other.dependency.specifier),
         };
     }
 };
 
-// TODO: replace with bun's hash
+// TODO: replace with fun's hash
 pub fn hash(allocator: Allocator, comptime fmt: []const u8, args: anytype, at_start: bool) []const u8 {
     const count = std.fmt.count(fmt, args);
     var stack_fallback = std.heap.stackFallback(128, allocator);
     const fmt_alloc = if (count <= 128) stack_fallback.get() else allocator;
-    var hasher = bun.Wyhash11.init(0);
-    var fmt_str = bun.handleOom(std.fmt.allocPrint(fmt_alloc, fmt, args));
+    var hasher = fun.Wyhash11.init(0);
+    var fmt_str = fun.handleOom(std.fmt.allocPrint(fmt_alloc, fmt, args));
     hasher.update(fmt_str);
 
     const h: u32 = @truncate(hasher.final());
     var h_bytes: [4]u8 = undefined;
     std.mem.writeInt(u32, &h_bytes, h, .little);
 
-    const encode_len = bun.base64.simdutfEncodeLenUrlSafe(h_bytes[0..].len);
+    const encode_len = fun.base64.simdutfEncodeLenUrlSafe(h_bytes[0..].len);
 
     var slice_to_write = if (encode_len <= 128 - @as(usize, @intFromBool(at_start)))
-        bun.handleOom(allocator.alloc(u8, encode_len + @as(usize, @intFromBool(at_start))))
+        fun.handleOom(allocator.alloc(u8, encode_len + @as(usize, @intFromBool(at_start))))
     else
         fmt_str[0..];
 
-    const base64_encoded_hash_len = bun.base64.simdutfEncodeUrlSafe(slice_to_write, &h_bytes);
+    const base64_encoded_hash_len = fun.base64.simdutfEncodeUrlSafe(slice_to_write, &h_bytes);
 
     const base64_encoded_hash = slice_to_write[0..base64_encoded_hash_len];
 
@@ -423,7 +423,7 @@ pub fn hash(allocator: Allocator, comptime fmt: []const u8, args: anytype, at_st
     return base64_encoded_hash;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

@@ -1,6 +1,6 @@
 // these tests involve ensuring react (html loader + single page app) works
 // react is big and we do lots of stuff like fast refresh.
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { devTest, emptyHtmlFile, minimalFramework } from "../bake-harness";
 
 /** To test react refresh's registration system */
@@ -9,13 +9,13 @@ const reactAndRefreshStub = {
     exports.performReactRefresh = () => {};
     exports.injectIntoGlobalHook = () => {};
     exports.isLikelyComponentType = () => true;
-    exports.register = require("bun-devserver-react-mock").register;
-    exports.createSignatureFunctionForTransform = require("bun-devserver-react-mock").createSignatureFunctionForTransform;
+    exports.register = require("fun-devserver-react-mock").register;
+    exports.createSignatureFunctionForTransform = require("fun-devserver-react-mock").createSignatureFunctionForTransform;
   `,
   "node_modules/react/index.js": /* js */ `
     exports.useState = (y) => [y, x => {}];
   `,
-  "node_modules/bun-devserver-react-mock/index.js": /* js */ `
+  "node_modules/fun-devserver-react-mock/index.js": /* js */ `
     globalThis.components = new Map();
     globalThis.functionToComponent = new Map();
     exports.expectComponent = function(fn, filename, exportId) {
@@ -118,7 +118,7 @@ devTest("react in html", {
     expect(await c.elemText("h1")).toBe("Yay");
   },
 });
-// https://github.com/oven-sh/bun/issues/17447
+// https://github.com/underdoc-org/fun/issues/17447
 devTest("react refresh should register and track hook state", {
   framework: minimalFramework,
   files: {
@@ -128,7 +128,7 @@ devTest("react refresh should register and track hook state", {
       scripts: ["index.tsx"],
     }),
     "index.tsx": `
-      import { expectHookComponent } from 'bun-devserver-react-mock';
+      import { expectHookComponent } from 'fun-devserver-react-mock';
       import App from './App.tsx';
       expectHookComponent(App, "App.tsx", "default");
     `,
@@ -182,7 +182,7 @@ devTest("react refresh cases", {
       scripts: ["index.tsx"],
     }),
     "index.tsx": `
-      import { expectComponent, expectHookComponent } from 'bun-devserver-react-mock';
+      import { expectComponent, expectHookComponent } from 'fun-devserver-react-mock';
 
       expectComponent((await import("./default_unnamed")).default, "default_unnamed.tsx", "default");
       expectComponent((await import("./default_named")).default, "default_named.tsx", "default");
@@ -226,7 +226,7 @@ devTest("react refresh cases", {
       }
     `,
     "non_exported.tsx": `
-      import { expectComponent } from 'bun-devserver-react-mock';
+      import { expectComponent } from 'fun-devserver-react-mock';
 
       function NonExportedFunc() {
         return <div></div>;
@@ -288,7 +288,7 @@ devTest("react refresh cases", {
     `,
     "non_exported_hooks.tsx": `
       import { useState } from "react";
-      import { expectHookComponent } from 'bun-devserver-react-mock';
+      import { expectHookComponent } from 'fun-devserver-react-mock';
 
       function NonExportedFunc() {
         const [count, setCount] = useState(0);
@@ -333,7 +333,7 @@ devTest("two functions with hooks should be independently tracked", {
     }),
     "index.tsx": `
       import { useState } from "react";
-      import { expectHook } from 'bun-devserver-react-mock';
+      import { expectHook } from 'fun-devserver-react-mock';
 
       function method1() {
         const _ = useState(1);
@@ -367,7 +367,7 @@ devTest("custom hook tracking", {
     }),
     "index.tsx": `
       import { useCustom1, useCustom2 } from "./custom-hook";
-      import { expectHook, getCustomHooks } from 'bun-devserver-react-mock';
+      import { expectHook, getCustomHooks } from 'fun-devserver-react-mock';
 
       function method1() {
         const _ = useCustom1();

@@ -1,5 +1,5 @@
-// This fixture is intended to be able to run in both Node.js and Bun
-const Bun = (globalThis.Bun ??= { gc() {} });
+// This fixture is intended to be able to run in both Node.js and Fun
+const Fun = (globalThis.Fun ??= { gc() {} });
 
 const { resolve } = require("path");
 
@@ -43,15 +43,15 @@ if (require.cache[res("./require-cache-fixture-b.cjs")].exports !== exports.foo)
   throw new Error("exports.foo !== require.cache[require.resolve('./require-cache-fixture-b')]");
 }
 
-Bun.gc(true);
+Fun.gc(true);
 
 delete require.cache[res("./require-cache-fixture-b.cjs")];
 
-Bun.gc(true);
+Fun.gc(true);
 
 exports.bar = require("./require-cache-fixture-b.cjs");
 
-Bun.gc(true);
+Fun.gc(true);
 
 if (require.cache[res("./require-cache-fixture-b.cjs")].exports !== exports.bar) {
   throw new Error("exports.bar !== require.cache[require.resolve('./require-cache-fixture-b')]");

@@ -9,7 +9,7 @@ import '../common/index.mjs';
 
 // import utils from 'internal/readline/utils';
 // const { CSI } = utils;
-const { CSI } = require('readline')[Symbol.for("__BUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
+const { CSI } = require('readline')[Symbol.for("__FUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
 
 const INVALID_ARG = {
   name: 'TypeError',

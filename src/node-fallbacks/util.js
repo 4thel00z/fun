@@ -1,4 +1,4 @@
-// NOTE: THIS IS A BROWSER POLYFILL - Bun's actual node:* modules are in src/js/node
+// NOTE: THIS IS A BROWSER POLYFILL - Fun's actual node:* modules are in src/js/node
 //
 // This file is derived from https://www.npmjs.com/package/util v0.12.5,
 // converted into an Tree-shaking ES Module.

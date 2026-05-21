@@ -1,4 +1,4 @@
-# This script will remove the Bun installation at the location of this
+# This script will remove the Fun installation at the location of this
 # script, removing it from %PATH%, deleting caches, and removing it from
 # the list of installed programs.
 param(
@@ -36,44 +36,44 @@ function Get-Env {
   $EnvRegisterKey.GetValue($Key, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
 }
 
-if (-not (Test-Path "${PSScriptRoot}\bin\bun.exe")) {
-  Write-Host "bun.exe not found in ${PSScriptRoot}\bin`n`nRefusing to delete this directory as it may.`n`nIf this uninstallation is still intentional, please just manually delete this folder."
+if (-not (Test-Path "${PSScriptRoot}\bin\fun.exe")) {
+  Write-Host "fun.exe not found in ${PSScriptRoot}\bin`n`nRefusing to delete this directory as it may.`n`nIf this uninstallation is still intentional, please just manually delete this folder."
   if ($PauseOnError) { pause }
   exit 1
 }
 
-function Stop-Bun {
+function Stop-Fun {
   try {
-    Get-Process -Name bun | Where-Object { $_.Path -eq "${PSScriptRoot}\bin\bun.exe" } | Stop-Process -Force
+    Get-Process -Name fun | Where-Object { $_.Path -eq "${PSScriptRoot}\bin\fun.exe" } | Stop-Process -Force
   } catch [Microsoft.PowerShell.Commands.ProcessCommandException] {
     # ignore
   } catch {
-    Write-Host "There are open instances of bun.exe that could not be automatically closed."
+    Write-Host "There are open instances of fun.exe that could not be automatically closed."
     if ($PauseOnError) { pause }
     exit 1
   }
 }
 
-# Remove ~\.bun\bin\bun.exe
+# Remove ~\.fun\bin\fun.exe
 try {
-  Stop-Bun
-  Remove-Item "${PSScriptRoot}\bin\bun.exe" -Force
+  Stop-Fun
+  Remove-Item "${PSScriptRoot}\bin\fun.exe" -Force
 } catch {
   # Try a second time
-  Stop-Bun
+  Stop-Fun
   Start-Sleep -Seconds 1
   try {
-    Remove-Item "${PSScriptRoot}\bin\bun.exe" -Force
+    Remove-Item "${PSScriptRoot}\bin\fun.exe" -Force
   } catch {
     Write-Host $_
-    Write-Host "`n`nCould not delete ${PSScriptRoot}\bin\bun.exe."
-    Write-Host "Please close all instances of bun.exe and try again."
+    Write-Host "`n`nCould not delete ${PSScriptRoot}\bin\fun.exe."
+    Write-Host "Please close all instances of fun.exe and try again."
     if ($PauseOnError) { pause }
     exit 1
   }
 }
 
-# Remove ~\.bun
+# Remove ~\.fun
 try {
   Remove-Item "${PSScriptRoot}" -Recurse -Force
 } catch {
@@ -84,10 +84,10 @@ try {
 
 # Delete some tempdir files. Do not fail if an error happens here
 try {
-  Remove-Item "${Temp}\bun-*" -Recurse -Force
+  Remove-Item "${Temp}\fun-*" -Recurse -Force
 } catch {}
 try {
-  Remove-Item "${Temp}\bunx-*" -Recurse -Force
+  Remove-Item "${Temp}\funx-*" -Recurse -Force
 } catch {}
 
 # Remove Entry from path
@@ -105,10 +105,10 @@ try {
 
 # Remove Entry from Windows Installer, if it is owned by this installation.
 try {
-  $item = Get-Item "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Bun";
+  $item = Get-Item "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Fun";
   $location = $item.GetValue("InstallLocation");
   if ($location -eq "${PSScriptRoot}") {
-    Remove-Item "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Bun" -Recurse
+    Remove-Item "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Fun" -Recurse
   }
 } catch {
   # unlucky tbh

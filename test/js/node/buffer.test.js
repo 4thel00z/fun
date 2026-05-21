@@ -1,5 +1,5 @@
 import { Buffer, SlowBuffer, isAscii, isUtf8, kMaxLength } from "buffer";
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "fun:test";
 import { gc } from "harness";
 import vm from "node:vm";
 
@@ -16,7 +16,7 @@ afterEach(() => gc());
  *
  * Our workaround for that here is to run all the Buffer.prototype.write() tests twice.
  * 1. First we run them with native Buffer.write
- * 2. Then we run them with Node.js' implementation of Buffer.write, calling out to Bun's implementation of utf8Write, asciiWrite, latin1Write, base64Write, base64urlWrite, ucs2Write, utf16leWrite, utf16beWrite, etc.
+ * 2. Then we run them with Node.js' implementation of Buffer.write, calling out to Fun's implementation of utf8Write, asciiWrite, latin1Write, base64Write, base64urlWrite, ucs2Write, utf16leWrite, utf16beWrite, etc.
  *
  */
 const NumberIsInteger = Number.isInteger;
@@ -30,7 +30,7 @@ class ERR_INVALID_ARG_TYPE extends TypeError {
         inspected = `${JSON.stringify(value)}`;
       }
     } else {
-      inspected = Bun.inspect(value);
+      inspected = Fun.inspect(value);
     }
     super(`The "${name}" argument must be of type ${type}. Received type ${typeof value} (${inspected})`);
     this.code = "ERR_INVALID_ARG_TYPE";
@@ -210,7 +210,7 @@ for (let withOverridenBufferWrite of [false, true]) {
         expect(isUtf8(new Buffer([129, 129, 129]).buffer)).toBeFalse();
       });
 
-      // https://github.com/oven-sh/bun/issues/2052
+      // https://github.com/underdoc-org/fun/issues/2052
       it("Buffer global is settable", () => {
         var prevBuffer = globalThis.Buffer;
         globalThis.Buffer = 42;
@@ -3011,7 +3011,7 @@ for (let withOverridenBufferWrite of [false, true]) {
 
       it("inspect() should exist", () => {
         expect(Buffer.prototype.inspect).toBeInstanceOf(Function);
-        expect(new Buffer("123").inspect()).toBe(Bun.inspect(new Buffer("123")));
+        expect(new Buffer("123").inspect()).toBe(Fun.inspect(new Buffer("123")));
       });
 
       it("read alias", () => {

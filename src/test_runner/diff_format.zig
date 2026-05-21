@@ -7,7 +7,7 @@ pub const DiffFormatter = struct {
     not: bool = false,
 
     pub fn format(this: DiffFormatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-        var scope = bun.AllocationScope.init(default_allocator);
+        var scope = fun.AllocationScope.init(default_allocator);
         // defer scope.deinit(); // TODO: fix leaks
         const allocator = scope.allocator();
 
@@ -75,10 +75,10 @@ const printDiffFile = @import("./diff/printDiff.zig");
 const DiffConfig = printDiffFile.DiffConfig;
 const printDiffMain = printDiffFile.printDiffMain;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
+const fun = @import("fun");
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

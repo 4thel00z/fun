@@ -1,6 +1,6 @@
-import jsc from "bun:jsc";
-import { describe, expect, it, mock, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import jsc from "fun:jsc";
+import { describe, expect, it, mock, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import path from "node:path";
 import { clearInterval, clearTimeout, promises, setImmediate, setInterval, setTimeout } from "node:timers";
 import { promisify } from "util";
@@ -133,7 +133,7 @@ describe("_destroyed", () => {
     let calls = 0;
     const timeout = setTimeout(() => calls++, 0) as TimerWithDestroyed;
     const immediate = setImmediate(() => calls++) as TimerWithDestroyed;
-    while (calls < 2) await Bun.sleep(1);
+    while (calls < 2) await Fun.sleep(1);
     expect(timeout._destroyed).toBeTrue();
     expect(immediate._destroyed).toBeTrue();
   });
@@ -173,7 +173,7 @@ describe("clear", () => {
     clearTimeout(immediate);
     clearInterval(immediate);
 
-    await Bun.sleep(1);
+    await Fun.sleep(1);
     expect(mockedCb).toHaveBeenCalledTimes(1);
   });
 
@@ -197,7 +197,7 @@ describe("clear", () => {
     clearTimeout((2 ** 64).toString());
 
     // none of the above strings should cause the timeout to be cleared
-    await Bun.sleep(2);
+    await Fun.sleep(2);
     expect(mockedCb).toHaveBeenCalled();
   });
 
@@ -225,10 +225,10 @@ describe.each(["with", "without"])("setImmediate %s timers running", mode => {
   it.todoIf(isWindows && mode == "with")(
     "has reasonable performance when nested",
     async () => {
-      const process = Bun.spawn({
-        cmd: [bunExe(), path.join(__dirname, "setImmediate-fixture.ts"), mode + "-interval"],
+      const process = Fun.spawn({
+        cmd: [funExe(), path.join(__dirname, "setImmediate-fixture.ts"), mode + "-interval"],
         stdout: "pipe",
-        env: bunEnv,
+        env: funEnv,
       });
 
       await process.exited;

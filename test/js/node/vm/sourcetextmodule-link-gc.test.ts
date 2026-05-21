@@ -11,8 +11,8 @@
 // populates its cache. 500 specifiers per module → the WTF::HashMap rehashes
 // ~9× per link() call.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 
 // collectContinuously is very slow under Windows + ASAN in CI; the code path
 // is identical on Linux/macOS, so skip Windows to keep duration reasonable.
@@ -40,7 +40,7 @@ test.skipIf(isWindows)(
         for (let iter = 0; iter < 60; iter++) {
           mods.push(new vm.SourceTextModule(src, { identifier: "root" + iter }));
         }
-        Bun.gc(true);
+        Fun.gc(true);
         for (const mod of mods) await mod.link(linker);
         console.log("ok");
       })().catch(e => {
@@ -49,12 +49,12 @@ test.skipIf(isWindows)(
       });
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", fixture],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", fixture],
       env: {
-        ...bunEnv,
-        BUN_JSC_collectContinuously: "1",
-        BUN_JSC_useGenerationalGC: "0",
+        ...funEnv,
+        FUN_JSC_collectContinuously: "1",
+        FUN_JSC_useGenerationalGC: "0",
       },
       stderr: "pipe",
       stdout: "pipe",

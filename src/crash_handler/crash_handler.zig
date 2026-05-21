@@ -1,19 +1,19 @@
-//! This file contains Bun's crash handler. In debug builds, we are able to
+//! This file contains Fun's crash handler. In debug builds, we are able to
 //! print backtraces that are mapped to source code. In release builds, we do
-//! not have debug symbols in the binary. Bun's solution to this is called
+//! not have debug symbols in the binary. Fun's solution to this is called
 //! a "trace string", a url with compressed encoding of the captured
 //! backtrace. Version 1 trace strings contain the following information:
 //!
-//! - What version and commit of Bun captured the backtrace.
+//! - What version and commit of Fun captured the backtrace.
 //! - The platform the backtrace was captured on.
 //! - The list of addresses with ASLR removed, ready to be remapped.
 //! - If panicking, the message that was panicked with.
 //!
-//! These can be demangled using Bun's remapping API, which has cached
-//! versions of all debug symbols for all versions of Bun. Hosting this keeps
+//! These can be demangled using Fun's remapping API, which has cached
+//! versions of all debug symbols for all versions of Fun. Hosting this keeps
 //! users from having to download symbols, which can be very large.
 //!
-//! The remapper is open source: https://github.com/oven-sh/bun.report
+//! The remapper is open source: https://github.com/underdoc-org/fun.report
 //!
 //! A lot of this handler is based on the Zig Standard Library implementation
 //! for std.debug.panicImpl and their code for gathering backtraces.
@@ -22,10 +22,10 @@
 /// This is useful for testing as a crash in here will not 'panicked during a panic'.
 pub const enable = true;
 
-/// Overridable with BUN_CRASH_REPORT_URL environment variable.
-const default_report_base_url = "https://bun.report";
+/// Overridable with FUN_CRASH_REPORT_URL environment variable.
+const default_report_base_url = "https://fun.report";
 
-/// Only print the `Bun has crashed` message once. Once this is true, control
+/// Only print the `Fun has crashed` message once. Once this is true, control
 /// flow is not returned to the main application.
 var has_printed_message = false;
 
@@ -35,7 +35,7 @@ var panicking = std.atomic.Value(u8).init(0);
 
 // Locked to avoid interleaving panic messages from multiple threads.
 // TODO: I don't think it's safe to lock/unlock a mutex inside a signal handler.
-var panic_mutex = bun.Mutex{};
+var panic_mutex = fun.Mutex{};
 
 /// Counts how many times the panic handler is invoked by this thread.
 /// This is used to catch and handle panics triggered by the panic handler.
@@ -55,14 +55,14 @@ pub threadlocal var current_action: ?Action = null;
 
 var before_crash_handlers: std.ArrayListUnmanaged(struct { *anyopaque, *const OnBeforeCrash }) = .{};
 
-var before_crash_handlers_mutex: bun.Mutex = .{};
+var before_crash_handlers_mutex: fun.Mutex = .{};
 
 /// Prevents crash reports from being uploaded to any server. Reports will still be printed and
-/// abort the process. Overrides BUN_CRASH_REPORT_URL, BUN_ENABLE_CRASH_REPORTING, and all other
+/// abort the process. Overrides FUN_CRASH_REPORT_URL, FUN_ENABLE_CRASH_REPORTING, and all other
 /// things that affect crash reporting. See suppressReporting() for intended usage.
 var suppress_reporting: bool = false;
 
-/// This structure and formatter must be kept in sync with `bun.report`'s decoder implementation.
+/// This structure and formatter must be kept in sync with `fun.report`'s decoder implementation.
 pub const CrashReason = union(enum) {
     /// From @panic()
     panic: []const u8,
@@ -98,7 +98,7 @@ pub const CrashReason = union(enum) {
             .datatype_misalignment => try writer.writeAll("Unaligned memory access"),
             .stack_overflow => try writer.writeAll("Stack overflow"),
             .zig_error => |err| try writer.print("error.{s}", .{@errorName(err)}),
-            .out_of_memory => try writer.writeAll("Bun ran out of memory"),
+            .out_of_memory => try writer.writeAll("Fun ran out of memory"),
         }
     }
 };
@@ -108,21 +108,21 @@ pub const Action = union(enum) {
     visit: []const u8,
     print: []const u8,
 
-    /// bun.bundle_v2.LinkerContext.generateCompileResultForJSChunk
-    bundle_generate_chunk: if (bun.Environment.show_crash_trace) struct {
+    /// fun.bundle_v2.LinkerContext.generateCompileResultForJSChunk
+    bundle_generate_chunk: if (fun.Environment.show_crash_trace) struct {
         context: *const anyopaque, // unfortunate dependency loop workaround
-        chunk: *const bun.bundle_v2.Chunk,
-        part_range: *const bun.bundle_v2.PartRange,
+        chunk: *const fun.bundle_v2.Chunk,
+        part_range: *const fun.bundle_v2.PartRange,
 
-        pub fn linkerContext(data: *const @This()) *const bun.bundle_v2.LinkerContext {
+        pub fn linkerContext(data: *const @This()) *const fun.bundle_v2.LinkerContext {
             return @ptrCast(@alignCast(data.context));
         }
     } else void,
 
-    resolver: if (bun.Environment.show_crash_trace) struct {
+    resolver: if (fun.Environment.show_crash_trace) struct {
         source_dir: []const u8,
         import_path: []const u8,
-        kind: bun.ImportKind,
+        kind: fun.ImportKind,
     } else void,
 
     dlopen: []const u8,
@@ -132,7 +132,7 @@ pub const Action = union(enum) {
             .parse => |path| try writer.print("parsing {s}", .{path}),
             .visit => |path| try writer.print("visiting {s}", .{path}),
             .print => |path| try writer.print("printing {s}", .{path}),
-            .bundle_generate_chunk => |data| if (bun.Environment.show_crash_trace) {
+            .bundle_generate_chunk => |data| if (fun.Environment.show_crash_trace) {
                 try writer.print(
                     \\generating bundler chunk
                     \\  chunk entry point: {?s}
@@ -151,7 +151,7 @@ pub const Action = union(enum) {
                     },
                 );
             },
-            .resolver => |res| if (bun.Environment.show_crash_trace) {
+            .resolver => |res| if (fun.Environment.show_crash_trace) {
                 try writer.print("resolving {s} from {s} ({s})", .{
                     res.import_path,
                     res.source_dir,
@@ -203,14 +203,14 @@ pub fn crashHandler(
 ) noreturn {
     @branchHint(.cold);
 
-    if (bun.Environment.isDebug)
-        bun.Output.disableScopedDebugWriter();
+    if (fun.Environment.isDebug)
+        fun.Output.disableScopedDebugWriter();
 
-    var trace_str_buf = bun.BoundedArray(u8, 1024){};
+    var trace_str_buf = fun.BoundedArray(u8, 1024){};
 
     nosuspend switch (panic_stage) {
         0 => {
-            bun.maybeHandlePanicDuringProcessReload();
+            fun.maybeHandlePanicDuringProcessReload();
 
             panic_stage = 1;
             _ = panicking.fetchAdd(1, .seq_cst);
@@ -241,9 +241,9 @@ pub fn crashHandler(
                 //
                 // To make the release-mode behavior easier to demo, debug mode
                 // checks for this CLI flag.
-                const debug_trace = bun.Environment.show_crash_trace and check_flag: {
-                    for (bun.argv) |arg| {
-                        if (bun.strings.eqlComptime(arg, "--debug-crash-handler-use-trace-string")) {
+                const debug_trace = fun.Environment.show_crash_trace and check_flag: {
+                    for (fun.argv) |arg| {
+                        if (fun.strings.eqlComptime(arg, "--debug-crash-handler-use-trace-string")) {
                             break :check_flag false;
                         }
                     }
@@ -264,22 +264,22 @@ pub fn crashHandler(
                         const native_plugin_name = name;
                         const fmt =
                             \\
-                            \\Bun has encountered a crash while running the <red><d>"{s}"<r> native plugin.
+                            \\Fun has encountered a crash while running the <red><d>"{s}"<r> native plugin.
                             \\
-                            \\This indicates either a bug in the native plugin or in Bun.
+                            \\This indicates either a bug in the native plugin or in Fun.
                             \\
                         ;
                         writer.print(Output.prettyFmt(fmt, true), .{native_plugin_name}) catch std.posix.abort();
-                    } else if (bun.analytics.Features.unsupported_uv_function > 0) {
+                    } else if (fun.analytics.Features.unsupported_uv_function > 0) {
                         const name = unsupported_uv_function orelse "<unknown>";
                         const fmt =
-                            \\Bun encountered a crash when running a NAPI module that tried to call
+                            \\Fun encountered a crash when running a NAPI module that tried to call
                             \\the <red>{s}<r> libuv function.
                             \\
-                            \\Bun is actively working on supporting all libuv functions for POSIX
+                            \\Fun is actively working on supporting all libuv functions for POSIX
                             \\systems, please see this issue to track our progress:
                             \\
-                            \\<cyan>https://github.com/oven-sh/bun/issues/18546<r>
+                            \\<cyan>https://github.com/underdoc-org/fun/issues/18546<r>
                             \\
                             \\
                         ;
@@ -309,16 +309,16 @@ pub fn crashHandler(
                         writer.writeAll(Output.prettyFmt("<r><d>", true)) catch std.posix.abort();
                     }
 
-                    if (bun.cli.Cli.is_main_thread) {
+                    if (fun.cli.Cli.is_main_thread) {
                         writer.writeAll("(main thread)") catch std.posix.abort();
-                    } else switch (bun.Environment.os) {
+                    } else switch (fun.Environment.os) {
                         .windows => {
                             var name: std.os.windows.PWSTR = undefined;
-                            const result = bun.windows.GetThreadDescription(bun.windows.GetCurrentThread(), &name);
+                            const result = fun.windows.GetThreadDescription(fun.windows.GetCurrentThread(), &name);
                             if (std.os.windows.HRESULT_CODE(result) == .SUCCESS and name[0] != 0) {
-                                writer.print("({f})", .{bun.fmt.utf16(bun.span(name))}) catch std.posix.abort();
+                                writer.print("({f})", .{fun.fmt.utf16(fun.span(name))}) catch std.posix.abort();
                             } else {
-                                writer.print("(thread {d})", .{bun.c.GetCurrentThreadId()}) catch std.posix.abort();
+                                writer.print("(thread {d})", .{fun.c.GetCurrentThreadId()}) catch std.posix.abort();
                             }
                         },
                         .mac, .linux, .freebsd => {},
@@ -351,7 +351,7 @@ pub fn crashHandler(
                     const desired_begin_addr = begin_addr orelse @returnAddress();
                     std.debug.captureStackTrace(desired_begin_addr, &trace_buf);
 
-                    if (comptime bun.Environment.isGlibc) {
+                    if (comptime fun.Environment.isGlibc) {
                         var addr_buf_libc: [20]usize = undefined;
                         var trace_buf_libc: std.builtin.StackTrace = .{
                             .index = 0,
@@ -389,41 +389,41 @@ pub fn crashHandler(
                         if (inside_native_plugin) |name| {
                             const native_plugin_name = name;
                             writer.print(Output.prettyFmt(
-                                \\Bun has encountered a crash while running the <red><d>"{s}"<r> native plugin.
+                                \\Fun has encountered a crash while running the <red><d>"{s}"<r> native plugin.
                                 \\
-                                \\To send a redacted crash report to Bun's team,
+                                \\To send a redacted crash report to Fun's team,
                                 \\please file a GitHub issue using the link below:
                                 \\
                                 \\
                             , true), .{native_plugin_name}) catch std.posix.abort();
-                        } else if (bun.analytics.Features.unsupported_uv_function > 0) {
+                        } else if (fun.analytics.Features.unsupported_uv_function > 0) {
                             const name = unsupported_uv_function orelse "<unknown>";
                             const fmt =
-                                \\Bun encountered a crash when running a NAPI module that tried to call
+                                \\Fun encountered a crash when running a NAPI module that tried to call
                                 \\the <red>{s}<r> libuv function.
                                 \\
-                                \\Bun is actively working on supporting all libuv functions for POSIX
+                                \\Fun is actively working on supporting all libuv functions for POSIX
                                 \\systems, please see this issue to track our progress:
                                 \\
-                                \\<cyan>https://github.com/oven-sh/bun/issues/18546<r>
+                                \\<cyan>https://github.com/underdoc-org/fun/issues/18546<r>
                                 \\
                                 \\
                             ;
                             writer.print(Output.prettyFmt(fmt, true), .{name}) catch std.posix.abort();
                         } else if (reason == .out_of_memory) {
                             writer.writeAll(
-                                \\Bun has run out of memory.
+                                \\Fun has run out of memory.
                                 \\
-                                \\To send a redacted crash report to Bun's team,
+                                \\To send a redacted crash report to Fun's team,
                                 \\please file a GitHub issue using the link below:
                                 \\
                                 \\
                             ) catch std.posix.abort();
                         } else {
                             writer.writeAll(
-                                \\Bun has crashed. This indicates a bug in Bun, not your code.
+                                \\Fun has crashed. This indicates a bug in Fun, not your code.
                                 \\
-                                \\To send a redacted crash report to Bun's team,
+                                \\To send a redacted crash report to Fun's team,
                                 \\please file a GitHub issue using the link below:
                                 \\
                                 \\
@@ -470,20 +470,20 @@ pub fn crashHandler(
             // want another thread to interrupt the crashing of the first one.
             resetSegfaultHandler();
 
-            if (bun.auto_reload_on_crash and
+            if (fun.auto_reload_on_crash and
                 // Do not reload if the panic arose FROM the reload function.
-                !bun.isProcessReloadInProgressOnAnotherThread())
+                !fun.isProcessReloadInProgressOnAnotherThread())
             {
                 // attempt to prevent a double panic
-                bun.auto_reload_on_crash = false;
+                fun.auto_reload_on_crash = false;
 
-                Output.prettyErrorln("<d>--- Bun is auto-restarting due to crash <d>[time: <b>{d}<r><d>] ---<r>", .{
+                Output.prettyErrorln("<d>--- Fun is auto-restarting due to crash <d>[time: <b>{d}<r><d>] ---<r>", .{
                     @max(std.time.milliTimestamp(), 0),
                 });
                 Output.flush();
 
-                comptime bun.assert(void == @TypeOf(bun.reloadProcess(bun.default_allocator, false, true)));
-                bun.reloadProcess(bun.default_allocator, false, true);
+                comptime fun.assert(void == @TypeOf(fun.reloadProcess(fun.default_allocator, false, true)));
+                fun.reloadProcess(fun.default_allocator, false, true);
             }
         },
         inline 1, 2 => |t| {
@@ -519,13 +519,13 @@ pub fn crashHandler(
 /// This is called when `main` returns a Zig error.
 /// We don't want to treat it as a crash under certain error codes.
 pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTrace) noreturn {
-    var show_trace = bun.Environment.show_crash_trace;
+    var show_trace = fun.Environment.show_crash_trace;
 
     switch (err) {
-        error.OutOfMemory => bun.outOfMemory(),
+        error.OutOfMemory => fun.outOfMemory(),
 
         error.InvalidArgument,
-        error.@"Invalid Bunfig",
+        error.@"Invalid Funfig",
         error.InstallFailed,
         => if (!show_trace) Global.exit(1),
 
@@ -541,9 +541,9 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
         },
 
         error.SystemFdQuotaExceeded => {
-            if (comptime bun.Environment.isPosix) {
+            if (comptime fun.Environment.isPosix) {
                 const limit = if (std.posix.getrlimit(.NOFILE)) |limit| limit.cur else |_| null;
-                if (comptime bun.Environment.isMac) {
+                if (comptime fun.Environment.isMac) {
                     Output.prettyError(
                         \\<r><red>error<r>: Your computer ran out of file descriptors <d>(<red>SystemFdQuotaExceeded<r><d>)<r>
                         \\
@@ -558,10 +558,10 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                         \\
                     ,
                         .{
-                            bun.fmt.nullableFallback(limit, "<unknown>"),
+                            fun.fmt.nullableFallback(limit, "<unknown>"),
                         },
                     );
-                } else if (comptime bun.Environment.isFreeBSD) {
+                } else if (comptime fun.Environment.isFreeBSD) {
                     Output.prettyError(
                         \\
                         \\<r><red>error<r>: Your computer ran out of file descriptors <d>(<red>SystemFdQuotaExceeded<r><d>)<r>
@@ -577,7 +577,7 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                         \\
                     ,
                         .{
-                            bun.fmt.nullableFallback(limit, "<unknown>"),
+                            fun.fmt.nullableFallback(limit, "<unknown>"),
                         },
                     );
                 } else {
@@ -595,11 +595,11 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                         \\
                     ,
                         .{
-                            bun.fmt.nullableFallback(limit, "<unknown>"),
+                            fun.fmt.nullableFallback(limit, "<unknown>"),
                         },
                     );
 
-                    if (bun.env_var.USER.get()) |user| {
+                    if (fun.env_var.USER.get()) |user| {
                         if (user.len > 0) {
                             Output.prettyError(
                                 \\
@@ -624,12 +624,12 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
         },
 
         error.ProcessFdQuotaExceeded => {
-            if (comptime bun.Environment.isPosix) {
+            if (comptime fun.Environment.isPosix) {
                 const limit = if (std.posix.getrlimit(.NOFILE)) |limit| limit.cur else |_| null;
-                if (comptime bun.Environment.isMac) {
+                if (comptime fun.Environment.isMac) {
                     Output.prettyError(
                         \\
-                        \\<r><red>error<r>: bun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
+                        \\<r><red>error<r>: fun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
                         \\
                         \\<d>Current limit: {f}<r>
                         \\
@@ -643,13 +643,13 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                         \\
                     ,
                         .{
-                            bun.fmt.nullableFallback(limit, "<unknown>"),
+                            fun.fmt.nullableFallback(limit, "<unknown>"),
                         },
                     );
-                } else if (comptime bun.Environment.isFreeBSD) {
+                } else if (comptime fun.Environment.isFreeBSD) {
                     Output.prettyError(
                         \\
-                        \\<r><red>error<r>: bun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
+                        \\<r><red>error<r>: fun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
                         \\
                         \\<d>Current limit: {f}<r>
                         \\
@@ -660,13 +660,13 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                         \\
                     ,
                         .{
-                            bun.fmt.nullableFallback(limit, "<unknown>"),
+                            fun.fmt.nullableFallback(limit, "<unknown>"),
                         },
                     );
                 } else {
                     Output.prettyError(
                         \\
-                        \\<r><red>error<r>: bun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
+                        \\<r><red>error<r>: fun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
                         \\
                         \\<d>Current limit: {f}<r>
                         \\
@@ -681,11 +681,11 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                         \\
                     ,
                         .{
-                            bun.fmt.nullableFallback(limit, "<unknown>"),
+                            fun.fmt.nullableFallback(limit, "<unknown>"),
                         },
                     );
 
-                    if (bun.env_var.USER.get()) |user| {
+                    if (fun.env_var.USER.get()) |user| {
                         if (user.len > 0) {
                             Output.prettyError(
                                 \\
@@ -702,7 +702,7 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                 }
             } else {
                 Output.prettyErrorln(
-                    \\<r><red>error<r>: bun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
+                    \\<r><red>error<r>: fun ran out of file descriptors <d>(<red>ProcessFdQuotaExceeded<r><d>)<r>
                 ,
                     .{},
                 );
@@ -711,7 +711,7 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
 
         // The usage of `unreachable` in Zig's std.posix may cause the file descriptor problem to show up as other errors
         error.NotOpenForReading, error.Unexpected => {
-            if (comptime bun.Environment.isPosix) {
+            if (comptime fun.Environment.isPosix) {
                 const limit = std.posix.getrlimit(.NOFILE) catch std.mem.zeroes(std.posix.rlimit);
 
                 if (limit.cur > 0 and limit.cur < (8192 * 2)) {
@@ -731,8 +731,8 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                         },
                     );
 
-                    if (bun.Environment.isLinux) {
-                        if (bun.env_var.USER.get()) |user| {
+                    if (fun.Environment.isLinux) {
+                        if (fun.env_var.USER.get()) |user| {
                             if (user.len > 0) {
                                 Output.prettyError(
                                     \\
@@ -749,7 +749,7 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
                                 );
                             }
                         }
-                    } else if (bun.Environment.isMac) {
+                    } else if (fun.Environment.isMac) {
                         Output.prettyError(
                             \\
                             \\If that still doesn't work, you may need to run:
@@ -780,22 +780,22 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
         error.ENOENT, error.FileNotFound => {
             Output.err(
                 "ENOENT",
-                "Bun could not find a file, and the code that produces this error is missing a better error.",
+                "Fun could not find a file, and the code that produces this error is missing a better error.",
                 .{},
             );
         },
 
         error.MissingPackageJSON => {
             Output.errGeneric(
-                "Bun could not find a package.json file to install from",
+                "Fun could not find a package.json file to install from",
                 .{},
             );
-            Output.note("Run \"bun init\" to initialize a project", .{});
+            Output.note("Run \"fun init\" to initialize a project", .{});
         },
 
         else => {
             Output.errGeneric(
-                if (bun.Environment.show_crash_trace)
+                if (fun.Environment.show_crash_trace)
                     "'main' returned <red>error.{s}<r>"
                 else
                     "An internal error occurred (<red>{s}<r>)",
@@ -816,7 +816,7 @@ pub fn handleRootError(err: anyerror, error_return_trace: ?*std.builtin.StackTra
 pub fn panicImpl(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace, begin_addr: ?usize) noreturn {
     @branchHint(.cold);
     crashHandler(
-        if (bun.strings.eqlComptime(msg, "reached unreachable code"))
+        if (fun.strings.eqlComptime(msg, "reached unreachable code"))
             .{ .@"unreachable" = {} }
         else
             .{ .panic = msg },
@@ -837,8 +837,8 @@ pub fn reportBaseUrl() []const u8 {
     };
     return static.base_url orelse {
         const computed = computed: {
-            if (bun.env_var.BUN_CRASH_REPORT_URL.get()) |url| {
-                break :computed bun.strings.withoutTrailingSlash(url);
+            if (fun.env_var.FUN_CRASH_REPORT_URL.get()) |url| {
+                break :computed fun.strings.withoutTrailingSlash(url);
             }
             break :computed default_report_base_url;
         };
@@ -847,24 +847,24 @@ pub fn reportBaseUrl() []const u8 {
     };
 }
 
-const arch_display_string = if (bun.Environment.isAarch64)
-    if (bun.Environment.isMac) "Silicon" else "arm64"
+const arch_display_string = if (fun.Environment.isAarch64)
+    if (fun.Environment.isMac) "Silicon" else "arm64"
 else
     "x64";
 
 const metadata_version_line = std.fmt.comptimePrint(
-    "Bun {s}v{s} {s} {s}{s}\n",
+    "Fun {s}v{s} {s} {s}{s}\n",
     .{
-        if (bun.Environment.isDebug) "Debug " else if (bun.Environment.is_canary) "Canary " else "",
+        if (fun.Environment.isDebug) "Debug " else if (fun.Environment.is_canary) "Canary " else "",
         Global.package_json_version_with_sha,
-        bun.Environment.os.displayString(),
+        fun.Environment.os.displayString(),
         arch_display_string,
-        if (bun.Environment.baseline) " (baseline)" else "",
+        if (fun.Environment.baseline) " (baseline)" else "",
     },
 );
 
 fn handleSegfaultPosix(sig: i32, info: *const std.posix.siginfo_t, _: ?*const anyopaque) callconv(.c) noreturn {
-    const addr = switch (bun.Environment.os) {
+    const addr = switch (fun.Environment.os) {
         .linux => @intFromPtr(info.fields.sigfault.addr),
         .mac, .freebsd => @intFromPtr(info.addr),
         .windows, .wasm => @compileError("unreachable"),
@@ -888,7 +888,7 @@ fn handleSegfaultPosix(sig: i32, info: *const std.posix.siginfo_t, _: ?*const an
 var did_register_sigaltstack = false;
 var sigaltstack: [512 * 1024]u8 = undefined;
 
-fn updatePosixSegfaultHandler(act: ?*bun.sys.Sigaction) !void {
+fn updatePosixSegfaultHandler(act: ?*fun.sys.Sigaction) !void {
     if (act) |act_| {
         if (!did_register_sigaltstack) {
             var stack: std.c.stack_t = .{
@@ -904,19 +904,19 @@ fn updatePosixSegfaultHandler(act: ?*bun.sys.Sigaction) !void {
         }
     }
 
-    bun.sys.sigaction(std.posix.SIG.SEGV, act, null);
-    bun.sys.sigaction(std.posix.SIG.ILL, act, null);
-    bun.sys.sigaction(std.posix.SIG.BUS, act, null);
-    bun.sys.sigaction(std.posix.SIG.FPE, act, null);
+    fun.sys.sigaction(std.posix.SIG.SEGV, act, null);
+    fun.sys.sigaction(std.posix.SIG.ILL, act, null);
+    fun.sys.sigaction(std.posix.SIG.BUS, act, null);
+    fun.sys.sigaction(std.posix.SIG.FPE, act, null);
 }
 
 var windows_segfault_handle: ?windows.HANDLE = null;
 
 pub fn resetOnPosix() void {
-    if (bun.Environment.enable_asan) return;
-    var act = bun.sys.Sigaction{
+    if (fun.Environment.enable_asan) return;
+    var act = fun.sys.Sigaction{
         .handler = .{ .sigaction = handleSegfaultPosix },
-        .mask = bun.sys.sigemptyset(),
+        .mask = fun.sys.sigemptyset(),
         .flags = (std.posix.SA.SIGINFO | std.posix.SA.RESTART | std.posix.SA.RESETHAND),
     };
     updatePosixSegfaultHandler(&act) catch {};
@@ -924,7 +924,7 @@ pub fn resetOnPosix() void {
 
 pub fn init() void {
     if (!enable) return;
-    switch (bun.Environment.os) {
+    switch (fun.Environment.os) {
         .windows => {
             windows_segfault_handle = windows.kernel32.AddVectoredExceptionHandler(0, handleSegfaultWindows);
         },
@@ -937,20 +937,20 @@ pub fn init() void {
 
 pub fn resetSegfaultHandler() void {
     if (!enable) return;
-    if (bun.Environment.enable_asan) return;
+    if (fun.Environment.enable_asan) return;
 
-    if (bun.Environment.os == .windows) {
+    if (fun.Environment.os == .windows) {
         if (windows_segfault_handle) |handle| {
             const rc = windows.kernel32.RemoveVectoredExceptionHandler(handle);
             windows_segfault_handle = null;
-            bun.assert(rc != 0);
+            fun.assert(rc != 0);
         }
         return;
     }
 
-    var act = bun.sys.Sigaction{
+    var act = fun.sys.Sigaction{
         .handler = .{ .handler = std.posix.SIG.DFL },
-        .mask = bun.sys.sigemptyset(),
+        .mask = fun.sys.sigemptyset(),
         .flags = 0,
     };
     // To avoid a double-panic, do nothing if an error happens here.
@@ -969,7 +969,7 @@ pub fn handleSegfaultWindows(info: *windows.EXCEPTION_POINTERS) callconv(.winapi
             // https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2017/debugger/how-to-set-a-thread-name-in-native-code?view=vs-2017#set-a-thread-name-by-throwing-an-exception
             // related commit
             // https://github.com/go-delve/delve/pull/1384
-            bun.windows.MS_VC_EXCEPTION => return bun.windows.EXCEPTION_CONTINUE_EXECUTION,
+            fun.windows.MS_VC_EXCEPTION => return fun.windows.EXCEPTION_CONTINUE_EXECUTION,
 
             else => return windows.EXCEPTION_CONTINUE_SEARCH,
         },
@@ -981,10 +981,10 @@ pub fn handleSegfaultWindows(info: *windows.EXCEPTION_POINTERS) callconv(.winapi
 extern "c" fn gnu_get_libc_version() ?[*:0]const u8;
 
 // Only populated after JSC::VM::tryCreate
-export var Bun__reported_memory_size: usize = 0;
+export var Fun__reported_memory_size: usize = 0;
 
 pub fn printMetadata(writer: anytype) !void {
-    if (comptime bun.Environment.isDebug) {
+    if (comptime fun.Environment.isDebug) {
         if (Output.isAIAgent()) {
             return;
         }
@@ -998,31 +998,31 @@ pub fn printMetadata(writer: anytype) !void {
 
     try writer.writeAll(metadata_version_line);
     {
-        const platform = bun.analytics.GenerateHeader.GeneratePlatform.forOS();
+        const platform = fun.analytics.GenerateHeader.GeneratePlatform.forOS();
         const cpu_features = CPUFeatures.get();
-        if (bun.Environment.isGlibc) {
+        if (fun.Environment.isGlibc) {
             const version = gnu_get_libc_version() orelse "";
-            const kernel_version = bun.analytics.GenerateHeader.GeneratePlatform.kernelVersion();
+            const kernel_version = fun.analytics.GenerateHeader.GeneratePlatform.kernelVersion();
             if (platform.os == .wsl) {
-                try writer.print("WSL Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, bun.sliceTo(version, 0) });
+                try writer.print("WSL Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, fun.sliceTo(version, 0) });
             } else {
-                try writer.print("Linux Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, bun.sliceTo(version, 0) });
+                try writer.print("Linux Kernel v{d}.{d}.{d} | glibc v{s}\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch, fun.sliceTo(version, 0) });
             }
-        } else if (bun.Environment.isLinux and bun.Environment.isMusl) {
-            const kernel_version = bun.analytics.GenerateHeader.GeneratePlatform.kernelVersion();
+        } else if (fun.Environment.isLinux and fun.Environment.isMusl) {
+            const kernel_version = fun.analytics.GenerateHeader.GeneratePlatform.kernelVersion();
             try writer.print("Linux Kernel v{d}.{d}.{d} | musl\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch });
-        } else if (bun.Environment.isAndroid) {
-            const kernel_version = bun.analytics.GenerateHeader.GeneratePlatform.kernelVersion();
+        } else if (fun.Environment.isAndroid) {
+            const kernel_version = fun.analytics.GenerateHeader.GeneratePlatform.kernelVersion();
             try writer.print("Android Kernel v{d}.{d}.{d} | bionic\n", .{ kernel_version.major, kernel_version.minor, kernel_version.patch });
-        } else if (bun.Environment.isFreeBSD) {
+        } else if (fun.Environment.isFreeBSD) {
             try writer.print("FreeBSD Kernel v{s}\n", .{platform.version});
-        } else if (bun.Environment.isMac) {
+        } else if (fun.Environment.isMac) {
             try writer.print("macOS v{s}\n", .{platform.version});
-        } else if (bun.Environment.isWindows) {
+        } else if (fun.Environment.isWindows) {
             try writer.print("Windows v{f}\n", .{std.zig.system.windows.detectRuntimeVersion()});
         }
 
-        if (bun.Environment.isX64) {
+        if (fun.Environment.isX64) {
             is_ancient_cpu = !cpu_features.hasAnyAVX();
         }
 
@@ -1031,10 +1031,10 @@ pub fn printMetadata(writer: anytype) !void {
         }
 
         try writer.print("Args: ", .{});
-        var arg_chars_left: usize = if (bun.Environment.isDebug) 4096 else 196;
-        for (bun.argv, 0..) |arg, i| {
+        var arg_chars_left: usize = if (fun.Environment.isDebug) 4096 else 196;
+        for (fun.argv, 0..) |arg, i| {
             if (i != 0) try writer.writeAll(" ");
-            try bun.fmt.quotedWriter(writer, arg[0..@min(arg.len, arg_chars_left)]);
+            try fun.fmt.quotedWriter(writer, arg[0..@min(arg.len, arg_chars_left)]);
             arg_chars_left -|= arg.len;
             if (arg_chars_left == 0) {
                 try writer.writeAll("...");
@@ -1042,9 +1042,9 @@ pub fn printMetadata(writer: anytype) !void {
             }
         }
     }
-    try writer.print("\n{f}", .{bun.analytics.Features.formatter()});
+    try writer.print("\n{f}", .{fun.analytics.Features.formatter()});
 
-    if (bun.use_mimalloc) {
+    if (fun.use_mimalloc) {
         var elapsed_msecs: usize = 0;
         var user_msecs: usize = 0;
         var system_msecs: usize = 0;
@@ -1076,8 +1076,8 @@ pub fn printMetadata(writer: anytype) !void {
             page_faults,
         });
 
-        if (Bun__reported_memory_size > 0) {
-            try writer.print(" | Machine: {B:<3.2}", .{Bun__reported_memory_size});
+        if (Fun__reported_memory_size > 0) {
+            try writer.print(" | Machine: {B:<3.2}", .{Fun__reported_memory_size});
         }
 
         try writer.writeAll("\n");
@@ -1088,7 +1088,7 @@ pub fn printMetadata(writer: anytype) !void {
     }
     try writer.writeAll("\n");
 
-    if (comptime bun.Environment.isX64) {
+    if (comptime fun.Environment.isX64) {
         if (is_ancient_cpu) {
             try writer.writeAll("CPU lacks AVX support. Please consider upgrading to a newer CPU.\n");
         }
@@ -1103,7 +1103,7 @@ fn waitForOtherThreadToFinishPanicking() void {
 
         // Sleep forever without hammering the CPU
         var futex = std.atomic.Value(u32).init(0);
-        while (true) bun.Futex.waitForever(&futex, 0);
+        while (true) fun.Futex.waitForever(&futex, 0);
         comptime unreachable;
     }
 }
@@ -1119,7 +1119,7 @@ pub fn sleepForeverIfAnotherThreadIsCrashing() void {
     if (panicking.load(.acquire) > 0) {
         // Sleep forever without hammering the CPU
         var futex = std.atomic.Value(u32).init(0);
-        while (true) bun.Futex.waitForever(&futex, 0);
+        while (true) fun.Futex.waitForever(&futex, 0);
         comptime unreachable;
     }
 }
@@ -1129,7 +1129,7 @@ pub fn sleepForeverIfAnotherThreadIsCrashing() void {
 /// what platform it came from. L, M, and W are for Linux, macOS, and Windows,
 /// with capital letters indicating aarch64, lowercase indicating x86_64.
 ///
-/// eg: 'https://bun.report/1.1.3/we04c...
+/// eg: 'https://fun.report/1.1.3/we04c...
 //                                ^ this tells you it is windows x86_64
 ///
 /// Baseline gets a weirder encoding of a mix of b and e.
@@ -1150,9 +1150,9 @@ const Platform = enum(u8) {
     freebsd_x86_64_baseline = 'g',
     freebsd_aarch64 = 'F',
 
-    const current = @field(Platform, @tagName(bun.Environment.os) ++
+    const current = @field(Platform, @tagName(fun.Environment.os) ++
         "_" ++ @tagName(builtin.target.cpu.arch) ++
-        (if (bun.Environment.baseline) "_baseline" else ""));
+        (if (fun.Environment.baseline) "_baseline" else ""));
 };
 
 /// Note to the decoder on how to process this string. This ensures backwards
@@ -1160,35 +1160,35 @@ const Platform = enum(u8) {
 ///
 /// '1' - original. uses 7 char hash with VLQ encoded stack-frames
 /// '2' - same as '1' but this build is known to be a canary build
-const version_char = if (bun.Environment.is_canary)
+const version_char = if (fun.Environment.is_canary)
     "2"
 else
     "1";
 
-const git_sha = if (bun.Environment.git_sha.len > 0) bun.Environment.git_sha[0..7] else "unknown";
+const git_sha = if (fun.Environment.git_sha.len > 0) fun.Environment.git_sha[0..7] else "unknown";
 
 const StackLine = struct {
     address: i32,
-    // null -> from bun.exe
+    // null -> from fun.exe
     object: ?[]const u8,
 
     /// `null` implies the trace is not known.
     pub fn fromAddress(addr: usize, name_bytes: []u8) ?StackLine {
-        return switch (bun.Environment.os) {
+        return switch (fun.Environment.os) {
             .windows => {
-                const module = bun.windows.getModuleHandleFromAddress(addr) orelse
+                const module = fun.windows.getModuleHandleFromAddress(addr) orelse
                     return null;
 
                 const base_address = @intFromPtr(module);
 
                 var temp: [512]u16 = undefined;
-                const name = bun.windows.getModuleNameW(module, &temp) orelse
+                const name = fun.windows.getModuleNameW(module, &temp) orelse
                     return null;
 
-                const image_path = bun.windows.exePathW();
+                const image_path = fun.windows.exePathW();
 
                 return .{
-                    // To remap this, `pdb-addr2line --exe bun.pdb 0x123456`
+                    // To remap this, `pdb-addr2line --exe fun.pdb 0x123456`
                     .address = @intCast(addr - base_address),
 
                     .object = if (!std.mem.eql(u16, name, image_path)) name: {
@@ -1197,7 +1197,7 @@ const StackLine = struct {
                             i + 1
                         else
                             0..];
-                        break :name bun.strings.convertUTF16toUTF8InBuffer(name_bytes, basename) catch null;
+                        break :name fun.strings.convertUTF16toUTF8InBuffer(name_bytes, basename) catch null;
                     } else null,
                 };
             },
@@ -1227,7 +1227,7 @@ const StackLine = struct {
                     while (it.next()) |cmd| switch (cmd.cmd()) {
                         .SEGMENT_64 => {
                             const segment_cmd = cmd.cast(std.macho.segment_command_64).?;
-                            if (!bun.strings.eqlComptime(segment_cmd.segName(), "__TEXT")) continue;
+                            if (!fun.strings.eqlComptime(segment_cmd.segName(), "__TEXT")) continue;
 
                             const original_address = address - vmaddr_slide;
                             const seg_start = segment_cmd.vmaddr;
@@ -1243,7 +1243,7 @@ const StackLine = struct {
                                     }
 
                                     // To remap this, you have to add the offset (which is going to be 0x100000000),
-                                    // and then you can run it through `llvm-symbolizer --obj bun-with-symbols 0x123456`
+                                    // and then you can run it through `llvm-symbolizer --obj fun-with-symbols 0x123456`
                                     // The reason we are subtracting this known offset is mostly just so that we can
                                     // fit it within a signed 32-bit integer. The VLQs will be shorter too.
                                     return .{
@@ -1290,7 +1290,7 @@ const StackLine = struct {
                             const seg_start = info.addr +% phdr.p_vaddr;
                             const seg_end = seg_start + phdr.p_memsz;
                             if (context.address >= seg_start and context.address < seg_end) {
-                                // const name = bun.sliceTo(info.name, 0) orelse "";
+                                // const name = fun.sliceTo(info.name, 0) orelse "";
                                 context.result = .{
                                     .address = @intCast(context.address - info.addr),
                                     .object = null,
@@ -1323,7 +1323,7 @@ const StackLine = struct {
 
     pub fn format(line: StackLine, writer: *std.Io.Writer) !void {
         try writer.print("0x{x}{s}{s}", .{
-            if (bun.Environment.isMac) @as(u64, line.address) + 0x100000000 else line.address,
+            if (fun.Environment.isMac) @as(u64, line.address) + 0x100000000 else line.address,
             if (line.object != null) " @ " else "",
             line.object orelse "",
         });
@@ -1359,15 +1359,15 @@ fn encodeTraceString(opts: TraceString, writer: anytype) !void {
     try writer.writeAll(reportBaseUrl());
     try writer.writeAll(
         "/" ++
-            bun.Environment.version_string ++
+            fun.Environment.version_string ++
             "/" ++
             .{@intFromEnum(Platform.current)},
     );
-    try writer.writeByte(if (bun.cli.Cli.cmd) |cmd| cmd.char() else '_');
+    try writer.writeByte(if (fun.cli.Cli.cmd) |cmd| cmd.char() else '_');
 
     try writer.writeAll(version_char ++ git_sha);
 
-    const packed_features = bun.analytics.packedFeatures();
+    const packed_features = fun.analytics.packedFeatures();
     try writeU64AsTwoVLQs(writer, @bitCast(packed_features));
 
     var name_bytes: [1024]u8 = undefined;
@@ -1379,14 +1379,14 @@ fn encodeTraceString(opts: TraceString, writer: anytype) !void {
 
     try writer.writeAll(VLQ.zero.slice());
 
-    // The following switch must be kept in sync with `bun.report`'s decoder implementation.
+    // The following switch must be kept in sync with `fun.report`'s decoder implementation.
     switch (opts.reason) {
         .panic => |message| {
             try writer.writeByte('0');
 
             var compressed_bytes: [2048]u8 = undefined;
-            var len: bun.zlib.uLong = compressed_bytes.len;
-            const ret: bun.zlib.ReturnCode = @enumFromInt(bun.zlib.compress2(&compressed_bytes, &len, message.ptr, @intCast(message.len), 9));
+            var len: fun.zlib.uLong = compressed_bytes.len;
+            const ret: fun.zlib.ReturnCode = @enumFromInt(fun.zlib.compress2(&compressed_bytes, &len, message.ptr, @intCast(message.len), 9));
             const compressed = switch (ret) {
                 .Ok => compressed_bytes[0..@intCast(len)],
                 // Insufficient memory.
@@ -1401,10 +1401,10 @@ fn encodeTraceString(opts: TraceString, writer: anytype) !void {
             };
 
             var b64_bytes: [2048]u8 = undefined;
-            if (bun.base64.encodeLen(compressed) > b64_bytes.len) {
+            if (fun.base64.encodeLen(compressed) > b64_bytes.len) {
                 return error.NoSpaceLeft;
             }
-            const b64_len = bun.base64.encode(&b64_bytes, compressed);
+            const b64_len = fun.base64.encode(&b64_bytes, compressed);
 
             try writer.writeAll(std.mem.trimRight(u8, b64_bytes[0..b64_len], "="));
         },
@@ -1455,46 +1455,46 @@ fn isReportingEnabled() bool {
     if (suppress_reporting) return false;
 
     // If trying to test the crash handler backend, implicitly enable reporting
-    if (bun.env_var.BUN_CRASH_REPORT_URL.get()) |value| {
+    if (fun.env_var.FUN_CRASH_REPORT_URL.get()) |value| {
         return value.len > 0;
     }
 
     // Environment variable to specifically enable or disable reporting
-    if (bun.env_var.BUN_ENABLE_CRASH_REPORTING.get()) |enable_crash_reporting| {
+    if (fun.env_var.FUN_ENABLE_CRASH_REPORTING.get()) |enable_crash_reporting| {
         return enable_crash_reporting;
     }
 
     // Debug builds shouldn't report to the default url by default
-    if (bun.Environment.isDebug)
+    if (fun.Environment.isDebug)
         return false;
 
-    if (bun.Environment.enable_asan)
+    if (fun.Environment.enable_asan)
         return false;
 
     // Honor DO_NOT_TRACK
-    if (!bun.analytics.isEnabled())
+    if (!fun.analytics.isEnabled())
         return false;
 
-    if (bun.Environment.is_canary)
+    if (fun.Environment.is_canary)
         return true;
 
     // Change in v1.1.10: enable crash reporter auto upload on macOS and Windows.
-    if (bun.Environment.isMac or bun.Environment.isWindows) {
+    if (fun.Environment.isMac or fun.Environment.isWindows) {
         return true;
     }
 
     return false;
 }
 
-/// Bun automatically reports crashes on Windows and macOS
+/// Fun automatically reports crashes on Windows and macOS
 ///
 /// These URLs contain no source code or personally-identifiable
-/// information (PII). The stackframes point to Bun's open-source native code
-/// (not user code), and are safe to share publicly and with the Bun team.
+/// information (PII). The stackframes point to Fun's open-source native code
+/// (not user code), and are safe to share publicly and with the Fun team.
 fn report(url: []const u8) void {
     if (!isReportingEnabled()) return;
 
-    switch (bun.Environment.os) {
+    switch (fun.Environment.os) {
         .windows => {
             var process: std.os.windows.PROCESS_INFORMATION = undefined;
             var startup_info = std.os.windows.STARTUPINFOW{
@@ -1516,14 +1516,14 @@ fn report(url: []const u8) void {
                 .hStdInput = null,
                 .hStdOutput = null,
                 .hStdError = null,
-                // .hStdInput = bun.FD.stdin().native(),
-                // .hStdOutput = bun.FD.stdout().native(),
-                // .hStdError = bun.FD.stderr().native(),
+                // .hStdInput = fun.FD.stdin().native(),
+                // .hStdOutput = fun.FD.stdout().native(),
+                // .hStdError = fun.FD.stderr().native(),
             };
-            var cmd_line = bun.BoundedArray(u16, 4096){};
+            var cmd_line = fun.BoundedArray(u16, 4096){};
             cmd_line.appendSliceAssumeCapacity(std.unicode.utf8ToUtf16LeStringLiteral("powershell -ExecutionPolicy Bypass -Command \"try{Invoke-RestMethod -Uri '"));
             {
-                const encoded = bun.strings.convertUTF8toUTF16InBuffer(cmd_line.unusedCapacitySlice(), url);
+                const encoded = fun.strings.convertUTF8toUTF16InBuffer(cmd_line.unusedCapacitySlice(), url);
                 cmd_line.len += @intCast(encoded.len);
             }
             cmd_line.appendSlice(std.unicode.utf8ToUtf16LeStringLiteral("/ack'|out-null}catch{}\"")) catch return;
@@ -1546,15 +1546,15 @@ fn report(url: []const u8) void {
             _ = spawn_result;
         },
         .mac, .linux, .freebsd => {
-            var buf: bun.PathBuffer = undefined;
-            var buf2: bun.PathBuffer = undefined;
-            const curl = bun.which(
+            var buf: fun.PathBuffer = undefined;
+            var buf2: fun.PathBuffer = undefined;
+            const curl = fun.which(
                 &buf,
-                bun.env_var.PATH.get() orelse return,
-                bun.getcwd(&buf2) catch return,
+                fun.env_var.PATH.get() orelse return,
+                fun.getcwd(&buf2) catch return,
                 "curl",
             ) orelse return;
-            var cmd_line = bun.BoundedArray(u8, 4096){};
+            var cmd_line = fun.BoundedArray(u8, 4096){};
             cmd_line.appendSlice(url) catch return;
             cmd_line.appendSlice("/ack") catch return;
             cmd_line.append(0) catch return;
@@ -1585,7 +1585,7 @@ fn report(url: []const u8) void {
 /// Crash. Make sure segfault handlers are off so that this doesnt trigger the crash handler.
 /// This causes a segfault on posix systems to try to get a core dump.
 fn crash() noreturn {
-    switch (bun.Environment.os) {
+    switch (fun.Environment.os) {
         .windows => {
             // Node.js exits with code 134 (128 + SIGABRT) instead. We use abort() as it includes a
             // breakpoint which makes crashes easier to debug.
@@ -1593,7 +1593,7 @@ fn crash() noreturn {
         },
         else => {
             // Install default handler so that the tkill below will terminate.
-            const sigact = bun.sys.Sigaction{ .handler = .{ .handler = std.posix.SIG.DFL }, .mask = bun.sys.sigemptyset(), .flags = 0 };
+            const sigact = fun.sys.Sigaction{ .handler = .{ .handler = std.posix.SIG.DFL }, .mask = fun.sys.sigemptyset(), .flags = 0 };
             inline for (.{
                 std.posix.SIG.SEGV,
                 std.posix.SIG.ILL,
@@ -1603,7 +1603,7 @@ fn crash() noreturn {
                 std.posix.SIG.HUP,
                 std.posix.SIG.TERM,
             }) |sig| {
-                bun.sys.sigaction(sig, &sigact, null);
+                fun.sys.sigaction(sig, &sigact, null);
             }
 
             @trap();
@@ -1623,9 +1623,9 @@ noinline fn coldHandleErrorReturnTrace(err_int_workaround_for_zig_ccall_bug: std
     //
     // To make the release-mode behavior easier to demo, debug mode
     // checks for this CLI flag.
-    const is_debug = bun.Environment.isDebug and check_flag: {
-        for (bun.argv) |arg| {
-            if (bun.strings.eqlComptime(arg, "--debug-crash-handler-use-trace-string")) {
+    const is_debug = fun.Environment.isDebug and check_flag: {
+        for (fun.argv) |arg| {
+            if (fun.strings.eqlComptime(arg, "--debug-crash-handler-use-trace-string")) {
                 break :check_flag false;
             }
         }
@@ -1654,7 +1654,7 @@ noinline fn coldHandleErrorReturnTrace(err_int_workaround_for_zig_ccall_bug: std
         if (is_root) {
             Output.prettyErrorln(
                 \\
-                \\To send a redacted crash report to Bun's team,
+                \\To send a redacted crash report to Fun's team,
                 \\please file a GitHub issue using the link below:
                 \\
                 \\ <cyan>{f}<r>
@@ -1686,7 +1686,7 @@ inline fn handleErrorReturnTraceExtra(err: anyerror, maybe_trace: ?*std.builtin.
 ///
 /// This can be enabled by passing `--verbose-error-trace` to the CLI.
 /// In release builds with error return tracing enabled, this is also exposed.
-/// You can test if this feature is available by checking `bun --help` for the flag.
+/// You can test if this feature is available by checking `fun --help` for the flag.
 pub inline fn handleErrorReturnTrace(err: anyerror, maybe_trace: ?*std.builtin.StackTrace) void {
     handleErrorReturnTraceExtra(err, maybe_trace, false);
 }
@@ -1698,7 +1698,7 @@ pub fn dumpStackTrace(trace: std.builtin.StackTrace, limits: WriteStackTraceLimi
     Output.flush();
     var stderr_w = std.fs.File.stderr().writerStreaming(&.{});
     const stderr = &stderr_w.interface;
-    if (!bun.Environment.show_crash_trace) {
+    if (!fun.Environment.show_crash_trace) {
         // debug symbols aren't available, lets print a tracestring
         stderr.print("View Debug Trace: {f}\n", .{TraceString{
             .action = .view_trace,
@@ -1708,7 +1708,7 @@ pub fn dumpStackTrace(trace: std.builtin.StackTrace, limits: WriteStackTraceLimi
         return;
     }
 
-    switch (bun.Environment.os) {
+    switch (fun.Environment.os) {
         .windows => attempt_dump: {
             // Windows has issues with opening the PDB file sometimes.
             const debug_info = debug.getSelfDebugInfo() catch |err| {
@@ -1723,7 +1723,7 @@ pub fn dumpStackTrace(trace: std.builtin.StackTrace, limits: WriteStackTraceLimi
         },
         .linux => {
             // In non-debug builds, use WTF's stack trace printer and return early
-            if (!bun.Environment.isDebug) {
+            if (!fun.Environment.isDebug) {
                 WTF__DumpStackTrace(trace.instruction_addresses.ptr, trace.index);
                 return;
             }
@@ -1743,13 +1743,13 @@ pub fn dumpStackTrace(trace: std.builtin.StackTrace, limits: WriteStackTraceLimi
         },
     }
 
-    const programs: []const [:0]const u8 = switch (bun.Environment.os) {
+    const programs: []const [:0]const u8 = switch (fun.Environment.os) {
         .windows => &.{"pdb-addr2line"},
         // if `llvm-symbolizer` doesn't work, also try `llvm-symbolizer-21`
         else => &.{ "llvm-symbolizer", "llvm-symbolizer-21" },
     };
     for (programs) |program| {
-        var arena = bun.ArenaAllocator.init(bun.default_allocator);
+        var arena = fun.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
         var sfa = std.heap.stackFallback(16384, arena.allocator());
         spawnSymbolizer(program, sfa.get(), &trace) catch |err| switch (err) {
@@ -1766,15 +1766,15 @@ fn spawnSymbolizer(program: [:0]const u8, alloc: std.mem.Allocator, trace: *cons
     try argv.append(program);
     try argv.append("--exe");
     try argv.append(
-        switch (bun.Environment.os) {
+        switch (fun.Environment.os) {
             .windows => brk: {
-                const image_path = try bun.strings.toUTF8Alloc(alloc, bun.windows.exePathW());
+                const image_path = try fun.strings.toUTF8Alloc(alloc, fun.windows.exePathW());
                 break :brk try std.mem.concat(alloc, u8, &.{
                     image_path[0 .. image_path.len - 3],
                     "pdb",
                 });
             },
-            else => try bun.selfExePath(),
+            else => try fun.selfExePath(),
         },
     );
 
@@ -1796,15 +1796,15 @@ fn spawnSymbolizer(program: [:0]const u8, alloc: std.mem.Allocator, trace: *cons
     var stderr_writer = std.fs.File.stderr().writerStreaming(&.{});
     const stderr = &stderr_writer.interface;
     const result = child.spawnAndWait() catch |err| {
-        stderr.print("Failed to invoke command: {f}\n", .{bun.fmt.fmtSlice(argv.items, " ")}) catch {};
-        if (bun.Environment.isWindows) {
-            stderr.print("(You can compile pdb-addr2line from https://github.com/oven-sh/bun.report, cd pdb-addr2line && cargo build)\n", .{}) catch {};
+        stderr.print("Failed to invoke command: {f}\n", .{fun.fmt.fmtSlice(argv.items, " ")}) catch {};
+        if (fun.Environment.isWindows) {
+            stderr.print("(You can compile pdb-addr2line from https://github.com/underdoc-org/fun.report, cd pdb-addr2line && cargo build)\n", .{}) catch {};
         }
         return err;
     };
 
     if (result != .Exited or result.Exited != 0) {
-        stderr.print("Failed to invoke command: {f}\n", .{bun.fmt.fmtSlice(argv.items, " ")}) catch {};
+        stderr.print("Failed to invoke command: {f}\n", .{fun.fmt.fmtSlice(argv.items, " ")}) catch {};
     }
 }
 
@@ -1819,7 +1819,7 @@ pub fn dumpCurrentStackTrace(first_address: ?usize, limits: WriteStackTraceLimit
 /// Used in places where we intentionally crash for testing purposes so that we don't clutter CI
 /// with core dumps.
 pub fn suppressCoreDumpsIfNecessary() void {
-    if (bun.Environment.isPosix) {
+    if (fun.Environment.isPosix) {
         var existing_limit = std.posix.getrlimit(.CORE) catch return;
         if (existing_limit.cur > 0 or existing_limit.cur == std.posix.RLIM.INFINITY) {
             existing_limit.cur = 0;
@@ -1828,8 +1828,8 @@ pub fn suppressCoreDumpsIfNecessary() void {
     }
 }
 
-/// From now on, prevent crashes from being reported to bun.report or the URL overridden in
-/// BUN_CRASH_REPORT_URL. Should only be used for tests that are going to intentionally crash,
+/// From now on, prevent crashes from being reported to fun.report or the URL overridden in
+/// FUN_CRASH_REPORT_URL. Should only be used for tests that are going to intentionally crash,
 /// so that they do not fail CI due to having a crash reported. And those cases should guard behind
 /// a feature flag and call right before the crash, in order to make sure that crashes other than
 /// the expected one are not suppressed.
@@ -1891,7 +1891,7 @@ pub const js_bindings = @import("../runtime/api/crash_handler_jsc.zig").js_bindi
 
 const OnBeforeCrash = fn (opaque_ptr: *anyopaque) void;
 
-/// For large codebases such as bun.bake.DevServer, it may be helpful
+/// For large codebases such as fun.bake.DevServer, it may be helpful
 /// to dump a large amount of state to a file to aid debugging a crash.
 ///
 /// Pre-crash handlers are likely, but not guaranteed to call. Errors are ignored.
@@ -1899,14 +1899,14 @@ pub fn appendPreCrashHandler(comptime T: type, ptr: *T, comptime handler: fn (*T
     const wrap = struct {
         fn onCrash(opaque_ptr: *anyopaque) void {
             handler(@ptrCast(@alignCast(opaque_ptr))) catch |err| {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
             };
         }
     };
 
     before_crash_handlers_mutex.lock();
     defer before_crash_handlers_mutex.unlock();
-    try before_crash_handlers.append(bun.default_allocator, .{ ptr, wrap.onCrash });
+    try before_crash_handlers.append(fun.default_allocator, .{ ptr, wrap.onCrash });
 }
 
 pub fn removePreCrashHandler(ptr: *anyopaque) void {
@@ -1977,24 +1977,24 @@ pub fn writeStackTrace(
 
         if (limits.skip_stdlib) {
             if (source.source_location) |sl| {
-                if (bun.strings.includes(sl.file_name, "lib/std")) {
+                if (fun.strings.includes(sl.file_name, "lib/std")) {
                     continue;
                 }
             }
         }
         for (limits.skip_file_patterns) |pattern| {
             if (source.source_location) |sl| {
-                if (bun.strings.includes(sl.file_name, pattern)) {
+                if (fun.strings.includes(sl.file_name, pattern)) {
                     continue;
                 }
             }
         }
         for (limits.skip_function_patterns) |pattern| {
-            if (bun.strings.includes(source.symbol_name, pattern)) {
+            if (fun.strings.includes(source.symbol_name, pattern)) {
                 continue;
             }
         }
-        if (limits.stop_at_jsc_llint and bun.strings.includes(source.symbol_name, "_llint_")) {
+        if (limits.stop_at_jsc_llint and fun.strings.includes(source.symbol_name, "_llint_")) {
             break;
         }
 
@@ -2050,10 +2050,10 @@ fn printLineInfo(
     compile_unit_name: []const u8,
     tty_config: std.io.tty.Config,
 ) !void {
-    const base_path = bun.Environment.base_path ++ std.fs.path.sep_str;
+    const base_path = fun.Environment.base_path ++ std.fs.path.sep_str;
     nosuspend {
         if (source_location) |*sl| {
-            if (bun.strings.startsWith(sl.file_name, base_path)) {
+            if (fun.strings.startsWith(sl.file_name, base_path)) {
                 try tty_config.setColor(out_stream, .dim);
                 try out_stream.print("{s}", .{base_path});
                 try tty_config.setColor(out_stream, .reset);
@@ -2121,7 +2121,7 @@ fn printLineFromFileAnyOs(out_stream: anytype, tty_config: std.io.tty.Config, so
             var next_line: usize = 1;
             while (next_line != source_location.line) {
                 const slice = buf[current_line_start..amt_read];
-                if (bun.strings.indexOfChar(slice, '\n')) |pos| {
+                if (fun.strings.indexOfChar(slice, '\n')) |pos| {
                     next_line += 1;
                     if (pos == slice.len - 1) {
                         amt_read = try f.read(buf[0..]);
@@ -2137,7 +2137,7 @@ fn printLineFromFileAnyOs(out_stream: anytype, tty_config: std.io.tty.Config, so
             break :seek current_line_start;
         };
         const slice = buf[line_start..amt_read];
-        if (bun.strings.indexOfChar(slice, '\n')) |pos| {
+        if (fun.strings.indexOfChar(slice, '\n')) |pos| {
             const line = slice[0..pos];
             std.mem.replaceScalar(u8, line, '\t', ' ');
             fbs.writer().writeAll(line) catch {};
@@ -2147,7 +2147,7 @@ fn printLineFromFileAnyOs(out_stream: anytype, tty_config: std.io.tty.Config, so
             fbs.writer().writeAll(slice) catch break :read_line;
             while (amt_read == buf.len) {
                 amt_read = try f.read(buf[0..]);
-                if (bun.strings.indexOfChar(buf[0..amt_read], '\n')) |pos| {
+                if (fun.strings.indexOfChar(buf[0..amt_read], '\n')) |pos| {
                     const line = buf[0..pos];
                     std.mem.replaceScalar(u8, line, '\t', ' ');
                     fbs.writer().writeAll(line) catch break :read_line;
@@ -2187,7 +2187,7 @@ fn printLineFromFileAnyOs(out_stream: anytype, tty_config: std.io.tty.Config, so
     const highlight = line_without_newline[left..right];
     var after_before_comment = line_without_newline[right..];
     var comment: []const u8 = "";
-    if (bun.strings.indexOf(after_before_comment, "//")) |pos| {
+    if (fun.strings.indexOf(after_before_comment, "//")) |pos| {
         comment = after_before_comment[pos..];
         after_before_comment = after_before_comment[0..pos];
     }
@@ -2213,24 +2213,24 @@ export fn CrashHandler__setInsideNativePlugin(name: ?[*:0]const u8) callconv(.c)
 }
 
 export fn CrashHandler__unsupportedUVFunction(name: ?[*:0]const u8) callconv(.c) void {
-    bun.analytics.Features.unsupported_uv_function += 1;
+    fun.analytics.Features.unsupported_uv_function += 1;
     unsupported_uv_function = name;
-    if (bun.feature_flag.BUN_INTERNAL_SUPPRESS_CRASH_ON_UV_STUB.get()) {
+    if (fun.feature_flag.FUN_INTERNAL_SUPPRESS_CRASH_ON_UV_STUB.get()) {
         suppressReporting();
     }
     std.debug.panic("unsupported uv function: {s}", .{name.?});
 }
 
-export fn Bun__crashHandler(message_ptr: [*]u8, message_len: usize) noreturn {
+export fn Fun__crashHandler(message_ptr: [*]u8, message_len: usize) noreturn {
     crashHandler(.{ .panic = message_ptr[0..message_len] }, null, @returnAddress());
 }
 
 export fn CrashHandler__setDlOpenAction(action: ?[*:0]const u8) void {
     if (action) |str| {
-        bun.debugAssert(current_action == null);
-        current_action = .{ .dlopen = bun.sliceTo(str, 0) };
+        fun.debugAssert(current_action == null);
+        current_action = .{ .dlopen = fun.sliceTo(str, 0) };
     } else {
-        bun.debugAssert(current_action != null and current_action.? == .dlopen);
+        fun.debugAssert(current_action != null and current_action.? == .dlopen);
         current_action = null;
     }
 }
@@ -2239,8 +2239,8 @@ pub fn fixDeadCodeElimination() void {
     std.mem.doNotOptimizeAway(&CrashHandler__unsupportedUVFunction);
 }
 comptime {
-    _ = &Bun__crashHandler;
-    if (!bun.Environment.isWindows) {
+    _ = &Fun__crashHandler;
+    if (!fun.Environment.isWindows) {
         std.mem.doNotOptimizeAway(&CrashHandler__unsupportedUVFunction);
     }
 }
@@ -2253,11 +2253,11 @@ const windows = std.os.windows;
 const SourceMap = @import("../sourcemap/sourcemap.zig");
 const VLQ = SourceMap.VLQ;
 
-const bun = @import("bun");
-const Global = bun.Global;
-const Output = bun.Output;
-const mimalloc = bun.mimalloc;
-const Features = bun.analytics.Features;
+const fun = @import("fun");
+const Global = fun.Global;
+const Output = fun.Output;
+const mimalloc = fun.mimalloc;
+const Features = fun.analytics.Features;
 
 const debug = std.debug;
 const SourceLocation = debug.SourceLocation;

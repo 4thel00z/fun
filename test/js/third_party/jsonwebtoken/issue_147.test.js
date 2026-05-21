@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import jwt from "jsonwebtoken";
 
 describe("issue 147 - signing with a sealed payload", function () {

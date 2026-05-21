@@ -41,8 +41,8 @@ pub const Stream = opaque {
     }
 };
 
-const bun = @import("bun");
-const uws = bun.uws;
+const fun = @import("fun");
+const uws = fun.uws;
 
 const Header = uws.quic.Header;
 const Socket = uws.quic.Socket;

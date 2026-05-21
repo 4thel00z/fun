@@ -12,12 +12,12 @@ export const WEBKIT_VERSION = "5488984d20e0dbfe4be2c3ba8fb18eb81a5e0e8b";
  *
  * **prebuilt**: Download tarball from oven-sh/WebKit releases. Tarball name
  *   encodes {os, arch, musl, debug|lto, asan} — each is a separate ABI.
- *   ASAN MUST match bun's setting: WTF::Vector layout changes with ASAN
+ *   ASAN MUST match fun's setting: WTF::Vector layout changes with ASAN
  *   (see WTF/Vector.h:682), so mixing → silent memory corruption.
  *
- * **local**: Source at `vendor/WebKit/`, or `$BUN_WEBKIT_PATH` if set. User
+ * **local**: Source at `vendor/WebKit/`, or `$FUN_WEBKIT_PATH` if set. User
  *   clones manually (clone takes 10+ min — too slow for the build system
- *   to do). Set `BUN_WEBKIT_PATH` to share one clone across worktrees. We
+ *   to do). Set `FUN_WEBKIT_PATH` to share one clone across worktrees. We
  *   cmake it like any other dep. Headers land in the BUILD dir (generated
  *   during configure), which is why `provides.includes` returns absolute
  *   paths.
@@ -114,7 +114,7 @@ function bmallocLib(cfg: Config): string {
 
 /**
  * ICU libs — prebuilt bundles them on linux/windows. macOS uses system ICU.
- * Local mode: system ICU on posix (linked via -licu* in bun.ts); built from
+ * Local mode: system ICU on posix (linked via -licu* in fun.ts); built from
  * source on Windows (see icuDir/icuLibs).
  */
 function prebuiltIcuLibs(cfg: Config): string[] {
@@ -154,10 +154,10 @@ function localIcuLibs(cfg: Config): string[] {
 
 /**
  * WebKit source dir for local mode. Defaults to vendor/WebKit; override via
- * $BUN_WEBKIT_PATH to share one clone across worktrees.
+ * $FUN_WEBKIT_PATH to share one clone across worktrees.
  */
 function webkitSrcDir(cfg: Config): string {
-  const env = process.env.BUN_WEBKIT_PATH;
+  const env = process.env.FUN_WEBKIT_PATH;
   if (!env) return depSourceDir(cfg, "WebKit");
   // Shells don't expand ~ inside quotes; handle it here so a quoted export works.
   if (env === "~" || env.startsWith("~/") || env.startsWith("~\\")) return join(homedir(), env.slice(1));
@@ -196,13 +196,13 @@ export const webkit: Dependency = {
     // build system doesn't automate). Once cloned, we cmake it like any
     // other dep. resolveDep()'s local-mode assert gives a clear "clone it
     // yourself" error if missing.
-    const env = process.env.BUN_WEBKIT_PATH;
+    const env = process.env.FUN_WEBKIT_PATH;
     return {
       kind: "local",
       path: webkitSrcDir(cfg),
       hint: env
-        ? `$BUN_WEBKIT_PATH is set to '${env}' but that path does not contain a WebKit checkout`
-        : "Clone oven-sh/WebKit to vendor/WebKit/, or set $BUN_WEBKIT_PATH to an existing clone (useful for worktrees)",
+        ? `$FUN_WEBKIT_PATH is set to '${env}' but that path does not contain a WebKit checkout`
+        : "Clone oven-sh/WebKit to vendor/WebKit/, or set $FUN_WEBKIT_PATH to an existing clone (useful for worktrees)",
     };
   },
 
@@ -218,7 +218,7 @@ export const webkit: Dependency = {
     // flags; ours would conflict. Dep args go LAST so they override. We DO
     // forward:
     //   - CPU target (-march/-mcpu): WebKit never sets this — without it,
-    //     local builds target generic x86-64 while bun + prebuilt WebKit
+    //     local builds target generic x86-64 while fun + prebuilt WebKit
     //     target haswell/nehalem.
     //   - LTO/PGO: WebKit's cmake doesn't set those itself.
     //
@@ -245,7 +245,7 @@ export const webkit: Dependency = {
     // via __ANDROID__ (set by clang --target=*-android*); we set the cmake
     // ANDROID variable manually so `if (ANDROID)` blocks trigger too.
     if (cfg.abi === "android") {
-      const icuRoot = process.env.BUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android";
+      const icuRoot = process.env.FUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android";
       optFlags.push(`--target=${cfg.crossTarget!}`, `--sysroot=${cfg.sysroot!}`, `-isystem`, join(icuRoot, "include"));
     }
     if (cfg.freebsd && cfg.crossTarget !== undefined) {
@@ -277,8 +277,8 @@ export const webkit: Dependency = {
             // explicit: the NDK sysroot ships annotated headers that mark
             // most ICU functions __INTRODUCED_IN(31), so FindICU picking
             // those up makes everything unavailable at API 28.
-            ICU_ROOT: process.env.BUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android",
-            ICU_INCLUDE_DIR: join(process.env.BUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android", "include"),
+            ICU_ROOT: process.env.FUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android",
+            ICU_INCLUDE_DIR: join(process.env.FUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android", "include"),
             CMAKE_FIND_ROOT_PATH_MODE_PACKAGE: "BOTH",
             CMAKE_FIND_ROOT_PATH_MODE_LIBRARY: "BOTH",
             CMAKE_FIND_ROOT_PATH_MODE_INCLUDE: "BOTH",
@@ -299,9 +299,9 @@ export const webkit: Dependency = {
       USE_THIN_ARCHIVES: "OFF",
       ENABLE_FTL_JIT: "ON",
       CMAKE_EXPORT_COMPILE_COMMANDS: "ON",
-      USE_BUN_JSC_ADDITIONS: "ON",
-      USE_BUN_EVENT_LOOP: "ON",
-      ENABLE_BUN_SKIP_FAILING_ASSERTIONS: "ON",
+      USE_FUN_JSC_ADDITIONS: "ON",
+      USE_FUN_EVENT_LOOP: "ON",
+      ENABLE_FUN_SKIP_FAILING_ASSERTIONS: "ON",
       ALLOW_LINE_AND_COLUMN_NUMBER_IN_BUILTINS: "ON",
       ENABLE_REMOTE_INSPECTOR: "ON",
       ENABLE_MEDIA_SOURCE: "OFF",
@@ -330,7 +330,7 @@ export const webkit: Dependency = {
       // link statically. Matches what the old cmake's SetupWebKit did.
       args.CMAKE_C_FLAGS = `/DU_STATIC_IMPLEMENTATION ${optFlagStr}`.trim();
       args.CMAKE_CXX_FLAGS = `/DU_STATIC_IMPLEMENTATION /clang:-fno-c++-static-destructors ${optFlagStr}`.trim();
-      // Static CRT to match bun + all other deps (we build everything
+      // Static CRT to match fun + all other deps (we build everything
       // with /MTd or /MT). Without this, cmake defaults to /MDd →
       // RuntimeLibrary mismatch at link.
       args.CMAKE_MSVC_RUNTIME_LIBRARY = cfg.debug ? "MultiThreadedDebug" : "MultiThreaded";
@@ -388,11 +388,11 @@ export const webkit: Dependency = {
     // Windows ICU libs are NOT listed here — they're preBuild.outputs,
     // which source.ts appends to the resolved libs automatically. Listing
     // them here would make dep_build also claim to produce them (dup error).
-    // Posix uses system ICU (linked via -licu* in bun.ts). Android has no
-    // system ICU — link the static cross-built libs from BUN_ANDROID_ICU_ROOT.
+    // Posix uses system ICU (linked via -licu* in fun.ts). Android has no
+    // system ICU — link the static cross-built libs from FUN_ANDROID_ICU_ROOT.
     const libs = [...coreLibs(cfg), bmallocLib(cfg)];
     if (cfg.abi === "android") {
-      const icuRoot = process.env.BUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android";
+      const icuRoot = process.env.FUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android";
       libs.push(
         resolve(icuRoot, "lib", "libicui18n.a"),
         resolve(icuRoot, "lib", "libicuuc.a"),
@@ -412,10 +412,10 @@ export const webkit: Dependency = {
     ];
     // Windows: ICU headers from preBuild output.
     if (cfg.windows) includes.push(resolve(icuDir(cfg), "include"));
-    // Android: ICU headers from BUN_ANDROID_ICU_ROOT (the NDK sysroot's
+    // Android: ICU headers from FUN_ANDROID_ICU_ROOT (the NDK sysroot's
     // unicode/ headers are __INTRODUCED_IN(31)-gated and unusable at API 28).
     if (cfg.abi === "android") {
-      includes.push(resolve(process.env.BUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android", "include"));
+      includes.push(resolve(process.env.FUN_ANDROID_ICU_ROOT ?? "/tmp/icu-android", "include"));
     }
 
     return { libs, includes };

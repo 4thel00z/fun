@@ -72,7 +72,7 @@ pub const PropertyHandlerContext = struct {
     }
 
     pub fn addDarkRule(this: *@This(), allocator: Allocator, property: css.Property) void {
-        bun.handleOom(this.dark.append(allocator, property));
+        fun.handleOom(this.dark.append(allocator, property));
     }
 
     pub fn addLogicalRule(this: *@This(), allocator: Allocator, ltr: css.Property, rtl: css.Property) void {
@@ -100,7 +100,7 @@ pub const PropertyHandlerContext = struct {
         var dest = ArrayList(css.CssRule(T)).initCapacity(
             this.allocator,
             this.supports.items.len,
-        ) catch |err| bun.handleOom(err);
+        ) catch |err| fun.handleOom(err);
 
         for (this.supports.items) |*entry| {
             dest.appendAssumeCapacity(css.CssRule(T){
@@ -108,7 +108,7 @@ pub const PropertyHandlerContext = struct {
                     .condition = entry.condition.deepClone(this.allocator),
                     .rules = css.CssRuleList(T){
                         .v = v: {
-                            var v = bun.handleOom(ArrayList(css.CssRule(T)).initCapacity(this.allocator, 1));
+                            var v = fun.handleOom(ArrayList(css.CssRule(T)).initCapacity(this.allocator, 1));
 
                             v.appendAssumeCapacity(.{ .style = css.StyleRule(T){
                                 .selectors = style_rule.selectors.deepClone(this.allocator),
@@ -156,7 +156,7 @@ pub const PropertyHandlerContext = struct {
                             var list = ArrayList(MediaQuery).initCapacity(
                                 this.allocator,
                                 1,
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
 
                             list.appendAssumeCapacity(MediaQuery{
                                 .qualifier = null,
@@ -188,13 +188,13 @@ pub const PropertyHandlerContext = struct {
                                 .rules = .{},
                                 .loc = style_rule.loc,
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
 
                         break :brk list;
                     },
                     .loc = style_rule.loc,
                 },
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
         }
 
         return dest;
@@ -227,7 +227,7 @@ pub const PropertyHandlerContext = struct {
             .loc = sty.loc,
         };
 
-        bun.handleOom(dest.append(this.allocator, .{ .style = rule }));
+        fun.handleOom(dest.append(this.allocator, .{ .style = rule }));
     }
 
     pub fn reset(this: *@This()) void {
@@ -262,23 +262,23 @@ pub const PropertyHandlerContext = struct {
             break :brk null;
         }) |entry| {
             if (this.is_important) {
-                bun.handleOom(entry.important_declarations.append(this.allocator, property));
+                fun.handleOom(entry.important_declarations.append(this.allocator, property));
             } else {
-                bun.handleOom(entry.declarations.append(this.allocator, property));
+                fun.handleOom(entry.declarations.append(this.allocator, property));
             }
         } else {
             var important_declarations = ArrayList(css.Property){};
             var declarations = ArrayList(css.Property){};
             if (this.is_important) {
-                bun.handleOom(important_declarations.append(this.allocator, property));
+                fun.handleOom(important_declarations.append(this.allocator, property));
             } else {
-                bun.handleOom(declarations.append(this.allocator, property));
+                fun.handleOom(declarations.append(this.allocator, property));
             }
             this.supports.append(this.allocator, SupportsEntry{
                 .condition = condition,
                 .declarations = declarations,
                 .important_declarations = important_declarations,
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
         }
     }
 
@@ -300,7 +300,7 @@ pub const PropertyHandlerContext = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

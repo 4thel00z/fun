@@ -28,8 +28,8 @@ pub fn WorkTask(comptime Context: type) type {
         ref: Async.KeepAlive = .{},
 
         pub fn createOnJSThread(allocator: std.mem.Allocator, globalThis: *jsc.JSGlobalObject, value: *Context) *This {
-            var vm = globalThis.bunVM();
-            var this = bun.new(This, .{
+            var vm = globalThis.funVM();
+            var this = fun.new(This, .{
                 .event_loop = vm.eventLoop(),
                 .ctx = value,
                 .allocator = allocator,
@@ -43,7 +43,7 @@ pub fn WorkTask(comptime Context: type) type {
 
         pub fn deinit(this: *This) void {
             this.ref.unref(this.event_loop.virtual_machine);
-            bun.destroy(this);
+            fun.destroy(this);
         }
 
         pub fn runFromThreadPool(task: *TaskType) void {
@@ -52,7 +52,7 @@ pub fn WorkTask(comptime Context: type) type {
             Context.run(this.ctx, this);
         }
 
-        pub fn runFromJS(this: *This) bun.JSTerminated!void {
+        pub fn runFromJS(this: *This) fun.JSTerminated!void {
             var ctx = this.ctx;
             const tracker = this.async_task_tracker;
             const vm = this.event_loop.virtual_machine;
@@ -79,10 +79,10 @@ pub fn WorkTask(comptime Context: type) type {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
+const fun = @import("fun");
+const Async = fun.Async;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ConcurrentTask = jsc.ConcurrentTask;
 const WorkPool = jsc.WorkPool;
 const WorkPoolTask = jsc.WorkPoolTask;

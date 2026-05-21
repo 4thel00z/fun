@@ -1,12 +1,12 @@
 // Test for issue #25190: TLSSocket.isSessionReused should use SSL_session_reused
-// https://github.com/oven-sh/bun/issues/25190
+// https://github.com/underdoc-org/fun/issues/25190
 //
 // The old implementation incorrectly returned `!!this[ksession]` which would
 // return true if setSession() was called, even if the session wasn't actually
 // reused by the SSL layer. The new implementation correctly uses BoringSSL's
 // SSL_session_reused() to check if the session was actually reused.
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import * as fs from "fs";
 import * as path from "path";
 import * as tls from "tls";

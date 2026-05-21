@@ -3,12 +3,12 @@
 //! `pub const jsFunction… = @import(...)` alias so call sites and the
 //! `$newZigFunction("npm.zig", "…")` codegen path are unchanged.
 
-pub fn operatingSystemIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn operatingSystemIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.arguments_old(1);
     var operating_system = npm.OperatingSystem.negatable(.none);
     var iter = try args.ptr[0].arrayIterator(globalObject);
     while (try iter.next()) |item| {
-        const slice = try item.toSlice(globalObject, bun.default_allocator);
+        const slice = try item.toSlice(globalObject, fun.default_allocator);
         defer slice.deinit();
         operating_system.apply(slice.slice());
         if (globalObject.hasException()) return .zero;
@@ -17,12 +17,12 @@ pub fn operatingSystemIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc
     return jsc.JSValue.jsBoolean(operating_system.combine().isMatch(npm.OperatingSystem.current));
 }
 
-pub fn libcIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn libcIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.arguments_old(1);
     var libc = npm.Libc.negatable(.none);
     var iter = args.ptr[0].arrayIterator(globalObject);
     while (iter.next()) |item| {
-        const slice = item.toSlice(globalObject, bun.default_allocator);
+        const slice = item.toSlice(globalObject, fun.default_allocator);
         defer slice.deinit();
         libc.apply(slice.slice());
         if (globalObject.hasException()) return .zero;
@@ -31,12 +31,12 @@ pub fn libcIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame)
     return jsc.JSValue.jsBoolean(libc.combine().isMatch(npm.Libc.current));
 }
 
-pub fn architectureIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn architectureIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.arguments_old(1);
     var architecture = npm.Architecture.negatable(.none);
     var iter = try args.ptr[0].arrayIterator(globalObject);
     while (try iter.next()) |item| {
-        const slice = try item.toSlice(globalObject, bun.default_allocator);
+        const slice = try item.toSlice(globalObject, fun.default_allocator);
         defer slice.deinit();
         architecture.apply(slice.slice());
         if (globalObject.hasException()) return .zero;
@@ -54,22 +54,22 @@ pub const ManifestBindings = struct {
         return obj;
     }
 
-    pub fn jsParseManifest(global: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn jsParseManifest(global: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const args = callFrame.arguments_old(2).slice();
         if (args.len < 2 or !args[0].isString() or !args[1].isString()) {
             return global.throw("expected manifest filename and registry string arguments", .{});
         }
 
-        const manifest_filename_str = try args[0].toBunString(global);
+        const manifest_filename_str = try args[0].toFunString(global);
         defer manifest_filename_str.deref();
 
-        const manifest_filename = manifest_filename_str.toUTF8(bun.default_allocator);
+        const manifest_filename = manifest_filename_str.toUTF8(fun.default_allocator);
         defer manifest_filename.deinit();
 
-        const registry_str = try args[1].toBunString(global);
+        const registry_str = try args[1].toFunString(global);
         defer registry_str.deref();
 
-        const registry = registry_str.toUTF8(bun.default_allocator);
+        const registry = registry_str.toUTF8(fun.default_allocator);
         defer registry.deinit();
 
         const manifest_file = std.fs.cwd().openFile(manifest_filename.slice(), .{}) catch |err| {
@@ -88,7 +88,7 @@ pub const ManifestBindings = struct {
             },
         };
 
-        const maybe_package_manifest = npm.PackageManifest.Serializer.loadByFile(bun.default_allocator, &scope, bun.sys.File.from(manifest_file)) catch |err| {
+        const maybe_package_manifest = npm.PackageManifest.Serializer.loadByFile(fun.default_allocator, &scope, fun.sys.File.from(manifest_file)) catch |err| {
             return global.throw("failed to load manifest file: {s}", .{@errorName(err)});
         };
 
@@ -97,7 +97,7 @@ pub const ManifestBindings = struct {
         };
 
         var buf: std.ArrayListUnmanaged(u8) = .{};
-        const writer = buf.writer(bun.default_allocator);
+        const writer = buf.writer(fun.default_allocator);
 
         // TODO: we can add more information. for now just versions is fine
 
@@ -110,7 +110,7 @@ pub const ManifestBindings = struct {
                 try writer.print("\"{f}\",", .{version.fmt(package_manifest.string_buf)});
         }
 
-        var result = bun.String.borrowUTF8(buf.items);
+        var result = fun.String.borrowUTF8(buf.items);
         defer result.deref();
 
         return result.toJSByParseJSON(global);
@@ -119,7 +119,7 @@ pub const ManifestBindings = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const strings = bun.strings;
-const npm = bun.install.Npm;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const strings = fun.strings;
+const npm = fun.install.Npm;

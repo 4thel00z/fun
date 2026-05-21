@@ -40,7 +40,7 @@ private:
 
 class FunctionTemplate : public Template {
 public:
-    BUN_EXPORT static Local<FunctionTemplate> New(
+    FUN_EXPORT static Local<FunctionTemplate> New(
         Isolate* isolate,
         FunctionCallback callback = nullptr,
         Local<Value> data = Local<Value>(),
@@ -53,7 +53,7 @@ public:
         uint16_t allowed_receiver_instance_type_range_start = 0,
         uint16_t allowed_receiver_instance_type_range_end = 0);
 
-    BUN_EXPORT MaybeLocal<Function> GetFunction(Local<Context> context);
+    FUN_EXPORT MaybeLocal<Function> GetFunction(Local<Context> context);
 
 private:
     shim::FunctionTemplate* localToObjectPointer()

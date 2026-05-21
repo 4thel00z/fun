@@ -1,16 +1,16 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { mkdirSync, readdirSync } from "fs";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
-test("runtime transpiler cache is disabled when BUN_INSPECT is set", async () => {
-  // When the debugger is active (via BUN_INSPECT env var), the runtime
+test("runtime transpiler cache is disabled when FUN_INSPECT is set", async () => {
+  // When the debugger is active (via FUN_INSPECT env var), the runtime
   // transpiler cache must be disabled. The cached output does not contain the
   // inline //# sourceMappingURL= comment that the debugger frontend needs to
   // correctly map breakpoint line numbers. Without it, debugger; statements
   // and breakpoints resolve to the transpiled line instead of the source line.
   //
-  // See: https://github.com/oven-sh/bun/issues/28159
+  // See: https://github.com/underdoc-org/fun/issues/28159
 
   // Generate a large TypeScript file (>50KB) to trigger caching.
   const lines: string[] = [];
@@ -34,15 +34,15 @@ test("runtime transpiler cache is disabled when BUN_INSPECT is set", async () =>
   const cacheDir = join(String(dir), "cache");
   mkdirSync(cacheDir, { recursive: true });
 
-  // Run with BUN_INSPECT set — the cache should NOT be populated.
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "large_module.ts"],
+  // Run with FUN_INSPECT set — the cache should NOT be populated.
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "large_module.ts"],
     cwd: String(dir),
     env: {
-      ...bunEnv,
-      BUN_RUNTIME_TRANSPILER_CACHE_PATH: cacheDir,
-      BUN_INSPECT:
-        process.platform === "win32" ? "127.0.0.1:0" : "ws+unix:///tmp/bun-inspect-fake-" + Date.now() + ".sock",
+      ...funEnv,
+      FUN_RUNTIME_TRANSPILER_CACHE_PATH: cacheDir,
+      FUN_INSPECT:
+        process.platform === "win32" ? "127.0.0.1:0" : "ws+unix:///tmp/fun-inspect-fake-" + Date.now() + ".sock",
     },
     stdout: "pipe",
     stderr: "pipe",

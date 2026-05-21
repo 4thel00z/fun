@@ -1,4 +1,4 @@
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -29,7 +29,7 @@ pending_reset: bool = false,
 closed: bool = false,
 task: jsc.WorkPoolTask = .{ .callback = undefined },
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*@This() {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*@This() {
     const arguments = callframe.argumentsAsArray(1);
 
     var mode = arguments[0];
@@ -45,7 +45,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
         return globalThis.throwRangeError(mode_int, .{ .field_name = "mode", .min = 10, .max = 11 });
     }
 
-    const ptr = bun.new(@This(), .{
+    const ptr = fun.new(@This(), .{
         .ref_count = .init(),
         .globalThis = globalThis,
     });
@@ -55,13 +55,13 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
 
 pub fn estimatedSize(this: *const @This()) usize {
     return @sizeOf(@This()) + @as(usize, switch (this.stream.mode) {
-        .ZSTD_COMPRESS => 5272, // estimate of bun.c.ZSTD_sizeof_CCtx(@ptrCast(this.stream.state)),
-        .ZSTD_DECOMPRESS => 95968, // estimate of bun.c.ZSTD_sizeof_DCtx(@ptrCast(this.stream.state)),
+        .ZSTD_COMPRESS => 5272, // estimate of fun.c.ZSTD_sizeof_CCtx(@ptrCast(this.stream.state)),
+        .ZSTD_DECOMPRESS => 95968, // estimate of fun.c.ZSTD_sizeof_DCtx(@ptrCast(this.stream.state)),
         else => 0,
     });
 }
 
-pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsAsArray(4);
     const this_value = callframe.this();
     if (callframe.argumentsCount() != 4) return globalThis.ERR(.MISSING_ARGS, "init(initParamsArray, pledgedSrcSize, writeState, processCallback)", .{}).throw();
@@ -103,7 +103,7 @@ pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.Cal
     return .true;
 }
 
-pub fn params(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn params(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     _ = this;
     _ = globalThis;
     _ = callframe;
@@ -117,13 +117,13 @@ fn deinit(this: *@This()) void {
         .ZSTD_COMPRESS, .ZSTD_DECOMPRESS => this.stream.close(),
         else => {},
     }
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 const Context = struct {
-    const c = bun.c;
+    const c = fun.c;
 
-    mode: bun.zlib.NodeMode = .NONE,
+    mode: fun.zlib.NodeMode = .NONE,
     state: ?*anyopaque = null,
     flush: c_int = c.ZSTD_e_continue,
     input: c.ZSTD_inBuffer = .{ .src = null, .size = 0, .pos = 0 },
@@ -277,5 +277,5 @@ const CompressionStream = @import("../node_zlib_binding.zig").CompressionStream;
 const CountedKeepAlive = @import("../node_zlib_binding.zig").CountedKeepAlive;
 const Error = @import("../node_zlib_binding.zig").Error;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

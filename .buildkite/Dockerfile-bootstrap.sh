@@ -69,31 +69,31 @@ EOF
 echo "Building Buildkite image"
 
 # Clean up any previous build artifacts
-rm -rf /tmp/fakebun
-mkdir -p /tmp/fakebun/scripts /tmp/fakebun/.buildkite
+rm -rf /tmp/fakefun
+mkdir -p /tmp/fakefun/scripts /tmp/fakefun/.buildkite
 
 # Copy required files
-cp /tmp/agent.mjs /tmp/fakebun/scripts/ || {
+cp /tmp/agent.mjs /tmp/fakefun/scripts/ || {
     echo "error: failed to copy agent.mjs"
     exit 1
 }
-cp /tmp/Dockerfile /tmp/fakebun/.buildkite/Dockerfile || {
+cp /tmp/Dockerfile /tmp/fakefun/.buildkite/Dockerfile || {
     echo "error: failed to copy Dockerfile"
     exit 1
 }
 
-cd /tmp/fakebun || {
+cd /tmp/fakefun || {
     echo "error: failed to change directory"
     exit 1
 }
 
-# Build the Buildkite image. BUN_REPO_REF tells the prefetch step which ref's
-# dep versions to bake — passed through from machine.mjs via BUN_BOOTSTRAP_REPO_REF.
+# Build the Buildkite image. FUN_REPO_REF tells the prefetch step which ref's
+# dep versions to bake — passed through from machine.mjs via FUN_BOOTSTRAP_REPO_REF.
 docker buildx build \
     --platform $(uname -m | sed 's/aarch64/linux\/arm64/;s/x86_64/linux\/amd64/') \
     --tag buildkite:latest \
     --target buildkite \
-    --build-arg BUN_REPO_REF="${BUN_BOOTSTRAP_REPO_REF:-main}" \
+    --build-arg FUN_REPO_REF="${FUN_BOOTSTRAP_REPO_REF:-main}" \
     -f .buildkite/Dockerfile \
     --load \
     . || {
@@ -105,13 +105,13 @@ docker buildx build \
 # daemon so tests don't fetch them at runtime. /var/lib/docker is on the root
 # volume and survives into the AMI. Best-effort — a missing script or docker
 # hiccup shouldn't fail the bake.
-if git clone --depth=1 --branch "${BUN_BOOTSTRAP_REPO_REF:-main}" \
-    https://github.com/oven-sh/bun.git /tmp/bun-test-docker; then
-    if [ -f /tmp/bun-test-docker/test/docker/prepare-ci.ts ]; then
-        (cd /tmp/bun-test-docker && bun test/docker/prepare-ci.ts) || \
+if git clone --depth=1 --branch "${FUN_BOOTSTRAP_REPO_REF:-main}" \
+    https://github.com/underdoc-org/fun.git /tmp/fun-test-docker; then
+    if [ -f /tmp/fun-test-docker/test/docker/prepare-ci.ts ]; then
+        (cd /tmp/fun-test-docker && fun test/docker/prepare-ci.ts) || \
             echo "warning: prepare-ci.ts failed; test docker images not pre-pulled"
     fi
-    rm -rf /tmp/bun-test-docker
+    rm -rf /tmp/fun-test-docker
 fi
 
 # Create container to ensure image is cached in AMI

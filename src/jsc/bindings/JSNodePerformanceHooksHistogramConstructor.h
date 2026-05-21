@@ -3,7 +3,7 @@
 #include "root.h"
 #include <JavaScriptCore/InternalFunction.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -45,4 +45,4 @@ private:
     void finishCreation(JSC::VM& vm, JSC::JSGlobalObject* globalObject, JSC::JSObject* prototype);
 };
 
-} // namespace Bun
+} // namespace Fun

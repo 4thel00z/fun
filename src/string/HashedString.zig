@@ -10,7 +10,7 @@ pub fn init(buf: []const u8) HashedString {
     return HashedString{
         .ptr = buf.ptr,
         .len = @as(u32, @truncate(buf.len)),
-        .hash = @as(u32, @truncate(bun.hash(buf))),
+        .hash = @as(u32, @truncate(fun.hash(buf))),
     };
 }
 
@@ -32,7 +32,7 @@ fn Eql(this: HashedString, comptime Other: type, other: Other) bool {
             return ((@max(this.hash, other.hash) > 0 and this.hash == other.hash) or (this.ptr == other.ptr)) and this.len == other.len;
         },
         else => {
-            return @as(usize, this.len) == other.len and @as(u32, @truncate(bun.hash(other[0..other.len]))) == this.hash;
+            return @as(usize, this.len) == other.len and @as(u32, @truncate(fun.hash(other[0..other.len]))) == this.hash;
         },
     }
 }
@@ -41,4 +41,4 @@ pub fn str(this: HashedString) []const u8 {
     return this.ptr[0..this.len];
 }
 
-const bun = @import("bun");
+const fun = @import("fun");

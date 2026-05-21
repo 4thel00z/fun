@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { expect, test } from "bun:test";
+import { serve } from "fun";
+import { expect, test } from "fun:test";
 import { deflateRawSync, deflateSync } from "node:zlib";
 
 /**
@@ -9,7 +9,7 @@ import { deflateRawSync, deflateSync } from "node:zlib";
  * - RFC 2616 (HTTP/1.1) says it should be zlib format (RFC 1950)
  * - Many implementations incorrectly use raw deflate (RFC 1951)
  *
- * Bun should handle both gracefully, auto-detecting the format.
+ * Fun should handle both gracefully, auto-detecting the format.
  */
 
 // Test data
@@ -119,7 +119,7 @@ test("chunked zlib-wrapped deflate should work", async () => {
         new ReadableStream({
           async start(controller) {
             controller.enqueue(compressed.slice(0, mid));
-            await Bun.sleep(50);
+            await Fun.sleep(50);
             controller.enqueue(compressed.slice(mid));
             controller.close();
           },
@@ -152,7 +152,7 @@ test("chunked raw deflate should work", async () => {
         new ReadableStream({
           async start(controller) {
             controller.enqueue(compressed.slice(0, mid));
-            await Bun.sleep(50);
+            await Fun.sleep(50);
             controller.enqueue(compressed.slice(mid));
             controller.close();
           },
@@ -227,9 +227,9 @@ test("invalid deflate data should fail", async () => {
 });
 
 /**
- * Documentation of deflate semantics in Bun:
+ * Documentation of deflate semantics in Fun:
  *
- * When Content-Encoding: deflate is received, Bun's HTTP client should:
+ * When Content-Encoding: deflate is received, Fun's HTTP client should:
  * 1. Attempt to decompress as zlib format (RFC 1950) first
  * 2. If that fails with a header error, retry as raw deflate (RFC 1951)
  * 3. This handles both correct implementations and common misimplementations

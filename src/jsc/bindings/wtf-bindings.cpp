@@ -98,13 +98,13 @@ static void uv__tty_make_raw(struct termios* tio)
 
 #endif
 
-extern "C" void Bun__atexit(void (*func)(void));
+extern "C" void Fun__atexit(void (*func)(void));
 
 #if !OS(WINDOWS)
-extern "C" volatile sig_atomic_t bun_stdio_modified[3];
+extern "C" volatile sig_atomic_t fun_stdio_modified[3];
 #endif
 
-extern "C" int Bun__ttySetMode(int fd, int mode)
+extern "C" int Fun__ttySetMode(int fd, int mode)
 {
 #if !OS(WINDOWS)
     struct termios tmp;
@@ -148,7 +148,7 @@ extern "C" int Bun__ttySetMode(int fd, int mode)
         tmp.c_cc[VTIME] = 0;
 
         std::call_once(reset_once_flag, [] {
-            Bun__atexit([] {
+            Fun__atexit([] {
                 uv_tty_reset_mode();
             });
         });
@@ -157,7 +157,7 @@ extern "C" int Bun__ttySetMode(int fd, int mode)
         uv__tty_make_raw(&tmp);
 
         std::call_once(reset_once_flag, [] {
-            Bun__atexit([] {
+            Fun__atexit([] {
                 uv_tty_reset_mode();
             });
         });
@@ -166,18 +166,18 @@ extern "C" int Bun__ttySetMode(int fd, int mode)
 
     // Mark the fd as modified *before* applying the change. If a
     // SIGINT/SIGTERM lands between the device going raw and our bookkeeping
-    // catching up, bun_restore_stdio would otherwise read 0 and skip the
+    // catching up, fun_restore_stdio would otherwise read 0 and skip the
     // restore — leaving the terminal in raw mode after exit. A spurious set
-    // when uv__tcsetattr fails is harmless: bun_restore_stdio then writes
+    // when uv__tcsetattr fails is harmless: fun_restore_stdio then writes
     // the cooked startup snapshot back to a still-cooked device (no-op,
     // pre-PR behavior). Bounds-checked because the PTY master fd from
-    // Bun.Terminal calls through here too. See #29592.
+    // Fun.Terminal calls through here too. See #29592.
     //
     // Marked on every transition, including setRawMode(true)→(false), so
-    // the signal-exit path (which runs only bun_restore_stdio, not the
+    // the signal-exit path (which runs only fun_restore_stdio, not the
     // atexit uv_tty_reset_mode hook) still restores cooked mode on Ctrl-C.
     if (fd >= 0 && fd < 3) {
-        bun_stdio_modified[fd] = 1;
+        fun_stdio_modified[fd] = 1;
     }
 
     /* Apply changes after draining */
@@ -212,7 +212,7 @@ extern "C" double WTF__parseES5Date(const Latin1Character* string, size_t length
     return WTF::parseES5Date({ string, length }, isLocalTime);
 }
 
-namespace Bun {
+namespace Fun {
 String base64URLEncodeToString(Vector<uint8_t> data)
 {
     auto size = data.size();
@@ -264,12 +264,12 @@ size_t toISOString(JSC::VM& vm, double date, char in[64])
 
 static thread_local WTF::StackBounds stackBoundsForCurrentThread = WTF::StackBounds::emptyBounds();
 
-extern "C" [[ZIG_EXPORT(nothrow)]] void Bun__StackCheck__initialize()
+extern "C" [[ZIG_EXPORT(nothrow)]] void Fun__StackCheck__initialize()
 {
     stackBoundsForCurrentThread = WTF::StackBounds::currentThreadStackBounds();
 }
 
-extern "C" [[ZIG_EXPORT(nothrow)]] void* Bun__StackCheck__getMaxStack()
+extern "C" [[ZIG_EXPORT(nothrow)]] void* Fun__StackCheck__getMaxStack()
 {
     return stackBoundsForCurrentThread.end();
 }

@@ -11,7 +11,7 @@ address: union(enum) {
         switch (this.*) {
             .tcp => |tcp| {
                 if (tcp.hostname) |host| {
-                    allocator.free(bun.sliceTo(host, 0));
+                    allocator.free(fun.sliceTo(host, 0));
                 }
             },
             .unix => |addr| {
@@ -25,12 +25,12 @@ address: union(enum) {
 },
 idleTimeout: u8 = 10, //TODO: should we match websocket default idleTimeout of 120?
 has_idleTimeout: bool = false,
-// TODO: use webkit URL parser instead of bun's
+// TODO: use webkit URL parser instead of fun's
 base_url: URL = URL{},
 base_uri: string = "",
 
 ssl_config: ?SSLConfig = null,
-sni: ?bun.BabyList(SSLConfig) = null,
+sni: ?fun.BabyList(SSLConfig) = null,
 max_request_body_size: usize = 1024 * 1024 * 128,
 development: DevelopmentOption = .development,
 broadcast_console_log_from_browser_to_server_for_bake: bool = false,
@@ -58,11 +58,11 @@ http1: bool = true,
 is_node_http: bool = false,
 had_routes_object: bool = false,
 
-static_routes: std.array_list.Managed(StaticRouteEntry) = std.array_list.Managed(StaticRouteEntry).init(bun.default_allocator),
-negative_routes: std.array_list.Managed([:0]const u8) = std.array_list.Managed([:0]const u8).init(bun.default_allocator),
-user_routes_to_build: std.array_list.Managed(UserRouteBuilder) = std.array_list.Managed(UserRouteBuilder).init(bun.default_allocator),
+static_routes: std.array_list.Managed(StaticRouteEntry) = std.array_list.Managed(StaticRouteEntry).init(fun.default_allocator),
+negative_routes: std.array_list.Managed([:0]const u8) = std.array_list.Managed([:0]const u8).init(fun.default_allocator),
+user_routes_to_build: std.array_list.Managed(UserRouteBuilder) = std.array_list.Managed(UserRouteBuilder).init(fun.default_allocator),
 
-bake: ?bun.bake.UserOptions = null,
+bake: ?fun.bake.UserOptions = null,
 
 pub const DevelopmentOption = enum {
     development,
@@ -107,7 +107,7 @@ pub const RouteDeclaration = struct {
 
     pub fn deinit(this: *RouteDeclaration) void {
         if (this.path.len > 0) {
-            bun.default_allocator.free(this.path);
+            fun.default_allocator.free(this.path);
         }
     }
 };
@@ -128,14 +128,14 @@ pub const StaticRouteEntry = struct {
         this.route.ref();
 
         return .{
-            .path = try bun.default_allocator.dupe(u8, this.path),
+            .path = try fun.default_allocator.dupe(u8, this.path),
             .route = this.route,
             .method = this.method,
         };
     }
 
     pub fn deinit(this: *StaticRouteEntry) void {
-        bun.default_allocator.free(this.path);
+        fun.default_allocator.free(this.path);
         this.path = "";
         this.route.deref();
         this.* = undefined;
@@ -165,7 +165,7 @@ fn normalizeStaticRoutesList(this: *ServerConfig) !void {
         }
     };
 
-    var static_routes_dedupe_list = std.array_list.Managed(u64).init(bun.default_allocator);
+    var static_routes_dedupe_list = std.array_list.Managed(u64).init(fun.default_allocator);
     try static_routes_dedupe_list.ensureTotalCapacity(@truncate(this.static_routes.items.len));
     defer static_routes_dedupe_list.deinit();
 
@@ -208,7 +208,7 @@ pub fn cloneForReloadingStaticRoutes(this: *ServerConfig) !ServerConfig {
 
 pub fn appendStaticRoute(this: *ServerConfig, path: []const u8, route: AnyRoute, method: HTTP.Method.Optional) !void {
     try this.static_routes.append(StaticRouteEntry{
-        .path = try bun.default_allocator.dupe(u8, path),
+        .path = try fun.default_allocator.dupe(u8, path),
         .route = route,
         .method = method,
     });
@@ -266,15 +266,15 @@ pub fn applyStaticRouteH3(server: AnyServer, app: *uws.H3.App, comptime T: type,
 }
 
 pub fn deinit(this: *ServerConfig) void {
-    this.address.deinit(bun.default_allocator);
+    this.address.deinit(fun.default_allocator);
 
     for (this.negative_routes.items) |route| {
-        bun.default_allocator.free(route);
+        fun.default_allocator.free(route);
     }
     this.negative_routes.clearAndFree();
 
     if (this.base_url.href.len > 0) {
-        bun.default_allocator.free(this.base_url.href);
+        fun.default_allocator.free(this.base_url.href);
         this.base_url = URL{};
     }
     if (this.ssl_config) |*ssl_config| {
@@ -285,7 +285,7 @@ pub fn deinit(this: *ServerConfig) void {
         for (sni.slice()) |*ssl_config| {
             ssl_config.deinit();
         }
-        sni.deinit(bun.default_allocator);
+        sni.deinit(fun.default_allocator);
         this.sni = null;
     }
 
@@ -313,7 +313,7 @@ pub fn computeID(this: *const ServerConfig, allocator: std.mem.Allocator) []cons
         .tcp => {
             if (this.address.tcp.hostname) |host| {
                 writer.print("tcp:{s}:{d}", .{
-                    bun.sliceTo(host, 0),
+                    fun.sliceTo(host, 0),
                     this.address.tcp.port,
                 }) catch {};
             } else {
@@ -324,7 +324,7 @@ pub fn computeID(this: *const ServerConfig, allocator: std.mem.Allocator) []cons
         },
         .unix => {
             writer.print("unix:{s}", .{
-                bun.sliceTo(this.address.unix, 0),
+                fun.sliceTo(this.address.unix, 0),
             }) catch {};
         },
     }
@@ -348,12 +348,12 @@ pub fn getUsocketsOptions(this: *const ServerConfig) i32 {
 
 fn validateRouteName(global: *jsc.JSGlobalObject, path: []const u8) !void {
     // Already validated by the caller
-    bun.debugAssert(path.len > 0 and path[0] == '/');
+    fun.debugAssert(path.len > 0 and path[0] == '/');
 
     // For now, we don't support params that start with a number.
     // Mostly because it makes the params object more complicated to implement and it's easier to cut scope this way for now.
     var remaining = path;
-    var duped_route_names = bun.StringHashMap(void).init(bun.default_allocator);
+    var duped_route_names = fun.StringHashMap(void).init(fun.default_allocator);
     defer duped_route_names.deinit();
     while (strings.indexOfChar(remaining, ':')) |index| {
         remaining = remaining[index + 1 ..];
@@ -367,7 +367,7 @@ fn validateRouteName(global: *jsc.JSGlobalObject, path: []const u8) !void {
             );
         }
 
-        const entry = bun.handleOom(duped_route_names.getOrPut(route_name));
+        const entry = fun.handleOom(duped_route_names.getOrPut(route_name));
         if (entry.found_existing) {
             return global.throwTODO(
                 \\Support for duplicate route parameter names is not yet implemented.
@@ -382,10 +382,10 @@ fn validateRouteName(global: *jsc.JSGlobalObject, path: []const u8) !void {
 
 pub const SSLConfig = @import("../socket/SSLConfig.zig");
 
-fn getRoutesObject(global: *jsc.JSGlobalObject, arg: jsc.JSValue) bun.JSError!?jsc.JSValue {
+fn getRoutesObject(global: *jsc.JSGlobalObject, arg: jsc.JSValue) fun.JSError!?jsc.JSValue {
     inline for (.{ "routes", "static" }) |key| {
         if (try arg.get(global, key)) |routes| {
-            // https://github.com/oven-sh/bun/issues/17568
+            // https://github.com/underdoc-org/fun/issues/17568
             if (routes.isArray()) {
                 return null;
             }
@@ -406,7 +406,7 @@ pub fn fromJS(
     args: *ServerConfig,
     arguments: *jsc.CallFrame.ArgumentsSlice,
     opts: FromJSOptions,
-) bun.JSError!void {
+) fun.JSError!void {
     const vm = arguments.vm;
     const env = vm.transpiler.env;
 
@@ -423,14 +423,14 @@ pub fn fromJS(
             .development,
 
         // If this is a node:cluster child, let's default to SO_REUSEPORT.
-        // That way you don't have to remember to set reusePort: true in Bun.serve() when using node:cluster.
+        // That way you don't have to remember to set reusePort: true in Fun.serve() when using node:cluster.
         .reuse_port = env.get("NODE_UNIQUE_ID") != null,
     };
     var has_hostname = false;
 
     defer {
         if (!args.development.isHMREnabled()) {
-            bun.assert(args.bake == null);
+            fun.assert(args.bake == null);
         }
     }
 
@@ -443,7 +443,7 @@ pub fn fromJS(
     }
 
     args.address.tcp.port = brk: {
-        const PORT_ENV = .{ "BUN_PORT", "PORT", "NODE_PORT" };
+        const PORT_ENV = .{ "FUN_PORT", "PORT", "NODE_PORT" };
 
         inline for (PORT_ENV) |PORT| {
             if (env.get(PORT)) |port| {
@@ -462,7 +462,7 @@ pub fn fromJS(
     var port = args.address.tcp.port;
 
     if (arguments.vm.transpiler.options.transform_options.origin) |origin| {
-        args.base_uri = try bun.default_allocator.dupeZ(u8, origin);
+        args.base_uri = try fun.default_allocator.dupeZ(u8, origin);
     }
 
     defer {
@@ -476,7 +476,7 @@ pub fn fromJS(
 
     if (arguments.next()) |arg| {
         if (!arg.isObject()) {
-            return global.throwInvalidArguments("Bun.serve expects an object", .{});
+            return global.throwInvalidArguments("Fun.serve expects an object", .{});
         }
 
         // "development" impacts other settings like bake.
@@ -505,7 +505,7 @@ pub fn fromJS(
         if (try getRoutesObject(global, arg)) |static| {
             const static_obj = static.getObject() orelse {
                 return global.throwInvalidArguments(
-                    \\Bun.serve() expects 'routes' to be an object shaped like:
+                    \\Fun.serve() expects 'routes' to be an object shaped like:
                     \\
                     \\  {
                     \\    "/path": {
@@ -516,7 +516,7 @@ pub fn fromJS(
                     \\    "/path3/:param1/:param2": (req) => new Response("Hello")
                     \\  }
                     \\
-                    \\Learn more at https://bun.com/docs/api/http
+                    \\Learn more at https://fun.dev/docs/api/http
                 , .{});
             };
             args.had_routes_object = true;
@@ -528,9 +528,9 @@ pub fn fromJS(
             defer iter.deinit();
 
             var init_ctx_: AnyRoute.ServerInitContext = .{
-                .arena = .init(bun.default_allocator),
-                .dedupe_html_bundle_map = .init(bun.default_allocator),
-                .framework_router_list = .init(bun.default_allocator),
+                .arena = .init(fun.default_allocator),
+                .dedupe_html_bundle_map = .init(fun.default_allocator),
+                .framework_router_list = .init(fun.default_allocator),
                 .js_string_allocations = .empty,
                 .user_routes = &args.static_routes,
                 .global = global,
@@ -543,7 +543,7 @@ pub fn fromJS(
             // This list is not used in the success case
             defer init_ctx.dedupe_html_bundle_map.deinit();
 
-            var framework_router_list = std.array_list.Managed(bun.bake.FrameworkRouter.Type).init(bun.default_allocator);
+            var framework_router_list = std.array_list.Managed(fun.bake.FrameworkRouter.Type).init(fun.default_allocator);
             errdefer framework_router_list.deinit();
 
             errdefer {
@@ -554,8 +554,8 @@ pub fn fromJS(
             }
 
             while (try iter.next()) |key| {
-                const path, const is_ascii = bun.handleOom(key.toOwnedSliceReturningAllASCII(bun.default_allocator));
-                errdefer bun.default_allocator.free(path);
+                const path, const is_ascii = fun.handleOom(key.toOwnedSliceReturningAllASCII(fun.default_allocator));
+                errdefer fun.default_allocator.free(path);
 
                 const value: jsc.JSValue = iter.value;
 
@@ -564,17 +564,17 @@ pub fn fromJS(
                 }
 
                 if (path.len == 0 or (path[0] != '/')) {
-                    return global.throwInvalidArguments("Invalid route {f}. Path must start with '/'", .{bun.fmt.quote(path)});
+                    return global.throwInvalidArguments("Invalid route {f}. Path must start with '/'", .{fun.fmt.quote(path)});
                 }
 
                 if (!is_ascii) {
-                    return global.throwInvalidArguments("Invalid route {f}. Please encode all non-ASCII characters in the path.", .{bun.fmt.quote(path)});
+                    return global.throwInvalidArguments("Invalid route {f}. Please encode all non-ASCII characters in the path.", .{fun.fmt.quote(path)});
                 }
 
                 if (value == .false) {
-                    const duped = bun.handleOom(bun.default_allocator.dupeZ(u8, path));
-                    defer bun.default_allocator.free(path);
-                    bun.handleOom(args.negative_routes.append(duped));
+                    const duped = fun.handleOom(fun.default_allocator.dupeZ(u8, path));
+                    defer fun.default_allocator.free(path);
+                    fun.handleOom(args.negative_routes.append(duped));
                     continue;
                 }
 
@@ -582,12 +582,12 @@ pub fn fromJS(
                     try validateRouteName(global, path);
                     args.user_routes_to_build.append(.{
                         .route = .{
-                            .path = bun.handleOom(bun.default_allocator.dupeZ(u8, path)),
+                            .path = fun.handleOom(fun.default_allocator.dupeZ(u8, path)),
                             .method = .any,
                         },
                         .callback = .create(value.withAsyncContextIfNeeded(global), global),
-                    }) catch |err| bun.handleOom(err);
-                    bun.default_allocator.free(path);
+                    }) catch |err| fun.handleOom(err);
+                    fun.default_allocator.free(path);
                     continue;
                 } else if (value.isObject()) {
                     const methods = .{
@@ -612,40 +612,40 @@ pub fn fromJS(
                             if (function.isCallable()) {
                                 args.user_routes_to_build.append(.{
                                     .route = .{
-                                        .path = bun.handleOom(bun.default_allocator.dupeZ(u8, path)),
+                                        .path = fun.handleOom(fun.default_allocator.dupeZ(u8, path)),
                                         .method = .{ .specific = method },
                                     },
                                     .callback = .create(function.withAsyncContextIfNeeded(global), global),
-                                }) catch |err| bun.handleOom(err);
+                                }) catch |err| fun.handleOom(err);
                             } else if (try AnyRoute.fromJS(global, path, function, init_ctx)) |html_route| {
-                                var method_set = bun.http.Method.Set.initEmpty();
+                                var method_set = fun.http.Method.Set.initEmpty();
                                 method_set.insert(method);
 
                                 args.static_routes.append(.{
-                                    .path = bun.handleOom(bun.default_allocator.dupe(u8, path)),
+                                    .path = fun.handleOom(fun.default_allocator.dupe(u8, path)),
                                     .route = html_route,
                                     .method = .{ .method = method_set },
-                                }) catch |err| bun.handleOom(err);
+                                }) catch |err| fun.handleOom(err);
                             }
                         }
                     }
 
                     if (found) {
-                        bun.default_allocator.free(path);
+                        fun.default_allocator.free(path);
                         continue;
                     }
                 }
 
                 const route = try AnyRoute.fromJS(global, path, value, init_ctx) orelse {
                     return global.throwInvalidArguments(
-                        \\'routes' expects a Record<string, Response | HTMLBundle | {[method: string]: (req: BunRequest) => Response|Promise<Response>}>
+                        \\'routes' expects a Record<string, Response | HTMLBundle | {[method: string]: (req: FunRequest) => Response|Promise<Response>}>
                         \\
-                        \\To bundle frontend apps on-demand with Bun.serve(), import HTML files.
+                        \\To bundle frontend apps on-demand with Fun.serve(), import HTML files.
                         \\
                         \\Example:
                         \\
                         \\```js
-                        \\import { serve } from "bun";
+                        \\import { serve } from "fun";
                         \\import app from "./app.html";
                         \\
                         \\serve({
@@ -672,7 +672,7 @@ pub fn fromJS(
                         \\});
                         \\```
                         \\
-                        \\See https://bun.com/docs/api/http for more information.
+                        \\See https://fun.dev/docs/api/http for more information.
                     ,
                         .{},
                     );
@@ -680,19 +680,19 @@ pub fn fromJS(
                 args.static_routes.append(.{
                     .path = path,
                     .route = route,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
             }
 
             // When HTML bundles are provided, ensure DevServer options are ready
-            // The presence of these options causes Bun.serve to initialize things.
+            // The presence of these options causes Fun.serve to initialize things.
             if ((init_ctx.dedupe_html_bundle_map.count() > 0 or
                 init_ctx.framework_router_list.items.len > 0))
             {
                 if (args.development.isHMREnabled()) {
-                    const root = bun.fs.FileSystem.instance.top_level_dir;
-                    const framework = try bun.bake.Framework.auto(
+                    const root = fun.fs.FileSystem.instance.top_level_dir;
+                    const framework = try fun.bake.Framework.auto(
                         init_ctx.arena.allocator(),
-                        &global.bunVM().transpiler.resolver,
+                        &global.funVM().transpiler.resolver,
                         init_ctx.framework_router_list.items,
                     );
                     args.bake = .{
@@ -700,7 +700,7 @@ pub fn fromJS(
                         .allocations = init_ctx.js_string_allocations,
                         .root = root,
                         .framework = framework,
-                        .bundler_options = bun.bake.SplitBundlerOptions.empty,
+                        .bundler_options = fun.bake.SplitBundlerOptions.empty,
                     };
                     const bake = &args.bake.?;
 
@@ -732,7 +732,7 @@ pub fn fromJS(
                     init_ctx.arena.deinit();
                 }
             } else {
-                bun.debugAssert(init_ctx.arena.state.end_index == 0 and
+                fun.debugAssert(init_ctx.arena.state.end_index == 0 and
                     init_ctx.arena.state.buffer_list.first == null);
                 init_ctx.arena.deinit();
             }
@@ -743,13 +743,13 @@ pub fn fromJS(
         if (try arg.get(global, "idleTimeout")) |value| {
             if (!value.isUndefinedOrNull()) {
                 if (!value.isAnyInt()) {
-                    return global.throwInvalidArguments("Bun.serve expects idleTimeout to be an integer", .{});
+                    return global.throwInvalidArguments("Fun.serve expects idleTimeout to be an integer", .{});
                 }
                 args.has_idleTimeout = true;
 
                 const idleTimeout: u64 = @intCast(@max(value.toInt64(), 0));
                 if (idleTimeout > 255) {
-                    return global.throwInvalidArguments("Bun.serve expects idleTimeout to be 255 or less", .{});
+                    return global.throwInvalidArguments("Fun.serve expects idleTimeout to be 255 or less", .{});
                 }
 
                 args.idleTimeout = @truncate(idleTimeout);
@@ -782,25 +782,25 @@ pub fn fromJS(
         if (global.hasException()) return error.JSError;
 
         if (try arg.getTruthy(global, "baseURI")) |baseURI| {
-            var sliced = try baseURI.toSlice(global, bun.default_allocator);
+            var sliced = try baseURI.toSlice(global, fun.default_allocator);
 
             if (sliced.len > 0) {
                 defer sliced.deinit();
                 if (args.base_uri.len > 0) {
-                    bun.default_allocator.free(@constCast(args.base_uri));
+                    fun.default_allocator.free(@constCast(args.base_uri));
                 }
-                args.base_uri = bun.default_allocator.dupe(u8, sliced.slice()) catch unreachable;
+                args.base_uri = fun.default_allocator.dupe(u8, sliced.slice()) catch unreachable;
             }
         }
         if (global.hasException()) return error.JSError;
 
         if (try arg.getStringish(global, "hostname") orelse try arg.getStringish(global, "host")) |host| {
             defer host.deref();
-            const host_str = host.toUTF8(bun.default_allocator);
+            const host_str = host.toUTF8(fun.default_allocator);
             defer host_str.deinit();
 
             if (host_str.len > 0) {
-                args.address.tcp.hostname = bun.default_allocator.dupeZ(u8, host_str.slice()) catch unreachable;
+                args.address.tcp.hostname = fun.default_allocator.dupeZ(u8, host_str.slice()) catch unreachable;
                 has_hostname = true;
             }
         }
@@ -808,14 +808,14 @@ pub fn fromJS(
 
         if (try arg.getStringish(global, "unix")) |unix| {
             defer unix.deref();
-            const unix_str = unix.toUTF8(bun.default_allocator);
+            const unix_str = unix.toUTF8(fun.default_allocator);
             defer unix_str.deinit();
             if (unix_str.len > 0) {
                 if (has_hostname) {
                     return global.throwInvalidArguments("Cannot specify both hostname and unix", .{});
                 }
 
-                args.address = .{ .unix = bun.default_allocator.dupeZ(u8, unix_str.slice()) catch unreachable };
+                args.address = .{ .unix = fun.default_allocator.dupeZ(u8, unix_str.slice()) catch unreachable };
             }
         }
         if (global.hasException()) return error.JSError;
@@ -824,7 +824,7 @@ pub fn fromJS(
             if (id.isUndefinedOrNull()) {
                 args.allow_hot = false;
             } else {
-                const id_str = try id.toUTF8Bytes(global, bun.default_allocator);
+                const id_str = try id.toUTF8Bytes(global, fun.default_allocator);
                 if (id_str.len > 0) {
                     args.id = id_str;
                 } else {
@@ -836,7 +836,7 @@ pub fn fromJS(
 
         if (opts.allow_bake_config) {
             if (try arg.getTruthy(global, "app")) |bake_args_js| brk: {
-                if (!bun.FeatureFlags.bake()) {
+                if (!fun.FeatureFlags.bake()) {
                     break :brk;
                 }
                 if (args.bake != null) {
@@ -845,10 +845,10 @@ pub fn fromJS(
                 }
 
                 if (args.development == .production) {
-                    return global.throwInvalidArguments("TODO: 'development: false' in serve options with 'app'. For now, use `bun build --app` or set 'development: true'", .{});
+                    return global.throwInvalidArguments("TODO: 'development: false' in serve options with 'app'. For now, use `fun build --app` or set 'development: true'", .{});
                 }
 
-                args.bake = try bun.bake.UserOptions.fromJS(bake_args_js, global);
+                args.bake = try fun.bake.UserOptions.fromJS(bake_args_js, global);
             }
         }
 
@@ -908,7 +908,7 @@ pub fn fromJS(
         } else if (args.bake == null and args.onNodeHTTPRequest == .zero and ((args.static_routes.items.len + args.user_routes_to_build.items.len) == 0 and !opts.has_user_routes) and opts.is_fetch_required) {
             if (global.hasException()) return error.JSError;
             return global.throwInvalidArguments(
-                \\Bun.serve() needs either:
+                \\Fun.serve() needs either:
                 \\
                 \\  - A routes object:
                 \\     routes: {
@@ -922,7 +922,7 @@ pub fn fromJS(
                 \\       return new Response("Hello")
                 \\     }
                 \\
-                \\Learn more at https://bun.com/docs/api/http
+                \\Learn more at https://fun.dev/docs/api/http
             , .{});
         } else {
             if (global.hasException()) return error.JSError;
@@ -954,10 +954,10 @@ pub fn fromJS(
                                 return global.throwInvalidArguments("SNI tls object must have a serverName", .{});
                             }
                             if (args.sni == null) {
-                                args.sni = bun.handleOom(bun.BabyList(SSLConfig).initCapacity(bun.default_allocator, value_iter.len - 1));
+                                args.sni = fun.handleOom(fun.BabyList(SSLConfig).initCapacity(fun.default_allocator, value_iter.len - 1));
                             }
 
-                            bun.handleOom(args.sni.?.append(bun.default_allocator, ssl_config));
+                            fun.handleOom(args.sni.?.append(fun.default_allocator, ssl_config));
                         }
                     }
                 }
@@ -972,7 +972,7 @@ pub fn fromJS(
         }
         if (global.hasException()) return error.JSError;
 
-        // @compatibility Bun v0.x - v0.2.1
+        // @compatibility Fun v0.x - v0.2.1
         // this used to be top-level, now it's "tls" object
         if (args.ssl_config == null) {
             if (try SSLConfig.fromJS(vm, global, arg)) |ssl_config| {
@@ -994,19 +994,19 @@ pub fn fromJS(
             return global.throwInvalidArguments("Cannot disable http1 with a unix socket — HTTP/3 over AF_UNIX is not supported", .{});
         }
     } else {
-        return global.throwInvalidArguments("Bun.serve expects an object", .{});
+        return global.throwInvalidArguments("Fun.serve expects an object", .{});
     }
 
     if (args.base_uri.len > 0) {
         args.base_url = URL.parse(args.base_uri);
         if (args.base_url.hostname.len == 0) {
-            bun.default_allocator.free(@constCast(args.base_uri));
+            fun.default_allocator.free(@constCast(args.base_uri));
             args.base_uri = "";
             return global.throwInvalidArguments("baseURI must have a hostname", .{});
         }
 
         if (!strings.isAllASCII(args.base_uri)) {
-            bun.default_allocator.free(@constCast(args.base_uri));
+            fun.default_allocator.free(@constCast(args.base_uri));
             args.base_uri = "";
             return global.throwInvalidArguments("Unicode baseURI must already be encoded for now.\nnew URL(baseuRI).toString() should do the trick.", .{});
         }
@@ -1016,16 +1016,16 @@ pub fn fromJS(
             const hostname = args.base_url.hostname;
             const needsBrackets: bool = strings.isIPV6Address(hostname) and hostname[0] != '[';
             const original_base_uri = args.base_uri;
-            defer bun.default_allocator.free(@constCast(original_base_uri));
+            defer fun.default_allocator.free(@constCast(original_base_uri));
             if (needsBrackets) {
                 args.base_uri = (if ((port == 80 and args.ssl_config == null) or (port == 443 and args.ssl_config != null))
-                    std.fmt.allocPrint(bun.default_allocator, "{s}://[{s}]/{s}", .{
+                    std.fmt.allocPrint(fun.default_allocator, "{s}://[{s}]/{s}", .{
                         protocol,
                         hostname,
                         strings.trimLeadingChar(args.base_url.pathname, '/'),
                     })
                 else
-                    std.fmt.allocPrint(bun.default_allocator, "{s}://[{s}]:{d}/{s}", .{
+                    std.fmt.allocPrint(fun.default_allocator, "{s}://[{s}]:{d}/{s}", .{
                         protocol,
                         hostname,
                         port,
@@ -1033,13 +1033,13 @@ pub fn fromJS(
                     })) catch unreachable;
             } else {
                 args.base_uri = (if ((port == 80 and args.ssl_config == null) or (port == 443 and args.ssl_config != null))
-                    std.fmt.allocPrint(bun.default_allocator, "{s}://{s}/{s}", .{
+                    std.fmt.allocPrint(fun.default_allocator, "{s}://{s}/{s}", .{
                         protocol,
                         hostname,
                         strings.trimLeadingChar(args.base_url.pathname, '/'),
                     })
                 else
-                    std.fmt.allocPrint(bun.default_allocator, "{s}://{s}:{d}/{s}", .{
+                    std.fmt.allocPrint(fun.default_allocator, "{s}://{s}:{d}/{s}", .{
                         protocol,
                         hostname,
                         port,
@@ -1058,24 +1058,24 @@ pub fn fromJS(
         const protocol: string = if (args.ssl_config != null) "https" else "http";
         if (needsBrackets) {
             args.base_uri = (if ((port == 80 and args.ssl_config == null) or (port == 443 and args.ssl_config != null))
-                std.fmt.allocPrint(bun.default_allocator, "{s}://[{s}]/", .{
+                std.fmt.allocPrint(fun.default_allocator, "{s}://[{s}]/", .{
                     protocol,
                     hostname,
                 })
             else
-                std.fmt.allocPrint(bun.default_allocator, "{s}://[{s}]:{d}/", .{ protocol, hostname, port })) catch unreachable;
+                std.fmt.allocPrint(fun.default_allocator, "{s}://[{s}]:{d}/", .{ protocol, hostname, port })) catch unreachable;
         } else {
             args.base_uri = (if ((port == 80 and args.ssl_config == null) or (port == 443 and args.ssl_config != null))
-                std.fmt.allocPrint(bun.default_allocator, "{s}://{s}/", .{
+                std.fmt.allocPrint(fun.default_allocator, "{s}://{s}/", .{
                     protocol,
                     hostname,
                 })
             else
-                std.fmt.allocPrint(bun.default_allocator, "{s}://{s}:{d}/", .{ protocol, hostname, port })) catch unreachable;
+                std.fmt.allocPrint(fun.default_allocator, "{s}://{s}:{d}/", .{ protocol, hostname, port })) catch unreachable;
         }
 
         if (!strings.isAllASCII(hostname)) {
-            bun.default_allocator.free(@constCast(args.base_uri));
+            fun.default_allocator.free(@constCast(args.base_uri));
             args.base_uri = "";
             return global.throwInvalidArguments("Unicode hostnames must already be encoded for now.\nnew URL(input).hostname should do the trick.", .{});
         }
@@ -1086,13 +1086,13 @@ pub fn fromJS(
     // I don't think there's a case where this can happen
     // but let's check anyway, just in case
     if (args.base_url.hostname.len == 0) {
-        bun.default_allocator.free(@constCast(args.base_uri));
+        fun.default_allocator.free(@constCast(args.base_uri));
         args.base_uri = "";
         return global.throwInvalidArguments("baseURI must have a hostname", .{});
     }
 
     if (args.base_url.username.len > 0 or args.base_url.password.len > 0) {
-        bun.default_allocator.free(@constCast(args.base_uri));
+        fun.default_allocator.free(@constCast(args.base_uri));
         args.base_uri = "";
         return global.throwInvalidArguments("baseURI can't have a username or password", .{});
     }
@@ -1115,13 +1115,13 @@ const string = []const u8;
 const WebSocketServerContext = @import("./WebSocketServerContext.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const HTTP = bun.http;
-const JSError = bun.JSError;
-const URL = bun.URL;
-const assert = bun.assert;
-const jsc = bun.jsc;
-const strings = bun.strings;
-const uws = bun.uws;
-const AnyRoute = bun.api.server.AnyRoute;
+const fun = @import("fun");
+const HTTP = fun.http;
+const JSError = fun.JSError;
+const URL = fun.URL;
+const assert = fun.assert;
+const jsc = fun.jsc;
+const strings = fun.strings;
+const uws = fun.uws;
+const AnyRoute = fun.api.server.AnyRoute;
 const AnyServer = jsc.API.AnyServer;

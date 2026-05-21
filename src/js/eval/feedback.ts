@@ -118,22 +118,22 @@ function parseCliArgs(argv: string[]): ParsedArgs {
 }
 
 function printHelp() {
-  const heading = `${bold}${cyan}bun feedback${reset}`;
+  const heading = `${bold}${cyan}fun feedback${reset}`;
   const usage = `${bold}Usage${reset}
-  bun feedback [options] [feedback text ... | files ...]`;
+  fun feedback [options] [feedback text ... | files ...]`;
   const options = `${bold}Options${reset}
   ${cyan}-e${reset}, ${cyan}--email${reset} <email>   Set the email address used for this submission
   ${cyan}-h${reset}, ${cyan}--help${reset}            Show this help message and exit`;
   const examples = `${bold}Examples${reset}
-  bun feedback "Love the new release!"
-  bun feedback report.txt details.log
-  echo "please document X" | bun feedback --email you@example.com`;
+  fun feedback "Love the new release!"
+  fun feedback report.txt details.log
+  echo "please document X" | fun feedback --email you@example.com`;
 
   console.log([heading, "", usage, "", options, "", examples].join("\n"));
 }
 
-async function readEmailFromBunInstall(): Promise<string | undefined> {
-  const installRoot = process.env.BUN_INSTALL ?? path.join(os.homedir(), ".bun");
+async function readEmailFromFunInstall(): Promise<string | undefined> {
+  const installRoot = process.env.FUN_INSTALL ?? path.join(os.homedir(), ".fun");
   const emailFile = path.join(installRoot, "feedback");
   try {
     const data = await fsp.readFile(emailFile, "utf8");
@@ -147,8 +147,8 @@ async function readEmailFromBunInstall(): Promise<string | undefined> {
   }
 }
 
-async function persistEmailToBunInstall(email: string): Promise<void> {
-  const installRoot = process.env.BUN_INSTALL;
+async function persistEmailToFunInstall(email: string): Promise<void> {
+  const installRoot = process.env.FUN_INSTALL;
   if (!installRoot) return;
 
   const emailFile = path.join(installRoot, "feedback");
@@ -320,7 +320,7 @@ async function promptForBody(
     input.resume();
   }
 
-  const header = `${symbols.question} ${bold}Share your feedback with Bun's team${reset} ${dim}(Enter to send, Shift+Enter for a newline)${reset}`;
+  const header = `${symbols.question} ${bold}Share your feedback with Fun's team${reset} ${dim}(Enter to send, Shift+Enter for a newline)${reset}`;
   output.write(`${header}\n`);
   if (attachments.length > 0) {
     output.write(`${dim}+ ${attachments.map(file => file.filename).join(", ")}${reset}\n`);
@@ -479,7 +479,7 @@ async function readFromPositionals(positionals: string[]): Promise<PositionalCon
 
     if (filePath) {
       try {
-        let fileContents = await Bun.file(filePath).bytes();
+        let fileContents = await Fun.file(filePath).bytes();
         // Truncate to
         if (fileContents.length > 1024 * 1024 * 10) {
           fileContents = fileContents.slice(0, 1024 * 1024 * 10);
@@ -567,7 +567,7 @@ async function main() {
       exit(1);
     }
 
-    const storedEmailRaw = await readEmailFromBunInstall();
+    const storedEmailRaw = await readEmailFromFunInstall();
     const storedEmail = isValidEmail(storedEmailRaw) ? storedEmailRaw.trim() : undefined;
 
     const gitEmailRaw = readEmailFromGitConfig();
@@ -593,8 +593,8 @@ async function main() {
 
     const normalizedEmail = email.trim();
 
-    if (process.env.BUN_INSTALL && !storedEmail) {
-      await persistEmailToBunInstall(normalizedEmail);
+    if (process.env.FUN_INSTALL && !storedEmail) {
+      await persistEmailToFunInstall(normalizedEmail);
     }
 
     const stdinContent = await readFromStdin();
@@ -627,7 +627,7 @@ async function main() {
     const messageBody = normalizedMessage;
 
     const projectId = getOldestGitSha();
-    const endpoint = process.env.BUN_FEEDBACK_URL || "https://bun.report/v1/feedback";
+    const endpoint = process.env.FUN_FEEDBACK_URL || "https://fun.report/v1/feedback";
 
     const form = new FormData();
     form.append("email", normalizedEmail);
@@ -636,14 +636,14 @@ async function main() {
       form.append("files[]", new Blob([file.content]), file.filename);
     }
 
-    const id = Bun.randomUUIDv7();
+    const id = Fun.randomUUIDv7();
 
     form.append("platform", process.platform);
     form.append("arch", process.arch);
-    form.append("bunRevision", Bun.revision);
+    form.append("funRevision", Fun.revision);
     form.append("hardwareConcurrency", String(navigator.hardwareConcurrency));
-    form.append("bunVersion", Bun.version);
-    form.append("bunBuild", path.basename(process.release.sourceUrl!, path.extname(process.release.sourceUrl!)));
+    form.append("funVersion", Fun.version);
+    form.append("funBuild", path.basename(process.release.sourceUrl!, path.extname(process.release.sourceUrl!)));
     form.append("availableMemory", String(process.availableMemory()));
     form.append("totalMemory", String(os.totalmem()));
     form.append("osVersion", String(os.version()));

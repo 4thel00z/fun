@@ -49,7 +49,7 @@ source "azure-arm" "windows-x64" {
     image_name           = var.image_name != "" ? var.image_name : "windows-x64-2019-build-${var.build_number}"
     image_version        = "1.0.0"
     // Premium_LRS: SSD-backed gallery storage — faster provisioning when
-    // robobun launches runners from this image, and faster cross-region
+    // robofun launches runners from this image, and faster cross-region
     // replication during the publish step above.
     storage_account_type = "Premium_LRS"
     target_region { name = var.location }
@@ -95,7 +95,7 @@ build {
   provisioner "powershell" {
     script           = var.bootstrap_script
     valid_exit_codes = [0, 3010]
-    environment_vars = ["CI=true", "BUN_BOOTSTRAP_REPO_REF=${var.repo_ref}"]
+    environment_vars = ["CI=true", "FUN_BOOTSTRAP_REPO_REF=${var.repo_ref}"]
   }
 
   // Step 2: Upload agent.mjs

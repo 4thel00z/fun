@@ -1,8 +1,8 @@
 /**
  * Clean build artifacts. Run with --help for presets.
  *
- * Node-compatible: no Bun APIs, so this works when bootstrapping without a
- * bun binary.
+ * Node-compatible: no Fun APIs, so this works when bootstrapping without a
+ * fun binary.
  */
 
 import { existsSync, readdirSync } from "node:fs";
@@ -15,7 +15,7 @@ import { allDeps } from "./deps/index.ts";
 const cwd = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 // Machine-shared cache (ccache/zig/tarballs/webkit). Matches resolveConfig()'s
 // non-CI default. `clean` is a dev-machine tool so we don't branch on CI here.
-const sharedCacheDir = resolve(process.env.BUN_INSTALL || resolve(homedir(), ".bun"), "build-cache");
+const sharedCacheDir = resolve(process.env.FUN_INSTALL || resolve(homedir(), ".fun"), "build-cache");
 
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
@@ -24,16 +24,16 @@ const preset = args.find(a => !a.startsWith("-")) ?? "debug";
 const log = (msg: string) => console.log(`[clean] ${msg}`);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`usage: bun run clean [preset] [--dry-run]
+  console.log(`usage: fun run clean [preset] [--dry-run]
 
 presets:
   debug (default)  build/debug/
   release          build/release/
   debug-local      build/debug-local/
   release-local    build/release-local/
-  zig              zig caches + bun-zig*.o across all profiles, .zig-cache, zig-out
+  zig              zig caches + fun-zig*.o across all profiles, .zig-cache, zig-out
   cpp              C++ obj/ + pch/ across all profiles
-  cache            machine-shared build cache (~/.bun/build-cache: ccache, zig,
+  cache            machine-shared build cache (~/.fun/build-cache: ccache, zig,
                    tarballs, prebuilt webkit) — affects ALL checkouts
   deep             build/, .zig-cache, zig-out, vendor/* (except manually
                    managed deps like WebKit)
@@ -70,7 +70,7 @@ const presets: Record<string, () => string[]> = {
     ...buildProfiles().flatMap(p => [
       resolve(p, "cache", "zig"),
       // Single-object (cg=1) and shard (cg>1) outputs both match.
-      ...(existsSync(p) ? readdirSync(p) : []).filter(f => /^bun-zig(\.\d+)?\.o$/.test(f)).map(f => resolve(p, f)),
+      ...(existsSync(p) ? readdirSync(p) : []).filter(f => /^fun-zig(\.\d+)?\.o$/.test(f)).map(f => resolve(p, f)),
     ]),
     resolve(sharedCacheDir, "zig"),
     resolve(cwd, "build", "debug", "zig-check-cache"),

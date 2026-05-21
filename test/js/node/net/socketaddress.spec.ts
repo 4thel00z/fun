@@ -114,7 +114,7 @@ describe("SocketAddress constructor", () => {
       sa = new SocketAddress(options[i % options.length]);
     }
     sa = undefined;
-    Bun.gc(true);
+    Fun.gc(true);
 
     const before = process.memoryUsage();
     if (debug) console.log("before", before);
@@ -124,7 +124,7 @@ describe("SocketAddress constructor", () => {
       sa = new SocketAddress(options[i % 2]);
     }
     sa = undefined;
-    Bun.gc(true);
+    Fun.gc(true);
 
     const after = process.memoryUsage();
     if (debug) console.log("after", after);

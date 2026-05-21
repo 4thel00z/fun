@@ -145,7 +145,7 @@ static inline EncodedJSValue jsWasmStreamingCompilerPrototypeFunction_addBytesBo
         return encodedJSUndefined();
     } else [[unlikely]] {
         // See WasmStreamingObject::Push in Node.js's node_wasm_web_api.cc
-        return Bun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "chunk must be an ArrayBufferView or an ArrayBuffer"_s);
+        return Fun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "chunk must be an ArrayBufferView or an ArrayBuffer"_s);
     }
 }
 

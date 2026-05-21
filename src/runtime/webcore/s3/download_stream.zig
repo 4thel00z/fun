@@ -1,29 +1,29 @@
-const log = bun.Output.scoped(.S3, .hidden);
+const log = fun.Output.scoped(.S3, .hidden);
 pub const S3HttpDownloadStreamingTask = struct {
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
-    http: bun.http.AsyncHTTP,
+    http: fun.http.AsyncHTTP,
     vm: *jsc.VirtualMachine,
     sign_result: SignResult,
-    headers: bun.http.Headers,
+    headers: fun.http.Headers,
     callback_context: *anyopaque,
     // this transfers ownership from the chunk
-    callback: *const fn (chunk: bun.MutableString, has_more: bool, err: ?S3Error, *anyopaque) void,
+    callback: *const fn (chunk: fun.MutableString, has_more: bool, err: ?S3Error, *anyopaque) void,
     has_schedule_callback: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
-    signal_store: bun.http.Signals.Store = .{},
-    signals: bun.http.Signals = .{},
-    poll_ref: bun.Async.KeepAlive = bun.Async.KeepAlive.init(),
+    signal_store: fun.http.Signals.Store = .{},
+    signals: fun.http.Signals = .{},
+    poll_ref: fun.Async.KeepAlive = fun.Async.KeepAlive.init(),
 
-    response_buffer: bun.MutableString = .{
-        .allocator = bun.default_allocator,
+    response_buffer: fun.MutableString = .{
+        .allocator = fun.default_allocator,
         .list = .{
             .items = &.{},
             .capacity = 0,
         },
     },
-    mutex: bun.Mutex = .{},
-    reported_response_buffer: bun.MutableString = .{
-        .allocator = bun.default_allocator,
+    mutex: fun.Mutex = .{},
+    reported_response_buffer: fun.MutableString = .{
+        .allocator = fun.default_allocator,
         .list = .{
             .items = &.{},
             .capacity = 0,
@@ -60,12 +60,12 @@ pub const S3HttpDownloadStreamingTask = struct {
         this.sign_result.deinit();
         this.http.clearData();
         if (this.range) |range| {
-            bun.default_allocator.free(range);
+            fun.default_allocator.free(range);
         }
         if (this.proxy_url.len > 0) {
-            bun.default_allocator.free(this.proxy_url);
+            fun.default_allocator.free(this.proxy_url);
         }
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     fn reportProgress(this: *@This(), state: State) void {
@@ -118,7 +118,7 @@ pub const S3HttpDownloadStreamingTask = struct {
                         .message = message,
                     };
                 }
-                break :brk bun.MutableString{ .allocator = bun.default_allocator, .list = .{} };
+                break :brk fun.MutableString{ .allocator = fun.default_allocator, .list = .{} };
             } else {
                 const buffer = this.reported_response_buffer;
                 break :brk buffer;
@@ -158,7 +158,7 @@ pub const S3HttpDownloadStreamingTask = struct {
 
     /// this function is only called from the http callback in the HTTPThread and returns true if we should wait until we are done buffering the response body to report
     /// should only be called when already locked
-    fn updateState(this: *@This(), async_http: *bun.http.AsyncHTTP, result: bun.http.HTTPClientResult, state: *State) bool {
+    fn updateState(this: *@This(), async_http: *fun.http.AsyncHTTP, result: fun.http.HTTPClientResult, state: *State) bool {
         const is_done = !result.has_more;
         // if we got a error or fail wait until we are done buffering the response body to report
         var wait_until_done = false;
@@ -168,12 +168,12 @@ pub const S3HttpDownloadStreamingTask = struct {
             state.request_error = if (result.fail) |err| @intFromError(err) else 0;
             if (state.status_code == 0) {
                 if (result.certificate_info) |*certificate| {
-                    certificate.deinit(bun.default_allocator);
+                    certificate.deinit(fun.default_allocator);
                 }
                 if (result.metadata) |m| {
                     var metadata = m;
                     state.status_code = metadata.response.status_code;
-                    metadata.deinit(bun.default_allocator);
+                    metadata.deinit(fun.default_allocator);
                 }
             }
             switch (state.status_code) {
@@ -188,7 +188,7 @@ pub const S3HttpDownloadStreamingTask = struct {
     }
 
     /// this functions is only called from the http callback in the HTTPThread and returns true if we should enqueue another task
-    fn processHttpCallback(this: *@This(), async_http: *bun.http.AsyncHTTP, result: bun.http.HTTPClientResult) bool {
+    fn processHttpCallback(this: *@This(), async_http: *fun.http.AsyncHTTP, result: fun.http.HTTPClientResult) bool {
         // lets lock and unlock to be safe we know the state is not in the middle of a callback when locked
         this.mutex.lock();
         defer this.mutex.unlock();
@@ -196,7 +196,7 @@ pub const S3HttpDownloadStreamingTask = struct {
         // remember the state is atomic load it once, and store it again
         var state = this.getState();
         // old state should have more otherwise its a http.zig bug
-        bun.assert(state.has_more);
+        fun.assert(state.has_more);
         const is_done = !result.has_more;
         const wait_until_done = updateState(this, async_http, result, &state);
         const should_enqueue = !wait_until_done or is_done;
@@ -206,7 +206,7 @@ pub const S3HttpDownloadStreamingTask = struct {
             if (result.body) |body| {
                 this.response_buffer = body.*;
                 if (body.list.items.len > 0) {
-                    _ = bun.handleOom(this.reported_response_buffer.write(body.list.items));
+                    _ = fun.handleOom(this.reported_response_buffer.write(body.list.items));
                 }
                 this.response_buffer.reset();
                 if (this.reported_response_buffer.list.items.len == 0 and !is_done) {
@@ -225,7 +225,7 @@ pub const S3HttpDownloadStreamingTask = struct {
         return false;
     }
     /// this is the callback from the http.zig AsyncHTTP is always called from the HTTPThread
-    pub fn httpCallback(this: *@This(), async_http: *bun.http.AsyncHTTP, result: bun.http.HTTPClientResult) void {
+    pub fn httpCallback(this: *@This(), async_http: *fun.http.AsyncHTTP, result: fun.http.HTTPClientResult) void {
         if (processHttpCallback(this, async_http, result)) {
             // we are always unlocked here and its safe to enqueue
             this.vm.eventLoop().enqueueTaskConcurrent(this.concurrent_task.from(this, .manual_deinit));
@@ -239,6 +239,6 @@ const S3Error = @import("../../../s3_signing/error.zig").S3Error;
 const S3Credentials = @import("../../../s3_signing/credentials.zig").S3Credentials;
 const SignResult = S3Credentials.SignResult;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const strings = bun.strings;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const strings = fun.strings;

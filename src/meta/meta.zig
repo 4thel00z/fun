@@ -75,7 +75,7 @@ pub fn enumFieldNames(comptime Type: type) []const []const u8 {
     for (names) |name| {
         // zig seems to include "_" or an empty string in the list of enum field names
         // it makes sense, but humans don't want that
-        if (bun.strings.eqlAnyComptime(name, &.{ "_none", "", "_" })) {
+        if (fun.strings.eqlAnyComptime(name, &.{ "_none", "", "_" })) {
             continue;
         }
         names[i] = name;
@@ -370,5 +370,5 @@ pub fn hasField(comptime T: type, comptime name: []const u8) bool {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

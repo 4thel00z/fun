@@ -20,7 +20,7 @@
 #include "ScriptExecutionContext.h"
 #include <wtf/RefCounted.h>
 
-namespace Bun {
+namespace Fun {
 
 class WebViewEventTarget final : public RefCounted<WebViewEventTarget>,
                                  public WebCore::EventTargetWithInlineData,
@@ -42,11 +42,11 @@ private:
     {
     }
 
-    WebCore::EventTargetInterface eventTargetInterface() const final { return WebCore::BunWebViewEventTargetInterfaceType; }
+    WebCore::EventTargetInterface eventTargetInterface() const final { return WebCore::FunWebViewEventTargetInterfaceType; }
     WebCore::ScriptExecutionContext* scriptExecutionContext() const final { return ContextDestructionObserver::scriptExecutionContext(); }
 
     void refEventTarget() final { ref(); }
     void derefEventTarget() final { deref(); }
 };
 
-} // namespace Bun
+} // namespace Fun

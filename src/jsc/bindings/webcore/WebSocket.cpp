@@ -34,7 +34,7 @@
 #include "WebSocketDeflate.h"
 #include "headers.h"
 #include "blob.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "ZigGeneratedClasses.h"
 #include "CloseEvent.h"
 #include <wtf/text/Base64.h>
@@ -83,8 +83,8 @@
 
 namespace WebCore {
 WTF_MAKE_TZONE_ALLOCATED_IMPL(WebSocket);
-extern "C" int Bun__getTLSRejectUnauthorizedValue();
-extern "C" bool Bun__isNoProxy(const char* hostname, size_t hostname_len, const char* host, size_t host_len);
+extern "C" int Fun__getTLSRejectUnauthorizedValue();
+extern "C" bool Fun__isNoProxy(const char* hostname, size_t hostname_len, const char* host, size_t host_len);
 
 static ErrorEvent::Init createErrorEventInit(WebSocket& webSocket, const String& reason, JSC::JSGlobalObject* globalObject)
 {
@@ -186,7 +186,7 @@ WebSocket::WebSocket(ScriptExecutionContext& context)
 {
     m_state = CONNECTING;
     m_hasPendingActivity.store(true);
-    m_rejectUnauthorized = Bun__getTLSRejectUnauthorizedValue() != 0;
+    m_rejectUnauthorized = Fun__getTLSRejectUnauthorizedValue() != 0;
 }
 
 WebSocket::~WebSocket()
@@ -196,19 +196,19 @@ WebSocket::~WebSocket()
         // Use TLS cancel if connection type is TLS or ProxyTLS (either is a TLS socket to the remote)
         bool useTLSClient = (m_connectionType == ConnectionType::TLS || m_connectionType == ConnectionType::ProxyTLS);
         if (useTLSClient) {
-            Bun__WebSocketHTTPSClient__cancel(reinterpret_cast<void*>(upgradeClient));
+            Fun__WebSocketHTTPSClient__cancel(reinterpret_cast<void*>(upgradeClient));
         } else {
-            Bun__WebSocketHTTPClient__cancel(reinterpret_cast<void*>(upgradeClient));
+            Fun__WebSocketHTTPClient__cancel(reinterpret_cast<void*>(upgradeClient));
         }
     }
 
     switch (m_connectedWebSocketKind) {
     case ConnectedWebSocketKind::Client: {
-        Bun__WebSocketClient__finalize(reinterpret_cast<void*>(this->m_connectedWebSocket.client));
+        Fun__WebSocketClient__finalize(reinterpret_cast<void*>(this->m_connectedWebSocket.client));
         break;
     }
     case ConnectedWebSocketKind::ClientSSL: {
-        Bun__WebSocketClientTLS__finalize(reinterpret_cast<void*>(this->m_connectedWebSocket.clientSSL));
+        Fun__WebSocketClientTLS__finalize(reinterpret_cast<void*>(this->m_connectedWebSocket.clientSSL));
         break;
     }
     // case ConnectedWebSocketKind::Server: {
@@ -432,18 +432,18 @@ size_t WebSocket::memoryCost() const
     cost += m_extensions.sizeInBytes();
 
     if (m_connectedWebSocketKind == ConnectedWebSocketKind::Client) {
-        cost += Bun__WebSocketClient__memoryCost(m_connectedWebSocket.client);
+        cost += Fun__WebSocketClient__memoryCost(m_connectedWebSocket.client);
     } else if (m_connectedWebSocketKind == ConnectedWebSocketKind::ClientSSL) {
-        cost += Bun__WebSocketClientTLS__memoryCost(m_connectedWebSocket.clientSSL);
+        cost += Fun__WebSocketClientTLS__memoryCost(m_connectedWebSocket.clientSSL);
     }
 
     if (m_upgradeClient) {
         // Use TLS cost if connection type is TLS or ProxyTLS
         bool useTLSClient = (m_connectionType == ConnectionType::TLS || m_connectionType == ConnectionType::ProxyTLS);
         if (useTLSClient) {
-            cost += Bun__WebSocketHTTPSClient__memoryCost(m_upgradeClient);
+            cost += Fun__WebSocketHTTPSClient__memoryCost(m_upgradeClient);
         } else {
-            cost += Bun__WebSocketHTTPClient__memoryCost(m_upgradeClient);
+            cost += Fun__WebSocketHTTPClient__memoryCost(m_upgradeClient);
         }
     }
 
@@ -547,7 +547,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
     if (!protocols.isEmpty())
         protocolString = joinStrings(protocols, subprotocolSeparator());
 
-    // Materialize host/path as WTF::String so the BunString wrappers hold a
+    // Materialize host/path as WTF::String so the FunString wrappers hold a
     // stable WTFStringImpl backing (preserving 8-bit vs UTF-16 encoding).
     // ZigString wrappers over non-ASCII Latin1/UTF-16 data lose the encoding
     // tag and corrupt the HTTP upgrade request build in Zig.
@@ -594,20 +594,20 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
             hostString = "localhost"_s;
         }
     }
-    BunString host = Bun::toString(hostString);
-    BunString path = Bun::toString(resource);
-    BunString unixSocketPath = Bun::toString(unixSocketPathString);
-    BunString clientProtocolString = Bun::toString(protocolString);
+    FunString host = Fun::toString(hostString);
+    FunString path = Fun::toString(resource);
+    FunString unixSocketPath = Fun::toString(unixSocketPathString);
+    FunString clientProtocolString = Fun::toString(protocolString);
     uint16_t port = is_secure ? 443 : 80;
     if (auto userPort = m_url.port()) {
         port = userPort.value();
     }
 
-    // Hold WTF::Strings so the BunString wrappers stay valid for the Zig call.
+    // Hold WTF::Strings so the FunString wrappers stay valid for the Zig call.
     Vector<String, 8> headerNameStrings;
     Vector<String, 8> headerValueStrings;
-    Vector<BunString, 8> headerNames;
-    Vector<BunString, 8> headerValues;
+    Vector<FunString, 8> headerNames;
+    Vector<FunString, 8> headerValues;
 
     auto headersOrException = FetchHeaders::create(WTF::move(headersInit));
     if (headersOrException.hasException()) [[unlikely]] {
@@ -628,8 +628,8 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
         headerValueStrings.append(value->value);
     }
     for (size_t i = 0; i < headerNameStrings.size(); ++i) {
-        headerNames.unsafeAppendWithoutCapacityCheck(Bun::toString(headerNameStrings[i]));
-        headerValues.unsafeAppendWithoutCapacityCheck(Bun::toString(headerValueStrings[i]));
+        headerNames.unsafeAppendWithoutCapacityCheck(Fun::toString(headerNameStrings[i]));
+        headerValues.unsafeAppendWithoutCapacityCheck(Fun::toString(headerValueStrings[i]));
     }
 
     // Determine connection type based on proxy usage and TLS requirements
@@ -647,7 +647,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
         auto hostWithPort = hostName(m_url, is_secure);
         auto hostUtf8 = hostStr.utf8();
         auto hostWithPortUtf8 = hostWithPort.utf8();
-        if (Bun__isNoProxy(hostUtf8.data(), hostUtf8.length(), hostWithPortUtf8.data(), hostWithPortUtf8.length())) {
+        if (Fun__isNoProxy(hostUtf8.data(), hostUtf8.length(), hostWithPortUtf8.data(), hostWithPortUtf8.length())) {
             proxyConfig = std::nullopt;
             hasProxy = false;
         }
@@ -667,20 +667,20 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
     this->incPendingActivityCount();
 
     // Prepare proxy parameters (use local variables, not member fields).
-    // The BunString wrappers reference the underlying WTF::Strings in proxyConfig
+    // The FunString wrappers reference the underlying WTF::Strings in proxyConfig
     // and remain valid for the duration of the connect() call.
-    BunString proxyHost = hasProxy ? Bun::toString(proxyConfig->host) : BunString { BunStringTag::Empty };
-    BunString proxyAuth = hasProxy ? Bun::toString(proxyConfig->authorization) : BunString { BunStringTag::Empty };
+    FunString proxyHost = hasProxy ? Fun::toString(proxyConfig->host) : FunString { FunStringTag::Empty };
+    FunString proxyAuth = hasProxy ? Fun::toString(proxyConfig->authorization) : FunString { FunStringTag::Empty };
     uint16_t proxyPort = hasProxy ? proxyConfig->port : 0;
 
-    Vector<BunString, 8> proxyHeaderNames;
-    Vector<BunString, 8> proxyHeaderValues;
+    Vector<FunString, 8> proxyHeaderNames;
+    Vector<FunString, 8> proxyHeaderValues;
     if (hasProxy) {
         proxyHeaderNames.reserveInitialCapacity(proxyConfig->headers.size());
         proxyHeaderValues.reserveInitialCapacity(proxyConfig->headers.size());
         for (const auto& header : proxyConfig->headers) {
-            proxyHeaderNames.unsafeAppendWithoutCapacityCheck(Bun::toString(header.first));
-            proxyHeaderValues.unsafeAppendWithoutCapacityCheck(Bun::toString(header.second));
+            proxyHeaderNames.unsafeAppendWithoutCapacityCheck(Fun::toString(header.first));
+            proxyHeaderValues.unsafeAppendWithoutCapacityCheck(Fun::toString(header.second));
         }
     }
 
@@ -692,7 +692,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
         auto encoded = base64EncodeToString(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(utf8.data()), utf8.length()));
         targetAuthorization = makeString("Basic "_s, encoded);
     }
-    BunString targetAuth = Bun::toString(targetAuthorization);
+    FunString targetAuth = Fun::toString(targetAuthorization);
 
     // Pass SSLConfig pointer to Zig (ownership transferred - Zig will deinit when connection closes)
     // After this call, m_sslConfig should not be used by C++ anymore
@@ -704,7 +704,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
     bool useTLSClient = (m_connectionType == ConnectionType::TLS || m_connectionType == ConnectionType::ProxyTLS);
 
     if (useTLSClient) {
-        this->m_upgradeClient = Bun__WebSocketHTTPSClient__connect(
+        this->m_upgradeClient = Fun__WebSocketHTTPSClient__connect(
             scriptExecutionContext()->jsGlobalObject(), reinterpret_cast<CppWebSocket*>(this),
             &host, port, &path, &clientProtocolString,
             headerNames.begin(), headerValues.begin(), headerNames.size(),
@@ -716,7 +716,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
             is_unix ? &unixSocketPath : nullptr,
             m_offerPerMessageDeflate);
     } else {
-        this->m_upgradeClient = Bun__WebSocketHTTPClient__connect(
+        this->m_upgradeClient = Fun__WebSocketHTTPClient__connect(
             scriptExecutionContext()->jsGlobalObject(), reinterpret_cast<CppWebSocket*>(this),
             &host, port, &path, &clientProtocolString,
             headerNames.begin(), headerValues.begin(), headerNames.size(),
@@ -856,13 +856,13 @@ void WebSocket::sendWebSocketData(const char* baseAddress, size_t length, const 
 {
     switch (m_connectedWebSocketKind) {
     case ConnectedWebSocketKind::Client: {
-        Bun__WebSocketClient__writeBinaryData(this->m_connectedWebSocket.client, reinterpret_cast<const unsigned char*>(baseAddress), length, static_cast<uint8_t>(op));
+        Fun__WebSocketClient__writeBinaryData(this->m_connectedWebSocket.client, reinterpret_cast<const unsigned char*>(baseAddress), length, static_cast<uint8_t>(op));
         // this->m_connectedWebSocket.client->send({ baseAddress, length }, opCode);
         // this->m_bufferedAmount = this->m_connectedWebSocket.client->getBufferedAmount();
         break;
     }
     case ConnectedWebSocketKind::ClientSSL: {
-        Bun__WebSocketClientTLS__writeBinaryData(this->m_connectedWebSocket.clientSSL, reinterpret_cast<const unsigned char*>(baseAddress), length, static_cast<uint8_t>(op));
+        Fun__WebSocketClientTLS__writeBinaryData(this->m_connectedWebSocket.clientSSL, reinterpret_cast<const unsigned char*>(baseAddress), length, static_cast<uint8_t>(op));
         break;
     }
     // case ConnectedWebSocketKind::Server: {
@@ -886,14 +886,14 @@ void WebSocket::sendWebSocketString(const String& message, const Opcode op)
     switch (m_connectedWebSocketKind) {
     case ConnectedWebSocketKind::Client: {
         auto zigStr = Zig::toZigString(message);
-        Bun__WebSocketClient__writeString(this->m_connectedWebSocket.client, &zigStr, static_cast<uint8_t>(op));
+        Fun__WebSocketClient__writeString(this->m_connectedWebSocket.client, &zigStr, static_cast<uint8_t>(op));
         // this->m_connectedWebSocket.client->send({ baseAddress, length }, opCode);
         // this->m_bufferedAmount = this->m_connectedWebSocket.client->getBufferedAmount();
         break;
     }
     case ConnectedWebSocketKind::ClientSSL: {
         auto zigStr = Zig::toZigString(message);
-        Bun__WebSocketClientTLS__writeString(this->m_connectedWebSocket.clientSSL, &zigStr, static_cast<uint8_t>(op));
+        Fun__WebSocketClientTLS__writeString(this->m_connectedWebSocket.clientSSL, &zigStr, static_cast<uint8_t>(op));
         break;
     }
     // case ConnectedWebSocketKind::Server: {
@@ -936,9 +936,9 @@ void WebSocket::failConnectingWebSocket()
         m_upgradeClient = nullptr;
         bool useTLSClient = (m_connectionType == ConnectionType::TLS || m_connectionType == ConnectionType::ProxyTLS);
         if (useTLSClient) {
-            Bun__WebSocketHTTPSClient__cancel(upgradeClient);
+            Fun__WebSocketHTTPSClient__cancel(upgradeClient);
         } else {
-            Bun__WebSocketHTTPClient__cancel(upgradeClient);
+            Fun__WebSocketHTTPClient__cancel(upgradeClient);
         }
     }
 
@@ -992,14 +992,14 @@ ExceptionOr<void> WebSocket::close(std::optional<unsigned short> optionalCode, c
     switch (m_connectedWebSocketKind) {
     case ConnectedWebSocketKind::Client: {
         ZigString reasonZigStr = Zig::toZigString(reason);
-        Bun__WebSocketClient__close(this->m_connectedWebSocket.client, code, &reasonZigStr);
+        Fun__WebSocketClient__close(this->m_connectedWebSocket.client, code, &reasonZigStr);
         updateHasPendingActivity();
         // this->m_bufferedAmount = this->m_connectedWebSocket.client->getBufferedAmount();
         break;
     }
     case ConnectedWebSocketKind::ClientSSL: {
         ZigString reasonZigStr = Zig::toZigString(reason);
-        Bun__WebSocketClientTLS__close(this->m_connectedWebSocket.clientSSL, code, &reasonZigStr);
+        Fun__WebSocketClientTLS__close(this->m_connectedWebSocket.clientSSL, code, &reasonZigStr);
         updateHasPendingActivity();
         // this->m_bufferedAmount = this->m_connectedWebSocket.clientSSL->getBufferedAmount();
         break;
@@ -1036,12 +1036,12 @@ ExceptionOr<void> WebSocket::terminate()
     m_state = CLOSING;
     switch (m_connectedWebSocketKind) {
     case ConnectedWebSocketKind::Client: {
-        Bun__WebSocketClient__cancel(this->m_connectedWebSocket.client);
+        Fun__WebSocketClient__cancel(this->m_connectedWebSocket.client);
         updateHasPendingActivity();
         break;
     }
     case ConnectedWebSocketKind::ClientSSL: {
-        Bun__WebSocketClientTLS__cancel(this->m_connectedWebSocket.clientSSL);
+        Fun__WebSocketClientTLS__cancel(this->m_connectedWebSocket.clientSSL);
         updateHasPendingActivity();
         break;
     }
@@ -1378,7 +1378,7 @@ void WebSocket::didReceiveMessage(String&& message)
     // a CString. The callback reads the span, we drop it — no
     // MessageEvent, no dispatchEvent, no postTask.
     if (m_native.onMessage) {
-        Bun::UTF8View view(message);
+        Fun::UTF8View view(message);
         m_native.onMessage(m_native.ctx, view.span());
         return;
     }
@@ -1643,17 +1643,17 @@ void WebSocket::didConnect(us_socket_t* socket, char* bufferedData, size_t buffe
     bool useTLSSocket = (m_connectionType == ConnectionType::TLS || m_connectionType == ConnectionType::ProxyTLS);
 
     if (useTLSSocket) {
-        this->m_connectedWebSocket.clientSSL = Bun__WebSocketClientTLS__init(reinterpret_cast<CppWebSocket*>(this), socket, this->scriptExecutionContext()->jsGlobalObject(), reinterpret_cast<unsigned char*>(bufferedData), bufferedDataSize, deflate_params, customSSLCtx);
+        this->m_connectedWebSocket.clientSSL = Fun__WebSocketClientTLS__init(reinterpret_cast<CppWebSocket*>(this), socket, this->scriptExecutionContext()->jsGlobalObject(), reinterpret_cast<unsigned char*>(bufferedData), bufferedDataSize, deflate_params, customSSLCtx);
         this->m_connectedWebSocketKind = ConnectedWebSocketKind::ClientSSL;
     } else {
-        this->m_connectedWebSocket.client = Bun__WebSocketClient__init(reinterpret_cast<CppWebSocket*>(this), socket, this->scriptExecutionContext()->jsGlobalObject(), reinterpret_cast<unsigned char*>(bufferedData), bufferedDataSize, deflate_params, customSSLCtx);
+        this->m_connectedWebSocket.client = Fun__WebSocketClient__init(reinterpret_cast<CppWebSocket*>(this), socket, this->scriptExecutionContext()->jsGlobalObject(), reinterpret_cast<unsigned char*>(bufferedData), bufferedDataSize, deflate_params, customSSLCtx);
         this->m_connectedWebSocketKind = ConnectedWebSocketKind::Client;
     }
 
     this->didConnect();
 }
 
-void WebSocket::didFailWithErrorCode(Bun::WebSocketErrorCode code)
+void WebSocket::didFailWithErrorCode(Fun::WebSocketErrorCode code)
 {
     // from new WebSocket() -> connect()
 
@@ -1669,148 +1669,148 @@ void WebSocket::didFailWithErrorCode(Bun::WebSocketErrorCode code)
     this->m_connectedWebSocketKind = ConnectedWebSocketKind::None;
     switch (code) {
 
-    case Bun::WebSocketErrorCode::cancel: {
+    case Fun::WebSocketErrorCode::cancel: {
         didReceiveClose(CleanStatus::NotClean, 1000, "Connection cancelled"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::invalid_response: {
+    case Fun::WebSocketErrorCode::invalid_response: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Invalid response"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::expected_101_status_code: {
+    case Fun::WebSocketErrorCode::expected_101_status_code: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Expected 101 status code"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::missing_upgrade_header: {
+    case Fun::WebSocketErrorCode::missing_upgrade_header: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Missing upgrade header"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::missing_connection_header: {
+    case Fun::WebSocketErrorCode::missing_connection_header: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Missing connection header"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::missing_websocket_accept_header: {
+    case Fun::WebSocketErrorCode::missing_websocket_accept_header: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Missing websocket accept header"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::invalid_upgrade_header: {
+    case Fun::WebSocketErrorCode::invalid_upgrade_header: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Invalid upgrade header"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::invalid_connection_header: {
+    case Fun::WebSocketErrorCode::invalid_connection_header: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Invalid connection header"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::invalid_websocket_version: {
+    case Fun::WebSocketErrorCode::invalid_websocket_version: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Invalid websocket version"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::mismatch_websocket_accept_header: {
+    case Fun::WebSocketErrorCode::mismatch_websocket_accept_header: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Mismatch websocket accept header"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::missing_client_protocol: {
+    case Fun::WebSocketErrorCode::missing_client_protocol: {
         didReceiveClose(CleanStatus::Clean, 1002, "Missing client protocol"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::mismatch_client_protocol: {
+    case Fun::WebSocketErrorCode::mismatch_client_protocol: {
         didReceiveClose(CleanStatus::Clean, 1002, "Mismatch client protocol"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::timeout: {
+    case Fun::WebSocketErrorCode::timeout: {
         didReceiveClose(CleanStatus::Clean, 1013, "Timeout"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::closed: {
+    case Fun::WebSocketErrorCode::closed: {
         didReceiveClose(CleanStatus::Clean, 1000, "Closed by client"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::failed_to_write: {
+    case Fun::WebSocketErrorCode::failed_to_write: {
         didReceiveClose(CleanStatus::NotClean, 1006, "Failed to write"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::failed_to_connect: {
+    case Fun::WebSocketErrorCode::failed_to_connect: {
         didReceiveClose(CleanStatus::NotClean, 1006, "Failed to connect"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::headers_too_large: {
+    case Fun::WebSocketErrorCode::headers_too_large: {
         didReceiveClose(CleanStatus::NotClean, 1007, "Headers too large"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::ended: {
+    case Fun::WebSocketErrorCode::ended: {
         didReceiveClose(CleanStatus::NotClean, 1006, "Connection ended"_s, true);
         break;
     }
 
-    case Bun::WebSocketErrorCode::failed_to_allocate_memory: {
+    case Fun::WebSocketErrorCode::failed_to_allocate_memory: {
         didReceiveClose(CleanStatus::NotClean, 1001, "Failed to allocate memory"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::control_frame_is_fragmented: {
+    case Fun::WebSocketErrorCode::control_frame_is_fragmented: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Protocol error - control frame is fragmented"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::invalid_control_frame: {
+    case Fun::WebSocketErrorCode::invalid_control_frame: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Protocol error - invalid control frame"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::compression_unsupported: {
+    case Fun::WebSocketErrorCode::compression_unsupported: {
         didReceiveClose(CleanStatus::Clean, 1011, "Compression not implemented yet"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::unexpected_mask_from_server: {
+    case Fun::WebSocketErrorCode::unexpected_mask_from_server: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Protocol error - unexpected mask from server"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::expected_control_frame: {
+    case Fun::WebSocketErrorCode::expected_control_frame: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Protocol error - expected control frame"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::unsupported_control_frame: {
+    case Fun::WebSocketErrorCode::unsupported_control_frame: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Protocol error - unsupported control frame"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::unexpected_opcode: {
+    case Fun::WebSocketErrorCode::unexpected_opcode: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Protocol error - unexpected opcode"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::invalid_utf8: {
+    case Fun::WebSocketErrorCode::invalid_utf8: {
         didReceiveClose(CleanStatus::NotClean, 1003, "Server sent invalid UTF8"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::tls_handshake_failed: {
+    case Fun::WebSocketErrorCode::tls_handshake_failed: {
         didReceiveClose(CleanStatus::NotClean, 1015, "TLS handshake failed"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::message_too_big: {
+    case Fun::WebSocketErrorCode::message_too_big: {
         didReceiveClose(CleanStatus::NotClean, 1009, "Message too big"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::protocol_error: {
+    case Fun::WebSocketErrorCode::protocol_error: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Protocol error"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::compression_failed: {
+    case Fun::WebSocketErrorCode::compression_failed: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Compression failed"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::invalid_compressed_data: {
+    case Fun::WebSocketErrorCode::invalid_compressed_data: {
         didReceiveClose(CleanStatus::NotClean, 1002, "Invalid compressed data"_s);
         break;
     }
-    case Bun::WebSocketErrorCode::proxy_connect_failed: {
+    case Fun::WebSocketErrorCode::proxy_connect_failed: {
         didReceiveClose(CleanStatus::NotClean, 1006, "Proxy connection failed"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::proxy_authentication_required: {
+    case Fun::WebSocketErrorCode::proxy_authentication_required: {
         didReceiveClose(CleanStatus::NotClean, 1006, "Proxy authentication required"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::proxy_connection_refused: {
+    case Fun::WebSocketErrorCode::proxy_connection_refused: {
         didReceiveClose(CleanStatus::NotClean, 1006, "Proxy connection refused"_s, true);
         break;
     }
-    case Bun::WebSocketErrorCode::proxy_tunnel_failed: {
+    case Fun::WebSocketErrorCode::proxy_tunnel_failed: {
         didReceiveClose(CleanStatus::NotClean, 1006, "Proxy tunnel failed"_s, true);
         break;
     }
@@ -1845,7 +1845,7 @@ void WebSocket::updateHasPendingActivity()
 }
 
 // Forward declarations for tunnel mode (defined outside namespace)
-extern "C" void* Bun__WebSocketClient__initWithTunnel(CppWebSocket* ws, void* tunnel, JSC::JSGlobalObject* globalObject, unsigned char* bufferedData, size_t bufferedDataSize, const PerMessageDeflateParams* deflate_params);
+extern "C" void* Fun__WebSocketClient__initWithTunnel(CppWebSocket* ws, void* tunnel, JSC::JSGlobalObject* globalObject, unsigned char* bufferedData, size_t bufferedDataSize, const PerMessageDeflateParams* deflate_params);
 extern "C" void WebSocketProxyTunnel__setConnectedWebSocket(void* tunnel, void* websocket);
 
 void WebSocket::didConnectWithTunnel(void* tunnel, char* bufferedData, size_t bufferedDataSize, const PerMessageDeflateParams* deflate_params)
@@ -1855,7 +1855,7 @@ void WebSocket::didConnectWithTunnel(void* tunnel, char* bufferedData, size_t bu
 
     // For wss:// through HTTP proxy, we use a plain (non-TLS) WebSocket client
     // because the TLS is handled by the proxy tunnel
-    this->m_connectedWebSocket.client = Bun__WebSocketClient__initWithTunnel(
+    this->m_connectedWebSocket.client = Fun__WebSocketClient__initWithTunnel(
         reinterpret_cast<CppWebSocket*>(this),
         tunnel,
         this->scriptExecutionContext()->jsGlobalObject(),
@@ -1886,11 +1886,11 @@ extern "C" void WebSocket__didConnectWithTunnel(WebCore::WebSocket* webSocket, v
     webSocket->didConnectWithTunnel(tunnel, bufferedData, len, deflate_params);
 }
 
-extern "C" void WebSocket__didAbruptClose(WebCore::WebSocket* webSocket, Bun::WebSocketErrorCode errorCode)
+extern "C" void WebSocket__didAbruptClose(WebCore::WebSocket* webSocket, Fun::WebSocketErrorCode errorCode)
 {
     webSocket->didFailWithErrorCode(errorCode);
 }
-extern "C" void WebSocket__didClose(WebCore::WebSocket* webSocket, uint16_t errorCode, BunString* reason)
+extern "C" void WebSocket__didClose(WebCore::WebSocket* webSocket, uint16_t errorCode, FunString* reason)
 {
     WTF::String wtf_reason = reason->transferToWTFString();
     webSocket->didClose(0, errorCode, WTF::move(wtf_reason));
@@ -1981,7 +1981,7 @@ void WebCore::WebSocket::setProtocol(const String& protocol)
     m_subprotocol = protocol;
 }
 
-extern "C" void WebSocket__setProtocol(WebCore::WebSocket* webSocket, BunString* protocol)
+extern "C" void WebSocket__setProtocol(WebCore::WebSocket* webSocket, FunString* protocol)
 {
     webSocket->setProtocol(protocol->transferToWTFString());
 }

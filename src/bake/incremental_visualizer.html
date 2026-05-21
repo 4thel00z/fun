@@ -139,7 +139,7 @@
       if (typeof inlinedData !== "undefined") {
         decodeAndUpdate(inlinedData);
       } else {
-        const ws = new WebSocket(location.origin + "/_bun/hmr");
+        const ws = new WebSocket(location.origin + "/_fun/hmr");
         ws.binaryType = "arraybuffer"; // We are expecting binary data
         ws.onopen = function () {
           ws.send("sv"); // Subscribe to visualizer events

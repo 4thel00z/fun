@@ -1,15 +1,15 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import path from "node:path";
 
-test("Response -> import { Response } from 'bun:app' transform in server components", async () => {
+test("Response -> import { Response } from 'fun:app' transform in server components", async () => {
   const dir = tempDirWithFiles("response-transform", {
     "server-component.js": `
       export const mode = "ssr";
       export const streaming = false;
       
       export default async function ServerPage({ request }) {
-        // Response should be imported from 'bun:app'
+        // Response should be imported from 'fun:app'
         const response1 = new Response("Hello", { status: 200 });
         
         // Response.redirect should work with imported Response
@@ -39,24 +39,24 @@ test("Response -> import { Response } from 'bun:app' transform in server compone
 
   // Build with server components enabled for server-side
   const serverResult =
-    await Bun.$`${bunExe()} build ${path.join(dir, "server-component.js")} --target=bun --server-components`
-      .env(bunEnv)
+    await Fun.$`${funExe()} build ${path.join(dir, "server-component.js")} --target=fun --server-components`
+      .env(funEnv)
       .text();
 
-  // Check that Response import was added from 'bun:app'
-  expect(serverResult).toContain('import { Response } from "bun:app"');
-  // Response is transformed to import_bun_app.Response
-  expect(serverResult).toContain("new import_bun_app.Response");
-  expect(serverResult).toContain("import_bun_app.Response.redirect");
-  expect(serverResult).toContain("import_bun_app.Response.render");
+  // Check that Response import was added from 'fun:app'
+  expect(serverResult).toContain('import { Response } from "fun:app"');
+  // Response is transformed to import_fun_app.Response
+  expect(serverResult).toContain("new import_fun_app.Response");
+  expect(serverResult).toContain("import_fun_app.Response.redirect");
+  expect(serverResult).toContain("import_fun_app.Response.render");
 
   // Build client component (should not have the transform)
-  const clientResult = await Bun.$`${bunExe()} build ${path.join(dir, "client-component.js")} --target=browser`
-    .env(bunEnv)
+  const clientResult = await Fun.$`${funExe()} build ${path.join(dir, "client-component.js")} --target=browser`
+    .env(funEnv)
     .text();
 
   // Check that Response import was NOT added in client component
-  expect(clientResult).not.toContain('import { Response } from "bun:app"');
+  expect(clientResult).not.toContain('import { Response } from "fun:app"');
   expect(clientResult).toContain("new Response");
 });
 
@@ -88,17 +88,17 @@ test("Response import is added for global Response in various contexts", async (
     `,
   });
 
-  const result = await Bun.$`${bunExe()} build ${path.join(dir, "server.js")} --target=bun --server-components`
-    .env(bunEnv)
+  const result = await Fun.$`${funExe()} build ${path.join(dir, "server.js")} --target=fun --server-components`
+    .env(funEnv)
     .text();
 
   // Check that import was added
-  expect(result).toContain('import { Response } from "bun:app"');
-  // Response is transformed to import_bun_app.Response
-  expect(result).toContain("new import_bun_app.Response");
-  expect(result).toContain("instanceof import_bun_app.Response");
-  expect(result).toContain("import_bun_app.Response.prototype.status");
-  expect(result).toContain("import_bun_app.Response.json");
+  expect(result).toContain('import { Response } from "fun:app"');
+  // Response is transformed to import_fun_app.Response
+  expect(result).toContain("new import_fun_app.Response");
+  expect(result).toContain("instanceof import_fun_app.Response");
+  expect(result).toContain("import_fun_app.Response.prototype.status");
+  expect(result).toContain("import_fun_app.Response.json");
 });
 
 test("Response import is not added when Response is already imported or shadowed", async () => {
@@ -110,7 +110,7 @@ test("Response import is not added when Response is already imported or shadowed
       import { Response } from "./custom-response";
       
       export default function Page() {
-        // Should use the imported Response, not transform to Bun.SSRResponse
+        // Should use the imported Response, not transform to Fun.SSRResponse
         const r = new Response();
         return r;
       }
@@ -141,21 +141,21 @@ test("Response import is not added when Response is already imported or shadowed
     `,
   });
 
-  const result1 = await Bun.$`${bunExe()} build ${path.join(dir, "server.js")} --target=bun --server-components`
-    .env(bunEnv)
+  const result1 = await Fun.$`${funExe()} build ${path.join(dir, "server.js")} --target=fun --server-components`
+    .env(funEnv)
     .text();
 
-  // When Response is already imported from another source, no bun:app import should be added
-  expect(result1).not.toContain('import { Response } from "bun:app"');
+  // When Response is already imported from another source, no fun:app import should be added
+  expect(result1).not.toContain('import { Response } from "fun:app"');
 
-  const result2 = await Bun.$`${bunExe()} build ${path.join(dir, "server2.js")} --target=bun --server-components`
-    .env(bunEnv)
+  const result2 = await Fun.$`${funExe()} build ${path.join(dir, "server2.js")} --target=fun --server-components`
+    .env(funEnv)
     .text();
 
   // Should preserve local variable
   expect(result2).toContain("return new CustomResponse");
   // The file should have the import added for the inner function
-  expect(result2).toContain('import { Response } from "bun:app"');
+  expect(result2).toContain('import { Response } from "fun:app"');
 });
 
 test("Response import is NOT added in client components", async () => {
@@ -163,7 +163,7 @@ test("Response import is NOT added in client components", async () => {
     "client-component.js": `
       "use client";
       
-      // Response should NOT be transformed to Bun.SSRResponse in client components
+      // Response should NOT be transformed to Fun.SSRResponse in client components
       const response = new Response("Client data", { 
         status: 200,
         headers: { "Content-Type": "text/plain" }
@@ -185,7 +185,7 @@ test("Response import is NOT added in client components", async () => {
     "server-component.js": `
       export const mode = "ssr";
       
-      // Response should be imported from 'bun:app' in server component
+      // Response should be imported from 'fun:app' in server component
       const serverResponse = new Response("Server", { status: 200 });
       
       // Response static methods should work with imported Response
@@ -196,12 +196,12 @@ test("Response import is NOT added in client components", async () => {
   });
 
   // Test 1: Client component - Response should NOT be transformed
-  const clientResult = await Bun.$`${bunExe()} build ${path.join(dir, "client-component.js")} --target=browser`
-    .env(bunEnv as any)
+  const clientResult = await Fun.$`${funExe()} build ${path.join(dir, "client-component.js")} --target=browser`
+    .env(funEnv as any)
     .text();
 
   // Verify Response import is NOT added in client components
-  expect(clientResult).not.toContain('import { Response } from "bun:app"');
+  expect(clientResult).not.toContain('import { Response } from "fun:app"');
   expect(clientResult).toContain("new Response");
   expect(clientResult).toContain("Response.json");
   expect(clientResult).toContain("instanceof Response");
@@ -209,13 +209,13 @@ test("Response import is NOT added in client components", async () => {
 
   // Test 2: Server component - Response SHOULD be transformed
   const serverResult =
-    await Bun.$`${bunExe()} build ${path.join(dir, "server-component.js")} --target=bun --server-components`
-      .env(bunEnv as any)
+    await Fun.$`${funExe()} build ${path.join(dir, "server-component.js")} --target=fun --server-components`
+      .env(funEnv as any)
       .text();
 
-  // Server component should have import from bun:app
-  expect(serverResult).toContain('import { Response } from "bun:app"');
-  expect(serverResult).toContain("new import_bun_app.Response");
+  // Server component should have import from fun:app
+  expect(serverResult).toContain('import { Response } from "fun:app"');
+  expect(serverResult).toContain("new import_fun_app.Response");
 });
 
 test("Response import is added when Response is global, but not when shadowed", async () => {
@@ -234,14 +234,14 @@ test("Response import is added when Response is global, but not when shadowed", 
   });
 
   const serverResult =
-    await Bun.$`${bunExe()} build ${path.join(dir, "server-component.js")} --target=bun --server-components`
-      .env(bunEnv as any)
+    await Fun.$`${funExe()} build ${path.join(dir, "server-component.js")} --target=fun --server-components`
+      .env(funEnv as any)
       .text();
 
   // Import should be added for the global Response usage
-  expect(serverResult).toContain('import { Response } from "bun:app"');
+  expect(serverResult).toContain('import { Response } from "fun:app"');
   // Local shadowed Response should not be affected
   expect(serverResult).toContain('new "ooga booga!"');
-  // Global Response is transformed to import_bun_app.Response
-  expect(serverResult).toContain("var lmao = new import_bun_app.Response");
+  // Global Response is transformed to import_fun_app.Response
+  expect(serverResult).toContain("var lmao = new import_fun_app.Response");
 });

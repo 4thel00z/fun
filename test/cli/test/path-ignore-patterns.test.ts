@@ -1,30 +1,30 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 describe("pathIgnorePatterns", () => {
-  test("bunfig - single pattern string", () => {
+  test("funfig - single pattern string", () => {
     const dir = tempDirWithFiles("path-ignore", {
-      "bunfig.toml": `
+      "funfig.toml": `
 [test]
 pathIgnorePatterns = "ignore-me.test.ts"
 `,
       "include-me.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("included test", () => {
   expect(1).toBe(1);
 });
 `,
       "ignore-me.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("ignored test", () => {
   expect(1).toBe(1);
 });
 `,
     });
 
-    const result = Bun.spawnSync([bunExe(), "test"], {
+    const result = Fun.spawnSync([funExe(), "test"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
@@ -35,35 +35,35 @@ test("ignored test", () => {
     expect(result.exitCode).toBe(0);
   });
 
-  test("bunfig - array of patterns", () => {
+  test("funfig - array of patterns", () => {
     const dir = tempDirWithFiles("path-ignore", {
-      "bunfig.toml": `
+      "funfig.toml": `
 [test]
 pathIgnorePatterns = ["helpers/**", "*.setup.test.ts"]
 `,
       "main.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("main test", () => {
   expect(1).toBe(1);
 });
 `,
       "helpers/util.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("helper test", () => {
   expect(1).toBe(1);
 });
 `,
       "db.setup.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("setup test", () => {
   expect(1).toBe(1);
 });
 `,
     });
 
-    const result = Bun.spawnSync([bunExe(), "test"], {
+    const result = Fun.spawnSync([funExe(), "test"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
@@ -75,29 +75,29 @@ test("setup test", () => {
     expect(result.exitCode).toBe(0);
   });
 
-  test("bunfig - glob pattern with **", () => {
+  test("funfig - glob pattern with **", () => {
     const dir = tempDirWithFiles("path-ignore", {
-      "bunfig.toml": `
+      "funfig.toml": `
 [test]
 pathIgnorePatterns = "**/integration/**"
 `,
       "unit/math.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("unit test", () => {
   expect(1 + 1).toBe(2);
 });
 `,
       "integration/api.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("integration test", () => {
   expect(true).toBe(true);
 });
 `,
     });
 
-    const result = Bun.spawnSync([bunExe(), "test"], {
+    const result = Fun.spawnSync([funExe(), "test"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
@@ -111,22 +111,22 @@ test("integration test", () => {
   test("CLI flag - single pattern", () => {
     const dir = tempDirWithFiles("path-ignore", {
       "keep.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("kept test", () => {
   expect(1).toBe(1);
 });
 `,
       "skip.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("skipped test", () => {
   expect(1).toBe(1);
 });
 `,
     });
 
-    const result = Bun.spawnSync([bunExe(), "test", "--path-ignore-patterns", "skip.test.ts"], {
+    const result = Fun.spawnSync([funExe(), "test", "--path-ignore-patterns", "skip.test.ts"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
@@ -140,30 +140,30 @@ test("skipped test", () => {
   test("CLI flag - multiple patterns", () => {
     const dir = tempDirWithFiles("path-ignore", {
       "app.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("app test", () => {
   expect(1).toBe(1);
 });
 `,
       "e2e/login.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("e2e test", () => {
   expect(1).toBe(1);
 });
 `,
       "fixtures/data.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("fixture test", () => {
   expect(1).toBe(1);
 });
 `,
     });
 
-    const result = Bun.spawnSync(
-      [bunExe(), "test", "--path-ignore-patterns", "e2e/**", "--path-ignore-patterns", "fixtures/**"],
+    const result = Fun.spawnSync(
+      [funExe(), "test", "--path-ignore-patterns", "e2e/**", "--path-ignore-patterns", "fixtures/**"],
       {
         cwd: dir,
-        env: bunEnv,
+        env: funEnv,
         stdio: [null, null, "pipe"],
       },
     );
@@ -176,23 +176,23 @@ test("fixture test", () => {
     expect(result.exitCode).toBe(0);
   });
 
-  test("bunfig - invalid config type", () => {
+  test("funfig - invalid config type", () => {
     const dir = tempDirWithFiles("path-ignore", {
-      "bunfig.toml": `
+      "funfig.toml": `
 [test]
 pathIgnorePatterns = 123
 `,
       "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("should pass", () => {
   expect(true).toBe(true);
 });
 `,
     });
 
-    const result = Bun.spawnSync([bunExe(), "test"], {
+    const result = Fun.spawnSync([funExe(), "test"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
@@ -201,23 +201,23 @@ test("should pass", () => {
     expect(result.exitCode).toBe(1);
   });
 
-  test("bunfig - invalid array item", () => {
+  test("funfig - invalid array item", () => {
     const dir = tempDirWithFiles("path-ignore", {
-      "bunfig.toml": `
+      "funfig.toml": `
 [test]
 pathIgnorePatterns = ["valid-pattern", 123]
 `,
       "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("should pass", () => {
   expect(true).toBe(true);
 });
 `,
     });
 
-    const result = Bun.spawnSync([bunExe(), "test"], {
+    const result = Fun.spawnSync([funExe(), "test"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
@@ -226,23 +226,23 @@ test("should pass", () => {
     expect(result.exitCode).toBe(1);
   });
 
-  test("bunfig - empty array is a no-op", () => {
+  test("funfig - empty array is a no-op", () => {
     const dir = tempDirWithFiles("path-ignore", {
-      "bunfig.toml": `
+      "funfig.toml": `
 [test]
 pathIgnorePatterns = []
 `,
       "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("should pass", () => {
   expect(true).toBe(true);
 });
 `,
     });
 
-    const result = Bun.spawnSync([bunExe(), "test"], {
+    const result = Fun.spawnSync([funExe(), "test"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
@@ -252,35 +252,35 @@ test("should pass", () => {
     expect(result.exitCode).toBe(0);
   });
 
-  test("CLI flag overrides bunfig", () => {
+  test("CLI flag overrides funfig", () => {
     const dir = tempDirWithFiles("path-ignore", {
-      "bunfig.toml": `
+      "funfig.toml": `
 [test]
 pathIgnorePatterns = "a.test.ts"
 `,
       "a.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("a test", () => {
   expect(1).toBe(1);
 });
 `,
       "b.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("b test", () => {
   expect(1).toBe(1);
 });
 `,
     });
 
-    // CLI flag should override bunfig: ignore b.test.ts instead of a.test.ts
-    const result = Bun.spawnSync([bunExe(), "test", "--path-ignore-patterns", "b.test.ts"], {
+    // CLI flag should override funfig: ignore b.test.ts instead of a.test.ts
+    const result = Fun.spawnSync([funExe(), "test", "--path-ignore-patterns", "b.test.ts"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 
     const stderr = result.stderr.toString("utf-8");
-    // CLI patterns override bunfig patterns, so a.test.ts should be included
+    // CLI patterns override funfig patterns, so a.test.ts should be included
     // and b.test.ts should be ignored
     expect(stderr).toContain("a.test.ts");
     expect(stderr).not.toContain("b.test.ts");
@@ -291,19 +291,19 @@ test("b test", () => {
   test("bare directory name pattern prunes entire subtree", () => {
     const dir = tempDirWithFiles("path-ignore", {
       "root.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("root test", () => {
   expect(1).toBe(1);
 });
 `,
       "ignored/deep.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("deep ignored test", () => {
   expect(1).toBe(1);
 });
 `,
       "ignored/nested/deeper.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("deeper ignored test", () => {
   expect(1).toBe(1);
 });
@@ -312,9 +312,9 @@ test("deeper ignored test", () => {
 
     // A bare directory name (no "/**") should prune the directory at scan time,
     // preventing any tests inside it from running.
-    const result = Bun.spawnSync([bunExe(), "test", "--path-ignore-patterns", "ignored"], {
+    const result = Fun.spawnSync([funExe(), "test", "--path-ignore-patterns", "ignored"], {
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, null, "pipe"],
     });
 

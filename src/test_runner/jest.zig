@@ -23,8 +23,8 @@ const CurrentFile = struct {
         }
         if (reporter.reporters.dots or reporter.reporters.only_failures) {
             this.freeAndClear();
-            this.title = bun.handleOom(bun.default_allocator.dupe(u8, title));
-            this.prefix = bun.handleOom(bun.default_allocator.dupe(u8, prefix));
+            this.title = fun.handleOom(fun.default_allocator.dupe(u8, title));
+            this.prefix = fun.handleOom(fun.default_allocator.dupe(u8, prefix));
             this.repeat_info.count = repeat_count;
             this.repeat_info.index = repeat_index;
             this.has_printed_filename = false;
@@ -36,8 +36,8 @@ const CurrentFile = struct {
     }
 
     fn freeAndClear(this: *CurrentFile) void {
-        bun.default_allocator.free(this.title);
-        bun.default_allocator.free(this.prefix);
+        fun.default_allocator.free(this.title);
+        fun.default_allocator.free(this.prefix);
     }
 
     fn print(title: string, prefix: string, repeat_count: u32, repeat_index: u32) void {
@@ -97,7 +97,7 @@ pub const TestRunner = struct {
     // from `setDefaultTimeout() or jest.setTimeout()`. maxInt(u32) means override not set.
     default_timeout_override: u32 = std.math.maxInt(u32),
 
-    test_options: *const bun.cli.Command.TestOptions = undefined,
+    test_options: *const fun.cli.Command.TestOptions = undefined,
 
     // Used for --test-name-pattern to reduce allocations
     filter_regex: ?*RegularExpression,
@@ -105,10 +105,10 @@ pub const TestRunner = struct {
     unhandled_errors_between_tests: u32 = 0,
     summary: Summary = Summary{},
 
-    bun_test_root: bun_test.BunTestRoot,
+    fun_test_root: fun_test.FunTestRoot,
 
-    pub fn getActiveTimeout(this: *const TestRunner) bun.timespec {
-        const active_file = this.bun_test_root.active_file.get() orelse return .epoch;
+    pub fn getActiveTimeout(this: *const TestRunner) fun.timespec {
+        const active_file = this.fun_test_root.active_file.get() orelse return .epoch;
         if (active_file.timer.state != .ACTIVE or active_file.timer.next.eql(&.epoch)) {
             return .epoch;
         }
@@ -116,7 +116,7 @@ pub const TestRunner = struct {
     }
 
     pub fn removeActiveTimeout(this: *TestRunner, vm: *jsc.VirtualMachine) void {
-        const active_file = this.bun_test_root.active_file.get() orelse return;
+        const active_file = this.fun_test_root.active_file.get() orelse return;
         if (active_file.timer.state != .ACTIVE or active_file.timer.next.eql(&.epoch)) {
             return;
         }
@@ -154,14 +154,14 @@ pub const TestRunner = struct {
 
         // Check if the file path matches any of the glob patterns
         for (glob_patterns) |pattern| {
-            const result = bun.glob.match(pattern, file_path);
+            const result = fun.glob.match(pattern, file_path);
             if (result == .match) return true;
         }
         return false;
     }
 
     pub fn getOrPutFile(this: *TestRunner, file_path: string) struct { file_id: File.ID } {
-        const entry = this.index.getOrPut(this.allocator, @as(u32, @truncate(bun.hash(file_path)))) catch unreachable; // TODO: this is wrong. you can't put a hash as the key in a hashmap.
+        const entry = this.index.getOrPut(this.allocator, @as(u32, @truncate(fun.hash(file_path)))) catch unreachable; // TODO: this is wrong. you can't put a hash as the key in a hashmap.
         if (entry.found_existing) {
             return .{ .file_id = entry.value_ptr.* };
         }
@@ -184,32 +184,32 @@ pub const TestRunner = struct {
 pub const Jest = struct {
     pub var runner: ?*TestRunner = null;
 
-    pub fn Bun__Jest__createTestModuleObject(globalObject: *JSGlobalObject) callconv(.c) JSValue {
+    pub fn Fun__Jest__createTestModuleObject(globalObject: *JSGlobalObject) callconv(.c) JSValue {
         return createTestModule(globalObject) catch return .zero;
     }
 
-    pub fn createTestModule(globalObject: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn createTestModule(globalObject: *JSGlobalObject) fun.JSError!JSValue {
         const module = JSValue.createEmptyObject(globalObject, 23);
 
-        const test_scope_functions = try bun_test.ScopeFunctions.createBound(globalObject, .@"test", .zero, .{}, bun_test.ScopeFunctions.strings.@"test");
+        const test_scope_functions = try fun_test.ScopeFunctions.createBound(globalObject, .@"test", .zero, .{}, fun_test.ScopeFunctions.strings.@"test");
         module.put(globalObject, ZigString.static("test"), test_scope_functions);
         module.put(globalObject, ZigString.static("it"), test_scope_functions);
 
-        const xtest_scope_functions = try bun_test.ScopeFunctions.createBound(globalObject, .@"test", .zero, .{ .self_mode = .skip }, bun_test.ScopeFunctions.strings.xtest);
+        const xtest_scope_functions = try fun_test.ScopeFunctions.createBound(globalObject, .@"test", .zero, .{ .self_mode = .skip }, fun_test.ScopeFunctions.strings.xtest);
         module.put(globalObject, ZigString.static("xtest"), xtest_scope_functions);
         module.put(globalObject, ZigString.static("xit"), xtest_scope_functions);
 
-        const describe_scope_functions = try bun_test.ScopeFunctions.createBound(globalObject, .describe, .zero, .{}, bun_test.ScopeFunctions.strings.describe);
+        const describe_scope_functions = try fun_test.ScopeFunctions.createBound(globalObject, .describe, .zero, .{}, fun_test.ScopeFunctions.strings.describe);
         module.put(globalObject, ZigString.static("describe"), describe_scope_functions);
 
-        const xdescribe_scope_functions = bun_test.ScopeFunctions.createBound(globalObject, .describe, .zero, .{ .self_mode = .skip }, bun_test.ScopeFunctions.strings.xdescribe) catch return .zero;
+        const xdescribe_scope_functions = fun_test.ScopeFunctions.createBound(globalObject, .describe, .zero, .{ .self_mode = .skip }, fun_test.ScopeFunctions.strings.xdescribe) catch return .zero;
         module.put(globalObject, ZigString.static("xdescribe"), xdescribe_scope_functions);
 
-        module.put(globalObject, ZigString.static("beforeEach"), jsc.JSFunction.create(globalObject, "beforeEach", bun_test.js_fns.genericHook(.beforeEach).hookFn, 1, .{}));
-        module.put(globalObject, ZigString.static("beforeAll"), jsc.JSFunction.create(globalObject, "beforeAll", bun_test.js_fns.genericHook(.beforeAll).hookFn, 1, .{}));
-        module.put(globalObject, ZigString.static("afterAll"), jsc.JSFunction.create(globalObject, "afterAll", bun_test.js_fns.genericHook(.afterAll).hookFn, 1, .{}));
-        module.put(globalObject, ZigString.static("afterEach"), jsc.JSFunction.create(globalObject, "afterEach", bun_test.js_fns.genericHook(.afterEach).hookFn, 1, .{}));
-        module.put(globalObject, ZigString.static("onTestFinished"), jsc.JSFunction.create(globalObject, "onTestFinished", bun_test.js_fns.genericHook(.onTestFinished).hookFn, 1, .{}));
+        module.put(globalObject, ZigString.static("beforeEach"), jsc.JSFunction.create(globalObject, "beforeEach", fun_test.js_fns.genericHook(.beforeEach).hookFn, 1, .{}));
+        module.put(globalObject, ZigString.static("beforeAll"), jsc.JSFunction.create(globalObject, "beforeAll", fun_test.js_fns.genericHook(.beforeAll).hookFn, 1, .{}));
+        module.put(globalObject, ZigString.static("afterAll"), jsc.JSFunction.create(globalObject, "afterAll", fun_test.js_fns.genericHook(.afterAll).hookFn, 1, .{}));
+        module.put(globalObject, ZigString.static("afterEach"), jsc.JSFunction.create(globalObject, "afterEach", fun_test.js_fns.genericHook(.afterEach).hookFn, 1, .{}));
+        module.put(globalObject, ZigString.static("onTestFinished"), jsc.JSFunction.create(globalObject, "onTestFinished", fun_test.js_fns.genericHook(.onTestFinished).hookFn, 1, .{}));
         module.put(globalObject, ZigString.static("setDefaultTimeout"), jsc.JSFunction.create(globalObject, "setDefaultTimeout", jsSetDefaultTimeout, 1, .{}));
         module.put(globalObject, ZigString.static("expect"), Expect.js.getConstructor(globalObject));
         module.put(globalObject, ZigString.static("expectTypeOf"), ExpectTypeOf.js.getConstructor(globalObject));
@@ -234,7 +234,7 @@ pub const Jest = struct {
         mockFn.put(globalObject, ZigString.static("restore"), restoreAllMocks);
         mockFn.put(globalObject, ZigString.static("clearAllMocks"), clearAllMocks);
 
-        const jest = JSValue.createEmptyObject(globalObject, 9 + bun_test.FakeTimers.timerFnsCount);
+        const jest = JSValue.createEmptyObject(globalObject, 9 + fun_test.FakeTimers.timerFnsCount);
         jest.put(globalObject, ZigString.static("fn"), mockFn);
         jest.put(globalObject, ZigString.static("mock"), mockModuleFn);
         jest.put(globalObject, ZigString.static("spyOn"), spyOn);
@@ -249,7 +249,7 @@ pub const Jest = struct {
         module.put(globalObject, ZigString.static("spyOn"), spyOn);
         module.put(globalObject, ZigString.static("expect"), Expect.js.getConstructor(globalObject));
 
-        const vi = JSValue.createEmptyObject(globalObject, 6 + bun_test.FakeTimers.timerFnsCount);
+        const vi = JSValue.createEmptyObject(globalObject, 6 + fun_test.FakeTimers.timerFnsCount);
         vi.put(globalObject, ZigString.static("fn"), mockFn);
         vi.put(globalObject, ZigString.static("mock"), mockModuleFn);
         vi.put(globalObject, ZigString.static("spyOn"), spyOn);
@@ -258,10 +258,10 @@ pub const Jest = struct {
         vi.put(globalObject, ZigString.static("clearAllMocks"), clearAllMocks);
         module.put(globalObject, ZigString.static("vi"), vi);
 
-        bun_test.FakeTimers.putTimersFns(globalObject, jest, vi);
+        fun_test.FakeTimers.putTimersFns(globalObject, jest, vi);
     }
 
-    extern fn Bun__Jest__testModuleObject(*JSGlobalObject) JSValue;
+    extern fn Fun__Jest__testModuleObject(*JSGlobalObject) JSValue;
     extern fn JSMock__jsMockFn(*JSGlobalObject, *CallFrame) callconv(jsc.conv) JSValue;
     extern fn JSMock__jsModuleMock(*JSGlobalObject, *CallFrame) callconv(jsc.conv) JSValue;
     extern fn JSMock__jsNow(*JSGlobalObject, *CallFrame) callconv(jsc.conv) JSValue;
@@ -273,8 +273,8 @@ pub const Jest = struct {
     pub fn call(
         globalObject: *JSGlobalObject,
         callframe: *CallFrame,
-    ) bun.JSError!JSValue {
-        const vm = globalObject.bunVM();
+    ) fun.JSError!JSValue {
+        const vm = globalObject.funVM();
 
         if (vm.is_in_preload or runner == null) {
             // in preload, no arguments needed
@@ -282,21 +282,21 @@ pub const Jest = struct {
             const arguments = callframe.arguments_old(2).slice();
 
             if (arguments.len < 1 or !arguments[0].isString()) {
-                return globalObject.throw("Bun.jest() expects a string filename", .{});
+                return globalObject.throw("Fun.jest() expects a string filename", .{});
             }
-            var str = try arguments[0].toSlice(globalObject, bun.default_allocator);
+            var str = try arguments[0].toSlice(globalObject, fun.default_allocator);
             defer str.deinit();
             const slice = str.slice();
 
             if (!std.fs.path.isAbsolute(slice)) {
-                return globalObject.throw("Bun.jest() expects an absolute file path, got '{s}'", .{slice});
+                return globalObject.throw("Fun.jest() expects an absolute file path, got '{s}'", .{slice});
             }
         }
 
-        return Bun__Jest__testModuleObject(globalObject);
+        return Fun__Jest__testModuleObject(globalObject);
     }
 
-    fn jsSetDefaultTimeout(globalObject: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    fn jsSetDefaultTimeout(globalObject: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arguments = callframe.arguments_old(1).slice();
         if (arguments.len < 1 or !arguments[0].isNumber()) {
             return globalObject.throw("setTimeout() expects a number (milliseconds)", .{});
@@ -312,28 +312,28 @@ pub const Jest = struct {
     }
 
     comptime {
-        @export(&Bun__Jest__createTestModuleObject, .{ .name = "Bun__Jest__createTestModuleObject" });
+        @export(&Fun__Jest__createTestModuleObject, .{ .name = "Fun__Jest__createTestModuleObject" });
     }
 };
 
 pub const on_unhandled_rejection = struct {
     pub fn onUnhandledRejection(jsc_vm: *VirtualMachine, globalObject: *JSGlobalObject, rejection: JSValue) void {
-        if (bun.jsc.Jest.bun_test.cloneActiveStrong()) |buntest_strong_| {
-            var buntest_strong = buntest_strong_;
-            defer buntest_strong.deinit();
+        if (fun.jsc.Jest.fun_test.cloneActiveStrong()) |funtest_strong_| {
+            var funtest_strong = funtest_strong_;
+            defer funtest_strong.deinit();
 
-            const buntest = buntest_strong.get();
-            var current_state_data = buntest.getCurrentStateData(); // mark unhandled errors as belonging to the currently active test. note that this can be misleading.
-            if (current_state_data.entry(buntest)) |entry| {
-                if (current_state_data.sequence(buntest)) |sequence| {
+            const funtest = funtest_strong.get();
+            var current_state_data = funtest.getCurrentStateData(); // mark unhandled errors as belonging to the currently active test. note that this can be misleading.
+            if (current_state_data.entry(funtest)) |entry| {
+                if (current_state_data.sequence(funtest)) |sequence| {
                     if (entry != sequence.test_entry) {
                         current_state_data = .start; // mark errors in hooks as 'unhandled error between tests'
                     }
                 }
             }
-            buntest.onUncaughtException(globalObject, rejection, true, current_state_data);
-            buntest.addResult(current_state_data);
-            bun_test.BunTest.run(buntest_strong, globalObject) catch |e| {
+            funtest.onUncaughtException(globalObject, rejection, true, current_state_data);
+            funtest.addResult(current_state_data);
+            fun_test.FunTest.run(funtest_strong, globalObject) catch |e| {
                 globalObject.reportUncaughtExceptionFromError(e);
             };
             return;
@@ -355,9 +355,9 @@ fn consumeArg(
     if (should_write) {
         const owned_slice = try arg.toSliceOrNull(globalThis);
         defer owned_slice.deinit();
-        bun.handleOom(array_list.appendSlice(owned_slice.slice()));
+        fun.handleOom(array_list.appendSlice(owned_slice.slice()));
     } else {
-        bun.handleOom(array_list.appendSlice(fallback));
+        fun.handleOom(array_list.appendSlice(fallback));
     }
     str_idx.* += 1;
     args_idx.* += 1;
@@ -367,7 +367,7 @@ fn consumeArg(
 pub fn formatLabel(globalThis: *JSGlobalObject, label: string, function_args: []const jsc.JSValue, test_idx: usize, allocator: std.mem.Allocator) !string {
     var idx: usize = 0;
     var args_idx: usize = 0;
-    var list = bun.handleOom(std.array_list.Managed(u8).initCapacity(allocator, label.len));
+    var list = fun.handleOom(std.array_list.Managed(u8).initCapacity(allocator, label.len));
     defer list.deinit();
 
     while (idx < label.len) {
@@ -377,18 +377,18 @@ pub fn formatLabel(globalThis: *JSGlobalObject, label: string, function_args: []
             const var_start = idx + 1;
             var var_end = var_start;
 
-            if (bun.js_lexer.isIdentifierStart(label[var_end])) {
+            if (fun.js_lexer.isIdentifierStart(label[var_end])) {
                 var_end += 1;
 
                 while (var_end < label.len) {
                     const c = label[var_end];
                     if (c == '.') {
-                        if (var_end + 1 < label.len and bun.js_lexer.isIdentifierContinue(label[var_end + 1])) {
+                        if (var_end + 1 < label.len and fun.js_lexer.isIdentifierContinue(label[var_end + 1])) {
                             var_end += 1;
                         } else {
                             break;
                         }
-                    } else if (bun.js_lexer.isIdentifierContinue(c)) {
+                    } else if (fun.js_lexer.isIdentifierContinue(c)) {
                         var_end += 1;
                     } else {
                         break;
@@ -396,30 +396,30 @@ pub fn formatLabel(globalThis: *JSGlobalObject, label: string, function_args: []
                 }
 
                 const var_path = label[var_start..var_end];
-                const value = try function_args[0].getIfPropertyExistsFromPath(globalThis, try bun.String.init(var_path).toJS(globalThis));
+                const value = try function_args[0].getIfPropertyExistsFromPath(globalThis, try fun.String.init(var_path).toJS(globalThis));
                 if (!value.isEmptyOrUndefinedOrNull()) {
                     // For primitive strings, use toString() to avoid adding quotes
                     // This matches Jest's behavior (https://github.com/jestjs/jest/issues/7689)
                     if (value.isString()) {
                         const owned_slice = try value.toSliceOrNull(globalThis);
                         defer owned_slice.deinit();
-                        bun.handleOom(list.appendSlice(owned_slice.slice()));
+                        fun.handleOom(list.appendSlice(owned_slice.slice()));
                     } else {
                         var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
                         defer formatter.deinit();
-                        bun.handleOom(list.writer().print("{f}", .{value.toFmt(&formatter)}));
+                        fun.handleOom(list.writer().print("{f}", .{value.toFmt(&formatter)}));
                     }
                     idx = var_end;
                     continue;
                 }
             } else {
-                while (var_end < label.len and (bun.js_lexer.isIdentifierContinue(label[var_end]) and label[var_end] != '$')) {
+                while (var_end < label.len and (fun.js_lexer.isIdentifierContinue(label[var_end]) and label[var_end] != '$')) {
                     var_end += 1;
                 }
             }
 
-            bun.handleOom(list.append('$'));
-            bun.handleOom(list.appendSlice(label[var_start..var_end]));
+            fun.handleOom(list.append('$'));
+            fun.handleOom(list.appendSlice(label[var_start..var_end]));
             idx = var_end;
         } else if (char == '%' and (idx + 1 < label.len) and !(args_idx >= function_args.len)) {
             const current_arg = function_args[args_idx];
@@ -438,13 +438,13 @@ pub fn formatLabel(globalThis: *JSGlobalObject, label: string, function_args: []
                     try consumeArg(globalThis, current_arg.isNumber(), &idx, &args_idx, &list, &current_arg, "%f");
                 },
                 'j', 'o' => {
-                    var str = bun.String.empty;
+                    var str = fun.String.empty;
                     defer str.deref();
                     // Use jsonStringifyFast for SIMD-optimized serialization
                     try current_arg.jsonStringifyFast(globalThis, &str);
-                    const owned_slice = bun.handleOom(str.toOwnedSlice(allocator));
+                    const owned_slice = fun.handleOom(str.toOwnedSlice(allocator));
                     defer allocator.free(owned_slice);
-                    bun.handleOom(list.appendSlice(owned_slice));
+                    fun.handleOom(list.appendSlice(owned_slice));
                     idx += 1;
                     args_idx += 1;
                 },
@@ -452,25 +452,25 @@ pub fn formatLabel(globalThis: *JSGlobalObject, label: string, function_args: []
                     var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
                     defer formatter.deinit();
                     const value_fmt = current_arg.toFmt(&formatter);
-                    bun.handleOom(list.writer().print("{f}", .{value_fmt}));
+                    fun.handleOom(list.writer().print("{f}", .{value_fmt}));
                     idx += 1;
                     args_idx += 1;
                 },
                 '#' => {
-                    const test_index_str = bun.handleOom(std.fmt.allocPrint(allocator, "{d}", .{test_idx}));
+                    const test_index_str = fun.handleOom(std.fmt.allocPrint(allocator, "{d}", .{test_idx}));
                     defer allocator.free(test_index_str);
-                    bun.handleOom(list.appendSlice(test_index_str));
+                    fun.handleOom(list.appendSlice(test_index_str));
                     idx += 1;
                 },
                 '%' => {
-                    bun.handleOom(list.append('%'));
+                    fun.handleOom(list.append('%'));
                     idx += 1;
                 },
                 else => {
                     // ignore unrecognized fmt
                 },
             }
-        } else bun.handleOom(list.append(char));
+        } else fun.handleOom(list.append(char));
         idx += 1;
     }
 
@@ -480,21 +480,21 @@ pub fn formatLabel(globalThis: *JSGlobalObject, label: string, function_args: []
 pub fn captureTestLineNumber(callframe: *jsc.CallFrame, globalThis: *JSGlobalObject) u32 {
     if (Jest.runner) |runner| {
         if (runner.test_options.reporters.junit) {
-            return bun.cpp.Bun__CallFrame__getLineNumber(callframe, globalThis);
+            return fun.cpp.Fun__CallFrame__getLineNumber(callframe, globalThis);
         }
     }
     return 0;
 }
 
-pub fn errorInCI(globalObject: *jsc.JSGlobalObject, message: []const u8) bun.JSError!void {
-    if (bun.ci.isCI()) {
+pub fn errorInCI(globalObject: *jsc.JSGlobalObject, message: []const u8) fun.JSError!void {
+    if (fun.ci.isCI()) {
         return globalObject.throwPretty("{s}\nTo override, set the environment variable CI=false.", .{message});
     }
 }
 
 const string = []const u8;
 
-pub const bun_test = @import("./bun_test.zig");
+pub const fun_test = @import("./fun_test.zig");
 
 const std = @import("std");
 const CommandLineReporter = @import("../cli/test_command.zig").CommandLineReporter;
@@ -504,13 +504,13 @@ const expect = @import("./expect.zig");
 const Expect = expect.Expect;
 const ExpectTypeOf = expect.ExpectTypeOf;
 
-const bun = @import("bun");
-const ArrayIdentityContext = bun.ArrayIdentityContext;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
+const fun = @import("fun");
+const ArrayIdentityContext = fun.ArrayIdentityContext;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

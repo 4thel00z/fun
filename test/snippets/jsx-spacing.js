@@ -7,7 +7,7 @@ var ReturnDescriptionAsString = function (_a) {
   return description;
 };
 function test() {
-  var _bun = ReactDOM.renderToString(
+  var _fun = ReactDOM.renderToString(
     <ReturnDescriptionAsString
       description="line1
 line2 trailing space 
@@ -21,16 +21,16 @@ line7 trailing newline that ${terminates} the string literal
   );
   // convert HTML entities to unicode
   var el = document.createElement("textarea");
-  el.innerHTML = _bun;
-  var bun = el.value;
+  el.innerHTML = _fun;
+  var fun = el.value;
   var esbuild =
     "line1\nline2 trailing space \n\nline4 no trailing space 'single quote' \\t\\f\\v\\uF000 `template string`\n\nline6 no trailing space\nline7 trailing newline that ${terminates} the string literal\n";
   console.assert(
-    bun === esbuild,
+    fun === esbuild,
     "strings did not match: " +
       JSON.stringify(
         {
-          received: bun,
+          received: fun,
           expected: esbuild,
         },
         null,

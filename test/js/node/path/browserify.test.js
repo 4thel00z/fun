@@ -1,5 +1,5 @@
 import assert from "assert";
-import { describe, expect, it, test } from "bun:test";
+import { describe, expect, it, test } from "fun:test";
 import { isWindows } from "harness";
 import path from "node:path";
 
@@ -846,7 +846,7 @@ describe("browserify path tests", () => {
         },
       },
       {
-        // https://github.com/oven-sh/bun/issues/4954
+        // https://github.com/underdoc-org/fun/issues/4954
         input: "/test/Ł.txt",
         expected: {
           root: "/",
@@ -857,7 +857,7 @@ describe("browserify path tests", () => {
         },
       },
       {
-        // https://github.com/oven-sh/bun/issues/8090
+        // https://github.com/underdoc-org/fun/issues/8090
         input: ".prettierrc",
         expected: {
           root: "",

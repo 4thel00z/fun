@@ -93,7 +93,7 @@ ${(() => {
   return result;
 })()}
 };`;
-  await Bun.$`echo ${output} > src/css/values/color_generated.zig; zig fmt src/css/values/color_generated.zig
+  await Fun.$`echo ${output} > src/css/values/color_generated.zig; zig fmt src/css/values/color_generated.zig
 `;
 }
 

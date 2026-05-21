@@ -3,25 +3,25 @@ import { bench, run } from "../runner.mjs";
 
 var short = (function () {
   const text = "Hello World!";
-  const path = "/tmp/bun-bench-short.text";
+  const path = "/tmp/fun-bench-short.text";
   writeFileSync(path, text, "utf8");
   return { path, length: text.length };
 })();
 var shortUTF16 = (function () {
   const text = "Hello World 💕💕💕";
-  const path = "/tmp/bun-bench-shortUTF16.text";
+  const path = "/tmp/fun-bench-shortUTF16.text";
   writeFileSync(path, text, "utf8");
   return { path, length: text.length };
 })();
 var long = (function () {
   const text = "Hello World!".repeat(1024);
-  const path = "/tmp/bun-bench-long.text";
+  const path = "/tmp/fun-bench-long.text";
   writeFileSync(path, text, "utf8");
   return { path, length: text.length };
 })();
 var longUTF16 = (function () {
   const text = "Hello World 💕💕💕".repeat(1024);
-  const path = "/tmp/bun-bench-longUTF16.text";
+  const path = "/tmp/fun-bench-longUTF16.text";
   writeFileSync(path, text, "utf8");
   return { path, length: text.length };
 })();

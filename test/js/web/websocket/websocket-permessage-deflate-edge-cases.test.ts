@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { expect, setDefaultTimeout, test } from "bun:test";
+import { serve } from "fun";
+import { expect, setDefaultTimeout, test } from "fun:test";
 
 // The decompression bomb test needs extra time to compress 150MB of test data
 setDefaultTimeout(30_000);
@@ -295,7 +295,7 @@ test("WebSocket client rejects decompression bombs", async () => {
   let messageReceived = false;
 
   try {
-    // Connect with Bun's WebSocket client
+    // Connect with Fun's WebSocket client
     client = new WebSocket(`ws://localhost:${port}`);
 
     const result = await new Promise<{ code: number; reason: string }>(resolve => {

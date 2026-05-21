@@ -1,4 +1,4 @@
-const log = bun.Output.scoped(.BRACES, .visible);
+const log = fun.Output.scoped(.BRACES, .visible);
 
 /// Using u16 because anymore tokens than that results in an unreasonably high
 /// amount of brace expansion (like around 32k variants to expand)
@@ -178,7 +178,7 @@ fn expandFlat(
             },
             .open => |expansion_variants| {
                 depth += 1;
-                if (bun.Environment.allow_assert) {
+                if (fun.Environment.allow_assert) {
                     assert(expansion_variants.end - expansion_variants.idx >= 1);
                 }
 
@@ -222,7 +222,7 @@ fn calculateVariantsAmount(tokens: []const Token) u32 {
     return count;
 }
 
-const ParserError = bun.OOM || error{
+const ParserError = fun.OOM || error{
     UnexpectedToken,
 };
 
@@ -384,13 +384,13 @@ pub fn calculateExpandedAmount(tokens: []const Token) u32 {
         segment_product: u32 = 1,
         accumulator: u32 = 0,
     };
-    var nested_brace_stack = bun.SmallList(StackEntry, MAX_NESTED_BRACES){};
-    defer nested_brace_stack.deinit(bun.default_allocator);
+    var nested_brace_stack = fun.SmallList(StackEntry, MAX_NESTED_BRACES){};
+    defer nested_brace_stack.deinit(fun.default_allocator);
     var variant_count: u32 = 0;
 
     for (tokens) |tok| {
         switch (tok) {
-            .open => nested_brace_stack.append(bun.default_allocator, .{}),
+            .open => nested_brace_stack.append(fun.default_allocator, .{}),
             .comma => {
                 const top = nested_brace_stack.lastMut().?;
                 top.accumulator +|= top.segment_product;
@@ -427,8 +427,8 @@ fn buildExpansionTable(tokens: []Token, table: *std.array_list.Managed(Expansion
         variants: u16,
         prev_tok_end: u16,
     };
-    var brace_stack = bun.SmallList(BraceState, MAX_NESTED_BRACES){};
-    defer brace_stack.deinit(bun.default_allocator);
+    var brace_stack = fun.SmallList(BraceState, MAX_NESTED_BRACES){};
+    defer brace_stack.deinit(fun.default_allocator);
 
     var i: u16 = 0;
     var prev_close = false;
@@ -437,7 +437,7 @@ fn buildExpansionTable(tokens: []Token, table: *std.array_list.Managed(Expansion
             .open => {
                 const table_idx: u16 = @intCast(table.items.len);
                 tokens[i].open.idx = table_idx;
-                brace_stack.append(bun.default_allocator, .{
+                brace_stack.append(fun.default_allocator, .{
                     .tok_idx = i,
                     .variants = 0,
                     .prev_tok_end = i,
@@ -476,7 +476,7 @@ fn buildExpansionTable(tokens: []Token, table: *std.array_list.Managed(Expansion
         }
     }
 
-    if (bun.Environment.allow_assert) {
+    if (fun.Environment.allow_assert) {
         for (table.items[0..], 0..) |variant, kdjsd| {
             _ = kdjsd;
             assert(variant.start != 0 and variant.end != 0);
@@ -537,8 +537,8 @@ pub fn NewLexer(comptime encoding: Encoding) type {
             // - If unclosed or encounter bad token:
             //   - Start at beginning of brace, replacing special tokens back with
             //     chars, skipping over actual closed braces
-            var brace_stack = bun.SmallList(u32, MAX_NESTED_BRACES){};
-            defer brace_stack.deinit(bun.default_allocator);
+            var brace_stack = fun.SmallList(u32, MAX_NESTED_BRACES){};
+            defer brace_stack.deinit(fun.default_allocator);
 
             while (true) {
                 const input = self.eat() orelse break;
@@ -548,7 +548,7 @@ pub fn NewLexer(comptime encoding: Encoding) type {
                 if (!escaped) {
                     switch (char) {
                         '{' => {
-                            brace_stack.append(bun.default_allocator, @intCast(self.tokens.items.len));
+                            brace_stack.append(fun.default_allocator, @intCast(self.tokens.items.len));
                             try self.tokens.append(.{ .open = .{} });
                             continue;
                         },
@@ -615,7 +615,7 @@ pub fn NewLexer(comptime encoding: Encoding) type {
         }
 
         fn rollbackBraces(self: *@This(), starting_idx: u32) void {
-            if (bun.Environment.allow_assert) {
+            if (fun.Environment.allow_assert) {
                 const first = &self.tokens.items[starting_idx];
                 assert(first.* == .open);
             }
@@ -666,7 +666,7 @@ pub fn NewLexer(comptime encoding: Encoding) type {
                         return;
                     }
                     var buf = [4]u8{ 0, 0, 0, 0 };
-                    const len = bun.strings.encodeWTF8Rune(&buf, @bitCast(char));
+                    const len = fun.strings.encodeWTF8Rune(&buf, @bitCast(char));
                     try last.text.appendSlice(self.alloc, buf[0..len]);
                     return;
                 }
@@ -678,7 +678,7 @@ pub fn NewLexer(comptime encoding: Encoding) type {
                 });
             } else {
                 var buf = [4]u8{ 0, 0, 0, 0 };
-                const len = bun.strings.encodeWTF8Rune(&buf, @bitCast(char));
+                const len = fun.strings.encodeWTF8Rune(&buf, @bitCast(char));
                 try self.tokens.append(.{
                     .text = try SmolStr.fromSlice(self.alloc, buf[0..len]),
                 });
@@ -729,8 +729,8 @@ const SmolStr = @import("../string/string.zig").SmolStr;
 const Encoding = @import("../shell/shell.zig").StringEncoding;
 const NewChars = @import("../shell/shell.zig").ShellCharIter;
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
 const std = @import("std");
 const t = std.testing;

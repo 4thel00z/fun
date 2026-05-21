@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import fs from "fs";
-import { bunExe, bunEnv as env, isASAN, tmpdirSync } from "harness";
+import { funExe, funEnv as env, isASAN, tmpdirSync } from "harness";
 import path from "path";
 
 const ASAN_MULTIPLIER = isASAN ? 3 : 1;
@@ -12,16 +12,16 @@ test(
 
     fs.cpSync(path.join(import.meta.dir, "the-test-app"), testDir, { recursive: true, force: true });
 
-    const { exited: installExited } = Bun.spawn({
-      cmd: [bunExe(), "install", "--ignore-scripts"],
+    const { exited: installExited } = Fun.spawn({
+      cmd: [funExe(), "install", "--ignore-scripts"],
       cwd: testDir,
       env,
     });
 
     expect(await installExited).toBe(0);
 
-    const { stdout, stderr, exited } = Bun.spawn({
-      cmd: [bunExe(), "node_modules/vite/bin/vite.js", "build"],
+    const { stdout, stderr, exited } = Fun.spawn({
+      cmd: [funExe(), "node_modules/vite/bin/vite.js", "build"],
       cwd: testDir,
       stdout: "pipe",
       stderr: "inherit",

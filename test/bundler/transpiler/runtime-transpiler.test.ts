@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { beforeEach, describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("use strict causes CommonJS", () => {
-  const { stdout, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), require.resolve("./use-strict-fixture.js")],
-    env: bunEnv,
+  const { stdout, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), require.resolve("./use-strict-fixture.js")],
+    env: funEnv,
   });
   expect(stdout.toString()).toBe("function\n");
   expect(exitCode).toBe(0);
@@ -19,7 +19,7 @@ test("ascii regex with escapes", () => {
   expect(/^[-#!$@£%^&*()_+|~=`{}\[\]:";'<>?,.\/ ]$/).toBeInstanceOf(RegExp);
 });
 
-describe("// @bun", () => {
+describe("// @fun", () => {
   beforeEach(() => {
     delete require.cache[require.resolve("./async-transpiler-entry")];
     delete require.cache[require.resolve("./async-transpiler-imported")];
@@ -38,10 +38,10 @@ describe("// @bun", () => {
   });
 
   test("synchronous", async () => {
-    const { stdout, exitCode } = Bun.spawnSync({
-      cmd: [bunExe(), require.resolve("./async-transpiler-imported")],
+    const { stdout, exitCode } = Fun.spawnSync({
+      cmd: [funExe(), require.resolve("./async-transpiler-imported")],
       cwd: import.meta.dir,
-      env: bunEnv,
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });
@@ -182,10 +182,10 @@ describe("json imports", () => {
 
 describe("with statement", () => {
   test("works", () => {
-    const { exitCode } = Bun.spawnSync({
-      cmd: [bunExe(), require.resolve("./with-statement-works.js")],
+    const { exitCode } = Fun.spawnSync({
+      cmd: [funExe(), require.resolve("./with-statement-works.js")],
       cwd: import.meta.dir,
-      env: bunEnv,
+      env: funEnv,
       stderr: "inherit",
       stdout: "inherit",
       stdin: "inherit",

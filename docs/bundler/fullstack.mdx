@@ -1,12 +1,12 @@
 ---
 title: "Fullstack dev server"
-description: "Build fullstack applications with Bun's integrated dev server that bundles frontend assets and handles API routes"
+description: "Build fullstack applications with Fun's integrated dev server that bundles frontend assets and handles API routes"
 ---
 
-To get started, import HTML files and pass them to the `routes` option in `Bun.serve()`.
+To get started, import HTML files and pass them to the `routes` option in `Fun.serve()`.
 
 ```ts title="app.ts" icon="/icons/typescript.svg"
-import { serve } from "bun";
+import { serve } from "fun";
 import dashboard from "./dashboard.html";
 import homepage from "./index.html";
 
@@ -14,14 +14,14 @@ const server = serve({
   routes: {
     // ** HTML imports **
     // Bundle & route index.html to "/". This uses HTMLRewriter to scan
-    // the HTML for `<script>` and `<link>` tags, runs Bun's JavaScript
+    // the HTML for `<script>` and `<link>` tags, runs Fun's JavaScript
     // & CSS bundler on them, transpiles any TypeScript, JSX, and TSX,
-    // downlevels CSS with Bun's CSS parser and serves the result.
+    // downlevels CSS with Fun's CSS parser and serves the result.
     "/": homepage,
     // Bundle & route dashboard.html to "/dashboard"
     "/dashboard": dashboard,
 
-    // ** API endpoints ** (Bun v1.2.3+ required)
+    // ** API endpoints ** (Fun v1.2.3+ required)
     "/api/users": {
       async GET(req) {
         const users = await sql`SELECT * FROM users`;
@@ -42,7 +42,7 @@ const server = serve({
 
   // Enable development mode for:
   // - Detailed error messages
-  // - Hot reloading (Bun v1.2.3+ required)
+  // - Hot reloading (Fun v1.2.3+ required)
   development: true,
 });
 
@@ -50,14 +50,14 @@ console.log(`Listening on ${server.url}`);
 ```
 
 ```bash terminal icon="terminal"
-bun run app.ts
+fun run app.ts
 ```
 
 ## HTML Routes
 
 ### HTML Imports as Routes
 
-The web starts with HTML, and so does Bun's fullstack dev server.
+The web starts with HTML, and so does Fun's fullstack dev server.
 
 To specify entrypoints to your frontend, import HTML files into your JavaScript/TypeScript/TSX/JSX files.
 
@@ -66,10 +66,10 @@ import dashboard from "./dashboard.html";
 import homepage from "./index.html";
 ```
 
-These HTML files are used as routes in Bun's dev server you can pass to `Bun.serve()`.
+These HTML files are used as routes in Fun's dev server you can pass to `Fun.serve()`.
 
 ```ts title="app.ts" icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   routes: {
     "/": homepage,
     "/dashboard": dashboard,
@@ -81,7 +81,7 @@ Bun.serve({
 });
 ```
 
-When you make a request to `/dashboard` or `/`, Bun automatically bundles the `<script>` and `<link>` tags in the HTML files, exposes them as static routes, and serves the result.
+When you make a request to `/dashboard` or `/`, Fun automatically bundles the `<script>` and `<link>` tags in the HTML files, exposes them as static routes, and serves the result.
 
 ### HTML Processing Example
 
@@ -127,7 +127,7 @@ To use React in your client-side code, import `react-dom/client` and render your
 
 ```ts title="src/backend.ts" icon="/icons/typescript.svg"
 import dashboard from "../public/dashboard.html";
-import { serve } from "bun";
+import { serve } from "fun";
 
 serve({
   routes: {
@@ -182,13 +182,13 @@ export default function App() {
 
 ## Development Mode
 
-When building locally, enable development mode by setting `development: true` in `Bun.serve()`.
+When building locally, enable development mode by setting `development: true` in `Fun.serve()`.
 
 ```ts title="src/backend.ts" icon="/icons/typescript.svg"
 import homepage from "./index.html";
 import dashboard from "./dashboard.html";
 
-Bun.serve({
+Fun.serve({
   routes: {
     "/": homepage,
     "/dashboard": dashboard,
@@ -204,7 +204,7 @@ Bun.serve({
 
 ### Development Mode Features
 
-When `development` is `true`, Bun will:
+When `development` is `true`, Fun will:
 
 - Include the SourceMap header in the response so that devtools can show the original source code
 - Disable minification
@@ -214,14 +214,14 @@ When `development` is `true`, Bun will:
 
 ### Advanced Development Configuration
 
-`Bun.serve()` supports echoing console logs from the browser to the terminal.
+`Fun.serve()` supports echoing console logs from the browser to the terminal.
 
-To enable this, pass `console: true` in the development object in `Bun.serve()`.
+To enable this, pass `console: true` in the development object in `Fun.serve()`.
 
 ```ts title="src/backend.ts" icon="/icons/typescript.svg"
 import homepage from "./index.html";
 
-Bun.serve({
+Fun.serve({
   // development can also be an object.
   development: {
     // Enable Hot Module Reloading
@@ -237,7 +237,7 @@ Bun.serve({
 });
 ```
 
-When `console: true` is set, Bun will stream console logs from the browser to the terminal. This reuses the existing WebSocket connection from HMR to send the logs.
+When `console: true` is set, Fun will stream console logs from the browser to the terminal. This reuses the existing WebSocket connection from HMR to send the logs.
 
 ### Development vs Production
 
@@ -256,16 +256,16 @@ Hot reloading and `development: true` helps you iterate quickly, but in producti
 
 ### Ahead of Time Bundling (Recommended)
 
-As of Bun v1.2.17, you can use `Bun.build` or `bun build` to bundle your full-stack application ahead of time.
+As of Fun v1.2.17, you can use `Fun.build` or `fun build` to bundle your full-stack application ahead of time.
 
 ```bash terminal icon="terminal"
-bun build --target=bun --production --outdir=dist ./src/index.ts
+fun build --target=fun --production --outdir=dist ./src/index.ts
 ```
 
-When Bun's bundler sees an HTML import from server-side code, it will bundle the referenced JavaScript/TypeScript/TSX/JSX and CSS files into a manifest object that `Bun.serve()` can use to serve the assets.
+When Fun's bundler sees an HTML import from server-side code, it will bundle the referenced JavaScript/TypeScript/TSX/JSX and CSS files into a manifest object that `Fun.serve()` can use to serve the assets.
 
 ```ts title="src/backend.ts" icon="/icons/typescript.svg"
-import { serve } from "bun";
+import { serve } from "fun";
 import index from "./index.html";
 
 serve({
@@ -275,16 +275,16 @@ serve({
 
 ### Runtime Bundling
 
-When adding a build step is too complicated, you can set `development: false` in `Bun.serve()`.
+When adding a build step is too complicated, you can set `development: false` in `Fun.serve()`.
 
 This will:
 
-- Enable in-memory caching of bundled assets. Bun will bundle assets lazily on the first request to an `.html` file, and cache the result in memory until the server restarts.
+- Enable in-memory caching of bundled assets. Fun will bundle assets lazily on the first request to an `.html` file, and cache the result in memory until the server restarts.
 - Enable `Cache-Control` headers and `ETag` headers
 - Minify JavaScript/TypeScript/TSX/JSX files
 
 ```ts title="src/backend.ts" icon="/icons/typescript.svg"
-import { serve } from "bun";
+import { serve } from "fun";
 import homepage from "./index.html";
 
 serve({
@@ -304,7 +304,7 @@ serve({
 Define API endpoints with HTTP method handlers:
 
 ```ts title="src/backend.ts" icon="/icons/typescript.svg"
-import { serve } from "bun";
+import { serve } from "fun";
 
 serve({
   routes: {
@@ -404,21 +404,21 @@ serve({
 
 ## Plugins
 
-Bun's bundler plugins are also supported when bundling static routes.
+Fun's bundler plugins are also supported when bundling static routes.
 
-To configure plugins for `Bun.serve`, add a `plugins` array in the `[serve.static]` section of your `bunfig.toml`.
+To configure plugins for `Fun.serve`, add a `plugins` array in the `[serve.static]` section of your `funfig.toml`.
 
 ### TailwindCSS Plugin
 
-You can use TailwindCSS by installing and adding the `tailwindcss` package and `bun-plugin-tailwind` plugin.
+You can use TailwindCSS by installing and adding the `tailwindcss` package and `fun-plugin-tailwind` plugin.
 
 ```bash terminal icon="terminal"
-bun add tailwindcss bun-plugin-tailwind
+fun add tailwindcss fun-plugin-tailwind
 ```
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [serve.static]
-plugins = ["bun-plugin-tailwind"]
+plugins = ["fun-plugin-tailwind"]
 ```
 
 This will allow you to use TailwindCSS utility classes in your HTML and CSS files. Import `tailwindcss` somewhere in your project:
@@ -459,20 +459,20 @@ Alternatively, you can import TailwindCSS in your CSS file:
 
 Any JS file or module which exports a valid bundler plugin object (essentially an object with a `name` and `setup` field) can be placed inside the plugins array:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [serve.static]
 plugins = ["./my-plugin-implementation.ts"]
 ```
 
 ```ts title="my-plugin-implementation.ts" icon="/icons/typescript.svg"
-import type { BunPlugin } from "bun";
+import type { FunPlugin } from "fun";
 
-const myPlugin: BunPlugin = {
+const myPlugin: FunPlugin = {
   name: "my-custom-plugin",
   setup(build) {
     // Plugin implementation
     build.onLoad({ filter: /\.custom$/ }, async args => {
-      const text = await Bun.file(args.path).text();
+      const text = await Fun.file(args.path).text();
       return {
         contents: `export default ${JSON.stringify(text)};`,
         loader: "js",
@@ -484,19 +484,19 @@ const myPlugin: BunPlugin = {
 export default myPlugin;
 ```
 
-Bun will lazily resolve and load each plugin and use them to bundle your routes.
+Fun will lazily resolve and load each plugin and use them to bundle your routes.
 
 <Note>
-  This is currently in `bunfig.toml` to make it possible to know statically which plugins are in use when we eventually
-  integrate this with the `bun build` CLI. These plugins work in `Bun.build()`'s JS API, but are not yet supported in
+  This is currently in `funfig.toml` to make it possible to know statically which plugins are in use when we eventually
+  integrate this with the `fun build` CLI. These plugins work in `Fun.build()`'s JS API, but are not yet supported in
   the CLI.
 </Note>
 
 ## Inline Environment Variables
 
-Bun can replace `process.env.*` references in your frontend JavaScript and TypeScript with their actual values at build time. Configure the `env` option in your `bunfig.toml`:
+Fun can replace `process.env.*` references in your frontend JavaScript and TypeScript with their actual values at build time. Configure the `env` option in your `funfig.toml`:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [serve.static]
 env = "PUBLIC_*"  # only inline env vars starting with PUBLIC_ (recommended)
 # env = "inline"  # inline all environment variables
@@ -516,7 +516,7 @@ See the [HTML & static sites documentation](/bundler/html-static#inline-environm
 
 ## How It Works
 
-Bun uses `HTMLRewriter` to scan for `<script>` and `<link>` tags in HTML files, uses them as entrypoints for Bun's bundler, generates an optimized bundle for the JavaScript/TypeScript/TSX/JSX and CSS files, and serves the result.
+Fun uses `HTMLRewriter` to scan for `<script>` and `<link>` tags in HTML files, uses them as entrypoints for Fun's bundler, generates an optimized bundle for the JavaScript/TypeScript/TSX/JSX and CSS files, and serves the result.
 
 ### Processing Pipeline
 
@@ -525,7 +525,7 @@ Bun uses `HTMLRewriter` to scan for `<script>` and `<link>` tags in HTML files, 
 - Transpiles TypeScript, JSX, and TSX in `<script>` tags
 - Bundles imported dependencies
 - Generates sourcemaps for debugging
-- Minifies when `development` is not `true` in `Bun.serve()`
+- Minifies when `development` is not `true` in `Fun.serve()`
 
 ```html title="index.html" icon="file-code"
 <script type="module" src="./counter.tsx"></script>
@@ -552,8 +552,8 @@ Bun uses `HTMLRewriter` to scan for `<script>` and `<link>` tags in HTML files, 
 - Outputs a new HTML file
 </Step>
 <Step title="5. Serving">
-- All the output files from the bundler are exposed as static routes, using the same mechanism internally as when you pass a Response object to `static` in `Bun.serve()`.
-- This works similarly to how `Bun.build` processes HTML files.
+- All the output files from the bundler are exposed as static routes, using the same mechanism internally as when you pass a Response object to `static` in `Fun.serve()`.
+- This works similarly to how `Fun.build` processes HTML files.
 </Step>
 </Steps>
 
@@ -562,8 +562,8 @@ Bun uses `HTMLRewriter` to scan for `<script>` and `<link>` tags in HTML files, 
 Here's a complete fullstack application example:
 
 ```ts title="server.ts" icon="/icons/typescript.svg"
-import { serve } from "bun";
-import { Database } from "bun:sqlite";
+import { serve } from "fun";
+import { Database } from "fun:sqlite";
 import homepage from "./public/index.html";
 import dashboard from "./public/dashboard.html";
 
@@ -660,7 +660,7 @@ console.log(`🚀 Server running on ${server.url}`);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Fullstack Bun App</title>
+    <title>Fullstack Fun App</title>
     <link rel="stylesheet" href="../src/styles.css" />
   </head>
   <body>
@@ -901,7 +901,7 @@ my-app/
 │   ├── db/
 │   │   └── schema.sql
 │   └── index.ts
-├── bunfig.toml
+├── funfig.toml
 └── package.json
 ```
 
@@ -987,36 +987,36 @@ export interface ApiResponse<T> {
 
 ```bash terminal icon="terminal"
 # Build for production
-bun build --target=bun --production --outdir=dist ./server/index.ts
+fun build --target=fun --production --outdir=dist ./server/index.ts
 
 # Run production server
-NODE_ENV=production bun dist/index.js
+NODE_ENV=production fun dist/index.js
 ```
 
 ### Docker Deployment
 
 ```dockerfile title="Dockerfile" icon="docker"
-FROM oven/bun:1 as base
+FROM underdoc-org/fun:1 as base
 WORKDIR /usr/src/app
 
 # Install dependencies
-COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile
+COPY package.json fun.lockb ./
+RUN fun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build application
-RUN bun build --target=bun --production --outdir=dist ./server/index.ts
+RUN fun build --target=fun --production --outdir=dist ./server/index.ts
 
 # Production stage
-FROM oven/bun:1-slim
+FROM underdoc-org/fun:1-slim
 WORKDIR /usr/src/app
 COPY --from=base /usr/src/app/dist ./
 COPY --from=base /usr/src/app/public ./public
 
 EXPOSE 3000
-CMD ["bun", "index.js"]
+CMD ["fun", "index.js"]
 ```
 
 ### Environment Variables
@@ -1039,7 +1039,7 @@ app.get("/api/users", (req, res) => {
   res.json(users);
 });
 
-// After (Bun fullstack)
+// After (Fun fullstack)
 serve({
   routes: {
     "/": homepage, // Replaces express.static
@@ -1062,7 +1062,7 @@ export default function handler(req, res) {
   }
 }
 
-// After (Bun)
+// After (Fun)
 "/api/users": {
   GET() { return Response.json(users); }
 }
@@ -1072,15 +1072,15 @@ export default function handler(req, res) {
 
 ### Current Limitations
 
-- `bun build` CLI integration is not yet available for fullstack apps
+- `fun build` CLI integration is not yet available for fullstack apps
 - Auto-discovery of API routes is not implemented
 - Server-side rendering (SSR) is not built-in
 
 ### Planned Features
 
-- Integration with `bun build` CLI
+- Integration with `fun build` CLI
 - File-based routing for API endpoints
 - Built-in SSR support
 - Enhanced plugin ecosystem
 
-<Note>This is a work in progress. Features and APIs may change as Bun continues to evolve.</Note>
+<Note>This is a work in progress. Features and APIs may change as Fun continues to evolve.</Note>

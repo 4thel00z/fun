@@ -1,4 +1,6 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 
 import { $ } from "bun";
 
@@ -60,7 +62,7 @@ async function countCompletedIssues(sinceDate: string): Promise<{ count: number;
  */
 async function getIssueReactions(issueNumber: number): Promise<number> {
   try {
-    const reactions = (await $`gh api "repos/oven-sh/bun/issues/${issueNumber}/reactions"`.json()) as Reaction[];
+    const reactions = (await $`gh api "repos/underdoc-org/fun/issues/${issueNumber}/reactions"`.json()) as Reaction[];
     return reactions.filter(r => ["+1", "heart", "hooray", "rocket"].includes(r.content)).length;
   } catch {
     return 0;
@@ -72,13 +74,13 @@ async function getIssueReactions(issueNumber: number): Promise<number> {
  */
 async function getCommentReactions(issueNumber: number): Promise<number> {
   try {
-    const comments = (await $`gh api "repos/oven-sh/bun/issues/${issueNumber}/comments"`.json()) as Comment[];
+    const comments = (await $`gh api "repos/underdoc-org/fun/issues/${issueNumber}/comments"`.json()) as Comment[];
 
     let totalReactions = 0;
     for (const comment of comments) {
       try {
         const reactions =
-          (await $`gh api "repos/oven-sh/bun/issues/comments/${comment.id}/reactions"`.json()) as Reaction[];
+          (await $`gh api "repos/underdoc-org/fun/issues/comments/${comment.id}/reactions"`.json()) as Reaction[];
         totalReactions += reactions.filter(r => ["+1", "heart", "hooray", "rocket"].includes(r.content)).length;
       } catch {
         // Skip if we can't get reactions for this comment
@@ -117,7 +119,7 @@ async function countReactions(issueNumbers: number[], verbose = false): Promise<
     }
 
     // Small delay to avoid rate limiting
-    await Bun.sleep(1);
+    await Fun.sleep(1);
   }
 
   return totalReactions;
@@ -132,8 +134,8 @@ async function main() {
   const verbose = args.includes("--verbose") || args.includes("-v");
 
   if (!releaseTag) {
-    console.error("Usage: bun run scripts/github-metrics.ts <release-tag> [--verbose]");
-    console.error("Example: bun run scripts/github-metrics.ts bun-v1.2.19");
+    console.error("Usage: fun run scripts/github-metrics.ts <release-tag> [--verbose]");
+    console.error("Example: fun run scripts/github-metrics.ts fun-v1.2.19");
     process.exit(1);
   }
 

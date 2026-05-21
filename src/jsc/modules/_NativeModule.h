@@ -11,10 +11,10 @@
 // of these functions.
 
 // To add a new native module
-//   1. Add a new line to `BUN_FOREACH_NATIVE_MODULE`
+//   1. Add a new line to `FUN_FOREACH_NATIVE_MODULE`
 //   2. Add a case to `module_loader.zig` that resolves the import.
 //   3. Add a new file in this folder named after the module, camelcase and suffixed with Module,
-//      like "NodeBufferModule.h" or "BunJSCModule.h". It should call DEFINE_NATIVE_MODULE(name).
+//      like "NodeBufferModule.h" or "FunJSCModule.h". It should call DEFINE_NATIVE_MODULE(name).
 //
 //      The native module function is called to create the module object:
 //      - INIT_NATIVE_MODULE(n) is called with the number of exports
@@ -24,10 +24,10 @@
 // If you decide to not use INIT_NATIVE_MODULE. make sure the first property
 // given is the default export
 
-#define BUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE(macro) \
-    macro("bun:test"_s, BunTest) \
-    macro("bun:jsc"_s, BunJSC) \
-    macro("bun:app"_s, BunApp) \
+#define FUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE(macro) \
+    macro("fun:test"_s, FunTest) \
+    macro("fun:jsc"_s, FunJSC) \
+    macro("fun:app"_s, FunApp) \
     macro("node:buffer"_s, NodeBuffer) \
     macro("node:constants"_s, NodeConstants) \
     macro("node:string_decoder"_s, NodeStringDecoder) \
@@ -35,14 +35,14 @@
     macro("utf-8-validate"_s, UTF8Validate) \
     macro("abort-controller"_s, AbortControllerModule)
 
-#define BUN_FOREACH_ESM_NATIVE_MODULE(macro) \
-    BUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE(macro) \
+#define FUN_FOREACH_ESM_NATIVE_MODULE(macro) \
+    FUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE(macro) \
     macro("node:module"_s, NodeModule)  \
     macro("node:process"_s, NodeProcess) \
-    macro("bun"_s, BunObject)
+    macro("fun"_s, FunObject)
 
-#define BUN_FOREACH_CJS_NATIVE_MODULE(macro) \
-    BUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE(macro)
+#define FUN_FOREACH_CJS_NATIVE_MODULE(macro) \
+    FUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE(macro)
 
 
 #if ASSERT_ENABLED
@@ -113,5 +113,5 @@ void generateNativeModule_##enumName( \
   JSC::JSGlobalObject *lexicalGlobalObject, JSC::Identifier moduleKey, \
   Vector<JSC::Identifier, 4> &exportNames, \
   JSC::MarkedArgumentBuffer &exportValues);
-BUN_FOREACH_ESM_NATIVE_MODULE(FORWARD_DECL_GENERATOR)
+FUN_FOREACH_ESM_NATIVE_MODULE(FORWARD_DECL_GENERATOR)
 } // namespace Zig

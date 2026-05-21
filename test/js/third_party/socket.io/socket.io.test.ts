@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 import fs from "fs";
 import { join } from "path";
@@ -200,7 +200,7 @@ describe.skip("socket.io", () => {
     }, 300);
 
     let imageData: any;
-    socket.on("bun", a => {
+    socket.on("fun", a => {
       clearTimeout(timeout);
       try {
         expect(Buffer.isBuffer(a)).toBe(true);
@@ -214,10 +214,10 @@ describe.skip("socket.io", () => {
       }
     });
     io.on("connection", s => {
-      fs.readFile(join(__dirname, "support", "bun.png"), (err, data) => {
+      fs.readFile(join(__dirname, "support", "fun.png"), (err, data) => {
         if (err) return done(err);
         imageData = data;
-        s.emit("bun", data);
+        s.emit("fun", data);
       });
     });
   });
@@ -248,7 +248,7 @@ describe.skip("socket.io", () => {
       }
     });
     io.on("connection", s => {
-      fs.readFile(join(__dirname, "support", "bun.png"), (err, data) => {
+      fs.readFile(join(__dirname, "support", "fun.png"), (err, data) => {
         if (err) return done(err);
         const buf = Buffer.from("asdfasdf", "utf8");
         s.emit("multiple", 1, data, "3", [4], buf, [data, "swag", buf]);
@@ -304,7 +304,7 @@ describe.skip("socket.io", () => {
           fail(done, io, err, socket);
         }
       });
-      fs.readFile(join(__dirname, "support", "bun.png"), (err, data) => {
+      fs.readFile(join(__dirname, "support", "fun.png"), (err, data) => {
         if (err) return done(err);
         const buf = Buffer.from("asdfasdf", "utf8");
         socket.emit("multiple", 1, data, "3", [4], buf, [data, "swag", buf]);

@@ -1,4 +1,4 @@
-// this file is compatible with jest to test node.js' util.inspect as well as bun's
+// this file is compatible with jest to test node.js' util.inspect as well as fun's
 
 const util = require("util");
 
@@ -8,13 +8,13 @@ test("util.inspect.custom exists", () => {
 
 const customSymbol = util.inspect.custom;
 
-for (const [name, inspect] of process.versions.bun
+for (const [name, inspect] of process.versions.fun
   ? [
       ["util.inspect", util.inspect],
-      ["Bun.inspect", Bun.inspect],
+      ["Fun.inspect", Fun.inspect],
     ]
   : [["util.inspect", util.inspect]]) {
-  const isBunInspect = name === "Bun.inspect";
+  const isFunInspect = name === "Fun.inspect";
 
   test(name + " calls inspect.custom", () => {
     const obj = {
@@ -53,7 +53,7 @@ for (const [name, inspect] of process.versions.bun
       },
     };
 
-    const expected = isBunInspect ? "{prop:42,}" : "{prop:42}";
+    const expected = isFunInspect ? "{prop:42,}" : "{prop:42}";
     expect(inspect(obj).replace(/\s/g, "")).toBe(expected);
   });
 
@@ -70,7 +70,7 @@ for (const [name, inspect] of process.versions.bun
       },
     };
 
-    const expected = isBunInspect ? "{prop:42,}" : "{prop:42}";
+    const expected = isFunInspect ? "{prop:42,}" : "{prop:42}";
     expect(inspect(obj).replace(/\s/g, "")).toBe(expected);
   });
 
@@ -132,7 +132,7 @@ for (const [name, inspect] of process.versions.bun
       },
     };
 
-    const expected = isBunInspect ? "{prop:[2,3],}" : "{prop:[2,3]}";
+    const expected = isFunInspect ? "{prop:[2,3],}" : "{prop:[2,3]}";
     expect(inspect(obj, { depth: 3 }).replace(/\s/g, "")).toBe(expected);
   });
   test(name + " non-callable does not get called", () => {
@@ -140,7 +140,7 @@ for (const [name, inspect] of process.versions.bun
       [customSymbol]: 512,
     };
 
-    const expected = isBunInspect
+    const expected = isFunInspect
       ? "{[Symbol(nodejs.util.inspect.custom)]:512,}"
       : "{Symbol(nodejs.util.inspect.custom):512}";
     expect(inspect(obj, { depth: 3 }).replace(/\s/g, "")).toBe(expected);

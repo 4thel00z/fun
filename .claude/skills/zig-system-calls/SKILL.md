@@ -1,20 +1,20 @@
 ---
 name: zig-system-calls
-description: Guides using bun.sys for system calls and file I/O in Zig. Use when implementing file operations instead of std.fs or std.posix.
+description: Guides using fun.sys for system calls and file I/O in Zig. Use when implementing file operations instead of std.fs or std.posix.
 ---
 
 # System Calls & File I/O in Zig
 
-Use `bun.sys` instead of `std.fs` or `std.posix` for cross-platform syscalls with proper error handling.
+Use `fun.sys` instead of `std.fs` or `std.posix` for cross-platform syscalls with proper error handling.
 
-## bun.sys.File (Preferred)
+## fun.sys.File (Preferred)
 
-For most file operations, use the `bun.sys.File` wrapper:
+For most file operations, use the `fun.sys.File` wrapper:
 
 ```zig
-const File = bun.sys.File;
+const File = fun.sys.File;
 
-const file = switch (File.open(path, bun.O.RDWR, 0o644)) {
+const file = switch (File.open(path, fun.O.RDWR, 0o644)) {
     .result => |f| f,
     .err => |err| return .{ .err = err },
 };
@@ -36,10 +36,10 @@ const writer = file.writer();
 ### Complete Example
 
 ```zig
-const File = bun.sys.File;
+const File = fun.sys.File;
 
 pub fn writeFile(path: [:0]const u8, data: []const u8) File.WriteError!void {
-    const file = switch (File.open(path, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o664)) {
+    const file = switch (File.open(path, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o664)) {
         .result => |f| f,
         .err => |err| return err.toError(),
     };
@@ -52,9 +52,9 @@ pub fn writeFile(path: [:0]const u8, data: []const u8) File.WriteError!void {
 }
 ```
 
-## Why bun.sys?
+## Why fun.sys?
 
-| Aspect      | bun.sys                          | std.fs/std.posix    |
+| Aspect      | fun.sys                          | std.fs/std.posix    |
 | ----------- | -------------------------------- | ------------------- |
 | Return Type | `Maybe(T)` with detailed Error   | Generic error union |
 | Windows     | Full support with libuv fallback | Limited/POSIX-only  |
@@ -63,10 +63,10 @@ pub fn writeFile(path: [:0]const u8, data: []const u8) File.WriteError!void {
 
 ## Error Handling with Maybe(T)
 
-`bun.sys` functions return `Maybe(T)` - a tagged union:
+`fun.sys` functions return `Maybe(T)` - a tagged union:
 
 ```zig
-const sys = bun.sys;
+const sys = fun.sys;
 
 // Pattern 1: Switch on result/error
 switch (sys.read(fd, buffer)) {
@@ -90,24 +90,24 @@ const value = sys.stat(path).unwrapOr(default_stat);
 
 ## Low-Level File Operations
 
-Only use these when `bun.sys.File` doesn't meet your needs.
+Only use these when `fun.sys.File` doesn't meet your needs.
 
 ### Opening Files
 
 ```zig
-const sys = bun.sys;
+const sys = fun.sys;
 
-// Use bun.O flags (cross-platform normalized)
-const fd = switch (sys.open(path, bun.O.RDONLY, 0)) {
+// Use fun.O flags (cross-platform normalized)
+const fd = switch (sys.open(path, fun.O.RDONLY, 0)) {
     .result => |fd| fd,
     .err => |err| return .{ .err = err },
 };
 defer fd.close();
 
 // Common flags
-bun.O.RDONLY, bun.O.WRONLY, bun.O.RDWR
-bun.O.CREAT, bun.O.TRUNC, bun.O.APPEND
-bun.O.NONBLOCK, bun.O.DIRECTORY
+fun.O.RDONLY, fun.O.WRONLY, fun.O.RDWR
+fun.O.CREAT, fun.O.TRUNC, fun.O.APPEND
+fun.O.NONBLOCK, fun.O.DIRECTORY
 ```
 
 ### Reading & Writing
@@ -173,7 +173,7 @@ sys.fchown(fd, uid, gid)
 
 ### Closing File Descriptors
 
-Close is on `bun.FD`:
+Close is on `fun.FD`:
 
 ```zig
 fd.close();  // Asserts on error (use in defer)
@@ -187,7 +187,7 @@ if (fd.closeAllowingBadFileDescriptor(null)) |err| {
 ## Directory Operations
 
 ```zig
-var buf: bun.PathBuffer = undefined;
+var buf: fun.PathBuffer = undefined;
 const cwd = try sys.getcwd(&buf).unwrap();
 const cwdZ = try sys.getcwdZ(&buf).unwrap();  // Zero-terminated
 sys.chdir(path, destination)
@@ -195,10 +195,10 @@ sys.chdir(path, destination)
 
 ### Directory Iteration
 
-Use `bun.DirIterator` instead of `std.fs.Dir.Iterator`:
+Use `fun.DirIterator` instead of `std.fs.Dir.Iterator`:
 
 ```zig
-var iter = bun.iterateDir(dir_fd);
+var iter = fun.iterateDir(dir_fd);
 while (true) {
     switch (iter.next()) {
         .result => |entry| {
@@ -216,19 +216,19 @@ while (true) {
 
 ## Socket Operations
 
-**Important**: `bun.sys` has limited socket support. For network I/O:
+**Important**: `fun.sys` has limited socket support. For network I/O:
 
 - **Non-blocking sockets**: Use `uws.Socket` (libuwebsockets) exclusively
 - **Pipes/blocking I/O**: Use `PipeReader.zig` and `PipeWriter.zig`
 
-Available in bun.sys:
+Available in fun.sys:
 
 ```zig
 sys.setsockopt(fd, level, optname, value)
 sys.socketpair(domain, socktype, protocol, nonblocking_status)
 ```
 
-Do NOT use `bun.sys` for socket read/write - use `uws.Socket` instead.
+Do NOT use `fun.sys` for socket read/write - use `uws.Socket` instead.
 
 ## Other Operations
 
@@ -249,7 +249,7 @@ sys.utimens(path, atime, mtime)
 ## Error Type
 
 ```zig
-const err: bun.sys.Error = ...;
+const err: fun.sys.Error = ...;
 err.errno      // Raw errno value
 err.getErrno() // As std.posix.E enum
 err.syscall    // Which syscall failed (Tag enum)
@@ -259,10 +259,10 @@ err.path       // Optional: path string
 
 ## Key Points
 
-- Prefer `bun.sys.File` wrapper for most file operations
-- Use low-level `bun.sys` functions only when needed
-- Use `bun.O.*` flags instead of `std.os.O.*`
+- Prefer `fun.sys.File` wrapper for most file operations
+- Use low-level `fun.sys` functions only when needed
+- Use `fun.O.*` flags instead of `std.os.O.*`
 - Handle `Maybe(T)` with switch or `.unwrap()`
 - Use `defer fd.close()` for cleanup
 - EINTR is handled automatically in most functions
-- For sockets, use `uws.Socket` not `bun.sys`
+- For sockets, use `uws.Socket` not `fun.sys`

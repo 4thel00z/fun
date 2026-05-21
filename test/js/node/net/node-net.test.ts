@@ -1,7 +1,7 @@
-import { Socket as _BunSocket, TCPSocketListener } from "bun";
-import { heapStats } from "bun:jsc";
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, expectMaxObjectTypeCount, isASAN, isDebug, isWindows, tmpdirSync } from "harness";
+import { Socket as _FunSocket, TCPSocketListener } from "fun";
+import { heapStats } from "fun:jsc";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, expectMaxObjectTypeCount, isASAN, isDebug, isWindows, tmpdirSync } from "harness";
 import { randomUUID } from "node:crypto";
 import { connect, createConnection, createServer, isIP, isIPv4, isIPv6, Server, Socket, Stream } from "node:net";
 import { join } from "node:path";
@@ -46,7 +46,7 @@ describe("net.Socket read", () => {
     describe(label, () => {
       function runWithServer(cb: (..._: any[]) => void, unix_domain_path?: any) {
         return (done: (_: any) => void) => {
-          function drain(socket: _BunSocket<{ message: string }>) {
+          function drain(socket: _FunSocket<{ message: string }>) {
             const message = socket.data.message;
             const written = socket.write(message);
             if (written < message.length) {
@@ -57,7 +57,7 @@ describe("net.Socket read", () => {
           }
 
           var server = unix_domain_path
-            ? Bun.listen({
+            ? Fun.listen({
                 unix: join(unix_domain_path, `${unix_servers++}.sock`),
                 socket: {
                   open(socket) {
@@ -73,7 +73,7 @@ describe("net.Socket read", () => {
                   message: "",
                 },
               })
-            : Bun.listen({
+            : Fun.listen({
                 hostname: "localhost",
                 port: 0,
                 socket: {
@@ -299,14 +299,14 @@ describe("net.Socket write", () => {
     return (done: (_?: any) => void) => {
       let server: TCPSocketListener<unknown>;
 
-      function close(socket: _BunSocket<Buffer[]>) {
+      function close(socket: _FunSocket<Buffer[]>) {
         expect(Buffer.concat(socket.data).toString("utf8")).toBe(message);
         server.stop();
         done();
       }
 
       var leaky;
-      server = Bun.listen({
+      server = Fun.listen({
         hostname: "0.0.0.0",
         port: 0,
         socket: {
@@ -450,9 +450,9 @@ describe("net.Socket write", () => {
         });
         s.connect(1, "127.0.0.1");
       `;
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", fixture],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", fixture],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -490,9 +490,9 @@ describe("net.Socket write", () => {
           s.connect(port, "127.0.0.1");
         });
       `;
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", fixture],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", fixture],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -536,9 +536,9 @@ describe("net.Socket write", () => {
           })();
         });
       `;
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", fixture],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", fixture],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -619,17 +619,17 @@ it("Socket has a prototype", () => {
 });
 
 it("unref should exit when no more work pending", async () => {
-  const process = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "node-unref-fixture.js")],
-    env: bunEnv,
+  const process = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "node-unref-fixture.js")],
+    env: funEnv,
   });
   expect(await process.exited).toBe(0);
 });
 
 it("socket should keep process alive if unref is not called", async () => {
-  const process = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "node-ref-default-fixture.js")],
-    env: bunEnv,
+  const process = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "node-ref-default-fixture.js")],
+    env: funEnv,
   });
   expect(await process.exited).toBe(1);
 });
@@ -646,13 +646,13 @@ it("should not hang after FIN", async () => {
     server.listen(0, () => {
       resolveListening(server.address().port);
     });
-    const process = Bun.spawn({
-      cmd: [bunExe(), join(import.meta.dir, "node-fin-fixture.js")],
+    const process = Fun.spawn({
+      cmd: [funExe(), join(import.meta.dir, "node-fin-fixture.js")],
       stderr: "inherit",
       stdin: "ignore",
       stdout: "inherit",
       env: {
-        ...bunEnv,
+        ...funEnv,
         PORT: ((await listening) as number).toString(),
       },
     });
@@ -678,13 +678,13 @@ it("should not hang after destroy", async () => {
     server.listen(0, () => {
       resolveListening(server.address().port);
     });
-    const process = Bun.spawn({
-      cmd: [bunExe(), join(import.meta.dir, "node-destroy-fixture.js")],
+    const process = Fun.spawn({
+      cmd: [funExe(), join(import.meta.dir, "node-destroy-fixture.js")],
       stderr: "inherit",
       stdin: "ignore",
       stdout: "inherit",
       env: {
-        ...bunEnv,
+        ...funEnv,
         PORT: ((await listening) as number).toString(),
       },
     });
@@ -717,7 +717,7 @@ it("should trigger error when aborted even if connection failed #13126", async (
 
 it("should trigger error when aborted even if connection failed, and the signal is already aborted #13126", async () => {
   const signal = AbortSignal.timeout(1);
-  await Bun.sleep(10);
+  await Fun.sleep(10);
   const socket = createConnection({
     host: "example.com",
     port: 999,
@@ -804,8 +804,8 @@ it.skipIf(isWindows)(
     // string.
     const script = `
       const net = require("node:net");
-      const { heapStats } = require("bun:jsc");
-      const path = "/tmp/bun-test-nonexistent-" + process.pid + ".sock";
+      const { heapStats } = require("fun:jsc");
+      const path = "/tmp/fun-test-nonexistent-" + process.pid + ".sock";
 
       function once() {
         return new Promise(resolve => {
@@ -821,9 +821,9 @@ it.skipIf(isWindows)(
           for (let j = 0; j < 100; j++) batch.push(once());
           await Promise.all(batch);
         }
-        Bun.gc(true);
-        await Bun.sleep(20);
-        Bun.gc(true);
+        Fun.gc(true);
+        await Fun.sleep(20);
+        Fun.gc(true);
       }
 
       // Count live mimalloc pages across all size bins. Each leaked
@@ -842,9 +842,9 @@ it.skipIf(isWindows)(
       const after = pageCount();
       console.log(JSON.stringify({ before, after, delta: after - before }));
     `;
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script],
-      env: { ...bunEnv, BUN_GARBAGE_COLLECTOR_LEVEL: "0" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script],
+      env: { ...funEnv, FUN_GARBAGE_COLLECTOR_LEVEL: "0" },
       stdout: "pipe",
       stderr: "pipe",
     });

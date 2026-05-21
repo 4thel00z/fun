@@ -59,7 +59,7 @@ pub const SupportsCondition = union(enum) {
     pub fn cloneWithImportRecords(
         this: *const @This(),
         allocator: std.mem.Allocator,
-        _: *bun.BabyList(bun.ImportRecord),
+        _: *fun.BabyList(fun.ImportRecord),
     ) @This() {
         return deepClone(this, allocator);
     }
@@ -98,7 +98,7 @@ pub const SupportsCondition = union(enum) {
             };
             return .{
                 .result = .{
-                    .not = bun.create(
+                    .not = fun.create(
                         input.allocator(),
                         SupportsCondition,
                         in_parens,
@@ -129,7 +129,7 @@ pub const SupportsCondition = union(enum) {
                 }
 
                 pub inline fn seenDeclKeyEql(this: SeenDeclKey, that: SeenDeclKey) bool {
-                    return @intFromEnum(this[0]) == @intFromEnum(that[0]) and bun.strings.eql(this[1], that[1]);
+                    return @intFromEnum(this[0]) == @intFromEnum(that[0]) and fun.strings.eql(this[1], that[1]);
                 }
             },
             false,
@@ -147,8 +147,8 @@ pub const SupportsCondition = union(enum) {
                     };
                     const found_type: i32 = found_type: {
                         // todo_stuff.match_ignore_ascii_case
-                        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("and", s)) break :found_type 1;
-                        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("or", s)) break :found_type 2;
+                        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("and", s)) break :found_type 1;
+                        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("or", s)) break :found_type 2;
                         return .{ .err = location.newUnexpectedTokenError(.{ .ident = s }) };
                     };
 
@@ -171,14 +171,14 @@ pub const SupportsCondition = union(enum) {
             switch (_condition) {
                 .result => |condition| {
                     if (conditions.items.len == 0) {
-                        bun.handleOom(conditions.append(input.allocator(), in_parens.deepClone(input.allocator())));
+                        fun.handleOom(conditions.append(input.allocator(), in_parens.deepClone(input.allocator())));
                         if (in_parens == .declaration) {
                             const property_id = in_parens.declaration.property_id;
                             const value = in_parens.declaration.value;
                             seen_declarations.put(
                                 .{ property_id.withPrefix(css.VendorPrefix{ .none = true }), value },
                                 0,
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
                         }
                     }
 
@@ -195,17 +195,17 @@ pub const SupportsCondition = union(enum) {
                                 cond.declaration.property_id.addPrefix(property_id.prefix());
                             }
                         } else {
-                            bun.handleOom(seen_declarations.put(key, conditions.items.len));
+                            fun.handleOom(seen_declarations.put(key, conditions.items.len));
                             conditions.append(input.allocator(), SupportsCondition{ .declaration = .{
                                 .property_id = property_id,
                                 .value = value,
-                            } }) catch |err| bun.handleOom(err);
+                            } }) catch |err| fun.handleOom(err);
                         }
                     } else {
                         conditions.append(
                             input.allocator(),
                             condition,
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     }
                 },
                 else => break,
@@ -250,7 +250,7 @@ pub const SupportsCondition = union(enum) {
         };
         switch (tok.*) {
             .function => |f| {
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("selector", f)) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("selector", f)) {
                     const Fn = struct {
                         pub fn tryParseFn(i: *css.Parser) Result(SupportsCondition) {
                             return i.parseNestedBlock(SupportsCondition, {}, @This().parseNestedBlockFn);
@@ -413,7 +413,7 @@ pub fn SupportsRule(comptime R: type) type {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

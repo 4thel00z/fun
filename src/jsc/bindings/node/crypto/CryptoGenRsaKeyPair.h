@@ -4,7 +4,7 @@
 #include "ncrypto.h"
 #include "CryptoGenKeyPair.h"
 
-namespace Bun {
+namespace Fun {
 
 enum class RsaKeyVariant {
     RSA_SSA_PKCS1_v1_5,
@@ -65,4 +65,4 @@ struct RsaKeyPairJob {
     void schedule();
 };
 
-} // namespace Bun
+} // namespace Fun

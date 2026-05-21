@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import perf from "perf_hooks";
 
 test("stubs", () => {

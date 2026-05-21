@@ -321,7 +321,7 @@ pub const ByteWriter = Writer(*std.io.FixedBufferStream([]u8));
 pub const FileWriter = Writer(std.fs.File);
 
 pub const api = struct {
-    // these are in sync with BunLoaderType in headers-handwritten.h
+    // these are in sync with FunLoaderType in headers-handwritten.h
     pub const Loader = enum(u8) {
         _none = 254,
         jsx = 1,
@@ -338,7 +338,7 @@ pub const api = struct {
         base64 = 12,
         dataurl = 13,
         text = 14,
-        bunsh = 15,
+        funsh = 15,
         sqlite = 16,
         sqlite_embedded = 17,
         html = 18,
@@ -428,7 +428,7 @@ pub const api = struct {
         }
     };
 
-    pub const StackFramePosition = bun.jsc.ZigStackFramePosition;
+    pub const StackFramePosition = fun.jsc.ZigStackFramePosition;
 
     pub const SourceLine = struct {
         /// line
@@ -737,11 +737,11 @@ pub const api = struct {
         /// node
         node,
 
-        /// bun
-        bun,
+        /// fun
+        fun,
 
-        /// bun_macro
-        bun_macro,
+        /// fun_macro
+        fun_macro,
 
         _,
 
@@ -837,8 +837,8 @@ pub const api = struct {
         length: u32 = 0,
 
         comptime {
-            bun.assert(@alignOf(StringPointer) == @alignOf(u32));
-            bun.assert(@sizeOf(StringPointer) == @sizeOf(u64));
+            fun.assert(@alignOf(StringPointer) == @alignOf(u32));
+            fun.assert(@sizeOf(StringPointer) == @sizeOf(u64));
         }
 
         pub fn decode(reader: anytype) anyerror!StringPointer {
@@ -1625,9 +1625,9 @@ pub const api = struct {
         warn = 2,
         none = 3,
         warn_with_error_code = 4,
-        bun = 5,
+        fun = 5,
 
-        pub const map = bun.ComptimeStringMap(UnhandledRejections, .{
+        pub const map = fun.ComptimeStringMap(UnhandledRejections, .{
             .{ "strict", .strict },
             .{ "throw", .throw },
             .{ "warn", .warn },
@@ -1657,7 +1657,7 @@ pub const api = struct {
 
         drop: []const []const u8 = &.{},
 
-        /// feature_flags for dead-code elimination via `import { feature } from "bun:bundle"`
+        /// feature_flags for dead-code elimination via `import { feature } from "fun:bundle"`
         feature_flags: []const []const u8 = &.{},
 
         /// preserve_symlinks
@@ -1739,10 +1739,10 @@ pub const api = struct {
 
         // from --no-addons. null == true
         allow_addons: ?bool = null,
-        /// from --unhandled-rejections, default is 'bun'
+        /// from --unhandled-rejections, default is 'fun'
         unhandled_rejections: ?UnhandledRejections = null,
 
-        bunfig_path: []const u8,
+        funfig_path: []const u8,
 
         pub fn decode(reader: anytype) anyerror!TransformOptions {
             var this = std.mem.zeroes(TransformOptions);
@@ -2821,7 +2821,7 @@ pub const api = struct {
         email: []const u8,
 
         pub fn dupe(this: NpmRegistry, allocator: std.mem.Allocator) NpmRegistry {
-            const buf = bun.handleOom(allocator.alloc(u8, this.url.len + this.username.len + this.password.len + this.token.len + this.email.len));
+            const buf = fun.handleOom(allocator.alloc(u8, this.url.len + this.username.len + this.password.len + this.token.len + this.email.len));
 
             var out: NpmRegistry = .{
                 .url = "",
@@ -2862,11 +2862,11 @@ pub const api = struct {
         }
 
         pub const Parser = struct {
-            log: *bun.logger.Log,
-            source: *const bun.logger.Source,
+            log: *fun.logger.Log,
+            source: *const fun.logger.Source,
             allocator: std.mem.Allocator,
 
-            fn addError(this: *Parser, loc: bun.logger.Loc, comptime text: []const u8) !void {
+            fn addError(this: *Parser, loc: fun.logger.Loc, comptime text: []const u8) !void {
                 this.log.addError(this.source, loc, text) catch unreachable;
                 return error.ParserError;
             }
@@ -2888,7 +2888,7 @@ pub const api = struct {
             }
 
             pub fn parseRegistryURLStringImpl(this: *Parser, str: []const u8) OOM!api.NpmRegistry {
-                const url = bun.URL.parse(str);
+                const url = fun.URL.parse(str);
                 var registry = std.mem.zeroes(api.NpmRegistry);
 
                 // Token
@@ -2954,7 +2954,7 @@ pub const api = struct {
     };
 
     pub const NpmRegistryMap = struct {
-        scopes: bun.StringArrayHashMapUnmanaged(NpmRegistry) = .{},
+        scopes: fun.StringArrayHashMapUnmanaged(NpmRegistry) = .{},
 
         pub fn decode(reader: anytype) anyerror!NpmRegistryMap {
             var this = std.mem.zeroes(NpmRegistryMap);
@@ -2970,7 +2970,7 @@ pub const api = struct {
         }
     };
 
-    pub const BunInstall = struct {
+    pub const FunInstall = struct {
         /// default_registry
         default_registry: ?NpmRegistry = null,
 
@@ -3047,7 +3047,7 @@ pub const api = struct {
 
         link_workspace_packages: ?bool = null,
 
-        node_linker: ?bun.install.PackageManager.Options.NodeLinker = null,
+        node_linker: ?fun.install.PackageManager.Options.NodeLinker = null,
 
         global_store: ?bool = null,
 
@@ -3218,7 +3218,7 @@ pub const api = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const install = bun.install;
-const js_ast = bun.ast;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const install = fun.install;
+const js_ast = fun.ast;

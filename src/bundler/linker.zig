@@ -1,4 +1,4 @@
-// This file is the old linker, used by Bun.Transpiler.
+// This file is the old linker, used by Fun.Transpiler.
 
 pub const CSSResolveError = error{ResolveMessage};
 
@@ -22,7 +22,7 @@ pub const Linker = struct {
 
     plugin_runner: ?*PluginRunner = null,
 
-    pub const runtime_source_path = "bun:wrap";
+    pub const runtime_source_path = "fun:wrap";
 
     pub const TaggedResolution = struct {
         react_refresh: ?Resolver.Result = null,
@@ -76,7 +76,7 @@ pub const Linker = struct {
         fd: ?FileDescriptorType,
     ) !string {
         if (Transpiler.isCacheEnabled) {
-            const hashed = bun.hash(file_path.text);
+            const hashed = fun.hash(file_path.text);
             const hashed_result = try this.hashed_filenames.getOrPut(hashed);
             if (hashed_result.found_existing) {
                 return hashed_result.value_ptr.*;
@@ -87,7 +87,7 @@ pub const Linker = struct {
         const hash_name = modkey.hashName(file_path.text);
 
         if (Transpiler.isCacheEnabled) {
-            const hashed = bun.hash(file_path.text);
+            const hashed = fun.hash(file_path.text);
             try this.hashed_filenames.put(hashed, try this.allocator.dupe(u8, hash_name));
         }
 
@@ -102,7 +102,7 @@ pub const Linker = struct {
         origin: URL,
         comptime import_path_format: Options.BundleOptions.ImportPathFormat,
         comptime ignore_runtime: bool,
-        comptime is_bun: bool,
+        comptime is_fun: bool,
     ) !void {
         const source_dir = file_path.sourceDir();
         var externals = std.array_list.Managed(u32).init(linker.allocator);
@@ -115,19 +115,19 @@ pub const Linker = struct {
             .jsx, .js, .ts, .tsx => {
                 for (result.ast.import_records.slice(), 0..) |*import_record, record_i| {
                     if (import_record.flags.is_unused or
-                        (is_bun and is_deferred and !result.isPendingImport(@intCast(record_i)))) continue;
+                        (is_fun and is_deferred and !result.isPendingImport(@intCast(record_i)))) continue;
 
                     const record_index = record_i;
                     if (comptime !ignore_runtime) {
                         if (strings.eqlComptime(import_record.path.namespace, "runtime")) {
                             if (import_path_format == .absolute_url) {
-                                import_record.path = Fs.Path.initWithNamespace(try origin.joinAlloc(linker.allocator, "", "", "bun:wrap", "", ""), "bun");
+                                import_record.path = Fs.Path.initWithNamespace(try origin.joinAlloc(linker.allocator, "", "", "fun:wrap", "", ""), "fun");
                             } else {
                                 import_record.path = try linker.generateImportPath(
                                     source_dir,
                                     Linker.runtime_source_path,
                                     false,
-                                    "bun",
+                                    "fun",
                                     origin,
                                     import_path_format,
                                 );
@@ -139,7 +139,7 @@ pub const Linker = struct {
                         }
                     }
 
-                    if (comptime is_bun) {
+                    if (comptime is_fun) {
                         if (jsc.ModuleLoader.HardcodedModule.Alias.get(import_record.path.text, linker.options.target, .{ .rewrite_jest_for_tests = linker.options.rewrite_jest_for_tests })) |replacement| {
                             if (replacement.tag == .builtin and import_record.kind.isCommonJS())
                                 continue;
@@ -151,17 +151,17 @@ pub const Linker = struct {
                         if (strings.startsWith(import_record.path.text, "node:")) {
                             // if a module is not found here, it is not found at all
                             // so we can just disable it
-                            had_resolve_errors = try whenModuleNotFound(linker, import_record, result, is_bun);
+                            had_resolve_errors = try whenModuleNotFound(linker, import_record, result, is_fun);
 
                             if (had_resolve_errors) return error.ResolveMessage;
                             continue;
                         }
 
-                        if (strings.hasPrefixComptime(import_record.path.text, "bun:")) {
-                            import_record.path = Fs.Path.init(import_record.path.text["bun:".len..]);
-                            import_record.path.namespace = "bun";
+                        if (strings.hasPrefixComptime(import_record.path.text, "fun:")) {
+                            import_record.path = Fs.Path.init(import_record.path.text["fun:".len..]);
+                            import_record.path.namespace = "fun";
 
-                            // don't link bun
+                            // don't link fun
                             continue;
                         }
 
@@ -178,8 +178,8 @@ pub const Linker = struct {
                                 file_path.text,
                                 linker.log,
                                 import_record.range.loc,
-                                if (is_bun)
-                                    .bun
+                                if (is_fun)
+                                    .fun
                                 else if (linker.options.target == .browser)
                                     .browser
                                 else
@@ -211,14 +211,14 @@ pub const Linker = struct {
         linker: *ThisLinker,
         import_record: *ImportRecord,
         result: *_transpiler.ParseResult,
-        comptime is_bun: bool,
+        comptime is_fun: bool,
     ) !bool {
         if (import_record.flags.handles_import_errors) {
             import_record.path.is_disabled = true;
             return false;
         }
 
-        if (comptime is_bun) {
+        if (comptime is_fun) {
             // make these happen at runtime
             if (import_record.kind == .require or import_record.kind == .require_resolve or import_record.kind == .dynamic) {
                 return false;
@@ -241,7 +241,7 @@ pub const Linker = struct {
                     &result.source,
                     import_record.range,
                     linker.allocator,
-                    "Could not resolve: \"{s}\". Maybe you need to \"bun install\"?",
+                    "Could not resolve: \"{s}\". Maybe you need to \"fun install\"?",
                     .{import_record.path.text},
                     import_record.kind,
                     error.ModuleNotFound,
@@ -281,7 +281,7 @@ pub const Linker = struct {
                     return Fs.Path.initWithNamespace(source_path, "node");
                 }
 
-                if (strings.eqlComptime(namespace, "bun") or strings.eqlComptime(namespace, "file") or namespace.len == 0) {
+                if (strings.eqlComptime(namespace, "fun") or strings.eqlComptime(namespace, "file") or namespace.len == 0) {
                     const relative_name = linker.fs.relative(source_dir, source_path);
                     return Fs.Path.initWithPretty(source_path, relative_name);
                 } else {
@@ -297,11 +297,11 @@ pub const Linker = struct {
                     const basename = try linker.getHashedFilename(basepath, null);
                     const dir = basepath.name.dirWithTrailingSlash();
                     var _pretty = try linker.allocator.alloc(u8, dir.len + basename.len + basepath.name.ext.len);
-                    bun.copy(u8, _pretty, dir);
+                    fun.copy(u8, _pretty, dir);
                     var remaining_pretty = _pretty[dir.len..];
-                    bun.copy(u8, remaining_pretty, basename);
+                    fun.copy(u8, remaining_pretty, basename);
                     remaining_pretty = remaining_pretty[basename.len..];
-                    bun.copy(u8, remaining_pretty, basepath.name.ext);
+                    fun.copy(u8, remaining_pretty, basepath.name.ext);
                     pretty = _pretty;
                     relative_name = try linker.allocator.dupe(u8, relative_name);
                 } else {
@@ -319,7 +319,7 @@ pub const Linker = struct {
 
             .absolute_url => {
                 if (strings.eqlComptime(namespace, "node")) {
-                    if (comptime Environment.isDebug) bun.assert(strings.eqlComptime(source_path[0..5], "node:"));
+                    if (comptime Environment.isDebug) fun.assert(strings.eqlComptime(source_path[0..5], "node:"));
 
                     return Fs.Path.init(try std.fmt.allocPrint(
                         linker.allocator,
@@ -378,7 +378,7 @@ pub const Linker = struct {
             hash_key = path.text[linker.fs.top_level_dir.len..];
         }
 
-        return bun.hash(hash_key);
+        return fun.hash(hash_key);
     }
 
     pub fn enqueueResolveResult(linker: *ThisLinker, resolve_result: *const Resolver.Result) !bool {
@@ -407,15 +407,15 @@ const ImportRecord = _import_record.ImportRecord;
 const Resolver = @import("../resolver/resolver.zig");
 const ResolverType = Resolver.Resolver;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FileDescriptorType = bun.FD;
-const allocators = bun.allocators;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FileDescriptorType = fun.FD;
+const allocators = fun.allocators;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const _transpiler = bun.transpiler;
-const PluginRunner = bun.transpiler.PluginRunner;
+const _transpiler = fun.transpiler;
+const PluginRunner = fun.transpiler.PluginRunner;
 const ResolveQueue = _transpiler.ResolveQueue;
 const Transpiler = _transpiler.Transpiler;

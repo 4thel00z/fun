@@ -79,22 +79,22 @@ pub fn objectToJS(this: *E.Object, allocator: std.mem.Allocator, globalObject: *
 pub fn stringToJS(s: *E.String, allocator: std.mem.Allocator, globalObject: *jsc.JSGlobalObject) !jsc.JSValue {
     s.resolveRopeIfNeeded(allocator);
     if (!s.isPresent()) {
-        var emp = bun.String.empty;
+        var emp = fun.String.empty;
         return emp.toJS(globalObject);
     }
 
     if (s.isUTF8()) {
-        if (try bun.strings.toUTF16Alloc(allocator, s.slice8(), false, false)) |utf16| {
-            var out, const chars = bun.String.createUninitialized(.utf16, utf16.len);
+        if (try fun.strings.toUTF16Alloc(allocator, s.slice8(), false, false)) |utf16| {
+            var out, const chars = fun.String.createUninitialized(.utf16, utf16.len);
             @memcpy(chars, utf16);
             return out.transferToJS(globalObject);
         } else {
-            var out, const chars = bun.String.createUninitialized(.latin1, s.slice8().len);
+            var out, const chars = fun.String.createUninitialized(.latin1, s.slice8().len);
             @memcpy(chars, s.slice8());
             return out.transferToJS(globalObject);
         }
     } else {
-        var out, const chars = bun.String.createUninitialized(.utf16, s.slice16().len);
+        var out, const chars = fun.String.createUninitialized(.utf16, s.slice16().len);
         @memcpy(chars, s.slice16());
         return out.transferToJS(globalObject);
     }
@@ -102,10 +102,10 @@ pub fn stringToJS(s: *E.String, allocator: std.mem.Allocator, globalObject: *jsc
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const G = js_ast.G;

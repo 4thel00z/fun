@@ -1,4 +1,4 @@
-const PathIntLen = std.math.IntFittingRange(0, bun.MAX_PATH_BYTES);
+const PathIntLen = std.math.IntFittingRange(0, fun.MAX_PATH_BYTES);
 const use_small_path_string_ = @bitSizeOf(usize) - @bitSizeOf(PathIntLen) >= 53;
 
 const PathStringBackingIntType = if (use_small_path_string_) u64 else u128;
@@ -14,7 +14,7 @@ pub const PathString = packed struct(PathStringBackingIntType) {
     ptr: PointerIntType = 0,
     len: PathInt = 0,
 
-    const jsc = bun.jsc;
+    const jsc = fun.jsc;
 
     pub fn estimatedSize(this: *const PathString) usize {
         return @as(usize, this.len);
@@ -50,7 +50,7 @@ pub const PathString = packed struct(PathStringBackingIntType) {
 
     pub const empty = @This(){ .ptr = 0, .len = 0 };
     comptime {
-        if (!bun.Environment.isWasm) {
+        if (!fun.Environment.isWasm) {
             if (use_small_path_string and @bitSizeOf(@This()) != 64) {
                 @compileError("PathString must be 64 bits");
             } else if (!use_small_path_string and @bitSizeOf(@This()) != 128) {
@@ -60,5 +60,5 @@ pub const PathString = packed struct(PathStringBackingIntType) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

@@ -1,12 +1,12 @@
 #include "NodeHTTPParser.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "helpers.h"
 #include "JSConnectionsList.h"
 #include "JSHTTPParser.h"
 #include "ZigGlobalObject.h"
 #include "uv.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;
@@ -662,4 +662,4 @@ void HTTPParser::flush()
     m_haveFlushed = true;
 }
 
-} // namespace Bun
+} // namespace Fun

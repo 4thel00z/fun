@@ -9,15 +9,15 @@
 //   - Buffer.concat(new Proxy([], {})) -> SEGV at 0x4
 //   - process.setgroups(new Proxy([], {})) -> SEGV at 0x4
 //   - vm.compileFunction("", new Proxy([], {})) -> debug assertion
-//   - new Bun.CookieMap(new Proxy([], {})) -> debug assertion
+//   - new Fun.CookieMap(new Proxy([], {})) -> debug assertion
 //   - expect(proxy).toEqual(expect.arrayContaining([...])) -> UBSan null deref
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import vm from "vm";
 
 describe("isArray + Proxy crash fixes", () => {
   test("Buffer.concat accepts empty Proxy-wrapped array", () => {
-    // Node.js returns an empty buffer here; before the fix, Bun would SEGV.
+    // Node.js returns an empty buffer here; before the fix, Fun would SEGV.
     const result = Buffer.concat(new Proxy([], {}));
     expect(result.length).toBe(0);
   });
@@ -65,10 +65,10 @@ describe("isArray + Proxy crash fixes", () => {
     ).toThrow();
   });
 
-  test("new Bun.CookieMap does not crash with Proxy-wrapped array", () => {
+  test("new Fun.CookieMap does not crash with Proxy-wrapped array", () => {
     // Before: debug assertion in jsCast<JSArray*>. Now: falls through to record path.
     // A Proxy wrapping [] has no own enumerable string keys, so this yields an empty map.
-    const map = new Bun.CookieMap(new Proxy([], {}));
+    const map = new Fun.CookieMap(new Proxy([], {}));
     expect(map.size).toBe(0);
   });
 

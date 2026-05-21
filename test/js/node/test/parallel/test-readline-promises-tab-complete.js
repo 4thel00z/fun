@@ -6,7 +6,7 @@ const common = require('../common');
 const readline = require('readline/promises');
 const assert = require('assert');
 const { EventEmitter } = require('events');
-const { utils: {getStringWidth} } = require('readline')[Symbol.for('__BUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__')];
+const { utils: {getStringWidth} } = require('readline')[Symbol.for('__FUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__')];
 
 common.skipIfDumbTerminal();
 

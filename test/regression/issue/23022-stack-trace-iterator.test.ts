@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import * as net from "node:net";
 
 test("V8StackTraceIterator handles frames without parentheses (issue #23022)", async () => {
@@ -14,7 +14,7 @@ test("V8StackTraceIterator handles frames without parentheses (issue #23022)", a
   const err = await promise;
 
   // Get the formatted error string (which internally uses V8StackTraceIterator after stack access)
-  const inspected = Bun.inspect(err);
+  const inspected = Fun.inspect(err);
 
   // Count the number of "at" frames in the formatted output
   const frameCount = (inspected.match(/\n\s+at\s+/g) || []).length;

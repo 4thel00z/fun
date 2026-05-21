@@ -17,7 +17,7 @@
 
 static bool suppress_core_dumps = false;
 __attribute__((constructor)) void suppressCoreDumps() {
-  if (getenv("BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
+  if (getenv("FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
     suppress_core_dumps = true;
     struct rlimit rl;
     rl.rlim_cur = 0;
@@ -39,7 +39,7 @@ Napi::Value RunCallback(const Napi::CallbackInfo &info) {
 Napi::Object Init2(Napi::Env env, Napi::Object exports) {
 #ifdef SUPPRESS_CORE_DUMP
   if (!suppress_core_dumps &&
-      getenv("BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
+      getenv("FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
     suppressCoreDumps();
   }
 #endif
@@ -50,7 +50,7 @@ Napi::Object Init2(Napi::Env env, Napi::Object exports) {
 Napi::Object InitAll(Napi::Env env, Napi::Object exports1) {
 #ifdef SUPPRESS_CORE_DUMP
   if (!suppress_core_dumps &&
-      getenv("BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
+      getenv("FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
     suppressCoreDumps();
   }
 #endif

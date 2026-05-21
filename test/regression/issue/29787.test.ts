@@ -1,8 +1,8 @@
-// https://github.com/oven-sh/bun/issues/29787
+// https://github.com/underdoc-org/fun/issues/29787
 //
 // NativeReadableStreamSource used a single `const closer = [false]` at
 // factory scope, so every instance backed by the same native-handle
-// prototype (e.g. `Bun.stdin.stream()` + `fetch(file://...)` bodies)
+// prototype (e.g. `Fun.stdin.stream()` + `fetch(file://...)` bodies)
 // shared one EOF signal slot.
 //
 // Race:
@@ -16,7 +16,7 @@
 //      controller — closing stdin even though the pipe has more data and
 //      is not at EOF.
 //
-// The test spawns a child that reads `Bun.stdin.stream()` concurrently
+// The test spawns a child that reads `Fun.stdin.stream()` concurrently
 // with 100 `fetch(file://...)` bodies — each body sync-completes with EOF,
 // flipping the (pre-fix) shared closer flag to true. Synchronization is
 // via stderr ACK/handshake, no wall-clock sleeps: the child signals
@@ -32,8 +32,8 @@
 // With the fix, each instance owns its own closer array so all five
 // bytes round-trip and the final `done` comes from the parent's real
 // `stdin.end()`.
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { pathToFileURL } from "node:url";
 
 test("stdin stream stays open while concurrent fetch(file://) bodies finish (#29787)", async () => {
@@ -47,7 +47,7 @@ test("stdin stream stays open while concurrent fetch(file://) bodies finish (#29
   const childScript = `
     const fileUrl = ${JSON.stringify(fileUrl)};
     const events = [];
-    const reader = Bun.stdin.stream().getReader();
+    const reader = Fun.stdin.stream().getReader();
 
     // reader.read() in the IIFE below runs synchronously up to its first
     // await, so the native stdin pull reaches its pending state before
@@ -97,9 +97,9 @@ test("stdin stream stays open while concurrent fetch(file://) bodies finish (#29
     process.exit(0);
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", childScript],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", childScript],
+    env: funEnv,
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",

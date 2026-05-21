@@ -7,7 +7,7 @@ pub const EventType = enum(u8) {
     unknown = 254,
     _,
 
-    pub const map = bun.ComptimeStringMap(EventType, .{
+    pub const map = fun.ComptimeStringMap(EventType, .{
         .{ EventType.Event.label(), EventType.Event },
         .{ EventType.MessageEvent.label(), EventType.MessageEvent },
         .{ EventType.CloseEvent.label(), EventType.CloseEvent },
@@ -29,4 +29,4 @@ pub const EventType = enum(u8) {
 
 const string = []const u8;
 
-const bun = @import("bun");
+const fun = @import("fun");

@@ -5,7 +5,7 @@
 #include "ProcessBindingHTTPParser.h"
 #include "JSConnectionsList.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSHTTPParser;
 
@@ -198,4 +198,4 @@ public:
 private:
 };
 
-}; // namespace Bun
+}; // namespace Fun

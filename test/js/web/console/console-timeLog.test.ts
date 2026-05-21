@@ -1,14 +1,14 @@
-import { file, spawn } from "bun";
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { file, spawn } from "fun";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "node:path";
 it("should log to console correctly", async () => {
   const { stderr, exited } = spawn({
-    cmd: [bunExe(), join(import.meta.dir, "console-timeLog.js")],
+    cmd: [funExe(), join(import.meta.dir, "console-timeLog.js")],
     stdin: null,
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
   expect(await exited).toBe(0);
   const outText = await stderr.text();

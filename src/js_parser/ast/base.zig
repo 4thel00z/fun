@@ -20,7 +20,7 @@ pub const RefCtx = struct {
     }
 };
 
-/// In some parts of Bun, we have many different IDs pointing to different things.
+/// In some parts of Fun, we have many different IDs pointing to different things.
 /// It's easy for them to get mixed up, so we use this type to make sure we don't.
 pub const Index = packed struct(u32) {
     value: Int,
@@ -57,7 +57,7 @@ pub const Index = packed struct(u32) {
             return init(num.*);
         }
 
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             return .{
                 .value = @as(Int, @intCast(num)),
             };
@@ -112,7 +112,7 @@ pub const Ref = packed struct(u64) {
     pub const None = Ref{ .inner_index = 0, .source_index = 0, .tag = .invalid };
 
     comptime {
-        bun.assert(None.isEmpty());
+        fun.assert(None.isEmpty());
     }
 
     pub inline fn isEmpty(this: Ref) bool {
@@ -187,7 +187,7 @@ pub const Ref = packed struct(u64) {
     }
 
     pub fn initSourceEnd(old: Ref) Ref {
-        bun.assert(old.tag != .invalid);
+        fun.assert(old.tag != .invalid);
         return init(old.inner_index, old.source_index, old.tag == .source_contents_slice);
     }
 
@@ -200,7 +200,7 @@ pub const Ref = packed struct(u64) {
     }
 
     pub inline fn hash64(key: Ref) u64 {
-        return bun.hash(&@as([8]u8, @bitCast(key.asU64())));
+        return fun.hash(&@as([8]u8, @bitCast(key.asU64())));
     }
 
     pub fn eql(ref: Ref, other: Ref) bool {
@@ -231,5 +231,5 @@ pub const Ref = packed struct(u64) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const ast = bun.ast;
+const fun = @import("fun");
+const ast = fun.ast;

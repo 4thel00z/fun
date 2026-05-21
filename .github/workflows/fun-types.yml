@@ -1,0 +1,43 @@
+name: fun-types
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "packages/fun-types/**"
+      - "packages/@types/fun/**"
+      - "test/integration/fun-types/**"
+      - "src/cli/init/tsconfig.default.json"
+      - ".github/workflows/fun-types.yml"
+  pull_request:
+    paths:
+      - "packages/fun-types/**"
+      - "packages/@types/fun/**"
+      - "test/integration/fun-types/**"
+      - "src/cli/init/tsconfig.default.json"
+      - ".github/workflows/fun-types.yml"
+
+env:
+  FUN_VERSION: "canary"
+
+jobs:
+  typecheck:
+    name: "TypeScript types"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
+        with:
+          fun-version: ${{ env.FUN_VERSION }}
+      - name: Install dependencies
+        run: |
+          fun install
+          fun install --cwd test
+      - name: Check types
+        run: fun test test/integration/fun-types/fun-types.test.ts

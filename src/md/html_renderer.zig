@@ -68,27 +68,27 @@ pub const HtmlRenderer = struct {
     // VTable implementation functions
     // ========================================
 
-    fn enterBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32, flags: u32) bun.JSError!void {
+    fn enterBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32, flags: u32) fun.JSError!void {
         const self: *HtmlRenderer = @ptrCast(@alignCast(ptr));
         self.enterBlock(block_type, data, flags);
     }
 
-    fn leaveBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32) bun.JSError!void {
+    fn leaveBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32) fun.JSError!void {
         const self: *HtmlRenderer = @ptrCast(@alignCast(ptr));
         self.leaveBlock(block_type, data);
     }
 
-    fn enterSpanImpl(ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) bun.JSError!void {
+    fn enterSpanImpl(ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) fun.JSError!void {
         const self: *HtmlRenderer = @ptrCast(@alignCast(ptr));
         self.enterSpan(span_type, detail);
     }
 
-    fn leaveSpanImpl(ptr: *anyopaque, span_type: SpanType) bun.JSError!void {
+    fn leaveSpanImpl(ptr: *anyopaque, span_type: SpanType) fun.JSError!void {
         const self: *HtmlRenderer = @ptrCast(@alignCast(ptr));
         self.leaveSpan(span_type);
     }
 
-    fn textImpl(ptr: *anyopaque, text_type: TextType, content: []const u8) bun.JSError!void {
+    fn textImpl(ptr: *anyopaque, text_type: TextType, content: []const u8) fun.JSError!void {
         const self: *HtmlRenderer = @ptrCast(@alignCast(ptr));
         self.text(text_type, content);
     }
@@ -490,7 +490,7 @@ pub const HtmlRenderer = struct {
         const needle = "&<>\"";
 
         while (true) {
-            const next = bun.strings.indexOfAny(txt[i..], needle) orelse {
+            const next = fun.strings.indexOfAny(txt[i..], needle) orelse {
                 self.write(txt[i..]);
                 return;
             };
@@ -682,7 +682,7 @@ pub const HtmlRenderer = struct {
     /// After the name, the next char must be '>', '/', whitespace, or end of string.
     fn matchTagNameCI(content: []const u8, pos: usize, tag: []const u8) bool {
         if (pos + tag.len > content.len) return false;
-        if (!bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(content[pos..][0..tag.len], tag)) return false;
+        if (!fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(content[pos..][0..tag.len], tag)) return false;
         // Check delimiter after tag name
         const end = pos + tag.len;
         if (end >= content.len) return true;
@@ -698,7 +698,7 @@ pub const HtmlRenderer = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const helpers = @import("./helpers.zig");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

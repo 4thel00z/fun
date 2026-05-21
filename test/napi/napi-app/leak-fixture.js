@@ -6,8 +6,8 @@ function usage() {
 }
 
 function gc() {
-  if (typeof Bun == "object") {
-    Bun.gc(true);
+  if (typeof Fun == "object") {
+    Fun.gc(true);
   } else {
     global.gc();
   }
@@ -70,7 +70,7 @@ function batchWrappedObjects(n) {
     const s = Math.random().toString();
     const wrapped = nativeTests.wrapped_object_factory(
       s,
-      !process.isBun, // supports_node_api_post_finalize
+      !process.isFun, // supports_node_api_post_finalize
     );
     wraps.push(wrapped);
     if (wrapped.get() != s) {

@@ -3,7 +3,7 @@
 
 pub fn Channel(
     comptime T: type,
-    comptime buffer_type: bun.LinearFifoBufferType,
+    comptime buffer_type: fun.LinearFifoBufferType,
 ) type {
     return struct {
         mutex: Mutex,
@@ -13,7 +13,7 @@ pub fn Channel(
         is_closed: bool,
 
         const Self = @This();
-        const Buffer = bun.LinearFifo(T, buffer_type);
+        const Buffer = fun.LinearFifo(T, buffer_type);
 
         pub const init = switch (buffer_type) {
             .Static => initStatic,
@@ -91,11 +91,11 @@ pub fn Channel(
         }
 
         pub fn writeAll(self: *Self, items: []const T) !void {
-            bun.assert((try self.writeItems(items, true)) == items.len);
+            fun.assert((try self.writeItems(items, true)) == items.len);
         }
 
         pub fn readAll(self: *Self, items: []T) !void {
-            bun.assert((try self.readItems(items, true)) == items.len);
+            fun.assert((try self.readItems(items, true)) == items.len);
         }
 
         fn writeItems(self: *Self, items: []const T, should_block: bool) !usize {
@@ -165,8 +165,8 @@ pub fn Channel(
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const Condition = bun.threading.Condition;
-const Mutex = bun.threading.Mutex;
+const Condition = fun.threading.Condition;
+const Mutex = fun.threading.Mutex;

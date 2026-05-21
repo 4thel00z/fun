@@ -1,5 +1,5 @@
-import { test, expect, describe } from "bun:test";
-import { bunEnv, bunExe, tls } from "harness";
+import { test, expect, describe } from "fun:test";
+import { funEnv, funExe, tls } from "harness";
 import { once } from "node:events";
 import nodetls from "node:tls";
 
@@ -85,11 +85,11 @@ async function withAdversarialServer(
 }
 
 function spawnFetch(script: string, extraEnv: Record<string, string> = {}) {
-  return Bun.spawn({
-    cmd: [bunExe(), "--no-warnings", "-e", script],
+  return Fun.spawn({
+    cmd: [funExe(), "--no-warnings", "-e", script],
     env: {
-      ...bunEnv,
-      BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT: "1",
+      ...funEnv,
+      FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT: "1",
       NODE_TLS_REJECT_UNAUTHORIZED: "0",
       ...extraEnv,
     },

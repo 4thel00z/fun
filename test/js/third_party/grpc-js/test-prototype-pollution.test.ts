@@ -17,7 +17,7 @@
 
 import { loadPackageDefinition } from "@grpc/grpc-js";
 import * as assert from "assert";
-import { describe, it } from "bun:test";
+import { describe, it } from "fun:test";
 
 describe("loadPackageDefinition", () => {
   it("Should not allow prototype pollution", () => {

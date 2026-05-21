@@ -1,7 +1,7 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 import { basename, extname } from "path";
 
-const input = await Bun.stdin.json();
+const input = await Fun.stdin.json();
 
 const toolName = input.tool_name;
 const toolInput = input.tool_input || {};
@@ -11,7 +11,7 @@ const cwd = input.cwd || "";
 
 // Get environment variables from the hook context
 // Note: We check process.env directly as env vars are inherited
-let useSystemBun = process.env.USE_SYSTEM_BUN;
+let useSystemFun = process.env.USE_SYSTEM_FUN;
 
 if (toolName !== "Bash" || !command) {
   process.exit(0);
@@ -42,7 +42,7 @@ if (tokens.length === 0) {
   process.exit(0);
 }
 
-// Strip inline environment variable assignments (e.g., FOO=1 bun test)
+// Strip inline environment variable assignments (e.g., FOO=1 fun test)
 const inlineEnv = new Map();
 let commandStart = 0;
 while (
@@ -58,7 +58,7 @@ if (commandStart >= tokens.length) {
   process.exit(0);
 }
 tokens = tokens.slice(commandStart);
-useSystemBun = inlineEnv.get("USE_SYSTEM_BUN") ?? useSystemBun;
+useSystemFun = inlineEnv.get("USE_SYSTEM_FUN") ?? useSystemFun;
 
 // Get the executable name (argv0)
 const argv0 = basename(tokens[0], extname(tokens[0]));
@@ -70,11 +70,11 @@ if (argv0 === "zig") {
 
   // Check if the positional args contain "build" followed by "obj"
   if (positionalArgs.length >= 2 && positionalArgs[0] === "build" && positionalArgs[1] === "obj") {
-    denyWithReason("error: Use `bun bd` to build Bun and wait patiently");
+    denyWithReason("error: Use `fun bd` to build Fun and wait patiently");
   }
 }
 
-// Check if argv0 is timeout and the command is "bun bd"
+// Check if argv0 is timeout and the command is "fun bd"
 if (argv0 === "timeout") {
   // Find the actual command after timeout and its arguments
   const timeoutArgEndIndex = tokens.slice(1).findIndex(t => !t.startsWith("-") && !/^\d/.test(t));
@@ -90,8 +90,8 @@ if (argv0 === "timeout") {
   const actualCommand = basename(tokens[actualCommandIndex]);
   const restArgs = tokens.slice(actualCommandIndex + 1);
 
-  // Check if it's "bun bd" or "bun-debug bd" without other positional args
-  if (actualCommand === "bun" || actualCommand.includes("bun-debug")) {
+  // Check if it's "fun bd" or "fun-debug bd" without other positional args
+  if (actualCommand === "fun" || actualCommand.includes("fun-debug")) {
     // Claude is a sneaky fucker
     let positionalArgs = restArgs.filter(arg => !arg.startsWith("-"));
     const redirectStderrToStdoutIndex = positionalArgs.findIndex(arg => arg === "2>&1");
@@ -126,13 +126,13 @@ if (argv0 === "timeout") {
     positionalArgs = positionalArgs.map(arg => arg.trim()).filter(Boolean);
 
     if (positionalArgs.length === 1 && positionalArgs[0] === "bd") {
-      denyWithReason("error: Run `bun bd` without a timeout");
+      denyWithReason("error: Run `fun bd` without a timeout");
     }
   }
 }
 
-// Check if command is "bun .* test" or "bun-debug test" with -u/--update-snapshots AND -t/--test-name-pattern
-if (argv0 === "bun" || argv0.includes("bun-debug")) {
+// Check if command is "fun .* test" or "fun-debug test" with -u/--update-snapshots AND -t/--test-name-pattern
+if (argv0 === "fun" || argv0.includes("fun-debug")) {
   const allArgs = tokens.slice(1);
 
   // Check if "test" is in positional args or "bd" followed by "test"
@@ -149,39 +149,39 @@ if (argv0 === "bun" || argv0.includes("bun-debug")) {
   }
 }
 
-// Check if timeout option is set for "bun bd" command
-if (timeout !== undefined && (argv0 === "bun" || argv0.includes("bun-debug"))) {
+// Check if timeout option is set for "fun bd" command
+if (timeout !== undefined && (argv0 === "fun" || argv0.includes("fun-debug"))) {
   const positionalArgs = tokens.slice(1).filter(arg => !arg.startsWith("-"));
   if (positionalArgs.length === 1 && positionalArgs[0] === "bd") {
-    denyWithReason("error: Run `bun bd` without a timeout");
+    denyWithReason("error: Run `fun bd` without a timeout");
   }
 }
 
-// Check if running "bun test <file>" without USE_SYSTEM_BUN=1
-if ((argv0 === "bun" || argv0.includes("bun-debug")) && useSystemBun !== "1") {
+// Check if running "fun test <file>" without USE_SYSTEM_FUN=1
+if ((argv0 === "fun" || argv0.includes("fun-debug")) && useSystemFun !== "1") {
   const allArgs = tokens.slice(1);
   const positionalArgs = allArgs.filter(arg => !arg.startsWith("-"));
 
   // Check if it's "test" (not "bd test")
   if (positionalArgs.length >= 1 && positionalArgs[0] === "test" && positionalArgs[0] !== "bd") {
     denyWithReason(
-      "error: In development, use `bun bd test <file>` to test your changes. If you meant to use a release version, set USE_SYSTEM_BUN=1",
+      "error: In development, use `fun bd test <file>` to test your changes. If you meant to use a release version, set USE_SYSTEM_FUN=1",
     );
   }
 }
 
-// Check if running "bun bd test" from bun repo root or test folder without a file path
-if (argv0 === "bun" || argv0.includes("bun-debug")) {
+// Check if running "fun bd test" from fun repo root or test folder without a file path
+if (argv0 === "fun" || argv0.includes("fun-debug")) {
   const allArgs = tokens.slice(1);
   const positionalArgs = allArgs.filter(arg => !arg.startsWith("-"));
 
   // Check if it's "bd test"
   if (positionalArgs.length >= 2 && positionalArgs[0] === "bd" && positionalArgs[1] === "test") {
-    // Check if cwd is the bun repo root or test folder
-    const isBunRepoRoot = cwd === "/workspace/bun" || cwd.endsWith("/bun");
-    const isTestFolder = cwd.endsWith("/bun/test");
+    // Check if cwd is the fun repo root or test folder
+    const isFunRepoRoot = cwd === "/workspace/fun" || cwd.endsWith("/fun");
+    const isTestFolder = cwd.endsWith("/fun/test");
 
-    if (isBunRepoRoot || isTestFolder) {
+    if (isFunRepoRoot || isTestFolder) {
       // Check if there's a file path argument (looks like a path: contains / or has test extension)
       const hasFilePath = positionalArgs
         .slice(2)
@@ -196,7 +196,7 @@ if (argv0 === "bun" || argv0.includes("bun-debug")) {
 
       if (!hasFilePath) {
         denyWithReason(
-          "error: `bun bd test` from repo root or test folder will run all tests. Use `bun bd test <path>` with a specific test file.",
+          "error: `fun bd test` from repo root or test folder will run all tests. Use `fun bd test <path>` with a specific test file.",
         );
       }
     }

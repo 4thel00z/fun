@@ -3,7 +3,7 @@
 //
 // DO NOT IMPORT FROM test-utils.ts. That import is janky and will have different state at different from different
 // importers.
-import { RedisClient } from "bun";
+import { RedisClient } from "fun";
 
 function trySend(msg: any) {
   if (process === undefined || process.send === undefined) {
@@ -38,9 +38,9 @@ const { url, tlsPaths } = await redisUrl;
 const subscriber = new RedisClient(url, {
   tls: tlsPaths
     ? {
-        cert: Bun.file(tlsPaths.cert),
-        key: Bun.file(tlsPaths.key),
-        ca: Bun.file(tlsPaths.ca),
+        cert: Fun.file(tlsPaths.cert),
+        key: Fun.file(tlsPaths.key),
+        ca: Fun.file(tlsPaths.ca),
         rejectUnauthorized: false,
       }
     : undefined,

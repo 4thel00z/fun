@@ -28,7 +28,7 @@ pub const URLSearchParams = opaque {
             const cb_ = callback;
             pub fn cb(c: *anyopaque, str: *const ZigString) callconv(.c) void {
                 cb_(
-                    bun.cast(*Ctx, c),
+                    fun.cast(*Ctx, c),
                     str.*,
                 );
             }
@@ -38,9 +38,9 @@ pub const URLSearchParams = opaque {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const ZigString = @import("./ZigString.zig").ZigString;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

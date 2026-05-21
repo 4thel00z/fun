@@ -58,9 +58,9 @@ pub fn execute(query: []const u8, writer: anytype) !void {
     try packet.end();
 }
 
-const debug = bun.Output.scoped(.MySQLQuery, .visible);
+const debug = fun.Output.scoped(.MySQLQuery, .visible);
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const CommandType = @import("./CommandType.zig").CommandType;
 const Data = @import("../../shared/Data.zig").Data;

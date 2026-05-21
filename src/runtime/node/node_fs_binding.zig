@@ -1,4 +1,4 @@
-const NodeFSFunction = fn (this: *jsc.Node.fs.Binding, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue;
+const NodeFSFunction = fn (this: *jsc.Node.fs.Binding, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue;
 
 const NodeFSFunctionEnum = std.meta.DeclEnum(node.fs.NodeFS);
 
@@ -13,8 +13,8 @@ fn Bindings(comptime function_name: NodeFSFunctionEnum) type {
     const Arguments = fn_info.params[1].type.?;
 
     return struct {
-        pub fn runSync(this: *Binding, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-            var slice = ArgumentsSlice.init(globalObject.bunVM(), callframe.arguments());
+        pub fn runSync(this: *Binding, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+            var slice = ArgumentsSlice.init(globalObject.funVM(), callframe.arguments());
             defer slice.deinit();
 
             const args = if (Arguments != void)
@@ -34,8 +34,8 @@ fn Bindings(comptime function_name: NodeFSFunctionEnum) type {
             };
         }
 
-        pub fn runAsync(this: *Binding, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-            var slice = ArgumentsSlice.init(globalObject.bunVM(), callframe.arguments());
+        pub fn runAsync(this: *Binding, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+            var slice = ArgumentsSlice.init(globalObject.funVM(), callframe.arguments());
             slice.will_be_async = true;
             var deinit = false;
 
@@ -65,11 +65,11 @@ fn Bindings(comptime function_name: NodeFSFunctionEnum) type {
 
             const Task = @field(node.fs.Async, @tagName(function_name));
             switch (comptime function_name) {
-                .cp => return Task.create(globalObject, this, args, globalObject.bunVM(), slice.arena),
-                .readdir => if (args.recursive) return node.fs.AsyncReaddirRecursiveTask.create(globalObject, args, globalObject.bunVM()),
+                .cp => return Task.create(globalObject, this, args, globalObject.funVM(), slice.arena),
+                .readdir => if (args.recursive) return node.fs.AsyncReaddirRecursiveTask.create(globalObject, args, globalObject.funVM()),
                 else => {},
             }
-            return Task.create(globalObject, this, args, globalObject.bunVM());
+            return Task.create(globalObject, this, args, globalObject.funVM());
         }
     };
 }
@@ -89,7 +89,7 @@ pub const Binding = struct {
     pub const fromJS = js.fromJS;
     pub const fromJSDirect = js.fromJSDirect;
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn finalize(this: *Binding) void {
         if (this.node_fs.vm) |vm| {
@@ -98,7 +98,7 @@ pub const Binding = struct {
             }
         }
 
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     pub fn getDirent(_: *Binding, globalThis: *jsc.JSGlobalObject) jsc.JSValue {
@@ -203,27 +203,27 @@ pub const Binding = struct {
 pub fn createBinding(globalObject: *jsc.JSGlobalObject) jsc.JSValue {
     const module = Binding.new(.{});
 
-    const vm = globalObject.bunVM();
+    const vm = globalObject.funVM();
     module.node_fs.vm = vm;
 
     return module.toJS(globalObject);
 }
 
-pub fn createMemfdForTesting(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn createMemfdForTesting(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callFrame.arguments_old(1);
 
     if (arguments.len < 1) {
         return .js_undefined;
     }
 
-    if (comptime !bun.Environment.isLinux) {
+    if (comptime !fun.Environment.isLinux) {
         return globalObject.throw("memfd_create is not implemented on this platform", .{});
     }
 
     const size = arguments.ptr[0].toInt64();
-    switch (bun.sys.memfd_create("my_memfd", .non_executable)) {
+    switch (fun.sys.memfd_create("my_memfd", .non_executable)) {
         .result => |fd| {
-            _ = bun.sys.ftruncate(fd, size);
+            _ = fun.sys.ftruncate(fd, size);
             return jsc.JSValue.jsNumber(fd.cast());
         },
         .err => |err| {
@@ -234,7 +234,7 @@ pub fn createMemfdForTesting(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const node = bun.api.node;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const node = fun.api.node;
 const ArgumentsSlice = jsc.CallFrame.ArgumentsSlice;

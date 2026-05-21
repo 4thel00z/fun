@@ -1,4 +1,4 @@
-// @runtime bun
+// @runtime fun
 import { ArrayBufferSink } from "bun";
 import { bench, run } from "../runner.mjs";
 

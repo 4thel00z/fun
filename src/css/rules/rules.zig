@@ -29,7 +29,7 @@ pub const starting_style = @import("./starting_style.zig");
 
 pub const tailwind = @import("./tailwind.zig");
 
-const debug = bun.Output.scoped(.CSS_MINIFY, .visible);
+const debug = fun.Output.scoped(.CSS_MINIFY, .visible);
 
 pub fn CssRule(comptime Rule: type) type {
     return union(enum) {
@@ -172,12 +172,12 @@ pub fn CssRuleList(comptime AtRule: type) type {
                         // }
 
                         // keyframez.vendor_prefix = context.targets.prefixes(keyframez.vendor_prefix, css.prefixes.Feature.at_keyframes);
-                        // bun.handleOom(keyframe_rules.put(context.allocator, keyframez.name, rules.items.len));
+                        // fun.handleOom(keyframe_rules.put(context.allocator, keyframez.name, rules.items.len));
 
                         // const fallbacks = keyframez.getFallbacks(AtRule, context.targets);
                         // moved_rule = true;
-                        // bun.handleOom(rules.append(context.allocator, rule.*));
-                        // bun.handleOom(rules.appendSlice(context.allocator, fallbacks));
+                        // fun.handleOom(rules.append(context.allocator, rule.*));
+                        // fun.handleOom(rules.appendSlice(context.allocator, fallbacks));
                         // continue;
                         debug("TODO: KeyframesRule", .{});
                     },
@@ -191,7 +191,7 @@ pub fn CssRuleList(comptime AtRule: type) type {
                         if (rules.items.len > 0 and rules.items[rules.items.len - 1] == .media) {
                             var last_rule = &rules.items[rules.items.len - 1].media;
                             if (last_rule.query.eql(&med.query)) {
-                                bun.handleOom(last_rule.rules.v.appendSlice(context.allocator, med.rules.v.items));
+                                fun.handleOom(last_rule.rules.v.appendSlice(context.allocator, med.rules.v.items));
                                 _ = try last_rule.minify(context, parent_is_unused);
                                 continue;
                             }
@@ -287,7 +287,7 @@ pub fn CssRuleList(comptime AtRule: type) type {
                                 // with the previous rule, so continue trying while we have style rules available.
                                 while (rules.items.len >= 2) {
                                     const len = rules.items.len;
-                                    var a, var b = bun.splitAtMut(CssRule(AtRule), rules.items, len - 1);
+                                    var a, var b = fun.splitAtMut(CssRule(AtRule), rules.items, len - 1);
                                     if (b[0] == .style and a[len - 2] == .style) {
                                         if (mergeStyleRules(AtRule, &b[0].style, &a[len - 2].style, context)) {
                                             // If we were able to merge the last rule into the previous one, remove the last.
@@ -372,7 +372,7 @@ pub fn CssRuleList(comptime AtRule: type) type {
                             const has_no_rules = sty.rules.v.items.len == 0;
                             const idx = rules.items.len;
 
-                            bun.handleOom(rules.append(context.allocator, rule.*));
+                            fun.handleOom(rules.append(context.allocator, rule.*));
                             moved_rule = true;
 
                             // Check if this rule is a duplicate of an earlier rule, meaning it has
@@ -394,32 +394,32 @@ pub fn CssRuleList(comptime AtRule: type) type {
                                     }
                                 }
 
-                                bun.handleOom(style_rules.put(context.allocator, key, idx));
+                                fun.handleOom(style_rules.put(context.allocator, key, idx));
                             }
                         }
 
                         if (logical.items.len > 0) {
-                            if (bun.Environment.isDebug and logical.items[0] == .style) {
+                            if (fun.Environment.isDebug and logical.items[0] == .style) {
                                 debug("Adding logical: {f}\n", .{logical.items[0].style.selectors.debug()});
                             }
                             var log = CssRuleList(AtRule){ .v = logical };
                             try log.minify(context, parent_is_unused);
-                            bun.handleOom(rules.appendSlice(context.allocator, log.v.items));
+                            fun.handleOom(rules.appendSlice(context.allocator, log.v.items));
                         }
-                        bun.handleOom(rules.appendSlice(context.allocator, supps.items));
+                        fun.handleOom(rules.appendSlice(context.allocator, supps.items));
                         for (incompatible_rules.slice_mut()) |incompatible_entry| {
                             if (!incompatible_entry.rule.isEmpty()) {
-                                bun.handleOom(rules.append(context.allocator, .{ .style = incompatible_entry.rule }));
+                                fun.handleOom(rules.append(context.allocator, .{ .style = incompatible_entry.rule }));
                             }
                             if (incompatible_entry.logical.items.len > 0) {
                                 var log = CssRuleList(AtRule){ .v = incompatible_entry.logical };
                                 try log.minify(context, parent_is_unused);
-                                bun.handleOom(rules.appendSlice(context.allocator, log.v.items));
+                                fun.handleOom(rules.appendSlice(context.allocator, log.v.items));
                             }
-                            bun.handleOom(rules.appendSlice(context.allocator, incompatible_entry.supports.items));
+                            fun.handleOom(rules.appendSlice(context.allocator, incompatible_entry.supports.items));
                         }
                         if (nested_rule) |nested| {
-                            bun.handleOom(rules.append(context.allocator, .{ .style = nested }));
+                            fun.handleOom(rules.append(context.allocator, .{ .style = nested }));
                         }
 
                         continue;
@@ -451,7 +451,7 @@ pub fn CssRuleList(comptime AtRule: type) type {
                     else => {},
                 }
 
-                bun.handleOom(rules.append(context.allocator, rule.*));
+                fun.handleOom(rules.append(context.allocator, rule.*));
                 moved_rule = true;
 
                 // Non-style rules (e.g. @property, @keyframes) act as a barrier for
@@ -622,13 +622,13 @@ fn mergeStyleRules(
         last_style_rule.declarations.declarations.appendSlice(
             context.allocator,
             sty.declarations.declarations.items,
-        ) catch |err| bun.handleOom(err);
+        ) catch |err| fun.handleOom(err);
         sty.declarations.declarations.clearRetainingCapacity();
 
         last_style_rule.declarations.important_declarations.appendSlice(
             context.allocator,
             sty.declarations.important_declarations.items,
-        ) catch |err| bun.handleOom(err);
+        ) catch |err| fun.handleOom(err);
         sty.declarations.important_declarations.clearRetainingCapacity();
 
         last_style_rule.declarations.minify(
@@ -652,7 +652,7 @@ fn mergeStyleRules(
             if (sty.vendor_prefix.none and context.targets.shouldCompileSelectors()) {
                 last_style_rule.vendor_prefix = sty.vendor_prefix;
             } else {
-                bun.bits.insert(css.VendorPrefix, &last_style_rule.vendor_prefix, sty.vendor_prefix);
+                fun.bits.insert(css.VendorPrefix, &last_style_rule.vendor_prefix, sty.vendor_prefix);
             }
             return true;
         }
@@ -667,7 +667,7 @@ fn mergeStyleRules(
             if (sty.vendor_prefix.none and context.targets.shouldCompileSelectors()) {
                 last_style_rule.vendor_prefix = sty.vendor_prefix;
             } else {
-                bun.bits.insert(css.VendorPrefix, &last_style_rule.vendor_prefix, sty.vendor_prefix);
+                fun.bits.insert(css.VendorPrefix, &last_style_rule.vendor_prefix, sty.vendor_prefix);
             }
             return true;
         }
@@ -675,7 +675,7 @@ fn mergeStyleRules(
     return false;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

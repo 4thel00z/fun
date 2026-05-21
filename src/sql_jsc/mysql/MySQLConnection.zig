@@ -3,8 +3,8 @@ const MySQLConnection = @This();
 #socket: Socket = .{ .SocketTCP = .{ .socket = .{ .detached = {} } } },
 status: ConnectionState = .disconnected,
 
-#write_buffer: bun.OffsetByteList = .{},
-#read_buffer: bun.OffsetByteList = .{},
+#write_buffer: fun.OffsetByteList = .{},
+#read_buffer: fun.OffsetByteList = .{},
 #last_message_start: u32 = 0,
 #sequence_id: u8 = 0,
 
@@ -13,7 +13,7 @@ queue: MySQLRequestQueue = MySQLRequestQueue.init(),
 // TODO: move it to JSMySQLConnection
 statements: PreparedStatementsMap = .{},
 
-#server_version: bun.ByteList = .{},
+#server_version: fun.ByteList = .{},
 #connection_id: u32 = 0,
 #capabilities: Capabilities = .{},
 #character_set: CharacterSet = CharacterSet.default,
@@ -22,7 +22,7 @@ statements: PreparedStatementsMap = .{},
 #auth_plugin: ?AuthMethod = null,
 #auth_state: AuthState = .{ .pending = {} },
 
-#auth_data: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(bun.default_allocator),
+#auth_data: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(fun.default_allocator),
 #database: []const u8 = "",
 #user: []const u8 = "",
 #password: []const u8 = "",
@@ -150,7 +150,7 @@ fn flushData(this: *@This()) void {
 }
 pub fn close(this: *@This()) void {
     this.#socket.close();
-    this.#write_buffer.clearAndFree(bun.default_allocator);
+    this.#write_buffer.clearAndFree(fun.default_allocator);
 }
 pub fn cleanQueueAndClose(this: *@This(), js_reason: ?jsc.JSValue, js_queries_array: JSValue) void {
     // cleanup requests
@@ -176,26 +176,26 @@ pub fn cleanup(this: *MySQLConnection) void {
     this.statements = PreparedStatementsMap{};
     this.#tls_config = .{};
     this.#options_buf = "";
-    write_buffer.deinit(bun.default_allocator);
+    write_buffer.deinit(fun.default_allocator);
 
-    read_buffer.deinit(bun.default_allocator);
+    read_buffer.deinit(fun.default_allocator);
 
     var iter = statements.valueIterator();
     while (iter.next()) |statement| {
         var stmt = statement.*;
         stmt.deref();
     }
-    statements.deinit(bun.default_allocator);
+    statements.deinit(fun.default_allocator);
 
     tls_config.deinit();
     this.#auth_data.deinit();
     if (this.#secure) |s| {
-        bun.BoringSSL.c.SSL_CTX_free(s);
+        fun.BoringSSL.c.SSL_CTX_free(s);
         this.#secure = null;
     }
 
     if (options_buf.len > 0) {
-        bun.default_allocator.free(options_buf);
+        fun.default_allocator.free(options_buf);
     }
 }
 
@@ -232,7 +232,7 @@ pub fn isActive(this: *MySQLConnection) bool {
 pub inline fn isConnected(this: *MySQLConnection) bool {
     return this.status == .connected;
 }
-pub fn doHandshake(this: *MySQLConnection, success: i32, ssl_error: uws.us_bun_verify_error_t) !bool {
+pub fn doHandshake(this: *MySQLConnection, success: i32, ssl_error: uws.us_fun_verify_error_t) !bool {
     debug("onHandshake: {d} {d} {s}", .{ success, ssl_error.error_no, @tagName(this.#ssl_mode) });
     const handshake_success = if (success == 1) true else false;
     this.#sequence_id = this.#sequence_id +% 1;
@@ -251,7 +251,7 @@ pub fn doHandshake(this: *MySQLConnection, success: i32, ssl_error: uws.us_bun_v
 
                     const ssl_ptr: *BoringSSL.c.SSL = @ptrCast(this.#socket.getNativeHandle());
                     if (BoringSSL.c.SSL_get_servername(ssl_ptr, 0)) |servername| {
-                        const hostname = servername[0..bun.len(servername)];
+                        const hostname = servername[0..fun.len(servername)];
                         if (!BoringSSL.checkServerIdentity(ssl_ptr, hostname)) {
                             this.#tls_status = .ssl_failed;
                             return false;
@@ -286,7 +286,7 @@ pub fn readAndProcessData(this: *MySQLConnection, data: []const u8) !void {
         this.processPackets(StackReader, reader) catch |err| {
             debug("processPackets without buffer: {s}", .{@errorName(err)});
             if (err == error.ShortRead) {
-                if (comptime bun.Environment.allow_assert) {
+                if (comptime fun.Environment.allow_assert) {
                     debug("Received short read: last_message_start: {d}, head: {d}, len: {d}", .{
                         offset,
                         consumed,
@@ -297,10 +297,10 @@ pub fn readAndProcessData(this: *MySQLConnection, data: []const u8) !void {
                 this.#read_buffer.head = 0;
                 this.#last_message_start = 0;
                 this.#read_buffer.byte_list.len = 0;
-                this.#read_buffer.write(bun.default_allocator, data[offset..]) catch @panic("failed to write to read buffer");
+                this.#read_buffer.write(fun.default_allocator, data[offset..]) catch @panic("failed to write to read buffer");
             } else {
-                if (comptime bun.Environment.allow_assert) {
-                    bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                if (comptime fun.Environment.allow_assert) {
+                    fun.handleErrorReturnTrace(err, @errorReturnTrace());
                 }
                 return err;
             }
@@ -311,11 +311,11 @@ pub fn readAndProcessData(this: *MySQLConnection, data: []const u8) !void {
     {
         this.#read_buffer.head = this.#last_message_start;
 
-        this.#read_buffer.write(bun.default_allocator, data) catch @panic("failed to write to read buffer");
+        this.#read_buffer.write(fun.default_allocator, data) catch @panic("failed to write to read buffer");
         this.processPackets(Reader, this.bufferedReader()) catch |err| {
             debug("processPackets with buffer: {s}", .{@errorName(err)});
             if (err != error.ShortRead) {
-                if (comptime bun.Environment.allow_assert) {
+                if (comptime fun.Environment.allow_assert) {
                     if (@errorReturnTrace()) |trace| {
                         debug("Error: {s}\n{f}", .{ @errorName(err), trace });
                     }
@@ -323,7 +323,7 @@ pub fn readAndProcessData(this: *MySQLConnection, data: []const u8) !void {
                 return err;
             }
 
-            if (comptime bun.Environment.allow_assert) {
+            if (comptime fun.Environment.allow_assert) {
                 debug("Received short read: last_message_start: {d}, head: {d}, len: {d}", .{
                     this.#last_message_start,
                     this.#read_buffer.head,
@@ -434,7 +434,7 @@ pub fn handleHandshake(this: *MySQLConnection, comptime Context: type, reader: N
             .capability_flags = this.#capabilities,
             .max_packet_size = 0, //16777216,
             .character_set = CharacterSet.default,
-            // bun always send connection attributes
+            // fun always send connection attributes
             .has_connection_attributes = true,
         };
         defer response.deinit();
@@ -708,8 +708,8 @@ pub fn sendHandshakeResponse(this: *MySQLConnection) AnyMySQLError.Error!void {
     defer response.deinit();
 
     // Add some basic connect attributes like mysql2
-    try response.connect_attrs.put(bun.default_allocator, try bun.default_allocator.dupe(u8, "_client_name"), try bun.default_allocator.dupe(u8, "Bun"));
-    try response.connect_attrs.put(bun.default_allocator, try bun.default_allocator.dupe(u8, "_client_version"), try bun.default_allocator.dupe(u8, bun.Global.package_json_version_with_revision));
+    try response.connect_attrs.put(fun.default_allocator, try fun.default_allocator.dupe(u8, "_client_name"), try fun.default_allocator.dupe(u8, "Fun"));
+    try response.connect_attrs.put(fun.default_allocator, try fun.default_allocator.dupe(u8, "_client_version"), try fun.default_allocator.dupe(u8, fun.Global.package_json_version_with_revision));
 
     // Generate auth response based on plugin
     var scrambled_buf: [32]u8 = undefined;
@@ -748,7 +748,7 @@ pub const Writer = struct {
 
     pub fn write(this: Writer, data: []const u8) AnyMySQLError.Error!void {
         var buffer = &this.connection.#write_buffer;
-        try buffer.write(bun.default_allocator, data);
+        try buffer.write(fun.default_allocator, data);
     }
 
     pub fn pwrite(this: Writer, data: []const u8, index: usize) AnyMySQLError.Error!void {
@@ -823,7 +823,7 @@ pub const Reader = struct {
 
     pub fn readZ(this: Reader) AnyMySQLError.Error!Data {
         const remaining = this.peek();
-        if (bun.strings.indexOfChar(remaining, 0)) |zero| {
+        if (fun.strings.indexOfChar(remaining, 0)) |zero| {
             this.skip(@intCast(zero + 1));
             return Data{
                 .temporary = remaining[0..zero],
@@ -922,13 +922,13 @@ pub fn handlePreparedStatement(this: *MySQLConnection, comptime Context: type, r
 
             // Read parameter definitions if any
             if (ok.num_params > 0) {
-                statement.params = try bun.default_allocator.alloc(MySQLStatement.Param, ok.num_params);
+                statement.params = try fun.default_allocator.alloc(MySQLStatement.Param, ok.num_params);
                 statement.params_received = 0;
             }
 
             // Read column definitions if any
             if (ok.num_columns > 0) {
-                statement.columns = try bun.default_allocator.alloc(ColumnDefinition41, ok.num_columns);
+                statement.columns = try fun.default_allocator.alloc(ColumnDefinition41, ok.num_columns);
                 for (statement.columns) |*col| col.* = .{};
                 statement.columns_received = 0;
             }
@@ -953,7 +953,7 @@ pub fn handlePreparedStatement(this: *MySQLConnection, comptime Context: type, r
             // stmt.error_response.toJS(), so we must own a copy of the message bytes.
             statement.error_response.deinit();
             statement.error_response = err;
-            statement.error_response.error_message = bun.handleOom(Data.create(err.error_message.slice(), bun.default_allocator));
+            statement.error_response.error_message = fun.handleOom(Data.create(err.error_message.slice(), fun.default_allocator));
             this.queue.markAsReadyForQuery();
             this.queue.markCurrentRequestAsFinished(request);
 
@@ -1064,13 +1064,13 @@ fn handleResultSet(this: *MySQLConnection, comptime Context: type, reader: NewRe
                         for (statement.columns) |*column| {
                             column.deinit();
                         }
-                        bun.default_allocator.free(statement.columns);
+                        fun.default_allocator.free(statement.columns);
                         // Clear the slice before the fallible alloc below. If the alloc
                         // fails, MySQLStatement.deinit() would otherwise iterate and free
                         // the already-freed columns again (use-after-free / double-free).
                         statement.columns = &.{};
                     }
-                    statement.columns = try bun.default_allocator.alloc(ColumnDefinition41, header.field_count);
+                    statement.columns = try fun.default_allocator.alloc(ColumnDefinition41, header.field_count);
                     for (statement.columns) |*col| col.* = .{};
                     statement.columns_received = 0;
                 }
@@ -1128,8 +1128,8 @@ fn handleResultSet(this: *MySQLConnection, comptime Context: type, reader: NewRe
     }
 }
 
-const PreparedStatementsMap = std.HashMapUnmanaged(u64, *MySQLStatement, bun.IdentityContext(u64), 80);
-const debug = bun.Output.scoped(.MySQLConnection, .visible);
+const PreparedStatementsMap = std.HashMapUnmanaged(u64, *MySQLStatement, fun.IdentityContext(u64), 80);
+const debug = fun.Output.scoped(.MySQLConnection, .visible);
 
 pub const ErrorPacket = @import("../../sql/mysql/protocol/ErrorPacket.zig");
 
@@ -1170,11 +1170,11 @@ const SSLMode = @import("../../sql/mysql/SSLMode.zig").SSLMode;
 const StatusFlags = @import("../../sql/mysql/StatusFlags.zig").StatusFlags;
 const TLSStatus = @import("../../sql/mysql/TLSStatus.zig").TLSStatus;
 
-const bun = @import("bun");
-const BoringSSL = bun.BoringSSL;
+const fun = @import("fun");
+const BoringSSL = fun.BoringSSL;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const Socket = uws.AnySocket;

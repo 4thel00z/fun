@@ -8,7 +8,7 @@ namespace Bake {
 
 class SourceProvider;
 
-extern "C" void Bun__addBakeSourceProviderSourceMap(void* bun_vm, SourceProvider* opaque_source_provider, BunString* specifier);
+extern "C" void Fun__addBakeSourceProviderSourceMap(void* fun_vm, SourceProvider* opaque_source_provider, FunString* specifier);
 
 class SourceProvider final : public JSC::StringSourceProvider {
 public:
@@ -22,8 +22,8 @@ public:
     {
         auto provider = adoptRef(*new SourceProvider(source, sourceOrigin, WTF::move(sourceURL), startPosition, sourceType));
         auto* zigGlobalObject = uncheckedDowncast<Zig::GlobalObject>(globalObject);
-        auto specifier = Bun::toString(provider->sourceURL());
-        Bun__addBakeSourceProviderSourceMap(zigGlobalObject->bunVM(), provider.ptr(), &specifier);
+        auto specifier = Fun::toString(provider->sourceURL());
+        Fun__addBakeSourceProviderSourceMap(zigGlobalObject->funVM(), provider.ptr(), &specifier);
         return provider;
     }
 

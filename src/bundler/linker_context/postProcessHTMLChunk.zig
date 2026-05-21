@@ -11,7 +11,7 @@ pub fn postProcessHTMLChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, c
     const compile_results = chunk.compile_results_for_chunk;
 
     for (compile_results) |compile_result| {
-        j.push(compile_result.code(), bun.default_allocator);
+        j.push(compile_result.code(), fun.default_allocator);
     }
 
     j.ensureNewlineAtEnd();
@@ -20,16 +20,16 @@ pub fn postProcessHTMLChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, c
         worker.allocator,
         &j,
         @as(u32, @truncate(ctx.chunks.len)),
-    ) catch |err| bun.handleOom(err);
+    ) catch |err| fun.handleOom(err);
 
     chunk.isolated_hash = c.generateIsolatedHash(chunk);
 }
 
-const bun = @import("bun");
-const StringJoiner = bun.StringJoiner;
+const fun = @import("fun");
+const StringJoiner = fun.StringJoiner;
 
-const Chunk = bun.bundle_v2.Chunk;
-const ThreadPool = bun.bundle_v2.ThreadPool;
+const Chunk = fun.bundle_v2.Chunk;
+const ThreadPool = fun.bundle_v2.ThreadPool;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const GenerateChunkCtx = bun.bundle_v2.LinkerContext.GenerateChunkCtx;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const GenerateChunkCtx = fun.bundle_v2.LinkerContext.GenerateChunkCtx;

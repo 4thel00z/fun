@@ -118,15 +118,15 @@ pub fn Symbols(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Scope = js_ast.Scope;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const FindSymbolResult = js_parser.FindSymbolResult;
 const JSXTransformType = js_parser.JSXTransformType;
 const Ref = js_parser.Ref;

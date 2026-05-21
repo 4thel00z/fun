@@ -1,9 +1,9 @@
 import assert from "assert";
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test("not implemented yet module throws an error", () => {
   var missingModule = "node:missing";
-  var missingBun = "bun:missing";
+  var missingFun = "fun:missing";
   var missingFile = "./filethatdoesntexist";
   var missingPackage = "package-that-doesnt-exist";
 
@@ -20,16 +20,16 @@ test("not implemented yet module throws an error", () => {
     code: "ERR_UNKNOWN_BUILTIN_MODULE",
   });
 
-  assert.throws(() => require(missingBun), {
-    message: /^Cannot find package 'bun:missing' from/,
+  assert.throws(() => require(missingFun), {
+    message: /^Cannot find package 'fun:missing' from/,
     code: "MODULE_NOT_FOUND",
   });
-  assert.throws(() => require.resolve(missingBun), {
-    message: /^Cannot find package 'bun:missing' from/,
+  assert.throws(() => require.resolve(missingFun), {
+    message: /^Cannot find package 'fun:missing' from/,
     code: "MODULE_NOT_FOUND",
   });
-  assert.rejects(() => import(missingBun), {
-    message: /^Cannot find package 'bun:missing' from/,
+  assert.rejects(() => import(missingFun), {
+    message: /^Cannot find package 'fun:missing' from/,
     code: "ERR_MODULE_NOT_FOUND",
   });
 

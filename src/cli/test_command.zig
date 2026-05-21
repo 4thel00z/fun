@@ -1,5 +1,5 @@
-var path_buf: bun.PathBuffer = undefined;
-var path_buf2: bun.PathBuffer = undefined;
+var path_buf: fun.PathBuffer = undefined;
+var path_buf2: fun.PathBuffer = undefined;
 
 pub fn escapeXml(str: string, writer: anytype) !void {
     var last: usize = 0;
@@ -39,7 +39,7 @@ pub fn escapeXml(str: string, writer: anytype) !void {
         try writer.writeAll(str[last..]);
     }
 }
-fn fmtStatusTextLine(status: bun_test.Execution.Result, emoji_or_color: bool) []const u8 {
+fn fmtStatusTextLine(status: fun_test.Execution.Result, emoji_or_color: bool) []const u8 {
     // emoji and color might be split into two different options in the future
     // some terminals support color, but not emoji.
     // For now, they are the same.
@@ -61,7 +61,7 @@ fn fmtStatusTextLine(status: bun_test.Execution.Result, emoji_or_color: bool) []
     };
 }
 
-pub fn writeTestStatusLine(comptime status: bun_test.Execution.Result, writer: anytype) void {
+pub fn writeTestStatusLine(comptime status: fun_test.Execution.Result, writer: anytype) void {
     switch (Output.enable_ansi_colors_stderr) {
         inline else => |enable_ansi_colors_stderr| writer.print(comptime fmtStatusTextLine(status, enable_ansi_colors_stderr), .{}) catch unreachable,
     }
@@ -90,13 +90,13 @@ pub const JunitReporter = struct {
                 return null;
             }
 
-            var name_buffer: [bun.HOST_NAME_MAX]u8 = undefined;
+            var name_buffer: [fun.HOST_NAME_MAX]u8 = undefined;
             const hostname = std.posix.gethostname(&name_buffer) catch {
                 this.hostname_value = "";
                 return null;
             };
 
-            var arraylist_writer = std.array_list.Managed(u8).init(bun.default_allocator);
+            var arraylist_writer = std.array_list.Managed(u8).init(fun.default_allocator);
             escapeXml(hostname, arraylist_writer.writer()) catch {
                 this.hostname_value = "";
                 return null;
@@ -147,25 +147,25 @@ pub const JunitReporter = struct {
         );
     }
 
-    pub const new = bun.TrivialNew(JunitReporter);
+    pub const new = fun.TrivialNew(JunitReporter);
 
     pub fn deinit(this: *JunitReporter) void {
         for (this.suite_stack.items) |*suite_info| {
-            suite_info.deinit(bun.default_allocator);
+            suite_info.deinit(fun.default_allocator);
         }
-        this.suite_stack.deinit(bun.default_allocator);
+        this.suite_stack.deinit(fun.default_allocator);
 
-        this.contents.deinit(bun.default_allocator);
+        this.contents.deinit(fun.default_allocator);
 
         if (this.hostname_value) |hostname| {
             if (hostname.len > 0) {
-                bun.default_allocator.free(hostname);
+                fun.default_allocator.free(hostname);
             }
         }
 
         if (this.properties_list_to_repeat_in_every_test_suite) |properties| {
             if (properties.len > 0) {
-                bun.default_allocator.free(properties);
+                fun.default_allocator.free(properties);
             }
         }
     }
@@ -175,16 +175,16 @@ pub const JunitReporter = struct {
             ci: string,
             commit: string,
         };
-        var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+        var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
         var stack = std.heap.stackFallback(1024, arena.allocator());
         const allocator = stack.get();
 
         const properties: PropertiesList = .{
             .ci = brk: {
-                if (bun.env_var.GITHUB_RUN_ID.get()) |github_run_id| {
-                    if (bun.env_var.GITHUB_SERVER_URL.get()) |github_server_url| {
-                        if (bun.env_var.GITHUB_REPOSITORY.get()) |github_repository| {
+                if (fun.env_var.GITHUB_RUN_ID.get()) |github_run_id| {
+                    if (fun.env_var.GITHUB_SERVER_URL.get()) |github_server_url| {
+                        if (fun.env_var.GITHUB_REPOSITORY.get()) |github_repository| {
                             if (github_run_id.len > 0 and github_server_url.len > 0 and github_repository.len > 0) {
                                 break :brk try std.fmt.allocPrint(allocator, "{s}/{s}/actions/runs/{s}", .{ github_server_url, github_repository, github_run_id });
                             }
@@ -192,7 +192,7 @@ pub const JunitReporter = struct {
                     }
                 }
 
-                if (bun.env_var.CI_JOB_URL.get()) |ci_job_url| {
+                if (fun.env_var.CI_JOB_URL.get()) |ci_job_url| {
                     if (ci_job_url.len > 0) {
                         break :brk ci_job_url;
                     }
@@ -201,19 +201,19 @@ pub const JunitReporter = struct {
                 break :brk "";
             },
             .commit = brk: {
-                if (bun.env_var.GITHUB_SHA.get()) |github_sha| {
+                if (fun.env_var.GITHUB_SHA.get()) |github_sha| {
                     if (github_sha.len > 0) {
                         break :brk github_sha;
                     }
                 }
 
-                if (bun.env_var.CI_COMMIT_SHA.get()) |sha| {
+                if (fun.env_var.CI_COMMIT_SHA.get()) |sha| {
                     if (sha.len > 0) {
                         break :brk sha;
                     }
                 }
 
-                if (bun.env_var.GIT_SHA.get()) |git_sha| {
+                if (fun.env_var.GIT_SHA.get()) |git_sha| {
                     if (git_sha.len > 0) {
                         break :brk git_sha;
                     }
@@ -228,7 +228,7 @@ pub const JunitReporter = struct {
             return;
         }
 
-        var buffer = std.array_list.Managed(u8).init(bun.default_allocator);
+        var buffer = std.array_list.Managed(u8).init(fun.default_allocator);
         var writer = buffer.writer();
 
         try writer.writeAll(
@@ -269,39 +269,39 @@ pub const JunitReporter = struct {
 
     pub fn beginTestSuiteWithLine(this: *JunitReporter, name: string, line_number: u32, is_file_suite: bool) !void {
         if (this.contents.items.len == 0) {
-            try this.contents.appendSlice(bun.default_allocator,
+            try this.contents.appendSlice(fun.default_allocator,
                 \\<?xml version="1.0" encoding="UTF-8"?>
                 \\
             );
 
-            try this.contents.appendSlice(bun.default_allocator, "<testsuites name=\"bun test\" ");
+            try this.contents.appendSlice(fun.default_allocator, "<testsuites name=\"fun test\" ");
             this.offset_of_testsuites_value = this.contents.items.len;
-            try this.contents.appendSlice(bun.default_allocator, ">\n");
+            try this.contents.appendSlice(fun.default_allocator, ">\n");
         }
 
         const indent = getIndent(this.current_depth);
-        try this.contents.appendSlice(bun.default_allocator, indent);
-        try this.contents.appendSlice(bun.default_allocator, "<testsuite name=\"");
-        try escapeXml(name, this.contents.writer(bun.default_allocator));
-        try this.contents.appendSlice(bun.default_allocator, "\"");
+        try this.contents.appendSlice(fun.default_allocator, indent);
+        try this.contents.appendSlice(fun.default_allocator, "<testsuite name=\"");
+        try escapeXml(name, this.contents.writer(fun.default_allocator));
+        try this.contents.appendSlice(fun.default_allocator, "\"");
 
         if (is_file_suite) {
-            try this.contents.appendSlice(bun.default_allocator, " file=\"");
-            try escapeXml(name, this.contents.writer(bun.default_allocator));
-            try this.contents.appendSlice(bun.default_allocator, "\"");
+            try this.contents.appendSlice(fun.default_allocator, " file=\"");
+            try escapeXml(name, this.contents.writer(fun.default_allocator));
+            try this.contents.appendSlice(fun.default_allocator, "\"");
         } else if (this.current_file.len > 0) {
-            try this.contents.appendSlice(bun.default_allocator, " file=\"");
-            try escapeXml(this.current_file, this.contents.writer(bun.default_allocator));
-            try this.contents.appendSlice(bun.default_allocator, "\"");
+            try this.contents.appendSlice(fun.default_allocator, " file=\"");
+            try escapeXml(this.current_file, this.contents.writer(fun.default_allocator));
+            try this.contents.appendSlice(fun.default_allocator, "\"");
         }
 
         if (line_number > 0) {
-            try this.contents.writer(bun.default_allocator).print(" line=\"{d}\"", .{line_number});
+            try this.contents.writer(fun.default_allocator).print(" line=\"{d}\"", .{line_number});
         }
 
-        try this.contents.appendSlice(bun.default_allocator, " ");
+        try this.contents.appendSlice(fun.default_allocator, " ");
         const offset_of_attributes = this.contents.items.len;
-        try this.contents.appendSlice(bun.default_allocator, ">\n");
+        try this.contents.appendSlice(fun.default_allocator, ">\n");
 
         if (is_file_suite) {
             if (this.properties_list_to_repeat_in_every_test_suite == null) {
@@ -310,13 +310,13 @@ pub const JunitReporter = struct {
 
             if (this.properties_list_to_repeat_in_every_test_suite) |properties_list| {
                 if (properties_list.len > 0) {
-                    try this.contents.appendSlice(bun.default_allocator, properties_list);
+                    try this.contents.appendSlice(fun.default_allocator, properties_list);
                 }
             }
         }
 
-        try this.suite_stack.append(bun.default_allocator, SuiteInfo{
-            .name = if (is_file_suite) name else try bun.default_allocator.dupe(u8, name),
+        try this.suite_stack.append(fun.default_allocator, SuiteInfo{
+            .name = if (is_file_suite) name else try fun.default_allocator.dupe(u8, name),
             .offset_of_attributes = offset_of_attributes,
             .is_file_suite = is_file_suite,
             .line_number = line_number,
@@ -333,9 +333,9 @@ pub const JunitReporter = struct {
 
         this.current_depth -= 1;
         var suite_info = this.suite_stack.swapRemove(this.suite_stack.items.len - 1);
-        defer suite_info.deinit(bun.default_allocator);
+        defer suite_info.deinit(fun.default_allocator);
 
-        var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+        var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
         var stack_fallback_allocator = std.heap.stackFallback(4096, arena.allocator());
         const allocator = stack_fallback_allocator.get();
@@ -356,11 +356,11 @@ pub const JunitReporter = struct {
             this.getHostname() orelse "",
         });
 
-        bun.handleOom(this.contents.insertSlice(bun.default_allocator, suite_info.offset_of_attributes, summary));
+        fun.handleOom(this.contents.insertSlice(fun.default_allocator, suite_info.offset_of_attributes, summary));
 
         const indent = getIndent(this.current_depth);
-        try this.contents.appendSlice(bun.default_allocator, indent);
-        try this.contents.appendSlice(bun.default_allocator, "</testsuite>\n");
+        try this.contents.appendSlice(fun.default_allocator, indent);
+        try this.contents.appendSlice(fun.default_allocator, "</testsuite>\n");
 
         if (this.suite_stack.items.len > 0) {
             this.suite_stack.items[this.suite_stack.items.len - 1].metrics.add(&suite_info.metrics);
@@ -371,7 +371,7 @@ pub const JunitReporter = struct {
 
     pub fn writeTestCase(
         this: *JunitReporter,
-        status: bun.jsc.Jest.bun_test.Execution.Result,
+        status: fun.jsc.Jest.fun_test.Execution.Result,
         file: string,
         name: string,
         class_name: string,
@@ -390,30 +390,30 @@ pub const JunitReporter = struct {
         }
 
         const indent = getIndent(this.current_depth);
-        try this.contents.appendSlice(bun.default_allocator, indent);
-        try this.contents.appendSlice(bun.default_allocator, "<testcase");
-        try this.contents.appendSlice(bun.default_allocator, " name=\"");
-        try escapeXml(name, this.contents.writer(bun.default_allocator));
-        try this.contents.appendSlice(bun.default_allocator, "\" classname=\"");
-        try escapeXml(class_name, this.contents.writer(bun.default_allocator));
-        try this.contents.appendSlice(bun.default_allocator, "\"");
+        try this.contents.appendSlice(fun.default_allocator, indent);
+        try this.contents.appendSlice(fun.default_allocator, "<testcase");
+        try this.contents.appendSlice(fun.default_allocator, " name=\"");
+        try escapeXml(name, this.contents.writer(fun.default_allocator));
+        try this.contents.appendSlice(fun.default_allocator, "\" classname=\"");
+        try escapeXml(class_name, this.contents.writer(fun.default_allocator));
+        try this.contents.appendSlice(fun.default_allocator, "\"");
 
         const elapsed_seconds = elapsed_ms / std.time.ms_per_s;
-        try this.contents.writer(bun.default_allocator).print(" time=\"{f}\"", .{bun.fmt.trimmedPrecision(elapsed_seconds, 6)});
+        try this.contents.writer(fun.default_allocator).print(" time=\"{f}\"", .{fun.fmt.trimmedPrecision(elapsed_seconds, 6)});
 
-        try this.contents.appendSlice(bun.default_allocator, " file=\"");
-        try escapeXml(file, this.contents.writer(bun.default_allocator));
-        try this.contents.appendSlice(bun.default_allocator, "\"");
+        try this.contents.appendSlice(fun.default_allocator, " file=\"");
+        try escapeXml(file, this.contents.writer(fun.default_allocator));
+        try this.contents.appendSlice(fun.default_allocator, "\"");
 
         if (line_number > 0) {
-            try this.contents.writer(bun.default_allocator).print(" line=\"{d}\"", .{line_number});
+            try this.contents.writer(fun.default_allocator).print(" line=\"{d}\"", .{line_number});
         }
 
-        try this.contents.writer(bun.default_allocator).print(" assertions=\"{d}\"", .{assertions});
+        try this.contents.writer(fun.default_allocator).print(" assertions=\"{d}\"", .{assertions});
 
         switch (status) {
             .pass => {
-                try this.contents.appendSlice(bun.default_allocator, " />\n");
+                try this.contents.appendSlice(fun.default_allocator, " />\n");
             },
             .fail => {
                 if (this.suite_stack.items.len > 0) {
@@ -421,97 +421,97 @@ pub const JunitReporter = struct {
                 }
                 // TODO: add the failure message
                 // if (failure_message) |msg| {
-                //     try this.contents.appendSlice(bun.default_allocator, " message=\"");
-                //     try escapeXml(msg, this.contents.writer(bun.default_allocator));
-                //     try this.contents.appendSlice(bun.default_allocator, "\"");
+                //     try this.contents.appendSlice(fun.default_allocator, " message=\"");
+                //     try escapeXml(msg, this.contents.writer(fun.default_allocator));
+                //     try this.contents.appendSlice(fun.default_allocator, "\"");
                 // }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "  <failure type=\"AssertionError\" />\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "  <failure type=\"AssertionError\" />\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .fail_because_failing_test_passed => {
                 if (this.suite_stack.items.len > 0) {
                     this.suite_stack.items[this.suite_stack.items.len - 1].metrics.failures += 1;
                 }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.writer(bun.default_allocator).print(
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.writer(fun.default_allocator).print(
                     \\  <failure message="test marked with .failing() did not throw" type="AssertionError"/>
                     \\
                 , .{});
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .fail_because_expected_assertion_count => {
                 if (this.suite_stack.items.len > 0) {
                     this.suite_stack.items[this.suite_stack.items.len - 1].metrics.failures += 1;
                 }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.writer(bun.default_allocator).print(
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.writer(fun.default_allocator).print(
                     \\  <failure message="Expected more assertions, but only received {d}" type="AssertionError"/>
                     \\
                 , .{assertions});
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .fail_because_todo_passed => {
                 if (this.suite_stack.items.len > 0) {
                     this.suite_stack.items[this.suite_stack.items.len - 1].metrics.failures += 1;
                 }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.writer(bun.default_allocator).print(
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.writer(fun.default_allocator).print(
                     \\  <failure message="TODO passed" type="AssertionError"/>
                     \\
                 , .{});
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .fail_because_expected_has_assertions => {
                 if (this.suite_stack.items.len > 0) {
                     this.suite_stack.items[this.suite_stack.items.len - 1].metrics.failures += 1;
                 }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.writer(bun.default_allocator).print(
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.writer(fun.default_allocator).print(
                     \\  <failure message="Expected to have assertions, but none were run" type="AssertionError"/>
                     \\
                 , .{});
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .skipped_because_label, .skip => {
                 if (this.suite_stack.items.len > 0) {
                     this.suite_stack.items[this.suite_stack.items.len - 1].metrics.skipped += 1;
                 }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "  <skipped />\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "  <skipped />\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .todo => {
                 if (this.suite_stack.items.len > 0) {
                     this.suite_stack.items[this.suite_stack.items.len - 1].metrics.skipped += 1;
                 }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "  <skipped message=\"TODO\" />\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "  <skipped message=\"TODO\" />\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .fail_because_timeout, .fail_because_timeout_with_done_callback, .fail_because_hook_timeout, .fail_because_hook_timeout_with_done_callback => {
                 if (this.suite_stack.items.len > 0) {
                     this.suite_stack.items[this.suite_stack.items.len - 1].metrics.failures += 1;
                 }
-                try this.contents.appendSlice(bun.default_allocator, ">\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "  <failure type=\"TimeoutError\" />\n");
-                try this.contents.appendSlice(bun.default_allocator, indent);
-                try this.contents.appendSlice(bun.default_allocator, "</testcase>\n");
+                try this.contents.appendSlice(fun.default_allocator, ">\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "  <failure type=\"TimeoutError\" />\n");
+                try this.contents.appendSlice(fun.default_allocator, indent);
+                try this.contents.appendSlice(fun.default_allocator, "</testcase>\n");
             },
             .pending => unreachable,
         }
@@ -525,12 +525,12 @@ pub const JunitReporter = struct {
         }
 
         {
-            var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+            var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
             defer arena.deinit();
             var stack_fallback_allocator = std.heap.stackFallback(4096, arena.allocator());
             const allocator = stack_fallback_allocator.get();
             const metrics = this.total_metrics;
-            const elapsed_time = @as(f64, @floatFromInt(std.time.nanoTimestamp() - bun.start_time)) / std.time.ns_per_s;
+            const elapsed_time = @as(f64, @floatFromInt(std.time.nanoTimestamp() - fun.start_time)) / std.time.ns_per_s;
             const summary = try std.fmt.allocPrint(allocator,
                 \\tests="{d}" assertions="{d}" failures="{d}" skipped="{d}" time="{d}"
             , .{
@@ -540,22 +540,22 @@ pub const JunitReporter = struct {
                 metrics.skipped,
                 elapsed_time,
             });
-            bun.handleOom(this.contents.insertSlice(bun.default_allocator, this.offset_of_testsuites_value, summary));
-            bun.handleOom(this.contents.appendSlice(bun.default_allocator, "</testsuites>\n"));
+            fun.handleOom(this.contents.insertSlice(fun.default_allocator, this.offset_of_testsuites_value, summary));
+            fun.handleOom(this.contents.appendSlice(fun.default_allocator, "</testsuites>\n"));
         }
 
-        var junit_path_buf: bun.PathBuffer = undefined;
+        var junit_path_buf: fun.PathBuffer = undefined;
 
         @memcpy(junit_path_buf[0..path.len], path);
         junit_path_buf[path.len] = 0;
 
-        switch (bun.sys.File.openat(.cwd(), junit_path_buf[0..path.len :0], bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o664)) {
+        switch (fun.sys.File.openat(.cwd(), junit_path_buf[0..path.len :0], fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o664)) {
             .err => |err| {
                 Output.err(error.JUnitReportFailed, "Failed to write JUnit report to {s}\n{f}", .{ path, err });
             },
             .result => |fd| {
                 defer _ = fd.close();
-                switch (bun.sys.File.writeAll(fd, this.contents.items)) {
+                switch (fun.sys.File.writeAll(fd, this.contents.items)) {
                     .result => {},
                     .err => |err| {
                         Output.err(error.JUnitReportFailed, "Failed to write JUnit report to {s}\n{f}", .{ path, err });
@@ -603,9 +603,9 @@ pub const CommandLineReporter = struct {
     pub fn handleTestStart(_: *TestRunner.Callback, _: Test.ID) void {}
 
     fn printTestLine(
-        comptime status: bun_test.Execution.Result,
-        sequence: *bun_test.Execution.ExecutionSequence,
-        test_entry: *bun_test.ExecutionEntry,
+        comptime status: fun_test.Execution.Result,
+        sequence: *fun_test.Execution.ExecutionSequence,
+        test_entry: *fun_test.ExecutionEntry,
         elapsed_ns: u64,
         writer: anytype,
         comptime dim: bool,
@@ -614,15 +614,15 @@ pub const CommandLineReporter = struct {
         const attempts = (initial_retry_count - sequence.remaining_retry_count) + 1;
         const initial_repeat_count = test_entry.repeat_count;
         const repeats = (initial_repeat_count - sequence.remaining_repeat_count) + 1;
-        var scopes_stack = bun.BoundedArray(*bun_test.DescribeScope, 64).init(0) catch unreachable;
-        var parent_: ?*bun_test.DescribeScope = test_entry.base.parent;
+        var scopes_stack = fun.BoundedArray(*fun_test.DescribeScope, 64).init(0) catch unreachable;
+        var parent_: ?*fun_test.DescribeScope = test_entry.base.parent;
 
         while (parent_) |scope| {
             scopes_stack.append(scope) catch break;
             parent_ = scope.base.parent;
         }
 
-        const scopes: []*bun_test.DescribeScope = scopes_stack.slice();
+        const scopes: []*fun_test.DescribeScope = scopes_stack.slice();
         const display_label = test_entry.base.name orelse "(unnamed)";
 
         // Quieter output when claude code is in use.
@@ -725,33 +725,33 @@ pub const CommandLineReporter = struct {
     }
 
     fn maybePrintJunitLine(
-        comptime status: bun_test.Execution.Result,
-        buntest: *bun_test.BunTest,
-        sequence: *bun_test.Execution.ExecutionSequence,
-        test_entry: *bun_test.ExecutionEntry,
+        comptime status: fun_test.Execution.Result,
+        funtest: *fun_test.FunTest,
+        sequence: *fun_test.Execution.ExecutionSequence,
+        test_entry: *fun_test.ExecutionEntry,
         elapsed_ns: u64,
     ) void {
-        if (buntest.reporter) |cmd_reporter| {
+        if (funtest.reporter) |cmd_reporter| {
             if (cmd_reporter.reporters.junit) |junit| {
-                var scopes_stack = bun.BoundedArray(*bun_test.DescribeScope, 64).init(0) catch unreachable;
-                var parent_: ?*bun_test.DescribeScope = test_entry.base.parent;
+                var scopes_stack = fun.BoundedArray(*fun_test.DescribeScope, 64).init(0) catch unreachable;
+                var parent_: ?*fun_test.DescribeScope = test_entry.base.parent;
                 const assertions = sequence.expect_call_count;
                 const line_number = test_entry.base.line_no;
 
-                const file: []const u8 = if (bun.jsc.Jest.Jest.runner) |runner| runner.files.get(buntest.file_id).source.path.text else "";
+                const file: []const u8 = if (fun.jsc.Jest.Jest.runner) |runner| runner.files.get(funtest.file_id).source.path.text else "";
 
                 while (parent_) |scope| {
                     scopes_stack.append(scope) catch break;
                     parent_ = scope.base.parent;
                 }
 
-                const scopes: []*bun_test.DescribeScope = scopes_stack.slice();
+                const scopes: []*fun_test.DescribeScope = scopes_stack.slice();
                 const display_label = test_entry.base.name orelse "(unnamed)";
 
                 {
                     const filename = brk: {
-                        if (strings.hasPrefix(file, bun.fs.FileSystem.instance.top_level_dir)) {
-                            break :brk strings.withoutLeadingPathSeparator(file[bun.fs.FileSystem.instance.top_level_dir.len..]);
+                        if (strings.hasPrefix(file, fun.fs.FileSystem.instance.top_level_dir)) {
+                            break :brk strings.withoutLeadingPathSeparator(file[fun.fs.FileSystem.instance.top_level_dir.len..]);
                         } else {
                             break :brk file;
                         }
@@ -759,26 +759,26 @@ pub const CommandLineReporter = struct {
 
                     if (!strings.eql(junit.current_file, filename)) {
                         while (junit.suite_stack.items.len > 0 and !junit.suite_stack.items[junit.suite_stack.items.len - 1].is_file_suite) {
-                            bun.handleOom(junit.endTestSuite());
+                            fun.handleOom(junit.endTestSuite());
                         }
 
                         if (junit.current_file.len > 0) {
-                            bun.handleOom(junit.endTestSuite());
+                            fun.handleOom(junit.endTestSuite());
                         }
 
-                        bun.handleOom(junit.beginTestSuite(filename));
+                        fun.handleOom(junit.beginTestSuite(filename));
                     }
 
                     // To make the juint reporter generate nested suites, we need to find the needed suites and create/print them.
                     // This assumes that the scopes are in the correct order.
-                    var needed_suites = std.array_list.Managed(*bun_test.DescribeScope).init(bun.default_allocator);
+                    var needed_suites = std.array_list.Managed(*fun_test.DescribeScope).init(fun.default_allocator);
                     defer needed_suites.deinit();
 
                     for (scopes, 0..) |_, i| {
                         const index = (scopes.len - 1) - i;
                         const scope = scopes[index];
                         if (scope.base.name) |name| if (name.len > 0) {
-                            bun.handleOom(needed_suites.append(scope));
+                            fun.handleOom(needed_suites.append(scope));
                         };
                     }
 
@@ -793,7 +793,7 @@ pub const CommandLineReporter = struct {
 
                     while (current_suite_depth > needed_suites.items.len) {
                         if (junit.suite_stack.items.len > 0 and !junit.suite_stack.items[junit.suite_stack.items.len - 1].is_file_suite) {
-                            bun.handleOom(junit.endTestSuite());
+                            fun.handleOom(junit.endTestSuite());
                             current_suite_depth -= 1;
                         } else {
                             break;
@@ -820,7 +820,7 @@ pub const CommandLineReporter = struct {
 
                     while (suites_to_close > 0) {
                         if (junit.suite_stack.items.len > 0 and !junit.suite_stack.items[junit.suite_stack.items.len - 1].is_file_suite) {
-                            bun.handleOom(junit.endTestSuite());
+                            fun.handleOom(junit.endTestSuite());
                             current_suite_depth -= 1;
                             suites_to_close -= 1;
                         } else {
@@ -837,11 +837,11 @@ pub const CommandLineReporter = struct {
 
                     while (describe_suite_index < needed_suites.items.len) {
                         const scope = needed_suites.items[describe_suite_index];
-                        bun.handleOom(junit.beginTestSuiteWithLine(scope.base.name orelse "", scope.base.line_no, false));
+                        fun.handleOom(junit.beginTestSuiteWithLine(scope.base.name orelse "", scope.base.line_no, false));
                         describe_suite_index += 1;
                     }
 
-                    var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+                    var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
                     defer arena.deinit();
                     var stack_fallback = std.heap.stackFallback(4096, arena.allocator());
                     const allocator = stack_fallback.get();
@@ -852,18 +852,18 @@ pub const CommandLineReporter = struct {
                         for (scopes) |scope| {
                             if (scope.base.name) |name| if (name.len > 0) {
                                 if (initial_length != concatenated_describe_scopes.items.len) {
-                                    bun.handleOom(concatenated_describe_scopes.appendSlice(" &gt; "));
+                                    fun.handleOom(concatenated_describe_scopes.appendSlice(" &gt; "));
                                 }
 
-                                bun.handleOom(escapeXml(name, concatenated_describe_scopes.writer()));
+                                fun.handleOom(escapeXml(name, concatenated_describe_scopes.writer()));
                             };
                         }
                     }
 
                     for (sequence.flakyAttempts()) |attempt| {
-                        bun.handleOom(junit.writeTestCase(attempt.result, filename, display_label, concatenated_describe_scopes.items, 0, attempt.elapsed_ns, line_number));
+                        fun.handleOom(junit.writeTestCase(attempt.result, filename, display_label, concatenated_describe_scopes.items, 0, attempt.elapsed_ns, line_number));
                     }
-                    bun.handleOom(junit.writeTestCase(status, filename, display_label, concatenated_describe_scopes.items, assertions, elapsed_ns, line_number));
+                    fun.handleOom(junit.writeTestCase(status, filename, display_label, concatenated_describe_scopes.items, assertions, elapsed_ns, line_number));
                 }
             }
         }
@@ -873,18 +873,18 @@ pub const CommandLineReporter = struct {
         return &this.jest.summary;
     }
 
-    pub fn handleTestCompleted(buntest: *bun_test.BunTest, sequence: *bun_test.Execution.ExecutionSequence, test_entry: *bun_test.ExecutionEntry, elapsed_ns: u64) void {
+    pub fn handleTestCompleted(funtest: *fun_test.FunTest, sequence: *fun_test.Execution.ExecutionSequence, test_entry: *fun_test.ExecutionEntry, elapsed_ns: u64) void {
         var output_buf: std.ArrayListUnmanaged(u8) = .empty;
-        defer output_buf.deinit(buntest.gpa);
+        defer output_buf.deinit(funtest.gpa);
 
         const initial_length = output_buf.items.len;
-        const base_writer = output_buf.writer(buntest.gpa);
+        const base_writer = output_buf.writer(funtest.gpa);
         var writer = base_writer;
 
         switch (sequence.result) {
             inline else => |result| {
                 if (result != .skipped_because_label) {
-                    if (buntest.reporter != null and buntest.reporter.?.reporters.dots and (comptime switch (result.basicResult()) {
+                    if (funtest.reporter != null and funtest.reporter.?.reporters.dots and (comptime switch (result.basicResult()) {
                         .pass, .skip, .todo, .pending => true,
                         .fail => false,
                     })) {
@@ -897,15 +897,15 @@ pub const CommandLineReporter = struct {
                                 .fail => writer.print(comptime Output.prettyFmt("<r><red>.<r>", enable_ansi_colors_stderr), .{}) catch {},
                             },
                         }
-                        buntest.reporter.?.last_printed_dot = true;
-                    } else if (((comptime result.basicResult()) != .fail) and (buntest.reporter != null and buntest.reporter.?.reporters.only_failures)) {
+                        funtest.reporter.?.last_printed_dot = true;
+                    } else if (((comptime result.basicResult()) != .fail) and (funtest.reporter != null and funtest.reporter.?.reporters.only_failures)) {
                         // when using --only-failures, only print failures
                     } else {
-                        buntest.bun_test_root.onBeforePrint();
+                        funtest.fun_test_root.onBeforePrint();
 
                         writeTestStatusLine(result, &writer);
                         const dim = switch (comptime result.basicResult()) {
-                            .todo => if (bun.jsc.Jest.Jest.runner) |runner| !runner.run_todo else true,
+                            .todo => if (fun.jsc.Jest.Jest.runner) |runner| !runner.run_todo else true,
                             .skip, .pending => true,
                             .pass, .fail => false,
                         };
@@ -915,23 +915,23 @@ pub const CommandLineReporter = struct {
                     }
                 }
                 // always print junit if needed
-                maybePrintJunitLine(result, buntest, sequence, test_entry, elapsed_ns);
+                maybePrintJunitLine(result, funtest, sequence, test_entry, elapsed_ns);
             },
         }
 
         const formatted_line = output_buf.items[initial_length..];
-        if (buntest.reporter != null and buntest.reporter.?.worker_ipc_file_idx != null) {
-            ParallelRunner.workerEmitTestDone(buntest.reporter.?.worker_ipc_file_idx.?, formatted_line);
+        if (funtest.reporter != null and funtest.reporter.?.worker_ipc_file_idx != null) {
+            ParallelRunner.workerEmitTestDone(funtest.reporter.?.worker_ipc_file_idx.?, formatted_line);
         } else {
             Output.errorWriter().writeAll(formatted_line) catch {};
         }
 
-        var this: *CommandLineReporter = buntest.reporter orelse return; // command line reporter is missing! uh oh!
+        var this: *CommandLineReporter = funtest.reporter orelse return; // command line reporter is missing! uh oh!
 
         if (!this.reporters.dots and !this.reporters.only_failures) switch (sequence.result.basicResult()) {
-            .skip => bun.handleOom(this.skips_to_repeat_buf.appendSlice(bun.default_allocator, output_buf.items[initial_length..])),
-            .todo => bun.handleOom(this.todos_to_repeat_buf.appendSlice(bun.default_allocator, output_buf.items[initial_length..])),
-            .fail => bun.handleOom(this.failures_to_repeat_buf.appendSlice(bun.default_allocator, output_buf.items[initial_length..])),
+            .skip => fun.handleOom(this.skips_to_repeat_buf.appendSlice(fun.default_allocator, output_buf.items[initial_length..])),
+            .todo => fun.handleOom(this.todos_to_repeat_buf.appendSlice(fun.default_allocator, output_buf.items[initial_length..])),
+            .fail => fun.handleOom(this.failures_to_repeat_buf.appendSlice(fun.default_allocator, output_buf.items[initial_length..])),
             .pass, .pending => {},
         };
 
@@ -978,7 +978,7 @@ pub const CommandLineReporter = struct {
             if (files == 1) "" else "s",
         });
 
-        Output.printStartEnd(bun.start_time, std.time.nanoTimestamp());
+        Output.printStartEnd(fun.start_time, std.time.nanoTimestamp());
     }
 
     /// Writes the JUnit reporter output file if a JUnit reporter is active and
@@ -1002,7 +1002,7 @@ pub const CommandLineReporter = struct {
 
         var map = coverage.ByteRangeMapping.map orelse return;
         var iter = map.valueIterator();
-        var byte_ranges = try std.array_list.Managed(bun.SourceMap.coverage.ByteRangeMapping).initCapacity(bun.default_allocator, map.count());
+        var byte_ranges = try std.array_list.Managed(fun.SourceMap.coverage.ByteRangeMapping).initCapacity(fun.default_allocator, map.count());
 
         while (iter.next()) |entry| {
             byte_ranges.appendAssumeCapacity(entry.*);
@@ -1013,10 +1013,10 @@ pub const CommandLineReporter = struct {
         }
 
         std.sort.pdq(
-            bun.SourceMap.coverage.ByteRangeMapping,
+            fun.SourceMap.coverage.ByteRangeMapping,
             byte_ranges.items,
             {},
-            bun.SourceMap.coverage.ByteRangeMapping.isLessThan,
+            fun.SourceMap.coverage.ByteRangeMapping.isLessThan,
         );
 
         try this.printCodeCoverage(vm, opts, byte_ranges.items, reporters, enable_ansi_colors);
@@ -1027,19 +1027,19 @@ pub const CommandLineReporter = struct {
     pub fn writeLcovOnly(_: *CommandLineReporter, vm: *jsc.VirtualMachine, opts: *const TestCommand.CodeCoverageOptions, out_path: [:0]const u8) !void {
         var map = coverage.ByteRangeMapping.map orelse return;
         var iter = map.valueIterator();
-        var byte_ranges = try std.array_list.Managed(bun.SourceMap.coverage.ByteRangeMapping).initCapacity(bun.default_allocator, map.count());
+        var byte_ranges = try std.array_list.Managed(fun.SourceMap.coverage.ByteRangeMapping).initCapacity(fun.default_allocator, map.count());
         defer byte_ranges.deinit();
         while (iter.next()) |entry| byte_ranges.appendAssumeCapacity(entry.*);
         if (byte_ranges.items.len == 0) return;
         std.sort.pdq(
-            bun.SourceMap.coverage.ByteRangeMapping,
+            fun.SourceMap.coverage.ByteRangeMapping,
             byte_ranges.items,
             {},
-            bun.SourceMap.coverage.ByteRangeMapping.isLessThan,
+            fun.SourceMap.coverage.ByteRangeMapping.isLessThan,
         );
 
         const relative_dir = vm.transpiler.fs.top_level_dir;
-        const file = switch (bun.sys.File.openat(.cwd(), out_path, bun.O.CREAT | bun.O.WRONLY | bun.O.TRUNC | bun.O.CLOEXEC, 0o644)) {
+        const file = switch (fun.sys.File.openat(.cwd(), out_path, fun.O.CREAT | fun.O.WRONLY | fun.O.TRUNC | fun.O.CLOEXEC, 0o644)) {
             .err => |e| {
                 Output.err(.lcovCoverageError, "failed to open coverage fragment {s}\n{f}", .{ out_path, e });
                 return error.OpenFailed;
@@ -1047,23 +1047,23 @@ pub const CommandLineReporter = struct {
             .result => |f| f,
         };
         defer file.close();
-        const buf = try bun.default_allocator.alloc(u8, 64 * 1024);
-        defer bun.default_allocator.free(buf);
+        const buf = try fun.default_allocator.alloc(u8, 64 * 1024);
+        defer fun.default_allocator.free(buf);
         var buffered = file.writer().adaptToNewApi(buf);
         const writer = &buffered.new_interface;
 
         for (byte_ranges.items) |*entry| {
             if (opts.ignore_patterns.len > 0) {
-                const rel = bun.path.relative(relative_dir, entry.source_url.slice());
+                const rel = fun.path.relative(relative_dir, entry.source_url.slice());
                 var skip = false;
-                for (opts.ignore_patterns) |p| if (bun.glob.match(p, rel).matches()) {
+                for (opts.ignore_patterns) |p| if (fun.glob.match(p, rel).matches()) {
                     skip = true;
                     break;
                 };
                 if (skip) continue;
             }
-            var report = CodeCoverageReport.generate(vm.global, bun.default_allocator, entry, opts.ignore_sourcemap) orelse continue;
-            defer report.deinit(bun.default_allocator);
+            var report = CodeCoverageReport.generate(vm.global, fun.default_allocator, entry, opts.ignore_sourcemap) orelse continue;
+            defer report.deinit(fun.default_allocator);
             CodeCoverageReport.Lcov.writeFormat(&report, relative_dir, writer) catch continue;
         }
         try writer.flush();
@@ -1073,16 +1073,16 @@ pub const CommandLineReporter = struct {
         _: *CommandLineReporter,
         vm: *jsc.VirtualMachine,
         opts: *TestCommand.CodeCoverageOptions,
-        byte_ranges: []bun.SourceMap.coverage.ByteRangeMapping,
+        byte_ranges: []fun.SourceMap.coverage.ByteRangeMapping,
         comptime reporters: TestCommand.Reporters,
         comptime enable_ansi_colors: bool,
     ) !void {
         const trace = if (reporters.text and reporters.lcov)
-            bun.perf.trace("TestCommand.printCodeCoverageLCovAndText")
+            fun.perf.trace("TestCommand.printCodeCoverageLCovAndText")
         else if (reporters.text)
-            bun.perf.trace("TestCommand.printCodeCoverageText")
+            fun.perf.trace("TestCommand.printCodeCoverageText")
         else if (reporters.lcov)
-            bun.perf.trace("TestCommand.printCodeCoverageLCov")
+            fun.perf.trace("TestCommand.printCodeCoverageLCov")
         else
             @compileError("No reporters enabled");
 
@@ -1099,13 +1099,13 @@ pub const CommandLineReporter = struct {
             var len = "All files".len;
             for (byte_ranges) |*entry| {
                 const utf8 = entry.source_url.slice();
-                const relative_path = bun.path.relative(relative_dir, utf8);
+                const relative_path = fun.path.relative(relative_dir, utf8);
 
                 // Check if this file should be ignored based on coveragePathIgnorePatterns
                 if (opts.ignore_patterns.len > 0) {
                     var should_ignore = false;
                     for (opts.ignore_patterns) |pattern| {
-                        if (bun.glob.match(pattern, relative_path).matches()) {
+                        if (fun.glob.match(pattern, relative_path).matches()) {
                             should_ignore = true;
                             break;
                         }
@@ -1139,10 +1139,10 @@ pub const CommandLineReporter = struct {
             console.writeAll(Output.prettyFmt("|---------|---------|-------------------<r>\n", enable_ansi_colors)) catch return;
         }
 
-        var console_buffer = std.Io.Writer.Allocating.init(bun.default_allocator);
+        var console_buffer = std.Io.Writer.Allocating.init(fun.default_allocator);
         const console_writer = &console_buffer.writer;
 
-        var avg = bun.SourceMap.coverage.Fraction{
+        var avg = fun.SourceMap.coverage.Fraction{
             .functions = 0.0,
             .lines = 0.0,
             .stmts = 0.0,
@@ -1151,15 +1151,15 @@ pub const CommandLineReporter = struct {
         // --- Text ---
 
         // --- LCOV ---
-        var lcov_name_buf: bun.PathBuffer = undefined;
+        var lcov_name_buf: fun.PathBuffer = undefined;
         const lcov_file, const lcov_name, var lcov_buffered_writer = brk: {
             if (comptime !reporters.lcov) break :brk .{ {}, {}, {} };
 
             // Ensure the directory exists
-            var fs = bun.jsc.Node.fs.NodeFS{};
+            var fs = fun.jsc.Node.fs.NodeFS{};
             _ = fs.mkdirRecursive(
                 .{
-                    .path = bun.jsc.Node.PathLike{
+                    .path = fun.jsc.Node.PathLike{
                         .encoded_slice = jsc.ZigString.Slice.fromUTF8NeverFree(opts.reports_directory),
                     },
                     .always_return_none = true,
@@ -1169,13 +1169,13 @@ pub const CommandLineReporter = struct {
             // Write the lcov.info file to a temporary file we atomically rename to the final name after it succeeds
             var base64_bytes: [8]u8 = undefined;
             var shortname_buf: [512]u8 = undefined;
-            bun.csprng(&base64_bytes);
+            fun.csprng(&base64_bytes);
             const tmpname = std.fmt.bufPrintZ(&shortname_buf, ".lcov.info.{x}.tmp", .{&base64_bytes}) catch unreachable;
-            const path = bun.path.joinAbsStringBufZ(relative_dir, &lcov_name_buf, &.{ opts.reports_directory, tmpname }, .auto);
-            const file = bun.sys.File.openat(
+            const path = fun.path.joinAbsStringBufZ(relative_dir, &lcov_name_buf, &.{ opts.reports_directory, tmpname }, .auto);
+            const file = fun.sys.File.openat(
                 .cwd(),
                 path,
-                bun.O.CREAT | bun.O.WRONLY | bun.O.TRUNC | bun.O.CLOEXEC,
+                fun.O.CREAT | fun.O.WRONLY | fun.O.TRUNC | fun.O.CLOEXEC,
                 0o644,
             );
 
@@ -1189,7 +1189,7 @@ pub const CommandLineReporter = struct {
                     const buffered = buffered_writer: {
                         const writer = f.writer();
                         // Heap-allocate the buffered writer because we want a stable memory address + 64 KB is kind of a lot.
-                        const buffer = try bun.default_allocator.alloc(u8, 64 * 1024);
+                        const buffer = try fun.default_allocator.alloc(u8, 64 * 1024);
                         break :buffered_writer writer.adaptToNewApi(buffer);
                     };
 
@@ -1205,7 +1205,7 @@ pub const CommandLineReporter = struct {
         errdefer {
             if (comptime reporters.lcov) {
                 lcov_file.close();
-                _ = bun.sys.unlink(
+                _ = fun.sys.unlink(
                     lcov_name,
                 );
             }
@@ -1216,11 +1216,11 @@ pub const CommandLineReporter = struct {
             // Check if this file should be ignored based on coveragePathIgnorePatterns
             if (opts.ignore_patterns.len > 0) {
                 const utf8 = entry.source_url.slice();
-                const relative_path = bun.path.relative(relative_dir, utf8);
+                const relative_path = fun.path.relative(relative_dir, utf8);
 
                 var should_ignore = false;
                 for (opts.ignore_patterns) |pattern| {
-                    if (bun.glob.match(pattern, relative_path).matches()) {
+                    if (fun.glob.match(pattern, relative_path).matches()) {
                         should_ignore = true;
                         break;
                     }
@@ -1231,8 +1231,8 @@ pub const CommandLineReporter = struct {
                 }
             }
 
-            var report = CodeCoverageReport.generate(vm.global, bun.default_allocator, entry, opts.ignore_sourcemap) orelse continue;
-            defer report.deinit(bun.default_allocator);
+            var report = CodeCoverageReport.generate(vm.global, fun.default_allocator, entry, opts.ignore_sourcemap) orelse continue;
+            defer report.deinit(fun.default_allocator);
 
             if (comptime reporters.text) {
                 var fraction = base_fraction;
@@ -1269,7 +1269,7 @@ pub const CommandLineReporter = struct {
                     avg.stmts /= avg_count;
                 }
 
-                const failed = if (avg_count > 0) base_fraction else bun.SourceMap.coverage.Fraction{
+                const failed = if (avg_count > 0) base_fraction else fun.SourceMap.coverage.Fraction{
                     .functions = 0,
                     .lines = 0,
                     .stmts = 0,
@@ -1302,12 +1302,12 @@ pub const CommandLineReporter = struct {
         if (comptime reporters.lcov) {
             try lcov_writer.flush();
             lcov_file.close();
-            const cwd = bun.FD.cwd();
-            bun.sys.moveFileZ(
+            const cwd = fun.FD.cwd();
+            fun.sys.moveFileZ(
                 cwd,
                 lcov_name,
                 cwd,
-                bun.path.joinAbsStringZ(
+                fun.path.joinAbsStringZ(
                     relative_dir,
                     &.{ opts.reports_directory, "lcov.info" },
                     .auto,
@@ -1320,19 +1320,19 @@ pub const CommandLineReporter = struct {
     }
 };
 
-export fn BunTest__shouldGenerateCodeCoverage(test_name_str: bun.String) callconv(.c) bool {
-    var zig_slice: bun.jsc.ZigString.Slice = .{};
+export fn FunTest__shouldGenerateCodeCoverage(test_name_str: fun.String) callconv(.c) bool {
+    var zig_slice: fun.jsc.ZigString.Slice = .{};
     defer zig_slice.deinit();
 
     // In this particular case, we don't actually care about non-ascii latin1 characters.
     // so we skip the ascii check
     const slice = brk: {
-        zig_slice = test_name_str.toUTF8(bun.default_allocator);
+        zig_slice = test_name_str.toUTF8(fun.default_allocator);
         break :brk zig_slice.slice();
     };
 
     // always ignore node_modules.
-    if (bun.strings.contains(slice, "/node_modules/") or bun.strings.contains(slice, "\\node_modules\\")) {
+    if (fun.strings.contains(slice, "/node_modules/") or fun.strings.contains(slice, "\\node_modules\\")) {
         return false;
     }
 
@@ -1348,7 +1348,7 @@ export fn BunTest__shouldGenerateCodeCoverage(test_name_str: bun.String) callcon
         if (runner.test_options.coverage.skip_test_files) {
             const name_without_extension = slice[0 .. slice.len - ext.len];
             inline for (Scanner.test_name_suffixes) |suffix| {
-                if (bun.strings.endsWithComptime(name_without_extension, suffix)) {
+                if (fun.strings.endsWithComptime(name_without_extension, suffix)) {
                     return false;
                 }
             }
@@ -1372,9 +1372,9 @@ pub const TestCommand = struct {
             const w = Output.writer();
             const colors = Output.enable_ansi_colors_stdout;
             w.writeAll(if (colors)
-                Output.prettyFmt("<r><b>bun test <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", true)
+                Output.prettyFmt("<r><b>fun test <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", true)
             else
-                Output.prettyFmt("<r><b>bun test <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", false)) catch {};
+                Output.prettyFmt("<r><b>fun test <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", false)) catch {};
             if (ctx.test_options.parallel > 0) {
                 if (colors) {
                     w.print(" \x1b[1;2m{d}\u{00d7} PARALLEL\x1b[0m", .{ctx.test_options.parallel}) catch {};
@@ -1394,11 +1394,11 @@ pub const TestCommand = struct {
             loader.* = DotEnv.Loader.init(map, ctx.allocator);
             break :brk loader;
         };
-        bun.jsc.initialize(false);
+        fun.jsc.initialize(false);
         HTTPThread.init(&.{});
 
         const enable_random = ctx.test_options.randomize;
-        const seed: u32 = if (enable_random) ctx.test_options.seed orelse @truncate(bun.fastRandom()) else 0; // seed is limited to u32 so storing it in js doesn't lose precision
+        const seed: u32 = if (enable_random) ctx.test_options.seed orelse @truncate(fun.fastRandom()) else 0; // seed is limited to u32 so storing it in js doesn't lose precision
         // Persist the chosen seed so --parallel forwards it to every worker;
         // otherwise each worker would draw its own and the printed --seed=N
         // would not reproduce the run.
@@ -1408,9 +1408,9 @@ pub const TestCommand = struct {
 
         var snapshot_file_buf = std.array_list.Managed(u8).init(ctx.allocator);
         var snapshot_values = Snapshots.ValuesHashMap.init(ctx.allocator);
-        var snapshot_counts = bun.StringHashMap(usize).init(ctx.allocator);
+        var snapshot_counts = fun.StringHashMap(usize).init(ctx.allocator);
         var inline_snapshots_to_write = std.AutoArrayHashMap(TestRunner.File.ID, std.array_list.Managed(Snapshots.InlineSnapshotToWrite)).init(ctx.allocator);
-        jsc.VirtualMachine.isBunTest = true;
+        jsc.VirtualMachine.isFunTest = true;
 
         var reporter = try ctx.allocator.create(CommandLineReporter);
         defer {
@@ -1439,7 +1439,7 @@ pub const TestCommand = struct {
                     .counts = &snapshot_counts,
                     .inline_snapshots_to_write = &inline_snapshots_to_write,
                 },
-                .bun_test_root = .init(ctx.allocator),
+                .fun_test_root = .init(ctx.allocator),
             },
         };
         reporter.repeat_count = @max(ctx.test_options.repeat_count, 1);
@@ -1480,8 +1480,8 @@ pub const TestCommand = struct {
         vm.argv = ctx.passthrough;
         vm.preload = ctx.preloads;
         vm.transpiler.options.rewrite_jest_for_tests = true;
-        bun.http.experimental_http2_client_from_cli = ctx.runtime_options.experimental_http2_fetch;
-        bun.http.experimental_http3_client_from_cli = ctx.runtime_options.experimental_http3_fetch;
+        fun.http.experimental_http2_client_from_cli = ctx.runtime_options.experimental_http2_fetch;
+        fun.http.experimental_http3_client_from_cli = ctx.runtime_options.experimental_http3_fetch;
         vm.transpiler.options.env.behavior = .load_all_without_inlining;
 
         const node_env_entry = try env_loader.map.getOrPutWithoutValue("NODE_ENV");
@@ -1538,7 +1538,7 @@ pub const TestCommand = struct {
         //
         try vm.ensureDebugger(false);
 
-        var scanner = bun.handleOom(Scanner.init(ctx.allocator, &vm.transpiler, ctx.positionals.len));
+        var scanner = fun.handleOom(Scanner.init(ctx.allocator, &vm.transpiler, ctx.positionals.len));
         defer scanner.deinit();
         scanner.path_ignore_patterns = ctx.test_options.path_ignore_patterns;
         const has_relative_path = for (ctx.positionals) |arg| {
@@ -1554,14 +1554,14 @@ pub const TestCommand = struct {
             const file_or_dirnames = ctx.positionals[1..];
             for (file_or_dirnames) |arg| {
                 scanner.scan(arg) catch |err| switch (err) {
-                    error.OutOfMemory => bun.outOfMemory(),
+                    error.OutOfMemory => fun.outOfMemory(),
                     // don't error if multiple are passed; one might fail
                     // but the others may not
                     error.DoesNotExist => if (file_or_dirnames.len == 1) {
                         if (Output.isAIAgent()) {
-                            Output.prettyErrorln("Test filter <b>{f}<r> had no matches in --cwd={f}", .{ bun.fmt.quote(arg), bun.fmt.quote(bun.fs.FileSystem.instance.top_level_dir) });
+                            Output.prettyErrorln("Test filter <b>{f}<r> had no matches in --cwd={f}", .{ fun.fmt.quote(arg), fun.fmt.quote(fun.fs.FileSystem.instance.top_level_dir) });
                         } else {
-                            Output.prettyErrorln("Test filter <b>{f}<r> had no matches", .{bun.fmt.quote(arg)});
+                            Output.prettyErrorln("Test filter <b>{f}<r> had no matches", .{fun.fmt.quote(arg)});
                         }
                         vm.exit_handler.exit_code = 1;
                         vm.is_shutting_down = true;
@@ -1579,7 +1579,7 @@ pub const TestCommand = struct {
                 const normalized = try ctx.allocator.alloc([]const u8, filter_names.len);
                 for (filter_names, normalized) |in, *out| {
                     const to_normalize = try ctx.allocator.dupe(u8, in);
-                    bun.path.posixToPlatformInPlace(u8, to_normalize);
+                    fun.path.posixToPlatformInPlace(u8, to_normalize);
                     out.* = to_normalize;
                 }
                 break :brk normalized;
@@ -1600,12 +1600,12 @@ pub const TestCommand = struct {
             };
 
             scanner.scan(dir_to_scan) catch |err| switch (err) {
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 error.DoesNotExist => {
                     if (Output.isAIAgent()) {
-                        Output.prettyErrorln("<red>Failed to scan non-existent root directory for tests:<r> {f} in --cwd={f}", .{ bun.fmt.quote(dir_to_scan), bun.fmt.quote(bun.fs.FileSystem.instance.top_level_dir) });
+                        Output.prettyErrorln("<red>Failed to scan non-existent root directory for tests:<r> {f} in --cwd={f}", .{ fun.fmt.quote(dir_to_scan), fun.fmt.quote(fun.fs.FileSystem.instance.top_level_dir) });
                     } else {
-                        Output.prettyErrorln("<red>Failed to scan non-existent root directory for tests:<r> {f}", .{bun.fmt.quote(dir_to_scan)});
+                        Output.prettyErrorln("<red>Failed to scan non-existent root directory for tests:<r> {f}", .{fun.fmt.quote(dir_to_scan)});
                     }
                     vm.exit_handler.exit_code = 1;
                     vm.is_shutting_down = true;
@@ -1614,7 +1614,7 @@ pub const TestCommand = struct {
             };
         }
 
-        const all_test_files = bun.handleOom(scanner.takeFoundTestFiles());
+        const all_test_files = fun.handleOom(scanner.takeFoundTestFiles());
         defer ctx.allocator.free(all_test_files);
         const search_count = scanner.search_count;
 
@@ -1711,7 +1711,7 @@ pub const TestCommand = struct {
         };
 
         // Normally the watcher is only enabled when there are test files to
-        // run; `bun test --watch` with nothing matching should still exit.
+        // run; `fun test --watch` with nothing matching should still exit.
         // With --changed we always want to keep watching as long as any test
         // files exist, since "nothing changed yet" is the common starting
         // state and editing a source file should kick off a run.
@@ -1768,7 +1768,7 @@ pub const TestCommand = struct {
         // before the next file edit.
         if (ctx.test_options.changed != null and vm.isWatcherEnabled()) {
             for (changed_module_graph_files) |path| {
-                _ = vm.bun_watcher.addFileByPathSlow(path, vm.transpiler.options.loader(std.fs.path.extension(path)));
+                _ = vm.fun_watcher.addFileByPathSlow(path, vm.transpiler.options.loader(std.fs.path.extension(path)));
             }
         }
 
@@ -1815,12 +1815,12 @@ pub const TestCommand = struct {
         if (test_files.len == 0 and !pass_with_no_tests_from_filter) {
             failed_to_find_any_tests = true;
 
-            // "bun test" - positionals[0] == "test"
+            // "fun test" - positionals[0] == "test"
             // Therefore positionals starts at [1].
             if (ctx.positionals.len < 2) {
                 if (Output.isAIAgent()) {
                     // Be very clear to ai.
-                    Output.errGeneric("0 test files matching **{{.test,.spec,_test_,_spec_}}.{{js,ts,jsx,tsx}} in --cwd={f}", .{bun.fmt.quote(bun.fs.FileSystem.instance.top_level_dir)});
+                    Output.errGeneric("0 test files matching **{{.test,.spec,_test_,_spec_}}.{{js,ts,jsx,tsx}} in --cwd={f}", .{fun.fmt.quote(fun.fs.FileSystem.instance.top_level_dir)});
                 } else {
                     // Be friendlier to humans.
                     Output.prettyErrorln(
@@ -1832,7 +1832,7 @@ pub const TestCommand = struct {
                 }
             } else {
                 if (Output.isAIAgent()) {
-                    Output.prettyErrorln("<yellow>The following filters did not match any test files in --cwd={f}:<r>", .{bun.fmt.quote(bun.fs.FileSystem.instance.top_level_dir)});
+                    Output.prettyErrorln("<yellow>The following filters did not match any test files in --cwd={f}:<r>", .{fun.fmt.quote(fun.fs.FileSystem.instance.top_level_dir)});
                 } else {
                     Output.prettyErrorln("<yellow>The following filters did not match any test files:<r>", .{});
                 }
@@ -1863,14 +1863,14 @@ pub const TestCommand = struct {
                 // print a helpful note
                 if (has_file_like) |i| {
                     Output.prettyErrorln(
-                        \\<blue>note<r><d>:<r> To treat the "{s}" filter as a path, run "bun test ./{s}"<r>
+                        \\<blue>note<r><d>:<r> To treat the "{s}" filter as a path, run "fun test ./{s}"<r>
                     , .{ ctx.positionals[i], ctx.positionals[i] });
                 }
             }
             if (!Output.isAIAgent()) {
                 Output.prettyError(
                     \\
-                    \\Learn more about bun test: <magenta>https://bun.com/docs/cli/test<r>
+                    \\Learn more about fun test: <magenta>https://fun.dev/docs/cli/test<r>
                 , .{});
             }
         } else {
@@ -1986,7 +1986,7 @@ pub const TestCommand = struct {
                 reporter.printSummary();
             } else {
                 Output.prettyError("<red>error<r><d>:<r> regex <b>{f}<r> matched 0 tests. Searched {d} file{s} (skipping {d} test{s}) ", .{
-                    bun.fmt.quote(ctx.test_options.test_filter_pattern.?),
+                    fun.fmt.quote(ctx.test_options.test_filter_pattern.?),
                     summary.files,
                     if (summary.files == 1) "" else "s",
                     summary.skipped_because_label,
@@ -2044,7 +2044,7 @@ pub const TestCommand = struct {
                 const reporter = this.reporter;
                 const vm = this.vm;
                 var files = this.files;
-                bun.assert(files.len > 0);
+                fun.assert(files.len > 0);
 
                 const isolate = vm.test_isolation_enabled;
 
@@ -2058,7 +2058,7 @@ pub const TestCommand = struct {
                         Global.mimalloc_cleanup(false);
                         if (isolate) {
                             vm.swapGlobalForTestIsolation();
-                            reporter.jest.bun_test_root.resetHookScopeForTestIsolation();
+                            reporter.jest.fun_test_root.resetHookScopeForTestIsolation();
                         }
                     }
                 }
@@ -2070,7 +2070,7 @@ pub const TestCommand = struct {
             }
         };
 
-        var arena = bun.MimallocArena.init();
+        var arena = fun.MimallocArena.init();
         vm_.eventLoop().ensureWaker();
         vm_.arena = &arena;
         vm_.allocator = arena.allocator();
@@ -2084,7 +2084,7 @@ pub const TestCommand = struct {
         reporter: *CommandLineReporter,
         vm: *jsc.VirtualMachine,
         file_name: string,
-        first_last: bun_test.BunTestRoot.FirstLast,
+        first_last: fun_test.FunTestRoot.FirstLast,
     ) !void {
         defer {
             js_ast.Expr.Data.Store.reset();
@@ -2106,9 +2106,9 @@ pub const TestCommand = struct {
         const resolution = try vm.transpiler.resolveEntryPoint(file_name);
         try vm.clearEntryPoint();
 
-        const file_path = bun.handleOom(bun.fs.FileSystem.instance.filename_store.append([]const u8, resolution.path_pair.primary.text));
-        const file_title = bun.path.relative(FileSystem.instance.top_level_dir, file_path);
-        const file_id = bun.jsc.Jest.Jest.runner.?.getOrPutFile(file_path).file_id;
+        const file_path = fun.handleOom(fun.fs.FileSystem.instance.filename_store.append([]const u8, resolution.path_pair.primary.text));
+        const file_title = fun.path.relative(FileSystem.instance.top_level_dir, file_path);
+        const file_id = fun.jsc.Jest.Jest.runner.?.getOrPutFile(file_path).file_id;
 
         // In Github Actions, append a special prefix that will group
         // subsequent log lines into a collapsable group.
@@ -2131,15 +2131,15 @@ pub const TestCommand = struct {
                 reporter.jest.snapshots.resetCounts();
             }
 
-            var bun_test_root = &jest.Jest.runner.?.bun_test_root;
+            var fun_test_root = &jest.Jest.runner.?.fun_test_root;
             // Determine if this file should run tests concurrently based on glob pattern
             const should_run_concurrent = reporter.jest.shouldFileRunConcurrently(file_id);
-            bun_test_root.enterFile(file_id, reporter, should_run_concurrent, first_last);
-            defer bun_test_root.exitFile();
+            fun_test_root.enterFile(file_id, reporter, should_run_concurrent, first_last);
+            defer fun_test_root.exitFile();
 
             reporter.jest.current_file.set(file_title, file_prefix, repeat_count, repeat_index, reporter);
 
-            bun.jsc.Jest.bun_test.debug.group.log("loadEntryPointForTestRunner(\"{f}\")", .{std.zig.fmtString(file_path)});
+            fun.jsc.Jest.fun_test.debug.group.log("loadEntryPointForTestRunner(\"{f}\")", .{std.zig.fmtString(file_path)});
 
             // need to wake up so autoTick() doesn't wait for 16-100ms after loading the entrypoint
             vm.wakeup();
@@ -2173,31 +2173,31 @@ pub const TestCommand = struct {
 
             blk: {
 
-                // Check if bun_test is available and has tests to run
-                var buntest_strong = bun_test_root.cloneActiveFile() orelse {
-                    bun.assert(false);
+                // Check if fun_test is available and has tests to run
+                var funtest_strong = fun_test_root.cloneActiveFile() orelse {
+                    fun.assert(false);
                     break :blk;
                 };
-                defer buntest_strong.deinit();
-                const buntest = buntest_strong.get();
+                defer funtest_strong.deinit();
+                const funtest = funtest_strong.get();
 
-                // Automatically execute bun_test tests
-                if (buntest.result_queue.readableLength() == 0) {
-                    buntest.addResult(.start);
+                // Automatically execute fun_test tests
+                if (funtest.result_queue.readableLength() == 0) {
+                    funtest.addResult(.start);
                 }
-                try bun.jsc.Jest.bun_test.BunTest.run(buntest_strong, vm.global);
+                try fun.jsc.Jest.fun_test.FunTest.run(funtest_strong, vm.global);
 
-                // Process event loop while bun_test tests are running
+                // Process event loop while fun_test tests are running
                 vm.eventLoop().tick();
 
                 var prev_unhandled_count = vm.unhandled_error_counter;
-                while (buntest.phase != .done) {
-                    if (buntest.wants_wakeup) {
-                        buntest.wants_wakeup = false;
+                while (funtest.phase != .done) {
+                    if (funtest.wants_wakeup) {
+                        funtest.wants_wakeup = false;
                         vm.wakeup();
                     }
                     vm.eventLoop().autoTick();
-                    if (buntest.phase == .done) break;
+                    if (funtest.phase == .done) break;
                     vm.eventLoop().tick();
 
                     while (prev_unhandled_count < vm.unhandled_error_counter) {
@@ -2237,7 +2237,7 @@ pub fn handleTopLevelTestErrorBeforeJavaScriptStart(err: anyerror) noreturn {
 }
 
 pub fn @"export"() void {
-    _ = &Scanner.BunTest__shouldGenerateCodeCoverage;
+    _ = &Scanner.FunTest__shouldGenerateCodeCoverage;
 }
 
 const string = []const u8;
@@ -2246,7 +2246,7 @@ const ChangedFilesFilter = @import("./test/ChangedFilesFilter.zig");
 const DotEnv = @import("../dotenv/env_loader.zig");
 const ParallelRunner = @import("./test/ParallelRunner.zig");
 const Scanner = @import("./test/Scanner.zig");
-const bun_test = @import("../test_runner/bun_test.zig");
+const fun_test = @import("../test_runner/fun_test.zig");
 const options = @import("../bundler/options.zig");
 const resolve_path = @import("../paths/resolve_path.zig");
 const std = @import("std");
@@ -2254,21 +2254,21 @@ const Command = @import("./cli.zig").Command;
 const FileSystem = @import("../resolver/fs.zig").FileSystem;
 const which = @import("../which/which.zig").which;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const PathString = bun.PathString;
-const default_allocator = bun.default_allocator;
-const js_ast = bun.ast;
-const strings = bun.strings;
-const uws = bun.uws;
-const HTTPThread = bun.http.HTTPThread;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const PathString = fun.PathString;
+const default_allocator = fun.default_allocator;
+const js_ast = fun.ast;
+const strings = fun.strings;
+const uws = fun.uws;
+const HTTPThread = fun.http.HTTPThread;
 
-const coverage = bun.SourceMap.coverage;
+const coverage = fun.SourceMap.coverage;
 const CodeCoverageReport = coverage.Report;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const jest = jsc.Jest;
 const Snapshots = jsc.Snapshot.Snapshots;
 

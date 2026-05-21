@@ -1,5 +1,5 @@
-import { memfd_create, setSyntheticAllocationLimitForTesting } from "bun:internal-for-testing";
-import { describe, expect, test } from "bun:test";
+import { memfd_create, setSyntheticAllocationLimitForTesting } from "fun:internal-for-testing";
+import { describe, expect, test } from "fun:test";
 import { closeSync, readFileSync, writeSync } from "fs";
 import { isLinux, isPosix } from "harness";
 setSyntheticAllocationLimitForTesting(128 * 1024 * 1024);
@@ -8,14 +8,14 @@ setSyntheticAllocationLimitForTesting(128 * 1024 * 1024);
 if (isPosix) {
   test("fs.readFileSync(/dev/zero) should throw an OOM without crashing the process.", () => {
     expect(() => readFileSync("/dev/zero")).toThrow("ENOMEM: not enough memory, read '/dev/zero'");
-    Bun.gc(true);
+    Fun.gc(true);
   });
 
   test.each(["utf8", "ucs2", "latin1", "hex", "base64", "base64url"] as const)(
     "fs.readFileSync(/dev/zero, '%s') should throw an OOM without crashing the process.",
     encoding => {
       expect(() => readFileSync("/dev/zero", encoding)).toThrow("ENOMEM: not enough memory, read '/dev/zero'");
-      Bun.gc(true);
+      Fun.gc(true);
     },
   );
 }
@@ -32,7 +32,7 @@ if (isLinux) {
           writeSync(memfd, buf, 0, buf.byteLength, i);
         }
       })(memfd);
-      Bun.gc(true);
+      Fun.gc(true);
       setSyntheticAllocationLimitForTesting(2 * 1024 * 1024);
 
       try {
@@ -40,7 +40,7 @@ if (isLinux) {
           "ENOMEM: not enough memory",
         );
       } finally {
-        Bun.gc(true);
+        Fun.gc(true);
         closeSync(memfd);
       }
     });

@@ -173,8 +173,8 @@ pub const Group = struct {
     }
 
     pub fn jsonStringify(this: *const Group, writer: anytype) !void {
-        const temp = try std.fmt.allocPrint(bun.default_allocator, "{f}", .{this.fmt()});
-        defer bun.default_allocator.free(temp);
+        const temp = try std.fmt.allocPrint(fun.default_allocator, "{f}", .{this.fmt()});
+        defer fun.default_allocator.free(temp);
         try std.json.encodeJsonString(temp, .{}, writer);
     }
 
@@ -212,7 +212,7 @@ pub const Group = struct {
 
     pub fn from(version: Version) Group {
         return .{
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
             .head = .{
                 .head = .{
                     .range = .{
@@ -226,7 +226,7 @@ pub const Group = struct {
         };
     }
 
-    pub const FlagsBitSet = bun.bit_set.IntegerBitSet(3);
+    pub const FlagsBitSet = fun.bit_set.IntegerBitSet(3);
 
     pub fn isExact(this: *const Group) bool {
         return this.head.next == null and this.head.head.next == null and !this.head.head.range.hasRight() and this.head.head.range.left.op == .eql;
@@ -559,7 +559,7 @@ pub fn parse(
     allocator: Allocator,
     input: string,
     sliced: SlicedString,
-) bun.OOM!Group {
+) fun.OOM!Group {
     var i: usize = 0;
     var list = Group{
         .allocator = allocator,
@@ -781,13 +781,13 @@ const string = []const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
 
-const Range = bun.Semver.Range;
-const SlicedString = bun.Semver.SlicedString;
-const Version = bun.Semver.Version;
+const Range = fun.Semver.Range;
+const SlicedString = fun.Semver.SlicedString;
+const Version = fun.Semver.Version;

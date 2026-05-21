@@ -18,7 +18,7 @@ fn printInstalledWorkspaceSection(
     const workspace_res = packages_slice.items(.resolution)[workspace_package_id];
     const names = packages_slice.items(.name);
     const pkg_metas = packages_slice.items(.meta);
-    bun.assert(workspace_res.tag == .workspace or workspace_res.tag == .root);
+    fun.assert(workspace_res.tag == .workspace or workspace_res.tag == .root);
     const resolutions_list = packages_slice.items(.resolutions);
     var printed_section_header = false;
     var printed_update = false;
@@ -284,7 +284,7 @@ pub fn print(
             for (resolutions_list[0].begin()..resolutions_list[0].end()) |dep_id| {
                 const dep = dependencies_buffer[dep_id];
                 if (dep.behavior.isWorkspace()) {
-                    bun.handleOom(workspaces_to_print.append(allocator, @intCast(dep_id)));
+                    fun.handleOom(workspaces_to_print.append(allocator, @intCast(dep_id)));
                 }
             }
 
@@ -385,12 +385,12 @@ pub fn print(
         try writer.writeAll("\n");
     }
 
-    if (bun.Environment.allow_assert) had_printed_new_install = false;
+    if (fun.Environment.allow_assert) had_printed_new_install = false;
 
     var printed_installed_update_request = false;
     for (id_map) |dependency_id| {
         if (dependency_id == invalid_package_id) continue;
-        if (bun.Environment.allow_assert) had_printed_new_install = true;
+        if (fun.Environment.allow_assert) had_printed_new_install = true;
 
         const name = dependencies_buffer[dependency_id].name;
         const package_id = resolutions_buffer[dependency_id];
@@ -440,7 +440,7 @@ pub fn print(
                     if (manager.track_installed_bin == .pending) {
                         if (iterator.next() catch null) |bin_name| {
                             manager.track_installed_bin = .{
-                                .basename = bun.handleOom(bun.default_allocator.dupe(u8, bin_name)),
+                                .basename = fun.handleOom(fun.default_allocator.dupe(u8, bin_name)),
                             };
 
                             try writer.print(fmt, .{bin_name});
@@ -464,22 +464,22 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const Semver = bun.Semver;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const Bitset = bun.bit_set.DynamicBitSetUnmanaged;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const Semver = fun.Semver;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const Bitset = fun.bit_set.DynamicBitSetUnmanaged;
 
-const install = bun.install;
-const Bin = bun.install.Bin;
+const install = fun.install;
+const Bin = fun.install.Bin;
 const Dependency = install.Dependency;
-const DependencyID = bun.install.DependencyID;
+const DependencyID = fun.install.DependencyID;
 const PackageID = install.PackageID;
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const Resolution = install.Resolution;
-const invalid_package_id = bun.install.invalid_package_id;
+const invalid_package_id = fun.install.invalid_package_id;
 
 const Lockfile = install.Lockfile;
 const Package = Lockfile.Package;

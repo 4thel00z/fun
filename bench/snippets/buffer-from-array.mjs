@@ -1,4 +1,4 @@
-// @runtime bun,node
+// @runtime fun,node
 import { Buffer } from "node:buffer";
 import { bench, group, run } from "../runner.mjs";
 

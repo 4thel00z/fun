@@ -24,29 +24,29 @@ fn globIgnoreFn(val: []const u8) bool {
 
 const GlobWalker = glob.GlobWalker(globIgnoreFn, glob.walk.DirEntryAccessor, false);
 
-pub fn getCandidatePackagePatterns(allocator: std.mem.Allocator, log: *bun.logger.Log, out_patterns: *std.array_list.Managed([]u8), workdir_: []const u8, root_buf: *bun.PathBuffer) ![]const u8 {
-    bun.ast.Expr.Data.Store.create();
-    bun.ast.Stmt.Data.Store.create();
+pub fn getCandidatePackagePatterns(allocator: std.mem.Allocator, log: *fun.logger.Log, out_patterns: *std.array_list.Managed([]u8), workdir_: []const u8, root_buf: *fun.PathBuffer) ![]const u8 {
+    fun.ast.Expr.Data.Store.create();
+    fun.ast.Stmt.Data.Store.create();
     defer {
-        bun.ast.Expr.Data.Store.reset();
-        bun.ast.Stmt.Data.Store.reset();
+        fun.ast.Expr.Data.Store.reset();
+        fun.ast.Stmt.Data.Store.reset();
     }
 
     var workdir = workdir_;
 
     while (true) : (workdir = std.fs.path.dirname(workdir) orelse break) {
-        var name_buf: bun.PathBuffer = undefined;
-        const json_path: [:0]const u8 = bun.path.joinAbsStringBufZ(workdir, name_buf[0..], &.{"package.json"}, .auto);
+        var name_buf: fun.PathBuffer = undefined;
+        const json_path: [:0]const u8 = fun.path.joinAbsStringBufZ(workdir, name_buf[0..], &.{"package.json"}, .auto);
 
         log.msgs.clearRetainingCapacity();
         log.errors = 0;
         log.warnings = 0;
 
-        const json_source = switch (bun.sys.File.toSource(json_path, allocator, .{})) {
+        const json_source = switch (fun.sys.File.toSource(json_path, allocator, .{})) {
             .err => |err| {
                 switch (err.getErrno()) {
                     .NOENT, .ACCES, .PERM => continue,
-                    else => |errno| return bun.errnoToZigErr(errno),
+                    else => |errno| return fun.errnoToZigErr(errno),
                 }
             },
             .result => |source| source,
@@ -133,7 +133,7 @@ pub const FilterSet = struct {
     pub fn init(allocator: std.mem.Allocator, filters: []const []const u8, cwd_: []const u8) !FilterSet {
         const cwd = cwd_;
 
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
         // TODO fixed buffer allocator with fallback?
         var list = try std.array_list.Managed(Pattern).initCapacity(allocator, filters.len);
         var self = FilterSet{ .allocator = allocator, .filters = &.{} };
@@ -147,7 +147,7 @@ pub const FilterSet = struct {
             const is_path = filter_utf8.len > 0 and filter_utf8[0] == '.';
             if (is_path) {
                 const parts = [_]string{filter_utf8};
-                const filter_utf8_temp = try allocator.dupe(u8, bun.path.joinAbsStringBuf(cwd, &buf, &parts, .loose));
+                const filter_utf8_temp = try allocator.dupe(u8, fun.path.joinAbsStringBuf(cwd, &buf, &parts, .loose));
                 std.mem.replaceScalar(u8, filter_utf8_temp, '\\', '/');
                 filter_utf8 = filter_utf8_temp;
                 try list.append(.{
@@ -277,9 +277,9 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Global = bun.Global;
-const JSON = bun.json;
-const Output = bun.Output;
-const glob = bun.glob;
-const strings = bun.strings;
+const fun = @import("fun");
+const Global = fun.Global;
+const JSON = fun.json;
+const Output = fun.Output;
+const glob = fun.glob;
+const strings = fun.strings;

@@ -1,9 +1,9 @@
 ---
 title: "Lockfile"
-description: "Bun's lockfile format and configuration"
+description: "Fun's lockfile format and configuration"
 ---
 
-Running `bun install` will create a lockfile called `bun.lock`.
+Running `fun install` will create a lockfile called `fun.lock`.
 
 #### Should it be committed to git?
 
@@ -14,7 +14,7 @@ Yes
 To generate a lockfile without installing to `node_modules` you can use the `--lockfile-only` flag. The lockfile will always be saved to disk, even if it is up-to-date with the `package.json`(s) for your project.
 
 ```bash terminal icon="terminal"
-bun install --lockfile-only
+fun install --lockfile-only
 ```
 
 <Note>
@@ -27,20 +27,20 @@ bun install --lockfile-only
 To install without creating a lockfile:
 
 ```bash terminal icon="terminal"
-bun install --no-save
+fun install --no-save
 ```
 
-To install a Yarn lockfile _in addition_ to `bun.lock`.
+To install a Yarn lockfile _in addition_ to `fun.lock`.
 
 <CodeGroup>
 
 ```bash terminal icon="terminal"
-bun install --yarn
+fun install --yarn
 ```
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.lockfile]
-# whether to save a non-Bun lockfile alongside bun.lock
+# whether to save a non-Fun lockfile alongside fun.lock
 # only "yarn" is supported
 print = "yarn"
 ```
@@ -49,13 +49,13 @@ print = "yarn"
 
 #### Text-based lockfile
 
-Bun v1.2 changed the default lockfile format to the text-based `bun.lock`. Existing binary `bun.lockb` lockfiles can be migrated to the new format by running `bun install --save-text-lockfile --frozen-lockfile --lockfile-only` and deleting `bun.lockb`.
+Fun v1.2 changed the default lockfile format to the text-based `fun.lock`. Existing binary `fun.lockb` lockfiles can be migrated to the new format by running `fun install --save-text-lockfile --frozen-lockfile --lockfile-only` and deleting `fun.lockb`.
 
-More information about the new lockfile format can be found on [our blogpost](https://bun.com/blog/bun-lock-text-lockfile).
+More information about the new lockfile format can be found on [our blogpost](https://fun.dev/blog/fun-lock-text-lockfile).
 
 #### Automatic lockfile migration
 
-When running `bun install` in a project without a `bun.lock`, Bun automatically migrates existing lockfiles:
+When running `fun install` in a project without a `fun.lock`, Fun automatically migrates existing lockfiles:
 
 - `yarn.lock` (v1)
 - `package-lock.json` (npm)

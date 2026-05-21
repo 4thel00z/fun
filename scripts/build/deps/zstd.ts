@@ -1,10 +1,12 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 /**
  * Zstandard — fast compression with a good ratio/speed tradeoff. Backs
- * bun's install cache and the `zstd` Content-Encoding in fetch.
+ * fun's install cache and the `zstd` Content-Encoding in fetch.
  *
  * DirectBuild: globbed common/compress/decompress/dictBuilder. Legacy-format
- * decoders (zstd v0.5-v0.7, pre-1.0) are NOT built — Bun never reads
- * pre-1.0 frames (install cache, fetch Content-Encoding, and Bun.zstd all
+ * decoders (zstd v0.5-v0.7, pre-1.0) are NOT built — Fun never reads
+ * pre-1.0 frames (install cache, fetch Content-Encoding, and Fun.zstd all
  * use the current format). The amd64
  * Huffman kernel ships as a .S file that clang assembles directly; on other
  * targets ZSTD_DISABLE_ASM falls through to the C implementation.

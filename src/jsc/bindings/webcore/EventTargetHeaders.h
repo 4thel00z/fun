@@ -264,6 +264,6 @@
 // #include "XMLHttpRequestUpload.h"
 // #include "JSXMLHttpRequestUpload.h"
 
-#include "BunWorkerGlobalScope.h"
+#include "FunWorkerGlobalScope.h"
 
 #endif // EventTargetHeaders_h

@@ -1,13 +1,13 @@
-// https://github.com/oven-sh/bun/issues/29240
+// https://github.com/underdoc-org/fun/issues/29240
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 test("cpu-prof callFrame.lineNumber/columnNumber point at function definition, not sample position (#29240)", async () => {
   // fibonacci is recursive so it shows up on many stacks at many different
-  // sample lines — this is the exact case where the old Bun output fragmented
+  // sample lines — this is the exact case where the old Fun output fragmented
   // into dozens of nodes per function. Same for the busy loop body in
   // `anotherFunction`, which gives us per-line ticks to assert on. Each
   // function is time-bounded (not iteration-bounded) so it occupies the CPU
@@ -43,10 +43,10 @@ console.log("done");
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--cpu-prof", "--cpu-prof-dir=.", "--cpu-prof-name=out.cpuprofile", "script.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--cpu-prof", "--cpu-prof-dir=.", "--cpu-prof-name=out.cpuprofile", "script.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -152,7 +152,7 @@ console.log("done");
 });
 
 test("cpu-prof respects sourcemaps for both function definition and positionTicks (#29240)", async () => {
-  // Bun transpiles `.ts` files through its bundler at load time, which sets
+  // Fun transpiles `.ts` files through its bundler at load time, which sets
   // up an internal sourcemap from the generated JS back to the original TS.
   // That's the exact path `computeLineColumnWithSourcemap` is wired to.
   // A TS-specific type annotation forces the transpile step (a plain JS file
@@ -179,10 +179,10 @@ console.log("result", hot() > 0);
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--cpu-prof", "--cpu-prof-dir=.", "--cpu-prof-name=out.cpuprofile", "script.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--cpu-prof", "--cpu-prof-dir=.", "--cpu-prof-name=out.cpuprofile", "script.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -197,7 +197,7 @@ console.log("result", hot() > 0);
   const profile = JSON.parse(readFileSync(join(String(dir), "out.cpuprofile"), "utf8"));
 
   // After sourcemap remapping, callFrame.url should be the ORIGINAL .ts URL
-  // (not a transpiled-bundle `bun://` / `file://...js` URL), and must still
+  // (not a transpiled-bundle `fun://` / `file://...js` URL), and must still
   // be wrapped in a `file://` scheme for tool compatibility.
   const scriptNodes = profile.nodes.filter(
     (n: any) => typeof n.callFrame.url === "string" && n.callFrame.url.endsWith("/script.ts"),

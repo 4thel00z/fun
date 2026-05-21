@@ -1,6 +1,6 @@
 /**
  * lol-html — Cloudflare's streaming HTML rewriter. Powers `HTMLRewriter` in
- * bun and Workers. Rust crate with C FFI bindings.
+ * fun and Workers. Rust crate with C FFI bindings.
  *
  * This is the only cargo-built dep. The C API crate lives under `c-api/`;
  * the root is the pure-rust library (which we don't use directly).
@@ -109,7 +109,7 @@ export const lolhtml: Dependency = {
     // consulted for cargo deps (emitCargo constructs the path directly).
     // We still list it for clarity.
     libs: ["lolhtml"],
-    // No includes — bun's c-api binding header is checked into
+    // No includes — fun's c-api binding header is checked into
     // src/jsc/bindings/, not read from the crate.
     includes: [],
   }),

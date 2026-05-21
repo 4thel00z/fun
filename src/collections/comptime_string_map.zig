@@ -192,21 +192,21 @@ pub fn ComptimeStringMapWithKeyType(comptime KeyType: type, comptime V: type, co
 
         /// Throws if toString() throws. Typed `anytype` so `collections/` has
         /// no JSC references; the body lives in `jsc/comptime_string_map_jsc.zig`.
-        pub fn fromJS(globalThis: anytype, input: anytype) bun.JSError!?V {
+        pub fn fromJS(globalThis: anytype, input: anytype) fun.JSError!?V {
             return @import("../jsc/comptime_string_map_jsc.zig").fromJS(@This(), globalThis, input);
         }
 
         /// Throws if toString() throws.
-        pub fn fromJSCaseInsensitive(globalThis: anytype, input: anytype) bun.JSError!?V {
+        pub fn fromJSCaseInsensitive(globalThis: anytype, input: anytype) fun.JSError!?V {
             return @import("../jsc/comptime_string_map_jsc.zig").fromJSCaseInsensitive(@This(), globalThis, input);
         }
 
-        pub fn fromString(str: bun.String) ?V {
-            return getWithEql(str, bun.String.eqlComptime);
+        pub fn fromString(str: fun.String) ?V {
+            return getWithEql(str, fun.String.eqlComptime);
         }
 
         pub fn getASCIIICaseInsensitive(input: anytype) ?V {
-            return getWithEqlLowercase(input, bun.strings.eqlComptimeIgnoreLen);
+            return getWithEqlLowercase(input, fun.strings.eqlComptimeIgnoreLen);
         }
 
         pub fn getWithEqlLowercase(input: anytype, comptime eql: anytype) ?V {
@@ -250,7 +250,7 @@ pub fn ComptimeStringMapWithKeyType(comptime KeyType: type, comptime V: type, co
         }
 
         pub fn getAnyCase(input: anytype) ?V {
-            return getCaseInsensitiveWithEql(input, bun.strings.eqlComptimeIgnoreLen);
+            return getCaseInsensitiveWithEql(input, fun.strings.eqlComptimeIgnoreLen);
         }
 
         pub fn getCaseInsensitiveWithEql(input: anytype, comptime eql: anytype) ?V {
@@ -546,8 +546,8 @@ const TestEnum2 = enum {
     });
 };
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
 const std = @import("std");
 const mem = std.mem;

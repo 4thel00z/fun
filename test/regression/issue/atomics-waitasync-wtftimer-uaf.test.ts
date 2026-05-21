@@ -1,8 +1,8 @@
 // This test reproduces a UAF bug where Atomics.waitAsync creates a DispatchTimer
-// which creates a new WTFTimer, violating Bun's assumption that there's only one WTFTimer per VM.
+// which creates a new WTFTimer, violating Fun's assumption that there's only one WTFTimer per VM.
 // The UAF occurs when the timer fires and continues to reference `this` after it's been freed.
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isWindows } from "harness";
 
 test.todoIf(isWindows)("Atomics.waitAsync with setTimeout does not crash (UAF bug)", async () => {

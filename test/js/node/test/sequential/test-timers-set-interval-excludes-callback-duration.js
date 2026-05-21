@@ -2,7 +2,7 @@
 'use strict';
 require('../common');
 const assert = require('assert');
-const sleep = typeof Bun === 'object' ? Bun.sleepSync : require('internal/util').sleep;
+const sleep = typeof Fun === 'object' ? Fun.sleepSync : require('internal/util').sleep;
 
 let cntr = 0;
 let first;

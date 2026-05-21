@@ -55,7 +55,7 @@
 #include <wtf/GetPtr.h>
 #include <wtf/PointerPreparations.h>
 #include <wtf/URL.h>
-#include "BunProcess.h"
+#include "FunProcess.h"
 
 namespace WebCore {
 using namespace JSC;
@@ -239,7 +239,7 @@ static inline JSC::EncodedJSValue jsEventTargetPrototypeFunction_addEventListene
         errorInstance->putDirect(vm, vm.propertyNames->target, &target);
         RETURN_IF_EXCEPTION(throwScope, {});
         errorInstance->putDirect(vm, vm.propertyNames->type, jsString(vm, WTF::move(type)));
-        Bun::Process::emitWarningErrorInstance(lexicalGlobalObject, errorInstance);
+        Fun::Process::emitWarningErrorInstance(lexicalGlobalObject, errorInstance);
         if (throwScope.exception()) [[unlikely]]
             (void)throwScope.tryClearException();
     }

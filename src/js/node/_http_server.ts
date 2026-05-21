@@ -57,7 +57,7 @@ const { OutgoingMessage } = require("node:_http_outgoing");
 const { kIncomingMessage } = require("node:_http_common");
 const kConnectionsCheckingInterval = Symbol("http.server.connectionsCheckingInterval");
 
-const getBunServerAllClosedPromise = $newZigFunction("node_http_binding.zig", "getBunServerAllClosedPromise", 1);
+const getFunServerAllClosedPromise = $newZigFunction("node_http_binding.zig", "getFunServerAllClosedPromise", 1);
 const sendHelper = $newZigFunction("node_cluster_binding.zig", "sendHelperChild", 3);
 
 const kServerResponse = Symbol("ServerResponse");
@@ -414,7 +414,7 @@ Server.prototype.listen = function () {
     }
   }
 
-  // Bun defaults to port 3000.
+  // Fun defaults to port 3000.
   // Node defaults to port 0.
   if (port === undefined && !socketPath) {
     port = 0;
@@ -441,7 +441,7 @@ Server.prototype.listen = function () {
 
     if (cluster === undefined) cluster = require("node:cluster");
 
-    // TODO: our net.Server and http.Server use different Bun APIs and our IPC doesnt support sending and receiving handles yet. use reusePort instead for now.
+    // TODO: our net.Server and http.Server use different Fun APIs and our IPC doesnt support sending and receiving handles yet. use reusePort instead for now.
 
     // const serverQuery = {
     //   // address: address,
@@ -494,7 +494,7 @@ Server.prototype[kRealListen] = function (tls, port, host, socketPath, reusePort
     if (tls) {
       this.serverName = tls.serverName || host || "localhost";
     }
-    this[serverSymbol] = Bun.serve<any>({
+    this[serverSymbol] = Fun.serve<any>({
       idleTimeout: 0, // nodejs dont have a idleTimeout by default
       tls,
       port,
@@ -525,7 +525,7 @@ Server.prototype[kRealListen] = function (tls, port, host, socketPath, reusePort
       maxRequestBodySize: Number.MAX_SAFE_INTEGER,
 
       onNodeHTTPRequest(
-        bunServer,
+        funServer,
         url: string,
         method: string,
         headersObject: Record<string, string>,
@@ -720,7 +720,7 @@ Server.prototype[kRealListen] = function (tls, port, host, socketPath, reusePort
       // },
     });
 
-    getBunServerAllClosedPromise(this[serverSymbol]).$then(emitCloseNTServer.bind(this));
+    getFunServerAllClosedPromise(this[serverSymbol]).$then(emitCloseNTServer.bind(this));
     isHTTPS = this[serverSymbol].protocol === "https";
     // always set strict method validation to true for node.js compatibility
     setServerCustomOptions(
@@ -1758,7 +1758,7 @@ function ServerResponse_finalDeprecated(chunk, encoding, callback) {
 
     this[firstWriteSymbol] = undefined;
     this.finished = true;
-    this.headersSent = true; // https://github.com/oven-sh/bun/issues/3458
+    this.headersSent = true; // https://github.com/underdoc-org/fun/issues/3458
     drainHeadersIfObservable.$call(this);
     this[kDeprecatedReplySymbol](
       new Response(data, {

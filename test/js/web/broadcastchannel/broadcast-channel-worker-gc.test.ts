@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug } from "harness";
 
 // Debug/ASAN builds are much slower at spawning workers.
 const timeout = isDebug || isASAN ? 60_000 : 10_000;
@@ -71,7 +71,7 @@ test(
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Force GC to clean up any lingering references.
-    Bun.gc(true);
+    Fun.gc(true);
 
     // Post more messages after GC.
     for (let i = 0; i < 100; i++) {
@@ -84,9 +84,9 @@ test(
     console.log("OK");
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script],
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });
@@ -162,16 +162,16 @@ test(
         worker.terminate();
       }
 
-      Bun.gc(true);
+      Fun.gc(true);
     }
 
     mainChannel.close();
     console.log("OK");
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script],
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });
@@ -221,16 +221,16 @@ test(
         mainChannel.postMessage("msg");
       }
 
-      Bun.gc(true);
+      Fun.gc(true);
     }
 
     mainChannel.close();
     console.log("OK");
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script],
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });

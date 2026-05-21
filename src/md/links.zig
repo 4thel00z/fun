@@ -507,13 +507,13 @@ pub fn findAutolink(self: *const Parser, content: []const u8, start: usize) ?str
     return null;
 }
 
-pub fn renderAutolink(self: *Parser, url: []const u8, is_email: bool) bun.JSError!void {
+pub fn renderAutolink(self: *Parser, url: []const u8, is_email: bool) fun.JSError!void {
     try self.renderer.enterSpan(.a, .{ .href = url, .autolink = true, .autolink_email = is_email });
     try self.emitText(.normal, url);
     try self.renderer.leaveSpan(.a);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const helpers = @import("./helpers.zig");
 const inlines_mod = @import("./inlines.zig");
 

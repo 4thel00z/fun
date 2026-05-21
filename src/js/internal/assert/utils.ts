@@ -196,7 +196,7 @@ function getErrMessage(_message: string, _value: unknown, _fn: Function): string
   //       // This ensure opensync will not throw ENOENT for ESM files.
   //       const fileProtoPrefix = 'file://';
   //       if (StringPrototypeStartsWith(filename, fileProtoPrefix)) {
-  //         filename = Bun.fileURLToPath(filename);
+  //         filename = Fun.fileURLToPath(filename);
   //       }
   //       fd = openSync(filename, 'r', 0o666);
   //       // Reset column and message.

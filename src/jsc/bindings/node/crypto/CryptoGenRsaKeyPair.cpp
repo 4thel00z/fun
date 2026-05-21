@@ -2,12 +2,12 @@
 #include "ErrorCode.h"
 #include "NodeValidator.h"
 #include "CryptoUtil.h"
-#include "BunProcess.h"
+#include "FunProcess.h"
 
-using namespace Bun;
+using namespace Fun;
 using namespace JSC;
 
-extern "C" void Bun__RsaKeyPairJobCtx__deinit(RsaKeyPairJobCtx* ctx)
+extern "C" void Fun__RsaKeyPairJobCtx__deinit(RsaKeyPairJobCtx* ctx)
 {
     ctx->deinit();
 }
@@ -17,7 +17,7 @@ void RsaKeyPairJobCtx::deinit()
     delete this;
 }
 
-extern "C" void Bun__RsaKeyPairJobCtx__runTask(RsaKeyPairJobCtx* ctx, JSGlobalObject* globalObject)
+extern "C" void Fun__RsaKeyPairJobCtx__runTask(RsaKeyPairJobCtx* ctx, JSGlobalObject* globalObject)
 {
     ncrypto::EVPKeyCtxPointer keyCtx = ctx->setup();
     if (!keyCtx) {
@@ -26,29 +26,29 @@ extern "C" void Bun__RsaKeyPairJobCtx__runTask(RsaKeyPairJobCtx* ctx, JSGlobalOb
     ctx->runTask(globalObject, keyCtx);
 }
 
-extern "C" void Bun__RsaKeyPairJobCtx__runFromJS(RsaKeyPairJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
+extern "C" void Fun__RsaKeyPairJobCtx__runFromJS(RsaKeyPairJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
 {
     ctx->runFromJS(globalObject, JSValue::decode(callback));
 }
 
-extern "C" RsaKeyPairJob* Bun__RsaKeyPairJob__create(JSGlobalObject* globalObject, RsaKeyPairJobCtx* ctx, EncodedJSValue callback);
+extern "C" RsaKeyPairJob* Fun__RsaKeyPairJob__create(JSGlobalObject* globalObject, RsaKeyPairJobCtx* ctx, EncodedJSValue callback);
 RsaKeyPairJob* RsaKeyPairJob::create(JSGlobalObject* globalObject, RsaKeyPairJobCtx&& ctx, JSValue callback)
 {
     RsaKeyPairJobCtx* ctxCopy = new RsaKeyPairJobCtx(WTF::move(ctx));
-    return Bun__RsaKeyPairJob__create(globalObject, ctxCopy, JSValue::encode(callback));
+    return Fun__RsaKeyPairJob__create(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
-extern "C" void Bun__RsaKeyPairJob__schedule(RsaKeyPairJob* job);
+extern "C" void Fun__RsaKeyPairJob__schedule(RsaKeyPairJob* job);
 void RsaKeyPairJob::schedule()
 {
-    Bun__RsaKeyPairJob__schedule(this);
+    Fun__RsaKeyPairJob__schedule(this);
 }
 
-extern "C" void Bun__RsaKeyPairJob__createAndSchedule(JSGlobalObject* globalObject, RsaKeyPairJobCtx* ctx, EncodedJSValue callback);
+extern "C" void Fun__RsaKeyPairJob__createAndSchedule(JSGlobalObject* globalObject, RsaKeyPairJobCtx* ctx, EncodedJSValue callback);
 void RsaKeyPairJob::createAndSchedule(JSGlobalObject* globalObject, RsaKeyPairJobCtx&& ctx, JSValue callback)
 {
     RsaKeyPairJobCtx* ctxCopy = new RsaKeyPairJobCtx(WTF::move(ctx));
-    Bun__RsaKeyPairJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
+    Fun__RsaKeyPairJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
 ncrypto::EVPKeyCtxPointer RsaKeyPairJobCtx::setup()
@@ -170,7 +170,7 @@ std::optional<RsaKeyPairJobCtx> RsaKeyPairJobCtx::fromJS(JSC::JSGlobalObject* gl
         RETURN_IF_EXCEPTION(scope, std::nullopt);
     }
     if (!hashValue.isUndefined()) {
-        Bun::Process::emitWarning(globalObject, jsString(vm, makeString("\"options.hash\" is deprecated, use \"options.hashAlgorithm\" instead."_s)), jsString(vm, makeString("DeprecationWarning"_s)), jsString(vm, makeString("DEP0154"_s)), jsUndefined());
+        Fun::Process::emitWarning(globalObject, jsString(vm, makeString("\"options.hash\" is deprecated, use \"options.hashAlgorithm\" instead."_s)), jsString(vm, makeString("DeprecationWarning"_s)), jsString(vm, makeString("DEP0154"_s)), jsUndefined());
         CLEAR_IF_EXCEPTION(scope);
         V::validateString(scope, globalObject, hashValue, "options.hash"_s);
         RETURN_IF_EXCEPTION(scope, std::nullopt);
@@ -184,7 +184,7 @@ std::optional<RsaKeyPairJobCtx> RsaKeyPairJobCtx::fromJS(JSC::JSGlobalObject* gl
         }
     }
     if (!mgf1HashValue.isUndefined()) {
-        Bun::Process::emitWarning(globalObject, jsString(vm, makeString("\"options.mgf1Hash\" is deprecated, use \"options.mgf1HashAlgorithm\" instead."_s)), jsString(vm, makeString("DeprecationWarning"_s)), jsString(vm, makeString("DEP0154"_s)), jsUndefined());
+        Fun::Process::emitWarning(globalObject, jsString(vm, makeString("\"options.mgf1Hash\" is deprecated, use \"options.mgf1HashAlgorithm\" instead."_s)), jsString(vm, makeString("DeprecationWarning"_s)), jsString(vm, makeString("DEP0154"_s)), jsUndefined());
         CLEAR_IF_EXCEPTION(scope);
         V::validateString(scope, globalObject, mgf1HashValue, "options.mgf1Hash"_s);
         RETURN_IF_EXCEPTION(scope, std::nullopt);

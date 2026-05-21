@@ -22,7 +22,7 @@ pub const LayerName = struct {
             pub fn eql(_: @This(), a: LayerName, b: LayerName, _: usize) bool {
                 if (a.v.len != b.v.len) return false;
                 for (a.v.items, 0..) |part, i| {
-                    if (!bun.strings.eql(part, b.v.items[i])) return false;
+                    if (!fun.strings.eql(part, b.v.items[i])) return false;
                 }
                 return true;
             }
@@ -36,7 +36,7 @@ pub const LayerName = struct {
     pub fn cloneWithImportRecords(
         this: *const @This(),
         allocator: std.mem.Allocator,
-        _: *bun.BabyList(bun.ImportRecord),
+        _: *fun.BabyList(fun.ImportRecord),
     ) @This() {
         return LayerName{ .v = this.v.deepClone(allocator) };
     }
@@ -50,7 +50,7 @@ pub const LayerName = struct {
     pub fn eql(lhs: *const LayerName, rhs: *const LayerName) bool {
         if (lhs.v.len() != rhs.v.len()) return false;
         for (lhs.v.slice(), rhs.v.slice()) |l, r| {
-            if (!bun.strings.eql(l, r)) return false;
+            if (!fun.strings.eql(l, r)) return false;
         }
         return true;
     }
@@ -183,7 +183,7 @@ pub fn LayerBlockRule(comptime R: type) type {
 /// See also [LayerBlockRule](LayerBlockRule).
 pub const LayerStatementRule = struct {
     /// The layer names to declare.
-    names: bun.css.SmallList(LayerName, 1),
+    names: fun.css.SmallList(LayerName, 1),
     /// The location of the rule in the source file.
     loc: Location,
 
@@ -206,5 +206,5 @@ pub const LayerStatementRule = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

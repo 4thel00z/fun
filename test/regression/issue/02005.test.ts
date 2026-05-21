@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 
 it("regex literal with non-latin1 should work", () => {
   const text = "这是一段要替换的文字";

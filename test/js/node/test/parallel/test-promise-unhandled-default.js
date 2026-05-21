@@ -1,6 +1,6 @@
 // Flags: --unhandled-rejections=throw
 // This test is modified to allow [ERR_UNHANDLED_REJECTION] in the error toString.
-// This test is also modified to specify --unhandled-rejections=throw because bun's default is 'bun'
+// This test is also modified to specify --unhandled-rejections=throw because fun's default is 'fun'
 'use strict';
 
 const common = require('../common');
@@ -23,7 +23,7 @@ Object.defineProperty(err2, 'name', {
   writable: true,
   configurable: true
 });
-if(typeof Bun !== "undefined") err2.toString = () => err2.name + " [ERR_UNHANDLED_REJECTION]: " + err2.message;
+if(typeof Fun !== "undefined") err2.toString = () => err2.name + " [ERR_UNHANDLED_REJECTION]: " + err2.message;
 
 const errors = [err1, err2];
 const identical = [true, false];

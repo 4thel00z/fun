@@ -43,7 +43,7 @@ const win32 = {
 posix.win32 = win32.win32 = win32;
 posix.posix = posix;
 
-type Glob = import("bun").Glob;
+type Glob = import("fun").Glob;
 
 // the most-recently used glob is memoized in case `matchesGlob` is called in a
 // loop with the same pattern
@@ -62,13 +62,13 @@ function matchesGlob(isWindows, path, pattern) {
     } else {
       validateString(pattern, "pattern");
       if (isWindows) pattern = pattern.replaceAll("\\", "/");
-      glob = prevGlob = new Bun.Glob(pattern);
+      glob = prevGlob = new Fun.Glob(pattern);
       prevPattern = pattern;
     }
   } else {
     validateString(pattern, "pattern");
     if (isWindows) pattern = pattern.replaceAll("\\", "/");
-    glob = prevGlob = new Bun.Glob(pattern);
+    glob = prevGlob = new Fun.Glob(pattern);
     prevPattern = pattern;
   }
 

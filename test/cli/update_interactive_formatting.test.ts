@@ -1,5 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles, VerdaccioRegistry } from "harness";
+import { afterAll, beforeAll, describe, expect, it } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles, VerdaccioRegistry } from "harness";
 import { join } from "path";
 
 let registry: VerdaccioRegistry;
@@ -15,7 +15,7 @@ afterAll(() => {
   registry.stop();
 });
 
-describe("bun update --interactive", () => {
+describe("fun update --interactive", () => {
   it("should handle package names of unusual lengths", async () => {
     const dir = tempDirWithFiles("update-interactive-test", {
       "package.json": JSON.stringify({
@@ -41,7 +41,7 @@ describe("bun update --interactive", () => {
           "very-long-optional-dependency-name-that-tests-formatting": "1.0.0",
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           "a": {
@@ -93,8 +93,8 @@ describe("bun update --interactive", () => {
     });
 
     // Mock outdated packages by creating fake manifests
-    const manifestsDir = join(dir, ".bun", "manifests");
-    await Bun.write(
+    const manifestsDir = join(dir, ".fun", "manifests");
+    await Fun.write(
       join(manifestsDir, "a.json"),
       JSON.stringify({
         name: "a",
@@ -107,10 +107,10 @@ describe("bun update --interactive", () => {
     );
 
     // Test that the command doesn't crash with unusual package name lengths
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -138,7 +138,7 @@ describe("bun update --interactive", () => {
           "package-with-prerelease": "1.0.0-beta.1+build.1234567890.abcdef",
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           "package-with-long-version": {
@@ -158,10 +158,10 @@ describe("bun update --interactive", () => {
     });
 
     // Test that the command doesn't crash with unusual version string lengths
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -188,7 +188,7 @@ describe("bun update --interactive", () => {
           [extremelyLongPackageName]: "1.0.0",
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           [extremelyLongPackageName]: {
@@ -200,10 +200,10 @@ describe("bun update --interactive", () => {
     });
 
     // Test that extremely long package names are handled gracefully
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -242,10 +242,10 @@ describe("bun update --interactive", () => {
     });
 
     // Test with --filter should include workspace column
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--filter=*", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--filter=*", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -283,10 +283,10 @@ describe("bun update --interactive", () => {
     });
 
     // Test interactive update with catalog dependencies
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--filter=*", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--filter=*", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -322,7 +322,7 @@ describe("bun update --interactive", () => {
           "very-long-optional-dependency-name": "1.0.0",
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           "a": { "integrity": "sha512-fake", "version": "1.0.0" },
@@ -338,10 +338,10 @@ describe("bun update --interactive", () => {
     });
 
     // Test that mixed dependency types with various name lengths don't cause crashes
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -360,7 +360,7 @@ describe("bun update --interactive", () => {
 
   it("should update packages when 'a' (select all) is used", async () => {
     const dir = tempDirWithFiles("update-interactive-select-all", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -374,20 +374,20 @@ registry = "${registryUrl}"
     });
 
     // First install to get lockfile
-    const install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    const install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Test interactive update with 'a' to select all
-    const update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest"],
+    const update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -413,7 +413,7 @@ registry = "${registryUrl}"
     expect(stderr).not.toContain("panic");
 
     // Check if package.json was updated
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     // no-deps should be updated from 1.0.0 to 2.0.0
     expect(packageJson.dependencies["no-deps"]).toBe("2.0.0");
 
@@ -429,7 +429,7 @@ registry = "${registryUrl}"
 
   it("should handle workspace updates with recursive flag", async () => {
     const dir = tempDirWithFiles("update-interactive-workspace-recursive", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -449,20 +449,20 @@ registry = "${registryUrl}"
     });
 
     // First install
-    const install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    const install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Test interactive update with recursive flag
-    const update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    const update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -479,13 +479,13 @@ registry = "${registryUrl}"
     expect(stderr).not.toContain("panic");
 
     // Check if workspace package was updated
-    const appPackageJson = await Bun.file(join(dir, "packages/app/package.json")).json();
+    const appPackageJson = await Fun.file(join(dir, "packages/app/package.json")).json();
     expect(appPackageJson.dependencies["no-deps"]).toBe("2.0.0");
   });
 
   it("should handle catalog updates correctly", async () => {
     const dir = tempDirWithFiles("update-interactive-catalog-actual", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -507,20 +507,20 @@ registry = "${registryUrl}"
     });
 
     // First install
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -539,17 +539,17 @@ registry = "${registryUrl}"
     expect(stdout + stderr).not.toContain("catalog: failed to resolve");
 
     // Check if catalog was updated in root package.json
-    const rootPackageJson = await Bun.file(join(dir, "package.json")).json();
+    const rootPackageJson = await Fun.file(join(dir, "package.json")).json();
     expect(rootPackageJson.catalog["no-deps"]).toBe("2.0.0");
 
     // App package.json should still have catalog reference
-    const appPackageJson = await Bun.file(join(dir, "packages/app/package.json")).json();
+    const appPackageJson = await Fun.file(join(dir, "packages/app/package.json")).json();
     expect(appPackageJson.dependencies["no-deps"]).toBe("catalog:");
   });
 
   it("should work correctly when run from inside a workspace directory", async () => {
     const dir = tempDirWithFiles("update-interactive-from-workspace", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -575,10 +575,10 @@ registry = "${registryUrl}"
     });
 
     // First install from root
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -586,10 +586,10 @@ registry = "${registryUrl}"
 
     // Run interactive update from inside workspace
     const workspaceDir = join(dir, "packages/app1");
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: workspaceDir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -610,8 +610,8 @@ registry = "${registryUrl}"
     expect(combined).not.toContain("Failed to update");
 
     // Check that both workspace packages were updated
-    const app1Json = await Bun.file(join(dir, "packages/app1/package.json")).json();
-    const app2Json = await Bun.file(join(dir, "packages/app2/package.json")).json();
+    const app1Json = await Fun.file(join(dir, "packages/app1/package.json")).json();
+    const app2Json = await Fun.file(join(dir, "packages/app2/package.json")).json();
 
     expect(app1Json.dependencies["no-deps"]).toBe("2.0.0");
     expect(app2Json.dependencies["dep-with-tags"]).toBe("3.0.0");
@@ -619,7 +619,7 @@ registry = "${registryUrl}"
 
   it("should handle basic interactive update with select all", async () => {
     const dir = tempDirWithFiles("update-interactive-basic", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -633,20 +633,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -660,13 +660,13 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check if package was updated
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.dependencies["no-deps"]).toBe("2.0.0");
   });
 
   it("should preserve version prefixes for all semver range types in catalogs", async () => {
     const dir = tempDirWithFiles("update-interactive-semver-prefixes", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -691,20 +691,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -718,7 +718,7 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check if prefixes were preserved
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
 
     // All prefixes should be preserved (versions may or may not change)
     expect(packageJson.catalog["no-deps"]).toMatch(/^\^/);
@@ -728,7 +728,7 @@ registry = "${registryUrl}"
 
   it("should handle catalog updates in workspaces.catalogs object", async () => {
     const dir = tempDirWithFiles("update-interactive-workspaces-catalogs", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -759,20 +759,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -789,7 +789,7 @@ registry = "${registryUrl}"
     expect(output).toContain("Installing updates...");
 
     // Check if catalogs were updated correctly
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
 
     // Prefixes should be preserved
     expect(packageJson.workspaces.catalogs.tools["no-deps"]).toMatch(/^\^/);
@@ -798,7 +798,7 @@ registry = "${registryUrl}"
 
   it("should handle mixed workspace and catalog dependencies", async () => {
     const dir = tempDirWithFiles("update-interactive-mixed-deps", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -828,20 +828,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -855,8 +855,8 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check updates were applied correctly
-    const appJson = await Bun.file(join(dir, "packages/app/package.json")).json();
-    const libJson = await Bun.file(join(dir, "packages/lib/package.json")).json();
+    const appJson = await Fun.file(join(dir, "packages/app/package.json")).json();
+    const libJson = await Fun.file(join(dir, "packages/lib/package.json")).json();
 
     // Workspace dependency should remain unchanged
     expect(appJson.dependencies["@test/lib"]).toBe("workspace:*");
@@ -868,7 +868,7 @@ registry = "${registryUrl}"
 
   it("should handle selecting specific packages in interactive mode", async () => {
     const dir = tempDirWithFiles("update-interactive-selective", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -884,20 +884,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update that selects only first package (space toggles, arrow down, enter)
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -914,7 +914,7 @@ registry = "${registryUrl}"
     expect(output).toContain("Selected 1 package to update");
 
     // Check only one package was updated
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
 
     // Since we toggled only the first package, check that only one was updated
     // The actual package updated depends on the order, so we check that exactly one changed
@@ -927,7 +927,7 @@ registry = "${registryUrl}"
 
   it("should handle empty catalog definitions gracefully", async () => {
     const dir = tempDirWithFiles("update-interactive-empty-catalog", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -946,20 +946,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -973,17 +973,17 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check workspace package was updated normally
-    const appJson = await Bun.file(join(dir, "packages/app/package.json")).json();
+    const appJson = await Fun.file(join(dir, "packages/app/package.json")).json();
     expect(appJson.dependencies["no-deps"]).toBe("^2.0.0");
 
     // Root catalog should remain empty
-    const rootJson = await Bun.file(join(dir, "package.json")).json();
+    const rootJson = await Fun.file(join(dir, "package.json")).json();
     expect(Object.keys(rootJson.catalog)).toHaveLength(0);
   });
 
   it("should handle cancellation (Ctrl+C) gracefully", async () => {
     const dir = tempDirWithFiles("update-interactive-cancel", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -997,20 +997,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update and send Ctrl+C
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1027,13 +1027,13 @@ registry = "${registryUrl}"
     expect(output).toContain("Cancelled");
 
     // Check package.json was not modified
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.dependencies["no-deps"]).toBe("1.0.0");
   });
 
   it("should handle packages with pre-release versions correctly", async () => {
     const dir = tempDirWithFiles("update-interactive-prerelease", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1049,20 +1049,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1076,7 +1076,7 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check version prefixes are preserved
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
 
     // Prefixes should be preserved
     expect(packageJson.dependencies["dep-with-tags"]).toMatch(/^\^/);
@@ -1085,7 +1085,7 @@ registry = "${registryUrl}"
 
   it("should update catalog in workspaces object (not workspaces.catalogs)", async () => {
     const dir = tempDirWithFiles("update-interactive-workspaces-catalog", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1110,20 +1110,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1140,14 +1140,14 @@ registry = "${registryUrl}"
     expect(output).toContain("Installing updates...");
 
     // Check catalog was updated with preserved prefixes
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.workspaces.catalog["no-deps"]).toBe("^2.0.0");
     expect(packageJson.workspaces.catalog["dep-with-tags"]).toMatch(/^~/);
   });
 
   it("should handle scoped packages in catalogs correctly", async () => {
     const dir = tempDirWithFiles("update-interactive-scoped-catalog", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1172,20 +1172,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1199,7 +1199,7 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check scoped packages were updated with preserved prefixes
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.catalog["@scoped/has-bin-entry"]).toMatch(/^\^/);
     expect(packageJson.catalog["no-deps"]).toMatch(/^~/);
     expect(packageJson.catalog["dep-with-tags"]).toMatch(/^>=/);
@@ -1207,7 +1207,7 @@ registry = "${registryUrl}"
 
   it("should handle catalog updates when running from root with filter", async () => {
     const dir = tempDirWithFiles("update-interactive-filter-catalog", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1235,20 +1235,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with filter
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--filter=@test/app2", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--filter=@test/app2", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1264,14 +1264,14 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check catalog was updated
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.catalog["dep-with-tags"]).toMatch(/^~/);
     //todo: actually check the catalog was updated
   });
 
   it("should handle multiple catalog definitions with same package", async () => {
     const dir = tempDirWithFiles("update-interactive-multi-catalog", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1302,20 +1302,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1331,7 +1331,7 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check both catalogs were updated with preserved prefixes
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.workspaces.catalogs.dev["no-deps"]).toBe("^2.0.0");
     expect(packageJson.workspaces.catalogs.prod["no-deps"]).toMatch(/^~/);
     //todo: actually check the catalog was updated
@@ -1339,7 +1339,7 @@ registry = "${registryUrl}"
 
   it("should handle version ranges with multiple conditions", async () => {
     const dir = tempDirWithFiles("update-interactive-complex-ranges", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1362,20 +1362,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with piped input
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1389,7 +1389,7 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Check complex ranges are handled (they might be simplified)
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     // Complex ranges might be simplified to latest version
     expect(packageJson.catalog["no-deps"]).toBeDefined();
     expect(packageJson.catalog["dep-with-tags"]).toBeDefined();
@@ -1397,7 +1397,7 @@ registry = "${registryUrl}"
 
   it("should handle dry-run mode correctly", async () => {
     const dir = tempDirWithFiles("update-interactive-dry-run", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1412,20 +1412,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update with dry-run
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest", "--dry-run"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1442,14 +1442,14 @@ registry = "${registryUrl}"
     expect(output).toContain("Selected");
 
     // Check packages were NOT updated (dry-run)
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.dependencies["no-deps"]).toBe("1.0.0");
     expect(packageJson.dependencies["dep-with-tags"]).toBe("1.0.0");
   });
 
   it("should handle keyboard navigation correctly", async () => {
     const dir = tempDirWithFiles("update-interactive-navigation", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1465,10 +1465,10 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1478,10 +1478,10 @@ registry = "${registryUrl}"
     // - n (select none)
     // - i (invert selection)
     // - Enter (confirm)
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1501,7 +1501,7 @@ registry = "${registryUrl}"
   // Comprehensive tests from separate file
   it("comprehensive interactive update test with all scenarios", async () => {
     const dir = tempDirWithFiles("update-interactive-comprehensive", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1552,10 +1552,10 @@ registry = "${registryUrl}"
     });
 
     // First install to establish the lockfile
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1568,10 +1568,10 @@ registry = "${registryUrl}"
     expect(installExitCode).toBe(0);
 
     // Run interactive update and select all packages
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1593,7 +1593,7 @@ registry = "${registryUrl}"
     expect(combined).not.toContain("Failed to update");
 
     // Verify catalog definitions were updated in root package.json
-    const rootPackageJson = await Bun.file(join(dir, "package.json")).json();
+    const rootPackageJson = await Fun.file(join(dir, "package.json")).json();
 
     // Catalog should be updated while preserving prefixes
     expect(rootPackageJson.catalog["no-deps"]).toBe("^2.0.0");
@@ -1604,29 +1604,29 @@ registry = "${registryUrl}"
     expect(rootPackageJson.devDependencies["normal-dep-and-dev-dep"]).toMatch(/^\^/);
 
     // App1 should have catalog references preserved but regular deps updated
-    const app1Json = await Bun.file(join(dir, "packages/app1/package.json")).json();
+    const app1Json = await Fun.file(join(dir, "packages/app1/package.json")).json();
     expect(app1Json.dependencies["no-deps"]).toBe("catalog:"); // Catalog ref preserved
     expect(app1Json.dependencies["dep-with-tags"]).toBe("catalog:"); // Catalog ref preserved
     expect(app1Json.dependencies["a-dep"]).toMatch(/^\^/); // Regular dep updated
     expect(app1Json.devDependencies["normal-dep-and-dev-dep"]).toMatch(/^\^/); // Dev dep updated
 
     // App2 should have catalog references preserved and independent deps updated
-    const app2Json = await Bun.file(join(dir, "packages/app2/package.json")).json();
+    const app2Json = await Fun.file(join(dir, "packages/app2/package.json")).json();
     expect(app2Json.dependencies["no-deps"]).toBe("catalog:"); // Catalog ref preserved
     expect(app2Json.dependencies["a-dep"]).toMatch(/^\^/); // Regular dep updated
     expect(app2Json.devDependencies["dep-with-tags"]).toMatch(/^\^/); // Independent dep updated
 
     // Verify lockfile exists and is valid
     console.log("Checking lockfile...");
-    const lockfilePath = join(dir, "bun.lock");
-    const lockfileExists = await Bun.file(lockfilePath).exists();
+    const lockfilePath = join(dir, "fun.lock");
+    const lockfileExists = await Fun.file(lockfilePath).exists();
     expect(lockfileExists).toBe(true);
 
-    // Run bun install again to verify no changes are needed
-    await using verifyInstall = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    // Run fun install again to verify no changes are needed
+    await using verifyInstall = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1645,7 +1645,7 @@ registry = "${registryUrl}"
 
   it("interactive update with workspace filters", async () => {
     const dir = tempDirWithFiles("update-interactive-filter", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1674,20 +1674,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Update only frontend workspace
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--filter=@test/frontend", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--filter=@test/frontend", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1700,21 +1700,21 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Verify catalog was updated (even with filter)
-    const rootJson = await Bun.file(join(dir, "package.json")).json();
+    const rootJson = await Fun.file(join(dir, "package.json")).json();
     expect(rootJson.catalog["no-deps"]).toBe("^2.0.0");
 
     // Verify frontend was updated
-    const frontendJson = await Bun.file(join(dir, "packages/frontend/package.json")).json();
+    const frontendJson = await Fun.file(join(dir, "packages/frontend/package.json")).json();
     expect(frontendJson.dependencies["a-dep"]).toMatch(/^\^/);
 
     // Verify backend was not updated (should still be old version)
-    const backendJson = await Bun.file(join(dir, "packages/backend/package.json")).json();
+    const backendJson = await Fun.file(join(dir, "packages/backend/package.json")).json();
     expect(backendJson.dependencies["dep-with-tags"]).toBe("^1.0.0");
   });
 
   it("interactive update with workspaces.catalogs structure", async () => {
     const dir = tempDirWithFiles("update-interactive-workspaces-catalogs", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1745,20 +1745,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1774,7 +1774,7 @@ registry = "${registryUrl}"
     expect(output).toContain("Installing updates..."); // Should show install message
 
     // Verify workspaces.catalogs were updated with preserved prefixes AND new versions
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
 
     // Check that versions actually changed from original static values
     expect(packageJson.workspaces.catalogs.shared["no-deps"]).not.toBe("^1.0.0"); // Should be newer
@@ -1797,7 +1797,7 @@ registry = "${registryUrl}"
     expect(packageJson.workspaces.catalogs.tools["a-dep"]).toMatch(/^>=/);
 
     // App package should still have catalog references (unchanged)
-    const appJson = await Bun.file(join(dir, "packages/app/package.json")).json();
+    const appJson = await Fun.file(join(dir, "packages/app/package.json")).json();
     expect(appJson.dependencies["no-deps"]).toBe("catalog:shared");
     expect(appJson.dependencies["dep-with-tags"]).toBe("catalog:shared");
     expect(appJson.dependencies["a-dep"]).toBe("catalog:tools");
@@ -1805,7 +1805,7 @@ registry = "${registryUrl}"
 
   it("interactive update dry run mode", async () => {
     const dir = tempDirWithFiles("update-interactive-dry-run", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1820,23 +1820,23 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Store original package.json content
-    const originalContent = await Bun.file(join(dir, "package.json")).text();
+    const originalContent = await Fun.file(join(dir, "package.json")).text();
 
     // Run interactive update with dry-run
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest", "--dry-run"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1852,18 +1852,18 @@ registry = "${registryUrl}"
     expect(output).toContain("Dry run");
 
     // Verify package.json was NOT modified
-    const afterContent = await Bun.file(join(dir, "package.json")).text();
+    const afterContent = await Fun.file(join(dir, "package.json")).text();
     expect(afterContent).toBe(originalContent);
 
     // Parse and verify versions are still old
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.dependencies["no-deps"]).toBe("1.0.0");
     expect(packageJson.dependencies["dep-with-tags"]).toBe("1.0.0");
   });
 
   it("should preserve npm: alias prefix when updating packages", async () => {
     const dir = tempDirWithFiles("update-interactive-npm-alias", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1877,19 +1877,19 @@ registry = "${registryUrl}"
       }),
     });
 
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1901,14 +1901,14 @@ registry = "${registryUrl}"
     const exitCode = await update.exited;
     expect(exitCode).toBe(0);
 
-    const packageJson = await Bun.file(join(dir, "package.json")).json();
+    const packageJson = await Fun.file(join(dir, "package.json")).json();
     expect(packageJson.dependencies["my-alias"]).toBe("npm:no-deps@2.0.0");
     expect(packageJson.dependencies["@my/alias"]).toBe("npm:@types/no-deps@^2.0.0");
   });
 
   it("interactive update with mixed dependency types", async () => {
     const dir = tempDirWithFiles("update-interactive-mixed", {
-      "bunfig.toml": `[install]
+      "funfig.toml": `[install]
 cache = false
 registry = "${registryUrl}"
 `,
@@ -1952,20 +1952,20 @@ registry = "${registryUrl}"
     });
 
     // Install first
-    await using install = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using install = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     expect(await install.exited).toBe(0);
 
     // Run interactive update
-    await using update = Bun.spawn({
-      cmd: [bunExe(), "update", "-i", "-r", "--latest"],
+    await using update = Fun.spawn({
+      cmd: [funExe(), "update", "-i", "-r", "--latest"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -1978,7 +1978,7 @@ registry = "${registryUrl}"
     expect(exitCode).toBe(0);
 
     // Verify all dependency types were handled correctly
-    const rootJson = await Bun.file(join(dir, "package.json")).json();
+    const rootJson = await Fun.file(join(dir, "package.json")).json();
     expect(rootJson.catalog["a-dep"]).toMatch(/^\^/); // Catalog updated
     expect(rootJson.dependencies["no-deps"]).toMatch(/^\^/); // Regular dep updated
     expect(rootJson.devDependencies["dep-with-tags"]).toMatch(/^~/); // Dev dep updated with prefix preserved
@@ -1986,12 +1986,12 @@ registry = "${registryUrl}"
     expect(rootJson.optionalDependencies["normal-dep-and-dev-dep"]).toMatch(/^\^/); // Optional dep updated
 
     // Verify workspace dependencies
-    const ws1Json = await Bun.file(join(dir, "packages/workspace1/package.json")).json();
+    const ws1Json = await Fun.file(join(dir, "packages/workspace1/package.json")).json();
     expect(ws1Json.dependencies["a-dep"]).toBe("catalog:"); // Catalog ref preserved
     expect(ws1Json.dependencies["@test/workspace2"]).toBe("workspace:*"); // Workspace ref preserved
     expect(ws1Json.devDependencies["no-deps"]).toMatch(/^\^/); // Regular dep updated
 
-    const ws2Json = await Bun.file(join(dir, "packages/workspace2/package.json")).json();
+    const ws2Json = await Fun.file(join(dir, "packages/workspace2/package.json")).json();
     expect(ws2Json.dependencies["a-dep"]).toBe("catalog:"); // Catalog ref preserved
   });
 });

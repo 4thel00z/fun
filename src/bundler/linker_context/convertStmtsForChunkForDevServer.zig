@@ -76,12 +76,12 @@ pub fn convertStmtsForChunkForDevServer(
                 continue;
             }
 
-            const is_builtin = record.tag == .builtin or record.tag == .bun or record.tag == .runtime;
+            const is_builtin = record.tag == .builtin or record.tag == .fun or record.tag == .runtime;
             const is_bare_import = st.star_name_loc == null and st.items.len == 0 and st.default_name == null;
 
             if (is_builtin) {
                 if (!is_bare_import) {
-                    // hmr.importBuiltin('...') or hmr.require('bun:wrap')
+                    // hmr.importBuiltin('...') or hmr.require('fun:wrap')
                     const call = Expr.init(E.Call, .{
                         .target = Expr.init(E.Dot, .{
                             .target = hmr_api_id,
@@ -89,7 +89,7 @@ pub fn convertStmtsForChunkForDevServer(
                             .name_loc = stmt.loc,
                         }, stmt.loc),
                         .args = .fromOwnedSlice(try allocator.dupe(Expr, &.{Expr.init(E.String, .{
-                            .data = if (record.tag == .runtime) "bun:wrap" else record.path.pretty,
+                            .data = if (record.tag == .runtime) "fun:wrap" else record.path.pretty,
                         }, record.range.loc)})),
                     }, stmt.loc);
 
@@ -168,14 +168,14 @@ pub fn convertStmtsForChunkForDevServer(
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -185,8 +185,8 @@ const JSAst = js_ast.BundledAst;
 const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const StmtList = LinkerContext.StmtList;
 
-const Logger = bun.logger;
+const Logger = fun.logger;
 const Loc = Logger.Loc;

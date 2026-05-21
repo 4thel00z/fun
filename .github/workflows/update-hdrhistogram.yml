@@ -7,7 +7,7 @@ on:
 
 jobs:
   check-update:
-    if: github.repository == 'oven-sh/bun'
+    if: github.repository == 'underdoc-org/fun'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -101,4 +101,4 @@ jobs:
 
             Compare: https://github.com/HdrHistogram/HdrHistogram_c/compare/${{ steps.check-version.outputs.current }}...${{ steps.check-version.outputs.latest }}
 
-            Auto-updated by [this workflow](https://github.com/oven-sh/bun/actions/workflows/update-hdrhistogram.yml)
+            Auto-updated by [this workflow](https://github.com/underdoc-org/fun/actions/workflows/update-hdrhistogram.yml)

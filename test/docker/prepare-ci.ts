@@ -1,11 +1,11 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 /**
  * CI preparation script for Docker test services
  *
  * This script pre-pulls and builds all Docker images needed for tests
  * to avoid failures during test execution.
  *
- * Usage: bun test/docker/prepare-ci.ts
+ * Usage: fun test/docker/prepare-ci.ts
  */
 
 import { prepareImages } from "./index";

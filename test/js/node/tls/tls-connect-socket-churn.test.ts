@@ -4,11 +4,11 @@
 // clients via the memoised SecureContext), and RSS must stay flat.
 //
 // Regression for #12117 / #24118 / #29887.
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import tls from "node:tls";
 import { once } from "node:events";
 // @ts-expect-error - debug-only export
-import { sslCtxLiveCount } from "bun:internal-for-testing";
+import { sslCtxLiveCount } from "fun:internal-for-testing";
 import { tls as tlsCerts, isASAN, isDebug } from "harness";
 
 test("tls.connect churn does not leak SSL_CTX or us_socket_context_t", async () => {
@@ -22,7 +22,7 @@ test("tls.connect churn does not leak SSL_CTX or us_socket_context_t", async () 
   try {
     // Warm: first connect allocates the server SSL_CTX + the memoised client one.
     await connectOnce(port);
-    Bun.gc(true);
+    Fun.gc(true);
     const ctxBefore = sslCtxLiveCount();
     const rssBefore = process.memoryUsage.rss();
 
@@ -34,7 +34,7 @@ test("tls.connect churn does not leak SSL_CTX or us_socket_context_t", async () 
     // The close-list drains on the next loop tick (us_internal_free_closed_sockets
     // runs in loop-post). Await a microtask + macrotask boundary instead of time.
     await new Promise<void>(r => setImmediate(() => queueMicrotask(r)));
-    Bun.gc(true);
+    Fun.gc(true);
 
     const ctxAfter = sslCtxLiveCount();
     const rssAfter = process.memoryUsage.rss();
@@ -73,7 +73,7 @@ test("createSecureContext memoises the native SSL_CTX (not the wrapper) by confi
   expect(c.context).not.toBe(a.context);
 });
 
-// The shared `defaultClientSslCtx` (used by `Bun.connect({tls:true})` AND
+// The shared `defaultClientSslCtx` (used by `Fun.connect({tls:true})` AND
 // `new WebSocket("wss://…")` with no custom CA) must let `ssl_attach` inject
 // the bundled root store per-SSL. A regression once set VERIFY_PEER on the CTX
 // to skip the cold root-load — that left wss:// with no roots and broke every
@@ -84,14 +84,14 @@ test("createSecureContext memoises the native SSL_CTX (not the wrapper) by confi
 // "no roots" → UNABLE_TO_VERIFY_LEAF_SIGNATURE (21). Seeing 18 proves the
 // bundled store was consulted.
 test("defaultClientSslCtx attaches bundled roots (verify error proves store was consulted)", async () => {
-  await using server = Bun.listen({
+  await using server = Fun.listen({
     port: 0,
     hostname: "127.0.0.1",
     tls: tlsCerts,
     socket: { data() {}, open() {} },
   });
   const { promise, resolve, reject } = Promise.withResolvers<number>();
-  const sock = await Bun.connect({
+  const sock = await Fun.connect({
     port: server.port,
     hostname: "127.0.0.1",
     tls: true, // ← no ca/cert: this is the defaultClientSslCtx path

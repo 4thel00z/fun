@@ -43,11 +43,11 @@ pub const DeclarationBlock = struct {
         self: *const DeclarationBlock,
 
         pub fn format(this: @This(), writer: *std.Io.Writer) !void {
-            var arraylist = std.Io.Writer.Allocating.init(bun.default_allocator);
+            var arraylist = std.Io.Writer.Allocating.init(fun.default_allocator);
             const w = &arraylist.writer;
             defer arraylist.deinit();
-            var symbols = bun.ast.Symbol.Map{};
-            var printer = css.Printer.new(bun.default_allocator, std.array_list.Managed(u8).init(bun.default_allocator), w, css.PrinterOptions.default(), null, null, &symbols);
+            var symbols = fun.ast.Symbol.Map{};
+            var printer = css.Printer.new(fun.default_allocator, std.array_list.Managed(u8).init(fun.default_allocator), w, css.PrinterOptions.default(), null, null, &symbols);
             defer printer.deinit();
             this.self.toCss(&printer) catch |e| return try writer.print("<error writing declaration block: {s}>\n", .{@errorName(e)});
             try writer.writeAll(arraylist.written());
@@ -168,7 +168,7 @@ pub const DeclarationBlock = struct {
                     const handled = hndlr.handleProperty(prop, ctx);
 
                     if (!handled) {
-                        bun.handleOom(hndlr.decls.append(ctx.allocator, prop.*));
+                        fun.handleOom(hndlr.decls.append(ctx.allocator, prop.*));
                         // replacing with a property which does not require allocation
                         // to "delete"
                         prop.* = css.Property{ .all = .@"revert-layer" };
@@ -346,7 +346,7 @@ pub fn parse_declaration_impl(
                         .{},
                         info.line,
                         info.column,
-                        &[_]bun.logger.Data{},
+                        &[_]fun.logger.Data{},
                     );
                 },
                 .disallow_not_single_class => |info| {
@@ -356,23 +356,23 @@ pub fn parse_declaration_impl(
                         source_location.line,
                         source_location.column,
                         options.allocator.dupe(
-                            bun.logger.Data,
-                            &[_]bun.logger.Data{
-                                bun.logger.Data{
-                                    .text = bun.handleOom(options.allocator.dupe(u8, "The parent selector is not a single class selector because of the syntax here:")),
+                            fun.logger.Data,
+                            &[_]fun.logger.Data{
+                                fun.logger.Data{
+                                    .text = fun.handleOom(options.allocator.dupe(u8, "The parent selector is not a single class selector because of the syntax here:")),
                                     .location = info.toLoggerLocation(options.filename),
                                 },
                             },
-                        ) catch |err| bun.handleOom(err),
+                        ) catch |err| fun.handleOom(err),
                     );
                 },
             }
         }
     }
     if (important) {
-        bun.handleOom(important_declarations.append(input.allocator(), property));
+        fun.handleOom(important_declarations.append(input.allocator(), property));
     } else {
-        bun.handleOom(declarations.append(input.allocator(), property));
+        fun.handleOom(declarations.append(input.allocator(), property));
     }
 
     return .success;
@@ -402,11 +402,11 @@ pub const DeclarationHandler = struct {
         _ = allocator; // autofix
         if (this.direction) |direction| {
             this.direction = null;
-            bun.handleOom(this.decls.append(context.allocator, css.Property{ .direction = direction }));
+            fun.handleOom(this.decls.append(context.allocator, css.Property{ .direction = direction }));
         }
         // if (this.unicode_bidi) |unicode_bidi| {
         //     this.unicode_bidi = null;
-        //     this.decls.append(context.allocator, css.Property{ .unicode_bidi = unicode_bidi }) catch |err| bun.handleOom(err);
+        //     this.decls.append(context.allocator, css.Property{ .unicode_bidi = unicode_bidi }) catch |err| fun.handleOom(err);
         // }
 
         this.background.finalize(&this.decls, context);
@@ -453,8 +453,8 @@ pub const DeclarationHandler = struct {
     }
 };
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

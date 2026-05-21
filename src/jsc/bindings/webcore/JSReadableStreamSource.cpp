@@ -103,11 +103,11 @@ const ClassInfo JSReadableStreamSourcePrototype::s_info = { "ReadableStreamSourc
 void JSReadableStreamSourcePrototype::finishCreation(VM& vm)
 {
     Base::finishCreation(vm);
-    // -- BUN ADDITION --
+    // -- FUN ADDITION --
     auto clientData = WebCore::clientData(vm);
-    this->putDirect(vm, clientData->builtinNames().bunNativePtrPrivateName(), jsNumber(0), JSC::PropertyAttribute::DontEnum | JSC::PropertyAttribute::DontDelete | 0);
-    this->putDirect(vm, clientData->builtinNames().bunNativeTypePrivateName(), jsNumber(0), JSC::PropertyAttribute::DontEnum | JSC::PropertyAttribute::DontDelete | 0);
-    // -- BUN ADDITION --
+    this->putDirect(vm, clientData->builtinNames().funNativePtrPrivateName(), jsNumber(0), JSC::PropertyAttribute::DontEnum | JSC::PropertyAttribute::DontDelete | 0);
+    this->putDirect(vm, clientData->builtinNames().funNativeTypePrivateName(), jsNumber(0), JSC::PropertyAttribute::DontEnum | JSC::PropertyAttribute::DontDelete | 0);
+    // -- FUN ADDITION --
 
     reifyStaticProperties(vm, JSReadableStreamSource::info(), JSReadableStreamSourcePrototypeTableValues, *this);
     JSC_TO_STRING_TAG_WITHOUT_TRANSITION();

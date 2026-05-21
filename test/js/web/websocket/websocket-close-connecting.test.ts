@@ -5,8 +5,8 @@
 // the socket stuck in CLOSING with hasPendingActivity() permanently true
 // — never GC'd, close event never fired, process never exited.
 
-import { heapStats } from "bun:jsc";
-import { describe, expect, it } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { describe, expect, it } from "fun:test";
 import { createServer, type AddressInfo } from "net";
 
 describe.each(["close", "terminate"] as const)("%s() during CONNECTING", method => {
@@ -53,7 +53,7 @@ describe.each(["close", "terminate"] as const)("%s() during CONNECTING", method 
 
   it("does not leak", async () => {
     function getWebSocketCount() {
-      Bun.gc(true);
+      Fun.gc(true);
       return heapStats().objectTypeCounts?.WebSocket || 0;
     }
 

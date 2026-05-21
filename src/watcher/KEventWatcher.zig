@@ -5,7 +5,7 @@ pub const EventListIndex = u32;
 // Everything being watched
 eventlist_index: EventListIndex = 0,
 
-fd: bun.FD.Optional = .none,
+fd: fun.FD.Optional = .none,
 
 const changelist_count = 128;
 
@@ -33,8 +33,8 @@ pub fn watchEventFromKEvent(kevent: KEvent) Watcher.Event {
     };
 }
 
-pub fn watchLoopCycle(this: *Watcher) bun.sys.Maybe(void) {
-    const fd: bun.FD = this.platform.fd.unwrap() orelse
+pub fn watchLoopCycle(this: *Watcher) fun.sys.Maybe(void) {
+    const fd: fun.FD = this.platform.fd.unwrap() orelse
         @panic("KEventWatcher has an invalid file descriptor");
 
     // not initialized each time
@@ -103,6 +103,6 @@ pub fn watchLoopCycle(this: *Watcher) bun.sys.Maybe(void) {
 const std = @import("std");
 const KEvent = std.c.Kevent;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const Watcher = bun.Watcher;
+const fun = @import("fun");
+const Output = fun.Output;
+const Watcher = fun.Watcher;

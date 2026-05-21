@@ -1,11 +1,11 @@
-pub fn dumpSub(current: TestScheduleEntry) bun.JSError!void {
+pub fn dumpSub(current: TestScheduleEntry) fun.JSError!void {
     if (!group.getLogEnabled()) return;
     switch (current) {
         .describe => |describe| try dumpDescribe(describe),
         .test_callback => |test_callback| try dumpTest(test_callback, "test"),
     }
 }
-pub fn dumpDescribe(describe: *DescribeScope) bun.JSError!void {
+pub fn dumpDescribe(describe: *DescribeScope) fun.JSError!void {
     if (!group.getLogEnabled()) return;
     group.beginMsg("describe \"{f}\" (concurrent={}, mode={s}, only={s}, has_callback={})", .{ std.zig.fmtString(describe.base.name orelse "(unnamed)"), describe.base.concurrent, @tagName(describe.base.mode), @tagName(describe.base.only), describe.base.has_callback });
     defer group.end();
@@ -16,12 +16,12 @@ pub fn dumpDescribe(describe: *DescribeScope) bun.JSError!void {
     for (describe.afterEach.items) |entry| try dumpTest(entry, "afterEach");
     for (describe.afterAll.items) |entry| try dumpTest(entry, "afterAll");
 }
-pub fn dumpTest(current: *ExecutionEntry, label: []const u8) bun.JSError!void {
+pub fn dumpTest(current: *ExecutionEntry, label: []const u8) fun.JSError!void {
     if (!group.getLogEnabled()) return;
     group.beginMsg("{s} \"{f}\" (concurrent={}, only={})", .{ label, std.zig.fmtString(current.base.name orelse "(unnamed)"), current.base.concurrent, current.base.only });
     defer group.end();
 }
-pub fn dumpOrder(this: *Execution) bun.JSError!void {
+pub fn dumpOrder(this: *Execution) fun.JSError!void {
     if (!group.getLogEnabled()) return;
     group.beginMsg("dumpOrder", .{});
     defer group.end();
@@ -53,12 +53,12 @@ pub const group = struct {
     var indent: usize = 0;
     var last_was_start = false;
     fn getLogEnabledRuntime() bool {
-        return bun.env_var.WANTS_LOUD.get();
+        return fun.env_var.WANTS_LOUD.get();
     }
     inline fn getLogEnabledStaticFalse() bool {
         return false;
     }
-    pub const getLogEnabled = if (!bun.Environment.enable_logs) getLogEnabledStaticFalse else getLogEnabledRuntime;
+    pub const getLogEnabled = if (!fun.Environment.enable_logs) getLogEnabledStaticFalse else getLogEnabledRuntime;
     pub fn begin(pos: std.builtin.SourceLocation) void {
         return beginMsg("\x1b[36m{s}\x1b[37m:\x1b[93m{d}\x1b[37m:\x1b[33m{d}\x1b[37m: \x1b[35m{s}\x1b[m", .{ pos.file, pos.line, pos.column, pos.fn_name });
     }
@@ -98,11 +98,11 @@ pub const group = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const bun_test = @import("./bun_test.zig");
-const DescribeScope = bun_test.DescribeScope;
-const Execution = bun_test.Execution;
-const ExecutionEntry = bun_test.ExecutionEntry;
-const TestScheduleEntry = bun_test.TestScheduleEntry;
+const fun_test = @import("./fun_test.zig");
+const DescribeScope = fun_test.DescribeScope;
+const Execution = fun_test.Execution;
+const ExecutionEntry = fun_test.ExecutionEntry;
+const TestScheduleEntry = fun_test.TestScheduleEntry;

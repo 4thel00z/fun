@@ -1,4 +1,4 @@
-//! Bidirectional IPC channel for `bun test --parallel`. Reads are
+//! Bidirectional IPC channel for `fun test --parallel`. Reads are
 //! frame-decoded in the loop's data callback; writes go through the platform
 //! socket/pipe with backpressure buffered and drained via the loop, so a full
 //! kernel buffer never truncates a frame. The owner type provides
@@ -6,7 +6,7 @@
 //!
 //! POSIX backend: `uws.NewSocketHandler` adopted from a socketpair fd.
 //! Windows backend: `uv.Pipe` over the inherited duplex named-pipe end (same
-//! mechanism as `Bun.spawn({ipc})` / `process.send()`).
+//! mechanism as `Fun.spawn({ipc})` / `process.send()`).
 //!
 //! Lifetime: a `Channel` is embedded as `owner_field` in an owner that
 //! outlives all uv/usockets callbacks (the coordinator's `Worker[]`, or the
@@ -73,7 +73,7 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
 
         /// Adopt a duplex fd into the channel and start reading. POSIX: the
         /// socketpair end. Windows: the inherited named-pipe end (worker side).
-        pub fn adopt(self: *Self, vm: *jsc.VirtualMachine, fd: bun.FD) bool {
+        pub fn adopt(self: *Self, vm: *jsc.VirtualMachine, fd: fun.FD) bool {
             if (Environment.isWindows) {
                 // ipc=true matches ipc.zig windowsConfigureClient. With ipc=true
                 // libuv wraps reads/writes in its own framing; both ends use it
@@ -82,14 +82,14 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
                 // uv_spawn for the .ipc stdio container, which always inits with
                 // ipc=true) and child end disagree on framing and the channel
                 // never delivers a frame.
-                const pipe = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
+                const pipe = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
                 pipe.init(uv.Loop.get(), true).unwrap() catch |e| {
-                    bun.Output.debugWarn("Channel.adopt: uv_pipe_init failed: {s}", .{@errorName(e)});
-                    bun.destroy(pipe);
+                    fun.Output.debugWarn("Channel.adopt: uv_pipe_init failed: {s}", .{@errorName(e)});
+                    fun.destroy(pipe);
                     return false;
                 };
                 pipe.open(fd).unwrap() catch |e| {
-                    bun.Output.debugWarn("Channel.adopt: uv_pipe_open({d}) failed: {s}", .{ fd.uv(), @errorName(e) });
+                    fun.Output.debugWarn("Channel.adopt: uv_pipe_open({d}) failed: {s}", .{ fd.uv(), @errorName(e) });
                     pipe.closeAndDestroy();
                     return false;
                 };
@@ -126,7 +126,7 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
         pub fn adoptPipe(self: *Self, _: *jsc.VirtualMachine, pipe: *uv.Pipe) bool {
             if (comptime !Environment.isWindows) @compileError("adoptPipe is Windows-only");
             pipe.readStart(self, WindowsHandlers.onAlloc, WindowsHandlers.onError, WindowsHandlers.onRead).unwrap() catch |e| {
-                bun.Output.debugWarn("Channel.adoptPipe: readStart failed: {s}", .{@errorName(e)});
+                fun.Output.debugWarn("Channel.adoptPipe: readStart failed: {s}", .{@errorName(e)});
                 return false;
             };
             self.backend.pipe = pipe;
@@ -142,13 +142,13 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
             if (self.done) return;
             if (Environment.isWindows) return self.sendWindows(frame_bytes);
             if (self.out.items.len > 0) {
-                bun.handleOom(self.out.appendSlice(bun.default_allocator, frame_bytes));
+                fun.handleOom(self.out.appendSlice(fun.default_allocator, frame_bytes));
                 return;
             }
             const wrote = self.backend.socket.write(frame_bytes);
             const w: usize = if (wrote > 0) @intCast(wrote) else 0;
             if (w < frame_bytes.len) {
-                bun.handleOom(self.out.appendSlice(bun.default_allocator, frame_bytes[w..]));
+                fun.handleOom(self.out.appendSlice(fun.default_allocator, frame_bytes[w..]));
             }
         }
 
@@ -156,7 +156,7 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
             if (comptime !Environment.isWindows) unreachable;
             // A uv_write is in flight — queue behind it.
             if (self.backend.inflight.items.len > 0) {
-                bun.handleOom(self.out.appendSlice(bun.default_allocator, frame_bytes));
+                fun.handleOom(self.out.appendSlice(fun.default_allocator, frame_bytes));
                 return;
             }
             const pipe = self.backend.pipe orelse return;
@@ -173,7 +173,7 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
                 },
             };
             if (w >= frame_bytes.len) return;
-            bun.handleOom(self.out.appendSlice(bun.default_allocator, frame_bytes[w..]));
+            fun.handleOom(self.out.appendSlice(fun.default_allocator, frame_bytes[w..]));
             self.submitWindowsWrite();
         }
 
@@ -238,15 +238,15 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
                     self.backend.pipe = null;
                     p.closeAndDestroy();
                 }
-                self.backend.inflight.deinit(bun.default_allocator);
+                self.backend.inflight.deinit(fun.default_allocator);
                 self.backend.inflight = .empty;
             } else if (!self.backend.socket.isDetached()) {
                 self.backend.socket.close(.normal);
                 self.backend.socket = .detached;
             }
-            self.in.deinit(bun.default_allocator);
+            self.in.deinit(fun.default_allocator);
             self.in = .empty;
-            self.out.deinit(bun.default_allocator);
+            self.out.deinit(fun.default_allocator);
             self.out = .empty;
         }
 
@@ -254,7 +254,7 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
 
         fn ingest(self: *Self, data: []const u8) void {
             if (self.done) return;
-            bun.handleOom(self.in.appendSlice(bun.default_allocator, data));
+            fun.handleOom(self.in.appendSlice(fun.default_allocator, data));
             var head: usize = 0;
             while (self.in.items.len - head >= 5) {
                 const len = std.mem.readInt(u32, self.in.items[head..][0..4], .little);
@@ -312,7 +312,7 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
             pub fn onRead(self: *Self, data: []const u8) void {
                 self.ingest(data);
             }
-            pub fn onError(self: *Self, _: bun.sys.E) void {
+            pub fn onError(self: *Self, _: fun.sys.E) void {
                 // Mirror the POSIX onClose path: detach the transport before
                 // signalling done so the owner can tell EOF apart from a
                 // protocol error (where the pipe is still attached).
@@ -335,12 +335,12 @@ pub fn Channel(comptime Owner: type, comptime owner_field: []const u8) type {
     };
 }
 
-const uv = if (Environment.isWindows) bun.windows.libuv else struct {};
+const uv = if (Environment.isWindows) fun.windows.libuv else struct {};
 
 const Frame = @import("./Frame.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
-const uws = bun.uws;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;
+const uws = fun.uws;

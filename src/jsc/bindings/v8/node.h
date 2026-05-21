@@ -8,11 +8,11 @@
 
 namespace node {
 
-BUN_EXPORT void AddEnvironmentCleanupHook(v8::Isolate* isolate,
+FUN_EXPORT void AddEnvironmentCleanupHook(v8::Isolate* isolate,
     void (*fun)(void* arg),
     void* arg);
 
-BUN_EXPORT void RemoveEnvironmentCleanupHook(v8::Isolate* isolate,
+FUN_EXPORT void RemoveEnvironmentCleanupHook(v8::Isolate* isolate,
     void (*fun)(void* arg),
     void* arg);
 
@@ -39,6 +39,6 @@ struct node_module {
     struct node_module* nm_link;
 };
 
-extern "C" BUN_EXPORT void node_module_register(void* mod);
+extern "C" FUN_EXPORT void node_module_register(void* mod);
 
 } // namespace node

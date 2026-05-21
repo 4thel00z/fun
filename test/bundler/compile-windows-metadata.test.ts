@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { execSync } from "child_process";
 import { promises as fs } from "fs";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import { join } from "path";
 
 // Helper to ensure executable cleanup
@@ -25,9 +25,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const outfile = join(String(dir), "app-with-metadata.exe");
       await using _cleanup = cleanup(outfile);
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -44,7 +44,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-copyright",
           "Copyright © 2024 Test Company Inc",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -55,7 +55,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       expect(stderr).toBe("");
 
       // Verify executable was created
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
 
       // Verify metadata using PowerShell
@@ -85,9 +85,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const outfile = join(String(dir), "app-partial.exe");
       await using _cleanup = cleanup(outfile);
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -98,7 +98,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-version",
           "2.0.0.0",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -126,9 +126,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
         "app.js": `console.log("test");`,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "build", join(String(dir), "app.js"), "--windows-title", "Should Fail"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "build", join(String(dir), "app.js"), "--windows-title", "Should Fail"],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -144,18 +144,18 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
         "app.js": `console.log("test");`,
       });
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           "--target",
-          "bun-linux-x64",
+          "fun-linux-x64",
           join(String(dir), "app.js"),
           "--windows-title",
           "Should Fail",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -168,23 +168,23 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
     });
   });
 
-  describe("Bun.build() API", () => {
-    test("all metadata via Bun.build()", async () => {
+  describe("Fun.build() API", () => {
+    test("all metadata via Fun.build()", async () => {
       using dir = tempDir("windows-metadata-api", {
         "app.js": `console.log("API metadata test");`,
       });
 
-      const result = await Bun.build({
+      const result = await Fun.build({
         entrypoints: [join(String(dir), "app.js")],
         outdir: String(dir),
         compile: {
-          target: process.arch === "arm64" ? "bun-windows-aarch64" : "bun-windows-x64",
+          target: process.arch === "arm64" ? "fun-windows-aarch64" : "fun-windows-x64",
           outfile: "app-api.exe",
           windows: {
             title: "API App",
             publisher: "API Company",
             version: "3.0.0.0",
-            description: "Built with Bun.build API",
+            description: "Built with Fun.build API",
             copyright: "© 2024 API Company",
           },
         },
@@ -196,7 +196,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const outfile = result.outputs[0].path;
       await using _cleanup = cleanup(outfile);
 
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
 
       const getMetadata = (field: string) => {
@@ -211,21 +211,21 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
 
       expect(getMetadata("ProductName")).toBe("API App");
       expect(getMetadata("CompanyName")).toBe("API Company");
-      expect(getMetadata("FileDescription")).toBe("Built with Bun.build API");
+      expect(getMetadata("FileDescription")).toBe("Built with Fun.build API");
       expect(getMetadata("LegalCopyright")).toBe("© 2024 API Company");
       expect(getMetadata("ProductVersion")).toBe("3.0.0.0");
     });
 
-    test("partial metadata via Bun.build()", async () => {
+    test("partial metadata via Fun.build()", async () => {
       using dir = tempDir("windows-metadata-api-partial", {
         "app.js": `console.log("Partial API test");`,
       });
 
-      const result = await Bun.build({
+      const result = await Fun.build({
         entrypoints: [join(String(dir), "app.js")],
         outdir: String(dir),
         compile: {
-          target: process.arch === "arm64" ? "bun-windows-aarch64" : "bun-windows-x64",
+          target: process.arch === "arm64" ? "fun-windows-aarch64" : "fun-windows-x64",
           outfile: "partial-api.exe",
           windows: {
             title: "Partial App",
@@ -258,11 +258,11 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
         "app.js": `console.log("Relative outdir test");`,
       });
 
-      const result = await Bun.build({
+      const result = await Fun.build({
         entrypoints: [join(String(dir), "app.js")],
         outdir: "./out",
         compile: {
-          target: process.arch === "arm64" ? "bun-windows-aarch64" : "bun-windows-x64",
+          target: process.arch === "arm64" ? "fun-windows-aarch64" : "fun-windows-x64",
           outfile: "relative.exe",
           windows: {
             title: "Relative Path App",
@@ -274,7 +274,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       expect(result.outputs.length).toBe(1);
 
       // Should not crash with assertion error
-      const exists = await Bun.file(result.outputs[0].path).exists();
+      const exists = await Fun.file(result.outputs[0].path).exists();
       expect(exists).toBe(true);
     });
   });
@@ -296,9 +296,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
 
       const outfile = join(String(dir), "version-test.exe");
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -307,7 +307,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-version",
           input,
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -333,9 +333,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
         "app.js": `console.log("Invalid version test");`,
       });
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -344,7 +344,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-version",
           version,
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -363,9 +363,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const outfile = join(String(dir), "test-original.exe");
       await using _cleanup = cleanup(outfile);
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -374,7 +374,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-title",
           "Test Application",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -382,7 +382,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      // Check that Original Filename is empty (not "bun.exe")
+      // Check that Original Filename is empty (not "fun.exe")
       const getMetadata = (field: string) => {
         try {
           return execSync(`powershell -Command "(Get-ItemProperty '${outfile}').VersionInfo.${field}"`, {
@@ -395,7 +395,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
 
       const originalFilename = getMetadata("OriginalFilename");
       expect(originalFilename).toBe("");
-      expect(originalFilename).not.toBe("bun.exe");
+      expect(originalFilename).not.toBe("fun.exe");
     });
 
     test("Original Filename should be empty even with all metadata set", async () => {
@@ -406,9 +406,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const outfile = join(String(dir), "full-metadata.exe");
       await using _cleanup = cleanup(outfile);
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -425,7 +425,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-copyright",
           "© 2024 Test",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -452,7 +452,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       // But Original Filename should still be empty
       const originalFilename = getMetadata("OriginalFilename");
       expect(originalFilename).toBe("");
-      expect(originalFilename).not.toBe("bun.exe");
+      expect(originalFilename).not.toBe("fun.exe");
     });
   });
 
@@ -465,9 +465,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const longString = Buffer.alloc(255, "A").toString();
       const outfile = join(String(dir), "long-strings.exe");
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -478,7 +478,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-description",
           longString,
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -486,7 +486,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
     });
 
@@ -497,9 +497,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
 
       const outfile = join(String(dir), "special-chars.exe");
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -514,7 +514,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-copyright",
           "© 2024 <Company>",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -522,7 +522,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
 
       const getMetadata = (field: string) => {
@@ -546,9 +546,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
 
       const outfile = join(String(dir), "unicode.exe");
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -563,7 +563,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-copyright",
           "© 2024 世界",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -571,7 +571,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
     });
 
@@ -584,9 +584,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       await using _cleanup = cleanup(outfile);
 
       // Empty strings should be treated as not provided
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -597,7 +597,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-description",
           "",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -605,7 +605,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
     });
   });
@@ -618,9 +618,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
 
       const outfile = join(String(dir), "hidden-with-metadata.exe");
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -632,7 +632,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-version",
           "1.0.0.0",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -640,7 +640,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
 
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
 
       const getMetadata = (field: string) => {
@@ -691,9 +691,9 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
 
       const outfile = join(String(dir), "icon-with-metadata.exe");
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           join(String(dir), "app.js"),
@@ -706,7 +706,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
           "--windows-version",
           "2.0.0.0",
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -714,7 +714,7 @@ describe.skipIf(!isWindows).concurrent("Windows compile metadata", () => {
       const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
       // Icon might fail but metadata should still work
-      const exists = await Bun.file(outfile).exists();
+      const exists = await Fun.file(outfile).exists();
       expect(exists).toBe(true);
 
       const getMetadata = (field: string) => {

@@ -1,14 +1,14 @@
-pub fn enterBlock(self: *Parser, block_type: BlockType, data: u32, flags: u32) bun.JSError!void {
+pub fn enterBlock(self: *Parser, block_type: BlockType, data: u32, flags: u32) fun.JSError!void {
     if (self.image_nesting_level > 0) return;
     try self.renderer.enterBlock(block_type, data, flags);
 }
 
-pub fn leaveBlock(self: *Parser, block_type: BlockType, data: u32) bun.JSError!void {
+pub fn leaveBlock(self: *Parser, block_type: BlockType, data: u32) fun.JSError!void {
     if (self.image_nesting_level > 0) return;
     try self.renderer.leaveBlock(block_type, data);
 }
 
-pub fn processCodeBlock(self: *Parser, block_lines: []const VerbatimLine, data: u32, flags: u32) bun.JSError!void {
+pub fn processCodeBlock(self: *Parser, block_lines: []const VerbatimLine, data: u32, flags: u32) fun.JSError!void {
     _ = data;
 
     var count = block_lines.len;
@@ -31,7 +31,7 @@ pub fn processCodeBlock(self: *Parser, block_lines: []const VerbatimLine, data: 
     }
 }
 
-pub fn processHtmlBlock(self: *Parser, block_lines: []const VerbatimLine) bun.JSError!void {
+pub fn processHtmlBlock(self: *Parser, block_lines: []const VerbatimLine) fun.JSError!void {
     for (block_lines, 0..) |vline, i| {
         if (i > 0) try self.emitText(.html, "\n");
         for (0..vline.indent) |_| {
@@ -140,7 +140,7 @@ pub fn processTableRow(self: *Parser, vline: VerbatimLine, is_header: bool, col_
     }
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const helpers = @import("./helpers.zig");
 const std = @import("std");
 

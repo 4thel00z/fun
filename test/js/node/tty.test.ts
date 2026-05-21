@@ -1,5 +1,5 @@
-import { describe, expect, it, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { describe, expect, it, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import { WriteStream } from "node:tty";
 
 describe("ReadStream.prototype.setRawMode", () => {
@@ -13,9 +13,9 @@ describe("ReadStream.prototype.setRawMode", () => {
     const done = Promise.withResolvers<void>();
     const eof = Promise.withResolvers<void>();
 
-    const proc = Bun.spawn({
+    const proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           let err;
@@ -40,7 +40,7 @@ describe("ReadStream.prototype.setRawMode", () => {
           process.exit(0);
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       terminal: {
         // Wide enough that ConPTY does not hard-wrap the RESULT line.
         cols: 200,
@@ -64,9 +64,9 @@ describe("ReadStream.prototype.setRawMode", () => {
     // ConPTY injects VT escape sequences and CR around the payload; strip
     // them so the RESULT JSON can be matched regardless of where the
     // terminal emulator decides to park the cursor.
-    const stripped = Bun.stripANSI(output).replace(/[\r\n]/g, "");
+    const stripped = Fun.stripANSI(output).replace(/[\r\n]/g, "");
 
-    // Bun.Terminal always gives the child a TTY stdin (openpty / ConPTY). If
+    // Fun.Terminal always gives the child a TTY stdin (openpty / ConPTY). If
     // RESULT is missing for any reason, surface the raw terminal output
     // rather than a bare null match.
     const match = stripped.match(/RESULT (\{[^}]*\})/);

@@ -3,32 +3,32 @@ title: "REPL"
 description: "An interactive JavaScript and TypeScript REPL with syntax highlighting, history, and tab completion"
 ---
 
-`bun repl` starts an interactive Read-Eval-Print Loop (REPL) for evaluating JavaScript and TypeScript expressions. Use it to test code snippets, explore APIs, and debug.
+`fun repl` starts an interactive Read-Eval-Print Loop (REPL) for evaluating JavaScript and TypeScript expressions. Use it to test code snippets, explore APIs, and debug.
 
 ```sh terminal icon="terminal"
-bun repl
+fun repl
 ```
 
 ```txt
-Welcome to Bun v1.3.3
+Welcome to Fun v1.3.3
 Type .copy [code] to copy to clipboard. .help for more info.
 
 > 1 + 1
 2
-> const greeting = "Hello, Bun!"
+> const greeting = "Hello, Fun!"
 undefined
 > greeting
-'Hello, Bun!'
+'Hello, Fun!'
 ```
 
 ---
 
 ## Features
 
-- **TypeScript & JSX** — Write TypeScript and JSX directly. Bun transpiles everything on the fly.
+- **TypeScript & JSX** — Write TypeScript and JSX directly. Fun transpiles everything on the fly.
 - **Top-level `await`** — Await promises directly at the prompt without wrapping in an async function.
 - **Syntax highlighting** — Input is highlighted as you type.
-- **Persistent history** — History is saved to `~/.bun_repl_history` and persists across sessions.
+- **Persistent history** — History is saved to `~/.fun_repl_history` and persists across sessions.
 - **Tab completion** — Press `Tab` to complete property names and REPL commands.
 - **Multi-line input** — Unclosed brackets, braces, and parentheses automatically continue on the next line.
 - **Node.js globals** — `require`, `module`, `__dirname`, and `__filename` are available, resolved relative to your current working directory.
@@ -62,7 +62,7 @@ SyntaxError: JSON Parse error: Unexpected identifier "oops"
 Promises are automatically awaited. You can `await` any expression directly at the prompt.
 
 ```txt
-> await fetch("https://api.github.com/repos/oven-sh/bun").then(r => r.json()).then(r => r.stargazers_count)
+> await fetch("https://api.github.com/repos/underdoc-org/fun").then(r => r.json()).then(r => r.stargazers_count)
 81234
 > const response = await fetch("https://example.com")
 undefined
@@ -74,7 +74,7 @@ undefined
 
 ## Importing modules
 
-Just like Bun's runtime, you can use either `require` or `import` in the REPL and it Just Works — mix ESM and CommonJS freely at the prompt. Module resolution uses the same rules as `bun run`, so you can import from `node_modules`, relative paths, or `node:` builtins.
+Just like Fun's runtime, you can use either `require` or `import` in the REPL and it Just Works — mix ESM and CommonJS freely at the prompt. Module resolution uses the same rules as `fun run`, so you can import from `node_modules`, relative paths, or `node:` builtins.
 
 ```txt
 > import { z } from "zod"
@@ -148,7 +148,7 @@ The REPL supports Emacs-style line editing.
 
 ## History
 
-REPL history is automatically saved to `~/.bun_repl_history` (up to 1000 entries) and loaded at the start of each session. Use `Up`/`Down` to navigate.
+REPL history is automatically saved to `~/.fun_repl_history` (up to 1000 entries) and loaded at the start of each session. Use `Up`/`Down` to navigate.
 
 To export your history to a different file, use `.save`:
 
@@ -163,13 +163,13 @@ To export your history to a different file, use `.save`:
 Use `-e` / `--eval` to evaluate a script with REPL semantics and exit. Use `-p` / `--print` to additionally print the result.
 
 ```sh terminal icon="terminal"
-bun repl -e "const x: number = 42; console.log(x)"
+fun repl -e "const x: number = 42; console.log(x)"
 # 42
 
-bun repl -p "await fetch('https://example.com').then(r => r.status)"
+fun repl -p "await fetch('https://example.com').then(r => r.status)"
 # 200
 
-bun repl -p "{ a: 1, b: 2 }"
+fun repl -p "{ a: 1, b: 2 }"
 # { a: 1, b: 2 }
 ```
 

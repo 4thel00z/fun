@@ -1,7 +1,7 @@
 // Standalone server for fetch-http2-leak.test.ts.
 //
 // Runs in its own process so the node:http2 event loop isn't sharing a thread
-// with the test's Bun.spawn() orchestration — when both live in one process the
+// with the test's Fun.spawn() orchestration — when both live in one process the
 // server intermittently leaves a few streams unanswered under load (observed on
 // macOS 14 and aarch64 Linux), which is a node:http2-server-side issue
 // unrelated to the H2 client lifetimes the leak test is measuring.

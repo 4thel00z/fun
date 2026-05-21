@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 import brotliFile from "./fetch.brotli.test.ts.br" with { type: "file" };
 import gzipFile from "./fetch.brotli.test.ts.gzip" with { type: "file" };
 
 test("fetch brotli response works", async () => {
-  const brotli = await Bun.file(brotliFile).arrayBuffer();
-  const gzip = await Bun.file(gzipFile).arrayBuffer();
+  const brotli = await Fun.file(brotliFile).arrayBuffer();
+  const gzip = await Fun.file(gzipFile).arrayBuffer();
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     fetch(req) {
       if (req.headers.get("Accept-Encoding") === "br") {

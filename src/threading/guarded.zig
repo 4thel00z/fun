@@ -1,7 +1,7 @@
 /// A wrapper around a mutex, and a value protected by the mutex.
-/// This type uses `bun.threading.Mutex` internally.
+/// This type uses `fun.threading.Mutex` internally.
 pub fn Guarded(comptime Value: type) type {
-    return GuardedBy(Value, bun.threading.Mutex);
+    return GuardedBy(Value, fun.threading.Mutex);
 }
 
 /// A wrapper around a mutex, and a value protected by the mutex.
@@ -16,7 +16,7 @@ pub fn GuardedBy(comptime Value: type, comptime Mutex: type) type {
 
         /// Creates a guarded value with a default-initialized mutex.
         pub fn init(value: Value) Self {
-            return .initWithMutex(value, bun.memory.initDefault(Mutex));
+            return .initWithMutex(value, fun.memory.initDefault(Mutex));
         }
 
         /// Creates a guarded value with the given mutex.
@@ -45,7 +45,7 @@ pub fn GuardedBy(comptime Value: type, comptime Mutex: type) type {
         /// this method.
         pub fn intoUnprotected(self: *Self) Value {
             defer self.* = undefined;
-            bun.memory.deinit(&self.#mutex);
+            fun.memory.deinit(&self.#mutex);
             return self.unsynchronized_value;
         }
 
@@ -57,16 +57,16 @@ pub fn GuardedBy(comptime Value: type, comptime Mutex: type) type {
         /// If neither `Value` nor `Mutex` has a `deinit` method, it is not necessary to call this
         /// method.
         pub fn deinit(self: *Self) void {
-            bun.memory.deinit(&self.unsynchronized_value);
-            bun.memory.deinit(&self.#mutex);
+            fun.memory.deinit(&self.unsynchronized_value);
+            fun.memory.deinit(&self.#mutex);
             self.* = undefined;
         }
     };
 }
 
-/// Uses `bun.safety.ThreadLock`.
+/// Uses `fun.safety.ThreadLock`.
 pub fn Debug(comptime Value: type) type {
-    return GuardedBy(Value, bun.safety.ThreadLock);
+    return GuardedBy(Value, fun.safety.ThreadLock);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");

@@ -1,2 +1,2 @@
 import { test } from "node:test";
-test("one", async () => await Bun.sleep(5));
+test("one", async () => await Fun.sleep(5));

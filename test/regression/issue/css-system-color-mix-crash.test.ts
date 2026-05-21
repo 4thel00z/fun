@@ -1,6 +1,6 @@
-import { cssInternals } from "bun:internal-for-testing";
-import { expect, test } from "bun:test";
-import { normalizeBunSnapshot } from "harness";
+import { cssInternals } from "fun:internal-for-testing";
+import { expect, test } from "fun:test";
+import { normalizeFunSnapshot } from "harness";
 
 test("CSS system colors in color-mix should not crash", () => {
   // This test reproduces a crash that was happening when using system colors
@@ -67,5 +67,5 @@ test("CSS system colors in color-mix - snapshot outputs", () => {
     }
   }
 
-  expect(normalizeBunSnapshot(JSON.stringify(results, null, 2))).toMatchSnapshot();
+  expect(normalizeFunSnapshot(JSON.stringify(results, null, 2))).toMatchSnapshot();
 });

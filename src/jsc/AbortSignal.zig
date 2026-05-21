@@ -21,7 +21,7 @@ pub const AbortSignal = opaque {
                 ptr: ?*anyopaque,
                 reason: JSValue,
             ) callconv(.c) void {
-                const val = bun.cast(*Context, ptr.?);
+                const val = fun.cast(*Context, ptr.?);
                 call(val, reason);
             }
         };
@@ -48,7 +48,7 @@ pub const AbortSignal = opaque {
         globalObject: *jsc.JSGlobalObject,
         reason: CommonAbortReason,
     ) void {
-        bun.analytics.Features.abort_signal += 1;
+        fun.analytics.Features.abort_signal += 1;
         return WebCore__AbortSignal__signal(this, globalObject, reason);
     }
 
@@ -98,7 +98,7 @@ pub const AbortSignal = opaque {
         var reason: u8 = 0;
         const js_reason = WebCore__AbortSignal__reasonIfAborted(this, global, &reason);
         if (reason > 0) {
-            bun.debugAssert(js_reason.isUndefined());
+            fun.debugAssert(js_reason.isUndefined());
             return .{ .common = @enumFromInt(reason) };
         }
         if (js_reason == .zero) {
@@ -165,20 +165,20 @@ pub const AbortSignal = opaque {
         /// file must not fire abort handlers in the new global.
         generation: u32 = 0,
 
-        const new = bun.TrivialNew(Timeout);
+        const new = fun.TrivialNew(Timeout);
 
         fn init(vm: *jsc.VirtualMachine, signal_: *AbortSignal, milliseconds: u64) *Timeout {
             const this: *Timeout = .new(.{
                 .signal = signal_,
                 .generation = vm.test_isolation_generation,
                 .event_loop_timer = .{
-                    .next = bun.timespec.now(.allow_mocked_time).addMs(@intCast(milliseconds)),
+                    .next = fun.timespec.now(.allow_mocked_time).addMs(@intCast(milliseconds)),
                     .tag = .AbortSignalTimeout,
                     .state = .CANCELLED,
                 },
             });
 
-            if (comptime bun.Environment.ci_assert) {
+            if (comptime fun.Environment.ci_assert) {
                 if (signal_.aborted()) {
                     @panic("unreachable: signal is already aborted");
                 }
@@ -224,7 +224,7 @@ pub const AbortSignal = opaque {
         // This may run inside the "signal" call.
         fn deinit(this: *Timeout, vm: *jsc.VirtualMachine) void {
             this.cancel(vm);
-            bun.destroy(this);
+            fun.destroy(this);
         }
 
         /// Caller is expected to have already ref'd the AbortSignal.
@@ -247,9 +247,9 @@ pub const AbortSignal = opaque {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const CommonAbortReason = @import("./CommonAbortReason.zig").CommonAbortReason;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

@@ -1,15 +1,15 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { join } from "path";
-import { bunEnv, bunExe } from "../../../harness";
+import { funEnv, funExe } from "../../../harness";
 
 describe("issue 14982", () => {
   it("does not hang in commander", async () => {
-    const process = Bun.spawn([bunExe(), join(__dirname, "commander-hang.fixture.ts"), "test"], {
+    const process = Fun.spawn([funExe(), join(__dirname, "commander-hang.fixture.ts"), "test"], {
       stdin: "inherit",
       stdout: "pipe",
       stderr: "inherit",
       cwd: __dirname,
-      env: bunEnv,
+      env: funEnv,
     });
     await process.exited;
     expect(process.exitCode).toBe(0);

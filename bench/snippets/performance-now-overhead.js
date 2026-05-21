@@ -5,9 +5,9 @@ bench("performance.now x 1000", () => {
   }
 });
 
-if ("Bun" in globalThis) {
-  var nanoseconds = Bun.nanoseconds;
-  bench("Bun.nanoseconds x 1000", () => {
+if ("Fun" in globalThis) {
+  var nanoseconds = Fun.nanoseconds;
+  bench("Fun.nanoseconds x 1000", () => {
     for (let i = 0; i < 1000; i++) {
       nanoseconds();
     }

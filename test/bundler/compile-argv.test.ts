@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -82,15 +82,15 @@ describe("bundler", () => {
           process.exit(1);
         }
 
-        // argv[0] should be "bun" for standalone executables
-        if (process.argv[0] !== "bun") {
-          console.error("FAIL: Expected argv[0] to be 'bun', got", process.argv[0]);
+        // argv[0] should be "fun" for standalone executables
+        if (process.argv[0] !== "fun") {
+          console.error("FAIL: Expected argv[0] to be 'fun', got", process.argv[0]);
           process.exit(1);
         }
 
         // argv[1] should be the script path (contains the bundle path)
-        if (!process.argv[1].includes("bunfs")) {
-          console.error("FAIL: Expected argv[1] to contain 'bunfs' path, got", process.argv[1]);
+        if (!process.argv[1].includes("funfs")) {
+          console.error("FAIL: Expected argv[1] to contain 'funfs' path, got", process.argv[1]);
           process.exit(1);
         }
 
@@ -141,13 +141,13 @@ describe("bundler", () => {
           process.exit(1);
         }
 
-        if (process.argv[0] !== "bun") {
-          console.error("FAIL: Expected argv[0] to be 'bun', got", process.argv[0]);
+        if (process.argv[0] !== "fun") {
+          console.error("FAIL: Expected argv[0] to be 'fun', got", process.argv[0]);
           process.exit(1);
         }
 
-        if (!process.argv[1].includes("bunfs")) {
-          console.error("FAIL: Expected argv[1] to contain 'bunfs' path, got", process.argv[1]);
+        if (!process.argv[1].includes("funfs")) {
+          console.error("FAIL: Expected argv[1] to contain 'funfs' path, got", process.argv[1]);
           process.exit(1);
         }
 
@@ -177,7 +177,7 @@ describe("bundler", () => {
   });
 
   // Test that --version and --help flags are passed through to user code (issue #26082)
-  // When compile-exec-argv is used, user flags like --version should NOT be intercepted by Bun
+  // When compile-exec-argv is used, user flags like --version should NOT be intercepted by Fun
   itBundled("compile/CompileExecArgvVersionHelpPassthrough", {
     compile: {
       execArgv: ["--smol"],
@@ -185,7 +185,7 @@ describe("bundler", () => {
     backend: "cli",
     files: {
       "/entry.ts": /* js */ `
-        // Test that --version and --help are passed through to user code, not intercepted by Bun
+        // Test that --version and --help are passed through to user code, not intercepted by Fun
         const args = process.argv.slice(2);
         console.log("User args:", JSON.stringify(args));
 
@@ -277,8 +277,8 @@ describe("bundler", () => {
     },
   });
 
-  // Test that BUN_OPTIONS env var is applied to standalone executables
-  itBundled("compile/BunOptionsEnvApplied", {
+  // Test that FUN_OPTIONS env var is applied to standalone executables
+  itBundled("compile/FunOptionsEnvApplied", {
     compile: true,
     backend: "cli",
     files: {
@@ -291,7 +291,7 @@ describe("bundler", () => {
           process.exit(1);
         }
 
-        // BUN_OPTIONS args should NOT appear in process.argv
+        // FUN_OPTIONS args should NOT appear in process.argv
         for (const arg of process.argv) {
           if (arg === "--smol") {
             console.error("FAIL: --smol leaked into process.argv:", process.argv);
@@ -299,17 +299,17 @@ describe("bundler", () => {
           }
         }
 
-        console.log("SUCCESS: BUN_OPTIONS applied to standalone executable");
+        console.log("SUCCESS: FUN_OPTIONS applied to standalone executable");
       `,
     },
     run: {
-      env: { BUN_OPTIONS: "--smol" },
-      stdout: /SUCCESS: BUN_OPTIONS applied to standalone executable/,
+      env: { FUN_OPTIONS: "--smol" },
+      stdout: /SUCCESS: FUN_OPTIONS applied to standalone executable/,
     },
   });
 
-  // Test BUN_OPTIONS combined with compile-exec-argv
-  itBundled("compile/BunOptionsEnvWithCompileExecArgv", {
+  // Test FUN_OPTIONS combined with compile-exec-argv
+  itBundled("compile/FunOptionsEnvWithCompileExecArgv", {
     compile: {
       execArgv: ["--conditions=production"],
     },
@@ -329,7 +329,7 @@ describe("bundler", () => {
           process.exit(1);
         }
 
-        // Neither BUN_OPTIONS nor compile-exec-argv args should be in process.argv
+        // Neither FUN_OPTIONS nor compile-exec-argv args should be in process.argv
         for (const arg of process.argv) {
           if (arg === "--smol" || arg === "--conditions=production") {
             console.error("FAIL: exec option leaked into process.argv:", arg);
@@ -337,17 +337,17 @@ describe("bundler", () => {
           }
         }
 
-        console.log("SUCCESS: BUN_OPTIONS and compile-exec-argv both applied");
+        console.log("SUCCESS: FUN_OPTIONS and compile-exec-argv both applied");
       `,
     },
     run: {
-      env: { BUN_OPTIONS: "--smol" },
-      stdout: /SUCCESS: BUN_OPTIONS and compile-exec-argv both applied/,
+      env: { FUN_OPTIONS: "--smol" },
+      stdout: /SUCCESS: FUN_OPTIONS and compile-exec-argv both applied/,
     },
   });
 
-  // Test BUN_OPTIONS with user passthrough args
-  itBundled("compile/BunOptionsEnvWithPassthroughArgs", {
+  // Test FUN_OPTIONS with user passthrough args
+  itBundled("compile/FunOptionsEnvWithPassthroughArgs", {
     compile: true,
     backend: "cli",
     files: {
@@ -370,7 +370,7 @@ describe("bundler", () => {
           process.exit(1);
         }
 
-        // BUN_OPTIONS args should NOT be in process.argv
+        // FUN_OPTIONS args should NOT be in process.argv
         for (const arg of process.argv) {
           if (arg === "--smol") {
             console.error("FAIL: --smol leaked into process.argv:", process.argv);
@@ -378,13 +378,13 @@ describe("bundler", () => {
           }
         }
 
-        console.log("SUCCESS: BUN_OPTIONS separated from passthrough args");
+        console.log("SUCCESS: FUN_OPTIONS separated from passthrough args");
       `,
     },
     run: {
-      env: { BUN_OPTIONS: "--smol" },
+      env: { FUN_OPTIONS: "--smol" },
       args: ["user-arg1", "user-arg2"],
-      stdout: /SUCCESS: BUN_OPTIONS separated from passthrough args/,
+      stdout: /SUCCESS: FUN_OPTIONS separated from passthrough args/,
     },
   });
 });

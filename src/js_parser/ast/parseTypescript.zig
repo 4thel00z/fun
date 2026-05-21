@@ -285,7 +285,7 @@ pub fn ParseTypescript(
                     // run the renamer. For external-facing things the renamer will avoid
                     // collisions automatically so this isn't important for correctness.
                     arg_ref = p.newSymbol(.hoisted, strings.cat(p.allocator, "_", name_text) catch unreachable) catch unreachable;
-                    bun.handleOom(p.current_scope.generated.append(p.allocator, arg_ref));
+                    fun.handleOom(p.current_scope.generated.append(p.allocator, arg_ref));
                 } else {
                     arg_ref = p.newSymbol(.hoisted, name_text) catch unreachable;
                 }
@@ -377,7 +377,7 @@ pub fn ParseTypescript(
                 name.ref = try p.declareSymbol(.ts_enum, name_loc, name_text);
                 _ = try p.pushScopeForParsePass(.entry, loc);
                 p.current_scope.ts_namespace = ts_namespace;
-                bun.handleOom(p.ref_to_ts_namespace_member.putNoClobber(p.allocator, name.ref.?, enum_member_data));
+                fun.handleOom(p.ref_to_ts_namespace_member.putNoClobber(p.allocator, name.ref.?, enum_member_data));
             }
 
             try p.lexer.expect(.t_open_brace);
@@ -418,7 +418,7 @@ pub fn ParseTypescript(
                 exported_members.put(p.allocator, value.name, .{
                     .loc = value.loc,
                     .data = .enum_property,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
 
                 if (p.lexer.token != .t_comma and p.lexer.token != .t_semicolon) {
                     break;
@@ -461,11 +461,11 @@ pub fn ParseTypescript(
                     // run the renamer. For external-facing things the renamer will avoid
                     // collisions automatically so this isn't important for correctness.
                     arg_ref = p.newSymbol(.hoisted, strings.cat(p.allocator, "_", name_text) catch unreachable) catch unreachable;
-                    bun.handleOom(p.current_scope.generated.append(p.allocator, arg_ref));
+                    fun.handleOom(p.current_scope.generated.append(p.allocator, arg_ref));
                 } else {
                     arg_ref = p.declareSymbol(.hoisted, name_loc, name_text) catch unreachable;
                 }
-                bun.handleOom(p.ref_to_ts_namespace_member.put(p.allocator, arg_ref, enum_member_data));
+                fun.handleOom(p.ref_to_ts_namespace_member.put(p.allocator, arg_ref, enum_member_data));
                 ts_namespace.arg_ref = arg_ref;
 
                 p.popScope();
@@ -495,7 +495,7 @@ pub fn ParseTypescript(
                         if (i != null) count += 1;
                     }
 
-                    const items = bun.handleOom(p.allocator.alloc(ScopeOrder, count));
+                    const items = fun.handleOom(p.allocator.alloc(ScopeOrder, count));
                     var i: usize = 0;
                     for (p.scopes_in_order.items[scope_index..]) |item| {
                         items[i] = item orelse continue;
@@ -503,7 +503,7 @@ pub fn ParseTypescript(
                     }
                     break :scope_order_clone items;
                 },
-            ) catch |err| bun.handleOom(err);
+            ) catch |err| fun.handleOom(err);
 
             return p.s(S.Enum{
                 .name = name,
@@ -517,11 +517,11 @@ pub fn ParseTypescript(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
@@ -534,10 +534,10 @@ const Stmt = js_ast.Stmt;
 const G = js_ast.G;
 const Decl = G.Decl;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const JSXTransformType = js_parser.JSXTransformType;
 const ParseStatementOptions = js_parser.ParseStatementOptions;
 const Ref = js_parser.Ref;

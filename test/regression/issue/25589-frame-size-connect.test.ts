@@ -2,7 +2,7 @@
  * Test for GitHub Issue #25589: NGHTTP2_FRAME_SIZE_ERROR with gRPC
  * Tests using @connectrpc/connect-node client
  *
- * This test verifies that Bun's HTTP/2 client correctly handles:
+ * This test verifies that Fun's HTTP/2 client correctly handles:
  * 1. Large response headers from server
  * 2. Large trailers (gRPC status details)
  * 3. Large request headers from client

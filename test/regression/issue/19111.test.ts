@@ -1,5 +1,5 @@
-// https://github.com/oven-sh/bun/issues/19111
-// stream.Readable's `readable` event not firing in Bun 1.2.6+
+// https://github.com/underdoc-org/fun/issues/19111
+// stream.Readable's `readable` event not firing in Fun 1.2.6+
 import assert from "node:assert";
 import { IncomingMessage, ServerResponse } from "node:http";
 import { PassThrough, Readable } from "node:stream";

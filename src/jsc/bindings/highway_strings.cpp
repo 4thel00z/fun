@@ -18,7 +18,7 @@
 
 // Wrap the SIMD implementations in the Highway namespaces
 HWY_BEFORE_NAMESPACE();
-namespace bun {
+namespace fun {
 namespace HWY_NAMESPACE {
 
 namespace hn = hwy::HWY_NAMESPACE; // Alias for convenience
@@ -644,14 +644,14 @@ void FillWithSkipMaskImpl(const uint8_t* HWY_RESTRICT mask, size_t mask_len, uin
 }
 
 } // namespace HWY_NAMESPACE
-} // namespace bun
+} // namespace fun
 HWY_AFTER_NAMESPACE();
 
 // HWY_ONCE ensures this block is only included once,
 // in the final pass after all target-specific code is generated.
 #if HWY_ONCE
 
-namespace bun {
+namespace fun {
 
 // Define the dispatch tables. The names here must exactly match
 // the *Impl function names defined within the HWY_NAMESPACE block above.
@@ -669,8 +669,8 @@ HWY_EXPORT(IndexOfSpaceOrNewlineOrNonASCIIImpl);
 HWY_EXPORT(MemMemImpl);
 HWY_EXPORT(ScanCharFrequencyImpl);
 // Define the C-callable wrappers that use HWY_DYNAMIC_DISPATCH.
-// These need to be defined *after* the HWY_EXPORT block and INSIDE namespace bun
-// so that HWY_DYNAMIC_DISPATCH(FuncImpl) correctly resolves to bun::N_*::FuncImpl.
+// These need to be defined *after* the HWY_EXPORT block and INSIDE namespace fun
+// so that HWY_DYNAMIC_DISPATCH(FuncImpl) correctly resolves to fun::N_*::FuncImpl.
 // The extern "C" only affects linkage (for C callers), not namespace resolution.
 extern "C" {
 
@@ -780,7 +780,7 @@ void highway_fill_with_skip_mask(
 
 } // extern "C"
 
-} // namespace bun
+} // namespace fun
 
 #if OS(DARWIN)
 // On macOS, override the libc memmem with our implementation

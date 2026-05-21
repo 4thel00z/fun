@@ -68,7 +68,7 @@ pub const Targets = css.targets.Targets;
 pub const Features = css.targets.Features;
 
 pub const ImportInfo = struct {
-    import_records: *const bun.BabyList(bun.ImportRecord),
+    import_records: *const fun.BabyList(fun.ImportRecord),
     /// bundle_v2.graph.ast.items(.url_for_css)
     ast_urls_for_css: []const []const u8,
     /// bundle_v2.graph.input_files.items(.unique_key_for_additional_file)
@@ -76,7 +76,7 @@ pub const ImportInfo = struct {
 
     /// Only safe to use when outside the bundler. As in, the import records
     /// were not resolved to source indices. This will out-of-bounds otherwise.
-    pub fn initOutsideOfBundler(records: *bun.BabyList(bun.ImportRecord)) ImportInfo {
+    pub fn initOutsideOfBundler(records: *fun.BabyList(fun.ImportRecord)) ImportInfo {
         return .{
             .import_records = records,
             .ast_urls_for_css = &.{},
@@ -122,17 +122,17 @@ pub const Printer = struct {
     error_kind: ?css.PrinterError = null,
     import_info: ?ImportInfo = null,
     public_path: []const u8,
-    symbols: *const bun.ast.Symbol.Map,
+    symbols: *const fun.ast.Symbol.Map,
     local_names: ?*const css.LocalsResultsMap = null,
     /// NOTE This should be the same mimalloc heap arena allocator
     allocator: Allocator,
     // TODO: finish the fields
 
-    pub threadlocal var in_debug_fmt: if (bun.Environment.isDebug) bool else u0 = if (bun.Environment.isDebug) false else 0;
+    pub threadlocal var in_debug_fmt: if (fun.Environment.isDebug) bool else u0 = if (fun.Environment.isDebug) false else 0;
 
     const This = @This();
 
-    pub fn lookupSymbol(this: *This, ref: bun.bundle_v2.Ref) []const u8 {
+    pub fn lookupSymbol(this: *This, ref: fun.bundle_v2.Ref) []const u8 {
         const symbols = this.symbols;
 
         const final_ref = symbols.follow(ref);
@@ -145,7 +145,7 @@ pub const Printer = struct {
     }
 
     pub fn lookupIdentOrRef(this: *This, ident: css.css_values.ident.IdentOrRef) []const u8 {
-        if (comptime bun.Environment.isDebug) {
+        if (comptime fun.Environment.isDebug) {
             if (in_debug_fmt) {
                 return ident.debugIdent();
             }
@@ -212,7 +212,7 @@ pub const Printer = struct {
         kind: css.PrinterErrorKind,
         maybe_loc: ?css.dependencies.Location,
     ) PrintErr!void {
-        bun.debugAssert(this.error_kind == null);
+        fun.debugAssert(this.error_kind == null);
         this.error_kind = css.PrinterError{
             .kind = kind,
             .loc = if (maybe_loc) |loc| css.ErrorLocation{
@@ -240,7 +240,7 @@ pub const Printer = struct {
         options: PrinterOptions,
         import_info: ?ImportInfo,
         local_names: ?*const css.LocalsResultsMap,
-        symbols: *const bun.ast.Symbol.Map,
+        symbols: *const fun.ast.Symbol.Map,
     ) This {
         return .{
             .sources = null,
@@ -265,7 +265,7 @@ pub const Printer = struct {
         };
     }
 
-    pub inline fn getImportRecords(this: *This) PrintErr!*const bun.BabyList(bun.ImportRecord) {
+    pub inline fn getImportRecords(this: *This) PrintErr!*const fun.BabyList(fun.ImportRecord) {
         if (this.import_info) |info| return info.import_records;
         return this.addNoImportRecordError();
     }
@@ -273,7 +273,7 @@ pub const Printer = struct {
     pub fn printImportRecord(this: *This, import_record_idx: u32) PrintErr!void {
         if (this.import_info) |info| {
             const import_record = info.import_records.at(import_record_idx);
-            const a, const b = bun.bundle_v2.cheapPrefixNormalizer(this.public_path, import_record.path.text);
+            const a, const b = fun.bundle_v2.cheapPrefixNormalizer(this.public_path, import_record.path.text);
             try this.writeStr(a);
             try this.writeStr(b);
             return;
@@ -281,7 +281,7 @@ pub const Printer = struct {
         return this.addNoImportRecordError();
     }
 
-    pub inline fn importRecord(this: *Printer, import_record_idx: u32) PrintErr!*const bun.ImportRecord {
+    pub inline fn importRecord(this: *Printer, import_record_idx: u32) PrintErr!*const fun.ImportRecord {
         if (this.import_info) |info| return info.import_records.at(import_record_idx);
         return this.addNoImportRecordError();
     }
@@ -334,8 +334,8 @@ pub const Printer = struct {
     /// NOTE: Is is assumed that the string does not contain any newline characters.
     /// If such a string is written, it will break source maps.
     pub fn writeStr(this: *This, s: []const u8) PrintErr!void {
-        if (comptime bun.Environment.isDebug) {
-            bun.assert(std.mem.indexOfScalar(u8, s, '\n') == null);
+        if (comptime fun.Environment.isDebug) {
+            fun.assert(std.mem.indexOfScalar(u8, s, '\n') == null);
         }
         this.col += @intCast(s.len);
         _ = this.dest.writeAll(s) catch {
@@ -357,7 +357,7 @@ pub const Printer = struct {
     }
 
     fn replaceDots(allocator: Allocator, s: []const u8) []const u8 {
-        var str = bun.handleOom(allocator.dupe(u8, s));
+        var str = fun.handleOom(allocator.dupe(u8, s));
         std.mem.replaceScalar(u8, str[0..], '.', '-');
         return str;
     }
@@ -565,7 +565,7 @@ pub const Printer = struct {
     }
 
     fn writeIndent(this: *This) PrintErr!void {
-        bun.debugAssert(!this.minify);
+        fun.debugAssert(!this.minify);
         if (this.indent_amt > 0) {
             // try this.writeStr(this.getIndent(this.ident));
             this.dest.splatByteAll(' ', this.indent_amt) catch return this.addFmtError();
@@ -573,7 +573,7 @@ pub const Printer = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const sourcemap = @import("./sourcemap.zig");
 
 const std = @import("std");

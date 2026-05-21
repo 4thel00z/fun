@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir } from "harness";
 
 // This test replicates the pattern used by TUI apps
 // where they read piped stdin first, then reopen /dev/tty for interactive input
@@ -10,7 +10,7 @@ test("TUI app pattern: read piped stdin then reopen /dev/tty", async () => {
   }
 
   // Check if 'script' command is available for TTY simulation
-  const scriptPath = Bun.which("script");
+  const scriptPath = Fun.which("script");
   if (!scriptPath) {
     // Skip test on platforms without 'script' command
     return;
@@ -80,12 +80,12 @@ test("TUI app pattern: read piped stdin then reopen /dev/tty", async () => {
   // macOS and Linux have different script command syntax
   const isMacOS = process.platform === "darwin";
   const cmd = isMacOS
-    ? [scriptPath, "-q", "/dev/null", "sh", "-c", `echo "piped content" | ${bunExe()} tui-app-sim.js`]
-    : [scriptPath, "-q", "-c", `echo "piped content" | ${bunExe()} tui-app-sim.js`, "/dev/null"];
+    ? [scriptPath, "-q", "/dev/null", "sh", "-c", `echo "piped content" | ${funExe()} tui-app-sim.js`]
+    : [scriptPath, "-q", "-c", `echo "piped content" | ${funExe()} tui-app-sim.js`, "/dev/null"];
 
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     cmd,
-    env: bunEnv,
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -96,7 +96,7 @@ test("TUI app pattern: read piped stdin then reopen /dev/tty", async () => {
   // First snapshot the combined output to see what actually happened
   const output = stdout + (stderr ? "\nSTDERR:\n" + stderr : "");
   // Use JSON.stringify to make control characters visible
-  const jsonOutput = JSON.stringify(normalizeBunSnapshot(output, dir));
+  const jsonOutput = JSON.stringify(normalizeFunSnapshot(output, dir));
   // macOS script adds control characters, Linux doesn't
   const expected = isMacOS
     ? `"^D\\b\\bPIPED_INPUT:piped content\\nTTY_REOPENED:SUCCESS"`

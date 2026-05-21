@@ -10,7 +10,7 @@
 #include "wtf/text/MakeString.h"
 #include "../ErrorCode.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;
@@ -31,7 +31,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionNodeEventsGetEventListeners, (JSGlobalObject 
     RETURN_IF_EXCEPTION(throwScope, {});
 
     if (!thisObject) [[unlikely]] {
-        return Bun::throwError(globalObject, throwScope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE,
+        return Fun::throwError(globalObject, throwScope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE,
             "ERR_INVALID_ARG_TYPE: first argument must be of type EventEmitter"_s);
     }
 

@@ -271,7 +271,7 @@ pub const LengthValue = union(enum) {
             .dimension => |*dim| {
                 // todo_stuff.match_ignore_ascii_case
                 inline for (std.meta.fields(@This())) |field| {
-                    if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(field.name, dim.unit)) {
+                    if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(field.name, dim.unit)) {
                         return .{ .result = @unionInit(LengthValue, field.name, dim.num.value) };
                     }
                 }
@@ -295,7 +295,7 @@ pub const LengthValue = union(enum) {
     }
 
     pub fn isZero(this: *const LengthValue) bool {
-        inline for (bun.meta.EnumFields(@This())) |field| {
+        inline for (fun.meta.EnumFields(@This())) |field| {
             if (@intFromEnum(this.*) == field.value) {
                 return @field(this, field.name) == 0.0;
             }
@@ -327,7 +327,7 @@ pub const LengthValue = union(enum) {
     }
 
     pub inline fn eql(this: *const @This(), other: *const @This()) bool {
-        inline for (bun.meta.EnumFields(@This())) |field| {
+        inline for (fun.meta.EnumFields(@This())) |field| {
             if (field.value == @intFromEnum(this.*) and field.value == @intFromEnum(other.*)) {
                 return @field(this, field.name) == @field(other, field.name);
             }
@@ -363,7 +363,7 @@ pub const LengthValue = union(enum) {
         switch (token.*) {
             .dimension => |*dim| {
                 inline for (std.meta.fields(@This())) |field| {
-                    if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(field.name, dim.unit)) {
+                    if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(field.name, dim.unit)) {
                         return .{ .result = @unionInit(LengthValue, field.name, dim.num.value) };
                     }
                 }
@@ -384,7 +384,7 @@ pub const LengthValue = union(enum) {
     }
 
     pub fn map(this: *const @This(), comptime map_fn: *const fn (f32) f32) LengthValue {
-        inline for (comptime bun.meta.EnumFields(@This())) |field| {
+        inline for (comptime fun.meta.EnumFields(@This())) |field| {
             if (field.value == @intFromEnum(this.*)) {
                 return @unionInit(LengthValue, field.name, map_fn(@field(this, field.name)));
             }
@@ -393,7 +393,7 @@ pub const LengthValue = union(enum) {
     }
 
     pub fn mulF32(this: @This(), _: Allocator, other: f32) LengthValue {
-        const fields = comptime bun.meta.EnumFields(@This());
+        const fields = comptime fun.meta.EnumFields(@This());
         inline for (fields) |field| {
             if (field.value == @intFromEnum(this)) {
                 return @unionInit(LengthValue, field.name, @field(this, field.name) * other);
@@ -408,7 +408,7 @@ pub const LengthValue = union(enum) {
 
     pub fn partialCmp(this: *const LengthValue, other: *const LengthValue) ?std.math.Order {
         if (@intFromEnum(this.*) == @intFromEnum(other.*)) {
-            inline for (bun.meta.EnumFields(LengthValue)) |field| {
+            inline for (fun.meta.EnumFields(LengthValue)) |field| {
                 if (field.value == @intFromEnum(this.*)) {
                     const a = @field(this, field.name);
                     const b = @field(other, field.name);
@@ -433,7 +433,7 @@ pub const LengthValue = union(enum) {
         comptime op_fn: *const fn (@TypeOf(ctx), a: f32, b: f32) f32,
     ) ?LengthValue {
         if (@intFromEnum(this.*) == @intFromEnum(other.*)) {
-            inline for (bun.meta.EnumFields(LengthValue)) |field| {
+            inline for (fun.meta.EnumFields(LengthValue)) |field| {
                 if (field.value == @intFromEnum(this.*)) {
                     const a = @field(this, field.name);
                     const b = @field(other, field.name);
@@ -459,7 +459,7 @@ pub const LengthValue = union(enum) {
         comptime op_fn: *const fn (@TypeOf(ctx), a: f32, b: f32) R,
     ) ?R {
         if (@intFromEnum(this.*) == @intFromEnum(other.*)) {
-            inline for (bun.meta.EnumFields(LengthValue)) |field| {
+            inline for (fun.meta.EnumFields(LengthValue)) |field| {
                 if (field.value == @intFromEnum(this.*)) {
                     const a = @field(this, field.name);
                     const b = @field(other, field.name);
@@ -483,7 +483,7 @@ pub const LengthValue = union(enum) {
 
     pub fn tryAdd(this: *const LengthValue, _: std.mem.Allocator, rhs: *const LengthValue) ?LengthValue {
         if (@intFromEnum(this.*) == @intFromEnum(rhs.*)) {
-            inline for (bun.meta.EnumFields(LengthValue)) |field| {
+            inline for (fun.meta.EnumFields(LengthValue)) |field| {
                 if (field.value == @intFromEnum(this.*)) {
                     return @unionInit(LengthValue, field.name, @field(this, field.name) + @field(rhs, field.name));
                 }
@@ -499,7 +499,7 @@ pub const LengthValue = union(enum) {
     }
 
     pub fn isCompatible(this: *const @This(), browsers: css.targets.Browsers) bool {
-        inline for (bun.meta.EnumFields(LengthValue)) |field| {
+        inline for (fun.meta.EnumFields(LengthValue)) |field| {
             if (field.value == @intFromEnum(this.*)) {
                 if (comptime @TypeOf(@field(FeatureMap, field.name)) == css.compat.Feature) {
                     const feature = @field(FeatureMap, field.name);
@@ -526,7 +526,7 @@ pub const Length = union(enum) {
     pub fn deepClone(this: *const Length, allocator: Allocator) Length {
         return switch (this.*) {
             .value => |v| .{ .value = v },
-            .calc => |calc| .{ .calc = bun.create(allocator, Calc(Length), Calc(Length).deepClone(calc, allocator)) },
+            .calc => |calc| .{ .calc = fun.create(allocator, Calc(Length), Calc(Length).deepClone(calc, allocator)) },
         };
     }
 
@@ -546,7 +546,7 @@ pub const Length = union(enum) {
                 return .{ .result = ret };
             }
             return .{ .result = .{
-                .calc = bun.create(
+                .calc = fun.create(
                     input.allocator(),
                     Calc(Length),
                     calc_value,
@@ -587,7 +587,7 @@ pub const Length = union(enum) {
         return switch (this) {
             .value => Length{ .value = this.value.mulF32(allocator, other) },
             .calc => Length{
-                .calc = bun.create(
+                .calc = fun.create(
                     allocator,
                     Calc(Length),
                     this.calc.mulF32(allocator, other),
@@ -604,9 +604,9 @@ pub const Length = union(enum) {
         const res: Length = Length.addInternal(a, allocator, b);
         if (res == .calc) {
             if (res.calc.* == .value) return res.calc.value.*;
-            if (res.calc.* == .function and res.calc.function.* != .calc) return Length{ .calc = bun.create(allocator, Calc(Length), Calc(Length){ .function = res.calc.function }) };
-            return Length{ .calc = bun.create(allocator, Calc(Length), Calc(Length){
-                .function = bun.create(allocator, MathFunction(Length), MathFunction(Length){ .calc = res.calc.* }),
+            if (res.calc.* == .function and res.calc.function.* != .calc) return Length{ .calc = fun.create(allocator, Calc(Length), Calc(Length){ .function = res.calc.function }) };
+            return Length{ .calc = fun.create(allocator, Calc(Length), Calc(Length){
+                .function = fun.create(allocator, MathFunction(Length), MathFunction(Length){ .calc = res.calc.* }),
             }) };
         }
         return res;
@@ -620,7 +620,7 @@ pub const Length = union(enum) {
     pub fn intoCalc(this: Length, allocator: Allocator) Calc(Length) {
         return switch (this) {
             .calc => |c| c.*,
-            else => |v| Calc(Length){ .value = bun.create(allocator, Length, v) },
+            else => |v| Calc(Length){ .value = fun.create(allocator, Length, v) },
         };
     }
 
@@ -641,10 +641,10 @@ pub const Length = union(enum) {
         } else if (b == .calc and b.calc.* == .value and a != .calc) {
             return a.add__(allocator, b.calc.value.*);
         } else {
-            return Length{ .calc = bun.create(allocator, Calc(Length), Calc(Length){
+            return Length{ .calc = fun.create(allocator, Calc(Length), Calc(Length){
                 .sum = .{
-                    .left = bun.create(allocator, Calc(Length), a.intoCalc(allocator)),
-                    .right = bun.create(allocator, Calc(Length), b.intoCalc(allocator)),
+                    .left = fun.create(allocator, Calc(Length), a.intoCalc(allocator)),
+                    .right = fun.create(allocator, Calc(Length), b.intoCalc(allocator)),
                 },
             }) };
         }
@@ -705,11 +705,11 @@ pub const Length = union(enum) {
         return switch (length) {
             .calc => |c| switch (c.*) {
                 .function => |f| switch (f.*) {
-                    .calc => |c2| .{ .calc = bun.create(allocator, Calc(Length), c2) },
-                    else => |c2| .{ .calc = bun.create(
+                    .calc => |c2| .{ .calc = fun.create(allocator, Calc(Length), c2) },
+                    else => |c2| .{ .calc = fun.create(
                         allocator,
                         Calc(Length),
-                        Calc(Length){ .function = bun.create(allocator, css.css_values.calc.MathFunction(Length), c2) },
+                        Calc(Length){ .function = fun.create(allocator, css.css_values.calc.MathFunction(Length), c2) },
                     ) },
                 },
                 else => .{ .calc = c },
@@ -792,6 +792,6 @@ pub const Length = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

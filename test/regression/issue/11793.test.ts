@@ -1,21 +1,21 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot } from "harness";
 
 test("11793", async () => {
-  const result = Bun.spawn({
-    cmd: [bunExe(), "test", import.meta.dir + "/11793.fixture.ts"],
+  const result = Fun.spawn({
+    cmd: [funExe(), "test", import.meta.dir + "/11793.fixture.ts"],
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
   const exitCode = await result.exited;
   const stdout = await result.stdout.text();
   const stderr = await result.stderr.text();
 
   expect(exitCode).toBe(1);
-  expect(normalizeBunSnapshot(stderr)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stderr)).toMatchInlineSnapshot(`
     "test/regression/issue/11793.fixture.ts:
-    1 | const { test, expect } = require("bun:test");
+    1 | const { test, expect } = require("fun:test");
     2 | 
     3 | test.each([[]])("%p", array => {
     4 |   expect(array.length).toBe(0);

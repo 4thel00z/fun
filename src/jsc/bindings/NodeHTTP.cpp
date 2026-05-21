@@ -3,7 +3,7 @@
 #include "ZigGlobalObject.h"
 #include <JavaScriptCore/GlobalObjectMethodTable.h>
 #include "helpers.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 #include <JavaScriptCore/AggregateError.h>
 #include <JavaScriptCore/InternalFieldTuple.h>
@@ -13,8 +13,8 @@
 #include "wtf/URL.h"
 #include "JSFetchHeaders.h"
 #include "JSDOMExceptionHandling.h"
-#include <bun-uws/src/App.h>
-#include <bun-uws/src/Http3Response.h>
+#include <fun-uws/src/App.h>
+#include <fun-uws/src/Http3Response.h>
 #include "ZigGeneratedClasses.h"
 #include "ScriptExecutionContext.h"
 #include "AsyncContextFrame.h"
@@ -24,14 +24,14 @@
 #include "JSSocketAddressDTO.h"
 #include "node/JSNodeHTTPServerSocket.h"
 #include "node/JSNodeHTTPServerSocketPrototype.h"
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;
 
-BUN_DECLARE_HOST_FUNCTION(Bun__drainMicrotasksFromJS);
-BUN_DECLARE_HOST_FUNCTION(jsFunctionRequestOrResponseHasBodyValue);
-BUN_DECLARE_HOST_FUNCTION(jsFunctionGetCompleteRequestOrResponseBodyValueAsArrayBuffer);
+FUN_DECLARE_HOST_FUNCTION(Fun__drainMicrotasksFromJS);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionRequestOrResponseHasBodyValue);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionGetCompleteRequestOrResponseBodyValueAsArrayBuffer);
 extern "C" uWS::HttpRequest* Request__getUWSRequest(void*);
 extern "C" void Request__setInternalEventCallback(void*, EncodedJSValue, JSC::JSGlobalObject*);
 extern "C" void Request__setTimeout(void*, EncodedJSValue, JSC::JSGlobalObject*);
@@ -1016,7 +1016,7 @@ JSValue createNodeHTTPInternalBinding(Zig::GlobalObject* globalObject)
         1, jsFunctionGetCompleteRequestOrResponseBodyValueAsArrayBuffer, ImplementationVisibility::Public, Intrinsic::NoIntrinsic, 0);
     obj->putDirectNativeFunction(
         vm, globalObject, JSC::PropertyName(JSC::Identifier::fromString(vm, "drainMicrotasks"_s)),
-        0, Bun__drainMicrotasksFromJS, ImplementationVisibility::Public, Intrinsic::NoIntrinsic, 0);
+        0, Fun__drainMicrotasksFromJS, ImplementationVisibility::Public, Intrinsic::NoIntrinsic, 0);
 
     return obj;
 }
@@ -1091,4 +1091,4 @@ extern "C" void WebCore__FetchHeaders__toUWSResponse(WebCore::FetchHeaders* arg0
     }
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -7,7 +7,7 @@
 #include "JavaScriptCore/JSObject.h"
 #include <JavaScriptCore/JSFunction.h>
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 JSC_DEFINE_HOST_FUNCTION(functionNoop, (JSC::JSGlobalObject*, JSC::CallFrame*))

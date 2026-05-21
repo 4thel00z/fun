@@ -58,10 +58,10 @@ const SymbolIterator = Symbol.iterator;
 type nodeAssert = typeof import("node:assert");
 
 function isDeepEqual(a, b) {
-  return Bun.deepEquals(a, b, false);
+  return Fun.deepEquals(a, b, false);
 }
 function isDeepStrictEqual(a, b) {
-  return Bun.deepEquals(a, b, true);
+  return Fun.deepEquals(a, b, true);
 }
 
 var _inspect;
@@ -429,7 +429,7 @@ function compareBranch(actual, expected, comparedObjects?) {
     ArrayBufferIsView(expected) ||
     isAnyArrayBuffer(expected)
   ) {
-    return Bun.deepEquals(actual, expected, true);
+    return Fun.deepEquals(actual, expected, true);
   }
 
   for (const type of typesToCallDeepStrictEqualWith) {

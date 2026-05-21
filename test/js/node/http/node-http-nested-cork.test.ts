@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // Security test: with two cork slots that can be stolen/evicted, a bug in slot
 // bookkeeping could cause bytes meant for socket A to land in socket B's
@@ -32,7 +32,7 @@ const harness = `
   // drainMicrotasks path and the event loop tick path.
   async function yieldMixed(c) {
     if (c % 3 === 0) await 42;              // microtask (awaiting non-thenable)
-    else if (c % 3 === 1) await Bun.sleep(0); // macrotask
+    else if (c % 3 === 1) await Fun.sleep(0); // macrotask
     else { await 42; await 42; }            // double microtask
   }
 
@@ -56,9 +56,9 @@ const harness = `
 `;
 
 async function run(script: string) {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", harness + script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", harness + script],
+    env: funEnv,
     stderr: "pipe",
   });
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
@@ -143,7 +143,7 @@ describe.concurrent("cork buffer: no cross-socket data bleed", () => {
         res.writeHead(200, { "x-id": id });
         const half = CHUNKS >> 1;
         for (let c = 0; c < half; c++) res.write("[" + id + ":" + c + "]");
-        await Bun.sleep(0);
+        await Fun.sleep(0);
         for (let c = half; c < CHUNKS; c++) res.write("[" + id + ":" + c + "]");
         res.end("[" + id + ":end]");
       }).listen(0, async () => {
@@ -153,18 +153,18 @@ describe.concurrent("cork buffer: no cross-socket data bleed", () => {
     `);
   });
 
-  // Attack 5: Bun.serve buffered Response — the whole body is one string,
+  // Attack 5: Fun.serve buffered Response — the whole body is one string,
   // but the interleaved awaits before returning stress slot allocation for
   // the headers + body write.
-  test("Bun.serve — buffered Response with await before return", async () => {
+  test("Fun.serve — buffered Response with await before return", async () => {
     await run(`
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         async fetch(req) {
           const id = new URL(req.url).pathname.slice(1);
           await chainAwait();
           await 42;
-          await Bun.sleep(0);
+          await Fun.sleep(0);
           let body = "";
           for (let c = 0; c < CHUNKS; c++) body += "[" + id + ":" + c + "]";
           body += "[" + id + ":end]";
@@ -178,9 +178,9 @@ describe.concurrent("cork buffer: no cross-socket data bleed", () => {
 
   // Attack 6: type:"direct" with write+yield per chunk. Direct streams write
   // straight to the socket via the cork path.
-  test('Bun.serve — type:"direct" write then mixed yield', async () => {
+  test('Fun.serve — type:"direct" write then mixed yield', async () => {
     await run(`
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         async fetch(req) {
           const id = new URL(req.url).pathname.slice(1);
@@ -205,9 +205,9 @@ describe.concurrent("cork buffer: no cross-socket data bleed", () => {
 
   // Attack 7: type:"direct" yield then write. Slot is empty at yield, we must
   // re-cork before each write.
-  test('Bun.serve — type:"direct" yield then write', async () => {
+  test('Fun.serve — type:"direct" yield then write', async () => {
     await run(`
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         async fetch(req) {
           const id = new URL(req.url).pathname.slice(1);
@@ -232,9 +232,9 @@ describe.concurrent("cork buffer: no cross-socket data bleed", () => {
 
   // Attack 8: type:"direct" burst + flush + yield + burst. Explicit flush
   // mid-stream exercises the uncork/recork path.
-  test('Bun.serve — type:"direct" burst, flush, yield, burst', async () => {
+  test('Fun.serve — type:"direct" burst, flush, yield, burst', async () => {
     await run(`
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         async fetch(req) {
           const id = new URL(req.url).pathname.slice(1);
@@ -245,7 +245,7 @@ describe.concurrent("cork buffer: no cross-socket data bleed", () => {
               const half = CHUNKS >> 1;
               for (let c = 0; c < half; c++) ctrl.write("[" + id + ":" + c + "]");
               await ctrl.flush();
-              await Bun.sleep(0);
+              await Fun.sleep(0);
               for (let c = half; c < CHUNKS; c++) ctrl.write("[" + id + ":" + c + "]");
               ctrl.write("[" + id + ":end]");
               await ctrl.end();
@@ -260,9 +260,9 @@ describe.concurrent("cork buffer: no cross-socket data bleed", () => {
 
   // Attack 9: async generator with mixed yields — every other chunk uses a
   // different yield primitive.
-  test("Bun.serve — async generator mixed yield per chunk", async () => {
+  test("Fun.serve — async generator mixed yield per chunk", async () => {
     await run(`
-      const server = Bun.serve({
+      const server = Fun.serve({
         port: 0,
         async fetch(req) {
           const id = new URL(req.url).pathname.slice(1);

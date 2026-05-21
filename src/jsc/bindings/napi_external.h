@@ -5,10 +5,10 @@
 #include "napi_finalizer.h"
 #include "root.h"
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "napi.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;

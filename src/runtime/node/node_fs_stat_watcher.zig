@@ -1,6 +1,6 @@
-const log = bun.Output.scoped(.StatWatcher, .visible);
+const log = fun.Output.scoped(.StatWatcher, .visible);
 
-fn statToJSStats(globalThis: *jsc.JSGlobalObject, stats: *const bun.sys.PosixStat, bigint: bool) bun.JSError!jsc.JSValue {
+fn statToJSStats(globalThis: *jsc.JSGlobalObject, stats: *const fun.sys.PosixStat, bigint: bool) fun.JSError!jsc.JSValue {
     if (bigint) {
         return StatsBig.init(stats).toJS(globalThis);
     } else {
@@ -13,7 +13,7 @@ pub const StatWatcherScheduler = struct {
     current_interval: std.atomic.Value(i32) = .{ .raw = 0 },
     task: jsc.WorkPoolTask = .{ .callback = &workPoolCallback },
     main_thread: std.Thread.Id,
-    vm: *bun.jsc.VirtualMachine,
+    vm: *fun.jsc.VirtualMachine,
     watchers: WatcherQueue = WatcherQueue{},
 
     event_loop_timer: EventLoopTimer = .{
@@ -23,13 +23,13 @@ pub const StatWatcherScheduler = struct {
 
     ref_count: RefCount,
 
-    const RefCount = bun.ptr.ThreadSafeRefCount(StatWatcherScheduler, "ref_count", deinit, .{ .debug_name = "StatWatcherScheduler" });
+    const RefCount = fun.ptr.ThreadSafeRefCount(StatWatcherScheduler, "ref_count", deinit, .{ .debug_name = "StatWatcherScheduler" });
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
 
     const WatcherQueue = UnboundedQueue(StatWatcher, .next);
 
-    pub fn init(vm: *bun.jsc.VirtualMachine) bun.ptr.RefPtr(StatWatcherScheduler) {
+    pub fn init(vm: *fun.jsc.VirtualMachine) fun.ptr.RefPtr(StatWatcherScheduler) {
         return .new(.{
             .ref_count = .init(),
             .main_thread = std.Thread.getCurrentId(),
@@ -38,14 +38,14 @@ pub const StatWatcherScheduler = struct {
     }
 
     fn deinit(this: *StatWatcherScheduler) void {
-        bun.assertf(this.watchers.isEmpty(), "destroying StatWatcherScheduler while it still has watchers", .{});
-        bun.destroy(this);
+        fun.assertf(this.watchers.isEmpty(), "destroying StatWatcherScheduler while it still has watchers", .{});
+        fun.destroy(this);
     }
 
     pub fn append(this: *StatWatcherScheduler, watcher: *StatWatcher) void {
         log("append new watcher {s}", .{watcher.path});
-        bun.assert(watcher.closed == false);
-        bun.assert(watcher.next == null);
+        fun.assert(watcher.closed == false);
+        fun.assert(watcher.next == null);
 
         watcher.ref();
         this.watchers.push(watcher);
@@ -88,7 +88,7 @@ pub const StatWatcherScheduler = struct {
         }
 
         // reschedule the timer
-        this.vm.timer.update(&this.event_loop_timer, &bun.timespec.msFromNow(.allow_mocked_time, interval));
+        this.vm.timer.update(&this.event_loop_timer, &fun.timespec.msFromNow(.allow_mocked_time, interval));
     }
 
     /// Schedule a task to set the timer in the main thread
@@ -98,11 +98,11 @@ pub const StatWatcherScheduler = struct {
             task: jsc.AnyTask,
 
             pub fn updateTimer(self: *@This()) void {
-                defer bun.default_allocator.destroy(self);
+                defer fun.default_allocator.destroy(self);
                 self.scheduler.setTimer(self.scheduler.getInterval());
             }
         };
-        const holder = bun.handleOom(bun.default_allocator.create(Holder));
+        const holder = fun.handleOom(fun.default_allocator.create(Holder));
         holder.* = .{
             .scheduler = this,
             .task = jsc.AnyTask.New(Holder, Holder.updateTimer).init(holder),
@@ -189,13 +189,13 @@ pub const StatWatcher = struct {
 
     this_value: jsc.JSRef,
 
-    poll_ref: bun.Async.KeepAlive = .{},
+    poll_ref: fun.Async.KeepAlive = .{},
 
-    #last_stat: bun.threading.Guarded(bun.sys.PosixStat),
+    #last_stat: fun.threading.Guarded(fun.sys.PosixStat),
 
-    scheduler: bun.ptr.RefPtr(StatWatcherScheduler),
+    scheduler: fun.ptr.RefPtr(StatWatcherScheduler),
 
-    const RefCount = bun.ptr.ThreadSafeRefCount(StatWatcher, "ref_count", deinit, .{ .debug_name = "StatWatcher" });
+    const RefCount = fun.ptr.ThreadSafeRefCount(StatWatcher, "ref_count", deinit, .{ .debug_name = "StatWatcher" });
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
 
@@ -216,14 +216,14 @@ pub const StatWatcher = struct {
     ///
     /// This field is sometimes set from aonther thread, so we should copy by
     /// value instead of referencing by pointer.
-    pub fn getLastStat(this: *StatWatcher) bun.sys.PosixStat {
+    pub fn getLastStat(this: *StatWatcher) fun.sys.PosixStat {
         const value = this.#last_stat.lock();
         defer this.#last_stat.unlock();
         return value.*;
     }
 
     /// Set the last stat.
-    pub fn setLastStat(this: *StatWatcher, stat: *const bun.sys.PosixStat) void {
+    pub fn setLastStat(this: *StatWatcher, stat: *const fun.sys.PosixStat) void {
         const value = this.#last_stat.lock();
         defer this.#last_stat.unlock();
         value.* = stat.*;
@@ -234,17 +234,17 @@ pub const StatWatcher = struct {
 
         if (this.ctx.test_isolation_enabled) this.ctx.rareData().removeStatWatcherForIsolation(this);
         this.persistent = false;
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             if (this.poll_ref.isActive()) {
-                bun.assert(jsc.VirtualMachine.get() == this.ctx); // We cannot unref() on another thread this way.
+                fun.assert(jsc.VirtualMachine.get() == this.ctx); // We cannot unref() on another thread this way.
             }
         }
         this.poll_ref.unref(this.ctx);
         this.closed = true;
         this.this_value.deinit();
 
-        bun.default_allocator.free(this.path);
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.free(this.path);
+        fun.default_allocator.destroy(this);
     }
 
     pub const Arguments = struct {
@@ -257,8 +257,8 @@ pub const StatWatcher = struct {
 
         global_this: *jsc.JSGlobalObject,
 
-        pub fn fromJS(global: *jsc.JSGlobalObject, arguments: *ArgumentsSlice) bun.JSError!Arguments {
-            const path = try PathLike.fromJSWithAllocator(global, arguments, bun.default_allocator) orelse {
+        pub fn fromJS(global: *jsc.JSGlobalObject, arguments: *ArgumentsSlice) fun.JSError!Arguments {
+            const path = try PathLike.fromJSWithAllocator(global, arguments, fun.default_allocator) orelse {
                 return global.throwInvalidArguments("filename must be a string or TypedArray", .{});
             };
 
@@ -311,7 +311,7 @@ pub const StatWatcher = struct {
         }
     };
 
-    pub fn doRef(this: *StatWatcher, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn doRef(this: *StatWatcher, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         if (!this.closed and !this.persistent) {
             this.persistent = true;
             this.poll_ref.ref(this.ctx);
@@ -319,7 +319,7 @@ pub const StatWatcher = struct {
         return .js_undefined;
     }
 
-    pub fn doUnref(this: *StatWatcher, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn doUnref(this: *StatWatcher, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         if (this.persistent) {
             this.persistent = false;
             this.poll_ref.unref(this.ctx);
@@ -337,7 +337,7 @@ pub const StatWatcher = struct {
         this.this_value.downgrade();
     }
 
-    pub fn doClose(this: *StatWatcher, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn doClose(this: *StatWatcher, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         this.close();
         return .js_undefined;
     }
@@ -356,14 +356,14 @@ pub const StatWatcher = struct {
         task: jsc.WorkPoolTask = .{ .callback = &workPoolCallback },
 
         pub fn createAndSchedule(watcher: *StatWatcher) void {
-            const task = bun.new(InitialStatTask, .{ .watcher = watcher });
+            const task = fun.new(InitialStatTask, .{ .watcher = watcher });
             watcher.ref();
             jsc.WorkPool.schedule(&task.task);
         }
 
         fn workPoolCallback(task: *jsc.WorkPoolTask) void {
             const initial_stat_task: *InitialStatTask = @fieldParentPtr("task", task);
-            defer bun.destroy(initial_stat_task);
+            defer fun.destroy(initial_stat_task);
             const this = initial_stat_task.watcher;
 
             if (this.closed) {
@@ -371,13 +371,13 @@ pub const StatWatcher = struct {
                 return;
             }
 
-            const stat: bun.sys.Maybe(bun.sys.PosixStat) = if (bun.Environment.isLinux and bun.sys.supports_statx_on_linux.load(.monotonic))
-                bun.sys.statx(this.path, &.{ .type, .mode, .nlink, .uid, .gid, .atime, .mtime, .ctime, .btime, .ino, .size, .blocks })
+            const stat: fun.sys.Maybe(fun.sys.PosixStat) = if (fun.Environment.isLinux and fun.sys.supports_statx_on_linux.load(.monotonic))
+                fun.sys.statx(this.path, &.{ .type, .mode, .nlink, .uid, .gid, .atime, .mtime, .ctime, .btime, .ino, .size, .blocks })
             else brk: {
-                const result = bun.sys.stat(this.path);
+                const result = fun.sys.stat(this.path);
                 break :brk switch (result) {
-                    .result => |r| bun.sys.Maybe(bun.sys.PosixStat){ .result = bun.sys.PosixStat.init(&r) },
-                    .err => |e| bun.sys.Maybe(bun.sys.PosixStat){ .err = e },
+                    .result => |r| fun.sys.Maybe(fun.sys.PosixStat){ .result = fun.sys.PosixStat.init(&r) },
+                    .err => |e| fun.sys.Maybe(fun.sys.PosixStat){ .err = e },
                 };
             };
             switch (stat) {
@@ -389,7 +389,7 @@ pub const StatWatcher = struct {
                 .err => {
                     // on enoent, eperm, we call cb with two zeroed stat objects
                     // and store previous stat as a zeroed stat object, and then call the callback.
-                    this.setLastStat(&std.mem.zeroes(bun.sys.PosixStat));
+                    this.setLastStat(&std.mem.zeroes(fun.sys.PosixStat));
                     this.enqueueTaskConcurrent(jsc.ConcurrentTask.fromCallback(this, initialStatErrorOnMainThread));
                 },
             }
@@ -440,10 +440,10 @@ pub const StatWatcher = struct {
     /// Called from any thread
     pub fn restat(this: *StatWatcher) void {
         log("recalling stat", .{});
-        const stat: bun.sys.Maybe(bun.sys.PosixStat) = if (bun.Environment.isLinux and bun.sys.supports_statx_on_linux.load(.monotonic))
-            bun.sys.statx(this.path, &.{ .type, .mode, .nlink, .uid, .gid, .atime, .mtime, .ctime, .btime, .ino, .size, .blocks })
+        const stat: fun.sys.Maybe(fun.sys.PosixStat) = if (fun.Environment.isLinux and fun.sys.supports_statx_on_linux.load(.monotonic))
+            fun.sys.statx(this.path, &.{ .type, .mode, .nlink, .uid, .gid, .atime, .mtime, .ctime, .btime, .ino, .size, .blocks })
         else brk: {
-            const result = bun.sys.stat(this.path);
+            const result = fun.sys.stat(this.path);
             break :brk switch (result) {
                 .result => |r| .{ .result = .init(&r) },
                 .err => |e| .{ .err = e },
@@ -451,7 +451,7 @@ pub const StatWatcher = struct {
         };
         const res = switch (stat) {
             .result => |res| res,
-            .err => std.mem.zeroes(bun.sys.PosixStat),
+            .err => std.mem.zeroes(fun.sys.PosixStat),
         };
 
         const last_stat = this.getLastStat();
@@ -503,10 +503,10 @@ pub const StatWatcher = struct {
     pub fn init(args: Arguments) !*StatWatcher {
         log("init", .{});
 
-        const buf = bun.path_buffer_pool.get();
-        defer bun.path_buffer_pool.put(buf);
+        const buf = fun.path_buffer_pool.get();
+        defer fun.path_buffer_pool.put(buf);
         var slice = args.path.slice();
-        if (bun.strings.startsWith(slice, "file://")) {
+        if (fun.strings.startsWith(slice, "file://")) {
             slice = slice["file://".len..];
         }
 
@@ -518,12 +518,12 @@ pub const StatWatcher = struct {
             .auto,
         );
 
-        const alloc_file_path = try bun.default_allocator.allocSentinel(u8, file_path.len, 0);
-        errdefer bun.default_allocator.free(alloc_file_path);
+        const alloc_file_path = try fun.default_allocator.allocSentinel(u8, file_path.len, 0);
+        errdefer fun.default_allocator.free(alloc_file_path);
         @memcpy(alloc_file_path, file_path);
 
-        var this = try bun.default_allocator.create(StatWatcher);
-        const vm = args.global_this.bunVM();
+        var this = try fun.default_allocator.create(StatWatcher);
+        const vm = args.global_this.funVM();
         this.* = .{
             .ctx = vm,
             .persistent = args.persistent,
@@ -536,7 +536,7 @@ pub const StatWatcher = struct {
             // Instant.now will not fail on our target platforms.
             .last_check = std.time.Instant.now() catch unreachable,
             // InitStatTask is responsible for setting this
-            .#last_stat = .init(std.mem.zeroes(bun.sys.PosixStat)),
+            .#last_stat = .init(std.mem.zeroes(fun.sys.PosixStat)),
             .scheduler = vm.rareData().nodeFSStatWatcherScheduler(vm),
             .ref_count = .init(),
         };
@@ -562,16 +562,16 @@ const Path = @import("../../paths/resolve_path.zig");
 const fs = @import("../../resolver/fs.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Output = bun.Output;
-const UnboundedQueue = bun.threading.UnboundedQueue;
-const EventLoopTimer = bun.api.Timer.EventLoopTimer;
+const fun = @import("fun");
+const Output = fun.Output;
+const UnboundedQueue = fun.threading.UnboundedQueue;
+const EventLoopTimer = fun.api.Timer.EventLoopTimer;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const EventLoop = jsc.EventLoop;
 const VirtualMachine = jsc.VirtualMachine;
 const ArgumentsSlice = jsc.CallFrame.ArgumentsSlice;
 
 const PathLike = jsc.Node.PathLike;
-const StatsBig = bun.jsc.Node.StatsBig;
-const StatsSmall = bun.jsc.Node.StatsSmall;
+const StatsBig = fun.jsc.Node.StatsBig;
+const StatsSmall = fun.jsc.Node.StatsSmall;

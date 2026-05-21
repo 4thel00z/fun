@@ -3,7 +3,7 @@ __ref_count: RefCount = RefCount.init(),
 #js_value: jsc.JSRef = jsc.JSRef.empty(),
 #globalObject: *jsc.JSGlobalObject,
 #vm: *jsc.VirtualMachine,
-#poll_ref: bun.Async.KeepAlive = .{},
+#poll_ref: fun.Async.KeepAlive = .{},
 
 #connection: MySQLConnection,
 
@@ -13,7 +13,7 @@ idle_timeout_interval_ms: u32 = 0,
 connection_timeout_ms: u32 = 0,
 /// Before being connected, this is a connection timeout timer.
 /// After being connected, this is an idle timeout timer.
-timer: bun.api.Timer.EventLoopTimer = .{
+timer: fun.api.Timer.EventLoopTimer = .{
     .tag = .MySQLConnectionTimeout,
     .next = .epoch,
 },
@@ -22,7 +22,7 @@ timer: bun.api.Timer.EventLoopTimer = .{
 /// It starts when the connection successfully starts (i.e. after handshake is complete).
 /// It stops when the connection is closed.
 max_lifetime_interval_ms: u32 = 0,
-max_lifetime_timer: bun.api.Timer.EventLoopTimer = .{
+max_lifetime_timer: fun.api.Timer.EventLoopTimer = .{
     .tag = .MySQLConnectionMaxLifetime,
     .next = .epoch,
 },
@@ -97,7 +97,7 @@ pub fn resetConnectionTimeout(this: *@This()) void {
         this.#connection.isProcessingData() or
         interval == 0) return;
 
-    this.timer.next = bun.timespec.msFromNow(.allow_mocked_time, @intCast(interval));
+    this.timer.next = fun.timespec.msFromNow(.allow_mocked_time, @intCast(interval));
     this.#vm.timer.insert(&this.timer);
 }
 
@@ -117,16 +117,16 @@ pub fn onConnectionTimeout(this: *@This()) void {
 
     switch (this.#connection.status) {
         .connected => {
-            this.failFmt(error.IdleTimeout, "Idle timeout reached after {f}", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.idle_timeout_interval_ms) *| std.time.ns_per_ms)});
+            this.failFmt(error.IdleTimeout, "Idle timeout reached after {f}", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.idle_timeout_interval_ms) *| std.time.ns_per_ms)});
         },
         .connecting => {
-            this.failFmt(error.ConnectionTimedOut, "Connection timeout after {f}", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
+            this.failFmt(error.ConnectionTimedOut, "Connection timeout after {f}", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
         },
         .handshaking,
         .authenticating,
         .authentication_awaiting_pk,
         => {
-            this.failFmt(error.ConnectionTimedOut, "Connection timeout after {f} (during authentication)", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
+            this.failFmt(error.ConnectionTimedOut, "Connection timeout after {f} (during authentication)", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
         },
         .disconnected, .failed => {},
     }
@@ -135,16 +135,16 @@ pub fn onConnectionTimeout(this: *@This()) void {
 pub fn onMaxLifetimeTimeout(this: *@This()) void {
     this.max_lifetime_timer.state = .FIRED;
     if (this.#connection.status == .failed) return;
-    this.failFmt(error.LifetimeTimeout, "Max lifetime timeout reached after {f}", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.max_lifetime_interval_ms) *| std.time.ns_per_ms)});
+    this.failFmt(error.LifetimeTimeout, "Max lifetime timeout reached after {f}", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.max_lifetime_interval_ms) *| std.time.ns_per_ms)});
 }
 fn setupMaxLifetimeTimerIfNecessary(this: *@This()) void {
     if (this.max_lifetime_interval_ms == 0) return;
     if (this.max_lifetime_timer.state == .ACTIVE) return;
 
-    this.max_lifetime_timer.next = bun.timespec.msFromNow(.allow_mocked_time, @intCast(this.max_lifetime_interval_ms));
+    this.max_lifetime_timer.next = fun.timespec.msFromNow(.allow_mocked_time, @intCast(this.max_lifetime_interval_ms));
     this.#vm.timer.insert(&this.max_lifetime_timer);
 }
-pub fn constructor(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*@This() {
+pub fn constructor(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*@This() {
     _ = callframe;
 
     return globalObject.throw("MySQLConnection cannot be constructed directly", .{});
@@ -182,7 +182,7 @@ fn drainInternal(this: *@This()) void {
     defer event_loop.exit();
     this.ensureJSValueIsAlive();
     this.#connection.flushQueue() catch |err| {
-        bun.assert_eql(err, error.AuthenticationFailed);
+        fun.assert_eql(err, error.AuthenticationFailed);
         this.fail("Authentication failed", err);
         return;
     };
@@ -193,7 +193,7 @@ pub fn deinit(this: *@This()) void {
     this.unregisterAutoFlusher();
 
     this.#connection.cleanup();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 fn ensureJSValueIsAlive(this: *@This()) void {
@@ -238,7 +238,7 @@ pub fn SocketHandler(comptime ssl: bool) type {
             this: *JSMySQLConnection,
             _: anytype,
             success: i32,
-            ssl_error: uws.us_bun_verify_error_t,
+            ssl_error: uws.us_fun_verify_error_t,
         ) void {
             const handshakeWasSuccessful = this.#connection.doHandshake(success, ssl_error) catch |err| return this.failFmt(err, "Failed to send handshake response", .{});
             if (!handshakeWasSuccessful) {
@@ -320,18 +320,18 @@ fn updateReferenceType(this: *@This()) void {
     this.#poll_ref.unref(this.#vm);
 }
 
-pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    var vm = globalObject.bunVM();
+pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    var vm = globalObject.funVM();
     const arguments = callframe.arguments();
-    const hostname_str = try arguments[0].toBunString(globalObject);
+    const hostname_str = try arguments[0].toFunString(globalObject);
     defer hostname_str.deref();
     const port = try arguments[1].coerce(i32, globalObject);
 
-    const username_str = try arguments[2].toBunString(globalObject);
+    const username_str = try arguments[2].toFunString(globalObject);
     defer username_str.deref();
-    const password_str = try arguments[3].toBunString(globalObject);
+    const password_str = try arguments[3].toFunString(globalObject);
     defer password_str.deref();
-    const database_str = try arguments[4].toBunString(globalObject);
+    const database_str = try arguments[4].toFunString(globalObject);
     defer database_str.deref();
     // TODO: update this to match MySQL.
     const ssl_mode: SSLMode = switch (arguments[5].toInt32()) {
@@ -366,18 +366,18 @@ pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
         // CA/cert errors throw synchronously, applied later by upgradeToTLS.
         // Goes through the per-VM weak `SSLContextCache` so every pooled
         // connection / reconnect shares one `SSL_CTX*` per distinct config.
-        var err: uws.create_bun_socket_error_t = .none;
+        var err: uws.create_fun_socket_error_t = .none;
         secure = vm.rareData().sslCtxCache().getOrCreateOpts(tls_config.asUSocketsForClientVerification(), &err) orelse {
             tls_config.deinit();
             return globalObject.throwValue(err.toJS(globalObject));
         };
     }
-    // Covers `try arguments[7/8].toBunString()` and the null-byte rejection
-    // below. Ownership passes to `MySQLConnection.init` once `bun.new`
+    // Covers `try arguments[7/8].toFunString()` and the null-byte rejection
+    // below. Ownership passes to `MySQLConnection.init` once `fun.new`
     // succeeds — we null the locals at that point so the connect-fail path
     // (which `deref()`s the connection) doesn't double-free.
     errdefer {
-        if (secure) |s| bun.BoringSSL.c.SSL_CTX_free(s);
+        if (secure) |s| fun.BoringSSL.c.SSL_CTX_free(s);
         tls_config.deinit();
     }
 
@@ -387,34 +387,34 @@ pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
     var options: []const u8 = "";
     var path: []const u8 = "";
 
-    const options_str = try arguments[7].toBunString(globalObject);
+    const options_str = try arguments[7].toFunString(globalObject);
     defer options_str.deref();
 
-    const path_str = try arguments[8].toBunString(globalObject);
+    const path_str = try arguments[8].toFunString(globalObject);
     defer path_str.deref();
 
     const options_buf: []u8 = brk: {
-        var b = bun.StringBuilder{};
+        var b = fun.StringBuilder{};
         b.cap += username_str.utf8ByteLength() + 1 + password_str.utf8ByteLength() + 1 + database_str.utf8ByteLength() + 1 + options_str.utf8ByteLength() + 1 + path_str.utf8ByteLength() + 1;
 
-        b.allocate(bun.default_allocator) catch {};
-        var u = username_str.toUTF8WithoutRef(bun.default_allocator);
+        b.allocate(fun.default_allocator) catch {};
+        var u = username_str.toUTF8WithoutRef(fun.default_allocator);
         defer u.deinit();
         username = b.append(u.slice());
 
-        var p = password_str.toUTF8WithoutRef(bun.default_allocator);
+        var p = password_str.toUTF8WithoutRef(fun.default_allocator);
         defer p.deinit();
         password = b.append(p.slice());
 
-        var d = database_str.toUTF8WithoutRef(bun.default_allocator);
+        var d = database_str.toUTF8WithoutRef(fun.default_allocator);
         defer d.deinit();
         database = b.append(d.slice());
 
-        var o = options_str.toUTF8WithoutRef(bun.default_allocator);
+        var o = options_str.toUTF8WithoutRef(fun.default_allocator);
         defer o.deinit();
         options = b.append(o.slice());
 
-        var _path = path_str.toUTF8WithoutRef(bun.default_allocator);
+        var _path = path_str.toUTF8WithoutRef(fun.default_allocator);
         defer _path.deinit();
         path = b.append(_path.slice());
 
@@ -425,7 +425,7 @@ pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
     // (null bytes act as field terminators in the MySQL wire protocol).
     inline for (.{ .{ username, "username" }, .{ password, "password" }, .{ database, "database" }, .{ path, "path" } }) |entry| {
         if (entry[0].len > 0 and std.mem.indexOfScalar(u8, entry[0], 0) != null) {
-            bun.default_allocator.free(options_buf);
+            fun.default_allocator.free(options_buf);
             // tls_config / secure released by the errdefer above.
             return globalObject.throwInvalidArguments(entry[1] ++ " must not contain null bytes", .{});
         }
@@ -440,7 +440,7 @@ pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
     // MySQL doesn't support unnamed prepared statements
     _ = use_unnamed_prepared_statements;
 
-    var ptr = bun.new(JSMySQLConnection, .{
+    var ptr = fun.new(JSMySQLConnection, .{
         .#globalObject = globalObject,
         .#vm = vm,
         .idle_timeout_interval_ms = @intCast(idle_timeout),
@@ -463,7 +463,7 @@ pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
     tls_config = .{};
 
     {
-        const hostname = hostname_str.toUTF8(bun.default_allocator);
+        const hostname = hostname_str.toUTF8(fun.default_allocator);
         defer hostname.deinit();
 
         // MySQL always opens plain TCP first; STARTTLS adopts into the TLS
@@ -492,7 +492,7 @@ pub fn createInstance(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
     return js_value;
 }
 
-pub fn getQueries(_: *@This(), thisValue: jsc.JSValue, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn getQueries(_: *@This(), thisValue: jsc.JSValue, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     if (js.queriesGetCached(thisValue)) |value| {
         return value;
     }
@@ -531,22 +531,22 @@ pub fn setOnClose(_: *@This(), thisValue: jsc.JSValue, globalObject: *jsc.JSGlob
     js.oncloseSetCached(thisValue, globalObject, value);
 }
 
-pub fn doRef(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doRef(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     this.#poll_ref.ref(this.#vm);
     return .js_undefined;
 }
 
-pub fn doUnref(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doUnref(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     this.#poll_ref.unref(this.#vm);
     return .js_undefined;
 }
 
-pub fn doFlush(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doFlush(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     this.registerAutoFlusher();
     return .js_undefined;
 }
 
-pub fn doClose(this: *@This(), globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doClose(this: *@This(), globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     _ = globalObject;
     this.stopTimers();
 
@@ -603,8 +603,8 @@ pub inline fn getWriter(this: *@This()) NewWriter(MySQLConnection.Writer) {
     return this.#connection.writer();
 }
 fn failFmt(this: *@This(), error_code: AnyMySQLError.Error, comptime fmt: [:0]const u8, args: anytype) void {
-    const message = bun.handleOom(std.fmt.allocPrint(bun.default_allocator, fmt, args));
-    defer bun.default_allocator.free(message);
+    const message = fun.handleOom(std.fmt.allocPrint(fun.default_allocator, fmt, args));
+    defer fun.default_allocator.free(message);
 
     const err = AnyMySQLError.mysqlErrorToJS(this.#globalObject, message, error_code);
     this.failWithJSValue(err);
@@ -664,7 +664,7 @@ pub fn onQueryResult(this: *@This(), request: *JSMySQLQuery, result: MySQLQueryR
 }
 pub fn onResultRow(this: *@This(), request: *JSMySQLQuery, statement: *MySQLStatement, Context: type, reader: NewReader(Context)) (error{ ShortRead, JSError })!void {
     const result_mode = request.getResultMode();
-    var stack_fallback = std.heap.stackFallback(4096, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(4096, fun.default_allocator);
     const allocator = stack_fallback.get();
     var row = ResultSet.Row{
         .globalObject = this.#globalObject,
@@ -766,10 +766,10 @@ pub fn onErrorPacket(
 }
 
 pub fn getStatementFromSignatureHash(this: *@This(), signature_hash: u64) !MySQLConnection.PreparedStatementsMapGetOrPutResult {
-    return try this.#connection.statements.getOrPut(bun.default_allocator, signature_hash);
+    return try this.#connection.statements.getOrPut(fun.default_allocator, signature_hash);
 }
 
-const RefCount = bun.ptr.RefCount(@This(), "__ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "__ref_count", deinit, .{});
 pub const js = jsc.Codegen.JSMySQLConnection;
 pub const fromJS = js.fromJS;
 pub const fromJSDirect = js.fromJSDirect;
@@ -777,7 +777,7 @@ pub const toJS = js.toJS;
 
 pub const Writer = MySQLConnection.Writer;
 
-const debug = bun.Output.scoped(.MySQLConnection, .visible);
+const debug = fun.Output.scoped(.MySQLConnection, .visible);
 
 const AnyMySQLError = @import("../../sql/mysql/protocol/AnyMySQLError.zig");
 const CachedStructure = @import("../../sql_jsc/shared/CachedStructure.zig");
@@ -792,10 +792,10 @@ const NewReader = @import("../../sql/mysql/protocol/NewReader.zig").NewReader;
 const NewWriter = @import("../../sql/mysql/protocol/NewWriter.zig").NewWriter;
 const SSLMode = @import("../../sql/mysql/SSLMode.zig").SSLMode;
 
-const bun = @import("bun");
-const uws = bun.uws;
+const fun = @import("fun");
+const uws = fun.uws;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const AutoFlusher = jsc.WebCore.AutoFlusher;

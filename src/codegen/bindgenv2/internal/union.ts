@@ -48,7 +48,7 @@ export function union(
   }
 
   function getUnionType() {
-    return `::Bun::IDLOrderedUnion<${alternatives.map(a => a.idlType).join(", ")}>`;
+    return `::Fun::IDLOrderedUnion<${alternatives.map(a => a.idlType).join(", ")}>`;
   }
 
   function validateAlternatives(name?: string) {
@@ -71,9 +71,9 @@ export function union(
       }
       zigType(style?: CodeStyle) {
         if (style !== "pretty") {
-          return `bun.meta.TaggedUnion(&.{ ${alternatives.map(a => a.zigType()).join(", ")} })`;
+          return `fun.meta.TaggedUnion(&.{ ${alternatives.map(a => a.zigType()).join(", ")} })`;
         }
-        return dedent(`bun.meta.TaggedUnion(&.{
+        return dedent(`fun.meta.TaggedUnion(&.{
           ${joinIndented(
             10,
             alternatives.map(a => a.zigType("pretty") + ","),
@@ -101,7 +101,7 @@ export function union(
       return name;
     }
     get idlType() {
-      return `::Bun::Bindgen::Generated::IDL${name}`;
+      return `::Fun::Bindgen::Generated::IDL${name}`;
     }
     get bindgenType() {
       return `bindgen_generated.internal.${name}`;
@@ -126,7 +126,7 @@ export function union(
         ${headersForTypes(alternatives)
           .map(headerName => `#include <${headerName}>\n` + " ".repeat(8))
           .join("")}
-        namespace Bun::Bindgen::Generated {
+        namespace Fun::Bindgen::Generated {
         using IDL${name} = ${getUnionType()};
         using ${name} = IDL${name}::ImplementationType;
         }
@@ -148,7 +148,7 @@ export function union(
 
           pub fn deinit(self: *@This()) void {
             switch (std.meta.activeTag(self.*)) {
-              inline else => |tag| bun.memory.deinit(&@field(self, @tagName(tag))),
+              inline else => |tag| fun.memory.deinit(&@field(self, @tagName(tag))),
             }
             self.* = undefined;
           }
@@ -177,8 +177,8 @@ export function union(
 
         const bindgen_generated = @import("bindgen_generated");
         const std = @import("std");
-        const bun = @import("bun");
-        const bindgen = bun.bun_js.bindgen;
+        const fun = @import("fun");
+        const bindgen = fun.fun_js.bindgen;
       `);
     }
   })();

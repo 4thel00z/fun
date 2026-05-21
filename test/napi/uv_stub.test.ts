@@ -1,5 +1,5 @@
-import { afterEach, beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, makeTree, tempDirWithFiles } from "harness";
+import { afterEach, beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, makeTree, tempDirWithFiles } from "harness";
 import path from "node:path";
 import { symbols, test_skipped } from "../../src/jsc/bindings/libuv/generate_uv_posix_stubs_constants";
 import goodSource from "./uv-stub-stuff/good_plugin.c";
@@ -15,14 +15,14 @@ describe.if(!isWindows)("uv stubs", () => {
 
   beforeAll(async () => {
     const files = {
-      "plugin.c": await Bun.file(source).text(),
-      "good_plugin.c": await Bun.file(goodSource).text(),
+      "plugin.c": await Fun.file(source).text(),
+      "good_plugin.c": await Fun.file(goodSource).text(),
       "package.json": JSON.stringify({
         "name": "fake-plugin",
         "module": "index.ts",
         "type": "module",
         "devDependencies": {
-          "@types/bun": "latest",
+          "@types/fun": "latest",
         },
         "peerDependencies": {
           "typescript": "^5.0.0",
@@ -65,8 +65,8 @@ describe.if(!isWindows)("uv stubs", () => {
     process.chdir(tempdir);
 
     const libuvDir = path.join(__dirname, "../../src/jsc/bindings/libuv");
-    await Bun.$`cp -R ${libuvDir} ${path.join(tempdir, "libuv")}`;
-    await Bun.$`${bunExe()} i && ${bunExe()} build:napi`.env(bunEnv).cwd(tempdir);
+    await Fun.$`cp -R ${libuvDir} ${path.join(tempdir, "libuv")}`;
+    await Fun.$`${funExe()} i && ${funExe()} build:napi`.env(funEnv).cwd(tempdir);
     console.log("tempdir:", tempdir);
   });
 
@@ -76,18 +76,18 @@ describe.if(!isWindows)("uv stubs", () => {
 
   for (const symbol of symbols_to_test) {
     test(`unsupported: ${symbol}`, async () => {
-      const { stderr } = await Bun.$`BUN_INTERNAL_SUPPRESS_CRASH_ON_UV_STUB=1 ${bunExe()} run index.ts ${symbol}`
+      const { stderr } = await Fun.$`FUN_INTERNAL_SUPPRESS_CRASH_ON_UV_STUB=1 ${funExe()} run index.ts ${symbol}`
         .cwd(tempdir)
         .throws(false)
         .quiet();
       const stderrStr = stderr.toString();
-      expect(stderrStr).toContain("Bun encountered a crash when running a NAPI module that tried to call");
+      expect(stderrStr).toContain("Fun encountered a crash when running a NAPI module that tried to call");
       expect(stderrStr).toContain(symbol);
     });
   }
 
   test("should not crash when calling supported uv functions", async () => {
-    const { stdout, exitCode } = await Bun.$`${bunExe()} run nocrash.ts`.cwd(tempdir).throws(false).quiet();
+    const { stdout, exitCode } = await Fun.$`${funExe()} run nocrash.ts`.cwd(tempdir).throws(false).quiet();
     expect(exitCode).toBe(0);
     expect(stdout.toString()).toContain("HI!");
   });

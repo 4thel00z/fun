@@ -8,7 +8,7 @@ using namespace JSC;
 using namespace ncrypto;
 using namespace WebCore;
 
-namespace Bun {
+namespace Fun {
 
 JSC_DEFINE_HOST_FUNCTION(jsVerifyOneShot, (JSGlobalObject * lexicalGlobalObject, CallFrame* callFrame))
 {
@@ -74,7 +74,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignOneShot, (JSGlobalObject * lexicalGlobalObject, C
     return JSValue::encode(signature);
 }
 
-extern "C" void Bun__SignJobCtx__deinit(SignJobCtx* ctx)
+extern "C" void Fun__SignJobCtx__deinit(SignJobCtx* ctx)
 {
     ctx->deinit();
 }
@@ -83,7 +83,7 @@ void SignJobCtx::deinit()
     delete this;
 }
 
-extern "C" void Bun__SignJobCtx__runTask(SignJobCtx* ctx, JSGlobalObject* globalObject)
+extern "C" void Fun__SignJobCtx__runTask(SignJobCtx* ctx, JSGlobalObject* globalObject)
 {
     ctx->runTask(globalObject);
 }
@@ -205,7 +205,7 @@ void SignJobCtx::runTask(JSGlobalObject* globalObject)
     }
 }
 
-extern "C" void Bun__SignJobCtx__runFromJS(SignJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
+extern "C" void Fun__SignJobCtx__runFromJS(SignJobCtx* ctx, JSGlobalObject* globalObject, EncodedJSValue callback)
 {
     ctx->runFromJS(globalObject, JSValue::decode(callback));
 }
@@ -218,7 +218,7 @@ void SignJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback
     case Mode::Sign: {
         if (!m_signResult) {
             JSValue err = createCryptoError(lexicalGlobalObject, scope, m_opensslError, "sign operation failed"_s);
-            Bun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
+            Fun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
             return;
         }
 
@@ -229,7 +229,7 @@ void SignJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback
         auto* signature = JSUint8Array::create(lexicalGlobalObject, globalObject->JSBufferSubclassStructure(), WTF::move(sigBuf), 0, m_signResult->size());
         RETURN_IF_EXCEPTION(scope, );
 
-        Bun__EventLoop__runCallback2(
+        Fun__EventLoop__runCallback2(
             lexicalGlobalObject,
             JSValue::encode(callback),
             JSValue::encode(jsUndefined()),
@@ -241,11 +241,11 @@ void SignJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback
     case Mode::Verify: {
         if (!m_verifyResult) {
             JSValue err = createCryptoError(lexicalGlobalObject, scope, m_opensslError, "verify operation failed"_s);
-            Bun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
+            Fun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
             return;
         }
 
-        Bun__EventLoop__runCallback2(
+        Fun__EventLoop__runCallback2(
             lexicalGlobalObject,
             JSValue::encode(callback),
             JSValue::encode(jsUndefined()),
@@ -256,24 +256,24 @@ void SignJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback
     }
 }
 
-extern "C" SignJob* Bun__SignJob__create(JSGlobalObject* globalObject, SignJobCtx* ctx, EncodedJSValue callback);
+extern "C" SignJob* Fun__SignJob__create(JSGlobalObject* globalObject, SignJobCtx* ctx, EncodedJSValue callback);
 SignJob* SignJob::create(JSGlobalObject* globalObject, SignJobCtx&& ctx, JSValue callback)
 {
     SignJobCtx* ctxCopy = new SignJobCtx(WTF::move(ctx));
-    return Bun__SignJob__create(globalObject, ctxCopy, JSValue::encode(callback));
+    return Fun__SignJob__create(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
-extern "C" void Bun__SignJob__schedule(SignJob* job);
+extern "C" void Fun__SignJob__schedule(SignJob* job);
 void SignJob::schedule()
 {
-    Bun__SignJob__schedule(this);
+    Fun__SignJob__schedule(this);
 }
 
-extern "C" void Bun__SignJob__createAndSchedule(JSGlobalObject* globalObject, SignJobCtx* ctx, EncodedJSValue callback);
+extern "C" void Fun__SignJob__createAndSchedule(JSGlobalObject* globalObject, SignJobCtx* ctx, EncodedJSValue callback);
 void SignJob::createAndSchedule(JSGlobalObject* globalObject, SignJobCtx&& ctx, JSValue callback)
 {
     SignJobCtx* ctxCopy = new SignJobCtx(WTF::move(ctx));
-    Bun__SignJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
+    Fun__SignJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
 std::optional<int32_t> getPadding(JSGlobalObject* globalObject, ThrowScope& scope, JSValue options)
@@ -389,7 +389,7 @@ std::optional<SignJobCtx> SignJobCtx::fromJS(JSGlobalObject* globalObject, Throw
         //
         // BoringSSL Difference:
         // =====================
-        // BoringSSL (used by Bun) does not have this automatic default mechanism.
+        // BoringSSL (used by Fun) does not have this automatic default mechanism.
         // When NULL is passed as the digest to EVP_DigestVerifyInit for RSA keys,
         // BoringSSL returns error 0x06000077 (NO_DEFAULT_DIGEST).
         //
@@ -442,4 +442,4 @@ std::optional<SignJobCtx> SignJobCtx::fromJS(JSGlobalObject* globalObject, Throw
         dsaSigEnc);
 }
 
-} // namespace Bun
+} // namespace Fun

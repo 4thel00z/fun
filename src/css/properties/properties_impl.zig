@@ -45,16 +45,16 @@ pub const property_id_mixin = struct {
         var trimmed_name: []const u8 = undefined;
 
         // TODO: todo_stuff.match_ignore_ascii_case
-        if (bun.strings.startsWithCaseInsensitiveAscii(name_ref, "-webkit-")) {
+        if (fun.strings.startsWithCaseInsensitiveAscii(name_ref, "-webkit-")) {
             prefix = VendorPrefix{ .webkit = true };
             trimmed_name = name_ref[8..];
-        } else if (bun.strings.startsWithCaseInsensitiveAscii(name_ref, "-moz-")) {
+        } else if (fun.strings.startsWithCaseInsensitiveAscii(name_ref, "-moz-")) {
             prefix = VendorPrefix{ .moz = true };
             trimmed_name = name_ref[5..];
-        } else if (bun.strings.startsWithCaseInsensitiveAscii(name_ref, "-o-")) {
+        } else if (fun.strings.startsWithCaseInsensitiveAscii(name_ref, "-o-")) {
             prefix = VendorPrefix{ .o = true };
             trimmed_name = name_ref[3..];
-        } else if (bun.strings.startsWithCaseInsensitiveAscii(name_ref, "-ms-")) {
+        } else if (fun.strings.startsWithCaseInsensitiveAscii(name_ref, "-ms-")) {
             prefix = VendorPrefix{ .ms = true };
             trimmed_name = name_ref[4..];
         } else {
@@ -106,4 +106,4 @@ pub const property_mixin = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

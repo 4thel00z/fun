@@ -3,13 +3,13 @@ buf: std.ArrayListUnmanaged(u8) = .{},
 
 pub fn start(this: *@This()) Yield {
     const args = this.bltn().argsSlice();
-    var iter = bun.SliceIterator([*:0]const u8).init(args);
+    var iter = fun.SliceIterator([*:0]const u8).init(args);
 
     if (args.len == 0) return this.fail(Builtin.Kind.usageString(.basename));
 
     while (iter.next()) |item| {
-        const arg = bun.sliceTo(item, 0);
-        this.print(bun.path.basename(arg));
+        const arg = fun.sliceTo(item, 0);
+        this.print(fun.path.basename(arg));
         this.print("\n");
     }
 
@@ -21,7 +21,7 @@ pub fn start(this: *@This()) Yield {
 }
 
 pub fn deinit(this: *@This()) void {
-    this.buf.deinit(bun.default_allocator);
+    this.buf.deinit(fun.default_allocator);
     //basename
 }
 
@@ -36,7 +36,7 @@ fn fail(this: *@This(), msg: []const u8) Yield {
 
 fn print(this: *@This(), msg: []const u8) void {
     if (this.bltn().stdout.needsIO() != null) {
-        bun.handleOom(this.buf.appendSlice(bun.default_allocator, msg));
+        fun.handleOom(this.buf.appendSlice(fun.default_allocator, msg));
         return;
     }
     _ = this.bltn().writeNoIO(.stdout, msg);
@@ -51,7 +51,7 @@ pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?jsc.SystemError) Yiel
     switch (this.state) {
         .done => return this.bltn().done(0),
         .err => return this.bltn().done(1),
-        .idle => bun.shell.unreachableState("Basename.onIOWriterChunk", "idle"),
+        .idle => fun.shell.unreachableState("Basename.onIOWriterChunk", "idle"),
     }
 }
 
@@ -66,6 +66,6 @@ const std = @import("std");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const Yield = bun.shell.Yield;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const Yield = fun.shell.Yield;

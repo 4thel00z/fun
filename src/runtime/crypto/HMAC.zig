@@ -3,7 +3,7 @@ const HMAC = @This();
 ctx: BoringSSL.HMAC_CTX,
 algorithm: EVP.Algorithm,
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 pub fn init(algorithm: EVP.Algorithm, key: []const u8) ?*HMAC {
     const md = algorithm.md() orelse return null;
@@ -48,10 +48,10 @@ pub fn final(this: *HMAC, out: []u8) []u8 {
 
 pub fn deinit(this: *HMAC) void {
     BoringSSL.HMAC_CTX_cleanup(&this.ctx);
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const BoringSSL = bun.BoringSSL.c;
-const EVP = jsc.API.Bun.Crypto.EVP;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const BoringSSL = fun.BoringSSL.c;
+const EVP = jsc.API.Fun.Crypto.EVP;

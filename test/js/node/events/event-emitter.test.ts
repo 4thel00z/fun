@@ -1,5 +1,5 @@
-import { sleep } from "bun";
-import { describe, expect, mock, test } from "bun:test";
+import { sleep } from "fun";
+import { describe, expect, mock, test } from "fun:test";
 import { createRequire } from "module";
 
 // this is also testing that imports with default and named imports in the same statement work
@@ -54,7 +54,7 @@ describe("node:events", () => {
     emitter.emit("hey", 2);
   });
 
-  /// https://github.com/oven-sh/bun/issues/4518
+  /// https://github.com/underdoc-org/fun/issues/4518
   test("once removes the listener afterwards", async () => {
     const emitter = new EventEmitter();
     process.nextTick(() => {
@@ -138,7 +138,7 @@ describe("EventEmitter", () => {
       });
     });
 
-    // Unlike Jest, bun supports async and done
+    // Unlike Jest, fun supports async and done
     test("async microtask before", done => {
       (async () => {
         await 1;
@@ -593,7 +593,7 @@ describe("EventEmitter.on", () => {
     const path = require("node:path");
 
     const fpath = path.join(__filename, "..", "..", "child_process", "fixtures", "child-process-echo-options.js");
-    const text = await Bun.file(fpath).text();
+    const text = await Fun.file(fpath).text();
     const interfaced = createInterface(createReadStream(fpath));
     const output = [];
 

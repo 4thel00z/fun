@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("process.stdout and process.stderr have Symbol.asyncIterator for Node.js compatibility", () => {
   // This is needed for compatibility with tools like execa that check for async iterability

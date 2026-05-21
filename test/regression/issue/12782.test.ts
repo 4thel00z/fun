@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot } from "harness";
 
 // tests that an error in preload prevents tests from running
 test("12782", async () => {
-  const result = Bun.spawn({
+  const result = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "test",
       import.meta.dir + "/12782.foo.fixture.ts",
       import.meta.dir + "/12782.bar.fixture.ts",
@@ -14,15 +14,15 @@ test("12782", async () => {
     ],
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
   const exitCode = await result.exited;
   const stdout = await result.stdout.text();
   const stderr = await result.stderr.text();
 
-  expect(normalizeBunSnapshot(stderr)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stderr)).toMatchInlineSnapshot(`
     "test/regression/issue/12782.foo.fixture.ts:
-    1 | import { beforeAll } from "bun:test";
+    1 | import { beforeAll } from "fun:test";
     2 | 
     3 | const FOO = process.env.FOO ?? "";
     4 | 

@@ -4,7 +4,7 @@ namespace Zig {
 class GlobalObject;
 }
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 class JSS3File : public WebCore::JSBlob {
@@ -38,4 +38,4 @@ public:
 JSValue constructS3File(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callframe);
 Structure* createJSS3FileStructure(JSC::VM& vm, JSC::JSGlobalObject* globalObject);
 
-} // namespace Bun
+} // namespace Fun

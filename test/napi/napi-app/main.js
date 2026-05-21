@@ -24,8 +24,8 @@ try {
   let shouldNotExist = 5;
   const result = fn.apply(null, [
     () => {
-      if (process.isBun) {
-        Bun.gc(true);
+      if (process.isFun) {
+        Fun.gc(true);
       } else if (global.gc) {
         global.gc();
       }

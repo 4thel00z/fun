@@ -83,7 +83,7 @@ for (const arg of [filename, { filename }]) {
     const lines = err.stack.split('\n');
 
     assert.strictEqual(lines[0].trim(), `${filename}:1`);
-    if (typeof Bun === 'undefined') {
+    if (typeof Fun === 'undefined') {
       assert.strictEqual(lines[1].trim(), code);
       // Skip lines[2] and lines[3]. They're just a ^ and blank line.
       assert.strictEqual(lines[4].trim(), 'Error: foo');

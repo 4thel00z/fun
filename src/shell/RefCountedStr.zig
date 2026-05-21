@@ -4,11 +4,11 @@ refcount: u32 = 1,
 len: u32 = 0,
 ptr: [*]const u8 = undefined,
 
-const debug = bun.Output.scoped(.RefCountedEnvStr, .hidden);
+const debug = fun.Output.scoped(.RefCountedEnvStr, .hidden);
 
 pub fn init(slice: []const u8) *RefCountedStr {
     debug("init: {s}", .{slice});
-    const this = bun.handleOom(bun.default_allocator.create(RefCountedStr));
+    const this = fun.handleOom(fun.default_allocator.create(RefCountedStr));
     this.* = .{
         .refcount = 1,
         .len = @intCast(slice.len),
@@ -36,12 +36,12 @@ pub fn deref(this: *RefCountedStr) void {
 fn deinit(this: *RefCountedStr) void {
     debug("deinit: {s}", .{this.byteSlice()});
     this.freeStr();
-    bun.default_allocator.destroy(this);
+    fun.default_allocator.destroy(this);
 }
 
 fn freeStr(this: *RefCountedStr) void {
     if (this.len == 0) return;
-    bun.default_allocator.free(this.ptr[0..this.len]);
+    fun.default_allocator.free(this.ptr[0..this.len]);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");

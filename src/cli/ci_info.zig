@@ -2,8 +2,8 @@
 // Only gets the CI name, `isPR` is not implemented.
 // Main implementation is in src/codegen/ci_info.ts
 
-var detectCIOnce = bun.once(detectUncached);
-var isCIOnce = bun.once(isCIUncached);
+var detectCIOnce = fun.once(detectUncached);
+var isCIOnce = fun.once(isCIUncached);
 
 /// returns true if the current process is running in a CI environment
 pub fn isCI() bool {
@@ -16,12 +16,12 @@ pub fn detectCIName() ?[]const u8 {
 }
 
 fn isCIUncached() bool {
-    return bun.env_var.CI.get() orelse generated.isCIUncachedGenerated() or detectCIName() != null;
+    return fun.env_var.CI.get() orelse generated.isCIUncachedGenerated() or detectCIName() != null;
 }
 fn detectUncached() ?[]const u8 {
-    if (bun.env_var.CI.get() == false) return null;
+    if (fun.env_var.CI.get() == false) return null;
     return generated.detectUncachedGenerated();
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const generated = @import("ci_info");

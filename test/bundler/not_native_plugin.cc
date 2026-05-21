@@ -1,14 +1,14 @@
 /*
  */
-#include <bun-native-bundler-plugin-api/bundler_plugin.h>
+#include <fun-native-bundler-plugin-api/bundler_plugin.h>
 #include <cstdlib>
 #include <cstring>
 #include <node_api.h>
 
 #ifdef _WIN32
-#define BUN_PLUGIN_EXPORT __declspec(dllexport)
+#define FUN_PLUGIN_EXPORT __declspec(dllexport)
 #else
-#define BUN_PLUGIN_EXPORT
+#define FUN_PLUGIN_EXPORT
 #endif
 
 napi_value HelloWorld(napi_env env, napi_callback_info info) {

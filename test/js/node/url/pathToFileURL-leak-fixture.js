@@ -1,10 +1,10 @@
 var longPath = Buffer.alloc(1021, "Z").toString();
-const isDebugBuildOfBun = globalThis?.Bun?.revision?.includes("debug");
+const isDebugBuildOfFun = globalThis?.Fun?.revision?.includes("debug");
 import { pathToFileURL } from "url";
-for (let i = 0; i < 1024 * (isDebugBuildOfBun ? 32 : 256); i++) {
+for (let i = 0; i < 1024 * (isDebugBuildOfFun ? 32 : 256); i++) {
   pathToFileURL(longPath);
 }
-Bun.gc(true);
+Fun.gc(true);
 const rss = (process.memoryUsage.rss() / 1024 / 1024) | 0;
 console.log("RSS", rss, "MB");
 if (rss > 250) {

@@ -1,22 +1,22 @@
 threadlocal var initialized_store = false;
 
-pub const bun_hash_tag = ".bun-tag-";
+pub const fun_hash_tag = ".fun-tag-";
 pub const max_hex_hash_len: comptime_int = brk: {
     var buf: [128]u8 = undefined;
     break :brk (std.fmt.bufPrint(buf[0..], "{x}", .{std.math.maxInt(u64)}) catch @panic("Buf wasn't big enough.")).len;
 };
-pub const max_buntag_hash_buf_len: comptime_int = max_hex_hash_len + bun_hash_tag.len + 1;
-pub const BuntagHashBuf = [max_buntag_hash_buf_len]u8;
+pub const max_buntag_hash_buf_len: comptime_int = max_hex_hash_len + fun_hash_tag.len + 1;
+pub const FuntagHashBuf = [max_buntag_hash_buf_len]u8;
 
-pub fn buntaghashbuf_make(buf: *BuntagHashBuf, patch_hash: u64) [:0]u8 {
-    @memcpy(buf[0..bun_hash_tag.len], bun_hash_tag);
-    const digits = std.fmt.bufPrint(buf[bun_hash_tag.len..], "{x}", .{patch_hash}) catch |err|
+pub fn funtaghashbuf_make(buf: *FuntagHashBuf, patch_hash: u64) [:0]u8 {
+    @memcpy(buf[0..fun_hash_tag.len], fun_hash_tag);
+    const digits = std.fmt.bufPrint(buf[fun_hash_tag.len..], "{x}", .{patch_hash}) catch |err|
         switch (err) {
             error.NoSpaceLeft => unreachable,
         };
-    buf[bun_hash_tag.len + digits.len] = 0;
-    const bunhashtag = buf[0 .. bun_hash_tag.len + digits.len :0];
-    return bunhashtag;
+    buf[fun_hash_tag.len + digits.len] = 0;
+    const funhashtag = buf[0 .. fun_hash_tag.len + digits.len :0];
+    return funhashtag;
 }
 
 pub const StorePathFormatter = struct {
@@ -45,7 +45,7 @@ pub fn fmtStorePath(str: string) StorePathFormatter {
 }
 
 // these bytes are skipped
-// so we just make it repeat bun bun bun bun bun bun bun bun bun
+// so we just make it repeat fun fun fun fun fun fun fun fun fun
 pub const alignment_bytes_to_repeat_buffer = [_]u8{0} ** 144;
 
 pub fn initializeStore() void {
@@ -65,15 +65,15 @@ pub fn initializeStore() void {
 /// ASTMemoryAllocator uses a smaller fixed buffer allocator
 pub fn initializeMiniStore() void {
     const MiniStore = struct {
-        heap: bun.MimallocArena,
+        heap: fun.MimallocArena,
         memory_allocator: JSAst.ASTMemoryAllocator,
 
         pub threadlocal var instance: ?*@This() = null;
     };
     if (MiniStore.instance == null) {
-        var mini_store = bun.handleOom(bun.default_allocator.create(MiniStore));
+        var mini_store = fun.handleOom(fun.default_allocator.create(MiniStore));
         mini_store.* = .{
-            .heap = bun.MimallocArena.init(),
+            .heap = fun.MimallocArena.init(),
             .memory_allocator = undefined,
         };
         mini_store.memory_allocator = .{ .allocator = mini_store.heap.allocator() };
@@ -84,7 +84,7 @@ pub fn initializeMiniStore() void {
         var mini_store = MiniStore.instance.?;
         if (mini_store.memory_allocator.stack_allocator.fixed_buffer_allocator.end_index >= mini_store.memory_allocator.stack_allocator.fixed_buffer_allocator.buffer.len -| 1) {
             mini_store.heap.deinit();
-            mini_store.heap = bun.MimallocArena.init();
+            mini_store.heap = fun.MimallocArena.init();
             mini_store.memory_allocator.allocator = mini_store.heap.allocator();
         }
         mini_store.memory_allocator.reset();
@@ -216,7 +216,7 @@ pub const ExtractData = struct {
 
 pub const DependencyInstallContext = struct {
     tree_id: Lockfile.Tree.Id = 0,
-    path: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(bun.default_allocator),
+    path: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(fun.default_allocator),
     dependency_id: DependencyID,
 };
 
@@ -250,7 +250,7 @@ pub const Npm = @import("./npm.zig");
 pub const PackageManager = @import("./PackageManager.zig");
 pub const PackageManifestMap = @import("./PackageManifestMap.zig");
 pub const Task = @import("./PackageManagerTask.zig");
-pub const TextLockfile = @import("./lockfile/bun.lock.zig");
+pub const TextLockfile = @import("./lockfile/fun.lock.zig");
 pub const Bin = @import("./bin.zig").Bin;
 pub const FolderResolution = @import("./resolvers/folder_resolver.zig").FolderResolution;
 pub const LifecycleScriptSubprocess = @import("./lifecycle_script_runner.zig").LifecycleScriptSubprocess;
@@ -287,9 +287,9 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const JSAst = bun.ast;
-const default_allocator = bun.default_allocator;
+const fun = @import("fun");
+const JSAst = fun.ast;
+const default_allocator = fun.default_allocator;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;

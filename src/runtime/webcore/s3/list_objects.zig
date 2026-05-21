@@ -34,7 +34,7 @@ const ObjectRestoreStatus = struct {
 
 const S3ListObjectsContents = struct {
     key: []const u8,
-    etag: ?bun.ptr.OwnedIn([]const u8, bun.allocators.MaybeOwned(bun.DefaultAllocator)),
+    etag: ?fun.ptr.OwnedIn([]const u8, fun.allocators.MaybeOwned(fun.DefaultAllocator)),
     checksum_type: ?[]const u8,
     checksum_algorithme: ?[]const u8,
     last_modified: ?[]const u8,
@@ -72,34 +72,34 @@ pub const S3ListObjectsV2Result = struct {
         }
     }
 
-    pub fn toJS(this: *const @This(), globalObject: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn toJS(this: *const @This(), globalObject: *JSGlobalObject) fun.JSError!JSValue {
         const jsResult = JSValue.createEmptyObject(globalObject, 0);
 
         if (this.name) |name| {
-            jsResult.put(globalObject, jsc.ZigString.static("name"), try bun.String.createUTF8ForJS(globalObject, name));
+            jsResult.put(globalObject, jsc.ZigString.static("name"), try fun.String.createUTF8ForJS(globalObject, name));
         }
 
         if (this.prefix) |prefix| {
-            jsResult.put(globalObject, jsc.ZigString.static("prefix"), try bun.String.createUTF8ForJS(globalObject, prefix));
+            jsResult.put(globalObject, jsc.ZigString.static("prefix"), try fun.String.createUTF8ForJS(globalObject, prefix));
         }
 
         if (this.delimiter) |delimiter| {
-            jsResult.put(globalObject, jsc.ZigString.static("delimiter"), try bun.String.createUTF8ForJS(globalObject, delimiter));
+            jsResult.put(globalObject, jsc.ZigString.static("delimiter"), try fun.String.createUTF8ForJS(globalObject, delimiter));
         }
 
         if (this.start_after) |start_after| {
-            jsResult.put(globalObject, jsc.ZigString.static("startAfter"), try bun.String.createUTF8ForJS(globalObject, start_after));
+            jsResult.put(globalObject, jsc.ZigString.static("startAfter"), try fun.String.createUTF8ForJS(globalObject, start_after));
         }
         if (this.encoding_type) |encoding_type| {
-            jsResult.put(globalObject, jsc.ZigString.static("encodingType"), try bun.String.createUTF8ForJS(globalObject, encoding_type));
+            jsResult.put(globalObject, jsc.ZigString.static("encodingType"), try fun.String.createUTF8ForJS(globalObject, encoding_type));
         }
 
         if (this.continuation_token) |continuation_token| {
-            jsResult.put(globalObject, jsc.ZigString.static("continuationToken"), try bun.String.createUTF8ForJS(globalObject, continuation_token));
+            jsResult.put(globalObject, jsc.ZigString.static("continuationToken"), try fun.String.createUTF8ForJS(globalObject, continuation_token));
         }
 
         if (this.next_continuation_token) |next_continuation_token| {
-            jsResult.put(globalObject, jsc.ZigString.static("nextContinuationToken"), try bun.String.createUTF8ForJS(globalObject, next_continuation_token));
+            jsResult.put(globalObject, jsc.ZigString.static("nextContinuationToken"), try fun.String.createUTF8ForJS(globalObject, next_continuation_token));
         }
 
         if (this.is_truncated) |is_truncated| {
@@ -119,22 +119,22 @@ pub const S3ListObjectsV2Result = struct {
 
             for (contents.items, 0..) |item, i| {
                 const objectInfo = JSValue.createEmptyObject(globalObject, 0);
-                objectInfo.put(globalObject, jsc.ZigString.static("key"), try bun.String.createUTF8ForJS(globalObject, item.key));
+                objectInfo.put(globalObject, jsc.ZigString.static("key"), try fun.String.createUTF8ForJS(globalObject, item.key));
 
                 if (item.etag) |etag| {
-                    objectInfo.put(globalObject, jsc.ZigString.static("eTag"), try bun.String.createUTF8ForJS(globalObject, etag.get()));
+                    objectInfo.put(globalObject, jsc.ZigString.static("eTag"), try fun.String.createUTF8ForJS(globalObject, etag.get()));
                 }
 
                 if (item.checksum_algorithme) |checksum_algorithme| {
-                    objectInfo.put(globalObject, jsc.ZigString.static("checksumAlgorithme"), try bun.String.createUTF8ForJS(globalObject, checksum_algorithme));
+                    objectInfo.put(globalObject, jsc.ZigString.static("checksumAlgorithme"), try fun.String.createUTF8ForJS(globalObject, checksum_algorithme));
                 }
 
                 if (item.checksum_type) |checksum_type| {
-                    objectInfo.put(globalObject, jsc.ZigString.static("checksumType"), try bun.String.createUTF8ForJS(globalObject, checksum_type));
+                    objectInfo.put(globalObject, jsc.ZigString.static("checksumType"), try fun.String.createUTF8ForJS(globalObject, checksum_type));
                 }
 
                 if (item.last_modified) |last_modified| {
-                    objectInfo.put(globalObject, jsc.ZigString.static("lastModified"), try bun.String.createUTF8ForJS(globalObject, last_modified));
+                    objectInfo.put(globalObject, jsc.ZigString.static("lastModified"), try fun.String.createUTF8ForJS(globalObject, last_modified));
                 }
 
                 if (item.object_size) |object_size| {
@@ -142,17 +142,17 @@ pub const S3ListObjectsV2Result = struct {
                 }
 
                 if (item.storage_class) |storage_class| {
-                    objectInfo.put(globalObject, jsc.ZigString.static("storageClass"), try bun.String.createUTF8ForJS(globalObject, storage_class));
+                    objectInfo.put(globalObject, jsc.ZigString.static("storageClass"), try fun.String.createUTF8ForJS(globalObject, storage_class));
                 }
 
                 if (item.owner) |owner| {
                     const jsOwner = JSValue.createEmptyObject(globalObject, 0);
                     if (owner.id) |id| {
-                        jsOwner.put(globalObject, jsc.ZigString.static("id"), try bun.String.createUTF8ForJS(globalObject, id));
+                        jsOwner.put(globalObject, jsc.ZigString.static("id"), try fun.String.createUTF8ForJS(globalObject, id));
                     }
 
                     if (owner.display_name) |display_name| {
-                        jsOwner.put(globalObject, jsc.ZigString.static("displayName"), try bun.String.createUTF8ForJS(globalObject, display_name));
+                        jsOwner.put(globalObject, jsc.ZigString.static("displayName"), try fun.String.createUTF8ForJS(globalObject, display_name));
                     }
 
                     objectInfo.put(globalObject, jsc.ZigString.static("owner"), jsOwner);
@@ -169,7 +169,7 @@ pub const S3ListObjectsV2Result = struct {
 
             for (common_prefixes.items, 0..) |prefix, i| {
                 const jsPrefix = JSValue.createEmptyObject(globalObject, 0);
-                jsPrefix.put(globalObject, jsc.ZigString.static("prefix"), try bun.String.createUTF8ForJS(globalObject, prefix));
+                jsPrefix.put(globalObject, jsc.ZigString.static("prefix"), try fun.String.createUTF8ForJS(globalObject, prefix));
                 try jsCommonPrefixes.putIndex(globalObject, @intCast(i), jsPrefix);
             }
 
@@ -196,8 +196,8 @@ pub fn parseS3ListObjectsResult(xml: []const u8) !S3ListObjectsV2Result {
         .start_after = null,
     };
 
-    var contents = std.array_list.Managed(S3ListObjectsContents).init(bun.default_allocator);
-    var common_prefixes = std.array_list.Managed([]const u8).init(bun.default_allocator);
+    var contents = std.array_list.Managed(S3ListObjectsContents).init(fun.default_allocator);
+    var common_prefixes = std.array_list.Managed([]const u8).init(fun.default_allocator);
 
     // we dont use trailing ">" as it may finish with xmlns=...
     if (strings.indexOf(xml, "<ListBucketResult")) |delete_result_pos| {
@@ -281,7 +281,7 @@ pub fn parseS3ListObjectsResult(xml: []const u8) !S3ListObjectsV2Result {
                                         const input = xml[i .. i + __tag_end];
 
                                         const size = std.mem.replacementSize(u8, input, "&quot;", "\"");
-                                        var output = try bun.default_allocator.alloc(u8, size);
+                                        var output = try fun.default_allocator.alloc(u8, size);
 
                                         const len = std.mem.replace(u8, input, "&quot;", "\"", output);
 
@@ -289,7 +289,7 @@ pub fn parseS3ListObjectsResult(xml: []const u8) !S3ListObjectsV2Result {
                                             etag = output[0 .. input.len - len * 5]; // 5 = "&quot;".len - 1 for replacement "
                                             etag_owned = true;
                                         } else {
-                                            bun.default_allocator.free(output);
+                                            fun.default_allocator.free(output);
                                             etag = input;
                                         }
 
@@ -522,10 +522,10 @@ pub fn getListObjectsOptionsFromJS(globalThis: *jsc.JSGlobalObject, listOptions:
 
     if (try listOptions.getTruthyComptime(globalThis, "continuationToken")) |val| {
         if (val.isString()) {
-            const str = try bun.String.fromJS(val, globalThis);
+            const str = try fun.String.fromJS(val, globalThis);
 
             if (str.tag != .Empty and str.tag != .Dead) {
-                listObjectsOptions._continuation_token = str.toUTF8(bun.default_allocator);
+                listObjectsOptions._continuation_token = str.toUTF8(fun.default_allocator);
                 listObjectsOptions.continuation_token = listObjectsOptions._continuation_token.?.slice();
             }
         }
@@ -533,10 +533,10 @@ pub fn getListObjectsOptionsFromJS(globalThis: *jsc.JSGlobalObject, listOptions:
 
     if (try listOptions.getTruthyComptime(globalThis, "delimiter")) |val| {
         if (val.isString()) {
-            const str = try bun.String.fromJS(val, globalThis);
+            const str = try fun.String.fromJS(val, globalThis);
 
             if (str.tag != .Empty and str.tag != .Dead) {
-                listObjectsOptions._delimiter = str.toUTF8(bun.default_allocator);
+                listObjectsOptions._delimiter = str.toUTF8(fun.default_allocator);
                 listObjectsOptions.delimiter = listObjectsOptions._delimiter.?.slice();
             }
         }
@@ -544,10 +544,10 @@ pub fn getListObjectsOptionsFromJS(globalThis: *jsc.JSGlobalObject, listOptions:
 
     if (try listOptions.getTruthyComptime(globalThis, "encodingType")) |val| {
         if (val.isString()) {
-            const str = try bun.String.fromJS(val, globalThis);
+            const str = try fun.String.fromJS(val, globalThis);
 
             if (str.tag != .Empty and str.tag != .Dead) {
-                listObjectsOptions._encoding_type = str.toUTF8(bun.default_allocator);
+                listObjectsOptions._encoding_type = str.toUTF8(fun.default_allocator);
                 listObjectsOptions.encoding_type = listObjectsOptions._encoding_type.?.slice();
             }
         }
@@ -565,10 +565,10 @@ pub fn getListObjectsOptionsFromJS(globalThis: *jsc.JSGlobalObject, listOptions:
 
     if (try listOptions.getTruthyComptime(globalThis, "prefix")) |val| {
         if (val.isString()) {
-            const str = try bun.String.fromJS(val, globalThis);
+            const str = try fun.String.fromJS(val, globalThis);
 
             if (str.tag != .Empty and str.tag != .Dead) {
-                listObjectsOptions._prefix = str.toUTF8(bun.default_allocator);
+                listObjectsOptions._prefix = str.toUTF8(fun.default_allocator);
                 listObjectsOptions.prefix = listObjectsOptions._prefix.?.slice();
             }
         }
@@ -576,10 +576,10 @@ pub fn getListObjectsOptionsFromJS(globalThis: *jsc.JSGlobalObject, listOptions:
 
     if (try listOptions.getTruthyComptime(globalThis, "startAfter")) |val| {
         if (val.isString()) {
-            const str = try bun.String.fromJS(val, globalThis);
+            const str = try fun.String.fromJS(val, globalThis);
 
             if (str.tag != .Empty and str.tag != .Dead) {
-                listObjectsOptions._start_after = str.toUTF8(bun.default_allocator);
+                listObjectsOptions._start_after = str.toUTF8(fun.default_allocator);
                 listObjectsOptions.start_after = listObjectsOptions._start_after.?.slice();
             }
         }
@@ -590,9 +590,9 @@ pub fn getListObjectsOptionsFromJS(globalThis: *jsc.JSGlobalObject, listOptions:
 
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

@@ -6,7 +6,7 @@
 
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 

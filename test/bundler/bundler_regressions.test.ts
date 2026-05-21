@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -22,7 +22,7 @@ describe("bundler", () => {
     },
   });
 
-  // https://github.com/oven-sh/bun/issues/2946
+  // https://github.com/underdoc-org/fun/issues/2946
   itBundled("regression/InvalidIdentifierInFileName#2946", {
     files: {
       "/entry.js": "import foo from './1.png';\nconsole.log(foo);",
@@ -169,7 +169,7 @@ describe("bundler", () => {
     ],
   });
 
-  // https://github.com/oven-sh/bun/issues/2948
+  // https://github.com/underdoc-org/fun/issues/2948
   itBundled("regression/ReassignLocal#2948", {
     files: {
       "/entry.js": `
@@ -193,13 +193,13 @@ describe("bundler", () => {
       `,
     },
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
     run: {
       file: "/entry.js",
     },
   });
 
-  // https://github.com/oven-sh/bun/issues/3660
+  // https://github.com/underdoc-org/fun/issues/3660
   itBundled("regression/StringDecoder#3660", {
     files: {
       "/entry.js": `

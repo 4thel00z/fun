@@ -159,7 +159,7 @@ pub const TransitionHandler = struct {
                 dest.append(
                     context.allocator,
                     .{ .unparsed = x.getPrefixed(context.allocator, context.targets, Feature.transition) },
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             } else return false,
             else => return false,
         }
@@ -179,7 +179,7 @@ pub const TransitionHandler = struct {
             const v = &p.*[0];
             const prefixes = &p.*[1];
             v.* = val.deepClone(context.allocator);
-            bun.bits.insert(VendorPrefix, prefixes, vp);
+            fun.bits.insert(VendorPrefix, prefixes, vp);
             prefixes.* = context.targets.prefixes(prefixes.*, feature);
         } else {
             const prefixes = context.targets.prefixes(vp, feature);
@@ -195,7 +195,7 @@ pub const TransitionHandler = struct {
         if (@field(this, prop)) |*p| {
             const v = &p.*[0];
             const prefixes = &p.*[1];
-            if (!val.eql(v) and !bun.bits.contains(VendorPrefix, prefixes.*, vp)) {
+            if (!val.eql(v) and !fun.bits.contains(VendorPrefix, prefixes.*, vp)) {
                 this.flush(dest, context);
             }
         }
@@ -205,10 +205,10 @@ pub const TransitionHandler = struct {
         if (!this.has_any) return;
         this.has_any = false;
 
-        var _properties: ?struct { SmallList(PropertyId, 1), VendorPrefix } = bun.take(&this.properties);
-        var _durations: ?struct { SmallList(Time, 1), VendorPrefix } = bun.take(&this.durations);
-        var _delays: ?struct { SmallList(Time, 1), VendorPrefix } = bun.take(&this.delays);
-        var _timing_functions: ?struct { SmallList(EasingFunction, 1), VendorPrefix } = bun.take(&this.timing_functions);
+        var _properties: ?struct { SmallList(PropertyId, 1), VendorPrefix } = fun.take(&this.properties);
+        var _durations: ?struct { SmallList(Time, 1), VendorPrefix } = fun.take(&this.durations);
+        var _delays: ?struct { SmallList(Time, 1), VendorPrefix } = fun.take(&this.delays);
+        var _timing_functions: ?struct { SmallList(EasingFunction, 1), VendorPrefix } = fun.take(&this.timing_functions);
 
         var rtl_properties: ?SmallList(PropertyId, 1) = if (_properties) |*p| expandProperties(&p.*[0], context) else null;
 
@@ -244,13 +244,13 @@ pub const TransitionHandler = struct {
                     dest.append(
                         context.allocator,
                         Property{ .transition = .{ transitions.deepClone(context.allocator), intersection } },
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
 
-                bun.bits.remove(VendorPrefix, property_prefixes, intersection);
-                bun.bits.remove(VendorPrefix, duration_prefixes, intersection);
-                bun.bits.remove(VendorPrefix, timing_prefixes, intersection);
-                bun.bits.remove(VendorPrefix, delay_prefixes, intersection);
+                fun.bits.remove(VendorPrefix, property_prefixes, intersection);
+                fun.bits.remove(VendorPrefix, duration_prefixes, intersection);
+                fun.bits.remove(VendorPrefix, timing_prefixes, intersection);
+                fun.bits.remove(VendorPrefix, delay_prefixes, intersection);
             }
         }
 
@@ -267,7 +267,7 @@ pub const TransitionHandler = struct {
                     );
                     rtl_properties = null;
                 } else {
-                    bun.handleOom(dest.append(context.allocator, Property{ .@"transition-property" = .{ properties, prefix } }));
+                    fun.handleOom(dest.append(context.allocator, Property{ .@"transition-property" = .{ properties, prefix } }));
                 }
             }
         }
@@ -277,7 +277,7 @@ pub const TransitionHandler = struct {
             const prefix: VendorPrefix = _durations.?[1];
             _durations = null;
             if (!prefix.isEmpty()) {
-                bun.handleOom(dest.append(context.allocator, Property{ .@"transition-duration" = .{ durations, prefix } }));
+                fun.handleOom(dest.append(context.allocator, Property{ .@"transition-duration" = .{ durations, prefix } }));
             }
         }
 
@@ -286,7 +286,7 @@ pub const TransitionHandler = struct {
             const prefix: VendorPrefix = _delays.?[1];
             _delays = null;
             if (!prefix.isEmpty()) {
-                bun.handleOom(dest.append(context.allocator, Property{ .@"transition-delay" = .{ delays, prefix } }));
+                fun.handleOom(dest.append(context.allocator, Property{ .@"transition-delay" = .{ delays, prefix } }));
             }
         }
 
@@ -295,7 +295,7 @@ pub const TransitionHandler = struct {
             const prefix: VendorPrefix = _timing_functions.?[1];
             _timing_functions = null;
             if (!prefix.isEmpty()) {
-                bun.handleOom(dest.append(context.allocator, Property{ .@"transition-timing-function" = .{ timing_functions, prefix } }));
+                fun.handleOom(dest.append(context.allocator, Property{ .@"transition-timing-function" = .{ timing_functions, prefix } }));
             }
         }
 
@@ -514,6 +514,6 @@ fn isTransitionProperty(property_id: *const PropertyId) bool {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

@@ -1,4 +1,4 @@
-pub fn toMatchSnapshot(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn toMatchSnapshot(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     defer this.postMatch(globalThis);
     const thisValue = callFrame.this();
     const _arguments = callFrame.arguments_old(2);
@@ -12,11 +12,11 @@ pub fn toMatchSnapshot(this: *Expect, globalThis: *JSGlobalObject, callFrame: *C
         return this.throw(globalThis, signature, "\n\n<b>Matcher error<r>: Snapshot matchers cannot be used with <b>not<r>\n", .{});
     }
 
-    var buntest_strong = this.bunTest() orelse {
+    var funtest_strong = this.funTest() orelse {
         const signature = comptime getSignature("toMatchSnapshot", "", true);
         return this.throw(globalThis, signature, "\n\n<b>Matcher error<r>: Snapshot matchers cannot be used outside of a test\n", .{});
     };
-    defer buntest_strong.deinit();
+    defer funtest_strong.deinit();
 
     var hint_string: ZigString = ZigString.Empty;
     var property_matchers: ?JSValue = null;
@@ -55,14 +55,14 @@ pub fn toMatchSnapshot(this: *Expect, globalThis: *JSGlobalObject, callFrame: *C
     return this.snapshot(globalThis, value, property_matchers, hint.slice(), "toMatchSnapshot");
 }
 
-const bun = @import("bun");
-const ZigString = bun.ZigString;
-const default_allocator = bun.default_allocator;
+const fun = @import("fun");
+const ZigString = fun.ZigString;
+const default_allocator = fun.default_allocator;
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

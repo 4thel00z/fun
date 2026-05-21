@@ -1,12 +1,12 @@
-import { spawnSync } from "bun";
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { spawnSync } from "fun";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "node:path";
 
 test("issue 8964", async () => {
   const { exitCode, signalCode, stdout } = spawnSync({
-    cmd: [bunExe(), "test", join(import.meta.dirname, "08964.fixture.ts")],
-    env: { ...bunEnv, CI: "false" },
+    cmd: [funExe(), "test", join(import.meta.dirname, "08964.fixture.ts")],
+    env: { ...funEnv, CI: "false" },
     stdio: ["ignore", "pipe", "inherit"],
   });
   const stdtext = stdout.toString();

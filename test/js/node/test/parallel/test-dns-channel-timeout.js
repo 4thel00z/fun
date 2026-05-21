@@ -1,6 +1,6 @@
 'use strict';
 const common = require('../common');
-if (common.isWindows) return; // TODO: BUN flaky
+if (common.isWindows) return; // TODO: FUN flaky
 const assert = require('assert');
 const dgram = require('dgram');
 const dns = require('dns');

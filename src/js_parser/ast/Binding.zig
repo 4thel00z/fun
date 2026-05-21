@@ -158,10 +158,10 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;

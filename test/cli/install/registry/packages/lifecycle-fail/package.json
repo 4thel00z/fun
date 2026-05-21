@@ -5,8 +5,8 @@
 			"name": "lifecycle-fail",
 			"version": "1.1.1",
 			"scripts": {
-				"preinstall": "bun fail.js",
-				"postinstall": "bun create.js"
+				"preinstall": "fun fail.js",
+				"postinstall": "fun create.js"
 			},
 			"_id": "lifecycle-fail@1.1.1",
 			"_integrity": "sha512-tqxnPDUZAsW0sy8JUO3LuzuyS7MkvRjGvnnkvbzv1Oo3sRZHMA2yhWDEQ9Bjo0ozxhU+H6vrW2q8EKDAXwnlQw==",

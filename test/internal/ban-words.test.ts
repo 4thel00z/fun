@@ -1,4 +1,4 @@
-import { file } from "bun";
+import { file } from "fun";
 import { readdirSync } from "fs";
 import path from "path";
 import { globAllSources } from "../../scripts/glob-sources.ts";
@@ -10,19 +10,19 @@ const words: Record<string, { reason: string; regex?: boolean }> = {
   "undefined != ": { reason: "This is by definition Undefined Behavior." },
   "undefined == ": { reason: "This is by definition Undefined Behavior." },
 
-  '@import("bun").': { reason: "Only import 'bun' once" },
-  "std.debug.assert": { reason: "Use bun.assert instead" },
-  "std.debug.dumpStackTrace": { reason: "Use bun.handleErrorReturnTrace or bun.crash_handler.dumpStackTrace instead" },
+  '@import("fun").': { reason: "Only import 'fun' once" },
+  "std.debug.assert": { reason: "Use fun.assert instead" },
+  "std.debug.dumpStackTrace": { reason: "Use fun.handleErrorReturnTrace or fun.crash_handler.dumpStackTrace instead" },
   "std.debug.print": { reason: "Don't let this be committed"},
   "std.log": { reason: "Don't let this be committed" },
-  "std.mem.indexOfAny(u8": { reason: "Use bun.strings.indexOfAny" },
-  "std.StringArrayHashMapUnmanaged(": { reason: "bun.StringArrayHashMapUnmanaged has a faster `eql`" },
-  "std.StringArrayHashMap(": { reason: "bun.StringArrayHashMap has a faster `eql`" },
-  "std.StringHashMapUnmanaged(": { reason: "bun.StringHashMapUnmanaged has a faster `eql`" },
-  "std.StringHashMap(": { reason: "bun.StringHashMap has a faster `eql`" },
-  "std.enums.tagName(": { reason: "Use bun.tagName instead" },
-  "std.unicode": { reason: "Use bun.strings instead" },
-  "std.Thread.Mutex": {reason: "Use bun.Mutex instead" },
+  "std.mem.indexOfAny(u8": { reason: "Use fun.strings.indexOfAny" },
+  "std.StringArrayHashMapUnmanaged(": { reason: "fun.StringArrayHashMapUnmanaged has a faster `eql`" },
+  "std.StringArrayHashMap(": { reason: "fun.StringArrayHashMap has a faster `eql`" },
+  "std.StringHashMapUnmanaged(": { reason: "fun.StringHashMapUnmanaged has a faster `eql`" },
+  "std.StringHashMap(": { reason: "fun.StringHashMap has a faster `eql`" },
+  "std.enums.tagName(": { reason: "Use fun.tagName instead" },
+  "std.unicode": { reason: "Use fun.strings instead" },
+  "std.Thread.Mutex": {reason: "Use fun.Mutex instead" },
   ".jsBoolean(true)": { reason: "Use .true instead" },
   "JSValue.true": { reason: "Use .true instead" },
   ".jsBoolean(false)": { reason: "Use .false instead" },
@@ -40,12 +40,12 @@ const words: Record<string, { reason: string; regex?: boolean }> = {
   ": [^=]+= undefined,$": { reason: "Do not default a struct field to undefined", regex: true },
   "usingnamespace": { reason: "Zig 0.15 will remove `usingnamespace`" },
 
-  "std.fs.Dir": { reason: "Prefer bun.sys + bun.FD instead of std.fs" },
-  "std.fs.cwd": { reason: "Prefer bun.FD.cwd()" },
-  "std.fs.File": { reason: "Prefer bun.sys + bun.FD instead of std.fs" },
-  "std.fs.openFileAbsolute": { reason: "Prefer bun.sys + bun.FD instead of std.fs" },
-  ".stdFile()": { reason: "Prefer bun.sys + bun.FD instead of std.fs.File. Zig hides 'errno' when Bun wants to match libuv" },
-  ".stdDir()": { reason: "Prefer bun.sys + bun.FD instead of std.fs.File. Zig hides 'errno' when Bun wants to match libuv" },
+  "std.fs.Dir": { reason: "Prefer fun.sys + fun.FD instead of std.fs" },
+  "std.fs.cwd": { reason: "Prefer fun.FD.cwd()" },
+  "std.fs.File": { reason: "Prefer fun.sys + fun.FD instead of std.fs" },
+  "std.fs.openFileAbsolute": { reason: "Prefer fun.sys + fun.FD instead of std.fs" },
+  ".stdFile()": { reason: "Prefer fun.sys + fun.FD instead of std.fs.File. Zig hides 'errno' when Fun wants to match libuv" },
+  ".stdDir()": { reason: "Prefer fun.sys + fun.FD instead of std.fs.File. Zig hides 'errno' when Fun wants to match libuv" },
   ".arguments_old(": { reason: "Please migrate to .argumentsAsArray() or another argument API" },
   "// autofix": { reason: "Evaluate if this variable should be deleted entirely or explicitly discarded." },
 
@@ -53,12 +53,12 @@ const words: Record<string, { reason: string; regex?: boolean }> = {
   "globalObject.hasException": { reason: "Incompatible with strict exception checks. Use a CatchScope instead." },
   "globalThis.hasException": { reason: "Incompatible with strict exception checks. Use a CatchScope instead." },
   "EXCEPTION_ASSERT(!scope.exception())": { reason: "Use scope.assertNoException() instead" },
-  " catch bun.outOfMemory()": { reason: "Use bun.handleOom to avoid catching unrelated errors" },
+  " catch fun.outOfMemory()": { reason: "Use fun.handleOom to avoid catching unrelated errors" },
   "TODO: properly propagate exception upwards": { reason: "This entry is here for tracking" },
 };
 const words_keys = [...Object.keys(words)];
 
-const limits = await Bun.file(import.meta.dir + "/ban-limits.json").json();
+const limits = await Fun.file(import.meta.dir + "/ban-limits.json").json();
 
 const root = path.resolve(import.meta.dir, "..", "..");
 const zigSources = globAllSources().zig;
@@ -103,14 +103,14 @@ if (typeof describe === "undefined") {
             (limit === 0
               ? `Remove banned word from:\n${count.map(([line, path]) => `- ${path}:${line}\n`).join("")}`
               : "") +
-            "Or increase the limit by running \`bun ./test/internal/ban-words.test.ts --allow-increase\`\n",
+            "Or increase the limit by running \`fun ./test/internal/ban-words.test.ts --allow-increase\`\n",
         );
       }
       newLimit = Math.min(newLimit, limits[word] ?? Infinity);
     }
     newLimits[word] = newLimit;
   }
-  await Bun.write(import.meta.dir + "/ban-limits.json", JSON.stringify(newLimits, null, 2));
+  await Fun.write(import.meta.dir + "/ban-limits.json", JSON.stringify(newLimits, null, 2));
   process.exit(0);
 }
 
@@ -125,11 +125,11 @@ describe("banned words", () => {
             (limit === 0
               ? `Remove banned word from:\n${count.map(([line, path]) => `- ${path}:${line}\n`).join("")}`
               : "") +
-            "Or increase the limit by running \`bun ./test/internal/ban-words.test.ts --allow-increase\`\n",
+            "Or increase the limit by running \`fun ./test/internal/ban-words.test.ts --allow-increase\`\n",
         );
       } else if (count.length < limit) {
         throw new Error(
-          `Instances of banned word ${JSON.stringify(word)} reduced from ${limit} to ${count.length}\nUpdate limit by running \`bun ./test/internal/ban-words.test.ts\`\n`,
+          `Instances of banned word ${JSON.stringify(word)} reduced from ${limit} to ${count.length}\nUpdate limit by running \`fun ./test/internal/ban-words.test.ts\`\n`,
         );
       }
     });
@@ -142,7 +142,7 @@ describe("required words", () => {
   for (const file of files) {
     if (!file.endsWith(".zig") || file.startsWith(".") || file === "toHaveReturnedTimes.zig") continue;
     test(file, async () => {
-      const content = await Bun.file(path.join(expectDir, file)).text();
+      const content = await Fun.file(path.join(expectDir, file)).text();
       if (!content.includes("incrementExpectCallCounter")) {
         throw new Error(
           `${expectDir}/${file} is missing string "incrementExpectCallCounter"\nAll expect() functions must call incrementExpectCallCounter()`,

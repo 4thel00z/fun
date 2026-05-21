@@ -1,6 +1,6 @@
 pub const RouteBundle = @This();
 
-pub const Index = bun.GenericIndex(u30, RouteBundle);
+pub const Index = fun.GenericIndex(u30, RouteBundle);
 
 server_state: State,
 /// There are two distinct types of route bundles.
@@ -58,7 +58,7 @@ pub const HTML = struct {
     /// - Any downstream file is rebundled.
     cached_response: ?*StaticRoute,
 
-    const ByteOffset = bun.GenericIndex(u32, u8);
+    const ByteOffset = fun.GenericIndex(u32, u8);
 };
 
 /// A union is not used so that `bundler_failure_logs` can re-use memory, as
@@ -153,12 +153,12 @@ pub fn memoryCost(rb: *const RouteBundle) usize {
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const bake = bun.bake;
-const jsc = bun.jsc;
-const RefPtr = bun.ptr.RefPtr;
+const fun = @import("fun");
+const bake = fun.bake;
+const jsc = fun.jsc;
+const RefPtr = fun.ptr.RefPtr;
 const HTMLBundle = jsc.API.HTMLBundle;
-const StaticRoute = bun.api.server.StaticRoute;
+const StaticRoute = fun.api.server.StaticRoute;
 
 const DevServer = bake.DevServer;
 const IncrementalGraph = DevServer.IncrementalGraph;

@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -34,10 +34,10 @@ describe("bundler", () => {
     },
   });
 
-  itBundled("banner/BannerWithCJSAndTargetBun", {
+  itBundled("banner/BannerWithCJSAndTargetFun", {
     banner: "// Copyright 2024 Example Corp",
     format: "cjs",
-    target: "bun",
+    target: "fun",
     backend: "api",
     outdir: "/out",
     minifyWhitespace: true,
@@ -47,7 +47,7 @@ describe("bundler", () => {
     onAfterBundle(api) {
       const content = api.readFile("/out/a.js");
       expect(content).toMatchInlineSnapshot(`
-        "// @bun @bun-cjs
+        "// @fun @fun-cjs
         (function(exports, require, module, __filename, __dirname) {// Copyright 2024 Example Corp
         module.exports=1;})
         "
@@ -55,10 +55,10 @@ describe("bundler", () => {
     },
   });
 
-  itBundled("banner/HashbangBannerWithCJSAndTargetBun", {
+  itBundled("banner/HashbangBannerWithCJSAndTargetFun", {
     banner: "#!/usr/bin/env -S node --enable-source-maps\n// Additional banner content",
     format: "cjs",
-    target: "bun",
+    target: "fun",
     backend: "api",
     outdir: "/out",
     minifyWhitespace: true,
@@ -69,7 +69,7 @@ describe("bundler", () => {
       const content = api.readFile("/out/a.js");
       expect(content).toMatchInlineSnapshot(`
         "#!/usr/bin/env -S node --enable-source-maps
-        // @bun @bun-cjs
+        // @fun @fun-cjs
         (function(exports, require, module, __filename, __dirname) {// Additional banner content
         module.exports=1;})
         "
@@ -77,10 +77,10 @@ describe("bundler", () => {
     },
   });
 
-  itBundled("banner/SourceHashbangWithBannerAndCJSTargetBun", {
+  itBundled("banner/SourceHashbangWithBannerAndCJSTargetFun", {
     banner: "// Copyright 2024 Example Corp",
     format: "cjs",
-    target: "bun",
+    target: "fun",
     outdir: "/out",
     minifyWhitespace: true,
     backend: "api",
@@ -92,7 +92,7 @@ module.exports = 1;`,
       const content = api.readFile("/out/a.js");
       expect(content).toMatchInlineSnapshot(`
         "#!/usr/bin/env node
-        // @bun @bun-cjs
+        // @fun @fun-cjs
         (function(exports, require, module, __filename, __dirname) {// Copyright 2024 Example Corp
         module.exports=1;})
         "
@@ -100,10 +100,10 @@ module.exports = 1;`,
     },
   });
 
-  itBundled("banner/BannerWithESMAndTargetBun", {
+  itBundled("banner/BannerWithESMAndTargetFun", {
     banner: "// Copyright 2024 Example Corp",
     format: "esm",
-    target: "bun",
+    target: "fun",
     backend: "api",
     minifyWhitespace: true,
     files: {
@@ -111,16 +111,16 @@ module.exports = 1;`,
     },
     onAfterBundle(api) {
       const content = api.readFile("out.js");
-      // @bun comment should come first, then banner
-      const bunCommentIndex = content.indexOf("// @bun");
+      // @fun comment should come first, then banner
+      const funCommentIndex = content.indexOf("// @fun");
       const bannerIndex = content.indexOf("// Copyright 2024 Example Corp");
 
-      expect(bunCommentIndex).toBe(0);
-      expect(bannerIndex).toBeGreaterThan(bunCommentIndex);
+      expect(funCommentIndex).toBe(0);
+      expect(bannerIndex).toBeGreaterThan(funCommentIndex);
       // No CJS wrapper in ESM format
       expect(content).not.toContain("(function(exports, require, module, __filename, __dirname)");
       expect(content).toMatchInlineSnapshot(`
-        "// @bun
+        "// @fun
         // Copyright 2024 Example Corp
         var a_default=1;export{a_default as default};
         "
@@ -128,10 +128,10 @@ module.exports = 1;`,
     },
   });
 
-  itBundled("banner/HashbangBannerWithESMAndTargetBun", {
+  itBundled("banner/HashbangBannerWithESMAndTargetFun", {
     banner: "#!/usr/bin/env -S node --enable-source-maps\n// Additional banner content",
     format: "esm",
-    target: "bun",
+    target: "fun",
     backend: "api",
     outdir: "/out",
     minifyWhitespace: true,
@@ -142,7 +142,7 @@ module.exports = 1;`,
       const content = api.readFile("/out/a.js");
       expect(content).toMatchInlineSnapshot(`
         "#!/usr/bin/env -S node --enable-source-maps
-        // @bun
+        // @fun
         // Additional banner content
         var a_default=1;export{a_default as default};
         "
@@ -150,10 +150,10 @@ module.exports = 1;`,
     },
   });
 
-  itBundled("banner/BannerWithBytecodeAndCJSTargetBun", {
+  itBundled("banner/BannerWithBytecodeAndCJSTargetFun", {
     banner: "// Copyright 2024 Example Corp",
     format: "cjs",
-    target: "bun",
+    target: "fun",
     backend: "api",
     bytecode: true,
     minifyWhitespace: true,
@@ -164,26 +164,26 @@ module.exports = 1;`,
     onAfterBundle(api) {
       const content = api.readFile("/out/a.js");
       expect(content).toMatchInlineSnapshot(`
-        "// @bun @bytecode @bun-cjs
+        "// @fun @bytecode @fun-cjs
         (function(exports, require, module, __filename, __dirname) {// Copyright 2024 Example Corp
         module.exports=1;})
         "
       `);
-      // @bun @bytecode @bun-cjs comment should come first, then CJS wrapper, then banner
-      const bunBytecodeIndex = content.indexOf("// @bun @bytecode @bun-cjs");
+      // @fun @bytecode @fun-cjs comment should come first, then CJS wrapper, then banner
+      const funBytecodeIndex = content.indexOf("// @fun @bytecode @fun-cjs");
       const wrapperIndex = content.indexOf("(function(exports, require, module, __filename, __dirname) {");
       const bannerIndex = content.indexOf("// Copyright 2024 Example Corp");
 
-      expect(bunBytecodeIndex).toBe(0);
-      expect(wrapperIndex).toBeGreaterThan(bunBytecodeIndex);
+      expect(funBytecodeIndex).toBe(0);
+      expect(wrapperIndex).toBeGreaterThan(funBytecodeIndex);
       expect(bannerIndex).toBeGreaterThan(wrapperIndex);
     },
   });
 
-  itBundled("banner/HashbangBannerWithBytecodeAndCJSTargetBun", {
-    banner: "#!/usr/bin/env bun\n// Production build",
+  itBundled("banner/HashbangBannerWithBytecodeAndCJSTargetFun", {
+    banner: "#!/usr/bin/env fun\n// Production build",
     format: "cjs",
-    target: "bun",
+    target: "fun",
     bytecode: true,
     backend: "api",
     outdir: "/out",
@@ -195,8 +195,8 @@ module.exports = 1;`,
       const content = api.readFile("/out/a.js");
 
       expect(content).toMatchInlineSnapshot(`
-        "#!/usr/bin/env bun
-        // @bun @bytecode @bun-cjs
+        "#!/usr/bin/env fun
+        // @fun @bytecode @fun-cjs
         (function(exports, require, module, __filename, __dirname) {// Production build
         module.exports=1;})
         "
@@ -204,32 +204,32 @@ module.exports = 1;`,
     },
   });
 
-  itBundled("banner/SourceHashbangWithBytecodeAndCJSTargetBun", {
+  itBundled("banner/SourceHashbangWithBytecodeAndCJSTargetFun", {
     banner: "// Copyright 2024 Example Corp",
     format: "cjs",
-    target: "bun",
+    target: "fun",
     bytecode: true,
     outdir: "/out",
     minifyWhitespace: true,
     backend: "api",
     files: {
-      "/a.js": `#!/usr/bin/env bun
+      "/a.js": `#!/usr/bin/env fun
 module.exports = 1;
-console.log("bun!");`,
+console.log("fun!");`,
     },
     onAfterBundle(api) {
       const content = api.readFile("/out/a.js");
-      // Shebang from source should come first, then @bun pragma
+      // Shebang from source should come first, then @fun pragma
       expect(content).toMatchInlineSnapshot(`
-        "#!/usr/bin/env bun
-        // @bun @bytecode @bun-cjs
+        "#!/usr/bin/env fun
+        // @fun @bytecode @fun-cjs
         (function(exports, require, module, __filename, __dirname) {// Copyright 2024 Example Corp
-        module.exports=1;console.log("bun!");})
+        module.exports=1;console.log("fun!");})
         "
       `);
     },
     run: {
-      stdout: "bun!\n",
+      stdout: "fun!\n",
     },
   });
 });

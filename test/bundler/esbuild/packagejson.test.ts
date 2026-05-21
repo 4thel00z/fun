@@ -1,10 +1,10 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_packagejson_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/packagejson
+// For debug, all files are written to $TEMP/fun-bundle-tests/packagejson
 
 describe("bundler", () => {
   itBundled("packagejson/Main", {
@@ -1075,11 +1075,11 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg1". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg2". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg3". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg4". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg5". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg1". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg2". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg3". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg4". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg5". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1094,8 +1094,8 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg1". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg2/foo". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg1". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg2/foo". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1112,9 +1112,9 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg1". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg2". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg3". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg1". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg2". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg3". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1124,7 +1124,7 @@ describe("bundler", () => {
       "/Users/user/project/node_modules/pkg1/package.json": `{ "exports": { ".": {} } }`,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ExportsErrorModuleNotFound", {
@@ -1133,7 +1133,7 @@ describe("bundler", () => {
       "/Users/user/project/node_modules/pkg1/package.json": `{ "exports": { ".": "./foo.js" } }`,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ExportsErrorUnsupportedDirectoryImport", {
@@ -1148,8 +1148,8 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg1". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg2". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg1". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg2". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1251,7 +1251,7 @@ describe("bundler", () => {
     },
     entryPointsRaw: ["pkg"],
     bundleErrors: {
-      "<bun>": [`ModuleNotFound resolving "pkg" (entry point)`],
+      "<fun>": [`ModuleNotFound resolving "pkg" (entry point)`],
     },
   });
   itBundled("packagejson/ExportsEntryPointModuleOverMain", {
@@ -1387,7 +1387,7 @@ describe("bundler", () => {
       "/Users/user/project/node_modules/pkg1/package.json": `{ "exports": { "./foo/": "./test" } }`,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo/bar". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo/bar". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ExportsCustomConditions", {
@@ -1460,7 +1460,7 @@ describe("bundler", () => {
       "/Users/user/project/node_modules/pkg1/dir/bar.js": `console.log('SUCCESS')`,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo/bar". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo/bar". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ExportsExactMissingExtension", {
@@ -1476,7 +1476,7 @@ describe("bundler", () => {
       "/Users/user/project/node_modules/pkg1/dir/bar.js": `console.log('SUCCESS')`,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo/bar". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "pkg1/foo/bar". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ExportsNoConditionsMatch", {
@@ -1502,8 +1502,8 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg1". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg1/foo.js". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg1". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg1/foo.js". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1551,8 +1551,8 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg1". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg1/foo.js". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg1". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg1/foo.js". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1579,8 +1579,8 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg/path/to/real/file". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg/path/to/other/file". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg/path/to/real/file". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg/path/to/other/file". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1638,8 +1638,8 @@ describe("bundler", () => {
     },
     bundleErrors: {
       "/Users/user/project/src/entry.js": [
-        `Could not resolve: "pkg/apples/red.js". Maybe you need to "bun install"?`,
-        `Could not resolve: "pkg/books/red". Maybe you need to "bun install"?`,
+        `Could not resolve: "pkg/apples/red.js". Maybe you need to "fun install"?`,
+        `Could not resolve: "pkg/books/red". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -1709,7 +1709,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "#foo". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "#foo". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ImportsInvalidPackageConfiguration", {
@@ -1722,7 +1722,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "#foo". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "#foo". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ImportsErrorEqualsHash", {
@@ -1735,7 +1735,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "#". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "#". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ImportsErrorStartsWithHashSlash", {
@@ -1748,7 +1748,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "#/foo". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "#/foo". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/MainFieldsErrorMessageDefault", {
@@ -1761,7 +1761,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "foo". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "foo". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/MainFieldsErrorMessageNotIncluded", {
@@ -1775,7 +1775,7 @@ describe("bundler", () => {
     },
     outfile: "/Users/user/project/out.js",
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "foo". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "foo". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/MainFieldsErrorMessageEmpty", {
@@ -1788,7 +1788,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "foo". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "foo". Maybe you need to "fun install"?`],
     },
     outfile: "/Users/user/project/out.js",
   });
@@ -1939,7 +1939,7 @@ describe("bundler", () => {
     },
     outfile: "/Users/user/project/out.js",
     bundleErrors: {
-      "/Users/user/project/src/index.js": [`Could not resolve: "xyz/src/foo.js". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/index.js": [`Could not resolve: "xyz/src/foo.js". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/ImportSelfUsingImportFailure", {
@@ -1958,7 +1958,7 @@ describe("bundler", () => {
     },
     outfile: "/Users/user/project/out.js",
     bundleErrors: {
-      "/Users/user/project/src/index.js": [`Could not resolve: "xyz/src/foo.js". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/index.js": [`Could not resolve: "xyz/src/foo.js". Maybe you need to "fun install"?`],
     },
   });
   itBundled("packagejson/CommonJSVariableInESMTypeModule", {

@@ -12,7 +12,7 @@ state: union(enum) {
         current_expansion_result: std.array_list.Managed([:0]const u8),
         expansion: Expansion,
     },
-    err: bun.shell.ShellErr,
+    err: fun.shell.ShellErr,
     done,
 },
 ctx: AssignCtx,
@@ -33,7 +33,7 @@ pub const ChildPtr = StatePtrUnion(.{
 pub inline fn deinit(this: *Assigns) void {
     switch (this.state) {
         .expanding => |*e| e.current_expansion_result.deinit(),
-        .err => |*e| e.deinit(bun.default_allocator),
+        .err => |*e| e.deinit(fun.default_allocator),
         .idle, .done => {},
     }
     this.io.deinit();
@@ -126,7 +126,7 @@ pub fn next(this: *Assigns) Yield {
 
 pub fn childDone(this: *Assigns, child: ChildPtr, exit_code: ExitCode) Yield {
     if (child.ptr.is(Expansion)) {
-        bun.assert(this.state == .expanding);
+        fun.assert(this.state == .expanding);
         const expansion = child.ptr.as(Expansion);
         if (exit_code != 0) {
             // `expansion` points into `this.state.expanding.expansion`; capture the error
@@ -172,7 +172,7 @@ pub fn childDone(this: *Assigns, child: ChildPtr, exit_code: ExitCode) Yield {
 
             const value: []const u8 = brk: {
                 if (size == 0) break :brk "";
-                var merged = bun.handleOom(this.base.allocator().alloc(u8, size));
+                var merged = fun.handleOom(this.base.allocator().alloc(u8, size));
                 var i: usize = 0;
                 const last = expanding.current_expansion_result.items.len -| 1;
                 for (expanding.current_expansion_result.items, 0..) |slice, j| {
@@ -205,7 +205,7 @@ pub fn childDone(this: *Assigns, child: ChildPtr, exit_code: ExitCode) Yield {
         return .{ .assigns = this };
     }
 
-    @panic("Invalid child to Assigns expression, this indicates a bug in Bun. Please file a report on Github.");
+    @panic("Invalid child to Assigns expression, this indicates a bug in Fun. Please file a report on Github.");
 }
 
 pub const AssignCtx = enum {
@@ -214,23 +214,23 @@ pub const AssignCtx = enum {
     exported,
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Binary = bun.shell.Interpreter.Binary;
-const Cmd = bun.shell.Interpreter.Cmd;
-const Expansion = bun.shell.Interpreter.Expansion;
-const IO = bun.shell.Interpreter.IO;
-const Pipeline = bun.shell.Interpreter.Pipeline;
+const Interpreter = fun.shell.Interpreter;
+const Binary = fun.shell.Interpreter.Binary;
+const Cmd = fun.shell.Interpreter.Cmd;
+const Expansion = fun.shell.Interpreter.Expansion;
+const IO = fun.shell.Interpreter.IO;
+const Pipeline = fun.shell.Interpreter.Pipeline;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
 
-const EnvStr = bun.shell.interpret.EnvStr;
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const EnvStr = fun.shell.interpret.EnvStr;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

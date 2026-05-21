@@ -17,16 +17,16 @@ done\n\
 echo "Redis is ready!"\n\
 \n\
 # Set up some test data for persistence tests\n\
-redis-cli set bun_valkey_test_init "initialization_successful"\n\
+redis-cli set fun_valkey_test_init "initialization_successful"\n\
 \n\
 # Create test hash\n\
-redis-cli hset bun_valkey_test_hash name "test_user" age "25" active "true"\n\
+redis-cli hset fun_valkey_test_hash name "test_user" age "25" active "true"\n\
 \n\
 # Create test set\n\
-redis-cli sadd bun_valkey_test_set "red" "green" "blue"\n\
+redis-cli sadd fun_valkey_test_set "red" "green" "blue"\n\
 \n\
 # Create test list\n\
-redis-cli lpush bun_valkey_test_list "first" "second" "third"\n\
+redis-cli lpush fun_valkey_test_list "first" "second" "third"\n\
 ' > /docker-entrypoint-initdb.d/init-redis.sh
 
 # Make the script executable

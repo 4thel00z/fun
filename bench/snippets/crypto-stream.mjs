@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/2190
+// https://github.com/underdoc-org/fun/issues/2190
 import { createHash } from "node:crypto";
 import { bench, run } from "../runner.mjs";
 

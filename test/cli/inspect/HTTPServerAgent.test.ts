@@ -1,12 +1,12 @@
-import { Subprocess, spawn } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { Subprocess, spawn } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import fs from "fs";
-import { bunExe, bunEnv as env, isPosix, tmpdirSync } from "harness";
+import { funExe, funEnv as env, isPosix, tmpdirSync } from "harness";
 import { join } from "node:path";
 import { InspectorSession, connect } from "./junit-reporter";
 import { SocketFramer } from "./socket-framer";
 
-const bunEnv = { ...env, NODE_ENV: "development" };
+const funEnv = { ...env, NODE_ENV: "development" };
 
 class HTTPServerInspectorSession extends InspectorSession {
   constructor() {
@@ -88,7 +88,7 @@ describe.if(isPosix)("HTTPServer inspector protocol", () => {
 
   const initialFile = /* js */ `
 import html from "./index.html";
-import { serve } from "bun";
+import { serve } from "fun";
 
 var server = serve({
   port: 0, // Use a random available port
@@ -115,7 +115,7 @@ var server = serve({
 
   const updatedFile = /* js */ `
 import html from "./index.html";
-import { serve } from "bun";
+import { serve } from "fun";
 
 var server = serve({
   port: 0, // Use a random available port
@@ -164,12 +164,12 @@ var server = serve({
 
       // Start the server with inspector enabled (Unix socket only)
       serverProcess = spawn({
-        cmd: [bunExe(), "--hot", `--inspect-wait=unix:${socketPath}`, join(tempdir, "server.ts")],
+        cmd: [funExe(), "--hot", `--inspect-wait=unix:${socketPath}`, join(tempdir, "server.ts")],
         env: {
-          ...bunEnv,
+          ...funEnv,
 
           ASAN_OPTIONS: "detect_leaks=0:abort_on_error=0:sleep_before_dying=10000000",
-          BUN_WAIT_FOR_DEBUGGER: "1",
+          FUN_WAIT_FOR_DEBUGGER: "1",
         },
         cwd: tempdir,
         stdout: "inherit",

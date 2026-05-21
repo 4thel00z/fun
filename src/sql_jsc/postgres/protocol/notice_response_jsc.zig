@@ -1,17 +1,17 @@
 pub fn toJS(this: NoticeResponse, globalObject: *jsc.JSGlobalObject) JSValue {
-    var b = bun.StringBuilder{};
-    defer b.deinit(bun.default_allocator);
+    var b = fun.StringBuilder{};
+    defer b.deinit(fun.default_allocator);
 
     for (this.messages.items) |msg| {
         b.cap += switch (msg) {
             inline else => |m| m.utf8ByteLength(),
         } + 1;
     }
-    b.allocate(bun.default_allocator) catch {};
+    b.allocate(fun.default_allocator) catch {};
 
     for (this.messages.items) |msg| {
         var str = switch (msg) {
-            inline else => |m| m.toUTF8(bun.default_allocator),
+            inline else => |m| m.toUTF8(fun.default_allocator),
         };
         defer str.deinit();
         _ = b.append(str.slice());
@@ -22,7 +22,7 @@ pub fn toJS(this: NoticeResponse, globalObject: *jsc.JSGlobalObject) JSValue {
 }
 
 const NoticeResponse = @import("../../../sql/postgres/protocol/NoticeResponse.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

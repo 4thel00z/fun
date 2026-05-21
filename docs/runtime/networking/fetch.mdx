@@ -1,11 +1,11 @@
 ---
 title: Fetch
-description: Send HTTP requests with Bun's fetch API
+description: Send HTTP requests with Fun's fetch API
 ---
 
-Bun implements the WHATWG `fetch` standard, with some extensions to meet the needs of server-side JavaScript.
+Fun implements the WHATWG `fetch` standard, with some extensions to meet the needs of server-side JavaScript.
 
-Bun also implements `node:http`, but `fetch` is generally recommended instead.
+Fun also implements `node:http`, but `fetch` is generally recommended instead.
 
 ## Sending an HTTP request
 
@@ -160,7 +160,7 @@ When using streams with HTTP(S):
 
 When using streams with S3:
 
-- For PUT/POST requests, Bun automatically uses multipart upload
+- For PUT/POST requests, Fun automatically uses multipart upload
 - The stream is consumed in chunks and uploaded in parallel
 - Progress can be monitored through the S3 options
 
@@ -196,7 +196,7 @@ To fetch a URL using a Unix domain socket, use the `unix: string` option:
 const response = await fetch("https://hostname/a/path", {
   unix: "/var/run/path/to/unix.sock",
   method: "POST",
-  body: JSON.stringify({ message: "Hello from Bun!" }),
+  body: JSON.stringify({ message: "Hello from Fun!" }),
   headers: {
     "Content-Type": "application/json",
   },
@@ -210,9 +210,9 @@ To use a client certificate, use the `tls` option:
 ```ts
 await fetch("https://example.com", {
   tls: {
-    key: Bun.file("/path/to/key.pem"),
-    cert: Bun.file("/path/to/cert.pem"),
-    // ca: [Bun.file("/path/to/ca.pem")],
+    key: Fun.file("/path/to/key.pem"),
+    cert: Fun.file("/path/to/cert.pem"),
+    // ca: [Fun.file("/path/to/ca.pem")],
   },
 });
 ```
@@ -249,7 +249,7 @@ This is especially useful to avoid SSL errors when using self-signed certificate
 
 ### Request options
 
-In addition to the standard fetch options, Bun provides several extensions:
+In addition to the standard fetch options, Fun provides several extensions:
 
 ```ts
 const response = await fetch("http://example.com", {
@@ -267,11 +267,11 @@ const response = await fetch("http://example.com", {
 
 ### Protocol support
 
-Beyond HTTP(S), Bun's fetch supports several additional protocols:
+Beyond HTTP(S), Fun's fetch supports several additional protocols:
 
 #### S3 URLs - `s3://`
 
-Bun supports fetching from S3 buckets directly.
+Fun supports fetching from S3 buckets directly.
 
 ```ts
 // Using environment variables for credentials
@@ -287,9 +287,9 @@ const response = await fetch("s3://my-bucket/path/to/object", {
 });
 ```
 
-Note: Only PUT and POST methods support request bodies when using S3. For uploads, Bun automatically uses multipart upload for streaming bodies.
+Note: Only PUT and POST methods support request bodies when using S3. For uploads, Fun automatically uses multipart upload for streaming bodies.
 
-You can read more about Bun's S3 support in the [S3](/runtime/s3) documentation.
+You can read more about Fun's S3 support in the [S3](/runtime/s3) documentation.
 
 #### File URLs - `file://`
 
@@ -310,7 +310,7 @@ const response2 = await fetch("file:///c:/path\\to/file.txt");
 
 #### Data URLs - `data:`
 
-Bun supports the `data:` URL scheme:
+Fun supports the `data:` URL scheme:
 
 ```ts
 const response = await fetch("data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==");
@@ -329,7 +329,7 @@ const response = await fetch(url);
 
 ### Error handling
 
-Bun's fetch implementation includes several specific error cases:
+Fun's fetch implementation includes several specific error cases:
 
 - Using a request body with GET/HEAD methods will throw an error (which is expected for the fetch API)
 - Attempting to use both `proxy` and `unix` options together will throw an error
@@ -338,7 +338,7 @@ Bun's fetch implementation includes several specific error cases:
 
 ### Content-Type handling
 
-Bun automatically sets the `Content-Type` header for request bodies when not explicitly provided:
+Fun automatically sets the `Content-Type` header for request bodies when not explicitly provided:
 
 - For `Blob` objects, uses the blob's `type`
 - For `FormData`, sets appropriate multipart boundary
@@ -358,7 +358,7 @@ This will print the request and response headers to your terminal:
 ```sh
 [fetch] > HTTP/1.1 GET http://example.com/
 [fetch] > Connection: keep-alive
-[fetch] > User-Agent: Bun/1.3.3
+[fetch] > User-Agent: Fun/1.3.3
 [fetch] > Accept: */*
 [fetch] > Host: example.com
 [fetch] > Accept-Encoding: gzip, deflate, br, zstd
@@ -378,7 +378,7 @@ This will print the request and response headers to your terminal:
 [fetch] < Content-Length: 648
 ```
 
-Note: `verbose: boolean` is not part of the Web standard `fetch` API and is specific to Bun.
+Note: `verbose: boolean` is not part of the Web standard `fetch` API and is specific to Fun.
 
 ## Performance
 
@@ -388,32 +388,32 @@ After the DNS lookup, the TCP socket must be connected and the TLS handshake mig
 
 After the request completes, consuming the response body can also take a significant amount of time and memory.
 
-At every step of the way, Bun provides APIs to help you optimize the performance of your application.
+At every step of the way, Fun provides APIs to help you optimize the performance of your application.
 
 ### DNS prefetching
 
 To prefetch a DNS entry, you can use the `dns.prefetch` API. This API is useful when you know you'll need to connect to a host soon and want to avoid the initial DNS lookup.
 
 ```ts
-import { dns } from "bun";
+import { dns } from "fun";
 
-dns.prefetch("bun.com");
+dns.prefetch("fun.dev");
 ```
 
 #### DNS caching
 
-By default, Bun caches and deduplicates DNS queries in-memory for up to 30 seconds. You can see the cache stats by calling `dns.getCacheStats()`:
+By default, Fun caches and deduplicates DNS queries in-memory for up to 30 seconds. You can see the cache stats by calling `dns.getCacheStats()`:
 
-To learn more about DNS caching in Bun, see the [DNS caching](/runtime/networking/dns) documentation.
+To learn more about DNS caching in Fun, see the [DNS caching](/runtime/networking/dns) documentation.
 
 ### Preconnect to a host
 
 To preconnect to a host, you can use the `fetch.preconnect` API. This API is useful when you know you'll need to connect to a host soon and want to start the initial DNS lookup, TCP socket connection, and TLS handshake early.
 
 ```ts
-import { fetch } from "bun";
+import { fetch } from "fun";
 
-fetch.preconnect("https://bun.com");
+fetch.preconnect("https://fun.dev");
 ```
 
 Note: calling `fetch` immediately after `fetch.preconnect` will not make your request faster. Preconnecting only helps if you know you'll need to connect to a host soon, but you're not ready to make the request yet.
@@ -423,7 +423,7 @@ Note: calling `fetch` immediately after `fetch.preconnect` will not make your re
 To preconnect to a host at startup, you can pass `--fetch-preconnect`:
 
 ```sh
-bun --fetch-preconnect https://bun.com ./my-script.ts
+fun --fetch-preconnect https://fun.dev ./my-script.ts
 ```
 
 This is sort of like `<link rel="preconnect">` in HTML.
@@ -432,28 +432,28 @@ This feature is not implemented on Windows yet. If you're interested in using th
 
 ### Connection pooling & HTTP keep-alive
 
-Bun automatically reuses connections to the same host. This is known as connection pooling. This can significantly reduce the time it takes to establish a connection. Connection pooling is enabled automatically.
+Fun automatically reuses connections to the same host. This is known as connection pooling. This can significantly reduce the time it takes to establish a connection. Connection pooling is enabled automatically.
 
 #### Simultaneous connection limit
 
-By default, Bun limits the maximum number of simultaneous `fetch` requests to 256. We do this for several reasons:
+By default, Fun limits the maximum number of simultaneous `fetch` requests to 256. We do this for several reasons:
 
 - It improves overall system stability. Operating systems have an upper limit on the number of simultaneous open TCP sockets, usually in the low thousands. Nearing this limit causes your entire computer to behave strangely. Applications hang and crash.
 - It encourages HTTP Keep-Alive connection reuse. For short-lived HTTP requests, the slowest step is often the initial connection setup. Reusing connections can save a lot of time.
 
 When the limit is exceeded, the requests are queued and sent as soon as the next request ends.
 
-You can increase the maximum number of simultaneous connections via the `BUN_CONFIG_MAX_HTTP_REQUESTS` environment variable:
+You can increase the maximum number of simultaneous connections via the `FUN_CONFIG_MAX_HTTP_REQUESTS` environment variable:
 
 ```sh
-BUN_CONFIG_MAX_HTTP_REQUESTS=512 bun ./my-script.ts
+FUN_CONFIG_MAX_HTTP_REQUESTS=512 fun ./my-script.ts
 ```
 
 The max value for this limit is currently set to 65,336. The maximum port number is 65,535, so it's quite difficult for any one computer to exceed this limit.
 
 ### Response buffering
 
-Bun goes to great lengths to optimize the performance of reading the response body. The fastest way to read the response body is to use one of these methods:
+Fun goes to great lengths to optimize the performance of reading the response body. The fastest way to read the response body is to use one of these methods:
 
 - `response.text(): Promise<string>`
 - `response.json(): Promise<any>`
@@ -462,10 +462,10 @@ Bun goes to great lengths to optimize the performance of reading the response bo
 - `response.arrayBuffer(): Promise<ArrayBuffer>`
 - `response.blob(): Promise<Blob>`
 
-You can also use `Bun.write` to write the response body to a file on disk:
+You can also use `Fun.write` to write the response body to a file on disk:
 
 ```ts
-import { write } from "bun";
+import { write } from "fun";
 
 await write("output.txt", response);
 ```
@@ -477,8 +477,8 @@ await write("output.txt", response);
   - The file must be larger than 32KB
   - The request must not be using a proxy
   - On macOS, only regular files (not pipes, sockets, or devices) can use `sendfile`
-  - When these conditions aren't met, or when using S3/streaming uploads, Bun falls back to reading the file into memory
+  - When these conditions aren't met, or when using S3/streaming uploads, Fun falls back to reading the file into memory
   - This optimization is particularly effective for HTTP (not HTTPS) requests where the file can be sent directly from the kernel to the network stack
 - S3 operations automatically handle signing requests and merging authentication headers
 
-Note: Many of these features are Bun-specific extensions to the standard fetch API.
+Note: Many of these features are Fun-specific extensions to the standard fetch API.

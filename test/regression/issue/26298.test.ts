@@ -1,8 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import { join } from "path";
 
-// Regression test for https://github.com/oven-sh/bun/issues/26298
+// Regression test for https://github.com/underdoc-org/fun/issues/26298
 // Windows segfault when running standalone executables with bytecode cache.
 // The crash occurred because bytecode offsets were not properly aligned
 // when embedded in PE sections, causing deserialization failures.
@@ -23,9 +23,9 @@ describe("issue #26298: bytecode cache in standalone executables", () => {
     const outfile = join(String(dir), `app${ext}`);
 
     // Build with bytecode
-    await using build = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", "--bytecode", join(String(dir), "index.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using build = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", "--bytecode", join(String(dir), "index.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -37,9 +37,9 @@ describe("issue #26298: bytecode cache in standalone executables", () => {
     expect(buildExitCode).toBe(0);
 
     // Run the compiled executable
-    await using exe = Bun.spawn({
+    await using exe = Fun.spawn({
       cmd: [outfile],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -75,9 +75,9 @@ describe("issue #26298: bytecode cache in standalone executables", () => {
     const outfile = join(String(dir), `multi${ext}`);
 
     // Build with bytecode
-    await using build = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", "--bytecode", join(String(dir), "index.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using build = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", "--bytecode", join(String(dir), "index.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -89,9 +89,9 @@ describe("issue #26298: bytecode cache in standalone executables", () => {
     expect(buildExitCode).toBe(0);
 
     // Run the compiled executable
-    await using exe = Bun.spawn({
+    await using exe = Fun.spawn({
       cmd: [outfile],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -112,9 +112,9 @@ describe("issue #26298: bytecode cache in standalone executables", () => {
     const outfile = join(String(dir), `cached${ext}`);
 
     // Build with bytecode
-    await using build = Bun.spawn({
-      cmd: [bunExe(), "build", "--compile", "--bytecode", join(String(dir), "app.js"), "--outfile", outfile],
-      env: bunEnv,
+    await using build = Fun.spawn({
+      cmd: [funExe(), "build", "--compile", "--bytecode", join(String(dir), "app.js"), "--outfile", outfile],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -126,11 +126,11 @@ describe("issue #26298: bytecode cache in standalone executables", () => {
     expect(buildExitCode).toBe(0);
 
     // Run with verbose disk cache to verify bytecode is being used
-    await using exe = Bun.spawn({
+    await using exe = Fun.spawn({
       cmd: [outfile],
       env: {
-        ...bunEnv,
-        BUN_JSC_verboseDiskCache: "1",
+        ...funEnv,
+        FUN_JSC_verboseDiskCache: "1",
       },
       stdout: "pipe",
       stderr: "pipe",
@@ -141,7 +141,7 @@ describe("issue #26298: bytecode cache in standalone executables", () => {
     expect(exeStdout).toContain("bytecode cache test");
     // Check for cache hit message which confirms bytecode is being loaded.
     // This relies on JSC's internal disk cache diagnostic output when
-    // BUN_JSC_verboseDiskCache=1 is set. The pattern is kept flexible to
+    // FUN_JSC_verboseDiskCache=1 is set. The pattern is kept flexible to
     // accommodate potential future changes in JSC's diagnostic format.
     expect(exeStderr).toMatch(/\[Disk Cache\].*Cache hit/i);
     expect(exeExitCode).toBe(0);

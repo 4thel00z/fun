@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -55,7 +55,7 @@ describe("bundler", () => {
   });
   itBundled("drop/UnaryExpression", {
     files: {
-      "/a.js": `Bun.inspect(); console.log("hello");`,
+      "/a.js": `Fun.inspect(); console.log("hello");`,
     },
     run: { stdout: "" },
     drop: ["console"],
@@ -70,41 +70,41 @@ describe("bundler", () => {
   });
   itBundled("drop/BecomesUndefined", {
     files: {
-      "/a.js": `console.log(Bun.inspect.table());`,
+      "/a.js": `console.log(Fun.inspect.table());`,
     },
     run: { stdout: "undefined" },
-    drop: ["Bun.inspect.table"],
+    drop: ["Fun.inspect.table"],
   });
   itBundled("drop/BecomesUndefinedNested1", {
     files: {
-      "/a.js": `console.log(Bun.inspect.table());`,
+      "/a.js": `console.log(Fun.inspect.table());`,
     },
     run: { stdout: "undefined" },
-    drop: ["Bun.inspect"],
+    drop: ["Fun.inspect"],
   });
   itBundled("drop/BecomesUndefinedNested2", {
     files: {
-      "/a.js": `console.log(Bun.inspect.table());`,
+      "/a.js": `console.log(Fun.inspect.table());`,
     },
     run: { stdout: "undefined" },
-    drop: ["Bun"],
+    drop: ["Fun"],
   });
   itBundled("drop/AssignTarget", {
     files: {
       "/a.js": `console.log(
       (
-      Bun.inspect.table = (() => 123) 
+      Fun.inspect.table = (() => 123) 
     )());`,
     },
     run: { stdout: "123" },
-    drop: ["Bun"],
+    drop: ["Fun"],
   });
   itBundled("drop/DeleteAssignTarget", {
     files: {
-      "/a.js": `console.log((delete Bun.inspect()));`,
+      "/a.js": `console.log((delete Fun.inspect()));`,
     },
     run: { stdout: "true" },
-    drop: ["Bun"],
+    drop: ["Fun"],
   });
   itBundled("drop/IdentifierCall", {
     files: {

@@ -8,7 +8,7 @@ pub fn installIsolatedPackages(
     workspace_filters: []const WorkspaceFilter,
     packages_to_install: ?[]const PackageID,
 ) OOM!PackageInstall.Summary {
-    bun.analytics.Features.isolated_bun_install += 1;
+    fun.analytics.Features.isolated_fun_install += 1;
 
     const lockfile = manager.lockfile;
 
@@ -66,7 +66,7 @@ pub fn installIsolatedPackages(
         }
         const peer_name_count: u32 = @intCast(peer_name_idx.count());
 
-        var leaking_peers: bun.bit_set.DynamicBitSetUnmanaged.List = try .initEmpty(
+        var leaking_peers: fun.bit_set.DynamicBitSetUnmanaged.List = try .initEmpty(
             lockfile.allocator,
             lockfile.packages.len,
             peer_name_count,
@@ -98,13 +98,13 @@ pub fn installIsolatedPackages(
             // Per-package bits computed once: own peer-dep names, and non-peer
             // dependency names that will appear in `node_dependencies` (i.e., not
             // filtered out by bundled/disabled/unresolved).
-            var own_peers: bun.bit_set.DynamicBitSetUnmanaged.List = try .initEmpty(
+            var own_peers: fun.bit_set.DynamicBitSetUnmanaged.List = try .initEmpty(
                 lockfile.allocator,
                 lockfile.packages.len,
                 peer_name_count,
             );
             defer own_peers.deinit(lockfile.allocator);
-            var provides: bun.bit_set.DynamicBitSetUnmanaged.List = try .initEmpty(
+            var provides: fun.bit_set.DynamicBitSetUnmanaged.List = try .initEmpty(
                 lockfile.allocator,
                 lockfile.packages.len,
                 peer_name_count,
@@ -132,7 +132,7 @@ pub fn installIsolatedPackages(
                 }
             }
 
-            var scratch = try bun.bit_set.DynamicBitSetUnmanaged.initEmpty(lockfile.allocator, peer_name_count);
+            var scratch = try fun.bit_set.DynamicBitSetUnmanaged.initEmpty(lockfile.allocator, peer_name_count);
             defer scratch.deinit(lockfile.allocator);
 
             var changed = true;
@@ -178,7 +178,7 @@ pub fn installIsolatedPackages(
         var early_dedupe: std.AutoHashMap(EarlyDedupeKey, Store.Node.Id) = .init(lockfile.allocator);
         defer early_dedupe.deinit();
 
-        var root_declares_workspace = try bun.bit_set.DynamicBitSetUnmanaged.initEmpty(lockfile.allocator, lockfile.packages.len);
+        var root_declares_workspace = try fun.bit_set.DynamicBitSetUnmanaged.initEmpty(lockfile.allocator, lockfile.packages.len);
         defer root_declares_workspace.deinit(lockfile.allocator);
         for (pkg_dependency_slices[0].begin()..pkg_dependency_slices[0].end()) |_dep_idx| {
             const dep_idx: DependencyID = @intCast(_dep_idx);
@@ -186,7 +186,7 @@ pub fn installIsolatedPackages(
             const res = resolutions[dep_idx];
             if (res == invalid_package_id) continue;
             // Only mark workspaces that root will actually queue; an entry excluded
-            // by --filter or `bun install <pkgs>` never gets a root-declared node,
+            // by --filter or `fun install <pkgs>` never gets a root-declared node,
             // so a `workspace:` reference must keep its dependencies.
             if (Tree.isFilteredDependencyOrWorkspace(
                 dep_idx,
@@ -222,7 +222,7 @@ pub fn installIsolatedPackages(
                 while (curr_id != .invalid) {
                     if (node_pkg_ids[curr_id.get()] == entry.pkg_id) {
                         // skip the new node, and add the previously added node to parent so it appears in
-                        // 'node_modules/.bun/parent@version/node_modules'.
+                        // 'node_modules/.fun/parent@version/node_modules'.
 
                         const dep_id = node_dep_ids[curr_id.get()];
                         if (dep_id == invalid_dependency_id and entry.dep_id == invalid_dependency_id) {
@@ -291,7 +291,7 @@ pub fn installIsolatedPackages(
                         if (leaks.count() == 0) break :ctx 0;
 
                         const peer_names = peer_name_idx.keys();
-                        var hasher = bun.Wyhash11.init(0);
+                        var hasher = fun.Wyhash11.init(0);
                         var it = leaks.iterator(.{});
                         while (it.next()) |bit| {
                             const peer_name_hash = peer_names[bit];
@@ -614,7 +614,7 @@ pub fn installIsolatedPackages(
         if (manager.options.log_level.isVerbose()) {
             const full_tree_end = timer.read();
             timer.reset();
-            Output.prettyErrorln("Resolved peers [{f}]", .{bun.fmt.fmtDurationOneDecimal(full_tree_end)});
+            Output.prettyErrorln("Resolved peers [{f}]", .{fun.fmt.fmtDurationOneDecimal(full_tree_end)});
         }
 
         const DedupeInfo = struct {
@@ -641,7 +641,7 @@ pub fn installIsolatedPackages(
             node_id: Store.Node.Id,
             entry_parent_id: Store.Entry.Id,
         };
-        var entry_queue: bun.LinearFifo(QueuedEntry, .Dynamic) = .init(lockfile.allocator);
+        var entry_queue: fun.LinearFifo(QueuedEntry, .Dynamic) = .init(lockfile.allocator);
         defer entry_queue.deinit();
 
         try entry_queue.writeItem(.{
@@ -649,10 +649,10 @@ pub fn installIsolatedPackages(
             .entry_parent_id = .invalid,
         });
 
-        var public_hoisted: bun.StringArrayHashMap(void) = .init(manager.allocator);
+        var public_hoisted: fun.StringArrayHashMap(void) = .init(manager.allocator);
         defer public_hoisted.deinit();
 
-        var hidden_hoisted: bun.StringArrayHashMap(void) = .init(manager.allocator);
+        var hidden_hoisted: fun.StringArrayHashMap(void) = .init(manager.allocator);
         defer hidden_hoisted.deinit();
 
         // Second pass: Deduplicate nodes when the pkg_id and peer set match an existing entry.
@@ -723,7 +723,7 @@ pub fn installIsolatedPackages(
                 if (peers.len() == 0) {
                     break :peer_hash .none;
                 }
-                var hasher = bun.Wyhash11.init(0);
+                var hasher = fun.Wyhash11.init(0);
                 for (peers.slice()) |peer_ids| {
                     const pkg_name = pkg_names[peer_ids.pkg_id];
                     hasher.update(pkg_name.slice(string_buf));
@@ -837,7 +837,7 @@ pub fn installIsolatedPackages(
 
         if (manager.options.log_level.isVerbose()) {
             const dedupe_end = timer.read();
-            Output.prettyErrorln("Created store [{f}]", .{bun.fmt.fmtDurationOneDecimal(dedupe_end)});
+            Output.prettyErrorln("Created store [{f}]", .{fun.fmt.fmtDurationOneDecimal(dedupe_end)});
         }
 
         break :store .{
@@ -888,7 +888,7 @@ pub fn installIsolatedPackages(
         const string_buf = lockfile.buffers.string_bytes.items;
         const dependencies = lockfile.buffers.dependencies.items;
 
-        // Packages newly trusted via `bun add --trust` (not yet written to the
+        // Packages newly trusted via `fun add --trust` (not yet written to the
         // lockfile) will have their lifecycle scripts run this install; treat
         // them the same as lockfile-trusted packages for eligibility.
         var trusted_from_update = manager.findTrustedDependenciesFromUpdateRequests();
@@ -932,7 +932,7 @@ pub fn installIsolatedPackages(
                             // shared global copy would either diverge from the
                             // patch or be mutated underneath other projects.
                             if (lockfile.patched_dependencies.count() > 0) {
-                                var name_version_buf: bun.PathBuffer = undefined;
+                                var name_version_buf: fun.PathBuffer = undefined;
                                 const name_version = std.fmt.bufPrint(&name_version_buf, "{s}@{f}", .{
                                     pkg_names[pkg_id].slice(string_buf),
                                     pkg_res.fmt(string_buf, .posix),
@@ -944,7 +944,7 @@ pub fn installIsolatedPackages(
                                     // slip into the shared store.
                                     break :eligible false;
                                 };
-                                if (lockfile.patched_dependencies.contains(bun.Semver.String.Builder.stringHash(name_version))) {
+                                if (lockfile.patched_dependencies.contains(fun.Semver.String.Builder.stringHash(name_version))) {
                                     break :eligible false;
                                 }
                             }
@@ -960,7 +960,7 @@ pub fn installIsolatedPackages(
                             // would run the postinstall through the project
                             // symlink and mutate the shared directory) *or*
                             // on `meta.hasInstallScript()` (that flag is not
-                            // serialised in `bun.lock`, so it reads `false`
+                            // serialised in `fun.lock`, so it reads `false`
                             // on every install after the first; a trusted
                             // scripted package would flip from project-local
                             // on the cold install to global on the warm one).
@@ -1257,22 +1257,22 @@ pub fn installIsolatedPackages(
         if (cache_dir_path.len == 0) break :global_store_path null;
         break :global_store_path try manager.allocator.dupeZ(
             u8,
-            bun.path.joinAbsString(cache_dir_path, &.{"links"}, .auto),
+            fun.path.joinAbsString(cache_dir_path, &.{"links"}, .auto),
         );
     } else null;
     defer if (global_store_path) |p| manager.allocator.free(p);
 
-    // setup node_modules/.bun
-    const is_new_bun_modules = is_new_bun_modules: {
-        const node_modules_path = bun.OSPathLiteral("node_modules");
-        const bun_modules_path = bun.OSPathLiteral("node_modules/" ++ Store.modules_dir_name);
+    // setup node_modules/.fun
+    const is_new_fun_modules = is_new_fun_modules: {
+        const node_modules_path = fun.OSPathLiteral("node_modules");
+        const fun_modules_path = fun.OSPathLiteral("node_modules/" ++ Store.modules_dir_name);
 
         sys.mkdirat(FD.cwd(), node_modules_path, 0o755).unwrap() catch {
-            sys.mkdirat(FD.cwd(), bun_modules_path, 0o755).unwrap() catch {
-                break :is_new_bun_modules false;
+            sys.mkdirat(FD.cwd(), fun_modules_path, 0o755).unwrap() catch {
+                break :is_new_fun_modules false;
             };
 
-            // 'node_modules' exists and 'node_modules/.bun' doesn't
+            // 'node_modules' exists and 'node_modules/.fun' doesn't
 
             if (comptime Environment.isWindows) {
                 // Windows:
@@ -1280,33 +1280,33 @@ pub fn installIsolatedPackages(
                 // 2. for each entry in 'node_modules' rename into 'node_modules/.old_modules-{hex}'
                 // 3. for each workspace 'node_modules' rename into 'node_modules/.old_modules-{hex}/old_{basename}_modules'
 
-                var rename_path: bun.AutoRelPath = .init();
+                var rename_path: fun.AutoRelPath = .init();
                 defer rename_path.deinit();
 
                 {
-                    var mkdir_path: bun.RelPath(.{ .sep = .auto, .unit = .u16 }) = .from("node_modules");
+                    var mkdir_path: fun.RelPath(.{ .sep = .auto, .unit = .u16 }) = .from("node_modules");
                     defer mkdir_path.deinit();
 
-                    mkdir_path.appendFmt(".old_modules-{s}", .{&std.fmt.bytesToHex(std.mem.asBytes(&bun.fastRandom()), .lower)});
+                    mkdir_path.appendFmt(".old_modules-{s}", .{&std.fmt.bytesToHex(std.mem.asBytes(&fun.fastRandom()), .lower)});
                     rename_path.append(mkdir_path.slice());
 
                     // 1
                     sys.mkdirat(FD.cwd(), mkdir_path.sliceZ(), 0o755).unwrap() catch {
-                        break :is_new_bun_modules true;
+                        break :is_new_fun_modules true;
                     };
                 }
 
-                const node_modules = bun.openDirForIteration(FD.cwd(), "node_modules").unwrap() catch {
-                    break :is_new_bun_modules true;
+                const node_modules = fun.openDirForIteration(FD.cwd(), "node_modules").unwrap() catch {
+                    break :is_new_fun_modules true;
                 };
 
-                var entry_path: bun.AutoRelPath = .from("node_modules");
+                var entry_path: fun.AutoRelPath = .from("node_modules");
                 defer entry_path.deinit();
 
                 // 2
-                var node_modules_iter = bun.DirIterator.iterate(node_modules, .u8);
-                while (node_modules_iter.next().unwrap() catch break :is_new_bun_modules true) |entry| {
-                    if (bun.strings.startsWithChar(entry.name.slice(), '.')) {
+                var node_modules_iter = fun.DirIterator.iterate(node_modules, .u8);
+                while (node_modules_iter.next().unwrap() catch break :is_new_fun_modules true) |entry| {
+                    if (fun.strings.startsWithChar(entry.name.slice(), '.')) {
                         continue;
                     }
 
@@ -1325,7 +1325,7 @@ pub fn installIsolatedPackages(
 
                 // 3
                 for (lockfile.workspace_paths.values()) |workspace_path| {
-                    var workspace_node_modules: bun.AutoRelPath = .from(workspace_path.slice(lockfile.buffers.string_bytes.items));
+                    var workspace_node_modules: fun.AutoRelPath = .from(workspace_path.slice(lockfile.buffers.string_bytes.items));
                     defer workspace_node_modules.deinit();
 
                     const basename = workspace_node_modules.basename();
@@ -1347,12 +1347,12 @@ pub fn installIsolatedPackages(
                 // 3. rename temp into 'node_modules/.old_modules-{hex}'
                 // 4. attempt renaming 'node_modules/.old_modules-{hex}/.cache' to 'node_modules/.cache'
                 // 5. rename each workspace 'node_modules' into 'node_modules/.old_modules-{hex}/old_{basename}_modules'
-                var temp_node_modules_buf: bun.PathBuffer = undefined;
-                const temp_node_modules = bun.fs.FileSystem.tmpname("tmp_modules", &temp_node_modules_buf, bun.fastRandom()) catch unreachable;
+                var temp_node_modules_buf: fun.PathBuffer = undefined;
+                const temp_node_modules = fun.fs.FileSystem.tmpname("tmp_modules", &temp_node_modules_buf, fun.fastRandom()) catch unreachable;
 
                 // 1
                 sys.renameat(FD.cwd(), "node_modules", FD.cwd(), temp_node_modules).unwrap() catch {
-                    break :is_new_bun_modules true;
+                    break :is_new_fun_modules true;
                 };
 
                 // 2
@@ -1361,24 +1361,24 @@ pub fn installIsolatedPackages(
                     Global.exit(1);
                 };
 
-                sys.mkdirat(FD.cwd(), bun_modules_path, 0o755).unwrap() catch |err| {
-                    Output.err(err, "failed to create './node_modules/.bun'", .{});
+                sys.mkdirat(FD.cwd(), fun_modules_path, 0o755).unwrap() catch |err| {
+                    Output.err(err, "failed to create './node_modules/.fun'", .{});
                     Global.exit(1);
                 };
 
-                var rename_path: bun.AutoRelPath = .from("node_modules");
+                var rename_path: fun.AutoRelPath = .from("node_modules");
                 defer rename_path.deinit();
 
-                rename_path.appendFmt(".old_modules-{s}", .{&std.fmt.bytesToHex(std.mem.asBytes(&bun.fastRandom()), .lower)});
+                rename_path.appendFmt(".old_modules-{s}", .{&std.fmt.bytesToHex(std.mem.asBytes(&fun.fastRandom()), .lower)});
 
                 // 3
                 sys.renameat(FD.cwd(), temp_node_modules, FD.cwd(), rename_path.sliceZ()).unwrap() catch {
-                    break :is_new_bun_modules true;
+                    break :is_new_fun_modules true;
                 };
 
                 rename_path.append(".cache");
 
-                var cache_path: bun.AutoRelPath = .from("node_modules");
+                var cache_path: fun.AutoRelPath = .from("node_modules");
                 defer cache_path.deinit();
 
                 cache_path.append(".cache");
@@ -1391,7 +1391,7 @@ pub fn installIsolatedPackages(
 
                 // 5
                 for (lockfile.workspace_paths.values()) |workspace_path| {
-                    var workspace_node_modules: bun.AutoRelPath = .from(workspace_path.slice(lockfile.buffers.string_bytes.items));
+                    var workspace_node_modules: fun.AutoRelPath = .from(workspace_path.slice(lockfile.buffers.string_bytes.items));
                     defer workspace_node_modules.deinit();
 
                     const basename = workspace_node_modules.basename();
@@ -1407,15 +1407,15 @@ pub fn installIsolatedPackages(
                 }
             }
 
-            break :is_new_bun_modules true;
+            break :is_new_fun_modules true;
         };
 
-        sys.mkdirat(FD.cwd(), bun_modules_path, 0o755).unwrap() catch |err| {
-            Output.err(err, "failed to create './node_modules/.bun'", .{});
+        sys.mkdirat(FD.cwd(), fun_modules_path, 0o755).unwrap() catch |err| {
+            Output.err(err, "failed to create './node_modules/.fun'", .{});
             Global.exit(1);
         };
 
-        break :is_new_bun_modules true;
+        break :is_new_fun_modules true;
     };
 
     {
@@ -1477,9 +1477,9 @@ pub fn installIsolatedPackages(
             .trusted_dependencies_mutex = .{},
             .trusted_dependencies_from_update_requests = manager.findTrustedDependenciesFromUpdateRequests(),
             .supported_backend = .init(PackageInstall.supported_method),
-            .is_new_bun_modules = is_new_bun_modules,
+            .is_new_fun_modules = is_new_fun_modules,
             .global_store_path = global_store_path,
-            .global_store_tmp_suffix = bun.fastRandom(),
+            .global_store_tmp_suffix = fun.fastRandom(),
         };
         defer installer.deinit();
 
@@ -1511,7 +1511,7 @@ pub fn installIsolatedPackages(
             switch (pkg_res.tag) {
                 else => {
                     // this is `uninitialized` or `single_file_module`.
-                    bun.debugAssert(false);
+                    fun.debugAssert(false);
                     // .monotonic is okay because the task isn't running on another thread.
                     entry_steps[entry_id.get()].store(.done, .monotonic);
                     installer.onTaskComplete(entry_id, .skipped);
@@ -1545,7 +1545,7 @@ pub fn installIsolatedPackages(
                 },
                 .symlink => {
                     // no installation required, will only need to be linked to packages that depend on it.
-                    bun.debugAssert(entry_dependencies[entry_id.get()].list.items.len == 0);
+                    fun.debugAssert(entry_dependencies[entry_id.get()].list.items.len == 0);
                     // .monotonic is okay because the task isn't running on another thread.
                     entry_steps[entry_id.get()].store(.done, .monotonic);
                     installer.onTaskComplete(entry_id, .skipped);
@@ -1570,7 +1570,7 @@ pub fn installIsolatedPackages(
                     // An entry that lost global-store eligibility since the
                     // previous install (newly patched, newly trusted, a dep
                     // that became a workspace package) still has a stale
-                    // `node_modules/.bun/<storepath>` symlink/junction into
+                    // `node_modules/.fun/<storepath>` symlink/junction into
                     // `<cache>/links/`. The existence check below would pass
                     // *through* it and skip the task, leaving the project to
                     // run against the shared entry (and, if the task did run,
@@ -1579,10 +1579,10 @@ pub fn installIsolatedPackages(
                     // needs-install so `link_package` detaches and rebuilds.
                     const has_stale_gvs_link = !uses_global_store and stale: {
                         if (installer.global_store_path == null) break :stale false;
-                        var local: bun.Path(.{ .sep = .auto }) = .initTopLevelDir();
+                        var local: fun.Path(.{ .sep = .auto }) = .initTopLevelDir();
                         defer local.deinit();
                         installer.appendLocalStoreEntryPath(&local, entry_id);
-                        if (comptime bun.Environment.isWindows) {
+                        if (comptime fun.Environment.isWindows) {
                             break :stale if (sys.getFileAttributes(local.sliceZ())) |a| a.is_reparse_point else false;
                         }
                         break :stale if (sys.lstat(local.sliceZ()).asValue()) |st|
@@ -1593,15 +1593,15 @@ pub fn installIsolatedPackages(
 
                     const needs_install =
                         manager.options.enable.force_install or
-                        // A freshly-created `node_modules/.bun` only implies the
+                        // A freshly-created `node_modules/.fun` only implies the
                         // *project-local* entries are missing; global virtual-
                         // store entries persist across `rm -rf node_modules` and
                         // should still take the cheap symlink-only path.
-                        (is_new_bun_modules and !uses_global_store) or
+                        (is_new_fun_modules and !uses_global_store) or
                         has_stale_gvs_link or
                         patch_info == .remove or
                         needs_install: {
-                            var store_path: bun.AbsPath(.{}) = .initTopLevelDir();
+                            var store_path: fun.AbsPath(.{}) = .initTopLevelDir();
                             defer store_path.deinit();
                             if (uses_global_store) {
                                 // Global entries are built under a per-process
@@ -1624,8 +1624,8 @@ pub fn installIsolatedPackages(
                                 // checked above
                                 .remove => unreachable,
                                 .patch => |patch| {
-                                    var hash_buf: install.BuntagHashBuf = undefined;
-                                    const hash = install.buntaghashbuf_make(&hash_buf, patch.contents_hash);
+                                    var hash_buf: install.FuntagHashBuf = undefined;
+                                    const hash = install.funtaghashbuf_make(&hash_buf, patch.contents_hash);
                                     scope_for_patch_tag_path.restore();
                                     store_path.append(hash);
                                     break :needs_install !sys.existsZ(store_path.sliceZ());
@@ -1638,7 +1638,7 @@ pub fn installIsolatedPackages(
                             // Warm hit: the global virtual store already holds
                             // this entry's files, dep symlinks, and bin links.
                             // The only per-install work is the project-level
-                            // `node_modules/.bun/<storepath>` → global symlink.
+                            // `node_modules/.fun/<storepath>` → global symlink.
                             switch (installer.linkProjectToGlobalStore(entry_id)) {
                                 .result => {},
                                 .err => |err| {
@@ -1657,7 +1657,7 @@ pub fn installIsolatedPackages(
                         continue;
                     }
 
-                    var pkg_cache_dir_subpath: bun.RelPath(.{ .sep = .auto }) = .from(switch (pkg_res_tag) {
+                    var pkg_cache_dir_subpath: fun.RelPath(.{ .sep = .auto }) = .from(switch (pkg_res_tag) {
                         .npm => manager.cachedNPMPackageFolderName(pkg_name.slice(string_buf), pkg_res.value.npm.version, patch_info.contentsHash()),
                         .git => manager.cachedGitFolderName(&pkg_res.value.git, patch_info.contentsHash()),
                         .github => manager.cachedGitHubFolderName(&pkg_res.value.github, patch_info.contentsHash()),
@@ -1697,7 +1697,7 @@ pub fn installIsolatedPackages(
 
                     if (!missing_from_cache) {
                         if (patch_info == .patch) {
-                            var patch_log: bun.logger.Log = .init(manager.allocator);
+                            var patch_log: fun.logger.Log = .init(manager.allocator);
                             installer.applyPackagePatch(entry_id, patch_info.patch, &patch_log);
                             if (patch_log.hasErrors()) {
                                 // monotonic is okay because we haven't started the task yet (it isn't running
@@ -1765,7 +1765,7 @@ pub fn installIsolatedPackages(
                                 ctx,
                                 patch_info.nameAndVersionHash(),
                             ) catch |err| switch (err) {
-                                error.OutOfMemory => bun.outOfMemory(),
+                                error.OutOfMemory => fun.outOfMemory(),
                                 error.InvalidURL => {
                                     Output.err(err, "failed to enqueue github package for download: {s}@{f}", .{
                                         pkg_name.slice(string_buf),
@@ -1800,7 +1800,7 @@ pub fn installIsolatedPackages(
                                 ctx,
                                 patch_info.nameAndVersionHash(),
                             ) catch |err| switch (err) {
-                                error.OutOfMemory => bun.outOfMemory(),
+                                error.OutOfMemory => fun.outOfMemory(),
                                 error.InvalidURL => {
                                     Output.err(err, "failed to enqueue tarball for download: {s}@{f}", .{
                                         pkg_name.slice(string_buf),
@@ -1918,7 +1918,7 @@ pub fn installIsolatedPackages(
                 log(" and is able to run\n", .{});
             }
 
-            bun.debugAssert(done);
+            fun.debugAssert(done);
         }
 
         installer.summary.successfully_installed = installer.installed;
@@ -1929,17 +1929,17 @@ pub fn installIsolatedPackages(
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const Global = bun.Global;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const Progress = bun.Progress;
-const sys = bun.sys;
-const Command = bun.cli.Command;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const Global = fun.Global;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const Progress = fun.Progress;
+const sys = fun.sys;
+const Command = fun.cli.Command;
 
-const install = bun.install;
+const install = fun.install;
 const DependencyID = install.DependencyID;
 const PackageID = install.PackageID;
 const PackageInstall = install.PackageInstall;

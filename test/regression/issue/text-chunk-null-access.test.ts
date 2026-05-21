@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("TextChunk methods handle null text_chunk gracefully", async () => {
   // This test reproduces a crash where TextChunk methods are called
@@ -18,8 +18,8 @@ test("TextChunk methods handle null text_chunk gracefully", async () => {
   await rewriter.transform(new Response(html)).text();
 
   // Force garbage collection to clean up internal references
-  if (typeof Bun !== "undefined" && Bun.gc) {
-    Bun.gc(true);
+  if (typeof Fun !== "undefined" && Fun.gc) {
+    Fun.gc(true);
   }
 
   // It should be undefined to be consistent with the rest of the APIs.

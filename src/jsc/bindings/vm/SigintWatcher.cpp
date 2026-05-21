@@ -5,10 +5,10 @@
 #include <windows.h>
 #endif
 
-extern "C" void Bun__onPosixSignal(int signalNumber);
-extern "C" void Bun__ensureSignalHandler();
+extern "C" void Fun__onPosixSignal(int signalNumber);
+extern "C" void Fun__ensureSignalHandler();
 
-namespace Bun {
+namespace Fun {
 
 #if OS(WINDOWS)
 static BOOL WindowsCtrlHandler(DWORD signal)
@@ -38,7 +38,7 @@ void SigintWatcher::install()
 #if OS(WINDOWS)
     SetConsoleCtrlHandler(WindowsCtrlHandler, true);
 #else
-    Bun__ensureSignalHandler();
+    Fun__ensureSignalHandler();
 
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
@@ -69,7 +69,7 @@ void SigintWatcher::install()
                 m_waiting.clear();
 #if !OS(WINDOWS)
                 if (!signalAll()) {
-                    Bun__onPosixSignal(SIGINT);
+                    Fun__onPosixSignal(SIGINT);
                 }
 #else
                 signalAll();
@@ -92,7 +92,7 @@ void SigintWatcher::uninstall()
 #else
         struct sigaction action;
         memset(&action, 0, sizeof(struct sigaction));
-        action.sa_handler = Bun__onPosixSignal;
+        action.sa_handler = Fun__onPosixSignal;
         sigemptyset(&action.sa_mask);
         sigaddset(&action.sa_mask, SIGINT);
         action.sa_flags = SA_RESTART;
@@ -205,4 +205,4 @@ bool SigintWatcher::signalAll()
     return true;
 }
 
-} // namespace Bun
+} // namespace Fun

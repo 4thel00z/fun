@@ -1,5 +1,5 @@
 // WebView host subprocess entry point. Reached via cli.zig when
-// BUN_INTERNAL_WEBVIEW_HOST is set. Runs CFRunLoopRun() as the real main
+// FUN_INTERNAL_WEBVIEW_HOST is set. Runs CFRunLoopRun() as the real main
 // loop — CF manages ignoreWakeUps correctly when it owns the loop. No
 // JSC, no VM, no Zig runtime past the env check.
 //
@@ -26,7 +26,7 @@
 #include <unordered_map>
 #include <wtf/NeverDestroyed.h>
 
-namespace Bun {
+namespace Fun {
 namespace WebViewProto {
 
 // ---------------------------------------------------------------------------
@@ -345,16 +345,16 @@ static void cfCallback(CFFileDescriptorRef, CFOptionFlags flags, void*)
 }
 
 } // namespace WebViewProto
-} // namespace Bun
+} // namespace Fun
 
 // ---------------------------------------------------------------------------
-// Entry. cli.zig calls this before anything else when BUN_INTERNAL_WEBVIEW_HOST
+// Entry. cli.zig calls this before anything else when FUN_INTERNAL_WEBVIEW_HOST
 // is set. Never returns.
 // ---------------------------------------------------------------------------
-extern "C" [[noreturn]] void Bun__WebView__hostMain(int fd)
+extern "C" [[noreturn]] void Fun__WebView__hostMain(int fd)
 {
-    using namespace Bun;
-    using namespace Bun::WebViewProto;
+    using namespace Fun;
+    using namespace Fun::WebViewProto;
 
     // dup2 preserved the parent-side flags on the parent end, not ours.
     // Set nonblocking here; the CFFileDescriptor callback reads to EAGAIN.

@@ -1,4 +1,4 @@
-pub fn toHaveBeenCalledTimes(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+pub fn toHaveBeenCalledTimes(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
 
     const thisValue = callframe.this();
@@ -9,7 +9,7 @@ pub fn toHaveBeenCalledTimes(this: *Expect, globalThis: *JSGlobalObject, callfra
 
     this.incrementExpectCallCounter();
 
-    const calls = try bun.cpp.JSMockFunction__getCalls(globalThis, value);
+    const calls = try fun.cpp.JSMockFunction__getCalls(globalThis, value);
     if (!calls.jsType().isArray()) {
         var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
         defer formatter.deinit();
@@ -38,12 +38,12 @@ pub fn toHaveBeenCalledTimes(this: *Expect, globalThis: *JSGlobalObject, callfra
     return this.throw(globalThis, signature, "\n\n" ++ "Expected number of calls: <green>{d}<r>\n" ++ "Received number of calls: <red>{d}<r>\n", .{ times, try calls.getLength(globalThis) });
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

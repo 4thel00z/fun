@@ -16,7 +16,7 @@
 /// to determine since the imports happen at run-time instead of compile-time.
 /// In this case we just pick an arbitrary but consistent order.
 pub fn findImportedCSSFilesInJSOrder(this: *LinkerContext, temp_allocator: std.mem.Allocator, entry_point: Index) BabyList(Index) {
-    var visited = bun.handleOom(BitSet.initEmpty(temp_allocator, this.graph.files.len));
+    var visited = fun.handleOom(BitSet.initEmpty(temp_allocator, this.graph.files.len));
     var order: BabyList(Index) = .{};
 
     const all_import_records = this.graph.ast.items(.import_records);
@@ -68,7 +68,7 @@ pub fn findImportedCSSFilesInJSOrder(this: *LinkerContext, temp_allocator: std.m
             }
 
             if (is_css and source_index.isValid()) {
-                bun.handleOom(o.append(temp, source_index));
+                fun.handleOom(o.append(temp, source_index));
             }
         }
     }.visit;
@@ -89,15 +89,15 @@ pub fn findImportedCSSFilesInJSOrder(this: *LinkerContext, temp_allocator: std.m
     return order;
 }
 
-pub const BitSet = bun.bit_set.DynamicBitSetUnmanaged;
+pub const BitSet = fun.bit_set.DynamicBitSetUnmanaged;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const ImportRecord = bun.ImportRecord;
-const Loader = bun.Loader;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const ImportRecord = fun.ImportRecord;
+const Loader = fun.Loader;
 
-const Index = bun.bundle_v2.Index;
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const Part = bun.bundle_v2.Part;
+const Index = fun.bundle_v2.Index;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const Part = fun.bundle_v2.Part;

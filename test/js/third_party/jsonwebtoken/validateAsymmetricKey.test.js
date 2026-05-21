@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { createPrivateKey } from "crypto";
 import fs from "fs";
 import path from "path";

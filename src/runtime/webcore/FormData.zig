@@ -7,9 +7,9 @@ pub const FormData = struct {
     const log = Output.scoped(.FormData, .visible);
 
     pub const Map = std.ArrayHashMapUnmanaged(
-        bun.Semver.String,
+        fun.Semver.String,
         Field.Entry,
-        bun.Semver.String.ArrayHashContext,
+        fun.Semver.String.ArrayHashContext,
         false,
     );
 
@@ -54,14 +54,14 @@ pub const FormData = struct {
             this.allocator.destroy(this);
         }
 
-        pub fn toJS(this: *AsyncFormData, global: *jsc.JSGlobalObject, data: []const u8, promise: jsc.AnyPromise) bun.JSTerminated!void {
+        pub fn toJS(this: *AsyncFormData, global: *jsc.JSGlobalObject, data: []const u8, promise: jsc.AnyPromise) fun.JSTerminated!void {
             if (this.encoding == .Multipart and this.encoding.Multipart.len == 0) {
                 log("AsnycFormData.toJS -> promise.reject missing boundary", .{});
                 try promise.reject(global, jsc.ZigString.init("FormData missing boundary").toErrorInstance(global));
                 return;
             }
 
-            const js_value = bun.FormData.toJS(
+            const js_value = fun.FormData.toJS(
                 global,
                 data,
                 this.encoding,
@@ -94,18 +94,18 @@ pub const FormData = struct {
     }
 
     pub const Field = struct {
-        /// Raw slice into the input buffer. Not using `bun.Semver.String` because
+        /// Raw slice into the input buffer. Not using `fun.Semver.String` because
         /// file bodies are binary data that can contain null bytes, which
         /// Semver.String's inline storage treats as terminators.
         value: []const u8 = "",
-        filename: bun.Semver.String = .{},
-        content_type: bun.Semver.String = .{},
+        filename: fun.Semver.String = .{},
+        content_type: fun.Semver.String = .{},
         is_file: bool = false,
         zero_count: u8 = 0,
 
         pub const Entry = union(enum) {
             field: Field,
-            list: bun.BabyList(Field),
+            list: fun.BabyList(Field),
         };
 
         pub const External = extern struct {
@@ -133,7 +133,7 @@ pub const FormData = struct {
     pub fn fromMultipartData(
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         jsc.markBinding(@src());
 
         const args_ = callframe.arguments_old(2);
@@ -208,14 +208,14 @@ pub const FormData = struct {
             globalThis: *jsc.JSGlobalObject,
             form: *jsc.DOMFormData,
 
-            pub fn onEntry(wrap: *@This(), name: bun.Semver.String, field: Field, buf: []const u8) void {
+            pub fn onEntry(wrap: *@This(), name: fun.Semver.String, field: Field, buf: []const u8) void {
                 const value_str = field.value;
                 var key = jsc.ZigString.initUTF8(name.slice(buf));
 
                 if (field.is_file) {
                     const filename_str = field.filename.slice(buf);
 
-                    var blob = jsc.WebCore.Blob.create(value_str, bun.default_allocator, wrap.globalThis, false);
+                    var blob = jsc.WebCore.Blob.create(value_str, fun.default_allocator, wrap.globalThis, false);
                     defer blob.detach();
                     var filename = jsc.ZigString.initUTF8(filename_str);
                     const content_type: []const u8 = brk: {
@@ -225,13 +225,13 @@ pub const FormData = struct {
                         if (filename_str.len > 0) {
                             const extension = std.fs.path.extension(filename_str);
                             if (extension.len > 0) {
-                                if (bun.http.MimeType.byExtensionNoDefault(extension[1..extension.len])) |mime| {
+                                if (fun.http.MimeType.byExtensionNoDefault(extension[1..extension.len])) |mime| {
                                     break :brk mime.value;
                                 }
                             }
                         }
 
-                        if (bun.http.MimeType.sniff(value_str)) |mime| {
+                        if (fun.http.MimeType.sniff(value_str)) |mime| {
                             break :brk mime.value;
                         }
 
@@ -241,7 +241,7 @@ pub const FormData = struct {
                     if (content_type.len > 0) {
                         if (!field.content_type.isEmpty()) {
                             blob.content_type_allocated = true;
-                            blob.content_type = bun.default_allocator.dupe(u8, content_type) catch @panic("failed to allocate memory for blob content type");
+                            blob.content_type = fun.default_allocator.dupe(u8, content_type) catch @panic("failed to allocate memory for blob content type");
                             blob.content_type_was_set = true;
                         } else {
                             blob.content_type = content_type;
@@ -289,13 +289,13 @@ pub const FormData = struct {
         ctx: Ctx,
         comptime iterator: fn (
             Ctx,
-            bun.Semver.String,
+            fun.Semver.String,
             Field,
             string,
         ) void,
     ) !void {
         var slice = input;
-        var subslicer = bun.Semver.SlicedString.init(input, input);
+        var subslicer = fun.Semver.SlicedString.init(input, input);
 
         var buf: [76]u8 = undefined;
         {
@@ -324,8 +324,8 @@ pub const FormData = struct {
             remain = remain[header_end + 4 ..];
 
             var field = Field{};
-            var name: bun.Semver.String = .{};
-            var filename: ?bun.Semver.String = null;
+            var name: fun.Semver.String = .{};
+            var filename: ?fun.Semver.String = null;
             var header_chunk = header;
             var is_file = false;
             while (header_chunk.len > 0 and (filename == null or name.len() == 0)) {
@@ -412,7 +412,7 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Output = bun.Output;
-const jsc = bun.jsc;
-const strings = bun.strings;
+const fun = @import("fun");
+const Output = fun.Output;
+const jsc = fun.jsc;
+const strings = fun.strings;

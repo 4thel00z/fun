@@ -1,5 +1,5 @@
-# h3blast — links against Bun's already-built vendored deps so we don't
-# rebuild lsquic/BoringSSL/HdrHistogram. Run `bun run build:release` once
+# h3blast — links against Fun's already-built vendored deps so we don't
+# rebuild lsquic/BoringSSL/HdrHistogram. Run `fun run build:release` once
 # in the repo root first so the .o files exist.
 
 ROOT      := ../..
@@ -25,7 +25,7 @@ all: $(BIN)
 $(LIBDEPS):
 	@if [ ! -d "$(OBJ)/lsquic" ]; then \
 		echo "error: no dep objects found under $(OBJ)"; \
-		echo "       run 'bun run build:$(PROFILE)' in the repo root first"; \
+		echo "       run 'fun run build:$(PROFILE)' in the repo root first"; \
 		exit 1; \
 	fi
 	@mkdir -p build

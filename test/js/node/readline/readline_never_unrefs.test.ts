@@ -1,9 +1,9 @@
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 
 test("readline should unref", () => {
-  const res = Bun.spawnSync({
-    cmd: [bunExe(), import.meta.dir + "/readline_never_unrefs.js"],
-    env: bunEnv,
+  const res = Fun.spawnSync({
+    cmd: [funExe(), import.meta.dir + "/readline_never_unrefs.js"],
+    env: funEnv,
     stdio: ["inherit", "pipe", "pipe"],
     timeout: 1000,
   });

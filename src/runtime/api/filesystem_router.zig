@@ -11,7 +11,7 @@ pub const FileSystemRouter = struct {
     origin: ?*jsc.RefString = null,
     base_dir: ?*jsc.RefString = null,
     router: Router,
-    arena: *bun.ArenaAllocator = undefined,
+    arena: *fun.ArenaAllocator = undefined,
     allocator: std.mem.Allocator = undefined,
     asset_prefix: ?*jsc.RefString = null,
 
@@ -20,7 +20,7 @@ pub const FileSystemRouter = struct {
     pub const fromJS = js.fromJS;
     pub const fromJSDirect = js.fromJSDirect;
 
-    pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*FileSystemRouter {
+    pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*FileSystemRouter {
         const argument_ = callframe.arguments_old(1);
         if (argument_.len == 0) {
             return globalThis.throwInvalidArguments("Expected object", .{});
@@ -30,14 +30,14 @@ pub const FileSystemRouter = struct {
         if (argument.isEmptyOrUndefinedOrNull() or !argument.isObject()) {
             return globalThis.throwInvalidArguments("Expected object", .{});
         }
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
 
         var root_dir_path: ZigString.Slice = ZigString.Slice.fromUTF8NeverFree(vm.transpiler.fs.top_level_dir);
         defer root_dir_path.deinit();
         var origin_str: ZigString.Slice = .{};
         var asset_prefix_slice: ZigString.Slice = .{};
 
-        var out_buf: [bun.MAX_PATH_BYTES * 2]u8 = undefined;
+        var out_buf: [fun.MAX_PATH_BYTES * 2]u8 = undefined;
         if (try argument.get(globalThis, "style")) |style_val| {
             if (!(try style_val.getZigString(globalThis)).eqlComptime("nextjs")) {
                 return globalThis.throwInvalidArguments("Only 'nextjs' style is currently implemented", .{});
@@ -54,19 +54,19 @@ pub const FileSystemRouter = struct {
             if (!(root_dir_path_.len == 0 or strings.eqlComptime(root_dir_path_.slice(), "."))) {
                 // resolve relative path if needed
                 const path = root_dir_path_.slice();
-                if (bun.path.Platform.isAbsolute(.auto, path)) {
+                if (fun.path.Platform.isAbsolute(.auto, path)) {
                     root_dir_path = root_dir_path_;
                 } else {
                     var parts = [_][]const u8{path};
-                    root_dir_path = jsc.ZigString.Slice.fromUTF8NeverFree(bun.path.joinAbsStringBuf(Fs.FileSystem.instance.top_level_dir, &out_buf, &parts, .auto));
+                    root_dir_path = jsc.ZigString.Slice.fromUTF8NeverFree(fun.path.joinAbsStringBuf(Fs.FileSystem.instance.top_level_dir, &out_buf, &parts, .auto));
                 }
             }
         } else {
             // dir is not optional
             return globalThis.throwInvalidArguments("Expected dir to be a string", .{});
         }
-        var arena = globalThis.allocator().create(bun.ArenaAllocator) catch unreachable;
-        arena.* = bun.ArenaAllocator.init(globalThis.allocator());
+        var arena = globalThis.allocator().create(fun.ArenaAllocator) catch unreachable;
+        arena.* = fun.ArenaAllocator.init(globalThis.allocator());
         const allocator = arena.allocator();
         var extensions = std.array_list.Managed(string).init(allocator);
         if (try argument.get(globalThis, "fileExtensions")) |file_extensions| {
@@ -181,11 +181,11 @@ pub const FileSystemRouter = struct {
         return fs_router;
     }
 
-    const win32_normalize_bufs = bun.ThreadlocalBuffers(struct {
-        buf: if (Environment.isWindows) [bun.MAX_PATH_BYTES * 2]u8 else void = undefined,
+    const win32_normalize_bufs = fun.ThreadlocalBuffers(struct {
+        buf: if (Environment.isWindows) [fun.MAX_PATH_BYTES * 2]u8 else void = undefined,
     });
     pub fn bustDirCacheRecursive(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject, inputPath: []const u8) void {
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         var path = inputPath;
         if (comptime Environment.isWindows) {
             path = vm.transpiler.resolver.fs.normalizeBuf(&win32_normalize_bufs.get().buf, path);
@@ -227,14 +227,14 @@ pub const FileSystemRouter = struct {
         bustDirCacheRecursive(this, globalThis, strings.withoutTrailingSlashWindowsPath(this.router.config.dir));
     }
 
-    pub fn reload(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn reload(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
         const this_value = callframe.this();
 
-        var arena = globalThis.allocator().create(bun.ArenaAllocator) catch unreachable;
-        arena.* = bun.ArenaAllocator.init(globalThis.allocator());
+        var arena = globalThis.allocator().create(fun.ArenaAllocator) catch unreachable;
+        arena.* = fun.ArenaAllocator.init(globalThis.allocator());
 
         var allocator = arena.allocator();
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
 
         const orig_log = vm.transpiler.resolver.log;
         var log = Log.Log.init(allocator);
@@ -281,7 +281,7 @@ pub const FileSystemRouter = struct {
         return this_value;
     }
 
-    pub fn match(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn match(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
         const argument_ = callframe.arguments_old(2);
         if (argument_.len == 0) {
             return globalThis.throwInvalidArguments("Expected string, Request or Response", .{});
@@ -361,11 +361,11 @@ pub const FileSystemRouter = struct {
         return JSValue.jsNull();
     }
 
-    pub fn getRoutes(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject) bun.JSError!JSValue {
+    pub fn getRoutes(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject) fun.JSError!JSValue {
         const paths = this.router.getEntryPoints();
         const names = this.router.getNames();
-        var name_strings = try bun.default_allocator.alloc(ZigString, names.len * 2);
-        defer bun.default_allocator.free(name_strings);
+        var name_strings = try fun.default_allocator.alloc(ZigString, names.len * 2);
+        defer fun.default_allocator.free(name_strings);
         var paths_strings = name_strings[names.len..];
         for (names, 0..) |name, i| {
             name_strings[i] = ZigString.init(name).withEncoding();
@@ -380,8 +380,8 @@ pub const FileSystemRouter = struct {
         );
     }
 
-    pub fn getStyle(_: *FileSystemRouter, globalThis: *jsc.JSGlobalObject) bun.JSError!JSValue {
-        return bun.String.static("nextjs").toJS(globalThis);
+    pub fn getStyle(_: *FileSystemRouter, globalThis: *jsc.JSGlobalObject) fun.JSError!JSValue {
+        return fun.String.static("nextjs").toJS(globalThis);
     }
 
     pub fn getAssetPrefix(this: *FileSystemRouter, globalThis: *jsc.JSGlobalObject) JSValue {
@@ -473,11 +473,11 @@ pub const MatchedRoute = struct {
             map.deinit();
         }
         if (this.needs_deinit) {
-            if (this.route.pathname.len > 0 and bun.mimalloc.mi_is_in_heap_region(this.route.pathname.ptr)) {
-                bun.mimalloc.mi_free(@constCast(this.route.pathname.ptr));
+            if (this.route.pathname.len > 0 and fun.mimalloc.mi_is_in_heap_region(this.route.pathname.ptr)) {
+                fun.mimalloc.mi_free(@constCast(this.route.pathname.ptr));
             }
 
-            this.params_list_holder.deinit(bun.default_allocator);
+            this.params_list_holder.deinit(fun.default_allocator);
             this.params_list_holder = .{};
         }
 
@@ -492,7 +492,7 @@ pub const MatchedRoute = struct {
         if (this.base_dir) |base|
             base.deref();
 
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 
     pub fn getFilePath(
@@ -551,13 +551,13 @@ pub const MatchedRoute = struct {
     pub fn createQueryObject(ctx: *jsc.JSGlobalObject, map: *QueryStringMap) JSValue {
         const QueryObjectCreator = struct {
             query: *QueryStringMap,
-            pub fn create(this: *@This(), obj: *JSObject, global: *JSGlobalObject) bun.JSError!void {
+            pub fn create(this: *@This(), obj: *JSObject, global: *JSGlobalObject) fun.JSError!void {
                 var iter = this.query.iter();
                 while (iter.next(&query_string_values_buf)) |entry| {
                     const entry_name = entry.name;
                     var str = ZigString.init(entry_name).withEncoding();
 
-                    bun.assert(entry.values.len > 0);
+                    fun.assert(entry.values.len > 0);
                     if (entry.values.len > 1) {
                         var values = query_string_value_refs_buf[0..entry.values.len];
                         for (entry.values, 0..) |value, i| {
@@ -586,12 +586,12 @@ pub const MatchedRoute = struct {
         file_path: string,
         client_framework_enabled: bool,
     ) void {
-        var entry_point_tempbuf: bun.PathBuffer = undefined;
+        var entry_point_tempbuf: fun.PathBuffer = undefined;
         // We don't store the framework config including the client parts in the server
         // instead, we just store a boolean saying whether we should generate this whenever the script is requested
         // this is kind of bad. we should consider instead a way to inline the contents of the script.
         if (client_framework_enabled) {
-            jsc.API.Bun.getPublicPath(
+            jsc.API.Fun.getPublicPath(
                 Transpiler.ClientEntryPoint.generateEntryPointPath(
                     &entry_point_tempbuf,
                     Fs.PathName.init(file_path),
@@ -601,7 +601,7 @@ pub const MatchedRoute = struct {
                 writer,
             );
         } else {
-            jsc.API.Bun.getPublicPath(file_path, origin, Writer, writer);
+            jsc.API.Fun.getPublicPath(file_path, origin, Writer, writer);
         }
     }
 
@@ -609,10 +609,10 @@ pub const MatchedRoute = struct {
         this: *MatchedRoute,
         globalThis: *jsc.JSGlobalObject,
     ) jsc.JSValue {
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
         var stream = std.io.fixedBufferStream(&buf);
         var writer = stream.writer();
-        jsc.API.Bun.getPublicPathWithAssetPrefix(
+        jsc.API.Fun.getPublicPathWithAssetPrefix(
             this.route.file_path,
             if (this.base_dir) |base_dir| base_dir.slice() else jsc.VirtualMachine.get().transpiler.fs.top_level_dir,
             if (this.origin) |origin| URL.parse(origin.slice()) else URL{},
@@ -629,7 +629,7 @@ pub const MatchedRoute = struct {
     pub fn getParams(
         this: *MatchedRoute,
         globalThis: *jsc.JSGlobalObject,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         if (this.route.params.len == 0)
             return JSValue.createEmptyObject(globalThis, 0);
 
@@ -651,7 +651,7 @@ pub const MatchedRoute = struct {
     pub fn getQuery(
         this: *MatchedRoute,
         globalThis: *jsc.JSGlobalObject,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         if (this.route.query_string.len == 0 and this.route.params.len == 0) {
             return JSValue.createEmptyObject(globalThis, 0);
         } else if (this.route.query_string.len == 0) {
@@ -693,13 +693,13 @@ const CombinedScanner = @import("../../url/url.zig").CombinedScanner;
 const QueryStringMap = @import("../../url/url.zig").QueryStringMap;
 const URL = @import("../../url/url.zig").URL;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Log = bun.logger;
-const Transpiler = bun.transpiler;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Log = fun.logger;
+const Transpiler = fun.transpiler;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSObject = jsc.JSObject;
 const JSValue = jsc.JSValue;

@@ -24,13 +24,13 @@ pub const ListenSocket = opaque {
         return @ptrCast(@alignCast(c.us_listen_socket_ext(this)));
     }
 
-    pub fn fd(this: *ListenSocket) bun.FD {
+    pub fn fd(this: *ListenSocket) fun.FD {
         return .fromNative(c.us_listen_socket_get_fd(this));
     }
 
     /// `ssl_ctx` is `SSL_CTX_up_ref`'d for the SNI node; the listener drops
     /// that ref on close / `removeServerName`. `user` is the per-domain handle
-    /// `findServerNameUserdata` recovers (uWS uses an `HttpRouter*`; Bun.listen
+    /// `findServerNameUserdata` recovers (uWS uses an `HttpRouter*`; Fun.listen
     /// passes `null`).
     pub fn addServerName(this: *ListenSocket, hostname: [*:0]const u8, ssl_ctx: *uws.SslCtx, user: anytype) bool {
         const U = @TypeOf(user);
@@ -63,7 +63,7 @@ const c = struct {
     extern fn us_listen_socket_on_server_name(ls: *ListenSocket, cb: *const fn (*ListenSocket, [*:0]const u8) callconv(.c) void) void;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const uws = bun.uws;
+const uws = fun.uws;
 const SocketGroup = uws.SocketGroup;

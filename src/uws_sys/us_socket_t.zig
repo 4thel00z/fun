@@ -1,4 +1,4 @@
-const debug = bun.Output.scoped(.uws, .visible);
+const debug = fun.Output.scoped(.uws, .visible);
 const max_i32 = std.math.maxInt(i32);
 
 /// Zig bindings for `us_socket_t`.
@@ -24,7 +24,7 @@ pub const us_socket_t = opaque {
     pub fn open(this: *us_socket_t, is_client: bool, ip_addr: ?[]const u8) void {
         debug("us_socket_open({p}, is_client: {})", .{ this, is_client });
         if (ip_addr) |ip| {
-            bun.assert(ip.len < max_i32);
+            fun.assert(ip.len < max_i32);
             _ = c.us_socket_open(this, @intFromBool(is_client), ip.ptr, @intCast(@min(ip.len, max_i32)));
         } else {
             _ = c.us_socket_open(this, @intFromBool(is_client), null, 0);
@@ -80,11 +80,11 @@ pub const us_socket_t = opaque {
         var length: i32 = @intCast(@min(buf.len, max_i32));
         c.us_socket_local_address(this, buf.ptr, &length);
         if (length < 0) {
-            const errno = bun.sys.getErrno(length);
-            bun.debugAssert(errno != .SUCCESS);
-            return bun.errnoToZigErr(errno);
+            const errno = fun.sys.getErrno(length);
+            fun.debugAssert(errno != .SUCCESS);
+            return fun.errnoToZigErr(errno);
         }
-        bun.unsafeAssert(buf.len >= length);
+        fun.unsafeAssert(buf.len >= length);
         return buf[0..@intCast(length)];
     }
 
@@ -93,11 +93,11 @@ pub const us_socket_t = opaque {
         var length: i32 = @intCast(@min(buf.len, max_i32));
         c.us_socket_remote_address(this, buf.ptr, &length);
         if (length < 0) {
-            const errno = bun.sys.getErrno(length);
-            bun.debugAssert(errno != .SUCCESS);
-            return bun.errnoToZigErr(errno);
+            const errno = fun.sys.getErrno(length);
+            fun.debugAssert(errno != .SUCCESS);
+            return fun.errnoToZigErr(errno);
         }
-        bun.unsafeAssert(buf.len >= length);
+        fun.unsafeAssert(buf.len >= length);
         return buf[0..@intCast(length)];
     }
 
@@ -153,7 +153,7 @@ pub const us_socket_t = opaque {
 
     /// Re-stamp the dispatch kind in place. Used after `Listener.onCreate`
     /// stashes the `NewSocket*` in ext so subsequent events skip the listener
-    /// arm and route straight to `BunSocket`.
+    /// arm and route straight to `FunSocket`.
     pub fn setKind(this: *us_socket_t, k: SocketKind) void {
         c.us_socket_set_kind(this, @intFromEnum(k));
     }
@@ -200,8 +200,8 @@ pub const us_socket_t = opaque {
         return rc;
     }
 
-    pub fn writeFd(this: *us_socket_t, data: []const u8, file_descriptor: bun.FD) i32 {
-        if (bun.Environment.isWindows) @compileError("TODO: implement writeFd on Windows");
+    pub fn writeFd(this: *us_socket_t, data: []const u8, file_descriptor: fun.FD) i32 {
+        if (fun.Environment.isWindows) @compileError("TODO: implement writeFd on Windows");
         const rc = c.us_socket_ipc_write_fd(this, data.ptr, @intCast(@min(data.len, max_i32)), file_descriptor.native());
         debug("us_socket_ipc_write_fd({p}, {d}, {d}) = {d}", .{ this, data.len, file_descriptor.native(), rc });
         return rc;
@@ -227,11 +227,11 @@ pub const us_socket_t = opaque {
         c.us_socket_sendfile_needs_more(this);
     }
 
-    pub fn getFd(this: *us_socket_t) bun.FD {
+    pub fn getFd(this: *us_socket_t) fun.FD {
         return .fromNative(c.us_socket_get_fd(this));
     }
 
-    pub fn getVerifyError(this: *us_socket_t) uws.us_bun_verify_error_t {
+    pub fn getVerifyError(this: *us_socket_t) uws.us_fun_verify_error_t {
         return c.us_socket_verify_error(this);
     }
 
@@ -282,7 +282,7 @@ const c = struct {
     extern fn us_socket_is_shut_down(s: *us_socket_t) i32;
     extern fn us_socket_sendfile_needs_more(socket: *us_socket_t) void;
     extern fn us_socket_get_fd(s: *us_socket_t) uws.LIBUS_SOCKET_DESCRIPTOR;
-    extern fn us_socket_verify_error(s: *us_socket_t) uws.us_bun_verify_error_t;
+    extern fn us_socket_verify_error(s: *us_socket_t) uws.us_fun_verify_error_t;
     extern fn us_socket_get_error(s: *us_socket_t) c_int;
     extern fn us_socket_is_established(s: *us_socket_t) i32;
 
@@ -299,7 +299,7 @@ pub const us_socket_stream_buffer_t = extern struct {
     total_bytes_written: usize = 0,
     cursor: usize = 0,
 
-    pub fn update(this: *us_socket_stream_buffer_t, stream_buffer: bun.io.StreamBuffer) void {
+    pub fn update(this: *us_socket_stream_buffer_t, stream_buffer: fun.io.StreamBuffer) void {
         if (stream_buffer.list.capacity > 0) {
             this.list_ptr = stream_buffer.list.items.ptr;
         } else {
@@ -313,14 +313,14 @@ pub const us_socket_stream_buffer_t = extern struct {
         this.total_bytes_written +|= written;
     }
 
-    pub fn toStreamBuffer(this: *us_socket_stream_buffer_t) bun.io.StreamBuffer {
+    pub fn toStreamBuffer(this: *us_socket_stream_buffer_t) fun.io.StreamBuffer {
         return .{
             .list = if (this.list_ptr) |buffer_ptr| .{
-                .allocator = bun.default_allocator,
+                .allocator = fun.default_allocator,
                 .items = buffer_ptr[0..this.list_len],
                 .capacity = this.list_cap,
             } else .{
-                .allocator = bun.default_allocator,
+                .allocator = fun.default_allocator,
                 .items = &.{},
                 .capacity = 0,
             },
@@ -330,7 +330,7 @@ pub const us_socket_stream_buffer_t = extern struct {
 
     pub fn deinit(this: *us_socket_stream_buffer_t) void {
         if (this.list_ptr) |buffer| {
-            bun.default_allocator.free(buffer[0..this.list_cap]);
+            fun.default_allocator.free(buffer[0..this.list_cap]);
         }
     }
 };
@@ -342,9 +342,9 @@ export fn us_socket_free_stream_buffer(buffer: *us_socket_stream_buffer_t) void 
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const BoringSSL = fun.BoringSSL.c;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const SocketGroup = uws.SocketGroup;
 const SocketKind = uws.SocketKind;

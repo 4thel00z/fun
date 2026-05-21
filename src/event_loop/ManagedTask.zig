@@ -4,15 +4,15 @@
 const ManagedTask = @This();
 
 ctx: ?*anyopaque,
-callback: *const (fn (*anyopaque) bun.JSError!void),
+callback: *const (fn (*anyopaque) fun.JSError!void),
 
 pub fn task(this: *ManagedTask) Task {
     return Task.init(this);
 }
 
-pub fn run(this: *ManagedTask) bun.JSError!void {
+pub fn run(this: *ManagedTask) fun.JSError!void {
     @setRuntimeSafety(false);
-    defer bun.default_allocator.destroy(this);
+    defer fun.default_allocator.destroy(this);
     const callback = this.callback;
     const ctx = this.ctx;
     try callback(ctx.?);
@@ -20,14 +20,14 @@ pub fn run(this: *ManagedTask) bun.JSError!void {
 
 pub fn cancel(this: *ManagedTask) void {
     this.callback = &struct {
-        fn f(_: *anyopaque) bun.JSError!void {}
+        fn f(_: *anyopaque) fun.JSError!void {}
     }.f;
 }
 
 pub fn New(comptime Type: type, comptime Callback: anytype) type {
     return struct {
         pub fn init(ctx: *Type) Task {
-            var managed = bun.handleOom(bun.default_allocator.create(ManagedTask));
+            var managed = fun.handleOom(fun.default_allocator.create(ManagedTask));
             managed.* = ManagedTask{
                 .callback = wrap,
                 .ctx = ctx,
@@ -35,13 +35,13 @@ pub fn New(comptime Type: type, comptime Callback: anytype) type {
             return managed.task();
         }
 
-        pub fn wrap(this: ?*anyopaque) bun.JSError!void {
-            return @call(bun.callmod_inline, Callback, .{@as(*Type, @ptrCast(@alignCast(this.?)))});
+        pub fn wrap(this: ?*anyopaque) fun.JSError!void {
+            return @call(fun.callmod_inline, Callback, .{@as(*Type, @ptrCast(@alignCast(this.?)))});
         }
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const Task = jsc.Task;

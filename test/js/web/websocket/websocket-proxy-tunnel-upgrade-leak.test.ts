@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isDebug } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isDebug } from "harness";
 import path from "node:path";
 
 // The tunnel-mode success branch in WebSocketUpgradeClient.processResponse()
@@ -15,11 +15,11 @@ import path from "node:path";
 test.skipIf(!isDebug)(
   "wss:// through HTTP proxy does not leak HTTPUpgradeClient",
   async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), path.join(import.meta.dir, "websocket-proxy-tunnel-upgrade-leak-fixture.ts")],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), path.join(import.meta.dir, "websocket-proxy-tunnel-upgrade-leak-fixture.ts")],
       env: {
-        ...bunEnv,
-        BUN_DEBUG_alloc: "1",
+        ...funEnv,
+        FUN_DEBUG_alloc: "1",
         // NO_PROXY in CI environments short-circuits the explicit `proxy:` option
         // for 127.0.0.1, so the fixture would bypass tunnel mode entirely.
         NO_PROXY: undefined,
@@ -33,7 +33,7 @@ test.skipIf(!isDebug)(
 
     const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-    // `bun.new`/`bun.destroy` log via Output.scoped(.alloc) in debug builds:
+    // `fun.new`/`fun.destroy` log via Output.scoped(.alloc) in debug builds:
     //   [alloc] new(http.websocket_client.WebSocketUpgradeClient.NewHTTPUpgradeClient(false)) = …
     //   [alloc] destroy(http.websocket_client.WebSocketUpgradeClient.NewHTTPUpgradeClient(false)) = …
     // Scoped debug output writes to the raw stdout stream, but search both

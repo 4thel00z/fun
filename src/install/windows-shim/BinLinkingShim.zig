@@ -1,5 +1,5 @@
-//! This struct is used by bun.exe to encode `.bunx` files, to be consumed
-//! by the shim 'bun_shim_impl.exe'. The latter exe does not include this code.
+//! This struct is used by fun.exe to encode `.funx` files, to be consumed
+//! by the shim 'fun_shim_impl.exe'. The latter exe does not include this code.
 //!
 //! The format is as follows:
 //!
@@ -9,7 +9,7 @@
 //! [WSTR:program][u16:0][WSTR:args][u32:bin_path_byte_len][u32:arg_byte_len]
 //! - args always ends with a trailing space
 //!
-//! See 'bun_shim_impl.zig' for more details on how this file is consumed.
+//! See 'fun_shim_impl.zig' for more details on how this file is consumed.
 
 fn eqlComptime(a: []const u8, comptime b: []const u8) bool {
     return std.mem.eql(u8, a, b);
@@ -33,7 +33,7 @@ pub const VersionFlag = enum(u13) {
     v3 = 5476,
     /// Added a flag to tell if the shebang is exactly "node" This is used in an
     /// automatic fallback path where if "node" is asked for, but not present,
-    /// it will retry the spawn with "bun".
+    /// it will retry the spawn with "fun".
     v4 = 5477,
     /// Fixed bugs where passing arguments did not always work.
     v5 = 5478,
@@ -41,8 +41,8 @@ pub const VersionFlag = enum(u13) {
 };
 
 pub const Flags = packed struct(u16) {
-    // this is set if the shebang content is "node" or "bun"
-    is_node_or_bun: bool,
+    // this is set if the shebang content is "node" or "fun"
+    is_node_or_fun: bool,
     // this is for validation that the shim is not corrupt and to detect offset memory reads
     is_node: bool,
     // indicates if a shebang is present
@@ -52,14 +52,14 @@ pub const Flags = packed struct(u16) {
 
     pub fn isValid(flags: Flags) bool {
         const mask: u16 = @bitCast(Flags{
-            .is_node_or_bun = false,
+            .is_node_or_fun = false,
             .is_node = false,
             .has_shebang = false,
             .version_tag = @enumFromInt(std.math.maxInt(u13)),
         });
 
         const compare_to: u16 = @bitCast(Flags{
-            .is_node_or_bun = false,
+            .is_node_or_fun = false,
             .is_node = false,
             .has_shebang = false,
         });
@@ -68,7 +68,7 @@ pub const Flags = packed struct(u16) {
     }
 };
 
-pub const embedded_executable_data = @embedFile("bun_shim_impl.exe");
+pub const embedded_executable_data = @embedFile("fun_shim_impl.exe");
 
 fn wU8(comptime s: []const u8) []const u8 {
     @setEvalBranchQuota(1_000_000);
@@ -79,33 +79,33 @@ fn wU8(comptime s: []const u8) []const u8 {
 pub const Shebang = struct {
     launcher: []const u8,
     utf16_len: u32,
-    is_node_or_bun: bool,
+    is_node_or_fun: bool,
 
-    pub fn init(launcher: []const u8, is_node_or_bun: bool) !Shebang {
+    pub fn init(launcher: []const u8, is_node_or_fun: bool) !Shebang {
         return .{
             .launcher = launcher,
             // TODO(@paperclover): what if this is invalid utf8?
-            .utf16_len = @intCast(bun.simdutf.length.utf16.from.utf8(launcher)),
-            .is_node_or_bun = is_node_or_bun,
+            .utf16_len = @intCast(fun.simdutf.length.utf16.from.utf8(launcher)),
+            .is_node_or_fun = is_node_or_fun,
         };
     }
 
     const ExtensionType = enum {
-        run_with_bun,
+        run_with_fun,
         run_with_cmd,
         run_with_powershell,
     };
 
-    const BunExtensions = std.StaticStringMap(ExtensionType).initComptime(.{
-        .{ wU8(".js"), .run_with_bun },
-        .{ wU8(".mjs"), .run_with_bun },
-        .{ wU8(".cjs"), .run_with_bun },
-        .{ wU8(".jsx"), .run_with_bun },
-        .{ wU8(".ts"), .run_with_bun },
-        .{ wU8(".cts"), .run_with_bun },
-        .{ wU8(".mts"), .run_with_bun },
-        .{ wU8(".tsx"), .run_with_bun },
-        .{ wU8(".sh"), .run_with_bun },
+    const FunExtensions = std.StaticStringMap(ExtensionType).initComptime(.{
+        .{ wU8(".js"), .run_with_fun },
+        .{ wU8(".mjs"), .run_with_fun },
+        .{ wU8(".cjs"), .run_with_fun },
+        .{ wU8(".jsx"), .run_with_fun },
+        .{ wU8(".ts"), .run_with_fun },
+        .{ wU8(".cts"), .run_with_fun },
+        .{ wU8(".mts"), .run_with_fun },
+        .{ wU8(".tsx"), .run_with_fun },
+        .{ wU8(".sh"), .run_with_fun },
         .{ wU8(".cmd"), .run_with_cmd },
         .{ wU8(".bat"), .run_with_cmd },
         .{ wU8(".ps1"), .run_with_powershell },
@@ -153,9 +153,9 @@ pub const Shebang = struct {
     }
 
     pub fn parseFromBinPath(bin_path: []const u16) ?Shebang {
-        if (BunExtensions.get(@alignCast(std.mem.sliceAsBytes(extensionW(bin_path))))) |i| {
+        if (FunExtensions.get(@alignCast(std.mem.sliceAsBytes(extensionW(bin_path))))) |i| {
             return switch (i) {
-                .run_with_bun => comptime Shebang.init("bun run", true) catch unreachable,
+                .run_with_fun => comptime Shebang.init("fun run", true) catch unreachable,
                 .run_with_cmd => comptime Shebang.init("cmd /c", false) catch unreachable,
                 .run_with_powershell => comptime Shebang.init("powershell -ExecutionPolicy Bypass -File", false) catch unreachable,
             };
@@ -184,7 +184,7 @@ pub const Shebang = struct {
         }
 
         const line = line: {
-            var line_i = bun.strings.indexOfCharUsize(contents, '\n') orelse return parseFromBinPath(bin_path);
+            var line_i = fun.strings.indexOfCharUsize(contents, '\n') orelse return parseFromBinPath(bin_path);
             std.debug.assert(line_i >= 1);
             if (contents[line_i - 1] == '\r') {
                 line_i -= 1;
@@ -197,8 +197,8 @@ pub const Shebang = struct {
         if (eqlComptime(first, "/usr/bin/env") or eqlComptime(first, "/bin/env")) {
             const rest = tokenizer.rest();
             const program = tokenizer.next() orelse return parseFromBinPath(bin_path);
-            const is_node_or_bun = eqlComptime(program, "bun") or eqlComptime(program, "node");
-            return try Shebang.init(rest, is_node_or_bun);
+            const is_node_or_fun = eqlComptime(program, "fun") or eqlComptime(program, "node");
+            return try Shebang.init(rest, is_node_or_fun);
         }
 
         return try Shebang.init(line, false);
@@ -232,19 +232,19 @@ pub fn encodeInto(options: @This(), buf: []u8) !void {
     wbuf[1] = 0;
     wbuf = wbuf[2..];
 
-    const is_node_or_bun = if (options.shebang) |s| s.is_node_or_bun else false;
+    const is_node_or_fun = if (options.shebang) |s| s.is_node_or_fun else false;
     var flags = Flags{
         .has_shebang = options.shebang != null,
-        .is_node_or_bun = is_node_or_bun,
+        .is_node_or_fun = is_node_or_fun,
         .is_node = false,
     };
 
     if (options.shebang) |s| {
-        flags.is_node = bun.strings.hasPrefixComptime(s.launcher, "node") and
+        flags.is_node = fun.strings.hasPrefixComptime(s.launcher, "node") and
             (s.launcher.len == 4 or s.launcher[4] == ' ');
-        if (flags.is_node) std.debug.assert(flags.is_node_or_bun);
+        if (flags.is_node) std.debug.assert(flags.is_node_or_fun);
 
-        const encoded = bun.strings.convertUTF8toUTF16InBuffer(
+        const encoded = fun.strings.convertUTF8toUTF16InBuffer(
             wbuf[0..s.utf16_len],
             s.launcher,
         );
@@ -299,7 +299,7 @@ pub fn looseDecode(input: []const u8) ?Decoded {
     }
 
     return .{
-        .bin_path = bun.reinterpretSlice(u16, bin_path_u8),
+        .bin_path = fun.reinterpretSlice(u16, bin_path_u8),
         .flags = flags,
     };
 }
@@ -307,5 +307,5 @@ pub fn looseDecode(input: []const u8) ?Decoded {
 const std = @import("std");
 const lastIndexOfScalar = std.mem.lastIndexOfScalar;
 
-const bun = @import("bun");
-const simdutf = bun.simdutf;
+const fun = @import("fun");
+const simdutf = fun.simdutf;

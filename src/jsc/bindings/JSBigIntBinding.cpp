@@ -4,7 +4,7 @@
 #include <JavaScriptCore/JSBigInt.h>
 
 using namespace JSC;
-using namespace Bun;
+using namespace Fun;
 
 extern "C" JSBigInt* JSC__JSBigInt__fromJS(EncodedJSValue encodedValue)
 {
@@ -70,7 +70,7 @@ extern "C" int64_t JSC__JSBigInt__toInt64(JSBigInt* bigInt)
     return JSBigInt::toBigInt64(bigInt);
 }
 
-extern "C" BunString JSC__JSBigInt__toString(JSBigInt* bigInt, JSGlobalObject* globalObject)
+extern "C" FunString JSC__JSBigInt__toString(JSBigInt* bigInt, JSGlobalObject* globalObject)
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);

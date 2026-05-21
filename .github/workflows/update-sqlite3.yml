@@ -7,7 +7,7 @@ on:
 
 jobs:
   check-update:
-    if: github.repository == 'oven-sh/bun'
+    if: github.repository == 'underdoc-org/fun'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -92,4 +92,4 @@ jobs:
 
             Compare: https://sqlite.org/src/vdiff?from=${{ steps.check-version.outputs.current }}&to=${{ steps.check-version.outputs.latest }}
 
-            Auto-updated by [this workflow](https://github.com/oven-sh/bun/actions/workflows/update-sqlite3.yml)
+            Auto-updated by [this workflow](https://github.com/underdoc-org/fun/actions/workflows/update-sqlite3.yml)

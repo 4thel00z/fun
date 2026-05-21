@@ -2,7 +2,7 @@ pub const QueryBindingIterator = union(enum) {
     array: jsc.JSArrayIterator,
     objects: ObjectIterator,
 
-    pub fn init(array: JSValue, columns: JSValue, globalObject: *jsc.JSGlobalObject) bun.JSError!QueryBindingIterator {
+    pub fn init(array: JSValue, columns: JSValue, globalObject: *jsc.JSGlobalObject) fun.JSError!QueryBindingIterator {
         if (columns.isEmptyOrUndefinedOrNull()) {
             return .{ .array = try jsc.JSArrayIterator.init(array, globalObject) };
         }
@@ -18,7 +18,7 @@ pub const QueryBindingIterator = union(enum) {
         };
     }
 
-    pub fn next(this: *QueryBindingIterator) bun.JSError!?jsc.JSValue {
+    pub fn next(this: *QueryBindingIterator) fun.JSError!?jsc.JSValue {
         return switch (this.*) {
             .array => |*iter| iter.next(),
             .objects => |*iter| iter.next(),
@@ -58,7 +58,7 @@ pub const QueryBindingIterator = union(enum) {
 };
 
 const ObjectIterator = @import("./ObjectIterator.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

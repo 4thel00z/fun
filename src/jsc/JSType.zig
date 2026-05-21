@@ -687,7 +687,7 @@ pub const JSType = enum(u8) {
         };
     }
 
-    pub fn toTypedArrayType(this: JSType) bun.jsc.ArrayBuffer.TypedArrayType {
+    pub fn toTypedArrayType(this: JSType) fun.jsc.ArrayBuffer.TypedArrayType {
         return switch (this) {
             .Int8Array => .TypeInt8,
             .Int16Array => .TypeInt16,
@@ -837,4 +837,4 @@ pub const JSType = enum(u8) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

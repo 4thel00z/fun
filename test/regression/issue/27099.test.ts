@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test("issue #27099", async () => {
   // Run it twice to trigger ASAN.
@@ -7,15 +7,15 @@ test("issue #27099", async () => {
 });
 
 async function run() {
-  const fileOps = Array.from({ length: 10 }, () => Bun.file("/tmp/nope").exists());
+  const fileOps = Array.from({ length: 10 }, () => Fun.file("/tmp/nope").exists());
 
-  const outer = Bun.spawn(["bash", "-c", 'for j in $(seq 1 100); do echo "padding padding padding"; done'], {
+  const outer = Fun.spawn(["bash", "-c", 'for j in $(seq 1 100); do echo "padding padding padding"; done'], {
     stdout: "pipe",
     stderr: "pipe",
   });
   const outerText = new Response(outer.stdout as ReadableStream).text();
 
-  const inner = Bun.spawn(["cat"], {
+  const inner = Fun.spawn(["cat"], {
     stdin: new Response(Buffer.allocUnsafe(20000).fill("a").toString()),
     stdout: "pipe",
   });

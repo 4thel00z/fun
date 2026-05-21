@@ -1,17 +1,17 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { mkdirSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 describe.concurrent("run-shell", () => {
   test("running a shell script works", async () => {
     const dir = tmpdirSync();
     mkdirSync(dir, { recursive: true });
-    await Bun.write(join(dir, "something.sh"), "echo wah");
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), join(dir, "something.sh")],
+    await Fun.write(join(dir, "something.sh"), "echo wah");
+    await using proc = Fun.spawn({
+      cmd: [funExe(), join(dir, "something.sh")],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });
@@ -22,15 +22,15 @@ describe.concurrent("run-shell", () => {
   });
 
   test("invalid syntax reports the error correctly", async () => {
-    const dir = tmpdirSync("bun-shell-test-error");
+    const dir = tmpdirSync("fun-shell-test-error");
     mkdirSync(dir, { recursive: true });
     const shellScript = `-h)
   echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"`;
-    await Bun.write(join(dir, "scripts", "script.sh"), shellScript);
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), join(dir, "scripts", "script.sh")],
+    await Fun.write(join(dir, "scripts", "script.sh"), shellScript);
+    await using proc = Fun.spawn({
+      cmd: [funExe(), join(dir, "scripts", "script.sh")],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });

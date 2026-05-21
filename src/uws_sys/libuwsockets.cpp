@@ -1,9 +1,9 @@
 // clang-format off
 #include "_libusockets.h"
 #include "libusockets.h"
-#include <bun-uws/src/App.h>
-#include <bun-uws/src/AsyncSocket.h>
-#include <bun-usockets/src/internal/internal.h>
+#include <fun-uws/src/App.h>
+#include <fun-uws/src/AsyncSocket.h>
+#include <fun-usockets/src/internal/internal.h>
 #include <string_view>
 
 extern "C" const char* ares_inet_ntop(int af, const char *src, char *dst, size_t size);
@@ -28,7 +28,7 @@ extern "C"
     loopData->updateDate();
   }
 
-  uws_app_t *uws_create_app(int ssl, struct us_bun_socket_context_options_t options)
+  uws_app_t *uws_create_app(int ssl, struct us_fun_socket_context_options_t options)
   {
     uWS::SocketContextOptions socket_context_options;
     memcpy(&socket_context_options, &options,
@@ -640,7 +640,7 @@ extern "C"
   }
   int uws_add_server_name_with_options(
       int ssl, uws_app_t *app, const char *hostname_pattern,
-      struct us_bun_socket_context_options_t options)
+      struct us_fun_socket_context_options_t options)
   {
     uWS::SocketContextOptions sco;
     memcpy(&sco, &options, sizeof(uWS::SocketContextOptions));
@@ -1885,7 +1885,7 @@ __attribute__((callback (corker, ctx)))
     //      us_socket_remote_address
     //      AsyncSocket::getRemoteAddress
     //      AsyncSocket::addressAsText
-    // To get { ip, port, is_ipv6 } for Bun.serve().requestIP()
+    // To get { ip, port, is_ipv6 } for Fun.serve().requestIP()
     static thread_local char b[64];
     auto length = us_get_remote_address_info(b, (us_socket_t *)res, dest, port, (int*)is_ipv6);
 
@@ -1923,7 +1923,7 @@ __attribute__((callback (corker, ctx)))
   }
 
   // we need to manually call this at thread exit
-  extern "C" void bun_clear_loop_at_thread_exit() {
+  extern "C" void fun_clear_loop_at_thread_exit() {
       uWS::Loop::clearLoopAtThreadExit();
   }
 }

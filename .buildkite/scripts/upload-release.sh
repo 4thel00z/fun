@@ -98,7 +98,7 @@ function release_tag() {
   if [ "$version" == "canary" ]; then
     echo "canary"
   else
-    echo "bun-v$version"
+    echo "fun-v$version"
   fi
 }
 
@@ -122,10 +122,10 @@ function download_buildkite_artifact() {
     dir="."
   fi
   # When signing ran, Windows zips exist in two steps with the same name
-  # (build-bun unsigned, windows-sign signed). Pin to the sign step to
+  # (build-fun unsigned, windows-sign signed). Pin to the sign step to
   # guarantee we get the signed one.
   local step_args=()
-  if [[ -n "$WINDOWS_ARTIFACT_STEP" && "$name" == bun-windows-* ]]; then
+  if [[ -n "$WINDOWS_ARTIFACT_STEP" && "$name" == fun-windows-* ]]; then
     step_args=(--step "$WINDOWS_ARTIFACT_STEP")
   fi
   run_command buildkite-agent artifact download "$name" "$dir" "${step_args[@]}"
@@ -155,7 +155,7 @@ function update_github_release() {
   if [ "$tag" == "canary" ]; then
     sleep 5 # There is possibly a race condition where this overwrites artifacts?
     run_command gh release edit "$tag" --repo "$BUILDKITE_REPO" \
-      --notes "This release of Bun corresponds to the commit: $BUILDKITE_COMMIT"
+      --notes "This release of Fun corresponds to the commit: $BUILDKITE_COMMIT"
   fi
 }
 
@@ -166,23 +166,23 @@ function upload_s3_file() {
 }
 
 function send_discord_announcement() {
-  local value=$(buildkite-agent secret get "BUN_ANNOUNCE_CANARY_WEBHOOK_URL")
+  local value=$(buildkite-agent secret get "FUN_ANNOUNCE_CANARY_WEBHOOK_URL")
   if [ -z "$value" ]; then
-    echo "warn: BUN_ANNOUNCE_CANARY_WEBHOOK_URL not set, skipping Discord announcement"
+    echo "warn: FUN_ANNOUNCE_CANARY_WEBHOOK_URL not set, skipping Discord announcement"
     return
   fi
 
   local version="$1"
   local commit="$BUILDKITE_COMMIT"
   local short_sha="${commit:0:7}"
-  local commit_url="https://github.com/oven-sh/bun/commit/$commit"
+  local commit_url="https://github.com/underdoc-org/fun/commit/$commit"
 
   if [ "$version" == "canary" ]; then
     local json_payload=$(cat <<EOF
 {
   "embeds": [{
-    "title": "New Bun Canary now available",
-    "description": "A new canary build of Bun has been automatically uploaded ([${short_sha}](${commit_url})). To upgrade, run:\n\n\`\`\`shell\nbun upgrade --canary\n\`\`\`\nCommit: \`${commit}\`",
+    "title": "New Fun Canary now available",
+    "description": "A new canary build of Fun has been automatically uploaded ([${short_sha}](${commit_url})). To upgrade, run:\n\n\`\`\`shell\nfun upgrade --canary\n\`\`\`\nCommit: \`${commit}\`",
     "color": 16023551,
     "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   }]
@@ -206,28 +206,28 @@ function create_release() {
 
   local tag="$1" # 'canary' or 'x.y.z'
   local artifacts=(
-    bun-darwin-aarch64.zip
-    bun-darwin-aarch64-profile.zip
-    bun-darwin-x64.zip
-    bun-darwin-x64-profile.zip
-    bun-linux-aarch64.zip
-    bun-linux-aarch64-profile.zip
-    bun-linux-x64.zip
-    bun-linux-x64-profile.zip
-    bun-linux-x64-baseline.zip
-    bun-linux-x64-baseline-profile.zip
-    bun-linux-aarch64-musl.zip
-    bun-linux-aarch64-musl-profile.zip
-    bun-linux-x64-musl.zip
-    bun-linux-x64-musl-profile.zip
-    bun-linux-x64-musl-baseline.zip
-    bun-linux-x64-musl-baseline-profile.zip
-    bun-windows-x64.zip
-    bun-windows-x64-profile.zip
-    bun-windows-x64-baseline.zip
-    bun-windows-x64-baseline-profile.zip
-    bun-windows-aarch64.zip
-    bun-windows-aarch64-profile.zip
+    fun-darwin-aarch64.zip
+    fun-darwin-aarch64-profile.zip
+    fun-darwin-x64.zip
+    fun-darwin-x64-profile.zip
+    fun-linux-aarch64.zip
+    fun-linux-aarch64-profile.zip
+    fun-linux-x64.zip
+    fun-linux-x64-profile.zip
+    fun-linux-x64-baseline.zip
+    fun-linux-x64-baseline-profile.zip
+    fun-linux-aarch64-musl.zip
+    fun-linux-aarch64-musl-profile.zip
+    fun-linux-x64-musl.zip
+    fun-linux-x64-musl-profile.zip
+    fun-linux-x64-musl-baseline.zip
+    fun-linux-x64-musl-baseline-profile.zip
+    fun-windows-x64.zip
+    fun-windows-x64-profile.zip
+    fun-windows-x64-baseline.zip
+    fun-windows-x64-baseline-profile.zip
+    fun-windows-aarch64.zip
+    fun-windows-aarch64-profile.zip
   )
 
   function upload_artifact() {

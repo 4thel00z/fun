@@ -37,14 +37,14 @@ String TextEncoder::encoding() const
 
 RefPtr<Uint8Array> TextEncoder::encode(String&& input) const
 {
-    // THIS CODE SHOULD NEVER BE REACHED IN BUN
+    // THIS CODE SHOULD NEVER BE REACHED IN FUN
     RELEASE_ASSERT(1);
     return nullptr;
 }
 
 auto TextEncoder::encodeInto(String&& input, Ref<Uint8Array>&& array) -> EncodeIntoResult
 {
-    // THIS CODE SHOULD NEVER BE REACHED IN BUN
+    // THIS CODE SHOULD NEVER BE REACHED IN FUN
     RELEASE_ASSERT(1);
 
     auto* destinationBytes = static_cast<uint8_t*>(array->baseAddress());

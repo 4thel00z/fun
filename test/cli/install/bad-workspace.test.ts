@@ -1,7 +1,7 @@
-import { spawnSync } from "bun";
-import { beforeAll, beforeEach, expect, setDefaultTimeout, test } from "bun:test";
+import { spawnSync } from "fun";
+import { beforeAll, beforeEach, expect, setDefaultTimeout, test } from "fun:test";
 import { mkdirSync, writeFileSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 
 let cwd: string;
 
@@ -26,9 +26,9 @@ test("bad workspace path", () => {
     ),
   );
   const { stderr, exitCode } = spawnSync({
-    cmd: [bunExe(), "install"],
+    cmd: [funExe(), "install"],
     cwd,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -68,9 +68,9 @@ test("workspace with ./ should not crash", () => {
     ),
   );
   const { stderr, exitCode } = spawnSync({
-    cmd: [bunExe(), "install"],
+    cmd: [funExe(), "install"],
     cwd,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -111,9 +111,9 @@ test("workspace with .\\ should not crash", () => {
     ),
   );
   const { stderr, exitCode } = spawnSync({
-    cmd: [bunExe(), "install"],
+    cmd: [funExe(), "install"],
     cwd,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

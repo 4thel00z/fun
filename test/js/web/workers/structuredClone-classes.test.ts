@@ -1,6 +1,6 @@
-import { structuredCloneAdvanced } from "bun:internal-for-testing";
-import { deserialize, serialize } from "bun:jsc";
-import { bunEnv, bunExe } from "harness";
+import { structuredCloneAdvanced } from "fun:internal-for-testing";
+import { deserialize, serialize } from "fun:jsc";
+import { funEnv, funExe } from "harness";
 
 enum TransferMode {
   no = 0,
@@ -26,8 +26,8 @@ const testTypes = [
     },
   },
   {
-    name: "BunFile (cloneable, non-transferable)",
-    createValue: () => Bun.file(import.meta.filename),
+    name: "FunFile (cloneable, non-transferable)",
+    createValue: () => Fun.file(import.meta.filename),
     isTransferable: false,
     expectedAfterClone: (original: any, cloned: any, isTransfer: TransferMode, isStorage: boolean) => {
       expect(original).toBeInstanceOf(Blob);
@@ -38,7 +38,7 @@ const testTypes = [
         // Non-transferable types should yield an empty object when transferred
         expect(cloned).toBeEmptyObject();
       } else {
-        // When not stored or transferred, BunFile maintains its properties
+        // When not stored or transferred, FunFile maintains its properties
         expect(cloned.name).toBe(original.name);
         expect(cloned.type).toBe(original.type);
       }
@@ -73,18 +73,18 @@ describe("serialize & deserialize", () => {
       const original = testType.createValue();
       const serialized = serialize(original);
 
-      const result = Bun.spawnSync({
+      const result = Fun.spawnSync({
         cmd: [
-          bunExe(),
+          funExe(),
           "-e",
           `
-        import {deserialize, serialize} from "bun:jsc";
-        const serialized = deserialize(await Bun.stdin.bytes());
+        import {deserialize, serialize} from "fun:jsc";
+        const serialized = deserialize(await Fun.stdin.bytes());
         const cloned = serialize(serialized);
         process.stdout.write(cloned);
         `,
         ],
-        env: bunEnv,
+        env: funEnv,
         stdin: serialized,
         stdout: "pipe",
         stderr: "inherit",

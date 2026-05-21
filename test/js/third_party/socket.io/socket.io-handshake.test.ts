@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { Server } from "socket.io";
 import { fail, getPort, success } from "./support/util.ts";
 

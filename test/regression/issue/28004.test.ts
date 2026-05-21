@@ -1,8 +1,8 @@
-// Tests that Bun.SQL MySQL adapter works with servers that don't support
+// Tests that Fun.SQL MySQL adapter works with servers that don't support
 // CLIENT_DEPRECATE_EOF (e.g., StarRocks, older MySQL-compatible databases).
-// See: https://github.com/oven-sh/bun/issues/28004
-import { SQL } from "bun";
-import { expect, test } from "bun:test";
+// See: https://github.com/underdoc-org/fun/issues/28004
+import { SQL } from "fun";
+import { expect, test } from "fun:test";
 import net from "net";
 
 // --- MySQL wire protocol helpers ---

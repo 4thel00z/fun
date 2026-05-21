@@ -1,9 +1,9 @@
 ---
 title: "DOM testing"
-description: "Learn how to test DOM elements and components using Bun with happy-dom and React Testing Library"
+description: "Learn how to test DOM elements and components using Fun with happy-dom and React Testing Library"
 ---
 
-Bun's test runner plays well with existing component and DOM testing libraries, including React Testing Library and happy-dom.
+Fun's test runner plays well with existing component and DOM testing libraries, including React Testing Library and happy-dom.
 
 ## happy-dom
 
@@ -12,10 +12,10 @@ For writing headless tests for your frontend code and components, we recommend h
 To get started install the `@happy-dom/global-registrator` package as a dev dependency.
 
 ```bash terminal icon="terminal"
-bun add -d @happy-dom/global-registrator
+fun add -d @happy-dom/global-registrator
 ```
 
-We'll be using Bun's preload functionality to register the happy-dom globals before running our tests. This step will make browser APIs like `document` available in the global scope. Create a file called `happydom.ts` in the root of your project and add the following code:
+We'll be using Fun's preload functionality to register the happy-dom globals before running our tests. This step will make browser APIs like `document` available in the global scope. Create a file called `happydom.ts` in the root of your project and add the following code:
 
 ```ts title="happydom.ts" icon="/icons/typescript.svg"
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
@@ -23,17 +23,17 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 GlobalRegistrator.register();
 ```
 
-To preload this file before `bun test`, open or create a `bunfig.toml` file and add the following lines.
+To preload this file before `fun test`, open or create a `funfig.toml` file and add the following lines.
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [test]
 preload = ["./happydom.ts"]
 ```
 
-This will execute `happydom.ts` when you run `bun test`. Now you can write tests that use browser APIs like `document` and `window`.
+This will execute `happydom.ts` when you run `fun test`. Now you can write tests that use browser APIs like `document` and `window`.
 
 ```ts title="dom.test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("dom test", () => {
   document.body.innerHTML = `<button>My button</button>`;
@@ -49,7 +49,7 @@ Depending on your `tsconfig.json` setup, you may see a "Cannot find name 'docume
 ```ts title="dom.test.ts" icon="/icons/typescript.svg"
 /// <reference lib="dom" />
 
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("dom test", () => {
   document.body.innerHTML = `<button>My button</button>`;
@@ -58,14 +58,14 @@ test("dom test", () => {
 });
 ```
 
-Let's run this test with `bun test`:
+Let's run this test with `fun test`:
 
 ```bash terminal icon="terminal"
-bun test
+fun test
 ```
 
 ```
-bun test v1.3.3
+fun test v1.3.3
 
 dom.test.ts:
 ✓ dom test [0.82ms]
@@ -78,16 +78,16 @@ Ran 1 tests across 1 files. 1 total [125.00ms]
 
 ## React Testing Library
 
-Bun works seamlessly with React Testing Library for testing React components. After setting up happy-dom as shown above, you can install and use React Testing Library normally.
+Fun works seamlessly with React Testing Library for testing React components. After setting up happy-dom as shown above, you can install and use React Testing Library normally.
 
 ```bash terminal icon="terminal"
-bun add -d @testing-library/react @testing-library/jest-dom
+fun add -d @testing-library/react @testing-library/jest-dom
 ```
 
 ```ts title="component.test.tsx" icon="/icons/typescript.svg"
 /// <reference lib="dom" />
 
-import { test, expect } from 'bun:test';
+import { test, expect } from 'fun:test';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
@@ -110,7 +110,7 @@ You can test custom elements and web components using the same setup:
 ```ts title="custom-element.test.ts" icon="/icons/typescript.svg"
 /// <reference lib="dom" />
 
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("custom element", () => {
   // Define a custom element
@@ -137,7 +137,7 @@ Test DOM events and user interactions:
 ```ts title="events.test.ts" icon="/icons/typescript.svg"
 /// <reference lib="dom" />
 
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("button click event", () => {
   let clicked = false;
@@ -190,9 +190,9 @@ Object.defineProperty(window, "matchMedia", {
 });
 ```
 
-Then update your `bunfig.toml`:
+Then update your `funfig.toml`:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [test]
 preload = ["./test-setup.ts"]
 ```
@@ -216,7 +216,7 @@ Happy-dom is fast, but for very large test suites, you might want to:
 - Consider using `cleanup` functions from testing libraries
 
 ```ts title="test-setup.ts" icon="/icons/typescript.svg"
-import { afterEach } from "bun:test";
+import { afterEach } from "fun:test";
 import { cleanup } from "@testing-library/react";
 
 afterEach(() => {

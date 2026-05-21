@@ -1,11 +1,11 @@
 #!/bin/sh
 # Version: 34
 
-# A script that installs the dependencies needed to build and test Bun.
+# A script that installs the dependencies needed to build and test Fun.
 # This should work on macOS and Linux with a POSIX shell.
 
 # If this script does not work on your machine, please open an issue:
-# https://github.com/oven-sh/bun/issues
+# https://github.com/underdoc-org/fun/issues
 
 # If you need to make a change to this script, such as upgrading a dependency,
 # increment the version comment to indicate that a new image should be built.
@@ -773,7 +773,7 @@ install_common_software() {
 
 	install_rosetta
 	install_nodejs
-	install_bun
+	install_fun
 	install_curl_h3
 	install_tailscale
 	install_buildkite
@@ -819,7 +819,7 @@ install_nodejs() {
 
 	case "$abi" in
 	musl)
-		nodejs_mirror="https://bun-nodejs-release.s3.us-west-1.amazonaws.com"
+		nodejs_mirror="https://fun-nodejs-release.s3.us-west-1.amazonaws.com"
 		nodejs_foldername="node-v$nodejs_version-$nodejs_platform-$nodejs_arch-musl"
 		;;
 	*)
@@ -953,7 +953,7 @@ setup_node_gyp_cache() {
 	grant_to_user "$home/.cache"
 }
 
-bun_version_exact() {
+fun_version_exact() {
 	print "1.3.13"
 }
 
@@ -963,7 +963,7 @@ curl_h3_version() {
 }
 
 # Installs a fully-static curl built with nghttp3/ngtcp2 as `curl-h3` so the
-# HTTP/3 server tests (test/js/bun/http/serve-http3.test.ts, fetch-h3.ts) can
+# HTTP/3 server tests (test/js/fun/http/serve-http3.test.ts, fetch-h3.ts) can
 # run in CI. Kept separate from the system `curl` so nothing else changes
 # behavior. Tests discover it via $CURL_HTTP3, then `curl-h3` in PATH.
 install_curl_h3() {
@@ -1005,7 +1005,7 @@ install_curl_h3() {
 	execute "$curl_h3_bin" --version | head -n1
 }
 
-install_bun() {
+install_fun() {
 	install_packages unzip
 
 	case "$pm" in
@@ -1018,22 +1018,22 @@ install_bun() {
 
 	case "$abi" in
 	musl)
-		bun_triplet="bun-$os-$arch-$abi"
+		fun_triplet="fun-$os-$arch-$abi"
 		;;
 	*)
-		bun_triplet="bun-$os-$arch"
+		fun_triplet="fun-$os-$arch"
 		;;
 	esac
 
 	unzip="$(require unzip)"
-	bun_download_url="https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/bun-v$(bun_version_exact)/$bun_triplet.zip"
-	bun_zip="$(download_file "$bun_download_url")"
-	bun_tmpdir="$(dirname "$bun_zip")"
-	execute "$unzip" -o "$bun_zip" -d "$bun_tmpdir"
+	fun_download_url="https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/fun-v$(fun_version_exact)/$fun_triplet.zip"
+	fun_zip="$(download_file "$fun_download_url")"
+	fun_tmpdir="$(dirname "$fun_zip")"
+	execute "$unzip" -o "$fun_zip" -d "$fun_tmpdir"
 
-	move_to_bin "$bun_tmpdir/$bun_triplet/bun"
-	bun_path="$(require bun)"
-	execute_sudo ln -sf "$bun_path" "$(dirname "$bun_path")/bunx"
+	move_to_bin "$fun_tmpdir/$fun_triplet/fun"
+	fun_path="$(require fun)"
+	execute_sudo ln -sf "$fun_path" "$(dirname "$fun_path")/funx"
 }
 
 install_cmake() {
@@ -1765,7 +1765,7 @@ configure_core_dumps() {
 	case "$os" in
 	linux)
 		# set up a directory that the test runner will look in after running tests
-		cores_dir="/var/bun-cores-$distro-$release-$arch"
+		cores_dir="/var/fun-cores-$distro-$release-$arch"
 		sysctl_file="/etc/sysctl.d/local.conf"
 		create_directory "$cores_dir"
 		# ensure core_pattern will point there
@@ -1820,34 +1820,34 @@ ensure_no_tmpfs() {
 
 prefetch_build_deps() {
 	# CI-only: bake a read-only download cache for scripts/build/download.ts
-	# (BUN_BUILD_PREFETCH_DIR). Everything is content-addressed by URL/identity,
+	# (FUN_BUILD_PREFETCH_DIR). Everything is content-addressed by URL/identity,
 	# so a dep version bump in scripts/build/deps/ just misses the cache for that
 	# one dep — no image rebuild needed.
 	if ! [ "$ci" = "1" ]; then
 		return
 	fi
 
-	prefetch_dir="/opt/bun-prefetch"
-	bun_path="$(require bun)"
+	prefetch_dir="/opt/fun-prefetch"
+	fun_path="$(require fun)"
 	git_path="$(require git)"
 
 	# Only bootstrap.sh is uploaded to the bake VM, so the repo (and the
 	# prefetch script + scripts/build/deps/*.ts version pins) has to be cloned.
-	# BUN_BOOTSTRAP_REPO_REF lets the image-build orchestrator pin to the
+	# FUN_BOOTSTRAP_REPO_REF lets the image-build orchestrator pin to the
 	# commit it was triggered from; default to main.
-	repo_ref="${BUN_BOOTSTRAP_REPO_REF:-main}"
+	repo_ref="${FUN_BOOTSTRAP_REPO_REF:-main}"
 	clone_dir="$(create_tmp_directory)"
 	# Best-effort: a fork-PR branch that doesn't exist on the upstream remote,
 	# a deleted branch, or a transient network blip shouldn't abort the whole
 	# image bake — the build just falls through to the network with no warm
 	# cache. Same for a ref that predates the prefetch script.
 	if ! "$git_path" clone --depth=1 --branch "$repo_ref" \
-		https://github.com/oven-sh/bun.git "$clone_dir/bun"; then
+		https://github.com/underdoc-org/fun.git "$clone_dir/fun"; then
 		print "warning: clone of $repo_ref failed; skipping warm cache"
 		execute_sudo rm -rf "$clone_dir"
 		return
 	fi
-	if ! [ -f "$clone_dir/bun/scripts/prefetch-deps.ts" ]; then
+	if ! [ -f "$clone_dir/fun/scripts/prefetch-deps.ts" ]; then
 		print "prefetch-deps.ts not present at $repo_ref; skipping warm cache"
 		execute_sudo rm -rf "$clone_dir"
 		return
@@ -1858,7 +1858,7 @@ prefetch_build_deps() {
 	# the clone. Direct invocation (not `execute`) so a non-zero is observable
 	# here rather than swallowed by the subshell — the parent shell has no
 	# `set -e`, and `error()` inside a subshell can't kill the parent.
-	if ! ( cd "$clone_dir/bun" && "$bun_path" scripts/prefetch-deps.ts "$prefetch_dir" ); then
+	if ! ( cd "$clone_dir/fun" && "$fun_path" scripts/prefetch-deps.ts "$prefetch_dir" ); then
 		print "warning: prefetch-deps.ts failed; baking without warm cache"
 		execute_sudo rm -rf "$clone_dir" "$prefetch_dir"
 		return
@@ -1871,12 +1871,12 @@ prefetch_build_deps() {
 	# the current shell, so a non-root `docker compose` here would get
 	# permission-denied on the socket. Best-effort: a docker hiccup shouldn't
 	# fail the bake.
-	if [ -f "$clone_dir/bun/test/docker/prepare-ci.ts" ] && command -v docker >/dev/null; then
+	if [ -f "$clone_dir/fun/test/docker/prepare-ci.ts" ] && command -v docker >/dev/null; then
 		systemctl_path="$(which systemctl)"
 		if [ -n "$systemctl_path" ]; then
 			execute_sudo "$systemctl_path" start docker || true
 		fi
-		( cd "$clone_dir/bun" && execute_sudo "$bun_path" test/docker/prepare-ci.ts ) || \
+		( cd "$clone_dir/fun" && execute_sudo "$fun_path" test/docker/prepare-ci.ts ) || \
 			print "warning: prepare-ci.ts failed; test docker images not pre-pulled"
 	fi
 
@@ -1888,8 +1888,8 @@ prefetch_build_deps() {
 	# isn't set, so the exports below are belt-and-braces for interactive
 	# debugging rather than the load-bearing mechanism.
 	execute_sudo chmod -R a-w "$prefetch_dir"
-	append_file /etc/environment "BUN_BUILD_PREFETCH_DIR=$prefetch_dir"
-	append_to_profile "export BUN_BUILD_PREFETCH_DIR=\"$prefetch_dir\""
+	append_file /etc/environment "FUN_BUILD_PREFETCH_DIR=$prefetch_dir"
+	append_to_profile "export FUN_BUILD_PREFETCH_DIR=\"$prefetch_dir\""
 }
 
 main() {
@@ -1906,7 +1906,7 @@ main() {
 	install_fuse_python
 	install_age
 	prefetch_build_deps
-	if [ "${BUN_NO_CORE_DUMP:-0}" != "1" ]; then
+	if [ "${FUN_NO_CORE_DUMP:-0}" != "1" ]; then
 		configure_core_dumps
 	fi
 	clean_system

@@ -6,7 +6,7 @@
 #include <JavaScriptCore/JSSetIterator.h>
 #include "JSHTTPParser.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -177,4 +177,4 @@ void JSConnectionsList::popActive(JSGlobalObject* globalObject, JSCell* parser)
     activeConnections()->remove(globalObject, parser);
 }
 
-} // namespace Bun
+} // namespace Fun

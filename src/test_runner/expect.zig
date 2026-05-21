@@ -22,8 +22,8 @@ pub const Expect = struct {
     pub const fromJSDirect = js.fromJSDirect;
 
     flags: Flags = .{},
-    parent: ?*bun.jsc.Jest.bun_test.BunTest.RefData,
-    custom_label: bun.String = bun.String.empty,
+    parent: ?*fun.jsc.Jest.fun_test.FunTest.RefData,
+    custom_label: fun.String = fun.String.empty,
 
     pub const TestScope = struct {
         test_id: TestRunner.Test.ID,
@@ -31,24 +31,24 @@ pub const Expect = struct {
     };
 
     pub fn incrementExpectCallCounter(this: *Expect) void {
-        const parent = this.parent orelse return; // not in bun:test
-        var buntest_strong = parent.bunTest() orelse return; // the test file this expect() call was for is no longer
-        defer buntest_strong.deinit();
-        const buntest = buntest_strong.get();
-        if (parent.phase.sequence(buntest)) |sequence| {
+        const parent = this.parent orelse return; // not in fun:test
+        var funtest_strong = parent.funTest() orelse return; // the test file this expect() call was for is no longer
+        defer funtest_strong.deinit();
+        const funtest = funtest_strong.get();
+        if (parent.phase.sequence(funtest)) |sequence| {
             // found active sequence
             sequence.expect_call_count +|= 1;
         } else {
             // in concurrent group or otherwise failed to get the sequence; increment the expect call count in the reporter directly
-            if (buntest.reporter) |reporter| {
+            if (funtest.reporter) |reporter| {
                 reporter.summary().expectations +|= 1;
             }
         }
     }
 
-    pub fn bunTest(this: *Expect) ?bun.jsc.Jest.bun_test.BunTestPtr {
+    pub fn funTest(this: *Expect) ?fun.jsc.Jest.fun_test.FunTestPtr {
         const parent = this.parent orelse return null;
-        return parent.bunTest();
+        return parent.funTest();
     }
 
     pub const Flags = packed struct(u8) {
@@ -79,7 +79,7 @@ pub const Expect = struct {
             InstanceOf = 9,
 
             extern fn AsymmetricMatcherConstructorType__fromJS(globalObject: *JSGlobalObject, value: JSValue) i8;
-            pub fn fromJS(globalObject: *JSGlobalObject, value: JSValue) bun.JSError!AsymmetricMatcherConstructorType {
+            pub fn fromJS(globalObject: *JSGlobalObject, value: JSValue) fun.JSError!AsymmetricMatcherConstructorType {
                 const result = AsymmetricMatcherConstructorType__fromJS(globalObject, value);
                 if (result == -1) return error.JSError;
                 return @enumFromInt(result);
@@ -108,7 +108,7 @@ pub const Expect = struct {
         return received ++ matcher_name ++ "<d>(<r>" ++ args ++ "<d>)<r>";
     }
 
-    pub fn throwPrettyMatcherError(globalThis: *JSGlobalObject, custom_label: bun.String, matcher_name: anytype, matcher_params: anytype, flags: Flags, comptime message_fmt: string, message_args: anytype) bun.JSError {
+    pub fn throwPrettyMatcherError(globalThis: *JSGlobalObject, custom_label: fun.String, matcher_name: anytype, matcher_params: anytype, flags: Flags, comptime message_fmt: string, message_args: anytype) fun.JSError {
         switch (Output.enable_ansi_colors_stderr) {
             inline else => |colors| {
                 const chain = switch (flags.promise) {
@@ -119,7 +119,7 @@ pub const Expect = struct {
                 switch (!custom_label.isEmpty()) {
                     inline else => |use_default_label| {
                         if (use_default_label) {
-                            const fmt = comptime Output.prettyFmt("<d>expect(<r><red>received<r><d>).<r>" ++ bun.deprecated.autoFormatLabel(@TypeOf(chain)) ++ bun.deprecated.autoFormatLabel(@TypeOf(matcher_name)) ++ "<d>(<r>" ++ bun.deprecated.autoFormatLabel(@TypeOf(matcher_params)) ++ "<d>)<r>\n\n" ++ message_fmt, colors);
+                            const fmt = comptime Output.prettyFmt("<d>expect(<r><red>received<r><d>).<r>" ++ fun.deprecated.autoFormatLabel(@TypeOf(chain)) ++ fun.deprecated.autoFormatLabel(@TypeOf(matcher_name)) ++ "<d>(<r>" ++ fun.deprecated.autoFormatLabel(@TypeOf(matcher_params)) ++ "<d>)<r>\n\n" ++ message_fmt, colors);
                             return globalThis.throwPretty(fmt, .{ chain, matcher_name, matcher_params } ++ message_args);
                         } else {
                             const fmt = comptime Output.prettyFmt("{f}\n\n" ++ message_fmt, colors);
@@ -136,7 +136,7 @@ pub const Expect = struct {
         return thisValue;
     }
 
-    pub fn getResolves(this: *Expect, thisValue: JSValue, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn getResolves(this: *Expect, thisValue: JSValue, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         this.flags.promise = switch (this.flags.promise) {
             .resolves, .none => .resolves,
             .rejects => {
@@ -147,7 +147,7 @@ pub const Expect = struct {
         return thisValue;
     }
 
-    pub fn getRejects(this: *Expect, thisValue: JSValue, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn getRejects(this: *Expect, thisValue: JSValue, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         this.flags.promise = switch (this.flags.promise) {
             .none, .rejects => .rejects,
             .resolves => {
@@ -158,7 +158,7 @@ pub const Expect = struct {
         return thisValue;
     }
 
-    pub fn getValue(this: *Expect, globalThis: *JSGlobalObject, thisValue: JSValue, matcher_name: string, comptime matcher_params_fmt: string) bun.JSError!JSValue {
+    pub fn getValue(this: *Expect, globalThis: *JSGlobalObject, thisValue: JSValue, matcher_name: string, comptime matcher_params_fmt: string) fun.JSError!JSValue {
         const value = js.capturedValueGetCached(thisValue) orelse {
             return globalThis.throw("Internal error: the expect(value) was garbage collected but it should not have been!", .{});
         };
@@ -173,14 +173,14 @@ pub const Expect = struct {
     /// Processes the async flags (resolves/rejects), waiting for the async value if needed.
     /// If no flags, returns the original value
     /// If either flag is set, waits for the result, and returns either it as a JSValue, or null if the expectation failed (in which case if silent is false, also throws a js exception)
-    pub fn processPromise(custom_label: bun.String, flags: Expect.Flags, globalThis: *JSGlobalObject, value: JSValue, matcher_name: anytype, matcher_params: anytype, comptime silent: bool) bun.JSError!JSValue {
+    pub fn processPromise(custom_label: fun.String, flags: Expect.Flags, globalThis: *JSGlobalObject, value: JSValue, matcher_name: anytype, matcher_params: anytype, comptime silent: bool) fun.JSError!JSValue {
         switch (flags.promise) {
             inline .resolves, .rejects => |resolution| {
                 if (value.asAnyPromise()) |promise| {
                     const vm = globalThis.vm();
                     promise.setHandled(vm);
 
-                    globalThis.bunVM().waitForPromise(promise);
+                    globalThis.funVM().waitForPromise(promise);
 
                     const newValue = promise.result(vm);
                     switch (promise.status()) {
@@ -271,16 +271,16 @@ pub const Expect = struct {
         outFlags.* = flags.encode();
 
         // (note that matcher_name/matcher_args are not used because silent=true)
-        value.* = processPromise(bun.String.empty, flags, globalThis, value.*, "", "", true) catch return false;
+        value.* = processPromise(fun.String.empty, flags, globalThis, value.*, "", "", true) catch return false;
         return true;
     }
 
     pub fn getSnapshotName(this: *Expect, allocator: std.mem.Allocator, hint: string) ![]const u8 {
         const parent = this.parent orelse return error.NoTest;
-        var buntest_strong = parent.bunTest() orelse return error.TestNotActive;
-        defer buntest_strong.deinit();
-        const buntest = buntest_strong.get();
-        const execution_entry = parent.phase.entry(buntest) orelse return error.SnapshotInConcurrentGroup;
+        var funtest_strong = parent.funTest() orelse return error.TestNotActive;
+        defer funtest_strong.deinit();
+        const funtest = funtest_strong.get();
+        const execution_entry = parent.phase.entry(funtest) orelse return error.SnapshotInConcurrentGroup;
 
         const test_name = execution_entry.base.name orelse "(unnamed)";
 
@@ -302,20 +302,20 @@ pub const Expect = struct {
         var index = buf.len;
         if (hint.len > 0) {
             index -= hint.len;
-            bun.copy(u8, buf[index..], hint);
+            fun.copy(u8, buf[index..], hint);
             index -= test_name.len + 2;
-            bun.copy(u8, buf[index..], test_name);
-            bun.copy(u8, buf[index + test_name.len ..], ": ");
+            fun.copy(u8, buf[index..], test_name);
+            fun.copy(u8, buf[index + test_name.len ..], ": ");
         } else {
             index -= test_name.len;
-            bun.copy(u8, buf[index..], test_name);
+            fun.copy(u8, buf[index..], test_name);
         }
         // copy describe scopes in reverse order
         curr_scope = execution_entry.base.parent;
         while (curr_scope) |scope| {
             if (scope.base.name != null and scope.base.name.?.len > 0) {
                 index -= scope.base.name.?.len + 1;
-                bun.copy(u8, buf[index..], scope.base.name.?);
+                fun.copy(u8, buf[index..], scope.base.name.?);
                 buf[index + scope.base.name.?.len] = ' ';
             }
             curr_scope = scope.base.parent;
@@ -332,28 +332,28 @@ pub const Expect = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arguments = callframe.arguments_old(2).slice();
         const value = if (arguments.len < 1) .js_undefined else arguments[0];
 
-        var custom_label = bun.String.empty;
+        var custom_label = fun.String.empty;
         if (arguments.len > 1) {
             if (arguments[1].isString() or try arguments[1].implementsToString(globalThis)) {
-                const label = try arguments[1].toBunString(globalThis);
+                const label = try arguments[1].toFunString(globalThis);
                 if (globalThis.hasException()) return .zero;
                 custom_label = label;
             }
         }
 
-        var expect = globalThis.bunVM().allocator.create(Expect) catch {
+        var expect = globalThis.funVM().allocator.create(Expect) catch {
             custom_label.deref();
             return globalThis.throwOutOfMemory();
         };
 
-        const active_execution_entry_ref = if (bun.jsc.Jest.bun_test.cloneActiveStrong()) |buntest_strong_| blk: {
-            var buntest_strong = buntest_strong_;
-            defer buntest_strong.deinit();
-            break :blk bun.jsc.Jest.bun_test.BunTest.ref(buntest_strong, buntest_strong.get().getCurrentStateData());
+        const active_execution_entry_ref = if (fun.jsc.Jest.fun_test.cloneActiveStrong()) |funtest_strong_| blk: {
+            var funtest_strong = funtest_strong_;
+            defer funtest_strong.deinit();
+            break :blk fun.jsc.Jest.fun_test.FunTest.ref(funtest_strong, funtest_strong.get().getCurrentStateData());
         } else null;
         errdefer if (active_execution_entry_ref) |entry_ref| entry_ref.deinit();
 
@@ -370,7 +370,7 @@ pub const Expect = struct {
         return expect_js_value;
     }
 
-    pub fn throw(this: *Expect, globalThis: *JSGlobalObject, comptime signature: [:0]const u8, comptime fmt: [:0]const u8, args: anytype) bun.JSError {
+    pub fn throw(this: *Expect, globalThis: *JSGlobalObject, comptime signature: [:0]const u8, comptime fmt: [:0]const u8, args: anytype) fun.JSError {
         if (this.custom_label.isEmpty()) {
             return globalThis.throwPretty(signature ++ fmt, args);
         } else {
@@ -378,7 +378,7 @@ pub const Expect = struct {
         }
     }
 
-    pub fn constructor(globalThis: *JSGlobalObject, _: *CallFrame) bun.JSError!*Expect {
+    pub fn constructor(globalThis: *JSGlobalObject, _: *CallFrame) fun.JSError!*Expect {
         return globalThis.throw("expect() cannot be called with new", .{});
     }
 
@@ -387,7 +387,7 @@ pub const Expect = struct {
         this: *Expect,
         globalThis: *JSGlobalObject,
         callFrame: *CallFrame,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         defer this.postMatch(globalThis);
 
         const arguments_ = callFrame.arguments_old(1);
@@ -432,7 +432,7 @@ pub const Expect = struct {
         this: *Expect,
         globalThis: *JSGlobalObject,
         callFrame: *CallFrame,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         defer this.postMatch(globalThis);
 
         const arguments_ = callFrame.arguments_old(1);
@@ -544,8 +544,8 @@ pub const Expect = struct {
     pub const toThrowErrorMatchingInlineSnapshot = @import("./expect/toThrowErrorMatchingInlineSnapshot.zig").toThrowErrorMatchingInlineSnapshot;
     pub const toThrowErrorMatchingSnapshot = @import("./expect/toThrowErrorMatchingSnapshot.zig").toThrowErrorMatchingSnapshot;
 
-    pub fn getValueAsToThrow(this: *Expect, globalThis: *JSGlobalObject, value: JSValue) bun.JSError!struct { ?JSValue, JSValue } {
-        const vm = globalThis.bunVM();
+    pub fn getValueAsToThrow(this: *Expect, globalThis: *JSGlobalObject, value: JSValue) fun.JSError!struct { ?JSValue, JSValue } {
+        const vm = globalThis.funVM();
 
         var return_value_from_function: JSValue = .zero;
 
@@ -692,7 +692,7 @@ pub const Expect = struct {
         property_matchers: ?JSValue,
         result: ?[]const u8,
         comptime fn_name: []const u8,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         // jest counts inline snapshots towards the snapshot counter for some reason
         const runner = Jest.runner orelse {
             const signature = comptime getSignature(fn_name, "", false);
@@ -744,24 +744,24 @@ pub const Expect = struct {
         }
 
         if (needs_write) {
-            if (bun.ci.isCI()) {
+            if (fun.ci.isCI()) {
                 if (!update) {
                     const signature = comptime getSignature(fn_name, "", false);
                     // Only creating new snapshots can reach here (updating with mismatches errors earlier with diff)
                     return this.throw(globalThis, signature, "\n\n<b>Matcher error<r>: Inline snapshot creation is disabled in CI environments unless --update-snapshots is used.\nTo override, set the environment variable CI=false.\n\nReceived: {s}", .{pretty_value.written()});
                 }
             }
-            var buntest_strong = this.bunTest() orelse {
+            var funtest_strong = this.funTest() orelse {
                 const signature = comptime getSignature(fn_name, "", false);
                 return this.throw(globalThis, signature, "\n\n<b>Matcher error<r>: Snapshot matchers cannot be used outside of a test\n", .{});
             };
-            defer buntest_strong.deinit();
-            const buntest = buntest_strong.get();
+            defer funtest_strong.deinit();
+            const funtest = funtest_strong.get();
 
             // 1. find the src loc of the snapshot
             const srcloc = callFrame.getCallerSrcLoc(globalThis);
             defer srcloc.str.deref();
-            const file_id = buntest.file_id;
+            const file_id = funtest.file_id;
             const fget = runner.files.get(file_id);
 
             if (!srcloc.str.eqlUTF8(fget.source.path.text)) {
@@ -795,7 +795,7 @@ pub const Expect = struct {
 
         return .js_undefined;
     }
-    pub fn matchAndFmtSnapshot(this: *Expect, globalThis: *JSGlobalObject, value: JSValue, property_matchers: ?JSValue, pretty_value: *std.Io.Writer, comptime fn_name: []const u8) bun.JSError!void {
+    pub fn matchAndFmtSnapshot(this: *Expect, globalThis: *JSGlobalObject, value: JSValue, property_matchers: ?JSValue, pretty_value: *std.Io.Writer, comptime fn_name: []const u8) fun.JSError!void {
         if (property_matchers) |_prop_matchers| {
             if (!value.isObject()) {
                 const signature = comptime getSignature(fn_name, "<green>properties<r><d>, <r>hint", false);
@@ -822,16 +822,16 @@ pub const Expect = struct {
             return globalThis.throw("Failed to pretty format value: {f}", .{value.toFmt(&formatter)});
         };
     }
-    pub fn snapshot(this: *Expect, globalThis: *JSGlobalObject, value: JSValue, property_matchers: ?JSValue, hint: []const u8, comptime fn_name: []const u8) bun.JSError!JSValue {
+    pub fn snapshot(this: *Expect, globalThis: *JSGlobalObject, value: JSValue, property_matchers: ?JSValue, hint: []const u8, comptime fn_name: []const u8) fun.JSError!JSValue {
         var pretty_value = std.Io.Writer.Allocating.init(default_allocator);
         defer pretty_value.deinit();
         try this.matchAndFmtSnapshot(globalThis, value, property_matchers, &pretty_value.writer, fn_name);
 
         const existing_value = Jest.runner.?.snapshots.getOrPut(this, pretty_value.written(), hint) catch |err| {
-            var buntest_strong = this.bunTest() orelse return globalThis.throw("Snapshot matchers cannot be used outside of a test", .{});
-            defer buntest_strong.deinit();
-            const buntest = buntest_strong.get();
-            const test_file_path = Jest.runner.?.files.get(buntest.file_id).source.path.text;
+            var funtest_strong = this.funTest() orelse return globalThis.throw("Snapshot matchers cannot be used outside of a test", .{});
+            defer funtest_strong.deinit();
+            const funtest = funtest_strong.get();
+            const test_file_path = Jest.runner.?.files.get(funtest.file_id).source.path.text;
             const runner = Jest.runner.?;
             return switch (err) {
                 error.FailedToOpenSnapshotFile => globalThis.throw("Failed to open snapshot file for test file: {s}", .{test_file_path}),
@@ -881,48 +881,48 @@ pub const Expect = struct {
         return .js_undefined;
     }
 
-    pub fn getStaticNot(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) bun.JSError!JSValue {
+    pub fn getStaticNot(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) fun.JSError!JSValue {
         return ExpectStatic.create(globalThis, .{ .not = true });
     }
 
-    pub fn getStaticResolvesTo(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) bun.JSError!JSValue {
+    pub fn getStaticResolvesTo(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) fun.JSError!JSValue {
         return ExpectStatic.create(globalThis, .{ .promise = .resolves });
     }
 
-    pub fn getStaticRejectsTo(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) bun.JSError!JSValue {
+    pub fn getStaticRejectsTo(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) fun.JSError!JSValue {
         return ExpectStatic.create(globalThis, .{ .promise = .rejects });
     }
 
-    pub fn any(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn any(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return ExpectAny.call(globalThis, callFrame);
     }
 
-    pub fn anything(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn anything(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return ExpectAnything.call(globalThis, callFrame);
     }
 
-    pub fn closeTo(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn closeTo(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return ExpectCloseTo.call(globalThis, callFrame);
     }
 
-    pub fn objectContaining(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn objectContaining(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return ExpectObjectContaining.call(globalThis, callFrame);
     }
 
-    pub fn stringContaining(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn stringContaining(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return ExpectStringContaining.call(globalThis, callFrame);
     }
 
-    pub fn stringMatching(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn stringMatching(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return ExpectStringMatching.call(globalThis, callFrame);
     }
 
-    pub fn arrayContaining(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn arrayContaining(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return ExpectArrayContaining.call(globalThis, callFrame);
     }
 
     /// Implements `expect.extend({ ... })`
-    pub fn extend(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn extend(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const args = callFrame.arguments_old(1).slice();
 
         if (args.len == 0 or !args[0].isObject()) {
@@ -947,7 +947,7 @@ pub const Expect = struct {
                 const matcher_fn: JSValue = iter.value;
 
                 if (!matcher_fn.jsType().isFunction()) {
-                    const type_name = if (matcher_fn.isNull()) bun.String.static("null") else bun.String.init(matcher_fn.jsTypeString(globalThis).getZigString(globalThis));
+                    const type_name = if (matcher_fn.isNull()) fun.String.static("null") else fun.String.init(matcher_fn.jsTypeString(globalThis).getZigString(globalThis));
                     return globalThis.throwInvalidArguments("expect.extend: `{f}` is not a valid matcher. Must be a function, is \"{f}\"", .{ matcher_name, type_name });
                 }
 
@@ -955,7 +955,7 @@ pub const Expect = struct {
                 // Even though they point to the same native functions for all matchers,
                 // multiple instances are created because each instance will hold the matcher_fn as a property
 
-                const wrapper_fn = Bun__JSWrappingFunction__create(globalThis, matcher_name, jsc.toJSHostFn(Expect.applyCustomMatcher), matcher_fn, true);
+                const wrapper_fn = Fun__JSWrappingFunction__create(globalThis, matcher_name, jsc.toJSHostFn(Expect.applyCustomMatcher), matcher_fn, true);
 
                 try expect_proto.putMayBeIndex(globalThis, matcher_name, wrapper_fn);
                 try expect_constructor.putMayBeIndex(globalThis, matcher_name, wrapper_fn);
@@ -963,7 +963,7 @@ pub const Expect = struct {
             }
         }
 
-        globalThis.bunVM().autoGarbageCollect();
+        globalThis.funVM().autoGarbageCollect();
 
         return .js_undefined;
     }
@@ -1015,7 +1015,7 @@ pub const Expect = struct {
         }
     };
 
-    fn throwInvalidMatcherError(globalThis: *JSGlobalObject, matcher_name: bun.String, result: JSValue) bun.JSError {
+    fn throwInvalidMatcherError(globalThis: *JSGlobalObject, matcher_name: fun.String, result: JSValue) fun.JSError {
         @branchHint(.cold);
 
         var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
@@ -1029,16 +1029,16 @@ pub const Expect = struct {
         const err = switch (Output.enable_ansi_colors_stderr) {
             inline else => |colors| globalThis.createErrorInstance(Output.prettyFmt(fmt, colors), .{ matcher_name, result.toFmt(&formatter) }),
         };
-        err.put(globalThis, ZigString.static("name"), try bun.String.static("InvalidMatcherError").toJS(globalThis));
+        err.put(globalThis, ZigString.static("name"), try fun.String.static("InvalidMatcherError").toJS(globalThis));
         return globalThis.throwValue(err);
     }
 
     /// Execute the custom matcher for the given args (the left value + the args passed to the matcher call).
     /// This function is called both for symmetric and asymmetric matching.
     /// If silent=false, throws an exception in JS if the matcher result didn't result in a pass (or if the matcher result is invalid).
-    pub fn executeCustomMatcher(globalThis: *JSGlobalObject, matcher_name: bun.String, matcher_fn: JSValue, args: []const JSValue, flags: Expect.Flags, silent: bool) bun.JSError!bool {
+    pub fn executeCustomMatcher(globalThis: *JSGlobalObject, matcher_name: fun.String, matcher_fn: JSValue, args: []const JSValue, flags: Expect.Flags, silent: bool) fun.JSError!bool {
         // prepare the this object
-        const matcher_context = try globalThis.bunVM().allocator.create(ExpectMatcherContext);
+        const matcher_context = try globalThis.funVM().allocator.create(ExpectMatcherContext);
         matcher_context.flags = flags;
         const matcher_context_jsvalue = matcher_context.toJS(globalThis);
         matcher_context_jsvalue.ensureStillAlive();
@@ -1050,7 +1050,7 @@ pub const Expect = struct {
             const vm = globalThis.vm();
             promise.setHandled(vm);
 
-            globalThis.bunVM().waitForPromise(promise);
+            globalThis.funVM().waitForPromise(promise);
 
             result = promise.result(vm);
             result.ensureStillAlive();
@@ -1097,18 +1097,18 @@ pub const Expect = struct {
         if (pass or silent) return pass;
 
         // handle failure
-        var message_text: bun.String = bun.String.dead;
+        var message_text: fun.String = fun.String.dead;
         defer message_text.deref();
         if (message.isUndefined()) {
-            message_text = bun.String.static("No message was specified for this matcher.");
+            message_text = fun.String.static("No message was specified for this matcher.");
         } else if (message.isString()) {
-            message_text = try message.toBunString(globalThis);
+            message_text = try message.toFunString(globalThis);
         } else {
             if (comptime Environment.allow_assert)
                 assert(message.isCallable()); // checked above
 
             const message_result = try message.callWithGlobalThis(globalThis, &.{});
-            message_text = try bun.String.fromJS(message_result, globalThis);
+            message_text = try fun.String.fromJS(message_result, globalThis);
         }
 
         const matcher_params = CustomMatcherParamsFormatter{
@@ -1116,13 +1116,13 @@ pub const Expect = struct {
             .globalThis = globalThis,
             .matcher_fn = matcher_fn,
         };
-        return throwPrettyMatcherError(globalThis, bun.String.empty, matcher_name, matcher_params, .{}, "{f}", .{message_text});
+        return throwPrettyMatcherError(globalThis, fun.String.empty, matcher_name, matcher_params, .{}, "{f}", .{message_text});
     }
 
     /// Function that is run for either `expect.myMatcher()` call or `expect().myMatcher` call,
     /// and we can known which case it is based on if the `callFrame.this()` value is an instance of Expect
-    pub fn applyCustomMatcher(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!jsc.JSValue {
-        defer globalThis.bunVM().autoGarbageCollect();
+    pub fn applyCustomMatcher(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!jsc.JSValue {
+        defer globalThis.funVM().autoGarbageCollect();
 
         // retrieve the user-provided matcher function (matcher_fn)
         const func: JSValue = callFrame.callee();
@@ -1174,15 +1174,15 @@ pub const Expect = struct {
 
     pub const addSnapshotSerializer = notImplementedStaticFn;
 
-    pub fn hasAssertions(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn hasAssertions(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         _ = callFrame;
-        defer globalThis.bunVM().autoGarbageCollect();
+        defer globalThis.funVM().autoGarbageCollect();
 
-        var buntest_strong = bun.jsc.Jest.bun_test.cloneActiveStrong() orelse return globalThis.throw("expect.assertions() must be called within a test", .{});
-        defer buntest_strong.deinit();
-        const buntest = buntest_strong.get();
-        const state_data = buntest.getCurrentStateData();
-        const execution = state_data.sequence(buntest) orelse return globalThis.throw("expect.assertions() is not supported in the describe phase, in concurrent tests, between tests, or after test execution has completed", .{});
+        var funtest_strong = fun.jsc.Jest.fun_test.cloneActiveStrong() orelse return globalThis.throw("expect.assertions() must be called within a test", .{});
+        defer funtest_strong.deinit();
+        const funtest = funtest_strong.get();
+        const state_data = funtest.getCurrentStateData();
+        const execution = state_data.sequence(funtest) orelse return globalThis.throw("expect.assertions() is not supported in the describe phase, in concurrent tests, between tests, or after test execution has completed", .{});
         if (execution.expect_assertions != .exact) {
             execution.expect_assertions = .at_least_one;
         }
@@ -1190,8 +1190,8 @@ pub const Expect = struct {
         return .js_undefined;
     }
 
-    pub fn assertions(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
-        defer globalThis.bunVM().autoGarbageCollect();
+    pub fn assertions(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
+        defer globalThis.funVM().autoGarbageCollect();
 
         const arguments_ = callFrame.arguments_old(1);
         const arguments = arguments_.slice();
@@ -1215,49 +1215,49 @@ pub const Expect = struct {
 
         const unsigned_expected_assertions: u32 = @intFromFloat(expected_assertions);
 
-        var buntest_strong = bun.jsc.Jest.bun_test.cloneActiveStrong() orelse return globalThis.throw("expect.assertions() must be called within a test", .{});
-        defer buntest_strong.deinit();
-        const buntest = buntest_strong.get();
-        const state_data = buntest.getCurrentStateData();
-        const execution = state_data.sequence(buntest) orelse return globalThis.throw("expect.assertions() is not supported in the describe phase, in concurrent tests, between tests, or after test execution has completed", .{});
+        var funtest_strong = fun.jsc.Jest.fun_test.cloneActiveStrong() orelse return globalThis.throw("expect.assertions() must be called within a test", .{});
+        defer funtest_strong.deinit();
+        const funtest = funtest_strong.get();
+        const state_data = funtest.getCurrentStateData();
+        const execution = state_data.sequence(funtest) orelse return globalThis.throw("expect.assertions() is not supported in the describe phase, in concurrent tests, between tests, or after test execution has completed", .{});
         execution.expect_assertions = .{ .exact = unsigned_expected_assertions };
 
         return .js_undefined;
     }
 
-    pub fn notImplementedJSCFn(_: *Expect, globalThis: *JSGlobalObject, _: *CallFrame) bun.JSError!JSValue {
+    pub fn notImplementedJSCFn(_: *Expect, globalThis: *JSGlobalObject, _: *CallFrame) fun.JSError!JSValue {
         return globalThis.throw("Not implemented", .{});
     }
 
-    pub fn notImplementedStaticFn(globalThis: *JSGlobalObject, _: *CallFrame) bun.JSError!JSValue {
+    pub fn notImplementedStaticFn(globalThis: *JSGlobalObject, _: *CallFrame) fun.JSError!JSValue {
         return globalThis.throw("Not implemented", .{});
     }
 
-    pub fn notImplementedJSCProp(_: *Expect, _: JSValue, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn notImplementedJSCProp(_: *Expect, _: JSValue, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         return globalThis.throw("Not implemented", .{});
     }
 
-    pub fn notImplementedStaticProp(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) bun.JSError!JSValue {
+    pub fn notImplementedStaticProp(globalThis: *JSGlobalObject, _: JSValue, _: JSValue) fun.JSError!JSValue {
         return globalThis.throw("Not implemented", .{});
     }
 
     pub fn postMatch(_: *Expect, globalThis: *JSGlobalObject) void {
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
     }
 
-    pub fn doUnreachable(globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn doUnreachable(globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arg = callframe.arguments_old(1).ptr[0];
 
         if (arg.isEmptyOrUndefinedOrNull()) {
-            const error_value = bun.String.init("reached unreachable code").toErrorInstance(globalThis);
-            error_value.put(globalThis, ZigString.static("name"), try bun.String.init("UnreachableError").toJS(globalThis));
+            const error_value = fun.String.init("reached unreachable code").toErrorInstance(globalThis);
+            error_value.put(globalThis, ZigString.static("name"), try fun.String.init("UnreachableError").toJS(globalThis));
             return globalThis.throwValue(error_value);
         }
 
         if (arg.isString()) {
-            const error_value = (try arg.toBunString(globalThis)).toErrorInstance(globalThis);
-            error_value.put(globalThis, ZigString.static("name"), try bun.String.init("UnreachableError").toJS(globalThis));
+            const error_value = (try arg.toFunString(globalThis)).toErrorInstance(globalThis);
+            error_value.put(globalThis, ZigString.static("name"), try fun.String.init("UnreachableError").toJS(globalThis));
             return globalThis.throwValue(error_value);
         }
 
@@ -1281,8 +1281,8 @@ pub const ExpectStatic = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn create(globalThis: *JSGlobalObject, flags: Expect.Flags) bun.JSError!JSValue {
-        var expect = try globalThis.bunVM().allocator.create(ExpectStatic);
+    pub fn create(globalThis: *JSGlobalObject, flags: Expect.Flags) fun.JSError!JSValue {
+        var expect = try globalThis.funVM().allocator.create(ExpectStatic);
         expect.flags = flags;
 
         const value = expect.toJS(globalThis);
@@ -1290,27 +1290,27 @@ pub const ExpectStatic = struct {
         return value;
     }
 
-    pub fn getNot(this: *ExpectStatic, _: JSValue, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn getNot(this: *ExpectStatic, _: JSValue, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         var flags = this.flags;
         flags.not = !this.flags.not;
         return create(globalThis, flags);
     }
 
-    pub fn getResolvesTo(this: *ExpectStatic, _: JSValue, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn getResolvesTo(this: *ExpectStatic, _: JSValue, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         var flags = this.flags;
         if (flags.promise != .none) return asyncChainingError(globalThis, flags, "resolvesTo");
         flags.promise = .resolves;
         return create(globalThis, flags);
     }
 
-    pub fn getRejectsTo(this: *ExpectStatic, _: JSValue, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn getRejectsTo(this: *ExpectStatic, _: JSValue, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         var flags = this.flags;
         if (flags.promise != .none) return asyncChainingError(globalThis, flags, "rejectsTo");
         flags.promise = .rejects;
         return create(globalThis, flags);
     }
 
-    fn asyncChainingError(globalThis: *JSGlobalObject, flags: Expect.Flags, name: string) bun.JSError {
+    fn asyncChainingError(globalThis: *JSGlobalObject, flags: Expect.Flags, name: string) fun.JSError {
         @branchHint(.cold);
         const str = switch (flags.promise) {
             .resolves => "resolvesTo",
@@ -1320,7 +1320,7 @@ pub const ExpectStatic = struct {
         return globalThis.throw("expect.{s}: already called expect.{s} on this chain", .{ name, str });
     }
 
-    fn createAsymmetricMatcherWithFlags(T: type, this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    fn createAsymmetricMatcherWithFlags(T: type, this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         //const this: *ExpectStatic = ExpectStatic.fromJS(callFrame.this());
         const instance_jsvalue = try T.call(globalThis, callFrame);
         if (instance_jsvalue != .zero and !instance_jsvalue.isAnyError()) {
@@ -1332,31 +1332,31 @@ pub const ExpectStatic = struct {
         return instance_jsvalue;
     }
 
-    pub fn anything(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn anything(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return createAsymmetricMatcherWithFlags(ExpectAnything, this, globalThis, callFrame);
     }
 
-    pub fn any(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn any(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return createAsymmetricMatcherWithFlags(ExpectAny, this, globalThis, callFrame);
     }
 
-    pub fn arrayContaining(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn arrayContaining(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return createAsymmetricMatcherWithFlags(ExpectArrayContaining, this, globalThis, callFrame);
     }
 
-    pub fn closeTo(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn closeTo(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return createAsymmetricMatcherWithFlags(ExpectCloseTo, this, globalThis, callFrame);
     }
 
-    pub fn objectContaining(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn objectContaining(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return createAsymmetricMatcherWithFlags(ExpectObjectContaining, this, globalThis, callFrame);
     }
 
-    pub fn stringContaining(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn stringContaining(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return createAsymmetricMatcherWithFlags(ExpectStringContaining, this, globalThis, callFrame);
     }
 
-    pub fn stringMatching(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn stringMatching(this: *ExpectStatic, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         return createAsymmetricMatcherWithFlags(ExpectStringMatching, this, globalThis, callFrame);
     }
 };
@@ -1375,14 +1375,14 @@ pub const ExpectAnything = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, _: *CallFrame) bun.JSError!JSValue {
-        const anything = try globalThis.bunVM().allocator.create(ExpectAnything);
+    pub fn call(globalThis: *JSGlobalObject, _: *CallFrame) fun.JSError!JSValue {
+        const anything = try globalThis.funVM().allocator.create(ExpectAnything);
         anything.* = .{};
 
         const anything_js_value = anything.toJS(globalThis);
         anything_js_value.ensureStillAlive();
 
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
 
         return anything_js_value;
@@ -1403,7 +1403,7 @@ pub const ExpectStringMatching = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const args = callFrame.arguments();
 
         if (args.len == 0 or (!args[0].isString() and !args[0].isRegExp())) {
@@ -1413,13 +1413,13 @@ pub const ExpectStringMatching = struct {
 
         const test_value = args[0];
 
-        const string_matching = try globalThis.bunVM().allocator.create(ExpectStringMatching);
+        const string_matching = try globalThis.funVM().allocator.create(ExpectStringMatching);
         string_matching.* = .{};
 
         const string_matching_js_value = string_matching.toJS(globalThis);
         js.testValueSetCached(string_matching_js_value, globalThis, test_value);
 
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
         return string_matching_js_value;
     }
@@ -1439,7 +1439,7 @@ pub const ExpectCloseTo = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const args = callFrame.arguments_old(2).slice();
 
         if (args.len == 0 or !args[0].isNumber()) {
@@ -1455,7 +1455,7 @@ pub const ExpectCloseTo = struct {
             return globalThis.throwPretty("<d>expect.<r>closeTo<d>(number, <r>precision?<d>)<r>\n\nPrecision must be a number or undefined", .{});
         }
 
-        const instance = try globalThis.bunVM().allocator.create(ExpectCloseTo);
+        const instance = try globalThis.funVM().allocator.create(ExpectCloseTo);
         instance.* = .{};
 
         const instance_jsvalue = instance.toJS(globalThis);
@@ -1464,7 +1464,7 @@ pub const ExpectCloseTo = struct {
         ExpectCloseTo.js.numberValueSetCached(instance_jsvalue, globalThis, number_value);
         ExpectCloseTo.js.digitsValueSetCached(instance_jsvalue, globalThis, precision_value);
 
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
         return instance_jsvalue;
     }
@@ -1484,7 +1484,7 @@ pub const ExpectObjectContaining = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const args = callFrame.arguments_old(1).slice();
 
         if (args.len == 0 or !args[0].isObject()) {
@@ -1494,13 +1494,13 @@ pub const ExpectObjectContaining = struct {
 
         const object_value = args[0];
 
-        const instance = try globalThis.bunVM().allocator.create(ExpectObjectContaining);
+        const instance = try globalThis.funVM().allocator.create(ExpectObjectContaining);
         instance.* = .{};
 
         const instance_jsvalue = instance.toJS(globalThis);
         ExpectObjectContaining.js.objectValueSetCached(instance_jsvalue, globalThis, object_value);
 
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
         return instance_jsvalue;
     }
@@ -1520,7 +1520,7 @@ pub const ExpectStringContaining = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const args = callFrame.arguments_old(1).slice();
 
         if (args.len == 0 or !args[0].isString()) {
@@ -1530,13 +1530,13 @@ pub const ExpectStringContaining = struct {
 
         const string_value = args[0];
 
-        const string_containing = try globalThis.bunVM().allocator.create(ExpectStringContaining);
+        const string_containing = try globalThis.funVM().allocator.create(ExpectStringContaining);
         string_containing.* = .{};
 
         const string_containing_js_value = string_containing.toJS(globalThis);
         ExpectStringContaining.js.stringValueSetCached(string_containing_js_value, globalThis, string_value);
 
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
         return string_containing_js_value;
     }
@@ -1554,7 +1554,7 @@ pub const ExpectAny = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const _arguments = callFrame.arguments_old(1);
         const arguments: []const JSValue = _arguments.ptr[0.._arguments.len];
 
@@ -1576,7 +1576,7 @@ pub const ExpectAny = struct {
             return error.JSError;
         }
 
-        var any = try globalThis.bunVM().allocator.create(ExpectAny);
+        var any = try globalThis.funVM().allocator.create(ExpectAny);
         any.* = .{
             .flags = .{
                 .asymmetric_matcher_constructor_type = asymmetric_matcher_constructor_type,
@@ -1588,7 +1588,7 @@ pub const ExpectAny = struct {
         ExpectAny.js.constructorValueSetCached(any_js_value, globalThis, constructor);
         any_js_value.ensureStillAlive();
 
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
 
         return any_js_value;
@@ -1609,7 +1609,7 @@ pub const ExpectArrayContaining = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const args = callFrame.arguments_old(1).slice();
 
         if (args.len == 0 or !args[0].jsType().isArray()) {
@@ -1619,13 +1619,13 @@ pub const ExpectArrayContaining = struct {
 
         const array_value = args[0];
 
-        const array_containing = try globalThis.bunVM().allocator.create(ExpectArrayContaining);
+        const array_containing = try globalThis.funVM().allocator.create(ExpectArrayContaining);
         array_containing.* = .{};
 
         const array_containing_js_value = array_containing.toJS(globalThis);
         ExpectArrayContaining.js.arrayValueSetCached(array_containing_js_value, globalThis, array_value);
 
-        var vm = globalThis.bunVM();
+        var vm = globalThis.funVM();
         vm.autoGarbageCollect();
         return array_containing_js_value;
     }
@@ -1652,7 +1652,7 @@ pub const ExpectCustomAsymmetricMatcher = struct {
     /// Implements the static call of the custom matcher (`expect.myCustomMatcher(<args>)`),
     /// which creates an asymmetric matcher instance (`ExpectCustomAsymmetricMatcher`).
     /// This will not run the matcher, but just capture the args etc.
-    pub fn create(globalThis: *JSGlobalObject, callFrame: *CallFrame, matcher_fn: JSValue) bun.JSError!JSValue {
+    pub fn create(globalThis: *JSGlobalObject, callFrame: *CallFrame, matcher_fn: JSValue) fun.JSError!JSValue {
         var flags: Expect.Flags = undefined;
 
         // try to retrieve the ExpectStatic instance (to get the flags)
@@ -1664,7 +1664,7 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         }
 
         // create the matcher instance
-        const instance = try globalThis.bunVM().allocator.create(ExpectCustomAsymmetricMatcher);
+        const instance = try globalThis.funVM().allocator.create(ExpectCustomAsymmetricMatcher);
         instance.* = .{};
 
         const instance_jsvalue = instance.toJS(globalThis);
@@ -1689,7 +1689,7 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         return instance_jsvalue;
     }
 
-    fn executeImpl(this: *ExpectCustomAsymmetricMatcher, thisValue: JSValue, globalThis: *JSGlobalObject, received: JSValue) bun.JSError!bool {
+    fn executeImpl(this: *ExpectCustomAsymmetricMatcher, thisValue: JSValue, globalThis: *JSGlobalObject, received: JSValue) fun.JSError!bool {
         // retrieve the user-provided matcher implementation function (the function passed to expect.extend({ ... }))
         const matcher_fn: JSValue = js.matcherFnGetCached(thisValue) orelse {
             return globalThis.throw("Internal consistency error: the ExpectCustomAsymmetricMatcher(matcherFn) was garbage collected but it should not have been!", .{});
@@ -1728,14 +1728,14 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         return executeImpl(this, thisValue, globalThis, received) catch false;
     }
 
-    pub fn asymmetricMatch(this: *ExpectCustomAsymmetricMatcher, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn asymmetricMatch(this: *ExpectCustomAsymmetricMatcher, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arguments = callframe.arguments_old(1).slice();
         const received_value = if (arguments.len < 1) .js_undefined else arguments[0];
         const matched = try executeImpl(this, callframe.this(), globalThis, received_value);
         return JSValue.jsBoolean(matched);
     }
 
-    fn maybeClear(comptime dontThrow: bool, globalThis: *JSGlobalObject, err: bun.JSError) bun.JSError!bool {
+    fn maybeClear(comptime dontThrow: bool, globalThis: *JSGlobalObject, err: fun.JSError) fun.JSError!bool {
         if (dontThrow) {
             globalThis.clearException();
             return false;
@@ -1758,20 +1758,20 @@ pub const ExpectCustomAsymmetricMatcher = struct {
                 }
 
                 const result = matcher_fn.call(globalThis, thisValue, args.items) catch |e| return maybeClear(dontThrow, globalThis, e);
-                try writer.print("{f}", .{result.toBunString(globalThis) catch |e| return maybeClear(dontThrow, globalThis, e)});
+                try writer.print("{f}", .{result.toFunString(globalThis) catch |e| return maybeClear(dontThrow, globalThis, e)});
             }
         }
         return false;
     }
 
-    pub fn toAsymmetricMatcher(this: *ExpectCustomAsymmetricMatcher, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn toAsymmetricMatcher(this: *ExpectCustomAsymmetricMatcher, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         var stack_fallback = std.heap.stackFallback(512, globalThis.allocator());
-        var mutable_string = try bun.MutableString.init2048(stack_fallback.get());
+        var mutable_string = try fun.MutableString.init2048(stack_fallback.get());
         defer mutable_string.deinit();
 
         const printed = try customPrint(this, callframe.this(), globalThis, mutable_string.writer());
         if (printed) {
-            return bun.String.init(mutable_string.slice()).toJS();
+            return fun.String.init(mutable_string.slice()).toJS();
         }
         return ExpectMatcherUtils.printValue(globalThis, this, null);
     }
@@ -1800,21 +1800,21 @@ pub const ExpectMatcherContext = struct {
         return JSValue.jsBoolean(this.flags.not);
     }
 
-    pub fn getPromise(this: *ExpectMatcherContext, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn getPromise(this: *ExpectMatcherContext, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         return switch (this.flags.promise) {
-            .rejects => bun.String.static("rejects").toJS(globalThis),
-            .resolves => bun.String.static("resolves").toJS(globalThis),
-            else => bun.String.empty.toJS(globalThis),
+            .rejects => fun.String.static("rejects").toJS(globalThis),
+            .resolves => fun.String.static("resolves").toJS(globalThis),
+            else => fun.String.empty.toJS(globalThis),
         };
     }
 
     pub fn getExpand(_: *ExpectMatcherContext, globalThis: *JSGlobalObject) JSValue {
         _ = globalThis;
-        // TODO: this should return whether running tests in verbose mode or not (jest flag --expand), but bun currently doesn't have this switch
+        // TODO: this should return whether running tests in verbose mode or not (jest flag --expand), but fun currently doesn't have this switch
         return .false;
     }
 
-    pub fn equals(_: *ExpectMatcherContext, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn equals(_: *ExpectMatcherContext, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         var arguments = callframe.arguments_old(3);
         if (arguments.len < 2) {
             return globalThis.throw("expect.extends matcher: this.util.equals expects at least 2 arguments", .{});
@@ -1832,7 +1832,7 @@ pub const ExpectMatcherUtils = struct {
     pub const fromJSDirect = js.fromJSDirect;
 
     fn createSingleton(globalThis: *JSGlobalObject) callconv(.c) JSValue {
-        var instance = globalThis.bunVM().allocator.create(ExpectMatcherUtils) catch {
+        var instance = globalThis.funVM().allocator.create(ExpectMatcherUtils) catch {
             return globalThis.throwOutOfMemoryValue();
         };
         return instance.toJS(globalThis);
@@ -1846,10 +1846,10 @@ pub const ExpectMatcherUtils = struct {
 
     fn printValue(globalThis: *JSGlobalObject, value: JSValue, comptime color_or_null: ?[]const u8) !JSValue {
         var stack_fallback = std.heap.stackFallback(512, globalThis.allocator());
-        var mutable_string = try bun.MutableString.init2048(stack_fallback.get());
+        var mutable_string = try fun.MutableString.init2048(stack_fallback.get());
         defer mutable_string.deinit();
 
-        var buffered_writer = bun.MutableString.BufferedWriter{ .context = &mutable_string };
+        var buffered_writer = fun.MutableString.BufferedWriter{ .context = &mutable_string };
         var writer = buffered_writer.writer();
 
         if (comptime color_or_null) |color| {
@@ -1870,7 +1870,7 @@ pub const ExpectMatcherUtils = struct {
 
         try buffered_writer.flush();
 
-        return bun.String.createUTF8ForJS(globalThis, mutable_string.slice());
+        return fun.String.createUTF8ForJS(globalThis, mutable_string.slice());
     }
 
     inline fn printValueCatched(globalThis: *JSGlobalObject, value: JSValue, comptime color_or_null: ?[]const u8) JSValue {
@@ -1879,35 +1879,35 @@ pub const ExpectMatcherUtils = struct {
         };
     }
 
-    pub fn stringify(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn stringify(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arguments = callframe.arguments_old(1).slice();
         const value = if (arguments.len < 1) .js_undefined else arguments[0];
         return printValueCatched(globalThis, value, null);
     }
 
-    pub fn printExpected(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn printExpected(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arguments = callframe.arguments_old(1).slice();
         const value = if (arguments.len < 1) .js_undefined else arguments[0];
         return printValueCatched(globalThis, value, "<green>");
     }
 
-    pub fn printReceived(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn printReceived(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arguments = callframe.arguments_old(1).slice();
         const value = if (arguments.len < 1) .js_undefined else arguments[0];
         return printValueCatched(globalThis, value, "<red>");
     }
 
-    pub fn matcherHint(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+    pub fn matcherHint(_: *ExpectMatcherUtils, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
         const arguments = callframe.arguments_old(4).slice();
 
         if (arguments.len == 0 or !arguments[0].isString()) {
             return globalThis.throw("matcherHint: the first argument (matcher name) must be a string", .{});
         }
-        const matcher_name = try arguments[0].toBunString(globalThis);
+        const matcher_name = try arguments[0].toFunString(globalThis);
         defer matcher_name.deref();
 
-        const received = if (arguments.len > 1) arguments[1] else try bun.String.static("received").toJS(globalThis);
-        const expected = if (arguments.len > 2) arguments[2] else try bun.String.static("expected").toJS(globalThis);
+        const received = if (arguments.len > 1) arguments[1] else try fun.String.static("received").toJS(globalThis);
+        const expected = if (arguments.len > 2) arguments[2] else try fun.String.static("expected").toJS(globalThis);
         const options = if (arguments.len > 3) arguments[3] else .js_undefined;
 
         var is_not = false;
@@ -1968,35 +1968,35 @@ pub const ExpectTypeOf = struct {
         VirtualMachine.get().allocator.destroy(this);
     }
 
-    pub fn create(globalThis: *JSGlobalObject) bun.JSError!JSValue {
-        var expect = try globalThis.bunVM().allocator.create(ExpectTypeOf);
+    pub fn create(globalThis: *JSGlobalObject) fun.JSError!JSValue {
+        var expect = try globalThis.funVM().allocator.create(ExpectTypeOf);
 
         const value = expect.toJS(globalThis);
         value.ensureStillAlive();
         return value;
     }
 
-    pub fn fnOneArgumentReturnsVoid(_: *ExpectTypeOf, _: *JSGlobalObject, _: *CallFrame) bun.JSError!JSValue {
+    pub fn fnOneArgumentReturnsVoid(_: *ExpectTypeOf, _: *JSGlobalObject, _: *CallFrame) fun.JSError!JSValue {
         return .js_undefined;
     }
-    pub fn fnOneArgumentReturnsExpectTypeOf(_: *ExpectTypeOf, globalThis: *JSGlobalObject, _: *CallFrame) bun.JSError!JSValue {
+    pub fn fnOneArgumentReturnsExpectTypeOf(_: *ExpectTypeOf, globalThis: *JSGlobalObject, _: *CallFrame) fun.JSError!JSValue {
         return create(globalThis);
     }
-    pub fn getReturnsExpectTypeOf(_: *ExpectTypeOf, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn getReturnsExpectTypeOf(_: *ExpectTypeOf, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         return create(globalThis);
     }
 
-    pub fn constructor(globalThis: *JSGlobalObject, _: *CallFrame) bun.JSError!*ExpectTypeOf {
+    pub fn constructor(globalThis: *JSGlobalObject, _: *CallFrame) fun.JSError!*ExpectTypeOf {
         return globalThis.throw("expectTypeOf() cannot be called with new", .{});
     }
-    pub fn call(globalThis: *JSGlobalObject, _: *CallFrame) bun.JSError!JSValue {
+    pub fn call(globalThis: *JSGlobalObject, _: *CallFrame) fun.JSError!JSValue {
         return create(globalThis);
     }
 };
 
 pub const mock = struct {
-    pub fn jestMockIterator(globalThis: *JSGlobalObject, value: bun.jsc.JSValue) bun.JSError!bun.jsc.JSArrayIterator {
-        const returns: bun.jsc.JSValue = try bun.cpp.JSMockFunction__getReturns(globalThis, value);
+    pub fn jestMockIterator(globalThis: *JSGlobalObject, value: fun.jsc.JSValue) fun.JSError!fun.jsc.JSArrayIterator {
+        const returns: fun.jsc.JSValue = try fun.cpp.JSMockFunction__getReturns(globalThis, value);
         if (!returns.jsType().isArray()) {
             var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
             defer formatter.deinit();
@@ -2005,7 +2005,7 @@ pub const mock = struct {
 
         return try returns.arrayIterator(globalThis);
     }
-    pub fn jestMockReturnObject_type(globalThis: *JSGlobalObject, value: bun.jsc.JSValue) bun.JSError!ReturnStatus {
+    pub fn jestMockReturnObject_type(globalThis: *JSGlobalObject, value: fun.jsc.JSValue) fun.JSError!ReturnStatus {
         if (try value.fastGet(globalThis, .type)) |type_string| {
             if (type_string.isString()) {
                 if (try ReturnStatus.Map.fromJS(globalThis, type_string)) |val| return val;
@@ -2015,7 +2015,7 @@ pub const mock = struct {
         defer formatter.deinit();
         return globalThis.throw("Expected value must be a mock function with returns: {f}", .{value.toFmt(&formatter)});
     }
-    pub fn jestMockReturnObject_value(globalThis: *JSGlobalObject, value: bun.jsc.JSValue) bun.JSError!JSValue {
+    pub fn jestMockReturnObject_value(globalThis: *JSGlobalObject, value: fun.jsc.JSValue) fun.JSError!JSValue {
         return (try value.get(globalThis, "value")) orelse .js_undefined;
     }
 
@@ -2027,7 +2027,7 @@ pub const mock = struct {
         pub fn format(self: @This(), writer: *std.Io.Writer) std.Io.Writer.Error!void {
             var printed_once = false;
 
-            const calls_count = @as(u32, @intCast(self.calls.getLength(self.globalThis) catch |e| return bun.deprecated.jsErrorToWriteError(e)));
+            const calls_count = @as(u32, @intCast(self.calls.getLength(self.globalThis) catch |e| return fun.deprecated.jsErrorToWriteError(e)));
             if (calls_count == 0) {
                 try writer.writeAll("(no calls)");
                 return;
@@ -2038,7 +2038,7 @@ pub const mock = struct {
                 printed_once = true;
 
                 try writer.print("           {d: >4}: ", .{i + 1});
-                const call_args = self.calls.getIndex(self.globalThis, @intCast(i)) catch |e| return bun.deprecated.jsErrorToWriteError(e);
+                const call_args = self.calls.getIndex(self.globalThis, @intCast(i)) catch |e| return fun.deprecated.jsErrorToWriteError(e);
                 try writer.print("{f}", .{call_args.toFmt(self.formatter)});
             }
         }
@@ -2049,7 +2049,7 @@ pub const mock = struct {
         @"return",
         incomplete,
 
-        pub const Map = bun.ComptimeEnumMap(ReturnStatus);
+        pub const Map = fun.ComptimeEnumMap(ReturnStatus);
     };
 
     // Formatter for when there are multiple returns or errors
@@ -2064,16 +2064,16 @@ pub const mock = struct {
             var num_returns: i32 = 0;
             var num_calls: i32 = 0;
 
-            var iter = self.returns.arrayIterator(self.globalThis) catch |e| return bun.deprecated.jsErrorToWriteError(e);
-            while (iter.next() catch |e| return bun.deprecated.jsErrorToWriteError(e)) |item| {
+            var iter = self.returns.arrayIterator(self.globalThis) catch |e| return fun.deprecated.jsErrorToWriteError(e);
+            while (iter.next() catch |e| return fun.deprecated.jsErrorToWriteError(e)) |item| {
                 if (printed_once) try writer.writeAll("\n");
                 printed_once = true;
 
                 num_calls += 1;
                 try writer.print("           {d: >2}: ", .{num_calls});
 
-                const value = jestMockReturnObject_value(self.globalThis, item) catch |e| return bun.deprecated.jsErrorToWriteError(e);
-                switch (jestMockReturnObject_type(self.globalThis, item) catch |e| return bun.deprecated.jsErrorToWriteError(e)) {
+                const value = jestMockReturnObject_value(self.globalThis, item) catch |e| return fun.deprecated.jsErrorToWriteError(e);
+                switch (jestMockReturnObject_type(self.globalThis, item) catch |e| return fun.deprecated.jsErrorToWriteError(e)) {
                     .@"return" => {
                         try writer.print("{f}", .{value.toFmt(self.formatter)});
                         num_returns += 1;
@@ -2113,7 +2113,7 @@ pub const mock = struct {
 
 // Extract the matcher_fn from a JSCustomExpectMatcherFunction instance
 inline fn getCustomMatcherFn(thisValue: JSValue, globalThis: *JSGlobalObject) ?JSValue {
-    const matcher_fn = Bun__JSWrappingFunction__getWrappedFunction(thisValue, globalThis);
+    const matcher_fn = Fun__JSWrappingFunction__getWrappedFunction(thisValue, globalThis);
     return if (matcher_fn == .zero) null else matcher_fn;
 }
 
@@ -2121,8 +2121,8 @@ inline fn getCustomMatcherFn(thisValue: JSValue, globalThis: *JSGlobalObject) ?J
 /// If there were no calls, it returns an empty JSArray*
 extern fn JSMockFunction__getReturns(JSValue) JSValue;
 
-extern fn Bun__JSWrappingFunction__create(globalThis: *JSGlobalObject, symbolName: *const bun.String, functionPointer: *const jsc.JSHostFn, wrappedFn: JSValue, strong: bool) JSValue;
-extern fn Bun__JSWrappingFunction__getWrappedFunction(this: JSValue, globalThis: *JSGlobalObject) JSValue;
+extern fn Fun__JSWrappingFunction__create(globalThis: *JSGlobalObject, symbolName: *const fun.String, functionPointer: *const jsc.JSHostFn, wrappedFn: JSValue, strong: bool) JSValue;
+extern fn Fun__JSWrappingFunction__getWrappedFunction(this: JSValue, globalThis: *JSGlobalObject) JSValue;
 
 extern fn ExpectMatcherUtils__getSingleton(globalThis: *JSGlobalObject) JSValue;
 
@@ -2250,22 +2250,22 @@ const string = []const u8;
 const std = @import("std");
 const DiffFormatter = @import("./diff_format.zig").DiffFormatter;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VirtualMachine = jsc.VirtualMachine;
 const ZigString = jsc.ZigString;
 
-const jest = bun.jsc.Jest;
+const jest = fun.jsc.Jest;
 const DescribeScope = jest.DescribeScope;
 const Jest = jest.Jest;
 const TestRunner = jest.TestRunner;

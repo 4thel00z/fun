@@ -1,10 +1,10 @@
-import { spawnSync } from "bun";
-import { expect, test } from "bun:test";
-import { bunExe, bunEnv as env } from "harness";
+import { spawnSync } from "fun";
+import { expect, test } from "fun:test";
+import { funExe, funEnv as env } from "harness";
 
 test("--no-addons throws an error on process.dlopen", () => {
   const { stdout, stderr, exitCode } = spawnSync({
-    cmd: [bunExe(), "--no-addons", "-p", "process.dlopen()"],
+    cmd: [funExe(), "--no-addons", "-p", "process.dlopen()"],
     env,
     stdout: "pipe",
     stderr: "pipe",

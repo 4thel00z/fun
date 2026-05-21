@@ -1,6 +1,6 @@
-import { readTarball } from "bun:internal-for-testing";
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { readTarball } from "fun:internal-for-testing";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import path from "node:path";
 
 // Helper to normalize path separators for cross-platform tarball entry lookup
@@ -8,7 +8,7 @@ function normalizePath(p: string): string {
   return p.replace(/\\/g, "/");
 }
 
-test("bun pm pack respects changes to package.json from prepack scripts", async () => {
+test("fun pm pack respects changes to package.json from prepack scripts", async () => {
   using dir = tempDir("pack-prepack", {
     "package.json": JSON.stringify(
       {
@@ -30,10 +30,10 @@ fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "pm", "pack"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "pm", "pack"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -61,7 +61,7 @@ fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
   expect(extractedPkg.description).toBe("MODIFIED BY PREPACK");
 });
 
-test("bun pm pack respects changes to package.json from prepare scripts", async () => {
+test("fun pm pack respects changes to package.json from prepare scripts", async () => {
   using dir = tempDir("pack-prepare", {
     "package.json": JSON.stringify(
       {
@@ -83,10 +83,10 @@ fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "pm", "pack"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "pm", "pack"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

@@ -31,7 +31,7 @@ import { ServiceClient, ServiceClientConstructor } from "@grpc/grpc-js/build/src
 import { sendUnaryData, ServerDuplexStream, ServerUnaryCall } from "@grpc/grpc-js/build/src/server-call";
 
 import { CompressionAlgorithms } from "@grpc/grpc-js/build/src/compression-algorithms";
-import { afterEach as after, afterEach, beforeEach as before, beforeEach, describe, it } from "bun:test";
+import { afterEach as after, afterEach, beforeEach as before, beforeEach, describe, it } from "fun:test";
 import { SecureContextOptions } from "tls";
 import { assert2, loadProtoFile } from "./common";
 import { Request__Output } from "./generated/Request";

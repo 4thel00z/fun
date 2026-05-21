@@ -1,4 +1,4 @@
-//! `bun.cli.Command.Tag` — the top-level CLI subcommand discriminant.
+//! `fun.cli.Command.Tag` — the top-level CLI subcommand discriminant.
 //! Extracted to `options_types/` so lower tiers (install/, bundler/) can
 //! switch on which command is running without importing `cli/`.
 //!
@@ -10,7 +10,7 @@ pub const Tag = enum {
     AddCommand,
     AutoCommand,
     BuildCommand,
-    BunxCommand,
+    FunxCommand,
     CreateCommand,
     DiscordCommand,
     GetCompletionsCommand,
@@ -42,13 +42,13 @@ pub const Tag = enum {
 
     /// Used by crash reports.
     ///
-    /// This must be kept in sync with https://github.com/oven-sh/bun.report/blob/62601d8aafb9c0d29554dfc3f8854044ec04d367/backend/remap.ts#L10
+    /// This must be kept in sync with https://github.com/underdoc-org/fun.report/blob/62601d8aafb9c0d29554dfc3f8854044ec04d367/backend/remap.ts#L10
     pub fn char(this: Tag) u8 {
         return switch (this) {
             .AddCommand => 'I',
             .AutoCommand => 'a',
             .BuildCommand => 'b',
-            .BunxCommand => 'B',
+            .FunxCommand => 'B',
             .CreateCommand => 'c',
             .DiscordCommand => 'D',
             .GetCompletionsCommand => 'g',
@@ -82,7 +82,7 @@ pub const Tag = enum {
 
     pub fn readGlobalConfig(this: Tag) bool {
         return switch (this) {
-            .BunxCommand,
+            .FunxCommand,
             .PackageManagerCommand,
             .InstallCommand,
             .AddCommand,
@@ -100,7 +100,7 @@ pub const Tag = enum {
 
     pub fn isNPMRelated(this: Tag) bool {
         return switch (this) {
-            .BunxCommand,
+            .FunxCommand,
             .LinkCommand,
             .UnlinkCommand,
             .PackageManagerCommand,
@@ -128,7 +128,7 @@ pub const Tag = enum {
         .PatchCommand = true,
         .PatchCommitCommand = true,
         .PackageManagerCommand = true,
-        .BunxCommand = true,
+        .FunxCommand = true,
         .AutoCommand = true,
         .RunCommand = true,
         .RunAsNodeCommand = true,
@@ -148,7 +148,7 @@ pub const Tag = enum {
         .PatchCommand = true,
         .PatchCommitCommand = true,
         .PackageManagerCommand = true,
-        .BunxCommand = true,
+        .FunxCommand = true,
         .OutdatedCommand = true,
         .UpdateInteractiveCommand = true,
         .PublishCommand = true,
@@ -158,7 +158,7 @@ pub const Tag = enum {
     pub const uses_global_options: std.EnumArray(Tag, bool) = std.EnumArray(Tag, bool).initDefault(true, .{
         .AddCommand = false,
         .AuditCommand = false,
-        .BunxCommand = false,
+        .FunxCommand = false,
         .CreateCommand = false,
         .InfoCommand = false,
         .InstallCommand = false,

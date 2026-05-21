@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 
 test("HTMLRewriter should not crash when element handler throws an exception - issue #21680", () => {
@@ -17,7 +17,7 @@ test("HTMLRewriter should not crash when element handler throws an exception - i
         throw new Error("abc");
       },
     });
-    rewriter.transform(new Response(Bun.file(`${dir}/min.html`)));
+    rewriter.transform(new Response(Fun.file(`${dir}/min.html`)));
   }).not.toThrow(); // The important thing is it doesn't crash, we're ok with it silently failing
 
   // Test with Response containing string content

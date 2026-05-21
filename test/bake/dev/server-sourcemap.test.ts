@@ -1,4 +1,4 @@
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { devTest } from "../bake-harness";
 
 devTest("server-side source maps show correct error lines", {

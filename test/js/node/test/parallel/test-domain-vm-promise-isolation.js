@@ -18,7 +18,7 @@ function run(code) {
     const p = vm.runInContext(code, context)();
     assert.strictEqual(p.domain, undefined);
     p.then(common.mustCall(() => {
-      // FIXME: Bun does not yet support process.domain propagation
+      // FIXME: Fun does not yet support process.domain propagation
       // assert.strictEqual(process.domain, d);
     }));
   }));

@@ -9,12 +9,12 @@
 // To clear your DNS cache on Windows:
 //   ipconfig /flushdns
 //
-const url = new URL(process.argv.length > 2 ? process.argv.at(-1) : "https://bun.com");
+const url = new URL(process.argv.length > 2 ? process.argv.at(-1) : "https://fun.dev");
 const hostname = url.hostname;
 const port = url.port ? parseInt(url.port, 10) : url.protocol === "https:" ? 443 : 80;
 
-if (typeof globalThis.Bun?.dns?.prefetch === "function") {
-  Bun.dns.prefetch(hostname, port);
+if (typeof globalThis.Fun?.dns?.prefetch === "function") {
+  Fun.dns.prefetch(hostname, port);
 }
 
 // Delay one second to make sure the DNS prefetch has time to run
@@ -33,6 +33,6 @@ await Promise.all(promises);
 const end = performance.now();
 console.log("fetch() took", (end - start) | 0, "ms");
 
-if (typeof globalThis.Bun?.dns?.getCacheStats === "function") {
-  console.log("DNS cache stats", Bun.dns.getCacheStats());
+if (typeof globalThis.Fun?.dns?.getCacheStats === "function") {
+  console.log("DNS cache stats", Fun.dns.getCacheStats());
 }

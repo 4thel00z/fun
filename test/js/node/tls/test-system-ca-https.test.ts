@@ -1,11 +1,11 @@
-import { spawn } from "bun";
-import { describe, expect, test } from "bun:test";
+import { spawn } from "fun";
+import { describe, expect, test } from "fun:test";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 // Gate network tests behind environment variable to avoid CI flakes
 // TODO: Replace with hermetic local TLS fixtures in a follow-up
-const networkTest = process.env.BUN_TEST_ALLOW_NET === "1" ? test : test.skip;
+const networkTest = process.env.FUN_TEST_ALLOW_NET === "1" ? test : test.skip;
 
 describe("system CA with HTTPS", () => {
   // Skip test if no system certificates are available
@@ -61,8 +61,8 @@ describe("system CA with HTTPS", () => {
 
     // Test with --use-system-ca flag
     await using proc1 = spawn({
-      cmd: [bunExe(), "--use-system-ca", "test.js"],
-      env: bunEnv,
+      cmd: [funExe(), "--use-system-ca", "test.js"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -75,8 +75,8 @@ describe("system CA with HTTPS", () => {
 
     // Test with NODE_USE_SYSTEM_CA=1
     await using proc2 = spawn({
-      cmd: [bunExe(), "test.js"],
-      env: { ...bunEnv, NODE_USE_SYSTEM_CA: "1" },
+      cmd: [funExe(), "test.js"],
+      env: { ...funEnv, NODE_USE_SYSTEM_CA: "1" },
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -119,8 +119,8 @@ describe("system CA with HTTPS", () => {
 
     // Test WITHOUT system CA - might fail for some sites
     await using proc1 = spawn({
-      cmd: [bunExe(), "test.js"],
-      env: { ...bunEnv, NODE_USE_SYSTEM_CA: "0" },
+      cmd: [funExe(), "test.js"],
+      env: { ...funEnv, NODE_USE_SYSTEM_CA: "0" },
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -134,8 +134,8 @@ describe("system CA with HTTPS", () => {
 
     // Test WITH system CA - should have better success rate
     await using proc2 = spawn({
-      cmd: [bunExe(), "--use-system-ca", "test.js"],
-      env: bunEnv,
+      cmd: [funExe(), "--use-system-ca", "test.js"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",

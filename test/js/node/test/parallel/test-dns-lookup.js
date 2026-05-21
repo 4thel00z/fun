@@ -5,12 +5,12 @@ const assert = require('assert');
 
 // Stub `getaddrinfo` to *always* error. This has to be done before we load the
 // `dns` module to guarantee that the `dns` module uses the stub.
-if (typeof Bun === "undefined") {
+if (typeof Fun === "undefined") {
   const { internalBinding } = require('internal/test/binding');
   const cares = internalBinding('cares_wrap');
   cares.getaddrinfo = () => internalBinding('uv').UV_ENOMEM;
 } else {
-  Bun.dns.lookup = (hostname) => Promise.reject(Object.assign(new Error('Out of memory'), { code: 'ENOMEM', hostname }));
+  Fun.dns.lookup = (hostname) => Promise.reject(Object.assign(new Error('Out of memory'), { code: 'ENOMEM', hostname }));
 }
 
 const dns = require('dns');
@@ -30,7 +30,7 @@ const dnsPromises = dns.promises;
 // This also verifies different expectWarning notations.
 common.expectWarning({
   // For 'internal/test/binding' module.
-  ...(typeof Bun === "undefined"? {
+  ...(typeof Fun === "undefined"? {
     'internal/test/binding': [
       'These APIs are for internal testing only. Do not use them.',
     ]

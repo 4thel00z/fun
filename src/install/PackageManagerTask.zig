@@ -22,7 +22,7 @@ pub const Id = enum(u64) {
     }
 
     pub fn forNPMPackage(package_name: string, package_version: Semver.Version) Id {
-        var hasher = bun.Wyhash11.init(0);
+        var hasher = fun.Wyhash11.init(0);
         hasher.update("npm-package:");
         hasher.update(package_name);
         hasher.update("@");
@@ -31,21 +31,21 @@ pub const Id = enum(u64) {
     }
 
     pub fn forBinLink(package_id: PackageID) Id {
-        var hasher = bun.Wyhash11.init(0);
+        var hasher = fun.Wyhash11.init(0);
         hasher.update("bin-link:");
         hasher.update(std.mem.asBytes(&package_id));
         return @enumFromInt(hasher.final());
     }
 
     pub fn forManifest(name: string) Id {
-        var hasher = bun.Wyhash11.init(0);
+        var hasher = fun.Wyhash11.init(0);
         hasher.update("manifest:");
         hasher.update(name);
         return @enumFromInt(hasher.final());
     }
 
     pub fn forTarball(url: string) Id {
-        var hasher = bun.Wyhash11.init(0);
+        var hasher = fun.Wyhash11.init(0);
         hasher.update("tarball:");
         hasher.update(url);
         return @enumFromInt(hasher.final());
@@ -54,13 +54,13 @@ pub const Id = enum(u64) {
     // These cannot change:
     // We persist them to the filesystem.
     pub fn forGitClone(url: string) Id {
-        var hasher = bun.Wyhash11.init(0);
+        var hasher = fun.Wyhash11.init(0);
         hasher.update(url);
         return @enumFromInt(@as(u64, 4 << 61) | @as(u64, @as(u61, @truncate(hasher.final()))));
     }
 
     pub fn forGitCheckout(url: string, resolved: string) Id {
-        var hasher = bun.Wyhash11.init(0);
+        var hasher = fun.Wyhash11.init(0);
         hasher.update(url);
         hasher.update("@");
         hasher.update(resolved);
@@ -78,10 +78,10 @@ pub fn callback(task: *ThreadPool.Task) void {
         if (this.status == .success) {
             if (this.apply_patch_task) |pt| {
                 defer pt.deinit();
-                bun.handleOom(pt.apply());
+                fun.handleOom(pt.apply());
                 if (pt.callback.apply.logger.errors > 0) {
                     defer pt.callback.apply.logger.deinit();
-                    // this.log.addErrorFmt(null, logger.Loc.Empty, bun.default_allocator, "failed to apply patch: {}", .{e}) catch unreachable;
+                    // this.log.addErrorFmt(null, logger.Loc.Empty, fun.default_allocator, "failed to apply patch: {}", .{e}) catch unreachable;
                     pt.callback.apply.logger.print(Output.errorWriter()) catch {};
                 }
             }
@@ -92,7 +92,7 @@ pub fn callback(task: *ThreadPool.Task) void {
 
     switch (this.tag) {
         .package_manifest => {
-            const allocator = bun.default_allocator;
+            const allocator = fun.default_allocator;
             var manifest = &this.request.package_manifest;
 
             const body = &manifest.network.response_buffer;
@@ -121,7 +121,7 @@ pub fn callback(task: *ThreadPool.Task) void {
                 manager,
                 manifest.network.callback.package_manifest.is_extended_manifest,
             ) catch |err| {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
                 this.err = err;
                 this.status = Status.fail;
@@ -160,7 +160,7 @@ pub fn callback(task: *ThreadPool.Task) void {
                 &this.log,
                 buffer.slice(),
             ) catch |err| {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
                 this.err = err;
                 this.status = Status.fail;
@@ -191,14 +191,14 @@ pub fn callback(task: *ThreadPool.Task) void {
                     if (err == error.RepositoryNotFound) {
                         this.err = err;
                         this.status = Status.fail;
-                        this.data = .{ .git_clone = bun.invalid_fd };
+                        this.data = .{ .git_clone = fun.invalid_fd };
 
                         return;
                     }
 
                     this.err = err;
                     this.status = Status.fail;
-                    this.data = .{ .git_clone = bun.invalid_fd };
+                    this.data = .{ .git_clone = fun.invalid_fd };
                     attempt += 1;
                     break :brk null;
                 };
@@ -215,7 +215,7 @@ pub fn callback(task: *ThreadPool.Task) void {
             ) catch |err| {
                 this.err = err;
                 this.status = Status.fail;
-                this.data = .{ .git_clone = bun.invalid_fd };
+                this.data = .{ .git_clone = fun.invalid_fd };
                 return;
             } else {
                 return;
@@ -265,7 +265,7 @@ pub fn callback(task: *ThreadPool.Task) void {
                 normalize,
                 &this.log,
             ) catch |err| {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
                 this.err = err;
                 this.status = Status.fail;
@@ -290,7 +290,7 @@ fn readAndExtract(
     const bytes = if (normalize)
         try File.readFromUserInput(std.fs.cwd(), tarball_path, allocator).unwrap()
     else
-        try File.readFrom(bun.FD.cwd(), tarball_path, allocator).unwrap();
+        try File.readFrom(fun.FD.cwd(), tarball_path, allocator).unwrap();
     defer allocator.free(bytes);
     return tarball.run(log, bytes);
 }
@@ -312,7 +312,7 @@ pub const Status = enum {
 pub const Data = union {
     package_manifest: Npm.PackageManifest,
     extract: ExtractData,
-    git_clone: bun.FD,
+    git_clone: fun.FD,
     git_checkout: ExtractData,
 };
 
@@ -335,7 +335,7 @@ pub const Request = union {
         res: Resolution,
     },
     git_checkout: struct {
-        repo_dir: bun.FD,
+        repo_dir: fun.FD,
         dependency_id: DependencyID,
         name: strings.StringOrTinyString,
         url: strings.StringOrTinyString,
@@ -375,11 +375,11 @@ const Repository = install.Repository;
 const Resolution = install.Resolution;
 const Task = install.Task;
 
-const bun = @import("bun");
-const DotEnv = bun.DotEnv;
-const Output = bun.Output;
-const Semver = bun.Semver;
-const ThreadPool = bun.ThreadPool;
-const logger = bun.logger;
-const strings = bun.strings;
-const File = bun.sys.File;
+const fun = @import("fun");
+const DotEnv = fun.DotEnv;
+const Output = fun.Output;
+const Semver = fun.Semver;
+const ThreadPool = fun.ThreadPool;
+const logger = fun.logger;
+const strings = fun.strings;
+const File = fun.sys.File;

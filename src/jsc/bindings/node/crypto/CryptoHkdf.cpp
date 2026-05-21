@@ -5,14 +5,14 @@
 #include "CryptoKey.h"
 #include "JSBuffer.h"
 #include "ErrorCode.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "JSKeyObject.h"
 
 using namespace JSC;
 using namespace WebCore;
 using namespace ncrypto;
 
-namespace Bun {
+namespace Fun {
 
 HkdfJobCtx::HkdfJobCtx(Digest digest, size_t length, KeyObject&& key, WTF::Vector<uint8_t>&& info, WTF::Vector<uint8_t>&& salt)
     : m_digest(digest)
@@ -37,7 +37,7 @@ HkdfJobCtx::~HkdfJobCtx()
 {
 }
 
-extern "C" void Bun__HkdfJobCtx__runTask(HkdfJobCtx* ctx, JSGlobalObject* lexicalGlobalObject)
+extern "C" void Fun__HkdfJobCtx__runTask(HkdfJobCtx* ctx, JSGlobalObject* lexicalGlobalObject)
 {
     ctx->runTask(lexicalGlobalObject);
 }
@@ -67,7 +67,7 @@ void HkdfJobCtx::runTask(JSGlobalObject* lexicalGlobalObject)
     m_result = ByteSource::allocated(dp.release());
 }
 
-extern "C" void Bun__HkdfJobCtx__runFromJS(HkdfJobCtx* ctx, JSGlobalObject* lexicalGlobalObject, EncodedJSValue callback)
+extern "C" void Fun__HkdfJobCtx__runFromJS(HkdfJobCtx* ctx, JSGlobalObject* lexicalGlobalObject, EncodedJSValue callback)
 {
     ctx->runFromJS(lexicalGlobalObject, JSValue::decode(callback));
 }
@@ -78,7 +78,7 @@ void HkdfJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback
 
     if (!m_result) {
         JSObject* err = createError(lexicalGlobalObject, ErrorCode::ERR_CRYPTO_OPERATION_FAILED, "hkdf operation failed"_s);
-        Bun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
+        Fun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
         return;
     }
 
@@ -88,20 +88,20 @@ void HkdfJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callback
     RefPtr<ArrayBuffer> buf = ArrayBuffer::tryCreateUninitialized(result.size(), 1);
     if (!buf) {
         JSObject* err = createOutOfMemoryError(lexicalGlobalObject);
-        Bun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
+        Fun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
         return;
     }
 
     memcpy(buf->data(), result.data(), result.size());
 
-    Bun__EventLoop__runCallback2(lexicalGlobalObject,
+    Fun__EventLoop__runCallback2(lexicalGlobalObject,
         JSValue::encode(callback),
         JSValue::encode(jsUndefined()),
         JSValue::encode(jsNull()),
         JSValue::encode(JSArrayBuffer::create(vm, globalObject->arrayBufferStructure(), buf.releaseNonNull())));
 }
 
-extern "C" void Bun__HkdfJobCtx__deinit(HkdfJobCtx* ctx)
+extern "C" void Fun__HkdfJobCtx__deinit(HkdfJobCtx* ctx)
 {
     ctx->deinit();
 }
@@ -110,24 +110,24 @@ void HkdfJobCtx::deinit()
     delete this;
 }
 
-extern "C" HkdfJob* Bun__HkdfJob__create(JSGlobalObject* globalObject, HkdfJobCtx* ctx, EncodedJSValue callback);
+extern "C" HkdfJob* Fun__HkdfJob__create(JSGlobalObject* globalObject, HkdfJobCtx* ctx, EncodedJSValue callback);
 HkdfJob* HkdfJob::create(JSGlobalObject* globalObject, HkdfJobCtx&& ctx, JSValue callback)
 {
     HkdfJobCtx* ctxCopy = new HkdfJobCtx(WTF::move(ctx));
-    return Bun__HkdfJob__create(globalObject, ctxCopy, JSValue::encode(callback));
+    return Fun__HkdfJob__create(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
-extern "C" void Bun__HkdfJob__schedule(HkdfJob* job);
+extern "C" void Fun__HkdfJob__schedule(HkdfJob* job);
 void HkdfJob::schedule()
 {
-    Bun__HkdfJob__schedule(this);
+    Fun__HkdfJob__schedule(this);
 }
 
-extern "C" void Bun__HkdfJob__createAndSchedule(JSGlobalObject* globalObject, HkdfJobCtx* ctx, EncodedJSValue callback);
+extern "C" void Fun__HkdfJob__createAndSchedule(JSGlobalObject* globalObject, HkdfJobCtx* ctx, EncodedJSValue callback);
 void HkdfJob::createAndSchedule(JSGlobalObject* globalObject, HkdfJobCtx&& ctx, JSValue callback)
 {
     HkdfJobCtx* ctxCopy = new HkdfJobCtx(WTF::move(ctx));
-    return Bun__HkdfJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
+    return Fun__HkdfJob__createAndSchedule(globalObject, ctxCopy, JSValue::encode(callback));
 }
 
 // similar to prepareSecretKey
@@ -215,7 +215,7 @@ std::optional<HkdfJobCtx> HkdfJobCtx::fromJS(JSGlobalObject* lexicalGlobalObject
     RETURN_IF_EXCEPTION(scope, std::nullopt);
 
     int32_t length = 0;
-    V::validateInteger(scope, lexicalGlobalObject, lengthValue, "length"_s, jsNumber(0), jsNumber(Bun::Buffer::kMaxLength), &length);
+    V::validateInteger(scope, lexicalGlobalObject, lengthValue, "length"_s, jsNumber(0), jsNumber(Fun::Buffer::kMaxLength), &length);
     RETURN_IF_EXCEPTION(scope, std::nullopt);
 
     if (info.size() > 1024) {
@@ -284,4 +284,4 @@ JSC_DEFINE_HOST_FUNCTION(jsHkdfSync, (JSGlobalObject * lexicalGlobalObject, JSC:
     return JSValue::encode(JSC::JSArrayBuffer::create(vm, globalObject->arrayBufferStructure(), buf.releaseNonNull()));
 }
 
-} // namespace Bun
+} // namespace Fun

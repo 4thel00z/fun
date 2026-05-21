@@ -26,7 +26,7 @@ pub const Scope = struct {
     previous: ?*ASTMemoryAllocator = null,
 
     pub fn enter(this: *@This()) void {
-        bun.debugAssert(Expr.Data.Store.memory_allocator == Stmt.Data.Store.memory_allocator);
+        fun.debugAssert(Expr.Data.Store.memory_allocator == Stmt.Data.Store.memory_allocator);
 
         this.previous = Expr.Data.Store.memory_allocator;
 
@@ -63,7 +63,7 @@ pub fn push(this: *ASTMemoryAllocator) void {
 
 pub fn pop(this: *ASTMemoryAllocator) void {
     const prev = this.previous;
-    bun.assert(prev != this);
+    fun.assert(prev != this);
     Stmt.Data.Store.memory_allocator = prev;
     Expr.Data.Store.memory_allocator = prev;
     this.previous = null;
@@ -85,10 +85,10 @@ pub fn initWithoutStack(this: *ASTMemoryAllocator, arena: std.mem.Allocator) voi
     this.bump_allocator = this.stack_allocator.get();
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const ASTMemoryAllocator = js_ast.ASTMemoryAllocator;
 const Expr = js_ast.Expr;
 const Stmt = js_ast.Stmt;

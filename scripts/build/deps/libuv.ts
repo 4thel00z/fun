@@ -1,7 +1,7 @@
 /**
- * libuv — cross-platform async I/O. Bun uses it on Windows ONLY, for the
+ * libuv — cross-platform async I/O. Fun uses it on Windows ONLY, for the
  * event loop and file I/O (Windows' IOCP model needs a proper abstraction
- * layer). On unix, bun's event loop is custom (kqueue/epoll direct).
+ * layer). On unix, fun's event loop is custom (kqueue/epoll direct).
  *
  * On POSIX, node-api addons that reference libuv symbols are served by
  * src/jsc/bindings/uv-posix-stubs.c + uv-posix-polyfills*.c, with headers
@@ -10,9 +10,9 @@
 
 import type { Dependency } from "../source.ts";
 
-// Tip of oven-sh/libuv's `bun` branch — upstream f3ce527e + the win-pipe
+// Tip of oven-sh/libuv's `fun` branch — upstream f3ce527e + the win-pipe
 // CancelIoEx race fix + ConPTY support in uv_spawn. To bump upstream, rebase
-// the `bun` branch and update this SHA.
+// the `fun` branch and update this SHA.
 const LIBUV_COMMIT = "4dcfac4780d394e0dc2d3fb30335ca01b553eb46";
 
 // prettier-ignore

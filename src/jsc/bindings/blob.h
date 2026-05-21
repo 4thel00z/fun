@@ -2,7 +2,7 @@
 
 #include "root.h"
 #include "JSDOMGlobalObject.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 namespace WebCore {
 
@@ -14,7 +14,7 @@ extern "C" void* Blob__fromBytes(JSC::JSGlobalObject* globalThis, const void* pt
 extern "C" void* Blob__ref(void* impl);
 extern "C" void* Blob__deref(void* impl);
 
-// Opaque type corresponding to `bun.webcore.Blob`.
+// Opaque type corresponding to `fun.webcore.Blob`.
 class BlobImpl;
 
 struct BlobImplRefDerefTraits {
@@ -41,7 +41,7 @@ struct BlobImplRefDerefTraits {
 using BlobRef = Ref<BlobImpl, RawPtrTraits<BlobImpl>, BlobImplRefDerefTraits>;
 using BlobRefPtr = RefPtr<BlobImpl, RawPtrTraits<BlobImpl>, BlobImplRefDerefTraits>;
 
-// TODO: Now that `bun.webcore.Blob` is ref-counted, can `RefPtr<Blob>` be replaced with `Blob`?
+// TODO: Now that `fun.webcore.Blob` is ref-counted, can `RefPtr<Blob>` be replaced with `Blob`?
 class Blob : public RefCounted<Blob> {
 public:
     BlobImpl* impl() const

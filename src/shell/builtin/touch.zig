@@ -104,12 +104,12 @@ pub fn writeFailingError(this: *Touch, buf: []const u8, exit_code: ExitCode) Yie
 pub fn onShellTouchTaskDone(this: *Touch, task: *ShellTouchTask) void {
     log("{f} onShellTouchTaskDone {f} tasks_done={d} tasks_count={d}", .{ this, task, this.state.exec.tasks_done, this.state.exec.tasks_count });
 
-    defer bun.default_allocator.destroy(task);
+    defer fun.default_allocator.destroy(task);
     this.state.exec.tasks_done += 1;
     const err = task.err;
 
     if (err) |e| {
-        const output_task: *ShellTouchOutputTask = bun.new(ShellTouchOutputTask, .{
+        const output_task: *ShellTouchOutputTask = fun.new(ShellTouchOutputTask, .{
             .parent = this,
             .output = .{ .arrlist = .{} },
             .state = .waiting_write_err,
@@ -186,11 +186,11 @@ pub const ShellTouchTask = struct {
         if (this.err) |*e| {
             e.deref();
         }
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 
     pub fn create(touch: *Touch, opts: Opts, filepath: [:0]const u8, cwd_path: [:0]const u8) *ShellTouchTask {
-        const task = bun.handleOom(bun.default_allocator.create(ShellTouchTask));
+        const task = fun.handleOom(fun.default_allocator.create(ShellTouchTask));
         task.* = ShellTouchTask{
             .touch = touch,
             .opts = opts,
@@ -232,7 +232,7 @@ pub const ShellTouchTask = struct {
 
         var node_fs = jsc.Node.fs.NodeFS{};
         const milliseconds: f64 = @floatFromInt(std.time.milliTimestamp());
-        const atime: jsc.Node.TimeLike = if (bun.Environment.isWindows) milliseconds / 1000.0 else jsc.Node.TimeLike{
+        const atime: jsc.Node.TimeLike = if (fun.Environment.isWindows) milliseconds / 1000.0 else jsc.Node.TimeLike{
             .sec = @intFromFloat(@divFloor(milliseconds, std.time.ms_per_s)),
             .nsec = @intFromFloat(@mod(milliseconds, std.time.ms_per_s) * std.time.ns_per_ms),
         };
@@ -240,12 +240,12 @@ pub const ShellTouchTask = struct {
         const args = jsc.Node.fs.Arguments.Utimes{
             .atime = atime,
             .mtime = mtime,
-            .path = .{ .string = bun.PathString.init(filepath) },
+            .path = .{ .string = fun.PathString.init(filepath) },
         };
         if (node_fs.utimes(args, .sync).asErr()) |err| out: {
             if (err.getErrno() == .NOENT) {
                 const perm = 0o664;
-                switch (Syscall.open(filepath, bun.O.CREAT | bun.O.WRONLY, perm)) {
+                switch (Syscall.open(filepath, fun.O.CREAT | fun.O.WRONLY, perm)) {
                     .result => |fd| {
                         fd.close();
                         break :out;
@@ -319,25 +319,25 @@ const Opts = struct {
 
     pub fn parseLong(this: *Opts, flag: []const u8) ?ParseFlagResult {
         _ = this;
-        if (bun.strings.eqlComptime(flag, "--no-create")) {
+        if (fun.strings.eqlComptime(flag, "--no-create")) {
             return .{
                 .unsupported = unsupportedFlag("--no-create"),
             };
         }
 
-        if (bun.strings.eqlComptime(flag, "--date")) {
+        if (fun.strings.eqlComptime(flag, "--date")) {
             return .{
                 .unsupported = unsupportedFlag("--date"),
             };
         }
 
-        if (bun.strings.eqlComptime(flag, "--reference")) {
+        if (fun.strings.eqlComptime(flag, "--reference")) {
             return .{
                 .unsupported = unsupportedFlag("--reference=FILE"),
             };
         }
 
-        if (bun.strings.eqlComptime(flag, "--time")) {
+        if (fun.strings.eqlComptime(flag, "--time")) {
             return .{
                 .unsupported = unsupportedFlag("--reference=FILE"),
             };
@@ -385,7 +385,7 @@ pub inline fn bltn(this: *Touch) *Builtin {
 }
 
 // --
-const debug = bun.Output.scoped(.ShellTouch, .hidden);
+const debug = fun.Output.scoped(.ShellTouch, .hidden);
 const log = debug;
 
 const std = @import("std");
@@ -402,13 +402,13 @@ const unsupportedFlag = interpreter.unsupportedFlag;
 const Builtin = Interpreter.Builtin;
 const Result = Interpreter.Builtin.Result;
 
-const bun = @import("bun");
-const ResolvePath = bun.path;
-const Syscall = bun.sys;
+const fun = @import("fun");
+const ResolvePath = fun.path;
+const Syscall = fun.sys;
 
-const jsc = bun.jsc;
-const WorkPool = bun.jsc.WorkPool;
+const jsc = fun.jsc;
+const WorkPool = fun.jsc.WorkPool;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
-const Yield = bun.shell.Yield;
+const Yield = fun.shell.Yield;

@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 
 import { readFileSync } from "fs";
 
@@ -64,7 +64,7 @@ function formatAttempts(attempts) {
 }
 
 if (process.argv.length !== 3) {
-  console.log("Usage: bun parse_test_logs.js <log_file>");
+  console.log("Usage: fun parse_test_logs.js <log_file>");
   process.exit(1);
 }
 

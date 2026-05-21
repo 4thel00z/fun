@@ -1,4 +1,4 @@
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { isASAN, isWindows } from "harness";
 import * as net from "node:net";
 import { tmpdir } from "node:os";
@@ -41,7 +41,7 @@ while (started < 50_000) {
   console.log(`Completed ${started} connections. RSS: ${(process.memoryUsage.rss() / 1024 / 1024) | 0} MB`);
 }
 
-Bun.gc(true);
+Fun.gc(true);
 const warmup_rss = process.memoryUsage.rss();
 
 started = 0;

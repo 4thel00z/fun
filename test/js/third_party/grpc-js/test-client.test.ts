@@ -17,7 +17,7 @@
 import grpc from "@grpc/grpc-js";
 import { Client, Server, ServerCredentials } from "@grpc/grpc-js/build/src";
 import { ConnectivityState } from "@grpc/grpc-js/build/src/connectivity-state";
-import { afterAll, beforeAll, describe, it } from "bun:test";
+import { afterAll, beforeAll, describe, it } from "fun:test";
 import assert from "node:assert";
 
 const clientInsecureCreds = grpc.credentials.createInsecure();

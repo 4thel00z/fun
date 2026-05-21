@@ -1,5 +1,5 @@
-import { beforeAll, expect, it, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDirWithFiles } from "harness";
+import { beforeAll, expect, it, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 test.skipIf(isWindows)("verify that we can call sigint 4096 times", () => {
@@ -34,10 +34,10 @@ test.skipIf(isWindows)("verify that we can call sigint 4096 times", () => {
     `,
   });
 
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), join(dir, "index.js")],
+  const result = Fun.spawnSync({
+    cmd: [funExe(), join(dir, "index.js")],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -45,7 +45,7 @@ test.skipIf(isWindows)("verify that we can call sigint 4096 times", () => {
   expect(result.signalCode).toBeUndefined();
 });
 
-test.skipIf(isWindows)("verify that we forward SIGINT from parent to child in bun run", () => {
+test.skipIf(isWindows)("verify that we forward SIGINT from parent to child in fun run", () => {
   const dir = tempDirWithFiles("ctrlc", {
     "index.js": `
       let count = 0;
@@ -60,16 +60,16 @@ test.skipIf(isWindows)("verify that we forward SIGINT from parent to child in bu
     {
       "name": "ctrlc",
       "scripts": {
-        "start": " ${bunExe()} index.js"
+        "start": " ${funExe()} index.js"
       }
     }
   `,
   });
   console.log(dir);
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "start"],
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "start"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -80,7 +80,7 @@ test.skipIf(isWindows)("verify that we forward SIGINT from parent to child in bu
 // Share a single vite install across all of the parameterized SIGINT tests below.
 // Each test only spawns vite, waits for first stdout, sends SIGINT, and asserts on
 // exit state — none of them mutate the project directory, so reusing one install
-// avoids redundant `bun install` + tempdir setup work per iteration.
+// avoids redundant `fun install` + tempdir setup work per iteration.
 let viteDir: string;
 let viteInstallExitCode: number | null;
 
@@ -96,10 +96,10 @@ beforeAll(() => {
       },
     }),
   });
-  viteInstallExitCode = Bun.spawnSync({
-    cmd: [bunExe(), "install"],
+  viteInstallExitCode = Fun.spawnSync({
+    cmd: [funExe(), "install"],
     cwd: viteDir,
-    env: bunEnv,
+    env: funEnv,
     stdin: "inherit",
     stdout: "inherit",
     stderr: "inherit",
@@ -110,19 +110,19 @@ for (const mode of [
   ["vite"],
   ["dev"],
   ...(isWindows ? [] : [["./node_modules/.bin/vite"]]),
-  ["--bun", "vite"],
-  ["--bun", "dev"],
-  ...(isWindows ? [] : [["--bun", "./node_modules/.bin/vite"]]),
+  ["--fun", "vite"],
+  ["--fun", "dev"],
+  ...(isWindows ? [] : [["--fun", "./node_modules/.bin/vite"]]),
 ]) {
-  it("kills on SIGINT in: 'bun " + mode.join(" ") + "'", async () => {
+  it("kills on SIGINT in: 'fun " + mode.join(" ") + "'", async () => {
     expect(viteInstallExitCode).toBe(0);
-    const proc = Bun.spawn({
-      cmd: [bunExe(), ...mode],
+    const proc = Fun.spawn({
+      cmd: [funExe(), ...mode],
       cwd: viteDir,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "inherit",
-      env: { ...bunEnv, PORT: "9876" },
+      env: { ...funEnv, PORT: "9876" },
     });
 
     // wait for vite to start
@@ -136,7 +136,7 @@ for (const mode of [
     process.kill(proc.pid, "SIGINT");
 
     // wait for exit (or 300ms max — same total grace period as before)
-    await Promise.race([proc.exited, Bun.sleep(300)]);
+    await Promise.race([proc.exited, Fun.sleep(300)]);
 
     expect({
       killed: proc.killed,

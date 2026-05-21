@@ -1,5 +1,5 @@
-import { TCPSocketListener } from "bun";
-import { describe, expect, test } from "bun:test";
+import { TCPSocketListener } from "fun";
+import { describe, expect, test } from "fun:test";
 import { WebSocket } from "ws";
 
 describe("WebSocket Sec-WebSocket-Accept validation", () => {
@@ -8,7 +8,7 @@ describe("WebSocket Sec-WebSocket-Accept validation", () => {
     let client: WebSocket | undefined;
 
     try {
-      server = Bun.listen({
+      server = Fun.listen({
         socket: {
           data(socket, data) {
             const frame = data.toString("utf-8");
@@ -57,7 +57,7 @@ describe("WebSocket Sec-WebSocket-Accept validation", () => {
     let client: WebSocket | undefined;
 
     try {
-      server = Bun.listen({
+      server = Fun.listen({
         socket: {
           data(socket, data) {
             const frame = data.toString("utf-8");
@@ -67,7 +67,7 @@ describe("WebSocket Sec-WebSocket-Accept validation", () => {
             if (!keyMatch) return;
 
             // Compute the CORRECT accept value per RFC 6455
-            const hasher = new Bun.CryptoHasher("sha1");
+            const hasher = new Fun.CryptoHasher("sha1");
             hasher.update(keyMatch[1]);
             hasher.update("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
             const accept = hasher.digest("base64");

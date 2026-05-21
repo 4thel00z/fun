@@ -1,4 +1,4 @@
-//! libjpeg-turbo (TurboJPEG 3 API) decode/encode for `Bun.Image`.
+//! libjpeg-turbo (TurboJPEG 3 API) decode/encode for `Fun.Image`.
 //! Dispatch lives in codecs.zig; this file is the codec body.
 
 const tjhandle = ?*anyopaque;
@@ -113,8 +113,8 @@ pub fn decode(bytes: []const u8, max_pixels: u64, hint: codecs.DecodeHint) codec
     // leave rows unfilled with raw mimalloc bytes) is treated as corrupt.
     _ = tj3Set(h, TJPARAM_MAXPIXELS, std.math.cast(c_int, src_w * src_h) orelse std.math.maxInt(c_int));
     _ = tj3SetCroppingRegion(h, .{ .x = 0, .y = 0, .w = @intCast(w), .h = @intCast(ht) });
-    const out = try bun.default_allocator.alloc(u8, @as(usize, w) * ht * 4);
-    errdefer bun.default_allocator.free(out);
+    const out = try fun.default_allocator.alloc(u8, @as(usize, w) * ht * 4);
+    errdefer fun.default_allocator.free(out);
     if (tj3Decompress8(h, bytes.ptr, bytes.len, out.ptr, @intCast(w * 4), TJPF_RGBA) != 0)
         return error.DecodeFailed;
     if (tj3Get(h, TJPARAM_JPEGWIDTH) != rw or tj3Get(h, TJPARAM_JPEGHEIGHT) != rh)
@@ -123,7 +123,7 @@ pub fn decode(bytes: []const u8, max_pixels: u64, hint: codecs.DecodeHint) codec
     // Extract the APP2 ICC profile (if the source carried one). The marker
     // parser ran during tj3DecompressHeader, so this is a copy-out of
     // already-parsed state. `tj3GetICCProfile` allocates via libjpeg-turbo's
-    // allocator; re-home into `bun.default_allocator` so the rest of the
+    // allocator; re-home into `fun.default_allocator` so the rest of the
     // pipeline can free it uniformly. A decode that simply has no profile
     // returns non-zero with iccSize==0 — treat that as "no profile", not an
     // error. OutOfMemory on the dupe is propagated (not swallowed) — the
@@ -136,7 +136,7 @@ pub fn decode(bytes: []const u8, max_pixels: u64, hint: codecs.DecodeHint) codec
         if (tj3GetICCProfile(h, &icc_ptr, &icc_size) != 0 or icc_size == 0) break :blk null;
         defer if (icc_ptr) |p| tj3Free(p);
         const p = icc_ptr orelse break :blk null;
-        break :blk try bun.default_allocator.dupe(u8, p[0..icc_size]);
+        break :blk try fun.default_allocator.dupe(u8, p[0..icc_size]);
     };
     return .{ .rgba = out, .width = w, .height = ht, .icc_profile = icc };
 }
@@ -171,6 +171,6 @@ pub fn encode(rgba: []const u8, w: u32, ht: u32, quality: u8, progressive: bool,
     return .{ .bytes = out_ptr.?[0..out_len], .free = codecs.Encoded.wrap(tj3Free) };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const codecs = @import("./codecs.zig");
 const std = @import("std");

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { cpSync } from "fs";
-import { bunEnv, bunRun, isCI, isWindows, runBunInstall, tmpdirSync } from "harness";
+import { funEnv, funRun, isCI, isWindows, runFunInstall, tmpdirSync } from "harness";
 import { join } from "path";
 describe("next-auth", () => {
   // This test OOMs on Windows.
@@ -23,11 +23,11 @@ describe("next-auth", () => {
         },
       });
 
-      console.log("running bun install");
-      await runBunInstall(bunEnv, testDir, { savesLockfile: false });
+      console.log("running fun install");
+      await runFunInstall(funEnv, testDir, { savesLockfile: false });
 
       console.log("starting server");
-      const result = bunRun(join(testDir, "server.js"), {
+      const result = funRun(join(testDir, "server.js"), {
         AUTH_SECRET: "I7Jiq12TSMlPlAzyVAT+HxYX7OQb/TTqIbfTTpr1rg8=",
       });
 

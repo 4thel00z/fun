@@ -5,7 +5,7 @@
  #include "huff-tables.h"
  
 +#if LS_HPACK_USE_LARGE_TABLES && LS_HPACK_BSS_LARGE_TABLES
-+/* Bun: hencs[65536] (512 KB) and hdecs[65536] (256 KB) are pure functions of
++/* Fun: hencs[65536] (512 KB) and hdecs[65536] (256 KB) are pure functions of
 + * encode_table[257]. Declare them in .bss instead of .rodata and fill once on
 + * first lshpack/lsqpack init — ~250 us, identical hot-path lookup afterwards.
 + * Non-static so lsqpack.c can extern the same arrays instead of carrying its

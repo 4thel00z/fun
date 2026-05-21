@@ -1,7 +1,7 @@
 #pragma once
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 // The object returned from process.binding('natives')
@@ -33,4 +33,4 @@ private:
     }
 };
 
-} // namespace Bun
+} // namespace Fun

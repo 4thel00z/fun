@@ -7,7 +7,7 @@
 
 #include "../vm/SigintReceiver.h"
 
-namespace Bun {
+namespace Fun {
 
 class NodeVMSyntheticModule final : public NodeVMModule {
 public:
@@ -65,4 +65,4 @@ private:
     }
 };
 
-} // namespace Bun
+} // namespace Fun

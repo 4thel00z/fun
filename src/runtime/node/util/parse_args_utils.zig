@@ -87,6 +87,6 @@ pub fn findOptionByShortName(short_name: String, options: []const OptionDefiniti
     return long_option_index;
 }
 
-const bun = @import("bun");
-const String = bun.String;
-const JSValue = bun.jsc.JSValue;
+const fun = @import("fun");
+const String = fun.String;
+const JSValue = fun.jsc.JSValue;

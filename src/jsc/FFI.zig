@@ -133,7 +133,7 @@ pub const __nonnull = @compileError("unable to translate macro: undefined identi
 pub const __null_unspecified = @compileError("unable to translate macro: undefined identifier `_Null_unspecified`"); // (no file):323:9
 pub const __nullable = @compileError("unable to translate macro: undefined identifier `_Nullable`"); // (no file):324:9
 pub const __weak = @compileError("unable to translate macro: undefined identifier `__attribute__`"); // (no file):382:9
-pub const LOAD_ARGUMENTS_FROM_CALL_FRAME = @compileError("unable to translate macro: undefined identifier `argsPtr`"); // /Users/jarred/Code/bun/src/runtime/api/FFI.h:95:9
+pub const LOAD_ARGUMENTS_FROM_CALL_FRAME = @compileError("unable to translate macro: undefined identifier `argsPtr`"); // /Users/jarred/Code/fun/src/runtime/api/FFI.h:95:9
 pub const __llvm__ = @as(c_int, 1);
 pub const __clang__ = @as(c_int, 1);
 pub const __clang_major__ = @as(c_int, 13);
@@ -526,5 +526,5 @@ pub const MAX_INT32 = @import("std").zig.c_translation.promoteIntLiteral(c_int, 
 pub const MAX_INT52 = @import("std").zig.c_translation.promoteIntLiteral(c_int, 9007199254740991, .decimal);
 pub const NumberTag = @import("std").zig.c_translation.promoteIntLiteral(c_longlong, 0xfffe000000000000, .hex);
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

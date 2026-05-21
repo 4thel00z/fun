@@ -1,5 +1,5 @@
 // This file is run through translate-c and exposed to Zig code
-// under the namespace bun.c (lowercase c). Prefer adding includes
+// under the namespace fun.c (lowercase c). Prefer adding includes
 // to this file instead of manually porting struct definitions
 // into Zig code. By using automatic translation, differences
 // between platforms and subtle mistakes can be avoided.
@@ -21,7 +21,7 @@
 #endif
 
 // OnBeforeParseResult, etc...
-#include "../packages/bun-native-bundler-plugin-api/bundler_plugin.h"
+#include "../packages/fun-native-bundler-plugin-api/bundler_plugin.h"
 
 #if POSIX
 #include <fcntl.h>

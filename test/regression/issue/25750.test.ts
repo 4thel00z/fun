@@ -1,5 +1,5 @@
-import { S3Client } from "bun";
-import { describe, expect, it } from "bun:test";
+import { S3Client } from "fun";
+import { describe, expect, it } from "fun:test";
 
 // Test for GitHub issue #25750: S3 File.presign() ignores contentDisposition and type options
 describe("issue #25750 - S3 presign contentDisposition and type", () => {

@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import path from "node:path";
 
-// Regression test for https://github.com/oven-sh/bun/issues/28170
+// Regression test for https://github.com/underdoc-org/fun/issues/28170
 // When a barrel file with sideEffects:false re-exports a namespace import
 // (`import * as X from './mod'; export { X }`), the barrel optimization
 // failed to propagate the star import to the target module. This caused
@@ -82,9 +82,9 @@ test("barrel optimization propagates through namespace re-exports", async () => 
   });
 
   // Install workspace dependencies
-  await using installProc = Bun.spawn({
-    cmd: [bunExe(), "install"],
-    env: bunEnv,
+  await using installProc = Fun.spawn({
+    cmd: [funExe(), "install"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -95,17 +95,17 @@ test("barrel optimization propagates through namespace re-exports", async () => 
   const outFile = path.join(String(dir), "dist", "index.js");
 
   // Bundle the app
-  await using buildProc = Bun.spawn({
+  await using buildProc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "build",
       path.join(String(dir), "packages/pkg-app/src/index.ts"),
       "--outfile",
       outFile,
       "--target",
-      "bun",
+      "fun",
     ],
-    env: bunEnv,
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -120,9 +120,9 @@ test("barrel optimization propagates through namespace re-exports", async () => 
   expect(buildExit).toBe(0);
 
   // Run the bundled output
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), outFile],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), outFile],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });

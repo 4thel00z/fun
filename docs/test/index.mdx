@@ -1,11 +1,11 @@
 ---
 title: "Test runner"
-description: "Bun's fast, built-in, Jest-compatible test runner with TypeScript support, lifecycle hooks, mocking, and watch mode"
+description: "Fun's fast, built-in, Jest-compatible test runner with TypeScript support, lifecycle hooks, mocking, and watch mode"
 ---
 
 import Test from "/snippets/cli/test.mdx";
 
-Bun ships with a fast, built-in, Jest-compatible test runner. Tests are executed with the Bun runtime, and support the following features.
+Fun ships with a fast, built-in, Jest-compatible test runner. Tests are executed with the Fun runtime, and support the following features.
 
 - TypeScript and JSX
 - Lifecycle hooks
@@ -15,20 +15,20 @@ Bun ships with a fast, built-in, Jest-compatible test runner. Tests are executed
 - Script pre-loading with `--preload`
 
 <Note>
-  Bun aims for compatibility with Jest, but not everything is implemented. To track compatibility, see [this tracking
-  issue](https://github.com/oven-sh/bun/issues/1825).
+  Fun aims for compatibility with Jest, but not everything is implemented. To track compatibility, see [this tracking
+  issue](https://github.com/underdoc-org/fun/issues/1825).
 </Note>
 
 ## Run tests
 
 ```bash terminal icon="terminal"
-bun test
+fun test
 ```
 
 Tests are written in JavaScript or TypeScript with a Jest-like API. Refer to [Writing tests](/test/writing-tests) for full documentation.
 
 ```ts math.test.ts icon="/icons/typescript.svg"
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("2 + 2", () => {
   expect(2 + 2).toBe(4);
@@ -42,40 +42,40 @@ The runner recursively searches the working directory for files that match the f
 - `*.spec.{js|jsx|ts|tsx}`
 - `*_spec.{js|jsx|ts|tsx}`
 
-You can filter the set of _test files_ to run by passing additional positional arguments to `bun test`. Any test file with a path that matches one of the filters will run. Commonly, these filters will be file or directory names; glob patterns are not yet supported.
+You can filter the set of _test files_ to run by passing additional positional arguments to `fun test`. Any test file with a path that matches one of the filters will run. Commonly, these filters will be file or directory names; glob patterns are not yet supported.
 
 ```bash terminal icon="terminal"
-bun test <filter> <filter> ...
+fun test <filter> <filter> ...
 ```
 
 To filter by _test name_, use the `-t`/`--test-name-pattern` flag.
 
 ```sh terminal icon="terminal"
 # run all tests or test suites with "addition" in the name
-bun test --test-name-pattern addition
+fun test --test-name-pattern addition
 ```
 
 To run a specific file in the test runner, make sure the path starts with `./` or `/` to distinguish it from a filter name.
 
 ```bash terminal icon="terminal"
-bun test ./test/specific-file.test.ts
+fun test ./test/specific-file.test.ts
 ```
 
 The test runner runs all tests in a single process. It loads all `--preload` scripts (see [Lifecycle](/test/lifecycle) for details), then runs all tests. If a test fails, the test runner will exit with a non-zero exit code.
 
 ## CI/CD integration
 
-`bun test` supports a variety of CI/CD integrations.
+`fun test` supports a variety of CI/CD integrations.
 
 ### GitHub Actions
 
-`bun test` automatically detects if it's running inside GitHub Actions and will emit GitHub Actions annotations to the console directly.
+`fun test` automatically detects if it's running inside GitHub Actions and will emit GitHub Actions annotations to the console directly.
 
-No configuration is needed, other than installing `bun` in the workflow and running `bun test`.
+No configuration is needed, other than installing `fun` in the workflow and running `fun test`.
 
-#### How to install `bun` in a GitHub Actions workflow
+#### How to install `fun` in a GitHub Actions workflow
 
-To use `bun test` in a GitHub Actions workflow, add the following step:
+To use `fun test` in a GitHub Actions workflow, add the following step:
 
 ```yaml title=".github/workflows/test.yml" icon="file-code"
 jobs:
@@ -85,22 +85,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
+      - name: Install fun
+        uses: oven-sh/setup-fun@v2
       - name: Install dependencies # (assuming your project has dependencies)
-        run: bun install # You can use npm/yarn/pnpm instead if you prefer
+        run: fun install # You can use npm/yarn/pnpm instead if you prefer
       - name: Run tests
-        run: bun test
+        run: fun test
 ```
 
 From there, you'll get GitHub Actions annotations.
 
 ### JUnit XML reports (GitLab, etc.)
 
-To use `bun test` with a JUnit XML reporter, you can use the `--reporter=junit` in combination with `--reporter-outfile`.
+To use `fun test` with a JUnit XML reporter, you can use the `--reporter=junit` in combination with `--reporter-outfile`.
 
 ```sh terminal icon="terminal"
-bun test --reporter=junit --reporter-outfile=./bun.xml
+fun test --reporter=junit --reporter-outfile=./fun.xml
 ```
 
 This will continue to output to stdout/stderr as usual, and also write a JUnit
@@ -114,19 +114,19 @@ Use the `--timeout` flag to specify a _per-test_ timeout in milliseconds. If a t
 
 ```bash terminal icon="terminal"
 # default value is 5000
-bun test --timeout 20
+fun test --timeout 20
 ```
 
 ## Concurrent test execution
 
-By default, Bun runs all tests sequentially within each test file. You can enable concurrent execution to run async tests in parallel, significantly speeding up test suites with independent tests.
+By default, Fun runs all tests sequentially within each test file. You can enable concurrent execution to run async tests in parallel, significantly speeding up test suites with independent tests.
 
 ### `--concurrent` flag
 
 Use the `--concurrent` flag to run all tests concurrently within their respective files:
 
 ```sh terminal icon="terminal"
-bun test --concurrent
+fun test --concurrent
 ```
 
 When this flag is enabled, all tests will run in parallel unless explicitly marked with `test.serial`.
@@ -137,10 +137,10 @@ Control the maximum number of tests running simultaneously with the `--max-concu
 
 ```sh terminal icon="terminal"
 # Limit to 4 concurrent tests
-bun test --concurrent --max-concurrency 4
+fun test --concurrent --max-concurrency 4
 
 # Default: 20
-bun test --concurrent
+fun test --concurrent
 ```
 
 This helps prevent resource exhaustion when running many concurrent tests. The default value is 20.
@@ -150,7 +150,7 @@ This helps prevent resource exhaustion when running many concurrent tests. The d
 Mark individual tests to run concurrently, even when the `--concurrent` flag is not used:
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 // These tests run in parallel with each other
 test.concurrent("concurrent test 1", async () => {
@@ -174,7 +174,7 @@ test("sequential test", () => {
 Force tests to run sequentially, even when the `--concurrent` flag is enabled:
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 let sharedState = 0;
 
@@ -206,7 +206,7 @@ test.failing.each([1, 2, 3])("chained qualifiers %d", input => {
 Use the `--retry` flag to automatically retry failed tests up to a given number of times. If a test fails and then passes on a subsequent attempt, it is reported as passing.
 
 ```sh terminal icon="terminal"
-bun test --retry 3
+fun test --retry 3
 ```
 
 Per-test `{ retry: N }` overrides the global `--retry` value:
@@ -223,9 +223,9 @@ test("custom retry", { retry: 1 }, () => {
 });
 ```
 
-You can also set this in `bunfig.toml`:
+You can also set this in `funfig.toml`:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [test]
 retry = 3
 ```
@@ -235,7 +235,7 @@ retry = 3
 Use the `--rerun-each` flag to run each test multiple times. This is useful for detecting flaky or non-deterministic test failures.
 
 ```sh terminal icon="terminal"
-bun test --rerun-each 100
+fun test --rerun-each 100
 ```
 
 ## Randomize test execution order
@@ -243,13 +243,13 @@ bun test --rerun-each 100
 Use the `--randomize` flag to run tests in a random order. This helps detect tests that depend on shared state or execution order.
 
 ```sh terminal icon="terminal"
-bun test --randomize
+fun test --randomize
 ```
 
 When using `--randomize`, the seed used for randomization will be displayed in the test summary:
 
 ```sh terminal icon="terminal"
-bun test --randomize
+fun test --randomize
 ```
 
 ```txt
@@ -266,34 +266,34 @@ Use the `--seed` flag to specify a seed for the randomization. This allows you t
 
 ```sh terminal icon="terminal"
 # Reproduce a previous randomized run
-bun test --seed 123456
+fun test --seed 123456
 ```
 
 The `--seed` flag implies `--randomize`, so you don't need to specify both. Using the same seed value will always produce the same test execution order, making it easier to debug intermittent failures caused by test interdependencies.
 
 ## Bail out with `--bail`
 
-Use the `--bail` flag to abort the test run early after a pre-determined number of test failures. By default Bun will run all tests and report all failures, but sometimes in CI environments it's preferable to terminate earlier to reduce CPU usage.
+Use the `--bail` flag to abort the test run early after a pre-determined number of test failures. By default Fun will run all tests and report all failures, but sometimes in CI environments it's preferable to terminate earlier to reduce CPU usage.
 
 ```sh terminal icon="terminal"
 # bail after 1 failure
-bun test --bail
+fun test --bail
 
 # bail after 10 failure
-bun test --bail=10
+fun test --bail=10
 ```
 
 ## Watch mode
 
-Similar to `bun run`, you can pass the `--watch` flag to `bun test` to watch for changes and re-run tests.
+Similar to `fun run`, you can pass the `--watch` flag to `fun test` to watch for changes and re-run tests.
 
 ```bash terminal icon="terminal"
-bun test --watch
+fun test --watch
 ```
 
 ## Lifecycle hooks
 
-Bun supports the following lifecycle hooks:
+Fun supports the following lifecycle hooks:
 
 | Hook         | Description                 |
 | ------------ | --------------------------- |
@@ -305,7 +305,7 @@ Bun supports the following lifecycle hooks:
 These hooks can be defined inside test files, or in a separate file that is preloaded with the `--preload` flag.
 
 ```sh terminal icon="terminal"
-bun test --preload ./setup.ts
+fun test --preload ./setup.ts
 ```
 
 See [Test > Lifecycle](/test/lifecycle) for complete documentation.
@@ -315,7 +315,7 @@ See [Test > Lifecycle](/test/lifecycle) for complete documentation.
 Create mock functions with the `mock` function.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { test, expect, mock } from "bun:test";
+import { test, expect, mock } from "fun:test";
 const random = mock(() => Math.random());
 
 test("random", () => {
@@ -329,8 +329,8 @@ test("random", () => {
 Alternatively, you can use `jest.fn()`, it behaves identically.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { test, expect, mock } from "bun:test"; // [!code --]
-import { test, expect, jest } from "bun:test"; // [!code ++]
+import { test, expect, mock } from "fun:test"; // [!code --]
+import { test, expect, jest } from "fun:test"; // [!code ++]
 
 const random = mock(() => Math.random()); // [!code --]
 const random = jest.fn(() => Math.random()); // [!code ++]
@@ -340,11 +340,11 @@ See [Test > Mocks](/test/mocks) for complete documentation.
 
 ## Snapshot testing
 
-Snapshots are supported by `bun test`.
+Snapshots are supported by `fun test`.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
 // example usage of toMatchSnapshot
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("snapshot", () => {
   expect({ a: 1 }).toMatchSnapshot();
@@ -354,14 +354,14 @@ test("snapshot", () => {
 To update snapshots, use the `--update-snapshots` flag.
 
 ```sh terminal icon="terminal"
-bun test --update-snapshots
+fun test --update-snapshots
 ```
 
 See [Test > Snapshots](/test/snapshots) for complete documentation.
 
 ## UI & DOM testing
 
-Bun is compatible with popular UI testing libraries:
+Fun is compatible with popular UI testing libraries:
 
 - [HappyDOM](https://github.com/capricorn86/happy-dom)
 - [DOM Testing Library](https://testing-library.com/docs/dom-testing-library/intro/)
@@ -371,13 +371,13 @@ See [Test > DOM Testing](/test/dom) for complete documentation.
 
 ## Performance
 
-Bun's test runner is fast.
+Fun's test runner is fast.
 
-<Frame>![Running 266 React SSR tests faster than Jest can print its version number.](/images/buntest.jpeg)</Frame>
+<Frame>![Running 266 React SSR tests faster than Jest can print its version number.](/images/funtest.jpeg)</Frame>
 
 ## AI Agent Integration
 
-When using Bun's test runner with AI coding assistants, you can enable quieter output to improve readability and reduce context noise. This feature minimizes test output verbosity while preserving essential failure information.
+When using Fun's test runner with AI coding assistants, you can enable quieter output to improve readability and reduce context noise. This feature minimizes test output verbosity while preserving essential failure information.
 
 ### Environment Variables
 
@@ -397,7 +397,7 @@ When an AI agent environment is detected:
 
 ```bash terminal icon="terminal"
 # Example: Enable quiet output for Claude Code
-CLAUDECODE=1 bun test
+CLAUDECODE=1 fun test
 
 # Still shows failures and summary, but hides verbose passing test output
 ```

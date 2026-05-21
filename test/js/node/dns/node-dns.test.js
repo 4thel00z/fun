@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, setDefaultTimeout, test } from "bun:test";
+import { beforeAll, describe, expect, it, setDefaultTimeout, test } from "fun:test";
 import { isWindows } from "harness";
 import * as dns from "node:dns";
 import * as dns_promises from "node:dns/promises";
@@ -61,7 +61,7 @@ test("it exists", () => {
   expect(dns_promises.resolveCname).toBeDefined();
 });
 
-// //TODO: use a bun.sh SRV for testing
+// //TODO: use a fun.dev SRV for testing
 test("dns.resolveSrv (_test._tcp.test.socketify.dev)", () => {
   const { promise, resolve, reject } = Promise.withResolvers();
   dns.resolveSrv("_test._tcp.test.socketify.dev", (err, results) => {
@@ -100,7 +100,7 @@ test("dns.resolveTxt (txt.socketify.dev)", () => {
     try {
       expect(err).toBeNull();
       expect(results instanceof Array).toBe(true);
-      expect(results[0][0]).toBe("bun_test;test");
+      expect(results[0][0]).toBe("fun_test;test");
       resolve();
     } catch (error) {
       reject(err || error);
@@ -109,9 +109,9 @@ test("dns.resolveTxt (txt.socketify.dev)", () => {
   return promise;
 });
 
-test("dns.resolveSoa (bun.sh)", () => {
+test("dns.resolveSoa (fun.dev)", () => {
   const { promise, resolve, reject } = Promise.withResolvers();
-  dns.resolveSoa("bun.sh", (err, result) => {
+  dns.resolveSoa("fun.dev", (err, result) => {
     try {
       expect(err).toBeNull();
       expect(typeof result.serial).toBe("number");
@@ -174,7 +174,7 @@ test("dns.resolveCaa (caa.socketify.dev)", () => {
       expect(err).toBeNull();
       expect(results instanceof Array).toBe(true);
       expect(results[0].critical).toBe(0);
-      expect(results[0].issue).toBe("bun.sh");
+      expect(results[0].issue).toBe("fun.dev");
       resolve();
     } catch (error) {
       reject(err || error);
@@ -183,9 +183,9 @@ test("dns.resolveCaa (caa.socketify.dev)", () => {
   return promise;
 });
 
-test("dns.resolveMx (bun.sh)", () => {
+test("dns.resolveMx (fun.dev)", () => {
   const { promise, resolve, reject } = Promise.withResolvers();
-  dns.resolveMx("bun.sh", (err, results) => {
+  dns.resolveMx("fun.dev", (err, results) => {
     try {
       expect(err).toBeNull();
       expect(results instanceof Array).toBe(true);
@@ -200,9 +200,9 @@ test("dns.resolveMx (bun.sh)", () => {
   return promise;
 });
 
-test("dns.resolveNs (bun.sh) ", () => {
+test("dns.resolveNs (fun.dev) ", () => {
   const { promise, resolve, reject } = Promise.withResolvers();
-  dns.resolveNs("bun.sh", (err, results) => {
+  dns.resolveNs("fun.dev", (err, results) => {
     try {
       expect(err).toBeNull();
       expect(results instanceof Array).toBe(true);
@@ -253,7 +253,7 @@ test("dns.resolvePtr (ptr.socketify.dev)", () => {
     try {
       expect(err).toBeNull();
       expect(results instanceof Array).toBe(true);
-      expect(results[0]).toBe("bun.sh");
+      expect(results[0]).toBe("fun.dev");
       resolve();
     } catch (error) {
       reject(err || error);
@@ -268,7 +268,7 @@ test("dns.resolveCname (cname.socketify.dev)", () => {
     try {
       expect(err).toBeNull();
       expect(results instanceof Array).toBe(true);
-      expect(results[0]).toBe("bun.sh");
+      expect(results[0]).toBe("fun.dev");
       resolve();
     } catch (error) {
       reject(err || error);
@@ -342,7 +342,7 @@ test("dns.getServers", () => {
   function parseResolvConf() {
     const servers = [];
     if (isWindows) {
-      const { stdout } = Bun.spawnSync(["node", "-e", "dns.getServers().forEach(x => console.log(x))"], {
+      const { stdout } = Fun.spawnSync(["node", "-e", "dns.getServers().forEach(x => console.log(x))"], {
         stdout: "pipe",
       });
       return stdout.toString("utf8").trim().split("\n");

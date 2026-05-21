@@ -1,6 +1,6 @@
-import { Subprocess, spawn, write } from "bun";
-import { afterEach, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isPosix, tempDir } from "harness";
+import { Subprocess, spawn, write } from "fun";
+import { afterEach, describe, expect, test } from "fun:test";
+import { funEnv, funExe, isPosix, tempDir } from "harness";
 import { join } from "node:path";
 import { InspectorSession, connect } from "./junit-reporter";
 import { SocketFramer } from "./socket-framer";
@@ -201,13 +201,13 @@ describe.if(isPosix)("TestReporter inspector protocol", () => {
 
     using dir = tempDir("test-reporter-delayed-enable", {
       "delayed.test.ts": `
-import { afterAll, describe, test, expect } from "bun:test";
+import { afterAll, describe, test, expect } from "fun:test";
 import { existsSync } from "node:fs";
 
 describe("suite A", () => {
   test("test A1", async () => {
     console.log("__A1_RUNNING__");
-    while (!existsSync("a1-gate")) await Bun.sleep(10);
+    while (!existsSync("a1-gate")) await Fun.sleep(10);
     expect(1).toBe(1);
   });
   test("test A2", () => {
@@ -222,7 +222,7 @@ describe("suite B", () => {
 });
 
 afterAll(async () => {
-  while (!existsSync("done-gate")) await Bun.sleep(10);
+  while (!existsSync("done-gate")) await Fun.sleep(10);
 });
 `,
     });
@@ -249,8 +249,8 @@ afterAll(async () => {
     proc = spawn({
       // --timeout keeps the inner test's budget above the 15000ms outer waits
       // so A1 cannot time out before the gate file is written under heavy load.
-      cmd: [bunExe(), `--inspect-wait=unix:${socketPath}`, "test", "--timeout", "30000", "delayed.test.ts"],
-      env: bunEnv,
+      cmd: [funExe(), `--inspect-wait=unix:${socketPath}`, "test", "--timeout", "30000", "delayed.test.ts"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",

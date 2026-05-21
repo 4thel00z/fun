@@ -1,5 +1,5 @@
 pub const SourceMap = @This();
-const debug = bun.Output.scoped(.SourceMap, .visible);
+const debug = fun.Output.scoped(.SourceMap, .visible);
 
 /// Coordinates in source maps are stored using relative offsets for size
 /// reasons. When joining together chunks of a source map that were emitted
@@ -64,17 +64,17 @@ pub fn parseUrl(
     const json_bytes = json_bytes: {
         const data_prefix = "data:application/json";
 
-        if (bun.strings.hasPrefixComptime(source, data_prefix) and source.len > (data_prefix.len + 1)) try_data_url: {
+        if (fun.strings.hasPrefixComptime(source, data_prefix) and source.len > (data_prefix.len + 1)) try_data_url: {
             debug("parse (data url, {d} bytes)", .{source.len});
             switch (source[data_prefix.len]) {
                 ';' => {
-                    const encoding = bun.sliceTo(source[data_prefix.len + 1 ..], ',');
-                    if (!bun.strings.eqlComptime(encoding, "base64")) break :try_data_url;
+                    const encoding = fun.sliceTo(source[data_prefix.len + 1 ..], ',');
+                    if (!fun.strings.eqlComptime(encoding, "base64")) break :try_data_url;
                     const base64_data = source[data_prefix.len + ";base64,".len ..];
 
-                    const len = bun.base64.decodeLen(base64_data);
-                    const bytes = bun.handleOom(arena.alloc(u8, len));
-                    const decoded = bun.base64.decode(bytes, base64_data);
+                    const len = fun.base64.decodeLen(base64_data);
+                    const bytes = fun.handleOom(arena.alloc(u8, len));
+                    const decoded = fun.base64.decode(bytes, base64_data);
                     if (!decoded.isSuccessful()) {
                         return error.InvalidBase64;
                     }
@@ -103,22 +103,22 @@ pub fn parseJSON(
     source: []const u8,
     hint: ParseUrlResultHint,
 ) !ParseUrl {
-    const json_src = bun.logger.Source.initPathString("sourcemap.json", source);
-    var log = bun.logger.Log.init(arena);
+    const json_src = fun.logger.Source.initPathString("sourcemap.json", source);
+    var log = fun.logger.Log.init(arena);
     defer log.deinit();
 
     // the allocator given to the JS parser is not respected for all parts
     // of the parse, so we need to remember to reset the ast store
-    bun.ast.Expr.Data.Store.reset();
-    bun.ast.Stmt.Data.Store.reset();
+    fun.ast.Expr.Data.Store.reset();
+    fun.ast.Stmt.Data.Store.reset();
     defer {
         // the allocator given to the JS parser is not respected for all parts
         // of the parse, so we need to remember to reset the ast store
-        bun.ast.Expr.Data.Store.reset();
-        bun.ast.Stmt.Data.Store.reset();
+        fun.ast.Expr.Data.Store.reset();
+        fun.ast.Stmt.Data.Store.reset();
     }
     debug("parse (JSON, {d} bytes)", .{source.len});
-    var json = bun.json.parse(&json_src, &log, arena, false) catch {
+    var json = fun.json.parse(&json_src, &log, arena, false) catch {
         return error.InvalidJSON;
     };
 
@@ -153,7 +153,7 @@ pub fn parseJSON(
     var i: usize = 0;
 
     const source_paths_slice = if (hint != .source_only)
-        bun.handleOom(alloc.alloc([]const u8, sources_content.items.len))
+        fun.handleOom(alloc.alloc([]const u8, sources_content.items.len))
     else
         null;
     errdefer if (hint != .source_only) {
@@ -186,7 +186,7 @@ pub fn parseJSON(
         if (hint == .all and hint.all.include_names and map_data.mappings.impl == .with_names) {
             if (json.get("names")) |names| {
                 if (names.data == .e_array) {
-                    var names_list = try std.ArrayListUnmanaged(bun.Semver.String).initCapacity(alloc, names.data.e_array.items.len);
+                    var names_list = try std.ArrayListUnmanaged(fun.Semver.String).initCapacity(alloc, names.data.e_array.items.len);
                     errdefer names_list.deinit(alloc);
 
                     var names_buffer = std.ArrayListUnmanaged(u8){};
@@ -199,7 +199,7 @@ pub fn parseJSON(
 
                         const str = try item.data.e_string.string(arena);
 
-                        names_list.appendAssumeCapacity(try bun.Semver.String.initAppendIfNeeded(alloc, &names_buffer, str));
+                        names_list.appendAssumeCapacity(try fun.Semver.String.initAppendIfNeeded(alloc, &names_buffer, str));
                     }
 
                     map_data.mappings.names = names_list.items;
@@ -208,7 +208,7 @@ pub fn parseJSON(
             }
         }
 
-        const ptr = bun.new(ParsedSourceMap, map_data);
+        const ptr = fun.new(ParsedSourceMap, map_data);
         ptr.external_source_names = source_paths_slice.?;
 
         break :map ptr;
@@ -234,7 +234,7 @@ pub fn parseJSON(
             break :content null;
         }
 
-        const str = bun.handleOom(item.data.e_string.string(arena));
+        const str = fun.handleOom(item.data.e_string.string(arena));
         if (str.len == 0) {
             break :content null;
         }
@@ -295,16 +295,16 @@ pub const SourceMapLoadHint = enum(u2) {
 };
 
 /// Always returns UTF-8
-fn findSourceMappingURL(comptime T: type, source: []const T, alloc: std.mem.Allocator) ?bun.jsc.ZigString.Slice {
-    const needle = comptime bun.strings.literal(T, "\n//# sourceMappingURL=");
+fn findSourceMappingURL(comptime T: type, source: []const T, alloc: std.mem.Allocator) ?fun.jsc.ZigString.Slice {
+    const needle = comptime fun.strings.literal(T, "\n//# sourceMappingURL=");
     const found = std.mem.lastIndexOf(T, source, needle) orelse return null;
     const end = std.mem.indexOfScalarPos(T, source, found + needle.len, '\n') orelse source.len;
     const url = std.mem.trimRight(T, source[found + needle.len .. end], &.{ ' ', '\r' });
     return switch (T) {
-        u8 => bun.jsc.ZigString.Slice.fromUTF8NeverFree(url),
-        u16 => bun.jsc.ZigString.Slice.init(
+        u8 => fun.jsc.ZigString.Slice.fromUTF8NeverFree(url),
+        u16 => fun.jsc.ZigString.Slice.init(
             alloc,
-            bun.handleOom(bun.strings.toUTF8Alloc(alloc, url)),
+            fun.handleOom(fun.strings.toUTF8Alloc(alloc, url)),
         ),
         else => @compileError("Not Supported"),
     };
@@ -326,8 +326,8 @@ pub fn getSourceMapImpl(
     // TODO: Experiment in debug builds calculating how much stack space we have left and using that to
     //       adjust the size
     const STACK_SPACE_TO_USE = 1024;
-    var sfb = std.heap.stackFallback(STACK_SPACE_TO_USE, bun.default_allocator);
-    var arena = bun.ArenaAllocator.init(sfb.get());
+    var sfb = std.heap.stackFallback(STACK_SPACE_TO_USE, fun.default_allocator);
+    var arena = fun.ArenaAllocator.init(sfb.get());
     defer arena.deinit();
     const allocator = arena.allocator();
 
@@ -338,7 +338,7 @@ pub fn getSourceMapImpl(
         if (load_hint != .is_external_map) try_inline: {
             const source = SourceProviderKind.getSourceSlice(provider);
             defer source.deref();
-            bun.assert(source.tag == .ZigString);
+            fun.assert(source.tag == .ZigString);
 
             const maybe_found_url = found_url: {
                 if (source.is8Bit())
@@ -351,7 +351,7 @@ pub fn getSourceMapImpl(
             defer found_url.deinit();
 
             const parsed = parseUrl(
-                bun.default_allocator,
+                fun.default_allocator,
                 allocator,
                 found_url.slice(),
                 result,
@@ -382,7 +382,7 @@ pub fn getSourceMapImpl(
                 break :parsed .{
                     .is_external_map,
                     parseJSON(
-                        bun.default_allocator,
+                        fun.default_allocator,
                         allocator,
                         json_slice,
                         result,
@@ -391,11 +391,11 @@ pub fn getSourceMapImpl(
                         // calling `error.stack`. This message is only printed if
                         // the sourcemap has been found but is invalid, such as being
                         // invalid JSON text or corrupt mappings.
-                        bun.Output.warn("Could not decode sourcemap in dev server runtime: {s} - {s}", .{
+                        fun.Output.warn("Could not decode sourcemap in dev server runtime: {s} - {s}", .{
                             source_filename,
                             @errorName(err),
                         }); // Disable the "try using --sourcemap=external" hint
-                        bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
+                        fun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
                         return null;
                     },
                 };
@@ -409,7 +409,7 @@ pub fn getSourceMapImpl(
                 break :parsed .{
                     .is_external_map,
                     parseJSON(
-                        bun.default_allocator,
+                        fun.default_allocator,
                         allocator,
                         data,
                         result,
@@ -418,24 +418,24 @@ pub fn getSourceMapImpl(
                         // calling `error.stack`. This message is only printed if
                         // the sourcemap has been found but is invalid, such as being
                         // invalid JSON text or corrupt mappings.
-                        bun.Output.warn("Could not decode sourcemap in '{s}': {s}", .{
+                        fun.Output.warn("Could not decode sourcemap in '{s}': {s}", .{
                             source_filename,
                             @errorName(err),
                         }); // Disable the "try using --sourcemap=external" hint
-                        bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
+                        fun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
                         return null;
                     },
                 };
             }
-            var load_path_buf: *bun.PathBuffer = bun.path_buffer_pool.get();
-            defer bun.path_buffer_pool.put(load_path_buf);
+            var load_path_buf: *fun.PathBuffer = fun.path_buffer_pool.get();
+            defer fun.path_buffer_pool.put(load_path_buf);
             if (source_filename.len + 4 > load_path_buf.len)
                 break :try_external;
             @memcpy(load_path_buf[0..source_filename.len], source_filename);
             @memcpy(load_path_buf[source_filename.len..][0..4], ".map");
 
             const load_path = load_path_buf[0 .. source_filename.len + 4];
-            const data = switch (bun.sys.File.readFrom(std.fs.cwd(), load_path, allocator)) {
+            const data = switch (fun.sys.File.readFrom(std.fs.cwd(), load_path, allocator)) {
                 .err => break :try_external,
                 .result => |data| data,
             };
@@ -443,7 +443,7 @@ pub fn getSourceMapImpl(
             break :parsed .{
                 .is_external_map,
                 parseJSON(
-                    bun.default_allocator,
+                    fun.default_allocator,
                     allocator,
                     data,
                     result,
@@ -452,23 +452,23 @@ pub fn getSourceMapImpl(
                     // calling `error.stack`. This message is only printed if
                     // the sourcemap has been found but is invalid, such as being
                     // invalid JSON text or corrupt mappings.
-                    bun.Output.warn("Could not decode sourcemap in '{s}': {s}", .{
+                    fun.Output.warn("Could not decode sourcemap in '{s}': {s}", .{
                         source_filename,
                         @errorName(err),
                     }); // Disable the "try using --sourcemap=external" hint
-                    bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
+                    fun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
                     return null;
                 },
             };
         }
 
         if (inline_err) |err| {
-            bun.Output.warn("Could not decode sourcemap in '{s}': {s}", .{
+            fun.Output.warn("Could not decode sourcemap in '{s}': {s}", .{
                 source_filename,
                 @errorName(err),
             });
             // Disable the "try using --sourcemap=external" hint
-            bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
+            fun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
             return null;
         }
 
@@ -484,9 +484,9 @@ pub fn getSourceMapImpl(
 /// This is a pointer to a ZigSourceProvider that may or may not have a `//# sourceMappingURL` comment
 /// when we want to lookup this data, we will then resolve it to a ParsedSourceMap if it does.
 ///
-/// This is used for files that were pre-bundled with `bun build --target=bun --sourcemap`
+/// This is used for files that were pre-bundled with `fun build --target=fun --sourcemap`
 pub const SourceProviderMap = opaque {
-    extern fn ZigSourceProvider__getSourceSlice(*SourceProviderMap) bun.String;
+    extern fn ZigSourceProvider__getSourceSlice(*SourceProviderMap) fun.String;
     pub const getSourceSlice = ZigSourceProvider__getSourceSlice;
     pub fn toSourceContentPtr(this: *SourceProviderMap) ParsedSourceMap.SourceContentPtr {
         return ParsedSourceMap.SourceContentPtr.fromProvider(this);
@@ -517,7 +517,7 @@ pub const DevServerSourceProvider = opaque {
         length: usize,
     };
 
-    extern fn DevServerSourceProvider__getSourceSlice(*DevServerSourceProvider) bun.String;
+    extern fn DevServerSourceProvider__getSourceSlice(*DevServerSourceProvider) fun.String;
     extern fn DevServerSourceProvider__getSourceMapJSON(*DevServerSourceProvider) SourceMapData;
 
     pub const getSourceSlice = DevServerSourceProvider__getSourceSlice;
@@ -547,9 +547,9 @@ pub const DevServerSourceProvider = opaque {
 /// The sourcemap spec says line and column offsets are zero-based
 pub const LineColumnOffset = struct {
     /// The zero-based line offset
-    lines: bun.Ordinal = bun.Ordinal.start,
+    lines: fun.Ordinal = fun.Ordinal.start,
     /// The zero-based column offset
-    columns: bun.Ordinal = bun.Ordinal.start,
+    columns: fun.Ordinal = fun.Ordinal.start,
 
     pub const Optional = union(enum) {
         null: void,
@@ -597,7 +597,7 @@ pub const LineColumnOffset = struct {
 
             // Given a null byte, cursor.width becomes 0
             // This can lead to integer overflow, crashes, or hangs.
-            // https://github.com/oven-sh/bun/issues/10624
+            // https://github.com/underdoc-org/fun/issues/10624
             if (cursor.width == 0) {
                 this.columns = this.columns.addScalar(1);
                 offset = i + 1;
@@ -615,7 +615,7 @@ pub const LineColumnOffset = struct {
                     }
 
                     this.lines = this.lines.addScalar(1);
-                    this.columns = bun.Ordinal.start;
+                    this.columns = fun.Ordinal.start;
                 },
                 else => |c| {
                     // Mozilla's "source-map" library counts columns using UTF-16 code units
@@ -629,10 +629,10 @@ pub const LineColumnOffset = struct {
 
         const remain = input[offset..];
 
-        if (bun.Environment.allow_assert) {
-            assert(bun.strings.isAllASCII(remain));
-            assert(!bun.strings.containsChar(remain, '\n'));
-            assert(!bun.strings.containsChar(remain, '\r'));
+        if (fun.Environment.allow_assert) {
+            assert(fun.strings.isAllASCII(remain));
+            assert(!fun.strings.containsChar(remain, '\n'));
+            assert(!fun.strings.containsChar(remain, '\r'));
         }
 
         this.columns = this.columns.addScalar(@intCast(remain.len));
@@ -658,8 +658,8 @@ pub const SourceContent = struct {
 
 pub fn find(
     this: *const SourceMap,
-    line: bun.Ordinal,
-    column: bun.Ordinal,
+    line: fun.Ordinal,
+    column: fun.Ordinal,
 ) ?Mapping {
     return this.mapping.find(line, column);
 }
@@ -696,7 +696,7 @@ pub const SourceMapPieces = struct {
         // the joiner's node allocator contains string join nodes as well as some vlq encodings
         // it doesnt contain json payloads or source code, so 16kb is probably going to cover
         // most applications.
-        var sfb = std.heap.stackFallback(16384, bun.default_allocator);
+        var sfb = std.heap.stackFallback(16384, fun.default_allocator);
         var j = StringJoiner{ .allocator = sfb.get() };
 
         j.pushStatic(this.prefix.items);
@@ -705,7 +705,7 @@ pub const SourceMapPieces = struct {
         while (current < mappings.len) {
             if (mappings[current] == ';') {
                 generated.lines = generated.lines.addScalar(1);
-                generated.columns = bun.Ordinal.start;
+                generated.columns = fun.Ordinal.start;
                 prev_shift_column_delta = 0;
                 current += 1;
                 continue;
@@ -765,7 +765,7 @@ pub const SourceMapPieces = struct {
         j.pushStatic(mappings[start_of_run..]);
 
         const str = try j.doneWithEnd(allocator, this.suffix.items);
-        bun.assert(str[0] == '{'); // invalid json
+        fun.assert(str[0] == '{'); // invalid json
         return str;
     }
 };
@@ -901,9 +901,9 @@ pub const DebugIDFormatter = struct {
 
     pub fn format(self: DebugIDFormatter, writer: *std.Io.Writer) !void {
         // The RFC asks for a UUID, which is 128 bits (32 hex chars). Our hashes are only 64 bits.
-        // We fill the end of the id with "bun!bun!" hex encoded
+        // We fill the end of the id with "fun!fun!" hex encoded
         var buf: [32]u8 = undefined;
-        const formatter = bun.fmt.hexIntUpper(self.id);
+        const formatter = fun.fmt.hexIntUpper(self.id);
         _ = std.fmt.bufPrint(&buf, "{f}64756E2164756E21", .{formatter}) catch unreachable;
         try writer.writeAll(&buf);
     }
@@ -922,10 +922,10 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Logger = bun.logger;
-const MutableString = bun.MutableString;
-const StringJoiner = bun.StringJoiner;
-const URL = bun.URL;
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const Logger = fun.logger;
+const MutableString = fun.MutableString;
+const StringJoiner = fun.StringJoiner;
+const URL = fun.URL;
+const assert = fun.assert;
+const strings = fun.strings;

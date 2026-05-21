@@ -4,9 +4,9 @@ pub const InstallCommand = struct {
             error.InstallFailed,
             error.InvalidPackageJSON,
             => {
-                const log = &bun.cli.Cli.log_;
-                log.print(bun.Output.errorWriter()) catch {};
-                bun.Global.exit(1);
+                const log = &fun.cli.Cli.log_;
+                log.print(fun.Output.errorWriter()) catch {};
+                fun.Global.exit(1);
             },
             else => |e| return e,
         };
@@ -25,11 +25,11 @@ fn install(ctx: Command.Context) !void {
         const Analyzer = struct {
             ctx: Command.Context,
             cli: *CommandLineArguments,
-            pub fn onAnalyze(this: *@This(), result: *bun.bundle_v2.BundleV2.DependenciesScanner.Result) anyerror!void {
+            pub fn onAnalyze(this: *@This(), result: *fun.bundle_v2.BundleV2.DependenciesScanner.Result) anyerror!void {
                 // TODO: add separate argument that makes it so positionals[1..] is not done     and instead the positionals are passed
-                var positionals = bun.handleOom(bun.default_allocator.alloc(string, result.dependencies.keys().len + 1));
+                var positionals = fun.handleOom(fun.default_allocator.alloc(string, result.dependencies.keys().len + 1));
                 positionals[0] = "install";
-                bun.copy(string, positionals[1..], result.dependencies.keys());
+                fun.copy(string, positionals[1..], result.dependencies.keys());
                 this.cli.positionals = positionals;
 
                 try installWithCLI(this.ctx, this.cli.*);
@@ -42,13 +42,13 @@ fn install(ctx: Command.Context) !void {
             .cli = &cli,
         };
 
-        var fetcher = bun.bundle_v2.BundleV2.DependenciesScanner{
+        var fetcher = fun.bundle_v2.BundleV2.DependenciesScanner{
             .ctx = &analyzer,
             .entry_points = cli.positionals[1..],
             .onFetch = @ptrCast(&Analyzer.onAnalyze),
         };
 
-        try bun.cli.BuildCommand.exec(bun.cli.Command.get(), &fetcher);
+        try fun.cli.BuildCommand.exec(fun.cli.Command.get(), &fetcher);
         return;
     }
 
@@ -58,22 +58,22 @@ fn install(ctx: Command.Context) !void {
 fn installWithCLI(ctx: Command.Context, cli: CommandLineArguments) !void {
     const subcommand: Subcommand = if (cli.positionals.len > 1) .add else .install;
 
-    // TODO(dylan-conway): print `bun install <version>` or `bun add <version>` before logs from `init`.
+    // TODO(dylan-conway): print `fun install <version>` or `fun add <version>` before logs from `init`.
     // and cleanup install/add subcommand usage
     var manager, const original_cwd = try PackageManager.init(ctx, cli, .install);
 
-    // switch to `bun add <package>`
+    // switch to `fun add <package>`
     if (subcommand == .add) {
         manager.subcommand = .add;
         if (manager.options.shouldPrintCommandName()) {
-            Output.prettyln("<r><b>bun add <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
+            Output.prettyln("<r><b>fun add <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
             Output.flush();
         }
         return manager.updatePackageJSONAndInstallWithManager(ctx, original_cwd);
     }
 
     if (manager.options.shouldPrintCommandName()) {
-        Output.prettyln("<r><b>bun install <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
+        Output.prettyln("<r><b>fun install <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
         Output.flush();
     }
 
@@ -86,12 +86,12 @@ fn installWithCLI(ctx: Command.Context, cli: CommandLineArguments) !void {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Global = bun.Global;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const Command = bun.cli.Command;
+const fun = @import("fun");
+const Global = fun.Global;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const Command = fun.cli.Command;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const CommandLineArguments = PackageManager.CommandLineArguments;
 const Subcommand = PackageManager.Subcommand;

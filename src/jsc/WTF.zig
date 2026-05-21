@@ -47,14 +47,14 @@ pub const WTF = struct {
         return error.InvalidDate;
     }
 
-    extern fn Bun__writeHTTPDate(buffer: *[32]u8, length: usize, timestampMs: u64) c_int;
+    extern fn Fun__writeHTTPDate(buffer: *[32]u8, length: usize, timestampMs: u64) c_int;
 
     pub fn writeHTTPDate(buffer: *[32]u8, timestampMs: u64) []u8 {
         if (timestampMs == 0) {
             return buffer[0..0];
         }
 
-        const res = Bun__writeHTTPDate(buffer, 32, timestampMs);
+        const res = Fun__writeHTTPDate(buffer, 32, timestampMs);
         if (res < 1) {
             return buffer[0..0];
         }
@@ -67,5 +67,5 @@ pub const WTF = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

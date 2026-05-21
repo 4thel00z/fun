@@ -78,7 +78,7 @@ pub const Scripts = extern struct {
             inline for (this.items, 0..) |maybe_script, i| {
                 if (maybe_script) |script| {
                     debug("enqueue({s}, {s}) in {s}", .{ "prepare", this.package_name, this.cwd });
-                    bun.handleOom(@field(lockfile.scripts, Lockfile.Scripts.names[i]).append(lockfile.allocator, script));
+                    fun.handleOom(@field(lockfile.scripts, Lockfile.Scripts.names[i]).append(lockfile.allocator, script));
                 }
             }
         }
@@ -193,7 +193,7 @@ pub const Scripts = extern struct {
         this: *const Package.Scripts,
         lockfile: *const Lockfile,
         lockfile_buf: []const u8,
-        cwd_: *bun.AbsPath(.{ .sep = .auto }),
+        cwd_: *fun.AbsPath(.{ .sep = .auto }),
         package_name: string,
         resolution_tag: Resolution.Tag,
         add_node_gyp_rebuild_script: bool,
@@ -201,12 +201,12 @@ pub const Scripts = extern struct {
         const allocator = lockfile.allocator;
         const first_index, const total, const scripts = getScriptEntries(this, lockfile, lockfile_buf, resolution_tag, add_node_gyp_rebuild_script);
         if (first_index != -1) {
-            var cwd_buf: if (Environment.isWindows) bun.PathBuffer else void = undefined;
+            var cwd_buf: if (Environment.isWindows) fun.PathBuffer else void = undefined;
 
             const cwd = if (comptime !Environment.isWindows)
                 cwd_.slice()
             else brk: {
-                const cwd_handle = bun.openDirNoRenamingOrDeletingWindows(bun.invalid_fd, cwd_.sliceZ()) catch break :brk cwd_.slice();
+                const cwd_handle = fun.openDirNoRenamingOrDeletingWindows(fun.invalid_fd, cwd_.sliceZ()) catch break :brk cwd_.slice();
                 break :brk FD.fromStdDir(cwd_handle).getFdPath(&cwd_buf) catch break :brk cwd_.slice();
             };
 
@@ -214,8 +214,8 @@ pub const Scripts = extern struct {
                 .items = scripts,
                 .first_index = @intCast(first_index),
                 .total = total,
-                .cwd = bun.handleOom(allocator.dupeZ(u8, cwd)),
-                .package_name = bun.handleOom(lockfile.allocator.dupe(u8, package_name)),
+                .cwd = fun.handleOom(allocator.dupeZ(u8, cwd)),
+                .package_name = fun.handleOom(lockfile.allocator.dupe(u8, package_name)),
             };
         }
 
@@ -254,7 +254,7 @@ pub const Scripts = extern struct {
         this: *Package.Scripts,
         log: *logger.Log,
         lockfile: *const Lockfile,
-        folder_path: *bun.AbsPath(.{ .sep = .auto }),
+        folder_path: *fun.AbsPath(.{ .sep = .auto }),
         folder_name: string,
         resolution: *const Resolution,
     ) !?Package.Scripts.List {
@@ -267,7 +267,7 @@ pub const Scripts = extern struct {
                 defer save.restore();
                 folder_path.append("binding.gyp");
 
-                break :brk bun.sys.exists(folder_path.slice());
+                break :brk fun.sys.exists(folder_path.slice());
             } else false;
 
             return this.createList(
@@ -296,7 +296,7 @@ pub const Scripts = extern struct {
         allocator: std.mem.Allocator,
         string_builder: *Lockfile.StringBuilder,
         log: *logger.Log,
-        folder_path: *bun.AbsPath(.{ .sep = .auto }),
+        folder_path: *fun.AbsPath(.{ .sep = .auto }),
     ) !void {
         const json = brk: {
             var save = folder_path.save();
@@ -304,7 +304,7 @@ pub const Scripts = extern struct {
             folder_path.append("package.json");
 
             const json_src = brk2: {
-                const buf = try bun.sys.File.readFrom(bun.FD.cwd(), folder_path.sliceZ(), allocator).unwrap();
+                const buf = try fun.sys.File.readFrom(fun.FD.cwd(), folder_path.sliceZ(), allocator).unwrap();
                 break :brk2 logger.Source.initPathString(folder_path.slice(), buf);
             };
 
@@ -326,7 +326,7 @@ pub const Scripts = extern struct {
         this: *Package.Scripts,
         log: *logger.Log,
         lockfile: *const Lockfile,
-        folder_path: *bun.AbsPath(.{ .sep = .auto }),
+        folder_path: *fun.AbsPath(.{ .sep = .auto }),
         folder_name: string,
         resolution_tag: Resolution.Tag,
     ) !?Package.Scripts.List {
@@ -341,7 +341,7 @@ pub const Scripts = extern struct {
             defer save.restore();
             folder_path.append("binding.gyp");
 
-            break :brk bun.sys.exists(folder_path.slice());
+            break :brk fun.sys.exists(folder_path.slice());
         } else false;
 
         return this.createList(
@@ -362,21 +362,21 @@ const debug = Output.scoped(.Lockfile, .hidden);
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const JSON = bun.json;
-const Output = bun.Output;
-const assert = bun.assert;
-const logger = bun.logger;
-const strings = bun.strings;
-const Expr = bun.ast.Expr;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const JSON = fun.json;
+const Output = fun.Output;
+const assert = fun.assert;
+const logger = fun.logger;
+const strings = fun.strings;
+const Expr = fun.ast.Expr;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const install = bun.install;
-const Resolution = bun.install.Resolution;
+const install = fun.install;
+const Resolution = fun.install.Resolution;
 const initializeStore = install.initializeStore;
 
 const Lockfile = install.Lockfile;

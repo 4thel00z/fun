@@ -1,4 +1,4 @@
-import { bunEnv, bunExe, isWindows } from "harness";
+import { funEnv, funExe, isWindows } from "harness";
 import { createTest } from "node-harness";
 import { ChildProcess, exec, fork, spawn } from "node:child_process";
 import { tmpdir } from "node:os";
@@ -8,7 +8,7 @@ const { beforeAll, beforeEach, afterAll, describe, expect, it, throws, assert, c
   createTest(import.meta.path);
 const origProcessEnv = process.env;
 beforeEach(() => {
-  process.env = { ...bunEnv };
+  process.env = { ...funEnv };
 });
 afterAll(() => {
   process.env = origProcessEnv;
@@ -196,8 +196,8 @@ describe("ChildProcess spawn bad stdio", () => {
       let cmd =
         target === "sleep"
           ? // The process can exit before returning which breaks tests.
-            ((target = ""), `${bunExe()} -e "setTimeout(() => {}, 100)"`)
-          : `${bunExe()} ${path.join(import.meta.dir, "spawned-child.js")}`;
+            ((target = ""), `${funExe()} -e "setTimeout(() => {}, 100)"`)
+          : `${funExe()} ${path.join(import.meta.dir, "spawned-child.js")}`;
       if (target) cmd += " " + target;
       const child = exec(cmd, options, async (err, stdout, stderr) => {
         try {
@@ -220,7 +220,7 @@ describe("ChildProcess spawn bad stdio", () => {
   });
 
   it.todo("should handle error event of child process", async () => {
-    const error = new Error(`Command failed: bun ${import.meta.dir}/spawned-child.js ERROR`);
+    const error = new Error(`Command failed: fun ${import.meta.dir}/spawned-child.js ERROR`);
     await createChild(
       {},
       (err, stdout, stderr) => {
@@ -290,7 +290,7 @@ describe("child_process cwd", () => {
   }
 
   // TODO: Make sure this isn't important
-  // Currently Bun.spawn will still spawn even though cwd doesn't exist
+  // Currently Fun.spawn will still spawn even though cwd doesn't exist
   // // Assume does-not-exist doesn't exist, expect exitCode=-1 and errno=ENOENT
   // it("should throw an error when given cwd doesn't exist", () => {
   //   testCwd({ cwd: "does-not-exist" }, "undefined", -1).on(
@@ -354,7 +354,7 @@ describe("child_process cwd", () => {
       createDone(1500),
     );
     testCwd(
-      { cwd: Bun.pathToFileURL(tmpdir.path) },
+      { cwd: Fun.pathToFileURL(tmpdir.path) },
       {
         expectPidType: "number",
         expectCode: 0,
@@ -378,7 +378,7 @@ describe("child_process default options", () => {
     process.env.TMPDIR = platformTmpDir;
 
     // fake printenv
-    let child = spawn(bunExe(), ["--print", "process.env"], {});
+    let child = spawn(funExe(), ["--print", "process.env"], {});
     let response = "";
 
     child.stdout.setEncoding("utf8");
@@ -406,15 +406,15 @@ describe("child_process double pipe", () => {
     const mustCallAtLeast = fn => fn;
     const mustCall = fn => fn;
     let fakeGrep, fakeSed, fakeEcho;
-    fakeGrep = spawn(bunExe(), [
+    fakeGrep = spawn(funExe(), [
       "-e",
       "process.stdin.on('data', (data) => { const dataStr = data.toString(); if (dataStr.includes('o')) process.stdout.write(dataStr); });",
     ]);
-    fakeSed = spawn(bunExe(), [
+    fakeSed = spawn(funExe(), [
       "-e",
       "process.stdin.on('data', (data) => { process.stdout.write(data.toString().replace(/o/g, 'O')); });",
     ]);
-    fakeEcho = spawn(bunExe(), ["-e", "console.log('hello');console.log('node');console.log('world');"]);
+    fakeEcho = spawn(funExe(), ["-e", "console.log('hello');console.log('node');console.log('world');"]);
 
     // pipe grep | sed
     fakeGrep.stdout.on(
@@ -521,7 +521,7 @@ describe("fork", () => {
       const { signal } = ac;
       const cp = fork(fixtures.path("child-process-stay-alive-forever.js"), {
         signal,
-        env: bunEnv,
+        env: funEnv,
       });
       cp.on(
         "exit",
@@ -544,7 +544,7 @@ describe("fork", () => {
       const { signal } = ac;
       const cp = fork(fixtures.path("child-process-stay-alive-forever.js"), {
         signal,
-        env: bunEnv,
+        env: funEnv,
       });
       cp.on(
         "exit",
@@ -568,7 +568,7 @@ describe("fork", () => {
       const signal = AbortSignal.abort();
       const cp = fork(fixtures.path("child-process-stay-alive-forever.js"), {
         signal,
-        env: bunEnv,
+        env: funEnv,
       });
       cp.on(
         "exit",
@@ -612,7 +612,7 @@ describe("fork", () => {
       const cp = fork(fixtures.path("child-process-stay-alive-forever.js"), {
         signal,
         killSignal: "SIGKILL",
-        env: bunEnv,
+        env: funEnv,
       });
       cp.on(
         "exit",
@@ -635,7 +635,7 @@ describe("fork", () => {
       const { signal } = ac;
       const cp = fork(fixtures.path("child-process-stay-alive-forever.js"), {
         signal,
-        env: bunEnv,
+        env: funEnv,
       });
       cp.on(
         "exit",
@@ -652,7 +652,7 @@ describe("fork", () => {
     const invalidModulePath = [0, true, undefined, null, [], {}, () => {}, Symbol("t")];
     invalidModulePath.forEach(modulePath => {
       it(`Ensure that first argument \`modulePath\` must be provided and be of type string :: ${String(modulePath)}`, () => {
-        expect(() => fork(modulePath, { env: bunEnv })).toThrow(
+        expect(() => fork(modulePath, { env: funEnv })).toThrow(
           expect.objectContaining({
             code: "ERR_INVALID_ARG_TYPE",
             name: "TypeError",
@@ -688,7 +688,7 @@ describe("fork", () => {
 
         argsLists.forEach(args => {
           const cp = fork(fixtures.path("child-process-echo-options.js"), args, {
-            env: { ...bunEnv, ...expectedEnv },
+            env: { ...funEnv, ...expectedEnv },
           });
 
           cp.on(
@@ -751,7 +751,7 @@ describe("fork", () => {
   });
   describe("fork", () => {
     it.todo("message", done => {
-      // TODO - bun has no `send` method in the process
+      // TODO - fun has no `send` method in the process
       const { mustCall } = createCallCheckCtx(done);
       const args = ["foo", "bar"];
       const n = fork(fixtures.path("child-process-spawn-node.js"), args);

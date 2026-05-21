@@ -128,7 +128,7 @@ void JSCStackTrace::getFramesForCaller(JSC::VM& vm, JSC::CallFrame* callFrame, J
     // Instead we filter out frames up to and including the caller afterwards.
     //
     // Collect without a limit: stackTraceLimit must apply to visible frames
-    // AFTER Bun's post-filter and AFTER caller removal, not to raw frames from
+    // AFTER Fun's post-filter and AFTER caller removal, not to raw frames from
     // JSC. If the caller is deep, capping at stackTraceLimit here would collect
     // only frames that get removed, leaving an empty trace. Stack depth is
     // bounded by native stack size so this walk is still O(actual depth).
@@ -136,7 +136,7 @@ void JSCStackTrace::getFramesForCaller(JSC::VM& vm, JSC::CallFrame* callFrame, J
     vm.interpreter.getStackTrace(owner, rawFrames, 1, std::numeric_limits<size_t>::max());
 
     // JSC's getStackTrace uses StackVisitor::isImplementationVisibilityPrivate
-    // which differs from Bun's helper — post-filter to keep behavior consistent
+    // which differs from Fun's helper — post-filter to keep behavior consistent
     // with new Error() stack formatting.
     stackTrace.reserveInitialCapacity(rawFrames.size());
     for (auto& frame : rawFrames) {
@@ -423,7 +423,7 @@ bool JSCStackFrame::calculateSourcePositions()
         return false;
     }
 
-    auto location = Bun::getAdjustedPositionForBytecode(m_codeBlock, m_bytecodeIndex);
+    auto location = Fun::getAdjustedPositionForBytecode(m_codeBlock, m_bytecodeIndex);
     m_sourcePositions.line = location.line();
     m_sourcePositions.column = location.column();
 
@@ -743,7 +743,7 @@ String functionName(JSC::VM& vm, JSC::JSGlobalObject* lexicalGlobalObject, const
 }
 }
 
-extern "C" void Bun__errorInstance__finalize(void* bunErrorData)
+extern "C" void Bun__errorInstance__finalize(void* funErrorData)
 {
-    UNUSED_PARAM(bunErrorData);
+    UNUSED_PARAM(funErrorData);
 }

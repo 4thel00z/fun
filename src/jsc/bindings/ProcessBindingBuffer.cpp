@@ -3,7 +3,7 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include "JSBuffer.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 #define PROCESS_BINDING_NOT_IMPLEMENTED(str)                                                                                                      \
@@ -14,7 +14,7 @@ using namespace JSC;
             auto throwScope = DECLARE_THROW_SCOPE(vm);                                                                                            \
             auto prelude = "process.binding('buffer')."_s;                                                                                        \
             auto name = #str##_s;                                                                                                                 \
-            auto finale = " is not implemented in Bun. If that breaks something, please file an issue and include a reproducible code sample."_s; \
+            auto finale = " is not implemented in Fun. If that breaks something, please file an issue and include a reproducible code sample."_s; \
             auto message = makeString(prelude, name, finale);                                                                                     \
             throwScope.throwException(lexicalGlobalObject, createError(lexicalGlobalObject, message));                                            \
             return {};                                                                                                                            \
@@ -142,8 +142,8 @@ void ProcessBindingBuffer::finishCreation(JSC::VM& vm)
     Base::finishCreation(vm);
     ASSERT(inherits(info()));
 
-    putDirect(vm, Identifier::fromString(vm, "kMaxLength"_s), jsNumber(Bun::Buffer::kMaxLength), 0);
-    putDirect(vm, Identifier::fromString(vm, "kStringMaxLength"_s), jsNumber(Bun::Buffer::kStringMaxLength), 0);
+    putDirect(vm, Identifier::fromString(vm, "kMaxLength"_s), jsNumber(Fun::Buffer::kMaxLength), 0);
+    putDirect(vm, Identifier::fromString(vm, "kStringMaxLength"_s), jsNumber(Fun::Buffer::kStringMaxLength), 0);
 }
 
 template<typename Visitor>
@@ -156,6 +156,6 @@ void ProcessBindingBuffer::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 
 DEFINE_VISIT_CHILDREN(ProcessBindingBuffer);
 
-} // namespace Bun
+} // namespace Fun
 
 #undef PROCESS_BINDING_NOT_IMPLEMENTED

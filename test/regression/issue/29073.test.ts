@@ -1,9 +1,9 @@
-// https://github.com/oven-sh/bun/issues/29073
+// https://github.com/underdoc-org/fun/issues/29073
 //
 // `node:http2.createServer` fails for h2c (cleartext HTTP/2).
 //
 // Two separate bugs caused strict HTTP/2 peers (curl's nghttp2, Node's
-// http2 client) to reject Bun's server with "callback failure":
+// http2 client) to reject Fun's server with "callback failure":
 //
 //   1. The server's initial SETTINGS frame advertised `ENABLE_PUSH=1`.
 //      RFC 9113 §6.5.2 says any value other than 0 for ENABLE_PUSH sent
@@ -12,9 +12,9 @@
 //   2. `res.end("ok")` wrote an extra empty DATA frame followed by an
 //      empty trailer HEADERS frame. The compat `Http2ServerResponse`
 //      layer sets `waitForTrailers: true` and then unconditionally calls
-//      `sendTrailers({})` — Bun was emitting a zero-length trailer block
+//      `sendTrailers({})` — Fun was emitting a zero-length trailer block
 //      instead of the single empty DATA with END_STREAM that Node sends.
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "node:events";
 import http2 from "node:http2";
 import net from "node:net";
@@ -48,7 +48,7 @@ function parseFrames(buf: Buffer) {
 // half-closes via END_STREAM on the final DATA (or trailer HEADERS) frame.
 // So we can't wait for socket "close"; instead, parse frames as they arrive
 // and resolve as soon as we see the stream's terminating frame. This also
-// catches the bug case where Bun used to emit an empty trailer HEADERS with
+// catches the bug case where Fun used to emit an empty trailer HEADERS with
 // END_STREAM — that path also ends the stream, so the test is driven by the
 // actual wire behaviour rather than a timeout backstop.
 async function rawH2cRequest(port: number) {
@@ -210,7 +210,7 @@ test("ServerHttp2Session.settings forces enablePush=0 mid-connection (#29073)", 
     try {
       session.settings({ enablePush: true });
     } catch {
-      // Node throws on invalid settings; Bun may or may not — either way,
+      // Node throws on invalid settings; Fun may or may not — either way,
       // the wire assertion below is the real guarantee.
     }
   });
@@ -240,7 +240,7 @@ test("ServerHttp2Session.settings forces enablePush=0 mid-connection (#29073)", 
 });
 
 // Exercise the exact client→server path from the issue (curl prior
-// knowledge succeeds, so Node's http2 client should too against Bun).
+// knowledge succeeds, so Node's http2 client should too against Fun).
 test("http2.connect client can read h2c response from http2.createServer (#29073)", async () => {
   const server = http2.createServer((req, res) => {
     res.setHeader("X-Foo", "bar");
@@ -320,7 +320,7 @@ test("http2.createServer responds with 204 without corrupting stream state (#290
   }
 });
 
-// Wire-level check for the above. Bun's own http2.connect client is lenient
+// Wire-level check for the above. Fun's own http2.connect client is lenient
 // about a DATA frame following HEADERS+END_STREAM, so the previous test
 // passes even when the server violates RFC 9113 §5.1. Inspect the raw
 // frames: a 204 must terminate via HEADERS+END_STREAM with NO subsequent

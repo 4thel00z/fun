@@ -7,18 +7,18 @@ const StaticRouteVisitor = @This();
 
 c: *LinkerContext,
 cache: std.AutoArrayHashMapUnmanaged(Index.Int, bool) = .{},
-visited: bun.bit_set.AutoBitSet,
+visited: fun.bit_set.AutoBitSet,
 
 pub fn deinit(this: *StaticRouteVisitor) void {
-    this.cache.deinit(bun.default_allocator);
-    this.visited.deinit(bun.default_allocator);
+    this.cache.deinit(fun.default_allocator);
+    this.visited.deinit(fun.default_allocator);
 }
 
 /// This the quickest, simplest, dumbest way I can think of doing this.
 /// Investigate performance. It can have false negatives (it doesn't properly
 /// handle cycles), but that's okay as it's just used an optimization
 pub fn hasTransitiveUseClient(this: *StaticRouteVisitor, entry_point_source_index: u32) bool {
-    if (bun.Environment.isDebug and bun.env_var.BUN_SSG_DISABLE_STATIC_ROUTE_VISITOR.get()) {
+    if (fun.Environment.isDebug and fun.env_var.FUN_SSG_DISABLE_STATIC_ROUTE_VISITOR.get()) {
         return false;
     }
 
@@ -79,15 +79,15 @@ fn hasTransitiveUseClientImpl(
         break :result false;
     };
 
-    this.cache.put(bun.default_allocator, source_index.get(), result) catch unreachable;
+    this.cache.put(fun.default_allocator, source_index.get(), result) catch unreachable;
 
     return result;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const ImportRecord = bun.bundle_v2.ImportRecord;
-const Index = bun.bundle_v2.Index;
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const UseDirective = bun.bundle_v2.UseDirective;
+const ImportRecord = fun.bundle_v2.ImportRecord;
+const Index = fun.bundle_v2.Index;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const UseDirective = fun.bundle_v2.UseDirective;

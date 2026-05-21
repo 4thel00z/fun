@@ -2,13 +2,13 @@
 #include "JSPrivateKeyObject.h"
 #include "ErrorCode.h"
 #include "CryptoUtil.h"
-#include "BunProcess.h"
+#include "FunProcess.h"
 #include "NodeValidator.h"
 #include "JSBufferEncodingType.h"
 #include <JavaScriptCore/TypedArrayInlines.h>
 #include <JavaScriptCore/JSCJSValueInlines.h>
 
-using namespace Bun;
+using namespace Fun;
 using namespace JSC;
 using namespace WebCore;
 using namespace ncrypto;

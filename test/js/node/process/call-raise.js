@@ -1,4 +1,4 @@
-import { dlopen } from "bun:ffi";
+import { dlopen } from "fun:ffi";
 import { libcPathForDlopen } from "harness";
 
 var lazyRaise;

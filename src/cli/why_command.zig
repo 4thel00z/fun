@@ -94,7 +94,7 @@ pub const WhyCommand = struct {
                     result.version_pattern = version_pattern;
 
                     const sliced = Semver.SlicedString.init(version_pattern, version_pattern);
-                    result.version_query = Semver.Query.parse(bun.default_allocator, version_pattern, sliced) catch null;
+                    result.version_query = Semver.Query.parse(fun.default_allocator, version_pattern, sliced) catch null;
 
                     return result;
                 }
@@ -188,7 +188,7 @@ pub const WhyCommand = struct {
     };
 
     pub fn printUsage() void {
-        Output.prettyln("<r><b>bun why<r> <d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+        Output.prettyln("<r><b>fun why<r> <d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
 
         const usage_text =
             \\Explain why a package is installed
@@ -201,9 +201,9 @@ pub const WhyCommand = struct {
             \\  <cyan>--depth<r> <blue>\<NUM\><r> <d>Maximum depth of the dependency tree to display<r>
             \\
             \\<b>Examples:<r>
-            \\  <d>$<r> <b><green>bun why<r> <blue>react<r>
-            \\  <d>$<r> <b><green>bun why<r> <blue>"@types/*"<r> <cyan>--depth<r> <blue>2<r>
-            \\  <d>$<r> <b><green>bun why<r> <blue>"*-lodash"<r> <cyan>--top<r>
+            \\  <d>$<r> <b><green>fun why<r> <blue>react<r>
+            \\  <d>$<r> <b><green>fun why<r> <blue>"@types/*"<r> <cyan>--depth<r> <blue>2<r>
+            \\  <d>$<r> <b><green>fun why<r> <blue>"*-lodash"<r> <cyan>--top<r>
             \\
         ;
         Output.pretty(usage_text, .{});
@@ -483,10 +483,10 @@ const std = @import("std");
 const PackageID = @import("../install/install.zig").PackageID;
 const PackageManagerCommand = @import("./package_manager_command.zig").PackageManagerCommand;
 
-const bun = @import("bun");
-const Global = bun.Global;
-const Output = bun.Output;
-const Semver = bun.Semver;
-const strings = bun.strings;
-const Command = bun.cli.Command;
-const PackageManager = bun.install.PackageManager;
+const fun = @import("fun");
+const Global = fun.Global;
+const Output = fun.Output;
+const Semver = fun.Semver;
+const strings = fun.strings;
+const Command = fun.cli.Command;
+const PackageManager = fun.install.PackageManager;

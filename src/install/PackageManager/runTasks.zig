@@ -33,7 +33,7 @@ pub fn runTasks(
     var patch_tasks_batch = manager.patch_task_queue.popBatch();
     var patch_tasks_iter = patch_tasks_batch.iterator();
     while (patch_tasks_iter.next()) |ptask| {
-        if (comptime Environment.allow_assert) bun.assert(manager.pendingTaskCount() > 0);
+        if (comptime Environment.allow_assert) fun.assert(manager.pendingTaskCount() > 0);
         manager.decrementPendingTasks();
         defer ptask.deinit();
         try ptask.runFromMainThread(manager, log_level);
@@ -47,7 +47,7 @@ pub fn runTasks(
                         if (ptask.callback.apply.install_context) |*ctx| {
                             var installer: *PackageInstaller = extract_ctx;
                             const path = ctx.path;
-                            ctx.path = std.array_list.Managed(u8).init(bun.default_allocator);
+                            ctx.path = std.array_list.Managed(u8).init(fun.default_allocator);
                             installer.node_modules.path = path;
                             installer.current_tree_id = ctx.tree_id;
                             const pkg_id = ptask.callback.apply.pkg_id;
@@ -80,7 +80,7 @@ pub fn runTasks(
             switch (task.result) {
                 .none => {
                     if (comptime Environment.ci_assert) {
-                        bun.assertWithLocation(false, @src());
+                        fun.assertWithLocation(false, @src());
                     }
                     installer.onTaskComplete(task.entry_id, .success);
                 },
@@ -117,7 +117,7 @@ pub fn runTasks(
                         // .monotonic is okay because we should have already synchronized with the
                         // completed task thread by virtue of popping from the `UnboundedQueue`.
                         const step = installer.store.entries.items(.step)[task.entry_id.get()].load(.monotonic);
-                        bun.assertWithLocation(step == .done, @src());
+                        fun.assertWithLocation(step == .done, @src());
                     }
                     installer.onTaskComplete(task.entry_id, .success);
                 },
@@ -128,7 +128,7 @@ pub fn runTasks(
     var network_tasks_batch = manager.async_network_task_queue.popBatch();
     var network_tasks_iter = network_tasks_batch.iterator();
     while (network_tasks_iter.next()) |task| {
-        if (comptime Environment.allow_assert) bun.assert(manager.pendingTaskCount() > 0);
+        if (comptime Environment.allow_assert) fun.assert(manager.pendingTaskCount() > 0);
         manager.decrementPendingTasks();
         // We cannot free the network task at the end of this scope.
         // It may continue to be referenced in a future task.
@@ -166,7 +166,7 @@ pub fn runTasks(
                                 logger.Loc.Empty,
                                 manager.allocator,
                                 "{s} downloading package manifest <b>{s}<r>. Retry {d}/{d}...",
-                                .{ bun.span(@errorName(err)), name.slice(), task.retried, manager.options.max_retry_count },
+                                .{ fun.span(@errorName(err)), name.slice(), task.retried, manager.options.max_retry_count },
                             ) catch unreachable;
                         }
 
@@ -194,7 +194,7 @@ pub fn runTasks(
                                 manager.allocator,
                                 fmt,
                                 .{ @errorName(err), name.slice() },
-                            ) catch |e| bun.handleOom(e);
+                            ) catch |e| fun.handleOom(e);
                         } else {
                             manager.log.addWarningFmt(
                                 null,
@@ -202,7 +202,7 @@ pub fn runTasks(
                                 manager.allocator,
                                 fmt,
                                 .{ @errorName(err), name.slice() },
-                            ) catch |e| bun.handleOom(e);
+                            ) catch |e| fun.handleOom(e);
                         }
 
                         if (manager.subcommand != .remove) {
@@ -250,7 +250,7 @@ pub fn runTasks(
                             manager.allocator,
                             "<r><red><b>GET<r><red> {s}<d> - {d}<r>",
                             .{ metadata.url, response.status_code },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     } else {
                         manager.log.addWarningFmt(
                             null,
@@ -258,7 +258,7 @@ pub fn runTasks(
                             manager.allocator,
                             "<r><yellow><b>GET<r><yellow> {s}<d> - {d}<r>",
                             .{ metadata.url, response.status_code },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     }
                     if (manager.subcommand != .remove) {
                         for (manager.update_requests) |*request| {
@@ -285,7 +285,7 @@ pub fn runTasks(
                     // The HTTP request was cached
                     if (manifest_req.loaded_manifest) |manifest| {
                         // If we requested extended manifest but we somehow got an abbreviated one, this is a bug
-                        bun.debugAssert(!manifest_req.is_extended_manifest or manifest.pkg.has_extended_manifest);
+                        fun.debugAssert(!manifest_req.is_extended_manifest or manifest.pkg.has_extended_manifest);
 
                         const entry = try manager.manifests.hash_map.getOrPut(manager.allocator, manifest.pkg.name.hash);
                         entry.value_ptr.* = .{ .manifest = manifest };
@@ -334,7 +334,7 @@ pub fn runTasks(
                 // extract Task published by `TarballStream.finish()`
                 // owns its lifetime — so every `.extract` task that
                 // arrives here is taking the buffered path.
-                bun.debugAssert(!task.streaming_committed);
+                fun.debugAssert(!task.streaming_committed);
 
                 if (!has_network_error and task.response.metadata == null) {
                     has_network_error = true;
@@ -363,7 +363,7 @@ pub fn runTasks(
                                 manager.allocator,
                                 "<r><yellow>warn:<r> {s} downloading tarball <b>{s}@{f}<r>. Retrying {d}/{d}...",
                                 .{
-                                    bun.span(@errorName(err)),
+                                    fun.span(@errorName(err)),
                                     extract.name.slice(),
                                     extract.resolution.fmt(manager.lockfile.buffers.string_bytes.items, .auto),
                                     task.retried,
@@ -437,7 +437,7 @@ pub fn runTasks(
                                 extract.name.slice(),
                                 extract.resolution.fmt(manager.lockfile.buffers.string_bytes.items, .auto),
                             },
-                        ) catch |e| bun.handleOom(e);
+                        ) catch |e| fun.handleOom(e);
                     } else {
                         manager.log.addWarningFmt(
                             null,
@@ -449,7 +449,7 @@ pub fn runTasks(
                                 extract.name.slice(),
                                 extract.resolution.fmt(manager.lockfile.buffers.string_bytes.items, .auto),
                             },
-                        ) catch |e| bun.handleOom(e);
+                        ) catch |e| fun.handleOom(e);
                     }
                     if (manager.subcommand != .remove) {
                         for (manager.update_requests) |*request| {
@@ -527,7 +527,7 @@ pub fn runTasks(
                                 metadata.url,
                                 response.status_code,
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     } else {
                         manager.log.addWarningFmt(
                             null,
@@ -538,7 +538,7 @@ pub fn runTasks(
                                 metadata.url,
                                 response.status_code,
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     }
                     if (manager.subcommand != .remove) {
                         for (manager.update_requests) |*request| {
@@ -582,7 +582,7 @@ pub fn runTasks(
     var resolve_tasks_batch = manager.resolve_tasks.popBatch();
     var resolve_tasks_iter = resolve_tasks_batch.iterator();
     while (resolve_tasks_iter.next()) |task| {
-        if (comptime Environment.allow_assert) bun.assert(manager.pendingTaskCount() > 0);
+        if (comptime Environment.allow_assert) fun.assert(manager.pendingTaskCount() > 0);
         defer manager.preallocated_resolve_tasks.put(task);
         manager.decrementPendingTasks();
 
@@ -618,7 +618,7 @@ pub fn runTasks(
                                 @errorName(err),
                                 name.slice(),
                             },
-                        ) catch |e| bun.handleOom(e);
+                        ) catch |e| fun.handleOom(e);
                     }
 
                     continue;
@@ -712,7 +712,7 @@ pub fn runTasks(
                             @errorName(err),
                             alias,
                         },
-                    ) catch |e| bun.handleOom(e);
+                    ) catch |e| fun.handleOom(e);
 
                     // Void-callback fallback (resolve phase): drain the
                     // `task_queue` entry too so a later install-phase
@@ -726,7 +726,7 @@ pub fn runTasks(
                 }
 
                 manager.extracted_count += 1;
-                bun.analytics.Features.extracted_packages += 1;
+                fun.analytics.Features.extracted_packages += 1;
 
                 if (comptime @TypeOf(callbacks.onExtract) != void) {
                     switch (Ctx) {
@@ -893,7 +893,7 @@ pub fn runTasks(
                                 @errorName(err),
                                 name,
                             },
-                        ) catch |e| bun.handleOom(e);
+                        ) catch |e| fun.handleOom(e);
                     }
                     continue;
                 }
@@ -977,7 +977,7 @@ pub fn runTasks(
                                 @errorName(err),
                                 alias.slice(),
                             },
-                        ) catch |e| bun.handleOom(e);
+                        ) catch |e| fun.handleOom(e);
                     }
 
                     continue;
@@ -1183,7 +1183,7 @@ pub fn allocGitHubURL(this: *const PackageManager, repository: *const Repository
 }
 
 pub fn hasCreatedNetworkTask(this: *PackageManager, task_id: Task.Id, is_required: bool) bool {
-    const gpe = bun.handleOom(this.network_dedupe_map.getOrPut(task_id));
+    const gpe = fun.handleOom(this.network_dedupe_map.getOrPut(task_id));
 
     // if there's an existing network task that is optional, we want to make it non-optional if this one would be required
     gpe.value_ptr.is_required = if (!gpe.found_existing)
@@ -1237,7 +1237,7 @@ pub fn generateNetworkTaskForTarball(
                 this.lockfile.str(&package.name),
                 *FileSystem.FilenameStore,
                 FileSystem.FilenameStore.instance,
-            ) catch |err| bun.handleOom(err),
+            ) catch |err| fun.handleOom(err),
             .resolution = package.resolution,
             .cache_dir = this.getCacheDirectory(),
             .temp_dir = this.getTemporaryDirectory().handle,
@@ -1247,7 +1247,7 @@ pub fn generateNetworkTaskForTarball(
                 url,
                 *FileSystem.FilenameStore,
                 FileSystem.FilenameStore.instance,
-            ) catch |err| bun.handleOom(err),
+            ) catch |err| fun.handleOom(err),
         },
         scope,
         authorization,
@@ -1270,38 +1270,38 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const ThreadPool = bun.ThreadPool;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const ThreadPool = fun.ThreadPool;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const HTTP = bun.http;
+const HTTP = fun.http;
 const AsyncHTTP = HTTP.AsyncHTTP;
 
-const DependencyID = bun.install.DependencyID;
-const ExtractTarball = bun.install.ExtractTarball;
-const Features = bun.install.Features;
-const NetworkTask = bun.install.NetworkTask;
-const Npm = bun.install.Npm;
-const PackageID = bun.install.PackageID;
-const PackageManifestError = bun.install.PackageManifestError;
-const PatchTask = bun.install.PatchTask;
-const Repository = bun.install.Repository;
-const Store = bun.install.Store;
-const TarballStream = bun.install.TarballStream;
-const Task = bun.install.Task;
-const invalid_package_id = bun.install.invalid_package_id;
+const DependencyID = fun.install.DependencyID;
+const ExtractTarball = fun.install.ExtractTarball;
+const Features = fun.install.Features;
+const NetworkTask = fun.install.NetworkTask;
+const Npm = fun.install.Npm;
+const PackageID = fun.install.PackageID;
+const PackageManifestError = fun.install.PackageManifestError;
+const PatchTask = fun.install.PatchTask;
+const Repository = fun.install.Repository;
+const Store = fun.install.Store;
+const TarballStream = fun.install.TarballStream;
+const Task = fun.install.Task;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const Options = PackageManager.Options;
 const PackageInstaller = PackageManager.PackageInstaller;
 const ProgressStrings = PackageManager.ProgressStrings;

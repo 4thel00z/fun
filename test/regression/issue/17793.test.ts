@@ -1,4 +1,4 @@
-// Regression test for https://github.com/oven-sh/bun/issues/17793
+// Regression test for https://github.com/underdoc-org/fun/issues/17793
 //
 // Bug: In handleResponseMetadata (src/http.zig), the RFC 9112 §6.3 logic
 // setting content_length=0 for 304 responses was inside `if (!proxy_tunneling)`,
@@ -7,10 +7,10 @@
 // This test is fully self-contained (no external proxy or internet needed):
 // - Mock HTTPS registry (raw TLS server for full control over response headers)
 // - Mock CONNECT proxy
-// - Runs `bun install` twice: first populates cache, second triggers 304
+// - Runs `fun install` twice: first populates cache, second triggers 304
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir, tls as tlsCert } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir, tls as tlsCert } from "harness";
 import { once } from "node:events";
 import { readdir, rm } from "node:fs/promises";
 import net from "node:net";
@@ -49,22 +49,22 @@ function createMinimalTarball(pkgJson: object): Buffer {
   const dataBlocks = Buffer.alloc(Math.ceil(content.length / 512) * 512, 0);
   content.copy(dataBlocks);
 
-  return Buffer.from(Bun.gzipSync(Buffer.concat([header, dataBlocks, Buffer.alloc(1024, 0)])));
+  return Buffer.from(Fun.gzipSync(Buffer.concat([header, dataBlocks, Buffer.alloc(1024, 0)])));
 }
 
-test("bun install with proxy does not hang on 304 cached response", async () => {
+test("fun install with proxy does not hang on 304 cached response", async () => {
   const pkgName = "test-pkg-304";
   const pkgVersion = "1.0.0";
   const etag = '"test-etag-304-regression"';
   const requests: Array<{ path: string; ifNoneMatch: boolean }> = [];
 
   const tarball = createMinimalTarball({ name: pkgName, version: pkgVersion });
-  const shasum = new Bun.CryptoHasher("sha1").update(tarball).digest("hex");
-  const integrity = "sha512-" + new Bun.CryptoHasher("sha512").update(tarball).digest("base64");
+  const shasum = new Fun.CryptoHasher("sha1").update(tarball).digest("hex");
+  const integrity = "sha512-" + new Fun.CryptoHasher("sha512").update(tarball).digest("base64");
 
   // --- Mock HTTPS registry (raw TLS for full control over headers) ---
-  // Using raw tls.createServer instead of Bun.serve because we need to send
-  // 304 responses WITHOUT a Content-Length header. Bun.serve may auto-add it.
+  // Using raw tls.createServer instead of Fun.serve because we need to send
+  // 304 responses WITHOUT a Content-Length header. Fun.serve may auto-add it.
   let registryPort = 0;
 
   const registryServer = tls.createServer({ key: tlsCert.key, cert: tlsCert.cert }, (socket: tls.TLSSocket) => {
@@ -159,7 +159,7 @@ test("bun install with proxy does not hang on 304 cached response", async () => 
   const proxyPort = (proxyServer.address() as net.AddressInfo).port;
 
   // --- Test project ---
-  // Use a version range (^) so bun revalidates the manifest on the second install.
+  // Use a version range (^) so fun revalidates the manifest on the second install.
   // Exact versions bypass revalidation even when the cache is expired.
   using dir = tempDir("proxy-304-regression", {
     "package.json": JSON.stringify({
@@ -167,11 +167,11 @@ test("bun install with proxy does not hang on 304 cached response", async () => 
       version: "1.0.0",
       dependencies: { [pkgName]: `^${pkgVersion}` },
     }),
-    "bunfig.toml": `[install]\nregistry = "https://localhost:${registryPort}/"\n`,
+    "funfig.toml": `[install]\nregistry = "https://localhost:${registryPort}/"\n`,
   });
 
   const installEnv = {
-    ...bunEnv,
+    ...funEnv,
     HTTPS_PROXY: `http://localhost:${proxyPort}`,
     HTTP_PROXY: `http://localhost:${proxyPort}`,
     https_proxy: `http://localhost:${proxyPort}`,
@@ -179,12 +179,12 @@ test("bun install with proxy does not hang on 304 cached response", async () => 
     NO_PROXY: "",
     no_proxy: "",
     NODE_TLS_REJECT_UNAUTHORIZED: "0",
-    BUN_INSTALL_CACHE_DIR: join(String(dir), ".bun-cache"),
+    FUN_INSTALL_CACHE_DIR: join(String(dir), ".fun-cache"),
   };
 
   const spawnInstall = (extraArgs: string[] = []) =>
-    Bun.spawn({
-      cmd: [bunExe(), "install", ...extraArgs],
+    Fun.spawn({
+      cmd: [funExe(), "install", ...extraArgs],
       cwd: String(dir),
       env: installEnv,
       stdout: "pipe",
@@ -207,9 +207,9 @@ test("bun install with proxy does not hang on 304 cached response", async () => 
     }
 
     // Wait for the async manifest cache save to complete.
-    // bun saves manifests asynchronously; without this, the second install
+    // fun saves manifests asynchronously; without this, the second install
     // may not find the cached manifest and skip the If-None-Match path.
-    const cacheDir = join(String(dir), ".bun-cache");
+    const cacheDir = join(String(dir), ".fun-cache");
     let cachePopulated = false;
     for (let i = 0; i < 40; i++) {
       const entries = await readdir(cacheDir).catch(() => []);
@@ -217,15 +217,15 @@ test("bun install with proxy does not hang on 304 cached response", async () => 
         cachePopulated = true;
         break;
       }
-      await Bun.sleep(50);
+      await Fun.sleep(50);
     }
     expect(cachePopulated).toBe(true);
 
     // Clear local artifacts but keep global manifest cache
     await rm(join(String(dir), "node_modules"), { recursive: true, force: true });
-    await rm(join(String(dir), "bun.lock"), { force: true });
+    await rm(join(String(dir), "fun.lock"), { force: true });
 
-    // Second install with --force: bypasses manifest cache freshness check, so bun
+    // Second install with --force: bypasses manifest cache freshness check, so fun
     // revalidates with If-None-Match → 304 through CONNECT tunnel.
     // Without the fix, content_length stays null for 304 responses through proxy tunnels,
     // causing the connection to hang in continue_streaming.

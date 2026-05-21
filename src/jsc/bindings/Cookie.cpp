@@ -316,7 +316,7 @@ JSC::JSValue Cookie::toJSON(JSC::VM& vm, JSC::JSGlobalObject* globalObject) cons
     auto* object = JSC::constructEmptyObject(vm, globalObject->nullPrototypeObjectStructure());
     RETURN_IF_EXCEPTION(scope, JSC::jsNull());
 
-    auto& builtinNames = Bun::builtinNames(vm);
+    auto& builtinNames = Fun::builtinNames(vm);
 
     object->putDirect(vm, vm.propertyNames->name, JSC::jsString(vm, m_name));
     object->putDirect(vm, vm.propertyNames->value, JSC::jsString(vm, m_value));

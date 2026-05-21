@@ -1,6 +1,6 @@
 #pragma once
 
-// Wire protocol between the Bun process (parent, JS thread, usockets) and
+// Wire protocol between the Fun process (parent, JS thread, usockets) and
 // the WebView host process (child, CFRunLoopRun on thread 0). Length-prefixed
 // frames over a SOCK_STREAM socketpair. No JSON, no alignment padding.
 //
@@ -14,7 +14,7 @@
 
 typedef struct __CFFileDescriptor* CFFileDescriptorRef;
 
-namespace Bun::WebViewProto {
+namespace Fun::WebViewProto {
 
 #pragma pack(push, 1)
 
@@ -340,4 +340,4 @@ private:
 
 FrameWriter* hostWriter();
 
-} // namespace Bun::WebViewProto
+} // namespace Fun::WebViewProto

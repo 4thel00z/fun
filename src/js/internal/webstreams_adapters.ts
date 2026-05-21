@@ -30,7 +30,7 @@ const SafePromisePrototypeFinally = $Promise.prototype.finally;
 const constants_zlib = $processBindingConstants.zlib;
 
 function tryTransferToNativeReadable(stream, options) {
-  const ptr = stream.$bunNativePtr;
+  const ptr = stream.$funNativePtr;
   if (!ptr || ptr === -1) {
     return undefined;
   }

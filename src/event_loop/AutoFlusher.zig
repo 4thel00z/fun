@@ -11,16 +11,16 @@ pub fn unregisterDeferredMicrotaskWithType(comptime Type: type, this: *Type, vm:
 }
 
 pub fn unregisterDeferredMicrotaskWithTypeUnchecked(comptime Type: type, this: *Type, vm: *jsc.VirtualMachine) void {
-    bun.assert(this.auto_flusher.registered);
-    bun.assert(vm.eventLoop().deferred_tasks.unregisterTask(this));
+    fun.assert(this.auto_flusher.registered);
+    fun.assert(vm.eventLoop().deferred_tasks.unregisterTask(this));
     this.auto_flusher.registered = false;
 }
 
 pub fn registerDeferredMicrotaskWithTypeUnchecked(comptime Type: type, this: *Type, vm: *jsc.VirtualMachine) void {
-    bun.assert(!this.auto_flusher.registered);
+    fun.assert(!this.auto_flusher.registered);
     this.auto_flusher.registered = true;
-    bun.assert(!vm.eventLoop().deferred_tasks.postTask(this, @ptrCast(&Type.onAutoFlush)));
+    fun.assert(!vm.eventLoop().deferred_tasks.postTask(this, @ptrCast(&Type.onAutoFlush)));
 }
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

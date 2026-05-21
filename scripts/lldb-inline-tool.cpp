@@ -109,7 +109,7 @@ bool logpointCallback(void *baton, SBProcess &process, SBThread &thread, SBBreak
 std::vector<std::string> getSourceFiles() {
     std::vector<std::string> files;
 
-    FILE* pipe = popen("bun scripts/glob-sources.ts --all", "r");
+    FILE* pipe = popen("fun scripts/glob-sources.ts --all", "r");
     if (!pipe) return files;
 
     char buffer[4096];

@@ -1,5 +1,7 @@
-#!/usr/bin/env bun
-// usage: bun scripts/gamble.ts <number of attempts> <timeout in seconds> <command>
+#!/usr/bin/env fun
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
+// usage: fun scripts/gamble.ts <number of attempts> <timeout in seconds> <command>
 
 import assert from "node:assert";
 
@@ -51,7 +53,7 @@ function report() {
 process.on("SIGINT", report);
 
 for (let i = 0; i < attempts; i++) {
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     cmd: argv,
     timeout: 1000 * timeout,
     stdin: null,

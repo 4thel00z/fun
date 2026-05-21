@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { MessageChannel, Worker } from "worker_threads";
 
 test("issue #22635 - MessagePort communication fails after transfer to worker", async () => {

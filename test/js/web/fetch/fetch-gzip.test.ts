@@ -1,5 +1,5 @@
-import { Socket } from "bun";
-import { beforeAll, expect, it } from "bun:test";
+import { Socket } from "fun";
+import { beforeAll, expect, it } from "fun:test";
 import { gcTick } from "harness";
 import path from "path";
 
@@ -7,11 +7,11 @@ const gzipped = path.join(import.meta.dir, "fixture.html.gz");
 const html = path.join(import.meta.dir, "fixture.html");
 let htmlText: string;
 beforeAll(async () => {
-  htmlText = (await Bun.file(html).text()).replace(/\r\n/g, "\n");
+  htmlText = (await Fun.file(html).text()).replace(/\r\n/g, "\n");
 });
 
 it("fetch() with a buffered gzip response works (one chunk)", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
 
     async fetch(req) {
@@ -40,12 +40,12 @@ it("fetch() with a buffered gzip response works (one chunk)", async () => {
 });
 
 it("fetch() with a redirect that returns a buffered gzip response works (one chunk)", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
 
     async fetch(req) {
       if (req.url.endsWith("/redirect"))
-        return new Response(await Bun.file(gzipped).arrayBuffer(), {
+        return new Response(await Fun.file(gzipped).arrayBuffer(), {
           headers: {
             "Content-Encoding": "gzip",
             "Content-Type": "text/html; charset=utf-8",
@@ -63,12 +63,12 @@ it("fetch() with a redirect that returns a buffered gzip response works (one chu
 });
 
 it("fetch() with a protocol-relative redirect that returns a buffered gzip response works (one chunk)", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
 
     async fetch(req, server) {
       if (req.url.endsWith("/redirect"))
-        return new Response(await Bun.file(gzipped).arrayBuffer(), {
+        return new Response(await Fun.file(gzipped).arrayBuffer(), {
           headers: {
             "Content-Encoding": "gzip",
             "Content-Type": "text/html; charset=utf-8",
@@ -89,7 +89,7 @@ it("fetch() with a protocol-relative redirect that returns a buffered gzip respo
 });
 
 it("fetch() with a gzip response works (one chunk, streamed, with a delay)", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
 
     fetch(req) {
@@ -99,7 +99,7 @@ it("fetch() with a gzip response works (one chunk, streamed, with a delay)", asy
           async pull(controller) {
             await 2;
 
-            const buffer = await Bun.file(import.meta.dir + "/fixture.html.gz").arrayBuffer();
+            const buffer = await Fun.file(import.meta.dir + "/fixture.html.gz").arrayBuffer();
             controller.write(buffer);
             controller.close();
           },
@@ -121,11 +121,11 @@ it("fetch() with a gzip response works (one chunk, streamed, with a delay)", asy
 });
 
 it("fetch() with a gzip response works (multiple chunks, TCP server)", async done => {
-  const compressed = await Bun.file(gzipped).arrayBuffer();
+  const compressed = await Fun.file(gzipped).arrayBuffer();
   var socketToClose!: Socket;
   let pending,
     pendingChunks = [];
-  const server = Bun.listen({
+  const server = Fun.listen({
     hostname: "localhost",
     port: 0,
     socket: {

@@ -1,13 +1,13 @@
 ---
 title: "Node.js Compatibility"
-description: "Bun's compatibility status with Node.js APIs, modules, and globals"
+description: "Fun's compatibility status with Node.js APIs, modules, and globals"
 ---
 
-Every day, Bun gets closer to 100% Node.js API compatibility. Today, popular frameworks like Next.js, Express, and millions of `npm` packages intended for Node work with Bun. To ensure compatibility, we run thousands of tests from Node.js' test suite before every release of Bun.
+Every day, Fun gets closer to 100% Node.js API compatibility. Today, popular frameworks like Next.js, Express, and millions of `npm` packages intended for Node work with Fun. To ensure compatibility, we run thousands of tests from Node.js' test suite before every release of Fun.
 
-**If a package works in Node.js but doesn't work in Bun, we consider it a bug in Bun.** Please [open an issue](https://bun.com/issues) and we'll fix it.
+**If a package works in Node.js but doesn't work in Fun, we consider it a bug in Fun.** Please [open an issue](https://fun.dev/issues) and we'll fix it.
 
-This page is updated regularly to reflect compatibility status of the latest version of Bun. The information below reflects Bun's compatibility with _Node.js v23_.
+This page is updated regularly to reflect compatibility status of the latest version of Fun. The information below reflects Fun's compatibility with _Node.js v23_.
 
 ## Built-in Node.js modules
 
@@ -101,7 +101,7 @@ This page is updated regularly to reflect compatibility status of the latest ver
 
 ### [`node:child_process`](https://nodejs.org/api/child_process.html)
 
-🟡 Missing `proc.gid` `proc.uid`. `Stream` class not exported. IPC cannot send socket handles. Node.js ↔ Bun IPC can be used with JSON serialization.
+🟡 Missing `proc.gid` `proc.uid`. `Stream` class not exported. IPC cannot send socket handles. Node.js ↔ Fun IPC can be used with JSON serialization.
 
 ### [`node:cluster`](https://nodejs.org/api/cluster.html)
 
@@ -121,7 +121,7 @@ This page is updated regularly to reflect compatibility status of the latest ver
 
 ### [`node:module`](https://nodejs.org/api/module.html)
 
-🟡 Missing `syncBuiltinESMExports`, `Module#load()`. Overriding `require.cache` is supported for ESM & CJS modules. `module._extensions`, `module._pathCache`, `module._cache` are no-ops. `module.register` is not implemented and we recommend using a [`Bun.plugin`](/runtime/plugins) in the meantime.
+🟡 Missing `syncBuiltinESMExports`, `Module#load()`. Overriding `require.cache` is supported for ESM & CJS modules. `module._extensions`, `module._pathCache`, `module._cache` are no-ops. `module.register` is not implemented and we recommend using a [`Fun.plugin`](/runtime/plugins) in the meantime.
 
 ### [`node:net`](https://nodejs.org/api/net.html)
 
@@ -149,7 +149,7 @@ This page is updated regularly to reflect compatibility status of the latest ver
 
 ### [`node:v8`](https://nodejs.org/api/v8.html)
 
-🟡 `writeHeapSnapshot` and `getHeapSnapshot` are implemented. `serialize` and `deserialize` use JavaScriptCore's wire format instead of V8's. Other methods are not implemented. For profiling, use [`bun:jsc`](/project/benchmarking#javascript-heap-stats) instead.
+🟡 `writeHeapSnapshot` and `getHeapSnapshot` are implemented. `serialize` and `deserialize` use JavaScriptCore's wire format instead of V8's. Other methods are not implemented. For profiling, use [`fun:jsc`](/project/benchmarking#javascript-heap-stats) instead.
 
 ### [`node:vm`](https://nodejs.org/api/vm.html)
 
@@ -177,7 +177,7 @@ This page is updated regularly to reflect compatibility status of the latest ver
 
 ### [`node:test`](https://nodejs.org/api/test.html)
 
-🟡 Partly implemented. Missing mocks, snapshots, timers. Use [`bun:test`](/test) instead.
+🟡 Partly implemented. Missing mocks, snapshots, timers. Use [`fun:test`](/test) instead.
 
 ### [`node:trace_events`](https://nodejs.org/api/tracing.html)
 
@@ -185,7 +185,7 @@ This page is updated regularly to reflect compatibility status of the latest ver
 
 ## Node.js globals
 
-The table below lists all globals implemented by Node.js and Bun's current compatibility status.
+The table below lists all globals implemented by Node.js and Fun's current compatibility status.
 
 ### [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
 

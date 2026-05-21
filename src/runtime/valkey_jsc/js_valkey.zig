@@ -7,7 +7,7 @@ pub const SubscriptionCtx = struct {
 
     const ParentJS = JSValkeyClient.js;
 
-    pub fn init(valkey_parent: *JSValkeyClient) bun.JSError!Self {
+    pub fn init(valkey_parent: *JSValkeyClient) fun.JSError!Self {
         const callback_map = jsc.JSMap.create(valkey_parent.globalObject);
         const parent_this = valkey_parent.this_value.tryGet() orelse unreachable;
 
@@ -33,7 +33,7 @@ pub const SubscriptionCtx = struct {
     }
 
     /// Get the total number of channels that this subscription context is subscribed to.
-    pub fn channelsSubscribedToCount(this: *Self, globalObject: *jsc.JSGlobalObject) bun.JSError!u32 {
+    pub fn channelsSubscribedToCount(this: *Self, globalObject: *jsc.JSGlobalObject) fun.JSError!u32 {
         const count = try this.subscriptionCallbackMap().size(globalObject);
 
         return count;
@@ -41,7 +41,7 @@ pub const SubscriptionCtx = struct {
 
     /// Test whether this context has any subscriptions. It is mandatory to
     /// guard deinit with this function.
-    pub fn hasSubscriptions(this: *Self, globalObject: *jsc.JSGlobalObject) bun.JSError!bool {
+    pub fn hasSubscriptions(this: *Self, globalObject: *jsc.JSGlobalObject) fun.JSError!bool {
         return (try this.channelsSubscribedToCount(globalObject)) > 0;
     }
 
@@ -49,12 +49,12 @@ pub const SubscriptionCtx = struct {
         this: *Self,
         globalObject: *jsc.JSGlobalObject,
         channelName: JSValue,
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         const map = this.subscriptionCallbackMap();
         _ = try map.remove(globalObject, channelName);
     }
 
-    pub fn clearAllReceiveHandlers(this: *Self, globalObject: *jsc.JSGlobalObject) bun.JSError!void {
+    pub fn clearAllReceiveHandlers(this: *Self, globalObject: *jsc.JSGlobalObject) fun.JSError!void {
         try this.subscriptionCallbackMap().clear(globalObject);
     }
 
@@ -81,8 +81,8 @@ pub const SubscriptionCtx = struct {
         // Existing is guaranteed to be an array of callbacks.
         // This check is necessary because crossing between Zig and C++ is necessary because Zig doesn't know that C++
         // is side-effect-free.
-        if (comptime bun.Environment.isDebug) {
-            bun.assert(existing.isArray());
+        if (comptime fun.Environment.isDebug) {
+            fun.assert(existing.isArray());
         }
 
         // TODO(markovejnovic): I can't find a better way to do this... I generate a new array,
@@ -121,7 +121,7 @@ pub const SubscriptionCtx = struct {
         globalObject: *jsc.JSGlobalObject,
         channelName: JSValue,
         callback: JSValue,
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         defer this.parent().onNewSubscriptionCallbackInsert();
         const map = this.subscriptionCallbackMap();
 
@@ -153,7 +153,7 @@ pub const SubscriptionCtx = struct {
         try map.set(globalObject, channelName, handlers_array);
     }
 
-    pub fn getCallbacks(this: *Self, globalObject: *jsc.JSGlobalObject, channelName: JSValue) bun.JSError!?JSValue {
+    pub fn getCallbacks(this: *Self, globalObject: *jsc.JSGlobalObject, channelName: JSValue) fun.JSError!?JSValue {
         const result = try this.subscriptionCallbackMap().get(globalObject, channelName);
         if (result == .js_undefined) {
             return null;
@@ -169,14 +169,14 @@ pub const SubscriptionCtx = struct {
         globalObject: *jsc.JSGlobalObject,
         channelName: JSValue,
         args: []const JSValue,
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         const callbacks = try this.getCallbacks(globalObject, channelName) orelse {
             debug("No callbacks found for channel {f}", .{channelName.asString().getZigString(globalObject)});
             return;
         };
 
-        if (comptime bun.Environment.isDebug) {
-            bun.assert(callbacks.isArray());
+        if (comptime fun.Environment.isDebug) {
+            fun.assert(callbacks.isArray());
         }
 
         const vm = jsc.VirtualMachine.get();
@@ -191,8 +191,8 @@ pub const SubscriptionCtx = struct {
         // If callbacks is an array, iterate and call each one
         var iter = try callbacks.arrayIterator(globalObject);
         while (try iter.next()) |callback| {
-            if (comptime bun.Environment.isDebug) {
-                bun.assert(callback.isCallable());
+            if (comptime fun.Environment.isDebug) {
+                fun.assert(callback.isCallable());
             }
 
             event_loop.runCallback(callback, globalObject, .js_undefined, args);
@@ -200,7 +200,7 @@ pub const SubscriptionCtx = struct {
     }
 
     /// Return whether the subscription context is ready to be deleted by the JS garbage collector.
-    pub fn isDeletable(this: *Self, global_object: *jsc.JSGlobalObject) bun.JSError!bool {
+    pub fn isDeletable(this: *Self, global_object: *jsc.JSGlobalObject) fun.JSError!bool {
         // The user may request .close(), in which case we can dispose of the subscription object. If that is the case,
         // finalized will be true. Otherwise, we should treat the object as disposable if there are no active
         // subscriptions.
@@ -208,8 +208,8 @@ pub const SubscriptionCtx = struct {
     }
 
     pub fn deinit(this: *Self, global_object: *jsc.JSGlobalObject) void {
-        if (comptime bun.Environment.isDebug) {
-            bun.debugAssert(this.isDeletable(this.parent().globalObject) catch unreachable);
+        if (comptime fun.Environment.isDebug) {
+            fun.debugAssert(this.isDeletable(this.parent().globalObject) catch unreachable);
         }
 
         if (this.parent().this_value.tryGet()) |parent_this| {
@@ -223,7 +223,7 @@ pub const JSValkeyClient = struct {
     client: valkey.ValkeyClient,
     globalObject: *jsc.JSGlobalObject,
     this_value: jsc.JSRef = jsc.JSRef.empty(),
-    poll_ref: bun.Async.KeepAlive = .{},
+    poll_ref: fun.Async.KeepAlive = .{},
 
     _subscription_ctx: SubscriptionCtx,
     /// `us_ssl_ctx_t` for `tls: { …custom CA… }`. `tls: true` borrows
@@ -245,30 +245,30 @@ pub const JSValkeyClient = struct {
     pub const fromJS = js.fromJS;
     pub const fromJSDirect = js.fromJSDirect;
 
-    const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+    const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     // Factory function to create a new Valkey client from JS
-    pub fn constructor(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, js_this: JSValue) bun.JSError!*JSValkeyClient {
+    pub fn constructor(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, js_this: JSValue) fun.JSError!*JSValkeyClient {
         return try create(globalObject, callframe.arguments(), js_this);
     }
 
     /// Create a Valkey client that does not have an associated JS object nor a SubscriptionCtx.
     ///
     /// This whole client needs a refactor.
-    pub fn createNoJsNoPubsub(globalObject: *jsc.JSGlobalObject, arguments: []const JSValue) bun.JSError!*JSValkeyClient {
-        const this_allocator = bun.default_allocator;
+    pub fn createNoJsNoPubsub(globalObject: *jsc.JSGlobalObject, arguments: []const JSValue) fun.JSError!*JSValkeyClient {
+        const this_allocator = fun.default_allocator;
 
-        const vm = globalObject.bunVM();
+        const vm = globalObject.funVM();
 
         const url_str = if (arguments.len >= 1 and !arguments[0].isUndefinedOrNull())
-            try arguments[0].toBunString(globalObject)
+            try arguments[0].toFunString(globalObject)
         else if (vm.transpiler.env.get("REDIS_URL") orelse vm.transpiler.env.get("VALKEY_URL")) |url|
-            bun.String.init(url)
+            fun.String.init(url)
         else
-            bun.String.static("valkey://localhost:6379");
+            fun.String.static("valkey://localhost:6379");
         defer url_str.deref();
         var fallback_url_buf: [2048]u8 = undefined;
 
@@ -288,7 +288,7 @@ pub const JSValkeyClient = struct {
                 return globalObject.throwInvalidArguments("Invalid URL format", .{});
             }
 
-            if (bun.strings.contains(url_byte_slice, "://")) {
+            if (fun.strings.contains(url_byte_slice, "://")) {
                 break :get_url URL.fromString(url_str) orelse {
                     return globalObject.throwInvalidArguments("Invalid URL format", .{});
                 };
@@ -397,7 +397,7 @@ pub const JSValkeyClient = struct {
         errdefer if (connection_strings.len != 0) this_allocator.free(connection_strings);
 
         if (username_utf8.slice().len > 0 or password_utf8.slice().len > 0 or hostname_slice.len > 0) {
-            var b = bun.StringBuilder{};
+            var b = fun.StringBuilder{};
             b.count(username_utf8.slice());
             b.count(password_utf8.slice());
             b.count(hostname_slice);
@@ -415,7 +415,7 @@ pub const JSValkeyClient = struct {
         else
             0;
 
-        bun.analytics.Features.valkey += 1;
+        fun.analytics.Features.valkey += 1;
 
         return JSValkeyClient.new(.{
             .ref_count = .init(),
@@ -461,7 +461,7 @@ pub const JSValkeyClient = struct {
         });
     }
 
-    pub fn create(globalObject: *jsc.JSGlobalObject, arguments: []const JSValue, js_this: JSValue) bun.JSError!*JSValkeyClient {
+    pub fn create(globalObject: *jsc.JSGlobalObject, arguments: []const JSValue, js_this: JSValue) fun.JSError!*JSValkeyClient {
         var new_client = try JSValkeyClient.createNoJsNoPubsub(globalObject, arguments);
 
         // Initially, we only need to hold a weak reference to the JS object.
@@ -480,8 +480,8 @@ pub const JSValkeyClient = struct {
     pub fn cloneWithoutConnecting(
         this: *const JSValkeyClient,
         globalObject: *jsc.JSGlobalObject,
-    ) bun.OOM!*JSValkeyClient {
-        const vm = globalObject.bunVM();
+    ) fun.OOM!*JSValkeyClient {
+        const vm = globalObject.funVM();
 
         // Make a copy of connection_strings to avoid double-free
         const connection_strings_copy = try this.client.allocator.dupe(u8, this.client.connection_strings);
@@ -490,10 +490,10 @@ pub const JSValkeyClient = struct {
         // within the connection_strings buffer.
         const base_ptr = this.client.connection_strings.ptr;
         const new_base = connection_strings_copy.ptr;
-        const username = bun.memory.rebaseSlice(this.client.username, base_ptr, new_base);
-        const password = bun.memory.rebaseSlice(this.client.password, base_ptr, new_base);
+        const username = fun.memory.rebaseSlice(this.client.username, base_ptr, new_base);
+        const password = fun.memory.rebaseSlice(this.client.password, base_ptr, new_base);
         const orig_hostname = this.client.address.hostname();
-        const hostname = bun.memory.rebaseSlice(orig_hostname, base_ptr, new_base);
+        const hostname = fun.memory.rebaseSlice(orig_hostname, base_ptr, new_base);
         const new_alloc = this.client.allocator;
         // TODO: we could ref count it instead of cloning it
         const tls: valkey.TLS = this.client.tls.clone();
@@ -559,7 +559,7 @@ pub const JSValkeyClient = struct {
 
     pub fn addSubscription(this: *JSValkeyClient) void {
         debug("addSubscription: entering, current subscriber state: {}", .{this._subscription_ctx.is_subscriber});
-        bun.debugAssert(this.client.status == .connected);
+        fun.debugAssert(this.client.status == .connected);
         this.ref();
         defer this.deref();
 
@@ -592,7 +592,7 @@ pub const JSValkeyClient = struct {
 
     pub fn getOrCreateSubscriptionCtx(
         this: *JSValkeyClient,
-    ) bun.JSError!*SubscriptionCtx {
+    ) fun.JSError!*SubscriptionCtx {
         if (this._subscription_ctx) |*ctx| {
             // If we already have a subscription context, return it
             return ctx;
@@ -635,7 +635,7 @@ pub const JSValkeyClient = struct {
         this: *JSValkeyClient,
         globalObject: *jsc.JSGlobalObject,
         this_value: JSValue,
-    ) bun.JSError!JSValue {
+    ) fun.JSError!JSValue {
         this.ref();
         defer this.deref();
 
@@ -657,7 +657,7 @@ pub const JSValkeyClient = struct {
         // Explicit connect() should also clear the sticky `failed` flag so the
         // client can recover after prior connection attempts exhausted retries.
         // Without this, every subsequent command rejects with "Connection has
-        // failed" forever — see https://github.com/oven-sh/bun/issues/29925.
+        // failed" forever — see https://github.com/underdoc-org/fun/issues/29925.
         this.client.flags.failed = false;
         defer this.updatePollRef();
 
@@ -691,11 +691,11 @@ pub const JSValkeyClient = struct {
         return promise;
     }
 
-    pub fn jsConnect(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn jsConnect(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
         return try this.doConnect(globalObject, callframe.this());
     }
 
-    pub fn jsDisconnect(this: *JSValkeyClient, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn jsDisconnect(this: *JSValkeyClient, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
         if (this.client.status == .disconnected) {
             return .js_undefined;
         }
@@ -744,7 +744,7 @@ pub const JSValkeyClient = struct {
         const vm = this.client.vm;
 
         // Set up timer and add to event loop
-        timer.next = bun.timespec.msFromNow(.allow_mocked_time, @intCast(next_timeout_ms));
+        timer.next = fun.timespec.msFromNow(.allow_mocked_time, @intCast(next_timeout_ms));
         vm.timer.insert(timer);
         this.ref();
     }
@@ -862,10 +862,10 @@ pub const JSValkeyClient = struct {
     }
 
     // Callback for when Valkey client connects
-    pub fn onValkeyConnect(this: *JSValkeyClient, value: *protocol.RESPValue) bun.JSTerminated!void {
-        bun.debugAssert(this.client.status == .connected);
+    pub fn onValkeyConnect(this: *JSValkeyClient, value: *protocol.RESPValue) fun.JSTerminated!void {
+        fun.debugAssert(this.client.status == .connected);
         // we should always have a strong reference to the object here
-        bun.debugAssert(this.this_value.isStrong());
+        fun.debugAssert(this.this_value.isStrong());
 
         defer {
             this.client.onWritable();
@@ -921,8 +921,8 @@ pub const JSValkeyClient = struct {
     }
 
     pub fn onValkeySubscribe(this: *JSValkeyClient, value: *protocol.RESPValue) void {
-        bun.debugAssert(this.isSubscriber());
-        bun.debugAssert(this.this_value.isStrong());
+        fun.debugAssert(this.isSubscriber());
+        fun.debugAssert(this.this_value.isStrong());
 
         this.ref();
         defer this.deref();
@@ -933,9 +933,9 @@ pub const JSValkeyClient = struct {
         this.updatePollRef();
     }
 
-    pub fn onValkeyUnsubscribe(this: *JSValkeyClient) bun.JSError!void {
-        bun.debugAssert(this.isSubscriber());
-        bun.debugAssert(this.this_value.isStrong());
+    pub fn onValkeyUnsubscribe(this: *JSValkeyClient) fun.JSError!void {
+        fun.debugAssert(this.isSubscriber());
+        fun.debugAssert(this.this_value.isStrong());
 
         this.client.onWritable();
         this.updatePollRef();
@@ -995,7 +995,7 @@ pub const JSValkeyClient = struct {
     }
 
     // Callback for when Valkey client closes
-    pub fn onValkeyClose(this: *JSValkeyClient) bun.JSTerminated!void {
+    pub fn onValkeyClose(this: *JSValkeyClient) fun.JSTerminated!void {
         const globalObject = this.globalObject;
 
         defer {
@@ -1036,7 +1036,7 @@ pub const JSValkeyClient = struct {
         this.clientFail("Connection timeout", protocol.RedisError.ConnectionClosed);
     }
 
-    pub fn clientFail(this: *JSValkeyClient, message: []const u8, err: protocol.RedisError) bun.JSTerminated!void {
+    pub fn clientFail(this: *JSValkeyClient, message: []const u8, err: protocol.RedisError) fun.JSTerminated!void {
         try this.client.fail(message, err);
     }
 
@@ -1065,13 +1065,13 @@ pub const JSValkeyClient = struct {
             task: jsc.AnyTask,
 
             pub fn run(self: *@This()) void {
-                defer bun.default_allocator.destroy(self);
+                defer fun.default_allocator.destroy(self);
 
                 self.ctx.client.close();
                 self.ctx.deref();
             }
         };
-        var holder = bun.handleOom(bun.default_allocator.create(Holder));
+        var holder = fun.handleOom(fun.default_allocator.create(Holder));
         holder.* = .{
             .ctx = this,
             .task = undefined,
@@ -1093,7 +1093,7 @@ pub const JSValkeyClient = struct {
         // garbage collected now and the subscription context holds a reference
         // to us. If we still had a subscription context, we would never be
         // garbage collected.
-        bun.debugAssert(!this._subscription_ctx.is_subscriber);
+        fun.debugAssert(!this._subscription_ctx.is_subscriber);
     }
 
     pub fn stopTimers(this: *JSValkeyClient) void {
@@ -1122,7 +1122,7 @@ pub const JSValkeyClient = struct {
                 // Reuse across reconnect — the SSL_CTX is the only thing the
                 // old `_socket_ctx` cache existed to preserve.
                 if (this._secure == null) {
-                    var err: uws.create_bun_socket_error_t = .none;
+                    var err: uws.create_fun_socket_error_t = .none;
                     // Per-VM weak cache: a `duplicate()`'d client (or any
                     // other client with the same config) hits the same
                     // `SSL_CTX*` instead of rebuilding.
@@ -1191,14 +1191,14 @@ pub const JSValkeyClient = struct {
     }
 
     fn deinit(this: *JSValkeyClient) void {
-        bun.debugAssert(this.client.socket.isClosed());
-        if (this._secure) |s| bun.BoringSSL.c.SSL_CTX_free(s);
+        fun.debugAssert(this.client.socket.isClosed());
+        if (this._secure) |s| fun.BoringSSL.c.SSL_CTX_free(s);
         this.client.deinit(null);
         this.poll_ref.disable();
         this.stopTimers();
         this.ref_count.assertNoRefs();
 
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     /// Keep the event loop alive, or don't keep it alive
@@ -1452,17 +1452,17 @@ pub fn SocketHandler(comptime ssl: bool) type {
 
             return Socket{ .SocketTCP = s };
         }
-        pub fn onOpen(this: *JSValkeyClient, socket: SocketType) bun.JSTerminated!void {
+        pub fn onOpen(this: *JSValkeyClient, socket: SocketType) fun.JSTerminated!void {
             this.client.socket = _socket(socket);
             try this.client.onOpen(_socket(socket));
         }
 
-        fn onHandshake_(this: *JSValkeyClient, _: anytype, success: i32, ssl_error: uws.us_bun_verify_error_t) bun.JSTerminated!void {
+        fn onHandshake_(this: *JSValkeyClient, _: anytype, success: i32, ssl_error: uws.us_fun_verify_error_t) fun.JSTerminated!void {
             debug("onHandshake: {d} error={d} reason={s} code={s}", .{
                 success,
                 ssl_error.error_no,
-                if (ssl_error.reason != null) bun.span(ssl_error.reason[0..bun.len(ssl_error.reason) :0]) else "no reason",
-                if (ssl_error.code != null) bun.span(ssl_error.code[0..bun.len(ssl_error.code) :0]) else "no code",
+                if (ssl_error.reason != null) fun.span(ssl_error.reason[0..fun.len(ssl_error.reason) :0]) else "no reason",
+                if (ssl_error.code != null) fun.span(ssl_error.code[0..fun.len(ssl_error.code) :0]) else "no code",
             });
             const handshake_success = if (success == 1) true else false;
             this.ref();
@@ -1484,7 +1484,7 @@ pub fn SocketHandler(comptime ssl: bool) type {
                     // for redis+tls+unix:// / valkey+tls+unix:// connections.
                     const ssl_ptr: *BoringSSL.c.SSL = @ptrCast(this.client.socket.getNativeHandle());
                     var hostname: []const u8 = if (BoringSSL.c.SSL_get_servername(ssl_ptr, 0)) |servername|
-                        servername[0..bun.len(servername)]
+                        servername[0..fun.len(servername)]
                     else switch (this.client.address) {
                         .host => |h| h.host,
                         .unix => "",
@@ -1509,10 +1509,10 @@ pub fn SocketHandler(comptime ssl: bool) type {
             }
         }
 
-        fn failHandshakeWithVerifyError(this: *JSValkeyClient, vm: *jsc.VirtualMachine, ssl_error: *const uws.us_bun_verify_error_t) bun.JSTerminated!void {
+        fn failHandshakeWithVerifyError(this: *JSValkeyClient, vm: *jsc.VirtualMachine, ssl_error: *const uws.us_fun_verify_error_t) fun.JSTerminated!void {
             const ssl_js_value = ssl_error.toJS(this.globalObject) catch |err| switch (err) {
                 error.JSTerminated => return error.JSTerminated,
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 error.JSError => {
                     // Clear any pending exception since we can't convert it to JS,
                     // but still fail-close the connection so we never fall through
@@ -1527,7 +1527,7 @@ pub fn SocketHandler(comptime ssl: bool) type {
             return try failHandshake(this, vm, ssl_js_value);
         }
 
-        fn failHandshake(this: *JSValkeyClient, vm: *jsc.VirtualMachine, err_value: jsc.JSValue) bun.JSTerminated!void {
+        fn failHandshake(this: *JSValkeyClient, vm: *jsc.VirtualMachine, err_value: jsc.JSValue) fun.JSTerminated!void {
             this.client.flags.is_authenticated = false;
             const loop = vm.eventLoop();
             loop.enter();
@@ -1563,7 +1563,7 @@ pub fn SocketHandler(comptime ssl: bool) type {
             // usockets will always call onClose after onEnd in this case so we don't need to do anything here
         }
 
-        pub fn onConnectError(this: *JSValkeyClient, _: SocketType, _: i32) bun.JSTerminated!void {
+        pub fn onConnectError(this: *JSValkeyClient, _: SocketType, _: i32) fun.JSTerminated!void {
             // Ensure the socket pointer is updated.
             this.client.socket = .{ .SocketTCP = .detached };
             this.ref();
@@ -1607,7 +1607,7 @@ pub fn SocketHandler(comptime ssl: bool) type {
 const Options = struct {
     pub fn fromJS(globalObject: *jsc.JSGlobalObject, options_obj: jsc.JSValue) !valkey.Options {
         var this = valkey.Options{
-            .enable_auto_pipelining = !bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_REDIS_AUTO_PIPELINING.get(),
+            .enable_auto_pipelining = !fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_REDIS_AUTO_PIPELINING.get(),
         };
 
         if (try options_obj.getOptionalInt(globalObject, "idleTimeout", u32)) |idle_timeout| {
@@ -1638,7 +1638,7 @@ const Options = struct {
             if (tls.isBoolean() or tls.isUndefinedOrNull()) {
                 this.tls = if (tls.toBoolean()) .enabled else .none;
             } else if (tls.isObject()) {
-                if (try jsc.API.ServerConfig.SSLConfig.fromJS(globalObject.bunVM(), globalObject, tls)) |ssl_config| {
+                if (try jsc.API.ServerConfig.SSLConfig.fromJS(globalObject.funVM(), globalObject, tls)) |ssl_config| {
                     this.tls = .{ .custom = ssl_config };
                 } else {
                     return globalObject.throwInvalidArgumentType("tls", "tls", "object");
@@ -1652,7 +1652,7 @@ const Options = struct {
     }
 };
 
-const debug = bun.Output.scoped(.RedisJS, .visible);
+const debug = fun.Output.scoped(.RedisJS, .visible);
 
 const Command = @import("./ValkeyCommand.zig");
 const std = @import("std");
@@ -1662,13 +1662,13 @@ const URL = @import("../../jsc/URL.zig").URL;
 const protocol = @import("../../valkey/valkey_protocol.zig");
 const RedisError = protocol.RedisError;
 
-const bun = @import("bun");
-const BoringSSL = bun.BoringSSL;
-const String = bun.String;
-const Timer = bun.api.Timer;
+const fun = @import("fun");
+const BoringSSL = fun.BoringSSL;
+const String = fun.String;
+const Timer = fun.api.Timer;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const Socket = uws.AnySocket;

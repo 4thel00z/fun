@@ -33,9 +33,9 @@ function getConfig() {
     clientId: env("AZURE_CLIENT_ID"),
     clientSecret: env("AZURE_CLIENT_SECRET"),
     subscriptionId: env("AZURE_SUBSCRIPTION_ID"),
-    resourceGroup: env("AZURE_RESOURCE_GROUP", "BUN-CI"),
+    resourceGroup: env("AZURE_RESOURCE_GROUP", "FUN-CI"),
     location: env("AZURE_LOCATION", "eastus2"),
-    galleryName: env("AZURE_GALLERY_NAME", "bunCIGallery2"),
+    galleryName: env("AZURE_GALLERY_NAME", "funCIGallery2"),
   };
 }
 
@@ -384,7 +384,7 @@ async function ensureImageDefinition(name, os, arch) {
         hyperVGeneration: "V2",
         architecture: arch === "aarch64" ? "Arm64" : "x64",
         identifier: {
-          publisher: "bun",
+          publisher: "fun",
           offer: `${os}-${arch}-ci`,
           sku: name,
         },
@@ -465,7 +465,7 @@ export const azure = {
    */
   async createMachine(options) {
     const { os, arch, tags, sshKeys } = options;
-    const vmName = `bun-${os}-${arch}-${Date.now()}`;
+    const vmName = `fun-${os}-${arch}-${Date.now()}`;
     const publicIpName = `${vmName}-ip`;
     const nicName = `${vmName}-nic`;
     const vmSize = options.instanceType || getVmSize(arch);
@@ -474,8 +474,8 @@ export const azure = {
     // Generate a random password for the admin account
     const adminPassword = `P@${crypto.randomUUID().replace(/-/g, "").substring(0, 20)}!`;
 
-    const subnetId = `${rgPath()}/providers/Microsoft.Network/virtualNetworks/bun-ci-vnet/subnets/default`;
-    const nsgId = `${rgPath()}/providers/Microsoft.Network/networkSecurityGroups/bun-ci-ssh-nsg`;
+    const subnetId = `${rgPath()}/providers/Microsoft.Network/virtualNetworks/fun-ci-vnet/subnets/default`;
+    const nsgId = `${rgPath()}/providers/Microsoft.Network/networkSecurityGroups/fun-ci-ssh-nsg`;
 
     await createPublicIp(publicIpName);
     const nicId = await createNic(nicName, publicIpName, subnetId, nsgId);
@@ -489,7 +489,7 @@ export const azure = {
       imageReference,
       osDiskSizeGB: diskSizeGB,
       nicId,
-      adminUsername: "bunadmin",
+      adminUsername: "funadmin",
       adminPassword,
       tags: tags
         ? Object.fromEntries(
@@ -604,7 +604,7 @@ export const azure = {
 
       // Ensure gallery and image definition exist.
       // Use the label as the image definition name — this matches what ci.mjs
-      // emits as the image-name agent tag, so robobun can look it up directly.
+      // emits as the image-name agent tag, so robofun can look it up directly.
       const imageDefName = label;
       await ensureImageDefinition(imageDefName, os, arch);
 

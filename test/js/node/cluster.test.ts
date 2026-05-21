@@ -1,10 +1,10 @@
-import { bunEnv, bunRun, joinP, tempDirWithFiles } from "harness";
+import { funEnv, funRun, joinP, tempDirWithFiles } from "harness";
 
 test("cloneable and transferable equals", () => {
-  const dir = tempDirWithFiles("bun-test", {
+  const dir = tempDirWithFiles("fun-test", {
     "index.ts": `
 import cluster from "cluster";
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 if (cluster.isPrimary) {
   cluster.settings.serialization = "advanced";
   const worker = cluster.fork();
@@ -30,20 +30,20 @@ if (cluster.isPrimary) {
 }
 `,
   });
-  bunRun(joinP(dir, "index.ts"), bunEnv, true);
+  funRun(joinP(dir, "index.ts"), funEnv, true);
 });
 
-test("cloneable and non-transferable not-equals (BunFile)", () => {
-  const dir = tempDirWithFiles("bun-test", {
+test("cloneable and non-transferable not-equals (FunFile)", () => {
+  const dir = tempDirWithFiles("fun-test", {
     "index.ts": `
 import cluster from "cluster";
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 if (cluster.isPrimary) {
   cluster.settings.serialization = "advanced";
   const worker = cluster.fork();
-  const file = Bun.file(import.meta.filename);
+  const file = Fun.file(import.meta.filename);
   console.log("P", "O", file);
-  expect(file).toBeInstanceOf(Blob); // Bun.BunFile isnt exposed to JS
+  expect(file).toBeInstanceOf(Blob); // Fun.FunFile isnt exposed to JS
   expect(file.name).toEqual(import.meta.filename);
   expect(file.type).toEqual("text/javascript;charset=utf-8");
   worker.on("online", function () {
@@ -75,15 +75,15 @@ if (cluster.isPrimary) {
 }
 `,
   });
-  bunRun(joinP(dir, "index.ts"), bunEnv, true);
+  funRun(joinP(dir, "index.ts"), funEnv, true);
 });
 
 test("cloneable and non-transferable not-equals (net.BlockList)", () => {
-  const dir = tempDirWithFiles("bun-test", {
+  const dir = tempDirWithFiles("fun-test", {
     "index.ts": `
 import cluster from "cluster";
 import net from "net";
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 if (cluster.isPrimary) {
   cluster.settings.serialization = "advanced";
   const worker = cluster.fork();
@@ -118,5 +118,5 @@ if (cluster.isPrimary) {
 }
 `,
   });
-  bunRun(joinP(dir, "index.ts"), bunEnv, true);
+  funRun(joinP(dir, "index.ts"), funEnv, true);
 });

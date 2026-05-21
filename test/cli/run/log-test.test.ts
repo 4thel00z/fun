@@ -1,19 +1,19 @@
-import { spawnSync } from "bun";
-import { expect, it } from "bun:test";
+import { spawnSync } from "fun";
+import { expect, it } from "fun:test";
 import * as fs from "fs";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { dirname, join, resolve } from "path";
 
 it("should not log .env when quiet", async () => {
   writeDirectoryTree("/tmp/log-test-silent", {
     ".env": "FOO=bar",
-    "bunfig.toml": `logLevel = "error"`,
+    "funfig.toml": `logLevel = "error"`,
     "index.ts": "export default console.log('Here');",
   });
   const { stderr } = spawnSync({
-    cmd: [bunExe(), "index.ts"],
+    cmd: [funExe(), "index.ts"],
     cwd: "/tmp/log-test-silent",
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(stderr!.toString()).toBe("");
@@ -22,14 +22,14 @@ it("should not log .env when quiet", async () => {
 it("should log .env by default", async () => {
   writeDirectoryTree("/tmp/log-test-silent", {
     ".env": "FOO=bar",
-    "bunfig.toml": ``,
+    "funfig.toml": ``,
     "index.ts": "export default console.log('Here');",
   });
 
   const { stderr } = spawnSync({
-    cmd: [bunExe(), "index.ts"],
+    cmd: [funExe(), "index.ts"],
     cwd: "/tmp/log-test-silent",
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(stderr?.toString().includes(".env")).toBe(false);

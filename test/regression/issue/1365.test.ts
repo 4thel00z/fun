@@ -1,15 +1,15 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("running unsupported file types shows helpful error message instead of 'File not found'", async () => {
   using dir = tempDir("issue-1365", {
     "test.css": "body { color: red; }",
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.css"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.css"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -30,10 +30,10 @@ test("running unsupported file types shows helpful error message instead of 'Fil
 test("actually missing files still show 'File not found'", async () => {
   using dir = tempDir("issue-1365-missing", {});
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "nonexistent.css"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "nonexistent.css"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

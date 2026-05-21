@@ -35,12 +35,12 @@ src/jsc/bindings/ZigGeneratedCode.cpp linguist-generated
 src/jsc/bindings/headers.h linguist-generated
 src/jsc/bindings/headers.zig linguist-generated
 
-packages/bun-uws/fuzzing/seed-corpus/**/* linguist-generated
+packages/fun-uws/fuzzing/seed-corpus/**/* linguist-generated
 
 src/jsc/bindings/sqlite/sqlite3.c linguist-vendored
 src/jsc/bindings/sqlite/sqlite3_local.h linguist-vendored
-src/simdutf_sys/bun-simdutf.cpp linguist-vendored
-src/simdutf_sys/bun-simdutf.h linguist-vendored
+src/simdutf_sys/fun-simdutf.cpp linguist-vendored
+src/simdutf_sys/fun-simdutf.h linguist-vendored
 
 docs/**/* linguist-documentation
 
@@ -55,7 +55,7 @@ vendor/brotli/** linguist-vendored
 test/js/node/test/fixtures linguist-vendored
 test/js/node/test/common linguist-vendored
 
-test/js/bun/css/files linguist-vendored
+test/js/fun/css/files linguist-vendored
 
 .vscode/*.json linguist-language=JSON-with-Comments
 src/cli/init/tsconfig.default.json linguist-language=JSON-with-Comments

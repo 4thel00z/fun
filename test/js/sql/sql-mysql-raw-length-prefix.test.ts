@@ -1,4 +1,4 @@
-// Regression for https://github.com/oven-sh/bun/issues/30039
+// Regression for https://github.com/underdoc-org/fun/issues/30039
 //
 // `.raw()` on any length-encoded MySQL column (json / varchar / text /
 // blob / enum / geometry / ...) used to return the length-encoded-integer
@@ -9,8 +9,8 @@
 // Uses a minimal mock MySQL server so the test runs without Docker or a
 // live MySQL installation.
 
-import { SQL } from "bun";
-import { expect, test } from "bun:test";
+import { SQL } from "fun";
+import { expect, test } from "fun:test";
 import { once } from "events";
 import net from "net";
 

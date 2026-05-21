@@ -1,7 +1,7 @@
 // This is an implementation of a module loader with hot-reloading support.
-// Note that this aims to implement the behavior of `bun build` rather than what
+// Note that this aims to implement the behavior of `fun build` rather than what
 // the ECMAScript Module spec says. This way, development builds function like
-// the production ones from `bun build`.
+// the production ones from `fun build`.
 //
 // Some build failures from the bundler surface as runtime errors here, such as
 // `require` on a module with transitive top-level await, or a missing export.
@@ -13,7 +13,7 @@ import {
   __legacyMetadataTS,
   __name,
   __using,
-} from "../runtime.bun";
+} from "../runtime.fun";
 // This import is different based on client vs server side.
 // On the server, remapping is done automatically.
 import { type SourceMapURL, derefMapping } from "#stack-trace";
@@ -30,7 +30,7 @@ export let onServerSideReload: (() => Promise<void>) | null = null;
 const eventHandlers: Record<HMREvent | string, HotEventHandler[] | undefined> = {};
 let refreshRuntime: any;
 /** The expression `import(a,b)` is not supported in all browsers, most notably
- * in Mozilla Firefox in 2025. Bun lazily evaluates it, so a SyntaxError gets
+ * in Mozilla Firefox in 2025. Fun lazily evaluates it, so a SyntaxError gets
  * thrown upon first usage. */
 let lazyDynamicImportWithOptions: null | Function = null;
 
@@ -215,20 +215,20 @@ export class HMRModule {
   }
 
   prune(cb: HotDisposeFunction) {
-    // Bun currently does not throw away detached modules yet.
+    // Fun currently does not throw away detached modules yet.
     // So never calling the function technically implements this.
   }
 
   invalidate() {
-    emitEvent("bun:invalidate", null);
+    emitEvent("fun:invalidate", null);
     // by throwing an error right now, this will cause a page refresh
     throw new Error("TODO: implement ImportMetaHot.invalidate");
   }
 
   on(event: string, cb: HotEventHandler) {
-    // Vite compatibility, but favor using Bun's event names.
+    // Vite compatibility, but favor using Fun's event names.
     if (event.startsWith("vite:")) {
-      event = "bun:" + event.slice(4);
+      event = "fun:" + event.slice(4);
     }
 
     (eventHandlers[event] ??= []).push(cb);
@@ -316,7 +316,7 @@ export function loadModuleSync(id: Id, isUserDynamic: boolean, importer: HMRModu
     mod.state = State.Loaded;
   } else {
     // ESM
-    if (IS_BUN_DEVELOPMENT) {
+    if (IS_FUN_DEVELOPMENT) {
       try {
         DEBUG.ASSERT(Array.isArray(loadOrEsmModule[ESMProps.imports]));
         DEBUG.ASSERT(Array.isArray(loadOrEsmModule[ESMProps.exports]));
@@ -417,7 +417,7 @@ export function loadModuleAsync<IsUserDynamic extends boolean>(
     return mod;
   } else {
     // ESM
-    if (IS_BUN_DEVELOPMENT) {
+    if (IS_FUN_DEVELOPMENT) {
       try {
         DEBUG.ASSERT(Array.isArray(loadOrEsmModule[0]));
         DEBUG.ASSERT(Array.isArray(loadOrEsmModule[1]));
@@ -543,7 +543,7 @@ function parseEsmDependencies<T extends GenericModuleLoader<any>>(
       DEBUG.ASSERT(!registry.get(dep)?.esm);
       i = expectedExportKeyEnd;
 
-      if (IS_BUN_DEVELOPMENT) {
+      if (IS_FUN_DEVELOPMENT) {
         DEBUG.ASSERT((list[list.length - 1] as any) instanceof HMRModule);
       }
     }
@@ -591,21 +591,21 @@ type HotEventHandler = (data: any) => void;
 // If updating this, make sure the `devserver.d.ts` types are
 // kept in sync.
 type HMREvent =
-  | "bun:ready"
-  | "bun:beforeUpdate"
-  | "bun:afterUpdate"
-  | "bun:beforeFullReload"
-  | "bun:beforePrune"
-  | "bun:invalidate"
-  | "bun:error"
-  | "bun:ws:disconnect"
-  | "bun:ws:connect";
+  | "fun:ready"
+  | "fun:beforeUpdate"
+  | "fun:afterUpdate"
+  | "fun:beforeFullReload"
+  | "fun:beforePrune"
+  | "fun:invalidate"
+  | "fun:error"
+  | "fun:ws:disconnect"
+  | "fun:ws:connect";
 
 /** Called when modules are replaced. */
 export async function replaceModules(modules: Record<Id, UnloadedModule>, sourceMapId?: SourceMapURL) {
   Object.assign(unloadedModuleRegistry, modules);
 
-  emitEvent("bun:beforeUpdate", null);
+  emitEvent("fun:beforeUpdate", null);
 
   type ToAccept = {
     cb: HotAccept;
@@ -683,7 +683,7 @@ export async function replaceModules(modules: Record<Id, UnloadedModule>, source
   // If roots were hit, print a nice message before reloading.
   if (failures) {
     let message =
-      "[Bun] Hot update was not accepted because it or its importers do not call `import.meta.hot.accept`. To prevent full page reloads, call `import.meta.hot.accept` in one of the following files to handle the update:\n\n";
+      "[Fun] Hot update was not accepted because it or its importers do not call `import.meta.hot.accept`. To prevent full page reloads, call `import.meta.hot.accept` in one of the following files to handle the update:\n\n";
 
     // For each failed boundary, re-compute the path to the root.
     for (const boundary of failures) {
@@ -718,7 +718,7 @@ export async function replaceModules(modules: Record<Id, UnloadedModule>, source
     message = message.trim();
     if (side === "client") {
       sessionStorage?.setItem?.(
-        "bun:hmr:message",
+        "fun:hmr:message",
         JSON.stringify?.({
           message,
           kind: "warn",
@@ -792,7 +792,7 @@ export async function replaceModules(modules: Record<Id, UnloadedModule>, source
     refreshRuntime.performReactRefresh();
   }
 
-  emitEvent("bun:afterUpdate", null);
+  emitEvent("fun:afterUpdate", null);
 }
 
 function patchImporters(mod: HMRModule) {
@@ -830,20 +830,20 @@ export function onEvent(event: HMREvent, cb) {
 function throwNotFound(id: Id, isUserDynamic: boolean) {
   if (isUserDynamic) {
     throw new Error(
-      `Failed to resolve dynamic import '${id}'. With Bun's bundler, all imports must be statically known at build time so that the bundler can trace everything.`,
+      `Failed to resolve dynamic import '${id}'. With Fun's bundler, all imports must be statically known at build time so that the bundler can trace everything.`,
     );
   }
-  if (IS_BUN_DEVELOPMENT) {
+  if (IS_FUN_DEVELOPMENT) {
     console.warn("Available modules:", Object.keys(unloadedModuleRegistry));
   }
   throw new Error(
-    `Failed to load bundled module '${id}'. This is not a dynamic import, and therefore is a bug in Bun's bundler.`,
+    `Failed to load bundled module '${id}'. This is not a dynamic import, and therefore is a bug in Fun's bundler.`,
   );
 }
 
 export function fullReload() {
   try {
-    emitEvent("bun:beforeFullReload", null);
+    emitEvent("fun:beforeFullReload", null);
   } catch {}
   location.reload();
 }
@@ -941,9 +941,9 @@ declare global {
   }
 }
 
-// bun:bake/server, bun:bake/client, and bun:wrap are
+// fun:bake/server, fun:bake/client, and fun:wrap are
 // provided by this file instead of the bundler
-registerSynthetic("bun:wrap", {
+registerSynthetic("fun:wrap", {
   __name,
   __legacyDecorateClassTS,
   __legacyDecorateParamTS,
@@ -953,7 +953,7 @@ registerSynthetic("bun:wrap", {
 });
 
 if (side === "server") {
-  registerSynthetic("bun:bake/server", {
+  registerSynthetic("fun:bake/server", {
     serverManifest,
     ssrManifest,
     actionManifest: null,
@@ -961,7 +961,7 @@ if (side === "server") {
 }
 
 if (side === "client") {
-  registerSynthetic("bun:bake/client", {
+  registerSynthetic("fun:bake/client", {
     onServerSideReload: cb => (onServerSideReload = cb),
   });
 }

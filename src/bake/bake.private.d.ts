@@ -15,8 +15,8 @@ interface Config {
   separateSSRGraph?: true;
 
   // Client
-  /** Bun version */
-  bun: string;
+  /** Fun version */
+  fun: string;
   /** Dev Server's `configuration_hash_key` */
   version: string;
   /** If available, this is the Id of `react-refresh/runtime` */
@@ -72,25 +72,25 @@ declare const config: Config;
 declare const side: "client" | "server";
 
 /*
- * If you are running a debug build of Bun. These debug builds should provide
+ * If you are running a debug build of Fun. These debug builds should provide
  * helpful information to someone working on the bundler itself. Assertions
  * aimed for the end user should always be enabled.
  */
-declare const IS_BUN_DEVELOPMENT: any;
+declare const IS_FUN_DEVELOPMENT: any;
 
 /** If this is the fallback error page */
 declare const IS_ERROR_RUNTIME: boolean;
 
-declare var __bun_f: any;
+declare var __fun_f: any;
 
 // The following interfaces have been transcribed manually.
 
-declare module "react-server-dom-bun/client.browser" {
+declare module "react-server-dom-fun/client.browser" {
   export function createFromReadableStream<T = any>(readable: ReadableStream<Uint8Array>): Promise<T>;
 }
 
-declare module "react-server-dom-bun/client.node.unbundled.js" {
-  import type { ReactClientManifest } from "bun:bake/server";
+declare module "react-server-dom-fun/client.node.unbundled.js" {
+  import type { ReactClientManifest } from "fun:bake/server";
   import type { Readable } from "node:stream";
   export interface Manifest {
     moduleMap: ReactClientManifest;
@@ -108,8 +108,8 @@ declare module "react-server-dom-bun/client.node.unbundled.js" {
   export function createFromNodeStream<T = any>(readable: Readable, manifest?: Manifest): Promise<T>;
 }
 
-declare module "react-server-dom-bun/server.node.unbundled.js" {
-  import type { ReactServerManifest } from "bun:bake/server";
+declare module "react-server-dom-fun/server.node.unbundled.js" {
+  import type { ReactServerManifest } from "fun:bake/server";
   import type { ReactElement } from "react";
 
   export interface PipeableStream<T> {
@@ -136,7 +136,7 @@ declare module "react-server-dom-bun/server.node.unbundled.js" {
 
 declare module "react-dom/server.node" {
   import type { ReactElement } from "react";
-  import type { PipeableStream } from "react-server-dom-bun/server.node.unbundled.js";
+  import type { PipeableStream } from "react-server-dom-fun/server.node.unbundled.js";
 
   export type RenderToPipeableStreamOptions = any;
   export function renderToPipeableStream(
@@ -145,7 +145,7 @@ declare module "react-dom/server.node" {
   ): PipeableStream<Uint8Array>;
 }
 
-declare module "bun:wrap" {
+declare module "fun:wrap" {
   export const __name: unique symbol;
   export const __legacyDecorateClassTS: unique symbol;
   export const __legacyDecorateParamTS: unique symbol;

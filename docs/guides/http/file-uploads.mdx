@@ -4,17 +4,17 @@ sidebarTitle: Upload files via HTTP using FormData
 mode: center
 ---
 
-To upload files via HTTP with Bun, use the [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) API. Let's start with an HTTP server that serves an HTML web form.
+To upload files via HTTP with Fun, use the [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) API. Let's start with an HTTP server that serves an HTML web form.
 
 ```ts index.ts icon="/icons/typescript.svg"
-const server = Bun.serve({
+const server = Fun.serve({
   port: 4000,
   async fetch(req) {
     const url = new URL(req.url);
 
     // return index.html for root path
     if (url.pathname === "/")
-      return new Response(Bun.file("index.html"), {
+      return new Response(Fun.file("index.html"), {
         headers: {
           "Content-Type": "text/html",
         },
@@ -53,7 +53,7 @@ We can define our HTML form in another file, `index.html`.
 At this point, we can run the server and visit [`localhost:4000`](http://localhost:4000) to see our form.
 
 ```bash
-bun run index.ts
+fun run index.ts
 Listening on http://localhost:4000
 ```
 
@@ -63,18 +63,18 @@ Our form will send a `POST` request to the `/action` endpoint with the form data
 
 First we use the [`.formData()`](https://developer.mozilla.org/en-US/docs/Web/API/Request/formData) method on the incoming `Request` to asynchronously parse its contents to a `FormData` instance. Then we can use the [`.get()`](https://developer.mozilla.org/en-US/docs/Web/API/FormData/get) method to extract the value of the `name` and `profilePicture` fields. Here `name` corresponds to a `string` and `profilePicture` is a `Blob`.
 
-Finally, we write the `Blob` to disk using [`Bun.write()`](/runtime/file-io#writing-files-bun-write).
+Finally, we write the `Blob` to disk using [`Fun.write()`](/runtime/file-io#writing-files-fun-write).
 
 {/* prettier-ignore */}
 ```ts index.ts icon="/icons/typescript.svg"
-const server = Bun.serve({
+const server = Fun.serve({
   port: 4000,
   async fetch(req) {
     const url = new URL(req.url);
 
     // return index.html for root path
     if (url.pathname === "/")
-      return new Response(Bun.file("index.html"), {
+      return new Response(Fun.file("index.html"), {
         headers: {
           "Content-Type": "text/html",
         },
@@ -87,7 +87,7 @@ const server = Bun.serve({
       const profilePicture = formdata.get("profilePicture"); // [!code ++]
       if (!profilePicture) throw new Error("Must upload a profile picture."); // [!code ++]
       // write profilePicture to disk // [!code ++]
-      await Bun.write("profilePicture.png", profilePicture); // [!code ++]
+      await Fun.write("profilePicture.png", profilePicture); // [!code ++]
       return new Response("Success"); // [!code ++]
     } // [!code ++]
 

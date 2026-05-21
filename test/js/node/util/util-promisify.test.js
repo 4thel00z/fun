@@ -21,7 +21,7 @@
 
 // Tests adapted from https://github.com/nodejs/node/blob/main/test/parallel/test-util-promisify.js
 import fs from "node:fs";
-// TODO: vm module not implemented by bun yet
+// TODO: vm module not implemented by fun yet
 // import vm from 'node:vm';
 import assert from "assert";
 import { inspect, promisify } from "util";
@@ -289,7 +289,7 @@ describe("util.promisify", () => {
   describe("invalid input", () => {
     // This test is failing because 'code' property
     // is not thrown in the error. does it have different
-    // throw error implementation in bun?
+    // throw error implementation in fun?
     it("should throw on invalid inputs for promisify", () => {
       [undefined, null, true, 0, "str", {}, [], Symbol()].forEach(input => {
         expect(() => {

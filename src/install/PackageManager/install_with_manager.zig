@@ -15,7 +15,7 @@ pub fn installWithManager(
             const allocator = hostname_stack.get();
             const hostname = try allocator.dupeZ(u8, manager.options.scope.url.hostname);
             defer allocator.free(hostname);
-            bun.dns.internal.prefetch(manager.event_loop.loop(), hostname, manager.options.scope.url.getPortAuto());
+            fun.dns.internal.prefetch(manager.event_loop.loop(), hostname, manager.options.scope.url.getPortAuto());
         }
     }
 
@@ -49,7 +49,7 @@ pub fn installWithManager(
                     manager.options.save_text_lockfile orelse false)));
 
     // this defaults to false
-    // but we force allowing updates to the lockfile when you do bun add
+    // but we force allowing updates to the lockfile when you do fun add
     var had_any_diffs = false;
     manager.progress = .{};
 
@@ -110,7 +110,7 @@ pub fn installWithManager(
                         const tag_total = original.tag.pre.len() + original.tag.build.len();
                         if (tag_total > 0) {
                             // clone because don't know if lockfile buffer will reallocate
-                            const tag_buf = bun.handleOom(manager.allocator.alloc(u8, tag_total));
+                            const tag_buf = fun.handleOom(manager.allocator.alloc(u8, tag_total));
                             var ptr = tag_buf;
                             original.tag = original_resolution.value.npm.version.tag.cloneInto(
                                 lockfile.buffers.string_bytes.items,
@@ -239,7 +239,7 @@ pub fn installWithManager(
                         if (!manager.summary.overrides_changed) break :brk &.{};
                         const hashes_len = manager.lockfile.overrides.map.entries.len + lockfile.overrides.map.entries.len;
                         if (hashes_len == 0) break :brk &.{};
-                        var all_name_hashes = try bun.default_allocator.alloc(PackageNameHash, hashes_len);
+                        var all_name_hashes = try fun.default_allocator.alloc(PackageNameHash, hashes_len);
                         @memcpy(all_name_hashes[0..manager.lockfile.overrides.map.entries.len], manager.lockfile.overrides.map.keys());
                         @memcpy(all_name_hashes[manager.lockfile.overrides.map.entries.len..], lockfile.overrides.map.keys());
                         var i = manager.lockfile.overrides.map.entries.len;
@@ -320,7 +320,7 @@ pub fn installWithManager(
                         var iter = lockfile.patched_dependencies.iterator();
                         while (iter.next()) |entry| {
                             const pkg_name_and_version_hash = entry.key_ptr.*;
-                            bun.debugAssert(entry.value_ptr.patchfile_hash_is_null);
+                            fun.debugAssert(entry.value_ptr.patchfile_hash_is_null);
                             const gop = try manager.lockfile.patched_dependencies.getOrPut(manager.lockfile.allocator, pkg_name_and_version_hash);
                             if (!gop.found_existing) {
                                 gop.value_ptr.* = .{
@@ -328,7 +328,7 @@ pub fn installWithManager(
                                 };
                                 gop.value_ptr.setPatchfileHash(null);
                                 // gop.value_ptr.path = gop.value_ptr.path;
-                            } else if (!bun.strings.eql(
+                            } else if (!fun.strings.eql(
                                 gop.value_ptr.path.slice(manager.lockfile.buffers.string_bytes.items),
                                 entry.value_ptr.path.slice(lockfile.buffers.string_bytes.items),
                             )) {
@@ -655,7 +655,7 @@ pub fn installWithManager(
                             Output.errGeneric("security scanner cannot be a dependency of a workspace package. It must be a direct dependency of the root package.", .{});
                         },
                         error.SecurityScannerRetryFailed => {
-                            Output.errGeneric("security scanner failed after partial install. This is probably a bug in Bun. Please report it at https://github.com/oven-sh/bun/issues", .{});
+                            Output.errGeneric("security scanner failed after partial install. This is probably a bug in Fun. Please report it at https://github.com/underdoc-org/fun/issues", .{});
                         },
                         error.InvalidPackageID => {
                             Output.errGeneric("cannot perform partial install: security scanner package ID is invalid", .{});
@@ -724,7 +724,7 @@ pub fn installWithManager(
                         );
 
                         if (comptime Environment.allow_assert) {
-                            bun.assert(first_index != -1);
+                            fun.assert(first_index != -1);
                         }
 
                         if (first_index != -1) {
@@ -733,7 +733,7 @@ pub fn installWithManager(
                                     @field(manager.lockfile.scripts, Lockfile.Scripts.names[i]).append(
                                         manager.lockfile.allocator,
                                         entry,
-                                    ) catch |err| bun.handleOom(err);
+                                    ) catch |err| fun.handleOom(err);
                                 }
                             }
                         }
@@ -746,7 +746,7 @@ pub fn installWithManager(
                         );
 
                         if (comptime Environment.allow_assert) {
-                            bun.assert(first_index != -1);
+                            fun.assert(first_index != -1);
                         }
 
                         inline for (entries, 0..) |maybe_entry, i| {
@@ -754,7 +754,7 @@ pub fn installWithManager(
                                 @field(manager.lockfile.scripts, Lockfile.Scripts.names[i]).append(
                                     manager.lockfile.allocator,
                                     entry,
-                                ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err);
                             }
                         }
                     }
@@ -771,7 +771,7 @@ pub fn installWithManager(
 
     if (manager.options.enable.frozen_lockfile and load_result != .not_found) frozen_lockfile: {
         if (load_result.loadedFromTextLockfile()) {
-            if (bun.handleOom(manager.lockfile.eql(lockfile_before_clean, packages_len_before_install, manager.allocator))) {
+            if (fun.handleOom(manager.lockfile.eql(lockfile_before_clean, packages_len_before_install, manager.allocator))) {
                 break :frozen_lockfile;
             }
         } else {
@@ -806,8 +806,8 @@ pub fn installWithManager(
             // added/removed/updated direct dependencies.
             Output.pretty("\nSaved <green>{s}<r> ({d} package{s}) ", .{
                 switch (save_format) {
-                    .text => "bun.lock",
-                    .binary => "bun.lockb",
+                    .text => "fun.lock",
+                    .binary => "fun.lockb",
                 },
                 manager.lockfile.packages.len,
                 if (manager.lockfile.packages.len == 1) "" else "s",
@@ -851,7 +851,7 @@ pub fn installWithManager(
             ),
 
             .isolated,
-            => break :install_summary bun.handleOom(installIsolatedPackages(
+            => break :install_summary fun.handleOom(installIsolatedPackages(
                 manager,
                 ctx,
                 install_root_dependencies,
@@ -925,7 +925,7 @@ pub fn installWithManager(
     if (manager.options.do.run_scripts and install_root_dependencies and !manager.options.global) {
         if (manager.root_lifecycle_scripts) |scripts| {
             if (comptime Environment.allow_assert) {
-                bun.assert(scripts.total > 0);
+                fun.assert(scripts.total > 0);
             }
 
             if (log_level != .silent) {
@@ -1070,13 +1070,13 @@ fn printBlockedPackagesInfo(summary: *const PackageInstall.Summary, global: bool
 
     if (comptime Environment.allow_assert) {
         // if packages_count is greater than 0, scripts_count must also be greater than 0.
-        bun.assert(packages_count == 0 or scripts_count > 0);
+        fun.assert(packages_count == 0 or scripts_count > 0);
         // if scripts_count is 1, it's only possible for packages_count to be 1.
-        bun.assert(scripts_count != 1 or packages_count == 1);
+        fun.assert(scripts_count != 1 or packages_count == 1);
     }
 
     if (packages_count > 0) {
-        Output.prettyln("\n\n<d>Blocked {d} postinstall{s}. Run `bun pm {s}untrusted` for details.<r>\n", .{
+        Output.prettyln("\n\n<d>Blocked {d} postinstall{s}. Run `fun pm {s}untrusted` for details.<r>\n", .{
             scripts_count,
             if (scripts_count > 1) "s" else "",
             if (global) "-g " else "",
@@ -1090,8 +1090,8 @@ pub fn getWorkspaceFilters(manager: *PackageManager, original_cwd: []const u8) !
     []const WorkspaceFilter,
     bool,
 } {
-    const path_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(path_buf);
+    const path_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(path_buf);
 
     var workspace_filters: std.ArrayListUnmanaged(WorkspaceFilter) = .{};
     // only populated when subcommand is `.install`
@@ -1125,7 +1125,7 @@ pub fn getWorkspaceFilters(manager: *PackageManager, original_cwd: []const u8) !
                 },
             };
 
-            switch (bun.glob.match(pattern, path_or_name)) {
+            switch (fun.glob.match(pattern, path_or_name)) {
                 .match, .negate_match => install_root_dependencies = true,
 
                 .negate_no_match => {
@@ -1150,7 +1150,7 @@ fn addDependencyError(manager: *PackageManager, dependency: *const Dependency, e
     const lockfile = manager.lockfile;
     const note = .{
         .fmt = "error occurred while resolving {f}",
-        .args = .{bun.fmt.fmtPath(u8, lockfile.str(&dependency.realname()), .{
+        .args = .{fun.fmt.fmtPath(u8, lockfile.str(&dependency.realname()), .{
             .path_sep = switch (dependency.version.tag) {
                 .folder => .auto,
                 else => .any,
@@ -1169,36 +1169,36 @@ const std = @import("std");
 const installHoistedPackages = @import("../hoisted_install.zig").installHoistedPackages;
 const installIsolatedPackages = @import("../isolated_install.zig").installIsolatedPackages;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const Path = bun.path;
-const Progress = bun.Progress;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
-const Command = bun.cli.Command;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const Path = fun.path;
+const Progress = fun.Progress;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
+const Command = fun.cli.Command;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const Dependency = bun.install.Dependency;
-const DependencyID = bun.install.DependencyID;
-const Features = bun.install.Features;
-const PackageID = bun.install.PackageID;
-const PackageInstall = bun.install.PackageInstall;
-const PackageNameHash = bun.install.PackageNameHash;
-const PatchTask = bun.install.PatchTask;
-const Resolution = bun.install.Resolution;
-const TextLockfile = bun.install.TextLockfile;
-const invalid_package_id = bun.install.invalid_package_id;
+const Dependency = fun.install.Dependency;
+const DependencyID = fun.install.DependencyID;
+const Features = fun.install.Features;
+const PackageID = fun.install.PackageID;
+const PackageInstall = fun.install.PackageInstall;
+const PackageNameHash = fun.install.PackageNameHash;
+const PatchTask = fun.install.PatchTask;
+const Resolution = fun.install.Resolution;
+const TextLockfile = fun.install.TextLockfile;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const Options = PackageManager.Options;
 const WorkspaceFilter = PackageManager.WorkspaceFilter;

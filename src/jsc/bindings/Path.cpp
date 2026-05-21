@@ -1,7 +1,7 @@
 #include "Path.h"
 #include "root.h"
 #include "headers.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ZigGlobalObject.h"
 
 #include <JavaScriptCore/JSFunction.h>
@@ -51,29 +51,29 @@ static inline JSC::EncodedJSValue createZigFunction(JSGlobalObject* globalObject
         return createZigFunction<isWindows, Function>(globalObject, callFrame); \
     }
 
-DEFINE_PATH_FUNCTION(jsFunctionPath_basenamePosix, Bun__Path__basename, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_dirnamePosix, Bun__Path__dirname, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_extnamePosix, Bun__Path__extname, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_formatPosix, Bun__Path__format, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_isAbsolutePosix, Bun__Path__isAbsolute, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_joinPosix, Bun__Path__join, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_normalizePosix, Bun__Path__normalize, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_parsePosix, Bun__Path__parse, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_relativePosix, Bun__Path__relative, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_resolvePosix, Bun__Path__resolve, false)
-DEFINE_PATH_FUNCTION(jsFunctionPath_toNamespacedPathPosix, Bun__Path__toNamespacedPath, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_basenamePosix, Fun__Path__basename, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_dirnamePosix, Fun__Path__dirname, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_extnamePosix, Fun__Path__extname, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_formatPosix, Fun__Path__format, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_isAbsolutePosix, Fun__Path__isAbsolute, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_joinPosix, Fun__Path__join, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_normalizePosix, Fun__Path__normalize, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_parsePosix, Fun__Path__parse, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_relativePosix, Fun__Path__relative, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_resolvePosix, Fun__Path__resolve, false)
+DEFINE_PATH_FUNCTION(jsFunctionPath_toNamespacedPathPosix, Fun__Path__toNamespacedPath, false)
 
-DEFINE_PATH_FUNCTION(jsFunctionPath_basenameWindows, Bun__Path__basename, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_dirnameWindows, Bun__Path__dirname, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_extnameWindows, Bun__Path__extname, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_formatWindows, Bun__Path__format, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_isAbsoluteWindows, Bun__Path__isAbsolute, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_joinWindows, Bun__Path__join, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_normalizeWindows, Bun__Path__normalize, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_parseWindows, Bun__Path__parse, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_relativeWindows, Bun__Path__relative, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_resolveWindows, Bun__Path__resolve, true)
-DEFINE_PATH_FUNCTION(jsFunctionPath_toNamespacedPathWindows, Bun__Path__toNamespacedPath, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_basenameWindows, Fun__Path__basename, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_dirnameWindows, Fun__Path__dirname, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_extnameWindows, Fun__Path__extname, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_formatWindows, Fun__Path__format, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_isAbsoluteWindows, Fun__Path__isAbsolute, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_joinWindows, Fun__Path__join, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_normalizeWindows, Fun__Path__normalize, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_parseWindows, Fun__Path__parse, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_relativeWindows, Fun__Path__relative, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_resolveWindows, Fun__Path__resolve, true)
+DEFINE_PATH_FUNCTION(jsFunctionPath_toNamespacedPathWindows, Fun__Path__toNamespacedPath, true)
 
 static JSC::JSObject* createPath(JSGlobalObject* globalThis, bool isWindows)
 {
@@ -133,7 +133,7 @@ extern "C" JSC::EncodedJSValue PathParsedObject__create(
     return JSC::JSValue::encode(result);
 }
 
-namespace Bun {
+namespace Fun {
 
 JSC::JSValue createNodePathBinding(Zig::GlobalObject* globalObject)
 {
@@ -154,4 +154,4 @@ JSC::JSValue createNodePathBinding(Zig::GlobalObject* globalObject)
     return binding;
 }
 
-} // namespace Bun
+} // namespace Fun

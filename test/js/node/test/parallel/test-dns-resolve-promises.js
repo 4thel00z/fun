@@ -3,7 +3,7 @@ const common = require('../common');
 const assert = require('assert');
 const dnsPromises = require('dns').promises;
 
-Bun.dns.resolve = (hostname, rrtype) => Promise.reject({code: 'EPERM', syscall: 'query' + rrtype[0].toUpperCase() + rrtype.substr(1), hostname});
+Fun.dns.resolve = (hostname, rrtype) => Promise.reject({code: 'EPERM', syscall: 'query' + rrtype[0].toUpperCase() + rrtype.substr(1), hostname});
 
 assert.rejects(
   dnsPromises.resolve('example.org'),

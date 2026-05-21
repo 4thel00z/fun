@@ -6,7 +6,7 @@ pub fn renameSymbolsInChunk(
     chunk: *Chunk,
     files_in_order: []const u32,
 ) !renamer.Renamer {
-    const trace = bun.perf.trace("Bundler.renameSymbolsInChunk");
+    const trace = fun.perf.trace("Bundler.renameSymbolsInChunk");
     defer trace.end();
     const all_module_scopes = c.graph.ast.items(.module_scope);
     const all_flags: []const JSMeta.Flags = c.graph.meta.items(.flags);
@@ -252,25 +252,25 @@ pub fn renameSymbolsInChunk(
     return r.toRenamer();
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const ImportRecord = bun.ImportRecord;
+const fun = @import("fun");
+const ImportRecord = fun.ImportRecord;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Part = js_ast.Part;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const JSMeta = bundler.JSMeta;
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const Ref = bun.bundle_v2.Ref;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const Ref = fun.bundle_v2.Ref;
 const StableRef = bundler.StableRef;
 
-const renamer = bun.renamer;
+const renamer = fun.renamer;
 const MinifyRenamer = renamer.MinifyRenamer;
 const StableSymbolCount = renamer.StableSymbolCount;

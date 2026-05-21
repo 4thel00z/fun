@@ -1,4 +1,4 @@
-import { describe, expect, jest, test } from "bun:test";
+import { describe, expect, jest, test } from "fun:test";
 
 describe("Jest mock functions from issue #1825", () => {
   test("jest.mock should be available and work with factory function", () => {

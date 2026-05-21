@@ -1,7 +1,7 @@
 # CLI Usage
 
 ```bash
-bun run <file or script>
+fun run <file or script>
 ```
 
 ### General Execution Options
@@ -54,12 +54,12 @@ bun run <file or script>
 
 ### Runtime &amp; Process Control
 
-<ParamField path="--bun" type="boolean">
-  Force a script or package to use Bun's runtime instead of Node.js (via symlinking node). Alias: <code>-b</code>
+<ParamField path="--fun" type="boolean">
+  Force a script or package to use Fun's runtime instead of Node.js (via symlinking node). Alias: <code>-b</code>
 </ParamField>
 
 <ParamField path="--shell" type="string">
-  Control the shell used for <code>package.json</code> scripts. Supports either <code>bun</code> or <code>system</code>
+  Control the shell used for <code>package.json</code> scripts. Supports either <code>fun</code> or <code>system</code>
 </ParamField>
 
 <ParamField path="--smol" type="boolean">
@@ -67,7 +67,7 @@ bun run <file or script>
 </ParamField>
 
 <ParamField path="--expose-gc" type="boolean">
-  Expose <code>gc()</code> on the global object. Has no effect on <code>Bun.gc()</code>
+  Expose <code>gc()</code> on the global object. Has no effect on <code>Fun.gc()</code>
 </ParamField>
 
 <ParamField path="--no-deprecation" type="boolean">
@@ -106,7 +106,7 @@ bun run <file or script>
 </ParamField>
 
 <ParamField path="--hot" type="boolean">
-  Enable auto reload in the Bun runtime, test runner, or bundler
+  Enable auto reload in the Fun runtime, test runner, or bundler
 </ParamField>
 
 <ParamField path="--no-clear-screen" type="boolean">
@@ -116,15 +116,15 @@ bun run <file or script>
 ### Debugging
 
 <ParamField path="--inspect" type="string">
-  Activate Bun's debugger
+  Activate Fun's debugger
 </ParamField>
 
 <ParamField path="--inspect-wait" type="string">
-  Activate Bun's debugger, wait for a connection before executing
+  Activate Fun's debugger, wait for a connection before executing
 </ParamField>
 
 <ParamField path="--inspect-brk" type="string">
-  Activate Bun's debugger, set breakpoint on first line of code and wait
+  Activate Fun's debugger, set breakpoint on first line of code and wait
 </ParamField>
 
 ### Dependency &amp; Module Resolution
@@ -142,7 +142,7 @@ bun run <file or script>
 </ParamField>
 
 <ParamField path="--no-install" type="boolean">
-  Disable auto install in the Bun runtime
+  Disable auto install in the Fun runtime
 </ParamField>
 
 <ParamField path="--install" type="string" default="auto">
@@ -155,11 +155,11 @@ bun run <file or script>
 </ParamField>
 
 <ParamField path="--prefer-offline" type="boolean">
-  Skip staleness checks for packages in the Bun runtime and resolve from disk
+  Skip staleness checks for packages in the Fun runtime and resolve from disk
 </ParamField>
 
 <ParamField path="--prefer-latest" type="boolean">
-  Use the latest matching versions of packages in the Bun runtime, always checking npm
+  Use the latest matching versions of packages in the Fun runtime, always checking npm
 </ParamField>
 
 <ParamField path="--conditions" type="string">
@@ -234,7 +234,7 @@ bun run <file or script>
 ### Networking &amp; Security
 
 <ParamField path="--port" type="number">
-  Set the default port for <code>Bun.serve</code>
+  Set the default port for <code>Fun.serve</code>
 </ParamField>
 
 <ParamField path="--fetch-preconnect" type="string">
@@ -285,7 +285,7 @@ bun run <file or script>
 </ParamField>
 
 <ParamField path="--config" type="string">
-  Specify path to Bun config file. Default <code>$cwd/bunfig.toml</code>. Alias: <code>-c</code>
+  Specify path to Fun config file. Default <code>$cwd/funfig.toml</code>. Alias: <code>-c</code>
 </ParamField>
 
 ## Examples
@@ -293,13 +293,13 @@ bun run <file or script>
 Run a JavaScript or TypeScript file:
 
 ```bash
-bun run ./index.js
-bun run ./index.tsx
+fun run ./index.js
+fun run ./index.tsx
 ```
 
 Run a package.json script:
 
 ```bash
-bun run dev
-bun run lint
+fun run dev
+fun run lint
 ```

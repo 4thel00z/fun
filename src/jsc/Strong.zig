@@ -8,26 +8,26 @@ impl: *Impl,
 
 /// Hold a strong reference to a JavaScript value. Release with `deinit` or `clear`
 pub fn create(value: jsc.JSValue, global: *jsc.JSGlobalObject) Strong {
-    if (bun.Environment.allow_assert) bun.assert(value != .zero);
+    if (fun.Environment.allow_assert) fun.assert(value != .zero);
     return .{ .impl = .init(global, value) };
 }
 
 /// Release the strong reference.
 pub fn deinit(strong: *Strong) void {
     strong.impl.deinit();
-    if (bun.Environment.isDebug)
+    if (fun.Environment.isDebug)
         strong.* = undefined;
 }
 
 pub fn get(strong: *const Strong) jsc.JSValue {
     const result = strong.impl.get();
-    if (bun.Environment.allow_assert) bun.assert(result != .zero);
+    if (fun.Environment.allow_assert) fun.assert(result != .zero);
     return result;
 }
 
 /// Set a new value for the strong reference.
 pub fn set(strong: *Strong, global: *jsc.JSGlobalObject, new_value: jsc.JSValue) void {
-    if (bun.Environment.allow_assert) bun.assert(new_value != .zero);
+    if (fun.Environment.allow_assert) fun.assert(new_value != .zero);
     strong.impl.set(global, new_value);
 }
 
@@ -117,7 +117,7 @@ pub const Optional = struct {
 pub const Impl = opaque {
     pub fn init(global: *jsc.JSGlobalObject, value: jsc.JSValue) *Impl {
         jsc.markBinding(@src());
-        return Bun__StrongRef__new(global, value);
+        return Fun__StrongRef__new(global, value);
     }
 
     pub fn get(this: *Impl) jsc.JSValue {
@@ -128,26 +128,26 @@ pub const Impl = opaque {
 
     pub fn set(this: *Impl, global: *jsc.JSGlobalObject, value: jsc.JSValue) void {
         jsc.markBinding(@src());
-        Bun__StrongRef__set(this, global, value);
+        Fun__StrongRef__set(this, global, value);
     }
 
     pub fn clear(this: *Impl) void {
         jsc.markBinding(@src());
-        Bun__StrongRef__clear(this);
+        Fun__StrongRef__clear(this);
     }
 
     pub fn deinit(this: *Impl) void {
         jsc.markBinding(@src());
-        Bun__StrongRef__delete(this);
+        Fun__StrongRef__delete(this);
     }
 
-    extern fn Bun__StrongRef__delete(this: *Impl) void;
-    extern fn Bun__StrongRef__new(*jsc.JSGlobalObject, jsc.JSValue) *Impl;
-    extern fn Bun__StrongRef__set(this: *Impl, *jsc.JSGlobalObject, jsc.JSValue) void;
-    extern fn Bun__StrongRef__clear(this: *Impl) void;
+    extern fn Fun__StrongRef__delete(this: *Impl) void;
+    extern fn Fun__StrongRef__new(*jsc.JSGlobalObject, jsc.JSValue) *Impl;
+    extern fn Fun__StrongRef__set(this: *Impl, *jsc.JSGlobalObject, jsc.JSValue) void;
+    extern fn Fun__StrongRef__clear(this: *Impl) void;
 };
 
 pub const Deprecated = @import("./DeprecatedStrong.zig");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

@@ -1,6 +1,6 @@
 ---
 title: "Lifecycle hooks"
-description: "Learn how to use beforeAll, beforeEach, afterEach, and afterAll lifecycle hooks in Bun tests"
+description: "Learn how to use beforeAll, beforeEach, afterEach, and afterAll lifecycle hooks in Fun tests"
 ---
 
 The test runner supports the following lifecycle hooks. This is useful for loading test fixtures, mocking data, and configuring the test environment.
@@ -18,7 +18,7 @@ The test runner supports the following lifecycle hooks. This is useful for loadi
 Perform per-test setup and teardown logic with `beforeEach` and `afterEach`.
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { beforeEach, afterEach, test } from "bun:test";
+import { beforeEach, afterEach, test } from "fun:test";
 
 beforeEach(() => {
   console.log("running test.");
@@ -44,7 +44,7 @@ Perform per-scope setup and teardown logic with `beforeAll` and `afterAll`. The 
 To scope the hooks to a particular describe block:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { describe, beforeAll, afterAll, test } from "bun:test";
+import { describe, beforeAll, afterAll, test } from "fun:test";
 
 describe("test group", () => {
   beforeAll(() => {
@@ -72,7 +72,7 @@ describe("test group", () => {
 To scope the hooks to an entire test file:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { describe, beforeAll, afterAll, test } from "bun:test";
+import { describe, beforeAll, afterAll, test } from "fun:test";
 
 beforeAll(() => {
   // setup for entire file
@@ -96,7 +96,7 @@ describe("test group", () => {
 Use `onTestFinished` to run a callback after a single test completes. It runs after all `afterEach` hooks.
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, onTestFinished } from "bun:test";
+import { test, onTestFinished } from "fun:test";
 
 test("cleanup after test", () => {
   onTestFinished(() => {
@@ -113,7 +113,7 @@ Not supported in concurrent tests; use `test.serial` instead.
 To scope the hooks to an entire multi-file test run, define the hooks in a separate file.
 
 ```ts title="setup.ts" icon="/icons/typescript.svg"
-import { beforeAll, afterAll } from "bun:test";
+import { beforeAll, afterAll } from "fun:test";
 
 beforeAll(() => {
   // global setup
@@ -131,12 +131,12 @@ afterAll(() => {
 Then use `--preload` to run the setup script before any test files.
 
 ```bash terminal icon="terminal"
-bun test --preload ./setup.ts
+fun test --preload ./setup.ts
 ```
 
-To avoid typing `--preload` every time you run tests, it can be added to your `bunfig.toml`:
+To avoid typing `--preload` every time you run tests, it can be added to your `funfig.toml`:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [test]
 preload = ["./setup.ts"]
 ```
@@ -146,7 +146,7 @@ preload = ["./setup.ts"]
 ### Database Setup
 
 ```ts title="database-setup.ts" icon="/icons/typescript.svg"
-import { beforeAll, afterAll, beforeEach, afterEach } from "bun:test";
+import { beforeAll, afterAll, beforeEach, afterEach } from "fun:test";
 import { createConnection, closeConnection, clearDatabase } from "./db";
 
 let connection;
@@ -173,7 +173,7 @@ beforeEach(async () => {
 ### API Server Setup
 
 ```ts title="server-setup.ts" icon="/icons/typescript.svg"
-import { beforeAll, afterAll } from "bun:test";
+import { beforeAll, afterAll } from "fun:test";
 import { startServer, stopServer } from "./server";
 
 let server;
@@ -195,8 +195,8 @@ afterAll(async () => {
 ### Mock Setup
 
 ```ts title="mock-setup.ts" icon="/icons/typescript.svg"
-import { beforeEach, afterEach } from "bun:test";
-import { mock } from "bun:test";
+import { beforeEach, afterEach } from "fun:test";
+import { mock } from "fun:test";
 
 beforeEach(() => {
   // Set up common mocks
@@ -217,7 +217,7 @@ afterEach(() => {
 All lifecycle hooks support async functions:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { beforeAll, afterAll, test } from "bun:test";
+import { beforeAll, afterAll, test } from "fun:test";
 
 beforeAll(async () => {
   // Async setup
@@ -242,7 +242,7 @@ test("async test", async () => {
 Hooks can be nested and will run in the appropriate order:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { describe, beforeAll, beforeEach, afterEach, afterAll, test } from "bun:test";
+import { describe, beforeAll, beforeEach, afterEach, afterAll, test } from "fun:test";
 
 beforeAll(() => console.log("File beforeAll"));
 afterAll(() => console.log("File afterAll"));
@@ -286,7 +286,7 @@ describe("outer describe", () => {
 If a lifecycle hook throws an error, it will affect test execution:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { beforeAll, test } from "bun:test";
+import { beforeAll, test } from "fun:test";
 
 beforeAll(() => {
   // If this throws, all tests in this scope will be skipped
@@ -301,7 +301,7 @@ test("this test will be skipped", () => {
 For better error handling:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { beforeAll, test, expect } from "bun:test";
+import { beforeAll, test, expect } from "fun:test";
 
 beforeAll(async () => {
   try {
@@ -350,7 +350,7 @@ beforeEach(() => {
 ### Clean Up Resources
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { afterAll, afterEach } from "bun:test";
+import { afterAll, afterEach } from "fun:test";
 
 afterEach(() => {
   // Clean up after each test

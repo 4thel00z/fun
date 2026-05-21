@@ -1,13 +1,13 @@
-import { fileURLToPath, Loader } from "bun";
-import { describe, expect } from "bun:test";
+import { fileURLToPath, Loader } from "fun";
+import { describe, expect } from "fun:test";
 import fs, { readdirSync } from "node:fs";
 import { join } from "path";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", async () => {
-  for (let target of ["bun", "node"] as const) {
+  for (let target of ["fun", "node"] as const) {
     describe(`${target} loader`, async () => {
-      itBundled("bun/loader-yaml-file", {
+      itBundled("fun/loader-yaml-file", {
         target,
         files: {
           "/entry.ts": /* js */ `
@@ -18,7 +18,7 @@ describe("bundler", async () => {
         },
         run: { stdout: '{"hello":"world"}' },
       });
-      itBundled("bun/loader-text-file", {
+      itBundled("fun/loader-text-file", {
         target,
         outfile: "",
         outdir: "/out",
@@ -32,7 +32,7 @@ describe("bundler", async () => {
         },
         run: { stdout: "Hello, world!" },
       });
-      itBundled("bun/loader-json-file", {
+      itBundled("fun/loader-json-file", {
         target,
         files: {
           "/entry.ts": /* js */ `
@@ -43,7 +43,7 @@ describe("bundler", async () => {
         },
         run: { stdout: '{"hello":"world"}' },
       });
-      itBundled("bun/loader-toml-file", {
+      itBundled("fun/loader-toml-file", {
         target,
         files: {
           "/entry.ts": /* js */ `
@@ -54,7 +54,7 @@ describe("bundler", async () => {
         },
         run: { stdout: '{"hello":"world"}' },
       });
-      itBundled("bun/loader-text-file", {
+      itBundled("fun/loader-text-file", {
         target,
         files: {
           "/entry.ts": /* js */ `
@@ -68,8 +68,8 @@ describe("bundler", async () => {
     });
   }
 
-  itBundled("bun/loader-text-file", {
-    target: "bun",
+  itBundled("fun/loader-text-file", {
+    target: "fun",
     outfile: "",
     outdir: "/out",
 
@@ -87,15 +87,15 @@ describe("bundler", async () => {
     },
   });
 
-  itBundled("bun/wasm-is-copied-to-outdir", {
-    target: "bun",
+  itBundled("fun/wasm-is-copied-to-outdir", {
+    target: "fun",
     outdir: "/out",
 
     files: {
       "/entry.ts": /* js */ `
     import wasm from './add.wasm';
     import { join } from 'path';
-    const { instance } = await WebAssembly.instantiate(await Bun.file(join(import.meta.dir, wasm)).arrayBuffer());
+    const { instance } = await WebAssembly.instantiate(await Fun.file(join(import.meta.dir, wasm)).arrayBuffer());
     console.log(instance.exports.add(1, 2));
   `,
       "/add.wasm": fs.readFileSync(join(import.meta.dir, "fixtures", "add.wasm")),
@@ -105,13 +105,13 @@ describe("bundler", async () => {
     },
   });
 
-  const moon = await Bun.file(
-    fileURLToPath(import.meta.resolve("../js/bun/util/text-loader-fixture-text-file.backslashes.txt")),
+  const moon = await Fun.file(
+    fileURLToPath(import.meta.resolve("../js/fun/util/text-loader-fixture-text-file.backslashes.txt")),
   ).text();
 
-  // https://github.com/oven-sh/bun/issues/3449
-  itBundled("bun/loader-text-file-#3449", {
-    target: "bun",
+  // https://github.com/underdoc-org/fun/issues/3449
+  itBundled("fun/loader-text-file-#3449", {
+    target: "fun",
     outfile: "",
     outdir: "/out",
 
@@ -132,8 +132,8 @@ describe("bundler", async () => {
   for (let i = 0; i < loaders.length; i++) {
     const loader = loaders[i];
     const ext = exts[i];
-    itBundled(`bun/loader-copy-file-entry-point-with-onLoad-${loader}`, {
-      target: "bun",
+    itBundled(`fun/loader-copy-file-entry-point-with-onLoad-${loader}`, {
+      target: "fun",
       outdir: "/out",
       files: {
         [`/entry.${ext}`]: /* js */ `{ "hello": "friends" }`,
@@ -141,7 +141,7 @@ describe("bundler", async () => {
       entryNaming: "[dir]/[name]-[hash].[ext]",
       plugins(builder) {
         builder.onLoad({ filter: new RegExp(`.${loader}$`) }, async ({ path }) => {
-          const result = await Bun.file(path).text();
+          const result = await Fun.file(path).text();
           return { contents: result, loader };
         });
       },
@@ -163,8 +163,8 @@ describe("bundler", async () => {
   for (let i = 0; i < loaders.length; i++) {
     const loader = loaders[i];
     const ext = exts[i];
-    itBundled(`bun/loader-copy-file-entry-point-${loader}`, {
-      target: "bun",
+    itBundled(`fun/loader-copy-file-entry-point-${loader}`, {
+      target: "fun",
       outfile: "",
       outdir: "/out",
       files: {
@@ -187,7 +187,7 @@ describe("bundler", async () => {
   }
 
   describe("handles empty files", () => {
-    for (const target of ["bun", "node", "browser"] as const) {
+    for (const target of ["fun", "node", "browser"] as const) {
       itBundled(`${target}/loader-empty-text-file`, {
         target: target,
         files: {

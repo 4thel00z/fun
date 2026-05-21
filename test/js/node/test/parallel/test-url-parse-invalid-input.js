@@ -85,7 +85,7 @@ if (common.hasIntl) {
       .then(common.mustCall(({ code, stdout, stderr }) => {
         assert.strictEqual(code, 0);
         assert.strictEqual(stdout, '');
-        // NOTE: bun formats errors slightly differently from node, but we're
+        // NOTE: fun formats errors slightly differently from node, but we're
         // printing the same deprecation message.
         // assert.match(stderr, /\[DEP0170\] DeprecationWarning:/);
         assert.match(stderr, /\DEP0170/);

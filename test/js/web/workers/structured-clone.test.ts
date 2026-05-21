@@ -1,7 +1,7 @@
-import { deserialize, serialize } from "bun:jsc";
+import { deserialize, serialize } from "fun:jsc";
 import { openSync } from "fs";
-import { bunEnv } from "harness";
-import { bunExe } from "js/bun/shell/test_builder";
+import { funEnv } from "harness";
+import { funExe } from "js/fun/shell/test_builder";
 import { join } from "path";
 function jscSerializeRoundtrip(value: any) {
   const serialized = serialize(value);
@@ -12,18 +12,18 @@ function jscSerializeRoundtrip(value: any) {
 function jscSerializeRoundtripCrossProcess(original: any) {
   const serialized = serialize(original);
 
-  const result = Bun.spawnSync({
+  const result = Fun.spawnSync({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
-    import {deserialize, serialize} from "bun:jsc";
-    const serialized = deserialize(await Bun.stdin.bytes());
+    import {deserialize, serialize} from "fun:jsc";
+    const serialized = deserialize(await Fun.stdin.bytes());
     const cloned = serialize(serialized);
     process.stdout.write(cloned);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdin: serialized,
     stdout: "pipe",
     stderr: "inherit",
@@ -163,7 +163,7 @@ for (const structuredCloneFn of [structuredClone, jscSerializeRoundtrip, jscSeri
       }
     });
 
-    describe("bun blobs work", () => {
+    describe("fun blobs work", () => {
       test("simple", async () => {
         const blob = new Blob(["hello"], { type: "application/octet-stream" });
         const cloned = structuredCloneFn(blob);
@@ -185,7 +185,7 @@ for (const structuredCloneFn of [structuredClone, jscSerializeRoundtrip, jscSeri
         await compareBlobs(blob, cloned);
       });
       test("file from path", async () => {
-        const blob = Bun.file(join(import.meta.dir, "example.txt"));
+        const blob = Fun.file(join(import.meta.dir, "example.txt"));
         const cloned = structuredCloneFn(blob);
         expect(cloned.lastModified).toBe(blob.lastModified);
         expect(cloned.name).toBe(blob.name);
@@ -193,7 +193,7 @@ for (const structuredCloneFn of [structuredClone, jscSerializeRoundtrip, jscSeri
       });
       test("file from fd", async () => {
         const fd = openSync(join(import.meta.dir, "example.txt"), "r");
-        const blob = Bun.file(fd);
+        const blob = Fun.file(fd);
         const cloned = structuredCloneFn(blob);
         expect(cloned.lastModified).toBe(blob.lastModified);
         expect(cloned.name).toBe(blob.name);
@@ -346,9 +346,9 @@ describe("structuredClone with ArrayBuffer larger than serialization buffer capa
           console.log(e.name);
         }
       `;
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", script],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", script],
+        env: funEnv,
         stdout: "pipe",
         stderr: "inherit",
       });

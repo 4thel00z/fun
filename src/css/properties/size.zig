@@ -61,7 +61,7 @@ pub const Size = union(enum) {
             @"-moz-fit-content",
             contain,
         };
-        const Map = comptime bun.ComptimeEnumMap(Enum);
+        const Map = comptime fun.ComptimeEnumMap(Enum);
         const res = input.tryParse(struct {
             pub fn parseFn(i: *css.Parser) css.Result(Size) {
                 const ident = switch (i.expectIdent()) {
@@ -127,7 +127,7 @@ pub const Size = union(enum) {
                 } else if (vp == css.VendorPrefix{ .moz = true }) {
                     try dest.writeStr("-moz-available");
                 } else {
-                    bun.unreachablePanic("Unexpected vendor prefixes", .{});
+                    fun.unreachablePanic("Unexpected vendor prefixes", .{});
                 }
             },
             .fit_content_function => |l| {
@@ -206,7 +206,7 @@ pub const MaxSize = union(enum) {
             contain,
         };
 
-        const IdentMap = bun.ComptimeStringMap(Ident, .{
+        const IdentMap = fun.ComptimeStringMap(Ident, .{
             .{ "none", .none },
             .{ "min-content", .min_content },
             .{ "-webkit-min-content", .webkit_min_content },
@@ -287,7 +287,7 @@ pub const MaxSize = union(enum) {
                 } else if (vp == css.VendorPrefix{ .moz = true }) {
                     try dest.writeStr("-moz-available");
                 } else {
-                    bun.unreachablePanic("Unexpected vendor prefixes", .{});
+                    fun.unreachablePanic("Unexpected vendor prefixes", .{});
                 }
             },
             .fit_content_function => |l| {
@@ -448,7 +448,7 @@ pub const SizeHandler = struct {
             .unparsed => |*unparsed| {
                 switch (unparsed.property_id) {
                     .width, .height, .@"min-width", .@"max-width", .@"min-height", .@"max-height" => {
-                        bun.bits.insert(SizeProperty, &this.flushed_properties, SizeProperty.tryFromPropertyIdTag(@as(PropertyIdTag, unparsed.property_id)).?);
+                        fun.bits.insert(SizeProperty, &this.flushed_properties, SizeProperty.tryFromPropertyIdTag(@as(PropertyIdTag, unparsed.property_id)).?);
                         dest.append(context.allocator, property.deepClone(context.allocator)) catch unreachable;
                     },
                     .@"block-size" => this.logicalUnparsedHelper(property, unparsed, .height, logical_supported, dest, context),
@@ -468,15 +468,15 @@ pub const SizeHandler = struct {
 
     inline fn logicalUnparsedHelper(this: *@This(), property: *const Property, unparsed: *const UnparsedProperty, comptime physical: PropertyIdTag, logical_supported: bool, dest: *css.DeclarationList, context: *css.PropertyHandlerContext) void {
         if (logical_supported) {
-            bun.bits.insert(SizeProperty, &this.flushed_properties, SizeProperty.tryFromPropertyIdTag(@as(PropertyIdTag, unparsed.property_id)).?);
-            bun.handleOom(dest.append(context.allocator, property.deepClone(context.allocator)));
+            fun.bits.insert(SizeProperty, &this.flushed_properties, SizeProperty.tryFromPropertyIdTag(@as(PropertyIdTag, unparsed.property_id)).?);
+            fun.handleOom(dest.append(context.allocator, property.deepClone(context.allocator)));
         } else {
             dest.append(context.allocator, Property{
                 .unparsed = unparsed.withPropertyId(
                     context.allocator,
                     @unionInit(PropertyId, @tagName(physical), {}),
                 ),
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
             @field(this.flushed_properties, @tagName(physical)) = true;
         }
     }
@@ -549,7 +549,7 @@ pub const SizeHandler = struct {
                             @tagName(property),
                             @unionInit(SizeType, @tagName(feature), prefix),
                         ),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             }
         }
@@ -563,7 +563,7 @@ pub const SizeHandler = struct {
         dest: *css.DeclarationList,
         context: *css.PropertyHandlerContext,
     ) void {
-        if (bun.take(&@field(this, field))) |val| {
+        if (fun.take(&@field(this, field))) |val| {
             switch (val) {
                 .stretch => |vp| if (vp == css.VendorPrefix{ .none = true }) {
                     this.flushPrefixHelper(property, SizeType, .stretch, dest, context);
@@ -579,7 +579,7 @@ pub const SizeHandler = struct {
                 },
                 else => {},
             }
-            bun.handleOom(dest.append(context.allocator, @unionInit(Property, @tagName(property), val.deepClone(context.allocator))));
+            fun.handleOom(dest.append(context.allocator, @unionInit(Property, @tagName(property), val.deepClone(context.allocator))));
             @field(this.flushed_properties, @tagName(property)) = true;
         }
     }
@@ -602,6 +602,6 @@ pub const SizeHandler = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

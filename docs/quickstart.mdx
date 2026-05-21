@@ -1,57 +1,57 @@
 ---
 title: Quickstart
-description: Build your first app with Bun
+description: Build your first app with Fun
 ---
 
 ## Overview
 
-Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by installing a package.
+Build a minimal HTTP server with `Fun.serve`, run it locally, then evolve it by installing a package.
 
-<Info>Prerequisites: Bun installed and available on your `PATH`. See [installation](/installation) for setup.</Info>
+<Info>Prerequisites: Fun installed and available on your `PATH`. See [installation](/installation) for setup.</Info>
 
 ---
 
 <Steps>
   <Step title="Step 1">
 
-    Initialize a new project with `bun init`.
+    Initialize a new project with `fun init`.
 
     ```bash terminal icon="terminal"
-    bun init my-app
+    fun init my-app
     ```
 
     It'll prompt you to pick a template, either `Blank`, `React`, or `Library`. For this guide, we'll pick `Blank`.
 
     ```bash terminal icon="terminal"
-    bun init my-app
+    fun init my-app
     ```
     ```txt
     ✓ Select a project template: Blank
 
     - .gitignore
     - CLAUDE.md
-    - .cursor/rules/use-bun-instead-of-node-vite-npm-pnpm.mdc -> CLAUDE.md
+    - .cursor/rules/use-fun-instead-of-node-vite-npm-pnpm.mdc -> CLAUDE.md
     - index.ts
     - tsconfig.json (for editor autocomplete)
     - README.md
     ```
 
-    This automatically creates a `my-app` directory with a basic Bun app.
+    This automatically creates a `my-app` directory with a basic Fun app.
 
   </Step>
   <Step title="Step 2">
 
-    Run the `index.ts` file using `bun run index.ts`.
+    Run the `index.ts` file using `fun run index.ts`.
 
     ```bash terminal icon="terminal"
     cd my-app
-    bun run index.ts
+    fun run index.ts
     ```
     ```txt
-    Hello via Bun!
+    Hello via Fun!
     ```
 
-    You should see a console output saying `"Hello via Bun!"`.
+    You should see a console output saying `"Hello via Fun!"`.
 
   </Step>
   <Step title="Step 3">
@@ -59,35 +59,35 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
     Replace the contents of `index.ts` with the following code:
 
     ```ts index.ts icon="/icons/typescript.svg"
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 3000,
       routes: {
-        "/": () => new Response('Bun!'),
+        "/": () => new Response('Fun!'),
       }
     });
 
     console.log(`Listening on ${server.url}`);
     ```
 
-    Run the `index.ts` file again using `bun run index.ts`.
+    Run the `index.ts` file again using `fun run index.ts`.
 
     ```bash terminal icon="terminal"
-    bun run index.ts
+    fun run index.ts
     ```
     ```txt
     Listening on http://localhost:3000
     ```
 
-    Visit [`http://localhost:3000`](http://localhost:3000) to test the server. You should see a page that says `"Bun!"`.
+    Visit [`http://localhost:3000`](http://localhost:3000) to test the server. You should see a page that says `"Fun!"`.
 
-    <Accordion title="Seeing TypeScript errors on Bun?">
+    <Accordion title="Seeing TypeScript errors on Fun?">
 
-      If you used `bun init`, Bun will have automatically installed Bun's TypeScript declarations and configured your `tsconfig.json`. If you're trying out Bun in an existing project, you may see a type error on the `Bun` global.
+      If you used `fun init`, Fun will have automatically installed Fun's TypeScript declarations and configured your `tsconfig.json`. If you're trying out Fun in an existing project, you may see a type error on the `Fun` global.
 
-      To fix this, first install `@types/bun` as a dev dependency.
+      To fix this, first install `@types/fun` as a dev dependency.
 
       ```bash terminal icon="terminal"
-      bun add -d @types/bun
+      fun add -d @types/fun
       ```
 
       Then add the following to your `compilerOptions` in `tsconfig.json`:
@@ -115,8 +115,8 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
     Install the `figlet` package and its type declarations. Figlet is a utility for converting strings into ASCII art.
 
     ```bash terminal icon="terminal"
-    bun add figlet
-    bun add -d @types/figlet # TypeScript users only
+    fun add figlet
+    fun add -d @types/figlet # TypeScript users only
     ```
 
     Update `index.ts` to use `figlet` in `routes`.
@@ -124,12 +124,12 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
     ```ts index.ts icon="/icons/typescript.svg"
     import figlet from 'figlet'; // [!code ++]
 
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 3000,
       routes: {
-        "/": () => new Response('Bun!'),
+        "/": () => new Response('Fun!'),
         "/figlet": () => { // [!code ++]
-          const body = figlet.textSync('Bun!'); // [!code ++]
+          const body = figlet.textSync('Fun!'); // [!code ++]
           return new Response(body); // [!code ++]
         } // [!code ++]
       }
@@ -138,16 +138,16 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
     console.log(`Listening on ${server.url}`);
     ```
 
-    Run the `index.ts` file again using `bun run index.ts`.
+    Run the `index.ts` file again using `fun run index.ts`.
 
     ```bash terminal icon="terminal"
-    bun run index.ts
+    fun run index.ts
     ```
     ```txt
     Listening on http://localhost:3000
     ```
 
-    Visit [`http://localhost:3000/figlet`](http://localhost:3000/figlet) to test the server. You should see a page that says `"Bun!"` in ASCII art.
+    Visit [`http://localhost:3000/figlet`](http://localhost:3000/figlet) to test the server. You should see a page that says `"Fun!"` in ASCII art.
 
     ```txt
     ____              _
@@ -168,10 +168,10 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bun</title>
+        <title>Fun</title>
       </head>
       <body>
-        <h1>Bun!</h1>
+        <h1>Fun!</h1>
       </body>
     </html>
     ```
@@ -182,12 +182,12 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
     import figlet from 'figlet';
     import index from './index.html'; // [!code ++]
 
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 3000,
       routes: {
         "/": index, // [!code ++]
         "/figlet": () => {
-          const body = figlet.textSync('Bun!');
+          const body = figlet.textSync('Fun!');
           return new Response(body);
         }
       }
@@ -196,10 +196,10 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
     console.log(`Listening on ${server.url}`);
     ```
 
-    Run the `index.ts` file again using `bun run index.ts`.
+    Run the `index.ts` file again using `fun run index.ts`.
 
     ```bash terminal icon="terminal"
-    bun run index.ts
+    fun run index.ts
     ```
     ```txt
     Listening on http://localhost:3000
@@ -211,13 +211,13 @@ Build a minimal HTTP server with `Bun.serve`, run it locally, then evolve it by 
 
 </Steps>
 
-🎉 Congratulations! You've built an HTTP server with Bun and installed a package.
+🎉 Congratulations! You've built an HTTP server with Fun and installed a package.
 
 ---
 
 ## Run a script
 
-Bun can also execute `"scripts"` from your `package.json`. Add the following script:
+Fun can also execute `"scripts"` from your `package.json`. Add the following script:
 
 {/* prettier-ignore */}
 ```json package.json icon="file-json"
@@ -227,10 +227,10 @@ Bun can also execute `"scripts"` from your `package.json`. Add the following scr
   "type": "module",
   "private": true,
   "scripts": { // [!code ++]
-    "start": "bun run index.ts" // [!code ++]
+    "start": "fun run index.ts" // [!code ++]
   }, // [!code ++]
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/fun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -238,14 +238,14 @@ Bun can also execute `"scripts"` from your `package.json`. Add the following scr
 }
 ```
 
-Then run it with `bun run start`.
+Then run it with `fun run start`.
 
 ```bash terminal icon="terminal"
-bun run start
+fun run start
 ```
 
 ```txt
 Listening on http://localhost:3000
 ```
 
-<Note>⚡️ **Performance** — `bun run` is roughly 28x faster than `npm run` (6ms vs 170ms of overhead).</Note>
+<Note>⚡️ **Performance** — `fun run` is roughly 28x faster than `npm run` (6ms vs 170ms of overhead).</Note>

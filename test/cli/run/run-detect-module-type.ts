@@ -1,6 +1,6 @@
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 // module type -> file extensions -> expected module type
 const table = {
@@ -39,9 +39,9 @@ test("detect module type", () => {
  
   const actual = Object.entries(table).map(([moduleType, extensions]) => {
     return Object.entries(extensions).map(([extension, expected]) => {
-      const proc =  Bun.spawnSync({
-        cmd: [bunExe(), "run", join(import.meta.dir, 'module-type-fixture', moduleType, extension)],
-        env: bunEnv,
+      const proc =  Fun.spawnSync({
+        cmd: [funExe(), "run", join(import.meta.dir, 'module-type-fixture', moduleType, extension)],
+        env: funEnv,
       });
       if (proc.exitCode !== 0) {
         throw new Error(`Failed to run ${moduleType} ${extension}: ${proc.stderr.toString('utf8').trim()}`);

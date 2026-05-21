@@ -10,7 +10,7 @@
 #include <wtf/HashMap.h>
 #include <mutex>
 
-namespace Bun {
+namespace Fun {
 
 // --- Static storage for wrapper types --------------------------------------
 namespace objc {
@@ -177,7 +177,7 @@ char NavigationDelegate::s_hostKey = 0;
 } // namespace objc
 
 // --- Delegate IMPs ---------------------------------------------------------
-// Installed on the runtime-registered BunWKNavigationDelegate class.
+// Installed on the runtime-registered FunWKNavigationDelegate class.
 
 extern "C" {
 
@@ -494,9 +494,9 @@ bool ObjCRuntime::load()
     WKWebView::s_callAsyncJavaScript = sel("callAsyncJavaScript:arguments:inFrame:inContentWorld:completionHandler:");
 #undef CLS
 
-    // --- register BunWKNavigationDelegate : NSObject <WKNavigationDelegate>
+    // --- register FunWKNavigationDelegate : NSObject <WKNavigationDelegate>
     Class nsobject = getClass("NSObject");
-    NavigationDelegate::cls = allocateClassPair(nsobject, "BunWKNavigationDelegate", 0);
+    NavigationDelegate::cls = allocateClassPair(nsobject, "FunWKNavigationDelegate", 0);
     if (!NavigationDelegate::cls) {
         m_loadError = "failed to allocate delegate class"_s;
         return false;
@@ -522,8 +522,8 @@ bool ObjCRuntime::load()
     if (Protocol* proto = getProtocol("WKScriptMessageHandler")) addProtocol(NavigationDelegate::cls, proto);
     registerClassPair(NavigationDelegate::cls);
 
-    // --- register BunHostWindow : NSWindow -------------------------------
-    NSWindow::hostCls = allocateClassPair(NSWindow::cls, "BunHostWindow", 0);
+    // --- register FunHostWindow : NSWindow -------------------------------
+    NSWindow::hostCls = allocateClassPair(NSWindow::cls, "FunHostWindow", 0);
     if (!NSWindow::hostCls) {
         m_loadError = "failed to allocate window class"_s;
         return false;
@@ -562,6 +562,6 @@ ObjCRuntime* ObjCRuntime::tryLoad()
     return &runtime.get();
 }
 
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(DARWIN)

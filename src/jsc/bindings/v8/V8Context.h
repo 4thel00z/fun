@@ -11,7 +11,7 @@ class Isolate;
 // Context can quickly access JSC data
 class Context : public Data {
 public:
-    BUN_EXPORT Isolate* GetIsolate();
+    FUN_EXPORT Isolate* GetIsolate();
 
     JSC::VM& vm() const
     {

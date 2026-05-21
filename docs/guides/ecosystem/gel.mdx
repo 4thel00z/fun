@@ -1,6 +1,6 @@
 ---
-title: Use Gel with Bun
-sidebarTitle: Gel with Bun
+title: Use Gel with Fun
+sidebarTitle: Gel with Fun
 mode: center
 ---
 
@@ -28,12 +28,12 @@ brew install geldata/tap/gel-cli
 
 ---
 
-Use `bun init` to create a fresh project.
+Use `fun init` to create a fresh project.
 
 ```sh terminal icon="terminal"
 mkdir my-edgedb-app
 cd my-edgedb-app
-bun init -y
+fun init -y
 ```
 
 ---
@@ -45,7 +45,7 @@ gel project init
 ```
 
 ```txt
-No `gel.toml` found in `/Users/colinmcd94/Documents/bun/fun/examples/my-gel-app` or above
+No `gel.toml` found in `/Users/colinmcd94/Documents/fun/fun/examples/my-gel-app` or above
 Do you want to initialize a new project? [Y/n]
 > Y
 Specify the name of Gel instance to use with this project [default: my_gel_app]:
@@ -54,9 +54,9 @@ Checking Gel versions...
 Specify the version of Gel to use with this project [default: x.y]:
 > x.y
 ┌─────────────────────┬──────────────────────────────────────────────────────────────────┐
-│ Project directory   │ /Users/colinmcd94/Documents/bun/fun/examples/my-gel-app         │
-│ Project config      │ /Users/colinmcd94/Documents/bun/fun/examples/my-gel-app/gel.toml│
-│ Schema dir (empty)  │ /Users/colinmcd94/Documents/bun/fun/examples/my-gel-app/dbschema│
+│ Project directory   │ /Users/colinmcd94/Documents/fun/fun/examples/my-gel-app         │
+│ Project config      │ /Users/colinmcd94/Documents/fun/fun/examples/my-gel-app/gel.toml│
+│ Schema dir (empty)  │ /Users/colinmcd94/Documents/fun/fun/examples/my-gel-app/dbschema│
 │ Installation method │ portable package                                                 │
 │ Version             │ x.y+6d5921b                                                      │
 │ Instance name       │ my_gel_app                                                       │
@@ -120,7 +120,7 @@ gel migration create
 ```
 
 ```txt
-Created /Users/colinmcd94/Documents/bun/fun/examples/my-gel-app/dbschema/migrations/00001.edgeql, id: m1uwekrn4ni4qs7ul7hfar4xemm5kkxlpswolcoyqj3xdhweomwjrq
+Created /Users/colinmcd94/Documents/fun/fun/examples/my-gel-app/dbschema/migrations/00001.edgeql, id: m1uwekrn4ni4qs7ul7hfar4xemm5kkxlpswolcoyqj3xdhweomwjrq
 ```
 
 ```sh terminal icon="terminal"
@@ -136,8 +136,8 @@ Applied m1uwekrn4ni4qs7ul7hfar4xemm5kkxlpswolcoyqj3xdhweomwjrq (00001.edgeql)
 With our schema applied, let's execute some queries using Gel's JavaScript client library. We'll install the client library and Gel's codegen CLI, and create a `seed.ts`.file.
 
 ```sh terminal icon="terminal"
-bun add gel
-bun add -D @gel/generate
+fun add gel
+fun add -D @gel/generate
 touch seed.ts
 ```
 
@@ -176,10 +176,10 @@ process.exit();
 
 ---
 
-Then run this file with Bun.
+Then run this file with Fun.
 
 ```sh terminal icon="terminal"
-bun run seed.ts
+fun run seed.ts
 ```
 
 ```txt
@@ -191,7 +191,7 @@ Seeding complete.
 Gel implements a number of code generation tools for TypeScript. To query our newly seeded database in a typesafe way, we'll use `@gel/generate` to code-generate the EdgeQL query builder.
 
 ```sh terminal icon="terminal"
-bunx @gel/generate edgeql-js
+funx @gel/generate edgeql-js
 ```
 
 ```txt
@@ -235,10 +235,10 @@ results; // { title: string, releaseYear: number | null }[]
 
 ---
 
-Running the file with Bun, we can see the list of movies we inserted.
+Running the file with Fun, we can see the list of movies we inserted.
 
 ```sh terminal icon="terminal"
-bun run index.ts
+fun run index.ts
 ```
 
 ```txt

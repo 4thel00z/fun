@@ -5,7 +5,7 @@
 #include "JavaScriptCore/JSString.h"
 #include "headers-handwritten.h"
 #include "wtf/NakedPtr.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 namespace Zig {
 class GlobalObject;
@@ -17,7 +17,7 @@ class ProgramExecutable;
 class AbstractModuleRecord;
 }
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -52,7 +52,7 @@ public:
     // Vector of pointers. If accessed, deduplication happens and array is
     // moved into JavaScript. These two fields add 16 bytes to JSCommonJSModule.
     // `m_childrenValue` can be set to any value via the user-exposed setter,
-    // but Bun does not test that behavior besides ensuring it does not crash.
+    // but Fun does not test that behavior besides ensuring it does not crash.
     mutable JSC::WriteBarrier<Unknown> m_childrenValue;
     // This must be WriteBarrier<Unknown> to compile; always JSCommonJSModule
     WTF::Vector<WriteBarrier<Unknown>> m_children;
@@ -236,4 +236,4 @@ public:
     void finishCreation(JSC::VM&);
 };
 
-} // namespace Bun
+} // namespace Fun

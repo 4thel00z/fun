@@ -37,7 +37,7 @@ pub const ChildPtr = StatePtrUnion(.{
     Subshell,
 });
 
-const PipelineItem = bun.TaggedPointerUnion(.{
+const PipelineItem = fun.TaggedPointerUnion(.{
     Cmd,
     If,
     CondExpr,
@@ -95,12 +95,12 @@ fn setupCommands(this: *Pipeline) ?Yield {
         break :brk i;
     };
 
-    this.cmds = if (cmd_count >= 1) bun.handleOom(this.base.allocator().alloc(CmdOrResult, cmd_count)) else null;
+    this.cmds = if (cmd_count >= 1) fun.handleOom(this.base.allocator().alloc(CmdOrResult, cmd_count)) else null;
     if (this.cmds == null) return null;
     // Pre-fill so a mid-loop failure leaves cmds[i..] in a state deinit() can skip safely.
     for (this.cmds.?) |*c| c.* = .{ .result = 0 };
 
-    var pipes = bun.handleOom(this.base.allocator().alloc(Pipe, if (cmd_count > 1) cmd_count - 1 else 1));
+    var pipes = fun.handleOom(this.base.allocator().alloc(Pipe, if (cmd_count > 1) cmd_count - 1 else 1));
     this.pipes = pipes;
 
     if (cmd_count > 1) {
@@ -112,7 +112,7 @@ fn setupCommands(this: *Pipeline) ?Yield {
             }
             const system_err = err.toShellSystemError();
             defer system_err.deref();
-            return this.writeFailingError("bun: {f}\n", .{system_err.message});
+            return this.writeFailingError("fun: {f}\n", .{system_err.message});
         }
     }
 
@@ -140,7 +140,7 @@ fn setupCommands(this: *Pipeline) ?Yield {
                         }
                         const system_err = err.toShellSystemError();
                         defer system_err.deref();
-                        return this.writeFailingError("bun: {f}\n", .{system_err.message});
+                        return this.writeFailingError("fun: {f}\n", .{system_err.message});
                     },
                 };
                 this.cmds.?[i] = .{
@@ -149,7 +149,7 @@ fn setupCommands(this: *Pipeline) ?Yield {
                         .cmd => PipelineItem.init(Cmd.init(this.base.interpreter, subshell_state, item.cmd, Cmd.ParentPtr.init(this), cmd_io)),
                         .condexpr => PipelineItem.init(CondExpr.init(this.base.interpreter, subshell_state, item.condexpr, CondExpr.ParentPtr.init(this), cmd_io)),
                         .subshell => PipelineItem.init(Subshell.init(this.base.interpreter, subshell_state, item.subshell, Subshell.ParentPtr.init(this), cmd_io)),
-                        else => @panic("Pipeline runnable should be a command or an if conditional, this appears to be a bug in Bun."),
+                        else => @panic("Pipeline runnable should be a command or an if conditional, this appears to be a bug in Fun."),
                     },
                 };
                 i += 1;
@@ -204,7 +204,7 @@ pub fn next(this: *Pipeline) Yield {
 }
 
 pub fn onIOWriterChunk(this: *Pipeline, _: usize, err: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .waiting_write_err);
     }
 
@@ -290,14 +290,14 @@ pub fn deinit(this: *Pipeline) void {
 
 fn initializePipes(pipes: []Pipe, set_count: *u32) Maybe(void) {
     for (pipes) |*pipe| {
-        if (bun.Environment.isWindows) {
-            pipe.* = switch (bun.sys.pipe()) {
+        if (fun.Environment.isWindows) {
+            pipe.* = switch (fun.sys.pipe()) {
                 .result => |p| p,
                 .err => |e| return .{ .err = e },
             };
         } else {
-            switch (bun.sys.socketpairForShell(
-                // switch (bun.sys.socketpair(
+            switch (fun.sys.socketpairForShell(
+                // switch (fun.sys.socketpair(
                 std.posix.AF.UNIX,
                 std.posix.SOCK.STREAM,
                 0,
@@ -319,7 +319,7 @@ fn writePipe(pipes: []Pipe, proc_idx: usize, cmd_count: usize, io: *IO, evtloop:
         .fd = .{
             .writer = IOWriter.init(pipes[proc_idx][1], .{
                 .pollable = true,
-                .is_socket = bun.Environment.isPosix,
+                .is_socket = fun.Environment.isPosix,
             }, evtloop),
         },
     };
@@ -333,32 +333,32 @@ fn readPipe(pipes: []Pipe, proc_idx: usize, io: *IO, evtloop: jsc.EventLoopHandl
 
 const std = @import("std");
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
-const Maybe = bun.sys.Maybe;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
+const Maybe = fun.sys.Maybe;
 
-const shell = bun.shell;
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const shell = fun.shell;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Assigns = bun.shell.Interpreter.Assigns;
-const Async = bun.shell.Interpreter.Async;
-const Binary = bun.shell.Interpreter.Binary;
-const Cmd = bun.shell.Interpreter.Cmd;
-const CondExpr = bun.shell.Interpreter.CondExpr;
-const IO = bun.shell.Interpreter.IO;
-const IOReader = bun.shell.Interpreter.IOReader;
-const IOWriter = bun.shell.Interpreter.IOWriter;
-const If = bun.shell.Interpreter.If;
+const Interpreter = fun.shell.Interpreter;
+const Assigns = fun.shell.Interpreter.Assigns;
+const Async = fun.shell.Interpreter.Async;
+const Binary = fun.shell.Interpreter.Binary;
+const Cmd = fun.shell.Interpreter.Cmd;
+const CondExpr = fun.shell.Interpreter.CondExpr;
+const IO = fun.shell.Interpreter.IO;
+const IOReader = fun.shell.Interpreter.IOReader;
+const IOWriter = fun.shell.Interpreter.IOWriter;
+const If = fun.shell.Interpreter.If;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
-const Subshell = bun.shell.Interpreter.Subshell;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
+const Subshell = fun.shell.Interpreter.Subshell;
 
-const Pipe = bun.shell.interpret.Pipe;
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const closefd = bun.shell.interpret.closefd;
-const log = bun.shell.interpret.log;
+const Pipe = fun.shell.interpret.Pipe;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const closefd = fun.shell.interpret.closefd;
+const log = fun.shell.interpret.log;

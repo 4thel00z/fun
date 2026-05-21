@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 test("import.meta properties are NOT inlined without bake framework", async () => {
   const dir = tempDirWithFiles("import-meta-no-inline", {
@@ -13,9 +13,9 @@ test("import.meta properties are NOT inlined without bake framework", async () =
   });
 
   // Run without bundling - should show actual values
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.ts"],
+    env: funEnv,
     cwd: dir,
   });
 

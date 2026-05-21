@@ -4,11 +4,11 @@ sidebarTitle: Add a trusted dependency
 mode: center
 ---
 
-Unlike other npm clients, Bun does not execute arbitrary lifecycle scripts for installed dependencies, such as `postinstall` and `node-gyp` builds. These scripts represent a potential security risk, as they can execute arbitrary code on your machine.
+Unlike other npm clients, Fun does not execute arbitrary lifecycle scripts for installed dependencies, such as `postinstall` and `node-gyp` builds. These scripts represent a potential security risk, as they can execute arbitrary code on your machine.
 
 <Note>
-  Bun includes a default allowlist of popular packages containing `postinstall` scripts that are known to be safe. You
-  can see this list [here](https://github.com/oven-sh/bun/blob/main/src/install/default-trusted-dependencies.txt). This
+  Fun includes a default allowlist of popular packages containing `postinstall` scripts that are known to be safe. You
+  can see this list [here](https://github.com/underdoc-org/fun/blob/main/src/install/default-trusted-dependencies.txt). This
   default list only applies to packages installed from npm. For packages from other sources (such as `file:`, `link:`,
   `git:`, or `github:` dependencies), you must explicitly add them to `trustedDependencies`.
 </Note>
@@ -22,7 +22,7 @@ If you are seeing one of the following errors, you are probably trying to use a 
 
 ---
 
-To allow Bun to execute lifecycle scripts for a specific package, add the package to `trustedDependencies` in your package.json file. You can do this automatically by running the command `bun pm trust <pkg>`.
+To allow Fun to execute lifecycle scripts for a specific package, add the package to `trustedDependencies` in your package.json file. You can do this automatically by running the command `fun pm trust <pkg>`.
 
 <Note>
   Note that this only allows lifecycle scripts for the specific package listed in `trustedDependencies`, _not_ the
@@ -39,12 +39,12 @@ To allow Bun to execute lifecycle scripts for a specific package, add the packag
 
 ---
 
-Once this is added, run a fresh install. Bun will re-install your dependencies and properly install
+Once this is added, run a fresh install. Fun will re-install your dependencies and properly install
 
 ```sh terminal icon="terminal"
 rm -rf node_modules
-rm bun.lock
-bun install
+rm fun.lock
+fun install
 ```
 
 ---

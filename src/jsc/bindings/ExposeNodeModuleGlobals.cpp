@@ -18,46 +18,46 @@
 #undef assert
 
 #define FOREACH_EXPOSED_BUILTIN_IMR(v)     \
-    v(ffi,                    Bun::InternalModuleRegistry::BunFFI) \
-    v(assert,                 Bun::InternalModuleRegistry::NodeAssert) \
-    v(async_hooks,            Bun::InternalModuleRegistry::NodeAsyncHooks) \
-    v(child_process,          Bun::InternalModuleRegistry::NodeChildProcess) \
-    v(cluster,                Bun::InternalModuleRegistry::NodeCluster) \
-    v(dgram,                  Bun::InternalModuleRegistry::NodeDgram) \
-    v(diagnostics_channel,    Bun::InternalModuleRegistry::NodeDiagnosticsChannel) \
-    v(dns,                    Bun::InternalModuleRegistry::NodeDNS) \
-    v(domain,                 Bun::InternalModuleRegistry::NodeDomain) \
-    v(events,                 Bun::InternalModuleRegistry::NodeEvents) \
-    v(fs,                     Bun::InternalModuleRegistry::NodeFS) \
-    v(http,                   Bun::InternalModuleRegistry::NodeHttp) \
-    v(http2,                  Bun::InternalModuleRegistry::NodeHttp2) \
-    v(https,                  Bun::InternalModuleRegistry::NodeHttps) \
-    v(inspector,              Bun::InternalModuleRegistry::NodeInspector) \
-    v(net,                    Bun::InternalModuleRegistry::NodeNet) \
-    v(os,                     Bun::InternalModuleRegistry::NodeOS) \
-    v(path,                   Bun::InternalModuleRegistry::NodePath) \
-    v(perf_hooks,             Bun::InternalModuleRegistry::NodePerfHooks) \
-    v(punycode,               Bun::InternalModuleRegistry::NodePunycode) \
-    v(querystring,            Bun::InternalModuleRegistry::NodeQuerystring) \
-    v(readline,               Bun::InternalModuleRegistry::NodeReadline) \
-    v(stream,                 Bun::InternalModuleRegistry::NodeStream) \
-    v(sys,                    Bun::InternalModuleRegistry::NodeUtil) \
-    v(timers,                 Bun::InternalModuleRegistry::NodeTimers) \
-    v(tls,                    Bun::InternalModuleRegistry::NodeTLS) \
-    v(trace_events,           Bun::InternalModuleRegistry::NodeTraceEvents) \
-    v(tty,                    Bun::InternalModuleRegistry::NodeTty) \
-    v(url,                    Bun::InternalModuleRegistry::NodeUrl) \
-    v(util,                   Bun::InternalModuleRegistry::NodeUtil) \
-    v(v8,                     Bun::InternalModuleRegistry::NodeV8) \
-    v(vm,                     Bun::InternalModuleRegistry::NodeVM) \
-    v(wasi,                   Bun::InternalModuleRegistry::NodeWasi) \
-    v(sqlite,                 Bun::InternalModuleRegistry::BunSqlite) \
-    v(worker_threads,         Bun::InternalModuleRegistry::NodeWorkerThreads) \
-    v(zlib,                   Bun::InternalModuleRegistry::NodeZlib) \
-    v(constants,              Bun::InternalModuleRegistry::NodeConstants) \
-    v(string_decoder,         Bun::InternalModuleRegistry::NodeStringDecoder) \
-    v(buffer,                 Bun::InternalModuleRegistry::NodeBuffer) \
-    v(jsc,                    Bun::InternalModuleRegistry::BunJSC) \
+    v(ffi,                    Fun::InternalModuleRegistry::FunFFI) \
+    v(assert,                 Fun::InternalModuleRegistry::NodeAssert) \
+    v(async_hooks,            Fun::InternalModuleRegistry::NodeAsyncHooks) \
+    v(child_process,          Fun::InternalModuleRegistry::NodeChildProcess) \
+    v(cluster,                Fun::InternalModuleRegistry::NodeCluster) \
+    v(dgram,                  Fun::InternalModuleRegistry::NodeDgram) \
+    v(diagnostics_channel,    Fun::InternalModuleRegistry::NodeDiagnosticsChannel) \
+    v(dns,                    Fun::InternalModuleRegistry::NodeDNS) \
+    v(domain,                 Fun::InternalModuleRegistry::NodeDomain) \
+    v(events,                 Fun::InternalModuleRegistry::NodeEvents) \
+    v(fs,                     Fun::InternalModuleRegistry::NodeFS) \
+    v(http,                   Fun::InternalModuleRegistry::NodeHttp) \
+    v(http2,                  Fun::InternalModuleRegistry::NodeHttp2) \
+    v(https,                  Fun::InternalModuleRegistry::NodeHttps) \
+    v(inspector,              Fun::InternalModuleRegistry::NodeInspector) \
+    v(net,                    Fun::InternalModuleRegistry::NodeNet) \
+    v(os,                     Fun::InternalModuleRegistry::NodeOS) \
+    v(path,                   Fun::InternalModuleRegistry::NodePath) \
+    v(perf_hooks,             Fun::InternalModuleRegistry::NodePerfHooks) \
+    v(punycode,               Fun::InternalModuleRegistry::NodePunycode) \
+    v(querystring,            Fun::InternalModuleRegistry::NodeQuerystring) \
+    v(readline,               Fun::InternalModuleRegistry::NodeReadline) \
+    v(stream,                 Fun::InternalModuleRegistry::NodeStream) \
+    v(sys,                    Fun::InternalModuleRegistry::NodeUtil) \
+    v(timers,                 Fun::InternalModuleRegistry::NodeTimers) \
+    v(tls,                    Fun::InternalModuleRegistry::NodeTLS) \
+    v(trace_events,           Fun::InternalModuleRegistry::NodeTraceEvents) \
+    v(tty,                    Fun::InternalModuleRegistry::NodeTty) \
+    v(url,                    Fun::InternalModuleRegistry::NodeUrl) \
+    v(util,                   Fun::InternalModuleRegistry::NodeUtil) \
+    v(v8,                     Fun::InternalModuleRegistry::NodeV8) \
+    v(vm,                     Fun::InternalModuleRegistry::NodeVM) \
+    v(wasi,                   Fun::InternalModuleRegistry::NodeWasi) \
+    v(sqlite,                 Fun::InternalModuleRegistry::FunSqlite) \
+    v(worker_threads,         Fun::InternalModuleRegistry::NodeWorkerThreads) \
+    v(zlib,                   Fun::InternalModuleRegistry::NodeZlib) \
+    v(constants,              Fun::InternalModuleRegistry::NodeConstants) \
+    v(string_decoder,         Fun::InternalModuleRegistry::NodeStringDecoder) \
+    v(buffer,                 Fun::InternalModuleRegistry::NodeBuffer) \
+    v(jsc,                    Fun::InternalModuleRegistry::FunJSC) \
 
 namespace ExposeNodeModuleGlobalGetters {
 
@@ -73,7 +73,7 @@ FOREACH_EXPOSED_BUILTIN_IMR(DECL_GETTER)
 
 } // namespace ExposeNodeModuleGlobalGetters
 
-extern "C" [[ZIG_EXPORT(nothrow)]] void Bun__ExposeNodeModuleGlobals(Zig::GlobalObject* globalObject)
+extern "C" [[ZIG_EXPORT(nothrow)]] void Fun__ExposeNodeModuleGlobals(Zig::GlobalObject* globalObject)
 {
 
     auto& vm = JSC::getVM(globalObject);
@@ -94,7 +94,7 @@ extern "C" [[ZIG_EXPORT(nothrow)]] void Bun__ExposeNodeModuleGlobals(Zig::Global
 
 // Set up require(), module, __filename, __dirname on globalThis for the REPL.
 // Creates a CommonJS module object rooted at the given directory so require() resolves correctly.
-extern "C" [[ZIG_EXPORT(check_slow)]] void Bun__REPL__setupGlobalRequire(
+extern "C" [[ZIG_EXPORT(check_slow)]] void Fun__REPL__setupGlobalRequire(
     Zig::GlobalObject* globalObject,
     const unsigned char* cwdPtr,
     size_t cwdLen)
@@ -107,7 +107,7 @@ extern "C" [[ZIG_EXPORT(check_slow)]] void Bun__REPL__setupGlobalRequire(
     auto* filename = jsString(vm, makeString(cwdStr, PLATFORM_SEP_s, "[repl]"_s));
     auto* dirname = jsString(vm, WTF::String(cwdStr));
 
-    auto* moduleObject = Bun::JSCommonJSModule::create(vm,
+    auto* moduleObject = Fun::JSCommonJSModule::create(vm,
         globalObject->CommonJSModuleObjectStructure(),
         filename, filename, dirname, SourceCode());
     moduleObject->hasEvaluated = true;

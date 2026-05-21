@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tempDir } from "harness";
 
-// Regression test for https://github.com/oven-sh/bun/issues/25785
+// Regression test for https://github.com/underdoc-org/fun/issues/25785
 // CSS logical border-radius properties were being silently dropped
 
 test("CSS bundler should preserve logical border-radius properties", async () => {
@@ -25,7 +25,7 @@ test("CSS bundler should preserve logical border-radius properties", async () =>
 `,
   });
 
-  const result = await Bun.build({
+  const result = await Fun.build({
     entrypoints: [`${dir}/test.css`],
     outdir: `${dir}/dist`,
     experimentalCss: true,
@@ -76,7 +76,7 @@ test("CSS bundler should handle logical border-radius with targets that compile 
 `,
   });
 
-  const result = await Bun.build({
+  const result = await Fun.build({
     entrypoints: [`${dir}/test.css`],
     outdir: `${dir}/dist`,
     experimentalCss: true,

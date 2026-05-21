@@ -1,7 +1,7 @@
 #pragma once
 
 #include "root.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/ArrayBuffer.h>
 #include <JavaScriptCore/ArrayBufferView.h>
 #include <JavaScriptCore/JSDestructibleObject.h>
@@ -12,7 +12,7 @@
 #include <JavaScriptCore/LazyProperty.h>
 #include <JavaScriptCore/LazyPropertyInlines.h>
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(callHash);
 JSC_DECLARE_HOST_FUNCTION(constructHash);
@@ -131,4 +131,4 @@ JSC_DECLARE_HOST_FUNCTION(jsHashProtoFuncDigest);
 
 void setupJSHashClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

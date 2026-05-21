@@ -1,5 +1,5 @@
-import { YAML } from "bun";
-import { expect, test } from "bun:test";
+import { YAML } from "fun";
+import { expect, test } from "fun:test";
 
 test("YAML.parse throws SyntaxError like JSON.parse", () => {
   // Test that YAML.parse throws a SyntaxError for invalid YAML

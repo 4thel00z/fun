@@ -1,8 +1,8 @@
 const ProcessAutoKiller = @This();
 
-const log = bun.Output.scoped(.AutoKiller, .hidden);
+const log = fun.Output.scoped(.AutoKiller, .hidden);
 
-processes: std.AutoArrayHashMapUnmanaged(*bun.spawn.Process, void) = .{},
+processes: std.AutoArrayHashMapUnmanaged(*fun.spawn.Process, void) = .{},
 enabled: bool = false,
 ever_enabled: bool = false,
 
@@ -31,7 +31,7 @@ fn killProcesses(this: *ProcessAutoKiller) u32 {
         defer process.key.deref();
         if (!process.key.hasExited()) {
             log("process.kill {d}", .{process.key.pid});
-            count += @as(u32, @intFromBool(process.key.kill(@intFromEnum(bun.SignalCode.default)) == .result));
+            count += @as(u32, @intFromBool(process.key.kill(@intFromEnum(fun.SignalCode.default)) == .result));
         }
     }
     return count;
@@ -43,20 +43,20 @@ pub fn clear(this: *ProcessAutoKiller) void {
     }
 
     if (this.processes.capacity() > 256) {
-        this.processes.clearAndFree(bun.default_allocator);
+        this.processes.clearAndFree(fun.default_allocator);
     }
 
     this.processes.clearRetainingCapacity();
 }
 
-pub fn onSubprocessSpawn(this: *ProcessAutoKiller, process: *bun.spawn.Process) void {
+pub fn onSubprocessSpawn(this: *ProcessAutoKiller, process: *fun.spawn.Process) void {
     if (this.enabled) {
-        this.processes.put(bun.default_allocator, process, {}) catch return;
+        this.processes.put(fun.default_allocator, process, {}) catch return;
         process.ref();
     }
 }
 
-pub fn onSubprocessExit(this: *ProcessAutoKiller, process: *bun.spawn.Process) void {
+pub fn onSubprocessExit(this: *ProcessAutoKiller, process: *fun.spawn.Process) void {
     if (this.ever_enabled) {
         if (this.processes.swapRemove(process)) {
             process.deref();
@@ -68,8 +68,8 @@ pub fn deinit(this: *ProcessAutoKiller) void {
     for (this.processes.keys()) |process| {
         process.deref();
     }
-    this.processes.deinit(bun.default_allocator);
+    this.processes.deinit(fun.default_allocator);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

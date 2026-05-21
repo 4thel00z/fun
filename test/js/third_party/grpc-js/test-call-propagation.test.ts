@@ -16,7 +16,7 @@
  */
 
 import grpc from "@grpc/grpc-js";
-import { afterAll, afterEach, beforeAll, describe, it } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, it } from "fun:test";
 import assert from "node:assert";
 import { loadProtoFile } from "./common.ts";
 

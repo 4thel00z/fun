@@ -1,5 +1,5 @@
 import assert from "assert";
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { osSlashes } from "harness";
 import path from "path";
 import { dedent, ESBUILD_PATH, itBundled } from "../expectBundled";
@@ -7,7 +7,7 @@ import { dedent, ESBUILD_PATH, itBundled } from "../expectBundled";
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_default_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/default
+// For debug, all files are written to $TEMP/fun-bundle-tests/default
 
 describe.concurrent("bundler", () => {
   itBundled("default/SimpleES6", {
@@ -440,7 +440,7 @@ describe.concurrent("bundler", () => {
     },
   });
   // itBundled("default/JSXImportsCommonJS", {
-  //   notImplemented: true, // jsx in bun is too different to esbuild
+  //   notImplemented: true, // jsx in fun is too different to esbuild
   //   files: {
   //     "/entry.jsx": /* jsx */ `
   //       import {elem, frag} from './custom-react'
@@ -467,7 +467,7 @@ describe.concurrent("bundler", () => {
   //   },
   // });
   // itBundled("default/JSXImportsES6", {
-  //   notImplemented: true, // jsx in bun is too different to esbuild
+  //   notImplemented: true, // jsx in fun is too different to esbuild
   //   files: {
   //     "/entry.jsx": /* jsx */ `
   //       import {elem, frag} from './custom-react'
@@ -493,7 +493,7 @@ describe.concurrent("bundler", () => {
   //   },
   // });
   // note: esbuild treats .js as non-jsx
-  // bun treats js as jsx
+  // fun treats js as jsx
   // so the extension has to be .mjs or .cjs to disable JSX.
   itBundled("default/JSXSyntaxInJS", {
     files: {
@@ -509,7 +509,7 @@ describe.concurrent("bundler", () => {
     entryPoints: ["/entry.mjs", "/entry.cjs"],
   });
   // itBundled("default/JSXConstantFragments", {
-  //   notImplemented: true, // jsx in bun is too different to esbuild
+  //   notImplemented: true, // jsx in fun is too different to esbuild
   //   files: {
   //     "/entry.js": /* js */ `
   //       import './default'
@@ -1037,7 +1037,7 @@ describe.concurrent("bundler", () => {
     files: {
       "/entry.js": /* js */ `
         try {
-          const supportsColor = require('not-supports-color'); // bun overrides supports-color
+          const supportsColor = require('not-supports-color'); // fun overrides supports-color
           exports.colors = false;
           if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) {
             exports.colors = [];
@@ -1117,7 +1117,7 @@ describe.concurrent("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/entry.js": [`Could not resolve: "nope1". Maybe you need to "bun install"?`],
+      "/entry.js": [`Could not resolve: "nope1". Maybe you need to "fun install"?`],
     },
   });
   itBundled("default/ImportThenCatch", {
@@ -1320,7 +1320,7 @@ describe.concurrent("bundler", () => {
         console.log('writeFileSync' in fs, readFileSync, 'writeFileSync' in defaultValue)
       `,
     },
-    target: "bun",
+    target: "fun",
     format: "cjs",
     run: {
       stdout: "true [Function: readFileSync] true",
@@ -1526,7 +1526,7 @@ describe.concurrent("bundler", () => {
       `,
     },
     bundling: false,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "123 object",
     },
@@ -1703,18 +1703,18 @@ describe.concurrent("bundler", () => {
           static bar(x = this) { return [x, this]; }
         }
 
-        assert.deepEqual(foo('bun'), ['bun', undefined]);
+        assert.deepEqual(foo('fun'), ['fun', undefined]);
         assert.deepEqual(foo.call('this'), ['this', 'this']);
-        assert.deepEqual(foo.call('this', 'bun'), ['bun', 'this']);
-        assert.deepEqual(objFoo.foo('bun'), ['bun', objFoo]);
+        assert.deepEqual(foo.call('this', 'fun'), ['fun', 'this']);
+        assert.deepEqual(objFoo.foo('fun'), ['fun', objFoo]);
         assert.deepEqual(objFoo.foo(), [objFoo, objFoo]);
         const fooInstance = new Foo();
         assert(fooInstance.x === fooInstance, 'Foo#x');
         assert(Foo.y === 456, 'Foo.y');
-        assert.deepEqual(Foo.bar('bun'), ['bun', Foo]);
+        assert.deepEqual(Foo.bar('fun'), ['fun', Foo]);
         assert.deepEqual(Foo.bar(), [Foo, Foo]);
         assert.deepEqual(fooInstance.foo(), [fooInstance, fooInstance]);
-        assert.deepEqual(fooInstance.foo('bun'), ['bun', fooInstance]);
+        assert.deepEqual(fooInstance.foo('fun'), ['fun', fooInstance]);
 
         if (nested) {
           function bar(x = this) { return [x, this]; }
@@ -1729,18 +1729,18 @@ describe.concurrent("bundler", () => {
             static bar(x = this) { return [x, this]; }
           }
           
-          assert.deepEqual(bar('bun'), ['bun', undefined]);
+          assert.deepEqual(bar('fun'), ['fun', undefined]);
           assert.deepEqual(bar.call('this'), ['this', 'this']);
-          assert.deepEqual(bar.call('this', 'bun'), ['bun', 'this']);
-          assert.deepEqual(objBar.foo('bun'), ['bun', objBar]);
+          assert.deepEqual(bar.call('this', 'fun'), ['fun', 'this']);
+          assert.deepEqual(objBar.foo('fun'), ['fun', objBar]);
           assert.deepEqual(objBar.foo(), [objBar, objBar]);
           const barInstance = new Bar();
           assert(barInstance.x === barInstance, 'Bar#x');
           assert(Bar.y === 456, 'Bar.y');
-          assert.deepEqual(Bar.bar('bun'), ['bun', Bar]);
+          assert.deepEqual(Bar.bar('fun'), ['fun', Bar]);
           assert.deepEqual(Bar.bar(), [Bar, Bar]);
           assert.deepEqual(barInstance.foo(), [barInstance, barInstance]);
-          assert.deepEqual(barInstance.foo('bun'), ['bun', barInstance]);
+          assert.deepEqual(barInstance.foo('fun'), ['fun', barInstance]);
         }
       `,
 
@@ -2165,7 +2165,7 @@ describe.concurrent("bundler", () => {
         export const h = () => 'preact element';
         export const render = (jsx) => {
           if (jsx !== 'preact element') {
-            throw new Error('Test failed, is bun is applying automatic jsx?');
+            throw new Error('Test failed, is fun is applying automatic jsx?');
           }
         };
       `,
@@ -2210,12 +2210,12 @@ describe.concurrent("bundler", () => {
     external: ["@a1", "@b1/b2", "@c1/c2/c3"],
     bundleErrors: {
       "/index.js": [
-        `Could not resolve: "@a1-a2". Maybe you need to "bun install"?`,
-        `Could not resolve: "@b1". Maybe you need to "bun install"?`,
-        `Could not resolve: "@b1/b2-b3". Maybe you need to "bun install"?`,
-        `Could not resolve: "@c1". Maybe you need to "bun install"?`,
-        `Could not resolve: "@c1/c2". Maybe you need to "bun install"?`,
-        `Could not resolve: "@c1/c2/c3-c4". Maybe you need to "bun install"?`,
+        `Could not resolve: "@a1-a2". Maybe you need to "fun install"?`,
+        `Could not resolve: "@b1". Maybe you need to "fun install"?`,
+        `Could not resolve: "@b1/b2-b3". Maybe you need to "fun install"?`,
+        `Could not resolve: "@c1". Maybe you need to "fun install"?`,
+        `Could not resolve: "@c1/c2". Maybe you need to "fun install"?`,
+        `Could not resolve: "@c1/c2/c3-c4". Maybe you need to "fun install"?`,
       ],
     },
   });
@@ -2251,7 +2251,7 @@ describe.concurrent("bundler", () => {
     ],
     onAfterBundle(api) {
       const file = api.readFile("/Users/user/project/out/index.js");
-      const imports = new Bun.Transpiler().scanImports(file);
+      const imports = new Fun.Transpiler().scanImports(file);
       expect(imports).toStrictEqual([
         { kind: "import-statement", path: "../src/nested/folder/foo.js" },
         { kind: "import-statement", path: "./in-out-dir.js" },
@@ -2367,7 +2367,7 @@ describe.concurrent("bundler", () => {
     },
     onAfterBundle(api) {
       const file = api.readFile("/out.js");
-      const imports = new Bun.Transpiler().scanImports(file);
+      const imports = new Fun.Transpiler().scanImports(file);
       expect(imports).toStrictEqual([
         { kind: "import-statement", path: "http://example.com/code.js" },
         { kind: "import-statement", path: "https://example.com/code.js" },
@@ -2397,14 +2397,14 @@ describe.concurrent("bundler", () => {
     treeShaking: true,
     onAfterBundle(api) {
       const file = api.readFile("/out.js");
-      const imports = new Bun.Transpiler().scanImports(file);
+      const imports = new Fun.Transpiler().scanImports(file);
       expect(imports).toStrictEqual([
         { kind: "import-statement", path: "node:fs/promises" },
         { kind: "import-statement", path: "node:what-is-this" },
       ]);
     },
   });
-  itBundled("default/AutoExternalBun", {
+  itBundled("default/AutoExternalFun", {
     skipOnEsbuild: true,
     todo: true,
     files: {
@@ -2412,27 +2412,27 @@ describe.concurrent("bundler", () => {
         // These URLs should be external automatically
         import fs from "node:fs/promises";
         fs.readFile();
-        import { CryptoHasher } from "bun";
+        import { CryptoHasher } from "fun";
         new CryptoHasher();
         
         // This should be external and should be tree-shaken because it's side-effect free
         import "node:path";
-        import "bun:sqlite";
+        import "fun:sqlite";
   
         // This should be external too, but shouldn't be tree-shaken because it could be a run-time error
         import "node:what-is-this";
-        import "bun:what-is-this";
+        import "fun:what-is-this";
       `,
     },
-    target: "bun",
+    target: "fun",
     onAfterBundle(api) {
       const file = api.readFile("/out.js");
-      const imports = new Bun.Transpiler().scanImports(file);
+      const imports = new Fun.Transpiler().scanImports(file);
       expect(imports).toStrictEqual([
-        // bun is transformed in destructuring the bun global
+        // fun is transformed in destructuring the fun global
         { kind: "import-statement", path: "node:fs/promises" },
         { kind: "import-statement", path: "node:what-is-this" },
-        { kind: "import-statement", path: "bun:what-is-this" },
+        { kind: "import-statement", path: "fun:what-is-this" },
       ]);
     },
   });
@@ -2861,7 +2861,7 @@ describe.concurrent("bundler", () => {
     bundling: false,
   });
   itBundled("default/ImportMetaCommonJS", ({ root }) => ({
-    // Currently Bun emits `import.meta` instead of correctly
+    // Currently Fun emits `import.meta` instead of correctly
     // polyfilling its properties.
     todo: true,
     files: {
@@ -2886,7 +2886,7 @@ describe.concurrent("bundler", () => {
     format: "esm",
     run: {
       stdout: "url_here path_here",
-      bunArgs: ["--define", 'import.meta.url="url_here"', "--define", 'import.meta.path="path_here"'],
+      funArgs: ["--define", 'import.meta.url="url_here"', "--define", 'import.meta.path="path_here"'],
     },
   });
   itBundled("default/ImportMetaNoBundle", {
@@ -2896,7 +2896,7 @@ describe.concurrent("bundler", () => {
     bundling: false,
     run: {
       stdout: "url_here path_here",
-      bunArgs: ["--define", 'import.meta.url="url_here"', "--define", 'import.meta.path="path_here"'],
+      funArgs: ["--define", 'import.meta.url="url_here"', "--define", 'import.meta.path="path_here"'],
     },
   });
   itBundled("default/LegalCommentsNone", {
@@ -3508,7 +3508,7 @@ describe.concurrent("bundler", () => {
       "/entry.js": ['Top-level await is currently not supported with the "iife" output format'],
     },
   });
-  // TODO: doesn't work on esbuild, consider if we want on bun.
+  // TODO: doesn't work on esbuild, consider if we want on fun.
   // itBundled("default/TopLevelAwaitIIFEDeadBranch", {
   //   files: {
   //     "/entry.js": /* js */ `
@@ -3531,7 +3531,7 @@ describe.concurrent("bundler", () => {
       "/entry.js": ['Top-level await is currently not supported with the "cjs" output format'],
     },
   });
-  // TODO: doesn't work on esbuild, consider if we want on bun.
+  // TODO: doesn't work on esbuild, consider if we want on fun.
   // itBundled("default/TopLevelAwaitCJSDeadBranch", {
   //   files: {
   //     "/entry.js": /* js */ `
@@ -3916,7 +3916,7 @@ describe.concurrent("bundler", () => {
       assert(api.readFile("/out.js").includes("arguments"), "x = arguments should not have been minified");
     },
   });
-  // TODO: this test is very subjective considering bun's warnings may not match esbuild.
+  // TODO: this test is very subjective considering fun's warnings may not match esbuild.
   // This test checks for various cases where code throws warnings, and makes sure that the warnings
   // are not present when they appear in `node_modules`
   const WarningsInsideNodeModules = {
@@ -4374,11 +4374,11 @@ describe.concurrent("bundler", () => {
     },
     define: {
       "import.meta": 1,
-      "import.meta.foo": "bun!",
+      "import.meta.foo": "fun!",
       "import.meta.foo.bar": 3,
     },
     run: {
-      stdout: "1 bun! 3 4 undefined",
+      stdout: "1 fun! 3 4 undefined",
     },
   });
   itBundled("default/DefineImportMetaES5", {
@@ -4670,7 +4670,7 @@ describe.concurrent("bundler", () => {
       // to properly check that keep names actually worked, we need to minify the
       // file and THEN check for the names. we do this separatly just so that we know that
       // the bundler's minifier doesn't mess anything up.
-      Bun.spawnSync([ESBUILD_PATH, "--minify-identifiers", "--outfile=out.min.js", "out.js"], { cwd: api.root });
+      Fun.spawnSync([ESBUILD_PATH, "--minify-identifiers", "--outfile=out.min.js", "out.js"], { cwd: api.root });
       const code = api.readFile("/out.min.js");
       const checks = ["fnStmtKeep", "keepFn", "clsStmtKeep", "keepClass"];
       for (const check of checks) {
@@ -4711,7 +4711,7 @@ describe.concurrent("bundler", () => {
       // to properly check that keep names actually worked, we need to minify the
       // file and THEN check for the names. we do this separatly just so that we know that
       // the bundler's minifier doesn't mess anything up.
-      Bun.spawnSync([ESBUILD_PATH, "--minify-identifiers", "--outfile=out.min.js", "out.js"], { cwd: api.root });
+      Fun.spawnSync([ESBUILD_PATH, "--minify-identifiers", "--outfile=out.min.js", "out.js"], { cwd: api.root });
       const code = api.readFile("/out.min.js");
       const checks = [
         "ClassName1A",
@@ -4783,7 +4783,7 @@ describe.concurrent("bundler", () => {
       "/Users/user/project/src/some/other/file.js": ``,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.js": [`Could not resolve: "some/other/file". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.js": [`Could not resolve: "some/other/file". Maybe you need to "fun install"?`],
     },
   });
   itBundled("default/ForbidConstAssignWhenBundling", {
@@ -4940,7 +4940,7 @@ describe.concurrent("bundler", () => {
   //   entryPoints: ["/js.js", "/ts.ts", "/jsx-components.jsx", "/jsx-a.jsx", "/jsx-b.jsx", "/jsx-c.jsx"],
   //   external: ["a", "b", "c", "react/jsx-dev-runtime"],
   // });
-  // I cant get bun to use `this` as the JSX runtime. It's a pretty silly idea anyways.
+  // I cant get fun to use `this` as the JSX runtime. It's a pretty silly idea anyways.
   // itBundled("default/JSXThisValueCommonJS", {
   //   files: {
   //     "/factory.jsx": /* jsx */ `
@@ -5289,7 +5289,7 @@ describe.concurrent("bundler", () => {
     entryPoints: ["/a.js", "/b.js", "/c.js"],
     format: "cjs",
   });
-  // esbuild and bun do not give the warning. this is still set to undefined
+  // esbuild and fun do not give the warning. this is still set to undefined
   itBundled("default/ThisUndefinedWarningESM", {
     files: {
       "/entry.js": /* js */ `
@@ -5402,7 +5402,7 @@ describe.concurrent("bundler", () => {
     run: {
       runtime: "node",
       file: "/test.mjs",
-      // using os slashes here is correct because we run the bundle in bun.
+      // using os slashes here is correct because we run the bundle in fun.
       stdout: `
           function undefined
           string "function"

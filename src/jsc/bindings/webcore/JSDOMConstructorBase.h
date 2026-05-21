@@ -50,13 +50,13 @@ public:
 
     JSDOMGlobalObject* globalObject() const { return uncheckedDowncast<JSDOMGlobalObject>(Base::globalObject()); }
     ScriptExecutionContext* scriptExecutionContext() const { return globalObject()->scriptExecutionContext(); }
-    Bun::ErrorCode errorCode() const { return m_errorCode; }
+    Fun::ErrorCode errorCode() const { return m_errorCode; }
 
 protected:
     JSDOMConstructorBase(JSC::VM& vm, JSC::Structure* structure,
         JSC::NativeFunction functionForConstruct,
         JSC::NativeFunction functionForCall = nullptr,
-        Bun::ErrorCode errorCode = Bun::ErrorCode::ERR_ILLEGAL_CONSTRUCTOR)
+        Fun::ErrorCode errorCode = Fun::ErrorCode::ERR_ILLEGAL_CONSTRUCTOR)
         : Base(vm, structure,
               functionForCall ? functionForCall : callThrowTypeErrorForJSDOMConstructor,
               functionForConstruct ? functionForConstruct : callThrowTypeErrorForJSDOMConstructor)
@@ -64,7 +64,7 @@ protected:
     {
     }
 
-    Bun::ErrorCode m_errorCode;
+    Fun::ErrorCode m_errorCode;
 };
 
 } // namespace WebCore

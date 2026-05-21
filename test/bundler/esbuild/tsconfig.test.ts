@@ -1,10 +1,10 @@
-import { describe, test } from "bun:test";
+import { describe, test } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_tsconfig_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/tsconfig
+// For debug, all files are written to $TEMP/fun-bundle-tests/tsconfig
 
 describe("bundler", () => {
   itBundled("tsconfig/Paths", ({ root }) => ({
@@ -363,7 +363,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.ts": [`Could not resolve: "#/test". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.ts": [`Could not resolve: "#/test". Maybe you need to "fun install"?`],
     },
   });
   itBundled("tsconfig/PathsInChildNoBaseURL", {
@@ -480,7 +480,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/app/src/entry.ts": [`Could not resolve: "util/helper". Maybe you need to "bun install"?`],
+      "/Users/user/project/app/src/entry.ts": [`Could not resolve: "util/helper". Maybe you need to "fun install"?`],
     },
   });
   itBundled("tsconfig/EmptyPathsClearsParent", {
@@ -511,7 +511,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/Users/user/project/src/entry.ts": [`Could not resolve: "@helpers/x". Maybe you need to "bun install"?`],
+      "/Users/user/project/src/entry.ts": [`Could not resolve: "@helpers/x". Maybe you need to "fun install"?`],
     },
   });
   itBundled("tsconfig/JSX", {

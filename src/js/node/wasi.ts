@@ -778,7 +778,7 @@ var require_wasi = __commonJS({
         preopens: {},
         bindings: defaultBindings,
         sleep: ms => {
-          Bun.sleepSync(ms);
+          Fun.sleepSync(ms);
         },
       });
     }
@@ -915,17 +915,17 @@ var require_wasi = __commonJS({
           }
           return stats;
         };
-        const CPUTIME_START = Bun.nanoseconds();
+        const CPUTIME_START = Fun.nanoseconds();
         const timeOrigin = Math.trunc(performance.timeOrigin * 1e6);
         const now = clockId => {
           switch (clockId) {
             case constants_1.WASI_CLOCK_MONOTONIC:
-              return Bun.nanoseconds();
+              return Fun.nanoseconds();
             case constants_1.WASI_CLOCK_REALTIME:
-              return Bun.nanoseconds() + timeOrigin;
+              return Fun.nanoseconds() + timeOrigin;
             case constants_1.WASI_CLOCK_PROCESS_CPUTIME_ID:
             case constants_1.WASI_CLOCK_THREAD_CPUTIME_ID:
-              return Bun.nanoseconds() - CPUTIME_START;
+              return Fun.nanoseconds() - CPUTIME_START;
             default:
               return null;
           }
@@ -1715,7 +1715,7 @@ var require_wasi = __commonJS({
               }
             }
             if (waitTimeNs > 0) {
-              waitTimeNs -= Bun.nanoseconds() - timeOrigin;
+              waitTimeNs -= Fun.nanoseconds() - timeOrigin;
               if (waitTimeNs >= 1e6) {
                 if (this.sleep == null && !warnedAboutSleep) {
                   warnedAboutSleep = true;

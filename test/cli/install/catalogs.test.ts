@@ -1,7 +1,7 @@
-import { file, spawn, write } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { file, spawn, write } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { exists } from "fs/promises";
-import { VerdaccioRegistry, bunEnv, bunExe, runBunInstall, stderrForInstall } from "harness";
+import { VerdaccioRegistry, funEnv, funExe, runFunInstall, stderrForInstall } from "harness";
 import { join } from "path";
 
 var registry = new VerdaccioRegistry();
@@ -65,7 +65,7 @@ describe("basic", () => {
 
       await createBasicCatalogMonorepo(packageDir, "catalog-basic-1", isTopLevel);
 
-      await runBunInstall(bunEnv, packageDir);
+      await runFunInstall(funEnv, packageDir);
 
       expect(await file(join(packageDir, "node_modules", "no-deps", "package.json")).json()).toEqual({
         name: "no-deps",
@@ -78,27 +78,27 @@ describe("basic", () => {
       });
 
       // another install does not save the lockfile
-      await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+      await runFunInstall(funEnv, packageDir, { savesLockfile: false });
     });
   }
 
   for (const binaryLockfile of [true, false]) {
-    test(`detect changes (${binaryLockfile ? "bun.lockb" : "bun.lock"})`, async () => {
+    test(`detect changes (${binaryLockfile ? "fun.lockb" : "fun.lock"})`, async () => {
       const { packageDir } = await registry.createTestDir({
-        bunfigOpts: { saveTextLockfile: !binaryLockfile, linker: "hoisted" },
+        funfigOpts: { saveTextLockfile: !binaryLockfile, linker: "hoisted" },
       });
       const packageJson = await createBasicCatalogMonorepo(packageDir, "catalog-basic-2");
-      let { err } = await runBunInstall(bunEnv, packageDir);
+      let { err } = await runFunInstall(funEnv, packageDir);
       expect(err).toContain("Saved lockfile");
 
       const initialLockfile = !binaryLockfile
-        ? (await file(join(packageDir, "bun.lock")).text()).replaceAll(/localhost:\d+/g, "localhost:1234")
+        ? (await file(join(packageDir, "fun.lock")).text()).replaceAll(/localhost:\d+/g, "localhost:1234")
         : undefined;
 
       if (!binaryLockfile) {
         expect(initialLockfile).toMatchSnapshot();
       } else {
-        expect(await exists(join(packageDir, "bun.lockb"))).toBeTrue();
+        expect(await exists(join(packageDir, "fun.lockb"))).toBeTrue();
       }
 
       expect(await file(join(packageDir, "node_modules", "no-deps", "package.json")).json()).toEqual({
@@ -113,11 +113,11 @@ describe("basic", () => {
       // update catalog
       packageJson.workspaces.catalog["no-deps"] = "1.0.0";
       await write(join(packageDir, "package.json"), JSON.stringify(packageJson));
-      ({ err } = await runBunInstall(bunEnv, packageDir, { savesLockfile: true }));
+      ({ err } = await runFunInstall(funEnv, packageDir, { savesLockfile: true }));
       expect(err).toContain("Saved lockfile");
 
       if (!binaryLockfile) {
-        const newLockfile = (await file(join(packageDir, "bun.lock")).text()).replaceAll(
+        const newLockfile = (await file(join(packageDir, "fun.lock")).text()).replaceAll(
           /localhost:\d+/g,
           "localhost:1234",
         );
@@ -125,7 +125,7 @@ describe("basic", () => {
         expect(newLockfile).not.toEqual(initialLockfile);
         expect(newLockfile).toMatchSnapshot();
       } else {
-        expect(await exists(join(packageDir, "bun.lockb"))).toBeTrue();
+        expect(await exists(join(packageDir, "fun.lockb"))).toBeTrue();
       }
 
       expect(await file(join(packageDir, "node_modules", "no-deps", "package.json")).json()).toEqual({
@@ -140,11 +140,11 @@ describe("basic", () => {
       // update catalogs
       packageJson.workspaces!.catalogs!.a["a-dep"] = "1.0.10";
       await write(join(packageDir, "package.json"), JSON.stringify(packageJson));
-      ({ err } = await runBunInstall(bunEnv, packageDir, { savesLockfile: true }));
+      ({ err } = await runFunInstall(funEnv, packageDir, { savesLockfile: true }));
       expect(err).toContain("Saved lockfile");
 
       if (!binaryLockfile) {
-        const newLockfile = (await file(join(packageDir, "bun.lock")).text()).replaceAll(
+        const newLockfile = (await file(join(packageDir, "fun.lock")).text()).replaceAll(
           /localhost:\d+/g,
           "localhost:1234",
         );
@@ -152,7 +152,7 @@ describe("basic", () => {
         expect(newLockfile).not.toEqual(initialLockfile);
         expect(newLockfile).toMatchSnapshot();
       } else {
-        expect(await exists(join(packageDir, "bun.lockb"))).toBeTrue();
+        expect(await exists(join(packageDir, "fun.lockb"))).toBeTrue();
       }
 
       expect(await file(join(packageDir, "node_modules", "no-deps", "package.json")).json()).toEqual({
@@ -190,11 +190,11 @@ describe("errors", () => {
     );
 
     const { stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
       stdout: "pipe",
       stderr: "pipe",
-      env: bunEnv,
+      env: funEnv,
     });
 
     const out = await stdout.text();
@@ -222,11 +222,11 @@ describe("errors", () => {
     );
 
     const { stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
       stdout: "pipe",
       stderr: "pipe",
-      env: bunEnv,
+      env: funEnv,
     });
 
     const out = await stdout.text();

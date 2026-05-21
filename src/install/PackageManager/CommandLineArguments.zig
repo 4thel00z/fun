@@ -1,14 +1,14 @@
 /// CLI Arguments for:
 ///
-/// - bun install
-/// - bun update
-/// - bun patch
-/// - bun patch-commit
-/// - bun pm
-/// - bun add
-/// - bun remove
-/// - bun link
-/// - bun audit
+/// - fun install
+/// - fun update
+/// - fun patch
+/// - fun patch-commit
+/// - fun pm
+/// - fun add
+/// - fun remove
+/// - fun link
+/// - fun audit
 ///
 const CommandLineArguments = @This();
 
@@ -19,7 +19,7 @@ else
     "Possible values: \"hardlink\" (default), \"symlink\", \"copyfile\"";
 
 const shared_params = [_]ParamType{
-    clap.parseParam("-c, --config <STR>?                   Specify path to config file (bunfig.toml)") catch unreachable,
+    clap.parseParam("-c, --config <STR>?                   Specify path to config file (funfig.toml)") catch unreachable,
     clap.parseParam("-y, --yarn                            Write a yarn.lock file (yarn v1)") catch unreachable,
     clap.parseParam("-p, --production                      Don't install devDependencies") catch unreachable,
     clap.parseParam("-P, --prod") catch unreachable,
@@ -43,7 +43,7 @@ const shared_params = [_]ParamType{
     clap.parseParam("-g, --global                          Install globally") catch unreachable,
     clap.parseParam("--cwd <STR>                           Set a specific cwd") catch unreachable,
     clap.parseParam("--backend <STR>                       Platform-specific optimizations for installing dependencies. " ++ platform_specific_backend_label) catch unreachable,
-    clap.parseParam("--registry <STR>                      Use a specific registry by default, overriding .npmrc, bunfig.toml and environment variables") catch unreachable,
+    clap.parseParam("--registry <STR>                      Use a specific registry by default, overriding .npmrc, funfig.toml and environment variables") catch unreachable,
     clap.parseParam("--concurrent-scripts <NUM>            Maximum number of concurrent jobs for lifecycle scripts (default: 2x CPU cores)") catch unreachable,
     clap.parseParam("--network-concurrency <NUM>           Maximum number of concurrent network requests (default 48)") catch unreachable,
     clap.parseParam("--save-text-lockfile                  Save a text-based lockfile") catch unreachable,
@@ -63,7 +63,7 @@ pub const install_params: []const ParamType = &(shared_params ++ [_]ParamType{
     clap.parseParam("--peer                        Add dependency to \"peerDependencies\"") catch unreachable,
     clap.parseParam("-E, --exact                  Add the exact version instead of the ^range") catch unreachable,
     clap.parseParam("--filter <STR>...                 Install packages for the matching workspaces") catch unreachable,
-    clap.parseParam("-a, --analyze                   Analyze & install all dependencies of files passed as arguments recursively (using Bun's bundler)") catch unreachable,
+    clap.parseParam("-a, --analyze                   Analyze & install all dependencies of files passed as arguments recursively (using Fun's bundler)") catch unreachable,
     clap.parseParam("--only-missing                  Only add dependencies to package.json if they are not already present") catch unreachable,
     clap.parseParam("<POS> ...                         ") catch unreachable,
 });
@@ -99,7 +99,7 @@ pub const add_params: []const ParamType = &(shared_params ++ [_]ParamType{
     clap.parseParam("--optional                        Add dependency to \"optionalDependencies\"") catch unreachable,
     clap.parseParam("--peer                        Add dependency to \"peerDependencies\"") catch unreachable,
     clap.parseParam("-E, --exact                  Add the exact version instead of the ^range") catch unreachable,
-    clap.parseParam("-a, --analyze                   Recursively analyze & install dependencies of files passed as arguments (using Bun's bundler)") catch unreachable,
+    clap.parseParam("-a, --analyze                   Recursively analyze & install dependencies of files passed as arguments (using Fun's bundler)") catch unreachable,
     clap.parseParam("--only-missing                  Only add dependencies to package.json if they are not already present") catch unreachable,
     clap.parseParam("<POS> ...                         \"name\" or \"name@version\" of package(s) to install") catch unreachable,
 });
@@ -235,17 +235,17 @@ node_linker: ?Options.NodeLinker = null,
 
 minimum_release_age_ms: ?f64 = null,
 
-// `bun pm version` options
+// `fun pm version` options
 git_tag_version: bool = true,
 allow_same_version: bool = false,
 preid: string = "",
 message: ?string = null,
 
-// `bun pm why` options
+// `fun pm why` options
 top_only: bool = false,
 depth: ?usize = null,
 
-// `bun audit` options
+// `fun audit` options
 audit_level: ?AuditLevel = null,
 audit_ignore_list: []const string = &.{},
 
@@ -259,7 +259,7 @@ pub const AuditLevel = enum {
     high,
     critical,
 
-    const Map = bun.ComptimeStringMap(AuditLevel, .{
+    const Map = fun.ComptimeStringMap(AuditLevel, .{
         .{ "low", .low },
         .{ "moderate", .moderate },
         .{ "high", .high },
@@ -293,7 +293,7 @@ const Omit = struct {
 pub fn printHelp(subcommand: Subcommand) void {
 
     // the output of --help uses the following syntax highlighting
-    // template: <b>Usage<r>: <b><green>bun <command><r> <cyan>[flags]<r> <blue>[arguments]<r>
+    // template: <b>Usage<r>: <b><green>fun <command><r> <cyan>[flags]<r> <blue>[arguments]<r>
     // use [foo] for multiple arguments or flags for foo.
     // use <bar> to emphasize 'bar'
 
@@ -302,8 +302,8 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.install => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun install<r> <cyan>[flags]<r> <blue>\<name\><r><d>@\<version\><r>
-                \\<b>Alias<r>: <b><green>bun i<r>
+                \\<b>Usage<r>: <b><green>fun install<r> <cyan>[flags]<r> <blue>\<name\><r><d>@\<version\><r>
+                \\<b>Alias<r>: <b><green>fun i<r>
                 \\
                 \\  Install the dependencies listed in package.json.
                 \\
@@ -314,12 +314,12 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Install the dependencies for the current project<r>
-                \\  <b><green>bun install<r>
+                \\  <b><green>fun install<r>
                 \\
                 \\  <d>Skip devDependencies<r>
-                \\  <b><green>bun install<r> <cyan>--production<r>
+                \\  <b><green>fun install<r> <cyan>--production<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/install<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/install<r>.
                 \\
             ;
             Output.pretty(intro_text, .{});
@@ -330,7 +330,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.update => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun update<r> <cyan>[flags]<r> <blue>\<name\><r><d>@\<version\><r>
+                \\<b>Usage<r>: <b><green>fun update<r> <cyan>[flags]<r> <blue>\<name\><r><d>@\<version\><r>
                 \\
                 \\  Update dependencies to their most recent versions within the version range in package.json.
                 \\
@@ -341,18 +341,18 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Update all dependencies:<r>
-                \\  <b><green>bun update<r>
+                \\  <b><green>fun update<r>
                 \\
                 \\  <d>Update all dependencies to latest:<r>
-                \\  <b><green>bun update<r> <cyan>--latest<r>
+                \\  <b><green>fun update<r> <cyan>--latest<r>
                 \\
                 \\  <d>Interactive update (select packages to update):<r>
-                \\  <b><green>bun update<r> <cyan>-i<r>
+                \\  <b><green>fun update<r> <cyan>-i<r>
                 \\
                 \\  <d>Update specific packages:<r>
-                \\  <b><green>bun update<r> <blue>zod jquery@3<r>
+                \\  <b><green>fun update<r> <blue>zod jquery@3<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/update<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/update<r>.
                 \\
             ;
             Output.pretty(intro_text, .{});
@@ -363,7 +363,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.patch => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun patch<r> <cyan>[flags or options]<r> <blue>\<package\><r><d>@\<version\><r>
+                \\<b>Usage<r>: <b><green>fun patch<r> <cyan>[flags or options]<r> <blue>\<package\><r><d>@\<version\><r>
                 \\
                 \\  Prepare a package for patching, or generate and save a patch.
                 \\
@@ -375,15 +375,15 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Prepare jquery for patching<r>
-                \\  <b><green>bun patch jquery<r>
+                \\  <b><green>fun patch jquery<r>
                 \\
                 \\  <d>Generate a patch file for changes made to jquery<r>
-                \\  <b><green>bun patch --commit 'node_modules/jquery'<r>
+                \\  <b><green>fun patch --commit 'node_modules/jquery'<r>
                 \\
                 \\  <d>Generate a patch file in a custom directory for changes made to jquery<r>
-                \\  <b><green>bun patch --patches-dir 'my-patches' 'node_modules/jquery'<r>
+                \\  <b><green>fun patch --patches-dir 'my-patches' 'node_modules/jquery'<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/install/patch<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/install/patch<r>.
                 \\
             ;
 
@@ -395,9 +395,9 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.@"patch-commit" => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun patch-commit<r> <cyan>[flags or options]<r> <blue>\<directory\><r>
+                \\<b>Usage<r>: <b><green>fun patch-commit<r> <cyan>[flags or options]<r> <blue>\<directory\><r>
                 \\
-                \\  Generate a patch out of a directory and save it. This is equivalent to <b><green>bun patch --commit<r>.
+                \\  Generate a patch out of a directory and save it. This is equivalent to <b><green>fun patch --commit<r>.
                 \\
                 \\<b>Flags:<r>
             ;
@@ -406,12 +406,12 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Generate a patch in the default "./patches" directory for changes in "./node_modules/jquery"<r>
-                \\  <b><green>bun patch-commit 'node_modules/jquery'<r>
+                \\  <b><green>fun patch-commit 'node_modules/jquery'<r>
                 \\
                 \\  <d>Generate a patch in a custom directory ("./my-patches")<r>
-                \\  <b><green>bun patch-commit --patches-dir 'my-patches' 'node_modules/jquery'<r>
+                \\  <b><green>fun patch-commit --patches-dir 'my-patches' 'node_modules/jquery'<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/install/patch<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/install/patch<r>.
                 \\
             ;
             Output.pretty(intro_text, .{});
@@ -425,8 +425,8 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.add => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun add<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r>
-                \\<b>Alias<r>: <b><green>bun a<r>
+                \\<b>Usage<r>: <b><green>fun add<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r>
+                \\<b>Alias<r>: <b><green>fun a<r>
                 \\
                 \\  Add a new dependency to package.json and install it.
                 \\
@@ -437,16 +437,16 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Add a dependency from the npm registry<r>
-                \\  <b><green>bun add<r> <blue>zod<r>
-                \\  <b><green>bun add<r> <blue>zod@next<r>
-                \\  <b><green>bun add<r> <blue>zod@3.0.0<r>
+                \\  <b><green>fun add<r> <blue>zod<r>
+                \\  <b><green>fun add<r> <blue>zod@next<r>
+                \\  <b><green>fun add<r> <blue>zod@3.0.0<r>
                 \\
                 \\  <d>Add a dev, optional, or peer dependency <r>
-                \\  <b><green>bun add<r> <cyan>-d<r> <blue>typescript<r>
-                \\  <b><green>bun add<r> <cyan>--optional<r> <blue>lodash<r>
-                \\  <b><green>bun add<r> <cyan>--peer<r> <blue>esbuild<r>
+                \\  <b><green>fun add<r> <cyan>-d<r> <blue>typescript<r>
+                \\  <b><green>fun add<r> <cyan>--optional<r> <blue>lodash<r>
+                \\  <b><green>fun add<r> <cyan>--peer<r> <blue>esbuild<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/add<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/add<r>.
                 \\
             ;
             Output.pretty(intro_text, .{});
@@ -457,8 +457,8 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.remove => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun remove<r> <cyan>[flags]<r> <blue>[\<packages\>]<r>
-                \\<b>Alias<r>: <b><green>bun r<r>
+                \\<b>Usage<r>: <b><green>fun remove<r> <cyan>[flags]<r> <blue>[\<packages\>]<r>
+                \\<b>Alias<r>: <b><green>fun r<r>
                 \\
                 \\  Remove a package from package.json and uninstall from node_modules.
                 \\
@@ -469,9 +469,9 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Remove a dependency<r>
-                \\  <b><green>bun remove<r> <blue>ts-node<r>
+                \\  <b><green>fun remove<r> <blue>ts-node<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/remove<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/remove<r>.
                 \\
             ;
             Output.pretty(intro_text, .{});
@@ -482,7 +482,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.link => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun link<r> <cyan>[flags]<r> <blue>[\<packages\>]<r>
+                \\<b>Usage<r>: <b><green>fun link<r> <cyan>[flags]<r> <blue>[\<packages\>]<r>
                 \\
                 \\  Register a local directory as a "linkable" package, or link a "linkable" package to the current project.
                 \\
@@ -494,12 +494,12 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\<b>Examples:<r>
                 \\  <d>Register the current directory as a linkable package.<r>
                 \\  <d>Directory should contain a package.json.<r>
-                \\  <b><green>bun link<r>
+                \\  <b><green>fun link<r>
                 \\
                 \\  <d>Add a previously-registered linkable package as a dependency of the current project.<r>
-                \\  <b><green>bun link<r> <blue>\<package\><r>
+                \\  <b><green>fun link<r> <blue>\<package\><r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/link<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/link<r>.
                 \\
             ;
             Output.pretty(intro_text, .{});
@@ -510,7 +510,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         Subcommand.unlink => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun unlink<r> <cyan>[flags]<r>
+                \\<b>Usage<r>: <b><green>fun unlink<r> <cyan>[flags]<r>
                 \\
                 \\  Unregister the current directory as a "linkable" package.
                 \\
@@ -522,9 +522,9 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Unregister the current directory as a linkable package.<r>
-                \\  <b><green>bun unlink<r>
+                \\  <b><green>fun unlink<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/unlink<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/unlink<r>.
                 \\
             ;
 
@@ -536,7 +536,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         .outdated => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun outdated<r> <cyan>[flags]<r> <blue>[filter]<r>
+                \\<b>Usage<r>: <b><green>fun outdated<r> <cyan>[flags]<r> <blue>[filter]<r>
                 \\
                 \\  Display outdated dependencies for each matching workspace.
                 \\
@@ -548,19 +548,19 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Display outdated dependencies in the current workspace.<r>
-                \\  <b><green>bun outdated<r>
+                \\  <b><green>fun outdated<r>
                 \\
                 \\  <d>Use --filter to include more than one workspace.<r>
-                \\  <b><green>bun outdated<r> <cyan>--filter="*"<r>
-                \\  <b><green>bun outdated<r> <cyan>--filter="./app/*"<r>
-                \\  <b><green>bun outdated<r> <cyan>--filter="!frontend"<r>
+                \\  <b><green>fun outdated<r> <cyan>--filter="*"<r>
+                \\  <b><green>fun outdated<r> <cyan>--filter="./app/*"<r>
+                \\  <b><green>fun outdated<r> <cyan>--filter="!frontend"<r>
                 \\
                 \\  <d>Filter dependencies with name patterns.<r>
-                \\  <b><green>bun outdated<r> <blue>jquery<r>
-                \\  <b><green>bun outdated<r> <blue>"is-*"<r>
-                \\  <b><green>bun outdated<r> <blue>"!is-even"<r>
+                \\  <b><green>fun outdated<r> <blue>jquery<r>
+                \\  <b><green>fun outdated<r> <blue>"is-*"<r>
+                \\  <b><green>fun outdated<r> <blue>"!is-even"<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/outdated<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/outdated<r>.
                 \\
             ;
 
@@ -572,7 +572,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         .pack => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun pm pack<r> <cyan>[flags]<r>
+                \\<b>Usage<r>: <b><green>fun pm pack<r> <cyan>[flags]<r>
                 \\
                 \\  Create a tarball for the current project.
                 \\
@@ -583,9 +583,9 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\
                 \\<b>Examples:<r>
-                \\  <b><green>bun pm pack<r>
+                \\  <b><green>fun pm pack<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/pm#pack<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/pm#pack<r>.
                 \\
             ;
 
@@ -597,7 +597,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         .publish => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun publish<r> <cyan>[flags]<r> <blue>[dist]<r>
+                \\<b>Usage<r>: <b><green>fun publish<r> <cyan>[flags]<r> <blue>[dist]<r>
                 \\
                 \\  Publish a package to the npm registry.
                 \\
@@ -609,18 +609,18 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Display files that would be published, without publishing to the registry.<r>
-                \\  <b><green>bun publish<r> <cyan>--dry-run<r>
+                \\  <b><green>fun publish<r> <cyan>--dry-run<r>
                 \\
                 \\  <d>Publish the current package with public access.<r>
-                \\  <b><green>bun publish<r> <cyan>--access public<r>
+                \\  <b><green>fun publish<r> <cyan>--access public<r>
                 \\
                 \\  <d>Publish a pre-existing package tarball with tag 'next'.<r>
-                \\  <b><green>bun publish<r> <cyan>--tag next<r> <blue>./path/to/tarball.tgz<r>
+                \\  <b><green>fun publish<r> <cyan>--tag next<r> <blue>./path/to/tarball.tgz<r>
                 \\
                 \\  <d>Publish without failing when republishing over an existing version.<r>
-                \\  <b><green>bun publish<r> <cyan>--tolerate-republish<r>
+                \\  <b><green>fun publish<r> <cyan>--tolerate-republish<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/publish<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/publish<r>.
                 \\
             ;
 
@@ -632,7 +632,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         .audit => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun audit<r> <cyan>[flags]<r>
+                \\<b>Usage<r>: <b><green>fun audit<r> <cyan>[flags]<r>
                 \\
                 \\  Check installed packages for vulnerabilities.
                 \\
@@ -644,12 +644,12 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Check the current project's packages for vulnerabilities.<r>
-                \\  <b><green>bun audit<r>
+                \\  <b><green>fun audit<r>
                 \\
                 \\  <d>Output package vulnerabilities in JSON format.<r>
-                \\  <b><green>bun audit --json<r>
+                \\  <b><green>fun audit --json<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/install/audit<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/install/audit<r>.
                 \\
             ;
 
@@ -661,7 +661,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         .info => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun info<r> <cyan>[flags]<r> <blue>\<package\><r><d>[@\<version\>]<r>
+                \\<b>Usage<r>: <b><green>fun info<r> <cyan>[flags]<r> <blue>\<package\><r><d>[@\<version\>]<r>
                 \\
                 \\  View package metadata from the registry.
                 \\
@@ -673,15 +673,15 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Display metadata for the 'react' package<r>
-                \\  <b><green>bun info<r> <blue>react<r>
+                \\  <b><green>fun info<r> <blue>react<r>
                 \\
                 \\  <d>Display a specific version of a package<r>
-                \\  <b><green>bun info<r> <blue>react@18.0.0<r>
+                \\  <b><green>fun info<r> <blue>react@18.0.0<r>
                 \\
                 \\  <d>Display a specific property in JSON format<r>
-                \\  <b><green>bun info<r> <blue>react<r> version <cyan>--json<r>
+                \\  <b><green>fun info<r> <blue>react<r> version <cyan>--json<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/info<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/info<r>.
                 \\
             ;
 
@@ -693,7 +693,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         .why => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun why<r> <cyan>[flags]<r> <blue>\<package\><r>
+                \\<b>Usage<r>: <b><green>fun why<r> <cyan>[flags]<r> <blue>\<package\><r>
                 \\
                 \\  Explain why a package is installed.
                 \\
@@ -704,11 +704,11 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\
                 \\<b>Examples:<r>
-                \\  <d>$<r> <b><green>bun why<r> <blue>react<r>
-                \\  <d>$<r> <b><green>bun why<r> <blue>"@types/*"<r> <cyan>--depth<r> <blue>2<r>
-                \\  <d>$<r> <b><green>bun why<r> <blue>"*-lodash"<r> <cyan>--top<r>
+                \\  <d>$<r> <b><green>fun why<r> <blue>react<r>
+                \\  <d>$<r> <b><green>fun why<r> <blue>"@types/*"<r> <cyan>--depth<r> <blue>2<r>
+                \\  <d>$<r> <b><green>fun why<r> <blue>"*-lodash"<r> <cyan>--top<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/why<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/why<r>.
                 \\
             ;
 
@@ -720,7 +720,7 @@ pub fn printHelp(subcommand: Subcommand) void {
         .scan => {
             const intro_text =
                 \\
-                \\<b>Usage<r>: <b><green>bun pm scan<r> <cyan>[flags]<r>
+                \\<b>Usage<r>: <b><green>fun pm scan<r> <cyan>[flags]<r>
                 \\
                 \\  Scan all packages in lockfile for security vulnerabilities.
                 \\
@@ -732,12 +732,12 @@ pub fn printHelp(subcommand: Subcommand) void {
                 \\
                 \\<b>Examples:<r>
                 \\  <d>Scan all packages for vulnerabilities<r>
-                \\  <b><green>bun pm scan<r>
+                \\  <b><green>fun pm scan<r>
                 \\
                 \\  <d>Output results as JSON<r>
-                \\  <b><green>bun pm scan<r> <cyan>--json<r>
+                \\  <b><green>fun pm scan<r> <cyan>--json<r>
                 \\
-                \\Full documentation is available at <magenta>https://bun.com/docs/cli/pm#scan<r>.
+                \\Full documentation is available at <magenta>https://fun.dev/docs/cli/pm#scan<r>.
                 \\
             ;
 
@@ -1031,21 +1031,21 @@ pub fn parse(allocator: std.mem.Allocator, comptime subcommand: Subcommand) !Com
     }
 
     if (args.option("--cwd")) |cwd_| {
-        var buf: bun.PathBuffer = undefined;
-        var buf2: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
+        var buf2: fun.PathBuffer = undefined;
         var final_path: [:0]u8 = undefined;
         if (cwd_.len > 0 and cwd_[0] == '.') {
-            const cwd = try bun.getcwd(&buf);
+            const cwd = try fun.getcwd(&buf);
             var parts = [_]string{cwd_};
             const path_ = Path.joinAbsStringBuf(cwd, &buf2, &parts, .auto);
             buf2[path_.len] = 0;
             final_path = buf2[0..path_.len :0];
         } else {
-            bun.copy(u8, &buf, cwd_);
+            fun.copy(u8, &buf, cwd_);
             buf[cwd_.len] = 0;
             final_path = buf[0..cwd_.len :0];
         }
-        bun.sys.chdir("", final_path).unwrap() catch |err| {
+        fun.sys.chdir("", final_path).unwrap() catch |err| {
             Output.errGeneric("failed to change directory to \"{s}\": {s}\n", .{ final_path, @errorName(err) });
             Global.crash();
         };
@@ -1072,7 +1072,7 @@ pub fn parse(allocator: std.mem.Allocator, comptime subcommand: Subcommand) !Com
 
     if (args.option("--registry")) |registry| {
         if (!strings.hasPrefixComptime(registry, "https://") and !strings.hasPrefixComptime(registry, "http://")) {
-            Output.errGeneric("Registry URL must start with 'https://' or 'http://': {f}\n", .{bun.fmt.quote(registry)});
+            Output.errGeneric("Registry URL must start with 'https://' or 'http://': {f}\n", .{fun.fmt.quote(registry)});
             Global.crash();
         }
         cli.registry = registry;
@@ -1104,7 +1104,7 @@ pub fn parse(allocator: std.mem.Allocator, comptime subcommand: Subcommand) !Com
     }
 
     if (comptime subcommand == .pm) {
-        // `bun pm version` command options
+        // `fun pm version` command options
         if (args.option("--git-tag-version")) |git_tag_version| {
             if (strings.eqlComptime(git_tag_version, "true")) {
                 cli.git_tag_version = true;
@@ -1125,7 +1125,7 @@ pub fn parse(allocator: std.mem.Allocator, comptime subcommand: Subcommand) !Com
         }
     }
 
-    // `bun pm why` and `bun why` options
+    // `fun pm why` and `fun why` options
     if (comptime subcommand == .pm or subcommand == .why) {
         cli.top_only = args.flag("--top");
         if (args.option("--depth")) |depth| {
@@ -1146,14 +1146,14 @@ const Options = @import("./PackageManagerOptions.zig");
 const std = @import("std");
 const PackageManagerCommand = @import("../../cli/package_manager_command.zig").PackageManagerCommand;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const Output = bun.Output;
-const Path = bun.path;
-const URL = bun.URL;
-const clap = bun.clap;
-const strings = bun.strings;
-const PackageInstall = bun.install.PackageInstall;
-const Subcommand = bun.install.PackageManager.Subcommand;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const Output = fun.Output;
+const Path = fun.path;
+const URL = fun.URL;
+const clap = fun.clap;
+const strings = fun.strings;
+const PackageInstall = fun.install.PackageInstall;
+const Subcommand = fun.install.PackageManager.Subcommand;

@@ -6,7 +6,7 @@ pub fn HiveArray(comptime T: type, comptime capacity: u16) type {
         const Self = @This();
 
         buffer: [capacity]T,
-        used: bun.bit_set.IntegerBitSet(capacity),
+        used: fun.bit_set.IntegerBitSet(capacity),
 
         pub const size = capacity;
 
@@ -30,19 +30,19 @@ pub fn HiveArray(comptime T: type, comptime capacity: u16) type {
             const index = self.used.findFirstUnset() orelse return null;
             self.used.set(index);
             const ret = &self.buffer[index];
-            bun.asan.unpoison(@ptrCast(ret), @sizeOf(T));
+            fun.asan.unpoison(@ptrCast(ret), @sizeOf(T));
             return ret;
         }
 
         pub fn at(self: *Self, index: u16) *T {
             assert(index < capacity);
             const ret = &self.buffer[index];
-            bun.asan.assertUnpoisoned(@ptrCast(ret));
+            fun.asan.assertUnpoisoned(@ptrCast(ret));
             return ret;
         }
 
         pub fn indexOf(self: *const Self, value: *const T) ?u32 {
-            bun.asan.assertUnpoisoned(@ptrCast(value));
+            fun.asan.assertUnpoisoned(@ptrCast(value));
             const start = &self.buffer;
             const end = @as([*]const T, @ptrCast(start)) + capacity;
             if (!(@intFromPtr(value) >= @intFromPtr(start) and @intFromPtr(value) < @intFromPtr(end)))
@@ -56,7 +56,7 @@ pub fn HiveArray(comptime T: type, comptime capacity: u16) type {
         }
 
         pub fn in(self: *const Self, value: *const T) bool {
-            bun.asan.assertUnpoisoned(@ptrCast(value));
+            fun.asan.assertUnpoisoned(@ptrCast(value));
             const start = &self.buffer;
             const end = @as([*]const T, @ptrCast(start)) + capacity;
             return (@intFromPtr(value) >= @intFromPtr(start) and @intFromPtr(value) < @intFromPtr(end));
@@ -69,7 +69,7 @@ pub fn HiveArray(comptime T: type, comptime capacity: u16) type {
             assert(&self.buffer[index] == value);
 
             value.* = undefined;
-            bun.asan.poison(value, @sizeOf(T));
+            fun.asan.poison(value, @sizeOf(T));
 
             self.used.unset(index);
             return true;
@@ -100,7 +100,7 @@ pub fn HiveArray(comptime T: type, comptime capacity: u16) type {
                     }
                 }
 
-                return bun.handleOom(self.allocator.create(T));
+                return fun.handleOom(self.allocator.create(T));
             }
 
             pub fn getAndSeeIfNew(self: *This, new: *bool) *T {
@@ -111,7 +111,7 @@ pub fn HiveArray(comptime T: type, comptime capacity: u16) type {
                     }
                 }
 
-                return bun.handleOom(self.allocator.create(T));
+                return fun.handleOom(self.allocator.create(T));
             }
 
             pub fn tryGet(self: *This) OOM!*T {
@@ -178,9 +178,9 @@ test "HiveArray" {
     }
 }
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const assert = bun.assert;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const assert = fun.assert;
 
 const std = @import("std");
 const mem = std.mem;

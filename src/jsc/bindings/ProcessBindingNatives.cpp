@@ -3,7 +3,7 @@
 #include "ProcessBindingNatives.h"
 #include "JavaScriptCore/ObjectConstructor.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 static JSValue processBindingNativesGetter(VM& vm, JSObject* bindingObject)
@@ -195,4 +195,4 @@ void ProcessBindingNatives::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 
 DEFINE_VISIT_CHILDREN(ProcessBindingNatives);
 
-} // namespace Bun
+} // namespace Fun

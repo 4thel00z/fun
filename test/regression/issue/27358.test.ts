@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tls as validTls } from "harness";
 
 describe("mTLS SSLConfig keepalive (#27358)", () => {
@@ -6,7 +6,7 @@ describe("mTLS SSLConfig keepalive (#27358)", () => {
     // Track client ports to detect connection reuse
     const clientPorts: number[] = [];
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: validTls,
       hostname: "127.0.0.1",
@@ -40,7 +40,7 @@ describe("mTLS SSLConfig keepalive (#27358)", () => {
   });
 
   test("different custom TLS configs do NOT share keepalive connections", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: validTls,
       hostname: "127.0.0.1",

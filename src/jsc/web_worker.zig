@@ -46,7 +46,7 @@
 //!
 //! Every field below is grouped by which thread may touch it.
 //!
-//! At process exit (`globalExit` under BUN_DESTRUCT_VM_ON_EXIT),
+//! At process exit (`globalExit` under FUN_DESTRUCT_VM_ON_EXIT),
 //! `terminateAllAndWait()` stops every live worker and waits for each to
 //! reach `shutdown()` before process-global resolver state is freed — the
 //! main-thread analogue of Node's `Environment::stop_sub_worker_contexts()`.
@@ -106,7 +106,7 @@ requested_terminate: std.atomic.Value(bool) = .init(false),
 /// `shutdown()` nulls it. Lives inside `arena`. `vm_lock` must be held for any
 /// cross-thread read (see header comment).
 vm: ?*jsc.VirtualMachine = null,
-vm_lock: bun.Mutex = .{},
+vm_lock: fun.Mutex = .{},
 
 // ---- Parent-thread only -----------------------------------------------------
 
@@ -119,7 +119,7 @@ parent_poll_ref: Async.KeepAlive = .{},
 // ---- Worker-thread only -----------------------------------------------------
 
 status: Status = .start,
-arena: ?bun.MimallocArena = null,
+arena: ?fun.MimallocArena = null,
 /// Set by `exit()` so that `spin()`'s error paths don't clobber an explicit
 /// `process.exit(code)`.
 exit_called: bool = false,
@@ -139,7 +139,7 @@ extern fn WebWorker__teardownJSCVM(*jsc.JSGlobalObject) void;
 extern fn WebWorker__dispatchExit(*anyopaque, i32) void;
 extern fn WebWorker__dispatchOnline(cpp_worker: *anyopaque, *jsc.JSGlobalObject) void;
 extern fn WebWorker__fireEarlyMessages(cpp_worker: *anyopaque, *jsc.JSGlobalObject) void;
-extern fn WebWorker__dispatchError(*jsc.JSGlobalObject, *anyopaque, bun.String, JSValue) void;
+extern fn WebWorker__dispatchError(*jsc.JSGlobalObject, *anyopaque, fun.String, JSValue) void;
 
 /// Process-global registry of worker threads that have been spawned and
 /// have not yet reached the point in `shutdown()` where they are past all
@@ -149,7 +149,7 @@ extern fn WebWorker__dispatchError(*jsc.JSGlobalObject, *anyopaque, bun.String, 
 ///
 /// Lock ordering: `LiveWorkers.mutex` → `worker.vm_lock` (never the reverse).
 const LiveWorkers = struct {
-    var mutex: bun.Mutex = .{};
+    var mutex: fun.Mutex = .{};
     var list: std.DoublyLinkedList = .{};
     /// Number of workers registered in `list`. Separate atomic so
     /// `terminateAllAndWait` can futex-wait on it without the mutex.
@@ -163,7 +163,7 @@ const LiveWorkers = struct {
         // Wake terminateAllAndWait so it re-sweeps and catches this worker
         // (it may have been created by another worker mid-sweep). No-op if
         // nothing is waiting.
-        bun.Futex.wake(&outstanding, 1);
+        fun.Futex.wake(&outstanding, 1);
     }
 
     fn unregister(worker: *WebWorker) void {
@@ -174,7 +174,7 @@ const LiveWorkers = struct {
         // unconditionally is fine (spurious wakeups just re-check the
         // counter) and avoids a compare-before-wake race.
         _ = outstanding.fetchSub(1, .release);
-        bun.Futex.wake(&outstanding, 1);
+        fun.Futex.wake(&outstanding, 1);
     }
 };
 
@@ -232,7 +232,7 @@ pub fn terminateAllAndWait(timeout_ms: u64) void {
                 log("terminateAllAndWait: timed out with {d} outstanding", .{n});
                 return;
             }
-            bun.Futex.wait(&LiveWorkers.outstanding, n, deadline_ns - elapsed) catch {};
+            fun.Futex.wait(&LiveWorkers.outstanding, n, deadline_ns - elapsed) catch {};
         } else {
             // Monotonic clock unavailable — yield-spin.
             std.Thread.yield() catch {};
@@ -263,9 +263,9 @@ fn setRequestedTerminate(this: *WebWorker) bool {
 pub fn create(
     cpp_worker: *anyopaque,
     parent: *jsc.VirtualMachine,
-    name_str: bun.String,
-    specifier_str: bun.String,
-    error_message: *bun.String,
+    name_str: fun.String,
+    specifier_str: fun.String,
+    error_message: *fun.String,
     parent_context_id: u32,
     this_context_id: u32,
     mini: bool,
@@ -276,38 +276,38 @@ pub fn create(
     inherit_execArgv: bool,
     execArgv_ptr: ?[*]WTFStringImpl,
     execArgv_len: usize,
-    preload_modules_ptr: ?[*]bun.String,
+    preload_modules_ptr: ?[*]fun.String,
     preload_modules_len: usize,
 ) callconv(.c) ?*WebWorker {
     jsc.markBinding(@src());
     log("[{d}] create", .{this_context_id});
 
-    var spec_slice = specifier_str.toUTF8(bun.default_allocator);
+    var spec_slice = specifier_str.toUTF8(fun.default_allocator);
     defer spec_slice.deinit();
     const prev_log = parent.transpiler.log;
-    var temp_log = bun.logger.Log.init(bun.default_allocator);
+    var temp_log = fun.logger.Log.init(fun.default_allocator);
     parent.transpiler.setLog(&temp_log);
     defer parent.transpiler.setLog(prev_log);
     defer temp_log.deinit();
 
     const preload_modules = if (preload_modules_ptr) |ptr| ptr[0..preload_modules_len] else &.{};
 
-    var preloads = bun.handleOom(std.array_list.Managed([]const u8).initCapacity(bun.default_allocator, preload_modules_len));
+    var preloads = fun.handleOom(std.array_list.Managed([]const u8).initCapacity(fun.default_allocator, preload_modules_len));
     for (preload_modules) |module| {
-        const utf8_slice = module.toUTF8(bun.default_allocator);
+        const utf8_slice = module.toUTF8(fun.default_allocator);
         defer utf8_slice.deinit();
         if (resolveEntryPointSpecifier(parent, utf8_slice.slice(), error_message, &temp_log)) |preload| {
-            bun.handleOom(preloads.append(bun.handleOom(bun.default_allocator.dupe(u8, preload))));
+            fun.handleOom(preloads.append(fun.handleOom(fun.default_allocator.dupe(u8, preload))));
         }
 
         if (!error_message.isEmpty()) {
-            for (preloads.items) |preload| bun.default_allocator.free(preload);
+            for (preloads.items) |preload| fun.default_allocator.free(preload);
             preloads.deinit();
             return null;
         }
     }
 
-    var worker = bun.handleOom(bun.default_allocator.create(WebWorker));
+    var worker = fun.handleOom(fun.default_allocator.create(WebWorker));
     worker.* = WebWorker{
         .cpp_worker = cpp_worker,
         .parent = parent,
@@ -315,11 +315,11 @@ pub fn create(
         .execution_context_id = this_context_id,
         .mini = mini,
         .eval_mode = eval_mode,
-        .unresolved_specifier = bun.handleOom(spec_slice.toOwned(bun.default_allocator)).slice(),
+        .unresolved_specifier = fun.handleOom(spec_slice.toOwned(fun.default_allocator)).slice(),
         .store_fd = parent.transpiler.resolver.store_fd,
         .name = brk: {
             if (!name_str.isEmpty()) {
-                break :brk bun.handleOom(std.fmt.allocPrintSentinel(bun.default_allocator, "{f}", .{name_str}, 0));
+                break :brk fun.handleOom(std.fmt.allocPrintSentinel(fun.default_allocator, "{f}", .{name_str}, 0));
             }
             break :brk "";
         },
@@ -340,14 +340,14 @@ pub fn create(
     LiveWorkers.register(worker);
 
     var thread = std.Thread.spawn(
-        .{ .stack_size = bun.default_thread_stack_size },
+        .{ .stack_size = fun.default_thread_stack_size },
         threadMain,
         .{worker},
     ) catch {
         LiveWorkers.unregister(worker);
         worker.parent_poll_ref.unref(parent);
         worker.destroy();
-        error_message.* = bun.String.static("Failed to spawn worker thread");
+        error_message.* = fun.String.static("Failed to spawn worker thread");
         return null;
     };
     thread.detach();
@@ -360,11 +360,11 @@ pub fn create(
 /// so the caller's thread doesn't matter.
 pub fn destroy(this: *WebWorker) callconv(.c) void {
     log("[{d}] destroy", .{this.execution_context_id});
-    bun.default_allocator.free(this.unresolved_specifier);
-    for (this.preloads) |preload| bun.default_allocator.free(preload);
-    bun.default_allocator.free(this.preloads);
-    if (this.name.len > 0) bun.default_allocator.free(this.name);
-    bun.default_allocator.destroy(this);
+    fun.default_allocator.free(this.unresolved_specifier);
+    for (this.preloads) |preload| fun.default_allocator.free(preload);
+    fun.default_allocator.free(this.preloads);
+    if (this.name.len > 0) fun.default_allocator.free(this.name);
+    fun.default_allocator.destroy(this);
 }
 
 // =============================================================================
@@ -413,7 +413,7 @@ pub fn releaseParentPollRef(this: *WebWorker) callconv(.c) void {
 // =============================================================================
 
 fn threadMain(this: *WebWorker) void {
-    bun.analytics.Features.workers_spawned += 1;
+    fun.analytics.Features.workers_spawned += 1;
 
     if (this.name.len > 0) {
         Output.Source.configureNamedThread(this.name);
@@ -443,22 +443,22 @@ fn startVM(this: *WebWorker) !void {
     var transform_options = this.parent.transpiler.options.transform_options;
 
     if (this.execArgv) |exec_argv| parse_new_args: {
-        var new_args: std.array_list.Managed([]const u8) = try .initCapacity(bun.default_allocator, exec_argv.len);
+        var new_args: std.array_list.Managed([]const u8) = try .initCapacity(fun.default_allocator, exec_argv.len);
         defer {
-            for (new_args.items) |arg| bun.default_allocator.free(arg);
+            for (new_args.items) |arg| fun.default_allocator.free(arg);
             new_args.deinit();
         }
 
         for (exec_argv) |arg| {
-            try new_args.append(arg.toOwnedSliceZ(bun.default_allocator));
+            try new_args.append(arg.toOwnedSliceZ(fun.default_allocator));
         }
 
-        var diag: bun.clap.Diagnostic = .{};
-        var iter: bun.clap.args.SliceIterator = .init(new_args.items);
+        var diag: fun.clap.Diagnostic = .{};
+        var iter: fun.clap.args.SliceIterator = .init(new_args.items);
 
-        var args = bun.clap.parseEx(bun.clap.Help, bun.cli.Command.Tag.RunCommand.params(), &iter, .{
+        var args = fun.clap.parseEx(fun.clap.Help, fun.cli.Command.Tag.RunCommand.params(), &iter, .{
             .diagnostic = &diag,
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
 
             // just one for executable
             .stop_after_positional_at = 1,
@@ -475,19 +475,19 @@ fn startVM(this: *WebWorker) !void {
         // this should go through most flags and update the options.
     }
 
-    this.arena = bun.MimallocArena.init();
+    this.arena = fun.MimallocArena.init();
     const allocator = this.arena.?.allocator();
 
     // Proxy-env values may be RefCountedEnvValue bytes owned by the parent's
     // proxy_env_storage. We need a consistent snapshot of (storage slots +
     // env.map entries) so every slice we copy is backed by a ref we hold.
-    // The parent's storage.lock serialises against Bun__setEnvValue on the
+    // The parent's storage.lock serialises against Fun__setEnvValue on the
     // main thread — it covers both the slot swap and the map.put, so
     // cloneFrom and cloneWithAllocator see the same state.
     var temp_proxy_storage: jsc.RareData.ProxyEnvStorage = .{};
     errdefer temp_proxy_storage.deinit();
 
-    const map = try allocator.create(bun.DotEnv.Map);
+    const map = try allocator.create(fun.DotEnv.Map);
     {
         const parent_storage = &this.parent.proxy_env_storage;
         parent_storage.lock.lock();
@@ -499,8 +499,8 @@ fn startVM(this: *WebWorker) !void {
     // Ensure map entries point at the exact bytes we hold refs on.
     temp_proxy_storage.syncInto(map);
 
-    const loader = try allocator.create(bun.DotEnv.Loader);
-    loader.* = bun.DotEnv.Loader.init(map, allocator);
+    const loader = try allocator.create(fun.DotEnv.Loader);
+    loader.* = fun.DotEnv.Loader.init(map, allocator);
 
     // Checkpoint before the expensive part: initWorker builds a full JSC
     // VM. If terminateAllAndWait() fired while we were cloning the env
@@ -549,7 +549,7 @@ fn startVM(this: *WebWorker) !void {
     b.resolver.env_loader = b.env;
 
     if (this.parent.standalone_module_graph) |graph| {
-        bun.bun_js.applyStandaloneRuntimeFlags(b, graph);
+        fun.fun_js.applyStandaloneRuntimeFlags(b, graph);
     }
 
     // Second checkpoint: initWorker just spent the bulk of startup time;
@@ -593,13 +593,13 @@ fn spin(this: *WebWorker) void {
     // raw specifier). The returned slice is BORROWED — every exit from spin()
     // goes through shutdown() which is noreturn, so a `defer free` here would
     // never run anyway.
-    var resolve_error = bun.String.empty;
+    var resolve_error = fun.String.empty;
     const path = resolveEntryPointSpecifier(vm, this.unresolved_specifier, &resolve_error, vm.log) orelse {
         vm.exit_handler.exit_code = 1;
         if (vm.log.errors == 0 and !resolve_error.isEmpty()) {
-            const err = resolve_error.toUTF8(bun.default_allocator);
+            const err = resolve_error.toUTF8(fun.default_allocator);
             defer err.deinit();
-            bun.handleOom(vm.log.addError(null, .Empty, err.slice()));
+            fun.handleOom(vm.log.addError(null, .Empty, err.slice()));
         }
         resolve_error.deref();
         this.flushLogs(vm);
@@ -693,7 +693,7 @@ fn spin(this: *WebWorker) void {
 fn shutdown(this: *WebWorker) noreturn {
     jsc.markBinding(@src());
     this.setStatus(.terminated);
-    bun.analytics.Features.workers_terminated += 1;
+    fun.analytics.Features.workers_terminated += 1;
     log("[{d}] shutdown", .{this.execution_context_id});
 
     // Snapshot everything we'll need after `this` may be freed (step 4).
@@ -703,7 +703,7 @@ fn shutdown(this: *WebWorker) noreturn {
 
     // ---- 1. Unpublish vm --------------------------------------------------
     var vm_to_deinit: ?*jsc.VirtualMachine = null;
-    var loop: ?*bun.uws.Loop = null;
+    var loop: ?*fun.uws.Loop = null;
     {
         this.vm_lock.lock();
         defer this.vm_lock.unlock();
@@ -758,17 +758,17 @@ fn shutdown(this: *WebWorker) noreturn {
         vm.gc_controller.deinit();
     }
     if (comptime Environment.isWindows) {
-        bun.windows.libuv.Loop.shutdown();
+        fun.windows.libuv.Loop.shutdown();
     }
     if (vm_to_deinit) |vm| {
         vm.deinit();
     }
-    bun.deleteAllPoolsForThreadExit();
+    fun.deleteAllPoolsForThreadExit();
     if (arena) |*arena_| {
         arena_.deinit();
     }
 
-    bun.exitThread();
+    fun.exitThread();
 }
 
 /// process.exit() inside the worker. Worker-thread only.
@@ -796,17 +796,17 @@ fn flushLogs(this: *WebWorker, vm: *jsc.VirtualMachine) void {
     jsc.markBinding(@src());
     if (vm.log.msgs.items.len == 0) return;
     const err, const str = blk: {
-        const err = vm.log.toJS(vm.global, bun.default_allocator, "Error in worker") catch |e|
+        const err = vm.log.toJS(vm.global, fun.default_allocator, "Error in worker") catch |e|
             break :blk e;
-        const str = err.toBunString(vm.global) catch |e| break :blk e;
+        const str = err.toFunString(vm.global) catch |e| break :blk e;
         break :blk .{ err, str };
     } catch |err| switch (err) {
         error.JSError => @panic("unhandled exception"),
-        error.OutOfMemory => bun.outOfMemory(),
+        error.OutOfMemory => fun.outOfMemory(),
         error.JSTerminated => @panic("unhandled exception"),
     };
     defer str.deref();
-    bun.jsc.fromJSHostCallGeneric(vm.global, @src(), WebWorker__dispatchError, .{ vm.global, this.cpp_worker, str, err }) catch |e| {
+    fun.jsc.fromJSHostCallGeneric(vm.global, @src(), WebWorker__dispatchError, .{ vm.global, this.cpp_worker, str, err }) catch |e| {
         _ = vm.global.reportUncaughtException(vm.global.takeException(e).asException(vm.global.vm()).?);
     };
 }
@@ -817,7 +817,7 @@ fn onUnhandledRejection(vm: *jsc.VirtualMachine, globalObject: *jsc.JSGlobalObje
 
     var error_instance = error_instance_or_exception.toError() orelse error_instance_or_exception;
 
-    var array = std.Io.Writer.Allocating.init(bun.default_allocator);
+    var array = std.Io.Writer.Allocating.init(fun.default_allocator);
     defer array.deinit();
 
     const worker = vm.worker orelse @panic("Assertion failure: no worker");
@@ -844,10 +844,10 @@ fn onUnhandledRejection(vm: *jsc.VirtualMachine, globalObject: *jsc.JSGlobalObje
         error_instance = globalObject.tryTakeException().?;
     };
     writer.flush() catch {
-        bun.outOfMemory();
+        fun.outOfMemory();
     };
     jsc.markBinding(@src());
-    WebWorker__dispatchError(globalObject, worker.cpp_worker, bun.String.cloneUTF8(array.written()), error_instance);
+    WebWorker__dispatchError(globalObject, worker.cpp_worker, fun.String.cloneUTF8(array.written()), error_instance);
     _ = worker.setRequestedTerminate();
     worker.shutdown();
 }
@@ -858,15 +858,15 @@ fn onUnhandledRejection(vm: *jsc.VirtualMachine, globalObject: *jsc.JSGlobalObje
 fn resolveEntryPointSpecifier(
     parent: *jsc.VirtualMachine,
     str: []const u8,
-    error_message: *bun.String,
-    logger: *bun.logger.Log,
+    error_message: *fun.String,
+    logger: *fun.logger.Log,
 ) ?[]const u8 {
     if (parent.standalone_module_graph) |graph| {
         if (graph.find(str) != null) {
             return str;
         }
 
-        // Since `bun build --compile` renames files to `.js` by
+        // Since `fun build --compile` renames files to `.js` by
         // default, we need to do the reverse of our file extension
         // mapping.
         //
@@ -879,11 +879,11 @@ fn resolveEntryPointSpecifier(
         //   new Worker("./foo.cts") -> new Worker("./foo.js")
         //   new Worker("./foo.tsx") -> new Worker("./foo.js")
         //
-        if (bun.strings.hasPrefixComptime(str, "./") or bun.strings.hasPrefixComptime(str, "../")) try_from_extension: {
-            var pathbuf: bun.PathBuffer = undefined;
+        if (fun.strings.hasPrefixComptime(str, "./") or fun.strings.hasPrefixComptime(str, "../")) try_from_extension: {
+            var pathbuf: fun.PathBuffer = undefined;
             var base = str;
 
-            base = bun.path.joinAbsStringBuf(bun.StandaloneModuleGraph.base_public_path_with_default_suffix, &pathbuf, &.{str}, .loose);
+            base = fun.path.joinAbsStringBuf(fun.StandaloneModuleGraph.base_public_path_with_default_suffix, &pathbuf, &.{str}, .loose);
             const extname = std.fs.path.extension(base);
 
             // ./foo -> ./foo.js
@@ -897,7 +897,7 @@ fn resolveEntryPointSpecifier(
             }
 
             // ./foo.ts -> ./foo.js
-            if (bun.strings.eqlComptime(extname, ".ts")) {
+            if (fun.strings.eqlComptime(extname, ".ts")) {
                 pathbuf[base.len - 3 .. base.len][0..3].* = ".js".*;
                 if (graph.find(pathbuf[0..base.len])) |js_file| {
                     return js_file.name;
@@ -908,7 +908,7 @@ fn resolveEntryPointSpecifier(
 
             if (extname.len == 4) {
                 inline for (.{ ".tsx", ".jsx", ".mjs", ".mts", ".cts", ".cjs" }) |ext| {
-                    if (bun.strings.eqlComptime(extname, ext)) {
+                    if (fun.strings.eqlComptime(extname, ext)) {
                         pathbuf[base.len - ext.len ..][0..".js".len].* = ".js".*;
                         const as_js = pathbuf[0 .. base.len - ext.len + ".js".len];
                         if (graph.find(as_js)) |js_file| {
@@ -921,31 +921,31 @@ fn resolveEntryPointSpecifier(
         }
     }
 
-    if (bun.webcore.ObjectURLRegistry.isBlobURL(str)) {
-        if (bun.webcore.ObjectURLRegistry.singleton().has(str["blob:".len..])) {
+    if (fun.webcore.ObjectURLRegistry.isBlobURL(str)) {
+        if (fun.webcore.ObjectURLRegistry.singleton().has(str["blob:".len..])) {
             return str;
         } else {
-            error_message.* = bun.String.static("Blob URL is missing");
+            error_message.* = fun.String.static("Blob URL is missing");
             return null;
         }
     }
 
-    var resolved_entry_point: bun.resolver.Result = parent.transpiler.resolveEntryPoint(str) catch {
+    var resolved_entry_point: fun.resolver.Result = parent.transpiler.resolveEntryPoint(str) catch {
         const out = blk: {
             const out = logger.toJS(
                 parent.global,
-                bun.default_allocator,
+                fun.default_allocator,
                 "Error resolving Worker entry point",
             ) catch |err| break :blk err;
-            break :blk out.toBunString(parent.global);
+            break :blk out.toFunString(parent.global);
         } catch |err| switch (err) {
-            error.OutOfMemory => bun.outOfMemory(),
+            error.OutOfMemory => fun.outOfMemory(),
             error.JSError => {
-                error_message.* = bun.String.static("unexpected exception");
+                error_message.* = fun.String.static("unexpected exception");
                 return null;
             },
             error.JSTerminated => {
-                error_message.* = bun.String.static("unexpected exception");
+                error_message.* = fun.String.static("unexpected exception");
                 return null;
             },
         };
@@ -953,8 +953,8 @@ fn resolveEntryPointSpecifier(
         return null;
     };
 
-    const entry_path: *bun.fs.Path = resolved_entry_point.path() orelse {
-        error_message.* = bun.String.static("Worker entry point is missing");
+    const entry_path: *fun.fs.Path = resolved_entry_point.path() orelse {
+        error_message.* = fun.String.static("Worker entry point is missing");
         return null;
     };
     return entry_path.text;
@@ -971,11 +971,11 @@ comptime {
 const std = @import("std");
 const WTFStringImpl = @import("../string/string.zig").WTFStringImpl;
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

@@ -80,7 +80,7 @@ const stat = promisify(fs.stat);
   );
 }
 
-// This test is commented out because Bun does not support getting the
+// This test is commented out because Fun does not support getting the
 // internal customPromisifyArgs symbol.
 
 // {

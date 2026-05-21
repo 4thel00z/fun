@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { createBrotliCompress, createBrotliDecompress } from "zlib";
 
 // This test verifies that calling reset() on Brotli streams doesn't leak memory.
@@ -9,8 +9,8 @@ test("Brotli reset() should not leak memory", { timeout: 30_000 }, async () => {
   const iterations = 100_000;
 
   // Get baseline memory
-  Bun.gc(true);
-  await Bun.sleep(10);
+  Fun.gc(true);
+  await Fun.sleep(10);
   const baselineMemory = process.memoryUsage.rss();
 
   const compressor = createBrotliCompress();
@@ -23,8 +23,8 @@ test("Brotli reset() should not leak memory", { timeout: 30_000 }, async () => {
   compressor.close();
 
   // Force GC and measure
-  Bun.gc(true);
-  await Bun.sleep(10);
+  Fun.gc(true);
+  await Fun.sleep(10);
   const finalMemory = process.memoryUsage.rss();
 
   const memoryGrowth = finalMemory - baselineMemory;
@@ -40,8 +40,8 @@ test("Brotli reset() should not leak memory", { timeout: 30_000 }, async () => {
 test("BrotliDecompress reset() should not leak memory", { timeout: 30_000 }, async () => {
   const iterations = 100_000;
 
-  Bun.gc(true);
-  await Bun.sleep(10);
+  Fun.gc(true);
+  await Fun.sleep(10);
   const baselineMemory = process.memoryUsage.rss();
 
   const decompressor = createBrotliDecompress();
@@ -52,8 +52,8 @@ test("BrotliDecompress reset() should not leak memory", { timeout: 30_000 }, asy
 
   decompressor.close();
 
-  Bun.gc(true);
-  await Bun.sleep(10);
+  Fun.gc(true);
+  await Fun.sleep(10);
   const finalMemory = process.memoryUsage.rss();
 
   const memoryGrowth = finalMemory - baselineMemory;

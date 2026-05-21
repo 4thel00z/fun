@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("Error.prepareStackTrace should not crash when stacktrace parameter is not an array", () => {
   const e = new Error("test message");

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run clang-format on all C++ source and header files in the Bun project
+# Run clang-format on all C++ source and header files in the Fun project
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,7 +35,7 @@ while IFS= read -r -d '' file; do
        [[ "$file" =~ src/napi/ ]] || \
        [[ "$file" =~ src/jsc/bindings/libuv/ ]] || \
        [[ "$file" =~ src/jsc/bindings/sqlite/ ]] || \
-       [[ "$file" =~ packages/bun-usockets/.*libuv ]] || \
+       [[ "$file" =~ packages/fun-usockets/.*libuv ]] || \
        [[ "$file" =~ vendor/ ]]; then
         continue
     fi
@@ -53,7 +53,7 @@ while IFS= read -r file; do
     if [[ -n "$file" && -f "$file" ]]; then
         FILES_TO_FORMAT+=("$file")
     fi
-done < <(bun scripts/glob-sources.ts cxx)
+done < <(fun scripts/glob-sources.ts cxx)
 
 # Remove duplicates while preserving order
 declare -a UNIQUE_FILES
@@ -88,7 +88,7 @@ if [ "$MODE" = "check" ]; then
     done
     
     if [ $FAILED -eq 1 ]; then
-        echo "Some files need formatting. Run 'bun run clang-format' to fix."
+        echo "Some files need formatting. Run 'fun run clang-format' to fix."
         exit 1
     else
         echo "All files are properly formatted."

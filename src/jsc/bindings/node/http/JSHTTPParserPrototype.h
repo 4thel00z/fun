@@ -2,7 +2,7 @@
 
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSHTTPParserPrototype final : public JSC::JSNonFinalObject {
 public:
@@ -40,4 +40,4 @@ private:
     void finishCreation(JSC::VM& vm);
 };
 
-} // namespace Bun
+} // namespace Fun

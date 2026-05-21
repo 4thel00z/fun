@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 test("remix works", async () => {
   process.env.PORT = "0";
   process.exitCode = 1;
@@ -18,7 +18,7 @@ test("remix works", async () => {
   require("@remix-run/serve/dist/cli.js");
 
   // Wait long enough for the server's setTimeout to run.
-  await Bun.sleep(10);
+  await Fun.sleep(10);
 
   const port = (await promise).port;
 

@@ -47,11 +47,11 @@ pub const MediaList = struct {
                     return .{ .err = e };
                 },
             };
-            bun.handleOom(media_queries.append(input.allocator(), mq));
+            fun.handleOom(media_queries.append(input.allocator(), mq));
 
             if (input.next().asValue()) |tok| {
                 if (tok.* != .comma) {
-                    bun.Output.panic("Unreachable code: expected a comma after parsing a MediaQuery.\n\nThis is a bug in Bun's CSS parser. Please file a bug report at https://github.com/oven-sh/bun/issues/new/choose", .{});
+                    fun.Output.panic("Unreachable code: expected a comma after parsing a MediaQuery.\n\nThis is a bug in Fun's CSS parser. Please file a bug report at https://github.com/underdoc-org/fun/issues/new/choose", .{});
                 }
             } else break;
         }
@@ -92,7 +92,7 @@ pub const MediaList = struct {
     pub fn cloneWithImportRecords(
         this: *const @This(),
         allocator: std.mem.Allocator,
-        _: *bun.BabyList(bun.ImportRecord),
+        _: *fun.BabyList(fun.ImportRecord),
     ) @This() {
         return deepClone(this, allocator);
     }
@@ -328,7 +328,7 @@ pub const MediaType = union(enum) {
 
     pub fn fromStr(name: []const u8) MediaType {
         const Enumerations = enum { all, print, screen };
-        const Map = comptime bun.ComptimeEnumMap(Enumerations);
+        const Map = comptime fun.ComptimeEnumMap(Enumerations);
         if (Map.getASCIIICaseInsensitive(name)) |x| return switch (x) {
             .all => .all,
             .print => .print,
@@ -439,7 +439,7 @@ pub const MediaCondition = union(enum) {
     pub fn deepClone(this: *const MediaCondition, allocator: std.mem.Allocator) MediaCondition {
         return switch (this.*) {
             .feature => |*f| MediaCondition{ .feature = f.deepClone(allocator) },
-            .not => |c| MediaCondition{ .not = bun.create(allocator, MediaCondition, c.deepClone(allocator)) },
+            .not => |c| MediaCondition{ .not = fun.create(allocator, MediaCondition, c.deepClone(allocator)) },
             .operation => |op| MediaCondition{
                 .operation = .{
                     .operator = op.operator,
@@ -473,11 +473,11 @@ pub fn parseQueryCondition(
         switch (tok.*) {
             .open_paren => break :brk .{ false, false },
             .ident => |ident| {
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "not")) break :brk .{ true, false };
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "not")) break :brk .{ true, false };
             },
             .function => |f| {
                 if (flags.allow_style and
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "style"))
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "style"))
                 {
                     break :brk .{ false, true };
                 }
@@ -497,7 +497,7 @@ pub fn parseQueryCondition(
                     .err => |e| return .{ .err = e },
                     .result => |v| v,
                 };
-                return .{ .result = QueryCondition.createNegation(bun.create(input.allocator(), QueryCondition, inner_condition)) };
+                return .{ .result = QueryCondition.createNegation(fun.create(input.allocator(), QueryCondition, inner_condition)) };
             },
             // (true, true)
             0b11 => {
@@ -505,7 +505,7 @@ pub fn parseQueryCondition(
                     .err => |e| return .{ .err = e },
                     .result => |v| v,
                 };
-                return .{ .result = QueryCondition.createNegation(bun.create(input.allocator(), QueryCondition, inner_condition)) };
+                return .{ .result = QueryCondition.createNegation(fun.create(input.allocator(), QueryCondition, inner_condition)) };
             },
             0b00 => break :first_condition switch (parseParenBlock(QueryCondition, input, flags)) {
                 .err => |e| return .{ .err = e },
@@ -576,7 +576,7 @@ pub fn parseParensOrFunction(
         .open_paren => return parseParenBlock(QueryCondition, input, flags),
         .function => |f| {
             if (flags.allow_style and
-                bun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "style"))
+                fun.strings.eqlCaseInsensitiveASCIIICheckLength(f, "style"))
             {
                 return QueryCondition.parseStyleQuery(input);
             }
@@ -1041,7 +1041,7 @@ pub fn QueryFeature(comptime FeatureId: type) type {
                     .result => |v| v,
                 };
                 _ = blah;
-                bun.debugAssert(feature_name.eql(&name));
+                fun.debugAssert(feature_name.eql(&name));
             }
 
             if (!name.valueType().allowsRanges() or !value.checkType(name.valueType())) {
@@ -1412,8 +1412,8 @@ pub fn MediaFeatureName(comptime FeatureId: type) type {
             if (@intFromEnum(lhs.*) != @intFromEnum(rhs.*)) return false;
             return switch (lhs.*) {
                 .standard => |fid| fid == rhs.standard,
-                .custom => |ident| bun.strings.eql(ident.v, rhs.custom.v),
-                .unknown => |ident| bun.strings.eql(ident.v, rhs.unknown.v),
+                .custom => |ident| fun.strings.eql(ident.v, rhs.custom.v),
+                .unknown => |ident| fun.strings.eql(ident.v, rhs.unknown.v),
             };
         }
 
@@ -1453,7 +1453,7 @@ pub fn MediaFeatureName(comptime FeatureId: type) type {
                 .result => |v| v,
             };
 
-            if (bun.strings.startsWith(ident, "--")) {
+            if (fun.strings.startsWith(ident, "--")) {
                 return .{ .result = .{
                     .{
                         .custom = .{ .v = ident },
@@ -1466,16 +1466,16 @@ pub fn MediaFeatureName(comptime FeatureId: type) type {
 
             // Webkit places its prefixes before "min" and "max". Remove it first, and
             // re-add after removing min/max.
-            const is_webkit = bun.strings.startsWithCaseInsensitiveAscii(name, "-webkit-");
+            const is_webkit = fun.strings.startsWithCaseInsensitiveAscii(name, "-webkit-");
             if (is_webkit) {
                 name = name[8..];
             }
 
             const comparator: ?MediaFeatureComparison = comparator: {
-                if (bun.strings.startsWithCaseInsensitiveAscii(name, "min-")) {
+                if (fun.strings.startsWithCaseInsensitiveAscii(name, "min-")) {
                     name = name[4..];
                     break :comparator .@"greater-than-equal";
-                } else if (bun.strings.startsWithCaseInsensitiveAscii(name, "max-")) {
+                } else if (fun.strings.startsWithCaseInsensitiveAscii(name, "max-")) {
                     name = name[4..];
                     break :comparator .@"less-than-equal";
                 } else break :comparator null;
@@ -1485,7 +1485,7 @@ pub fn MediaFeatureName(comptime FeatureId: type) type {
             const final_name = if (is_webkit) name: {
                 // PERF: stack buffer here?
                 free_str = true;
-                break :name bun.handleOom(std.fmt.allocPrint(input.allocator(), "-webkit-{s}", .{name}));
+                break :name fun.handleOom(std.fmt.allocPrint(input.allocator(), "-webkit-{s}", .{name}));
             } else name;
 
             defer if (is_webkit) {
@@ -1561,7 +1561,7 @@ fn writeMinMax(
     return dest.writeChar(')');
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

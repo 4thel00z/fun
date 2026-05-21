@@ -1,21 +1,21 @@
 #pragma once
-#include <BunIDLConvertBase.h>
+#include <FunIDLConvertBase.h>
 #include <ErrorCode.h>
 #include <wtf/text/MakeString.h>
 
-namespace Bun::Bindgen {
+namespace Fun::Bindgen {
 
 namespace Detail {
 
 template<typename Derived>
-struct ContextBase : Bun::IDLConversionContextBase<Derived> {
+struct ContextBase : Fun::IDLConversionContextBase<Derived> {
     template<typename String>
     void throwGenericTypeError(
         JSC::JSGlobalObject& global,
         JSC::ThrowScope& scope,
         String&& message)
     {
-        Bun::throwError(
+        Fun::throwError(
             &global,
             scope,
             ErrorCode::ERR_INVALID_ARG_TYPE,
@@ -28,7 +28,7 @@ struct ContextBase : Bun::IDLConversionContextBase<Derived> {
         JSC::ThrowScope& scope,
         String&& message)
     {
-        Bun::throwError(&global, scope, ErrorCode::ERR_OUT_OF_RANGE, std::forward<String>(message));
+        Fun::throwError(&global, scope, ErrorCode::ERR_OUT_OF_RANGE, std::forward<String>(message));
     }
 };
 
@@ -53,7 +53,7 @@ private:
 }
 
 // Conversion context where the name of the value being converted is specified as an
-// ASCIILiteral. Calls Bun::throwError.
+// ASCIILiteral. Calls Fun::throwError.
 struct LiteralConversionContext : Detail::ContextBase<LiteralConversionContext> {
     using ElementContext = Detail::ElementOf<LiteralConversionContext>;
 

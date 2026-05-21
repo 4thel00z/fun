@@ -1,6 +1,6 @@
 pub const URL = opaque {
     extern fn URL__fromJS(JSValue, *jsc.JSGlobalObject) ?*URL;
-    extern fn URL__fromString(*bun.String) ?*URL;
+    extern fn URL__fromString(*fun.String) ?*URL;
     extern fn URL__protocol(*URL) String;
     extern fn URL__href(*URL) String;
     extern fn URL__username(*URL) String;
@@ -31,26 +31,26 @@ pub const URL = opaque {
         return URL__fragmentIdentifier(url);
     }
 
-    pub fn hrefFromString(str: bun.String) String {
+    pub fn hrefFromString(str: fun.String) String {
         jsc.markBinding(@src());
         var input = str;
         return URL__getHref(&input);
     }
 
-    pub fn join(base: bun.String, relative: bun.String) String {
+    pub fn join(base: fun.String, relative: fun.String) String {
         jsc.markBinding(@src());
         var base_str = base;
         var relative_str = relative;
         return URL__getHrefJoin(&base_str, &relative_str);
     }
 
-    pub fn fileURLFromString(str: bun.String) String {
+    pub fn fileURLFromString(str: fun.String) String {
         jsc.markBinding(@src());
         var input = str;
         return URL__getFileURLString(&input);
     }
 
-    pub fn pathFromFileURL(str: bun.String) String {
+    pub fn pathFromFileURL(str: fun.String) String {
         jsc.markBinding(@src());
         var input = str;
         return URL__pathFromFileURL(&input);
@@ -58,14 +58,14 @@ pub const URL = opaque {
 
     /// This percent-encodes the URL, punycode-encodes the hostname, and returns the result
     /// If it fails, the tag is marked Dead
-    pub fn hrefFromJS(value: JSValue, globalObject: *jsc.JSGlobalObject) bun.JSError!String {
+    pub fn hrefFromJS(value: JSValue, globalObject: *jsc.JSGlobalObject) fun.JSError!String {
         jsc.markBinding(@src());
         const result = URL__getHrefFromJS(value, globalObject);
         if (globalObject.hasException()) return error.JSError;
         return result;
     }
 
-    pub fn fromJS(value: JSValue, globalObject: *jsc.JSGlobalObject) bun.JSError!?*URL {
+    pub fn fromJS(value: JSValue, globalObject: *jsc.JSGlobalObject) fun.JSError!?*URL {
         jsc.markBinding(@src());
         const result = URL__fromJS(value, globalObject);
         if (globalObject.hasException()) return error.JSError;
@@ -75,7 +75,7 @@ pub const URL = opaque {
     pub fn fromUTF8(input: []const u8) ?*URL {
         return fromString(String.borrowUTF8(input));
     }
-    pub fn fromString(str: bun.String) ?*URL {
+    pub fn fromString(str: fun.String) ?*URL {
         jsc.markBinding(@src());
         var input = str;
         return URL__fromString(&input);
@@ -145,7 +145,7 @@ pub const URL = opaque {
     pub fn originFromSlice(slice: []const u8) ?[]const u8 {
         jsc.markBinding(@src());
         // a valid URL will not have ascii in the origin.
-        const first_non_ascii = bun.strings.firstNonASCII(slice) orelse slice.len;
+        const first_non_ascii = fun.strings.firstNonASCII(slice) orelse slice.len;
         const len = URL__originLength(
             slice[0..first_non_ascii].ptr,
             first_non_ascii,
@@ -157,10 +157,10 @@ pub const URL = opaque {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const String = bun.String;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

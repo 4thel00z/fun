@@ -1,12 +1,12 @@
 /// A host function is the native function pointer type that can be used by a
 /// JSC::JSFunction to call native code from JavaScript.
 pub const JSHostFn = fn (*JSGlobalObject, *CallFrame) callconv(jsc.conv) JSValue;
-/// To allow usage of `try` for error handling, Bun provides `toJSHostFn` to
+/// To allow usage of `try` for error handling, Fun provides `toJSHostFn` to
 /// wrap this type into a JSHostFn.
-pub const JSHostFnZig = fn (*JSGlobalObject, *CallFrame) bun.JSError!JSValue;
+pub const JSHostFnZig = fn (*JSGlobalObject, *CallFrame) fun.JSError!JSValue;
 
 pub fn JSHostFnZigWithContext(comptime ContextType: type) type {
-    return fn (*ContextType, *JSGlobalObject, *CallFrame) bun.JSError!JSValue;
+    return fn (*ContextType, *JSGlobalObject, *CallFrame) fun.JSError!JSValue;
 }
 
 pub fn JSHostFunctionTypeWithContext(comptime ContextType: type) type {
@@ -28,7 +28,7 @@ pub fn toJSHostFnWithContext(comptime ContextType: type, comptime Function: JSHo
         }
     }.function;
 }
-pub fn toJSHostFnResult(globalThis: *JSGlobalObject, result: bun.JSError!JSValue) JSValue {
+pub fn toJSHostFnResult(globalThis: *JSGlobalObject, result: fun.JSError!JSValue) JSValue {
     if (Environment.allow_assert and Environment.is_canary) {
         const value = result catch |err| switch (err) {
             error.JSError => .zero,
@@ -51,7 +51,7 @@ fn debugExceptionAssertion(globalThis: *JSGlobalObject, value: JSValue, comptime
             if (globalThis.hasException()) {
                 var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
                 defer formatter.deinit();
-                bun.Output.err("Assertion failed",
+                fun.Output.err("Assertion failed",
                     \\Native function returned a non-zero JSValue while an exception is pending
                     \\
                     \\    fn: {s}
@@ -61,11 +61,11 @@ fn debugExceptionAssertion(globalThis: *JSGlobalObject, value: JSValue, comptime
                     &func, // use `(lldb) image lookup --address 0x1ec4` to discover what function failed
                     value.toFmt(&formatter),
                 });
-                bun.Output.flush();
+                fun.Output.flush();
             }
         }
     }
-    bun.assert((value == .zero) == globalThis.hasException());
+    fun.assert((value == .zero) == globalThis.hasException());
 }
 
 pub fn toJSHostSetterValue(globalThis: *JSGlobalObject, value: error{ OutOfMemory, JSError, JSTerminated }!void) bool {
@@ -171,14 +171,14 @@ inline fn parseErrorSet(T: type, errors: []const std.builtin.Type.Error) ParsedH
 
 // For when bubbling up errors to functions that require a C ABI boundary
 // TODO: make this not need a 'globalThis'
-pub fn voidFromJSError(err: bun.JSError, globalThis: *jsc.JSGlobalObject) void {
+pub fn voidFromJSError(err: fun.JSError, globalThis: *jsc.JSGlobalObject) void {
     switch (err) {
         error.JSError => {},
         error.OutOfMemory => globalThis.throwOutOfMemory() catch {},
         error.JSTerminated => {},
     }
     // TODO: catch exception, declare throw scope, re-throw
-    // c++ needs to be able to see that zig functions can throw for BUN_JSC_validateExceptionChecks
+    // c++ needs to be able to see that zig functions can throw for FUN_JSC_validateExceptionChecks
 }
 
 pub fn wrap1(comptime func: anytype) @"return": {
@@ -266,7 +266,7 @@ pub fn wrap4v(comptime func: anytype) @"return": {
 }
 
 const private = struct {
-    pub extern fn Bun__CreateFFIFunctionWithDataValue(
+    pub extern fn Fun__CreateFFIFunctionWithDataValue(
         *JSGlobalObject,
         ?*const ZigString,
         argCount: u32,
@@ -274,7 +274,7 @@ const private = struct {
         data: *anyopaque,
     ) JSValue;
 
-    pub extern fn Bun__CreateFFIFunctionValue(
+    pub extern fn Fun__CreateFFIFunctionValue(
         globalObject: *JSGlobalObject,
         symbolName: ?*const ZigString,
         argCount: u32,
@@ -283,8 +283,8 @@ const private = struct {
         inputFunctionPtr: ?*anyopaque,
     ) JSValue;
 
-    pub extern fn Bun__FFIFunction_getDataPtr(JSValue) ?*anyopaque;
-    pub extern fn Bun__FFIFunction_setDataPtr(JSValue, ?*anyopaque) void;
+    pub extern fn Fun__FFIFunction_getDataPtr(JSValue) ?*anyopaque;
+    pub extern fn Fun__FFIFunction_setDataPtr(JSValue, ?*anyopaque) void;
 };
 
 pub fn NewRuntimeFunction(
@@ -296,17 +296,17 @@ pub fn NewRuntimeFunction(
     inputFunctionPtr: ?*anyopaque,
 ) JSValue {
     jsc.markBinding(@src());
-    return private.Bun__CreateFFIFunctionValue(globalObject, symbolName, argCount, functionPointer, add_ptr_property, inputFunctionPtr);
+    return private.Fun__CreateFFIFunctionValue(globalObject, symbolName, argCount, functionPointer, add_ptr_property, inputFunctionPtr);
 }
 
 pub fn getFunctionData(function: JSValue) ?*anyopaque {
     jsc.markBinding(@src());
-    return private.Bun__FFIFunction_getDataPtr(function);
+    return private.Fun__FFIFunction_getDataPtr(function);
 }
 
 pub fn setFunctionData(function: JSValue, value: ?*anyopaque) void {
     jsc.markBinding(@src());
-    return private.Bun__FFIFunction_setDataPtr(function, value);
+    return private.Fun__FFIFunction_setDataPtr(function, value);
 }
 
 pub fn NewFunctionWithData(
@@ -317,7 +317,7 @@ pub fn NewFunctionWithData(
     data: *anyopaque,
 ) JSValue {
     jsc.markBinding(@src());
-    return private.Bun__CreateFFIFunctionWithDataValue(
+    return private.Fun__CreateFFIFunctionWithDataValue(
         globalObject,
         symbolName,
         argCount,
@@ -487,7 +487,7 @@ pub fn DOMCall(
 }
 
 pub fn InstanceMethodType(comptime Container: type) type {
-    return fn (instance: *Container, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue;
+    return fn (instance: *Container, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue;
 }
 
 pub fn wrapInstanceMethod(
@@ -505,9 +505,9 @@ pub fn wrapInstanceMethod(
             this: *Container,
             globalThis: *jsc.JSGlobalObject,
             callframe: *jsc.CallFrame,
-        ) bun.JSError!jsc.JSValue {
+        ) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(FunctionTypeInfo.params.len);
-            var iter = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments.slice());
+            var iter = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments.slice());
             var args: Args = undefined;
 
             const has_exception_ref: bool = comptime brk: {
@@ -592,7 +592,7 @@ pub fn wrapInstanceMethod(
 
                         args[i] = try string_value.getZigString(globalThis);
                     },
-                    ?bun.api.HTMLRewriter.ContentOptions => {
+                    ?fun.api.HTMLRewriter.ContentOptions => {
                         if (iter.nextEat()) |content_arg| {
                             if (try content_arg.get(globalThis, "html")) |html_val| {
                                 args[i] = .{ .html = html_val.toBoolean() };
@@ -646,7 +646,7 @@ pub fn wrapInstanceMethod(
                 }
             }
 
-            return @call(bun.callmod_inline, @field(Container, name), args);
+            return @call(fun.callmod_inline, @field(Container, name), args);
         }
     }.method;
 }
@@ -665,9 +665,9 @@ pub fn wrapStaticMethod(
         pub fn method(
             globalThis: *jsc.JSGlobalObject,
             callframe: *jsc.CallFrame,
-        ) bun.JSError!jsc.JSValue {
+        ) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(FunctionTypeInfo.params.len);
-            var iter = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments.slice());
+            var iter = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments.slice());
             var args: Args = undefined;
 
             inline for (FunctionTypeInfo.params, 0..) |param, i| {
@@ -745,7 +745,7 @@ pub fn wrapStaticMethod(
 
                         args[i] = try string_value.getZigString(globalThis);
                     },
-                    ?bun.api.HTMLRewriter.ContentOptions => {
+                    ?fun.api.HTMLRewriter.ContentOptions => {
                         if (iter.nextEat()) |content_arg| {
                             if (try content_arg.get(globalThis, "html")) |html_val| {
                                 args[i] = .{ .html = html_val.toBoolean() };
@@ -788,7 +788,7 @@ pub fn wrapStaticMethod(
 
             defer iter.deinit();
 
-            return @call(bun.callmod_inline, @field(Container, name), args);
+            return @call(fun.callmod_inline, @field(Container, name), args);
         }
     }.method;
 }
@@ -797,10 +797,10 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

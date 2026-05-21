@@ -22,7 +22,7 @@ const Node = struct {
     next: ?*Node = null,
 
     pub fn init(joiner_alloc: Allocator, slice: []const u8, slice_alloc: ?Allocator) *Node {
-        const node = bun.handleOom(joiner_alloc.create(Node));
+        const node = fun.handleOom(joiner_alloc.create(Node));
         node.* = .{
             .slice = slice,
             .allocator = NullableAllocator.init(slice_alloc),
@@ -51,7 +51,7 @@ pub fn pushStatic(this: *StringJoiner, data: []const u8) void {
 pub fn pushCloned(this: *StringJoiner, data: []const u8) void {
     if (data.len == 0) return;
     this.push(
-        bun.handleOom(this.allocator.dupe(u8, data)),
+        fun.handleOom(this.allocator.dupe(u8, data)),
         this.allocator,
     );
 }
@@ -65,7 +65,7 @@ pub fn push(this: *StringJoiner, data: []const u8, allocator: ?Allocator) void {
     if (data.len > 0) {
         this.watcher.estimated_count += @intFromBool(
             this.watcher.input.len > 0 and
-                bun.strings.contains(data, this.watcher.input),
+                fun.strings.contains(data, this.watcher.input),
         );
         this.watcher.needs_newline = data[data.len - 1] != '\n';
     }
@@ -99,7 +99,7 @@ pub fn done(this: *StringJoiner, allocator: Allocator) ![]u8 {
         prev.deinit(this.allocator);
     }
 
-    bun.assert(remaining.len == 0);
+    fun.assert(remaining.len == 0);
 
     return slice;
 }
@@ -143,7 +143,7 @@ pub fn doneWithEnd(this: *StringJoiner, allocator: Allocator, end: []const u8) !
         prev.deinit(this.allocator);
     }
 
-    bun.assert(remaining.len == end.len);
+    fun.assert(remaining.len == end.len);
     @memcpy(remaining, end);
 
     return slice;
@@ -166,7 +166,7 @@ pub fn contains(this: *const StringJoiner, slice: []const u8) bool {
     var el = this.head;
     while (el) |node| {
         el = node.next;
-        if (bun.strings.contains(node.slice, slice)) return true;
+        if (fun.strings.contains(node.slice, slice)) return true;
     }
 
     return false;
@@ -175,6 +175,6 @@ pub fn contains(this: *const StringJoiner, slice: []const u8) bool {
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const NullableAllocator = bun.NullableAllocator;
-const assert = bun.assert;
+const fun = @import("fun");
+const NullableAllocator = fun.NullableAllocator;
+const assert = fun.assert;

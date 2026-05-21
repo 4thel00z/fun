@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 /**
  * This script creates test packages for native binlink optimization testing.
  * It creates:
@@ -6,7 +6,7 @@
  * - test-native-binlink-target: platform-specific package with bin that exits with code 0
  */
 
-import { $ } from "bun";
+import { $ } from "fun";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 
@@ -100,14 +100,14 @@ for (const pkgName of ["test-native-binlink", "test-native-binlink-target"]) {
   const tarballPath = join(packagesDir, pkgName, tarballName);
 
   // Calculate SHA512 integrity hash
-  const tarballFile = Bun.file(tarballPath);
+  const tarballFile = Fun.file(tarballPath);
   const tarballBytes = await tarballFile.arrayBuffer();
-  const hash = new Bun.CryptoHasher("sha512");
+  const hash = new Fun.CryptoHasher("sha512");
   hash.update(tarballBytes);
   const integrity = `sha512-${Buffer.from(hash.digest()).toString("base64")}`;
 
   // Calculate SHA1 shasum
-  const sha1Hash = new Bun.CryptoHasher("sha1");
+  const sha1Hash = new Fun.CryptoHasher("sha1");
   sha1Hash.update(tarballBytes);
   const shasum = Buffer.from(sha1Hash.digest()).toString("hex");
 

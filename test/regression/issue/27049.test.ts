@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import http from "node:http";
 
 test("ClientRequest.setHeaders should not throw ERR_HTTP_HEADERS_SENT on new request", async () => {
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       return new Response(req.headers.get("x-test") ?? "missing");
@@ -31,7 +31,7 @@ test("ClientRequest.setHeaders should not throw ERR_HTTP_HEADERS_SENT on new req
 });
 
 test("ClientRequest.setHeaders works with Map", async () => {
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       return new Response(req.headers.get("x-map-test") ?? "missing");

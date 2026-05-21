@@ -37,7 +37,7 @@
 
 groups: []ConcurrentGroup,
 #sequences: []ExecutionSequence,
-/// the entries themselves are owned by BunTest, which owns Execution.
+/// the entries themselves are owned by FunTest, which owns Execution.
 group_index: usize,
 
 pub const ConcurrentGroup = struct {
@@ -82,7 +82,7 @@ pub const ExecutionSequence = struct {
     flaky_attempts_buf: [MAX_FLAKY_ATTEMPTS]FlakyAttempt = std.mem.zeroes([MAX_FLAKY_ATTEMPTS]FlakyAttempt),
     result: Result = .pending,
     executing: bool = false,
-    started_at: bun.timespec = .epoch,
+    started_at: fun.timespec = .epoch,
     /// Number of expect() calls observed in this sequence.
     expect_call_count: u32 = 0,
     /// Expectation set by expect.hasAssertions() or expect.assertions(n).
@@ -119,7 +119,7 @@ pub const ExecutionSequence = struct {
         return this.flaky_attempts_buf[0..this.flaky_attempt_count];
     }
 
-    fn entryMode(this: ExecutionSequence) bun_test.ScopeMode {
+    fn entryMode(this: ExecutionSequence) fun_test.ScopeMode {
         if (this.test_entry) |entry| return entry.base.mode;
         return .normal;
     }
@@ -176,24 +176,24 @@ pub fn init(_: std.mem.Allocator) Execution {
     };
 }
 pub fn deinit(this: *Execution) void {
-    this.bunTest().gpa.free(this.groups);
-    this.bunTest().gpa.free(this.#sequences);
+    this.funTest().gpa.free(this.groups);
+    this.funTest().gpa.free(this.#sequences);
 }
-pub fn loadFromOrder(this: *Execution, order: *Order) bun.JSError!void {
-    bun.assert(this.groups.len == 0);
-    bun.assert(this.#sequences.len == 0);
-    var alloc_safety = bun.safety.CheckedAllocator.init(this.bunTest().gpa);
+pub fn loadFromOrder(this: *Execution, order: *Order) fun.JSError!void {
+    fun.assert(this.groups.len == 0);
+    fun.assert(this.#sequences.len == 0);
+    var alloc_safety = fun.safety.CheckedAllocator.init(this.funTest().gpa);
     alloc_safety.assertEq(order.groups.allocator);
     alloc_safety.assertEq(order.sequences.allocator);
     this.groups = try order.groups.toOwnedSlice();
     this.#sequences = try order.sequences.toOwnedSlice();
 }
 
-fn bunTest(this: *Execution) *BunTest {
+fn funTest(this: *Execution) *FunTest {
     return @fieldParentPtr("execution", this);
 }
 
-pub fn handleTimeout(this: *Execution, globalThis: *jsc.JSGlobalObject) bun.JSError!void {
+pub fn handleTimeout(this: *Execution, globalThis: *jsc.JSGlobalObject) fun.JSError!void {
     groupLog.begin(@src());
     defer groupLog.end();
 
@@ -205,31 +205,31 @@ pub fn handleTimeout(this: *Execution, globalThis: *jsc.JSGlobalObject) bun.JSEr
         if (sequences.len == 1) {
             const sequence = sequences[0];
             if (sequence.active_entry) |entry| {
-                const now = bun.timespec.now(.force_real_time);
+                const now = fun.timespec.now(.force_real_time);
                 if (entry.timespec.order(&now) == .lt) {
-                    const kill_count = globalThis.bunVM().auto_killer.kill();
+                    const kill_count = globalThis.funVM().auto_killer.kill();
                     if (kill_count.processes > 0) {
-                        bun.Output.prettyErrorln("<d>killed {d} dangling process{s}<r>", .{ kill_count.processes, if (kill_count.processes != 1) "es" else "" });
-                        bun.Output.flush();
+                        fun.Output.prettyErrorln("<d>killed {d} dangling process{s}<r>", .{ kill_count.processes, if (kill_count.processes != 1) "es" else "" });
+                        fun.Output.flush();
                     }
                 }
             }
         }
     }
 
-    this.bunTest().addResult(.start);
+    this.funTest().addResult(.start);
 }
 
-pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject, data: bun_test.BunTest.RefDataValue) bun.JSError!bun_test.StepResult {
+pub fn step(funtest_strong: fun_test.FunTestPtr, globalThis: *jsc.JSGlobalObject, data: fun_test.FunTest.RefDataValue) fun.JSError!fun_test.StepResult {
     groupLog.begin(@src());
     defer groupLog.end();
-    const buntest = buntest_strong.get();
-    const this = &buntest.execution;
-    var now = bun.timespec.now(.force_real_time);
+    const funtest = funtest_strong.get();
+    const this = &funtest.execution;
+    var now = fun.timespec.now(.force_real_time);
 
     switch (data) {
         .start => {
-            return try stepGroup(buntest_strong, globalThis, &now);
+            return try stepGroup(funtest_strong, globalThis, &now);
         },
         else => {
             // determine the active sequence,group
@@ -243,10 +243,10 @@ pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject
             };
             const sequence_index = data.execution.entry_data.?.sequence_index;
 
-            if (bun.Environment.ci_assert) bun.assert(sequence.active_entry != null);
+            if (fun.Environment.ci_assert) fun.assert(sequence.active_entry != null);
             this.advanceSequence(sequence, group);
 
-            const sequence_result = try stepSequence(buntest_strong, globalThis, group, sequence_index, &now);
+            const sequence_result = try stepSequence(funtest_strong, globalThis, group, sequence_index, &now);
             switch (sequence_result) {
                 .done => {},
                 .execute => |exec| return .{ .waiting = .{ .timeout = exec.timeout } },
@@ -255,7 +255,7 @@ pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject
             while (group.next_sequence_index < group.sequences(this).len) : (group.next_sequence_index += 1) {
                 const target_sequence = &group.sequences(this)[group.next_sequence_index];
                 if (target_sequence.executing) continue;
-                const sequence_status = try stepSequence(buntest_strong, globalThis, group, group.next_sequence_index, &now);
+                const sequence_status = try stepSequence(funtest_strong, globalThis, group, group.next_sequence_index, &now);
                 switch (sequence_status) {
                     .done => continue,
                     .execute => |exec| {
@@ -265,18 +265,18 @@ pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject
             }
             // all sequences have started
             if (group.remaining_incomplete_entries == 0) {
-                return try stepGroup(buntest_strong, globalThis, &now);
+                return try stepGroup(funtest_strong, globalThis, &now);
             }
             return .{ .waiting = .{} };
         },
     }
 }
 
-pub fn stepGroup(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject, now: *bun.timespec) bun.JSError!bun_test.StepResult {
+pub fn stepGroup(funtest_strong: fun_test.FunTestPtr, globalThis: *jsc.JSGlobalObject, now: *fun.timespec) fun.JSError!fun_test.StepResult {
     groupLog.begin(@src());
     defer groupLog.end();
-    const buntest = buntest_strong.get();
-    const this = &buntest.execution;
+    const funtest = funtest_strong.get();
+    const this = &funtest.execution;
 
     while (true) {
         const group = this.activeGroup() orelse return .complete;
@@ -287,7 +287,7 @@ pub fn stepGroup(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalO
 
         // loop over items in the group and advance their execution
 
-        const status = try stepGroupOne(buntest_strong, globalThis, group, now);
+        const status = try stepGroupOne(funtest_strong, globalThis, group, now);
         switch (status) {
             .execute => |exec| return .{ .waiting = .{ .timeout = exec.timeout } },
             .done => {},
@@ -310,22 +310,22 @@ pub fn stepGroup(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalO
         }
     }
 }
-const AdvanceStatus = union(enum) { done, execute: struct { timeout: bun.timespec = .epoch } };
-fn stepGroupOne(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject, group: *ConcurrentGroup, now: *bun.timespec) !AdvanceStatus {
-    const buntest = buntest_strong.get();
-    const this = &buntest.execution;
+const AdvanceStatus = union(enum) { done, execute: struct { timeout: fun.timespec = .epoch } };
+fn stepGroupOne(funtest_strong: fun_test.FunTestPtr, globalThis: *jsc.JSGlobalObject, group: *ConcurrentGroup, now: *fun.timespec) !AdvanceStatus {
+    const funtest = funtest_strong.get();
+    const this = &funtest.execution;
     var final_status: AdvanceStatus = .done;
-    const concurrent_limit = if (buntest.reporter) |reporter| reporter.jest.max_concurrency else blk: {
-        bun.assert(false); // probably can't get here because reporter is only set null when the file is exited
+    const concurrent_limit = if (funtest.reporter) |reporter| reporter.jest.max_concurrency else blk: {
+        fun.assert(false); // probably can't get here because reporter is only set null when the file is exited
         break :blk 20;
     };
     var active_count: usize = 0;
     for (0..group.sequences(this).len) |sequence_index| {
-        const sequence_status = try stepSequence(buntest_strong, globalThis, group, sequence_index, now);
+        const sequence_status = try stepSequence(funtest_strong, globalThis, group, sequence_index, now);
         switch (sequence_status) {
             .done => {},
             .execute => |exec| {
-                const prev_timeout: bun.timespec = if (final_status == .execute) final_status.execute.timeout else .epoch;
+                const prev_timeout: fun.timespec = if (final_status == .execute) final_status.execute.timeout else .epoch;
                 const this_timeout = exec.timeout;
                 final_status = .{ .execute = .{ .timeout = prev_timeout.minIgnoreEpoch(this_timeout) } };
                 active_count += 1;
@@ -340,25 +340,25 @@ const AdvanceSequenceStatus = union(enum) {
     done,
     /// the item is queued for execution or has not completed yet. need to wait for it
     execute: struct {
-        timeout: bun.timespec = .epoch,
+        timeout: fun.timespec = .epoch,
     },
 };
-fn stepSequence(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject, group: *ConcurrentGroup, sequence_index: usize, now: *bun.timespec) !AdvanceSequenceStatus {
+fn stepSequence(funtest_strong: fun_test.FunTestPtr, globalThis: *jsc.JSGlobalObject, group: *ConcurrentGroup, sequence_index: usize, now: *fun.timespec) !AdvanceSequenceStatus {
     while (true) {
-        return try stepSequenceOne(buntest_strong, globalThis, group, sequence_index, now) orelse continue;
+        return try stepSequenceOne(funtest_strong, globalThis, group, sequence_index, now) orelse continue;
     }
 }
 /// returns null if the while loop should continue
-fn stepSequenceOne(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject, group: *ConcurrentGroup, sequence_index: usize, now: *bun.timespec) !?AdvanceSequenceStatus {
+fn stepSequenceOne(funtest_strong: fun_test.FunTestPtr, globalThis: *jsc.JSGlobalObject, group: *ConcurrentGroup, sequence_index: usize, now: *fun.timespec) !?AdvanceSequenceStatus {
     groupLog.begin(@src());
     defer groupLog.end();
-    const buntest = buntest_strong.get();
-    const this = &buntest.execution;
+    const funtest = funtest_strong.get();
+    const this = &funtest.execution;
 
     const sequence = &group.sequences(this)[sequence_index];
     if (sequence.executing) {
         const active_entry = sequence.active_entry orelse {
-            bun.debugAssert(false); // sequence is executing with no active entry
+            fun.debugAssert(false); // sequence is executing with no active entry
             return .{ .execute = .{} };
         };
         if (active_entry.evaluateTimeout(sequence, now)) {
@@ -385,7 +385,7 @@ fn stepSequenceOne(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGloba
     if (next_item.callback) |cb| {
         groupLog.log("runSequence queued callback", .{});
 
-        const callback_data: bun_test.BunTest.RefDataValue = .{
+        const callback_data: fun_test.FunTest.RefDataValue = .{
             .execution = .{
                 .group_index = this.group_index,
                 .entry_data = .{
@@ -397,8 +397,8 @@ fn stepSequenceOne(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGloba
         };
         groupLog.log("runSequence queued callback: {f}", .{callback_data});
 
-        if (BunTest.runTestCallback(buntest_strong, globalThis, cb.get(), next_item.has_done_parameter, callback_data, &next_item.timespec) != null) {
-            now.* = bun.timespec.now(.force_real_time);
+        if (FunTest.runTestCallback(funtest_strong, globalThis, cb.get(), next_item.has_done_parameter, callback_data, &next_item.timespec) != null) {
+            now.* = fun.timespec.now(.force_real_time);
             _ = next_item.evaluateTimeout(sequence, now);
 
             // the result is available immediately; advance the sequence and run again.
@@ -419,7 +419,7 @@ fn stepSequenceOne(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGloba
             },
             else => {
                 groupLog.log("runSequence: no callback for sequence_index {d} (entry_index {x})", .{ sequence_index, @intFromPtr(sequence.active_entry) });
-                bun.debugAssert(false);
+                fun.debugAssert(false);
             },
         }
         this.advanceSequence(sequence, group);
@@ -430,7 +430,7 @@ pub fn activeGroup(this: *Execution) ?*ConcurrentGroup {
     if (this.group_index >= this.groups.len) return null;
     return &this.groups[this.group_index];
 }
-pub fn getCurrentAndValidExecutionSequence(this: *Execution, data: bun_test.BunTest.RefDataValue) ?struct { *ExecutionSequence, *ConcurrentGroup } {
+pub fn getCurrentAndValidExecutionSequence(this: *Execution, data: fun_test.FunTest.RefDataValue) ?struct { *ExecutionSequence, *ConcurrentGroup } {
     groupLog.begin(@src());
     defer groupLog.end();
 
@@ -444,15 +444,15 @@ pub fn getCurrentAndValidExecutionSequence(this: *Execution, data: bun_test.BunT
         groupLog.log("runOneCompleted: the data did not know which entry was active in the group", .{});
         return null;
     }
-    if (this.activeGroup() != data.group(this.bunTest())) {
+    if (this.activeGroup() != data.group(this.funTest())) {
         groupLog.log("runOneCompleted: the data is for a different group", .{});
         return null;
     }
-    const group = data.group(this.bunTest()) orelse {
+    const group = data.group(this.funTest()) orelse {
         groupLog.log("runOneCompleted: the data did not know the group", .{});
         return null;
     };
-    const sequence = data.sequence(this.bunTest()) orelse {
+    const sequence = data.sequence(this.funTest()) orelse {
         groupLog.log("runOneCompleted: the data did not know the sequence", .{});
         return null;
     };
@@ -471,7 +471,7 @@ fn advanceSequence(this: *Execution, sequence: *ExecutionSequence, group: *Concu
     groupLog.begin(@src());
     defer groupLog.end();
 
-    bun.assert(sequence.executing);
+    fun.assert(sequence.executing);
     if (sequence.active_entry) |entry| {
         this.onEntryCompleted(entry);
 
@@ -483,7 +483,7 @@ fn advanceSequence(this: *Execution, sequence: *ExecutionSequence, group: *Concu
             sequence.active_entry = entry.next;
         }
     } else {
-        if (bun.Environment.ci_assert) bun.assert(false); // can't call advanceSequence on a completed sequence
+        if (fun.Environment.ci_assert) fun.assert(false); // can't call advanceSequence on a completed sequence
     }
 
     if (sequence.active_entry == null) {
@@ -518,24 +518,24 @@ fn advanceSequence(this: *Execution, sequence: *ExecutionSequence, group: *Concu
 
         // No more retries or repeats; mark sequence as complete
         if (group.remaining_incomplete_entries == 0) {
-            bun.debugAssert(false); // remaining_incomplete_entries should never go below 0
+            fun.debugAssert(false); // remaining_incomplete_entries should never go below 0
             return;
         }
         group.remaining_incomplete_entries -= 1;
     }
 }
 fn onGroupStarted(_: *Execution, _: *ConcurrentGroup, globalThis: *jsc.JSGlobalObject) void {
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
     vm.auto_killer.enable();
 }
 fn onGroupCompleted(_: *Execution, _: *ConcurrentGroup, globalThis: *jsc.JSGlobalObject) void {
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
     vm.auto_killer.disable();
 }
 fn onSequenceStarted(_: *Execution, sequence: *ExecutionSequence) void {
     if (sequence.test_entry) |entry| if (entry.callback == null) return;
 
-    sequence.started_at = bun.timespec.now(.force_real_time);
+    sequence.started_at = fun.timespec.now(.force_real_time);
 
     if (sequence.test_entry) |entry| {
         log("Running test: \"{f}\"", .{std.zig.fmtString(entry.base.name orelse "(unnamed)")});
@@ -556,7 +556,7 @@ fn onEntryStarted(_: *Execution, entry: *ExecutionEntry) void {
     defer groupLog.end();
     if (entry.timeout != 0) {
         groupLog.log("-> entry.timeout: {}", .{entry.timeout});
-        entry.timespec = bun.timespec.msFromNow(.force_real_time, entry.timeout);
+        entry.timespec = fun.timespec.msFromNow(.force_real_time, entry.timeout);
     } else {
         groupLog.log("-> entry.timeout: 0", .{});
         entry.timespec = .epoch;
@@ -582,7 +582,7 @@ fn onSequenceCompleted(this: *Execution, sequence: *ExecutionSequence) void {
         };
     }
     if (sequence.first_entry) |first_entry| if (sequence.test_entry != null or sequence.result != .pass) {
-        test_command.CommandLineReporter.handleTestCompleted(this.bunTest(), sequence, sequence.test_entry orelse first_entry, elapsed_ns);
+        test_command.CommandLineReporter.handleTestCompleted(this.funTest(), sequence, sequence.test_entry orelse first_entry, elapsed_ns);
     };
 
     if (sequence.test_entry) |entry| {
@@ -611,7 +611,7 @@ fn onSequenceCompleted(this: *Execution, sequence: *ExecutionSequence) void {
     }
 }
 pub fn resetSequence(this: *Execution, sequence: *ExecutionSequence) void {
-    bun.assert(!sequence.executing);
+    fun.assert(!sequence.executing);
     {
         // reset the entries
         var current_entry = sequence.first_entry;
@@ -640,7 +640,7 @@ pub fn resetSequence(this: *Execution, sequence: *ExecutionSequence) void {
     // Snapshot counters are keyed by full test name and incremented on every
     // toMatchSnapshot() call. Without this reset, retries / repeats would
     // increment the counter to N on attempt N and look for a key that does
-    // not exist (https://github.com/oven-sh/bun/issues/23705).
+    // not exist (https://github.com/underdoc-org/fun/issues/23705).
     // Zeroing all entries matches Jest (SnapshotState.clear() on test_retry,
     // jestjs/jest#7493). Concurrent tests never touch the counts map — see
     // SnapshotInConcurrentGroup in expect.zig.
@@ -648,7 +648,7 @@ pub fn resetSequence(this: *Execution, sequence: *ExecutionSequence) void {
     _ = this;
 }
 
-pub fn handleUncaughtException(this: *Execution, user_data: bun_test.BunTest.RefDataValue) bun_test.HandleUncaughtExceptionResult {
+pub fn handleUncaughtException(this: *Execution, user_data: fun_test.FunTest.RefDataValue) fun_test.HandleUncaughtExceptionResult {
     groupLog.begin(@src());
     defer groupLog.end();
 
@@ -678,17 +678,17 @@ pub fn handleUncaughtException(this: *Execution, user_data: bun_test.BunTest.Ref
     };
 }
 
-const log = bun.Output.scoped(.jest, .visible);
+const log = fun.Output.scoped(.jest, .visible);
 
 const std = @import("std");
 const test_command = @import("../cli/test_command.zig");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const bun_test = jsc.Jest.bun_test;
-const BunTest = bun_test.BunTest;
-const Execution = bun_test.Execution;
-const ExecutionEntry = bun_test.ExecutionEntry;
-const Order = bun_test.Order;
-const groupLog = bun_test.debug.group;
+const fun_test = jsc.Jest.fun_test;
+const FunTest = fun_test.FunTest;
+const Execution = fun_test.Execution;
+const ExecutionEntry = fun_test.ExecutionEntry;
+const Order = fun_test.Order;
+const groupLog = fun_test.debug.group;

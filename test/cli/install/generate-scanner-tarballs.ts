@@ -1,9 +1,9 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-const __dirname = dirname(Bun.fileURLToPath(import.meta.url));
+const __dirname = dirname(Fun.fileURLToPath(import.meta.url));
 
 async function createScannerTarball(behavior: "clean" | "warn" | "fatal") {
   const tmpDir = await mkdtemp(join(tmpdir(), `test-security-scanner-${behavior}-`));
@@ -12,7 +12,7 @@ async function createScannerTarball(behavior: "clean" | "warn" | "fatal") {
   try {
     await mkdir(`${tmpDir}/package`, { recursive: true });
 
-    await Bun.write(
+    await Fun.write(
       `${tmpDir}/package/package.json`,
       JSON.stringify({
         name: "test-security-scanner",
@@ -53,10 +53,10 @@ async function createScannerTarball(behavior: "clean" | "warn" | "fatal") {
   }
 };`;
 
-    await Bun.write(`${tmpDir}/package/index.js`, scannerCode);
+    await Fun.write(`${tmpDir}/package/index.js`, scannerCode);
 
-    await Bun.$`tar czf ${outputPath} -C ${tmpDir} package`;
-    await Bun.$`rm -rf ${tmpDir}`;
+    await Fun.$`tar czf ${outputPath} -C ${tmpDir} package`;
+    await Fun.$`rm -rf ${tmpDir}`;
 
     console.log(`Created ${outputPath}`);
   } catch (error) {

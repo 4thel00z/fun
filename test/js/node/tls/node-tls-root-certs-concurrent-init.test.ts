@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import path from "node:path";
 import tls from "node:tls";
 
@@ -79,10 +79,10 @@ describe("root certificate initialization", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), path.join(String(dir), "concurrent-init.fixture.ts")],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), path.join(String(dir), "concurrent-init.fixture.ts")],
       env: {
-        ...bunEnv,
+        ...funEnv,
         NODE_EXTRA_CA_CERTS: path.join(String(dir), "extra-ca-bundle.pem"),
       },
       stdout: "pipe",

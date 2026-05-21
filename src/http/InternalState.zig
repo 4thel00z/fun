@@ -49,8 +49,8 @@ pub fn init(body: HTTPRequestBody, body_out_str: *MutableString) InternalState {
     return .{
         .original_request_body = body,
         .request_body = if (body == .bytes) body.bytes else "",
-        .compressed_body = MutableString{ .allocator = bun.http.default_allocator, .list = .{} },
-        .response_message_buffer = MutableString{ .allocator = bun.http.default_allocator, .list = .{} },
+        .compressed_body = MutableString{ .allocator = fun.http.default_allocator, .list = .{} },
+        .response_message_buffer = MutableString{ .allocator = fun.http.default_allocator, .list = .{} },
         .body_out_str = body_out_str,
         .stage = Stage.pending,
         .pending_response = null,
@@ -78,14 +78,14 @@ pub fn reset(this: *InternalState, allocator: std.mem.Allocator) void {
     // if exists we own this info
     if (this.certificate_info) |info| {
         this.certificate_info = null;
-        info.deinit(bun.default_allocator);
+        info.deinit(fun.default_allocator);
     }
 
     this.original_request_body.deinit();
     this.* = .{
         .body_out_str = body_msg,
-        .compressed_body = MutableString{ .allocator = bun.http.default_allocator, .list = .{} },
-        .response_message_buffer = MutableString{ .allocator = bun.http.default_allocator, .list = .{} },
+        .compressed_body = MutableString{ .allocator = fun.http.default_allocator, .list = .{} },
+        .response_message_buffer = MutableString{ .allocator = fun.http.default_allocator, .list = .{} },
         .original_request_body = .{ .bytes = "" },
         .request_body = "",
         .certificate_info = null,
@@ -119,7 +119,7 @@ pub fn decompressBytes(this: *InternalState, buffer: []const u8, body_out_str: *
     defer this.compressed_body.reset();
     var gzip_timer: std.time.Timer = undefined;
 
-    if (bun.http.extremely_verbose)
+    if (fun.http.extremely_verbose)
         gzip_timer = std.time.Timer.start() catch @panic("Timer failure");
 
     var still_needs_to_decompress = true;
@@ -130,7 +130,7 @@ pub fn decompressBytes(this: *InternalState, buffer: []const u8, body_out_str: *
             this.flags.is_libdeflate_fast_path_disabled = true;
 
             log("Decompressing {d} bytes with libdeflate\n", .{buffer.len});
-            var deflater = bun.http.http_thread.deflater();
+            var deflater = fun.http.http_thread.deflater();
 
             // gzip stores the size of the uncompressed data in the last 4 bytes of the stream
             // But it's only valid if the stream is less than 4.7 GB, since it's 4 bytes.
@@ -179,14 +179,14 @@ pub fn decompressBytes(this: *InternalState, buffer: []const u8, body_out_str: *
 
         this.decompressor.readAll(this.isDone()) catch |err| {
             if (this.isDone() or error.ShortRead != err) {
-                Output.prettyErrorln("<r><red>Decompression error: {s}<r>", .{bun.asByteSlice(@errorName(err))});
+                Output.prettyErrorln("<r><red>Decompression error: {s}<r>", .{fun.asByteSlice(@errorName(err))});
                 Output.flush();
                 return err;
             }
         };
     }
 
-    if (bun.http.extremely_verbose)
+    if (fun.http.extremely_verbose)
         this.gzip_elapsed = gzip_timer.read();
 }
 
@@ -206,7 +206,7 @@ pub fn processBodyBuffer(this: *InternalState, buffer: MutableString, is_final_c
         else => {
             if (!body_out_str.owns(buffer.list.items)) {
                 body_out_str.append(buffer.list.items) catch |err| {
-                    Output.prettyErrorln("<r><red>Failed to append to body buffer: {s}<r>", .{bun.asByteSlice(@errorName(err))});
+                    Output.prettyErrorln("<r><red>Failed to append to body buffer: {s}<r>", .{fun.asByteSlice(@errorName(err))});
                     Output.flush();
                     return err;
                 };
@@ -244,13 +244,13 @@ const Stage = enum(u8) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const FeatureFlags = bun.FeatureFlags;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const picohttp = bun.picohttp;
+const fun = @import("fun");
+const FeatureFlags = fun.FeatureFlags;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const picohttp = fun.picohttp;
 
-const HTTPClient = bun.http;
+const HTTPClient = fun.http;
 const CertificateInfo = HTTPClient.CertificateInfo;
 const Decompressor = HTTPClient.Decompressor;
 const Encoding = HTTPClient.Encoding;

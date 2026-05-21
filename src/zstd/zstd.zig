@@ -11,7 +11,7 @@
 //                                   int compressionLevel);
 pub fn compress(dest: []u8, src: []const u8, level: ?i32) Result {
     const result = c.ZSTD_compress(dest.ptr, dest.len, src.ptr, src.len, level orelse c.ZSTD_defaultCLevel());
-    if (c.ZSTD_isError(result) != 0) return .{ .err = bun.sliceTo(c.ZSTD_getErrorName(result), 0) };
+    if (c.ZSTD_isError(result) != 0) return .{ .err = fun.sliceTo(c.ZSTD_getErrorName(result), 0) };
     return .{ .success = result };
 }
 
@@ -29,7 +29,7 @@ pub fn compressBound(srcSize: usize) usize {
 //   const void* src, size_t compressedSize);
 pub fn decompress(dest: []u8, src: []const u8) Result {
     const result = c.ZSTD_decompress(dest.ptr, dest.len, src.ptr, src.len);
-    if (c.ZSTD_isError(result) != 0) return .{ .err = bun.sliceTo(c.ZSTD_getErrorName(result), 0) };
+    if (c.ZSTD_isError(result) != 0) return .{ .err = fun.sliceTo(c.ZSTD_getErrorName(result), 0) };
     return .{ .success = result };
 }
 
@@ -125,7 +125,7 @@ pub const ZstdReaderArrayList = struct {
     total_out: usize = 0,
     total_in: usize = 0,
 
-    pub const new = bun.TrivialNew(ZstdReaderArrayList);
+    pub const new = fun.TrivialNew(ZstdReaderArrayList);
 
     pub fn init(
         input: []const u8,
@@ -271,5 +271,5 @@ pub const ZstdReaderArrayList = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const c = bun.c;
+const fun = @import("fun");
+const c = fun.c;

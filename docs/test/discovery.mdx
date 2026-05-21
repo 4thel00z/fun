@@ -1,13 +1,13 @@
 ---
 title: "Finding tests"
-description: "Learn how Bun's test runner discovers and filters test files in your project"
+description: "Learn how Fun's test runner discovers and filters test files in your project"
 ---
 
-bun test's file discovery mechanism determines which files to run as tests. Understanding how it works helps you structure your test files effectively.
+fun test's file discovery mechanism determines which files to run as tests. Understanding how it works helps you structure your test files effectively.
 
 ## Default Discovery Logic
 
-By default, `bun test` recursively searches the project directory for files that match specific patterns:
+By default, `fun test` recursively searches the project directory for files that match specific patterns:
 
 - `*.test.{js|jsx|ts|tsx}` - Files ending with `.test.js`, `.test.jsx`, `.test.ts`, or `.test.tsx`
 - `*_test.{js|jsx|ts|tsx}` - Files ending with `_test.js`, `_test.jsx`, `_test.ts`, or `_test.tsx`
@@ -16,7 +16,7 @@ By default, `bun test` recursively searches the project directory for files that
 
 ## Exclusions
 
-By default, Bun test ignores:
+By default, Fun test ignores:
 
 - `node_modules` directories
 - Hidden directories (those starting with a period `.`)
@@ -26,10 +26,10 @@ By default, Bun test ignores:
 
 ### Position Arguments as Filters
 
-You can filter which test files run by passing additional positional arguments to `bun test`:
+You can filter which test files run by passing additional positional arguments to `fun test`:
 
 ```bash terminal icon="terminal"
-bun test <filter> <filter> ...
+fun test <filter> <filter> ...
 ```
 
 Any test file with a path that contains one of the filters will run. These filters are simple substring matches, not glob patterns.
@@ -37,7 +37,7 @@ Any test file with a path that contains one of the filters will run. These filte
 For example, to run all tests in a `utils` directory:
 
 ```bash terminal icon="terminal"
-bun test utils
+fun test utils
 ```
 
 This would match files like `src/utils/string.test.ts` and `lib/utils/array_test.js`.
@@ -47,7 +47,7 @@ This would match files like `src/utils/string.test.ts` and `lib/utils/array_test
 To run a specific file in the test runner, make sure the path starts with `./` or `/` to distinguish it from a filter name:
 
 ```bash terminal icon="terminal"
-bun test ./test/specific-file.test.ts
+fun test ./test/specific-file.test.ts
 ```
 
 ### Filter by Test Name
@@ -56,7 +56,7 @@ To filter tests by name rather than file path, use the `-t`/`--test-name-pattern
 
 ```sh terminal icon="terminal"
 # run all tests with "addition" in the name
-bun test --test-name-pattern addition
+fun test --test-name-pattern addition
 ```
 
 The pattern is matched against a concatenated string of the test name prepended with the labels of all its parent describe blocks, separated by spaces. For example, a test defined as:
@@ -75,9 +75,9 @@ Would be matched against the string "Math operations should add correctly".
 
 ### Changing the Root Directory
 
-By default, Bun looks for test files starting from the current working directory. You can change this with the `root` option in your `bunfig.toml`:
+By default, Fun looks for test files starting from the current working directory. You can change this with the `root` option in your `funfig.toml`:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [test]
 root = "src"  # Only scan for tests in the src directory
 ```

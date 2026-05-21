@@ -6,10 +6,10 @@
 .git
 examples
 node_modules
-packages/**/bun
-packages/**/bun-profile
-src/bun.js/WebKit
-src/bun.js/WebKit/LayoutTests
+packages/**/fun
+packages/**/fun-profile
+src/fun.js/WebKit
+src/fun.js/WebKit/LayoutTests
 zig-build
 .zig-cache
 zig-out
@@ -18,4 +18,4 @@ vendor
 node_modules
 *.trace
 
-packages/bun-uws/fuzzing
+packages/fun-uws/fuzzing

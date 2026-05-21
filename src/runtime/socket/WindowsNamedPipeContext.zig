@@ -11,7 +11,7 @@ task: jsc.AnyTask,
 task_event: EventState = .none,
 is_open: bool = false,
 
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", scheduleDeinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", scheduleDeinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -30,7 +30,7 @@ pub const SocketType = union(enum) {
     none: void,
 };
 
-pub const new = bun.TrivialNew(WindowsNamedPipeContext);
+pub const new = fun.TrivialNew(WindowsNamedPipeContext);
 const log = Output.scoped(.WindowsNamedPipeContext, .visible);
 
 fn onOpen(this: *WindowsNamedPipeContext) void {
@@ -62,7 +62,7 @@ fn onData(this: *WindowsNamedPipeContext, decoded_data: []const u8) void {
     }
 }
 
-fn onHandshake(this: *WindowsNamedPipeContext, success: bool, ssl_error: uws.us_bun_verify_error_t) void {
+fn onHandshake(this: *WindowsNamedPipeContext, success: bool, ssl_error: uws.us_fun_verify_error_t) void {
     switch (this.socket) {
         .tls => |tls| {
             const socket = TLSSocket.Socket.fromNamedPipe(&this.named_pipe);
@@ -104,7 +104,7 @@ fn onWritable(this: *WindowsNamedPipeContext) void {
     }
 }
 
-fn onError(this: *WindowsNamedPipeContext, err: bun.sys.Error) void {
+fn onError(this: *WindowsNamedPipeContext, err: fun.sys.Error) void {
     if (this.is_open) {
         switch (this.socket) {
             .tls => |tls| {
@@ -170,13 +170,13 @@ fn runEvent(this: *WindowsNamedPipeContext) void {
 }
 
 fn deinitInNextTick(this: *WindowsNamedPipeContext) void {
-    bun.assert(this.task_event != .deinit);
+    fun.assert(this.task_event != .deinit);
     this.task_event = .deinit;
     this.vm.enqueueTask(jsc.Task.init(&this.task));
 }
 
 pub fn create(globalThis: *jsc.JSGlobalObject, socket: SocketType) *WindowsNamedPipeContext {
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
     const this = WindowsNamedPipeContext.new(.{
         .ref_count = .init(),
         .vm = vm,
@@ -187,7 +187,7 @@ pub fn create(globalThis: *jsc.JSGlobalObject, socket: SocketType) *WindowsNamed
     });
 
     // named_pipe owns the pipe (PipeWriter owns the pipe and will close and deinit it)
-    this.named_pipe = uws.WindowsNamedPipe.from(bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)), .{
+    this.named_pipe = uws.WindowsNamedPipe.from(fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)), .{
         .ctx = this,
         .ref_ctx = @ptrCast(&WindowsNamedPipeContext.ref),
         .deref_ctx = @ptrCast(&WindowsNamedPipeContext.deref),
@@ -218,9 +218,9 @@ pub fn create(globalThis: *jsc.JSGlobalObject, socket: SocketType) *WindowsNamed
 /// `owned_ctx` is one `SSL_CTX_up_ref` ADOPTED by `named_pipe.open` (kept on
 /// success, freed by it on failure). Prefer it over `ssl_config` so a memoised
 /// `tls.createSecureContext` reaches this path with its trust store intact —
-/// on this branch `[buntls]` returns `{secureContext}` only, so `ssl_config`
+/// on this branch `[funtls]` returns `{secureContext}` only, so `ssl_config`
 /// alone would be empty.
-pub fn open(globalThis: *jsc.JSGlobalObject, fd: bun.FD, ssl_config: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX, socket: SocketType) !*uws.WindowsNamedPipe {
+pub fn open(globalThis: *jsc.JSGlobalObject, fd: fun.FD, ssl_config: ?jsc.API.ServerConfig.SSLConfig, owned_ctx: ?*BoringSSL.SSL_CTX, socket: SocketType) !*uws.WindowsNamedPipe {
     // TODO: reuse the same context for multiple connections when possibles
 
     const this = WindowsNamedPipeContext.create(globalThis, socket);
@@ -228,10 +228,10 @@ pub fn open(globalThis: *jsc.JSGlobalObject, fd: bun.FD, ssl_config: ?jsc.API.Se
     errdefer {
         switch (socket) {
             .tls => |tls| {
-                tls.handleConnectError(@intFromEnum(bun.sys.SystemErrno.ENOENT)) catch {};
+                tls.handleConnectError(@intFromEnum(fun.sys.SystemErrno.ENOENT)) catch {};
             },
             .tcp => |tcp| {
-                tcp.handleConnectError(@intFromEnum(bun.sys.SystemErrno.ENOENT)) catch {};
+                tcp.handleConnectError(@intFromEnum(fun.sys.SystemErrno.ENOENT)) catch {};
             },
             .none => {},
         }
@@ -249,10 +249,10 @@ pub fn connect(globalThis: *jsc.JSGlobalObject, path: []const u8, ssl_config: ?j
     errdefer {
         switch (socket) {
             .tls => |tls| {
-                tls.handleConnectError(@intFromEnum(bun.sys.SystemErrno.ENOENT)) catch {};
+                tls.handleConnectError(@intFromEnum(fun.sys.SystemErrno.ENOENT)) catch {};
             },
             .tcp => |tcp| {
-                tcp.handleConnectError(@intFromEnum(bun.sys.SystemErrno.ENOENT)) catch {};
+                tcp.handleConnectError(@intFromEnum(fun.sys.SystemErrno.ENOENT)) catch {};
             },
             .none => {},
         }
@@ -264,7 +264,7 @@ pub fn connect(globalThis: *jsc.JSGlobalObject, path: []const u8, ssl_config: ?j
         const slice_z = path[0 .. path.len - 1 :0];
         try this.named_pipe.connect(slice_z, ssl_config, owned_ctx).unwrap();
     } else {
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
         // we need to null terminate the path
         const len = @min(path.len, path_buf.len - 1);
 
@@ -291,17 +291,17 @@ pub fn deinit(this: *WindowsNamedPipeContext) void {
     }
 
     this.named_pipe.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Output = bun.Output;
-const jsc = bun.jsc;
-const uws = bun.uws;
-const BoringSSL = bun.BoringSSL.c;
-const uv = bun.windows.libuv;
+const fun = @import("fun");
+const Output = fun.Output;
+const jsc = fun.jsc;
+const uws = fun.uws;
+const BoringSSL = fun.BoringSSL.c;
+const uv = fun.windows.libuv;
 
 const TCPSocket = jsc.API.TCPSocket;
 const TLSSocket = jsc.API.TLSSocket;

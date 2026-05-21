@@ -2,8 +2,8 @@
 //
 // To run:
 //
-//   bun generate-exports.mjs > node-exports.bun-${version}.json
-//   bun generate-exports.mjs bun > bun-exports.bun-${version}.json
+//   fun generate-exports.mjs > node-exports.fun-${version}.json
+//   fun generate-exports.mjs fun > fun-exports.fun-${version}.json
 //   node generate-exports.mjs > node-exports.node-$(node --version).json
 //
 import { createRequire } from "node:module";
@@ -83,13 +83,13 @@ const nodeBuiltins = [
   .map(a => "node:" + a)
   .sort();
 
-const bunBuiltins = [
+const funBuiltins = [
   "buffer",
-  "bun:ffi",
-  "bun:jsc",
-  "bun:main",
-  "bun:sqlite",
-  "bun:events_native",
+  "fun:ffi",
+  "fun:jsc",
+  "fun:main",
+  "fun:sqlite",
+  "fun:events_native",
   "node:assert",
   "node:assert/strict",
   "node:async_hooks",
@@ -197,11 +197,11 @@ async function processBuiltins(builtins) {
 process.stdout.write(
   JSON.stringify(
     {
-      builtins: await processBuiltins(process.argv.at(-1) === "bun" ? bunBuiltins : nodeBuiltins),
+      builtins: await processBuiltins(process.argv.at(-1) === "fun" ? funBuiltins : nodeBuiltins),
       import: imported,
       require: required,
-      runtime: typeof Bun !== "undefined" ? "bun" : "node",
-      version: typeof Bun !== "undefined" ? Bun.version : process.version,
+      runtime: typeof Fun !== "undefined" ? "fun" : "node",
+      version: typeof Fun !== "undefined" ? Fun.version : process.version,
       errors,
     },
     null,

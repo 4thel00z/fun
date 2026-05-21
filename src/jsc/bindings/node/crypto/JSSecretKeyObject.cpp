@@ -10,7 +10,7 @@
 #include <JavaScriptCore/FunctionPrototype.h>
 #include <JavaScriptCore/ObjectPrototype.h>
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSSecretKeyObject::s_info = { "SecretKeyObject"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSSecretKeyObject) };
 
@@ -45,4 +45,4 @@ void setupSecretKeyObjectClassStructure(JSC::LazyClassStructure::Initializer& in
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

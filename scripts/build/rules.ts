@@ -46,7 +46,7 @@ export function registerAllRules(n: Ninja, cfg: Config): void {
   // WebKit prebuilt uses dep_fetch_prebuilt; local uses dep_configure/dep_build.
   registerDepRules(n, cfg);
 
-  // codegen, esbuild, bun_install + codegen/stamps dir stamps
+  // codegen, esbuild, fun_install + codegen/stamps dir stamps
   registerCodegenRules(n, cfg);
 
   // zig_fetch, zig_build

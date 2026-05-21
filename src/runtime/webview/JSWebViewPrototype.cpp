@@ -14,7 +14,7 @@
 
 #include "ipc_protocol.h" // VirtualKey, Mod*
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -133,11 +133,11 @@ static JSWebView* unwrapThis(JSGlobalObject* globalObject, ThrowScope& scope, Ca
 {
     auto* thisObject = dynamicDowncast<JSWebView>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        Bun::ERR::INVALID_THIS(scope, globalObject, "WebView"_s);
+        Fun::ERR::INVALID_THIS(scope, globalObject, "WebView"_s);
         return nullptr;
     }
     if (thisObject->m_closed) {
-        Bun::ERR::INVALID_STATE(scope, globalObject, makeString("WebView."_s, method, ": view is closed"_s));
+        Fun::ERR::INVALID_STATE(scope, globalObject, makeString("WebView."_s, method, ": view is closed"_s));
         return nullptr;
     }
     return thisObject;
@@ -148,7 +148,7 @@ static JSWebView* unwrapThis(JSGlobalObject* globalObject, ThrowScope& scope, Ca
 static bool checkSlot(JSGlobalObject* g, ThrowScope& scope, const WriteBarrier<JSPromise>& slot, ASCIILiteral what)
 {
     if (slot) {
-        Bun::ERR::INVALID_STATE(scope, g, makeString(what, " is already pending"_s));
+        Fun::ERR::INVALID_STATE(scope, g, makeString(what, " is already pending"_s));
         return false;
     }
     return true;
@@ -218,7 +218,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncNavigate, (JSGlobalObject * globalObj
 
     JSValue urlArg = callFrame->argument(0);
     if (!urlArg.isString())
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "url"_s, "string"_s, urlArg);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "url"_s, "string"_s, urlArg);
     WTF::String url = urlArg.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
 
@@ -235,7 +235,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncEvaluate, (JSGlobalObject * globalObj
 
     JSValue scriptArg = callFrame->argument(0);
     if (!scriptArg.isString())
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "script"_s, "string"_s, scriptArg);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "script"_s, "string"_s, scriptArg);
     WTF::String script = scriptArg.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
 
@@ -272,14 +272,14 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncScreenshot, (JSGlobalObject * globalO
                 // public.webp UTI (macOS 11+), which is a separate dlsym
                 // surface not yet wired. Chrome-only until then.
                 if (thisObject->m_backend != WebViewBackend::Chrome)
-                    return Bun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
+                    return Fun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
                         "format: \"webp\" requires backend: \"chrome\""_s);
                 format = ScreenshotFormat::Webp;
             } else
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                     "format must be \"png\", \"jpeg\", or \"webp\""_s);
         } else if (!fmtVal.isUndefined())
-            return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+            return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                 "format must be a string"_s);
 
         JSValue qVal = opts->get(globalObject, Identifier::fromString(vm, "quality"_s));
@@ -287,10 +287,10 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncScreenshot, (JSGlobalObject * globalO
         if (qVal.isNumber()) {
             double q = qVal.asNumber();
             if (!std::isfinite(q) || q < 0 || q > 100)
-                return Bun::ERR::OUT_OF_RANGE(scope, globalObject, "quality"_s, 0, 100, qVal);
+                return Fun::ERR::OUT_OF_RANGE(scope, globalObject, "quality"_s, 0, 100, qVal);
             quality = static_cast<uint8_t>(q);
         } else if (!qVal.isUndefined())
-            return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+            return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                 "quality must be a number"_s);
 
         // encoding: how the bytes are handed back. "shmem" is for Kitty
@@ -311,16 +311,16 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncScreenshot, (JSGlobalObject * globalO
 #if OS(WINDOWS)
                 // No POSIX shm. Kitty on Windows uses temp files (t=t)
                 // or direct (t=d) transmission anyway.
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
                     "encoding: \"shmem\" is not supported on Windows"_s);
 #else
                 encoding = ScreenshotEncoding::Shmem;
 #endif
             } else
-                return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
+                return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE,
                     "encoding must be \"blob\", \"buffer\", \"base64\", or \"shmem\""_s);
         } else if (!encVal.isUndefined())
-            return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+            return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                 "encoding must be a string"_s);
     }
 
@@ -328,7 +328,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncScreenshot, (JSGlobalObject * globalO
     // that call view.close() between the guard and the screenshot() send.
     if (!checkSlot(globalObject, scope, thisObject->m_pendingScreenshot, "a screenshot()"_s)) return {};
     if (thisObject->m_closed)
-        return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_STATE, "WebView is closed"_s);
+        return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_STATE, "WebView is closed"_s);
 
     thisObject->m_screenshotEncoding = encoding;
     return JSValue::encode(thisObject->screenshot(globalObject, format, quality));
@@ -357,21 +357,21 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncCdp, (JSGlobalObject * globalObject, 
     RETURN_IF_EXCEPTION(scope, {});
 
     if (thisObject->m_backend != WebViewBackend::Chrome)
-        return Bun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
+        return Fun::throwError(globalObject, scope, ErrorCode::ERR_METHOD_NOT_IMPLEMENTED,
             "WebView.cdp() requires backend: \"chrome\""_s);
 
     // Must have attached (first navigate() completes the target→session
     // chain). Before attach there's no sessionId; a browser-level CDP
     // command here would reach the wrong target. The user can `await
-    // navigate(...)` first to get a session, or use Bun.WebView.chrome()
+    // navigate(...)` first to get a session, or use Fun.WebView.chrome()
     // for browser-level commands (v2).
     if (thisObject->m_sessionId.isEmpty())
-        return Bun::ERR::INVALID_STATE(scope, globalObject,
+        return Fun::ERR::INVALID_STATE(scope, globalObject,
             "WebView.cdp(): no session - await navigate() first"_s);
 
     JSValue methodArg = callFrame->argument(0);
     if (!methodArg.isString())
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "method"_s, "string"_s, methodArg);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "method"_s, "string"_s, methodArg);
     WTF::String method = methodArg.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
 
@@ -389,14 +389,14 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncCdp, (JSGlobalObject * globalObject, 
         // JSONStringify returns empty for non-serializable (function,
         // symbol as root). CDP params must be an object.
         if (paramsJson.isEmpty() || paramsJson[0] != '{')
-            return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
+            return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE,
                 "params must be a JSON-serializable object"_s);
     }
 
     // Same TOCTOU as screenshot: JSONStringify can call a user-supplied
     // .toJSON() that closes the view between the earlier guards and send.
     if (thisObject->m_closed)
-        return Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_STATE, "WebView is closed"_s);
+        return Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_STATE, "WebView is closed"_s);
     if (!checkSlot(globalObject, scope, thisObject->m_pendingCdp, "a cdp()"_s)) return {};
     return JSValue::encode(thisObject->cdp(globalObject, method, paramsJson));
 }
@@ -450,7 +450,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncClick, (JSGlobalObject * globalObject
         WTF::String selector = arg0.toWTFString(globalObject);
         RETURN_IF_EXCEPTION(scope, {});
         if (selector.isEmpty()) {
-            return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "selector"_s, arg0, "must not be empty"_s);
+            return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "selector"_s, arg0, "must not be empty"_s);
         }
         if (!parseOpts(callFrame->argument(1))) return {};
         if (!checkSlot(globalObject, scope, thisObject->m_pendingMisc, "a simple operation"_s)) return {};
@@ -478,7 +478,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncType, (JSGlobalObject * globalObject,
 
     JSValue textArg = callFrame->argument(0);
     if (!textArg.isString())
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "text"_s, "string"_s, textArg);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "text"_s, "string"_s, textArg);
     WTF::String text = textArg.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
 
@@ -495,7 +495,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncPress, (JSGlobalObject * globalObject
 
     JSValue keyArg = callFrame->argument(0);
     if (!keyArg.isString())
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "key"_s, "string"_s, keyArg);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "key"_s, "string"_s, keyArg);
     WTF::String key = keyArg.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
 
@@ -510,7 +510,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncPress, (JSGlobalObject * globalObject
 
     VirtualKey vk = virtualKeyFromName(key);
     if (vk == VirtualKey::Character && key.length() != 1) {
-        return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "key"_s, keyArg,
+        return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "key"_s, keyArg,
             "must be a virtual key name (Enter, Tab, Escape, Arrow*, etc.) or a single character"_s);
     }
 
@@ -534,7 +534,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncScroll, (JSGlobalObject * globalObjec
     // in the host (NaN + anything = NaN), and static_cast<int32_t>(NaN)
     // at the CGEvent call site is UB.
     if (!std::isfinite(dx) || !std::isfinite(dy))
-        return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "dx/dy"_s,
+        return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "dx/dy"_s,
             jsNumber(std::isfinite(dx) ? dy : dx), "must be finite"_s);
 
     if (!checkSlot(globalObject, scope, thisObject->m_pendingMisc, "a simple operation"_s)) return {};
@@ -550,12 +550,12 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncScrollTo, (JSGlobalObject * globalObj
 
     JSValue arg0 = callFrame->argument(0);
     if (!arg0.isString()) {
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "selector"_s, "string"_s, arg0);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "selector"_s, "string"_s, arg0);
     }
     WTF::String selector = arg0.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
     if (selector.isEmpty()) {
-        return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "selector"_s, arg0, "must not be empty"_s);
+        return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "selector"_s, arg0, "must not be empty"_s);
     }
 
     // opts: { timeout?, block?: "start"|"center"|"end"|"nearest" }
@@ -582,7 +582,7 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncScrollTo, (JSGlobalObject * globalObj
             else if (bs == "nearest"_s)
                 block = 3;
             else
-                return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "block"_s, b,
+                return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "block"_s, b,
                     "must be \"start\", \"center\", \"end\", or \"nearest\""_s);
         }
     }
@@ -603,9 +603,9 @@ JSC_DEFINE_HOST_FUNCTION(jsWebViewProtoFuncResize, (JSGlobalObject * globalObjec
     uint32_t h = callFrame->argument(1).toUInt32(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
     if (w == 0 || w > 16384)
-        return Bun::ERR::OUT_OF_RANGE(scope, globalObject, "width"_s, 1, 16384, jsNumber(w));
+        return Fun::ERR::OUT_OF_RANGE(scope, globalObject, "width"_s, 1, 16384, jsNumber(w));
     if (h == 0 || h > 16384)
-        return Bun::ERR::OUT_OF_RANGE(scope, globalObject, "height"_s, 1, 16384, jsNumber(h));
+        return Fun::ERR::OUT_OF_RANGE(scope, globalObject, "height"_s, 1, 16384, jsNumber(h));
 
     if (!checkSlot(globalObject, scope, thisObject->m_pendingMisc, "a simple operation"_s)) return {};
     return JSValue::encode(thisObject->resize(globalObject, w, h));
@@ -702,7 +702,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsWebViewGetter_loading, (JSGlobalObject*, EncodedJSVal
             thisObject->field.set(globalObject->vm(), thisObject, value.getObject());                           \
         } else {                                                                                                \
             auto scope = DECLARE_THROW_SCOPE(globalObject->vm());                                               \
-            Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "callback"_s, "function"_s, value);                 \
+            Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "callback"_s, "function"_s, value);                 \
             return false;                                                                                       \
         }                                                                                                       \
         return true;                                                                                            \
@@ -713,4 +713,4 @@ WEBVIEW_CALLBACK_ACCESSOR(onNavigationFailed, m_onNavigationFailed)
 
 #undef WEBVIEW_CALLBACK_ACCESSOR
 
-} // namespace Bun
+} // namespace Fun

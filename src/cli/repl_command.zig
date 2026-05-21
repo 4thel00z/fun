@@ -1,6 +1,6 @@
-//! Bun REPL Command - Native Zig REPL with full TUI support
+//! Fun REPL Command - Native Zig REPL with full TUI support
 //!
-//! This is the entry point for `bun repl` which provides an interactive
+//! This is the entry point for `fun repl` which provides an interactive
 //! JavaScript REPL with:
 //! - Syntax highlighting using QuickAndDirtySyntaxHighlighter
 //! - Full line editing with Emacs-style keybindings
@@ -22,13 +22,13 @@ pub const ReplCommand = struct {
     }
 
     fn bootReplVM(ctx: Command.Context, repl: *Repl) !void {
-        // Load bunfig if not already loaded
+        // Load funfig if not already loaded
         if (!ctx.debug.loaded_bunfig) {
-            try bun.cli.Arguments.loadConfigPath(ctx.allocator, true, "bunfig.toml", ctx, .RunCommand);
+            try fun.cli.Arguments.loadConfigPath(ctx.allocator, true, "funfig.toml", ctx, .RunCommand);
         }
 
         // Initialize JSC
-        bun.jsc.initialize(true); // true for eval mode
+        fun.jsc.initialize(true); // true for eval mode
 
         js_ast.Expr.Data.Store.create();
         js_ast.Stmt.Data.Store.create();
@@ -74,7 +74,7 @@ pub const ReplCommand = struct {
             Global.exit(1);
         };
 
-        bun.http.AsyncHTTP.loadEnv(vm.allocator, vm.log, b.env);
+        fun.http.AsyncHTTP.loadEnv(vm.allocator, vm.log, b.env);
         vm.loadExtraEnvAndSourceCodePrinter();
 
         vm.is_main_thread = true;
@@ -112,7 +112,7 @@ pub const ReplCommand = struct {
 const ReplRunner = struct {
     repl: *Repl,
     vm: *jsc.VirtualMachine,
-    arena: bun.allocators.MimallocArena,
+    arena: fun.allocators.MimallocArena,
     entry_path: []const u8,
     eval_script: []const u8,
     eval_and_print: bool,
@@ -142,7 +142,7 @@ const ReplRunner = struct {
                 vm.exit_handler.exit_code = 1;
             } else {
                 // Fire process.on("beforeExit") and re-drain as needed
-                // (matches bun -e / Node.js semantics).
+                // (matches fun -e / Node.js semantics).
                 vm.onBeforeExit();
             }
         } else {
@@ -157,16 +157,16 @@ const ReplRunner = struct {
         vm.globalExit();
     }
 
-    fn setupReplEnvironment(this: *ReplRunner) bun.JSError!void {
+    fn setupReplEnvironment(this: *ReplRunner) fun.JSError!void {
         const vm = this.vm;
 
         // Expose Node.js module globals (__dirname, __filename, require, etc.)
         // This must be done inside the API lock as it allocates JS objects
-        bun.cpp.Bun__ExposeNodeModuleGlobals(vm.global);
+        fun.cpp.Fun__ExposeNodeModuleGlobals(vm.global);
 
         // Set up require(), module, __filename, __dirname relative to cwd
         const cwd = vm.transpiler.fs.topLevelDirWithoutTrailingSlash();
-        try bun.cpp.Bun__REPL__setupGlobalRequire(vm.global, cwd.ptr, cwd.len);
+        try fun.cpp.Fun__REPL__setupGlobalRequire(vm.global, cwd.ptr, cwd.len);
 
         // Set timezone if specified
         if (vm.transpiler.env.get("TZ")) |tz| {
@@ -181,11 +181,11 @@ const ReplRunner = struct {
 
 const Repl = @import("./repl.zig");
 
-const bun = @import("bun");
-const Global = bun.Global;
-const Output = bun.Output;
-const js_ast = bun.ast;
-const jsc = bun.jsc;
-const Arena = bun.allocators.MimallocArena;
-const Command = bun.cli.Command;
-const DNSResolver = bun.api.dns.Resolver;
+const fun = @import("fun");
+const Global = fun.Global;
+const Output = fun.Output;
+const js_ast = fun.ast;
+const jsc = fun.jsc;
+const Arena = fun.allocators.MimallocArena;
+const Command = fun.cli.Command;
+const DNSResolver = fun.api.dns.Resolver;

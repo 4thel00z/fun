@@ -1,7 +1,7 @@
 //! Web APIs implemented in Zig live here
 
 comptime {
-    if (bun.Environment.export_cpp_apis) {
+    if (fun.Environment.export_cpp_apis) {
         _ = &@import("./webcore/prompt.zig");
     }
     _ = &@import("./webcore/TextEncoder.zig");
@@ -10,7 +10,7 @@ comptime {
 pub const DOMExceptionCode = @import("../jsc/JSErrorCode.zig").DOMExceptionCode;
 
 // TODO: make this JSGlobalObject local for better security
-pub const ByteListPool = bun.ObjectPool(bun.ByteList, null, true, 8);
+pub const ByteListPool = fun.ObjectPool(fun.ByteList, null, true, 8);
 
 pub const Crypto = @import("./webcore/Crypto.zig");
 pub const AbortSignal = @import("../jsc/AbortSignal.zig").AbortSignal;
@@ -59,7 +59,7 @@ comptime {
 
 pub const PathOrFileDescriptor = union(enum) {
     path: jsc.ZigString.Slice,
-    fd: bun.FD,
+    fd: fun.FD,
 
     pub fn deinit(this: *const PathOrFileDescriptor) void {
         if (this.* == .path) this.path.deinit();
@@ -125,5 +125,5 @@ const WebSocketClientTLS = @import("../http/websocket_http_client.zig").WebSocke
 const WebSocketHTTPClient = @import("../http/websocket_http_client.zig").WebSocketHTTPClient;
 const WebSocketHTTPSClient = @import("../http/websocket_http_client.zig").WebSocketHTTPSClient;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

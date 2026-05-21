@@ -35,26 +35,26 @@ test/bake/dev/import-meta-inline.test.ts
 test/bake/dev/production.test.ts
 test/cli/run/run-eval.test.ts
 test/cli/run/self-reference.test.ts
-test/js/bun/resolve/import-meta-resolve.test.mjs
-test/js/bun/resolve/import-meta.test.js
-test/js/bun/util/BunObject.test.ts
-test/js/bun/util/fuzzy-wuzzy.test.ts
+test/js/fun/resolve/import-meta-resolve.test.mjs
+test/js/fun/resolve/import-meta.test.js
+test/js/fun/util/FunObject.test.ts
+test/js/fun/util/fuzzy-wuzzy.test.ts
 test/js/third_party/pg-gateway/pglite.test.ts
 test/js/web/websocket/websocket.test.js
 test/js/node/test/parallel/test-vm-module-referrer-realm.mjs
-test/js/bun/resolve/resolve.test.ts
-test/cli/install/bunx.test.ts
+test/js/fun/resolve/resolve.test.ts
+test/cli/install/funx.test.ts
 test/js/node/util/node-inspect-tests/parallel/util-inspect.test.js
 test/integration/vite-build/vite-build.test.ts
 test/bundler/esbuild/default.test.ts
-test/cli/install/bun-repl.test.ts
+test/cli/install/fun-repl.test.ts
 test/js/third_party/astro/astro-post.test.js
 test/regression/issue/ctrl-c.test.ts
 test/bundler/bundler_comments.test.ts
 test/js/node/test/parallel/test-fs-promises-file-handle-readLines.mjs
-test/js/bun/test/parallel/test-require-builtins.ts
-test/cli/install/bun-install-lifecycle-scripts.test.ts
-test/js/bun/test/parallel/test-integration-rspack.ts
+test/js/fun/test/parallel/test-require-builtins.ts
+test/cli/install/fun-install-lifecycle-scripts.test.ts
+test/js/fun/test/parallel/test-integration-rspack.ts
 
 # trips asan on my macos test machine
 test/js/node/test/parallel/test-fs-watch.js
@@ -128,7 +128,7 @@ test/napi/node-napi-tests/test/node-api/test_env_teardown_gc/do.test.ts
 test/napi/node-napi-tests/test/node-api/test_general/do.test.ts
 
 # normalizeCryptoAlgorithmParameters
-test/js/bun/crypto/wpt-webcrypto.generateKey.test.ts
+test/js/fun/crypto/wpt-webcrypto.generateKey.test.ts
 test/js/deno/crypto/webcrypto.test.ts
 test/js/node/crypto/node-crypto.test.js
 test/js/node/test/parallel/test-crypto-oaep-zero-length.js
@@ -161,7 +161,7 @@ test/js/node/test/parallel/test-worker-abort-on-uncaught-exception.js
 test/js/web/urlpattern/urlpattern.test.ts
 
 # TODO: jsc
-test/js/bun/jsonl/jsonl-parse.test.ts
+test/js/fun/jsonl/jsonl-parse.test.ts
 test/regression/issue/isArray-proxy-crash.test.ts
 
 # Third-party SDK with unchecked exception path in JSArray pushInline

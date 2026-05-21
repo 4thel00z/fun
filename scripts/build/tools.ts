@@ -109,27 +109,27 @@ interface Rejection {
 }
 
 /**
- * Find the bun executable for codegen (`bun install`, `bun build`, scripts
- * using Bun APIs). Must be the actual bun binary — NOT process.execPath,
+ * Find the fun executable for codegen (`fun install`, `fun build`, scripts
+ * using Fun APIs). Must be the actual fun binary — NOT process.execPath,
  * since configure may run under node.
  *
- * Search order: ~/.bun/bin (curl-install location), then PATH, then
- * process.execPath only if it's actually bun. CI agents pin an old system
- * bun but codegen scripts need newer CLI flags, so the user install goes
+ * Search order: ~/.fun/bin (curl-install location), then PATH, then
+ * process.execPath only if it's actually fun. CI agents pin an old system
+ * fun but codegen scripts need newer CLI flags, so the user install goes
  * first.
  */
-export function findBun(os: OS): string {
-  const exe = os === "windows" ? "bun.exe" : "bun";
-  const userBun = join(homedir(), ".bun", "bin", exe);
-  if (isExecutable(userBun)) return userBun;
+export function findFun(os: OS): string {
+  const exe = os === "windows" ? "fun.exe" : "fun";
+  const userFun = join(homedir(), ".fun", "bin", exe);
+  if (isExecutable(userFun)) return userFun;
 
-  // Running under bun at a non-standard path — use that.
-  if (process.versions.bun !== undefined) return process.execPath;
+  // Running under fun at a non-standard path — use that.
+  if (process.versions.fun !== undefined) return process.execPath;
 
   return findTool({
-    names: ["bun"],
+    names: ["fun"],
     required: true,
-    hint: "Codegen requires bun (for `bun install`, `bun build`, and scripts using Bun APIs). Install: curl -fsSL https://bun.sh/install | bash",
+    hint: "Codegen requires fun (for `fun install`, `fun build`, and scripts using Fun APIs). Install: curl -fsSL https://fun.dev/install | bash",
   })!.path;
 }
 
@@ -366,7 +366,7 @@ function findLlvmTool(
  * Call this once at configure time. All tool paths are absolute.
  * Throws BuildError if any required tool is missing.
  *
- * zig/bun/esbuild are resolved separately (they come from cache/, not PATH)
+ * zig/fun/esbuild are resolved separately (they come from cache/, not PATH)
  * so pass them in as placeholders for now; they'll be filled by downloaders.
  */
 export function resolveLlvmToolchain(

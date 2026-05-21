@@ -2,8 +2,8 @@
 #include "headers-handwritten.h"
 #include "JavaScriptCore/BytecodeIndex.h"
 
-namespace Bun {
+namespace Fun {
 
 ZigStackFramePosition getAdjustedPositionForBytecode(JSC::CodeBlock* code, JSC::BytecodeIndex bc);
 
-} // namespace Bun
+} // namespace Fun

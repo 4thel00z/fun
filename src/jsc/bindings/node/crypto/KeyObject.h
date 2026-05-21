@@ -10,7 +10,7 @@ namespace WebCore {
 class CryptoKey;
 }
 
-namespace Bun {
+namespace Fun {
 
 class KeyObject {
     WTF_MAKE_TZONE_ALLOCATED(KeyObject);

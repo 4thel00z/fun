@@ -1,5 +1,5 @@
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug, withoutAggressiveGC } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug, withoutAggressiveGC } from "harness";
 
 const RealStringDecoder = require("string_decoder").StringDecoder;
 
@@ -7,8 +7,8 @@ it("require('string_decoder')", async () => {
   expect((await import("string_decoder")).StringDecoder).toBe(RealStringDecoder);
 });
 
-it("Bun.inspect(StringDecoder)", async () => {
-  expect((await Bun.inspect(RealStringDecoder).length) > 0).toBe(true);
+it("Fun.inspect(StringDecoder)", async () => {
+  expect((await Fun.inspect(RealStringDecoder).length) > 0).toBe(true);
 });
 
 function FakeStringDecoderCall() {
@@ -272,7 +272,7 @@ it("invalid utf-8 at end of stream can sometimes produce more than one replaceme
 
 // When the input buffer is too large to be represented as a JS string,
 // write()/end() should throw ERR_STRING_TOO_LONG instead of segfaulting.
-// Previously, Bun__encoding__toString would throw and return an empty JSValue,
+// Previously, Fun__encoding__toString would throw and return an empty JSValue,
 // and JSStringDecoder::write would call .toString() on it before checking for
 // an exception, dereferencing nullptr->m_type (segfault at address 0x5).
 it(
@@ -293,9 +293,9 @@ it(
       }
     }
   `;
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", src],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", src],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

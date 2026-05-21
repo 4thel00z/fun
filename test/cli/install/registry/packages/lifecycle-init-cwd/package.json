@@ -5,7 +5,7 @@
 			"name": "lifecycle-init-cwd",
 			"version": "1.0.0",
 			"scripts": {
-				"install": "bun install.js"
+				"install": "fun install.js"
 			},
 			"_id": "lifecycle-init-cwd@1.0.0",
 			"_nodeVersion": "21.1.0",

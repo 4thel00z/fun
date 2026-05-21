@@ -1,4 +1,4 @@
-//! Markdown → ANSI renderer. Used by `bun ./file.md` to pretty-print
+//! Markdown → ANSI renderer. Used by `fun ./file.md` to pretty-print
 //! markdown documents to the terminal with colors, hyperlinks, syntax
 //! highlighting, and Unicode box drawing.
 
@@ -12,7 +12,7 @@ pub const Theme = struct {
     /// Emit colors and styles. When false the renderer emits plain text.
     colors: bool = true,
     /// Emit OSC 8 hyperlinks. When false links are shown as "text (url)".
-    /// Default false to match the documented Bun.markdown.ansi() API.
+    /// Default false to match the documented Fun.markdown.ansi() API.
     hyperlinks: bool = false,
     /// Inline images using the Kitty Graphics Protocol when the `src`
     /// refers to a local file (absolute or ./relative path, or file://).
@@ -23,11 +23,11 @@ pub const Theme = struct {
     /// `collectImageUrls` + the CLI entry point) so `emitImage` can
     /// send remote images through Kitty's `t=f` path. When null, http
     /// and https URLs fall through to the alt-text fallback.
-    remote_image_paths: ?*const bun.StringHashMapUnmanaged([]const u8) = null,
+    remote_image_paths: ?*const fun.StringHashMapUnmanaged([]const u8) = null,
     /// Base directory used to resolve relative image `src` paths. When
     /// null, falls back to the process cwd. The CLI entry point sets
     /// this to the markdown file's directory so `![](./img.png)` works
-    /// regardless of where `bun ./some/dir/file.md` is invoked from.
+    /// regardless of where `fun ./some/dir/file.md` is invoked from.
     image_base_dir: ?[]const u8 = null,
 };
 
@@ -58,12 +58,12 @@ pub const ImageUrlCollector = struct {
         .text = noopText,
     };
 
-    fn noopEnterBlock(_: *anyopaque, _: BlockType, _: u32, _: u32) bun.JSError!void {}
-    fn noopLeaveBlock(_: *anyopaque, _: BlockType, _: u32) bun.JSError!void {}
-    fn noopLeaveSpan(_: *anyopaque, _: SpanType) bun.JSError!void {}
-    fn noopText(_: *anyopaque, _: TextType, _: []const u8) bun.JSError!void {}
+    fn noopEnterBlock(_: *anyopaque, _: BlockType, _: u32, _: u32) fun.JSError!void {}
+    fn noopLeaveBlock(_: *anyopaque, _: BlockType, _: u32) fun.JSError!void {}
+    fn noopLeaveSpan(_: *anyopaque, _: SpanType) fun.JSError!void {}
+    fn noopText(_: *anyopaque, _: TextType, _: []const u8) fun.JSError!void {}
 
-    fn enterSpanImpl(ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) bun.JSError!void {
+    fn enterSpanImpl(ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) fun.JSError!void {
         if (span_type != .img) return;
         const self: *ImageUrlCollector = @ptrCast(@alignCast(ptr));
         if (detail.href.len == 0) return;
@@ -248,27 +248,27 @@ pub const AnsiRenderer = struct {
         .text = textImpl,
     };
 
-    fn enterBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32, flags: u32) bun.JSError!void {
+    fn enterBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32, flags: u32) fun.JSError!void {
         const self: *AnsiRenderer = @ptrCast(@alignCast(ptr));
         self.enterBlock(block_type, data, flags);
     }
 
-    fn leaveBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32) bun.JSError!void {
+    fn leaveBlockImpl(ptr: *anyopaque, block_type: BlockType, data: u32) fun.JSError!void {
         const self: *AnsiRenderer = @ptrCast(@alignCast(ptr));
         self.leaveBlock(block_type, data);
     }
 
-    fn enterSpanImpl(ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) bun.JSError!void {
+    fn enterSpanImpl(ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) fun.JSError!void {
         const self: *AnsiRenderer = @ptrCast(@alignCast(ptr));
         self.enterSpan(span_type, detail);
     }
 
-    fn leaveSpanImpl(ptr: *anyopaque, span_type: SpanType) bun.JSError!void {
+    fn leaveSpanImpl(ptr: *anyopaque, span_type: SpanType) fun.JSError!void {
         const self: *AnsiRenderer = @ptrCast(@alignCast(ptr));
         self.leaveSpan(span_type);
     }
 
-    fn textImpl(ptr: *anyopaque, text_type: TextType, content: []const u8) bun.JSError!void {
+    fn textImpl(ptr: *anyopaque, text_type: TextType, content: []const u8) fun.JSError!void {
         const self: *AnsiRenderer = @ptrCast(@alignCast(ptr));
         self.text(text_type, content);
     }
@@ -746,7 +746,7 @@ pub const AnsiRenderer = struct {
                         continue;
                     }
                     var cut = visibleIndexAt(rest, r);
-                    if (cut == 0) cut = @min(rest.len, @as(usize, bun.strings.wtf8ByteSequenceLengthWithInvalid(rest[0])));
+                    if (cut == 0) cut = @min(rest.len, @as(usize, fun.strings.wtf8ByteSequenceLengthWithInvalid(rest[0])));
                     self.writeRaw(rest[0..cut]);
                     self.col += @intCast(visibleWidth(rest[0..cut]));
                     self.last_was_newline = false;
@@ -915,7 +915,7 @@ pub const AnsiRenderer = struct {
                     // Even a fresh line can't hold one codepoint —
                     // emit one codepoint to make progress.
                     const adv = visibleIndexAt(rest, 2);
-                    const one = if (adv == 0) @min(rest.len, @as(usize, bun.strings.wtf8ByteSequenceLengthWithInvalid(rest[0]))) else adv;
+                    const one = if (adv == 0) @min(rest.len, @as(usize, fun.strings.wtf8ByteSequenceLengthWithInvalid(rest[0]))) else adv;
                     self.emitInline(rest[0..one]);
                     self.col += @intCast(visibleWidth(rest[0..one]));
                     self.last_was_newline = false;
@@ -1264,7 +1264,7 @@ pub const AnsiRenderer = struct {
     }
 
     fn writeHighlightedJs(self: *AnsiRenderer, line: []const u8) void {
-        const highlighter = bun.fmt.QuickAndDirtyJavaScriptSyntaxHighlighter{
+        const highlighter = fun.fmt.QuickAndDirtyJavaScriptSyntaxHighlighter{
             .text = line,
             .opts = .{ .enable_colors = true, .check_for_unhighlighted_write = false },
         };
@@ -1452,7 +1452,7 @@ pub const AnsiRenderer = struct {
                         }
                     }
                     const seq = bytes[seq_start..j];
-                    if (seq.len >= 5 and bun.strings.hasPrefixComptime(seq, "\x1b]8;")) {
+                    if (seq.len >= 5 and fun.strings.hasPrefixComptime(seq, "\x1b]8;")) {
                         // "\x1b]8;<params>;<URL>\x1b\\" — a close has an
                         // empty URL component.
                         const body = seq[4..]; // after "\x1b]8;"
@@ -1465,7 +1465,7 @@ pub const AnsiRenderer = struct {
                             break :blk body.len;
                         };
                         const body_stripped = body[0..body_end];
-                        if (bun.strings.indexOfChar(body_stripped, ';')) |semi| {
+                        if (fun.strings.indexOfChar(body_stripped, ';')) |semi| {
                             const url = body_stripped[semi + 1 ..];
                             if (url.len == 0) {
                                 self.link = null;
@@ -1640,7 +1640,7 @@ pub const AnsiRenderer = struct {
                         if (sp > 0) cut = sp;
                     }
                 }
-                if (cut == 0) cut = @min(rest.len, @as(usize, bun.strings.wtf8ByteSequenceLengthWithInvalid(rest[0])));
+                if (cut == 0) cut = @min(rest.len, @as(usize, fun.strings.wtf8ByteSequenceLengthWithInvalid(rest[0])));
                 state_at[i].append(self.allocator, state) catch {
                     self.out.oom = true;
                     return;
@@ -1816,8 +1816,8 @@ pub const AnsiRenderer = struct {
             // http(s) URL that the CLI pre-scan pass already downloaded
             // to a temp file → send via Kitty's t=f against that path.
             if (self.theme.remote_image_paths) |map| {
-                if ((bun.strings.startsWith(src.?, "http://") or
-                    bun.strings.startsWith(src.?, "https://")))
+                if ((fun.strings.startsWith(src.?, "http://") or
+                    fun.strings.startsWith(src.?, "https://")))
                 {
                     if (map.get(src.?)) |local_path| {
                         self.emitKittyImageFile(local_path);
@@ -1848,7 +1848,7 @@ pub const AnsiRenderer = struct {
         // the outer link destination for subsequent text on that line.
         const link_ok = self.theme.colors and self.theme.hyperlinks and has_src and
             self.link_depth == 0 and
-            !bun.strings.startsWith(src.?, "data:");
+            !fun.strings.startsWith(src.?, "data:");
         if (link_ok) {
             self.writeRawNoColor("\x1b]8;;");
             self.writeRawNoColor(src.?);
@@ -1882,13 +1882,13 @@ pub const AnsiRenderer = struct {
     /// that don't understand the APC sequence silently drop it.
     fn emitKittyImageFile(self: *AnsiRenderer, path: []const u8) void {
         // Base64-encode the file path (Kitty expects the payload to be b64).
-        const encoded_len = bun.base64.encodeLen(path);
+        const encoded_len = fun.base64.encodeLen(path);
         const encoded = self.allocator.alloc(u8, encoded_len) catch {
             self.out.oom = true;
             return;
         };
         defer self.allocator.free(encoded);
-        _ = bun.base64.encode(encoded, path);
+        _ = fun.base64.encode(encoded, path);
         self.writeRawNoColor("\x1b_Ga=T,t=f,f=100,q=2;");
         self.writeRawNoColor(encoded);
         self.writeRawNoColor("\x1b\\");
@@ -1973,13 +1973,13 @@ fn codeSpanOpen(light: bool) []const u8 {
 /// Visible printable width of a UTF-8 byte slice, excluding ANSI escape
 /// sequences. Correctly handles multi-width graphemes (CJK, emoji).
 fn visibleWidth(s: []const u8) usize {
-    return bun.strings.visible.width.exclude_ansi_colors.utf8(s);
+    return fun.strings.visible.width.exclude_ansi_colors.utf8(s);
 }
 
 /// Byte index of the longest prefix of `s` whose visible width is <=
 /// `max_cols`. ANSI escapes are zero-width and always included.
 fn visibleIndexAt(s: []const u8, max_cols: usize) usize {
-    return bun.strings.visible.width.exclude_ansi_colors.utf8IndexAtWidth(s, max_cols);
+    return fun.strings.visible.width.exclude_ansi_colors.utf8IndexAtWidth(s, max_cols);
 }
 
 fn isJsLang(lang: []const u8) bool {
@@ -1988,7 +1988,7 @@ fn isJsLang(lang: []const u8) bool {
         "ts", "typescript", "tsx", "mts", "cts",
     };
     for (names) |n| {
-        if (bun.strings.eqlCaseInsensitiveASCII(lang, n, true)) return true;
+        if (fun.strings.eqlCaseInsensitiveASCII(lang, n, true)) return true;
     }
     return false;
 }
@@ -2023,7 +2023,7 @@ fn resolveHref(detail: SpanDetail, allocator: Allocator) ![]u8 {
 /// 1. `COLORFGBG` env var (set by rxvt, xterm, Konsole, iTerm2 in some modes)
 /// 2. Dark mode (default)
 pub fn detectLightBackground() bool {
-    if (bun.getenvZ("COLORFGBG")) |value| {
+    if (fun.getenvZ("COLORFGBG")) |value| {
         // Format: "fg;bg" or "fg;default;bg" — only 7 (white) and 15
         // (bright white) are light terminal backgrounds. Bright colors
         // 9-14 are high-intensity foreground codes, not light backgrounds.
@@ -2047,19 +2047,19 @@ pub fn detectLightBackground() bool {
 pub fn detectKittyGraphics() bool {
     // TERM=dumb is the standard opt-out for any ESC handling — bail
     // before any env match or probe runs.
-    if (bun.getenvZ("TERM")) |term| {
-        if (bun.strings.eqlCaseInsensitiveASCII(term, "dumb", true)) return false;
+    if (fun.getenvZ("TERM")) |term| {
+        if (fun.strings.eqlCaseInsensitiveASCII(term, "dumb", true)) return false;
     }
     // Fast path: env vars set by known-compatible terminals.
-    if (bun.getenvZ("KITTY_WINDOW_ID")) |_| return true;
-    if (bun.getenvZ("GHOSTTY_RESOURCES_DIR")) |_| return true;
-    if (bun.getenvZ("TERM")) |term| {
-        if (bun.strings.contains(term, "kitty")) return true;
-        if (bun.strings.contains(term, "ghostty")) return true;
+    if (fun.getenvZ("KITTY_WINDOW_ID")) |_| return true;
+    if (fun.getenvZ("GHOSTTY_RESOURCES_DIR")) |_| return true;
+    if (fun.getenvZ("TERM")) |term| {
+        if (fun.strings.contains(term, "kitty")) return true;
+        if (fun.strings.contains(term, "ghostty")) return true;
     }
-    if (bun.getenvZ("TERM_PROGRAM")) |tp| {
-        if (bun.strings.eqlCaseInsensitiveASCII(tp, "wezterm", true)) return true;
-        if (bun.strings.eqlCaseInsensitiveASCII(tp, "ghostty", true)) return true;
+    if (fun.getenvZ("TERM_PROGRAM")) |tp| {
+        if (fun.strings.eqlCaseInsensitiveASCII(tp, "wezterm", true)) return true;
+        if (fun.strings.eqlCaseInsensitiveASCII(tp, "ghostty", true)) return true;
     }
     // Runtime probe: send a Kitty query to the terminal and wait for a
     // response. Compatible terminals reply within a few ms; others stay
@@ -2076,10 +2076,10 @@ pub fn detectKittyGraphics() bool {
 /// the reply with a short timeout. Raw mode is applied + restored
 /// around the read so the bytes don't echo to the user's terminal.
 fn probeKittyGraphics() bool {
-    if (comptime !bun.Environment.isPosix) return false;
-    if (bun.Output.bun_stdio_tty[0] == 0 or bun.Output.bun_stdio_tty[1] == 0) return false;
+    if (comptime !fun.Environment.isPosix) return false;
+    if (fun.Output.fun_stdio_tty[0] == 0 or fun.Output.fun_stdio_tty[1] == 0) return false;
     // Honor an explicit opt-out.
-    if (bun.getenvZ("BUN_DISABLE_KITTY_PROBE")) |_| return false;
+    if (fun.getenvZ("FUN_DISABLE_KITTY_PROBE")) |_| return false;
 
     // Save the parent's termios before flipping stdin to raw. If the
     // parent (a TUI, tmux/Zellij pane, etc.) already had raw mode on,
@@ -2087,16 +2087,16 @@ fn probeKittyGraphics() bool {
     // exactly what we read. tcgetattr failing means stdin isn't a real
     // TTY in a way we can snapshot; skip probing entirely.
     const saved_termios = std.posix.tcgetattr(0) catch return false;
-    _ = bun.tty.setMode(0, .raw);
+    _ = fun.tty.setMode(0, .raw);
     defer std.posix.tcsetattr(0, .NOW, saved_termios) catch {
-        _ = bun.tty.setMode(0, .normal);
+        _ = fun.tty.setMode(0, .normal);
     };
 
     // Query: transmit a 1×1 RGB image (3 zero bytes = "AAAA" b64),
     // id=31. The terminal replies with `\x1b_Gi=31;OK\x1b\\`
     // (or `ENOTSUPPORTED:...`) within a frame.
     const query = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\";
-    switch (bun.sys.write(bun.FD.stdout(), query)) {
+    switch (fun.sys.write(fun.FD.stdout(), query)) {
         .result => {},
         .err => return false,
     }
@@ -2108,12 +2108,12 @@ fn probeKittyGraphics() bool {
         .events = std.posix.POLL.IN,
         .revents = 0,
     }};
-    // bun.sys.poll has a Maybe variant Zig flags as incomplete — keep std.posix.poll.
+    // fun.sys.poll has a Maybe variant Zig flags as incomplete — keep std.posix.poll.
     const ready = std.posix.poll(&pfd, 80) catch return false;
     if (ready <= 0) return false;
 
     var buf: [128]u8 = undefined;
-    const n = switch (bun.sys.read(bun.FD.stdin(), &buf)) {
+    const n = switch (fun.sys.read(fun.FD.stdin(), &buf)) {
         .result => |r| r,
         .err => return false,
     };
@@ -2121,7 +2121,7 @@ fn probeKittyGraphics() bool {
     const reply = buf[0..n];
     // A successful reply looks like: \x1b_G<...>;OK\x1b\
     // Failure (but-understood): \x1b_G<...>;ENOTSUPPORTED:...\x1b\
-    return bun.strings.contains(reply, ";OK\x1b\\");
+    return fun.strings.contains(reply, ";OK\x1b\\");
 }
 
 /// Resolve an image `src` from markdown to an absolute file path on
@@ -2135,9 +2135,9 @@ fn resolveLocalImagePath(src: []const u8, allocator: Allocator, base_dir: ?[]con
     // http(s) URLs into the renderer via a lookup table as local paths.
     // data: URIs are handled separately in emitImage via direct Kitty
     // transmission (t=d) to avoid creating temp files.
-    if (bun.strings.startsWith(src, "http://") or
-        bun.strings.startsWith(src, "https://") or
-        bun.strings.startsWith(src, "data:"))
+    if (fun.strings.startsWith(src, "http://") or
+        fun.strings.startsWith(src, "https://") or
+        fun.strings.startsWith(src, "data:"))
     {
         return null;
     }
@@ -2147,12 +2147,12 @@ fn resolveLocalImagePath(src: []const u8, allocator: Allocator, base_dir: ?[]con
     // (equivalent to `file:///path`) and real-world file URLs
     // contain %XX escapes for spaces and other reserved chars.
     var path: []const u8 = src;
-    if (bun.strings.startsWith(src, "file://")) {
+    if (fun.strings.startsWith(src, "file://")) {
         path = src["file://".len..];
         // Drop `localhost` authority — RFC 8089 treats it as identity.
-        if (bun.strings.startsWith(path, "localhost/")) {
+        if (fun.strings.startsWith(path, "localhost/")) {
             path = path["localhost".len..];
-        } else if (bun.strings.eqlComptime(path, "localhost")) {
+        } else if (fun.strings.eqlComptime(path, "localhost")) {
             return null;
         }
     }
@@ -2161,20 +2161,20 @@ fn resolveLocalImagePath(src: []const u8, allocator: Allocator, base_dir: ?[]con
     const decoded = PercentEncoding.decodeAlloc(allocator, path) catch return null;
     defer allocator.free(decoded);
 
-    // Resolve to an absolute path. bun.path.joinAbsString returns a
+    // Resolve to an absolute path. fun.path.joinAbsString returns a
     // slice in a threadlocal buffer — dupe it before leaving this fn.
     // Prefer the markdown file's directory when provided; otherwise fall
-    // back to cwd so `Bun.markdown.ansi()` callers without a source path
+    // back to cwd so `Fun.markdown.ansi()` callers without a source path
     // still work.
-    var cwd_buf: bun.PathBuffer = undefined;
-    const base: []const u8 = if (base_dir) |d| d else switch (bun.sys.getcwd(&cwd_buf)) {
+    var cwd_buf: fun.PathBuffer = undefined;
+    const base: []const u8 = if (base_dir) |d| d else switch (fun.sys.getcwd(&cwd_buf)) {
         .result => |c| c,
         .err => return null,
     };
-    const joined = bun.path.joinAbsString(base, &.{decoded}, .auto);
+    const joined = fun.path.joinAbsString(base, &.{decoded}, .auto);
     const abs = allocator.dupe(u8, joined) catch return null;
     // Stat instead of plain exists() so a directory like `./assets/` gets
-    // rejected. bun.sys.exists wraps access(path, F_OK) which returns true
+    // rejected. fun.sys.exists wraps access(path, F_OK) which returns true
     // for any entry, including directories — and emitKittyImageFile sets
     // q=2 so the terminal silently drops directory paths without falling
     // through to alt text.
@@ -2183,8 +2183,8 @@ fn resolveLocalImagePath(src: []const u8, allocator: Allocator, base_dir: ?[]con
         return null;
     };
     defer allocator.free(abs_z);
-    switch (bun.sys.stat(abs_z)) {
-        .result => |s| if ((s.mode & bun.S.IFMT) != bun.S.IFREG) {
+    switch (fun.sys.stat(abs_z)) {
+        .result => |s| if ((s.mode & fun.S.IFMT) != fun.S.IFREG) {
             allocator.free(abs);
             return null;
         },
@@ -2206,13 +2206,13 @@ fn resolveLocalImagePath(src: []const u8, allocator: Allocator, base_dir: ?[]con
 /// Kitty's format codes (`f=100` PNG, `f=24` RGB, `f=32` RGBA) don't
 /// cover JPEG/GIF/WebP binary input.
 fn extractPngDataUrlBase64(src: []const u8) ?[]const u8 {
-    if (!bun.strings.startsWith(src, "data:")) return null;
-    const comma = bun.strings.indexOfChar(src, ',') orelse return null;
+    if (!fun.strings.startsWith(src, "data:")) return null;
+    const comma = fun.strings.indexOfChar(src, ',') orelse return null;
     const header = src[0..comma];
     const payload = src[comma + 1 ..];
-    if (!bun.strings.endsWith(header, ";base64")) return null;
+    if (!fun.strings.endsWith(header, ";base64")) return null;
     // Only PNG is losslessly transmittable via t=d,f=100.
-    if (!bun.strings.contains(header, "image/png")) return null;
+    if (!fun.strings.contains(header, "image/png")) return null;
     return payload;
 }
 
@@ -2234,7 +2234,7 @@ pub fn renderToAnsi(
     return try renderer.out.list.toOwnedSlice(allocator);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const helpers = @import("./helpers.zig");
 const root = @import("./root.zig");
 const std = @import("std");

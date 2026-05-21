@@ -1,4 +1,4 @@
-//! libwebp decode/encode for `Bun.Image`.
+//! libwebp decode/encode for `Fun.Image`.
 //! Dispatch lives in codecs.zig; this file is the codec body.
 
 pub extern fn WebPGetInfo(data: [*]const u8, len: usize, w: *c_int, h: *c_int) c_int;
@@ -89,14 +89,14 @@ pub fn decode(bytes: []const u8, max_pixels: u64) codecs.Error!codecs.Decoded {
     // smaller allocation. (Same race the CG shim guards at :298.)
     if (cw != w or ch != h) return error.DecodeFailed;
     const len: usize = @as(usize, w) * h * 4;
-    const out = try bun.default_allocator.dupe(u8, ptr[0..len]);
-    errdefer bun.default_allocator.free(out);
+    const out = try fun.default_allocator.dupe(u8, ptr[0..len]);
+    errdefer fun.default_allocator.free(out);
 
     // Extract the ICCP chunk (if any) from the RIFF container. A plain
     // VP8/VP8L WebP with no VP8X wrapper has no ICCP — `WebPDemux` still
     // succeeds, `WEBP_FF_FORMAT_FLAGS` returns 0, and we skip the chunk
     // walk. The chunk iterator hands back a borrowed view into `bytes`;
-    // dupe into `bun.default_allocator` to match JPEG/PNG ownership so the
+    // dupe into `fun.default_allocator` to match JPEG/PNG ownership so the
     // pipeline can free it uniformly. Propagate OutOfMemory on the dupe
     // rather than silently dropping colour management — the pixels may be
     // Display P3 / Adobe RGB / XYB where "no profile" reinterprets them as
@@ -114,7 +114,7 @@ pub fn decode(bytes: []const u8, max_pixels: u64) codecs.Error!codecs.Decoded {
         defer WebPDemuxReleaseChunkIterator(&iter);
         const p = iter.chunk.bytes orelse break :blk null;
         if (iter.chunk.size == 0) break :blk null;
-        break :blk try bun.default_allocator.dupe(u8, p[0..iter.chunk.size]);
+        break :blk try fun.default_allocator.dupe(u8, p[0..iter.chunk.size]);
     };
     return .{ .rgba = out, .width = w, .height = h, .icc_profile = icc };
 }
@@ -163,6 +163,6 @@ pub fn encode(rgba: []const u8, w: u32, h: u32, quality: u8, lossless: bool, icc
     return .{ .bytes = assembled_ptr[0..assembled.size], .free = codecs.Encoded.wrap(WebPFree) };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const codecs = @import("./codecs.zig");
 const std = @import("std");

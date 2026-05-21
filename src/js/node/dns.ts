@@ -1,5 +1,5 @@
 // Hardcoded module "node:dns"
-const dns = Bun.dns;
+const dns = Fun.dns;
 const utilPromisifyCustomSymbol = Symbol.for("nodejs.util.promisify.custom");
 const { isIP } = require("internal/net/isIP");
 const {
@@ -680,7 +680,7 @@ function throwIfEmpty(res) {
     throw err;
   }
 }
-Object.defineProperty(throwIfEmpty, "name", { value: "::bunternal::" });
+Object.defineProperty(throwIfEmpty, "name", { value: "::funternal::" });
 
 const promisifyLookup = order => res => {
   throwIfEmpty(res);

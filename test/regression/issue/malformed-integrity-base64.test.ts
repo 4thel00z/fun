@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDirWithFiles } from "harness";
 
 test("malformed integrity base64 in lockfile should be handled gracefully", async () => {
   const dir = tempDirWithFiles("malformed-integrity-test", {
@@ -13,10 +13,10 @@ test("malformed integrity base64 in lockfile should be handled gracefully", asyn
   });
 
   // First create a normal lockfile by running install
-  const { exitCode: installExitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "install"],
+  const { exitCode: installExitCode } = Fun.spawnSync({
+    cmd: [funExe(), "install"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
   });
 
   if (installExitCode !== 0) {
@@ -44,20 +44,20 @@ test("malformed integrity base64 in lockfile should be handled gracefully", asyn
     },
   };
 
-  await Bun.write(`${dir}/bun.lock`, JSON.stringify(lockfile, null, 2));
+  await Fun.write(`${dir}/fun.lock`, JSON.stringify(lockfile, null, 2));
 
   // Now run any command that would parse the lockfile - this should not panic
-  const { stdout, stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "install", "--dry-run"],
+  const { stdout, stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "install", "--dry-run"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
   });
 
-  expect(normalizeBunSnapshot(stdout.toString(), dir)).toMatchInlineSnapshot(`
-    "bun install <version> (<revision>)
+  expect(normalizeFunSnapshot(stdout.toString(), dir)).toMatchInlineSnapshot(`
+    "fun install <version> (<revision>)
 
      lodash@4.17.21 done"
   `);
-  expect(normalizeBunSnapshot(stderr.toString(), dir)).toMatchInlineSnapshot(`""`);
+  expect(normalizeFunSnapshot(stderr.toString(), dir)).toMatchInlineSnapshot(`""`);
   expect(exitCode).toMatchInlineSnapshot(`0`);
 });

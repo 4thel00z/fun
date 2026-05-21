@@ -86,7 +86,7 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const AbsPath = bun.AbsPath;
-const OOM = bun.OOM;
-const strings = bun.strings;
+const fun = @import("fun");
+const AbsPath = fun.AbsPath;
+const OOM = fun.OOM;
+const strings = fun.strings;

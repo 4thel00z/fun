@@ -4,12 +4,12 @@ sidebarTitle: Get entrypoint path
 mode: center
 ---
 
-The `Bun.main` property contains the absolute path to the current entrypoint.
+The `Fun.main` property contains the absolute path to the current entrypoint.
 
 <CodeGroup>
 
 ```ts foo.ts icon="/icons/typescript.svg"
-console.log(Bun.main);
+console.log(Fun.main);
 ```
 
 ```ts index.ts icon="/icons/typescript.svg"
@@ -20,10 +20,10 @@ import "./foo.ts";
 
 ---
 
-The printed path corresponds to the file that is executed with `bun run`.
+The printed path corresponds to the file that is executed with `fun run`.
 
 ```sh terminal icon="terminal"
-bun run index.ts
+fun run index.ts
 ```
 
 ```txt
@@ -31,7 +31,7 @@ bun run index.ts
 ```
 
 ```sh terminal icon="terminal"
-bun run foo.ts
+fun run foo.ts
 ```
 
 ```txt

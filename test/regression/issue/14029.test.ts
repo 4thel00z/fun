@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 test("snapshots will recognize existing entries", async () => {
   const testDir = tmpdirSync();
-  await Bun.write(
+  await Fun.write(
     join(testDir, "test.test.js"),
     `
   test("snapshot test", () => {
@@ -13,10 +13,10 @@ test("snapshots will recognize existing entries", async () => {
   `,
   );
 
-  let proc = Bun.spawnSync({
-    cmd: [bunExe(), "test", "./test.test.js"],
+  let proc = Fun.spawnSync({
+    cmd: [funExe(), "test", "./test.test.js"],
     cwd: testDir,
-    env: { ...bunEnv, CI: "false" },
+    env: { ...funEnv, CI: "false" },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -24,13 +24,13 @@ test("snapshots will recognize existing entries", async () => {
   expect(proc.stderr.toString()).toContain("1 added");
   expect(proc.exitCode).toBe(0);
 
-  const newSnapshot = await Bun.file(join(testDir, "__snapshots__", "test.test.js.snap")).text();
+  const newSnapshot = await Fun.file(join(testDir, "__snapshots__", "test.test.js.snap")).text();
 
   // Run the same test, make sure another entry isn't added
-  proc = Bun.spawnSync({
-    cmd: [bunExe(), "test", "./test.test.js"],
+  proc = Fun.spawnSync({
+    cmd: [funExe(), "test", "./test.test.js"],
     cwd: testDir,
-    env: { ...bunEnv, CI: "false" },
+    env: { ...funEnv, CI: "false" },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -38,5 +38,5 @@ test("snapshots will recognize existing entries", async () => {
   expect(proc.stderr.toString()).not.toContain("1 added");
   expect(proc.exitCode).toBe(0);
 
-  expect(newSnapshot).toBe(await Bun.file(join(testDir, "__snapshots__", "test.test.js.snap")).text());
+  expect(newSnapshot).toBe(await Fun.file(join(testDir, "__snapshots__", "test.test.js.snap")).text());
 });

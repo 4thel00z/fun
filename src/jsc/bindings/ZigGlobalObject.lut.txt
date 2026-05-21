@@ -1,7 +1,7 @@
 // In a separate file because processing ZigGlobalObject.cpp takes 15+ seconds
 
 /* Source for ZigGlobalObject.lut.h
-@begin bunGlobalObjectTable
+@begin funGlobalObjectTable
   addEventListener                jsFunctionAddEventListener                           Function 2
   alert                           WebCore__alert                                       Function 1
   atob                            functionATOB                                         Function 1
@@ -11,7 +11,7 @@
   clearTimeout                    functionClearTimeout                                 Function 1
   confirm                         WebCore__confirm                                     Function 1
   dispatchEvent                   jsFunctionDispatchEvent                              Function 1
-  fetch                           constructBunFetchObject                              PropertyCallback
+  fetch                           constructFunFetchObject                              PropertyCallback
   postMessage                     jsFunctionPostMessage                                Function 1
   prompt                          WebCore__prompt                                      Function 1
   queueMicrotask                  functionQueueMicrotask                               Function 2
@@ -24,7 +24,7 @@
 
   global                          GlobalObject_getGlobalThis                           PropertyCallback
 
-  Bun                             GlobalObject::m_bunObject                            CellProperty|DontDelete|ReadOnly
+  Fun                             GlobalObject::m_funObject                            CellProperty|DontDelete|ReadOnly
   File                            GlobalObject::m_JSDOMFileConstructor                 CellProperty
   crypto                          GlobalObject::m_cryptoObject                         CellProperty
   navigator                       GlobalObject::m_navigatorObject                      CellProperty

@@ -1,9 +1,9 @@
-import { write } from "bun";
-import { afterAll, beforeAll, describe, expect, it, test } from "bun:test";
+import { write } from "fun";
+import { afterAll, beforeAll, describe, expect, it, test } from "fun:test";
 import { rm } from "fs/promises";
-import { VerdaccioRegistry, bunExe, bunEnv as env, stderrForInstall } from "harness";
+import { VerdaccioRegistry, funExe, funEnv as env, stderrForInstall } from "harness";
 import { join } from "path";
-const { iniInternals } = require("bun:internal-for-testing");
+const { iniInternals } = require("fun:internal-for-testing");
 const { loadNpmrc } = iniInternals;
 
 var registry = new VerdaccioRegistry();
@@ -25,19 +25,19 @@ describe("npmrc", async () => {
     await Promise.all([
       write(join(packageDir, ".npmrc"), Buffer.from(`\ufeff\ncache=hi!`, "utf16le")),
       write(packageJson, JSON.stringify({ name: "foo", version: "1.0.0" })),
-      rm(join(packageDir, "bunfig.toml"), { force: true }),
+      rm(join(packageDir, "funfig.toml"), { force: true }),
     ]);
 
-    const originalCacheDir = env.BUN_INSTALL_CACHE_DIR;
-    delete env.BUN_INSTALL_CACHE_DIR;
-    const { stdout, stderr, exited } = Bun.spawn({
-      cmd: [bunExe(), "pm", "cache"],
+    const originalCacheDir = env.FUN_INSTALL_CACHE_DIR;
+    delete env.FUN_INSTALL_CACHE_DIR;
+    const { stdout, stderr, exited } = Fun.spawn({
+      cmd: [funExe(), "pm", "cache"],
       cwd: packageDir,
       env,
       stdout: "pipe",
       stderr: "pipe",
     });
-    env.BUN_INSTALL_CACHE_DIR = originalCacheDir;
+    env.FUN_INSTALL_CACHE_DIR = originalCacheDir;
 
     const out = await stdout.text();
     const err = stderrForInstall(await stderr.text());
@@ -52,79 +52,79 @@ describe("npmrc", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
     console.log("package dir", packageDir);
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     const ini = /* ini */ ``;
 
-    await Bun.$`echo ${ini} > ${packageDir}/.npmrc`;
-    await Bun.$`echo ${JSON.stringify({
+    await Fun.$`echo ${ini} > ${packageDir}/.npmrc`;
+    await Fun.$`echo ${JSON.stringify({
       name: "foo",
       dependencies: {},
     })} > package.json`.cwd(packageDir);
-    await Bun.$`${bunExe()} install`.cwd(packageDir).throws(true);
+    await Fun.$`${funExe()} install`.cwd(packageDir).throws(true);
   });
 
   it("sets default registry", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
     console.log("package dir", packageDir);
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     const ini = /* ini */ `
 registry = http://localhost:${registry.port}/
 `;
 
-    await Bun.$`echo ${ini} > ${packageDir}/.npmrc`;
-    await Bun.$`echo ${JSON.stringify({
+    await Fun.$`echo ${ini} > ${packageDir}/.npmrc`;
+    await Fun.$`echo ${JSON.stringify({
       name: "foo",
       dependencies: {
         "no-deps": "1.0.0",
       },
     })} > package.json`.cwd(packageDir);
-    await Bun.$`${bunExe()} install`.cwd(packageDir).throws(true);
+    await Fun.$`${funExe()} install`.cwd(packageDir).throws(true);
   });
 
   it("sets scoped registry", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     const ini = /* ini */ `
   @types:registry=http://localhost:${registry.port}/
   `;
 
-    await Bun.$`echo ${ini} > ${packageDir}/.npmrc`;
-    await Bun.$`echo ${JSON.stringify({
+    await Fun.$`echo ${ini} > ${packageDir}/.npmrc`;
+    await Fun.$`echo ${JSON.stringify({
       name: "foo",
       dependencies: {
         "@types/no-deps": "1.0.0",
       },
     })} > package.json`.cwd(packageDir);
-    await Bun.$`${bunExe()} install`.cwd(packageDir).throws(true);
+    await Fun.$`${funExe()} install`.cwd(packageDir).throws(true);
   });
 
   it("works with home config", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
     console.log("package dir", packageDir);
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     const homeDir = `${packageDir}/home_dir`;
-    await Bun.$`mkdir -p ${homeDir}`;
+    await Fun.$`mkdir -p ${homeDir}`;
     console.log("home dir", homeDir);
 
     const ini = /* ini */ `
   registry=http://localhost:${registry.port}/
   `;
 
-    await Bun.$`echo ${ini} > ${homeDir}/.npmrc`;
-    await Bun.$`echo ${JSON.stringify({
+    await Fun.$`echo ${ini} > ${homeDir}/.npmrc`;
+    await Fun.$`echo ${JSON.stringify({
       name: "foo",
       dependencies: {
         "no-deps": "1.0.0",
       },
     })} > package.json`.cwd(packageDir);
-    await Bun.$`${bunExe()} install`
+    await Fun.$`${funExe()} install`
       .env({
         ...process.env,
         XDG_CONFIG_HOME: `${homeDir}`,
@@ -136,30 +136,30 @@ registry = http://localhost:${registry.port}/
   it("works with two configs", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     console.log("package dir", packageDir);
     const packageIni = /* ini */ `
   @types:registry=http://localhost:${registry.port}/
   `;
-    await Bun.$`echo ${packageIni} > ${packageDir}/.npmrc`;
+    await Fun.$`echo ${packageIni} > ${packageDir}/.npmrc`;
 
     const homeDir = `${packageDir}/home_dir`;
-    await Bun.$`mkdir -p ${homeDir}`;
+    await Fun.$`mkdir -p ${homeDir}`;
     console.log("home dir", homeDir);
     const homeIni = /* ini */ `
     registry = http://localhost:${registry.port}/
     `;
-    await Bun.$`echo ${homeIni} > ${homeDir}/.npmrc`;
+    await Fun.$`echo ${homeIni} > ${homeDir}/.npmrc`;
 
-    await Bun.$`echo ${JSON.stringify({
+    await Fun.$`echo ${JSON.stringify({
       name: "foo",
       dependencies: {
         "no-deps": "1.0.0",
         "@types/no-deps": "1.0.0",
       },
     })} > package.json`.cwd(packageDir);
-    await Bun.$`${bunExe()} install`
+    await Fun.$`${funExe()} install`
       .env({
         ...process.env,
         XDG_CONFIG_HOME: `${homeDir}`,
@@ -171,27 +171,27 @@ registry = http://localhost:${registry.port}/
   it("package config overrides home config", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     console.log("package dir", packageDir);
     const packageIni = /* ini */ `
   @types:registry=http://localhost:${registry.port}/
   `;
-    await Bun.$`echo ${packageIni} > ${packageDir}/.npmrc`;
+    await Fun.$`echo ${packageIni} > ${packageDir}/.npmrc`;
 
     const homeDir = `${packageDir}/home_dir`;
-    await Bun.$`mkdir -p ${homeDir}`;
+    await Fun.$`mkdir -p ${homeDir}`;
     console.log("home dir", homeDir);
     const homeIni = /* ini */ "@types:registry=https://registry.npmjs.org/";
-    await Bun.$`echo ${homeIni} > ${homeDir}/.npmrc`;
+    await Fun.$`echo ${homeIni} > ${homeDir}/.npmrc`;
 
-    await Bun.$`echo ${JSON.stringify({
+    await Fun.$`echo ${JSON.stringify({
       name: "foo",
       dependencies: {
         "@types/no-deps": "1.0.0",
       },
     })} > package.json`.cwd(packageDir);
-    await Bun.$`${bunExe()} install`
+    await Fun.$`${funExe()} install`
       .env({
         ...process.env,
         XDG_CONFIG_HOME: `${homeDir}`,
@@ -215,7 +215,7 @@ registry=\${LOL}
   it("default registry from env variable 2", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     const ini = /* ini */ `
 registry=http://localhost:\${PORT}/
@@ -240,7 +240,7 @@ registry=http://localhost:\${PORT}/
     test(optionName.join(" "), async () => {
       const { packageDir, packageJson } = await registry.createTestDir();
 
-      await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+      await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
       const iniInner = await Promise.all(
         options.map(async ([option, value]) => {
@@ -254,7 +254,7 @@ registry=http://localhost:\${PORT}/
 ${iniInner.join("\n")}
 `;
 
-      await Bun.$`echo ${JSON.stringify({
+      await Fun.$`echo ${JSON.stringify({
         name: "hello",
         main: "index.js",
         version: "1.0.0",
@@ -263,7 +263,7 @@ ${iniInner.join("\n")}
         },
       })} > package.json`.cwd(packageDir);
 
-      await Bun.$`echo ${ini} > ${packageDir}/.npmrc`;
+      await Fun.$`echo ${ini} > ${packageDir}/.npmrc`;
 
       const result = loadNpmrc(ini);
 
@@ -291,7 +291,7 @@ ${iniInner.join("\n")}
   it("authentication works", async () => {
     const { packageDir, packageJson } = await registry.createTestDir();
 
-    await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+    await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
     const ini = /* ini */ `
 registry = http://localhost:${registry.port}/
@@ -299,8 +299,8 @@ registry = http://localhost:${registry.port}/
 //localhost:${registry.port}/:_authToken=${await registry.generateUser("bilbo_swaggins", "verysecure")}
 `;
 
-    await Bun.$`echo ${ini} > ${packageDir}/.npmrc`;
-    await Bun.$`echo ${JSON.stringify({
+    await Fun.$`echo ${ini} > ${packageDir}/.npmrc`;
+    await Fun.$`echo ${JSON.stringify({
       name: "hi",
       main: "index.js",
       version: "1.0.0",
@@ -313,7 +313,7 @@ registry = http://localhost:${registry.port}/
       },
     })} > package.json`.cwd(packageDir);
 
-    await Bun.$`${bunExe()} install`.env(env).cwd(packageDir).throws(true);
+    await Fun.$`${funExe()} install`.env(env).cwd(packageDir).throws(true);
   });
 
   type EnvMap =
@@ -335,7 +335,7 @@ registry = http://localhost:${registry.port}/
       const { packageDir, packageJson } = await registry.createTestDir();
 
       console.log("PACKAGE DIR", packageDir);
-      await Bun.$`rm -rf ${packageDir}/bunfig.toml`;
+      await Fun.$`rm -rf ${packageDir}/funfig.toml`;
 
       const { dotEnv, ...restOfEnv } = _env
         ? typeof _env === "function"
@@ -359,9 +359,9 @@ ${Object.keys(opts)
   .join("\n")}
 `;
 
-      if (dotEnvInner.length > 0) await Bun.$`echo ${dotEnvInner} > ${packageDir}/.env`;
-      await Bun.$`echo ${ini} > ${packageDir}/.npmrc`;
-      await Bun.$`echo ${JSON.stringify({
+      if (dotEnvInner.length > 0) await Fun.$`echo ${dotEnvInner} > ${packageDir}/.env`;
+      await Fun.$`echo ${ini} > ${packageDir}/.npmrc`;
+      await Fun.$`echo ${JSON.stringify({
         name: "hi",
         main: "index.js",
         version: "1.0.0",
@@ -373,7 +373,7 @@ ${Object.keys(opts)
         },
       })} > package.json`.cwd(packageDir);
 
-      const { stdout, stderr } = await Bun.$`${bunExe()} install`
+      const { stdout, stderr } = await Fun.$`${funExe()} install`
         .env({ ...env, ...restOfEnv })
         .cwd(packageDir)
         .throws(check === undefined);
@@ -466,9 +466,9 @@ ${Object.keys(opts)
   );
 
   test("applies auth tokens to default registry correctly - same host different paths", () => {
-    // Regression test for https://github.com/oven-sh/bun/issues/26350
+    // Regression test for https://github.com/underdoc-org/fun/issues/26350
     // When multiple auth tokens exist for the same host but different paths,
-    // Bun should match the token by both host AND path, not just host.
+    // Fun should match the token by both host AND path, not just host.
     const ini = `
 registry=https://somehost.com/org1/npm/registry/
 //somehost.com/org1/npm/registry/:_authToken=jwt1
@@ -481,7 +481,7 @@ registry=https://somehost.com/org1/npm/registry/
   });
 
   test("auth token not applied when paths don't match - same host", () => {
-    // Regression test for https://github.com/oven-sh/bun/issues/26350
+    // Regression test for https://github.com/underdoc-org/fun/issues/26350
     // When auth tokens exist for a different path on the same host,
     // they should not be applied to the default registry.
     const ini = `

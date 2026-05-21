@@ -215,9 +215,9 @@ canonical: 2024-01-15T10:30:00.123456789Z
 
 // Parse benchmarks
 group("parse small YAML", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(smallYaml);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(smallYaml);
     });
   }
 
@@ -231,9 +231,9 @@ group("parse small YAML", () => {
 });
 
 group("parse medium YAML", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(mediumYaml);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(mediumYaml);
     });
   }
 
@@ -247,9 +247,9 @@ group("parse medium YAML", () => {
 });
 
 group("parse large YAML", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(largeYaml);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(largeYaml);
     });
   }
 
@@ -263,9 +263,9 @@ group("parse large YAML", () => {
 });
 
 group("parse YAML with anchors", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(yamlWithAnchors);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(yamlWithAnchors);
     });
   }
 
@@ -279,9 +279,9 @@ group("parse YAML with anchors", () => {
 });
 
 group("parse YAML array", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(arrayYaml);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(arrayYaml);
     });
   }
 
@@ -295,9 +295,9 @@ group("parse YAML array", () => {
 });
 
 group("parse YAML with multiline strings", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(multilineYaml);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(multilineYaml);
     });
   }
 
@@ -311,9 +311,9 @@ group("parse YAML with multiline strings", () => {
 });
 
 group("parse YAML with numbers", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(numbersYaml);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(numbersYaml);
     });
   }
 
@@ -327,9 +327,9 @@ group("parse YAML with numbers", () => {
 });
 
 group("parse YAML with dates", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.parse", () => {
-      globalThis.result = Bun.YAML.parse(datesYaml);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.parse", () => {
+      globalThis.result = Fun.YAML.parse(datesYaml);
     });
   }
 

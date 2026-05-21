@@ -1,11 +1,11 @@
 /**
  * All new tests in this file should also run in Node.js.
  *
- * Do not add any tests that only run in Bun.
+ * Do not add any tests that only run in Fun.
  *
  * A handful of older tests do not run in Node in this file. These tests should be updated to run in Node, or deleted.
  */
-import { bunEnv, bunExe, exampleSite, randomPort, tls as tlsCert } from "harness";
+import { funEnv, funExe, exampleSite, randomPort, tls as tlsCert } from "harness";
 import { createTest } from "node-harness";
 import { EventEmitter, once } from "node:events";
 import nodefs from "node:fs";
@@ -304,7 +304,7 @@ describe("node:http", () => {
 
             function addPoweredBy() {
               if (!this.getHeader("X-Powered-By")) {
-                this.setHeader("X-Powered-By", "Bun");
+                this.setHeader("X-Powered-By", "Fun");
               }
             }
 
@@ -774,7 +774,7 @@ describe("node:http", () => {
       runTest(done, (server, serverPort, done) => {
         const req = request(`http://localhost:${serverPort}/customWriteHead`, res => {
           expect(res.headers["content-type"]).toBe("text/plain");
-          expect(res.headers["x-powered-by"]).toBe("Bun");
+          expect(res.headers["x-powered-by"]).toBe("Fun");
           done();
         });
         req.end();
@@ -1052,25 +1052,25 @@ describe("node:http", () => {
 
   test("test unix socket server", async () => {
     const { promise, resolve, reject } = Promise.withResolvers();
-    const socketPath = `${tmpdir()}/bun-server-${Math.random().toString(32)}.sock`;
+    const socketPath = `${tmpdir()}/fun-server-${Math.random().toString(32)}.sock`;
     await using server = createServer((req, res) => {
       expect(req.method).toStrictEqual("GET");
-      expect(req.url).toStrictEqual("/bun?a=1");
+      expect(req.url).toStrictEqual("/fun?a=1");
       res.writeHead(200, {
         "Content-Type": "text/plain",
         "Connection": "close",
       });
-      res.write("Bun\n");
+      res.write("Fun\n");
       res.end();
     });
 
     server.listen(socketPath, async () => {
       try {
-        const response = await fetch(`http://localhost/bun?a=1`, {
+        const response = await fetch(`http://localhost/fun?a=1`, {
           unix: socketPath,
         });
         const text = await response.text();
-        expect(text).toBe("Bun\n");
+        expect(text).toBe("Fun\n");
         resolve();
       } catch (err) {
         reject(err);
@@ -1081,11 +1081,11 @@ describe("node:http", () => {
   });
 
   test("should not decompress gzip, issue#4397", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: tlsCert,
       fetch() {
-        const body = Bun.gzipSync(Buffer.from("<html>Hello</html>"));
+        const body = Fun.gzipSync(Buffer.from("<html>Hello</html>"));
         return new Response(body, {
           headers: { "content-encoding": "gzip" },
         });
@@ -1243,7 +1243,7 @@ describe("server.address should be valid IP", () => {
     });
   });
   it("test unix socket, issue#6413", done => {
-    const socketPath = `${tmpdir()}/bun-server-${Math.random().toString(32)}.sock`;
+    const socketPath = `${tmpdir()}/fun-server-${Math.random().toString(32)}.sock`;
     const server = createServer((req, res) => {});
     server.listen(socketPath, async (_err, host, port) => {
       try {
@@ -1286,7 +1286,7 @@ describe("server.address should be valid IP", () => {
         doneRequest();
       });
       res.assignSocket(socket);
-      await Bun.sleep(10);
+      await Fun.sleep(10);
 
       expect(res.socket).toBe(socket);
       expect(socket._httpMessage).toBe(res);
@@ -1300,11 +1300,11 @@ describe("server.address should be valid IP", () => {
 });
 
 it("should propagate exception in sync data handler", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run", path.join(import.meta.dir, "node-http-error-in-data-handler-fixture.1.js")],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run", path.join(import.meta.dir, "node-http-error-in-data-handler-fixture.1.js")],
     stdout: "pipe",
     stderr: "inherit",
-    env: bunEnv,
+    env: funEnv,
   });
   const [stdout, exitCode] = await Promise.all([proc.stdout.text(), proc.exited]);
   expect(stdout).toContain("Test passed");
@@ -1312,11 +1312,11 @@ it("should propagate exception in sync data handler", async () => {
 });
 
 it("should propagate exception in async data handler", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run", path.join(import.meta.dir, "node-http-error-in-data-handler-fixture.2.js")],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run", path.join(import.meta.dir, "node-http-error-in-data-handler-fixture.2.js")],
     stdout: "pipe",
     stderr: "inherit",
-    env: bunEnv,
+    env: funEnv,
   });
   const [stdout, exitCode] = await Promise.all([proc.stdout.text(), proc.exited]);
   expect(stdout).toContain("Test passed");
@@ -1718,7 +1718,7 @@ describe("HTTP Server Security Tests - Advanced", () => {
     const clientErrors: Promise<void>[] = [];
     server.on("clientError", (err, socket) => {
       clientErrors.push(
-        Bun.sleep(10).then(() => {
+        Fun.sleep(10).then(() => {
           socket.destroy();
         }),
       );

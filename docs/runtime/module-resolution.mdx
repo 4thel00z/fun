@@ -1,13 +1,13 @@
 ---
 title: "Module Resolution"
-description: "How Bun resolves modules and handles imports in JavaScript and TypeScript"
+description: "How Fun resolves modules and handles imports in JavaScript and TypeScript"
 ---
 
 Module resolution in JavaScript is a complex topic.
 
 The ecosystem is currently in the midst of a years-long transition from CommonJS modules to native ES modules. TypeScript enforces its own set of rules around import extensions that aren't compatible with ESM. Different build tools support path re-mapping via disparate non-compatible mechanisms.
 
-Bun aims to provide a consistent and predictable module resolution system that works out of the box. Unfortunately it's still quite complex.
+Fun aims to provide a consistent and predictable module resolution system that works out of the box. Unfortunately it's still quite complex.
 
 ## Syntax
 
@@ -32,11 +32,11 @@ export function hello() {
 When we run `index.ts`, it prints "Hello world!".
 
 ```bash icon="terminal" terminal
-bun index.ts
+fun index.ts
 Hello world!
 ```
 
-In this case, we are importing from `./hello`, a relative path with no extension. **Extensioned imports are optional but supported.** To resolve this import, Bun will check for the following files in order:
+In this case, we are importing from `./hello`, a relative path with no extension. **Extensioned imports are optional but supported.** To resolve this import, Fun will check for the following files in order:
 
 - `./hello.tsx`
 - `./hello.jsx`
@@ -53,14 +53,14 @@ In this case, we are importing from `./hello`, a relative path with no extension
 - `./hello/index.cjs`
 - `./hello/index.json`
 
-Import paths can optionally include extensions. If an extension is present, Bun will only check for a file with that exact extension.
+Import paths can optionally include extensions. If an extension is present, Fun will only check for a file with that exact extension.
 
 ```ts index.ts icon="/icons/typescript.svg"
 import { hello } from "./hello";
 import { hello } from "./hello.ts"; // this works
 ```
 
-If you import `from "*.js{x}"`, Bun will additionally check for a matching `*.ts{x}` file, to be compatible with TypeScript's [ES module support](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7.html#new-file-extensions).
+If you import `from "*.js{x}"`, Fun will additionally check for a matching `*.ts{x}` file, to be compatible with TypeScript's [ES module support](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7.html#new-file-extensions).
 
 ```ts index.ts icon="/icons/typescript.svg"
 import { hello } from "./hello";
@@ -68,7 +68,7 @@ import { hello } from "./hello.ts"; // this works
 import { hello } from "./hello.js"; // this also works
 ```
 
-Bun supports both ES modules (`import`/`export` syntax) and CommonJS modules (`require()`/`module.exports`). The following CommonJS version would also work in Bun.
+Fun supports both ES modules (`import`/`export` syntax) and CommonJS modules (`require()`/`module.exports`). The following CommonJS version would also work in Fun.
 
 <CodeGroup>
 
@@ -94,9 +94,9 @@ That said, using CommonJS is discouraged in new projects.
 
 ## Module systems
 
-Bun has native support for CommonJS and ES modules. ES Modules are the recommended module format for new projects, but CommonJS modules are still widely used in the Node.js ecosystem.
+Fun has native support for CommonJS and ES modules. ES Modules are the recommended module format for new projects, but CommonJS modules are still widely used in the Node.js ecosystem.
 
-In Bun's JavaScript runtime, `require` can be used by both ES Modules and CommonJS modules. If the target module is an ES Module, `require` returns the module namespace object (equivalent to `import * as`). If the target module is a CommonJS module, `require` returns the `module.exports` object (as in Node.js).
+In Fun's JavaScript runtime, `require` can be used by both ES Modules and CommonJS modules. If the target module is an ES Module, `require` returns the module namespace object (equivalent to `import * as`). If the target module is a CommonJS module, `require` returns the `module.exports` object (as in Node.js).
 
 | Module Type | `require()`      | `import * as`                                                           |
 | ----------- | ---------------- | ----------------------------------------------------------------------- |
@@ -156,7 +156,7 @@ import { stuff } from "./my-commonjs.cjs";
 
 ### Using `import` and `require()` together
 
-In Bun, you can use `import` or `require` in the same file—they both work, all the time.
+In Fun, you can use `import` or `require` in the same file—they both work, all the time.
 
 ```ts title="index.ts" icon="/icons/typescript.svg"
 import { stuff } from "./my-commonjs.cjs";
@@ -175,20 +175,20 @@ Fortunately, very few libraries use top-level await, so this is rarely a problem
 
 ## Importing packages
 
-Bun implements the Node.js module resolution algorithm, so you can import packages from `node_modules` with a bare specifier.
+Fun implements the Node.js module resolution algorithm, so you can import packages from `node_modules` with a bare specifier.
 
 ```ts title="index.ts" icon="/icons/typescript.svg"
 import { stuff } from "foo";
 ```
 
-The full specification of this algorithm are officially documented in the [Node.js documentation](https://nodejs.org/api/modules.html); we won't rehash it here. Briefly: if you import `from "foo"`, Bun scans up the file system for a `node_modules` directory containing the package `foo`.
+The full specification of this algorithm are officially documented in the [Node.js documentation](https://nodejs.org/api/modules.html); we won't rehash it here. Briefly: if you import `from "foo"`, Fun scans up the file system for a `node_modules` directory containing the package `foo`.
 
 ### NODE_PATH
 
-Bun supports `NODE_PATH` for additional module resolution directories:
+Fun supports `NODE_PATH` for additional module resolution directories:
 
 ```bash
-NODE_PATH=./packages bun run src/index.js
+NODE_PATH=./packages fun run src/index.js
 ```
 
 ```ts
@@ -202,17 +202,17 @@ import { hello } from "foo";
 Multiple paths use the platform's delimiter (`:` on Unix, `;` on Windows):
 
 ```bash
-NODE_PATH=./packages:./lib bun run src/index.js  # Unix/macOS
-NODE_PATH=./packages;./lib bun run src/index.js  # Windows
+NODE_PATH=./packages:./lib fun run src/index.js  # Unix/macOS
+NODE_PATH=./packages;./lib fun run src/index.js  # Windows
 ```
 
-Once it finds the `foo` package, Bun reads the `package.json` to determine how the package should be imported. To determine the package's entrypoint, Bun first reads the `exports` field and checks for the following conditions.
+Once it finds the `foo` package, Fun reads the `package.json` to determine how the package should be imported. To determine the package's entrypoint, Fun first reads the `exports` field and checks for the following conditions.
 
 ```json package.json icon="file-json"
 {
   "name": "foo",
   "exports": {
-    "bun": "./index.js",
+    "fun": "./index.js",
     "node": "./index.js",
     "require": "./index.js", // if importer is CommonJS
     "import": "./index.mjs", // if importer is ES module
@@ -223,7 +223,7 @@ Once it finds the `foo` package, Bun reads the `package.json` to determine how t
 
 Whichever one of these conditions occurs _first_ in the `package.json` is used to determine the package's entrypoint.
 
-Bun respects subpath [`"exports"`](https://nodejs.org/api/packages.html#subpath-exports) and [`"imports"`](https://nodejs.org/api/packages.html#imports).
+Fun respects subpath [`"exports"`](https://nodejs.org/api/packages.html#subpath-exports) and [`"imports"`](https://nodejs.org/api/packages.html#imports).
 
 ```json package.json icon="file-json"
 {
@@ -256,12 +256,12 @@ import stuff from "foo/index.mjs"; // this doesn't
 ```
 
 <Note>
-  **Shipping TypeScript** — Note that Bun supports the special `"bun"` export condition. If your library is written in
+  **Shipping TypeScript** — Note that Fun supports the special `"fun"` export condition. If your library is written in
   TypeScript, you can publish your (un-transpiled!) TypeScript files to `npm` directly. If you specify your package's
-  `*.ts` entrypoint in the `"bun"` condition, Bun will directly import and execute your TypeScript source files.
+  `*.ts` entrypoint in the `"fun"` condition, Fun will directly import and execute your TypeScript source files.
 </Note>
 
-If `exports` is not defined, Bun falls back to `"module"` (ESM imports only) then [`"main"`](https://nodejs.org/api/packages.html#main).
+If `exports` is not defined, Fun falls back to `"module"` (ESM imports only) then [`"main"`](https://nodejs.org/api/packages.html#main).
 
 ```json package.json icon="file-json"
 {
@@ -275,22 +275,22 @@ If `exports` is not defined, Bun falls back to `"module"` (ESM imports only) the
 
 The `--conditions` flag allows you to specify a list of conditions to use when resolving packages from package.json `"exports"`.
 
-This flag is supported in both `bun build` and Bun's runtime.
+This flag is supported in both `fun build` and Fun's runtime.
 
 ```sh terminal icon="terminal"
-# Use it with bun build:
-bun build --conditions="react-server" --target=bun ./app/foo/route.js
+# Use it with fun build:
+fun build --conditions="react-server" --target=fun ./app/foo/route.js
 
-# Use it with bun's runtime:
-bun --conditions="react-server" ./app/foo/route.js
+# Use it with fun's runtime:
+fun --conditions="react-server" ./app/foo/route.js
 ```
 
-You can also use `conditions` programmatically with `Bun.build`:
+You can also use `conditions` programmatically with `Fun.build`:
 
 ```ts build.ts icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   conditions: ["react-server"],
-  target: "bun",
+  target: "fun",
   entryPoints: ["./app/foo/route.js"],
 });
 ```
@@ -299,7 +299,7 @@ await Bun.build({
 
 ## Path re-mapping
 
-Bun supports import path re-mapping through TypeScript's [`compilerOptions.paths`](https://www.typescriptlang.org/tsconfig#paths) in `tsconfig.json`, which works well with editors. If you aren't a TypeScript user, you can achieve the same behavior by using a [`jsconfig.json`](https://code.visualstudio.com/docs/languages/jsconfig) in your project root.
+Fun supports import path re-mapping through TypeScript's [`compilerOptions.paths`](https://www.typescriptlang.org/tsconfig#paths) in `tsconfig.json`, which works well with editors. If you aren't a TypeScript user, you can achieve the same behavior by using a [`jsconfig.json`](https://code.visualstudio.com/docs/languages/jsconfig) in your project root.
 
 ```json tsconfig.json icon="file-json"
 {
@@ -312,7 +312,7 @@ Bun supports import path re-mapping through TypeScript's [`compilerOptions.paths
 }
 ```
 
-Bun also supports [Node.js-style subpath imports](https://nodejs.org/api/packages.html#subpath-imports) in `package.json`, where mapped paths must start with `#`. This approach doesn’t work as well with editors, but both options can be used together.
+Fun also supports [Node.js-style subpath imports](https://nodejs.org/api/packages.html#subpath-imports) in `package.json`, where mapped paths must start with `#`. This approach doesn’t work as well with editors, but both options can be used together.
 
 ```json package.json icon="file-json"
 {
@@ -323,9 +323,9 @@ Bun also supports [Node.js-style subpath imports](https://nodejs.org/api/package
 }
 ```
 
-<Accordion title="Low-level details of CommonJS interop in Bun">
+<Accordion title="Low-level details of CommonJS interop in Fun">
 
-Bun's JavaScript runtime has native support for CommonJS. When Bun's JavaScript transpiler detects usages of `module.exports`, it treats the file as CommonJS. The module loader will then wrap the transpiled module in a function shaped like this:
+Fun's JavaScript runtime has native support for CommonJS. When Fun's JavaScript transpiler detects usages of `module.exports`, it treats the file as CommonJS. The module loader will then wrap the transpiled module in a function shaped like this:
 
 ```js
 (function (module, exports, require) {
@@ -335,9 +335,9 @@ Bun's JavaScript runtime has native support for CommonJS. When Bun's JavaScript 
 
 `module`, `exports`, and `require` are very much like the `module`, `exports`, and `require` in Node.js. These are assigned via a [`with scope`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/with) in C++. An internal `Map` stores the `exports` object to handle cyclical `require` calls before the module is fully loaded.
 
-Once the CommonJS module is successfully evaluated, a Synthetic Module Record is created with the `default` ES Module [export set to `module.exports`](https://github.com/oven-sh/bun/blob/9b6913e1a674ceb7f670f917fc355bb8758c6c72/src/bun.js/bindings/CommonJSModuleRecord.cpp#L212-L213) and keys of the `module.exports` object are re-exported as named exports (if the `module.exports` object is an object).
+Once the CommonJS module is successfully evaluated, a Synthetic Module Record is created with the `default` ES Module [export set to `module.exports`](https://github.com/underdoc-org/fun/blob/9b6913e1a674ceb7f670f917fc355bb8758c6c72/src/fun.js/bindings/CommonJSModuleRecord.cpp#L212-L213) and keys of the `module.exports` object are re-exported as named exports (if the `module.exports` object is an object).
 
-When using Bun's bundler, this works differently. The bundler will wrap the CommonJS module in a `require_${moduleName}` function which returns the `module.exports` object.
+When using Fun's bundler, this works differently. The bundler will wrap the CommonJS module in a `require_${moduleName}` function which returns the `module.exports` object.
 
 </Accordion>
 
@@ -347,7 +347,7 @@ When using Bun's bundler, this works differently. The bundler will wrap the Comm
 
 The `import.meta` object is a way for a module to access information about itself. It's part of the JavaScript language, but its contents are not standardized. Each "host" (browser, runtime, etc) is free to implement any properties it wishes on the `import.meta` object.
 
-Bun implements the following properties.
+Fun implements the following properties.
 
 ```ts /path/to/project/file.ts
 import.meta.dir; // => "/path/to/project"
@@ -355,7 +355,7 @@ import.meta.file; // => "file.ts"
 import.meta.path; // => "/path/to/project/file.ts"
 import.meta.url; // => "file:///path/to/project/file.ts"
 
-import.meta.main; // `true` if this file is directly executed by `bun run`
+import.meta.main; // `true` if this file is directly executed by `fun run`
 // `false` otherwise
 
 import.meta.resolve("zod"); // => "file:///path/to/project/node_modules/zod/index.js"
@@ -369,6 +369,6 @@ import.meta.resolve("zod"); // => "file:///path/to/project/node_modules/zod/inde
 | `import.meta.file`     | The name of the current file, e.g. `index.tsx`                                                                                                                                                                                                                                                                                |
 | `import.meta.path`     | Absolute path to the current file, e.g. `/path/to/project/index.ts`. Equivalent to `__filename` in CommonJS modules (and Node.js)                                                                                                                                                                                             |
 | `import.meta.filename` | An alias to `import.meta.path`, for Node.js compatibility                                                                                                                                                                                                                                                                     |
-| `import.meta.main`     | Indicates whether the current file is the entrypoint to the current `bun` process. Is the file being directly executed by `bun run` or is it being imported?                                                                                                                                                                  |
+| `import.meta.main`     | Indicates whether the current file is the entrypoint to the current `fun` process. Is the file being directly executed by `fun run` or is it being imported?                                                                                                                                                                  |
 | `import.meta.resolve`  | Resolve a module specifier (e.g. `"zod"` or `"./file.tsx"`) to a url. Equivalent to [`import.meta.resolve` in browsers](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta#resolve). Example: `import.meta.resolve("zod")` returns `"file:///path/to/project/node_modules/zod/index.ts"` |
 | `import.meta.url`      | A `string` url to the current file, e.g. `file:///path/to/project/index.ts`. Equivalent to [`import.meta.url` in browsers](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta#url)                                                                                                       |

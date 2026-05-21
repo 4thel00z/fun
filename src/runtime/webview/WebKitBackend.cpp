@@ -8,10 +8,10 @@
 
 #if OS(DARWIN)
 
-#include "bun-uws/src/SocketKinds.h"
+#include "fun-uws/src/SocketKinds.h"
 #include "ipc_protocol.h"
 #include "ZigGlobalObject.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/JSCInlines.h>
 #include <JavaScriptCore/TopExceptionScope.h>
 #include <JavaScriptCore/JSPromise.h>
@@ -33,25 +33,25 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace Bun {
+namespace Fun {
 namespace WK {
 
 using namespace JSC;
 using namespace WebViewProto;
 
-// Spawn + process-exit watch in Zig (reuses bun.spawn.Process / EVFILT_PROC).
-extern "C" int32_t Bun__WebViewHost__ensure(Zig::GlobalObject*, bool stdoutInherit, bool stderrInherit);
+// Spawn + process-exit watch in Zig (reuses fun.spawn.Process / EVFILT_PROC).
+extern "C" int32_t Fun__WebViewHost__ensure(Zig::GlobalObject*, bool stdoutInherit, bool stderrInherit);
 extern "C" void* Blob__fromMmapWithType(JSC::JSGlobalObject*, uint8_t* ptr, size_t len, const char* mime);
 extern "C" JSC::EncodedJSValue SYSV_ABI Blob__create(Zig::GlobalObject*, void* impl);
 extern "C" JSC::EncodedJSValue JSBuffer__fromMmap(Zig::GlobalObject*, void* ptr, size_t length);
-extern "C" void Bun__eventLoop__incrementRefConcurrently(void* bunVM, int delta);
+extern "C" void Fun__eventLoop__incrementRefConcurrently(void* funVM, int delta);
 // Bracket the whole onData batch. exit() drains microtasks when outermost,
 // so all the promise reactions from this batch run before we return to usockets.
-extern "C" void Bun__EventLoop__enter(Zig::GlobalObject*);
-extern "C" void Bun__EventLoop__exit(Zig::GlobalObject*);
+extern "C" void Fun__EventLoop__enter(Zig::GlobalObject*);
+extern "C" void Fun__EventLoop__exit(Zig::GlobalObject*);
 // runCallback does its own nested enter/exit + reportActiveExceptionAsUnhandled
 // on throw — one bad onNavigated callback won't poison the rest of the batch.
-extern "C" void Bun__EventLoop__runCallback2(JSC::JSGlobalObject*, JSC::EncodedJSValue cb,
+extern "C" void Fun__EventLoop__runCallback2(JSC::JSGlobalObject*, JSC::EncodedJSValue cb,
     JSC::EncodedJSValue thisVal, JSC::EncodedJSValue arg0, JSC::EncodedJSValue arg1);
 
 // --- HostClient singleton --------------------------------------------------
@@ -123,8 +123,8 @@ void HostClient::updateKeepAlive()
     bool want = !viewsById.empty();
     if (want == sockRefd || !global) return;
     sockRefd = want;
-    Bun__eventLoop__incrementRefConcurrently(
-        WebCore::clientData(global->vm())->bunVM, want ? 1 : -1);
+    Fun__eventLoop__incrementRefConcurrently(
+        WebCore::clientData(global->vm())->funVM, want ? 1 : -1);
 }
 
 bool HostClient::ensureSpawned(Zig::GlobalObject* zig, bool stdoutInherit, bool stderrInherit)
@@ -132,7 +132,7 @@ bool HostClient::ensureSpawned(Zig::GlobalObject* zig, bool stdoutInherit, bool 
     if (sock && !dead) return true;
 
     // Host died (rejectAllAndMarkDead ran). The Zig side cleared its
-    // instance in onProcessExit, so Bun__WebViewHost__ensure will spawn a
+    // instance in onProcessExit, so Fun__WebViewHost__ensure will spawn a
     // fresh child. Clear stale state and try again — the old rx/txQueue
     // bytes are for the dead socket.
     if (dead) {
@@ -142,7 +142,7 @@ bool HostClient::ensureSpawned(Zig::GlobalObject* zig, bool stdoutInherit, bool 
         txQueue.clear();
     }
 
-    int fd = Bun__WebViewHost__ensure(zig, stdoutInherit, stderrInherit);
+    int fd = Fun__WebViewHost__ensure(zig, stdoutInherit, stderrInherit);
     if (fd < 0) {
         dead = true;
         return false;
@@ -160,7 +160,7 @@ bool HostClient::ensureSpawned(Zig::GlobalObject* zig, bool stdoutInherit, bool 
     // READABLE|WRITABLE. ipc=0 — we're not doing SCM_RIGHTS fd passing.
     // us_poll_start_rc doesn't touch loop.active; updateKeepAlive is the
     // sole ref manager. kind=1 (.dynamic) → dispatch via s_hostVTable.
-    sock = us_socket_from_fd(&s_hostGroup, BUN_SOCKET_KIND_DYNAMIC, nullptr, sizeof(void*), fd, 0);
+    sock = us_socket_from_fd(&s_hostGroup, FUN_SOCKET_KIND_DYNAMIC, nullptr, sizeof(void*), fd, 0);
     if (!sock) {
         // us_socket_from_fd calls us_poll_free on failure but doesn't close
         // the fd (ownership was ours). Leak it and the child stays alive
@@ -250,7 +250,7 @@ static JSValue openShmScreenshot(JSGlobalObject* g, const char* name, uint32_t n
     zname[nameLen] = '\0';
 
     // Shmem: return {name, size} without opening. The name is the child-
-    // picked /bun-webview-<pid>-<seq> — the user (or Kitty) shm_open's it.
+    // picked /fun-webview-<pid>-<seq> — the user (or Kitty) shm_open's it.
     // We don't unlink; the caller owns cleanup. The child already
     // munmapped its side, so the ONLY live ref is the name itself — if the
     // user drops the name without unlinking, the pages leak until process
@@ -330,7 +330,7 @@ void HostClient::handleReply(const Frame& h, Reader r)
         view->m_title = title;
         view->m_loading = false;
         if (JSObject* cb = view->m_onNavigated.get()) {
-            Bun__EventLoop__runCallback2(g, JSValue::encode(cb), JSValue::encode(jsUndefined()),
+            Fun__EventLoop__runCallback2(g, JSValue::encode(cb), JSValue::encode(jsUndefined()),
                 JSValue::encode(jsString(vm, url)), JSValue::encode(jsString(vm, title)));
         }
         return;
@@ -339,7 +339,7 @@ void HostClient::handleReply(const Frame& h, Reader r)
         WTF::String err = r.str();
         view->m_loading = false;
         if (JSObject* cb = view->m_onNavigationFailed.get()) {
-            Bun__EventLoop__runCallback2(g, JSValue::encode(cb), JSValue::encode(jsUndefined()),
+            Fun__EventLoop__runCallback2(g, JSValue::encode(cb), JSValue::encode(jsUndefined()),
                 JSValue::encode(createError(g, err)), JSValue::encode(jsUndefined()));
         }
         return;
@@ -459,7 +459,7 @@ void HostClient::rejectAllAndMarkDead(const WTF::String& reason)
     if (dead) return;
     dead = true;
     // us_socket_close is idempotent (checks is_closed internally). When
-    // this runs via Bun__WebViewHost__childDied (EVFILT_PROC won the race
+    // this runs via Fun__WebViewHost__childDied (EVFILT_PROC won the race
     // against EOF) the socket is still polling — close it. The dead guard
     // above short-circuits the reentrant onClose.
     if (auto* s = std::exchange(sock, nullptr)) us_socket_close(s, 0, nullptr);
@@ -492,7 +492,7 @@ void HostClient::onData(const char* data, int length)
     // TopExceptionScope is the event-loop catch-all (same pattern as
     // performMicrotaskCheckpoint). Its dtor doesn't simulate.
     auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
-    Bun__EventLoop__enter(global);
+    Fun__EventLoop__enter(global);
 
     size_t off = 0;
     while (rx.size() - off >= sizeof(Frame)) {
@@ -521,7 +521,7 @@ void HostClient::onData(const char* data, int length)
 
     // exit() drains microtasks when outermost — all the reactions from
     // resolve()s above run here, before we return to usockets.
-    Bun__EventLoop__exit(global);
+    Fun__EventLoop__exit(global);
 }
 
 // --- WK::Ops ---------------------------------------------------------------
@@ -663,13 +663,13 @@ void close(JSWebView* view)
 } // namespace Ops
 
 } // namespace WK
-} // namespace Bun
+} // namespace Fun
 
 // Called from Zig's onProcessExit (EVFILT_PROC). The socket onClose may or
 // may not have fired (crash = no FIN). Idempotent with onClose.
-extern "C" void Bun__WebViewHost__childDied(int32_t signo)
+extern "C" void Fun__WebViewHost__childDied(int32_t signo)
 {
-    auto& c = Bun::WK::client();
+    auto& c = Fun::WK::client();
     if (c.dead) return;
     c.rejectAllAndMarkDead(signo
             ? makeString("WebView host process killed by signal "_s, signo)
@@ -682,6 +682,6 @@ extern "C" void Bun__WebViewHost__childDied(int32_t signo)
 // elimination doesn't trigger because the TaggedPointer dispatch switch in
 // process.zig pulls in all ProcessExitHandler arms. spawn() itself is gated
 // on Environment.isMac so this is never called.
-extern "C" void Bun__WebViewHost__childDied(int32_t) {}
+extern "C" void Fun__WebViewHost__childDied(int32_t) {}
 
 #endif // OS(DARWIN)

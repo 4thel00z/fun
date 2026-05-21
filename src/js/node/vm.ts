@@ -12,7 +12,7 @@ const {
 } = require("internal/validators");
 const util = require("node:util");
 
-const vm = $cpp("NodeVM.cpp", "Bun::createNodeVMBinding");
+const vm = $cpp("NodeVM.cpp", "Fun::createNodeVMBinding");
 
 const ObjectFreeze = Object.freeze;
 const ObjectDefineProperty = Object.defineProperty;

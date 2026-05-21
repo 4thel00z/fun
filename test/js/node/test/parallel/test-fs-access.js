@@ -95,7 +95,7 @@ fs.promises.access(readOnlyFile, fs.constants.R_OK)
   };
   const expectedErrorPromise = (err) => {
     expectedError(err);
-    // TODO: https://github.com/oven-sh/bun/issues/2704
+    // TODO: https://github.com/underdoc-org/fun/issues/2704
     // assert.match(err.stack, /at async Object\.access/);
   };
   fs.access(doesNotExist, common.mustCall(expectedError));

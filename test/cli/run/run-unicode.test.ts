@@ -1,21 +1,21 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { mkdirSync, realpathSync } from "fs";
-import { bunEnv, bunExe, bunRun } from "harness";
+import { funEnv, funExe, funRun } from "harness";
 import { tmpdir } from "os";
 import { join } from "path";
 
 describe.concurrent("run-unicode", () => {
   test("running a weird filename works", async () => {
     const troll = process.platform == "win32" ? "💥'​\\" : "💥'\"​\n";
-    const dir = join(realpathSync(tmpdir()), "bun-run-test" + troll);
+    const dir = join(realpathSync(tmpdir()), "fun-run-test" + troll);
     mkdirSync(dir, { recursive: true });
     console.log("dir", dir);
     // i this it's possible that the filesystem rejects the path
-    await Bun.write(join(dir, troll + ".js"), "console.log('hello world');");
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), join(dir, troll + ".js")],
+    await Fun.write(join(dir, troll + ".js"), "console.log('hello world');");
+    await using proc = Fun.spawn({
+      cmd: [funExe(), join(dir, troll + ".js")],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "ignore",
       stdout: "pipe",
       stderr: "inherit",
@@ -25,7 +25,7 @@ describe.concurrent("run-unicode", () => {
   });
 
   test("ts enum with utf16 works", () => {
-    const result = bunRun(join(import.meta.dir, "ts-enum-fixture.ts"));
+    const result = funRun(join(import.meta.dir, "ts-enum-fixture.ts"));
     expect(result.stdout).toBe(`{
   "1": "aaaa\u5FEB\u00E9\u00E9",
   "123": "bbb",

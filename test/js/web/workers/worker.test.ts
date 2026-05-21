@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { once } from "events";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import path from "path";
 import wt from "worker_threads";
 
@@ -202,9 +202,9 @@ describe("web worker", () => {
   });
 
   test("worker with event listeners doesn't close event loop", done => {
-    const x = Bun.spawn({
-      cmd: [bunExe(), path.join(import.meta.dir, "many-messages-event-loop.js"), "worker-fixture-many-messages.js"],
-      env: bunEnv,
+    const x = Fun.spawn({
+      cmd: [funExe(), path.join(import.meta.dir, "many-messages-event-loop.js"), "worker-fixture-many-messages.js"],
+      env: funEnv,
       stdio: ["inherit", "pipe", "inherit"],
     });
 
@@ -230,9 +230,9 @@ describe("web worker", () => {
   });
 
   test("worker with event listeners doesn't close event loop 2", done => {
-    const x = Bun.spawn({
-      cmd: [bunExe(), path.join(import.meta.dir, "many-messages-event-loop.js"), "worker-fixture-many-messages2.js"],
-      env: bunEnv,
+    const x = Fun.spawn({
+      cmd: [funExe(), path.join(import.meta.dir, "many-messages-event-loop.js"), "worker-fixture-many-messages2.js"],
+      env: funEnv,
       stdio: ["inherit", "pipe", "inherit"],
     });
 
@@ -342,7 +342,7 @@ describe("worker_threads", () => {
     const worker = new wt.Worker(new URL("worker-fixture-process-exit.js", import.meta.url).href, {
       smol: true,
     });
-    await Bun.sleep(200);
+    await Fun.sleep(200);
     const code = await worker.terminate();
     expect(code).toBe(2);
   });

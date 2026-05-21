@@ -3,7 +3,7 @@ const SourceFileProjectGenerator = @This();
 // Generate project files based on the entry point and dependencies
 pub fn generate(_: Command.Context, _: Example.Tag, entry_point: string, result: *BundleV2.DependenciesScanner.Result) !void {
     const react_component_export = findReactComponentExport(result.bundle_v2) orelse {
-        Output.errGeneric("No component export found in <b>{f}<r>", .{bun.fmt.quote(entry_point)});
+        Output.errGeneric("No component export found in <b>{f}<r>", .{fun.fmt.quote(entry_point)});
         Output.flush();
         const writer = Output.errorWriterBuffered();
         try writer.writeAll(
@@ -21,7 +21,7 @@ pub fn generate(_: Command.Context, _: Example.Tag, entry_point: string, result:
     };
 
     // Check if Tailwind is already in dependencies
-    const has_tailwind_in_dependencies = result.dependencies.contains("tailwindcss") or result.dependencies.contains("bun-plugin-tailwind");
+    const has_tailwind_in_dependencies = result.dependencies.contains("tailwindcss") or result.dependencies.contains("fun-plugin-tailwind");
     var needs_to_inject_tailwind = false;
     if (!has_tailwind_in_dependencies) {
         // Scan source files for Tailwind classes if not already in dependencies
@@ -29,13 +29,13 @@ pub fn generate(_: Command.Context, _: Example.Tag, entry_point: string, result:
     }
 
     // Get any shadcn components used in the project
-    const shadcn = if (enable_shadcn_ui) try getShadcnComponents(result.bundle_v2, result.reachable_files) else bun.StringSet.init(default_allocator);
+    const shadcn = if (enable_shadcn_ui) try getShadcnComponents(result.bundle_v2, result.reachable_files) else fun.StringSet.init(default_allocator);
     const needs_to_inject_shadcn_ui = shadcn.keys().len > 0;
 
     // Add Tailwind dependencies if needed
     if (needs_to_inject_tailwind) {
         try result.dependencies.insert("tailwindcss");
-        try result.dependencies.insert("bun-plugin-tailwind");
+        try result.dependencies.insert("fun-plugin-tailwind");
     }
 
     // Add shadcn-ui dependencies if needed
@@ -62,7 +62,7 @@ pub fn generate(_: Command.Context, _: Example.Tag, entry_point: string, result:
     try result.dependencies.insert("react@19");
 
     const dev_dependencies = &[_][]const u8{
-        "@types/bun",
+        "@types/fun",
         "@types/react@19",
         "@types/react-dom@19",
     };
@@ -85,9 +85,9 @@ pub fn generate(_: Command.Context, _: Example.Tag, entry_point: string, result:
 }
 
 // Create a file with given contents, returns if file was newly created
-fn createFile(filename: []const u8, contents: []const u8) bun.sys.Maybe(bool) {
+fn createFile(filename: []const u8, contents: []const u8) fun.sys.Maybe(bool) {
     // Check if file exists and has same contents
-    if (bun.sys.File.readFrom(bun.FD.cwd(), filename, default_allocator).asValue()) |source_contents| {
+    if (fun.sys.File.readFrom(fun.FD.cwd(), filename, default_allocator).asValue()) |source_contents| {
         defer default_allocator.free(source_contents);
         if (strings.eqlLong(source_contents, contents, true)) {
             return .{ .result = false };
@@ -96,18 +96,18 @@ fn createFile(filename: []const u8, contents: []const u8) bun.sys.Maybe(bool) {
 
     // Create parent directories if needed
     if (std.fs.path.dirname(filename)) |dirname| {
-        bun.makePath(std.fs.cwd(), dirname) catch {};
+        fun.makePath(std.fs.cwd(), dirname) catch {};
     }
 
     // Open file for writing
-    const fd = switch (bun.sys.openatA(.cwd(), filename, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o644)) {
+    const fd = switch (fun.sys.openatA(.cwd(), filename, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o644)) {
         .result => |fd| fd,
         .err => |err| return .{ .err = err },
     };
     defer fd.close();
 
     // Write contents
-    switch (bun.sys.File.writeAll(.{ .handle = fd }, contents)) {
+    switch (fun.sys.File.writeAll(.{ .handle = fd }, contents)) {
         .result => return .{ .result = true },
         .err => |err| return .{ .err = err },
     }
@@ -171,18 +171,18 @@ fn runInstall(argv: [][]const u8) !void {
     Output.commandOut(argv);
     Output.flush();
 
-    argv[0] = try bun.selfExePath();
+    argv[0] = try fun.selfExePath();
 
-    const process = bun.spawnSync(&.{
+    const process = fun.spawnSync(&.{
         .argv = argv,
         .envp = null,
-        .cwd = bun.fs.FileSystem.instance.top_level_dir,
+        .cwd = fun.fs.FileSystem.instance.top_level_dir,
         .stderr = .inherit,
         .stdout = .inherit,
         .stdin = .inherit,
 
         .windows = if (Environment.isWindows) .{
-            .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+            .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
         },
     }) catch |err| {
         Output.err(err, "failed to install dependencies", .{});
@@ -222,11 +222,11 @@ pub fn generateFiles(allocator: std.mem.Allocator, entry_point: string, dependen
     }
 
     // Normalize file paths
-    var normalized_buf: bun.PathBuffer = undefined;
+    var normalized_buf: fun.PathBuffer = undefined;
     var normalized_name: []const u8 = if (std.fs.path.isAbsolute(entry_point))
-        bun.path.relativeNormalizedBuf(&normalized_buf, bun.fs.FileSystem.instance.top_level_dir, entry_point, .loose, true)
+        fun.path.relativeNormalizedBuf(&normalized_buf, fun.fs.FileSystem.instance.top_level_dir, entry_point, .loose, true)
     else
-        bun.path.normalizeBuf(entry_point, &normalized_buf, .loose);
+        fun.path.normalizeBuf(entry_point, &normalized_buf, .loose);
 
     if (extension.len > 0) {
         normalized_name = normalized_name[0 .. normalized_name.len - extension.len];
@@ -246,7 +246,7 @@ pub fn generateFiles(allocator: std.mem.Allocator, entry_point: string, dependen
             inline for (0..files.len) |index| {
                 const file = &files[index];
                 const file_name = try stringWithReplacements(file.name, basename, normalized_name, react_component_export, allocator);
-                if (file.overwrite or !bun.sys.exists(file_name)) {
+                if (file.overwrite or !fun.sys.exists(file_name)) {
                     switch (createFile(file_name, try stringWithReplacements(file.content, basename, normalized_name, react_component_export, default_allocator))) {
                         .result => |new| {
                             if (new) {
@@ -280,7 +280,7 @@ pub fn generateFiles(allocator: std.mem.Allocator, entry_point: string, dependen
 
     if (dependencies.len > 0) {
         var argv = std.array_list.Managed([]const u8).init(default_allocator);
-        try argv.append("bun");
+        try argv.append("fun");
         try argv.append("--only-missing");
         try argv.append("install");
         try argv.appendSlice(dependencies);
@@ -289,7 +289,7 @@ pub fn generateFiles(allocator: std.mem.Allocator, entry_point: string, dependen
 
     if (dev_dependencies.len > 0) {
         var argv = std.array_list.Managed([]const u8).init(default_allocator);
-        try argv.append("bun");
+        try argv.append("fun");
         try argv.append("--only-missing");
         try argv.append("add");
         try argv.append("-d");
@@ -304,7 +304,7 @@ pub fn generateFiles(allocator: std.mem.Allocator, entry_point: string, dependen
             if (shadcn.components.keys().len > 0) {
                 // Add shadcn components
                 var shadcn_argv = try std.array_list.Managed([]const u8).initCapacity(default_allocator, 10);
-                try shadcn_argv.append("bun");
+                try shadcn_argv.append("fun");
                 try shadcn_argv.append("x");
                 try shadcn_argv.append("shadcn@canary");
                 try shadcn_argv.append("add");
@@ -314,17 +314,17 @@ pub fn generateFiles(allocator: std.mem.Allocator, entry_point: string, dependen
                 try shadcn_argv.append("-y");
                 try shadcn_argv.appendSlice(shadcn.components.keys());
 
-                // print "bun" but use bun.selfExePath()
+                // print "fun" but use fun.selfExePath()
                 Output.prettyln("\n<r>😎 <b>Setting up shadcn/ui components<r>", .{});
                 Output.commandOut(shadcn_argv.items);
                 Output.flush();
-                shadcn_argv.items[0] = try bun.selfExePath();
+                shadcn_argv.items[0] = try fun.selfExePath();
 
                 // Now we need to run shadcn to add the components to the project
-                const shadcn_process = bun.spawnSync(&.{
+                const shadcn_process = fun.spawnSync(&.{
                     .argv = shadcn_argv.items,
                     .envp = null,
-                    .cwd = bun.fs.FileSystem.instance.top_level_dir,
+                    .cwd = fun.fs.FileSystem.instance.top_level_dir,
                     .stderr = .inherit,
                     .stdout = .inherit,
                     .stdin = .inherit,
@@ -368,19 +368,19 @@ pub fn generateFiles(allocator: std.mem.Allocator, entry_point: string, dependen
     Output.flush();
 
     // Start dev server
-    const start = bun.spawnSync(&.{
+    const start = fun.spawnSync(&.{
         .argv = &.{
-            try bun.selfExePath(),
+            try fun.selfExePath(),
             "dev",
         },
         .envp = null,
-        .cwd = bun.fs.FileSystem.instance.top_level_dir,
+        .cwd = fun.fs.FileSystem.instance.top_level_dir,
         .stderr = .inherit,
         .stdout = .inherit,
         .stdin = .inherit,
 
         .windows = if (Environment.isWindows) .{
-            .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+            .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
         },
     }) catch |err| {
         Output.err(err, "failed to start app", .{});
@@ -424,7 +424,7 @@ fn hasAnyTailwindClassesInSourceFiles(bundler: *BundleV2, reachable_files: []con
     for (reachable_files) |file| {
         switch (loaders[file.get()]) {
             .tsx, .jsx => {
-                const source: *const bun.logger.Source = &sources[file.get()];
+                const source: *const fun.logger.Source = &sources[file.get()];
                 var source_code: []const u8 = source.contents;
 
                 // First check for className=" or className='
@@ -450,7 +450,7 @@ fn hasAnyTailwindClassesInSourceFiles(bundler: *BundleV2, reachable_files: []con
                 }
             },
             .html => {
-                const source: *const bun.logger.Source = &sources[file.get()];
+                const source: *const fun.logger.Source = &sources[file.get()];
                 const source_code: []const u8 = source.contents;
 
                 // Look for class=" or class='
@@ -482,11 +482,11 @@ fn hasAnyTailwindClassesInSourceFiles(bundler: *BundleV2, reachable_files: []con
 }
 
 // Get list of shadcn components used in source files
-fn getShadcnComponents(bundler: *BundleV2, reachable_files: []const js_ast.Index) !bun.StringSet {
+fn getShadcnComponents(bundler: *BundleV2, reachable_files: []const js_ast.Index) !fun.StringSet {
     const input_files = bundler.graph.input_files.slice();
     const loaders = input_files.items(.loader);
     const all = bundler.graph.ast.items(.import_records);
-    var icons = bun.StringSet.init(default_allocator);
+    var icons = fun.StringSet.init(default_allocator);
     for (reachable_files) |file| {
         switch (loaders[file.get()]) {
             .tsx, .jsx => {
@@ -507,14 +507,14 @@ fn getShadcnComponents(bundler: *BundleV2, reachable_files: []const js_ast.Index
 fn findReactComponentExport(bundler: *BundleV2) ?[]const u8 {
     const input_files = bundler.graph.input_files.slice();
     const loaders = input_files.items(.loader);
-    const resolved_exports: []const bun.bundle_v2.ResolvedExports = bundler.linker.graph.meta.items(.resolved_exports);
+    const resolved_exports: []const fun.bundle_v2.ResolvedExports = bundler.linker.graph.meta.items(.resolved_exports);
     const sources = input_files.items(.source);
 
     const entry_point_ids = bundler.graph.entry_points.items;
     for (entry_point_ids) |entry_point_id| {
         const loader = loaders[entry_point_id.get()];
         if (loader == .jsx or loader == .tsx) {
-            const source: *const bun.logger.Source = &sources[entry_point_id.get()];
+            const source: *const fun.logger.Source = &sources[entry_point_id.get()];
             const exports = &resolved_exports[entry_point_id.get()];
 
             // 1. Prioritize the default export
@@ -542,7 +542,7 @@ fn findReactComponentExport(bundler: *BundleV2) ?[]const u8 {
             // 2. Prioritize the export matching the filename with an uppercase first letter
             // such as export const App = () => { ... }
             if (filename[0] >= 'A' and filename[0] <= 'Z') {
-                if (bun.js_lexer.isIdentifier(filename)) {
+                if (fun.js_lexer.isIdentifier(filename)) {
                     if (exports.contains(filename)) {
                         return filename;
                     }
@@ -550,9 +550,9 @@ fn findReactComponentExport(bundler: *BundleV2) ?[]const u8 {
             }
 
             if (filename[0] >= 'a' and filename[0] <= 'z') {
-                const duped = bun.handleOom(default_allocator.dupe(u8, filename));
+                const duped = fun.handleOom(default_allocator.dupe(u8, filename));
                 duped[0] = duped[0] - 32;
-                if (bun.js_lexer.isIdentifier(duped)) {
+                if (fun.js_lexer.isIdentifier(duped)) {
                     if (exports.contains(duped)) {
                         return duped;
                     }
@@ -565,7 +565,7 @@ fn findReactComponentExport(bundler: *BundleV2) ?[]const u8 {
                     var output_index: usize = 0;
                     var capitalize_next = false;
                     while (input_index < duped.len) : (input_index += 1) {
-                        if (duped[input_index] == ' ' or duped[input_index] == '-' or duped[input_index] == '_' or (output_index == 0 and !bun.js_lexer.isIdentifierStart(duped[input_index]))) {
+                        if (duped[input_index] == ' ' or duped[input_index] == '-' or duped[input_index] == '_' or (output_index == 0 and !fun.js_lexer.isIdentifierStart(duped[input_index]))) {
                             capitalize_next = true;
                             continue;
                         }
@@ -649,7 +649,7 @@ const TemplateFile = struct {
 
 const Reason = enum {
     shadcn,
-    bun,
+    fun,
     css,
     tsc,
     build,
@@ -678,12 +678,12 @@ const ReactTailwindSpa = struct {
         .{
             .name = "REPLACE_ME_WITH_YOUR_APP_FILE_NAME.client.tsx",
             .content = shared_client_tsx,
-            .reason = .bun,
+            .reason = .fun,
         },
         .{
-            .name = "bunfig.toml",
+            .name = "funfig.toml",
             .content = shared_bunfig_toml,
-            .reason = .bun,
+            .reason = .fun,
             .overwrite = false,
         },
         .{
@@ -701,7 +701,7 @@ const shared_build_ts = @embedFile("projects/react-shadcn-spa/REPLACE_ME_WITH_YO
 const shared_client_tsx = @embedFile("projects/react-shadcn-spa/REPLACE_ME_WITH_YOUR_APP_FILE_NAME.client.tsx");
 const shared_html = @embedFile("projects/react-shadcn-spa/REPLACE_ME_WITH_YOUR_APP_FILE_NAME.html");
 const shared_package_json = @embedFile("projects/react-shadcn-spa/package.json");
-const shared_bunfig_toml = @embedFile("projects/react-shadcn-spa/bunfig.toml");
+const shared_bunfig_toml = @embedFile("projects/react-shadcn-spa/funfig.toml");
 
 // Template for basic React project
 const ReactSpa = struct {
@@ -725,7 +725,7 @@ const ReactSpa = struct {
         .{
             .name = "REPLACE_ME_WITH_YOUR_APP_FILE_NAME.client.tsx",
             .content = shared_client_tsx,
-            .reason = .bun,
+            .reason = .fun,
         },
         .{
             .name = "package.json",
@@ -752,12 +752,12 @@ const ReactShadcnSpa = struct {
         .{
             .name = "REPLACE_ME_WITH_YOUR_APP_FILE_NAME.build.ts",
             .content = shared_build_ts,
-            .reason = .bun,
+            .reason = .fun,
         },
         .{
             .name = "REPLACE_ME_WITH_YOUR_APP_FILE_NAME.client.tsx",
             .content = shared_client_tsx,
-            .reason = .bun,
+            .reason = .fun,
         },
         .{
             .name = "REPLACE_ME_WITH_YOUR_APP_FILE_NAME.css",
@@ -775,9 +775,9 @@ const ReactShadcnSpa = struct {
             .reason = .shadcn,
         },
         .{
-            .name = "bunfig.toml",
+            .name = "funfig.toml",
             .content = shared_bunfig_toml,
-            .reason = .bun,
+            .reason = .fun,
             .overwrite = false,
         },
         .{
@@ -806,7 +806,7 @@ pub const Template = union(Tag) {
     ReactTailwindSpa: void,
     ReactSpa: void,
     ReactShadcnSpa: struct {
-        components: bun.StringSet,
+        components: fun.StringSet,
     },
 
     pub const Tag = enum {
@@ -856,11 +856,11 @@ pub const Template = union(Tag) {
                 \\
                 \\<b><cyan>Development<r><d> - frontend dev server with hot reload<r>
                 \\
-                \\  <cyan><b>bun dev<r>
+                \\  <cyan><b>fun dev<r>
                 \\
                 \\<b><green>Production<r><d> - build optimized assets<r>
                 \\
-                \\  <green><b>bun run build<r>
+                \\  <green><b>fun run build<r>
                 \\
                 \\<blue>Happy bunning! 🐇<r>
             , .{this.template.label()});
@@ -874,14 +874,14 @@ const linker = @import("../../bundler/linker.zig");
 const std = @import("std");
 const Example = @import("../create_command.zig").Example;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const js_ast = bun.ast;
-const logger = bun.logger;
-const strings = bun.strings;
-const BundleV2 = bun.bundle_v2.BundleV2;
-const Command = bun.cli.Command;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const js_ast = fun.ast;
+const logger = fun.logger;
+const strings = fun.strings;
+const BundleV2 = fun.bundle_v2.BundleV2;
+const Command = fun.cli.Command;

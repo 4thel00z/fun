@@ -11,7 +11,7 @@ pub fn ArrayList(comptime T: type) type {
 ///
 /// NOTE: Unlike `std.ArrayList`, this type's `deinit` method calls `deinit` on each of the items.
 pub fn ArrayListDefault(comptime T: type) type {
-    return ArrayListIn(T, bun.DefaultAllocator);
+    return ArrayListIn(T, fun.DefaultAllocator);
 }
 
 /// Managed `ArrayList` using a specific kind of allocator. No overhead if `Allocator` is a
@@ -36,7 +36,7 @@ pub fn ArrayListAligned(comptime T: type, comptime alignment: ?u29) type {
 ///
 /// NOTE: Unlike `std.ArrayList`, this type's `deinit` method calls `deinit` on each of the items.
 pub fn ArrayListAlignedDefault(comptime T: type, comptime alignment: ?u29) type {
-    return ArrayListAlignedIn(T, bun.DefaultAllocator, alignment);
+    return ArrayListAlignedIn(T, fun.DefaultAllocator, alignment);
 }
 
 /// Managed `ArrayListAligned` using a specific kind of allocator. No overhead if `Allocator` is a
@@ -67,7 +67,7 @@ pub fn ArrayListAlignedIn(
         pub const Unmanaged = std.ArrayListAlignedUnmanaged(T, alignment);
 
         pub fn init() Self {
-            return .initIn(bun.memory.initDefault(Allocator));
+            return .initIn(fun.memory.initDefault(Allocator));
         }
 
         pub fn initIn(allocator_: Allocator) Self {
@@ -78,12 +78,12 @@ pub fn ArrayListAlignedIn(
         }
 
         pub fn initCapacity(num: usize) AllocError!Self {
-            return .initCapacityIn(num, bun.memory.initDefault(Allocator));
+            return .initCapacityIn(num, fun.memory.initDefault(Allocator));
         }
 
         pub fn initCapacityIn(num: usize, allocator_: Allocator) AllocError!Self {
             return .{
-                .#unmanaged = try .initCapacity(bun.allocators.asStd(allocator_), num),
+                .#unmanaged = try .initCapacity(fun.allocators.asStd(allocator_), num),
                 .#allocator = allocator_,
             };
         }
@@ -91,14 +91,14 @@ pub fn ArrayListAlignedIn(
         /// NOTE: Unlike `std.ArrayList`, this method calls `deinit` on every item in the list,
         /// if such a method exists. If you don't want that behavior, use `deinitShallow`.
         pub fn deinit(self: *Self) void {
-            bun.memory.deinit(self.items());
+            fun.memory.deinit(self.items());
             self.deinitShallow();
         }
 
         pub fn deinitShallow(self: *Self) void {
             defer self.* = undefined;
             self.#unmanaged.deinit(self.getStdAllocator());
-            bun.memory.deinit(&self.#allocator);
+            fun.memory.deinit(&self.#allocator);
         }
 
         pub fn fromOwnedSlice(allocator_: Allocator, slice: Slice) Self {
@@ -124,8 +124,8 @@ pub fn ArrayListAlignedIn(
         }
 
         /// Returns a borrowed version of the allocator.
-        pub fn allocator(self: *const Self) bun.allocators.Borrowed(Allocator) {
-            return bun.allocators.borrow(self.#allocator);
+        pub fn allocator(self: *const Self) fun.allocators.Borrowed(Allocator) {
+            return fun.allocators.borrow(self.#allocator);
         }
 
         /// This method empties `self`.
@@ -162,7 +162,7 @@ pub fn ArrayListAlignedIn(
         /// `deinitShallow` on one of the `ArrayList`s to prevent `deinit` from being called twice
         /// on each element.
         pub fn clone(self: *const Self) AllocError!Self {
-            return self.cloneIn(bun.memory.initDefault(Allocator));
+            return self.cloneIn(fun.memory.initDefault(Allocator));
         }
 
         /// Creates a copy of this `ArrayList` using the provided allocator, with *shallow* copies
@@ -172,7 +172,7 @@ pub fn ArrayListAlignedIn(
             allocator_: anytype,
         ) AllocError!ArrayListAlignedIn(T, @TypeOf(allocator_), alignment) {
             return .{
-                .#unmanaged = try self.#unmanaged.clone(bun.allocators.asStd(allocator_)),
+                .#unmanaged = try self.#unmanaged.clone(fun.allocators.asStd(allocator_)),
                 .#allocator = allocator_,
             };
         }
@@ -212,7 +212,7 @@ pub fn ArrayListAlignedIn(
             len: usize,
             new_items: []const T,
         ) AllocError!void {
-            bun.memory.deinit(self.items()[start .. start + len]);
+            fun.memory.deinit(self.items()[start .. start + len]);
             return self.replaceRangeShallow(start, len, new_items);
         }
 
@@ -236,7 +236,7 @@ pub fn ArrayListAlignedIn(
             new_items: []const T,
         ) void {
             for (self.items()[start .. start + len]) |*item| {
-                bun.memory.deinit(item);
+                fun.memory.deinit(item);
             }
             self.replaceRangeAssumeCapacityShallow(start, len, new_items);
         }
@@ -307,7 +307,7 @@ pub fn ArrayListAlignedIn(
             const len = self.items().len;
             try self.resizeWithoutDeinit(init_value, new_len);
             if (new_len < len) {
-                bun.memory.deinit(self.items().ptr[new_len..len]);
+                fun.memory.deinit(self.items().ptr[new_len..len]);
             }
         }
 
@@ -348,7 +348,7 @@ pub fn ArrayListAlignedIn(
 
         /// This method `deinit`s all items.
         pub fn clearRetainingCapacity(self: *Self) void {
-            bun.memory.deinit(self.items());
+            fun.memory.deinit(self.items());
             self.clearRetainingCapacityShallow();
         }
 
@@ -359,7 +359,7 @@ pub fn ArrayListAlignedIn(
 
         /// This method `deinit`s all items.
         pub fn clearAndFree(self: *Self) void {
-            bun.memory.deinit(self.items());
+            fun.memory.deinit(self.items());
             self.clearAndFreeShallow();
         }
 
@@ -406,20 +406,20 @@ pub fn ArrayListAlignedIn(
 
         fn prepareForDeepShrink(self: *Self, new_len: usize) void {
             const items_ = self.items();
-            bun.assertf(
+            fun.assertf(
                 new_len <= items_.len,
                 "new_len ({d}) cannot exceed current len ({d})",
                 .{ new_len, items_.len },
             );
-            bun.memory.deinit(items_[new_len..]);
+            fun.memory.deinit(items_[new_len..]);
         }
 
         fn getStdAllocator(self: *const Self) std.mem.Allocator {
-            return bun.allocators.asStd(self.#allocator);
+            return fun.allocators.asStd(self.#allocator);
         }
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const AllocError = std.mem.Allocator.Error;

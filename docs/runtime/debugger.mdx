@@ -1,14 +1,14 @@
 ---
 title: "Debugging"
-description: "Debug your Bun code with an interactive debugger using WebKit Inspector Protocol"
+description: "Debug your Fun code with an interactive debugger using WebKit Inspector Protocol"
 ---
 
-Bun speaks the [WebKit Inspector Protocol](https://github.com/oven-sh/bun/blob/main/packages/bun-inspector-protocol/src/protocol/jsc/index.d.ts), so you can debug your code with an interactive debugger. For demonstration purposes, consider the following web server.
+Fun speaks the [WebKit Inspector Protocol](https://github.com/underdoc-org/fun/blob/main/packages/fun-inspector-protocol/src/protocol/jsc/index.d.ts), so you can debug your code with an interactive debugger. For demonstration purposes, consider the following web server.
 
 ## Debugging JavaScript and TypeScript
 
 ```typescript icon="/icons/typescript.svg" title="server.ts"
-Bun.serve({
+Fun.serve({
   fetch(req) {
     console.log(req.url);
     return new Response("Hello, world!");
@@ -18,20 +18,20 @@ Bun.serve({
 
 ### `--inspect`
 
-To enable debugging when running code with Bun, use the `--inspect` flag. This automatically starts a WebSocket server on an available port that can be used to introspect the running Bun process.
+To enable debugging when running code with Fun, use the `--inspect` flag. This automatically starts a WebSocket server on an available port that can be used to introspect the running Fun process.
 
 ```sh icon="terminal" title="terminal"
-bun --inspect server.ts
+fun --inspect server.ts
 ```
 
 ```txt id="terminal"
------------------- Bun Inspector ------------------
+------------------ Fun Inspector ------------------
 Listening at:
   ws://localhost:6499/0tqxs9exrgrm
 
 Inspect in browser:
-  https://debug.bun.sh/#localhost:6499/0tqxs9exrgrm
------------------- Bun Inspector ------------------
+  https://debug.fun.dev/#localhost:6499/0tqxs9exrgrm
+------------------ Fun Inspector ------------------
 ```
 
 ### `--inspect-brk`
@@ -47,9 +47,9 @@ The `--inspect-wait` flag behaves identically to `--inspect`, except the code wi
 Regardless of which flag you use, you can optionally specify a port number, URL prefix, or both.
 
 ```sh icon="terminal" title="terminal"
-bun --inspect=4000 server.ts
-bun --inspect=localhost:4000 server.ts
-bun --inspect=localhost:4000/prefix server.ts
+fun --inspect=4000 server.ts
+fun --inspect=localhost:4000 server.ts
+fun --inspect=localhost:4000/prefix server.ts
 ```
 
 ---
@@ -58,21 +58,21 @@ bun --inspect=localhost:4000/prefix server.ts
 
 Various debugging tools can connect to this server to provide an interactive debugging experience.
 
-### `debug.bun.sh`
+### `debug.fun.dev`
 
-Bun hosts a web-based debugger at [debug.bun.sh](https://debug.bun.sh). It is a modified version of WebKit's [Web Inspector Interface](https://webkit.org/web-inspector/web-inspector-interface/), which will look familiar to Safari users.
+Fun hosts a web-based debugger at [debug.fun.dev](https://debug.fun.dev). It is a modified version of WebKit's [Web Inspector Interface](https://webkit.org/web-inspector/web-inspector-interface/), which will look familiar to Safari users.
 
-Open the provided `debug.bun.sh` URL in your browser to start a debugging session. From this interface, you'll be able to view the source code of the running file, view and set breakpoints, and execute code with the built-in console.
+Open the provided `debug.fun.dev` URL in your browser to start a debugging session. From this interface, you'll be able to view the source code of the running file, view and set breakpoints, and execute code with the built-in console.
 
 <Frame>
-  ![Screenshot of Bun debugger, Console
-  tab](https://github.com/oven-sh/bun/assets/3084745/e6a976a8-80cc-4394-8925-539025cc025d)
+  ![Screenshot of Fun debugger, Console
+  tab](https://github.com/underdoc-org/fun/assets/3084745/e6a976a8-80cc-4394-8925-539025cc025d)
 </Frame>
 
 Let's set a breakpoint. Navigate to the Sources tab; you should see the code from earlier. Click on the line number `3` to set a breakpoint on our `console.log(req.url)` statement.
 
 <Frame>
-  ![screenshot of Bun debugger](https://github.com/oven-sh/bun/assets/3084745/3b69c7e9-25ff-4f9d-acc4-caa736862935)
+  ![screenshot of Fun debugger](https://github.com/underdoc-org/fun/assets/3084745/3b69c7e9-25ff-4f9d-acc4-caa736862935)
 </Frame>
 
 Then visit [`http://localhost:3000`](http://localhost:3000) in your web browser. This will send an HTTP request to our `localhost` web server. It will seem like the page isn't loading. Why? Because the program has paused execution at the breakpoint we set earlier.
@@ -80,25 +80,25 @@ Then visit [`http://localhost:3000`](http://localhost:3000) in your web browser.
 Note how the UI has changed.
 
 <Frame>
-  ![screenshot of Bun debugger](https://github.com/oven-sh/bun/assets/3084745/8b565e58-5445-4061-9bc4-f41090dfe769)
+  ![screenshot of Fun debugger](https://github.com/underdoc-org/fun/assets/3084745/8b565e58-5445-4061-9bc4-f41090dfe769)
 </Frame>
 
 At this point there's a lot we can do to introspect the current execution environment. We can use the console at the bottom to run arbitrary code in the context of the program, with full access to the variables in scope at our breakpoint.
 
 <Frame>
-  ![Bun debugger console](https://github.com/oven-sh/bun/assets/3084745/f4312b76-48ba-4a7d-b3b6-6205968ac681)
+  ![Fun debugger console](https://github.com/underdoc-org/fun/assets/3084745/f4312b76-48ba-4a7d-b3b6-6205968ac681)
 </Frame>
 
 On the right side of the Sources pane, we can see all local variables currently in scope, and drill down to see their properties and methods. Here, we're inspecting the `req` variable.
 
 <Frame>
-  ![Bun debugger variables](https://github.com/oven-sh/bun/assets/3084745/63d7f843-5180-489c-aa94-87c486e68646)
+  ![Fun debugger variables](https://github.com/underdoc-org/fun/assets/3084745/63d7f843-5180-489c-aa94-87c486e68646)
 </Frame>
 
 In the upper left of the Sources pane, we can control the execution of the program.
 
 <Frame>
-  ![Bun debugger controls](https://github.com/oven-sh/bun/assets/3084745/41b76deb-7371-4461-9d5d-81b5a6d2f7a4)
+  ![Fun debugger controls](https://github.com/underdoc-org/fun/assets/3084745/41b76deb-7371-4461-9d5d-81b5a6d2f7a4)
 </Frame>
 
 Here's a cheat sheet explaining the functions of the control flow buttons.
@@ -109,19 +109,19 @@ Here's a cheat sheet explaining the functions of the control flow buttons.
 - _Step out_ — If the current statement is a function call, the debugger will finish executing the call, then "step out" of the function to the location where it was called.
 
 <Frame>
-  ![Bun debugger execution
+  ![Fun debugger execution
   controls](https://github-production-user-asset-6210df.s3.amazonaws.com/3084745/261510346-6a94441c-75d3-413a-99a7-efa62365f83d.png)
 </Frame>
 
 ### Visual Studio Code Debugger
 
-Experimental support for debugging Bun scripts is available in Visual Studio Code. To use it, you'll need to install the [Bun VSCode extension](/guides/runtime/vscode-debugger).
+Experimental support for debugging Fun scripts is available in Visual Studio Code. To use it, you'll need to install the [Fun VSCode extension](/guides/runtime/vscode-debugger).
 
 ---
 
 ## Debugging Network Requests
 
-The `BUN_CONFIG_VERBOSE_FETCH` environment variable lets you log network requests made with `fetch()` or `node:http` automatically.
+The `FUN_CONFIG_VERBOSE_FETCH` environment variable lets you log network requests made with `fetch()` or `node:http` automatically.
 
 | Value   | Description                        |
 | ------- | ---------------------------------- |
@@ -131,10 +131,10 @@ The `BUN_CONFIG_VERBOSE_FETCH` environment variable lets you log network request
 
 ### Print fetch & node:http requests as curl commands
 
-Bun also supports printing `fetch()` and `node:http` network requests as `curl` commands by setting the environment variable `BUN_CONFIG_VERBOSE_FETCH` to `curl`. This prints the `fetch` request as a single-line `curl` command to let you copy-paste into your terminal to replicate the request.
+Fun also supports printing `fetch()` and `node:http` network requests as `curl` commands by setting the environment variable `FUN_CONFIG_VERBOSE_FETCH` to `curl`. This prints the `fetch` request as a single-line `curl` command to let you copy-paste into your terminal to replicate the request.
 
 ```ts index.ts icon="/icons/typescript.svg"
-process.env.BUN_CONFIG_VERBOSE_FETCH = "curl";
+process.env.FUN_CONFIG_VERBOSE_FETCH = "curl";
 
 await fetch("https://example.com", {
   method: "POST",
@@ -146,11 +146,11 @@ await fetch("https://example.com", {
 ```
 
 ```txt
-[fetch] $ curl --http1.1 "https://example.com/" -X POST -H "content-type: application/json" -H "Connection: keep-alive" -H "User-Agent: Bun/1.3.3" -H "Accept: */*" -H "Host: example.com" -H "Accept-Encoding: gzip, deflate, br" --compressed -H "Content-Length: 13" --data-raw "{\"foo\":\"bar\"}"
+[fetch] $ curl --http1.1 "https://example.com/" -X POST -H "content-type: application/json" -H "Connection: keep-alive" -H "User-Agent: Fun/1.3.3" -H "Accept: */*" -H "Host: example.com" -H "Accept-Encoding: gzip, deflate, br" --compressed -H "Content-Length: 13" --data-raw "{\"foo\":\"bar\"}"
 [fetch] > HTTP/1.1 POST https://example.com/
 [fetch] > content-type: application/json
 [fetch] > Connection: keep-alive
-[fetch] > User-Agent: Bun/1.3.3
+[fetch] > User-Agent: Fun/1.3.3
 [fetch] > Accept: */*
 [fetch] > Host: example.com
 [fetch] > Accept-Encoding: gzip, deflate, br
@@ -170,12 +170,12 @@ await fetch("https://example.com", {
 
 The lines with `[fetch] >` are the request from your local code, and the lines with `[fetch] <` are the response from the remote server.
 
-The `BUN_CONFIG_VERBOSE_FETCH` environment variable is supported in both `fetch()` and `node:http` requests, so it works in both cases.
+The `FUN_CONFIG_VERBOSE_FETCH` environment variable is supported in both `fetch()` and `node:http` requests, so it works in both cases.
 
-To print without the `curl` command, set `BUN_CONFIG_VERBOSE_FETCH` to `true`.
+To print without the `curl` command, set `FUN_CONFIG_VERBOSE_FETCH` to `true`.
 
 ```ts index.ts icon="/icons/typescript.svg"
-process.env.BUN_CONFIG_VERBOSE_FETCH = "true";
+process.env.FUN_CONFIG_VERBOSE_FETCH = "true";
 
 await fetch("https://example.com", {
   method: "POST",
@@ -190,7 +190,7 @@ await fetch("https://example.com", {
 [fetch] > HTTP/1.1 POST https://example.com/
 [fetch] > content-type: application/json
 [fetch] > Connection: keep-alive
-[fetch] > User-Agent: Bun/1.3.3
+[fetch] > User-Agent: Fun/1.3.3
 [fetch] > Accept: */*
 [fetch] > Host: example.com
 [fetch] > Accept-Encoding: gzip, deflate, br
@@ -212,18 +212,18 @@ await fetch("https://example.com", {
 
 ## Stacktraces & sourcemaps
 
-Bun transpiles every file, which sounds like it would mean that the stack traces you see in the console would unhelpfully point to the transpiled output. To address this, Bun automatically generates and serves sourcemapped files for every file it transpiles. When you see a stack trace in the console, you can click on the file path and be taken to the original source code, even though it was written in TypeScript or JSX, or has some other transformation applied.
+Fun transpiles every file, which sounds like it would mean that the stack traces you see in the console would unhelpfully point to the transpiled output. To address this, Fun automatically generates and serves sourcemapped files for every file it transpiles. When you see a stack trace in the console, you can click on the file path and be taken to the original source code, even though it was written in TypeScript or JSX, or has some other transformation applied.
 
-Bun automatically loads sourcemaps both at runtime when transpiling files on-demand, and when using `bun build` to precompile files ahead of time.
+Fun automatically loads sourcemaps both at runtime when transpiling files on-demand, and when using `fun build` to precompile files ahead of time.
 
 ### Syntax-highlighted source code preview
 
-To help with debugging, Bun automatically prints a small source-code preview when an unhandled exception or rejection occurs. You can simulate this behavior by calling `Bun.inspect(error)`:
+To help with debugging, Fun automatically prints a small source-code preview when an unhandled exception or rejection occurs. You can simulate this behavior by calling `Fun.inspect(error)`:
 
 ```ts
 // Create an error
 const err = new Error("Something went wrong");
-console.log(Bun.inspect(err, { colors: true }));
+console.log(Fun.inspect(err, { colors: true }));
 ```
 
 This prints a syntax-highlighted preview of the source code where the error occurred, along with the error message and stack trace.
@@ -238,13 +238,13 @@ error: Something went wrong
 
 ### V8 Stack Traces
 
-Bun uses JavaScriptCore as it's engine, but much of the Node.js ecosystem & npm expects V8. JavaScript engines differ in `error.stack` formatting. Bun intends to be a drop-in replacement for Node.js, and that means it's our job to make sure that even though the engine is different, the stack traces are as similar as possible.
+Fun uses JavaScriptCore as it's engine, but much of the Node.js ecosystem & npm expects V8. JavaScript engines differ in `error.stack` formatting. Fun intends to be a drop-in replacement for Node.js, and that means it's our job to make sure that even though the engine is different, the stack traces are as similar as possible.
 
-That's why when you log `error.stack` in Bun, the formatting of `error.stack` is the same as in Node.js's V8 engine. This is especially useful when you're using libraries that expect V8 stack traces.
+That's why when you log `error.stack` in Fun, the formatting of `error.stack` is the same as in Node.js's V8 engine. This is especially useful when you're using libraries that expect V8 stack traces.
 
 #### V8 Stack Trace API
 
-Bun implements the [V8 Stack Trace API](https://v8.dev/docs/stack-trace-api), which is a set of functions that allow you to manipulate stack traces.
+Fun implements the [V8 Stack Trace API](https://v8.dev/docs/stack-trace-api), which is a set of functions that allow you to manipulate stack traces.
 
 ##### `Error.prepareStackTrace`
 

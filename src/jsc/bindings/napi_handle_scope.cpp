@@ -3,7 +3,7 @@
 
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 // for CREATE_METHOD_TABLE
 namespace JSCastingHelpers = JSC::JSCastingHelpers;
@@ -151,4 +151,4 @@ extern "C" bool NapiHandleScope__escape(NapiHandleScopeImpl* handleScope, JSC::E
     return handleScope->escape(JSC::JSValue::decode(value));
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -3,7 +3,7 @@
 @@ -182,2 +182,14 @@
  
 +	/*
-+	 * BUN PATCH: set by the format's read_header callback when it
++	 * FUN PATCH: set by the format's read_header callback when it
 +	 * returns ARCHIVE_RETRY from a non-blocking source and wants
 +	 * the next call to skip archive_entry_clear() so that
 +	 * attributes already populated by consumed extension headers
@@ -25,7 +25,7 @@
  	/*
 -	 * If client didn't consume entire data, skip any remainder
 -	 * (This is especially important for GNU incremental directories.)
-+	 * BUN PATCH: when resuming after an ARCHIVE_RETRY from a
++	 * FUN PATCH: when resuming after an ARCHIVE_RETRY from a
 +	 * non-blocking source, the format reader has already
 +	 * populated `entry` from consumed extension headers (pax,
 +	 * GNU long name/link). Clearing it here would discard that
@@ -52,7 +52,7 @@
 +		if (a->archive.state == ARCHIVE_STATE_DATA) {
 +			r1 = archive_read_data_skip(&a->archive);
 +			/*
-+			 * BUN PATCH: the skip may run out of buffered
++			 * FUN PATCH: the skip may run out of buffered
 +			 * bytes when the source is non-blocking. The
 +			 * format's skip handler has already recorded how
 +			 * much remains, so the next next_header() call
@@ -81,9 +81,9 @@
 +	}
  	r2 = (a->format->read_header)(a, entry);
 +	/*
-+	 * BUN PATCH: the format reader sets read_header_in_progress
++	 * FUN PATCH: the format reader sets read_header_in_progress
 +	 * itself when a non-blocking source yields mid-header (see
-+	 * `bun_retry` in the tar reader). Clear it on any terminal
++	 * `fun_retry` in the tar reader). Clear it on any terminal
 +	 * result so the next call runs the full reset above. An
 +	 * ARCHIVE_RETRY that did not set the flag — upstream tar's
 +	 * pre-existing damaged-block skip — therefore behaves exactly
@@ -96,11 +96,11 @@
 @@ -1384,2 +1417,29 @@
  			    &filter->client_buff);
 +			/*
-+			 * BUN PATCH: non-blocking read support.
++			 * FUN PATCH: non-blocking read support.
 +			 *
 +			 * A client reader that is being fed incrementally
 +			 * (e.g. tarball bytes arriving from the network
-+			 * during `bun install`) returns ARCHIVE_RETRY when
++			 * during `fun install`) returns ARCHIVE_RETRY when
 +			 * no data is currently available. Unlike a real
 +			 * error this must not poison the filter: whatever
 +			 * has already been copied into `filter->buffer`
@@ -127,7 +127,7 @@
  			filter->client_buff = NULL;
 -			filter->fatal = 1;
 +			/*
-+			 * BUN PATCH: see the matching comment in
++			 * FUN PATCH: see the matching comment in
 +			 * __archive_read_filter_ahead. A non-blocking
 +			 * reader returning ARCHIVE_RETRY must not mark
 +			 * the filter fatal.
@@ -140,7 +140,7 @@
 @@ -63,2 +63,9 @@
  	char		 eof; /* True = found end of compressed data. */
 +	/*
-+	 * BUN PATCH: set after Z_STREAM_END so that a retry which
++	 * FUN PATCH: set after Z_STREAM_END so that a retry which
 +	 * interrupts consume_trailer() does not re-enter
 +	 * consume_header() (which would try to parse deflate bytes as
 +	 * a gzip header).
@@ -150,7 +150,7 @@
 @@ -148,2 +155,10 @@
  	p = __archive_read_filter_ahead(filter, len, &avail);
 +	/*
-+	 * BUN PATCH: propagate non-blocking retry. Nothing has been
++	 * FUN PATCH: propagate non-blocking retry. Nothing has been
 +	 * consumed yet, so calling peek_at_header again once more
 +	 * input is available will re-read the same header bytes from
 +	 * filter->buffer.
@@ -182,10 +182,10 @@
  
 -	if (peek_at_header(filter, &bits_checked, NULL))
 +	/*
-+	 * BUN PATCH: peek_at_header() may now return ARCHIVE_RETRY
++	 * FUN PATCH: peek_at_header() may now return ARCHIVE_RETRY
 +	 * from a non-blocking source. Bidding has no retry channel,
 +	 * so only accept a positive header length as a match.
-+	 * Streaming callers (bun install) always deliver at least
++	 * Streaming callers (fun install) always deliver at least
 +	 * one HTTP chunk — well over the ~10-byte gzip header —
 +	 * before archive_read_open() is invoked, so this branch is
 +	 * defensive rather than expected.
@@ -201,7 +201,7 @@
 @@ -351,2 +374,10 @@
  	len = peek_at_header(self->upstream, NULL, state);
 +	/*
-+	 * BUN PATCH: peek_at_header consumes nothing, so on
++	 * FUN PATCH: peek_at_header consumes nothing, so on
 +	 * ARCHIVE_RETRY the caller can simply try again later and the
 +	 * partial header bytes already copied into the upstream
 +	 * filter's buffer will still be there.
@@ -238,7 +238,7 @@
 -		    "Failed to clean up gzip decompressor");
 -		return (ARCHIVE_FATAL);
 +	/*
-+	 * BUN PATCH: inflateEnd()/in_stream=0 are only safe to run
++	 * FUN PATCH: inflateEnd()/in_stream=0 are only safe to run
 +	 * once. If a previous consume_trailer() attempt was
 +	 * interrupted by ARCHIVE_RETRY while reading the 8-byte
 +	 * footer, `trailer_pending` stays set and we skip straight to
@@ -269,14 +269,14 @@
 @@ -446,2 +496,14 @@
  	while (state->stream.avail_out > 0 && !state->eof) {
 +		/*
-+		 * BUN PATCH: finish any pending trailer first. This can
++		 * FUN PATCH: finish any pending trailer first. This can
 +		 * only be set when a previous gzip_filter_read() call hit
 +		 * ARCHIVE_RETRY inside consume_trailer().
 +		 */
 +		if (state->trailer_pending) {
 +			ret = consume_trailer(self);
 +			if (ret == ARCHIVE_RETRY)
-+				goto bun_retry;
++				goto fun_retry;
 +			if (ret < ARCHIVE_OK)
 +				return (ret);
 +		}
@@ -284,30 +284,30 @@
 @@ -454,2 +516,4 @@
  			}
 +			if (ret == ARCHIVE_RETRY)
-+				goto bun_retry;
++				goto fun_retry;
  			if (ret < ARCHIVE_OK)
 @@ -464,2 +528,10 @@
  		if (state->stream.next_in == NULL) {
 +			/*
-+			 * BUN PATCH: upstream has no bytes right now but
++			 * FUN PATCH: upstream has no bytes right now but
 +			 * isn't done. zlib's inflate state is untouched,
 +			 * so propagate the retry (or return whatever we
 +			 * have already decompressed this call).
 +			 */
 +			if (avail_in == ARCHIVE_RETRY)
-+				goto bun_retry;
++				goto fun_retry;
  			archive_set_error(&self->archive->archive,
 @@ -490,2 +562,4 @@
  			ret = consume_trailer(self);
 +			if (ret == ARCHIVE_RETRY)
-+				goto bun_retry;
++				goto fun_retry;
  			if (ret < ARCHIVE_OK)
 @@ -510,2 +584,21 @@
  	return (decompressed);
 +
-+bun_retry:
++fun_retry:
 +	/*
-+	 * BUN PATCH: upstream ran dry mid-call. If we managed to
++	 * FUN PATCH: upstream ran dry mid-call. If we managed to
 +	 * decompress anything before that happened, hand it back
 +	 * now; the tar layer will consume it and the next call will
 +	 * start with an empty out_block and immediately retry.
@@ -330,7 +330,7 @@
  	int			 read_concatenated_archives;
 +
 +	/*
-+	 * BUN PATCH: resume state for non-blocking sources.
++	 * FUN PATCH: resume state for non-blocking sources.
 +	 *
 +	 * `tar_read_header` walks a variable-length sequence of
 +	 * extension headers (pax 'x'/'g', GNU 'L'/'K', etc.) before
@@ -354,7 +354,7 @@
 @@ -475,2 +494,49 @@
  
 +/*
-+ * BUN PATCH: consume up to `request` bytes in a way that is safe to
++ * FUN PATCH: consume up to `request` bytes in a way that is safe to
 + * resume from a non-blocking source. Each iteration uses
 + * __archive_read_ahead(1) to discover how many bytes are currently
 + * buffered and then __archive_read_consume()s exactly that much, so
@@ -425,7 +425,7 @@
 -			    archive_string_default_conversion_for_read(&(a->archive));
 -			tar->init_default_conversion = 1;
 +	/*
-+	 * BUN PATCH: when resuming after an ARCHIVE_RETRY from a
++	 * FUN PATCH: when resuming after an ARCHIVE_RETRY from a
 +	 * non-blocking source, skip the fresh-entry initialisation
 +	 * below. Extension headers parsed before the retry have
 +	 * already written into `entry` and `tar->entry_*`; repeating
@@ -460,7 +460,7 @@
 @@ -562,2 +638,13 @@
  
 +	/*
-+	 * BUN PATCH: a non-blocking yield leaves `header_in_progress`
++	 * FUN PATCH: a non-blocking yield leaves `header_in_progress`
 +	 * set; in that case `*unconsumed == 0` (nothing pending that
 +	 * isn't already flushed) so the caller can yield and re-enter
 +	 * later. Upstream's damaged-block ARCHIVE_RETRY clears the
@@ -475,7 +475,7 @@
  
 -			if (__archive_read_consume(a, request) != request)
 +			/*
-+			 * BUN PATCH: make the end-of-entry padding
++			 * FUN PATCH: make the end-of-entry padding
 +			 * consume resumable. `tar_consume_retryable`
 +			 * decrements `entry_bytes_remaining` /
 +			 * `entry_padding` as bytes become available so a
@@ -492,7 +492,7 @@
 @@ -648,2 +746,11 @@
  		if (*buff == NULL) {
 +			/*
-+			 * BUN PATCH: propagate non-blocking retry. Every
++			 * FUN PATCH: propagate non-blocking retry. Every
 +			 * counter we would have touched
 +			 * (`entry_bytes_remaining`, `sparse_list`, etc.)
 +			 * is still at its pre-call value, so the caller
@@ -509,7 +509,7 @@
  
 -	if (__archive_read_consume(a, request) != request)
 +	/*
-+	 * BUN PATCH: use the retryable consume so a non-blocking
++	 * FUN PATCH: use the retryable consume so a non-blocking
 +	 * source can yield mid-skip. Progress is recorded in
 +	 * `entry_bytes_remaining` / `entry_padding` /
 +	 * `entry_bytes_unconsumed`, so archive_read_next_header's
@@ -541,7 +541,7 @@
  
 -	tar_reset_header_state(tar);
 +	/*
-+	 * BUN PATCH: `header_in_progress` persists the header loop's
++	 * FUN PATCH: `header_in_progress` persists the header loop's
 +	 * locals across an ARCHIVE_RETRY so a non-blocking source can
 +	 * resume mid-sequence. On a fresh entry we initialise them
 +	 * exactly as before; on resume we restore and skip the reset
@@ -562,7 +562,7 @@
 @@ -745,2 +880,13 @@
  
 +/*
-+ * BUN PATCH: every terminal exit from this function (anything other
++ * FUN PATCH: every terminal exit from this function (anything other
 + * than the non-blocking retry path) must clear `header_in_progress`
 + * so the next entry starts with fresh `seen_headers` / header state.
 + * The macro keeps the existing `return (X)` sites readable.
@@ -582,14 +582,14 @@
  			h = __archive_read_ahead(a, 512, &bytes);
 +			if (h == NULL && bytes == ARCHIVE_RETRY) {
 +				/*
-+				 * BUN PATCH: non-blocking source ran
++				 * FUN PATCH: non-blocking source ran
 +				 * out mid-header. Nothing has been
 +				 * added to `*unconsumed` yet this
 +				 * iteration, so save loop state and
 +				 * let the caller try again once more
 +				 * input arrives.
 +				 */
-+				goto bun_retry;
++				goto fun_retry;
 +			}
  			if (bytes == 0) { /* EOF at a block boundary. */
 @@ -769,5 +926,5 @@
@@ -622,7 +622,7 @@
  				} else {
 -					return (ARCHIVE_RETRY);
 +					/*
-+					 * BUN PATCH: upstream's
++					 * FUN PATCH: upstream's
 +					 * "damaged block, skip and retry
 +					 * the next one" — NOT a
 +					 * non-blocking yield. The next
@@ -631,7 +631,7 @@
 +					 * tar_reset_header_state) exactly
 +					 * as upstream, so clear both
 +					 * in-progress flags instead of
-+					 * routing through bun_retry.
++					 * routing through fun_retry.
 +					 */
 +					a->read_header_in_progress = 0;
 +					TAR_HEADER_RETURN(ARCHIVE_RETRY);
@@ -640,7 +640,7 @@
  		header = (const struct archive_entry_header_ustar *)h;
 +
 +		/*
-+		 * BUN PATCH: extension headers ('A','g','K','L','V',
++		 * FUN PATCH: extension headers ('A','g','K','L','V',
 +		 * 'x','X') are followed by a payload whose length is
 +		 * encoded in this block's `size` field. The handlers
 +		 * below flush `*unconsumed` (this 512-byte block) and
@@ -679,7 +679,7 @@
 +			    (size_t)(512 + ext_padded), &bytes) == NULL &&
 +			    bytes == ARCHIVE_RETRY) {
 +				*unconsumed -= 512;
-+				goto bun_retry;
++				goto fun_retry;
 +			}
 +			/* Re-establish `h`: the filter may have
 +			 * memmoved its buffer to satisfy the larger
@@ -757,9 +757,9 @@
 @@ -993,2 +1224,22 @@
  	}
 +
-+bun_retry:
++fun_retry:
 +	/*
-+	 * BUN PATCH: persist loop state so the next tar_read_header()
++	 * FUN PATCH: persist loop state so the next tar_read_header()
 +	 * call resumes exactly here. At this point `*unconsumed == 0`
 +	 * (either nothing was added this iteration, or we rolled the
 +	 * 512-byte header back above), so

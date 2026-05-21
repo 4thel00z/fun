@@ -1,5 +1,5 @@
 const PostgresSQLStatement = @This();
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 cached_structure: PostgresCachedStructure = .{},
 ref_count: RefCount = RefCount.init(),
 fields: []protocol.FieldDescription = &[_]protocol.FieldDescription{},
@@ -46,10 +46,10 @@ pub fn checkForDuplicateFields(this: *PostgresSQLStatement) void {
     if (!this.needs_duplicate_check) return;
     this.needs_duplicate_check = false;
 
-    var seen_numbers = std.array_list.Managed(u32).init(bun.default_allocator);
+    var seen_numbers = std.array_list.Managed(u32).init(fun.default_allocator);
     defer seen_numbers.deinit();
-    var seen_fields = bun.StringHashMap(void).init(bun.default_allocator);
-    bun.handleOom(seen_fields.ensureUnusedCapacity(@intCast(this.fields.len)));
+    var seen_fields = fun.StringHashMap(void).init(fun.default_allocator);
+    fun.handleOom(seen_fields.ensureUnusedCapacity(@intCast(this.fields.len)));
     defer seen_fields.deinit();
 
     // iterate backwards
@@ -73,7 +73,7 @@ pub fn checkForDuplicateFields(this: *PostgresSQLStatement) void {
                     field.name_or_index = .duplicate;
                     flags.has_duplicate_columns = true;
                 } else {
-                    bun.handleOom(seen_numbers.append(index));
+                    fun.handleOom(seen_numbers.append(index));
                 }
 
                 flags.has_indexed_columns = true;
@@ -95,8 +95,8 @@ pub fn deinit(this: *PostgresSQLStatement) void {
     for (this.fields) |*field| {
         field.deinit();
     }
-    bun.default_allocator.free(this.fields);
-    bun.default_allocator.free(this.parameters);
+    fun.default_allocator.free(this.fields);
+    fun.default_allocator.free(this.parameters);
     this.cached_structure.deinit();
     if (this.error_response) |err| {
         this.error_response = null;
@@ -104,7 +104,7 @@ pub fn deinit(this: *PostgresSQLStatement) void {
         _error.deinit();
     }
     this.signature.deinit();
-    bun.default_allocator.destroy(this);
+    fun.default_allocator.destroy(this);
 }
 
 pub fn structure(this: *PostgresSQLStatement, owner: JSValue, globalObject: *jsc.JSGlobalObject) PostgresCachedStructure {
@@ -122,7 +122,7 @@ pub fn structure(this: *PostgresSQLStatement, owner: JSValue, globalObject: *jsc
             nonDuplicatedCount -= 1;
         }
     }
-    const ids = if (nonDuplicatedCount <= jsc.JSObject.maxInlineCapacity()) stack_ids[0..nonDuplicatedCount] else bun.handleOom(bun.default_allocator.alloc(jsc.JSObject.ExternColumnIdentifier, nonDuplicatedCount));
+    const ids = if (nonDuplicatedCount <= jsc.JSObject.maxInlineCapacity()) stack_ids[0..nonDuplicatedCount] else fun.handleOom(fun.default_allocator.alloc(jsc.JSObject.ExternColumnIdentifier, nonDuplicatedCount));
 
     var i: usize = 0;
     for (this.fields) |*field| {
@@ -160,7 +160,7 @@ pub fn structure(this: *PostgresSQLStatement, owner: JSValue, globalObject: *jsc
     return this.cached_structure;
 }
 
-const debug = bun.Output.scoped(.Postgres, .visible);
+const debug = fun.Output.scoped(.Postgres, .visible);
 
 const PostgresCachedStructure = @import("../../sql_jsc/shared/CachedStructure.zig");
 const Signature = @import("../../sql_jsc/postgres/Signature.zig");
@@ -174,9 +174,9 @@ const postgresErrorToJS = @import("../../sql/postgres/AnyPostgresError.zig").pos
 const types = @import("../../sql/postgres/PostgresTypes.zig");
 const int4 = types.int4;
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const String = bun.String;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

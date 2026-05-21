@@ -178,7 +178,7 @@ pub fn jsonStringify(this: *const Lockfile, w: anytype) !void {
         const hoisted_deps = this.buffers.hoisted_dependencies.items;
         const resolutions = this.buffers.resolutions.items;
         var depth_buf: Tree.DepthBuf = undefined;
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
         @memcpy(path_buf[0.."node_modules".len], "node_modules");
 
         for (0..this.buffers.trees.items.len) |tree_id| {
@@ -199,7 +199,7 @@ pub fn jsonStringify(this: *const Lockfile, w: anytype) !void {
             );
 
             try w.objectField("path");
-            try w.print("\"{f}\"", .{bun.fmt.fmtPath(u8, relative_path, .{ .path_sep = .posix })});
+            try w.print("\"{f}\"", .{fun.fmt.fmtPath(u8, relative_path, .{ .path_sep = .posix })});
 
             try w.objectField("depth");
             try w.write(depth);
@@ -407,11 +407,11 @@ pub fn jsonStringify(this: *const Lockfile, w: anytype) !void {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const PathBuffer = bun.PathBuffer;
-const ExternalString = bun.Semver.ExternalString;
+const fun = @import("fun");
+const PathBuffer = fun.PathBuffer;
+const ExternalString = fun.Semver.ExternalString;
 
-const install = bun.install;
+const install = fun.install;
 const DependencyID = install.DependencyID;
 const Npm = install.Npm;
 const PackageID = install.PackageID;

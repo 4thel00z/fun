@@ -243,7 +243,7 @@ const PureGlobalIdentifierValue = enum {
     }
 };
 
-pub const pure_global_identifier_map = bun.ComptimeStringMap(PureGlobalIdentifierValue, .{
+pub const pure_global_identifier_map = fun.ComptimeStringMap(PureGlobalIdentifierValue, .{
     .{ "NaN", PureGlobalIdentifierValue.NaN },
     .{ "Infinity", PureGlobalIdentifierValue.Infinity },
     .{ "undefined", PureGlobalIdentifierValue.@"strict undefined" },
@@ -927,5 +927,5 @@ const string = []const u8;
 const defines = @import("./defines.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const js_ast = bun.ast;
+const fun = @import("fun");
+const js_ast = fun.ast;

@@ -1,4 +1,4 @@
-pub fn toHaveBeenCalledWith(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+pub fn toHaveBeenCalledWith(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
 
     const thisValue = callframe.this();
@@ -8,7 +8,7 @@ pub fn toHaveBeenCalledWith(this: *Expect, globalThis: *JSGlobalObject, callfram
 
     this.incrementExpectCallCounter();
 
-    const calls = try bun.cpp.JSMockFunction__getCalls(globalThis, value);
+    const calls = try fun.cpp.JSMockFunction__getCalls(globalThis, value);
     if (!calls.jsType().isArray()) {
         var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
         defer formatter.deinit();
@@ -114,14 +114,14 @@ pub fn toHaveBeenCalledWith(this: *Expect, globalThis: *JSGlobalObject, callfram
 
 const DiffFormatter = @import("../diff_format.zig").DiffFormatter;
 
-const bun = @import("bun");
-const Output = bun.Output;
+const fun = @import("fun");
+const Output = fun.Output;
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
-const mock = bun.jsc.Expect.mock;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
+const mock = fun.jsc.Expect.mock;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

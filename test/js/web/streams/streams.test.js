@@ -5,9 +5,9 @@ import {
   readableStreamToArrayBuffer,
   readableStreamToBytes,
   readableStreamToText,
-} from "bun";
-import { describe, expect, it, test } from "bun:test";
-import { bunEnv, bunExe, isMacOS, isWindows, tempDir, tmpdirSync } from "harness";
+} from "fun";
+import { describe, expect, it, test } from "fun:test";
+import { funEnv, funExe, isMacOS, isWindows, tempDir, tmpdirSync } from "harness";
 import { mkfifo } from "mkfifo";
 import { createReadStream, realpathSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -159,7 +159,7 @@ describe("readableStreamToFormData", () => {
         new ReadableStream({
           async pull(controller) {
             for (let chunk of chunks) {
-              await Bun.sleep(0);
+              await Fun.sleep(0);
               controller.enqueue(chunk);
             }
             controller.close();
@@ -179,10 +179,10 @@ describe("readableStreamToFormData", () => {
       expect((await responseWithPullAsync().formData()).toJSON()).toEqual(expected.toJSON());
     });
 
-    test("Bun.readableStreamToFormData", async () => {
+    test("Fun.readableStreamToFormData", async () => {
       expect(
         (
-          await Bun.readableStreamToFormData(await responseWithPull().body, "WebKitFormBoundary7MA4YWxkTrZu0gW")
+          await Fun.readableStreamToFormData(await responseWithPull().body, "WebKitFormBoundary7MA4YWxkTrZu0gW")
         ).toJSON(),
       ).toEqual(expected.toJSON());
     });
@@ -207,7 +207,7 @@ describe("readableStreamToFormData", () => {
 
   test("URL-encoded example", async () => {
     const stream = new Response("hello=123").body;
-    const formData = await Bun.readableStreamToFormData(stream);
+    const formData = await Fun.readableStreamToFormData(stream);
     expect(formData.get("hello")).toBe("123");
   });
 });
@@ -425,8 +425,8 @@ it("ReadableStream.prototype.values", async () => {
   expect(chunks.join("")).toBe("helloworld");
 });
 
-it.todoIf(isWindows || isMacOS)("Bun.file() read text from pipe", async () => {
-  const fifoPath = join(tmpdirSync(), "bun-streams-test-fifo");
+it.todoIf(isWindows || isMacOS)("Fun.file() read text from pipe", async () => {
+  const fifoPath = join(tmpdirSync(), "fun-streams-test-fifo");
   try {
     unlinkSync(fifoPath);
   } catch {}
@@ -439,13 +439,13 @@ it.todoIf(isWindows || isMacOS)("Bun.file() read text from pipe", async () => {
 
   const chunks = [];
 
-  const proc = Bun.spawn({
-    cmd: ["bash", join(import.meta.dir + "/", "bun-streams-test-fifo.sh"), fifoPath],
+  const proc = Fun.spawn({
+    cmd: ["bash", join(import.meta.dir + "/", "fun-streams-test-fifo.sh"), fifoPath],
     stderr: "inherit",
     stdout: "pipe",
     stdin: null,
     env: {
-      ...bunEnv,
+      ...funEnv,
       FIFO_TEST: large,
     },
   });
@@ -454,7 +454,7 @@ it.todoIf(isWindows || isMacOS)("Bun.file() read text from pipe", async () => {
 
   const prom = (async function () {
     while (chunks.length === 0) {
-      var out = Bun.file(fifoPath).stream();
+      var out = Fun.file(fifoPath).stream();
       for await (const chunk of out) {
         chunks.push(chunk);
       }
@@ -1074,24 +1074,24 @@ it("Blob.stream() -> new Response(stream).text()", async () => {
   expect(text).toBe("abdefgh");
 });
 
-it("Bun.file().stream() of a small file does not double-close the controller", async () => {
+it("Fun.file().stream() of a small file does not double-close the controller", async () => {
   // When the first pull returns data + EOF synchronously, both the native onClose
   // callback and the pull-result handler enqueue callClose for the same controller.
   // The second callClose must be a no-op rather than throwing ERR_INVALID_STATE
   // through reportError → process.on("uncaughtException").
   using dir = tempDir("file-stream-double-close", { "x.txt": "x" });
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `process.on("uncaughtException", e => {
          console.log(e?.code ?? e?.name, e?.message);
          process.exitCode = 1;
        });
-       Bun.file(process.argv[1]).stream().getReader().releaseLock();`,
+       Fun.file(process.argv[1]).stream().getReader().releaseLock();`,
       join(String(dir), "x.txt"),
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -1100,7 +1100,7 @@ it("Bun.file().stream() of a small file does not double-close the controller", a
   expect(exitCode).toBe(0);
 });
 
-it("Bun.file().stream() read text from large file", async () => {
+it("Fun.file().stream() read text from large file", async () => {
   // Guard against reading the same repeating chunks
   // There were bugs previously where the stream would
   // repeat the same chunk over and over again
@@ -1109,14 +1109,14 @@ it("Bun.file().stream() read text from large file", async () => {
   var written = 0;
   var i = 0;
   while (written < 1024 * 1024 * 10) {
-    written += sink.write(Bun.SHA1.hash((i++).toString(10), "hex"));
+    written += sink.write(Fun.SHA1.hash((i++).toString(10), "hex"));
   }
   const hugely = Buffer.from(sink.end()).toString();
-  const tmpfile = join(realpathSync(tmpdirSync()), "bun-streams-test.txt");
+  const tmpfile = join(realpathSync(tmpdirSync()), "fun-streams-test.txt");
   writeFileSync(tmpfile, hugely);
   try {
     const chunks = [];
-    for await (const chunk of Bun.file(tmpfile).stream()) {
+    for await (const chunk of Fun.file(tmpfile).stream()) {
       chunks.push(chunk);
     }
     const output = Buffer.concat(chunks).toString();
@@ -1151,7 +1151,7 @@ it("pipeTo doesn't cause unhandled rejections on readable errors", async () => {
   const readable = new ReadableStream({ start: c => c.error("error") });
   readable.pipeTo(writable).catch(() => {});
 
-  await Bun.sleep(15);
+  await Fun.sleep(15);
 
   process.off("unhandledRejection", catchUnhandledRejection);
 
@@ -1170,7 +1170,7 @@ it("pipeThrough doesn't cause unhandled rejections on readable errors", async ()
   const ts = new TransformStream();
   readable.pipeThrough(ts);
 
-  await Bun.sleep(15);
+  await Fun.sleep(15);
 
   process.off("unhandledRejection", catchUnhandledRejection);
 
@@ -1206,9 +1206,9 @@ recursiveFunction();
 `,
   );
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), testFile],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), testFile],
+    env: funEnv,
     cwd: dir,
     stderr: "pipe",
   });

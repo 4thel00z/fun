@@ -1,5 +1,5 @@
 leak:runtime.server.server.ServerAllConnectionsClosedTask.schedule
-leak:cli.bunfig.Bunfig.parse__anon
+leak:cli.funfig.Funfig.parse__anon
 leak:resolver.resolver.Resolver.parsePackageJSON
 leak:resolver.package_json.PackageJSON.parse__anon
 leak:resolver.resolver.Resolver.parseTSConfig
@@ -9,10 +9,10 @@ leak:Zig__GlobalObject__create
 leak:_objc_msgSend_uncached
 leak:WTF::fastMalloc
 leak:WTF::AutomaticThread::start
-leak:Bun__transpileFile
+leak:Fun__transpileFile
 leak:WTF::SymbolRegistry::symbolForKey
 leak:js_printer.js_printer.printAst__anon
-leak:Bun__resolveSync
+leak:Fun__resolveSync
 leak:JSC::moduleLoaderParseModule
 leak:JSC::ScriptExecutable::newCodeBlockFor
 leak:JSC::Parser<JSC::Lexer<unsigned char>>::parseFunctionExpression
@@ -24,7 +24,7 @@ leak:start_wqthread
 leak:CRYPTO_set_thread_local
 leak:BIO_new
 leak:_tlv_get_addr
-leak:Bun::generateModule
+leak:Fun::generateModule
 leak:Zig::ImportMetaObject::createFromSpecifier
 leak:Zig::GlobalObject::moduleLoaderResolve
 leak:JSModuleLoader__import
@@ -42,13 +42,13 @@ leak:lshpack_wrapper_init
 leak:jsc.ipc.onData2
 leak:runtime.node.fs_events.InitLibrary
 leak:runtime.node.fs_events.FSEventsLoop._schedule
-leak:Bun__Path__join
-leak:Bun__Path__resolve
+leak:Fun__Path__join
+leak:Fun__Path__resolve
 leak:Zig::GlobalObject::moduleLoaderImportModule
 leak:bake.FrameworkRouter.JSFrameworkRouter.getFileIdForRouter
 leak:js_parser_jsc.Macro.MacroContext.call
 leak:runtime.webcore.Blob.findOrCreateFileFromPath__anon
-leak:BunString::toWTFString(BunString::ZeroCopyTag)
+leak:FunString::toWTFString(FunString::ZeroCopyTag)
 leak:runtime.node.node_fs_binding.Bindings(.mkdtemp).runSync
 leak:jsc.ModuleLoader.fetchBuiltinModule
 leak:boringssl.boringssl.checkX509ServerIdentity
@@ -59,7 +59,7 @@ leak:JSC::arrayProtoFuncSort
 leak:bindgen_Fmt_jsFmtString
 leak:runtime.dns_jsc.dns.GetAddrInfoRequest.run
 leak:tcc_sys.tcc.State.init__anon
-leak:runtime.api.bun.dynamic_library.DlDynLib.open
+leak:runtime.api.fun.dynamic_library.DlDynLib.open
 leak:Zig::ImportMetaObject::finishCreation
 leak:uws_add_server_name_with_options
 leak:runtime.webcore.Body.Value.fromJS
@@ -100,9 +100,9 @@ leak:sql_jsc.postgres.PostgresSQLStatement.structure
 leak:sql_jsc.postgres.DataCell.parseArray__anon
 leak:sql.postgres.protocol.FieldMessage.FieldMessage.init
 leak:JSC::intlCollatorAvailableLocales
-leak:Bun__canonicalizeIP
+leak:Fun__canonicalizeIP
 leak:dlopen
-leak:Bun::evaluateCommonJSModuleOnce
+leak:Fun::evaluateCommonJSModuleOnce
 leak:fse_run_loop
 leak:Zig::NapiClass_ConstructorFunction
 leak:runtime.webcore.fetch.FetchTasklet.toResponse
@@ -120,7 +120,7 @@ leak:WebCore::JSReadableStreamDefaultControllerPrototype::finishCreation
 
 # file comments below are where it was first seen, not an exhaustive list
 # test/js/node/tls/node-tls-cert.test.ts
-leak:create_ssl_context_from_bun_options
+leak:create_ssl_context_from_fun_options
 # test/js/node/test/parallel/test-inspector-enabled.js
 leak:jsc.Debugger.startJSDebuggerThread
 # test/js/sql/sqlite-sql.test.ts

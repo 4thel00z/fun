@@ -317,7 +317,7 @@ static inline JSC::EncodedJSValue jsAbortSignalConstructorFunction_anyBody(JSC::
     // manual conversion to nodejs error handling
     Vector<RefPtr<AbortSignal>> signals;
     if (argument0.value().isUndefinedOrNull()) {
-        Bun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "signals can not be converted to sequence"_s);
+        Fun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "signals can not be converted to sequence"_s);
         return {};
     }
 
@@ -326,7 +326,7 @@ static inline JSC::EncodedJSValue jsAbortSignalConstructorFunction_anyBody(JSC::
         if (auto* signal = JSAbortSignal::toWrapped(vm, item)) {
             signals.append(signal);
         } else {
-            Bun::ERR::INVALID_ARG_INSTANCE(throwScope, lexicalGlobalObject, makeString("signals["_s, i, "]"_s), "AbortSignal"_s, item);
+            Fun::ERR::INVALID_ARG_INSTANCE(throwScope, lexicalGlobalObject, makeString("signals["_s, i, "]"_s), "AbortSignal"_s, item);
         }
         i++;
     });

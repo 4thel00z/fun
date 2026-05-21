@@ -123,7 +123,7 @@ public:
     const AbortSignalSet& sourceSignals() const { return m_sourceSignals; }
     AbortSignalSet& sourceSignals() { return m_sourceSignals; }
 
-    // https://github.com/oven-sh/bun/issues/4517
+    // https://github.com/underdoc-org/fun/issues/4517
     void incrementPendingActivityCount() { ++pendingActivityCount; }
     void decrementPendingActivityCount() { --pendingActivityCount; }
     bool hasPendingActivity() const { return pendingActivityCount > 0; }

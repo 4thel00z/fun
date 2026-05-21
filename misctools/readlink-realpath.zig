@@ -1,15 +1,15 @@
 const std = @import("std");
 
 const path_handler = @import("../src/resolver/resolve_path.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const string = []const u8;
-const Output = bun.Output;
-const Global = bun.Global;
-const Environment = bun.Environment;
-const strings = bun.strings;
-const MutableString = bun.MutableString;
+const Output = fun.Output;
+const Global = fun.Global;
+const Environment = fun.Environment;
+const strings = fun.strings;
+const MutableString = fun.MutableString;
 const stringZ = [:0]const u8;
-const default_allocator = bun.default_allocator;
+const default_allocator = fun.default_allocator;
 
 // zig build-exe -Doptimize=ReleaseFast --main-pkg-path ../ ./readlink-getfd.zig
 pub fn main() anyerror!void {
@@ -26,7 +26,7 @@ pub fn main() anyerror!void {
     var args = std.mem.bytesAsSlice([]u8, try std.process.argsAlloc(allocator));
 
     const to_resolve = args[args.len - 1];
-    var out_buffer: bun.PathBuffer = undefined;
+    var out_buffer: fun.PathBuffer = undefined;
     var path: []u8 = undefined;
 
     var j: usize = 0;

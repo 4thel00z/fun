@@ -1,10 +1,10 @@
-# Bun Event Loop Architecture
+# Fun Event Loop Architecture
 
-This document explains how Bun's event loop works, including task draining, microtasks, process.nextTick, setTimeout ordering, and I/O polling integration.
+This document explains how Fun's event loop works, including task draining, microtasks, process.nextTick, setTimeout ordering, and I/O polling integration.
 
 ## Overview
 
-Bun's event loop is built on top of **uSockets** (a cross-platform event loop based on epoll/kqueue) and integrates with **JavaScriptCore's** microtask queue and a custom **process.nextTick** queue. The event loop processes tasks in a specific order to ensure correct JavaScript semantics while maximizing performance.
+Fun's event loop is built on top of **uSockets** (a cross-platform event loop based on epoll/kqueue) and integrates with **JavaScriptCore's** microtask queue and a custom **process.nextTick** queue. The event loop processes tasks in a specific order to ensure correct JavaScript semantics while maximizing performance.
 
 ## Core Components
 
@@ -232,15 +232,15 @@ The queue maintains a map of `(pointer, task_fn)` pairs and runs each task. If a
 
 ### uSockets Event Loop (`epoll_kqueue.c:251-320`)
 
-The I/O poll is integrated into the event loop via `us_loop_run_bun_tick()`:
+The I/O poll is integrated into the event loop via `us_loop_run_fun_tick()`:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ us_loop_run_bun_tick():                                      │
+│ us_loop_run_fun_tick():                                      │
 │                                                              │
 │   1. EMIT PRE-CALLBACK (us_internal_loop_pre)               │
 │                                                              │
-│   2. CALL Bun__JSC_onBeforeWait(jsc_vm)                     │
+│   2. CALL Fun__JSC_onBeforeWait(jsc_vm)                     │
 │      └─> Notify VM we're about to block                     │
 │                                                              │
 │   3. POLL I/O                                               │
@@ -267,7 +267,7 @@ The I/O poll is integrated into the event loop via `us_loop_run_bun_tick()`:
 
 When I/O becomes ready (socket readable/writable, file descriptor ready):
 
-1. The poll is dispatched via `us_internal_dispatch_ready_poll()` or `Bun__internal_dispatch_ready_poll()`
+1. The poll is dispatched via `us_internal_dispatch_ready_poll()` or `Fun__internal_dispatch_ready_poll()`
 2. This triggers the appropriate callback **synchronously during the I/O poll phase**
 3. The callback may:
    - Directly execute JavaScript (must use `EventLoop.enter()/exit()`)
@@ -336,7 +336,7 @@ This ensures microtasks are only drained once per top-level event loop task, eve
 
 ## Summary
 
-The Bun event loop processes work in this order:
+The Fun event loop processes work in this order:
 
 1. **Immediate tasks** (setImmediate)
 2. **I/O polling** (epoll/kqueue)

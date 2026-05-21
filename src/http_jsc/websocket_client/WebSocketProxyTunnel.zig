@@ -10,7 +10,7 @@
 /// 6. Hand off to WebSocket client
 const WebSocketProxyTunnel = @This();
 
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -62,7 +62,7 @@ ref_count: RefCount,
 /// Socket reference (the proxy connection)
 #socket: SocketUnion = .{ .none = {} },
 /// Write buffer for encrypted data (maintains TLS record ordering)
-#write_buffer: bun.io.StreamBuffer = .{},
+#write_buffer: fun.io.StreamBuffer = .{},
 /// Hostname for SNI (Server Name Indication)
 #sni_hostname: ?[]const u8 = null,
 /// Whether to reject unauthorized certificates
@@ -100,11 +100,11 @@ pub fn init(
     sni_hostname: []const u8,
     reject_unauthorized: bool,
 ) !*WebSocketProxyTunnel {
-    return bun.new(WebSocketProxyTunnel, .{
+    return fun.new(WebSocketProxyTunnel, .{
         .ref_count = .init(),
         .#upgrade_client = if (comptime ssl) .{ .https = upgrade_client } else .{ .http = upgrade_client },
         .#socket = if (comptime ssl) .{ .ssl = socket } else .{ .tcp = socket },
-        .#sni_hostname = try bun.default_allocator.dupe(u8, sni_hostname),
+        .#sni_hostname = try fun.default_allocator.dupe(u8, sni_hostname),
         .#reject_unauthorized = reject_unauthorized,
     });
 }
@@ -116,10 +116,10 @@ fn deinit(this: *WebSocketProxyTunnel) void {
     }
     this.#write_buffer.deinit();
     if (this.#sni_hostname) |hostname| {
-        bun.default_allocator.free(hostname);
+        fun.default_allocator.free(hostname);
         this.#sni_hostname = null;
     }
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 /// Start TLS handshake inside the tunnel
@@ -156,10 +156,10 @@ fn onOpen(this: *WebSocketProxyTunnel) void {
     if (this.#wrapper) |*wrapper| {
         if (wrapper.ssl) |ssl_ptr| {
             if (this.#sni_hostname) |hostname| {
-                if (!bun.strings.isIPAddress(hostname)) {
+                if (!fun.strings.isIPAddress(hostname)) {
                     // Set SNI hostname
-                    const hostname_z = bun.default_allocator.dupeZ(u8, hostname) catch return;
-                    defer bun.default_allocator.free(hostname_z);
+                    const hostname_z = fun.default_allocator.dupeZ(u8, hostname) catch return;
+                    defer fun.default_allocator.free(hostname_z);
                     ssl_ptr.configureHTTPClient(hostname_z);
                 }
             }
@@ -186,7 +186,7 @@ fn onData(this: *WebSocketProxyTunnel, decrypted_data: []const u8) void {
 }
 
 /// SSLWrapper callback: Called after TLS handshake completes
-fn onHandshake(this: *WebSocketProxyTunnel, success: bool, ssl_error: uws.us_bun_verify_error_t) void {
+fn onHandshake(this: *WebSocketProxyTunnel, success: bool, ssl_error: uws.us_fun_verify_error_t) void {
     this.ref();
     defer this.deref();
 
@@ -273,7 +273,7 @@ fn writeEncrypted(this: *WebSocketProxyTunnel, encrypted_data: []const u8) void 
 
     // If data is already buffered, queue this to maintain TLS record ordering
     if (this.#write_buffer.isNotEmpty()) {
-        bun.handleOom(this.#write_buffer.write(encrypted_data));
+        fun.handleOom(this.#write_buffer.write(encrypted_data));
         return;
     }
 
@@ -281,14 +281,14 @@ fn writeEncrypted(this: *WebSocketProxyTunnel, encrypted_data: []const u8) void 
     const written = this.#socket.write(encrypted_data);
     if (written < 0) {
         // Write failed - buffer data for retry when socket becomes writable
-        bun.handleOom(this.#write_buffer.write(encrypted_data));
+        fun.handleOom(this.#write_buffer.write(encrypted_data));
         return;
     }
 
     // Buffer remaining data
     const written_usize: usize = @intCast(written);
     if (written_usize < encrypted_data.len) {
-        bun.handleOom(this.#write_buffer.write(encrypted_data[written_usize..]));
+        fun.handleOom(this.#write_buffer.write(encrypted_data[written_usize..]));
     }
 }
 
@@ -358,14 +358,14 @@ pub export fn WebSocketProxyTunnel__setConnectedWebSocket(tunnel: *WebSocketProx
     tunnel.setConnectedWebSocket(ws);
 }
 
-const log = bun.Output.scoped(.WebSocketProxyTunnel, .visible);
+const log = fun.Output.scoped(.WebSocketProxyTunnel, .visible);
 
 const ErrorCode = @import("../websocket_client.zig").ErrorCode;
 const NewHTTPUpgradeClient = @import("./WebSocketUpgradeClient.zig").NewHTTPUpgradeClient;
 const SSLWrapper = @import("../../runtime/socket/ssl_wrapper.zig").SSLWrapper;
 
-const bun = @import("bun");
-const BoringSSL = bun.BoringSSL;
-const jsc = bun.jsc;
-const uws = bun.uws;
+const fun = @import("fun");
+const BoringSSL = fun.BoringSSL;
+const jsc = fun.jsc;
+const uws = fun.uws;
 const SSLConfig = jsc.API.ServerConfig.SSLConfig;

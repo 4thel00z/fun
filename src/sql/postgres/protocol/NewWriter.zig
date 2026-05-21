@@ -97,13 +97,13 @@ pub fn NewWriterWrap(
             try this.int4(std.math.maxInt(PostgresInt32));
         }
 
-        pub fn String(this: @This(), value: bun.String) !void {
+        pub fn String(this: @This(), value: fun.String) !void {
             if (value.isEmpty()) {
                 try this.write(&[_]u8{0});
                 return;
             }
 
-            var sliced = value.toUTF8(bun.default_allocator);
+            var sliced = value.toUTF8(fun.default_allocator);
             defer sliced.deinit();
             const slice = sliced.slice();
 
@@ -118,7 +118,7 @@ pub fn NewWriter(comptime Context: type) type {
     return NewWriterWrap(Context, Context.offset, Context.write, Context.pwrite);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const AnyPostgresError = @import("../AnyPostgresError.zig").AnyPostgresError;
 

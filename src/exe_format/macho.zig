@@ -1,5 +1,5 @@
-pub const SEGNAME_BUN = "__BUN\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".*;
-pub const SECTNAME = "__bun\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".*;
+pub const SEGNAME_FUN = "__FUN\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".*;
+pub const SECTNAME = "__fun\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".*;
 
 pub const MachoFile = struct {
     header: macho.mach_header_64,
@@ -48,7 +48,7 @@ pub const MachoFile = struct {
         const total_size = header_size + data.len;
         const aligned_size = alignSize(total_size, blob_alignment);
 
-        // Look for existing __BUN,__BUN section
+        // Look for existing __FUN,__FUN section
 
         var original_fileoff: u64 = 0;
         var original_vmaddr: u64 = 0;
@@ -59,7 +59,7 @@ pub const MachoFile = struct {
         var code_sign_cmd_idx: ?usize = null;
         var linkedit_seg_idx: ?usize = null;
 
-        var found_bun = false;
+        var found_fun = false;
 
         var iter = self.iterator();
 
@@ -68,13 +68,13 @@ pub const MachoFile = struct {
             switch (cmd.cmd) {
                 .SEGMENT_64 => {
                     const command = entry.cast(macho.segment_command_64).?;
-                    if (strings.eqlComptime(command.segName(), "__BUN")) {
+                    if (strings.eqlComptime(command.segName(), "__FUN")) {
                         if (command.nsects > 0) {
                             const section_offset = @intFromPtr(entry.data.ptr) - @intFromPtr(self.data.items.ptr);
                             const sections = @as([*]macho.section_64, @ptrCast(@alignCast(&self.data.items[section_offset + @sizeOf(macho.segment_command_64)])))[0..command.nsects];
                             for (sections) |*sect| {
-                                if (strings.eqlComptime(sect.sectName(), "__bun")) {
-                                    found_bun = true;
+                                if (strings.eqlComptime(sect.sectName(), "__fun")) {
+                                    found_fun = true;
                                     original_fileoff = sect.offset;
                                     original_vmaddr = sect.addr;
                                     original_data_end = command.fileoff + command.filesize;
@@ -90,7 +90,7 @@ pub const MachoFile = struct {
 
                                     self.section = .{
                                         .sectname = SECTNAME,
-                                        .segname = SEGNAME_BUN,
+                                        .segname = SEGNAME_FUN,
                                         .addr = original_vmaddr,
                                         .size = @intCast(total_size),
                                         .offset = @intCast(original_fileoff),
@@ -120,7 +120,7 @@ pub const MachoFile = struct {
             }
         }
 
-        if (!found_bun) {
+        if (!found_fun) {
             return error.InvalidObject;
         }
 
@@ -153,11 +153,11 @@ pub const MachoFile = struct {
         self.data.items.len += @as(usize, @intCast(size_diff));
 
         // Binary is:
-        // [header][...data before __BUN][__BUN][...data after __BUN]
-        // We need to shift [...data after __BUN] forward by size_diff bytes.
-        const after_bun_slice = self.data.items[original_data_end + @as(usize, @intCast(size_diff)) ..];
-        const prev_after_bun_slice = prev_data_slice[original_segsize..];
-        bun.memmove(after_bun_slice, prev_after_bun_slice);
+        // [header][...data before __FUN][__FUN][...data after __FUN]
+        // We need to shift [...data after __FUN] forward by size_diff bytes.
+        const after_fun_slice = self.data.items[original_data_end + @as(usize, @intCast(size_diff)) ..];
+        const prev_after_fun_slice = prev_data_slice[original_segsize..];
+        fun.memmove(after_fun_slice, prev_after_fun_slice);
 
         // Now we copy the u64 size header (8 bytes for alignment)
         std.mem.writeInt(u64, self.data.items[original_fileoff..][0..8], @intCast(data.len), .little);
@@ -180,14 +180,14 @@ pub const MachoFile = struct {
         }
 
         if (code_sign_cmd) |cs| {
-            if (self.header.cputype == macho.CPU_TYPE_ARM64 and !bun.feature_flag.BUN_NO_CODESIGN_MACHO_BINARY.get()) {
+            if (self.header.cputype == macho.CPU_TYPE_ARM64 and !fun.feature_flag.FUN_NO_CODESIGN_MACHO_BINARY.get()) {
                 // `buildAndSign` replaces the template's signature with one built by
                 // `MachoSigner`, whose size depends only on the (possibly-shifted)
                 // `cs.dataoff` — not on the template signature's shape. Resize
                 // __LINKEDIT and `LC_CODE_SIGNATURE.datasize` to that exact size.
                 //
                 // This must run even when `size_diff == 0` (bundle fits in the
-                // template's existing __BUN slot): the template may have been signed
+                // template's existing __FUN slot): the template may have been signed
                 // with a different page size / identifier / blob set, so its
                 // `cs.datasize` can be smaller than what `sign()` will produce, which
                 // the trailing truncation in `sign()` then chops (issue #29120).
@@ -352,7 +352,7 @@ pub const MachoFile = struct {
     }
 
     pub fn buildAndSign(self: *MachoFile, writer: *std.Io.Writer) !void {
-        if (self.header.cputype == macho.CPU_TYPE_ARM64 and !bun.feature_flag.BUN_NO_CODESIGN_MACHO_BINARY.get()) {
+        if (self.header.cputype == macho.CPU_TYPE_ARM64 and !fun.feature_flag.FUN_NO_CODESIGN_MACHO_BINARY.get()) {
             var data = std.array_list.Managed(u8).init(self.allocator);
             defer data.deinit();
             try self.build(data.writer());
@@ -499,7 +499,7 @@ pub const MachoFile = struct {
 
             // Calculate total signature size
             const sig_structure_size = super_blob_header_size + blob_index_size + code_dir_length;
-            bun.debugAssert(sig_structure_size == computeSignatureSize(self.sig_off));
+            fun.debugAssert(sig_structure_size == computeSignatureSize(self.sig_off));
             const total_sig_size = alignSize(sig_structure_size, PAGE_SIZE);
 
             // Setup SuperBlob
@@ -555,8 +555,8 @@ pub const MachoFile = struct {
             var remaining = self.data.items[0..self.sig_off];
             while (remaining.len >= PAGE_SIZE) {
                 const page = remaining[0..PAGE_SIZE];
-                var digest: bun.sha.SHA256.Digest = undefined;
-                bun.sha.SHA256.hash(page, &digest, null);
+                var digest: fun.sha.SHA256.Digest = undefined;
+                fun.sha.SHA256.hash(page, &digest, null);
                 try sig_writer.writeAll(&digest);
                 remaining = remaining[PAGE_SIZE..];
             }
@@ -564,8 +564,8 @@ pub const MachoFile = struct {
             if (remaining.len > 0) {
                 var last_page = [_]u8{0} ** PAGE_SIZE;
                 @memcpy(last_page[0..remaining.len], remaining);
-                var digest: bun.sha.SHA256.Digest = undefined;
-                bun.sha.SHA256.hash(&last_page, &digest, null);
+                var digest: fun.sha.SHA256.Digest = undefined;
+                fun.sha.SHA256.hash(&last_page, &digest, null);
                 try sig_writer.writeAll(&digest);
             }
 
@@ -609,8 +609,8 @@ const CS_EXECSEG_MAIN_BINARY: u64 = 0x1;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
 const macho = std.macho;
 const BlobIndex = std.macho.BlobIndex;

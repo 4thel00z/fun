@@ -10,7 +10,7 @@ args: ?*ShellArgs = null,
 jsobjs: std.array_list.Managed(JSValue),
 export_env: ?EnvMap = null,
 quiet: bool = false,
-cwd: ?bun.String = null,
+cwd: ?fun.String = null,
 this_jsvalue: JSValue = .zero,
 estimated_size_for_gc: usize = 0,
 
@@ -43,7 +43,7 @@ pub fn take(
     out_args: **ShellArgs,
     out_jsobjs: *std.array_list.Managed(JSValue),
     out_quiet: *bool,
-    out_cwd: *?bun.String,
+    out_cwd: *?fun.String,
     out_export_env: *?EnvMap,
 ) void {
     out_args.* = this.args.?;
@@ -53,7 +53,7 @@ pub fn take(
     out_export_env.* = this.export_env;
 
     this.args = null;
-    this.jsobjs = std.array_list.Managed(JSValue).init(bun.default_allocator);
+    this.jsobjs = std.array_list.Managed(JSValue).init(fun.default_allocator);
     this.cwd = null;
     this.export_env = null;
 }
@@ -66,28 +66,28 @@ pub fn finalize(
     if (this.export_env) |*env| env.deinit();
     if (this.cwd) |*cwd| cwd.deref();
     if (this.args) |a| a.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
-pub fn setCwd(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn setCwd(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments_ = callframe.arguments_old(2);
-    var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+    var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments_.slice());
     const str_js = arguments.nextEat() orelse {
         return globalThis.throw("$`...`.cwd(): expected a string argument", .{});
     };
-    const str = try bun.String.fromJS(str_js, globalThis);
+    const str = try fun.String.fromJS(str_js, globalThis);
     if (this.cwd) |*prev| prev.deref();
     this.cwd = str;
     return .js_undefined;
 }
 
-pub fn setQuiet(this: *ParsedShellScript, _: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn setQuiet(this: *ParsedShellScript, _: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arg = callframe.argument(0);
     this.quiet = arg.toBoolean();
     return .js_undefined;
 }
 
-pub fn setEnv(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn setEnv(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const value1 = callframe.argument(0).getObject() orelse {
         return globalThis.throwInvalidArguments("env must be an object", .{});
     };
@@ -98,7 +98,7 @@ pub fn setEnv(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: 
     }).init(globalThis, value1);
     defer object_iter.deinit();
 
-    var env: EnvMap = EnvMap.init(bun.default_allocator);
+    var env: EnvMap = EnvMap.init(fun.default_allocator);
     errdefer env.deinit();
     env.ensureTotalCapacity(object_iter.len);
 
@@ -109,10 +109,10 @@ pub fn setEnv(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: 
         var value = object_iter.value;
         if (value.isUndefined()) continue;
 
-        const keyslice = bun.handleOom(key.toOwnedSlice(bun.default_allocator));
-        errdefer bun.default_allocator.free(keyslice);
+        const keyslice = fun.handleOom(key.toOwnedSlice(fun.default_allocator));
+        errdefer fun.default_allocator.free(keyslice);
         const value_str = try value.getZigString(globalThis);
-        const slice = bun.handleOom(value_str.toOwnedSlice(bun.default_allocator));
+        const slice = fun.handleOom(value_str.toOwnedSlice(fun.default_allocator));
         const keyref = EnvStr.initRefCounted(keyslice);
         defer keyref.deref();
         const valueref = EnvStr.initRefCounted(slice);
@@ -129,7 +129,7 @@ pub fn setEnv(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: 
 
 pub const createParsedShellScript = jsc.MarkedArgumentBuffer.wrap(createParsedShellScriptImpl);
 
-fn createParsedShellScriptImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, marked_argument_buffer: *jsc.MarkedArgumentBuffer) bun.JSError!JSValue {
+fn createParsedShellScriptImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, marked_argument_buffer: *jsc.MarkedArgumentBuffer) fun.JSError!JSValue {
     var shargs = ShellArgs.init();
     var needs_to_free_shargs = true;
     defer if (needs_to_free_shargs) shargs.deinit();
@@ -137,25 +137,25 @@ fn createParsedShellScriptImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.
     const arguments_ = callframe.arguments_old(2);
     const arguments = arguments_.slice();
     if (arguments.len < 2) {
-        return globalThis.throwNotEnoughArguments("Bun.$", 2, arguments.len);
+        return globalThis.throwNotEnoughArguments("Fun.$", 2, arguments.len);
     }
     const string_args = arguments[0];
     const template_args_js = arguments[1];
     var template_args = try template_args_js.arrayIterator(globalThis);
 
-    var stack_alloc = std.heap.stackFallback(@sizeOf(bun.String) * 4, shargs.arena_allocator());
-    var jsstrings = try std.array_list.Managed(bun.String).initCapacity(stack_alloc.get(), 4);
+    var stack_alloc = std.heap.stackFallback(@sizeOf(fun.String) * 4, shargs.arena_allocator());
+    var jsstrings = try std.array_list.Managed(fun.String).initCapacity(stack_alloc.get(), 4);
     defer {
-        for (jsstrings.items[0..]) |bunstr| {
-            bunstr.deref();
+        for (jsstrings.items[0..]) |funstr| {
+            funstr.deref();
         }
         jsstrings.deinit();
     }
     var jsobjs = std.array_list.Managed(JSValue).init(shargs.arena_allocator());
     var script = std.array_list.Managed(u8).init(shargs.arena_allocator());
-    try bun.shell.shellCmdFromJS(globalThis, string_args, &template_args, &jsobjs, &jsstrings, &script, marked_argument_buffer);
+    try fun.shell.shellCmdFromJS(globalThis, string_args, &template_args, &jsobjs, &jsstrings, &script, marked_argument_buffer);
 
-    var parser: ?bun.shell.Parser = null;
+    var parser: ?fun.shell.Parser = null;
     var lex_result: ?shell.LexResult = null;
     const script_ast = Interpreter.parse(
         shargs.arena_allocator(),
@@ -172,7 +172,7 @@ fn createParsedShellScriptImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.
         }
 
         if (parser) |*p| {
-            if (bun.Environment.allow_assert) {
+            if (fun.Environment.allow_assert) {
                 assert(p.errors.items.len > 0);
             }
             const errstr = p.combineErrors();
@@ -184,7 +184,7 @@ fn createParsedShellScriptImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.
 
     shargs.script_ast = script_ast;
 
-    const parsed_shell_script = bun.new(ParsedShellScript, .{
+    const parsed_shell_script = fun.new(ParsedShellScript, .{
         .args = shargs,
         .jsobjs = jsobjs,
     });
@@ -192,7 +192,7 @@ fn createParsedShellScriptImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.
     const this_jsvalue = jsc.Codegen.JSParsedShellScript.toJSWithValues(parsed_shell_script, globalThis, marked_argument_buffer);
     parsed_shell_script.this_jsvalue = this_jsvalue;
 
-    bun.analytics.Features.shell += 1;
+    fun.analytics.Features.shell += 1;
     needs_to_free_shargs = false;
     return this_jsvalue;
 }
@@ -202,17 +202,17 @@ const std = @import("std");
 const interpreter = @import("./interpreter.zig");
 const ShellArgs = interpreter.ShellArgs;
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 
 const CallFrame = jsc.CallFrame;
 const ArgumentsSlice = jsc.CallFrame.ArgumentsSlice;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const EnvMap = shell.EnvMap;
 const EnvStr = shell.EnvStr;
 const Interpreter = shell.Interpreter;

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "fun:test";
 import { request } from "undici";
 
 import { createServer } from "../../../http-test-server";

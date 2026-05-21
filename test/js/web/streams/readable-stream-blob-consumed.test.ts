@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("ReadableStream.blob() after body consumed does not crash", async () => {
   const r = new Response("Hello World");

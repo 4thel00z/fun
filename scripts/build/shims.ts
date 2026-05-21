@@ -1,5 +1,5 @@
 /**
- * Platform shims — small dylibs/objects linked into the bun executable to
+ * Platform shims — small dylibs/objects linked into the fun executable to
  * work around toolchain or OS bugs.
  *
  * Each shim is a ninja build edge (source → output), so ninja handles
@@ -44,7 +44,7 @@ export function registerShimRules(n: Ninja, cfg: Config): void {
 
 /**
  * Emit shim build edges and return link flags. Call once per link site
- * (emitBun, emitLinkOnly) before the link() call.
+ * (emitFun, emitLinkOnly) before the link() call.
  *
  * Currently just the macOS 26.4 ASAN dyld deadlock shim. See
  * scripts/build/shims/asan-dyld-shim.c for the mechanism and

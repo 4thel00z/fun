@@ -24,7 +24,7 @@ if (isMainThread) {
     new Worker(__filename);
   }, 1);
 
-  // Immediately starting another crashes bun - comment next line to make bun 'work'
+  // Immediately starting another crashes fun - comment next line to make fun 'work'
   new Worker(__filename);
 
   setTimeout(() => process.exit(0), 500);

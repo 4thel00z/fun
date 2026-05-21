@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test.failing("issue #12250: afterAll hook should run even with --bail flag", async () => {
   using dir = tempDir("test-12250", {
     "test.spec.ts": `
-import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, it } from 'fun:test';
 
 describe('test', () => {
   beforeAll(async () => {
@@ -26,9 +26,9 @@ describe('test', () => {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--bail", "test.spec.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--bail", "test.spec.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -54,7 +54,7 @@ describe('test', () => {
 test("issue #12250: afterAll hook runs normally without --bail flag", async () => {
   using dir = tempDir("test-12250-control", {
     "test.spec.ts": `
-import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, it } from 'fun:test';
 
 describe('test', () => {
   beforeAll(async () => {
@@ -76,9 +76,9 @@ describe('test', () => {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "test.spec.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "test.spec.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

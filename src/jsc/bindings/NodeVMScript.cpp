@@ -14,7 +14,7 @@
 
 #include <bit>
 
-namespace Bun {
+namespace Fun {
 using namespace NodeVM;
 
 bool ScriptOptions::fromJS(JSC::JSGlobalObject* globalObject, JSC::VM& vm, JSC::ThrowScope& scope, JSC::JSValue optionsArg, JSValue* importer)
@@ -705,4 +705,4 @@ bool RunningScriptOptions::fromJS(JSC::JSGlobalObject* globalObject, JSC::VM& vm
     return any;
 }
 
-} // namespace Bun
+} // namespace Fun

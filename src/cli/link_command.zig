@@ -17,12 +17,12 @@ fn link(ctx: Command.Context) !void {
     defer ctx.allocator.free(original_cwd);
 
     if (manager.options.shouldPrintCommandName()) {
-        Output.prettyln("<r><b>bun link <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
+        Output.prettyln("<r><b>fun link <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
         Output.flush();
     }
 
     if (manager.options.positionals.len == 1) {
-        // bun link
+        // fun link
 
         var lockfile: Lockfile = undefined;
         var name: string = "";
@@ -30,7 +30,7 @@ fn link(ctx: Command.Context) !void {
 
         // Step 1. parse the nearest package.json file
         {
-            const package_json_source = &(bun.sys.File.toSource(manager.original_package_json_path, ctx.allocator, .{}).unwrap() catch |err| {
+            const package_json_source = &(fun.sys.File.toSource(manager.original_package_json_path, ctx.allocator, .{}).unwrap() catch |err| {
                 Output.errGeneric("failed to read \"{s}\" for linking: {s}", .{ manager.original_package_json_path, @errorName(err) });
                 Global.crash();
             });
@@ -93,7 +93,7 @@ fn link(ctx: Command.Context) !void {
             if (comptime Environment.isWindows) {
                 // create the junction
                 const top_level = Fs.FileSystem.instance.topLevelDirWithoutTrailingSlash();
-                var link_path_buf: bun.PathBuffer = undefined;
+                var link_path_buf: fun.PathBuffer = undefined;
                 @memcpy(
                     link_path_buf[0..top_level.len],
                     top_level,
@@ -102,10 +102,10 @@ fn link(ctx: Command.Context) !void {
                 const link_path = link_path_buf[0..top_level.len :0];
                 const global_path = manager.globalLinkDirPath();
                 const dest_path = Path.joinAbsStringZ(global_path, &.{name}, .windows);
-                switch (bun.sys.sys_uv.symlinkUV(
+                switch (fun.sys.sys_uv.symlinkUV(
                     link_path,
                     dest_path,
-                    bun.windows.libuv.UV_FS_SYMLINK_JUNCTION,
+                    fun.windows.libuv.UV_FS_SYMLINK_JUNCTION,
                 )) {
                     .err => |err| {
                         Output.prettyErrorln("<r><red>error:<r> failed to create junction to node_modules in global dir due to error {f}", .{err});
@@ -125,11 +125,11 @@ fn link(ctx: Command.Context) !void {
 
         // Step 3b. Link any global bins
         if (package.bin.tag != .none) {
-            var link_target_buf: bun.PathBuffer = undefined;
-            var link_dest_buf: bun.PathBuffer = undefined;
-            var link_rel_buf: bun.PathBuffer = undefined;
+            var link_target_buf: fun.PathBuffer = undefined;
+            var link_dest_buf: fun.PathBuffer = undefined;
+            var link_rel_buf: fun.PathBuffer = undefined;
 
-            var node_modules_path = bun.AbsPath(.{}).initFdPath(.fromStdDir(node_modules)) catch |err| {
+            var node_modules_path = fun.AbsPath(.{}).initFdPath(.fromStdDir(node_modules)) catch |err| {
                 if (manager.options.log_level != .silent) {
                     Output.err(err, "failed to link binary", .{});
                 }
@@ -170,7 +170,7 @@ fn link(ctx: Command.Context) !void {
                 \\<r><green>Success!<r> Registered "{[name]s}"
                 \\
                 \\To use {[name]s} in a project, run:
-                \\  <cyan>bun link {[name]s}<r>
+                \\  <cyan>fun link {[name]s}<r>
                 \\
                 \\Or add it in dependencies in your package.json file:
                 \\  <cyan>"{[name]s}": "link:{[name]s}"<r>
@@ -184,7 +184,7 @@ fn link(ctx: Command.Context) !void {
         Output.flush();
         Global.exit(0);
     } else {
-        // bun link lodash
+        // fun link lodash
         try manager.updatePackageJSONAndInstallWithManager(ctx, original_cwd);
     }
 }
@@ -193,25 +193,25 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const Path = bun.path;
-const strings = bun.strings;
-const Command = bun.cli.Command;
-const File = bun.sys.File;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const Path = fun.path;
+const strings = fun.strings;
+const Command = fun.cli.Command;
+const File = fun.sys.File;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const Bin = bun.install.Bin;
-const Features = bun.install.Features;
+const Bin = fun.install.Bin;
+const Features = fun.install.Features;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const CommandLineArguments = PackageManager.CommandLineArguments;
 const Options = PackageManager.Options;
 const attemptToCreatePackageJSON = PackageManager.attemptToCreatePackageJSON;

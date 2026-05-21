@@ -165,7 +165,7 @@ JSValue createDOMException(JSGlobalObject* lexicalGlobalObject, ExceptionCode ec
         return createRangeError(lexicalGlobalObject, message);
 
     // WebIDL says ExceptionCode::SyntaxError should be a DOMException named "SyntaxError",
-    // but Bun throws a JS SyntaxError here (WebSocket URL validation etc.) and existing
+    // but Fun throws a JS SyntaxError here (WebSocket URL validation etc.) and existing
     // code depends on `instanceof SyntaxError`. Intentional divergence from upstream.
     case ExceptionCode::SyntaxError:
     case ExceptionCode::JSSyntaxError:
@@ -180,16 +180,16 @@ JSValue createDOMException(JSGlobalObject* lexicalGlobalObject, ExceptionCode ec
         return createOutOfMemoryError(lexicalGlobalObject);
 
     case ExceptionCode::InvalidThisError:
-        return Bun::createInvalidThisError(lexicalGlobalObject, message.isEmpty() ? "Expected this to be of a different type"_s : message);
+        return Fun::createInvalidThisError(lexicalGlobalObject, message.isEmpty() ? "Expected this to be of a different type"_s : message);
 
     case ExceptionCode::InvalidURLError:
-        return Bun::createError(lexicalGlobalObject, Bun::ErrorCode::ERR_INVALID_URL, message.isEmpty() ? "Invalid URL"_s : message);
+        return Fun::createError(lexicalGlobalObject, Fun::ErrorCode::ERR_INVALID_URL, message.isEmpty() ? "Invalid URL"_s : message);
 
     case ExceptionCode::CryptoOperationFailedError:
-        return Bun::createError(lexicalGlobalObject, Bun::ErrorCode::ERR_CRYPTO_OPERATION_FAILED, message.isEmpty() ? "Crypto operation failed"_s : message);
+        return Fun::createError(lexicalGlobalObject, Fun::ErrorCode::ERR_CRYPTO_OPERATION_FAILED, message.isEmpty() ? "Crypto operation failed"_s : message);
 
     case ExceptionCode::EVENT_RECURSION:
-        return Bun::createError(lexicalGlobalObject, Bun::ErrorCode::ERR_EVENT_RECURSION, message);
+        return Fun::createError(lexicalGlobalObject, Fun::ErrorCode::ERR_EVENT_RECURSION, message);
 
     default: {
         // FIXME: All callers to createDOMException need to pass in the correct global object.
@@ -253,22 +253,22 @@ void throwSecurityError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScop
 
 JSC::EncodedJSValue throwArgumentMustBeEnumError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, unsigned argumentIndex, ASCIILiteral argumentName, ASCIILiteral functionInterfaceName, ASCIILiteral functionName, ASCIILiteral expectedValues)
 {
-    return Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, functionInterfaceName, functionName, "one of: "_s, expectedValues));
+    return Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, functionInterfaceName, functionName, "one of: "_s, expectedValues));
 }
 
 JSC::EncodedJSValue throwArgumentMustBeFunctionError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, unsigned argumentIndex, ASCIILiteral argumentName, ASCIILiteral interfaceName, ASCIILiteral functionName)
 {
-    return Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, interfaceName, functionName, "a function"_s));
+    return Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, interfaceName, functionName, "a function"_s));
 }
 
 JSC::EncodedJSValue throwArgumentMustBeObjectError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, unsigned argumentIndex, ASCIILiteral argumentName, ASCIILiteral interfaceName, ASCIILiteral functionName)
 {
-    return Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, interfaceName, functionName, "an object"_s));
+    return Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, interfaceName, functionName, "an object"_s));
 }
 
 JSC::EncodedJSValue throwArgumentTypeError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, unsigned argumentIndex, ASCIILiteral argumentName, ASCIILiteral functionInterfaceName, ASCIILiteral functionName, ASCIILiteral expectedType)
 {
-    return Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, functionInterfaceName, functionName, "an instance of "_s, expectedType));
+    return Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE, makeArgumentTypeErrorMessage(argumentIndex, argumentName, functionInterfaceName, functionName, "an instance of "_s, expectedType));
 }
 
 void throwAttributeTypeError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, ASCIILiteral interfaceName, ASCIILiteral attributeName, ASCIILiteral expectedType)
@@ -278,7 +278,7 @@ void throwAttributeTypeError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::Thro
 
 JSC::EncodedJSValue throwRequiredMemberTypeError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, ASCIILiteral memberName, ASCIILiteral dictionaryName, ASCIILiteral expectedType)
 {
-    return Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE, makeString("Member "_s, dictionaryName, '.', memberName, " is required and must be an instance of "_s, expectedType));
+    return Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE, makeString("Member "_s, dictionaryName, '.', memberName, " is required and must be an instance of "_s, expectedType));
 }
 
 JSC::EncodedJSValue throwConstructorScriptExecutionContextUnavailableError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, ASCIILiteral interfaceName)
@@ -289,9 +289,9 @@ JSC::EncodedJSValue throwConstructorScriptExecutionContextUnavailableError(JSC::
 void throwSequenceTypeError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, ASCIILiteral functionName, ASCIILiteral argumentName)
 {
     if (functionName && argumentName) {
-        Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_ARG_NOT_ITERABLE, makeString(functionName, ": "_s, argumentName, " is not iterable."_s));
+        Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_ARG_NOT_ITERABLE, makeString(functionName, ": "_s, argumentName, " is not iterable."_s));
     } else {
-        Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE, "Value is not a sequence"_s);
+        Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE, "Value is not a sequence"_s);
     }
 }
 
@@ -317,7 +317,7 @@ String makeUnsupportedIndexedSetterErrorMessage(ASCIILiteral interfaceName)
 
 EncodedJSValue throwThisTypeError(JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope, ASCIILiteral interfaceName, ASCIILiteral attributeName)
 {
-    scope.throwException(&lexicalGlobalObject, Bun::createInvalidThisError(&lexicalGlobalObject, makeThisTypeErrorMessage(interfaceName, attributeName)));
+    scope.throwException(&lexicalGlobalObject, Fun::createInvalidThisError(&lexicalGlobalObject, makeThisTypeErrorMessage(interfaceName, attributeName)));
     return {};
 }
 

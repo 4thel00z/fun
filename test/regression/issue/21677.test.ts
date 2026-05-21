@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("issue #21677 - should not add redundant Date headers", async () => {
   const testDate1 = new Date("2025-08-07T17:01:47.000Z").toUTCString();
   const testDate2 = new Date("2025-08-07T17:02:23.000Z").toUTCString();
   const testDate3 = new Date("2025-08-07T17:03:06.000Z").toUTCString();
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     routes: {
       "/static": () =>
@@ -63,7 +63,7 @@ test("issue #21677 - should not add redundant Date headers", async () => {
 test("issue #21677 - reproduce with raw HTTP to verify duplicate headers", async () => {
   const testDate = new Date("2025-08-07T17:02:23.000Z").toUTCString();
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     fetch: () =>
       new Response(`date test`, {
@@ -73,7 +73,7 @@ test("issue #21677 - reproduce with raw HTTP to verify duplicate headers", async
 
   // Use TCP socket to get raw HTTP response and check for duplicate headers
   await new Promise((resolve, reject) => {
-    const socket = Bun.connect({
+    const socket = Fun.connect({
       hostname: "localhost",
       port: server.port,
       socket: {

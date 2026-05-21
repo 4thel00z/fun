@@ -1,11 +1,11 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild
 // most of these are from scripts/end-to-end-tests.js but some are from other files
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/extra
+// For debug, all files are written to $TEMP/fun-bundle-tests/extra
 describe("bundler", () => {
   itBundled("extra/FileAsDirectoryBreak", {
     files: {
@@ -898,7 +898,7 @@ describe("bundler", () => {
         itBundled(`extra/${label}${n}`, {
           files,
           run: true,
-          target: "bun",
+          target: "fun",
         });
       }
       add(1, {

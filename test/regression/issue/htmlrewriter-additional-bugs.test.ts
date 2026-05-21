@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("HTMLRewriter selector validation should throw proper errors", () => {
   // Test various invalid CSS selectors that should be rejected

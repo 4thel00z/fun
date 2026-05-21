@@ -1,4 +1,4 @@
-# undici fetch/http2 conformance against Bun's HTTP/2 client
+# undici fetch/http2 conformance against Fun's HTTP/2 client
 
 Vendored from `nodejs/undici@5878f54` (`test/fetch/http2.js`, the only file
 matching `test/fetch/http2*.js`). Only the `require()` block at the top is
@@ -9,12 +9,12 @@ rewritten; test bodies are byte-identical to upstream.
 - `Client`/`Agent`/`Pool` → no-op stubs with `.close()`/`.destroy()`
 - `pem.generate()` → returns harness `tls` cert/key
 - `closeClientAndServerAsPromise` → inline replacement for `test/utils/node-http`
-- `test` → wraps `node:test` so `t.plan(n)` is enforced via an assertion-counting Proxy (Bun's `node:test` shim throws `ERR_NOT_IMPLEMENTED` for `t.plan`)
+- `test` → wraps `node:test` so `t.plan(n)` is enforced via an assertion-counting Proxy (Fun's `node:test` shim throws `ERR_NOT_IMPLEMENTED` for `t.plan`)
 
 ## Run
 
 ```sh
-bun bd test test/js/third_party/undici-h2/run.test.ts
+fun bd test test/js/third_party/undici-h2/run.test.ts
 ```
 
 ## Results
@@ -33,7 +33,7 @@ bun bd test test/js/third_party/undici-h2/run.test.ts
 | `[Fetch] Empty POST without h2 has Content-Length` | pass |
 | `[Fetch] Empty POST with h2 has Content-Length` | pass |
 
-**11/11 pass** on the debug build. Regression check: `USE_SYSTEM_BUN=1` → 1/11
+**11/11 pass** on the debug build. Regression check: `USE_SYSTEM_FUN=1` → 1/11
 pass (only the plain-http test), confirming the suite exercises the h2 path.
 
 ## Skipped

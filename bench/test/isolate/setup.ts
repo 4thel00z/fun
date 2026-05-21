@@ -44,7 +44,7 @@ test("t${f}", () => {
       "  │                                                             │\\n" +
       "  │  t${String(f).padStart(2, "0")}.test.ts ran in the same global as t" + String(seen).padStart(2, "0") + ".test.ts.         │\\n" +
       "  │                                                             │\\n" +
-      "  │  Run with:  bun test --isolate ./suite                      │\\n" +
+      "  │  Run with:  fun test --isolate ./suite                      │\\n" +
       "  └─────────────────────────────────────────────────────────────┘\\n"
     );
   }

@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 const fixture = ["action", "default", "loader"];
 
-const transpiler = new Bun.Transpiler({
+const transpiler = new Fun.Transpiler({
   loader: "ts",
 });
 

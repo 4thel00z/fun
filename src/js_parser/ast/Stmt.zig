@@ -157,7 +157,7 @@ pub fn alloc(comptime StatementData: type, origData: StatementData, loc: logger.
     };
 }
 
-pub const Disabler = bun.DebugOnlyDisabler(@This());
+pub const Disabler = fun.DebugOnlyDisabler(@This());
 
 /// When the lifetime of an Stmt.Data's pointer must exist longer than reset() is called, use this function.
 /// Be careful to free the memory (or use an allocator that does it for you)
@@ -368,7 +368,7 @@ pub const Data = union(Tag) {
         pub inline fn assert() void {
             if (comptime Environment.allow_assert) {
                 if (instance == null and memory_allocator == null)
-                    bun.unreachablePanic("Store must be init'd", .{});
+                    fun.unreachablePanic("Store must be init'd", .{});
             }
         }
 
@@ -410,11 +410,11 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const logger = bun.logger;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const ASTMemoryAllocator = js_ast.ASTMemoryAllocator;
 const Expr = js_ast.Expr;
 const NewBatcher = js_ast.NewBatcher;

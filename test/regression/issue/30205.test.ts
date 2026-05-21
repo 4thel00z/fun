@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/30205
+// https://github.com/underdoc-org/fun/issues/30205
 //
-// `bun test --isolate` / `--parallel` creates a fresh Zig::GlobalObject per
+// `fun test --isolate` / `--parallel` creates a fresh Zig::GlobalObject per
 // file and gcUnprotect()s the previous one. NapiEnv holds a raw
 // `Zig::GlobalObject*` in m_globalObject; for non-experimental addons
 // (nm_version != NAPI_VERSION_EXPERIMENTAL), napi finalizers are deferred to
@@ -17,9 +17,9 @@
 // file once after its worker crashed, which hid exactly this panic and made
 // the run exit 0. A fatal-signal crash now aborts the whole run.
 
-import { spawnSync } from "bun";
-import { beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { spawnSync } from "fun";
+import { beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -32,9 +32,9 @@ describe("#30205", () => {
     // Same one-shot build pattern as test/napi/napi.test.ts; the addon is
     // tiny but node-gyp's toolchain detection is the slow part.
     const install = spawnSync({
-      cmd: [bunExe(), "install", "--verbose"],
+      cmd: [funExe(), "install", "--verbose"],
       cwd: napiAppDir,
-      env: bunEnv,
+      env: funEnv,
       stderr: "inherit",
       stdout: "inherit",
       stdin: "inherit",
@@ -42,8 +42,8 @@ describe("#30205", () => {
     if (!install.success) throw new Error("node-gyp build failed");
   }, 120_000);
 
-  // CI's ASAN lane runs this file with BUN_JSC_validateExceptionChecks=1,
-  // which leaks into the spawned subprocesses via bunEnv → process.env.
+  // CI's ASAN lane runs this file with FUN_JSC_validateExceptionChecks=1,
+  // which leaks into the spawned subprocesses via funEnv → process.env.
   // The napi layer has a known unchecked ThrowScope between
   // napi_create_function and napi_set_named_property (see the "3rd party
   // napi" section in test/no-validate-exceptions.txt — every napi test is
@@ -52,14 +52,14 @@ describe("#30205", () => {
   // even runs. That's orthogonal to the GC UAF this test covers, so strip
   // the validator from the child env only.
   const env = {
-    ...bunEnv,
-    BUN_JSC_collectContinuously: "1",
-    BUN_JSC_validateExceptionChecks: undefined,
-    BUN_JSC_dumpSimulatedThrows: undefined,
+    ...funEnv,
+    FUN_JSC_collectContinuously: "1",
+    FUN_JSC_validateExceptionChecks: undefined,
+    FUN_JSC_dumpSimulatedThrows: undefined,
   };
 
   // The crash is a GC-timing race; collectContinuously + per-file
-  // `Bun.gc(true)` before loading the addon makes the previous global's napi
+  // `Fun.gc(true)` before loading the addon makes the previous global's napi
   // objects collect *before* any event-loop tick has drained their
   // finalizers, so it reproduces deterministically on Linux x64 ASAN too.
   // On unpatched main this hits the JSCell cellState assertion on file 2.
@@ -70,13 +70,13 @@ describe("#30205", () => {
     const files: Record<string, string> = {};
     for (let i = 0; i < n; i++) {
       files[`f${i}.test.js`] = `
-        import { test, expect } from "bun:test";
-        Bun.gc(true);
+        import { test, expect } from "fun:test";
+        Fun.gc(true);
         const addon = require(${JSON.stringify(addon)});
         globalThis.__wrapped = [];
         for (let j = 0; j < 1000; j++)
           globalThis.__wrapped.push(addon.wrap({ j, pad: new Array(100).fill(j) }));
-        Bun.gc(true);
+        Fun.gc(true);
         await 0;
         test("f${i}", () => { expect(globalThis.__wrapped.length).toBe(1000); });
       `;
@@ -91,8 +91,8 @@ describe("#30205", () => {
     "--isolate: deferred napi finalizers from the previous global don't write to its dead cell",
     async () => {
       using dir = tempDir("isolate-napi-uaf", makeFixtures(8));
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test", "--isolate", "."],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test", "--isolate", "."],
         env,
         cwd: String(dir),
         stdout: "pipe",
@@ -114,9 +114,9 @@ describe("#30205", () => {
     "--parallel: same scenario via the worker path",
     async () => {
       using dir = tempDir("parallel-napi-uaf", makeFixtures(8));
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test", "--parallel=2", "."],
-        env: { ...env, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test", "--parallel=2", "."],
+        env: { ...env, FUN_TEST_PARALLEL_SCALE_MS: "0" },
         cwd: String(dir),
         stdout: "pipe",
         stderr: "pipe",
@@ -130,7 +130,7 @@ describe("#30205", () => {
     120_000,
   );
 
-  // Bun's panic handler ends in @trap(), so a real worker panic surfaces
+  // Fun's panic handler ends in @trap(), so a real worker panic surfaces
   // as a fatal signal (SIGILL/SIGTRAP). Previously the coordinator printed
   // "⟳ crashed running …, retrying" and re-ran the file in a fresh worker;
   // if the retry happened to pass the whole run exited 0 and the panic was
@@ -145,17 +145,17 @@ describe("#30205", () => {
     "--parallel: worker killed by a fatal signal aborts the run instead of retrying",
     async () => {
       using dir = tempDir("parallel-panic-no-retry", {
-        "ok.test.js": `import {test,expect} from "bun:test"; test("ok",()=>expect(1).toBe(1));`,
-        "boom.test.js": `import {test} from "bun:test"; test("boom",()=>process.kill(process.pid, "SIGABRT"));`,
+        "ok.test.js": `import {test,expect} from "fun:test"; test("ok",()=>expect(1).toBe(1));`,
+        "boom.test.js": `import {test} from "fun:test"; test("boom",()=>process.kill(process.pid, "SIGABRT"));`,
       });
       // CI lanes with coredump-upload flag any new core file in coresDir as a
       // test failure — including the one the worker deliberately produces
       // here. ulimit -c 0 on the coordinator is inherited by the workers;
       // the test is POSIX-only so /bin/sh is available. Same reasoning as
-      // the setrlimit(RLIMIT_CORE, {0,0}) in BunProcess.cpp's execve path.
-      await using proc = Bun.spawn({
-        cmd: ["/bin/sh", "-c", `ulimit -c 0 && exec "$@"`, "--", bunExe(), "test", "--parallel=2", "."],
-        env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+      // the setrlimit(RLIMIT_CORE, {0,0}) in FunProcess.cpp's execve path.
+      await using proc = Fun.spawn({
+        cmd: ["/bin/sh", "-c", `ulimit -c 0 && exec "$@"`, "--", funExe(), "test", "--parallel=2", "."],
+        env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
         cwd: String(dir),
         stdout: "pipe",
         stderr: "pipe",
@@ -172,18 +172,18 @@ describe("#30205", () => {
     60_000,
   );
 
-  // process.exit() is a deliberate user action, not a Bun bug. The file is
+  // process.exit() is a deliberate user action, not a Fun bug. The file is
   // marked failed (not retried) and the run continues so the other files'
   // results are still reported.
   test("--parallel: worker process.exit() is a non-retried failure, not a panic-abort", async () => {
     using dir = tempDir("parallel-exit-no-retry", {
-      "a.test.js": `import {test,expect} from "bun:test"; test("a",()=>expect(1).toBe(1));`,
-      "b.test.js": `import {test,expect} from "bun:test"; test("b",()=>expect(1).toBe(1));`,
-      "boom.test.js": `import {test} from "bun:test"; test("boom",()=>process.exit(7));`,
+      "a.test.js": `import {test,expect} from "fun:test"; test("a",()=>expect(1).toBe(1));`,
+      "b.test.js": `import {test,expect} from "fun:test"; test("b",()=>expect(1).toBe(1));`,
+      "boom.test.js": `import {test} from "fun:test"; test("boom",()=>process.exit(7));`,
     });
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--parallel=2", "."],
-      env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--parallel=2", "."],
+      env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",

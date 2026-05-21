@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 describe("DOMException in Node.js environment", () => {
   it("exists globally", () => {

@@ -1,11 +1,11 @@
 // Represents data that can be either owned or temporary
 pub const Data = union(enum) {
-    owned: bun.ByteList,
+    owned: fun.ByteList,
     temporary: []const u8,
     inline_storage: InlineStorage,
     empty: void,
 
-    pub const InlineStorage = bun.BoundedArray(u8, 15);
+    pub const InlineStorage = fun.BoundedArray(u8, 15);
 
     pub const Empty: Data = .{ .empty = {} };
 
@@ -21,26 +21,26 @@ pub const Data = union(enum) {
             return .{ .inline_storage = inline_storage };
         }
         return .{
-            .owned = bun.ByteList.fromOwnedSlice(try allocator.dupe(u8, possibly_inline_bytes)),
+            .owned = fun.ByteList.fromOwnedSlice(try allocator.dupe(u8, possibly_inline_bytes)),
         };
     }
 
-    pub fn toOwned(this: @This()) !bun.ByteList {
+    pub fn toOwned(this: @This()) !fun.ByteList {
         return switch (this) {
             .owned => this.owned,
-            .temporary => bun.ByteList.fromOwnedSlice(
-                try bun.default_allocator.dupe(u8, this.temporary),
+            .temporary => fun.ByteList.fromOwnedSlice(
+                try fun.default_allocator.dupe(u8, this.temporary),
             ),
-            .empty => bun.ByteList.empty,
-            .inline_storage => bun.ByteList.fromOwnedSlice(
-                try bun.default_allocator.dupe(u8, this.inline_storage.slice()),
+            .empty => fun.ByteList.empty,
+            .inline_storage => fun.ByteList.fromOwnedSlice(
+                try fun.default_allocator.dupe(u8, this.inline_storage.slice()),
             ),
         };
     }
 
     pub fn deinit(this: *@This()) void {
         switch (this.*) {
-            .owned => |*owned| owned.clearAndFree(bun.default_allocator),
+            .owned => |*owned| owned.clearAndFree(fun.default_allocator),
             .temporary => {},
             .empty => {},
             .inline_storage => {},
@@ -53,8 +53,8 @@ pub const Data = union(enum) {
         switch (this.*) {
             .owned => |*owned| {
                 // Zero bytes before deinit
-                bun.freeSensitive(bun.default_allocator, owned.slice());
-                owned.deinit(bun.default_allocator);
+                fun.freeSensitive(fun.default_allocator, owned.slice());
+                owned.deinit(fun.default_allocator);
             },
             .temporary => {},
             .empty => {},
@@ -90,5 +90,5 @@ pub const Data = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

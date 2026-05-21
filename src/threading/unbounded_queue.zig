@@ -89,7 +89,7 @@ pub fn UnboundedQueue(comptime T: type, comptime next_field: meta.FieldEnum(T)) 
 
         pub fn pushBatch(self: *Self, first: *T, last: *T) void {
             setNext(last, null);
-            if (comptime bun.Environment.allow_assert) {
+            if (comptime fun.Environment.allow_assert) {
                 var item = first;
                 while (getNext(item)) |next_item| {
                     item = next_item;
@@ -168,8 +168,8 @@ pub fn UnboundedQueue(comptime T: type, comptime next_field: meta.FieldEnum(T)) 
     };
 }
 
-const bun = @import("bun");
-const assertf = bun.assertf;
+const fun = @import("fun");
+const assertf = fun.assertf;
 
 const std = @import("std");
 const atomic = std.atomic;

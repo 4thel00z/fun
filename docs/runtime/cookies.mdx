@@ -1,29 +1,29 @@
 ---
 title: Cookies
-description: Use Bun's native APIs for working with HTTP cookies
+description: Use Fun's native APIs for working with HTTP cookies
 ---
 
-Bun provides native APIs for working with HTTP cookies through `Bun.Cookie` and `Bun.CookieMap`. These APIs offer fast methods for parsing, generating, and manipulating cookies in HTTP requests and responses.
+Fun provides native APIs for working with HTTP cookies through `Fun.Cookie` and `Fun.CookieMap`. These APIs offer fast methods for parsing, generating, and manipulating cookies in HTTP requests and responses.
 
 ## CookieMap class
 
-`Bun.CookieMap` provides a Map-like interface for working with collections of cookies. It implements the `Iterable` interface, allowing you to use it with `for...of` loops and other iteration methods.
+`Fun.CookieMap` provides a Map-like interface for working with collections of cookies. It implements the `Iterable` interface, allowing you to use it with `for...of` loops and other iteration methods.
 
 ```ts title="cookies.ts" icon="/icons/typescript.svg"
 // Empty cookie map
-const cookies = new Bun.CookieMap();
+const cookies = new Fun.CookieMap();
 
 // From a cookie string
-const cookies1 = new Bun.CookieMap("name=value; foo=bar");
+const cookies1 = new Fun.CookieMap("name=value; foo=bar");
 
 // From an object
-const cookies2 = new Bun.CookieMap({
+const cookies2 = new Fun.CookieMap({
   session: "abc123",
   theme: "dark",
 });
 
 // From an array of name/value pairs
-const cookies3 = new Bun.CookieMap([
+const cookies3 = new Fun.CookieMap([
   ["session", "abc123"],
   ["theme", "dark"],
 ]);
@@ -31,10 +31,10 @@ const cookies3 = new Bun.CookieMap([
 
 ### In HTTP servers
 
-In Bun's HTTP server, the `cookies` property on the request object (in `routes`) is an instance of `CookieMap`:
+In Fun's HTTP server, the `cookies` property on the request object (in `routes`) is an instance of `CookieMap`:
 
 ```ts title="server.ts" icon="/icons/typescript.svg"
-const server = Bun.serve({
+const server = Fun.serve({
   routes: {
     "/": req => {
       // Access request cookies
@@ -109,7 +109,7 @@ cookies.set({
 });
 
 // Set using Cookie instance
-const cookie = new Bun.Cookie("visited", "true");
+const cookie = new Fun.Cookie("visited", "true");
 cookies.set(cookie);
 ```
 
@@ -143,11 +143,11 @@ const json = cookies.toJSON();
 
 Returns an array of values for Set-Cookie headers that can be used to apply all cookie changes.
 
-When using `Bun.serve()`, you don't need to call this method explicitly. Any changes made to the `req.cookies` map are automatically applied to the response headers. This method is primarily useful when working with other HTTP server implementations.
+When using `Fun.serve()`, you don't need to call this method explicitly. Any changes made to the `req.cookies` map are automatically applied to the response headers. This method is primarily useful when working with other HTTP server implementations.
 
 ```js title="node-server.js" icon="file-code"
 import { createServer } from "node:http";
-import { CookieMap } from "bun";
+import { CookieMap } from "fun";
 
 const server = createServer((req, res) => {
   const cookieHeader = req.headers.cookie || "";
@@ -211,16 +211,16 @@ console.log(cookies.size); // Number of cookies
 
 ## Cookie class
 
-`Bun.Cookie` represents an HTTP cookie with its name, value, and attributes.
+`Fun.Cookie` represents an HTTP cookie with its name, value, and attributes.
 
 ```ts title="cookie-class.ts" icon="/icons/typescript.svg"
-import { Cookie } from "bun";
+import { Cookie } from "fun";
 
 // Create a basic cookie
-const cookie = new Bun.Cookie("name", "value");
+const cookie = new Fun.Cookie("name", "value");
 
 // Create a cookie with options
-const secureSessionCookie = new Bun.Cookie("session", "abc123", {
+const secureSessionCookie = new Fun.Cookie("session", "abc123", {
   domain: "example.com",
   path: "/admin",
   expires: new Date(Date.now() + 86400000), // 1 day
@@ -230,10 +230,10 @@ const secureSessionCookie = new Bun.Cookie("session", "abc123", {
 });
 
 // Parse from a cookie string
-const parsedCookie = new Bun.Cookie("name=value; Path=/; HttpOnly");
+const parsedCookie = new Fun.Cookie("name=value; Path=/; HttpOnly");
 
 // Create from an options object
-const objCookie = new Bun.Cookie({
+const objCookie = new Fun.Cookie({
   name: "theme",
   value: "dark",
   maxAge: 3600,
@@ -245,16 +245,16 @@ const objCookie = new Bun.Cookie({
 
 ```ts title="constructors.ts" icon="/icons/typescript.svg"
 // Basic constructor with name/value
-new Bun.Cookie(name: string, value: string);
+new Fun.Cookie(name: string, value: string);
 
 // Constructor with name, value, and options
-new Bun.Cookie(name: string, value: string, options: CookieInit);
+new Fun.Cookie(name: string, value: string, options: CookieInit);
 
 // Constructor from cookie string
-new Bun.Cookie(cookieString: string);
+new Fun.Cookie(cookieString: string);
 
 // Constructor from cookie object
-new Bun.Cookie(options: CookieInit);
+new Fun.Cookie(options: CookieInit);
 ```
 
 ### Properties
@@ -280,19 +280,19 @@ Checks if the cookie has expired.
 
 ```ts title="is-expired.ts" icon="/icons/typescript.svg"
 // Expired cookie (Date in the past)
-const expiredCookie = new Bun.Cookie("name", "value", {
+const expiredCookie = new Fun.Cookie("name", "value", {
   expires: new Date(Date.now() - 1000),
 });
 console.log(expiredCookie.isExpired()); // true
 
 // Valid cookie (Using maxAge instead of expires)
-const validCookie = new Bun.Cookie("name", "value", {
+const validCookie = new Fun.Cookie("name", "value", {
   maxAge: 3600, // 1 hour in seconds
 });
 console.log(validCookie.isExpired()); // false
 
 // Session cookie (no expiration)
-const sessionCookie = new Bun.Cookie("name", "value");
+const sessionCookie = new Fun.Cookie("name", "value");
 console.log(sessionCookie.isExpired()); // false
 ```
 
@@ -303,7 +303,7 @@ console.log(sessionCookie.isExpired()); // false
 Returns a string representation of the cookie suitable for a `Set-Cookie` header.
 
 ```ts title="serialize-cookie.ts" icon="/icons/typescript.svg"
-const cookie = new Bun.Cookie("session", "abc123", {
+const cookie = new Fun.Cookie("session", "abc123", {
   domain: "example.com",
   path: "/admin",
   expires: new Date(Date.now() + 86400000),
@@ -323,7 +323,7 @@ console.log(cookie.toString());
 Converts the cookie to a plain object suitable for JSON serialization.
 
 ```ts title="cookie-json.ts" icon="/icons/typescript.svg"
-const cookie = new Bun.Cookie("session", "abc123", {
+const cookie = new Fun.Cookie("session", "abc123", {
   secure: true,
   httpOnly: true,
 });
@@ -350,7 +350,7 @@ const jsonString = JSON.stringify(cookie);
 Parses a cookie string into a `Cookie` instance.
 
 ```ts title="parse-cookie.ts" icon="/icons/typescript.svg"
-const cookie = Bun.Cookie.parse("name=value; Path=/; Secure; SameSite=Lax");
+const cookie = Fun.Cookie.parse("name=value; Path=/; Secure; SameSite=Lax");
 
 console.log(cookie.name); // "name"
 console.log(cookie.value); // "value"
@@ -364,7 +364,7 @@ console.log(cookie.sameSite); // "lax"
 Factory method to create a cookie.
 
 ```ts title="cookie-from.ts" icon="/icons/typescript.svg"
-const cookie = Bun.Cookie.from("session", "abc123", {
+const cookie = Fun.Cookie.from("session", "abc123", {
   httpOnly: true,
   secure: true,
   maxAge: 3600,

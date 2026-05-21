@@ -39,7 +39,7 @@ pub const Format = enum {
         return this == .esm;
     }
 
-    pub const Map = bun.ComptimeStringMap(Format, .{
+    pub const Map = fun.ComptimeStringMap(Format, .{
         .{ "esm", .esm },
         .{ "cjs", .cjs },
         .{ "iife", .iife },
@@ -51,7 +51,7 @@ pub const Format = enum {
     pub const fromJS = @import("../bundler_jsc/options_jsc.zig").formatFromJS;
 
     pub fn fromString(slice: []const u8) ?Format {
-        return Map.getWithEql(slice, bun.strings.eqlComptime);
+        return Map.getWithEql(slice, fun.strings.eqlComptime);
     }
 };
 
@@ -69,7 +69,7 @@ pub const BundlePackage = enum {
     always,
     never,
 
-    pub const Map = bun.StringArrayHashMapUnmanaged(BundlePackage);
+    pub const Map = fun.StringArrayHashMapUnmanaged(BundlePackage);
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

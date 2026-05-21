@@ -29,7 +29,7 @@ export type WebKitMode = "prebuilt" | "local";
  * (Config.os/arch/windows) which is what we're building FOR.
  *
  * Host vs target matters for zig-only cross-compile: a linux CI box
- * can cross-compile bun-zig.o for darwin/windows. Target determines
+ * can cross-compile fun-zig.o for darwin/windows. Target determines
  * zig's triple and compile flags; host determines shell syntax (cmd
  * vs sh), quoting, and tool executable suffixes.
  *
@@ -128,7 +128,7 @@ export interface Config {
   unifiedSources: boolean;
   /**
    * Archive each `direct` dep's objects into a per-dep .a (the old
-   * behaviour). Default off — dep .o files go straight into bun's link/
+   * behaviour). Default off — dep .o files go straight into fun's link/
    * cpp-only archive instead. Turn on to bisect duplicate-symbol issues:
    * a .a only contributes members the linker actually pulls.
    */
@@ -146,7 +146,7 @@ export interface Config {
   // ─── Paths (all absolute) ───
   /** Repository root. */
   cwd: string;
-  /** Build output directory, e.g. /path/to/bun/build/debug/. */
+  /** Build output directory, e.g. /path/to/fun/build/debug/. */
   buildDir: string;
   /** Generated code output, e.g. buildDir/codegen/. */
   codegenDir: string;
@@ -169,11 +169,11 @@ export interface Config {
   /** darwin-only. */
   dsymutil: string | undefined;
   zig: string;
-  /** Self-host bun for codegen (bun install, bun build). */
-  bun: string;
+  /** Self-host fun for codegen (fun install, fun build). */
+  fun: string;
   /**
    * Shell-ready command prefix for running .ts subprocesses (stream.ts,
-   * fetch-cli.ts, regen). Either the bun path or `node --experimental-strip-types`
+   * fetch-cli.ts, regen). Either the fun path or `node --experimental-strip-types`
    * depending on what's running configure. Already quoted — splice directly
    * into rule commands.
    */
@@ -221,9 +221,9 @@ export interface Config {
   freebsdVersion: string | undefined;
 
   // ─── Versioning ───
-  /** Bun's own version (from package.json). */
+  /** Fun's own version (from package.json). */
   version: string;
-  /** Git commit of the bun checkout — feeds into zig's -Dsha. */
+  /** Git commit of the fun checkout — feeds into zig's -Dsha. */
   revision: string;
   canaryRevision: string;
   /** Node.js compat version. Default in versions.ts; override to test a bump. */
@@ -301,7 +301,7 @@ export interface Toolchain {
   strip: string;
   dsymutil: string | undefined;
   zig: string;
-  bun: string;
+  fun: string;
   jsRuntime: string;
   esbuild: string;
   ccache: string | undefined;
@@ -355,7 +355,7 @@ export function detectHost(): Host {
             ? "freebsd"
             : (() => {
                 throw new BuildError(`Unsupported host platform: ${plat}`, {
-                  hint: "Bun builds on linux, darwin, windows, or freebsd",
+                  hint: "Fun builds on linux, darwin, windows, or freebsd",
                 });
               })();
 
@@ -366,7 +366,7 @@ export function detectHost(): Host {
       : a === "arm64"
         ? "aarch64"
         : (() => {
-            throw new BuildError(`Unsupported host architecture: ${a}`, { hint: "Bun builds on x64 or arm64" });
+            throw new BuildError(`Unsupported host architecture: ${a}`, { hint: "Fun builds on x64 or arm64" });
           })();
 
   return { os, arch, exeSuffix: os === "windows" ? ".exe" : "" };
@@ -526,7 +526,7 @@ export function resolveConfig(partial: PartialConfig, toolchain: Toolchain): Con
 
   // ─── Target platform ───
   const os = partial.os ?? host.os;
-  // Windows: process.arch can be wrong under emulation (x64 bun on arm64
+  // Windows: process.arch can be wrong under emulation (x64 fun on arm64
   // hardware). Ask the compiler what it targets — CMake does the same in
   // project() to set CMAKE_SYSTEM_PROCESSOR. The found clang's default
   // target is what we actually build for.
@@ -580,7 +580,7 @@ export function resolveConfig(partial: PartialConfig, toolchain: Toolchain): Con
 
   // Assertions: default on in debug OR asan. ASAN coupling is ABI-critical:
   // the -asan WebKit prebuilt is built with ASSERT_ENABLED=1, which gates
-  // struct fields (RefCountDebugger etc). If bun's C++ isn't also compiled
+  // struct fields (RefCountDebugger etc). If fun's C++ isn't also compiled
   // with ASSERT_ENABLED=1, the struct layouts mismatch → crashes. CMake's
   // build:asan always set ENABLE_ASSERTIONS=ON for this reason.
   const assertions = partial.assertions ?? (debug || asan);
@@ -634,12 +634,12 @@ export function resolveConfig(partial: PartialConfig, toolchain: Toolchain): Con
         : resolve(cwd, partial.buildDir)
       : resolve(cwd, "build", defaultBuildDirName);
   const codegenDir = resolve(buildDir, "codegen");
-  // Local builds share $BUN_INSTALL/build-cache across checkouts and profiles
+  // Local builds share $FUN_INSTALL/build-cache across checkouts and profiles
   // so ccache/zig/tarballs/webkit reuse one another's work. CI stays per-build
   // so runners remain hermetic and `rm -rf build/` is a full reset.
-  // Relative BUN_INSTALL is anchored to repo root (not process.cwd()) so the
+  // Relative FUN_INSTALL is anchored to repo root (not process.cwd()) so the
   // ninja regen rule — which runs from buildDir — resolves the same path.
-  const bunInstall = process.env.BUN_INSTALL ? resolve(cwd, process.env.BUN_INSTALL) : join(homedir(), ".bun");
+  const funInstall = process.env.FUN_INSTALL ? resolve(cwd, process.env.FUN_INSTALL) : join(homedir(), ".fun");
   const cacheDir =
     partial.cacheDir !== undefined
       ? isAbsolute(partial.cacheDir)
@@ -647,7 +647,7 @@ export function resolveConfig(partial: PartialConfig, toolchain: Toolchain): Con
         : resolve(cwd, partial.cacheDir)
       : ci
         ? resolve(buildDir, "cache")
-        : resolve(bunInstall, "build-cache");
+        : resolve(funInstall, "build-cache");
   const vendorDir = resolve(cwd, "vendor");
 
   // ─── Validation ───
@@ -806,7 +806,7 @@ export function resolveConfig(partial: PartialConfig, toolchain: Toolchain): Con
     strip: toolchain.strip,
     dsymutil: toolchain.dsymutil,
     zig: toolchain.zig,
-    bun: toolchain.bun,
+    fun: toolchain.fun,
     jsRuntime: toolchain.jsRuntime,
     esbuild: toolchain.esbuild,
     ccache: toolchain.ccache,
@@ -949,7 +949,7 @@ function compareVersionStrings(a: string, b: string): number {
 
 /**
  * Find the repository root by walking up from cwd looking for package.json
- * with name "bun". Exported so `resolveToolchain()` in configure.ts can
+ * with name "fun". Exported so `resolveToolchain()` in configure.ts can
  * resolve paths correctly when invoked from ninja (where cwd = build dir).
  */
 export function findRepoRoot(): string {
@@ -959,7 +959,7 @@ export function findRepoRoot(): string {
     if (existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { name?: string };
-        if (pkg.name === "bun") {
+        if (pkg.name === "fun") {
           return dir;
         }
       } catch {
@@ -968,7 +968,7 @@ export function findRepoRoot(): string {
     }
     const parent = resolve(dir, "..");
     if (parent === dir) {
-      throw new BuildError("Could not find bun repository root", { hint: "Run this from within the bun repository" });
+      throw new BuildError("Could not find fun repository root", { hint: "Run this from within the fun repository" });
     }
     dir = parent;
   }
@@ -1009,26 +1009,26 @@ function computeBuildDirName(c: { debug: boolean; release: boolean; asan: boolea
 /**
  * Name of the output executable (no suffix).
  *
- * Debug builds: bun-debug. Release with ASAN: bun-asan. Etc.
- * The plain `bun` name (without -profile) only exists post-strip.
+ * Debug builds: fun-debug. Release with ASAN: fun-asan. Etc.
+ * The plain `fun` name (without -profile) only exists post-strip.
  *
- * Lives here (not bun.ts) so flags.ts can use it for linker-map filename
+ * Lives here (not fun.ts) so flags.ts can use it for linker-map filename
  * without a circular import.
  */
-export function bunExeName(cfg: Config): string {
-  if (cfg.debug) return "bun-debug";
+export function funExeName(cfg: Config): string {
+  if (cfg.debug) return "fun-debug";
   // Release variants — suffix encodes which features differ from plain release.
   // First match wins.
-  if (cfg.asan && cfg.valgrind) return "bun-asan-valgrind";
-  if (cfg.asan) return "bun-asan";
-  if (cfg.valgrind) return "bun-valgrind";
-  if (cfg.assertions) return "bun-assertions";
-  // Plain release: called bun-profile (the stripped one is `bun`).
-  return "bun-profile";
+  if (cfg.asan && cfg.valgrind) return "fun-asan-valgrind";
+  if (cfg.asan) return "fun-asan";
+  if (cfg.valgrind) return "fun-valgrind";
+  if (cfg.assertions) return "fun-assertions";
+  // Plain release: called fun-profile (the stripped one is `fun`).
+  return "fun-profile";
 }
 
 /**
- * Whether this config produces a stripped `bun` alongside `bun-profile`.
+ * Whether this config produces a stripped `fun` alongside `fun-profile`.
  *
  * Only plain release builds strip — not debug (you want symbols), not
  * asan/valgrind (strip interferes), not assertions (usually debugging).
@@ -1041,7 +1041,7 @@ const c = { dim, cyan, green };
 
 /**
  * Format a config for display (used at configure time).
- * `exe` is the output binary name (e.g. "bun-debug" or "bun-profile → bun (stripped)").
+ * `exe` is the output binary name (e.g. "fun-debug" or "fun-profile → fun (stripped)").
  */
 export function formatConfig(cfg: Config, exe: string): string {
   const label = (s: string) => c.dim(s.padEnd(12));

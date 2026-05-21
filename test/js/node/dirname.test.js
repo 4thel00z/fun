@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 
 it("__dirname should work", () => {
   expect(import.meta.dir).toBe(__dirname);

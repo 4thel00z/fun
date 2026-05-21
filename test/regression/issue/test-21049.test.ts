@@ -1,9 +1,9 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("fetch with Request object respects redirect: 'manual' option", async () => {
   // Test server that redirects
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       const url = new URL(req.url);
@@ -58,23 +58,23 @@ test("fetch with Request object respects redirect: 'manual' option", async () =>
     main();
   `;
 
-  // Run with Bun
-  await using bunProc = Bun.spawn({
-    cmd: [bunExe(), "-e", testScript],
-    env: bunEnv,
+  // Run with Fun
+  await using funProc = Fun.spawn({
+    cmd: [funExe(), "-e", testScript],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
 
-  const [bunStdout, bunExitCode] = await Promise.all([new Response(bunProc.stdout).text(), bunProc.exited]);
+  const [funStdout, funExitCode] = await Promise.all([new Response(funProc.stdout).text(), funProc.exited]);
 
-  expect(bunExitCode).toBe(0);
-  const bunResult = JSON.parse(bunStdout.trim());
+  expect(funExitCode).toBe(0);
+  const funResult = JSON.parse(funStdout.trim());
 
-  // The bug: Bun follows the redirect even though redirect: "manual" was specified
+  // The bug: Fun follows the redirect even though redirect: "manual" was specified
   // Expected: status=302, url=original, redirected=false
   // Actual (bug): status=200, url=target, redirected=true
-  expect(bunResult).toEqual({
+  expect(funResult).toEqual({
     status: 302,
     url: `${server.url}/redirect`,
     redirected: false,
@@ -85,7 +85,7 @@ test("fetch with Request object respects redirect: 'manual' option", async () =>
 // Additional test to verify it works with external redirects
 test("fetch with Request object respects redirect: 'manual' for external URLs", async () => {
   // This test uses a real URL that redirects
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     routes: {
       "/redirect": new Response(null, {
@@ -114,7 +114,7 @@ test("fetch with Request object respects redirect: 'manual' for external URLs", 
 // Test edge case: fetch with options but no redirect should use Request's redirect
 test("fetch with Request respects redirect when fetch has other options but no redirect", async () => {
   // Test server that redirects
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       const url = new URL(req.url);

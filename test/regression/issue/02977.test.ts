@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isPosix } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isPosix } from "harness";
 
-// https://github.com/oven-sh/bun/issues/2977
-test.if(isPosix)("bun completions handles BrokenPipe gracefully", async () => {
+// https://github.com/underdoc-org/fun/issues/2977
+test.if(isPosix)("fun completions handles BrokenPipe gracefully", async () => {
   // Simulate piping to a command that closes stdin immediately (like `true`)
-  // This tests that bun completions doesn't crash with BrokenPipe error
-  await using proc = Bun.spawn({
-    cmd: ["sh", "-c", `SHELL=/bin/bash ${bunExe()} completions | true`],
-    env: bunEnv,
+  // This tests that fun completions doesn't crash with BrokenPipe error
+  await using proc = Fun.spawn({
+    cmd: ["sh", "-c", `SHELL=/bin/bash ${funExe()} completions | true`],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

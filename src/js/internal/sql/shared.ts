@@ -224,7 +224,7 @@ const SQLITE_MEMORY_VARIANTS: string[] = [":memory:", "sqlite://:memory:", "sqli
 const sqliteProtocols = [
   { prefix: "sqlite://", stripLength: 9 },
   { prefix: "sqlite:", stripLength: 7 },
-  { prefix: "file://", stripLength: -1 }, // Special case we can use Bun.fileURLToPath
+  { prefix: "file://", stripLength: -1 }, // Special case we can use Fun.fileURLToPath
   { prefix: "file:", stripLength: 5 },
 ];
 
@@ -241,7 +241,7 @@ function parseDefinitelySqliteUrl(value: string | URL | null): string | null {
 
     if (stripLength === -1) {
       try {
-        return Bun.fileURLToPath(str);
+        return Fun.fileURLToPath(str);
       } catch {
         // if it cant pass it's probably query string, we can just strip it
         // slicing off the file:// at the beginning
@@ -259,10 +259,10 @@ function parseDefinitelySqliteUrl(value: string | URL | null): string | null {
 
 function parseSQLiteOptions(
   filenameOrUrl: string | URL | null | undefined,
-  options: Bun.SQL.__internal.OptionsWithDefinedAdapter,
-): Bun.SQL.__internal.DefinedSQLiteOptions {
+  options: Fun.SQL.__internal.OptionsWithDefinedAdapter,
+): Fun.SQL.__internal.DefinedSQLiteOptions {
   // Start with base options
-  const sqliteOptions: Bun.SQL.__internal.DefinedSQLiteOptions = {
+  const sqliteOptions: Fun.SQL.__internal.DefinedSQLiteOptions = {
     ...options,
     adapter: "sqlite" as const,
     filename: ":memory:",
@@ -327,25 +327,25 @@ function parseSQLiteOptions(
   return sqliteOptions;
 }
 
-function isOptionsOfAdapter<A extends Bun.SQL.__internal.Adapter>(
-  options: Bun.SQL.Options,
+function isOptionsOfAdapter<A extends Fun.SQL.__internal.Adapter>(
+  options: Fun.SQL.Options,
   adapter: A,
-): options is Extract<Bun.SQL.Options, { adapter?: A }> {
+): options is Extract<Fun.SQL.Options, { adapter?: A }> {
   return options.adapter === adapter;
 }
 
-function assertIsOptionsOfAdapter<A extends Bun.SQL.__internal.Adapter>(
-  options: Bun.SQL.Options,
+function assertIsOptionsOfAdapter<A extends Fun.SQL.__internal.Adapter>(
+  options: Fun.SQL.Options,
   adapter: A,
-): asserts options is Extract<Bun.SQL.Options, { adapter?: A }> {
+): asserts options is Extract<Fun.SQL.Options, { adapter?: A }> {
   if (!isOptionsOfAdapter(options, adapter)) {
     throw new Error(`Expected adapter to be ${adapter}, but got '${options.adapter}'`);
   }
 }
 
-const DEFAULT_PROTOCOL: Bun.SQL.__internal.Adapter = "postgres";
+const DEFAULT_PROTOCOL: Fun.SQL.__internal.Adapter = "postgres";
 
-const env = Bun.env;
+const env = Fun.env;
 
 /**
  * Reads environment variables to try and find a connnection string
@@ -354,8 +354,8 @@ const env = Bun.env;
  * to that adapter. Otherwise it will try them all.
  */
 function getConnectionDetailsFromEnvironment(
-  adapter: Bun.SQL.__internal.Adapter | undefined,
-): [url: string | null, sslMode: SSLMode | null, adapter: Bun.SQL.__internal.Adapter | null] {
+  adapter: Fun.SQL.__internal.Adapter | undefined,
+): [url: string | null, sslMode: SSLMode | null, adapter: Fun.SQL.__internal.Adapter | null] {
   let url: string | null = null;
   let sslMode: SSLMode.require | null = null;
 
@@ -427,17 +427,17 @@ function hasProtocol(url: string | URL): boolean {
  * url string, that you should continue to use for further options. In some
  * cases the it will be a parsed URL instance, and in others a string. This is
  * to save unnecessary parses in some cases. The third value is the SSL mode The last value is the options object
- * resolved from the possible overloads of the Bun.SQL constructor, it may have modifications
+ * resolved from the possible overloads of the Fun.SQL constructor, it may have modifications
  */
 function parseConnectionDetailsFromOptionsOrEnvironment(
-  stringOrUrlOrOptions: Bun.SQL.Options | string | URL | undefined,
-  definitelyOptionsButMaybeEmpty: Bun.SQL.Options,
-): [url: string | URL | null, sslMode: SSLMode | null, options: Bun.SQL.__internal.OptionsWithDefinedAdapter] {
+  stringOrUrlOrOptions: Fun.SQL.Options | string | URL | undefined,
+  definitelyOptionsButMaybeEmpty: Fun.SQL.Options,
+): [url: string | URL | null, sslMode: SSLMode | null, options: Fun.SQL.__internal.OptionsWithDefinedAdapter] {
   // Step 1: Determine the options object and initial URL
-  let options: Bun.SQL.Options;
+  let options: Fun.SQL.Options;
   let stringOrUrl: string | URL | null = null;
   let sslMode: SSLMode | null = null;
-  let adapter: Bun.SQL.__internal.Adapter | null = null;
+  let adapter: Fun.SQL.__internal.Adapter | null = null;
 
   if (typeof stringOrUrlOrOptions === "string" || stringOrUrlOrOptions instanceof URL) {
     stringOrUrl = stringOrUrlOrOptions;
@@ -472,7 +472,7 @@ function parseConnectionDetailsFromOptionsOrEnvironment(
   }
 
   if (options.adapter === "sqlite") {
-    return [resolvedUrl, null, options as Bun.SQL.__internal.OptionsWithDefinedAdapter];
+    return [resolvedUrl, null, options as Fun.SQL.__internal.OptionsWithDefinedAdapter];
   }
 
   if (!options.adapter && resolvedUrl !== null) {
@@ -485,7 +485,7 @@ function parseConnectionDetailsFromOptionsOrEnvironment(
   }
 
   // Step 3: Parse protocol and ensure URL format for non-SQLite databases
-  let protocol: Bun.SQL.__internal.Adapter | (string & {}) = options.adapter || DEFAULT_PROTOCOL;
+  let protocol: Fun.SQL.__internal.Adapter | (string & {}) = options.adapter || DEFAULT_PROTOCOL;
 
   let urlToProcess = resolvedUrl || stringOrUrl;
 
@@ -529,7 +529,7 @@ function parseConnectionDetailsFromOptionsOrEnvironment(
         `Unsupported adapter: ${options.adapter}. Supported adapters: "postgres", "sqlite", "mysql", "mariadb"`,
       );
     }
-    return [urlToProcess, sslMode, options as Bun.SQL.__internal.OptionsWithDefinedAdapter];
+    return [urlToProcess, sslMode, options as Fun.SQL.__internal.OptionsWithDefinedAdapter];
   }
 
   // Step 6: Infer adapter from protocol
@@ -542,7 +542,7 @@ function parseConnectionDetailsFromOptionsOrEnvironment(
   return [urlToProcess, sslMode, { ...options, adapter: parsedAdapterFromProtocol }];
 }
 
-function parseAdapterFromProtocol(protocol: string): Bun.SQL.__internal.Adapter | null {
+function parseAdapterFromProtocol(protocol: string): Fun.SQL.__internal.Adapter | null {
   switch (protocol) {
     case "http":
     case "https":
@@ -568,9 +568,9 @@ function parseAdapterFromProtocol(protocol: string): Bun.SQL.__internal.Adapter 
 }
 
 function parseOptions(
-  stringOrUrlOrOptions: Bun.SQL.Options | string | URL | undefined,
-  definitelyOptionsButMaybeEmpty: Bun.SQL.Options,
-): Bun.SQL.__internal.DefinedOptions {
+  stringOrUrlOrOptions: Fun.SQL.Options | string | URL | undefined,
+  definitelyOptionsButMaybeEmpty: Fun.SQL.Options,
+): Fun.SQL.__internal.DefinedOptions {
   const [_url, sslModeFromConnectionDetails, options] = parseConnectionDetailsFromOptionsOrEnvironment(
     stringOrUrlOrOptions,
     definitelyOptionsButMaybeEmpty,
@@ -591,9 +591,9 @@ function parseOptions(
   let hostname: string | undefined;
   let port: number | string | undefined;
   let username: string | null | undefined;
-  let password: string | (() => Bun.MaybePromise<string>) | undefined | null;
+  let password: string | (() => Fun.MaybePromise<string>) | undefined | null;
   let database: string | undefined;
-  let tls: Bun.TLSOptions | boolean | undefined;
+  let tls: Fun.TLSOptions | boolean | undefined;
   let query: string = "";
   let idleTimeout: number | null | undefined;
   let connectionTimeout: number | null | undefined;
@@ -856,7 +856,7 @@ function parseOptions(
     throw $ERR_INVALID_ARG_VALUE("port", port, "must be a non-negative integer between 1 and 65535");
   }
 
-  const ret: Bun.SQL.__internal.DefinedOptions = {
+  const ret: Fun.SQL.__internal.DefinedOptions = {
     adapter,
     hostname,
     port,

@@ -12,7 +12,7 @@ pub const JSON5Parser = struct {
     source: []const u8,
     pos: usize,
     allocator: std.mem.Allocator,
-    stack_check: bun.StackCheck,
+    stack_check: fun.StackCheck,
     token: Token,
 
     const Token = struct {
@@ -903,11 +903,11 @@ pub const JSON5Parser = struct {
 const identifier = @import("../js_parser/lexer/identifier.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const E = bun.ast.E;
-const Expr = bun.ast.Expr;
-const G = bun.ast.G;
+const E = fun.ast.E;
+const Expr = fun.ast.Expr;
+const G = fun.ast.G;

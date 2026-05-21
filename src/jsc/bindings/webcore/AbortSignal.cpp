@@ -66,7 +66,7 @@ Ref<AbortSignal> AbortSignal::abort(JSDOMGlobalObject& globalObject, ScriptExecu
 Ref<AbortSignal> AbortSignal::timeout(ScriptExecutionContext& context, uint64_t milliseconds)
 {
     auto signal = adoptRef(*new AbortSignal(&context));
-    signal->m_timeout = AbortSignal__Timeout__create(bunVM(context.vm()), signal.ptr(), milliseconds);
+    signal->m_timeout = AbortSignal__Timeout__create(funVM(context.vm()), signal.ptr(), milliseconds);
     ASSERT(signal->m_timeout);
     signal->ref();
     return signal;

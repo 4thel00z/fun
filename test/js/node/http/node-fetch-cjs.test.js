@@ -1,8 +1,8 @@
 const fetch = require("node-fetch");
 
 test("require('node-fetch') fetches", async () => {
-  // can't use `using`. see https://github.com/oven-sh/bun/issues/11100
-  const server = Bun.serve({
+  // can't use `using`. see https://github.com/underdoc-org/fun/issues/11100
+  const server = Fun.serve({
     port: 0,
     fetch(req, server) {
       server.stop();

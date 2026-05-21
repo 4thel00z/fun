@@ -1,6 +1,6 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
-exports[`pnpm-lock.yaml migration simple pnpm lockfile migration produces correct bun.lock: simple-pnpm-migration 1`] = `
+exports[`pnpm-lock.yaml migration simple pnpm lockfile migration produces correct fun.lock: simple-pnpm-migration 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,

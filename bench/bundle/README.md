@@ -2,13 +2,13 @@
 
 This is a performance benchmark of the following bundlers:
 
-- Bun
+- Fun
 - esbuild
 - Parcel 2
 - Rollup + Terser
 - Webpack
 
-It is an exact copy of [`esbuild`'s benchmark](https://github.com/evanw/esbuild/blob/main/Makefile), aside from the fact that Bun [has been added](https://github.com/colinhacks/esbuild/commit/1b928b7981aa7edfadf77fcf8931bb8d6f38cd96). The benchmark bundles 10 copies of the large [three.js](https://threejs.org/), with minification and source maps enabled.
+It is an exact copy of [`esbuild`'s benchmark](https://github.com/evanw/esbuild/blob/main/Makefile), aside from the fact that Fun [has been added](https://github.com/colinhacks/esbuild/commit/1b928b7981aa7edfadf77fcf8931bb8d6f38cd96). The benchmark bundles 10 copies of the large [three.js](https://threejs.org/), with minification and source maps enabled.
 
 To run the benchmark:
 
@@ -33,7 +33,7 @@ The `real` results, as run on a 16-inch M1 Macbook Pro:
 
 | Bundler | Time   |
 | ------- | ------ |
-| Bun     | 0.17s  |
+| Fun     | 0.17s  |
 | esbuild | 0.33s  |
 | Rollup  | 18.82s |
 | Webpack | 26.21  |

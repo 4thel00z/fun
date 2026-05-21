@@ -3,14 +3,14 @@ title: "Workspaces"
 description: "Develop complex monorepos with multiple independent packages"
 ---
 
-Bun supports [`workspaces`](https://docs.npmjs.com/cli/v9/using-npm/workspaces?v=true#description) in `package.json`. Workspaces let you develop complex software as a _monorepo_ consisting of several independent packages.
+Fun supports [`workspaces`](https://docs.npmjs.com/cli/v9/using-npm/workspaces?v=true#description) in `package.json`. Workspaces let you develop complex software as a _monorepo_ consisting of several independent packages.
 
 It's common for a monorepo to have the following structure:
 
 ```txt File Tree icon="folder-tree"
 <root>
 ├── README.md
-├── bun.lock
+├── fun.lock
 ├── package.json
 ├── tsconfig.json
 └── packages
@@ -42,7 +42,7 @@ In the root `package.json`, the `"workspaces"` key is used to indicate which sub
 ```
 
 <Note>
-  **Glob support** — Bun supports full glob syntax in `"workspaces"`, including negative patterns (e.g.
+  **Glob support** — Fun supports full glob syntax in `"workspaces"`, including negative patterns (e.g.
   `!**/excluded/**`). See [here](/runtime/glob#supported-glob-patterns) for a comprehensive list of supported syntax.
 </Note>
 
@@ -66,14 +66,14 @@ Each workspace has it's own `package.json`. When referencing other packages in t
 }
 ```
 
-`bun install` will install dependencies for all workspaces in the monorepo, de-duplicating packages if possible. If you only want to install dependencies for specific workspaces, you can use the `--filter` flag.
+`fun install` will install dependencies for all workspaces in the monorepo, de-duplicating packages if possible. If you only want to install dependencies for specific workspaces, you can use the `--filter` flag.
 
 ```bash
 # Install dependencies for all workspaces starting with `pkg-` except for `pkg-c`
-bun install --filter "pkg-*" --filter "!pkg-c"
+fun install --filter "pkg-*" --filter "!pkg-c"
 
 # Paths can also be used. This is equivalent to the command above.
-bun install --filter "./packages/pkg-*" --filter "!pkg-c" # or --filter "!./packages/pkg-c"
+fun install --filter "./packages/pkg-*" --filter "!pkg-c" # or --filter "!./packages/pkg-c"
 ```
 
 When publishing, `workspace:` versions are replaced by the package's `package.json` version,
@@ -92,7 +92,7 @@ Setting a specific version takes precedence over the package's `package.json` ve
 
 Workspaces have a couple major benefits.
 
-- **Code can be split into logical parts.** If one package relies on another, add it as a dependency in `package.json`. If package `b` depends on `a`, `bun install` will install your local `packages/a` directory into `node_modules` instead of downloading it from the npm registry.
+- **Code can be split into logical parts.** If one package relies on another, add it as a dependency in `package.json`. If package `b` depends on `a`, `fun install` will install your local `packages/a` directory into `node_modules` instead of downloading it from the npm registry.
 - **Dependencies can be de-duplicated.** If `a` and `b` share a common dependency, it will be _hoisted_ to the root `node_modules` directory. This reduces redundant disk usage and minimizes "dependency hell" issues associated with having multiple versions of a package installed simultaneously.
 - **Run scripts in multiple packages.** You can use the [`--filter` flag](/pm/filter) to run `package.json` scripts in multiple packages in your workspace, or `--workspaces` to run scripts across all workspaces.
 
@@ -105,7 +105,7 @@ updates every package that references it. See
 [Catalogs](/pm/catalogs) for details.
 
 <Note>
-⚡️ **Speed** — Installs are fast, even for big monorepos. Bun installs the [Remix](https://github.com/remix-run/remix) monorepo in about `500ms` on Linux.
+⚡️ **Speed** — Installs are fast, even for big monorepos. Fun installs the [Remix](https://github.com/remix-run/remix) monorepo in about `500ms` on Linux.
 
 - 28x faster than `npm install`
 - 12x faster than `yarn install` (v1)

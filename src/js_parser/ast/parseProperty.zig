@@ -269,7 +269,7 @@ pub fn ParseProperty(
                                         },
                                         .p_declare => {
                                             // skip declare keyword entirely
-                                            // https://github.com/oven-sh/bun/issues/1907
+                                            // https://github.com/underdoc-org/fun/issues/1907
                                             if (opts.is_class and is_typescript_enabled and strings.eqlComptime(raw, "declare")) {
                                                 const scope_index = p.scopes_in_order.items.len;
                                                 if (try p.parseProperty(kind, opts, null)) |_prop| {
@@ -355,9 +355,9 @@ pub fn ParseProperty(
                         }
 
                         // Handle invalid identifiers in property names
-                        // https://github.com/oven-sh/bun/issues/12039
+                        // https://github.com/underdoc-org/fun/issues/12039
                         if (p.lexer.token == .t_syntax_error) {
-                            bun.handleOom(p.log.addRangeErrorFmt(p.source, name_range, p.allocator, "Unexpected {f}", .{bun.fmt.quote(name)}));
+                            fun.handleOom(p.log.addRangeErrorFmt(p.source, name_range, p.allocator, "Unexpected {f}", .{fun.fmt.quote(name)}));
                             return error.SyntaxError;
                         }
 
@@ -559,11 +559,11 @@ pub fn ParseProperty(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const ExprNodeList = js_ast.ExprNodeList;
@@ -574,10 +574,10 @@ const Symbol = js_ast.Symbol;
 const G = js_ast.G;
 const Property = G.Property;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const AwaitOrYield = js_parser.AwaitOrYield;
 const DeferredErrors = js_parser.DeferredErrors;
 const FnOrArrowDataParse = js_parser.FnOrArrowDataParse;

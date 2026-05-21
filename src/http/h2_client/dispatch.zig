@@ -236,7 +236,7 @@ pub fn dispatchFrame(session: *ClientSession, header: wire.FrameHeader, payload:
                     return;
                 }
                 session.orphan_header_block.clearRetainingCapacity();
-                bun.handleOom(session.orphan_header_block.appendSlice(bun.default_allocator, fragment));
+                fun.handleOom(session.orphan_header_block.appendSlice(fun.default_allocator, fragment));
                 if (header.flags & @intFromEnum(wire.HeadersFrameFlags.END_HEADERS) != 0) {
                     decodeDiscardOrphan(session);
                 } else {
@@ -264,7 +264,7 @@ pub fn dispatchFrame(session: *ClientSession, header: wire.FrameHeader, payload:
                 return;
             }
             stream.header_block.clearRetainingCapacity();
-            bun.handleOom(stream.header_block.appendSlice(bun.default_allocator, fragment));
+            fun.handleOom(stream.header_block.appendSlice(fun.default_allocator, fragment));
             stream.headers_end_stream = header.flags & @intFromEnum(wire.HeadersFrameFlags.END_STREAM) != 0;
             if (header.flags & @intFromEnum(wire.HeadersFrameFlags.END_HEADERS) != 0) {
                 if (stream.headers_end_stream) stream.recvEndStream();
@@ -283,7 +283,7 @@ pub fn dispatchFrame(session: *ClientSession, header: wire.FrameHeader, payload:
                     session.fatal_error = error.HTTP2HeaderListTooLarge;
                     return;
                 }
-                bun.handleOom(stream.header_block.appendSlice(bun.default_allocator, payload));
+                fun.handleOom(stream.header_block.appendSlice(fun.default_allocator, payload));
                 if (header.flags & @intFromEnum(wire.HeadersFrameFlags.END_HEADERS) != 0) {
                     session.expecting_continuation = 0;
                     if (stream.headers_end_stream) stream.recvEndStream();
@@ -294,7 +294,7 @@ pub fn dispatchFrame(session: *ClientSession, header: wire.FrameHeader, payload:
                     session.fatal_error = error.HTTP2HeaderListTooLarge;
                     return;
                 }
-                bun.handleOom(session.orphan_header_block.appendSlice(bun.default_allocator, payload));
+                fun.handleOom(session.orphan_header_block.appendSlice(fun.default_allocator, payload));
                 if (header.flags & @intFromEnum(wire.HeadersFrameFlags.END_HEADERS) != 0) {
                     session.expecting_continuation = 0;
                     decodeDiscardOrphan(session);
@@ -342,7 +342,7 @@ pub fn dispatchFrame(session: *ClientSession, header: wire.FrameHeader, payload:
             }
             stream.data_bytes_received += fragment.len;
             if (fragment.len > 0) {
-                bun.handleOom(stream.body_buffer.appendSlice(bun.default_allocator, fragment));
+                fun.handleOom(stream.body_buffer.appendSlice(fun.default_allocator, fragment));
             }
         },
         .HTTP_FRAME_RST_STREAM => {
@@ -427,7 +427,7 @@ pub fn decodeHeaderBlock(session: *ClientSession, stream: *Stream) void {
 
     var status: u32 = 0;
     var bounds: std.ArrayListUnmanaged([3]u32) = .{};
-    defer bounds.deinit(bun.default_allocator);
+    defer bounds.deinit(fun.default_allocator);
     const start_len = stream.decoded_bytes.items.len;
     var seen_regular = false;
     var seen_status = false;
@@ -478,10 +478,10 @@ pub fn decodeHeaderBlock(session: *ClientSession, stream: *Stream) void {
             return;
         }
         const name_start: u32 = @intCast(stream.decoded_bytes.items.len);
-        bun.handleOom(stream.decoded_bytes.appendSlice(bun.default_allocator, result.name));
+        fun.handleOom(stream.decoded_bytes.appendSlice(fun.default_allocator, result.name));
         const value_start: u32 = @intCast(stream.decoded_bytes.items.len);
-        bun.handleOom(stream.decoded_bytes.appendSlice(bun.default_allocator, result.value));
-        bun.handleOom(bounds.append(bun.default_allocator, .{ name_start, value_start, @intCast(stream.decoded_bytes.items.len) }));
+        fun.handleOom(stream.decoded_bytes.appendSlice(fun.default_allocator, result.value));
+        fun.handleOom(bounds.append(fun.default_allocator, .{ name_start, value_start, @intCast(stream.decoded_bytes.items.len) }));
     }
 
     if (malformed) {
@@ -527,7 +527,7 @@ pub fn decodeHeaderBlock(session: *ClientSession, stream: *Stream) void {
         stream.sentEndStream();
     }
     const bytes = stream.decoded_bytes.items;
-    bun.handleOom(stream.decoded_headers.ensureTotalCapacityPrecise(bun.default_allocator, bounds.items.len));
+    fun.handleOom(stream.decoded_headers.ensureTotalCapacityPrecise(fun.default_allocator, bounds.items.len));
     for (bounds.items) |b| {
         stream.decoded_headers.appendAssumeCapacity(.{ .name = bytes[b[0]..b[1]], .value = bytes[b[1]..b[2]] });
     }
@@ -548,7 +548,7 @@ pub fn isMalformedResponseField(name: []const u8) bool {
     return forbidden_response_fields.has(name);
 }
 
-const forbidden_response_fields = bun.ComptimeStringMap(void, .{
+const forbidden_response_fields = fun.ComptimeStringMap(void, .{
     .{ "connection", {} },
     .{ "keep-alive", {} },
     .{ "proxy-connection", {} },
@@ -568,7 +568,7 @@ pub fn errorCodeFor(err: anyerror) wire.ErrorCode {
     };
 }
 
-const log = bun.Output.scoped(.h2_client, .hidden);
+const log = fun.Output.scoped(.h2_client, .hidden);
 
 const ClientSession = @import("./ClientSession.zig");
 const Stream = @import("./Stream.zig");
@@ -579,5 +579,5 @@ const H2 = @import("../H2Client.zig");
 const local_max_header_list_size = H2.local_max_header_list_size;
 const write_buffer_control_limit = H2.write_buffer_control_limit;
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;

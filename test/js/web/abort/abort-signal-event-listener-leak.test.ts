@@ -1,6 +1,6 @@
-import { estimateShallowMemoryUsageOf } from "bun:jsc";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { estimateShallowMemoryUsageOf } from "fun:jsc";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // addEventListener({ signal }) registers an abort algorithm on the signal
 // that removes the listener when the signal aborts. That algorithm must be
@@ -121,9 +121,9 @@ describe("addEventListener({ signal }) does not leak abort algorithms", () => {
     // removeAlgorithm() on a freed Vector / ref()s a mid-deletion object.
     // Run in a subprocess so an ASAN report or debug ASSERT surfaces as a
     // non-zero exit instead of taking down the test runner.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           for (let i = 0; i < 200; i++) {
@@ -132,17 +132,17 @@ describe("addEventListener({ signal }) does not leak abort algorithms", () => {
             signal.addEventListener("abort", () => {}, { signal });
             signal.addEventListener("foo", () => {}, { signal });
           }
-          Bun.gc(true);
+          Fun.gc(true);
           for (let i = 0; i < 200; i++) {
             const controller = new AbortController();
             const signal = controller.signal;
             signal.addEventListener("abort", () => {}, { signal });
           }
-          Bun.gc(true);
+          Fun.gc(true);
           console.log("ok");
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

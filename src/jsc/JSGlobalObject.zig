@@ -1,14 +1,14 @@
 pub const JSGlobalObject = opaque {
     pub fn allocator(this: *JSGlobalObject) std.mem.Allocator {
-        return this.bunVM().allocator;
+        return this.funVM().allocator;
     }
     extern fn JSGlobalObject__throwStackOverflow(this: *JSGlobalObject) void;
-    pub fn throwStackOverflow(this: *JSGlobalObject) bun.JSError {
+    pub fn throwStackOverflow(this: *JSGlobalObject) fun.JSError {
         JSGlobalObject__throwStackOverflow(this);
         return error.JSError;
     }
     extern fn JSGlobalObject__throwOutOfMemoryError(this: *JSGlobalObject) void;
-    pub fn throwOutOfMemory(this: *JSGlobalObject) bun.JSError {
+    pub fn throwOutOfMemory(this: *JSGlobalObject) fun.JSError {
         JSGlobalObject__throwOutOfMemoryError(this);
         return error.JSError;
     }
@@ -22,14 +22,14 @@ pub const JSGlobalObject = opaque {
         JSGlobalObject__throwOutOfMemoryError(this);
         return .zero;
     }
-    pub fn gregorianDateTimeToMS(this: *jsc.JSGlobalObject, year: i32, month: i32, day: i32, hour: i32, minute: i32, second: i32, millisecond: i32) bun.JSError!f64 {
+    pub fn gregorianDateTimeToMS(this: *jsc.JSGlobalObject, year: i32, month: i32, day: i32, hour: i32, minute: i32, second: i32, millisecond: i32) fun.JSError!f64 {
         jsc.markBinding(@src());
-        return bun.cpp.Bun__gregorianDateTimeToMS(this, year, month, day, hour, minute, second, millisecond, true);
+        return fun.cpp.Fun__gregorianDateTimeToMS(this, year, month, day, hour, minute, second, millisecond, true);
     }
 
-    pub fn gregorianDateTimeToMSUTC(this: *jsc.JSGlobalObject, year: i32, month: i32, day: i32, hour: i32, minute: i32, second: i32, millisecond: i32) bun.JSError!f64 {
+    pub fn gregorianDateTimeToMSUTC(this: *jsc.JSGlobalObject, year: i32, month: i32, day: i32, hour: i32, minute: i32, second: i32, millisecond: i32) fun.JSError!f64 {
         jsc.markBinding(@src());
-        return bun.cpp.Bun__gregorianDateTimeToMS(this, year, month, day, hour, minute, second, millisecond, false);
+        return fun.cpp.Fun__gregorianDateTimeToMS(this, year, month, day, hour, minute, second, millisecond, false);
     }
 
     pub const GregorianDateTime = struct {
@@ -45,17 +45,17 @@ pub const JSGlobalObject = opaque {
     pub fn msToGregorianDateTimeUTC(this: *jsc.JSGlobalObject, ms: f64) GregorianDateTime {
         jsc.markBinding(@src());
         var dt: GregorianDateTime = undefined;
-        bun.cpp.Bun__msToGregorianDateTime(this, ms, false, &dt.year, &dt.month, &dt.day, &dt.hour, &dt.minute, &dt.second, &dt.weekday);
+        fun.cpp.Fun__msToGregorianDateTime(this, ms, false, &dt.year, &dt.month, &dt.day, &dt.hour, &dt.minute, &dt.second, &dt.weekday);
         return dt;
     }
 
-    pub fn throwTODO(this: *JSGlobalObject, msg: []const u8) bun.JSError {
+    pub fn throwTODO(this: *JSGlobalObject, msg: []const u8) fun.JSError {
         const err = this.createErrorInstance("{s}", .{msg});
         if (err == .zero) {
-            bun.assert(this.hasException());
+            fun.assert(this.hasException());
             return error.JSError;
         }
-        err.put(this, ZigString.static("name"), (bun.String.static("TODOError").toJS(this)) catch return error.JSError);
+        err.put(this, ZigString.static("name"), (fun.String.static("TODOError").toJS(this)) catch return error.JSError);
         return this.throwValue(err);
     }
 
@@ -70,12 +70,12 @@ pub const JSGlobalObject = opaque {
         return @enumFromInt(@intFromPtr(globalThis));
     }
 
-    pub fn throwInvalidArguments(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) bun.JSError {
+    pub fn throwInvalidArguments(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) fun.JSError {
         const err = this.toInvalidArguments(fmt, args);
         return this.throwValue(err);
     }
 
-    pub inline fn throwMissingArgumentsValue(this: *JSGlobalObject, comptime arg_names: []const []const u8) bun.JSError {
+    pub inline fn throwMissingArgumentsValue(this: *JSGlobalObject, comptime arg_names: []const []const u8) fun.JSError {
         return switch (arg_names.len) {
             0 => @compileError("requires at least one argument"),
             1 => this.ERR(.MISSING_ARGS, "The \"{s}\" argument must be specified", .{arg_names[0]}).throw(),
@@ -95,7 +95,7 @@ pub const JSGlobalObject = opaque {
         return this.ERR(.INVALID_ARG_TYPE, comptime std.fmt.comptimePrint("Expected {s} to be a {s} for '{s}'.", .{ field, typename, name_ }), .{}).toJS();
     }
 
-    pub fn toJS(this: *jsc.JSGlobalObject, value: anytype) bun.JSError!jsc.JSValue {
+    pub fn toJS(this: *jsc.JSGlobalObject, value: anytype) fun.JSError!jsc.JSValue {
         return .fromAny(this, @TypeOf(value), value);
     }
 
@@ -105,7 +105,7 @@ pub const JSGlobalObject = opaque {
         comptime name_: []const u8,
         comptime field: []const u8,
         comptime typename: []const u8,
-    ) bun.JSError {
+    ) fun.JSError {
         return this.throwValue(this.createInvalidArgumentType(name_, field, typename));
     }
 
@@ -114,7 +114,7 @@ pub const JSGlobalObject = opaque {
         this: *JSGlobalObject,
         argname: []const u8,
         value: JSValue,
-    ) bun.JSError {
+    ) fun.JSError {
         const actual_string_value = try determineSpecificType(this, value);
         defer actual_string_value.deref();
         return this.ERR(.INVALID_ARG_VALUE, "The \"{s}\" argument is invalid. Received {f}", .{ argname, actual_string_value }).throw();
@@ -125,7 +125,7 @@ pub const JSGlobalObject = opaque {
         argname: []const u8,
         value: JSValue,
         message: []const u8,
-    ) bun.JSError {
+    ) fun.JSError {
         const actual_string_value = try determineSpecificType(this, value);
         defer actual_string_value.deref();
         return this.ERR(.INVALID_ARG_VALUE, "The \"{s}\" argument {s}. Received {f}", .{ argname, message, actual_string_value }).throw();
@@ -140,7 +140,7 @@ pub const JSGlobalObject = opaque {
         argname: []const u8,
         comptime expected: ?[]const u8,
         value: JSValue,
-    ) bun.JSError {
+    ) fun.JSError {
         const actual_string_value = try determineSpecificType(this, value);
         defer actual_string_value.deref();
         if (comptime expected) |_expected| {
@@ -150,10 +150,10 @@ pub const JSGlobalObject = opaque {
         }
     }
 
-    extern "c" fn Bun__ErrorCode__determineSpecificType(*JSGlobalObject, JSValue) String;
+    extern "c" fn Fun__ErrorCode__determineSpecificType(*JSGlobalObject, JSValue) String;
 
     pub fn determineSpecificType(global: *JSGlobalObject, value: JSValue) JSError!String {
-        const str = Bun__ErrorCode__determineSpecificType(global, value);
+        const str = Fun__ErrorCode__determineSpecificType(global, value);
         errdefer str.deref();
         if (global.hasException()) {
             return error.JSError;
@@ -172,10 +172,10 @@ pub const JSGlobalObject = opaque {
     pub fn throwInvalidScryptParams(
         this: *JSGlobalObject,
     ) JSError {
-        const err = bun.BoringSSL.c.ERR_peek_last_error();
+        const err = fun.BoringSSL.c.ERR_peek_last_error();
         if (err != 0) {
             var buf: [256]u8 = undefined;
-            const msg = bun.BoringSSL.c.ERR_error_string_n(err, &buf, buf.len);
+            const msg = fun.BoringSSL.c.ERR_error_string_n(err, &buf, buf.len);
             return this.ERR(.CRYPTO_INVALID_SCRYPT_PARAMS, "Invalid scrypt params: {s}", .{msg}).throw();
         }
 
@@ -188,7 +188,7 @@ pub const JSGlobalObject = opaque {
         argname: []const u8,
         typename: []const u8,
         value: JSValue,
-    ) bun.JSError {
+    ) fun.JSError {
         const actual_string_value = try determineSpecificType(this, value);
         defer actual_string_value.deref();
         return this.ERR(.INVALID_ARG_TYPE, "The \"{s}\" argument must be of type {s}. Received {f}", .{ argname, typename, actual_string_value }).throw();
@@ -211,7 +211,7 @@ pub const JSGlobalObject = opaque {
         argname: []const u8,
         typename: []const u8,
         value: JSValue,
-    ) bun.JSError {
+    ) fun.JSError {
         const actual_string_value = try determineSpecificType(this, value);
         defer actual_string_value.deref();
         return this.ERR(.INVALID_ARG_TYPE, "The \"{s}\" argument must be one of type {s}. Received {f}", .{ argname, typename, actual_string_value }).throw();
@@ -222,7 +222,7 @@ pub const JSGlobalObject = opaque {
         argname: []const u8,
         typename: []const u8,
         value: i64,
-    ) bun.JSError {
+    ) fun.JSError {
         return this.ERR(.OUT_OF_RANGE, "The \"{s}\" is out of range. {s}. Received {f}", .{ argname, typename, value }).throw();
     }
 
@@ -231,8 +231,8 @@ pub const JSGlobalObject = opaque {
         field: []const u8,
         typename: []const u8,
         value: JSValue,
-    ) bun.JSError {
-        const ty_str = value.jsTypeString(this).toSlice(this, bun.default_allocator);
+    ) fun.JSError {
+        const ty_str = value.jsTypeString(this).toSlice(this, fun.default_allocator);
         defer ty_str.deinit();
         return this.ERR(.INVALID_ARG_TYPE, "The \"{s}\" property must be of type {s}. Received {s}", .{ field, typename, ty_str.slice() }).throw();
     }
@@ -252,34 +252,34 @@ pub const JSGlobalObject = opaque {
         comptime name_: []const u8,
         comptime expected: usize,
         got: usize,
-    ) bun.JSError {
+    ) fun.JSError {
         return this.throwValue(this.createNotEnoughArguments(name_, expected, got));
     }
 
     pub fn reload(this: *jsc.JSGlobalObject) !void {
         this.vm().drainMicrotasks();
         this.vm().collectAsync();
-        try bun.cpp.JSC__JSGlobalObject__reload(this);
+        try fun.cpp.JSC__JSGlobalObject__reload(this);
     }
 
-    pub const BunPluginTarget = enum(u8) {
-        bun = 0,
+    pub const FunPluginTarget = enum(u8) {
+        fun = 0,
         node = 1,
         browser = 2,
     };
-    extern fn Bun__runOnLoadPlugins(*jsc.JSGlobalObject, ?*const bun.String, *const bun.String, BunPluginTarget) JSValue;
-    extern fn Bun__runOnResolvePlugins(*jsc.JSGlobalObject, ?*const bun.String, *const bun.String, *const String, BunPluginTarget) JSValue;
+    extern fn Fun__runOnLoadPlugins(*jsc.JSGlobalObject, ?*const fun.String, *const fun.String, FunPluginTarget) JSValue;
+    extern fn Fun__runOnResolvePlugins(*jsc.JSGlobalObject, ?*const fun.String, *const fun.String, *const String, FunPluginTarget) JSValue;
 
-    pub fn runOnLoadPlugins(this: *JSGlobalObject, namespace_: bun.String, path: bun.String, target: BunPluginTarget) bun.JSError!?JSValue {
+    pub fn runOnLoadPlugins(this: *JSGlobalObject, namespace_: fun.String, path: fun.String, target: FunPluginTarget) fun.JSError!?JSValue {
         jsc.markBinding(@src());
-        const result = try bun.jsc.fromJSHostCall(this, @src(), Bun__runOnLoadPlugins, .{ this, if (namespace_.length() > 0) &namespace_ else null, &path, target });
+        const result = try fun.jsc.fromJSHostCall(this, @src(), Fun__runOnLoadPlugins, .{ this, if (namespace_.length() > 0) &namespace_ else null, &path, target });
         if (result.isUndefinedOrNull()) return null;
         return result;
     }
 
-    pub fn runOnResolvePlugins(this: *JSGlobalObject, namespace_: bun.String, path: bun.String, source: bun.String, target: BunPluginTarget) bun.JSError!?JSValue {
+    pub fn runOnResolvePlugins(this: *JSGlobalObject, namespace_: fun.String, path: fun.String, source: fun.String, target: FunPluginTarget) fun.JSError!?JSValue {
         jsc.markBinding(@src());
-        const result = try bun.jsc.fromJSHostCall(this, @src(), Bun__runOnResolvePlugins, .{ this, if (namespace_.length() > 0) &namespace_ else null, &path, &source, target });
+        const result = try fun.jsc.fromJSHostCall(this, @src(), Fun__runOnResolvePlugins, .{ this, if (namespace_.length() > 0) &namespace_ else null, &path, &source, target });
         if (result.isUndefinedOrNull()) return null;
         return result;
     }
@@ -313,7 +313,7 @@ pub const JSGlobalObject = opaque {
     pub fn createTypeErrorInstance(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) JSValue {
         if (comptime std.meta.fieldNames(@TypeOf(args)).len > 0) {
             var stack_fallback = std.heap.stackFallback(1024 * 4, this.allocator());
-            var buf = bun.MutableString.init2048(stack_fallback.get()) catch unreachable;
+            var buf = fun.MutableString.init2048(stack_fallback.get()) catch unreachable;
             defer buf.deinit();
             var writer = buf.writer();
             writer.print(fmt, args) catch {
@@ -330,7 +330,7 @@ pub const JSGlobalObject = opaque {
     pub fn createDOMExceptionInstance(this: *JSGlobalObject, code: jsc.WebCore.DOMExceptionCode, comptime fmt: [:0]const u8, args: anytype) JSError!JSValue {
         if (comptime std.meta.fieldNames(@TypeOf(args)).len > 0) {
             var stack_fallback = std.heap.stackFallback(1024 * 4, this.allocator());
-            var buf = try bun.MutableString.init2048(stack_fallback.get());
+            var buf = try fun.MutableString.init2048(stack_fallback.get());
             defer buf.deinit();
             var writer = buf.writer();
             try writer.print(fmt, args);
@@ -344,7 +344,7 @@ pub const JSGlobalObject = opaque {
     pub fn createSyntaxErrorInstance(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) JSValue {
         if (comptime std.meta.fieldNames(@TypeOf(args)).len > 0) {
             var stack_fallback = std.heap.stackFallback(1024 * 4, this.allocator());
-            var buf = bun.MutableString.init2048(stack_fallback.get()) catch unreachable;
+            var buf = fun.MutableString.init2048(stack_fallback.get()) catch unreachable;
             defer buf.deinit();
             var writer = buf.writer();
             writer.print(fmt, args) catch {
@@ -361,7 +361,7 @@ pub const JSGlobalObject = opaque {
     pub fn createRangeErrorInstance(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) JSValue {
         if (comptime std.meta.fieldNames(@TypeOf(args)).len > 0) {
             var stack_fallback = std.heap.stackFallback(1024 * 4, this.allocator());
-            var buf = bun.MutableString.init2048(stack_fallback.get()) catch unreachable;
+            var buf = fun.MutableString.init2048(stack_fallback.get()) catch unreachable;
             defer buf.deinit();
             var writer = buf.writer();
             writer.print(fmt, args) catch {
@@ -378,7 +378,7 @@ pub const JSGlobalObject = opaque {
     pub fn createRangeError(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) JSValue {
         const err = createErrorInstance(this, fmt, args);
         if (err == .zero) {
-            bun.assert(this.hasException());
+            fun.assert(this.hasException());
             return .zero;
         }
         err.put(this, ZigString.static("code"), ZigString.static(@tagName(jsc.Node.ErrorCode.ERR_OUT_OF_RANGE)).toJS(this));
@@ -402,7 +402,7 @@ pub const JSGlobalObject = opaque {
     ) JSError {
         const err = createErrorInstance(this, message, args);
         if (err == .zero) {
-            bun.assert(this.hasException());
+            fun.assert(this.hasException());
             return error.JSError;
         }
         err.put(this, ZigString.static("code"), ZigString.init(@tagName(opts.code)).toJS(this));
@@ -413,23 +413,23 @@ pub const JSGlobalObject = opaque {
 
     /// Throw an Error from a formatted string.
     ///
-    /// Note: If you are throwing an error within somewhere in the Bun API,
+    /// Note: If you are throwing an error within somewhere in the Fun API,
     /// chances are you should be using `.ERR(...).throw()` instead.
     pub fn throw(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) JSError {
         const instance = this.createErrorInstance(fmt, args);
         if (instance == .zero) {
-            bun.assert(this.hasException());
+            fun.assert(this.hasException());
             return error.JSError;
         }
         return this.throwValue(instance);
     }
 
-    pub fn throwPretty(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) bun.JSError {
+    pub fn throwPretty(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) fun.JSError {
         const instance = switch (Output.enable_ansi_colors_stderr) {
             inline else => |enabled| this.createErrorInstance(Output.prettyFmt(fmt, enabled), args),
         };
         if (instance == .zero) {
-            bun.assert(this.hasException());
+            fun.assert(this.hasException());
             return error.JSError;
         }
         return this.throwValue(instance);
@@ -446,7 +446,7 @@ pub const JSGlobalObject = opaque {
         const ContextType = @TypeOf(ctx_val);
         const Wrapper = struct {
             pub fn call(p: *anyopaque) callconv(.c) void {
-                Fn(bun.cast(ContextType, p));
+                Fn(fun.cast(ContextType, p));
             }
         };
 
@@ -461,9 +461,9 @@ pub const JSGlobalObject = opaque {
         );
     }
 
-    extern fn Bun__Process__emitWarning(globalObject: *JSGlobalObject, warning: JSValue, @"type": JSValue, code: JSValue, ctor: JSValue) void;
+    extern fn Fun__Process__emitWarning(globalObject: *JSGlobalObject, warning: JSValue, @"type": JSValue, code: JSValue, ctor: JSValue) void;
     pub fn emitWarning(globalObject: *JSGlobalObject, warning: JSValue, @"type": JSValue, code: JSValue, ctor: JSValue) JSError!void {
-        return bun.jsc.fromJSHostCallGeneric(globalObject, @src(), Bun__Process__emitWarning, .{ globalObject, warning, @"type", code, ctor });
+        return fun.jsc.fromJSHostCallGeneric(globalObject, @src(), Fun__Process__emitWarning, .{ globalObject, warning, @"type", code, ctor });
     }
 
     extern fn JSC__JSGlobalObject__queueMicrotaskJob(JSC__JSGlobalObject__ptr: *JSGlobalObject, JSValue, JSValue, JSValue) void;
@@ -479,17 +479,17 @@ pub const JSGlobalObject = opaque {
         return this.vm().throwError(this, value);
     }
 
-    pub fn throwTypeError(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) bun.JSError {
+    pub fn throwTypeError(this: *JSGlobalObject, comptime fmt: [:0]const u8, args: anytype) fun.JSError {
         const instance = this.createTypeErrorInstance(fmt, args);
         return this.throwValue(instance);
     }
 
-    pub fn throwDOMException(this: *JSGlobalObject, code: jsc.WebCore.DOMExceptionCode, comptime fmt: [:0]const u8, args: anytype) bun.JSError {
+    pub fn throwDOMException(this: *JSGlobalObject, code: jsc.WebCore.DOMExceptionCode, comptime fmt: [:0]const u8, args: anytype) fun.JSError {
         const instance = try this.createDOMExceptionInstance(code, fmt, args);
         return this.throwValue(instance);
     }
 
-    pub fn throwError(this: *JSGlobalObject, err: anyerror, comptime fmt: [:0]const u8) bun.JSError {
+    pub fn throwError(this: *JSGlobalObject, err: anyerror, comptime fmt: [:0]const u8) fun.JSError {
         if (err == error.OutOfMemory) {
             return this.throwOutOfMemory();
         }
@@ -497,10 +497,10 @@ pub const JSGlobalObject = opaque {
         // If we're throwing JSError, that means either:
         // - We're throwing an exception while another exception is already active
         // - We're incorrectly returning JSError from a function that did not throw.
-        bun.debugAssert(err != error.JSError);
+        fun.debugAssert(err != error.JSError);
 
         // Avoid tiny extra allocation
-        var stack = std.heap.stackFallback(128, bun.default_allocator);
+        var stack = std.heap.stackFallback(128, fun.default_allocator);
         const allocator_ = stack.get();
         const buffer = try std.fmt.allocPrint(allocator_, comptime "{s} " ++ fmt, .{@errorName(err)});
         defer allocator_.free(buffer);
@@ -516,18 +516,18 @@ pub const JSGlobalObject = opaque {
     pub const ctx = ref;
 
     extern fn JSC__JSGlobalObject__createAggregateError(*JSGlobalObject, [*]const JSValue, usize, *const ZigString) JSValue;
-    pub fn createAggregateError(globalObject: *JSGlobalObject, errors: []const JSValue, message: *const ZigString) bun.JSError!JSValue {
-        return bun.jsc.fromJSHostCall(globalObject, @src(), JSC__JSGlobalObject__createAggregateError, .{ globalObject, errors.ptr, errors.len, message });
+    pub fn createAggregateError(globalObject: *JSGlobalObject, errors: []const JSValue, message: *const ZigString) fun.JSError!JSValue {
+        return fun.jsc.fromJSHostCall(globalObject, @src(), JSC__JSGlobalObject__createAggregateError, .{ globalObject, errors.ptr, errors.len, message });
     }
 
-    extern fn JSC__JSGlobalObject__createAggregateErrorWithArray(*JSGlobalObject, JSValue, bun.String, JSValue) JSValue;
+    extern fn JSC__JSGlobalObject__createAggregateErrorWithArray(*JSGlobalObject, JSValue, fun.String, JSValue) JSValue;
     pub fn createAggregateErrorWithArray(
         globalObject: *JSGlobalObject,
-        message: bun.String,
+        message: fun.String,
         error_array: JSValue,
-    ) bun.JSError!JSValue {
-        if (bun.Environment.allow_assert) bun.assert(error_array.isArray());
-        return bun.jsc.fromJSHostCall(globalObject, @src(), JSC__JSGlobalObject__createAggregateErrorWithArray, .{ globalObject, error_array, message, .js_undefined });
+    ) fun.JSError!JSValue {
+        if (fun.Environment.allow_assert) fun.assert(error_array.isArray());
+        return fun.jsc.fromJSHostCall(globalObject, @src(), JSC__JSGlobalObject__createAggregateErrorWithArray, .{ globalObject, error_array, message, .js_undefined });
     }
 
     extern fn JSC__JSGlobalObject__generateHeapSnapshot(*JSGlobalObject) JSValue;
@@ -558,7 +558,7 @@ pub const JSGlobalObject = opaque {
 
     /// Clears the current exception and returns that value. Requires compile-time
     /// proof of an exception via `error.JSError`
-    pub fn takeException(this: *JSGlobalObject, proof: bun.JSError) JSValue {
+    pub fn takeException(this: *JSGlobalObject, proof: fun.JSError) JSValue {
         switch (proof) {
             error.JSError => {},
             error.OutOfMemory => this.throwOutOfMemory() catch {},
@@ -570,7 +570,7 @@ pub const JSGlobalObject = opaque {
         };
     }
 
-    pub fn takeError(this: *JSGlobalObject, proof: bun.JSError) JSValue {
+    pub fn takeError(this: *JSGlobalObject, proof: fun.JSError) JSValue {
         switch (proof) {
             error.JSError => {},
             error.OutOfMemory => this.throwOutOfMemory() catch {},
@@ -598,10 +598,10 @@ pub const JSGlobalObject = opaque {
     ///     const result = value.call(...) catch |err|
     ///         return global.reportActiveExceptionAsUnhandled(err);
     ///
-    pub fn reportActiveExceptionAsUnhandled(this: *JSGlobalObject, err: bun.JSError) void {
+    pub fn reportActiveExceptionAsUnhandled(this: *JSGlobalObject, err: fun.JSError) void {
         const exception = this.takeException(err);
         if (!exception.isTerminationException()) {
-            _ = this.bunVM().uncaughtException(this, exception, false);
+            _ = this.funVM().uncaughtException(this, exception, false);
         }
     }
 
@@ -609,27 +609,27 @@ pub const JSGlobalObject = opaque {
         return JSC__JSGlobalObject__vm(this);
     }
 
-    pub fn deleteModuleRegistryEntry(this: *JSGlobalObject, name_: *ZigString) bun.JSError!void {
-        return bun.jsc.fromJSHostCallGeneric(this, @src(), JSC__JSGlobalObject__deleteModuleRegistryEntry, .{ this, name_ });
+    pub fn deleteModuleRegistryEntry(this: *JSGlobalObject, name_: *ZigString) fun.JSError!void {
+        return fun.jsc.fromJSHostCallGeneric(this, @src(), JSC__JSGlobalObject__deleteModuleRegistryEntry, .{ this, name_ });
     }
 
-    fn bunVMUnsafe(this: *JSGlobalObject) *anyopaque {
-        return JSC__JSGlobalObject__bunVM(this);
+    fn funVMUnsafe(this: *JSGlobalObject) *anyopaque {
+        return JSC__JSGlobalObject__funVM(this);
     }
 
-    pub fn bunVM(this: *JSGlobalObject) *jsc.VirtualMachine {
-        if (comptime bun.Environment.allow_assert) {
+    pub fn funVM(this: *JSGlobalObject) *jsc.VirtualMachine {
+        if (comptime fun.Environment.allow_assert) {
             // if this fails
             // you most likely need to run
             //   make clean-jsc-bindings
             //   make bindings -j10
             if (jsc.VirtualMachine.VMHolder.vm) |vm_| {
-                bun.assert(this.bunVMUnsafe() == @as(*anyopaque, @ptrCast(vm_)));
+                fun.assert(this.funVMUnsafe() == @as(*anyopaque, @ptrCast(vm_)));
             } else {
-                @panic("This thread lacks a Bun VM");
+                @panic("This thread lacks a Fun VM");
             }
         }
-        return @as(*jsc.VirtualMachine, @ptrCast(@alignCast(this.bunVMUnsafe())));
+        return @as(*jsc.VirtualMachine, @ptrCast(@alignCast(this.funVMUnsafe())));
     }
 
     pub const ThreadKind = enum {
@@ -637,12 +637,12 @@ pub const JSGlobalObject = opaque {
         other,
     };
 
-    pub fn tryBunVM(this: *JSGlobalObject) struct { *jsc.VirtualMachine, ThreadKind } {
-        const vmPtr = @as(*jsc.VirtualMachine, @ptrCast(@alignCast(this.bunVMUnsafe())));
+    pub fn tryFunVM(this: *JSGlobalObject) struct { *jsc.VirtualMachine, ThreadKind } {
+        const vmPtr = @as(*jsc.VirtualMachine, @ptrCast(@alignCast(this.funVMUnsafe())));
 
         if (jsc.VirtualMachine.VMHolder.vm) |vm_| {
-            if (comptime bun.Environment.allow_assert) {
-                bun.assert(this.bunVMUnsafe() == @as(*anyopaque, @ptrCast(vm_)));
+            if (comptime fun.Environment.allow_assert) {
+                fun.assert(this.funVMUnsafe() == @as(*anyopaque, @ptrCast(vm_)));
             }
         } else {
             return .{ vmPtr, .other };
@@ -652,8 +652,8 @@ pub const JSGlobalObject = opaque {
     }
 
     /// We can't do the threadlocal check when queued from another thread
-    pub fn bunVMConcurrently(this: *JSGlobalObject) *jsc.VirtualMachine {
-        return @as(*jsc.VirtualMachine, @ptrCast(@alignCast(this.bunVMUnsafe())));
+    pub fn funVMConcurrently(this: *JSGlobalObject) *jsc.VirtualMachine {
+        return @as(*jsc.VirtualMachine, @ptrCast(@alignCast(this.funVMUnsafe())));
     }
 
     extern fn JSC__JSGlobalObject__handleRejectedPromises(*JSGlobalObject) void;
@@ -662,7 +662,7 @@ pub const JSGlobalObject = opaque {
         // own exceptions; the only thing that escapes is a TerminationException
         // (worker terminate() or process.exit()), and the request flag may
         // already be cleared by the time we observe it. Nothing actionable here.
-        return bun.jsc.fromJSHostCallGeneric(this, @src(), JSC__JSGlobalObject__handleRejectedPromises, .{this}) catch return;
+        return fun.jsc.fromJSHostCallGeneric(this, @src(), JSC__JSGlobalObject__handleRejectedPromises, .{this}) catch return;
     }
 
     extern fn ZigGlobalObject__readableStreamToArrayBuffer(*JSGlobalObject, JSValue) JSValue;
@@ -703,7 +703,7 @@ pub const JSGlobalObject = opaque {
     }
 
     pub inline fn assertOnJSThread(this: *JSGlobalObject) void {
-        if (bun.Environment.allow_assert) this.bunVM().assertOnJSThread();
+        if (fun.Environment.allow_assert) this.funVM().assertOnJSThread();
     }
 
     // returns false if it throws
@@ -716,7 +716,7 @@ pub const JSGlobalObject = opaque {
             allowFunction: bool = false,
             nullable: bool = false,
         },
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         if ((!opts.nullable and value.isNull()) or
             (!opts.allowArray and value.isArray()) or
             (!value.isObject() and (!opts.allowFunction or !value.isFunction())))
@@ -725,8 +725,8 @@ pub const JSGlobalObject = opaque {
         }
     }
 
-    pub fn throwRangeError(this: *JSGlobalObject, value: anytype, options: bun.fmt.OutOfRangeOptions) bun.JSError {
-        return this.ERR(.OUT_OF_RANGE, "{f}", .{bun.fmt.outOfRange(value, options)}).throw();
+    pub fn throwRangeError(this: *JSGlobalObject, value: anytype, options: fun.fmt.OutOfRangeOptions) fun.JSError {
+        return this.ERR(.OUT_OF_RANGE, "{f}", .{fun.fmt.outOfRange(value, options)}).throw();
     }
 
     pub const IntegerRange = struct {
@@ -736,7 +736,7 @@ pub const JSGlobalObject = opaque {
         always_allow_zero: bool = false,
     };
 
-    pub fn validateBigIntRange(this: *JSGlobalObject, value: JSValue, comptime T: type, default: T, comptime range: IntegerRange) bun.JSError!T {
+    pub fn validateBigIntRange(this: *JSGlobalObject, value: JSValue, comptime T: type, default: T, comptime range: IntegerRange) fun.JSError!T {
         if (value.isUndefined() or value == .zero) {
             return 0;
         }
@@ -770,7 +770,7 @@ pub const JSGlobalObject = opaque {
         });
     }
 
-    pub fn validateIntegerRange(this: *JSGlobalObject, value: JSValue, comptime T: type, default: T, comptime range: IntegerRange) bun.JSError!T {
+    pub fn validateIntegerRange(this: *JSGlobalObject, value: JSValue, comptime T: type, default: T, comptime range: IntegerRange) fun.JSError!T {
         if (value.isUndefined() or value == .zero) {
             return default;
         }
@@ -836,20 +836,20 @@ pub const JSGlobalObject = opaque {
         return default;
     }
 
-    /// Get a lazily-initialized `JSC::String` from `BunCommonStrings.h`.
+    /// Get a lazily-initialized `JSC::String` from `FunCommonStrings.h`.
     pub inline fn commonStrings(this: *jsc.JSGlobalObject) CommonStrings {
         jsc.markBinding(@src());
         return .{ .globalObject = this };
     }
 
-    /// Throw an error from within the Bun runtime.
+    /// Throw an error from within the Fun runtime.
     ///
     /// The set of errors accepted by `ERR()` is defined in `ErrorCode.ts`.
     pub fn ERR(global: *JSGlobalObject, comptime code: jsc.Error, comptime fmt: [:0]const u8, args: anytype) @import("ErrorCode").ErrorBuilder(code, fmt, @TypeOf(args)) {
         return .{ .global = global, .args = args };
     }
 
-    extern fn JSC__JSGlobalObject__bunVM(*JSGlobalObject) *VM;
+    extern fn JSC__JSGlobalObject__funVM(*JSGlobalObject) *VM;
     extern fn JSC__JSGlobalObject__vm(*JSGlobalObject) *VM;
     extern fn JSC__JSGlobalObject__deleteModuleRegistryEntry(*JSGlobalObject, *const ZigString) void;
     extern fn JSGlobalObject__clearException(*JSGlobalObject) void;
@@ -869,14 +869,14 @@ pub const JSGlobalObject = opaque {
         eval_mode: bool,
         worker_ptr: ?*anyopaque,
     ) *JSGlobalObject {
-        const trace = bun.perf.trace("JSGlobalObject.create");
+        const trace = fun.perf.trace("JSGlobalObject.create");
         defer trace.end();
 
         v.eventLoop().ensureWaker();
         const global = Zig__GlobalObject__create(console, context_id, mini_mode, eval_mode, worker_ptr);
 
         // JSC might mess with the stack size.
-        bun.StackCheck.configureThread();
+        fun.StackCheck.configureThread();
 
         return global;
     }
@@ -896,10 +896,10 @@ pub const JSGlobalObject = opaque {
         return Zig__GlobalObject__resetModuleRegistryMap(global, map);
     }
 
-    pub fn resolve(res: *ErrorableString, global: *JSGlobalObject, specifier: *bun.String, source: *bun.String, query: *bun.String) callconv(.c) void {
+    pub fn resolve(res: *ErrorableString, global: *JSGlobalObject, specifier: *fun.String, source: *fun.String, query: *fun.String) callconv(.c) void {
         jsc.markBinding(@src());
         return jsc.VirtualMachine.resolve(res, global, specifier.*, source.*, query, true) catch {
-            bun.debugAssert(res.success == false);
+            fun.debugAssert(res.success == false);
         };
     }
 
@@ -908,14 +908,14 @@ pub const JSGlobalObject = opaque {
         return jsc.VirtualMachine.reportUncaughtException(global, exception);
     }
 
-    pub fn reportUncaughtExceptionFromError(global: *JSGlobalObject, proof: bun.JSError) void {
+    pub fn reportUncaughtExceptionFromError(global: *JSGlobalObject, proof: fun.JSError) void {
         jsc.markBinding(@src());
         _ = global.reportUncaughtException(global.takeException(proof).asException(global.vm()).?);
     }
 
     pub fn onCrash() callconv(.c) void {
         jsc.markBinding(@src());
-        bun.Output.flush();
+        fun.Output.flush();
         @panic("A C++ exception occurred");
     }
 
@@ -925,7 +925,7 @@ pub const JSGlobalObject = opaque {
         this: *jsc.JSGlobalObject,
         response_value: jsc.JSValue,
         streaming_compiler: *anyopaque,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         const response = jsc.WebCore.Response.fromJS(response_value) orelse return this.throwInvalidArgumentTypeValue2(
             "source",
             "an instance of Response or an Promise resolving to Response",
@@ -1005,7 +1005,7 @@ pub const JSGlobalObject = opaque {
 
             return zig_str.toErrorInstance(globalThis);
         } else {
-            var fallback = std.heap.stackFallback(256, bun.default_allocator);
+            var fallback = std.heap.stackFallback(256, fun.default_allocator);
             var alloc = fallback.get();
 
             const buf = std.fmt.allocPrint(alloc, fmt, args) catch unreachable;
@@ -1038,7 +1038,7 @@ pub const JSGlobalObject = opaque {
 
     extern fn ScriptExecutionContextIdentifier__forGlobalObject(global: *jsc.JSGlobalObject) u32;
 
-    pub fn scriptExecutionContextIdentifier(global: *jsc.JSGlobalObject) bun.webcore.ScriptExecutionContext.Identifier {
+    pub fn scriptExecutionContextIdentifier(global: *jsc.JSGlobalObject) fun.webcore.ScriptExecutionContext.Identifier {
         return @enumFromInt(ScriptExecutionContextIdentifier__forGlobalObject(global));
     }
 
@@ -1057,14 +1057,14 @@ const string = []const u8;
 const napi = @import("../napi/napi.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const String = bun.String;
-const strings = bun.strings;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const String = fun.String;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CommonStrings = jsc.CommonStrings;
 const ErrorableString = jsc.ErrorableString;
 const JSValue = jsc.JSValue;

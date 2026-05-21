@@ -1,4 +1,4 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`issue/03830 macros should not lead to seg faults under any given input 1`] = `
 "2 | fn(\`©\${Number(0)}\`);

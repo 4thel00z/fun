@@ -2,8 +2,8 @@
 // DataRow whose header `len` field exceeds the actual column byte length.
 // The binary array parser must validate `len` against the column's byte length
 // before iterating; otherwise slice() reads and writes past the read buffer.
-import { SQL } from "bun";
-import { expect, test } from "bun:test";
+import { SQL } from "fun";
+import { expect, test } from "fun:test";
 import net from "net";
 
 function pkt(type: string, body: Buffer): Buffer {

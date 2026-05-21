@@ -8,11 +8,11 @@ pub fn toJS(
     return JSValue.jsBoolean(value);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const AnyPostgresError = @import("../../../sql/postgres/AnyPostgresError.zig").AnyPostgresError;
 
 const int_types = @import("../../../sql/postgres/types/int_types.zig");
 const short = int_types.short;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

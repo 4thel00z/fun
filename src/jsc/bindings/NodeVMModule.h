@@ -7,7 +7,7 @@
 
 #include "../vm/SigintReceiver.h"
 
-namespace Bun {
+namespace Fun {
 
 class NodeVMSourceTextModule;
 
@@ -125,4 +125,4 @@ private:
 
 STATIC_ASSERT_ISO_SUBSPACE_SHARABLE(NodeVMModuleConstructor, JSC::InternalFunction);
 
-} // namespace Bun
+} // namespace Fun

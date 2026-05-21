@@ -12,7 +12,7 @@ pkgs.mkShell rec {
     llvm_21
     lld_21
     nodejs_24
-    bun
+    fun
     rustc
     cargo
     go
@@ -94,10 +94,10 @@ pkgs.mkShell rec {
   '' + ''
 
     echo "====================================="
-    echo "Bun Development Environment (Nix)"
+    echo "Fun Development Environment (Nix)"
     echo "====================================="
-    echo "To build: bun bd"
-    echo "To test:  bun bd test <test-file>"
+    echo "To build: fun bd"
+    echo "To test:  fun bd test <test-file>"
     echo "====================================="
   '';
 }

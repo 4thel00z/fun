@@ -7,7 +7,7 @@
  * - textdecoder-labels.any.js
  */
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 // From https://github.com/web-platform-tests/wpt/blob/master/encoding/single-byte-decoder.window.js
 describe("WPT: single-byte-decoder", () => {

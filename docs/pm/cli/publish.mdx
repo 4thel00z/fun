@@ -1,19 +1,19 @@
 ---
-title: "bun publish"
-description: Use `bun publish` to publish a package to the npm registry
+title: "fun publish"
+description: Use `fun publish` to publish a package to the npm registry
 ---
 
 import Publish from "/snippets/cli/publish.mdx";
 
-`bun publish` will automatically pack your package into a tarball, strip catalog and workspace protocols from the `package.json` (resolving versions if necessary), and publish to the registry specified in your configuration files. Both `bunfig.toml` and `.npmrc` files are supported.
+`fun publish` will automatically pack your package into a tarball, strip catalog and workspace protocols from the `package.json` (resolving versions if necessary), and publish to the registry specified in your configuration files. Both `funfig.toml` and `.npmrc` files are supported.
 
 ```sh terminal icon="terminal"
 ## Publishing the package from the current working directory
-bun publish
+fun publish
 ```
 
 ```txt
-bun publish v1.3.3 (ca7428e9)
+fun publish v1.3.3 (ca7428e9)
 
 packed 203B package.json
 packed 224B README.md
@@ -32,17 +32,17 @@ Registry: http://localhost:4873/
  + publish-1@1.0.0
 ```
 
-Alternatively, you can pack and publish your package separately by using `bun pm pack` followed by `bun publish` with the path to the output tarball.
+Alternatively, you can pack and publish your package separately by using `fun pm pack` followed by `fun publish` with the path to the output tarball.
 
 ```sh terminal icon="terminal"
-bun pm pack
+fun pm pack
 ...
-bun publish ./package.tgz
+fun publish ./package.tgz
 ```
 
 <Note>
-  `bun publish` will not run lifecycle scripts (`prepublishOnly/prepack/prepare/postpack/publish/postpublish`) if a
-  tarball path is provided. Scripts will only be run if the package is packed by `bun publish`.
+  `fun publish` will not run lifecycle scripts (`prepublishOnly/prepack/prepare/postpack/publish/postpublish`) if a
+  tarball path is provided. Scripts will only be run if the package is packed by `fun publish`.
 </Note>
 
 ### `--access`
@@ -50,7 +50,7 @@ bun publish ./package.tgz
 The `--access` flag can be used to set the access level of the package being published. The access level can be one of `public` or `restricted`. Unscoped packages are always public, and attempting to publish an unscoped package with `--access restricted` will result in an error.
 
 ```sh terminal icon="terminal"
-bun publish --access public
+fun publish --access public
 ```
 
 `--access` can also be set in the `publishConfig` field of your `package.json`.
@@ -68,7 +68,7 @@ bun publish --access public
 Set the tag of the package version being published. By default, the tag is `latest`. The initial version of a package is always given the `latest` tag in addition to the specified tag.
 
 ```sh terminal icon="terminal"
-bun publish --tag alpha
+fun publish --tag alpha
 ```
 
 `--tag` can also be set in the `publishConfig` field of your `package.json`.
@@ -86,7 +86,7 @@ bun publish --tag alpha
 The `--dry-run` flag can be used to simulate the publish process without actually publishing the package. This is useful for verifying the contents of the published package without actually publishing the package.
 
 ```sh terminal icon="terminal"
-bun publish --dry-run
+fun publish --dry-run
 ```
 
 ### `--tolerate-republish`
@@ -94,19 +94,19 @@ bun publish --dry-run
 Exit with code 0 instead of 1 if the package version already exists. Useful in CI/CD where jobs may be re-run.
 
 ```sh terminal icon="terminal"
-bun publish --tolerate-republish
+fun publish --tolerate-republish
 ```
 
 ### `--gzip-level`
 
-Specify the level of gzip compression to use when packing the package. Only applies to `bun publish` without a tarball path argument. Values range from `0` to `9` (default is `9`).
+Specify the level of gzip compression to use when packing the package. Only applies to `fun publish` without a tarball path argument. Values range from `0` to `9` (default is `9`).
 
 ### `--auth-type`
 
-If you have 2FA enabled for your npm account, `bun publish` will prompt you for a one-time password. This can be done through a browser or the CLI. The `--auth-type` flag can be used to tell the npm registry which method you prefer. The possible values are `web` and `legacy`, with `web` being the default.
+If you have 2FA enabled for your npm account, `fun publish` will prompt you for a one-time password. This can be done through a browser or the CLI. The `--auth-type` flag can be used to tell the npm registry which method you prefer. The possible values are `web` and `legacy`, with `web` being the default.
 
 ```sh terminal icon="terminal"
-bun publish --auth-type legacy
+fun publish --auth-type legacy
 ...
 This operation requires a one-time password.
 Enter OTP: 123456
@@ -118,11 +118,11 @@ Enter OTP: 123456
 Provide a one-time password directly to the CLI. If the password is valid, this will skip the extra prompt for a one-time password before publishing. Example usage:
 
 ```sh terminal icon="terminal"
-bun publish --otp 123456
+fun publish --otp 123456
 ```
 
 <Note>
-  `bun publish` respects the `NPM_CONFIG_TOKEN` environment variable which can be used when publishing in github actions
+  `fun publish` respects the `NPM_CONFIG_TOKEN` environment variable which can be used when publishing in github actions
   or automated workflows.
 </Note>
 

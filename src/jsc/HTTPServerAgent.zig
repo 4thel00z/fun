@@ -15,14 +15,14 @@ pub fn notifyServerStarted(this: *HTTPServerAgent, instance: jsc.API.AnyServer) 
     if (this.agent) |agent| {
         this.next_server_id = .init(this.next_server_id.get() + 1);
         instance.setInspectorServerID(this.next_server_id);
-        var url = bun.handleOom(instance.getURLAsString());
+        var url = fun.handleOom(instance.getURLAsString());
         defer url.deref();
 
         agent.notifyServerStarted(
             this.next_server_id,
             @intCast(instance.vm().hot_reload_counter),
             &url,
-            @floatFromInt(bun.timespec.now(.allow_mocked_time).ms()),
+            @floatFromInt(fun.timespec.now(.allow_mocked_time).ms()),
             instance.ptr.ptr(),
         );
     }
@@ -37,7 +37,7 @@ pub fn notifyServerStopped(this: *const HTTPServerAgent, server: jsc.API.AnyServ
 pub fn notifyServerRoutesUpdated(this: *const HTTPServerAgent, server: jsc.API.AnyServer) !void {
     if (this.agent) |agent| {
         const config = server.config();
-        var routes = std.array_list.Managed(Route).init(bun.default_allocator);
+        var routes = std.array_list.Managed(Route).init(fun.default_allocator);
         defer {
             for (routes.items) |*route| {
                 route.deinit();
@@ -54,7 +54,7 @@ pub fn notifyServerRoutesUpdated(this: *const HTTPServerAgent, server: jsc.API.A
                     max_id = @max(max_id, user_route.id);
                     try routes.append(.{
                         .route_id = @intCast(user_route.id),
-                        .path = bun.String.init(decl.path),
+                        .path = fun.String.init(decl.path),
                         .type = .api,
                         // TODO:
                         .param_names = null,
@@ -69,7 +69,7 @@ pub fn notifyServerRoutesUpdated(this: *const HTTPServerAgent, server: jsc.API.A
         for (config.static_routes.items) |*route| {
             try routes.append(.{
                 .route_id = @intCast(max_id + 1),
-                .path = bun.String.init(route.path),
+                .path = fun.String.init(route.path),
                 .type = switch (route.route) {
                     .html => .html,
                     .static => .static,
@@ -80,7 +80,7 @@ pub fn notifyServerRoutesUpdated(this: *const HTTPServerAgent, server: jsc.API.A
                 .param_names = null,
                 .param_names_len = 0,
                 .file_path = switch (route.route) {
-                    .html => |html| bun.String.init(html.data.bundle.data.path),
+                    .html => |html| fun.String.init(html.data.bundle.data.path),
                     else => .empty,
                 },
             });
@@ -97,14 +97,14 @@ pub fn notifyServerRoutesUpdated(this: *const HTTPServerAgent, server: jsc.API.A
 
 pub const Route = extern struct {
     route_id: RouteId,
-    path: BunString = .empty,
+    path: FunString = .empty,
     type: Type = .default,
     script_line: i32 = -1,
-    param_names: ?[*]BunString = null,
+    param_names: ?[*]FunString = null,
     param_names_len: usize = 0,
-    file_path: BunString = .empty,
-    script_id: BunString = .empty,
-    script_url: BunString = .empty,
+    file_path: FunString = .empty,
+    script_id: FunString = .empty,
+    script_url: FunString = .empty,
 
     pub const Type = enum(u8) {
         default = 1,
@@ -113,8 +113,8 @@ pub const Route = extern struct {
         static = 4,
     };
 
-    pub fn params(this: *const Route) []BunString {
-        const ptr = this.param_names orelse return &[_]BunString{};
+    pub fn params(this: *const Route) []FunString {
+        const ptr = this.param_names orelse return &[_]FunString{};
         return ptr[0..this.param_names_len];
     }
 
@@ -122,7 +122,7 @@ pub const Route = extern struct {
         for (this.params()) |*param_name| {
             param_name.deref();
         }
-        bun.default_allocator.free(this.params());
+        fun.default_allocator.free(this.params());
         this.path.deref();
         this.file_path.deref();
         this.script_id.deref();
@@ -134,22 +134,22 @@ pub const Route = extern struct {
 
 //#region C++ agent reference type for Zig
 pub const InspectorHTTPServerAgent = opaque {
-    extern fn Bun__HTTPServerAgent__notifyRequestWillBeSent(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, routeId: RouteId, url: *const BunString, fullUrl: *const BunString, method: HTTPMethod, headersJson: *const BunString, paramsJson: *const BunString, hasBody: bool, timestamp: f64) void;
-    extern fn Bun__HTTPServerAgent__notifyResponseReceived(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, statusCode: i32, statusText: *const BunString, headersJson: *const BunString, hasBody: bool, timestamp: f64) void;
-    extern fn Bun__HTTPServerAgent__notifyBodyChunkReceived(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, flags: i32, chunk: *const BunString, timestamp: f64) void;
-    extern fn Bun__HTTPServerAgent__notifyRequestFinished(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, timestamp: f64, duration: f64) void;
-    extern fn Bun__HTTPServerAgent__notifyRequestHandlerException(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, message: *const BunString, url: *const BunString, line: i32, timestamp: f64) void;
+    extern fn Fun__HTTPServerAgent__notifyRequestWillBeSent(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, routeId: RouteId, url: *const FunString, fullUrl: *const FunString, method: HTTPMethod, headersJson: *const FunString, paramsJson: *const FunString, hasBody: bool, timestamp: f64) void;
+    extern fn Fun__HTTPServerAgent__notifyResponseReceived(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, statusCode: i32, statusText: *const FunString, headersJson: *const FunString, hasBody: bool, timestamp: f64) void;
+    extern fn Fun__HTTPServerAgent__notifyBodyChunkReceived(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, flags: i32, chunk: *const FunString, timestamp: f64) void;
+    extern fn Fun__HTTPServerAgent__notifyRequestFinished(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, timestamp: f64, duration: f64) void;
+    extern fn Fun__HTTPServerAgent__notifyRequestHandlerException(agent: *InspectorHTTPServerAgent, requestId: RequestId, serverId: ServerId, message: *const FunString, url: *const FunString, line: i32, timestamp: f64) void;
 
-    pub fn notifyServerStarted(agent: *InspectorHTTPServerAgent, serverId: ServerId, hotReloadId: HotReloadId, address: *const BunString, startTime: f64, serverInstance: *anyopaque) void {
-        bun.cpp.Bun__HTTPServerAgent__notifyServerStarted(agent, serverId, hotReloadId, address, startTime, serverInstance);
+    pub fn notifyServerStarted(agent: *InspectorHTTPServerAgent, serverId: ServerId, hotReloadId: HotReloadId, address: *const FunString, startTime: f64, serverInstance: *anyopaque) void {
+        fun.cpp.Fun__HTTPServerAgent__notifyServerStarted(agent, serverId, hotReloadId, address, startTime, serverInstance);
     }
 
     pub fn notifyServerStopped(agent: *InspectorHTTPServerAgent, serverId: ServerId, timestamp: f64) void {
-        bun.cpp.Bun__HTTPServerAgent__notifyServerStopped(agent, serverId, timestamp);
+        fun.cpp.Fun__HTTPServerAgent__notifyServerStopped(agent, serverId, timestamp);
     }
 
     pub fn notifyServerRoutesUpdated(agent: *InspectorHTTPServerAgent, serverId: ServerId, hotReloadId: HotReloadId, routes: []Route) void {
-        bun.cpp.Bun__HTTPServerAgent__notifyServerRoutesUpdated(agent, serverId, hotReloadId, routes.ptr, routes.len);
+        fun.cpp.Fun__HTTPServerAgent__notifyServerRoutesUpdated(agent, serverId, hotReloadId, routes.ptr, routes.len);
     }
 };
 
@@ -157,7 +157,7 @@ pub const InspectorHTTPServerAgent = opaque {
 
 //#region Zig -> C++
 
-export fn Bun__HTTPServerAgent__setEnabled(agent: ?*InspectorHTTPServerAgent) void {
+export fn Fun__HTTPServerAgent__setEnabled(agent: ?*InspectorHTTPServerAgent) void {
     if (jsc.VirtualMachine.get().debugger) |*debugger| {
         debugger.http_server_agent.agent = agent;
     }
@@ -170,10 +170,10 @@ pub const ServerId = jsc.Debugger.DebuggerId;
 pub const RequestId = i32;
 pub const RouteId = i32;
 pub const HotReloadId = i32;
-pub const HTTPMethod = bun.http.Method;
+pub const HTTPMethod = fun.http.Method;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BunString = bun.String;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const FunString = fun.String;
+const jsc = fun.jsc;

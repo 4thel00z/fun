@@ -8,7 +8,7 @@ skip_all: []const u64 = &[_]u64{},
 seed: u64 = 0,
 resolve_unknown_entry_types: bool = false,
 
-const NameBufferList = std.array_list.Managed(bun.OSPathChar);
+const NameBufferList = std.array_list.Managed(fun.OSPathChar);
 
 const WrappedIterator = DirIterator.NewWrappedIterator(if (Environment.isWindows) .u16 else .u8);
 
@@ -30,7 +30,7 @@ const StackItem = struct {
 /// After each call to this function, and on deinit(), the memory returned
 /// from this function becomes invalid. A copy must be made in order to keep
 /// a reference to the path.
-pub fn next(self: *Walker) bun.sys.Maybe(?WalkerEntry) {
+pub fn next(self: *Walker) fun.sys.Maybe(?WalkerEntry) {
     while (self.stack.items.len != 0) {
         // `top` becomes invalid after appending to `self.stack`
         var top = &self.stack.items[self.stack.items.len - 1];
@@ -46,8 +46,8 @@ pub fn next(self: *Walker) bun.sys.Maybe(?WalkerEntry) {
                     const kind: @TypeOf(base.kind) = if (comptime !Environment.isWindows)
                         (if (base.kind == .unknown and self.resolve_unknown_entry_types) brk: {
                             const dir_fd = top.iter.iter.dir;
-                            break :brk switch (bun.sys.lstatat(dir_fd, base.name.sliceAssumeZ())) {
-                                .result => |stat_buf| bun.sys.kindFromMode(stat_buf.mode),
+                            break :brk switch (fun.sys.lstatat(dir_fd, base.name.sliceAssumeZ())) {
+                                .result => |stat_buf| fun.sys.kindFromMode(stat_buf.mode),
                                 .err => continue, // skip entries we can't stat
                             };
                         } else base.kind)
@@ -60,7 +60,7 @@ pub fn next(self: *Walker) bun.sys.Maybe(?WalkerEntry) {
                                 u64,
                                 self.skip_dirnames,
                                 // avoid hashing if there will be 0 results
-                                if (self.skip_dirnames.len > 0) bun.hashWithSeed(self.seed, std.mem.sliceAsBytes(base.name.slice())) else 0,
+                                if (self.skip_dirnames.len > 0) fun.hashWithSeed(self.seed, std.mem.sliceAsBytes(base.name.slice())) else 0,
                             ) != null) continue;
                         },
                         .file => {
@@ -68,7 +68,7 @@ pub fn next(self: *Walker) bun.sys.Maybe(?WalkerEntry) {
                                 u64,
                                 self.skip_filenames,
                                 // avoid hashing if there will be 0 results
-                                if (self.skip_filenames.len > 0) bun.hashWithSeed(self.seed, std.mem.sliceAsBytes(base.name.slice())) else 0,
+                                if (self.skip_filenames.len > 0) fun.hashWithSeed(self.seed, std.mem.sliceAsBytes(base.name.slice())) else 0,
                             ) != null) continue;
                         },
 
@@ -78,7 +78,7 @@ pub fn next(self: *Walker) bun.sys.Maybe(?WalkerEntry) {
                                 u64,
                                 self.skip_all,
                                 // avoid hashing if there will be 0 results
-                                if (self.skip_all.len > 0) bun.hashWithSeed(self.seed, std.mem.sliceAsBytes(base.name.slice())) else 0,
+                                if (self.skip_all.len > 0) fun.hashWithSeed(self.seed, std.mem.sliceAsBytes(base.name.slice())) else 0,
                             ) != null) continue;
                         },
 
@@ -87,15 +87,15 @@ pub fn next(self: *Walker) bun.sys.Maybe(?WalkerEntry) {
 
                     self.name_buffer.shrinkRetainingCapacity(dirname_len);
                     if (self.name_buffer.items.len != 0) {
-                        bun.handleOom(self.name_buffer.append(path.sep));
+                        fun.handleOom(self.name_buffer.append(path.sep));
                         dirname_len += 1;
                     }
-                    bun.handleOom(self.name_buffer.appendSlice(base.name.slice()));
+                    fun.handleOom(self.name_buffer.appendSlice(base.name.slice()));
                     const cur_len = self.name_buffer.items.len;
-                    bun.handleOom(self.name_buffer.append(0));
+                    fun.handleOom(self.name_buffer.append(0));
 
                     if (kind == .directory) {
-                        const new_dir = switch (bun.openDirForIterationOSPath(top.iter.iter.dir, base.name.slice())) {
+                        const new_dir = switch (fun.openDirForIterationOSPath(top.iter.iter.dir, base.name.slice())) {
                             .result => |fd| fd,
                             .err => |err| return .initErr(err),
                         };
@@ -103,7 +103,7 @@ pub fn next(self: *Walker) bun.sys.Maybe(?WalkerEntry) {
                             self.stack.append(StackItem{
                                 .iter = DirIterator.iterate(new_dir, if (Environment.isWindows) .u16 else .u8),
                                 .dirname_len = cur_len,
-                            }) catch |err| bun.handleOom(err);
+                            }) catch |err| fun.handleOom(err);
                             top = &self.stack.items[self.stack.items.len - 1];
                         }
                     }
@@ -161,14 +161,14 @@ pub fn walk(
     var skip_name_i: usize = 0;
 
     for (skip_filenames) |name| {
-        skip_names[skip_name_i] = bun.hashWithSeed(seed, std.mem.sliceAsBytes(name));
+        skip_names[skip_name_i] = fun.hashWithSeed(seed, std.mem.sliceAsBytes(name));
         skip_name_i += 1;
     }
     const skip_filenames_ = skip_names[0..skip_name_i];
     var skip_dirnames_ = skip_names[skip_name_i..];
 
     for (skip_dirnames, 0..) |name, i| {
-        skip_dirnames_[i] = bun.hashWithSeed(seed, std.mem.sliceAsBytes(name));
+        skip_dirnames_[i] = fun.hashWithSeed(seed, std.mem.sliceAsBytes(name));
     }
 
     try stack.append(Walker.StackItem{
@@ -190,10 +190,10 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const path = std.fs.path;
 
-const bun = @import("bun");
-const DirIterator = bun.DirIterator;
-const Environment = bun.Environment;
-const FD = bun.FD;
-const OOM = bun.OOM;
-const OSPathSlice = bun.OSPathSlice;
-const OSPathSliceZ = bun.OSPathSliceZ;
+const fun = @import("fun");
+const DirIterator = fun.DirIterator;
+const Environment = fun.Environment;
+const FD = fun.FD;
+const OOM = fun.OOM;
+const OSPathSlice = fun.OSPathSlice;
+const OSPathSliceZ = fun.OSPathSliceZ;

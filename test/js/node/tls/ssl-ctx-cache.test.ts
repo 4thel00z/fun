@@ -3,11 +3,11 @@
 // configs (including `{servername}`-only and inline-CA configs) allocate one
 // CTX, not one per connection. The cache holds zero refs — when the last
 // real owner drops, BoringSSL's ex_data free callback tombstones the entry.
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import tls from "node:tls";
 import { once } from "node:events";
 // @ts-expect-error - debug-only export
-import { sslCtxLiveCount } from "bun:internal-for-testing";
+import { sslCtxLiveCount } from "fun:internal-for-testing";
 import { tls as tlsCerts, tempDir } from "harness";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -25,20 +25,20 @@ async function withServer(fn: (port: number) => Promise<void>) {
   }
 }
 
-// Before the native cache, `Bun.connect({tls:{servername}})` set
+// Before the native cache, `Fun.connect({tls:{servername}})` set
 // `requires_custom_request_ctx` and built a fresh SSL_CTX per call even though
 // SNI is per-SSL not per-CTX. The digest now excludes servername, so 50 of
 // these share the default client CTX.
-test("Bun.connect with servername-only tls reuses one SSL_CTX", async () => {
+test("Fun.connect with servername-only tls reuses one SSL_CTX", async () => {
   await withServer(async port => {
     // Warm: server CTX + the digest-{} client CTX.
     await connectOnce(port);
-    Bun.gc(true);
+    Fun.gc(true);
     const before = sslCtxLiveCount();
 
     for (let i = 0; i < 50; i++) await connectOnce(port);
     await new Promise<void>(r => setImmediate(() => queueMicrotask(r)));
-    Bun.gc(true);
+    Fun.gc(true);
 
     // Old behaviour: Δ ≈ 50. Now: Δ ≤ 2.
     expect(sslCtxLiveCount() - before).toBeLessThanOrEqual(2);
@@ -46,7 +46,7 @@ test("Bun.connect with servername-only tls reuses one SSL_CTX", async () => {
 
   async function connectOnce(port: number) {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
-    const sock = await Bun.connect({
+    const sock = await Fun.connect({
       hostname: "127.0.0.1",
       port,
       tls: { servername: "localhost", rejectUnauthorized: false },
@@ -95,9 +95,9 @@ test("createSecureContext returns the same native handle for identical configs",
 // count returns to baseline.
 test("SSL_CTX is freed once no owners remain (weak cache, not strong)", async () => {
   // Drain anything previous tests left for the sweeper so `before` is stable.
-  Bun.gc(true);
+  Fun.gc(true);
   await new Promise<void>(r => setImmediate(r));
-  Bun.gc(true);
+  Fun.gc(true);
   const before = sslCtxLiveCount();
 
   // Build a CTX with a unique digest (custom cipher) so nothing else holds it.
@@ -113,35 +113,35 @@ test("SSL_CTX is freed once no owners remain (weak cache, not strong)", async ()
   // pin the count at before+1. JSC's conservative stack scan and finalizer
   // scheduling don't guarantee N passes is enough — await the condition.
   for (let i = 0; i < 50; i++) {
-    Bun.gc(true);
+    Fun.gc(true);
     await new Promise<void>(r => setImmediate(r));
     if (sslCtxLiveCount() <= before) break;
   }
   expect(sslCtxLiveCount()).toBeLessThanOrEqual(before);
 });
 
-// Same-CA inline configs across repeated `Bun.connect` calls resolve to one
+// Same-CA inline configs across repeated `Fun.connect` calls resolve to one
 // CTX — the cache is keyed by digest. (Not shared with `new WebSocket`, which
 // projects via `asUSocketsForClientVerification()` → different `request_cert`
 // → different digest by design.)
-test("Bun.connect with inline ca shares SSL_CTX across calls", async () => {
+test("Fun.connect with inline ca shares SSL_CTX across calls", async () => {
   await withServer(async port => {
     const tlsOpts = { ca: tlsCerts.cert, rejectUnauthorized: false };
     // Warm.
     await connectOnce(port, tlsOpts);
-    Bun.gc(true);
+    Fun.gc(true);
     const before = sslCtxLiveCount();
 
     for (let i = 0; i < 30; i++) await connectOnce(port, tlsOpts);
     await new Promise<void>(r => setImmediate(() => queueMicrotask(r)));
-    Bun.gc(true);
+    Fun.gc(true);
 
     expect(sslCtxLiveCount() - before).toBeLessThanOrEqual(2);
   });
 
   async function connectOnce(port: number, tlsOpts: object) {
     const { promise, resolve, reject } = Promise.withResolvers<void>();
-    await Bun.connect({
+    await Fun.connect({
       hostname: "127.0.0.1",
       port,
       tls: tlsOpts,

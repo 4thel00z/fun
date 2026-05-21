@@ -2,17 +2,17 @@
 
 #include "root.h"
 #include "ZigGlobalObject.h"
-#include "BunGlobalScope.h"
+#include "FunGlobalScope.h"
 
 #include <JavaScriptCore/JSFunction.h>
 #include <JavaScriptCore/VM.h>
 
 #include "headers-handwritten.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/CallFrame.h>
 #include <JavaScriptCore/Nodes.h>
 
-namespace Bun {
+namespace Fun {
 
 class NodeVMGlobalObject;
 class NodeVMContextOptions;
@@ -102,9 +102,9 @@ private:
 };
 
 // This class represents a sandboxed global object for vm contexts
-class NodeVMGlobalObject final : public Bun::GlobalScope {
+class NodeVMGlobalObject final : public Fun::GlobalScope {
 public:
-    using Base = Bun::GlobalScope;
+    using Base = Fun::GlobalScope;
 
     static constexpr unsigned StructureFlags = Base::StructureFlags | JSC::OverridesGetOwnPropertySlot | JSC::OverridesPut | JSC::OverridesGetOwnPropertyNames | JSC::GetOwnPropertySlotMayBeWrongAboutDontEnum | JSC::ProhibitsPropertyCaching;
     static constexpr JSC::DestructionMode needsDestruction = NeedsDestruction;
@@ -160,4 +160,4 @@ JSC_DECLARE_HOST_FUNCTION(vmModule_isContext);
 JSC_DECLARE_HOST_FUNCTION(vmModuleRunInNewContext);
 JSC_DECLARE_HOST_FUNCTION(vmModuleRunInThisContext);
 
-} // namespace Bun
+} // namespace Fun

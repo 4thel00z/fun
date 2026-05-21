@@ -1,5 +1,5 @@
 /**
- * HdrHistogram_c — high-dynamic-range latency histogram. Used by bun test's
+ * HdrHistogram_c — high-dynamic-range latency histogram. Used by fun test's
  * per-test timing output and benchmark reporting.
  *
  * DirectBuild: 3 .c files, no config.h. Only the in-memory histogram API is

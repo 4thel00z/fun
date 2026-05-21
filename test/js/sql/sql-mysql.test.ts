@@ -1,6 +1,6 @@
-import { SQL, randomUUIDv7 } from "bun";
-import { beforeAll, describe, expect, mock, test } from "bun:test";
-import { bunEnv, bunRun, describeWithContainer, isDockerEnabled, tempDirWithFiles } from "harness";
+import { SQL, randomUUIDv7 } from "fun";
+import { beforeAll, describe, expect, mock, test } from "fun:test";
+import { funEnv, funRun, describeWithContainer, isDockerEnabled, tempDirWithFiles } from "harness";
 import net from "net";
 import path from "path";
 const dir = tempDirWithFiles("sql-test", {
@@ -25,7 +25,7 @@ if (isDockerEnabled()) {
       name: "MySQL 9",
       image: "mysql:9",
       env: {
-        MYSQL_ROOT_PASSWORD: "bun",
+        MYSQL_ROOT_PASSWORD: "fun",
       },
     },
   ].filter(Boolean);
@@ -40,13 +40,13 @@ if (isDockerEnabled()) {
       },
       container => {
         let sql: SQL;
-        const password = image.image === "mysql_plain" ? "" : "bun";
-        const getOptions = (): Bun.SQL.Options => ({
-          url: `mysql://root:${password}@${container.host}:${container.port}/bun_sql_test`,
+        const password = image.image === "mysql_plain" ? "" : "fun";
+        const getOptions = (): Fun.SQL.Options => ({
+          url: `mysql://root:${password}@${container.host}:${container.port}/fun_sql_test`,
           max: 1,
           tls:
             image.name === "MySQL with TLS"
-              ? Bun.file(path.join(import.meta.dir, "mysql-tls", "ssl", "ca.pem"))
+              ? Fun.file(path.join(import.meta.dir, "mysql-tls", "ssl", "ca.pem"))
               : undefined,
         });
 
@@ -56,8 +56,8 @@ if (isDockerEnabled()) {
         });
 
         test("process should exit when idle", async () => {
-          const { stderr } = bunRun(path.join(import.meta.dir, "sql-idle-exit-fixture.ts"), {
-            ...bunEnv,
+          const { stderr } = funRun(path.join(import.meta.dir, "sql-idle-exit-fixture.ts"), {
+            ...funEnv,
             MYSQL_URL: getOptions().url,
             CA_PATH: image.name === "MySQL with TLS" ? path.join(import.meta.dir, "mysql-tls", "ssl", "ca.pem") : "",
           });
@@ -237,7 +237,7 @@ if (isDockerEnabled()) {
 
           expect(Object.keys(result[0])).toEqual(["0", "1", "2", "3"]);
           // Sanity check: ensure iterating through the properties doesn't crash.
-          Bun.inspect(result);
+          Fun.inspect(result);
         });
 
         // Last one wins.
@@ -245,21 +245,21 @@ if (isDockerEnabled()) {
           const result = await sql`select 1 as "1", 2 as "1", 3 as "1"`;
           expect(result).toEqual([{ "1": 3 }]);
           // Sanity check: ensure iterating through the properties doesn't crash.
-          Bun.inspect(result);
+          Fun.inspect(result);
         });
 
         test("Handles mixed column names", async () => {
           const result = await sql`select 1 as "1", 2 as "2", 3 as "3", 4 as x`;
           expect(result).toEqual([{ "1": 1, "2": 2, "3": 3, x: 4 }]);
           // Sanity check: ensure iterating through the properties doesn't crash.
-          Bun.inspect(result);
+          Fun.inspect(result);
         });
 
         test("Handles mixed column names with duplicates", async () => {
           const result = await sql`select 1 as "1", 2 as "2", 3 as "3", 4 as "1", 1 as x, 2 as x`;
           expect(result).toEqual([{ "1": 4, "2": 2, "3": 3, x: 2 }]);
           // Sanity check: ensure iterating through the properties doesn't crash.
-          Bun.inspect(result);
+          Fun.inspect(result);
 
           // Named columns are inserted first, but they appear from JS as last.
           expect(Object.keys(result[0])).toEqual(["1", "2", "3", "x"]);
@@ -270,14 +270,14 @@ if (isDockerEnabled()) {
           expect(result).toEqual([{ "1": 4, "2": 2, "3": 3, x: 3, y: 4 }]);
 
           // Sanity check: ensure iterating through the properties doesn't crash.
-          Bun.inspect(result);
+          Fun.inspect(result);
         });
 
         test("Handles mixed column names with duplicates at the start", async () => {
           const result = await sql`select 1 as "1", 2 as "1", 3 as "2", 4 as "3", 1 as x, 2 as x, 3 as x`;
           expect(result).toEqual([{ "1": 2, "2": 3, "3": 4, x: 3 }]);
           // Sanity check: ensure iterating through the properties doesn't crash.
-          Bun.inspect(result);
+          Fun.inspect(result);
         });
 
         test("Uses default database without slash", async () => {
@@ -332,7 +332,7 @@ if (isDockerEnabled()) {
 
         test("MediumInt/Int24", async () => {
           await using sql = new SQL({ ...getOptions(), max: 1 });
-          let random_name = ("t_" + Bun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
+          let random_name = ("t_" + Fun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
           await sql`CREATE TEMPORARY TABLE ${sql(random_name)} (a mediumint unsigned)`;
           await sql`INSERT INTO ${sql(random_name)} VALUES (${1})`;
           const result = await sql`select * from ${sql(random_name)}`;
@@ -346,7 +346,7 @@ if (isDockerEnabled()) {
           // Protocol will always return 0 or 1 for TRUE and FALSE when not using a table.
           expect((await sql`select ${false} as x`)[0].x).toBe(0);
           expect((await sql`select ${true} as x`)[0].x).toBe(1);
-          let random_name = ("t_" + Bun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
+          let random_name = ("t_" + Fun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
           await sql`CREATE TEMPORARY TABLE ${sql(random_name)} (a bool)`;
           const values = [{ a: true }, { a: false }, { a: 8 }, { a: -1 }];
           await sql`INSERT INTO ${sql(random_name)} ${sql(values)}`;
@@ -471,7 +471,7 @@ if (isDockerEnabled()) {
           const y = (await sql`select CAST('{"key": "value", "number": 123}' AS JSON) as x`)[0].x;
           expect(y).toEqual({ key: "value", number: 123 });
 
-          const random_name = ("t_" + Bun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
+          const random_name = ("t_" + Fun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
           await sql`CREATE TEMPORARY TABLE ${sql(random_name)} (a json)`;
           const values = [{ a: { b: 1 } }, { a: { b: 2 } }];
           await sql`INSERT INTO ${sql(random_name)} ${sql(values)}`;
@@ -481,7 +481,7 @@ if (isDockerEnabled()) {
         });
 
         test("Binary", async () => {
-          const random_name = ("t_" + Bun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
+          const random_name = ("t_" + Fun.randomUUIDv7("hex").replaceAll("-", "")).toLowerCase();
           await sql`CREATE TEMPORARY TABLE ${sql(random_name)} (a binary(1), b varbinary(1), c blob)`;
           const values = [
             { a: Buffer.from([1]), b: Buffer.from([2]), c: Buffer.from([3]) },
@@ -585,7 +585,7 @@ if (isDockerEnabled()) {
         test("Idle timeout retry works", async () => {
           await using sql = new SQL({ ...getOptions(), idleTimeout: 1 });
           await sql`select 1`;
-          await Bun.sleep(1100); // 1.1 seconds so it should retry
+          await Fun.sleep(1100); // 1.1 seconds so it should retry
           await sql`select 1`;
           expect().pass();
         });
@@ -741,7 +741,7 @@ if (isDockerEnabled()) {
             ...getOptions(),
             max: 1,
             password: async () => {
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               return password;
             },
           });
@@ -766,7 +766,7 @@ if (isDockerEnabled()) {
             ...getOptions(),
             max: 1,
             password: async () => {
-              await Bun.sleep(10);
+              await Fun.sleep(10);
               throw new Error("password error");
             },
           });

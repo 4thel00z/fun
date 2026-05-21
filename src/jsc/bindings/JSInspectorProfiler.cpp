@@ -1,6 +1,6 @@
 #include "root.h"
 #include "helpers.h"
-#include "BunCPUProfiler.h"
+#include "FunCPUProfiler.h"
 #include "NodeValidator.h"
 #include <JavaScriptCore/JSGlobalObject.h>
 #include <JavaScriptCore/VM.h>
@@ -11,7 +11,7 @@ using namespace JSC;
 JSC_DECLARE_HOST_FUNCTION(jsFunction_startCPUProfiler);
 JSC_DEFINE_HOST_FUNCTION(jsFunction_startCPUProfiler, (JSGlobalObject * globalObject, CallFrame*))
 {
-    Bun::startCPUProfiler(globalObject->vm());
+    Fun::startCPUProfiler(globalObject->vm());
     return JSValue::encode(jsUndefined());
 }
 
@@ -20,7 +20,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunction_stopCPUProfiler, (JSGlobalObject * globalObj
 {
     auto& vm = globalObject->vm();
     WTF::String result;
-    Bun::stopCPUProfiler(vm, &result, nullptr);
+    Fun::stopCPUProfiler(vm, &result, nullptr);
     return JSValue::encode(jsString(vm, result));
 }
 
@@ -36,15 +36,15 @@ JSC_DEFINE_HOST_FUNCTION(jsFunction_setCPUSamplingInterval, (JSGlobalObject * gl
     }
 
     int interval;
-    Bun::V::validateInteger(scope, globalObject, callFrame->uncheckedArgument(0), "interval"_s, jsNumber(1), jsUndefined(), &interval);
+    Fun::V::validateInteger(scope, globalObject, callFrame->uncheckedArgument(0), "interval"_s, jsNumber(1), jsUndefined(), &interval);
     RETURN_IF_EXCEPTION(scope, {});
 
-    Bun::setSamplingInterval(interval);
+    Fun::setSamplingInterval(interval);
     return JSValue::encode(jsUndefined());
 }
 
 JSC_DECLARE_HOST_FUNCTION(jsFunction_isCPUProfilerRunning);
 JSC_DEFINE_HOST_FUNCTION(jsFunction_isCPUProfilerRunning, (JSGlobalObject*, CallFrame*))
 {
-    return JSValue::encode(jsBoolean(Bun::isCPUProfilerRunning()));
+    return JSValue::encode(jsBoolean(Fun::isCPUProfilerRunning()));
 }

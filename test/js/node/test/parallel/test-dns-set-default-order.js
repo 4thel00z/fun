@@ -6,9 +6,9 @@ const { promisify } = require('util');
 // Test that `dns.setDefaultResultOrder()` and
 // `dns.promises.setDefaultResultOrder()` work as expected.
 
-const originalLookup = Bun.dns.lookup;
+const originalLookup = Fun.dns.lookup;
 const calls = [];
-Bun.dns.lookup = common.mustCallAtLeast((...args) => {
+Fun.dns.lookup = common.mustCallAtLeast((...args) => {
   calls.push(args);
   return originalLookup(...args);
 }, 1);

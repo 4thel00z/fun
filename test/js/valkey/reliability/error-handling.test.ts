@@ -1,5 +1,5 @@
-import { randomUUIDv7 } from "bun";
-import { beforeEach, describe, expect, test } from "bun:test";
+import { randomUUIDv7 } from "fun";
+import { beforeEach, describe, expect, test } from "fun:test";
 import { ConnectionType, createClient, ctx, isEnabled } from "../test-utils";
 
 /**

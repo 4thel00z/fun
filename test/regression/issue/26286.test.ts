@@ -1,26 +1,26 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// https://github.com/oven-sh/bun/issues/26286
-// Bun.Terminal callbacks not invoked inside AsyncLocalStorage.run()
+// https://github.com/underdoc-org/fun/issues/26286
+// Fun.Terminal callbacks not invoked inside AsyncLocalStorage.run()
 
-// Bun.Terminal uses PTY which is not supported on Windows
-test.skipIf(isWindows)("Bun.Terminal data callback works inside AsyncLocalStorage.run()", async () => {
+// Fun.Terminal uses PTY which is not supported on Windows
+test.skipIf(isWindows)("Fun.Terminal data callback works inside AsyncLocalStorage.run()", async () => {
   const storage = new AsyncLocalStorage();
 
   async function terminalTest() {
     const { promise, resolve } = Promise.withResolvers<Uint8Array>();
 
-    await using terminal = new Bun.Terminal({
+    await using terminal = new Fun.Terminal({
       data(term, data) {
         resolve(data);
       },
     });
 
-    const process = Bun.spawn([bunExe(), "-e", "console.log('Hello')"], {
+    const process = Fun.spawn([funExe(), "-e", "console.log('Hello')"], {
       terminal,
-      env: bunEnv,
+      env: funEnv,
     });
 
     const data = await promise;
@@ -36,21 +36,21 @@ test.skipIf(isWindows)("Bun.Terminal data callback works inside AsyncLocalStorag
   expect(new TextDecoder().decode(result.data!)).toContain("Hello");
 });
 
-test.skipIf(isWindows)("Bun.Terminal preserves async context inside callbacks", async () => {
+test.skipIf(isWindows)("Fun.Terminal preserves async context inside callbacks", async () => {
   const storage = new AsyncLocalStorage<{ id: number }>();
 
   async function terminalTest() {
     const { promise, resolve } = Promise.withResolvers<{ id: number } | undefined>();
 
-    await using terminal = new Bun.Terminal({
+    await using terminal = new Fun.Terminal({
       data(term, data) {
         resolve(storage.getStore());
       },
     });
 
-    const process = Bun.spawn([bunExe(), "-e", "console.log('Hello')"], {
+    const process = Fun.spawn([funExe(), "-e", "console.log('Hello')"], {
       terminal,
-      env: bunEnv,
+      env: funEnv,
     });
 
     const contextInCallback = await promise;

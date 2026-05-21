@@ -1,12 +1,12 @@
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "node:path";
 
 it("works with large utf-16 strings", async () => {
   const filepath = join(import.meta.dir, "console-log-utf16.fixture.js").replaceAll("\\", "/");
-  const proc = Bun.spawn({
-    cmd: [bunExe(), filepath],
-    env: { ...bunEnv },
+  const proc = Fun.spawn({
+    cmd: [funExe(), filepath],
+    env: { ...funEnv },
     stdio: ["inherit", "pipe", "pipe"],
   });
 

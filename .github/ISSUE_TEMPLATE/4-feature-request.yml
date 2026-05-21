@@ -5,9 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for submitting an idea. It helps make Bun better.
+        Thank you for submitting an idea. It helps make Fun better.
 
-        If you want to discuss Bun, or learn how others are using Bun, please
+        If you want to discuss Fun, or learn how others are using Fun, please
         join our [Discord](https://discord.gg/CXdq2DP29u) server, where you can share in the [`#feedback`](https://discord.gg/unwUnHBNqy) channel.
   - type: textarea
     attributes:

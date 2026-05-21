@@ -13,18 +13,18 @@
 pub fn myersDiff(
     allocator: Allocator,
     global: *jsc.JSGlobalObject,
-    actual: *const BunString,
-    expected: *const BunString,
+    actual: *const FunString,
+    expected: *const FunString,
     // If true, strings that have a trailing comma but are otherwise equal are
     // considered equal.
     check_comma_disparity: bool,
     // split `actual` and `expected` into lines before diffing
     lines: bool,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     // Short circuit on empty strings. Note that, in release builds where
     // assertions are disabled, if `actual` and `expected` are both dead, this
     // branch will be hit since dead strings have a length of 0. This should be
-    // moot since BunStrings with non-zero reference counds should never be
+    // moot since FunStrings with non-zero reference counds should never be
     // dead.
     if (actual.length() == 0 and expected.length() == 0) {
         return try jsc.JSValue.createEmptyArray(global, 0);
@@ -70,7 +70,7 @@ fn diffChars(
     global: *jsc.JSGlobalObject,
     actual: []const T,
     expected: []const T,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     const Differ = MyersDiff.Differ(T, .{ .check_comma_disparity = false });
     const diff: MyersDiff.DiffList(T) = Differ.diff(allocator, actual, expected) catch |err| return mapDiffError(global, err);
     return diffListToJS(T, global, diff);
@@ -83,7 +83,7 @@ fn diffLines(
     actual: []const T,
     expected: []const T,
     check_comma_disparity: bool,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     var a = try MyersDiff.split(T, allocator, actual);
     defer a.deinit(allocator);
     var e = try MyersDiff.split(T, allocator, expected);
@@ -101,7 +101,7 @@ fn diffLines(
     return diffListToJS([]const T, global, diff);
 }
 
-fn diffListToJS(comptime T: type, global: *jsc.JSGlobalObject, diff_list: MyersDiff.DiffList(T)) bun.JSError!jsc.JSValue {
+fn diffListToJS(comptime T: type, global: *jsc.JSGlobalObject, diff_list: MyersDiff.DiffList(T)) fun.JSError!jsc.JSValue {
     var array = try jsc.JSValue.createEmptyArray(global, diff_list.items.len);
     for (diff_list.items, 0..) |*line, i| {
         try array.putIndex(global, @truncate(i), (try jsc.JSObject.createNullProto(line.*, global)).toJS());
@@ -109,7 +109,7 @@ fn diffListToJS(comptime T: type, global: *jsc.JSGlobalObject, diff_list: MyersD
     return array;
 }
 
-fn mapDiffError(global: *jsc.JSGlobalObject, err: MyersDiff.Error) bun.JSError {
+fn mapDiffError(global: *jsc.JSGlobalObject, err: MyersDiff.Error) fun.JSError {
     return switch (err) {
         error.OutOfMemory => error.OutOfMemory,
         error.DiffTooLarge => global.throwInvalidArguments("Diffing these two values would create a string that is too large. If this was intentional, please open a bug report on GitHub.", .{}),
@@ -121,8 +121,8 @@ const MyersDiff = @import("./assert/myers_diff.zig");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const BunString = bun.String;
+const fun = @import("fun");
+const FunString = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

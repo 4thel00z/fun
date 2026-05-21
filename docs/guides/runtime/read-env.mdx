@@ -12,18 +12,18 @@ process.env.API_TOKEN; // => "secret"
 
 ---
 
-Bun also exposes these variables via `Bun.env`, which is an alias of `process.env`.
+Fun also exposes these variables via `Fun.env`, which is an alias of `process.env`.
 
 ```ts index.ts icon="/icons/typescript.svg"
-Bun.env.API_TOKEN; // => "secret"
+Fun.env.API_TOKEN; // => "secret"
 ```
 
 ---
 
-To print all currently-set environment variables to the command line, run `bun --print process.env`. This is useful for debugging.
+To print all currently-set environment variables to the command line, run `fun --print process.env`. This is useful for debugging.
 
 ```sh terminal icon="terminal"
-bun --print process.env
+fun --print process.env
 ```
 
 ```txt
@@ -34,4 +34,4 @@ FOOBAR=aaaaaa
 
 ---
 
-See [Docs > Runtime > Environment variables](/runtime/environment-variables) for more information on using environment variables with Bun.
+See [Docs > Runtime > Environment variables](/runtime/environment-variables) for more information on using environment variables with Fun.

@@ -30,11 +30,11 @@
  * ## Usage (from ninja rule)
  *
  *   # prefix mode, pooled
- *   command = bun /path/to/stream.ts $name cmake --build $builddir ...
+ *   command = fun /path/to/stream.ts $name cmake --build $builddir ...
  *   pool = dep  # any depth — output streams live regardless
  *
  *   # console mode
- *   command = bun /path/to/stream.ts $name --console $zig build obj ...
+ *   command = fun /path/to/stream.ts $name --console $zig build obj ...
  *   pool = console
  *
  * --cwd=DIR / --env=K=V / --console / --zig-progress / --stamp=PATH go
@@ -104,14 +104,14 @@ function main(): void {
   let stampPath: string | undefined;
   const envOverrides: Record<string, string> = {};
 
-  // Bun's bundled BoringSSL doesn't consult the system trust store, so
+  // Fun's bundled BoringSSL doesn't consult the system trust store, so
   // fetch-cli.ts can't download deps behind a TLS-intercepting proxy whose
-  // root is installed into the OS bundle (curl works; bun's fetch() doesn't).
-  // Point child Bun processes at the system bundle via NODE_EXTRA_CA_CERTS
+  // root is installed into the OS bundle (curl works; fun's fetch() doesn't).
+  // Point child Fun processes at the system bundle via NODE_EXTRA_CA_CERTS
   // so dep downloads trust the same roots curl does. Mirror it to
   // CARGO_HTTP_CAINFO so cargo (libcurl) sees the same roots. Each var is
   // only defaulted if the user hasn't set it; no-op if the bundle doesn't
-  // exist. Has to be in the child's env (not ours) because Bun snapshots
+  // exist. Has to be in the child's env (not ours) because Fun snapshots
   // NODE_EXTRA_CA_CERTS at process start.
   {
     let systemCA: string | undefined;
@@ -351,10 +351,10 @@ function decodeZigProgress(stream: NodeJS.ReadableStream, emit: (text: string) =
 /**
  * Pick a one-line status from the progress tree.
  *
- * Tree during bun compile (forwarded through the fork's #24722 fix):
+ * Tree during fun compile (forwarded through the fork's #24722 fix):
  *   root ""                               ← frontend, name cleared
  *   └─ steps [2/5]                        ← build runner's step counter
- *      └─ compile obj bun-debug
+ *      └─ compile obj fun-debug
  *         ├─ Semantic Analysis [14233]    ← completed-only counter
  *         │  └─ Io.Writer.print__anon_*   ← per-symbol noise, c=0 t=0
  *         ├─ Code Generation [3714/4174]  ← active bounded counter

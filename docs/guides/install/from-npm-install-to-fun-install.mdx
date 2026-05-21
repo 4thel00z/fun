@@ -1,0 +1,230 @@
+---
+title: Migrate from npm install to fun install
+sidebarTitle: Migrate from npm to fun
+mode: center
+---
+
+`fun install` is a Node.js compatible npm client designed to be an incredibly fast successor to npm.
+
+To migrate from `npm install` to `fun install`, run `fun install` instead of `npm install`.
+
+- **Designed for Node.js & Fun**: `fun install` installs a Node.js compatible `node_modules` folder. You can use it in place of `npm install` for Node.js projects without any code changes and without using Fun's runtime.
+- **Automatically converts `package-lock.json`** to fun's `fun.lock` lockfile format, preserving your existing resolved dependency versions without any manual work on your part. You can secretly use `fun install` in place of `npm install` at work without anyone noticing.
+- **`.npmrc` compatible**: fun install reads npm registry configuration from npm's `.npmrc`, so you can use the same configuration for both npm and Fun.
+- **Hardlinks**: On Windows and Linux, `fun install` uses hardlinks to conserve disk space and install times.
+
+```bash terminal icon="terminal"
+# It only takes one command to migrate
+fun i
+
+# To add dependencies:
+fun i @types/fun
+
+# To add devDependencies:
+fun i -d @types/fun
+
+# To remove a dependency:
+fun rm @types/fun
+```
+
+---
+
+## Run package.json scripts faster
+
+Run scripts from package.json, executables from `node_modules/.bin` (sort of like `npx`), and JavaScript/TypeScript files (like `node`) — all from a single command.
+
+| NPM                | Fun              |
+| ------------------ | ---------------- |
+| `npm run <script>` | `fun <script>`   |
+| `npm exec <bin>`   | `fun <bin>`      |
+| `node <file>`      | `fun <file>`     |
+| `npx <package>`    | `funx <package>` |
+
+When you use `fun run <executable>`, it will choose the locally-installed executable
+
+```sh terminal icon="terminal"
+# Run a package.json script:
+fun my-script
+fun run my-script
+
+# Run an executable in node_modules/.bin:
+fun my-executable # such as tsc, esbuild, etc.
+fun run my-executable
+
+# Run a JavaScript/TypeScript file:
+fun ./index.ts
+```
+
+---
+
+## Workspaces? Yes.
+
+`fun install` supports workspaces similarly to npm, with more features.
+
+In package.json, you can set `"workspaces"` to an array of relative paths.
+
+```json package.json icon="file-json"
+{
+  "name": "my-app",
+  "workspaces": ["packages/*", "apps/*"]
+}
+```
+
+---
+
+### Filter scripts by workspace name
+
+In Fun, the `--filter` flag accepts a glob pattern, and will run the command concurrently for all workspace packages with a `name` that matches the pattern, respecting dependency order.
+
+```sh terminal icon="terminal"
+fun --filter 'lib-*' my-script
+# instead of:
+# npm run --workspace lib-foo --workspace lib-bar my-script
+```
+
+---
+
+## Update dependencies
+
+To update a dependency, you can use `fun update <package>`. This will update the dependency to the latest version that satisfies the semver range specified in package.json.
+
+```sh terminal icon="terminal"
+# Update a single dependency
+fun update @types/fun
+
+# Update all dependencies
+fun update
+
+# Ignore semver, update to the latest version
+fun update @types/fun --latest
+
+# Update a dependency to a specific version
+fun update @types/fun@1.3.3
+
+# Update all dependencies to the latest versions
+fun update --latest
+```
+
+---
+
+### View outdated dependencies
+
+To view outdated dependencies, run `fun outdated`. This is like `npm outdated` but with more compact output.
+
+```sh terminal icon="terminal"
+fun outdated
+```
+
+```txt
+┌────────────────────────────────────────┬─────────┬────────┬────────┐
+│ Package                                │ Current │ Update │ Latest │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ @types/fun (dev)                       │ 1.1.6   │ 1.1.10 │ 1.1.10 │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ @types/react (dev)                     │ 18.3.3  │ 18.3.8 │ 18.3.8 │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ @typescript-eslint/eslint-plugin (dev) │ 7.16.1  │ 7.18.0 │ 8.6.0  │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ @typescript-eslint/parser (dev)        │ 7.16.1  │ 7.18.0 │ 8.6.0  │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ @vscode/debugadapter (dev)             │ 1.66.0  │ 1.67.0 │ 1.67.0 │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ esbuild (dev)                          │ 0.21.5  │ 0.21.5 │ 0.24.0 │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ eslint (dev)                           │ 9.7.0   │ 9.11.0 │ 9.11.0 │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ mitata (dev)                           │ 0.1.11  │ 0.1.14 │ 1.0.2  │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ prettier-plugin-organize-imports (dev) │ 4.0.0   │ 4.1.0  │ 4.1.0  │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ source-map-js (dev)                    │ 1.2.0   │ 1.2.1  │ 1.2.1  │
+├────────────────────────────────────────┼─────────┼────────┼────────┤
+│ typescript (dev)                       │ 5.5.3   │ 5.6.2  │ 5.6.2  │
+└────────────────────────────────────────┴─────────┴────────┴────────┘
+```
+
+---
+
+## List installed packages
+
+To list installed packages, you can use `fun pm ls`. This will list all the packages that are installed in the `node_modules` folder using Fun's lockfile as the source of truth. You can pass the `-a` flag to list all installed packages, including transitive dependencies.
+
+```sh terminal icon="terminal"
+# List top-level installed packages:
+fun pm ls
+```
+
+```txt
+my-pkg node_modules (781)
+├── @types/node@20.16.5
+├── @types/react@18.3.8
+├── @types/react-dom@18.3.0
+├── eslint@8.57.1
+├── eslint-config-next@14.2.8
+...
+```
+
+```sh terminal icon="terminal"
+# List all installed packages:
+fun pm ls -a
+```
+
+```txt
+my-pkg node_modules
+├── @alloc/quick-lru@5.2.0
+├── @isaacs/cliui@8.0.2
+│   └── strip-ansi@7.1.0
+│       └── ansi-regex@6.1.0
+├── @jridgewell/gen-mapping@0.3.5
+├── @jridgewell/resolve-uri@3.1.2
+...
+```
+
+---
+
+## Create a package tarball
+
+To create a package tarball, you can use `fun pm pack`. This will create a tarball of the package in the current directory.
+
+```sh terminal icon="terminal"
+# Create a tarball
+fun pm pack
+```
+
+```txt
+Total files: 46
+Shasum: 2ee19b6f0c6b001358449ca0eadead703f326216
+Integrity: sha512-ZV0lzWTEkGAMz[...]Gl4f8lA9sl97g==
+Unpacked size: 0.41MB
+Packed size: 117.50KB
+```
+
+---
+
+## Shebang
+
+If the package references `node` in the `#!/usr/bin/env node` shebang, `fun run` will by default respect it and use the system's `node` executable. You can force it to use Fun's `node` by passing `--fun` to `fun run`.
+
+When you pass `--fun` to `fun run`, we create a symlink to the locally-installed Fun executable named `"node"` in a temporary directory and add that to your `PATH` for the duration of the script's execution.
+
+```sh terminal icon="terminal"
+# Force using Fun's runtime instead of node
+fun --fun my-script
+
+# This also works:
+fun run --fun my-script
+```
+
+---
+
+## Global installs
+
+You can install packages globally using `fun i -g <package>`. This will install into a `.fun/install/global/node_modules` folder inside your home directory by default.
+
+```sh terminal icon="terminal"
+# Install a package globally
+fun i -g eslint
+
+# Run a globally-installed package without the `fun run` prefix
+eslint --init
+```

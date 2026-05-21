@@ -16,7 +16,7 @@ const OutputColorFormat = enum {
     @"{rgb}",
     @"{rgba}",
 
-    pub const Map = bun.ComptimeStringMap(OutputColorFormat, .{
+    pub const Map = fun.ComptimeStringMap(OutputColorFormat, .{
         .{ "[r,g,b,a]", .@"[rgba]" },
         .{ "[rgb]", .@"[rgb]" },
         .{ "[rgba]", .@"[rgba]" },
@@ -44,7 +44,7 @@ const OutputColorFormat = enum {
     });
 };
 
-fn colorIntFromJS(globalThis: *jsc.JSGlobalObject, input: jsc.JSValue, comptime property: []const u8) bun.JSError!i32 {
+fn colorIntFromJS(globalThis: *jsc.JSGlobalObject, input: jsc.JSValue, comptime property: []const u8) fun.JSError!i32 {
     if (input == .zero or input.isUndefined() or !input.isNumber()) {
         return globalThis.throwInvalidArgumentType("color", property, "integer");
     }
@@ -131,18 +131,18 @@ pub const Ansi256 = struct {
     }
 };
 
-pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callFrame.argumentsAsArray(2);
     if (args[0].isUndefined()) {
         return globalThis.throwInvalidArgumentType("color", "input", "string, number, or object");
     }
 
-    var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+    var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
     var stack_fallback = std.heap.stackFallback(4096, arena.allocator());
     const allocator = stack_fallback.get();
 
-    var log = bun.logger.Log.init(allocator);
+    var log = fun.logger.Log.init(allocator);
     defer log.deinit();
 
     const unresolved_format: OutputColorFormat = brk: {
@@ -198,7 +198,7 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
 
             const a: ?u8 = if (try args[0].getTruthy(globalThis, "a")) |a_value| brk2: {
                 if (a_value.isNumber()) {
-                    break :brk2 @intCast(@mod(@as(i64, bun.intFromFloat(i64, a_value.asNumber() * 255.0)), 256));
+                    break :brk2 @intCast(@mod(@as(i64, fun.intFromFloat(i64, a_value.asNumber() * 255.0)), 256));
                 }
                 break :brk2 null;
             } else null;
@@ -218,7 +218,7 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
             };
         }
 
-        input = try args[0].toSlice(globalThis, bun.default_allocator);
+        input = try args[0].toSlice(globalThis, fun.default_allocator);
 
         var parser_input = css.ParserInput.new(allocator, input.slice());
         var parser = css.Parser.new(&parser_input, null, .{}, null);
@@ -234,7 +234,7 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
             return globalThis.throw("color() failed to parse {s}", .{@tagName(err.basic().kind)});
         },
         .result => |*result| {
-            const format: OutputColorFormat = if (unresolved_format == .ansi) switch (bun.Output.Source.colorDepth()) {
+            const format: OutputColorFormat = if (unresolved_format == .ansi) switch (fun.Output.Source.colorDepth()) {
                 // No color terminal, therefore return an empty string
                 .none => return jsc.JSValue.jsEmptyString(globalThis),
                 .@"16" => .ansi_16,
@@ -315,21 +315,21 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
                                     return jsc.JSValue.jsNumber(int);
                                 },
                                 .hex => {
-                                    break :color bun.String.createFormat("#{f}{f}{f}", .{ bun.fmt.hexIntLower(rgba.red), bun.fmt.hexIntLower(rgba.green), bun.fmt.hexIntLower(rgba.blue) });
+                                    break :color fun.String.createFormat("#{f}{f}{f}", .{ fun.fmt.hexIntLower(rgba.red), fun.fmt.hexIntLower(rgba.green), fun.fmt.hexIntLower(rgba.blue) });
                                 },
                                 .HEX => {
-                                    break :color bun.String.createFormat("#{f}{f}{f}", .{ bun.fmt.hexIntUpper(rgba.red), bun.fmt.hexIntUpper(rgba.green), bun.fmt.hexIntUpper(rgba.blue) });
+                                    break :color fun.String.createFormat("#{f}{f}{f}", .{ fun.fmt.hexIntUpper(rgba.red), fun.fmt.hexIntUpper(rgba.green), fun.fmt.hexIntUpper(rgba.blue) });
                                 },
                                 .rgb => {
-                                    break :color bun.String.createFormat("rgb({d}, {d}, {d})", .{ rgba.red, rgba.green, rgba.blue });
+                                    break :color fun.String.createFormat("rgb({d}, {d}, {d})", .{ rgba.red, rgba.green, rgba.blue });
                                 },
                                 .rgba => {
-                                    break :color bun.String.createFormat("rgba({d}, {d}, {d}, {d})", .{ rgba.red, rgba.green, rgba.blue, rgba.alphaF32() });
+                                    break :color fun.String.createFormat("rgba({d}, {d}, {d}, {d})", .{ rgba.red, rgba.green, rgba.blue, rgba.alphaF32() });
                                 },
                                 .ansi_16 => {
                                     const ansi_16_color = Ansi256.get16(rgba.red, rgba.green, rgba.blue);
                                     // 16-color ansi, foreground text color
-                                    break :color bun.String.cloneLatin1(&[_]u8{
+                                    break :color fun.String.cloneLatin1(&[_]u8{
                                         // 0x1b is the escape character
                                         // 38 is the foreground color code
                                         // 5 is the 16-color mode
@@ -354,13 +354,13 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
                                         rgba.blue,
                                     }) catch unreachable;
 
-                                    break :color bun.String.cloneLatin1(buf[0 .. 7 + additional.len]);
+                                    break :color fun.String.cloneLatin1(buf[0 .. 7 + additional.len]);
                                 },
                                 .ansi_256 => {
                                     // ANSI escape sequence
                                     var buf: Ansi256.Buffer = undefined;
                                     const val = Ansi256.from(rgba, &buf);
-                                    break :color bun.String.cloneLatin1(val);
+                                    break :color fun.String.cloneLatin1(val);
                                 },
                                 else => unreachable,
                             }
@@ -381,7 +381,7 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
                                 else => break :formatted,
                             };
 
-                            break :color bun.String.createFormat("hsl({d}, {d}, {d})", .{ hsl.h, hsl.s, hsl.l });
+                            break :color fun.String.createFormat("hsl({d}, {d}, {d})", .{ hsl.h, hsl.s, hsl.l });
                         },
                         .lab => {
                             const lab = switch (result.*) {
@@ -396,10 +396,10 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
                                 else => break :formatted,
                             };
 
-                            break :color bun.String.createFormat("lab({d}, {d}, {d})", .{ lab.l, lab.a, lab.b });
+                            break :color fun.String.createFormat("lab({d}, {d}, {d})", .{ lab.l, lab.a, lab.b });
                         },
                     }
-                } catch |err| bun.handleOom(err);
+                } catch |err| fun.handleOom(err);
 
                 return str.transferToJS(globalThis);
             }
@@ -408,7 +408,7 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
             var dest = std.Io.Writer.Allocating.init(allocator);
             const writer = &dest.writer;
 
-            const symbols = bun.ast.Symbol.Map{};
+            const symbols = fun.ast.Symbol.Map{};
             var printer = css.Printer.new(
                 allocator,
                 std.array_list.Managed(u8).init(allocator),
@@ -423,7 +423,7 @@ pub fn jsFunctionColor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFram
                 return globalThis.throw("color() internal error: {s}", .{@errorName(err)});
             };
 
-            return bun.String.createUTF8ForJS(globalThis, dest.written());
+            return fun.String.createUTF8ForJS(globalThis, dest.written());
         },
     }
 }
@@ -436,6 +436,6 @@ const LAB = color.LAB;
 const RGBA = color.RGBA;
 const SRGB = color.SRGB;
 
-const bun = @import("bun");
-const css = bun.css;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const css = fun.css;
+const jsc = fun.jsc;

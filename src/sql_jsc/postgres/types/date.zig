@@ -11,13 +11,13 @@ pub fn fromBinary(bytes: []const u8) f64 {
     return (double_microseconds / std.time.us_per_ms) + POSTGRES_EPOCH_DATE;
 }
 
-pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) bun.JSError!i64 {
+pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) fun.JSError!i64 {
     const double_value = if (value.isDate())
         value.getUnixTimestamp()
     else if (value.isNumber())
         value.asNumber()
     else if (value.isString()) brk: {
-        var str = value.toBunString(globalObject) catch @panic("unreachable");
+        var str = value.toFunString(globalObject) catch @panic("unreachable");
         defer str.deref();
         break :brk try str.parseDate(globalObject);
     } else return 0;
@@ -44,12 +44,12 @@ pub fn toJS(
     }
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Data = @import("../../../sql/shared/Data.zig").Data;
 
 const int_types = @import("../../../sql/postgres/types/int_types.zig");
 const short = int_types.short;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

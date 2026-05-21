@@ -1,5 +1,5 @@
-import { describe, expect } from "bun:test";
-import { normalizeBunSnapshot } from "harness";
+import { describe, expect } from "fun:test";
+import { normalizeFunSnapshot } from "harness";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -61,7 +61,7 @@ describe("bundler", () => {
       "2",
     ],
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
   });
   itBundled("minify/StringAdditionFolding", {
     files: {
@@ -102,7 +102,7 @@ describe("bundler", () => {
     },
     minifySyntax: true,
     minifyIdentifiers: true,
-    target: "bun",
+    target: "fun",
   });
   itBundled("minify/KeepNamesPreservesNames", {
     files: {
@@ -133,7 +133,7 @@ describe("bundler", () => {
     minifySyntax: true,
     minifyIdentifiers: false, // Don't minify identifiers to make testing easier
     keepNames: true,
-    target: "bun",
+    target: "fun",
   });
   itBundled("minify/KeepNamesWithMinifyIdentifiers", {
     files: {
@@ -156,7 +156,7 @@ describe("bundler", () => {
     minifySyntax: true,
     minifyIdentifiers: true,
     keepNames: true,
-    target: "bun",
+    target: "fun",
   });
   itBundled("minify/PrivateIdentifiersNameCollision", {
     files: {
@@ -433,8 +433,8 @@ describe("bundler", () => {
       stdout: "PASS",
     },
   });
-  // https://github.com/oven-sh/bun/issues/5501
-  itBundled("minify/BunRequireStatement", {
+  // https://github.com/underdoc-org/fun/issues/5501
+  itBundled("minify/FunRequireStatement", {
     files: {
       "/entry.js": /* js */ `
         export function test(ident) {
@@ -448,13 +448,13 @@ describe("bundler", () => {
     minifyWhitespace: true,
     minifySyntax: true,
     minifyIdentifiers: true,
-    target: "bun",
+    target: "fun",
     backend: "cli",
     run: {
       stdout: "PASS",
     },
   });
-  // https://github.com/oven-sh/bun/issues/6750
+  // https://github.com/underdoc-org/fun/issues/6750
   itBundled("minify/SwitchUndefined", {
     files: {
       "/entry.js": /* js */ `
@@ -468,7 +468,7 @@ describe("bundler", () => {
     minifyWhitespace: true,
     minifySyntax: false,
     minifyIdentifiers: false,
-    target: "bun",
+    target: "fun",
     backend: "cli",
     run: {
       stdout: "PASS",
@@ -828,7 +828,7 @@ describe("bundler", () => {
       "/* @__PURE__ */ new Set",
     ],
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
   });
 
   itBundled("minify/ErrorConstructorWithVariables", {
@@ -868,7 +868,7 @@ describe("bundler", () => {
       "e.message",
     ],
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "test1\ntest2\ntest3\ntrue\ntrue\ntrue\nout of range",
     },
@@ -917,7 +917,7 @@ describe("bundler", () => {
       "withNew.constructor === withoutNew.constructor",
     ],
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue",
     },
@@ -999,7 +999,7 @@ describe("bundler", () => {
       "/* @__PURE__ */ new Set",
     ],
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
   });
 
   itBundled("minify/ArrayConstructorWithNumberAndMinifyWhitespace", {
@@ -1037,7 +1037,7 @@ describe("bundler", () => {
     ],
     minifySyntax: true,
     minifyWhitespace: true,
-    target: "bun",
+    target: "fun",
   });
 
   itBundled("minify/GlobalConstructorSemanticsPreserved", {
@@ -1098,7 +1098,7 @@ describe("bundler", () => {
       "r1.flags === r2.flags",
     ],
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue",
     },
@@ -1130,64 +1130,64 @@ describe("bundler", () => {
     minifyIdentifiers: false,
     onAfterBundle(api) {
       const file = api.readFile("out.js");
-      expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(
+      expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(
         `"console.log(typeof x<"u");console.log(typeof x<"u");console.log(typeof x<"u");console.log(typeof x<"u");console.log(typeof x>"u");console.log(typeof x>"u");console.log(typeof x>"u");console.log(typeof x>"u");console.log(typeof x==="string");console.log(x==="undefined");console.log(y==="undefined");console.log(typeof x==="undefinedx");"`,
       );
     },
   });
 
-  // https://github.com/oven-sh/bun/issues/26371
+  // https://github.com/underdoc-org/fun/issues/26371
   // Minified bundler output missing semicolon between statements when
-  // using both default and named imports from "bun" module
-  itBundled("minify/BunImportSemicolonInsertion", {
+  // using both default and named imports from "fun" module
+  itBundled("minify/FunImportSemicolonInsertion", {
     files: {
       "/entry.js": /* js */ `
-        import bun, { embeddedFiles } from "bun"
+        import fun, { embeddedFiles } from "fun"
         console.log(typeof embeddedFiles)
-        console.log(typeof bun.argv)
+        console.log(typeof fun.argv)
       `,
     },
     minifySyntax: true,
     minifyWhitespace: true,
     minifyIdentifiers: true,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "object\nobject",
     },
   });
 
-  itBundled("minify/BunImportNamespaceAndNamed", {
+  itBundled("minify/FunImportNamespaceAndNamed", {
     files: {
       "/entry.js": /* js */ `
-        import * as bun from "bun"
-        import { embeddedFiles } from "bun"
+        import * as fun from "fun"
+        import { embeddedFiles } from "fun"
         console.log(typeof embeddedFiles)
-        console.log(typeof bun.argv)
+        console.log(typeof fun.argv)
       `,
     },
     minifySyntax: true,
     minifyWhitespace: true,
     minifyIdentifiers: true,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "object\nobject",
     },
   });
 
-  itBundled("minify/BunImportDefaultNamespaceAndNamed", {
+  itBundled("minify/FunImportDefaultNamespaceAndNamed", {
     files: {
       "/entry.js": /* js */ `
-        import bun, * as bunNs from "bun"
-        import { embeddedFiles } from "bun"
+        import fun, * as funNs from "fun"
+        import { embeddedFiles } from "fun"
         console.log(typeof embeddedFiles)
-        console.log(typeof bun.argv)
-        console.log(typeof bunNs.argv)
+        console.log(typeof fun.argv)
+        console.log(typeof funNs.argv)
       `,
     },
     minifySyntax: true,
     minifyWhitespace: true,
     minifyIdentifiers: true,
-    target: "bun",
+    target: "fun",
     run: {
       stdout: "object\nobject\nobject",
     },

@@ -1,7 +1,7 @@
 # node-inspect-extracted
 
-Vendored copy of [node-inspect-extracted](https://github.com/hildjj/node-inspect-extracted) with adaptations for Bun.
-Some features not relevant to Bun have been removed. Others might be added or modified.
+Vendored copy of [node-inspect-extracted](https://github.com/hildjj/node-inspect-extracted) with adaptations for Fun.
+Some features not relevant to Fun have been removed. Others might be added or modified.
 
 This library provides an as-faithful-as-possible implementation of Node.js's
 [`util.inspect`](https://nodejs.org/api/util.html#util_util_inspect_object_options) function.

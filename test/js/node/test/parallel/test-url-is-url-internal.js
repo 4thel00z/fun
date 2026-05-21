@@ -1,5 +1,5 @@
 /*
- * NOTE (@DonIsaac) this file tests node internals, which Bun does not match.
+ * NOTE (@DonIsaac) this file tests node internals, which Fun does not match.
  * We aim for API compatability, but make no guarantees about internals.
  */
 

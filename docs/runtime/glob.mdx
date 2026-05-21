@@ -1,6 +1,6 @@
 ---
 title: Glob
-description: Use Bun's fast native implementation of file globbing
+description: Use Fun's fast native implementation of file globbing
 ---
 
 ## Quickstart
@@ -8,7 +8,7 @@ description: Use Bun's fast native implementation of file globbing
 **Scan a directory for files matching `*.ts`**:
 
 ```ts
-import { Glob } from "bun";
+import { Glob } from "fun";
 
 const glob = new Glob("**/*.ts");
 
@@ -21,7 +21,7 @@ for await (const file of glob.scan(".")) {
 **Match a string against a glob pattern**:
 
 ```ts
-import { Glob } from "bun";
+import { Glob } from "fun";
 
 const glob = new Glob("*.ts");
 
@@ -84,7 +84,7 @@ interface ScanOptions {
 
 ## Supported Glob Patterns
 
-Bun supports the following glob patterns:
+Fun supports the following glob patterns:
 
 ### `?` - Match any single character
 
@@ -161,7 +161,7 @@ glob.match("index.ts"); // => false
 
 ## Node.js `fs.glob()` compatibility
 
-Bun also implements Node.js's `fs.glob()` functions with additional features:
+Fun also implements Node.js's `fs.glob()` functions with additional features:
 
 ```ts
 import { glob, globSync, promises } from "node:fs";

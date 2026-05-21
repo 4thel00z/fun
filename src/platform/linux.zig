@@ -3,7 +3,7 @@
 //! If an API can be implemented on multiple platforms,
 //! it does not belong in this namespace.
 
-pub const MemFdAllocator = bun.allocators.LinuxMemFdAllocator;
+pub const MemFdAllocator = fun.allocators.LinuxMemFdAllocator;
 
 /// splice() moves data between two file descriptors without copying
 /// between kernel address space and user address space.  It
@@ -30,7 +30,7 @@ pub const RWFFlagSupport = enum(u8) {
     var rwf_bool = std.atomic.Value(RWFFlagSupport).init(RWFFlagSupport.unknown);
 
     pub fn isLinuxKernelVersionWithBuggyRWF_NONBLOCK() bool {
-        return bun.linuxKernelVersion().major == 5 and switch (bun.linuxKernelVersion().minor) {
+        return fun.linuxKernelVersion().major == 5 and switch (fun.linuxKernelVersion().minor) {
             9, 10 => true,
             else => false,
         };
@@ -42,10 +42,10 @@ pub const RWFFlagSupport = enum(u8) {
 
     /// Workaround for https://github.com/google/gvisor/issues/2601
     pub fn isMaybeSupported() bool {
-        if (comptime !bun.Environment.isLinux) return false;
+        if (comptime !fun.Environment.isLinux) return false;
         switch (rwf_bool.load(.monotonic)) {
             .unknown => {
-                if (isLinuxKernelVersionWithBuggyRWF_NONBLOCK() or bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_RWF_NONBLOCK.get()) {
+                if (isLinuxKernelVersionWithBuggyRWF_NONBLOCK() or fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_RWF_NONBLOCK.get()) {
                     rwf_bool.store(.unsupported, .monotonic);
                     return false;
                 }
@@ -68,8 +68,8 @@ pub const RWFFlagSupport = enum(u8) {
 /// https://man7.org/linux/man-pages/man2/ioctl_ficlone.2.html
 ///
 /// Support for FICLONE is dependent on the filesystem driver.
-pub fn ioctl_ficlone(dest_fd: bun.FD, srcfd: bun.FD) usize {
-    return std.os.linux.ioctl(dest_fd.native(), bun.c.FICLONE, @intCast(srcfd.native()));
+pub fn ioctl_ficlone(dest_fd: fun.FD, srcfd: fun.FD) usize {
+    return std.os.linux.ioctl(dest_fd.native(), fun.c.FICLONE, @intCast(srcfd.native()));
 }
 
 export fn sys_epoll_pwait2(epfd: i32, events: ?[*]std.os.linux.epoll_event, maxevents: i32, timeout: ?*const std.os.linux.timespec, sigmask: ?*const std.os.linux.sigset_t) isize {
@@ -89,5 +89,5 @@ export fn sys_epoll_pwait2(epfd: i32, events: ?[*]std.os.linux.epoll_event, maxe
     );
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

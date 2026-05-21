@@ -1,19 +1,19 @@
 ---
-title: Add Sentry to a Bun app
-sidebarTitle: Sentry with Bun
+title: Add Sentry to a Fun app
+sidebarTitle: Sentry with Fun
 mode: center
 ---
 
-[Sentry](https://sentry.io) is a developer-first error tracking and performance monitoring platform. Sentry has a first-class SDK for Bun, `@sentry/bun`, that instruments your Bun application to automatically collect error and performance data.
+[Sentry](https://sentry.io) is a developer-first error tracking and performance monitoring platform. Sentry has a first-class SDK for Fun, `@sentry/fun`, that instruments your Fun application to automatically collect error and performance data.
 
 Don't already have an account and Sentry project established? Head over to [sentry.io](https://sentry.io/signup/), then return to this page.
 
 ---
 
-To start using Sentry with Bun, first install the Sentry Bun SDK.
+To start using Sentry with Fun, first install the Sentry Fun SDK.
 
 ```sh terminal icon="terminal"
-bun add @sentry/bun
+fun add @sentry/fun
 ```
 
 ---
@@ -21,7 +21,7 @@ bun add @sentry/bun
 Then, initialize the Sentry SDK with your Sentry DSN in your app's entry file. You can find your DSN in your Sentry project settings.
 
 ```ts sentry.ts icon="/icons/typescript.svg"
-import * as Sentry from "@sentry/bun";
+import * as Sentry from "@sentry/fun";
 
 // Ensure to call this before importing any other modules!
 Sentry.init({
@@ -51,4 +51,4 @@ To view and resolve the recorded error, log into [sentry.io](https://sentry.io/)
 
 ---
 
-To learn more about Sentry and using the Sentry Bun SDK, view the [Sentry documentation](https://docs.sentry.io/platforms/javascript/guides/bun).
+To learn more about Sentry and using the Sentry Fun SDK, view the [Sentry documentation](https://docs.sentry.io/platforms/javascript/guides/fun).

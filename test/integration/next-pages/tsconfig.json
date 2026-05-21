@@ -27,7 +27,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "../../../../packages/bun-types/dist/types.d.ts"
+    "../../../../packages/fun-types/dist/types.d.ts"
   ],
   "exclude": [
     "node_modules"

@@ -2,19 +2,19 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const dest = await import.meta.resolve("./esm-leak-fixture-large-ast.mjs");
 
-if (typeof Bun !== "undefined") Bun.gc(true);
+if (typeof Fun !== "undefined") Fun.gc(true);
 for (let i = 0; i < 5; i++) {
   delete require.cache[dest];
   await import(dest);
 }
-if (typeof Bun !== "undefined") Bun.gc(true);
+if (typeof Fun !== "undefined") Fun.gc(true);
 const baseline = process.memoryUsage.rss();
 
 for (let i = 0; i < 50; i++) {
   delete require.cache[dest];
   await import(dest);
 }
-if (typeof Bun !== "undefined") Bun.gc(true);
+if (typeof Fun !== "undefined") Fun.gc(true);
 
 setTimeout(() => {
   let diff = process.memoryUsage.rss() - baseline;

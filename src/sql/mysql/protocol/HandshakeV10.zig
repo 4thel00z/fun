@@ -62,7 +62,7 @@ pub fn decodeInternal(this: *HandshakeV10, comptime Context: type, reader: NewRe
     const remaining_auth_len = @max(13, auth_plugin_data_len - 8);
     var auth_data_2 = try reader.read(remaining_auth_len);
     defer auth_data_2.deinit();
-    this.auth_plugin_data_part_2 = try bun.default_allocator.dupe(u8, auth_data_2.slice());
+    this.auth_plugin_data_part_2 = try fun.default_allocator.dupe(u8, auth_data_2.slice());
 
     // Auth plugin name
     if (this.capability_flags.CLIENT_PLUGIN_AUTH) {
@@ -73,7 +73,7 @@ pub fn decodeInternal(this: *HandshakeV10, comptime Context: type, reader: NewRe
 pub const decode = decoderWrap(HandshakeV10, decodeInternal).decode;
 
 const Capabilities = @import("../Capabilities.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const CharacterSet = @import("./CharacterSet.zig").CharacterSet;
 const Data = @import("../../shared/Data.zig").Data;
 const StatusFlags = @import("../StatusFlags.zig").StatusFlags;

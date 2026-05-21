@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 
@@ -37,7 +39,7 @@ console.log("Server module loaded");
 import html from './index.html';
 
 // Create a server to prove things are running
-const server = Bun.serve({
+const server = Fun.serve({
   port: 0,
   routes: {
     "/": html,
@@ -163,4 +165,4 @@ await generateModuleFiles();
 console.log("Generating entry point...");
 await generateEntryPoint();
 console.log("Generation complete!");
-console.log("Run with: HOT_RELOAD_TEST=true RELOAD_ID=initial bun --hot modules/index.ts");
+console.log("Run with: HOT_RELOAD_TEST=true RELOAD_ID=initial fun --hot modules/index.ts");

@@ -5,7 +5,7 @@ pub const FetchRequestMode = enum(u2) {
     cors,
     navigate,
 
-    pub const Map = bun.ComptimeStringMap(FetchRequestMode, .{
+    pub const Map = fun.ComptimeStringMap(FetchRequestMode, .{
         .{ "same-origin", .@"same-origin" },
         .{ "no-cors", .@"no-cors" },
         .{ "cors", .cors },
@@ -14,4 +14,4 @@ pub const FetchRequestMode = enum(u2) {
     pub const toJS = @import("../http_jsc/fetch_enums_jsc.zig").fetchRequestModeToJS;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

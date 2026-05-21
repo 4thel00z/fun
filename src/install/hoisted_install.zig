@@ -6,7 +6,7 @@ pub fn installHoistedPackages(
     log_level: PackageManager.Options.LogLevel,
     packages_to_install: ?[]const PackageID,
 ) !PackageInstall.Summary {
-    bun.analytics.Features.hoisted_bun_install += 1;
+    fun.analytics.Features.hoisted_fun_install += 1;
 
     const original_trees = this.lockfile.buffers.trees;
     const original_tree_dep_ids = this.lockfile.buffers.hoisted_dependencies;
@@ -50,10 +50,10 @@ pub fn installHoistedPackages(
     // we want to check lazily though
     // no need to download packages you've already installed!!
     var new_node_modules = false;
-    const cwd = bun.FD.cwd();
+    const cwd = fun.FD.cwd();
     const node_modules_folder = brk: {
         // Attempt to open the existing node_modules folder
-        switch (bun.sys.openatOSPath(cwd, bun.OSPathLiteral("node_modules"), bun.O.DIRECTORY | bun.O.RDONLY, 0o755)) {
+        switch (fun.sys.openatOSPath(cwd, fun.OSPathLiteral("node_modules"), fun.O.DIRECTORY | fun.O.RDONLY, 0o755)) {
             .result => |fd| break :brk std.fs.Dir{ .fd = fd.cast() },
             .err => {},
         }
@@ -61,13 +61,13 @@ pub fn installHoistedPackages(
         new_node_modules = true;
 
         // Attempt to create a new node_modules folder
-        if (bun.sys.mkdir("node_modules", 0o755).asErr()) |err| {
-            if (err.errno != @intFromEnum(bun.sys.E.EXIST)) {
+        if (fun.sys.mkdir("node_modules", 0o755).asErr()) |err| {
+            if (err.errno != @intFromEnum(fun.sys.E.EXIST)) {
                 Output.err(err, "could not create the <b>\"node_modules\"<r> directory", .{});
                 Global.crash();
             }
         }
-        break :brk bun.openDir(cwd.stdDir(), "node_modules") catch |err| {
+        break :brk fun.openDir(cwd.stdDir(), "node_modules") catch |err| {
             Output.err(err, "could not open the <b>\"node_modules\"<r> directory", .{});
             Global.crash();
         };
@@ -116,17 +116,17 @@ pub fn installHoistedPackages(
                 if (comptime Environment.allow_assert) {
                     if (trees.len > 0) {
                         // last tree should only depend on one other
-                        bun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(trees.len - 1).count() == 1, @src());
+                        fun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(trees.len - 1).count() == 1, @src());
                         // and it should be itself
-                        bun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(trees.len - 1).isSet(trees.len - 1), @src());
+                        fun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(trees.len - 1).isSet(trees.len - 1), @src());
 
                         // root tree should always depend on all trees
-                        bun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(0).count() == trees.len, @src());
+                        fun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(0).count() == trees.len, @src());
                     }
 
                     // a tree should always depend on itself
                     for (0..trees.len) |j| {
-                        bun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(j).isSet(j), @src());
+                        fun.assertWithLocation(tree_ids_to_trees_the_id_depends_on.at(j).isSet(j), @src());
                     }
                 }
 
@@ -176,7 +176,7 @@ pub fn installHoistedPackages(
                 .tree_ids_to_trees_the_id_depends_on = tree_ids_to_trees_the_id_depends_on,
                 .completed_trees = completed_trees,
                 .trees = trees: {
-                    const trees = bun.handleOom(this.allocator.alloc(TreeContext, this.lockfile.buffers.trees.items.len));
+                    const trees = fun.handleOom(this.allocator.alloc(TreeContext, this.lockfile.buffers.trees.items.len));
                     for (0..this.lockfile.buffers.trees.items.len) |i| {
                         trees[i] = .{
                             .binaries = Bin.PriorityQueue.init(this.allocator, .{
@@ -188,7 +188,7 @@ pub fn installHoistedPackages(
                     break :trees trees;
                 },
                 .trusted_dependencies_from_update_requests = this.findTrustedDependenciesFromUpdateRequests(),
-                .seen_bin_links = bun.StringHashMap(void).init(this.allocator),
+                .seen_bin_links = fun.StringHashMap(void).init(this.allocator),
             };
         };
 
@@ -318,7 +318,7 @@ pub fn installHoistedPackages(
 
         for (installer.trees) |tree| {
             if (comptime Environment.allow_assert) {
-                bun.assert(tree.pending_installs.items.len == 0);
+                fun.assert(tree.pending_installs.items.len == 0);
             }
             const force = true;
             installer.installAvailablePackages(log_level, force);
@@ -356,17 +356,17 @@ pub fn installHoistedPackages(
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const Progress = bun.Progress;
-const strings = bun.strings;
-const Bitset = bun.bit_set.DynamicBitSetUnmanaged;
-const Command = bun.cli.Command;
-const FileSystem = bun.fs.FileSystem;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const Progress = fun.Progress;
+const strings = fun.strings;
+const Bitset = fun.bit_set.DynamicBitSetUnmanaged;
+const Command = fun.cli.Command;
+const FileSystem = fun.fs.FileSystem;
 
-const install = bun.install;
+const install = fun.install;
 const Bin = install.Bin;
 const Lockfile = install.Lockfile;
 const PackageID = install.PackageID;

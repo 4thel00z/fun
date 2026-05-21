@@ -1,17 +1,17 @@
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { dirname, join } from "node:path";
 
 it("works", async () => {
   const fixture_path = join(import.meta.dirname, "st.fixture.ts");
-  const fixture_data = await Bun.file(fixture_path).text();
-  let { stdout, stderr, exited } = Bun.spawn({
-    cmd: [bunExe(), "run", fixture_path],
+  const fixture_data = await Fun.file(fixture_path).text();
+  let { stdout, stderr, exited } = Fun.spawn({
+    cmd: [funExe(), "run", fixture_path],
     cwd: dirname(fixture_path),
     stdout: "pipe",
     stdin: "ignore",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
   let [code, err, out] = await Promise.all([exited, stderr.text(), stdout.text()]);
   if (code !== 0) {

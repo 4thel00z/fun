@@ -73,7 +73,7 @@ export const workarounds: Workaround[] = [
       const FIXED_IN_LLVM = "22.1.4";
       return cfg.clangVersion !== undefined && satisfiesRange(cfg.clangVersion, `>=${FIXED_IN_LLVM}`);
     },
-    cleanup: `Delete scripts/build/shims/asan-dyld-shim.c, scripts/build/shims.ts, the emitShims() calls in bun.ts, registerShimRules in rules.ts, and this entry.`,
+    cleanup: `Delete scripts/build/shims/asan-dyld-shim.c, scripts/build/shims.ts, the emitShims() calls in fun.ts, registerShimRules in rules.ts, and this entry.`,
   },
 ];
 

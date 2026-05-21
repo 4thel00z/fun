@@ -15,7 +15,7 @@ pub const ParseResult = struct {
     empty: bool = false,
     pending_imports: _resolver.PendingResolution.List = .{},
 
-    runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = null,
+    runtime_transpiler_cache: ?*fun.jsc.RuntimeTranspilerCache = null,
 
     pub const AlreadyBundled = union(enum) {
         none: void,
@@ -50,10 +50,10 @@ pub const ParseResult = struct {
     /// Normally, we allocate each AST in an arena and free all at once
     /// So this function only should be used when we globally allocate an AST
     pub fn deinit(this: *ParseResult) void {
-        _resolver.PendingResolution.deinitListItems(this.pending_imports, bun.default_allocator);
-        this.pending_imports.deinit(bun.default_allocator);
+        _resolver.PendingResolution.deinitListItems(this.pending_imports, fun.default_allocator);
+        this.pending_imports.deinit(fun.default_allocator);
         this.ast.deinit();
-        bun.default_allocator.free(@constCast(this.source.contents));
+        fun.default_allocator.free(@constCast(this.source.contents));
     }
 };
 
@@ -63,7 +63,7 @@ pub const PluginRunner = @import("../bundler_jsc/PluginRunner.zig").PluginRunner
 /// acts mostly as a configuration object, but it also contains stateful logic around
 /// logging errors (.log) and module resolution (.resolve_queue)
 ///
-/// This object is not exclusive to bundle_v2/Bun.build, one of these is stored
+/// This object is not exclusive to bundle_v2/Fun.build, one of these is stored
 /// on every VM so that the options can be used for transpilation.
 pub const Transpiler = struct {
     options: options.BundleOptions,
@@ -129,23 +129,23 @@ pub const Transpiler = struct {
 
     pub fn resolveEntryPoint(transpiler: *Transpiler, entry_point: string) !_resolver.Result {
         return _resolveEntryPoint(transpiler, entry_point) catch |err| {
-            var cache_bust_buf: bun.PathBuffer = undefined;
+            var cache_bust_buf: fun.PathBuffer = undefined;
 
             // Bust directory cache and try again
             const buster_name = name: {
                 if (std.fs.path.isAbsolute(entry_point)) {
                     if (std.fs.path.dirname(entry_point)) |dir| {
                         // Normalized with trailing slash
-                        break :name bun.strings.normalizeSlashesOnly(&cache_bust_buf, dir, std.fs.path.sep);
+                        break :name fun.strings.normalizeSlashesOnly(&cache_bust_buf, dir, std.fs.path.sep);
                     }
                 }
 
                 var parts = [_]string{
                     entry_point,
-                    bun.pathLiteral(".."),
+                    fun.pathLiteral(".."),
                 };
 
-                break :name bun.path.joinAbsStringBufZ(
+                break :name fun.path.joinAbsStringBufZ(
                     transpiler.fs.top_level_dir,
                     &cache_bust_buf,
                     &parts,
@@ -154,7 +154,7 @@ pub const Transpiler = struct {
             };
 
             // Only re-query if we previously had something cached.
-            if (transpiler.resolver.bustDirCache(bun.strings.withoutTrailingSlashWindowsPath(buster_name))) {
+            if (transpiler.resolver.bustDirCache(fun.strings.withoutTrailingSlashWindowsPath(buster_name))) {
                 if (_resolveEntryPoint(transpiler, entry_point)) |result|
                     return result
                 else |_| {
@@ -162,7 +162,7 @@ pub const Transpiler = struct {
                 }
             }
 
-            bun.handleOom(transpiler.log.addErrorFmt(null, logger.Loc.Empty, transpiler.allocator, "{s} resolving \"{s}\" (entry point)", .{ @errorName(err), entry_point }));
+            fun.handleOom(transpiler.log.addErrorFmt(null, logger.Loc.Empty, transpiler.allocator, "{s} resolving \"{s}\" (entry point)", .{ @errorName(err), entry_point }));
             return err;
         };
     }
@@ -305,7 +305,7 @@ pub const Transpiler = struct {
             else => {},
         }
 
-        if (strings.eqlComptime(this.env.get("BUN_DISABLE_TRANSPILER") orelse "0", "1")) {
+        if (strings.eqlComptime(this.env.get("FUN_DISABLE_TRANSPILER") orelse "0", "1")) {
             this.options.disable_transpilation = true;
         }
     }
@@ -316,9 +316,9 @@ pub const Transpiler = struct {
             return;
         }
 
-        if (this.options.target == .bun_macro) {
+        if (this.options.target == .fun_macro) {
             this.options.env.behavior = .prefix;
-            this.options.env.prefix = "BUN_";
+            this.options.env.prefix = "FUN_";
         }
 
         try this.runEnvLoader(this.options.env.disable_default_env_files);
@@ -431,7 +431,7 @@ pub const Transpiler = struct {
                     return null;
                 };
                 if (!transpiler.options.transform_only) {
-                    if (!transpiler.options.target.isBun())
+                    if (!transpiler.options.target.isFun())
                         try transpiler.linker.link(
                             file_path,
                             &result,
@@ -461,7 +461,7 @@ pub const Transpiler = struct {
                         &writer,
                         .esm,
                     ),
-                    .bun, .bun_macro, .bake_server_components_ssr => try transpiler.print(
+                    .fun, .fun_macro, .bake_server_components_ssr => try transpiler.print(
                         result,
                         *js_printer.BufferPrinter,
                         &writer,
@@ -492,21 +492,21 @@ pub const Transpiler = struct {
                     transpiler.log.addErrorFmt(null, logger.Loc.Empty, transpiler.allocator, "{s} reading \"{s}\"", .{ @errorName(err), file_path.pretty }) catch {};
                     return null;
                 };
-                var opts = bun.css.ParserOptions.default(alloc, transpiler.log);
+                var opts = fun.css.ParserOptions.default(alloc, transpiler.log);
                 const css_module_suffix = ".module.css";
                 const enable_css_modules = file_path.text.len > css_module_suffix.len and
                     strings.eqlComptime(file_path.text[file_path.text.len - css_module_suffix.len ..], css_module_suffix);
                 if (enable_css_modules) {
-                    opts.filename = bun.path.basename(file_path.text);
-                    opts.css_modules = bun.css.CssModuleConfig{};
+                    opts.filename = fun.path.basename(file_path.text);
+                    opts.css_modules = fun.css.CssModuleConfig{};
                 }
-                var sheet, var extra = switch (bun.css.StyleSheet(bun.css.DefaultAtRule).parse(
+                var sheet, var extra = switch (fun.css.StyleSheet(fun.css.DefaultAtRule).parse(
                     alloc,
                     entry.contents,
                     opts,
                     null,
                     // TODO: DO WE EVEN HAVE SOURCE INDEX IN THIS TRANSPILER.ZIG file??
-                    bun.bundle_v2.Index.invalid,
+                    fun.bundle_v2.Index.invalid,
                 )) {
                     .result => |v| v,
                     .err => |e| {
@@ -514,15 +514,15 @@ pub const Transpiler = struct {
                         return null;
                     },
                 };
-                if (sheet.minify(alloc, bun.css.MinifyOptions.default(), &extra).asErr()) |e| {
-                    bun.handleOom(transpiler.log.addErrorFmt(null, logger.Loc.Empty, transpiler.allocator, "{f} while minifying", .{e.kind}));
+                if (sheet.minify(alloc, fun.css.MinifyOptions.default(), &extra).asErr()) |e| {
+                    fun.handleOom(transpiler.log.addErrorFmt(null, logger.Loc.Empty, transpiler.allocator, "{f} while minifying", .{e.kind}));
                     return null;
                 }
-                const symbols = bun.ast.Symbol.Map{};
+                const symbols = fun.ast.Symbol.Map{};
                 const result = switch (sheet.toCss(
                     alloc,
-                    bun.css.PrinterOptions{
-                        .targets = bun.css.Targets.forBundlerTarget(transpiler.options.target),
+                    fun.css.PrinterOptions{
+                        .targets = fun.css.Targets.forBundlerTarget(transpiler.options.target),
                         .minify = transpiler.options.minify_whitespace,
                     },
                     null,
@@ -531,18 +531,18 @@ pub const Transpiler = struct {
                 )) {
                     .result => |v| v,
                     .err => |e| {
-                        bun.handleOom(transpiler.log.addErrorFmt(null, logger.Loc.Empty, transpiler.allocator, "{f} while printing", .{e}));
+                        fun.handleOom(transpiler.log.addErrorFmt(null, logger.Loc.Empty, transpiler.allocator, "{f} while printing", .{e}));
                         return null;
                     },
                 };
                 output_file.value = .{ .buffer = .{ .allocator = alloc, .bytes = result.code } };
             },
 
-            .html, .bunsh, .sqlite_embedded, .sqlite, .wasm, .file, .napi => {
+            .html, .funsh, .sqlite_embedded, .sqlite, .wasm, .file, .napi => {
                 const hashed_name = try transpiler.linker.getHashedFilename(file_path, null);
                 var pathname = try transpiler.allocator.alloc(u8, hashed_name.len + file_path.name.ext.len);
-                bun.copy(u8, pathname, hashed_name);
-                bun.copy(u8, pathname[hashed_name.len..], file_path.name.ext);
+                fun.copy(u8, pathname, hashed_name);
+                fun.copy(u8, pathname[hashed_name.len..], file_path.name.ext);
 
                 output_file.value = .{
                     .copy = options.OutputFile.FileOperation{
@@ -569,13 +569,13 @@ pub const Transpiler = struct {
         comptime format: js_printer.Format,
         comptime enable_source_map: bool,
         source_map_context: ?js_printer.SourceMapHandler,
-        runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache,
+        runtime_transpiler_cache: ?*fun.jsc.RuntimeTranspilerCache,
         module_info: ?*analyze_transpiled_module.ModuleInfo,
     ) !usize {
         const tracer = if (enable_source_map)
-            bun.perf.trace("JSPrinter.printWithSourceMap")
+            fun.perf.trace("JSPrinter.printWithSourceMap")
         else
-            bun.perf.trace("JSPrinter.print");
+            fun.perf.trace("JSPrinter.print");
         defer tracer.end();
 
         const symbols = js_ast.Symbol.NestedList.fromBorrowedSliceDangerous(&.{ast.symbols});
@@ -631,14 +631,14 @@ pub const Transpiler = struct {
                 },
                 enable_source_map,
             ),
-            .esm_ascii => switch (transpiler.options.target.isBun()) {
-                inline else => |is_bun| try js_printer.printAst(
+            .esm_ascii => switch (transpiler.options.target.isFun()) {
+                inline else => |is_fun| try js_printer.printAst(
                     Writer,
                     writer,
                     ast,
                     js_ast.Symbol.Map.initList(symbols),
                     source,
-                    is_bun,
+                    is_fun,
                     .{
                         .bundling = false,
                         .runtime_imports = ast.runtime_imports,
@@ -649,8 +649,8 @@ pub const Transpiler = struct {
                         .minify_syntax = transpiler.options.minify_syntax,
                         .minify_identifiers = transpiler.options.minify_identifiers,
                         .transform_only = transpiler.options.transform_only,
-                        .module_type = if (is_bun and transpiler.options.transform_only)
-                            // this is for when using `bun build --no-bundle`
+                        .module_type = if (is_fun and transpiler.options.transform_only)
+                            // this is for when using `fun build --no-bundle`
                             // it should copy what was passed for the cli
                             transpiler.options.output_format
                         else if (ast.exports_kind == .cjs)
@@ -702,7 +702,7 @@ pub const Transpiler = struct {
         handler: js_printer.SourceMapHandler,
         module_info: ?*analyze_transpiled_module.ModuleInfo,
     ) !usize {
-        if (bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_SOURCE_MAPS.get()) {
+        if (fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_SOURCE_MAPS.get()) {
             return transpiler.printWithSourceMapMaybe(
                 result.ast,
                 &result.source,
@@ -759,7 +759,7 @@ pub const Transpiler = struct {
         /// See: https://nodejs.org/api/packages.html#type
         module_type: options.ModuleType = .unknown,
 
-        runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = null,
+        runtime_transpiler_cache: ?*fun.jsc.RuntimeTranspilerCache = null,
 
         keep_json_and_toml_as_one_statement: bool = false,
         allow_bytecode_cache: bool = false,
@@ -836,7 +836,7 @@ pub const Transpiler = struct {
             }
 
             const entry = transpiler.resolver.caches.fs.readFileWithAllocator(
-                if (use_shared_buffer) bun.default_allocator else this_parse.allocator,
+                if (use_shared_buffer) fun.default_allocator else this_parse.allocator,
                 transpiler.fs,
                 path.text,
                 dirname_fd,
@@ -901,7 +901,7 @@ pub const Transpiler = struct {
 
                 opts.ignore_dce_annotations = transpiler.options.ignore_dce_annotations;
 
-                // @bun annotation
+                // @fun annotation
                 opts.features.dont_bundle_twice = this_parse.dont_bundle_twice;
 
                 opts.features.commonjs_at_runtime = this_parse.allow_commonjs;
@@ -912,10 +912,10 @@ pub const Transpiler = struct {
 
                 opts.filepath_hash_for_hmr = file_hash orelse 0;
                 opts.features.auto_import_jsx = transpiler.options.auto_import_jsx;
-                opts.warn_about_unbundled_modules = !target.isBun();
+                opts.warn_about_unbundled_modules = !target.isFun();
                 // JavaScriptCore implements `using` / `await using` natively, so
-                // when targeting Bun there is no need to lower them.
-                opts.features.lower_using = !target.isBun();
+                // when targeting Fun there is no need to lower them.
+                opts.features.lower_using = !target.isFun();
 
                 opts.features.inject_jest_globals = this_parse.inject_jest_globals;
                 opts.features.minify_syntax = transpiler.options.minify_syntax;
@@ -935,11 +935,11 @@ pub const Transpiler = struct {
                 opts.features.top_level_await = true;
 
                 opts.macro_context = &transpiler.macro_context.?;
-                if (target != .bun_macro) {
+                if (target != .fun_macro) {
                     opts.macro_context.javascript_object = this_parse.macro_js_ctx;
                 }
 
-                opts.features.is_macro_runtime = target == .bun_macro;
+                opts.features.is_macro_runtime = target == .fun_macro;
                 opts.features.replace_exports = this_parse.replace_exports;
 
                 return switch ((transpiler.resolver.caches.js.parse(
@@ -966,15 +966,15 @@ pub const Transpiler = struct {
                     .already_bundled => |already_bundled| .{
                         .ast = undefined,
                         .already_bundled = switch (already_bundled) {
-                            .bun => .source_code,
-                            .bun_cjs => .source_code_cjs,
+                            .fun => .source_code,
+                            .fun_cjs => .source_code_cjs,
                             .bytecode_cjs, .bytecode => brk: {
                                 const default_value: ParseResult.AlreadyBundled = if (already_bundled == .bytecode_cjs) .source_code_cjs else .source_code;
                                 if (this_parse.virtual_source == null and this_parse.allow_bytecode_cache) {
-                                    var path_buf2: bun.PathBuffer = undefined;
+                                    var path_buf2: fun.PathBuffer = undefined;
                                     @memcpy(path_buf2[0..path.text.len], path.text);
-                                    path_buf2[path.text.len..][0..bun.bytecode_extension.len].* = bun.bytecode_extension.*;
-                                    const bytecode = bun.sys.File.toSourceAt(dirname_fd.unwrapValid() orelse bun.FD.cwd(), path_buf2[0 .. path.text.len + bun.bytecode_extension.len], bun.default_allocator, .{}).asValue() orelse break :brk default_value;
+                                    path_buf2[path.text.len..][0..fun.bytecode_extension.len].* = fun.bytecode_extension.*;
+                                    const bytecode = fun.sys.File.toSourceAt(dirname_fd.unwrapValid() orelse fun.FD.cwd(), path_buf2[0 .. path.text.len + fun.bytecode_extension.len], fun.default_allocator, .{}).asValue() orelse break :brk default_value;
                                     if (bytecode.contents.len == 0) {
                                         break :brk default_value;
                                     }
@@ -1024,12 +1024,12 @@ pub const Transpiler = struct {
                             var decls = std.ArrayListUnmanaged(js_ast.G.Decl).initCapacity(
                                 allocator,
                                 properties.len,
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
                             decls.expandToCapacity();
 
                             symbols = allocator.alloc(js_ast.Symbol, properties.len) catch return null;
                             var export_clauses = allocator.alloc(js_ast.ClauseItem, properties.len) catch return null;
-                            var duplicate_key_checker = bun.StringHashMap(u32).init(allocator);
+                            var duplicate_key_checker = fun.StringHashMap(u32).init(allocator);
                             defer duplicate_key_checker.deinit();
                             var count: usize = 0;
                             for (properties, decls.items, symbols, 0..) |*prop, *decl, *symbol, i| {
@@ -1159,7 +1159,7 @@ pub const Transpiler = struct {
                 };
             },
             .md => {
-                const html = bun.md.renderToHtml(source.contents, allocator) catch {
+                const html = fun.md.renderToHtml(source.contents, allocator) catch {
                     transpiler.log.addErrorFmt(
                         null,
                         logger.Loc.Empty,
@@ -1192,7 +1192,7 @@ pub const Transpiler = struct {
                 };
             },
             .wasm => {
-                if (transpiler.options.target.isBun()) {
+                if (transpiler.options.target.isFun()) {
                     if (!source.isWebAssembly()) {
                         transpiler.log.addErrorFmt(
                             null,
@@ -1244,7 +1244,7 @@ pub const Transpiler = struct {
             var __entry = transpiler.allocator.alloc(u8, "./".len + entry.len) catch unreachable;
             __entry[0] = '.';
             __entry[1] = '/';
-            bun.copy(u8, __entry[2..__entry.len], entry);
+            fun.copy(u8, __entry[2..__entry.len], entry);
             entry = __entry;
         }
 
@@ -1300,7 +1300,7 @@ pub const Transpiler = struct {
         const did_start = false;
 
         if (transpiler.options.output_dir_handle == null) {
-            const outstream = bun.sys.File.from(std.fs.File.stdout());
+            const outstream = fun.sys.File.from(std.fs.File.stdout());
 
             if (!did_start) {
                 try switch (transpiler.options.import_path_format) {
@@ -1410,7 +1410,7 @@ pub const ResolveResults = std.AutoHashMap(
     u64,
     void,
 );
-pub const ResolveQueue = bun.LinearFifo(
+pub const ResolveQueue = fun.LinearFifo(
     _resolver.Result,
     .Dynamic,
 );
@@ -1439,23 +1439,23 @@ const Resolver = _resolver.Resolver;
 const linker = @import("./linker.zig");
 const Linker = linker.Linker;
 
-const bun = @import("bun");
-const FD = bun.FD;
-const FeatureFlags = bun.FeatureFlags;
-const Global = bun.Global;
-const JSON = bun.json;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const js_parser = bun.js_parser;
-const js_printer = bun.js_printer;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const api = bun.schema.api;
-const JSON5 = bun.interchange.json5.JSON5Parser;
-const TOML = bun.interchange.toml.TOML;
-const YAML = bun.interchange.yaml.YAML;
+const fun = @import("fun");
+const FD = fun.FD;
+const FeatureFlags = fun.FeatureFlags;
+const Global = fun.Global;
+const JSON = fun.json;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const js_parser = fun.js_parser;
+const js_printer = fun.js_printer;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const api = fun.schema.api;
+const JSON5 = fun.interchange.json5.JSON5Parser;
+const TOML = fun.interchange.toml.TOML;
+const YAML = fun.interchange.yaml.YAML;
 
-const js_ast = bun.ast;
-const Ref = bun.ast.Ref;
+const js_ast = fun.ast;
+const Ref = fun.ast.Ref;

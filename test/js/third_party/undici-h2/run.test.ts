@@ -1,6 +1,6 @@
-// Runs undici's vendored test/fetch/http2.js against Bun's built-in fetch()
+// Runs undici's vendored test/fetch/http2.js against Fun's built-in fetch()
 // over the experimental HTTP/2 client path. Each undici sub-test registers
-// itself via node:test, which Bun's runner surfaces individually.
+// itself via node:test, which Fun's runner surfaces individually.
 //
 // Update by re-copying from a fresh undici checkout and re-applying the
 // import rewrite at the top of http2.js (see undici-shim.mjs).

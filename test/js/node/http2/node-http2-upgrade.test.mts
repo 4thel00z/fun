@@ -7,7 +7,7 @@
  * `h2Server.emit('connection', rawSocket)`.
  *
  * Works with both:
- *   bun bd test test/js/node/http2/node-http2-upgrade.test.ts
+ *   fun bd test test/js/node/http2/node-http2-upgrade.test.ts
  *   node --experimental-strip-types --test test/js/node/http2/node-http2-upgrade.test.ts
  */
 import assert from "node:assert";
@@ -413,11 +413,11 @@ describe("HTTP/2 upgrade — independent upgrade per connection", () => {
     srv.netServer.close();
   });
 });
-if (typeof Bun !== "undefined") {
+if (typeof Fun !== "undefined") {
   describe("Node.js compatibility", () => {
     test("tests should run on node.js", async () => {
-      await using proc = Bun.spawn({
-        cmd: [Bun.which("node") || "node", "--test", import.meta.filename],
+      await using proc = Fun.spawn({
+        cmd: [Fun.which("node") || "node", "--test", import.meta.filename],
         stdout: "inherit",
         stderr: "inherit",
         stdin: "ignore",

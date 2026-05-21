@@ -5,7 +5,7 @@ const assert = require("node:assert");
 function expectedError(fn) {
   return {
     name: "NotImplementedError",
-    message: `${fn}() inside another test() is not yet implemented in Bun. Track the status & thumbs up the issue: https://github.com/oven-sh/bun/issues/5090. Use \`bun:test\` in the interim.`,
+    message: `${fn}() inside another test() is not yet implemented in Fun. Track the status & thumbs up the issue: https://github.com/underdoc-org/fun/issues/5090. Use \`fun:test\` in the interim.`,
   };
 }
 

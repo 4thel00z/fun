@@ -1,12 +1,12 @@
-import { $ } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { $ } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { readdirSync, statSync } from "fs";
 import { rm } from "fs/promises";
-import { bunExe, tempDirWithFiles } from "harness";
+import { funExe, tempDirWithFiles } from "harness";
 import path from "path";
 
-// https://github.com/oven-sh/bun/issues/10139
-describe("https://github.com/oven-sh/bun/issues/10139", async () => {
+// https://github.com/underdoc-org/fun/issues/10139
+describe("https://github.com/underdoc-org/fun/issues/10139", async () => {
   let temp = "";
   beforeAll(async () => {
     temp = tempDirWithFiles("issue-10132", {
@@ -19,7 +19,7 @@ describe("https://github.com/oven-sh/bun/issues/10139", async () => {
       // Note: the SIGBUS only seemed to reproduce at >= 768 MB
       // However, that causes issues in CI. CI does not like writing 1 GB files
       // to disk. So we shrink it down to 128 MB instead, which still causes the
-      // test to fail in Bun v1.1.2 and earlier.
+      // test to fail in Fun v1.1.2 and earlier.
       "1.png": new Buffer(1024 * 1024 * 128),
     });
   });
@@ -28,8 +28,8 @@ describe("https://github.com/oven-sh/bun/issues/10139", async () => {
     rm(temp, { recursive: true, force: true });
   });
 
-  test("Bun.build", async () => {
-    const results = await Bun.build({
+  test("Fun.build", async () => {
+    const results = await Fun.build({
       entrypoints: [path.join(temp, "huge-asset.js")],
       outdir: path.join(temp, "out"),
       sourcemap: "external",
@@ -46,7 +46,7 @@ describe("https://github.com/oven-sh/bun/issues/10139", async () => {
 
   test("CLI", async () => {
     $.cwd(temp);
-    await $`${bunExe()} build ./huge-asset.js --outdir=out --sourcemap=external --minify`;
+    await $`${funExe()} build ./huge-asset.js --outdir=out --sourcemap=external --minify`;
     readdirSync(path.join(temp, "out")).forEach(file => {
       const size = statSync(path.join(temp, "out", file)).size;
       if (file.includes(".map")) {

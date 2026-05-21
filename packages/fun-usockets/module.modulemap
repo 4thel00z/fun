@@ -1,0 +1,4 @@
+module fun-usockets {
+	header "src/libusockets.h"
+	export *
+}

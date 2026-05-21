@@ -282,38 +282,38 @@ pub const Archive = opaque {
     }
     extern fn archive_version_string() [*c]const u8;
     pub fn versionString() []const u8 {
-        return bun.sliceTo(archive_version_string(), 0);
+        return fun.sliceTo(archive_version_string(), 0);
     }
     extern fn archive_version_details() [*c]const u8;
     pub fn versionDetails() []const u8 {
-        return bun.sliceTo(archive_version_details(), 0);
+        return fun.sliceTo(archive_version_details(), 0);
     }
     extern fn archive_zlib_version() [*c]const u8;
     pub fn zlibVersion() []const u8 {
-        return bun.sliceTo(archive_zlib_version(), 0);
+        return fun.sliceTo(archive_zlib_version(), 0);
     }
     extern fn archive_liblzma_version() [*c]const u8;
     pub fn liblzmaVersion() []const u8 {
-        return bun.sliceTo(archive_liblzma_version(), 0);
+        return fun.sliceTo(archive_liblzma_version(), 0);
     }
     extern fn archive_bzlib_version() [*c]const u8;
     pub fn bzlibVersion() []const u8 {
-        return bun.sliceTo(archive_bzlib_version(), 0);
+        return fun.sliceTo(archive_bzlib_version(), 0);
     }
     extern fn archive_liblz4_version() [*c]const u8;
     pub fn liblz4Version() []const u8 {
-        return bun.sliceTo(archive_liblz4_version(), 0);
+        return fun.sliceTo(archive_liblz4_version(), 0);
     }
     extern fn archive_libzstd_version() [*c]const u8;
     pub fn libzstdVersion() []const u8 {
-        return bun.sliceTo(archive_libzstd_version(), 0);
+        return fun.sliceTo(archive_libzstd_version(), 0);
     }
 
     extern fn archive_error_string(*Archive) [*c]const u8;
     pub fn errorString(archive: *Archive) []const u8 {
         const err_str = archive_error_string(archive);
         if (err_str == null) return "";
-        return bun.sliceTo(err_str, 0);
+        return fun.sliceTo(err_str, 0);
     }
 
     extern fn archive_write_new() *Archive;
@@ -465,7 +465,7 @@ pub const Archive = opaque {
     }
 
     extern fn archive_write_open_fd(*Archive, _fd: c_int) Result;
-    pub fn writeOpenFd(archive: *Archive, fd: bun.FD) Result {
+    pub fn writeOpenFd(archive: *Archive, fd: fun.FD) Result {
         return archive_write_open_fd(archive, fd.cast());
     }
 
@@ -678,7 +678,7 @@ pub const Archive = opaque {
         return archive_read_data(archive, buf.ptr, buf.len);
     }
     extern fn archive_read_data_into_fd(*Archive, fd: c_int) Result;
-    pub fn writeZerosToFile(file: bun.sys.File, count: usize) Result {
+    pub fn writeZerosToFile(file: fun.sys.File, count: usize) Result {
         // Use undefined + memset instead of comptime zero-init to reduce binary size
         var zero_buf: [16 * 1024]u8 = undefined;
         @memset(&zero_buf, 0);
@@ -700,11 +700,11 @@ pub const Archive = opaque {
     /// - Falls back to lseek + write if pwrite is not available
     /// - Falls back to writing zeros if lseek is not available
     /// - Truncates the file to the final size to handle trailing sparse holes
-    pub fn readDataIntoFd(archive: *Archive, fd: bun.FD, can_use_pwrite: *bool, can_use_lseek: *bool) Result {
+    pub fn readDataIntoFd(archive: *Archive, fd: fun.FD, can_use_pwrite: *bool, can_use_lseek: *bool) Result {
         var target_offset: i64 = 0; // Updated by archive.next() - where this block should be written
         var actual_offset: i64 = 0; // Where we've actually written to (for write() path)
         var final_offset: i64 = 0; // Track the furthest point we need the file to extend to
-        const file = bun.sys.File{ .handle = fd };
+        const file = fun.sys.File{ .handle = fd };
 
         while (archive.next(&target_offset)) |block| {
             if (block.result != Result.ok) {
@@ -715,13 +715,13 @@ pub const Archive = opaque {
             // Track the furthest point we need to write to (for final truncation)
             final_offset = @max(final_offset, block.offset + @as(i64, @intCast(data.len)));
 
-            if (comptime bun.Environment.isPosix) {
+            if (comptime fun.Environment.isPosix) {
                 // Try pwrite first - it handles sparse files without needing lseek
                 if (can_use_pwrite.*) {
                     switch (file.pwriteAll(data, block.offset)) {
                         .err => {
                             can_use_pwrite.* = false;
-                            bun.Output.debugWarn("libarchive: falling back to write() after pwrite() failure", .{});
+                            fun.Output.debugWarn("libarchive: falling back to write() after pwrite() failure", .{});
                             // Fall through to lseek+write path
                         },
                         .result => {
@@ -736,7 +736,7 @@ pub const Archive = opaque {
             // Handle mismatch between actual position and target position
             if (block.offset != actual_offset) seek: {
                 if (can_use_lseek.*) {
-                    switch (bun.sys.setFileOffset(fd, @intCast(block.offset))) {
+                    switch (fun.sys.setFileOffset(fd, @intCast(block.offset))) {
                         .err => can_use_lseek.* = false,
                         .result => {
                             actual_offset = block.offset;
@@ -771,7 +771,7 @@ pub const Archive = opaque {
         // Handle trailing sparse hole by truncating file to final size
         // This extends the file to include any trailing zeros without actually writing them
         if (final_offset > actual_offset) {
-            _ = bun.sys.ftruncate(fd, final_offset);
+            _ = fun.sys.ftruncate(fd, final_offset);
         }
 
         return Result.ok;
@@ -888,13 +888,13 @@ pub const Archive = opaque {
             archive_entry_set_filetype(entry, @"type");
         }
 
-        extern fn archive_entry_set_perm(*Entry, bun.Mode) void;
-        pub fn setPerm(entry: *Entry, p: bun.Mode) void {
+        extern fn archive_entry_set_perm(*Entry, fun.Mode) void;
+        pub fn setPerm(entry: *Entry, p: fun.Mode) void {
             archive_entry_set_perm(entry, p);
         }
 
-        extern fn archive_entry_set_mode(*Entry, bun.Mode) void;
-        pub fn setMode(entry: *Entry, mode: bun.Mode) void {
+        extern fn archive_entry_set_mode(*Entry, fun.Mode) void;
+        pub fn setMode(entry: *Entry, mode: fun.Mode) void {
             archive_entry_set_mode(entry, mode);
         }
 
@@ -910,22 +910,22 @@ pub const Archive = opaque {
 
         extern fn archive_entry_pathname(*Entry) [*c]const u8;
         pub fn pathname(entry: *Entry) [:0]const u8 {
-            return bun.sliceTo(archive_entry_pathname(entry), 0);
+            return fun.sliceTo(archive_entry_pathname(entry), 0);
         }
         extern fn archive_entry_pathname_utf8(*Entry) [*c]const u8;
         pub fn pathnameUtf8(entry: *Entry) [:0]const u8 {
-            return bun.sliceTo(archive_entry_pathname_utf8(entry), 0);
+            return fun.sliceTo(archive_entry_pathname_utf8(entry), 0);
         }
         extern fn archive_entry_pathname_w(*Entry) [*c]const u16;
         pub fn pathnameW(entry: *Entry) [:0]const u16 {
-            return bun.sliceTo(archive_entry_pathname_w(entry), 0);
+            return fun.sliceTo(archive_entry_pathname_w(entry), 0);
         }
-        extern fn archive_entry_filetype(*Entry) bun.Mode;
-        pub fn filetype(entry: *Entry) bun.Mode {
+        extern fn archive_entry_filetype(*Entry) fun.Mode;
+        pub fn filetype(entry: *Entry) fun.Mode {
             return archive_entry_filetype(entry);
         }
-        extern fn archive_entry_perm(*Entry) bun.Mode;
-        pub fn perm(entry: *Entry) bun.Mode {
+        extern fn archive_entry_perm(*Entry) fun.Mode;
+        pub fn perm(entry: *Entry) fun.Mode {
             return archive_entry_perm(entry);
         }
         extern fn archive_entry_size(*Entry) i64;
@@ -937,11 +937,11 @@ pub const Archive = opaque {
         }
         extern fn archive_entry_symlink(*Entry) [*c]const u8;
         pub fn symlink(entry: *Entry) [:0]const u8 {
-            return bun.sliceTo(archive_entry_symlink(entry), 0);
+            return fun.sliceTo(archive_entry_symlink(entry), 0);
         }
         pub extern fn archive_entry_symlink_utf8(*Entry) [*c]const u8;
         pub fn symlinkUtf8(entry: *Entry) [:0]const u8 {
-            return bun.sliceTo(archive_entry_symlink_utf8(entry), 0);
+            return fun.sliceTo(archive_entry_symlink_utf8(entry), 0);
         }
         pub extern fn archive_entry_symlink_type(*Entry) SymlinkType;
         pub fn symlinkType(entry: *Entry) SymlinkType {
@@ -949,7 +949,7 @@ pub const Archive = opaque {
         }
         pub extern fn archive_entry_symlink_w(*Entry) [*c]const u16;
         pub fn symlinkW(entry: *Entry) [:0]const u16 {
-            return bun.sliceTo(archive_entry_symlink_w(entry), 0);
+            return fun.sliceTo(archive_entry_symlink_w(entry), 0);
         }
     };
 
@@ -1047,7 +1047,7 @@ pub const Archive = opaque {
                     .retry => continue,
                     .eof => Return.initRes(null),
                     .ok => {
-                        const kind = bun.sys.kindFromMode(entry.filetype());
+                        const kind = fun.sys.kindFromMode(entry.filetype());
 
                         if (this.filter.contains(kind)) continue;
 
@@ -1498,9 +1498,9 @@ pub const GrowingBuffer = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const mode_t = bun.Mode;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const mode_t = fun.Mode;
 
 const FILE = @import("std").c.FILE;
 const dev_t = @import("std").c.dev_t;

@@ -19,7 +19,7 @@
 // tslint:disable no-any
 import { ServerCredentials } from "@grpc/grpc-js/build/src";
 import assert from "assert";
-import { describe, it } from "bun:test";
+import { describe, it } from "fun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
 

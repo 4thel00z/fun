@@ -2,7 +2,7 @@
 #include "_NativeModule.h"
 #include <JavaScriptCore/CustomGetterSetter.h>
 #include <JavaScriptCore/JSGlobalObject.h>
-#include "BunProcess.h"
+#include "FunProcess.h"
 
 namespace Zig {
 
@@ -12,7 +12,7 @@ DEFINE_NATIVE_MODULE(NodeProcess)
     auto scope = DECLARE_THROW_SCOPE(vm);
     auto* globalObject = defaultGlobalObject(lexicalGlobalObject);
 
-    Bun::Process* process = globalObject->processObject();
+    Fun::Process* process = globalObject->processObject();
     if (!process->staticPropertiesReified()) {
         process->reifyAllStaticProperties(globalObject);
         RETURN_IF_EXCEPTION(scope, );

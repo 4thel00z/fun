@@ -1,17 +1,17 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { realpathSync } from "fs";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import path from "path";
 
-// Helper: spawn bun with multi-run flags, returns { stdout, stderr, exitCode }
+// Helper: spawn fun with multi-run flags, returns { stdout, stderr, exitCode }
 async function runMulti(
   args: string[],
   dir: string,
   extraEnv?: Record<string, string>,
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), ...args],
-    env: { ...bunEnv, NO_COLOR: "1", ...extraEnv },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), ...args],
+    env: { ...funEnv, NO_COLOR: "1", ...extraEnv },
     cwd: dir,
     stderr: "pipe",
     stdout: "pipe",
@@ -50,8 +50,8 @@ describe.concurrent("parallel: basic", () => {
     using dir = tempDir("mr-par-basic", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "console.log('output-a')"`,
-          b: `${bunExe()} -e "console.log('output-b')"`,
+          a: `${funExe()} -e "console.log('output-a')"`,
+          b: `${funExe()} -e "console.log('output-b')"`,
         },
       }),
     });
@@ -64,7 +64,7 @@ describe.concurrent("parallel: basic", () => {
   test("runs a single script", async () => {
     using dir = tempDir("mr-par-single", {
       "package.json": JSON.stringify({
-        scripts: { only: `${bunExe()} -e "console.log('single')"` },
+        scripts: { only: `${funExe()} -e "console.log('single')"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "only"], String(dir));
@@ -76,7 +76,7 @@ describe.concurrent("parallel: basic", () => {
   test("runs many scripts (10+)", async () => {
     const scripts: Record<string, string> = {};
     for (let i = 0; i < 12; i++) {
-      scripts[`s${i}`] = `${bunExe()} -e "console.log('out-${i}')"`;
+      scripts[`s${i}`] = `${funExe()} -e "console.log('out-${i}')"`;
     }
     using dir = tempDir("mr-par-many", {
       "package.json": JSON.stringify({ scripts }),
@@ -93,9 +93,9 @@ describe.concurrent("parallel: basic", () => {
     using dir = tempDir("mr-par-all-ok", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "process.exit(0)"`,
-          b: `${bunExe()} -e "process.exit(0)"`,
-          c: `${bunExe()} -e "process.exit(0)"`,
+          a: `${funExe()} -e "process.exit(0)"`,
+          b: `${funExe()} -e "process.exit(0)"`,
+          c: `${funExe()} -e "process.exit(0)"`,
         },
       }),
     });
@@ -144,7 +144,7 @@ describe.concurrent("parallel: file scripts", () => {
   test("mixes package.json scripts and file scripts", async () => {
     using dir = tempDir("mr-par-mix", {
       "package.json": JSON.stringify({
-        scripts: { greet: `${bunExe()} -e "console.log('from-pkg')"` },
+        scripts: { greet: `${funExe()} -e "console.log('from-pkg')"` },
       }),
       "standalone.ts": "console.log('from-file')",
     });
@@ -162,8 +162,8 @@ describe.concurrent("parallel: error handling", () => {
     using dir = tempDir("mr-par-fail", {
       "package.json": JSON.stringify({
         scripts: {
-          fail: `${bunExe()} -e "process.exit(1)"`,
-          ok: `${bunExe()} -e "console.log('ok-output')"`,
+          fail: `${funExe()} -e "process.exit(1)"`,
+          ok: `${funExe()} -e "console.log('ok-output')"`,
         },
       }),
     });
@@ -176,7 +176,7 @@ describe.concurrent("parallel: error handling", () => {
     using dir = tempDir("mr-par-code", {
       "package.json": JSON.stringify({
         scripts: {
-          bad: `${bunExe()} -e "process.exit(42)"`,
+          bad: `${funExe()} -e "process.exit(42)"`,
         },
       }),
     });
@@ -189,8 +189,8 @@ describe.concurrent("parallel: error handling", () => {
     using dir = tempDir("mr-par-first-code", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "process.exit(7)"`,
-          b: `${bunExe()} -e "process.exit(0)"`,
+          a: `${funExe()} -e "process.exit(7)"`,
+          b: `${funExe()} -e "process.exit(0)"`,
         },
       }),
     });
@@ -203,8 +203,8 @@ describe.concurrent("parallel: error handling", () => {
     using dir = tempDir("mr-par-noexit", {
       "package.json": JSON.stringify({
         scripts: {
-          fail: `${bunExe()} -e "process.exit(1)"`,
-          ok: `${bunExe()} -e "console.log('ok-ran')"`,
+          fail: `${funExe()} -e "process.exit(1)"`,
+          ok: `${funExe()} -e "console.log('ok-ran')"`,
         },
       }),
     });
@@ -218,8 +218,8 @@ describe.concurrent("parallel: error handling", () => {
     using dir = tempDir("mr-par-noexit-code", {
       "package.json": JSON.stringify({
         scripts: {
-          fail: `${bunExe()} -e "process.exit(3)"`,
-          ok: `${bunExe()} -e "process.exit(0)"`,
+          fail: `${funExe()} -e "process.exit(3)"`,
+          ok: `${funExe()} -e "process.exit(0)"`,
         },
       }),
     });
@@ -246,7 +246,7 @@ describe.concurrent("parallel: output formatting", () => {
   test("each line has prefix label", async () => {
     using dir = tempDir("mr-par-prefix", {
       "package.json": JSON.stringify({
-        scripts: { hello: `${bunExe()} -e "console.log('hello-world')"` },
+        scripts: { hello: `${funExe()} -e "console.log('hello-world')"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "hello"], String(dir));
@@ -259,8 +259,8 @@ describe.concurrent("parallel: output formatting", () => {
     using dir = tempDir("mr-par-pad", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "console.log('short')"`,
-          longname: `${bunExe()} -e "console.log('long')"`,
+          a: `${funExe()} -e "console.log('short')"`,
+          longname: `${funExe()} -e "console.log('long')"`,
         },
       }),
     });
@@ -283,7 +283,7 @@ describe.concurrent("parallel: output formatting", () => {
     using dir = tempDir("mr-par-multiline", {
       "package.json": JSON.stringify({
         scripts: {
-          multi: `${bunExe()} -e "console.log('line1'); console.log('line2'); console.log('line3')"`,
+          multi: `${funExe()} -e "console.log('line1'); console.log('line2'); console.log('line3')"`,
         },
       }),
     });
@@ -299,7 +299,7 @@ describe.concurrent("parallel: output formatting", () => {
     using dir = tempDir("mr-par-stderr", {
       "package.json": JSON.stringify({
         scripts: {
-          err: `${bunExe()} -e "console.error('err-msg')"`,
+          err: `${funExe()} -e "console.error('err-msg')"`,
         },
       }),
     });
@@ -313,7 +313,7 @@ describe.concurrent("parallel: output formatting", () => {
     using dir = tempDir("mr-par-notrnl", {
       "package.json": JSON.stringify({
         scripts: {
-          partial: `${bunExe()} -e "process.stdout.write('no-newline')"`,
+          partial: `${funExe()} -e "process.stdout.write('no-newline')"`,
         },
       }),
     });
@@ -328,7 +328,7 @@ describe.concurrent("parallel: output formatting", () => {
     using dir = tempDir("mr-par-long", {
       "package.json": JSON.stringify({
         scripts: {
-          big: `${bunExe()} -e "console.log('${longStr}')"`,
+          big: `${funExe()} -e "console.log('${longStr}')"`,
         },
       }),
     });
@@ -341,7 +341,7 @@ describe.concurrent("parallel: output formatting", () => {
     using dir = tempDir("mr-par-empty", {
       "package.json": JSON.stringify({
         scripts: {
-          silent: `${bunExe()} -e "0"`,
+          silent: `${funExe()} -e "0"`,
         },
       }),
     });
@@ -353,7 +353,7 @@ describe.concurrent("parallel: output formatting", () => {
   test("no color codes when NO_COLOR=1", async () => {
     using dir = tempDir("mr-par-nocolor", {
       "package.json": JSON.stringify({
-        scripts: { x: `${bunExe()} -e "console.log('nc')"` },
+        scripts: { x: `${funExe()} -e "console.log('nc')"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "x"], String(dir));
@@ -366,7 +366,7 @@ describe.concurrent("parallel: output formatting", () => {
   test("shows 'Done in Xms' for successful scripts", async () => {
     using dir = tempDir("mr-par-done", {
       "package.json": JSON.stringify({
-        scripts: { fast: `${bunExe()} -e "0"` },
+        scripts: { fast: `${funExe()} -e "0"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "fast"], String(dir));
@@ -377,7 +377,7 @@ describe.concurrent("parallel: output formatting", () => {
   test("shows 'Exited with code N' for failed scripts", async () => {
     using dir = tempDir("mr-par-exitcode", {
       "package.json": JSON.stringify({
-        scripts: { bad: `${bunExe()} -e "process.exit(5)"` },
+        scripts: { bad: `${funExe()} -e "process.exit(5)"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "bad"], String(dir));
@@ -389,8 +389,8 @@ describe.concurrent("parallel: output formatting", () => {
     using dir = tempDir("mr-par-interleave", {
       "package.json": JSON.stringify({
         scripts: {
-          aa: `${bunExe()} -e "for(let i=0;i<20;i++) console.log('aaa-'+i)"`,
-          bb: `${bunExe()} -e "for(let i=0;i<20;i++) console.log('bbb-'+i)"`,
+          aa: `${funExe()} -e "for(let i=0;i<20;i++) console.log('aaa-'+i)"`,
+          bb: `${funExe()} -e "for(let i=0;i<20;i++) console.log('bbb-'+i)"`,
         },
       }),
     });
@@ -409,7 +409,7 @@ describe.concurrent("stdout/stderr separation", () => {
   test("child stdout goes to parent stdout with prefix", async () => {
     using dir = tempDir("mr-sep-stdout", {
       "package.json": JSON.stringify({
-        scripts: { out: `${bunExe()} -e "console.log('to-stdout')"` },
+        scripts: { out: `${funExe()} -e "console.log('to-stdout')"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "out"], String(dir));
@@ -422,7 +422,7 @@ describe.concurrent("stdout/stderr separation", () => {
   test("child stderr goes to parent stderr with prefix", async () => {
     using dir = tempDir("mr-sep-stderr", {
       "package.json": JSON.stringify({
-        scripts: { err: `${bunExe()} -e "console.error('to-stderr')"` },
+        scripts: { err: `${funExe()} -e "console.error('to-stderr')"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "err"], String(dir));
@@ -436,7 +436,7 @@ describe.concurrent("stdout/stderr separation", () => {
     using dir = tempDir("mr-sep-mixed", {
       "package.json": JSON.stringify({
         scripts: {
-          both: `${bunExe()} -e "console.log('OUT'); console.error('ERR')"`,
+          both: `${funExe()} -e "console.log('OUT'); console.error('ERR')"`,
         },
       }),
     });
@@ -452,7 +452,7 @@ describe.concurrent("stdout/stderr separation", () => {
   test("status messages always go to stderr", async () => {
     using dir = tempDir("mr-sep-status", {
       "package.json": JSON.stringify({
-        scripts: { ok: `${bunExe()} -e "console.log('data')"` },
+        scripts: { ok: `${funExe()} -e "console.log('data')"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "ok"], String(dir));
@@ -471,9 +471,9 @@ describe.concurrent("sequential: basic", () => {
     using dir = tempDir("mr-seq-order", {
       "package.json": JSON.stringify({
         scripts: {
-          first: `${bunExe()} -e "console.log('first-output')"`,
-          second: `${bunExe()} -e "console.log('second-output')"`,
-          third: `${bunExe()} -e "console.log('third-output')"`,
+          first: `${funExe()} -e "console.log('first-output')"`,
+          second: `${funExe()} -e "console.log('second-output')"`,
+          third: `${funExe()} -e "console.log('third-output')"`,
         },
       }),
     });
@@ -495,7 +495,7 @@ describe.concurrent("sequential: basic", () => {
   test("sequential with single script", async () => {
     using dir = tempDir("mr-seq-single", {
       "package.json": JSON.stringify({
-        scripts: { only: `${bunExe()} -e "console.log('seq-single')"` },
+        scripts: { only: `${funExe()} -e "console.log('seq-single')"` },
       }),
     });
     const r = await runMulti(["run", "--sequential", "only"], String(dir));
@@ -508,8 +508,8 @@ describe.concurrent("sequential: basic", () => {
     using dir = tempDir("mr-seq-stop", {
       "package.json": JSON.stringify({
         scripts: {
-          fail: `${bunExe()} -e "process.exit(1)"`,
-          never: `${bunExe()} -e "console.log('should-not-run')"`,
+          fail: `${funExe()} -e "process.exit(1)"`,
+          never: `${funExe()} -e "console.log('should-not-run')"`,
         },
       }),
     });
@@ -523,9 +523,9 @@ describe.concurrent("sequential: basic", () => {
     using dir = tempDir("mr-seq-code", {
       "package.json": JSON.stringify({
         scripts: {
-          ok: `${bunExe()} -e "console.log('ok')"`,
-          bad: `${bunExe()} -e "process.exit(13)"`,
-          never: `${bunExe()} -e "console.log('nope')"`,
+          ok: `${funExe()} -e "console.log('ok')"`,
+          bad: `${funExe()} -e "process.exit(13)"`,
+          never: `${funExe()} -e "console.log('nope')"`,
         },
       }),
     });
@@ -540,8 +540,8 @@ describe.concurrent("sequential: basic", () => {
     using dir = tempDir("mr-seq-noexit", {
       "package.json": JSON.stringify({
         scripts: {
-          fail: `${bunExe()} -e "process.exit(2)"`,
-          after: `${bunExe()} -e "console.log('ran-after')"`,
+          fail: `${funExe()} -e "process.exit(2)"`,
+          after: `${funExe()} -e "console.log('ran-after')"`,
         },
       }),
     });
@@ -570,9 +570,9 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-prepost-order", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "console.log('pre-ran')"`,
-          build: `${bunExe()} -e "console.log('build-ran')"`,
-          postbuild: `${bunExe()} -e "console.log('post-ran')"`,
+          prebuild: `${funExe()} -e "console.log('pre-ran')"`,
+          build: `${funExe()} -e "console.log('build-ran')"`,
+          postbuild: `${funExe()} -e "console.log('post-ran')"`,
         },
       }),
     });
@@ -595,8 +595,8 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-preonly", {
       "package.json": JSON.stringify({
         scripts: {
-          pretest: `${bunExe()} -e "console.log('pre-only')"`,
-          test: `${bunExe()} -e "console.log('test-main')"`,
+          pretest: `${funExe()} -e "console.log('pre-only')"`,
+          test: `${funExe()} -e "console.log('test-main')"`,
         },
       }),
     });
@@ -615,8 +615,8 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-postonly", {
       "package.json": JSON.stringify({
         scripts: {
-          deploy: `${bunExe()} -e "console.log('deploy-main')"`,
-          postdeploy: `${bunExe()} -e "console.log('post-only')"`,
+          deploy: `${funExe()} -e "console.log('deploy-main')"`,
+          postdeploy: `${funExe()} -e "console.log('post-only')"`,
         },
       }),
     });
@@ -630,9 +630,9 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-prefail", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "process.exit(1)"`,
-          build: `${bunExe()} -e "console.log('main-shouldnt-run')"`,
-          postbuild: `${bunExe()} -e "console.log('post-shouldnt-run')"`,
+          prebuild: `${funExe()} -e "process.exit(1)"`,
+          build: `${funExe()} -e "console.log('main-shouldnt-run')"`,
+          postbuild: `${funExe()} -e "console.log('post-shouldnt-run')"`,
         },
       }),
     });
@@ -647,9 +647,9 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-mainfail", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "console.log('pre-ok')"`,
-          build: `${bunExe()} -e "process.exit(1)"`,
-          postbuild: `${bunExe()} -e "console.log('post-shouldnt-run')"`,
+          prebuild: `${funExe()} -e "console.log('pre-ok')"`,
+          build: `${funExe()} -e "process.exit(1)"`,
+          postbuild: `${funExe()} -e "console.log('post-shouldnt-run')"`,
         },
       }),
     });
@@ -664,12 +664,12 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-prepost-par", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "console.log('pre-build')"`,
-          build: `${bunExe()} -e "console.log('main-build')"`,
-          postbuild: `${bunExe()} -e "console.log('post-build')"`,
-          pretest: `${bunExe()} -e "console.log('pre-test')"`,
-          test: `${bunExe()} -e "console.log('main-test')"`,
-          posttest: `${bunExe()} -e "console.log('post-test')"`,
+          prebuild: `${funExe()} -e "console.log('pre-build')"`,
+          build: `${funExe()} -e "console.log('main-build')"`,
+          postbuild: `${funExe()} -e "console.log('post-build')"`,
+          pretest: `${funExe()} -e "console.log('pre-test')"`,
+          test: `${funExe()} -e "console.log('main-test')"`,
+          posttest: `${funExe()} -e "console.log('post-test')"`,
         },
       }),
     });
@@ -694,12 +694,12 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-prepost-seq", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "console.log('pre-b')"`,
-          build: `${bunExe()} -e "console.log('main-b')"`,
-          postbuild: `${bunExe()} -e "console.log('post-b')"`,
-          pretest: `${bunExe()} -e "console.log('pre-t')"`,
-          test: `${bunExe()} -e "console.log('main-t')"`,
-          posttest: `${bunExe()} -e "console.log('post-t')"`,
+          prebuild: `${funExe()} -e "console.log('pre-b')"`,
+          build: `${funExe()} -e "console.log('main-b')"`,
+          postbuild: `${funExe()} -e "console.log('post-b')"`,
+          pretest: `${funExe()} -e "console.log('pre-t')"`,
+          test: `${funExe()} -e "console.log('main-t')"`,
+          posttest: `${funExe()} -e "console.log('post-t')"`,
         },
       }),
     });
@@ -720,9 +720,9 @@ describe.concurrent("pre/post scripts", () => {
     using dir = tempDir("mr-prepost-label", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "console.log('p')"`,
-          build: `${bunExe()} -e "console.log('m')"`,
-          postbuild: `${bunExe()} -e "console.log('o')"`,
+          prebuild: `${funExe()} -e "console.log('p')"`,
+          build: `${funExe()} -e "console.log('m')"`,
+          postbuild: `${funExe()} -e "console.log('o')"`,
         },
       }),
     });
@@ -784,7 +784,7 @@ describe.concurrent("output streams", () => {
     using dir = tempDir("mr-streams", {
       "package.json": JSON.stringify({
         scripts: {
-          both: `${bunExe()} -e "console.log('out'); console.error('err')"`,
+          both: `${funExe()} -e "console.log('out'); console.error('err')"`,
         },
       }),
     });
@@ -799,7 +799,7 @@ describe.concurrent("output streams", () => {
     using dir = tempDir("mr-stderr-only", {
       "package.json": JSON.stringify({
         scripts: {
-          erronly: `${bunExe()} -e "console.error('only-err')"`,
+          erronly: `${funExe()} -e "console.error('only-err')"`,
         },
       }),
     });
@@ -830,7 +830,7 @@ describe.concurrent("shell features", () => {
     using dir = tempDir("mr-shell-env", {
       "package.json": JSON.stringify({
         scripts: {
-          env: `${bunExe()} -e "console.log(process.env.MY_VAR)"`,
+          env: `${funExe()} -e "console.log(process.env.MY_VAR)"`,
         },
       }),
     });
@@ -875,8 +875,8 @@ describe.concurrent("script name edge cases", () => {
     using dir = tempDir("mr-colon", {
       "package.json": JSON.stringify({
         scripts: {
-          "dev:server": `${bunExe()} -e "console.log('server')"`,
-          "dev:client": `${bunExe()} -e "console.log('client')"`,
+          "dev:server": `${funExe()} -e "console.log('server')"`,
+          "dev:client": `${funExe()} -e "console.log('client')"`,
         },
       }),
     });
@@ -890,8 +890,8 @@ describe.concurrent("script name edge cases", () => {
     using dir = tempDir("mr-hyphen", {
       "package.json": JSON.stringify({
         scripts: {
-          "build-prod": `${bunExe()} -e "console.log('prod')"`,
-          "build-dev": `${bunExe()} -e "console.log('dev')"`,
+          "build-prod": `${funExe()} -e "console.log('prod')"`,
+          "build-dev": `${funExe()} -e "console.log('dev')"`,
         },
       }),
     });
@@ -905,7 +905,7 @@ describe.concurrent("script name edge cases", () => {
     using dir = tempDir("mr-dup", {
       "package.json": JSON.stringify({
         scripts: {
-          greet: `${bunExe()} -e "console.log('hello')"`,
+          greet: `${funExe()} -e "console.log('hello')"`,
         },
       }),
     });
@@ -924,9 +924,9 @@ describe.concurrent("timing edge cases", () => {
     using dir = tempDir("mr-instant", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "0"`,
-          b: `${bunExe()} -e "0"`,
-          c: `${bunExe()} -e "0"`,
+          a: `${funExe()} -e "0"`,
+          b: `${funExe()} -e "0"`,
+          c: `${funExe()} -e "0"`,
         },
       }),
     });
@@ -941,9 +941,9 @@ describe.concurrent("timing edge cases", () => {
     using dir = tempDir("mr-seq-rapid", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "console.log('rapid-a')"`,
-          b: `${bunExe()} -e "console.log('rapid-b')"`,
-          c: `${bunExe()} -e "console.log('rapid-c')"`,
+          a: `${funExe()} -e "console.log('rapid-a')"`,
+          b: `${funExe()} -e "console.log('rapid-b')"`,
+          c: `${funExe()} -e "console.log('rapid-c')"`,
         },
       }),
     });
@@ -967,8 +967,8 @@ describe.concurrent("exit code propagation", () => {
     using dir = tempDir("mr-exitprop", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "process.exit(0)"`,
-          b: `${bunExe()} -e "process.exit(99)"`,
+          a: `${funExe()} -e "process.exit(0)"`,
+          b: `${funExe()} -e "process.exit(99)"`,
         },
       }),
     });
@@ -982,8 +982,8 @@ describe.concurrent("exit code propagation", () => {
     using dir = tempDir("mr-allzero", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "process.exit(0)"`,
-          b: `${bunExe()} -e "process.exit(0)"`,
+          a: `${funExe()} -e "process.exit(0)"`,
+          b: `${funExe()} -e "process.exit(0)"`,
         },
       }),
     });
@@ -997,8 +997,8 @@ describe.concurrent("exit code propagation", () => {
     using dir = tempDir("mr-seq-exitcode", {
       "package.json": JSON.stringify({
         scripts: {
-          ok: `${bunExe()} -e "process.exit(0)"`,
-          bad: `${bunExe()} -e "process.exit(77)"`,
+          ok: `${funExe()} -e "process.exit(0)"`,
+          bad: `${funExe()} -e "process.exit(77)"`,
         },
       }),
     });
@@ -1016,7 +1016,7 @@ describe.concurrent("working directory", () => {
     using dir = tempDir("mr-cwd", {
       "package.json": JSON.stringify({
         scripts: {
-          pwd: `${bunExe()} -e "console.log(process.cwd())"`,
+          pwd: `${funExe()} -e "console.log(process.cwd())"`,
         },
       }),
     });
@@ -1034,12 +1034,12 @@ describe.concurrent("working directory", () => {
 // ─── EXPLICIT RUN COMMAND ───────────────────────────────────────────────────
 
 describe.concurrent("explicit run command", () => {
-  test("'bun run --parallel' with run keyword", async () => {
+  test("'fun run --parallel' with run keyword", async () => {
     using dir = tempDir("mr-run-explicit", {
       "package.json": JSON.stringify({
         scripts: {
-          x: `${bunExe()} -e "console.log('explicit-run')"`,
-          y: `${bunExe()} -e "console.log('explicit-run2')"`,
+          x: `${funExe()} -e "console.log('explicit-run')"`,
+          y: `${funExe()} -e "console.log('explicit-run2')"`,
         },
       }),
     });
@@ -1057,7 +1057,7 @@ describe.concurrent("stress tests", () => {
     using dir = tempDir("mr-stress-lines", {
       "package.json": JSON.stringify({
         scripts: {
-          flood: `${bunExe()} -e "for(let i=0;i<500;i++) console.log('line-'+i)"`,
+          flood: `${funExe()} -e "for(let i=0;i<500;i++) console.log('line-'+i)"`,
         },
       }),
     });
@@ -1070,7 +1070,7 @@ describe.concurrent("stress tests", () => {
   test("handles output from multiple concurrent scripts", async () => {
     const scripts: Record<string, string> = {};
     for (let i = 0; i < 5; i++) {
-      scripts[`s${i}`] = `${bunExe()} -e "for(let j=0;j<50;j++) console.log('s${i}-'+j)"`;
+      scripts[`s${i}`] = `${funExe()} -e "for(let j=0;j<50;j++) console.log('s${i}-'+j)"`;
     }
     using dir = tempDir("mr-stress-multi", {
       "package.json": JSON.stringify({ scripts }),
@@ -1110,7 +1110,7 @@ describe.concurrent("raw shell commands", () => {
     using dir = tempDir("mr-raw-mix", {
       "package.json": JSON.stringify({
         scripts: {
-          pkg: `${bunExe()} -e "console.log('from-pkg')"`,
+          pkg: `${funExe()} -e "console.log('from-pkg')"`,
         },
       }),
     });
@@ -1128,8 +1128,8 @@ describe.concurrent("sequential: side effects ordering", () => {
     using dir = tempDir("mr-seq-sideeffect", {
       "package.json": JSON.stringify({
         scripts: {
-          create: `${bunExe()} -e "require('fs').writeFileSync('marker.txt', 'created'); console.log('created')"`,
-          check: `${bunExe()} -e "const d = require('fs').readFileSync('marker.txt','utf8'); console.log('found:'+d)"`,
+          create: `${funExe()} -e "require('fs').writeFileSync('marker.txt', 'created'); console.log('created')"`,
+          check: `${funExe()} -e "const d = require('fs').readFileSync('marker.txt','utf8'); console.log('found:'+d)"`,
         },
       }),
     });
@@ -1167,8 +1167,8 @@ describe("abort: failure kills long-running processes", () => {
     using dir = tempDir("mr-abort-slow", {
       "package.json": JSON.stringify({
         scripts: {
-          slow: `${bunExe()} -e "await Bun.sleep(30000); console.log('should-not-appear')"`,
-          fail: `${bunExe()} -e "process.exit(1)"`,
+          slow: `${funExe()} -e "await Fun.sleep(30000); console.log('should-not-appear')"`,
+          fail: `${funExe()} -e "process.exit(1)"`,
         },
       }),
     });
@@ -1185,7 +1185,7 @@ describe("abort: failure kills long-running processes", () => {
     using dir = tempDir("mr-abort-signal", {
       "package.json": JSON.stringify({
         scripts: {
-          suicide: `${bunExe()} -e "process.kill(process.pid, 'SIGKILL')"`,
+          suicide: `${funExe()} -e "process.kill(process.pid, 'SIGKILL')"`,
         },
       }),
     });
@@ -1202,7 +1202,7 @@ describe.concurrent("partial line buffering", () => {
     using dir = tempDir("mr-chunk", {
       "package.json": JSON.stringify({
         scripts: {
-          chunky: `${bunExe()} -e "
+          chunky: `${funExe()} -e "
             const chars = 'CHUNKED-LINE\\n';
             for (const c of chars) {
               process.stdout.write(c);
@@ -1221,7 +1221,7 @@ describe.concurrent("partial line buffering", () => {
     using dir = tempDir("mr-partial-coalesce", {
       "package.json": JSON.stringify({
         scripts: {
-          parts: `${bunExe()} -e "
+          parts: `${funExe()} -e "
             process.stdout.write('part1-');
             process.stdout.write('part2-');
             process.stdout.write('part3\\n');
@@ -1238,7 +1238,7 @@ describe.concurrent("partial line buffering", () => {
     using dir = tempDir("mr-partial-mixed", {
       "package.json": JSON.stringify({
         scripts: {
-          mixed: `${bunExe()} -e "
+          mixed: `${funExe()} -e "
             process.stdout.write('complete-line\\npartial');
             process.stdout.write('-rest\\n');
           "`,
@@ -1255,7 +1255,7 @@ describe.concurrent("partial line buffering", () => {
     using dir = tempDir("mr-cr", {
       "package.json": JSON.stringify({
         scripts: {
-          cr: `${bunExe()} -e "process.stdout.write('before\\\\rafter')"`,
+          cr: `${funExe()} -e "process.stdout.write('before\\\\rafter')"`,
         },
       }),
     });
@@ -1270,7 +1270,7 @@ describe.concurrent("partial line buffering", () => {
     using dir = tempDir("mr-emptylines", {
       "package.json": JSON.stringify({
         scripts: {
-          blanks: `${bunExe()} -e "console.log('above'); console.log(''); console.log('below')"`,
+          blanks: `${funExe()} -e "console.log('above'); console.log(''); console.log('below')"`,
         },
       }),
     });
@@ -1291,9 +1291,9 @@ describe.concurrent("--no-exit-on-error: multiple failures", () => {
     using dir = tempDir("mr-noexit-multi", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "process.exit(11)"`,
-          b: `${bunExe()} -e "process.exit(22)"`,
-          c: `${bunExe()} -e "process.exit(0)"`,
+          a: `${funExe()} -e "process.exit(11)"`,
+          b: `${funExe()} -e "process.exit(22)"`,
+          c: `${funExe()} -e "process.exit(0)"`,
         },
       }),
     });
@@ -1308,9 +1308,9 @@ describe.concurrent("--no-exit-on-error: multiple failures", () => {
     using dir = tempDir("mr-noexit-allfail", {
       "package.json": JSON.stringify({
         scripts: {
-          x: `${bunExe()} -e "process.exit(5)"`,
-          y: `${bunExe()} -e "process.exit(10)"`,
-          z: `${bunExe()} -e "process.exit(15)"`,
+          x: `${funExe()} -e "process.exit(5)"`,
+          y: `${funExe()} -e "process.exit(10)"`,
+          z: `${funExe()} -e "process.exit(15)"`,
         },
       }),
     });
@@ -1325,9 +1325,9 @@ describe.concurrent("--no-exit-on-error: multiple failures", () => {
     using dir = tempDir("mr-seq-noexit-multi", {
       "package.json": JSON.stringify({
         scripts: {
-          a: `${bunExe()} -e "console.log('a-ran'); process.exit(3)"`,
-          b: `${bunExe()} -e "console.log('b-ran'); process.exit(7)"`,
-          c: `${bunExe()} -e "console.log('c-ran')"`,
+          a: `${funExe()} -e "console.log('a-ran'); process.exit(3)"`,
+          b: `${funExe()} -e "console.log('b-ran'); process.exit(7)"`,
+          c: `${funExe()} -e "console.log('c-ran')"`,
         },
       }),
     });
@@ -1346,10 +1346,10 @@ describe.concurrent("pre/post + --no-exit-on-error interaction", () => {
     using dir = tempDir("mr-pre-noexit", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "process.exit(1)"`,
-          build: `${bunExe()} -e "console.log('build-main')"`,
-          postbuild: `${bunExe()} -e "console.log('build-post')"`,
-          lint: `${bunExe()} -e "console.log('lint-ran')"`,
+          prebuild: `${funExe()} -e "process.exit(1)"`,
+          build: `${funExe()} -e "console.log('build-main')"`,
+          postbuild: `${funExe()} -e "console.log('build-post')"`,
+          lint: `${funExe()} -e "console.log('lint-ran')"`,
         },
       }),
     });
@@ -1364,8 +1364,8 @@ describe.concurrent("pre/post + --no-exit-on-error interaction", () => {
     using dir = tempDir("mr-postfail", {
       "package.json": JSON.stringify({
         scripts: {
-          build: `${bunExe()} -e "console.log('build-ok')"`,
-          postbuild: `${bunExe()} -e "console.log('post-fail'); process.exit(44)"`,
+          build: `${funExe()} -e "console.log('build-ok')"`,
+          postbuild: `${funExe()} -e "console.log('post-fail'); process.exit(44)"`,
         },
       }),
     });
@@ -1380,9 +1380,9 @@ describe.concurrent("pre/post + --no-exit-on-error interaction", () => {
     using dir = tempDir("mr-seq-pre-noexit", {
       "package.json": JSON.stringify({
         scripts: {
-          prebuild: `${bunExe()} -e "process.exit(1)"`,
-          build: `${bunExe()} -e "console.log('build-shouldnt')"`,
-          test: `${bunExe()} -e "console.log('test-ran')"`,
+          prebuild: `${funExe()} -e "process.exit(1)"`,
+          build: `${funExe()} -e "console.log('build-shouldnt')"`,
+          test: `${funExe()} -e "console.log('test-ran')"`,
         },
       }),
     });
@@ -1413,7 +1413,7 @@ describe.concurrent("edge-case script content", () => {
     using dir = tempDir("mr-whitespace", {
       "package.json": JSON.stringify({
         scripts: {
-          ws: `${bunExe()} -e "console.log('   ')"`,
+          ws: `${funExe()} -e "console.log('   ')"`,
         },
       }),
     });
@@ -1428,8 +1428,8 @@ describe.concurrent("edge-case script content", () => {
     using dir = tempDir("mr-longname", {
       "package.json": JSON.stringify({
         scripts: {
-          [longName]: `${bunExe()} -e "console.log('long-name-ok')"`,
-          short: `${bunExe()} -e "console.log('short-ok')"`,
+          [longName]: `${funExe()} -e "console.log('long-name-ok')"`,
+          short: `${funExe()} -e "console.log('short-ok')"`,
         },
       }),
     });
@@ -1452,7 +1452,7 @@ describe.concurrent("unusual output", () => {
     using dir = tempDir("mr-nullbyte", {
       "package.json": JSON.stringify({
         scripts: {
-          nulls: `${bunExe()} -e "process.stdout.write(Buffer.from([0x68, 0x69, 0x00, 0x0a]))"`,
+          nulls: `${funExe()} -e "process.stdout.write(Buffer.from([0x68, 0x69, 0x00, 0x0a]))"`,
         },
       }),
     });
@@ -1465,7 +1465,7 @@ describe.concurrent("unusual output", () => {
     using dir = tempDir("mr-rapid-lines", {
       "package.json": JSON.stringify({
         scripts: {
-          rapid: `${bunExe()} -e "for(let i=0;i<1000;i++) console.log('L'+i)"`,
+          rapid: `${funExe()} -e "for(let i=0;i<1000;i++) console.log('L'+i)"`,
         },
       }),
     });
@@ -1481,7 +1481,7 @@ describe.concurrent("unusual output", () => {
     using dir = tempDir("mr-unicode", {
       "package.json": JSON.stringify({
         scripts: {
-          uni: `${bunExe()} -e "console.log('Hello \\u4e16\\u754c \\ud83c\\udf0d')"`,
+          uni: `${funExe()} -e "console.log('Hello \\u4e16\\u754c \\ud83c\\udf0d')"`,
         },
       }),
     });
@@ -1499,8 +1499,8 @@ describe.concurrent("sequential: status messages between scripts", () => {
     using dir = tempDir("mr-seq-done-between", {
       "package.json": JSON.stringify({
         scripts: {
-          first: `${bunExe()} -e "console.log('first-out')"`,
-          second: `${bunExe()} -e "console.log('second-out')"`,
+          first: `${funExe()} -e "console.log('first-out')"`,
+          second: `${funExe()} -e "console.log('second-out')"`,
         },
       }),
     });
@@ -1521,8 +1521,8 @@ describe.concurrent("sequential: status messages between scripts", () => {
     using dir = tempDir("mr-seq-exit-between", {
       "package.json": JSON.stringify({
         scripts: {
-          fail: `${bunExe()} -e "process.exit(2)"`,
-          next: `${bunExe()} -e "console.log('next-out')"`,
+          fail: `${funExe()} -e "process.exit(2)"`,
+          next: `${funExe()} -e "console.log('next-out')"`,
         },
       }),
     });
@@ -1540,7 +1540,7 @@ describe.concurrent("concurrent stdout + stderr from same script", () => {
     using dir = tempDir("mr-interleave-streams", {
       "package.json": JSON.stringify({
         scripts: {
-          both: `${bunExe()} -e "
+          both: `${funExe()} -e "
             for (let i = 0; i < 10; i++) {
               console.log('OUT-' + i);
               console.error('ERR-' + i);
@@ -1566,15 +1566,15 @@ describe.concurrent("dependency chains", () => {
     using dir = tempDir("mr-deep-chain", {
       "package.json": JSON.stringify({
         scripts: {
-          prea: `${bunExe()} -e "console.log('pre-a')"`,
-          a: `${bunExe()} -e "console.log('main-a')"`,
-          posta: `${bunExe()} -e "console.log('post-a')"`,
-          preb: `${bunExe()} -e "console.log('pre-b')"`,
-          b: `${bunExe()} -e "console.log('main-b')"`,
-          postb: `${bunExe()} -e "console.log('post-b')"`,
-          prec: `${bunExe()} -e "console.log('pre-c')"`,
-          c: `${bunExe()} -e "console.log('main-c')"`,
-          postc: `${bunExe()} -e "console.log('post-c')"`,
+          prea: `${funExe()} -e "console.log('pre-a')"`,
+          a: `${funExe()} -e "console.log('main-a')"`,
+          posta: `${funExe()} -e "console.log('post-a')"`,
+          preb: `${funExe()} -e "console.log('pre-b')"`,
+          b: `${funExe()} -e "console.log('main-b')"`,
+          postb: `${funExe()} -e "console.log('post-b')"`,
+          prec: `${funExe()} -e "console.log('pre-c')"`,
+          c: `${funExe()} -e "console.log('main-c')"`,
+          postc: `${funExe()} -e "console.log('post-c')"`,
         },
       }),
     });
@@ -1595,12 +1595,12 @@ describe.concurrent("dependency chains", () => {
     using dir = tempDir("mr-chain-partial", {
       "package.json": JSON.stringify({
         scripts: {
-          prea: `${bunExe()} -e "console.log('pre-a-ok')"`,
-          a: `${bunExe()} -e "process.exit(1)"`,
-          posta: `${bunExe()} -e "console.log('post-a-no')"`,
-          preb: `${bunExe()} -e "console.log('pre-b-ok')"`,
-          b: `${bunExe()} -e "console.log('main-b-ok')"`,
-          postb: `${bunExe()} -e "console.log('post-b-ok')"`,
+          prea: `${funExe()} -e "console.log('pre-a-ok')"`,
+          a: `${funExe()} -e "process.exit(1)"`,
+          posta: `${funExe()} -e "console.log('post-a-no')"`,
+          preb: `${funExe()} -e "console.log('pre-b-ok')"`,
+          b: `${funExe()} -e "console.log('main-b-ok')"`,
+          postb: `${funExe()} -e "console.log('post-b-ok')"`,
         },
       }),
     });
@@ -1620,14 +1620,14 @@ describe.concurrent("color cycling", () => {
   test("more than 6 scripts cycle through colors", async () => {
     const scripts: Record<string, string> = {};
     for (let i = 0; i < 7; i++) {
-      scripts[`task${i}`] = `${bunExe()} -e "console.log('t${i}')"`;
+      scripts[`task${i}`] = `${funExe()} -e "console.log('t${i}')"`;
     }
     using dir = tempDir("mr-color-cycle", {
       "package.json": JSON.stringify({ scripts }),
     });
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--parallel", ...Object.keys(scripts)],
-      env: { ...bunEnv, NO_COLOR: undefined, FORCE_COLOR: "1" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--parallel", ...Object.keys(scripts)],
+      env: { ...funEnv, NO_COLOR: undefined, FORCE_COLOR: "1" },
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1655,10 +1655,10 @@ describe.concurrent("glob pattern matching", () => {
     using dir = tempDir("mr-glob-basic", {
       "package.json": JSON.stringify({
         scripts: {
-          "build:css": `${bunExe()} -e "console.log('css-built')"`,
-          "build:js": `${bunExe()} -e "console.log('js-built')"`,
-          "build:html": `${bunExe()} -e "console.log('html-built')"`,
-          "test": `${bunExe()} -e "console.log('should-not-run')"`,
+          "build:css": `${funExe()} -e "console.log('css-built')"`,
+          "build:js": `${funExe()} -e "console.log('js-built')"`,
+          "build:html": `${funExe()} -e "console.log('html-built')"`,
+          "test": `${funExe()} -e "console.log('should-not-run')"`,
         },
       }),
     });
@@ -1674,8 +1674,8 @@ describe.concurrent("glob pattern matching", () => {
     using dir = tempDir("mr-glob-star", {
       "package.json": JSON.stringify({
         scripts: {
-          alpha: `${bunExe()} -e "console.log('a-out')"`,
-          beta: `${bunExe()} -e "console.log('b-out')"`,
+          alpha: `${funExe()} -e "console.log('a-out')"`,
+          beta: `${funExe()} -e "console.log('b-out')"`,
         },
       }),
     });
@@ -1702,10 +1702,10 @@ describe.concurrent("glob pattern matching", () => {
     using dir = tempDir("mr-glob-prepost", {
       "package.json": JSON.stringify({
         scripts: {
-          "prebuild:css": `${bunExe()} -e "console.log('pre-css')"`,
-          "build:css": `${bunExe()} -e "console.log('main-css')"`,
-          "postbuild:css": `${bunExe()} -e "console.log('post-css')"`,
-          "build:js": `${bunExe()} -e "console.log('main-js')"`,
+          "prebuild:css": `${funExe()} -e "console.log('pre-css')"`,
+          "build:css": `${funExe()} -e "console.log('main-css')"`,
+          "postbuild:css": `${funExe()} -e "console.log('post-css')"`,
+          "build:js": `${funExe()} -e "console.log('main-js')"`,
         },
       }),
     });
@@ -1725,9 +1725,9 @@ describe.concurrent("glob pattern matching", () => {
     using dir = tempDir("mr-glob-seq", {
       "package.json": JSON.stringify({
         scripts: {
-          "lint:c": `${bunExe()} -e "console.log('lint-c')"`,
-          "lint:a": `${bunExe()} -e "console.log('lint-a')"`,
-          "lint:b": `${bunExe()} -e "console.log('lint-b')"`,
+          "lint:c": `${funExe()} -e "console.log('lint-c')"`,
+          "lint:a": `${funExe()} -e "console.log('lint-a')"`,
+          "lint:b": `${funExe()} -e "console.log('lint-b')"`,
         },
       }),
     });
@@ -1748,9 +1748,9 @@ describe.concurrent("glob pattern matching", () => {
     using dir = tempDir("mr-glob-mixed", {
       "package.json": JSON.stringify({
         scripts: {
-          "build:css": `${bunExe()} -e "console.log('css')"`,
-          "build:js": `${bunExe()} -e "console.log('js')"`,
-          "test": `${bunExe()} -e "console.log('test-ran')"`,
+          "build:css": `${funExe()} -e "console.log('css')"`,
+          "build:js": `${funExe()} -e "console.log('js')"`,
+          "test": `${funExe()} -e "console.log('test-ran')"`,
         },
       }),
     });
@@ -1790,9 +1790,9 @@ function makeWorkspace(
 describe("workspace integration", () => {
   test("--parallel --filter='*' runs script in all packages", async () => {
     using dir = makeWorkspace("mr-ws-all", {
-      "pkg-a": { build: `${bunExe()} -e "console.log('a-built')"` },
-      "pkg-b": { build: `${bunExe()} -e "console.log('b-built')"` },
-      "pkg-c": { build: `${bunExe()} -e "console.log('c-built')"` },
+      "pkg-a": { build: `${funExe()} -e "console.log('a-built')"` },
+      "pkg-b": { build: `${funExe()} -e "console.log('b-built')"` },
+      "pkg-c": { build: `${funExe()} -e "console.log('c-built')"` },
     });
     const r = await runMulti(["run", "--parallel", "--filter", "*", "build"], String(dir));
     expectPrefixed(r.stdout, "pkg-a:build", "a-built");
@@ -1803,8 +1803,8 @@ describe("workspace integration", () => {
 
   test("--parallel --filter='pkg-a' runs only in matching package", async () => {
     using dir = makeWorkspace("mr-ws-single", {
-      "pkg-a": { build: `${bunExe()} -e "console.log('a-only')"` },
-      "pkg-b": { build: `${bunExe()} -e "console.log('b-nope')"` },
+      "pkg-a": { build: `${funExe()} -e "console.log('a-only')"` },
+      "pkg-b": { build: `${funExe()} -e "console.log('b-nope')"` },
     });
     const r = await runMulti(["run", "--parallel", "--filter", "pkg-a", "build"], String(dir));
     expectPrefixed(r.stdout, "pkg-a:build", "a-only");
@@ -1814,8 +1814,8 @@ describe("workspace integration", () => {
 
   test("--parallel --workspaces matches all workspace packages", async () => {
     using dir = makeWorkspace("mr-ws-workspaces", {
-      "pkg-a": { test: `${bunExe()} -e "console.log('a-test')"` },
-      "pkg-b": { test: `${bunExe()} -e "console.log('b-test')"` },
+      "pkg-a": { test: `${funExe()} -e "console.log('a-test')"` },
+      "pkg-b": { test: `${funExe()} -e "console.log('b-test')"` },
     });
     const r = await runMulti(["run", "--parallel", "--workspaces", "test"], String(dir));
     expectPrefixed(r.stdout, "pkg-a:test", "a-test");
@@ -1826,11 +1826,11 @@ describe("workspace integration", () => {
   test("--parallel --filter='*' with glob expands per-package scripts", async () => {
     using dir = makeWorkspace("mr-ws-glob", {
       "pkg-a": {
-        "build:css": `${bunExe()} -e "console.log('a-css')"`,
-        "build:js": `${bunExe()} -e "console.log('a-js')"`,
+        "build:css": `${funExe()} -e "console.log('a-css')"`,
+        "build:js": `${funExe()} -e "console.log('a-js')"`,
       },
       "pkg-b": {
-        "build:css": `${bunExe()} -e "console.log('b-css')"`,
+        "build:css": `${funExe()} -e "console.log('b-css')"`,
       },
     });
     const r = await runMulti(["run", "--parallel", "--filter", "*", "build:*"], String(dir));
@@ -1842,8 +1842,8 @@ describe("workspace integration", () => {
 
   test("--sequential --filter='*' runs in sequence", async () => {
     using dir = makeWorkspace("mr-ws-seq", {
-      "pkg-a": { build: `${bunExe()} -e "console.log('a-seq')"` },
-      "pkg-b": { build: `${bunExe()} -e "console.log('b-seq')"` },
+      "pkg-a": { build: `${funExe()} -e "console.log('a-seq')"` },
+      "pkg-b": { build: `${funExe()} -e "console.log('b-seq')"` },
     });
     const r = await runMulti(["run", "--sequential", "--filter", "*", "build"], String(dir));
     expectPrefixed(r.stdout, "pkg-a:build", "a-seq");
@@ -1859,8 +1859,8 @@ describe("workspace integration", () => {
 
   test("workspace + failure aborts other scripts", async () => {
     using dir = makeWorkspace("mr-ws-fail", {
-      "pkg-a": { build: `${bunExe()} -e "process.exit(1)"` },
-      "pkg-b": { build: `${bunExe()} -e "await Bun.sleep(30000); console.log('should-not-appear')"` },
+      "pkg-a": { build: `${funExe()} -e "process.exit(1)"` },
+      "pkg-b": { build: `${funExe()} -e "await Fun.sleep(30000); console.log('should-not-appear')"` },
     });
     const start = Date.now();
     const r = await runMulti(["run", "--parallel", "--filter", "*", "build"], String(dir));
@@ -1873,8 +1873,8 @@ describe("workspace integration", () => {
 
   test("workspace + --no-exit-on-error lets all finish", async () => {
     using dir = makeWorkspace("mr-ws-noexit", {
-      "pkg-a": { build: `${bunExe()} -e "process.exit(1)"` },
-      "pkg-b": { build: `${bunExe()} -e "console.log('b-ok')"` },
+      "pkg-a": { build: `${funExe()} -e "process.exit(1)"` },
+      "pkg-b": { build: `${funExe()} -e "console.log('b-ok')"` },
     });
     const r = await runMulti(["run", "--parallel", "--no-exit-on-error", "--filter", "*", "build"], String(dir));
     expectExited(r.stderr, "pkg-a:build", 1);
@@ -1886,9 +1886,9 @@ describe("workspace integration", () => {
     using dir = makeWorkspace(
       "mr-ws-skiproot",
       {
-        "pkg-a": { build: `${bunExe()} -e "console.log('a-ws')"` },
+        "pkg-a": { build: `${funExe()} -e "console.log('a-ws')"` },
       },
-      { build: `${bunExe()} -e "console.log('root-should-not-run')"` },
+      { build: `${funExe()} -e "console.log('root-should-not-run')"` },
     );
     const r = await runMulti(["run", "--parallel", "--workspaces", "build"], String(dir));
     expectPrefixed(r.stdout, "pkg-a:build", "a-ws");
@@ -1898,8 +1898,8 @@ describe("workspace integration", () => {
 
   test("each workspace script runs in its own package directory", async () => {
     using dir = makeWorkspace("mr-ws-cwd", {
-      "pkg-a": { pwd: `${bunExe()} -e "console.log(process.cwd())"` },
-      "pkg-b": { pwd: `${bunExe()} -e "console.log(process.cwd())"` },
+      "pkg-a": { pwd: `${funExe()} -e "console.log(process.cwd())"` },
+      "pkg-b": { pwd: `${funExe()} -e "console.log(process.cwd())"` },
     });
     const r = await runMulti(["run", "--parallel", "--filter", "*", "pwd"], String(dir));
     // Each package should report its own directory, not the root
@@ -1920,12 +1920,12 @@ describe("workspace integration", () => {
   test("multiple script names across workspaces", async () => {
     using dir = makeWorkspace("mr-ws-multi-scripts", {
       "pkg-a": {
-        build: `${bunExe()} -e "console.log('a-build')"`,
-        test: `${bunExe()} -e "console.log('a-test')"`,
+        build: `${funExe()} -e "console.log('a-build')"`,
+        test: `${funExe()} -e "console.log('a-test')"`,
       },
       "pkg-b": {
-        build: `${bunExe()} -e "console.log('b-build')"`,
-        test: `${bunExe()} -e "console.log('b-test')"`,
+        build: `${funExe()} -e "console.log('b-build')"`,
+        test: `${funExe()} -e "console.log('b-test')"`,
       },
     });
     const r = await runMulti(["run", "--parallel", "--filter", "*", "build", "test"], String(dir));
@@ -1939,9 +1939,9 @@ describe("workspace integration", () => {
   test("pre/post scripts work per workspace package", async () => {
     using dir = makeWorkspace("mr-ws-prepost", {
       "pkg-a": {
-        prebuild: `${bunExe()} -e "console.log('a-pre')"`,
-        build: `${bunExe()} -e "console.log('a-main')"`,
-        postbuild: `${bunExe()} -e "console.log('a-post')"`,
+        prebuild: `${funExe()} -e "console.log('a-pre')"`,
+        build: `${funExe()} -e "console.log('a-main')"`,
+        postbuild: `${funExe()} -e "console.log('a-post')"`,
       },
     });
     const r = await runMulti(["run", "--parallel", "--filter", "*", "build"], String(dir));
@@ -1962,8 +1962,8 @@ describe("workspace integration", () => {
 
   test("--filter skips packages without the script (no error)", async () => {
     using dir = makeWorkspace("mr-ws-skip-missing", {
-      "pkg-a": { build: `${bunExe()} -e "console.log('a-has-it')"` },
-      "pkg-b": { lint: `${bunExe()} -e "console.log('b-different')"` },
+      "pkg-a": { build: `${funExe()} -e "console.log('a-has-it')"` },
+      "pkg-b": { lint: `${funExe()} -e "console.log('b-different')"` },
     });
     // pkg-b doesn't have 'build', should be silently skipped with --filter
     const r = await runMulti(["run", "--parallel", "--filter", "*", "build"], String(dir));
@@ -1974,8 +1974,8 @@ describe("workspace integration", () => {
 
   test("--workspaces errors when a package is missing the script", async () => {
     using dir = makeWorkspace("mr-ws-missing-err", {
-      "pkg-a": { build: `${bunExe()} -e "console.log('a-ok')"` },
-      "pkg-b": { lint: `${bunExe()} -e "console.log('no-build')"` },
+      "pkg-a": { build: `${funExe()} -e "console.log('a-ok')"` },
+      "pkg-b": { lint: `${funExe()} -e "console.log('no-build')"` },
     });
     // --workspaces (not --filter) should error on missing script
     const r = await runMulti(["run", "--parallel", "--workspaces", "build"], String(dir));
@@ -1985,8 +1985,8 @@ describe("workspace integration", () => {
 
   test("--workspaces --if-present skips missing scripts silently", async () => {
     using dir = makeWorkspace("mr-ws-ifpresent", {
-      "pkg-a": { build: `${bunExe()} -e "console.log('a-present')"` },
-      "pkg-b": { lint: `${bunExe()} -e "console.log('no-build')"` },
+      "pkg-a": { build: `${funExe()} -e "console.log('a-present')"` },
+      "pkg-b": { lint: `${funExe()} -e "console.log('no-build')"` },
     });
     const r = await runMulti(["run", "--parallel", "--workspaces", "--if-present", "build"], String(dir));
     expectPrefixed(r.stdout, "pkg-a:build", "a-present");
@@ -1996,8 +1996,8 @@ describe("workspace integration", () => {
 
   test("labels are padded correctly across workspace packages", async () => {
     using dir = makeWorkspace("mr-ws-padding", {
-      "a": { build: `${bunExe()} -e "console.log('short')"` },
-      "long-package-name": { build: `${bunExe()} -e "console.log('long')"` },
+      "a": { build: `${funExe()} -e "console.log('short')"` },
+      "long-package-name": { build: `${funExe()} -e "console.log('long')"` },
     });
     const r = await runMulti(["run", "--parallel", "--filter", "*", "build"], String(dir));
     const stdoutLines = r.stdout.split("\n").filter(l => l.includes(" | "));
@@ -2021,7 +2021,7 @@ describe("workspace integration", () => {
       }),
       "packages/my-pkg/package.json": JSON.stringify({
         // no "name" field
-        scripts: { build: `${bunExe()} -e "console.log('no-name-ok')"` },
+        scripts: { build: `${funExe()} -e "console.log('no-name-ok')"` },
       }),
     });
     const r = await runMulti(["run", "--parallel", "--filter", "./packages/my-pkg", "build"], String(dir));

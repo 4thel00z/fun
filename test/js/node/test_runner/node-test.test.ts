@@ -1,6 +1,6 @@
-import { spawn } from "bun";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { spawn } from "fun";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "node:path";
 
 describe("node:test", () => {
@@ -61,8 +61,8 @@ async function runTests(filenames: string[]) {
     stdout: stdoutStream,
     stderr: stderrStream,
   } = spawn({
-    cmd: [bunExe(), "test", ...testPaths],
-    env: bunEnv,
+    cmd: [funExe(), "test", ...testPaths],
+    env: funEnv,
     stderr: "pipe",
   });
   const [exitCode, stdout, stderr] = await Promise.all([

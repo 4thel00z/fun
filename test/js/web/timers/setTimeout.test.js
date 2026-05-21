@@ -1,7 +1,7 @@
-import { spawnSync } from "bun";
-import { heapStats } from "bun:jsc";
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { spawnSync } from "fun";
+import { heapStats } from "fun:jsc";
+import { expect, it } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import path from "node:path";
 
 it("setTimeout", async () => {
@@ -78,7 +78,7 @@ it.todo("setImmediate runs after setTimeout cb", async () => {
     if (ranFirst === -1) ranFirst = 0;
   });
 
-  await Bun.sleep(5);
+  await Fun.sleep(5);
 
   expect(ranFirst).toBe(1);
 });
@@ -123,14 +123,14 @@ it("setTimeout(() => {}, 0)", async () => {
   expect(ranFirst).toBe(-1);
 });
 
-it("Bun.sleep", async () => {
+it("Fun.sleep", async () => {
   var sleeps = 0;
-  await Bun.sleep(0);
+  await Fun.sleep(0);
   const start = performance.now();
   sleeps++;
-  await Bun.sleep(1);
+  await Fun.sleep(1);
   sleeps++;
-  await Bun.sleep(2);
+  await Fun.sleep(2);
   sleeps++;
   const end = performance.now();
   expect((end - start) * 1000).toBeGreaterThan(2);
@@ -138,9 +138,9 @@ it("Bun.sleep", async () => {
   expect(sleeps).toBe(3);
 });
 
-it("Bun.sleep propagates exceptions", async () => {
+it("Fun.sleep propagates exceptions", async () => {
   try {
-    await Bun.sleep(1).then(a => {
+    await Fun.sleep(1).then(a => {
       throw new Error("TestPassed");
     });
     throw "Should not reach here";
@@ -150,21 +150,21 @@ it("Bun.sleep propagates exceptions", async () => {
 });
 
 const tolerance = 8;
-it("Bun.sleep works with a Date object", async () => {
+it("Fun.sleep works with a Date object", async () => {
   const offset = isWindows ? 100 : 10;
   const init = performance.now();
   var ten_ms = new Date();
   ten_ms.setMilliseconds(ten_ms.getMilliseconds() + offset);
-  await Bun.sleep(ten_ms);
+  await Fun.sleep(ten_ms);
   expect(Math.ceil(performance.now() - init + tolerance)).toBeGreaterThanOrEqual(offset);
 });
 
-it("Bun.sleep(Date) fulfills after Date", async () => {
+it("Fun.sleep(Date) fulfills after Date", async () => {
   const offset = isWindows ? 100 : 50;
   let ten_ms = new Date();
   const init = performance.now();
   ten_ms.setMilliseconds(ten_ms.getMilliseconds() + offset);
-  await Bun.sleep(ten_ms);
+  await Fun.sleep(ten_ms);
   expect(Math.ceil(performance.now() - init + tolerance)).toBeGreaterThanOrEqual(offset);
 });
 
@@ -203,8 +203,8 @@ it("order of setTimeouts", done => {
 
 it("setTimeout -> refresh", () => {
   const { exitCode, stdout } = spawnSync({
-    cmd: [bunExe(), path.join(import.meta.dir, "setTimeout-unref-fixture.js")],
-    env: bunEnv,
+    cmd: [funExe(), path.join(import.meta.dir, "setTimeout-unref-fixture.js")],
+    env: funEnv,
   });
   expect(exitCode).toBe(0);
   expect(stdout.toString()).toBe("SUCCESS\n");
@@ -212,8 +212,8 @@ it("setTimeout -> refresh", () => {
 
 it("setTimeout -> unref -> ref works", () => {
   const { exitCode, stdout } = spawnSync({
-    cmd: [bunExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-4.js")],
-    env: bunEnv,
+    cmd: [funExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-4.js")],
+    env: funEnv,
   });
   expect(exitCode).toBe(0);
   expect(stdout.toString()).toBe("TEST PASSED!\n");
@@ -221,8 +221,8 @@ it("setTimeout -> unref -> ref works", () => {
 
 it("setTimeout -> ref -> unref works, even if there is another timer", () => {
   const { exitCode, stdout } = spawnSync({
-    cmd: [bunExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-2.js")],
-    env: bunEnv,
+    cmd: [funExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-2.js")],
+    env: funEnv,
   });
   expect(exitCode).toBe(0);
   expect(stdout.toString()).toBe("");
@@ -230,8 +230,8 @@ it("setTimeout -> ref -> unref works, even if there is another timer", () => {
 
 it("setTimeout -> ref -> unref works", () => {
   const { exitCode, stdout } = spawnSync({
-    cmd: [bunExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-5.js")],
-    env: bunEnv,
+    cmd: [funExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-5.js")],
+    env: funEnv,
   });
   expect(exitCode).toBe(0);
   expect(stdout.toString()).toBe("");
@@ -239,8 +239,8 @@ it("setTimeout -> ref -> unref works", () => {
 
 it("setTimeout -> unref doesn't keep event loop alive forever", () => {
   const { exitCode, stdout } = spawnSync({
-    cmd: [bunExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-3.js")],
-    env: bunEnv,
+    cmd: [funExe(), path.join(import.meta.dir, "setTimeout-unref-fixture-3.js")],
+    env: funEnv,
   });
   expect(exitCode).toBe(0);
   expect(stdout.toString()).toBe("");
@@ -257,9 +257,9 @@ it("setTimeout -> fire -> unref -> ref does not keep the event loop alive", asyn
       console.log("destroyed=" + t._destroyed);
     }, 20);
   `;
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", src],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", src],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
     timeout: 4_000,
@@ -280,9 +280,9 @@ it("setImmediate -> fire -> unref -> ref does not keep the event loop alive", as
       console.log("destroyed=" + im._destroyed);
     }, 20);
   `;
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", src],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", src],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
     timeout: 4_000,
@@ -376,7 +376,7 @@ it("setTimeout Timeout objects are unprotected after called", async () => {
 
   expect(heapStats().protectedObjectTypeCounts.Timeout || 0).toEqual(initial.Timeout || 0);
 
-  Bun.gc(true);
+  Fun.gc(true);
   remaining = 5;
   ({ promise, resolve } = Promise.withResolvers());
   setInterval(function () {
@@ -386,15 +386,15 @@ it("setTimeout Timeout objects are unprotected after called", async () => {
       queueMicrotask(resolve);
     }
   });
-  Bun.gc(true);
+  Fun.gc(true);
   await promise;
   expect(heapStats().protectedObjectTypeCounts.Timeout || 0).toEqual(initial.Timeout || 0);
 });
 
 it("setTimeout CPU usage #7790", async () => {
-  const process = Bun.spawn({
-    cmd: [bunExe(), "run", path.join(import.meta.dir, "setTimeout-cpu-fixture.js")],
-    env: bunEnv,
+  const process = Fun.spawn({
+    cmd: [funExe(), "run", path.join(import.meta.dir, "setTimeout-cpu-fixture.js")],
+    env: funEnv,
     stdout: "inherit",
   });
   const code = await process.exited;
@@ -417,9 +417,9 @@ it("setTimeout canceling with unref, close, _idleTimeout, and _onTimeout", () =>
 
 for (const mode of ["clear", "refresh", "repeat"]) {
   it(`setTimeout doesn't leak when ${mode} is called inside its own callback`, async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), path.join(import.meta.dir, "setTimeout-clear-in-callback-leak-fixture.js"), mode],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), path.join(import.meta.dir, "setTimeout-clear-in-callback-leak-fixture.js"), mode],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -438,9 +438,9 @@ it("setTimeout does not leak a pending exception when emitting a timeout warning
   // The out-of-range timeout warning queues a process.nextTick, which reads process._exiting.
   // If that read throws, the exception must not be left pending on the VM when setTimeout
   // returns — otherwise debug builds hit releaseAssertNoException().
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
         process.nextTick(() => {});
@@ -453,7 +453,7 @@ it("setTimeout does not leak a pending exception when emitting a timeout warning
         console.log("survived");
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

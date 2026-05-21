@@ -1,7 +1,7 @@
-import { write } from "bun";
-import { beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { write } from "fun";
+import { beforeAll, expect, setDefaultTimeout, test } from "fun:test";
 import { readFileSync, writeFileSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 beforeAll(() => {
@@ -9,31 +9,31 @@ beforeAll(() => {
 });
 
 function install(cwd: string, args: string[]) {
-  const exec = Bun.spawnSync({
-    cmd: [bunExe(), ...args, "--linker=hoisted"],
+  const exec = Fun.spawnSync({
+    cmd: [funExe(), ...args, "--linker=hoisted"],
     cwd,
     stdout: "inherit",
     stdin: "inherit",
     stderr: "inherit",
-    env: bunEnv,
+    env: funEnv,
   });
   if (exec.exitCode !== 0) {
-    throw new Error(`bun install exited with code ${exec.exitCode}`);
+    throw new Error(`fun install exited with code ${exec.exitCode}`);
   }
   return exec;
 }
 
 function installExpectFail(cwd: string, args: string[]) {
-  const exec = Bun.spawnSync({
-    cmd: [bunExe(), ...args],
+  const exec = Fun.spawnSync({
+    cmd: [funExe(), ...args],
     cwd,
     stdout: "inherit",
     stdin: "inherit",
     stderr: "inherit",
-    env: bunEnv,
+    env: funEnv,
   });
   if (exec.exitCode === 0) {
-    throw new Error(`bun install exited with code ${exec.exitCode}, (expected failure)`);
+    throw new Error(`fun install exited with code ${exec.exitCode}, (expected failure)`);
   }
   return exec;
 }
@@ -44,12 +44,12 @@ function versionOf(cwd: string, path: string) {
   return json.version;
 }
 
-function ensureLockfileDoesntChangeOnBunI(cwd: string) {
+function ensureLockfileDoesntChangeOnFunI(cwd: string) {
   install(cwd, ["install"]);
-  const lockb1 = readFileSync(join(cwd, "bun.lock"));
+  const lockb1 = readFileSync(join(cwd, "fun.lock"));
   install(cwd, ["install", "--frozen-lockfile"]);
   install(cwd, ["install", "--force"]);
-  const lockb2 = readFileSync(join(cwd, "bun.lock"));
+  const lockb2 = readFileSync(join(cwd, "fun.lock"));
 
   expect(lockb1.toString("hex")).toEqual(lockb2.toString("hex"));
 }
@@ -67,7 +67,7 @@ test("overrides affect your own packages", async () => {
   );
   install(tmp, ["install", "lodash"]);
   expect(versionOf(tmp, "node_modules/lodash/package.json")).toBe("4.0.0");
-  ensureLockfileDoesntChangeOnBunI(tmp);
+  ensureLockfileDoesntChangeOnFunI(tmp);
 });
 
 test("overrides affects all dependencies", async () => {
@@ -84,7 +84,7 @@ test("overrides affects all dependencies", async () => {
   install(tmp, ["install", "express@4.18.2"]);
   expect(versionOf(tmp, "node_modules/bytes/package.json")).toBe("1.0.0");
 
-  ensureLockfileDoesntChangeOnBunI(tmp);
+  ensureLockfileDoesntChangeOnFunI(tmp);
 });
 
 test("overrides being set later affects all dependencies", async () => {
@@ -98,7 +98,7 @@ test("overrides being set later affects all dependencies", async () => {
   install(tmp, ["install", "express@4.18.2"]);
   expect(versionOf(tmp, "node_modules/bytes/package.json")).not.toBe("1.0.0");
 
-  ensureLockfileDoesntChangeOnBunI(tmp);
+  ensureLockfileDoesntChangeOnFunI(tmp);
 
   writeFileSync(
     join(tmp, "package.json"),
@@ -112,7 +112,7 @@ test("overrides being set later affects all dependencies", async () => {
   install(tmp, ["install"]);
   expect(versionOf(tmp, "node_modules/bytes/package.json")).toBe("1.0.0");
 
-  ensureLockfileDoesntChangeOnBunI(tmp);
+  ensureLockfileDoesntChangeOnFunI(tmp);
 });
 
 test("overrides to npm specifier", async () => {
@@ -133,7 +133,7 @@ test("overrides to npm specifier", async () => {
   expect(bytes.name).toBe("lodash");
   expect(bytes.version).toBe("4.0.0");
 
-  ensureLockfileDoesntChangeOnBunI(tmp);
+  ensureLockfileDoesntChangeOnFunI(tmp);
 });
 
 test("changing overrides makes the lockfile changed, prevent frozen install", async () => {
@@ -185,7 +185,7 @@ test("overrides reset when removed", async () => {
   install(tmp, ["install"]);
   expect(versionOf(tmp, "node_modules/bytes/package.json")).not.toBe("1.0.0");
 
-  ensureLockfileDoesntChangeOnBunI(tmp);
+  ensureLockfileDoesntChangeOnFunI(tmp);
 });
 
 test("overrides do not apply to workspaces", async () => {
@@ -211,10 +211,10 @@ test("overrides do not apply to workspaces", async () => {
     ),
   ]);
 
-  let { exited, stderr } = Bun.spawn({
-    cmd: [bunExe(), "install"],
+  let { exited, stderr } = Fun.spawn({
+    cmd: [funExe(), "install"],
     cwd: tmp,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "inherit",
   });
@@ -223,10 +223,10 @@ test("overrides do not apply to workspaces", async () => {
   expect(await stderr.text()).toContain("Saved lockfile");
 
   // --frozen-lockfile works
-  ({ exited, stderr } = Bun.spawn({
-    cmd: [bunExe(), "install", "--frozen-lockfile"],
+  ({ exited, stderr } = Fun.spawn({
+    cmd: [funExe(), "install", "--frozen-lockfile"],
     cwd: tmp,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "inherit",
   }));
@@ -236,10 +236,10 @@ test("overrides do not apply to workspaces", async () => {
 
   // lockfile is not changed
 
-  ({ exited, stderr } = Bun.spawn({
-    cmd: [bunExe(), "install"],
+  ({ exited, stderr } = Fun.spawn({
+    cmd: [funExe(), "install"],
     cwd: tmp,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "inherit",
   }));

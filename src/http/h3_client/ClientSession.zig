@@ -6,13 +6,13 @@
 
 const ClientSession = @This();
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 /// Ref holders: the `ClientContext.sessions` registry while listed (1), the
 /// `quic.Socket` ext slot while connected (1, transferred from the registry
 /// add via `connect`), and one per entry in `pending`. `PendingConnect` holds
 /// an extra ref while DNS is in flight.
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -51,7 +51,7 @@ pub fn hasHeadroom(this: *const ClientSession) bool {
 /// created asynchronously, so the request goes into `pending` until
 /// `onStreamOpen` pops it.
 pub fn enqueue(this: *ClientSession, client: *HTTPClient) void {
-    bun.debugAssert(!this.closed);
+    fun.debugAssert(!this.closed);
     client.h3 = null;
     client.flags.protocol = .http3;
     client.allow_retry = false;
@@ -59,7 +59,7 @@ pub fn enqueue(this: *ClientSession, client: *HTTPClient) void {
     const stream = Stream.new(.{ .session = this, .client = client });
     _ = H3.live_streams.fetchAdd(1, .monotonic);
     client.h3 = stream;
-    bun.handleOom(this.pending.append(bun.default_allocator, stream));
+    fun.handleOom(this.pending.append(fun.default_allocator, stream));
     this.ref();
 
     if (this.handshake_done) {
@@ -122,8 +122,8 @@ pub fn retryOrFail(this: *ClientSession, stream: *Stream, err: anyerror) void {
     // can't pick it again.
     this.closed = true;
     const port = this.port;
-    const host = bun.handleOom(bun.default_allocator.dupe(u8, this.hostname));
-    defer bun.default_allocator.free(host);
+    const host = fun.handleOom(fun.default_allocator.dupe(u8, this.hostname));
+    defer fun.default_allocator.free(host);
     log("retry {s}:{d} after {s}", .{ host, port, @errorName(err) });
     stream.abort();
     this.detach(stream);
@@ -245,15 +245,15 @@ fn finish(client: *HTTPClient) void {
 }
 
 fn deinit(this: *ClientSession) void {
-    bun.debugAssert(this.pending.items.len == 0);
-    this.pending.deinit(bun.default_allocator);
-    bun.default_allocator.free(this.hostname);
-    bun.destroy(this);
+    fun.debugAssert(this.pending.items.len == 0);
+    this.pending.deinit(fun.default_allocator);
+    fun.default_allocator.free(this.hostname);
+    fun.destroy(this);
 }
 
 const HeaderResult = enum { has_body, finished };
 
-const log = bun.Output.scoped(.h3_client, .hidden);
+const log = fun.Output.scoped(.h3_client, .hidden);
 
 const ClientContext = @import("./ClientContext.zig");
 const H3 = @import("../H3Client.zig");
@@ -261,8 +261,8 @@ const Stream = @import("./Stream.zig");
 const encode = @import("./encode.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const HTTPClient = bun.http;
-const picohttp = bun.picohttp;
-const strings = bun.strings;
-const quic = bun.uws.quic;
+const fun = @import("fun");
+const HTTPClient = fun.http;
+const picohttp = fun.picohttp;
+const strings = fun.strings;
+const quic = fun.uws.quic;

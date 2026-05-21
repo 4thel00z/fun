@@ -28,23 +28,23 @@ pub const Url = struct {
     }
 
     /// Returns whether the URL is absolute, and not relative.
-    pub fn isAbsolute(this: *const This, import_records: *const bun.BabyList(bun.ImportRecord)) bool {
+    pub fn isAbsolute(this: *const This, import_records: *const fun.BabyList(fun.ImportRecord)) bool {
         const url = import_records.at(this.import_record_idx).path.pretty;
 
         // Quick checks. If the url starts with '.', it is relative.
-        if (bun.strings.startsWithChar(url, '.')) {
+        if (fun.strings.startsWithChar(url, '.')) {
             return false;
         }
 
         // If the url starts with '/' it is absolute.
-        if (bun.strings.startsWithChar(url, '/')) {
+        if (fun.strings.startsWithChar(url, '/')) {
             return true;
         }
 
         // If the url starts with '#' we have a fragment URL.
         // These are resolved relative to the document rather than the CSS file.
         // https://drafts.csswg.org/css-values-4/#local-urls
-        if (bun.strings.startsWithChar(url, '#')) {
+        if (fun.strings.startsWithChar(url, '#')) {
             return true;
         }
 
@@ -83,7 +83,7 @@ pub const Url = struct {
             try dest.writeChar(')');
 
             if (dest.dependencies) |*dependencies| {
-                bun.handleOom(dependencies.append(dest.allocator, css.Dependency{ .url = d }));
+                fun.handleOom(dependencies.append(dest.allocator, css.Dependency{ .url = d }));
             }
 
             return;
@@ -137,5 +137,5 @@ pub const Url = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

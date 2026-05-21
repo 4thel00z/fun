@@ -60,7 +60,7 @@ require(fixtures.path('resolve-paths', 'default', 'verify-paths.js'));
 {
   // builtinModules.
   builtinModules.forEach((mod) => {
-    if (mod.startsWith('bun')) return;
+    if (mod.startsWith('fun')) return;
 
     // TODO(@jasnell): Remove once node:quic is no longer flagged
     if (mod === 'node:quic') return;
@@ -69,7 +69,7 @@ require(fixtures.path('resolve-paths', 'default', 'verify-paths.js'));
       try {
         require.resolve(`node:${mod}`);
       } catch (e) {
-        return; // skip modules that don't support the node prefix, such as 'bun:ffi' -> 'node:bun:ffi'
+        return; // skip modules that don't support the node prefix, such as 'fun:ffi' -> 'node:fun:ffi'
       }
       assert.strictEqual(require.resolve.paths(`node:${mod}`), null);
     }

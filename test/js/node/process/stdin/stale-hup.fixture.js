@@ -2,7 +2,7 @@
 //
 // stdin is a named FIFO. The test harness writes a chunk and then closes
 // its writer, so the kernel delivers POLLHUP together with the data.
-// Bun's PosixBufferedReader.readBlockingPipe() enters its drain loop with
+// Fun's PosixBufferedReader.readBlockingPipe() enters its drain loop with
 // received_hup=true, reads the chunk, and delivers it to JS via
 // onReadChunk → pending.run() → microtask drain → our 'data' handler.
 //
@@ -15,7 +15,7 @@
 //   - with O_NONBLOCK: read() → EAGAIN → loop → EAGAIN → 100% CPU spin
 // Either way the timer below never fires and this process times out.
 //
-// With the fix, readBlockingPipe re-checks bun.isReadable() after JS ran
+// With the fix, readBlockingPipe re-checks fun.isReadable() after JS ran
 // and re-arms the poll instead of looping, so the timer fires and we
 // print OK.
 const fs = require("fs");

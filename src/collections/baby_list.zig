@@ -20,7 +20,7 @@ pub fn BabyList(comptime Type: type) type {
         len: u32 = 0,
         cap: u32 = 0,
         #origin: if (safety_checks) Origin else void = if (safety_checks) .owned,
-        #allocator: bun.safety.CheckedAllocator = .{},
+        #allocator: fun.safety.CheckedAllocator = .{},
 
         pub const Elem = Type;
 
@@ -72,7 +72,7 @@ pub fn BabyList(comptime Type: type) type {
                 @compileError(unsupported_arg_msg);
 
             if (comptime Environment.allow_assert) {
-                bun.assert(items.len <= capacity);
+                fun.assert(items.len <= capacity);
             }
 
             var this: Self = .{
@@ -89,7 +89,7 @@ pub fn BabyList(comptime Type: type) type {
             if (comptime @TypeOf(allocator) == void) {
                 list_ptr.* = .empty;
             } else {
-                this.#allocator.set(bun.allocators.asStd(allocator));
+                this.#allocator.set(fun.allocators.asStd(allocator));
                 // `moveToUnmanaged` already cleared the old list.
                 if (comptime !std.meta.hasFn(ListType, "moveToUnmanaged")) {
                     list_ptr.* = .init(allocator);
@@ -126,7 +126,7 @@ pub fn BabyList(comptime Type: type) type {
         /// Copies all elements of `items` into new memory. Creates shallow copies.
         pub fn fromSlice(allocator: std.mem.Allocator, items: []const Type) OOM!Self {
             const allocated = try allocator.alloc(Type, items.len);
-            bun.copy(Type, allocated, items);
+            fun.copy(Type, allocated, items);
 
             return Self{
                 .ptr = allocated.ptr,
@@ -153,30 +153,30 @@ pub fn BabyList(comptime Type: type) type {
             this.len = 0;
         }
 
-        pub fn slice(this: Self) callconv(bun.callconv_inline) []Type {
+        pub fn slice(this: Self) callconv(fun.callconv_inline) []Type {
             return this.ptr[0..this.len];
         }
 
         /// Same as `.slice()`, with an explicit coercion to const.
-        pub fn sliceConst(this: Self) callconv(bun.callconv_inline) []const Type {
+        pub fn sliceConst(this: Self) callconv(fun.callconv_inline) []const Type {
             return this.slice();
         }
 
-        pub fn at(this: Self, index: usize) callconv(bun.callconv_inline) *const Type {
-            bun.assert(index < this.len);
+        pub fn at(this: Self, index: usize) callconv(fun.callconv_inline) *const Type {
+            fun.assert(index < this.len);
             return &this.ptr[index];
         }
 
-        pub fn mut(this: Self, index: usize) callconv(bun.callconv_inline) *Type {
-            bun.assert(index < this.len);
+        pub fn mut(this: Self, index: usize) callconv(fun.callconv_inline) *Type {
+            fun.assert(index < this.len);
             return &this.ptr[index];
         }
 
-        pub fn first(this: Self) callconv(bun.callconv_inline) ?*Type {
+        pub fn first(this: Self) callconv(fun.callconv_inline) ?*Type {
             return if (this.len > 0) &this.ptr[0] else null;
         }
 
-        pub fn last(this: Self) callconv(bun.callconv_inline) ?*Type {
+        pub fn last(this: Self) callconv(fun.callconv_inline) ?*Type {
             return if (this.len > 0) &this.ptr[this.len - 1] else null;
         }
 
@@ -246,7 +246,7 @@ pub fn BabyList(comptime Type: type) type {
         }
 
         pub fn shrinkRetainingCapacity(this: *Self, new_len: usize) void {
-            bun.assertf(
+            fun.assertf(
                 new_len <= this.len,
                 "shrinkRetainingCapacity: new len ({d}) cannot exceed old ({d})",
                 .{ new_len, this.len },
@@ -262,7 +262,7 @@ pub fn BabyList(comptime Type: type) type {
         }
 
         pub fn appendAssumeCapacity(this: *Self, value: Type) void {
-            bun.assert(this.cap > this.len);
+            fun.assert(this.cap > this.len);
             this.ptr[this.len] = value;
             this.len += 1;
         }
@@ -275,11 +275,11 @@ pub fn BabyList(comptime Type: type) type {
         }
 
         pub fn appendSliceAssumeCapacity(this: *Self, values: []const Type) void {
-            bun.assert(this.cap >= this.len + @as(u32, @intCast(values.len)));
+            fun.assert(this.cap >= this.len + @as(u32, @intCast(values.len)));
             const tail = this.ptr[this.len .. this.len + values.len];
-            bun.copy(Type, tail, values);
+            fun.copy(Type, tail, values);
             this.len += @intCast(values.len);
-            bun.assert(this.cap >= this.len);
+            fun.assert(this.cap >= this.len);
         }
 
         pub fn pop(this: *Self) ?Type {
@@ -346,7 +346,7 @@ pub fn BabyList(comptime Type: type) type {
         }
 
         pub fn sortAsc(this: *Self) void {
-            bun.strings.sortAsc(this.slice());
+            fun.strings.sortAsc(this.slice());
         }
 
         pub fn sort(this: *Self, comptime Context: type, context: Context) void {
@@ -432,7 +432,7 @@ pub fn BabyList(comptime Type: type) type {
                     // This length is an estimate. `str` isn't validated and might contain invalid
                     // sequences. If it does simdutf will assume they require 2 characters instead
                     // of 3.
-                    bun.simdutf.length.utf8.from.utf16.le(str)
+                    fun.simdutf.length.utf8.from.utf16.le(str)
                 else
                     str.len;
 
@@ -448,13 +448,13 @@ pub fn BabyList(comptime Type: type) type {
         pub fn writeTypeAsBytesAssumeCapacity(this: *Self, comptime Int: type, int: Int) void {
             if (comptime Type != u8)
                 @compileError("Unsupported for type " ++ @typeName(Type));
-            bun.assert(this.cap >= this.len + @sizeOf(Int));
+            fun.assert(this.cap >= this.len + @sizeOf(Int));
             @as([*]align(1) Int, @ptrCast(this.ptr[this.len .. this.len + @sizeOf(Int)]))[0] = int;
             this.len += @sizeOf(Int);
         }
 
-        pub fn parse(input: *bun.css.Parser) bun.css.Result(Self) {
-            return switch (input.parseCommaSeparated(Type, bun.css.generic.parseFor(Type))) {
+        pub fn parse(input: *fun.css.Parser) fun.css.Result(Self) {
+            return switch (input.parseCommaSeparated(Type, fun.css.generic.parseFor(Type))) {
                 .result => |v| return .{ .result = Self{
                     .ptr = v.items.ptr,
                     .len = @intCast(v.items.len),
@@ -464,14 +464,14 @@ pub fn BabyList(comptime Type: type) type {
             };
         }
 
-        pub fn toCss(this: *const Self, dest: *bun.css.Printer) bun.css.PrintErr!void {
-            return bun.css.to_css.fromBabyList(Type, this, dest);
+        pub fn toCss(this: *const Self, dest: *fun.css.Printer) fun.css.PrintErr!void {
+            return fun.css.to_css.fromBabyList(Type, this, dest);
         }
 
         pub fn eql(lhs: *const Self, rhs: *const Self) bool {
             if (lhs.len != rhs.len) return false;
             for (lhs.sliceConst(), rhs.sliceConst()) |*a, *b| {
-                if (!bun.css.generic.eql(Type, a, b)) return false;
+                if (!fun.css.generic.eql(Type, a, b)) return false;
             }
             return true;
         }
@@ -493,10 +493,10 @@ pub fn BabyList(comptime Type: type) type {
             return list_;
         }
 
-        /// Same as `deepClone` but calls `bun.outOfMemory` instead of returning an error.
+        /// Same as `deepClone` but calls `fun.outOfMemory` instead of returning an error.
         /// `Type.deepClone` must not return any error except `error.OutOfMemory`.
         pub fn deepCloneInfallible(this: Self, allocator: std.mem.Allocator) Self {
-            return bun.handleOom(this.deepClone(allocator));
+            return fun.handleOom(this.deepClone(allocator));
         }
 
         /// Avoid using this function. It creates a `BabyList` that will immediately invoke
@@ -535,7 +535,7 @@ pub fn BabyList(comptime Type: type) type {
         /// Transfers ownership of this `BabyList` to a new allocator.
         ///
         /// This method is valid only if both the old allocator and new allocator are
-        /// `MimallocArena`s. See `bun.safety.CheckedAllocator.transferOwnership`.
+        /// `MimallocArena`s. See `fun.safety.CheckedAllocator.transferOwnership`.
         pub fn transferOwnership(this: *Self, new_allocator: anytype) void {
             this.#allocator.transferOwnership(new_allocator);
         }
@@ -553,8 +553,8 @@ pub fn BabyList(comptime Type: type) type {
         fn assertOwned(this: *Self) void {
             if ((comptime !safety_checks) or this.#origin == .owned) return;
             if (comptime traces_enabled) {
-                bun.Output.note("borrowed BabyList created here:", .{});
-                bun.crash_handler.dumpStackTrace(
+                fun.Output.note("borrowed BabyList created here:", .{});
+                fun.crash_handler.dumpStackTrace(
                     this.#origin.borrowed.trace.trace(),
                     .{ .frame_count = 10, .stop_at_jsc_llint = true },
                 );
@@ -583,7 +583,7 @@ pub fn BabyList(comptime Type: type) type {
             this.len = @intCast(list_.items.len);
             this.cap = @intCast(list_.capacity);
             if (comptime Environment.allow_assert) {
-                bun.assert(this.len <= this.cap);
+                fun.assert(this.len <= this.cap);
             }
         }
 
@@ -651,10 +651,10 @@ pub const safety_checks = Environment.ci_assert;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const strings = bun.strings;
-const StoredTrace = bun.crash_handler.StoredTrace;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const strings = fun.strings;
+const StoredTrace = fun.crash_handler.StoredTrace;
 
-const Environment = bun.Environment;
+const Environment = fun.Environment;
 const traces_enabled = Environment.isDebug;

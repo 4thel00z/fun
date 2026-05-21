@@ -11,7 +11,7 @@
 #include <JavaScriptCore/ObjectPrototype.h>
 #include "JSDOMExceptionHandling.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsDiffieHellmanGetter_verifyError);
 
@@ -68,10 +68,10 @@ JSC_DEFINE_HOST_FUNCTION(jsDiffieHellmanGetter_verifyError, (JSC::JSGlobalObject
     auto& dh = thisObject->getImpl();
     auto result = dh.check();
     if (result == ncrypto::DHPointer::CheckResult::CHECK_FAILED) {
-        return Bun::ERR::CRYPTO_OPERATION_FAILED(scope, globalObject, "Checking DH parameters failed"_s);
+        return Fun::ERR::CRYPTO_OPERATION_FAILED(scope, globalObject, "Checking DH parameters failed"_s);
     }
 
     return JSC::JSValue::encode(JSC::jsNumber(static_cast<int>(result)));
 }
 
-} // namespace Bun
+} // namespace Fun

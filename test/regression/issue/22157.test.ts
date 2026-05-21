@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
-// Regression test for https://github.com/oven-sh/bun/issues/22157
+// Regression test for https://github.com/underdoc-org/fun/issues/22157
 // Compiled binaries were including executable name in process.argv
 test("issue 22157: compiled binary should not include executable name in process.argv", async () => {
   const dir = tempDirWithFiles("22157-basic", {
@@ -20,10 +20,10 @@ test("issue 22157: compiled binary should not include executable name in process
   });
 
   // Compile the binary
-  await using compileProc = Bun.spawn({
-    cmd: [bunExe(), "build", "--compile", "--outfile=test-binary", "./index.js"],
+  await using compileProc = Fun.spawn({
+    cmd: [funExe(), "build", "--compile", "--outfile=test-binary", "./index.js"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -31,10 +31,10 @@ test("issue 22157: compiled binary should not include executable name in process
   await compileProc.exited;
 
   // Run the compiled binary - should not throw
-  await using runProc = Bun.spawn({
+  await using runProc = Fun.spawn({
     cmd: ["./test-binary"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -50,9 +50,9 @@ test("issue 22157: compiled binary should not include executable name in process
 
   const processArgv = JSON.parse(argvMatch![0]);
   expect(processArgv).toHaveLength(2);
-  expect(processArgv[0]).toBe("bun");
-  // Windows uses "B:/~BUN/root/", Unix uses "/$bunfs/root/"
-  expect(processArgv[1]).toMatch(/(\$bunfs|~BUN).*root/);
+  expect(processArgv[0]).toBe("fun");
+  // Windows uses "B:/~FUN/root/", Unix uses "/$funfs/root/"
+  expect(processArgv[1]).toMatch(/(\$funfs|~FUN).*root/);
 });
 
 test("issue 22157: compiled binary with user args should pass them correctly", async () => {
@@ -60,7 +60,7 @@ test("issue 22157: compiled binary with user args should pass them correctly", a
     "index.js": /* js */ `
       console.log(JSON.stringify(process.argv));
       
-      // Expect: ["bun", "/$bunfs/root/..." or "B:/~BUN/root/...", "arg1", "arg2"]
+      // Expect: ["fun", "/$funfs/root/..." or "B:/~FUN/root/...", "arg1", "arg2"]
       if (process.argv.length !== 4) {
         console.error("Expected 4 argv items, got", process.argv.length);
         process.exit(1);
@@ -75,20 +75,20 @@ test("issue 22157: compiled binary with user args should pass them correctly", a
     `,
   });
 
-  await using compileProc = Bun.spawn({
-    cmd: [bunExe(), "build", "--compile", "--outfile=test-binary", "./index.js"],
+  await using compileProc = Fun.spawn({
+    cmd: [funExe(), "build", "--compile", "--outfile=test-binary", "./index.js"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
 
   await compileProc.exited;
 
-  await using runProc = Bun.spawn({
+  await using runProc = Fun.spawn({
     cmd: ["./test-binary", "arg1", "arg2"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

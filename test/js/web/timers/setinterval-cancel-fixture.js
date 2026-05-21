@@ -1,7 +1,7 @@
 const huge = Array.from({ length: 1000000 }, () => 0);
 huge.fill(0);
 let hasRun = false;
-const gc = typeof Bun !== "undefined" ? Bun.gc : typeof globalThis.gc !== "undefined" ? globalThis.gc : () => {};
+const gc = typeof Fun !== "undefined" ? Fun.gc : typeof globalThis.gc !== "undefined" ? globalThis.gc : () => {};
 
 var timers = new Array(50_000);
 

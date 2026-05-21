@@ -56,7 +56,7 @@ pub fn enter(this: *Handlers) Scope {
 
 // corker: Corker = .{},
 
-pub fn resolvePromise(this: *Handlers, value: JSValue) bun.JSTerminated!void {
+pub fn resolvePromise(this: *Handlers, value: JSValue) fun.JSTerminated!void {
     const vm = this.vm;
     if (vm.isShuttingDown()) {
         return;
@@ -67,7 +67,7 @@ pub fn resolvePromise(this: *Handlers, value: JSValue) bun.JSTerminated!void {
     try anyPromise.resolve(this.globalObject, value);
 }
 
-pub fn rejectPromise(this: *Handlers, value: JSValue) bun.JSTerminated!bool {
+pub fn rejectPromise(this: *Handlers, value: JSValue) fun.JSTerminated!bool {
     const vm = this.vm;
     if (vm.isShuttingDown()) {
         return true;
@@ -127,7 +127,7 @@ pub fn fromJS(
     globalObject: *jsc.JSGlobalObject,
     opts: jsc.JSValue,
     is_server: bool,
-) bun.JSError!Handlers {
+) fun.JSError!Handlers {
     var generated: jsc.generated.SocketConfigHandlers = try .fromJS(globalObject, opts);
     defer generated.deinit();
     return .fromGenerated(globalObject, &generated, is_server);
@@ -137,9 +137,9 @@ pub fn fromGenerated(
     globalObject: *jsc.JSGlobalObject,
     generated: *const jsc.generated.SocketConfigHandlers,
     is_server: bool,
-) bun.JSError!Handlers {
+) fun.JSError!Handlers {
     var result: Handlers = .{
-        .vm = globalObject.bunVM(),
+        .vm = globalObject.funVM(),
         .globalObject = globalObject,
         .mode = if (is_server) .server else .client,
         .binary_type = switch (generated.binary_type) {
@@ -182,7 +182,7 @@ fn unprotect(this: *Handlers) void {
     }
 
     if (comptime Environment.ci_assert) {
-        bun.assert(this.protection_count > 0);
+        fun.assert(this.protection_count > 0);
         this.protection_count -= 1;
     }
     this.onOpen.unprotect();
@@ -224,7 +224,7 @@ fn protect(this: *Handlers) void {
 pub const SocketConfig = struct {
     hostname_or_unix: jsc.ZigString.Slice,
     port: ?u16 = null,
-    fd: ?bun.FD = null,
+    fd: ?fun.FD = null,
     ssl: ?SSLConfig = null,
     handlers: Handlers,
     default_data: jsc.JSValue = .zero,
@@ -243,7 +243,7 @@ pub const SocketConfig = struct {
     /// Deinitializes everything except `handlers`.
     pub fn deinitExcludingHandlers(this: *SocketConfig) void {
         this.hostname_or_unix.deinit();
-        bun.memory.deinit(&this.ssl);
+        fun.memory.deinit(&this.ssl);
         const handlers = this.handlers;
         this.* = undefined;
         // make sure pointers to `this.handlers` are still valid
@@ -273,14 +273,14 @@ pub const SocketConfig = struct {
         global: *jsc.JSGlobalObject,
         generated: *const jsc.generated.SocketConfig,
         is_server: bool,
-    ) bun.JSError!SocketConfig {
+    ) fun.JSError!SocketConfig {
         var result: SocketConfig = blk: {
             var ssl: ?SSLConfig = switch (generated.tls) {
                 .none => null,
                 .boolean => |b| if (b) .zero else null,
                 .object => |*ssl| try .fromGenerated(vm, global, ssl),
             };
-            errdefer bun.memory.deinit(&ssl);
+            errdefer fun.memory.deinit(&ssl);
             break :blk .{
                 .hostname_or_unix = .empty,
                 .fd = if (generated.fd) |fd| .fromUV(fd) else null,
@@ -295,21 +295,21 @@ pub const SocketConfig = struct {
             // If a user passes a file descriptor then prefer it over hostname or unix
         } else if (generated.unix_.get()) |unix| {
             if (unix.length() == 0) return global.throwInvalidArguments("Expected a non-empty \"unix\" path", .{});
-            result.hostname_or_unix = unix.toUTF8(bun.default_allocator);
+            result.hostname_or_unix = unix.toUTF8(fun.default_allocator);
             const slice = result.hostname_or_unix.slice();
             if (strings.hasPrefixComptime(slice, "file://") or
                 strings.hasPrefixComptime(slice, "unix://") or
                 strings.hasPrefixComptime(slice, "sock://"))
             {
-                const without_prefix = try bun.default_allocator.dupe(u8, slice[7..]);
+                const without_prefix = try fun.default_allocator.dupe(u8, slice[7..]);
                 result.hostname_or_unix.deinit();
-                result.hostname_or_unix = .init(bun.default_allocator, without_prefix);
+                result.hostname_or_unix = .init(fun.default_allocator, without_prefix);
             }
         } else if (generated.hostname.get()) |hostname| {
             if (hostname.length() == 0) return global.throwInvalidArguments("Expected a non-empty \"hostname\"", .{});
-            result.hostname_or_unix = hostname.toUTF8(bun.default_allocator);
+            result.hostname_or_unix = hostname.toUTF8(fun.default_allocator);
             const slice = result.hostname_or_unix.slice();
-            result.port = generated.port orelse bun.URL.parse(slice).getPort() orelse {
+            result.port = generated.port orelse fun.URL.parse(slice).getPort() orelse {
                 return global.throwInvalidArguments("Missing \"port\"", .{});
             };
             result.exclusive = generated.exclusive;
@@ -327,22 +327,22 @@ pub const SocketConfig = struct {
         opts: jsc.JSValue,
         globalObject: *jsc.JSGlobalObject,
         is_server: bool,
-    ) bun.JSError!SocketConfig {
+    ) fun.JSError!SocketConfig {
         var generated: jsc.generated.SocketConfig = try .fromJS(globalObject, opts);
         defer generated.deinit();
         return .fromGenerated(vm, globalObject, &generated, is_server);
     }
 };
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const strings = bun.strings;
-const uws = bun.uws;
-const Listener = bun.api.Listener;
-const SSLConfig = bun.api.ServerConfig.SSLConfig;
-const SocketMode = bun.api.socket.SocketMode;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const strings = fun.strings;
+const uws = fun.uws;
+const Listener = fun.api.Listener;
+const SSLConfig = fun.api.ServerConfig.SSLConfig;
+const SocketMode = fun.api.socket.SocketMode;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;
 const BinaryType = jsc.ArrayBuffer.BinaryType;

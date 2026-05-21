@@ -1,4 +1,4 @@
-pub const MemberHashMap = bun.StringHashMapUnmanaged(Member);
+pub const MemberHashMap = fun.StringHashMapUnmanaged(Member);
 
 id: usize = 0,
 kind: Kind = Kind.block,
@@ -26,14 +26,14 @@ is_after_const_local_prefix: bool = false,
 // This will be non-null if this is a TypeScript "namespace" or "enum"
 ts_namespace: ?*TSNamespaceScope = null,
 
-pub const NestedScopeMap = std.AutoArrayHashMap(u32, bun.BabyList(*Scope));
+pub const NestedScopeMap = std.AutoArrayHashMap(u32, fun.BabyList(*Scope));
 
 pub fn getMemberHash(name: []const u8) u64 {
-    return bun.StringHashMapContext.hash(.{}, name);
+    return fun.StringHashMapContext.hash(.{}, name);
 }
 
 pub fn getMemberWithHash(this: *const Scope, name: []const u8, hash_value: u64) ?Member {
-    const hashed = bun.StringHashMapContext.Prehashed{
+    const hashed = fun.StringHashMapContext.Prehashed{
         .value = hash_value,
         .input = name,
     };
@@ -46,7 +46,7 @@ pub fn getOrPutMemberWithHash(
     name: []const u8,
     hash_value: u64,
 ) !MemberHashMap.GetOrPutResult {
-    const hashed = bun.StringHashMapContext.Prehashed{
+    const hashed = fun.StringHashMapContext.Prehashed{
         .value = hash_value,
         .input = name,
     };
@@ -74,7 +74,7 @@ pub const Member = struct {
     loc: logger.Loc,
 
     pub fn eql(a: Member, b: Member) bool {
-        return @call(bun.callmod_inline, Ref.eql, .{ a.ref, b.ref }) and a.loc.start == b.loc.start;
+        return @call(fun.callmod_inline, Ref.eql, .{ a.ref, b.ref }) and a.loc.start == b.loc.start;
     }
 };
 
@@ -207,11 +207,11 @@ pub inline fn kindStopsHoisting(s: *const Scope) bool {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const logger = bun.logger;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Ref = js_ast.Ref;
 const Scope = js_ast.Scope;
 const StrictModeKind = js_ast.StrictModeKind;

@@ -1,8 +1,8 @@
 // Running this file in jest/vitest does not work as expected. Jest & Vitest
 // mess with timers, producing unreliable results. You must manually test this
 // in Node.
-import { expect, it } from "bun:test";
-const isBun = !!process.versions.bun;
+import { expect, it } from "fun:test";
+const isFun = !!process.versions.fun;
 
 it("process.nextTick", async () => {
   // You can verify this test is correct by copy pasting this into a browser's console and checking it doesn't throw an error.
@@ -60,7 +60,7 @@ it("process.nextTick", async () => {
     try {
       queueMicrotask(1234);
     } catch (exception) {
-      if (isBun) {
+      if (isFun) {
         passed = exception instanceof TypeError;
       } else {
         // Node.js throws a non-TypeError TypeError
@@ -76,7 +76,7 @@ it("process.nextTick", async () => {
     try {
       queueMicrotask();
     } catch (exception) {
-      if (isBun) {
+      if (isFun) {
         passed = exception instanceof TypeError;
       } else {
         // Node.js throws a non-TypeError TypeError

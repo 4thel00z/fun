@@ -4,7 +4,7 @@ pub const PackCommand = struct {
         allocator: std.mem.Allocator,
         command_ctx: Command.Context,
 
-        // `bun pack` does not require a lockfile, but
+        // `fun pack` does not require a lockfile, but
         // it's possible we will need it for finding
         // workspace versions. This is the only valid lockfile
         // pointer in this file. `manager.lockfile` is incorrect
@@ -35,14 +35,14 @@ pub const PackCommand = struct {
                     Output.prettyln("<b><blue>Shasum<r>: {s}", .{std.fmt.bytesToHex(shasum, .lower)});
                 }
                 if (maybe_integrity) |integrity| {
-                    Output.prettyln("<b><blue>Integrity<r>: {f}", .{bun.fmt.integrity(integrity, .short)});
+                    Output.prettyln("<b><blue>Integrity<r>: {f}", .{fun.fmt.integrity(integrity, .short)});
                 }
                 Output.prettyln("<b><blue>Unpacked size<r>: {f}", .{
-                    bun.fmt.size(stats.unpacked_size, .{ .space_between_number_and_unit = false }),
+                    fun.fmt.size(stats.unpacked_size, .{ .space_between_number_and_unit = false }),
                 });
                 if (stats.packed_size > 0) {
                     Output.pretty("<b><blue>Packed size<r>: {f}\n", .{
-                        bun.fmt.size(stats.packed_size, .{ .space_between_number_and_unit = false }),
+                        fun.fmt.size(stats.packed_size, .{ .space_between_number_and_unit = false }),
                     });
                 }
                 if (stats.bundled_deps > 0) {
@@ -60,7 +60,7 @@ pub const PackCommand = struct {
 
     pub fn execWithManager(ctx: Command.Context, manager: *PackageManager) !void {
         if (manager.options.log_level != .silent and manager.options.log_level != .quiet) {
-            Output.prettyln("<r><b>bun pack <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+            Output.prettyln("<r><b>fun pack <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
             Output.flush();
         }
 
@@ -119,7 +119,7 @@ pub const PackCommand = struct {
         // just pack the current workspace
         pack(&pack_ctx, manager.original_package_json_path, false) catch |err| {
             switch (err) {
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 error.MissingPackageName, error.MissingPackageVersion => {
                     Output.errGeneric("package.json must have `name` and `version` fields", .{});
                     Global.crash();
@@ -143,14 +143,14 @@ pub const PackCommand = struct {
             if (!cli.silent) {
                 switch (err) {
                     error.MissingPackageJSON => {
-                        var cwd_buf: bun.PathBuffer = undefined;
-                        const cwd = bun.getcwd(&cwd_buf) catch {
+                        var cwd_buf: fun.PathBuffer = undefined;
+                        const cwd = fun.getcwd(&cwd_buf) catch {
                             Output.errGeneric("failed to find project package.json", .{});
                             Global.crash();
                         };
                         Output.errGeneric("failed to find project package.json from: \"{s}\"", .{cwd});
                     },
-                    else => Output.errGeneric("failed to initialize bun install: {s}", .{@errorName(err)}),
+                    else => Output.errGeneric("failed to initialize fun install: {s}", .{@errorName(err)}),
                 }
             }
 
@@ -181,7 +181,7 @@ pub const PackCommand = struct {
         &.{ 112, 97, 99, 107, 97, 103, 101, 45, 108, 111, 99, 107, 46, 106, 115, 111, 110 }, // package-lock.json
         &.{ 121, 97, 114, 110, 46, 108, 111, 99, 107 }, // yarn.lock
         &.{ 112, 110, 112, 109, 45, 108, 111, 99, 107, 46, 121, 97, 109, 108 }, // pnpm-lock.yaml
-        &.{ 'b', 'u', 'n', '.', 'l', 'o', 'c', 'k', 'b' }, // bun.lockb
+        &.{ 'b', 'u', 'n', '.', 'l', 'o', 'c', 'k', 'b' }, // fun.lockb
         &.{ 'b', 'u', 'n', '.', 'l', 'o', 'c', 'k' },
     };
 
@@ -243,7 +243,7 @@ pub const PackCommand = struct {
     ) OOM!void {
         if (comptime Environment.isDebug) {
             for (excludes) |exclude| {
-                bun.assertf(exclude.flags.negated, "Illegal exclusion pattern '{f}'. Exclusion patterns are always negated.", .{exclude.glob});
+                fun.assertf(exclude.flags.negated, "Illegal exclusion pattern '{f}'. Exclusion patterns are always negated.", .{exclude.glob});
             }
         }
 
@@ -258,7 +258,7 @@ pub const PackCommand = struct {
         var included_dirs: std.ArrayListUnmanaged(DirInfo) = .{};
         defer included_dirs.deinit(allocator);
 
-        var subpath_dedupe = bun.StringHashMap(void).init(allocator);
+        var subpath_dedupe = fun.StringHashMap(void).init(allocator);
         defer subpath_dedupe.deinit();
 
         // first find included dirs and files
@@ -350,7 +350,7 @@ pub const PackCommand = struct {
                     },
                     .file => {
                         const dedupe_entry = try subpath_dedupe.getOrPut(entry_subpath);
-                        bun.assertWithLocation(!dedupe_entry.found_existing, @src());
+                        fun.assertWithLocation(!dedupe_entry.found_existing, @src());
                         if (dedupe_entry.found_existing) continue;
 
                         for (bins) |bin| {
@@ -387,7 +387,7 @@ pub const PackCommand = struct {
         excludes: []const Pattern,
         root_dir_info: DirInfo,
         pack_queue: *PackQueue,
-        dedupe: *bun.StringHashMap(void),
+        dedupe: *fun.StringHashMap(void),
         log_level: LogLevel,
     ) OOM!void {
         var dirs: std.ArrayListUnmanaged(DirInfo) = .{};
@@ -435,7 +435,7 @@ pub const PackCommand = struct {
                 // make sure depths are in order
                 if (ignores.items.len > 0) {
                     for (1..ignores.items.len) |i| {
-                        bun.assertWithLocation(ignores.items[i - 1].depth < ignores.items[i].depth, @src());
+                        fun.assertWithLocation(ignores.items[i - 1].depth < ignores.items[i].depth, @src());
                     }
                 }
             }
@@ -557,7 +557,7 @@ pub const PackCommand = struct {
         // - node_modules/is-even/node_modules/is-odd
         // - node_modules/is-odd
         // - ...
-        var dedupe = bun.StringHashMap(void).init(ctx.allocator);
+        var dedupe = fun.StringHashMap(void).init(ctx.allocator);
         defer dedupe.deinit();
 
         var additional_bundled_deps: std.ArrayListUnmanaged(DirInfo) = .{};
@@ -582,7 +582,7 @@ pub const PackCommand = struct {
                     const entry_name = try entrySubpath(ctx.allocator, _entry_name, sub_entry.name.slice());
 
                     for (ctx.bundled_deps.items) |*dep| {
-                        bun.assertWithLocation(dep.from_root_package_json, @src());
+                        fun.assertWithLocation(dep.from_root_package_json, @src());
                         if (!strings.eqlLong(entry_name, dep.name, true)) continue;
 
                         const entry_subpath = try entrySubpath(ctx.allocator, "node_modules", entry_name);
@@ -612,7 +612,7 @@ pub const PackCommand = struct {
             } else {
                 const entry_name = _entry_name;
                 for (ctx.bundled_deps.items) |*dep| {
-                    bun.assertWithLocation(dep.from_root_package_json, @src());
+                    fun.assertWithLocation(dep.from_root_package_json, @src());
                     if (!strings.eqlLong(entry_name, dep.name, true)) continue;
 
                     const entry_subpath = try entrySubpath(ctx.allocator, "node_modules", entry_name);
@@ -644,7 +644,7 @@ pub const PackCommand = struct {
         while (additional_bundled_deps.pop()) |bundled_dir_info| {
             const dir_subpath = bundled_dir_info[1];
             const maybe_slash = strings.lastIndexOfChar(dir_subpath, '/');
-            bun.assertWithLocation(maybe_slash != null, @src());
+            fun.assertWithLocation(maybe_slash != null, @src());
             const dep_name: string = if (maybe_slash) |slash| dir_subpath[slash + 1 ..] else dir_subpath;
 
             try ctx.bundled_deps.append(ctx.allocator, .{
@@ -672,7 +672,7 @@ pub const PackCommand = struct {
         root_dir: std.fs.Dir,
         bundled_dir_info: DirInfo,
         bundled_pack_queue: *PackQueue,
-        dedupe: *bun.StringHashMap(void),
+        dedupe: *fun.StringHashMap(void),
         additional_bundled_deps: *std.ArrayListUnmanaged(DirInfo),
         log_level: LogLevel,
     ) OOM!void {
@@ -842,7 +842,7 @@ pub const PackCommand = struct {
                 // make sure depths are in order
                 if (ignores.items.len > 0) {
                     for (1..ignores.items.len) |i| {
-                        bun.assertWithLocation(ignores.items[i - 1].depth < ignores.items[i].depth, @src());
+                        fun.assertWithLocation(ignores.items[i - 1].depth < ignores.items[i].depth, @src());
                     }
                 }
             }
@@ -881,7 +881,7 @@ pub const PackCommand = struct {
 
                 switch (entry.kind) {
                     .file => {
-                        bun.assertWithLocation(entry_subpath.len > 0, @src());
+                        fun.assertWithLocation(entry_subpath.len > 0, @src());
                         for (bins) |bin| {
                             if (bin.type == .file and strings.eqlLong(bin.path, entry_subpath, true)) {
                                 continue :next_entry;
@@ -983,7 +983,7 @@ pub const PackCommand = struct {
 
         if (json.asProperty("bin")) |bin| {
             if (bin.expr.asString(allocator)) |bin_str| {
-                const normalized = bun.path.normalizeBuf(bin_str, &path_buf, .posix);
+                const normalized = fun.path.normalizeBuf(bin_str, &path_buf, .posix);
                 try bins.append(allocator, .{
                     .path = try allocator.dupeZ(u8, normalized),
                     .type = .file,
@@ -998,7 +998,7 @@ pub const PackCommand = struct {
                     for (bin_obj.properties.slice()) |bin_prop| {
                         if (bin_prop.value) |bin_prop_value| {
                             if (bin_prop_value.asString(allocator)) |bin_str| {
-                                const normalized = bun.path.normalizeBuf(bin_str, &path_buf, .posix);
+                                const normalized = fun.path.normalizeBuf(bin_str, &path_buf, .posix);
                                 try bins.append(allocator, .{
                                     .path = try allocator.dupeZ(u8, normalized),
                                     .type = .file,
@@ -1018,7 +1018,7 @@ pub const PackCommand = struct {
                 .e_object => |directories_obj| {
                     if (directories_obj.asProperty("bin")) |bin| {
                         if (bin.expr.asString(allocator)) |bin_str| {
-                            const normalized = bun.path.normalizeBuf(bin_str, &path_buf, .posix);
+                            const normalized = fun.path.normalizeBuf(bin_str, &path_buf, .posix);
                             try bins.append(allocator, .{
                                 .path = try allocator.dupeZ(u8, normalized),
                                 .type = .dir,
@@ -1163,7 +1163,7 @@ pub const PackCommand = struct {
             };
     }
 
-    const BufferedFileReader = bun.deprecated.BufferedReader(1024 * 512, File.Reader);
+    const BufferedFileReader = fun.deprecated.BufferedReader(1024 * 512, File.Reader);
 
     pub fn pack(
         ctx: *Context,
@@ -1235,7 +1235,7 @@ pub const PackCommand = struct {
             }
         }
 
-        var this_transpiler: bun.transpiler.Transpiler = undefined;
+        var this_transpiler: fun.transpiler.Transpiler = undefined;
 
         _ = RunCommand.configureEnvForRun(
             ctx.command_ctx,
@@ -1373,7 +1373,7 @@ pub const PackCommand = struct {
             var cache_key_buf: if (Environment.isWindows) PathBuffer else void = undefined;
             const cache_key = if (comptime Environment.isWindows) blk: {
                 @memcpy(cache_key_buf[0..abs_package_json_path.len], abs_package_json_path);
-                bun.path.dangerouslyConvertPathToPosixInPlace(u8, cache_key_buf[0..abs_package_json_path.len]);
+                fun.path.dangerouslyConvertPathToPosixInPlace(u8, cache_key_buf[0..abs_package_json_path.len]);
                 break :blk cache_key_buf[0..abs_package_json_path.len];
             } else abs_package_json_path;
             _ = manager.workspace_package_json_cache.map.remove(cache_key);
@@ -1481,7 +1481,7 @@ pub const PackCommand = struct {
                         var files_array = _files_array;
                         while (files_array.next()) |files_entry| {
                             if (files_entry.asString(ctx.allocator)) |file_entry_str| {
-                                const normalized = bun.path.normalizeBuf(file_entry_str, &path_buf, .posix);
+                                const normalized = fun.path.normalizeBuf(file_entry_str, &path_buf, .posix);
                                 const parsed = try Pattern.fromUTF8(ctx.allocator, normalized) orelse continue;
                                 if (parsed.flags.negated) {
                                     @branchHint(.unlikely); // most "files" entries are not exclusions.
@@ -1576,7 +1576,7 @@ pub const PackCommand = struct {
             }
 
             if (comptime for_publish) {
-                var dest_buf: bun.PathBuffer = undefined;
+                var dest_buf: fun.PathBuffer = undefined;
                 const abs_tarball_dest, _ = tarballDestination(
                     ctx.manager.options.pack_destination,
                     ctx.manager.options.pack_filename,
@@ -1671,7 +1671,7 @@ pub const PackCommand = struct {
             const most_likely_a_slash = dest_buf[abs_tarball_dest_dir_end];
             dest_buf[abs_tarball_dest_dir_end] = 0;
             const abs_tarball_dest_dir = dest_buf[0..abs_tarball_dest_dir_end :0];
-            bun.makePath(std.fs.cwd(), abs_tarball_dest_dir) catch {};
+            fun.makePath(std.fs.cwd(), abs_tarball_dest_dir) catch {};
             dest_buf[abs_tarball_dest_dir_end] = most_likely_a_slash;
         }
 
@@ -1715,7 +1715,7 @@ pub const PackCommand = struct {
             while (pack_queue.removeOrNull()) |item| {
                 defer if (log_level.showProgress()) node.completeOne();
 
-                const file = bun.sys.openat(.fromStdDir(root_dir), item.path, bun.O.RDONLY, 0).unwrap() catch |err| {
+                const file = fun.sys.openat(.fromStdDir(root_dir), item.path, fun.O.RDONLY, 0).unwrap() catch |err| {
                     if (item.optional) {
                         ctx.stats.total_files -= 1;
                         continue;
@@ -1731,7 +1731,7 @@ pub const PackCommand = struct {
 
                 defer fd.close();
 
-                const stat = bun.sys.sys_uv.fstat(fd).unwrap() catch |err| {
+                const stat = fun.sys.sys_uv.fstat(fd).unwrap() catch |err| {
                     Output.err(err, "failed to stat file: \"{s}\"", .{item.path});
                     Global.crash();
                 };
@@ -1755,7 +1755,7 @@ pub const PackCommand = struct {
             while (bundled_pack_queue.removeOrNull()) |item| {
                 defer if (log_level.showProgress()) node.completeOne();
 
-                const file = File.openat(.fromStdDir(root_dir), item.path, bun.O.RDONLY, 0).unwrap() catch |err| {
+                const file = File.openat(.fromStdDir(root_dir), item.path, fun.O.RDONLY, 0).unwrap() catch |err| {
                     if (item.optional) {
                         ctx.stats.total_files -= 1;
                         continue;
@@ -1806,7 +1806,7 @@ pub const PackCommand = struct {
         var integrity: sha.SHA512.Digest = undefined;
 
         const tarball_bytes = tarball_bytes: {
-            const tarball_file = File.open(abs_tarball_dest, bun.O.RDONLY, 0).unwrap() catch |err| {
+            const tarball_file = File.open(abs_tarball_dest, fun.O.RDONLY, 0).unwrap() catch |err| {
                 Output.err(err, "failed to open tarball at: \"{s}\"", .{abs_tarball_dest});
                 Global.crash();
             };
@@ -1969,7 +1969,7 @@ pub const PackCommand = struct {
                 0,
             };
         } else {
-            const tarball_destination_dir = bun.path.joinAbsStringBuf(
+            const tarball_destination_dir = fun.path.joinAbsStringBuf(
                 abs_workspace_path,
                 dest_buf,
                 &.{pack_destination},
@@ -2047,7 +2047,7 @@ pub const PackCommand = struct {
         root_dir: std.fs.Dir,
         edited_package_json: string,
     ) OOM!*Archive.Entry {
-        const stat = bun.sys.fstatat(.fromStdDir(root_dir), "package.json").unwrap() catch |err| {
+        const stat = fun.sys.fstatat(.fromStdDir(root_dir), "package.json").unwrap() catch |err| {
             Output.err(err, "failed to stat package.json", .{});
             Global.crash();
         };
@@ -2077,7 +2077,7 @@ pub const PackCommand = struct {
     fn addArchiveEntry(
         ctx: *Context,
         file: FD,
-        stat: bun.Stat,
+        stat: fun.Stat,
         filename: stringZ,
         read_buf: []u8,
         file_reader: *BufferedFileReader,
@@ -2101,7 +2101,7 @@ pub const PackCommand = struct {
         // https://github.com/libarchive/libarchive/blob/898dc8319355b7e985f68a9819f182aaed61b53a/libarchive/archive_entry.h#L185
         entry.setFiletype(0o100000);
 
-        var perm: bun.Mode = @intCast(stat.mode);
+        var perm: fun.Mode = @intCast(stat.mode);
         // https://github.com/npm/cli/blob/ec105f400281a5bfd17885de1ea3d54d0c231b27/node_modules/pacote/lib/util/tar-create-options.js#L20
         if (isPackageBin(bins, filename)) perm |= 0o111;
         entry.setPerm(@intCast(perm));
@@ -2213,7 +2213,7 @@ pub const PackCommand = struct {
                                         }
 
                                         // only produce this error only when we need to get the workspace version
-                                        Output.errGeneric("Failed to resolve workspace version for \"{s}\" in `{s}`. Run <cyan>`bun install`<r> and try again.", .{
+                                        Output.errGeneric("Failed to resolve workspace version for \"{s}\" in `{s}`. Run <cyan>`fun install`<r> and try again.", .{
                                             dependency_name,
                                             dependency_group,
                                         });
@@ -2393,7 +2393,7 @@ pub const PackCommand = struct {
 
         /// Invert a negated pattern to a positive pattern
         pub fn asPositive(this: *const Pattern) Pattern {
-            bun.assertWithLocation(this.flags.negated and this.glob.length() > 0, @src());
+            fun.assertWithLocation(this.flags.negated and this.glob.length() > 0, @src());
             return Pattern{
                 .glob = this.glob.borrowSubslice(1, null), // remove the leading `!`
                 .flags = .{
@@ -2432,7 +2432,7 @@ pub const PackCommand = struct {
 
         fn ignoreFileFail(dir: std.fs.Dir, ignore_kind: Kind, reason: enum { read, open }, err: anyerror) noreturn {
             var buf: PathBuffer = undefined;
-            const dir_path = bun.getFdPath(.fromStdDir(dir), &buf) catch "";
+            const dir_path = fun.getFdPath(.fromStdDir(dir), &buf) catch "";
             Output.err(err, "failed to {s} {s} at: \"{s}{s}{s}\"", .{
                 @tagName(reason),
                 @tagName(ignore_kind),
@@ -2534,7 +2534,7 @@ pub const PackCommand = struct {
         pack_list: if (is_dry_run) *PackQueue else PackList,
         package_json_len: usize,
     ) void {
-        const root_dir = bun.FD.fromStdDir(root_dir_std);
+        const root_dir = fun.FD.fromStdDir(root_dir_std);
         if (ctx.manager.options.log_level == .silent or ctx.manager.options.log_level == .quiet) return;
         const packed_fmt = "<r><b><cyan>packed<r> {f} {s}";
 
@@ -2547,7 +2547,7 @@ pub const PackCommand = struct {
             ctx.stats.unpacked_size += @intCast(package_json_stat.size);
 
             Output.prettyln("\n" ++ packed_fmt, .{
-                bun.fmt.size(package_json_stat.size, .{ .space_between_number_and_unit = false }),
+                fun.fmt.size(package_json_stat.size, .{ .space_between_number_and_unit = false }),
                 "package.json",
             });
 
@@ -2564,7 +2564,7 @@ pub const PackCommand = struct {
                 ctx.stats.unpacked_size += @intCast(stat.size);
 
                 Output.prettyln(packed_fmt, .{
-                    bun.fmt.size(stat.size, .{ .space_between_number_and_unit = false }),
+                    fun.fmt.size(stat.size, .{ .space_between_number_and_unit = false }),
                     item.path,
                 });
             }
@@ -2579,13 +2579,13 @@ pub const PackCommand = struct {
         }
 
         Output.prettyln("\n" ++ packed_fmt, .{
-            bun.fmt.size(package_json_len, .{ .space_between_number_and_unit = false }),
+            fun.fmt.size(package_json_len, .{ .space_between_number_and_unit = false }),
             "package.json",
         });
 
         for (pack_list.items) |entry| {
             Output.prettyln(packed_fmt, .{
-                bun.fmt.size(entry.size, .{ .space_between_number_and_unit = false }),
+                fun.fmt.size(entry.size, .{ .space_between_number_and_unit = false }),
                 entry.subpath,
             });
         }
@@ -2613,13 +2613,13 @@ pub const PackCommand = struct {
     else
         strings.eqlCaseInsensitiveASCIIICheckLength;
 
-    fn isSpecialFileOrVariant(filename: []const u8, comptime name: []const u8) callconv(bun.callconv_inline) bool {
+    fn isSpecialFileOrVariant(filename: []const u8, comptime name: []const u8) callconv(fun.callconv_inline) bool {
         return switch (filename.len) {
             inline 0...name.len - 1 => false,
             inline name.len => stringsEql(filename, name),
             inline name.len + 1 => false,
             else => blk: {
-                bun.unsafeAssert(filename.len > name.len + 1);
+                fun.unsafeAssert(filename.len > name.len + 1);
                 break :blk filename[name.len] == '.' and stringsEql(filename[0..name.len], name);
             },
         };
@@ -2627,25 +2627,25 @@ pub const PackCommand = struct {
 };
 
 pub const bindings = struct {
-    const jsc = bun.jsc;
+    const jsc = fun.jsc;
     const JSValue = jsc.JSValue;
     const JSGlobalObject = jsc.JSGlobalObject;
     const CallFrame = jsc.CallFrame;
     const ZigString = jsc.ZigString;
-    const String = bun.String;
+    const String = fun.String;
     const JSArray = jsc.JSArray;
     const JSObject = jsc.JSObject;
 
-    pub fn jsReadTarball(global: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+    pub fn jsReadTarball(global: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
         const args = callFrame.arguments_old(1).slice();
         if (args.len < 1 or !args[0].isString()) {
             return global.throw("expected tarball path string argument", .{});
         }
 
-        const tarball_path_str = try args[0].toBunString(global);
+        const tarball_path_str = try args[0].toFunString(global);
         defer tarball_path_str.deref();
 
-        const tarball_path = tarball_path_str.toUTF8(bun.default_allocator);
+        const tarball_path = tarball_path_str.toUTF8(fun.default_allocator);
         defer tarball_path.deinit();
 
         const tarball_file = File.from(std.fs.cwd().openFile(tarball_path.slice(), .{}) catch |err| {
@@ -2653,17 +2653,17 @@ pub const bindings = struct {
         });
         defer tarball_file.close();
 
-        const tarball = tarball_file.readToEnd(bun.default_allocator).unwrap() catch |err| {
+        const tarball = tarball_file.readToEnd(fun.default_allocator).unwrap() catch |err| {
             return global.throw("failed to read tarball contents \"{s}\": {s}", .{ tarball_path.slice(), @errorName(err) });
         };
-        defer bun.default_allocator.free(tarball);
+        defer fun.default_allocator.free(tarball);
 
         var sha1_digest: sha.SHA1.Digest = undefined;
         var sha1 = sha.SHA1.init();
         defer sha1.deinit();
         sha1.update(tarball);
         sha1.final(&sha1_digest);
-        const shasum_str = bun.handleOom(String.createFormat("{s}", .{std.fmt.bytesToHex(sha1_digest, .lower)}));
+        const shasum_str = fun.handleOom(String.createFormat("{s}", .{std.fmt.bytesToHex(sha1_digest, .lower)}));
 
         var sha512_digest: sha.SHA512.Digest = undefined;
         var sha512 = sha.SHA512.init();
@@ -2671,17 +2671,17 @@ pub const bindings = struct {
         sha512.update(tarball);
         sha512.final(&sha512_digest);
         var base64_buf: [std.base64.standard.Encoder.calcSize(sha.SHA512.digest)]u8 = undefined;
-        const encode_count = bun.simdutf.base64.encode(&sha512_digest, &base64_buf, false);
+        const encode_count = fun.simdutf.base64.encode(&sha512_digest, &base64_buf, false);
         const integrity_value = try String.createUTF8ForJS(global, base64_buf[0..encode_count]);
 
         const EntryInfo = struct {
             pathname: String,
             kind: String,
-            perm: bun.Mode,
+            perm: fun.Mode,
             size: ?usize = null,
             contents: ?String = null,
         };
-        var entries_info = std.array_list.Managed(EntryInfo).init(bun.default_allocator);
+        var entries_info = std.array_list.Managed(EntryInfo).init(fun.default_allocator);
         defer entries_info.deinit();
 
         const archive = Archive.readNew();
@@ -2722,7 +2722,7 @@ pub const bindings = struct {
         var archive_entry: *Archive.Entry = undefined;
         var header_status = archive.readNextHeader(&archive_entry);
 
-        var read_buf = std.array_list.Managed(u8).init(bun.default_allocator);
+        var read_buf = std.array_list.Managed(u8).init(fun.default_allocator);
         defer read_buf.deinit();
 
         while (header_status != .eof) : (header_status = archive.readNextHeader(&archive_entry)) {
@@ -2733,15 +2733,15 @@ pub const bindings = struct {
                     return global.throw("failed to read archive header: {s}", .{Archive.errorString(@ptrCast(archive))});
                 },
                 else => {
-                    const pathname_string = if (bun.Environment.isWindows) blk: {
+                    const pathname_string = if (fun.Environment.isWindows) blk: {
                         const pathname_w = archive_entry.pathnameW();
-                        const list = std.array_list.Managed(u8).init(bun.default_allocator);
-                        var result = bun.handleOom(bun.strings.toUTF8ListWithType(list, pathname_w));
+                        const list = std.array_list.Managed(u8).init(fun.default_allocator);
+                        var result = fun.handleOom(fun.strings.toUTF8ListWithType(list, pathname_w));
                         defer result.deinit();
                         break :blk String.cloneUTF8(result.items);
                     } else String.cloneUTF8(archive_entry.pathname());
 
-                    const kind = bun.sys.kindFromMode(archive_entry.filetype());
+                    const kind = fun.sys.kindFromMode(archive_entry.filetype());
                     const perm = archive_entry.perm();
 
                     var entry_info: EntryInfo = .{
@@ -2752,12 +2752,12 @@ pub const bindings = struct {
 
                     if (kind == .file) {
                         const size: usize = @intCast(archive_entry.size());
-                        bun.handleOom(read_buf.resize(size));
+                        fun.handleOom(read_buf.resize(size));
                         defer read_buf.clearRetainingCapacity();
 
                         const read = archive.readData(read_buf.items);
                         if (read < 0) {
-                            const pathname_utf8 = pathname_string.toUTF8(bun.default_allocator);
+                            const pathname_utf8 = pathname_string.toUTF8(fun.default_allocator);
                             defer pathname_utf8.deinit();
                             return global.throw("failed to read archive entry \"{s}\": {s}", .{
                                 pathname_utf8.slice(),
@@ -2768,7 +2768,7 @@ pub const bindings = struct {
                         entry_info.contents = String.cloneUTF8(read_buf.items);
                     }
 
-                    bun.handleOom(entries_info.append(entry_info));
+                    fun.handleOom(entries_info.append(entry_info));
                 },
             }
         }
@@ -2817,33 +2817,33 @@ const std = @import("std");
 const libarchive = @import("../libarchive/libarchive.zig").lib;
 const Archive = libarchive.Archive;
 
-const bun = @import("bun");
-const DirIterator = bun.DirIterator;
-const Environment = bun.Environment;
-const FD = bun.FD;
-const Global = bun.Global;
-const JSON = bun.json;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const PathBuffer = bun.PathBuffer;
-const Progress = bun.Progress;
-const RunCommand = bun.RunCommand;
-const Semver = bun.Semver;
-const glob = bun.glob;
-const js_printer = bun.js_printer;
-const sha = bun.sha;
-const strings = bun.strings;
-const CowString = bun.ptr.CowString;
-const File = bun.sys.File;
+const fun = @import("fun");
+const DirIterator = fun.DirIterator;
+const Environment = fun.Environment;
+const FD = fun.FD;
+const Global = fun.Global;
+const JSON = fun.json;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const PathBuffer = fun.PathBuffer;
+const Progress = fun.Progress;
+const RunCommand = fun.RunCommand;
+const Semver = fun.Semver;
+const glob = fun.glob;
+const js_printer = fun.js_printer;
+const sha = fun.sha;
+const strings = fun.strings;
+const CowString = fun.ptr.CowString;
+const File = fun.sys.File;
 
-const Command = bun.cli.Command;
-const Publish = bun.cli.PublishCommand;
+const Command = fun.cli.Command;
+const Publish = fun.cli.PublishCommand;
 
-const Install = bun.install;
+const Install = fun.install;
 const Dependency = Install.Dependency;
 const Lockfile = Install.Lockfile;
 const PackageManager = Install.PackageManager;
 const LogLevel = PackageManager.Options.LogLevel;
 
-const E = bun.js_parser.E;
-const Expr = bun.js_parser.Expr;
+const E = fun.js_parser.E;
+const Expr = fun.js_parser.Expr;

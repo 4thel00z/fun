@@ -1,9 +1,9 @@
 ---
 name: implementing-jsc-classes-zig
-description: Creates JavaScript classes using Bun's Zig bindings generator (.classes.ts). Use when implementing new JS APIs in Zig with JSC integration.
+description: Creates JavaScript classes using Fun's Zig bindings generator (.classes.ts). Use when implementing new JS APIs in Zig with JSC integration.
 ---
 
-# Bun's JavaScriptCore Class Bindings Generator
+# Fun's JavaScriptCore Class Bindings Generator
 
 Bridge JavaScript and Zig through `.classes.ts` definitions and Zig implementations.
 
@@ -53,15 +53,15 @@ pub const TextDecoder = struct {
     pub fn constructor(
         globalObject: *JSGlobalObject,
         callFrame: *JSC.CallFrame,
-    ) bun.JSError!*TextDecoder {
-        return bun.new(TextDecoder, .{ .encoding = "utf-8", .fatal = false });
+    ) fun.JSError!*TextDecoder {
+        return fun.new(TextDecoder, .{ .encoding = "utf-8", .fatal = false });
     }
 
     pub fn decode(
         this: *TextDecoder,
         globalObject: *JSGlobalObject,
         callFrame: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+    ) fun.JSError!JSC.JSValue {
         const args = callFrame.arguments();
         if (args.len < 1 or args.ptr[0].isUndefinedOrNull()) {
             return globalObject.throw("Input cannot be null", .{});
@@ -79,14 +79,14 @@ pub const TextDecoder = struct {
 
     pub fn finalize(this: *TextDecoder) void {
         this.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 ```
 
 **Key patterns:**
 
-- Use `bun.JSError!JSValue` return type for error handling
+- Use `fun.JSError!JSValue` return type for error handling
 - Use `globalObject` not `ctx`
 - `deinit()` for cleanup, `finalize()` called by GC
 - Update `src/jsc/bindings/generated_classes_list.zig`
@@ -121,7 +121,7 @@ pub fn encodingSetCached(thisValue: JSC.JSValue, globalObject: *JSC.JSGlobalObje
 ## Error Handling
 
 ```zig
-pub fn method(this: *MyClass, globalObject: *JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn method(this: *MyClass, globalObject: *JSGlobalObject, callFrame: *JSC.CallFrame) fun.JSError!JSC.JSValue {
     const args = callFrame.arguments();
     if (args.len < 1) {
         return globalObject.throw("Missing required argument", .{});
@@ -136,14 +136,14 @@ pub fn method(this: *MyClass, globalObject: *JSGlobalObject, callFrame: *JSC.Cal
 pub fn deinit(this: *TextDecoder) void {
     this._encoding.deref();
     if (this.buffer) |buffer| {
-        bun.default_allocator.free(buffer);
+        fun.default_allocator.free(buffer);
     }
 }
 
 pub fn finalize(this: *TextDecoder) void {
     JSC.markBinding(@src());
     this.deinit();
-    bun.default_allocator.destroy(this);
+    fun.default_allocator.destroy(this);
 }
 ```
 
@@ -173,13 +173,13 @@ pub const MyClass = struct {
 
     value: []const u8,
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
-    pub fn constructor(globalObject: *JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!*MyClass {
+    pub fn constructor(globalObject: *JSGlobalObject, callFrame: *JSC.CallFrame) fun.JSError!*MyClass {
         return MyClass.new(.{ .value = "" });
     }
 
-    pub fn myMethod(this: *MyClass, globalObject: *JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn myMethod(this: *MyClass, globalObject: *JSGlobalObject, callFrame: *JSC.CallFrame) fun.JSError!JSC.JSValue {
         return JSC.JSValue.jsUndefined();
     }
 
@@ -191,7 +191,7 @@ pub const MyClass = struct {
 
     pub fn finalize(this: *MyClass) void {
         this.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 ```

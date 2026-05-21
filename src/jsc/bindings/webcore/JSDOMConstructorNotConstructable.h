@@ -24,7 +24,7 @@
 
 namespace WebCore {
 
-template<typename JSClass, Bun::ErrorCode templateErrorCode = Bun::ErrorCode::ERR_ILLEGAL_CONSTRUCTOR>
+template<typename JSClass, Fun::ErrorCode templateErrorCode = Fun::ErrorCode::ERR_ILLEGAL_CONSTRUCTOR>
 class JSDOMConstructorNotConstructable final : public JSDOMConstructorBase {
 public:
     using Base = JSDOMConstructorBase;

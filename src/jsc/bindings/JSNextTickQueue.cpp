@@ -12,9 +12,9 @@
 #include <JavaScriptCore/JSInternalFieldObjectImplInlines.h>
 #include "ExtendedDOMClientIsoSubspaces.h"
 #include "ExtendedDOMIsoSubspaces.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 

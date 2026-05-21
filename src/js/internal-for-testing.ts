@@ -1,18 +1,18 @@
-// Hardcoded module "bun:internal-for-testing"
+// Hardcoded module "fun:internal-for-testing"
 
 // If you want to test an internal API, add a binding into this file.
 //
-// Then at test time: import ... from "bun:internal-for-testing"
+// Then at test time: import ... from "fun:internal-for-testing"
 //
 // In a debug build, the import is always allowed.
-// It is disallowed in release builds unless run in Bun's CI.
+// It is disallowed in release builds unless run in Fun's CI.
 
 const fmtBinding = $bindgenFn("fmt_jsc.bind.ts", "fmtString");
 
 export const highlightJavaScript = (code: string) => fmtBinding(code, "highlight-javascript");
 export const escapePowershell = (code: string) => fmtBinding(code, "escape-powershell");
 
-export const canonicalizeIP = $newCppFunction("NodeTLS.cpp", "Bun__canonicalizeIP", 1);
+export const canonicalizeIP = $newCppFunction("NodeTLS.cpp", "Fun__canonicalizeIP", 1);
 
 export const SQL = $cpp("JSSQLStatement.cpp", "createJSSQLStatementConstructor");
 
@@ -66,7 +66,7 @@ export const shellInternals = {
 
 export const subprocessInternals = {
   injectStdioReadError: $newZigFunction("subprocess.zig", "TestingAPIs.injectStdioReadError", 2) as (
-    subprocess: import("bun").Subprocess,
+    subprocess: import("fun").Subprocess,
     kind: "stdout" | "stderr",
   ) => boolean,
 };
@@ -110,7 +110,7 @@ export const upgrade_test_helpers = $zig("upgrade_command.zig", "upgrade_js_bind
   closeTempDirHandle: () => void;
 };
 
-export const install_test_helpers = $zig("install_binding.zig", "bun_install_js_bindings.generate") as {
+export const install_test_helpers = $zig("install_binding.zig", "fun_install_js_bindings.generate") as {
   /**
    * Returns the lockfile at the given path as an object.
    */
@@ -140,7 +140,7 @@ export const createStatsForIno: (ino: bigint, big: boolean) => any = $newZigFunc
 
 export const setSyntheticAllocationLimitForTesting: (limit: number) => number = $newZigFunction(
   "virtual_machine_exports.zig",
-  "Bun__setSyntheticAllocationLimitForTesting",
+  "Fun__setSyntheticAllocationLimitForTesting",
   1,
 );
 
@@ -226,8 +226,8 @@ export const getCounters = $newZigFunction("Counters.zig", "createCountersObject
 export const hasNonReifiedStatic = $newCppFunction("InternalForTesting.cpp", "jsFunction_hasReifiedStatic", 1);
 
 interface setSocketOptionsFn {
-  (socket: Bun.Socket, sendBuffer: 1, size: number): void;
-  (socket: Bun.Socket, recvBuffer: 2, size: number): void;
+  (socket: Fun.Socket, sendBuffer: 1, size: number): void;
+  (socket: Fun.Socket, recvBuffer: 2, size: number): void;
 }
 
 export const setSocketOptions: setSocketOptionsFn = $newZigFunction("runtime/socket/socket.zig", "jsSetSocketOptions", 3);
@@ -242,9 +242,9 @@ export const structuredCloneAdvanced: (
 
 export const lsanDoLeakCheck = $newCppFunction("InternalForTesting.cpp", "jsFunction_lsanDoLeakCheck", 1);
 
-export const BunString_toThreadSafeRefCountDelta: () => number = $newCppFunction(
+export const FunString_toThreadSafeRefCountDelta: () => number = $newCppFunction(
   "InternalForTesting.cpp",
-  "jsFunction_BunString_toThreadSafeRefCountDelta",
+  "jsFunction_FunString_toThreadSafeRefCountDelta",
   0,
 );
 
@@ -278,9 +278,9 @@ export const sigactionLayout: () =>
 
 export const stringsInternals = {
   /**
-   * Calls `bun.strings.toUTF16AllocForReal(allocator, bytes, false, true)` and
+   * Calls `fun.strings.toUTF16AllocForReal(allocator, bytes, false, true)` and
    * returns the resulting UTF-16 data as a JS string. The `sentinel = true`
-   * path is otherwise only reachable from Windows `bun build --compile`
+   * path is otherwise only reachable from Windows `fun build --compile`
    * metadata, so this binding lets us exercise it on all platforms.
    */
   toUTF16AllocSentinel: $newZigFunction("string/immutable/unicode.zig", "TestingAPIs.toUTF16AllocSentinel", 1) as (

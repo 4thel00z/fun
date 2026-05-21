@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/25869
+// https://github.com/underdoc-org/fun/issues/25869
 // useFakeTimers with testing-library/react hangs when using user-event
-import { expect, jest, test } from "bun:test";
+import { expect, jest, test } from "fun:test";
 
 // Test that jestFakeTimersAreEnabled() detection works properly.
 // testing-library/react checks for setTimeout.clock or setTimeout._isMockFunction

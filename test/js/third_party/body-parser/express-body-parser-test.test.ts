@@ -1,8 +1,8 @@
 // @ts-nocheck
 // can't use @types/express or @types/body-parser because they
-// depend on @types/node which conflicts with bun-types
+// depend on @types/node which conflicts with fun-types
 import { json } from "body-parser";
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import express, { Application, Request, Response } from "express";
 import net from "net";
 // Express uses iconv-lite
@@ -21,7 +21,7 @@ test("iconv works", () => {
   expect(iconv.encodingExists("us-ascii")).toBe(true);
 });
 
-// https://github.com/oven-sh/bun/issues/1913
+// https://github.com/underdoc-org/fun/issues/1913
 test("httpServer", async () => {
   // Constants
   const PORT = 8412;

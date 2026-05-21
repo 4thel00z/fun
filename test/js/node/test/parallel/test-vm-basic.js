@@ -258,7 +258,7 @@ const vm = require('vm');
     vm.compileFunction('throw new Error("Sample Error")')();
   }, {
     message: 'Sample Error',
-    stack: 'Error: Sample Error\n    at <anonymous> (file:///:2:16)' // from <anonymous>:1:7 to match Bun's stack trace formatting
+    stack: 'Error: Sample Error\n    at <anonymous> (file:///:2:16)' // from <anonymous>:1:7 to match Fun's stack trace formatting
   });
 
   assert.throws(() => {
@@ -269,7 +269,7 @@ const vm = require('vm');
     )();
   }, {
     message: 'Sample Error',
-    stack: 'Error: Sample Error\n    at <anonymous> (evalmachine.<anonymous>:5:16)' // modified from <anonymous>:4:7 to match Bun's stack trace formatting
+    stack: 'Error: Sample Error\n    at <anonymous> (evalmachine.<anonymous>:5:16)' // modified from <anonymous>:4:7 to match Fun's stack trace formatting
   });
 
   assert.throws(() => {
@@ -280,7 +280,7 @@ const vm = require('vm');
     )();
   }, {
     message: 'Sample Error',
-    stack: 'Error: Sample Error\n    at <anonymous> (evalmachine.<anonymous>:2:16)' // modified from <anonymous>:1:10 to match Bun's stack trace formatting
+    stack: 'Error: Sample Error\n    at <anonymous> (evalmachine.<anonymous>:2:16)' // modified from <anonymous>:1:10 to match Fun's stack trace formatting
   });
 
   assert.strictEqual(
@@ -301,7 +301,7 @@ const vm = require('vm');
     )();
   }, {
     message: 'varInContext is not defined',
-    stack: 'ReferenceError: varInContext is not defined\n    at <anonymous> (file:///:2:20)' // modified from <anonymous>:1:1 to match Bun's stack trace formatting
+    stack: 'ReferenceError: varInContext is not defined\n    at <anonymous> (file:///:2:20)' // modified from <anonymous>:1:1 to match Fun's stack trace formatting
   });
 
   assert.notDeepStrictEqual(

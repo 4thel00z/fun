@@ -12,12 +12,12 @@ pub fn toJS(
     return JSValue.createBuffer(globalObject, value.slice(), null);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const AnyPostgresError = @import("../../../sql/postgres/AnyPostgresError.zig").AnyPostgresError;
 const Data = @import("../../../sql/shared/Data.zig").Data;
 
 const int_types = @import("../../../sql/postgres/types/int_types.zig");
 const short = int_types.short;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

@@ -7,7 +7,7 @@ pub const FetchCacheMode = enum(u3) {
     @"force-cache",
     @"only-if-cached",
 
-    pub const Map = bun.ComptimeStringMap(FetchCacheMode, .{
+    pub const Map = fun.ComptimeStringMap(FetchCacheMode, .{
         .{ "default", .default },
         .{ "no-store", .@"no-store" },
         .{ "reload", .reload },
@@ -18,4 +18,4 @@ pub const FetchCacheMode = enum(u3) {
     pub const toJS = @import("../http_jsc/fetch_enums_jsc.zig").fetchCacheModeToJS;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

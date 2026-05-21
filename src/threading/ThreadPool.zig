@@ -551,12 +551,12 @@ pub const Thread = struct {
 
     /// Thread entry point which runs a worker for the ThreadPool
     fn run(thread_pool: *ThreadPool) void {
-        bun.mimalloc.mi_thread_set_in_threadpool();
+        fun.mimalloc.mi_thread_set_in_threadpool();
 
         {
             var counter_buf: [100]u8 = undefined;
             const int = counter.fetchAdd(1, .seq_cst);
-            const named = std.fmt.bufPrintZ(&counter_buf, "Bun Pool {d}", .{int}) catch "Bun Pool";
+            const named = std.fmt.bufPrintZ(&counter_buf, "Fun Pool {d}", .{int}) catch "Fun Pool";
             Output.Source.configureNamedThread(named);
         }
 
@@ -703,8 +703,8 @@ const Event = struct {
             // This unfortunately results in the last notify() or shutdown() doing an extra futex wake but that's fine.
             Futex.wait(&self.state, WAITING, if (!has_shrunk_memory) std.time.ns_per_s * 10 else null) catch {
                 has_shrunk_memory = true;
-                bun.Global.mimalloc_cleanup(false);
-                bun.jsc.wtf.releaseFastMallocFreeMemoryForThisThread();
+                fun.Global.mimalloc_cleanup(false);
+                fun.jsc.wtf.releaseFastMallocFreeMemoryForThisThread();
             };
             state = self.state.load(.monotonic);
             acquire_with = WAITING;
@@ -1046,10 +1046,10 @@ pub const Node = struct {
 const std = @import("std");
 const Atomic = std.atomic.Value;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
 
-const Futex = bun.threading.Futex;
-const WaitGroup = bun.threading.WaitGroup;
+const Futex = fun.threading.Futex;
+const WaitGroup = fun.threading.WaitGroup;

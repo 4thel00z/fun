@@ -1,5 +1,5 @@
-import type { Server } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import type { Server } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { tls } from "harness";
 
 // Adversarial fuzzer-style coverage for the HTTP/3 large-body path. The server
@@ -9,7 +9,7 @@ let server: Server;
 let base: string;
 
 beforeAll(() => {
-  server = Bun.serve({
+  server = Fun.serve({
     port: 0,
     tls,
     http3: true,
@@ -31,7 +31,7 @@ beforeAll(() => {
           if (done) break;
           chunks.push(value);
           total += value.length;
-          await Bun.sleep(5);
+          await Fun.sleep(5);
         }
         const out = new Uint8Array(total);
         let off = 0;
@@ -127,7 +127,7 @@ const sizes = [64 * 1024, 512 * 1024, 1024 * 1024, 4 * 1024 * 1024];
 
 describe.each(sizes)("http3 adversarial body=%d", size => {
   const data = payload(size);
-  const want = Bun.hash(data);
+  const want = Fun.hash(data);
 
   test("POST /echo (Uint8Array)", async () => {
     const res = await fetch(`${base}/echo`, { ...h3, method: "POST", body: data });
@@ -135,7 +135,7 @@ describe.each(sizes)("http3 adversarial body=%d", size => {
     expect(res.headers.get("x-recv-len")).toBe(String(size));
     const got = await res.bytes();
     expect(got.length).toBe(size);
-    expect(Bun.hash(got)).toBe(want);
+    expect(Fun.hash(got)).toBe(want);
   });
 
   test("POST /slow-echo (slow consumer)", async () => {
@@ -143,7 +143,7 @@ describe.each(sizes)("http3 adversarial body=%d", size => {
     expect(res.status).toBe(200);
     const got = await res.bytes();
     expect(got.length).toBe(size);
-    expect(Bun.hash(got)).toBe(want);
+    expect(Fun.hash(got)).toBe(want);
   });
 
   test("POST /echo via pull ReadableStream", async () => {
@@ -151,7 +151,7 @@ describe.each(sizes)("http3 adversarial body=%d", size => {
     expect(res.status).toBe(200);
     const got = await res.bytes();
     expect(got.length).toBe(size);
-    expect(Bun.hash(got)).toBe(want);
+    expect(Fun.hash(got)).toBe(want);
   });
 
   test("POST /echo via type:direct stream", async () => {
@@ -159,7 +159,7 @@ describe.each(sizes)("http3 adversarial body=%d", size => {
     expect(res.status).toBe(200);
     const got = await res.bytes();
     expect(got.length).toBe(size);
-    expect(Bun.hash(got)).toBe(want);
+    expect(Fun.hash(got)).toBe(want);
   });
 
   test("POST /drop (server abandons body)", async () => {
@@ -180,7 +180,7 @@ describe.each(sizes)("http3 adversarial body=%d", size => {
       Array.from({ length: 8 }, async () => {
         const res = await fetch(`${base}/echo`, { ...h3, method: "POST", body: data });
         const got = await res.bytes();
-        return { status: res.status, len: got.length, hash: Bun.hash(got) };
+        return { status: res.status, len: got.length, hash: Fun.hash(got) };
       }),
     );
     for (const r of results) {
@@ -210,7 +210,7 @@ test("AbortController during 1MB upload", async () => {
   const data = payload(1024 * 1024);
   const ac = new AbortController();
   const p = fetch(`${base}/slow-echo`, { ...h3, method: "POST", body: data, signal: ac.signal });
-  await Bun.sleep(100);
+  await Fun.sleep(100);
   ac.abort();
   let err: unknown;
   try {

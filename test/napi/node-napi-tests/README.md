@@ -1,4 +1,4 @@
-These files are copied from https://github.com/190n/node/tree/napi-tests-bun, which in turn is a fork of Node.js with their js-native-api tests modified slightly to work in Bun.
+These files are copied from https://github.com/190n/node/tree/napi-tests-fun, which in turn is a fork of Node.js with their js-native-api tests modified slightly to work in Fun.
 
 To change these files, edit the Node.js fork and then copy the changed version here.
 

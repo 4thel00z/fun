@@ -7,7 +7,7 @@
 
 #include <atomic>
 
-namespace Bun {
+namespace Fun {
 
 template<typename T>
 concept SigintHoldable = std::derived_from<T, JSC::JSGlobalObject> || std::derived_from<T, SigintReceiver>;
@@ -107,4 +107,4 @@ private:
     bool signalAll();
 };
 
-} // namespace Bun
+} // namespace Fun

@@ -38,7 +38,7 @@
 #include <dlfcn.h>
 #endif
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 static JSValue processBindingConstantsGetOs(VM& vm, JSObject* bindingObject)
@@ -1202,4 +1202,4 @@ void ProcessBindingConstants::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 
 DEFINE_VISIT_CHILDREN(ProcessBindingConstants);
 
-} // namespace Bun
+} // namespace Fun

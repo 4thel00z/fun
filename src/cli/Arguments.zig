@@ -20,7 +20,7 @@ pub fn readFile(
     var paths = [_]string{ cwd, filename };
     const outpath = try std.fs.path.resolve(allocator, &paths);
     defer allocator.free(outpath);
-    var file = try bun.openFileZ(&try std.posix.toPosixPath(outpath), std.fs.File.OpenFlags{ .mode = .read_only });
+    var file = try fun.openFileZ(&try std.posix.toPosixPath(outpath), std.fs.File.OpenFlags{ .mode = .read_only });
     defer file.close();
     const size = try file.getEndPos();
     return try file.readToEndAlloc(allocator, size);
@@ -44,7 +44,7 @@ pub const base_params_ = (if (Environment.show_crash_trace) debug_params else [_
     clap.parseParam("--env-file <STR>...               Load environment variables from the specified file(s)") catch unreachable,
     clap.parseParam("--no-env-file                     Disable automatic loading of .env files") catch unreachable,
     clap.parseParam("--cwd <STR>                       Absolute path to resolve files & entry points from. This just changes the process' cwd.") catch unreachable,
-    clap.parseParam("-c, --config <PATH>?              Specify path to Bun config file. Default <d>$cwd<r>/bunfig.toml") catch unreachable,
+    clap.parseParam("-c, --config <PATH>?              Specify path to Fun config file. Default <d>$cwd<r>/funfig.toml") catch unreachable,
     clap.parseParam("-h, --help                        Display this menu and exit") catch unreachable,
 } ++ (if (builtin.have_error_return_tracing) [_]ParamType{
     // This will print more error return traces, as a debug aid
@@ -78,15 +78,15 @@ pub const transpiler_params_ = [_]ParamType{
 };
 pub const runtime_params_ = [_]ParamType{
     clap.parseParam("--watch                           Automatically restart the process on file change") catch unreachable,
-    clap.parseParam("--hot                             Enable auto reload in the Bun runtime, test runner, or bundler") catch unreachable,
+    clap.parseParam("--hot                             Enable auto reload in the Fun runtime, test runner, or bundler") catch unreachable,
     clap.parseParam("--no-clear-screen                 Disable clearing the terminal screen on reload when --hot or --watch is enabled") catch unreachable,
     clap.parseParam("--smol                            Use less memory, but run garbage collection more often") catch unreachable,
     clap.parseParam("-r, --preload <STR>...            Import a module before other modules are loaded") catch unreachable,
     clap.parseParam("--require <STR>...                Alias of --preload, for Node.js compatibility") catch unreachable,
     clap.parseParam("--import <STR>...                 Alias of --preload, for Node.js compatibility") catch unreachable,
-    clap.parseParam("--inspect <STR>?                  Activate Bun's debugger") catch unreachable,
-    clap.parseParam("--inspect-wait <STR>?             Activate Bun's debugger, wait for a connection before executing") catch unreachable,
-    clap.parseParam("--inspect-brk <STR>?              Activate Bun's debugger, set breakpoint on first line of code and wait") catch unreachable,
+    clap.parseParam("--inspect <STR>?                  Activate Fun's debugger") catch unreachable,
+    clap.parseParam("--inspect-wait <STR>?             Activate Fun's debugger, wait for a connection before executing") catch unreachable,
+    clap.parseParam("--inspect-brk <STR>?              Activate Fun's debugger, set breakpoint on first line of code and wait") catch unreachable,
     clap.parseParam("--cpu-prof                        Start CPU profiler and write profile to disk on exit") catch unreachable,
     clap.parseParam("--cpu-prof-name <STR>             Specify the name of the CPU profile file") catch unreachable,
     clap.parseParam("--cpu-prof-dir <STR>              Specify the directory where the CPU profile will be saved") catch unreachable,
@@ -97,22 +97,22 @@ pub const runtime_params_ = [_]ParamType{
     clap.parseParam("--heap-prof-dir <STR>             Specify the directory where the heap profile will be saved") catch unreachable,
     clap.parseParam("--heap-prof-md                    Generate markdown heap profile on exit (for CLI analysis)") catch unreachable,
     clap.parseParam("--if-present                      Exit without an error if the entrypoint does not exist") catch unreachable,
-    clap.parseParam("--no-install                      Disable auto install in the Bun runtime") catch unreachable,
+    clap.parseParam("--no-install                      Disable auto install in the Fun runtime") catch unreachable,
     clap.parseParam("--install <STR>                   Configure auto-install behavior. One of \"auto\" (default, auto-installs when no node_modules), \"fallback\" (missing packages only), \"force\" (always).") catch unreachable,
     clap.parseParam("-i                                Auto-install dependencies during execution. Equivalent to --install=fallback.") catch unreachable,
     clap.parseParam("-e, --eval <STR>                  Evaluate argument as a script") catch unreachable,
     clap.parseParam("-p, --print <STR>                 Evaluate argument as a script and print the result") catch unreachable,
-    clap.parseParam("--prefer-offline                  Skip staleness checks for packages in the Bun runtime and resolve from disk") catch unreachable,
-    clap.parseParam("--prefer-latest                   Use the latest matching versions of packages in the Bun runtime, always checking npm") catch unreachable,
-    clap.parseParam("--port <STR>                      Set the default port for Bun.serve") catch unreachable,
+    clap.parseParam("--prefer-offline                  Skip staleness checks for packages in the Fun runtime and resolve from disk") catch unreachable,
+    clap.parseParam("--prefer-latest                   Use the latest matching versions of packages in the Fun runtime, always checking npm") catch unreachable,
+    clap.parseParam("--port <STR>                      Set the default port for Fun.serve") catch unreachable,
     clap.parseParam("-u, --origin <STR>") catch unreachable,
     clap.parseParam("--conditions <STR>...             Pass custom conditions to resolve") catch unreachable,
     clap.parseParam("--fetch-preconnect <STR>...       Preconnect to a URL while code is loading") catch unreachable,
-    clap.parseParam("--experimental-http2-fetch        Offer h2 in fetch() TLS ALPN. Same as BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT=1") catch unreachable,
-    clap.parseParam("--experimental-http3-fetch        Honor Alt-Svc: h3 in fetch() and upgrade to HTTP/3. Same as BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT=1") catch unreachable,
+    clap.parseParam("--experimental-http2-fetch        Offer h2 in fetch() TLS ALPN. Same as FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT=1") catch unreachable,
+    clap.parseParam("--experimental-http3-fetch        Honor Alt-Svc: h3 in fetch() and upgrade to HTTP/3. Same as FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT=1") catch unreachable,
     clap.parseParam("--max-http-header-size <INT>      Set the maximum size of HTTP headers in bytes. Default is 16KiB") catch unreachable,
     clap.parseParam("--dns-result-order <STR>          Set the default order of DNS lookup results. Valid orders: verbatim (default), ipv4first, ipv6first") catch unreachable,
-    clap.parseParam("--expose-gc                       Expose gc() on the global object. Has no effect on Bun.gc().") catch unreachable,
+    clap.parseParam("--expose-gc                       Expose gc() on the global object. Has no effect on Fun.gc().") catch unreachable,
     clap.parseParam("--no-deprecation                  Suppress all reporting of the custom deprecation.") catch unreachable,
     clap.parseParam("--throw-deprecation               Determine whether or not deprecation warnings result in errors.") catch unreachable,
     clap.parseParam("--title <STR>                     Set the process title") catch unreachable,
@@ -132,9 +132,9 @@ pub const runtime_params_ = [_]ParamType{
 
 pub const auto_or_run_params = [_]ParamType{
     clap.parseParam("-F, --filter <STR>...             Run a script in all workspace packages matching the pattern") catch unreachable,
-    clap.parseParam("-b, --bun                         Force a script or package to use Bun's runtime instead of Node.js (via symlinking node)") catch unreachable,
+    clap.parseParam("-b, --fun                         Force a script or package to use Fun's runtime instead of Node.js (via symlinking node)") catch unreachable,
     clap.parseParam("--no-orphans                      Exit when the parent process dies, and on exit SIGKILL every descendant. Linux/macOS only.") catch unreachable,
-    clap.parseParam("--shell <STR>                     Control the shell used for package.json scripts. Supports either 'bun' or 'system'") catch unreachable,
+    clap.parseParam("--shell <STR>                     Control the shell used for package.json scripts. Supports either 'fun' or 'system'") catch unreachable,
     clap.parseParam("--workspaces                      Run a script in all workspace packages (from the \"workspaces\" field in package.json)") catch unreachable,
     clap.parseParam("--parallel                        Run multiple scripts concurrently with Foreman-style output") catch unreachable,
     clap.parseParam("--sequential                      Run multiple scripts sequentially with Foreman-style output") catch unreachable,
@@ -156,34 +156,34 @@ pub const run_only_params = [_]ParamType{
 } ++ auto_or_run_params;
 pub const run_params = run_only_params ++ runtime_params_ ++ transpiler_params_ ++ base_params_;
 
-pub const bunx_commands = [_]ParamType{
-    clap.parseParam("-b, --bun                         Force a script or package to use Bun's runtime instead of Node.js (via symlinking node)") catch unreachable,
+pub const funx_commands = [_]ParamType{
+    clap.parseParam("-b, --fun                         Force a script or package to use Fun's runtime instead of Node.js (via symlinking node)") catch unreachable,
 } ++ auto_only_params;
 
 pub const build_only_params = [_]ParamType{
     clap.parseParam("--production                     Set NODE_ENV=production and enable minification") catch unreachable,
-    clap.parseParam("--compile                        Generate a standalone Bun executable containing your bundled code. Implies --production") catch unreachable,
+    clap.parseParam("--compile                        Generate a standalone Fun executable containing your bundled code. Implies --production") catch unreachable,
     clap.parseParam("--compile-exec-argv <STR>       Prepend arguments to the standalone executable's execArgv") catch unreachable,
     clap.parseParam("--compile-autoload-dotenv        Enable autoloading of .env files in standalone executable (default: true)") catch unreachable,
     clap.parseParam("--no-compile-autoload-dotenv     Disable autoloading of .env files in standalone executable") catch unreachable,
-    clap.parseParam("--compile-autoload-bunfig        Enable autoloading of bunfig.toml in standalone executable (default: true)") catch unreachable,
-    clap.parseParam("--no-compile-autoload-bunfig     Disable autoloading of bunfig.toml in standalone executable") catch unreachable,
+    clap.parseParam("--compile-autoload-funfig        Enable autoloading of funfig.toml in standalone executable (default: true)") catch unreachable,
+    clap.parseParam("--no-compile-autoload-funfig     Disable autoloading of funfig.toml in standalone executable") catch unreachable,
     clap.parseParam("--compile-autoload-tsconfig      Enable autoloading of tsconfig.json at runtime in standalone executable (default: false)") catch unreachable,
     clap.parseParam("--no-compile-autoload-tsconfig   Disable autoloading of tsconfig.json at runtime in standalone executable") catch unreachable,
     clap.parseParam("--compile-autoload-package-json  Enable autoloading of package.json at runtime in standalone executable (default: false)") catch unreachable,
     clap.parseParam("--no-compile-autoload-package-json Disable autoloading of package.json at runtime in standalone executable") catch unreachable,
-    clap.parseParam("--compile-executable-path <STR>  Path to a Bun executable to use for cross-compilation instead of downloading") catch unreachable,
+    clap.parseParam("--compile-executable-path <STR>  Path to a Fun executable to use for cross-compilation instead of downloading") catch unreachable,
     clap.parseParam("--bytecode                       Use a bytecode cache") catch unreachable,
     clap.parseParam("--watch                          Automatically restart the process on file change") catch unreachable,
     clap.parseParam("--no-clear-screen                Disable clearing the terminal screen on reload when --watch is enabled") catch unreachable,
-    clap.parseParam("--target <STR>                   The intended execution environment for the bundle. \"browser\", \"bun\" or \"node\"") catch unreachable,
+    clap.parseParam("--target <STR>                   The intended execution environment for the bundle. \"browser\", \"fun\" or \"node\"") catch unreachable,
     clap.parseParam("--outdir <STR>                   Default to \"dist\" if multiple files") catch unreachable,
     clap.parseParam("--outfile <STR>                  Write to a file") catch unreachable,
     clap.parseParam("--metafile <STR>?                Write a JSON file with metadata about the build") catch unreachable,
     clap.parseParam("--metafile-md <STR>?             Write a markdown file with a visualization of the module graph (LLM-friendly)") catch unreachable,
     clap.parseParam("--sourcemap <STR>?               Build with sourcemaps - 'linked', 'inline', 'external', or 'none'") catch unreachable,
     clap.parseParam("--banner <STR>                   Add a banner to the bundled output such as \"use client\"; for a bundle being used with RSCs") catch unreachable,
-    clap.parseParam("--footer <STR>                   Add a footer to the bundled output such as // built with bun!") catch unreachable,
+    clap.parseParam("--footer <STR>                   Add a footer to the bundled output such as // built with fun!") catch unreachable,
     clap.parseParam("--format <STR>                   Specifies the module format to build to. \"esm\", \"cjs\" and \"iife\" are supported. Defaults to \"esm\", or \"cjs\" with --bytecode.") catch unreachable,
     clap.parseParam("--root <STR>                     Root directory used for multiple entry points") catch unreachable,
     clap.parseParam("--splitting                      Enable code splitting") catch unreachable,
@@ -206,7 +206,7 @@ pub const build_only_params = [_]ParamType{
     clap.parseParam("--css-chunking                   Chunk CSS files together to reduce duplicated CSS loaded in a browser. Only has an effect when multiple entrypoints import CSS") catch unreachable,
     clap.parseParam("--dump-environment-variables") catch unreachable,
     clap.parseParam("--conditions <STR>...            Pass custom conditions to resolve") catch unreachable,
-    clap.parseParam("--app                            (EXPERIMENTAL) Build a web app for production using Bun Bake.") catch unreachable,
+    clap.parseParam("--app                            (EXPERIMENTAL) Build a web app for production using Fun Bake.") catch unreachable,
     clap.parseParam("--server-components              (EXPERIMENTAL) Enable server components") catch unreachable,
     clap.parseParam("--env <inline|prefix*|disable>   Inline environment variables into the bundle as process.env.${name}. Defaults to 'disable'. To inline environment variables matching a prefix, use my prefix like 'FOO_PUBLIC_*'.") catch unreachable,
     clap.parseParam("--windows-hide-console           When using --compile targeting Windows, prevent a Command prompt from opening alongside the executable") catch unreachable,
@@ -260,7 +260,7 @@ fn loadGlobalBunfig(allocator: std.mem.Allocator, ctx: Command.Context, comptime
 
     ctx.has_loaded_global_config = true;
 
-    var config_buf: bun.PathBuffer = undefined;
+    var config_buf: fun.PathBuffer = undefined;
     if (getHomeConfigPath(&config_buf)) |path| {
         try loadBunfig(allocator, true, path, ctx, comptime cmd);
     }
@@ -283,7 +283,7 @@ pub fn loadConfigPath(allocator: std.mem.Allocator, auto_loaded: bool, config_pa
 }
 
 fn loadBunfig(allocator: std.mem.Allocator, auto_loaded: bool, config_path: [:0]const u8, ctx: Command.Context, comptime cmd: Command.Tag) !void {
-    const source = switch (bun.sys.File.toSource(config_path, allocator, .{ .convert_bom = true })) {
+    const source = switch (fun.sys.File.toSource(config_path, allocator, .{ .convert_bom = true })) {
         .result => |s| s,
         .err => |err| {
             if (auto_loaded) return;
@@ -306,17 +306,17 @@ fn loadBunfig(allocator: std.mem.Allocator, auto_loaded: bool, config_path: [:0]
     }
     ctx.log.level = logger.Log.Level.warn;
     ctx.debug.loaded_bunfig = true;
-    try Bunfig.parse(allocator, &source, ctx, cmd);
+    try Funfig.parse(allocator, &source, ctx, cmd);
 }
 
-fn getHomeConfigPath(buf: *bun.PathBuffer) ?[:0]const u8 {
-    var paths = [_]string{".bunfig.toml"};
+fn getHomeConfigPath(buf: *fun.PathBuffer) ?[:0]const u8 {
+    var paths = [_]string{".funfig.toml"};
 
-    if (bun.env_var.XDG_CONFIG_HOME.get()) |data_dir| {
+    if (fun.env_var.XDG_CONFIG_HOME.get()) |data_dir| {
         return resolve_path.joinAbsStringBufZ(data_dir, buf, &paths, .auto);
     }
 
-    if (bun.env_var.HOME.get()) |home_dir| {
+    if (fun.env_var.HOME.get()) |home_dir| {
         return resolve_path.joinAbsStringBufZ(home_dir, buf, &paths, .auto);
     }
 
@@ -326,14 +326,14 @@ pub fn loadConfig(allocator: std.mem.Allocator, user_config_path_: ?string, ctx:
     // If running as a standalone executable with autoloadBunfig disabled, skip config loading
     // unless an explicit config path was provided via --config
     if (user_config_path_ == null) {
-        if (bun.StandaloneModuleGraph.get()) |graph| {
+        if (fun.StandaloneModuleGraph.get()) |graph| {
             if (graph.flags.disable_autoload_bunfig) {
                 return;
             }
         }
     }
 
-    var config_buf: bun.PathBuffer = undefined;
+    var config_buf: fun.PathBuffer = undefined;
     if (comptime cmd.readGlobalConfig()) {
         if (!ctx.has_loaded_global_config) {
             ctx.has_loaded_global_config = true;
@@ -344,7 +344,7 @@ pub fn loadConfig(allocator: std.mem.Allocator, user_config_path_: ?string, ctx:
                         ctx.log.print(Output.errorWriter()) catch {};
                     }
                     if (ctx.log.hasAny()) Output.printError("\n", .{});
-                    Output.err(err, "failed to load bunfig", .{});
+                    Output.err(err, "failed to load funfig", .{});
                     Global.crash();
                 };
             }
@@ -357,12 +357,12 @@ pub fn loadConfig(allocator: std.mem.Allocator, user_config_path_: ?string, ctx:
     if (config_path_.len == 0 and (user_config_path_ != null or
         Command.Tag.always_loads_config.get(cmd) or
         (cmd == .AutoCommand and
-            // "bun"
+            // "fun"
             (ctx.positionals.len == 0 or
-                // "bun file.js"
+                // "fun file.js"
                 ctx.positionals.len > 0 and options.defaultLoaders.has(std.fs.path.extension(ctx.positionals[0]))))))
     {
-        config_path_ = "bunfig.toml";
+        config_path_ = "funfig.toml";
         auto_loaded = true;
     }
 
@@ -376,8 +376,8 @@ pub fn loadConfig(allocator: std.mem.Allocator, user_config_path_: ?string, ctx:
         config_path = config_buf[0..config_path_.len :0];
     } else {
         if (ctx.args.absolute_working_dir == null) {
-            var secondbuf: bun.PathBuffer = undefined;
-            const cwd = bun.getcwd(&secondbuf) catch return;
+            var secondbuf: fun.PathBuffer = undefined;
+            const cwd = fun.getcwd(&secondbuf) catch return;
 
             ctx.args.absolute_working_dir = try allocator.dupeZ(u8, cwd);
         }
@@ -398,7 +398,7 @@ pub fn loadConfig(allocator: std.mem.Allocator, user_config_path_: ?string, ctx:
             ctx.log.print(Output.errorWriter()) catch {};
         }
         if (ctx.log.hasAny()) Output.printError("\n", .{});
-        Output.err(err, "failed to load bunfig", .{});
+        Output.err(err, "failed to load funfig", .{});
         Global.crash();
     };
 }
@@ -450,30 +450,30 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
 
     if (builtin.have_error_return_tracing) {
         if (args.flag("--verbose-error-trace")) {
-            bun.crash_handler.verbose_error_trace = true;
+            fun.crash_handler.verbose_error_trace = true;
         }
     }
 
     var cwd: [:0]u8 = undefined;
     if (args.option("--cwd")) |cwd_arg| {
         cwd = brk: {
-            var outbuf: bun.PathBuffer = undefined;
-            const out = bun.path.joinAbs(try bun.getcwd(&outbuf), .loose, cwd_arg);
-            bun.sys.chdir("", out).unwrap() catch |err| {
+            var outbuf: fun.PathBuffer = undefined;
+            const out = fun.path.joinAbs(try fun.getcwd(&outbuf), .loose, cwd_arg);
+            fun.sys.chdir("", out).unwrap() catch |err| {
                 Output.err(err, "Could not change directory to \"{s}\"\n", .{cwd_arg});
                 Global.exit(1);
             };
             break :brk try allocator.dupeZ(u8, out);
         };
     } else {
-        cwd = try bun.getcwdAlloc(allocator);
+        cwd = try fun.getcwdAlloc(allocator);
     }
 
-    // Not gated on .BunxCommand: bunx skips Arguments.parse entirely
-    // (uses_global_options=false). bunx picks up no-orphans via the
-    // BUN_FEATURE_FLAG_NO_ORPHANS env var in main()→install() instead.
+    // Not gated on .FunxCommand: funx skips Arguments.parse entirely
+    // (uses_global_options=false). funx picks up no-orphans via the
+    // FUN_FEATURE_FLAG_NO_ORPHANS env var in main()→install() instead.
     if (cmd == .RunCommand or cmd == .AutoCommand or cmd == .TestCommand) {
-        if (args.flag("--no-orphans")) bun.ParentDeathWatchdog.enable();
+        if (args.flag("--no-orphans")) fun.ParentDeathWatchdog.enable();
     }
 
     if (cmd == .RunCommand or cmd == .AutoCommand) {
@@ -521,9 +521,9 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         if (args.options("--coverage-reporter").len > 0) {
             ctx.test_options.coverage.reporters = .{ .text = false, .lcov = false };
             for (args.options("--coverage-reporter")) |reporter| {
-                if (bun.strings.eqlComptime(reporter, "text")) {
+                if (fun.strings.eqlComptime(reporter, "text")) {
                     ctx.test_options.coverage.reporters.text = true;
-                } else if (bun.strings.eqlComptime(reporter, "lcov")) {
+                } else if (fun.strings.eqlComptime(reporter, "lcov")) {
                     ctx.test_options.coverage.reporters.lcov = true;
                 } else {
                     Output.prettyErrorln("<r><red>error<r>: invalid coverage reporter '{s}'. Available options: 'text' (console output), 'lcov' (code coverage file)", .{reporter});
@@ -609,11 +609,11 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         }
         if (args.option("--test-name-pattern")) |namePattern| {
             ctx.test_options.test_filter_pattern = namePattern;
-            const regex = RegularExpression.init(bun.String.fromBytes(namePattern), RegularExpression.Flags.none) catch {
+            const regex = RegularExpression.init(fun.String.fromBytes(namePattern), RegularExpression.Flags.none) catch {
                 Output.prettyErrorln(
                     "<r><red>error<r>: --test-name-pattern expects a valid regular expression but received {f}",
                     .{
-                        bun.fmt.QuotedFormatter{
+                        fun.fmt.QuotedFormatter{
                             .text = namePattern,
                         },
                     },
@@ -626,7 +626,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
             ctx.test_options.changed = since;
         }
         if (args.option("--shard")) |shard| {
-            const sep = bun.strings.indexOfChar(shard, '/') orelse {
+            const sep = fun.strings.indexOfChar(shard, '/') orelse {
                 Output.prettyErrorln("<r><red>error<r>: --shard expects <d>'<r>index/count<d>'<r>, e.g. --shard=1/3", .{});
                 Global.exit(1);
             };
@@ -666,7 +666,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
                     Global.exit(1);
                 }
             else
-                @max(bun.getThreadCount(), 1);
+                @max(fun.getThreadCount(), 1);
             if (parsed == 0) {
                 Output.prettyErrorln("<red>error<r>: --parallel expects a positive integer, received \"0\"", .{});
                 Global.exit(1);
@@ -763,7 +763,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
             const preloads = args.options("--preload");
             const preloads2 = args.options("--require");
             const preloads3 = args.options("--import");
-            const preload4 = bun.env_var.BUN_INSPECT_PRELOAD.get();
+            const preload4 = fun.env_var.FUN_INSPECT_PRELOAD.get();
 
             const total_preloads = ctx.preloads.len + preloads.len + preloads2.len + preloads3.len + (if (preload4 != null) @as(usize, 1) else @as(usize, 0));
             if (total_preloads > 0) {
@@ -780,18 +780,18 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         if (args.flag("--hot")) {
             ctx.debug.hot_reload = .hot;
             if (args.flag("--no-clear-screen")) {
-                bun.DotEnv.Loader.has_no_clear_screen_cli_flag = true;
+                fun.DotEnv.Loader.has_no_clear_screen_cli_flag = true;
             }
         } else if (args.flag("--watch")) {
             ctx.debug.hot_reload = .watch;
 
             // Windows applies this to the watcher child process.
             // The parent process is unable to re-launch itself
-            if (!bun.Environment.isWindows)
-                bun.auto_reload_on_crash = true;
+            if (!fun.Environment.isWindows)
+                fun.auto_reload_on_crash = true;
 
             if (args.flag("--no-clear-screen")) {
-                bun.DotEnv.Loader.has_no_clear_screen_cli_flag = true;
+                fun.DotEnv.Loader.has_no_clear_screen_cli_flag = true;
             }
         }
 
@@ -828,13 +828,13 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
             } else {
                 opts.port = std.fmt.parseInt(u16, port_str, 10) catch {
                     Output.errFmt(
-                        bun.fmt.outOfRange(port_str, .{
+                        fun.fmt.outOfRange(port_str, .{
                             .field_name = "--port",
                             .min = 0,
                             .max = std.math.maxInt(u16),
                         }),
                     );
-                    Output.note("To evaluate TypeScript here, use 'bun --print'", .{});
+                    Output.note("To evaluate TypeScript here, use 'fun --print'", .{});
                     Global.exit(1);
                 };
             }
@@ -846,22 +846,22 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
                 Global.exit(1);
             };
             if (size == 0) {
-                bun.http.max_http_header_size = 1024 * 1024 * 1024;
+                fun.http.max_http_header_size = 1024 * 1024 * 1024;
             } else {
-                bun.http.max_http_header_size = size;
+                fun.http.max_http_header_size = size;
             }
         }
 
         if (args.option("--user-agent")) |user_agent| {
-            bun.http.overridden_default_user_agent = user_agent;
+            fun.http.overridden_default_user_agent = user_agent;
         }
 
         ctx.debug.offline_mode_setting = if (args.flag("--prefer-offline"))
-            Bunfig.OfflineMode.offline
+            Funfig.OfflineMode.offline
         else if (args.flag("--prefer-latest"))
-            Bunfig.OfflineMode.latest
+            Funfig.OfflineMode.latest
         else
-            Bunfig.OfflineMode.online;
+            Funfig.OfflineMode.online;
 
         if (args.flag("--no-install")) {
             ctx.debug.global_cache = .disable;
@@ -1022,16 +1022,16 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         }
 
         if (args.flag("--no-deprecation")) {
-            Bun__Node__ProcessNoDeprecation = true;
+            Fun__Node__ProcessNoDeprecation = true;
         }
         if (args.flag("--throw-deprecation")) {
-            Bun__Node__ProcessThrowDeprecation = true;
+            Fun__Node__ProcessThrowDeprecation = true;
         }
         if (args.option("--title")) |title| {
-            CLI.Bun__Node__ProcessTitle = title;
+            CLI.Fun__Node__ProcessTitle = title;
         }
         if (args.flag("--zero-fill-buffers")) {
-            Bun__Node__ZeroFillBuffers = true;
+            Fun__Node__ZeroFillBuffers = true;
         }
         const use_system_ca = args.flag("--use-system-ca");
         const use_openssl_ca = args.flag("--use-openssl-ca");
@@ -1045,19 +1045,19 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
 
         // CLI overrides env var (NODE_USE_SYSTEM_CA)
         if (use_bundled_ca) {
-            Bun__Node__CAStore = .bundled;
+            Fun__Node__CAStore = .bundled;
         } else if (use_openssl_ca) {
-            Bun__Node__CAStore = .openssl;
+            Fun__Node__CAStore = .openssl;
         } else if (use_system_ca) {
-            Bun__Node__CAStore = .system;
+            Fun__Node__CAStore = .system;
         } else {
-            if (bun.env_var.NODE_USE_SYSTEM_CA.get()) {
-                Bun__Node__CAStore = .system;
+            if (fun.env_var.NODE_USE_SYSTEM_CA.get()) {
+                Fun__Node__CAStore = .system;
             }
         }
 
         // Back-compat boolean used by native code until fully migrated
-        Bun__Node__UseSystemCA = (Bun__Node__CAStore == .system);
+        Fun__Node__UseSystemCA = (Fun__Node__CAStore == .system);
     }
 
     if (opts.port != null and opts.origin == null) {
@@ -1076,21 +1076,21 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         const production = args.flag("--production");
 
         if (args.flag("--app")) {
-            if (!bun.FeatureFlags.bake()) {
-                Output.errGeneric("To use the experimental \"--app\" option, upgrade to the canary build of bun via \"bun upgrade --canary\"", .{});
+            if (!fun.FeatureFlags.bake()) {
+                Output.errGeneric("To use the experimental \"--app\" option, upgrade to the canary build of fun via \"fun upgrade --canary\"", .{});
                 Global.crash();
             }
 
             ctx.bundler_options.bake = true;
-            ctx.bundler_options.bake_debug_dump_server = bun.FeatureFlags.bake_debugging_features and
+            ctx.bundler_options.bake_debug_dump_server = fun.FeatureFlags.bake_debugging_features and
                 args.flag("--debug-dump-server-files");
-            ctx.bundler_options.bake_debug_disable_minify = bun.FeatureFlags.bake_debugging_features and
+            ctx.bundler_options.bake_debug_disable_minify = fun.FeatureFlags.bake_debugging_features and
                 args.flag("--debug-no-minify");
         }
 
         if (ctx.bundler_options.bytecode) {
             ctx.bundler_options.output_format = .cjs;
-            ctx.args.target = .bun;
+            ctx.args.target = .fun;
         }
 
         if (args.option("--public-path")) |public_path| {
@@ -1172,13 +1172,13 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         if (args.option("--target")) |_target| brk: {
             if (comptime cmd == .BuildCommand) {
                 if (args.flag("--compile")) {
-                    if (_target.len > 4 and strings.hasPrefixComptime(_target, "bun-")) {
+                    if (_target.len > 4 and strings.hasPrefixComptime(_target, "fun-")) {
                         ctx.bundler_options.compile_target = CLI.Cli.CompileTarget.from(_target[3..]);
                         if (!ctx.bundler_options.compile_target.isSupported()) {
                             Output.errGeneric("Unsupported compile target: {f}\n", .{ctx.bundler_options.compile_target});
                             Global.exit(1);
                         }
-                        opts.target = .bun;
+                        opts.target = .fun;
                         break :brk;
                     }
                 }
@@ -1187,31 +1187,31 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
             opts.target = opts.target orelse switch (TargetMatcher.match(_target)) {
                 TargetMatcher.case("browser") => Api.Target.browser,
                 TargetMatcher.case("node") => Api.Target.node,
-                TargetMatcher.case("macro") => if (cmd == .BuildCommand) Api.Target.bun_macro else Api.Target.bun,
-                TargetMatcher.case("bun") => Api.Target.bun,
+                TargetMatcher.case("macro") => if (cmd == .BuildCommand) Api.Target.fun_macro else Api.Target.fun,
+                TargetMatcher.case("fun") => Api.Target.fun,
                 else => CLI.invalidTarget(&diag, _target),
             };
 
-            if (opts.target.? == .bun) {
-                ctx.debug.run_in_bun = opts.target.? == .bun;
+            if (opts.target.? == .fun) {
+                ctx.debug.run_in_fun = opts.target.? == .fun;
             } else {
                 if (ctx.bundler_options.bytecode) {
-                    Output.errGeneric("target must be 'bun' when bytecode is true. Received: {s}", .{@tagName(opts.target.?)});
+                    Output.errGeneric("target must be 'fun' when bytecode is true. Received: {s}", .{@tagName(opts.target.?)});
                     Global.exit(1);
                 }
 
                 if (ctx.bundler_options.bake) {
-                    Output.errGeneric("target must be 'bun' when using --app. Received: {s}", .{@tagName(opts.target.?)});
+                    Output.errGeneric("target must be 'fun' when using --app. Received: {s}", .{@tagName(opts.target.?)});
                 }
             }
         }
 
         if (args.flag("--watch")) {
             ctx.debug.hot_reload = .watch;
-            bun.auto_reload_on_crash = true;
+            fun.auto_reload_on_crash = true;
 
             if (args.flag("--no-clear-screen")) {
-                bun.DotEnv.Loader.has_no_clear_screen_cli_flag = true;
+                fun.DotEnv.Loader.has_no_clear_screen_cli_flag = true;
             }
         }
 
@@ -1246,18 +1246,18 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
             }
         }
 
-        // Handle --compile-autoload-bunfig flags
+        // Handle --compile-autoload-funfig flags
         {
-            const has_positive = args.flag("--compile-autoload-bunfig");
-            const has_negative = args.flag("--no-compile-autoload-bunfig");
+            const has_positive = args.flag("--compile-autoload-funfig");
+            const has_negative = args.flag("--no-compile-autoload-funfig");
 
             if (has_positive or has_negative) {
                 if (!ctx.bundler_options.compile) {
-                    Output.errGeneric("--compile-autoload-bunfig requires --compile", .{});
+                    Output.errGeneric("--compile-autoload-funfig requires --compile", .{});
                     Global.crash();
                 }
                 if (has_positive and has_negative) {
-                    Output.errGeneric("Cannot use both --compile-autoload-bunfig and --no-compile-autoload-bunfig", .{});
+                    Output.errGeneric("Cannot use both --compile-autoload-funfig and --no-compile-autoload-funfig", .{});
                     Global.crash();
                 }
                 ctx.bundler_options.compile_autoload_bunfig = has_positive;
@@ -1429,7 +1429,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         if (args.option("--metafile")) |metafile| {
             // If --metafile is passed without a value, default to "meta.json"
             ctx.bundler_options.metafile = if (metafile.len > 0)
-                bun.handleOom(allocator.dupeZ(u8, metafile))
+                fun.handleOom(allocator.dupeZ(u8, metafile))
             else
                 "meta.json";
         }
@@ -1437,7 +1437,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         if (args.option("--metafile-md")) |metafile_md| {
             // If --metafile-md is passed without a value, default to "meta.md"
             ctx.bundler_options.metafile_md = if (metafile_md.len > 0)
-                bun.handleOom(allocator.dupeZ(u8, metafile_md))
+                fun.handleOom(allocator.dupeZ(u8, metafile_md))
             else
                 "meta.md";
         }
@@ -1456,8 +1456,8 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
 
             switch (format) {
                 .internal_bake_dev => {
-                    bun.Output.warn("--format={s} is for debugging only, and may experience breaking changes at any moment", .{format_str});
-                    bun.Output.flush();
+                    fun.Output.warn("--format={s} is for debugging only, and may experience breaking changes at any moment", .{format_str});
+                    fun.Output.flush();
                 },
                 .cjs => {
                     if (ctx.args.target == null) {
@@ -1488,25 +1488,25 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
         }
 
         if (args.option("--entry-naming")) |entry_naming| {
-            ctx.bundler_options.entry_naming = try strings.concat(allocator, &.{ "./", bun.strings.removeLeadingDotSlash(entry_naming) });
+            ctx.bundler_options.entry_naming = try strings.concat(allocator, &.{ "./", fun.strings.removeLeadingDotSlash(entry_naming) });
         }
 
         if (args.option("--chunk-naming")) |chunk_naming| {
-            ctx.bundler_options.chunk_naming = try strings.concat(allocator, &.{ "./", bun.strings.removeLeadingDotSlash(chunk_naming) });
+            ctx.bundler_options.chunk_naming = try strings.concat(allocator, &.{ "./", fun.strings.removeLeadingDotSlash(chunk_naming) });
         }
 
         if (args.option("--asset-naming")) |asset_naming| {
-            ctx.bundler_options.asset_naming = try strings.concat(allocator, &.{ "./", bun.strings.removeLeadingDotSlash(asset_naming) });
+            ctx.bundler_options.asset_naming = try strings.concat(allocator, &.{ "./", fun.strings.removeLeadingDotSlash(asset_naming) });
         }
 
         if (args.flag("--server-components")) {
             ctx.bundler_options.server_components = true;
             if (opts.target) |target| {
-                if (!bun.options.Target.from(target).isServerSide()) {
-                    bun.Output.errGeneric("Cannot use client-side --target={s} with --server-components", .{@tagName(target)});
+                if (!fun.options.Target.from(target).isServerSide()) {
+                    fun.Output.errGeneric("Cannot use client-side --target={s} with --server-components", .{@tagName(target)});
                     Global.crash();
                 } else {
-                    opts.target = .bun;
+                    opts.target = .fun;
                 }
             }
         }
@@ -1517,7 +1517,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
 
         if (args.option("--sourcemap")) |setting| {
             if (setting.len == 0) {
-                // In the future, Bun is going to make this default to .linked
+                // In the future, Fun is going to make this default to .linked
                 opts.source_map = .linked;
             } else if (strings.eqlComptime(setting, "inline")) {
                 opts.source_map = .@"inline";
@@ -1549,7 +1549,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
                 if (entry_points.len > 0 and (strings.eqlComptime(
                     entry_points[0],
                     "build",
-                ) or strings.eqlComptime(entry_points[0], "bun"))) {
+                ) or strings.eqlComptime(entry_points[0], "fun"))) {
                     var out_entry = entry_points[1..];
                     for (entry_points, 0..) |entry, i| {
                         if (entry.len > 0) {
@@ -1584,7 +1584,7 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
     const jsx_side_effects = args.flag("--jsx-side-effects");
 
     if (cmd == .AutoCommand or cmd == .RunCommand) {
-        // "run.silent" in bunfig.toml
+        // "run.silent" in funfig.toml
         if (args.flag("--silent")) {
             ctx.debug.silent = true;
         }
@@ -1600,14 +1600,14 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
 
         if (opts.define) |define| {
             if (define.keys.len > 0)
-                bun.jsc.RuntimeTranspilerCache.is_disabled = true;
+                fun.jsc.RuntimeTranspilerCache.is_disabled = true;
         }
     }
 
-    if (cmd == .RunCommand or cmd == .AutoCommand or cmd == .BunxCommand) {
-        // "run.bun" in bunfig.toml
-        if (args.flag("--bun")) {
-            ctx.debug.run_in_bun = true;
+    if (cmd == .RunCommand or cmd == .AutoCommand or cmd == .FunxCommand) {
+        // "run.fun" in funfig.toml
+        if (args.flag("--fun")) {
+            ctx.debug.run_in_fun = true;
         }
     }
 
@@ -1644,11 +1644,11 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
 
     if (cmd == .BuildCommand) {
         if (opts.entry_points.len == 0 and !ctx.bundler_options.bake) {
-            Output.prettyln("<r><b>bun build <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+            Output.prettyln("<r><b>fun build <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
             Output.pretty("<r><red>error: Missing entrypoints. What would you like to bundle?<r>\n\n", .{});
             Output.flush();
-            Output.pretty("Usage:\n  <d>$<r> <b><green>bun build<r> \\<entrypoint\\> [...\\<entrypoints\\>] <cyan>[...flags]<r>  \n", .{});
-            Output.pretty("\nTo see full documentation:\n  <d>$<r> <b><green>bun build<r> --help\n", .{});
+            Output.pretty("Usage:\n  <d>$<r> <b><green>fun build<r> \\<entrypoint\\> [...\\<entrypoints\\>] <cyan>[...flags]<r>  \n", .{});
+            Output.pretty("\nTo see full documentation:\n  <d>$<r> <b><green>fun build<r> --help\n", .{});
             Output.flush();
             Global.exit(1);
         }
@@ -1687,12 +1687,12 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
 
     if (cmd == .RunCommand or cmd == .AutoCommand) {
         if (args.option("--shell")) |shell| {
-            if (strings.eqlComptime(shell, "bun")) {
+            if (strings.eqlComptime(shell, "fun")) {
                 ctx.debug.use_system_shell = false;
             } else if (strings.eqlComptime(shell, "system")) {
                 ctx.debug.use_system_shell = true;
             } else {
-                Output.errGeneric("Expected --shell to be one of 'bun' or 'system'. Received: \"{s}\"", .{shell});
+                Output.errGeneric("Expected --shell to be one of 'fun' or 'system'. Received: \"{s}\"", .{shell});
                 Global.exit(1);
             }
         }
@@ -1706,36 +1706,36 @@ pub fn parse(allocator: std.mem.Allocator, ctx: Command.Context, comptime cmd: C
     return opts;
 }
 
-export var Bun__Node__ZeroFillBuffers = false;
-export var Bun__Node__ProcessNoDeprecation = false;
-export var Bun__Node__ProcessThrowDeprecation = false;
+export var Fun__Node__ZeroFillBuffers = false;
+export var Fun__Node__ProcessNoDeprecation = false;
+export var Fun__Node__ProcessThrowDeprecation = false;
 
-pub const BunCAStore = enum(u8) { bundled, openssl, system };
-pub export var Bun__Node__CAStore: BunCAStore = .bundled;
-pub export var Bun__Node__UseSystemCA = false;
+pub const FunCAStore = enum(u8) { bundled, openssl, system };
+pub export var Fun__Node__CAStore: FunCAStore = .bundled;
+pub export var Fun__Node__UseSystemCA = false;
 
 const string = []const u8;
 
 const builtin = @import("builtin");
 const std = @import("std");
 
-const bun = @import("bun");
-const Bunfig = bun.Bunfig;
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const Global = bun.Global;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const clap = bun.clap;
-const js_ast = bun.ast;
-const logger = bun.logger;
-const options = bun.options;
-const resolve_path = bun.path;
-const strings = bun.strings;
-const Api = bun.schema.api;
-const RegularExpression = bun.jsc.RegularExpression;
+const fun = @import("fun");
+const Funfig = fun.Funfig;
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const Global = fun.Global;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const clap = fun.clap;
+const js_ast = fun.ast;
+const logger = fun.logger;
+const options = fun.options;
+const resolve_path = fun.path;
+const strings = fun.strings;
+const Api = fun.schema.api;
+const RegularExpression = fun.jsc.RegularExpression;
 
-const CLI = bun.cli;
+const CLI = fun.cli;
 const Command = CLI.Command;
 const DefineColonList = CLI.DefineColonList;
 const LoaderColonList = CLI.LoaderColonList;

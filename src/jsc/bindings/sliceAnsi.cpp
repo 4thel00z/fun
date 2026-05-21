@@ -7,20 +7,20 @@
 #include <wtf/Vector.h>
 
 // Zig exports for visible width and grapheme break
-extern "C" uint8_t Bun__codepointWidth(uint32_t cp, bool ambiguous_as_wide);
-extern "C" bool Bun__graphemeBreak(uint32_t cp1, uint32_t cp2, uint8_t* state);
-extern "C" bool Bun__isEmojiPresentation(uint32_t cp);
-extern "C" size_t Bun__visibleWidthExcludeANSI_latin1(const uint8_t* ptr, size_t len);
-extern "C" size_t Bun__visibleWidthExcludeANSI_utf16(const uint16_t* ptr, size_t len, bool ambiguous_as_wide);
+extern "C" uint8_t Fun__codepointWidth(uint32_t cp, bool ambiguous_as_wide);
+extern "C" bool Fun__graphemeBreak(uint32_t cp1, uint32_t cp2, uint8_t* state);
+extern "C" bool Fun__isEmojiPresentation(uint32_t cp);
+extern "C" size_t Fun__visibleWidthExcludeANSI_latin1(const uint8_t* ptr, size_t len);
+extern "C" size_t Fun__visibleWidthExcludeANSI_utf16(const uint16_t* ptr, size_t len, bool ambiguous_as_wide);
 
-namespace Bun {
+namespace Fun {
 using namespace WTF;
 
 // Shared SIMD/SGR helpers live in ANSIHelpers.h. We keep a local
 // GraphemeWidthState mirror of visible.zig's GraphemeState because these are
 // called per-codepoint in the hot loop — extern-call overhead would hurt more
 // than the ~80 lines of duplication. Drift is caught by tests that assert
-// Bun.stringWidth(s) == width of Bun.sliceAnsi(s, 0, N) for edge cases.
+// Fun.stringWidth(s) == width of Fun.sliceAnsi(s, 0, N) for edge cases.
 
 // ============================================================================
 // Grapheme-aware Visible Width (mirrors visible.zig GraphemeState; see above)
@@ -52,10 +52,10 @@ struct GraphemeWidthState {
         vs15 = false;
         vs16 = false;
 
-        uint8_t w = Bun__codepointWidth(cp, ambiguousIsWide);
+        uint8_t w = Fun__codepointWidth(cp, ambiguousIsWide);
         baseWidth = w;
         nonEmojiWidth = w;
-        emojiBase = Bun__isEmojiPresentation(cp);
+        emojiBase = Fun__isEmojiPresentation(cp);
     }
 
     void add(uint32_t cp, bool ambiguousIsWide)
@@ -70,7 +70,7 @@ struct GraphemeWidthState {
         vs15 = vs15 || (cp == 0xFE0E);
         vs16 = vs16 || (cp == 0xFE0F);
 
-        uint8_t w = Bun__codepointWidth(cp, ambiguousIsWide);
+        uint8_t w = Fun__codepointWidth(cp, ambiguousIsWide);
         if (w > 0) {
             uint16_t newWidth = nonEmojiWidth + w;
             nonEmojiWidth = newWidth < 1023 ? newWidth : 1023;
@@ -628,7 +628,7 @@ static const Char* parseControlString(const Char* start, const Char* end)
         // Unterminated control string — DO NOT consume to EOF. A single C1
         // byte (0x90, 0x98, 0x9E, 0x9F) or malformed ESC-sequence should not
         // swallow the rest of the string (DoS vector; also inconsistent with
-        // Bun.stringWidth which treats these as standalone width-0 controls).
+        // Fun.stringWidth which treats these as standalone width-0 controls).
         // Instead, return nullptr so the caller treats the introducer as a
         // single visible char (which will be width 0 via codepointWidth).
         return nullptr;
@@ -753,7 +753,7 @@ static size_t computeTotalWidth(std::span<const Char> input, size_t asciiPrefix,
             shouldBreak = true;
             breakState = 0;
         } else
-            shouldBreak = Bun__graphemeBreak(prevCp, cp, &breakState);
+            shouldBreak = Fun__graphemeBreak(prevCp, cp, &breakState);
 
         if (shouldBreak) {
             if (hasPrev) totalW += gs.width();
@@ -948,7 +948,7 @@ static WTF::String emitSliceStreaming(
             shouldBreak = true;
             breakState = 0;
         } else
-            shouldBreak = Bun__graphemeBreak(prevVisCp, cp, &breakState);
+            shouldBreak = Fun__graphemeBreak(prevVisCp, cp, &breakState);
 
         if (shouldBreak) {
             if (hasPrev) position += gs.width();
@@ -1332,7 +1332,7 @@ static WTF::String sliceAnsiImpl(std::span<const Char> input, double startD, dou
 // JavaScript Binding
 // ============================================================================
 
-JSC_DEFINE_HOST_FUNCTION(jsFunctionBunSliceAnsi, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
+JSC_DEFINE_HOST_FUNCTION(jsFunctionFunSliceAnsi, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -1412,8 +1412,8 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionBunSliceAnsi, (JSC::JSGlobalObject * globalOb
     size_t ellipsisWidth = 0;
     if (!ellipsis.isEmpty()) {
         ellipsisWidth = ellipsis.is8Bit()
-            ? Bun__visibleWidthExcludeANSI_latin1(reinterpret_cast<const uint8_t*>(ellipsis.span8().data()), ellipsis.length())
-            : Bun__visibleWidthExcludeANSI_utf16(reinterpret_cast<const uint16_t*>(ellipsis.span16().data()), ellipsis.length(), ambiguousIsWide);
+            ? Fun__visibleWidthExcludeANSI_latin1(reinterpret_cast<const uint8_t*>(ellipsis.span8().data()), ellipsis.length())
+            : Fun__visibleWidthExcludeANSI_utf16(reinterpret_cast<const uint16_t*>(ellipsis.span16().data()), ellipsis.length(), ambiguousIsWide);
     }
 
     WTF::String result;
@@ -1431,4 +1431,4 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionBunSliceAnsi, (JSC::JSGlobalObject * globalOb
     return JSC::JSValue::encode(JSC::jsString(vm, result));
 }
 
-} // namespace Bun
+} // namespace Fun

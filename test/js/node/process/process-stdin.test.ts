@@ -1,15 +1,15 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("pipe does the right thing", async () => {
-  // Note: Bun.spawnSync uses memfd_create on Linux for pipe, which means we see
+  // Note: Fun.spawnSync uses memfd_create on Linux for pipe, which means we see
   // it as a file instead of a tty
-  const result = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log(typeof process.stdin.ref)"],
+  const result = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log(typeof process.stdin.ref)"],
     stdin: "pipe",
     stdout: "pipe",
     stderr: "inherit",
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect((await new Response(result.stdout).text()).trim()).toBe("function");
@@ -17,12 +17,12 @@ test("pipe does the right thing", async () => {
 });
 
 test("file does the right thing", async () => {
-  const result = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log(typeof process.stdin.ref)"],
-    stdin: Bun.file(import.meta.path),
+  const result = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log(typeof process.stdin.ref)"],
+    stdin: Fun.file(import.meta.path),
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(await result.stdout.text()).toMatchInlineSnapshot(`
@@ -34,9 +34,9 @@ test("file does the right thing", async () => {
 });
 
 test("stdin with 'readable' event handler should receive data when paused", async () => {
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       const handleReadable = () => {
@@ -57,7 +57,7 @@ test("stdin with 'readable' event handler should receive data when paused", asyn
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   proc.stdin.write("abc\n");
@@ -75,9 +75,9 @@ test("stdin with 'readable' event handler should receive data when paused", asyn
 });
 
 test("stdin with 'data' event handler should NOT receive data when paused", async () => {
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       const handleData = chunk => {
@@ -95,7 +95,7 @@ test("stdin with 'data' event handler should NOT receive data when paused", asyn
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   proc.stdin.write("abc\n");
@@ -110,9 +110,9 @@ test("stdin with 'data' event handler should NOT receive data when paused", asyn
 });
 
 test("stdin should allow process to exit when paused", async () => {
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
         process.stdin.on("data", () => {});
@@ -122,7 +122,7 @@ test("stdin should allow process to exit when paused", async () => {
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   await proc.exited;
@@ -132,9 +132,9 @@ test("stdin should allow process to exit when paused", async () => {
 });
 
 test("stdin should not allow process to exit when not paused", async () => {
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       process.stdin.on("data", () => {});
@@ -143,10 +143,10 @@ test("stdin should not allow process to exit when not paused", async () => {
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
-  await Bun.sleep(1000);
+  await Fun.sleep(1000);
   expect(proc.exitCode).toBe(null);
   proc.kill();
   await proc.exited;

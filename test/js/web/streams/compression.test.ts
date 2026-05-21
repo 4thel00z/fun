@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("CompressionStream and DecompressionStream", () => {
   describe("brotli", () => {
     test("compresses data with brotli", async () => {
-      const input = "Hello, Bun! This is a test string for brotli compression.";
+      const input = "Hello, Fun! This is a test string for brotli compression.";
       const encoder = new TextEncoder();
       const data = encoder.encode(input);
 
@@ -27,7 +27,7 @@ describe("CompressionStream and DecompressionStream", () => {
     });
 
     test("decompresses brotli data", async () => {
-      const input = "Hello, Bun! This is a test string for brotli decompression.";
+      const input = "Hello, Fun! This is a test string for brotli decompression.";
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
       const data = encoder.encode(input);
@@ -112,7 +112,7 @@ describe("CompressionStream and DecompressionStream", () => {
 
   describe("zstd", () => {
     test("compresses data with zstd", async () => {
-      const input = "Hello, Bun! This is a test string for zstd compression.";
+      const input = "Hello, Fun! This is a test string for zstd compression.";
       const encoder = new TextEncoder();
       const data = encoder.encode(input);
 
@@ -136,7 +136,7 @@ describe("CompressionStream and DecompressionStream", () => {
     });
 
     test("decompresses zstd data", async () => {
-      const input = "Hello, Bun! This is a test string for zstd decompression.";
+      const input = "Hello, Fun! This is a test string for zstd decompression.";
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
       const data = encoder.encode(input);

@@ -1,9 +1,9 @@
 name: Bump version
-description: Bump the version of Bun
+description: Bump the version of Fun
 
 inputs:
   version:
-    description: The most recent version of Bun.
+    description: The most recent version of Fun.
     required: true
     type: string
   token:
@@ -20,7 +20,7 @@ runs:
       id: bump
       run: |
         set -euo pipefail
-        MESSAGE=$(bun ./scripts/bump.ts patch --last-version=${{ inputs.version }})
+        MESSAGE=$(fun ./scripts/bump.ts patch --last-version=${{ inputs.version }})
         LATEST=$(cat LATEST)
         echo "version=$LATEST" >> $GITHUB_OUTPUT
         echo "message=$MESSAGE" >> $GITHUB_OUTPUT
@@ -39,4 +39,4 @@ runs:
 
           ${{ steps.bump.outputs.message }}
 
-          Auto-bumped by [this workflow](https://github.com/oven-sh/bun/actions/workflows/release.yml)
+          Auto-bumped by [this workflow](https://github.com/underdoc-org/fun/actions/workflows/release.yml)

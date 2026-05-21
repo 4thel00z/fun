@@ -1,6 +1,6 @@
-const bloblog = bun.Output.scoped(.WriteFile, .hidden);
+const bloblog = fun.Output.scoped(.WriteFile, .hidden);
 
-const log = bun.Output.scoped(.ReadFile, .hidden);
+const log = fun.Output.scoped(.ReadFile, .hidden);
 
 pub fn NewReadFileHandler(comptime Function: anytype) type {
     return struct {
@@ -8,14 +8,14 @@ pub fn NewReadFileHandler(comptime Function: anytype) type {
         promise: JSPromise.Strong = .{},
         globalThis: *JSGlobalObject,
 
-        pub fn run(handler: *@This(), maybe_bytes: ReadFileResultType) bun.JSTerminated!void {
+        pub fn run(handler: *@This(), maybe_bytes: ReadFileResultType) fun.JSTerminated!void {
             var promise = handler.promise.swap();
             var blob = handler.context.takeOwnership();
             // `context` was populated via `this.dupe()` in doReadFile(), so it
             // owns a store ref, a name ref, and possibly a content_type copy.
             defer blob.deinit();
             const globalThis = handler.globalThis;
-            bun.destroy(handler);
+            fun.destroy(handler);
             switch (maybe_bytes) {
                 .result => |result| {
                     const bytes = result.buf;
@@ -44,24 +44,24 @@ pub const ReadFileTask = jsc.WorkTask(ReadFile);
 
 pub const ReadFile = struct {
     file_store: FileStore,
-    byte_store: ByteStore = ByteStore{ .allocator = bun.default_allocator },
+    byte_store: ByteStore = ByteStore{ .allocator = fun.default_allocator },
     store: ?*Store = null,
     offset: SizeType = 0,
     max_length: SizeType = Blob.max_size,
     total_size: SizeType = Blob.max_size,
-    opened_fd: bun.FD = invalid_fd,
+    opened_fd: fun.FD = invalid_fd,
     read_off: SizeType = 0,
     read_eof: bool = false,
     size: SizeType = 0,
     buffer: std.ArrayListUnmanaged(u8) = .{},
-    task: bun.ThreadPool.Task = undefined,
+    task: fun.ThreadPool.Task = undefined,
     system_error: ?jsc.SystemError = null,
     errno: ?anyerror = null,
     onCompleteCtx: *anyopaque = undefined,
     onCompleteCallback: ReadFileOnReadFileCallback = undefined,
     io_task: ?*ReadFileTask = null,
-    io_poll: bun.io.Poll = .{},
-    io_request: bun.io.Request = .{ .callback = &onRequestReadable },
+    io_poll: fun.io.Poll = .{},
+    io_request: fun.io.Request = .{ .callback = &onRequestReadable },
     could_block: bool = false,
     close_after_io: bool = false,
     state: std.atomic.Value(ClosingState) = std.atomic.Value(ClosingState).init(.running),
@@ -90,7 +90,7 @@ pub const ReadFile = struct {
         if (Environment.isWindows)
             @compileError("Do not call ReadFile.createWithCtx on Windows, see ReadFileUV");
 
-        const read_file = bun.new(ReadFile, ReadFile{
+        const read_file = fun.new(ReadFile, ReadFile{
             .file_store = store.data.file,
             .offset = off,
             .max_length = max_len,
@@ -109,14 +109,14 @@ pub const ReadFile = struct {
         max_len: SizeType,
         comptime Context: type,
         context: Context,
-        comptime callback: fn (ctx: Context, bytes: ReadFileResultType) bun.JSTerminated!void,
+        comptime callback: fn (ctx: Context, bytes: ReadFileResultType) fun.JSTerminated!void,
     ) !*ReadFile {
         if (Environment.isWindows)
             @compileError("dont call this function on windows");
 
         const Handler = struct {
             pub fn run(ptr: *anyopaque, bytes: ReadFileResultType) void {
-                callback(bun.cast(Context, ptr), bytes) catch {}; // TODO: properly propagate exception upwards
+                callback(fun.cast(Context, ptr), bytes) catch {}; // TODO: properly propagate exception upwards
             }
         };
 
@@ -144,9 +144,9 @@ pub const ReadFile = struct {
         jsc.WorkPool.schedule(&this.task);
     }
 
-    pub fn onIOError(this: *ReadFile, err: bun.sys.Error) void {
+    pub fn onIOError(this: *ReadFile, err: fun.sys.Error) void {
         bloblog("ReadFile.onIOError", .{});
-        this.errno = bun.errnoToZigErr(err.errno);
+        this.errno = fun.errnoToZigErr(err.errno);
         this.system_error = err.toSystemError();
         this.task = .{ .callback = &doReadLoopTask };
         // On macOS, we use one-shot mode, so:
@@ -189,12 +189,12 @@ pub const ReadFile = struct {
     }
 
     pub fn doRead(this: *ReadFile, buffer: []u8, read_len: *usize, retry: *bool) bool {
-        const result: bun.sys.Maybe(usize) = brk: {
+        const result: fun.sys.Maybe(usize) = brk: {
             if (std.posix.S.ISSOCK(this.file_store.mode)) {
-                break :brk bun.sys.recvNonBlock(this.opened_fd, buffer);
+                break :brk fun.sys.recvNonBlock(this.opened_fd, buffer);
             }
 
-            break :brk bun.sys.read(this.opened_fd, buffer);
+            break :brk fun.sys.read(this.opened_fd, buffer);
         };
 
         while (true) {
@@ -205,7 +205,7 @@ pub const ReadFile = struct {
                 },
                 .err => |err| {
                     switch (err.getErrno()) {
-                        bun.io.retry => {
+                        fun.io.retry => {
                             if (!this.could_block) {
                                 // regular files cannot use epoll.
                                 // this is fine on kqueue, but not on epoll.
@@ -216,13 +216,13 @@ pub const ReadFile = struct {
                             return true;
                         },
                         else => {
-                            this.errno = bun.errnoToZigErr(err.errno);
+                            this.errno = fun.errnoToZigErr(err.errno);
                             this.system_error = err.toSystemError();
                             if (this.system_error.?.path.isEmpty()) {
                                 this.system_error.?.path = if (this.file_store.pathlike == .path)
-                                    bun.String.cloneUTF8(this.file_store.pathlike.path.slice())
+                                    fun.String.cloneUTF8(this.file_store.pathlike.path.slice())
                                 else
-                                    bun.String.empty;
+                                    fun.String.empty;
                             }
                             return false;
                         },
@@ -235,23 +235,23 @@ pub const ReadFile = struct {
         return true;
     }
 
-    pub fn then(this: *ReadFile, _: *jsc.JSGlobalObject) bun.JSTerminated!void {
+    pub fn then(this: *ReadFile, _: *jsc.JSGlobalObject) fun.JSTerminated!void {
         const cb = this.onCompleteCallback;
         const cb_ctx = this.onCompleteCtx;
 
         if (this.store == null and this.system_error != null) {
             const system_error = this.system_error.?;
-            bun.destroy(this);
+            fun.destroy(this);
             cb(cb_ctx, ReadFileResultType{ .err = system_error });
             return;
         } else if (this.store == null) {
-            bun.destroy(this);
+            fun.destroy(this);
             if (Environment.allow_assert) @panic("assertion failure - store should not be null");
             cb(cb_ctx, ReadFileResultType{
                 .err = SystemError{
-                    .code = bun.String.static("INTERNAL_ERROR"),
-                    .message = bun.String.static("assertion failure - store should not be null"),
-                    .syscall = bun.String.static("read"),
+                    .code = fun.String.static("INTERNAL_ERROR"),
+                    .message = fun.String.static("assertion failure - store should not be null"),
+                    .syscall = fun.String.static("read"),
                 },
             });
             return;
@@ -263,7 +263,7 @@ pub const ReadFile = struct {
         defer store.deref();
         const system_error = this.system_error;
         const total_size = this.total_size;
-        bun.destroy(this);
+        fun.destroy(this);
 
         if (system_error) |err| {
             cb(cb_ctx, ReadFileResultType{ .err = err });
@@ -312,11 +312,11 @@ pub const ReadFile = struct {
         }
     }
 
-    fn resolveSizeAndLastModified(this: *ReadFile, fd: bun.FD) void {
-        const stat: bun.Stat = switch (bun.sys.fstat(fd)) {
+    fn resolveSizeAndLastModified(this: *ReadFile, fd: fun.FD) void {
+        const stat: fun.Stat = switch (fun.sys.fstat(fd)) {
             .result => |result| result,
             .err => |err| {
-                this.errno = bun.errnoToZigErr(err.errno);
+                this.errno = fun.errnoToZigErr(err.errno);
                 this.system_error = err.toSystemError();
                 return;
             },
@@ -328,21 +328,21 @@ pub const ReadFile = struct {
             }
         }
 
-        if (bun.S.ISDIR(@intCast(stat.mode))) {
+        if (fun.S.ISDIR(@intCast(stat.mode))) {
             this.errno = error.EISDIR;
             this.system_error = jsc.SystemError{
-                .code = bun.String.static("EISDIR"),
+                .code = fun.String.static("EISDIR"),
                 .path = if (this.file_store.pathlike == .path)
-                    bun.String.cloneUTF8(this.file_store.pathlike.path.slice())
+                    fun.String.cloneUTF8(this.file_store.pathlike.path.slice())
                 else
-                    bun.String.empty,
-                .message = bun.String.static("Directories cannot be read like files"),
-                .syscall = bun.String.static("read"),
+                    fun.String.empty,
+                .message = fun.String.static("Directories cannot be read like files"),
+                .syscall = fun.String.static("read"),
             };
             return;
         }
 
-        this.could_block = !bun.isRegularFile(stat.mode);
+        this.could_block = !fun.isRegularFile(stat.mode);
         this.total_size = @intCast(@min(@max(stat.size, 0), Blob.max_size));
 
         if (stat.size > 0 and !this.could_block) {
@@ -354,15 +354,15 @@ pub const ReadFile = struct {
         }
 
         if (this.offset > 0) {
-            // We DO support offset in Bun.file()
-            switch (bun.sys.setFileOffset(fd, this.offset)) {
+            // We DO support offset in Fun.file()
+            switch (fun.sys.setFileOffset(fd, this.offset)) {
                 // we ignore errors because it should continue to work even if its a pipe
                 .err, .result => {},
             }
         }
     }
 
-    fn runAsyncWithFD(this: *ReadFile, fd: bun.FD) void {
+    fn runAsyncWithFD(this: *ReadFile, fd: fun.FD) void {
         if (this.errno != null) {
             this.onFinish();
             return;
@@ -374,9 +374,9 @@ pub const ReadFile = struct {
 
         // Special files might report a size of > 0, and be wrong.
         // so we should check specifically that its a regular file before trusting the size.
-        if (this.size == 0 and bun.isRegularFile(this.file_store.mode)) {
+        if (this.size == 0 and fun.isRegularFile(this.file_store.mode)) {
             this.buffer = .{};
-            this.byte_store = ByteStore.init(this.buffer.items, bun.default_allocator);
+            this.byte_store = ByteStore.init(this.buffer.items, fun.default_allocator);
 
             this.onFinish();
             return;
@@ -384,9 +384,9 @@ pub const ReadFile = struct {
 
         // add an extra 16 bytes to the buffer to avoid having to resize it for trailing extra data
         if (!this.could_block or (this.size > 0 and this.size != Blob.max_size))
-            this.buffer = std.ArrayListUnmanaged(u8).initCapacity(bun.default_allocator, this.size +| 16) catch |err| {
+            this.buffer = std.ArrayListUnmanaged(u8).initCapacity(fun.default_allocator, this.size +| 16) catch |err| {
                 this.errno = err;
-                this.system_error = bun.sys.Error.fromCode(bun.sys.E.NOMEM, .read).toSystemError();
+                this.system_error = fun.sys.Error.fromCode(fun.sys.E.NOMEM, .read).toSystemError();
                 this.onFinish();
                 return;
             };
@@ -399,12 +399,12 @@ pub const ReadFile = struct {
         //
         // An example of where this happens is stdin.
         //
-        //    await Bun.stdin.text();
+        //    await Fun.stdin.text();
         //
         // If we immediately call read(), it will block until stdin is
         // readable.
         if (this.could_block) {
-            if (bun.isReadable(fd) == .not_ready) {
+            if (fun.isReadable(fd) == .not_ready) {
                 this.waitForReadable();
                 return;
             }
@@ -442,9 +442,9 @@ pub const ReadFile = struct {
                         // We need to allocate a new buffer
                         // In this case, we want to use `ensureTotalCapacityPrecis` so that it's an exact amount
                         // We want to avoid over-allocating incase it's a large amount of data sent in a single chunk followed by a 0 byte chunk.
-                        bun.handleOom(this.buffer.ensureTotalCapacityPrecise(bun.default_allocator, read.len));
+                        fun.handleOom(this.buffer.ensureTotalCapacityPrecise(fun.default_allocator, read.len));
                     } else {
-                        bun.handleOom(this.buffer.ensureUnusedCapacity(bun.default_allocator, read.len));
+                        fun.handleOom(this.buffer.ensureUnusedCapacity(fun.default_allocator, read.len));
                     }
                     this.buffer.appendSliceAssumeCapacity(read);
                 } else {
@@ -473,7 +473,7 @@ pub const ReadFile = struct {
                 //
                 // An example of where this happens is stdin.
                 //
-                //    await Bun.stdin.text();
+                //    await Fun.stdin.text();
                 //
                 // If we immediately call read(), it will block until stdin is
                 // readable.
@@ -487,7 +487,7 @@ pub const ReadFile = struct {
                         // call. We already know it's done.
                         !this.read_eof))
                     {
-                        switch (bun.isReadable(this.opened_fd)) {
+                        switch (fun.isReadable(this.opened_fd)) {
                             .not_ready => {},
                             .ready, .hup => continue,
                         }
@@ -507,14 +507,14 @@ pub const ReadFile = struct {
         }
 
         if (this.system_error != null) {
-            this.buffer.clearAndFree(bun.default_allocator);
+            this.buffer.clearAndFree(fun.default_allocator);
         }
 
         // If we over-allocated by a lot, we should shrink the buffer to conserve memory.
         if (this.buffer.items.len + 16_000 < this.buffer.capacity) {
-            this.buffer.shrinkAndFree(bun.default_allocator, this.buffer.items.len);
+            this.buffer.shrinkAndFree(fun.default_allocator, this.buffer.items.len);
         }
-        this.byte_store = ByteStore.init(this.buffer.items, bun.default_allocator);
+        this.byte_store = ByteStore.init(this.buffer.items, fun.default_allocator);
         this.onFinish();
     }
 };
@@ -526,12 +526,12 @@ pub const ReadFileUV = struct {
     loop: *libuv.Loop,
     event_loop: *jsc.EventLoop,
     file_store: FileStore,
-    byte_store: ByteStore = ByteStore{ .allocator = bun.default_allocator },
+    byte_store: ByteStore = ByteStore{ .allocator = fun.default_allocator },
     store: *Store,
     offset: SizeType = 0,
     max_length: SizeType = Blob.max_size,
     total_size: SizeType = Blob.max_size,
-    opened_fd: bun.FD = invalid_fd,
+    opened_fd: fun.FD = invalid_fd,
     read_len: SizeType = 0,
     read_off: SizeType = 0,
     read_eof: bool = false,
@@ -547,7 +547,7 @@ pub const ReadFileUV = struct {
 
     pub fn start(event_loop: *jsc.EventLoop, store: *Store, off: SizeType, max_len: SizeType, comptime Handler: type, handler: *anyopaque) void {
         log("ReadFileUV.start", .{});
-        var this = bun.new(ReadFileUV, .{
+        var this = fun.new(ReadFileUV, .{
             .loop = event_loop.virtual_machine.uvLoop(),
             .event_loop = event_loop,
             .file_store = store.data.file,
@@ -569,7 +569,7 @@ pub const ReadFileUV = struct {
         defer {
             this.store.deref();
             this.req.deinit();
-            bun.destroy(this);
+            fun.destroy(this);
             // Release the event loop reference now that we're done
             event_loop.unrefConcurrently();
             log("ReadFileUV.finalize destroy", .{});
@@ -593,7 +593,7 @@ pub const ReadFileUV = struct {
     fn onFinish(this: *ReadFileUV) void {
         log("ReadFileUV.onFinish", .{});
         const fd = this.opened_fd;
-        const needs_close = fd != bun.invalid_fd;
+        const needs_close = fd != fun.invalid_fd;
 
         this.size = @max(this.read_len, this.size);
         this.total_size = @max(this.total_size, this.size);
@@ -608,7 +608,7 @@ pub const ReadFileUV = struct {
         this.finalize();
     }
 
-    pub fn onFileOpen(this: *ReadFileUV, opened_fd: bun.FD) void {
+    pub fn onFileOpen(this: *ReadFileUV, opened_fd: fun.FD) void {
         log("ReadFileUV.onFileOpen", .{});
         if (this.errno != null) {
             this.onFinish();
@@ -619,8 +619,8 @@ pub const ReadFileUV = struct {
         this.req.data = this;
 
         if (libuv.uv_fs_fstat(this.loop, &this.req, opened_fd.uv(), &onFileInitialStat).errEnum()) |errno| {
-            this.errno = bun.errnoToZigErr(errno);
-            this.system_error = bun.sys.Error.fromCode(errno, .fstat).toSystemError();
+            this.errno = fun.errnoToZigErr(errno);
+            this.system_error = fun.sys.Error.fromCode(errno, .fstat).toSystemError();
             this.onFinish();
             return;
         }
@@ -633,8 +633,8 @@ pub const ReadFileUV = struct {
         var this: *ReadFileUV = @ptrCast(@alignCast(req.data));
 
         if (req.result.errEnum()) |errno| {
-            this.errno = bun.errnoToZigErr(errno);
-            this.system_error = bun.sys.Error.fromCode(errno, .fstat).toSystemError();
+            this.errno = fun.errnoToZigErr(errno);
+            this.system_error = fun.sys.Error.fromCode(errno, .fstat).toSystemError();
             this.onFinish();
             return;
         }
@@ -646,22 +646,22 @@ pub const ReadFileUV = struct {
             this.store.data.file.last_modified = jsc.toJSTime(stat.mtime().sec, stat.mtime().nsec);
         }
 
-        if (bun.S.ISDIR(@intCast(stat.mode))) {
+        if (fun.S.ISDIR(@intCast(stat.mode))) {
             this.errno = error.EISDIR;
             this.system_error = jsc.SystemError{
-                .code = bun.String.static("EISDIR"),
+                .code = fun.String.static("EISDIR"),
                 .path = if (this.file_store.pathlike == .path)
-                    bun.String.cloneUTF8(this.file_store.pathlike.path.slice())
+                    fun.String.cloneUTF8(this.file_store.pathlike.path.slice())
                 else
-                    bun.String.empty,
-                .message = bun.String.static("Directories cannot be read like files"),
-                .syscall = bun.String.static("read"),
+                    fun.String.empty,
+                .message = fun.String.static("Directories cannot be read like files"),
+                .syscall = fun.String.static("read"),
             };
             this.onFinish();
             return;
         }
         this.total_size = @intCast(@min(@max(stat.size, 0), Blob.max_size));
-        this.is_regular_file = bun.isRegularFile(stat.mode);
+        this.is_regular_file = fun.isRegularFile(stat.mode);
 
         log("is_regular_file: {}", .{this.is_regular_file});
 
@@ -674,8 +674,8 @@ pub const ReadFileUV = struct {
         }
 
         if (this.offset > 0) {
-            // We DO support offset in Bun.file()
-            switch (bun.sys.setFileOffset(this.opened_fd, this.offset)) {
+            // We DO support offset in Fun.file()
+            switch (fun.sys.setFileOffset(this.opened_fd, this.offset)) {
                 // we ignore errors because it should continue to work even if its a pipe
                 .err, .result => {},
             }
@@ -684,21 +684,21 @@ pub const ReadFileUV = struct {
         // Special files might report a size of > 0, and be wrong.
         // so we should check specifically that its a regular file before trusting the size.
         if (this.size == 0 and this.is_regular_file) {
-            this.byte_store = ByteStore.init(this.buffer.items, bun.default_allocator);
+            this.byte_store = ByteStore.init(this.buffer.items, fun.default_allocator);
             this.onFinish();
             return;
         }
         // Out of memory we can't read more than 4GB at a time (ULONG) on Windows
-        if (this.size > @as(usize, std.math.maxInt(bun.windows.ULONG))) {
-            this.errno = bun.errnoToZigErr(bun.sys.E.NOMEM);
-            this.system_error = bun.sys.Error.fromCode(bun.sys.E.NOMEM, .read).toSystemError();
+        if (this.size > @as(usize, std.math.maxInt(fun.windows.ULONG))) {
+            this.errno = fun.errnoToZigErr(fun.sys.E.NOMEM);
+            this.system_error = fun.sys.Error.fromCode(fun.sys.E.NOMEM, .read).toSystemError();
             this.onFinish();
             return;
         }
         // add an extra 16 bytes to the buffer to avoid having to resize it for trailing extra data
-        this.buffer.ensureTotalCapacityPrecise(this.byte_store.allocator, @min(this.size +| 16, @as(usize, std.math.maxInt(bun.windows.ULONG)))) catch {
+        this.buffer.ensureTotalCapacityPrecise(this.byte_store.allocator, @min(this.size +| 16, @as(usize, std.math.maxInt(fun.windows.ULONG)))) catch {
             this.errno = error.OutOfMemory;
-            this.system_error = bun.sys.Error.fromCode(bun.sys.E.NOMEM, .read).toSystemError();
+            this.system_error = fun.sys.Error.fromCode(fun.sys.E.NOMEM, .read).toSystemError();
             this.onFinish();
             return;
         };
@@ -727,7 +727,7 @@ pub const ReadFileUV = struct {
                 // been an initial allocation done for us
                 this.buffer.ensureUnusedCapacity(this.byte_store.allocator, 4096) catch {
                     this.errno = error.OutOfMemory;
-                    this.system_error = bun.sys.Error.fromCode(bun.sys.E.NOMEM, .read).toSystemError();
+                    this.system_error = fun.sys.Error.fromCode(fun.sys.E.NOMEM, .read).toSystemError();
                     this.onFinish();
                     return;
                 };
@@ -749,8 +749,8 @@ pub const ReadFileUV = struct {
             );
             this.req.data = this;
             if (res.errEnum()) |errno| {
-                this.errno = bun.errnoToZigErr(errno);
-                this.system_error = bun.sys.Error.fromCode(errno, .read).toSystemError();
+                this.errno = fun.errnoToZigErr(errno);
+                this.system_error = fun.sys.Error.fromCode(errno, .read).toSystemError();
                 this.onFinish();
             }
         } else {
@@ -760,11 +760,11 @@ pub const ReadFileUV = struct {
             this.byte_store = ByteStore.init(
                 this.buffer.toOwnedSlice(this.byte_store.allocator) catch {
                     this.errno = error.OutOfMemory;
-                    this.system_error = bun.sys.Error.fromCode(bun.sys.E.NOMEM, .read).toSystemError();
+                    this.system_error = fun.sys.Error.fromCode(fun.sys.E.NOMEM, .read).toSystemError();
                     this.onFinish();
                     return;
                 },
-                bun.default_allocator,
+                fun.default_allocator,
             );
             this.onFinish();
         }
@@ -776,8 +776,8 @@ pub const ReadFileUV = struct {
         const result = req.result;
 
         if (result.errEnum()) |errno| {
-            this.errno = bun.errnoToZigErr(errno);
-            this.system_error = bun.sys.Error.fromCode(errno, .read).toSystemError();
+            this.errno = fun.errnoToZigErr(errno);
+            this.system_error = fun.sys.Error.fromCode(errno, .read).toSystemError();
             this.onFinish();
             return;
         }
@@ -787,11 +787,11 @@ pub const ReadFileUV = struct {
             this.byte_store = ByteStore.init(
                 this.buffer.toOwnedSlice(this.byte_store.allocator) catch {
                     this.errno = error.OutOfMemory;
-                    this.system_error = bun.sys.Error.fromCode(bun.sys.E.NOMEM, .read).toSystemError();
+                    this.system_error = fun.sys.Error.fromCode(fun.sys.E.NOMEM, .read).toSystemError();
                     this.onFinish();
                     return;
                 },
-                bun.default_allocator,
+                fun.default_allocator,
             );
             this.onFinish();
             return;
@@ -807,18 +807,18 @@ pub const ReadFileUV = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const invalid_fd = bun.invalid_fd;
-const io = bun.io;
-const libuv = bun.windows.libuv;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const invalid_fd = fun.invalid_fd;
+const io = fun.io;
+const libuv = fun.windows.libuv;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSPromise = jsc.JSPromise;
 const SystemError = jsc.SystemError;
 
-const Blob = bun.webcore.Blob;
+const Blob = fun.webcore.Blob;
 const ClosingState = Blob.ClosingState;
 const FileCloser = Blob.FileCloser;
 const FileOpener = Blob.FileOpener;

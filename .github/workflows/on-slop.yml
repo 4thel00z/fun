@@ -7,7 +7,7 @@ on:
 jobs:
   on-slop:
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'slop' && github.repository == 'oven-sh/bun'
+    if: github.event.label.name == 'slop' && github.repository == 'underdoc-org/fun'
     permissions:
       issues: write
       pull-requests: write

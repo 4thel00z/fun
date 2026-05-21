@@ -45,7 +45,7 @@ pub const Fs = struct {
             }
         }
 
-        pub fn closeFD(entry: *Entry) ?bun.sys.Error {
+        pub fn closeFD(entry: *Entry) ?fun.sys.Error {
             if (entry.fd.isValid()) {
                 defer entry.fd = .invalid;
                 return entry.fd.closeAllowingBadFileDescriptor(@returnAddress());
@@ -74,11 +74,11 @@ pub const Fs = struct {
     /// The caller must
     pub fn resetSharedBuffer(this: *Fs, buffer: *MutableString) void {
         if (buffer == &this.shared_buffer) {
-            this.shared_buffer = MutableString.initEmpty(bun.default_allocator);
+            this.shared_buffer = MutableString.initEmpty(fun.default_allocator);
         } else if (buffer == &this.macro_shared_buffer) {
-            this.macro_shared_buffer = MutableString.initEmpty(bun.default_allocator);
+            this.macro_shared_buffer = MutableString.initEmpty(fun.default_allocator);
         } else {
-            bun.unreachablePanic("resetSharedBuffer: invalid buffer", .{});
+            fun.unreachablePanic("resetSharedBuffer: invalid buffer", .{});
         }
     }
 
@@ -140,7 +140,7 @@ pub const Fs = struct {
         comptime use_shared_buffer: bool,
         _file_handle: ?FD,
     ) !Entry {
-        return c.readFileWithAllocator(bun.default_allocator, _fs, path, dirname_fd, use_shared_buffer, _file_handle);
+        return c.readFileWithAllocator(fun.default_allocator, _fs, path, dirname_fd, use_shared_buffer, _file_handle);
     }
 
     pub fn readFileWithAllocator(
@@ -158,33 +158,33 @@ pub const Fs = struct {
 
         if (_file_handle == null) {
             if (FeatureFlags.store_file_descriptors and dirname_fd.isValid()) {
-                file_handle = (bun.sys.openatA(dirname_fd, std.fs.path.basename(path), bun.O.RDONLY, 0).unwrap() catch |err| brk: {
+                file_handle = (fun.sys.openatA(dirname_fd, std.fs.path.basename(path), fun.O.RDONLY, 0).unwrap() catch |err| brk: {
                     switch (err) {
                         error.ENOENT => {
-                            const handle = try bun.openFile(path, .{ .mode = .read_only });
+                            const handle = try fun.openFile(path, .{ .mode = .read_only });
                             Output.prettyErrorln(
                                 "<r><d>Internal error: directory mismatch for directory \"{s}\", fd {f}<r>. You don't need to do anything, but this indicates a bug.",
                                 .{ path, dirname_fd },
                             );
-                            break :brk bun.FD.fromStdFile(handle);
+                            break :brk fun.FD.fromStdFile(handle);
                         },
                         else => return err,
                     }
                 }).stdFile();
             } else {
-                file_handle = try bun.openFile(path, .{ .mode = .read_only });
+                file_handle = try fun.openFile(path, .{ .mode = .read_only });
             }
         } else {
             try file_handle.seekTo(0);
         }
 
         if (comptime !Environment.isWindows) // skip on Windows because NTCreateFile will do it.
-            debug("openat({f}, {s}) = {f}", .{ dirname_fd, path, bun.FD.fromStdFile(file_handle) });
+            debug("openat({f}, {s}) = {f}", .{ dirname_fd, path, fun.FD.fromStdFile(file_handle) });
 
         const will_close = rfs.needToCloseFiles() and _file_handle == null;
         defer {
             if (will_close) {
-                debug("readFileWithAllocator close({f})", .{bun.fs.printHandle(file_handle.handle)});
+                debug("readFileWithAllocator close({f})", .{fun.fs.printHandle(file_handle.handle)});
                 file_handle.close();
             }
         }
@@ -206,7 +206,7 @@ pub const Fs = struct {
 
         return Entry{
             .contents = file.contents,
-            .fd = if (FeatureFlags.store_file_descriptors and !will_close) .fromStdFile(file_handle) else bun.invalid_fd,
+            .fd = if (FeatureFlags.store_file_descriptors and !will_close) .fromStdFile(file_handle) else fun.invalid_fd,
         };
     }
 };
@@ -319,16 +319,16 @@ const fs = @import("../resolver/fs.zig");
 const std = @import("std");
 const Define = @import("./defines.zig").Define;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const FeatureFlags = bun.FeatureFlags;
-const Global = bun.Global;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const js_ast = bun.ast;
-const js_parser = bun.js_parser;
-const json_parser = bun.json;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const FeatureFlags = fun.FeatureFlags;
+const Global = fun.Global;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const js_ast = fun.ast;
+const js_parser = fun.js_parser;
+const json_parser = fun.json;
+const logger = fun.logger;
+const strings = fun.strings;

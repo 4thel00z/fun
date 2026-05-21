@@ -1,6 +1,6 @@
 name: Issue Labeled
 env:
-  BUN_VERSION: 1.1.44
+  FUN_VERSION: 1.1.44
 
 on:
   issues:
@@ -22,10 +22,10 @@ jobs:
   #           scripts
   #           .github
   #           CMakeLists.txt
-  #     - name: Setup Bun
-  #       uses: ./.github/actions/setup-bun
+  #     - name: Setup Fun
+  #       uses: ./.github/actions/setup-fun
   #       with:
-  #         bun-version: ${{ env.BUN_VERSION }}
+  #         fun-version: ${{ env.FUN_VERSION }}
   #     - name: "categorize bug"
   #       id: add-labels
   #       env:
@@ -34,8 +34,8 @@ jobs:
   #         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #       shell: bash
   #       run: |
-  #         echo '{"dependencies": { "@anthropic-ai/sdk": "latest" }}' > scripts/package.json && bun install --cwd=./scripts
-  #         LABELS=$(bun scripts/label-issue.ts)
+  #         echo '{"dependencies": { "@anthropic-ai/sdk": "latest" }}' > scripts/package.json && fun install --cwd=./scripts
+  #         LABELS=$(fun scripts/label-issue.ts)
   #         echo "labels=$LABELS" >> $GITHUB_OUTPUT
   #     - name: Add labels
   #       uses: actions-cool/issues-helper@v3
@@ -95,10 +95,10 @@ jobs:
             scripts
             .github
             CMakeLists.txt
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          fun-version: ${{ env.FUN_VERSION }}
       - name: "add platform and command label"
         id: add-labels
         if: github.event.label.name == 'crash'
@@ -108,11 +108,11 @@ jobs:
           GITHUB_ISSUE_NUMBER: ${{ github.event.issue.number }}
         shell: bash
         run: |
-          LABELS=$(bun scripts/read-issue.ts)
-          bun scripts/is-outdated.ts
+          LABELS=$(fun scripts/read-issue.ts)
+          fun scripts/is-outdated.ts
 
           # Check for patterns that should close the issue
-          CLOSE_ACTION=$(bun scripts/handle-crash-patterns.ts)
+          CLOSE_ACTION=$(fun scripts/handle-crash-patterns.ts)
           echo "close-action=$CLOSE_ACTION" >> $GITHUB_OUTPUT
 
           if [[ -f "is-outdated.txt" ]]; then
@@ -170,7 +170,7 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_EVENTS_SECRET }}
         shell: bash
         run: |
-          bun scripts/associate-issue-with-sentry.ts
+          fun scripts/associate-issue-with-sentry.ts
 
           if [[ -f "sentry-link.txt" ]]; then
             echo "sentry-link=$(cat sentry-link.txt)" >> $GITHUB_OUTPUT
@@ -203,7 +203,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           body: |
-            @${{ github.event.issue.user.login }}, the latest version of Bun is v${{ steps.add-labels.outputs.latest }}, but the standalone executable is running Bun v${{ steps.add-labels.outputs.outdated }}. When the CLI using Bun's single-file executable next updates it might be fixed.
+            @${{ github.event.issue.user.login }}, the latest version of Fun is v${{ steps.add-labels.outputs.latest }}, but the standalone executable is running Fun v${{ steps.add-labels.outputs.outdated }}. When the CLI using Fun's single-file executable next updates it might be fixed.
       - name: Comment outdated
         if: steps.add-labels.outputs.is-outdated == 'true' && steps.add-labels.outputs.is-standalone != 'true' && github.event.label.name == 'crash' && steps.generate-comment-text.outputs.sentry-link == ''
         uses: actions-cool/issues-helper@v3
@@ -212,12 +212,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           body: |
-            @${{ github.event.issue.user.login }}, the latest version of Bun is v${{ steps.add-labels.outputs.latest }}, but this crash was reported on Bun v${{ steps.add-labels.outputs.outdated }}.
+            @${{ github.event.issue.user.login }}, the latest version of Fun is v${{ steps.add-labels.outputs.latest }}, but this crash was reported on Fun v${{ steps.add-labels.outputs.outdated }}.
 
-            Are you able to reproduce this crash on the latest version of Bun?
+            Are you able to reproduce this crash on the latest version of Fun?
 
             ```sh
-            bun upgrade
+            fun upgrade
             ```
       - name: Comment with Sentry Link and outdated version (standalone executable)
         if: steps.generate-comment-text.outputs.sentry-link != '' && github.event.label.name == 'crash' && steps.add-labels.outputs.is-outdated == 'true' && steps.add-labels.outputs.is-standalone == 'true'
@@ -227,9 +227,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           body: |
-            @${{ github.event.issue.user.login }}, thank you for reporting this crash. The latest version of Bun is v${{ steps.add-labels.outputs.latest }}, but the standalone executable is running Bun v${{ steps.add-labels.outputs.outdated }}. When the CLI using Bun's single-file executable next updates it might be fixed.
+            @${{ github.event.issue.user.login }}, thank you for reporting this crash. The latest version of Fun is v${{ steps.add-labels.outputs.latest }}, but the standalone executable is running Fun v${{ steps.add-labels.outputs.outdated }}. When the CLI using Fun's single-file executable next updates it might be fixed.
 
-            For Bun's internal tracking, this issue is [${{ steps.generate-comment-text.outputs.sentry-id }}](${{ steps.generate-comment-text.outputs.sentry-link }}).
+            For Fun's internal tracking, this issue is [${{ steps.generate-comment-text.outputs.sentry-id }}](${{ steps.generate-comment-text.outputs.sentry-link }}).
 
             <!-- sentry-id: ${{ steps.generate-comment-text.outputs.sentry-id }} -->
             <!-- sentry-link: ${{ steps.generate-comment-text.outputs.sentry-link }} -->
@@ -241,15 +241,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           body: |
-            @${{ github.event.issue.user.login }}, thank you for reporting this crash. The latest version of Bun is v${{ steps.add-labels.outputs.latest }}, but this crash was reported on Bun v${{ steps.add-labels.outputs.outdated }}.
+            @${{ github.event.issue.user.login }}, thank you for reporting this crash. The latest version of Fun is v${{ steps.add-labels.outputs.latest }}, but this crash was reported on Fun v${{ steps.add-labels.outputs.outdated }}.
 
-            Are you able to reproduce this crash on the latest version of Bun?
+            Are you able to reproduce this crash on the latest version of Fun?
 
             ```sh
-            bun upgrade
+            fun upgrade
             ```
 
-            For Bun's internal tracking, this issue is [${{ steps.generate-comment-text.outputs.sentry-id }}](${{ steps.generate-comment-text.outputs.sentry-link }}).
+            For Fun's internal tracking, this issue is [${{ steps.generate-comment-text.outputs.sentry-id }}](${{ steps.generate-comment-text.outputs.sentry-link }}).
 
             <!-- sentry-id: ${{ steps.generate-comment-text.outputs.sentry-id }} -->
             <!-- sentry-link: ${{ steps.generate-comment-text.outputs.sentry-link }} -->
@@ -263,7 +263,7 @@ jobs:
           body: |
             Thank you for reporting this crash.
 
-            For Bun's internal tracking, this issue is [${{ steps.generate-comment-text.outputs.sentry-id }}](${{ steps.generate-comment-text.outputs.sentry-link }}).
+            For Fun's internal tracking, this issue is [${{ steps.generate-comment-text.outputs.sentry-id }}](${{ steps.generate-comment-text.outputs.sentry-link }}).
 
             <!-- sentry-id: ${{ steps.generate-comment-text.outputs.sentry-id }} -->
             <!-- sentry-link: ${{ steps.generate-comment-text.outputs.sentry-link }} -->
@@ -275,4 +275,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           body: |
-            Hello @${{ github.event.issue.user.login }}. Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository, [Replit](https://replit.com/@replit/Bun), [CodeSandbox](https://codesandbox.io/templates/bun), or provide a bulleted list of commands to run that reproduce this issue. Issues marked with `needs repro` will be closed if they have no activity within 3 days.
+            Hello @${{ github.event.issue.user.login }}. Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository, [Replit](https://replit.com/@replit/Fun), [CodeSandbox](https://codesandbox.io/templates/fun), or provide a bulleted list of commands to run that reproduce this issue. Issues marked with `needs repro` will be closed if they have no activity within 3 days.

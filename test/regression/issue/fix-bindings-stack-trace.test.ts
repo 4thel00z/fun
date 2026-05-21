@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("Error.prepareStackTrace should not have empty filenames", () => {
   let capturedStack: any[] = [];

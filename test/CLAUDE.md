@@ -1,42 +1,42 @@
 To run tests:
 
 ```sh
-bun bd test <...test file>
+fun bd test <...test file>
 ```
 
-To run a command with your debug build of Bun:
+To run a command with your debug build of Fun:
 
 ```sh
-bun bd <...cmd>
+fun bd <...cmd>
 ```
 
-Note that compiling Bun may take up to 2.5 minutes. It is slow!
+Note that compiling Fun may take up to 2.5 minutes. It is slow!
 
-**CRITICAL**: Do not use `bun test` to run tests. It will not have your changes. `bun bd test <...test file>` is the correct command, which compiles your code automatically.
+**CRITICAL**: Do not use `fun test` to run tests. It will not have your changes. `fun bd test <...test file>` is the correct command, which compiles your code automatically.
 
 ## Testing style
 
-Use `bun:test` with files that end in `*.test.{ts,js,jsx,tsx,mjs,cjs}`. If it's a test/js/node/test/{parallel,sequential}/\*.js without a .test.extension, use `bun bd <file>` instead of `bun bd test <file>` since those expect exit code 0 and don't use bun's test runner.
+Use `fun:test` with files that end in `*.test.{ts,js,jsx,tsx,mjs,cjs}`. If it's a test/js/node/test/{parallel,sequential}/\*.js without a .test.extension, use `fun bd <file>` instead of `fun bd test <file>` since those expect exit code 0 and don't use fun's test runner.
 
 - **Do not write flaky tests**. Unless explicitly asked, **never wait for time to pass in tests**. Always wait for the condition to be met instead of waiting for an arbitrary amount of time. **Never use hardcoded port numbers**. Always use `port: 0` to get a random port.
 - **Prefer concurrent tests over sequential tests**: When multiple tests in the same file spawn processes or write files, make them concurrent with `test.concurrent` or `describe.concurrent` unless it's very difficult to make them concurrent.
 
 ### Spawning processes
 
-#### Spawning Bun in tests
+#### Spawning Fun in tests
 
-When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`. This ensures the same build of Bun is used to run the test and ensures debug logging is silenced.
+When spawning Fun processes, use `funExe` and `funEnv` from `harness`. This ensures the same build of Fun is used to run the test and ensures debug logging is silenced.
 
 ##### Use `-e` for single-file tests
 
 ```ts
-import { bunEnv, bunExe, tempDir } from "harness";
-import { test, expect } from "bun:test";
+import { funEnv, funExe, tempDir } from "harness";
+import { test, expect } from "fun:test";
 
-test("single-file test spawns a Bun process", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log('Hello, world!')"],
-    env: bunEnv,
+test("single-file test spawns a Fun process", async () => {
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log('Hello, world!')"],
+    env: funEnv,
   });
 
   const [stdout, stderr, exitCode] = await Promise.all([
@@ -54,10 +54,10 @@ test("single-file test spawns a Bun process", async () => {
 ##### When multi-file tests are required:
 
 ```ts
-import { bunEnv, bunExe, tempDir } from "harness";
-import { test, expect } from "bun:test";
+import { funEnv, funExe, tempDir } from "harness";
+import { test, expect } from "fun:test";
 
-test("multi-file test spawns a Bun process", async () => {
+test("multi-file test spawns a Fun process", async () => {
   // If a test MUST use multiple files:
   using dir = tempDir("my-test-prefix", {
     "my.fixture.ts": `
@@ -71,15 +71,15 @@ test("multi-file test spawns a Bun process", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "my.fixture.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "my.fixture.ts"],
+    env: funEnv,
     cwd: String(dir),
   });
 
   const [stdout, stderr, exitCode] = await Promise.all([
 
-    // ReadableStream in Bun supports:
+    // ReadableStream in Fun supports:
     //  - `await stream.text()`
     //  - `await stream.json()`
     //  - `await stream.bytes()`
@@ -95,9 +95,9 @@ test("multi-file test spawns a Bun process", async () => {
   expect(exitCode).toBe(0);
 ```
 
-When a test file spawns a Bun process, we like for that file to end in `*-fixture.ts`. This is a convention that helps us identify the file as a test fixture and not a test itself.
+When a test file spawns a Fun process, we like for that file to end in `*-fixture.ts`. This is a convention that helps us identify the file as a test fixture and not a test itself.
 
-Generally, `await using` or `using` is a good idea to ensure proper resource cleanup. This works in most Bun APIs like Bun.listen, Bun.connect, Bun.spawn, Bun.serve, etc.
+Generally, `await using` or `using` is a good idea to ensure proper resource cleanup. This works in most Fun APIs like Fun.listen, Fun.connect, Fun.spawn, Fun.serve, etc.
 
 #### Async/await in tests
 
@@ -117,11 +117,11 @@ If it's several callbacks, it's okay to use callbacks. We aren't a stickler for 
 
 ### No timeouts
 
-**CRITICAL**: Do not set a timeout on tests. Bun already has timeouts.
+**CRITICAL**: Do not set a timeout on tests. Fun already has timeouts.
 
 ### Use port 0 to get a random port
 
-Most APIs in Bun support `port: 0` to get a random port. Never hardcode ports. Avoid using your own random port number function.
+Most APIs in Fun support `port: 0` to get a random port. Never hardcode ports. Avoid using your own random port number function.
 
 ### Creating temporary files
 
@@ -136,7 +136,7 @@ test("creates a temporary directory with files", () => {
     "file.txt": "Hello, world!",
   });
 
-  expect(await Bun.file(path.join(String(dir), "file.txt")).text()).toBe(
+  expect(await Fun.file(path.join(String(dir), "file.txt")).text()).toBe(
     "Hello, world!",
   );
 });
@@ -149,7 +149,7 @@ To create a repetitive string, use `Buffer.alloc(count, fill).toString()` instea
 ### Test Organization
 
 - Use `describe` blocks for grouping related tests
-- **Add tests to the existing test file for the code you're changing** — do not create a new file. Tests are organized by module (e.g., `/test/js/bun/`, `/test/js/node/`, `/test/js/web/`).
+- **Add tests to the existing test file for the code you're changing** — do not create a new file. Tests are organized by module (e.g., `/test/js/fun/`, `/test/js/node/`, `/test/js/web/`).
 - `/test/regression/issue/${issueNumber}.test.ts` is **only** for bugs that have a GitHub issue number **and** are true regressions (worked in a previous release, then broke). An issue number alone does not qualify — if it was never correct, put the test in the module's existing test file instead.
 - Integration tests are in `/test/integration/`
 
@@ -184,8 +184,8 @@ expect(result).toEqual([
 
 ```ts
 import {
-  bunExe, // Path to Bun executable
-  bunEnv, // Environment variables for Bun
+  funExe, // Path to Fun executable
+  funEnv, // Environment variables for Fun
   tempDirWithFiles, // Create temporary test directories with files
   tmpdirSync, // Create empty temporary directory
   isMacOS, // Platform checks
@@ -202,9 +202,9 @@ Always check exit codes and test error scenarios:
 
 ```ts
 test("handles errors", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run", "invalid.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run", "invalid.js"],
+    env: funEnv,
   });
 
   const exitCode = await proc.exited;

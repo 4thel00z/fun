@@ -1,17 +1,17 @@
-// https://github.com/oven-sh/bun/issues/29181
-import { expect, test } from "bun:test";
+// https://github.com/underdoc-org/fun/issues/29181
+import { expect, test } from "fun:test";
 import { getFDCount, isPosix, tempDir } from "harness";
 import { join } from "node:path";
 
 // getFDCount reads /proc/self/fd (Linux) or /dev/fd (macOS). On Windows
 // we don't have a stable way to query per-process fds, so skip there.
-test.skipIf(!isPosix)("Bun.serve static file route does not leak fds on 304 / HEAD", async () => {
+test.skipIf(!isPosix)("Fun.serve static file route does not leak fds on 304 / HEAD", async () => {
   using dir = tempDir("issue-29181-fds", { "file.txt": "Hello, world!\n" });
   const tmpFile = join(String(dir), "file.txt");
 
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
-    static: { "/test": new Response(Bun.file(tmpFile)) },
+    static: { "/test": new Response(Fun.file(tmpFile)) },
     fetch() {
       return new Response("fallback");
     },
@@ -65,13 +65,13 @@ test.skipIf(!isPosix)("Bun.serve static file route does not leak fds on 304 / HE
 // was never decremented. graceful `server.stop()` awaits
 // pending_requests == 0 and hung forever after any 304 or HEAD on a
 // static file route.
-test("Bun.serve static file route: graceful stop resolves after 304 / HEAD", async () => {
+test("Fun.serve static file route: graceful stop resolves after 304 / HEAD", async () => {
   using dir = tempDir("issue-29181-stop", { "file.txt": "Hello, world!\n" });
   const tmpFile = join(String(dir), "file.txt");
 
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
-    static: { "/test": new Response(Bun.file(tmpFile)) },
+    static: { "/test": new Response(Fun.file(tmpFile)) },
     fetch() {
       return new Response("fallback");
     },

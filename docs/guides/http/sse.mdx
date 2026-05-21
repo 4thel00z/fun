@@ -1,30 +1,30 @@
 ---
-title: Server-Sent Events (SSE) with Bun
+title: Server-Sent Events (SSE) with Fun
 sidebarTitle: Server-Sent Events
 mode: center
 ---
 
 [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) let you push a stream of text events to the browser over a single HTTP response. The client consumes them via [`EventSource`](https://developer.mozilla.org/en-US/docs/Web/API/EventSource).
 
-In Bun, you can implement an SSE endpoint by returning a `Response` whose body is a streaming source and setting the `Content-Type` header to `text/event-stream`.
+In Fun, you can implement an SSE endpoint by returning a `Response` whose body is a streaming source and setting the `Content-Type` header to `text/event-stream`.
 
 <Note>
-  `Bun.serve` closes idle connections after **10 seconds** by default. A quiet SSE stream counts as idle, so the
+  `Fun.serve` closes idle connections after **10 seconds** by default. A quiet SSE stream counts as idle, so the
   examples below call `server.timeout(req, 0)` to disable the timeout for the stream. See
   [`idleTimeout`](/runtime/http/server#idletimeout) for details.
 </Note>
 
 ## Using an async generator
 
-In Bun, `new Response` accepts an async generator function directly. This is usually the simplest way to write an SSE endpoint — each `yield` flushes a chunk to the client, and if the client disconnects, the generator's `finally` block runs so you can clean up.
+In Fun, `new Response` accepts an async generator function directly. This is usually the simplest way to write an SSE endpoint — each `yield` flushes a chunk to the client, and if the client disconnects, the generator's `finally` block runs so you can clean up.
 
 ```ts server.ts icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   port: 3000,
   routes: {
     "/events": (req, server) => {
       // SSE streams are often quiet between events. By default,
-      // Bun.serve closes connections after 10 seconds of inactivity.
+      // Fun.serve closes connections after 10 seconds of inactivity.
       // Disable the idle timeout for this request so the stream
       // stays open indefinitely.
       server.timeout(req, 0);
@@ -37,7 +37,7 @@ Bun.serve({
           // When the client goes away, the generator is returned
           // (cancelled) and this loop stops automatically.
           while (true) {
-            await Bun.sleep(5000);
+            await Fun.sleep(5000);
             yield `data: tick ${Date.now()}\n\n`;
           }
         },
@@ -55,10 +55,10 @@ Bun.serve({
 
 ## Using a `ReadableStream`
 
-If your events originate from callbacks — message brokers, timers, external pushes — rather than a linear `await` flow, a `ReadableStream` often fits better. When the client disconnects, Bun calls the stream's `cancel()` method automatically, so you can release any resources you set up in `start()`.
+If your events originate from callbacks — message brokers, timers, external pushes — rather than a linear `await` flow, a `ReadableStream` often fits better. When the client disconnects, Fun calls the stream's `cancel()` method automatically, so you can release any resources you set up in `start()`.
 
 ```ts server.ts icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   port: 3000,
   routes: {
     "/events": (req, server) => {

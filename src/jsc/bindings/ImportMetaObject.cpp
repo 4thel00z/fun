@@ -83,8 +83,8 @@ static JSC::EncodedJSValue functionRequireResolve(JSC::JSGlobalObject* globalObj
                 }
             }
 
-            BunString from = Bun::toString(fromStr);
-            auto result = Bun__resolveSyncWithSource(globalObject, JSC::JSValue::encode(moduleName), &from, false, true);
+            FunString from = Fun::toString(fromStr);
+            auto result = Fun__resolveSyncWithSource(globalObject, JSC::JSValue::encode(moduleName), &from, false, true);
             RETURN_IF_EXCEPTION(scope, {});
 
             if (!JSC::JSValue::decode(result).isString()) {
@@ -274,7 +274,7 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSync(JSC::JSGlobalObje
         }
     }
 
-    auto result = Bun__resolveSync(globalObject, JSC::JSValue::encode(moduleName), from, isESM, false);
+    auto result = Fun__resolveSync(globalObject, JSC::JSValue::encode(moduleName), from, isESM, false);
     RETURN_IF_EXCEPTION(scope, {});
 
     if (!JSC::JSValue::decode(result).isString()) {
@@ -286,7 +286,7 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSync(JSC::JSGlobalObje
     return result;
 }
 
-extern "C" bool Bun__isBunMain(JSC::JSGlobalObject* global, const BunString*);
+extern "C" bool Fun__isFunMain(JSC::JSGlobalObject* global, const FunString*);
 
 extern "C" JSC::EncodedJSValue functionImportMeta__resolveSyncPrivate(JSC::JSGlobalObject* lexicalGlobalObject, JSC::CallFrame* callFrame)
 {
@@ -322,7 +322,7 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSyncPrivate(JSC::JSGlo
                     JSValue parentModuleObject = globalObject->requireMap()->get(globalObject, from);
 
                     JSValue parentID = jsUndefined();
-                    if (auto* parent = dynamicDowncast<Bun::JSCommonJSModule>(parentModuleObject)) {
+                    if (auto* parent = dynamicDowncast<Fun::JSCommonJSModule>(parentModuleObject)) {
                         parentID = parent->filename();
                     } else {
                         parentID = from;
@@ -332,8 +332,8 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSyncPrivate(JSC::JSGlo
                     args.append(moduleName);
                     args.append(parentModuleObject);
                     auto parentIdStr = parentID.toWTFString(globalObject);
-                    auto bunStr = Bun::toString(parentIdStr);
-                    args.append(jsBoolean(Bun__isBunMain(lexicalGlobalObject, &bunStr)));
+                    auto funStr = Fun::toString(parentIdStr);
+                    args.append(jsBoolean(Fun__isFunMain(lexicalGlobalObject, &funStr)));
 
                     // Pass options object with paths if provided
                     if (!userPathList.isUndefinedOrNull()) {
@@ -349,7 +349,7 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSyncPrivate(JSC::JSGlo
                         RETURN_IF_EXCEPTION(scope, {});
                         auto str = string->value(globalObject);
                         RETURN_IF_EXCEPTION(scope, {});
-                        WTF::String prefixed = Bun::isUnprefixedNodeBuiltin(str);
+                        WTF::String prefixed = Fun::isUnprefixedNodeBuiltin(str);
                         if (!prefixed.isNull()) {
                             return JSValue::encode(jsString(vm, prefixed));
                         }
@@ -363,22 +363,22 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSyncPrivate(JSC::JSGlo
         if (!userPathList.isUndefinedOrNull()) {
             if (JSArray* userPathListArray = dynamicDowncast<JSArray>(userPathList)) {
                 if (!moduleName.isString()) {
-                    Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "id"_s, "string"_s, moduleName);
+                    Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "id"_s, "string"_s, moduleName);
                     scope.release();
                     return {};
                 }
 
                 JSC::EncodedJSValue result = {};
-                WTF::Vector<BunString> paths;
+                WTF::Vector<FunString> paths;
                 for (size_t i = 0; i < userPathListArray->length(); ++i) {
                     JSValue path = userPathListArray->getIndex(globalObject, i);
                     WTF::String pathStr = path.toWTFString(globalObject);
                     if (scope.exception()) [[unlikely]]
                         goto cleanup;
-                    paths.append(Bun::toStringRef(pathStr));
+                    paths.append(Fun::toStringRef(pathStr));
                 }
 
-                result = Bun__resolveSyncWithPaths(lexicalGlobalObject, JSC::JSValue::encode(moduleName), JSValue::encode(from), isESM, isRequireDotResolve, paths.begin(), paths.size());
+                result = Fun__resolveSyncWithPaths(lexicalGlobalObject, JSC::JSValue::encode(moduleName), JSValue::encode(from), isESM, isRequireDotResolve, paths.begin(), paths.size());
                 if (scope.exception()) [[unlikely]]
                     goto cleanup;
 
@@ -394,7 +394,7 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSyncPrivate(JSC::JSGlo
                 }
                 RELEASE_AND_RETURN(scope, result);
             } else {
-                Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "option.paths"_s, userPathList);
+                Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "option.paths"_s, userPathList);
                 scope.release();
                 return {};
             }
@@ -402,12 +402,12 @@ extern "C" JSC::EncodedJSValue functionImportMeta__resolveSyncPrivate(JSC::JSGlo
     }
 
     if (!moduleName.isString()) {
-        Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, isRequireDotResolve ? "request"_s : "id"_s, "string"_s, moduleName);
+        Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, isRequireDotResolve ? "request"_s : "id"_s, "string"_s, moduleName);
         scope.release();
         return {};
     }
 
-    auto result = Bun__resolveSync(lexicalGlobalObject, JSC::JSValue::encode(moduleName), JSValue::encode(from), isESM, isRequireDotResolve);
+    auto result = Fun__resolveSync(lexicalGlobalObject, JSC::JSValue::encode(moduleName), JSValue::encode(from), isESM, isRequireDotResolve);
     RETURN_IF_EXCEPTION(scope, {});
 
     if (!JSC::JSValue::decode(result).isString()) {
@@ -500,14 +500,14 @@ JSC_DEFINE_HOST_FUNCTION(functionImportMeta__resolve,
     }
 
     // In Node.js, `node:doesnotexist` resolves to `node:doesnotexist`
-    if (specifier.startsWith("node:"_s) || specifier.startsWith("bun:"_s)) [[unlikely]] {
+    if (specifier.startsWith("node:"_s) || specifier.startsWith("fun:"_s)) [[unlikely]] {
         return JSValue::encode(jsString(vm, specifier));
     }
 
     // Run it through the module resolver, errors at this point are actual errors.
-    auto a = Bun::toString(specifier);
-    auto b = Bun::toString(fromWTFString);
-    auto result = JSValue::decode(Bun__resolveSyncWithStrings(globalObject, &a, &b, true));
+    auto a = Fun::toString(specifier);
+    auto b = Fun::toString(fromWTFString);
+    auto result = JSValue::decode(Fun__resolveSyncWithStrings(globalObject, &a, &b, true));
     RETURN_IF_EXCEPTION(scope, {});
 
     if (!result.isString()) {
@@ -569,7 +569,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsImportMetaObjectGetter_require, (JSGlobalObject * glo
     return JSValue::encode(nullable ? nullable : jsUndefined());
 }
 
-// https://github.com/oven-sh/bun/issues/11754#issuecomment-2452626172
+// https://github.com/underdoc-org/fun/issues/11754#issuecomment-2452626172
 // This setter exists mainly to support various libraries doing weird things wrapping the require function.
 JSC_DEFINE_CUSTOM_SETTER(jsImportMetaObjectSetter_require, (JSGlobalObject * jsGlobalObject, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue encodedValue, PropertyName propertyName))
 {
@@ -712,7 +712,7 @@ void ImportMetaObject::finishCreation(VM& vm)
             path = meta->url;
         }
 
-        auto* object = Bun::JSCommonJSModule::createBoundRequireFunction(init.vm, meta->globalObject(), path);
+        auto* object = Fun::JSCommonJSModule::createBoundRequireFunction(init.vm, meta->globalObject(), path);
         RETURN_IF_EXCEPTION(scope, );
         ASSERT(object);
         init.set(uncheckedDowncast<JSFunction>(object));

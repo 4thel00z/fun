@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, tls } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, tls } from "harness";
 import { once } from "node:events";
 import http2 from "node:http2";
 import https from "node:https";
@@ -145,7 +145,7 @@ async function withRawH2Server(
   }
 }
 
-// Each test spawns a fresh subprocess so the BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT
+// Each test spawns a fresh subprocess so the FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT
 // env var is read at startup. With describe.concurrent + max_concurrency=20 that
 // peaks at ~8GB of debug subprocesses, which under ASAN (~2-3x) OOM-kills the
 // 16GB/0-swap runner; fully serialising under ASAN instead pushes the 50+ spawns
@@ -155,13 +155,13 @@ async function withRawH2Server(
 const slotLimit = isASAN ? 4 : 20;
 let live = 0;
 const waiters: Array<() => void> = [];
-async function spawnCapped(options: Parameters<typeof Bun.spawn>[0]) {
+async function spawnCapped(options: Parameters<typeof Fun.spawn>[0]) {
   if (live >= slotLimit) {
     await new Promise<void>(r => waiters.push(r)); // slot handed off to us, `live` already counts it
   } else {
     live++;
   }
-  const proc = Bun.spawn(options);
+  const proc = Fun.spawn(options);
   proc.exited.finally(() => {
     const next = waiters.shift();
     if (next)
@@ -173,10 +173,10 @@ async function spawnCapped(options: Parameters<typeof Bun.spawn>[0]) {
 
 function spawnFetch(script: string) {
   return spawnCapped({
-    cmd: [bunExe(), "--no-warnings", "-e", script],
+    cmd: [funExe(), "--no-warnings", "-e", script],
     env: {
-      ...bunEnv,
-      BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT: "1",
+      ...funEnv,
+      FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT: "1",
       NODE_TLS_REJECT_UNAUTHORIZED: "0",
     },
     stdout: "pipe",
@@ -184,7 +184,7 @@ function spawnFetch(script: string) {
   });
 }
 
-describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT)", () => {
+describe.concurrent("fetch() over HTTP/2 (FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT)", () => {
   test("GET: status, headers and body round-trip", async () => {
     await withH2Server(
       (req, res) => {
@@ -591,7 +591,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
         const url = "https://localhost:${port}";
         const opts = { tls: { rejectUnauthorized: false } };
         const a = await (await fetch(url + "/first", opts)).text();
-        await Bun.sleep(50);
+        await Fun.sleep(50);
         const b = await (await fetch(url + "/second", opts)).text();
         console.log(a + "," + b);
       `);
@@ -652,7 +652,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
     }
   });
 
-  // Bun's node:http2 server currently emits an empty DATA+END_STREAM for
+  // Fun's node:http2 server currently emits an empty DATA+END_STREAM for
   // stream.close(code) rather than RST_STREAM, so this also covers the
   // RFC 9113 §8.1 "DATA before HEADERS" stream-error case.
   test("server-reset stream fails that request; sibling on the session survives", async () => {
@@ -1154,7 +1154,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
           await using proc = await spawnFetch(`
             const r = await fetch("${url}", { tls: { rejectUnauthorized: false } });
             console.log(r.status, await r.text());
-            await Bun.sleep(80);
+            await Fun.sleep(80);
             console.log("survived");
           `);
           const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
@@ -1455,12 +1455,12 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
     try {
       await using proc = await spawnCapped({
         cmd: [
-          bunExe(),
+          funExe(),
           "--no-warnings",
           "-e",
           `console.log(await fetch("https://localhost:${port}", { tls: { rejectUnauthorized: false } }).then(r => r.text()));`,
         ],
-        env: { ...bunEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
+        env: { ...funEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1483,18 +1483,18 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
         res.end(req.httpVersion);
       },
       async url => {
-        // No BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT in env; the CLI flag
+        // No FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT in env; the CLI flag
         // alone should make ALPN offer h2.
         await using proc = await spawnCapped({
           cmd: [
-            bunExe(),
+            funExe(),
             "--no-warnings",
             "--experimental-http2-fetch",
             "-e",
             `const r = await fetch("${url}", { tls: { rejectUnauthorized: false } });
              console.log(r.status, await r.text());`,
           ],
-          env: { ...bunEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
+          env: { ...funEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
           stdout: "pipe",
           stderr: "pipe",
         });
@@ -1513,16 +1513,16 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
         res.end(req.httpVersion);
       },
       async url => {
-        // No BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT in env.
+        // No FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CLIENT in env.
         await using proc = await spawnCapped({
           cmd: [
-            bunExe(),
+            funExe(),
             "--no-warnings",
             "-e",
             `const r = await fetch("${url}", { protocol: "http2", tls: { rejectUnauthorized: false } });
              console.log(r.status, await r.text());`,
           ],
-          env: { ...bunEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
+          env: { ...funEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
           stdout: "pipe",
           stderr: "pipe",
         });
@@ -1542,7 +1542,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
     try {
       await using proc = await spawnCapped({
         cmd: [
-          bunExe(),
+          funExe(),
           "--no-warnings",
           "-e",
           `try {
@@ -1550,7 +1550,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
              console.log("unexpected-ok");
            } catch (e) { console.log(e.code || String(e)); }`,
         ],
-        env: { ...bunEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
+        env: { ...funEnv, NODE_TLS_REJECT_UNAUTHORIZED: "0" },
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1625,7 +1625,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
     // silently complete over HTTP/1.1.
     await using proc = await spawnCapped({
       cmd: [
-        bunExe(),
+        funExe(),
         "--no-warnings",
         "-e",
         `try {
@@ -1633,7 +1633,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
            console.log("unexpected-ok");
          } catch (e) { console.log(e.code || String(e)); }`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1648,7 +1648,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
     // would otherwise wait for the leader before observing the abort.
     await using proc = await spawnCapped({
       cmd: [
-        bunExe(),
+        funExe(),
         "--no-warnings",
         "-e",
         `import net from "node:net";
@@ -1670,13 +1670,13 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
          // creation is synchronous in connect()). The settle window lets a
          // non-coalesced waiter's connect land so conns reflects it.
          await accepted;
-         await Bun.sleep(100);
+         await Fun.sleep(100);
          ac.abort();
          console.log(await waiter, "conns=" + conns);
          void leader;
          process.exit(0);`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1726,7 +1726,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
     // must open a fresh connection.
     await using proc = await spawnCapped({
       cmd: [
-        bunExe(),
+        funExe(),
         "--no-warnings",
         "-e",
         `import net from "node:net";
@@ -1760,7 +1760,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
          console.log(res.status, await res.text(), "conns=" + conns);
          process.exit(0);`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1780,7 +1780,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
     // second TCP connect) rather than be told the server lacks h2.
     await using proc = await spawnCapped({
       cmd: [
-        bunExe(),
+        funExe(),
         "--no-warnings",
         "-e",
         `import net from "node:net";
@@ -1799,17 +1799,17 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
            e => (typeof e?.code === "string" ? e.code : e?.name) || String(e),
          );
          await accepted;
-         await Bun.sleep(100);
+         await Fun.sleep(100);
          const before = conns;
          leaderAc.abort();
          await leader;
-         await Bun.sleep(100);
+         await Fun.sleep(100);
          const after = conns;
          waiterAc.abort();
          console.log(await waiter, "before=" + before, "after=" + after);
          process.exit(0);`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1825,7 +1825,7 @@ describe.concurrent("fetch() over HTTP/2 (BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP2_CL
   // client's first SSL_read that returns app data is also the call that
   // completes the handshake. ssl_on_data must fire on_handshake there or the
   // socket never gets re-tagged for h2 and the frame bytes hit the HTTP/1.1
-  // parser as Malformed_HTTP_Response. Neither node:tls nor Bun.listen exposes
+  // parser as Malformed_HTTP_Response. Neither node:tls nor Fun.listen exposes
   // the 0.5-RTT write window, so this hits a real Cloudflare-fronted origin —
   // tolerate network blips by only failing on the specific regression code.
   test("GET https://registry.npmjs.org over protocol: http2", async () => {

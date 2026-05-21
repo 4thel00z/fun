@@ -3,7 +3,7 @@ set -euo pipefail
 
 # This script updates SQLite amalgamation files with the required compiler flags.
 # It downloads the SQLite source, configures it with necessary flags, builds the
-# amalgamation, and copies the generated files to the Bun source tree.
+# amalgamation, and copies the generated files to the Fun source tree.
 #
 # Usage:
 #   ./scripts/update-sqlite-amalgamation.sh <version_number> <year>
@@ -49,7 +49,7 @@ CFLAGS="-DSQLITE_ENABLE_UPDATE_DELETE_LIMIT=1 -DSQLITE_ENABLE_COLUMN_METADATA=1"
 echo "Building amalgamation..."
 make sqlite3.c > /dev/null 2>&1
 
-echo "Copying files to Bun source tree..."
+echo "Copying files to Fun source tree..."
 # Add clang-format off directive and copy the amalgamation
 echo "// clang-format off" > "$REPO_ROOT/src/jsc/bindings/sqlite/sqlite3.c"
 cat sqlite3.c >> "$REPO_ROOT/src/jsc/bindings/sqlite/sqlite3.c"

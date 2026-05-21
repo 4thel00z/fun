@@ -5,7 +5,7 @@
 
 extern "C" void napi_internal_enqueue_finalizer(napi_env env, napi_finalize finalize_cb, void* data, void* hint);
 
-namespace Bun {
+namespace Fun {
 
 class NapiFinalizer {
 public:
@@ -28,4 +28,4 @@ private:
     void* m_hint = nullptr;
 };
 
-} // namespace Bun
+} // namespace Fun

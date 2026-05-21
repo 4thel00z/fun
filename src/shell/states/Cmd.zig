@@ -3,7 +3,7 @@
 //!
 //! There are two kinds of commands we are going to run:
 //! - builtins: commands we implement natively in Zig and which run in the
-//!             current Bun process (see `Builtin.zig` and the `builtins` folder)
+//!             current Fun process (see `Builtin.zig` and the `builtins` folder)
 //!
 //! - subprocesses: commands which run in a new process
 pub const Cmd = @This();
@@ -22,7 +22,7 @@ parent: ParentPtr,
 ///
 /// TODO: Change to `AllocationScope`. This will allow us to track memory misuse in debug
 ///       builds
-spawn_arena: bun.ArenaAllocator,
+spawn_arena: fun.ArenaAllocator,
 spawn_arena_freed: bool = false,
 
 args: std.array_list.Managed(?[*:0]const u8),
@@ -89,7 +89,7 @@ pub const ShellAsyncSubprocessDone = struct {
 
     pub fn deinit(this: *ShellAsyncSubprocessDone) void {
         log("{f} deinit", .{this});
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
@@ -110,14 +110,14 @@ const BufferedIoClosed = struct {
     const BufferedIoState = struct {
         state: union(enum) {
             open,
-            closed: bun.ByteList,
+            closed: fun.ByteList,
         } = .open,
 
         pub fn deinit(this: *BufferedIoState) void {
             // The closed buffer was taken via PipeReader.takeBuffer(); we own it
             // regardless of the original stdio variant.
             if (this.state == .closed) {
-                this.state.closed.clearAndFree(bun.default_allocator);
+                this.state.closed.clearAndFree(fun.default_allocator);
             }
         }
 
@@ -153,11 +153,11 @@ const BufferedIoClosed = struct {
                     // If the shell state is piped (inside a cmd substitution) aggregate the output of this command
                     if (cmd.io.stdout == .pipe and cmd.io.stdout == .pipe and !cmd.node.redirect.redirectsElsewhere(.stdout)) {
                         const the_slice = readable.pipe.slice();
-                        bun.handleOom(cmd.base.shell.buffered_stdout().appendSlice(bun.default_allocator, the_slice));
+                        fun.handleOom(cmd.base.shell.buffered_stdout().appendSlice(fun.default_allocator, the_slice));
                     }
 
                     var buffer = readable.pipe.takeBuffer();
-                    stdout.state = .{ .closed = bun.ByteList.moveFromList(&buffer) };
+                    stdout.state = .{ .closed = fun.ByteList.moveFromList(&buffer) };
                 }
             },
             .stderr => {
@@ -167,11 +167,11 @@ const BufferedIoClosed = struct {
                     // If the shell state is piped (inside a cmd substitution) aggregate the output of this command
                     if (cmd.io.stderr == .pipe and cmd.io.stderr == .pipe and !cmd.node.redirect.redirectsElsewhere(.stderr)) {
                         const the_slice = readable.pipe.slice();
-                        bun.handleOom(cmd.base.shell.buffered_stderr().appendSlice(bun.default_allocator, the_slice));
+                        fun.handleOom(cmd.base.shell.buffered_stderr().appendSlice(fun.default_allocator, the_slice));
                     }
 
                     var buffer = readable.pipe.takeBuffer();
-                    stderr.state = .{ .closed = bun.ByteList.moveFromList(&buffer) };
+                    stderr.state = .{ .closed = fun.ByteList.moveFromList(&buffer) };
                 }
             },
             .stdin => {
@@ -184,7 +184,7 @@ const BufferedIoClosed = struct {
         return @field(this, @tagName(io)) != null;
     }
 
-    fn fromStdio(io: *const [3]bun.shell.subproc.Stdio) BufferedIoClosed {
+    fn fromStdio(io: *const [3]fun.shell.subproc.Stdio) BufferedIoClosed {
         return .{
             .stdin = if (io[stdin_no].isPiped()) false else null,
             .stdout = if (io[stdout_no].isPiped()) .{} else null,
@@ -244,8 +244,8 @@ pub fn init(
         .io = io,
         .state = .idle,
     };
-    cmd.spawn_arena = bun.ArenaAllocator.init(cmd.base.allocator());
-    cmd.args = bun.handleOom(std.array_list.Managed(?[*:0]const u8).initCapacity(cmd.base.allocator(), node.name_and_args.len));
+    cmd.spawn_arena = fun.ArenaAllocator.init(cmd.base.allocator());
+    cmd.args = fun.handleOom(std.array_list.Managed(?[*:0]const u8).initCapacity(cmd.base.allocator(), node.name_and_args.len));
     cmd.redirection_file = std.array_list.Managed(u8).init(cmd.spawn_arena.allocator());
 
     return cmd;
@@ -308,7 +308,7 @@ pub fn next(this: *Cmd) Yield {
                     return this.transitionToExecStateAndYield();
                 }
 
-                bun.handleOom(this.args.ensureUnusedCapacity(1));
+                fun.handleOom(this.args.ensureUnusedCapacity(1));
                 Expansion.init(
                     this.base.interpreter,
                     this.base.shell,
@@ -326,10 +326,10 @@ pub fn next(this: *Cmd) Yield {
                 return this.state.expanding_args.expansion.start();
             },
             .waiting_write_err => {
-                bun.shell.unreachableState("Cmd.next", "waiting_write_err");
+                fun.shell.unreachableState("Cmd.next", "waiting_write_err");
             },
             .exec => {
-                bun.shell.unreachableState("Cmd.next", "exec");
+                fun.shell.unreachableState("Cmd.next", "exec");
             },
             .done => unreachable,
         }
@@ -354,7 +354,7 @@ pub fn start(this: *Cmd) Yield {
 
 pub fn onIOWriterChunk(this: *Cmd, _: usize, e: ?jsc.SystemError) Yield {
     if (e) |err| {
-        this.base.throw(&bun.shell.ShellErr.newSys(err));
+        this.base.throw(&fun.shell.ShellErr.newSys(err));
         return .failed;
     }
     assert(this.state == .waiting_write_err);
@@ -366,7 +366,7 @@ pub fn childDone(this: *Cmd, child: ChildPtr, exit_code: ExitCode) Yield {
         if (exit_code != 0) {
             const err = this.state.expanding_assigns.state.err;
             this.state.expanding_assigns.state.err = .{ .custom = "" };
-            defer err.deinit(bun.default_allocator);
+            defer err.deinit(fun.default_allocator);
 
             this.state.expanding_assigns.deinit();
             return this.writeFailingError("{f}\n", .{err});
@@ -410,7 +410,7 @@ pub fn childDone(this: *Cmd, child: ChildPtr, exit_code: ExitCode) Yield {
         return .{ .cmd = this };
     }
 
-    @panic("Expected Cmd child to be Assigns or Expansion. This indicates a bug in Bun. Please file a GitHub issue. ");
+    @panic("Expected Cmd child to be Assigns or Expansion. This indicates a bug in Fun. Please file a GitHub issue. ");
 }
 
 fn initSubproc(this: *Cmd) Yield {
@@ -424,13 +424,13 @@ fn initSubproc(this: *Cmd) Yield {
     spawn_args.cwd = this.base.shell.cwdZ();
 
     {
-        bun.handleOom(this.args.append(null));
+        fun.handleOom(this.args.append(null));
 
         log("Cmd(0x{x}, {s}) IO: {f}", .{ @intFromPtr(this), if (this.args.items.len > 0) this.args.items[0] orelse "<no args>" else "<no args>", this.io });
-        if (bun.Environment.isDebug) {
+        if (fun.Environment.isDebug) {
             for (this.args.items) |maybe_arg| {
                 if (maybe_arg) |arg| {
-                    if (bun.sliceTo(arg, 0).len > 80) {
+                    if (fun.sliceTo(arg, 0).len > 80) {
                         log("ARG: {s}...\n", .{arg[0..80]});
                     } else {
                         log("ARG: {s}\n", .{arg});
@@ -475,7 +475,7 @@ fn initSubproc(this: *Cmd) Yield {
             );
             if (maybe_yield) |yield| return yield;
 
-            if (comptime bun.Environment.allow_assert) {
+            if (comptime fun.Environment.allow_assert) {
                 assert(this.exec == .bltn);
             }
 
@@ -484,17 +484,17 @@ fn initSubproc(this: *Cmd) Yield {
             return this.exec.bltn.start();
         }
 
-        const path_buf = bun.path_buffer_pool.get();
-        defer bun.path_buffer_pool.put(path_buf);
+        const path_buf = fun.path_buffer_pool.get();
+        defer fun.path_buffer_pool.put(path_buf);
         const resolved = which(path_buf, spawn_args.PATH, spawn_args.cwd, first_arg_real) orelse blk: {
-            if (bun.strings.eqlComptime(first_arg_real, "bun") or bun.strings.eqlComptime(first_arg_real, "bun-debug")) blk2: {
-                break :blk bun.selfExePath() catch break :blk2;
+            if (fun.strings.eqlComptime(first_arg_real, "fun") or fun.strings.eqlComptime(first_arg_real, "fun-debug")) blk2: {
+                break :blk fun.selfExePath() catch break :blk2;
             }
-            return this.writeFailingError("bun: command not found: {s}\n", .{first_arg});
+            return this.writeFailingError("fun: command not found: {s}\n", .{first_arg});
         };
 
         this.base.allocator().free(first_arg_real);
-        const duped = bun.handleOom(this.base.allocator().dupeZ(u8, bun.span(resolved)));
+        const duped = fun.handleOom(this.base.allocator().dupeZ(u8, fun.span(resolved)));
         this.args.items[0] = duped;
     }
 
@@ -523,7 +523,7 @@ fn initSubproc(this: *Cmd) Yield {
     const subproc = switch (Subprocess.spawnAsync(this.base.eventLoop(), &shellio, spawn_args, &this.exec.subproc.child, &did_exit_immediately)) {
         .result => this.exec.subproc.child,
         .err => |*e| {
-            defer e.deinit(bun.default_allocator);
+            defer e.deinit(fun.default_allocator);
             this.exec = .none;
             return this.writeFailingError("{f}\n", .{e});
         },
@@ -535,7 +535,7 @@ fn initSubproc(this: *Cmd) Yield {
     if (did_exit_immediately) {
         if (subproc.process.hasExited()) {
             // process has already exited, we called wait4(), but we did not call onProcessExit()
-            subproc.process.onExit(subproc.process.status, &std.mem.zeroes(bun.spawn.Rusage));
+            subproc.process.onExit(subproc.process.status, &std.mem.zeroes(fun.spawn.Rusage));
         } else {
             // process has already exited, but we haven't called wait4() yet
             // https://cs.github.com/libuv/libuv/blob/b00d1bd225b602570baee82a6152eaa823a84fa6/src/unix/process.c#L1007
@@ -546,7 +546,7 @@ fn initSubproc(this: *Cmd) Yield {
     return .suspended;
 }
 
-fn initRedirections(this: *Cmd, spawn_args: *Subprocess.SpawnArgs) bun.JSError!?Yield {
+fn initRedirections(this: *Cmd, spawn_args: *Subprocess.SpawnArgs) fun.JSError!?Yield {
     if (this.node.redirect_file) |redirect| {
         const in_cmd_subst = false;
 
@@ -610,7 +610,7 @@ fn initRedirections(this: *Cmd, spawn_args: *Subprocess.SpawnArgs) bun.JSError!?
             },
             .atom => {
                 if (this.redirection_file.items.len == 0) {
-                    return this.writeFailingError("bun: ambiguous redirect: at `{s}`\n", .{spawn_args.cmd_parent.args.items[0] orelse "<unknown>"});
+                    return this.writeFailingError("fun: ambiguous redirect: at `{s}`\n", .{spawn_args.cmd_parent.args.items[0] orelse "<unknown>"});
                 }
                 const path = this.redirection_file.items[0..this.redirection_file.items.len -| 1 :0];
                 log("Expanded Redirect: {s}\n", .{this.redirection_file.items[0..]});
@@ -620,7 +620,7 @@ fn initRedirections(this: *Cmd, spawn_args: *Subprocess.SpawnArgs) bun.JSError!?
                     .err => |e| {
                         const sys_err = e.toShellSystemError();
                         defer sys_err.deref();
-                        return this.writeFailingError("bun: {f}: {s}", .{ sys_err.message, path });
+                        return this.writeFailingError("fun: {f}: {s}", .{ sys_err.message, path });
                     },
                     .result => |f| f,
                 };
@@ -732,7 +732,7 @@ pub fn deinit(this: *Cmd) void {
     {
         for (this.args.items) |maybe_arg| {
             if (maybe_arg) |arg| {
-                this.base.allocator().free(bun.sliceTo(arg, 0));
+                this.base.allocator().free(fun.sliceTo(arg, 0));
             }
         }
         this.args.deinit();
@@ -759,7 +759,7 @@ pub fn bufferedOutputClose(this: *Cmd, kind: Subprocess.OutKind, err: ?jsc.Syste
     }
     if (this.hasFinished()) {
         if (!this.spawn_arena_freed) {
-            var async_subprocess_done = bun.new(ShellAsyncSubprocessDone, .{
+            var async_subprocess_done = fun.new(ShellAsyncSubprocessDone, .{
                 .cmd = this,
                 .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.base.eventLoop()),
             });
@@ -773,7 +773,7 @@ pub fn bufferedOutputClose(this: *Cmd, kind: Subprocess.OutKind, err: ?jsc.Syste
 }
 
 pub fn bufferedOutputCloseStdout(this: *Cmd, err: ?jsc.SystemError) void {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.exec == .subproc);
     }
     log("cmd ({x}) close buffered stdout", .{@intFromPtr(this)});
@@ -784,14 +784,14 @@ pub fn bufferedOutputCloseStdout(this: *Cmd, err: ?jsc.SystemError) void {
     if (this.io.stdout == .fd and this.io.stdout.fd.captured != null and !this.node.redirect.redirectsElsewhere(.stdout)) {
         var buf = this.io.stdout.fd.captured.?;
         const the_slice = this.exec.subproc.child.stdout.pipe.slice();
-        bun.handleOom(buf.appendSlice(bun.default_allocator, the_slice));
+        fun.handleOom(buf.appendSlice(fun.default_allocator, the_slice));
     }
     this.exec.subproc.buffered_closed.close(this, .{ .stdout = &this.exec.subproc.child.stdout });
     this.exec.subproc.child.closeIO(.stdout);
 }
 
 pub fn bufferedOutputCloseStderr(this: *Cmd, err: ?jsc.SystemError) void {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.exec == .subproc);
     }
     log("cmd ({x}) close buffered stderr", .{@intFromPtr(this)});
@@ -801,7 +801,7 @@ pub fn bufferedOutputCloseStderr(this: *Cmd, err: ?jsc.SystemError) void {
     }
     if (this.io.stderr == .fd and this.io.stderr.fd.captured != null and !this.node.redirect.redirectsElsewhere(.stderr)) {
         var buf = this.io.stderr.fd.captured.?;
-        bun.handleOom(buf.appendSlice(bun.default_allocator, this.exec.subproc.child.stderr.pipe.slice()));
+        fun.handleOom(buf.appendSlice(fun.default_allocator, this.exec.subproc.child.stderr.pipe.slice()));
     }
     this.exec.subproc.buffered_closed.close(this, .{ .stderr = &this.exec.subproc.child.stderr });
     this.exec.subproc.child.closeIO(.stderr);
@@ -809,35 +809,35 @@ pub fn bufferedOutputCloseStderr(this: *Cmd, err: ?jsc.SystemError) void {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
-const which = bun.which;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
+const which = fun.which;
 
-const shell = bun.shell;
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
-const Subprocess = bun.shell.subproc.ShellSubprocess;
+const shell = fun.shell;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
+const Subprocess = fun.shell.subproc.ShellSubprocess;
 
-const Interpreter = bun.shell.Interpreter;
-const Assigns = bun.shell.Interpreter.Assigns;
-const Async = bun.shell.Interpreter.Async;
-const Binary = bun.shell.Interpreter.Binary;
-const Builtin = bun.shell.Interpreter.Builtin;
-const Expansion = bun.shell.Interpreter.Expansion;
-const IO = bun.shell.Interpreter.IO;
-const If = bun.shell.Interpreter.If;
-const Pipeline = bun.shell.Interpreter.Pipeline;
+const Interpreter = fun.shell.Interpreter;
+const Assigns = fun.shell.Interpreter.Assigns;
+const Async = fun.shell.Interpreter.Async;
+const Binary = fun.shell.Interpreter.Binary;
+const Builtin = fun.shell.Interpreter.Builtin;
+const Expansion = fun.shell.Interpreter.Expansion;
+const IO = fun.shell.Interpreter.IO;
+const If = fun.shell.Interpreter.If;
+const Pipeline = fun.shell.Interpreter.Pipeline;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
 
-const Arena = bun.shell.interpret.Arena;
-const CowFd = bun.shell.interpret.CowFd;
-const ShellSyscall = bun.shell.interpret.ShellSyscall;
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
-const stderr_no = bun.shell.interpret.stderr_no;
-const stdin_no = bun.shell.interpret.stdin_no;
-const stdout_no = bun.shell.interpret.stdout_no;
+const Arena = fun.shell.interpret.Arena;
+const CowFd = fun.shell.interpret.CowFd;
+const ShellSyscall = fun.shell.interpret.ShellSyscall;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;
+const stderr_no = fun.shell.interpret.stderr_no;
+const stdin_no = fun.shell.interpret.stdin_no;
+const stdout_no = fun.shell.interpret.stdout_no;

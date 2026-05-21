@@ -4,7 +4,7 @@
 #include "ncrypto.h"
 #include "CryptoGenKeyPair.h"
 
-namespace Bun {
+namespace Fun {
 
 struct EcKeyPairJobCtx : KeyPairJobCtx {
     WTF_MAKE_TZONE_ALLOCATED(EcKeyPairJobCtx);
@@ -31,4 +31,4 @@ struct EcKeyPairJob {
     void schedule();
 };
 
-} // namespace Bun
+} // namespace Fun

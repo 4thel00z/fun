@@ -3,7 +3,7 @@
 # We do this because the event names have to be compile-time constants.
 
 
-export TRACE_EVENTS=$(rg 'bun\.perf\.trace\("([^"]*)"\)' -t zig --json \
+export TRACE_EVENTS=$(rg 'fun\.perf\.trace\("([^"]*)"\)' -t zig --json \
     | jq -r 'select(.type == "match")' \
     | jq -r '.data.submatches[].match.text' \
     | cut -d'"' -f2 \

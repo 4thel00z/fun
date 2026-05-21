@@ -1,9 +1,9 @@
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, hideFromStackTrace } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, hideFromStackTrace } from "harness";
 import { join } from "path";
 
-describe("Bun.Transpiler", () => {
-  const transpiler = new Bun.Transpiler({
+describe("Fun.Transpiler", () => {
+  const transpiler = new Fun.Transpiler({
     loader: "tsx",
     define: {
       "process.env.NODE_ENV": JSON.stringify("development"),
@@ -19,7 +19,7 @@ describe("Bun.Transpiler", () => {
     },
     platform: "browser",
   });
-  const transpilerMinifySyntax = new Bun.Transpiler({
+  const transpilerMinifySyntax = new Fun.Transpiler({
     loader: "tsx",
     define: {
       "process.env.NODE_ENV": JSON.stringify("development"),
@@ -103,7 +103,7 @@ describe("Bun.Transpiler", () => {
 
   it("handles errors when parsing macros", () => {
     expect(() => {
-      new Bun.Transpiler({ macro: "hi" });
+      new Fun.Transpiler({ macro: "hi" });
     }).toThrow("Unexpected hi");
   });
 
@@ -241,7 +241,7 @@ describe("Bun.Transpiler", () => {
       err("const b1 = f?.<number>;", "Parse error");
       // err("const b1 = f?.<number>;", 'Expected "(" but found ";"');
 
-      // TODO: why are the JSX tests failing but only in Bun.Transpiler? They
+      // TODO: why are the JSX tests failing but only in Fun.Transpiler? They
       // work when run manually
 
       // See: https://github.com/microsoft/TypeScript/issues/48711
@@ -1065,7 +1065,7 @@ export default class {
   });
 
   describe("exports.replace", () => {
-    const transpiler = new Bun.Transpiler({
+    const transpiler = new Fun.Transpiler({
       exports: {
         replace: {
           // export var foo = function() { }
@@ -1174,13 +1174,13 @@ export default class {
     });
   });
 
-  const bunTranspiler = new Bun.Transpiler({
+  const funTranspiler = new Fun.Transpiler({
     loader: "tsx",
     define: {
       "process.env.NODE_ENV": JSON.stringify("development"),
       user_undefined: "undefined",
     },
-    platform: "bun",
+    platform: "fun",
     macro: {
       inline: {
         whatDidIPass: `${import.meta.dir}/inline.macro.js`,
@@ -1229,9 +1229,9 @@ export default class {
   `;
 
   it.todo("jsxFactory (two level)", () => {
-    var bun = new Bun.Transpiler({
+    var fun = new Fun.Transpiler({
       loader: "jsx",
-      allowBunRuntime: false,
+      allowFunRuntime: false,
       tsconfig: JSON.stringify({
         compilerOptions: {
           jsxFragmentFactory: "foo.frag",
@@ -1241,22 +1241,22 @@ export default class {
       }),
     });
 
-    const element = bun.transformSync(`
+    const element = fun.transformSync(`
 export default <div>hi</div>
     `);
 
     expect(element.includes("var $jsxEl = foo.factory;")).toBe(true);
 
-    const fragment = bun.transformSync(`
+    const fragment = fun.transformSync(`
 export default <>hi</>
     `);
     expect(fragment.includes("var $JSXFrag = foo.frag,")).toBe(true);
   });
 
   it.todo("jsxFactory (one level)", () => {
-    var bun = new Bun.Transpiler({
+    var fun = new Fun.Transpiler({
       loader: "jsx",
-      allowBunRuntime: false,
+      allowFunRuntime: false,
       tsconfig: JSON.stringify({
         compilerOptions: {
           jsxFragmentFactory: "foo.frag",
@@ -1266,19 +1266,19 @@ export default <>hi</>
       }),
     });
 
-    const element = bun.transformSync(`
+    const element = fun.transformSync(`
 export default <div>hi</div>
     `);
     expect(element.includes("var jsxEl = h;")).toBe(true);
 
-    const fragment = bun.transformSync(`
+    const fragment = fun.transformSync(`
 export default <>hi</>
     `);
     expect(fragment.includes("var JSXFrag = foo.frag,")).toBe(true);
   });
 
   it('logLevel: "error" throws', () => {
-    var bun = new Bun.Transpiler({
+    var fun = new Fun.Transpiler({
       loader: "jsx",
       define: {
         "process.env.NODE_ENV": JSON.stringify("development"),
@@ -1286,13 +1286,13 @@ export default <>hi</>
       logLevel: "error",
     });
 
-    expect(() => bun.transformSync("bad??!?!?!")).toThrow("Unexpected ?");
+    expect(() => fun.transformSync("bad??!?!?!")).toThrow("Unexpected ?");
   });
 
   it("invalid logLevel throws", () => {
     expect(
       () =>
-        new Bun.Transpiler({
+        new Fun.Transpiler({
           loader: "jsx",
           define: {
             "process.env.NODE_ENV": JSON.stringify("development"),
@@ -1307,16 +1307,16 @@ export default <>hi</>
     // indexed by the property position instead of a dense counter, leaving garbage in the
     // skipped slot that `stringHashMapFromArrays` then tried to hash. Run in a subprocess
     // so a crash surfaces as a test failure instead of taking down the test runner.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
-          const t = new Bun.Transpiler({ define: { "": "1", FOO: '"bar"' } });
+          const t = new Fun.Transpiler({ define: { "": "1", FOO: '"bar"' } });
           process.stdout.write(t.transformSync("console.log(FOO);", "js"));
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1327,7 +1327,7 @@ export default <>hi</>
   });
 
   it("JSX keys", () => {
-    var bun = new Bun.Transpiler({
+    var fun = new Fun.Transpiler({
       loader: "jsx",
       define: {
         "process.env.NODE_ENV": JSON.stringify("development"),
@@ -1335,65 +1335,65 @@ export default <>hi</>
       logLevel: "error",
     });
 
-    expect(bun.transformSync("console.log(<div key={() => {}} points={() => {}}></div>);")).toBe(
+    expect(fun.transformSync("console.log(<div key={() => {}} points={() => {}}></div>);")).toBe(
       `console.log(jsxDEV_7x81h0kn("div", {
   points: () => {}
 }, () => {}, false, undefined, this));
 `,
     );
 
-    expect(bun.transformSync("console.log(<div points={() => {}} key={() => {}}></div>);")).toBe(
+    expect(fun.transformSync("console.log(<div points={() => {}} key={() => {}}></div>);")).toBe(
       `console.log(jsxDEV_7x81h0kn("div", {
   points: () => {}
 }, () => {}, false, undefined, this));
 `,
     );
 
-    expect(bun.transformSync("console.log(<div key={() => {}} key={() => {}}></div>);")).toBe(
+    expect(fun.transformSync("console.log(<div key={() => {}} key={() => {}}></div>);")).toBe(
       'console.log(jsxDEV_7x81h0kn("div", {\n  key: () => {}\n}, () => {}, false, undefined, this));\n',
     );
 
-    expect(bun.transformSync("console.log(<div key={() => {}}></div>, () => {});")).toBe(
+    expect(fun.transformSync("console.log(<div key={() => {}}></div>, () => {});")).toBe(
       'console.log(jsxDEV_7x81h0kn("div", {}, () => {}, false, undefined, this), () => {});\n',
     );
 
-    expect(bun.transformSync("console.log(<div key={() => {}} a={() => {}} key={() => {}}></div>, () => {});")).toBe(
+    expect(fun.transformSync("console.log(<div key={() => {}} a={() => {}} key={() => {}}></div>, () => {});")).toBe(
       'console.log(jsxDEV_7x81h0kn("div", {\n  key: () => {},\n  a: () => {}\n}, () => {}, false, undefined, this), () => {});\n',
     );
 
-    expect(bun.transformSync("console.log(<div key={() => {}} key={() => {}} a={() => {}}></div>, () => {});")).toBe(
+    expect(fun.transformSync("console.log(<div key={() => {}} key={() => {}} a={() => {}}></div>, () => {});")).toBe(
       'console.log(jsxDEV_7x81h0kn("div", {\n  key: () => {},\n  a: () => {}\n}, () => {}, false, undefined, this), () => {});\n',
     );
 
-    expect(bun.transformSync("console.log(<div points={() => {}} key={() => {}}></div>);")).toBe(
+    expect(fun.transformSync("console.log(<div points={() => {}} key={() => {}}></div>);")).toBe(
       `console.log(jsxDEV_7x81h0kn("div", {
   points: () => {}
 }, () => {}, false, undefined, this));
 `,
     );
 
-    expect(bun.transformSync("console.log(<div key={() => {}}></div>);")).toBe(
+    expect(fun.transformSync("console.log(<div key={() => {}}></div>);")).toBe(
       `console.log(jsxDEV_7x81h0kn("div", {}, () => {}, false, undefined, this));
 `,
     );
 
-    expect(bun.transformSync("console.log(<div></div>);")).toBe(
+    expect(fun.transformSync("console.log(<div></div>);")).toBe(
       `console.log(jsxDEV_7x81h0kn("div", {}, undefined, false, undefined, this));
 `,
     );
 
     // key after spread props
-    // https://github.com/oven-sh/bun/issues/7328
-    expect(bun.transformSync(`console.log(<div {...obj} key="after" />, <div key="before" {...obj} />);`)).toBe(
+    // https://github.com/underdoc-org/fun/issues/7328
+    expect(fun.transformSync(`console.log(<div {...obj} key="after" />, <div key="before" {...obj} />);`)).toBe(
       `console.log(createElement_mvmpqhxp(\"div\", {\n  ...obj,\n  key: \"after\"\n}), jsxDEV_7x81h0kn(\"div\", {\n  ...obj\n}, \"before\", false, undefined, this));
 `,
     );
-    expect(bun.transformSync(`console.log(<div {...obj} key="after" {...obj2} />);`)).toBe(
+    expect(fun.transformSync(`console.log(<div {...obj} key="after" {...obj2} />);`)).toBe(
       `console.log(createElement_mvmpqhxp(\"div\", {\n  ...obj,\n  key: \"after\",\n  ...obj2\n}));
 `,
     );
     expect(
-      bun.transformSync(`// @jsx foo;
+      fun.transformSync(`// @jsx foo;
 console.log(<div {...obj} key="after" />);`),
     ).toBe(
       `console.log(createElement_mvmpqhxp(\"div\", {\n  ...obj,\n  key: \"after\"\n}));
@@ -1402,7 +1402,7 @@ console.log(<div {...obj} key="after" />);`),
   });
 
   it("parses TSX arrow functions correctly", () => {
-    var transpiler = new Bun.Transpiler({
+    var transpiler = new Fun.Transpiler({
       loader: "tsx",
     });
     expect(transpiler.transformSync("console.log(A = <T = unknown,>() => null)")).toBe(
@@ -1415,50 +1415,50 @@ console.log(<div {...obj} key="after" />);`),
   });
 
   it.todo("JSX", () => {
-    var bun = new Bun.Transpiler({
+    var fun = new Fun.Transpiler({
       loader: "jsx",
       define: {
         "process.env.NODE_ENV": JSON.stringify("development"),
       },
     });
-    expect(bun.transformSync("export var foo = <div foo />")).toBe(
+    expect(fun.transformSync("export var foo = <div foo />")).toBe(
       `export var foo = jsxDEV_7x81h0kn("div", {
   foo: true
 }, undefined, false, undefined, this);
 `,
     );
-    expect(bun.transformSync("export var foo = <div foo={foo} />")).toBe(
+    expect(fun.transformSync("export var foo = <div foo={foo} />")).toBe(
       `export var foo = jsxDEV_7x81h0kn("div", {
   foo
 }, undefined, false, undefined, this);
 `,
     );
-    expect(bun.transformSync("export var foo = <div {...foo} />")).toBe(
+    expect(fun.transformSync("export var foo = <div {...foo} />")).toBe(
       `export var foo = jsxDEV_7x81h0kn("div", {
   ...foo
 }, undefined, false, undefined, this);
 `,
     );
 
-    expect(bun.transformSync("export var hi = <div {foo} />")).toBe(
+    expect(fun.transformSync("export var hi = <div {foo} />")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   foo
 }, undefined, false, undefined, this);
 `,
     );
-    expect(bun.transformSync("export var hi = <div {foo.bar.baz} />")).toBe(
+    expect(fun.transformSync("export var hi = <div {foo.bar.baz} />")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   baz: foo.bar.baz
 }, undefined, false, undefined, this);
 `,
     );
-    expect(bun.transformSync("export var hi = <div {foo?.bar?.baz} />")).toBe(
+    expect(fun.transformSync("export var hi = <div {foo?.bar?.baz} />")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   baz: foo?.bar?.baz
 }, undefined, false, undefined, this);
 `,
     );
-    expect(bun.transformSync("export var hi = <div {foo['baz'].bar?.baz} />")).toBe(
+    expect(fun.transformSync("export var hi = <div {foo['baz'].bar?.baz} />")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   baz: foo["baz"].bar?.baz
 }, undefined, false, undefined, this);
@@ -1466,40 +1466,40 @@ console.log(<div {...obj} key="after" />);`),
     );
 
     // cursed
-    expect(bun.transformSync("export var hi = <div {foo[() => true].hi} />")).toBe(
+    expect(fun.transformSync("export var hi = <div {foo[() => true].hi} />")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   hi: foo[() => true].hi
 }, undefined, false, undefined, this);
 `,
     );
-    expect(bun.transformSync("export var hi = <Foo {process.env.NODE_ENV} />")).toBe(
+    expect(fun.transformSync("export var hi = <Foo {process.env.NODE_ENV} />")).toBe(
       `export var hi = jsxDEV_7x81h0kn(Foo, {
       NODE_ENV: "development"
     }, undefined, false, undefined, this);
     `,
     );
 
-    expect(bun.transformSync("export var hi = <div {foo['baz'].bar?.baz} />")).toBe(
+    expect(fun.transformSync("export var hi = <div {foo['baz'].bar?.baz} />")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   baz: foo["baz"].bar?.baz
 }, undefined, false, undefined, this);
 `,
     );
     try {
-      bun.transformSync("export var hi = <div {foo}={foo}= />");
+      fun.transformSync("export var hi = <div {foo}={foo}= />");
       throw new Error("Expected error");
     } catch (e) {
       expect(e.errors[0].message.includes('Expected ">"')).toBe(true);
     }
 
-    expect(bun.transformSync("export var hi = <div {Foo}><Foo></Foo></div>")).toBe(
+    expect(fun.transformSync("export var hi = <div {Foo}><Foo></Foo></div>")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   Foo,
   children: jsxDEV_7x81h0kn(Foo, {}, undefined, false, undefined, this)
 }, undefined, false, undefined, this);
 `,
     );
-    expect(bun.transformSync("export var hi = <div {Foo}><Foo></Foo></div>")).toBe(
+    expect(fun.transformSync("export var hi = <div {Foo}><Foo></Foo></div>")).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   Foo,
   children: jsxDEV_7x81h0kn(Foo, {}, undefined, false, undefined, this)
@@ -1507,7 +1507,7 @@ console.log(<div {...obj} key="after" />);`),
 `,
     );
 
-    expect(bun.transformSync("export var hi = <div>{123}}</div>").trim()).toBe(
+    expect(fun.transformSync("export var hi = <div>{123}}</div>").trim()).toBe(
       `export var hi = jsxDEV_7x81h0kn("div", {
   children: [
     123,
@@ -1519,13 +1519,13 @@ console.log(<div {...obj} key="after" />);`),
   });
 
   it("JSX spread children", () => {
-    var bun = new Bun.Transpiler({
+    var fun = new Fun.Transpiler({
       loader: "jsx",
       define: {
         "process.env.NODE_ENV": JSON.stringify("development"),
       },
     });
-    expect(bun.transformSync("export var foo = <div>{...a}b</div>")).toBe(
+    expect(fun.transformSync("export var foo = <div>{...a}b</div>")).toBe(
       `export var foo = jsxDEV_7x81h0kn("div", {
   children: [
     ...a,
@@ -1535,7 +1535,7 @@ console.log(<div {...obj} key="after" />);`),
 `,
     );
 
-    expect(bun.transformSync("export var foo = <div>{...a}</div>")).toBe(
+    expect(fun.transformSync("export var foo = <div>{...a}</div>")).toBe(
       `export var foo = jsxDEV_7x81h0kn("div", {
   children: [...a]
 }, undefined, true, undefined, this);
@@ -1544,12 +1544,12 @@ console.log(<div {...obj} key="after" />);`),
   });
 
   it("require with a dynamic non-string expression", () => {
-    var nodeTranspiler = new Bun.Transpiler({ platform: "node" });
+    var nodeTranspiler = new Fun.Transpiler({ platform: "node" });
     expect(nodeTranspiler.transformSync("require('hi' + bar)")).toBe('require("hi" + bar);\n');
   });
 
   it("CommonJS", () => {
-    var nodeTranspiler = new Bun.Transpiler({ platform: "node", minify: { syntax: false } });
+    var nodeTranspiler = new Fun.Transpiler({ platform: "node", minify: { syntax: false } });
 
     // note: even if minify syntax is off, constant folding must happen within require calls
     expect(nodeTranspiler.transformSync("module.require('hi' + 123)")).toBe('require("hi123");\n');
@@ -1645,8 +1645,8 @@ console.log(<div {...obj} key="after" />);`),
     expect(parsed(code, false, false)).toBe(out);
   };
 
-  const expectBunPrinted_ = (code, out) => {
-    expect(parsed(code, !out.endsWith(";\n"), false, bunTranspiler)).toBe(out);
+  const expectFunPrinted_ = (code, out) => {
+    expect(parsed(code, !out.endsWith(";\n"), false, funTranspiler)).toBe(out);
   };
 
   const expectParseError = (code, message) => {
@@ -1827,9 +1827,9 @@ console.log(a)
     });
 
     it("numeric constants", () => {
-      expectBunPrinted_("export const foo = 1 + 2", "export const foo = 3");
-      expectBunPrinted_("export const foo = 1 - 2", "export const foo = -1");
-      expectBunPrinted_("export const foo = 1 * 2", "export const foo = 2");
+      expectFunPrinted_("export const foo = 1 + 2", "export const foo = 3");
+      expectFunPrinted_("export const foo = 1 - 2", "export const foo = -1");
+      expectFunPrinted_("export const foo = 1 * 2", "export const foo = 2");
     });
 
     it.todo("pass objects to macros", () => {
@@ -1839,7 +1839,7 @@ console.log(a)
         },
       };
 
-      const output = bunTranspiler.transformSync(
+      const output = funTranspiler.transformSync(
         `
         import {whatDidIPass} from 'inline';
 
@@ -1868,7 +1868,7 @@ console.log(a)
         },
       };
 
-      const output = bunTranspiler.transformSync(
+      const output = funTranspiler.transformSync(
         `
         import {promiseReturningFunction} from 'inline';
 
@@ -1909,7 +1909,7 @@ export function foo() {
 }
 `.trim();
 
-      expect(bunTranspiler.transformSync(input, object).trim()).toBe(output);
+      expect(funTranspiler.transformSync(input, object).trim()).toBe(output);
     });
 
     it.todo("macros get dead code eliminated", () => {
@@ -1937,50 +1937,50 @@ export const {dead} = promiseReturningCtx();
 export const { dead } = { dead: "hello world!" };
 `.trim();
 
-      expect(bunTranspiler.transformSync(input, object).trim()).toBe(output);
+      expect(funTranspiler.transformSync(input, object).trim()).toBe(output);
     });
 
     it("rewrite string to length", () => {
-      expectBunPrinted_(`export const foo = "a".length + "b".length;`, `export const foo = 2`);
+      expectFunPrinted_(`export const foo = "a".length + "b".length;`, `export const foo = 2`);
       // check rope string
-      expectBunPrinted_(`export const foo = ("a" + "b").length;`, `export const foo = 2`);
-      expectBunPrinted_(
+      expectFunPrinted_(`export const foo = ("a" + "b").length;`, `export const foo = 2`);
+      expectFunPrinted_(
         // check UTF-16
         `export const foo = "😋 Get Emoji — All Emojis to ✂️ Copy and 📋 Paste 👌".length;`,
         `export const foo = 52`,
       );
       // no rope string for non-ascii
-      expectBunPrinted_(`export const foo = ("æ" + "™").length;`, `export const foo = ("æ" + "™").length`);
+      expectFunPrinted_(`export const foo = ("æ" + "™").length;`, `export const foo = ("æ" + "™").length`);
     });
 
-    describe("Bun.js", () => {
+    describe("Fun.js", () => {
       it.todo("require -> import.meta.require", () => {
-        expectBunPrinted_(
+        expectFunPrinted_(
           `export const foo = require('bar.node')`,
           `export const foo = import.meta.require("bar.node")`,
         );
-        expectBunPrinted_(
+        expectFunPrinted_(
           `export const foo = require('bar.node')`,
           `export const foo = import.meta.require("bar.node")`,
         );
       });
 
       it.todo("require.resolve -> import.meta.require.resolve", () => {
-        expectBunPrinted_(
+        expectFunPrinted_(
           `export const foo = require.resolve('bar.node')`,
           `export const foo = import.meta.require.resolve("bar.node")`,
         );
       });
 
       it.todo('require.resolve(path, {paths: ["blah"]}) -> import.meta.require.resolve', () => {
-        expectBunPrinted_(
+        expectFunPrinted_(
           `export const foo = require.resolve('bar.node', {paths: ["blah"]})`,
           `export const foo = import.meta.require.resolve("bar.node", { paths: ["blah"] })`,
         );
       });
 
       it.todo("require is defined", () => {
-        expectBunPrinted_(
+        expectFunPrinted_(
           `
 const {resolve} = require;
 console.log(resolve.length)
@@ -2016,7 +2016,7 @@ console.log(resolve.length)
     });
 
     it("jsx symbol should work", () => {
-      expectBunPrinted_(`var x = jsx; export default x;`, "var x = jsx;\nexport default x");
+      expectFunPrinted_(`var x = jsx; export default x;`, "var x = jsx;\nexport default x");
     });
 
     it.todo("decls", () => {
@@ -2192,7 +2192,7 @@ console.log(resolve.length)
     });
 
     describe("dead code elimination", () => {
-      const transpilerNoDCE = new Bun.Transpiler({ deadCodeElimination: false });
+      const transpilerNoDCE = new Fun.Transpiler({ deadCodeElimination: false });
       it("should DCE with deadCodeElimination: true or by default", () => {
         expect(parsed("123", true, false)).toBe("");
         expect(parsed("[-1, 2n, null]", true, false)).toBe("");
@@ -2409,7 +2409,7 @@ class Foo {
   });
 
   describe("simplification", () => {
-    const transpiler = new Bun.Transpiler({
+    const transpiler = new Fun.Transpiler({
       loader: "tsx",
       define: {
         "process.env.NODE_ENV": JSON.stringify("development"),
@@ -2459,8 +2459,8 @@ class Foo {
       expect(parsed(code, false, false)).toBe(out);
     };
 
-    const expectBunPrinted_ = (code, out) => {
-      expect(parsed(code, !out.endsWith(";\n"), false, bunTranspiler)).toBe(out);
+    const expectFunPrinted_ = (code, out) => {
+      expect(parsed(code, !out.endsWith(";\n"), false, funTranspiler)).toBe(out);
     };
 
     it("unary operator", () => {
@@ -2468,10 +2468,10 @@ class Foo {
     });
 
     it.todo("const inlining", () => {
-      var transpiler = new Bun.Transpiler({
+      var transpiler = new Fun.Transpiler({
         inline: true,
-        platform: "bun",
-        allowBunRuntime: false,
+        platform: "fun",
+        allowFunRuntime: false,
         minify: { syntax: true },
       });
 
@@ -2560,10 +2560,10 @@ console.log(foo, array);
     });
 
     it("constant folding scopes", () => {
-      var transpiler = new Bun.Transpiler({
+      var transpiler = new Fun.Transpiler({
         inline: true,
-        platform: "bun",
-        allowBunRuntime: false,
+        platform: "fun",
+        allowFunRuntime: false,
         minify: { syntax: true },
       });
 
@@ -2609,10 +2609,10 @@ console.log(foo, array);
     });
 
     it.todo("substitution", () => {
-      var transpiler = new Bun.Transpiler({
+      var transpiler = new Fun.Transpiler({
         inline: true,
-        platform: "bun",
-        allowBunRuntime: false,
+        platform: "fun",
+        allowFunRuntime: false,
         minify: { syntax: true },
       });
       function check(input, output) {
@@ -2970,7 +2970,7 @@ console.log(foo, array);
       };
 
       // we have an optimization for numbers 0 - 100, -0 - -100 so we must test those specifically
-      // https://github.com/oven-sh/bun/issues/2810
+      // https://github.com/underdoc-org/fun/issues/2810
       for (let i = 1; i < 120; i++) {
         const inner = "${" + i + " * 1}";
         expectPrinted("console.log(`" + inner + "`)", 'console.log("' + i + '")');
@@ -3371,7 +3371,7 @@ console.log(foo, array);
 
     it("#17961 - node target", async () => {
       // Issue #17961: Transpiler encoding issue with UTF-8 characters
-      const transpiler = new Bun.Transpiler({
+      const transpiler = new Fun.Transpiler({
         loader: "ts",
         target: "node",
       });
@@ -3382,7 +3382,7 @@ console.log(foo, array);
     });
 
     it("#17961 - browser target", async () => {
-      const transpiler = new Bun.Transpiler({
+      const transpiler = new Fun.Transpiler({
         loader: "ts",
         target: "browser",
       });
@@ -3392,10 +3392,10 @@ console.log(foo, array);
       expect(result).toBe(`let list = ["•", "-", "◦", "▪", "▫"];\n`);
     });
 
-    it("#17961 - bun target", async () => {
-      const transpiler = new Bun.Transpiler({
+    it("#17961 - fun target", async () => {
+      const transpiler = new Fun.Transpiler({
         loader: "ts",
-        target: "bun",
+        target: "fun",
       });
 
       const input = `let list = ["•", "-", "◦", "▪", "▫"];\n`;
@@ -3418,16 +3418,16 @@ console.log(foo, array);
   });
 
   it("scan on empty file does not segfault", () => {
-    new Bun.Transpiler().scan("");
+    new Fun.Transpiler().scan("");
   });
 
   it("scanImports on empty file does not segfault", () => {
-    new Bun.Transpiler().scanImports("");
+    new Fun.Transpiler().scanImports("");
   });
 
   it("preserves exotic directives", () => {
     expect(
-      new Bun.Transpiler().transformSync(`"use client";
+      new Fun.Transpiler().transformSync(`"use client";
 console.log("boop");
 `),
     ).toBe(
@@ -3438,7 +3438,7 @@ console.log("boop");
   });
   it("does not preserve use strict (for now)", () => {
     expect(
-      new Bun.Transpiler().transformSync(`"use strict";
+      new Fun.Transpiler().transformSync(`"use strict";
   console.log("boop");
   `),
     ).toBe(
@@ -3449,7 +3449,7 @@ console.log("boop");
 
   it("can parse 'a<b>' as typescript", () => {
     ts.expectPrinted("a<b>", "a");
-    expect(new Bun.Transpiler({ loader: "ts" }).transformSync(`a<b>`)).toBe(`a;\n`);
+    expect(new Fun.Transpiler({ loader: "ts" }).transformSync(`a<b>`)).toBe(`a;\n`);
   });
 
   const prepareForSnapshot = code => {
@@ -3505,7 +3505,7 @@ console.log("boop");
 });
 
 describe("await can only be used inside an async function message", () => {
-  var transpiler = new Bun.Transpiler({
+  var transpiler = new Fun.Transpiler({
     logLevel: "debug",
   });
 
@@ -3600,7 +3600,7 @@ describe("malformed function definition does not crash due to invalid scope init
     const tests = ["function:", "function a() {function:}"];
     for (const code of tests) {
       for (const loader of ["js", "ts"]) {
-        const transpiler = new Bun.Transpiler({ loader });
+        const transpiler = new Fun.Transpiler({ loader });
         expect(() => transpiler.transformSync(code)).toThrow("Parse error");
       }
     }
@@ -3608,12 +3608,12 @@ describe("malformed function definition does not crash due to invalid scope init
 });
 
 it("does not crash with 9 comments and typescript type skipping", () => {
-  const cmd = [bunExe(), "build", "--minify-identifiers", join(import.meta.dir, "fixtures", "9-comments.ts")];
-  const { stdout, stderr, exitCode } = Bun.spawnSync({
+  const cmd = [funExe(), "build", "--minify-identifiers", join(import.meta.dir, "fixtures", "9-comments.ts")];
+  const { stdout, stderr, exitCode } = Fun.spawnSync({
     cmd,
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(stderr.toString()).toBe("");
@@ -3622,11 +3622,11 @@ it("does not crash with 9 comments and typescript type skipping", () => {
 });
 
 it("does not crash with --minify-syntax and revisiting dot expressions", () => {
-  const { stdout, stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "-p", "[(()=>{})()][''+'c']"],
+  const { stdout, stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "-p", "[(()=>{})()][''+'c']"],
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   expect(stderr.toString()).toBe("");
@@ -3638,20 +3638,20 @@ it("runtime transpiler stack overflows", async () => {
   expect(async () => await import("./fixtures/lots-of-for-loop.js")).toThrow(`Maximum call stack size exceeded`);
 });
 
-it("Bun.Transpiler.transformSync stack overflows", async () => {
-  const code = await Bun.file(join(import.meta.dir, "fixtures", "lots-of-for-loop.js")).text();
-  const transpiler = new Bun.Transpiler();
+it("Fun.Transpiler.transformSync stack overflows", async () => {
+  const code = await Fun.file(join(import.meta.dir, "fixtures", "lots-of-for-loop.js")).text();
+  const transpiler = new Fun.Transpiler();
   expect(() => transpiler.transformSync(code)).toThrow(`Maximum call stack size exceeded`);
 });
 
-it("Bun.Transpiler.transform stack overflows", async () => {
-  const code = await Bun.file(join(import.meta.dir, "fixtures", "lots-of-for-loop.js")).text();
-  const transpiler = new Bun.Transpiler();
+it("Fun.Transpiler.transform stack overflows", async () => {
+  const code = await Fun.file(join(import.meta.dir, "fixtures", "lots-of-for-loop.js")).text();
+  const transpiler = new Fun.Transpiler();
   expect(async () => await transpiler.transform(code)).toThrow(`Maximum call stack size exceeded`);
 });
 
 describe("arrow function parsing after const declaration (scope mismatch bug)", () => {
-  const transpiler = new Bun.Transpiler({ loader: "tsx" });
+  const transpiler = new Fun.Transpiler({ loader: "tsx" });
 
   it("reproduces the original scope mismatch bug with JSX", () => {
     // This is the exact pattern that caused the scope mismatch panic

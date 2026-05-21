@@ -1,7 +1,7 @@
 import JSON5 from "json5";
 import { bench, group, run } from "../runner.mjs";
 
-const isBun = typeof Bun !== "undefined" && Bun.JSON5;
+const isFun = typeof Fun !== "undefined" && Fun.JSON5;
 
 function sizeLabel(n) {
   if (n >= 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)}MB`;
@@ -59,29 +59,29 @@ const largeObject = {
   status: "complete",
 };
 
-const stringify = isBun ? Bun.JSON5.stringify : JSON5.stringify;
+const stringify = isFun ? Fun.JSON5.stringify : JSON5.stringify;
 
 // -- parse benchmarks --
 
 group(`parse small (${sizeLabel(smallJson5.length)})`, () => {
-  if (isBun) bench("Bun.JSON5.parse", () => Bun.JSON5.parse(smallJson5));
+  if (isFun) bench("Fun.JSON5.parse", () => Fun.JSON5.parse(smallJson5));
   bench("json5.parse", () => JSON5.parse(smallJson5));
 });
 
 group(`parse large (${sizeLabel(largeJson5.length)})`, () => {
-  if (isBun) bench("Bun.JSON5.parse", () => Bun.JSON5.parse(largeJson5));
+  if (isFun) bench("Fun.JSON5.parse", () => Fun.JSON5.parse(largeJson5));
   bench("json5.parse", () => JSON5.parse(largeJson5));
 });
 
 // -- stringify benchmarks --
 
 group(`stringify small (${sizeLabel(stringify(smallObject).length)})`, () => {
-  if (isBun) bench("Bun.JSON5.stringify", () => Bun.JSON5.stringify(smallObject));
+  if (isFun) bench("Fun.JSON5.stringify", () => Fun.JSON5.stringify(smallObject));
   bench("json5.stringify", () => JSON5.stringify(smallObject));
 });
 
 group(`stringify large (${sizeLabel(stringify(largeObject).length)})`, () => {
-  if (isBun) bench("Bun.JSON5.stringify", () => Bun.JSON5.stringify(largeObject));
+  if (isFun) bench("Fun.JSON5.stringify", () => Fun.JSON5.stringify(largeObject));
   bench("json5.stringify", () => JSON5.stringify(largeObject));
 });
 

@@ -1,4 +1,4 @@
-pub fn toBeEmpty(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn toBeEmpty(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     defer this.postMatch(globalThis);
 
     const thisValue = callFrame.this();
@@ -24,7 +24,7 @@ pub fn toBeEmpty(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFra
                         any_: ?*anyopaque,
                         _: JSValue,
                     ) callconv(.c) void {
-                        bun.cast(*bool, any_.?).* = true;
+                        fun.cast(*bool, any_.?).* = true;
                     }
                 }.anythingInIterator);
                 pass = !any_properties_in_iterator;
@@ -76,13 +76,13 @@ pub fn toBeEmpty(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFra
     return globalThis.throwPretty(fmt, .{value.toFmt(&formatter)});
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

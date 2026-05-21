@@ -1,13 +1,13 @@
 ---
-title: Set a code coverage threshold with the Bun test runner
+title: Set a code coverage threshold with the Fun test runner
 sidebarTitle: Coverage threshold
 mode: center
 ---
 
-Bun's test runner supports built-in code coverage reporting via the `--coverage` flag.
+Fun's test runner supports built-in code coverage reporting via the `--coverage` flag.
 
 ```sh terminal icon="terminal"
-bun test --coverage
+fun test --coverage
 ```
 
 ```txt
@@ -30,9 +30,9 @@ All files    |   66.67 |   77.78 |
 
 ---
 
-To set a minimum coverage threshold, add the following line to your `bunfig.toml`. This requires that 90% of your codebase is covered by tests.
+To set a minimum coverage threshold, add the following line to your `funfig.toml`. This requires that 90% of your codebase is covered by tests.
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [test]
 # to require 90% line-level and function-level coverage
 coverageThreshold = 0.9
@@ -40,10 +40,10 @@ coverageThreshold = 0.9
 
 ---
 
-If your test suite does not meet this threshold, `bun test` will exit with a non-zero exit code to signal a failure.
+If your test suite does not meet this threshold, `fun test` will exit with a non-zero exit code to signal a failure.
 
 ```sh terminal icon="terminal"
-bun test --coverage
+fun test --coverage
 ```
 
 ```txt
@@ -56,7 +56,7 @@ $ echo $?
 
 Different thresholds can be set for line-level and function-level coverage.
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [test]
 # to set different thresholds for lines and functions
 coverageThreshold = { lines = 0.5, functions = 0.7 }
@@ -64,4 +64,4 @@ coverageThreshold = { lines = 0.5, functions = 0.7 }
 
 ---
 
-See [Docs > Test runner > Coverage](/test/code-coverage) for complete documentation on code coverage reporting in Bun.
+See [Docs > Test runner > Coverage](/test/code-coverage) for complete documentation on code coverage reporting in Fun.

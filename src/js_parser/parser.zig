@@ -70,13 +70,13 @@ pub const JSXImport = enum {
         pub fn runtimeImportNames(noalias this: *const Symbols, buf: *[3]string) []const string {
             var i: usize = 0;
             if (this.jsxDEV != null) {
-                bun.assert(this.jsx == null); // we should never end up with this in the same file
+                fun.assert(this.jsx == null); // we should never end up with this in the same file
                 buf[0] = "jsxDEV";
                 i += 1;
             }
 
             if (this.jsx != null) {
-                bun.assert(this.jsxDEV == null); // we should never end up with this in the same file
+                fun.assert(this.jsxDEV == null); // we should never end up with this in the same file
                 buf[0] = "jsx";
                 i += 1;
             }
@@ -215,7 +215,7 @@ pub const TransposeState = struct {
     is_require_immediately_assigned_to_decl: bool = false,
     loc: logger.Loc = logger.Loc.Empty,
     import_record_tag: ?ImportRecord.Tag = null,
-    import_loader: ?bun.options.Loader = null,
+    import_loader: ?fun.options.Loader = null,
     import_options: Expr = Expr.empty,
 };
 
@@ -290,9 +290,9 @@ pub const JSXTag = struct {
             }
 
             var _name = try p.allocator.alloc(u8, name.len + 1 + member.len);
-            bun.copy(u8, _name, name);
+            fun.copy(u8, _name, name);
             _name[name.len] = '.';
-            bun.copy(u8, _name[name.len + 1 .. _name.len], member);
+            fun.copy(u8, _name[name.len + 1 .. _name.len], member);
             name = _name;
             tag_range.len = member_range.loc.start + member_range.len - tag_range.loc.start;
             tag = p.newExpr(E.Dot{ .target = tag, .name = member, .name_loc = member_range.loc }, loc);
@@ -314,7 +314,7 @@ pub const JSXTag = struct {
 pub inline fn generatedSymbolName(name: []const u8) []const u8 {
     comptime {
         const hash = std.hash.Wyhash.hash(0, name);
-        const hash_str = std.fmt.comptimePrint("_{f}", .{bun.fmt.truncatedHash32(@intCast(hash))});
+        const hash_str = std.fmt.comptimePrint("_{f}", .{fun.fmt.truncatedHash32(@intCast(hash))});
         return name ++ hash_str;
     }
 }
@@ -332,7 +332,7 @@ pub const AsyncPrefixExpression = enum(u2) {
     is_async,
     is_await,
 
-    const map = bun.ComptimeStringMap(AsyncPrefixExpression, .{
+    const map = fun.ComptimeStringMap(AsyncPrefixExpression, .{
         .{ "yield", .is_yield },
         .{ "await", .is_await },
         .{ "async", .is_async },
@@ -495,7 +495,7 @@ pub const ParsedPath = struct {
     text: string,
     is_macro: bool,
     import_tag: ImportRecord.Tag = .none,
-    loader: ?bun.options.Loader = null,
+    loader: ?fun.options.Loader = null,
 };
 
 pub const StrictModeFeature = enum {
@@ -543,7 +543,7 @@ pub const StmtList = ListManaged(Stmt);
 
 pub const StringVoidMap = struct {
     allocator: Allocator,
-    map: bun.StringHashMapUnmanaged(void) = bun.StringHashMapUnmanaged(void){},
+    map: fun.StringHashMapUnmanaged(void) = fun.StringHashMapUnmanaged(void){},
 
     pub const deinit = void;
 
@@ -578,7 +578,7 @@ pub const StringVoidMap = struct {
     pub const Node = Pool.Node;
 };
 
-pub const StringBoolMap = bun.StringHashMapUnmanaged(bool);
+pub const StringBoolMap = fun.StringHashMapUnmanaged(bool);
 pub const RefMap = std.HashMapUnmanaged(Ref, void, RefCtx, 80);
 
 pub const RefRefMap = std.HashMapUnmanaged(Ref, Ref, RefCtx, 80);
@@ -758,7 +758,7 @@ pub const PropertyOpts = struct {
 pub const ScanPassResult = struct {
     pub const ParsePassSymbolUse = struct { ref: Ref, used: bool = false, import_record_index: u32 };
     pub const NamespaceCounter = struct { count: u16, import_record_index: u32 };
-    pub const ParsePassSymbolUsageMap = bun.StringArrayHashMap(ParsePassSymbolUse);
+    pub const ParsePassSymbolUsageMap = fun.StringArrayHashMap(ParsePassSymbolUse);
     import_records: ListManaged(ImportRecord),
     named_imports: js_ast.Ast.NamedImports,
     used_symbols: ParsePassSymbolUsageMap,
@@ -901,7 +901,7 @@ pub const Prefill = struct {
 };
 
 const ReactJSX = struct {
-    hoisted_elements: std.ArrayHashMapUnmanaged(Ref, G.Decl, bun.ArrayIdentityContext, false) = .{},
+    hoisted_elements: std.ArrayHashMapUnmanaged(Ref, G.Decl, fun.ArrayIdentityContext, false) = .{},
 };
 
 pub const ImportOrRequireScanResults = struct {
@@ -913,7 +913,7 @@ pub const JSXTransformType = enum {
     react,
 };
 
-pub const ImportItemForNamespaceMap = bun.StringArrayHashMap(LocRef);
+pub const ImportItemForNamespaceMap = fun.StringArrayHashMap(LocRef);
 
 pub const MacroState = struct {
     refs: MacroRefs,
@@ -947,16 +947,16 @@ pub const Jest = struct {
 };
 
 // Doing this seems to yield a 1% performance improvement parsing larger files
-// ❯ hyperfine "../../build/macos-x86_64/bun node_modules/react-dom/cjs/react-dom.development.js --resolve=disable" "../../bun.before-comptime-js-parser node_modules/react-dom/cjs/react-dom.development.js --resolve=disable" --min-runs=500
-// Benchmark #1: ../../build/macos-x86_64/bun node_modules/react-dom/cjs/react-dom.development.js --resolve=disable
+// ❯ hyperfine "../../build/macos-x86_64/fun node_modules/react-dom/cjs/react-dom.development.js --resolve=disable" "../../fun.before-comptime-js-parser node_modules/react-dom/cjs/react-dom.development.js --resolve=disable" --min-runs=500
+// Benchmark #1: ../../build/macos-x86_64/fun node_modules/react-dom/cjs/react-dom.development.js --resolve=disable
 //   Time (mean ± σ):      25.1 ms ±   1.1 ms    [User: 20.4 ms, System: 3.1 ms]
 //   Range (min … max):    23.5 ms …  31.7 ms    500 runs
 
-// Benchmark #2: ../../bun.before-comptime-js-parser node_modules/react-dom/cjs/react-dom.development.js --resolve=disable
+// Benchmark #2: ../../fun.before-comptime-js-parser node_modules/react-dom/cjs/react-dom.development.js --resolve=disable
 //   Time (mean ± σ):      25.6 ms ±   1.3 ms    [User: 20.9 ms, System: 3.1 ms]
 //   Range (min … max):    24.1 ms …  39.7 ms    500 runs
-// '../../build/macos-x86_64/bun node_modules/react-dom/cjs/react-dom.development.js --resolve=disable' ran
-// 1.02 ± 0.07 times faster than '../../bun.before-comptime-js-parser node_modules/react-dom/cjs/react-dom.development.js --resolve=disable'
+// '../../build/macos-x86_64/fun node_modules/react-dom/cjs/react-dom.development.js --resolve=disable' ran
+// 1.02 ± 0.07 times faster than '../../fun.before-comptime-js-parser node_modules/react-dom/cjs/react-dom.development.js --resolve=disable'
 pub const JavaScriptParser = NewParser(.{});
 pub const JSXParser = NewParser(.{ .jsx = .react });
 pub const TSXParser = NewParser(.{ .jsx = .react, .typescript = true });
@@ -1045,7 +1045,7 @@ pub fn newLazyExportASTImpl(
 
 pub const WrapMode = enum {
     none,
-    bun_commonjs,
+    fun_commonjs,
 };
 
 /// "Fast Refresh" is React's solution for hot-module-reloading in the context of the UI framework
@@ -1063,7 +1063,7 @@ pub const WrapMode = enum {
 ///  [3] https://github.com/facebook/react/issues/16604#issuecomment-528663101
 ///  [4] https://github.com/facebook/react/blob/master/packages/react-refresh/src/__tests__/ReactFreshIntegration-test.js
 ///
-/// Instead of a plugin which visits the tree separately, Bun's implementation of fast refresh
+/// Instead of a plugin which visits the tree separately, Fun's implementation of fast refresh
 /// happens in tandem with the visit pass. The responsibilities of the transform are as follows:
 ///
 /// 1. For all Components (which is defined as any top-level function/function variable, that is
@@ -1088,7 +1088,7 @@ pub const WrapMode = enum {
 ///     const $RefreshReg$ = (type, id) => Refresh.register(type, "<file id here>" + id);
 ///     const $RefreshSig$ = Refresh.createSignatureFunctionForTransform;
 ///
-/// Since Bun is a transpiler *and* bundler, we take a slightly different approach. Aside
+/// Since Fun is a transpiler *and* bundler, we take a slightly different approach. Aside
 /// from including the link to the refresh runtime, our notation of $RefreshReg$ is just
 /// pointing at `Refresh.register`, which means when we call it, the second argument has
 /// to be a string containing the filepath, not just the component name.
@@ -1161,7 +1161,7 @@ pub const ReactRefresh = struct {
             };
     }
 
-    pub const built_in_hooks = bun.ComptimeEnumMap(enum {
+    pub const built_in_hooks = fun.ComptimeEnumMap(enum {
         useState,
         useReducer,
         useEffect,
@@ -1225,12 +1225,12 @@ pub const RuntimeNames = _runtime.Runtime.Names;
 
 pub const NewParser_ = @import("./ast/P.zig").NewParser_;
 
-pub const StringHashMap = bun.StringHashMap;
-pub const js_printer = bun.js_printer;
-pub const logger = bun.logger;
+pub const StringHashMap = fun.StringHashMap;
+pub const js_printer = fun.js_printer;
+pub const logger = fun.logger;
 const string = []const u8;
 
-pub const js_ast = bun.ast;
+pub const js_ast = fun.ast;
 pub const B = js_ast.B;
 pub const Binding = js_ast.Binding;
 pub const BindingNodeIndex = js_ast.BindingNodeIndex;
@@ -1253,7 +1253,7 @@ const Decl = G.Decl;
 pub const Op = js_ast.Op;
 pub const Level = js_ast.Op.Level;
 
-pub const js_lexer = bun.js_lexer;
+pub const js_lexer = fun.js_lexer;
 pub const T = js_lexer.T;
 
 pub const std = @import("std");
@@ -1270,8 +1270,8 @@ const ObjectPool = @import("../collections/pool.zig").ObjectPool;
 const Index = @import("./ast/base.zig").Index;
 const RefCtx = @import("./ast/base.zig").RefCtx;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const StringHashMapUnmanaged = bun.StringHashMapUnmanaged;
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const Output = fun.Output;
+const StringHashMapUnmanaged = fun.StringHashMapUnmanaged;
+const assert = fun.assert;
+const strings = fun.strings;

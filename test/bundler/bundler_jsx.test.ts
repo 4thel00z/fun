@@ -1,9 +1,9 @@
-import { describe, expect } from "bun:test";
-import { normalizeBunSnapshot } from "harness";
+import { describe, expect } from "fun:test";
+import { normalizeFunSnapshot } from "harness";
 import { BundlerTestInput, itBundled } from "./expectBundled";
 
 const helpers = {
-  "/node_modules/bun-test-helpers/index.js": /* js */ `
+  "/node_modules/fun-test-helpers/index.js": /* js */ `
     export function print(arg) {
       const replacer = (_, val) => {
         if(typeof val === "function") {
@@ -146,14 +146,14 @@ describe("bundler", () => {
   itBundledDevAndProd("jsx/Automatic", {
     files: {
       "index.jsx": /* js*/ `
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         const Component = 'hello'
         print(<div>Hello World</div>)
         print(<div className="container"><Component prop={2}><h1 onClick={() => 1}>hello</h1></Component></div>)
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     devStdout: `
       {"$$typeof":"Symbol(jsxdev)","type":"div","props":{"children":"Hello World"},"key":"undefined","source":false,"self":"undefined"}
       {"$$typeof":"Symbol(jsxdev)","type":"div","props":{"className":"container","children":{"$$typeof":"Symbol(jsxdev)","type":"hello","props":{"prop":2,"children":{"$$typeof":"Symbol(jsxdev)","type":"h1","props":{"onClick":"Function:onClick","children":"hello"},"key":"undefined","source":false,"self":"undefined"}},"key":"undefined","source":false,"self":"undefined"}},"key":"undefined","source":false,"self":"undefined"}
@@ -163,12 +163,12 @@ describe("bundler", () => {
       {"$$typeof":"Symbol(jsx)","type":"div","props":{"className":"container","children":{"$$typeof":"Symbol(jsx)","type":"hello","props":{"prop":2,"children":{"$$typeof":"Symbol(jsx)","type":"h1","props":{"onClick":"Function:onClick","children":"hello"},"key":"undefined"}},"key":"undefined"}},"key":"undefined"}
     `,
   });
-  // bun does not do the production transform for fragments as good as it could be right now.
+  // fun does not do the production transform for fragments as good as it could be right now.
   itBundledDevAndProd("jsx/AutomaticFragment", {
     todo: true,
     files: {
       "index.jsx": /* js*/ `
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         const Component = 'hello'
         print(<div>Hello World</div>)
         print(<div className="container"><Component prop={2}><h1 onClick={() => 1}>hello</h1></Component></div>)
@@ -176,7 +176,7 @@ describe("bundler", () => {
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     devStdout: `
       {"$$typeof":"Symbol(jsxdev)","type":"Symbol(jsxdev.fragment)","props":{"children":"Fragment"},"key":"undefined","source":false,"self":"undefined"}
     `,
@@ -188,12 +188,12 @@ describe("bundler", () => {
     prodTodo: true,
     files: {
       "/index.jsx": /* js*/ `
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         print([<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     jsx: {
       importSource: "custom-automatic",
     },
@@ -207,14 +207,14 @@ describe("bundler", () => {
   itBundledDevAndProd("jsx/Classic", {
     files: {
       "/index.jsx": /* js*/ `
-        import { print } from 'bun-test-helpers'
-        // not react to catch if bun auto imports or uses the global
+        import { print } from 'fun-test-helpers'
+        // not react to catch if fun auto imports or uses the global
         import * as React from 'custom-classic'
         print([<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     jsx: {
       runtime: "classic",
       importSource: "ignore-me",
@@ -230,13 +230,13 @@ describe("bundler", () => {
       "/index.jsx": /* js*/ `
         // @jsx fn
         // @jsxFrag something
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         import { fn, something } from 'custom-renamed'
         print([<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     jsx: {
       runtime: "classic",
       importSource: "ignore-me",
@@ -258,8 +258,8 @@ describe("bundler", () => {
       `,
       "/classic.jsx": /* js*/ `
         /* @jsxRuntime classic */
-        import { print } from 'bun-test-helpers'
-        // not react to catch if bun auto imports or uses the global
+        import { print } from 'fun-test-helpers'
+        // not react to catch if fun auto imports or uses the global
         import * as React from 'custom-classic'
         print(['classic.jsx',<div props={123}>Hello World</div>, <>Fragment</>])
       `,
@@ -267,22 +267,22 @@ describe("bundler", () => {
         /* @jsxRuntime classic */
         // @jsx fn
         // @jsxFrag something
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         import { fn, something } from 'custom-renamed'
         print(['classic-renamed.jsx',<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       "/automatic.jsx": /* js*/ `
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         print(['automatic.jsx',<div props={123}>Hello World</div>, process.env.NODE_ENV === 'production' ? '' : <>Fragment</>])
       `,
       "/automatic-source2.jsx": /* js*/ `
         // @jsxImportSource custom-automatic
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         print(['automatic-source2.jsx',<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     devStdout: `
       ["classic.jsx",["custom-classic","div",{"props":123},["Hello World"]],["custom-classic","CustomFragment","null",["Fragment"]]]
       ["classic-renamed.jsx",["custom-renamed","div",{"props":123},["Hello World"]],["custom-renamed","something","null",["Fragment"]]]
@@ -303,12 +303,12 @@ describe("bundler", () => {
         const Fragment = 123;
 
         import * as React from "react";
-        import { print } from 'bun-test-helpers'
+        import { print } from 'fun-test-helpers'
         print([<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     jsx: {
       runtime: "classic",
       factory: "h",
@@ -325,7 +325,7 @@ describe("bundler", () => {
       import { h, fragment } from './jsx.ts';
       const Fragment = 123;
       
-      import { print } from 'bun-test-helpers'
+      import { print } from 'fun-test-helpers'
       print([<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       "/jsx.ts": /* ts */ `
@@ -334,7 +334,7 @@ describe("bundler", () => {
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     jsx: {
       runtime: "classic",
       factory: "h",
@@ -352,13 +352,13 @@ describe("bundler", () => {
   itBundledDevAndProd("jsx/FactoryImportExplicitReactDefault", {
     files: {
       "/index.jsx": /* js*/ `
-      import { print } from 'bun-test-helpers'
+      import { print } from 'fun-test-helpers'
       import * as React from 'react';
       print([<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     jsx: {
       runtime: "classic",
       factory: "React.createElement",
@@ -372,13 +372,13 @@ describe("bundler", () => {
   itBundledDevAndProd("jsx/FactoryImportExplicitReactDefaultExternal", {
     files: {
       "/index.jsx": /* js*/ `
-      import { print } from 'bun-test-helpers'
+      import { print } from 'fun-test-helpers'
       import * as React from 'react';
       print([<div props={123}>Hello World</div>, <>Fragment</>])
       `,
       ...helpers,
     },
-    target: "bun",
+    target: "fun",
     jsx: {
       runtime: "classic",
       factory: "React.createElement",
@@ -420,7 +420,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       jsx: {
         runtime: "classic",
         factory: "React.createElement",
@@ -430,8 +430,8 @@ describe("bundler", () => {
         const file = api.readFile("out.js");
         // Default behavior: should include /* @__PURE__ */ comments
         expect(file).toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // index.jsx
           console.log(/* @__PURE__ */ React.createElement("a", null));
           console.log(/* @__PURE__ */ React.createElement(React.Fragment, null));"
@@ -444,7 +444,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       jsx: {
         runtime: "classic",
         factory: "React.createElement",
@@ -456,8 +456,8 @@ describe("bundler", () => {
         // When sideEffects is true: should NOT include /* @__PURE__ */ comments
         expect(file).not.toContain("/* @__PURE__ */");
         expect(file).toContain("React.createElement");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // index.jsx
           console.log(React.createElement("a", null));
           console.log(React.createElement(React.Fragment, null));"
@@ -471,7 +471,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       jsx: {
         runtime: "automatic",
       },
@@ -479,8 +479,8 @@ describe("bundler", () => {
         const file = api.readFile("out.js");
         // Default behavior: should include /* @__PURE__ */ comments
         expect(file).toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // node_modules/react/jsx-dev-runtime.js
           var $$typeof = Symbol.for("jsxdev");
           function jsxDEV(type, props, key, source, self) {
@@ -507,7 +507,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       jsx: {
         runtime: "automatic",
         sideEffects: true,
@@ -516,8 +516,8 @@ describe("bundler", () => {
         const file = api.readFile("out.js");
         // When sideEffects is true: should NOT include /* @__PURE__ */ comments
         expect(file).not.toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // node_modules/react/jsx-dev-runtime.js
           var $$typeof = Symbol.for("jsxdev");
           function jsxDEV(type, props, key, source, self) {
@@ -545,7 +545,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       jsx: {
         runtime: "classic",
         factory: "React.createElement",
@@ -558,8 +558,8 @@ describe("bundler", () => {
         const file = api.readFile("out.js");
         // Default behavior in production: should include /* @__PURE__ */ comments
         expect(file).toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // index.jsx
           console.log(/* @__PURE__ */ React.createElement("a", null));
           console.log(/* @__PURE__ */ React.createElement(React.Fragment, null));"
@@ -572,7 +572,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       backend: "api",
       jsx: {
         runtime: "classic",
@@ -588,8 +588,8 @@ describe("bundler", () => {
         // When sideEffects is true in production: should NOT include /* @__PURE__ */ comments
         expect(file).not.toContain("/* @__PURE__ */");
         expect(file).toContain("React.createElement");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // index.jsx
           console.log(React.createElement("a", null));
           console.log(React.createElement(React.Fragment, null));"
@@ -602,7 +602,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       jsx: {
         runtime: "automatic",
       },
@@ -613,8 +613,8 @@ describe("bundler", () => {
         const file = api.readFile("out.js");
         // Default behavior in production: should include /* @__PURE__ */ comments
         expect(file).toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // node_modules/react/jsx-runtime.js
           var $$typeof = Symbol.for("jsx");
           function jsx(type, props, key) {
@@ -639,7 +639,7 @@ describe("bundler", () => {
         "/index.jsx": /* jsx */ `console.log(<a></a>); console.log(<></>);`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       backend: "api",
       jsx: {
         runtime: "automatic",
@@ -653,8 +653,8 @@ describe("bundler", () => {
         const file = api.readFile("out.js");
         // When sideEffects is true in production: should NOT include /* @__PURE__ */ comments
         expect(file).not.toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // node_modules/react/jsx-runtime.js
           var $$typeof = Symbol.for("jsx");
           function jsx(type, props, key) {
@@ -681,13 +681,13 @@ describe("bundler", () => {
         "/tsconfig.json": /* json */ `{"compilerOptions": {}}`,
         ...helpers,
       },
-      target: "bun",
+      target: "fun",
       onAfterBundle(api) {
         const file = api.readFile("out.js");
         // Default behavior via tsconfig: should include /* @__PURE__ */ comments
         expect(file).toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // node_modules/react/jsx-dev-runtime.js
           var $$typeof = Symbol.for("jsxdev");
           function jsxDEV(type, props, key, source, self) {
@@ -718,13 +718,13 @@ describe("bundler", () => {
       jsx: {
         sideEffects: true,
       },
-      target: "bun",
+      target: "fun",
       onAfterBundle(api) {
         const file = api.readFile("out.js");
         // When sideEffects is true via tsconfig: should NOT include /* @__PURE__ */ comments
         expect(file).not.toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // node_modules/react/jsx-dev-runtime.js
           var $$typeof = Symbol.for("jsxdev");
           function jsxDEV(type, props, key, source, self) {
@@ -758,14 +758,14 @@ describe("bundler", () => {
         fragment: "React.Fragment",
         sideEffects: true,
       },
-      target: "bun",
+      target: "fun",
       onAfterBundle(api) {
         const file = api.readFile("out.js");
         // When sideEffects is true via tsconfig with classic jsx: should NOT include /* @__PURE__ */ comments
         expect(file).not.toContain("/* @__PURE__ */");
         expect(file).toContain("React.createElement");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // index.jsx
           console.log(React.createElement("a", null));
           console.log(React.createElement(React.Fragment, null));"
@@ -783,13 +783,13 @@ describe("bundler", () => {
         runtime: "automatic",
         sideEffects: true,
       },
-      target: "bun",
+      target: "fun",
       onAfterBundle(api) {
         const file = api.readFile("out.js");
         // When sideEffects is true via tsconfig with automatic jsx: should NOT include /* @__PURE__ */ comments
         expect(file).not.toContain("/* @__PURE__ */");
-        expect(normalizeBunSnapshot(file)).toMatchInlineSnapshot(`
-          "// @bun
+        expect(normalizeFunSnapshot(file)).toMatchInlineSnapshot(`
+          "// @fun
           // node_modules/react/jsx-dev-runtime.js
           var $$typeof = Symbol.for("jsxdev");
           function jsxDEV(type, props, key, source, self) {

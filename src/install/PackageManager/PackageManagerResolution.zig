@@ -84,14 +84,14 @@ pub fn resolveFromDiskCache(this: *PackageManager, package_name: []const u8, ver
         return null;
     }
 
-    var arena = bun.ArenaAllocator.init(this.allocator);
+    var arena = fun.ArenaAllocator.init(this.allocator);
     defer arena.deinit();
     const arena_alloc = arena.allocator();
     var stack_fallback = std.heap.stackFallback(4096, arena_alloc);
     const allocator = stack_fallback.get();
     var tags_buf = std.array_list.Managed(u8).init(allocator);
     const installed_versions = this.getInstalledVersionsFromDiskCache(&tags_buf, package_name, allocator) catch |err| {
-        Output.debug("error getting installed versions from disk cache: {s}", .{bun.span(@errorName(err))});
+        Output.debug("error getting installed versions from disk cache: {s}", .{fun.span(@errorName(err))});
         return null;
     };
 
@@ -104,9 +104,9 @@ pub fn resolveFromDiskCache(this: *PackageManager, package_name: []const u8, ver
     );
     for (installed_versions.items) |installed_version| {
         if (version.value.npm.version.satisfies(installed_version, this.lockfile.buffers.string_bytes.items, tags_buf.items)) {
-            var buf: bun.PathBuffer = undefined;
+            var buf: fun.PathBuffer = undefined;
             const npm_package_path = this.pathForCachedNPMPath(&buf, package_name, installed_version) catch |err| {
-                Output.debug("error getting path for cached npm path: {s}", .{bun.span(@errorName(err))});
+                Output.debug("error getting path for cached npm path: {s}", .{fun.span(@errorName(err))});
                 return null;
             };
             const dependency = Dependency.Version{
@@ -128,7 +128,7 @@ pub fn resolveFromDiskCache(this: *PackageManager, package_name: []const u8, ver
                     return id;
                 },
                 .err => |err| {
-                    Output.debug("error getting or putting folder resolution: {s}", .{bun.span(@errorName(err))});
+                    Output.debug("error getting or putting folder resolution: {s}", .{fun.span(@errorName(err))});
                     return null;
                 },
             }
@@ -141,9 +141,9 @@ pub fn resolveFromDiskCache(this: *PackageManager, package_name: []const u8, ver
 pub fn assignResolution(this: *PackageManager, dependency_id: DependencyID, package_id: PackageID) void {
     const buffers = &this.lockfile.buffers;
     if (comptime Environment.allow_assert) {
-        bun.assert(dependency_id < buffers.resolutions.items.len);
-        bun.assert(package_id < this.lockfile.packages.len);
-        // bun.assert(buffers.resolutions.items[dependency_id] == invalid_package_id);
+        fun.assert(dependency_id < buffers.resolutions.items.len);
+        fun.assert(package_id < this.lockfile.packages.len);
+        // fun.assert(buffers.resolutions.items[dependency_id] == invalid_package_id);
     }
     buffers.resolutions.items[dependency_id] = package_id;
     const string_buf = buffers.string_bytes.items;
@@ -157,9 +157,9 @@ pub fn assignResolution(this: *PackageManager, dependency_id: DependencyID, pack
 pub fn assignRootResolution(this: *PackageManager, dependency_id: DependencyID, package_id: PackageID) void {
     const buffers = &this.lockfile.buffers;
     if (comptime Environment.allow_assert) {
-        bun.assert(dependency_id < buffers.resolutions.items.len);
-        bun.assert(package_id < this.lockfile.packages.len);
-        bun.assert(buffers.resolutions.items[dependency_id] == invalid_package_id);
+        fun.assert(dependency_id < buffers.resolutions.items.len);
+        fun.assert(package_id < this.lockfile.packages.len);
+        fun.assert(buffers.resolutions.items[dependency_id] == invalid_package_id);
     }
     buffers.resolutions.items[dependency_id] = package_id;
     const string_buf = buffers.string_bytes.items;
@@ -221,23 +221,23 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const strings = fun.strings;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const SlicedString = Semver.SlicedString;
 const String = Semver.String;
 
-const Dependency = bun.install.Dependency;
-const DependencyID = bun.install.DependencyID;
-const FolderResolution = bun.install.FolderResolution;
-const Lockfile = bun.install.Lockfile;
-const Npm = bun.install.Npm;
-const PackageID = bun.install.PackageID;
-const PackageManager = bun.install.PackageManager;
-const PackageNameHash = bun.install.PackageNameHash;
-const Resolution = bun.install.Resolution;
-const invalid_package_id = bun.install.invalid_package_id;
+const Dependency = fun.install.Dependency;
+const DependencyID = fun.install.DependencyID;
+const FolderResolution = fun.install.FolderResolution;
+const Lockfile = fun.install.Lockfile;
+const Npm = fun.install.Npm;
+const PackageID = fun.install.PackageID;
+const PackageManager = fun.install.PackageManager;
+const PackageNameHash = fun.install.PackageNameHash;
+const Resolution = fun.install.Resolution;
+const invalid_package_id = fun.install.invalid_package_id;

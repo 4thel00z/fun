@@ -1,13 +1,13 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // https://bugs.webkit.org/show_bug.cgi?id=281662
 // Transferring buffers to a closed MessageChannel causes memory leaks
 describe("MessagePortChannel closed port", () => {
   test("postMessage to closed port does not accumulate in pending queue", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const { port1, port2 } = new MessageChannel();
@@ -17,8 +17,8 @@ describe("MessagePortChannel closed port", () => {
           for (let i = 0; i < 5000; i++) {
             port1.postMessage(Buffer.alloc(64 * 1024).toString());
           }
-          Bun.gc(true);
-          Bun.gc(true);
+          Fun.gc(true);
+          Fun.gc(true);
 
           // Measure: second batch should reuse freed memory if messages
           // are dropped (not queued) for closed ports.
@@ -26,8 +26,8 @@ describe("MessagePortChannel closed port", () => {
           for (let i = 0; i < 5000; i++) {
             port1.postMessage(Buffer.alloc(64 * 1024).toString());
           }
-          Bun.gc(true);
-          Bun.gc(true);
+          Fun.gc(true);
+          Fun.gc(true);
           const rssAfter = process.memoryUsage().rss;
           const deltaMB = (rssAfter - rssBefore) / 1024 / 1024;
 
@@ -41,7 +41,7 @@ describe("MessagePortChannel closed port", () => {
           port1.close();
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -58,9 +58,9 @@ describe("MessagePortChannel closed port", () => {
   // ~TransferredMessagePort calling pipe->close(side) when the carrying message is destroyed.
   for (const closeBeforePost of [false, true]) {
     test(`transferred port dropped ${closeBeforePost ? "after" : "before"} receiver closed does not leak channel`, async () => {
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "-e",
           `
             const closeBeforePost = ${closeBeforePost};
@@ -92,8 +92,8 @@ describe("MessagePortChannel closed port", () => {
                 inner.port2.close();
                 carrier.port1.close();
               }
-              Bun.gc(true);
-              Bun.gc(true);
+              Fun.gc(true);
+              Fun.gc(true);
             }
 
             // Warm up to establish allocator high-water mark.
@@ -113,7 +113,7 @@ describe("MessagePortChannel closed port", () => {
             console.log("PASS: delta", deltaMB.toFixed(2), "MB");
           `,
         ],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -131,9 +131,9 @@ describe("MessagePortChannel closed port", () => {
   // pipe->close(), which drops the inbox, whose destruction calls ~TransferredMessagePort
   // again; MessagePortPipe::close() must drain that cascade iteratively.
   test("deep chain of nested transferred ports does not overflow on close", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const DEPTH = 20_000;
@@ -152,7 +152,7 @@ describe("MessagePortChannel closed port", () => {
           console.log("PASS");
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

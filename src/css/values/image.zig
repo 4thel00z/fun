@@ -46,7 +46,7 @@ pub const Image = union(enum) {
 
     pub fn getPrefixed(this: *const @This(), allocator: Allocator, prefix: css.VendorPrefix) Image {
         return switch (this.*) {
-            .gradient => |grad| .{ .gradient = bun.create(allocator, Gradient, grad.getPrefixed(allocator, prefix)) },
+            .gradient => |grad| .{ .gradient = fun.create(allocator, Gradient, grad.getPrefixed(allocator, prefix)) },
             .image_set => |image_set| .{ .image_set = image_set.getPrefixed(allocator, prefix) },
             else => this.deepClone(allocator),
         };
@@ -101,7 +101,7 @@ pub const Image = union(enum) {
     /// May return an error in case the gradient cannot be converted.
     pub fn getLegacyWebkit(this: *const @This(), allocator: Allocator) ?Image {
         return switch (this.*) {
-            .gradient => |gradient| Image{ .gradient = bun.create(allocator, Gradient, gradient.getLegacyWebkit(allocator) orelse return null) },
+            .gradient => |gradient| Image{ .gradient = fun.create(allocator, Gradient, gradient.getLegacyWebkit(allocator) orelse return null) },
             else => this.deepClone(allocator),
         };
     }
@@ -172,7 +172,7 @@ pub const Image = union(enum) {
 
     pub fn getFallback(this: *const @This(), allocator: Allocator, kind: css.ColorFallbackKind) Image {
         return switch (this.*) {
-            .gradient => |grad| .{ .gradient = bun.create(allocator, Gradient, grad.getFallback(allocator, kind)) },
+            .gradient => |grad| .{ .gradient = fun.create(allocator, Gradient, grad.getFallback(allocator, kind)) },
             else => this.deepClone(allocator),
         };
     }
@@ -215,9 +215,9 @@ pub const ImageSet = struct {
         };
         const vendor_prefix = vendor_prefix: {
             // todo_stuff.match_ignore_ascii_case
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("image-set", f)) {
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("image-set", f)) {
                 break :vendor_prefix VendorPrefix{ .none = true };
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("-webkit-image-set", f)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("-webkit-image-set", f)) {
                 break :vendor_prefix VendorPrefix{ .webkit = true };
             } else return .{ .err = location.newUnexpectedTokenError(.{ .ident = f }) };
         };
@@ -350,7 +350,7 @@ pub const ImageSetOption = struct {
                     dependencies.append(
                         dest.allocator,
                         .{ .url = dep },
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             } else {
                 css.serializer.serializeString(try dest.getImportRecordUrl(this.image.url.import_record_idx), dest) catch return dest.addFmtError();
@@ -401,7 +401,7 @@ fn parseFileType(input: *css.Parser) Result([]const u8) {
     return input.parseNestedBlock([]const u8, {}, Fn.parseNestedBlockFn);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

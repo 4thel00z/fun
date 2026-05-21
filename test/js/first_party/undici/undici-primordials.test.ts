@@ -1,4 +1,4 @@
-import { afterEach, expect, it } from "bun:test";
+import { afterEach, expect, it } from "fun:test";
 const { Response, Request, Headers, FormData, File, URL, AbortSignal, URLSearchParams } = globalThis;
 afterEach(() => {
   globalThis.Response = Response;

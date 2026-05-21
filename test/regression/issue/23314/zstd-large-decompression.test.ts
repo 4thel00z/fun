@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import zlib from "node:zlib";
 
 test("should handle large data decompression safely", async () => {
@@ -14,7 +14,7 @@ test("should handle large data decompression safely", async () => {
   });
 
   // This should use streaming decompression because reported size > 16MB
-  const decompressed = Bun.zstdDecompressSync(compressed);
+  const decompressed = Fun.zstdDecompressSync(compressed);
   expect(decompressed.length).toBe(input.length);
   expect(decompressed.toString()).toBe(input);
 });

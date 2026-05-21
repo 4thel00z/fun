@@ -19,30 +19,30 @@ until pg_isready; do\n\
   sleep 1\n\
 done\n\
 \n\
-dropdb --if-exists bun_sql_test\n\
+dropdb --if-exists fun_sql_test\n\
 \n\
 # Drop and recreate users with different auth methods\n\
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL\n\
-    DROP USER IF EXISTS bun_sql_test;\n\
-    CREATE USER bun_sql_test;\n\
+    DROP USER IF EXISTS fun_sql_test;\n\
+    CREATE USER fun_sql_test;\n\
     \n\
     ALTER SYSTEM SET password_encryption = '"'"'md5'"'"';\n\
     SELECT pg_reload_conf();\n\
-    DROP USER IF EXISTS bun_sql_test_md5;\n\
-    CREATE USER bun_sql_test_md5 WITH PASSWORD '"'"'bun_sql_test_md5'"'"';\n\
+    DROP USER IF EXISTS fun_sql_test_md5;\n\
+    CREATE USER fun_sql_test_md5 WITH PASSWORD '"'"'fun_sql_test_md5'"'"';\n\
     \n\
     ALTER SYSTEM SET password_encryption = '"'"'scram-sha-256'"'"';\n\
     SELECT pg_reload_conf();\n\
-    DROP USER IF EXISTS bun_sql_test_scram;\n\
-    CREATE USER bun_sql_test_scram WITH PASSWORD '"'"'bun_sql_test_scram'"'"';\n\
+    DROP USER IF EXISTS fun_sql_test_scram;\n\
+    CREATE USER fun_sql_test_scram WITH PASSWORD '"'"'fun_sql_test_scram'"'"';\n\
 EOSQL\n\
 \n\
 # Create database and set permissions\n\
-createdb bun_sql_test\n\
+createdb fun_sql_test\n\
 \n\
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL\n\
-    GRANT ALL ON DATABASE bun_sql_test TO bun_sql_test;\n\
-    ALTER DATABASE bun_sql_test OWNER TO bun_sql_test;\n\
+    GRANT ALL ON DATABASE fun_sql_test TO fun_sql_test;\n\
+    ALTER DATABASE fun_sql_test OWNER TO fun_sql_test;\n\
 EOSQL\n\
 ' > /docker-entrypoint-initdb.d/init-users-db.sh
 
@@ -56,13 +56,13 @@ RUN mkdir -p /etc/postgresql && touch /etc/postgresql/pg_hba.conf && \
     echo "local all all trust" >> /etc/postgresql/pg_hba.conf && \
     echo "# Remote TLS connections" >> /etc/postgresql/pg_hba.conf && \
     echo "hostssl all postgres 0.0.0.0/0 trust" >> /etc/postgresql/pg_hba.conf && \
-    echo "hostssl all bun_sql_test 0.0.0.0/0 trust" >> /etc/postgresql/pg_hba.conf && \
-    echo "hostssl all bun_sql_test_md5 0.0.0.0/0 md5" >> /etc/postgresql/pg_hba.conf && \
-    echo "hostssl all bun_sql_test_scram 0.0.0.0/0 scram-sha-256" >> /etc/postgresql/pg_hba.conf && \
+    echo "hostssl all fun_sql_test 0.0.0.0/0 trust" >> /etc/postgresql/pg_hba.conf && \
+    echo "hostssl all fun_sql_test_md5 0.0.0.0/0 md5" >> /etc/postgresql/pg_hba.conf && \
+    echo "hostssl all fun_sql_test_scram 0.0.0.0/0 scram-sha-256" >> /etc/postgresql/pg_hba.conf && \
     echo "hostssl all postgres ::/0 trust" >> /etc/postgresql/pg_hba.conf && \
-    echo "hostssl all bun_sql_test ::/0 trust" >> /etc/postgresql/pg_hba.conf && \
-    echo "hostssl all bun_sql_test_md5 ::/0 md5" >> /etc/postgresql/pg_hba.conf && \
-    echo "hostssl all bun_sql_test_scram ::/0 scram-sha-256" >> /etc/postgresql/pg_hba.conf && \
+    echo "hostssl all fun_sql_test ::/0 trust" >> /etc/postgresql/pg_hba.conf && \
+    echo "hostssl all fun_sql_test_md5 ::/0 md5" >> /etc/postgresql/pg_hba.conf && \
+    echo "hostssl all fun_sql_test_scram ::/0 scram-sha-256" >> /etc/postgresql/pg_hba.conf && \
     echo "hostssl replication all 0.0.0.0/0 trust" >> /etc/postgresql/pg_hba.conf && \
     echo "hostssl replication all ::/0 trust" >> /etc/postgresql/pg_hba.conf && \
     echo "host all all all reject" >> /etc/postgresql/pg_hba.conf

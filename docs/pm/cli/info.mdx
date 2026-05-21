@@ -1,14 +1,14 @@
 ---
-title: "bun info"
+title: "fun info"
 description: "Display package metadata from the npm registry"
 ---
 
-`bun info` displays package metadata from the npm registry.
+`fun info` displays package metadata from the npm registry.
 
 ## Usage
 
 ```bash terminal icon="terminal"
-bun info react
+fun info react
 ```
 
 This will display information about the `react` package, including its latest version, description, homepage, dependencies, and more.
@@ -18,7 +18,7 @@ This will display information about the `react` package, including its latest ve
 To view information about a specific version:
 
 ```bash terminal icon="terminal"
-bun info react@18.0.0
+fun info react@18.0.0
 ```
 
 ## Viewing specific properties
@@ -26,9 +26,9 @@ bun info react@18.0.0
 You can also query specific properties from the package metadata:
 
 ```bash terminal icon="terminal"
-bun info react version
-bun info react dependencies
-bun info react repository.url
+fun info react version
+fun info react dependencies
+fun info react repository.url
 ```
 
 ## JSON output
@@ -36,35 +36,35 @@ bun info react repository.url
 To get the output in JSON format, use the `--json` flag:
 
 ```bash terminal icon="terminal"
-bun info react --json
+fun info react --json
 ```
 
 ## Alias
 
-`bun pm view` is an alias for `bun info`:
+`fun pm view` is an alias for `fun info`:
 
 ```bash terminal icon="terminal"
-bun pm view react  # equivalent to: bun info react
+fun pm view react  # equivalent to: fun info react
 ```
 
 ## Examples
 
 ```bash terminal icon="terminal"
 # View basic package information
-bun info is-number
+fun info is-number
 
 # View a specific version
-bun info is-number@7.0.0
+fun info is-number@7.0.0
 
 # View all available versions
-bun info is-number versions
+fun info is-number versions
 
 # View package dependencies
-bun info express dependencies
+fun info express dependencies
 
 # View package homepage
-bun info lodash homepage
+fun info lodash homepage
 
 # Get JSON output
-bun info react --json
+fun info react --json
 ```

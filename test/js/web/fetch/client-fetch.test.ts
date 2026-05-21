@@ -1,6 +1,6 @@
 /* globals AbortController */
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { createHash, randomFillSync } from "node:crypto";
 import { once } from "node:events";
 import { createServer } from "node:http";
@@ -150,17 +150,17 @@ test.todo("multipart formdata base64", async () => {
   // Example form data with base64 encoding
   const data = randomFillSync(Buffer.alloc(256));
   const formRaw =
-    "------formdata-bun-0.5786922755719377\r\n" +
+    "------formdata-fun-0.5786922755719377\r\n" +
     'Content-Disposition: form-data; name="file"; filename="test.txt"\r\n' +
     "Content-Type: application/octet-stream\r\n" +
     "Content-Transfer-Encoding: base64\r\n" +
     "\r\n" +
     data.toString("base64") +
     "\r\n" +
-    "------formdata-bun-0.5786922755719377--";
+    "------formdata-fun-0.5786922755719377--";
 
   await using server = createServer(async (req, res) => {
-    res.setHeader("content-type", "multipart/form-data; boundary=----formdata-bun-0.5786922755719377");
+    res.setHeader("content-type", "multipart/form-data; boundary=----formdata-fun-0.5786922755719377");
 
     for (let offset = 0; offset < formRaw.length; ) {
       res.write(formRaw.slice(offset, (offset += 2)));

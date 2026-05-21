@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("scanImports respects trimUnusedImports", () => {
-  const transpiler = new Bun.Transpiler({
+  const transpiler = new Fun.Transpiler({
     trimUnusedImports: true,
     loader: "tsx",
   });
@@ -30,7 +30,7 @@ test("scanImports respects trimUnusedImports", () => {
 });
 
 test("scan respects trimUnusedImports", () => {
-  const transpiler = new Bun.Transpiler({
+  const transpiler = new Fun.Transpiler({
     trimUnusedImports: true,
     loader: "tsx",
   });
@@ -49,7 +49,7 @@ test("scan respects trimUnusedImports", () => {
 });
 
 test("scanImports returns all imports when trimUnusedImports is false", () => {
-  const transpiler = new Bun.Transpiler({
+  const transpiler = new Fun.Transpiler({
     trimUnusedImports: false,
     loader: "tsx",
   });
@@ -61,7 +61,7 @@ test("scanImports returns all imports when trimUnusedImports is false", () => {
 });
 
 test("scan returns all imports when trimUnusedImports is false", () => {
-  const transpiler = new Bun.Transpiler({
+  const transpiler = new Fun.Transpiler({
     trimUnusedImports: false,
     loader: "tsx",
   });

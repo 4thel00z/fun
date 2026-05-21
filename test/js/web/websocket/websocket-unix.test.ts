@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tls as tlsCert } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tls as tlsCert } from "harness";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,12 +8,12 @@ import { join } from "node:path";
 describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
   function sockPath(name: string) {
     // Keep it short to stay under sun_path limits on macOS/Linux.
-    return join(tmpdir(), `bun.ws.${name}.${process.pid}.${Date.now().toString(36)}.sock`);
+    return join(tmpdir(), `fun.ws.${name}.${process.pid}.${Date.now().toString(36)}.sock`);
   }
 
-  test("ws+unix:// echoes through Bun.serve({ unix })", async () => {
+  test("ws+unix:// echoes through Fun.serve({ unix })", async () => {
     const unix = sockPath("echo");
-    await using server = Bun.serve({
+    await using server = Fun.serve({
       unix,
       fetch(req, server) {
         if (server.upgrade(req)) return;
@@ -57,7 +57,7 @@ describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
     const unix = sockPath("path");
     let seenUrl = "";
     let seenHost = "";
-    await using server = Bun.serve({
+    await using server = Fun.serve({
       unix,
       fetch(req, server) {
         seenUrl = new URL(req.url).pathname + new URL(req.url).search;
@@ -90,7 +90,7 @@ describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
 
   test("ws+unix:// sends binary data", async () => {
     const unix = sockPath("bin");
-    await using server = Bun.serve({
+    await using server = Fun.serve({
       unix,
       fetch(req, server) {
         if (server.upgrade(req)) return;
@@ -137,7 +137,7 @@ describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
 
   test("wss+unix:// connects to a TLS server over a unix socket", async () => {
     const unix = sockPath("tls");
-    await using server = Bun.serve({
+    await using server = Fun.serve({
       unix,
       tls: tlsCert,
       fetch(req, server) {
@@ -152,7 +152,7 @@ describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
     });
 
     const ws = new WebSocket(`wss+unix://${unix}`, {
-      // @ts-expect-error bun extension
+      // @ts-expect-error fun extension
       tls: { rejectUnauthorized: false },
     });
     const { promise, resolve, reject } = Promise.withResolvers<string>();
@@ -168,7 +168,7 @@ describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
 
   test("works from a subprocess", async () => {
     const unix = sockPath("sp");
-    await using server = Bun.serve({
+    await using server = Fun.serve({
       unix,
       fetch(req, server) {
         if (server.upgrade(req)) return;
@@ -181,9 +181,9 @@ describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
       },
     });
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const ws = new WebSocket(process.argv[1]);
@@ -199,7 +199,7 @@ describe.skipIf(isWindows)("WebSocket over unix domain socket", () => {
         `,
         `ws+unix://${unix}`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "inherit",
     });

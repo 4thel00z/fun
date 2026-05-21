@@ -1,21 +1,21 @@
 import { build, preview } from "astro";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, nodeExe } from "harness";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, nodeExe } from "harness";
 import { join } from "path";
 
 const fixtureDir = join(import.meta.dirname, "fixtures");
 async function postNodeFormData(port) {
-  const result = Bun.spawn({
+  const result = Fun.spawn({
     cmd: [nodeExe(), join(fixtureDir, "node-form-data.fetch.fixture.js"), port?.toString()],
-    env: bunEnv,
+    env: funEnv,
     stdio: ["inherit", "inherit", "inherit"],
   });
   expect(await result.exited).toBe(0);
 }
 async function postNodeAction(port) {
-  const result = Bun.spawn({
+  const result = Fun.spawn({
     cmd: [nodeExe(), join(fixtureDir, "node-action.fetch.fixture.js"), port?.toString()],
-    env: bunEnv,
+    env: funEnv,
     stdio: ["inherit", "inherit", "inherit"],
   });
   expect(await result.exited).toBe(0);
@@ -42,7 +42,7 @@ describe("astro", async () => {
     await previewServer.stop();
   });
 
-  test("is able todo a POST request to an astro action using bun", async () => {
+  test("is able todo a POST request to an astro action using fun", async () => {
     const r = await fetch(`${origin}/_actions/getGreeting/`, {
       body: '{"name":"World"}',
       headers: {
@@ -69,7 +69,7 @@ describe("astro", async () => {
     await postNodeAction(previewServer.port);
   });
 
-  test("is able to post form data to an astro using bun", async () => {
+  test("is able to post form data to an astro using fun", async () => {
     const formData = new FormData();
     formData.append("name", "John Doe");
     formData.append("email", "john.doe@example.com");

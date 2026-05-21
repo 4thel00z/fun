@@ -1,5 +1,5 @@
-name: bun install crash report
-description: Report a crash in bun install
+name: fun install crash report
+description: Report a crash in fun install
 labels:
   - npm
   - crash
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Thank you so much** for submitting a crash report. You're helping us make Bun more reliable for everyone!
+        **Thank you so much** for submitting a crash report. You're helping us make Fun more reliable for everyone!
   - type: textarea
     id: package_json
     attributes:
@@ -18,7 +18,7 @@ body:
     id: repro
     attributes:
       label: How can we reproduce the crash?
-      description: Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository, [Replit](https://replit.com/@replit/Bun) or [CodeSandbox](https://codesandbox.io/templates/bun)
+      description: Please provide a [minimal reproduction](https://stackoverflow.com/help/minimal-reproducible-example) using a GitHub repository, [Replit](https://replit.com/@replit/Fun) or [CodeSandbox](https://codesandbox.io/templates/fun)
   - type: textarea
     id: logs
     attributes:
@@ -29,6 +29,6 @@ body:
   - type: textarea
     id: remapped_trace
     attributes:
-      label: Stack Trace (bun.report)
+      label: Stack Trace (fun.report)
     validations:
       required: true

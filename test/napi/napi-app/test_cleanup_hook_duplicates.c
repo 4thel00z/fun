@@ -13,7 +13,7 @@ napi_value test_function(napi_env env, napi_callback_info info) {
     
     // Add the same hook twice with same data
     // In Node.js, this crashes in debug builds but works in release
-    // In Bun, this currently crashes with NAPI_RELEASE_ASSERT
+    // In Fun, this currently crashes with NAPI_RELEASE_ASSERT
     napi_status status1 = napi_add_env_cleanup_hook(env, test_hook, NULL);
     printf("First add status: %d\n", status1);
     

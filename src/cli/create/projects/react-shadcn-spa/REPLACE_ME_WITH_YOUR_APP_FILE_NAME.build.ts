@@ -1,13 +1,13 @@
-import tailwind from "bun-plugin-tailwind";
+import tailwind from "fun-plugin-tailwind";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 
 const outdir = path.join(import.meta.dir, "dist");
 await rm(outdir, { recursive: true, force: true });
 
-const entrypoints = [...new Bun.Glob("*.html").scanSync(import.meta.dir)].map(f => path.join(import.meta.dir, f));
+const entrypoints = [...new Fun.Glob("*.html").scanSync(import.meta.dir)].map(f => path.join(import.meta.dir, f));
 
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints,
   outdir,
   plugins: [tailwind],

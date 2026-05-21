@@ -1,15 +1,15 @@
-// https://github.com/oven-sh/bun/issues/23139
+// https://github.com/underdoc-org/fun/issues/23139
 //
 // Dynamically importing a file that fails to parse threw on the first
 // `await import()`, but the *second* `await import()` of the same path
 // hung forever instead of re-throwing — the rejected module-registry
 // entry was never re-queried. Fixed somewhere in the WebKit
-// module-loader rewrite window (oven-sh/bun#29393 → #30262); reproduces
+// module-loader rewrite window (underdoc-org/fun#29393 → #30262); reproduces
 // on 1.3.13, gone on main with WebKit 88b2f7a2 (i.e. before #30527).
 // This test pins it.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("repeated dynamic import of a file that fails to parse re-throws instead of hanging", async () => {
   using dir = tempDir("issue-23139", {
@@ -27,10 +27,10 @@ test("repeated dynamic import of a file that fails to parse re-throws instead of
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "entry.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "entry.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
     // Before the fix the second import never settles, so bound the

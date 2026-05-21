@@ -1,8 +1,8 @@
-const input = await Bun.stdin.text();
+const input = await Fun.stdin.text();
 
 if (process.platform == "win32") {
   // powershell unavoidably appends \r\n to text sent from a powershell command (like Get-Content)
-  // to an external program (like bun)
+  // to an external program (like fun)
   // https://github.com/PowerShell/PowerShell/issues/5974
   // so we have to remove it
   // for sanity check that it actually ends in \r\n

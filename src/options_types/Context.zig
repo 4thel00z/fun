@@ -14,7 +14,7 @@ pub const ContextData = struct {
     allocator: std.mem.Allocator,
     positionals: []const string = &.{},
     passthrough: []const string = &.{},
-    install: ?*api.BunInstall = null,
+    install: ?*api.FunInstall = null,
 
     debug: DebugOptions = .{},
     test_options: TestOptions = .{},
@@ -81,7 +81,7 @@ pub const ContextData = struct {
 
     /// `Arguments.parse` lives in `cli/`; forward-aliased so
     /// `Command.ContextData.create(...)` keeps working.
-    pub const create = bun.cli.Command.createContextData;
+    pub const create = fun.cli.Command.createContextData;
 };
 
 pub const Context = *ContextData;
@@ -94,15 +94,15 @@ pub const DebugOptions = struct {
     hot_reload: HotReload = HotReload.none,
     global_cache: GlobalCache = .auto,
     offline_mode_setting: ?OfflineMode = null,
-    run_in_bun: bool = false,
+    run_in_fun: bool = false,
     loaded_bunfig: bool = false,
-    /// Disables using bun.shell.Interpreter for `bun run`, instead spawning cmd.exe
-    use_system_shell: bool = !bun.Environment.isWindows,
+    /// Disables using fun.shell.Interpreter for `fun run`, instead spawning cmd.exe
+    use_system_shell: bool = !fun.Environment.isWindows,
 
     // technical debt
     macros: MacroOptions = MacroOptions.unspecified,
     editor: string = "",
-    package_bundle_map: bun.StringArrayHashMapUnmanaged(BundleEnums.BundlePackage) = bun.StringArrayHashMapUnmanaged(BundleEnums.BundlePackage){},
+    package_bundle_map: fun.StringArrayHashMapUnmanaged(BundleEnums.BundlePackage) = fun.StringArrayHashMapUnmanaged(BundleEnums.BundlePackage){},
 
     test_directory: []const u8 = "",
     output_file: []const u8 = "",
@@ -112,8 +112,8 @@ pub const MacroOptions = union(enum) { unspecified: void, disable: void, map: Ma
 
 /// Re-declared from `resolver/package_json.zig` (plain hashmap aliases) so this
 /// file does not depend on `resolver/`.
-pub const MacroImportReplacementMap = bun.StringArrayHashMap(string);
-pub const MacroMap = bun.StringArrayHashMapUnmanaged(MacroImportReplacementMap);
+pub const MacroImportReplacementMap = fun.StringArrayHashMap(string);
+pub const MacroMap = fun.StringArrayHashMapUnmanaged(MacroImportReplacementMap);
 
 pub const HotReload = enum {
     none,
@@ -138,29 +138,29 @@ pub const TestOptions = struct {
     path_ignore_patterns: []const []const u8 = &.{},
     path_ignore_patterns_from_cli: bool = false,
     test_filter_pattern: ?[]const u8 = null,
-    /// `?*bun.jsc.RegularExpression` — typed as opaque to keep this file free
+    /// `?*fun.jsc.RegularExpression` — typed as opaque to keep this file free
     /// of `jsc/` references. Read via `testFilterRegex()`.
     test_filter_regex: ?*anyopaque = null,
     max_concurrency: u32 = 20,
-    /// `bun test --isolate`: run each test file in a fresh global object on
+    /// `fun test --isolate`: run each test file in a fresh global object on
     /// the same VM, force-closing leaked handles between files.
     isolate: bool = false,
-    /// `bun test --parallel[=N]`: run test files across N worker
+    /// `fun test --parallel[=N]`: run test files across N worker
     /// processes. 0 means not requested. Implies `isolate` in workers.
     parallel: u32 = 0,
-    /// `bun test --parallel-delay=MS`: how long the first worker must be
+    /// `fun test --parallel-delay=MS`: how long the first worker must be
     /// busy before spawning the rest. null = use the built-in default.
     parallel_delay_ms: ?u32 = null,
     /// Internal: this process is a `--parallel` worker. Files arrive over
     /// fd 3, results are written back over fd 3; no discovery, no header.
     test_worker: bool = false,
-    /// `bun test --changed[=<since>]`. When set, only test files whose
+    /// `fun test --changed[=<since>]`. When set, only test files whose
     /// module graph reaches a file changed according to git are run.
     /// null = flag not passed. "" = compare against uncommitted changes.
     /// Otherwise the value is a git ref (commit, branch, tag) to diff
     /// against.
     changed: ?[]const u8 = null,
-    /// `bun test --shard=M/N`. When set, test files are sorted by path
+    /// `fun test --shard=M/N`. When set, test files are sorted by path
     /// and only every Nth file (starting from M-1) is run. index is
     /// 1-based; both are validated at parse time so `1 <= index <= count`.
     shard: ?struct { index: u32, count: u32 } = null,
@@ -172,7 +172,7 @@ pub const TestOptions = struct {
     } = .{},
     reporter_outfile: ?[]const u8 = null,
 
-    pub inline fn testFilterRegex(self: *const TestOptions) ?*bun.jsc.RegularExpression {
+    pub inline fn testFilterRegex(self: *const TestOptions) ?*fun.jsc.RegularExpression {
         return @ptrCast(@alignCast(self.test_filter_regex));
     }
 };
@@ -232,6 +232,6 @@ const CodeCoverageOptions = @import("./CodeCoverageOptions.zig").CodeCoverageOpt
 const GlobalCache = @import("./GlobalCache.zig").GlobalCache;
 const OfflineMode = @import("./OfflineMode.zig").OfflineMode;
 
-const bun = @import("bun");
-const logger = bun.logger;
-const api = bun.schema.api;
+const fun = @import("fun");
+const logger = fun.logger;
+const api = fun.schema.api;

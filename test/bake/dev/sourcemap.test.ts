@@ -2,7 +2,7 @@
 // hardcodings of the generated line/column numbers. Hardcoding wouldn't even
 // work because hmr-runtime is minified in release builds, which would affect
 // the generated line/column numbers across different build configurations.
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { BasicSourceMapConsumer, IndexedSourceMapConsumer, SourceMapConsumer } from "source-map";
 import { Dev, devTest, emptyHtmlFile } from "../bake-harness";
 
@@ -23,7 +23,7 @@ devTest("source map emitted for primary chunk", {
   async test(dev) {
     const html = await dev.fetch("/").text();
     using sourceMap = await extractSourceMapHtml(dev, html);
-    expect(sourceMap.sources.slice(1).map(Bun.fileURLToPath)) //
+    expect(sourceMap.sources.slice(1).map(Fun.fileURLToPath)) //
       .toEqual([dev.join("index.html"), dev.join("index.ts"), dev.join("❤️.ts")]);
 
     const generated = indexOfLineColumn(sourceMap.script, "♠️");
@@ -57,7 +57,7 @@ devTest("source map emitted for hmr chunk", {
     await dev.write("App.tsx", "// yay\nconsole.log('magic');\nimport.meta.hot.accept();");
     const chunk = await c.getMostRecentHmrChunk();
     using sourceMap = await extractSourceMap(dev, chunk);
-    expect(sourceMap.sources.slice(1).map(Bun.fileURLToPath)) //
+    expect(sourceMap.sources.slice(1).map(Fun.fileURLToPath)) //
       .toEqual([dev.join("App.tsx")]);
     const generated = indexOfLineColumn(sourceMap.script, "magic");
     const original = sourceMap.originalPositionFor(generated);

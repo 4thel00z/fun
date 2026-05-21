@@ -1,4 +1,4 @@
-import type * as BunSQLiteModule from "bun:sqlite";
+import type * as FunSQLiteModule from "fun:sqlite";
 import type { BaseQueryHandle, Query, SQLQueryResultMode } from "./query";
 import type { ArrayType, DatabaseAdapter, OnConnected, SQLArrayParameter, SQLHelper, SQLResultArray } from "./shared";
 
@@ -10,10 +10,10 @@ const {
 } = require("internal/sql/query");
 const { SQLiteError } = require("internal/sql/errors");
 
-let lazySQLiteModule: typeof BunSQLiteModule;
+let lazySQLiteModule: typeof FunSQLiteModule;
 function getSQLiteModule() {
   if (!lazySQLiteModule) {
-    lazySQLiteModule = require("../../bun/sqlite.ts");
+    lazySQLiteModule = require("../../fun/sqlite.ts");
   }
   return lazySQLiteModule;
 }
@@ -206,7 +206,7 @@ function parseSQLQuery(query: string, partial: boolean = false): SQLParsedInfo {
   return { command, lastToken, canReturnRows };
 }
 
-class SQLiteQueryHandle implements BaseQueryHandle<BunSQLiteModule.Database> {
+class SQLiteQueryHandle implements BaseQueryHandle<FunSQLiteModule.Database> {
   private mode = SQLQueryResultMode.objects;
 
   private readonly sql: string;
@@ -224,7 +224,7 @@ class SQLiteQueryHandle implements BaseQueryHandle<BunSQLiteModule.Database> {
     this.mode = mode;
   }
 
-  run(db: BunSQLiteModule.Database, query: Query<any, any>) {
+  run(db: FunSQLiteModule.Database, query: Query<any, any>) {
     if (!db) {
       throw new SQLiteError("SQLite database not initialized", {
         code: "SQLITE_CONNECTION_CLOSED",
@@ -269,7 +269,7 @@ class SQLiteQueryHandle implements BaseQueryHandle<BunSQLiteModule.Database> {
         query.resolve(sqlResult);
       }
     } catch (err) {
-      // Convert bun:sqlite errors to SQLiteError
+      // Convert fun:sqlite errors to SQLiteError
       if (err && typeof err === "object" && "name" in err && err.name === "SQLiteError") {
         // Extract SQLite error properties
         const code = "code" in err ? String(err.code) : "SQLITE_ERROR";
@@ -285,14 +285,14 @@ class SQLiteQueryHandle implements BaseQueryHandle<BunSQLiteModule.Database> {
   }
 }
 
-class SQLiteAdapter implements DatabaseAdapter<BunSQLiteModule.Database, BunSQLiteModule.Database, SQLiteQueryHandle> {
-  public readonly connectionInfo: Bun.SQL.__internal.DefinedSQLiteOptions;
-  public db: BunSQLiteModule.Database | null = null;
+class SQLiteAdapter implements DatabaseAdapter<FunSQLiteModule.Database, FunSQLiteModule.Database, SQLiteQueryHandle> {
+  public readonly connectionInfo: Fun.SQL.__internal.DefinedSQLiteOptions;
+  public db: FunSQLiteModule.Database | null = null;
   public storedError: Error | null = null;
   private _closed: boolean = false;
   public queries: Set<Query<any, any>> = new Set();
 
-  constructor(connectionInfo: Bun.SQL.__internal.DefinedSQLiteOptions) {
+  constructor(connectionInfo: Fun.SQL.__internal.DefinedSQLiteOptions) {
     this.connectionInfo = connectionInfo;
 
     try {
@@ -303,7 +303,7 @@ class SQLiteAdapter implements DatabaseAdapter<BunSQLiteModule.Database, BunSQLi
         filename = filename.toString();
       }
 
-      const options: BunSQLiteModule.DatabaseOptions = {};
+      const options: FunSQLiteModule.DatabaseOptions = {};
 
       if (this.connectionInfo.readonly) {
         options.readonly = true;
@@ -326,7 +326,7 @@ class SQLiteAdapter implements DatabaseAdapter<BunSQLiteModule.Database, BunSQLi
         if (onconnect) onconnect(null);
       } catch {}
     } catch (err) {
-      // Convert bun:sqlite initialization errors to SQLiteError
+      // Convert fun:sqlite initialization errors to SQLiteError
       if (err && typeof err === "object" && "name" in err && err.name === "SQLiteError") {
         const code = "code" in err ? String(err.code) : "SQLITE_ERROR";
         const errno = "errno" in err ? Number(err.errno) : 1;
@@ -577,7 +577,7 @@ class SQLiteAdapter implements DatabaseAdapter<BunSQLiteModule.Database, BunSQLi
     return [query, binding_values];
   }
 
-  connect(onConnected: OnConnected<BunSQLiteModule.Database>, reserved?: boolean) {
+  connect(onConnected: OnConnected<FunSQLiteModule.Database>, reserved?: boolean) {
     if (this._closed) {
       return onConnected(this.connectionClosedError(), null);
     }
@@ -598,7 +598,7 @@ class SQLiteAdapter implements DatabaseAdapter<BunSQLiteModule.Database, BunSQLi
     }
   }
 
-  release(_connection: BunSQLiteModule.Database, _connectingEvent?: boolean) {
+  release(_connection: FunSQLiteModule.Database, _connectingEvent?: boolean) {
     // SQLite doesn't need to release connections since we don't pool. We
     // shouldn't throw or prevent the user facing API from releasing connections
     // so we can just no-op here
@@ -644,7 +644,7 @@ class SQLiteAdapter implements DatabaseAdapter<BunSQLiteModule.Database, BunSQLi
     return false;
   }
 
-  getConnectionForQuery(connection: BunSQLiteModule.Database): BunSQLiteModule.Database {
+  getConnectionForQuery(connection: FunSQLiteModule.Database): FunSQLiteModule.Database {
     return connection;
   }
   array(_values: any[], _typeNameOrID?: number | ArrayType): SQLArrayParameter {

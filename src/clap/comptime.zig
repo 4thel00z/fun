@@ -70,15 +70,15 @@ pub fn ComptimeClap(
                     try pos.append(arg.value.?);
                     if (opt.stop_after_positional_at > 0 and pos.items.len >= opt.stop_after_positional_at) {
                         var remaining_ = stream.iter.remain;
-                        const first: []const u8 = if (remaining_.len > 0) bun.span(remaining_[0]) else "";
+                        const first: []const u8 = if (remaining_.len > 0) fun.span(remaining_[0]) else "";
                         if (first.len > 0 and std.mem.eql(u8, first, "--")) {
                             remaining_ = remaining_[1..];
                         }
 
                         try passthrough_positionals.ensureTotalCapacityPrecise(remaining_.len);
                         for (remaining_) |arg_| {
-                            // use bun.span due to the optimization for long strings
-                            passthrough_positionals.appendAssumeCapacity(bun.span(arg_));
+                            // use fun.span due to the optimization for long strings
+                            passthrough_positionals.appendAssumeCapacity(fun.span(arg_));
                         }
                         break;
                     }
@@ -191,7 +191,7 @@ pub fn ComptimeClap(
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const clap = @import("./clap.zig");
 
 const std = @import("std");

@@ -1,5 +1,5 @@
 // CSS tests concern bundling bugs with CSS files
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import assert from "node:assert";
 import { devTest, emptyHtmlFile, imageFixtures } from "../bake-harness";
 
@@ -171,17 +171,17 @@ devTest("asset referenced in css", {
     }),
     "styles.css": `
       body {
-        background-image: url(./bun.png);
+        background-image: url(./fun.png);
       }
     `,
-    "bun.png": imageFixtures.bun,
+    "fun.png": imageFixtures.fun,
   },
   async test(dev) {
     await using c = await dev.client("/");
     let backgroundImage = await c.style("body").backgroundImage;
     assert(backgroundImage);
-    await dev.fetch(extractCssUrl(backgroundImage)).expectFile(imageFixtures.bun);
-    await dev.write("bun.png", imageFixtures.bun2);
+    await dev.fetch(extractCssUrl(backgroundImage)).expectFile(imageFixtures.fun);
+    await dev.write("fun.png", imageFixtures.bun2);
     backgroundImage = await c.style("body").backgroundImage;
     assert(backgroundImage);
     await dev.fetch(extractCssUrl(backgroundImage)).expectFile(imageFixtures.bun2);
@@ -445,7 +445,7 @@ devTest("changing html file with link tag works", {
         styles: ["other.css"],
       }),
       {
-        errors: ['index.html: error: Could not resolve: "other.css". Maybe you need to "bun install"?'],
+        errors: ['index.html: error: Could not resolve: "other.css". Maybe you need to "fun install"?'],
       },
     );
     await c.expectReload(async () => {
@@ -495,26 +495,26 @@ devTest("css import before create", {
   },
   async test(dev) {
     await using c = await dev.client("/", {
-      errors: ['index.html: error: Could not resolve: "styles.css". Maybe you need to "bun install"?'],
+      errors: ['index.html: error: Could not resolve: "styles.css". Maybe you need to "fun install"?'],
     });
     await dev.fetch("/").expect.not.toContain("HELLO");
     await dev.write(
       "styles.css",
       `
         body {
-          background-image: url(bun.png);
+          background-image: url(fun.png);
         }
       `,
       {
-        errors: ['styles.css:2:21: error: Could not resolve: "bun.png". Maybe you need to "bun install"?'],
+        errors: ['styles.css:2:21: error: Could not resolve: "fun.png". Maybe you need to "fun install"?'],
       },
     );
     await c.expectReload(async () => {
-      await dev.write("bun.png", imageFixtures.bun);
+      await dev.write("fun.png", imageFixtures.fun);
     });
     const backgroundImage = await c.style("body").backgroundImage;
     assert(backgroundImage);
-    await dev.fetch(extractCssUrl(backgroundImage)).expectFile(imageFixtures.bun);
+    await dev.fetch(extractCssUrl(backgroundImage)).expectFile(imageFixtures.fun);
     await dev.fetch("/").expect.toContain("HELLO");
   },
 });
@@ -528,7 +528,7 @@ devTest("css import before create project relative", {
     }),
   },
   async test(dev) {
-    dev.mkdir("style"); // (See DevServer.zig "BUN-10968")
+    dev.mkdir("style"); // (See DevServer.zig "FUN-10968")
     await using c = await dev.client("/", {
       errors: ['html/index.html: error: Could not resolve: "/style/styles.css"'],
     });
@@ -537,35 +537,35 @@ devTest("css import before create project relative", {
       "style/styles.css",
       `
         body {
-          background-image: url(/assets/bun.png);
+          background-image: url(/assets/fun.png);
         }
       `,
       {
-        errors: ['style/styles.css:2:21: error: Could not resolve: "/assets/bun.png"'],
+        errors: ['style/styles.css:2:21: error: Could not resolve: "/assets/fun.png"'],
       },
     );
     await c.expectNoWebSocketActivity(async () => {
-      await dev.write("assets/bun.png", imageFixtures.bun, { errors: null });
-      await dev.delete("assets/bun.png", { errors: null });
+      await dev.write("assets/fun.png", imageFixtures.fun, { errors: null });
+      await dev.delete("assets/fun.png", { errors: null });
     });
     await dev.fetch("/").expect.not.toContain("HELLO");
     await dev.write(
       "style/styles.css",
       `
         body {
-          background-image: url(../assets/bun.png);
+          background-image: url(../assets/fun.png);
         }
       `,
       {
-        errors: ['style/styles.css:2:21: error: Could not resolve: "../assets/bun.png"'],
+        errors: ['style/styles.css:2:21: error: Could not resolve: "../assets/fun.png"'],
       },
     );
     await c.expectReload(async () => {
-      await dev.write("assets/bun.png", imageFixtures.bun);
+      await dev.write("assets/fun.png", imageFixtures.fun);
     });
     const backgroundImage = await c.style("body").backgroundImage;
     assert(backgroundImage);
-    await dev.fetch(extractCssUrl(backgroundImage)).expectFile(imageFixtures.bun);
+    await dev.fetch(extractCssUrl(backgroundImage)).expectFile(imageFixtures.fun);
     await dev.fetch("/").expect.toContain("HELLO");
   },
 });

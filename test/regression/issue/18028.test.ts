@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/18028
-// Object diff in bun test should display empty string keys correctly.
+// https://github.com/underdoc-org/fun/issues/18028
+// Object diff in fun test should display empty string keys correctly.
 
 test("toStrictEqual diff shows empty string keys", () => {
   expect({
@@ -31,17 +31,17 @@ test("empty string key mixed with other keys", () => {
 test("toStrictEqual fails and shows diff with empty string key", async () => {
   using dir = tempDir("issue-18028", {
     "test.test.ts": `
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 test("diff", () => {
   expect({ val: {} }).toStrictEqual({ val: { "": "value" } });
 });
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "test.test.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "test.test.ts"],
     cwd: String(dir),
-    env: { ...bunEnv, FORCE_COLOR: "0" },
+    env: { ...funEnv, FORCE_COLOR: "0" },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -56,9 +56,9 @@ test("diff", () => {
 });
 
 test("console.log shows empty string keys", () => {
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "-e", 'console.log({ "": "value", foo: "bar" })'],
-    env: { ...bunEnv, NO_COLOR: "1" },
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "-e", 'console.log({ "": "value", foo: "bar" })'],
+    env: { ...funEnv, NO_COLOR: "1" },
   });
 
   const stdout = result.stdout.toString();

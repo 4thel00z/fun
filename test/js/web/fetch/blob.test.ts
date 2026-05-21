@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import type { BlobOptions } from "node:buffer";
 import type { BinaryLike } from "node:crypto";
 import path from "node:path";
@@ -9,7 +9,7 @@ test("blob: imports have sourcemapped stacktraces", async () => {
     [
       `
     export function uhOh(very: any): boolean {
-      return Bun.inspect(new Error());  
+      return Fun.inspect(new Error());  
     }
   `,
     ],
@@ -25,13 +25,13 @@ test("blob: imports have sourcemapped stacktraces", async () => {
 
 for (const info of [
   {
-    blob: new Blob(["Bun", "Foo"]),
+    blob: new Blob(["Fun", "Foo"]),
     name: "Blob.slice",
     is_file: false,
   },
   {
-    blob: Bun.file(path.join(import.meta.dir, "fixtures", "slice.txt")),
-    name: "Bun.file().slice",
+    blob: Fun.file(path.join(import.meta.dir, "fixtures", "slice.txt")),
+    name: "Fun.file().slice",
     is_file: true,
   },
 ]) {
@@ -65,7 +65,7 @@ for (const info of [
     expect(blob.slice("text/plain;charset=utf-8").type).toBe("text/plain;charset=utf-8");
 
     // test Blob.slice().slice(), issue#6252
-    expect(await blob.slice(0, 4).slice(0, 3).text()).toBe("Bun");
+    expect(await blob.slice(0, 4).slice(0, 3).text()).toBe("Fun");
     expect(await blob.slice(0, 4).slice(1, 3).text()).toBe("un");
     expect(await blob.slice(1, 4).slice(0, 3).text()).toBe("unF");
     expect(await blob.slice(1, 4).slice(1, 3).text()).toBe("nF");
@@ -89,25 +89,25 @@ for (const info of [
     expect(await blob.slice(-4, 4).slice(-3, 3).text()).toBe("nF");
     expect(await blob.slice(-5, 4).slice(-4, 3).text()).toBe("unF");
     expect(await blob.slice(-3, 4).slice(-2, 3).text()).toBe("F");
-    expect(await blob.slice(-blob.size, 4).slice(-blob.size, 3).text()).toBe("Bun");
+    expect(await blob.slice(-blob.size, 4).slice(-blob.size, 3).text()).toBe("Fun");
   });
 }
 
 test("new Blob", () => {
-  var blob = new Blob(["Bun", "Foo"], { type: "text/foo" });
+  var blob = new Blob(["Fun", "Foo"], { type: "text/foo" });
   expect(blob.size).toBe(6);
   expect(blob.type).toBe("text/foo");
 
-  blob = new Blob(["Bun", "Foo"], { type: "\u1234" });
+  blob = new Blob(["Fun", "Foo"], { type: "\u1234" });
   expect(blob.size).toBe(6);
   expect(blob.type).toBe("");
 });
 
 test("blob: can be fetched", async () => {
-  const blob = new Blob(["Bun", "Foo"]);
+  const blob = new Blob(["Fun", "Foo"]);
   const url = URL.createObjectURL(blob);
   expect(url).toStartWith("blob:");
-  expect(await fetch(url).then(r => r.text())).toBe("BunFoo");
+  expect(await fetch(url).then(r => r.text())).toBe("FunFoo");
   URL.revokeObjectURL(url);
   expect(async () => {
     await fetch(url);
@@ -115,7 +115,7 @@ test("blob: can be fetched", async () => {
 });
 
 test("blob: URL has Content-Type", async () => {
-  const blob = new File(["Bun", "Foo"], "file.txt", { type: "text/javascript;charset=utf-8" });
+  const blob = new File(["Fun", "Foo"], "file.txt", { type: "text/javascript;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   expect(url).toStartWith("blob:");
   const resp = await fetch(url);
@@ -149,7 +149,7 @@ test("blob: can be imported", async () => {
 });
 
 test("blob: can reliable get type from fetch #10072", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     fetch() {
       return new Response(
         new ReadableStream({
@@ -157,9 +157,9 @@ test("blob: can reliable get type from fetch #10072", async () => {
             controller.enqueue(Buffer.from("Hello"));
           },
           async pull(controller) {
-            await Bun.sleep(100);
+            await Fun.sleep(100);
             controller.enqueue(Buffer.from("World"));
-            await Bun.sleep(100);
+            await Fun.sleep(100);
             controller.close();
           },
         }),
@@ -176,13 +176,13 @@ test("blob: can reliable get type from fetch #10072", async () => {
   expect(blob.type).toBe("plain/text");
 });
 
-// https://github.com/oven-sh/bun/issues/13049
+// https://github.com/underdoc-org/fun/issues/13049
 test("new Blob(new Uint8Array()) is supported", async () => {
   const blob = new Blob(Buffer.from("1234"));
   expect(await blob.text()).toBe("1234");
 });
 
-// https://github.com/oven-sh/bun/issues/13049
+// https://github.com/underdoc-org/fun/issues/13049
 test("new File(new Uint8Array()) is supported", async () => {
   const blob = new File(Buffer.from("1234"), "file.txt");
   expect(await blob.text()).toBe("1234");
@@ -252,8 +252,8 @@ test("blob: can set name property #10178", () => {
 });
 
 test("#12894", () => {
-  const bunFile = Bun.file("foo.txt");
-  expect(new File([bunFile], "bar.txt").name).toBe("bar.txt");
+  const funFile = Fun.file("foo.txt");
+  expect(new File([funFile], "bar.txt").name).toBe("bar.txt");
 });
 
 test("dupeWithContentType does not alias the source's allocated content_type", async () => {
@@ -263,7 +263,7 @@ test("dupeWithContentType does not alias the source's allocated content_type", a
   // deep-copies a heap-allocated content_type became dead code, so duped
   // blobs aliased the source's allocation while both claimed ownership.
   //
-  // Observable: create a Bun.file with a custom (non-registry) type so
+  // Observable: create a Fun.file with a custom (non-registry) type so
   // content_type_allocated=true, wrap it in a Response (which dupes the
   // blob into its body), then call file.write() with a new type which
   // frees the original content_type. Reading the Response's headers then
@@ -274,7 +274,7 @@ test("dupeWithContentType does not alias the source's allocated content_type", a
       const p = join(process.argv[2], "out.txt");
       // Must NOT be a known mime type so the string is heap-allocated.
       const originalType = "application/x-custom-type-not-in-registry-abcdefghijklm";
-      const file = Bun.file(p, { type: originalType });
+      const file = Fun.file(p, { type: originalType });
       if (file.type !== originalType) throw new Error("precondition: unexpected type " + file.type);
 
       // Response body holds a dupe of the file blob.
@@ -293,9 +293,9 @@ test("dupeWithContentType does not alias the source's allocated content_type", a
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run.ts", String(dir)],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run.ts", String(dir)],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

@@ -52,7 +52,7 @@ enum class DOMEventName : uint8_t {
 
 };
 
-extern "C" JSC::EncodedJSValue Bun__domEventNameToJS(JSC::JSGlobalObject* globalObject, DOMEventName name)
+extern "C" JSC::EncodedJSValue Fun__domEventNameToJS(JSC::JSGlobalObject* globalObject, DOMEventName name)
 {
     const auto& eventName = [&]() -> const AtomString& {
         switch (name) {

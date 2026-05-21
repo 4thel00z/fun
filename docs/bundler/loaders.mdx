@@ -1,15 +1,15 @@
 ---
 title: Loaders
-description: Built-in loaders for the Bun bundler and runtime
+description: Built-in loaders for the Fun bundler and runtime
 ---
 
-The Bun bundler implements a set of default loaders out of the box.
+The Fun bundler implements a set of default loaders out of the box.
 
 > As a rule of thumb: **the bundler and the runtime both support the same set of file types out of the box.**
 
 `.js` `.cjs` `.mjs` `.mts` `.cts` `.ts` `.tsx` `.jsx` `.css` `.json` `.jsonc` `.toml` `.yaml` `.yml` `.txt` `.wasm` `.node` `.html` `.sh`
 
-Bun uses the file extension to determine which built-in loader should be used to parse the file. Every loader has a name, such as `js`, `tsx`, or `json`. These names are used when building plugins that extend Bun with custom loaders.
+Fun uses the file extension to determine which built-in loader should be used to parse the file. Every loader has a name, such as `js`, `tsx`, or `json`. These names are used when building plugins that extend Fun with custom loaders.
 
 You can explicitly specify which loader to use using the `'type'` import attribute.
 
@@ -25,7 +25,7 @@ const { default: my_toml } = await import("./my_file", { with: { type: "toml" } 
 
 **JavaScript loader.** Default for `.cjs` and `.mjs`.
 
-Parses the code and applies a set of default transforms like dead-code elimination and tree shaking. Note that Bun does not attempt to down-convert syntax at the moment.
+Parses the code and applies a set of default transforms like dead-code elimination and tree shaking. Note that Fun does not attempt to down-convert syntax at the moment.
 
 ---
 
@@ -41,7 +41,7 @@ Same as the `js` loader, but JSX syntax is supported. By default, JSX is down-co
 
 **TypeScript loader.** Default for `.ts`, `.mts`, and `.cts`.
 
-Strips out all TypeScript syntax, then behaves identically to the `js` loader. Bun does not perform typechecking.
+Strips out all TypeScript syntax, then behaves identically to the `js` loader. Fun does not perform typechecking.
 
 ---
 
@@ -103,7 +103,7 @@ export default {
 
 **JSON with Comments loader.** Default for `.jsonc`.
 
-JSONC (JSON with Comments) files can be directly imported. Bun will parse them, stripping out comments and trailing commas.
+JSONC (JSON with Comments) files can be directly imported. Fun will parse them, stripping out comments and trailing commas.
 
 ```js
 import config from "./config.jsonc";
@@ -119,7 +119,7 @@ var config = {
 ```
 
 <Note>
-  Bun automatically uses the `jsonc` loader for `tsconfig.json`, `jsconfig.json`, `package.json`, and `bun.lock` files.
+  Fun automatically uses the `jsonc` loader for `tsconfig.json`, `jsconfig.json`, `package.json`, and `fun.lock` files.
 </Note>
 
 ---
@@ -128,10 +128,10 @@ var config = {
 
 **TOML loader.** Default for `.toml`.
 
-TOML files can be directly imported. Bun will parse them with its fast native TOML parser.
+TOML files can be directly imported. Fun will parse them with its fast native TOML parser.
 
 ```js
-import config from "./bunfig.toml";
+import config from "./funfig.toml";
 config.logLevel; // => "debug"
 
 // via import attribute:
@@ -174,7 +174,7 @@ export default {
 
 **YAML loader.** Default for `.yaml` and `.yml`.
 
-YAML files can be directly imported. Bun will parse them with its fast native YAML parser.
+YAML files can be directly imported. Fun will parse them with its fast native YAML parser.
 
 ```js
 import config from "./config.yaml";
@@ -273,13 +273,13 @@ console.log(addon);
 
 **SQLite loader.** Requires `with { "type": "sqlite" }` import attribute.
 
-In the runtime and bundler, SQLite databases can be directly imported. This will load the database using `bun:sqlite`.
+In the runtime and bundler, SQLite databases can be directly imported. This will load the database using `fun:sqlite`.
 
 ```js
 import db from "./my.db" with { type: "sqlite" };
 ```
 
-<Warning>This is only supported when the target is `bun`.</Warning>
+<Warning>This is only supported when the target is `fun`.</Warning>
 
 By default, the database is external to the bundle (so that you can potentially use a database loaded elsewhere), so the database file on-disk won't be bundled into the final output.
 
@@ -368,9 +368,9 @@ Currently, the list of selectors is:
 
 The `html` loader behaves differently depending on how it's used:
 
-- Static Build: When you run `bun build ./index.html`, Bun produces a static site with all assets bundled and hashed.
-- Runtime: When you run `bun run server.ts` (where `server.ts` imports an HTML file), Bun bundles assets on-the-fly during development, enabling features like hot module replacement.
-- Full-stack Build: When you run `bun build --target=bun server.ts` (where `server.ts` imports an HTML file), the import resolves to a manifest object that `Bun.serve` uses to efficiently serve pre-bundled assets in production.
+- Static Build: When you run `fun build ./index.html`, Fun produces a static site with all assets bundled and hashed.
+- Runtime: When you run `fun run server.ts` (where `server.ts` imports an HTML file), Fun bundles assets on-the-fly during development, enabling features like hot module replacement.
+- Full-stack Build: When you run `fun build --target=fun server.ts` (where `server.ts` imports an HTML file), the import resolves to a manifest object that `Fun.serve` uses to efficiently serve pre-bundled assets in production.
 
 </Note>
 
@@ -398,12 +398,12 @@ During bundling, all imported CSS files are bundled together into a single `.css
 
 ### `sh`
 
-**Bun Shell loader.** Default for `.sh` files.
+**Fun Shell loader.** Default for `.sh` files.
 
-This loader is used to parse Bun Shell scripts. It's only supported when starting Bun itself, so it's not available in the bundler or in the runtime.
+This loader is used to parse Fun Shell scripts. It's only supported when starting Fun itself, so it's not available in the bundler or in the runtime.
 
 ```bash
-bun run ./script.sh
+fun run ./script.sh
 ```
 
 ---
@@ -420,10 +420,10 @@ import logo from "./logo.svg";
 console.log(logo);
 ```
 
-In the runtime, Bun checks that the `logo.svg` file exists and converts it to an absolute path to the location of `logo.svg` on disk.
+In the runtime, Fun checks that the `logo.svg` file exists and converts it to an absolute path to the location of `logo.svg` on disk.
 
 ```bash
-bun run logo.ts
+fun run logo.ts
 # Output: /path/to/project/logo.svg
 ```
 

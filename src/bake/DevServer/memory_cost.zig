@@ -27,7 +27,7 @@ pub fn memoryCostDetailed(dev: *DevServer) MemoryCost {
     useAllFields(DevServer, .{
         // does not contain pointers
         .assume_perfect_incremental_bundling = {},
-        .bun_watcher = {},
+        .fun_watcher = {},
         .bundles_since_last_error = {},
         .configuration_hash_key = {},
         .inspector_server_id = {},
@@ -205,12 +205,12 @@ pub fn memoryCostArrayHashMap(map: anytype) usize {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const useAllFields = bun.meta.useAllFields;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const useAllFields = fun.meta.useAllFields;
 const HTMLBundle = jsc.API.HTMLBundle;
 
-const DevServer = bun.bake.DevServer;
+const DevServer = fun.bake.DevServer;
 const DeferredRequest = DevServer.DeferredRequest;
 const HmrSocket = DevServer.HmrSocket;
 const IncrementalResult = DevServer.IncrementalResult;

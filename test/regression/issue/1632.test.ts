@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { spawn } from "child_process";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 
 describe("issue #1632 - broken pipe behavior for process.stdout.write()", () => {
   test("process.stdout.write() should exit non-zero on broken pipe", async () => {
     // Use child_process.spawn to get proper Node-style streams with destroy()
-    const child = spawn(bunExe(), ["-e", 'process.stdout.write("testing\\n");'], {
-      env: bunEnv,
+    const child = spawn(funExe(), ["-e", 'process.stdout.write("testing\\n");'], {
+      env: funEnv,
       stdio: ["pipe", "pipe", "pipe"],
     });
 
@@ -24,8 +24,8 @@ describe("issue #1632 - broken pipe behavior for process.stdout.write()", () => 
 
   test("console.log should not panic on broken pipe", async () => {
     // console.log should ignore errors (uses catch {}) and not crash
-    const child = spawn(bunExe(), ["-e", 'console.log("testing");'], {
-      env: bunEnv,
+    const child = spawn(funExe(), ["-e", 'console.log("testing");'], {
+      env: funEnv,
       stdio: ["pipe", "pipe", "pipe"],
     });
 
@@ -48,9 +48,9 @@ describe("issue #1632 - broken pipe behavior for process.stdout.write()", () => 
   test("matches Node.js behavior - broken pipe causes exit code 1", async () => {
     // This test spawns a subprocess that tries to write to a destroyed stdout
     // using child_process.exec pattern from the original issue
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const { exec } = require("child_process");
@@ -66,7 +66,7 @@ describe("issue #1632 - broken pipe behavior for process.stdout.write()", () => 
         child.stdout.destroy();
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -87,7 +87,7 @@ describe("issue #1632 - broken pipe behavior for process.stdout.write()", () => 
   test("process.stdout.write() callback receives EPIPE error", async () => {
     // Test that the write callback receives the EPIPE error
     const child = spawn(
-      bunExe(),
+      funExe(),
       [
         "-e",
         `
@@ -103,7 +103,7 @@ describe("issue #1632 - broken pipe behavior for process.stdout.write()", () => 
       `,
       ],
       {
-        env: bunEnv,
+        env: funEnv,
         stdio: ["pipe", "pipe", "pipe"],
       },
     );

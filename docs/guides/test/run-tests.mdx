@@ -1,14 +1,14 @@
 ---
-title: Run your tests with the Bun test runner
+title: Run your tests with the Fun test runner
 sidebarTitle: Run tests
 mode: center
 ---
 
-Bun has a built-in [test runner](/test) with a Jest-like `expect` API.
+Fun has a built-in [test runner](/test) with a Jest-like `expect` API.
 
 ---
 
-To use it, run the `bun test` command from your project directory. The test runner will recursively search for all files in the directory that match the following patterns and execute the tests they contain.
+To use it, run the `fun test` command from your project directory. The test runner will recursively search for all files in the directory that match the following patterns and execute the tests they contain.
 
 ```txt File Tree icon="folder-tree"
 *.test.{js|jsx|ts|tsx}
@@ -22,7 +22,7 @@ To use it, run the `bun test` command from your project directory. The test runn
 Here's what the output of a typical test run looks like. In this case, there are three tests files (`test.test.js`, `test2.test.js`, and `test3.test.js`) containing two tests each (`add` and `multiply`).
 
 ```sh terminal icon="terminal"
-bun test
+fun test
 ```
 
 ```txt
@@ -46,10 +46,10 @@ Ran 6 tests across 3 files. [9.00ms]
 
 ---
 
-To only run certain test files, pass a positional argument to `bun test`. The runner will only execute files that contain that argument in their path.
+To only run certain test files, pass a positional argument to `fun test`. The runner will only execute files that contain that argument in their path.
 
 ```sh terminal icon="terminal"
-bun test test3
+fun test test3
 ```
 
 ```txt
@@ -68,7 +68,7 @@ Ran 2 tests across 1 files. [15.00ms]
 All tests have a name, defined using the first parameter to the `test` function. Tests can also be grouped into suites with `describe`.
 
 ```ts
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "fun:test";
 
 describe("math", () => {
   test("add", () => {
@@ -88,7 +88,7 @@ To filter which tests are executed by name, use the `-t`/`--test-name-pattern` f
 Adding `-t add` will only run tests with "add" in the name. This works with test names defined with `test` or test suite names defined with `describe`.
 
 ```sh terminal icon="terminal"
-bun test -t add
+fun test -t add
 ```
 
 ```txt

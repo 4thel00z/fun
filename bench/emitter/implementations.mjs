@@ -4,7 +4,7 @@ import { group } from "../runner.mjs";
 export const implementations = [
   {
     EventEmitter: EventEmitterNative,
-    name: process.isBun ? (EventEmitterNative.init ? "bun" : "C++") : "node:events",
+    name: process.isFun ? (EventEmitterNative.init ? "fun" : "C++") : "node:events",
     monkey: true,
   },
   // { EventEmitter: EventEmitter3, name: "EventEmitter3" },

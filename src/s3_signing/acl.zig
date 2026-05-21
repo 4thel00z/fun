@@ -28,7 +28,7 @@ pub const ACL = enum {
         };
     }
 
-    pub const Map = bun.ComptimeStringMap(ACL, .{
+    pub const Map = fun.ComptimeStringMap(ACL, .{
         .{ "private", .private },
         .{ "public-read", .public_read },
         .{ "public-read-write", .public_read_write },
@@ -40,4 +40,4 @@ pub const ACL = enum {
     });
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

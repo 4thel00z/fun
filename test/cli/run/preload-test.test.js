@@ -1,11 +1,11 @@
-import { spawnSync } from "bun";
-import { describe, expect, test } from "bun:test";
+import { spawnSync } from "fun";
+import { describe, expect, test } from "fun:test";
 import { mkdirSync, realpathSync } from "fs";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { tmpdir } from "os";
 import { join } from "path";
 const preloadModule = `
-import {plugin} from 'bun';
+import {plugin} from 'fun';
 
 plugin({
     setup(build) {
@@ -35,22 +35,22 @@ console.log('Test passed');
 process.exit(0);
 `;
 
-const bunfig = `preload = ["./preload.js"]`;
+const funfig = `preload = ["./preload.js"]`;
 
 describe("preload", () => {
   test.todo("works", async () => {
-    const preloadDir = join(realpathSync(tmpdir()), "bun-preload-test");
+    const preloadDir = join(realpathSync(tmpdir()), "fun-preload-test");
     mkdirSync(preloadDir, { recursive: true });
     const preloadPath = join(preloadDir, "preload.js");
     const mainPath = join(preloadDir, "main.js");
-    const bunfigPath = join(preloadDir, "bunfig.toml");
-    await Bun.write(preloadPath, preloadModule);
-    await Bun.write(mainPath, mainModule);
-    await Bun.write(bunfigPath, bunfig);
+    const funfigPath = join(preloadDir, "funfig.toml");
+    await Fun.write(preloadPath, preloadModule);
+    await Fun.write(mainPath, mainModule);
+    await Fun.write(funfigPath, funfig);
 
     const cmds = [
-      [bunExe(), "run", mainPath],
-      [bunExe(), mainPath],
+      [funExe(), "run", mainPath],
+      [funExe(), mainPath],
     ];
 
     for (let cmd of cmds) {
@@ -59,7 +59,7 @@ describe("preload", () => {
         cwd: preloadDir,
         stderr: "pipe",
         stdout: "pipe",
-        env: bunEnv,
+        env: funEnv,
       });
 
       expect(stderr.toString()).toBe("");
@@ -69,16 +69,16 @@ describe("preload", () => {
   });
 
   test.todo("works from CLI", async () => {
-    const preloadDir = join(realpathSync(tmpdir()), "bun-preload-test4");
+    const preloadDir = join(realpathSync(tmpdir()), "fun-preload-test4");
     mkdirSync(preloadDir, { recursive: true });
     const preloadPath = join(preloadDir, "preload.js");
     const mainPath = join(preloadDir, "main.js");
-    await Bun.write(preloadPath, preloadModule);
-    await Bun.write(mainPath, mainModule);
+    await Fun.write(preloadPath, preloadModule);
+    await Fun.write(mainPath, mainModule);
 
     const cmds = [
-      [bunExe(), "-r=" + preloadPath, "run", mainPath],
-      [bunExe(), "-r=" + preloadPath, mainPath],
+      [funExe(), "-r=" + preloadPath, "run", mainPath],
+      [funExe(), "-r=" + preloadPath, mainPath],
     ];
 
     for (let cmd of cmds) {
@@ -87,7 +87,7 @@ describe("preload", () => {
         cwd: preloadDir,
         stderr: "pipe",
         stdout: "pipe",
-        env: bunEnv,
+        env: funEnv,
       });
 
       expect(stderr.toString()).toBe("");
@@ -98,7 +98,7 @@ describe("preload", () => {
 
   describe("as entry point", () => {
     const preloadModule = `
-import {plugin} from 'bun';
+import {plugin} from 'fun';
 console.log('preload')
 plugin({
     setup(build) {
@@ -119,16 +119,16 @@ plugin({
     `;
 
     test.todo("works from CLI", async () => {
-      const preloadDir = join(realpathSync(tmpdir()), "bun-preload-test6");
+      const preloadDir = join(realpathSync(tmpdir()), "fun-preload-test6");
       mkdirSync(preloadDir, { recursive: true });
       const preloadPath = join(preloadDir, "preload.js");
       const mainPath = join(preloadDir, "boop.txt");
-      await Bun.write(preloadPath, preloadModule);
-      await Bun.write(mainPath, "beep");
+      await Fun.write(preloadPath, preloadModule);
+      await Fun.write(mainPath, "beep");
 
       const cmds = [
-        [bunExe(), "-r=" + preloadPath, "run", mainPath],
-        [bunExe(), "-r=" + preloadPath, mainPath],
+        [funExe(), "-r=" + preloadPath, "run", mainPath],
+        [funExe(), "-r=" + preloadPath, mainPath],
       ];
 
       for (let cmd of cmds) {
@@ -137,7 +137,7 @@ plugin({
           cwd: preloadDir,
           stderr: "pipe",
           stdout: "pipe",
-          env: bunEnv,
+          env: funEnv,
         });
 
         expect(stderr.toString()).toBe("");
@@ -150,18 +150,18 @@ plugin({
   test("throws an error when preloaded module fails to execute", async () => {
     const preloadModule = "throw new Error('preload test failed');";
 
-    const preloadDir = join(realpathSync(tmpdir()), "bun-preload-test3");
+    const preloadDir = join(realpathSync(tmpdir()), "fun-preload-test3");
     mkdirSync(preloadDir, { recursive: true });
     const preloadPath = join(preloadDir, "preload.js");
     const mainPath = join(preloadDir, "main.js");
-    const bunfigPath = join(preloadDir, "bunfig.toml");
-    await Bun.write(preloadPath, preloadModule);
-    await Bun.write(mainPath, mainModule);
-    await Bun.write(bunfigPath, bunfig);
+    const funfigPath = join(preloadDir, "funfig.toml");
+    await Fun.write(preloadPath, preloadModule);
+    await Fun.write(mainPath, mainModule);
+    await Fun.write(funfigPath, funfig);
 
     const cmds = [
-      [bunExe(), "run", mainPath],
-      [bunExe(), mainPath],
+      [funExe(), "run", mainPath],
+      [funExe(), mainPath],
     ];
 
     for (let cmd of cmds) {
@@ -170,7 +170,7 @@ plugin({
         cwd: preloadDir,
         stderr: "pipe",
         stdout: "pipe",
-        env: bunEnv,
+        env: funEnv,
       });
 
       expect(stderr.toString()).toContain("preload test failed");
@@ -180,20 +180,20 @@ plugin({
   });
 
   test("throws an error when preloaded module not found", async () => {
-    const bunfig = `preload = ["./bad-file.js"]`;
+    const funfig = `preload = ["./bad-file.js"]`;
 
-    const preloadDir = join(realpathSync(tmpdir()), "bun-preload-test2");
+    const preloadDir = join(realpathSync(tmpdir()), "fun-preload-test2");
     mkdirSync(preloadDir, { recursive: true });
     const preloadPath = join(preloadDir, "preload.js");
     const mainPath = join(preloadDir, "main.js");
-    const bunfigPath = join(preloadDir, "bunfig.toml");
-    await Bun.write(preloadPath, preloadModule);
-    await Bun.write(mainPath, mainModule);
-    await Bun.write(bunfigPath, bunfig);
+    const funfigPath = join(preloadDir, "funfig.toml");
+    await Fun.write(preloadPath, preloadModule);
+    await Fun.write(mainPath, mainModule);
+    await Fun.write(funfigPath, funfig);
 
     const cmds = [
-      [bunExe(), "run", mainPath],
-      [bunExe(), mainPath],
+      [funExe(), "run", mainPath],
+      [funExe(), mainPath],
     ];
 
     for (let cmd of cmds) {
@@ -202,7 +202,7 @@ plugin({
         cwd: preloadDir,
         stderr: "pipe",
         stdout: "pipe",
-        env: bunEnv,
+        env: funEnv,
       });
 
       expect(stderr.toString()).toContain("preload not found ");

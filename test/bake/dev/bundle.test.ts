@@ -1,5 +1,5 @@
 // Bundle tests are tests concerning bundling bugs that only occur in DevServer.
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { devTest, emptyHtmlFile, minimalFramework } from "../bake-harness";
 
 devTest("import identifier doesnt get renamed", {
@@ -23,9 +23,9 @@ devTest("import identifier doesnt get renamed", {
     await dev.fetch("/").equals("Hello, 456!");
     await dev.patch("routes/index.ts", {
       find: "Hello",
-      replace: "Bun",
+      replace: "Fun",
     });
-    await dev.fetch("/").equals("Bun, 456!");
+    await dev.fetch("/").equals("Fun, 456!");
   },
 });
 devTest("symbol collision with import identifier", {
@@ -433,20 +433,20 @@ devTest("importing html file with text loader (#18154)", {
     await c.expectMessage("<div>hello world</div>");
   },
 });
-devTest("importing bun on the client", {
+devTest("importing fun on the client", {
   files: {
     "index.html": emptyHtmlFile({
       styles: [],
       scripts: ["index.ts"],
     }),
     "index.ts": `
-      import bun from "bun";
-      console.log(bun);
+      import fun from "fun";
+      console.log(fun);
     `,
   },
   async test(dev) {
     await using c = await dev.client("/", {
-      errors: ['index.ts:1:17: error: Browser build cannot import Bun builtin: "bun"'],
+      errors: ['index.ts:1:17: error: Browser build cannot import Fun builtin: "fun"'],
     });
   },
 });

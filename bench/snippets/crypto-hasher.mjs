@@ -6,9 +6,9 @@ import crypto from "node:crypto";
 var foo = Buffer.allocUnsafe(512);
 foo.fill(123);
 
-// if ("Bun" in globalThis) {
-//   const { CryptoHasher } = Bun;
-//   bench("Bun.CryptoHasher(sha512)", () => {
+// if ("Fun" in globalThis) {
+//   const { CryptoHasher } = Fun;
+//   bench("Fun.CryptoHasher(sha512)", () => {
 //     var hasher = new CryptoHasher("sha512");
 //     hasher.update(foo);
 //     hasher.digest();

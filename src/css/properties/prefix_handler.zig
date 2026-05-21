@@ -49,7 +49,7 @@ pub const FallbackHandler = struct {
                                 else
                                     fallback,
                             ),
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     }
                     if (comptime has_vendor_prefix) {
                         if (has_fallbacks and @field(property, field.name[1]).contains(VendorPrefix{ .none = true })) {
@@ -72,7 +72,7 @@ pub const FallbackHandler = struct {
                             else
                                 val,
                         ),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 } else if (@field(this, field.name) != null) {
                     const index = @field(this, field.name).?;
                     dest.items[index] = @unionInit(
@@ -115,7 +115,7 @@ pub const FallbackHandler = struct {
                 dest.items[i] = Property{ .unparsed = unparsed };
             } else {
                 index.* = dest.items.len;
-                bun.handleOom(dest.append(context.allocator, Property{ .unparsed = unparsed }));
+                fun.handleOom(dest.append(context.allocator, Property{ .unparsed = unparsed }));
             }
 
             return true;
@@ -131,5 +131,5 @@ pub const FallbackHandler = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

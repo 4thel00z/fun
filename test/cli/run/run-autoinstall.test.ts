@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { mkdirSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 //   --install=<val>                 Configure auto-install behavior. One of "auto" (default, auto-installs when no node_modules), "fallback" (missing packages only), "force" (always).
@@ -23,14 +23,14 @@ describe("basic autoinstall", () => {
       test(`${install || "<no flag>"} ${has_node_modules ? "with" : "without"} node_modules ${should_install ? "should" : "should not"} autoinstall`, async () => {
         const dir = tmpdirSync();
         mkdirSync(dir, { recursive: true });
-        await Bun.write(join(dir, "index.js"), "import isEven from 'is-even'; console.log(isEven(2));");
-        const env = bunEnv;
-        env.BUN_INSTALL = install;
+        await Fun.write(join(dir, "index.js"), "import isEven from 'is-even'; console.log(isEven(2));");
+        const env = funEnv;
+        env.FUN_INSTALL = install;
         if (has_node_modules) {
           mkdirSync(join(dir, "node_modules/abc"), { recursive: true });
         }
-        const { stdout, stderr } = Bun.spawnSync({
-          cmd: [bunExe(), ...(install === "" ? [] : [install]), join(dir, "index.js")],
+        const { stdout, stderr } = Fun.spawnSync({
+          cmd: [funExe(), ...(install === "" ? [] : [install]), join(dir, "index.js")],
           cwd: dir,
           env,
           stdout: "pipe",
@@ -52,11 +52,11 @@ test("--install=fallback to install missing packages", async () => {
   const dir = tmpdirSync();
   mkdirSync(dir, { recursive: true });
   await Promise.all([
-    Bun.write(
+    Fun.write(
       join(dir, "index.js"),
       "import isEven from 'is-even'; import isOdd from 'is-odd'; console.log(isEven(2), isOdd(2));",
     ),
-    Bun.write(
+    Fun.write(
       join(dir, "package.json"),
       JSON.stringify({
         name: "test",
@@ -67,16 +67,16 @@ test("--install=fallback to install missing packages", async () => {
     ),
   ]);
 
-  Bun.spawnSync({
-    cmd: [bunExe(), "install"],
+  Fun.spawnSync({
+    cmd: [funExe(), "install"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
   });
 
-  const { stdout, stderr } = Bun.spawnSync({
-    cmd: [bunExe(), "--install=fallback", join(dir, "index.js")],
+  const { stdout, stderr } = Fun.spawnSync({
+    cmd: [funExe(), "--install=fallback", join(dir, "index.js")],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

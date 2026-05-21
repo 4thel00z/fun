@@ -1,18 +1,18 @@
 /// This runs after we've already populated the compile results
 pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chunk: *Chunk, chunk_index: usize) !void {
-    const trace = bun.perf.trace("Bundler.postProcessJSChunk");
+    const trace = fun.perf.trace("Bundler.postProcessJSChunk");
     defer trace.end();
 
     _ = chunk_index;
     const c = ctx.c;
-    bun.assert(chunk.content == .javascript);
+    fun.assert(chunk.content == .javascript);
 
     js_ast.Expr.Data.Store.create();
     js_ast.Stmt.Data.Store.create();
 
-    defer chunk.renamer.deinit(bun.default_allocator);
+    defer chunk.renamer.deinit(fun.default_allocator);
 
-    var arena = bun.ArenaAllocator.init(worker.allocator);
+    var arena = fun.ArenaAllocator.init(worker.allocator);
     defer arena.deinit();
 
     // Also generate the cross-chunk binding code
@@ -30,7 +30,7 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
     const loader = c.parse_graph.input_files.items(.loader)[chunk.entry_point.source_index];
     const is_typescript = loader.isTypeScript();
     const module_info: ?*analyze_transpiled_module.ModuleInfo = if (generate_module_info)
-        analyze_transpiled_module.ModuleInfo.create(bun.default_allocator, is_typescript) catch null
+        analyze_transpiled_module.ModuleInfo.create(fun.default_allocator, is_typescript) catch null
     else
         null;
 
@@ -133,7 +133,7 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
         // 1c. Same idea for top-level await. The new JSC module loader decides
         // sync vs async evaluation from JSModuleRecord::hasTLA(), which we set
         // from this bit when constructing the record from cached module_info
-        // (BunAnalyzeTranspiledModule). Without it, a bytecode-compiled module
+        // (FunAnalyzeTranspiledModule). Without it, a bytecode-compiled module
         // that contains TLA gets evaluated on the sync path and the suspended
         // generator is dropped — the entry promise resolves immediately and the
         // process exits before the awaited value lands.
@@ -171,7 +171,7 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
                         .s_import => |s| {
                             const record = &source_import_records[s.import_record_index];
                             if (record.path.is_disabled) continue;
-                            if (record.tag == .bun) continue;
+                            if (record.tag == .fun) continue;
                             // Skip bundled imports — these are converted to cross-chunk
                             // imports by the linker. The printer already recorded them
                             // when printing cross_chunk_prefix_stmts.
@@ -271,7 +271,7 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
     errdefer j.deinit();
     const output_format = c.options.output_format;
 
-    var line_offset: bun.SourceMap.LineColumnOffset.Optional = if (c.options.source_maps != .none) .{ .value = .{} } else .{ .null = {} };
+    var line_offset: fun.SourceMap.LineColumnOffset.Optional = if (c.options.source_maps != .none) .{ .value = .{} } else .{ .null = {} };
 
     // Concatenate the generated JavaScript chunks together
 
@@ -310,23 +310,23 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
         is_executable = true;
     }
 
-    // Add @bun comments and CJS wrapper start for each chunk when targeting Bun.
-    const is_bun = c.graph.ast.items(.target)[chunk.entry_point.source_index].isBun();
-    if (is_bun) {
+    // Add @fun comments and CJS wrapper start for each chunk when targeting Fun.
+    const is_fun = c.graph.ast.items(.target)[chunk.entry_point.source_index].isFun();
+    if (is_fun) {
         const cjs_entry_chunk = "(function(exports, require, module, __filename, __dirname) {";
         if (ctx.c.options.generate_bytecode_cache and output_format == .cjs) {
-            const input = "// @bun @bytecode @bun-cjs\n" ++ cjs_entry_chunk;
+            const input = "// @fun @bytecode @fun-cjs\n" ++ cjs_entry_chunk;
             j.pushStatic(input);
             line_offset.advance(input);
         } else if (ctx.c.options.generate_bytecode_cache) {
-            j.pushStatic("// @bun @bytecode\n");
-            line_offset.advance("// @bun @bytecode\n");
+            j.pushStatic("// @fun @bytecode\n");
+            line_offset.advance("// @fun @bytecode\n");
         } else if (output_format == .cjs) {
-            j.pushStatic("// @bun @bun-cjs\n" ++ cjs_entry_chunk);
-            line_offset.advance("// @bun @bun-cjs\n" ++ cjs_entry_chunk);
+            j.pushStatic("// @fun @fun-cjs\n" ++ cjs_entry_chunk);
+            line_offset.advance("// @fun @fun-cjs\n" ++ cjs_entry_chunk);
         } else {
-            j.pushStatic("// @bun\n");
-            line_offset.advance("// @bun\n");
+            j.pushStatic("// @fun\n");
+            line_offset.advance("// @fun\n");
         }
     }
 
@@ -360,18 +360,18 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
             const source_index = compile_result.sourceIndex();
             if (source_index != Index.runtime.value) break;
             line_offset.advance(compile_result.code());
-            j.push(compile_result.code(), bun.default_allocator);
+            j.push(compile_result.code(), fun.default_allocator);
         }
     }
 
     switch (c.options.output_format) {
         .internal_bake_dev => {
-            const start = bun.bake.getHmrRuntime(if (c.options.target.isServerSide()) .server else .client);
+            const start = fun.bake.getHmrRuntime(if (c.options.target.isServerSide()) .server else .client);
             j.pushStatic(start.code);
             line_offset.advance(start.code);
         },
         .iife => {
-            // Bun does not do arrow function lowering. So the wrapper can be an arrow.
+            // Fun does not do arrow function lowering. So the wrapper can be an arrow.
             const start = if (c.options.minify_whitespace) "(()=>{" else "(() => {\n";
             j.pushStatic(start);
             line_offset.advance(start);
@@ -389,7 +389,7 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
     var prev_filename_comment: Index.Int = 0;
 
     var compile_results_for_source_map: std.MultiArrayList(CompileResultForSourceMap) = .{};
-    bun.handleOom(compile_results_for_source_map.setCapacity(worker.allocator, compile_results.len));
+    fun.handleOom(compile_results_for_source_map.setCapacity(worker.allocator, compile_results.len));
 
     const show_comments = c.options.mode == .bundle and
         !c.options.minify_whitespace;
@@ -473,10 +473,10 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
         if (is_runtime) {
             if (c.options.output_format != .internal_bake_dev) {
                 line_offset.advance(compile_result.code());
-                j.push(compile_result.code(), bun.default_allocator);
+                j.push(compile_result.code(), fun.default_allocator);
             }
         } else {
-            j.push(compile_result.code(), bun.default_allocator);
+            j.push(compile_result.code(), fun.default_allocator);
 
             if (compile_result.sourceMapChunk()) |source_map_chunk| {
                 if (c.options.source_maps != .none) {
@@ -534,7 +534,7 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
             {
                 const input = c.parse_graph.input_files.items(.source)[chunk.entry_point.source_index].path;
                 var buf = MutableString.initEmpty(worker.allocator);
-                bun.handleOom(js_printer.quoteForJSON(input.pretty, &buf, true));
+                fun.handleOom(js_printer.quoteForJSON(input.pretty, &buf, true));
                 const str = buf.slice(); // worker.allocator is an arena
                 j.pushStatic(str);
                 line_offset.advance(str);
@@ -551,7 +551,7 @@ pub fn postProcessJSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, chu
             }
         },
         .cjs => {
-            if (is_bun) {
+            if (is_fun) {
                 j.pushStatic("})\n");
                 line_offset.advance("})\n");
             }
@@ -1088,38 +1088,38 @@ pub fn generateEntryPointTailJS(
 const analyze_transpiled_module = @import("../analyze_transpiled_module.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const ImportRecord = bun.ImportRecord;
-const Logger = bun.logger;
-const MutableString = bun.MutableString;
-const StringJoiner = bun.StringJoiner;
-const options = bun.options;
-const strings = bun.strings;
+const fun = @import("fun");
+const ImportRecord = fun.ImportRecord;
+const Logger = fun.logger;
+const MutableString = fun.MutableString;
+const StringJoiner = fun.StringJoiner;
+const options = fun.options;
+const strings = fun.strings;
 
-const Chunk = bun.bundle_v2.Chunk;
-const CompileResult = bun.bundle_v2.CompileResult;
-const CompileResultForSourceMap = bun.bundle_v2.CompileResultForSourceMap;
-const Fs = bun.bundle_v2.Fs;
-const Index = bun.bundle_v2.Index;
-const JSAst = bun.bundle_v2.JSAst;
-const JSMeta = bun.bundle_v2.JSMeta;
-const Part = bun.bundle_v2.Part;
-const RefImportData = bun.bundle_v2.RefImportData;
-const ResolvedExports = bun.bundle_v2.ResolvedExports;
-const ThreadPool = bun.bundle_v2.ThreadPool;
-const js_printer = bun.bundle_v2.js_printer;
-const renamer = bun.bundle_v2.renamer;
+const Chunk = fun.bundle_v2.Chunk;
+const CompileResult = fun.bundle_v2.CompileResult;
+const CompileResultForSourceMap = fun.bundle_v2.CompileResultForSourceMap;
+const Fs = fun.bundle_v2.Fs;
+const Index = fun.bundle_v2.Index;
+const JSAst = fun.bundle_v2.JSAst;
+const JSMeta = fun.bundle_v2.JSMeta;
+const Part = fun.bundle_v2.Part;
+const RefImportData = fun.bundle_v2.RefImportData;
+const ResolvedExports = fun.bundle_v2.ResolvedExports;
+const ThreadPool = fun.bundle_v2.ThreadPool;
+const js_printer = fun.bundle_v2.js_printer;
+const renamer = fun.bundle_v2.renamer;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const GenerateChunkCtx = bun.bundle_v2.LinkerContext.GenerateChunkCtx;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const GenerateChunkCtx = fun.bundle_v2.LinkerContext.GenerateChunkCtx;
 
-const js_ast = bun.bundle_v2.js_ast;
+const js_ast = fun.bundle_v2.js_ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const G = js_ast.G;
-const Ref = bun.bundle_v2.js_ast.Ref;
+const Ref = fun.bundle_v2.js_ast.Ref;
 const S = js_ast.S;
 const Scope = js_ast.Scope;
 const Stmt = js_ast.Stmt;

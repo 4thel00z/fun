@@ -9,7 +9,7 @@
 // HTTP thread's deref() takes count 1→0 and enters destroy(), a concurrent
 // JS-thread intern() can find the dying config and do ref() 0→1.
 //
-// On debug builds with BUN_DEBUG_SSLConfig=1, scoped logging in deref()
+// On debug builds with FUN_DEBUG_SSLConfig=1, scoped logging in deref()
 // and destroy() widens the race window from ~10 CPU cycles to ~100μs+.
 //
 // If the race triggers, debugAssert/assertValid panics → non-zero exit.
@@ -64,7 +64,7 @@ async function driver() {
       const r = await fetch(url, { proxy, keepalive: false, tls, signal: driverAbort.signal });
       if ((await r.text()) === "ok") driverOk++;
     } catch {}
-    await Bun.sleep(1);
+    await Fun.sleep(1);
   }
 }
 
@@ -73,7 +73,7 @@ async function driver() {
 // Bounded by hardCap above — if the warmup itself stalls, stop flips and we
 // fall through to report driverOk=0 (a real failure) instead of hanging.
 const driverDone = driver();
-while (driverOk === 0 && !stop) await Bun.sleep(1);
+while (driverOk === 0 && !stop) await Fun.sleep(1);
 probe();
 
 await driverDone;

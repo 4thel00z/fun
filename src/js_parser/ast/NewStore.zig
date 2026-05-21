@@ -20,7 +20,7 @@ pub fn NewStore(comptime types: []const type, comptime count: usize) type {
         break :brk .{ largest_size, largest_align };
     };
 
-    const backing_allocator = bun.default_allocator;
+    const backing_allocator = fun.default_allocator;
 
     const log = Output.scoped(.Store, .hidden);
 
@@ -78,7 +78,7 @@ pub fn NewStore(comptime types: []const type, comptime count: usize) type {
         pub fn init() *Store {
             log("init", .{});
             // Avoid initializing the entire struct.
-            const prealloc = bun.handleOom(backing_allocator.create(PreAlloc));
+            const prealloc = fun.handleOom(backing_allocator.create(PreAlloc));
             prealloc.zero();
 
             return &prealloc.metadata;
@@ -95,7 +95,7 @@ pub fn NewStore(comptime types: []const type, comptime count: usize) type {
             }
 
             const prealloc: PreAlloc = @fieldParentPtr("metadata", store);
-            bun.assert(&prealloc.first_block == store.head);
+            fun.assert(&prealloc.first_block == store.head);
             backing_allocator.destroy(prealloc);
         }
 
@@ -115,7 +115,7 @@ pub fn NewStore(comptime types: []const type, comptime count: usize) type {
         }
 
         fn allocate(store: *Store, comptime T: type) *T {
-            comptime bun.assert(@sizeOf(T) > 0); // don't allocate!
+            comptime fun.assert(@sizeOf(T) > 0); // don't allocate!
             comptime if (!supportsType(T)) {
                 @compileError("Store does not know about type: " ++ @typeName(T));
             };
@@ -129,7 +129,7 @@ pub fn NewStore(comptime types: []const type, comptime count: usize) type {
                 break :brk next;
             } else brk: {
                 const new_block = backing_allocator.create(Block) catch
-                    bun.outOfMemory();
+                    fun.outOfMemory();
                 new_block.zero();
                 store.current.next = new_block;
                 break :brk new_block;
@@ -144,7 +144,7 @@ pub fn NewStore(comptime types: []const type, comptime count: usize) type {
         pub inline fn append(store: *Store, comptime T: type, data: T) *T {
             const ptr = store.allocate(T);
             if (Environment.isDebug) {
-                log("append({s}) -> 0x{x}", .{ bun.meta.typeName(T), @intFromPtr(ptr) });
+                log("append({s}) -> 0x{x}", .{ fun.meta.typeName(T), @intFromPtr(ptr) });
             }
             ptr.* = data;
             return ptr;
@@ -166,6 +166,6 @@ pub fn NewStore(comptime types: []const type, comptime count: usize) type {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;

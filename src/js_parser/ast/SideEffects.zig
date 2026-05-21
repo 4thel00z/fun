@@ -375,7 +375,7 @@ pub const SideEffects = enum(u1) {
         const stack_bottom = stack.items.len;
         defer stack.shrinkRetainingCapacity(stack_bottom);
 
-        bun.handleOom(stack.append(.{ .bin = expr.data.e_binary }));
+        fun.handleOom(stack.append(.{ .bin = expr.data.e_binary }));
 
         // Build stack up of expressions
         var left: Expr = expr.data.e_binary.left;
@@ -385,7 +385,7 @@ pub const SideEffects = enum(u1) {
                 .bin_strict_ne,
                 .bin_comma,
                 => {
-                    bun.handleOom(stack.append(.{ .bin = left_bin }));
+                    fun.handleOom(stack.append(.{ .bin = left_bin }));
                     left = left_bin.left;
                 },
                 else => break,
@@ -895,12 +895,12 @@ const string = []const u8;
 
 const options = @import("../../bundler/options.zig");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
 const Expr = js_ast.Expr;

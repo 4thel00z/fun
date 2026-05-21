@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("Request cache option is set correctly", () => {
   const cacheValues = ["default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached"] as const;

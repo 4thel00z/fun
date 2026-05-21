@@ -39,7 +39,7 @@ function run() {
   if (hit === 0) {
     setTimeout(() => { ticked = true; }, 1);
     const now = Date.now();
-    // BUN: blocking duration changed from 2ms to 20ms as our Date.now() is slightly less precise
+    // FUN: blocking duration changed from 2ms to 20ms as our Date.now() is slightly less precise
     // than Node on Windows, and setTimeout() uses a different clock than Date.now(), so sometimes
     // this loop will finish blocking for 2ms but the setTimeout() will not fire yet
     while (Date.now() - now < 20);

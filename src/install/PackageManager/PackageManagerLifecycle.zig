@@ -7,13 +7,13 @@ pub const LifecycleScriptTimeLog = struct {
         duration: u64,
     };
 
-    mutex: bun.Mutex = .{},
+    mutex: fun.Mutex = .{},
     list: std.ArrayListUnmanaged(Entry) = .{},
 
     pub fn appendConcurrent(log: *LifecycleScriptTimeLog, allocator: std.mem.Allocator, entry: Entry) void {
         log.mutex.lock();
         defer log.mutex.unlock();
-        bun.handleOom(log.list.append(allocator, entry));
+        fun.handleOom(log.list.append(allocator, entry));
     }
 
     /// this can be called if .start was never called
@@ -40,7 +40,7 @@ pub const LifecycleScriptTimeLog = struct {
             Output.warn("{s}'s {s} script took {f}\n\n", .{
                 longest.package_name,
                 Lockfile.Scripts.names[longest.script_id],
-                bun.fmt.fmtDurationOneDecimal(longest.duration),
+                fun.fmt.fmtDurationOneDecimal(longest.duration),
             });
             Output.flush();
         }
@@ -54,7 +54,7 @@ pub fn ensurePreinstallStateListCapacity(this: *PackageManager, count: usize) vo
     }
 
     const offset = this.preinstall_state.items.len;
-    bun.handleOom(this.preinstall_state.ensureTotalCapacity(this.allocator, count));
+    fun.handleOom(this.preinstall_state.ensureTotalCapacity(this.allocator, count));
     this.preinstall_state.expandToCapacity();
     @memset(this.preinstall_state.items[offset..], PreinstallState.unknown);
 }
@@ -138,8 +138,8 @@ pub fn determinePreinstallState(
             // 3. apply patch to temp dir
             // 4. rename temp dir to `folder_path`
             if (patch_hash != null) {
-                const non_patched_path_ = folder_path[0 .. std.mem.indexOf(u8, folder_path, "_patch_hash=") orelse @panic("Expected folder path to contain `patch_hash=`, this is a bug in Bun. Please file a GitHub issue.")];
-                const non_patched_path = bun.handleOom(manager.lockfile.allocator.dupeZ(u8, non_patched_path_));
+                const non_patched_path_ = folder_path[0 .. std.mem.indexOf(u8, folder_path, "_patch_hash=") orelse @panic("Expected folder path to contain `patch_hash=`, this is a bug in Fun. Please file a GitHub issue.")];
+                const non_patched_path = fun.handleOom(manager.lockfile.allocator.dupeZ(u8, non_patched_path_));
                 defer manager.lockfile.allocator.free(non_patched_path);
                 if (manager.isFolderInCache(non_patched_path)) {
                     manager.setPreinstallState(pkg.meta.id, manager.lockfile, .apply_patch);
@@ -176,7 +176,7 @@ pub fn sleep(this: *PackageManager) void {
 pub fn reportSlowLifecycleScripts(this: *PackageManager) void {
     const log_level = this.options.log_level;
     if (log_level == .silent) return;
-    if (bun.feature_flag.BUN_DISABLE_SLOW_LIFECYCLE_SCRIPT_LOGGING.get()) {
+    if (fun.feature_flag.FUN_DISABLE_SLOW_LIFECYCLE_SCRIPT_LOGGING.get()) {
         return;
     }
 
@@ -185,7 +185,7 @@ pub fn reportSlowLifecycleScripts(this: *PackageManager) void {
             return;
         }
         this.cached_tick_for_slow_lifecycle_script_logging = this.event_loop.iterationNumber();
-        const current_time = bun.timespec.now(.allow_mocked_time).ns();
+        const current_time = fun.timespec.now(.allow_mocked_time).ns();
         const time_running = current_time -| active_lifecycle_script_running_for_the_longest_amount_of_time.started_at;
         const interval: u64 = if (log_level.isVerbose()) std.time.ns_per_s * 5 else std.time.ns_per_s * 30;
         if (time_running > interval and current_time -| this.last_reported_slow_lifecycle_script_at > interval) {
@@ -195,12 +195,12 @@ pub fn reportSlowLifecycleScripts(this: *PackageManager) void {
             if (!(package_name.len > 1 and package_name[package_name.len - 1] == 's')) {
                 Output.warn("{s}'s postinstall cost you {f}\n", .{
                     package_name,
-                    bun.fmt.fmtDurationOneDecimal(time_running),
+                    fun.fmt.fmtDurationOneDecimal(time_running),
                 });
             } else {
                 Output.warn("{s}' postinstall cost you {f}\n", .{
                     package_name,
-                    bun.fmt.fmtDurationOneDecimal(time_running),
+                    fun.fmt.fmtDurationOneDecimal(time_running),
                 });
             }
             Output.flush();
@@ -219,7 +219,7 @@ pub fn loadRootLifecycleScripts(this: *PackageManager, root_package: Package) vo
     // need to clone because this is a copy before Lockfile.cleanWithLogger
     const name = root_package.name.slice(buf);
 
-    var top_level_dir: bun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
+    var top_level_dir: fun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
     defer top_level_dir.deinit();
 
     if (root_package.scripts.hasAny()) {
@@ -275,12 +275,12 @@ pub fn spawnPackageLifecycleScripts(
     const cwd = list.cwd;
     var this_transpiler = try this.configureEnvForScripts(ctx, log_level);
 
-    var script_env = try this_transpiler.env.map.cloneWithAllocator(bun.default_allocator);
+    var script_env = try this_transpiler.env.map.cloneWithAllocator(fun.default_allocator);
     defer script_env.map.deinit();
 
     const original_path = script_env.get("PATH") orelse "";
 
-    var PATH: bun.EnvPath(.{}) = try .initCapacity(bun.default_allocator, original_path.len + 1 + "node_modules/.bin".len + cwd.len + 1);
+    var PATH: fun.EnvPath(.{}) = try .initCapacity(fun.default_allocator, original_path.len + 1 + "node_modules/.bin".len + cwd.len + 1);
     defer PATH.deinit();
 
     var parent: ?string = cwd;
@@ -305,7 +305,7 @@ pub fn spawnPackageLifecycleScripts(
         }
 
         if (this.env.get("PATH")) |env_path| {
-            break :shell_bin bun.cli.RunCommand.findShell(env_path, cwd);
+            break :shell_bin fun.cli.RunCommand.findShell(env_path, cwd);
         }
 
         break :shell_bin null;
@@ -329,7 +329,7 @@ pub fn findTrustedDependenciesFromUpdateRequests(this: *PackageManager) std.Auto
                     const package_id = this.lockfile.buffers.resolutions.items[dep_id];
                     if (package_id == invalid_package_id) continue;
 
-                    const entry = bun.handleOom(set.getOrPut(this.lockfile.allocator, @truncate(root_dep.name_hash)));
+                    const entry = fun.handleOom(set.getOrPut(this.lockfile.allocator, @truncate(root_dep.name_hash)));
                     if (!entry.found_existing) {
                         const dependency_slice = parts.items(.dependencies)[package_id];
                         addDependenciesToSet(&set, this.lockfile, dependency_slice);
@@ -356,7 +356,7 @@ fn addDependenciesToSet(
         if (package_id == invalid_package_id) continue;
 
         const dep = lockfile.buffers.dependencies.items[dep_id];
-        const entry = bun.handleOom(names.getOrPut(lockfile.allocator, @truncate(dep.name_hash)));
+        const entry = fun.handleOom(names.getOrPut(lockfile.allocator, @truncate(dep.name_hash)));
         if (!entry.found_existing) {
             const dependency_slice = lockfile.packages.items(.dependencies)[package_id];
             addDependenciesToSet(names, lockfile, dependency_slice);
@@ -368,26 +368,26 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const Path = bun.path;
-const Syscall = bun.sys;
-const default_allocator = bun.default_allocator;
-const Command = bun.cli.Command;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const Path = fun.path;
+const Syscall = fun.sys;
+const default_allocator = fun.default_allocator;
+const Command = fun.cli.Command;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const LifecycleScriptSubprocess = bun.install.LifecycleScriptSubprocess;
-const PackageID = bun.install.PackageID;
-const PackageManager = bun.install.PackageManager;
-const PreinstallState = bun.install.PreinstallState;
-const TruncatedPackageNameHash = bun.install.TruncatedPackageNameHash;
-const invalid_package_id = bun.install.invalid_package_id;
+const LifecycleScriptSubprocess = fun.install.LifecycleScriptSubprocess;
+const PackageID = fun.install.PackageID;
+const PackageManager = fun.install.PackageManager;
+const PreinstallState = fun.install.PreinstallState;
+const TruncatedPackageNameHash = fun.install.TruncatedPackageNameHash;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;

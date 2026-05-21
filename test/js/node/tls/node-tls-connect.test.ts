@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { once } from "events";
-import { bunEnv, bunExe, tls as COMMON_CERT_ } from "harness";
+import { funEnv, funExe, tls as COMMON_CERT_ } from "harness";
 import net from "net";
 import { join } from "path";
 import stream from "stream";
@@ -9,7 +9,7 @@ import tls, { checkServerIdentity, connect as tlsConnect, TLSSocket } from "tls"
 import type { AddressInfo } from "net";
 import { Duplex } from "node:stream";
 
-const symbolConnectOptions = Symbol.for("::buntlsconnectoptions::");
+const symbolConnectOptions = Symbol.for("::funtlsconnectoptions::");
 
 class SocketProxy extends Duplex {
   socket: net.Socket;
@@ -149,8 +149,8 @@ for (const { name, connect } of tests) {
       try {
         let socket: TLSSocket | null = connect({
           ALPNProtocols: ["http/1.1"],
-          host: "bun.sh",
-          servername: "bun.sh",
+          host: "fun.dev",
+          servername: "fun.dev",
           port: 443,
           rejectUnauthorized: false,
         });
@@ -170,11 +170,11 @@ for (const { name, connect } of tests) {
     });
     const COMMON_CERT = { ...COMMON_CERT_ };
 
-    it("Bun.serve() should work with tls and Bun.file()", async () => {
-      using server = Bun.serve({
+    it("Fun.serve() should work with tls and Fun.file()", async () => {
+      using server = Fun.serve({
         port: 0,
         fetch() {
-          return new Response(Bun.file(join(import.meta.dir, "fixtures/index.html")));
+          return new Response(Fun.file(join(import.meta.dir, "fixtures/index.html")));
         },
         tls: {
           cert: COMMON_CERT.cert,
@@ -186,7 +186,7 @@ for (const { name, connect } of tests) {
     });
 
     it("should have peer certificate when using self asign certificate", async () => {
-      using server = Bun.serve({
+      using server = Fun.serve({
         tls: {
           cert: COMMON_CERT.cert,
           key: COMMON_CERT.key,
@@ -219,19 +219,19 @@ for (const { name, connect } of tests) {
         expect(cert).toBeDefined();
         expect(cert.subject).toMatchObject({
           C: "US",
-          CN: "server-bun",
+          CN: "server-fun",
           L: "San Francisco",
           O: "Oven",
-          OU: "Team Bun",
+          OU: "Team Fun",
           ST: "CA",
         });
         expect(cert.issuer).toBeDefined();
         expect(cert.issuer).toMatchObject({
           C: "US",
-          CN: "server-bun",
+          CN: "server-fun",
           L: "San Francisco",
           O: "Oven",
-          OU: "Team Bun",
+          OU: "Team Fun",
           ST: "CA",
         });
         expect(cert.subjectaltname).toBe("DNS:localhost, IP Address:127.0.0.1, IP Address:0:0:0:0:0:0:0:1");
@@ -264,8 +264,8 @@ for (const { name, connect } of tests) {
         const instance = connect(
           {
             ALPNProtocols: ["http/1.1"],
-            host: "bun.sh",
-            servername: "bun.sh",
+            host: "fun.dev",
+            servername: "fun.dev",
             port: 443,
             rejectUnauthorized: false,
             requestCert: true,
@@ -282,8 +282,8 @@ for (const { name, connect } of tests) {
         expect(cert).toBeDefined();
         expect(cert.subject).toBeDefined();
         // this should never change
-        expect(cert.subject.CN).toBe("bun.sh");
-        expect(cert.subjectaltname).toContain("DNS:bun.sh");
+        expect(cert.subject.CN).toBe("fun.dev");
+        expect(cert.subjectaltname).toContain("DNS:fun.dev");
         expect(cert.infoAccess).toBeDefined();
         // we just check the types this can change over time
         const infoAccess = cert.infoAccess as NodeJS.Dict<string[]>;
@@ -328,8 +328,8 @@ for (const { name, connect } of tests) {
       const socket = (await new Promise((resolve, reject) => {
         connect({
           ALPNProtocols: ["http/1.1"],
-          host: "bun.sh",
-          servername: "bun.sh",
+          host: "fun.dev",
+          servername: "fun.dev",
           port: 443,
           rejectUnauthorized: false,
           requestCert: true,
@@ -371,13 +371,13 @@ for (const { name, connect } of tests) {
     it.skipIf(connect === duplexProxy)("should process options correctly when connect is called with only options", done => {
       let socket = connect({
         port: 443,
-        host: "bun.sh",
+        host: "fun.dev",
         rejectUnauthorized: false,
       });
 
       socket.on("secureConnect", () => {
         expect(socket.remotePort).toBe(443);
-        expect(socket[symbolConnectOptions].servername).toBe("bun.sh");
+        expect(socket[symbolConnectOptions].servername).toBe("fun.dev");
         socket.end();
         done();
       });
@@ -390,7 +390,7 @@ for (const { name, connect } of tests) {
 
     // Test using port and host
     it("should process port and host correctly", done => {
-      let socket = connect(443, "bun.sh", {
+      let socket = connect(443, "fun.dev", {
         rejectUnauthorized: false,
       });
 
@@ -398,7 +398,7 @@ for (const { name, connect } of tests) {
         if (connect === tlsConnect) {
           expect(socket.remotePort).toBe(443);
         }
-        expect(socket[symbolConnectOptions].servername).toBe("bun.sh");
+        expect(socket[symbolConnectOptions].servername).toBe("fun.dev");
         socket.end();
         done();
       });
@@ -413,7 +413,7 @@ for (const { name, connect } of tests) {
     it("should process port, host, and callback correctly", done => {
       let socket = connect(
         443,
-        "bun.sh",
+        "fun.dev",
         {
           rejectUnauthorized: false,
         },
@@ -421,7 +421,7 @@ for (const { name, connect } of tests) {
           if (connect === tlsConnect) {
             expect(socket.remotePort).toBe(443);
           }
-          expect(socket[symbolConnectOptions].servername).toBe("bun.sh");
+          expect(socket[symbolConnectOptions].servername).toBe("fun.dev");
           socket.end();
           done();
         },
@@ -432,12 +432,12 @@ for (const { name, connect } of tests) {
 
     // Additional tests to ensure the callback is optional and handled correctly
     it("should handle the absence of a callback gracefully", done => {
-      let socket = connect(443, "bun.sh", {
+      let socket = connect(443, "fun.dev", {
         rejectUnauthorized: false,
       });
 
       socket.on("secureConnect", () => {
-        expect(socket[symbolConnectOptions].servername).toBe("bun.sh");
+        expect(socket[symbolConnectOptions].servername).toBe("fun.dev");
         if (connect === tlsConnect) {
           expect(socket.remotePort).toBe(443);
         }
@@ -455,7 +455,7 @@ for (const { name, connect } of tests) {
       const socket = connect(
         {
           port: 443,
-          host: "bun.sh",
+          host: "fun.dev",
         },
         () => {
           socket.setTimeout(1000, () => {
@@ -483,8 +483,8 @@ for (const { name, connect } of tests) {
       const socket = connect(
         {
           port: 443,
-          host: "bun.com",
-          servername: "bun.com",
+          host: "fun.dev",
+          servername: "fun.dev",
         },
         () => {
           let data = "";
@@ -499,8 +499,8 @@ for (const { name, connect } of tests) {
             }
           });
           socket.write("GET / HTTP/1.1\r\n");
-          socket.write("Host: bun.com\r\n");
-          socket.write("User-Agent: Bun/1.0\r\n");
+          socket.write("Host: fun.dev\r\n");
+          socket.write("User-Agent: Fun/1.0\r\n");
           socket.write("Accept: */*\r\n");
           socket.write("Accept-Encoding: identity\r\n");
           socket.write("Connection: close\r\n");
@@ -523,9 +523,9 @@ it("setSession() should not leak the SSL_SESSION returned by d2i_SSL_SESSION", a
   //
   // Without the SSL_SESSION_free: ~125–140 MB growth (~7 KB leaked per call).
   // With it: ~5–10 MB (allocator noise, no per-call growth).
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dirname, "node-tls-set-session-leak.fixture.ts"), "20000"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dirname, "node-tls-set-session-leak.fixture.ts"), "20000"],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

@@ -1,16 +1,16 @@
 import {
 __require
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
-__HMRClient as Bun
-} from "http://localhost:8080/bun:wrap";
-Bun.activate(false);
+__HMRClient as Fun
+} from "http://localhost:8080/fun:wrap";
+Fun.activate(false);
 import {
 __FastRefreshModule as FastHMR
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
 __FastRefreshRuntime as FastRefresh
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import * as $75175720 from "http://localhost:8080/node_modules/lodash/lodash.js";
 var { shuffle} = __require($75175720);
 var hmr = new FastHMR(2675673186, "lodash-regexp.js", FastRefresh), exports = hmr.exports;

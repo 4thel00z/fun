@@ -1,13 +1,13 @@
 ---
-title: Spy on methods in `bun test`
+title: Spy on methods in `fun test`
 sidebarTitle: Spy on methods
 mode: center
 ---
 
-Use the `spyOn` utility to track method calls with Bun's test runner.
+Use the `spyOn` utility to track method calls with Fun's test runner.
 
 ```ts
-import { test, expect, spyOn } from "bun:test";
+import { test, expect, spyOn } from "fun:test";
 
 const leo = {
   name: "Leonardo",
@@ -25,7 +25,7 @@ Once the spy is created, it can be used to write `expect` assertions relating to
 
 {/* prettier-ignore */}
 ```ts
-import { test, expect, spyOn } from "bun:test";
+import { test, expect, spyOn } from "fun:test";
 
 const leo = {
   name: "Leonardo",
@@ -46,4 +46,4 @@ test("turtles", () => { // [!code ++]
 
 ---
 
-See [Docs > Test Runner > Mocks](/test/mocks) for complete documentation on mocking with the Bun test runner.
+See [Docs > Test Runner > Mocks](/test/mocks) for complete documentation on mocking with the Fun test runner.

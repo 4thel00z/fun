@@ -1,8 +1,8 @@
 /**
- * @note `fs.glob` et. al. are powered by {@link Bun.Glob}, which is extensively
+ * @note `fs.glob` et. al. are powered by {@link Fun.Glob}, which is extensively
  * tested elsewhere. These tests check API compatibility with Node.js.
  */
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "fun:test";
 import { isWindows, tempDirWithFiles } from "harness";
 import fs from "node:fs";
 

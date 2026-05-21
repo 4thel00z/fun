@@ -1,7 +1,7 @@
-pub fn getBunServerAllClosedPromise(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn getFunServerAllClosedPromise(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
     if (arguments.len < 1) {
-        return globalThis.throwNotEnoughArguments("getBunServerAllClosePromise", 1, arguments.len);
+        return globalThis.throwNotEnoughArguments("getFunServerAllClosePromise", 1, arguments.len);
     }
 
     const value = arguments[0];
@@ -17,16 +17,16 @@ pub fn getBunServerAllClosedPromise(globalThis: *jsc.JSGlobalObject, callframe: 
         }
     }
 
-    return globalThis.throwInvalidArgumentTypeValue("server", "bun.Server", value);
+    return globalThis.throwInvalidArgumentTypeValue("server", "fun.Server", value);
 }
 
-pub fn getMaxHTTPHeaderSize(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn getMaxHTTPHeaderSize(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     _ = globalThis; // autofix
     _ = callframe; // autofix
-    return jsc.JSValue.jsNumber(bun.http.max_http_header_size);
+    return jsc.JSValue.jsNumber(fun.http.max_http_header_size);
 }
 
-pub fn setMaxHTTPHeaderSize(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn setMaxHTTPHeaderSize(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
     if (arguments.len < 1) {
         return globalThis.throwNotEnoughArguments("setMaxHTTPHeaderSize", 1, arguments.len);
@@ -36,9 +36,9 @@ pub fn setMaxHTTPHeaderSize(globalThis: *jsc.JSGlobalObject, callframe: *jsc.Cal
     if (num <= 0) {
         return globalThis.throwInvalidArgumentTypeValue("maxHeaderSize", "non-negative integer", value);
     }
-    bun.http.max_http_header_size = @intCast(num);
-    return jsc.JSValue.jsNumber(bun.http.max_http_header_size);
+    fun.http.max_http_header_size = @intCast(num);
+    return jsc.JSValue.jsNumber(fun.http.max_http_header_size);
 }
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

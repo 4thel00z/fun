@@ -18,8 +18,8 @@
 #include "wtf/text/WTFString.h"
 #include "wtf/ASCIICType.h"
 #include "ZigGlobalObject.h"
-#include "NodeValidator.h" // For Bun::V::
-#include "ErrorCode.h" // For Bun::ERR::
+#include "NodeValidator.h" // For Fun::V::
+#include "ErrorCode.h" // For Fun::ERR::
 #include "JavaScriptCore/JSMapInlines.h"
 
 namespace WebCore {
@@ -395,7 +395,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncGet, (JSGlobalObject * globalObjec
     // 1. Get this value
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
 
@@ -425,7 +425,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncHas, (JSGlobalObject * globalObjec
 
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
 
@@ -447,7 +447,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncSet, (JSGlobalObject * globalObjec
 
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
 
@@ -464,14 +464,14 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncSet, (JSGlobalObject * globalObjec
     int invalidNameIndex = findFirstInvalidHTTPTokenChar(nameStr);
     if (nameStr.isEmpty() || invalidNameIndex != -1) {
         scope.release();
-        return Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "parameter name"_s, nameStr, invalidNameIndex);
+        return Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "parameter name"_s, nameStr, invalidNameIndex);
     }
 
     // Validate value (must contain only valid quoted-string characters)
     int invalidValueIndex = findFirstInvalidHTTPQuotedStringChar(valueStr);
     if (invalidValueIndex != -1) {
         scope.release();
-        return Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "parameter value"_s, valueStr, invalidValueIndex);
+        return Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "parameter value"_s, valueStr, invalidValueIndex);
     }
 
     // 2. Perform Set Operation
@@ -489,7 +489,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncDelete, (JSGlobalObject * globalOb
 
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
 
@@ -511,7 +511,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncToString, (JSGlobalObject * global
 
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
 
@@ -524,7 +524,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncToString, (JSGlobalObject * global
     JSMapIterator* iterator = dynamicDowncast<JSMapIterator>(iteratorValue);
     if (!iterator) { // Should not happen for JSMap.entries()
         scope.release();
-        return Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "Internal error: Expected MapIterator"_s, "toString"_s, -1);
+        return Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "Internal error: Expected MapIterator"_s, "toString"_s, -1);
     }
 
     while (true) {
@@ -563,7 +563,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncEntries, (JSGlobalObject * globalO
     auto scope = DECLARE_THROW_SCOPE(vm);
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
     RELEASE_AND_RETURN(scope, JSValue::encode(JSMapIterator::create(vm, globalObject->mapIteratorStructure(), thisObject->jsMap(), IterationKind::Entries)));
@@ -575,7 +575,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncKeys, (JSGlobalObject * globalObje
     auto scope = DECLARE_THROW_SCOPE(vm);
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
     RELEASE_AND_RETURN(scope, JSValue::encode(JSMapIterator::create(vm, globalObject->mapIteratorStructure(), thisObject->jsMap(), IterationKind::Keys)));
@@ -587,7 +587,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMEParamsProtoFuncValues, (JSGlobalObject * globalOb
     auto scope = DECLARE_THROW_SCOPE(vm);
     auto* thisObject = dynamicDowncast<JSMIMEParams>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEParams"));
         RETURN_IF_EXCEPTION(scope, {});
     }
     RELEASE_AND_RETURN(scope, JSValue::encode(JSMapIterator::create(vm, globalObject->mapIteratorStructure(), thisObject->jsMap(), IterationKind::Values)));

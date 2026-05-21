@@ -4,11 +4,11 @@ pub fn generateCompileResultForCssChunk(task: *ThreadPoolLib.Task) void {
     var worker = ThreadPool.Worker.get(@fieldParentPtr("linker", ctx.c));
     defer worker.unget();
 
-    const prev_action = if (Environment.show_crash_trace) bun.crash_handler.current_action;
+    const prev_action = if (Environment.show_crash_trace) fun.crash_handler.current_action;
     defer if (Environment.show_crash_trace) {
-        bun.crash_handler.current_action = prev_action;
+        fun.crash_handler.current_action = prev_action;
     };
-    if (Environment.show_crash_trace) bun.crash_handler.current_action = .{ .bundle_generate_chunk = .{
+    if (Environment.show_crash_trace) fun.crash_handler.current_action = .{ .bundle_generate_chunk = .{
         .chunk = ctx.chunk,
         .context = ctx.c,
         .part_range = &part_range.part_range,
@@ -18,7 +18,7 @@ pub fn generateCompileResultForCssChunk(task: *ThreadPoolLib.Task) void {
 }
 
 fn generateCompileResultForCssChunkImpl(worker: *ThreadPool.Worker, c: *LinkerContext, chunk: *Chunk, imports_in_chunk_index: u32) CompileResult {
-    const trace = bun.perf.trace("Bundler.generateCodeForFileInChunkCss");
+    const trace = fun.perf.trace("Bundler.generateCodeForFileInChunkCss");
     defer trace.end();
 
     var arena = &worker.temporary_arena;
@@ -26,16 +26,16 @@ fn generateCompileResultForCssChunkImpl(worker: *ThreadPool.Worker, c: *LinkerCo
     defer _ = arena.reset(.retain_capacity);
 
     const css_import = chunk.content.css.imports_in_chunk_in_order.at(imports_in_chunk_index);
-    const css: *const bun.css.BundlerStyleSheet = &chunk.content.css.asts[imports_in_chunk_index];
+    const css: *const fun.css.BundlerStyleSheet = &chunk.content.css.asts[imports_in_chunk_index];
     // const symbols: []const Symbol.List = c.graph.ast.items(.symbols);
     const symbols = &c.graph.symbols;
 
     switch (css_import.kind) {
         .layers => {
-            const printer_options = bun.css.PrinterOptions{
+            const printer_options = fun.css.PrinterOptions{
                 // TODO: make this more configurable
                 .minify = c.options.minify_whitespace,
-                .targets = bun.css.Targets.forBundlerTarget(c.options.target),
+                .targets = fun.css.Targets.forBundlerTarget(c.options.target),
             };
             _ = switch (css.toCssWithWriter(
                 worker.allocator,
@@ -71,10 +71,10 @@ fn generateCompileResultForCssChunkImpl(worker: *ThreadPool.Worker, c: *LinkerCo
             var import_records = BabyList(ImportRecord).fromBorrowedSliceDangerous(
                 css_import.condition_import_records.sliceConst(),
             );
-            const printer_options = bun.css.PrinterOptions{
+            const printer_options = fun.css.PrinterOptions{
                 // TODO: make this more configurable
                 .minify = c.options.minify_whitespace,
-                .targets = bun.css.Targets.forBundlerTarget(c.options.target),
+                .targets = fun.css.Targets.forBundlerTarget(c.options.target),
             };
             _ = switch (css.toCssWithWriter(
                 worker.allocator,
@@ -108,8 +108,8 @@ fn generateCompileResultForCssChunkImpl(worker: *ThreadPool.Worker, c: *LinkerCo
             };
         },
         .source_index => |idx| {
-            const printer_options = bun.css.PrinterOptions{
-                .targets = bun.css.Targets.forBundlerTarget(c.options.target),
+            const printer_options = fun.css.PrinterOptions{
+                .targets = fun.css.Targets.forBundlerTarget(c.options.target),
                 // TODO: make this more configurable
                 .minify = c.options.minify_whitespace or c.options.minify_syntax or c.options.minify_identifiers,
             };
@@ -153,26 +153,26 @@ fn generateCompileResultForCssChunkImpl(worker: *ThreadPool.Worker, c: *LinkerCo
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const Environment = bun.Environment;
-const ImportRecord = bun.ImportRecord;
-const ThreadPoolLib = bun.ThreadPool;
-const options = bun.options;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const Environment = fun.Environment;
+const ImportRecord = fun.ImportRecord;
+const ThreadPoolLib = fun.ThreadPool;
+const options = fun.options;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Symbol = js_ast.Symbol;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const CompileResult = bundler.CompileResult;
-const Index = bun.bundle_v2.Index;
+const Index = fun.bundle_v2.Index;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const PendingPartRange = LinkerContext.PendingPartRange;

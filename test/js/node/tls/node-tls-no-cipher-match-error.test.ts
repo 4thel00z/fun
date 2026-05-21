@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import * as tls from "node:tls";
 
 const fixtures = require("../test/common/fixtures");

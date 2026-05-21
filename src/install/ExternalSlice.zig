@@ -19,7 +19,7 @@ pub fn ExternalSlice(comptime Type: type) type {
 
         pub inline fn get(this: Slice, in: []const Type) []const Type {
             if (comptime Environment.allow_assert) {
-                bun.assert(this.off + this.len <= in.len);
+                fun.assert(this.off + this.len <= in.len);
             }
             // it should be impossible to address this out of bounds due to the minimum here
             return in.ptr[this.off..@min(in.len, this.off + this.len)];
@@ -27,7 +27,7 @@ pub fn ExternalSlice(comptime Type: type) type {
 
         pub inline fn mut(this: Slice, in: []Type) []Type {
             if (comptime Environment.allow_assert) {
-                bun.assert(this.off + this.len <= in.len);
+                fun.assert(this.off + this.len <= in.len);
             }
             return in.ptr[this.off..@min(in.len, this.off + this.len)];
         }
@@ -42,8 +42,8 @@ pub fn ExternalSlice(comptime Type: type) type {
 
         pub fn init(buf: []const Type, in: []const Type) Slice {
             // if (comptime Environment.allow_assert) {
-            //     bun.assert(@intFromPtr(buf.ptr) <= @intFromPtr(in.ptr));
-            //     bun.assert((@intFromPtr(in.ptr) + in.len) <= (@intFromPtr(buf.ptr) + buf.len));
+            //     fun.assert(@intFromPtr(buf.ptr) <= @intFromPtr(in.ptr));
+            //     fun.assert((@intFromPtr(in.ptr) + in.len) <= (@intFromPtr(buf.ptr) + buf.len));
             // }
 
             return Slice{
@@ -65,9 +65,9 @@ pub const VersionSlice = ExternalSlice(Semver.Version);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const PackageNameHash = bun.install.PackageNameHash;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const PackageNameHash = fun.install.PackageNameHash;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const ExternalString = Semver.ExternalString;

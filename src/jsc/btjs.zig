@@ -1,8 +1,8 @@
 extern const jsc_llint_begin: u8;
 extern const jsc_llint_end: u8;
-/// allocated using bun.default_allocator. when called from lldb, it is never freed.
+/// allocated using fun.default_allocator. when called from lldb, it is never freed.
 pub export fn dumpBtjsTrace() [*:0]const u8 {
-    if (comptime bun.Environment.isDebug) {
+    if (comptime fun.Environment.isDebug) {
         return dumpBtjsTraceDebugImpl();
     }
 
@@ -10,7 +10,7 @@ pub export fn dumpBtjsTrace() [*:0]const u8 {
 }
 
 fn dumpBtjsTraceDebugImpl() [*:0]const u8 {
-    var result_writer = std.Io.Writer.Allocating.init(bun.default_allocator);
+    var result_writer = std.Io.Writer.Allocating.init(fun.default_allocator);
     defer result_writer.deinit();
     const w = &result_writer.writer;
 
@@ -31,7 +31,7 @@ fn dumpBtjsTraceDebugImpl() [*:0]const u8 {
     var context: std.debug.ThreadContext = undefined;
     const has_context = std.debug.getContext(&context);
 
-    var it: std.debug.StackIterator = (if (has_context and !bun.Environment.isWindows) blk: {
+    var it: std.debug.StackIterator = (if (has_context and !fun.Environment.isWindows) blk: {
         break :blk std.debug.StackIterator.initWithContext(null, debug_info, &context) catch null;
     } else null) orelse std.debug.StackIterator.init(null, null);
     defer it.deinit();
@@ -64,7 +64,7 @@ fn dumpBtjsTraceDebugImpl() [*:0]const u8 {
 }
 
 fn printSourceAtAddress(debug_info: *std.debug.SelfInfo, out_stream: *std.Io.Writer, address: usize, tty_config: std.io.tty.Config, fp: usize) !void {
-    if (!bun.Environment.isDebug) unreachable;
+    if (!fun.Environment.isDebug) unreachable;
     const module = debug_info.getModuleForAddress(address) catch |err| switch (err) {
         error.MissingDebugInfo, error.InvalidDebugInfo => return printUnknownSource(debug_info, out_stream, address, tty_config),
         else => return err,
@@ -86,9 +86,9 @@ fn printSourceAtAddress(debug_info: *std.debug.SelfInfo, out_stream: *std.Io.Wri
     }
     const do_llint = probably_llint and allow_llint;
 
-    const frame: *const bun.jsc.CallFrame = @ptrFromInt(fp);
+    const frame: *const fun.jsc.CallFrame = @ptrFromInt(fp);
     if (do_llint) {
-        const srcloc = frame.getCallerSrcLoc(bun.jsc.VirtualMachine.get().global);
+        const srcloc = frame.getCallerSrcLoc(fun.jsc.VirtualMachine.get().global);
         try tty_config.setColor(out_stream, .bold);
         try out_stream.print("{f}:{d}:{d}: ", .{ srcloc.str, srcloc.line, srcloc.column });
         try tty_config.setColor(out_stream, .reset);
@@ -115,7 +115,7 @@ fn printSourceAtAddress(debug_info: *std.debug.SelfInfo, out_stream: *std.Io.Wri
 }
 
 fn printUnknownSource(debug_info: *std.debug.SelfInfo, out_stream: *std.Io.Writer, address: usize, tty_config: std.io.tty.Config) !void {
-    if (!bun.Environment.isDebug) unreachable;
+    if (!fun.Environment.isDebug) unreachable;
     const module_name = debug_info.getModuleNameForAddress(address);
     return printLineInfo(
         out_stream,
@@ -138,7 +138,7 @@ fn printLineInfo(
     comptime printLineFromFile: anytype,
     do_llint: bool,
 ) !void {
-    if (!bun.Environment.isDebug) unreachable;
+    if (!fun.Environment.isDebug) unreachable;
 
     nosuspend {
         try tty_config.setColor(out_stream, .bold);
@@ -180,7 +180,7 @@ fn printLineInfo(
 }
 
 fn printLineFromFileAnyOs(out_stream: *std.Io.Writer, source_location: std.debug.SourceLocation) !void {
-    if (!bun.Environment.isDebug) unreachable;
+    if (!fun.Environment.isDebug) unreachable;
 
     // Need this to always block even in async I/O mode, because this could potentially
     // be called from e.g. the event loop code crashing.
@@ -236,7 +236,7 @@ fn printLineFromFileAnyOs(out_stream: *std.Io.Writer, source_location: std.debug
 }
 
 fn printLastUnwindError(it: *std.debug.StackIterator, debug_info: *std.debug.SelfInfo, out_stream: *std.Io.Writer, tty_config: std.io.tty.Config) void {
-    if (!bun.Environment.isDebug) unreachable;
+    if (!fun.Environment.isDebug) unreachable;
     if (!std.debug.have_ucontext) return;
     if (it.getLastError()) |unwind_error| {
         printUnwindError(debug_info, out_stream, unwind_error.address, unwind_error.err, tty_config) catch {};
@@ -244,7 +244,7 @@ fn printLastUnwindError(it: *std.debug.StackIterator, debug_info: *std.debug.Sel
 }
 
 fn printUnwindError(debug_info: *std.debug.SelfInfo, out_stream: *std.Io.Writer, address: usize, err: std.debug.UnwindError, tty_config: std.io.tty.Config) !void {
-    if (!bun.Environment.isDebug) unreachable;
+    if (!fun.Environment.isDebug) unreachable;
 
     const module_name = debug_info.getModuleNameForAddress(address) orelse "???";
     try tty_config.setColor(out_stream, .dim);
@@ -256,5 +256,5 @@ fn printUnwindError(debug_info: *std.debug.SelfInfo, out_stream: *std.Io.Writer,
     try tty_config.setColor(out_stream, .reset);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

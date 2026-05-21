@@ -24,14 +24,14 @@
 #include "JavaScriptCore/JSType.h"
 #include "JavaScriptCore/TypedArrayAdaptersForwardDeclarations.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 typedef struct ExternColumnIdentifier {
     uint8_t tag;
     union {
         uint32_t index;
-        BunString name;
+        FunString name;
     };
 
     bool isIndexedColumn() const { return tag == 1; }
@@ -94,7 +94,7 @@ enum class DataCellTag : uint8_t {
     UnsignedBigint = 14,
 };
 
-enum class BunResultMode : uint8_t {
+enum class FunResultMode : uint8_t {
     Objects = 0,
     Values = 1,
     Raw = 2,
@@ -112,11 +112,11 @@ typedef struct DataCell {
     bool isDuplicateColumn() const { return _indexedColumnFlag == 2; }
 } DataCell;
 
-class BunStructureFlags {
+class FunStructureFlags {
 public:
     uint32_t flags;
 
-    BunStructureFlags(uint32_t flags)
+    FunStructureFlags(uint32_t flags)
         : flags(flags)
     {
     }
@@ -284,7 +284,7 @@ static JSC::JSValue toJS(JSC::VM& vm, JSC::JSGlobalObject* globalObject, DataCel
     }
 }
 
-static JSC::JSValue toJS(JSC::Structure* structure, DataCell* cells, uint32_t count, JSC::JSGlobalObject* globalObject, Bun::BunStructureFlags flags, BunResultMode result_mode, ExternColumnIdentifier* namesPtr, uint32_t namesCount)
+static JSC::JSValue toJS(JSC::Structure* structure, DataCell* cells, uint32_t count, JSC::JSGlobalObject* globalObject, Fun::FunStructureFlags flags, FunResultMode result_mode, ExternColumnIdentifier* namesPtr, uint32_t namesCount)
 {
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -293,7 +293,7 @@ static JSC::JSValue toJS(JSC::Structure* structure, DataCell* cells, uint32_t co
         names = std::span<ExternColumnIdentifier>(namesPtr, namesCount);
     }
     switch (result_mode) {
-    case BunResultMode::Objects: // objects
+    case FunResultMode::Objects: // objects
 
     {
         auto* object = structure ? JSC::constructEmptyObject(vm, structure) : JSC::constructEmptyObject(globalObject, globalObject->objectPrototype(), 0);
@@ -375,8 +375,8 @@ static JSC::JSValue toJS(JSC::Structure* structure, DataCell* cells, uint32_t co
         }
         return object;
     }
-    case BunResultMode::Raw: // raw is just array mode with raw values
-    case BunResultMode::Values: // values
+    case FunResultMode::Raw: // raw is just array mode with raw values
+    case FunResultMode::Values: // values
     {
         auto* array = JSC::constructEmptyArray(globalObject, static_cast<ArrayAllocationProfile*>(nullptr), count);
         RETURN_IF_EXCEPTION(scope, {});
@@ -397,7 +397,7 @@ static JSC::JSValue toJS(JSC::Structure* structure, DataCell* cells, uint32_t co
         return jsUndefined();
     }
 }
-static JSC::JSValue toJS(JSC::JSArray* array, JSC::Structure* structure, DataCell* cells, uint32_t count, JSC::JSGlobalObject* globalObject, Bun::BunStructureFlags flags, BunResultMode result_mode, ExternColumnIdentifier* namesPtr, uint32_t namesCount)
+static JSC::JSValue toJS(JSC::JSArray* array, JSC::Structure* structure, DataCell* cells, uint32_t count, JSC::JSGlobalObject* globalObject, Fun::FunStructureFlags flags, FunResultMode result_mode, ExternColumnIdentifier* namesPtr, uint32_t namesCount)
 {
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -427,7 +427,7 @@ extern "C" EncodedJSValue JSC__constructObjectFromDataCell(
     JSValue structureValue = JSValue::decode(encodedStructureValue);
     auto* array = arrayValue ? dynamicDowncast<JSC::JSArray>(arrayValue) : nullptr;
     auto* structure = dynamicDowncast<JSC::Structure>(structureValue);
-    return JSValue::encode(toJS(array, structure, cells, count, globalObject, Bun::BunStructureFlags(flags), BunResultMode(result_mode), namesPtr, namesCount));
+    return JSValue::encode(toJS(array, structure, cells, count, globalObject, Fun::FunStructureFlags(flags), FunResultMode(result_mode), namesPtr, namesCount));
 }
 
 extern "C" EncodedJSValue JSC__createStructure(JSC::JSGlobalObject* globalObject, JSC::JSCell* owner, uint32_t capacity, ExternColumnIdentifier* namesPtr)

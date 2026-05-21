@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 test("workspace devDependencies should take priority over peerDependencies for resolution", async () => {
@@ -36,10 +36,10 @@ test("workspace devDependencies should take priority over peerDependencies for r
   // Run initial install
   let { stdout, stderr, exitCode } = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(
     resolve => {
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--no-progress", "--no-summary"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--no-progress", "--no-summary"],
         cwd: dir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -59,13 +59,13 @@ test("workspace devDependencies should take priority over peerDependencies for r
   }
   expect(exitCode).toBe(0);
 
-  // Now run bun install with a dead registry to ensure no network requests
+  // Now run fun install with a dead registry to ensure no network requests
   ({ stdout, stderr, exitCode } = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(resolve => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "install", "--no-progress", "--no-summary"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "install", "--no-progress", "--no-summary"],
       cwd: dir,
       env: {
-        ...bunEnv,
+        ...funEnv,
         NPM_CONFIG_REGISTRY: "http://localhost:9999/", // Dead URL - will fail if used
       },
       stdout: "pipe",
@@ -91,16 +91,16 @@ test("workspace devDependencies should take priority over peerDependencies for r
   expect(stderr).not.toContain("http");
 
   // Check that the lockfile was created correctly
-  const lockfilePath = join(dir, "bun.lock");
-  expect(await Bun.file(lockfilePath).exists()).toBe(true);
+  const lockfilePath = join(dir, "fun.lock");
+  expect(await Fun.file(lockfilePath).exists()).toBe(true);
 
   // Verify that version 2.0.0 (devDependency) was linked
   // If peerDependency range ^1.0.0 was used, it would try to fetch from npm and fail
   const testResult = await new Promise<string>(resolve => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "packages/lib/test.js"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "packages/lib/test.js"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
     });
 
@@ -140,13 +140,13 @@ test("devDependencies and peerDependencies with different versions should coexis
     "packages/utils/index.js": `console.log("utils");`,
   });
 
-  // Run bun install in the monorepo
+  // Run fun install in the monorepo
   const { stdout, stderr, exitCode } = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(
     resolve => {
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--no-progress", "--no-summary"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--no-progress", "--no-summary"],
         cwd: dir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -167,8 +167,8 @@ test("devDependencies and peerDependencies with different versions should coexis
   expect(exitCode).toBe(0);
 
   // Check that the lockfile was created correctly
-  const lockfilePath = join(dir, "bun.lock");
-  expect(await Bun.file(lockfilePath).exists()).toBe(true);
+  const lockfilePath = join(dir, "fun.lock");
+  expect(await Fun.file(lockfilePath).exists()).toBe(true);
 });
 
 test("dependency behavior comparison prioritizes devDependencies", async () => {
@@ -187,13 +187,13 @@ test("dependency behavior comparison prioritizes devDependencies", async () => {
     "index.js": `console.log("app");`,
   });
 
-  // Run bun install
+  // Run fun install
   const { stdout, stderr, exitCode } = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(
     resolve => {
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--no-progress", "--no-summary"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--no-progress", "--no-summary"],
         cwd: dir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -214,8 +214,8 @@ test("dependency behavior comparison prioritizes devDependencies", async () => {
   expect(exitCode).toBe(0);
 
   // Check that the lockfile was created correctly
-  const lockfilePath = join(dir, "bun.lock");
-  expect(await Bun.file(lockfilePath).exists()).toBe(true);
+  const lockfilePath = join(dir, "fun.lock");
+  expect(await Fun.file(lockfilePath).exists()).toBe(true);
 });
 
 test("Next.js monorepo scenario should not make unnecessary network requests", async () => {
@@ -252,10 +252,10 @@ test("Next.js monorepo scenario should not make unnecessary network requests", a
   // Run initial install
   let { stdout, stderr, exitCode } = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(
     resolve => {
-      const proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--no-progress", "--no-summary"],
+      const proc = Fun.spawn({
+        cmd: [funExe(), "install", "--no-progress", "--no-summary"],
         cwd: dir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -274,13 +274,13 @@ test("Next.js monorepo scenario should not make unnecessary network requests", a
   }
   expect(exitCode).toBe(0);
 
-  // Run bun install with dead registry
+  // Run fun install with dead registry
   ({ stdout, stderr, exitCode } = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(resolve => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "install", "--no-progress", "--no-summary"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "install", "--no-progress", "--no-summary"],
       cwd: dir,
       env: {
-        ...bunEnv,
+        ...funEnv,
         NPM_CONFIG_REGISTRY: "http://localhost:9999/", // Dead URL
       },
       stdout: "pipe",
@@ -303,16 +303,16 @@ test("Next.js monorepo scenario should not make unnecessary network requests", a
   expect(stderr).not.toContain("http");
 
   // Check that the lockfile was created correctly
-  const lockfilePath = join(dir, "bun.lock");
-  expect(await Bun.file(lockfilePath).exists()).toBe(true);
+  const lockfilePath = join(dir, "fun.lock");
+  expect(await Fun.file(lockfilePath).exists()).toBe(true);
 
   // Verify that version 15.0.0-canary.119 (devDependency) was used
   // If peer range was used, it would try to fetch a stable version from npm and fail
   const testResult = await new Promise<string>(resolve => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "packages/web/test.js"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "packages/web/test.js"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
     });
 

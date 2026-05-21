@@ -36,7 +36,7 @@ const json = {
 };
 
 const inspect =
-  "Bun" in globalThis ? Bun.inspect : "Deno" in globalThis ? Deno.inspect : (await import("util")).inspect;
+  "Fun" in globalThis ? Fun.inspect : "Deno" in globalThis ? Deno.inspect : (await import("util")).inspect;
 bench("big json object", () => {
   console.error(json);
 });

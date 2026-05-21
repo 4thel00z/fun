@@ -5,7 +5,7 @@
  * `UnifiedSource-<dir>-<n>.cpp` files that contain only `#include` lines
  * pointing at the originals, then compiling those instead.
  *
- * Why: Bun has ~550 .cpp files, ~330 of them under 200 lines. Each compile
+ * Why: Fun has ~550 .cpp files, ~330 of them under 200 lines. Each compile
  * spends most of its time re-parsing the same JSC/WebCore headers. Bundling
  * N files into one TU means 1 header parse instead of N — same code, 1/Nth
  * the redundant frontend work. WebKit reports a 3–4× clean-build speedup
@@ -51,9 +51,9 @@ const noUnify: readonly string[] = [
   // Heavy single-file TUs that already saturate a core. Bundling them with
   // siblings would serialize work that should run in parallel.
   "src/jsc/bindings/ZigGlobalObject.cpp",
-  "src/jsc/bindings/BunObject.cpp",
+  "src/jsc/bindings/FunObject.cpp",
   "src/jsc/bindings/bindings.cpp",
-  "src/jsc/bindings/BunProcess.cpp",
+  "src/jsc/bindings/FunProcess.cpp",
   "src/jsc/bindings/JSBuffer.cpp",
   "src/jsc/bindings/napi.cpp",
   "src/jsc/bindings/webcore/SerializedScriptValue.cpp",
@@ -120,8 +120,8 @@ const noUnify: readonly string[] = [
   // sibling that includes them; the darwin file defines errSecSuccess /
   // SecCertificateRef that clash with the real framework header. Written
   // assuming TU isolation — keep it that way.
-  "packages/bun-usockets/src/crypto/root_certs_windows.cpp",
-  "packages/bun-usockets/src/crypto/root_certs_darwin.cpp",
+  "packages/fun-usockets/src/crypto/root_certs_windows.cpp",
+  "packages/fun-usockets/src/crypto/root_certs_darwin.cpp",
 
   // Second highway TU. foreach_target.h has a TU-wide include guard, so when
   // bundled after highway_strings.cpp it doesn't re-expand and only the
@@ -176,7 +176,7 @@ export interface UnifiedSplit {
  * `cxxSources` must be absolute paths (the glob output). Generated codegen
  * .cpp files should NOT be passed here — those are already large single TUs
  * (ZigGeneratedClasses.cpp etc.) and are added to the compile list separately
- * in bun.ts.
+ * in fun.ts.
  */
 export function generateUnifiedSources(cfg: Config, cxxSources: readonly string[]): UnifiedSplit {
   const outDir = resolve(cfg.buildDir, "unified");

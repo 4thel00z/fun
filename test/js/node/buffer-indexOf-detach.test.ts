@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { describe, test } from "node:test";
 
 // When the haystack or needle is detached via a valueOf/toString callback,
-// Bun must not read freed memory. We match Node.js behavior: detached buffers
+// Fun must not read freed memory. We match Node.js behavior: detached buffers
 // are treated as having zero length (haystack → -1, needle → empty match at
 // the computed byteOffset). No errors are thrown.
 //

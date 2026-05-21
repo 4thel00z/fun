@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import crypto from "node:crypto";
 
-// https://github.com/oven-sh/bun/issues/27445
+// https://github.com/underdoc-org/fun/issues/27445
 // A failed crypto.createPrivateKey() call on an encrypted legacy RSA PEM
 // should not poison subsequent unrelated crypto.createPrivateKey() calls.
 test("crypto.createPrivateKey error does not poison subsequent calls", () => {

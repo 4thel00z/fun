@@ -254,9 +254,9 @@ fn NewLexer_(
             this.comments_to_preserve_before = comments_to_preserve_before;
             this.temp_buffer_u16 = temp_buffer_u16;
 
-            bun.debugAssert(all_comments.items.len >= original.all_comments.items.len);
-            bun.debugAssert(comments_to_preserve_before.items.len >= original.comments_to_preserve_before.items.len);
-            bun.debugAssert(temp_buffer_u16.items.len == 0 and original.temp_buffer_u16.items.len == 0);
+            fun.debugAssert(all_comments.items.len >= original.all_comments.items.len);
+            fun.debugAssert(comments_to_preserve_before.items.len >= original.comments_to_preserve_before.items.len);
+            fun.debugAssert(temp_buffer_u16.items.len == 0 and original.temp_buffer_u16.items.len == 0);
 
             this.all_comments.items.len = original.all_comments.items.len;
             this.comments_to_preserve_before.items.len = original.comments_to_preserve_before.items.len;
@@ -855,18 +855,18 @@ fn NewLexer_(
             i: usize = 0,
 
             pub fn append(fake: *FakeArrayList16, value: u16) !void {
-                bun.assert(fake.items.len > fake.i);
+                fun.assert(fake.items.len > fake.i);
                 fake.items[fake.i] = value;
                 fake.i += 1;
             }
 
             pub fn appendAssumeCapacity(fake: *FakeArrayList16, value: u16) void {
-                bun.assert(fake.items.len > fake.i);
+                fun.assert(fake.items.len > fake.i);
                 fake.items[fake.i] = value;
                 fake.i += 1;
             }
             pub fn ensureUnusedCapacity(fake: *FakeArrayList16, int: anytype) !void {
-                bun.assert(fake.items.len > fake.i + int);
+                fun.assert(fake.items.len > fake.i + int);
             }
         };
 
@@ -939,7 +939,7 @@ fn NewLexer_(
             // Second pass: re-use our existing escape sequence parser
             const original_text = lexer.raw();
 
-            bun.assert(lexer.temp_buffer_u16.items.len == 0);
+            fun.assert(lexer.temp_buffer_u16.items.len == 0);
             defer lexer.temp_buffer_u16.clearRetainingCapacity();
             try lexer.temp_buffer_u16.ensureUnusedCapacity(original_text.len);
             try lexer.decodeEscapeSequences(lexer.start, original_text, std.array_list.Managed(u16), &lexer.temp_buffer_u16);
@@ -1923,7 +1923,7 @@ fn NewLexer_(
         fn scanSingleLineComment(noalias lexer: *LexerType) void {
             while (true) {
                 // Find index of newline (ASCII/Unicode), non-ASCII, '#', or '@'.
-                if (bun.highway.indexOfNewlineOrNonASCIIOrHashOrAt(lexer.remaining())) |relative_index| {
+                if (fun.highway.indexOfNewlineOrNonASCIIOrHashOrAt(lexer.remaining())) |relative_index| {
                     const absolute_index = lexer.current + relative_index;
                     lexer.current = absolute_index; // Move TO the interesting char
 
@@ -2081,7 +2081,7 @@ fn NewLexer_(
                 .needs_decode => {
                     // string_literal_raw_content contains escapes (ie '\n') that need to be converted to their values (ie 0x0A).
                     // escape parsing may cause a syntax error.
-                    bun.assert(lexer.temp_buffer_u16.items.len == 0);
+                    fun.assert(lexer.temp_buffer_u16.items.len == 0);
                     defer lexer.temp_buffer_u16.clearRetainingCapacity();
                     try lexer.temp_buffer_u16.ensureUnusedCapacity(lexer.string_literal_raw_content.len);
                     try lexer.decodeEscapeSequences(lexer.string_literal_start, lexer.string_literal_raw_content, std.array_list.Managed(u16), &lexer.temp_buffer_u16);
@@ -2121,7 +2121,7 @@ fn NewLexer_(
                         const flag_characters = "dgimsuvy";
                         const min_flag = comptime std.mem.min(u8, flag_characters);
                         const max_flag = comptime std.mem.max(u8, flag_characters);
-                        const RegexpFlags = bun.bit_set.IntegerBitSet((max_flag - min_flag) + 1);
+                        const RegexpFlags = fun.bit_set.IntegerBitSet((max_flag - min_flag) + 1);
                         var flags = RegexpFlags.initEmpty();
                         while (isIdentifierContinue(lexer.code_point)) {
                             switch (lexer.code_point) {
@@ -2383,7 +2383,7 @@ fn NewLexer_(
 
             const raw_content_slice = lexer.source.contents[lexer.start + 1 .. lexer.end - 1];
             if (needs_decode) {
-                bun.assert(lexer.temp_buffer_u16.items.len == 0);
+                fun.assert(lexer.temp_buffer_u16.items.len == 0);
                 defer lexer.temp_buffer_u16.clearRetainingCapacity();
                 try lexer.temp_buffer_u16.ensureUnusedCapacity(raw_content_slice.len);
                 try lexer.fixWhitespaceAndDecodeJSXEntities(raw_content_slice, &lexer.temp_buffer_u16);
@@ -2455,7 +2455,7 @@ fn NewLexer_(
                         const raw_content_slice = lexer.source.contents[original_start..lexer.end];
 
                         if (needs_fixing) {
-                            bun.assert(lexer.temp_buffer_u16.items.len == 0);
+                            fun.assert(lexer.temp_buffer_u16.items.len == 0);
                             defer lexer.temp_buffer_u16.clearRetainingCapacity();
                             try lexer.temp_buffer_u16.ensureUnusedCapacity(raw_content_slice.len);
                             try lexer.fixWhitespaceAndDecodeJSXEntities(raw_content_slice, &lexer.temp_buffer_u16);
@@ -2675,7 +2675,7 @@ fn NewLexer_(
             // them. <CR><LF> and <CR> LineTerminatorSequences are normalized to
             // <LF> for both TV and TRV. An explicit EscapeSequence is needed to
             // include a <CR> or <CR><LF> sequence.
-            var bytes = bun.handleOom(MutableString.initCopy(lexer.allocator, text));
+            var bytes = fun.handleOom(MutableString.initCopy(lexer.allocator, text));
             var end: usize = 0;
             var i: usize = 0;
             var c: u8 = '0';
@@ -2989,7 +2989,7 @@ fn NewLexer_(
                     lexer.number = @as(f64, @floatFromInt(number));
                 } else {
                     // Parse a double-precision floating-point number
-                    if (bun.parseDouble(text)) |num| {
+                    if (fun.parseDouble(text)) |num| {
                         lexer.number = num;
                     } else |_| {
                         try lexer.addSyntaxError(lexer.start, "Invalid number", .{});
@@ -3244,7 +3244,7 @@ pub const PragmaArg = enum {
         const url_and_rest_of_code = chunk[prefix..]; // Slice containing only the potential argument
 
         const url_len: usize = brk: {
-            if (bun.strings.indexOfSpaceOrNewlineOrNonASCII(url_and_rest_of_code, 0)) |delimiter_pos_in_arg| {
+            if (fun.strings.indexOfSpaceOrNewlineOrNonASCII(url_and_rest_of_code, 0)) |delimiter_pos_in_arg| {
                 // SIMD found the delimiter at index 'delimiter_pos_in_arg' relative to url start.
                 // The argument's length is exactly this index.
                 break :brk delimiter_pos_in_arg;
@@ -3334,8 +3334,8 @@ fn skipToInterestingCharacterInMultilineComment(text_: []const u8) ?u32 {
     const V1x16 = strings.AsciiVectorU1;
 
     const text_end_len = text.len & ~(@as(usize, strings.ascii_vector_size) - 1);
-    bun.assertWithLocation(text_end_len % strings.ascii_vector_size == 0, @src());
-    bun.assertWithLocation(text_end_len <= text.len, @src());
+    fun.assertWithLocation(text_end_len % strings.ascii_vector_size == 0, @src());
+    fun.assertWithLocation(text_end_len <= text.len, @src());
 
     const text_end_ptr = text.ptr + text_end_len;
 
@@ -3351,8 +3351,8 @@ fn skipToInterestingCharacterInMultilineComment(text_: []const u8) ?u32 {
         if (@reduce(.Max, any_significant) > 0) {
             const bitmask = @as(u16, @bitCast(any_significant));
             const first = @ctz(bitmask);
-            bun.assertWithLocation(first < strings.ascii_vector_size, @src());
-            bun.assertWithLocation(text.ptr[first] == '*' or text.ptr[first] == '\r' or text.ptr[first] == '\n' or text.ptr[first] > 127, @src());
+            fun.assertWithLocation(first < strings.ascii_vector_size, @src());
+            fun.assertWithLocation(text.ptr[first] == '*' or text.ptr[first] == '\r' or text.ptr[first] == '\n' or text.ptr[first] > 127, @src());
             return @as(u32, @truncate(first + (@intFromPtr(text.ptr) - @intFromPtr(text_.ptr))));
         }
         text.ptr += strings.ascii_vector_size;
@@ -3362,7 +3362,7 @@ fn skipToInterestingCharacterInMultilineComment(text_: []const u8) ?u32 {
 }
 
 fn indexOfInterestingCharacterInStringLiteral(text_: []const u8, quote: u8) ?usize {
-    return bun.highway.indexOfInterestingCharacterInStringLiteral(text_, quote);
+    return fun.highway.indexOfInterestingCharacterInStringLiteral(text_, quote);
 }
 
 const InvalidEscapeSequenceFormatter = struct {
@@ -3381,20 +3381,20 @@ const InvalidEscapeSequenceFormatter = struct {
 
 const string = []const u8;
 
-const FeatureFlags = @import("../bun_core/feature_flags.zig");
+const FeatureFlags = @import("../fun_core/feature_flags.zig");
 const JSIdentifier = @import("./lexer/identifier.zig");
 const tables = @import("./lexer_tables.zig");
 
-const bun = @import("bun");
-const CodePoint = bun.CodePoint;
-const Environment = bun.Environment;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const js_ast = bun.ast;
-const strings = bun.strings;
-const Indentation = bun.js_printer.Options.Indentation;
+const fun = @import("fun");
+const CodePoint = fun.CodePoint;
+const Environment = fun.Environment;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const js_ast = fun.ast;
+const strings = fun.strings;
+const Indentation = fun.js_printer.Options.Indentation;
 
-const logger = bun.logger;
+const logger = fun.logger;
 const Source = logger.Source;
 
 const std = @import("std");

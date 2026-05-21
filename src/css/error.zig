@@ -87,7 +87,7 @@ pub fn ParseError(comptime T: type) type {
                     .kind = kind,
                     .location = this.location,
                 },
-                .custom => @panic("Not a basic parse error. This is a bug in Bun's css parser."),
+                .custom => @panic("Not a basic parse error. This is a bug in Fun's css parser."),
             };
         }
     };
@@ -170,7 +170,7 @@ pub const ErrorLocation = struct {
             .namespace = source.path.namespace,
             .line = @intCast(this.line + 1),
             .column = @intCast(this.column),
-            .line_text = if (bun.strings.getLinesInText(source.contents, this.line, 1)) |lines| try allocator.dupe(u8, lines.buffer[0]) else null,
+            .line_text = if (fun.strings.getLinesInText(source.contents, this.line, 1)) |lines| try allocator.dupe(u8, lines.buffer[0]) else null,
         };
     }
 };
@@ -409,9 +409,9 @@ pub const MinifyErrorKind = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const logger = bun.logger;
+const logger = fun.logger;
 const Log = logger.Log;

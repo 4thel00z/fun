@@ -43,12 +43,12 @@ pub fn NewSocketHandler(comptime is_ssl: bool) type {
             return this.socket.isNamedPipe();
         }
 
-        pub fn getVerifyError(this: ThisSocket) uws.us_bun_verify_error_t {
+        pub fn getVerifyError(this: ThisSocket) uws.us_fun_verify_error_t {
             switch (this.socket) {
                 .connected => |socket| return socket.getVerifyError(),
                 .upgradedDuplex => |socket| return socket.sslError(),
-                .pipe => |pipe| if (Environment.isWindows) return pipe.sslError() else return std.mem.zeroes(us_bun_verify_error_t),
-                .connecting, .detached => return std.mem.zeroes(us_bun_verify_error_t),
+                .pipe => |pipe| if (Environment.isWindows) return pipe.sslError() else return std.mem.zeroes(us_fun_verify_error_t),
+                .connecting, .detached => return std.mem.zeroes(us_fun_verify_error_t),
             }
         }
 
@@ -137,8 +137,8 @@ pub fn NewSocketHandler(comptime is_ssl: bool) type {
             } orelse return null);
         }
 
-        pub inline fn fd(this: ThisSocket) bun.FD {
-            const socket = this.socket.get() orelse return bun.invalid_fd;
+        pub inline fn fd(this: ThisSocket) fun.FD {
+            const socket = this.socket.get() orelse return fun.invalid_fd;
             // Same fd regardless of TLS — read it directly off the poll.
             return socket.getFd();
         }
@@ -186,7 +186,7 @@ pub fn NewSocketHandler(comptime is_ssl: bool) type {
             };
         }
 
-        pub fn writeFd(this: ThisSocket, data: []const u8, file_descriptor: bun.FD) i32 {
+        pub fn writeFd(this: ThisSocket, data: []const u8, file_descriptor: fun.FD) i32 {
             return switch (this.socket) {
                 .upgradedDuplex, .pipe => this.write(data),
                 .connected => |socket| socket.writeFd(data, file_descriptor),
@@ -290,7 +290,7 @@ pub fn NewSocketHandler(comptime is_ssl: bool) type {
         pub fn remoteAddress(this: ThisSocket, buf: []u8) ?[]const u8 {
             return switch (this.socket) {
                 .connected => |sock| sock.remoteAddress(buf) catch |e| {
-                    bun.Output.panic("Failed to get socket's remote address: {s}", .{@errorName(e)});
+                    fun.Output.panic("Failed to get socket's remote address: {s}", .{@errorName(e)});
                 },
                 .pipe, .upgradedDuplex, .connecting, .detached => null,
             };
@@ -299,7 +299,7 @@ pub fn NewSocketHandler(comptime is_ssl: bool) type {
         pub fn localAddress(this: ThisSocket, buf: []u8) ?[]const u8 {
             return switch (this.socket) {
                 .connected => |sock| sock.localAddress(buf) catch |e| {
-                    bun.Output.panic("Failed to get socket's local address: {s}", .{@errorName(e)});
+                    fun.Output.panic("Failed to get socket's local address: {s}", .{@errorName(e)});
                 },
                 .pipe, .upgradedDuplex, .connecting, .detached => null,
             };
@@ -321,7 +321,7 @@ pub fn NewSocketHandler(comptime is_ssl: bool) type {
         pub fn fromFd(
             g: *SocketGroup,
             k: SocketKind,
-            handle: bun.FD,
+            handle: fun.FD,
             comptime This: type,
             this: *This,
             comptime socket_field_name: ?[]const u8,
@@ -363,8 +363,8 @@ pub fn NewSocketHandler(comptime is_ssl: bool) type {
                 @memcpy(stack[0..host.len], host);
                 stack[host.len] = 0;
                 break :blk stack[0..host.len :0];
-            } else bun.handleOom(bun.default_allocator.dupeZ(u8, host));
-            defer if (hostZ.ptr != &stack) bun.default_allocator.free(hostZ);
+            } else fun.handleOom(fun.default_allocator.dupeZ(u8, host));
+            defer if (hostZ.ptr != &stack) fun.default_allocator.free(hostZ);
 
             return switch (g.connect(kind, ssl_ctx, hostZ, @intCast(port), opts, @sizeOf(?*Owner))) {
                 .failed => error.FailedToOpenSocket,
@@ -635,19 +635,19 @@ fn NativeSocketHandleType(comptime ssl: bool) type {
     }
 }
 
-const debug = bun.Output.scoped(.uws, .visible);
+const debug = fun.Output.scoped(.uws, .visible);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const BoringSSL = fun.BoringSSL.c;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const ConnectingSocket = uws.ConnectingSocket;
 const SocketGroup = uws.SocketGroup;
 const SocketKind = uws.SocketKind;
 const UpgradedDuplex = uws.UpgradedDuplex;
 const WindowsNamedPipe = uws.WindowsNamedPipe;
-const us_bun_verify_error_t = uws.us_bun_verify_error_t;
+const us_fun_verify_error_t = uws.us_fun_verify_error_t;
 const us_socket_t = uws.us_socket_t;

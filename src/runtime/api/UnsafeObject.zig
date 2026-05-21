@@ -18,15 +18,15 @@ pub fn create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
 pub fn gcAggressionLevel(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
-    const ret = JSValue.jsNumber(@as(i32, @intFromEnum(globalThis.bunVM().aggressive_garbage_collection)));
+) fun.JSError!jsc.JSValue {
+    const ret = JSValue.jsNumber(@as(i32, @intFromEnum(globalThis.funVM().aggressive_garbage_collection)));
     const value = callframe.arguments_old(1).ptr[0];
 
     if (!value.isEmptyOrUndefinedOrNull()) {
         switch (try value.coerce(i32, globalThis)) {
-            1 => globalThis.bunVM().aggressive_garbage_collection = .mild,
-            2 => globalThis.bunVM().aggressive_garbage_collection = .aggressive,
-            0 => globalThis.bunVM().aggressive_garbage_collection = .none,
+            1 => globalThis.funVM().aggressive_garbage_collection = .mild,
+            2 => globalThis.funVM().aggressive_garbage_collection = .aggressive,
+            0 => globalThis.funVM().aggressive_garbage_collection = .none,
             else => {},
         }
     }
@@ -36,7 +36,7 @@ pub fn gcAggressionLevel(
 pub fn arrayBufferToString(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     const args = callframe.arguments_old(2).slice();
     if (args.len < 1 or !args[0].isCell() or !args[0].jsType().isTypedArrayOrArrayBuffer()) {
         return globalThis.throwInvalidArguments("Expected an ArrayBuffer", .{});
@@ -59,18 +59,18 @@ pub fn arrayBufferToString(
 
 extern fn dump_zone_malloc_stats() void;
 
-fn dump_mimalloc(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    globalObject.bunVM().arena.dumpStats();
-    if (bun.heap_breakdown.enabled) {
+fn dump_mimalloc(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    globalObject.funVM().arena.dumpStats();
+    if (fun.heap_breakdown.enabled) {
         dump_zone_malloc_stats();
     }
     return .js_undefined;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

@@ -1,6 +1,6 @@
-import { randomUUIDv7, RedisClient, spawn } from "bun";
-import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import { bunExe, bunRun } from "harness";
+import { randomUUIDv7, RedisClient, spawn } from "fun";
+import { beforeAll, beforeEach, describe, expect, test } from "fun:test";
+import { funExe, funRun } from "harness";
 import { join } from "node:path";
 import {
   ctx as _ctx,
@@ -39,9 +39,9 @@ for (const connectionType of [ConnectionType.TLS, ConnectionType.TCP]) {
 
     describe("Basic Operations", () => {
       test("should keep process alive when connecting", async () => {
-        const result = bunRun(join(import.meta.dir, "valkey.connecting.fixture.ts"), {
-          "BUN_VALKEY_URL": connectionType === ConnectionType.TLS ? TLS_REDIS_URL : DEFAULT_REDIS_URL,
-          "BUN_VALKEY_TLS": connectionType === ConnectionType.TLS ? JSON.stringify(TLS_REDIS_OPTIONS.tlsPaths) : "",
+        const result = funRun(join(import.meta.dir, "valkey.connecting.fixture.ts"), {
+          "FUN_VALKEY_URL": connectionType === ConnectionType.TLS ? TLS_REDIS_URL : DEFAULT_REDIS_URL,
+          "FUN_VALKEY_TLS": connectionType === ConnectionType.TLS ? JSON.stringify(TLS_REDIS_OPTIONS.tlsPaths) : "",
         });
         expect(result.stdout).toContain(`connected`);
       });
@@ -49,7 +49,7 @@ for (const connectionType of [ConnectionType.TLS, ConnectionType.TCP]) {
       test("should set and get strings", async () => {
         const redis = ctx.redis;
         const testKey = "greeting";
-        const testValue = "Hello from Bun Redis!";
+        const testValue = "Hello from Fun Redis!";
 
         const setResult = await redis.set(testKey, testValue);
         expect(setResult).toMatchInlineSnapshot(`"OK"`);
@@ -6595,7 +6595,7 @@ for (const connectionType of [ConnectionType.TLS, ConnectionType.TCP]) {
         const channel = "error-callback-channel";
 
         const subscriberProc = spawn({
-          cmd: [bunExe(), `${__dirname}/valkey.failing-subscriber-no-ipc.ts`],
+          cmd: [funExe(), `${__dirname}/valkey.failing-subscriber-no-ipc.ts`],
           stdout: "pipe",
           stderr: "inherit",
           stdin: "pipe",
@@ -6682,7 +6682,7 @@ for (const connectionType of [ConnectionType.TLS, ConnectionType.TCP]) {
         let currentMessage: any = {};
 
         const subscriberProc = spawn({
-          cmd: [bunExe(), `${__dirname}/valkey.failing-subscriber.ts`],
+          cmd: [funExe(), `${__dirname}/valkey.failing-subscriber.ts`],
           stdout: "inherit",
           stderr: "inherit",
           ipc: msg => {

@@ -1,11 +1,11 @@
 #include "BakeAdditionsToGlobalObject.h"
 #include "JSBakeResponse.h"
-#include "JSBunRequest.h"
+#include "JSFunRequest.h"
 #include "JavaScriptCore/SlotVisitorMacros.h"
 #include "ErrorCode.h"
 #include "WebCoreJSBuiltins.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC::JSFunction* BakeAdditionsToGlobalObject::wrapComponent(JSGlobalObject* globalObject)
 {
@@ -75,18 +75,18 @@ extern "C" SYSV_ABI JSC::EncodedJSValue Bake__getSSRResponseConstructor(JSC::JSG
     return JSValue::encode(zig->bakeAdditions().JSBakeResponseConstructor(globalObject));
 }
 
-BUN_DEFINE_HOST_FUNCTION(jsFunctionBakeGetAsyncLocalStorage, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(jsFunctionBakeGetAsyncLocalStorage, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     auto* zig = static_cast<Zig::GlobalObject*>(globalObject);
     return JSValue::encode(zig->bakeAdditions().getAsyncLocalStorage(zig));
 }
 
-BUN_DEFINE_HOST_FUNCTION(jsFunctionBakeEnsureAsyncLocalStorage, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(jsFunctionBakeEnsureAsyncLocalStorage, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     auto* zig = static_cast<Zig::GlobalObject*>(globalObject);
     if (callframe->argumentCount() < 1) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_MISSING_ARGS, "bakeEnsureAsyncLocalStorage requires at least one argument"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_MISSING_ARGS, "bakeEnsureAsyncLocalStorage requires at least one argument"_s);
         return JSValue::encode(jsUndefined());
     }
     zig->bakeAdditions().ensureAsyncLocalStorageInstance(zig, callframe->argument(0));
@@ -101,34 +101,34 @@ extern "C" SYSV_ABI JSC::EncodedJSValue Bake__getBundleNewRouteJSFunction(JSC::J
     return JSValue::encode(value);
 }
 
-extern "C" SYSV_ABI JSC::EncodedJSValue Bake__bundleNewRouteJSFunctionImpl(JSC::JSGlobalObject* globalObject, void* requestPtr, BunString url);
-BUN_DEFINE_HOST_FUNCTION(jsFunctionBakeGetBundleNewRouteJSFunction, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+extern "C" SYSV_ABI JSC::EncodedJSValue Bake__bundleNewRouteJSFunctionImpl(JSC::JSGlobalObject* globalObject, void* requestPtr, FunString url);
+FUN_DEFINE_HOST_FUNCTION(jsFunctionBakeGetBundleNewRouteJSFunction, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     if (callframe->argumentCount() < 2) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_MISSING_ARGS, "bundleNewRoute requires at least two arguments"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_MISSING_ARGS, "bundleNewRoute requires at least two arguments"_s);
         return JSValue::encode(jsUndefined());
     }
 
     JSValue requestValue = callframe->argument(0);
     if (requestValue.isEmpty() || requestValue.isUndefinedOrNull() || !requestValue.isObject()) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "request must be an object"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "request must be an object"_s);
         return JSValue::encode(jsUndefined());
     }
 
-    JSBunRequest* request = dynamicDowncast<JSBunRequest>(requestValue);
+    JSFunRequest* request = dynamicDowncast<JSFunRequest>(requestValue);
     if (!request) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "request must be a JSBunRequest"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "request must be a JSFunRequest"_s);
         return JSValue::encode(jsUndefined());
     }
 
     JSValue urlValue = callframe->argument(1);
     if (urlValue.isEmpty() || urlValue.isUndefinedOrNull() || !urlValue.isString()) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "url must be a string"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "url must be a string"_s);
         return JSValue::encode(jsUndefined());
     }
 
-    BunString url = Bun::toString(urlValue.getString(globalObject));
+    FunString url = Fun::toString(urlValue.getString(globalObject));
     RETURN_IF_EXCEPTION(scope, JSC::JSValue::encode(jsUndefined()));
 
     return Bake__bundleNewRouteJSFunctionImpl(globalObject, request->m_ctx, url);
@@ -141,4 +141,4 @@ extern "C" SYSV_ABI JSC::EncodedJSValue Bake__getNewRouteParamsJSFunction(JSC::J
     return JSValue::encode(value);
 }
 
-} // namespace Bun
+} // namespace Fun

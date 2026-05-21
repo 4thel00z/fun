@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -96,7 +96,7 @@ console.log(favicon);
       ]),
     },
     entryPoints: ["/server.js"],
-    target: "bun",
+    target: "fun",
 
     run: {
       validate({ stdout, stderr }) {
@@ -184,7 +184,7 @@ console.log(JSON.stringify(html, null, 2));
       "/favicon.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">T</text></svg>`,
     },
     entryPoints: ["/server.js"],
-    target: "bun",
+    target: "fun",
 
     run: {
       validate({ stdout }) {
@@ -249,7 +249,7 @@ console.log("About manifest:", aboutHtml);
       "/about.js": "console.log('About page');",
     },
     entryPoints: ["/server.js"],
-    target: "bun",
+    target: "fun",
 
     onAfterBundle(api) {
       const serverCode = api.readFile("out/server.js");
@@ -372,7 +372,7 @@ console.log("About manifest:", aboutHtml);
 
     async function buildAndReadManifest() {
       const out = join(dir, "out");
-      const r = await Bun.build({ entrypoints: [join(dir, "server.ts")], outdir: out, target: "bun" });
+      const r = await Fun.build({ entrypoints: [join(dir, "server.ts")], outdir: out, target: "fun" });
       expect(r.success).toBe(true);
       const js = readFileSync(join(out, "server.js"), "utf8");
       const m = js.match(/__jsonParse\("(.+?)"\)/s)!;
@@ -441,7 +441,7 @@ console.log("✓ Both import types work correctly");
       "/styles.css": `body { background: #fff; }`,
     },
     entryPoints: ["/entry.js"],
-    target: "bun",
+    target: "fun",
 
     run: {
       validate({ stdout }) {

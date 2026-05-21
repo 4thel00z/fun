@@ -17,7 +17,7 @@ pub const Tag = enum(u8) {
     /// String is backed by a WTF::StringImpl from JavaScriptCore.
     /// Can be in either `latin1` or `utf16le` encodings.
     WTFStringImpl = 1,
-    /// Memory has an unknown owner, likely in Bun's Zig codebase. If `isGloballyAllocated`
+    /// Memory has an unknown owner, likely in Fun's Zig codebase. If `isGloballyAllocated`
     /// is set, then it is owned by mimalloc. When converted to a JS value it has to be cloned
     /// into a WTF::String.
     /// Can be in either `utf8` or `utf16le` encodings.
@@ -40,7 +40,7 @@ pub const StringImpl = extern union {
 
 /// Prefer using String instead of ZigString in new code.
 pub const String = extern struct {
-    pub const name = "BunString";
+    pub const name = "FunString";
 
     tag: Tag,
     value: StringImpl,
@@ -51,7 +51,7 @@ pub const String = extern struct {
     pub const StringImplAllocator = @import("./wtf.zig").StringImplAllocator;
 
     pub fn toInt32(this: *const String) ?i32 {
-        const val = bun.cpp.BunString__toInt32(this);
+        const val = fun.cpp.FunString__toInt32(this);
         if (val > std.math.maxInt(i32)) return null;
         return @intCast(val);
     }
@@ -83,7 +83,7 @@ pub const String = extern struct {
         const is_ascii = switch (ascii_status) {
             .all_ascii => true,
             .non_ascii => false,
-            .unknown => bun.strings.isAllASCII(bytes),
+            .unknown => fun.strings.isAllASCII(bytes),
         };
         return .{ bytes, is_ascii };
     }
@@ -125,8 +125,8 @@ pub const String = extern struct {
     }
 
     fn createUninitializedLatin1(len: usize) struct { String, []u8 } {
-        bun.assert(len > 0);
-        const string = bun.cpp.BunString__fromLatin1Unitialized(len);
+        fun.assert(len > 0);
+        const string = fun.cpp.FunString__fromLatin1Unitialized(len);
         if (string.tag == .Dead) {
             return .{ string, &.{} };
         }
@@ -139,8 +139,8 @@ pub const String = extern struct {
     }
 
     fn createUninitializedUTF16(len: usize) struct { String, []u16 } {
-        bun.assert(len > 0);
-        const string = bun.cpp.BunString__fromUTF16Unitialized(len);
+        fun.assert(len > 0);
+        const string = fun.cpp.FunString__fromUTF16Unitialized(len);
         if (string.tag == .Dead) {
             return .{ string, &.{} };
         }
@@ -175,7 +175,7 @@ pub const String = extern struct {
         comptime kind: WTFEncoding,
         len: usize,
     ) struct { String, [](kind.Byte()) } {
-        bun.assert(len > 0);
+        fun.assert(len > 0);
         return switch (comptime kind) {
             .latin1 => createUninitializedLatin1(len),
             .utf16 => createUninitializedUTF16(len),
@@ -185,15 +185,15 @@ pub const String = extern struct {
     pub fn cloneLatin1(bytes: []const u8) String {
         jsc.markBinding(@src());
         if (bytes.len == 0) return String.empty;
-        return validateRefCount(bun.cpp.BunString__fromLatin1(bytes.ptr, bytes.len));
+        return validateRefCount(fun.cpp.FunString__fromLatin1(bytes.ptr, bytes.len));
     }
 
     pub inline fn validateRefCount(this: String) String {
-        if (comptime bun.Environment.isDebug) {
+        if (comptime fun.Environment.isDebug) {
             // Newly created strings should have a ref count of 1
             if (!this.isEmpty()) {
                 const ref_count = this.value.WTFStringImpl.refCount();
-                bun.assert(ref_count == 1);
+                fun.assert(ref_count == 1);
             }
         }
 
@@ -201,15 +201,15 @@ pub const String = extern struct {
     }
 
     pub fn cloneUTF8(bytes: []const u8) String {
-        return jsc.WebCore.encoding.toBunStringComptime(bytes, .utf8);
+        return jsc.WebCore.encoding.toFunStringComptime(bytes, .utf8);
     }
 
     pub fn cloneUTF16(bytes: []const u16) String {
         if (bytes.len == 0) return String.empty;
-        if (bun.strings.firstNonASCII16(bytes) == null) {
-            return validateRefCount(bun.cpp.BunString__fromUTF16ToLatin1(bytes.ptr, bytes.len));
+        if (fun.strings.firstNonASCII16(bytes) == null) {
+            return validateRefCount(fun.cpp.FunString__fromUTF16ToLatin1(bytes.ptr, bytes.len));
         }
-        return validateRefCount(bun.cpp.BunString__fromUTF16(bytes.ptr, bytes.len));
+        return validateRefCount(fun.cpp.FunString__fromUTF16(bytes.ptr, bytes.len));
     }
 
     pub fn createFormat(comptime fmt: [:0]const u8, args: anytype) OOM!String {
@@ -217,14 +217,14 @@ pub const String = extern struct {
             return String.static(fmt);
         }
 
-        var sba = std.heap.stackFallback(512, bun.default_allocator);
+        var sba = std.heap.stackFallback(512, fun.default_allocator);
         const alloc = sba.get();
         const buf = try std.fmt.allocPrint(alloc, fmt, args);
         defer alloc.free(buf);
         return cloneUTF8(buf);
     }
 
-    pub fn createFromOSPath(os_path: bun.OSPathSlice) String {
+    pub fn createFromOSPath(os_path: fun.OSPathSlice) String {
         return switch (@TypeOf(os_path)) {
             []const u8 => cloneUTF8(os_path),
             []const u16 => cloneUTF16(os_path),
@@ -263,12 +263,12 @@ pub const String = extern struct {
 
     /// Must be given ascii input
     pub fn createAtomASCII(bytes: []const u8) String {
-        return bun.cpp.BunString__createAtom(bytes.ptr, bytes.len);
+        return fun.cpp.FunString__createAtom(bytes.ptr, bytes.len);
     }
 
     /// Will return null if the input is non-ascii or too long
     pub fn tryCreateAtom(bytes: []const u8) ?String {
-        const atom = bun.cpp.BunString__tryCreateAtom(bytes.ptr, bytes.len);
+        const atom = fun.cpp.FunString__tryCreateAtom(bytes.ptr, bytes.len);
         return if (atom.tag == .Dead) null else atom;
     }
 
@@ -326,7 +326,7 @@ pub const String = extern struct {
         return this.toZigString().toOwnedSliceZ(allocator);
     }
 
-    /// Create a bun.String from a slice. This is never a copy.
+    /// Create a fun.String from a slice. This is never a copy.
     /// For strings created from static string literals, use `String.static`
     pub fn init(value: anytype) String {
         const Type = @TypeOf(value);
@@ -366,14 +366,14 @@ pub const String = extern struct {
     pub const toTypeErrorInstance = string_jsc.toTypeErrorInstance;
     pub const toRangeErrorInstance = string_jsc.toRangeErrorInstance;
 
-    extern fn BunString__createExternal(
+    extern fn FunString__createExternal(
         bytes: [*]const u8,
         len: usize,
         isLatin1: bool,
         ptr: ?*anyopaque,
         callback: ?*const fn (*anyopaque, *anyopaque, u32) callconv(.c) void,
     ) String;
-    extern fn BunString__createStaticExternal(
+    extern fn FunString__createStaticExternal(
         bytes: [*]const u8,
         len: usize,
         isLatin1: bool,
@@ -409,7 +409,7 @@ pub const String = extern struct {
         callback: ?*const ExternalStringImplFreeFunction(Ctx),
     ) String {
         comptime if (@typeInfo(Ctx) != .pointer) @compileError("context must be a pointer");
-        bun.assert(bytes.len > 0);
+        fun.assert(bytes.len > 0);
         jsc.markBinding(@src());
         if (bytes.len >= max_length()) {
             if (callback) |cb| {
@@ -417,7 +417,7 @@ pub const String = extern struct {
             }
             return dead;
         }
-        return validateRefCount(BunString__createExternal(@ptrCast(bytes.ptr), bytes.len, isLatin1, ctx, @ptrCast(callback)));
+        return validateRefCount(FunString__createExternal(@ptrCast(bytes.ptr), bytes.len, isLatin1, ctx, @ptrCast(callback)));
     }
 
     /// This should rarely be used. The WTF::StringImpl* will never be freed.
@@ -426,16 +426,16 @@ pub const String = extern struct {
     /// string that will never be freed.
     pub fn createStaticExternal(bytes: []const u8, isLatin1: bool) String {
         jsc.markBinding(@src());
-        bun.assert(bytes.len > 0);
-        return BunString__createStaticExternal(bytes.ptr, bytes.len, isLatin1);
+        fun.assert(bytes.len > 0);
+        return FunString__createStaticExternal(bytes.ptr, bytes.len, isLatin1);
     }
 
-    extern fn BunString__createExternalGloballyAllocatedLatin1(
+    extern fn FunString__createExternalGloballyAllocatedLatin1(
         bytes: [*]u8,
         len: usize,
     ) String;
 
-    extern fn BunString__createExternalGloballyAllocatedUTF16(
+    extern fn FunString__createExternalGloballyAllocatedUTF16(
         bytes: [*]u16,
         len: usize,
     ) String;
@@ -449,16 +449,16 @@ pub const String = extern struct {
     /// If the allocation fails, this will free the bytes and return a dead string.
     pub fn createExternalGloballyAllocated(comptime kind: WTFEncoding, bytes: []kind.Byte()) String {
         jsc.markBinding(@src());
-        bun.assert(bytes.len > 0);
+        fun.assert(bytes.len > 0);
 
         if (bytes.len >= max_length()) {
-            bun.default_allocator.free(bytes);
+            fun.default_allocator.free(bytes);
             return dead;
         }
 
         return switch (comptime kind) {
-            .latin1 => validateRefCount(BunString__createExternalGloballyAllocatedLatin1(bytes.ptr, bytes.len)),
-            .utf16 => validateRefCount(BunString__createExternalGloballyAllocatedUTF16(bytes.ptr, bytes.len)),
+            .latin1 => validateRefCount(FunString__createExternalGloballyAllocatedLatin1(bytes.ptr, bytes.len)),
+            .utf16 => validateRefCount(FunString__createExternalGloballyAllocatedUTF16(bytes.ptr, bytes.len)),
         };
     }
 
@@ -529,7 +529,7 @@ pub const String = extern struct {
     pub fn toWTF(this: *String) void {
         jsc.markBinding(@src());
 
-        bun.cpp.BunString__toWTFString(this);
+        fun.cpp.FunString__toWTFString(this);
     }
 
     pub inline fn length(this: String) usize {
@@ -569,7 +569,7 @@ pub const String = extern struct {
 
     pub inline fn asUTF8(self: String) ?[]const u8 {
         if (self.tag == .WTFStringImpl) {
-            if (self.value.WTFStringImpl.is8Bit() and bun.strings.isAllASCII(self.value.WTFStringImpl.latin1Slice())) {
+            if (self.value.WTFStringImpl.is8Bit() and fun.strings.isAllASCII(self.value.WTFStringImpl.latin1Slice())) {
                 return self.value.WTFStringImpl.latin1Slice();
             }
 
@@ -581,7 +581,7 @@ pub const String = extern struct {
                 return self.value.ZigString.slice();
             }
 
-            if (bun.strings.isAllASCII(self.toZigString().slice())) {
+            if (fun.strings.isAllASCII(self.toZigString().slice())) {
                 return self.value.ZigString.slice();
             }
 
@@ -591,7 +591,7 @@ pub const String = extern struct {
         return "";
     }
 
-    pub fn encoding(self: String) bun.strings.EncodingNonAscii {
+    pub fn encoding(self: String) fun.strings.EncodingNonAscii {
         if (self.isUTF16()) {
             return .utf16;
         }
@@ -640,27 +640,27 @@ pub const String = extern struct {
     }
 
     pub fn encode(self: String, enc: jsc.Node.Encoding) []u8 {
-        return self.toZigString().encodeWithAllocator(bun.default_allocator, enc);
+        return self.toZigString().encodeWithAllocator(fun.default_allocator, enc);
     }
 
     pub inline fn utf8(self: String) []const u8 {
-        if (comptime bun.Environment.allow_assert) {
-            bun.assert(self.tag == .ZigString or self.tag == .StaticZigString);
-            bun.assert(self.canBeUTF8());
+        if (comptime fun.Environment.allow_assert) {
+            fun.assert(self.tag == .ZigString or self.tag == .StaticZigString);
+            fun.assert(self.canBeUTF8());
         }
         return self.value.ZigString.slice();
     }
 
     pub fn canBeUTF8(self: String) bool {
         if (self.tag == .WTFStringImpl)
-            return self.value.WTFStringImpl.is8Bit() and bun.strings.isAllASCII(self.value.WTFStringImpl.latin1Slice());
+            return self.value.WTFStringImpl.is8Bit() and fun.strings.isAllASCII(self.value.WTFStringImpl.latin1Slice());
 
         if (self.tag == .ZigString or self.tag == .StaticZigString) {
             if (self.value.ZigString.isUTF8()) {
                 return true;
             }
 
-            return bun.strings.isAllASCII(self.toZigString().slice());
+            return fun.strings.isAllASCII(self.toZigString().slice());
         }
 
         return self.tag == .Empty;
@@ -722,7 +722,7 @@ pub const String = extern struct {
 
     /// Equivalent to calling `toUTF8WithoutRef` followed by `cloneIfBorrowed`.
     pub fn toUTF8Owned(this: String, allocator: std.mem.Allocator) ZigString.Slice {
-        return bun.handleOom(this.toUTF8WithoutRef(allocator).cloneIfBorrowed(allocator));
+        return fun.handleOom(this.toUTF8WithoutRef(allocator).cloneIfBorrowed(allocator));
     }
 
     /// The returned slice is always allocated by `allocator`.
@@ -739,7 +739,7 @@ pub const String = extern struct {
         };
     }
 
-    pub fn toThreadSafeSlice(this: *String, allocator: std.mem.Allocator) bun.OOM!SliceWithUnderlyingString {
+    pub fn toThreadSafeSlice(this: *String, allocator: std.mem.Allocator) fun.OOM!SliceWithUnderlyingString {
         if (this.tag == .WTFStringImpl) {
             if (!this.value.WTFStringImpl.isThreadSafe()) {
                 const slice = this.value.WTFStringImpl.toUTF8WithoutRef(allocator);
@@ -752,9 +752,9 @@ pub const String = extern struct {
                     };
                 }
 
-                if (comptime bun.Environment.allow_assert) {
-                    bun.assert(!isWTFAllocator(slice.allocator.get().?)); // toUTF8WithoutRef() should never return a WTF allocator
-                    bun.assert(slice.allocator.get().?.vtable == allocator.vtable); // assert that the allocator is the same
+                if (comptime fun.Environment.allow_assert) {
+                    fun.assert(!isWTFAllocator(slice.allocator.get().?)); // toUTF8WithoutRef() should never return a WTF allocator
+                    fun.assert(slice.allocator.get().?.vtable == allocator.vtable); // assert that the allocator is the same
                 }
 
                 // We've already cloned the string, so let's just return the slice.
@@ -781,9 +781,9 @@ pub const String = extern struct {
                     };
                 }
 
-                if (comptime bun.Environment.allow_assert) {
-                    bun.assert(!isWTFAllocator(slice.allocator.get().?)); // toUTF8WithoutRef() should never return a WTF allocator
-                    bun.assert(slice.allocator.get().?.vtable == allocator.vtable); // assert that the allocator is the same
+                if (comptime fun.Environment.allow_assert) {
+                    fun.assert(!isWTFAllocator(slice.allocator.get().?)); // toUTF8WithoutRef() should never return a WTF allocator
+                    fun.assert(slice.allocator.get().?.vtable == allocator.vtable); // assert that the allocator is the same
                 }
 
                 // We did have to clone the string. Let's avoid keeping the WTFStringImpl around
@@ -829,8 +829,8 @@ pub const String = extern struct {
     }
 
     pub fn charAt(this: String, index: usize) u16 {
-        if (comptime bun.Environment.allow_assert) {
-            bun.assert(index < this.length());
+        if (comptime fun.Environment.allow_assert) {
+            fun.assert(index < this.length());
         }
         return switch (this.tag) {
             .WTFStringImpl => if (this.value.WTFStringImpl.is8Bit()) this.value.WTFStringImpl.latin1Slice()[index] else this.value.WTFStringImpl.utf16Slice()[index],
@@ -840,30 +840,30 @@ pub const String = extern struct {
     }
 
     pub fn indexOfAsciiChar(this: String, chr: u8) ?usize {
-        bun.assert(chr < 128);
+        fun.assert(chr < 128);
         return switch (this.isUTF16()) {
             true => std.mem.indexOfScalar(u16, this.utf16(), @intCast(chr)),
-            false => bun.strings.indexOfCharUsize(this.byteSlice(), chr),
+            false => fun.strings.indexOfCharUsize(this.byteSlice(), chr),
         };
     }
 
     pub fn visibleWidth(this: *const String, ambiguousAsWide: bool) usize {
         if (this.isUTF8()) {
-            return bun.strings.visible.width.utf8(this.utf8());
+            return fun.strings.visible.width.utf8(this.utf8());
         } else if (this.isUTF16()) {
-            return bun.strings.visible.width.utf16(this.utf16(), ambiguousAsWide);
+            return fun.strings.visible.width.utf16(this.utf16(), ambiguousAsWide);
         } else {
-            return bun.strings.visible.width.latin1(this.latin1());
+            return fun.strings.visible.width.latin1(this.latin1());
         }
     }
 
     pub fn visibleWidthExcludeANSIColors(this: *const String, ambiguousAsWide: bool) usize {
         if (this.isUTF8()) {
-            return bun.strings.visible.width.exclude_ansi_colors.utf8(this.utf8());
+            return fun.strings.visible.width.exclude_ansi_colors.utf8(this.utf8());
         } else if (this.isUTF16()) {
-            return bun.strings.visible.width.exclude_ansi_colors.utf16(this.utf16(), ambiguousAsWide);
+            return fun.strings.visible.width.exclude_ansi_colors.utf16(this.utf16(), ambiguousAsWide);
         } else {
-            return bun.strings.visible.width.exclude_ansi_colors.latin1(this.latin1());
+            return fun.strings.visible.width.exclude_ansi_colors.latin1(this.latin1());
         }
     }
 
@@ -871,7 +871,7 @@ pub const String = extern struct {
         if (this.is8Bit()) {
             const bytes = this.byteSlice();
             for (values, 0..) |val, i| {
-                if (bun.strings.eqlComptimeCheckLenWithType(u8, bytes, val, check_len)) {
+                if (fun.strings.eqlComptimeCheckLenWithType(u8, bytes, val, check_len)) {
                     return i;
                 }
             }
@@ -881,7 +881,7 @@ pub const String = extern struct {
 
         const u16_bytes = this.byteSlice();
         inline for (values, 0..) |val, i| {
-            if (bun.strings.eqlComptimeCheckLenWithType(u16, u16_bytes, comptime bun.strings.toUTF16Literal(val), check_len)) {
+            if (fun.strings.eqlComptimeCheckLenWithType(u16, u16_bytes, comptime fun.strings.toUTF16Literal(val), check_len)) {
                 return i;
             }
         }
@@ -894,8 +894,8 @@ pub const String = extern struct {
             const bytes = this.byteSlice();
 
             inline for (0..values.len) |i| {
-                bun.assert(bytes.len == values[i].len);
-                if (bun.strings.eqlComptimeCheckLenWithType(u8, bytes, values[i], false)) {
+                fun.assert(bytes.len == values[i].len);
+                if (fun.strings.eqlComptimeCheckLenWithType(u8, bytes, values[i], false)) {
                     return i;
                 }
             }
@@ -914,7 +914,7 @@ pub const String = extern struct {
         }
 
         inline for (0..values.len) |i| {
-            if (bun.strings.eqlComptimeCheckLenWithType(u8, &buffer, values[i], false)) {
+            if (fun.strings.eqlComptimeCheckLenWithType(u8, &buffer, values[i], false)) {
                 return i;
             }
         }
@@ -935,8 +935,8 @@ pub const String = extern struct {
             const bytes = this.byteSlice();
 
             inline for (0..values.len) |i| {
-                bun.assert(bytes.len == values[i].len);
-                if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(bytes, values[i])) {
+                fun.assert(bytes.len == values[i].len);
+                if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(bytes, values[i])) {
                     return i;
                 }
             }
@@ -957,7 +957,7 @@ pub const String = extern struct {
         };
 
         inline for (0..values.len) |i| {
-            if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(&buffer, values[i])) {
+            if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(&buffer, values[i])) {
                 return i;
             }
         }
@@ -981,7 +981,7 @@ pub const String = extern struct {
     }
 
     pub fn eqlBytes(this: String, value: []const u8) bool {
-        return bun.strings.eqlLong(this.byteSlice(), value, true);
+        return fun.strings.eqlLong(this.byteSlice(), value, true);
     }
 
     /// Replace the underlying StringImpl with an isolated copy that is safe to
@@ -992,7 +992,7 @@ pub const String = extern struct {
         jsc.markBinding(@src());
 
         if (this.tag == .WTFStringImpl) {
-            bun.cpp.BunString__toThreadSafe(this);
+            fun.cpp.FunString__toThreadSafe(this);
         }
     }
 
@@ -1002,7 +1002,7 @@ pub const String = extern struct {
         jsc.markBinding(@src());
 
         if (this.tag == .WTFStringImpl) {
-            bun.cpp.BunString__toThreadSafe(this);
+            fun.cpp.FunString__toThreadSafe(this);
             this.value.WTFStringImpl.ref();
         }
     }
@@ -1027,7 +1027,7 @@ pub const String = extern struct {
     }
 
     // TODO: move ZigString.Slice here
-    /// A UTF-8 encoded slice tied to the lifetime of a `bun.String`
+    /// A UTF-8 encoded slice tied to the lifetime of a `fun.String`
     /// Must call `.deinit` to release memory
     pub const Slice = ZigString.Slice;
 };
@@ -1036,11 +1036,11 @@ pub const SliceWithUnderlyingString = struct {
     utf8: ZigString.Slice = ZigString.Slice.empty,
     underlying: String = String.dead,
 
-    did_report_extra_memory_debug: bun.DebugOnly(bool) = if (bun.Environment.isDebug) false,
+    did_report_extra_memory_debug: fun.DebugOnly(bool) = if (fun.Environment.isDebug) false,
 
     pub inline fn reportExtraMemory(this: *SliceWithUnderlyingString, vm: *jsc.VM) void {
-        if (comptime bun.Environment.isDebug) {
-            bun.assert(!this.did_report_extra_memory_debug);
+        if (comptime fun.Environment.isDebug) {
+            fun.assert(!this.did_report_extra_memory_debug);
             this.did_report_extra_memory_debug = true;
         }
         this.utf8.reportExtraMemory(vm);
@@ -1075,14 +1075,14 @@ pub const SliceWithUnderlyingString = struct {
         }
 
         return .{
-            .underlying = jsc.WebCore.encoding.toBunStringFromOwnedSlice(owned_input_bytes, encoding),
+            .underlying = jsc.WebCore.encoding.toFunStringFromOwnedSlice(owned_input_bytes, encoding),
         };
     }
 
     /// Assumes default allocator in use
     pub fn fromUTF8(utf8: []const u8) SliceWithUnderlyingString {
         return .{
-            .utf8 = ZigString.Slice.init(bun.default_allocator, utf8),
+            .utf8 = ZigString.Slice.init(fun.default_allocator, utf8),
             .underlying = String.dead,
         };
     }
@@ -1090,7 +1090,7 @@ pub const SliceWithUnderlyingString = struct {
     pub fn toThreadSafe(this: *SliceWithUnderlyingString) void {
         if (this.underlying.tag == .WTFStringImpl) {
             const orig = this.underlying.value.WTFStringImpl;
-            // BunString__toThreadSafe transfers ownership: it derefs the
+            // FunString__toThreadSafe transfers ownership: it derefs the
             // previous impl and installs a new one. We only need to migrate
             // the utf8 slice if it was a ref-counted view into the old impl.
             this.underlying.toThreadSafe();
@@ -1128,16 +1128,16 @@ pub const SliceWithUnderlyingString = struct {
 };
 
 comptime {
-    bun.assert_eql(@sizeOf(bun.String), 24);
-    bun.assert_eql(@alignOf(bun.String), 8);
+    fun.assert_eql(@sizeOf(fun.String), 24);
+    fun.assert_eql(@alignOf(fun.String), 8);
 }
 
 const std = @import("std");
-const string_jsc = @import("../jsc/bun_string_jsc.zig");
+const string_jsc = @import("../jsc/fun_string_jsc.zig");
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const AsciiStatus = bun.strings.AsciiStatus;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const AsciiStatus = fun.strings.AsciiStatus;
 
-const jsc = bun.jsc;
-const ZigString = bun.jsc.ZigString;
+const jsc = fun.jsc;
+const ZigString = fun.jsc.ZigString;

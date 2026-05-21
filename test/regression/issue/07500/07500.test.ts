@@ -1,27 +1,27 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tmpdirSync } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tmpdirSync } from "harness";
 import { join } from "path";
 
-test("7500 - Bun.stdin.text() doesn't read all data", async () => {
-  const filename = join(tmpdirSync(), "bun.test.offset.txt");
+test("7500 - Fun.stdin.text() doesn't read all data", async () => {
+  const filename = join(tmpdirSync(), "fun.test.offset.txt");
   const text = "contents of file to be read with several lines of text and lots and lots and lots and lots of bytes! "
     .repeat(1000)
     .repeat(9)
     .split(" ")
     .join("\n");
-  await Bun.write(filename, text);
+  await Fun.write(filename, text);
   // -Raw on windows makes it output a single string instead of an array of lines
   const cat = isWindows ? "Get-Content -Raw" : "cat";
-  const bunCommand = `${bunExe()} ${join(import.meta.dir, "07500.fixture.js")}`;
-  const shellCommand = `${cat} ${filename} | ${bunCommand}`.replace(/\\/g, "\\\\");
+  const funCommand = `${funExe()} ${join(import.meta.dir, "07500.fixture.js")}`;
+  const shellCommand = `${cat} ${filename} | ${funCommand}`.replace(/\\/g, "\\\\");
 
   const cmd = isWindows ? (["pwsh.exe", "/C", shellCommand] as const) : (["bash", "-c", shellCommand] as const);
 
-  const proc = Bun.spawnSync(cmd, {
+  const proc = Fun.spawnSync(cmd, {
     stdin: "inherit",
     stdout: "pipe",
     stderr: "inherit",
-    env: bunEnv,
+    env: funEnv,
   });
 
   if (proc.exitCode != 0) {

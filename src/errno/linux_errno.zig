@@ -164,7 +164,7 @@ pub const UV_E = struct {
     pub const BADF: i32 = @intFromEnum(SystemErrno.EBADF);
     pub const BUSY: i32 = @intFromEnum(SystemErrno.EBUSY);
     pub const CANCELED: i32 = @intFromEnum(SystemErrno.ECANCELED);
-    pub const CHARSET: i32 = -bun.windows.libuv.UV_ECHARSET;
+    pub const CHARSET: i32 = -fun.windows.libuv.UV_ECHARSET;
     pub const CONNABORTED: i32 = @intFromEnum(SystemErrno.ECONNABORTED);
     pub const CONNREFUSED: i32 = @intFromEnum(SystemErrno.ECONNREFUSED);
     pub const CONNRESET: i32 = @intFromEnum(SystemErrno.ECONNRESET);
@@ -216,7 +216,7 @@ pub const UV_E = struct {
     pub const HOSTDOWN: i32 = @intFromEnum(SystemErrno.EHOSTDOWN);
     pub const REMOTEIO: i32 = @intFromEnum(SystemErrno.EREMOTEIO);
     pub const NOTTY: i32 = @intFromEnum(SystemErrno.ENOTTY);
-    pub const FTYPE: i32 = -bun.windows.libuv.UV_EFTYPE;
+    pub const FTYPE: i32 = -fun.windows.libuv.UV_EFTYPE;
     pub const ILSEQ: i32 = @intFromEnum(SystemErrno.EILSEQ);
     pub const OVERFLOW: i32 = @intFromEnum(SystemErrno.EOVERFLOW);
     pub const SOCKTNOSUPPORT: i32 = @intFromEnum(SystemErrno.ESOCKTNOSUPPORT);
@@ -249,5 +249,5 @@ pub fn getErrno(rc: anytype) E {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

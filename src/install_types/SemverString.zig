@@ -160,7 +160,7 @@ pub const String = extern struct {
         };
 
         pub fn format(formatter: JsonFormatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-            try writer.print("{f}", .{bun.fmt.formatJSONStringUTF8(formatter.str.slice(formatter.buf), .{ .quote = formatter.opts.quote })});
+            try writer.print("{f}", .{fun.fmt.formatJSONStringUTF8(formatter.str.slice(formatter.buf), .{ .quote = formatter.opts.quote })});
         }
     };
 
@@ -248,7 +248,7 @@ pub const String = extern struct {
 
         pub fn hash(ctx: HashContext, arg: String) u64 {
             const str = arg.slice(ctx.arg_buf);
-            return bun.hash(str);
+            return fun.hash(str);
         }
     };
 
@@ -269,7 +269,7 @@ pub const String = extern struct {
 
         pub fn hash(ctx: ArrayHashContext, arg: String) u32 {
             const str = arg.slice(ctx.arg_buf);
-            return @as(u32, @truncate(bun.hash(str)));
+            return @as(u32, @truncate(fun.hash(str)));
         }
     };
 
@@ -336,7 +336,7 @@ pub const String = extern struct {
     pub fn initInline(
         in: string,
     ) String {
-        bun.assertWithLocation(canInline(in), @src());
+        fun.assertWithLocation(canInline(in), @src());
         return switch (in.len) {
             0 => .{},
             1 => .{ .bytes = .{ in[0], 0, 0, 0, 0, 0, 0, 0 } },
@@ -440,7 +440,7 @@ pub const String = extern struct {
             in: string,
         ) Pointer {
             if (Environment.allow_assert) {
-                assert(bun.isSliceInBuffer(in, buf));
+                assert(fun.isSliceInBuffer(in, buf));
             }
 
             return Pointer{
@@ -492,7 +492,7 @@ pub const String = extern struct {
         pub const StringPool = std.HashMap(u64, String, IdentityContext(u64), 80);
 
         pub inline fn stringHash(buf: []const u8) u64 {
-            return bun.Wyhash11.hash(0, buf);
+            return fun.Wyhash11.hash(0, buf);
         }
 
         pub inline fn count(this: *Builder, slice_: string) void {
@@ -519,7 +519,7 @@ pub const String = extern struct {
         }
 
         pub fn append(this: *Builder, comptime Type: type, slice_: string) Type {
-            return @call(bun.callmod_inline, appendWithHash, .{ this, Type, slice_, stringHash(slice_) });
+            return @call(fun.callmod_inline, appendWithHash, .{ this, Type, slice_, stringHash(slice_) });
         }
 
         pub fn appendUTF8WithoutPool(this: *Builder, comptime Type: type, slice_: string, hash: u64) Type {
@@ -542,7 +542,7 @@ pub const String = extern struct {
                 assert(this.ptr != null); // must call allocate first
             }
 
-            bun.copy(u8, this.ptr.?[this.len..this.cap], slice_);
+            fun.copy(u8, this.ptr.?[this.len..this.cap], slice_);
             const final_slice = this.ptr.?[this.len..this.cap][0..slice_.len];
             this.len += slice_.len;
 
@@ -577,7 +577,7 @@ pub const String = extern struct {
                 assert(this.ptr != null); // must call allocate first
             }
 
-            bun.copy(u8, this.ptr.?[this.len..this.cap], slice_);
+            fun.copy(u8, this.ptr.?[this.len..this.cap], slice_);
             const final_slice = this.ptr.?[this.len..this.cap][0..slice_.len];
             this.len += slice_.len;
 
@@ -614,7 +614,7 @@ pub const String = extern struct {
 
             const string_entry = this.string_pool.getOrPut(hash) catch unreachable;
             if (!string_entry.found_existing) {
-                bun.copy(u8, this.ptr.?[this.len..this.cap], slice_);
+                fun.copy(u8, this.ptr.?[this.len..this.cap], slice_);
                 const final_slice = this.ptr.?[this.len..this.cap][0..slice_.len];
                 this.len += slice_.len;
 
@@ -650,13 +650,13 @@ const string = []const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const IdentityContext = bun.IdentityContext;
-const OOM = bun.OOM;
-const assert = bun.assert;
-const strings = bun.strings;
-const Lockfile = bun.install.Lockfile;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const IdentityContext = fun.IdentityContext;
+const OOM = fun.OOM;
+const assert = fun.assert;
+const strings = fun.strings;
+const Lockfile = fun.install.Lockfile;
 
-const ExternalString = bun.Semver.ExternalString;
-const SlicedString = bun.Semver.SlicedString;
+const ExternalString = fun.Semver.ExternalString;
+const SlicedString = fun.Semver.SlicedString;

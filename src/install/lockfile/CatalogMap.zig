@@ -249,7 +249,7 @@ pub fn fromPnpmLockfile(
     lockfile: *Lockfile,
     allocator: std.mem.Allocator,
     log: *logger.Log,
-    catalogs_obj: *bun.ast.E.Object,
+    catalogs_obj: *fun.ast.E.Object,
     string_buf: *String.Buf,
 ) FromPnpmLockfileError!void {
     for (catalogs_obj.properties.slice()) |prop| {
@@ -278,7 +278,7 @@ fn putEntriesFromPnpmLockfile(
     allocator: std.mem.Allocator,
     log: *logger.Log,
     catalog_map: *Map,
-    entries_obj: *bun.ast.E.Object,
+    entries_obj: *fun.ast.E.Object,
     string_buf: *String.Buf,
 ) FromPnpmLockfileError!void {
     for (entries_obj.properties.slice()) |entry_prop| {
@@ -459,13 +459,13 @@ const string = []const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const logger = bun.logger;
-const strings = bun.strings;
-const Expr = bun.ast.Expr;
-const String = bun.Semver.String;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const logger = fun.logger;
+const strings = fun.strings;
+const Expr = fun.ast.Expr;
+const String = fun.Semver.String;
 
-const Dependency = bun.install.Dependency;
-const Lockfile = bun.install.Lockfile;
-const PackageManager = bun.install.PackageManager;
+const Dependency = fun.install.Dependency;
+const Lockfile = fun.install.Lockfile;
+const PackageManager = fun.install.PackageManager;

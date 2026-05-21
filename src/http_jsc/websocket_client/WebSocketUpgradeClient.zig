@@ -20,7 +20,7 @@
 /// - WebSocket Handshake: https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#the_websocket_handshake
 pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
     return struct {
-        pub const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+        pub const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
         pub const ref = RefCount.ref;
         pub const deref = RefCount.deref;
         pub const Socket = uws.NewSocketHandler(ssl);
@@ -41,7 +41,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
         hostname: [:0]const u8 = "",
         poll_ref: Async.KeepAlive = Async.KeepAlive.init(),
         state: State = .initializing,
-        subprotocols: bun.StringSet,
+        subprotocols: fun.StringSet,
 
         /// Proxy state (null when not using proxy)
         proxy: ?WebSocketProxy = null,
@@ -93,8 +93,8 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
         fn deinit(this: *HTTPClient) void {
             this.clearData();
-            bun.debugAssert(this.tcp.isDetached());
-            bun.destroy(this);
+            fun.debugAssert(this.tcp.isDetached());
+            fun.destroy(this);
         }
 
         /// On error, this returns null.
@@ -102,41 +102,41 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
         pub fn connect(
             global: *jsc.JSGlobalObject,
             websocket: *CppWebSocket,
-            host: *const bun.String,
+            host: *const fun.String,
             port: u16,
-            pathname: *const bun.String,
-            client_protocol: *const bun.String,
-            header_names: ?[*]const bun.String,
-            header_values: ?[*]const bun.String,
+            pathname: *const fun.String,
+            client_protocol: *const fun.String,
+            header_names: ?[*]const fun.String,
+            header_values: ?[*]const fun.String,
             header_count: usize,
             // Proxy parameters
-            proxy_host: ?*const bun.String,
+            proxy_host: ?*const fun.String,
             proxy_port: u16,
-            proxy_authorization: ?*const bun.String,
-            proxy_header_names: ?[*]const bun.String,
-            proxy_header_values: ?[*]const bun.String,
+            proxy_authorization: ?*const fun.String,
+            proxy_header_names: ?[*]const fun.String,
+            proxy_header_values: ?[*]const fun.String,
             proxy_header_count: usize,
             // TLS options (full SSLConfig for complete TLS customization)
             ssl_config: ?*SSLConfig,
             // Whether the target URL is wss:// (separate from ssl template parameter)
             target_is_secure: bool,
             // Target URL authorization (Basic auth from ws://user:pass@host)
-            target_authorization: ?*const bun.String,
+            target_authorization: ?*const fun.String,
             // Unix domain socket path for ws+unix:// / wss+unix:// (null for TCP)
-            unix_socket_path: ?*const bun.String,
+            unix_socket_path: ?*const fun.String,
             // Whether to advertise `permessage-deflate` in the upgrade request
             // (ws.WebSocket's `perMessageDeflate` option; true by default).
             offer_permessage_deflate: bool,
         ) callconv(.c) ?*HTTPClient {
-            const vm = global.bunVM();
+            const vm = global.funVM();
 
-            bun.assert(vm.event_loop_handle != null);
+            fun.assert(vm.event_loop_handle != null);
 
-            // Decode all BunString inputs into UTF-8 slices. The underlying
+            // Decode all FunString inputs into UTF-8 slices. The underlying
             // JavaScript strings may be Latin1 or UTF-16; `String.toUTF8()` either
             // borrows the 8-bit ASCII backing (no allocation) or allocates a
             // UTF-8 copy. All slices live until `deinit_slices()` below.
-            const allocator = bun.default_allocator;
+            const allocator = fun.default_allocator;
 
             var host_slice = host.toUTF8(allocator);
             var pathname_slice = pathname.toUTF8(allocator);
@@ -145,7 +145,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             // Headers8Bit.init only returns Allocator.Error; handle OOM as a
             // crash per the OOM contract instead of masking it as a connection
             // failure.
-            const extra_headers = Headers8Bit.init(allocator, header_names, header_values, header_count) catch |err| bun.handleOom(err);
+            const extra_headers = Headers8Bit.init(allocator, header_names, header_values, header_count) catch |err| fun.handleOom(err);
             defer extra_headers.deinit();
 
             defer host_slice.deinit();
@@ -210,11 +210,11 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
                 // Headers8Bit.init / toHeaders only return Allocator.Error;
                 // OOM should crash, not silently become a connection failure.
-                const proxy_extra_headers = Headers8Bit.init(allocator, proxy_header_names, proxy_header_values, proxy_header_count) catch |err| bun.handleOom(err);
+                const proxy_extra_headers = Headers8Bit.init(allocator, proxy_header_names, proxy_header_values, proxy_header_count) catch |err| fun.handleOom(err);
                 defer proxy_extra_headers.deinit();
 
                 if (proxy_header_count > 0) {
-                    proxy_hdrs = proxy_extra_headers.toHeaders(allocator) catch |err| bun.handleOom(err);
+                    proxy_hdrs = proxy_extra_headers.toHeaders(allocator) catch |err| fun.handleOom(err);
                 }
 
                 // Build CONNECT request (proxy_auth and proxy_hdrs are freed by defer after this).
@@ -224,11 +224,11 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                     port,
                     proxy_auth_slice,
                     proxy_hdrs,
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
 
                 // Duplicate target_host (needed for SNI during TLS handshake).
                 // allocator.dupe only returns Allocator.Error; crash on OOM.
-                const target_host_dup = allocator.dupe(u8, host_slice.slice()) catch |err| bun.handleOom(err);
+                const target_host_dup = allocator.dupe(u8, host_slice.slice()) catch |err| fun.handleOom(err);
 
                 proxy_state = WebSocketProxy.init(
                     target_host_dup,
@@ -239,7 +239,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                 );
             }
 
-            var client = bun.new(HTTPClient, .{
+            var client = fun.new(HTTPClient, .{
                 .ref_count = .init(),
                 .tcp = .{ .socket = .{ .detached = {} } },
                 .outgoing_websocket = websocket,
@@ -249,10 +249,10 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                 .expected_accept = request_result.expected_accept,
                 .offered_permessage_deflate = offer_permessage_deflate,
                 .subprotocols = brk: {
-                    var subprotocols = bun.StringSet.init(bun.default_allocator);
-                    var it = bun.http.HeaderValueIterator.init(protocol_for_subprotocols);
+                    var subprotocols = fun.StringSet.init(fun.default_allocator);
+                    var it = fun.http.HeaderValueIterator.init(protocol_for_subprotocols);
                     while (it.next()) |protocol| {
-                        subprotocols.insert(protocol) catch |e| bun.handleOom(e);
+                        subprotocols.insert(protocol) catch |e| fun.handleOom(e);
                     }
                     break :brk subprotocols;
                 },
@@ -265,7 +265,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             const connect_port = if (using_proxy) proxy_port else port;
 
             client.poll_ref.ref(vm);
-            const display_host = if (bun.FeatureFlags.hardcode_localhost_to_127_0_0_1 and strings.eqlComptime(display_host_, "localhost"))
+            const display_host = if (fun.FeatureFlags.hardcode_localhost_to_127_0_0_1 and strings.eqlComptime(display_host_, "localhost"))
                 "127.0.0.1"
             else
                 display_host_;
@@ -279,10 +279,10 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             // inherits so it isn't rebuilt on adopt.
             const secure_ptr: ?*uws.SslCtx = if (comptime ssl) brk: {
                 if (ssl_config) |config| if (config.requires_custom_request_ctx) {
-                    var err: uws.create_bun_socket_error_t = .none;
+                    var err: uws.create_fun_socket_error_t = .none;
                     // Per-VM weak cache: every `new WebSocket(wss://, {tls:{ca}})`
                     // with the same CA shares one CTX with each other and with
-                    // any `Bun.connect`/Postgres/etc. that named it.
+                    // any `Fun.connect`/Postgres/etc. that named it.
                     const ctx = vm.rareData().sslCtxCache().getOrCreateOpts(config.asUSocketsForClientVerification(), &err) orelse {
                         // Do NOT fall through to the default trust store — the
                         // user passed an explicit CA/cert and BoringSSL
@@ -317,7 +317,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                         client.deref();
                         return null;
                     }
-                    bun.analytics.Features.WebSocket += 1;
+                    fun.analytics.Features.WebSocket += 1;
 
                     if (comptime ssl) {
                         // SNI uses the URL host (defaulted to "localhost" in
@@ -327,7 +327,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                         // in the URL (wss+unix://name/path) to verify against
                         // a specific certificate name.
                         if (host_slice.slice().len > 0 and !strings.isIPAddress(host_slice.slice())) {
-                            client.hostname = bun.default_allocator.dupeZ(u8, host_slice.slice()) catch "";
+                            client.hostname = fun.default_allocator.dupeZ(u8, host_slice.slice()) catch "";
                         }
                     }
 
@@ -358,14 +358,14 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                     client.deref();
                     return null;
                 }
-                bun.analytics.Features.WebSocket += 1;
+                fun.analytics.Features.WebSocket += 1;
 
                 if (comptime ssl) {
                     // SNI for the outer TLS socket must use the host we actually
                     // dialed. For HTTPS proxy connections, that's the proxy host,
                     // not the wss:// target.
                     if (!strings.isIPAddress(display_host_)) {
-                        out.hostname = bun.default_allocator.dupeZ(u8, display_host_) catch "";
+                        out.hostname = fun.default_allocator.dupeZ(u8, display_host_) catch "";
                     }
                 }
 
@@ -382,7 +382,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
         }
 
         pub fn clearInput(this: *HTTPClient) void {
-            if (this.input_body_buf.len > 0) bun.default_allocator.free(this.input_body_buf);
+            if (this.input_body_buf.len > 0) fun.default_allocator.free(this.input_body_buf);
             this.input_body_buf.len = 0;
         }
         pub fn clearData(this: *HTTPClient) void {
@@ -390,10 +390,10 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
             this.subprotocols.clearAndFree();
             this.clearInput();
-            this.body.clearAndFree(bun.default_allocator);
+            this.body.clearAndFree(fun.default_allocator);
 
             if (this.hostname.len > 0) {
-                bun.default_allocator.free(this.hostname);
+                fun.default_allocator.free(this.hostname);
                 this.hostname = "";
             }
 
@@ -410,11 +410,11 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             }
             if (this.ssl_config) |config| {
                 config.deinit();
-                bun.default_allocator.destroy(config);
+                fun.default_allocator.destroy(config);
                 this.ssl_config = null;
             }
             if (this.secure) |s| {
-                bun.BoringSSL.c.SSL_CTX_free(s);
+                fun.BoringSSL.c.SSL_CTX_free(s);
                 this.secure = null;
             }
         }
@@ -476,7 +476,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             // We cannot access the pointer after fail is called.
         }
 
-        pub fn handleHandshake(this: *HTTPClient, socket: Socket, success: i32, ssl_error: uws.us_bun_verify_error_t) void {
+        pub fn handleHandshake(this: *HTTPClient, socket: Socket, success: i32, ssl_error: uws.us_fun_verify_error_t) void {
             log("onHandshake({d}) ssl_error.error_no={d}", .{ success, ssl_error.error_no });
 
             const handshake_success = if (success == 1) true else false;
@@ -496,7 +496,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                     }
                     const ssl_ptr = @as(*BoringSSL.c.SSL, @ptrCast(socket.getNativeHandle()));
                     if (BoringSSL.c.SSL_get_servername(ssl_ptr, 0)) |servername| {
-                        const hostname = servername[0..bun.len(servername)];
+                        const hostname = servername[0..fun.len(servername)];
                         if (!BoringSSL.checkServerIdentity(ssl_ptr, hostname)) {
                             this.fail(ErrorCode.tls_handshake_failed);
                         }
@@ -513,15 +513,15 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             log("onOpen", .{});
             this.tcp = socket;
 
-            bun.assert(this.input_body_buf.len > 0);
-            bun.assert(this.to_send.len == 0);
+            fun.assert(this.input_body_buf.len > 0);
+            fun.assert(this.to_send.len == 0);
 
             if (comptime ssl) {
                 if (this.hostname.len > 0) {
                     if (socket.getNativeHandle()) |handle| {
                         handle.configureHTTPClient(this.hostname);
                     }
-                    bun.default_allocator.free(this.hostname);
+                    fun.default_allocator.free(this.hostname);
                     this.hostname = "";
                 }
             }
@@ -571,10 +571,10 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             this.ref();
             defer this.deref();
 
-            bun.assert(this.isSameSocket(socket));
+            fun.assert(this.isSameSocket(socket));
 
             if (comptime Environment.allow_assert)
-                bun.assert(!socket.isShutdown());
+                fun.assert(!socket.isShutdown());
 
             // Handle proxy handshake response
             if (this.state == .proxy_handshake) {
@@ -592,7 +592,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
             var body = data;
             if (this.body.items.len > 0) {
-                bun.handleOom(this.body.appendSlice(bun.default_allocator, data));
+                fun.handleOom(this.body.appendSlice(fun.default_allocator, data));
                 body = this.body.items;
             }
 
@@ -614,7 +614,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                     },
                     error.ShortRead => {
                         if (this.body.items.len == 0) {
-                            bun.handleOom(this.body.appendSlice(bun.default_allocator, data));
+                            fun.handleOom(this.body.appendSlice(fun.default_allocator, data));
                         }
                         return;
                     },
@@ -629,7 +629,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
             var body = data;
             if (this.body.items.len > 0) {
-                bun.handleOom(this.body.appendSlice(bun.default_allocator, data));
+                fun.handleOom(this.body.appendSlice(fun.default_allocator, data));
                 body = this.body.items;
             }
 
@@ -654,7 +654,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                     },
                     error.ShortRead => {
                         if (this.body.items.len == 0) {
-                            bun.handleOom(this.body.appendSlice(bun.default_allocator, data));
+                            fun.handleOom(this.body.appendSlice(fun.default_allocator, data));
                         }
                         return;
                     },
@@ -696,7 +696,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
             // Free the CONNECT request buffer
             if (this.input_body_buf.len > 0) {
-                bun.default_allocator.free(this.input_body_buf);
+                fun.default_allocator.free(this.input_body_buf);
             }
 
             // Use the WebSocket upgrade request from proxy state
@@ -762,7 +762,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
             // Free the CONNECT request buffer
             if (this.input_body_buf.len > 0) {
-                bun.default_allocator.free(this.input_body_buf);
+                fun.default_allocator.free(this.input_body_buf);
                 this.input_body_buf = &[_]u8{};
             }
 
@@ -800,7 +800,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             // Process as if it came directly from the socket
             var body = data;
             if (this.body.items.len > 0) {
-                bun.handleOom(this.body.appendSlice(bun.default_allocator, data));
+                fun.handleOom(this.body.appendSlice(fun.default_allocator, data));
                 body = this.body.items;
             }
 
@@ -822,7 +822,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                     },
                     error.ShortRead => {
                         if (this.body.items.len == 0) {
-                            bun.handleOom(this.body.appendSlice(bun.default_allocator, data));
+                            fun.handleOom(this.body.appendSlice(fun.default_allocator, data));
                         }
                         return;
                     },
@@ -884,7 +884,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
                                 protocol_header_seen = true;
 
-                                var iterator = bun.http.HeaderValueIterator.init(header.value);
+                                var iterator = fun.http.HeaderValueIterator.init(header.value);
 
                                 const protocol = iterator.next()
                                     // Can't be empty.
@@ -897,7 +897,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                                 if (!this.subprotocols.contains(protocol)) break :brk false;
 
                                 if (this.outgoing_websocket) |ws| {
-                                    var protocol_str = bun.String.cloneLatin1(protocol);
+                                    var protocol_str = fun.String.cloneLatin1(protocol);
                                     defer protocol_str.deref();
                                     ws.setProtocol(&protocol_str);
                                 }
@@ -1017,7 +1017,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             const overflow_len = remain_buf.len;
             var overflow: []u8 = &.{};
             if (overflow_len > 0) {
-                overflow = bun.default_allocator.alloc(u8, overflow_len) catch {
+                overflow = fun.default_allocator.alloc(u8, overflow_len) catch {
                     this.terminate(ErrorCode.invalid_response);
                     return;
                 };
@@ -1042,7 +1042,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
                         // in handleClose) is what keeps this struct alive to forward
                         // socket data to the tunnel after we switch to .done.
                         defer this.deref();
-                        const ws = bun.take(&this.outgoing_websocket).?;
+                        const ws = fun.take(&this.outgoing_websocket).?;
 
                         // Create the WebSocket client with the tunnel
                         ws.didConnectWithTunnel(tunnel, overflow.ptr, overflow.len, if (deflate_result.enabled) &deflate_result.params else null);
@@ -1066,7 +1066,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             this.secure = null; // prevent clearData from freeing it
             // Any arm below that doesn't hand `saved_secure` to didConnect must
             // drop the ref it took out of `this`; do it once on scope exit.
-            defer if (saved_secure) |s| bun.BoringSSL.c.SSL_CTX_free(s);
+            defer if (saved_secure) |s| fun.BoringSSL.c.SSL_CTX_free(s);
             this.clearData();
             jsc.markBinding(@src());
             if (!this.tcp.isClosed() and this.outgoing_websocket != null) {
@@ -1075,7 +1075,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
                 // Once for the outgoing_websocket.
                 defer this.deref();
-                const ws = bun.take(&this.outgoing_websocket).?;
+                const ws = fun.take(&this.outgoing_websocket).?;
                 const socket = this.tcp;
 
                 // Normal mode: pass socket directly to WebSocket client
@@ -1106,7 +1106,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             this: *HTTPClient,
             socket: Socket,
         ) void {
-            bun.assert(this.isSameSocket(socket));
+            fun.assert(this.isSameSocket(socket));
 
             // Forward to proxy tunnel if active
             if (this.proxy) |*p| {
@@ -1167,27 +1167,27 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             comptime {
                 const name = if (ssl) "WebSocketHTTPSClient" else "WebSocketHTTPClient";
                 @export(&connect, .{
-                    .name = "Bun__" ++ name ++ "__connect",
+                    .name = "Fun__" ++ name ++ "__connect",
                 });
                 @export(&cancel, .{
-                    .name = "Bun__" ++ name ++ "__cancel",
+                    .name = "Fun__" ++ name ++ "__cancel",
                 });
                 @export(&memoryCost, .{
-                    .name = "Bun__" ++ name ++ "__memoryCost",
+                    .name = "Fun__" ++ name ++ "__memoryCost",
                 });
             }
         }
     };
 }
 
-/// Decodes an array of BunString header name/value pairs to UTF-8 up front.
+/// Decodes an array of FunString header name/value pairs to UTF-8 up front.
 ///
-/// The BunString values may be backed by 8-bit Latin1 or 16-bit UTF-16
+/// The FunString values may be backed by 8-bit Latin1 or 16-bit UTF-16
 /// `WTFStringImpl`s. Calling `.slice()` on a ZigString wrapper that was built
 /// from a non-ASCII WTFStringImpl returns raw Latin1 or UTF-16 code units,
 /// which then corrupts the HTTP upgrade request and can cause heap corruption.
 ///
-/// Using `bun.String.toUTF8(allocator)` either borrows the 8-bit ASCII backing
+/// Using `fun.String.toUTF8(allocator)` either borrows the 8-bit ASCII backing
 /// (no allocation) or allocates a UTF-8 copy. The resulting slices are stored
 /// here so buildRequestBody / buildConnectRequest can index them by []const u8.
 const Headers8Bit = struct {
@@ -1198,8 +1198,8 @@ const Headers8Bit = struct {
 
     pub fn init(
         allocator: std.mem.Allocator,
-        names_ptr: ?[*]const bun.String,
-        values_ptr: ?[*]const bun.String,
+        names_ptr: ?[*]const fun.String,
+        values_ptr: ?[*]const fun.String,
         len: usize,
     ) std.mem.Allocator.Error!Headers8Bit {
         if (len == 0) {
@@ -1262,7 +1262,7 @@ const Headers8Bit = struct {
         return self.value_slices;
     }
 
-    /// Convert Headers8Bit to bun.http.Headers
+    /// Convert Headers8Bit to fun.http.Headers
     pub fn toHeaders(self: Headers8Bit, allocator: std.mem.Allocator) !Headers {
         var headers = Headers{
             .allocator = allocator,
@@ -1284,7 +1284,7 @@ fn buildConnectRequest(
     proxy_authorization: ?[]const u8,
     proxy_headers: ?Headers,
 ) std.mem.Allocator.Error![]u8 {
-    const allocator = bun.default_allocator;
+    const allocator = fun.default_allocator;
 
     // Calculate size for the CONNECT request
     var buf = std.array_list.Managed(u8).init(allocator);
@@ -1345,7 +1345,7 @@ fn buildRequestBody(
     /// offer `permessage-deflate; client_max_window_bits`.
     offer_permessage_deflate: bool,
 ) std.mem.Allocator.Error!BuildRequestResult {
-    const allocator = bun.default_allocator;
+    const allocator = fun.default_allocator;
 
     // Check for user overrides
     var user_host: ?[]const u8 = null;
@@ -1396,7 +1396,7 @@ fn buildRequestBody(
 
     const protocol = if (user_protocol) |p| p else client_protocol;
 
-    const host_fmt = bun.fmt.HostFormatter{
+    const host_fmt = fun.fmt.HostFormatter{
         .is_https = is_https,
         .host = host,
         .port = port,
@@ -1483,13 +1483,13 @@ fn buildRequestBody(
 /// base64(SHA-1(key ++ "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
 fn computeAcceptValue(key: []const u8) [28]u8 {
     const websocket_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    var hasher = bun.sha.Hashers.SHA1.init();
+    var hasher = fun.sha.Hashers.SHA1.init();
     hasher.update(key);
     hasher.update(websocket_guid);
-    var hash: bun.sha.Hashers.SHA1.Digest = undefined;
+    var hash: fun.sha.Hashers.SHA1.Digest = undefined;
     hasher.final(&hash);
     var result: [28]u8 = undefined;
-    _ = bun.base64.encode(&result, &hash);
+    _ = fun.base64.encode(&result, &hash);
     return result;
 }
 
@@ -1503,7 +1503,7 @@ pub fn parseSSLConfig(
     globalThis: *jsc.JSGlobalObject,
     tls_value: jsc.JSValue,
 ) callconv(.c) ?*SSLConfig {
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
 
     // Use SSLConfig.fromJS for clean and safe parsing
     const config_opt = SSLConfig.fromJS(vm, globalThis, tls_value) catch {
@@ -1513,7 +1513,7 @@ pub fn parseSSLConfig(
 
     if (config_opt) |config| {
         // Allocate on heap and return pointer (ownership transferred to caller)
-        const config_ptr = bun.handleOom(bun.default_allocator.create(SSLConfig));
+        const config_ptr = fun.handleOom(fun.default_allocator.create(SSLConfig));
         config_ptr.* = config;
         return config_ptr;
     }
@@ -1529,12 +1529,12 @@ pub fn parseSSLConfig(
 /// hands the pointer off to a Zig upgrade client.
 pub fn freeSSLConfig(config: *SSLConfig) callconv(.c) void {
     config.deinit();
-    bun.default_allocator.destroy(config);
+    fun.default_allocator.destroy(config);
 }
 
 comptime {
-    @export(&parseSSLConfig, .{ .name = "Bun__WebSocket__parseSSLConfig" });
-    @export(&freeSSLConfig, .{ .name = "Bun__WebSocket__freeSSLConfig" });
+    @export(&parseSSLConfig, .{ .name = "Fun__WebSocket__parseSSLConfig" });
+    @export(&freeSSLConfig, .{ .name = "Fun__WebSocket__freeSSLConfig" });
 }
 
 const WebSocketDeflate = @import("./WebSocketDeflate.zig");
@@ -1546,15 +1546,15 @@ const CppWebSocket = @import("./CppWebSocket.zig").CppWebSocket;
 const websocket_client = @import("../websocket_client.zig");
 const ErrorCode = websocket_client.ErrorCode;
 
-const bun = @import("bun");
-const Async = bun.Async;
-const BoringSSL = bun.BoringSSL;
-const Environment = bun.Environment;
-const Output = bun.Output;
-const PicoHTTP = bun.picohttp;
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const strings = bun.strings;
-const uws = bun.uws;
-const Headers = bun.http.Headers;
+const fun = @import("fun");
+const Async = fun.Async;
+const BoringSSL = fun.BoringSSL;
+const Environment = fun.Environment;
+const Output = fun.Output;
+const PicoHTTP = fun.picohttp;
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const strings = fun.strings;
+const uws = fun.uws;
+const Headers = fun.http.Headers;
 const SSLConfig = jsc.API.ServerConfig.SSLConfig;

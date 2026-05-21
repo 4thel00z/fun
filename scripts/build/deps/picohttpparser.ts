@@ -1,7 +1,7 @@
 /**
  * picohttpparser — tiny HTTP parser. Single .c file, no build system.
  *
- * No `.a` produced — bun compiles `picohttpparser.c` directly into its
+ * No `.a` produced — fun compiles `picohttpparser.c` directly into its
  * binary. `provides.sources` tells the build system which files; they're
  * declared as implicit outputs of the fetch rule so ninja knows they
  * exist once fetch completes (otherwise: "missing and no known rule to

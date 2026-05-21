@@ -1,5 +1,5 @@
 import { Resvg } from "@resvg/resvg-js";
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 const opts = {
   fitTo: {
@@ -57,6 +57,6 @@ test("napi_create_external_buffer", () => {
   const resvg = new Resvg(svg, opts);
   for (let i = 0; i < 10; i++) {
     resvg.render().asPng();
-    Bun.gc();
+    Fun.gc();
   }
 });

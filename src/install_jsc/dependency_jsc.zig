@@ -1,9 +1,9 @@
-//! JSC bridges for `bun.install.Dependency`. Aliased back into
+//! JSC bridges for `fun.install.Dependency`. Aliased back into
 //! `src/install/dependency.zig` so call sites are unchanged.
 
-pub fn versionToJS(dep: *const Dependency.Version, buf: []const u8, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn versionToJS(dep: *const Dependency.Version, buf: []const u8, globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     const object = jsc.JSValue.createEmptyObject(globalThis, 0);
-    object.put(globalThis, "type", try bun.String.static(@tagName(dep.tag)).toJS(globalThis));
+    object.put(globalThis, "type", try fun.String.static(@tagName(dep.tag)).toJS(globalThis));
 
     switch (dep.tag) {
         .dist_tag => {
@@ -25,7 +25,7 @@ pub fn versionToJS(dep: *const Dependency.Version, buf: []const u8, globalThis: 
         },
         .npm => {
             object.put(globalThis, "name", try dep.value.npm.name.toJS(buf, globalThis));
-            var version_str = try bun.String.createFormat("{f}", .{dep.value.npm.version.fmt(buf)});
+            var version_str = try fun.String.createFormat("{f}", .{dep.value.npm.version.fmt(buf)});
             object.put(globalThis, "version", try version_str.transferToJS(globalThis));
             object.put(globalThis, "alias", jsc.JSValue.jsBoolean(dep.value.npm.is_alias));
         },
@@ -54,28 +54,28 @@ pub fn versionToJS(dep: *const Dependency.Version, buf: []const u8, globalThis: 
     return object;
 }
 
-pub fn tagInferFromJS(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn tagInferFromJS(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
     if (arguments.len == 0 or !arguments[0].isString()) {
         return .js_undefined;
     }
 
-    const dependency_str = try arguments[0].toBunString(globalObject);
+    const dependency_str = try arguments[0].toFunString(globalObject);
     defer dependency_str.deref();
-    var as_utf8 = dependency_str.toUTF8(bun.default_allocator);
+    var as_utf8 = dependency_str.toUTF8(fun.default_allocator);
     defer as_utf8.deinit();
 
     const tag = Dependency.Version.Tag.infer(as_utf8.slice());
-    var str = bun.String.init(@tagName(tag));
+    var str = fun.String.init(@tagName(tag));
     return str.transferToJS(globalObject);
 }
 
-pub fn dependencyFromJS(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn dependencyFromJS(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(2).slice();
     if (arguments.len == 1) {
-        return try bun.install.PackageManager.UpdateRequest.fromJS(globalThis, arguments[0]);
+        return try fun.install.PackageManager.UpdateRequest.fromJS(globalThis, arguments[0]);
     }
-    var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+    var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
     var stack = std.heap.stackFallback(1024, arena.allocator());
     const allocator = stack.get();
@@ -102,7 +102,7 @@ pub fn dependencyFromJS(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFra
     var buf = alias;
 
     if (name_value.isString()) {
-        var builder = bun.handleOom(bun.StringBuilder.initCapacity(allocator, name_slice.len + alias_slice.len));
+        var builder = fun.handleOom(fun.StringBuilder.initCapacity(allocator, name_slice.len + alias_slice.len));
         name = builder.append(name_slice.slice());
         alias = builder.append(alias_slice.slice());
         buf = builder.allocatedSlice();
@@ -113,14 +113,14 @@ pub fn dependencyFromJS(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFra
 
     const dep: Dependency.Version = Dependency.parse(allocator, SlicedString.init(buf, alias).value(), null, buf, &sliced, &log, null) orelse {
         if (log.msgs.items.len > 0) {
-            return globalThis.throwValue(try log.toJS(globalThis, bun.default_allocator, "Failed to parse dependency"));
+            return globalThis.throwValue(try log.toJS(globalThis, fun.default_allocator, "Failed to parse dependency"));
         }
 
         return .js_undefined;
     };
 
     if (log.msgs.items.len > 0) {
-        return globalThis.throwValue(try log.toJS(globalThis, bun.default_allocator, "Failed to parse dependency"));
+        return globalThis.throwValue(try log.toJS(globalThis, fun.default_allocator, "Failed to parse dependency"));
     }
     log.deinit();
 
@@ -129,8 +129,8 @@ pub fn dependencyFromJS(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFra
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const logger = bun.logger;
-const Dependency = bun.install.Dependency;
-const SlicedString = bun.Semver.SlicedString;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const logger = fun.logger;
+const Dependency = fun.install.Dependency;
+const SlicedString = fun.Semver.SlicedString;

@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe("issue #20546 - CSS @layer declarations should be stripped from source files", () => {
   test("separate @layer statements with @import layer()", async () => {
@@ -18,9 +18,9 @@ describe("issue #20546 - CSS @layer declarations should be stripped from source 
       "c.css": /* css */ `.text-centered { text-align: center; }`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "./main.css", "--outdir=out"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "./main.css", "--outdir=out"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -30,7 +30,7 @@ describe("issue #20546 - CSS @layer declarations should be stripped from source 
 
     expect(stderr).toBe("");
 
-    const outCss = await Bun.file(`${dir}/out/main.css`).text();
+    const outCss = await Fun.file(`${dir}/out/main.css`).text();
 
     // @layer declarations should appear at the top (hoisted or as part of the layer blocks)
     // @import statements should NOT appear in the output (they've been inlined)
@@ -70,9 +70,9 @@ describe("issue #20546 - CSS @layer declarations should be stripped from source 
       "c.css": /* css */ `.text-centered { text-align: center; }`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "./main.css", "--outdir=out"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "./main.css", "--outdir=out"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -82,7 +82,7 @@ describe("issue #20546 - CSS @layer declarations should be stripped from source 
 
     expect(stderr).toBe("");
 
-    const outCss = await Bun.file(`${dir}/out/main.css`).text();
+    const outCss = await Fun.file(`${dir}/out/main.css`).text();
 
     // @import statements should NOT appear in the output
     expect(outCss).not.toContain("@import");

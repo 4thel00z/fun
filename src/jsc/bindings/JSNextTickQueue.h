@@ -2,10 +2,10 @@
 #include "headers-handwritten.h"
 
 #include "JavaScriptCore/JSCInlines.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/JSInternalFieldObjectImpl.h>
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 class JSNextTickQueue : public JSC::JSInternalFieldObjectImpl<3> {

@@ -1,6 +1,6 @@
 pub fn writeBind(
     name: []const u8,
-    cursor_name: bun.String,
+    cursor_name: fun.String,
     globalObject: *jsc.JSGlobalObject,
     values_array: JSValue,
     columns_value: JSValue,
@@ -65,14 +65,14 @@ pub fn writeBind(
     // must match the number of parameters needed by the query.
     try writer.short(len);
 
-    debug("Bind: {f} ({d} args)", .{ bun.fmt.quote(name), len });
+    debug("Bind: {f} ({d} args)", .{ fun.fmt.quote(name), len });
     iter.to(0);
     var i: usize = 0;
     while (try iter.next()) |value| : (i += 1) {
         const tag: types.Tag = brk: {
             if (i >= len) {
                 // parameter in array but not in parameter_fields
-                // this is probably a bug a bug in bun lets return .text here so the server will send a error 08P01
+                // this is probably a bug a bug in fun lets return .text here so the server will send a error 08P01
                 // with will describe better the error saying exactly how many parameters are missing and are expected
                 // Example:
                 // SQL error: PostgresError: bind message supplies 0 parameters, but prepared statement "PSELECT * FROM test_table WHERE id=$1 .in$0" requires 1
@@ -91,7 +91,7 @@ pub fn writeBind(
             try writer.int4(@bitCast(@as(i32, -1)));
             continue;
         }
-        if (comptime bun.Environment.enable_logs) {
+        if (comptime fun.Environment.enable_logs) {
             debug("  -> {s}", .{tag.tagName() orelse "(unknown)"});
         }
 
@@ -103,11 +103,11 @@ pub fn writeBind(
         // timezone.
         if (tag.isBinaryFormatSupported() and value.isString()) .text else tag) {
             .jsonb, .json => {
-                var str = bun.String.empty;
+                var str = fun.String.empty;
                 defer str.deref();
                 // Use jsonStringifyFast for SIMD-optimized serialization
                 try value.jsonStringifyFast(globalObject, &str);
-                const slice = str.toUTF8WithoutRef(bun.default_allocator);
+                const slice = str.toUTF8WithoutRef(fun.default_allocator);
                 defer slice.deinit();
                 const l = try writer.length();
                 try writer.write(slice.slice());
@@ -154,7 +154,7 @@ pub fn writeBind(
                 const str = try String.fromJS(value, globalObject);
                 if (str.tag == .Dead) return error.OutOfMemory;
                 defer str.deref();
-                const slice = str.toUTF8WithoutRef(bun.default_allocator);
+                const slice = str.toUTF8WithoutRef(fun.default_allocator);
                 defer slice.deinit();
                 const l = try writer.length();
                 try writer.write(slice.slice());
@@ -202,7 +202,7 @@ pub fn writeQuery(
             .query = query,
         };
         try q.writeInternal(Context, writer);
-        debug("Parse: {f}", .{bun.fmt.quote(query)});
+        debug("Parse: {f}", .{fun.fmt.quote(query)});
     }
 
     {
@@ -212,7 +212,7 @@ pub fn writeQuery(
             },
         };
         try d.writeInternal(Context, writer);
-        debug("Describe: {f}", .{bun.fmt.quote(name)});
+        debug("Describe: {f}", .{fun.fmt.quote(name)});
     }
 }
 
@@ -225,7 +225,7 @@ pub fn prepareAndQueryWithSignature(
     signature: *Signature,
 ) AnyPostgresError!void {
     try writeQuery(query, signature.prepared_statement_name, signature.fields, Context, writer);
-    try writeBind(signature.prepared_statement_name, bun.String.empty, globalObject, array_value, .zero, &.{}, &.{}, Context, writer);
+    try writeBind(signature.prepared_statement_name, fun.String.empty, globalObject, array_value, .zero, &.{}, &.{}, Context, writer);
     var exec = protocol.Execute{
         .p = .{
             .prepared_statement = signature.prepared_statement_name,
@@ -245,7 +245,7 @@ pub fn bindAndExecute(
     comptime Context: type,
     writer: protocol.NewWriter(Context),
 ) !void {
-    try writeBind(statement.signature.prepared_statement_name, bun.String.empty, globalObject, array_value, columns_value, statement.parameters, statement.fields, Context, writer);
+    try writeBind(statement.signature.prepared_statement_name, fun.String.empty, globalObject, array_value, columns_value, statement.parameters, statement.fields, Context, writer);
     var exec = protocol.Execute{
         .p = .{
             .prepared_statement = statement.signature.prepared_statement_name,
@@ -282,7 +282,7 @@ pub fn parseAndBindAndExecute(
             .query = query,
         };
         try q.writeInternal(Context, writer);
-        debug("Parse: {f}", .{bun.fmt.quote(query)});
+        debug("Parse: {f}", .{fun.fmt.quote(query)});
     }
 
     // Describe (needed on first execution to learn parameter/result types for caching)
@@ -293,7 +293,7 @@ pub fn parseAndBindAndExecute(
             },
         };
         try d.writeInternal(Context, writer);
-        debug("Describe: {f}", .{bun.fmt.quote(name)});
+        debug("Describe: {f}", .{fun.fmt.quote(name)});
     }
 
     // Bind — use server-provided types if available (binary format), otherwise
@@ -302,7 +302,7 @@ pub fn parseAndBindAndExecute(
     const param_fields = if (statement.parameters.len > 0) statement.parameters else statement.signature.fields;
     const result_fields = statement.fields;
 
-    try writeBind(name, bun.String.empty, globalObject, array_value, columns_value, param_fields, result_fields, Context, writer);
+    try writeBind(name, fun.String.empty, globalObject, array_value, columns_value, param_fields, result_fields, Context, writer);
 
     // Execute
     var exec = protocol.Execute{
@@ -340,7 +340,7 @@ pub fn onData(
             'd' => try connection.on(.CopyData, Context, reader),
             'S' => {
                 if (connection.tls_status == .message_sent) {
-                    bun.debugAssert(connection.tls_status.message_sent == 8);
+                    fun.debugAssert(connection.tls_status.message_sent == 8);
                     connection.tls_status = .ssl_ok;
                     connection.setupTLS();
                     return;
@@ -389,9 +389,9 @@ pub fn onData(
     }
 }
 
-pub const Queue = bun.LinearFifo(*PostgresSQLQuery, .Dynamic);
+pub const Queue = fun.LinearFifo(*PostgresSQLQuery, .Dynamic);
 
-const debug = bun.Output.scoped(.Postgres, .visible);
+const debug = fun.Output.scoped(.Postgres, .visible);
 
 /// The PostgreSQL wire protocol uses 16-bit integers for parameter and column counts.
 const max_parameters = std.math.maxInt(u16);
@@ -409,8 +409,8 @@ const AnyPostgresError = @import("../../sql/postgres/PostgresTypes.zig").AnyPost
 const int4 = types.int4;
 const short = types.short;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

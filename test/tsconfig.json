@@ -2,7 +2,7 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ESNext"],
-    // baseUrl needed until resolver fix propagates to system Bun used during build
+    // baseUrl needed until resolver fix propagates to system Fun used during build
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
@@ -10,17 +10,17 @@
       "mkfifo": ["./mkfifo.ts"],
       "node-harness": ["./js/node/harness.ts"],
       "deno:harness": ["./js/deno/harness.ts"],
-      "bun:internal-for-testing": ["../src/js/internal-for-testing.ts"],
-      "foo/bar": ["./js/bun/resolve/baz.js"],
-      "@faasjs/*": ["./js/bun/resolve/*.js", "./js/bun/resolve/*/src/index.js"],
-      "@faasjs/larger/*": ["./js/bun/resolve/*/larger-index.js"],
+      "fun:internal-for-testing": ["../src/js/internal-for-testing.ts"],
+      "foo/bar": ["./js/fun/resolve/baz.js"],
+      "@faasjs/*": ["./js/fun/resolve/*.js", "./js/fun/resolve/*/src/index.js"],
+      "@faasjs/larger/*": ["./js/fun/resolve/*/larger-index.js"],
       "bake/*": ["../src/bake/client/*"],
       "_util/*": ["./_util/*"],
       "js/*": ["./js/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["../packages/bun-types"]
+    "types": ["../packages/fun-types"]
   },
   "include": [
     //
@@ -36,7 +36,7 @@
   ],
   "exclude": [
     "fixtures",
-    "__snapshots__", // bun snapshots (toMatchSnapshot)
+    "__snapshots__", // fun snapshots (toMatchSnapshot)
     "./snapshots",
     "./js/deno",
     "./node.js" // entire node.js upstream repository

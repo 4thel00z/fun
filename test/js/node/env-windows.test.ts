@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isWindows } from "harness";
 
 test.if(isWindows)("process.env is case insensitive on windows", () => {

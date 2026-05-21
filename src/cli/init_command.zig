@@ -13,17 +13,17 @@ pub const InitCommand = struct {
 
         // unset `ENABLE_VIRTUAL_TERMINAL_INPUT` on windows. This prevents backspace from
         // deleting the entire line
-        const original_mode: if (Environment.isWindows) ?bun.windows.DWORD else void = if (comptime Environment.isWindows)
-            bun.windows.updateStdioModeFlags(.std_in, .{ .unset = bun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT }) catch null;
+        const original_mode: if (Environment.isWindows) ?fun.windows.DWORD else void = if (comptime Environment.isWindows)
+            fun.windows.updateStdioModeFlags(.std_in, .{ .unset = fun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT }) catch null;
 
         defer if (comptime Environment.isWindows) {
             if (original_mode) |mode| {
-                _ = bun.c.SetConsoleMode(bun.FD.stdin().native(), mode);
+                _ = fun.c.SetConsoleMode(fun.FD.stdin().native(), mode);
             }
         };
 
         var input: std.array_list.Managed(u8) = .init(alloc);
-        try bun.Output.buffered_stdin.reader().readUntilDelimiterArrayList(&input, '\n', 1024);
+        try fun.Output.buffered_stdin.reader().readUntilDelimiterArrayList(&input, '\n', 1024);
 
         if (strings.endsWithChar(input.items, '\r')) {
             _ = input.pop();
@@ -42,7 +42,7 @@ pub const InitCommand = struct {
         const colors = Output.enable_ansi_colors_stdout;
         const choices = switch (colors) {
             inline else => |colors_comptime| comptime choices: {
-                const choices_fields = bun.meta.EnumFields(Choices);
+                const choices_fields = fun.meta.EnumFields(Choices);
                 if (choices_fields.len == 0) {
                     @compileError("Choices must be an enum type with at least one field");
                 }
@@ -178,28 +178,28 @@ pub const InitCommand = struct {
     pub fn radio(label: string, comptime Choices: type) !Choices {
 
         // Set raw mode to read single characters without echo
-        const original_mode: if (Environment.isWindows) ?bun.windows.DWORD else void = if (comptime Environment.isWindows)
-            bun.windows.updateStdioModeFlags(.std_in, .{
+        const original_mode: if (Environment.isWindows) ?fun.windows.DWORD else void = if (comptime Environment.isWindows)
+            fun.windows.updateStdioModeFlags(.std_in, .{
                 // virtual terminal input enables arrow keys, processed input lets ctrl+c kill the program
-                .set = bun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT | bun.windows.ENABLE_PROCESSED_INPUT,
+                .set = fun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT | fun.windows.ENABLE_PROCESSED_INPUT,
                 // disabling line input sends keys immediately, disabling echo input makes sure it doesn't print to the terminal
-                .unset = bun.windows.ENABLE_LINE_INPUT | bun.windows.ENABLE_ECHO_INPUT,
+                .unset = fun.windows.ENABLE_LINE_INPUT | fun.windows.ENABLE_ECHO_INPUT,
             }) catch null;
 
         if (Environment.isPosix)
-            _ = bun.tty.setMode(0, .raw);
+            _ = fun.tty.setMode(0, .raw);
 
         defer {
             if (comptime Environment.isWindows) {
                 if (original_mode) |mode| {
-                    _ = bun.c.SetConsoleMode(
-                        bun.FD.stdin().native(),
+                    _ = fun.c.SetConsoleMode(
+                        fun.FD.stdin().native(),
                         mode,
                     );
                 }
             }
             if (Environment.isPosix) {
-                _ = bun.tty.setMode(0, .normal);
+                _ = fun.tty.setMode(0, .normal);
             }
         }
 
@@ -239,7 +239,7 @@ pub const InitCommand = struct {
         }
 
         fn createNew(filename: [:0]const u8, contents: []const u8) !void {
-            const file = try bun.sys.File.makeOpen(filename, bun.O.CREAT | bun.O.EXCL | bun.O.WRONLY, 0o666).unwrap();
+            const file = try fun.sys.File.makeOpen(filename, fun.O.CREAT | fun.O.EXCL | fun.O.WRONLY, 0o666).unwrap();
             defer file.close();
 
             try file.writeAll(contents).unwrap();
@@ -353,7 +353,7 @@ pub const InitCommand = struct {
         var template: Template = .blank;
         var prev_flag_was_react = false;
         for (init_args) |arg_| {
-            const arg = bun.span(arg_);
+            const arg = fun.span(arg_);
             if (parse_flags and arg.len > 0 and arg[0] == '-') {
                 if (strings.eqlComptime(arg, "--help") or strings.eqlComptime(arg, "-h")) {
                     CLI.Command.Tag.printHelp(.InitCommand, true);
@@ -396,7 +396,7 @@ pub const InitCommand = struct {
                 Output.prettyErrorln("Failed to create directory {s}: {s}", .{ ifdir, @errorName(err) });
                 Global.exit(1);
             };
-            bun.sys.chdir("", ifdir).unwrap() catch |err| {
+            fun.sys.chdir("", ifdir).unwrap() catch |err| {
                 Output.prettyErrorln("Failed to change directory to {s}: {s}", .{ ifdir, @errorName(err) });
                 Global.exit(1);
             };
@@ -414,7 +414,7 @@ pub const InitCommand = struct {
         read_package_json: {
             if (package_json_file) |pkg| {
                 const size = brk: {
-                    if (comptime bun.Environment.isWindows) {
+                    if (comptime fun.Environment.isWindows) {
                         const end = pkg.getEndPos() catch break :read_package_json;
                         if (end == 0) {
                             break :read_package_json;
@@ -513,10 +513,10 @@ pub const InitCommand = struct {
             // Find any source file
             var dir = std.fs.cwd().openDir(".", .{ .iterate = true }) catch break :infer;
             defer dir.close();
-            var it = bun.DirIterator.iterate(.fromStdDir(dir), .u8);
+            var it = fun.DirIterator.iterate(.fromStdDir(dir), .u8);
             while (try it.next().unwrap()) |file| {
                 if (file.kind != .file) continue;
-                const loader = bun.options.Loader.fromString(std.fs.path.extension(file.name.slice())) orelse
+                const loader = fun.options.Loader.fromString(std.fs.path.extension(file.name.slice())) orelse
                     continue;
                 if (loader.isJavaScriptLike()) {
                     // If a non-index file is found, it might not be the "main"
@@ -611,7 +611,7 @@ pub const InitCommand = struct {
 
         switch (template) {
             inline .react_blank, .react_tailwind, .react_tailwind_shadcn => |t| {
-                try t.@"write files and run `bun dev`"(alloc);
+                try t.@"write files and run `fun dev`"(alloc);
                 return;
             },
             else => {},
@@ -666,13 +666,13 @@ pub const InitCommand = struct {
             }
         }
 
-        var need_run_bun_install = !did_load_package_json;
+        var need_run_fun_install = !did_load_package_json;
         {
             const all_dependencies = template.dependencies();
             const dependencies = all_dependencies.dependencies;
             const dev_dependencies = all_dependencies.devDependencies;
-            var needed_dependencies = bun.bit_set.IntegerBitSet(64).initEmpty();
-            var needed_dev_dependencies = bun.bit_set.IntegerBitSet(64).initEmpty();
+            var needed_dependencies = fun.bit_set.IntegerBitSet(64).initEmpty();
+            var needed_dev_dependencies = fun.bit_set.IntegerBitSet(64).initEmpty();
             needed_dependencies.setRangeValue(.{ .start = 0, .end = dependencies.len }, true);
             needed_dev_dependencies.setRangeValue(.{ .start = 0, .end = dev_dependencies.len }, true);
 
@@ -716,7 +716,7 @@ pub const InitCommand = struct {
                 break :brk true;
             };
 
-            need_run_bun_install = needs_dependencies or needs_dev_dependencies or needs_typescript_dependency;
+            need_run_fun_install = needs_dependencies or needs_dev_dependencies or needs_typescript_dependency;
 
             if (needs_dependencies) {
                 var dependencies_object = fields.object.get("dependencies") orelse js_ast.Expr.init(js_ast.E.Object, js_ast.E.Object{}, logger.Loc.Empty);
@@ -750,9 +750,9 @@ pub const InitCommand = struct {
         }
 
         write_package_json: {
-            var fd = bun.FD.fromStdFile(package_json_file orelse try std.fs.cwd().createFileZ("package.json", .{}));
+            var fd = fun.FD.fromStdFile(package_json_file orelse try std.fs.cwd().createFileZ("package.json", .{}));
             defer fd.close();
-            var buffer_writer = JSPrinter.BufferWriter.init(bun.default_allocator);
+            var buffer_writer = JSPrinter.BufferWriter.init(fun.default_allocator);
             buffer_writer.append_newline = true;
             var package_json_writer = JSPrinter.BufferPrinter.init(buffer_writer);
 
@@ -768,12 +768,12 @@ pub const InitCommand = struct {
                 break :write_package_json;
             };
             const written = package_json_writer.ctx.getWritten();
-            bun.sys.File.writeAll(.{ .handle = fd }, written).unwrap() catch |err| {
+            fun.sys.File.writeAll(.{ .handle = fd }, written).unwrap() catch |err| {
                 Output.prettyErrorln("package.json failed to write due to error {s}", .{@errorName(err)});
                 package_json_file = null;
                 break :write_package_json;
             };
-            bun.sys.ftruncate(fd, @intCast(written.len)).unwrap() catch |err| {
+            fun.sys.ftruncate(fd, @intCast(written.len)).unwrap() catch |err| {
                 Output.prettyErrorln("package.json failed to write due to error {s}", .{@errorName(err)});
                 package_json_file = null;
                 break :write_package_json;
@@ -805,7 +805,7 @@ pub const InitCommand = struct {
                         }
                     }
 
-                    Assets.createNew(fields.entry_point, "console.log(\"Hello via Bun!\");") catch {
+                    Assets.createNew(fields.entry_point, "console.log(\"Hello via Fun!\");") catch {
                         // suppress
                     };
                 }
@@ -825,7 +825,7 @@ pub const InitCommand = struct {
                 if (steps.write_readme) {
                     Assets.create("README.md", .{
                         .name = fields.name,
-                        .bunVersion = Environment.version_string,
+                        .funVersion = Environment.version_string,
                         .entryPoint = fields.entry_point,
                     }) catch {
                         // suppressed
@@ -836,19 +836,19 @@ pub const InitCommand = struct {
                     Output.pretty("\nTo get started, run:\n\n    ", .{});
 
                     if (strings.containsAny(" \"'", fields.entry_point)) {
-                        Output.pretty("<cyan>bun run {f}<r>\n\n", .{bun.fmt.formatJSONStringLatin1(fields.entry_point)});
+                        Output.pretty("<cyan>fun run {f}<r>\n\n", .{fun.fmt.formatJSONStringLatin1(fields.entry_point)});
                     } else {
-                        Output.pretty("<cyan>bun run {s}<r>\n\n", .{fields.entry_point});
+                        Output.pretty("<cyan>fun run {s}<r>\n\n", .{fields.entry_point});
                     }
                 }
 
                 Output.flush();
 
-                if (existsZ("package.json") and need_run_bun_install) {
+                if (existsZ("package.json") and need_run_fun_install) {
                     Output.prettyln("", .{});
                     var process = std.process.Child.init(
                         &.{
-                            try bun.selfExePath(),
+                            try fun.selfExePath(),
                             "install",
                         },
                         alloc,
@@ -876,7 +876,7 @@ const DependencyGroup = struct {
     pub const blank = DependencyGroup{
         .dependencies = &[_]DependencyNeeded{},
         .devDependencies = &[_]DependencyNeeded{
-            .{ .name = "@types/bun", .version = "latest" },
+            .{ .name = "@types/fun", .version = "latest" },
         },
     };
 
@@ -896,7 +896,7 @@ const DependencyGroup = struct {
             .{ .name = "tailwindcss", .version = "^4" },
         } ++ react.dependencies[0..react.dependencies.len].*,
         .devDependencies = &[_]DependencyNeeded{
-            .{ .name = "bun-plugin-tailwind", .version = "latest" },
+            .{ .name = "fun-plugin-tailwind", .version = "latest" },
         } ++ react.devDependencies[0..react.devDependencies.len].*,
     };
 
@@ -967,27 +967,27 @@ const Template = enum {
     }
     pub fn name(this: Template) []const u8 {
         return switch (this) {
-            .blank => "bun-blank-template",
-            .typescript_library => "bun-typescript-library-template",
-            .react_blank => "bun-react-template",
-            .react_tailwind => "bun-react-tailwind-template",
-            .react_tailwind_shadcn => "bun-react-tailwind-shadcn-template",
+            .blank => "fun-blank-template",
+            .typescript_library => "fun-typescript-library-template",
+            .react_blank => "fun-react-template",
+            .react_tailwind => "fun-react-tailwind-template",
+            .react_tailwind_shadcn => "fun-react-tailwind-shadcn-template",
         };
     }
     pub fn scripts(this: Template) []const []const u8 {
         const s: []const []const u8 = switch (this) {
             .blank, .typescript_library => &.{},
             .react_tailwind, .react_tailwind_shadcn => &.{
-                "dev",   "bun './**/*.html'",
-                "build", "bun 'REPLACE_ME_WITH_YOUR_APP_FILE_NAME.build.ts'",
+                "dev",   "fun './**/*.html'",
+                "build", "fun 'REPLACE_ME_WITH_YOUR_APP_FILE_NAME.build.ts'",
             },
             .react_blank => &.{
                 "dev",
-                "bun --hot .",
+                "fun --hot .",
                 "static",
-                "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
+                "fun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='FUN_PUBLIC_*'",
                 "build",
-                "NODE_ENV=production bun .",
+                "NODE_ENV=production fun .",
             },
         };
 
@@ -995,7 +995,7 @@ const Template = enum {
     }
 
     const agent_rule = @embedFile("./init/rule.md");
-    const cursor_rule = TemplateFile{ .path = ".cursor/rules/use-bun-instead-of-node-vite-npm-pnpm.mdc", .contents = agent_rule };
+    const cursor_rule = TemplateFile{ .path = ".cursor/rules/use-fun-instead-of-node-vite-npm-pnpm.mdc", .contents = agent_rule };
     const cursor_rule_path_to_claude_md = "../../CLAUDE.md";
 
     fn isClaudeCodeInstalled() bool {
@@ -1005,20 +1005,20 @@ const Template = enum {
         }
 
         // Give some way to opt out.
-        if (bun.env_var.BUN_AGENT_RULE_DISABLED.get() or bun.env_var.CLAUDE_CODE_AGENT_RULE_DISABLED.get()) {
+        if (fun.env_var.FUN_AGENT_RULE_DISABLED.get() or fun.env_var.CLAUDE_CODE_AGENT_RULE_DISABLED.get()) {
             return false;
         }
 
-        const pathbuffer = bun.path_buffer_pool.get();
-        defer bun.path_buffer_pool.put(pathbuffer);
+        const pathbuffer = fun.path_buffer_pool.get();
+        defer fun.path_buffer_pool.put(pathbuffer);
 
-        return bun.which(pathbuffer, bun.env_var.PATH.get() orelse return false, bun.fs.FileSystem.instance.top_level_dir, "claude") != null;
+        return fun.which(pathbuffer, fun.env_var.PATH.get() orelse return false, fun.fs.FileSystem.instance.top_level_dir, "claude") != null;
     }
 
     pub fn createAgentRule() void {
         var @"create CLAUDE.md" = Template.isClaudeCodeInstalled() and
             // Never overwrite CLAUDE.md
-            !bun.sys.exists("CLAUDE.md");
+            !fun.sys.exists("CLAUDE.md");
 
         if (Template.getCursorRule()) |template_file| {
             var did_create_agent_rule = false;
@@ -1045,8 +1045,8 @@ const Template = enum {
                 // appear prominently in repos) doesn't show a file path.
                 if (did_create_agent_rule and @"create CLAUDE.md") symlink_cursor_rule: {
                     @"create CLAUDE.md" = false;
-                    bun.makePath(bun.FD.cwd().stdDir(), ".cursor/rules") catch {};
-                    bun.sys.symlinkat(cursor_rule_path_to_claude_md, .cwd(), template_file.path).unwrap() catch break :symlink_cursor_rule;
+                    fun.makePath(fun.FD.cwd().stdDir(), ".cursor/rules") catch {};
+                    fun.sys.symlinkat(cursor_rule_path_to_claude_md, .cwd(), template_file.path).unwrap() catch break :symlink_cursor_rule;
                     Output.prettyln(" + <r><d>{s} -\\> {s}<r>", .{ template_file.path, asset_path });
                     Output.flush();
                 }
@@ -1056,7 +1056,7 @@ const Template = enum {
         // If cursor is not installed but claude code is installed, then create the CLAUDE.md.
         if (@"create CLAUDE.md") {
             // In this case, the frontmatter from the cursor rule is not helpful so let's trim it out.
-            const end_of_frontmatter = if (bun.strings.lastIndexOf(agent_rule, "---\n")) |start| start + "---\n".len else 0;
+            const end_of_frontmatter = if (fun.strings.lastIndexOf(agent_rule, "---\n")) |start| start + "---\n".len else 0;
 
             InitCommand.Assets.createNew("CLAUDE.md", agent_rule[end_of_frontmatter..]) catch {};
         }
@@ -1064,30 +1064,30 @@ const Template = enum {
 
     fn isCursorInstalled() bool {
         // Give some way to opt-out.
-        if (bun.env_var.BUN_AGENT_RULE_DISABLED.get() or bun.env_var.CURSOR_AGENT_RULE_DISABLED.get()) {
+        if (fun.env_var.FUN_AGENT_RULE_DISABLED.get() or fun.env_var.CURSOR_AGENT_RULE_DISABLED.get()) {
             return false;
         }
 
         // Detect if they're currently using cursor.
-        if (bun.env_var.CURSOR_TRACE_ID.get()) {
+        if (fun.env_var.CURSOR_TRACE_ID.get()) {
             return true;
         }
 
         if (Environment.isMac) {
-            if (bun.sys.exists("/Applications/Cursor.app")) {
+            if (fun.sys.exists("/Applications/Cursor.app")) {
                 return true;
             }
         }
 
         if (Environment.isWindows) {
-            if (bun.getenvZAnyCase("USER")) |user| {
-                const pathbuf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(pathbuf);
+            if (fun.getenvZAnyCase("USER")) |user| {
+                const pathbuf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(pathbuf);
                 const path = std.fmt.bufPrintZ(pathbuf, "C:\\Users\\{s}\\AppData\\Local\\Programs\\Cursor\\Cursor.exe", .{user}) catch {
                     return false;
                 };
 
-                if (bun.sys.exists(path)) {
+                if (fun.sys.exists(path)) {
                     return true;
                 }
             }
@@ -1105,10 +1105,10 @@ const Template = enum {
 
     const ReactBlank = struct {
         const files: []const TemplateFile = &.{
-            .{ .path = "bunfig.toml", .contents = @embedFile("./init/react-app/bunfig.toml") },
+            .{ .path = "funfig.toml", .contents = @embedFile("./init/react-app/funfig.toml") },
             .{ .path = "package.json", .contents = @embedFile("./init/react-app/package.json") },
             .{ .path = "tsconfig.json", .contents = @embedFile("./init/react-app/tsconfig.json") },
-            .{ .path = "bun-env.d.ts", .contents = @embedFile("./init/react-app/bun-env.d.ts") },
+            .{ .path = "fun-env.d.ts", .contents = @embedFile("./init/react-app/fun-env.d.ts") },
             .{ .path = "README.md", .contents = InitCommand.Assets.@"README2.md" },
             .{ .path = ".gitignore", .contents = InitCommand.Assets.@".gitignore", .can_skip_if_exists = true },
             .{ .path = "src/index.ts", .contents = @embedFile("./init/react-app/src/index.ts") },
@@ -1124,10 +1124,10 @@ const Template = enum {
 
     const ReactTailwind = struct {
         const files: []const TemplateFile = &.{
-            .{ .path = "bunfig.toml", .contents = @embedFile("./init/react-tailwind/bunfig.toml") },
+            .{ .path = "funfig.toml", .contents = @embedFile("./init/react-tailwind/funfig.toml") },
             .{ .path = "package.json", .contents = @embedFile("./init/react-tailwind/package.json") },
             .{ .path = "tsconfig.json", .contents = @embedFile("./init/react-tailwind/tsconfig.json") },
-            .{ .path = "bun-env.d.ts", .contents = @embedFile("./init/react-tailwind/bun-env.d.ts") },
+            .{ .path = "fun-env.d.ts", .contents = @embedFile("./init/react-tailwind/fun-env.d.ts") },
             .{ .path = "README.md", .contents = InitCommand.Assets.@"README2.md" },
             .{ .path = ".gitignore", .contents = InitCommand.Assets.@".gitignore", .can_skip_if_exists = true },
             .{ .path = "src/index.ts", .contents = @embedFile("./init/react-tailwind/src/index.ts") },
@@ -1144,12 +1144,12 @@ const Template = enum {
 
     const ReactShadcn = struct {
         const files: []const TemplateFile = &.{
-            .{ .path = "bunfig.toml", .contents = @embedFile("./init/react-shadcn/bunfig.toml") },
+            .{ .path = "funfig.toml", .contents = @embedFile("./init/react-shadcn/funfig.toml") },
             .{ .path = "styles/globals.css", .contents = @embedFile("./init/react-shadcn/styles/globals.css") },
             .{ .path = "package.json", .contents = @embedFile("./init/react-shadcn/package.json") },
             .{ .path = "components.json", .contents = @embedFile("./init/react-shadcn/components.json") },
             .{ .path = "tsconfig.json", .contents = @embedFile("./init/react-shadcn/tsconfig.json") },
-            .{ .path = "bun-env.d.ts", .contents = @embedFile("./init/react-shadcn/bun-env.d.ts") },
+            .{ .path = "fun-env.d.ts", .contents = @embedFile("./init/react-shadcn/fun-env.d.ts") },
             .{ .path = "README.md", .contents = InitCommand.Assets.@"README2.md" },
             .{ .path = ".gitignore", .contents = InitCommand.Assets.@".gitignore", .can_skip_if_exists = true },
             .{ .path = "src/index.ts", .contents = @embedFile("./init/react-shadcn/src/index.ts") },
@@ -1180,7 +1180,7 @@ const Template = enum {
         };
     }
 
-    pub fn @"write files and run `bun dev`"(comptime this: Template, allocator: std.mem.Allocator) !void {
+    pub fn @"write files and run `fun dev`"(comptime this: Template, allocator: std.mem.Allocator) !void {
         Template.createAgentRule();
 
         inline for (comptime this.files()) |file| {
@@ -1190,7 +1190,7 @@ const Template = enum {
             const result = if (comptime strings.eqlComptime(path, "README.md"))
                 InitCommand.Assets.createWithContents("README.md", contents, .{
                     .name = this.name(),
-                    .bunVersion = Environment.version_string,
+                    .funVersion = Environment.version_string,
                 })
             else
                 InitCommand.Assets.createNew(path, contents);
@@ -1210,7 +1210,7 @@ const Template = enum {
 
         var install = std.process.Child.init(
             &.{
-                try bun.selfExePath(),
+                try fun.selfExePath(),
                 "install",
             },
             allocator,
@@ -1227,15 +1227,15 @@ const Template = enum {
             \\
             \\<b><cyan>Development<r><d> - full-stack dev server with hot reload<r>
             \\
-            \\    <cyan><b>bun dev<r>
+            \\    <cyan><b>fun dev<r>
             \\
             \\<b><yellow>Static Site<r><d> - build optimized assets to disk (no backend)<r>
             \\
-            \\    <yellow><b>bun run build<r>
+            \\    <yellow><b>fun run build<r>
             \\
             \\<b><green>Production<r><d> - serve a full-stack production build<r>
             \\
-            \\    <green><b>bun start<r>
+            \\    <green><b>fun start<r>
             \\
             \\<blue>Happy bunning! 🐇<r>
             \\
@@ -1254,17 +1254,17 @@ const options = @import("../bundler/options.zig");
 const std = @import("std");
 const initializeStore = @import("./create_command.zig").initializeStore;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const JSPrinter = bun.js_printer;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const js_ast = bun.ast;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const JSPrinter = fun.js_printer;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const js_ast = fun.ast;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const exists = bun.sys.exists;
-const existsZ = bun.sys.existsZ;
+const exists = fun.sys.exists;
+const existsZ = fun.sys.existsZ;

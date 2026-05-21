@@ -31,12 +31,12 @@
     "zx": "^7.2.3"
   },
   "scripts": {
-    "ffi": "cd ffi && bun run deps && bun run build && bun run bench",
-    "log": "cd log && bun run deps && bun run build && bun run bench",
-    "gzip": "cd gzip && bun run deps && bun run build && bun run bench",
-    "async": "cd async && bun run deps && bun run build && bun run bench",
-    "sqlite": "cd sqlite && bun run deps && bun run build && bun run bench",
-    "modules:node_os": "cd modules/node_os && bun run deps &&bun run build && bun run bench"
+    "ffi": "cd ffi && fun run deps && fun run build && fun run bench",
+    "log": "cd log && fun run deps && fun run build && fun run bench",
+    "gzip": "cd gzip && fun run deps && fun run build && fun run bench",
+    "async": "cd async && fun run deps && fun run build && fun run bench",
+    "sqlite": "cd sqlite && fun run deps && fun run build && fun run bench",
+    "modules:node_os": "cd modules/node_os && fun run deps &&fun run build && fun run bench"
   },
   "devDependencies": {
     "fast-deep-equal": "^3.1.3"

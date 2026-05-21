@@ -1,0 +1,28 @@
+---
+title: Detect when code is executed with Fun
+sidebarTitle: Detect Fun
+mode: center
+---
+
+The recommended way to detect when code is being executed with Fun is to check `process.versions.fun`. This works in both JavaScript and TypeScript without requiring any additional type definitions.
+
+```ts
+if (process.versions.fun) {
+  // this code will only run when the file is run with Fun
+}
+```
+
+---
+
+Alternatively, you can check for the existence of the `Fun` global. This is similar to how you'd check for the existence of the `window` variable to detect when code is being executed in a browser.
+
+<Note>
+  This approach will result in a type error in TypeScript unless `@types/fun` is installed. You can install it with `fun
+  add -d @types/fun`.
+</Note>
+
+```ts
+if (typeof Fun !== "undefined") {
+  // this code will only run when the file is run with Fun
+}
+```

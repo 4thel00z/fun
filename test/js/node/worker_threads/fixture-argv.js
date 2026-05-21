@@ -1,3 +1,3 @@
 module.exports = {
-  argv: Bun.argv,
+  argv: Fun.argv,
 };

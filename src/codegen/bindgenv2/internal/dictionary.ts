@@ -68,7 +68,7 @@ export function dictionary(
       return name;
     }
     get idlType() {
-      return `::Bun::Bindgen::Generated::IDL${name}`;
+      return `::Fun::Bindgen::Generated::IDL${name}`;
     }
     get bindgenType() {
       return `bindgen_generated.internal.${name}`;
@@ -114,7 +114,7 @@ export function dictionary(
         ${headersForTypes(Object.values(fullMembers).map(m => m.type))
           .map(headerName => `#include <${headerName}>\n` + " ".repeat(8))
           .join("")}
-        namespace Bun {
+        namespace Fun {
         namespace Bindgen {
         namespace Generated {
         struct ${name} {
@@ -180,8 +180,8 @@ export function dictionary(
         };
         }
 
-        template<> Bun::Bindgen::Generated::${name}
-        WebCore::convertDictionary<Bun::Bindgen::Generated::${name}>(
+        template<> Fun::Bindgen::Generated::${name}
+        WebCore::convertDictionary<Fun::Bindgen::Generated::${name}>(
           JSC::JSGlobalObject& globalObject,
           JSC::JSValue value);
 
@@ -190,8 +190,8 @@ export function dictionary(
             return "";
           }
           const code = `
-            template<> struct WebCore::IDLDictionary<::Bun::Bindgen::Generated::${name}>
-              : ::Bun::Bindgen::IDLStackOnlyDictionary<::Bun::Bindgen::Generated::${name}> {};
+            template<> struct WebCore::IDLDictionary<::Fun::Bindgen::Generated::${name}>
+              : ::Fun::Bindgen::IDLStackOnlyDictionary<::Fun::Bindgen::Generated::${name}> {};
           `;
           return joinIndented(8, [code]);
         })()}
@@ -208,20 +208,20 @@ export function dictionary(
         #include "Bindgen/IDLConvert.h"
         #include <JavaScriptCore/Identifier.h>
 
-        template<> Bun::Bindgen::Generated::${name}
-        WebCore::convertDictionary<Bun::Bindgen::Generated::${name}>(
+        template<> Fun::Bindgen::Generated::${name}
+        WebCore::convertDictionary<Fun::Bindgen::Generated::${name}>(
           JSC::JSGlobalObject& globalObject,
           JSC::JSValue value)
         {
           ::JSC::VM& vm = globalObject.vm();
           auto throwScope = DECLARE_THROW_SCOPE(vm);
-          auto ctx = Bun::Bindgen::LiteralConversionContext { ${toASCIILiteral(userFacingName)} };
+          auto ctx = Fun::Bindgen::LiteralConversionContext { ${toASCIILiteral(userFacingName)} };
           auto* object = value.getObject();
           if (!object) [[unlikely]] {
             ctx.throwNotObject(globalObject, throwScope);
             return {};
           }
-          ::Bun::Bindgen::Generated::${name} result;
+          ::Fun::Bindgen::Generated::${name} result;
           ${joinIndented(
             10,
             fullMembers.map((m, i) => memberConversion(userFacingName, m, i)),
@@ -234,7 +234,7 @@ export function dictionary(
             return "";
           }
           const result = `
-            namespace Bun::Bindgen::Generated {
+            namespace Fun::Bindgen::Generated {
             extern "C" bool bindgenConvertJSTo${name}(
               ::JSC::JSGlobalObject* globalObject,
               ::JSC::EncodedJSValue value,
@@ -276,7 +276,7 @@ export function dictionary(
             ${joinIndented(
               12,
               fullMembers.map(memberInfo => {
-                return `bun.memory.deinit(&self.${memberInfo.internalName});`;
+                return `fun.memory.deinit(&self.${memberInfo.internalName});`;
               }),
             )}
             self.* = undefined;
@@ -285,7 +285,7 @@ export function dictionary(
               return "";
             }
             const result = dedent(`
-              pub fn fromJS(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue) bun.JSError!Self {
+              pub fn fromJS(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue) fun.JSError!Self {
                 var scope: jsc.ExceptionValidationScope = undefined;
                 scope.init(globalThis, @src());
                 defer scope.deinit();
@@ -337,9 +337,9 @@ export function dictionary(
         ) bool;
 
         const bindgen_generated = @import("bindgen_generated");
-        const bun = @import("bun");
-        const bindgen = bun.bun_js.bindgen;
-        const jsc = bun.bun_js.jsc;
+        const fun = @import("fun");
+        const bindgen = fun.fun_js.bindgen;
+        const jsc = fun.fun_js.jsc;
       `);
     }
   })();
@@ -383,7 +383,7 @@ function memberConversion(
 
   const start = `
     ::JSC::JSValue value${i};
-    auto ctx${i} = Bun::Bindgen::LiteralConversionContext { ${toASCIILiteral(qualifiedName)} };
+    auto ctx${i} = Fun::Bindgen::LiteralConversionContext { ${toASCIILiteral(qualifiedName)} };
     do {
       ${joinIndented(
         6,
@@ -410,13 +410,13 @@ function memberConversion(
       if (value${i}.isUndefined()) {
         result.${internalName} = ${memberInfo.type.toCpp(memberInfo.default)};
       } else {
-        result.${internalName} = Bun::convertIDL<${idlType}>(globalObject, value${i}, ctx${i});
+        result.${internalName} = Fun::convertIDL<${idlType}>(globalObject, value${i}, ctx${i});
         RETURN_IF_EXCEPTION(throwScope, {});
       }
     `;
   } else if (permitsUndefined(memberInfo.type)) {
     end = `
-      result.${internalName} = Bun::convertIDL<${idlType}>(globalObject, value${i}, ctx${i});
+      result.${internalName} = Fun::convertIDL<${idlType}>(globalObject, value${i}, ctx${i});
       RETURN_IF_EXCEPTION(throwScope, {});
     `;
   } else {
@@ -425,7 +425,7 @@ function memberConversion(
         ctx${i}.throwRequired(globalObject, throwScope);
         return {};
       }
-      result.${internalName} = Bun::convertIDL<${idlType}>(globalObject, value${i}, ctx${i});
+      result.${internalName} = Fun::convertIDL<${idlType}>(globalObject, value${i}, ctx${i});
       RETURN_IF_EXCEPTION(throwScope, {});
     `;
   }

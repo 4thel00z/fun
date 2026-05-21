@@ -1,6 +1,6 @@
 ---
 title: "Lifecycle scripts"
-description: "How Bun handles package lifecycle scripts securely"
+description: "How Fun handles package lifecycle scripts securely"
 ---
 
 Packages on `npm` can define _lifecycle scripts_ in their `package.json`. Some of the most common are below, but there are [many others](https://docs.npmjs.com/cli/v10/using-npm/scripts).
@@ -10,7 +10,7 @@ Packages on `npm` can define _lifecycle scripts_ in their `package.json`. Some o
 - `preuninstall`: Runs before the package is uninstalled
 - `prepublishOnly`: Runs before the package is published
 
-These scripts are arbitrary shell commands that the package manager is expected to read and execute at the appropriate time. But executing arbitrary scripts represents a potential security risk, so—unlike other `npm` clients—Bun does not execute arbitrary lifecycle scripts by default.
+These scripts are arbitrary shell commands that the package manager is expected to read and execute at the appropriate time. But executing arbitrary scripts represents a potential security risk, so—unlike other `npm` clients—Fun does not execute arbitrary lifecycle scripts by default.
 
 ---
 
@@ -32,7 +32,7 @@ The `postinstall` script is particularly important. It's widely used to build or
 
 ## `trustedDependencies`
 
-Instead of executing arbitrary scripts, Bun uses a "default-secure" approach. You can add certain packages to an allow list, and Bun will execute lifecycle scripts for those packages. To tell Bun to allow lifecycle scripts for a particular package, add the package name to `trustedDependencies` array in your `package.json`.
+Instead of executing arbitrary scripts, Fun uses a "default-secure" approach. You can add certain packages to an allow list, and Fun will execute lifecycle scripts for those packages. To tell Fun to allow lifecycle scripts for a particular package, add the package name to `trustedDependencies` array in your `package.json`.
 
 ```json package.json icon="file-json"
 {
@@ -42,9 +42,9 @@ Instead of executing arbitrary scripts, Bun uses a "default-secure" approach. Yo
 }
 ```
 
-Once added to `trustedDependencies`, install/re-install the package. Bun will read this field and run lifecycle scripts for `my-trusted-package`.
+Once added to `trustedDependencies`, install/re-install the package. Fun will read this field and run lifecycle scripts for `my-trusted-package`.
 
-The top 500 npm packages with lifecycle scripts are allowed by default. You can see the full list [here](https://github.com/oven-sh/bun/blob/main/src/install/default-trusted-dependencies.txt).
+The top 500 npm packages with lifecycle scripts are allowed by default. You can see the full list [here](https://github.com/underdoc-org/fun/blob/main/src/install/default-trusted-dependencies.txt).
 
 <Note>
   The default trusted dependencies list only applies to packages installed from npm. For packages from other sources
@@ -60,12 +60,12 @@ The top 500 npm packages with lifecycle scripts are allowed by default. You can 
 To disable lifecycle scripts for all packages, use the `--ignore-scripts` flag.
 
 ```bash terminal icon="terminal"
-bun install --ignore-scripts
+fun install --ignore-scripts
 ```
 
-To make this the default for a project, set [`install.ignoreScripts`](/runtime/bunfig#install-ignorescripts) in `bunfig.toml`:
+To make this the default for a project, set [`install.ignoreScripts`](/runtime/funfig#install-ignorescripts) in `funfig.toml`:
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install]
 ignoreScripts = true
 ```

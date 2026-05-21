@@ -1,18 +1,18 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import path from "path";
 
-// https://github.com/oven-sh/bun/issues/3768
+// https://github.com/underdoc-org/fun/issues/3768
 describe.concurrent("jsx", () => {
   for (const node_env of ["production", "development", "test", ""]) {
     for (const child_node_env of ["production", "development", "test", ""]) {
       test(`react-jsxDEV parent: ${node_env} child: ${child_node_env} should work`, async () => {
-        const env = { ...bunEnv };
+        const env = { ...funEnv };
         env.NODE_ENV = node_env;
         env.CHILD_NODE_ENV = child_node_env;
         env.TSCONFIG_JSX = "react-jsxdev";
-        await using proc = Bun.spawn({
-          cmd: [bunExe(), "run", path.join(import.meta.dirname, "jsx-dev", "jsx-dev.tsx")],
+        await using proc = Fun.spawn({
+          cmd: [funExe(), "run", path.join(import.meta.dirname, "jsx-dev", "jsx-dev.tsx")],
           cwd: import.meta.dirname,
           env: env,
           stdout: "pipe",
@@ -25,12 +25,12 @@ describe.concurrent("jsx", () => {
       });
 
       test(`react-jsx parent: ${node_env} child: ${child_node_env} should work`, async () => {
-        const env = { ...bunEnv };
+        const env = { ...funEnv };
         env.NODE_ENV = node_env;
         env.CHILD_NODE_ENV = child_node_env;
         env.TSCONFIG_JSX = "react-jsx";
-        await using proc = Bun.spawn({
-          cmd: [bunExe(), "run", path.join(import.meta.dirname, "jsx-production-entry.ts")],
+        await using proc = Fun.spawn({
+          cmd: [funExe(), "run", path.join(import.meta.dirname, "jsx-production-entry.ts")],
           cwd: import.meta.dirname,
           env: env,
           stdout: "pipe",

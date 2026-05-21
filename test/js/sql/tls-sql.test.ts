@@ -1,5 +1,5 @@
-import { SQL, randomUUIDv7 } from "bun";
-import { describe, expect, test } from "bun:test";
+import { SQL, randomUUIDv7 } from "fun";
+import { describe, expect, test } from "fun:test";
 import { describeWithContainer, isDockerEnabled } from "harness";
 
 if (!isDockerEnabled()) {
@@ -14,8 +14,8 @@ if (!isDockerEnabled()) {
       // Test with prepared statements on and off
       for (const prepare of [true, false]) {
         describe(`prepared: ${prepare}`, () => {
-          const getOptions = (): Bun.SQL.Options => ({
-            url: `postgres://postgres@${container.host}:${container.port}/bun_sql_test`,
+          const getOptions = (): Fun.SQL.Options => ({
+            url: `postgres://postgres@${container.host}:${container.port}/fun_sql_test`,
             tls: true,
             adapter: "postgres",
             max: 1,
@@ -147,8 +147,8 @@ if (!isDockerEnabled()) {
             expect(
               (
                 await sql.begin(sql => [
-                  sql`select set_config('bun_sql.test', 'testing', true)`,
-                  sql`select current_setting('bun_sql.test') as x`,
+                  sql`select set_config('fun_sql.test', 'testing', true)`,
+                  sql`select current_setting('fun_sql.test') as x`,
                 ])
               )[1][0].x,
             ).toBe("testing");
@@ -159,7 +159,7 @@ if (!isDockerEnabled()) {
             await using sql = new SQL(getOptions());
             expect(
               await sql
-                .begin(sql => [sql`select wat`, sql`select current_setting('bun_sql.test') as x, ${1} as a`])
+                .begin(sql => [sql`select wat`, sql`select current_setting('fun_sql.test') as x, ${1} as a`])
                 .catch(e => e.errno),
             ).toBe("42703");
           });

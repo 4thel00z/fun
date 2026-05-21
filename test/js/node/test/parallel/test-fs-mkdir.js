@@ -248,7 +248,7 @@ if (common.isMainThread && (common.isLinux || common.isMacOS)) {
       {
         code: 'ERR_INVALID_ARG_TYPE',
         name: 'TypeError',
-        message: typeof Bun === 'undefined' ? 'The "options.recursive" property must be of type boolean.' +
+        message: typeof Fun === 'undefined' ? 'The "options.recursive" property must be of type boolean.' +
           received : 'The "recursive" property must be of type boolean, got ' +typeof recursive,
       }
     );
@@ -257,7 +257,7 @@ if (common.isMainThread && (common.isLinux || common.isMacOS)) {
       {
         code: 'ERR_INVALID_ARG_TYPE',
         name: 'TypeError',
-        message: typeof Bun === 'undefined' ? 'The "options.recursive" property must be of type boolean.' +
+        message: typeof Fun === 'undefined' ? 'The "options.recursive" property must be of type boolean.' +
           received : 'The "recursive" property must be of type boolean, got ' +typeof recursive,
       }
     );

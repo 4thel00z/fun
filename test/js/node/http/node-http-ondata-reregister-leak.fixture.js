@@ -6,7 +6,7 @@
 // This fixture re-assigns ondata after the body has been fully consumed and asserts
 // that activeTasks does not increase.
 const http = require("node:http");
-const { getEventLoopStats } = require("bun:internal-for-testing");
+const { getEventLoopStats } = require("fun:internal-for-testing");
 
 process.exitCode = 1;
 

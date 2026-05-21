@@ -1,4 +1,4 @@
-// bun:test automatically rewrites this import to bun:test when run in bun
+// fun:test automatically rewrites this import to fun:test when run in fun
 import { expect, test } from "@jest/globals";
 
 const N = parseInt(process.env.RUN_COUNT || "10000", 10);

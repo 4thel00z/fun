@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "fun:test";
 import { isASAN } from "harness";
 import { promisify } from "node:util";
 import zlib from "node:zlib";
@@ -13,7 +13,7 @@ describe("zlib compression does not leak memory", () => {
     for (let index = 0; index < 10_000; index++) {
       zlib.deflateSync(input);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     console.log("beforeAll done");
   });
 
@@ -29,7 +29,7 @@ describe("zlib compression does not leak memory", () => {
         for (let index = 0; index < 10_000; index++) {
           await promisify(zlib[compress])(input);
         }
-        Bun.gc(true);
+        Fun.gc(true);
         const after = process.memoryUsage.rss();
         console.log(after);
         console.log("-", after - baseline);
@@ -52,7 +52,7 @@ describe("zlib compression does not leak memory", () => {
         for (let index = 0; index < 10_000; index++) {
           zlib[compress](input);
         }
-        Bun.gc(true);
+        Fun.gc(true);
         const after = process.memoryUsage.rss();
         console.log(after);
         console.log("-", after - baseline);
@@ -72,7 +72,7 @@ describe("zlib compression does not leak memory", () => {
     for (let index = 0; index < 1_000; index++) {
       await promisify(zlib.brotliCompress)(input);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
     console.log(after);
     console.log("-", after - baseline);
@@ -89,7 +89,7 @@ describe("zlib compression does not leak memory", () => {
     for (let index = 0; index < 1_000; index++) {
       zlib.brotliCompressSync(input);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
     console.log(after);
     console.log("-", after - baseline);
@@ -106,7 +106,7 @@ describe("zlib compression does not leak memory", () => {
     for (let index = 0; index < 1_000; index++) {
       await promisify(zlib.zstdCompress)(input);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
     console.log(after);
     console.log("-", after - baseline);
@@ -123,7 +123,7 @@ describe("zlib compression does not leak memory", () => {
     for (let index = 0; index < 1_000; index++) {
       zlib.zstdCompressSync(input);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
     console.log(after);
     console.log("-", after - baseline);

@@ -1,6 +1,6 @@
 #include "root.h"
 #include "helpers.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <string.h>
 #ifdef _WIN32
 #include <uv.h>
@@ -21,7 +21,7 @@ JSValue createSystemError(JSGlobalObject* global, ASCIILiteral message, ASCIILit
 
 JSValue createSystemError(JSGlobalObject* global, ASCIILiteral syscall, int err)
 {
-    auto errstr = String::fromLatin1(Bun__errnoName(err));
+    auto errstr = String::fromLatin1(Fun__errnoName(err));
 #ifdef _WIN32
     auto strerr = uv_strerror(err);
 #else

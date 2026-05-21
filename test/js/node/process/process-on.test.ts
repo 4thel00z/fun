@@ -1,12 +1,12 @@
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import path from "path";
 
 describe("process.on", () => {
   it("when called from the main thread", () => {
-    const result = Bun.spawnSync({
-      cmd: [bunExe(), path.join(__dirname, "process-on-fixture.ts")],
-      env: bunEnv,
+    const result = Fun.spawnSync({
+      cmd: [funExe(), path.join(__dirname, "process-on-fixture.ts")],
+      env: funEnv,
       stdin: "inherit",
       stdout: "inherit",
       stderr: "inherit",
@@ -22,13 +22,13 @@ describe("process.on", () => {
         "name": "process-on-test",
         "type": "module",
         "scripts": {
-          "start": "bun run process-on-fixture.ts"
+          "start": "fun run process-on-fixture.ts"
         }
       }`,
     });
-    const result1 = Bun.spawnSync({
-      cmd: [bunExe(), "build", "--compile", path.join(dir, "./process-on-fixture.ts"), "--outfile=./out"],
-      env: bunEnv,
+    const result1 = Fun.spawnSync({
+      cmd: [funExe(), "build", "--compile", path.join(dir, "./process-on-fixture.ts"), "--outfile=./out"],
+      env: funEnv,
       cwd: dir,
       stdin: "inherit",
       stdout: "inherit",
@@ -37,9 +37,9 @@ describe("process.on", () => {
 
     expect(result1.exitCode).toBe(0);
 
-    const result2 = Bun.spawnSync({
+    const result2 = Fun.spawnSync({
       cmd: ["./out"],
-      env: bunEnv,
+      env: funEnv,
       cwd: dir,
       stdin: "inherit",
       stdout: "inherit",
@@ -57,15 +57,15 @@ describe("process.on", () => {
         "name": "process-on-test",
         "type": "module",
         "scripts": {
-          "start": "bun run entry.ts"
+          "start": "fun run entry.ts"
         }
       }`,
     });
 
     expect(
-      Bun.spawnSync({
-        cmd: [bunExe(), "build", "--target=bun", path.join(dir, "entry.ts"), "--outfile=./out.ts"],
-        env: bunEnv,
+      Fun.spawnSync({
+        cmd: [funExe(), "build", "--target=fun", path.join(dir, "entry.ts"), "--outfile=./out.ts"],
+        env: funEnv,
         cwd: dir,
         stdin: "inherit",
         stdout: "inherit",
@@ -73,9 +73,9 @@ describe("process.on", () => {
       }).exitCode,
     ).toBe(0);
 
-    const result2 = Bun.spawnSync({
-      cmd: [bunExe(), "run", "./out.ts"],
-      env: bunEnv,
+    const result2 = Fun.spawnSync({
+      cmd: [funExe(), "run", "./out.ts"],
+      env: funEnv,
       cwd: dir,
       stdin: "inherit",
       stdout: "inherit",

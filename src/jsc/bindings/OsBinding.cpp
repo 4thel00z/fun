@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 // Adapted from libuv darwin uv_get_free_memory, MIT
-extern "C" uint64_t Bun__Os__getFreeMemory(void)
+extern "C" uint64_t Fun__Os__getFreeMemory(void)
 {
     vm_statistics_data_t info;
     mach_msg_type_number_t count = sizeof(info) / sizeof(integer_t);
@@ -32,7 +32,7 @@ extern "C" uint64_t Bun__Os__getFreeMemory(void)
 
 // Read a numeric field (in kB) from /proc/meminfo, matching libuv's
 // uv__read_proc_meminfo. Returns the value in bytes, or 0 on failure.
-static uint64_t bunReadProcMeminfo(const char* what)
+static uint64_t funReadProcMeminfo(const char* what)
 {
     char buf[4096]; // Large enough to hold all of /proc/meminfo.
     int fd;
@@ -85,9 +85,9 @@ static uint64_t bunReadProcMeminfo(const char* what)
 // new allocations, including reclaimable page cache) and only fall back to
 // sysinfo.freeram (which excludes page cache) when /proc/meminfo cannot be
 // read. This matches Node.js's os.freemem() behaviour.
-extern "C" uint64_t Bun__Os__getFreeMemory(void)
+extern "C" uint64_t Fun__Os__getFreeMemory(void)
 {
-    uint64_t rc = bunReadProcMeminfo("MemAvailable:");
+    uint64_t rc = funReadProcMeminfo("MemAvailable:");
     if (rc != 0) {
         return rc;
     }
@@ -103,7 +103,7 @@ extern "C" uint64_t Bun__Os__getFreeMemory(void)
 #if OS(WINDOWS)
 extern "C" uint64_t uv_get_available_memory(void);
 
-extern "C" uint64_t Bun__Os__getFreeMemory(void)
+extern "C" uint64_t Fun__Os__getFreeMemory(void)
 {
     return uv_get_available_memory();
 }
@@ -115,7 +115,7 @@ extern "C" uint64_t Bun__Os__getFreeMemory(void)
 #include <unistd.h>
 
 // Matches libuv's uv_get_free_memory for FreeBSD: free pages × pagesize.
-extern "C" uint64_t Bun__Os__getFreeMemory(void)
+extern "C" uint64_t Fun__Os__getFreeMemory(void)
 {
     int free_pages = 0;
     size_t len = sizeof(free_pages);

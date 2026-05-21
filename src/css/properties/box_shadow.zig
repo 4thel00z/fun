@@ -142,7 +142,7 @@ pub const BoxShadowHandler = struct {
                 if (this.box_shadows) |*bxs| {
                     const val: *SmallList(BoxShadow, 1) = &bxs.*[0];
                     const prefixes: *VendorPrefix = &bxs.*[1];
-                    if (!val.eql(box_shadows) and !bun.bits.contains(VendorPrefix, prefixes.*, prefix)) {
+                    if (!val.eql(box_shadows) and !fun.bits.contains(VendorPrefix, prefixes.*, prefix)) {
                         this.flush(dest, context);
                         this.box_shadows = .{
                             box_shadows.deepClone(context.allocator),
@@ -150,7 +150,7 @@ pub const BoxShadowHandler = struct {
                         };
                     } else {
                         val.* = box_shadows.deepClone(context.allocator);
-                        bun.bits.insert(VendorPrefix, prefixes, prefix);
+                        fun.bits.insert(VendorPrefix, prefixes, prefix);
                     }
                 } else {
                     this.box_shadows = .{
@@ -165,7 +165,7 @@ pub const BoxShadowHandler = struct {
 
                     var unparsed = unp.deepClone(context.allocator);
                     context.addUnparsedFallbacks(&unparsed);
-                    bun.handleOom(dest.append(context.allocator, .{ .unparsed = unparsed }));
+                    fun.handleOom(dest.append(context.allocator, .{ .unparsed = unparsed }));
                     this.flushed = true;
                 } else return false;
             },
@@ -183,7 +183,7 @@ pub const BoxShadowHandler = struct {
     pub fn flush(this: *@This(), dest: *css.DeclarationList, context: *css.PropertyHandlerContext) void {
         if (this.box_shadows == null) return;
 
-        const box_shadows: SmallList(BoxShadow, 1), const prefixes2: VendorPrefix = bun.take(&this.box_shadows) orelse {
+        const box_shadows: SmallList(BoxShadow, 1), const prefixes2: VendorPrefix = fun.take(&this.box_shadows) orelse {
             this.flushed = true;
             return;
         };
@@ -193,7 +193,7 @@ pub const BoxShadowHandler = struct {
             var prefixes = context.targets.prefixes(prefixes2, Feature.box_shadow);
             var fallbacks = ColorFallbackKind{};
             for (box_shadows.slice()) |*shadow| {
-                bun.bits.insert(ColorFallbackKind, &fallbacks, shadow.color.getNecessaryFallbacks(context.targets));
+                fun.bits.insert(ColorFallbackKind, &fallbacks, shadow.color.getNecessaryFallbacks(context.targets));
             }
 
             if (fallbacks.rgb) {
@@ -208,7 +208,7 @@ pub const BoxShadowHandler = struct {
                     }
                 }
 
-                bun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ rgb, prefixes } }));
+                fun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ rgb, prefixes } }));
                 if (prefixes.none) {
                     prefixes = VendorPrefix.NONE;
                 } else {
@@ -228,7 +228,7 @@ pub const BoxShadowHandler = struct {
                         @field(output, field.name) = css.generic.deepClone(field.type, &@field(input, field.name), context.allocator);
                     }
                 }
-                bun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ p3, VendorPrefix.NONE } }));
+                fun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ p3, VendorPrefix.NONE } }));
             }
 
             if (fallbacks.lab) {
@@ -242,18 +242,18 @@ pub const BoxShadowHandler = struct {
                         @field(output, field.name) = css.generic.deepClone(field.type, &@field(input, field.name), context.allocator);
                     }
                 }
-                bun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ lab, VendorPrefix.NONE } }));
+                fun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ lab, VendorPrefix.NONE } }));
             } else {
-                bun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ box_shadows, prefixes } }));
+                fun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ box_shadows, prefixes } }));
             }
         } else {
-            bun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ box_shadows, prefixes2 } }));
+            fun.handleOom(dest.append(context.allocator, .{ .@"box-shadow" = .{ box_shadows, prefixes2 } }));
         }
 
         this.flushed = true;
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

@@ -1,12 +1,14 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 /*
 
-cppbind - C++ to Zig binding generator for Bun
+cppbind - C++ to Zig binding generator for Fun
 
 This tool automatically generates Zig bindings for C++ functions marked with [[ZIG_EXPORT(...)]] attributes.
 It runs automatically when C++ files change during the build process.
 
 To run manually:
-    bun src/codegen/cppbind src build/debug/codegen
+    fun src/codegen/cppbind src build/debug/codegen
 
 ## USAGE
 
@@ -18,7 +20,7 @@ To run manually:
        printf("hello world\n");
    }
    ```
-   Zig usage: `bun.cpp.hello_world();`
+   Zig usage: `fun.cpp.hello_world();`
 
 2. **zero_is_throw** - Function returns JSValue, where .zero indicates an exception:
    ```cpp
@@ -29,7 +31,7 @@ To run manually:
        return result;
    }
    ```
-   Zig usage: `try bun.cpp.create_object(globalThis);`
+   Zig usage: `try fun.cpp.create_object(globalThis);`
 
 3. **check_slow** - Function that may throw, performs runtime exception checking:
    ```cpp
@@ -39,7 +41,7 @@ To run manually:
        RETURN_IF_EXCEPTION(scope, );
    }
    ```
-   Zig usage: `try bun.cpp.process_data(globalThis);`
+   Zig usage: `try fun.cpp.process_data(globalThis);`
 
 ### Parameters
 
@@ -56,15 +58,15 @@ To run manually:
 const start = Date.now();
 let isInstalled = false;
 try {
-  const grammarfile = await Bun.file("node_modules/@lezer/cpp/src/cpp.grammar").text();
+  const grammarfile = await Fun.file("node_modules/@lezer/cpp/src/cpp.grammar").text();
   isInstalled = true;
 } catch (e) {}
 if (!isInstalled) {
   if (process.argv.includes("--already-installed")) {
-    console.error("Lezer C++ grammar is not installed. Please run `bun install` to install it.");
+    console.error("Lezer C++ grammar is not installed. Please run `fun install` to install it.");
     process.exit(1);
   }
-  const r = Bun.spawnSync([process.argv[0], "install", "--frozen-lockfile"], {
+  const r = Fun.spawnSync([process.argv[0], "install", "--frozen-lockfile"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (r.exitCode !== 0) {
@@ -73,7 +75,7 @@ if (!isInstalled) {
     process.exit(r.exitCode ?? 1);
   }
 
-  const r2 = Bun.spawnSync([...process.argv, "--already-installed"], { stdio: ["inherit", "inherit", "inherit"] });
+  const r2 = Fun.spawnSync([...process.argv, "--already-installed"], { stdio: ["inherit", "inherit", "inherit"] });
   process.exit(r2.exitCode ?? 1);
 }
 
@@ -399,7 +401,7 @@ function processFunction(ctx: ParseContext, node: SyntaxNode, tag: ExportTag): C
 
 type ExportTag = "check_slow" | "zero_is_throw" | "false_is_throw" | "null_is_throw" | "nothrow";
 
-const sharedTypesText = await Bun.file("src/codegen/shared-types.ts").text();
+const sharedTypesText = await Fun.file("src/codegen/shared-types.ts").text();
 const sharedTypesLines = sharedTypesText.split("\n");
 let sharedTypesLine = 0;
 let sharedTypesColumn = 0;
@@ -485,7 +487,7 @@ function closest(node: SyntaxNode | null, type: string): SyntaxNode | null {
 type CppParser = typeof cppParser;
 
 async function processFile(parser: CppParser, file: string, allFunctions: CppFn[]) {
-  const sourceCode = await Bun.file(file).text();
+  const sourceCode = await Fun.file(file).text();
   if (!sourceCode.includes("[[ZIG_EXPORT(")) return;
 
   const sourceCodeLines = sourceCode.split("\n");
@@ -615,7 +617,7 @@ async function processFile(parser: CppParser, file: string, allFunctions: CppFn[
 }
 
 async function renderError(position: Srcloc, message: string, label: string, color: string) {
-  const fileContent = await Bun.file(position.file).text();
+  const fileContent = await Fun.file(position.file).text();
   const lines = fileContent.split("\n");
   const line = lines[position.start.line - 1];
   if (line === undefined) return;
@@ -627,7 +629,7 @@ async function renderError(position: Srcloc, message: string, label: string, col
   const after = line.substring(position.start.column - 1);
   console.error(`\x1b[90m${before}${after}\x1b[m`);
   let length = position.start.line === position.end.line ? position.end.column - position.start.column : 1;
-  console.error(`\x1b[m${" ".repeat(Bun.stringWidth(before))}${color}^${"~".repeat(Math.max(length - 1, 0))}\x1b[m`);
+  console.error(`\x1b[m${" ".repeat(Fun.stringWidth(before))}${color}^${"~".repeat(Math.max(length - 1, 0))}\x1b[m`);
 }
 
 type Cfg = {
@@ -679,7 +681,7 @@ function generateZigFn(
       `        return result;`,
       `    } else {`,
       `        const result = raw.${formatZigName(fn.name)}(${fn.parameters.map(p => formatZigName(p.name)).join(", ")});`,
-      `        if (Bun__RETURN_IF_EXCEPTION(${formatZigName(globalThisArg.name)})) return error.JSError;`,
+      `        if (Fun__RETURN_IF_EXCEPTION(${formatZigName(globalThisArg.name)})) return error.JSError;`,
       `        return result;`,
       `    }`,
       `}`,
@@ -728,7 +730,7 @@ function generateZigFn(
 
 async function readFileOrEmpty(file: string): Promise<string> {
   try {
-    const fileContents = await Bun.file(file).text();
+    const fileContents = await Fun.file(file).text();
     return fileContents;
   } catch (e) {
     return "";
@@ -751,7 +753,7 @@ async function main() {
       |_|   |_|
 `.slice(1),
     );
-    console.error("Usage: bun src/codegen/cppbind src build/debug/codegen [cxx-sources.txt]");
+    console.error("Usage: fun src/codegen/cppbind src build/debug/codegen [cxx-sources.txt]");
     process.exit(1);
   }
   await mkdir(dstDir, { recursive: true });
@@ -760,14 +762,14 @@ async function main() {
 
   // Source list: build system globs and passes the path (see
   // scripts/build/codegen.ts emitCppBind). For ad-hoc runs:
-  //   bun scripts/glob-sources.ts cxx > /tmp/cxx.txt
-  //   bun src/codegen/cppbind.ts <codegen> <out> /tmp/cxx.txt
+  //   fun scripts/glob-sources.ts cxx > /tmp/cxx.txt
+  //   fun src/codegen/cppbind.ts <codegen> <out> /tmp/cxx.txt
   const cxxSourcesPath = args[2];
   if (!cxxSourcesPath) {
     console.error("usage: cppbind.ts <codegen-dir> <output> <cxx-sources-file>");
     process.exit(1);
   }
-  const allCppFiles = (await Bun.file(cxxSourcesPath).text())
+  const allCppFiles = (await Fun.file(cxxSourcesPath).text())
     .trim()
     .split("\n")
     .map(q => q.trim())
@@ -806,13 +808,13 @@ async function main() {
     resultRaw.join("\n") +
     "\n};\n";
   if ((await readFileOrEmpty(resultFilePath)) !== resultContents) {
-    await Bun.write(resultFilePath, resultContents);
+    await Fun.write(resultFilePath, resultContents);
   }
 
   const resultSourceLinksFilePath = join(dstDir, "cpp.source-links");
   const resultSourceLinksContents = resultSourceLinks.join("\n");
   if ((await readFileOrEmpty(resultSourceLinksFilePath)) !== resultSourceLinksContents) {
-    await Bun.write(resultSourceLinksFilePath, resultSourceLinksContents);
+    await Fun.write(resultSourceLinksFilePath, resultSourceLinksContents);
     const now = Date.now();
     const sin = Math.round(((Math.sin((now / 1000) * 1) + 1) / 2) * 0);
     if (process.env.CI) {

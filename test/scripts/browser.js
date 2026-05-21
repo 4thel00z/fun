@@ -8,43 +8,43 @@ const snippetsDir = path.resolve(__dirname, "../snippets");
 const serverURL = process.env.TEST_SERVER_URL || "http://localhost:8080";
 const USE_EXISTING_PROCESS = process.env.USE_EXISTING_PROCESS || false;
 const DISABLE_HMR = !!process.env.DISABLE_HMR;
-const bunFlags = ["dev", `--origin=${serverURL}`, DISABLE_HMR && "--disable-hmr"].filter(Boolean);
-const bunExec = process.env.BUN_BIN || "bun";
+const funFlags = ["dev", `--origin=${serverURL}`, DISABLE_HMR && "--disable-hmr"].filter(Boolean);
+const funExec = process.env.FUN_BIN || "fun";
 
-var bunProcess;
+var funProcess;
 var waitSpawn;
 if (!USE_EXISTING_PROCESS) {
-  bunProcess = child_process.spawn(bunExec, bunFlags, {
+  funProcess = child_process.spawn(funExec, funFlags, {
     cwd: snippetsDir,
     stdio: "pipe",
     env: {
       ...process.env,
-      DISABLE_BUN_ANALYTICS: "1",
+      DISABLE_FUN_ANALYTICS: "1",
     },
 
     shell: false,
   });
-  console.log("$", bunExec, bunFlags.join(" "));
-  bunProcess.stderr.pipe(process.stderr);
-  bunProcess.stdout.pipe(process.stdout);
+  console.log("$", funExec, funFlags.join(" "));
+  funProcess.stderr.pipe(process.stderr);
+  funProcess.stdout.pipe(process.stdout);
   var rejecter;
-  bunProcess.once("error", err => {
-    console.error("❌ bun error", err);
+  funProcess.once("error", err => {
+    console.error("❌ fun error", err);
     process.exit(1);
   });
   if (!process.env.CI) {
     waitSpawn = new Promise((resolve, reject) => {
-      bunProcess.once("spawn", code => {
+      funProcess.once("spawn", code => {
         console.log("Spawned");
         resolve();
       });
     });
   }
   process.on("beforeExit", () => {
-    bunProcess && bunProcess.kill(0);
+    funProcess && funProcess.kill(0);
   });
 }
-const isDebug = bunExec.endsWith("-debug");
+const isDebug = funExec.endsWith("-debug");
 
 function writeSnapshot(name, code) {
   let file = path.join(__dirname, "../snapshots", name);
@@ -95,7 +95,7 @@ async function main() {
       page = await browser.newPage();
       if (USE_EXISTING_PROCESS) {
         await page.evaluate(`
-        globalThis.BUN_DEBUG_MODE = true;
+        globalThis.FUN_DEBUG_MODE = true;
       `);
       }
 
@@ -155,14 +155,14 @@ async function main() {
   }
 
   if (!USE_EXISTING_PROCESS || (USE_EXISTING_PROCESS && allTestsPassed)) {
-    bunProcess && bunProcess.kill(0);
+    funProcess && funProcess.kill(0);
 
     if (!allTestsPassed) {
       console.error(`❌ browser test failed`);
       process.exit(1);
     } else {
       console.log(`✅ browser test passed`);
-      bunProcess && bunProcess.kill(0);
+      funProcess && funProcess.kill(0);
       process.exit(0);
     }
     await browser.close();

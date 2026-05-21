@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug } from "harness";
 
 // Worker VM startup/teardown is much slower under debug and/or ASAN; these
 // tests spawn many workers, so scale iteration counts and timeouts down.
@@ -15,9 +15,9 @@ const timeout = slow ? 60_000 : 20_000;
 // parent keep-alive was taken unconditionally in `create()`. `.unref()` after
 // construction worked; the constructor option did not.
 test("new Worker with { ref: false } does not keep the parent alive", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
         // The worker never exits on its own; if ref:false is honoured the
@@ -26,7 +26,7 @@ test("new Worker with { ref: false } does not keep the parent alive", async () =
         console.log("spawned");
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -44,9 +44,9 @@ test("new Worker with { ref: false } does not keep the parent alive", async () =
 test(
   "terminate/ref/unref after worker exits naturally does not UAF",
   async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         for (let round = 0; round < ${rounds}; round++) {
@@ -69,7 +69,7 @@ test(
         }
       `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -89,9 +89,9 @@ test(
 test(
   "nested worker whose grandchild outlives the middle worker's JSWorker does not assert",
   async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         for (let i = 0; i < ${rounds}; i++) {
@@ -107,7 +107,7 @@ test(
         }
       `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

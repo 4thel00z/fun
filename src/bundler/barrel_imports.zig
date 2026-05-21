@@ -11,7 +11,7 @@ const log = Output.scoped(.barrel, .hidden);
 
 pub const RequestedExports = union(enum) {
     all,
-    partial: bun.StringArrayHashMapUnmanaged(void),
+    partial: fun.StringArrayHashMapUnmanaged(void),
 };
 
 const BarrelExportResolution = struct {
@@ -42,7 +42,7 @@ fn resolveBarrelExport(alias: []const u8, named_exports: JSAst.NamedExports, nam
 ///
 /// Export * records are never deferred (always resolved) to avoid circular races.
 pub fn applyBarrelOptimization(this: *BundleV2, parse_result: *ParseTask.Result) void {
-    bun.handleOom(applyBarrelOptimizationImpl(this, parse_result));
+    fun.handleOom(applyBarrelOptimizationImpl(this, parse_result));
 }
 
 fn applyBarrelOptimizationImpl(this: *BundleV2, parse_result: *ParseTask.Result) !void {
@@ -130,7 +130,7 @@ fn applyBarrelOptimizationImpl(this: *BundleV2, parse_result: *ParseTask.Result)
         // Collect paths of needed records.
         var needed_paths_stack = std.heap.stackFallback(4096, this.allocator());
         const needed_paths_alloc = needed_paths_stack.get();
-        var needed_paths = bun.StringArrayHashMapUnmanaged(void){};
+        var needed_paths = fun.StringArrayHashMapUnmanaged(void){};
         defer needed_paths.deinit(needed_paths_alloc);
 
         for (needed_records.keys()) |rec_idx| {
@@ -271,13 +271,13 @@ pub fn scheduleBarrelDeferredImports(this: *BundleV2, result: *ParseTask.Result.
     // its index, so the direct path lookup below fails for those entries.
     // Build a fallback: raw specifier → surviving record's resolved path
     // text, using non-unused records in this file. See #28886.
-    var dedup_fallback = bun.StringArrayHashMapUnmanaged([]const u8){};
+    var dedup_fallback = fun.StringArrayHashMapUnmanaged([]const u8){};
     defer dedup_fallback.deinit(this.allocator());
     if (this.transpiler.options.dev_server != null) {
         for (file_import_records.slice()) |ir_probe| {
             if (ir_probe.flags.is_unused or ir_probe.flags.is_internal) continue;
             if (ir_probe.original_path.len == 0) continue;
-            if (bun.strings.eql(ir_probe.original_path, ir_probe.path.text)) continue;
+            if (fun.strings.eql(ir_probe.original_path, ir_probe.path.text)) continue;
             try dedup_fallback.put(this.allocator(), ir_probe.original_path, ir_probe.path.text);
         }
     }
@@ -537,7 +537,7 @@ pub fn scheduleBarrelDeferredImports(this: *BundleV2, result: *ParseTask.Result.
 /// seeding so that exports requested in previous builds are not lost when the
 /// barrel is re-parsed in an incremental build where the requesting file is
 /// not stale.
-fn persistBarrelExport(dev: *bun.bake.DevServer, barrel_path: []const u8, alias: []const u8) void {
+fn persistBarrelExport(dev: *fun.bake.DevServer, barrel_path: []const u8, alias: []const u8) void {
     const alloc = dev.allocator();
     const outer_gop = dev.barrel_needed_exports.getOrPut(alloc, barrel_path) catch return;
     if (!outer_gop.found_existing) {
@@ -554,9 +554,9 @@ const std = @import("std");
 const BundleV2 = @import("./bundle_v2.zig").BundleV2;
 const ParseTask = @import("./ParseTask.zig").ParseTask;
 
-const bun = @import("bun");
-const ImportRecord = bun.ImportRecord;
-const Output = bun.Output;
+const fun = @import("fun");
+const ImportRecord = fun.ImportRecord;
+const Output = fun.Output;
 
-const Index = bun.ast.Index;
-const JSAst = bun.ast.BundledAst;
+const Index = fun.ast.Index;
+const JSAst = fun.ast.BundledAst;

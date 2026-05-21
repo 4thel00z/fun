@@ -216,5 +216,5 @@ pub fn IntrusiveField(comptime T: type) type {
     };
 }
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;

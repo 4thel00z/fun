@@ -1,5 +1,5 @@
-import type { Server } from "bun";
-import { serve, deepEquals, concatArrayBuffers } from "bun";
+import type { Server } from "fun";
+import { serve, deepEquals, concatArrayBuffers } from "fun";
 import { join } from "path";
 import { hideFromStackTrace } from "harness";
 import resources from "./resources.json";
@@ -23,7 +23,7 @@ type Options = {
  * });
  */
 export function createDenoTest(path: string, defaultTimeout = 5000) {
-  const { expect, test, beforeAll, afterAll } = Bun.jest(path);
+  const { expect, test, beforeAll, afterAll } = Fun.jest(path);
 
   let server: Server;
 
@@ -295,7 +295,7 @@ export function createDenoTest(path: string, defaultTimeout = 5000) {
   // https://deno.land/api@v1.31.1?s=Deno.readTextFile
 
   const readTextFile = async (path: string): Promise<string> => {
-    return await Bun.file(join(import.meta.dir, 'fixtures', path)).text();
+    return await Fun.file(join(import.meta.dir, 'fixtures', path)).text();
   };
 
   // Globals
@@ -375,6 +375,6 @@ export function createDenoTest(path: string, defaultTimeout = 5000) {
   return exports;
 }
 
-declare namespace Bun {
-  function jest(path: string): typeof import("bun:test");
+declare namespace Fun {
+  function jest(path: string): typeof import("fun:test");
 }

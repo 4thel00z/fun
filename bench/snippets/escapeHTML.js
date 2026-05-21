@@ -1,6 +1,6 @@
 import { bench, group, run } from "../runner.mjs";
 
-var bunEscapeHTML = globalThis.escapeHTML || Bun.escapeHTML;
+var funEscapeHTML = globalThis.escapeHTML || Fun.escapeHTML;
 
 const FIXTURE = require("fs")
   .readFileSync(import.meta.dir + "/_fixture.txt", "utf8")
@@ -86,7 +86,7 @@ function reactEscapeHtml(string) {
 //       bench(`ReactDOM.escapeHTML`, () => reactEscapeHtml(input));
 //       bench(`html-entities.encode`, () => htmlEntityEncode(input));
 //       bench(`he.escape`, () => heEscape(input));
-//       bench(`Bun.escapeHTML`, () => bunEscapeHTML(input));
+//       bench(`Fun.escapeHTML`, () => funEscapeHTML(input));
 //     }
 //   );
 // }
@@ -106,7 +106,7 @@ for (let input of [
       // bench(`ReactDOM.escapeHTML`, () => reactEscapeHtml(input));
       // bench(`html-entities.encode`, () => htmlEntityEncode(input));
       // bench(`he.escape`, () => heEscape(input));
-      bench(`Bun.escapeHTML (${name})`, () => bunEscapeHTML(input));
+      bench(`Fun.escapeHTML (${name})`, () => funEscapeHTML(input));
     },
   );
 }

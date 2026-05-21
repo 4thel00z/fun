@@ -6,7 +6,7 @@ static constexpr ASCIILiteral builtinModuleNamesSortedLength[] = {
     "v8"_s,
     "vm"_s,
     "ws"_s,
-    "bun"_s,
+    "fun"_s,
     "dns"_s,
     "net"_s,
     "sys"_s,
@@ -31,21 +31,21 @@ static constexpr ASCIILiteral builtinModuleNamesSortedLength[] = {
     "stream"_s,
     "timers"_s,
     "undici"_s,
-    "bun:ffi"_s,
-    "bun:jsc"_s,
+    "fun:ffi"_s,
+    "fun:jsc"_s,
     "cluster"_s,
     "console"_s,
     "process"_s,
-    "bun:wrap"_s,
+    "fun:wrap"_s,
     "punycode"_s,
-    "bun:test"_s,
-    "bun:main"_s,
+    "fun:test"_s,
+    "fun:main"_s,
     "readline"_s,
     "_tls_wrap"_s,
     "constants"_s,
     "inspector"_s,
     "node:test"_s,
-    "bun:sqlite"_s,
+    "fun:sqlite"_s,
     "path/posix"_s,
     "path/win32"_s,
     "perf_hooks"_s,
@@ -81,7 +81,7 @@ static constexpr ASCIILiteral builtinModuleNamesSortedLength[] = {
     "diagnostics_channel"_s,
 };
 
-namespace Bun {
+namespace Fun {
 
 bool isBuiltinModule(const String& namePossiblyWithNodePrefix)
 {
@@ -256,4 +256,4 @@ String isUnprefixedNodeBuiltin(const String& name)
     return String();
 }
 
-} // namespace Bun
+} // namespace Fun

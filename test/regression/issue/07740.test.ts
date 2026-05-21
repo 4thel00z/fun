@@ -1,12 +1,12 @@
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 it("duplicate dependencies should warn instead of error", () => {
   const package_json = JSON.stringify({
     devDependencies: {
-      "empty-package-for-bun-test-runner": "1.0.0",
+      "empty-package-for-fun-test-runner": "1.0.0",
     },
     dependencies: {
-      "empty-package-for-bun-test-runner": "1.0.0",
+      "empty-package-for-fun-test-runner": "1.0.0",
     },
   });
 
@@ -14,8 +14,8 @@ it("duplicate dependencies should warn instead of error", () => {
     "package.json": package_json,
   });
 
-  const proc = Bun.spawnSync([bunExe(), "install"], {
-    env: bunEnv,
+  const proc = Fun.spawnSync([funExe(), "install"], {
+    env: funEnv,
     cwd: dir,
     stderr: "pipe",
   });

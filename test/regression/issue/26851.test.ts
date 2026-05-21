@@ -1,20 +1,20 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 test("--bail writes JUnit reporter outfile", async () => {
   using dir = tempDir("bail-junit", {
     "fail.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       test("failing test", () => { expect(1).toBe(2); });
     `,
   });
 
   const outfile = join(String(dir), "results.xml");
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--bail", "--reporter=junit", `--reporter-outfile=${outfile}`, "fail.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--bail", "--reporter=junit", `--reporter-outfile=${outfile}`, "fail.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -26,7 +26,7 @@ test("--bail writes JUnit reporter outfile", async () => {
   expect(exitCode).not.toBe(0);
 
   // The JUnit report file should still be written despite bail
-  const file = Bun.file(outfile);
+  const file = Fun.file(outfile);
   expect(await file.exists()).toBe(true);
 
   const xml = await file.text();
@@ -39,20 +39,20 @@ test("--bail writes JUnit reporter outfile", async () => {
 test("--bail writes JUnit reporter outfile with multiple files", async () => {
   using dir = tempDir("bail-junit-multi", {
     "a_pass.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       test("passing test", () => { expect(1).toBe(1); });
     `,
     "b_fail.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       test("another failing test", () => { expect(1).toBe(2); });
     `,
   });
 
   const outfile = join(String(dir), "results.xml");
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--bail", "--reporter=junit", `--reporter-outfile=${outfile}`],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--bail", "--reporter=junit", `--reporter-outfile=${outfile}`],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -64,7 +64,7 @@ test("--bail writes JUnit reporter outfile with multiple files", async () => {
   expect(exitCode).not.toBe(0);
 
   // The JUnit report file should still be written despite bail
-  const file = Bun.file(outfile);
+  const file = Fun.file(outfile);
   expect(await file.exists()).toBe(true);
 
   const xml = await file.text();

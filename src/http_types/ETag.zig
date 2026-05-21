@@ -6,7 +6,7 @@ fn parse(tag_str: []const u8) struct { tag: []const u8, is_weak: bool } {
 
     // Check for weak indicator
     var is_weak = false;
-    if (bun.strings.hasPrefix(str, "W/")) {
+    if (fun.strings.hasPrefix(str, "W/")) {
         is_weak = true;
         str = str[2..];
         str = std.mem.trimLeft(u8, str, " \t");
@@ -28,11 +28,11 @@ fn weakMatch(tag1: []const u8, is_weak1: bool, tag2: []const u8, is_weak2: bool)
     return std.mem.eql(u8, tag1, tag2);
 }
 
-pub fn appendToHeaders(bytes: []const u8, headers: *bun.http.Headers) !void {
+pub fn appendToHeaders(bytes: []const u8, headers: *fun.http.Headers) !void {
     const hash = std.hash.XxHash64.hash(0, bytes);
 
     var etag_buf: [40]u8 = undefined;
-    const etag_str = std.fmt.bufPrint(&etag_buf, "\"{f}\"", .{bun.fmt.hexIntLower(hash)}) catch unreachable;
+    const etag_str = std.fmt.bufPrint(&etag_buf, "\"{f}\"", .{fun.fmt.hexIntLower(hash)}) catch unreachable;
     try headers.append("etag", etag_str);
 }
 
@@ -61,5 +61,5 @@ pub fn ifNoneMatch(
     return false; // Condition is true, continue with normal processing
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

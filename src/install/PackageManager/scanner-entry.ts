@@ -4,7 +4,7 @@ const scannerModuleName = "__SCANNER_MODULE__";
 const suppressError = __SUPPRESS_ERROR__;
 
 type IPCMessage =
-  | { type: "result"; advisories: Bun.Security.Advisory[] }
+  | { type: "result"; advisories: Fun.Security.Advisory[] }
   | { type: "error"; code: "MODULE_NOT_FOUND"; module: string }
   | { type: "error"; code: "INVALID_VERSION"; message: string }
   | { type: "error"; code: "SCAN_FAILED"; message: string };
@@ -30,11 +30,11 @@ function sendAndExit(message: IPCMessage): never {
 }
 
 // Read packages JSON from fd 4 (reads until EOF when parent closes the pipe)
-let packages: Bun.Security.Package[];
+let packages: Fun.Security.Package[];
 let packagesJson: string = "";
 
 try {
-  packagesJson = await Bun.file(IPC_INPUT_FD).text();
+  packagesJson = await Fun.file(IPC_INPUT_FD).text();
 } catch (error) {
   const message = `Failed to read packages from FD ${IPC_INPUT_FD}: ${error instanceof Error ? error.message : String(error)}`;
   sendAndExit({
@@ -58,7 +58,7 @@ try {
   });
 }
 
-let scanner: Bun.Security.Scanner;
+let scanner: Fun.Security.Scanner;
 
 try {
   scanner = (await import(scannerModuleName)).scanner;

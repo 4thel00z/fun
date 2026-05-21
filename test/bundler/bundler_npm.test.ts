@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { isWindows } from "harness";
 import { itBundled } from "./expectBundled";
 
@@ -27,7 +27,7 @@ describe("bundler", () => {
         );
 
         const port = 0;
-        using server = Bun.serve({
+        using server = Fun.serve({
           port,
           async fetch(req) {
             return new Response(await renderToReadableStream(<App />), headers);
@@ -79,7 +79,7 @@ describe("bundler", () => {
       "/entry.ts": /* tsx */ `
         import { isEqual, isBuffer } from "lodash-es";
 
-        // https://github.com/oven-sh/bun/issues/3206
+        // https://github.com/underdoc-org/fun/issues/3206
         if(!isEqual({a: 1}, {a: 1})) throw "error 1";
         if(isEqual({a: 1}, {a: 2})) throw "error 2";
 

@@ -10,7 +10,7 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include "ExtendedDOMClientIsoSubspaces.h"
 #include "ExtendedDOMIsoSubspaces.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/LazyProperty.h>
 #include <JavaScriptCore/JSCJSValueInlines.h>
 #include <JavaScriptCore/JSPromise.h>
@@ -25,16 +25,16 @@
 #include <JavaScriptCore/DateInstance.h>
 #include <JavaScriptCore/JSModuleEnvironment.h>
 #include <JavaScriptCore/JSModuleNamespaceObject.h>
-#include "BunPlugin.h"
+#include "FunPlugin.h"
 #include "AsyncContextFrame.h"
 #include "ErrorCode.h"
 
-BUN_DECLARE_HOST_FUNCTION(JSMock__jsNow);
-BUN_DECLARE_HOST_FUNCTION(JSMock__jsSetSystemTime);
-BUN_DECLARE_HOST_FUNCTION(JSMock__jsRestoreAllMocks);
-BUN_DECLARE_HOST_FUNCTION(JSMock__jsClearAllMocks);
-BUN_DECLARE_HOST_FUNCTION(JSMock__jsSpyOn);
-BUN_DECLARE_HOST_FUNCTION(JSMock__jsMockFn);
+FUN_DECLARE_HOST_FUNCTION(JSMock__jsNow);
+FUN_DECLARE_HOST_FUNCTION(JSMock__jsSetSystemTime);
+FUN_DECLARE_HOST_FUNCTION(JSMock__jsRestoreAllMocks);
+FUN_DECLARE_HOST_FUNCTION(JSMock__jsClearAllMocks);
+FUN_DECLARE_HOST_FUNCTION(JSMock__jsSpyOn);
+FUN_DECLARE_HOST_FUNCTION(JSMock__jsMockFn);
 
 #define CHECK_IS_MOCK_FUNCTION(thisValue)                                                              \
     if (!thisObject) [[unlikely]] {                                                                    \
@@ -42,7 +42,7 @@ BUN_DECLARE_HOST_FUNCTION(JSMock__jsMockFn);
         return {};                                                                                     \
     }
 
-namespace Bun {
+namespace Fun {
 
 /**
  * intended to be used in an if statement as an abstraction over this double if statement
@@ -238,7 +238,7 @@ public:
         JSMockFunction* function = new (NotNull, JSC::allocateCell<JSMockFunction>(vm)) JSMockFunction(vm, structure, kind);
         function->finishCreation(vm);
 
-        // Do not forget to set the original name: https://github.com/oven-sh/bun/issues/8794
+        // Do not forget to set the original name: https://github.com/underdoc-org/fun/issues/8794
         function->m_originalName.set(vm, function, globalObject->commonStrings().mockedFunctionString(globalObject));
 
         return function;
@@ -286,7 +286,7 @@ public:
         auto& vm = this->vm();
         auto* nameStr = jsString(vm, name);
 
-        // Do not forget to set the original name: https://github.com/oven-sh/bun/issues/8794
+        // Do not forget to set the original name: https://github.com/underdoc-org/fun/issues/8794
         m_originalName.set(vm, this, nameStr);
 
         this->putDirect(vm, vm.propertyNames->name, nameStr, JSC::PropertyAttribute::DontEnum | JSC::PropertyAttribute::ReadOnly);
@@ -777,7 +777,7 @@ JSMockModule JSMockModule::create(JSC::JSGlobalObject* globalObject)
         });
     mock.mockWithImplementationCleanupDataStructure.initLater(
         [](const JSC::LazyProperty<JSC::JSGlobalObject, Structure>::Initializer& init) {
-            init.set(Bun::MockWithImplementationCleanupData::createStructure(init.vm, init.owner, init.owner->objectPrototype()));
+            init.set(Fun::MockWithImplementationCleanupData::createStructure(init.vm, init.owner, init.owner->objectPrototype()));
         });
     return mock;
 }
@@ -933,7 +933,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMockFunctionCall, (JSGlobalObject * lexicalGlobalObje
 
             auto topExceptionScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
-            JSValue returnValue = Bun::call(globalObject, result, callData, thisValue, args);
+            JSValue returnValue = Fun::call(globalObject, result, callData, thisValue, args);
 
             if (auto* exc = topExceptionScope.exception()) {
                 if (auto* returnValuesArray = fn->returnValues.get()) {
@@ -1014,7 +1014,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMockFunctionGetMockImplementation, (JSC::JSGlobalObje
 
 JSC_DEFINE_CUSTOM_GETTER(jsMockFunctionGetter_mock, (JSC::JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, JSC::PropertyName))
 {
-    Bun::JSMockFunction* thisObject = dynamicDowncast<Bun::JSMockFunction>(JSValue::decode(thisValue));
+    Fun::JSMockFunction* thisObject = dynamicDowncast<Fun::JSMockFunction>(JSValue::decode(thisValue));
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     CHECK_IS_MOCK_FUNCTION(JSValue::decode(thisValue))
 
@@ -1023,7 +1023,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsMockFunctionGetter_mock, (JSC::JSGlobalObject * globa
 
 JSC_DEFINE_CUSTOM_GETTER(jsMockFunctionGetter_protoImpl, (JSC::JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, JSC::PropertyName))
 {
-    Bun::JSMockFunction* thisObject = dynamicDowncast<Bun::JSMockFunction>(JSValue::decode(thisValue));
+    Fun::JSMockFunction* thisObject = dynamicDowncast<Fun::JSMockFunction>(JSValue::decode(thisValue));
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     CHECK_IS_MOCK_FUNCTION(JSValue::decode(thisValue))
 
@@ -1420,12 +1420,12 @@ JSC_DEFINE_HOST_FUNCTION(jsMockFunctionWithImplementation, (JSC::JSGlobalObject 
 
     return JSC::JSValue::encode(jsUndefined());
 }
-} // namespace Bun
+} // namespace Fun
 
-using namespace Bun;
+using namespace Fun;
 using namespace JSC;
 
-BUN_DEFINE_HOST_FUNCTION(JSMock__jsUseRealTimers, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(JSMock__jsUseRealTimers, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     globalObject->overridenDateNow = -1;
     return JSValue::encode(callframe->thisValue());
@@ -1443,11 +1443,11 @@ extern "C" [[ZIG_EXPORT(nothrow)]] double JSMock__getCurrentUnixTimeMs()
     return WTF::WallTime::now().secondsSinceEpoch().milliseconds();
 }
 
-BUN_DEFINE_HOST_FUNCTION(JSMock__jsNow, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(JSMock__jsNow, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     return JSValue::encode(jsNumber(globalObject->jsDateNow()));
 }
-BUN_DEFINE_HOST_FUNCTION(JSMock__jsSetSystemTime, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(JSMock__jsSetSystemTime, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     JSValue argument0 = callframe->argument(0);
 
@@ -1463,19 +1463,19 @@ BUN_DEFINE_HOST_FUNCTION(JSMock__jsSetSystemTime, (JSC::JSGlobalObject * globalO
     return JSValue::encode(callframe->thisValue());
 }
 
-BUN_DEFINE_HOST_FUNCTION(JSMock__jsRestoreAllMocks, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(JSMock__jsRestoreAllMocks, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     JSMock__resetSpies(uncheckedDowncast<Zig::GlobalObject>(globalObject));
     return JSValue::encode(jsUndefined());
 }
 
-BUN_DEFINE_HOST_FUNCTION(JSMock__jsClearAllMocks, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(JSMock__jsClearAllMocks, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callframe))
 {
     JSMock__clearAllMocks(uncheckedDowncast<Zig::GlobalObject>(globalObject));
     return JSValue::encode(jsUndefined());
 }
 
-BUN_DEFINE_HOST_FUNCTION(JSMock__jsSpyOn, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(JSMock__jsSpyOn, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callframe))
 {
     auto& vm = JSC::getVM(lexicalGlobalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -1601,7 +1601,7 @@ BUN_DEFINE_HOST_FUNCTION(JSMock__jsSpyOn, (JSC::JSGlobalObject * lexicalGlobalOb
     return {};
 }
 
-BUN_DEFINE_HOST_FUNCTION(JSMock__jsMockFn, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callframe))
+FUN_DEFINE_HOST_FUNCTION(JSMock__jsMockFn, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callframe))
 {
     auto& vm = JSC::getVM(lexicalGlobalObject);
     auto* globalObject = uncheckedDowncast<Zig::GlobalObject>(lexicalGlobalObject);

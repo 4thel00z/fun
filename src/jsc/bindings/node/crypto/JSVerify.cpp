@@ -13,7 +13,7 @@
 #include "NodeValidator.h"
 #include "JSBuffer.h"
 #include "CryptoUtil.h"
-#include "BunString.h"
+#include "FunString.h"
 #include <openssl/bn.h>
 #include <openssl/ecdsa.h>
 #include <openssl/rsa.h>
@@ -26,7 +26,7 @@
 #include "KeyObject.h"
 
 // Forward declarations for functions defined in other files
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -159,7 +159,7 @@ JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncInit, (JSGlobalObject * globalObject, 
     // Get the JSVerify object from thisValue and verify it's valid
     JSVerify* thisObject = dynamicDowncast<JSVerify>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        Bun::throwThisTypeError(*globalObject, scope, "Verify"_s, "init"_s);
+        Fun::throwThisTypeError(*globalObject, scope, "Verify"_s, "init"_s);
         return {};
     }
 
@@ -183,7 +183,7 @@ JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncInit, (JSGlobalObject * globalObject, 
     // Get the EVP_MD* for the digest using ncrypto helper
     auto* digest = ncrypto::getDigestByName(digestName);
     if (!digest) {
-        return Bun::ERR::CRYPTO_INVALID_DIGEST(scope, globalObject, digestName);
+        return Fun::ERR::CRYPTO_INVALID_DIGEST(scope, globalObject, digestName);
     }
 
     // Create a new EVPMDCtxPointer using ncrypto's wrapper
@@ -213,7 +213,7 @@ JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncUpdate, (JSGlobalObject * globalObject
     // Get the JSVerify object from thisValue and verify it's valid
     JSVerify* thisObject = dynamicDowncast<JSVerify>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        Bun::throwThisTypeError(*globalObject, scope, "Verify"_s, "update"_s);
+        Fun::throwThisTypeError(*globalObject, scope, "Verify"_s, "update"_s);
         return {};
     }
 
@@ -238,7 +238,7 @@ JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncUpdate, (JSGlobalObject * globalObject
         RETURN_IF_EXCEPTION(scope, {});
 
         if (encoding == BufferEncodingType::hex && dataString->length() % 2 != 0) {
-            return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, dataString->length()));
+            return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, dataString->length()));
         }
 
         auto dataView = dataString->view(globalObject);
@@ -274,7 +274,7 @@ JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncUpdate, (JSGlobalObject * globalObject
     }
 
     if (!data.isCell() || !JSC::isTypedArrayTypeIncludingDataView(data.asCell()->type())) {
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
     }
 
     // Handle ArrayBufferView input
@@ -303,7 +303,7 @@ JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncUpdate, (JSGlobalObject * globalObject
         return JSValue::encode(wrappedVerify);
     }
 
-    return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
+    return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
 }
 
 JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncVerify, (JSGlobalObject * globalObject, CallFrame* callFrame))
@@ -316,7 +316,7 @@ JSC_DEFINE_HOST_FUNCTION(jsVerifyProtoFuncVerify, (JSGlobalObject * globalObject
     // Get the JSVerify object from thisValue and verify it's valid
     JSVerify* thisObject = dynamicDowncast<JSVerify>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        Bun::throwThisTypeError(*globalObject, scope, "Verify"_s, "verify"_s);
+        Fun::throwThisTypeError(*globalObject, scope, "Verify"_s, "verify"_s);
         return {};
     }
 
@@ -503,4 +503,4 @@ std::optional<ncrypto::EVPKeyPointer> keyFromPublicString(JSGlobalObject* lexica
     return std::nullopt;
 }
 
-} // namespace Bun
+} // namespace Fun

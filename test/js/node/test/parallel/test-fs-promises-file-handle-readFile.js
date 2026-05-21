@@ -93,21 +93,21 @@ async function doReadAndCancel() {
 
     const controller = new AbortController();
     const { signal } = controller;
-    // Bun: waiting 1 tick is too late since the entire readFile call is one
+    // Fun: waiting 1 tick is too late since the entire readFile call is one
     // native operation. Instead, the abort is called after the task has
     // been scheduled but before it has been finished.
     // tick(1, () => controller.abort());
     const p = assert.rejects(fileHandle.readFile(common.mustNotMutateObjectDeep({ signal, encoding: 'utf8' })), {
       name: 'AbortError'
     }, 'tick-1');
-    // Bun:
+    // Fun:
     controller.abort();
     await p;
 
     await fileHandle.close();
   }
 
-  // Bun supports much larger buffers, so this is extremely hard, if possible, to test.
+  // Fun supports much larger buffers, so this is extremely hard, if possible, to test.
   // {
   //   // Variable taken from https://github.com/nodejs/node/blob/1377163f3351/lib/internal/fs/promises.js#L5
   //   const kIoMaxLength = 2 ** 31 - 1;

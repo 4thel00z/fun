@@ -44,12 +44,12 @@ pub const Job = struct {
     any_task: jsc.AnyTask = undefined,
     poll: Async.KeepAlive = .{},
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn runTask(task: *jsc.WorkPoolTask) void {
         const job: *PBKDF2.Job = @fieldParentPtr("task", task);
         defer job.vm.enqueueTaskConcurrent(jsc.ConcurrentTask.create(job.any_task.task()));
-        job.output = bun.default_allocator.alloc(u8, @as(usize, @intCast(job.pbkdf2.length))) catch {
+        job.output = fun.default_allocator.alloc(u8, @as(usize, @intCast(job.pbkdf2.length))) catch {
             job.err = BoringSSL.EVP_R_MEMORY_LIMIT_EXCEEDED;
             return;
         };
@@ -57,12 +57,12 @@ pub const Job = struct {
             job.err = BoringSSL.ERR_get_error();
             BoringSSL.ERR_clear_error();
 
-            bun.default_allocator.free(job.output);
+            fun.default_allocator.free(job.output);
             job.output = &[_]u8{};
         }
     }
 
-    pub fn runFromJS(this: *Job) bun.JSTerminated!void {
+    pub fn runFromJS(this: *Job) fun.JSTerminated!void {
         defer this.deinit();
         if (this.vm.isShuttingDown()) {
             return;
@@ -86,8 +86,8 @@ pub const Job = struct {
         this.poll.unref(this.vm);
         this.pbkdf2.deinitAndUnprotect();
         this.promise.deinit();
-        bun.default_allocator.free(this.output);
-        bun.destroy(this);
+        fun.default_allocator.free(this.output);
+        fun.destroy(this);
     }
 
     pub fn create(vm: *jsc.VirtualMachine, globalThis: *jsc.JSGlobalObject, data: *const PBKDF2) *Job {
@@ -116,7 +116,7 @@ pub fn deinit(this: *PBKDF2) void {
     this.salt.deinit();
 }
 
-pub fn fromJS(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, is_async: bool) bun.JSError!PBKDF2 {
+pub fn fromJS(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, is_async: bool) fun.JSError!PBKDF2 {
     const arg0, const arg1, const arg2, const arg3, const arg4, const arg5 = callFrame.argumentsAsArray(6);
 
     if (!arg3.isNumber()) {
@@ -169,7 +169,7 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, is_asy
         }
 
         if (!globalThis.hasException()) {
-            const slice = try arg4.toSlice(globalThis, bun.default_allocator);
+            const slice = try arg4.toSlice(globalThis, fun.default_allocator);
             defer slice.deinit();
             const name = slice.slice();
             return globalThis.ERR(.CRYPTO_INVALID_DIGEST, "Invalid digest: {s}", .{name}).throw();
@@ -192,7 +192,7 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, is_asy
     }
 
     const allow_string_object = true;
-    out.salt = try jsc.Node.StringOrBuffer.fromJSMaybeAsync(globalThis, bun.default_allocator, arg1, is_async, allow_string_object) orelse {
+    out.salt = try jsc.Node.StringOrBuffer.fromJSMaybeAsync(globalThis, fun.default_allocator, arg1, is_async, allow_string_object) orelse {
         return globalThis.throwInvalidArgumentTypeValue("salt", "string or buffer", arg1);
     };
 
@@ -200,7 +200,7 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, is_asy
         return globalThis.throwInvalidArguments("salt is too long", .{});
     }
 
-    out.password = try jsc.Node.StringOrBuffer.fromJSMaybeAsync(globalThis, bun.default_allocator, arg0, is_async, allow_string_object) orelse {
+    out.password = try jsc.Node.StringOrBuffer.fromJSMaybeAsync(globalThis, fun.default_allocator, arg0, is_async, allow_string_object) orelse {
         return globalThis.throwInvalidArgumentTypeValue("password", "string or buffer", arg0);
     };
 
@@ -244,19 +244,19 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const Async = fun.Async;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const BoringSSL = fun.BoringSSL.c;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VirtualMachine = jsc.VirtualMachine;
 const ZigString = jsc.ZigString;
-const createCryptoError = jsc.API.Bun.Crypto.createCryptoError;
+const createCryptoError = jsc.API.Fun.Crypto.createCryptoError;
 
-const EVP = jsc.API.Bun.Crypto.EVP;
+const EVP = jsc.API.Fun.Crypto.EVP;
 const Algorithm = EVP.Algorithm;

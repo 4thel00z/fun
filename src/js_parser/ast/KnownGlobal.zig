@@ -21,7 +21,7 @@ pub const KnownGlobal = enum {
     Function,
     RegExp,
 
-    pub const map = bun.ComptimeEnumMap(KnownGlobal);
+    pub const map = fun.ComptimeEnumMap(KnownGlobal);
 
     inline fn callFromNew(e: *E.New, loc: logger.Loc) js_ast.Expr {
         const call = E.Call{
@@ -131,7 +131,7 @@ pub const KnownGlobal = enum {
                                     const arg_loc = arg.loc;
                                     var list = e.args.moveToListManaged(allocator);
                                     list.clearRetainingCapacity();
-                                    bun.handleOom(list.appendNTimes(js_ast.Expr{ .data = js_parser.Prefill.Data.EMissing, .loc = arg_loc }, @intFromFloat(val)));
+                                    fun.handleOom(list.appendNTimes(js_ast.Expr{ .data = js_parser.Prefill.Data.EMissing, .loc = arg_loc }, @intFromFloat(val)));
                                     return js_ast.Expr.init(E.Array, .{ .items = .moveFromList(&list) }, loc);
                                 }
                                 return callFromNew(e, loc);
@@ -352,10 +352,10 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const js_parser = bun.js_parser;
-const logger = bun.logger;
+const fun = @import("fun");
+const js_parser = fun.js_parser;
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Symbol = js_ast.Symbol;

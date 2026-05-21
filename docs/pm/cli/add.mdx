@@ -1,6 +1,6 @@
 ---
-title: "bun add"
-description: "Add packages to your project with Bun's fast package manager"
+title: "fun add"
+description: "Add packages to your project with Fun's fast package manager"
 ---
 
 import Add from "/snippets/cli/add.mdx";
@@ -8,15 +8,15 @@ import Add from "/snippets/cli/add.mdx";
 To add a particular package:
 
 ```bash terminal icon="terminal"
-bun add preact
+fun add preact
 ```
 
 To specify a version, version range, or tag:
 
 ```bash terminal icon="terminal"
-bun add zod@3.20.0
-bun add zod@^3.0.0
-bun add zod@latest
+fun add zod@3.20.0
+fun add zod@^3.0.0
+fun add zod@latest
 ```
 
 ## `--dev`
@@ -26,8 +26,8 @@ bun add zod@latest
 To add a package as a dev dependency (`"devDependencies"`):
 
 ```bash terminal icon="terminal"
-bun add --dev @types/react
-bun add -d @types/react
+fun add --dev @types/react
+fun add -d @types/react
 ```
 
 ## `--optional`
@@ -35,7 +35,7 @@ bun add -d @types/react
 To add a package as an optional dependency (`"optionalDependencies"`):
 
 ```bash terminal icon="terminal"
-bun add --optional lodash
+fun add --optional lodash
 ```
 
 ## `--peer`
@@ -43,7 +43,7 @@ bun add --optional lodash
 To add a package as a peer dependency (`"peerDependencies"`):
 
 ```bash terminal icon="terminal"
-bun add --peer @types/bun
+fun add --peer @types/fun
 ```
 
 ## `--exact`
@@ -53,8 +53,8 @@ bun add --peer @types/bun
 To add a package and pin to the resolved version, use `--exact`. This will resolve the version of the package and add it to your `package.json` with an exact version number instead of a version range.
 
 ```bash terminal icon="terminal"
-bun add react --exact
-bun add react -E
+fun add react --exact
+fun add react -E
 ```
 
 This will add the following to your `package.json`:
@@ -74,26 +74,26 @@ This will add the following to your `package.json`:
 To view a complete list of options for this command:
 
 ```bash terminal icon="terminal"
-bun add --help
+fun add --help
 ```
 
 ## `--global`
 
 <Note>
-  **Note** — This would not modify package.json of your current project folder. **Alias** - `bun add --global`, `bun add
-  -g`, `bun install --global` and `bun install -g`
+  **Note** — This would not modify package.json of your current project folder. **Alias** - `fun add --global`, `fun add
+  -g`, `fun install --global` and `fun install -g`
 </Note>
 
 To install a package globally, use the `-g`/`--global` flag. This will not modify the `package.json` of your current project. Typically this is used for installing command-line tools.
 
 ```bash terminal icon="terminal"
-bun add --global cowsay # or `bun add -g cowsay`
-cowsay "Bun!"
+fun add --global cowsay # or `fun add -g cowsay`
+cowsay "Fun!"
 ```
 
 ```txt
  ______
-< Bun! >
+< Fun! >
  ------
         \   ^__^
          \  (oo)\_______
@@ -104,22 +104,22 @@ cowsay "Bun!"
 
 <Accordion title="Configuring global installation behavior">
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install]
-# where `bun add --global` installs packages
-globalDir = "~/.bun/install/global"
+# where `fun add --global` installs packages
+globalDir = "~/.fun/install/global"
 
 # where globally-installed package bins are linked
-globalBinDir = "~/.bun/bin"
+globalBinDir = "~/.fun/bin"
 ```
 
 </Accordion>
 
 ## Trusted dependencies
 
-Unlike other npm clients, Bun does not execute arbitrary lifecycle scripts for installed dependencies, such as `postinstall`. These scripts represent a potential security risk, as they can execute arbitrary code on your machine.
+Unlike other npm clients, Fun does not execute arbitrary lifecycle scripts for installed dependencies, such as `postinstall`. These scripts represent a potential security risk, as they can execute arbitrary code on your machine.
 
-To tell Bun to allow lifecycle scripts for a particular package, add the package to `trustedDependencies` in your package.json.
+To tell Fun to allow lifecycle scripts for a particular package, add the package to `trustedDependencies` in your package.json.
 
 ```json package.json icon="file-json"
 {
@@ -129,21 +129,21 @@ To tell Bun to allow lifecycle scripts for a particular package, add the package
 }
 ```
 
-Bun reads this field and will run lifecycle scripts for `my-trusted-package`.
+Fun reads this field and will run lifecycle scripts for `my-trusted-package`.
 
 ## Git dependencies
 
 To add a dependency from a public or private git repository:
 
 ```bash terminal icon="terminal"
-bun add git@github.com:moment/moment.git
+fun add git@github.com:moment/moment.git
 ```
 
 <Note>
   To install private repositories, your system needs the appropriate SSH credentials to access the repository.
 </Note>
 
-Bun supports a variety of protocols, including [`github`](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#github-urls), [`git`](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#git-urls-as-dependencies), `git+ssh`, `git+https`, and many more.
+Fun supports a variety of protocols, including [`github`](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#github-urls), [`git`](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#git-urls-as-dependencies), `git+ssh`, `git+https`, and many more.
 
 ```json package.json icon="file-json"
 {
@@ -158,10 +158,10 @@ Bun supports a variety of protocols, including [`github`](https://docs.npmjs.com
 
 ## Tarball dependencies
 
-A package name can correspond to a publicly hosted `.tgz` file. During installation, Bun will download and install the package from the specified tarball URL, rather than from the package registry.
+A package name can correspond to a publicly hosted `.tgz` file. During installation, Fun will download and install the package from the specified tarball URL, rather than from the package registry.
 
 ```sh terminal icon="terminal"
-bun add zod@https://registry.npmjs.org/zod/-/zod-3.21.4.tgz
+fun add zod@https://registry.npmjs.org/zod/-/zod-3.21.4.tgz
 ```
 
 This will add the following line to your `package.json`:

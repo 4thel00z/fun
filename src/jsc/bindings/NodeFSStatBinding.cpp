@@ -5,7 +5,7 @@
 #include "JavaScriptCore/LazyClassStructure.h"
 #include "JavaScriptCore/LazyClassStructureInlines.h"
 #include "JavaScriptCore/VMTrapsInlines.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "JavaScriptCore/ArgList.h"
 #include "JavaScriptCore/JSType.h"
 #include "JavaScriptCore/ObjectInitializationScope.h"
@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #endif
 
-namespace Bun {
+namespace Fun {
 
 class JSStatsPrototype;
 class JSBigIntStatsPrototype;
@@ -36,7 +36,7 @@ using namespace WebCore;
 #if OS(WINDOWS)
 #ifndef mode_t
 #pragma push_macro("mode_t")
-#define BUN_PUSHED_MODE_T
+#define FUN_PUSHED_MODE_T
 #define mode_t int32_t
 #endif
 
@@ -598,7 +598,7 @@ JSC::Structure* createJSBigIntStatsObjectStructure(JSC::VM& vm, JSC::JSGlobalObj
     return structure;
 }
 
-extern "C" JSC::EncodedJSValue Bun__createJSStatsObject(Zig::GlobalObject* globalObject, uint64_t dev,
+extern "C" JSC::EncodedJSValue Fun__createJSStatsObject(Zig::GlobalObject* globalObject, uint64_t dev,
     uint64_t ino,
     uint64_t mode,
     uint64_t nlink,
@@ -642,7 +642,7 @@ extern "C" JSC::EncodedJSValue Bun__createJSStatsObject(Zig::GlobalObject* globa
     return JSC::JSValue::encode(object);
 }
 
-extern "C" JSC::EncodedJSValue Bun__createJSBigIntStatsObject(Zig::GlobalObject* globalObject,
+extern "C" JSC::EncodedJSValue Fun__createJSBigIntStatsObject(Zig::GlobalObject* globalObject,
     uint64_t dev,
     uint64_t ino,
     uint64_t mode,
@@ -915,12 +915,12 @@ JSC_DEFINE_HOST_FUNCTION(callBigIntStats, (JSC::JSGlobalObject * lexicalGlobalOb
     return JSValue::encode(callJSStatsFunction<true>(lexicalGlobalObject, callFrame));
 }
 
-extern "C" JSC::EncodedJSValue Bun__JSBigIntStatsObjectConstructor(Zig::GlobalObject* globalobject)
+extern "C" JSC::EncodedJSValue Fun__JSBigIntStatsObjectConstructor(Zig::GlobalObject* globalobject)
 {
     return JSValue::encode(globalobject->m_JSStatsBigIntClassStructure.constructor(globalobject));
 }
 
-extern "C" JSC::EncodedJSValue Bun__JSStatsObjectConstructor(Zig::GlobalObject* globalobject)
+extern "C" JSC::EncodedJSValue Fun__JSStatsObjectConstructor(Zig::GlobalObject* globalobject)
 {
     return JSValue::encode(globalobject->m_JSStatsClassStructure.constructor(globalobject));
 }
@@ -945,9 +945,9 @@ void initJSBigIntStatsClassStructure(JSC::LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun
 
-#ifdef BUN_PUSHED_MODE_T
+#ifdef FUN_PUSHED_MODE_T
 #pragma pop_macro("mode_t")
-#undef BUN_PUSHED_MODE_T
+#undef FUN_PUSHED_MODE_T
 #endif

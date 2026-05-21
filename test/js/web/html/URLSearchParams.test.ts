@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 describe("URLSearchParams", () => {
   it("does not crash when calling .toJSON() on a URLSearchParams object with a large number of properties", () => {
@@ -127,7 +127,7 @@ describe("URLSearchParams", () => {
         foo: ["bar", "boop"],
         bar: "baz",
       });
-      expect(Bun.inspect(params)).toBe(
+      expect(Fun.inspect(params)).toBe(
         "URLSearchParams {" + "\n" + '  "foo": [ "bar", "boop" ],' + "\n" + '  "bar": "baz",' + "\n" + "}",
       );
       params.delete("foo");

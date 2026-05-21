@@ -16,7 +16,7 @@
 //   clang -dynamiclib -o asan-dyld-shim.dylib asan-dyld-shim.c
 //
 // Use:
-//   DYLD_INSERT_LIBRARIES=.../asan-dyld-shim.dylib ./bun-debug
+//   DYLD_INSERT_LIBRARIES=.../asan-dyld-shim.dylib ./fun-debug
 //
 // Remove once compiler-rt with the fix ships — LLVM 22.1.3+ via
 // https://github.com/llvm/llvm-project/pull/188913 backport, or an Xcode

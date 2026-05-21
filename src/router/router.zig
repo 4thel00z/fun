@@ -6,7 +6,7 @@ const Router = @This();
 // It does not handle the framework parts of rendering pages.
 // All it does is resolve URL paths to the appropriate entry point and parse URL params/query.
 
-const index_route_hash = @as(u32, @truncate(bun.hash("$$/index-route$$-!(@*@#&*%-901823098123")));
+const index_route_hash = @as(u32, @truncate(fun.hash("$$/index-route$$-!(@*@#&*%-901823098123")));
 
 pub const Param = struct {
     name: string,
@@ -31,7 +31,7 @@ pub fn init(
         .routes = Routes{
             .config = config,
             .allocator = allocator,
-            .static = bun.StringHashMap(*Route).init(allocator),
+            .static = fun.StringHashMap(*Route).init(allocator),
         },
         .fs = fs,
         .allocator = allocator,
@@ -93,7 +93,7 @@ pub const Routes = struct {
     /// `"dashboard"`
     /// `"profiles"`
     /// this is a fast path?
-    static: bun.StringHashMap(*Route),
+    static: fun.StringHashMap(*Route),
 
     /// Corresponds to "index.js" on the filesystem
     index: ?*Route = null,
@@ -219,7 +219,7 @@ const RouteLoader = struct {
     dedupe_dynamic: std.AutoArrayHashMap(u32, string),
     log: *Logger.Log,
     index: ?*Route = null,
-    static_list: bun.StringHashMap(*Route),
+    static_list: fun.StringHashMap(*Route),
     all_routes: std.ArrayListUnmanaged(*Route),
 
     pub fn appendRoute(this: *RouteLoader, route: Route) void {
@@ -325,7 +325,7 @@ const RouteLoader = struct {
             .log = log,
             .fs = resolver.fs,
             .config = config,
-            .static_list = bun.StringHashMap(*Route).init(allocator),
+            .static_list = fun.StringHashMap(*Route).init(allocator),
             .dedupe_dynamic = std.AutoArrayHashMap(u32, string).init(allocator),
             .all_routes = .{},
             .route_dirname_len = route_dirname_len,
@@ -444,7 +444,7 @@ const RouteLoader = struct {
                                 // length is extended by one
                                 // entry.dir is a string with a trailing slash
                                 if (comptime Environment.isDebug) {
-                                    bun.assert(bun.path.isSepAny(entry.dir[base_dir.len - 1]));
+                                    fun.assert(fun.path.isSepAny(entry.dir[base_dir.len - 1]));
                                 }
 
                                 const public_dir = entry.dir.ptr[base_dir.len - 1 .. entry.dir.len];
@@ -506,7 +506,7 @@ pub const TinyPtr = packed struct(u32) {
         const right = @intFromPtr(in.ptr) + in.len;
         const end = @intFromPtr(parent.ptr) + parent.len;
         if (comptime Environment.isDebug) {
-            bun.assert(end < right);
+            fun.assert(end < right);
         }
 
         const length = @max(end, right) - right;
@@ -558,9 +558,9 @@ pub const Route = struct {
     pub const Ptr = TinyPtr;
 
     pub const index_route_name: string = "/";
-    const route_bufs = bun.ThreadlocalBuffers(struct {
-        route_file_buf: bun.PathBuffer = undefined,
-        normalized_abs_path_buf: bun.windows.PathBuffer = undefined,
+    const route_bufs = fun.ThreadlocalBuffers(struct {
+        route_file_buf: fun.PathBuffer = undefined,
+        normalized_abs_path_buf: fun.windows.PathBuffer = undefined,
     });
 
     pub const Sorter = struct {
@@ -602,7 +602,7 @@ pub const Route = struct {
                 .eq => switch (a.kind) {
                     // static + dynamic are sorted alphabetically
                     .static, .dynamic => @call(
-                        bun.callmod_inline,
+                        fun.callmod_inline,
                         sortByNameString,
                         .{
                             ctx,
@@ -613,7 +613,7 @@ pub const Route = struct {
                     // catch all and optional catch all must appear below dynamic
                     .catch_all, .optional_catch_all => switch (std.math.order(a.param_count, b.param_count)) {
                         .eq => @call(
-                            bun.callmod_inline,
+                            fun.callmod_inline,
                             sortByNameString,
                             .{
                                 ctx,
@@ -662,17 +662,17 @@ pub const Route = struct {
             if (public_dir.len > 0) {
                 route_file_buf[0] = '/';
                 buf = buf[1..];
-                bun.copy(u8, buf, public_dir);
+                fun.copy(u8, buf, public_dir);
             }
             buf[public_dir.len] = '/';
             buf = buf[public_dir.len + 1 ..];
-            bun.copy(u8, buf, base);
+            fun.copy(u8, buf, base);
             buf = buf[base.len..];
-            bun.copy(u8, buf, extname);
+            fun.copy(u8, buf, extname);
             buf = buf[extname.len..];
 
             if (comptime Environment.isWindows) {
-                bun.path.platformToPosixInPlace(u8, route_file_buf[0 .. @intFromPtr(buf.ptr) - @intFromPtr(route_file_buf)]);
+                fun.path.platformToPosixInPlace(u8, route_file_buf[0 .. @intFromPtr(buf.ptr) - @intFromPtr(route_file_buf)]);
             }
 
             break :brk route_file_buf[0 .. @intFromPtr(buf.ptr) - @intFromPtr(route_file_buf)];
@@ -722,8 +722,8 @@ pub const Route = struct {
                 match_name = name[1..];
             }
 
-            if (Environment.allow_assert) bun.assert(match_name[0] != '/');
-            if (Environment.allow_assert) bun.assert(name[0] == '/');
+            if (Environment.allow_assert) fun.assert(match_name[0] != '/');
+            if (Environment.allow_assert) fun.assert(name[0] == '/');
         } else {
             name = Route.index_route_name;
             match_name = Route.index_route_name;
@@ -751,7 +751,7 @@ pub const Route = struct {
                 FileSystem.setMaxFd(file.handle);
             }
 
-            const _abs = bun.getFdPath(.fromStdFile(file), route_file_buf) catch |err| {
+            const _abs = fun.getFdPath(.fromStdFile(file), route_file_buf) catch |err| {
                 log.addErrorFmt(null, Logger.Loc.Empty, allocator, "{s} resolving route: {s}", .{ @errorName(err), abs_path_str }) catch unreachable;
                 return null;
             };
@@ -761,16 +761,16 @@ pub const Route = struct {
         }
 
         const abs_path = if (comptime Environment.isWindows)
-            bun.handleOom(allocator.dupe(u8, bun.path.platformToPosixBuf(u8, abs_path_str, &route_bufs.get().normalized_abs_path_buf)))
+            fun.handleOom(allocator.dupe(u8, fun.path.platformToPosixBuf(u8, abs_path_str, &route_bufs.get().normalized_abs_path_buf)))
         else
             PathString.init(abs_path_str);
 
         if (comptime Environment.allow_assert and Environment.isWindows) {
-            bun.assert(!strings.containsChar(name, '\\'));
-            bun.assert(!strings.containsChar(public_path, '\\'));
-            bun.assert(!strings.containsChar(match_name, '\\'));
-            bun.assert(!strings.containsChar(abs_path, '\\'));
-            bun.assert(!strings.containsChar(entry.base(), '\\'));
+            fun.assert(!strings.containsChar(name, '\\'));
+            fun.assert(!strings.containsChar(public_path, '\\'));
+            fun.assert(!strings.containsChar(match_name, '\\'));
+            fun.assert(!strings.containsChar(abs_path, '\\'));
+            fun.assert(!strings.containsChar(entry.base(), '\\'));
         }
 
         return Route{
@@ -781,7 +781,7 @@ pub const Route = struct {
             .full_hash = if (is_index)
                 index_route_hash
             else
-                @as(u32, @truncate(bun.hash(name))),
+                @as(u32, @truncate(fun.hash(name))),
             .param_count = validation_result.param_count,
             .kind = validation_result.kind,
             .abs_path = if (comptime Environment.isWindows) .{
@@ -820,7 +820,7 @@ pub fn match(app: *Router, comptime Server: type, server: Server, comptime Reque
             return;
         }
 
-        bun.assert(route.path.len > 0);
+        fun.assert(route.path.len > 0);
 
         if (comptime @hasField(std.meta.Child(Server), "watcher")) {
             if (server.watcher.watchloop_handle == null) {
@@ -916,11 +916,11 @@ pub const MockServer = struct {
 
 fn makeTest(cwd_path: string, data: anytype) !void {
     Output.initTest();
-    bun.assert(cwd_path.len > 1 and !strings.eql(cwd_path, "/") and !strings.endsWith(cwd_path, "bun"));
-    const bun_tests_dir = try std.fs.cwd().makeOpenPath("bun-test-scratch", .{});
-    bun_tests_dir.deleteTree(cwd_path) catch {};
+    fun.assert(cwd_path.len > 1 and !strings.eql(cwd_path, "/") and !strings.endsWith(cwd_path, "fun"));
+    const fun_tests_dir = try std.fs.cwd().makeOpenPath("fun-test-scratch", .{});
+    fun_tests_dir.deleteTree(cwd_path) catch {};
 
-    const cwd = try bun_tests_dir.makeOpenPath(cwd_path, .{});
+    const cwd = try fun_tests_dir.makeOpenPath(cwd_path, .{});
     try cwd.setAsCwd();
 
     const Data = @TypeOf(data);
@@ -943,7 +943,7 @@ pub const Test = struct {
     pub fn makeRoutes(comptime testName: string, data: anytype) !Routes {
         Output.initTest();
         try makeTest(testName, data);
-        const JSAst = bun.ast;
+        const JSAst = fun.ast;
         JSAst.Expr.Data.Store.create(default_allocator);
         JSAst.Stmt.Data.Store.create(default_allocator);
         const fs = try FileSystem.init(null);
@@ -973,7 +973,7 @@ pub const Test = struct {
             .log = &logger,
             .routes = router.config,
             .entry_points = &.{},
-            .out_extensions = bun.StringHashMap(string).init(default_allocator),
+            .out_extensions = fun.StringHashMap(string).init(default_allocator),
             .transform_options = std.mem.zeroes(api.TransformOptions),
             .external = Options.ExternalModules.init(
                 default_allocator,
@@ -998,7 +998,7 @@ pub const Test = struct {
 
     pub fn make(comptime testName: string, data: anytype) !Router {
         try makeTest(testName, data);
-        const JSAst = bun.ast;
+        const JSAst = fun.ast;
         JSAst.Expr.Data.Store.create(default_allocator);
         JSAst.Stmt.Data.Store.create(default_allocator);
         const fs = try FileSystem.initWithForce(null, true);
@@ -1028,7 +1028,7 @@ pub const Test = struct {
             .log = &logger,
             .routes = router.config,
             .entry_points = &.{},
-            .out_extensions = bun.StringHashMap(string).init(default_allocator),
+            .out_extensions = fun.StringHashMap(string).init(default_allocator),
             .transform_options = std.mem.zeroes(api.TransformOptions),
             .external = Options.ExternalModules.init(
                 default_allocator,
@@ -1184,7 +1184,7 @@ const Pattern = struct {
 
         var count: u16 = 0;
         var offset: RoutePathInt = 0;
-        bun.assert(input.len > 0);
+        fun.assert(input.len > 0);
         var kind: u4 = @intFromEnum(Tag.static);
         const end = @as(u32, @truncate(input.len - 1));
         while (offset < end) {
@@ -1899,18 +1899,18 @@ const PathnameScanner = @import("../url/url.zig").PathnameScanner;
 const Fs = @import("../resolver/fs.zig");
 const FileSystem = Fs.FileSystem;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const HashedString = bun.HashedString;
-const Logger = bun.logger;
-const Output = bun.Output;
-const PathString = bun.PathString;
-const default_allocator = bun.default_allocator;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const HashedString = fun.HashedString;
+const Logger = fun.logger;
+const Output = fun.Output;
+const PathString = fun.PathString;
+const default_allocator = fun.default_allocator;
+const api = fun.schema.api;
 
-const strings = bun.strings;
-const CodepointIterator = bun.strings.CodepointIterator;
+const strings = fun.strings;
+const CodepointIterator = fun.strings.CodepointIterator;
 
 const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;

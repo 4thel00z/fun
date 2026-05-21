@@ -30,6 +30,6 @@ const scripts = [];
 scripts.forEach((script, i) => {
   const node = process.execPath;
   execFile(node, [ '-e', script ], common.mustCall((err, stdout, stderr) => {
-    assert(typeof Bun === 'undefined' ? stderr.includes('Error: xyz') : stderr.includes('error: xyz'), 'createScript crashes');
+    assert(typeof Fun === 'undefined' ? stderr.includes('Error: xyz') : stderr.includes('error: xyz'), 'createScript crashes');
   }));
 });

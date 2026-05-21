@@ -1,6 +1,6 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
-exports[`basic: bun.lock 1`] = `
+exports[`basic: fun.lock 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,

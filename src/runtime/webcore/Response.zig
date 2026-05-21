@@ -12,12 +12,12 @@ pub const fromJSDirect = js.fromJSDirect;
 
 #body: Body,
 #init: Init,
-#url: bun.String = bun.String.empty,
+#url: fun.String = fun.String.empty,
 #redirected: bool = false,
 /// We increment this count in fetch so if JS Response is discarted we can resolve the Body
 /// In the server we use a flag response_protected to protect/unprotect the response
 ref_count: u32 = 1,
-/// Bun.serve's RequestContext holds a weak reference so `onAbort` /
+/// Fun.serve's RequestContext holds a weak reference so `onAbort` /
 /// `handleResolveStream` / `handleRejectStream` can safely observe that the
 /// Response was GC'd (null) instead of dereferencing a freed pointer when
 /// backpressure lets GC run between `render()` and the async callback.
@@ -27,7 +27,7 @@ weak_ptr_data: WeakRef.Data = .empty,
 // We must report a consistent value for this
 #reported_estimated_size: usize = 0,
 
-pub const WeakRef = bun.ptr.WeakPtr(Response, "weak_ptr_data");
+pub const WeakRef = fun.ptr.WeakPtr(Response, "weak_ptr_data");
 
 pub const getText = ResponseMixin.getText;
 pub const getBody = ResponseMixin.getBody;
@@ -39,7 +39,7 @@ pub const getBlob = ResponseMixin.getBlob;
 pub const getBlobWithoutCallFrame = ResponseMixin.getBlobWithoutCallFrame;
 pub const getFormData = ResponseMixin.getFormData;
 
-pub fn init(response_init: Init, body: Body, url: bun.String, redirected: bool) Response {
+pub fn init(response_init: Init, body: Body, url: fun.String, redirected: bool) Response {
     return Response{
         .#init = response_init,
         .#body = body,
@@ -48,7 +48,7 @@ pub fn init(response_init: Init, body: Body, url: bun.String, redirected: bool) 
     };
 }
 
-pub inline fn setInit(this: *Response, method: Method, status_code: u16, status_text: bun.String) void {
+pub inline fn setInit(this: *Response, method: Method, status_code: u16, status_text: fun.String) void {
     this.#init.method = method;
     this.#init.status_code = status_code;
     this.#init.status_text.deref();
@@ -63,17 +63,17 @@ pub inline fn setInitHeaders(this: *Response, headers: ?*FetchHeaders) void {
 pub inline fn getInitStatusCode(this: *Response) u16 {
     return this.#init.status_code;
 }
-pub inline fn getInitStatusText(this: *Response) bun.String {
+pub inline fn getInitStatusText(this: *Response) fun.String {
     return this.#init.status_text;
 }
-pub inline fn setUrl(this: *Response, url: bun.String) void {
+pub inline fn setUrl(this: *Response, url: fun.String) void {
     this.#url.deref();
     this.#url = url;
 }
 pub inline fn getUTF8Url(this: *Response, allocator: std.mem.Allocator) ZigString.Slice {
     return this.#url.toUTF8(allocator);
 }
-pub inline fn getUrl(this: *Response) bun.String {
+pub inline fn getUrl(this: *Response) fun.String {
     return this.#url;
 }
 pub inline fn getInitHeaders(this: *Response) ?*FetchHeaders {
@@ -92,11 +92,11 @@ pub inline fn getBodyLen(this: *Response) usize {
 pub inline fn getMethod(this: *Response) Method {
     return this.#init.method;
 }
-pub fn getFormDataEncoding(this: *Response) bun.JSError!?*bun.FormData.AsyncFormData {
+pub fn getFormDataEncoding(this: *Response) fun.JSError!?*fun.FormData.AsyncFormData {
     var content_type_slice: ZigString.Slice = (try this.getContentType()) orelse return null;
     defer content_type_slice.deinit();
-    const encoding = bun.FormData.Encoding.get(content_type_slice.slice()) orelse return null;
-    return bun.handleOom(bun.FormData.AsyncFormData.init(bun.default_allocator, encoding));
+    const encoding = fun.FormData.Encoding.get(content_type_slice.slice()) orelse return null;
+    return fun.handleOom(fun.FormData.AsyncFormData.init(fun.default_allocator, encoding));
 }
 
 pub fn estimatedSize(this: *Response) callconv(.c) usize {
@@ -217,7 +217,7 @@ pub export fn jsFunctionGetCompleteRequestOrResponseBodyValueAsArrayBuffer(globa
     switch (body.*) {
         .Used, .Empty, .Null => return .js_undefined,
         .Blob => |*blob| {
-            if (blob.isBunFile()) {
+            if (blob.isFunFile()) {
                 return .js_undefined;
             }
             defer body.* = .{ .Used = {} };
@@ -245,7 +245,7 @@ pub fn redirectLocation(this: *const Response) ?[]const u8 {
     return this.header(.Location);
 }
 
-pub fn header(this: *const Response, name: bun.webcore.FetchHeaders.HTTPHeaderName) ?[]const u8 {
+pub fn header(this: *const Response, name: fun.webcore.FetchHeaders.HTTPHeaderName) ?[]const u8 {
     return if (try (this.#init.headers orelse return null).fastGet(name)) |str|
         str.slice()
     else
@@ -256,7 +256,7 @@ pub const Props = struct {};
 
 pub fn writeFormat(this: *Response, comptime Formatter: type, formatter: *Formatter, writer: anytype, comptime enable_ansi_colors: bool) !void {
     const Writer = @TypeOf(writer);
-    try writer.print("Response ({f}) {{\n", .{bun.fmt.size(this.#body.len(), .{})});
+    try writer.print("Response ({f}) {{\n", .{fun.fmt.size(this.#body.len(), .{})});
 
     {
         formatter.indent += 1;
@@ -315,7 +315,7 @@ pub fn isOK(this: *const Response) bool {
 pub fn getURL(
     this: *Response,
     globalThis: *jsc.JSGlobalObject,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     // https://developer.mozilla.org/en-US/docs/Web/API/Response/url
     return this.#url.toJS(globalThis);
 }
@@ -323,7 +323,7 @@ pub fn getURL(
 pub fn getResponseType(
     this: *Response,
     globalThis: *jsc.JSGlobalObject,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     if (this.#init.status_code < 200) {
         return globalThis.commonStrings().@"error"();
     }
@@ -334,7 +334,7 @@ pub fn getResponseType(
 pub fn getStatusText(
     this: *Response,
     globalThis: *jsc.JSGlobalObject,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     // https://developer.mozilla.org/en-US/docs/Web/API/Response/statusText
     return this.#init.status_text.toJS(globalThis);
 }
@@ -355,7 +355,7 @@ pub fn getOK(
     return JSValue.jsBoolean(this.isOK());
 }
 
-fn getOrCreateHeaders(this: *Response, globalThis: *jsc.JSGlobalObject) bun.JSError!*FetchHeaders {
+fn getOrCreateHeaders(this: *Response, globalThis: *jsc.JSGlobalObject) fun.JSError!*FetchHeaders {
     if (this.#init.headers == null) {
         this.#init.headers = FetchHeaders.createEmpty();
 
@@ -373,7 +373,7 @@ fn getOrCreateHeaders(this: *Response, globalThis: *jsc.JSGlobalObject) bun.JSEr
 pub fn getHeaders(
     this: *Response,
     globalThis: *jsc.JSGlobalObject,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     return (try this.getOrCreateHeaders(globalThis)).toJS(globalThis);
 }
 
@@ -381,7 +381,7 @@ pub fn doClone(
     this: *Response,
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const this_value = callframe.this();
     const cloned = try this.clone(globalThis);
 
@@ -417,7 +417,7 @@ pub fn makeMaybePooled(globalObject: *jsc.JSGlobalObject, ptr: *Response) JSValu
 pub fn cloneValue(
     this: *Response,
     globalThis: *JSGlobalObject,
-) bun.JSError!Response {
+) fun.JSError!Response {
     var body = brk: {
         if (this.#js_ref.tryGet()) |js_ref| {
             if (js.gc.stream.get(js_ref)) |stream| {
@@ -430,9 +430,9 @@ pub fn cloneValue(
 
         break :brk try this.#body.clone(globalThis);
     };
-    errdefer body.deinit(bun.default_allocator);
+    errdefer body.deinit(fun.default_allocator);
     var _init = try this.#init.clone(globalThis);
-    errdefer _init.deinit(bun.default_allocator);
+    errdefer _init.deinit(fun.default_allocator);
     return Response{
         .#body = body,
         .#init = _init,
@@ -441,8 +441,8 @@ pub fn cloneValue(
     };
 }
 
-pub fn clone(this: *Response, globalThis: *JSGlobalObject) bun.JSError!*Response {
-    return bun.new(Response, try this.cloneValue(globalThis));
+pub fn clone(this: *Response, globalThis: *JSGlobalObject) fun.JSError!*Response {
+    return fun.new(Response, try this.cloneValue(globalThis));
 }
 
 pub fn getStatus(
@@ -454,8 +454,8 @@ pub fn getStatus(
 }
 
 fn destroy(this: *Response) void {
-    this.#init.deinit(bun.default_allocator);
-    this.#body.deinit(bun.default_allocator);
+    this.#init.deinit(fun.default_allocator);
+    this.#body.deinit(fun.default_allocator);
     this.#url.deref();
     this.#js_ref.deinit();
 
@@ -463,7 +463,7 @@ fn destroy(this: *Response) void {
     // WeakRef derefs (RequestContext.response_weakref). WeakRef.get() returns
     // null from here on.
     if (this.weak_ptr_data.onFinalize()) {
-        bun.destroy(this);
+        fun.destroy(this);
     }
 }
 
@@ -473,7 +473,7 @@ pub fn ref(this: *Response) *Response {
 }
 
 pub fn unref(this: *Response) void {
-    bun.assert(this.ref_count > 0);
+    fun.assert(this.ref_count > 0);
     this.ref_count -= 1;
     if (this.ref_count == 0) {
         this.destroy();
@@ -489,10 +489,10 @@ pub fn finalize(
 
 pub fn getContentType(
     this: *Response,
-) bun.JSError!?ZigString.Slice {
+) fun.JSError!?ZigString.Slice {
     if (this.#init.headers) |headers| {
         if (headers.fastGet(.ContentType)) |value| {
-            return value.toSlice(bun.default_allocator);
+            return value.toSlice(fun.default_allocator);
         }
     }
 
@@ -507,10 +507,10 @@ pub fn getContentType(
 pub fn constructJSON(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const args_list = callframe.arguments_old(2);
     // https://github.com/remix-run/remix/blob/db2c31f64affb2095e4286b91306b96435967969/packages/remix-server-runtime/responses.ts#L4
-    var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), args_list.ptr[0..args_list.len]);
+    var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), args_list.ptr[0..args_list.len]);
 
     var response = Response{
         .#body = Body{
@@ -519,13 +519,13 @@ pub fn constructJSON(
         .#init = Response.Init{
             .status_code = 200,
         },
-        .#url = bun.String.empty,
+        .#url = fun.String.empty,
     };
     var did_succeed = false;
     defer {
         if (!did_succeed) {
-            response.#body.deinit(bun.default_allocator);
-            response.#init.deinit(bun.default_allocator);
+            response.#body.deinit(fun.default_allocator);
+            response.#init.deinit(fun.default_allocator);
         }
     }
     const json_value = args.nextEat() orelse jsc.JSValue.zero;
@@ -543,7 +543,7 @@ pub fn constructJSON(
             return globalThis.throwValue(err);
         }
 
-        var str = bun.String.empty;
+        var str = fun.String.empty;
         // Use jsonStringifyFast which passes undefined for the space parameter,
         // triggering JSC's FastStringifier optimization. This is significantly faster
         // than jsonStringify which passes 0 for space and uses the slower Stringifier.
@@ -554,11 +554,11 @@ pub fn constructJSON(
         }
 
         if (!str.isEmpty()) {
-            if (str.value.WTFStringImpl.toUTF8IfNeeded(bun.default_allocator)) |bytes| {
+            if (str.value.WTFStringImpl.toUTF8IfNeeded(fun.default_allocator)) |bytes| {
                 defer str.deref();
                 response.#body.value = .{
                     .InternalBlob = InternalBlob{
-                        .bytes = std.array_list.Managed(u8).fromOwnedSlice(bun.default_allocator, @constCast(bytes.slice())),
+                        .bytes = std.array_list.Managed(u8).fromOwnedSlice(fun.default_allocator, @constCast(bytes.slice())),
                         .was_string = true,
                     },
                 };
@@ -583,10 +583,10 @@ pub fn constructJSON(
     var headers_ref = try response.getOrCreateHeaders(globalThis);
     try headers_ref.putDefault(.ContentType, MimeType.json.value, globalThis);
     did_succeed = true;
-    return bun.new(Response, response).toJS(globalThis);
+    return fun.new(Response, response).toJS(globalThis);
 }
 
-fn validateRedirectStatusCode(globalThis: *jsc.JSGlobalObject, status_code: i32) bun.JSError!u16 {
+fn validateRedirectStatusCode(globalThis: *jsc.JSGlobalObject, status_code: i32) fun.JSError!u16 {
     switch (status_code) {
         301, 302, 303, 307, 308 => return @intCast(status_code),
         else => {
@@ -599,9 +599,9 @@ fn validateRedirectStatusCode(globalThis: *jsc.JSGlobalObject, status_code: i32)
 pub fn constructRedirect(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const response = try constructRedirectImpl(globalThis, callframe);
-    const ptr = bun.new(Response, response);
+    const ptr = fun.new(Response, response);
     const response_js = ptr.toJS(globalThis);
     return response_js;
 }
@@ -609,10 +609,10 @@ pub fn constructRedirect(
 pub fn constructRedirectImpl(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!Response {
+) fun.JSError!Response {
     var args_list = callframe.arguments_old(4);
     // https://github.com/remix-run/remix/blob/db2c31f64affb2095e4286b91306b96435967969/packages/remix-server-runtime/responses.ts#L4
-    var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), args_list.ptr[0..args_list.len]);
+    var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), args_list.ptr[0..args_list.len]);
 
     var url_string_slice = ZigString.Slice.empty;
     defer url_string_slice.deinit();
@@ -624,7 +624,7 @@ pub fn constructRedirectImpl(
             .#body = Body{
                 .value = .{ .Empty = {} },
             },
-            .#url = bun.String.empty,
+            .#url = fun.String.empty,
         };
 
         const url_string_value = args.nextEat() orelse jsc.JSValue.zero;
@@ -633,12 +633,12 @@ pub fn constructRedirectImpl(
         if (@intFromEnum(url_string_value) != 0) {
             url_string = try url_string_value.getZigString(globalThis);
         }
-        url_string_slice = url_string.toSlice(bun.default_allocator);
+        url_string_slice = url_string.toSlice(fun.default_allocator);
         var did_succeed = false;
         defer {
             if (!did_succeed) {
-                response.#body.deinit(bun.default_allocator);
-                response.#init.deinit(bun.default_allocator);
+                response.#body.deinit(fun.default_allocator);
+                response.#init.deinit(fun.default_allocator);
             }
         }
 
@@ -646,7 +646,7 @@ pub fn constructRedirectImpl(
             if (arg_init.isUndefinedOrNull()) {} else if (arg_init.isNumber()) {
                 response.#init.status_code = try validateRedirectStatusCode(globalThis, arg_init.toInt32());
             } else if (try Response.Init.init(globalThis, arg_init)) |_init| {
-                errdefer response.#init.deinit(bun.default_allocator);
+                errdefer response.#init.deinit(fun.default_allocator);
                 response.#init = _init;
 
                 if (_init.status_code != 200) {
@@ -671,8 +671,8 @@ pub fn constructRedirectImpl(
 pub fn constructError(
     globalThis: *jsc.JSGlobalObject,
     _: *jsc.CallFrame,
-) bun.JSError!JSValue {
-    const response = bun.new(
+) fun.JSError!JSValue {
+    const response = fun.new(
         Response,
         Response{
             .#init = Response.Init{
@@ -689,7 +689,7 @@ pub fn constructError(
     return js_value;
 }
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, js_this: jsc.JSValue) bun.JSError!*Response {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, js_this: jsc.JSValue) fun.JSError!*Response {
     var arguments = callframe.argumentsAsArray(2);
 
     if (!arguments[0].isUndefinedOrNull() and arguments[0].isObject()) {
@@ -705,7 +705,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, j
                     .#body = Body{
                         .value = .{ .Empty = {} },
                     },
-                    .#url = bun.String.empty,
+                    .#url = fun.String.empty,
                     .#js_ref = .initWeak(js_this),
                 };
 
@@ -722,7 +722,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, j
                 response.#redirected = true;
                 var headers_ref = response.#init.headers.?;
                 try headers_ref.put(.Location, result.url, globalThis);
-                return bun.new(Response, response);
+                return fun.new(Response, response);
             }
         }
     }
@@ -741,7 +741,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, j
         }
         return error.JSError;
     });
-    errdefer _init.deinit(bun.default_allocator);
+    errdefer _init.deinit(fun.default_allocator);
 
     if (globalThis.hasException()) {
         return error.JSError;
@@ -755,13 +755,13 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, j
         }
         break :brk try Body.extract(globalThis, arguments[0]);
     };
-    errdefer body.deinit(bun.default_allocator);
+    errdefer body.deinit(fun.default_allocator);
 
     if (globalThis.hasException()) {
         return error.JSError;
     }
 
-    var response = bun.new(Response, Response{
+    var response = fun.new(Response, Response{
         .#body = body,
         .#init = _init,
         .#js_ref = .initWeak(js_this),
@@ -783,10 +783,10 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, j
 pub const Init = struct {
     headers: ?*FetchHeaders = null,
     status_code: u16,
-    status_text: bun.String = bun.String.empty,
+    status_text: fun.String = fun.String.empty,
     method: Method = Method.GET,
 
-    pub fn clone(this: Init, ctx: *JSGlobalObject) bun.JSError!Init {
+    pub fn clone(this: Init, ctx: *JSGlobalObject) fun.JSError!Init {
         var that = this;
         const headers = this.headers;
         if (headers) |head| {
@@ -797,10 +797,10 @@ pub const Init = struct {
         return that;
     }
 
-    pub fn init(globalThis: *JSGlobalObject, response_init: jsc.JSValue) bun.JSError!?Init {
+    pub fn init(globalThis: *JSGlobalObject, response_init: jsc.JSValue) fun.JSError!?Init {
         var result = Init{ .status_code = 200 };
         errdefer {
-            result.deinit(bun.default_allocator);
+            result.deinit(fun.default_allocator);
         }
 
         if (!response_init.isCell())
@@ -865,7 +865,7 @@ pub const Init = struct {
         }
 
         if (try response_init.getTruthy(globalThis, "statusText")) |status_text| {
-            result.status_text = try bun.String.fromJS(status_text, globalThis);
+            result.status_text = try fun.String.fromJS(status_text, globalThis);
         }
 
         if (try response_init.getTruthy(globalThis, "method")) |method_value| {
@@ -885,7 +885,7 @@ pub const Init = struct {
         }
 
         this.status_text.deref();
-        this.status_text = bun.String.empty;
+        this.status_text = fun.String.empty;
     }
 };
 
@@ -898,7 +898,7 @@ pub fn @"200"(globalThis: *jsc.JSGlobalObject) Response {
 }
 
 inline fn emptyWithStatus(_: *jsc.JSGlobalObject, status: u16) Response {
-    return bun.new(Response, .{
+    return fun.new(Response, .{
         .#body = Body{
             .value = Body.Value{ .Null = {} },
         },
@@ -914,16 +914,16 @@ inline fn emptyWithStatus(_: *jsc.JSGlobalObject, status: u16) Response {
 const std = @import("std");
 const Method = @import("../../http_types/Method.zig").Method;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const s3 = bun.S3;
-const FetchHeaders = bun.webcore.FetchHeaders;
+const fun = @import("fun");
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const s3 = fun.S3;
+const FetchHeaders = fun.webcore.FetchHeaders;
 
-const http = bun.http;
-const MimeType = bun.http.MimeType;
+const http = fun.http;
+const MimeType = fun.http.MimeType;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

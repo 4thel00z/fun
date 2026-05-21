@@ -804,6 +804,6 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const ComptimeStringMap = bun.ComptimeStringMap;
-const CodePoint = bun.strings.CodePoint;
+const fun = @import("fun");
+const ComptimeStringMap = fun.ComptimeStringMap;
+const CodePoint = fun.strings.CodePoint;

@@ -21,7 +21,7 @@
 #include <JavaScriptCore/LazyPropertyInlines.h>
 #include "openssl/evp.h"
 #include "JavaScriptCore/ObjectPrototype.h"
-#include "BunString.h"
+#include "FunString.h"
 #include <JavaScriptCore/FunctionPrototype.h>
 #include "JSBuffer.h"
 #include "wtf/text/ExternalStringImpl.h"
@@ -30,7 +30,7 @@
 #include "CryptoUtil.h"
 #include "JSPublicKeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -102,7 +102,7 @@ void JSX509CertificateConstructor::finishCreation(VM& vm, JSGlobalObject* global
 static JSValue createX509Certificate(JSC::VM& vm, JSGlobalObject* globalObject, Structure* structure, JSValue arg)
 {
     auto scope = DECLARE_THROW_SCOPE(vm);
-    Bun::UTF8View view;
+    Fun::UTF8View view;
     std::span<const uint8_t> data;
 
     if (arg.isString()) {
@@ -111,19 +111,19 @@ static JSValue createX509Certificate(JSC::VM& vm, JSGlobalObject* globalObject, 
         data = std::span(reinterpret_cast<const uint8_t*>(view.span().data()), view.span().size());
     } else if (auto* typedArray = dynamicDowncast<JSArrayBufferView>(arg)) {
         if (typedArray->isDetached()) [[unlikely]] {
-            Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "TypedArray is detached"_s);
+            Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "TypedArray is detached"_s);
             return {};
         }
         data = typedArray->span();
     } else if (auto* buffer = dynamicDowncast<JSArrayBuffer>(arg)) {
         auto* impl = buffer->impl();
         if (!impl) [[unlikely]] {
-            Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "Buffer is detached"_s);
+            Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "Buffer is detached"_s);
             return {};
         }
         data = impl->span();
     } else {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "X509Certificate constructor argument must be a Buffer, TypedArray, or string"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "X509Certificate constructor argument must be a Buffer, TypedArray, or string"_s);
         return {};
     }
 
@@ -135,7 +135,7 @@ static JSValue createX509Certificate(JSC::VM& vm, JSGlobalObject* globalObject, 
 JSC_DEFINE_HOST_FUNCTION(x509CertificateConstructorCall, (JSGlobalObject * globalObject, CallFrame* callFrame))
 {
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
-    Bun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR, "X509Certificate constructor cannot be invoked without 'new'"_s);
+    Fun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR, "X509Certificate constructor cannot be invoked without 'new'"_s);
     return {};
 }
 
@@ -145,13 +145,13 @@ JSC_DEFINE_HOST_FUNCTION(x509CertificateConstructorConstruct, (JSGlobalObject * 
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     if (!callFrame->argumentCount()) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_MISSING_ARGS, "X509Certificate constructor requires at least one argument"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_MISSING_ARGS, "X509Certificate constructor requires at least one argument"_s);
         return {};
     }
 
     JSValue arg = callFrame->uncheckedArgument(0);
     if (!arg.isCell()) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "X509Certificate constructor argument must be a Buffer, TypedArray, or string"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "X509Certificate constructor argument must be a Buffer, TypedArray, or string"_s);
         return {};
     }
 
@@ -261,7 +261,7 @@ JSX509Certificate* JSX509Certificate::create(JSC::VM& vm, JSC::Structure* struct
     // Initialize the X509 certificate from the provided data
     auto result = ncrypto::X509Pointer::Parse(ncrypto::Buffer<const unsigned char> { reinterpret_cast<const unsigned char*>(der.data()), der.size() });
     if (!result) {
-        Bun::throwBoringSSLError(globalObject, scope, result.error.value_or(0));
+        Fun::throwBoringSSLError(globalObject, scope, result.error.value_or(0));
         return nullptr;
     }
 
@@ -577,7 +577,7 @@ JSUint8Array* JSX509Certificate::computeRaw(ncrypto::X509View view, JSGlobalObje
     Ref<JSC::ArrayBuffer> buffer = JSC::ArrayBuffer::createFromBytes(std::span(reinterpret_cast<uint8_t*>(bptr->data), bptr->length), createSharedTask<void(void*)>([bio_ptr](void*) {
         ncrypto::BIOPointer free_me(bio_ptr);
     }));
-    RELEASE_AND_RETURN(scope, Bun::createBuffer(globalObject, WTF::move(buffer)));
+    RELEASE_AND_RETURN(scope, Fun::createBuffer(globalObject, WTF::move(buffer)));
 }
 
 bool JSX509Certificate::computeIsCA(ncrypto::X509View view, JSGlobalObject* globalObject)
@@ -589,7 +589,7 @@ static bool handleMatchResult(JSGlobalObject* globalObject, ASCIILiteral errorMe
 {
     switch (result) {
     case ncrypto::X509View::CheckMatch::INVALID_NAME:
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE, errorMessage);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_VALUE, errorMessage);
         return false;
     case ncrypto::X509View::CheckMatch::NO_MATCH:
         return false;
@@ -773,7 +773,7 @@ JSC::JSObject* JSX509Certificate::toLegacyObject(ncrypto::X509View view, JSGloba
                 // Set pubkey
                 int size = i2d_RSA_PUBKEY(rsa, nullptr);
                 if (size > 0) {
-                    auto* buffer = Bun::createUninitializedBuffer(globalObject, static_cast<size_t>(size));
+                    auto* buffer = Fun::createUninitializedBuffer(globalObject, static_cast<size_t>(size));
                     RETURN_IF_EXCEPTION(scope, nullptr);
                     uint8_t* data = buffer->typedVector();
                     i2d_RSA_PUBKEY(rsa, &data);
@@ -800,7 +800,7 @@ JSC::JSObject* JSX509Certificate::toLegacyObject(ncrypto::X509View view, JSGloba
                         point_conversion_form_t form = EC_KEY_get_conv_form(ec);
                         size_t size = EC_POINT_point2oct(group, point, form, nullptr, 0, nullptr);
                         if (size > 0) {
-                            auto* buffer = Bun::createUninitializedBuffer(globalObject, size);
+                            auto* buffer = Fun::createUninitializedBuffer(globalObject, size);
                             RETURN_IF_EXCEPTION(scope, nullptr);
                             uint8_t* data = buffer->typedVector();
                             size_t result_size = EC_POINT_point2oct(group, point, form, data, size, nullptr);
@@ -942,7 +942,7 @@ JSC::JSObject* JSX509Certificate::toLegacyObject(JSGlobalObject* globalObject)
                 // Set pubkey
                 int size = i2d_RSA_PUBKEY(rsa, nullptr);
                 if (size > 0) {
-                    auto* buffer = Bun::createUninitializedBuffer(globalObject, static_cast<size_t>(size));
+                    auto* buffer = Fun::createUninitializedBuffer(globalObject, static_cast<size_t>(size));
                     RETURN_IF_EXCEPTION(scope, nullptr);
                     uint8_t* data = buffer->typedVector();
                     i2d_RSA_PUBKEY(rsa, &data);
@@ -969,7 +969,7 @@ JSC::JSObject* JSX509Certificate::toLegacyObject(JSGlobalObject* globalObject)
                         point_conversion_form_t form = EC_KEY_get_conv_form(ec);
                         size_t size = EC_POINT_point2oct(group, point, form, nullptr, 0, nullptr);
                         if (size > 0) {
-                            auto* buffer = Bun::createUninitializedBuffer(globalObject, size);
+                            auto* buffer = Fun::createUninitializedBuffer(globalObject, size);
                             RETURN_IF_EXCEPTION(scope, nullptr);
                             uint8_t* data = buffer->typedVector();
                             size_t result_size = EC_POINT_point2oct(group, point, form, data, size, nullptr);
@@ -1166,12 +1166,12 @@ void setupX509CertificateClassStructure(LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-extern "C" EncodedJSValue Bun__X509__toJSLegacyEncoding(X509* cert, JSGlobalObject* globalObject)
+extern "C" EncodedJSValue Fun__X509__toJSLegacyEncoding(X509* cert, JSGlobalObject* globalObject)
 {
     ncrypto::X509View view(cert);
     return JSValue::encode(JSX509Certificate::toLegacyObject(view, globalObject));
 }
-extern "C" EncodedJSValue Bun__X509__toJS(X509* cert, JSGlobalObject* globalObject)
+extern "C" EncodedJSValue Fun__X509__toJS(X509* cert, JSGlobalObject* globalObject)
 {
     ncrypto::X509Pointer cert_ptr(cert);
     auto* zigGlobalObject = defaultGlobalObject(globalObject);
@@ -1186,4 +1186,4 @@ JSC_DEFINE_HOST_FUNCTION(jsIsX509Certificate, (JSGlobalObject * globalObject, Ca
     return JSValue::encode(jsBoolean(value.asCell()->inherits(JSX509Certificate::info())));
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -1,5 +1,5 @@
 // Test script for TTY stdin buffering issue
-// Should work the same in Node.js and Bun
+// Should work the same in Node.js and Fun
 
 console.log("Starting TTY stdin test...");
 console.log("Listening for chunks from stdin...");

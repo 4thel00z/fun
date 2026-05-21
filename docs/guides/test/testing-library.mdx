@@ -1,17 +1,17 @@
 ---
-title: Using Testing Library with Bun
+title: Using Testing Library with Fun
 sidebarTitle: Testing Library
 mode: center
 ---
 
-You can use [Testing Library](https://testing-library.com/) with Bun's test runner.
+You can use [Testing Library](https://testing-library.com/) with Fun's test runner.
 
 ---
 
-As a prerequisite to using Testing Library you will need to install [Happy Dom](https://github.com/capricorn86/happy-dom). ([see Bun's Happy DOM guide for more information](/guides/test/happy-dom)).
+As a prerequisite to using Testing Library you will need to install [Happy Dom](https://github.com/capricorn86/happy-dom). ([see Fun's Happy DOM guide for more information](/guides/test/happy-dom)).
 
 ```sh terminal icon="terminal"
-bun add -D @happy-dom/global-registrator
+fun add -D @happy-dom/global-registrator
 ```
 
 ---
@@ -19,12 +19,12 @@ bun add -D @happy-dom/global-registrator
 Next you should install the Testing Library packages you are planning on using. For example, if you are setting up testing for React your installs may look like this. You will also need to install `@testing-library/jest-dom` to get matchers working later.
 
 ```sh terminal icon="terminal"
-bun add -D @testing-library/react @testing-library/dom @testing-library/jest-dom
+fun add -D @testing-library/react @testing-library/dom @testing-library/jest-dom
 ```
 
 ---
 
-Next you will need to create a preload script for Happy DOM and for Testing Library. For more details about the Happy DOM setup script see [Bun's Happy DOM guide](/guides/test/happy-dom).
+Next you will need to create a preload script for Happy DOM and for Testing Library. For more details about the Happy DOM setup script see [Fun's Happy DOM guide](/guides/test/happy-dom).
 
 ```ts happydom.ts icon="/icons/typescript.svg"
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
@@ -34,10 +34,10 @@ GlobalRegistrator.register();
 
 ---
 
-For Testing Library, you will want to extend Bun's `expect` function with Testing Library's matchers. Optionally, to better match the behavior of test-runners like Jest, you may want to run cleanup after each test.
+For Testing Library, you will want to extend Fun's `expect` function with Testing Library's matchers. Optionally, to better match the behavior of test-runners like Jest, you may want to run cleanup after each test.
 
 ```ts testing-library.ts icon="/icons/typescript.svg"
-import { afterEach, expect } from "bun:test";
+import { afterEach, expect } from "fun:test";
 import { cleanup } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
@@ -51,9 +51,9 @@ afterEach(() => {
 
 ---
 
-Next, add these preload scripts to your `bunfig.toml` (you can also have everything in a single `preload.ts` script if you prefer).
+Next, add these preload scripts to your `funfig.toml` (you can also have everything in a single `preload.ts` script if you prefer).
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [test]
 preload = ["./happydom.ts", "./testing-library.ts"]
 ```
@@ -64,9 +64,9 @@ If you are using TypeScript, you will also need to use declaration merging to ge
 
 ```ts matchers.d.ts icon="/icons/typescript.svg"
 import { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers";
-import { Matchers, AsymmetricMatchers } from "bun:test";
+import { Matchers, AsymmetricMatchers } from "fun:test";
 
-declare module "bun:test" {
+declare module "fun:test" {
   interface Matchers<T> extends TestingLibraryMatchers<typeof expect.stringContaining, T> {}
   interface AsymmetricMatchers extends TestingLibraryMatchers {}
 }
@@ -77,7 +77,7 @@ declare module "bun:test" {
 You should now be able to use Testing Library in your tests
 
 ```tsx myComponent.test.tsx icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { screen, render } from "@testing-library/react";
 import { MyComponent } from "./myComponent";
 
@@ -90,4 +90,4 @@ test("Can use Testing Library", () => {
 
 ---
 
-Refer to the [Testing Library docs](https://testing-library.com/), [Happy DOM repo](https://github.com/capricorn86/happy-dom) and [Docs > Test runner > DOM](/test/dom) for complete documentation on writing browser tests with Bun.
+Refer to the [Testing Library docs](https://testing-library.com/), [Happy DOM repo](https://github.com/capricorn86/happy-dom) and [Docs > Test runner > DOM](/test/dom) for complete documentation on writing browser tests with Fun.

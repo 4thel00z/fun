@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/24147
+// https://github.com/underdoc-org/fun/issues/24147
 // EventEmitter: this._events becomes undefined when removeAllListeners()
 // called from event handler with removeListener meta-listener
 

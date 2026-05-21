@@ -1,5 +1,5 @@
-import { heapStats } from "bun:jsc";
-import { expect } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { expect } from "fun:test";
 function getHeapStats() {
   return heapStats().objectTypeCounts;
 }
@@ -20,8 +20,8 @@ try {
     }
 
     {
-      Bun.gc(true);
-      await Bun.sleep(10);
+      Fun.gc(true);
+      await Fun.sleep(10);
       const stats = getHeapStats();
       let { Response, Promise } = stats;
       Response ||= 0;

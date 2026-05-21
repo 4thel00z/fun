@@ -1,10 +1,10 @@
-import { describe, test } from "bun:test";
+import { describe, test } from "fun:test";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 // This test file programmatically runs esbuild's decorator test suite
-// (vendor/esbuild/scripts/decorator-tests.ts) against Bun's transpiler.
+// (vendor/esbuild/scripts/decorator-tests.ts) against Fun's transpiler.
 // Each test is run as a standalone .ts file in a temp directory with
 // a tsconfig that does NOT have experimentalDecorators, so standard
 // decorators are used.
@@ -61,9 +61,9 @@ async function runDecoratorTest(code: string) {
     "test.ts": testBoilerplate + "\n" + code,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

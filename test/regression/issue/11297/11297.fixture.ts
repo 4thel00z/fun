@@ -1,11 +1,11 @@
-import { bunExe } from "harness";
+import { funExe } from "harness";
 
 const string = Buffer.alloc(1024 * 1024, "zombo.com\n").toString();
 process.exitCode = 1;
 
-const proc = Bun.spawn({
+const proc = Fun.spawn({
   cmd: [
-    bunExe(),
+    funExe(),
     "-e",
     `
 let length = 0;
@@ -26,7 +26,7 @@ const writer = (async function () {
     // To reproduce:
     //
     //   1. Remove "await" from proc.stdin.write(string) (keep the .end() await)
-    //   2. Run `hyperfine "bun test/regression/issue/011297.fixture.ts"` (or run this many times on macOS.)
+    //   2. Run `hyperfine "fun test/regression/issue/011297.fixture.ts"` (or run this many times on macOS.)
     //
     proc.stdin.write(string);
   }
@@ -50,14 +50,14 @@ const reader = (async function () {
 const [chunks, exitCode] = await Promise.all([reader, proc.exited, writer]);
 const combined = Buffer.concat(chunks).toString().trim();
 if (combined !== string.repeat(10)) {
-  await Bun.write("a.txt", string.repeat(10));
-  await Bun.write("b.txt", combined);
+  await Fun.write("a.txt", string.repeat(10));
+  await Fun.write("b.txt", combined);
   throw new Error(`string mismatch!
   exit code: ${exitCode}
 
   hash:
-    input   ${Bun.SHA1.hash(string.repeat(10), "hex")}
-    output: ${Bun.SHA1.hash(combined, "hex")}
+    input   ${Fun.SHA1.hash(string.repeat(10), "hex")}
+    output: ${Fun.SHA1.hash(combined, "hex")}
   length:
     input   ${string.length * 10}
     output: ${combined.length}

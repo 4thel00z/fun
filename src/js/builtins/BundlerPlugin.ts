@@ -1,4 +1,4 @@
-import type { BuildConfig, BunPlugin, OnLoadCallback, OnResolveCallback, PluginBuilder, PluginConstraints } from "bun";
+import type { BuildConfig, FunPlugin, OnLoadCallback, OnResolveCallback, PluginBuilder, PluginConstraints } from "fun";
 type AnyFunction = (...args: any[]) => any;
 
 /**
@@ -7,7 +7,7 @@ type AnyFunction = (...args: any[]) => any;
 interface BundlerPlugin {
   onLoad: Map<string, [RegExp, OnLoadCallback][]>;
   onResolve: Map<string, [RegExp, OnResolveCallback][]>;
-  onEndCallbacks: Array<(build: Bun.BuildOutput) => void | Promise<void>> | undefined;
+  onEndCallbacks: Array<(build: Fun.BuildOutput) => void | Promise<void>> | undefined;
   /** Binding to `JSBundlerPlugin__onLoadAsync` */
   onLoadAsync(
     internalID,
@@ -27,13 +27,13 @@ interface BundlerPlugin {
 }
 
 // Extra types
-type Setup = BunPlugin["setup"];
+type Setup = FunPlugin["setup"];
 type MinifyObj = Exclude<BuildConfig["minify"], boolean>;
 interface BuildConfigExt extends BuildConfig {
   // we support esbuild-style 'entryPoints' capitalization
   entryPoints?: string[];
   // plugins is guaranteed to not be null
-  plugins: BunPlugin[];
+  plugins: FunPlugin[];
 }
 interface PluginBuilderExt extends PluginBuilder {
   resolve: AnyFunction;
@@ -47,12 +47,12 @@ interface PluginBuilderExt extends PluginBuilder {
 }
 
 /**
- * Used by Bun.serve() to resolve and load plugins.
+ * Used by Fun.serve() to resolve and load plugins.
  */
 export function loadAndResolvePluginsForServe(
   this: BundlerPlugin,
   plugins: string[],
-  bunfig_folder: string,
+  funfig_folder: string,
   runSetupFn: typeof runSetupFunction,
 ) {
   // Same config as created in HTMLBundle.init
@@ -60,7 +60,7 @@ export function loadAndResolvePluginsForServe(
     experimentalCss: true,
     experimentalHtml: true,
     target: "browser",
-    root: bunfig_folder,
+    root: funfig_folder,
   };
 
   class InvalidBundlerPluginError extends TypeError {
@@ -74,13 +74,13 @@ export function loadAndResolvePluginsForServe(
   let bundlerPlugin = this;
   let promiseResult = (async (
     plugins: string[],
-    bunfig_folder: string,
+    funfig_folder: string,
     runSetupFn: typeof runSetupFunction,
     bundlerPlugin: BundlerPlugin,
   ) => {
     let onstart_promises_array: Array<Promise<any>> | undefined = undefined;
     for (let i = 0; i < plugins.length; i++) {
-      let pluginModuleResolved = await Bun.resolve(plugins[i], bunfig_folder);
+      let pluginModuleResolved = await Fun.resolve(plugins[i], funfig_folder);
 
       let pluginModuleRaw = await import(pluginModuleResolved);
       if (!pluginModuleRaw || !pluginModuleRaw.default) {
@@ -101,15 +101,15 @@ export function loadAndResolvePluginsForServe(
     if (onstart_promises_array !== undefined) {
       await Promise.all(onstart_promises_array);
     }
-  })(plugins, bunfig_folder, runSetupFn, bundlerPlugin);
+  })(plugins, funfig_folder, runSetupFn, bundlerPlugin);
 
   return promiseResult;
 }
 
 export function runOnEndCallbacks(
   this: BundlerPlugin,
-  promise: Promise<Bun.BuildOutput>,
-  buildResult: Bun.BuildOutput,
+  promise: Promise<Fun.BuildOutput>,
+  buildResult: Fun.BuildOutput,
   buildRejection: AggregateError | undefined,
 ): Promise<void> | void {
   const callbacks = this.onEndCallbacks;
@@ -181,7 +181,7 @@ export function runSetupFunction(
       // TODO: how to check if it a napi module here?
       if (!callback || !$isObject(callback) || !callback.$napiDlopenHandle) {
         throw new TypeError(
-          "onBeforeParse `napiModule` must be a Napi module which exports the `BUN_PLUGIN_NAME` symbol.",
+          "onBeforeParse `napiModule` must be a Napi module which exports the `FUN_PLUGIN_NAME` symbol.",
         );
       }
 
@@ -348,10 +348,10 @@ export function runSetupFunction(
     onStart,
     resolve: notImplementedIssueFn(2771, "build.resolve()"),
     module: () => {
-      throw new TypeError("module() is not supported in Bun.build() yet. Only via Bun.plugin() at runtime");
+      throw new TypeError("module() is not supported in Fun.build() yet. Only via Fun.plugin() at runtime");
     },
     addPreload: () => {
-      throw new TypeError("addPreload() is not supported in Bun.build() yet.");
+      throw new TypeError("addPreload() is not supported in Fun.build() yet.");
     },
     // esbuild's options argument is different, we provide some interop
     initialOptions: {
@@ -363,7 +363,7 @@ export function runSetupFunction(
       minifyWhitespace: config.minify === true || (config.minify as MinifyObj)?.whitespace,
       minifySyntax: config.minify === true || (config.minify as MinifyObj)?.syntax,
       outbase: config.root,
-      platform: config.target === "bun" ? "node" : config.target,
+      platform: config.target === "fun" ? "node" : config.target,
     },
     esbuild: {},
   } as PluginBuilderExt);
@@ -554,7 +554,7 @@ export function runOnLoadPlugins(
             contents = JSON.stringify(result.exports);
             loader = "json";
           } catch (e) {
-            throw new TypeError("When using Bun.build, onLoad plugin must return a JSON-serializable object: " + e);
+            throw new TypeError("When using Fun.build, onLoad plugin must return a JSON-serializable object: " + e);
           }
         }
 

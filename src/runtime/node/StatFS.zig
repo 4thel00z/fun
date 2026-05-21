@@ -15,13 +15,13 @@ pub fn StatFSType(comptime big: bool) type {
 
         const This = @This();
 
-        pub fn toJS(this: *const This, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        pub fn toJS(this: *const This, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
             return statfsToJS(this, globalObject);
         }
 
-        fn statfsToJS(this: *const This, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        fn statfsToJS(this: *const This, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
             if (big) {
-                return bun.jsc.fromJSHostCall(globalObject, @src(), Bun__createJSBigIntStatFSObject, .{
+                return fun.jsc.fromJSHostCall(globalObject, @src(), Fun__createJSBigIntStatFSObject, .{
                     globalObject,
                     this._fstype,
                     this._bsize,
@@ -33,7 +33,7 @@ pub fn StatFSType(comptime big: bool) type {
                 });
             }
 
-            return Bun__createJSStatFSObject(
+            return Fun__createJSStatFSObject(
                 globalObject,
                 this._fstype,
                 this._bsize,
@@ -45,7 +45,7 @@ pub fn StatFSType(comptime big: bool) type {
             );
         }
 
-        pub fn init(statfs_: *const bun.StatFS) This {
+        pub fn init(statfs_: *const fun.StatFS) This {
             const fstype_, const bsize_, const blocks_, const bfree_, const bavail_, const files_, const ffree_ = switch (comptime Environment.os) {
                 .linux, .mac, .freebsd => .{
                     statfs_.f_type,
@@ -80,10 +80,10 @@ pub fn StatFSType(comptime big: bool) type {
     };
 }
 
-extern fn Bun__JSBigIntStatFSObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
-extern fn Bun__JSStatFSObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
+extern fn Fun__JSBigIntStatFSObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
+extern fn Fun__JSStatFSObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
 
-extern fn Bun__createJSStatFSObject(
+extern fn Fun__createJSStatFSObject(
     globalObject: *jsc.JSGlobalObject,
     fstype: i64,
     bsize: i64,
@@ -94,7 +94,7 @@ extern fn Bun__createJSStatFSObject(
     ffree: i64,
 ) jsc.JSValue;
 
-extern fn Bun__createJSBigIntStatFSObject(
+extern fn Fun__createJSBigIntStatFSObject(
     globalObject: *jsc.JSGlobalObject,
     fstype: i64,
     bsize: i64,
@@ -113,7 +113,7 @@ pub const StatFS = union(enum) {
     big: StatFSBig,
     small: StatFSSmall,
 
-    pub inline fn init(stat_: *const bun.StatFS, big: bool) StatFS {
+    pub inline fn init(stat_: *const fun.StatFS, big: bool) StatFS {
         if (big) {
             return .{ .big = StatFSBig.init(stat_) };
         } else {
@@ -121,7 +121,7 @@ pub const StatFS = union(enum) {
         }
     }
 
-    pub fn toJSNewlyCreated(this: *const StatFS, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn toJSNewlyCreated(this: *const StatFS, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         return switch (this.*) {
             .big => |*big| big.toJS(globalObject),
             .small => |*small| small.toJS(globalObject),
@@ -136,6 +136,6 @@ pub const StatFS = union(enum) {
     }
 };
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;

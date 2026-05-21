@@ -1,6 +1,6 @@
 'use strict';
 const common = require('../common');
-if (typeof globalThis.Bun !== "undefined") return; // TODO: BUN
+if (typeof globalThis.Fun !== "undefined") return; // TODO: FUN
 if (!common.hasCrypto)
   common.skip('missing crypto');
 

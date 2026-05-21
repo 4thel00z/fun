@@ -50,7 +50,7 @@ for (let i = 0; i < iters; i++) {
   // above) but may still be destroying its outer EventLoopTask. Force a
   // synchronous full GC so the "Sh" constraint walks m_strongList while
   // the worker would have been removing a node from it.
-  Bun.gc(true);
+  Fun.gc(true);
   stream.on("data", () => {});
   await new Promise(resolve => stream.once("end", resolve));
 }

@@ -1,10 +1,10 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_lower_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/lower
+// For debug, all files are written to $TEMP/fun-bundle-tests/lower
 
 describe.todo("bundler", () => {
   itBundled("lower/LowerOptionalCatchNameCollisionNoBundle", {

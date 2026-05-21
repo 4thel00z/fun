@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "events";
 import { createServer, request } from "http";
 import { AddressInfo, connect, Server } from "net";

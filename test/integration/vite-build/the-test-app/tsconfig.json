@@ -19,6 +19,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
-    "types": ["@types/bun"]
+    "types": ["@types/fun"]
   }
 }

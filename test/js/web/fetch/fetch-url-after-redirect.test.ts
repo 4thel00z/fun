@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { createServer } from "node:http";
 import { promisify } from "node:util";
 

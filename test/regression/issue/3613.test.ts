@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/3613
+// https://github.com/underdoc-org/fun/issues/3613
 // WebSocketServer handleProtocols option should set the selected protocol in the upgrade response
 test("ws WebSocketServer handleProtocols sets selected protocol", async () => {
   using dir = tempDir("ws-handle-protocols", {
@@ -46,10 +46,10 @@ wss.on('connection', (ws) => {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "server.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "server.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -91,7 +91,7 @@ wss.on('listening', async () => {
       }
     });
     console.log("STATUS:" + res.status);
-    // When handleProtocols returns empty, Bun falls back to client's first protocol
+    // When handleProtocols returns empty, Fun falls back to client's first protocol
     console.log("PROTOCOL:" + res.headers.get("sec-websocket-protocol"));
   } catch (e) {
     console.log("ERROR:" + e.message);
@@ -107,10 +107,10 @@ wss.on('connection', (ws) => {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "server.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "server.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -162,10 +162,10 @@ wss.on('connection', (ws) => {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "server.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "server.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

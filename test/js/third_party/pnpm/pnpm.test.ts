@@ -1,5 +1,5 @@
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { expect, it } from "fun:test";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { cpSync } from "node:fs";
 import * as path from "node:path";
 
@@ -13,22 +13,22 @@ it("successfully traverses pnpm-generated install directory", async () => {
 
   //
 
-  ({ exited } = Bun.spawn({
-    cmd: [bunExe(), "x", "pnpm@9.15.6", "install"],
+  ({ exited } = Fun.spawn({
+    cmd: [funExe(), "x", "pnpm@9.15.6", "install"],
     cwd: path.join(package_dir),
     stdio: ["ignore", "inherit", "inherit"],
-    env: bunEnv,
+    env: funEnv,
   }));
   expect(await exited).toBe(0);
   console.log(2);
 
   //
 
-  ({ exited } = Bun.spawn({
-    cmd: [bunExe(), "run", "build"],
+  ({ exited } = Fun.spawn({
+    cmd: [funExe(), "run", "build"],
     cwd: path.join(package_dir),
     stdio: ["ignore", "inherit", "inherit"],
-    env: bunEnv,
+    env: funEnv,
   }));
   expect(await exited).toBe(0);
   console.log(3);

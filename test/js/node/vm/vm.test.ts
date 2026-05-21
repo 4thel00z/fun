@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { compileFunction, createContext, runInContext, runInNewContext, runInThisContext, Script } from "node:vm";
 
 function capture(_: any, _1?: any) {}
@@ -531,15 +531,15 @@ function testRunInContext({ fn, isIsolated, isNew }: TestRunInContextArg) {
     //
   });
 
-  // https://github.com/oven-sh/bun/issues/10885 .if(isNew == true)
+  // https://github.com/underdoc-org/fun/issues/10885 .if(isNew == true)
   test.todo("can specify contextName", () => {
     //
   });
-  // https://github.com/oven-sh/bun/issues/10885 .if(isNew == true)
+  // https://github.com/underdoc-org/fun/issues/10885 .if(isNew == true)
   test.todo("can specify contextOrigin", () => {
     //
   });
-  // https://github.com/oven-sh/bun/issues/10885 .if(isNew == true)
+  // https://github.com/underdoc-org/fun/issues/10885 .if(isNew == true)
   test.todo("can specify microtaskMode", () => {
     //
   });
@@ -556,7 +556,7 @@ function randomProps(propsNumber = 0) {
   return props;
 }
 
-// https://github.com/oven-sh/bun/issues/13629
+// https://github.com/underdoc-org/fun/issues/13629
 test("can extend generated globals & WebCore globals", async () => {
   const vm = require("vm");
 

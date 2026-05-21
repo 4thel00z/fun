@@ -30,7 +30,7 @@ static int32_t write1(void* props, const wchar_t* name, VARTYPE vt, void (*set)(
     return SUCCEEDED(hr) ? 1 : 0;
 }
 
-extern "C" int32_t bun_wic_propbag_write_f32(void* props, const wchar_t* name, float value)
+extern "C" int32_t fun_wic_propbag_write_f32(void* props, const wchar_t* name, float value)
 {
     // Ignore failure — a missing "ImageQuality" knob (older codec) should
     // fall through to the encoder's default, not fail the whole encode.
@@ -46,7 +46,7 @@ extern "C" int32_t bun_wic_propbag_write_f32(void* props, const wchar_t* name, f
 // on a machine with only the HEVC extension. Caller treats 0 (Write failed /
 // codec doesn't recognise the option) as "extension missing" and surfaces
 // BackendUnavailable.
-extern "C" int32_t bun_wic_propbag_write_u8(void* props, const wchar_t* name, uint8_t value)
+extern "C" int32_t fun_wic_propbag_write_u8(void* props, const wchar_t* name, uint8_t value)
 {
     static thread_local uint8_t v;
     v = value;
@@ -56,6 +56,6 @@ extern "C" int32_t bun_wic_propbag_write_u8(void* props, const wchar_t* name, ui
 #else
 // Stubs so the symbols exist everywhere; backend_wic.zig is Windows-only so
 // these are never called, but the linker wants them.
-extern "C" int bun_wic_propbag_write_f32(void*, const void*, float) { return 0; }
-extern "C" int bun_wic_propbag_write_u8(void*, const void*, unsigned char) { return 0; }
+extern "C" int fun_wic_propbag_write_f32(void*, const void*, float) { return 0; }
+extern "C" int fun_wic_propbag_write_u8(void*, const void*, unsigned char) { return 0; }
 #endif

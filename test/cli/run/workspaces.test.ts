@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
-test("bun run --workspaces runs script in all workspace packages", async () => {
+test("fun run --workspaces runs script in all workspace packages", async () => {
   const dir = tempDirWithFiles("workspaces-test", {
     "package.json": JSON.stringify({
       name: "root",
@@ -24,9 +24,9 @@ test("bun run --workspaces runs script in all workspace packages", async () => {
     }),
   });
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "run", "--workspaces", "test"],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "run", "--workspaces", "test"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -41,7 +41,7 @@ test("bun run --workspaces runs script in all workspace packages", async () => {
   expect(stdout).not.toContain("root test");
 });
 
-test("bun run --workspaces --if-present succeeds when script is missing", async () => {
+test("fun run --workspaces --if-present succeeds when script is missing", async () => {
   const dir = tempDirWithFiles("workspaces-if-present", {
     "package.json": JSON.stringify({
       name: "root",
@@ -59,9 +59,9 @@ test("bun run --workspaces --if-present succeeds when script is missing", async 
     }),
   });
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "run", "--workspaces", "--if-present", "test"],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "run", "--workspaces", "--if-present", "test"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -74,7 +74,7 @@ test("bun run --workspaces --if-present succeeds when script is missing", async 
   // Should not fail for package b
 });
 
-test("bun run --workspaces fails when no packages have the script", async () => {
+test("fun run --workspaces fails when no packages have the script", async () => {
   const dir = tempDirWithFiles("workspaces-no-script", {
     "package.json": JSON.stringify({
       name: "root",
@@ -88,9 +88,9 @@ test("bun run --workspaces fails when no packages have the script", async () => 
     }),
   });
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "run", "--workspaces", "nonexistent"],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "run", "--workspaces", "nonexistent"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",

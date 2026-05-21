@@ -1,7 +1,7 @@
 export default function LandingPage() {
   let copied = false;
   const handleCopy = () => {
-    navigator.clipboard.writeText("bun create ./MyComponent.tsx");
+    navigator.clipboard.writeText("fun create ./MyComponent.tsx");
   };
 
   return (
@@ -9,12 +9,12 @@ export default function LandingPage() {
       <div className="max-w-6xl mx-auto px-4 py-20">
         <div className="text-center mb-16">
           <h1 className="text-6xl font-bold mb-6">
-            <span className="text-purple-400">bun create</span> for React
+            <span className="text-purple-400">fun create</span> for React
           </h1>
           <p className="text-xl text-gray-300 mb-8">Start a React dev server instantly from a single component file</p>
 
           <div className="bg-gray-800 p-4 rounded-lg flex items-center justify-between max-w-lg mx-auto mb-8">
-            <code className="text-purple-400">bun create ./MyComponent.tsx</code>
+            <code className="text-purple-400">fun create ./MyComponent.tsx</code>
             <button onClick={handleCopy} className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded transition">
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -52,7 +52,7 @@ export default function LandingPage() {
               <div className="bg-purple-600 rounded-full p-2 mt-1">2</div>
               <div>
                 <h3 className="font-semibold mb-2">Run Command</h3>
-                <p className="text-gray-300">Execute bun create with your file path</p>
+                <p className="text-gray-300">Execute fun create with your file path</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -69,13 +69,13 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold mb-6">Ready to Try?</h2>
           <div className="space-x-4">
             <a
-              href="https://bun.com/docs"
+              href="https://fun.dev/docs"
               className="inline-block bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition"
             >
               Read Docs
             </a>
             <a
-              href="https://github.com/oven-sh/bun"
+              href="https://github.com/underdoc-org/fun"
               className="inline-block bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg transition"
             >
               GitHub →

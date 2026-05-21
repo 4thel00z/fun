@@ -1,14 +1,14 @@
-pub fn getServername(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getServername(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
 
     const servername = BoringSSL.SSL_get_servername(ssl_ptr, BoringSSL.TLSEXT_NAMETYPE_host_name);
     if (servername == null) {
         return .js_undefined;
     }
-    return ZigString.fromUTF8(servername[0..bun.len(servername)]).toJS(globalObject);
+    return ZigString.fromUTF8(servername[0..fun.len(servername)]).toJS(globalObject);
 }
 
-pub fn setServername(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn setServername(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     if (this.isServer()) {
         return globalObject.throw("Cannot issue SNI from a TLS server-side socket", .{});
     }
@@ -23,7 +23,7 @@ pub fn setServername(this: *This, globalObject: *jsc.JSGlobalObject, callframe: 
         return globalObject.throw("Expected \"serverName\" to be a string", .{});
     }
 
-    const slice = try (try server_name.getZigString(globalObject)).toOwnedSlice(bun.default_allocator);
+    const slice = try (try server_name.getZigString(globalObject)).toOwnedSlice(fun.default_allocator);
     if (this.server_name) |old| {
         this.server_name = slice;
         default_allocator.free(old);
@@ -39,7 +39,7 @@ pub fn setServername(this: *This, globalObject: *jsc.JSGlobalObject, callframe: 
             // match node.js exceptions
             return globalObject.throw("Already started.", .{});
         }
-        const host__ = bun.handleOom(default_allocator.dupeZ(u8, host));
+        const host__ = fun.handleOom(default_allocator.dupeZ(u8, host));
         defer default_allocator.free(host__);
         ssl_ptr.setHostname(host__);
     }
@@ -47,7 +47,7 @@ pub fn setServername(this: *This, globalObject: *jsc.JSGlobalObject, callframe: 
     return .js_undefined;
 }
 
-pub fn getPeerX509Certificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getPeerX509Certificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     const cert = BoringSSL.SSL_get_peer_certificate(ssl_ptr);
     if (cert) |x509| {
@@ -56,7 +56,7 @@ pub fn getPeerX509Certificate(this: *This, globalObject: *jsc.JSGlobalObject, _:
     return .js_undefined;
 }
 
-pub fn getX509Certificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getX509Certificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     const cert = BoringSSL.SSL_get_certificate(ssl_ptr);
     if (cert) |x509| {
@@ -65,19 +65,19 @@ pub fn getX509Certificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *js
     return .js_undefined;
 }
 
-pub fn getTLSVersion(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getTLSVersion(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
 
     const ssl_ptr = this.socket.ssl() orelse return JSValue.jsNull();
     const version = BoringSSL.SSL_get_version(ssl_ptr);
     if (version == null) return JSValue.jsNull();
-    const version_len = bun.len(version);
+    const version_len = fun.len(version);
     if (version_len == 0) return JSValue.jsNull();
     const slice = version[0..version_len];
     return ZigString.fromUTF8(slice).toJS(globalObject);
 }
 
-pub fn setMaxSendFragment(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn setMaxSendFragment(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
 
     const args = callframe.arguments_old(1);
@@ -102,7 +102,7 @@ pub fn setMaxSendFragment(this: *This, globalObject: *jsc.JSGlobalObject, callfr
     return JSValue.jsBoolean(BoringSSL.SSL_set_max_send_fragment(ssl_ptr, @as(usize, @intCast(size))) == 1);
 }
 
-pub fn getPeerCertificate(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getPeerCertificate(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
 
     const args = callframe.arguments_old(1);
@@ -150,7 +150,7 @@ pub fn getPeerCertificate(this: *This, globalObject: *jsc.JSGlobalObject, callfr
     return .js_undefined;
 }
 
-pub fn getCertificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getCertificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     const cert = BoringSSL.SSL_get_certificate(ssl_ptr);
 
@@ -160,7 +160,7 @@ pub fn getCertificate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.Ca
     return .js_undefined;
 }
 
-pub fn getTLSFinishedMessage(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getTLSFinishedMessage(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     // We cannot just pass nullptr to SSL_get_finished()
     // because it would further be propagated to memcpy(),
@@ -176,11 +176,11 @@ pub fn getTLSFinishedMessage(this: *This, globalObject: *jsc.JSGlobalObject, _: 
     const buffer_ptr = @as(*anyopaque, @ptrCast(buffer.asArrayBuffer(globalObject).?.ptr));
 
     const result_size = BoringSSL.SSL_get_finished(ssl_ptr, buffer_ptr, buffer_size);
-    bun.assert(result_size == size);
+    fun.assert(result_size == size);
     return buffer;
 }
 
-pub fn getSharedSigalgs(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getSharedSigalgs(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
 
     const ssl_ptr = this.socket.ssl() orelse return JSValue.jsNull();
@@ -231,7 +231,7 @@ pub fn getSharedSigalgs(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.
             else => {
                 const sn_str = BoringSSL.OBJ_nid2sn(sign_nid);
                 if (sn_str != null) {
-                    sig_with_md = sn_str[0..bun.len(sn_str)];
+                    sig_with_md = sn_str[0..fun.len(sn_str)];
                 } else {
                     sig_with_md = "UNDEF";
                 }
@@ -240,28 +240,28 @@ pub fn getSharedSigalgs(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.
 
         const hash_str = BoringSSL.OBJ_nid2sn(hash_nid);
         if (hash_str != null) {
-            const hash_str_len = bun.len(hash_str);
+            const hash_str_len = fun.len(hash_str);
             const hash_slice = hash_str[0..hash_str_len];
-            const buffer = bun.handleOom(bun.default_allocator.alloc(u8, sig_with_md.len + hash_str_len + 1));
-            defer bun.default_allocator.free(buffer);
+            const buffer = fun.handleOom(fun.default_allocator.alloc(u8, sig_with_md.len + hash_str_len + 1));
+            defer fun.default_allocator.free(buffer);
 
-            bun.copy(u8, buffer, sig_with_md);
+            fun.copy(u8, buffer, sig_with_md);
             buffer[sig_with_md.len] = '+';
-            bun.copy(u8, buffer[sig_with_md.len + 1 ..], hash_slice);
+            fun.copy(u8, buffer[sig_with_md.len + 1 ..], hash_slice);
             try array.putIndex(globalObject, @as(u32, @intCast(i)), jsc.ZigString.fromUTF8(buffer).toJS(globalObject));
         } else {
-            const buffer = bun.handleOom(bun.default_allocator.alloc(u8, sig_with_md.len + 6));
-            defer bun.default_allocator.free(buffer);
+            const buffer = fun.handleOom(fun.default_allocator.alloc(u8, sig_with_md.len + 6));
+            defer fun.default_allocator.free(buffer);
 
-            bun.copy(u8, buffer, sig_with_md);
-            bun.copy(u8, buffer[sig_with_md.len..], "+UNDEF");
+            fun.copy(u8, buffer, sig_with_md);
+            fun.copy(u8, buffer[sig_with_md.len..], "+UNDEF");
             try array.putIndex(globalObject, @as(u32, @intCast(i)), jsc.ZigString.fromUTF8(buffer).toJS(globalObject));
         }
     }
     return array;
 }
 
-pub fn getCipher(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getCipher(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     const cipher = BoringSSL.SSL_get_current_cipher(ssl_ptr);
     var result = JSValue.createEmptyObject(globalObject, 0);
@@ -277,27 +277,27 @@ pub fn getCipher(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFra
     if (name == null) {
         result.put(globalObject, ZigString.static("name"), JSValue.jsNull());
     } else {
-        result.put(globalObject, ZigString.static("name"), ZigString.fromUTF8(name[0..bun.len(name)]).toJS(globalObject));
+        result.put(globalObject, ZigString.static("name"), ZigString.fromUTF8(name[0..fun.len(name)]).toJS(globalObject));
     }
 
     const standard_name = BoringSSL.SSL_CIPHER_standard_name(cipher);
     if (standard_name == null) {
         result.put(globalObject, ZigString.static("standardName"), JSValue.jsNull());
     } else {
-        result.put(globalObject, ZigString.static("standardName"), ZigString.fromUTF8(standard_name[0..bun.len(standard_name)]).toJS(globalObject));
+        result.put(globalObject, ZigString.static("standardName"), ZigString.fromUTF8(standard_name[0..fun.len(standard_name)]).toJS(globalObject));
     }
 
     const version = BoringSSL.SSL_CIPHER_get_version(cipher);
     if (version == null) {
         result.put(globalObject, ZigString.static("version"), JSValue.jsNull());
     } else {
-        result.put(globalObject, ZigString.static("version"), ZigString.fromUTF8(version[0..bun.len(version)]).toJS(globalObject));
+        result.put(globalObject, ZigString.static("version"), ZigString.fromUTF8(version[0..fun.len(version)]).toJS(globalObject));
     }
 
     return result;
 }
 
-pub fn getTLSPeerFinishedMessage(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getTLSPeerFinishedMessage(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     // We cannot just pass nullptr to SSL_get_peer_finished()
     // because it would further be propagated to memcpy(),
@@ -313,11 +313,11 @@ pub fn getTLSPeerFinishedMessage(this: *This, globalObject: *jsc.JSGlobalObject,
     const buffer_ptr = @as(*anyopaque, @ptrCast(buffer.asArrayBuffer(globalObject).?.ptr));
 
     const result_size = BoringSSL.SSL_get_peer_finished(ssl_ptr, buffer_ptr, buffer_size);
-    bun.assert(result_size == size);
+    fun.assert(result_size == size);
     return buffer;
 }
 
-pub fn exportKeyingMaterial(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn exportKeyingMaterial(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     if (this.socket.isDetached()) {
         return .js_undefined;
     }
@@ -350,7 +350,7 @@ pub fn exportKeyingMaterial(this: *This, globalObject: *jsc.JSGlobalObject, call
     if (args.len > 2) {
         const context_arg = args.ptr[2];
 
-        var arena: bun.ArenaAllocator = bun.ArenaAllocator.init(bun.default_allocator);
+        var arena: fun.ArenaAllocator = fun.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
 
         if (try jsc.Node.StringOrBuffer.fromJS(globalObject, arena.allocator(), context_arg)) |sb| {
@@ -382,7 +382,7 @@ pub fn exportKeyingMaterial(this: *This, globalObject: *jsc.JSGlobalObject, call
     }
 }
 
-pub fn getEphemeralKeyInfo(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getEphemeralKeyInfo(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
 
     // only available for clients
     if (this.isServer()) {
@@ -409,7 +409,7 @@ pub fn getEphemeralKeyInfo(this: *This, globalObject: *jsc.JSGlobalObject, _: *j
 
     switch (kid) {
         BoringSSL.EVP_PKEY_DH => {
-            result.put(globalObject, ZigString.static("type"), try bun.String.static("DH").toJS(globalObject));
+            result.put(globalObject, ZigString.static("type"), try fun.String.static("DH").toJS(globalObject));
             result.put(globalObject, ZigString.static("size"), JSValue.jsNumber(bits));
         },
 
@@ -420,19 +420,19 @@ pub fn getEphemeralKeyInfo(this: *This, globalObject: *jsc.JSGlobalObject, _: *j
                 const nid = BoringSSL.EC_GROUP_get_curve_name(BoringSSL.EC_KEY_get0_group(ec));
                 const nid_str = BoringSSL.OBJ_nid2sn(nid);
                 if (nid_str != null) {
-                    curve_name = nid_str[0..bun.len(nid_str)];
+                    curve_name = nid_str[0..fun.len(nid_str)];
                 } else {
                     curve_name = "";
                 }
             } else {
                 const kid_str = BoringSSL.OBJ_nid2sn(kid);
                 if (kid_str != null) {
-                    curve_name = kid_str[0..bun.len(kid_str)];
+                    curve_name = kid_str[0..fun.len(kid_str)];
                 } else {
                     curve_name = "";
                 }
             }
-            result.put(globalObject, ZigString.static("type"), try bun.String.static("ECDH").toJS(globalObject));
+            result.put(globalObject, ZigString.static("type"), try fun.String.static("ECDH").toJS(globalObject));
             result.put(globalObject, ZigString.static("name"), ZigString.fromUTF8(curve_name).toJS(globalObject));
             result.put(globalObject, ZigString.static("size"), JSValue.jsNumber(bits));
         },
@@ -441,7 +441,7 @@ pub fn getEphemeralKeyInfo(this: *This, globalObject: *jsc.JSGlobalObject, _: *j
     return result;
 }
 
-pub fn getALPNProtocol(this: *This, globalObject: *jsc.JSGlobalObject) bun.JSError!JSValue {
+pub fn getALPNProtocol(this: *This, globalObject: *jsc.JSGlobalObject) fun.JSError!JSValue {
     var alpn_proto: [*c]const u8 = null;
     var alpn_proto_len: u32 = 0;
 
@@ -454,15 +454,15 @@ pub fn getALPNProtocol(this: *This, globalObject: *jsc.JSGlobalObject) bun.JSErr
 
     const slice = alpn_proto[0..alpn_proto_len];
     if (strings.eql(slice, "h2")) {
-        return bun.String.static("h2").toJS(globalObject);
+        return fun.String.static("h2").toJS(globalObject);
     }
     if (strings.eql(slice, "http/1.1")) {
-        return bun.String.static("http/1.1").toJS(globalObject);
+        return fun.String.static("http/1.1").toJS(globalObject);
     }
     return ZigString.fromUTF8(slice).toJS(globalObject);
 }
 
-pub fn getSession(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getSession(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     const session = BoringSSL.SSL_get_session(ssl_ptr) orelse return .js_undefined;
     const size = BoringSSL.i2d_SSL_SESSION(session, null);
@@ -475,11 +475,11 @@ pub fn getSession(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFr
     var buffer_ptr = @as([*c]u8, @ptrCast(buffer.asArrayBuffer(globalObject).?.ptr));
 
     const result_size = BoringSSL.i2d_SSL_SESSION(session, &buffer_ptr);
-    bun.assert(result_size == size);
+    fun.assert(result_size == size);
     return buffer;
 }
 
-pub fn setSession(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn setSession(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     if (this.socket.isDetached()) {
         return .js_undefined;
     }
@@ -491,7 +491,7 @@ pub fn setSession(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *js
     }
 
     const session_arg = args.ptr[0];
-    var arena: bun.ArenaAllocator = bun.ArenaAllocator.init(bun.default_allocator);
+    var arena: fun.ArenaAllocator = fun.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
 
     if (try jsc.Node.StringOrBuffer.fromJS(globalObject, arena.allocator(), session_arg)) |sb| {
@@ -512,7 +512,7 @@ pub fn setSession(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *js
     }
 }
 
-pub fn getTLSTicket(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getTLSTicket(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     const session = BoringSSL.SSL_get_session(ssl_ptr) orelse return .js_undefined;
     var ticket: [*c]const u8 = undefined;
@@ -527,7 +527,7 @@ pub fn getTLSTicket(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.Call
     return jsc.ArrayBuffer.createBuffer(globalObject, ticket[0..length]);
 }
 
-pub fn renegotiate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn renegotiate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     BoringSSL.ERR_clear_error();
     if (BoringSSL.SSL_renegotiate(ssl_ptr) != 1) {
@@ -536,18 +536,18 @@ pub fn renegotiate(this: *This, globalObject: *jsc.JSGlobalObject, _: *jsc.CallF
     return .js_undefined;
 }
 
-pub fn disableRenegotiation(this: *This, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn disableRenegotiation(this: *This, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .js_undefined;
     BoringSSL.SSL_set_renegotiate_mode(ssl_ptr, BoringSSL.ssl_renegotiate_never);
     return .js_undefined;
 }
 
-pub fn isSessionReused(this: *This, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn isSessionReused(this: *This, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     const ssl_ptr = this.socket.ssl() orelse return .false;
     return JSValue.jsBoolean(BoringSSL.SSL_session_reused(ssl_ptr) == 1);
 }
 
-pub fn setVerifyMode(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn setVerifyMode(this: *This, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     if (this.socket.isDetached()) {
         return .js_undefined;
     }
@@ -634,7 +634,7 @@ noinline fn getSSLException(globalThis: *jsc.JSGlobalObject, defaultMessage: []c
 
     if (written > 0) {
         const message = output_buf[0..written];
-        zig_str = ZigString.init(bun.handleOom(std.fmt.allocPrint(bun.default_allocator, "OpenSSL {s}", .{message})));
+        zig_str = ZigString.init(fun.handleOom(std.fmt.allocPrint(fun.default_allocator, "OpenSSL {s}", .{message})));
         var encoded_str = zig_str.withEncoding();
         encoded_str.markGlobal();
 
@@ -658,15 +658,15 @@ noinline fn getSSLException(globalThis: *jsc.JSGlobalObject, defaultMessage: []c
 
 const string = []const u8;
 
-const X509 = @import("../api/bun/x509.zig");
+const X509 = @import("../api/fun/x509.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
+const BoringSSL = fun.BoringSSL.c;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

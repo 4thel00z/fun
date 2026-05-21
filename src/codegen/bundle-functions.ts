@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 // This script is run when you change anything in src/js/*
 //
 // Documentation is in src/js/README.md
@@ -5,7 +7,7 @@
 // Originally, the builtin bundler only supported function files, but then the module files were
 // added to this, which has made this entire setup extremely convoluted and a mess.
 //
-// One day, this entire setup should be rewritten, but also it would be cool if Bun natively
+// One day, this entire setup should be rewritten, but also it would be cool if Fun natively
 // supported macros that aren't json value -> json value. Otherwise, I'd use a real JS parser/ast
 // library, instead of RegExp hacks.
 //
@@ -70,7 +72,7 @@ interface BundledBuiltin {
  */
 async function processFileSplit(filename: string): Promise<{ functions: BundledBuiltin[]; internal: boolean }> {
   const basename = path.basename(filename, ".ts");
-  let contents = await Bun.file(filename).text();
+  let contents = await Fun.file(filename).text();
 
   contents = applyGlobalReplacements(contents);
   const originalContents = contents;
@@ -267,7 +269,7 @@ async function processFileSplit(filename: string): Promise<{ functions: BundledB
     const useThis = true;
 
     // TODO: we should use format=IIFE so we could bundle imports and extra functions.
-    await Bun.write(
+    await Fun.write(
       tmpFile,
       `// @ts-nocheck
 // GENERATED TEMP FILE - DO NOT EDIT
@@ -283,8 +285,8 @@ $$capture_start$$(${fn.async ? "async " : ""}${
       } {${fn.source}}).$$capture_end$$;
 `,
     );
-    await Bun.sleep(1);
-    const build = await Bun.build({
+    await Fun.sleep(1);
+    const build = await Fun.build({
       entrypoints: [tmpFile],
       define,
       target: "bun",
@@ -297,7 +299,7 @@ $$capture_start$$(${fn.async ? "async " : ""}${
     if (build.outputs.length !== 1) {
       throw new Error("expected one output");
     }
-    let output = (await build.outputs[0].text()).replaceAll("// @bun\n", "");
+    let output = (await build.outputs[0].text()).replaceAll("// @fun\n", "");
     let usesDebug = output.includes("$debug_log");
     let usesAssert = output.includes("$assert");
     const captured = output.match(/\$\$capture_start\$\$([\s\S]+)\.\$\$capture_end\$\$/)![1];
@@ -375,7 +377,7 @@ export async function bundleBuiltinFunctions({ requireTransformer }: BundleBuilt
     .filter(x => x.endsWith(".ts") && !x.endsWith(".d.ts"))
     .sort();
 
-  // Bun seems to crash if this is parallelized, :(
+  // Fun seems to crash if this is parallelized, :(
   if (PARALLEL) {
     await Promise.all(filesToProcess.map(processFunctionFile));
   } else {
@@ -399,7 +401,7 @@ export async function bundleBuiltinFunctions({ requireTransformer }: BundleBuilt
 
         // If you want to see the individual function sources:
         // if (true) {
-        //   Bun.write(CODEGEN_DIR + "/functions/" + low(basename) + cap(fn.name) + ".js", fn.source + "\n");
+        //   Fun.write(CODEGEN_DIR + "/functions/" + low(basename) + cap(fn.name) + ".js", fn.source + "\n");
         // }
       }
     }
@@ -421,7 +423,7 @@ export async function bundleBuiltinFunctions({ requireTransformer }: BundleBuilt
     #include "WebCoreJSClientData.h"
     #include "WebCoreJSBuiltins.h"
     #include <JavaScriptCore/JSObjectInlines.h>
-    #include "BunBuiltinNames.h"
+    #include "FunBuiltinNames.h"
 
     namespace WebCore {
         static const Latin1Character combinedSourceCodeBuffer[${combinedSourceCodeLength + 1}] = { ${combinedSourceCodeChars}, 0 };
@@ -455,7 +457,7 @@ JSC::FunctionExecutable* ${lowerBasename}${cap(fn.name)}CodeGenerator(JSC::VM& v
     bundledCPP += `
 #pragma mark ${basename}
 
-${basename}BuiltinsWrapper::${basename}BuiltinsWrapper(JSC::VM& vm, RefPtr<JSC::SourceProvider> sourceProvider, BunBuiltinNames &builtinNames)
+${basename}BuiltinsWrapper::${basename}BuiltinsWrapper(JSC::VM& vm, RefPtr<JSC::SourceProvider> sourceProvider, FunBuiltinNames &builtinNames)
     : m_vm(vm)`;
 
     if (internal) {
@@ -472,7 +474,7 @@ RefPtr<JSC::SourceProvider> createBuiltinsSourceProvider() {
 `;
 
   bundledCPP += `
-JSBuiltinFunctions::JSBuiltinFunctions(JSC::VM& vm, RefPtr<JSC::SourceProvider> provider, BunBuiltinNames& builtinNames) : m_vm(vm),
+JSBuiltinFunctions::JSBuiltinFunctions(JSC::VM& vm, RefPtr<JSC::SourceProvider> provider, FunBuiltinNames& builtinNames) : m_vm(vm),
   ${files.map(({ basename }) => `m_${low(basename)}Builtins(vm, provider, builtinNames)`).join(", ")}
 {}
 
@@ -625,7 +627,7 @@ JSBuiltinInternalFunctions::JSBuiltinInternalFunctions(JSC::VM& vm) : m_vm(vm)
 
     class ${basename}BuiltinsWrapper : private JSC::WeakHandleOwner {
     public:
-        explicit ${basename}BuiltinsWrapper(JSC::VM& vm, RefPtr<JSC::SourceProvider> sourceProvider, BunBuiltinNames &builtinNames);
+        explicit ${basename}BuiltinsWrapper(JSC::VM& vm, RefPtr<JSC::SourceProvider> sourceProvider, FunBuiltinNames &builtinNames);
 
     #define EXPOSE_BUILTIN_EXECUTABLES(name, functionName, overriddenName, length) \\
         JSC::UnlinkedFunctionExecutable* name##Executable(); \\
@@ -713,7 +715,7 @@ JSBuiltinInternalFunctions::JSBuiltinInternalFunctions(JSC::VM& vm) : m_vm(vm)
   bundledHeader += `class JSBuiltinFunctions {
         WTF_DEPRECATED_MAKE_FAST_ALLOCATED(JSBuiltinFunctions);
     public:
-        explicit JSBuiltinFunctions(JSC::VM& vm, RefPtr<JSC::SourceProvider> provider, BunBuiltinNames &builtinNames);
+        explicit JSBuiltinFunctions(JSC::VM& vm, RefPtr<JSC::SourceProvider> provider, FunBuiltinNames &builtinNames);
         void exportNames();
 
     `;
@@ -769,17 +771,17 @@ JSBuiltinInternalFunctions::JSBuiltinInternalFunctions(JSC::VM& vm) : m_vm(vm)
     `;
   // Handle builtin names
   {
-    const BunBuiltinNamesHeader = require("fs").readFileSync(
-      path.join(import.meta.dir, "../js/builtins/BunBuiltinNames.h"),
+    const FunBuiltinNamesHeader = require("fs").readFileSync(
+      path.join(import.meta.dir, "../js/builtins/FunBuiltinNames.h"),
       "utf8",
     );
-    let definedBuiltinNamesStartI = BunBuiltinNamesHeader.indexOf(
-      "#define BUN_COMMON_PRIVATE_IDENTIFIERS_EACH_PROPERTY_NAME",
+    let definedBuiltinNamesStartI = FunBuiltinNamesHeader.indexOf(
+      "#define FUN_COMMON_PRIVATE_IDENTIFIERS_EACH_PROPERTY_NAME",
     );
-    let definedBuiltinNamesMacroEndI = BunBuiltinNamesHeader.indexOf(
-      "--- END of BUN_COMMON_PRIVATE_IDENTIFIERS_EACH_PROPERTY_NAME ---",
+    let definedBuiltinNamesMacroEndI = FunBuiltinNamesHeader.indexOf(
+      "--- END of FUN_COMMON_PRIVATE_IDENTIFIERS_EACH_PROPERTY_NAME ---",
     );
-    const definedBuiltinNames = BunBuiltinNamesHeader.slice(definedBuiltinNamesStartI, definedBuiltinNamesMacroEndI)
+    const definedBuiltinNames = FunBuiltinNamesHeader.slice(definedBuiltinNamesStartI, definedBuiltinNamesMacroEndI)
       .split("\n")
       .map(x => x.trim())
       .filter(x => x.startsWith("macro("))
@@ -792,7 +794,7 @@ JSBuiltinInternalFunctions::JSBuiltinInternalFunctions(JSC::VM& vm) : m_vm(vm)
       const prevSize = uniqueDefinedBuiltinNames.size;
       uniqueDefinedBuiltinNames.add(name);
       if (uniqueDefinedBuiltinNames.size === prevSize) {
-        throw new Error(`Duplicate private name "${name}" in BunBuiltinNames.h`);
+        throw new Error(`Duplicate private name "${name}" in FunBuiltinNames.h`);
       }
     }
     for (let additionalPrivateName of additionalPrivateNames) {
@@ -804,21 +806,21 @@ JSBuiltinInternalFunctions::JSBuiltinInternalFunctions(JSC::VM& vm) : m_vm(vm)
     let additionalPrivateNamesHeader = `// Generated by ${import.meta.path}
 #pragma once
 
-#ifndef BUN_ADDITIONAL_BUILTIN_NAMES
-#define BUN_ADDITIONAL_BUILTIN_NAMES(macro) \\
+#ifndef FUN_ADDITIONAL_BUILTIN_NAMES
+#define FUN_ADDITIONAL_BUILTIN_NAMES(macro) \\
   ${Array.from(additionalPrivateNames)
     .map(x => `macro(${x})`)
     .join(" \\\n  ")}
 #endif
 `;
 
-    writeIfNotChanged(path.join(CODEGEN_DIR, "BunBuiltinNames+extras.h"), additionalPrivateNamesHeader);
+    writeIfNotChanged(path.join(CODEGEN_DIR, "FunBuiltinNames+extras.h"), additionalPrivateNamesHeader);
   }
   writeIfNotChanged(path.join(CODEGEN_DIR, "WebCoreJSBuiltins.h"), bundledHeader);
   writeIfNotChanged(path.join(CODEGEN_DIR, "WebCoreJSBuiltins.cpp"), bundledCPP);
 
   // Generate TS types
-  let dts = `// Generated by \`bun src/js/builtins/codegen\`
+  let dts = `// Generated by \`fun src/js/builtins/codegen\`
     // Do not edit by hand.
     type RemoveThis<F> = F extends (this: infer T, ...args: infer A) => infer R ? (...args: A) => R : F;
     `;

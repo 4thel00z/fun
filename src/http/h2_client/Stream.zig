@@ -3,7 +3,7 @@
 //! that the request belongs to (cleared before any terminal callback so the
 //! deliver loop never dereferences a freed client).
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 id: u31,
 session: *ClientSession,
@@ -62,11 +62,11 @@ pub const State = enum(u2) {
 
 pub fn deinit(this: *@This()) void {
     _ = H2.live_streams.fetchSub(1, .monotonic);
-    this.header_block.deinit(bun.default_allocator);
-    this.body_buffer.deinit(bun.default_allocator);
-    this.decoded_bytes.deinit(bun.default_allocator);
-    this.decoded_headers.deinit(bun.default_allocator);
-    bun.destroy(this);
+    this.header_block.deinit(fun.default_allocator);
+    this.body_buffer.deinit(fun.default_allocator);
+    this.decoded_bytes.deinit(fun.default_allocator);
+    this.decoded_headers.deinit(fun.default_allocator);
+    fun.destroy(this);
 }
 
 pub fn rst(this: *@This(), code: wire.ErrorCode) void {
@@ -109,6 +109,6 @@ const H2 = @import("../H2Client.zig");
 const std = @import("std");
 const wire = @import("../H2FrameParser.zig");
 
-const bun = @import("bun");
-const HTTPClient = bun.http;
-const picohttp = bun.picohttp;
+const fun = @import("fun");
+const HTTPClient = fun.http;
+const picohttp = fun.picohttp;

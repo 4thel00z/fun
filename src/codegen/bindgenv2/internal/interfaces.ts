@@ -2,13 +2,13 @@ import { CodeStyle, Type } from "./base";
 
 export const ArrayBuffer = new (class extends Type {
   get idlType() {
-    return `::Bun::IDLArrayBufferRef`;
+    return `::Fun::IDLArrayBufferRef`;
   }
   get bindgenType() {
     return `bindgen.BindgenArrayBuffer`;
   }
   zigType(style?: CodeStyle) {
-    return "bun.bun_js.jsc.JSCArrayBuffer.Ref";
+    return "fun.fun_js.jsc.JSCArrayBuffer.Ref";
   }
   optionalZigType(style?: CodeStyle) {
     return this.zigType(style) + ".Optional";
@@ -20,13 +20,13 @@ export const ArrayBuffer = new (class extends Type {
 
 export const Blob = new (class extends Type {
   get idlType() {
-    return `::Bun::IDLBlobRef`;
+    return `::Fun::IDLBlobRef`;
   }
   get bindgenType() {
     return `bindgen.BindgenBlob`;
   }
   zigType(style?: CodeStyle) {
-    return "bun.bun_js.webcore.Blob.Ref";
+    return "fun.fun_js.webcore.Blob.Ref";
   }
   optionalZigType(style?: CodeStyle) {
     return this.zigType(style) + ".Optional";
@@ -35,6 +35,6 @@ export const Blob = new (class extends Type {
     throw RangeError("default values for `Blob` are not supported");
   }
   getHeaders(result: Set<string>): void {
-    result.add("BunIDLConvertBlob.h");
+    result.add("FunIDLConvertBlob.h");
   }
 })();

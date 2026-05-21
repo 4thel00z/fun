@@ -151,14 +151,14 @@ var output_files: [1]api.OutputFile = undefined;
 var buffer_writer: JSPrinter.BufferWriter = undefined;
 var writer: JSPrinter.BufferPrinter = undefined;
 var define: *Define.Define = undefined;
-export fn bun_malloc(size: usize) u64 {
+export fn fun_malloc(size: usize) u64 {
     return @as(u64, @bitCast([2]u32{
         @intFromPtr((default_allocator.alloc(u8, size) catch unreachable).ptr),
         size,
     }));
 }
 
-export fn bun_free(bytes: u64) void {
+export fn fun_free(bytes: u64) void {
     default_allocator.free(Uint8Array.fromJS(bytes));
 }
 
@@ -196,7 +196,7 @@ const TestAnalyzer = struct {
     string_buffer: std.array_list.Managed(u8),
     items: std.array_list.Managed(api.TestResponseItem),
 
-    pub fn visitExpr(this: *TestAnalyzer, parser: *bun.js_parser.TSXParser, expr: JSAst.Expr) !void {
+    pub fn visitExpr(this: *TestAnalyzer, parser: *fun.js_parser.TSXParser, expr: JSAst.Expr) !void {
         switch (expr.data) {
             .e_call => |call| {
                 if (call.target.isRef(parser.jest.@"test") or call.target.isRef(parser.jest.it) or call.target.isRef(parser.jest.describe)) {
@@ -222,7 +222,7 @@ const TestAnalyzer = struct {
 
                         return;
                     }
-                } else if (call.target.data == .e_dot and bun.strings.eqlComptime(call.target.data.e_dot.name, "only")) {
+                } else if (call.target.data == .e_dot and fun.strings.eqlComptime(call.target.data.e_dot.name, "only")) {
                     const target = call.target.data.e_dot.target;
                     if (target.isRef(parser.jest.@"test") or target.isRef(parser.jest.it) or target.isRef(parser.jest.describe)) {
                         if (call.args.len > 0) {
@@ -293,7 +293,7 @@ const TestAnalyzer = struct {
         }
     }
 
-    pub fn visitStmt(this: *TestAnalyzer, parser: *bun.js_parser.TSXParser, stmt: JSAst.Stmt) anyerror!void {
+    pub fn visitStmt(this: *TestAnalyzer, parser: *fun.js_parser.TSXParser, stmt: JSAst.Stmt) anyerror!void {
         switch (stmt.data) {
             .s_block => |s| {
                 for (s.stmts) |s2| {
@@ -390,14 +390,14 @@ const TestAnalyzer = struct {
             },
 
             .s_import => |import| {
-                if (bun.strings.eqlComptime(parser.import_records.items[import.import_record_index].path.text, "bun:test")) {
+                if (fun.strings.eqlComptime(parser.import_records.items[import.import_record_index].path.text, "fun:test")) {
                     for (import.items) |item| {
-                        const clause: bun.ast.ClauseItem = item;
-                        if (bun.strings.eqlComptime(clause.alias, "test")) {
+                        const clause: fun.ast.ClauseItem = item;
+                        if (fun.strings.eqlComptime(clause.alias, "test")) {
                             parser.jest.@"test" = clause.name.ref.?;
-                        } else if (bun.strings.eqlComptime(clause.alias, "it")) {
+                        } else if (fun.strings.eqlComptime(clause.alias, "it")) {
                             parser.jest.it = clause.name.ref.?;
-                        } else if (bun.strings.eqlComptime(clause.alias, "describe")) {
+                        } else if (fun.strings.eqlComptime(clause.alias, "describe")) {
                             parser.jest.describe = clause.name.ref.?;
                         }
                     }
@@ -409,8 +409,8 @@ const TestAnalyzer = struct {
 
     pub fn visitParts(
         this: *TestAnalyzer,
-        parser: *bun.js_parser.TSXParser,
-        parts: []bun.ast.Part,
+        parser: *fun.js_parser.TSXParser,
+        parts: []fun.ast.Part,
     ) anyerror!void {
         var jest = &parser.jest;
         if (parser.symbols.items[jest.it.innerIndex()].use_count_estimate == 0) {
@@ -436,7 +436,7 @@ export fn getTests(opts_array: u64) u64 {
     defer arena.deinit();
     var log_ = Logger.Log.init(allocator);
     var reader = ApiReader.init(Uint8Array.fromJS(opts_array), allocator);
-    var opts = bun.handleOom(api.GetTestsRequest.decode(&reader));
+    var opts = fun.handleOom(api.GetTestsRequest.decode(&reader));
     var code = Logger.Source.initPathString(if (opts.path.len > 0) opts.path else "my-test-file.test.tsx", opts.contents);
     code.contents_is_recycled = true;
     defer {
@@ -447,7 +447,7 @@ export fn getTests(opts_array: u64) u64 {
     var parser = JSParser.Parser.init(.{
         .jsx = .{},
         .ts = true,
-    }, &log_, &code, define, allocator) catch |err| bun.handleOom(err);
+    }, &log_, &code, define, allocator) catch |err| fun.handleOom(err);
 
     var anaylzer = TestAnalyzer{
         .items = std.array_list.Managed(
@@ -462,7 +462,7 @@ export fn getTests(opts_array: u64) u64 {
     parser.options.features.top_level_await = true;
 
     parser.analyze(&anaylzer, @ptrCast(&TestAnalyzer.visitParts)) catch |err| {
-        bun.handleErrorReturnTrace(err, @errorReturnTrace());
+        fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
         Output.print("Error: {s}\n", .{@errorName(err)});
 
@@ -484,7 +484,7 @@ export fn getTests(opts_array: u64) u64 {
 }
 
 export fn transform(opts_array: u64) u64 {
-    // var arena = bun.ArenaAllocator.init(default_allocator);
+    // var arena = fun.ArenaAllocator.init(default_allocator);
     var arena = Arena.init();
     var allocator = arena.allocator();
     defer arena.deinit();
@@ -554,7 +554,7 @@ export fn transform(opts_array: u64) u64 {
 }
 
 export fn scan(opts_array: u64) u64 {
-    // var arena = bun.ArenaAllocator.init(default_allocator);
+    // var arena = fun.ArenaAllocator.init(default_allocator);
     var arena = Arena.init();
     var allocator = arena.allocator();
     defer arena.deinit();
@@ -633,8 +633,8 @@ export fn emsc_main() void {
     _ = cycleEnd;
     _ = cycleStart;
     _ = transform;
-    _ = bun_free;
-    _ = bun_malloc;
+    _ = fun_free;
+    _ = fun_malloc;
     _ = getTests;
 }
 
@@ -643,9 +643,9 @@ comptime {
     _ = cycleEnd;
     _ = cycleStart;
     _ = transform;
-    _ = bun_free;
+    _ = fun_free;
     _ = scan;
-    _ = bun_malloc;
+    _ = fun_malloc;
     _ = getTests;
 }
 
@@ -653,17 +653,17 @@ const Define = @import("./bundler/defines.zig");
 const Options = @import("./bundler/options.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const global = @import("bun");
-const JSAst = bun.ast;
-const JSParser = bun.js_parser;
-const JSPrinter = bun.js_printer;
-const Logger = bun.logger;
+const fun = @import("fun");
+const global = @import("fun");
+const JSAst = fun.ast;
+const JSParser = fun.js_parser;
+const JSPrinter = fun.js_printer;
+const Logger = fun.logger;
 const Output = global.Output;
 const default_allocator = global.default_allocator;
-const mimalloc = bun.mimalloc;
-const Arena = bun.allocators.MimallocArena;
+const mimalloc = fun.mimalloc;
+const Arena = fun.allocators.MimallocArena;
 
-const ApiReader = bun.schema.Reader;
-const ApiWriter = bun.schema.Writer;
-const api = bun.schema.api;
+const ApiReader = fun.schema.Reader;
+const ApiWriter = fun.schema.Writer;
+const api = fun.schema.api;

@@ -2,7 +2,7 @@ last_part: *js_ast.Part,
 // files in node modules will not get hot updates, so the code generation
 // can be a bit more concise for re-exports
 is_in_node_modules: bool,
-imports_seen: bun.StringArrayHashMapUnmanaged(ImportRef) = .{},
+imports_seen: fun.StringArrayHashMapUnmanaged(ImportRef) = .{},
 export_star_props: std.ArrayListUnmanaged(G.Property) = .{},
 export_props: std.ArrayListUnmanaged(G.Property) = .{},
 stmts: std.ArrayListUnmanaged(Stmt) = .{},
@@ -447,7 +447,7 @@ pub fn finalize(ctx: *ConvertESMExportsForHmr, p: anytype, all_parts: []js_ast.P
             try ctx.export_props.ensureUnusedCapacity(p.allocator, export_star_len);
             const len = ctx.export_props.items.len;
             ctx.export_props.items.len += export_star_len;
-            bun.copy(G.Property, ctx.export_props.items[export_star_len..], ctx.export_props.items[0..len]);
+            fun.copy(G.Property, ctx.export_props.items[export_star_len..], ctx.export_props.items[0..len]);
             @memcpy(ctx.export_props.items[0..export_star_len], ctx.export_star_props.items);
         }
     }
@@ -522,10 +522,10 @@ pub fn finalize(ctx: *ConvertESMExportsForHmr, p: anytype, all_parts: []js_ast.P
     ctx.last_part.tag = .none;
 }
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -538,7 +538,7 @@ const G = js_ast.G;
 const Decl = G.Decl;
 const Property = G.Property;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const ConvertESMExportsForHmr = js_parser.ConvertESMExportsForHmr;
 const ReactRefresh = js_parser.ReactRefresh;
 const Ref = js_parser.Ref;

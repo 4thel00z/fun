@@ -4,7 +4,7 @@ pub const Entry = struct {
     name: api.StringPointer,
     value: api.StringPointer,
 
-    pub const List = bun.MultiArrayList(Entry);
+    pub const List = fun.MultiArrayList(Entry);
 };
 
 entries: Entry.List = .{},
@@ -30,7 +30,7 @@ pub fn get(this: *const Headers, name: []const u8) ?[]const u8 {
     const names = entries.items(.name);
     const values = entries.items(.value);
     for (names, 0..) |name_ptr, i| {
-        if (bun.strings.eqlCaseInsensitiveASCII(this.asStr(name_ptr), name, true)) {
+        if (fun.strings.eqlCaseInsensitiveASCII(this.asStr(name_ptr), name, true)) {
             return this.asStr(values[i]);
         }
     }
@@ -96,17 +96,17 @@ pub fn fromPicoHttpHeaders(headers: []const picohttp.Header, allocator: std.mem.
     for (headers) |header| {
         buf_len += header.name.len + header.value.len;
     }
-    bun.handleOom(result.entries.ensureTotalCapacity(allocator, header_count));
+    fun.handleOom(result.entries.ensureTotalCapacity(allocator, header_count));
     result.entries.len = headers.len;
-    bun.handleOom(result.buf.ensureTotalCapacityPrecise(allocator, buf_len));
+    fun.handleOom(result.buf.ensureTotalCapacityPrecise(allocator, buf_len));
     result.buf.items.len = buf_len;
     var offset: u32 = 0;
     for (headers, 0..headers.len) |header, i| {
         const name_offset = offset;
-        bun.copy(u8, result.buf.items[offset..][0..header.name.len], header.name);
+        fun.copy(u8, result.buf.items[offset..][0..header.name.len], header.name);
         offset += @truncate(header.name.len);
         const value_offset = offset;
-        bun.copy(u8, result.buf.items[offset..][0..header.value.len], header.value);
+        fun.copy(u8, result.buf.items[offset..][0..header.value.len], header.value);
         offset += @truncate(header.value.len);
 
         result.entries.set(i, .{
@@ -144,9 +144,9 @@ pub fn from(fetch_headers_ref: ?*FetchHeaders, allocator: std.mem.Allocator, opt
         }
         break :brk false;
     };
-    bun.handleOom(headers.entries.ensureTotalCapacity(allocator, header_count));
+    fun.handleOom(headers.entries.ensureTotalCapacity(allocator, header_count));
     headers.entries.len = header_count;
-    bun.handleOom(headers.buf.ensureTotalCapacityPrecise(allocator, buf_len));
+    fun.handleOom(headers.buf.ensureTotalCapacityPrecise(allocator, buf_len));
     headers.buf.items.len = buf_len;
     var sliced = headers.entries.slice();
     var names = sliced.items(.name);
@@ -156,13 +156,13 @@ pub fn from(fetch_headers_ref: ?*FetchHeaders, allocator: std.mem.Allocator, opt
 
     // TODO: maybe we should send Content-Type header first instead of last?
     if (needs_content_type) {
-        bun.copy(u8, headers.buf.items[buf_len_before_content_type..], "Content-Type");
+        fun.copy(u8, headers.buf.items[buf_len_before_content_type..], "Content-Type");
         names[header_count - 1] = .{
             .offset = buf_len_before_content_type,
             .length = "Content-Type".len,
         };
 
-        bun.copy(u8, headers.buf.items[buf_len_before_content_type + "Content-Type".len ..], options.body.?.contentType());
+        fun.copy(u8, headers.buf.items[buf_len_before_content_type + "Content-Type".len ..], options.body.?.contentType());
         values[header_count - 1] = .{
             .offset = buf_len_before_content_type + @as(u32, "Content-Type".len),
             .length = @as(u32, @truncate(options.body.?.contentType().len)),
@@ -174,9 +174,9 @@ pub fn from(fetch_headers_ref: ?*FetchHeaders, allocator: std.mem.Allocator, opt
 
 const std = @import("std");
 
-const bun = @import("bun");
-const picohttp = bun.picohttp;
-const api = bun.schema.api;
+const fun = @import("fun");
+const picohttp = fun.picohttp;
+const api = fun.schema.api;
 
-const Blob = bun.webcore.Blob;
-const FetchHeaders = bun.webcore.FetchHeaders;
+const Blob = fun.webcore.Blob;
+const FetchHeaders = fun.webcore.FetchHeaders;

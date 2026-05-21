@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("issue #22650 - shell crash with && operator followed by external command", async () => {
   // Minimal reproduction: echo && <external command>
   // This triggers the crash because after the first command succeeds,
   // the shell tries to spawn an external process but top_level_dir is not set
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "exec", "echo test && node --version"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "exec", "echo test && node --version"],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

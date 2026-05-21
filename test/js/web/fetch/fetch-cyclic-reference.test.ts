@@ -1,9 +1,9 @@
-import { heapStats } from "bun:jsc";
-import { describe, expect, test } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { describe, expect, test } from "fun:test";
 
 describe("FetchTasklet cyclic reference", () => {
   test("fetch with request body stream should not leak with cyclic reference", async () => {
-    await using server = Bun.serve({
+    await using server = Fun.serve({
       port: 0,
       async fetch(req) {
         const body = await req.text();
@@ -40,10 +40,10 @@ describe("FetchTasklet cyclic reference", () => {
       await leak();
     }
 
-    await Bun.sleep(10);
-    Bun.gc(true);
-    await Bun.sleep(10);
-    Bun.gc(true);
+    await Fun.sleep(10);
+    Fun.gc(true);
+    await Fun.sleep(10);
+    Fun.gc(true);
 
     const requestCount = heapStats().objectTypeCounts.Request || 0;
     const readableStreamCount = heapStats().objectTypeCounts.ReadableStream || 0;
@@ -52,7 +52,7 @@ describe("FetchTasklet cyclic reference", () => {
   });
 
   test("fetch with ReadableStream body should not leak streams", async () => {
-    await using server = Bun.serve({
+    await using server = Fun.serve({
       port: 0,
       async fetch(req) {
         const body = await req.text();
@@ -82,10 +82,10 @@ describe("FetchTasklet cyclic reference", () => {
       await leak();
     }
 
-    await Bun.sleep(10);
-    Bun.gc(true);
-    await Bun.sleep(10);
-    Bun.gc(true);
+    await Fun.sleep(10);
+    Fun.gc(true);
+    await Fun.sleep(10);
+    Fun.gc(true);
 
     const readableStreamCount = heapStats().objectTypeCounts.ReadableStream || 0;
     // This currently fails with ~502 streams leaked

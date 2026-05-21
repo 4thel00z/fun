@@ -1,5 +1,5 @@
-import { SQL } from "bun";
-import { describe, expect, test } from "bun:test";
+import { SQL } from "fun";
+import { describe, expect, test } from "fun:test";
 
 describe("SQLite URL Parsing Matrix", () => {
   const protocols = [
@@ -58,10 +58,10 @@ describe("SQLite URL Parsing Matrix", () => {
 
         if (testCase.protocolName === "file://") {
           const filename = sql.options.filename;
-          // The implementation uses Bun.fileURLToPath if valid, else strips "file://"
+          // The implementation uses Fun.fileURLToPath if valid, else strips "file://"
           let expected: string;
           try {
-            expected = Bun.fileURLToPath(testCase.url);
+            expected = Fun.fileURLToPath(testCase.url);
           } catch {
             // Not a valid file:// URL, so implementation just strips the prefix
             expected = testCase.url.slice(7); // "file://".length
@@ -147,7 +147,7 @@ describe("SQLite URL Parsing Matrix", () => {
         const filename = sql.options.filename;
         let expected: string;
         try {
-          expected = Bun.fileURLToPath(testCase.url);
+          expected = Fun.fileURLToPath(testCase.url);
         } catch {
           expected = testCase.url.slice(testCase.protocol.length);
         }
@@ -185,10 +185,10 @@ describe("SQLite URL Parsing Matrix", () => {
 
       if (testCase.protocol === "file://") {
         const filename = sql.options.filename;
-        // Same logic as above - try Bun.fileURLToPath, fallback to stripping prefix
+        // Same logic as above - try Fun.fileURLToPath, fallback to stripping prefix
         let expected: string;
         try {
-          expected = Bun.fileURLToPath(testCase.url);
+          expected = Fun.fileURLToPath(testCase.url);
         } catch {
           expected = testCase.url.slice(7); // "file://".length
         }
@@ -246,7 +246,7 @@ describe("SQLite URL Parsing Matrix", () => {
       expect(sql.options.adapter).toBe("sqlite");
 
       const filename = sql.options.filename;
-      const expected = Bun.fileURLToPath(resolvedUrl);
+      const expected = Fun.fileURLToPath(resolvedUrl);
       expect(filename).toBe(expected);
     });
   });

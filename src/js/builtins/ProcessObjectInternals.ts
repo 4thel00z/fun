@@ -24,7 +24,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const enum BunProcessStdinFdType {
+const enum FunProcessStdinFdType {
   file = 0,
   pipe = 1,
   socket = 2,
@@ -34,7 +34,7 @@ export function getStdioWriteStream(
   process: typeof globalThis.process,
   fd: number,
   isTTY: boolean,
-  fdType: BunProcessStdinFdType,
+  fdType: FunProcessStdinFdType,
 ) {
   $assert(fd === 1 || fd === 2, `Expected fd to be 1 or 2, got ${fd}`);
 
@@ -59,7 +59,7 @@ export function getStdioWriteStream(
     // When stdout/stderr are piped or connected to a socket, they should have Symbol.asyncIterator
     // to match Node.js behavior where they become Duplex streams (Socket)
     // But when redirected to a file, they shouldn't have it
-    if (fdType === BunProcessStdinFdType.pipe || fdType === BunProcessStdinFdType.socket) {
+    if (fdType === FunProcessStdinFdType.pipe || fdType === FunProcessStdinFdType.socket) {
       stream[Symbol.asyncIterator] = function () {
         return (async function* () {
           // stdout/stderr don't produce readable data, so yield nothing
@@ -114,11 +114,11 @@ export function getStdinStream(
   process: typeof globalThis.process,
   fd: number,
   isTTY: boolean,
-  fdType: BunProcessStdinFdType,
+  fdType: FunProcessStdinFdType,
 ) {
   $assert(fd === 0);
-  const native = Bun.stdin.stream();
-  const source = native.$bunNativePtr;
+  const native = Fun.stdin.stream();
+  const source = native.$funNativePtr;
 
   var reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
 
@@ -190,7 +190,7 @@ export function getStdinStream(
 
   // tty.ReadStream is supposed to extend from net.Socket.
   // but we haven't made that work yet. Until then, we need to manually add some of net.Socket's methods
-  if (isTTY || fdType !== BunProcessStdinFdType.file) {
+  if (isTTY || fdType !== FunProcessStdinFdType.file) {
     stream.ref = function () {
       forceUnref = false;
       own();
@@ -394,7 +394,7 @@ export function windowsEnv(
   //
   // it throws "Cannot convert a Symbol value to a string"
 
-  (internalEnv as any)[Bun.inspect.custom] = () => {
+  (internalEnv as any)[Fun.inspect.custom] = () => {
     let o = {};
     for (let k of envMapList) {
       o[k] = internalEnv[k.toUpperCase()];

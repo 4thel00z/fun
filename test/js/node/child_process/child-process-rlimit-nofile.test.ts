@@ -1,13 +1,13 @@
 /**
- * This test runs under `bun test` and (via node:test/node:assert) under
+ * This test runs under `fun test` and (via node:test/node:assert) under
  * `node --experimental-strip-types --test`.
  *
- * On macOS the hard RLIMIT_NOFILE defaults to RLIM_INFINITY. Both Bun and Node
+ * On macOS the hard RLIMIT_NOFILE defaults to RLIM_INFINITY. Both Fun and Node
  * raise the soft limit on startup; Node caps the raise at 1<<20. Raising it
  * anywhere near INT_MAX breaks child processes that read the limit into an int.
  *
  * The test lowers the soft limit to 256 before exec'ing the runtime so its
- * startup raise actually runs (neither Bun nor Node lowers an already-high
+ * startup raise actually runs (neither Fun nor Node lowers an already-high
  * limit), then checks what a grandchild shell sees.
  */
 import assert from "node:assert";
@@ -25,7 +25,7 @@ test(
     const { stdout } = await execFileP(
       "/bin/sh",
       ["-c", `ulimit -Sn 256 && exec "$1" -e "$2"`, "sh", process.execPath, inner],
-      { env: { ...process.env, BUN_DEBUG_QUIET_LOGS: "1" } },
+      { env: { ...process.env, FUN_DEBUG_QUIET_LOGS: "1" } },
     );
 
     const soft = stdout.trim();

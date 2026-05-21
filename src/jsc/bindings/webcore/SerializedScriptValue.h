@@ -120,7 +120,7 @@ class SerializedScriptValue : public ThreadSafeRefCounted<SerializedScriptValue>
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(SerializedScriptValue, SerializedScriptValue);
 
 public:
-    static SYSV_ABI void writeBytesForBun(CloneSerializer*, const uint8_t*, uint32_t);
+    static SYSV_ABI void writeBytesForFun(CloneSerializer*, const uint8_t*, uint32_t);
     static SYSV_ABI bool isTransferable(JSC::JSGlobalObject* globalObject, JSC::JSValue value);
 
     WEBCORE_EXPORT static ExceptionOr<Ref<SerializedScriptValue>> create(JSC::JSGlobalObject&, JSC::JSValue, Vector<JSC::Strong<JSC::JSObject>>&& transfer, Vector<RefPtr<MessagePort>>&, SerializationForStorage = SerializationForStorage::No, SerializationContext = SerializationContext::Default, SerializationForCrossProcessTransfer = SerializationForCrossProcessTransfer::No);

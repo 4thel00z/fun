@@ -1,16 +1,16 @@
-// On NixOS, autoPatchelfHook rewrites bun's PT_INTERP to a /nix/store/... path.
-// `bun build --compile` then copies that patched binary, producing output that
+// On NixOS, autoPatchelfHook rewrites fun's PT_INTERP to a /nix/store/... path.
+// `fun build --compile` then copies that patched binary, producing output that
 // only runs on the same Nix generation. We now detect store-path interpreters
 // and rewrite them back to the standard FHS path.
 //
-// https://github.com/oven-sh/bun/issues/24742
+// https://github.com/underdoc-org/fun/issues/24742
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { chmodSync, closeSync, cpSync, existsSync, openSync, readSync } from "fs";
-import { bunEnv, bunExe, isLinux, isMusl, tempDir } from "harness";
+import { funEnv, funExe, isLinux, isMusl, tempDir } from "harness";
 import { join } from "path";
 
-const patchelf = Bun.which("patchelf");
+const patchelf = Fun.which("patchelf");
 
 const ldso =
   process.arch === "arm64"
@@ -42,7 +42,7 @@ function readInterp(buf: Buffer): string | null {
 }
 
 // Read up to the first 4 KiB of a file (enough for PT_INTERP, which always
-// lives in the first ELF page). The bun binary is ~1.3 GB in debug builds,
+// lives in the first ELF page). The fun binary is ~1.3 GB in debug builds,
 // so `readFileSync` on it would be wasteful; mirror what the Zig helper does.
 function readHead(path: string, bytes = 4096): Buffer {
   const fd = openSync(path, "r");
@@ -63,7 +63,7 @@ function hostLooksNix(): boolean {
   if (existsSync("/etc/NIXOS")) return true;
   if (existsSync("/gnu/store")) return true;
   try {
-    const selfInterp = readInterp(readHead(bunExe()));
+    const selfInterp = readInterp(readHead(funExe()));
     if (selfInterp && (selfInterp.startsWith("/nix/store/") || selfInterp.startsWith("/gnu/store/"))) {
       return true;
     }
@@ -72,44 +72,44 @@ function hostLooksNix(): boolean {
 }
 
 test.skipIf(!isLinux || !patchelf || !existsSync(ldso) || hostLooksNix())(
-  "bun build --compile normalizes /nix/store interpreter (#24742)",
+  "fun build --compile normalizes /nix/store interpreter (#24742)",
   async () => {
     using dir = tempDir("nix-interp", {
       "in.js": `console.log("hello from compiled");`,
     });
     const cwd = String(dir);
 
-    // Simulate a NixOS-installed bun: copy the real binary, then patchelf it.
-    const fakeNixBun = join(cwd, "fake-nix-bun");
-    cpSync(bunExe(), fakeNixBun);
-    chmodSync(fakeNixBun, 0o755);
+    // Simulate a NixOS-installed fun: copy the real binary, then patchelf it.
+    const fakeNixFun = join(cwd, "fake-nix-fun");
+    cpSync(funExe(), fakeNixFun);
+    chmodSync(fakeNixFun, 0o755);
 
     {
-      const r = Bun.spawnSync({
-        cmd: [patchelf!, "--set-interpreter", fakeNixInterp, fakeNixBun],
+      const r = Fun.spawnSync({
+        cmd: [patchelf!, "--set-interpreter", fakeNixInterp, fakeNixFun],
         stderr: "pipe",
       });
       expect(r.stderr.toString()).toBe("");
       expect(r.exitCode).toBe(0);
     }
-    expect(readInterp(readHead(fakeNixBun))).toBe(fakeNixInterp);
+    expect(readInterp(readHead(fakeNixFun))).toBe(fakeNixInterp);
 
     // Build using the patched binary as the template via --compile-executable-path.
-    // (We run the real bunExe(); only the *source* of the copy is the Nix-patched one.)
+    // (We run the real funExe(); only the *source* of the copy is the Nix-patched one.)
     const out = join(cwd, "out");
     {
-      const r = Bun.spawnSync({
+      const r = Fun.spawnSync({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--compile",
           "--compile-executable-path",
-          fakeNixBun,
+          fakeNixFun,
           join(cwd, "in.js"),
           "--outfile",
           out,
         ],
-        env: bunEnv,
+        env: funEnv,
         cwd,
         stderr: "pipe",
         stdout: "pipe",
@@ -120,13 +120,13 @@ test.skipIf(!isLinux || !patchelf || !existsSync(ldso) || hostLooksNix())(
     }
 
     // The compiled output's interpreter must be the standard FHS path,
-    // not the /nix/store path baked into fake-nix-bun.
+    // not the /nix/store path baked into fake-nix-fun.
     const interp = readInterp(readHead(out));
     expect(interp).toBe(ldso);
 
     // And it must actually run on a stock system.
     {
-      const r = Bun.spawnSync({ cmd: [out], env: bunEnv, stderr: "pipe", stdout: "pipe" });
+      const r = Fun.spawnSync({ cmd: [out], env: funEnv, stderr: "pipe", stdout: "pipe" });
       expect(r.stdout.toString().trim()).toBe("hello from compiled");
       expect(r.exitCode).toBe(0);
     }

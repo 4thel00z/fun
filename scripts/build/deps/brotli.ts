@@ -1,6 +1,6 @@
 /**
  * Brotli — high-ratio compression. Backs the `br` Content-Encoding in fetch
- * and bun's --compress bundler flag.
+ * and fun's --compress bundler flag.
  *
  * DirectBuild: one archive containing common + dec + enc. The cmake build
  * splits these into three libs purely so dec-only consumers can avoid the

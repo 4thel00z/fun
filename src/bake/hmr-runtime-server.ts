@@ -1,12 +1,12 @@
 // This file is the entrypoint to the hot-module-reloading runtime.
 // On the server, communication is established with `server_exports`.
-import type { Bake } from "bun";
+import type { Bake } from "fun";
 import "./debug";
 import { loadExports, replaceModules, serverManifest, ssrManifest } from "./hmr-module";
 // import { AsyncLocalStorage } from "node:async_hooks";
 const { AsyncLocalStorage } = require("node:async_hooks");
 
-if (typeof IS_BUN_DEVELOPMENT !== "boolean") {
+if (typeof IS_FUN_DEVELOPMENT !== "boolean") {
   throw new Error("DCE is configured incorrectly");
 }
 
@@ -69,7 +69,7 @@ server_exports = {
     }
 
     while (true) {
-      if (IS_BUN_DEVELOPMENT && process.env.BUN_DEBUG_BAKE_JS) {
+      if (IS_FUN_DEVELOPMENT && process.env.FUN_DEBUG_BAKE_JS) {
         console.log("handleRequest", {
           routeModules,
           clientEntryUrl,

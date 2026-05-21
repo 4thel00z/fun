@@ -1,8 +1,8 @@
 import { bench, run } from "../runner.mjs";
 
 let decodeURIComponentSIMD;
-if (typeof Bun !== "undefined") {
-  ({ decodeURIComponentSIMD } = await import("bun:internal-for-testing"));
+if (typeof Fun !== "undefined") {
+  ({ decodeURIComponentSIMD } = await import("fun:internal-for-testing"));
 }
 
 const hugeText = Buffer.alloc(1000000, "Hello, world!").toString();

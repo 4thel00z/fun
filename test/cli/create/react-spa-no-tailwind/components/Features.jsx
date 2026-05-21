@@ -6,7 +6,7 @@ const FEATURES = [
     icon: "⚡️",
     title: "Lightning Fast",
     description:
-      "Built from scratch in Zig, Bun is focused on performance and developer experience",
+      "Built from scratch in Zig, Fun is focused on performance and developer experience",
     highlight: "Zig",
   },
   {
@@ -45,7 +45,7 @@ const FEATURES = [
 export default function Features() {
   return (
     <section className="features-section">
-      <h2>Why Choose Bun?</h2>
+      <h2>Why Choose Fun?</h2>
       <div className="features">
         {FEATURES.map((feature, index) => (
           <Feature key={index} {...feature} />

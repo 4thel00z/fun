@@ -109,7 +109,7 @@ pub const Authentication = union(enum) {
                     bytes.deinit();
                 }
 
-                var iter = bun.strings.split(bytes.slice(), ",");
+                var iter = fun.strings.split(bytes.slice(), ",");
                 var r: ?[]const u8 = null;
                 var i: ?[]const u8 = null;
                 var s: ?[]const u8 = null;
@@ -171,9 +171,9 @@ pub const Authentication = union(enum) {
     pub const decode = DecoderWrap(Authentication, decodeInternal).decode;
 };
 
-const debug = bun.Output.scoped(.Postgres, .hidden);
+const debug = fun.Output.scoped(.Postgres, .hidden);
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Data = @import("../../shared/Data.zig").Data;
 const DecoderWrap = @import("./DecoderWrap.zig").DecoderWrap;

@@ -29,7 +29,7 @@ model Post {
   authorId  Int
 
   // Big schema to replicate
-  // https://github.com/oven-sh/bun/issues/5320
+  // https://github.com/underdoc-org/fun/issues/5320
   option1  Int?
   option2  Int?
   option3  Int?

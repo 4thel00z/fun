@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -14,7 +14,7 @@ describe("SNI TLS array handling (issue #21792)", () => {
 
   test("should accept empty TLS array (no TLS)", () => {
     // Empty array should be treated as no TLS
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: [],
       fetch: () => new Response("Hello"),
@@ -25,7 +25,7 @@ describe("SNI TLS array handling (issue #21792)", () => {
 
   test("should accept single TLS config in array", () => {
     // This was the bug: single TLS config in array was incorrectly rejected
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: [{ cert: crtA, key: keyA, serverName: "serverA.com" }],
       fetch: () => new Response("Hello from serverA"),
@@ -35,7 +35,7 @@ describe("SNI TLS array handling (issue #21792)", () => {
   });
 
   test("should accept multiple TLS configs for SNI", () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: [
         { cert: crtA, key: keyA, serverName: "serverA.com" },
@@ -52,7 +52,7 @@ describe("SNI TLS array handling (issue #21792)", () => {
 
   test("should reject TLS array with missing serverName for SNI configs", () => {
     expect(() => {
-      Bun.serve({
+      Fun.serve({
         port: 0,
         tls: [
           { cert: crtA, key: keyA, serverName: "serverA.com" },
@@ -66,7 +66,7 @@ describe("SNI TLS array handling (issue #21792)", () => {
 
   test("should reject TLS array with empty serverName for SNI configs", () => {
     expect(() => {
-      Bun.serve({
+      Fun.serve({
         port: 0,
         tls: [
           { cert: crtA, key: keyA, serverName: "serverA.com" },
@@ -80,7 +80,7 @@ describe("SNI TLS array handling (issue #21792)", () => {
 
   test("should accept single TLS config without serverName when alone", () => {
     // When there's only one TLS config in the array, serverName is optional
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: [{ cert: crtA, key: keyA }], // No serverName - should work for single config
       fetch: () => new Response("Hello from default"),
@@ -91,7 +91,7 @@ describe("SNI TLS array handling (issue #21792)", () => {
 
   test("should support traditional non-array TLS config", () => {
     // Traditional single TLS config (not in array) should still work
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: { cert: crtA, key: keyA },
       fetch: () => new Response("Hello traditional"),

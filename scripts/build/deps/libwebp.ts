@@ -1,5 +1,7 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 /**
- * libwebp — Google's reference WebP codec. Backs Bun.Image WebP
+ * libwebp — Google's reference WebP codec. Backs Fun.Image WebP
  * decode/encode plus the SharpYUV RGB→YUV converter the encoder prefers.
  *
  * mux/demux are the RIFF-container helpers: demux reads VP8X chunks (ICCP,
@@ -16,7 +18,7 @@
  * and let the preprocessor prune.
  *
  * Threading: WEBP_USE_THREAD is left OFF. The decoder/encoder are invoked
- * from Bun's worker pool already; libwebp's internal pthread pool would just
+ * from Fun's worker pool already; libwebp's internal pthread pool would just
  * oversubscribe.
  */
 
@@ -79,7 +81,7 @@ const UTILS = [
 // non-sRGB source (Display P3, Adobe RGB, Jpegli XYB) keeps its colour
 // meaning through a WebP re-encode. `anim_decode.c`/`anim_encode.c`
 // (WebPAnimDecoder/WebPAnimEncoder) are omitted: they layer ON TOP of
-// demux/mux, not the reverse, and Bun has no animated-WebP support.
+// demux/mux, not the reverse, and Fun has no animated-WebP support.
 const DEMUX = ["demux"];
 const MUX = ["muxedit", "muxinternal", "muxread"];
 

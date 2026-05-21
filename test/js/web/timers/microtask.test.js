@@ -1,4 +1,4 @@
-import { it } from "bun:test";
+import { it } from "fun:test";
 
 it("queueMicrotask", async () => {
   // You can verify this test is correct by copy pasting this into a browser's console and checking it doesn't throw an error.

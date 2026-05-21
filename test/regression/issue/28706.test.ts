@@ -1,21 +1,21 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // Regression: fetch silently retries POST on keep-alive disconnect (ECONNRESET)
 // and merges response streams from multiple request lifecycles.
-// https://github.com/oven-sh/bun/issues/28706
+// https://github.com/underdoc-org/fun/issues/28706
 //
 // Run in a subprocess to isolate from ASAN shutdown diagnostics.
 test("POST should not be silently retried on keep-alive disconnect", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       let requestCount = 0;
       let sseSocket;
 
-      const server = Bun.listen({
+      const server = Fun.listen({
         hostname: "127.0.0.1",
         port: 0,
         socket: {
@@ -65,7 +65,7 @@ test("POST should not be silently retried on keep-alive disconnect", async () =>
       process.exit(0);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -83,14 +83,14 @@ test("POST should not be silently retried on keep-alive disconnect", async () =>
 });
 
 test("GET should still be retried on keep-alive disconnect", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       let dataAttempts = 0;
 
-      const server = Bun.listen({
+      const server = Fun.listen({
         hostname: "127.0.0.1",
         port: 0,
         socket: {
@@ -127,7 +127,7 @@ test("GET should still be retried on keep-alive disconnect", async () => {
       process.exit(0);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

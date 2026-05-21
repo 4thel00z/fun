@@ -24,13 +24,13 @@
 #include "GeneratedNodeModuleModule.h"
 #include "ZigGeneratedClasses.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
-BUN_DECLARE_HOST_FUNCTION(Bun__JSSourceMap__find);
+FUN_DECLARE_HOST_FUNCTION(Fun__JSSourceMap__find);
 
-BUN_DECLARE_HOST_FUNCTION(Resolver__nodeModulePathsForJS);
+FUN_DECLARE_HOST_FUNCTION(Resolver__nodeModulePathsForJS);
 JSC_DECLARE_HOST_FUNCTION(jsFunctionDebugNoop);
 JSC_DECLARE_HOST_FUNCTION(jsFunctionFindPath);
 JSC_DECLARE_HOST_FUNCTION(jsFunctionIsBuiltinModule);
@@ -45,10 +45,10 @@ JSC_DECLARE_CUSTOM_GETTER(getterRequireFunction);
 JSC_DECLARE_CUSTOM_SETTER(setterRequireFunction);
 
 // This is a list of builtin module names that do not have the node prefix. It
-// also includes Bun's builtin modules, as well as Bun's thirdparty overrides.
+// also includes Fun's builtin modules, as well as Fun's thirdparty overrides.
 // The reason for overstuffing this list is so that uses that use these as the
 // 'external' option to a bundler will properly exclude things like 'ws' which
-// only work with Bun's native 'ws' implementation and not the JS one on NPM.
+// only work with Fun's native 'ws' implementation and not the JS one on NPM.
 static constexpr ASCIILiteral builtinModuleNames[] = {
     "_http_agent"_s,
     "_http_client"_s,
@@ -68,12 +68,12 @@ static constexpr ASCIILiteral builtinModuleNames[] = {
     "assert/strict"_s,
     "async_hooks"_s,
     "buffer"_s,
-    "bun:ffi"_s,
-    "bun:jsc"_s,
-    "bun:sqlite"_s,
-    "bun:test"_s,
-    "bun:wrap"_s,
-    "bun"_s,
+    "fun:ffi"_s,
+    "fun:jsc"_s,
+    "fun:sqlite"_s,
+    "fun:test"_s,
+    "fun:wrap"_s,
+    "fun"_s,
     "child_process"_s,
     "cluster"_s,
     "console"_s,
@@ -180,7 +180,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionNodeModuleModuleConstructor,
         }
     }
 
-    auto* out = Bun::JSCommonJSModule::create(vm, structure, idString, jsNull(),
+    auto* out = Fun::JSCommonJSModule::create(vm, structure, idString, jsNull(),
         dirname, SourceCode());
 
     if (!parentValue.isUndefined()) {
@@ -210,7 +210,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionIsBuiltinModule,
     auto moduleStr = moduleName.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, JSValue::encode(jsBoolean(false)));
 
-    return JSValue::encode(jsBoolean(Bun::isBuiltinModule(moduleStr)));
+    return JSValue::encode(jsBoolean(Fun::isBuiltinModule(moduleStr)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(jsFunctionWrap, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
@@ -231,8 +231,8 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionWrap, (JSC::JSGlobalObject * globalObject, JS
 
     return JSValue::encode(jsString(globalObject, prefix, code, suffix));
 }
-extern "C" void Bun__Node__Path_joinWTF(BunString* lhs, const char* rhs,
-    size_t len, BunString* result);
+extern "C" void Fun__Node__Path_joinWTF(FunString* lhs, const char* rhs,
+    size_t len, FunString* result);
 JSC_DEFINE_HOST_FUNCTION(jsFunctionNodeModuleCreateRequire,
     (JSC::JSGlobalObject * globalObject,
         JSC::CallFrame* callFrame))
@@ -240,8 +240,8 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionNodeModuleCreateRequire,
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
     if (callFrame->argumentCount() < 1) {
-        return Bun::throwError(globalObject, scope,
-            Bun::ErrorCode::ERR_MISSING_ARGS,
+        return Fun::throwError(globalObject, scope,
+            Fun::ErrorCode::ERR_MISSING_ARGS,
             "createRequire() requires at least one argument"_s);
     }
 
@@ -275,9 +275,9 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionNodeModuleCreateRequire,
 
     // https://github.com/nodejs/node/blob/2eff28fb7a93d3f672f80b582f664a7c701569fb/lib/internal/modules/cjs/loader.js#L1603-L1620
     if (trailingSlash) {
-        BunString lhs = Bun::toString(val);
-        BunString result;
-        Bun__Node__Path_joinWTF(&lhs, "noop.js", sizeof("noop.js") - 1, &result);
+        FunString lhs = Fun::toString(val);
+        FunString result;
+        Fun__Node__Path_joinWTF(&lhs, "noop.js", sizeof("noop.js") - 1, &result);
         val = result.toWTFString();
         if (!val.isNull()) {
             ASSERT(val.impl()->refCount() == 2);
@@ -287,7 +287,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionNodeModuleCreateRequire,
 
     RETURN_IF_EXCEPTION(scope, {});
     RELEASE_AND_RETURN(
-        scope, JSValue::encode(Bun::JSCommonJSModule::createBoundRequireFunction(vm, globalObject, val)));
+        scope, JSValue::encode(Fun::JSCommonJSModule::createBoundRequireFunction(vm, globalObject, val)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(jsFunctionSyncBuiltinExports,
@@ -326,7 +326,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionResolveFileName,
         if (!fromValue.isString()) {
             if (
                 // fast path: it's a real CommonJS module object.
-                auto* cjs = dynamicDowncast<Bun::JSCommonJSModule>(fromValue)) {
+                auto* cjs = dynamicDowncast<Fun::JSCommonJSModule>(fromValue)) {
                 fromValue = cjs->filename();
             } else if (fromValue.isObject()) {
                 // slow path: userland code did something weird. Try filename first, then id
@@ -362,17 +362,17 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionResolveFileName,
 
         JSC::EncodedJSValue result;
 
-        // If paths are provided, use Bun__resolveSyncWithPaths
+        // If paths are provided, use Fun__resolveSyncWithPaths
         if (!pathsValue.isUndefinedOrNull()) {
             // Node.js requires options.paths to be an array
             if (!JSC::isArray(globalObject, pathsValue)) {
-                Bun::throwError(globalObject, scope,
-                    Bun::ErrorCode::ERR_INVALID_ARG_TYPE,
+                Fun::throwError(globalObject, scope,
+                    Fun::ErrorCode::ERR_INVALID_ARG_TYPE,
                     "options.paths must be an array"_s);
                 return {};
             }
 
-            WTF::Vector<BunString> paths;
+            WTF::Vector<FunString> paths;
 
             // Iterate through the array using forEachInIterable
             forEachInIterable(globalObject, pathsValue, [&](JSC::VM&, JSC::JSGlobalObject* lexicalGlobalObject, JSC::JSValue item) {
@@ -383,7 +383,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionResolveFileName,
                 if (scope.exception())
                     return;
 
-                paths.append(Bun::toStringRef(pathStr));
+                paths.append(Fun::toStringRef(pathStr));
             });
 
             if (scope.exception()) {
@@ -394,9 +394,9 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionResolveFileName,
                 return {};
             }
 
-            result = Bun__resolveSyncWithPaths(globalObject, JSC::JSValue::encode(moduleName), JSValue::encode(fromValue), false, true, paths.begin(), paths.size());
+            result = Fun__resolveSyncWithPaths(globalObject, JSC::JSValue::encode(moduleName), JSValue::encode(fromValue), false, true, paths.begin(), paths.size());
 
-            // Clean up BunStrings to avoid leaking
+            // Clean up FunStrings to avoid leaking
             for (auto& path : paths) {
                 path.deref();
             }
@@ -412,7 +412,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionResolveFileName,
         }
 
         // No paths provided, use regular resolution
-        result = Bun__resolveSync(globalObject, JSC::JSValue::encode(moduleName), JSValue::encode(fromValue), false, true);
+        result = Fun__resolveSync(globalObject, JSC::JSValue::encode(moduleName), JSValue::encode(fromValue), false, true);
         RETURN_IF_EXCEPTION(scope, {});
 
         if (!JSC::JSValue::decode(result).isString()) {
@@ -476,7 +476,7 @@ PathResolveModule getParent(VM& vm, JSGlobalObject* global, JSValue maybe_parent
     }
 
     auto scope = DECLARE_THROW_SCOPE(vm);
-    const auto& builtinNames = Bun::builtinNames(vm);
+    const auto& builtinNames = Fun::builtinNames(vm);
     JSValue paths = parent->get(global, builtinNames.pathsPublicName());
     RETURN_IF_EXCEPTION(scope, value);
     if (paths.isCell()) {
@@ -537,7 +537,7 @@ JSC::JSValue resolveLookupPaths(JSC::JSGlobalObject* globalObject, String reques
         } else if (parent.pathsArrayLazy && parent.filename) {
             auto filenameValue = parent.filename->value(globalObject);
             RETURN_IF_EXCEPTION(scope, {});
-            auto filename = Bun::toString(filenameValue);
+            auto filename = Fun::toString(filenameValue);
             auto paths = JSValue::decode(Resolver__nodeModulePathsJSValue(filename, globalObject, true));
             RELEASE_AND_RETURN(scope, paths);
         } else {
@@ -552,10 +552,10 @@ JSC::JSValue resolveLookupPaths(JSC::JSGlobalObject* globalObject, String reques
         EncodedJSValue encodedFilename = JSValue::encode(parent.filename);
 #if OS(WINDOWS)
         dirname = JSValue::decode(
-            Bun__Path__dirname(globalObject, true, &encodedFilename, 1));
+            Fun__Path__dirname(globalObject, true, &encodedFilename, 1));
 #else
         dirname = JSValue::decode(
-            Bun__Path__dirname(globalObject, false, &encodedFilename, 1));
+            Fun__Path__dirname(globalObject, false, &encodedFilename, 1));
 #endif
     } else {
         dirname = jsString(vm, String("."_s));
@@ -568,7 +568,7 @@ JSC::JSValue resolveLookupPaths(JSC::JSGlobalObject* globalObject, String reques
 }
 
 extern "C" JSC::EncodedJSValue NodeModuleModule__findPath(JSGlobalObject*,
-    BunString, JSArray*);
+    FunString, JSArray*);
 
 JSC_DEFINE_HOST_FUNCTION(jsFunctionFindPath, (JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
@@ -580,11 +580,11 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionFindPath, (JSGlobalObject * globalObject, JSC
 
     String request = request_value.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
-    BunString request_bun_str = Bun::toString(request);
+    FunString request_fun_str = Fun::toString(request);
 
     JSArray* paths = paths_value.isCell() ? dynamicDowncast<JSArray>(paths_value) : nullptr;
 
-    return NodeModuleModule__findPath(globalObject, request_bun_str, paths);
+    return NodeModuleModule__findPath(globalObject, request_fun_str, paths);
 }
 
 // These two setters are only used if you directly hit
@@ -785,7 +785,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionLoad, (JSGlobalObject * globalObject, JSC::Ca
     return JSC::JSValue::encode(JSC::jsUndefined());
 }
 
-extern "C" void Bun__VirtualMachine__setOverrideModuleRunMainPromise(void* bunVM, JSPromise* promise);
+extern "C" void Fun__VirtualMachine__setOverrideModuleRunMainPromise(void* funVM, JSPromise* promise);
 JSC_DEFINE_HOST_FUNCTION(jsFunctionRunMain, (JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
     auto& vm = JSC::getVM(globalObject);
@@ -795,7 +795,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionRunMain, (JSGlobalObject * globalObject, JSC:
 
     auto* promise = JSC::loadAndEvaluateModule(globalObject, name, nullptr, nullptr);
     RETURN_IF_EXCEPTION(scope, {});
-    Bun__VirtualMachine__setOverrideModuleRunMainPromise(defaultGlobalObject(globalObject)->bunVM(), promise);
+    Fun__VirtualMachine__setOverrideModuleRunMainPromise(defaultGlobalObject(globalObject)->funVM(), promise);
 
     return JSC::JSValue::encode(JSC::jsUndefined());
 }
@@ -812,7 +812,7 @@ JSC_DEFINE_CUSTOM_GETTER(moduleRunMain,
             globalObject));
 }
 
-extern "C" void Bun__VirtualMachine__setOverrideModuleRunMain(void* bunVM, bool isOriginal);
+extern "C" void Fun__VirtualMachine__setOverrideModuleRunMain(void* funVM, bool isOriginal);
 extern "C" JSC::EncodedJSValue NodeModuleModule__callOverriddenRunMain(Zig::GlobalObject* global, JSValue argv1)
 {
     auto overrideHandler = uncheckedDowncast<JSObject>(global->m_moduleRunMainFunction.get(global));
@@ -838,7 +838,7 @@ JSC_DEFINE_CUSTOM_SETTER(setModuleRunMain,
                 }
             }
         }
-        Bun__VirtualMachine__setOverrideModuleRunMain(globalObject->bunVM(), !isOriginal);
+        Fun__VirtualMachine__setOverrideModuleRunMain(globalObject->funVM(), !isOriginal);
         globalObject->m_moduleRunMainFunction.set(
             lexicalGlobalObject->vm(), globalObject, value.asCell());
     }
@@ -902,7 +902,7 @@ builtinModules          getBuiltinModulesObject           PropertyCallback
 constants               getConstantsObject                PropertyCallback
 createRequire           jsFunctionNodeModuleCreateRequire Function 1
 enableCompileCache      jsFunctionEnableCompileCache      Function 0
-findSourceMap           Bun__JSSourceMap__find           Function 1
+findSourceMap           Fun__JSSourceMap__find           Function 1
 getCompileCacheDir      jsFunctionGetCompileCacheDir      Function 0
 globalPaths             getGlobalPathsObject              PropertyCallback
 isBuiltin               jsFunctionIsBuiltinModule         Function 1
@@ -994,7 +994,7 @@ static JSC::Structure* createNodeModuleSourceMapEntryStructure(JSC::VM& vm, JSC:
     return structure;
 }
 
-extern "C" JSC::EncodedJSValue Bun__createNodeModuleSourceMapEntryObject(
+extern "C" JSC::EncodedJSValue Fun__createNodeModuleSourceMapEntryObject(
     JSC::JSGlobalObject* globalObject,
     JSC::EncodedJSValue encodedGeneratedLine,
     JSC::EncodedJSValue encodedGeneratedColumn,
@@ -1032,7 +1032,7 @@ static JSC::Structure* createNodeModuleSourceMapOriginStructure(JSC::VM& vm, JSC
     return structure;
 }
 
-extern "C" JSC::EncodedJSValue Bun__createNodeModuleSourceMapOriginObject(
+extern "C" JSC::EncodedJSValue Fun__createNodeModuleSourceMapOriginObject(
     JSC::JSGlobalObject* globalObject,
     JSC::EncodedJSValue encodedName,
     JSC::EncodedJSValue encodedLine,
@@ -1115,7 +1115,7 @@ void addNodeModuleConstructorProperties(JSC::VM& vm,
         });
 
     globalObject->m_lazyRequireExtensionsObject.initLater(
-        [](const Zig::GlobalObject::Initializer<Bun::JSCommonJSExtensions>& init) {
+        [](const Zig::GlobalObject::Initializer<Fun::JSCommonJSExtensions>& init) {
             JSC::VM& vm = init.vm;
             JSC::JSGlobalObject* globalObject = init.owner;
 
@@ -1132,7 +1132,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionIsModuleResolveFilenameSlowPathEnabled,
                 ->hasOverriddenModuleResolveFilenameFunction));
 }
 
-} // namespace Bun
+} // namespace Fun
 
 namespace Zig {
 void generateNativeModule_NodeModule(JSC::JSGlobalObject* lexicalGlobalObject,
@@ -1150,19 +1150,19 @@ void generateNativeModule_NodeModule(JSC::JSGlobalObject* lexicalGlobalObject,
     // getGlobalPathsObject, …) call constructArray/constructEmptyArray which
     // open a ThrowScope at the same recursion depth as the next callback's
     // ThrowScope — that trips the exception-check verifier on the synthetic
-    // ESM path (BUN_JSC_validateExceptionChecks=1). The loop below already
+    // ESM path (FUN_JSC_validateExceptionChecks=1). The loop below already
     // does constructor->get(property) per-export, which lazy-reifies one entry
     // at a time inside JSObject::get's own ThrowScope and is checked
     // immediately after.
 
-    exportNames.reserveCapacity(Bun::countof(Bun::nodeModuleObjectTableValues) + 1);
-    exportValues.ensureCapacity(Bun::countof(Bun::nodeModuleObjectTableValues) + 1);
+    exportNames.reserveCapacity(Fun::countof(Fun::nodeModuleObjectTableValues) + 1);
+    exportValues.ensureCapacity(Fun::countof(Fun::nodeModuleObjectTableValues) + 1);
 
     exportNames.append(vm.propertyNames->defaultKeyword);
     exportValues.append(constructor);
 
-    for (unsigned i = 0; i < Bun::countof(Bun::nodeModuleObjectTableValues); ++i) {
-        const auto& entry = Bun::nodeModuleObjectTableValues[i];
+    for (unsigned i = 0; i < Fun::countof(Fun::nodeModuleObjectTableValues); ++i) {
+        const auto& entry = Fun::nodeModuleObjectTableValues[i];
         const auto& property = Identifier::fromString(vm, entry.m_key);
         JSValue value = constructor->get(globalObject, property);
 

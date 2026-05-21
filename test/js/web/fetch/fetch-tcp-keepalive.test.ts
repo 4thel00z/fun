@@ -6,7 +6,7 @@
 //
 // Linux-only: reads /proc/<pid>/net/tcp for the kernel's view of the
 // socket's keepalive timer. Other platforms skip.
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import http from "node:http";
 
 const linuxOnly = test.skipIf(process.platform !== "linux");
@@ -18,7 +18,7 @@ const linuxOnly = test.skipIf(process.platform !== "linux");
 async function probeClientSocket(startRequest: (url: string) => Promise<{ drain: () => Promise<void> }>) {
   // Server that holds the connection open so the client socket stays
   // ESTABLISHED long enough to inspect.
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     async fetch(req) {
       // Keep the response streaming so the client socket stays open
@@ -27,7 +27,7 @@ async function probeClientSocket(startRequest: (url: string) => Promise<{ drain:
         new ReadableStream({
           async start(controller) {
             controller.enqueue(new TextEncoder().encode("hold"));
-            await Bun.sleep(500);
+            await Fun.sleep(500);
             controller.close();
           },
         }),
@@ -45,7 +45,7 @@ async function probeClientSocket(startRequest: (url: string) => Promise<{ drain:
   // 2=sk_timer armed — which is the keepalive timer on an idle
   // established socket. Empirically: without SO_KEEPALIVE this field is
   // "00:00000000"; with it, "02:<jiffies>".
-  const tcp = await Bun.file("/proc/self/net/tcp").text();
+  const tcp = await Fun.file("/proc/self/net/tcp").text();
   const portHex = port.toString(16).toUpperCase().padStart(4, "0");
   let found = false;
   let timerActive = "";

@@ -104,7 +104,7 @@ pub fn onShellMkdirTaskDone(this: *Mkdir, task: *ShellMkdirTask) void {
     this.state.exec.tasks_done += 1;
     var output = task.takeOutput();
     const err = task.err;
-    const output_task: *ShellMkdirOutputTask = bun.new(ShellMkdirOutputTask, .{
+    const output_task: *ShellMkdirOutputTask = fun.new(ShellMkdirOutputTask, .{
         .parent = this,
         .output = .{ .arrlist = output.moveToUnmanaged() },
         .state = .waiting_write_err,
@@ -181,12 +181,12 @@ pub const ShellMkdirTask = struct {
 
     pub fn deinit(this: *ShellMkdirTask) void {
         this.created_directories.deinit();
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 
     fn takeOutput(this: *ShellMkdirTask) ArrayList(u8) {
         const out = this.created_directories;
-        this.created_directories = ArrayList(u8).init(bun.default_allocator);
+        this.created_directories = ArrayList(u8).init(fun.default_allocator);
         return out;
     }
 
@@ -200,14 +200,14 @@ pub const ShellMkdirTask = struct {
         filepath: [:0]const u8,
         cwd_path: [:0]const u8,
     ) *ShellMkdirTask {
-        const task = bun.handleOom(bun.default_allocator.create(ShellMkdirTask));
+        const task = fun.handleOom(fun.default_allocator.create(ShellMkdirTask));
         const evtloop = mkdir.bltn().parentCmd().base.eventLoop();
         task.* = ShellMkdirTask{
             .mkdir = mkdir,
             .opts = opts,
             .cwd_path = cwd_path,
             .filepath = filepath,
-            .created_directories = ArrayList(u8).init(bun.default_allocator),
+            .created_directories = ArrayList(u8).init(fun.default_allocator),
             .event_loop = evtloop,
             .concurrent_task = jsc.EventLoopTask.fromEventLoop(evtloop),
         };
@@ -247,7 +247,7 @@ pub const ShellMkdirTask = struct {
         // Recursive
         if (this.opts.parents) {
             const args = jsc.Node.fs.Arguments.Mkdir{
-                .path = jsc.Node.PathLike{ .string = bun.PathString.init(filepath) },
+                .path = jsc.Node.PathLike{ .string = fun.PathString.init(filepath) },
                 .recursive = true,
                 .always_return_none = true,
             };
@@ -263,15 +263,15 @@ pub const ShellMkdirTask = struct {
             }
         } else {
             const args = jsc.Node.fs.Arguments.Mkdir{
-                .path = jsc.Node.PathLike{ .string = bun.PathString.init(filepath) },
+                .path = jsc.Node.PathLike{ .string = fun.PathString.init(filepath) },
                 .recursive = false,
                 .always_return_none = true,
             };
             switch (node_fs.mkdirNonRecursive(args)) {
                 .result => {
                     if (this.opts.verbose) {
-                        bun.handleOom(this.created_directories.appendSlice(filepath[0..filepath.len]));
-                        bun.handleOom(this.created_directories.append('\n'));
+                        fun.handleOom(this.created_directories.appendSlice(filepath[0..filepath.len]));
+                        fun.handleOom(this.created_directories.append('\n'));
                     }
                 },
                 .err => |e| {
@@ -292,16 +292,16 @@ pub const ShellMkdirTask = struct {
         inner: *ShellMkdirTask,
         active: bool,
 
-        pub fn onCreateDir(vtable: *@This(), dirpath: bun.OSPathSliceZ) void {
+        pub fn onCreateDir(vtable: *@This(), dirpath: fun.OSPathSliceZ) void {
             if (!vtable.active) return;
-            if (bun.Environment.isWindows) {
-                var buf: bun.PathBuffer = undefined;
-                const str = bun.strings.fromWPath(&buf, dirpath[0..dirpath.len]);
-                bun.handleOom(vtable.inner.created_directories.appendSlice(str));
-                bun.handleOom(vtable.inner.created_directories.append('\n'));
+            if (fun.Environment.isWindows) {
+                var buf: fun.PathBuffer = undefined;
+                const str = fun.strings.fromWPath(&buf, dirpath[0..dirpath.len]);
+                fun.handleOom(vtable.inner.created_directories.appendSlice(str));
+                fun.handleOom(vtable.inner.created_directories.append('\n'));
             } else {
-                bun.handleOom(vtable.inner.created_directories.appendSlice(dirpath));
-                bun.handleOom(vtable.inner.created_directories.append('\n'));
+                fun.handleOom(vtable.inner.created_directories.appendSlice(dirpath));
+                fun.handleOom(vtable.inner.created_directories.append('\n'));
             }
             return;
         }
@@ -332,12 +332,12 @@ const Opts = struct {
     }
 
     pub fn parseLong(this: *Opts, flag: []const u8) ?ParseFlagResult {
-        if (bun.strings.eqlComptime(flag, "--mode")) {
+        if (fun.strings.eqlComptime(flag, "--mode")) {
             return .{ .unsupported = "--mode" };
-        } else if (bun.strings.eqlComptime(flag, "--parents")) {
+        } else if (fun.strings.eqlComptime(flag, "--parents")) {
             this.parents = true;
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--vebose")) {
+        } else if (fun.strings.eqlComptime(flag, "--vebose")) {
             this.verbose = true;
             return .continue_parsing;
         }
@@ -371,7 +371,7 @@ pub inline fn bltn(this: *Mkdir) *Builtin {
 }
 
 // --
-const debug = bun.Output.scoped(.ShellMkdir, .hidden);
+const debug = fun.Output.scoped(.ShellMkdir, .hidden);
 
 const log = debug;
 
@@ -389,12 +389,12 @@ const ParseFlagResult = interpreter.ParseFlagResult;
 const Builtin = Interpreter.Builtin;
 const Result = Interpreter.Builtin.Result;
 
-const bun = @import("bun");
-const ResolvePath = bun.path;
+const fun = @import("fun");
+const ResolvePath = fun.path;
 
-const jsc = bun.jsc;
-const WorkPool = bun.jsc.WorkPool;
+const jsc = fun.jsc;
+const WorkPool = fun.jsc.WorkPool;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
-const Yield = bun.shell.Yield;
+const Yield = fun.shell.Yield;

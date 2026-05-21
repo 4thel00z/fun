@@ -81,13 +81,13 @@ pub fn NewWriterWrap(
                 try this.write(&[_]u8{0});
         }
 
-        pub fn String(this: @This(), value: bun.String) AnyMySQLError.Error!void {
+        pub fn String(this: @This(), value: fun.String) AnyMySQLError.Error!void {
             if (value.isEmpty()) {
                 try this.write(&[_]u8{0});
                 return;
             }
 
-            var sliced = value.toUTF8(bun.default_allocator);
+            var sliced = value.toUTF8(fun.default_allocator);
             defer sliced.deinit();
             const slice = sliced.slice();
 
@@ -119,11 +119,11 @@ pub fn writeWrap(comptime Container: type, comptime writeFn: anytype) type {
     };
 }
 
-const debug = bun.Output.scoped(.NewWriter, .hidden);
+const debug = fun.Output.scoped(.NewWriter, .hidden);
 
 const AnyMySQLError = @import("./AnyMySQLError.zig");
 const PacketHeader = @import("./PacketHeader.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const encodeLengthInt = @import("./EncodeInt.zig").encodeLengthInt;
 

@@ -50,7 +50,7 @@ pub fn LowerDecorators(
 
         /// Allocate args + callRuntime in one call.
         fn callRt(p: *P, l: logger.Loc, comptime name: []const u8, args: []const Expr) Expr {
-            const a = bun.handleOom(p.allocator.alloc(Expr, args.len));
+            const a = fun.handleOom(p.allocator.alloc(Expr, args.len));
             @memcpy(a, args);
             return p.callRuntime(l, name, a);
         }
@@ -58,20 +58,20 @@ pub fn LowerDecorators(
         /// newSymbol + scope.generated.append in one call.
         fn newSym(p: *P, kind: Symbol.Kind, name: []const u8) Ref {
             const ref = p.newSymbol(kind, name) catch unreachable;
-            bun.handleOom(p.current_scope.generated.append(p.allocator, ref));
+            fun.handleOom(p.current_scope.generated.append(p.allocator, ref));
             return ref;
         }
 
         /// Single var declaration statement.
         fn varDecl(p: *P, ref: Ref, value: ?Expr, l: logger.Loc) Stmt {
-            const decls = bun.handleOom(p.allocator.alloc(G.Decl, 1));
+            const decls = fun.handleOom(p.allocator.alloc(G.Decl, 1));
             decls[0] = .{ .binding = p.b(B.Identifier{ .ref = ref }, l), .value = value };
             return p.s(S.Local{ .decls = Decl.List.fromOwnedSlice(decls) }, l);
         }
 
         /// Two-variable declaration statement.
         fn varDecl2(p: *P, r1: Ref, v1: ?Expr, r2: Ref, v2: ?Expr, l: logger.Loc) Stmt {
-            const decls = bun.handleOom(p.allocator.alloc(G.Decl, 2));
+            const decls = fun.handleOom(p.allocator.alloc(G.Decl, 2));
             decls[0] = .{ .binding = p.b(B.Identifier{ .ref = r1 }, l), .value = v1 };
             decls[1] = .{ .binding = p.b(B.Identifier{ .ref = r2 }, l), .value = v2 };
             return p.s(S.Local{ .decls = Decl.List.fromOwnedSlice(decls) }, l);
@@ -103,10 +103,10 @@ pub fn LowerDecorators(
 
         /// Create a static block property from a single expression.
         fn makeStaticBlock(p: *P, expr: Expr, l: logger.Loc) Property {
-            const stmts = bun.handleOom(p.allocator.alloc(Stmt, 1));
+            const stmts = fun.handleOom(p.allocator.alloc(Stmt, 1));
             stmts[0] = p.s(S.SExpr{ .value = expr }, l);
-            const sb = bun.handleOom(p.allocator.create(G.ClassStaticBlock));
-            sb.* = .{ .loc = l, .stmts = bun.BabyList(Stmt).fromOwnedSlice(stmts) };
+            const sb = fun.handleOom(p.allocator.create(G.ClassStaticBlock));
+            sb.* = .{ .loc = l, .stmts = fun.BabyList(Stmt).fromOwnedSlice(stmts) };
             return .{ .kind = .class_static_block, .class_static_block = sb };
         }
 
@@ -404,7 +404,7 @@ pub fn LowerDecorators(
                                     .name_loc = expr.loc,
                                 }, expr.loc);
                                 const orig_args = e.args.slice();
-                                const new_args = bun.handleOom(p.allocator.alloc(Expr, 1 + orig_args.len));
+                                const new_args = fun.handleOom(p.allocator.alloc(Expr, 1 + orig_args.len));
                                 new_args[0] = obj_expr;
                                 for (orig_args, 0..) |*arg, ai| {
                                     rewritePrivateAccessesInExpr(p, arg, map);
@@ -829,25 +829,25 @@ pub fn LowerDecorators(
                         prefix_stmts.append(varDecl(p, wm_ref, newWeakMapExpr(p, loc), loc)) catch unreachable;
 
                         // Getter: get foo() { return __privateGet(this, _foo); }
-                        const get_body = bun.handleOom(p.allocator.alloc(Stmt, 1));
+                        const get_body = fun.handleOom(p.allocator.alloc(Stmt, 1));
                         get_body[0] = p.s(S.Return{ .value = callRt(p, loc, "__privateGet", &[_]Expr{
                             p.newExpr(E.This{}, loc),
                             useRef(p, wm_ref, loc),
                         }) }, loc);
-                        const get_fn = bun.handleOom(p.allocator.create(G.Fn));
+                        const get_fn = fun.handleOom(p.allocator.create(G.Fn));
                         get_fn.* = .{ .body = .{ .stmts = get_body, .loc = loc } };
 
                         // Setter: set foo(v) { __privateSet(this, _foo, v); }
                         const setter_param_ref = newSym(p, .other, "v");
-                        const set_body = bun.handleOom(p.allocator.alloc(Stmt, 1));
+                        const set_body = fun.handleOom(p.allocator.alloc(Stmt, 1));
                         set_body[0] = p.s(S.SExpr{ .value = callRt(p, loc, "__privateSet", &[_]Expr{
                             p.newExpr(E.This{}, loc),
                             useRef(p, wm_ref, loc),
                             useRef(p, setter_param_ref, loc),
                         }) }, loc);
-                        const setter_fn_args = bun.handleOom(p.allocator.alloc(G.Arg, 1));
+                        const setter_fn_args = fun.handleOom(p.allocator.alloc(G.Arg, 1));
                         setter_fn_args[0] = .{ .binding = p.b(B.Identifier{ .ref = setter_param_ref }, loc) };
-                        const set_fn = bun.handleOom(p.allocator.create(G.Fn));
+                        const set_fn = fun.handleOom(p.allocator.create(G.Fn));
                         set_fn.* = .{ .args = setter_fn_args, .body = .{ .stmts = set_body, .loc = loc } };
 
                         var getter_flags = prop.flags;
@@ -985,7 +985,7 @@ pub fn LowerDecorators(
 
                 // Build __decorateElement args
                 const target_ref = if (is_expr and expr_class_ref != null) expr_class_ref.? else class_name_ref;
-                const dec_args = bun.handleOom(p.allocator.alloc(Expr, dec_arg_count));
+                const dec_args = fun.handleOom(p.allocator.alloc(Expr, dec_arg_count));
                 dec_args[0] = p.newExpr(E.Identifier{ .ref = init_ref }, loc);
                 dec_args[1] = p.newExpr(E.Number{ .value = flags }, loc);
                 dec_args[2] = if (is_private)
@@ -1129,7 +1129,7 @@ pub fn LowerDecorators(
                 else
                     p.symbols.items[class_name_ref.innerIndex()].original_name;
 
-                const cls_dec_args = bun.handleOom(p.allocator.alloc(Expr, 5));
+                const cls_dec_args = fun.handleOom(p.allocator.alloc(Expr, 5));
                 cls_dec_args[0] = p.newExpr(E.Identifier{ .ref = init_ref }, loc);
                 cls_dec_args[1] = p.newExpr(E.Number{ .value = 0 }, loc);
                 cls_dec_args[2] = p.newExpr(E.String{ .data = class_name_str }, loc);
@@ -1199,7 +1199,7 @@ pub fn LowerDecorators(
                             };
 
                             const run_args_count: usize = if (entry.prop.initializer != null) 4 else 3;
-                            const run_args = bun.handleOom(p.allocator.alloc(Expr, run_args_count));
+                            const run_args = fun.handleOom(p.allocator.alloc(Expr, run_args_count));
                             run_args[0] = useRef(p, init_ref, loc);
                             run_args[1] = p.newExpr(E.Number{ .value = initFlag(field_idx) }, loc);
                             run_args[2] = useRef(p, class_name_ref, class_name_loc);
@@ -1274,7 +1274,7 @@ pub fn LowerDecorators(
                     };
 
                     const run_args_count: usize = if (entry.prop.initializer != null) 4 else 3;
-                    const run_args = bun.handleOom(p.allocator.alloc(Expr, run_args_count));
+                    const run_args = fun.handleOom(p.allocator.alloc(Expr, run_args_count));
                     run_args[0] = useRef(p, init_ref, loc);
                     run_args[1] = p.newExpr(E.Number{ .value = initFlag(field_idx) }, loc);
                     run_args[2] = p.newExpr(E.This{}, loc);
@@ -1341,7 +1341,7 @@ pub fn LowerDecorators(
                         const target = p.newExpr(E.Super{}, loc);
                         const args_ref = newSym(p, .unbound, arguments_str);
                         const spread = p.newExpr(E.Spread{ .value = p.newExpr(E.Identifier{ .ref = args_ref }, loc) }, loc);
-                        const call_args = bun.handleOom(ExprNodeList.initOne(p.allocator, spread));
+                        const call_args = fun.handleOom(ExprNodeList.initOne(p.allocator, spread));
                         ctor_stmts.append(
                             p.s(S.SExpr{ .value = p.newExpr(E.Call{ .target = target, .args = call_args }, loc) }, loc),
                         ) catch unreachable;
@@ -1452,7 +1452,7 @@ pub fn LowerDecorators(
             // Inner class binding: let _Foo = Foo
             if (!inner_class_ref.eql(class_name_ref)) {
                 p.recordUsage(class_name_ref);
-                const inner_decls = bun.handleOom(p.allocator.alloc(G.Decl, 1));
+                const inner_decls = fun.handleOom(p.allocator.alloc(G.Decl, 1));
                 inner_decls[0] = .{
                     .binding = p.b(B.Identifier{ .ref = inner_class_ref }, loc),
                     .value = p.newExpr(E.Identifier{ .ref = class_name_ref }, class_name_loc),
@@ -1471,10 +1471,10 @@ pub fn LowerDecorators(
 const std = @import("std");
 const ListManaged = std.array_list.Managed;
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
@@ -1489,7 +1489,7 @@ const Arg = G.Arg;
 const Decl = G.Decl;
 const Property = G.Property;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const JSXTransformType = js_parser.JSXTransformType;
 const Ref = js_parser.Ref;
 const arguments_str = js_parser.arguments_str;

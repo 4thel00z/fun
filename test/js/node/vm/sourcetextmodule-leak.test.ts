@@ -1,5 +1,5 @@
 const vm = require("vm");
-const { describe, it, expect } = require("bun:test");
+const { describe, it, expect } = require("fun:test");
 const { isDebug } = require("harness");
 
 // 50k×50KB ≈ 2.5 GB of source text — if module records leak their source we
@@ -29,7 +29,7 @@ describe("vm.SourceTextModule", () => {
         }
       }
 
-      Bun.gc(true);
+      Fun.gc(true);
 
       const finalUsage = process.memoryUsage.rss();
       const megabytes = Math.round(((finalUsage - initialUsage) / 1024 / 1024) * 100) / 100;

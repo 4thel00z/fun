@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { mkdtempSync, writeFileSync } from "fs";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { tmpdir } from "os";
 import { join } from "path";
 
 test("Module._extensions should not break ASI (automatic semicolon insertion)", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "bun-module-extensions-asi-"));
+  const dir = mkdtempSync(join(tmpdir(), "fun-module-extensions-asi-"));
 
   // Create a module without semicolons that relies on ASI
   const moduleWithoutSemi = join(dir, "module-no-semi.js");
@@ -42,10 +42,10 @@ console.log('SUCCESS');
   );
 
   // Run the test
-  const proc = Bun.spawn({
-    cmd: [bunExe(), testFile],
+  const proc = Fun.spawn({
+    cmd: [funExe(), testFile],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -60,7 +60,7 @@ console.log('SUCCESS');
 });
 
 test("Module._extensions works with modules that have semicolons", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "bun-module-extensions-semi-"));
+  const dir = mkdtempSync(join(tmpdir(), "fun-module-extensions-semi-"));
 
   // Create a module with semicolons
   const moduleWithSemi = join(dir, "module-with-semi.js");
@@ -99,10 +99,10 @@ console.log('SUCCESS');
   );
 
   // Run the test
-  const proc = Bun.spawn({
-    cmd: [bunExe(), testFile],
+  const proc = Fun.spawn({
+    cmd: [funExe(), testFile],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

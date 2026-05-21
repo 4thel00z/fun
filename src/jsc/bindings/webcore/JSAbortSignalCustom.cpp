@@ -62,7 +62,7 @@ bool JSAbortSignalOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> ha
             }
         }
 
-        // https://github.com/oven-sh/bun/issues/4517
+        // https://github.com/underdoc-org/fun/issues/4517
         if (abortSignal.hasPendingActivity()) {
             if (reason) [[unlikely]]
                 *reason = "Has Pending Activity"_s;

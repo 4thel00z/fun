@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { SourceMap } from "node:module";
 import { itBundled } from "./expectBundled";
 

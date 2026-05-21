@@ -1,16 +1,16 @@
 import {
-__HMRClient as Bun
-} from "http://localhost:8080/bun:wrap";
-Bun.activate(true);
+__HMRClient as Fun
+} from "http://localhost:8080/fun:wrap";
+Fun.activate(true);
 import {
 __require as require
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
 __FastRefreshModule as FastHMR
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
 __FastRefreshRuntime as FastRefresh
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 var this_package_should_not_exist_f335_0 = (() => ({}));
 var this_package_should_not_exist_f335_1 = (() => ({}));
 var hmr = new FastHMR(3165260286, "caught-require.js", FastRefresh), exports = hmr.exports;

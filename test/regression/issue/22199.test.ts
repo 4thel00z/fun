@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("plugin onResolve returning undefined should not crash", () => {
   using dir = tempDir("plugin-undefined", {
     "plugin.js": `
-      Bun.plugin({
+      Fun.plugin({
         name: "test-plugin",
         setup(build) {
           build.onResolve({ filter: /.*\\.(ts|tsx|js|jsx)$/ }, async (args) => {
@@ -17,9 +17,9 @@ test("plugin onResolve returning undefined should not crash", () => {
     "index.js": `console.log("Hello from index.js");`,
   });
 
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "--preload", "./plugin.js", "./index.js"],
-    env: bunEnv,
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "--preload", "./plugin.js", "./index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "inherit",
   });
@@ -31,7 +31,7 @@ test("plugin onResolve returning undefined should not crash", () => {
 test("plugin onResolve returning null should not crash", () => {
   using dir = tempDir("plugin-null", {
     "plugin.js": `
-      Bun.plugin({
+      Fun.plugin({
         name: "test-plugin",
         setup(build) {
           build.onResolve({ filter: /.*\\.(ts|tsx|js|jsx)$/ }, async (args) => {
@@ -44,9 +44,9 @@ test("plugin onResolve returning null should not crash", () => {
     "index.js": `console.log("Hello from index.js");`,
   });
 
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "--preload", "./plugin.js", "./index.js"],
-    env: bunEnv,
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "--preload", "./plugin.js", "./index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "inherit",
   });
@@ -58,7 +58,7 @@ test("plugin onResolve returning null should not crash", () => {
 test("plugin onResolve with sync function returning undefined should not crash", () => {
   using dir = tempDir("plugin-sync-undefined", {
     "plugin.js": `
-      Bun.plugin({
+      Fun.plugin({
         name: "test-plugin",
         setup(build) {
           build.onResolve({ filter: /.*\\.(ts|tsx|js|jsx)$/ }, (args) => {
@@ -71,9 +71,9 @@ test("plugin onResolve with sync function returning undefined should not crash",
     "index.js": `console.log("Hello from index.js");`,
   });
 
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "--preload", "./plugin.js", "./index.js"],
-    env: bunEnv,
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "--preload", "./plugin.js", "./index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "inherit",
   });
@@ -85,7 +85,7 @@ test("plugin onResolve with sync function returning undefined should not crash",
 test("plugin onResolve with rejected promise should throw error", () => {
   using dir = tempDir("plugin-reject", {
     "plugin.js": `
-      Bun.plugin({
+      Fun.plugin({
         name: "test-plugin",
         setup(build) {
           build.onResolve({ filter: /.*\\.(ts|tsx|js|jsx)$/ }, async (args) => {
@@ -97,9 +97,9 @@ test("plugin onResolve with rejected promise should throw error", () => {
     "index.js": `console.log("Hello from index.js");`,
   });
 
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "--preload", "./plugin.js", "./index.js"],
-    env: bunEnv,
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "--preload", "./plugin.js", "./index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });

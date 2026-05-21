@@ -1,10 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 describe("yarn.lock migration basic", () => {
-  test("simple yarn.lock migration produces correct bun.lock", async () => {
+  test("simple yarn.lock migration produces correct fun.lock", async () => {
     const tempDir = tempDirWithFiles("yarn-migration-simple", {
       "package.json": JSON.stringify(
         {
@@ -28,11 +28,11 @@ is-number@^7.0.0:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -45,10 +45,10 @@ is-number@^7.0.0:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("simple-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("simple-yarn-migration");
   });
 
   test("yarn.lock with packages containing long build tags", async () => {
@@ -125,11 +125,11 @@ to-fast-properties@^2.0.0:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -142,25 +142,25 @@ to-fast-properties@^2.0.0:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
 
     // Verify that long build tags are preserved correctly
-    expect(bunLockContent).toContain("4.16.1-1.4bc8b6e1b66cb932731fb1bdbbc550d1e010de81");
-    expect(bunLockContent).toContain("7.21.0-placeholder-for-preset-env.2");
-    expect(bunLockContent).toContain("0.1.6-no-external-plugins");
+    expect(funLockContent).toContain("4.16.1-1.4bc8b6e1b66cb932731fb1bdbbc550d1e010de81");
+    expect(funLockContent).toContain("7.21.0-placeholder-for-preset-env.2");
+    expect(funLockContent).toContain("0.1.6-no-external-plugins");
 
     // Ensure no corrupted version strings
-    expect(bunLockContent).not.toContain("monoreporeact");
-    expect(bunLockContent).not.toContain("@types/react");
-    expect(bunLockContent).not.toContain("�");
+    expect(funLockContent).not.toContain("monoreporeact");
+    expect(funLockContent).not.toContain("@types/react");
+    expect(funLockContent).not.toContain("�");
 
     // Install should work after migration
-    const installResult = await Bun.spawn({
-      cmd: [bunExe(), "install"],
+    const installResult = await Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -195,11 +195,11 @@ test-package@1.0.0-alpha.beta.gamma.delta.epsilon.zeta.eta.theta.iota.kappa.lamb
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -208,21 +208,21 @@ test-package@1.0.0-alpha.beta.gamma.delta.epsilon.zeta.eta.theta.iota.kappa.lamb
     const exitCode = await migrateResult.exited;
     expect(exitCode).toBe(0);
 
-    const bunLockPath = join(tempDir, "bun.lock");
-    expect(fs.existsSync(bunLockPath)).toBe(true);
+    const funLockPath = join(tempDir, "fun.lock");
+    expect(fs.existsSync(funLockPath)).toBe(true);
 
-    const bunLockContent = fs.readFileSync(bunLockPath, "utf8");
+    const funLockContent = fs.readFileSync(funLockPath, "utf8");
 
     // The entire long version string should be preserved
     const expectedVersion =
       "1.0.0-alpha.beta.gamma.delta.epsilon.zeta.eta.theta.iota.kappa.lambda.mu.nu.xi.omicron.pi.rho.sigma.tau.upsilon.phi.chi.psi.omega.0123456789abcdef";
-    expect(bunLockContent).toContain(expectedVersion);
+    expect(funLockContent).toContain(expectedVersion);
 
     // Should not contain any corruption artifacts
-    expect(bunLockContent).not.toContain("�");
-    expect(bunLockContent).not.toContain("\0");
-    expect(bunLockContent).not.toContain("undefined");
-    expect(bunLockContent).not.toContain("null");
+    expect(funLockContent).not.toContain("�");
+    expect(funLockContent).not.toContain("\0");
+    expect(funLockContent).not.toContain("undefined");
+    expect(funLockContent).not.toContain("null");
   });
 
   test("complex yarn.lock with multiple dependencies and versions", async () => {
@@ -711,11 +711,11 @@ vary@~1.1.2:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -728,10 +728,10 @@ vary@~1.1.2:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("complex-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("complex-yarn-migration");
   });
 
   test("yarn.lock with npm aliases", async () => {
@@ -741,7 +741,7 @@ vary@~1.1.2:
           name: "alias-test",
           version: "1.0.0",
           dependencies: {
-            "@types/bun": "npm:bun-types@1.2.19",
+            "@types/fun": "npm:fun-types@1.2.19",
             "my-lodash": "npm:lodash@4.17.21",
           },
         },
@@ -752,9 +752,9 @@ vary@~1.1.2:
 # yarn lockfile v1
 
 
-"@types/bun@npm:bun-types@1.2.19":
+"@types/fun@npm:fun-types@1.2.19":
   version "1.2.19"
-  resolved "https://registry.yarnpkg.com/bun-types/-/bun-types-1.2.19.tgz#0cecd78ed08bae389cc902ae3a5617c390b0fab6"
+  resolved "https://registry.yarnpkg.com/fun-types/-/fun-types-1.2.19.tgz#0cecd78ed08bae389cc902ae3a5617c390b0fab6"
   integrity sha512-uAOTaZSPuYsWIXRpj7o56Let0g/wjihKCkeRqUBhlLVM/Bt+Fj9xTo+LhC1OV1XDaGkz4hNC80et5xgy+9KTHQ==
   dependencies:
     "@types/node" "*"
@@ -783,11 +783,11 @@ undici-types@~5.26.4:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -800,14 +800,14 @@ undici-types@~5.26.4:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("aliases-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("aliases-yarn-migration");
 
     // Verify that npm aliases are handled correctly
-    expect(bunLockContent).toContain('"@types/bun": ["bun-types@1.2.19"');
-    expect(bunLockContent).toContain('"my-lodash": ["lodash@4.17.21"');
+    expect(funLockContent).toContain('"@types/fun": ["fun-types@1.2.19"');
+    expect(funLockContent).toContain('"my-lodash": ["lodash@4.17.21"');
   });
 
   test("yarn.lock with resolutions", async () => {
@@ -873,11 +873,11 @@ webpack@^5.89.0:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -890,13 +890,13 @@ webpack@^5.89.0:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("resolutions-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("resolutions-yarn-migration");
 
     // Verify resolutions are handled
-    expect(bunLockContent).toContain("resolutions");
+    expect(funLockContent).toContain("resolutions");
   });
 
   test("yarn.lock with workspace dependencies", async () => {
@@ -971,11 +971,11 @@ lodash@^4.17.21:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -988,13 +988,13 @@ lodash@^4.17.21:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("workspace-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("workspace-yarn-migration");
 
     // TODO: Workspace dependencies are not yet supported in yarn migration
-    // expect(bunLockContent).toContain("workspace:");
+    // expect(funLockContent).toContain("workspace:");
   });
 
   test("yarn.lock with scoped packages and parent/child relationships", async () => {
@@ -1086,11 +1086,11 @@ babel-loader/chalk@^2.4.2:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -1103,13 +1103,13 @@ babel-loader/chalk@^2.4.2:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("scoped-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("scoped-yarn-migration");
 
     // Verify scoped packages are at the bottom
-    const lines = bunLockContent.split("\n");
+    const lines = funLockContent.split("\n");
     const packageSectionStart = lines.findIndex(line => line.trim().startsWith("packages:"));
     const lastBabelIndex = lines.findLastIndex(line => line.includes("@babel/"));
     const firstNonScopedAfterPackages = lines.findIndex(
@@ -1311,11 +1311,11 @@ webpack@^5.75.0:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -1323,23 +1323,23 @@ webpack@^5.75.0:
 
     const exitCode = await migrateResult.exited;
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("complex-realistic-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("complex-realistic-yarn-migration");
 
     // Verify key features are migrated
-    expect(bunLockContent).toContain('"react": [');
-    expect(bunLockContent).toContain('"@babel/core": [');
-    expect(bunLockContent).toContain('"webpack": [');
-    expect(bunLockContent).toContain('"typescript": [');
+    expect(funLockContent).toContain('"react": [');
+    expect(funLockContent).toContain('"@babel/core": [');
+    expect(funLockContent).toContain('"webpack": [');
+    expect(funLockContent).toContain('"typescript": [');
 
     // Verify peer dependencies are captured
-    expect(bunLockContent).toContain("peerDependencies");
+    expect(funLockContent).toContain("peerDependencies");
   });
 });
 
-describe("bun pm migrate for existing yarn.lock", () => {
+describe("fun pm migrate for existing yarn.lock", () => {
   const folders = [
     "yarn-cli-repo",
     "yarn-lock-mkdirp",
@@ -1349,28 +1349,28 @@ describe("bun pm migrate for existing yarn.lock", () => {
     "yarn-stuff/abbrev-link-target",
   ];
   test.each(folders)("%s", async folder => {
-    const packageJsonContent = await Bun.file(join(import.meta.dir, "yarn", folder, "package.json")).text();
-    const yarnLockContent = await Bun.file(join(import.meta.dir, "yarn", folder, "yarn.lock")).text();
+    const packageJsonContent = await Fun.file(join(import.meta.dir, "yarn", folder, "package.json")).text();
+    const yarnLockContent = await Fun.file(join(import.meta.dir, "yarn", folder, "yarn.lock")).text();
 
     const tempDir = tempDirWithFiles("yarn-lock-migration-", {
       "package.json": packageJsonContent,
       "yarn.lock": yarnLockContent,
     });
 
-    const migrateResult = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    const migrateResult = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
     });
 
     expect(migrateResult.exited).resolves.toBe(0);
-    expect(Bun.file(join(tempDir, "bun.lock")).exists()).resolves.toBe(true);
+    expect(Fun.file(join(tempDir, "fun.lock")).exists()).resolves.toBe(true);
 
-    const bunLockContent = await Bun.file(join(tempDir, "bun.lock")).text();
-    expect(bunLockContent).toMatchSnapshot(folder);
+    const funLockContent = await Fun.file(join(tempDir, "fun.lock")).text();
+    expect(funLockContent).toMatchSnapshot(folder);
   });
 
   test("yarn.lock with packages that have os/cpu requirements", async () => {
@@ -1451,11 +1451,11 @@ fsevents@^2.3.2:
 `,
     });
 
-    // Run bun pm migrate
-    const migrateResult = await Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate", "-f"],
+    // Run fun pm migrate
+    const migrateResult = await Fun.spawn({
+      cmd: [funExe(), "pm", "migrate", "-f"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
       stdin: "ignore",
@@ -1468,15 +1468,15 @@ fsevents@^2.3.2:
     ]);
 
     expect(exitCode).toBe(0);
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("os-cpu-yarn-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("os-cpu-yarn-migration");
 
     // Verify that the lockfile contains the expected os/cpu metadata by checking the snapshot
     // fsevents should have darwin os constraint, esbuild packages should have arch constraints
-    expect(bunLockContent).toContain("fsevents");
-    expect(bunLockContent).toContain("@esbuild/linux-arm64");
-    expect(bunLockContent).toContain("@esbuild/darwin-arm64");
+    expect(funLockContent).toContain("fsevents");
+    expect(funLockContent).toContain("@esbuild/linux-arm64");
+    expect(funLockContent).toContain("@esbuild/darwin-arm64");
   });
 });

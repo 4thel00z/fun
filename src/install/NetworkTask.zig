@@ -1,5 +1,5 @@
 unsafe_http_client: AsyncHTTP = undefined,
-response: bun.http.HTTPClientResult = .{},
+response: fun.http.HTTPClientResult = .{},
 task_id: Task.Id,
 url_buf: []const u8 = &[_]u8{},
 retried: u16 = 0,
@@ -45,7 +45,7 @@ pub const DedupeMapEntry = struct {
 };
 pub const DedupeMap = std.HashMap(Task.Id, DedupeMapEntry, IdentityContext(Task.Id), 80);
 
-pub fn notify(this: *NetworkTask, async_http: *AsyncHTTP, result: bun.http.HTTPClientResult) void {
+pub fn notify(this: *NetworkTask, async_http: *AsyncHTTP, result: fun.http.HTTPClientResult) void {
     if (this.tarball_stream) |stream| {
         // Runs on the HTTP thread. With response-body streaming enabled,
         // `notify` is called once per body chunk (has_more=true) and once
@@ -150,7 +150,7 @@ pub const Authorization = enum {
 };
 
 // We must use a less restrictive Accept header value
-// https://github.com/oven-sh/bun/issues/341
+// https://github.com/underdoc-org/fun/issues/341
 // https://www.jfrog.com/jira/browse/RTFACT-18398
 const accept_header_value = "application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*";
 const accept_header_value_extended = "application/json, */*";
@@ -201,7 +201,7 @@ pub fn forManifest(
         // registry.npmjs.org supports both "@storybook%2Faddons" and "@storybook/addons"
         // Other registries like AWS codeartifact only support the former.
         // "npm" CLI requests the manifest with the encoded name.
-        var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+        var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
         var stack_fallback_allocator = std.heap.stackFallback(512, arena.allocator());
         var encoded_name = name;
@@ -209,9 +209,9 @@ pub fn forManifest(
             encoded_name = try std.mem.replaceOwned(u8, stack_fallback_allocator.get(), name, "/", "%2f");
         }
 
-        const tmp = bun.jsc.URL.join(
-            bun.String.borrowUTF8(scope.url.href),
-            bun.String.borrowUTF8(encoded_name),
+        const tmp = fun.jsc.URL.join(
+            fun.String.borrowUTF8(scope.url.href),
+            fun.String.borrowUTF8(encoded_name),
         );
         defer tmp.deref();
 
@@ -222,16 +222,16 @@ pub fn forManifest(
                     logger.Loc.Empty,
                     allocator,
                     "Failed to join registry {f} and package {f} URLs",
-                    .{ bun.fmt.QuotedFormatter{ .text = scope.url.href }, bun.fmt.QuotedFormatter{ .text = name } },
-                ) catch |err| bun.handleOom(err);
+                    .{ fun.fmt.QuotedFormatter{ .text = scope.url.href }, fun.fmt.QuotedFormatter{ .text = name } },
+                ) catch |err| fun.handleOom(err);
             } else {
                 this.package_manager.log.addWarningFmt(
                     null,
                     logger.Loc.Empty,
                     allocator,
                     "Failed to join registry {f} and package {f} URLs",
-                    .{ bun.fmt.QuotedFormatter{ .text = scope.url.href }, bun.fmt.QuotedFormatter{ .text = name } },
-                ) catch |err| bun.handleOom(err);
+                    .{ fun.fmt.QuotedFormatter{ .text = scope.url.href }, fun.fmt.QuotedFormatter{ .text = name } },
+                ) catch |err| fun.handleOom(err);
             }
             return error.InvalidURL;
         }
@@ -244,7 +244,7 @@ pub fn forManifest(
                     allocator,
                     "Registry URL must be http:// or https://\nReceived: \"{f}\"",
                     .{tmp},
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             } else {
                 this.package_manager.log.addWarningFmt(
                     null,
@@ -252,7 +252,7 @@ pub fn forManifest(
                     allocator,
                     "Registry URL must be http:// or https://\nReceived: \"{f}\"",
                     .{tmp},
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             }
             return error.InvalidURL;
         }
@@ -343,7 +343,7 @@ pub fn forManifest(
     }
 
     // Incase the ETag causes invalidation, we fallback to the last modified date.
-    if (last_modified.len != 0 and bun.feature_flag.BUN_FEATURE_FLAG_LAST_MODIFIED_PRETEND_304.get()) {
+    if (last_modified.len != 0 and fun.feature_flag.FUN_FEATURE_FLAG_LAST_MODIFIED_PRETEND_304.get()) {
         this.unsafe_http_client.client.flags.force_last_modified = true;
         this.unsafe_http_client.client.if_modified_since = last_modified;
     }
@@ -385,7 +385,7 @@ pub fn forTarball(
     if (!(strings.hasPrefixComptime(this.url_buf, "https://") or strings.hasPrefixComptime(this.url_buf, "http://"))) {
         const msg = .{
             .fmt = "Expected tarball URL to start with https:// or http://, got {f} while fetching package {f}",
-            .args = .{ bun.fmt.QuotedFormatter{ .text = this.url_buf }, bun.fmt.QuotedFormatter{ .text = tarball.name.slice() } },
+            .args = .{ fun.fmt.QuotedFormatter{ .text = this.url_buf }, fun.fmt.QuotedFormatter{ .text = tarball.name.slice() } },
         };
 
         try this.package_manager.log.addErrorFmt(null, .{}, allocator, msg.fmt, msg.args);
@@ -454,7 +454,7 @@ pub fn forTarball(
 /// the request errored before a drain was scheduled. Called on the main
 /// thread from `runTasks` when falling back to the buffered path.
 pub fn discardUnusedStreamingState(this: *NetworkTask, manager: *PackageManager) void {
-    bun.debugAssert(!this.streaming_committed);
+    fun.debugAssert(!this.streaming_committed);
     if (this.tarball_stream) |stream| {
         stream.deinit();
         this.tarball_stream = null;
@@ -469,7 +469,7 @@ pub fn discardUnusedStreamingState(this: *NetworkTask, manager: *PackageManager)
 /// streaming extraction never started). Keeps the stream allocation so the
 /// retry can still benefit from streaming.
 pub fn resetStreamingForRetry(this: *NetworkTask) void {
-    bun.debugAssert(!this.streaming_committed);
+    fun.debugAssert(!this.streaming_committed);
     if (this.tarball_stream) |stream| stream.resetForRetry();
     this.response = .{};
 }
@@ -487,19 +487,19 @@ const PatchTask = install.PatchTask;
 const TarballStream = install.TarballStream;
 const Task = install.Task;
 
-const bun = @import("bun");
-const GlobalStringBuilder = bun.StringBuilder;
-const IdentityContext = bun.IdentityContext;
-const MutableString = bun.MutableString;
-const OOM = bun.OOM;
-const ThreadPool = bun.ThreadPool;
-const URL = bun.URL;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const GlobalStringBuilder = fun.StringBuilder;
+const IdentityContext = fun.IdentityContext;
+const MutableString = fun.MutableString;
+const OOM = fun.OOM;
+const ThreadPool = fun.ThreadPool;
+const URL = fun.URL;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const HTTP = bun.http;
+const HTTP = fun.http;
 const AsyncHTTP = HTTP.AsyncHTTP;
 const HeaderBuilder = HTTP.HeaderBuilder;

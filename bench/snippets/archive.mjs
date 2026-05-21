@@ -4,8 +4,8 @@ import { join } from "node:path";
 import { Pack, Unpack } from "tar";
 import { bench, group, run } from "../runner.mjs";
 
-// Check if Bun.Archive is available
-const hasBunArchive = typeof Bun !== "undefined" && typeof Bun.Archive !== "undefined";
+// Check if Fun.Archive is available
+const hasFunArchive = typeof Fun !== "undefined" && typeof Fun.Archive !== "undefined";
 
 // Test data sizes
 const smallContent = "Hello, World!";
@@ -55,8 +55,8 @@ const manyFilesDir = setupNodeTarFiles("many", manyFilesEntries);
 // Pre-create archives for extraction benchmarks
 let smallTarGzBuffer, mediumTarGzBuffer, largeTarGzBuffer, manyFilesTarGzBuffer;
 let smallTarBuffer, mediumTarBuffer, largeTarBuffer, manyFilesTarBuffer;
-let smallBunArchiveGz, mediumBunArchiveGz, largeBunArchiveGz, manyFilesBunArchiveGz;
-let smallBunArchive, mediumBunArchive, largeBunArchive, manyFilesBunArchive;
+let smallFunArchiveGz, mediumFunArchiveGz, largeFunArchiveGz, manyFilesFunArchiveGz;
+let smallFunArchive, mediumFunArchive, largeFunArchive, manyFilesFunArchive;
 
 // Create tar buffer using node-tar (with optional gzip)
 async function createNodeTarBuffer(cwd, files, gzip = false) {
@@ -98,23 +98,23 @@ const smallFiles = { "file1.txt": smallContent, "file2.txt": smallContent, "file
 const mediumFiles = { "file1.txt": mediumContent, "file2.txt": mediumContent, "file3.txt": mediumContent };
 const largeFiles = { "file1.txt": largeContent, "file2.txt": largeContent, "file3.txt": largeContent };
 
-if (hasBunArchive) {
-  smallBunArchiveGz = await Bun.Archive.from(smallFiles).bytes("gzip");
-  mediumBunArchiveGz = await Bun.Archive.from(mediumFiles).bytes("gzip");
-  largeBunArchiveGz = await Bun.Archive.from(largeFiles).bytes("gzip");
-  manyFilesBunArchiveGz = await Bun.Archive.from(manyFilesEntries).bytes("gzip");
+if (hasFunArchive) {
+  smallFunArchiveGz = await Fun.Archive.from(smallFiles).bytes("gzip");
+  mediumFunArchiveGz = await Fun.Archive.from(mediumFiles).bytes("gzip");
+  largeFunArchiveGz = await Fun.Archive.from(largeFiles).bytes("gzip");
+  manyFilesFunArchiveGz = await Fun.Archive.from(manyFilesEntries).bytes("gzip");
 
-  smallBunArchive = await Bun.Archive.from(smallFiles).bytes();
-  mediumBunArchive = await Bun.Archive.from(mediumFiles).bytes();
-  largeBunArchive = await Bun.Archive.from(largeFiles).bytes();
-  manyFilesBunArchive = await Bun.Archive.from(manyFilesEntries).bytes();
+  smallFunArchive = await Fun.Archive.from(smallFiles).bytes();
+  mediumFunArchive = await Fun.Archive.from(mediumFiles).bytes();
+  largeFunArchive = await Fun.Archive.from(largeFiles).bytes();
+  manyFilesFunArchive = await Fun.Archive.from(manyFilesEntries).bytes();
 }
 
 // Create reusable extraction directories (overwriting is fine)
 const extractDirNodeTar = mkdtempSync(join(tmpdir(), "archive-bench-extract-node-"));
-const extractDirBun = mkdtempSync(join(tmpdir(), "archive-bench-extract-bun-"));
+const extractDirFun = mkdtempSync(join(tmpdir(), "archive-bench-extract-fun-"));
 const writeDirNodeTar = mkdtempSync(join(tmpdir(), "archive-bench-write-node-"));
-const writeDirBun = mkdtempSync(join(tmpdir(), "archive-bench-write-bun-"));
+const writeDirFun = mkdtempSync(join(tmpdir(), "archive-bench-write-fun-"));
 
 // ============================================================================
 // Create .tar (uncompressed) benchmarks
@@ -125,9 +125,9 @@ group("create .tar (3 small files)", () => {
     await createNodeTarBuffer(smallFilesDir, ["file1.txt", "file2.txt", "file3.txt"], false);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(smallFiles).bytes();
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(smallFiles).bytes();
     });
   }
 });
@@ -137,9 +137,9 @@ group("create .tar (3 x 100KB files)", () => {
     await createNodeTarBuffer(largeFilesDir, ["file1.txt", "file2.txt", "file3.txt"], false);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(largeFiles).bytes();
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(largeFiles).bytes();
     });
   }
 });
@@ -149,9 +149,9 @@ group("create .tar (100 small files)", () => {
     await createNodeTarBuffer(manyFilesDir, Object.keys(manyFilesEntries), false);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(manyFilesEntries).bytes();
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(manyFilesEntries).bytes();
     });
   }
 });
@@ -165,9 +165,9 @@ group("create .tar.gz (3 small files)", () => {
     await createNodeTarBuffer(smallFilesDir, ["file1.txt", "file2.txt", "file3.txt"], true);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(smallFiles).bytes("gzip");
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(smallFiles).bytes("gzip");
     });
   }
 });
@@ -177,9 +177,9 @@ group("create .tar.gz (3 x 100KB files)", () => {
     await createNodeTarBuffer(largeFilesDir, ["file1.txt", "file2.txt", "file3.txt"], true);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(largeFiles).bytes("gzip");
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(largeFiles).bytes("gzip");
     });
   }
 });
@@ -189,9 +189,9 @@ group("create .tar.gz (100 small files)", () => {
     await createNodeTarBuffer(manyFilesDir, Object.keys(manyFilesEntries), true);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(manyFilesEntries).bytes("gzip");
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(manyFilesEntries).bytes("gzip");
     });
   }
 });
@@ -205,9 +205,9 @@ group("extract .tar (3 small files)", () => {
     await extractNodeTarBuffer(smallTarBuffer, extractDirNodeTar);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(smallBunArchive).extract(extractDirBun);
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(smallFunArchive).extract(extractDirFun);
     });
   }
 });
@@ -217,9 +217,9 @@ group("extract .tar (3 x 100KB files)", () => {
     await extractNodeTarBuffer(largeTarBuffer, extractDirNodeTar);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(largeBunArchive).extract(extractDirBun);
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(largeFunArchive).extract(extractDirFun);
     });
   }
 });
@@ -229,9 +229,9 @@ group("extract .tar (100 small files)", () => {
     await extractNodeTarBuffer(manyFilesTarBuffer, extractDirNodeTar);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(manyFilesBunArchive).extract(extractDirBun);
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(manyFilesFunArchive).extract(extractDirFun);
     });
   }
 });
@@ -245,9 +245,9 @@ group("extract .tar.gz (3 small files)", () => {
     await extractNodeTarBuffer(smallTarGzBuffer, extractDirNodeTar);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(smallBunArchiveGz).extract(extractDirBun);
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(smallFunArchiveGz).extract(extractDirFun);
     });
   }
 });
@@ -257,9 +257,9 @@ group("extract .tar.gz (3 x 100KB files)", () => {
     await extractNodeTarBuffer(largeTarGzBuffer, extractDirNodeTar);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(largeBunArchiveGz).extract(extractDirBun);
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(largeFunArchiveGz).extract(extractDirFun);
     });
   }
 });
@@ -269,9 +269,9 @@ group("extract .tar.gz (100 small files)", () => {
     await extractNodeTarBuffer(manyFilesTarGzBuffer, extractDirNodeTar);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive", async () => {
-      await Bun.Archive.from(manyFilesBunArchiveGz).extract(extractDirBun);
+  if (hasFunArchive) {
+    bench("Fun.Archive", async () => {
+      await Fun.Archive.from(manyFilesFunArchiveGz).extract(extractDirFun);
     });
   }
 });
@@ -288,9 +288,9 @@ group("write .tar to disk (3 small files)", () => {
     writeFileSync(join(writeDirNodeTar, `archive-${writeCounter++}.tar`), buffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.write", async () => {
-      await Bun.Archive.write(join(writeDirBun, `archive-${writeCounter++}.tar`), smallFiles);
+  if (hasFunArchive) {
+    bench("Fun.Archive.write", async () => {
+      await Fun.Archive.write(join(writeDirFun, `archive-${writeCounter++}.tar`), smallFiles);
     });
   }
 });
@@ -301,9 +301,9 @@ group("write .tar to disk (3 x 100KB files)", () => {
     writeFileSync(join(writeDirNodeTar, `archive-${writeCounter++}.tar`), buffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.write", async () => {
-      await Bun.Archive.write(join(writeDirBun, `archive-${writeCounter++}.tar`), largeFiles);
+  if (hasFunArchive) {
+    bench("Fun.Archive.write", async () => {
+      await Fun.Archive.write(join(writeDirFun, `archive-${writeCounter++}.tar`), largeFiles);
     });
   }
 });
@@ -314,9 +314,9 @@ group("write .tar to disk (100 small files)", () => {
     writeFileSync(join(writeDirNodeTar, `archive-${writeCounter++}.tar`), buffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.write", async () => {
-      await Bun.Archive.write(join(writeDirBun, `archive-${writeCounter++}.tar`), manyFilesEntries);
+  if (hasFunArchive) {
+    bench("Fun.Archive.write", async () => {
+      await Fun.Archive.write(join(writeDirFun, `archive-${writeCounter++}.tar`), manyFilesEntries);
     });
   }
 });
@@ -331,9 +331,9 @@ group("write .tar.gz to disk (3 small files)", () => {
     writeFileSync(join(writeDirNodeTar, `archive-${writeCounter++}.tar.gz`), buffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.write", async () => {
-      await Bun.Archive.write(join(writeDirBun, `archive-${writeCounter++}.tar.gz`), smallFiles, "gzip");
+  if (hasFunArchive) {
+    bench("Fun.Archive.write", async () => {
+      await Fun.Archive.write(join(writeDirFun, `archive-${writeCounter++}.tar.gz`), smallFiles, "gzip");
     });
   }
 });
@@ -344,9 +344,9 @@ group("write .tar.gz to disk (3 x 100KB files)", () => {
     writeFileSync(join(writeDirNodeTar, `archive-${writeCounter++}.tar.gz`), buffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.write", async () => {
-      await Bun.Archive.write(join(writeDirBun, `archive-${writeCounter++}.tar.gz`), largeFiles, "gzip");
+  if (hasFunArchive) {
+    bench("Fun.Archive.write", async () => {
+      await Fun.Archive.write(join(writeDirFun, `archive-${writeCounter++}.tar.gz`), largeFiles, "gzip");
     });
   }
 });
@@ -357,9 +357,9 @@ group("write .tar.gz to disk (100 small files)", () => {
     writeFileSync(join(writeDirNodeTar, `archive-${writeCounter++}.tar.gz`), buffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.write", async () => {
-      await Bun.Archive.write(join(writeDirBun, `archive-${writeCounter++}.tar.gz`), manyFilesEntries, "gzip");
+  if (hasFunArchive) {
+    bench("Fun.Archive.write", async () => {
+      await Fun.Archive.write(join(writeDirFun, `archive-${writeCounter++}.tar.gz`), manyFilesEntries, "gzip");
     });
   }
 });
@@ -389,7 +389,7 @@ async function getFilesArrayNodeTar(buffer) {
           entry.on("data", chunk => chunks.push(chunk));
           entry.on("end", () => {
             const content = Buffer.concat(chunks);
-            // Create a File-like object similar to Bun.Archive.files()
+            // Create a File-like object similar to Fun.Archive.files()
             files.set(entry.path, new Blob([content]));
             pending--;
             maybeResolve();
@@ -412,9 +412,9 @@ group("files() - get all files as Map (3 small files)", () => {
     await getFilesArrayNodeTar(smallTarBuffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.files()", async () => {
-      await Bun.Archive.from(smallBunArchive).files();
+  if (hasFunArchive) {
+    bench("Fun.Archive.files()", async () => {
+      await Fun.Archive.from(smallFunArchive).files();
     });
   }
 });
@@ -424,9 +424,9 @@ group("files() - get all files as Map (3 x 100KB files)", () => {
     await getFilesArrayNodeTar(largeTarBuffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.files()", async () => {
-      await Bun.Archive.from(largeBunArchive).files();
+  if (hasFunArchive) {
+    bench("Fun.Archive.files()", async () => {
+      await Fun.Archive.from(largeFunArchive).files();
     });
   }
 });
@@ -436,9 +436,9 @@ group("files() - get all files as Map (100 small files)", () => {
     await getFilesArrayNodeTar(manyFilesTarBuffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.files()", async () => {
-      await Bun.Archive.from(manyFilesBunArchive).files();
+  if (hasFunArchive) {
+    bench("Fun.Archive.files()", async () => {
+      await Fun.Archive.from(manyFilesFunArchive).files();
     });
   }
 });
@@ -448,9 +448,9 @@ group("files() - get all files as Map from .tar.gz (3 small files)", () => {
     await getFilesArrayNodeTar(smallTarGzBuffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.files()", async () => {
-      await Bun.Archive.from(smallBunArchiveGz).files();
+  if (hasFunArchive) {
+    bench("Fun.Archive.files()", async () => {
+      await Fun.Archive.from(smallFunArchiveGz).files();
     });
   }
 });
@@ -460,9 +460,9 @@ group("files() - get all files as Map from .tar.gz (100 small files)", () => {
     await getFilesArrayNodeTar(manyFilesTarGzBuffer);
   });
 
-  if (hasBunArchive) {
-    bench("Bun.Archive.files()", async () => {
-      await Bun.Archive.from(manyFilesBunArchiveGz).files();
+  if (hasFunArchive) {
+    bench("Fun.Archive.files()", async () => {
+      await Fun.Archive.from(manyFilesFunArchiveGz).files();
     });
   }
 });
@@ -472,6 +472,6 @@ await run();
 // Cleanup
 rmSync(setupDir, { recursive: true, force: true });
 rmSync(extractDirNodeTar, { recursive: true, force: true });
-rmSync(extractDirBun, { recursive: true, force: true });
+rmSync(extractDirFun, { recursive: true, force: true });
 rmSync(writeDirNodeTar, { recursive: true, force: true });
-rmSync(writeDirBun, { recursive: true, force: true });
+rmSync(writeDirFun, { recursive: true, force: true });

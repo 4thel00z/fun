@@ -1,12 +1,12 @@
 // On Windows, libuv fs calls (uv_fs_read etc.) can surface negative error codes
 // that are not explicitly listed in translateUVErrorToE's switch. The fallback
-// arm used @enumFromInt(-code) on the exhaustive `bun.sys.E` enum, which panics
+// arm used @enumFromInt(-code) on the exhaustive `fun.sys.E` enum, which panics
 // with "invalid enum value" in safe builds for any code that isn't a named tag.
 // Windows release builds are ReleaseSafe, so this panicked in the wild via
 // fs.readFile -> sys_uv.preadv -> ReturnCodeI64.errEnum -> translateUVErrorToE.
 
-import { translateUVErrorToE } from "bun:internal-for-testing";
-import { expect, test } from "bun:test";
+import { translateUVErrorToE } from "fun:internal-for-testing";
+import { expect, test } from "fun:test";
 import { isWindows } from "harness";
 
 test.skipIf(!isWindows)("translateUVErrorToE falls back to UNKNOWN for unmapped libuv codes", () => {

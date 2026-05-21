@@ -1,4 +1,4 @@
-# `Bun.Image`
+# `Fun.Image`
 
 Sharp-shaped image pipeline. Decode → (auto-orient) → transform\* → encode, all
 off the JS thread.
@@ -14,7 +14,7 @@ off the JS thread.
 | `quantize.zig`                        | median-cut RGBA → palette for `png({palette})`                                                                  | dithering, perceptual weighting          |
 | `backend_coregraphics.zig`            | macOS ImageIO/CoreGraphics, lazy `dlopen`                                                                       | macOS-specific behaviour                 |
 | `backend_wic.zig`                     | Windows WIC, COM                                                                                                | Windows-specific behaviour               |
-| `../bun.js/bindings/image_resize.cpp` | highway resize/rotate/flip/modulate kernels (`bun_image_*` C ABI)                                               | new filter, perf work                    |
+| `../fun.js/bindings/image_resize.cpp` | highway resize/rotate/flip/modulate kernels (`fun_image_*` C ABI)                                               | new filter, perf work                    |
 
 `system_backend` in `codecs.zig` is `?type` — `null` on Linux so the dispatch
 compiles away. On macOS/Windows the backend is tried first; it returns
@@ -48,7 +48,7 @@ The codecs themselves are vendored via `scripts/build/deps/{libjpeg-turbo,libspn
 
 - Pixel format is **RGBA8 everywhere** between decode and encode. Decoders are
   configured to emit it; encoders are fed it. Nothing branches on channels.
-- **Decode** output is `bun.default_allocator`-owned `[]u8`. **Encode** output
+- **Decode** output is `fun.default_allocator`-owned `[]u8`. **Encode** output
   is `Encoded{bytes, free}` where `free` is the _codec's_ deallocator
   (`tj3Free`/`WebPFree`/`std.c.free`/`mi_free`); `then()` hands that buffer
   straight to JS via `ArrayBuffer.toJSWithContext(..., free)` — no dupe. New

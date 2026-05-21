@@ -440,8 +440,8 @@ test "errors" {
 const clap = @import("./clap.zig");
 const args = clap.args;
 
-const bun = @import("bun");
-const Output = bun.Output;
+const fun = @import("fun");
+const Output = fun.Output;
 
 const std = @import("std");
 const io = std.io;

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funExe, tempDirWithFiles } from "harness";
 
 test("11806", () => {
   const dir = tempDirWithFiles("11806", {
@@ -22,15 +22,15 @@ test("11806", () => {
     },
   });
 
-  const result1 = Bun.spawnSync({
-    cmd: [bunExe(), "install"],
+  const result1 = Fun.spawnSync({
+    cmd: [funExe(), "install"],
     stdio: ["inherit", "inherit", "inherit"],
     cwd: dir + "/apps/api",
   });
   expect(result1.exitCode).toBe(0);
 
-  const result2 = Bun.spawnSync({
-    cmd: [bunExe(), "add", "--dev", "typescript"],
+  const result2 = Fun.spawnSync({
+    cmd: [funExe(), "add", "--dev", "typescript"],
     stdio: ["inherit", "inherit", "inherit"],
     cwd: dir + "/apps/api",
   });

@@ -1,12 +1,12 @@
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
 describe.concurrent("jsx-symbol-collision", () => {
   it("should not have a symbol collision with jsx imports", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--bun", join(import.meta.dir, "jsx-collision.tsx")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--fun", join(import.meta.dir, "jsx-collision.tsx")],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

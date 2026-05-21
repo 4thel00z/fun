@@ -12,7 +12,7 @@
 
 namespace napitests {
 
-// https://github.com/oven-sh/bun/issues/7685
+// https://github.com/underdoc-org/fun/issues/7685
 static napi_value test_issue_7685(const Napi::CallbackInfo &info) {
   Napi::Env env(info.Env());
   Napi::HandleScope scope(env);
@@ -41,7 +41,7 @@ static void test_issue_11949_callback(napi_env env, napi_value js_callback,
   tsfn_11949 = nullptr;
 }
 
-// https://github.com/oven-sh/bun/issues/11949
+// https://github.com/underdoc-org/fun/issues/11949
 static napi_value test_issue_11949(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -344,7 +344,7 @@ static napi_value
 test_napi_handle_scope_many_args(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   run_gc(info);
-  // now if bun is broken a bunch of our args are dead, because node-addon-api
+  // now if fun is broken a bunch of our args are dead, because node-addon-api
   // uses a heap array for >6 args
   for (size_t i = 1; i < info.Length(); i++) {
     Napi::String s = info[i].As<Napi::String>();
@@ -1190,7 +1190,7 @@ static napi_value test_deferred_exceptions(const Napi::CallbackInfo &info) {
 }
 
 // Test for napi_create_array_with_length boundary handling
-// Bun converts out-of-bounds lengths to 0, Node may handle differently
+// Fun converts out-of-bounds lengths to 0, Node may handle differently
 static napi_value
 test_napi_create_array_boundary(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
@@ -1278,7 +1278,7 @@ test_napi_create_array_boundary(const Napi::CallbackInfo &info) {
 }
 
 // Test for napi_call_function recv parameter validation
-// Node validates recv parameter, Bun might not
+// Node validates recv parameter, Fun might not
 static napi_value
 test_napi_call_function_recv_null(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
@@ -1470,7 +1470,7 @@ static napi_value test_napi_typeof_empty_value(const Napi::CallbackInfo &info) {
   if (status == napi_ok) {
     if (type == napi_undefined) {
       printf("PASS: napi_typeof(zero-initialized value) returned "
-             "napi_undefined (Bun behavior)\n");
+             "napi_undefined (Fun behavior)\n");
     } else {
       printf("FAIL: napi_typeof(zero-initialized value) returned %d\n", type);
     }
@@ -1482,7 +1482,7 @@ static napi_value test_napi_typeof_empty_value(const Napi::CallbackInfo &info) {
 
   // Test 2: Try accessing deleted reference (undefined behavior per spec)
   // This is actually undefined behavior according to N-API documentation
-  // Both Node.js and Bun may crash or behave unpredictably
+  // Both Node.js and Fun may crash or behave unpredictably
   printf("INFO: Accessing deleted reference is undefined behavior - test "
          "skipped\n");
   // After napi_delete_reference, the ref is invalid and should not be used
@@ -1495,7 +1495,7 @@ static napi_value test_napi_typeof_empty_value(const Napi::CallbackInfo &info) {
   status = napi_typeof(env, null_value, &type);
   if (status == napi_ok) {
     if (type == napi_undefined) {
-      printf("WARN: napi_typeof(nullptr) returned napi_undefined - Bun's "
+      printf("WARN: napi_typeof(nullptr) returned napi_undefined - Fun's "
              "isEmpty() check\n");
     } else {
       printf("INFO: napi_typeof(nullptr) returned type %d\n", type);
@@ -1542,7 +1542,7 @@ test_napi_freeze_seal_indexed(const Napi::CallbackInfo &info) {
 
       if (num == 99) {
         printf("FAIL: Array with indexed properties was NOT actually frozen "
-               "(Bun behavior?)\n");
+               "(Fun behavior?)\n");
       } else {
         printf("INFO: Array freeze had partial effect\n");
       }
@@ -1578,7 +1578,7 @@ test_napi_freeze_seal_indexed(const Napi::CallbackInfo &info) {
 
       if (get_status == napi_ok) {
         printf("FAIL: Array with indexed properties was NOT actually sealed "
-               "(Bun behavior?)\n");
+               "(Fun behavior?)\n");
       } else {
         printf("INFO: Array seal had partial effect\n");
       }
@@ -1828,7 +1828,7 @@ static napi_value test_napi_empty_buffer_info(const Napi::CallbackInfo &info) {
 }
 
 // Test for napi_typeof with boxed primitive objects (String, Number, Boolean)
-// See: https://github.com/oven-sh/bun/issues/25351
+// See: https://github.com/underdoc-org/fun/issues/25351
 static napi_value napi_get_typeof(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
 
@@ -2230,7 +2230,7 @@ static napi_value test_napi_get_named_property_copied_string(const Napi::Callbac
   return ok(env);
 }
 
-// https://github.com/oven-sh/bun/issues/25933
+// https://github.com/underdoc-org/fun/issues/25933
 // When a threadsafe function is created inside AsyncLocalStorage.run(),
 // the js_callback gets wrapped in AsyncContextFrame. napi_typeof must
 // still report it as napi_function, not napi_object.
@@ -2257,7 +2257,7 @@ static napi_value test_issue_25933(const Napi::CallbackInfo &info) {
   Napi::HandleScope scope(env);
 
   // The first argument is the JS callback function.
-  // When called inside AsyncLocalStorage.run(), Bun wraps this in
+  // When called inside AsyncLocalStorage.run(), Fun wraps this in
   // AsyncContextFrame via withAsyncContextIfNeeded.
   napi_value js_cb = info[0];
   napi_value name = Napi::String::New(env, "tsfn_typeof_test");
@@ -2315,7 +2315,7 @@ static napi_threadsafe_function tsfn_create_outer = nullptr;
 
 static void test_create_tsfn_outer_cb(napi_env env, napi_value js_callback,
                                       void *context, void *data) {
-  // js_callback here is an AsyncContextFrame in Bun.
+  // js_callback here is an AsyncContextFrame in Fun.
   // Try to create a new threadsafe function with it and call_js_cb=NULL.
   napi_value name;
   napi_create_string_utf8(env, "inner_tsfn", NAPI_AUTO_LENGTH, &name);

@@ -39,7 +39,7 @@ pub const Parser = struct {
 
         /// When using react fast refresh or server components, the framework is
         /// able to customize what import sources are used.
-        framework: ?*bun.bake.Framework = null,
+        framework: ?*fun.bake.Framework = null,
 
         /// REPL mode: transforms code for interactive evaluation
         /// - Wraps lone object literals `{...}` in parentheses
@@ -49,13 +49,13 @@ pub const Parser = struct {
         repl_mode: bool = false,
 
         pub fn hashForRuntimeTranspiler(this: *const Options, hasher: *std.hash.Wyhash, did_use_jsx: bool) void {
-            bun.assert(!this.bundle);
+            fun.assert(!this.bundle);
 
             if (did_use_jsx) {
                 if (this.jsx.parse) {
                     this.jsx.hashForRuntimeTranspiler(hasher);
                     // this holds the values for the jsx optimizaiton flags, which have both been removed
-                    // as the optimizations break newer versions of react, see https://github.com/oven-sh/bun/issues/11025
+                    // as the optimizations break newer versions of react, see https://github.com/underdoc-org/fun/issues/11025
                     const jsx_optimizations = [_]bool{ false, false };
                     hasher.update(std.mem.asBytes(&jsx_optimizations));
                 } else {
@@ -161,7 +161,7 @@ pub const Parser = struct {
 
         // Symbol use counts are unavailable
         // So we say "did we parse any JSX?"
-        // if yes, just automatically add the import so that .bun knows to include the file.
+        // if yes, just automatically add the import so that .fun knows to include the file.
         if (self.options.jsx.parse and p.needs_jsx_import) {
             _ = p.addImportRecord(
                 .require,
@@ -196,7 +196,7 @@ pub const Parser = struct {
 
         // If we added to `p.symbols` it's going to fuck up all the indices
         // in the `symbols` array.
-        bun.assert(p.symbols.items.len == 0);
+        fun.assert(p.symbols.items.len == 0);
         var symbols_ = symbols;
         p.symbols = symbols_.moveToListManaged(p.allocator);
 
@@ -277,7 +277,7 @@ pub const Parser = struct {
 
         // Parse the file in the first pass, but do not bind symbols
         var opts = ParseStatementOptions{ .is_module_scope = true };
-        const parse_tracer = bun.perf.trace("JSParser.parse");
+        const parse_tracer = fun.perf.trace("JSParser.parse");
 
         const stmts = p.parseStmtsUpTo(js_lexer.T.t_end_of_file, &opts) catch |err| {
             if (comptime Environment.isWasm) {
@@ -304,7 +304,7 @@ pub const Parser = struct {
                 const writer = std.Io.GenericWriter(fakeWriter, anyerror, fakeWriter.writeAll){
                     .context = fakeWriter{},
                 };
-                var buffered_writer = bun.deprecated.bufferedWriter(writer);
+                var buffered_writer = fun.deprecated.bufferedWriter(writer);
                 const actual = buffered_writer.writer();
                 for (self.log.msgs.items) |msg| {
                     var m: logger.Msg = msg;
@@ -315,7 +315,7 @@ pub const Parser = struct {
             return error.SyntaxError;
         }
 
-        const visit_tracer = bun.perf.trace("JSParser.visit");
+        const visit_tracer = fun.perf.trace("JSParser.visit");
         try p.prepareForVisitPass();
 
         var parts = ListManaged(js_ast.Part).init(p.allocator);
@@ -324,22 +324,22 @@ pub const Parser = struct {
         try p.appendPart(&parts, stmts);
         visit_tracer.end();
 
-        const analyze_tracer = bun.perf.trace("JSParser.analyze");
+        const analyze_tracer = fun.perf.trace("JSParser.analyze");
         try callback(context, &p, parts.items);
         analyze_tracer.end();
     }
 
     fn _parse(noalias self: *Parser, comptime ParserType: type) !js_ast.Result {
-        const prev_action = bun.crash_handler.current_action;
-        defer bun.crash_handler.current_action = prev_action;
-        bun.crash_handler.current_action = .{ .parse = self.source.path.text };
+        const prev_action = fun.crash_handler.current_action;
+        defer fun.crash_handler.current_action = prev_action;
+        fun.crash_handler.current_action = .{ .parse = self.source.path.text };
 
         var p: ParserType = undefined;
         const orig_error_count = self.log.errors;
         try ParserType.init(self.allocator, self.log, self.source, self.define, self.lexer, self.options, &p);
 
         if (p.options.features.hot_module_reloading) {
-            bun.assert(!p.options.tree_shaking);
+            fun.assert(!p.options.tree_shaking);
         }
 
         // Instead of doing "should_fold_typescript_constant_expressions or features.minify_syntax"
@@ -352,14 +352,14 @@ pub const Parser = struct {
 
         defer p.lexer.deinit();
 
-        var binary_expression_stack_heap = std.heap.stackFallback(42 * @sizeOf(ParserType.BinaryExpressionVisitor), bun.default_allocator);
+        var binary_expression_stack_heap = std.heap.stackFallback(42 * @sizeOf(ParserType.BinaryExpressionVisitor), fun.default_allocator);
         p.binary_expression_stack = std.array_list.Managed(ParserType.BinaryExpressionVisitor).initCapacity(
             binary_expression_stack_heap.get(),
             41, // one less in case of unlikely alignment between the stack buffer and reality
         ) catch unreachable; // stack allocation cannot fail
         defer p.binary_expression_stack.clearAndFree();
 
-        var binary_expression_simplify_stack_heap = std.heap.stackFallback(48 * @sizeOf(SideEffects.BinaryExpressionSimplifyVisitor), bun.default_allocator);
+        var binary_expression_simplify_stack_heap = std.heap.stackFallback(48 * @sizeOf(SideEffects.BinaryExpressionSimplifyVisitor), fun.default_allocator);
         p.binary_expression_simplify_stack = std.array_list.Managed(SideEffects.BinaryExpressionSimplifyVisitor).initCapacity(
             binary_expression_simplify_stack_heap.get(),
             47,
@@ -367,8 +367,8 @@ pub const Parser = struct {
         defer p.binary_expression_simplify_stack.clearAndFree();
 
         if (Environment.allow_assert) {
-            bun.assert(binary_expression_stack_heap.fixed_buffer_allocator.ownsPtr(@ptrCast(p.binary_expression_stack.items)));
-            bun.assert(binary_expression_simplify_stack_heap.fixed_buffer_allocator.ownsPtr(@ptrCast(p.binary_expression_simplify_stack.items)));
+            fun.assert(binary_expression_stack_heap.fixed_buffer_allocator.ownsPtr(@ptrCast(p.binary_expression_stack.items)));
+            fun.assert(binary_expression_simplify_stack_heap.fixed_buffer_allocator.ownsPtr(@ptrCast(p.binary_expression_simplify_stack.items)));
         }
 
         // defer {
@@ -386,19 +386,19 @@ pub const Parser = struct {
             try p.lexer.next();
         }
 
-        // Detect a leading "// @bun" pragma
+        // Detect a leading "// @fun" pragma
         if (self.options.features.dont_bundle_twice) {
-            if (self.hasBunPragma(hashbang.len > 0)) |pragma| {
+            if (self.hasFunPragma(hashbang.len > 0)) |pragma| {
                 return js_ast.Result{
                     .already_bundled = pragma,
                 };
             }
         }
 
-        // We must check the cache only after we've consumed the hashbang and leading // @bun pragma
-        // We don't want to ever put files with `// @bun` into this cache, as that would be wasteful.
-        if (comptime Environment.isNative and bun.FeatureFlags.runtime_transpiler_cache) {
-            const runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
+        // We must check the cache only after we've consumed the hashbang and leading // @fun pragma
+        // We don't want to ever put files with `// @fun` into this cache, as that would be wasteful.
+        if (comptime Environment.isNative and fun.FeatureFlags.runtime_transpiler_cache) {
+            const runtime_transpiler_cache: ?*fun.jsc.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
             if (runtime_transpiler_cache) |cache| {
                 if (cache.get(p.source, &p.options, p.options.jsx.parse and (!p.source.path.isNodeModule() or p.source.path.isJSXFile()))) {
                     return js_ast.Result{
@@ -410,7 +410,7 @@ pub const Parser = struct {
 
         // Parse the file in the first pass, but do not bind symbols
         var opts = ParseStatementOptions{ .is_module_scope = true };
-        const parse_tracer = bun.perf.trace("JSParser.parse");
+        const parse_tracer = fun.perf.trace("JSParser.parse");
 
         // Parsing seems to take around 2x as much time as visiting.
         // Which makes sense.
@@ -440,9 +440,9 @@ pub const Parser = struct {
             return error.SyntaxError;
         }
 
-        bun.crash_handler.current_action = .{ .visit = self.source.path.text };
+        fun.crash_handler.current_action = .{ .visit = self.source.path.text };
 
-        const visit_tracer = bun.perf.trace("JSParser.visit");
+        const visit_tracer = fun.perf.trace("JSParser.visit");
         try p.prepareForVisitPass();
 
         var before = ListManaged(js_ast.Part).init(p.allocator);
@@ -456,7 +456,7 @@ pub const Parser = struct {
         if (p.options.bundle) {
             // The bundler requires a part for generated module wrappers. This
             // part must be at the start as it is referred to by index.
-            bun.handleOom(before.append(js_ast.Part{}));
+            fun.handleOom(before.append(js_ast.Part{}));
         }
 
         // --inspect-brk
@@ -470,7 +470,7 @@ pub const Parser = struct {
                 js_ast.Part{
                     .stmts = debugger_stmts,
                 },
-            ) catch |err| bun.handleOom(err);
+            ) catch |err| fun.handleOom(err);
         }
 
         // When "using" declarations appear at the top level, we change all TDZ
@@ -613,7 +613,7 @@ pub const Parser = struct {
                     .s_export_default => |value| {
                         // We move export default statements when we can
                         // This automatically resolves some cyclical import issues in packages like luxon
-                        // https://github.com/oven-sh/bun/issues/1961
+                        // https://github.com/underdoc-org/fun/issues/1961
                         const should_move = !p.options.bundle and value.canBeMoved();
                         var sliced = try ListManaged(Stmt).initCapacity(p.allocator, 1);
                         sliced.items.len = 1;
@@ -648,7 +648,7 @@ pub const Parser = struct {
             return error.SyntaxError;
         }
 
-        const postvisit_tracer = bun.perf.trace("JSParser.postvisit");
+        const postvisit_tracer = fun.perf.trace("JSParser.postvisit");
         defer postvisit_tracer.end();
 
         var uses_dirname = p.symbols.items[p.dirname_ref.innerIndex()].use_count_estimate > 0;
@@ -722,7 +722,7 @@ pub const Parser = struct {
                     var import_part_stmts = remaining_stmts[0..1];
                     remaining_stmts = remaining_stmts[1..];
 
-                    bun.handleOom(p.module_scope.generated.append(p.allocator, deferred_import.namespace.ref.?));
+                    fun.handleOom(p.module_scope.generated.append(p.allocator, deferred_import.namespace.ref.?));
 
                     import_part_stmts[0] = Stmt.alloc(
                         S.Import,
@@ -743,7 +743,7 @@ pub const Parser = struct {
                         .can_be_removed_if_unused = true,
                     });
                 }
-                bun.assert(remaining_stmts.len == 0);
+                fun.assert(remaining_stmts.len == 0);
             }
 
             if (p.commonjs_named_exports.count() > 0) {
@@ -947,7 +947,7 @@ pub const Parser = struct {
                                         part.import_record_indices.append(
                                             p.allocator,
                                             right.data.e_require_string.import_record_index,
-                                        ) catch |err| bun.handleOom(err);
+                                        ) catch |err| fun.handleOom(err);
                                         p.symbols.items[p.module_ref.innerIndex()].use_count_estimate = 0;
                                         p.symbols.items[namespace_ref.innerIndex()].use_count_estimate -|= 1;
                                         _ = part.symbol_uses.swapRemove(namespace_ref);
@@ -1059,7 +1059,7 @@ pub const Parser = struct {
         } else if (uses_exports_ref or uses_module_ref or p.has_top_level_return or p.has_with_scope) {
             exports_kind = .cjs;
             if (p.options.features.commonjs_at_runtime) {
-                wrap_mode = .bun_commonjs;
+                wrap_mode = .fun_commonjs;
 
                 const import_record: ?*const ImportRecord = brk: {
                     for (p.import_records.items) |*import_record| {
@@ -1077,7 +1077,7 @@ pub const Parser = struct {
                     var notes = ListManaged(logger.Data).init(p.allocator);
 
                     try notes.append(logger.Data{
-                        .text = try std.fmt.allocPrint(p.allocator, "Try require({f}) instead", .{bun.fmt.QuotedFormatter{ .text = record.path.text }}),
+                        .text = try std.fmt.allocPrint(p.allocator, "Try require({f}) instead", .{fun.fmt.QuotedFormatter{ .text = record.path.text }}),
                     });
 
                     if (uses_module_ref) {
@@ -1112,7 +1112,7 @@ pub const Parser = struct {
                 // ".cjs" or ".cts" or ("type: commonjs" and (".js" or ".jsx" or ".ts" or ".tsx"))
                 .cjs => {
                     // There are no commonjs-only features used (require is allowed in ESM)
-                    bun.assert(!uses_exports_ref and
+                    fun.assert(!uses_exports_ref and
                         !uses_module_ref and
                         !p.has_top_level_return and
                         !p.has_with_scope);
@@ -1156,7 +1156,7 @@ pub const Parser = struct {
             }
 
             if (exports_kind == .cjs and p.options.features.commonjs_at_runtime) {
-                wrap_mode = .bun_commonjs;
+                wrap_mode = .fun_commonjs;
             }
         }
 
@@ -1165,11 +1165,11 @@ pub const Parser = struct {
         // If we reach this point, it means:
         //
         // 1) we are building an ESM file that uses __dirname or __filename
-        // 2) we are targeting bun's runtime.
+        // 2) we are targeting fun's runtime.
         // 3) we are not bundling.
         //
         if (exports_kind == .esm and (uses_dirname or uses_filename)) {
-            bun.assert(!p.options.bundle);
+            fun.assert(!p.options.bundle);
             const count = @as(usize, @intFromBool(uses_dirname)) + @as(usize, @intFromBool(uses_filename));
             var declared_symbols = DeclaredSymbol.List.initCapacity(p.allocator, count) catch unreachable;
             var decls = p.allocator.alloc(G.Decl, count) catch unreachable;
@@ -1226,10 +1226,10 @@ pub const Parser = struct {
 
             for (p.import_records.items) |*item| {
                 // skip if they did import it
-                if (strings.eqlComptime(item.path.text, "bun:test") or strings.eqlComptime(item.path.text, "@jest/globals") or strings.eqlComptime(item.path.text, "vitest")) {
+                if (strings.eqlComptime(item.path.text, "fun:test") or strings.eqlComptime(item.path.text, "@jest/globals") or strings.eqlComptime(item.path.text, "vitest")) {
                     if (p.options.features.runtime_transpiler_cache) |cache| {
                         // If we rewrote import paths, we need to disable the runtime transpiler cache
-                        if (!strings.eqlComptime(item.path.text, "bun:test")) {
+                        if (!strings.eqlComptime(item.path.text, "fun:test")) {
                             cache.input_hash = null;
                         }
                     }
@@ -1255,8 +1255,8 @@ pub const Parser = struct {
 
             // For CommonJS modules, use require instead of import
             if (exports_kind == .cjs) {
-                var import_record_indices = bun.handleOom(p.allocator.alloc(u32, 1));
-                const import_record_id = p.addImportRecord(.require, logger.Loc.Empty, "bun:test");
+                var import_record_indices = fun.handleOom(p.allocator.alloc(u32, 1));
+                const import_record_id = p.addImportRecord(.require, logger.Loc.Empty, "fun:test");
                 import_record_indices[0] = import_record_id;
 
                 // Create object binding pattern for destructuring
@@ -1275,7 +1275,7 @@ pub const Parser = struct {
                     }
                 }
 
-                // Create: const { test, expect, ... } = require("bun:test")
+                // Create: const { test, expect, ... } = require("fun:test")
                 var decls = p.allocator.alloc(G.Decl, 1) catch unreachable;
                 decls[0] = .{
                     .binding = p.b(B.Object{
@@ -1295,12 +1295,12 @@ pub const Parser = struct {
                 before.append(js_ast.Part{
                     .stmts = part_stmts,
                     .declared_symbols = declared_symbols,
-                    .import_record_indices = bun.BabyList(u32).fromOwnedSlice(import_record_indices),
-                    .tag = .bun_test,
+                    .import_record_indices = fun.BabyList(u32).fromOwnedSlice(import_record_indices),
+                    .tag = .fun_test,
                 }) catch unreachable;
             } else {
-                var import_record_indices = bun.handleOom(p.allocator.alloc(u32, 1));
-                const import_record_id = p.addImportRecord(.stmt, logger.Loc.Empty, "bun:test");
+                var import_record_indices = fun.handleOom(p.allocator.alloc(u32, 1));
+                const import_record_id = p.addImportRecord(.stmt, logger.Loc.Empty, "fun:test");
                 import_record_indices[0] = import_record_id;
 
                 // For ESM modules, use import statement
@@ -1321,7 +1321,7 @@ pub const Parser = struct {
 
                 const import_stmt = p.s(
                     S.Import{
-                        .namespace_ref = p.declareSymbol(.unbound, logger.Loc.Empty, "bun_test_import_namespace_for_internal_use_only") catch unreachable,
+                        .namespace_ref = p.declareSymbol(.unbound, logger.Loc.Empty, "fun_test_import_namespace_for_internal_use_only") catch unreachable,
                         .items = clauses,
                         .import_record_index = import_record_id,
                     },
@@ -1333,8 +1333,8 @@ pub const Parser = struct {
                 before.append(js_ast.Part{
                     .stmts = part_stmts,
                     .declared_symbols = declared_symbols,
-                    .import_record_indices = bun.BabyList(u32).fromOwnedSlice(import_record_indices),
-                    .tag = .bun_test,
+                    .import_record_indices = fun.BabyList(u32).fromOwnedSlice(import_record_indices),
+                    .tag = .fun_test,
                 }) catch unreachable;
             }
 
@@ -1446,7 +1446,7 @@ pub const Parser = struct {
             );
         }
 
-        // Bake: transform global `Response` to use `import { Response } from 'bun:app'`
+        // Bake: transform global `Response` to use `import { Response } from 'fun:app'`
         if (!p.response_ref.isNull() and is_used_and_has_no_links: {
             // We only want to do this if the symbol is used and didn't get
             // bound to some other value
@@ -1464,20 +1464,20 @@ pub const Parser = struct {
             if (before.items.len > 0) {
                 if (parts_len > 0) {
                     // first copy parts to the middle if before exists
-                    bun.copy(js_ast.Part, parts.items[before.items.len..][0..parts_len], parts.items[0..parts_len]);
+                    fun.copy(js_ast.Part, parts.items[before.items.len..][0..parts_len], parts.items[0..parts_len]);
                 }
-                bun.copy(js_ast.Part, parts.items[0..before.items.len], before.items);
+                fun.copy(js_ast.Part, parts.items[0..before.items.len], before.items);
             }
             if (after.items.len > 0) {
-                bun.copy(js_ast.Part, parts.items[parts_len + before.items.len ..][0..after.items.len], after.items);
+                fun.copy(js_ast.Part, parts.items[parts_len + before.items.len ..][0..after.items.len], after.items);
             }
         }
 
         // Pop the module scope to apply the "ContainsDirectEval" rules
         // p.popScope();
 
-        if (comptime Environment.isNative and bun.FeatureFlags.runtime_transpiler_cache) {
-            const runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
+        if (comptime Environment.isNative and fun.FeatureFlags.runtime_transpiler_cache) {
+            const runtime_transpiler_cache: ?*fun.jsc.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
             if (runtime_transpiler_cache) |cache| {
                 if (p.macro_call_count != 0) {
                     // disable this for:
@@ -1505,16 +1505,16 @@ pub const Parser = struct {
 
     const PragmaState = packed struct { seen_cjs: bool = false, seen_bytecode: bool = false };
 
-    fn hasBunPragma(self: *const Parser, has_hashbang: bool) ?js_ast.Result.AlreadyBundled {
-        const BUN_PRAGMA = "// @bun";
+    fn hasFunPragma(self: *const Parser, has_hashbang: bool) ?js_ast.Result.AlreadyBundled {
+        const FUN_PRAGMA = "// @fun";
         const contents = self.lexer.source.contents;
         const end = contents.len;
 
         // pragmas may appear after a hashbang comment
         //
         //   ```js
-        //   #!/usr/bin/env bun
-        //   // @bun
+        //   #!/usr/bin/env fun
+        //   // @fun
         //   const myCode = 1;
         //   ```
         var cursor: usize = 0;
@@ -1529,8 +1529,8 @@ pub const Parser = struct {
             cursor += 1;
         }
 
-        if (!bun.strings.startsWith(contents[cursor..], BUN_PRAGMA)) return null;
-        cursor += BUN_PRAGMA.len;
+        if (!fun.strings.startsWith(contents[cursor..], FUN_PRAGMA)) return null;
+        cursor += FUN_PRAGMA.len;
 
         var state: PragmaState = .{};
 
@@ -1542,10 +1542,10 @@ pub const Parser = struct {
                     if (cursor >= contents.len) break;
                     if (contents[cursor] != 'b') continue;
                     const slice = contents[cursor..];
-                    if (bun.strings.startsWith(slice, "bun-cjs")) {
+                    if (fun.strings.startsWith(slice, "fun-cjs")) {
                         state.seen_cjs = true;
-                        cursor += "bun-cjs".len;
-                    } else if (bun.strings.startsWith(slice, "bytecode")) {
+                        cursor += "fun-cjs".len;
+                    } else if (fun.strings.startsWith(slice, "bytecode")) {
                         state.seen_bytecode = true;
                         cursor += "bytecode".len;
                     }
@@ -1555,9 +1555,9 @@ pub const Parser = struct {
         }
 
         if (state.seen_cjs) {
-            return if (state.seen_bytecode) .bytecode_cjs else .bun_cjs;
+            return if (state.seen_bytecode) .bytecode_cjs else .fun_cjs;
         } else {
-            return if (state.seen_bytecode) .bytecode else .bun;
+            return if (state.seen_bytecode) .bytecode else .fun;
         }
     }
 };
@@ -1581,16 +1581,16 @@ const ImportRecord = importRecord.ImportRecord;
 const RuntimeFeatures = _runtime.Runtime.Features;
 const RuntimeImports = _runtime.Runtime.Imports;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const options = bun.options;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const options = fun.options;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const DeclaredSymbol = js_ast.DeclaredSymbol;
 const E = js_ast.E;
@@ -1603,10 +1603,10 @@ const Symbol = js_ast.Symbol;
 const G = js_ast.G;
 const Decl = G.Decl;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const JSXImportScanner = js_parser.JSXImportScanner;
 const JSXParser = js_parser.JSXParser;
 const JavaScriptImportScanner = js_parser.JavaScriptImportScanner;

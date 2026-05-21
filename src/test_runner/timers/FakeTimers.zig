@@ -6,12 +6,12 @@
 timers: TimerHeap = .{ .context = {} },
 
 pub var current_time: struct {
-    const min_timespec = bun.timespec{ .sec = std.math.minInt(i64), .nsec = std.math.minInt(i64) };
+    const min_timespec = fun.timespec{ .sec = std.math.minInt(i64), .nsec = std.math.minInt(i64) };
     /// starts at 0. offset in milliseconds.
-    offset_raw: bun.timespec = min_timespec,
+    offset_raw: fun.timespec = min_timespec,
     offset_lock: std.Thread.RwLock = .{},
     date_now_offset: f64 = 0,
-    pub fn getTimespecNow(this: *@This()) ?bun.timespec {
+    pub fn getTimespecNow(this: *@This()) ?fun.timespec {
         this.offset_lock.lockShared();
         defer this.offset_lock.unlockShared();
         const value = this.offset_raw;
@@ -19,10 +19,10 @@ pub var current_time: struct {
         return value;
     }
     pub fn set(this: *@This(), globalObject: *jsc.JSGlobalObject, v: struct {
-        offset: *const bun.timespec,
+        offset: *const fun.timespec,
         js: ?f64 = null,
     }) void {
-        const vm = globalObject.bunVM();
+        const vm = globalObject.funVM();
         {
             this.offset_lock.lock();
             defer this.offset_lock.unlock();
@@ -32,27 +32,27 @@ pub var current_time: struct {
         if (v.js) |js| {
             this.date_now_offset = @floor(js) - timespec_ms;
         }
-        bun.cpp.JSMock__setOverridenDateNow(globalObject, this.date_now_offset + timespec_ms);
+        fun.cpp.JSMock__setOverridenDateNow(globalObject, this.date_now_offset + timespec_ms);
 
         vm.overridden_performance_now = @bitCast(v.offset.ns());
     }
     pub fn clear(this: *@This(), globalObject: *jsc.JSGlobalObject) void {
-        const vm = globalObject.bunVM();
+        const vm = globalObject.funVM();
         {
             this.offset_lock.lock();
             defer this.offset_lock.unlock();
             this.offset_raw = min_timespec;
         }
-        bun.cpp.JSMock__setOverridenDateNow(globalObject, -1);
+        fun.cpp.JSMock__setOverridenDateNow(globalObject, -1);
         vm.overridden_performance_now = null;
     }
 } = .{};
 
 fn assertValid(this: *FakeTimers, mode: enum { locked, unlocked }) void {
-    if (!bun.Environment.ci_assert) return;
-    const owner: *bun.api.Timer.All = @fieldParentPtr("fake_timers", this);
+    if (!fun.Environment.ci_assert) return;
+    const owner: *fun.api.Timer.All = @fieldParentPtr("fake_timers", this);
     switch (mode) {
-        .locked => bun.assert(owner.lock.tryLock() == false),
+        .locked => fun.assert(owner.lock.tryLock() == false),
         .unlocked => {}, // can't assert unlocked because another thread could be holding the lock
     }
 }
@@ -90,7 +90,7 @@ fn clear(this: *FakeTimers) void {
 fn executeNext(this: *FakeTimers, globalObject: *jsc.JSGlobalObject) bool {
     this.assertValid(.unlocked);
     defer this.assertValid(.unlocked);
-    const vm = globalObject.bunVM();
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
 
     const next = blk: {
@@ -102,24 +102,24 @@ fn executeNext(this: *FakeTimers, globalObject: *jsc.JSGlobalObject) bool {
     this.fire(globalObject, next);
     return true;
 }
-fn fire(this: *FakeTimers, globalObject: *jsc.JSGlobalObject, next: *bun.api.Timer.EventLoopTimer) void {
+fn fire(this: *FakeTimers, globalObject: *jsc.JSGlobalObject, next: *fun.api.Timer.EventLoopTimer) void {
     this.assertValid(.unlocked);
     defer this.assertValid(.unlocked);
-    const vm = globalObject.bunVM();
+    const vm = globalObject.funVM();
 
-    if (bun.Environment.ci_assert) {
+    if (fun.Environment.ci_assert) {
         const prev = current_time.getTimespecNow();
-        bun.assert(prev != null);
-        bun.assert(next.next.eql(&prev.?) or next.next.greater(&prev.?));
+        fun.assert(prev != null);
+        fun.assert(next.next.eql(&prev.?) or next.next.greater(&prev.?));
     }
     const now = next.next;
     current_time.set(globalObject, .{ .offset = &now });
     next.fire(&now, vm);
 }
-fn executeUntil(this: *FakeTimers, globalObject: *jsc.JSGlobalObject, until: bun.timespec) void {
+fn executeUntil(this: *FakeTimers, globalObject: *jsc.JSGlobalObject, until: fun.timespec) void {
     this.assertValid(.unlocked);
     defer this.assertValid(.unlocked);
-    const vm = globalObject.bunVM();
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
 
     while (true) {
@@ -129,7 +129,7 @@ fn executeUntil(this: *FakeTimers, globalObject: *jsc.JSGlobalObject, until: bun
 
             const peek = this.timers.peek() orelse break;
             if (peek.next.greater(&until)) break;
-            bun.assert(this.timers.deleteMin() == peek);
+            fun.assert(this.timers.deleteMin() == peek);
             break :blk peek;
         };
         this.fire(globalObject, next);
@@ -138,7 +138,7 @@ fn executeUntil(this: *FakeTimers, globalObject: *jsc.JSGlobalObject, until: bun
 fn executeOnlyPendingTimers(this: *FakeTimers, globalObject: *jsc.JSGlobalObject) void {
     this.assertValid(.unlocked);
     defer this.assertValid(.unlocked);
-    const vm = globalObject.bunVM();
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
 
     const target = blk: {
@@ -160,8 +160,8 @@ fn executeAllTimers(this: *FakeTimers, globalObject: *jsc.JSGlobalObject) void {
 // JS Functions
 // ===
 
-fn errorUnlessFakeTimers(globalObject: *jsc.JSGlobalObject) bun.JSError!void {
-    const vm = globalObject.bunVM();
+fn errorUnlessFakeTimers(globalObject: *jsc.JSGlobalObject) fun.JSError!void {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
 
@@ -191,12 +191,12 @@ fn setFakeTimerMarker(globalObject: *jsc.JSGlobalObject, enabled: bool) void {
     }
 }
 
-fn useFakeTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn useFakeTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
 
-    var js_now = bun.cpp.JSMock__getCurrentUnixTimeMs();
+    var js_now = fun.cpp.JSMock__getCurrentUnixTimeMs();
 
     // Check if options object was provided
     const args = callframe.argumentsAsArray(1);
@@ -230,8 +230,8 @@ fn useFakeTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
 
     return callframe.this();
 }
-fn useRealTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn useRealTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
 
@@ -246,8 +246,8 @@ fn useRealTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
 
     return callframe.this();
 }
-fn advanceTimersToNextTimer(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn advanceTimersToNextTimer(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
     try errorUnlessFakeTimers(globalObject);
@@ -256,8 +256,8 @@ fn advanceTimersToNextTimer(globalObject: *jsc.JSGlobalObject, callframe: *jsc.C
 
     return callframe.this();
 }
-fn advanceTimersByTime(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn advanceTimersByTime(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
     try errorUnlessFakeTimers(globalObject);
@@ -283,8 +283,8 @@ fn advanceTimersByTime(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFr
 
     return callframe.this();
 }
-fn runOnlyPendingTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn runOnlyPendingTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
     try errorUnlessFakeTimers(globalObject);
@@ -293,8 +293,8 @@ fn runOnlyPendingTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallF
 
     return callframe.this();
 }
-fn runAllTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn runAllTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
     try errorUnlessFakeTimers(globalObject);
@@ -303,8 +303,8 @@ fn runAllTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bu
 
     return callframe.this();
 }
-fn getTimerCount(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn getTimerCount(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
     try errorUnlessFakeTimers(globalObject);
@@ -317,8 +317,8 @@ fn getTimerCount(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSErr
 
     return jsc.JSValue.jsNumber(count);
 }
-fn clearAllTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn clearAllTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
     try errorUnlessFakeTimers(globalObject);
@@ -331,8 +331,8 @@ fn clearAllTimers(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) 
 
     return callframe.this();
 }
-fn isFakeTimers(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const vm = globalObject.bunVM();
+fn isFakeTimers(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const vm = globalObject.funVM();
     const timers = &vm.timer;
     const this = &timers.fake_timers;
 
@@ -345,7 +345,7 @@ fn isFakeTimers(globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSErro
     return jsc.JSValue.jsBoolean(is_active);
 }
 
-const fake_timers_fns: []const struct { [:0]const u8, u32, (fn (*jsc.JSGlobalObject, *jsc.CallFrame) bun.JSError!jsc.JSValue) } = &.{
+const fake_timers_fns: []const struct { [:0]const u8, u32, (fn (*jsc.JSGlobalObject, *jsc.CallFrame) fun.JSError!jsc.JSValue) } = &.{
     .{ "useFakeTimers", 0, useFakeTimers },
     .{ "useRealTimers", 0, useRealTimers },
     .{ "advanceTimersToNextTimer", 0, advanceTimersToNextTimer },
@@ -359,7 +359,7 @@ const fake_timers_fns: []const struct { [:0]const u8, u32, (fn (*jsc.JSGlobalObj
 pub const timerFnsCount = fake_timers_fns.len;
 pub fn putTimersFns(globalObject: *jsc.JSGlobalObject, jest: jsc.JSValue, vi: jsc.JSValue) void {
     inline for (fake_timers_fns) |fake_timer_fn| {
-        const str = bun.ZigString.static(fake_timer_fn[0]);
+        const str = fun.ZigString.static(fake_timer_fn[0]);
         const jsvalue = jsc.JSFunction.create(globalObject, fake_timer_fn[0], fake_timer_fn[2], fake_timer_fn[1], .{});
         vi.put(globalObject, str, jsvalue);
         jest.put(globalObject, str, jsvalue);
@@ -369,7 +369,7 @@ pub fn putTimersFns(globalObject: *jsc.JSGlobalObject, jest: jsc.JSValue, vi: js
 const bindgen_generated = @import("bindgen_generated");
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const TimerHeap = bun.api.Timer.TimerHeap;
-const FakeTimers = bun.jsc.Jest.bun_test.FakeTimers;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const TimerHeap = fun.api.Timer.TimerHeap;
+const FakeTimers = fun.jsc.Jest.fun_test.FakeTimers;

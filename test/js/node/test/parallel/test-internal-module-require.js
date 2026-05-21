@@ -9,7 +9,7 @@
 
 const common = require('../common');
 
-common.skip("This test is not going to be implemented in Bun. We do not support --expose-internals.")
+common.skip("This test is not going to be implemented in Fun. We do not support --expose-internals.")
 
 // if (!common.isMainThread) {
 //   common.skip('Cannot test the existence of --expose-internals from worker');

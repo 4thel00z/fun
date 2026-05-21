@@ -54,7 +54,7 @@ int main() {
       //   garbage3,
       //   garbage4,
       "PATH=/usr/bin:/bin", // Keep PATH so we can find commands
-      "BUN_DEBUG_QUIET_LOGS=1", "OOGA=booga", "OOGA=laskdjflsdf", NULL};
+      "FUN_DEBUG_QUIET_LOGS=1", "OOGA=booga", "OOGA=laskdjflsdf", NULL};
 
   pid = fork();
 
@@ -75,14 +75,14 @@ int main() {
     close(stdout_pipe[1]);
     close(stderr_pipe[1]);
 
-    char *BUN_PATH = getenv("BUN_PATH");
-    if (BUN_PATH == NULL) {
-      fprintf(stderr, "Missing BUN_PATH!\n");
+    char *FUN_PATH = getenv("FUN_PATH");
+    if (FUN_PATH == NULL) {
+      fprintf(stderr, "Missing FUN_PATH!\n");
       fflush(stderr);
       exit(1);
     }
-    execve(BUN_PATH,
-           (char *[]){"bun-debug", "-e", "console.log(process.env)", NULL},
+    execve(FUN_PATH,
+           (char *[]){"fun-debug", "-e", "console.log(process.env)", NULL},
            garbage_env);
 
     // If both fail, exit with error

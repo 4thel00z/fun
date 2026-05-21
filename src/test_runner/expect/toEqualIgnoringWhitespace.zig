@@ -1,4 +1,4 @@
-pub fn toEqualIgnoringWhitespace(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn toEqualIgnoringWhitespace(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     defer this.postMatch(globalThis);
 
     const thisValue = callFrame.this();
@@ -79,13 +79,13 @@ pub fn toEqualIgnoringWhitespace(this: *Expect, globalThis: *JSGlobalObject, cal
 
 const std = @import("std");
 
-const bun = @import("bun");
-const default_allocator = bun.default_allocator;
+const fun = @import("fun");
+const default_allocator = fun.default_allocator;
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

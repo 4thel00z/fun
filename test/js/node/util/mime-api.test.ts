@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funExe } from "harness";
 import { MIMEParams, MIMEType } from "util";
 
 describe("MIME API", () => {
@@ -217,8 +217,8 @@ describe("MIME API", () => {
 });
 
 test("Exact match with node", () => {
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), import.meta.dir + "/exact/mime-test.js"],
+  const result = Fun.spawnSync({
+    cmd: [funExe(), import.meta.dir + "/exact/mime-test.js"],
   });
 
   expect(result.stderr.toString("utf-8")).toBe("");

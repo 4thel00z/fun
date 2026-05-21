@@ -1,6 +1,6 @@
 //! HTTP/2 wire-format types for the fetch() HTTP/2 client. Kept free of JSC
 //! and socket dependencies so the node:http2 JS bindings (which currently
-//! carry their own copies in src/runtime/api/bun/h2_frame_parser.zig) can later
+//! carry their own copies in src/runtime/api/fun/h2_frame_parser.zig) can later
 //! share them.
 
 pub const client_preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
@@ -80,7 +80,7 @@ pub const SettingsType = enum(u16) {
 };
 
 pub inline fn u32FromBytes(src: []const u8) u32 {
-    bun.debugAssert(src.len == 4);
+    fun.debugAssert(src.len == 4);
     return std.mem.readInt(u32, src[0..4], .big);
 }
 
@@ -150,5 +150,5 @@ pub const SettingsPayloadUnit = packed struct(u48) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

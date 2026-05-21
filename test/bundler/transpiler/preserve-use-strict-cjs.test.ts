@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import path from "path";
 
 test(`"use strict'; preserves strict mode in CJS`, async () => {

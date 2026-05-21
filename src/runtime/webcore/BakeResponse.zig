@@ -29,7 +29,7 @@ pub export fn BakeResponseClass__constructForSSR(globalObject: *jsc.JSGlobalObje
     });
 }
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, bake_ssr_has_jsx: *c_int, js_this: jsc.JSValue) bun.JSError!*Response {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, bake_ssr_has_jsx: *c_int, js_this: jsc.JSValue) fun.JSError!*Response {
     var arguments = callframe.argumentsAsArray(2);
 
     // Allow `return new Response(<jsx> ... </jsx>, { ... }`
@@ -37,7 +37,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, b
     if (!arguments[0].isUndefinedOrNull() and arguments[0].isObject()) {
         bake_ssr_has_jsx.* = 0;
         if (try arguments[0].isJSXElement(globalThis)) {
-            const vm = globalThis.bunVM();
+            const vm = globalThis.funVM();
             if (try vm.getDevServerAsyncLocalStorage()) |async_local_storage| {
                 try assertStreamingDisabled(globalThis, async_local_storage, "new Response(<jsx />, { ... })");
             }
@@ -55,12 +55,12 @@ pub export fn BakeResponseClass__constructRedirect(globalObject: *jsc.JSGlobalOb
 pub fn constructRedirect(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const response = try Response.constructRedirectImpl(globalThis, callframe);
-    const ptr = bun.new(Response, response);
+    const ptr = fun.new(Response, response);
 
-    const vm = globalThis.bunVM();
-    // Check if dev_server_async_local_storage is set (indicating we're in Bun dev server)
+    const vm = globalThis.funVM();
+    // Check if dev_server_async_local_storage is set (indicating we're in Fun dev server)
     if (try vm.getDevServerAsyncLocalStorage()) |async_local_storage| {
         try assertStreamingDisabled(globalThis, async_local_storage, "Response.redirect");
         return toJSForSSR(ptr, globalThis, .redirect);
@@ -70,20 +70,20 @@ pub fn constructRedirect(
 }
 
 pub export fn BakeResponseClass__constructRender(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) callconv(jsc.conv) jsc.JSValue {
-    return @call(bun.callmod_inline, jsc.toJSHostFn(constructRender), .{ globalObject, callFrame });
+    return @call(fun.callmod_inline, jsc.toJSHostFn(constructRender), .{ globalObject, callFrame });
 }
 
 /// This function is only available on JSBakeResponse
 pub fn constructRender(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const arguments = callframe.argumentsAsArray(2);
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
 
     // Check if dev server async local_storage is set
     const async_local_storage = (try vm.getDevServerAsyncLocalStorage()) orelse {
-        return globalThis.throwInvalidArguments("Response.render() is only available in the Bun dev server", .{});
+        return globalThis.throwInvalidArguments("Response.render() is only available in the Fun dev server", .{});
     };
 
     try assertStreamingDisabled(globalThis, async_local_storage, "Response.render");
@@ -99,24 +99,24 @@ pub fn constructRender(
     }
 
     // Get the path string
-    const path_str = try path_arg.toBunString(globalThis);
+    const path_str = try path_arg.toFunString(globalThis);
     defer path_str.deref();
 
-    const path_utf8 = path_str.toUTF8(bun.default_allocator);
+    const path_utf8 = path_str.toUTF8(fun.default_allocator);
     defer path_utf8.deinit();
 
     // Create a Response with Render body
-    const response = bun.new(Response, Response.init(
+    const response = fun.new(Response, Response.init(
         .{
             .status_code = 200,
             .headers = headers: {
-                var headers = bun.webcore.FetchHeaders.createEmpty();
+                var headers = fun.webcore.FetchHeaders.createEmpty();
                 try headers.put(.Location, path_utf8.slice(), globalThis);
                 break :headers headers;
             },
         },
         .{ .value = .Empty },
-        bun.String.empty,
+        fun.String.empty,
         false,
     ));
 
@@ -126,7 +126,7 @@ pub fn constructRender(
     return response_js;
 }
 
-fn assertStreamingDisabled(globalThis: *jsc.JSGlobalObject, async_local_storage: JSValue, display_function: []const u8) bun.JSError!void {
+fn assertStreamingDisabled(globalThis: *jsc.JSGlobalObject, async_local_storage: JSValue, display_function: []const u8) fun.JSError!void {
     if (async_local_storage.isEmptyOrUndefinedOrNull() or !async_local_storage.isObject()) return globalThis.throwInvalidArguments("store value must be an object", .{});
     const getStoreFn = (try async_local_storage.getPropertyValue(globalThis, "getStore")) orelse return globalThis.throwInvalidArguments("store value must have a \"getStore\" field", .{});
     if (!getStoreFn.isCallable()) return globalThis.throwInvalidArguments("\"getStore\" must be a function", .{});
@@ -138,9 +138,9 @@ fn assertStreamingDisabled(globalThis: *jsc.JSGlobalObject, async_local_storage:
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Response = bun.webcore.Response;
+const fun = @import("fun");
+const Response = fun.webcore.Response;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

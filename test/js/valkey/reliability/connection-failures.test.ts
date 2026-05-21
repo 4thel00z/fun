@@ -1,5 +1,5 @@
-import { RedisClient } from "bun";
-import { describe, expect, mock, test } from "bun:test";
+import { RedisClient } from "fun";
+import { describe, expect, mock, test } from "fun:test";
 import { DEFAULT_REDIS_OPTIONS, DEFAULT_REDIS_URL, delay, isEnabled } from "../test-utils";
 
 /**

@@ -60,7 +60,7 @@ def usage(message)
     exit 1
 end
 
-MAX_DENSE_BUNDLE_SIZE = 64
+MAX_DENSE_FUNDLE_SIZE = 64
 $derivedSourcesPath = nil
 $unifiedSourceOutputPath = nil
 $sourceTreePath = nil
@@ -278,7 +278,7 @@ def BundlePrefixAndSizeForPath(path)
     topLevelDirectory = TopLevelDirectoryForPath(path.dirname)
     $denseBundleFilters.each { |filter|
         if path.fnmatch(filter)
-            return filter, MAX_DENSE_BUNDLE_SIZE
+            return filter, MAX_DENSE_FUNDLE_SIZE
         end
     }
     return topLevelDirectory, $maxBundleSize

@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("assert.partialDeepStrictEqual supports arrays", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       const assert = require("node:assert/strict");
@@ -37,7 +37,7 @@ test("assert.partialDeepStrictEqual supports arrays", async () => {
       console.log("pass");
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
   });
 
   const [stdout, exitCode] = await Promise.all([proc.stdout.text(), proc.exited]);

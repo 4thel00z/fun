@@ -1,9 +1,9 @@
-import { spawnSync } from "bun";
-import { beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { spawnSync } from "fun";
+import { beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
-// This test verifies that Bun can load the same native module multiple times
+// This test verifies that Fun can load the same native module multiple times
 // Previously, the second load would fail with "symbol 'napi_register_module_v1' not found"
 // because static constructors only run once, so the module registration wasn't replayed
 
@@ -70,9 +70,9 @@ NODE_MODULE_CONTEXT_AWARE(addon, demo::Initialize)
 
     // Build the addon
     const build = spawnSync({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -101,9 +101,9 @@ NODE_MODULE_CONTEXT_AWARE(addon, demo::Initialize)
       console.log("Second module result:", m2.exports.hello());
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", testScript],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", testScript],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -131,9 +131,9 @@ NODE_MODULE_CONTEXT_AWARE(addon, demo::Initialize)
       console.log("m2.exports.hello:", m2.exports.hello());
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", testScript],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", testScript],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

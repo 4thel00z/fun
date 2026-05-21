@@ -154,7 +154,7 @@ export function serialize(_message, _handle, _options) {
   const dgram = require("node:dgram");
   if (handle instanceof net.Server) {
     // this one doesn't need a close function, but the fd needs to be kept alive until it is sent
-    const server = handle as unknown as (typeof net)["Server"] & { _handle: Bun.TCPSocketListener<unknown> };
+    const server = handle as unknown as (typeof net)["Server"] & { _handle: Fun.TCPSocketListener<unknown> };
     return [server._handle, { cmd: "NODE_HANDLE", message, type: "net.Server" }];
   } else if (handle instanceof net.Socket) {
     const new_message: { cmd: "NODE_HANDLE"; message: unknown; type: "net.Socket"; key?: string } = {
@@ -163,7 +163,7 @@ export function serialize(_message, _handle, _options) {
       type: "net.Socket",
     };
     const socket = handle as unknown as (typeof net)["Socket"] & {
-      _handle: Bun.Socket;
+      _handle: Fun.Socket;
       server: (typeof net)["Server"] | null;
       setTimeout(timeout: number): void;
     };

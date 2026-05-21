@@ -1,7 +1,7 @@
-import { describe, expect, it, spyOn } from "bun:test";
+import { describe, expect, it, spyOn } from "fun:test";
 import {
-  bunEnv,
-  bunExe,
+  funEnv,
+  funExe,
   gc,
   getMaxFD,
   isBroken,
@@ -62,7 +62,7 @@ import _promises, { type FileHandle } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { spawnSync } from "bun";
+import { spawnSync } from "fun";
 import { mkfifo } from "mkfifo";
 import { ReadStream as ReadStream_, WriteStream as WriteStream_ } from "./export-from.js";
 import { ReadStream as ReadStreamStar_, WriteStream as WriteStreamStar_ } from "./export-star-from.js";
@@ -92,9 +92,9 @@ function tmpdirTestMkdir(): string {
 }
 
 it.concurrent("fs.writeFile(1, data) should work when its inherited", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "fs-writeFile-1-fixture.js"), "1"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "fs-writeFile-1-fixture.js"), "1"],
+    env: funEnv,
     stdio: ["inherit", "pipe", "inherit"],
   });
   const [stdout, exitCode] = await Promise.all([proc.stdout.text(), proc.exited]);
@@ -103,9 +103,9 @@ it.concurrent("fs.writeFile(1, data) should work when its inherited", async () =
 });
 
 it.concurrent("fs.writeFile(2, data) should work when its inherited", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "fs-writeFile-1-fixture.js"), "2"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "fs-writeFile-1-fixture.js"), "2"],
+    env: funEnv,
     stdio: ["inherit", "pipe", "inherit"],
   });
   const [stdout, exitCode] = await Promise.all([proc.stdout.text(), proc.exited]);
@@ -114,9 +114,9 @@ it.concurrent("fs.writeFile(2, data) should work when its inherited", async () =
 });
 
 it.concurrent("fs.writeFile(/dev/null, data) should work", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "fs-writeFile-1-fixture.js"), os.devNull],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "fs-writeFile-1-fixture.js"), os.devNull],
+    env: funEnv,
     stdio: ["inherit", "pipe", "inherit"],
   });
   const [stdout, exitCode] = await Promise.all([proc.stdout.text(), proc.exited]);
@@ -449,9 +449,9 @@ it("writeFileSync in append should not truncate the file", () => {
 });
 
 it.concurrent("await readdir #3931", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "./repro-3931.js")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "./repro-3931.js")],
+    env: funEnv,
     cwd: import.meta.dir,
   });
   const exitCode = await proc.exited;
@@ -498,18 +498,18 @@ describe("copyFileSync", () => {
       buffer[i] = i % 256;
     }
 
-    const hash = Bun.hash(buffer.buffer);
+    const hash = Fun.hash(buffer.buffer);
     writeFileSync(tempdir + "/copyFileSync.src.blob", buffer.buffer);
 
     expect(existsSync(tempdir + "/copyFileSync.dest.blob")).toBe(false);
     expect(existsSync(tempdir + "/copyFileSync.src.blob")).toBe(true);
     copyFileSync(tempdir + "/copyFileSync.src.blob", tempdir + "/copyFileSync.dest.blob");
 
-    expect(Bun.hash(readFileSync(tempdir + "/copyFileSync.dest.blob"))).toBe(hash);
+    expect(Fun.hash(readFileSync(tempdir + "/copyFileSync.dest.blob"))).toBe(hash);
     buffer[0] = 255;
     writeFileSync(tempdir + "/copyFileSync.src.blob", buffer.buffer);
     copyFileSync(tempdir + "/copyFileSync.src.blob", tempdir + "/copyFileSync.dest.blob");
-    expect(Bun.hash(readFileSync(tempdir + "/copyFileSync.dest.blob"))).toBe(Bun.hash(buffer.buffer));
+    expect(Fun.hash(readFileSync(tempdir + "/copyFileSync.dest.blob"))).toBe(Fun.hash(buffer.buffer));
   });
 
   it("constants are right", () => {
@@ -546,7 +546,7 @@ describe("copyFileSync", () => {
           buffer[i] = i % 256;
         }
 
-        const hash = Bun.hash(buffer.buffer);
+        const hash = Fun.hash(buffer.buffer);
         const src = tempdir + "/copyFileSync.src.blob";
         const dest = tempdir + "/copyFileSync.dest.blob";
 
@@ -556,15 +556,15 @@ describe("copyFileSync", () => {
 
           const { exitCode } = spawnSync({
             stdio: ["inherit", "inherit", "inherit"],
-            cmd: [bunExe(), join(import.meta.dir, "./fs-fixture-copyFile-no-copy_file_range.js"), src, dest],
+            cmd: [funExe(), join(import.meta.dir, "./fs-fixture-copyFile-no-copy_file_range.js"), src, dest],
             env: {
-              ...bunEnv,
-              BUN_CONFIG_DISABLE_COPY_FILE_RANGE: "1",
+              ...funEnv,
+              FUN_CONFIG_DISABLE_COPY_FILE_RANGE: "1",
             },
           });
           expect(exitCode).toBe(0);
 
-          expect(Bun.hash(readFileSync(dest))).toBe(hash);
+          expect(Fun.hash(readFileSync(dest))).toBe(hash);
         } finally {
           rmSync(src, { force: true });
           rmSync(dest, { force: true });
@@ -578,7 +578,7 @@ describe("copyFileSync", () => {
           buffer[i] = i % 256;
         }
 
-        const hash = Bun.hash(buffer.buffer);
+        const hash = Fun.hash(buffer.buffer);
         const src = tempdir + "/copyFileSync.src.blob";
         const dest = tempdir + "/copyFileSync.dest.blob";
 
@@ -589,15 +589,15 @@ describe("copyFileSync", () => {
 
           const { exitCode } = spawnSync({
             stdio: ["inherit", "inherit", "inherit"],
-            cmd: [bunExe(), join(import.meta.dir, "./fs-fixture-copyFile-no-copy_file_range.js"), src, dest],
+            cmd: [funExe(), join(import.meta.dir, "./fs-fixture-copyFile-no-copy_file_range.js"), src, dest],
             env: {
-              ...bunEnv,
-              BUN_CONFIG_DISABLE_COPY_FILE_RANGE: "1",
+              ...funEnv,
+              FUN_CONFIG_DISABLE_COPY_FILE_RANGE: "1",
             },
           });
           expect(exitCode).toBe(0);
 
-          expect(Bun.hash(readFileSync(dest))).toBe(hash);
+          expect(Fun.hash(readFileSync(dest))).toBe(hash);
         } finally {
           rmSync(src, { force: true });
           rmSync(dest, { force: true });
@@ -956,21 +956,21 @@ describe("promises.readFile", async () => {
 });
 
 it("promises.readFile - UTF16 file path", async () => {
-  const filename = `superduperduperdupduperdupersuperduperduperduperduperduperdupersuperduperduperduperduperduperdupersuperduperduperdupe-Bun-👍-${Date.now()}-${
+  const filename = `superduperduperdupduperdupersuperduperduperduperduperduperdupersuperduperduperduperduperduperdupersuperduperduperdupe-Fun-👍-${Date.now()}-${
     (Math.random() * 1024000) | 0
   }.txt`;
   const dest = join(tmpdir(), filename);
   await fs.promises.copyFile(import.meta.path, dest);
   const expected = readFileSync(import.meta.path, "utf-8");
-  Bun.gc(true);
+  Fun.gc(true);
   for (let i = 0; i < 100; i++) {
     expect(await fs.promises.readFile(dest, "utf-8")).toEqual(expected);
   }
-  Bun.gc(true);
+  Fun.gc(true);
 });
 
 it("promises.readFile - atomized file path", async () => {
-  const filename = `superduperduperdupduperdupersuperduperduperduperduperduperdupersuperduperduperduperduperduperdupersuperduperduperdupe-Bun-👍-${Date.now()}-${
+  const filename = `superduperduperdupduperdupersuperduperduperduperduperduperdupersuperduperduperduperduperduperdupersuperduperduperdupe-Fun-👍-${Date.now()}-${
     (Math.random() * 1024000) | 0
   }.txt`;
   const destInput = join(tmpdir(), filename);
@@ -983,11 +983,11 @@ it("promises.readFile - atomized file path", async () => {
   )[destInput] as string;
   await fs.promises.copyFile(import.meta.path, dest);
   const expected = readFileSync(import.meta.path, "utf-8");
-  Bun.gc(true);
+  Fun.gc(true);
   for (let i = 0; i < 100; i++) {
     expect(await fs.promises.readFile(dest, "utf-8")).toEqual(expected);
   }
-  Bun.gc(true);
+  Fun.gc(true);
 });
 
 it("promises.readFile with buffer as file path", async () => {
@@ -1053,7 +1053,7 @@ it("stat == statSync", async () => {
   expect(Object.entries(sync)).toEqual(Object.entries(async));
 });
 
-// https://github.com/oven-sh/bun/issues/1887
+// https://github.com/underdoc-org/fun/issues/1887
 it("mkdtempSync, readdirSync, rmdirSync and unlinkSync with non-ascii", () => {
   const tempdir = mkdtempSync(`${tmpdir()}/emoji-fruit-🍇 🍈 🍉 🍊 🍋`);
   expect(existsSync(tempdir)).toBe(true);
@@ -1194,9 +1194,9 @@ it.skipIf(isWindows)(
     });
     fs.symlinkSync("loop", join(String(dir), "loop"));
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const fs = require("fs");
@@ -1215,8 +1215,8 @@ it.skipIf(isWindows)(
       // Disable symbolization so an ASAN abort exits promptly instead of spending
       // seconds in llvm-symbolizer against the large debug binary.
       env: {
-        ...bunEnv,
-        ASAN_OPTIONS: [bunEnv.ASAN_OPTIONS, "allow_user_segv_handler=1", "symbolize=0", "abort_on_error=1"]
+        ...funEnv,
+        ASAN_OPTIONS: [funEnv.ASAN_OPTIONS, "allow_user_segv_handler=1", "symbolize=0", "abort_on_error=1"]
           .filter(Boolean)
           .join(":"),
       },
@@ -1428,7 +1428,7 @@ describe("readFileSync", () => {
   it("works with a file path which contains spaces", async () => {
     gc();
     const outpath = join(tmpdir(), "read file sync with space characters " + Math.random().toString(32) + " .txt");
-    await Bun.write(outpath, Bun.file(Bun.fileURLToPath(new URL("./readFileSync.txt", import.meta.url))));
+    await Fun.write(outpath, Fun.file(Fun.fileURLToPath(new URL("./readFileSync.txt", import.meta.url))));
     const text = readFileSync(outpath, "utf8");
     gc();
     expect(text).toBe("File read successfully");
@@ -1437,7 +1437,7 @@ describe("readFileSync", () => {
   it("works with a file URL which contains spaces", async () => {
     gc();
     const outpath = join(tmpdir(), "read file sync with space characters " + Math.random().toString(32) + " .txt");
-    await Bun.write(outpath, Bun.file(Bun.fileURLToPath(new URL("./readFileSync.txt", import.meta.url))));
+    await Fun.write(outpath, Fun.file(Fun.fileURLToPath(new URL("./readFileSync.txt", import.meta.url))));
     // on windows constructing a file url from an absolute path containing a drive letter will not add the "file:///" prefix
     // node.js has the same behavior, not sure what makes the most sense here
     const url = isWindows ? new URL("file:///" + outpath) : new URL(outpath, import.meta.url);
@@ -1538,7 +1538,7 @@ describe("writeFileSync", () => {
   });
   it("write file with mode, issue #3740", () => {
     const path = `${tmpdirSync()}/writeFileSyncWithMode.txt`;
-    writeFileSync(path, "bun", { mode: 33188 });
+    writeFileSync(path, "fun", { mode: 33188 });
     const stat = fs.statSync(path);
     expect(stat.mode).toBe(isWindows ? 33206 : 33188);
   });
@@ -1662,7 +1662,7 @@ it("readlink", () => {
 });
 
 // On FUSE / some network filesystems a symlink target can exceed PATH_MAX,
-// and POSIX readlink() may return exactly buf.len (truncated). Bun used to
+// and POSIX readlink() may return exactly buf.len (truncated). Fun used to
 // write the NUL terminator at buf[rc] which would be one past the end of the
 // stack PathBuffer in that case. We can't create a >= PATH_MAX target on a
 // normal filesystem, but we can exercise the longest-possible target to make
@@ -1670,7 +1670,7 @@ it("readlink", () => {
 it.skipIf(isWindows)("readlink with PATH_MAX-1 target", () => {
   const dir = tmpdirSync();
   // Find the longest target the local filesystem will accept for symlink(2).
-  // On Linux this is 4095, on macOS 1023. Bun's own path validation silently
+  // On Linux this is 4095, on macOS 1023. Fun's own path validation silently
   // replaces the target with "" when it is exactly MAX_PATH_BYTES long (and
   // Darwin accepts symlink("", link)), so start just below that boundary on
   // each platform rather than probing through it.
@@ -2103,7 +2103,7 @@ describe("createReadStream", () => {
 
   it("works with very large file", async () => {
     const tempFile = tmpdir() + "/" + "large-file" + Date.now() + ".txt";
-    await Bun.write(Bun.file(tempFile), "big data big data big data".repeat(10000));
+    await Fun.write(Fun.file(tempFile), "big data big data big data".repeat(10000));
     var stream = createReadStream(tempFile, {
       highWaterMark: 512,
     });
@@ -2144,7 +2144,7 @@ describe("createReadStream", () => {
   it(
     "correctly handles file descriptors with an offset",
     done => {
-      const path = `${tmpdir()}/bun-fs-createReadStream-${Date.now()}.txt`;
+      const path = `${tmpdir()}/fun-fs-createReadStream-${Date.now()}.txt`;
       const fd = fs.openSync(path, "w+");
 
       const stream = fs.createReadStream("", { fd: fd, start: 2 });
@@ -2509,14 +2509,14 @@ describe("fs/promises", () => {
     "readdir(path, {recursive: true}) produces the same result as Node.js",
     async () => {
       const full = resolve(import.meta.dir, "../");
-      const [bun, subprocess] = await Promise.all([
+      const [fun, subprocess] = await Promise.all([
         (async function () {
           const files = await promises.readdir(full, { recursive: true });
           files.sort();
           return files;
         })(),
         (async function () {
-          const subprocess = Bun.spawn({
+          const subprocess = Fun.spawn({
             cmd: [
               "node",
               "-e",
@@ -2537,7 +2537,7 @@ describe("fs/promises", () => {
       expect(subprocess.exitCode).toBe(0);
       const text = await subprocess.stdout.text();
       const node = JSON.parse(text);
-      expect(bun).toEqual(node as string[]);
+      expect(fun).toEqual(node as string[]);
     },
     100000,
   );
@@ -2546,14 +2546,14 @@ describe("fs/promises", () => {
     "readdir(path, {withFileTypes: true}) produces the same result as Node.js",
     async () => {
       const full = resolve(import.meta.dir, "../");
-      const [bun, subprocess] = await Promise.all([
+      const [fun, subprocess] = await Promise.all([
         (async function () {
           const files = await promises.readdir(full, { withFileTypes: true });
           files.sort();
           return files;
         })(),
         (async function () {
-          const subprocess = Bun.spawn({
+          const subprocess = Fun.spawn({
             cmd: [
               "node",
               "-e",
@@ -2574,10 +2574,10 @@ describe("fs/promises", () => {
       expect(subprocess.exitCode).toBe(0);
       const text = await subprocess.stdout.text();
       const node = JSON.parse(text);
-      expect(bun.length).toEqual(node.length);
+      expect(fun.length).toEqual(node.length);
       expect([...new Set(node.map(v => v.parentPath ?? v.path))]).toEqual([full]);
-      expect([...new Set(bun.map(v => v.parentPath ?? v.path))]).toEqual([full]);
-      expect(bun.map(v => join(v.parentPath ?? v.path, v.name)).sort()).toEqual(
+      expect([...new Set(fun.map(v => v.parentPath ?? v.path))]).toEqual([full]);
+      expect(fun.map(v => join(v.parentPath ?? v.path, v.name)).sort()).toEqual(
         node.map(v => join(v.path, v.name)).sort(),
       );
     },
@@ -2588,14 +2588,14 @@ describe("fs/promises", () => {
     "readdir(path, {withFileTypes: true, recursive: true}) produces the same result as Node.js",
     async () => {
       const full = resolve(import.meta.dir, "../");
-      const [bun, subprocess] = await Promise.all([
+      const [fun, subprocess] = await Promise.all([
         (async function () {
           const files = await promises.readdir(full, { withFileTypes: true, recursive: true });
           files.sort((a, b) => a.path.localeCompare(b.path));
           return files;
         })(),
         (async function () {
-          const subprocess = Bun.spawn({
+          const subprocess = Fun.spawn({
             cmd: [
               "node",
               "-e",
@@ -2616,9 +2616,9 @@ describe("fs/promises", () => {
       expect(subprocess.exitCode).toBe(0);
       const text = await subprocess.stdout.text();
       const node = JSON.parse(text);
-      expect(bun.length).toEqual(node.length);
-      expect(new Set(bun.map(v => v.parentPath ?? v.path))).toEqual(new Set(node.map(v => v.path)));
-      expect(bun.map(v => join(v.parentPath ?? v.path, v.name)).sort()).toEqual(
+      expect(fun.length).toEqual(node.length);
+      expect(new Set(fun.map(v => v.parentPath ?? v.path))).toEqual(new Set(node.map(v => v.path)));
+      expect(fun.map(v => join(v.parentPath ?? v.path, v.name)).sort()).toEqual(
         node.map(v => join(v.path, v.name)).sort(),
       );
     },
@@ -2629,14 +2629,14 @@ describe("fs/promises", () => {
     "readdirSync(path, {withFileTypes: true, recursive: true}) produces the same result as Node.js",
     async () => {
       const full = resolve(import.meta.dir, "../");
-      const [bun, subprocess] = await Promise.all([
+      const [fun, subprocess] = await Promise.all([
         (async function () {
           const files = readdirSync(full, { withFileTypes: true, recursive: true });
           files.sort((a, b) => a.path.localeCompare(b.path));
           return files;
         })(),
         (async function () {
-          const subprocess = Bun.spawn({
+          const subprocess = Fun.spawn({
             cmd: [
               "node",
               "-e",
@@ -2657,9 +2657,9 @@ describe("fs/promises", () => {
       expect(subprocess.exitCode).toBe(0);
       const text = await subprocess.stdout.text();
       const node = JSON.parse(text);
-      expect(bun.length).toEqual(node.length);
-      expect(new Set(bun.map(v => v.parentPath ?? v.path))).toEqual(new Set(node.map(v => v.path)));
-      expect(bun.map(v => join(v.parentPath ?? v.path, v.name)).sort()).toEqual(
+      expect(fun.length).toEqual(node.length);
+      expect(new Set(fun.map(v => v.parentPath ?? v.path))).toEqual(new Set(node.map(v => v.path)));
+      expect(fun.map(v => join(v.parentPath ?? v.path, v.name)).sort()).toEqual(
         node.map(v => join(v.path, v.name)).sort(),
       );
     },
@@ -2803,7 +2803,7 @@ describe("fs/promises", () => {
         await promises.readdir(...(args as [any, ...any[]]));
       } catch (e) {
         // check that producing the error doesn't cause any crashes
-        Bun.inspect(e);
+        Fun.inspect(e);
       }
     }
   });
@@ -3153,13 +3153,13 @@ it("createReadStream on a large file emits readable event correctly", () => {
 
 describe("fs.write", () => {
   it("should work with (fd, buffer, offset, length, position, callback)", done => {
-    const path = `${tmpdir()}/bun-fs-write-1-${Date.now()}.txt`;
+    const path = `${tmpdir()}/fun-fs-write-1-${Date.now()}.txt`;
     const fd = fs.openSync(path, "w");
-    const buffer = Buffer.from("bun");
+    const buffer = Buffer.from("fun");
     fs.write(fd, buffer, 0, buffer.length, 0, err => {
       try {
         expect(err).toBeNull();
-        expect(readFileSync(path, "utf8")).toStrictEqual("bun");
+        expect(readFileSync(path, "utf8")).toStrictEqual("fun");
       } catch (e) {
         return done(e);
       } finally {
@@ -3171,16 +3171,16 @@ describe("fs.write", () => {
   });
 
   it("should work with (fd, buffer, offset, length, callback)", done => {
-    const path = `${tmpdir()}/bun-fs-write-2-${Date.now()}.txt`;
+    const path = `${tmpdir()}/fun-fs-write-2-${Date.now()}.txt`;
     const fd = fs.openSync(path, "w");
-    const buffer = Buffer.from("bun");
+    const buffer = Buffer.from("fun");
     fs.write(fd, buffer, 0, buffer.length, (err, written, buffer) => {
       try {
         expect(err).toBeNull();
         expect(written).toBe(3);
-        expect(buffer.slice(0, written).toString()).toStrictEqual("bun");
+        expect(buffer.slice(0, written).toString()).toStrictEqual("fun");
         expect(Buffer.isBuffer(buffer)).toBe(true);
-        expect(readFileSync(path, "utf8")).toStrictEqual("bun");
+        expect(readFileSync(path, "utf8")).toStrictEqual("fun");
       } catch (e) {
         return done(e);
       } finally {
@@ -3192,16 +3192,16 @@ describe("fs.write", () => {
   });
 
   it("should work with (fd, string, position, encoding, callback)", done => {
-    const path = `${tmpdir()}/bun-fs-write-3-${Date.now()}.txt`;
+    const path = `${tmpdir()}/fun-fs-write-3-${Date.now()}.txt`;
     const fd = fs.openSync(path, "w");
-    const string = "bun";
+    const string = "fun";
     fs.write(fd, string, 0, "utf8", (err, written, string) => {
       try {
         expect(err).toBeNull();
         expect(written).toBe(3);
-        expect(string.slice(0, written).toString()).toStrictEqual("bun");
+        expect(string.slice(0, written).toString()).toStrictEqual("fun");
         expect(string).toBeTypeOf("string");
-        expect(readFileSync(path, "utf8")).toStrictEqual("bun");
+        expect(readFileSync(path, "utf8")).toStrictEqual("fun");
       } catch (e) {
         return done(e);
       } finally {
@@ -3213,16 +3213,16 @@ describe("fs.write", () => {
   });
 
   it("should work with (fd, string, position, callback)", done => {
-    const path = `${tmpdir()}/bun-fs-write-4-${Date.now()}.txt`;
+    const path = `${tmpdir()}/fun-fs-write-4-${Date.now()}.txt`;
     const fd = fs.openSync(path, "w");
-    const string = "bun";
+    const string = "fun";
     fs.write(fd, string, 0, (err, written, string) => {
       try {
         expect(err).toBeNull();
         expect(written).toBe(3);
-        expect(string.slice(0, written).toString()).toStrictEqual("bun");
+        expect(string.slice(0, written).toString()).toStrictEqual("fun");
         expect(string).toBeTypeOf("string");
-        expect(readFileSync(path, "utf8")).toStrictEqual("bun");
+        expect(readFileSync(path, "utf8")).toStrictEqual("fun");
       } catch (e) {
         return done(e);
       } finally {
@@ -3234,30 +3234,30 @@ describe("fs.write", () => {
   });
 
   it("should work with util.promisify", async () => {
-    const path = `${tmpdir()}/bun-fs-write-5-${Date.now()}.txt`;
+    const path = `${tmpdir()}/fun-fs-write-5-${Date.now()}.txt`;
     const fd = fs.openSync(path, "w");
-    const string = "bun";
+    const string = "fun";
     const fswrite = promisify(fs.write);
     const ret = await fswrite(fd, string, 0);
     expect(typeof ret === "object").toBeTrue();
     expect(ret.bytesWritten === 3).toBeTrue();
     expect(ret.buffer === string).toBeTrue();
-    expect(readFileSync(path, "utf8")).toStrictEqual("bun");
+    expect(readFileSync(path, "utf8")).toStrictEqual("fun");
     fs.closeSync(fd);
   });
 });
 
 describe("fs.read", () => {
   it("should work with (fd, callback)", done => {
-    const path = `${tmpdir()}/bun-fs-read-1-${Date.now()}.txt`;
-    fs.writeFileSync(path, "bun");
+    const path = `${tmpdir()}/fun-fs-read-1-${Date.now()}.txt`;
+    fs.writeFileSync(path, "fun");
 
     const fd = fs.openSync(path, "r");
     fs.read(fd, (err, bytesRead, buffer) => {
       try {
         expect(err).toBeNull();
         expect(bytesRead).toBe(3);
-        expect(buffer).toStrictEqual(Buffer.concat([Buffer.from("bun"), Buffer.alloc(16381)]));
+        expect(buffer).toStrictEqual(Buffer.concat([Buffer.from("fun"), Buffer.alloc(16381)]));
       } catch (e) {
         return done(e);
       } finally {
@@ -3268,8 +3268,8 @@ describe("fs.read", () => {
     });
   });
   it("should work with (fd, options, callback)", done => {
-    const path = `${tmpdir()}/bun-fs-read-2-${Date.now()}.txt`;
-    fs.writeFileSync(path, "bun");
+    const path = `${tmpdir()}/fun-fs-read-2-${Date.now()}.txt`;
+    fs.writeFileSync(path, "fun");
 
     const fd = fs.openSync(path, "r");
     const buffer = Buffer.alloc(16);
@@ -3277,7 +3277,7 @@ describe("fs.read", () => {
       try {
         expect(err).toBeNull();
         expect(bytesRead).toBe(3);
-        expect(buffer.slice(0, bytesRead).toString()).toStrictEqual("bun");
+        expect(buffer.slice(0, bytesRead).toString()).toStrictEqual("fun");
       } catch (e) {
         return done(e);
       } finally {
@@ -3288,8 +3288,8 @@ describe("fs.read", () => {
     });
   });
   it("should work with (fd, buffer, offset, length, position, callback)", done => {
-    const path = `${tmpdir()}/bun-fs-read-3-${Date.now()}.txt`;
-    fs.writeFileSync(path, "bun");
+    const path = `${tmpdir()}/fun-fs-read-3-${Date.now()}.txt`;
+    fs.writeFileSync(path, "fun");
 
     const fd = fs.openSync(path, "r");
     const buffer = Buffer.alloc(16);
@@ -3297,7 +3297,7 @@ describe("fs.read", () => {
       try {
         expect(err).toBeNull();
         expect(bytesRead).toBe(3);
-        expect(buffer.slice(0, bytesRead).toString()).toStrictEqual("bun");
+        expect(buffer.slice(0, bytesRead).toString()).toStrictEqual("fun");
       } catch (e) {
         return done(e);
       } finally {
@@ -3308,8 +3308,8 @@ describe("fs.read", () => {
     });
   });
   it("should work with offset", done => {
-    const path = `${tmpdir()}/bun-fs-read-4-${Date.now()}.txt`;
-    fs.writeFileSync(path, "bun");
+    const path = `${tmpdir()}/fun-fs-read-4-${Date.now()}.txt`;
+    fs.writeFileSync(path, "fun");
 
     const fd = fs.openSync(path, "r");
     const buffer = Buffer.alloc(16);
@@ -3317,7 +3317,7 @@ describe("fs.read", () => {
       try {
         expect(err).toBeNull();
         expect(bytesRead).toBe(3);
-        expect(buffer.slice(1, bytesRead + 1).toString()).toStrictEqual("bun");
+        expect(buffer.slice(1, bytesRead + 1).toString()).toStrictEqual("fun");
       } catch (e) {
         return done(e);
       } finally {
@@ -3328,8 +3328,8 @@ describe("fs.read", () => {
     });
   });
   it("should work with position", done => {
-    const path = `${tmpdir()}/bun-fs-read-5-${Date.now()}.txt`;
-    fs.writeFileSync(path, "bun");
+    const path = `${tmpdir()}/fun-fs-read-5-${Date.now()}.txt`;
+    fs.writeFileSync(path, "fun");
 
     const fd = fs.openSync(path, "r");
     const buffer = Buffer.alloc(16);
@@ -3348,8 +3348,8 @@ describe("fs.read", () => {
     });
   });
   it("should work with both position and offset", done => {
-    const path = `${tmpdir()}/bun-fs-read-6-${Date.now()}.txt`;
-    fs.writeFileSync(path, "bun");
+    const path = `${tmpdir()}/fun-fs-read-6-${Date.now()}.txt`;
+    fs.writeFileSync(path, "fun");
 
     const fd = fs.openSync(path, "r");
     const buffer = Buffer.alloc(16);
@@ -3368,8 +3368,8 @@ describe("fs.read", () => {
     });
   });
   it("should work with util.promisify", async () => {
-    const path = `${tmpdir()}/bun-fs-read-6-${Date.now()}.txt`;
-    fs.writeFileSync(path, "bun bun bun bun");
+    const path = `${tmpdir()}/fun-fs-read-6-${Date.now()}.txt`;
+    fs.writeFileSync(path, "fun fun fun fun");
 
     const fd = fs.openSync(path, "r");
     const buffer = Buffer.alloc(15);
@@ -3378,7 +3378,7 @@ describe("fs.read", () => {
     const ret = await fsread(fd, buffer, 0, 15, 0);
     expect(typeof ret === "object").toBeTrue();
     expect(ret.bytesRead === 15).toBeTrue();
-    expect(buffer.slice().toString() === "bun bun bun bun").toBeTrue();
+    expect(buffer.slice().toString() === "fun fun fun fun").toBeTrue();
     fs.closeSync(fd);
   });
 });
@@ -3476,7 +3476,7 @@ it("test syscall errno, issue#4198", () => {
 it.if(isWindows)("writing to windows hidden file is possible", () => {
   const temp = tmpdir();
   writeFileSync(join(temp, "file.txt"), "FAIL");
-  const status = Bun.spawnSync(["cmd", "/C", "attrib +h file.txt"], {
+  const status = Fun.spawnSync(["cmd", "/C", "attrib +h file.txt"], {
     stdio: ["ignore", "ignore", "ignore"],
     cwd: temp,
   });
@@ -3517,8 +3517,8 @@ describe.if(isWindows)("windows path handling", () => {
       expect(stats.size).toBeGreaterThan(0);
     });
 
-    it(`Can read '${filename}' with Bun.file`, async () => {
-      const stats = await Bun.file(filename).text();
+    it(`Can read '${filename}' with Fun.file`, async () => {
+      const stats = await Fun.file(filename).text();
       expect(stats.length).toBeGreaterThan(0);
     });
   }
@@ -3574,7 +3574,7 @@ it("promises.cp should work even if dest does not exist", async () => {
   await promises.rm(folder, { recursive: true, force: true });
   await promises.cp(src, dst);
 
-  const text_actual = await Bun.file(dst).text();
+  const text_actual = await Fun.file(dst).text();
   expect(text_actual).toBe(text_expected);
 });
 
@@ -3583,13 +3583,13 @@ it("promises.writeFile should accept a FileHandle", async () => {
   const x_path = join(x_dir, "dummy.txt");
   await using file = await fs.promises.open(x_path, "w");
   await fs.promises.writeFile(file, "data");
-  expect(await Bun.file(x_path).text()).toBe("data");
+  expect(await Fun.file(x_path).text()).toBe("data");
 });
 
 it("promises.readFile should accept a FileHandle", async () => {
   const x_dir = tmpdirSync();
   const x_path = join(x_dir, "dummy.txt");
-  await Bun.write(Bun.file(x_path), "data");
+  await Fun.write(Fun.file(x_path), "data");
   await using file = await fs.promises.open(x_path, "r");
   expect((await fs.promises.readFile(file)).toString()).toBe("data");
 });
@@ -3599,9 +3599,9 @@ it("promises.appendFile should accept a FileHandle", async () => {
   const x_path = join(x_dir, "dummy.txt");
   await using file = await fs.promises.open(x_path, "w");
   await fs.promises.appendFile(file, "data");
-  expect(await Bun.file(x_path).text()).toBe("data");
+  expect(await Fun.file(x_path).text()).toBe("data");
   await fs.promises.appendFile(file, "data");
-  expect(await Bun.file(x_path).text()).toBe("datadata");
+  expect(await Fun.file(x_path).text()).toBe("datadata");
 });
 
 it("chown should verify its arguments", () => {
@@ -3783,11 +3783,11 @@ describe('kernel32 long path conversion does not mangle "../../path" into "path"
 
   for (const [name, code] of nonExistTests) {
     it.concurrent(`${name} (not existing)`, async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", code],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", code],
         cwd: workingDir1,
         stdio: ["ignore", "inherit", "inherit"],
-        env: bunEnv,
+        env: funEnv,
       });
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);
@@ -3795,11 +3795,11 @@ describe('kernel32 long path conversion does not mangle "../../path" into "path"
   }
   for (const [name, code] of existTests) {
     it.concurrent(`${name} (existing)`, async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", code],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", code],
         cwd: workingDir2,
         stdio: ["ignore", "inherit", "inherit"],
-        env: bunEnv,
+        env: funEnv,
       });
       const exitCode = await proc.exited;
       expect(exitCode).toBe(0);

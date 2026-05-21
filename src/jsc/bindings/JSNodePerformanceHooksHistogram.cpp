@@ -5,7 +5,7 @@
 #include "JSNodePerformanceHooksHistogramConstructor.h"
 #include "ZigGlobalObject.h"
 #include "ErrorCode.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "JSDOMExceptionHandling.h"
 #include <JavaScriptCore/JSCJSValueInlines.h>
 #include <JavaScriptCore/JSCellInlines.h>
@@ -24,7 +24,7 @@
 #include <hdr/hdr_histogram.h>
 #include <wtf/MonotonicTime.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -282,4 +282,4 @@ void JSNodePerformanceHooksHistogram::getPercentilesBigInt(JSGlobalObject* globa
     }
 }
 
-} // namespace Bun
+} // namespace Fun

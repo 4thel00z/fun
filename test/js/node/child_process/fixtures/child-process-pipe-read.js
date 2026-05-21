@@ -1,4 +1,4 @@
-import { sleep } from "bun";
+import { sleep } from "fun";
 
 const fs = require("node:fs");
 

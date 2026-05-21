@@ -309,7 +309,7 @@ fn testDiag(diag: Diagnostic, err: anyerror, expected: []const u8) void {
 
 pub fn Args(comptime Id: type, comptime params: []const Param(Id)) type {
     return struct {
-        arena: bun.ArenaAllocator,
+        arena: fun.ArenaAllocator,
         clap: ComptimeClap(Id, params),
         exe_arg: ?[]const u8,
 
@@ -551,7 +551,7 @@ pub fn simpleHelp(
         if (desc_text.len == 0) continue;
 
         // create a string with spaces_len spaces
-        const default_allocator = bun.default_allocator;
+        const default_allocator = fun.default_allocator;
 
         const flags_len = if (param.names.long) |l| l.len else 0;
         const value_len: usize = if (param.takes_value != .none) 6 else 0;
@@ -568,7 +568,7 @@ pub fn simpleHelp(
     }
 }
 
-pub fn simpleHelpBunTopLevel(
+pub fn simpleHelpFunTopLevel(
     comptime params: []const Param(Help),
 ) void {
     const max_spacing = 30;
@@ -587,7 +587,7 @@ pub fn simpleHelpBunTopLevel(
     };
 
     if (computed_max_spacing > max_spacing) {
-        @compileError("a parameter is too long to be nicely printed in `bun --help`");
+        @compileError("a parameter is too long to be nicely printed in `fun --help`");
     }
 
     inline for (params) |param| {
@@ -724,8 +724,8 @@ fn testUsage(expected: []const u8, params: []const Param(Help)) !void {
     testing.expectEqualStrings(expected, fbs.getWritten());
 }
 
-const Output = @import("../bun_core/output.zig");
-const bun = @import("bun");
+const Output = @import("../fun_core/output.zig");
+const fun = @import("fun");
 
 const std = @import("std");
 const heap = std.heap;

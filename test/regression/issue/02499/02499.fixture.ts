@@ -1,4 +1,4 @@
-const server = Bun.serve({
+const server = Fun.serve({
   port: 0,
   async fetch(req) {
     console.log(await req.json());

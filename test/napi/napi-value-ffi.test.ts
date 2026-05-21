@@ -1,12 +1,12 @@
-import { spawnSync } from "bun";
-import { cc, dlopen } from "bun:ffi";
-import { beforeAll, describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, isArm64, isASAN, isWindows } from "harness";
+import { spawnSync } from "fun";
+import { cc, dlopen } from "fun:ffi";
+import { beforeAll, describe, expect, it } from "fun:test";
+import { funEnv, funExe, isArm64, isASAN, isWindows } from "harness";
 import { join } from "path";
 
 import source from "./napi-app/ffi_addon_1.c" with { type: "file" };
 
-// TinyCC (and all of bun:ffi) is disabled on Windows ARM64
+// TinyCC (and all of fun:ffi) is disabled on Windows ARM64
 const isFFIUnavailable = isWindows && isArm64;
 
 const symbols = {
@@ -31,10 +31,10 @@ beforeAll(() => {
 
   // build gyp
   const install = spawnSync({
-    cmd: [bunExe(), "install", "--verbose"],
+    cmd: [funExe(), "install", "--verbose"],
     cwd: join(__dirname, "napi-app"),
     stderr: "inherit",
-    env: bunEnv,
+    env: funEnv,
     stdout: "inherit",
     stdin: "inherit",
   });

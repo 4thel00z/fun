@@ -1,19 +1,19 @@
 ---
-title: Generate code coverage reports with the Bun test runner
+title: Generate code coverage reports with the Fun test runner
 sidebarTitle: Coverage reports
 mode: center
 ---
 
-Bun's test runner supports built-in _code coverage reporting_. Use it to see how much of your codebase is covered by tests and find areas that are not currently well-tested.
+Fun's test runner supports built-in _code coverage reporting_. Use it to see how much of your codebase is covered by tests and find areas that are not currently well-tested.
 
 ---
 
-Pass the `--coverage` flag to `bun test` to enable this feature. This will print a coverage report after the test run.
+Pass the `--coverage` flag to `fun test` to enable this feature. This will print a coverage report after the test run.
 
 The coverage report lists the source files that were executed during the test run, the percentage of functions and lines that were executed, and the line ranges that were not executed during the run.
 
 ```sh terminal icon="terminal"
-bun test --coverage
+fun test --coverage
 ```
 
 ```txt
@@ -37,13 +37,13 @@ All files    |   66.67 |   77.78 |
 
 ---
 
-To always enable coverage reporting by default, add the following line to your `bunfig.toml`:
+To always enable coverage reporting by default, add the following line to your `funfig.toml`:
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [test]
 coverage = true # always enable coverage
 ```
 
 ---
 
-Refer to [Docs > Test runner > Coverage](/test/code-coverage) for complete documentation on code coverage reporting in Bun.
+Refer to [Docs > Test runner > Coverage](/test/code-coverage) for complete documentation on code coverage reporting in Fun.

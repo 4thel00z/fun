@@ -1,5 +1,5 @@
-import { hostedGitInfo } from "bun:internal-for-testing";
-import { describe, expect, it } from "bun:test";
+import { hostedGitInfo } from "fun:internal-for-testing";
+import { describe, expect, it } from "fun:test";
 import { invalidGitUrls, validGitUrls } from "./cases";
 
 describe("fromUrl", () => {

@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("Response.bytes() with async iterable body does not crash with null deref", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       function* gen() {}
@@ -16,7 +16,7 @@ test("Response.bytes() with async iterable body does not crash with null deref",
       process.exit(0);
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -28,9 +28,9 @@ test("Response.bytes() with async iterable body does not crash with null deref",
 });
 
 test("Response.arrayBuffer() with async iterable body does not crash with null deref", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       function* gen() {}
@@ -42,7 +42,7 @@ test("Response.arrayBuffer() with async iterable body does not crash with null d
       process.exit(0);
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

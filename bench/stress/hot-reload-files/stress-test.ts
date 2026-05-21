@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { Subprocess } from "bun";
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
@@ -50,10 +52,10 @@ function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Start the child process with Bun's hot reloading
-function startBunProcess() {
-  // Start the Bun process with hot reloading enabled
-  const child = Bun.spawn({
+// Start the child process with Fun's hot reloading
+function startFunProcess() {
+  // Start the Fun process with hot reloading enabled
+  const child = Fun.spawn({
     cmd: [process.execPath, "--hot", "--no-clear-screen", "./modules/index.ts"],
     stdio: ["inherit", "inherit", "inherit"],
     env: {
@@ -144,8 +146,8 @@ async function runStressTest() {
   console.log(`Starting stress test - will perform ${TOTAL_RELOADS} hot reloads`);
   startTime = Date.now();
 
-  // Start the Bun process with hot reloading
-  childProcess = startBunProcess();
+  // Start the Fun process with hot reloading
+  childProcess = startFunProcess();
 }
 
 // Start the stress test

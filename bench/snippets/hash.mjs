@@ -7,99 +7,99 @@ const longStr = Buffer.alloc(128 * 1024, "xABcDpQrStUvWxYz=-1]23]12312312][3123]
 // Short string benchmarks
 
 bench("wyhash (short)", () => {
-  Bun.hash.wyhash(shortStr);
+  Fun.hash.wyhash(shortStr);
 });
 
 bench("adler32 (short)", () => {
-  Bun.hash.adler32(shortStr);
+  Fun.hash.adler32(shortStr);
 });
 
 bench("crc32 (short)", () => {
-  Bun.hash.crc32(shortStr);
+  Fun.hash.crc32(shortStr);
 });
 
 bench("cityHash32 (short)", () => {
-  Bun.hash.cityHash32(shortStr);
+  Fun.hash.cityHash32(shortStr);
 });
 
 bench("cityHash64 (short)", () => {
-  Bun.hash.cityHash64(shortStr);
+  Fun.hash.cityHash64(shortStr);
 });
 
 bench("xxHash32 (short)", () => {
-  Bun.hash.xxHash32(shortStr);
+  Fun.hash.xxHash32(shortStr);
 });
 
 bench("xxHash64 (short)", () => {
-  Bun.hash.xxHash64(shortStr);
+  Fun.hash.xxHash64(shortStr);
 });
 
 bench("xxHash3 (short)", () => {
-  Bun.hash.xxHash3(shortStr);
+  Fun.hash.xxHash3(shortStr);
 });
 
 bench("murmur32v3 (short)", () => {
-  Bun.hash.murmur32v3(shortStr);
+  Fun.hash.murmur32v3(shortStr);
 });
 
 bench("murmur32v2 (short)", () => {
-  Bun.hash.murmur32v2(shortStr);
+  Fun.hash.murmur32v2(shortStr);
 });
 
 bench("murmur64v2 (short)", () => {
-  Bun.hash.murmur64v2(shortStr);
+  Fun.hash.murmur64v2(shortStr);
 });
 
 bench("rapidhash (short)", () => {
-  Bun.hash.rapidhash(shortStr);
+  Fun.hash.rapidhash(shortStr);
 });
 
 bench("wyhash (128 KB)", () => {
-  Bun.hash.wyhash(longStr);
+  Fun.hash.wyhash(longStr);
 });
 
 bench("adler32 (128 KB)", () => {
-  Bun.hash.adler32(longStr);
+  Fun.hash.adler32(longStr);
 });
 
 bench("crc32 (128 KB)", () => {
-  Bun.hash.crc32(longStr);
+  Fun.hash.crc32(longStr);
 });
 
 bench("cityHash32 (128 KB)", () => {
-  Bun.hash.cityHash32(longStr);
+  Fun.hash.cityHash32(longStr);
 });
 
 bench("cityHash64 (128 KB)", () => {
-  Bun.hash.cityHash64(longStr);
+  Fun.hash.cityHash64(longStr);
 });
 
 bench("xxHash32 (128 KB)", () => {
-  Bun.hash.xxHash32(longStr);
+  Fun.hash.xxHash32(longStr);
 });
 
 bench("xxHash64 (128 KB)", () => {
-  Bun.hash.xxHash64(longStr);
+  Fun.hash.xxHash64(longStr);
 });
 
 bench("xxHash3 (128 KB)", () => {
-  Bun.hash.xxHash3(longStr);
+  Fun.hash.xxHash3(longStr);
 });
 
 bench("murmur32v3 (128 KB)", () => {
-  Bun.hash.murmur32v3(longStr);
+  Fun.hash.murmur32v3(longStr);
 });
 
 bench("murmur32v2 (128 KB)", () => {
-  Bun.hash.murmur32v2(longStr);
+  Fun.hash.murmur32v2(longStr);
 });
 
 bench("murmur64v2 (128 KB)", () => {
-  Bun.hash.murmur64v2(longStr);
+  Fun.hash.murmur64v2(longStr);
 });
 
 bench("rapidhash (128 KB)", () => {
-  Bun.hash.rapidhash(longStr);
+  Fun.hash.rapidhash(longStr);
 });
 
 run();

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { readFileSync } from "fs";
 import type { AddressInfo } from "node:net";
 import { join } from "path";

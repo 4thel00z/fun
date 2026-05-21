@@ -1,16 +1,16 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/11100
+// https://github.com/underdoc-org/fun/issues/11100
 //
 // A CommonJS module containing a `using` declaration used to be lowered into
-// `import { __using, __callDispose } from "bun:wrap"; ...` which was then
+// `import { __using, __callDispose } from "fun:wrap"; ...` which was then
 // printed *inside* the CommonJS `(function(exports, require, module, ...) { ... })`
 // wrapper — an ESM `import` inside a function body. JSC would reject that and
-// Bun surfaced a confusing
+// Fun surfaced a confusing
 // "TypeError: Expected CommonJS module to have a function wrapper" error.
 //
-// Now that Bun no longer lowers `using` / `await using` when targeting Bun,
+// Now that Fun no longer lowers `using` / `await using` when targeting Fun,
 // JSC evaluates the declaration directly and the module loads and throws the
 // spec-correct error for a non-disposable value.
 
@@ -21,9 +21,9 @@ using server = {};
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "entry.cjs"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "entry.cjs"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -32,7 +32,7 @@ using server = {};
 
   expect(stdout).toBe("");
   expect(stderr).not.toContain("Expected CommonJS module to have a function wrapper");
-  expect(stderr).not.toContain("bun:wrap");
+  expect(stderr).not.toContain("fun:wrap");
   // `{}` has no [Symbol.dispose], so JSC throws the spec-mandated TypeError
   // when entering the `using` declaration.
   expect(stderr).toContain("TypeError");
@@ -48,9 +48,9 @@ console.log("loaded", typeof path.join);
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "entry.cjs"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "entry.cjs"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

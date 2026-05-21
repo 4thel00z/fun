@@ -109,7 +109,7 @@ pub fn initFromLog(
     owner: Owner,
     // for .client and .server, these are meant to be relative file paths
     owner_display_name: []const u8,
-    messages: []const bun.logger.Msg,
+    messages: []const fun.logger.Msg,
 ) !SerializedFailure {
     assert(messages.len > 0);
 
@@ -142,7 +142,7 @@ pub fn initFromLog(
 
 const Writer = std.array_list.Managed(u8).Writer;
 
-fn writeLogMsg(msg: *const bun.logger.Msg, w: Writer) !void {
+fn writeLogMsg(msg: *const fun.logger.Msg, w: Writer) !void {
     try w.writeByte(switch (msg.kind) {
         inline else => |k| @intFromEnum(@field(ErrorKind, "bundler_log_" ++ @tagName(k))),
     });
@@ -154,7 +154,7 @@ fn writeLogMsg(msg: *const bun.logger.Msg, w: Writer) !void {
     }
 }
 
-fn writeLogData(data: bun.logger.Data, w: Writer) !void {
+fn writeLogData(data: fun.logger.Data, w: Writer) !void {
     try writeString32(data.text, w);
     if (data.location) |loc| {
         if (loc.line < 0) {
@@ -188,10 +188,10 @@ fn writeString32(data: []const u8, w: Writer) !void {
 //         //
 //     }
 //     if (value.jsType() == .DOMWrapper) {
-//         if (value.as(bun.api.BuildMessage)) |build_error| {
+//         if (value.as(fun.api.BuildMessage)) |build_error| {
 //             _ = build_error; // autofix
 //             //
-//         } else if (value.as(bun.api.ResolveMessage)) |resolve_error| {
+//         } else if (value.as(fun.api.ResolveMessage)) |resolve_error| {
 //             _ = resolve_error; // autofix
 //             @panic("TODO");
 //         }
@@ -203,14 +203,14 @@ fn writeString32(data: []const u8, w: Writer) !void {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const assert = bun.assert;
-const bake = bun.bake;
-const Log = bun.logger.Log;
+const fun = @import("fun");
+const assert = fun.assert;
+const bake = fun.bake;
+const Log = fun.logger.Log;
 
 const DevServer = bake.DevServer;
 const IncrementalGraph = DevServer.IncrementalGraph;
 const RouteBundle = DevServer.RouteBundle;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

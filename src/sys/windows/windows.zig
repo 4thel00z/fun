@@ -80,8 +80,8 @@ pub const nt_object_prefix_u8 = [4]u8{ '\\', '?', '?', '\\' };
 pub const nt_unc_object_prefix_u8 = [8]u8{ '\\', '?', '?', '\\', 'U', 'N', 'C', '\\' };
 pub const long_path_prefix_u8 = [4]u8{ '\\', '\\', '?', '\\' };
 
-pub const PathBuffer = if (Environment.isWindows) bun.PathBuffer else void;
-pub const WPathBuffer = if (Environment.isWindows) bun.WPathBuffer else void;
+pub const PathBuffer = if (Environment.isWindows) fun.PathBuffer else void;
+pub const WPathBuffer = if (Environment.isWindows) fun.WPathBuffer else void;
 
 pub const HANDLE = win32.HANDLE;
 pub const HMODULE = win32.HMODULE;
@@ -100,7 +100,7 @@ pub fn GetFileType(hFile: win32.HANDLE) win32.DWORD {
 
     const rc = function(hFile);
     if (comptime Environment.enable_logs)
-        bun.sys.syslog("GetFileType({f}) = {d}", .{ bun.FD.fromNative(hFile), rc });
+        fun.sys.syslog("GetFileType({f}) = {d}", .{ fun.FD.fromNative(hFile), rc });
     return rc;
 }
 
@@ -2941,7 +2941,7 @@ pub const Win32Error = enum(u16) {
     pub const WSA_QOS_RESERVED_PETYPE: Win32Error = @enumFromInt(11031);
 
     pub fn get() Win32Error {
-        return @enumFromInt(@intFromEnum(bun.windows.kernel32.GetLastError()));
+        return @enumFromInt(@intFromEnum(fun.windows.kernel32.GetLastError()));
     }
 
     pub fn int(this: Win32Error) u16 {
@@ -2973,7 +2973,7 @@ pub fn GetProcAddressA(
     utf8: [:0]const u8,
 ) ?*anyopaque {
     var wbuf: [2048]u16 = undefined;
-    return GetProcAddress(ptr, bun.strings.toWPath(&wbuf, utf8).ptr);
+    return GetProcAddress(ptr, fun.strings.toWPath(&wbuf, utf8).ptr);
 }
 
 pub const LoadLibraryA = @import("../../windows_sys/externs.zig").LoadLibraryA;
@@ -2990,11 +2990,11 @@ pub const CreateHardLinkW = struct {
 
         const rc = run(newFileName, existingFileName, securityAttributes);
         if (comptime Environment.isDebug)
-            bun.sys.syslog(
+            fun.sys.syslog(
                 "CreateHardLinkW({f}, {f}) = {d}",
                 .{
-                    bun.fmt.fmtOSPath(std.mem.span(newFileName), .{}),
-                    bun.fmt.fmtOSPath(std.mem.span(existingFileName), .{}),
+                    fun.fmt.fmtOSPath(std.mem.span(newFileName), .{}),
+                    fun.fmt.fmtOSPath(std.mem.span(existingFileName), .{}),
                     if (rc == 0) @intFromEnum(Win32Error.get()) else 0,
                 },
             );
@@ -3006,15 +3006,15 @@ pub const CopyFileW = @import("../../windows_sys/externs.zig").CopyFileW;
 
 pub const SetFileInformationByHandle = @import("../../windows_sys/externs.zig").SetFileInformationByHandle;
 
-pub fn getLastErrno() bun.sys.E {
-    return (bun.sys.SystemErrno.init(bun.windows.kernel32.GetLastError()) orelse SystemErrno.EUNKNOWN).toE();
+pub fn getLastErrno() fun.sys.E {
+    return (fun.sys.SystemErrno.init(fun.windows.kernel32.GetLastError()) orelse SystemErrno.EUNKNOWN).toE();
 }
 
 pub fn getLastError() anyerror {
-    return bun.errnoToZigErr(getLastErrno());
+    return fun.errnoToZigErr(getLastErrno());
 }
 
-pub fn translateNTStatusToErrno(err: win32.NTSTATUS) bun.sys.E {
+pub fn translateNTStatusToErrno(err: win32.NTSTATUS) fun.sys.E {
     return switch (err) {
         .SUCCESS => .SUCCESS,
         .ACCESS_DENIED => .PERM,
@@ -3031,19 +3031,19 @@ pub fn translateNTStatusToErrno(err: win32.NTSTATUS) bun.sys.E {
         .NOT_SAME_DEVICE => .XDEV,
         .DELETE_PENDING => .BUSY,
         .SHARING_VIOLATION => if (comptime Environment.isDebug) brk: {
-            bun.Output.debugWarn("Received SHARING_VIOLATION, indicates file handle should've been opened with FILE_SHARE_DELETE", .{});
+            fun.Output.debugWarn("Received SHARING_VIOLATION, indicates file handle should've been opened with FILE_SHARE_DELETE", .{});
             break :brk .BUSY;
         } else .BUSY,
         .OBJECT_NAME_INVALID => if (comptime Environment.isDebug) brk: {
-            bun.Output.debugWarn("Received OBJECT_NAME_INVALID, indicates a file path conversion issue.", .{});
-            bun.crash_handler.dumpCurrentStackTrace(null, .{ .frame_count = 10 });
+            fun.Output.debugWarn("Received OBJECT_NAME_INVALID, indicates a file path conversion issue.", .{});
+            fun.crash_handler.dumpCurrentStackTrace(null, .{ .frame_count = 10 });
             break :brk .INVAL;
         } else .INVAL,
 
         else => |t| {
-            if (bun.Environment.isDebug) {
-                bun.Output.warn("Called translateNTStatusToErrno with {s} which does not have a mapping to errno.", .{@tagName(t)});
-                bun.crash_handler.dumpCurrentStackTrace(null, .{ .frame_count = 10 });
+            if (fun.Environment.isDebug) {
+                fun.Output.warn("Called translateNTStatusToErrno with {s} which does not have a mapping to errno.", .{@tagName(t)});
+                fun.crash_handler.dumpCurrentStackTrace(null, .{ .frame_count = 10 });
             }
             return .UNKNOWN;
         },
@@ -3169,11 +3169,11 @@ pub const INPUT_RECORD = extern struct {
     },
 };
 
-// Bun__UVSignalHandle__{init,close}: see src/runtime/node/uv_signal_handle_windows.zig
+// Fun__UVSignalHandle__{init,close}: see src/runtime/node/uv_signal_handle_windows.zig
 
 comptime {
     if (Environment.isWindows) {
-        @export(&@"windows process.dlopen", .{ .name = "Bun__LoadLibraryBunString" });
+        @export(&@"windows process.dlopen", .{ .name = "Fun__LoadLibraryFunString" });
     }
 }
 
@@ -3184,12 +3184,12 @@ pub fn userUniqueId() u32 {
     var buf: [257]u16 = undefined;
     var size: u32 = buf.len;
     if (GetUserNameW(@ptrCast(&buf), &size) == 0) {
-        if (Environment.isDebug) std.debug.panic("GetUserNameW failed: {}", .{bun.windows.GetLastError()});
+        if (Environment.isDebug) std.debug.panic("GetUserNameW failed: {}", .{fun.windows.GetLastError()});
         return 0;
     }
     const name = buf[0..size];
-    bun.Output.scoped(.windowsUserUniqueId, .visible)("username: {f}", .{bun.fmt.utf16(name)});
-    return bun.hash32(std.mem.sliceAsBytes(name));
+    fun.Output.scoped(.windowsUserUniqueId, .visible)("username: {f}", .{fun.fmt.utf16(name)});
+    return fun.hash32(std.mem.sliceAsBytes(name));
 }
 
 pub fn winSockErrorToZigError(err: std.os.windows.ws2_32.WinsockError) !void {
@@ -3293,7 +3293,7 @@ pub fn winSockErrorToZigError(err: std.os.windows.ws2_32.WinsockError) !void {
         _ => |t| {
             if (@intFromEnum(t) != 0) {
                 if (Environment.isDebug) {
-                    bun.Output.debugWarn("Unknown WinSockError: {d}", .{@intFromEnum(t)});
+                    fun.Output.debugWarn("Unknown WinSockError: {d}", .{@intFromEnum(t)});
                 }
             }
         },
@@ -3316,29 +3316,29 @@ pub fn GetFinalPathNameByHandle(
     fmt: std.os.windows.GetFinalPathNameByHandleFormat,
     out_buffer: []u16,
 ) std.os.windows.GetFinalPathNameByHandleError![]u16 {
-    const return_length = bun.windows.GetFinalPathNameByHandleW(hFile, out_buffer.ptr, @truncate(out_buffer.len), switch (fmt.volume_name) {
+    const return_length = fun.windows.GetFinalPathNameByHandleW(hFile, out_buffer.ptr, @truncate(out_buffer.len), switch (fmt.volume_name) {
         .Dos => win32.FILE_NAME_NORMALIZED | win32.VOLUME_NAME_DOS,
         .Nt => win32.FILE_NAME_NORMALIZED | win32.VOLUME_NAME_NT,
     });
 
     if (return_length == 0) {
-        bun.sys.syslog("GetFinalPathNameByHandleW({*p}) = {}", .{ hFile, GetLastError() });
+        fun.sys.syslog("GetFinalPathNameByHandleW({*p}) = {}", .{ hFile, GetLastError() });
         return error.FileNotFound;
     }
 
     if (return_length >= out_buffer.len) {
-        bun.sys.syslog("GetFinalPathNameByHandleW({*p}) = NAMETOOLONG (needed {d}, have {d})", .{ hFile, return_length, out_buffer.len });
+        fun.sys.syslog("GetFinalPathNameByHandleW({*p}) = NAMETOOLONG (needed {d}, have {d})", .{ hFile, return_length, out_buffer.len });
         return error.NameTooLong;
     }
 
     var ret = out_buffer[0..@intCast(return_length)];
 
-    bun.sys.syslog("GetFinalPathNameByHandleW({*p}) = {f}", .{ hFile, bun.fmt.utf16(ret) });
+    fun.sys.syslog("GetFinalPathNameByHandleW({*p}) = {f}", .{ hFile, fun.fmt.utf16(ret) });
 
-    if (bun.strings.hasPrefixComptimeType(u16, ret, long_path_prefix)) {
+    if (fun.strings.hasPrefixComptimeType(u16, ret, long_path_prefix)) {
         // '\\?\C:\absolute\path' -> 'C:\absolute\path'
         ret = ret[4..];
-        if (bun.strings.hasPrefixComptimeUTF16(ret, "UNC\\")) {
+        if (fun.strings.hasPrefixComptimeUTF16(ret, "UNC\\")) {
             // '\\?\UNC\absolute\path' -> '\\absolute\path'
             ret[2] = '\\';
             ret = ret[2..];
@@ -3393,7 +3393,7 @@ const FILE_DISPOSITION_ON_CLOSE: ULONG = 0x00000008;
 const FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE: ULONG = 0x00000010;
 
 // Copy-paste of the standard library function except without unreachable.
-pub fn DeleteFileBun(sub_path_w: []const u16, options: DeleteFileOptions) bun.sys.Maybe(void) {
+pub fn DeleteFileFun(sub_path_w: []const u16, options: DeleteFileOptions) fun.sys.Maybe(void) {
     const create_options_flags: ULONG = if (options.remove_dir)
         FILE_DIRECTORY_FILE | FILE_OPEN_REPARSE_POINT
     else
@@ -3435,11 +3435,11 @@ pub fn DeleteFileBun(sub_path_w: []const u16, options: DeleteFileOptions) bun.sy
         null,
         0,
     );
-    bun.sys.syslog("NtCreateFile({f}, DELETE) = {}", .{ bun.fmt.fmtPath(u16, sub_path_w, .{}), rc });
-    if (bun.sys.Maybe(void).errnoSys(rc, .open)) |err| {
+    fun.sys.syslog("NtCreateFile({f}, DELETE) = {}", .{ fun.fmt.fmtPath(u16, sub_path_w, .{}), rc });
+    if (fun.sys.Maybe(void).errnoSys(rc, .open)) |err| {
         return err;
     }
-    defer _ = bun.windows.CloseHandle(tmp_handle);
+    defer _ = fun.windows.CloseHandle(tmp_handle);
 
     // FileDispositionInformationEx (and therefore FILE_DISPOSITION_POSIX_SEMANTICS and FILE_DISPOSITION_IGNORE_READONLY_ATTRIBUTE)
     // are only supported on NTFS filesystems, so the version check on its own is only a partial solution. To support non-NTFS filesystems
@@ -3461,7 +3461,7 @@ pub fn DeleteFileBun(sub_path_w: []const u16, options: DeleteFileOptions) bun.sy
         @sizeOf(windows.FILE_DISPOSITION_INFORMATION_EX),
         .FileDispositionInformationEx,
     );
-    bun.sys.syslog("NtSetInformationFile({f}, DELETE) = {}", .{ bun.fmt.fmtPath(u16, sub_path_w, .{}), rc });
+    fun.sys.syslog("NtSetInformationFile({f}, DELETE) = {}", .{ fun.fmt.fmtPath(u16, sub_path_w, .{}), rc });
     switch (rc) {
         .SUCCESS => return .success,
         // INVALID_PARAMETER here means that the filesystem does not support FileDispositionInformationEx
@@ -3483,9 +3483,9 @@ pub fn DeleteFileBun(sub_path_w: []const u16, options: DeleteFileOptions) bun.sy
             @sizeOf(windows.FILE_DISPOSITION_INFORMATION),
             .FileDispositionInformation,
         );
-        bun.sys.syslog("NtSetInformationFile({f}, DELETE) = {}", .{ bun.fmt.fmtPath(u16, sub_path_w, .{}), rc });
+        fun.sys.syslog("NtSetInformationFile({f}, DELETE) = {}", .{ fun.fmt.fmtPath(u16, sub_path_w, .{}), rc });
     }
-    if (bun.sys.Maybe(void).errnoSys(rc, .NtSetInformationFile)) |err| {
+    if (fun.sys.Maybe(void).errnoSys(rc, .NtSetInformationFile)) |err| {
         return err;
     }
 
@@ -3530,12 +3530,12 @@ pub const Subsystem = enum(u16) {
     windows_gui = 2,
 };
 
-pub fn editWin32BinarySubsystem(fd: bun.sys.File, subsystem: Subsystem) !void {
-    comptime bun.assert(bun.Environment.isWindows);
-    if (bun.windows.SetFilePointerEx(fd.handle.cast(), pe_header_offset_location, null, std.os.windows.FILE_BEGIN) == 0)
+pub fn editWin32BinarySubsystem(fd: fun.sys.File, subsystem: Subsystem) !void {
+    comptime fun.assert(fun.Environment.isWindows);
+    if (fun.windows.SetFilePointerEx(fd.handle.cast(), pe_header_offset_location, null, std.os.windows.FILE_BEGIN) == 0)
         return error.Win32Error;
     const offset = try fd.reader().readInt(u32, .little);
-    if (bun.windows.SetFilePointerEx(fd.handle.cast(), offset + subsystem_offset, null, std.os.windows.FILE_BEGIN) == 0)
+    if (fun.windows.SetFilePointerEx(fd.handle.cast(), offset + subsystem_offset, null, std.os.windows.FILE_BEGIN) == 0)
         return error.Win32Error;
     try fd.writer().writeInt(u16, @intFromEnum(subsystem), .little);
 }
@@ -3553,7 +3553,7 @@ pub const rescle = struct {
     ) c_int;
 
     pub fn setIcon(exe_path: [*:0]const u16, icon: [*:0]const u16) !void {
-        comptime bun.assert(bun.Environment.isWindows);
+        comptime fun.assert(fun.Environment.isWindows);
         const status = rescle__setIcon(exe_path, icon);
         return switch (status) {
             0 => {},
@@ -3570,7 +3570,7 @@ pub const rescle = struct {
         description: ?[]const u8,
         copyright: ?[]const u8,
     ) !void {
-        comptime bun.assert(bun.Environment.isWindows);
+        comptime fun.assert(fun.Environment.isWindows);
 
         // Validate version string format if provided
         if (version) |v| {
@@ -3598,31 +3598,31 @@ pub const rescle = struct {
         }
 
         // Allocate UTF-16 strings
-        const allocator = bun.default_allocator;
+        const allocator = fun.default_allocator;
 
         // Icon is a path, so use toWPathNormalized with proper buffer handling
-        var icon_buf: bun.OSPathBuffer = undefined;
+        var icon_buf: fun.OSPathBuffer = undefined;
         const icon_w = if (icon) |i| brk: {
-            const path_w = bun.strings.toWPathNormalized(&icon_buf, i);
+            const path_w = fun.strings.toWPathNormalized(&icon_buf, i);
             // toWPathNormalized returns a slice into icon_buf, need to null-terminate it
-            const buf_u16 = bun.reinterpretSlice(u16, &icon_buf);
+            const buf_u16 = fun.reinterpretSlice(u16, &icon_buf);
             buf_u16[path_w.len] = 0;
             break :brk buf_u16[0..path_w.len :0];
         } else null;
 
-        const title_w = if (title) |t| try bun.strings.toUTF16AllocForReal(allocator, t, false, true) else null;
+        const title_w = if (title) |t| try fun.strings.toUTF16AllocForReal(allocator, t, false, true) else null;
         defer if (title_w) |tw| allocator.free(tw);
 
-        const publisher_w = if (publisher) |p| try bun.strings.toUTF16AllocForReal(allocator, p, false, true) else null;
+        const publisher_w = if (publisher) |p| try fun.strings.toUTF16AllocForReal(allocator, p, false, true) else null;
         defer if (publisher_w) |pw| allocator.free(pw);
 
-        const version_w = if (version) |v| try bun.strings.toUTF16AllocForReal(allocator, v, false, true) else null;
+        const version_w = if (version) |v| try fun.strings.toUTF16AllocForReal(allocator, v, false, true) else null;
         defer if (version_w) |vw| allocator.free(vw);
 
-        const description_w = if (description) |d| try bun.strings.toUTF16AllocForReal(allocator, d, false, true) else null;
+        const description_w = if (description) |d| try fun.strings.toUTF16AllocForReal(allocator, d, false, true) else null;
         defer if (description_w) |dw| allocator.free(dw);
 
-        const copyright_w = if (copyright) |cr| try bun.strings.toUTF16AllocForReal(allocator, cr, false, true) else null;
+        const copyright_w = if (copyright) |cr| try fun.strings.toUTF16AllocForReal(allocator, cr, false, true) else null;
         defer if (copyright_w) |cw| allocator.free(cw);
 
         const status = rescle__setWindowsMetadata(
@@ -3664,7 +3664,7 @@ pub const SetEndOfFile = @import("../../windows_sys/externs.zig").SetEndOfFile;
 pub const GetProcessTimes = @import("../../windows_sys/externs.zig").GetProcessTimes;
 
 /// Returns the original mode, or null on failure
-pub fn updateStdioModeFlags(i: bun.FD.Stdio, opts: struct { set: DWORD = 0, unset: DWORD = 0 }) !DWORD {
+pub fn updateStdioModeFlags(i: fun.FD.Stdio, opts: struct { set: DWORD = 0, unset: DWORD = 0 }) !DWORD {
     const fd = i.fd();
     var original_mode: DWORD = 0;
     if (c.GetConsoleMode(fd.cast(), &original_mode) != 0) {
@@ -3675,13 +3675,13 @@ pub fn updateStdioModeFlags(i: bun.FD.Stdio, opts: struct { set: DWORD = 0, unse
     return original_mode;
 }
 
-const watcherChildEnv: [:0]const u16 = bun.strings.toUTF16Literal("_BUN_WATCHER_CHILD");
+const watcherChildEnv: [:0]const u16 = fun.strings.toUTF16Literal("_FUN_WATCHER_CHILD");
 
 // magic exit code to indicate to the watcher manager that the child process should be re-spawned
 // this was randomly generated - we need to avoid using a common exit code that might be used by the script itself
 pub const watcher_reload_exit: DWORD = 3224497970;
 
-pub const spawn = @import("../../runtime/api/bun/spawn.zig").PosixSpawn;
+pub const spawn = @import("../../runtime/api/fun/spawn.zig").PosixSpawn;
 
 pub fn isWatcherChild() bool {
     var buf: [1]u16 = undefined;
@@ -3716,7 +3716,7 @@ pub fn becomeWatcherManager(allocator: std.mem.Allocator) noreturn {
 
     while (true) {
         spawnWatcherChild(allocator, &procinfo, job) catch |err| {
-            bun.handleErrorReturnTrace(err, @errorReturnTrace());
+            fun.handleErrorReturnTrace(err, @errorReturnTrace());
             if (err == error.Win32Error) {
                 Output.panic("Failed to spawn process: {s}\n", .{@tagName(GetLastError())});
             }
@@ -3737,7 +3737,7 @@ pub fn becomeWatcherManager(allocator: std.mem.Allocator) noreturn {
         if (exit_code == watcher_reload_exit) {
             continue;
         } else {
-            bun.Global.exit(exit_code);
+            fun.Global.exit(exit_code);
         }
     }
 }
@@ -3844,7 +3844,7 @@ pub fn spawnWatcherChild(
     }
     var is_in_job: c.BOOL = 0;
     _ = c.IsProcessInJob(procinfo.hProcess, job, &is_in_job);
-    bun.debugAssert(is_in_job != 0);
+    fun.debugAssert(is_in_job != 0);
     _ = c.NtClose(procinfo.hThread);
 }
 
@@ -3853,26 +3853,26 @@ pub fn spawnWatcherChild(
 ///
 /// Using characters16() does not seem to always have the sentinel. or something else
 /// broke when I just used it. Not sure. ... but this works!
-fn @"windows process.dlopen"(str: *bun.String) callconv(.c) ?*anyopaque {
-    if (comptime !bun.Environment.isWindows) {
+fn @"windows process.dlopen"(str: *fun.String) callconv(.c) ?*anyopaque {
+    if (comptime !fun.Environment.isWindows) {
         @compileError("unreachable");
     }
 
-    var buf: bun.WPathBuffer = undefined;
+    var buf: fun.WPathBuffer = undefined;
     const data = switch (str.encoding()) {
-        .utf8 => bun.strings.convertUTF8toUTF16InBuffer(&buf, str.utf8()),
+        .utf8 => fun.strings.convertUTF8toUTF16InBuffer(&buf, str.utf8()),
         .utf16 => brk: {
             @memcpy(buf[0..str.length()], str.utf16());
             break :brk buf[0..str.length()];
         },
         .latin1 => brk: {
-            bun.strings.copyU8IntoU16(&buf, str.latin1());
+            fun.strings.copyU8IntoU16(&buf, str.latin1());
             break :brk buf[0..str.length()];
         },
     };
     buf[data.len] = 0;
     const LOAD_WITH_ALTERED_SEARCH_PATH = 0x00000008;
-    return bun.windows.kernel32.LoadLibraryExW(buf[0..data.len :0].ptr, null, LOAD_WITH_ALTERED_SEARCH_PATH);
+    return fun.windows.kernel32.LoadLibraryExW(buf[0..data.len :0].ptr, null, LOAD_WITH_ALTERED_SEARCH_PATH);
 }
 
 pub const windows_enable_stdio_inheritance = @import("../../windows_sys/externs.zig").windows_enable_stdio_inheritance;
@@ -3880,8 +3880,8 @@ pub const windows_enable_stdio_inheritance = @import("../../windows_sys/externs.
 /// Extracted from standard library except this takes an open file descriptor
 ///
 /// NOTE: THE FILE MUST BE OPENED WITH ACCESS_MASK "DELETE" OR THIS WILL FAIL
-pub fn deleteOpenedFile(fd: bun.FD) Maybe(void) {
-    comptime bun.assert(builtin.target.os.version_range.windows.min.isAtLeast(.win10_rs5));
+pub fn deleteOpenedFile(fd: fun.FD) Maybe(void) {
+    comptime fun.assert(builtin.target.os.version_range.windows.min.isAtLeast(.win10_rs5));
     var info = w.FILE_DISPOSITION_INFORMATION_EX{
         .Flags = FILE_DISPOSITION_DELETE |
             FILE_DISPOSITION_POSIX_SEMANTICS |
@@ -3912,8 +3912,8 @@ pub fn deleteOpenedFile(fd: bun.FD) Maybe(void) {
 /// - source_fd must have been opened with access_mask=w.DELETE
 /// - new_path_w must be the name of a file. it cannot be a path relative to new_dir_fd. see moveOpenedFileAtLoose
 pub fn moveOpenedFileAt(
-    src_fd: bun.FD,
-    new_dir_fd: bun.FD,
+    src_fd: fun.FD,
+    new_dir_fd: fun.FD,
     new_file_name: []const u16,
     replace_if_exists: bool,
 ) Maybe(void) {
@@ -3923,17 +3923,17 @@ pub fn moveOpenedFileAt(
     // supported in order to avoid either (1) using a redundant call that we can know in advance will return
     // STATUS_NOT_SUPPORTED or (2) only setting IGNORE_READONLY_ATTRIBUTE when >= rs5
     // and therefore having different behavior when the Windows version is >= rs1 but < rs5.
-    comptime bun.assert(builtin.target.os.version_range.windows.min.isAtLeast(.win10_rs5));
+    comptime fun.assert(builtin.target.os.version_range.windows.min.isAtLeast(.win10_rs5));
 
-    if (bun.Environment.allow_assert) {
-        bun.assert(std.mem.indexOfScalar(u16, new_file_name, '/') == null); // Call moveOpenedFileAtLoose
+    if (fun.Environment.allow_assert) {
+        fun.assert(std.mem.indexOfScalar(u16, new_file_name, '/') == null); // Call moveOpenedFileAtLoose
     }
 
-    const struct_buf_len = @sizeOf(w.FILE_RENAME_INFORMATION_EX) + (bun.MAX_PATH_BYTES - 1);
+    const struct_buf_len = @sizeOf(w.FILE_RENAME_INFORMATION_EX) + (fun.MAX_PATH_BYTES - 1);
     var rename_info_buf: [struct_buf_len]u8 align(@alignOf(w.FILE_RENAME_INFORMATION_EX)) = undefined;
 
     const struct_len = @sizeOf(w.FILE_RENAME_INFORMATION_EX) - 1 + new_file_name.len * 2;
-    if (struct_len > struct_buf_len) return Maybe(void).errno(bun.sys.E.NAMETOOLONG, .NtSetInformationFile);
+    if (struct_len > struct_buf_len) return Maybe(void).errno(fun.sys.E.NAMETOOLONG, .NtSetInformationFile);
 
     const rename_info = @as(*w.FILE_RENAME_INFORMATION_EX, @ptrCast(&rename_info_buf));
     var io_status_block: w.IO_STATUS_BLOCK = undefined;
@@ -3954,11 +3954,11 @@ pub fn moveOpenedFileAt(
         @intCast(struct_len), // already checked for error.NameTooLong
         .FileRenameInformationEx,
     );
-    log("moveOpenedFileAt({f} ->> {f} '{f}', {s}) = {s}", .{ src_fd, new_dir_fd, bun.fmt.utf16(new_file_name), if (replace_if_exists) "replace_if_exists" else "no flag", @tagName(rc) });
+    log("moveOpenedFileAt({f} ->> {f} '{f}', {s}) = {s}", .{ src_fd, new_dir_fd, fun.fmt.utf16(new_file_name), if (replace_if_exists) "replace_if_exists" else "no flag", @tagName(rc) });
 
-    if (bun.Environment.isDebug) {
+    if (fun.Environment.isDebug) {
         if (rc == .ACCESS_DENIED) {
-            bun.Output.debugWarn("moveOpenedFileAt was called on a file descriptor without access_mask=w.DELETE", .{});
+            fun.Output.debugWarn("moveOpenedFileAt was called on a file descriptor without access_mask=w.DELETE", .{});
         }
     }
 
@@ -3972,12 +3972,12 @@ pub fn moveOpenedFileAt(
 ///
 /// Aka: moveOpenedFileAtLoose(fd, dir, ".\\a\\relative\\not-normalized-path.txt", false);
 pub fn moveOpenedFileAtLoose(
-    src_fd: bun.FD,
-    new_dir_fd: bun.FD,
+    src_fd: fun.FD,
+    new_dir_fd: fun.FD,
     new_path: []const u16,
     replace_if_exists: bool,
 ) Maybe(void) {
-    bun.assert(std.mem.indexOfScalar(u16, new_path, '/') == null); // Call bun.strings.toWPathNormalized first
+    fun.assert(std.mem.indexOfScalar(u16, new_path, '/') == null); // Call fun.strings.toWPathNormalized first
 
     const without_leading_dot_slash = if (new_path.len >= 2 and new_path[0] == '.' and new_path[1] == '\\')
         new_path[2..]
@@ -3986,7 +3986,7 @@ pub fn moveOpenedFileAtLoose(
 
     if (std.mem.lastIndexOfScalar(u16, new_path, '\\')) |last_slash| {
         const dirname = new_path[0..last_slash];
-        const fd = switch (bun.sys.openDirAtWindows(new_dir_fd, dirname, .{ .can_rename_or_delete = true, .iterable = false })) {
+        const fd = switch (fun.sys.openDirAtWindows(new_dir_fd, dirname, .{ .can_rename_or_delete = true, .iterable = false })) {
             .err => |e| return .{ .err = e },
             .result => |fd| fd,
         };
@@ -4003,14 +4003,14 @@ pub fn moveOpenedFileAtLoose(
 /// Derived from std.os.windows.renameAtW
 /// Allows more errors
 pub fn renameAtW(
-    old_dir_fd: bun.FD,
+    old_dir_fd: fun.FD,
     old_path_w: []const u16,
-    new_dir_fd: bun.FD,
+    new_dir_fd: fun.FD,
     new_path_w: []const u16,
     replace_if_exists: bool,
 ) Maybe(void) {
     const src_fd = brk: {
-        switch (bun.sys.openFileAtWindows(
+        switch (fun.sys.openFileAtWindows(
             old_dir_fd,
             old_path_w,
             .{
@@ -4021,7 +4021,7 @@ pub fn renameAtW(
         )) {
             .err => {
                 // retry, wtihout FILE_TRAVERSE flag
-                switch (bun.sys.openFileAtWindows(
+                switch (fun.sys.openFileAtWindows(
                     old_dir_fd,
                     old_path_w,
                     .{
@@ -4094,14 +4094,14 @@ const GetModuleFileNameW = @import("../../windows_sys/externs.zig").GetModuleFil
 const GetModuleHandleExW = @import("../../windows_sys/externs.zig").GetModuleHandleExW;
 const GetUserNameW = @import("../../windows_sys/externs.zig").GetUserNameW;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const c = bun.c;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const c = fun.c;
 
-const Maybe = bun.sys.Maybe;
-const SystemErrno = bun.sys.SystemErrno;
-const log = bun.sys.syslog;
+const Maybe = fun.sys.Maybe;
+const SystemErrno = fun.sys.SystemErrno;
+const log = fun.sys.syslog;
 
 const w = std.os.windows;
 const win32 = windows;

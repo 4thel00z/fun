@@ -9,7 +9,7 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 **Without Docker Compose (the old way):**
 ```javascript
 // Each test file manages its own container
-const container = await Bun.spawn({
+const container = await Fun.spawn({
   cmd: ["docker", "run", "-d", "-p", "0:5432", "postgres:15"],
   // ... complex setup
 });
@@ -244,8 +244,8 @@ Some services use volumes to persist data across container restarts:
 ### Environment Variables
 
 Control behavior with environment variables:
-- `COMPOSE_PROJECT_NAME`: Prefix for container names (default: "bun-test-services")
-- `BUN_DOCKER_COMPOSE_PATH`: Override docker-compose.yml location
+- `COMPOSE_PROJECT_NAME`: Prefix for container names (default: "fun-test-services")
+- `FUN_DOCKER_COMPOSE_PATH`: Override docker-compose.yml location
 
 ## Migration Guide
 

@@ -5,13 +5,13 @@ This benchmarks a hello world express server.
 To install dependencies:
 
 ```bash
-bun install
+fun install
 ```
 
-To run in Bun:
+To run in Fun:
 
 ```sh
-bun ./express.mjs
+fun ./express.mjs
 ```
 
 To run in Node:
@@ -32,6 +32,6 @@ To benchmark each runtime:
 oha http://localhost:3000 -n 500000 -H "Accept-Encoding: identity"
 ```
 
-We recommend using `oha` or `bombardier` for benchmarking. We do not recommend using `ab`, as it uses HTTP/1.0 which stopped being used by web browsers in the early 2000s. We also do not recommend using autocannon, as the node:http client is not performant enough to measure the throughput of Bun's HTTP server.
+We recommend using `oha` or `bombardier` for benchmarking. We do not recommend using `ab`, as it uses HTTP/1.0 which stopped being used by web browsers in the early 2000s. We also do not recommend using autocannon, as the node:http client is not performant enough to measure the throughput of Fun's HTTP server.
 
 Note the `Accept-Encoding: identity` header exists to prevent Deno's HTTP server from compressing the response.

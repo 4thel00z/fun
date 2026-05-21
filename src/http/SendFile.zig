@@ -1,11 +1,11 @@
 const SendFile = @This();
 
-fd: bun.FD,
+fd: fun.FD,
 remain: usize = 0,
 offset: usize = 0,
 content_size: usize = 0,
 
-pub fn isEligible(url: bun.URL) bool {
+pub fn isEligible(url: fun.URL) bool {
     if (comptime Environment.isWindows or !FeatureFlags.streaming_file_uploads_for_http_client) {
         return false;
     }
@@ -28,7 +28,7 @@ pub fn write(
             std.os.linux.sendfile(socket.fd().cast(), this.fd.cast(), &signed_offset, this.remain);
         this.offset = @as(u64, @intCast(signed_offset));
 
-        const errcode = bun.sys.getErrno(val);
+        const errcode = fun.sys.getErrno(val);
 
         this.remain -|= @as(u64, @intCast(this.offset -| begin));
 
@@ -37,13 +37,13 @@ pub fn write(
                 return .{ .done = {} };
             }
 
-            return .{ .err = bun.errnoToZigErr(errcode) };
+            return .{ .err = fun.errnoToZigErr(errcode) };
         }
     } else if (Environment.isFreeBSD) {
         var sbytes: std.posix.off_t = 0;
         const signed_offset = @as(i64, @bitCast(@as(u64, this.offset)));
         // FreeBSD: sendfile(fd, s, offset, nbytes, hdtr, *sbytes, flags)
-        const errcode = bun.sys.getErrno(std.c.sendfile(
+        const errcode = fun.sys.getErrno(std.c.sendfile(
             this.fd.cast(),
             socket.fd().cast(),
             signed_offset,
@@ -59,12 +59,12 @@ pub fn write(
             if (errcode == .SUCCESS) {
                 return .{ .done = {} };
             }
-            return .{ .err = bun.errnoToZigErr(errcode) };
+            return .{ .err = fun.errnoToZigErr(errcode) };
         }
     } else if (Environment.isPosix) {
         var sbytes: std.posix.off_t = adjusted_count;
         const signed_offset = @as(i64, @bitCast(@as(u64, this.offset)));
-        const errcode = bun.sys.getErrno(std.c.sendfile(
+        const errcode = fun.sys.getErrno(std.c.sendfile(
             this.fd.cast(),
             socket.fd().cast(),
             signed_offset,
@@ -80,7 +80,7 @@ pub fn write(
                 return .{ .done = {} };
             }
 
-            return .{ .err = bun.errnoToZigErr(errcode) };
+            return .{ .err = fun.errnoToZigErr(errcode) };
         }
     }
 
@@ -95,7 +95,7 @@ pub const Status = union(enum) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const NewHTTPContext = bun.http.NewHTTPContext;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const NewHTTPContext = fun.http.NewHTTPContext;

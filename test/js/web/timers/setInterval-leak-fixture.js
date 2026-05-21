@@ -16,8 +16,8 @@ Promise.withResolvers ??= () => {
 };
 
 function gc() {
-  if (typeof Bun !== "undefined") {
-    Bun.gc(true);
+  if (typeof Fun !== "undefined") {
+    Fun.gc(true);
   } else if (typeof globalThis.gc !== "undefined") {
     globalThis.gc();
   }
@@ -81,8 +81,8 @@ async function batch(iterations) {
     console.log("RSS", (result / 1024 / 1024) | 0, "MB");
     console.log("Delta", delta, "MB");
 
-    if (globalThis.Bun) {
-      const heapStats = require("bun:jsc").heapStats();
+    if (globalThis.Fun) {
+      const heapStats = require("fun:jsc").heapStats();
       console.log("Timeout object count:", heapStats.objectTypeCounts.Timeout || 0);
       if (heapStats.protectedObjectTypeCounts.Timeout) {
         throw new Error("Expected 0 protected Timeout but received " + heapStats.protectedObjectTypeCounts.Timeout);

@@ -10,8 +10,8 @@ module.exports = debugMode => {
       console.log("global after setting to 123 =", nativeModule.global_get());
 
       nativeModule.global_set({ foo: 5, bar: ["one", "two", "three"] });
-      if (process.isBun) {
-        Bun.gc(true);
+      if (process.isFun) {
+        Fun.gc(true);
       }
       console.log("global after setting to object =", JSON.stringify(nativeModule.global_get()));
 
@@ -21,8 +21,8 @@ module.exports = debugMode => {
 
     test_v8_function_template() {
       const f = nativeModule.create_function_with_data();
-      if (process.isBun) {
-        Bun.gc(true);
+      if (process.isFun) {
+        Fun.gc(true);
       }
       console.log(f());
     },

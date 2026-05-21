@@ -1,5 +1,5 @@
-import { frameworkRouterInternals } from "bun:internal-for-testing";
-import { describe, expect, test } from "bun:test";
+import { frameworkRouterInternals } from "fun:internal-for-testing";
+import { describe, expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 import path from "path";
 

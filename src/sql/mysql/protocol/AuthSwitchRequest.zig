@@ -17,9 +17,9 @@ pub fn decodeInternal(this: *AuthSwitchRequest, comptime Context: type, reader: 
 
     const remaining = try reader.read(this.packet_size - 1);
     const remaining_slice = remaining.slice();
-    bun.assert(remaining == .temporary);
+    fun.assert(remaining == .temporary);
 
-    if (bun.strings.indexOfChar(remaining_slice, 0)) |zero| {
+    if (fun.strings.indexOfChar(remaining_slice, 0)) |zero| {
         // EOF String
         this.plugin_name = .{
             .temporary = remaining_slice[0..zero],
@@ -35,7 +35,7 @@ pub fn decodeInternal(this: *AuthSwitchRequest, comptime Context: type, reader: 
 
 pub const decode = decoderWrap(AuthSwitchRequest, decodeInternal).decode;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const Data = @import("../../shared/Data.zig").Data;
 
 const NewReader = @import("./NewReader.zig").NewReader;

@@ -1,19 +1,19 @@
 ---
 title: TypeScript
-description: Using TypeScript with Bun, including type definitions and compiler options
+description: Using TypeScript with Fun, including type definitions and compiler options
 ---
 
-To install the TypeScript definitions for Bun's built-in APIs, install `@types/bun`.
+To install the TypeScript definitions for Fun's built-in APIs, install `@types/fun`.
 
 ```zsh terminal icon="terminal"
-bun add -d @types/bun # dev dependency
+fun add -d @types/fun # dev dependency
 ```
 
-At this point, you should be able to reference the `Bun` global in your TypeScript files without seeing errors in your editor.
+At this point, you should be able to reference the `Fun` global in your TypeScript files without seeing errors in your editor.
 
 ## Suggested `compilerOptions`
 
-Bun supports things like top-level await, JSX, and extensioned `.ts` imports, which TypeScript doesn't allow by default. Below is a set of recommended `compilerOptions` for a Bun project, so you can use these features without seeing compiler warnings from TypeScript.
+Fun supports things like top-level await, JSX, and extensioned `.ts` imports, which TypeScript doesn't allow by default. Below is a set of recommended `compilerOptions` for a Fun project, so you can use these features without seeing compiler warnings from TypeScript.
 
 ```json tsconfig.json icon="file-json"
 {
@@ -25,7 +25,7 @@ Bun supports things like top-level await, JSX, and extensioned `.ts` imports, wh
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-    "types": ["bun"],
+    "types": ["fun"],
 
     // Bundler mode
     "moduleResolution": "bundler",
@@ -48,12 +48,12 @@ Bun supports things like top-level await, JSX, and extensioned `.ts` imports, wh
 }
 ```
 
-If you run `bun init` in a new directory, this `tsconfig.json` will be generated for you. (The stricter flags are disabled by default.)
+If you run `fun init` in a new directory, this `tsconfig.json` will be generated for you. (The stricter flags are disabled by default.)
 
 ```sh terminal icon="terminal"
-bun init
+fun init
 ```
 
 ## TypeScript 6 and 7
 
-If you're using TypeScript 6.0 or later, you'll also need to add `"types": ["bun"]` to your `compilerOptions`. See [TypeScript 6 and 7](/typescript-6) for details.
+If you're using TypeScript 6.0 or later, you'll also need to add `"types": ["fun"]` to your `compilerOptions`. See [TypeScript 6 and 7](/typescript-6) for details.

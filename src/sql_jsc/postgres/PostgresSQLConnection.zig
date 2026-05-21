@@ -1,11 +1,11 @@
 const PostgresSQLConnection = @This();
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 socket: Socket,
 status: Status = Status.connecting,
 ref_count: RefCount = RefCount.init(),
 
-write_buffer: bun.OffsetByteList = .{},
-read_buffer: bun.OffsetByteList = .{},
+write_buffer: fun.OffsetByteList = .{},
+read_buffer: fun.OffsetByteList = .{},
 last_message_start: u32 = 0,
 requests: PostgresRequest.Queue,
 // number of pipelined requests (Bind/Execute/Prepared statements)
@@ -13,7 +13,7 @@ pipelined_requests: u32 = 0,
 // number of non-pipelined requests (Simple/Copy)
 nonpipelinable_requests: u32 = 0,
 
-poll_ref: bun.Async.KeepAlive = .{},
+poll_ref: fun.Async.KeepAlive = .{},
 globalObject: *jsc.JSGlobalObject,
 vm: *jsc.VirtualMachine,
 statements: PreparedStatementsMap,
@@ -21,7 +21,7 @@ prepared_statement_id: u64 = 0,
 pending_activity_count: std.atomic.Value(u32) = std.atomic.Value(u32).init(0),
 js_value: JSValue = .js_undefined,
 
-backend_parameters: bun.StringMap = bun.StringMap.init(bun.default_allocator, true),
+backend_parameters: fun.StringMap = fun.StringMap.init(fun.default_allocator, true),
 backend_key_data: protocol.BackendKeyData = .{},
 
 database: []const u8 = "",
@@ -47,7 +47,7 @@ flags: ConnectionFlags = .{},
 
 /// Before being connected, this is a connection timeout timer.
 /// After being connected, this is an idle timeout timer.
-timer: bun.api.Timer.EventLoopTimer = .{
+timer: fun.api.Timer.EventLoopTimer = .{
     .tag = .PostgresSQLConnectionTimeout,
     .next = .epoch,
 },
@@ -56,7 +56,7 @@ timer: bun.api.Timer.EventLoopTimer = .{
 /// It starts when the connection successfully starts (i.e. after handshake is complete).
 /// It stops when the connection is closed.
 max_lifetime_interval_ms: u32 = 0,
-max_lifetime_timer: bun.api.Timer.EventLoopTimer = .{
+max_lifetime_timer: fun.api.Timer.EventLoopTimer = .{
     .tag = .PostgresSQLConnectionMaxLifetime,
     .next = .epoch,
 },
@@ -131,11 +131,11 @@ pub fn resetConnectionTimeout(this: *PostgresSQLConnection) void {
         return;
     }
 
-    this.timer.next = bun.timespec.msFromNow(.allow_mocked_time, @intCast(interval));
+    this.timer.next = fun.timespec.msFromNow(.allow_mocked_time, @intCast(interval));
     this.vm.timer.insert(&this.timer);
 }
 
-pub fn getQueries(_: *PostgresSQLConnection, thisValue: jsc.JSValue, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn getQueries(_: *PostgresSQLConnection, thisValue: jsc.JSValue, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     if (js.queriesGetCached(thisValue)) |value| {
         return value;
     }
@@ -194,7 +194,7 @@ fn setupMaxLifetimeTimerIfNecessary(this: *PostgresSQLConnection) void {
     if (this.max_lifetime_interval_ms == 0) return;
     if (this.max_lifetime_timer.state == .ACTIVE) return;
 
-    this.max_lifetime_timer.next = bun.timespec.msFromNow(.allow_mocked_time, @intCast(this.max_lifetime_interval_ms));
+    this.max_lifetime_timer.next = fun.timespec.msFromNow(.allow_mocked_time, @intCast(this.max_lifetime_interval_ms));
     this.vm.timer.insert(&this.max_lifetime_timer);
 }
 
@@ -213,13 +213,13 @@ pub fn onConnectionTimeout(this: *PostgresSQLConnection) void {
 
     switch (this.status) {
         .connected => {
-            this.failFmt("ERR_POSTGRES_IDLE_TIMEOUT", "Idle timeout reached after {f}", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.idle_timeout_interval_ms) *| std.time.ns_per_ms)});
+            this.failFmt("ERR_POSTGRES_IDLE_TIMEOUT", "Idle timeout reached after {f}", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.idle_timeout_interval_ms) *| std.time.ns_per_ms)});
         },
         else => {
-            this.failFmt("ERR_POSTGRES_CONNECTION_TIMEOUT", "Connection timeout after {f}", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
+            this.failFmt("ERR_POSTGRES_CONNECTION_TIMEOUT", "Connection timeout after {f}", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
         },
         .sent_startup_message => {
-            this.failFmt("ERR_POSTGRES_CONNECTION_TIMEOUT", "Connection timeout after {f} (sent startup message, but never received response)", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
+            this.failFmt("ERR_POSTGRES_CONNECTION_TIMEOUT", "Connection timeout after {f} (sent startup message, but never received response)", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.connection_timeout_ms) *| std.time.ns_per_ms)});
         },
     }
 }
@@ -228,7 +228,7 @@ pub fn onMaxLifetimeTimeout(this: *PostgresSQLConnection) void {
     debug("onMaxLifetimeTimeout", .{});
     this.max_lifetime_timer.state = .FIRED;
     if (this.status == .failed) return;
-    this.failFmt("ERR_POSTGRES_LIFETIME_TIMEOUT", "Max lifetime timeout reached after {f}", .{bun.fmt.fmtDurationOneDecimal(@as(u64, this.max_lifetime_interval_ms) *| std.time.ns_per_ms)});
+    this.failFmt("ERR_POSTGRES_LIFETIME_TIMEOUT", "Max lifetime timeout reached after {f}", .{fun.fmt.fmtDurationOneDecimal(@as(u64, this.max_lifetime_interval_ms) *| std.time.ns_per_ms)});
 }
 
 fn start(this: *PostgresSQLConnection) void {
@@ -346,8 +346,8 @@ pub fn failWithJSValue(this: *PostgresSQLConnection, value: JSValue) void {
 }
 
 pub fn failFmt(this: *PostgresSQLConnection, code: []const u8, comptime fmt: [:0]const u8, args: anytype) void {
-    const message = bun.handleOom(std.fmt.allocPrint(bun.default_allocator, fmt, args));
-    defer bun.default_allocator.free(message);
+    const message = fun.handleOom(std.fmt.allocPrint(fun.default_allocator, fmt, args));
+    defer fun.default_allocator.free(message);
 
     const err = createPostgresError(this.globalObject, message, .{ .code = code }) catch |e| this.globalObject.takeError(e);
 
@@ -433,7 +433,7 @@ pub fn onOpen(this: *PostgresSQLConnection, socket: uws.AnySocket) void {
     this.start();
 }
 
-pub fn onHandshake(this: *PostgresSQLConnection, success: i32, ssl_error: uws.us_bun_verify_error_t) void {
+pub fn onHandshake(this: *PostgresSQLConnection, success: i32, ssl_error: uws.us_fun_verify_error_t) void {
     debug("onHandshake: {d} {d}", .{ success, ssl_error.error_no });
     const handshake_success = if (success == 1) true else false;
     if (handshake_success) {
@@ -450,7 +450,7 @@ pub fn onHandshake(this: *PostgresSQLConnection, success: i32, ssl_error: uws.us
 
                     const ssl_ptr: *BoringSSL.c.SSL = @ptrCast(this.socket.getNativeHandle());
                     if (BoringSSL.c.SSL_get_servername(ssl_ptr, 0)) |servername| {
-                        const hostname = servername[0..bun.len(servername)];
+                        const hostname = servername[0..fun.len(servername)];
                         if (!BoringSSL.checkServerIdentity(ssl_ptr, hostname)) {
                             this.failWithJSValue(ssl_error.toJS(this.globalObject) catch return);
                         }
@@ -538,7 +538,7 @@ pub fn onData(this: *PostgresSQLConnection, data: []const u8) void {
         const reader = protocol.StackReader.init(data, &consumed, &offset);
         PostgresRequest.onData(this, protocol.StackReader, reader) catch |err| {
             if (err == error.ShortRead) {
-                if (comptime bun.Environment.allow_assert) {
+                if (comptime fun.Environment.allow_assert) {
                     debug("read_buffer: empty and received short read: last_message_start: {d}, head: {d}, len: {d}", .{
                         offset,
                         consumed,
@@ -549,9 +549,9 @@ pub fn onData(this: *PostgresSQLConnection, data: []const u8) void {
                 this.read_buffer.head = 0;
                 this.last_message_start = 0;
                 this.read_buffer.byte_list.len = 0;
-                this.read_buffer.write(bun.default_allocator, data[offset..]) catch @panic("failed to write to read buffer");
+                this.read_buffer.write(fun.default_allocator, data[offset..]) catch @panic("failed to write to read buffer");
             } else {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
                 this.fail("Failed to read data", err);
             }
@@ -560,15 +560,15 @@ pub fn onData(this: *PostgresSQLConnection, data: []const u8) void {
         return;
     }
     // read buffer is not empty, so we need to write the data to the buffer and then read it
-    this.read_buffer.write(bun.default_allocator, data) catch @panic("failed to write to read buffer");
+    this.read_buffer.write(fun.default_allocator, data) catch @panic("failed to write to read buffer");
     PostgresRequest.onData(this, Reader, this.bufferedReader()) catch |err| {
         if (err != error.ShortRead) {
-            bun.handleErrorReturnTrace(err, @errorReturnTrace());
+            fun.handleErrorReturnTrace(err, @errorReturnTrace());
             this.fail("Failed to read data", err);
             return;
         }
 
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             debug("read_buffer: not empty and received short read: last_message_start: {d}, head: {d}, len: {d}", .{
                 this.last_message_start,
                 this.read_buffer.head,
@@ -584,7 +584,7 @@ pub fn onData(this: *PostgresSQLConnection, data: []const u8) void {
     this.read_buffer.head = 0;
 }
 
-pub fn constructor(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*PostgresSQLConnection {
+pub fn constructor(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*PostgresSQLConnection {
     _ = callframe;
     return globalObject.throw("PostgresSQLConnection cannot be constructed directly", .{});
 }
@@ -594,18 +594,18 @@ comptime {
     @export(&jscall, .{ .name = "PostgresSQLConnection__createInstance" });
 }
 
-pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    var vm = globalObject.bunVM();
+pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    var vm = globalObject.funVM();
     const arguments = callframe.arguments();
-    const hostname_str = try arguments[0].toBunString(globalObject);
+    const hostname_str = try arguments[0].toFunString(globalObject);
     defer hostname_str.deref();
     const port = try arguments[1].coerce(i32, globalObject);
 
-    const username_str = try arguments[2].toBunString(globalObject);
+    const username_str = try arguments[2].toFunString(globalObject);
     defer username_str.deref();
-    const password_str = try arguments[3].toBunString(globalObject);
+    const password_str = try arguments[3].toFunString(globalObject);
     defer password_str.deref();
-    const database_str = try arguments[4].toBunString(globalObject);
+    const database_str = try arguments[4].toFunString(globalObject);
     defer database_str.deref();
     const ssl_mode: SSLMode = switch (arguments[5].toInt32()) {
         0 => .disable,
@@ -640,17 +640,17 @@ pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
         // through the per-VM weak `SSLContextCache` so every connection in the
         // pool — and every reconnect — shares one `SSL_CTX*` per distinct
         // config instead of building a fresh one per `PostgresSQLConnection`.
-        var err: uws.create_bun_socket_error_t = .none;
+        var err: uws.create_fun_socket_error_t = .none;
         secure = vm.rareData().sslCtxCache().getOrCreateOpts(tls_config.asUSocketsForClientVerification(), &err) orelse {
             tls_config.deinit();
             return globalObject.throwValue(err.toJS(globalObject));
         };
     }
-    // Covers `try arguments[7/8].toBunString()` and the null-byte rejection
+    // Covers `try arguments[7/8].toFunString()` and the null-byte rejection
     // below. Ownership passes into `ptr.*` once allocated — locals are nulled
     // there so the connect-fail path's `ptr.deinit()` is the sole cleanup.
     errdefer {
-        if (secure) |s| bun.BoringSSL.c.SSL_CTX_free(s);
+        if (secure) |s| fun.BoringSSL.c.SSL_CTX_free(s);
         tls_config.deinit();
     }
 
@@ -660,34 +660,34 @@ pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
     var options: []const u8 = "";
     var path: []const u8 = "";
 
-    const options_str = try arguments[7].toBunString(globalObject);
+    const options_str = try arguments[7].toFunString(globalObject);
     defer options_str.deref();
 
-    const path_str = try arguments[8].toBunString(globalObject);
+    const path_str = try arguments[8].toFunString(globalObject);
     defer path_str.deref();
 
     const options_buf: []u8 = brk: {
-        var b = bun.StringBuilder{};
+        var b = fun.StringBuilder{};
         b.cap += username_str.utf8ByteLength() + 1 + password_str.utf8ByteLength() + 1 + database_str.utf8ByteLength() + 1 + options_str.utf8ByteLength() + 1 + path_str.utf8ByteLength() + 1;
 
-        b.allocate(bun.default_allocator) catch {};
-        var u = username_str.toUTF8WithoutRef(bun.default_allocator);
+        b.allocate(fun.default_allocator) catch {};
+        var u = username_str.toUTF8WithoutRef(fun.default_allocator);
         defer u.deinit();
         username = b.append(u.slice());
 
-        var p = password_str.toUTF8WithoutRef(bun.default_allocator);
+        var p = password_str.toUTF8WithoutRef(fun.default_allocator);
         defer p.deinit();
         password = b.append(p.slice());
 
-        var d = database_str.toUTF8WithoutRef(bun.default_allocator);
+        var d = database_str.toUTF8WithoutRef(fun.default_allocator);
         defer d.deinit();
         database = b.append(d.slice());
 
-        var o = options_str.toUTF8WithoutRef(bun.default_allocator);
+        var o = options_str.toUTF8WithoutRef(fun.default_allocator);
         defer o.deinit();
         options = b.append(o.slice());
 
-        var _path = path_str.toUTF8WithoutRef(bun.default_allocator);
+        var _path = path_str.toUTF8WithoutRef(fun.default_allocator);
         defer _path.deinit();
         path = b.append(_path.slice());
 
@@ -699,7 +699,7 @@ pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
     // wire protocol's key\0value\0 format).
     inline for (.{ .{ username, "username" }, .{ password, "password" }, .{ database, "database" }, .{ path, "path" } }) |entry| {
         if (entry[0].len > 0 and std.mem.indexOfScalar(u8, entry[0], 0) != null) {
-            bun.default_allocator.free(options_buf);
+            fun.default_allocator.free(options_buf);
             // tls_config / secure released by the errdefer above.
             return globalObject.throwInvalidArguments(entry[1] ++ " must not contain null bytes", .{});
         }
@@ -712,7 +712,7 @@ pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
     const max_lifetime = arguments[13].toInt32();
     const use_unnamed_prepared_statements = arguments[14].asBoolean();
 
-    const ptr: *PostgresSQLConnection = try bun.default_allocator.create(PostgresSQLConnection);
+    const ptr: *PostgresSQLConnection = try fun.default_allocator.create(PostgresSQLConnection);
 
     ptr.* = PostgresSQLConnection{
         .globalObject = globalObject,
@@ -724,7 +724,7 @@ pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
         .options = options,
         .options_buf = options_buf,
         .socket = .{ .SocketTCP = .{ .socket = .{ .detached = {} } } },
-        .requests = PostgresRequest.Queue.init(bun.default_allocator),
+        .requests = PostgresRequest.Queue.init(fun.default_allocator),
         .statements = PreparedStatementsMap{},
         .tls_config = tls_config,
         .secure = secure,
@@ -742,7 +742,7 @@ pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
     tls_config = .{};
 
     {
-        const hostname = hostname_str.toUTF8(bun.default_allocator);
+        const hostname = hostname_str.toUTF8(fun.default_allocator);
         defer hostname.deinit();
 
         // Postgres always opens plain TCP first (SSLRequest happens in-band),
@@ -769,7 +769,7 @@ pub fn call(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JS
     ptr.js_value = js_value;
     js.onconnectSetCached(js_value, globalObject, on_connect);
     js.oncloseSetCached(js_value, globalObject, on_close);
-    bun.analytics.Features.postgres_connections += 1;
+    fun.analytics.Features.postgres_connections += 1;
     return js_value;
 }
 
@@ -794,7 +794,7 @@ pub fn SocketHandler(comptime ssl: bool) type {
             this.onOpen(_socket(socket));
         }
 
-        fn onHandshake_(this: *PostgresSQLConnection, _: anytype, success: i32, ssl_error: uws.us_bun_verify_error_t) void {
+        fn onHandshake_(this: *PostgresSQLConnection, _: anytype, success: i32, ssl_error: uws.us_fun_verify_error_t) void {
             if (this.vm.isShuttingDown()) {
                 @branchHint(.unlikely);
                 this.close();
@@ -857,18 +857,18 @@ pub fn SocketHandler(comptime ssl: bool) type {
     };
 }
 
-pub fn doRef(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doRef(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     this.poll_ref.ref(this.vm);
     this.updateHasPendingActivity();
     return .js_undefined;
 }
 
-pub fn doUnref(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doUnref(this: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     this.poll_ref.unref(this.vm);
     this.updateHasPendingActivity();
     return .js_undefined;
 }
-pub fn doFlush(this: *PostgresSQLConnection, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFlush(this: *PostgresSQLConnection, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     this.registerAutoFlusher();
     return .js_undefined;
 }
@@ -876,10 +876,10 @@ pub fn doFlush(this: *PostgresSQLConnection, _: *jsc.JSGlobalObject, _: *jsc.Cal
 fn close(this: *@This()) void {
     this.disconnect();
     this.unregisterAutoFlusher();
-    this.write_buffer.clearAndFree(bun.default_allocator);
+    this.write_buffer.clearAndFree(fun.default_allocator);
 }
 
-pub fn doClose(this: *@This(), globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doClose(this: *@This(), globalObject: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     _ = globalObject;
     this.close();
     return .js_undefined;
@@ -902,17 +902,17 @@ pub fn deinit(this: *@This()) void {
         var stmt = stmt_ptr.*;
         stmt.deref();
     }
-    this.statements.deinit(bun.default_allocator);
+    this.statements.deinit(fun.default_allocator);
     this.requests.deinit();
-    this.write_buffer.deinit(bun.default_allocator);
-    this.read_buffer.deinit(bun.default_allocator);
+    this.write_buffer.deinit(fun.default_allocator);
+    this.read_buffer.deinit(fun.default_allocator);
     this.backend_parameters.deinit();
 
-    bun.freeSensitive(bun.default_allocator, this.options_buf);
+    fun.freeSensitive(fun.default_allocator, this.options_buf);
 
     this.tls_config.deinit();
-    if (this.secure) |s| bun.BoringSSL.c.SSL_CTX_free(s);
-    bun.default_allocator.destroy(this);
+    if (this.secure) |s| fun.BoringSSL.c.SSL_CTX_free(s);
+    fun.default_allocator.destroy(this);
 }
 
 fn cleanUpRequests(this: *@This(), js_reason: ?jsc.JSValue) void {
@@ -988,7 +988,7 @@ pub fn hasQueryRunning(this: *PostgresSQLConnection) bool {
 }
 
 pub fn canPipeline(this: *PostgresSQLConnection) bool {
-    if (bun.feature_flag.BUN_FEATURE_FLAG_DISABLE_SQL_AUTO_PIPELINING.get()) {
+    if (fun.feature_flag.FUN_FEATURE_FLAG_DISABLE_SQL_AUTO_PIPELINING.get()) {
         @branchHint(.unlikely);
         return false;
     }
@@ -1005,7 +1005,7 @@ pub const Writer = struct {
 
     pub fn write(this: Writer, data: []const u8) AnyPostgresError!void {
         var buffer = &this.connection.write_buffer;
-        try buffer.write(bun.default_allocator, data);
+        try buffer.write(fun.default_allocator, data);
     }
 
     pub fn pwrite(this: Writer, data: []const u8, index: usize) AnyPostgresError!void {
@@ -1057,7 +1057,7 @@ pub const Reader = struct {
     pub fn readZ(this: Reader) AnyPostgresError!Data {
         const remain = this.connection.read_buffer.remaining();
 
-        if (bun.strings.indexOfChar(remain, 0)) |zero| {
+        if (fun.strings.indexOfChar(remain, 0)) |zero| {
             this.skip(zero + 1);
             return Data{
                 .temporary = remain[0..zero],
@@ -1136,7 +1136,7 @@ fn advance(this: *PostgresSQLConnection) void {
                         // need to wait for the previous request to finish before starting simple queries
                         return;
                     }
-                    var query_str = req.query.toUTF8(bun.default_allocator);
+                    var query_str = req.query.toUTF8(fun.default_allocator);
                     defer query_str.deinit();
                     debug("execute simple query: {s}", .{query_str.slice()});
                     PostgresRequest.executeQuery(query_str.slice(), PostgresSQLConnection.Writer, this.writer()) catch |err| {
@@ -1164,7 +1164,7 @@ fn advance(this: *PostgresSQLConnection) void {
                         switch (statement.status) {
                             .failed => {
                                 debug("stmt failed", .{});
-                                bun.assert(statement.error_response != null);
+                                fun.assert(statement.error_response != null);
                                 req.onError(statement.error_response.?, this.globalObject);
                                 if (offset == 0) {
                                     req.deref();
@@ -1179,7 +1179,7 @@ fn advance(this: *PostgresSQLConnection) void {
                             },
                             .prepared => {
                                 const thisValue = req.thisValue.tryGet() orelse {
-                                    bun.assertf(false, "query value was freed earlier than expected", .{});
+                                    fun.assertf(false, "query value was freed earlier than expected", .{});
                                     if (offset == 0) {
                                         req.deref();
                                         this.requests.discard(1);
@@ -1200,7 +1200,7 @@ fn advance(this: *PostgresSQLConnection) void {
                                     // on the current server connection when using PgBouncer or
                                     // other connection poolers in transaction mode.
                                     debug("parse, bind and execute unnamed stmt", .{});
-                                    var query_str = req.query.toUTF8(bun.default_allocator);
+                                    var query_str = req.query.toUTF8(fun.default_allocator);
                                     defer query_str.deinit();
                                     PostgresRequest.parseAndBindAndExecute(this.globalObject, query_str.slice(), statement, binding_value, columns_value, false, PostgresSQLConnection.Writer, this.writer()) catch |err| {
                                         if (this.globalObject.tryTakeException()) |err_| {
@@ -1260,13 +1260,13 @@ fn advance(this: *PostgresSQLConnection) void {
                                     return;
                                 }
                                 // statement is pending, lets write/parse it
-                                var query_str = req.query.toUTF8(bun.default_allocator);
+                                var query_str = req.query.toUTF8(fun.default_allocator);
                                 defer query_str.deinit();
                                 const has_params = statement.signature.fields.len > 0;
                                 // If it does not have params, we can write and execute immediately in one go
                                 if (!has_params) {
                                     const thisValue = req.thisValue.tryGet() orelse {
-                                        bun.assertf(false, "query value was freed earlier than expected", .{});
+                                        fun.assertf(false, "query value was freed earlier than expected", .{});
                                         if (offset == 0) {
                                             req.deref();
                                             this.requests.discard(1);
@@ -1314,8 +1314,8 @@ fn advance(this: *PostgresSQLConnection) void {
                                     // (text format for unknowns); actual types will be cached from
                                     // ParameterDescription for subsequent executions.
                                     const thisValue = req.thisValue.tryGet() orelse {
-                                        bun.assertf(false, "query value was freed earlier than expected", .{});
-                                        bun.assert(offset == 0);
+                                        fun.assertf(false, "query value was freed earlier than expected", .{});
+                                        fun.assert(offset == 0);
                                         req.deref();
                                         this.requests.discard(1);
                                         continue;
@@ -1331,7 +1331,7 @@ fn advance(this: *PostgresSQLConnection) void {
                                             statement.error_response = .{ .postgres_error = err };
                                             req.onWriteFail(err, this.globalObject, this.getQueriesArray());
                                         }
-                                        bun.assert(offset == 0);
+                                        fun.assert(offset == 0);
                                         req.deref();
                                         this.requests.discard(1);
                                         debug("parseAndBindAndExecute failed: {s}", .{@errorName(err)});
@@ -1361,7 +1361,7 @@ fn advance(this: *PostgresSQLConnection) void {
                                         statement.status = .failed;
                                         req.onWriteFail(err, this.globalObject, this.getQueriesArray());
                                     }
-                                    bun.assert(offset == 0);
+                                    fun.assert(offset == 0);
                                     req.deref();
                                     this.requests.discard(1);
                                     debug("write query failed: {s}", .{@errorName(err)});
@@ -1375,7 +1375,7 @@ fn advance(this: *PostgresSQLConnection) void {
                                         statement.status = .failed;
                                         req.onWriteFail(err, this.globalObject, this.getQueriesArray());
                                     }
-                                    bun.assert(offset == 0);
+                                    fun.assert(offset == 0);
                                     req.deref();
                                     this.requests.discard(1);
                                     debug("write query (sync) failed: {s}", .{@errorName(err)});
@@ -1480,11 +1480,11 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                 for (cells[0..putter.count]) |*cell| {
                     cell.deinit();
                 }
-                if (free_cells) bun.default_allocator.free(cells);
+                if (free_cells) fun.default_allocator.free(cells);
             }
 
             if (statement.fields.len >= jsc.JSObject.maxInlineCapacity()) {
-                cells = try bun.default_allocator.alloc(DataCell.SQLDataCell, statement.fields.len);
+                cells = try fun.default_allocator.alloc(DataCell.SQLDataCell, statement.fields.len);
                 free_cells = true;
             }
             // make sure all cells are reset if reader short breaks the fields will just be null with is better than undefined behavior
@@ -1507,7 +1507,7 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                 );
             }
             const thisValue = request.thisValue.tryGet() orelse return {
-                bun.assertf(false, "query value was freed earlier than expected", .{});
+                fun.assertf(false, "query value was freed earlier than expected", .{});
                 return error.ExpectedRequest;
             };
             const pending_value = PostgresSQLQuery.js.pendingValueGetCached(thisValue) orelse .zero;
@@ -1593,11 +1593,11 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
         .ParameterDescription => {
             var description: protocol.ParameterDescription = undefined;
             try description.decodeInternal(Context, reader);
-            errdefer bun.default_allocator.free(description.parameters);
+            errdefer fun.default_allocator.free(description.parameters);
             const request = this.current() orelse return error.ExpectedRequest;
             var statement = request.statement orelse return error.ExpectedStatement;
             if (statement.parameters.len > 0) {
-                bun.default_allocator.free(statement.parameters);
+                fun.default_allocator.free(statement.parameters);
             }
             statement.parameters = description.parameters;
             if (statement.status == .parsing) {
@@ -1621,7 +1621,7 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                 for (statement.fields) |*field| {
                     field.deinit();
                 }
-                bun.default_allocator.free(statement.fields);
+                fun.default_allocator.free(statement.fields);
                 statement.cached_structure.deinit();
                 statement.cached_structure = .{};
                 statement.needs_duplicate_check = true;
@@ -1670,17 +1670,17 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
 
                     const iteration_count = try cont.iterationCount();
 
-                    const server_salt_decoded_base64 = bun.base64.decodeAlloc(bun.z_allocator, cont.s) catch |err| {
+                    const server_salt_decoded_base64 = fun.base64.decodeAlloc(fun.z_allocator, cont.s) catch |err| {
                         return switch (err) {
                             error.DecodingFailed => error.SASL_SIGNATURE_INVALID_BASE64,
                             else => |e| e,
                         };
                     };
-                    defer bun.z_allocator.free(server_salt_decoded_base64);
+                    defer fun.z_allocator.free(server_salt_decoded_base64);
                     try sasl.computeSaltedPassword(server_salt_decoded_base64, iteration_count, this);
 
                     const auth_string = try std.fmt.allocPrint(
-                        bun.z_allocator,
+                        fun.z_allocator,
                         "n=*,r={s},r={s},s={s},i={s},c=biws,r={s}",
                         .{
                             sasl.nonce(),
@@ -1690,7 +1690,7 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                             cont.r,
                         },
                     );
-                    defer bun.z_allocator.free(auth_string);
+                    defer fun.z_allocator.free(auth_string);
                     try sasl.computeServerSignature(auth_string);
 
                     const client_key = sasl.clientKey();
@@ -1700,15 +1700,15 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                         out.* = a ^ b;
                     }
 
-                    var client_key_xor_base64_buf = std.mem.zeroes([bun.base64.encodeLenFromSize(32)]u8);
-                    const xor_base64_len = bun.base64.encode(&client_key_xor_base64_buf, &client_key_xor_buffer);
+                    var client_key_xor_base64_buf = std.mem.zeroes([fun.base64.encodeLenFromSize(32)]u8);
+                    const xor_base64_len = fun.base64.encode(&client_key_xor_base64_buf, &client_key_xor_buffer);
 
                     const payload = try std.fmt.allocPrint(
-                        bun.z_allocator,
+                        fun.z_allocator,
                         "c=biws,r={s},p={s}",
                         .{ cont.r, client_key_xor_base64_buf[0..xor_base64_len] },
                     );
-                    defer bun.z_allocator.free(payload);
+                    defer fun.z_allocator.free(payload);
 
                     var response = protocol.SASLResponse{
                         .data = .{
@@ -1778,21 +1778,21 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                 .MD5Password => |md5| {
                     debug("MD5Password", .{});
                     // Format is: md5 + md5(md5(password + username) + salt)
-                    var first_hash_buf: bun.sha.MD5.Digest = undefined;
+                    var first_hash_buf: fun.sha.MD5.Digest = undefined;
                     var first_hash_str: [32]u8 = undefined;
-                    var final_hash_buf: bun.sha.MD5.Digest = undefined;
+                    var final_hash_buf: fun.sha.MD5.Digest = undefined;
                     var final_hash_str: [32]u8 = undefined;
                     var final_password_buf: [36]u8 = undefined;
 
                     // First hash: md5(password + username)
-                    var first_hasher = bun.sha.MD5.init();
+                    var first_hasher = fun.sha.MD5.init();
                     first_hasher.update(this.password);
                     first_hasher.update(this.user);
                     first_hasher.final(&first_hash_buf);
                     const first_hash_str_output = std.fmt.bufPrint(&first_hash_str, "{x}", .{&first_hash_buf}) catch unreachable;
 
                     // Second hash: md5(first_hash + salt)
-                    var final_hasher = bun.sha.MD5.init();
+                    var final_hasher = fun.sha.MD5.init();
                     final_hasher.update(first_hash_str_output);
                     final_hasher.update(&md5.salt);
                     final_hasher.final(&final_hash_buf);
@@ -1839,7 +1839,7 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                 this.failWithJSValue(err.toJS(this.globalObject));
 
                 // it shouldn't enqueue any requests while connecting
-                bun.assert(this.requests.count == 0);
+                fun.assert(this.requests.count == 0);
                 return;
             }
 
@@ -1858,7 +1858,7 @@ pub fn on(this: *PostgresSQLConnection, comptime MessageType: @Type(.enum_litera
                     stmt.status = PostgresSQLStatement.Status.failed;
                     stmt.error_response = .{ .protocol = err };
                     is_error_owned = false;
-                    if (this.statements.remove(bun.hash(stmt.signature.name))) {
+                    if (this.statements.remove(fun.hash(stmt.signature.name))) {
                         stmt.deref();
                     }
                 }
@@ -1939,9 +1939,9 @@ pub fn consumeOnCloseCallback(this: *const PostgresSQLConnection, globalObject: 
     return on_close;
 }
 
-const PreparedStatementsMap = std.HashMapUnmanaged(u64, *PostgresSQLStatement, bun.IdentityContext(u64), 80);
+const PreparedStatementsMap = std.HashMapUnmanaged(u64, *PostgresSQLStatement, fun.IdentityContext(u64), 80);
 
-const debug = bun.Output.scoped(.Postgres, .visible);
+const debug = fun.Output.scoped(.Postgres, .visible);
 
 const MAX_PIPELINE_SIZE = std.math.maxInt(u16); // about 64KB per connection
 
@@ -1969,13 +1969,13 @@ const AnyPostgresError = @import("../../sql/postgres/AnyPostgresError.zig").AnyP
 const createPostgresError = @import("../../sql/postgres/AnyPostgresError.zig").createPostgresError;
 const postgresErrorToJS = @import("../../sql/postgres/AnyPostgresError.zig").postgresErrorToJS;
 
-const bun = @import("bun");
-const BoringSSL = bun.BoringSSL;
-const assert = bun.assert;
+const fun = @import("fun");
+const BoringSSL = fun.BoringSSL;
+const assert = fun.assert;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 const AutoFlusher = jsc.WebCore.AutoFlusher;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const Socket = uws.AnySocket;

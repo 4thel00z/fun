@@ -4,19 +4,19 @@ pub fn createPostgresError(
     globalObject: *jsc.JSGlobalObject,
     message: []const u8,
     options: PostgresErrorOptions,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const opts_obj = JSValue.createEmptyObject(globalObject, 0);
     opts_obj.ensureStillAlive();
-    opts_obj.put(globalObject, jsc.ZigString.static("code"), try bun.String.createUTF8ForJS(globalObject, options.code));
+    opts_obj.put(globalObject, jsc.ZigString.static("code"), try fun.String.createUTF8ForJS(globalObject, options.code));
     inline for (std.meta.fields(PostgresErrorOptions)) |field| {
         const FieldType = @typeInfo(@TypeOf(@field(options, field.name)));
         if (FieldType == .optional) {
             if (@field(options, field.name)) |value| {
-                opts_obj.put(globalObject, jsc.ZigString.static(field.name), try bun.String.createUTF8ForJS(globalObject, value));
+                opts_obj.put(globalObject, jsc.ZigString.static(field.name), try fun.String.createUTF8ForJS(globalObject, value));
             }
         }
     }
-    opts_obj.put(globalObject, jsc.ZigString.static("message"), try bun.String.createUTF8ForJS(globalObject, message));
+    opts_obj.put(globalObject, jsc.ZigString.static("message"), try fun.String.createUTF8ForJS(globalObject, message));
 
     return opts_obj;
 }
@@ -70,7 +70,7 @@ pub fn postgresErrorToJS(globalObject: *jsc.JSGlobalObject, message: ?[]const u8
             return globalObject.createOutOfMemoryError();
         },
         error.ShortRead => {
-            bun.unreachablePanic("Assertion failed: ShortRead should be handled by the caller in postgres", .{});
+            fun.unreachablePanic("Assertion failed: ShortRead should be handled by the caller in postgres", .{});
         },
     };
 
@@ -85,8 +85,8 @@ const std = @import("std");
 const AnyPostgresError = @import("../../sql/postgres/AnyPostgresError.zig").AnyPostgresError;
 const PostgresErrorOptions = @import("../../sql/postgres/AnyPostgresError.zig").PostgresErrorOptions;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

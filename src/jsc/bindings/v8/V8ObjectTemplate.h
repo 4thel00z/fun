@@ -14,10 +14,10 @@ namespace v8 {
 
 class ObjectTemplate : public Template {
 public:
-    BUN_EXPORT static Local<ObjectTemplate> New(Isolate* isolate, Local<FunctionTemplate> constructor = Local<FunctionTemplate>());
-    BUN_EXPORT MaybeLocal<Object> NewInstance(Local<Context> context);
-    BUN_EXPORT void SetInternalFieldCount(int value);
-    BUN_EXPORT int InternalFieldCount() const;
+    FUN_EXPORT static Local<ObjectTemplate> New(Isolate* isolate, Local<FunctionTemplate> constructor = Local<FunctionTemplate>());
+    FUN_EXPORT MaybeLocal<Object> NewInstance(Local<Context> context);
+    FUN_EXPORT void SetInternalFieldCount(int value);
+    FUN_EXPORT int InternalFieldCount() const;
 
 private:
     shim::ObjectTemplate* localToObjectPointer()

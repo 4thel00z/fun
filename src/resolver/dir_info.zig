@@ -14,8 +14,8 @@ enclosing_tsconfig_json: ?*const TSConfigJSON = null,
 
 /// package.json used for bundling
 /// it's the deepest one in the hierarchy with a "name" field
-/// or, if using `bun run`, the name field is optional
-/// https://github.com/oven-sh/bun/issues/229
+/// or, if using `fun run`, the name field is optional
+/// https://github.com/underdoc-org/fun/issues/229
 enclosing_package_json: ?*PackageJSON = null,
 
 package_json_for_dependencies: ?*PackageJSON = null,
@@ -65,7 +65,7 @@ pub fn getFileDescriptor(dirinfo: *const DirInfo) FD {
     return .invalid;
 }
 
-pub fn getEntries(dirinfo: *const DirInfo, generation: bun.Generation) ?*Fs.FileSystem.DirEntry {
+pub fn getEntries(dirinfo: *const DirInfo, generation: fun.Generation) ?*Fs.FileSystem.DirEntry {
     const entries_ptr = Fs.FileSystem.instance.fs.entriesAt(dirinfo.entries, generation) orelse return null;
     switch (entries_ptr.*) {
         .entries => {
@@ -122,7 +122,7 @@ const std = @import("std");
 const PackageJSON = @import("./package_json.zig").PackageJSON;
 const TSConfigJSON = @import("./tsconfig_json.zig").TSConfigJSON;
 
-const bun = @import("bun");
-const FD = bun.FD;
-const FeatureFlags = bun.FeatureFlags;
-const allocators = bun.allocators;
+const fun = @import("fun");
+const FD = fun.FD;
+const FeatureFlags = fun.FeatureFlags;
+const allocators = fun.allocators;

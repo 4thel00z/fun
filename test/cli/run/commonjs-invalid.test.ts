@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
 describe.concurrent("commonjs-invalid", () => {
   test("Loading an invalid commonjs module", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", join(import.meta.dir, "cjs-fixture-bad.cjs")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", join(import.meta.dir, "cjs-fixture-bad.cjs")],
+      env: funEnv,
       stdout: "inherit",
       stderr: "pipe",
       stdin: "inherit",

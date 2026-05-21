@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
-// https://github.com/oven-sh/bun/issues/12276
+// https://github.com/underdoc-org/fun/issues/12276
 test("toIncludeRepeated should check for exact count, not at least count", () => {
   // The bug: toIncludeRepeated was checking if string contains AT LEAST n occurrences
   // Instead of EXACTLY n occurrences

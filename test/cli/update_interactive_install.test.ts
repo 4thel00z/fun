@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { existsSync, readFileSync } from "fs";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
-describe.concurrent("bun update --interactive actually installs packages", () => {
+describe.concurrent("fun update --interactive actually installs packages", () => {
   test("should update package.json AND install packages", async () => {
     using dir = tempDir("update-interactive-install", {
       "package.json": JSON.stringify({
@@ -16,11 +16,11 @@ describe.concurrent("bun update --interactive actually installs packages", () =>
       }),
     });
 
-    // First, run bun install to create initial node_modules
-    await using installProc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    // First, run fun install to create initial node_modules
+    await using installProc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -44,10 +44,10 @@ describe.concurrent("bun update --interactive actually installs packages", () =>
     expect(initialVersion).toBe("0.1.0");
 
     // Now run update --interactive with automatic selection
-    await using updateProc = Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive"],
+    await using updateProc = Fun.spawn({
+      cmd: [funExe(), "update", "--interactive"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -93,7 +93,7 @@ describe.concurrent("bun update --interactive actually installs packages", () =>
 
       // The installed version should NOT be the old version
       expect(installedVersion).not.toBe("0.1.0");
-      expect(Bun.semver.satisfies(installedVersion, ">0.1.0")).toBe(true);
+      expect(Fun.semver.satisfies(installedVersion, ">0.1.0")).toBe(true);
 
       // And ideally should match the expected version (or at least be compatible)
       // We check that it starts with the expected major.minor
@@ -119,10 +119,10 @@ describe.concurrent("bun update --interactive actually installs packages", () =>
     });
 
     // Initial install
-    await using installProc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using installProc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -136,10 +136,10 @@ describe.concurrent("bun update --interactive actually installs packages", () =>
     expect(initialPkgJson.version).toBe("0.1.0");
 
     // Run update --interactive with 'l' to toggle latest, then select and confirm
-    await using updateProc = Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive"],
+    await using updateProc = Fun.spawn({
+      cmd: [funExe(), "update", "--interactive"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -171,7 +171,7 @@ describe.concurrent("bun update --interactive actually installs packages", () =>
 
       // Should be newer than 0.1.0
       expect(updatedPkgJson.version).not.toBe("0.1.0");
-      expect(Bun.semver.satisfies(updatedPkgJson.version, ">0.1.0")).toBe(true);
+      expect(Fun.semver.satisfies(updatedPkgJson.version, ">0.1.0")).toBe(true);
     } catch (err) {
       // Ensure cleanup on failure
       updateProc.stdin.end();

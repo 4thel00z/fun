@@ -219,10 +219,10 @@ pub const Continue = struct {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Case = js_ast.Case;
 const Catch = js_ast.Catch;
 const ClauseItem = js_ast.ClauseItem;

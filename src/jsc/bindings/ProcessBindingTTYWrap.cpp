@@ -54,7 +54,7 @@ public:
 
 #endif
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -176,7 +176,7 @@ private:
 };
 
 #if OS(WINDOWS)
-extern "C" void Bun__setCTRLHandler(BOOL add);
+extern "C" void Fun__setCTRLHandler(BOOL add);
 #endif
 
 const ClassInfo TTYWrapObject::s_info = {
@@ -187,7 +187,7 @@ const ClassInfo TTYWrapObject::s_info = {
 
 JSC::EncodedJSValue Process_functionInternalGetWindowSize(JSC::JSGlobalObject* globalObject, JSC::CallFrame* callFrame);
 
-extern "C" int Bun__ttySetMode(int fd, int mode);
+extern "C" int Fun__ttySetMode(int fd, int mode);
 
 JSC_DEFINE_HOST_FUNCTION(jsTTYSetMode, (JSC::JSGlobalObject * globalObject, CallFrame* callFrame))
 {
@@ -222,7 +222,7 @@ JSC_DEFINE_HOST_FUNCTION(jsTTYSetMode, (JSC::JSGlobalObject * globalObject, Call
     // Nodejs does not throw when ttySetMode fails. An Error event is emitted instead.
     int mode_ = mode.toInt32(globalObject);
     RETURN_IF_EXCEPTION(scope, {});
-    int err = Bun__ttySetMode(fdToUse, mode_);
+    int err = Fun__ttySetMode(fdToUse, mode_);
     return JSValue::encode(jsNumber(err));
 #endif
 }
@@ -253,13 +253,13 @@ JSC_DEFINE_HOST_FUNCTION(TTYWrap_functionSetMode,
 
 #if OS(WINDOWS)
     if (mode.toInt32(globalObject) == 0) {
-        Bun__setCTRLHandler(1);
+        Fun__setCTRLHandler(1);
     }
 
     int err = uv_tty_set_mode(ttyWrap->handle->tty(), mode.toInt32(globalObject));
 #else
     // Nodejs does not throw when ttySetMode fails. An Error event is emitted instead.
-    int err = Bun__ttySetMode(fd, mode.toInt32(globalObject));
+    int err = Fun__ttySetMode(fd, mode.toInt32(globalObject));
 #endif
     return JSValue::encode(jsNumber(err));
 }
@@ -492,7 +492,7 @@ private:
 
 const ClassInfo TTYWrapConstructor::s_info = { "TTY"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(TTYWrapConstructor) };
 
-JSValue createBunTTYFunctions(Zig::GlobalObject* globalObject)
+JSValue createFunTTYFunctions(Zig::GlobalObject* globalObject)
 {
     auto& vm = JSC::getVM(globalObject);
     auto* obj = constructEmptyObject(globalObject);
@@ -501,7 +501,7 @@ JSValue createBunTTYFunctions(Zig::GlobalObject* globalObject)
 
     obj->putDirect(vm, PropertyName(Identifier::fromString(vm, "setRawMode"_s)), JSFunction::create(vm, globalObject, 0, "ttySetMode"_s, jsTTYSetMode, ImplementationVisibility::Public), 0);
 
-    obj->putDirect(vm, PropertyName(Identifier::fromString(vm, "getWindowSize"_s)), JSFunction::create(vm, globalObject, 0, "getWindowSize"_s, Bun::Process_functionInternalGetWindowSize, ImplementationVisibility::Public), 0);
+    obj->putDirect(vm, PropertyName(Identifier::fromString(vm, "getWindowSize"_s)), JSFunction::create(vm, globalObject, 0, "getWindowSize"_s, Fun::Process_functionInternalGetWindowSize, ImplementationVisibility::Public), 0);
 
     return obj;
 }

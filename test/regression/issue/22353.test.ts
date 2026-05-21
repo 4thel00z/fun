@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("issue #22353 - server should handle oversized request without crashing", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     maxRequestBodySize: 1024, // 1KB limit
     async fetch(req) {

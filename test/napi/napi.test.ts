@@ -1,7 +1,7 @@
-import { spawn, spawnSync } from "bun";
-import { beforeAll, describe, expect, it } from "bun:test";
+import { spawn, spawnSync } from "fun";
+import { beforeAll, describe, expect, it } from "fun:test";
 import { readdirSync } from "fs";
-import { bunEnv, bunExe, isCI, isMacOS, isMusl, isWindows, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isCI, isMacOS, isMusl, isWindows, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 describe.concurrent("napi", () => {
@@ -9,10 +9,10 @@ describe.concurrent("napi", () => {
     // build gyp
     console.time("Building node-gyp");
     const install = spawnSync({
-      cmd: [bunExe(), "install", "--verbose"],
+      cmd: [funExe(), "install", "--verbose"],
       cwd: join(__dirname, "napi-app"),
       stderr: "inherit",
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stdin: "inherit",
     });
@@ -26,8 +26,8 @@ describe.concurrent("napi", () => {
   }, 120_000);
 
   describe.each(["esm", "cjs"])("bundle .node files to %s via", format => {
-    describe.each(["node", "bun"])("target %s", target => {
-      it("Bun.build", async () => {
+    describe.each(["node", "fun"])("target %s", target => {
+      it("Fun.build", async () => {
         const dir = tempDirWithFiles("node-file-cli", {
           "package.json": JSON.stringify({
             name: "napi-app",
@@ -37,7 +37,7 @@ describe.concurrent("napi", () => {
         });
         const build = spawnSync({
           cmd: [
-            bunExe(),
+            funExe(),
             "build",
             "--target",
             target,
@@ -47,16 +47,16 @@ describe.concurrent("napi", () => {
             join(__dirname, "napi-app/main.js"),
           ],
           cwd: join(__dirname, "napi-app"),
-          env: bunEnv,
+          env: funEnv,
           stdout: "inherit",
           stderr: "inherit",
         });
         expect(build.success).toBeTrue();
 
-        for (let exec of target === "bun" ? [bunExe()] : [bunExe(), "node"]) {
+        for (let exec of target === "fun" ? [funExe()] : [funExe(), "node"]) {
           const result = spawnSync({
             cmd: [exec, join(dir, "main.js"), "self"],
-            env: bunEnv,
+            env: funEnv,
             stdin: "inherit",
             stderr: "inherit",
             stdout: "pipe",
@@ -67,7 +67,7 @@ describe.concurrent("napi", () => {
         }
       });
 
-      if (target === "bun") {
+      if (target === "fun") {
         it(
           "should work with --compile",
           async () => {
@@ -82,7 +82,7 @@ describe.concurrent("napi", () => {
             const exe = join(dir, "main" + (process.platform === "win32" ? ".exe" : ""));
             const build = spawnSync({
               cmd: [
-                bunExe(),
+                funExe(),
                 "build",
                 "--target=" + target,
                 "--format=" + format,
@@ -90,7 +90,7 @@ describe.concurrent("napi", () => {
                 join(__dirname, "napi-app", "main.js"),
               ],
               cwd: dir,
-              env: bunEnv,
+              env: funEnv,
               stdout: "inherit",
               stderr: "inherit",
             });
@@ -98,7 +98,7 @@ describe.concurrent("napi", () => {
             const tmpdir = tempDirWithFiles("should-be-empty-except", {});
             const result = spawnSync({
               cmd: [exe, "self"],
-              env: { ...bunEnv, BUN_TMPDIR: tmpdir },
+              env: { ...funEnv, FUN_TMPDIR: tmpdir },
               stdin: "inherit",
               stderr: "inherit",
               stdout: "pipe",
@@ -107,7 +107,7 @@ describe.concurrent("napi", () => {
             expect(stdout).toBe("hello world!");
             expect(result.success).toBeTrue();
             if (process.platform !== "win32") {
-              expect(readdirSync(tmpdir), "bun should clean up .node files").toBeEmpty();
+              expect(readdirSync(tmpdir), "fun should clean up .node files").toBeEmpty();
             } else {
               // On Windows, we have to mark it for deletion on reboot.
               // Not clear how to test for that.
@@ -117,7 +117,7 @@ describe.concurrent("napi", () => {
         );
       }
 
-      it("`bun build`", async () => {
+      it("`fun build`", async () => {
         const dir = tempDirWithFiles("node-file-build", {
           "package.json": JSON.stringify({
             name: "napi-app",
@@ -125,7 +125,7 @@ describe.concurrent("napi", () => {
             type: format === "esm" ? "module" : "commonjs",
           }),
         });
-        const build = await Bun.build({
+        const build = await Fun.build({
           entrypoints: [join(__dirname, "napi-app/main.js")],
           outdir: dir,
           target,
@@ -134,10 +134,10 @@ describe.concurrent("napi", () => {
 
         expect(build.logs).toBeEmpty();
 
-        for (let exec of target === "bun" ? [bunExe()] : [bunExe(), "node"]) {
+        for (let exec of target === "fun" ? [funExe()] : [funExe(), "node"]) {
           const result = spawnSync({
             cmd: [exec, join(dir, "main.js"), "self"],
-            env: bunEnv,
+            env: funEnv,
             stdin: "inherit",
             stderr: "inherit",
             stdout: "pipe",
@@ -166,7 +166,7 @@ describe.concurrent("napi", () => {
   });
 
   describe("napi_get_value_string_utf8 with buffer", () => {
-    // see https://github.com/oven-sh/bun/issues/6949
+    // see https://github.com/underdoc-org/fun/issues/6949
     it("copies one char", async () => {
       const result = await checkSameOutput("test_napi_get_value_string_utf8_with_buffer", ["abcdef", 2]);
       expect(result).toEndWith("str: a");
@@ -328,13 +328,13 @@ describe.concurrent("napi", () => {
       // This test verifies that async work can be created with a null complete callback.
       // The output order can vary due to thread scheduling on Linux, so we normalize
       // the output lines before comparing.
-      const [nodeResult, bunResult] = await Promise.all([
+      const [nodeResult, funResult] = await Promise.all([
         runOn("node", "test_napi_async_work_complete_null_check", []),
-        runOn(bunExe(), "test_napi_async_work_complete_null_check", []),
+        runOn(funExe(), "test_napi_async_work_complete_null_check", []),
       ]);
 
       // Filter out debug logs and normalize
-      const cleanBunResult = bunResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
+      const cleanFunResult = funResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
 
       // Both should contain these two lines, but order may vary
       const expectedLines = ["execute called!", "resolved to undefined"];
@@ -344,13 +344,13 @@ describe.concurrent("napi", () => {
         .split("\n")
         .filter(line => line)
         .sort();
-      const bunLines = cleanBunResult
+      const funLines = cleanFunResult
         .split("\n")
         .filter(line => line)
         .sort();
 
-      expect(bunLines).toEqual(nodeLines);
-      expect(bunLines).toEqual(expectedLines.sort());
+      expect(funLines).toEqual(nodeLines);
+      expect(funLines).toEqual(expectedLines.sort());
     });
     it("works with cancelation", async () => {
       const output = await checkSameOutput("test_napi_async_work_cancel", [], { "UV_THREADPOOL_SIZE": "2" });
@@ -397,10 +397,10 @@ describe.concurrent("napi", () => {
     it("cannot see locals from around its invocation", async () => {
       // variable should_not_exist is declared on main.js:18, but it should not be in scope for the eval'd code
       // this doesn't use await checkSameOutput because V8 and JSC use different error messages for a missing variable
-      let bunResult = await runOn(bunExe(), "test_napi_run_script", ["shouldNotExist"]);
+      let funResult = await runOn(funExe(), "test_napi_run_script", ["shouldNotExist"]);
       // remove all debug logs
-      bunResult = bunResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
-      expect(bunResult).toBe(
+      funResult = funResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
+      expect(funResult).toBe(
         `synchronously threw ReferenceError: message "shouldNotExist is not defined", code undefined`,
       );
     });
@@ -455,7 +455,7 @@ describe.concurrent("napi", () => {
   });
 
   describe("napi_create_object", () => {
-    // https://github.com/oven-sh/bun/issues/25658
+    // https://github.com/underdoc-org/fun/issues/25658
     it("result is clonable with structuredClone", async () => {
       await checkSameOutput("test_napi_create_object_structured_clone", []);
     });
@@ -595,8 +595,8 @@ describe.concurrent("napi", () => {
     // under ASAN, garbage nm_register_func pointer otherwise).
     const addonPath = join(__dirname, "napi-app", "build", "Debug", "reentrant_register_addon.node");
     await using proc = spawn({
-      cmd: [bunExe(), "-e", `require(${JSON.stringify(addonPath)});`],
-      env: bunEnv,
+      cmd: [funExe(), "-e", `require(${JSON.stringify(addonPath)});`],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -619,18 +619,18 @@ describe.concurrent("napi", () => {
   });
 
   it("napi_get_named_property copies utf8 string data", async () => {
-    // Must spawn bun directly (not via checkSameOutput/main.js) because the
+    // Must spawn fun directly (not via checkSameOutput/main.js) because the
     // bug only reproduces when global property names like "Response" haven't
     // been pre-atomized. Loading through main.js → module.js pre-initializes
     // globals, masking the use-after-free in the atom string table.
     const addonPath = join(__dirname, "napi-app", "build", "Debug", "napitests.node");
     await using proc = spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
-        `const addon = require(${JSON.stringify(addonPath)}); addon.test_napi_get_named_property_copied_string(() => { Bun.gc(true); });`,
+        `const addon = require(${JSON.stringify(addonPath)}); addon.test_napi_get_named_property_copied_string(() => { Fun.gc(true); });`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -671,15 +671,15 @@ describe.concurrent("napi", () => {
 
   it("napi_wrap finalizers run in LIFO order during env teardown", async () => {
     // Mirrors sqlite3/duckdb crash: a child wrapped after its parent must be finalized
-    // first so its destructor can still touch the parent. Bun previously iterated an
+    // first so its destructor can still touch the parent. Fun previously iterated an
     // unordered_set here, so order was hash-dependent and the child could see a freed parent.
     const code = `
       const addon = require(${JSON.stringify(join(__dirname, "napi-app/build/Debug/test_wrap_cleanup_order.node"))});
       globalThis.keep = addon.createParentAndChildren(32);
     `;
     await using proc = spawn({
-      cmd: [bunExe(), "-e", code],
-      env: bunEnv,
+      cmd: [funExe(), "-e", code],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -698,7 +698,7 @@ describe.concurrent("napi", () => {
     // This test ensures that napi_reference_unref can be called during GC
     // without triggering the NAPI_CHECK_ENV_NOT_IN_GC assertion for regular modules.
     // This was causing crashes with packages like rolldown-vite when used with Nuxt.
-    // See: https://github.com/oven-sh/bun/issues/22596
+    // See: https://github.com/underdoc-org/fun/issues/22596
     const result = await checkSameOutput("test_reference_unref_in_finalizer", []);
     expect(result).toContain("Created 100 objects with finalizers");
     expect(result).toContain("Finalizers called:");
@@ -719,17 +719,17 @@ describe.concurrent("napi", () => {
 
       // Note: Node.js may not enforce this check for manually-registered experimental modules
       // (ones that set nm_version to NAPI_VERSION_EXPERIMENTAL manually)
-      // But Bun should still enforce it for safety
+      // But Fun should still enforce it for safety
 
-      // Test with Bun - should crash
+      // Test with Fun - should crash
       // Use the wrapper script that kills the process after seeing the crash messages
       // to avoid hanging on llvm-symbolizer
-      const { BUN_INSPECT_CONNECT_TO: _, ASAN_OPTIONS, ...rest } = bunEnv;
-      const bunProc = spawn({
-        cmd: [bunExe(), join(__dirname, "napi-app/test_experimental_with_timeout.js")],
+      const { FUN_INSPECT_CONNECT_TO: _, ASAN_OPTIONS, ...rest } = funEnv;
+      const funProc = spawn({
+        cmd: [funExe(), join(__dirname, "napi-app/test_experimental_with_timeout.js")],
         env: {
           ...rest,
-          BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT: "1",
+          FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT: "1",
           // Override ASAN_OPTIONS to disable coredump and symbolization for this specific test
           // Otherwise ASAN will hang trying to create a core dump or symbolize
           ASAN_OPTIONS: "allow_user_segv_handler=1:disable_coredump=1:symbolize=0",
@@ -738,44 +738,44 @@ describe.concurrent("napi", () => {
         stderr: "pipe",
       });
 
-      const [bunStdout, bunStderr, bunExitCode] = await Promise.all([
-        bunProc.stdout.text(),
-        bunProc.stderr.text(),
-        bunProc.exited,
+      const [funStdout, funStderr, funExitCode] = await Promise.all([
+        funProc.stdout.text(),
+        funProc.stderr.text(),
+        funProc.exited,
       ]);
 
       // The wrapper script should exit with 0 if the test passed
-      expect(bunExitCode).toBe(0);
-      expect(bunStdout + bunStderr).toContain("Loading experimental module");
-      expect(bunStdout + bunStderr).toContain("Created");
-      expect(bunStderr).toContain("FATAL ERROR");
-      expect(bunStdout + bunStderr).toContain("TEST PASSED: Process crashed as expected");
+      expect(funExitCode).toBe(0);
+      expect(funStdout + funStderr).toContain("Loading experimental module");
+      expect(funStdout + funStderr).toContain("Created");
+      expect(funStderr).toContain("FATAL ERROR");
+      expect(funStdout + funStderr).toContain("TEST PASSED: Process crashed as expected");
 
       // The error message should NOT contain "Did not crash"
-      expect(bunStdout + bunStderr).not.toContain("ERROR: Did not crash");
+      expect(funStdout + funStderr).not.toContain("ERROR: Did not crash");
     },
     25_000,
   );
 });
 
 async function checkSameOutput(test: string, args: any[] | string, envArgs: Record<string, string> = {}) {
-  let [nodeResult, bunResult] = await Promise.all([
+  let [nodeResult, funResult] = await Promise.all([
     runOn("node", test, args, envArgs),
-    runOn(bunExe(), test, args, envArgs),
+    runOn(funExe(), test, args, envArgs),
   ]);
   nodeResult = nodeResult.trim();
   // remove all debug logs
-  bunResult = bunResult
+  funResult = funResult
     .replaceAll(/^\[\w+\].+$/gm, "")
     // TODO: we don't seem to print ProxyObject in this case.
     .replaceAll("function ProxyObject()", "function ()")
     .trim();
-  expect(bunResult).toEqual(nodeResult);
+  expect(funResult).toEqual(nodeResult);
   return nodeResult;
 }
 
 async function runOn(executable: string, test: string, args: any[] | string, envArgs: Record<string, string> = {}) {
-  const env = { ...bunEnv, ...envArgs };
+  const env = { ...funEnv, ...envArgs };
   const exec = spawn({
     cmd: [
       executable,
@@ -803,10 +803,10 @@ async function runOn(executable: string, test: string, args: any[] | string, env
 }
 
 async function checkBothFail(test: string, args: any[] | string, envArgs: Record<string, string> = {}) {
-  const [node, bun] = await Promise.all(
-    ["node", bunExe()].map(async executable => {
-      const { BUN_INSPECT_CONNECT_TO: _, ...rest } = bunEnv;
-      const env = { ...rest, BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT: "1", ...envArgs };
+  const [node, fun] = await Promise.all(
+    ["node", funExe()].map(async executable => {
+      const { FUN_INSPECT_CONNECT_TO: _, ...rest } = funEnv;
+      const env = { ...rest, FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT: "1", ...envArgs };
       const exec = spawn({
         cmd: [
           executable,
@@ -816,8 +816,8 @@ async function checkBothFail(test: string, args: any[] | string, envArgs: Record
           typeof args == "string" ? args : JSON.stringify(args),
         ],
         env,
-        stdout: Bun.version_with_sha.includes("debug") ? "inherit" : "pipe",
-        stderr: Bun.version_with_sha.includes("debug") ? "inherit" : "pipe",
+        stdout: Fun.version_with_sha.includes("debug") ? "inherit" : "pipe",
+        stderr: Fun.version_with_sha.includes("debug") ? "inherit" : "pipe",
         stdin: "inherit",
       });
       const exitCode = await exec.exited;
@@ -825,8 +825,8 @@ async function checkBothFail(test: string, args: any[] | string, envArgs: Record
     }),
   );
   expect(node.exitCode || node.signalCode).toBeTruthy();
-  expect(!!node.exitCode).toEqual(!!bun.exitCode);
-  expect(!!node.signalCode).toEqual(!!bun.signalCode);
+  expect(!!node.exitCode).toEqual(!!fun.exitCode);
+  expect(!!node.signalCode).toEqual(!!fun.signalCode);
 }
 
 describe("cleanup hooks", () => {
@@ -878,12 +878,12 @@ describe("cleanup hooks", () => {
     it("should handle empty/invalid values", async () => {
       const output = await checkSameOutput("test_napi_typeof_empty_value", []);
       // This test explores edge cases with empty/invalid napi_values
-      // Bun has special handling for isEmpty() that Node doesn't have
+      // Fun has special handling for isEmpty() that Node doesn't have
       expect(output).toContain("napi_typeof");
     });
 
     it("should return napi_function for AsyncContextFrame in threadsafe callback", async () => {
-      // Test for https://github.com/oven-sh/bun/issues/25933
+      // Test for https://github.com/underdoc-org/fun/issues/25933
       // When a threadsafe function is created inside AsyncLocalStorage.run(),
       // the callback gets wrapped in AsyncContextFrame. napi_typeof must
       // report it as napi_function, not napi_object.
@@ -907,7 +907,7 @@ describe("cleanup hooks", () => {
     });
 
     it("should return napi_object for boxed primitives (String, Number, Boolean)", async () => {
-      // Regression test for https://github.com/oven-sh/bun/issues/25351
+      // Regression test for https://github.com/underdoc-org/fun/issues/25351
       // napi_typeof was incorrectly returning napi_string for String objects (new String("hello"))
       // when it should return napi_object (matching JavaScript's typeof behavior)
       const output = await checkSameOutput("test_napi_typeof_boxed_primitives", []);
@@ -922,7 +922,7 @@ describe("cleanup hooks", () => {
   describe("napi_object_freeze and napi_object_seal", () => {
     it("should handle arrays with indexed properties", async () => {
       const output = await checkSameOutput("test_napi_freeze_seal_indexed", []);
-      // Bun has a check for indexed properties that Node.js doesn't have
+      // Fun has a check for indexed properties that Node.js doesn't have
       // This might cause different behavior when freezing/sealing arrays
       expect(output).toContain("freeze");
     });

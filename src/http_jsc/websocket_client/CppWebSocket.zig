@@ -24,7 +24,7 @@ pub const CppWebSocket = opaque {
         deflate_params: ?*const WebSocketDeflate.Params,
     ) void;
     extern fn WebSocket__didAbruptClose(websocket_context: *CppWebSocket, reason: ErrorCode) void;
-    extern fn WebSocket__didClose(websocket_context: *CppWebSocket, code: u16, reason: *const bun.String) void;
+    extern fn WebSocket__didClose(websocket_context: *CppWebSocket, code: u16, reason: *const fun.String) void;
     extern fn WebSocket__didReceiveText(websocket_context: *CppWebSocket, clone: bool, text: *const jsc.ZigString) void;
     extern fn WebSocket__didReceiveBytes(websocket_context: *CppWebSocket, bytes: [*]const u8, byte_len: usize, opcode: u8) void;
     extern fn WebSocket__rejectUnauthorized(websocket_context: *CppWebSocket) bool;
@@ -34,7 +34,7 @@ pub const CppWebSocket = opaque {
         defer loop.exit();
         WebSocket__didAbruptClose(this, reason);
     }
-    pub fn didClose(this: *CppWebSocket, code: u16, reason: *bun.String) void {
+    pub fn didClose(this: *CppWebSocket, code: u16, reason: *fun.String) void {
         const loop = jsc.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
@@ -72,7 +72,7 @@ pub const CppWebSocket = opaque {
     }
     extern fn WebSocket__incrementPendingActivity(websocket_context: *CppWebSocket) void;
     extern fn WebSocket__decrementPendingActivity(websocket_context: *CppWebSocket) void;
-    extern fn WebSocket__setProtocol(websocket_context: *CppWebSocket, protocol: *bun.String) void;
+    extern fn WebSocket__setProtocol(websocket_context: *CppWebSocket, protocol: *fun.String) void;
     pub fn ref(this: *CppWebSocket) void {
         jsc.markBinding(@src());
         WebSocket__incrementPendingActivity(this);
@@ -82,7 +82,7 @@ pub const CppWebSocket = opaque {
         jsc.markBinding(@src());
         WebSocket__decrementPendingActivity(this);
     }
-    pub fn setProtocol(this: *CppWebSocket, protocol: *bun.String) void {
+    pub fn setProtocol(this: *CppWebSocket, protocol: *fun.String) void {
         jsc.markBinding(@src());
         WebSocket__setProtocol(this, protocol);
     }
@@ -91,6 +91,6 @@ pub const CppWebSocket = opaque {
 const WebSocketDeflate = @import("./WebSocketDeflate.zig");
 const ErrorCode = @import("../websocket_client.zig").ErrorCode;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const uws = bun.uws;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const uws = fun.uws;

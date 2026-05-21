@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom/server";
 const ReturnDescriptionAsString = ({ description }) => description;
 
 export function test() {
-  const _bun = ReactDOM.renderToString(
+  const _fun = ReactDOM.renderToString(
     <ReturnDescriptionAsString
       description="line1
 line2 trailing space 
@@ -18,8 +18,8 @@ line7 trailing newline that ${terminates} the string literal
 
   // convert HTML entities to unicode
   const el = document.createElement("textarea");
-  el.innerHTML = _bun;
-  const bun = el.value;
+  el.innerHTML = _fun;
+  const fun = el.value;
 
   const esbuild =
     "line1\nline2 trailing space \n\nline4 no trailing space 'single quote' \\t\\f\\v\\uF000 `template string`\n\nline6 no trailing space\nline7 trailing newline that ${terminates} the string literal\n";
@@ -28,10 +28,10 @@ line7 trailing newline that ${terminates} the string literal
     "line1\nline2 trailing space \n\nline4 no trailing space 'single quote' \\t\\f\\v\\uF000 `template string`\n\nline6 no trailing space\nline7 trailing newline that ${terminates} the string literal\n";
 
   console.assert(
-    bun === esbuild && bun === tsc,
+    fun === esbuild && fun === tsc,
     `strings did not match: ${JSON.stringify(
       {
-        received: bun,
+        received: fun,
         expected: esbuild,
       },
       null,

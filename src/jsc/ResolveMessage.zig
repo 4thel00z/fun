@@ -9,11 +9,11 @@ pub const ResolveMessage = struct {
     referrer: ?Fs.Path = null,
     logged: bool = false,
 
-    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!*ResolveMessage {
+    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!*ResolveMessage {
         return globalThis.throw("ResolveMessage is not constructable", .{});
     }
 
-    pub fn getCode(this: *ResolveMessage, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn getCode(this: *ResolveMessage, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         switch (this.msg.metadata) {
             .resolve => |resolve| {
                 const code: []const u8 = brk: {
@@ -22,13 +22,13 @@ pub const ResolveMessage = struct {
                     break :brk switch (resolve.import_kind) {
                         // Match Node.js error codes. CommonJS is historic
                         // before they started prefixing with 'ERR_'
-                        .require => if (bun.strings.hasPrefixComptime(specifier, "node:"))
+                        .require => if (fun.strings.hasPrefixComptime(specifier, "node:"))
                             break :brk "ERR_UNKNOWN_BUILTIN_MODULE"
                         else
                             break :brk "MODULE_NOT_FOUND",
                         // require resolve does not have the UNKNOWN_BUILTIN_MODULE error code
                         .require_resolve => "MODULE_NOT_FOUND",
-                        .stmt, .dynamic => if (bun.strings.hasPrefixComptime(specifier, "node:"))
+                        .stmt, .dynamic => if (fun.strings.hasPrefixComptime(specifier, "node:"))
                             break :brk "ERR_UNKNOWN_BUILTIN_MODULE"
                         else
                             break :brk "ERR_MODULE_NOT_FOUND",
@@ -45,7 +45,7 @@ pub const ResolveMessage = struct {
                     };
                 };
 
-                var atom = bun.String.createAtomASCII(code);
+                var atom = fun.String.createAtomASCII(code);
                 defer atom.deref();
                 return atom.toJS(globalObject);
             },
@@ -53,7 +53,7 @@ pub const ResolveMessage = struct {
         }
     }
 
-    // https://github.com/oven-sh/bun/issues/2375#issuecomment-2121530202
+    // https://github.com/underdoc-org/fun/issues/2375#issuecomment-2121530202
     pub fn getColumn(this: *ResolveMessage, _: *jsc.JSGlobalObject) jsc.JSValue {
         if (this.msg.data.location) |location| {
             return jsc.JSValue.jsNumber(@max(location.column - 1, 0));
@@ -70,14 +70,14 @@ pub const ResolveMessage = struct {
         return jsc.JSValue.jsNumber(@as(i32, 0));
     }
 
-    pub fn fmt(allocator: std.mem.Allocator, specifier: string, referrer: string, err: anyerror, import_kind: bun.ImportKind) !string {
-        if (import_kind != .require_resolve and bun.strings.hasPrefixComptime(specifier, "node:")) {
+    pub fn fmt(allocator: std.mem.Allocator, specifier: string, referrer: string, err: anyerror, import_kind: fun.ImportKind) !string {
+        if (import_kind != .require_resolve and fun.strings.hasPrefixComptime(specifier, "node:")) {
             // This matches Node.js exactly.
             return try std.fmt.allocPrint(allocator, "No such built-in module: {s}", .{specifier});
         }
         switch (err) {
             error.ModuleNotFound => {
-                if (strings.eqlComptime(referrer, "bun:main")) {
+                if (strings.eqlComptime(referrer, "fun:main")) {
                     return try std.fmt.allocPrint(allocator, "Module not found '{s}'", .{specifier});
                 }
                 if (Resolver.isPackagePath(specifier) and !strings.containsChar(specifier, '/')) {
@@ -122,7 +122,7 @@ pub const ResolveMessage = struct {
         this: *ResolveMessage,
         globalThis: *jsc.JSGlobalObject,
         _: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         return this.toStringFn(globalThis);
     }
 
@@ -130,7 +130,7 @@ pub const ResolveMessage = struct {
         this: *ResolveMessage,
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         const args_ = callframe.arguments_old(1);
         const args = args_.ptr[0..args_.len];
         if (args.len > 0) {
@@ -151,9 +151,9 @@ pub const ResolveMessage = struct {
         this: *ResolveMessage,
         globalThis: *jsc.JSGlobalObject,
         _: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         var object = jsc.JSValue.createEmptyObject(globalThis, 7);
-        object.put(globalThis, ZigString.static("name"), try bun.String.static("ResolveMessage").toJS(globalThis));
+        object.put(globalThis, ZigString.static("name"), try fun.String.static("ResolveMessage").toJS(globalThis));
         object.put(globalThis, ZigString.static("position"), this.getPosition(globalThis));
         object.put(globalThis, ZigString.static("message"), this.getMessage(globalThis));
         object.put(globalThis, ZigString.static("level"), this.getLevel(globalThis));
@@ -168,7 +168,7 @@ pub const ResolveMessage = struct {
         allocator: std.mem.Allocator,
         msg: logger.Msg,
         referrer: string,
-    ) bun.OOM!jsc.JSValue {
+    ) fun.OOM!jsc.JSValue {
         var resolve_error = try allocator.create(ResolveMessage);
         resolve_error.* = ResolveMessage{
             .msg = try msg.clone(allocator),
@@ -182,7 +182,7 @@ pub const ResolveMessage = struct {
         this: *ResolveMessage,
         globalThis: *jsc.JSGlobalObject,
     ) jsc.JSValue {
-        return bun.api.BuildMessage.generatePositionObject(this.msg, globalThis);
+        return fun.api.BuildMessage.generatePositionObject(this.msg, globalThis);
     }
 
     pub fn getMessage(
@@ -238,12 +238,12 @@ const string = []const u8;
 const Resolver = @import("../resolver/resolver.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Fs = bun.fs;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Fs = fun.fs;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const ZigString = jsc.ZigString;

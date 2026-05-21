@@ -4,10 +4,10 @@ pub const OfflineMode = enum {
     offline,
 };
 
-pub const Prefer = bun.ComptimeStringMap(OfflineMode, .{
+pub const Prefer = fun.ComptimeStringMap(OfflineMode, .{
     &.{ "offline", OfflineMode.offline },
     &.{ "latest", OfflineMode.latest },
     &.{ "online", OfflineMode.online },
 });
 
-const bun = @import("bun");
+const fun = @import("fun");

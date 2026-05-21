@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("Request with streaming body can be cloned", async () => {
   const stream = new ReadableStream({
@@ -422,7 +422,7 @@ test("ReadableStream with mixed content (starting with Uint8Array) can be conver
     },
   });
 
-  const arrayBuffer = await Bun.readableStreamToArrayBuffer(stream);
+  const arrayBuffer = await Fun.readableStreamToArrayBuffer(stream);
   expect(arrayBuffer).toBeInstanceOf(ArrayBuffer);
   const text = new TextDecoder().decode(arrayBuffer);
   expect(text).toContain("Hello");
@@ -451,7 +451,7 @@ test("ReadableStream with mixed content (starting with ArrayBuffer) can be conve
     },
   });
 
-  const uint8Array = await Bun.readableStreamToBytes(stream);
+  const uint8Array = await Fun.readableStreamToBytes(stream);
   expect(uint8Array).toBeInstanceOf(Uint8Array);
   const text = new TextDecoder().decode(uint8Array);
   expect(text).toContain("Hello, 世界!");

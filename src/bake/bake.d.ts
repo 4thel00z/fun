@@ -1,26 +1,26 @@
-// This API is under heavy development. See #bake in the Bun Discord for more info.
+// This API is under heavy development. See #bake in the Fun Discord for more info.
 // Definitions that are commented out are planned but not implemented.
 //
 // To use, add a TypeScript reference comment mentioning this file:
-// /// <reference path="/path/to/bun/src/bake/bake.d.ts" />
+// /// <reference path="/path/to/fun/src/bake/bake.d.ts" />
 
-declare module "bun" {
+declare module "fun" {
   declare namespace Bake {
     interface Options {
       /**
-       * Bun provides built-in support for using React as a framework by passing
+       * Fun provides built-in support for using React as a framework by passing
        * 'react' as the framework name. Otherwise, frameworks are config objects.
        *
        * External dependencies:
        * ```
-       * bun i react@experimental react-dom@experimental react-server-dom-webpack@experimental react-refresh@experimental
+       * fun i react@experimental react-dom@experimental react-server-dom-webpack@experimental react-refresh@experimental
        * ```
        */
       framework: Framework | "react";
-      // Note: To contribute to 'bun-framework-react', it can be run from this file:
-      // https://github.com/oven-sh/bun/blob/main/src/bake/bun-framework-react/index.ts
+      // Note: To contribute to 'fun-framework-react', it can be run from this file:
+      // https://github.com/underdoc-org/fun/blob/main/src/bake/fun-framework-react/index.ts
       /**
-       * A subset of the options from Bun.build can be configured. While the framework
+       * A subset of the options from Fun.build can be configured. While the framework
        * can also set these options, this property overrides and merges with them.
        *
        * @default {}
@@ -29,10 +29,10 @@ declare module "bun" {
       /**
        * These plugins are applied after `framework.plugins`
        */
-      plugins?: BunPlugin[] | undefined;
+      plugins?: FunPlugin[] | undefined;
     }
 
-    /** Bake only allows a subset of options from `Bun.build` */
+    /** Bake only allows a subset of options from `Fun.build` */
     type BuildConfigSubset = Pick<
       BuildConfig,
       "conditions" | "define" | "loader" | "ignoreDCEAnnotations" | "drop"
@@ -95,13 +95,13 @@ declare module "bun" {
        * Add extra modules. This can be used to, for example, replace `react`
        * with a different resolution.
        *
-       * Internally, Bun's `react-server-components` framework uses this to
-       * embed its files in the `bun` binary.
+       * Internally, Fun's `react-server-components` framework uses this to
+       * embed its files in the `fun` binary.
        * @default {}
        */
       builtInModules?: BuiltInModule[] | undefined;
       /**
-       * Bun offers integration for React's Server Components with an
+       * Fun offers integration for React's Server Components with an
        * interface that is generic enough to adapt to any framework.
        * @default undefined
        */
@@ -113,7 +113,7 @@ declare module "bun" {
        */
       reactFastRefresh?: boolean | ReactFastRefreshOptions | undefined;
       /** Framework bundler plugins load before the user-provided ones. */
-      plugins?: BunPlugin[];
+      plugins?: FunPlugin[];
 
       // /**
       //  * Called after the list of routes is updated. This can be used to
@@ -152,10 +152,10 @@ declare module "bun" {
        * of the server and client react runtimes, such as `async` components only
        * being available on the server.
        *
-       * To cross from the server graph to the SSR graph, use the bun_bake_graph
+       * To cross from the server graph to the SSR graph, use the fun_bake_graph
        * import attribute:
        *
-       *     import * as ReactDOM from 'react-dom/server' with { bunBakeGraph: 'ssr' };
+       *     import * as ReactDOM from 'react-dom/server' with { funBakeGraph: 'ssr' };
        *
        * Since these models are so subtley different, there is no default value
        * provided for this.
@@ -189,7 +189,7 @@ declare module "bun" {
        *         function () { ... original user implementation here ... },
        *
        *         // The file path of the client-side file to import in the browser.
-       *         "/_bun/d41d8cd0.js",
+       *         "/_fun/d41d8cd0.js",
        *
        *         // The export within the client-side file to load. This is
        *         // not guaranteed to match the export name the user has given.
@@ -242,7 +242,7 @@ declare module "bun" {
       | void
       | ((func: Function, hash: string, force?: bool, customHooks?: () => Function[]) => void);
 
-    /** This API is similar, but unrelated to `Bun.FileSystemRouter`  */
+    /** This API is similar, but unrelated to `Fun.FileSystemRouter`  */
     interface FrameworkFileSystemRouterType {
       /**
        * Relative to project root. For example: `src/pages`.
@@ -259,9 +259,9 @@ declare module "bun" {
        * bundled route module, and returns a response. See `ServerEntryPoint`
        *
        * When `serverComponents` is configured, this can access the component
-       * manifest using the special 'bun:bake/server' import:
+       * manifest using the special 'fun:bake/server' import:
        *
-       *     import { serverManifest } from 'bun:bake/server'
+       *     import { serverManifest } from 'fun:bake/server'
        */
       serverEntryPoint: ImportSource<ServerEntryPoint>;
       /**
@@ -329,7 +329,7 @@ declare module "bun" {
         };
 
     /**
-     * Bun will call this function for every found file. This
+     * Fun will call this function for every found file. This
      * function classifies each file's role in the file system routing.
      */
     type CustomFileSystemRouterFunction = (candidatePath: string) => CustomFileSystemRouterResult;
@@ -361,7 +361,7 @@ declare module "bun" {
 
     interface ServerEntryPoint {
       /**
-       * Bun passes the route's module as an opaque argument `routeModule`. The
+       * Fun passes the route's module as an opaque argument `routeModule`. The
        * framework implementation decides and enforces the shape of the module.
        *
        * A common pattern would be to enforce the object is
@@ -392,14 +392,14 @@ declare module "bun" {
        *          exhaustive: true,
        *      }
        *
-       * "exhaustive" tells Bun that the list is complete. If it is not, a
+       * "exhaustive" tells Fun that the list is complete. If it is not, a
        * static site cannot be generated as it would otherwise be missing
        * routes. A non-exhaustive list can speed up build times by only
        * specifying a few important pages (such as 10 most recent), leaving
        * the rest to be generated on-demand at runtime.
        *
        * To stream results, `getParams` may return an async iterator, which
-       * Bun will start rendering as more parameters are provided:
+       * Fun will start rendering as more parameters are provided:
        *
        *     export async function* getParams(meta: Bake.ParamsMetadata) {
        *         yield { slug: await fetchSlug() };
@@ -409,7 +409,7 @@ declare module "bun" {
        */
       getParams?: (paramsMetadata: ParamsMetadata) => MaybePromise<GetParamIterator>;
       /**
-       * When a dynamic build uses static assets, Bun can map content types in the
+       * When a dynamic build uses static assets, Fun can map content types in the
        * user's `Accept` header to the different static files.
        */
       contentTypeToStaticFile?: Record<string, string>;
@@ -428,7 +428,7 @@ declare module "bun" {
     };
 
     interface PrerenderResult {
-      files?: Record<string, Blob | NodeJS.TypedArray | ArrayBufferLike | string | Bun.BlobPart[]>;
+      files?: Record<string, Blob | NodeJS.TypedArray | ArrayBufferLike | string | Fun.BlobPart[]>;
       // /**
       //  * For dynamic builds, `partialData` will be provided to `render` to allow
       //  * to implement Partial Pre-rendering, a technique where the a page shell
@@ -504,7 +504,7 @@ declare module "bun" {
   }
 
   declare interface BaseServeOptions {
-    /** Add a fullstack web app to this server using Bun Bake */
+    /** Add a fullstack web app to this server using Fun Bake */
     app?: Bake.Options | undefined;
   }
 
@@ -528,7 +528,7 @@ declare module "bun" {
 }
 
 /** Available in server-side files only. */
-declare module "bun:bake/server" {
+declare module "fun:bake/server" {
   // NOTE: The format of these manifests will likely be customizable in the future.
 
   /**
@@ -590,7 +590,7 @@ declare module "bun:bake/server" {
 }
 
 /** Available in client-side files. */
-declare module "bun:bake/client" {
+declare module "fun:bake/client" {
   /**
    * Callback is invoked when server-side code is changed. This can be used to
    * fetch a non-html version of the updated page to perform a faster reload. If
@@ -602,4 +602,4 @@ declare module "bun:bake/client" {
 }
 
 /** Available during development */
-declare module "bun:bake/dev" {}
+declare module "fun:bake/dev" {}

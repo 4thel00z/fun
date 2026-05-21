@@ -4,7 +4,7 @@ opts: Opts = .{},
 args: struct {
     sources: []const [*:0]const u8 = &[_][*:0]const u8{},
     target: [:0]const u8 = &[0:0]u8{},
-    target_fd: ?bun.FD = null,
+    target_fd: ?fun.FD = null,
 } = .{},
 state: union(enum) {
     idle,
@@ -33,14 +33,14 @@ state: union(enum) {
 pub const ShellMvCheckTargetTask = struct {
     mv: *Mv,
 
-    cwd: bun.FD,
+    cwd: fun.FD,
     target: [:0]const u8,
-    result: ?Maybe(?bun.FD) = null,
+    result: ?Maybe(?fun.FD) = null,
 
     task: ShellTask(@This(), runFromThreadPool, runFromMainThread, debug),
 
     pub fn runFromThreadPool(this: *@This()) void {
-        const fd = switch (ShellSyscall.openat(this.cwd, this.target, bun.O.RDONLY | bun.O.DIRECTORY, 0)) {
+        const fd = switch (ShellSyscall.openat(this.cwd, this.target, fun.O.RDONLY | fun.O.DIRECTORY, 0)) {
             .err => |e| {
                 switch (e.getErrno()) {
                     Syscall.E.NOTDIR => {
@@ -72,8 +72,8 @@ pub const ShellMvBatchedTask = struct {
     mv: *Mv,
     sources: []const [*:0]const u8,
     target: [:0]const u8,
-    target_fd: ?bun.FD,
-    cwd: bun.FD,
+    target_fd: ?fun.FD,
+    cwd: fun.FD,
     error_signal: *std.atomic.Value(bool),
 
     err: ?Syscall.Error = null,
@@ -93,7 +93,7 @@ pub const ShellMvBatchedTask = struct {
         if (this.target_fd) |fd| {
             _ = fd;
 
-            var buf: bun.PathBuffer = undefined;
+            var buf: fun.PathBuffer = undefined;
             _ = this.moveInDir(src, &buf);
             return;
         }
@@ -108,8 +108,8 @@ pub const ShellMvBatchedTask = struct {
         }
     }
 
-    pub fn moveInDir(this: *@This(), src: [:0]const u8, buf: *bun.PathBuffer) bool {
-        const path_in_dir_ = bun.path.normalizeBuf(ResolvePath.basename(src), buf, .auto);
+    pub fn moveInDir(this: *@This(), src: [:0]const u8, buf: *fun.PathBuffer) bool {
+        const path_in_dir_ = fun.path.normalizeBuf(ResolvePath.basename(src), buf, .auto);
         if (path_in_dir_.len + 1 >= buf.len) {
             this.err = Syscall.Error.fromCode(Syscall.E.NAMETOOLONG, .rename);
             return false;
@@ -124,7 +124,7 @@ pub const ShellMvBatchedTask = struct {
                     ResolvePath.basename(src),
                 }, .auto);
 
-                this.err = e.withPath(bun.handleOom(bun.default_allocator.dupeZ(u8, target_path[0..])));
+                this.err = e.withPath(fun.handleOom(fun.default_allocator.dupeZ(u8, target_path[0..])));
                 this.err_path_owned = true;
                 return false;
             },
@@ -135,8 +135,8 @@ pub const ShellMvBatchedTask = struct {
     }
 
     fn moveMultipleIntoDir(this: *@This()) void {
-        var buf: bun.PathBuffer = undefined;
-        var fixed_alloc = std.heap.FixedBufferAllocator.init(buf[0..bun.MAX_PATH_BYTES]);
+        var buf: fun.PathBuffer = undefined;
+        var fixed_alloc = std.heap.FixedBufferAllocator.init(buf[0..fun.MAX_PATH_BYTES]);
 
         for (this.sources) |src_raw| {
             if (this.error_signal.load(.seq_cst)) return;
@@ -221,11 +221,11 @@ pub fn next(this: *Mv) Yield {
                 if (this.state.check_target.state == .running) return .suspended;
                 const check_target = &this.state.check_target;
 
-                if (comptime bun.Environment.allow_assert) {
+                if (comptime fun.Environment.allow_assert) {
                     assert(check_target.task.result != null);
                 }
 
-                const maybe_fd: ?bun.FD = switch (check_target.task.result.?) {
+                const maybe_fd: ?fun.FD = switch (check_target.task.result.?) {
                     .err => |e| brk: {
                         switch (e.getErrno()) {
                             Syscall.E.NOENT => {
@@ -263,7 +263,7 @@ pub fn next(this: *Mv) Yield {
 
                 this.args.target_fd = maybe_fd;
                 const cwd_fd = this.bltn().parentCmd().base.shell.cwd_fd;
-                const tasks = bun.handleOom(this.bltn().arena.allocator().alloc(ShellMvBatchedTask, task_count));
+                const tasks = fun.handleOom(this.bltn().arena.allocator().alloc(ShellMvBatchedTask, task_count));
                 // Initialize tasks
                 {
                     var i: usize = 0;
@@ -336,7 +336,7 @@ pub fn onIOWriterChunk(this: *Mv, _: usize, e: ?jsc.SystemError) Yield {
 pub fn checkTargetTaskDone(this: *Mv, task: *ShellMvCheckTargetTask) void {
     _ = task;
 
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .check_target);
         assert(this.state.check_target.task.result != null);
     }
@@ -346,7 +346,7 @@ pub fn checkTargetTaskDone(this: *Mv, task: *ShellMvCheckTargetTask) void {
 }
 
 pub fn batchedMoveTaskDone(this: *Mv, task: *ShellMvBatchedTask) void {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .executing);
         assert(this.state.executing.tasks_done < this.state.executing.task_count);
     }
@@ -359,7 +359,7 @@ pub fn batchedMoveTaskDone(this: *Mv, task: *ShellMvBatchedTask) void {
             exec.err = err.*;
             exec.err_path_owned = task.err_path_owned;
         } else if (task.err_path_owned) {
-            bun.default_allocator.free(err.path);
+            fun.default_allocator.free(err.path);
         }
     }
 
@@ -369,7 +369,7 @@ pub fn batchedMoveTaskDone(this: *Mv, task: *ShellMvBatchedTask) void {
             const e = err.toShellSystemError();
             defer e.deref();
             const buf = this.bltn().fmtErrorArena(.mv, "{f}: {f}\n", .{ e.path, e.message });
-            if (exec.err_path_owned) bun.default_allocator.free(err.path);
+            if (exec.err_path_owned) fun.default_allocator.free(err.path);
             exec.err = null;
             _ = this.writeFailingError(buf, err.errno);
             return;
@@ -384,7 +384,7 @@ pub fn deinit(this: *Mv) void {
     if (this.args.target_fd) |fd| fd.toOptional().close();
     if (this.state == .executing) {
         if (this.state.executing.err) |err| {
-            if (this.state.executing.err_path_owned) bun.default_allocator.free(err.path);
+            if (this.state.executing.err_path_owned) fun.default_allocator.free(err.path);
         }
     }
 }
@@ -500,7 +500,7 @@ pub inline fn bltn(this: *Mv) *Builtin {
 }
 
 // --
-const debug = bun.Output.scoped(.ShellCat, .hidden);
+const debug = fun.Output.scoped(.ShellCat, .hidden);
 
 const std = @import("std");
 
@@ -513,14 +513,14 @@ const ShellTask = interpreter.ShellTask;
 const Builtin = Interpreter.Builtin;
 const Result = Interpreter.Builtin.Result;
 
-const bun = @import("bun");
-const ResolvePath = bun.path;
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const ResolvePath = fun.path;
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
 const Yield = shell.Yield;
 
-const Syscall = bun.sys;
-const Maybe = bun.sys.Maybe;
+const Syscall = fun.sys;
+const Maybe = fun.sys.Maybe;

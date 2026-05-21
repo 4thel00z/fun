@@ -20,7 +20,7 @@ dev: *DevServer,
 body: uws.BodyReaderMixin(@This(), "body", runWithBody, finalize),
 
 pub fn run(dev: *DevServer, _: *Request, resp: anytype) void {
-    const ctx = bun.new(ErrorReportRequest, .{
+    const ctx = fun.new(ErrorReportRequest, .{
         .dev = dev,
         .body = .init(dev.allocator()),
     });
@@ -30,7 +30,7 @@ pub fn run(dev: *DevServer, _: *Request, resp: anytype) void {
 
 pub fn finalize(ctx: *ErrorReportRequest) void {
     ctx.dev.server.?.onStaticRequestComplete();
-    bun.destroy(ctx);
+    fun.destroy(ctx);
 }
 
 pub fn runWithBody(ctx: *ErrorReportRequest, body: []const u8, r: AnyResponse) !void {
@@ -83,12 +83,12 @@ pub fn runWithBody(ctx: *ErrorReportRequest, body: []const u8, r: AnyResponse) !
         });
     }
 
-    const runtime_name = "Bun HMR Runtime";
+    const runtime_name = "Fun HMR Runtime";
 
-    const browser_url_origin = bun.jsc.URL.originFromSlice(browser_url) orelse browser_url;
+    const browser_url_origin = fun.jsc.URL.originFromSlice(browser_url) orelse browser_url;
 
     // All files that DevServer could provide a source map fit the pattern:
-    // `/_bun/client/<label>-{u64}.js`
+    // `/_fun/client/<label>-{u64}.js`
     // Where the u64 is a unique identifier pointing into sourcemaps.
     //
     // HMR chunks use this too, but currently do not host their JS code.
@@ -105,7 +105,7 @@ pub fn runWithBody(ctx: *ErrorReportRequest, body: []const u8, r: AnyResponse) !
     for (frames.items) |*frame| {
         const source_url = frame.source_url.value.ZigString.slice();
         // The browser code strips "http://localhost:3000" when the string
-        // has /_bun/client. It's done because JS can refer to `location`
+        // has /_fun/client. It's done because JS can refer to `location`
         const id = parseId(source_url, browser_url_origin) orelse continue;
 
         // Get and cache the parsed source map
@@ -160,10 +160,10 @@ pub fn runWithBody(ctx: *ErrorReportRequest, body: []const u8, r: AnyResponse) !
             if (index >= 1 and (index - 1) < result.file_paths.len) {
                 const abs_path = result.file_paths[@intCast(index - 1)];
                 frame.source_url = .init(abs_path);
-                const relative_path_buf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(relative_path_buf);
+                const relative_path_buf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(relative_path_buf);
                 const rel_path = ctx.dev.relativePath(relative_path_buf, abs_path);
-                if (bun.strings.eql(frame.function_name.value.ZigString.slice(), rel_path)) {
+                if (fun.strings.eql(frame.function_name.value.ZigString.slice(), rel_path)) {
                     frame.function_name = .empty;
                 }
                 frame.remapped = true;
@@ -253,9 +253,9 @@ pub fn runWithBody(ctx: *ErrorReportRequest, body: []const u8, r: AnyResponse) !
         try w.writeAll(function_name);
 
         const src_to_write = frame.source_url.value.ZigString.slice();
-        if (bun.strings.hasPrefixComptime(src_to_write, "/")) {
-            const relative_path_buf = bun.path_buffer_pool.get();
-            defer bun.path_buffer_pool.put(relative_path_buf);
+        if (fun.strings.hasPrefixComptime(src_to_write, "/")) {
+            const relative_path_buf = fun.path_buffer_pool.get();
+            defer fun.path_buffer_pool.put(relative_path_buf);
             const file = ctx.dev.relativePath(relative_path_buf, src_to_write);
             try w.writeInt(u32, @intCast(file.len), .little);
             try w.writeAll(file);
@@ -298,14 +298,14 @@ pub fn runWithBody(ctx: *ErrorReportRequest, body: []const u8, r: AnyResponse) !
 }
 
 pub fn parseId(source_url: []const u8, browser_url: []const u8) ?SourceMapStore.Key {
-    if (!bun.strings.startsWith(source_url, browser_url))
+    if (!fun.strings.startsWith(source_url, browser_url))
         return null;
-    const after_host = source_url[bun.strings.withoutTrailingSlash(browser_url).len..];
-    if (!bun.strings.hasPrefixComptime(after_host, client_prefix ++ "/"))
+    const after_host = source_url[fun.strings.withoutTrailingSlash(browser_url).len..];
+    if (!fun.strings.hasPrefixComptime(after_host, client_prefix ++ "/"))
         return null;
     const after_prefix = after_host[client_prefix.len + 1 ..];
     // Extract the ID
-    if (!bun.strings.hasSuffixComptime(after_prefix, ".js"))
+    if (!fun.strings.hasSuffixComptime(after_prefix, ".js"))
         return null;
     const min_len = "00000000FFFFFFFF.js".len;
     if (after_prefix.len < min_len)
@@ -323,9 +323,9 @@ fn extractJsonEncodedSourceCode(contents: []const u8, target_line: u32, comptime
     var prev: usize = 0;
     const index_of_first_line = if (target_line == 0)
         0 // no iteration needed
-    else while (bun.strings.indexOfCharPos(contents, '\\', prev)) |i| : (prev = i + 2) {
+    else while (fun.strings.indexOfCharPos(contents, '\\', prev)) |i| : (prev = i + 2) {
         if (i >= contents.len - 2) return null;
-        // Bun's JSON printer will not use a sillier encoding for newline.
+        // Fun's JSON printer will not use a sillier encoding for newline.
         if (contents[i + 1] == 'n') {
             line += 1;
             if (line == target_line)
@@ -343,7 +343,7 @@ fn extractJsonEncodedSourceCode(contents: []const u8, target_line: u32, comptime
     // This function expects but does not assume the escape sequences
     // given are valid, and does not bubble errors up.
     var log = Log.init(arena);
-    var l: bun.interchange.toml.Lexer = .{
+    var l: fun.interchange.toml.Lexer = .{
         .log = &log,
         .source = .initEmptyFile(""),
         .allocator = arena,
@@ -357,7 +357,7 @@ fn extractJsonEncodedSourceCode(contents: []const u8, target_line: u32, comptime
         var has_extra_escapes = false;
         prev = 0;
         // Locate the line slice
-        const end_of_line = while (bun.strings.indexOfCharPos(rest, '\\', prev)) |i| : (prev = i + 2) {
+        const end_of_line = while (fun.strings.indexOfCharPos(rest, '\\', prev)) |i| : (prev = i + 2) {
             if (i >= rest.len - 1) return null;
             if (rest[i + 1] == 'n') {
                 break i;
@@ -382,20 +382,20 @@ fn extractJsonEncodedSourceCode(contents: []const u8, target_line: u32, comptime
     return result;
 }
 
-const bun = @import("bun");
-const Output = bun.Output;
-const bake = bun.bake;
-const jsc = bun.jsc;
-const Log = bun.logger.Log;
-const StaticRoute = bun.api.server.StaticRoute;
+const fun = @import("fun");
+const Output = fun.Output;
+const bake = fun.bake;
+const jsc = fun.jsc;
+const Log = fun.logger.Log;
+const StaticRoute = fun.api.server.StaticRoute;
 
 const DevServer = bake.DevServer;
 const SourceMapStore = DevServer.SourceMapStore;
 const client_prefix = DevServer.client_prefix;
 const readString32 = DevServer.readString32;
 
-const uws = bun.uws;
-const AnyResponse = bun.uws.AnyResponse;
+const uws = fun.uws;
+const AnyResponse = fun.uws.AnyResponse;
 const Request = uws.Request;
 
 const std = @import("std");

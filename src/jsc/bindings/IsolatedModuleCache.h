@@ -7,13 +7,13 @@ namespace Zig {
 class SourceProvider;
 }
 
-namespace Bun {
+namespace Fun {
 
 // Per-VM cache mapping resolved specifier (absolute path) → Zig::SourceProvider,
-// populated only under `bun test --isolate`. Survives global swaps so a fresh
+// populated only under `fun test --isolate`. Survives global swaps so a fresh
 // global's module fetch reuses an already-transpiled provider (and hits JSC's
-// CodeCache + Bun__analyzeTranspiledModule for module_info) instead of
-// re-running Bun__transpileFile.
+// CodeCache + Fun__analyzeTranspiledModule for module_info) instead of
+// re-running Fun__transpileFile.
 //
 // Storage lives on JSVMClientData; this class is a stateless facade so the
 // gating, key, and tag-cacheability decisions live in exactly one place. The
@@ -25,7 +25,7 @@ public:
     // The single gate. False if the feature flag is off, --isolate isn't
     // active, or a non-empty type attribute is present (different output for
     // the same path → not cacheable by path alone).
-    static bool canUse(JSC::VM&, void* bunVM, const BunString* typeAttribute = nullptr);
+    static bool canUse(JSC::VM&, void* funVM, const FunString* typeAttribute = nullptr);
 
     // Only tags whose provider holds JS transpiled from the on-disk file at
     // the cache key. Loader-specific outputs (File, JSON, Object*, custom CJS
@@ -39,7 +39,7 @@ public:
         case SyntheticModuleType::JavaScript:
         case SyntheticModuleType::PackageJSONTypeModule:
         case SyntheticModuleType::PackageJSONTypeCommonJS:
-        // ESM tag is used by builtins that ship real JS source (e.g. bun:wrap).
+        // ESM tag is used by builtins that ship real JS source (e.g. fun:wrap).
         // Their providers are constant across globals, so caching is safe.
         case SyntheticModuleType::ESM:
             return true;
@@ -59,4 +59,4 @@ public:
     static void clear(JSC::VM&);
 };
 
-} // namespace Bun
+} // namespace Fun

@@ -10,10 +10,10 @@ concurrent_task: jsc.ConcurrentTask,
 /// The watcher is not able to peek into IncrementalGraph to know what files
 /// to invalidate, so the watch events are de-duplicated and passed along.
 /// The keys are owned by the file watcher.
-files: bun.StringArrayHashMapUnmanaged(void),
+files: fun.StringArrayHashMapUnmanaged(void),
 /// Directories are watched so that resolution failures can be solved.
 /// The keys are owned by the file watcher.
-dirs: bun.StringArrayHashMapUnmanaged(void),
+dirs: fun.StringArrayHashMapUnmanaged(void),
 /// Same purpose as `files` but keys do not have an owner.
 extra_files: std.ArrayListUnmanaged(u8),
 /// Initialized by the WatcherAtomics.watcherAcquireEvent
@@ -22,7 +22,7 @@ timer: std.time.Timer,
 /// 1 if referenced, 0 if unreferenced; see WatcherAtomics
 contention_indicator: std.atomic.Value(u32),
 
-debug_mutex: if (Environment.isDebug) bun.Mutex else void,
+debug_mutex: if (Environment.isDebug) fun.Mutex else void,
 
 pub fn initEmpty(owner: *DevServer) HotReloadEvent {
     return .{
@@ -52,22 +52,22 @@ pub fn isEmpty(ev: *const HotReloadEvent) bool {
 }
 
 pub fn appendFile(event: *HotReloadEvent, allocator: Allocator, file_path: []const u8) void {
-    _ = bun.handleOom(event.files.getOrPut(allocator, file_path));
+    _ = fun.handleOom(event.files.getOrPut(allocator, file_path));
 }
 
 pub fn appendDir(event: *HotReloadEvent, allocator: Allocator, dir_path: []const u8, maybe_sub_path: ?[]const u8) void {
     if (dir_path.len == 0) return;
-    _ = bun.handleOom(event.dirs.getOrPut(allocator, dir_path));
+    _ = fun.handleOom(event.dirs.getOrPut(allocator, dir_path));
 
     const sub_path = maybe_sub_path orelse return;
     if (sub_path.len == 0) return;
 
-    const platform = bun.path.Platform.auto;
+    const platform = fun.path.Platform.auto;
     const ends_with_sep = platform.isSeparator(dir_path[dir_path.len - 1]);
     const starts_with_sep = platform.isSeparator(sub_path[0]);
     const sep_offset: i32 = if (ends_with_sep and starts_with_sep) -1 else 1;
 
-    bun.handleOom(event.extra_files.ensureUnusedCapacity(allocator, @intCast(@as(i32, @intCast(dir_path.len + sub_path.len)) + sep_offset + 1)));
+    fun.handleOom(event.extra_files.ensureUnusedCapacity(allocator, @intCast(@as(i32, @intCast(dir_path.len + sub_path.len)) + sep_offset + 1)));
     event.extra_files.appendSliceAssumeCapacity(if (ends_with_sep) dir_path[0 .. dir_path.len - 1] else dir_path);
     event.extra_files.appendAssumeCapacity(platform.separator());
     event.extra_files.appendSliceAssumeCapacity(sub_path);
@@ -86,9 +86,9 @@ pub fn processFileList(
 
     // First handle directories, because this may mutate `event.files`
     if (dev.directory_watchers.watches.count() > 0) for (event.dirs.keys()) |changed_dir_with_slash| {
-        const changed_dir = bun.strings.withoutTrailingSlashWindowsPath(changed_dir_with_slash);
+        const changed_dir = fun.strings.withoutTrailingSlashWindowsPath(changed_dir_with_slash);
 
-        // Bust resolution cache, but since Bun does not watch all
+        // Bust resolution cache, but since Fun does not watch all
         // directories in a codebase, this only targets the following resolutions
         _ = dev.server_transpiler.resolver.bustDirCache(changed_dir);
 
@@ -103,7 +103,7 @@ pub fn processFileList(
                 it = dep.next.unwrap();
 
                 if ((dev.server_transpiler.resolver.resolve(
-                    bun.path.dirname(dep.source_file_path, .auto),
+                    fun.path.dirname(dep.source_file_path, .auto),
                     dep.specifier,
                     .stmt,
                 ) catch null) != null) {
@@ -111,7 +111,7 @@ pub fn processFileList(
                     // into BundleV2 is too complicated. the resolution is
                     // cached, anyways.
                     event.appendFile(dev.allocator(), dep.source_file_path);
-                    bun.handleOom(dev.directory_watchers.freeDependencyIndex(dev.allocator(), index));
+                    fun.handleOom(dev.directory_watchers.freeDependencyIndex(dev.allocator(), index));
                 } else {
                     // rebuild a new linked list for unaffected files
                     dep.next = new_chain;
@@ -129,29 +129,29 @@ pub fn processFileList(
     };
 
     var rest_extra = event.extra_files.items;
-    while (bun.strings.indexOfChar(rest_extra, 0)) |str| {
-        bun.handleOom(event.files.put(dev.allocator(), rest_extra[0..str], {}));
+    while (fun.strings.indexOfChar(rest_extra, 0)) |str| {
+        fun.handleOom(event.files.put(dev.allocator(), rest_extra[0..str], {}));
         rest_extra = rest_extra[str + 1 ..];
     }
     if (rest_extra.len > 0) {
-        bun.handleOom(event.files.put(dev.allocator(), rest_extra, {}));
+        fun.handleOom(event.files.put(dev.allocator(), rest_extra, {}));
     }
 
     const changed_file_paths = event.files.keys();
     inline for (.{ &dev.server_graph, &dev.client_graph }) |g| {
-        bun.handleOom(g.invalidate(changed_file_paths, entry_points, temp_alloc));
+        fun.handleOom(g.invalidate(changed_file_paths, entry_points, temp_alloc));
     }
 
     if (entry_points.set.count() == 0) {
         Output.debugWarn("nothing to bundle", .{});
         if (changed_file_paths.len > 0)
             Output.debugWarn("modified files: {f}", .{
-                bun.fmt.fmtSlice(changed_file_paths, ", "),
+                fun.fmt.fmtSlice(changed_file_paths, ", "),
             });
 
         if (event.dirs.count() > 0)
             Output.debugWarn("modified dirs: {f}", .{
-                bun.fmt.fmtSlice(event.dirs.keys(), ", "),
+                fun.fmt.fmtSlice(event.dirs.keys(), ", "),
             });
 
         dev.publish(.testing_watch_synchronization, &.{
@@ -165,7 +165,7 @@ pub fn processFileList(
         for (map.keys()) |abs_path| {
             const file = (dev.client_graph.bundled_files.get(abs_path) orelse continue).unpack();
             if (file.kind() == .css)
-                bun.handleOom(entry_points.appendCss(temp_alloc, abs_path));
+                fun.handleOom(entry_points.appendCss(temp_alloc, abs_path));
         }
     }
 }
@@ -212,14 +212,14 @@ pub fn run(first: *HotReloadEvent) void {
     switch (dev.testing_batch_events) {
         .disabled => {},
         .enabled => |*ev| {
-            bun.handleOom(ev.append(dev, entry_points));
+            fun.handleOom(ev.append(dev, entry_points));
             dev.publish(.testing_watch_synchronization, &.{
                 MessageId.testing_watch_synchronization.char(),
                 1,
             }, .binary);
             return;
         },
-        .enable_after_bundle => bun.debugAssert(false),
+        .enable_after_bundle => fun.debugAssert(false),
     }
 
     dev.startAsyncBundle(
@@ -227,20 +227,20 @@ pub fn run(first: *HotReloadEvent) void {
         true,
         timer,
     ) catch |err| {
-        bun.handleErrorReturnTrace(err, @errorReturnTrace());
+        fun.handleErrorReturnTrace(err, @errorReturnTrace());
         return;
     };
 }
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Mutex = bun.Mutex;
-const Output = bun.Output;
-const Watcher = bun.Watcher;
-const assert = bun.assert;
-const bake = bun.bake;
-const jsc = bun.jsc;
-const BundleV2 = bun.bundle_v2.BundleV2;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Mutex = fun.Mutex;
+const Output = fun.Output;
+const Watcher = fun.Watcher;
+const assert = fun.assert;
+const bake = fun.bake;
+const jsc = fun.jsc;
+const BundleV2 = fun.bundle_v2.BundleV2;
 
 const DevServer = bake.DevServer;
 const DirectoryWatchStore = DevServer.DirectoryWatchStore;

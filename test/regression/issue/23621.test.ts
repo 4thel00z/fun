@@ -1,5 +1,5 @@
-import { RedisClient } from "bun";
-import { describe, expect, test } from "bun:test";
+import { RedisClient } from "fun";
+import { describe, expect, test } from "fun:test";
 
 /**
  * Regression test for issue #23621: Invalid URL and port handling in Redis/Valkey client

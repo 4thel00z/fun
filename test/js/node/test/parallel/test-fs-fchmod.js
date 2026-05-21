@@ -27,7 +27,7 @@ const fs = require('fs');
   assert.throws(() => fs.fchmodSync(1, input), errObj);
 });
 
-// EDIT: Bun checks the callback first, then the mode. Original check did not have callback set.
+// EDIT: Fun checks the callback first, then the mode. Original check did not have callback set.
 assert.throws(() => fs.fchmod(1, '123x', common.mustNotCall()), {
   code: 'ERR_INVALID_ARG_VALUE'
 });

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { constants, sign } from "crypto";
 
 const DUMMY_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----

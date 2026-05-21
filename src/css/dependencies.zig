@@ -54,7 +54,7 @@ pub const ImportDependency = struct {
     /// The location of the dependency in the source file.
     loc: SourceRange,
 
-    pub fn new(allocator: Allocator, rule: *const css.css_rules.import.ImportRule, filename: []const u8, local_names: ?*const css.LocalsResultsMap, symbols: *const bun.ast.Symbol.Map) ImportDependency {
+    pub fn new(allocator: Allocator, rule: *const css.css_rules.import.ImportRule, filename: []const u8, local_names: ?*const css.LocalsResultsMap, symbols: *const fun.ast.Symbol.Map) ImportDependency {
         const supports = if (rule.supports) |*supports| brk: {
             const s = css.to_css.string(
                 allocator,
@@ -64,16 +64,16 @@ pub const ImportDependency = struct {
                 null,
                 local_names,
                 symbols,
-            ) catch bun.Output.panic(
-                "Unreachable code: failed to stringify SupportsCondition.\n\nThis is a bug in Bun's CSS printer. Please file a bug report at https://github.com/oven-sh/bun/issues/new/choose",
+            ) catch fun.Output.panic(
+                "Unreachable code: failed to stringify SupportsCondition.\n\nThis is a bug in Fun's CSS printer. Please file a bug report at https://github.com/underdoc-org/fun/issues/new/choose",
                 .{},
             );
             break :brk s;
         } else null;
 
         const media = if (rule.media.media_queries.items.len > 0) media: {
-            const s = css.to_css.string(allocator, css.MediaList, &rule.media, css.PrinterOptions.default(), null, local_names, symbols) catch bun.Output.panic(
-                "Unreachable code: failed to stringify MediaList.\n\nThis is a bug in Bun's CSS printer. Please file a bug report at https://github.com/oven-sh/bun/issues/new/choose",
+            const s = css.to_css.string(allocator, css.MediaList, &rule.media, css.PrinterOptions.default(), null, local_names, symbols) catch fun.Output.panic(
+                "Unreachable code: failed to stringify MediaList.\n\nThis is a bug in Fun's CSS printer. Please file a bug report at https://github.com/underdoc-org/fun/issues/new/choose",
                 .{},
             );
             break :media s;
@@ -106,7 +106,7 @@ pub const UrlDependency = struct {
     /// The location of the dependency in the source file.
     loc: SourceRange,
 
-    pub fn new(allocator: Allocator, url: *const Url, filename: []const u8, import_records: *const bun.BabyList(bun.ImportRecord)) UrlDependency {
+    pub fn new(allocator: Allocator, url: *const Url, filename: []const u8, import_records: *const fun.BabyList(fun.ImportRecord)) UrlDependency {
         const theurl = import_records.at(url.import_record_idx).path.pretty;
         const placeholder = css.css_modules.hash(
             allocator,
@@ -146,6 +146,6 @@ pub const SourceRange = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

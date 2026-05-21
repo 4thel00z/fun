@@ -987,7 +987,7 @@ CrossOriginResourcePolicy parseCrossOriginResourcePolicyHeader(StringView header
     return CrossOriginResourcePolicy::Invalid;
 }
 
-extern "C" int Bun__writeHTTPDate(char* buffer, size_t length, uint64_t timestampMs)
+extern "C" int Fun__writeHTTPDate(char* buffer, size_t length, uint64_t timestampMs)
 {
     if (timestampMs == 0) {
         return 0;

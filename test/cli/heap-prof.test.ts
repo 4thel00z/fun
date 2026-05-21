@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 const testScript = `const arr = []; for (let i = 0; i < 100; i++) arr.push({ x: i, y: "hello" + i }); console.log("done");`;
@@ -7,10 +7,10 @@ const testScript = `const arr = []; for (let i = 0; i < 100; i++) arr.push({ x: 
 test("--heap-prof generates V8 heap snapshot on exit", async () => {
   using dir = tempDir("heap-prof-v8-test", {});
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--heap-prof", "-e", testScript],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--heap-prof", "-e", testScript],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -22,13 +22,13 @@ test("--heap-prof generates V8 heap snapshot on exit", async () => {
   expect(exitCode).toBe(0);
 
   // Find the heap snapshot file (V8 format)
-  const glob = new Bun.Glob("Heap.*.heapsnapshot");
+  const glob = new Fun.Glob("Heap.*.heapsnapshot");
   const files = Array.from(glob.scanSync({ cwd: String(dir) }));
   expect(files.length).toBeGreaterThan(0);
 
   // Read and validate the heap snapshot content (should be valid JSON in V8 format)
   const profilePath = join(String(dir), files[0]);
-  const content = await Bun.file(profilePath).text();
+  const content = await Fun.file(profilePath).text();
 
   // V8 heap snapshot format is JSON with specific structure
   const snapshot = JSON.parse(content);
@@ -41,10 +41,10 @@ test("--heap-prof generates V8 heap snapshot on exit", async () => {
 test("--heap-prof-md generates markdown heap profile on exit", async () => {
   using dir = tempDir("heap-prof-md-test", {});
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--heap-prof-md", "-e", testScript],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--heap-prof-md", "-e", testScript],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -56,16 +56,16 @@ test("--heap-prof-md generates markdown heap profile on exit", async () => {
   expect(exitCode).toBe(0);
 
   // Find the heap profile file (markdown format)
-  const glob = new Bun.Glob("Heap.*.md");
+  const glob = new Fun.Glob("Heap.*.md");
   const files = Array.from(glob.scanSync({ cwd: String(dir) }));
   expect(files.length).toBeGreaterThan(0);
 
   // Read and validate the heap profile content
   const profilePath = join(String(dir), files[0]);
-  const content = await Bun.file(profilePath).text();
+  const content = await Fun.file(profilePath).text();
 
   // Check for markdown headers
-  expect(content).toContain("# Bun Heap Profile");
+  expect(content).toContain("# Fun Heap Profile");
   expect(content).toContain("## Summary");
   expect(content).toContain("## Top 50 Types by Retained Size");
   expect(content).toContain("## Top 50 Largest Objects");
@@ -104,10 +104,10 @@ test("--heap-prof-dir specifies output directory for V8 format", async () => {
     "profiles": {},
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--heap-prof", "--heap-prof-dir", "profiles", "-e", `console.log("hello");`],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--heap-prof", "--heap-prof-dir", "profiles", "-e", `console.log("hello");`],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -121,7 +121,7 @@ test("--heap-prof-dir specifies output directory for V8 format", async () => {
   expect(exitCode).toBe(0);
 
   // Check the profile is in the specified directory
-  const glob = new Bun.Glob("Heap.*.heapsnapshot");
+  const glob = new Fun.Glob("Heap.*.heapsnapshot");
   const files = Array.from(glob.scanSync({ cwd: join(String(dir), "profiles") }));
   expect(files.length).toBeGreaterThan(0);
 });
@@ -131,10 +131,10 @@ test("--heap-prof-dir specifies output directory for markdown format", async () 
     "profiles": {},
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--heap-prof-md", "--heap-prof-dir", "profiles", "-e", `console.log("hello");`],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--heap-prof-md", "--heap-prof-dir", "profiles", "-e", `console.log("hello");`],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -148,7 +148,7 @@ test("--heap-prof-dir specifies output directory for markdown format", async () 
   expect(exitCode).toBe(0);
 
   // Check the profile is in the specified directory
-  const glob = new Bun.Glob("Heap.*.md");
+  const glob = new Fun.Glob("Heap.*.md");
   const files = Array.from(glob.scanSync({ cwd: join(String(dir), "profiles") }));
   expect(files.length).toBeGreaterThan(0);
 });
@@ -156,10 +156,10 @@ test("--heap-prof-dir specifies output directory for markdown format", async () 
 test("--heap-prof-name specifies output filename", async () => {
   using dir = tempDir("heap-prof-name-test", {});
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--heap-prof", "--heap-prof-name", "my-profile.heapsnapshot", "-e", `console.log("hello");`],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--heap-prof", "--heap-prof-name", "my-profile.heapsnapshot", "-e", `console.log("hello");`],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -173,7 +173,7 @@ test("--heap-prof-name specifies output filename", async () => {
 
   // Check the profile exists with the specified name
   const profilePath = join(String(dir), "my-profile.heapsnapshot");
-  expect(Bun.file(profilePath).size).toBeGreaterThan(0);
+  expect(Fun.file(profilePath).size).toBeGreaterThan(0);
 });
 
 test("--heap-prof-name and --heap-prof-dir work together", async () => {
@@ -181,9 +181,9 @@ test("--heap-prof-name and --heap-prof-dir work together", async () => {
     "output": {},
   });
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "--heap-prof",
       "--heap-prof-dir",
       "output",
@@ -193,7 +193,7 @@ test("--heap-prof-name and --heap-prof-dir work together", async () => {
       `console.log("hello");`,
     ],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -206,16 +206,16 @@ test("--heap-prof-name and --heap-prof-dir work together", async () => {
 
   // Check the profile exists in the specified location
   const profilePath = join(String(dir), "output", "custom.heapsnapshot");
-  expect(Bun.file(profilePath).size).toBeGreaterThan(0);
+  expect(Fun.file(profilePath).size).toBeGreaterThan(0);
 });
 
 test("--heap-prof-name without --heap-prof or --heap-prof-md shows warning", async () => {
   using dir = tempDir("heap-prof-warn-test", {});
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--heap-prof-name", "test.heapsnapshot", "-e", `console.log("hello");`],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--heap-prof-name", "test.heapsnapshot", "-e", `console.log("hello");`],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -227,7 +227,7 @@ test("--heap-prof-name without --heap-prof or --heap-prof-md shows warning", asy
   expect(exitCode).toBe(0);
 
   // No profile should be generated
-  const glob = new Bun.Glob("*.heap*");
+  const glob = new Fun.Glob("*.heap*");
   const files = Array.from(glob.scanSync({ cwd: String(dir) }));
   expect(files.length).toBe(0);
 });

@@ -3,10 +3,10 @@ pub const NPMClient = struct {
     tag: Tag,
 
     pub const Tag = enum {
-        bun,
+        fun,
     };
 };
 
 const string = []const u8;
 
-const bun = @import("bun");
+const fun = @import("fun");

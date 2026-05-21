@@ -1,4 +1,4 @@
-import { bunEnv, bunExe, isASAN, isCI, nodeExe } from "harness";
+import { funEnv, funExe, isASAN, isCI, nodeExe } from "harness";
 import { createTest } from "node-harness";
 import fs from "node:fs";
 import http2 from "node:http2";
@@ -33,7 +33,7 @@ function paddingStrategyName(paddingStrategy) {
   }
 }
 
-for (const nodeExecutable of [nodeExe(), bunExe()]) {
+for (const nodeExecutable of [nodeExe(), funExe()]) {
   for (const paddingStrategy of [
     http2.constants.PADDING_STRATEGY_NONE,
     http2.constants.PADDING_STRATEGY_MAX,
@@ -61,11 +61,11 @@ for (const nodeExecutable of [nodeExe(), bunExe()]) {
   });`);
         fs.writeFileSync(file_name, contents);
 
-        const subprocess = Bun.spawn([nodeExecutable, file_name, JSON.stringify(TLS_CERT)], {
+        const subprocess = Fun.spawn([nodeExecutable, file_name, JSON.stringify(TLS_CERT)], {
           stdout: "pipe",
           stdin: "inherit",
           stderr: "inherit",
-          env: bunEnv,
+          env: funEnv,
         });
         subprocess.unref();
         const reader = subprocess.stdout.getReader();
@@ -186,7 +186,7 @@ for (const nodeExecutable of [nodeExe(), bunExe()]) {
           expect(parsed.headers["test-header"]).toBe("test-value");
         });
         it("should be able to send a POST request", async () => {
-          const payload = JSON.stringify({ "hello": "bun" });
+          const payload = JSON.stringify({ "hello": "fun" });
           const result = await doHttp2Request(
             HTTPS_SERVER,
             HTTPS_SERVER,
@@ -197,11 +197,11 @@ for (const nodeExecutable of [nodeExe(), bunExe()]) {
           expect(() => (parsed = JSON.parse(result.data))).not.toThrow();
           expect(parsed.url).toBe(`${HTTPS_SERVER}/post`);
           expect(parsed.headers["test-header"]).toBe("test-value");
-          expect(parsed.json).toEqual({ "hello": "bun" });
+          expect(parsed.json).toEqual({ "hello": "fun" });
           expect(parsed.data).toEqual(payload);
         });
         it("should be able to send data using end", async () => {
-          const payload = JSON.stringify({ "hello": "bun" });
+          const payload = JSON.stringify({ "hello": "fun" });
           const { promise, resolve, reject } = Promise.withResolvers();
           const client = http2.connect(HTTPS_SERVER, TLS_OPTIONS);
           client.on("error", reject);
@@ -225,7 +225,7 @@ for (const nodeExecutable of [nodeExe(), bunExe()]) {
           expect(() => (parsed = JSON.parse(result.data))).not.toThrow();
           expect(parsed.url).toBe(`${HTTPS_SERVER}/post`);
           expect(parsed.headers["test-header"]).toBe("test-value");
-          expect(parsed.json).toEqual({ "hello": "bun" });
+          expect(parsed.json).toEqual({ "hello": "fun" });
           expect(parsed.data).toEqual(payload);
         });
         it("should be able to mutiplex GET requests", async () => {
@@ -621,7 +621,7 @@ for (const nodeExecutable of [nodeExe(), bunExe()]) {
         });
         it("should fail to connect over HTTP/1.1", async () => {
           const tlsCert = TLS_CERT;
-          using server = Bun.serve({
+          using server = Fun.serve({
             port: 0,
             hostname: "127.0.0.1",
             tls: {
@@ -1022,11 +1022,11 @@ for (const nodeExecutable of [nodeExe(), bunExe()]) {
             // Use a dedicated server: this test floods it with requests for ~100s
             // and would contend with other concurrent tests sharing the same server.
             await using server = await nodeEchoServer(paddingStrategy);
-            await using proc = Bun.spawn({
-              cmd: [bunExe(), "--smol", "run", path.join(import.meta.dir, "node-http2-memory-leak.js")],
+            await using proc = Fun.spawn({
+              cmd: [funExe(), "--smol", "run", path.join(import.meta.dir, "node-http2-memory-leak.js")],
               env: {
-                ...bunEnv,
-                BUN_JSC_forceRAMSize: (1024 * 1024 * 64).toString("10"),
+                ...funEnv,
+                FUN_JSC_forceRAMSize: (1024 * 1024 * 64).toString("10"),
                 HTTP2_SERVER_INFO: JSON.stringify(server),
                 HTTP2_SERVER_TLS: JSON.stringify(TLS_OPTIONS),
               },
@@ -1640,7 +1640,7 @@ it("http2.createServer validates input options", () => {
     tests.forEach(({ val, err }) => {
       expect(() => http2.createServer({ [opt]: val })).toThrow();
 
-      // Note: Bun's expect doesn't have the same detailed error matching as Node's assert,
+      // Note: Fun's expect doesn't have the same detailed error matching as Node's assert,
       // so we're just checking that it throws an error with the expected name
       let error;
       try {

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("toContainKeys empty", () => {
   expect({ "": 1 }).toContainKeys([""]);

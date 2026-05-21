@@ -1,15 +1,15 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
-// https://github.com/oven-sh/bun/issues/27849
-// Calling Bun.stdin.exists() before reading stdin caused
+// https://github.com/underdoc-org/fun/issues/27849
+// Calling Fun.stdin.exists() before reading stdin caused
 // the read to return empty on Linux because resolveSize()
 // incorrectly set the blob size to 0 for pipes.
 
 async function runStdinTest(script: string, input = "hello from pipe\n") {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
@@ -21,11 +21,11 @@ async function runStdinTest(script: string, input = "hello from pipe\n") {
   return await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
 }
 
-test("Bun.stdin.stream() works after Bun.stdin.exists()", async () => {
+test("Fun.stdin.stream() works after Fun.stdin.exists()", async () => {
   const [stdout, stderr, exitCode] = await runStdinTest(`
-    await Bun.stdin.exists();
+    await Fun.stdin.exists();
     const chunks = [];
-    for await (const chunk of Bun.stdin.stream()) {
+    for await (const chunk of Fun.stdin.stream()) {
       chunks.push(Buffer.from(chunk).toString());
     }
     process.stdout.write(chunks.join(""));
@@ -36,10 +36,10 @@ test("Bun.stdin.stream() works after Bun.stdin.exists()", async () => {
   expect(exitCode).toBe(0);
 });
 
-test("Bun.stdin.text() works after Bun.stdin.exists()", async () => {
+test("Fun.stdin.text() works after Fun.stdin.exists()", async () => {
   const [stdout, stderr, exitCode] = await runStdinTest(`
-    await Bun.stdin.exists();
-    process.stdout.write(await Bun.stdin.text());
+    await Fun.stdin.exists();
+    process.stdout.write(await Fun.stdin.text());
   `);
 
   expect(stdout.trim()).toBe("hello from pipe");
@@ -47,11 +47,11 @@ test("Bun.stdin.text() works after Bun.stdin.exists()", async () => {
   expect(exitCode).toBe(0);
 });
 
-test("Bun.stdin.stream() works after accessing Bun.stdin.size", async () => {
+test("Fun.stdin.stream() works after accessing Fun.stdin.size", async () => {
   const [stdout, stderr, exitCode] = await runStdinTest(`
-    const s = Bun.stdin.size;
+    const s = Fun.stdin.size;
     const chunks = [];
-    for await (const chunk of Bun.stdin.stream()) {
+    for await (const chunk of Fun.stdin.stream()) {
       chunks.push(Buffer.from(chunk).toString());
     }
     process.stdout.write(chunks.join(""));

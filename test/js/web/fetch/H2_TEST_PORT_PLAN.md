@@ -2,7 +2,7 @@
 
 Third-party h2 *client* test cases mined from `golang/net`, `nodejs/undici`, and `denoland/deno` for porting into `test/js/web/fetch/fetch-http2-client.test.ts`.
 
-**Already covered in Bun:** GET round-trip, POST body, large body (70KB+20MB), gzip decode, concurrent multiplex, abort→RST_STREAM siblings survive, MAX_CONCURRENT_STREAMS cap, sequential keep-alive, GOAWAY reconnect, cold-start coalescing, feature-flag-off.
+**Already covered in Fun:** GET round-trip, POST body, large body (70KB+20MB), gzip decode, concurrent multiplex, abort→RST_STREAM siblings survive, MAX_CONCURRENT_STREAMS cap, sequential keep-alive, GOAWAY reconnect, cold-start coalescing, feature-flag-off.
 
 Repos cloned to `~/code/{golang-net,undici,deno}` (shallow).
 
@@ -10,13 +10,13 @@ Repos cloned to `~/code/{golang-net,undici,deno}` (shallow).
 
 ## golang/net — `http2/transport_test.go` (5793 lines, gold standard)
 
-Go uses a synthetic frame-level harness (`newTestClientConn`) that lets the test write raw frames at the client and assert outbound frames. Bun's harness uses a real `node:http2` server, so some of these need a raw-TCP fake server that speaks the h2 wire format directly (noted as **needs raw server**).
+Go uses a synthetic frame-level harness (`newTestClientConn`) that lets the test write raw frames at the client and assert outbound frames. Fun's harness uses a real `node:http2` server, so some of these need a raw-TCP fake server that speaks the h2 wire format directly (noted as **needs raw server**).
 
-| Test name | file:line | What it asserts | Priority | Notes for Bun port |
+| Test name | file:line | What it asserts | Priority | Notes for Fun port |
 |---|---|---|---|---|
 | `testTransportResPattern` (36 combinations) | :1059 | All combinations of `{100-continue, headers via 1/CONTINUATION, with/without DATA, trailers via 1/CONTINUATION}` round-trip and decode correctly. | **high** | Port a representative subset (4–6 cases) using `node:http2` server `waitForTrailers` + `writeContinue()`. CONTINUATION-split variants need raw server or large header padding to force CONTINUATION. |
 | `TestTransportUnknown1xx` | :1145 | Multiple unknown 1xx (110, 111, …) before final 200 are ignored; final response status/body intact. | **high** | `stream.additionalHeaders({':status': 110})` repeatedly before `respond({':status':200})`. |
-| `TestTransportReceiveUndeclaredTrailer` | :1194 | Second HEADERS (no `Trailer:` advertised) treated as trailers, accessible after body. | **high** | `waitForTrailers` + `sendTrailers`. fetch surfaces via `Response.prototype` (Bun has no `.trailers` yet — assert no crash + body correct). |
+| `TestTransportReceiveUndeclaredTrailer` | :1194 | Second HEADERS (no `Trailer:` advertised) treated as trailers, accessible after body. | **high** | `waitForTrailers` + `sendTrailers`. fetch surfaces via `Response.prototype` (Fun has no `.trailers` yet — assert no crash + body correct). |
 | `TestTransportInvalidTrailer_Pseudo/Capital/Empty/Binary` | :1228–1261 | Trailers containing `:colon`, uppercase name, empty name, or `\n` in value → stream-level error; client RSTs PROTOCOL_ERROR. | med | `sendTrailers` with bad keys; nghttp2 may pre-validate so likely **needs raw server**. |
 | `TestTransportChecksRequestHeaderListSize` | :1416 | Request headers > server's `SETTINGS_MAX_HEADER_LIST_SIZE` rejected client-side (no HEADERS sent). | med | `createSecureServer({settings:{maxHeaderListSize:16384}})`, send 32KB header, assert error before network. |
 | `TestTransportChecksResponseHeaderListSize` | :1511 | Response headers >10MB (HPACK-compressed to ~6KB via repeated keys) → stream error, not OOM. | **high** | Real DoS surface. Server `respond` with `Object.fromEntries(Array(5000).fill(['a'.repeat(1024),'a'.repeat(1024)]))` — nghttp2 may cap; likely **needs raw server**. |
@@ -26,7 +26,7 @@ Go uses a synthetic frame-level harness (`newTestClientConn`) that lets the test
 | `TestTransportRejectsContentLengthWithSign` | :2008 | Response `content-length: +3` / `-3` rejected. | low | Easy port with `respond({'content-length':'+3'})`. |
 | `TestTransportReadHeadResponse` | :2143 | HEAD with `content-length:123` + END_STREAM=false + empty DATA → body empty, ContentLength=123. | **high** | nghttp2 HEAD: `respond({...,'content-length':'123'},{endStream:false}); stream.end()`. |
 | `TestTransportReadHeadResponseWithBody` | :2170 | HEAD response with actual DATA payload (protocol violation) → body discarded, no crash. | **high** | **Needs raw server** (nghttp2 won't send body for HEAD). |
-| `TestTransportFlowControl` | :2248 | Client withholds WINDOW_UPDATE until user consumes body (buffered backpressure). | med | Bun's design replenishes incrementally regardless of consumption — verify our 20MB test exercises this; otherwise skip (different design). |
+| `TestTransportFlowControl` | :2248 | Client withholds WINDOW_UPDATE until user consumes body (buffered backpressure). | med | Fun's design replenishes incrementally regardless of consumption — verify our 20MB test exercises this; otherwise skip (different design). |
 | `TestTransportUsesGoAwayDebugError` | :2318 | Two GOAWAYs (NO_ERROR+debug, then ERR+nil) → error surfaces last code + first debug data. | low | **Needs raw server**. |
 | `TestTransportReturnsUnusedFlowControl` | :2380 | Body.Close() after partial read → RST CANCEL + connection-level WINDOW_UPDATE for unread bytes. DATA arriving after RST also credited. | **high** | Stream 5KB, fetch with `r.body.cancel()` after 1 byte; server asserts stream `rstCode===8` and second request still works on same conn (window not leaked). |
 | `TestTransportAdjustsFlowControl` | :2468 | 1MB upload: client respects 64KB initial send-window, then sends rest after server SETTINGS+WINDOW_UPDATE. | **high** | Directly tests streaming-body send-side flow control we're about to build. Server with default 64KB initial; assert all 1MB arrives. |
@@ -35,7 +35,7 @@ Go uses a synthetic frame-level harness (`newTestClientConn`) that lets the test
 | `TestTransportBodyDoubleEndStream` | :2617 | Reader returning `(n>0, EOF)` doesn't cause double END_STREAM DATA frames. | med | Relevant once `.stream` body lands; use a `ReadableStream` with single chunk + close. Server `on('frameError')` shouldn't fire. |
 | `TestTransportRequestPathPseudo` | :2640 | `:path` derivation for edge URLs (`//foo`, opaque, CONNECT). | low | Unit-level; port `//foo` and CONNECT cases. |
 | `TestClientConnPing` | :2799 | Explicit Ping API round-trips. | low | N/A — fetch has no ping API. |
-| `TestTransportCloseAfterLostPing` | :2894 | ReadIdleTimeout → PING → no ACK within PingTimeout → conn closed, request errors. | med | Only if Bun adds idle-ping. |
+| `TestTransportCloseAfterLostPing` | :2894 | ReadIdleTimeout → PING → no ACK within PingTimeout → conn closed, request errors. | med | Only if Fun adds idle-ping. |
 | `TestTransportRetryAfterGOAWAYNoRetry` | :3020 | GOAWAY(err≠NO_ERROR, lastID < req) → request **fails** (not retried). | **high** | We have GOAWAY-reconnect; add the negative case. |
 | `TestTransportRetryAfterGOAWAYRetry` | :3047 | GOAWAY(NO_ERROR, lastID < req) → request transparently retried on new conn. | **high** | We test this; verify lastID < ourID specifically (server `goaway(0,0)`). |
 | `TestTransportRetryAfterGOAWAYSecondRequest` | :3094 | Req1 ok; req3 hit by GOAWAY(PROTOCOL_ERROR, lastID=1) → req3 retried (server claims unprocessed). | med | Subtle: even non-NO_ERROR retries if lastID < reqID. |
@@ -60,13 +60,13 @@ Go uses a synthetic frame-level harness (`newTestClientConn`) that lets the test
 
 undici uses real `node:http2.createSecureServer`, so server-side snippets translate directly to our harness.
 
-| Test name | file:line | What it asserts | Priority | Notes for Bun port |
+| Test name | file:line | What it asserts | Priority | Notes for Fun port |
 |---|---|---|---|---|
 | `Should handle http2 trailers` | http2-trailers.js:12 | `waitForTrailers` → `sendTrailers({'x-trailer':'hello'})` surfaces in client trailers. | **high** | Direct paste; for fetch, assert no crash + body intact (trailers API TBD). |
 | `Should handle h2 continue` | http2-continue.js:12 | `Expect: 100-continue` → server `checkContinue` event → `writeContinue()` → body sent → 200 received. | **high** | Direct paste. |
 | `Should provide pseudo-headers in proper order` | http2-pseudo-headers.js:12 | rawHeaders array is `[:authority, :method, :path, :scheme]` (pseudo first, fixed order). | med | Order-sensitive; check `rawHeaders` arg of `on('stream')`. |
 | `h2 pseudo-headers not in headers` | http2-pseudo-headers.js:58 | `response.headers[':status']` is undefined. | **high** | Trivial port; we likely pass already but should pin. |
-| `surface invalid connection headers` | http2-invalid-connection-headers.js:13 | Conn-specific request header → catchable error; subsequent queued request still proceeds on new conn. | med | undici-internal; for Bun, instead test that `fetch(url,{headers:{Connection:'upgrade'}})` over h2 strips/errors and second fetch succeeds. |
+| `surface invalid connection headers` | http2-invalid-connection-headers.js:13 | Conn-specific request header → catchable error; subsequent queued request still proceeds on new conn. | med | undici-internal; for Fun, instead test that `fetch(url,{headers:{Connection:'upgrade'}})` over h2 strips/errors and second fetch succeeds. |
 | `Should throw on half-closed streams (remote)` | http2-stream.js:12 | Server `stream.destroy()` immediately → client gets typed error; second request also errors (not hangs). | **high** | Direct paste; assert `cause.code` or message. |
 | `multiple header values with semicolon` | http2-connection.js:185 | Array-valued + duplicated `cookie`/custom headers join correctly (`; ` for cookie, `, ` for others). | med | Mirrors Go cookie-split from server's view. |
 | `#5089 GOAWAY Gracefully` | http2-goaway.js:148 | maxConcurrentStreams=2; after 2 streams server GOAWAYs; remaining 4 of 6 requests succeed on new session; sessionCounts=[2,4]. | **high** | More thorough than our existing GOAWAY test — ports cleanly. |
@@ -77,7 +77,7 @@ undici uses real `node:http2.createSecureServer`, so server-side snippets transl
 | `Issue#2415` Headers ctor | fetch/http2.js:370 | `new Headers(response.headers)` doesn't throw (no `:status` in iterable). | med | Trivial port. |
 | `Issue #3046` set-cookie array | fetch/http2.js:464 | `respond({'set-cookie':['a=b','c=d']})` → `response.headers.getSetCookie()` returns both. | **high** | Direct paste; tests our header decode preserves repeated values. |
 | `Empty POST has Content-Length:0` | fetch/http2.js:541 | Empty POST over h2 still sends `content-length: 0`. | med | Echo `headers['content-length']`. |
-| `Send PING frames` / `not after close` | http2-dispatcher.js:639,781 | Periodic client PING; stops after close. | low | Only if Bun adds ping interval. |
+| `Send PING frames` / `not after close` | http2-dispatcher.js:639,781 | Periodic client PING; stops after close. | low | Only if Fun adds ping interval. |
 
 ---
 
@@ -85,7 +85,7 @@ undici uses real `node:http2.createSecureServer`, so server-side snippets transl
 
 Deno's fetch h2 coverage is thin (relies on hyper); mostly version-negotiation tests.
 
-| Test name | file:line | What it asserts | Priority | Notes for Bun port |
+| Test name | file:line | What it asserts | Priority | Notes for Fun port |
 |---|---|---|---|---|
 | `fetchSupportsHttp2` | fetch_test.ts:1631 | ALPN auto-selects h2; server sees `HTTP/2.0`. | covered | We have this. |
 | `fetchForceHttp1OnHttp2Server` | fetch_test.ts:1643 | `createHttpClient({http2:false,http1:true})` against h2-only server → rejects. | med | Maps to our planned `protocol:` option / flag-off. |
@@ -102,7 +102,7 @@ Seven Go tests (padded DATA, DATA-before-HEADERS, missing `:status`, bad header 
 
 ```ts
 // test/js/web/fetch/h2-raw-server.ts
-import { wire } from "bun:internal-for-testing"; // or hand-roll FrameHeader
+import { wire } from "fun:internal-for-testing"; // or hand-roll FrameHeader
 import tls from "node:tls";
 function rawH2Server(onStream: (write: (type, flags, sid, payload) => void, hpackEnc) => void) {
   return tls.createServer({...tls, ALPNProtocols: ["h2"]}, sock => {
@@ -111,7 +111,7 @@ function rawH2Server(onStream: (write: (type, flags, sid, payload) => void, hpac
 }
 ```
 
-Or piggy-back on `src/http/H2FrameParser.zig` exposed via `bun:internal-for-testing` for encode helpers.
+Or piggy-back on `src/http/H2FrameParser.zig` exposed via `fun:internal-for-testing` for encode helpers.
 
 ---
 

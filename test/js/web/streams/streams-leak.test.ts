@@ -1,9 +1,9 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isWindows } from "harness";
 
 const BYTES_TO_WRITE = 500_000;
 
-// https://github.com/oven-sh/bun/issues/12198
+// https://github.com/underdoc-org/fun/issues/12198
 test.skipIf(isWindows)(
   "Absolute memory usage remains relatively constant when reading and writing to a pipe",
   async () => {
@@ -26,7 +26,7 @@ test.skipIf(isWindows)(
       await Promise.all([write(bytes), read(bytes)]);
     }
 
-    await using cat = Bun.spawn(["cat"], {
+    await using cat = Fun.spawn(["cat"], {
       stdin: "pipe",
       stdout: "pipe",
       stderr: "inherit",
@@ -38,22 +38,22 @@ test.skipIf(isWindows)(
     for (let i = 0; i < rounds; i++) {
       await readAndWrite(BYTES_TO_WRITE);
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const before = process.memoryUsage.rss();
 
     for (let i = 0; i < rounds; i++) {
       await readAndWrite();
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const after = process.memoryUsage.rss();
 
     for (let i = 0; i < rounds; i++) {
       await readAndWrite();
     }
-    Bun.gc(true);
+    Fun.gc(true);
     const after2 = process.memoryUsage.rss();
     console.log({ after, after2 });
-    console.log(require("bun:jsc").heapStats());
+    console.log(require("fun:jsc").heapStats());
     console.log("RSS delta", ((after - before) | 0) / 1024 / 1024);
     console.log("RSS total", (after / 1024 / 1024) | 0, "MB");
     expect(after).toBeLessThan(250 * 1024 * 1024);

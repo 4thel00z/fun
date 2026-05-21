@@ -1,5 +1,5 @@
-import { serve, ServeOptions, Server } from "bun";
-import { afterAll, expect, it } from "bun:test";
+import { serve, ServeOptions, Server } from "fun";
+import { afterAll, expect, it } from "fun:test";
 import { mkdirSync, rmSync } from "fs";
 import { isWindows, tmpdirSync } from "harness";
 import { request } from "http";
@@ -54,7 +54,7 @@ it("throws an error when the directory is not found", () => {
 if (process.platform === "linux") {
   it("works with abstract namespace", async () => {
     const unix = "\0" + Math.random().toString(36).slice(2).repeat(100).slice(0, 105);
-    const server = Bun.serve({
+    const server = Fun.serve({
       unix,
       fetch(req) {
         return new Response(req.body);
@@ -75,7 +75,7 @@ if (process.platform === "linux") {
 
   it("can workaround socket path length limit via /proc/self/fd/NN/ trick", async () => {
     const unix = join(tmpdirSync(), "fetch-unix.sock");
-    const server = Bun.serve({
+    const server = Fun.serve({
       unix,
       fetch(req) {
         return new Response(req.body);
@@ -107,7 +107,7 @@ if (process.platform === "linux" || process.platform === "darwin") {
     const unix = join(dir, "fetch-unix.sock");
     expect(unix.length).toBeGreaterThanOrEqual(108);
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       unix,
       fetch(req) {
         return new Response(req.body);

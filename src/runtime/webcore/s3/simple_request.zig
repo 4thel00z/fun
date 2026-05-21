@@ -18,7 +18,7 @@ pub const S3DownloadResult = union(enum) {
         /// etag is not owned and need to be copied if used after this callback
         etag: []const u8 = "",
         /// body is owned and dont need to be copied, but dont forget to free it
-        body: bun.MutableString,
+        body: fun.MutableString,
     },
     not_found: S3Error,
     /// failure error is not owned and need to be copied if used after this callback
@@ -58,39 +58,39 @@ pub const S3PartResult = union(enum) {
 };
 
 pub const S3HttpSimpleTask = struct {
-    http: bun.http.AsyncHTTP,
+    http: fun.http.AsyncHTTP,
     vm: *jsc.VirtualMachine,
     sign_result: SignResult,
-    headers: bun.http.Headers,
+    headers: fun.http.Headers,
     callback_context: *anyopaque,
     callback: Callback,
-    response_buffer: bun.MutableString = .{
-        .allocator = bun.default_allocator,
+    response_buffer: fun.MutableString = .{
+        .allocator = fun.default_allocator,
         .list = .{
             .items = &.{},
             .capacity = 0,
         },
     },
-    result: bun.http.HTTPClientResult = .{},
+    result: fun.http.HTTPClientResult = .{},
     concurrent_task: jsc.ConcurrentTask = .{},
     range: ?[]const u8,
     /// Owned dupe of the proxy URL. The env-derived proxy slice can be freed
     /// by a concurrent process.env.HTTP_PROXY write while the HTTP thread is
     /// in flight, so we must own our copy for the task's lifetime.
     proxy_url: []const u8 = "",
-    poll_ref: bun.Async.KeepAlive = bun.Async.KeepAlive.init(),
+    poll_ref: fun.Async.KeepAlive = fun.Async.KeepAlive.init(),
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
     pub const Callback = union(enum) {
-        stat: *const fn (S3StatResult, *anyopaque) bun.JSTerminated!void,
-        download: *const fn (S3DownloadResult, *anyopaque) bun.JSTerminated!void,
-        upload: *const fn (S3UploadResult, *anyopaque) bun.JSTerminated!void,
-        delete: *const fn (S3DeleteResult, *anyopaque) bun.JSTerminated!void,
-        listObjects: *const fn (S3ListObjectsResult, *anyopaque) bun.JSTerminated!void,
-        commit: *const fn (S3CommitResult, *anyopaque) bun.JSTerminated!void,
-        part: *const fn (S3PartResult, *anyopaque) bun.JSTerminated!void,
+        stat: *const fn (S3StatResult, *anyopaque) fun.JSTerminated!void,
+        download: *const fn (S3DownloadResult, *anyopaque) fun.JSTerminated!void,
+        upload: *const fn (S3UploadResult, *anyopaque) fun.JSTerminated!void,
+        delete: *const fn (S3DeleteResult, *anyopaque) fun.JSTerminated!void,
+        listObjects: *const fn (S3ListObjectsResult, *anyopaque) fun.JSTerminated!void,
+        commit: *const fn (S3CommitResult, *anyopaque) fun.JSTerminated!void,
+        part: *const fn (S3PartResult, *anyopaque) fun.JSTerminated!void,
 
-        pub fn fail(this: @This(), code: []const u8, message: []const u8, context: *anyopaque) bun.JSTerminated!void {
+        pub fn fail(this: @This(), code: []const u8, message: []const u8, context: *anyopaque) fun.JSTerminated!void {
             switch (this) {
                 inline .upload,
                 .download,
@@ -107,7 +107,7 @@ pub const S3HttpSimpleTask = struct {
                 }, context),
             }
         }
-        pub fn notFound(this: @This(), code: []const u8, message: []const u8, context: *anyopaque) bun.JSTerminated!void {
+        pub fn notFound(this: @This(), code: []const u8, message: []const u8, context: *anyopaque) fun.JSTerminated!void {
             switch (this) {
                 inline .download,
                 .stat,
@@ -126,7 +126,7 @@ pub const S3HttpSimpleTask = struct {
 
     pub fn deinit(this: *@This()) void {
         if (this.result.certificate_info) |*certificate| {
-            certificate.deinit(bun.default_allocator);
+            certificate.deinit(fun.default_allocator);
         }
         this.poll_ref.unref(this.vm);
         this.response_buffer.deinit();
@@ -134,22 +134,22 @@ pub const S3HttpSimpleTask = struct {
         this.sign_result.deinit();
         this.http.clearData();
         if (this.range) |range| {
-            bun.default_allocator.free(range);
+            fun.default_allocator.free(range);
         }
         if (this.proxy_url.len > 0) {
-            bun.default_allocator.free(this.proxy_url);
+            fun.default_allocator.free(this.proxy_url);
         }
         if (this.result.metadata) |*metadata| {
-            metadata.deinit(bun.default_allocator);
+            metadata.deinit(fun.default_allocator);
         }
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     const ErrorType = enum {
         not_found,
         failure,
     };
-    fn errorWithBody(this: @This(), comptime error_type: ErrorType) bun.JSTerminated!void {
+    fn errorWithBody(this: @This(), comptime error_type: ErrorType) fun.JSTerminated!void {
         var code: []const u8 = "UnknownError";
         var message: []const u8 = "an unexpected error has occurred";
         var has_error_code = false;
@@ -185,7 +185,7 @@ pub const S3HttpSimpleTask = struct {
         }
     }
 
-    fn failIfContainsError(this: *@This(), status: u32) bun.JSTerminated!bool {
+    fn failIfContainsError(this: *@This(), status: u32) fun.JSTerminated!bool {
         var code: []const u8 = "UnknownError";
         var message: []const u8 = "an unexpected error has occurred";
 
@@ -220,13 +220,13 @@ pub const S3HttpSimpleTask = struct {
         return true;
     }
     /// this is the task callback from the last task result and is always in the main thread
-    pub fn onResponse(this: *@This()) bun.JSTerminated!void {
+    pub fn onResponse(this: *@This()) fun.JSTerminated!void {
         defer this.deinit();
         if (!this.result.isSuccess()) {
             try this.errorWithBody(.failure);
             return;
         }
-        bun.assert(this.result.metadata != null);
+        fun.assert(this.result.metadata != null);
         const response = this.result.metadata.?.response;
         switch (this.callback) {
             .stat => |callback| {
@@ -299,7 +299,7 @@ pub const S3HttpSimpleTask = struct {
                     200, 204, 206 => {
                         const body = this.response_buffer;
                         this.response_buffer = .{
-                            .allocator = bun.default_allocator,
+                            .allocator = fun.default_allocator,
                             .list = .{
                                 .items = &.{},
                                 .capacity = 0,
@@ -340,7 +340,7 @@ pub const S3HttpSimpleTask = struct {
     }
 
     /// this is the callback from the http.zig AsyncHTTP is always called from the HTTPThread
-    pub fn httpCallback(this: *@This(), async_http: *bun.http.AsyncHTTP, result: bun.http.HTTPClientResult) void {
+    pub fn httpCallback(this: *@This(), async_http: *fun.http.AsyncHTTP, result: fun.http.HTTPClientResult) void {
         const is_done = !result.has_more;
         this.result = result;
         this.http = async_http.*;
@@ -354,7 +354,7 @@ pub const S3HttpSimpleTask = struct {
 pub const S3SimpleRequestOptions = struct {
     // signing options
     path: []const u8,
-    method: bun.http.Method,
+    method: fun.http.Method,
     search_params: ?[]const u8 = null,
     content_type: ?[]const u8 = null,
     content_disposition: ?[]const u8 = null,
@@ -374,7 +374,7 @@ pub fn executeSimpleS3Request(
     options: S3SimpleRequestOptions,
     callback: S3HttpSimpleTask.Callback,
     callback_context: *anyopaque,
-) bun.JSTerminated!void {
+) fun.JSTerminated!void {
     var result = this.signRequest(.{
         .path = options.path,
         .method = options.method,
@@ -385,7 +385,7 @@ pub fn executeSimpleS3Request(
         .storage_class = options.storage_class,
         .request_payer = options.request_payer,
     }, false, null) catch |sign_err| {
-        if (options.range) |range_| bun.default_allocator.free(range_);
+        if (options.range) |range_| fun.default_allocator.free(range_);
         const error_code_and_message = getSignErrorCodeAndMessage(sign_err);
         try callback.fail(error_code_and_message.code, error_code_and_message.message, callback_context);
         return;
@@ -395,16 +395,16 @@ pub fn executeSimpleS3Request(
         var header_buffer: [S3Credentials.SignResult.MAX_HEADERS + 1]picohttp.Header = undefined;
         if (options.range) |range_| {
             const _headers = result.mixWithHeader(&header_buffer, .{ .name = "range", .value = range_ });
-            break :brk bun.handleOom(bun.http.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator));
+            break :brk fun.handleOom(fun.http.Headers.fromPicoHttpHeaders(_headers, fun.default_allocator));
         } else {
             if (options.content_type) |content_type| {
                 if (content_type.len > 0) {
                     const _headers = result.mixWithHeader(&header_buffer, .{ .name = "Content-Type", .value = content_type });
-                    break :brk bun.handleOom(bun.http.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator));
+                    break :brk fun.handleOom(fun.http.Headers.fromPicoHttpHeaders(_headers, fun.default_allocator));
                 }
             }
 
-            break :brk bun.handleOom(bun.http.Headers.fromPicoHttpHeaders(result.headers(), bun.default_allocator));
+            break :brk fun.handleOom(fun.http.Headers.fromPicoHttpHeaders(result.headers(), fun.default_allocator));
         }
     };
     const task = S3HttpSimpleTask.new(.{
@@ -418,33 +418,33 @@ pub fn executeSimpleS3Request(
     });
     task.poll_ref.ref(task.vm);
 
-    const url = bun.URL.parse(result.url);
+    const url = fun.URL.parse(result.url);
     const proxy = options.proxy_url orelse "";
-    task.proxy_url = if (proxy.len > 0) bun.handleOom(bun.default_allocator.dupe(u8, proxy)) else "";
-    task.http = bun.http.AsyncHTTP.init(
-        bun.default_allocator,
+    task.proxy_url = if (proxy.len > 0) fun.handleOom(fun.default_allocator.dupe(u8, proxy)) else "";
+    task.http = fun.http.AsyncHTTP.init(
+        fun.default_allocator,
         options.method,
         url,
         task.headers.entries,
         task.headers.buf.items,
         &task.response_buffer,
         options.body,
-        bun.http.HTTPClientResult.Callback.New(
+        fun.http.HTTPClientResult.Callback.New(
             *S3HttpSimpleTask,
             S3HttpSimpleTask.httpCallback,
         ).init(task),
         .follow,
         .{
-            .http_proxy = if (task.proxy_url.len > 0) bun.URL.parse(task.proxy_url) else null,
+            .http_proxy = if (task.proxy_url.len > 0) fun.URL.parse(task.proxy_url) else null,
             .verbose = task.vm.getVerboseFetch(),
             .reject_unauthorized = task.vm.getTLSRejectUnauthorized(),
         },
     );
     // queue http request
-    bun.http.HTTPThread.init(&.{});
-    var batch = bun.ThreadPool.Batch{};
-    task.http.schedule(bun.default_allocator, &batch);
-    bun.http.http_thread.schedule(batch);
+    fun.http.HTTPThread.init(&.{});
+    var batch = fun.ThreadPool.Batch{};
+    task.http.schedule(fun.default_allocator, &batch);
+    fun.http.http_thread.schedule(batch);
 }
 
 const ListObjects = @import("./list_objects.zig");
@@ -458,7 +458,7 @@ const SignResult = @import("../../../s3_signing/credentials.zig").S3Credentials.
 const S3Error = @import("../../../s3_signing/error.zig").S3Error;
 const getSignErrorCodeAndMessage = @import("../../../s3_signing/error.zig").getSignErrorCodeAndMessage;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const picohttp = bun.picohttp;
-const strings = bun.strings;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const picohttp = fun.picohttp;
+const strings = fun.strings;

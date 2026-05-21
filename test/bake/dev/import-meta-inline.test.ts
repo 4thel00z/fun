@@ -1,5 +1,5 @@
 // import.meta properties are inlined at parse time in Bake
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { devTest, emptyHtmlFile, minimalFramework } from "../bake-harness";
 
 const platformPath = (path: string) => {
@@ -197,12 +197,12 @@ export default function BlogPost(req, meta) {
     expect(json1.meta.url).toMatch(/^file:\/\/.*routes\/blog\/%5B\.\.\.slug%5D\.ts$/);
 
     // Test multiple segments
-    const post2 = await dev.fetch("/blog/2024/tech/bun-framework");
+    const post2 = await dev.fetch("/blog/2024/tech/fun-framework");
     const json2 = await post2.json();
 
-    expect(json2.slug).toEqual(["2024", "tech", "bun-framework"]);
-    expect(json2.title).toBe("2024 Tech Bun-framework");
-    expect(json2.content).toBe("This is a blog post at: 2024/tech/bun-framework");
+    expect(json2.slug).toEqual(["2024", "tech", "fun-framework"]);
+    expect(json2.title).toBe("2024 Tech Fun-framework");
+    expect(json2.content).toBe("This is a blog post at: 2024/tech/fun-framework");
 
     // Meta properties should be the same regardless of the route
     expect(json2.meta.file).toBe("[...slug].ts");

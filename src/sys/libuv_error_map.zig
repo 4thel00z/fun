@@ -95,11 +95,11 @@ pub const libuv_error_map = brk: {
     }
 
     // sanity check
-    bun.assert(std.mem.eql(u8, map.get(SystemErrno.ENOENT).?, "no such file or directory"));
+    fun.assert(std.mem.eql(u8, map.get(SystemErrno.ENOENT).?, "no such file or directory"));
 
     break :brk map;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
-const SystemErrno = bun.sys.SystemErrno;
+const SystemErrno = fun.sys.SystemErrno;

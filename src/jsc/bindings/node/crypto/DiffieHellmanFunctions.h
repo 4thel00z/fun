@@ -11,7 +11,7 @@
 #include "CryptoUtil.h"
 #include "JSBuffer.h"
 
-namespace Bun {
+namespace Fun {
 
 // Template implementations for Diffie-Hellman functions that are shared between
 // JSDiffieHellman and JSDiffieHellmanGroup
@@ -59,7 +59,7 @@ JSC::EncodedJSValue jsDiffieHellmanProtoFuncComputeSecretTemplate(JSC::JSGlobalO
     JSC::JSValue outputEncodingArg = callFrame->argument(2);
 
     // Process the public key input
-    auto* keyBuffer = Bun::getArrayBufferOrView(globalObject, scope, keyArg, "key"_s, inputEncodingArg);
+    auto* keyBuffer = Fun::getArrayBufferOrView(globalObject, scope, keyArg, "key"_s, inputEncodingArg);
     RETURN_IF_EXCEPTION(scope, {});
     ASSERT(keyBuffer);
 
@@ -237,7 +237,7 @@ JSC::EncodedJSValue jsDiffieHellmanProtoFuncSetPublicKeyTemplate(JSC::JSGlobalOb
     JSC::JSValue keyArg = callFrame->argument(0);
 
     // Process the public key input
-    auto* keyBuffer = Bun::getArrayBufferOrView(globalObject, scope, keyArg, "key"_s, callFrame->argument(1));
+    auto* keyBuffer = Fun::getArrayBufferOrView(globalObject, scope, keyArg, "key"_s, callFrame->argument(1));
     RETURN_IF_EXCEPTION(scope, {});
     ASSERT(keyBuffer);
 
@@ -273,7 +273,7 @@ JSC::EncodedJSValue jsDiffieHellmanProtoFuncSetPrivateKeyTemplate(JSC::JSGlobalO
 
     JSC::JSValue keyArg = callFrame->argument(0);
 
-    auto* keyBuffer = Bun::getArrayBufferOrView(globalObject, scope, keyArg, "key"_s, callFrame->argument(1));
+    auto* keyBuffer = Fun::getArrayBufferOrView(globalObject, scope, keyArg, "key"_s, callFrame->argument(1));
     RETURN_IF_EXCEPTION(scope, {});
     ASSERT(keyBuffer);
 
@@ -294,4 +294,4 @@ JSC::EncodedJSValue jsDiffieHellmanProtoFuncSetPrivateKeyTemplate(JSC::JSGlobalO
     return JSC::JSValue::encode(callFrame->thisValue());
 }
 
-} // namespace Bun
+} // namespace Fun

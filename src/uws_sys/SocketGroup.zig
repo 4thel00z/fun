@@ -41,7 +41,7 @@ pub const SocketGroup = extern struct {
         on_end: ?*const fn (*us_socket_t) callconv(.c) ?*us_socket_t = null,
         on_connect_error: ?*const fn (*us_socket_t, c_int) callconv(.c) ?*us_socket_t = null,
         on_connecting_error: ?*const fn (*ConnectingSocket, c_int) callconv(.c) ?*ConnectingSocket = null,
-        on_handshake: ?*const fn (*us_socket_t, c_int, uws.us_bun_verify_error_t, ?*anyopaque) callconv(.c) void = null,
+        on_handshake: ?*const fn (*us_socket_t, c_int, uws.us_fun_verify_error_t, ?*anyopaque) callconv(.c) void = null,
     };
 
     comptime {
@@ -198,9 +198,9 @@ const c = struct {
     extern fn us_socket_pair(*SocketGroup, u8, c_int, *[2]uws.LIBUS_SOCKET_DESCRIPTOR) ?*us_socket_t;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const uws = bun.uws;
+const uws = fun.uws;
 const ConnectingSocket = uws.ConnectingSocket;
 const Loop = uws.Loop;
 const SocketKind = uws.SocketKind;

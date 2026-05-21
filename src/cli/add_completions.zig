@@ -1,7 +1,7 @@
 // Auto-generated file. Do not edit.
 // To regenerate this file, run:
 //
-//   bun misctools/generate-add-completions.ts
+//   fun misctools/generate-add-completions.ts
 //
 // If you update add_completions.txt, then you should run this script again.
 //
@@ -101,5 +101,5 @@ pub const biggest_list: usize = 1034;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const zstd = bun.zstd;
+const fun = @import("fun");
+const zstd = fun.zstd;

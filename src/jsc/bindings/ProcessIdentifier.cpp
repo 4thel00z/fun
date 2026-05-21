@@ -31,7 +31,7 @@
 namespace WebCore {
 namespace Process {
 
-// Bun only has 1 process
+// Fun only has 1 process
 static ProcessIdentifier globalIdentifier { 1 };
 
 ProcessIdentifier identifier()

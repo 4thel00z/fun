@@ -1,10 +1,10 @@
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import path from "node:path";
 
 test("dev server deinitializes itself", () => {
-  const result = Bun.spawnSync({
-    cmd: [bunExe(), "test", path.join(import.meta.dir, "fixtures/deinitialization/test.ts")],
-    env: bunEnv,
+  const result = Fun.spawnSync({
+    cmd: [funExe(), "test", path.join(import.meta.dir, "fixtures/deinitialization/test.ts")],
+    env: funEnv,
     stdio: ["inherit", "inherit", "inherit"],
     cwd: path.join(import.meta.dir, "fixtures/deinitialization"),
   });

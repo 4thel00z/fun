@@ -10,7 +10,7 @@ pub const JSBigInt = opaque {
     pub fn order(this: *JSBigInt, comptime T: type, num: T) std.math.Order {
         const result = switch (T) {
             f64 => brk: {
-                bun.debugAssert(!std.math.isNan(num));
+                fun.debugAssert(!std.math.isNan(num));
                 break :brk JSC__JSBigInt__orderDouble(this, num);
             },
             u64 => JSC__JSBigInt__orderUint64(this, num),
@@ -27,18 +27,18 @@ pub const JSBigInt = opaque {
         return JSC__JSBigInt__toInt64(this);
     }
 
-    extern fn JSC__JSBigInt__toString(*JSBigInt, *JSGlobalObject) bun.String;
-    pub fn toString(this: *JSBigInt, global: *JSGlobalObject) JSError!bun.String {
-        return bun.jsc.fromJSHostCallGeneric(global, @src(), JSC__JSBigInt__toString, .{ this, global });
+    extern fn JSC__JSBigInt__toString(*JSBigInt, *JSGlobalObject) fun.String;
+    pub fn toString(this: *JSBigInt, global: *JSGlobalObject) JSError!fun.String {
+        return fun.jsc.fromJSHostCallGeneric(global, @src(), JSC__JSBigInt__toString, .{ this, global });
     }
 };
 
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const String = bun.String;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

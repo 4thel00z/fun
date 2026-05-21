@@ -6,6 +6,6 @@
     "svelte": "3.50.0"
   },
   "scripts": {
-    "postinstall": "bun postinstall.js"
+    "postinstall": "fun postinstall.js"
   }
 }

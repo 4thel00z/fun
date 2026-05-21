@@ -9,8 +9,8 @@
  * Also runnable as a CLI to print a single list (for run-clang-format.sh,
  * ad-hoc inspection):
  *
- *   bun scripts/glob-sources.ts cxx    # one .cpp path per line
- *   bun scripts/glob-sources.ts        # list available fields
+ *   fun scripts/glob-sources.ts cxx    # one .cpp path per line
+ *   fun scripts/glob-sources.ts        # list available fields
  */
 
 import { globSync } from "node:fs";
@@ -32,9 +32,9 @@ interface SourcePattern {
  * `globAllSources()` pick it up automatically.
  */
 const patterns = {
-  /** `packages/bun-error/*` — error overlay page */
-  bunError: {
-    paths: ["packages/bun-error/*.{json,ts,tsx,css}", "packages/bun-error/img/*"],
+  /** `packages/fun-error/*` — error overlay page */
+  funError: {
+    paths: ["packages/fun-error/*.{json,ts,tsx,css}", "packages/fun-error/img/*"],
   },
   /** `src/node-fallbacks/*.js` */
   nodeFallbacks: {
@@ -69,11 +69,11 @@ const patterns = {
   bindgenV2Internal: {
     paths: ["src/codegen/bindgenv2/**/*.ts"],
   },
-  /** NOT filtered; includes codegen-written files (see bun.ts) */
+  /** NOT filtered; includes codegen-written files (see fun.ts) */
   zig: {
     paths: ["src/**/*.zig"],
   },
-  /** all `*.cpp` compiled into bun (bindings, webcore, v8 shim, usockets) */
+  /** all `*.cpp` compiled into fun (bindings, webcore, v8 shim, usockets) */
   cxx: {
     paths: [
       "src/io/*.cpp",
@@ -93,16 +93,16 @@ const patterns = {
       "src/uws_sys/*.cpp",
       "src/simdutf_sys/*.cpp",
       "src/jsc/bindings/vm/*.cpp",
-      "packages/bun-usockets/src/crypto/*.cpp",
+      "packages/fun-usockets/src/crypto/*.cpp",
     ],
   },
-  /** all `*.c` compiled into bun (usockets, llhttp, uv polyfills) */
+  /** all `*.c` compiled into fun (usockets, llhttp, uv polyfills) */
   c: {
     paths: [
-      "packages/bun-usockets/src/*.c",
-      "packages/bun-usockets/src/eventing/*.c",
-      "packages/bun-usockets/src/internal/*.c",
-      "packages/bun-usockets/src/crypto/*.c",
+      "packages/fun-usockets/src/*.c",
+      "packages/fun-usockets/src/eventing/*.c",
+      "packages/fun-usockets/src/internal/*.c",
+      "packages/fun-usockets/src/crypto/*.c",
       "src/jsc/bindings/uv-posix-polyfills.c",
       "src/jsc/bindings/uv-posix-stubs.c",
       "src/*.c",
@@ -167,7 +167,7 @@ if (process.argv[1] === import.meta.filename) {
   } else if (arg && arg in sources) {
     print(sources[arg as keyof Sources]);
   } else {
-    const msg = arg ? `unknown field '${arg}'` : "usage: bun scripts/glob-sources.ts <field>|--all";
+    const msg = arg ? `unknown field '${arg}'` : "usage: fun scripts/glob-sources.ts <field>|--all";
     console.error(`${msg}\nfields: ${Object.keys(sources).join(", ")}`);
     process.exit(1);
   }

@@ -1,9 +1,9 @@
 $overriddenName = "[Symbol.asyncIterator]";
 export function asyncIterator(this: Console) {
-  var stream = Bun.stdin.stream();
+  var stream = Fun.stdin.stream();
 
   var decoder = new TextDecoder("utf-8", { fatal: false });
-  var indexOf = Bun.indexOfLine;
+  var indexOf = Fun.indexOfLine;
   var actualChunk: Uint8Array;
   var i: number = -1;
   var idx: number;
@@ -119,7 +119,7 @@ export function write(this: Console, input) {
   var writer = $getByIdDirectPrivate(this, "writer");
   if (!writer) {
     var length = $toLength(input?.length ?? 0);
-    writer = Bun.stdout.writer({ highWaterMark: length > 65536 ? length : 65536 });
+    writer = Fun.stdout.writer({ highWaterMark: length > 65536 ? length : 65536 });
     $putByIdDirectPrivate(this, "writer", writer);
   }
 
@@ -471,8 +471,8 @@ export function createConsoleConstructor(console: typeof globalThis.console) {
       value: function (stream) {
         let color = this[kColorMode];
         if (color === "auto") {
-          if (Bun.env["FORCE_COLOR"] !== undefined) {
-            color = Bun.enableANSIColors;
+          if (Fun.env["FORCE_COLOR"] !== undefined) {
+            color = Fun.enableANSIColors;
           } else {
             color = stream.isTTY && (typeof stream.getColorDepth === "function" ? stream.getColorDepth() > 2 : true);
           }
@@ -594,7 +594,7 @@ export function createConsoleConstructor(console: typeof globalThis.console) {
     clear() {
       // It only makes sense to clear if _stdout is a TTY.
       // Otherwise, do nothing.
-      if (this._stdout.isTTY && Bun.env["TERM"] !== "dumb") {
+      if (this._stdout.isTTY && Fun.env["TERM"] !== "dumb") {
         this._stdout.write("\x1B[2J\x1B[3J\x1B[H");
       }
     },

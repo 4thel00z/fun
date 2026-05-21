@@ -1,17 +1,17 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "../../bundler/expectBundled";
 
 describe("bundler", () => {
-  // Test that `bun build --compile` produces absolute asset URLs in HTML,
+  // Test that `fun build --compile` produces absolute asset URLs in HTML,
   // so that assets load correctly when served from nested routes like "/foo/".
-  // Regression test for https://github.com/oven-sh/bun/issues/27465
+  // Regression test for https://github.com/underdoc-org/fun/issues/27465
   for (const backend of ["api", "cli"] as const) {
     itBundled(`compile/${backend}/HTMLNestedRouteAssetURLs`, {
       compile: true,
       backend: backend,
       files: {
         "/entry.ts": /* js */ `
-          import { serve } from "bun";
+          import { serve } from "fun";
           import index from "./index.html";
 
           const server = serve({

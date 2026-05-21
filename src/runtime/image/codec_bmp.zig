@@ -124,8 +124,8 @@ pub fn decode(bytes: []const u8, max_pixels: u64) codecs.Error!codecs.Decoded {
     const bs, const bw = shiftWidth(h.b_mask);
     const as, const aw = shiftWidth(h.a_mask);
 
-    const out = try bun.default_allocator.alloc(u8, @as(usize, h.width) * h.height * 4);
-    errdefer bun.default_allocator.free(out);
+    const out = try fun.default_allocator.alloc(u8, @as(usize, h.width) * h.height * 4);
+    errdefer fun.default_allocator.free(out);
 
     var y: u32 = 0;
     while (y < h.height) : (y += 1) {
@@ -149,6 +149,6 @@ pub fn decode(bytes: []const u8, max_pixels: u64) codecs.Error!codecs.Decoded {
     return .{ .rgba = out, .width = h.width, .height = h.height };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const codecs = @import("./codecs.zig");
 const std = @import("std");

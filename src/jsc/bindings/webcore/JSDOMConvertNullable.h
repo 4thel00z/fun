@@ -30,7 +30,7 @@
 #include "JSDOMConvertInterface.h"
 #include "JSDOMConvertNumbers.h"
 #include "JSDOMConvertStrings.h"
-#include "BunIDLConvertBase.h"
+#include "FunIDLConvertBase.h"
 
 namespace WebCore {
 
@@ -73,7 +73,7 @@ template<typename T> struct Converter<IDLNullable<T>> : DefaultConverter<IDLNull
     // 2. Otherwise, if V is null or undefined, then return the IDL nullable type T? value null.
     // 3. Otherwise, return the result of converting V using the rules for the inner IDL type T.
 
-    template<Bun::IDLConversionContext Ctx>
+    template<Fun::IDLConversionContext Ctx>
     static std::optional<ReturnType> tryConvert(
         JSC::JSGlobalObject& lexicalGlobalObject,
         JSC::JSValue value,
@@ -81,15 +81,15 @@ template<typename T> struct Converter<IDLNullable<T>> : DefaultConverter<IDLNull
     {
         if (value.isUndefinedOrNull())
             return T::nullValue();
-        return Bun::tryConvertIDL<T>(lexicalGlobalObject, value, ctx);
+        return Fun::tryConvertIDL<T>(lexicalGlobalObject, value, ctx);
     }
 
-    template<Bun::IDLConversionContext Ctx>
+    template<Fun::IDLConversionContext Ctx>
     static ReturnType convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, Ctx& ctx)
     {
         if (value.isUndefinedOrNull())
             return T::nullValue();
-        return Bun::convertIDL<T>(lexicalGlobalObject, value, ctx);
+        return Fun::convertIDL<T>(lexicalGlobalObject, value, ctx);
     }
 
     static ReturnType convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value)
@@ -111,7 +111,7 @@ template<typename T> struct Converter<IDLNullable<T>> : DefaultConverter<IDLNull
         return Converter<T>::convert(lexicalGlobalObject, value, globalObject);
     }
     template<typename ExceptionThrower = DefaultExceptionThrower>
-        requires(!Bun::IDLConversionContext<std::decay_t<ExceptionThrower>>)
+        requires(!Fun::IDLConversionContext<std::decay_t<ExceptionThrower>>)
     static ReturnType convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, ExceptionThrower&& exceptionThrower)
     {
         if (value.isUndefinedOrNull())

@@ -23,24 +23,24 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorTestReporterAgent);
 // Zig bindings implementation
 extern "C" {
 
-void Bun__TestReporterAgentEnable(Inspector::InspectorTestReporterAgent* agent);
-void Bun__TestReporterAgentDisable(Inspector::InspectorTestReporterAgent* agent);
+void Fun__TestReporterAgentEnable(Inspector::InspectorTestReporterAgent* agent);
+void Fun__TestReporterAgentDisable(Inspector::InspectorTestReporterAgent* agent);
 
-enum class BunTestType : uint8_t {
+enum class FunTestType : uint8_t {
     Test,
     Describe,
 };
 
-void Bun__TestReporterAgentReportTestFound(Inspector::InspectorTestReporterAgent* agent, JSC::CallFrame* callFrame, int testId, BunString* name, BunTestType item_type, int parentId)
+void Fun__TestReporterAgentReportTestFound(Inspector::InspectorTestReporterAgent* agent, JSC::CallFrame* callFrame, int testId, FunString* name, FunTestType item_type, int parentId)
 {
-    auto str = name->toWTFString(BunString::ZeroCopy);
+    auto str = name->toWTFString(FunString::ZeroCopy);
 
     Protocol::TestReporter::TestType type;
     switch (item_type) {
-    case BunTestType::Test:
+    case FunTestType::Test:
         type = Protocol::TestReporter::TestType::Test;
         break;
-    case BunTestType::Describe:
+    case FunTestType::Describe:
         type = Protocol::TestReporter::TestType::Describe;
         break;
     default:
@@ -50,17 +50,17 @@ void Bun__TestReporterAgentReportTestFound(Inspector::InspectorTestReporterAgent
     agent->reportTestFound(callFrame, testId, str, type, parentId);
 }
 
-void Bun__TestReporterAgentReportTestFoundWithLocation(Inspector::InspectorTestReporterAgent* agent, int testId, BunString* name, BunTestType item_type, int parentId, BunString* sourceURL, int line)
+void Fun__TestReporterAgentReportTestFoundWithLocation(Inspector::InspectorTestReporterAgent* agent, int testId, FunString* name, FunTestType item_type, int parentId, FunString* sourceURL, int line)
 {
-    auto str = name->toWTFString(BunString::ZeroCopy);
-    auto sourceURLStr = sourceURL->toWTFString(BunString::ZeroCopy);
+    auto str = name->toWTFString(FunString::ZeroCopy);
+    auto sourceURLStr = sourceURL->toWTFString(FunString::ZeroCopy);
 
     Protocol::TestReporter::TestType type;
     switch (item_type) {
-    case BunTestType::Test:
+    case FunTestType::Test:
         type = Protocol::TestReporter::TestType::Test;
         break;
-    case BunTestType::Describe:
+    case FunTestType::Describe:
         type = Protocol::TestReporter::TestType::Describe;
         break;
     default:
@@ -70,12 +70,12 @@ void Bun__TestReporterAgentReportTestFoundWithLocation(Inspector::InspectorTestR
     agent->reportTestFoundWithLocation(testId, str, type, parentId, sourceURLStr, line);
 }
 
-void Bun__TestReporterAgentReportTestStart(Inspector::InspectorTestReporterAgent* agent, int testId)
+void Fun__TestReporterAgentReportTestStart(Inspector::InspectorTestReporterAgent* agent, int testId)
 {
     agent->reportTestStart(testId);
 }
 
-enum class BunTestStatus : uint8_t {
+enum class FunTestStatus : uint8_t {
     // this enum is kept in sync with zig Debugger.zig `pub const TestStatus`
     Pass,
     Fail,
@@ -85,26 +85,26 @@ enum class BunTestStatus : uint8_t {
     SkippedBecauseLabel,
 };
 
-void Bun__TestReporterAgentReportTestEnd(Inspector::InspectorTestReporterAgent* agent, int testId, BunTestStatus bunTestStatus, double elapsed)
+void Fun__TestReporterAgentReportTestEnd(Inspector::InspectorTestReporterAgent* agent, int testId, FunTestStatus funTestStatus, double elapsed)
 {
     Protocol::TestReporter::TestStatus status;
-    switch (bunTestStatus) {
-    case BunTestStatus::Pass:
+    switch (funTestStatus) {
+    case FunTestStatus::Pass:
         status = Protocol::TestReporter::TestStatus::Pass;
         break;
-    case BunTestStatus::Fail:
+    case FunTestStatus::Fail:
         status = Protocol::TestReporter::TestStatus::Fail;
         break;
-    case BunTestStatus::Timeout:
+    case FunTestStatus::Timeout:
         status = Protocol::TestReporter::TestStatus::Timeout;
         break;
-    case BunTestStatus::Skip:
+    case FunTestStatus::Skip:
         status = Protocol::TestReporter::TestStatus::Skip;
         break;
-    case BunTestStatus::Todo:
+    case FunTestStatus::Todo:
         status = Protocol::TestReporter::TestStatus::Todo;
         break;
-    case BunTestStatus::SkippedBecauseLabel:
+    case FunTestStatus::SkippedBecauseLabel:
         status = Protocol::TestReporter::TestStatus::Skipped_because_label;
         break;
     default:
@@ -126,7 +126,7 @@ InspectorTestReporterAgent::InspectorTestReporterAgent(JSC::JSGlobalObject& glob
 InspectorTestReporterAgent::~InspectorTestReporterAgent()
 {
     if (m_enabled) {
-        Bun__TestReporterAgentDisable(this);
+        Fun__TestReporterAgentDisable(this);
     }
 }
 
@@ -145,7 +145,7 @@ Protocol::ErrorStringOr<void> InspectorTestReporterAgent::enable()
         return {};
 
     m_enabled = true;
-    Bun__TestReporterAgentEnable(this);
+    Fun__TestReporterAgentEnable(this);
     return {};
 }
 
@@ -155,7 +155,7 @@ Protocol::ErrorStringOr<void> InspectorTestReporterAgent::disable()
         return {};
 
     m_enabled = false;
-    Bun__TestReporterAgentDisable(this);
+    Fun__TestReporterAgentDisable(this);
     return {};
 }
 
@@ -212,9 +212,9 @@ void InspectorTestReporterAgent::reportTestFound(JSC::CallFrame* callFrame, int 
 
         remappedFrame.position.line_zero_based = originalLine.zeroBasedInt();
         remappedFrame.position.column_zero_based = originalColumn.zeroBasedInt();
-        remappedFrame.source_url = Bun::toStringRef(sourceURL);
+        remappedFrame.source_url = Fun::toStringRef(sourceURL);
 
-        Bun__remapStackFramePositions(Bun::vm(globalObject), &remappedFrame, 1);
+        Fun__remapStackFramePositions(Fun::vm(globalObject), &remappedFrame, 1);
 
         sourceURL = remappedFrame.source_url.toWTFString();
         lineColumn.line = OrdinalNumber::fromZeroBasedInt(remappedFrame.position.line_zero_based).oneBasedInt();

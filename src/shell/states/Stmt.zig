@@ -48,7 +48,7 @@ pub fn init(
 }
 
 pub fn start(this: *Stmt) Yield {
-    if (bun.Environment.allow_assert) {
+    if (fun.Environment.allow_assert) {
         assert(this.idx == 0);
         assert(this.last_exit_code == null);
         assert(this.currently_executing == null);
@@ -91,7 +91,7 @@ pub fn next(this: *Stmt) Yield {
             )) {
                 .result => |s| s,
                 .err => |e| {
-                    this.base.throw(&bun.shell.ShellErr.newSys(e));
+                    this.base.throw(&fun.shell.ShellErr.newSys(e));
                     return .failed;
                 },
             };
@@ -134,26 +134,26 @@ pub fn deinit(this: *Stmt) void {
     this.parent.destroy(this);
 }
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Assigns = bun.shell.Interpreter.Assigns;
-const Async = bun.shell.Interpreter.Async;
-const Binary = bun.shell.Interpreter.Binary;
-const Cmd = bun.shell.Interpreter.Cmd;
-const CondExpr = bun.shell.Interpreter.CondExpr;
-const IO = bun.shell.Interpreter.IO;
-const If = bun.shell.Interpreter.If;
-const Pipeline = bun.shell.Interpreter.Pipeline;
-const Script = bun.shell.Interpreter.Script;
+const Interpreter = fun.shell.Interpreter;
+const Assigns = fun.shell.Interpreter.Assigns;
+const Async = fun.shell.Interpreter.Async;
+const Binary = fun.shell.Interpreter.Binary;
+const Cmd = fun.shell.Interpreter.Cmd;
+const CondExpr = fun.shell.Interpreter.CondExpr;
+const IO = fun.shell.Interpreter.IO;
+const If = fun.shell.Interpreter.If;
+const Pipeline = fun.shell.Interpreter.Pipeline;
+const Script = fun.shell.Interpreter.Script;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Subshell = bun.shell.Interpreter.Subshell;
+const State = fun.shell.Interpreter.State;
+const Subshell = fun.shell.Interpreter.Subshell;
 
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

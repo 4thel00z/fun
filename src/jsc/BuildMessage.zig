@@ -9,19 +9,19 @@ pub const BuildMessage = struct {
     allocator: std.mem.Allocator,
     logged: bool = false,
 
-    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!*BuildMessage {
+    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!*BuildMessage {
         return globalThis.throw("BuildMessage is not constructable", .{});
     }
 
-    pub fn getNotes(this: *BuildMessage, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn getNotes(this: *BuildMessage, globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         const notes = this.msg.notes;
         const array = try jsc.JSValue.createEmptyArray(globalThis, notes.len);
         for (notes, 0..) |note, i| {
-            const cloned = try note.clone(bun.default_allocator);
+            const cloned = try note.clone(fun.default_allocator);
             try array.putIndex(
                 globalThis,
                 @intCast(i),
-                try BuildMessage.create(globalThis, bun.default_allocator, logger.Msg{ .data = cloned, .kind = .note }),
+                try BuildMessage.create(globalThis, fun.default_allocator, logger.Msg{ .data = cloned, .kind = .note }),
             );
         }
 
@@ -48,7 +48,7 @@ pub const BuildMessage = struct {
         allocator: std.mem.Allocator,
         msg: logger.Msg,
         // resolve_result: *const Resolver.Result,
-    ) bun.OOM!jsc.JSValue {
+    ) fun.OOM!jsc.JSValue {
         var build_error = try allocator.create(BuildMessage);
         build_error.* = BuildMessage{
             .msg = try msg.clone(allocator),
@@ -63,7 +63,7 @@ pub const BuildMessage = struct {
         this: *BuildMessage,
         globalThis: *jsc.JSGlobalObject,
         _: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         return this.toStringFn(globalThis);
     }
 
@@ -71,7 +71,7 @@ pub const BuildMessage = struct {
         this: *BuildMessage,
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         const args_ = callframe.arguments_old(1);
         const args = args_.ptr[0..args_.len];
         if (args.len > 0) {
@@ -92,9 +92,9 @@ pub const BuildMessage = struct {
         this: *BuildMessage,
         globalThis: *jsc.JSGlobalObject,
         _: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         var object = jsc.JSValue.createEmptyObject(globalThis, 4);
-        object.put(globalThis, ZigString.static("name"), try bun.String.static("BuildMessage").toJS(globalThis));
+        object.put(globalThis, ZigString.static("name"), try fun.String.static("BuildMessage").toJS(globalThis));
         object.put(globalThis, ZigString.static("position"), this.getPosition(globalThis));
         object.put(globalThis, ZigString.static("message"), this.getMessage(globalThis));
         object.put(globalThis, ZigString.static("level"), this.getLevel(globalThis));
@@ -144,7 +144,7 @@ pub const BuildMessage = struct {
         return object;
     }
 
-    // https://github.com/oven-sh/bun/issues/2375#issuecomment-2121530202
+    // https://github.com/underdoc-org/fun/issues/2375#issuecomment-2121530202
     pub fn getColumn(this: *BuildMessage, _: *jsc.JSGlobalObject) jsc.JSValue {
         if (this.msg.data.location) |location| {
             return jsc.JSValue.jsNumber(@max(location.column - 1, 0));
@@ -193,11 +193,11 @@ const string = []const u8;
 const std = @import("std");
 const Resolver = @import("../resolver/resolver.zig").Resolver;
 
-const bun = @import("bun");
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
+const fun = @import("fun");
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

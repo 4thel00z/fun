@@ -1,9 +1,9 @@
 #include "config.h"
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
-BUN_DECLARE_HOST_FUNCTION(Bun__canonicalizeIP);
+FUN_DECLARE_HOST_FUNCTION(Fun__canonicalizeIP);
 JSC_DECLARE_HOST_FUNCTION(getBundledRootCertificates);
 JSC_DECLARE_HOST_FUNCTION(getExtraCACertificates);
 JSC_DECLARE_HOST_FUNCTION(getSystemCACertificates);

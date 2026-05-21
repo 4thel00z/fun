@@ -6,13 +6,13 @@ on:
 
 jobs:
   auto-label:
-    if: github.event.pull_request.user.login == 'robobun' || contains(github.event.pull_request.body, '🤖 Generated with')
+    if: github.event.pull_request.user.login == 'robofun' || contains(github.event.pull_request.body, '🤖 Generated with')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
-      - name: Add claude label to PRs from robobun
+      - name: Add claude label to PRs from robofun
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |

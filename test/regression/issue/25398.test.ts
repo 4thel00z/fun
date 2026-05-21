@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/25398
+// https://github.com/underdoc-org/fun/issues/25398
 // Bug: Object spread with nullish coalescing to empty object literal
 // in unused expression statements was incorrectly simplified,
 // resulting in invalid JavaScript output like `k?.x ?? ` (missing {})
@@ -12,10 +12,10 @@ test("object spread with nullish coalescing to empty object in arrow function bo
     "test.js": `exports.id=1,exports.ids=[1],exports.modules={1:(a,b,c)=>{let k={};({...k,a:k?.x??{}})}};`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run", "test.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run", "test.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -38,10 +38,10 @@ test("object spread with nullish coalescing preserves value in simplification", 
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run", "test.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run", "test.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

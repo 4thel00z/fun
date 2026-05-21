@@ -159,7 +159,7 @@ pub fn childDone(this: *If, child: ChildPtr, exit_code: ExitCode) Yield {
     defer child.deinit();
 
     if (this.state != .exec) {
-        @panic("Expected `exec` state in If, this indicates a bug in Bun. Please file a GitHub issue.");
+        @panic("Expected `exec` state in If, this indicates a bug in Fun. Please file a GitHub issue.");
     }
 
     var exec = &this.state.exec;
@@ -182,23 +182,23 @@ pub fn childDone(this: *If, child: ChildPtr, exit_code: ExitCode) Yield {
     }
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const shell = bun.shell;
-const ExitCode = bun.shell.ExitCode;
-const SmolList = bun.shell.SmolList;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const shell = fun.shell;
+const ExitCode = fun.shell.ExitCode;
+const SmolList = fun.shell.SmolList;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Async = bun.shell.Interpreter.Async;
-const Binary = bun.shell.Interpreter.Binary;
-const IO = bun.shell.Interpreter.IO;
-const Pipeline = bun.shell.Interpreter.Pipeline;
+const Interpreter = fun.shell.Interpreter;
+const Async = fun.shell.Interpreter.Async;
+const Binary = fun.shell.Interpreter.Binary;
+const IO = fun.shell.Interpreter.IO;
+const Pipeline = fun.shell.Interpreter.Pipeline;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
 
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

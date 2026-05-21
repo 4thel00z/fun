@@ -1,7 +1,7 @@
 ## CLI Usage
 
 ```bash terminal icon="terminal"
-bun publish dist
+fun publish dist
 ```
 
 ### Publishing Options
@@ -10,7 +10,7 @@ bun publish dist
   The `--access` flag can be used to set the access level of the package being published. The access level can be one of `public` or `restricted`. Unscoped packages are always public, and attempting to publish an unscoped package with `--access restricted` will result in an error.
 
 ```sh terminal icon="terminal"
-bun publish --access public
+fun publish --access public
 ```
 
 `--access` can also be set in the `publishConfig` field of your `package.json`.
@@ -29,7 +29,7 @@ bun publish --access public
 Set the tag of the package version being published. By default, the tag is `latest`. The initial version of a package is always given the `latest` tag in addition to the specified tag.
 
 ```sh terminal icon="terminal"
-bun publish --tag alpha
+fun publish --tag alpha
 ```
 
 `--tag` can also be set in the `publishConfig` field of your `package.json`.
@@ -48,22 +48,22 @@ bun publish --tag alpha
 The `--dry-run` flag can be used to simulate the publish process without actually publishing the package. This is useful for verifying the contents of the published package without actually publishing the package.
 
 ```sh
-bun publish --dry-run
+fun publish --dry-run
 ```
 
 </ParamField>
 
 <ParamField path="--gzip-level" type="string" default="9">
-  Specify the level of gzip compression to use when packing the package. Only applies to `bun publish` without a tarball
+  Specify the level of gzip compression to use when packing the package. Only applies to `fun publish` without a tarball
   path argument. Values range from `0` to `9` (default is `9`).
 </ParamField>
 
 <ParamField path="--auth-type" type="string" default="web">
 
-If you have 2FA enabled for your npm account, `bun publish` will prompt you for a one-time password. This can be done through a browser or the CLI. The `--auth-type` flag can be used to tell the npm registry which method you prefer. The possible values are `web` and `legacy`, with `web` being the default.
+If you have 2FA enabled for your npm account, `fun publish` will prompt you for a one-time password. This can be done through a browser or the CLI. The `--auth-type` flag can be used to tell the npm registry which method you prefer. The possible values are `web` and `legacy`, with `web` being the default.
 
 ```sh terminal icon="terminal"
-bun publish --auth-type legacy
+fun publish --auth-type legacy
 ...
 This operation requires a one-time password.
 Enter OTP: 123456
@@ -77,11 +77,11 @@ Enter OTP: 123456
 Provide a one-time password directly to the CLI. If the password is valid, this will skip the extra prompt for a one-time password before publishing. Example usage:
 
 ```sh terminal icon="terminal"
-bun publish --otp 123456
+fun publish --otp 123456
 ```
 
 <Note>
-  `bun publish` respects the `NPM_CONFIG_TOKEN` environment variable which can be used when publishing in github actions
+  `fun publish` respects the `NPM_CONFIG_TOKEN` environment variable which can be used when publishing in github actions
   or automated workflows.
 </Note>
 
@@ -92,11 +92,11 @@ bun publish --otp 123456
 #### Custom Registry
 
 <ParamField path="--registry" type="string">
-  Specify registry URL, overriding .npmrc and bunfig.toml
+  Specify registry URL, overriding .npmrc and funfig.toml
 </ParamField>
 
 ```bash
-bun publish --registry https://my-private-registry.com
+fun publish --registry https://my-private-registry.com
 ```
 
 #### SSL Certificates
@@ -111,11 +111,11 @@ bun publish --registry https://my-private-registry.com
 
 <CodeGroup>
 ```bash Inline Certificate
-bun publish --ca "-----BEGIN CERTIFICATE-----..."
+fun publish --ca "-----BEGIN CERTIFICATE-----..."
 ```
 
 ```bash Certificate File
-bun publish --cafile ./ca-cert.pem
+fun publish --cafile ./ca-cert.pem
 ```
 
 </CodeGroup>
@@ -148,7 +148,7 @@ bun publish --cafile ./ca-cert.pem
 
 <Note>
   **Lifecycle Scripts** — When providing a pre-built tarball, lifecycle scripts (prepublishOnly, prepack, etc.) are not
-  executed. Scripts only run when Bun packs the package itself.
+  executed. Scripts only run when Fun packs the package itself.
 </Note>
 
 #### File Management

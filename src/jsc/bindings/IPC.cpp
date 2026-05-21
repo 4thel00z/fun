@@ -1,6 +1,6 @@
 #include "root.h"
 #include "headers-handwritten.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "WebCoreJSBuiltins.h"
 #include "ZigGlobalObject.h"
 

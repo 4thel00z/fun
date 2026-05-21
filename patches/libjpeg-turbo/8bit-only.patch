@@ -4,7 +4,7 @@
  #define BITS_IN_JSAMPLE  8
  #include "turbojpeg-mp.c"
  #undef BITS_IN_JSAMPLE
-+#ifndef BUN_8BIT_ONLY
++#ifndef FUN_8BIT_ONLY
  #define BITS_IN_JSAMPLE  12
  #include "turbojpeg-mp.c"
  #undef BITS_IN_JSAMPLE
@@ -21,7 +21,7 @@
  
  /*************************** Packed-Pixel Image I/O **************************/
  
-+#ifndef BUN_8BIT_ONLY
++#ifndef FUN_8BIT_ONLY
  #if BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED)
  
  /* TurboJPEG 3.0+ */
@@ -29,7 +29,7 @@
  
  #endif
  }
-+#endif /* BUN_8BIT_ONLY */
++#endif /* FUN_8BIT_ONLY */
  
  
  #undef _JSAMPLE

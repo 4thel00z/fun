@@ -11,17 +11,17 @@ comptime {
     _ = CryptoObject__create;
 }
 
-fn throwInvalidParameter(globalThis: *jsc.JSGlobalObject) bun.JSError {
+fn throwInvalidParameter(globalThis: *jsc.JSGlobalObject) fun.JSError {
     return globalThis.ERR(.CRYPTO_SCRYPT_INVALID_PARAMETER, "Invalid scrypt parameters", .{}).throw();
 }
 
-fn throwInvalidParams(globalThis: *jsc.JSGlobalObject, comptime error_type: @Type(.enum_literal), comptime message: [:0]const u8, fmt: anytype) bun.JSError {
+fn throwInvalidParams(globalThis: *jsc.JSGlobalObject, comptime error_type: @Type(.enum_literal), comptime message: [:0]const u8, fmt: anytype) fun.JSError {
     if (error_type != .RangeError) @compileError("Error type not added!");
     BoringSSL.ERR_clear_error();
     return globalThis.ERR(.CRYPTO_INVALID_SCRYPT_PARAMS, message, fmt).throw();
 }
 
-pub fn timingSafeEqual(_: *@This(), global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn timingSafeEqual(_: *@This(), global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return jsc.Node.crypto.timingSafeEqual(global, callframe);
 }
 
@@ -39,14 +39,14 @@ pub fn timingSafeEqualWithoutTypeChecks(
         return globalThis.ERR(.CRYPTO_TIMING_SAFE_EQUAL_LENGTH, "Input buffers must have the same byte length", .{}).throw();
     }
 
-    return jsc.jsBoolean(bun.BoringSSL.c.CRYPTO_memcmp(a.ptr, b.ptr, len) == 0);
+    return jsc.jsBoolean(fun.BoringSSL.c.CRYPTO_memcmp(a.ptr, b.ptr, len) == 0);
 }
 
 pub fn getRandomValues(
     _: *@This(),
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments();
     if (arguments.len == 0) {
         return globalThis.throwDOMException(.TypeMismatchError, "The data argument must be an integer-type TypedArray", .{});
@@ -84,10 +84,10 @@ fn randomData(
         0 => {},
         // 512 bytes or less we reuse from the same cache as UUID generation.
         1...jsc.RareData.EntropyCache.size / 8 => {
-            bun.copy(u8, slice, globalThis.bunVM().rareData().entropySlice(slice.len));
+            fun.copy(u8, slice, globalThis.funVM().rareData().entropySlice(slice.len));
         },
         else => {
-            bun.csprng(slice);
+            fun.csprng(slice);
         },
     }
 }
@@ -96,20 +96,20 @@ pub fn randomUUID(
     _: *@This(),
     globalThis: *jsc.JSGlobalObject,
     _: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
-    var str, var bytes = bun.String.createUninitialized(.latin1, 36);
+) fun.JSError!jsc.JSValue {
+    var str, var bytes = fun.String.createUninitialized(.latin1, 36);
 
-    const uuid = globalThis.bunVM().rareData().nextUUID();
+    const uuid = globalThis.funVM().rareData().nextUUID();
 
     uuid.print(bytes[0..36]);
     return str.transferToJS(globalThis);
 }
 
 comptime {
-    const Bun__randomUUIDv7 = jsc.toJSHostFn(Bun__randomUUIDv7_);
-    @export(&Bun__randomUUIDv7, .{ .name = "Bun__randomUUIDv7" });
+    const Fun__randomUUIDv7 = jsc.toJSHostFn(Fun__randomUUIDv7_);
+    @export(&Fun__randomUUIDv7, .{ .name = "Fun__randomUUIDv7" });
 }
-pub fn Bun__randomUUIDv7_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn Fun__randomUUIDv7_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsUndef(2).slice();
 
     var encoding_value: jsc.JSValue = .js_undefined;
@@ -148,12 +148,12 @@ pub fn Bun__randomUUIDv7_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallF
         break :brk @intCast(@max(0, std.time.milliTimestamp()));
     };
 
-    const entropy = globalThis.bunVM().rareData().entropySlice(8);
+    const entropy = globalThis.funVM().rareData().entropySlice(8);
 
     const uuid = UUID7.init(timestamp, &entropy[0..8].*);
 
     if (encoding == .hex) {
-        var str, var bytes = bun.String.createUninitialized(.latin1, 36);
+        var str, var bytes = fun.String.createUninitialized(.latin1, 36);
         uuid.print(bytes[0..36]);
         return str.transferToJS(globalThis);
     }
@@ -162,11 +162,11 @@ pub fn Bun__randomUUIDv7_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallF
 }
 
 comptime {
-    const Bun__randomUUIDv5 = jsc.toJSHostFn(Bun__randomUUIDv5_);
-    @export(&Bun__randomUUIDv5, .{ .name = "Bun__randomUUIDv5" });
+    const Fun__randomUUIDv5 = jsc.toJSHostFn(Fun__randomUUIDv5_);
+    @export(&Fun__randomUUIDv5, .{ .name = "Fun__randomUUIDv5" });
 }
 
-pub fn Bun__randomUUIDv5_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn Fun__randomUUIDv5_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments: []const jsc.JSValue = callframe.argumentsUndef(3).slice();
 
     if (arguments.len == 0 or arguments[0].isUndefinedOrNull()) {
@@ -194,9 +194,9 @@ pub fn Bun__randomUUIDv5_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallF
 
     const name = brk: {
         if (name_value.isString()) {
-            const name_str = try name_value.toBunString(globalThis);
+            const name_str = try name_value.toFunString(globalThis);
             defer name_str.deref();
-            const result = name_str.toUTF8(bun.default_allocator);
+            const result = name_str.toUTF8(fun.default_allocator);
 
             break :brk result;
         } else if (name_value.asArrayBuffer(globalThis)) |array_buffer| {
@@ -209,9 +209,9 @@ pub fn Bun__randomUUIDv5_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallF
 
     const namespace = brk: {
         if (namespace_value.isString()) {
-            const namespace_str = try namespace_value.toBunString(globalThis);
+            const namespace_str = try namespace_value.toFunString(globalThis);
             defer namespace_str.deref();
-            const namespace_slice = namespace_str.toUTF8(bun.default_allocator);
+            const namespace_slice = namespace_str.toUTF8(fun.default_allocator);
             defer namespace_slice.deinit();
 
             if (namespace_slice.slice().len != 36) {
@@ -240,7 +240,7 @@ pub fn Bun__randomUUIDv5_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallF
     const uuid = UUID5.init(&namespace, name.slice());
 
     if (encoding == .hex) {
-        var str, var bytes = bun.String.createUninitialized(.latin1, 36);
+        var str, var bytes = fun.String.createUninitialized(.latin1, 36);
         uuid.print(bytes[0..36]);
         return str.transferToJS(globalThis);
     }
@@ -252,25 +252,25 @@ pub fn randomUUIDWithoutTypeChecks(
     _: *Crypto,
     globalThis: *jsc.JSGlobalObject,
 ) jsc.JSValue {
-    const str, var bytes = bun.String.createUninitialized(.latin1, 36);
+    const str, var bytes = fun.String.createUninitialized(.latin1, 36);
     defer str.deref();
 
     // randomUUID must have been called already many times before this kicks
     // in so we can skip the rare_data pointer check.
-    const uuid = globalThis.bunVM().rare_data.?.nextUUID();
+    const uuid = globalThis.funVM().rare_data.?.nextUUID();
 
     uuid.print(bytes[0..36]);
     return str.toJS(globalThis);
 }
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!*Crypto {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!*Crypto {
     return jsc.Error.ILLEGAL_CONSTRUCTOR.throw(globalThis, "Crypto is not constructable", .{});
 }
 
 pub export fn CryptoObject__create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
     jsc.markBinding(@src());
 
-    var ptr = bun.default_allocator.create(Crypto) catch {
+    var ptr = fun.default_allocator.create(Crypto) catch {
         return globalThis.throwOutOfMemoryValue();
     };
 
@@ -283,6 +283,6 @@ const UUID = @import("../../jsc/uuid.zig");
 const UUID5 = @import("../../jsc/uuid.zig").UUID5;
 const UUID7 = @import("../../jsc/uuid.zig").UUID7;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const BoringSSL = fun.BoringSSL.c;

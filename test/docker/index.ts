@@ -1,4 +1,4 @@
-import { spawn } from "bun";
+import { spawn } from "fun";
 import * as net from "net";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -44,12 +44,12 @@ class DockerComposeHelper {
   constructor(options: DockerComposeOptions = {}) {
     this.projectName =
       options.projectName ||
-      process.env.BUN_DOCKER_PROJECT_NAME ||
+      process.env.FUN_DOCKER_PROJECT_NAME ||
       process.env.COMPOSE_PROJECT_NAME ||
-      "bun-test-services"; // Default project name for all test services
+      "fun-test-services"; // Default project name for all test services
 
     this.composeFile =
-      options.composeFile || process.env.BUN_DOCKER_COMPOSE_FILE || join(__dirname, "docker-compose.yml");
+      options.composeFile || process.env.FUN_DOCKER_COMPOSE_FILE || join(__dirname, "docker-compose.yml");
 
     // Verify the compose file exists
     const fs = require("fs");
@@ -217,9 +217,9 @@ class DockerComposeHelper {
 
         if (service === "postgres_auth") {
           info.users = {
-            bun_sql_test: "",
-            bun_sql_test_md5: "bun_sql_test_md5",
-            bun_sql_test_scram: "bun_sql_test_scram",
+            fun_sql_test: "",
+            fun_sql_test_md5: "fun_sql_test_md5",
+            fun_sql_test_scram: "fun_sql_test_scram",
           };
         }
         break;
@@ -288,8 +288,8 @@ class DockerComposeHelper {
       case "postgres_auth":
         env.PGHOST = info.host;
         env.PGPORT = info.ports[5432].toString();
-        env.PGUSER = "bun_sql_test";
-        env.PGDATABASE = "bun_sql_test";
+        env.PGUSER = "fun_sql_test";
+        env.PGDATABASE = "fun_sql_test";
 
         if (info.tls) {
           env.PGSSLMODE = "require";
@@ -304,8 +304,8 @@ class DockerComposeHelper {
         env.MYSQL_HOST = info.host;
         env.MYSQL_PORT = info.ports[3306].toString();
         env.MYSQL_USER = "root";
-        env.MYSQL_PASSWORD = service === "mysql_plain" ? "" : "bun";
-        env.MYSQL_DATABASE = "bun_sql_test";
+        env.MYSQL_PASSWORD = service === "mysql_plain" ? "" : "fun";
+        env.MYSQL_DATABASE = "fun_sql_test";
 
         if (info.tls) {
           env.MYSQL_SSL_CA = info.tls.ca!;
@@ -352,7 +352,7 @@ class DockerComposeHelper {
   }
 
   async down(): Promise<void> {
-    if (process.env.BUN_KEEP_DOCKER === "1") {
+    if (process.env.FUN_KEEP_DOCKER === "1") {
       return;
     }
 
@@ -369,14 +369,14 @@ class DockerComposeHelper {
 
     while (Date.now() - start < timeout) {
       try {
-        const socket = await Bun.connect({
+        const socket = await Fun.connect({
           hostname: host,
           port,
         });
         socket.end();
         return;
       } catch {
-        await Bun.sleep(500);
+        await Fun.sleep(500);
       }
     }
 
@@ -474,8 +474,8 @@ export async function withPostgres(
   const serviceName = `postgres_${variant}` as ServiceName;
   const info = await ensure(serviceName);
 
-  const user = variant === "auth" ? "bun_sql_test" : "postgres";
-  const url = `postgres://${user}@${info.host}:${info.ports[5432]}/bun_sql_test`;
+  const user = variant === "auth" ? "fun_sql_test" : "postgres";
+  const url = `postgres://${user}@${info.host}:${info.ports[5432]}/fun_sql_test`;
 
   try {
     await fn({ ...info, url });
@@ -492,8 +492,8 @@ export async function withMySQL(
   const serviceName = `mysql_${variant}` as ServiceName;
   const info = await ensure(serviceName);
 
-  const password = variant === "plain" ? "" : ":bun";
-  const url = `mysql://root${password}@${info.host}:${info.ports[3306]}/bun_sql_test`;
+  const password = variant === "plain" ? "" : ":fun";
+  const url = `mysql://root${password}@${info.host}:${info.ports[3306]}/fun_sql_test`;
 
   try {
     await fn({ ...info, url });

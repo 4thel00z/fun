@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import inspector from "node:inspector";
 
 test("inspector.url()", () => {

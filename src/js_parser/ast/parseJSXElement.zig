@@ -287,11 +287,11 @@ pub fn ParseJSXElement(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const ExprNodeIndex = js_ast.ExprNodeIndex;
@@ -304,10 +304,10 @@ const Property = G.Property;
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const JSXTag = js_parser.JSXTag;
 const JSXTransformType = js_parser.JSXTransformType;
 const TypeScript = js_parser.TypeScript;

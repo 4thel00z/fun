@@ -24,7 +24,7 @@ pub fn enable(this: *EventLoopDelayMonitor, vm: *VirtualMachine, histogram: jsc.
     this.enabled = true;
 
     // Schedule timer
-    const now = bun.timespec.now(.force_real_time);
+    const now = fun.timespec.now(.force_real_time);
     this.event_loop_timer.next = now.addMs(@intCast(resolution_ms));
     vm.timer.insert(&this.event_loop_timer);
 }
@@ -42,7 +42,7 @@ pub fn isEnabled(this: *const EventLoopDelayMonitor) bool {
     return this.enabled and this.js_histogram != jsc.JSValue.zero;
 }
 
-pub fn onFire(this: *EventLoopDelayMonitor, vm: *VirtualMachine, now: *const bun.timespec) void {
+pub fn onFire(this: *EventLoopDelayMonitor, vm: *VirtualMachine, now: *const fun.timespec) void {
     if (!this.enabled or this.js_histogram == jsc.JSValue.zero) {
         return;
     }
@@ -77,7 +77,7 @@ export fn Timer_disableEventLoopDelayMonitoring(vm: *VirtualMachine) void {
     vm.timer.event_loop_delay.disable(vm);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;

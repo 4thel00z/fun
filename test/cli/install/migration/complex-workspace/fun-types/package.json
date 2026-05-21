@@ -1,0 +1,7 @@
+{
+  "name": "fun-types",
+  "version": "1.0.0",
+  "dependencies": {
+    "fun-types": "npm:fun-types@^1.0.0"
+  }
+}

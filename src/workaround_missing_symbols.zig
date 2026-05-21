@@ -1,6 +1,6 @@
 pub const linux = struct {
 
-    // On linux, bun overrides the libc symbols for various functions.
+    // On linux, fun overrides the libc symbols for various functions.
     // This is to compensate for older glibc versions.
 
     fn simulateLibcErrno(rc: usize) c_int {
@@ -42,7 +42,7 @@ pub const linux = struct {
         return simulateLibcErrno(rc);
     }
 
-    pub const memmem = bun.c.memmem;
+    pub const memmem = fun.c.memmem;
 
     comptime {
         _ = stat;
@@ -60,21 +60,21 @@ pub const linux = struct {
     }
 };
 pub const darwin = struct {
-    pub const memmem = bun.c.memmem;
+    pub const memmem = fun.c.memmem;
 
     // The symbol name depends on the arch.
 
     pub const lstat = blk: {
-        const T = *const fn (?[*:0]const u8, ?*bun.Stat) callconv(.c) c_int;
-        break :blk @extern(T, .{ .name = if (bun.Environment.isAarch64) "lstat" else "lstat64" });
+        const T = *const fn (?[*:0]const u8, ?*fun.Stat) callconv(.c) c_int;
+        break :blk @extern(T, .{ .name = if (fun.Environment.isAarch64) "lstat" else "lstat64" });
     };
     pub const fstat = blk: {
-        const T = *const fn (i32, ?*bun.Stat) callconv(.c) c_int;
-        break :blk @extern(T, .{ .name = if (bun.Environment.isAarch64) "fstat" else "fstat64" });
+        const T = *const fn (i32, ?*fun.Stat) callconv(.c) c_int;
+        break :blk @extern(T, .{ .name = if (fun.Environment.isAarch64) "fstat" else "fstat64" });
     };
     pub const stat = blk: {
-        const T = *const fn (?[*:0]const u8, ?*bun.Stat) callconv(.c) c_int;
-        break :blk @extern(T, .{ .name = if (bun.Environment.isAarch64) "stat" else "stat64" });
+        const T = *const fn (?[*:0]const u8, ?*fun.Stat) callconv(.c) c_int;
+        break :blk @extern(T, .{ .name = if (fun.Environment.isAarch64) "stat" else "stat64" });
     };
 };
 pub const windows = struct {
@@ -115,7 +115,7 @@ pub const windows = struct {
 };
 
 pub const freebsd = struct {
-    pub const memmem = bun.c.memmem;
+    pub const memmem = fun.c.memmem;
     // FreeBSD has plain stat/fstat/lstat (no 64-suffix; off_t is always
     // 64-bit). Zig's std.c only exports darwin's `stat$INODE64`, so bind
     // them directly.
@@ -124,7 +124,7 @@ pub const freebsd = struct {
     pub extern "c" fn stat(noalias path: [*:0]const u8, noalias buf: *std.c.Stat) c_int;
 };
 
-pub const current = switch (bun.Environment.os) {
+pub const current = switch (fun.Environment.os) {
     .linux => linux,
     .windows => windows,
     .mac => darwin,
@@ -132,5 +132,5 @@ pub const current = switch (bun.Environment.os) {
     .wasm => struct {},
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

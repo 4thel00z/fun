@@ -1,4 +1,4 @@
-pub fn toHaveReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+pub fn toHaveReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
 
     const thisValue = callframe.this();
@@ -9,7 +9,7 @@ pub fn toHaveReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe:
     const expected = callframe.argumentsAsArray(1)[0];
     this.incrementExpectCallCounter();
 
-    const returns = try bun.cpp.JSMockFunction__getReturns(globalThis, value);
+    const returns = try fun.cpp.JSMockFunction__getReturns(globalThis, value);
     if (!returns.jsType().isArray()) {
         var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
         defer formatter.deinit();
@@ -19,7 +19,7 @@ pub fn toHaveReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe:
     const calls_count = @as(u32, @intCast(try returns.getLength(globalThis)));
     var pass = false;
 
-    var successful_returns = std.array_list.Managed(JSValue).init(globalThis.bunVM().allocator);
+    var successful_returns = std.array_list.Managed(JSValue).init(globalThis.funVM().allocator);
     defer successful_returns.deinit();
 
     var has_errors = false;
@@ -31,7 +31,7 @@ pub fn toHaveReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe:
         if (result.isObject()) {
             const result_type = try result.get(globalThis, "type") orelse .js_undefined;
             if (result_type.isString()) {
-                const type_str = try result_type.toBunString(globalThis);
+                const type_str = try result_type.toFunString(globalThis);
                 defer type_str.deref();
 
                 if (type_str.eqlComptime("return")) {
@@ -146,14 +146,14 @@ pub fn toHaveReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe:
 const std = @import("std");
 const DiffFormatter = @import("../diff_format.zig").DiffFormatter;
 
-const bun = @import("bun");
-const Output = bun.Output;
+const fun = @import("fun");
+const Output = fun.Output;
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
-const mock = bun.jsc.Expect.mock;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
+const mock = fun.jsc.Expect.mock;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

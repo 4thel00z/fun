@@ -130,7 +130,7 @@ static uint8_t aarch64_cpu_features()
 
 #endif
 
-extern "C" uint8_t bun_cpu_features()
+extern "C" uint8_t fun_cpu_features()
 {
 #if CPU(X86_64)
     return x86_cpu_features();

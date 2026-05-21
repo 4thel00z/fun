@@ -16,7 +16,7 @@ pub const SocketContext = @import("../uws_sys/SocketContext.zig");
 /// policy (verify mode, reneg limits) is encoded on the SSL_CTX itself via
 /// `us_ssl_ctx_from_options`, so there's no wrapper struct. `?*SslCtx` is what
 /// listen/connect/adopt take.
-pub const SslCtx = bun.BoringSSL.c.SSL_CTX;
+pub const SslCtx = fun.BoringSSL.c.SSL_CTX;
 pub const ConnectingSocket = @import("../uws_sys/ConnectingSocket.zig").ConnectingSocket;
 pub const InternalLoopData = @import("../uws_sys/InternalLoopData.zig").InternalLoopData;
 pub const WindowsNamedPipe = @import("../runtime/socket/WindowsNamedPipe.zig");
@@ -94,14 +94,14 @@ pub const LIBUS_LISTEN_REUSE_ADDR: i32 = 16;
 pub const LIBUS_LISTEN_DISALLOW_REUSE_PORT_FAILURE: i32 = 32;
 
 // TODO: refactor to error union
-pub const create_bun_socket_error_t = enum(c_int) {
+pub const create_fun_socket_error_t = enum(c_int) {
     none = 0,
     load_ca_file,
     invalid_ca_file,
     invalid_ca,
     invalid_ciphers,
 
-    pub fn message(this: create_bun_socket_error_t) ?[]const u8 {
+    pub fn message(this: create_fun_socket_error_t) ?[]const u8 {
         return switch (this) {
             .none => null,
             .load_ca_file => "Failed to load CA file",
@@ -111,10 +111,10 @@ pub const create_bun_socket_error_t = enum(c_int) {
         };
     }
 
-    pub const toJS = @import("../runtime/socket/uws_jsc.zig").createBunSocketErrorToJS;
+    pub const toJS = @import("../runtime/socket/uws_jsc.zig").createFunSocketErrorToJS;
 };
 
-pub const us_bun_verify_error_t = extern struct {
+pub const us_fun_verify_error_t = extern struct {
     error_no: i32 = 0,
     code: [*c]const u8 = null,
     reason: [*c]const u8 = null,
@@ -151,16 +151,16 @@ pub const SendStatus = enum(c_uint) {
     dropped = 2,
 };
 
-extern fn bun_clear_loop_at_thread_exit() void;
+extern fn fun_clear_loop_at_thread_exit() void;
 pub fn onThreadExit() void {
-    bun_clear_loop_at_thread_exit();
+    fun_clear_loop_at_thread_exit();
 }
 
-export fn BUN__warn__extra_ca_load_failed(filename: [*c]const u8, error_msg: [*c]const u8) void {
-    bun.Output.warn("ignoring extra certs from {s}, load failed: {s}", .{ filename, error_msg });
+export fn FUN__warn__extra_ca_load_failed(filename: [*c]const u8, error_msg: [*c]const u8) void {
+    fun.Output.warn("ignoring extra certs from {s}, load failed: {s}", .{ filename, error_msg });
 }
 
-pub const LIBUS_SOCKET_DESCRIPTOR = switch (bun.Environment.isWindows) {
+pub const LIBUS_SOCKET_DESCRIPTOR = switch (fun.Environment.isWindows) {
     true => *anyopaque,
     false => i32,
 };
@@ -170,8 +170,8 @@ const c = struct {
 };
 
 pub fn get_default_ciphers() [:0]const u8 {
-    return c.us_get_default_ciphers()[0..bun.len(c.us_get_default_ciphers()) :0];
+    return c.us_get_default_ciphers()[0..fun.len(c.us_get_default_ciphers()) :0];
 }
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

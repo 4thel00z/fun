@@ -1,8 +1,8 @@
 #pragma once
 
 // This file includes the actual V8 headers, with the namespace renamed from v8 to real_v8. To
-// minimize potential conflicts between V8 and Bun's implementation, it should only be included by
-// files from Bun's V8 implementation, and it should only be included in source files (not
+// minimize potential conflicts between V8 and Fun's implementation, it should only be included by
+// files from Fun's V8 implementation, and it should only be included in source files (not
 // header files).
 
 // Microsoft's C++ headers cause a compiler error if `private` has been redefined, like we do below.

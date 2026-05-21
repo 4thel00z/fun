@@ -1,7 +1,7 @@
 // Heuristic: you probably don't have 100 of these
 // Probably like 5-10
 // Array iteration is faster and deterministically ordered in that case.
-const PathsMap = bun.StringArrayHashMap([]string);
+const PathsMap = fun.StringArrayHashMap([]string);
 
 fn FlagSet(comptime Type: type) type {
     return std.EnumSet(std.meta.FieldEnum(Type));
@@ -10,7 +10,7 @@ fn FlagSet(comptime Type: type) type {
 const JSXFieldSet = FlagSet(options.JSX.Pragma);
 
 pub const TSConfigJSON = struct {
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     abs_path: string,
 
@@ -53,7 +53,7 @@ pub const TSConfigJSON = struct {
         remove,
         invalid,
 
-        pub const List = bun.ComptimeStringMap(ImportsNotUsedAsValue, .{
+        pub const List = fun.ComptimeStringMap(ImportsNotUsedAsValue, .{
             .{ "preserve", .preserve },
             .{ "error", .err },
             .{ "remove", .remove },
@@ -92,15 +92,15 @@ pub const TSConfigJSON = struct {
     ///
     /// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-5.html#the-configdir-template-variable-for-configuration-files
     ///
-    /// https://github.com/oven-sh/bun/issues/11752
+    /// https://github.com/underdoc-org/fun/issues/11752
     ///
     // Note that the way tsc does this is slightly different. They replace
     // "${configDir}" with "./" and then convert it to an absolute path sometimes.
     // We convert it to an absolute path during module resolution, so we shouldn't need to do that here.
     // https://github.com/microsoft/TypeScript/blob/ef802b1e4ddaf8d6e61d6005614dd796520448f8/src/compiler/commandLineParser.ts#L3243-L3245
-    fn strReplacingTemplates(allocator: std.mem.Allocator, input: string, source: *const logger.Source) bun.OOM!string {
+    fn strReplacingTemplates(allocator: std.mem.Allocator, input: string, source: *const logger.Source) fun.OOM!string {
         var remaining = input;
-        var string_builder = bun.StringBuilder{};
+        var string_builder = fun.StringBuilder{};
         const configDir = source.path.sourceDir();
 
         // There's only one template variable we support, so we can keep this simple for now.
@@ -147,7 +147,7 @@ pub const TSConfigJSON = struct {
         // behavior may also be different).
         const json: js_ast.Expr = (json_cache.parseTSConfig(log, source, allocator) catch null) orelse return null;
 
-        bun.analytics.Features.tsconfig += 1;
+        fun.analytics.Features.tsconfig += 1;
 
         var result: TSConfigJSON = TSConfigJSON{ .abs_path = source.path.text, .paths = PathsMap.init(allocator) };
         errdefer allocator.free(result.paths);
@@ -278,7 +278,7 @@ pub const TSConfigJSON = struct {
                 switch (paths_prop.expr.data) {
                     .e_object => {
                         defer {
-                            bun.analytics.Features.tsconfig_paths += 1;
+                            fun.analytics.Features.tsconfig_paths += 1;
                         }
                         var paths = paths_prop.expr.data.e_object;
                         result.base_url_for_paths = if (result.base_url.len > 0) result.base_url else ".";
@@ -415,7 +415,7 @@ pub const TSConfigJSON = struct {
         // foo.bar. == 2
         // foo == 1
         // foo.bar.baz == 3
-        // foo.bar.baz.bun == 4
+        // foo.bar.baz.fun == 4
         const parts_count = std.mem.count(u8, text, ".") + @as(usize, @intFromBool(text[text.len - 1] != '.'));
         var parts = std.array_list.Managed(string).initCapacity(allocator, parts_count) catch unreachable;
 
@@ -503,7 +503,7 @@ pub const TSConfigJSON = struct {
 
     pub fn deinit(this: *TSConfigJSON) void {
         this.paths.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
@@ -513,10 +513,10 @@ const cache = @import("../bundler/cache.zig");
 const options = @import("../bundler/options.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const js_ast = bun.ast;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const js_ast = fun.ast;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;

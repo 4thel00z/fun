@@ -1,4 +1,4 @@
-pub fn toThrow(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn toThrow(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     defer this.postMatch(globalThis);
 
     const thisValue = callFrame.this();
@@ -304,16 +304,16 @@ pub fn toThrow(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame
     return this.throw(globalThis, signature, expected_fmt, .{ expected_class, result.toFmt(&formatter) });
 }
 
-const bun = @import("bun");
-const ZigString = bun.ZigString;
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const ZigString = fun.ZigString;
+const assert = fun.assert;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
-const ExpectAny = bun.jsc.Expect.ExpectAny;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
+const ExpectAny = fun.jsc.Expect.ExpectAny;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/23133
+// https://github.com/underdoc-org/fun/issues/23133
 // Passing HookOptions to lifecycle hooks should work
-import { afterAll, afterEach, beforeAll, beforeEach, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, beforeEach, expect, test } from "fun:test";
 
 const logs: string[] = [];
 

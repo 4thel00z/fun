@@ -27,7 +27,7 @@ pub const FontWeight = union(enum) {
         return .{ .absolute = AbsoluteFontWeight.default() };
     }
 
-    pub fn isCompatible(this: *const FontWeight, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const FontWeight, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .absolute => |*a| a.isCompatible(browsers),
             .bolder, .lighter => true,
@@ -65,7 +65,7 @@ pub const AbsoluteFontWeight = union(enum) {
         };
     }
 
-    pub fn isCompatible(this: *const AbsoluteFontWeight, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const AbsoluteFontWeight, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             // Older browsers only supported 100, 200, 300, ...900 rather than arbitrary values.
             .weight => |*val| if (!((val.* >= 100.0 and val.* <= 900.0) and @mod(val.*, 100.0) == 0.0))
@@ -97,7 +97,7 @@ pub const FontSize = union(enum) {
     pub const parse = css.DeriveParse(@This()).parse;
     pub const toCss = css.DeriveToCss(@This()).toCss;
 
-    pub fn isCompatible(this: *const FontSize, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const FontSize, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .length => |*l| switch (l.*) {
                 .dimension => |*d| switch (d.*) {
@@ -149,7 +149,7 @@ pub const AbsoluteFontSize = enum {
     pub const toCss = css_impl.toCss;
     pub const deepClone = css_impl.deepClone;
 
-    pub fn isCompatible(this: *const AbsoluteFontSize, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const AbsoluteFontSize, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .@"xxx-large" => css.Feature.font_size_x_x_x_large.isCompatible(browsers),
             else => true,
@@ -202,7 +202,7 @@ pub const FontStretch = union(enum) {
         };
     }
 
-    pub fn isCompatible(this: *const FontStretch, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const FontStretch, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .percentage => css.Feature.font_stretch_percentage.isCompatible(browsers),
             .keyword => true,
@@ -312,12 +312,12 @@ pub const FontFamily = union(enum) {
         while (input.tryParse(css.Parser.expectIdent, .{}).asValue()) |ident| {
             if (string == null) {
                 string = ArrayList(u8){};
-                bun.handleOom(string.?.appendSlice(stralloc, value));
+                fun.handleOom(string.?.appendSlice(stralloc, value));
             }
 
             if (string) |*s| {
-                bun.handleOom(s.append(stralloc, ' '));
-                bun.handleOom(s.appendSlice(stralloc, ident));
+                fun.handleOom(s.append(stralloc, ' '));
+                fun.handleOom(s.appendSlice(stralloc, ident));
             }
         }
 
@@ -352,7 +352,7 @@ pub const FontFamily = union(enum) {
                         if (first) {
                             first = false;
                         } else {
-                            bun.handleOom(id.writer.writeByte(' ') catch |e| switch (e) {
+                            fun.handleOom(id.writer.writeByte(' ') catch |e| switch (e) {
                                 error.WriteFailed => error.OutOfMemory,
                             });
                         }
@@ -367,7 +367,7 @@ pub const FontFamily = union(enum) {
         }
     }
 
-    pub fn isCompatible(this: *const FontFamily, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const FontFamily, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .generic => |g| g.isCompatible(browsers),
             .family_name => true,
@@ -428,7 +428,7 @@ pub const GenericFontFamily = enum {
     pub const toCss = css_impl.toCss;
     pub const deepClone = css_impl.deepClone;
 
-    pub fn isCompatible(this: *const GenericFontFamily, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const GenericFontFamily, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .@"system-ui" => css.Feature.font_family_system_ui.isCompatible(browsers),
             .@"ui-serif", .@"ui-sans-serif", .@"ui-monospace", .@"ui-rounded" => css.Feature.extended_system_fonts.isCompatible(browsers),
@@ -457,11 +457,11 @@ pub const FontStyle = union(enum) {
             .err => |e| return .{ .err = e },
         };
         // todo_stuff.match_ignore_ascii_case
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("normal", ident)) {
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("normal", ident)) {
             return .{ .result = .normal };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("italic", ident)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("italic", ident)) {
             return .{ .result = .italic };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("oblique", ident)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("oblique", ident)) {
             const angle = input.tryParse(Angle.parse, .{}).unwrapOr(FontStyle.defaultObliqueAngle());
             return .{ .result = .{ .oblique = angle } };
         } else {
@@ -484,7 +484,7 @@ pub const FontStyle = union(enum) {
         }
     }
 
-    pub fn isCompatible(this: *const FontStyle, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const FontStyle, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .oblique => |*angle| if (!angle.eql(&FontStyle.defaultObliqueAngle()))
                 css.Feature.font_style_oblique_angle.isCompatible(browsers)
@@ -553,7 +553,7 @@ pub const FontVariantCaps = enum {
         return .{ .result = value };
     }
 
-    pub fn isCompatible(_: *const FontVariantCaps, _: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(_: *const FontVariantCaps, _: fun.css.targets.Browsers) bool {
         return true;
     }
 };
@@ -570,7 +570,7 @@ pub const LineHeight = union(enum) {
     pub const parse = css.DeriveParse(@This()).parse;
     pub const toCss = css.DeriveToCss(@This()).toCss;
 
-    pub fn isCompatible(this: *const LineHeight, browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const LineHeight, browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .length => |*l| l.isCompatible(browsers),
             .normal, .number => true,
@@ -593,7 +593,7 @@ pub const LineHeight = union(enum) {
 /// A value for the [font](https://www.w3.org/TR/css-fonts-4/#font-prop) shorthand property.
 pub const Font = struct {
     /// The font family.
-    family: bun.BabyList(FontFamily),
+    family: fun.BabyList(FontFamily),
     /// The font size.
     size: FontSize,
     /// The font style.
@@ -682,7 +682,7 @@ pub const Font = struct {
             .err => |e| return .{ .err = e },
         } else null;
 
-        const family = switch (bun.BabyList(FontFamily).parse(input)) {
+        const family = switch (fun.BabyList(FontFamily).parse(input)) {
             .result => |v| v,
             .err => |e| return .{ .err = e },
         };
@@ -820,7 +820,7 @@ pub const FontProperty = packed struct(u8) {
 };
 
 pub const FontHandler = struct {
-    family: ?bun.BabyList(FontFamily) = null,
+    family: ?fun.BabyList(FontFamily) = null,
     size: ?FontSize = null,
     style: ?FontStyle = null,
     weight: ?FontWeight = null,
@@ -853,7 +853,7 @@ pub const FontHandler = struct {
                 this.flushHelper(dest, context, "line_height", &val.line_height);
                 this.flushHelper(dest, context, "variant_caps", &val.variant_caps);
 
-                this.family = css.generic.deepClone(bun.BabyList(FontFamily), &val.family, context.allocator);
+                this.family = css.generic.deepClone(fun.BabyList(FontFamily), &val.family, context.allocator);
                 this.size = val.size.deepClone(context.allocator);
                 this.style = val.style.deepClone(context.allocator);
                 this.weight = val.weight.deepClone(context.allocator);
@@ -866,8 +866,8 @@ pub const FontHandler = struct {
             .unparsed => |*val| {
                 if (isFontProperty(val.property_id)) {
                     this.flush(dest, context);
-                    bun.bits.insert(FontProperty, &this.flushed_properties, FontProperty.tryFromPropertyId(val.property_id).?);
-                    bun.handleOom(dest.append(context.allocator, property.*));
+                    fun.bits.insert(FontProperty, &this.flushed_properties, FontProperty.tryFromPropertyId(val.property_id).?);
+                    fun.handleOom(dest.append(context.allocator, property.*));
                 } else {
                     return false;
                 }
@@ -906,14 +906,14 @@ pub const FontHandler = struct {
     }
 
     fn push(self: *FontHandler, d: *css.DeclarationList, ctx: *css.PropertyHandlerContext, comptime prop: []const u8, val: anytype) void {
-        bun.handleOom(d.append(ctx.allocator, @unionInit(css.Property, prop, val)));
+        fun.handleOom(d.append(ctx.allocator, @unionInit(css.Property, prop, val)));
         var insertion: FontProperty = .{};
         if (comptime std.mem.eql(u8, prop, "font")) {
             insertion = FontProperty.FONT;
         } else {
             @field(insertion, prop) = true;
         }
-        bun.bits.insert(FontProperty, &self.flushed_properties, insertion);
+        fun.bits.insert(FontProperty, &self.flushed_properties, insertion);
     }
 
     fn flush(this: *FontHandler, decls: *css.DeclarationList, context: *css.PropertyHandlerContext) void {
@@ -923,29 +923,29 @@ pub const FontHandler = struct {
 
         this.has_any = false;
 
-        var family: ?bun.BabyList(FontFamily) = bun.take(&this.family);
+        var family: ?fun.BabyList(FontFamily) = fun.take(&this.family);
         if (!this.flushed_properties.@"font-family") {
             family = compatibleFontFamily(context.allocator, family, !context.targets.shouldCompileSame(.font_family_system_ui));
         }
 
-        const size: ?FontSize = bun.take(&this.size);
-        const style: ?FontStyle = bun.take(&this.style);
-        const weight: ?FontWeight = bun.take(&this.weight);
-        const stretch: ?FontStretch = bun.take(&this.stretch);
-        const line_height: ?LineHeight = bun.take(&this.line_height);
-        const variant_caps: ?FontVariantCaps = bun.take(&this.variant_caps);
+        const size: ?FontSize = fun.take(&this.size);
+        const style: ?FontStyle = fun.take(&this.style);
+        const weight: ?FontWeight = fun.take(&this.weight);
+        const stretch: ?FontStretch = fun.take(&this.stretch);
+        const line_height: ?LineHeight = fun.take(&this.line_height);
+        const variant_caps: ?FontVariantCaps = fun.take(&this.variant_caps);
 
         if (family) |*f| {
             if (f.len > 1) {
                 // Dedupe
-                var sfb = std.heap.stackFallback(664, bun.default_allocator);
+                var sfb = std.heap.stackFallback(664, fun.default_allocator);
                 const alloc = sfb.get();
                 var seen = FontFamily.HashMap(void){};
                 defer seen.deinit(alloc);
 
                 var i: usize = 0;
                 while (i < f.len) {
-                    const gop = bun.handleOom(seen.getOrPut(alloc, f.at(i).*));
+                    const gop = fun.handleOom(seen.getOrPut(alloc, f.at(i).*));
                     if (gop.found_existing) {
                         _ = f.orderedRemove(i);
                     } else {
@@ -1019,7 +1019,7 @@ const DEFAULT_SYSTEM_FONTS: []const []const u8 = &.{
     "Helvetica Neue",
 };
 
-inline fn compatibleFontFamily(allocator: std.mem.Allocator, _family: ?bun.BabyList(FontFamily), is_supported: bool) ?bun.BabyList(FontFamily) {
+inline fn compatibleFontFamily(allocator: std.mem.Allocator, _family: ?fun.BabyList(FontFamily), is_supported: bool) ?fun.BabyList(FontFamily) {
     var family = _family;
     if (is_supported) {
         return family;
@@ -1029,7 +1029,7 @@ inline fn compatibleFontFamily(allocator: std.mem.Allocator, _family: ?bun.BabyL
         for (families.sliceConst(), 0..) |v, i| {
             if (v.eql(&SYSTEM_UI)) {
                 for (DEFAULT_SYSTEM_FONTS, 0..) |name, j| {
-                    bun.handleOom(families.insert(allocator, i + j + 1, .{ .family_name = name }));
+                    fun.handleOom(families.insert(allocator, i + j + 1, .{ .family_name = name }));
                 }
                 break;
             }
@@ -1054,7 +1054,7 @@ inline fn isFontProperty(property_id: css.PropertyId) bool {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

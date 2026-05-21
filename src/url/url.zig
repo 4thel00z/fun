@@ -27,10 +27,10 @@ pub const URL = struct {
     /// host + path without the ending slash, protocol, searchParams and hash
     pub fn hostWithPath(this: *const URL) []const u8 {
         if (this.host.len > 0) {
-            if (this.path.len > 1 and bun.isSliceInBuffer(this.path, this.href) and bun.isSliceInBuffer(this.host, this.href)) {
+            if (this.path.len > 1 and fun.isSliceInBuffer(this.path, this.href) and fun.isSliceInBuffer(this.host, this.href)) {
                 const end = @intFromPtr(this.path.ptr) + this.path.len;
                 const start = @intFromPtr(this.host.ptr);
-                const len: usize = end - start - (if (bun.strings.endsWithComptime(this.path, "/")) @as(usize, 1) else @as(usize, 0));
+                const len: usize = end - start - (if (fun.strings.endsWithComptime(this.path, "/")) @as(usize, 1) else @as(usize, 0));
                 const ptr: [*]u8 = @ptrFromInt(start);
                 return ptr[0..len];
             }
@@ -48,7 +48,7 @@ pub const URL = struct {
 
     pub const fromJS = @import("../url_jsc/url_jsc.zig").urlFromJS;
 
-    pub fn fromString(allocator: std.mem.Allocator, input: bun.String) !URL {
+    pub fn fromString(allocator: std.mem.Allocator, input: fun.String) !URL {
         var href = jsc.URL.hrefFromString(input);
         if (href.tag == .Dead) {
             return error.InvalidURL;
@@ -59,7 +59,7 @@ pub const URL = struct {
     }
 
     pub fn fromUTF8(allocator: std.mem.Allocator, input: []const u8) !URL {
-        return fromString(allocator, bun.String.borrowUTF8(input));
+        return fromString(allocator, fun.String.borrowUTF8(input));
     }
 
     pub fn isLocalhost(this: *const URL) bool {
@@ -110,8 +110,8 @@ pub const URL = struct {
         return href[0 .. href.len - (this.search.len + this.hash.len)];
     }
 
-    pub fn displayHost(this: *const URL) bun.fmt.HostFormatter {
-        return bun.fmt.HostFormatter{
+    pub fn displayHost(this: *const URL) fun.fmt.HostFormatter {
+        return fun.fmt.HostFormatter{
             .host = if (this.host.len > 0) this.host else this.displayHostname(),
             .port = if (this.port.len > 0) this.getPort() else null,
             .is_https = this.isHTTPS(),
@@ -135,7 +135,7 @@ pub const URL = struct {
     }
 
     pub fn isIPAddress(this: *const URL) bool {
-        return bun.strings.isIPAddress(this.hostname);
+        return fun.strings.isIPAddress(this.hostname);
     }
 
     pub fn hasValidPort(this: *const URL) bool {
@@ -186,7 +186,7 @@ pub const URL = struct {
 
         var buf_i: usize = 0;
         for (path_parts[0..path_end]) |part| {
-            bun.copy(u8, buf[buf_i..], part);
+            fun.copy(u8, buf[buf_i..], part);
             buf_i += part.len;
         }
         return resolve_path.normalizeStringBuf(buf[0..buf_i], out, false, .loose, false);
@@ -244,7 +244,7 @@ pub const URL = struct {
 
                     // if there's no protocol or @, it's ambiguous whether the colon is a port or a username.
                     if (offset > 0) {
-                        // see https://github.com/oven-sh/bun/issues/1390
+                        // see https://github.com/underdoc-org/fun/issues/1390
                         const first_at = strings.indexOfChar(base[offset..], '@') orelse 0;
                         const first_colon = strings.indexOfChar(base[offset..], ':') orelse 0;
 
@@ -386,7 +386,7 @@ pub const URL = struct {
                 '@' => {
                     // we found a password, everything before this point in the slice is a password
                     url.password = str[0..i];
-                    if (Environment.allow_assert) bun.assert(str[i..].len < 2 or std.mem.readInt(u16, str[i..][0..2], .little) != std.mem.readInt(u16, "//", .little));
+                    if (Environment.allow_assert) fun.assert(str[i..].len < 2 or std.mem.readInt(u16, str[i..][0..2], .little) != std.mem.readInt(u16, "//", .little));
                     return @intCast(i + 1);
                 },
                 // if we reach a slash or "?", there's no password
@@ -497,7 +497,7 @@ pub const QueryStringMap = struct {
     pub const Iterator = struct {
         // Assume no query string param map will exceed 2048 keys
         // Browsers typically limit URL lengths to around 64k
-        const VisitedMap = bun.bit_set.ArrayBitSet(usize, 2048);
+        const VisitedMap = fun.bit_set.ArrayBitSet(usize, 2048);
 
         i: usize = 0,
         map: *const QueryStringMap,
@@ -519,7 +519,7 @@ pub const QueryStringMap = struct {
             var slice = this.map.list.slice();
             const hash = slice.items(.name_hash)[this.i];
             const name_slice = slice.items(.name)[this.i];
-            bun.assert(name_slice.length > 0);
+            fun.assert(name_slice.length > 0);
             var result = Result{ .name = this.map.str(name_slice), .values = target[0..1] };
             target[0] = this.map.str(slice.items(.value)[this.i]);
 
@@ -535,7 +535,7 @@ pub const QueryStringMap = struct {
             while (std.mem.indexOfScalar(u64, remainder_hashes[current_i..], hash)) |next_index| {
                 const real_i = current_i + next_index + this.i;
                 if (comptime Environment.isDebug) {
-                    bun.assert(!this.visited.isSet(real_i));
+                    fun.assert(!this.visited.isSet(real_i));
                 }
 
                 this.visited.set(real_i);
@@ -557,12 +557,12 @@ pub const QueryStringMap = struct {
     }
 
     pub fn getIndex(this: *const QueryStringMap, input: string) ?usize {
-        const hash = bun.hash(input);
+        const hash = fun.hash(input);
         return std.mem.indexOfScalar(u64, this.list.items(.name_hash), hash);
     }
 
     pub fn get(this: *const QueryStringMap, input: string) ?string {
-        const hash = bun.hash(input);
+        const hash = fun.hash(input);
         const _slice = this.list.slice();
         const i = std.mem.indexOfScalar(u64, _slice.items(.name_hash), hash) orelse return null;
         return this.str(_slice.items(.value)[i]);
@@ -573,9 +573,9 @@ pub const QueryStringMap = struct {
     }
 
     pub fn getAll(this: *const QueryStringMap, input: string, target: []string) usize {
-        const hash = bun.hash(input);
+        const hash = fun.hash(input);
         const _slice = this.list.slice();
-        return @call(bun.callmod_inline, getAllWithHashFromOffset, .{ this, target, hash, 0, _slice });
+        return @call(fun.callmod_inline, getAllWithHashFromOffset, .{ this, target, hash, 0, _slice });
     }
 
     pub fn getAllWithHashFromOffset(this: *const QueryStringMap, target: []string, hash: u64, offset: usize, _slice: Param.List.Slice) usize {
@@ -603,7 +603,7 @@ pub const QueryStringMap = struct {
     pub fn initWithScanner(
         allocator: std.mem.Allocator,
         _scanner: CombinedScanner,
-    ) bun.OOM!?QueryStringMap {
+    ) fun.OOM!?QueryStringMap {
         var list = Param.List{};
         var scanner = _scanner;
 
@@ -621,7 +621,7 @@ pub const QueryStringMap = struct {
         }
 
         if (Environment.allow_assert)
-            bun.assert(count > 0); // We should not call initWithScanner when there are no path params
+            fun.assert(count > 0); // We should not call initWithScanner when there are no path params
 
         while (scanner.query.next()) |result| {
             if (result.name_needs_decoding or result.value_needs_decoding) {
@@ -653,7 +653,7 @@ pub const QueryStringMap = struct {
             try writer.writeAll(name_slice);
             buf_writer_pos += @as(u32, @truncate(name_slice.len));
 
-            const name_hash: u64 = bun.hash(name_slice);
+            const name_hash: u64 = fun.hash(name_slice);
 
             value.length = PercentEncoding.decode(Writer, writer, result.rawValue(scanner.pathname.pathname)) catch continue;
             value.offset = buf_writer_pos;
@@ -674,9 +674,9 @@ pub const QueryStringMap = struct {
                 name.length = PercentEncoding.decode(Writer, writer, scanner.query.query_string[name.offset..][0..name.length]) catch continue;
                 name.offset = buf_writer_pos;
                 buf_writer_pos += name.length;
-                name_hash = bun.hash(buf.items[name.offset..][0..name.length]);
+                name_hash = fun.hash(buf.items[name.offset..][0..name.length]);
             } else {
-                name_hash = bun.hash(result.rawName(scanner.query.query_string));
+                name_hash = fun.hash(result.rawName(scanner.query.query_string));
                 if (std.mem.indexOfScalar(u64, list_slice.items(.name_hash), name_hash)) |index| {
 
                     // query string parameters should not override route parameters
@@ -712,7 +712,7 @@ pub const QueryStringMap = struct {
     pub fn init(
         allocator: std.mem.Allocator,
         query_string: string,
-    ) bun.OOM!?QueryStringMap {
+    ) fun.OOM!?QueryStringMap {
         var list = Param.List{};
 
         var scanner = Scanner.init(query_string);
@@ -736,12 +736,12 @@ pub const QueryStringMap = struct {
         if (nothing_needs_decoding) {
             scanner = Scanner.init(query_string);
             while (scanner.next()) |result| {
-                if (Environment.allow_assert) bun.assert(!result.name_needs_decoding);
-                if (Environment.allow_assert) bun.assert(!result.value_needs_decoding);
+                if (Environment.allow_assert) fun.assert(!result.name_needs_decoding);
+                if (Environment.allow_assert) fun.assert(!result.value_needs_decoding);
 
                 const name = result.name;
                 const value = result.value;
-                const name_hash: u64 = bun.hash(result.rawName(query_string));
+                const name_hash: u64 = fun.hash(result.rawName(query_string));
                 list.appendAssumeCapacity(Param{ .name = name, .value = value, .name_hash = name_hash });
             }
 
@@ -767,9 +767,9 @@ pub const QueryStringMap = struct {
                 name.length = PercentEncoding.decode(Writer, writer, query_string[name.offset..][0..name.length]) catch continue;
                 name.offset = buf_writer_pos;
                 buf_writer_pos += name.length;
-                name_hash = bun.hash(buf.items[name.offset..][0..name.length]);
+                name_hash = fun.hash(buf.items[name.offset..][0..name.length]);
             } else {
-                name_hash = bun.hash(result.rawName(query_string));
+                name_hash = fun.hash(result.rawName(query_string));
                 if (std.mem.indexOfScalar(u64, list_slice.items(.name_hash), name_hash)) |index| {
                     name = list_slice.items(.name)[index];
                 } else {
@@ -808,7 +808,7 @@ pub const QueryStringMap = struct {
 
 pub const PercentEncoding = struct {
     pub fn decode(comptime Writer: type, writer: Writer, input: string) !u32 {
-        return @call(bun.callmod_inline, decodeFaultTolerant, .{ Writer, writer, input, null, false });
+        return @call(fun.callmod_inline, decodeFaultTolerant, .{ Writer, writer, input, null, false });
     }
 
     /// Decode percent-encoded input into allocated memory.
@@ -907,12 +907,12 @@ pub const CombinedScanner = struct {
 fn stringPointerFromStrings(parent: string, in: string) api.StringPointer {
     if (in.len == 0 or parent.len == 0) return api.StringPointer{};
 
-    if (bun.rangeOfSliceInBuffer(in, parent)) |range| {
+    if (fun.rangeOfSliceInBuffer(in, parent)) |range| {
         return api.StringPointer{ .offset = range[0], .length = range[1] };
     } else {
         if (strings.indexOf(parent, in)) |i| {
             if (comptime Environment.allow_assert) {
-                bun.assert(strings.eqlLong(parent[i..][0..in.len], in, false));
+                fun.assert(strings.eqlLong(parent[i..][0..in.len], in, false));
             }
 
             return api.StringPointer{
@@ -1077,9 +1077,9 @@ const std = @import("std");
 const ParamsList = @import("../router/router.zig").Param.List;
 const expect = std.testing.expect;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const jsc = bun.jsc;
-const strings = bun.strings;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const jsc = fun.jsc;
+const strings = fun.strings;
+const api = fun.schema.api;

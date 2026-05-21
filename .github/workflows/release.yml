@@ -5,8 +5,8 @@ name: Release
 concurrency: release
 
 env:
-  BUN_VERSION: ${{ github.event.inputs.tag || github.event.release.tag_name || 'canary' }}
-  BUN_LATEST: ${{ (github.event.inputs.is-latest || github.event.release.tag_name) && 'true' || 'false' }}
+  FUN_VERSION: ${{ github.event.inputs.tag || github.event.release.tag_name || 'canary' }}
+  FUN_LATEST: ${{ (github.event.inputs.is-latest || github.event.release.tag_name) && 'true' || 'false' }}
 
 on:
   release:
@@ -58,7 +58,7 @@ jobs:
       contents: write
     defaults:
       run:
-        working-directory: packages/bun-release
+        working-directory: packages/fun-release
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -67,15 +67,15 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: "1.2.3"
+          fun-version: "1.2.3"
       - name: Install Dependencies
-        run: bun install
+        run: fun install
       - name: Sign Release
         run: |
-          echo "$GPG_PASSPHRASE" | bun upload-assets -- "${{ env.BUN_VERSION }}"
+          echo "$GPG_PASSPHRASE" | fun upload-assets -- "${{ env.FUN_VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -88,21 +88,21 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: packages/bun-release
+        working-directory: packages/fun-release
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           # To workaround issue
           ref: main
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: "1.2.3"
+          fun-version: "1.2.3"
       - name: Install Dependencies
-        run: bun install
+        run: fun install
       - name: Release
-        run: bun upload-npm -- "${{ env.BUN_VERSION }}" publish
+        run: fun upload-npm -- "${{ env.FUN_VERSION }}" publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -115,7 +115,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: packages/bun-types
+        working-directory: packages/fun-types
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -123,44 +123,44 @@ jobs:
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: latest
-      - name: Setup Bun
-        if: ${{ env.BUN_VERSION != 'canary' }}
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        if: ${{ env.FUN_VERSION != 'canary' }}
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: "1.2.3"
-      - name: Setup Bun
-        if: ${{ env.BUN_VERSION == 'canary' }}
-        uses: ./.github/actions/setup-bun
+          fun-version: "1.2.3"
+      - name: Setup Fun
+        if: ${{ env.FUN_VERSION == 'canary' }}
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: "canary" # Must be 'canary' so tag is correct
+          fun-version: "canary" # Must be 'canary' so tag is correct
       - name: Install Dependencies
-        run: bun install
+        run: fun install
       - name: Setup Tag
-        if: ${{ env.BUN_VERSION == 'canary' }}
+        if: ${{ env.FUN_VERSION == 'canary' }}
         run: |
-          VERSION=$(bun --version)
+          VERSION=$(fun --version)
           TAG="${VERSION}-canary.$(date +'%Y%m%dT%H%M%S')"
           echo "Setup tag: ${TAG}"
           echo "TAG=${TAG}" >> ${GITHUB_ENV}
       - name: Build
-        run: bun run build
+        run: fun run build
         env:
-          BUN_VERSION: ${{ env.TAG || env.BUN_VERSION }}
+          FUN_VERSION: ${{ env.TAG || env.FUN_VERSION }}
       - name: Release (canary)
-        if: ${{ env.BUN_VERSION == 'canary' }}
+        if: ${{ env.FUN_VERSION == 'canary' }}
         uses: JS-DevTools/npm-publish@0f451a94170d1699fd50710966d48fb26194d939 # v1
         with:
-          package: packages/bun-types/package.json
+          package: packages/fun-types/package.json
           token: ${{ secrets.NPM_TOKEN }}
           tag: canary
       - name: Release (latest)
-        if: ${{ env.BUN_LATEST == 'true' }}
+        if: ${{ env.FUN_LATEST == 'true' }}
         uses: JS-DevTools/npm-publish@0f451a94170d1699fd50710966d48fb26194d939 # v1
         with:
-          package: packages/bun-types/package.json
+          package: packages/fun-types/package.json
           token: ${{ secrets.NPM_TOKEN }}
   definitelytyped:
-    name: Make pr to DefinitelyTyped to update `bun-types` version
+    name: Make pr to DefinitelyTyped to update `fun-types` version
     runs-on: ubuntu-latest
     needs: npm-types
     if: ${{ github.event_name == 'release' || github.event.inputs.use-definitelytyped == 'true' }}
@@ -171,40 +171,40 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: DefinitelyTyped/DefinitelyTyped
-      - name: Checkout (bun)
+      - name: Checkout (fun)
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          path: bun
-      - name: Setup Bun
-        uses: ./bun/.github/actions/setup-bun
+          path: fun
+      - name: Setup Fun
+        uses: ./fun/.github/actions/setup-fun
         with:
-          bun-version: "1.2.0"
-      - id: bun-version
-        run: echo "BUN_VERSION=${BUN_VERSION#bun-v}" >> "$GITHUB_OUTPUT"
-      - name: Update bun-types version in package.json
+          fun-version: "1.2.0"
+      - id: fun-version
+        run: echo "FUN_VERSION=${FUN_VERSION#fun-v}" >> "$GITHUB_OUTPUT"
+      - name: Update fun-types version in package.json
         run: |
-          bun -e '
-          const file = Bun.file("./types/bun/package.json");
+          fun -e '
+          const file = Fun.file("./types/fun/package.json");
           const json = await file.json();
-          const version = "${{ steps.bun-version.outputs.BUN_VERSION }}"; 
-          json.dependencies["bun-types"] = version;
+          const version = "${{ steps.fun-version.outputs.FUN_VERSION }}"; 
+          json.dependencies["fun-types"] = version;
           json.version = version.slice(0, version.lastIndexOf(".")) + ".9999";
           await file.write(JSON.stringify(json, null, 4) + "\n");
           '
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
-        if: ${{ env.BUN_LATEST == 'true' && env.BUN_VERSION != 'canary'}}
+        if: ${{ env.FUN_LATEST == 'true' && env.FUN_VERSION != 'canary'}}
         with:
-          token: ${{ secrets.ROBOBUN_TOKEN }}
-          add-paths: ./types/bun/package.json
-          title: "[bun] update to ${{ steps.bun-version.outputs.BUN_VERSION }}"
-          commit-message: "[bun] update to ${{ steps.bun-version.outputs.BUN_VERSION }}"
+          token: ${{ secrets.ROBOFUN_TOKEN }}
+          add-paths: ./types/fun/package.json
+          title: "[fun] update to ${{ steps.fun-version.outputs.FUN_VERSION }}"
+          commit-message: "[fun] update to ${{ steps.fun-version.outputs.FUN_VERSION }}"
           body: |
-            Update `bun-types` version to ${{ steps.bun-version.outputs.BUN_VERSION }}
+            Update `fun-types` version to ${{ steps.fun-version.outputs.FUN_VERSION }}
 
-            https://bun.com/blog/${{ env.BUN_VERSION }}
+            https://fun.dev/blog/${{ env.FUN_VERSION }}
           push-to-fork: oven-sh/DefinitelyTyped
-          branch: ${{env.BUN_VERSION}}
+          branch: ${{env.FUN_VERSION}}
   docker:
     name: Release to Dockerhub
     runs-on: ubuntu-latest
@@ -241,15 +241,15 @@ jobs:
         name: Setup Docker metadata
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
-          images: oven/bun
+          images: underdoc-org/fun
           flavor: |
             latest=false
           tags: |
-            type=raw,value=latest,enable=${{ env.BUN_LATEST == 'true' && matrix.suffix == '' }}
-            type=raw,value=${{ matrix.variant }},enable=${{ env.BUN_LATEST == 'true' }}
-            type=match,pattern=(bun-v)?(canary|\d+.\d+.\d+),group=2,value=${{ env.BUN_VERSION }},suffix=${{ matrix.suffix }}
-            type=match,pattern=(bun-v)?(canary|\d+.\d+),group=2,value=${{ env.BUN_VERSION }},suffix=${{ matrix.suffix }}
-            type=match,pattern=(bun-v)?(canary|\d+),group=2,value=${{ env.BUN_VERSION }},suffix=${{ matrix.suffix }}
+            type=raw,value=latest,enable=${{ env.FUN_LATEST == 'true' && matrix.suffix == '' }}
+            type=raw,value=${{ matrix.variant }},enable=${{ env.FUN_LATEST == 'true' }}
+            type=match,pattern=(fun-v)?(canary|\d+.\d+.\d+),group=2,value=${{ env.FUN_VERSION }},suffix=${{ matrix.suffix }}
+            type=match,pattern=(fun-v)?(canary|\d+.\d+),group=2,value=${{ env.FUN_VERSION }},suffix=${{ matrix.suffix }}
+            type=match,pattern=(fun-v)?(canary|\d+),group=2,value=${{ env.FUN_VERSION }},suffix=${{ matrix.suffix }}
       - name: Login to Docker
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -265,7 +265,7 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           build-args: |
-            BUN_VERSION=${{ env.BUN_VERSION }}
+            FUN_VERSION=${{ env.FUN_VERSION }}
   homebrew:
     name: Release to Homebrew
     runs-on: ubuntu-latest
@@ -277,8 +277,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          repository: oven-sh/homebrew-bun
-          token: ${{ secrets.ROBOBUN_TOKEN }}
+          repository: oven-sh/homebrew-fun
+          token: ${{ secrets.ROBOFUN_TOKEN }}
       - id: gpg
         name: Setup GPG
         uses: crazy-max/ghaction-import-gpg@d6f3f49f3345e29369fe57596a3ca8f94c4d2ca7 # v5
@@ -290,15 +290,15 @@ jobs:
         with:
           ruby-version: "2.6"
       - name: Update Tap
-        run: ruby scripts/release.rb "${{ env.BUN_VERSION }}"
+        run: ruby scripts/release.rb "${{ env.FUN_VERSION }}"
       - name: Commit Tap
         uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4
         with:
           commit_options: --gpg-sign=${{ steps.gpg.outputs.keyid }}
-          commit_message: Release ${{ env.BUN_VERSION }}
-          commit_user_name: robobun
-          commit_user_email: robobun@oven.sh
-          commit_author: robobun <robobun@oven.sh>
+          commit_message: Release ${{ env.FUN_VERSION }}
+          commit_user_name: robofun
+          commit_user_email: robofun@oven.sh
+          commit_author: robofun <robofun@oven.sh>
   s3:
     name: Upload to S3
     runs-on: ubuntu-latest
@@ -308,24 +308,24 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: packages/bun-release
+        working-directory: packages/fun-release
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: "1.2.0"
+          fun-version: "1.2.0"
       - name: Install Dependencies
-        run: bun install
+        run: fun install
       - name: Release
-        run: bun upload-s3 -- "${{ env.BUN_VERSION }}"
+        run: fun upload-s3 -- "${{ env.FUN_VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
           AWS_ENDPOINT: ${{ secrets.AWS_ENDPOINT }}
-          AWS_BUCKET: bun
+          AWS_BUCKET: fun
 
   notify-sentry:
     name: Notify Sentry
@@ -341,7 +341,7 @@ jobs:
         with:
           ignore_missing: true
           ignore_empty: true
-          version: ${{ env.BUN_VERSION }}
+          version: ${{ env.FUN_VERSION }}
           environment: production
 
   bump:
@@ -354,15 +354,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        if: ${{ env.BUN_LATEST == 'true' }}
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
-        if: ${{ env.BUN_LATEST == 'true' }}
+        if: ${{ env.FUN_LATEST == 'true' }}
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
+        if: ${{ env.FUN_LATEST == 'true' }}
         with:
-          bun-version: "1.2.0"
+          fun-version: "1.2.0"
       - name: Bump version
         uses: ./.github/actions/bump
-        if: ${{ env.BUN_LATEST == 'true' }}
+        if: ${{ env.FUN_LATEST == 'true' }}
         with:
-          version: ${{ env.BUN_VERSION }}
+          version: ${{ env.FUN_VERSION }}
           token: ${{ github.token }}

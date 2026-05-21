@@ -78,7 +78,7 @@ pub const BrotliDecoder = opaque {
     }
 
     pub fn errorString(c: BrotliDecoderErrorCode) callconv(.c) [:0]const u8 {
-        return bun.sliceTo(BrotliDecoderErrorString(c) orelse "", 0);
+        return fun.sliceTo(BrotliDecoderErrorString(c) orelse "", 0);
     }
 
     pub fn version() callconv(.c) u32 {
@@ -331,4 +331,4 @@ pub const BROTLI_DEFAULT_WINDOW = 22;
 pub const BROTLI_DEFAULT_MODE = BROTLI_MODE_GENERIC;
 
 const std = @import("std");
-const bun = @import("root").bun;
+const fun = @import("root").fun;

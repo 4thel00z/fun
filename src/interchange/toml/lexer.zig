@@ -1241,8 +1241,8 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const CodePoint = bun.CodePoint;
-const js_ast = bun.ast;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const CodePoint = fun.CodePoint;
+const js_ast = fun.ast;
+const logger = fun.logger;
+const strings = fun.strings;

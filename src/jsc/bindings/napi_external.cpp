@@ -1,7 +1,7 @@
 #include "napi_external.h"
 #include "napi.h"
 
-namespace Bun {
+namespace Fun {
 
 NapiExternal::~NapiExternal()
 {

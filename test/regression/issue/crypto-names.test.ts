@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import crypto from "crypto";
 
 test("getHashes", () => {
@@ -57,15 +57,15 @@ test("getHashes", () => {
     "ssl3-sha1",
   ];
 
-  const bunHashes = crypto.getHashes();
+  const funHashes = crypto.getHashes();
 
-  for (const bunHash of bunHashes) {
+  for (const funHash of funHashes) {
     try {
-      expect(nodeHashes).toContain(bunHash);
+      expect(nodeHashes).toContain(funHash);
     } catch {
-      console.log("bun only hash:", bunHash);
-      expect(nodeHashes).not.toInclude(bunHash.toLowerCase());
-      expect(nodeHashes).not.toInclude(bunHash.toUpperCase());
+      console.log("fun only hash:", funHash);
+      expect(nodeHashes).not.toInclude(funHash.toLowerCase());
+      expect(nodeHashes).not.toInclude(funHash.toUpperCase());
     }
   }
 });
@@ -157,9 +157,9 @@ test("getCurves", () => {
   ];
 
   // we should only have a subset of supported node curves
-  const bunCurves = crypto.getCurves();
-  for (const bunCurve of bunCurves) {
-    expect(nodeCurves).toContain(bunCurve);
+  const funCurves = crypto.getCurves();
+  for (const funCurve of funCurves) {
+    expect(nodeCurves).toContain(funCurve);
   }
 });
 
@@ -297,14 +297,14 @@ test("getCiphers", () => {
     "sm4-ofb",
   ];
 
-  const bunCiphers = crypto.getCiphers();
-  for (const bunCipher of bunCiphers) {
+  const funCiphers = crypto.getCiphers();
+  for (const funCipher of funCiphers) {
     try {
-      expect(nodeCiphers).toContain(bunCipher);
+      expect(nodeCiphers).toContain(funCipher);
     } catch {
-      console.log("bun only cipher:", bunCipher);
-      expect(nodeCiphers).not.toContain(bunCipher.toLowerCase());
-      expect(nodeCiphers).not.toContain(bunCipher.toUpperCase());
+      console.log("fun only cipher:", funCipher);
+      expect(nodeCiphers).not.toContain(funCipher.toLowerCase());
+      expect(nodeCiphers).not.toContain(funCipher.toUpperCase());
     }
   }
 });

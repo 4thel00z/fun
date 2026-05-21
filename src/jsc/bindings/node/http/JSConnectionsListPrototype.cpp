@@ -4,7 +4,7 @@
 #include "JSDOMExceptionHandling.h"
 #include "uv.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -120,4 +120,4 @@ JSC_DEFINE_HOST_FUNCTION(jsConnectionsList_expired, (JSGlobalObject * globalObje
     return JSValue::encode(result);
 }
 
-} // namespace Bun
+} // namespace Fun

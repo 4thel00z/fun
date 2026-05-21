@@ -1,7 +1,7 @@
 /*
  * The buffer module from node.js, for the browser.
  *
- * Modified to an ES module for usage in Bun. Additional changes were made to
+ * Modified to an ES module for usage in Fun. Additional changes were made to
  * add many pure annotations, and support newer node features, such as
  * re-exporting Blob and file.
  *

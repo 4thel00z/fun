@@ -1,30 +1,30 @@
 ---
 title: YAML
-description: Use Bun's built-in support for YAML files through both runtime APIs and bundler integration
+description: Use Fun's built-in support for YAML files through both runtime APIs and bundler integration
 ---
 
-In Bun, YAML is a first-class citizen alongside JSON and TOML. You can:
+In Fun, YAML is a first-class citizen alongside JSON and TOML. You can:
 
-- Parse YAML strings with `Bun.YAML.parse`
+- Parse YAML strings with `Fun.YAML.parse`
 - `import` & `require` YAML files as modules at runtime (including hot reloading & watch mode support)
-- `import` & `require` YAML files in frontend apps via bun's bundler
+- `import` & `require` YAML files in frontend apps via fun's bundler
 
 ---
 
 ## Conformance
 
-Bun's YAML parser currently passes over 90% of the official YAML test suite. While we're actively working on reaching 100% conformance, the current implementation covers the vast majority of real-world use cases. The parser is written in Zig for optimal performance and is continuously being improved.
+Fun's YAML parser currently passes over 90% of the official YAML test suite. While we're actively working on reaching 100% conformance, the current implementation covers the vast majority of real-world use cases. The parser is written in Zig for optimal performance and is continuously being improved.
 
 ---
 
 ## Runtime API
 
-### `Bun.YAML.parse()`
+### `Fun.YAML.parse()`
 
 Parse a YAML string into a JavaScript object.
 
 ```ts
-import { YAML } from "bun";
+import { YAML } from "fun";
 const text = `
 name: John Doe
 age: 30
@@ -47,7 +47,7 @@ console.log(data);
 
 #### Multi-document YAML
 
-When parsing YAML with multiple documents (separated by `---`), `Bun.YAML.parse()` returns an array:
+When parsing YAML with multiple documents (separated by `---`), `Fun.YAML.parse()` returns an array:
 
 ```ts
 const multiDoc = `
@@ -59,7 +59,7 @@ name: Document 2
 name: Document 3
 `;
 
-const docs = Bun.YAML.parse(multiDoc);
+const docs = Fun.YAML.parse(multiDoc);
 console.log(docs);
 // [
 //   { name: "Document 1" },
@@ -70,7 +70,7 @@ console.log(docs);
 
 #### Supported YAML Features
 
-Bun's YAML parser supports the full YAML 1.2 specification, including:
+Fun's YAML parser supports the full YAML 1.2 specification, including:
 
 - **Scalars**: strings, numbers, booleans, null values
 - **Collections**: sequences (arrays) and mappings (objects)
@@ -106,16 +106,16 @@ summary: >
   unless there are blank lines.
 `;
 
-const data = Bun.YAML.parse(yaml);
+const data = Fun.YAML.parse(yaml);
 ```
 
 #### Error Handling
 
-`Bun.YAML.parse()` throws a `SyntaxError` if the YAML is invalid:
+`Fun.YAML.parse()` throws a `SyntaxError` if the YAML is invalid:
 
 ```ts
 try {
-  Bun.YAML.parse("invalid: yaml: content:");
+  Fun.YAML.parse("invalid: yaml: content:");
 } catch (error) {
   console.error("Failed to parse YAML:", error.message);
 }
@@ -197,7 +197,7 @@ console.log(database.port); // 5432
 
 ## Hot Reloading with YAML
 
-One of the most powerful features of Bun's YAML support is hot reloading. When you run your application with `bun --hot`, changes to YAML files are automatically detected and reloaded without closing connections
+One of the most powerful features of Fun's YAML support is hot reloading. When you run your application with `fun --hot`, changes to YAML files are automatically detected and reloaded without closing connections
 
 ### Configuration Hot Reloading
 
@@ -221,7 +221,7 @@ if (features.debug) {
 }
 
 // Your server code here
-Bun.serve({
+Fun.serve({
   port: server.port,
   hostname: server.host,
   fetch(req) {
@@ -236,7 +236,7 @@ Bun.serve({
 Run with hot reloading:
 
 ```bash terminal icon="terminal"
-bun --hot server.ts
+fun --hot server.ts
 ```
 
 Now when you modify `config.yaml`, the changes are immediately reflected in your running application. This is perfect for:
@@ -437,10 +437,10 @@ if (parseConfig(migrations).autoRun === "true") {
 
 ### Bundler Integration
 
-When you import YAML files in your application and bundle it with Bun, the YAML is parsed at build time and included as a JavaScript module:
+When you import YAML files in your application and bundle it with Fun, the YAML is parsed at build time and included as a JavaScript module:
 
 ```bash terminal icon="terminal"
-bun build app.ts --outdir=dist
+fun build app.ts --outdir=dist
 ```
 
 This means:

@@ -7,7 +7,7 @@
 #include <wtf/text/WTFString.h>
 #include <wtf/NeverDestroyed.h>
 
-namespace Bun {
+namespace Fun {
 namespace Secrets {
 
 using namespace WTF;
@@ -239,11 +239,11 @@ static LibsecretFramework* libsecretFramework()
     return framework->secret_handle ? &framework.get() : nullptr;
 }
 
-// Define our simple schema for Bun secrets
-static const SecretSchema* get_bun_schema()
+// Define our simple schema for Fun secrets
+static const SecretSchema* get_fun_schema()
 {
     static const SecretSchema schema = {
-        "com.oven-sh.bun.Secret",
+        "com.oven-sh.fun.Secret",
         SECRET_SCHEMA_NONE,
         { { "service", SECRET_SCHEMA_ATTRIBUTE_STRING },
             { "account", SECRET_SCHEMA_ATTRIBUTE_STRING },
@@ -297,7 +297,7 @@ Error setPassword(const CString& service, const CString& name, CString&& passwor
     auto labelUtf8 = label.utf8();
 
     gboolean result = framework->secret_password_store_sync(
-        get_bun_schema(),
+        get_fun_schema(),
         nullptr, // Let libsecret handle collection creation automatically
         labelUtf8.data(),
         password.data(),
@@ -333,7 +333,7 @@ std::optional<WTF::Vector<uint8_t>> getPassword(const CString& service, const CS
     GError* gerror = nullptr;
 
     gchar* raw_password = framework->secret_password_lookup_sync(
-        get_bun_schema(),
+        get_fun_schema(),
         nullptr, // cancellable
         &gerror,
         "service", service.data(),
@@ -377,7 +377,7 @@ bool deletePassword(const CString& service, const CString& name, Error& err)
     GError* gerror = nullptr;
 
     gboolean result = framework->secret_password_clear_sync(
-        get_bun_schema(),
+        get_fun_schema(),
         nullptr, // cancellable
         &gerror,
         "service", service.data(),
@@ -400,6 +400,6 @@ bool deletePassword(const CString& service, const CString& name, Error& err)
 }
 
 } // namespace Secrets
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(LINUX) || OS(FREEBSD)

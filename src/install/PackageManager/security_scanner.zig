@@ -47,8 +47,8 @@ pub const SecurityScanResults = struct {
 
 pub fn doPartialInstallOfSecurityScanner(
     manager: *PackageManager,
-    ctx: bun.cli.Command.Context,
-    log_level: bun.install.PackageManager.Options.LogLevel,
+    ctx: fun.cli.Command.Context,
+    log_level: fun.install.PackageManager.Options.LogLevel,
     security_scanner_pkg_id: PackageID,
     original_cwd: []const u8,
 ) !void {
@@ -87,8 +87,8 @@ pub fn doPartialInstallOfSecurityScanner(
         ),
     };
 
-    if (bun.Environment.isDebug) {
-        bun.Output.debugWarn("Partial install summary - success: {d}, fail: {d}, skipped: {d}", .{ summary.success, summary.fail, summary.skipped });
+    if (fun.Environment.isDebug) {
+        fun.Output.debugWarn("Partial install summary - success: {d}, fail: {d}, skipped: {d}", .{ summary.success, summary.fail, summary.skipped });
     }
 
     if (summary.fail > 0) {
@@ -159,7 +159,7 @@ const ScannerFinder = struct {
     }
 };
 
-pub fn performSecurityScanAfterResolution(manager: *PackageManager, command_ctx: bun.cli.Command.Context, original_cwd: []const u8) !?SecurityScanResults {
+pub fn performSecurityScanAfterResolution(manager: *PackageManager, command_ctx: fun.cli.Command.Context, original_cwd: []const u8) !?SecurityScanResults {
     const security_scanner = manager.options.security_scanner orelse return null;
 
     if (manager.options.dry_run or !manager.options.do.install_packages) return null;
@@ -187,7 +187,7 @@ pub fn performSecurityScanAfterResolution(manager: *PackageManager, command_ctx:
     }
 }
 
-pub fn performSecurityScanForAll(manager: *PackageManager, command_ctx: bun.cli.Command.Context, original_cwd: []const u8) !?SecurityScanResults {
+pub fn performSecurityScanForAll(manager: *PackageManager, command_ctx: fun.cli.Command.Context, original_cwd: []const u8) !?SecurityScanResults {
     const security_scanner = manager.options.security_scanner orelse return null;
 
     const result = try attemptSecurityScan(manager, security_scanner, true, command_ctx, original_cwd);
@@ -337,7 +337,7 @@ pub fn promptForWarnings() bool {
 const PackageCollector = struct {
     manager: *PackageManager,
     dedupe: std.AutoArrayHashMap(PackageID, void),
-    queue: bun.LinearFifo(QueueItem, .Dynamic),
+    queue: fun.LinearFifo(QueueItem, .Dynamic),
     package_paths: std.AutoArrayHashMap(PackageID, PackagePath),
 
     const QueueItem = struct {
@@ -350,8 +350,8 @@ const PackageCollector = struct {
     pub fn init(manager: *PackageManager) PackageCollector {
         return .{
             .manager = manager,
-            .dedupe = std.AutoArrayHashMap(PackageID, void).init(bun.default_allocator),
-            .queue = bun.LinearFifo(QueueItem, .Dynamic).init(bun.default_allocator),
+            .dedupe = std.AutoArrayHashMap(PackageID, void).init(fun.default_allocator),
+            .queue = fun.LinearFifo(QueueItem, .Dynamic).init(fun.default_allocator),
             .package_paths = std.AutoArrayHashMap(PackageID, PackagePath).init(manager.allocator),
         };
     }
@@ -583,10 +583,10 @@ const JSONBuilder = struct {
                     \\    "tarball": {f}
                     \\  }}
                 , .{
-                    bun.fmt.formatJSONStringUTF8(pkg_name.slice(string_buf), .{}),
+                    fun.fmt.formatJSONStringUTF8(pkg_name.slice(string_buf), .{}),
                     pkg_res.value.npm.version.fmt(string_buf),
                     pkg_res.value.npm.version.fmt(string_buf),
-                    bun.fmt.formatJSONStringUTF8(pkg_res.value.npm.url.slice(string_buf), .{}),
+                    fun.fmt.formatJSONStringUTF8(pkg_res.value.npm.url.slice(string_buf), .{}),
                 });
             } else {
                 const dep_version = this.manager.lockfile.buffers.dependencies.items[dep_id].version;
@@ -598,10 +598,10 @@ const JSONBuilder = struct {
                     \\    "tarball": {f}
                     \\  }}
                 , .{
-                    bun.fmt.formatJSONStringUTF8(pkg_name.slice(string_buf), .{}),
+                    fun.fmt.formatJSONStringUTF8(pkg_name.slice(string_buf), .{}),
                     pkg_res.value.npm.version.fmt(string_buf),
-                    bun.fmt.formatJSONStringUTF8(dep_version.literal.slice(string_buf), .{}),
-                    bun.fmt.formatJSONStringUTF8(pkg_res.value.npm.url.slice(string_buf), .{}),
+                    fun.fmt.formatJSONStringUTF8(dep_version.literal.slice(string_buf), .{}),
+                    fun.fmt.formatJSONStringUTF8(pkg_res.value.npm.url.slice(string_buf), .{}),
                 });
             }
 
@@ -618,11 +618,11 @@ const JSONBuilder = struct {
 // scanner-entry.d.ts is NOT included in the build (type definitions only)
 const scanner_entry_source = @embedFile("./scanner-entry.ts");
 
-fn attemptSecurityScan(manager: *PackageManager, security_scanner: []const u8, scan_all: bool, command_ctx: bun.cli.Command.Context, original_cwd: []const u8) !ScanAttemptResult {
+fn attemptSecurityScan(manager: *PackageManager, security_scanner: []const u8, scan_all: bool, command_ctx: fun.cli.Command.Context, original_cwd: []const u8) !ScanAttemptResult {
     return attemptSecurityScanWithRetry(manager, security_scanner, scan_all, command_ctx, original_cwd, false);
 }
 
-fn attemptSecurityScanWithRetry(manager: *PackageManager, security_scanner: []const u8, scan_all: bool, command_ctx: bun.cli.Command.Context, original_cwd: []const u8, is_retry: bool) !ScanAttemptResult {
+fn attemptSecurityScanWithRetry(manager: *PackageManager, security_scanner: []const u8, scan_all: bool, command_ctx: fun.cli.Command.Context, original_cwd: []const u8, is_retry: bool) !ScanAttemptResult {
     if (manager.options.log_level == .verbose) {
         Output.prettyErrorln("<d>[SecurityProvider]<r> Running at '{s}'", .{security_scanner});
         Output.prettyErrorln("<d>[SecurityProvider]<r> top_level_dir: '{s}'", .{FileSystem.instance.top_level_dir});
@@ -692,7 +692,7 @@ fn attemptSecurityScanWithRetry(manager: *PackageManager, security_scanner: []co
             p.detach();
             p.deref();
         }
-        bun.destroy(scanner);
+        fun.destroy(scanner);
     }
 
     try scanner.spawn();
@@ -715,17 +715,17 @@ pub const SecurityScanSubprocess = struct {
     manager: *PackageManager,
     code: []const u8,
     json_data: []const u8,
-    process: ?*bun.spawn.Process = null,
-    ipc_reader: bun.io.BufferedReader = bun.io.BufferedReader.init(@This()),
+    process: ?*fun.spawn.Process = null,
+    ipc_reader: fun.io.BufferedReader = fun.io.BufferedReader.init(@This()),
     ipc_data: std.ArrayList(u8),
     stderr_data: std.ArrayList(u8),
     has_process_exited: bool = false,
     has_received_ipc: bool = false,
-    exit_status: ?bun.spawn.Status = null,
+    exit_status: ?fun.spawn.Status = null,
     remaining_fds: i8 = 0,
     json_writer: ?*StaticPipeWriter = null,
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
     pub const StaticPipeWriter = jsc.Subprocess.NewStaticPipeWriter(@This());
 
     pub fn spawn(this: *SecurityScanSubprocess) !void {
@@ -741,13 +741,13 @@ pub const SecurityScanSubprocess = struct {
         // command-line length limits (>1MB), and we can't use stdin because scanners
         // may need stdin for their own setup (e.g. interactive prompts).
 
-        // fd 3 output pipe: bun.sys.pipe() + .pipe (inherit_fd) on both platforms.
-        const ipc_output_fds = switch (bun.sys.pipe()) {
+        // fd 3 output pipe: fun.sys.pipe() + .pipe (inherit_fd) on both platforms.
+        const ipc_output_fds = switch (fun.sys.pipe()) {
             .err => return error.IPCPipeFailed,
             .result => |fds| fds,
         };
 
-        const exec_path = try bun.selfExePath();
+        const exec_path = try fun.selfExePath();
 
         var argv = [_]?[*:0]const u8{
             try this.manager.allocator.dupeZ(u8, exec_path),
@@ -757,8 +757,8 @@ pub const SecurityScanSubprocess = struct {
             null,
         };
         defer {
-            this.manager.allocator.free(bun.span(argv[0].?));
-            this.manager.allocator.free(bun.span(argv[3].?));
+            this.manager.allocator.free(fun.span(argv[0].?));
+            this.manager.allocator.free(fun.span(argv[3].?));
         }
 
         if (comptime Environment.isWindows) {
@@ -772,13 +772,13 @@ pub const SecurityScanSubprocess = struct {
     /// spawn machinery. The child's end is dup'd to fd 4 and closed in the
     /// parent by spawn's to_close_at_end list (process.zig:1460). The parent's
     /// end comes back via spawned.extra_pipes.
-    fn spawnPosix(this: *SecurityScanSubprocess, argv: *[5]?[*:0]const u8, ipc_output_fds: [2]bun.FD) !void {
-        const extra_fds = [_]bun.spawn.SpawnOptions.Stdio{
+    fn spawnPosix(this: *SecurityScanSubprocess, argv: *[5]?[*:0]const u8, ipc_output_fds: [2]fun.FD) !void {
+        const extra_fds = [_]fun.spawn.SpawnOptions.Stdio{
             .{ .pipe = ipc_output_fds[1] }, // fd 3: child inherits write end
             .buffer, // fd 4: socketpair, parent's end in extra_pipes
         };
 
-        const spawn_options = bun.spawn.SpawnOptions{
+        const spawn_options = fun.spawn.SpawnOptions{
             .stdout = .inherit,
             .stderr = .inherit,
             .stdin = .inherit,
@@ -786,12 +786,12 @@ pub const SecurityScanSubprocess = struct {
             .extra_fds = &extra_fds,
         };
 
-        var spawned = try (try bun.spawn.spawnProcess(&spawn_options, @ptrCast(argv), @ptrCast(std.os.environ.ptr))).unwrap();
+        var spawned = try (try fun.spawn.spawnProcess(&spawn_options, @ptrCast(argv), @ptrCast(std.os.environ.ptr))).unwrap();
         defer spawned.extra_pipes.deinit();
 
         ipc_output_fds[1].close();
 
-        _ = bun.sys.setNonblocking(ipc_output_fds[0]);
+        _ = fun.sys.setNonblocking(ipc_output_fds[0]);
         this.ipc_reader.flags.nonblocking = true;
         this.ipc_reader.flags.socket = false;
 
@@ -804,37 +804,37 @@ pub const SecurityScanSubprocess = struct {
     /// parent's write end is overlapped. Child inherits the non-overlapped read
     /// end via .pipe (inherit_fd); parent wraps the overlapped write end in a
     /// uv.Pipe for IOCP-based async writes.
-    fn spawnWindows(this: *SecurityScanSubprocess, argv: *[5]?[*:0]const u8, ipc_output_fds: [2]bun.FD) !void {
-        const uv = bun.windows.libuv;
+    fn spawnWindows(this: *SecurityScanSubprocess, argv: *[5]?[*:0]const u8, ipc_output_fds: [2]fun.FD) !void {
+        const uv = fun.windows.libuv;
 
         var json_fds: [2]uv.uv_file = undefined;
         if (uv.uv_pipe(&json_fds, 0, uv.UV_NONBLOCK_PIPE).errEnum()) |e| {
             ipc_output_fds[0].close();
             ipc_output_fds[1].close();
-            return bun.errnoToZigErr(e);
+            return fun.errnoToZigErr(e);
         }
         // Track ownership with optionals: null means the fd has been transferred
         // or closed, so the errdefer skips it. Prevents double-close on error paths
         // after pipe.open() takes ownership or after the explicit closes below.
-        var child_read_fd: ?bun.FD = bun.FD.fromUV(json_fds[0]);
-        var parent_write_fd: ?bun.FD = bun.FD.fromUV(json_fds[1]);
+        var child_read_fd: ?fun.FD = fun.FD.fromUV(json_fds[0]);
+        var parent_write_fd: ?fun.FD = fun.FD.fromUV(json_fds[1]);
         errdefer {
             if (child_read_fd) |fd| fd.close();
             if (parent_write_fd) |fd| fd.close();
         }
 
-        const pipe = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
+        const pipe = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
         errdefer pipe.closeAndDestroy();
         try pipe.init(this.loop(), false).unwrap();
         try pipe.open(parent_write_fd.?).unwrap();
         parent_write_fd = null; // pipe owns it now
 
-        const extra_fds = [_]bun.spawn.SpawnOptions.Stdio{
+        const extra_fds = [_]fun.spawn.SpawnOptions.Stdio{
             .{ .pipe = ipc_output_fds[1] }, // fd 3: child inherits write end
             .{ .pipe = child_read_fd.? }, // fd 4: child inherits non-overlapped read end
         };
 
-        const spawn_options = bun.spawn.SpawnOptions{
+        const spawn_options = fun.spawn.SpawnOptions{
             .stdout = .inherit,
             .stderr = .inherit,
             .stdin = .inherit,
@@ -845,7 +845,7 @@ pub const SecurityScanSubprocess = struct {
             },
         };
 
-        var spawned = try (try bun.spawn.spawnProcess(&spawn_options, @ptrCast(argv), @ptrCast(std.os.environ.ptr))).unwrap();
+        var spawned = try (try fun.spawn.spawnProcess(&spawn_options, @ptrCast(argv), @ptrCast(std.os.environ.ptr))).unwrap();
         defer spawned.extra_pipes.deinit();
 
         ipc_output_fds[1].close();
@@ -862,7 +862,7 @@ pub const SecurityScanSubprocess = struct {
     fn finishSpawn(
         this: *SecurityScanSubprocess,
         spawned: anytype,
-        ipc_read_fd: bun.FD,
+        ipc_read_fd: fun.FD,
         json_stdio_result: jsc.Subprocess.StdioResult,
     ) !void {
         // Allocate the blob copy before registering any event loop callbacks. If
@@ -921,8 +921,8 @@ pub const SecurityScanSubprocess = struct {
         return &this.manager.event_loop;
     }
 
-    pub fn loop(this: *const SecurityScanSubprocess) *bun.Async.Loop {
-        if (comptime bun.Environment.isWindows) {
+    pub fn loop(this: *const SecurityScanSubprocess) *fun.Async.Loop {
+        if (comptime fun.Environment.isWindows) {
             return this.manager.event_loop.loop().uv_loop;
         }
         return this.manager.event_loop.loop();
@@ -933,32 +933,32 @@ pub const SecurityScanSubprocess = struct {
         this.remaining_fds -= 1;
     }
 
-    pub fn onReaderError(this: *SecurityScanSubprocess, err: bun.sys.Error) void {
+    pub fn onReaderError(this: *SecurityScanSubprocess, err: fun.sys.Error) void {
         Output.errGeneric("Failed to read security scanner IPC: {f}", .{err});
         this.has_received_ipc = true;
         this.remaining_fds -= 1;
     }
 
     pub fn onStderrChunk(this: *SecurityScanSubprocess, chunk: []const u8) void {
-        bun.handleOom(this.stderr_data.appendSlice(this.manager.allocator, chunk));
+        fun.handleOom(this.stderr_data.appendSlice(this.manager.allocator, chunk));
     }
 
     pub fn getReadBuffer(this: *SecurityScanSubprocess) []u8 {
         const available = this.ipc_data.unusedCapacitySlice();
         if (available.len < 4096) {
-            bun.handleOom(this.ipc_data.ensureTotalCapacity(this.manager.allocator, this.ipc_data.capacity + 4096));
+            fun.handleOom(this.ipc_data.ensureTotalCapacity(this.manager.allocator, this.ipc_data.capacity + 4096));
             return this.ipc_data.unusedCapacitySlice();
         }
         return available;
     }
 
-    pub fn onReadChunk(this: *SecurityScanSubprocess, chunk: []const u8, hasMore: bun.io.ReadState) bool {
+    pub fn onReadChunk(this: *SecurityScanSubprocess, chunk: []const u8, hasMore: fun.io.ReadState) bool {
         _ = hasMore;
-        bun.handleOom(this.ipc_data.appendSlice(this.manager.allocator, chunk));
+        fun.handleOom(this.ipc_data.appendSlice(this.manager.allocator, chunk));
         return true;
     }
 
-    pub fn onProcessExit(this: *SecurityScanSubprocess, _: *bun.spawn.Process, status: bun.spawn.Status, _: *const bun.spawn.Rusage) void {
+    pub fn onProcessExit(this: *SecurityScanSubprocess, _: *fun.spawn.Process, status: fun.spawn.Status, _: *const fun.spawn.Rusage) void {
         this.has_process_exited = true;
         this.exit_status = status;
 
@@ -968,7 +968,7 @@ pub const SecurityScanSubprocess = struct {
         }
     }
 
-    pub fn handleResults(this: *SecurityScanSubprocess, package_paths: *std.AutoArrayHashMap(PackageID, PackagePath), start_time: i64, packages_scanned: usize, security_scanner: []const u8, security_scanner_pkg_id: ?PackageID, command_ctx: bun.cli.Command.Context, original_cwd: []const u8, is_retry: bool) !ScanAttemptResult {
+    pub fn handleResults(this: *SecurityScanSubprocess, package_paths: *std.AutoArrayHashMap(PackageID, PackagePath), start_time: i64, packages_scanned: usize, security_scanner: []const u8, security_scanner_pkg_id: ?PackageID, command_ctx: fun.cli.Command.Context, original_cwd: []const u8, is_retry: bool) !ScanAttemptResult {
         _ = command_ctx; // Reserved for future use
         _ = original_cwd; // Reserved for future use
         defer {
@@ -977,7 +977,7 @@ pub const SecurityScanSubprocess = struct {
         }
 
         if (this.exit_status == null) {
-            Output.errGeneric("Security scanner terminated without an exit status. This is a bug in Bun.", .{});
+            Output.errGeneric("Security scanner terminated without an exit status. This is a bug in Fun.", .{});
             return error.SecurityScannerProcessFailedWithoutExitStatus;
         }
 
@@ -1000,13 +1000,13 @@ pub const SecurityScanSubprocess = struct {
 
         const json_source = logger.Source{
             .contents = this.ipc_data.items,
-            .path = bun.fs.Path.init("ipc-message.json"),
+            .path = fun.fs.Path.init("ipc-message.json"),
         };
 
         var temp_log = logger.Log.init(this.manager.allocator);
         defer temp_log.deinit();
 
-        const json_expr = bun.json.parseUTF8(&json_source, &temp_log, this.manager.allocator) catch |err| {
+        const json_expr = fun.json.parseUTF8(&json_source, &temp_log, this.manager.allocator) catch |err| {
             Output.errGeneric("Security scanner sent invalid JSON: {s}", .{@errorName(err)});
             if (this.ipc_data.items.len < 1000) {
                 Output.errGeneric("Response: {s}", .{this.ipc_data.items});
@@ -1056,7 +1056,7 @@ pub const SecurityScanSubprocess = struct {
                     // The scanner might have been installed but the lockfile wasn't updated
                     if (is_retry) {
                         // Check if the scanner is an npm package name (not a file path)
-                        const is_package_name = bun.resolver.isPackagePath(security_scanner);
+                        const is_package_name = fun.resolver.isPackagePath(security_scanner);
 
                         if (is_package_name) {
                             // For npm packages, after install they should be resolvable
@@ -1065,7 +1065,7 @@ pub const SecurityScanSubprocess = struct {
                             return error.SecurityScannerNotFound;
                         } else {
                             // For local files, the error is expected - they can't be installed
-                            Output.errGeneric("Security scanner '{s}' is configured in bunfig.toml but the file could not be found.\n  <d>Please check that the file exists and the path is correct.<r>", .{security_scanner});
+                            Output.errGeneric("Security scanner '{s}' is configured in funfig.toml but the file could not be found.\n  <d>Please check that the file exists and the path is correct.<r>", .{security_scanner});
                             return error.SecurityScannerNotFound;
                         }
                     }
@@ -1075,12 +1075,12 @@ pub const SecurityScanSubprocess = struct {
                         return ScanAttemptResult{ .needs_install = pkg_id };
                     } else {
                         // No package ID means it's not in dependencies
-                        const is_package_name = bun.resolver.isPackagePath(security_scanner);
+                        const is_package_name = fun.resolver.isPackagePath(security_scanner);
 
                         if (is_package_name) {
-                            Output.errGeneric("Security scanner '{s}' is configured in bunfig.toml but is not installed.\n  <d>To install it, run: bun add --dev {s}<r>", .{ security_scanner, security_scanner });
+                            Output.errGeneric("Security scanner '{s}' is configured in funfig.toml but is not installed.\n  <d>To install it, run: fun add --dev {s}<r>", .{ security_scanner, security_scanner });
                         } else {
-                            Output.errGeneric("Security scanner '{s}' is configured in bunfig.toml but the file could not be found.\n  <d>Please check that the file exists and the path is correct.<r>", .{security_scanner});
+                            Output.errGeneric("Security scanner '{s}' is configured in funfig.toml but the file could not be found.\n  <d>Please check that the file exists and the path is correct.<r>", .{security_scanner});
                         }
                         return error.SecurityScannerNotInDependencies;
                     }
@@ -1182,7 +1182,7 @@ pub const SecurityScanSubprocess = struct {
     }
 };
 
-fn parseSecurityAdvisoriesFromExpr(manager: *PackageManager, advisories_expr: bun.js_parser.Expr, package_paths: *std.AutoArrayHashMap(PackageID, PackagePath)) ![]SecurityAdvisory {
+fn parseSecurityAdvisoriesFromExpr(manager: *PackageManager, advisories_expr: fun.js_parser.Expr, package_paths: *std.AutoArrayHashMap(PackageID, PackagePath)) ![]SecurityAdvisory {
     var advisories_list: std.ArrayList(SecurityAdvisory) = .{};
     defer advisories_list.deinit(manager.allocator);
 
@@ -1288,15 +1288,15 @@ const InstallWithManager = @import("./install_with_manager.zig");
 const IsolatedInstall = @import("../isolated_install.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const FileSystem = bun.fs.FileSystem;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const FileSystem = fun.fs.FileSystem;
 
-const DependencyID = bun.install.DependencyID;
-const PackageID = bun.install.PackageID;
-const PackageManager = bun.install.PackageManager;
-const invalid_dependency_id = bun.install.invalid_dependency_id;
-const invalid_package_id = bun.install.invalid_package_id;
+const DependencyID = fun.install.DependencyID;
+const PackageID = fun.install.PackageID;
+const PackageManager = fun.install.PackageManager;
+const invalid_dependency_id = fun.install.invalid_dependency_id;
+const invalid_package_id = fun.install.invalid_package_id;

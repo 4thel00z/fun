@@ -1,7 +1,7 @@
-import type { Subprocess } from "bun";
-import { beforeEach, describe, expect, test } from "bun:test";
+import type { Subprocess } from "fun";
+import { beforeEach, describe, expect, test } from "fun:test";
 import { cp, readdir } from "fs/promises";
-import { bunEnv, bunExe, isCI, isWindows, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isCI, isWindows, tempDirWithFiles } from "harness";
 import path from "path";
 
 async function getServerUrl(process: Subprocess<any, "pipe", any>, all = { text: "" }) {
@@ -65,9 +65,9 @@ let dir_with_happy_dom = tempDirWithFiles("happy-dom", {
 });
 
 async function fetchAndInjectHTML(url: string) {
-  var subprocess = Bun.spawn({
+  var subprocess = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "--eval",
       `
         const url = ${JSON.stringify(url)};
@@ -92,7 +92,7 @@ async function fetchAndInjectHTML(url: string) {
       `,
     ],
     cwd: dir_with_happy_dom,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stdin: "ignore",
     stderr: "inherit",
@@ -106,8 +106,8 @@ for (const development of [true, false]) {
   describe(`development: ${development}`, () => {
     const normalizeHTML = normalizeHTMLFn(development);
     const env = {
-      ...bunEnv,
-      BUN_PORT: "0",
+      ...funEnv,
+      FUN_PORT: "0",
       NODE_ENV: development ? undefined : "production",
     };
 
@@ -127,7 +127,7 @@ for (const development of [true, false]) {
 
       test.todoIf(isCI || isWindows)("dev server", async () => {
         console.log({ dir });
-        await using process = Bun.spawn([bunExe(), "create", "./index.jsx"], {
+        await using process = Fun.spawn([funExe(), "create", "./index.jsx"], {
           cwd: dir,
           env: env,
           stdout: "pipe",
@@ -144,8 +144,8 @@ for (const development of [true, false]) {
 
           expect(
             all.text
-              .replaceAll(Bun.version, "*.*.*")
-              .replaceAll(Bun.version_with_sha, "*.*.*")
+              .replaceAll(Fun.version, "*.*.*")
+              .replaceAll(Fun.version_with_sha, "*.*.*")
               .replace(/v\d+\.\d+\.\d+(?:\s*\([a-f0-9]+\))?(?:-(debug|canary.*))?/g, "v*.*.*") // Handle version with git hash
               .replace(/\[\d+\.?\d*m?s\]/g, "[*ms]")
               .replace(/@\d+\.\d+\.\d+/g, "@*.*.*")
@@ -162,7 +162,7 @@ for (const development of [true, false]) {
 
       test.todoIf(isWindows)("build", async () => {
         {
-          const process = Bun.spawn([bunExe(), "create", "./index.jsx"], {
+          const process = Fun.spawn([funExe(), "create", "./index.jsx"], {
             cwd: dir,
             env: env,
             stdout: "pipe",
@@ -173,7 +173,7 @@ for (const development of [true, false]) {
           process.kill();
         }
 
-        const process = Bun.spawn([bunExe(), "run", "build"], {
+        const process = Fun.spawn([funExe(), "run", "build"], {
           cwd: dir,
           env: env,
           stdout: "pipe",
@@ -188,12 +188,12 @@ for (const development of [true, false]) {
       let dir: string;
       beforeEach(async () => {
         dir = tempDirWithFiles("react-spa-tailwind", {
-          "index.tsx": await Bun.file(path.join(__dirname, "tailwind.tsx")).text(),
+          "index.tsx": await Fun.file(path.join(__dirname, "tailwind.tsx")).text(),
         });
       });
 
       test.todoIf(isCI || isWindows)("dev server", async () => {
-        const process = Bun.spawn([bunExe(), "create", "./index.tsx"], {
+        const process = Fun.spawn([funExe(), "create", "./index.tsx"], {
           cwd: dir,
           env: env,
           stdout: "pipe",
@@ -211,8 +211,8 @@ for (const development of [true, false]) {
 
           expect(
             all.text
-              .replaceAll(Bun.version_with_sha, "*.*.*")
-              .replace(/Bun (v\d+\.\d+\.\d+)/, "Bun *.*.*")
+              .replaceAll(Fun.version_with_sha, "*.*.*")
+              .replace(/Fun (v\d+\.\d+\.\d+)/, "Fun *.*.*")
               .replace(/\[\d+\.?\d*m?s\]/g, "[*ms]")
               .replace(/@\d+\.\d+\.\d+/g, "@*.*.*")
               .replace(/\d+\.\d+\s*ms/g, "*.** ms")
@@ -228,7 +228,7 @@ for (const development of [true, false]) {
 
       test.todoIf(isWindows)("build", async () => {
         {
-          const process = Bun.spawn([bunExe(), "create", "./index.tsx"], {
+          const process = Fun.spawn([funExe(), "create", "./index.tsx"], {
             cwd: dir,
             env: env,
             stdout: "pipe",
@@ -239,7 +239,7 @@ for (const development of [true, false]) {
           process.kill();
         }
 
-        const process = Bun.spawn([bunExe(), "run", "build"], {
+        const process = Fun.spawn([funExe(), "run", "build"], {
           cwd: dir,
           env: env,
           stdout: "pipe",
@@ -254,12 +254,12 @@ for (const development of [true, false]) {
       let dir: string;
       beforeEach(async () => {
         dir = tempDirWithFiles("shadcn-ui", {
-          "index.tsx": await Bun.file(path.join(__dirname, "shadcn.tsx")).text(),
+          "index.tsx": await Fun.file(path.join(__dirname, "shadcn.tsx")).text(),
         });
       });
 
       test.todoIf(isCI || isWindows)("dev server", async () => {
-        const process = Bun.spawn([bunExe(), "create", "./index.tsx"], {
+        const process = Fun.spawn([funExe(), "create", "./index.tsx"], {
           cwd: dir,
           env: env,
           stdout: "pipe",
@@ -273,13 +273,13 @@ for (const development of [true, false]) {
           const content = await fetchAndInjectHTML(serverUrl);
 
           // Check for components.json
-          const componentsJson = await Bun.file(path.join(dir, "components.json")).exists();
+          const componentsJson = await Fun.file(path.join(dir, "components.json")).exists();
           expect(componentsJson).toBe(true);
 
           expect(
             all.text
-              .replaceAll(Bun.version_with_sha, "*.*.*")
-              .replaceAll(Bun.version, "*.*.*")
+              .replaceAll(Fun.version_with_sha, "*.*.*")
+              .replaceAll(Fun.version, "*.*.*")
               .replace(/\[\d+\.?\d*m?s\]/g, "[*ms]")
               .replace(/@\d+\.\d+\.\d+/g, "@*.*.*")
               .replace(/\d+\.\d+\s*ms/g, "*.** ms")
@@ -299,7 +299,7 @@ for (const development of [true, false]) {
 
       test.todoIf(isCI || isWindows)("build", async () => {
         {
-          const process = Bun.spawn([bunExe(), "create", "./index.tsx"], {
+          const process = Fun.spawn([funExe(), "create", "./index.tsx"], {
             cwd: dir,
             env: env,
             stdout: "pipe",
@@ -310,7 +310,7 @@ for (const development of [true, false]) {
           process.kill();
         }
 
-        const process = Bun.spawn([bunExe(), "run", "build"], {
+        const process = Fun.spawn([funExe(), "run", "build"], {
           cwd: dir,
           env: env,
           stdout: "pipe",
@@ -347,8 +347,8 @@ function normalizeHTMLFn(development: boolean = true) {
         console.log(trimmed);
         // In development mode, replace non-deterministic generation IDs
         return trimmed
-          .replace(/\/_bun\/client\/(.*?-[a-z0-9]{8})[a-z0-9]{8}\.js/gm, "/_bun/client/$1[NONDETERMINISTIC].js")
-          .replace(/\/_bun\/asset\/[a-z0-9]{16}\.[a-z]+/gm, "/_bun/asset/[ASSET_HASH].css");
+          .replace(/\/_fun\/client\/(.*?-[a-z0-9]{8})[a-z0-9]{8}\.js/gm, "/_fun/client/$1[NONDETERMINISTIC].js")
+          .replace(/\/_fun\/asset\/[a-z0-9]{16}\.[a-z]+/gm, "/_fun/asset/[ASSET_HASH].css");
       })
       .filter(Boolean)
       .join("\n")

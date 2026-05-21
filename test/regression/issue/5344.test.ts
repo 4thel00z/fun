@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/5344
+// https://github.com/underdoc-org/fun/issues/5344
 // When one entry point re-exports from another entry point with code splitting,
 // the bundler was producing duplicate export statements.
 test("code splitting with re-exports between entry points should not produce duplicate exports", async () => {
@@ -10,7 +10,7 @@ test("code splitting with re-exports between entry points should not produce dup
     "entry-b.ts": `export function b() {}`,
   });
 
-  const result = await Bun.build({
+  const result = await Fun.build({
     entrypoints: [`${dir}/entry-a.ts`, `${dir}/entry-b.ts`],
     outdir: `${dir}/dist`,
     splitting: true,
@@ -27,11 +27,11 @@ test("code splitting with re-exports between entry points should not produce dup
   const exportMatches = entryBContent.match(/^export\s*\{/gm);
   expect(exportMatches?.length).toBe(1);
 
-  const entryAUrl = Bun.pathToFileURL(`${dir}/dist/entry-a.js`);
-  const entryBUrl = Bun.pathToFileURL(`${dir}/dist/entry-b.js`);
-  await using proc = Bun.spawn({
+  const entryAUrl = Fun.pathToFileURL(`${dir}/dist/entry-a.js`);
+  const entryBUrl = Fun.pathToFileURL(`${dir}/dist/entry-b.js`);
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       import { a, b } from "${entryAUrl}";
@@ -39,7 +39,7 @@ test("code splitting with re-exports between entry points should not produce dup
       console.log(typeof a, typeof b, b === b2);
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

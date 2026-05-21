@@ -8,7 +8,7 @@
 #include <JavaScriptCore/LazyProperty.h>
 #include <JavaScriptCore/LazyPropertyInlines.h>
 
-namespace Bun {
+namespace Fun {
 
 // JSC_DECLARE_HOST_FUNCTION(jsSignOneShot);
 
@@ -83,4 +83,4 @@ private:
 
 void setupJSSignClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

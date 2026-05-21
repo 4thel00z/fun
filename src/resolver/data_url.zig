@@ -16,7 +16,7 @@ pub const PercentEncoding = struct {
 
     /// returns true if str starts with a valid path character or a percent encoded octet
     pub fn isPchar(str: []const u8) bool {
-        if (comptime Environment.allow_assert) bun.assert(str.len > 0);
+        if (comptime Environment.allow_assert) fun.assert(str.len > 0);
         return switch (str[0]) {
             'a'...'z', 'A'...'Z', '0'...'9', '-', '.', '_', '~', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=', ':', '@' => true,
             '%' => str.len >= 3 and isHex(str[1]) and isHex(str[2]),
@@ -44,7 +44,7 @@ pub const PercentEncoding = struct {
             if (path[i] == '%' and path[i..].len >= 3 and isHex(path[i + 1]) and isHex(path[i + 2])) {
                 if (ret == null) {
                     ret = try allocator.alloc(u8, path.len);
-                    bun.copy(u8, ret.?, path[0..i]);
+                    fun.copy(u8, ret.?, path[0..i]);
                     ret_index = i;
                 }
 
@@ -68,7 +68,7 @@ pub const PercentEncoding = struct {
 };
 
 pub const DataURL = struct {
-    url: bun.String = bun.String.empty,
+    url: fun.String = fun.String.empty,
     mime_type: string,
     data: string,
     is_base64: bool = false,
@@ -97,8 +97,8 @@ pub const DataURL = struct {
         return parsed;
     }
 
-    pub fn decodeMimeType(d: DataURL) bun.http.MimeType {
-        return bun.http.MimeType.init(d.mime_type, null, null);
+    pub fn decodeMimeType(d: DataURL) fun.http.MimeType {
+        return fun.http.MimeType.init(d.mime_type, null, null);
     }
 
     /// Decodes the data from the data URL. Always returns an owned slice.
@@ -108,10 +108,10 @@ pub const DataURL = struct {
         const percent_decoded: []const u8 = percent_decoded_owned orelse url.data;
 
         if (url.is_base64) {
-            const len = bun.base64.decodeLen(percent_decoded);
+            const len = fun.base64.decodeLen(percent_decoded);
             const buf = try allocator.alloc(u8, len);
             errdefer allocator.free(buf);
-            const result = bun.base64.decode(buf, percent_decoded);
+            const result = fun.base64.decode(buf, percent_decoded);
             if (!result.isSuccessful() or result.count != len) {
                 return error.Base64DecodeError;
             }
@@ -124,7 +124,7 @@ pub const DataURL = struct {
     /// Returns the shorter of either a base64-encoded or percent-escaped data URL
     pub fn encodeStringAsShortestDataURL(allocator: Allocator, mime_type: []const u8, text: []const u8) []u8 {
         // Calculate base64 version
-        const base64_encode_len = bun.base64.encodeLen(text);
+        const base64_encode_len = fun.base64.encodeLen(text);
         const total_base64_encode_len = "data:".len + mime_type.len + ";base64,".len + base64_encode_len;
 
         use_base64: {
@@ -147,7 +147,7 @@ pub const DataURL = struct {
             return buf.items;
         }
 
-        const base64buf = bun.handleOom(allocator.alloc(u8, total_base64_encode_len));
+        const base64buf = fun.handleOom(allocator.alloc(u8, total_base64_encode_len));
         return std.fmt.bufPrint(base64buf, "data:{s};base64,{s}", .{ mime_type, text }) catch unreachable;
     }
 
@@ -184,7 +184,7 @@ pub const DataURL = struct {
             trailing_start -= 1;
         }
 
-        if (!bun.simdutf.validate.utf8(text)) {
+        if (!fun.simdutf.validate.utf8(text)) {
             return false;
         }
 
@@ -215,7 +215,7 @@ pub const DataURL = struct {
                 run_start = i + 1;
             }
 
-            i += bun.strings.utf8ByteSequenceLength(first_byte);
+            i += fun.strings.utf8ByteSequenceLength(first_byte);
         }
 
         if (run_start < text.len) {
@@ -231,6 +231,6 @@ const string = []const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const strings = fun.strings;

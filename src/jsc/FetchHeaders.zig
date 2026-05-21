@@ -20,7 +20,7 @@ pub const FetchHeaders = opaque {
     extern fn WebCore__FetchHeaders__put_(arg0: *FetchHeaders, arg1: [*c]const ZigString, arg2: [*c]const ZigString, arg3: *JSGlobalObject) void;
     extern fn WebCore__FetchHeaders__remove(arg0: *FetchHeaders, arg1: [*c]const ZigString, arg2: *JSGlobalObject) void;
     extern fn WebCore__FetchHeaders__toJS(arg0: *FetchHeaders, arg1: *JSGlobalObject) JSValue;
-    extern fn WebCore__FetchHeaders__toUWSResponse(arg0: *FetchHeaders, kind: bun.uws.ResponseKind, arg2: ?*anyopaque) void;
+    extern fn WebCore__FetchHeaders__toUWSResponse(arg0: *FetchHeaders, kind: fun.uws.ResponseKind, arg2: ?*anyopaque) void;
     extern fn WebCore__FetchHeaders__createFromH3(arg0: *anyopaque) *FetchHeaders;
 
     pub fn createValue(
@@ -49,11 +49,11 @@ pub const FetchHeaders = opaque {
     /// Throws an exception if invalid.
     ///
     /// If empty, returns null.
-    pub fn createFromJS(global: *JSGlobalObject, value: JSValue) bun.JSError!?*FetchHeaders {
-        return bun.jsc.fromJSHostCallGeneric(global, @src(), WebCore__FetchHeaders__createFromJS, .{ global, value });
+    pub fn createFromJS(global: *JSGlobalObject, value: JSValue) fun.JSError!?*FetchHeaders {
+        return fun.jsc.fromJSHostCallGeneric(global, @src(), WebCore__FetchHeaders__createFromJS, .{ global, value });
     }
 
-    pub fn putDefault(this: *FetchHeaders, name_: HTTPHeaderName, value: []const u8, global: *JSGlobalObject) bun.JSError!void {
+    pub fn putDefault(this: *FetchHeaders, name_: HTTPHeaderName, value: []const u8, global: *JSGlobalObject) fun.JSError!void {
         if (this.fastHas(name_)) {
             return;
         }
@@ -115,7 +115,7 @@ pub const FetchHeaders = opaque {
 
     pub fn toUWSResponse(
         headers: *FetchHeaders,
-        kind: bun.uws.ResponseKind,
+        kind: fun.uws.ResponseKind,
         uws_response: *anyopaque,
     ) void {
         return WebCore__FetchHeaders__toUWSResponse(
@@ -171,8 +171,8 @@ pub const FetchHeaders = opaque {
         name_: HTTPHeaderName,
         value: []const u8,
         global: *JSGlobalObject,
-    ) bun.JSError!void {
-        return bun.jsc.fromJSHostCallGeneric(global, @src(), WebCore__FetchHeaders__put, .{ this, name_, &ZigString.init(value), global });
+    ) fun.JSError!void {
+        return fun.jsc.fromJSHostCallGeneric(global, @src(), WebCore__FetchHeaders__put, .{ this, name_, &ZigString.init(value), global });
     }
 
     pub fn get_(
@@ -420,8 +420,8 @@ pub const FetchHeaders = opaque {
     pub fn cloneThis(
         this: *FetchHeaders,
         global: *JSGlobalObject,
-    ) bun.JSError!?*FetchHeaders {
-        return bun.jsc.fromJSHostCallGeneric(global, @src(), WebCore__FetchHeaders__cloneThis, .{ this, global });
+    ) fun.JSError!?*FetchHeaders {
+        return fun.jsc.fromJSHostCallGeneric(global, @src(), WebCore__FetchHeaders__cloneThis, .{ this, global });
     }
 
     pub fn deref(
@@ -445,13 +445,13 @@ pub const FetchHeaders = opaque {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VM = jsc.VM;
 const ZigString = jsc.ZigString;
 
-const api = bun.schema.api;
+const api = fun.schema.api;
 const StringPointer = api.StringPointer;

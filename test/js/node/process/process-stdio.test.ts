@@ -1,6 +1,6 @@
-import { spawn, spawnSync } from "bun";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { spawn, spawnSync } from "fun";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import path from "path";
 import { isatty } from "tty";
 describe.concurrent("process-stdio", () => {
@@ -17,12 +17,12 @@ describe.concurrent("process-stdio", () => {
 
   test("process.stdin - read", async () => {
     const { stdin, stdout } = spawn({
-      cmd: [bunExe(), files.echo],
+      cmd: [funExe(), files.echo],
       stdout: "pipe",
       stdin: "pipe",
       stderr: "inherit",
       env: {
-        ...bunEnv,
+        ...funEnv,
       },
     });
     expect(stdin).toBeDefined();
@@ -45,11 +45,11 @@ describe.concurrent("process-stdio", () => {
 
   test("process.stdin - resume", async () => {
     const { stdin, stdout } = spawn({
-      cmd: [bunExe(), files.echo, "resume"],
+      cmd: [funExe(), files.echo, "resume"],
       stdout: "pipe",
       stdin: "pipe",
       stderr: null,
-      env: bunEnv,
+      env: funEnv,
     });
     expect(stdin).toBeDefined();
     expect(stdout).toBeDefined();
@@ -71,13 +71,13 @@ describe.concurrent("process-stdio", () => {
 
   test("process.stdin - close(#6713)", async () => {
     const { stdin, stdout } = spawn({
-      cmd: [bunExe(), files.echo, "close-event"],
+      cmd: [funExe(), files.echo, "close-event"],
       stdout: "pipe",
       stdin: "pipe",
       stderr: null,
       env: {
         ...process.env,
-        BUN_DEBUG_QUIET_LOGS: "1",
+        FUN_DEBUG_QUIET_LOGS: "1",
       },
     });
     expect(stdin).toBeDefined();
@@ -112,13 +112,13 @@ describe.concurrent("process-stdio", () => {
 
   test("process.stdout - write", () => {
     const { stdout } = spawnSync({
-      cmd: [bunExe(), path.join(import.meta.dir, "stdio-test-instance.js")],
+      cmd: [funExe(), path.join(import.meta.dir, "stdio-test-instance.js")],
       stdout: "pipe",
       stdin: null,
       stderr: null,
       env: {
         ...process.env,
-        BUN_DEBUG_QUIET_LOGS: "1",
+        FUN_DEBUG_QUIET_LOGS: "1",
       },
     });
 
@@ -127,13 +127,13 @@ describe.concurrent("process-stdio", () => {
 
   test("process.stdout - write a lot (string)", () => {
     const { stdout } = spawnSync({
-      cmd: [bunExe(), path.join(import.meta.dir, "stdio-test-instance-a-lot.js")],
+      cmd: [funExe(), path.join(import.meta.dir, "stdio-test-instance-a-lot.js")],
       stdout: "pipe",
       stdin: null,
       stderr: null,
       env: {
         ...process.env,
-        BUN_DEBUG_QUIET_LOGS: "1",
+        FUN_DEBUG_QUIET_LOGS: "1",
         TEST_STDIO_STRING: "1",
       },
     });
@@ -145,13 +145,13 @@ describe.concurrent("process-stdio", () => {
 
   test("process.stdout - write a lot (bytes)", () => {
     const { stdout } = spawnSync({
-      cmd: [bunExe(), path.join(import.meta.dir, "stdio-test-instance-a-lot.js")],
+      cmd: [funExe(), path.join(import.meta.dir, "stdio-test-instance-a-lot.js")],
       stdout: "pipe",
       stdin: null,
       stderr: null,
       env: {
         ...process.env,
-        BUN_DEBUG_QUIET_LOGS: "1",
+        FUN_DEBUG_QUIET_LOGS: "1",
       },
     });
     expect(stdout?.toString()).toBe(

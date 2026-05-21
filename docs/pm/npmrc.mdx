@@ -3,11 +3,11 @@ title: .npmrc support
 description:
 ---
 
-Bun supports loading configuration options from [`.npmrc`](https://docs.npmjs.com/cli/v10/configuring-npm/npmrc) files, allowing you to reuse existing registry/scope configurations.
+Fun supports loading configuration options from [`.npmrc`](https://docs.npmjs.com/cli/v10/configuring-npm/npmrc) files, allowing you to reuse existing registry/scope configurations.
 
 <Note>
-  We recommend migrating your `.npmrc` file to Bun's [`bunfig.toml`](/runtime/bunfig) format, as it provides more
-  flexible options and can let you configure Bun-specific options.
+  We recommend migrating your `.npmrc` file to Fun's [`funfig.toml`](/runtime/funfig) format, as it provides more
+  flexible options and can let you configure Fun-specific options.
 </Note>
 
 ---
@@ -24,9 +24,9 @@ To change it, you can set the `registry` option in `.npmrc`:
 registry=http://localhost:4873/
 ```
 
-The equivalent `bunfig.toml` option is [`install.registry`](/runtime/bunfig#install-registry):
+The equivalent `funfig.toml` option is [`install.registry`](/runtime/funfig#install-registry):
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 install.registry = "http://localhost:4873/"
 ```
 
@@ -38,9 +38,9 @@ install.registry = "http://localhost:4873/"
 @myorg:registry=http://localhost:4873/
 ```
 
-The equivalent `bunfig.toml` option is to add a key in [`install.scopes`](/runtime/bunfig#install-registry):
+The equivalent `funfig.toml` option is to add a key in [`install.scopes`](/runtime/funfig#install-registry):
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.scopes]
 myorg = "http://localhost:4873/"
 ```
@@ -74,9 +74,9 @@ The following options are supported:
 - `_auth` (base64 encoded username:password, e.g. `btoa(username + ":" + password)`)
 - `email`
 
-The equivalent `bunfig.toml` option is to add a key in [`install.scopes`](/runtime/bunfig#install-registry):
+The equivalent `funfig.toml` option is to add a key in [`install.scopes`](/runtime/funfig#install-registry):
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.scopes]
 myorg = { url = "http://localhost:4873/", username = "myusername", password = "$NPM_PASSWORD" }
 ```
@@ -89,9 +89,9 @@ Controls how workspace packages are installed when available locally:
 link-workspace-packages=true
 ```
 
-The equivalent `bunfig.toml` option is [`install.linkWorkspacePackages`](/runtime/bunfig#install-linkworkspacepackages):
+The equivalent `funfig.toml` option is [`install.linkWorkspacePackages`](/runtime/funfig#install-linkworkspacepackages):
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install]
 linkWorkspacePackages = true
 ```
@@ -104,9 +104,9 @@ Always saves exact versions without the `^` prefix:
 save-exact=true
 ```
 
-The equivalent `bunfig.toml` option is [`install.exact`](/runtime/bunfig#install-exact):
+The equivalent `funfig.toml` option is [`install.exact`](/runtime/funfig#install-exact):
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install]
 exact = true
 ```
@@ -119,7 +119,7 @@ Prevents running lifecycle scripts during installation:
 ignore-scripts=true
 ```
 
-This is equivalent to using the `--ignore-scripts` flag with `bun install`.
+This is equivalent to using the `--ignore-scripts` flag with `fun install`.
 
 ### `dry-run`: Preview changes without installing
 
@@ -129,9 +129,9 @@ Shows what would be installed without actually installing:
 dry-run=true
 ```
 
-The equivalent `bunfig.toml` option is [`install.dryRun`](/runtime/bunfig#install-dryrun):
+The equivalent `funfig.toml` option is [`install.dryRun`](/runtime/funfig#install-dryrun):
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install]
 dryRun = true
 ```
@@ -148,9 +148,9 @@ cache=/path/to/cache
 cache=false
 ```
 
-The equivalent `bunfig.toml` option is [`install.cache`](/runtime/bunfig#install-cache):
+The equivalent `funfig.toml` option is [`install.cache`](/runtime/funfig#install-cache):
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install.cache]
 # set a custom cache directory
 dir = "/path/to/cache"
@@ -195,7 +195,7 @@ Valid values: `dev`, `peer`, `optional`
 
 ### `install-strategy` and `node-linker`: Installation strategy
 
-Control how packages are installed in `node_modules`. Bun supports two different configuration options for compatibility with different package managers.
+Control how packages are installed in `node_modules`. Fun supports two different configuration options for compatibility with different package managers.
 
 **npm's `install-strategy`:**
 
@@ -209,7 +209,7 @@ install-strategy=linked
 
 **pnpm/yarn's `node-linker`:**
 
-The `node-linker` option controls the installation mode. Bun supports values from both pnpm and yarn:
+The `node-linker` option controls the installation mode. Fun supports values from both pnpm and yarn:
 
 | Value          | Description                                     | Accepted by |
 | -------------- | ----------------------------------------------- | ----------- |

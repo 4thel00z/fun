@@ -6,18 +6,18 @@
 // `this.tls` before the freeing call so subsequent callbacks short-circuit
 // on the existing null-check.
 
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug } from "harness";
 
 async function run(script: string) {
   // Spawn a subprocess so an ASAN use-after-poison report shows up as a
   // non-zero exit + stderr dump rather than killing the test runner itself.
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
     // Disable the external ASAN symbolizer: when the UAF fires it can wedge
     // on a broken pipe to llvm-symbolizer and the subprocess never exits,
     // turning a clear assertion failure into a test timeout.
-    env: { ...bunEnv, ASAN_OPTIONS: "symbolize=0:abort_on_error=1:allow_user_segv_handler=1" },
+    env: { ...funEnv, ASAN_OPTIONS: "symbolize=0:abort_on_error=1:allow_user_segv_handler=1" },
     stdout: "pipe",
     stderr: "pipe",
   });

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "fun:test";
 import { createServer } from "http";
 import type { AddressInfo } from "net";
 import { Server } from "socket.io";

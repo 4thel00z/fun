@@ -1,9 +1,11 @@
-#!/usr/bin/env bun
-// Resolve a branch / PR / URL to BuildKite build number(s) for the `bun` pipeline.
+#!/usr/bin/env fun
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
+// Resolve a branch / PR / URL to BuildKite build number(s) for the `fun` pipeline.
 //
 // Prints build number(s) to stdout (one per line) so it composes with `bk`:
-//   bk build view $(bun run ci:find)
-//   bk job log <uuid> -b $(bun run ci:find)
+//   bk build view $(fun run ci:find)
+//   bk job log <uuid> -b $(fun run ci:find)
 //
 // With --status / --watch / --errors / --logs, acts on the resolved build directly.
 //
@@ -12,7 +14,7 @@
 import { $ } from "bun";
 import { parseArgs } from "node:util";
 
-const tty = Bun.enableANSIColors;
+const tty = Fun.enableANSIColors;
 const c = {
   reset: tty ? "\x1b[0m" : "",
   bold: tty ? "\x1b[1m" : "",
@@ -24,14 +26,14 @@ const c = {
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.includes("-h")) {
-  console.log(`Usage: bun scripts/find-build.ts [target] [options]
+  console.log(`Usage: fun scripts/find-build.ts [target] [options]
 
-Resolve a BuildKite build number for the bun pipeline.
+Resolve a BuildKite build number for the fun pipeline.
 
 Target (optional, defaults to current git branch):
   #12345                       GitHub PR number
   https://github.com/.../pull/12345
-  https://buildkite.com/bun/bun/builds/43756
+  https://buildkite.com/fun/fun/builds/43756
   43756                        Build number (passthrough)
   my-branch-name               Branch name
 
@@ -48,9 +50,9 @@ Options:
   -h, --help           Show this help
 
 For anything else, compose with \`bk\` directly (.bk.yaml sets the pipeline):
-  bk build view $(bun run ci:find)
-  bk job log <uuid> -b $(bun run ci:find)
-  bk api /pipelines/bun/builds/$(bun run ci:find)/annotations
+  bk build view $(fun run ci:find)
+  bk job log <uuid> -b $(fun run ci:find)
+  bk api /pipelines/fun/builds/$(fun run ci:find)/annotations
 `);
   process.exit(0);
 }
@@ -78,7 +80,7 @@ function die(msg: string): never {
   process.exit(1);
 }
 
-if (!Bun.which("bk")) {
+if (!Fun.which("bk")) {
   die(
     "`bk` (BuildKite CLI) not found.\n" +
       "  Install: brew install buildkite/buildkite/bk\n" +
@@ -101,7 +103,7 @@ if (target == null) {
   buildNumber = Number(target.match(/builds\/(\d+)/)![1]);
 } else if (/github\.com\/.+\/pull\/(\d+)/.test(target) || /^#\d+$/.test(target)) {
   const pr = target.match(/(\d+)/)![1];
-  branch = (await $`gh pr view ${pr} --repo oven-sh/bun --json headRefName -q .headRefName`.text()).trim();
+  branch = (await $`gh pr view ${pr} --repo underdoc-org/fun --json headRefName -q .headRefName`.text()).trim();
   if (!branch) die(`could not resolve PR #${pr} to a branch`);
 } else if (/^\d+$/.test(target)) {
   buildNumber = Number(target);
@@ -114,7 +116,7 @@ let builds: Build[];
 
 try {
   if (buildNumber != null) {
-    builds = [{ number: buildNumber, state: "", web_url: `https://buildkite.com/bun/bun/builds/${buildNumber}` }];
+    builds = [{ number: buildNumber, state: "", web_url: `https://buildkite.com/fun/fun/builds/${buildNumber}` }];
   } else {
     // `bk build view -b <branch>` silently filters by creator; use `list` instead.
     builds = await bk("build", "list", "--branch", branch!, "--limit", opts.limit!, "--json");
@@ -147,7 +149,7 @@ function isFailedJob(j: Job) {
 }
 
 async function annotations(build: number): Promise<Annotation[]> {
-  return bk("api", `/pipelines/bun/builds/${build}/annotations`);
+  return bk("api", `/pipelines/fun/builds/${build}/annotations`);
 }
 
 function renderTermHTML(html: string): string {
@@ -207,7 +209,7 @@ function splitFlaky(a: Annotation): Annotation[] {
 }
 
 function normalizeForDedup(s: string): string {
-  return Bun.stripANSI(s)
+  return Fun.stripANSI(s)
     .replace(/[\d.]+m?s\b/g, "<t>")
     .replace(/([A-Z]:)?[\\/][\w\\/.:+-]*?[\\/](test[\\/])/g, "$2")
     .replace(/\\/g, "/")
@@ -218,7 +220,7 @@ async function printErrors(
   build: number,
   { all, compare, excludeBranch }: { all: boolean; compare: boolean; excludeBranch: string | null | undefined },
 ) {
-  console.log(`${c.bold}build #${build}${c.reset}  https://buildkite.com/bun/bun/builds/${build}\n`);
+  console.log(`${c.bold}build #${build}${c.reset}  https://buildkite.com/fun/fun/builds/${build}\n`);
 
   const [anns, baseline] = await Promise.all([
     annotations(build),
@@ -323,7 +325,7 @@ async function watchStatus(build: number) {
     if (terminal.has(state)) process.exit(state === "passed" ? 0 : 1);
     if (!isTTY) {
       console.log();
-      await Bun.sleep(10_000);
+      await Fun.sleep(10_000);
       continue;
     }
     prevLines = lines.length + 1;
@@ -332,7 +334,7 @@ async function watchStatus(build: number) {
       process.stdout.write(
         `\r${c.dim}${frames[i % frames.length]} watching — next refresh in ${left}s (^C to stop)${c.reset}  `,
       );
-      await Bun.sleep(100);
+      await Fun.sleep(100);
     }
     process.stdout.write(`\r${c.dim}${frames[0]} fetching…${c.reset}\x1b[K`);
   }
@@ -353,13 +355,13 @@ async function saveLogs(build: number) {
       const path = `${dir}/${name}.log`;
       const { exitCode, stdout, stderr } = await $`bk job log ${j.id} -b ${String(build)}`.quiet().nothrow();
       if (exitCode !== 0) return console.error(`  ${j.name}: ${stderr.toString().trim()}`);
-      // Strip BuildKite APC timestamp markers first; an unterminated \x1b_ makes Bun.stripANSI eat to EOF.
+      // Strip BuildKite APC timestamp markers first; an unterminated \x1b_ makes Fun.stripANSI eat to EOF.
       const text = stdout
         .toString()
         // oxlint-disable-next-line no-control-regex -- BuildKite APC timestamp marker is ESC_…BEL
         .replace(/\u001b_(?:bk;t=\d+\u0007)?/g, "")
         .replace(/\r/g, "");
-      await Bun.write(path, Bun.stripANSI(text));
+      await Fun.write(path, Fun.stripANSI(text));
       console.log(`  ${path}`);
     }),
   );
@@ -370,7 +372,7 @@ async function mergedPRFailingContexts(excludeBranch: string | null | undefined)
   // merged PRs' final builds — anything still failing there is pre-existing.
   let merged: Array<{ headRefName: string }>;
   try {
-    merged = await $`gh pr list --repo oven-sh/bun --state merged --limit 5 --json headRefName`.json();
+    merged = await $`gh pr list --repo underdoc-org/fun --state merged --limit 5 --json headRefName`.json();
   } catch {
     return null;
   }

@@ -1,6 +1,6 @@
 ---
 title: "Snapshots"
-description: "Learn how to use snapshot testing in Bun to save and compare output between test runs"
+description: "Learn how to use snapshot testing in Fun to save and compare output between test runs"
 ---
 
 Snapshot testing saves the output of a value and compares it against future test runs. This is particularly useful for UI components, complex objects, or any output that needs to remain consistent.
@@ -10,7 +10,7 @@ Snapshot testing saves the output of a value and compares it against future test
 Snapshot tests are written using the `.toMatchSnapshot()` matcher:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("snap", () => {
   expect("foo").toMatchSnapshot();
@@ -21,7 +21,7 @@ The first time this test is run, the argument to `expect` will be serialized and
 
 ### Snapshot Files
 
-After running the test above, Bun will create:
+After running the test above, Fun will create:
 
 ```text title="directory structure" icon="file-directory"
 your-project/
@@ -33,7 +33,7 @@ your-project/
 The snapshot file contains:
 
 ```ts title="__snapshots__/snap.test.ts.snap" icon="file-code"
-// Bun Snapshot v1, https://bun.com/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`snap 1`] = `"foo"`;
 ```
@@ -45,7 +45,7 @@ On future runs, the argument is compared against the snapshot on disk.
 Snapshots can be re-generated with the following command:
 
 ```bash terminal icon="terminal"
-bun test --update-snapshots
+fun test --update-snapshots
 ```
 
 This is useful when:
@@ -59,7 +59,7 @@ This is useful when:
 For smaller values, you can use inline snapshots with `.toMatchInlineSnapshot()`. These snapshots are stored directly in your test file:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("inline snapshot", () => {
   // First run: snapshot will be inserted automatically
@@ -67,10 +67,10 @@ test("inline snapshot", () => {
 });
 ```
 
-After the first run, Bun automatically updates your test file:
+After the first run, Fun automatically updates your test file:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("inline snapshot", () => {
   expect({ hello: "world" }).toMatchInlineSnapshot(`
@@ -85,7 +85,7 @@ test("inline snapshot", () => {
 
 1. Write your test with `.toMatchInlineSnapshot()`
 2. Run the test once
-3. Bun automatically updates your test file with the snapshot
+3. Fun automatically updates your test file with the snapshot
 4. On subsequent runs, the value will be compared against the inline snapshot
 
 Inline snapshots are particularly useful for small, simple values where it's helpful to see the expected output right in the test file.
@@ -95,7 +95,7 @@ Inline snapshots are particularly useful for small, simple values where it's hel
 You can also snapshot error messages using `.toThrowErrorMatchingSnapshot()` and `.toThrowErrorMatchingInlineSnapshot()`:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("error snapshot", () => {
   expect(() => {
@@ -129,7 +129,7 @@ test("error snapshot", () => {
 Snapshots work well with complex nested objects:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("complex object snapshot", () => {
   const user = {
@@ -143,7 +143,7 @@ test("complex object snapshot", () => {
         notifications: true,
       },
     },
-    tags: ["developer", "javascript", "bun"],
+    tags: ["developer", "javascript", "fun"],
   };
 
   expect(user).toMatchSnapshot();
@@ -155,7 +155,7 @@ test("complex object snapshot", () => {
 Arrays are also well-suited for snapshot testing:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("array snapshot", () => {
   const numbers = [1, 2, 3, 4, 5].map(n => n * 2);
@@ -168,7 +168,7 @@ test("array snapshot", () => {
 Snapshot the output of functions:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 function generateReport(data: any[]) {
   return {
@@ -193,7 +193,7 @@ test("report generation", () => {
 Snapshots are particularly useful for React components:
 
 ```tsx title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 import { render } from "@testing-library/react";
 
 function Button({ children, variant = "primary" }) {
@@ -214,7 +214,7 @@ test("Button component snapshots", () => {
 For values that change between test runs (like timestamps or IDs), use property matchers:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("snapshot with dynamic values", () => {
   const user = {
@@ -247,7 +247,7 @@ exports[`snapshot with dynamic values 1`] = `
 You can customize how objects are serialized in snapshots:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 // Custom serializer for Date objects
 expect.addSnapshotSerializer({
@@ -300,7 +300,7 @@ test("format test", () => {
 ### Group Related Snapshots
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "fun:test";
 
 describe("Button component", () => {
   test("primary variant", () => {
@@ -360,7 +360,7 @@ When snapshots change, carefully review them:
 git diff __snapshots__/
 
 # Update if changes are intentional
-bun test --update-snapshots
+fun test --update-snapshots
 
 # Commit the updated snapshots
 git add __snapshots__/
@@ -369,7 +369,7 @@ git commit -m "Update snapshots after UI changes"
 
 ### Cleaning Up Unused Snapshots
 
-Bun will warn about unused snapshots:
+Fun will warn about unused snapshots:
 
 ```txt title="warning" icon="warning"
 Warning: 1 unused snapshot found:

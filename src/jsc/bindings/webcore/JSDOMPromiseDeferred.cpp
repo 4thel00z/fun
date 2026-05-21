@@ -247,7 +247,7 @@ JSC::EncodedJSValue createRejectedPromiseWithTypeError(JSC::JSGlobalObject& lexi
     auto& vm = lexicalGlobalObject.vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    ErrorInstance* rejectionValue = static_cast<ErrorInstance*>(cause == RejectedPromiseWithTypeErrorCause::InvalidThis ? Bun::createInvalidThisError(&lexicalGlobalObject, errorMessage) : createTypeError(&lexicalGlobalObject, errorMessage));
+    ErrorInstance* rejectionValue = static_cast<ErrorInstance*>(cause == RejectedPromiseWithTypeErrorCause::InvalidThis ? Fun::createInvalidThisError(&lexicalGlobalObject, errorMessage) : createTypeError(&lexicalGlobalObject, errorMessage));
     if (cause == RejectedPromiseWithTypeErrorCause::NativeGetter)
         rejectionValue->setNativeGetterTypeError();
 

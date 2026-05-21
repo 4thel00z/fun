@@ -1,8 +1,8 @@
 /**
  * Regression test for GitHub issue #24007
- * https://github.com/oven-sh/bun/issues/24007
+ * https://github.com/underdoc-org/fun/issues/24007
  *
- * Issue: Bun's glob/readdir functionality failed on bind-mounted paths in Docker
+ * Issue: Fun's glob/readdir functionality failed on bind-mounted paths in Docker
  * because certain filesystems (sshfs, fuse, NFS, bind mounts) don't provide d_type
  * information in directory entries (returns DT_UNKNOWN).
  *
@@ -11,7 +11,7 @@
  *
  * See also: test/cli/run/glob-on-fuse.test.ts for FUSE filesystem testing.
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tempDir } from "harness";
 import fs from "node:fs";
 import path from "node:path";
@@ -71,15 +71,15 @@ describe.concurrent("issue #24007 - glob with recursive patterns", () => {
     expect(results.length).toBe(2);
   });
 
-  test("Bun.Glob recursive scan finds nested files", () => {
-    using dir = tempDir("issue-24007-bun-glob", {
+  test("Fun.Glob recursive scan finds nested files", () => {
+    using dir = tempDir("issue-24007-fun-glob", {
       "api/health.get.ts": "x",
       "api/users/index.ts": "x",
       "routes/home.ts": "x",
     });
 
     const cwd = String(dir);
-    const glob = new Bun.Glob("**/*.ts");
+    const glob = new Fun.Glob("**/*.ts");
     const results = Array.from(glob.scanSync({ cwd }));
 
     expect(results).toContain(path.join("api", "health.get.ts"));

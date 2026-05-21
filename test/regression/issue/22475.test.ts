@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("issue #22475: cookie.isExpired() should return true for Unix epoch (0)", () => {
   const cookies = ["a=; Expires=Thu, 01 Jan 1970 00:00:00 GMT", "b=; Expires=Thu, 01 Jan 1970 00:00:01 GMT"];
 
   const results = [];
   for (const _cookie of cookies) {
-    const cookie = new Bun.Cookie(_cookie);
+    const cookie = new Fun.Cookie(_cookie);
     results.push({
       name: cookie.name,
       expires: cookie.expires,
@@ -28,23 +28,23 @@ test("issue #22475: cookie.isExpired() should return true for Unix epoch (0)", (
 
 test("cookie.isExpired() for various edge cases", () => {
   // Test Unix epoch (0) - should be expired
-  const epochCookie = new Bun.Cookie("test", "value", { expires: 0 });
+  const epochCookie = new Fun.Cookie("test", "value", { expires: 0 });
   expect(epochCookie.expires).toBeDate();
   expect(epochCookie.expires?.getTime()).toBe(0);
   expect(epochCookie.isExpired()).toBe(true);
 
   // Test negative timestamp - should be expired
-  const negativeCookie = new Bun.Cookie("test", "value", { expires: -1 });
+  const negativeCookie = new Fun.Cookie("test", "value", { expires: -1 });
   expect(negativeCookie.expires).toBeDate();
   expect(negativeCookie.expires?.getTime()).toBe(-1000);
   expect(negativeCookie.isExpired()).toBe(true);
 
   // Test session cookie (no expires) - should not be expired
-  const sessionCookie = new Bun.Cookie("test", "value");
+  const sessionCookie = new Fun.Cookie("test", "value");
   expect(sessionCookie.expires).toBeUndefined();
   expect(sessionCookie.isExpired()).toBe(false);
 
   // Test future date - should not be expired
-  const futureCookie = new Bun.Cookie("test", "value", { expires: Date.now() + 86400000 });
+  const futureCookie = new Fun.Cookie("test", "value", { expires: Date.now() + 86400000 });
   expect(futureCookie.isExpired()).toBe(false);
 });

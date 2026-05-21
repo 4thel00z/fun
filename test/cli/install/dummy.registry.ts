@@ -1,7 +1,7 @@
 /**
  * This file can be directly run
  *
- *  PACKAGE_DIR_TO_USE=(realpath .) bun test/cli/install/dummy.registry.ts
+ *  PACKAGE_DIR_TO_USE=(realpath .) fun test/cli/install/dummy.registry.ts
  *
  * ## Concurrent Test Support
  *
@@ -27,10 +27,10 @@
  * });
  * ```
  */
-import { file, Server } from "bun";
+import { file, Server } from "fun";
 import { tmpdirSync } from "harness";
 
-let expect: (typeof import("bun:test"))["expect"];
+let expect: (typeof import("fun:test"))["expect"];
 
 import { writeFile } from "fs/promises";
 import { basename, join } from "path";
@@ -103,7 +103,7 @@ function extractTestPrefix(url: string): { prefix: string; remainingPath: string
  * Creates a new isolated test context for concurrent test execution.
  * Each context has its own handler, package_dir, and request counter.
  *
- * The bunfig.toml is automatically created with the prefixed registry URL.
+ * The funfig.toml is automatically created with the prefixed registry URL.
  *
  * @param opts - Optional configuration for the test context
  * @returns A new TestContext that should be used for all test operations
@@ -122,9 +122,9 @@ export async function createTestContext(opts?: { linker: "hoisted" | "isolated" 
 
   testContexts.set(id, ctx);
 
-  // Create bunfig.toml with the prefixed registry URL
+  // Create funfig.toml with the prefixed registry URL
   await writeFile(
-    join(pkg_dir, "bunfig.toml"),
+    join(pkg_dir, "funfig.toml"),
     `
 [install]
 cache = false
@@ -320,11 +320,11 @@ let legacyHandler: Handler = defaultHandler;
 export async function write(path: string, content: string | object) {
   if (!package_dir) throw new Error("writeToPackageDir() must be called in a test");
 
-  await Bun.write(join(package_dir, path), typeof content === "string" ? content : JSON.stringify(content));
+  await Fun.write(join(package_dir, path), typeof content === "string" ? content : JSON.stringify(content));
 }
 
 export function read(path: string) {
-  return Bun.file(join(package_dir, path));
+  return Fun.file(join(package_dir, path));
 }
 
 /** @deprecated Use setContextHandler() for concurrent tests */
@@ -337,7 +337,7 @@ function resetHandler() {
 }
 
 export function dummyBeforeAll() {
-  server = Bun.serve({
+  server = Fun.serve({
     async fetch(request) {
       const url = request.url;
 
@@ -381,7 +381,7 @@ export async function dummyBeforeEach(opts?: { linker: "hoisted" | "isolated" })
   requested = 0;
   package_dir = packageDirGetter();
   await writeFile(
-    join(package_dir, "bunfig.toml"),
+    join(package_dir, "funfig.toml"),
     `
 [install]
 cache = false
@@ -397,7 +397,7 @@ export async function dummyAfterEach() {
   resetHandler();
 }
 
-if (Bun.main === import.meta.path) {
+if (Fun.main === import.meta.path) {
   // @ts-expect-error
   expect = value => {
     return {
@@ -417,5 +417,5 @@ if (Bun.main === import.meta.path) {
   setHandler(dummyRegistry([]));
   console.log("Running dummy registry!\n\n URL: ", root_url!, "\n", "DIR: ", package_dir!);
 } else {
-  ({ expect } = Bun.jest(import.meta.path));
+  ({ expect } = Fun.jest(import.meta.path));
 }

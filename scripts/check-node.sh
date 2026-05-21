@@ -23,13 +23,13 @@ case $1 in
     ;;
 esac
 
-export BUN_DEBUG_QUIET_LOGS=1
+export FUN_DEBUG_QUIET_LOGS=1
 
 for x in $(git ls-files test/js/node/test/parallel --exclude-standard --others | grep test-$1)
 do
   i=$((i+1))
   echo ./$x
-  if timeout 2 $PWD/build/debug/bun-debug ./$x
+  if timeout 2 $PWD/build/debug/fun-debug ./$x
   then
     j=$((j+1))
     git add $x

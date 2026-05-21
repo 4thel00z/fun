@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { once } from "node:events";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
@@ -8,7 +8,7 @@ test("client IncomingMessage.setTimeout does not keep the event loop alive", asy
   // A child process makes a keep-alive http.get() and calls res.setTimeout(60000).
   // Once the body is consumed there is nothing left to do, so the process must
   // exit immediately instead of waiting for the timeout to fire. Node unrefs the
-  // socket timeout timer; Bun's res.setTimeout override must do the same.
+  // socket timeout timer; Fun's res.setTimeout override must do the same.
   const server = http.createServer((req, res) => {
     res.setHeader("Connection", "keep-alive");
     res.end("hello");
@@ -42,9 +42,9 @@ test("client IncomingMessage.setTimeout does not keep the event loop alive", asy
       }, 2000).unref();
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

@@ -42,7 +42,7 @@ pub fn valkeyErrorToJS(globalObject: *jsc.JSGlobalObject, message: ?[]const u8, 
     return error_code.fmt(globalObject, "Valkey error: {s}", .{@errorName(err)});
 }
 
-pub fn respValueToJS(self: *RESPValue, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn respValueToJS(self: *RESPValue, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     return respValueToJSWithOptions(self, globalObject, .{});
 }
 
@@ -50,16 +50,16 @@ pub const ToJSOptions = struct {
     return_as_buffer: bool = false,
 };
 
-fn valkeyStrToJSValue(globalObject: *jsc.JSGlobalObject, str: []const u8, options: *const ToJSOptions) bun.JSError!jsc.JSValue {
+fn valkeyStrToJSValue(globalObject: *jsc.JSGlobalObject, str: []const u8, options: *const ToJSOptions) fun.JSError!jsc.JSValue {
     if (options.return_as_buffer) {
         // TODO: handle values > 4.7 GB
         return try jsc.ArrayBuffer.createBuffer(globalObject, str);
     } else {
-        return bun.String.createUTF8ForJS(globalObject, str);
+        return fun.String.createUTF8ForJS(globalObject, str);
     }
 }
 
-pub fn respValueToJSWithOptions(self: *RESPValue, globalObject: *jsc.JSGlobalObject, options: ToJSOptions) bun.JSError!jsc.JSValue {
+pub fn respValueToJSWithOptions(self: *RESPValue, globalObject: *jsc.JSGlobalObject, options: ToJSOptions) fun.JSError!jsc.JSValue {
     switch (self.*) {
         .SimpleString => |str| return valkeyStrToJSValue(globalObject, str, &options),
         .Error => |str| return valkeyErrorToJS(globalObject, str, protocol.RedisError.InvalidResponse),
@@ -88,7 +88,7 @@ pub fn respValueToJSWithOptions(self: *RESPValue, globalObject: *jsc.JSGlobalObj
             var js_obj = jsc.JSValue.createEmptyObjectWithNullPrototype(globalObject);
             for (entries) |*entry| {
                 const js_key = try respValueToJSWithOptions(&entry.key, globalObject, .{});
-                var key_str = try js_key.toBunString(globalObject);
+                var key_str = try js_key.toFunString(globalObject);
                 defer key_str.deref();
                 const js_value = try respValueToJSWithOptions(&entry.value, globalObject, options);
 
@@ -113,7 +113,7 @@ pub fn respValueToJSWithOptions(self: *RESPValue, globalObject: *jsc.JSGlobalObj
             var js_obj = jsc.JSValue.createEmptyObjectWithNullPrototype(globalObject);
 
             // Add the push type
-            const kind_str = try bun.String.createUTF8ForJS(globalObject, push.kind);
+            const kind_str = try fun.String.createUTF8ForJS(globalObject, push.kind);
             js_obj.put(globalObject, "type", kind_str);
 
             // Add the data as an array
@@ -132,7 +132,7 @@ pub fn respValueToJSWithOptions(self: *RESPValue, globalObject: *jsc.JSGlobalObj
                 return jsc.JSValue.jsNumber(int);
             } else |_| {
                 // If it doesn't fit in an i64, return as string
-                return bun.String.createUTF8ForJS(globalObject, str);
+                return fun.String.createUTF8ForJS(globalObject, str);
             }
         },
     }
@@ -143,5 +143,5 @@ const std = @import("std");
 const protocol = @import("../../valkey/valkey_protocol.zig");
 const RESPValue = protocol.RESPValue;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

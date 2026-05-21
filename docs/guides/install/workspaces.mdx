@@ -1,12 +1,12 @@
 ---
 title: Configuring a monorepo using workspaces
-sidebarTitle: Workspaces with Bun
+sidebarTitle: Workspaces with Fun
 mode: center
 ---
 
-Bun's package manager supports npm `"workspaces"`. This allows you to split a codebase into multiple distinct "packages" that live in the same repository, can depend on each other, and (when possible) share a `node_modules` directory.
+Fun's package manager supports npm `"workspaces"`. This allows you to split a codebase into multiple distinct "packages" that live in the same repository, can depend on each other, and (when possible) share a `node_modules` directory.
 
-Clone [this sample project](https://github.com/colinhacks/bun-workspaces) to experiment with workspaces.
+Clone [this sample project](https://github.com/colinhacks/fun-workspaces) to experiment with workspaces.
 
 ---
 
@@ -50,21 +50,21 @@ To add dependencies between workspaces, use the `"workspace:*"` syntax. Here we'
 
 ---
 
-Once added, run `bun install` from the project root to install dependencies for all workspaces.
+Once added, run `fun install` from the project root to install dependencies for all workspaces.
 
 ```sh terminal icon="terminal"
-bun install
+fun install
 ```
 
 ---
 
-To add npm dependencies to a particular workspace, `cd` to the appropriate directory and run `bun add` commands as you would normally. Bun will detect that you are in a workspace and hoist the dependency as needed.
+To add npm dependencies to a particular workspace, `cd` to the appropriate directory and run `fun add` commands as you would normally. Fun will detect that you are in a workspace and hoist the dependency as needed.
 
 ```sh terminal icon="terminal"
 cd packages/stuff-a
-bun add zod
+fun add zod
 ```
 
 ---
 
-See [Docs > Package manager](/pm/cli/install) for complete documentation of Bun's package manager.
+See [Docs > Package manager](/pm/cli/install) for complete documentation of Fun's package manager.

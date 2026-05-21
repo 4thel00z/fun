@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { nodeExe, tempDirWithFiles } from "harness";
 import net from "node:net";
 
@@ -29,7 +29,7 @@ async function nodeRun(callback, clients = 1) {
   })
   `,
   });
-  const process = Bun.spawn([nodeExe(), "index.mjs"], {
+  const process = Fun.spawn([nodeExe(), "index.mjs"], {
     cwd,
     stdin: "ignore",
     stdout: "pipe",

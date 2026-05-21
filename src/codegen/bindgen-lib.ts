@@ -1,7 +1,9 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 /**
  * This is the public API for `bind.ts` files
  * It is aliased as `import {} from 'bindgen'`
- * @see https://bun.com/docs/project/bindgen
+ * @see https://fun.dev/docs/project/bindgen
  */
 
 import {
@@ -247,7 +249,7 @@ export namespace t {
 
   /**
    * Reference an external class type that is not defined with `bindgen`,
-   * from either WebCore, JavaScriptCore, or Bun.
+   * from either WebCore, JavaScriptCore, or Fun.
    */
   export function externalClass<T>(name: string): Type<T> {
     return new TypeImpl("ref", name);
@@ -351,7 +353,7 @@ export interface FuncMetadata {
 
 export type FuncReference = { [isFunc]: true };
 
-export type ExposedOn = "JSGlobalObject" | "BunObject";
+export type ExposedOn = "JSGlobalObject" | "FunObject";
 
 export interface FuncVariant {
   /** Ordered record. Cannot include ".required" types since required is the default. */

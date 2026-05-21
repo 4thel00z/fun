@@ -1,18 +1,18 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("--pass-with-no-tests exits with 0 when no test files found", async () => {
   using dir = tempDir("pass-with-no-tests", {
     "not-a-test.ts": `console.log("hello");`,
   });
 
-  const { exited, stderr } = Bun.spawn({
-    cmd: [bunExe(), "test", "--pass-with-no-tests"],
+  const { exited, stderr } = Fun.spawn({
+    cmd: [funExe(), "test", "--pass-with-no-tests"],
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
     stdin: "ignore",
-    env: bunEnv,
+    env: funEnv,
   });
 
   const [err, exitCode] = await Promise.all([stderr.text(), exited]);
@@ -23,16 +23,16 @@ test("--pass-with-no-tests exits with 0 when no test files found", async () => {
 
 test("--pass-with-no-tests exits with 0 when filters match no tests", async () => {
   using dir = tempDir("pass-with-no-tests-filter", {
-    "some.test.ts": `import { test } from "bun:test"; test("example", () => {});`,
+    "some.test.ts": `import { test } from "fun:test"; test("example", () => {});`,
   });
 
-  const { exited, stderr } = Bun.spawn({
-    cmd: [bunExe(), "test", "--pass-with-no-tests", "-t", "nonexistent"],
+  const { exited, stderr } = Fun.spawn({
+    cmd: [funExe(), "test", "--pass-with-no-tests", "-t", "nonexistent"],
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
     stdin: "ignore",
-    env: bunEnv,
+    env: funEnv,
   });
 
   const [err, exitCode] = await Promise.all([stderr.text(), exited]);
@@ -45,13 +45,13 @@ test("without --pass-with-no-tests, exits with 1 when no test files found", asyn
     "not-a-test.ts": `console.log("hello");`,
   });
 
-  const { exited, stderr } = Bun.spawn({
-    cmd: [bunExe(), "test"],
+  const { exited, stderr } = Fun.spawn({
+    cmd: [funExe(), "test"],
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
     stdin: "ignore",
-    env: bunEnv,
+    env: funEnv,
   });
 
   const [err, exitCode] = await Promise.all([stderr.text(), exited]);
@@ -62,16 +62,16 @@ test("without --pass-with-no-tests, exits with 1 when no test files found", asyn
 
 test("without --pass-with-no-tests, exits with 1 when filters match no tests", async () => {
   using dir = tempDir("fail-with-no-tests-filter", {
-    "some.test.ts": `import { test } from "bun:test"; test("example", () => {});`,
+    "some.test.ts": `import { test } from "fun:test"; test("example", () => {});`,
   });
 
-  const { exited } = Bun.spawn({
-    cmd: [bunExe(), "test", "-t", "nonexistent"],
+  const { exited } = Fun.spawn({
+    cmd: [funExe(), "test", "-t", "nonexistent"],
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
     stdin: "ignore",
-    env: bunEnv,
+    env: funEnv,
   });
 
   const exitCode = await exited;
@@ -81,16 +81,16 @@ test("without --pass-with-no-tests, exits with 1 when filters match no tests", a
 
 test("--pass-with-no-tests still fails when tests fail", async () => {
   using dir = tempDir("pass-with-no-tests-but-fail", {
-    "test.test.ts": `import { test, expect } from "bun:test"; test("failing", () => { expect(1).toBe(2); });`,
+    "test.test.ts": `import { test, expect } from "fun:test"; test("failing", () => { expect(1).toBe(2); });`,
   });
 
-  const { exited } = Bun.spawn({
-    cmd: [bunExe(), "test", "--pass-with-no-tests"],
+  const { exited } = Fun.spawn({
+    cmd: [funExe(), "test", "--pass-with-no-tests"],
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
     stdin: "ignore",
-    env: bunEnv,
+    env: funEnv,
   });
 
   const exitCode = await exited;

@@ -71,11 +71,11 @@ pub fn escapeRegExpForPackageNameMatching(input: []const u8, writer: *std.Io.Wri
     try writer.writeAll(remain);
 }
 
-pub const jsEscapeRegExp = @import("../jsc/bun_string_jsc.zig").jsEscapeRegExp;
-pub const jsEscapeRegExpForPackageNameMatching = @import("../jsc/bun_string_jsc.zig").jsEscapeRegExpForPackageNameMatching;
+pub const jsEscapeRegExp = @import("../jsc/fun_string_jsc.zig").jsEscapeRegExp;
+pub const jsEscapeRegExpForPackageNameMatching = @import("../jsc/fun_string_jsc.zig").jsEscapeRegExpForPackageNameMatching;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const strings = fun.strings;

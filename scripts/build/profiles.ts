@@ -1,7 +1,7 @@
 /**
  * Build profiles — named configuration presets.
  *
- * Stateless: every `bun run build --profile=X` resolves fresh. No persistence,
+ * Stateless: every `fun run build --profile=X` resolves fresh. No persistence,
  * no stickiness. To override a single field, pass CLI flags on top of a profile.
  *
  * Each profile is a `PartialConfig`; `resolveConfig()` fills the rest with
@@ -131,7 +131,7 @@ export const profiles = {
     assertions: true,
   },
 
-  /** CI: compile C++ to libbun.a only (parallelized with zig build). */
+  /** CI: compile C++ to libfun.a only (parallelized with zig build). */
   "ci-cpp-only": {
     buildType: "Release",
     mode: "cpp-only",
@@ -141,7 +141,7 @@ export const profiles = {
   },
 
   /**
-   * CI: cross-compile bun-zig.o only. Target platform via --os/--arch
+   * CI: cross-compile fun-zig.o only. Target platform via --os/--arch
    * overrides (zig cross-compiles cleanly; this runs on a fast linux box).
    */
   "ci-zig-only": {

@@ -1,5 +1,5 @@
-import { expect, setDefaultTimeout, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, setDefaultTimeout, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 // These tests install npm packages, so they need a longer timeout
 setDefaultTimeout(30_000);
@@ -7,7 +7,7 @@ setDefaultTimeout(30_000);
 // Test for GitHub issue #26225
 // Multipart uploads using form-data + node-fetch@2 + fs.createReadStream() are truncated
 test("node-fetch with form-data and fs.createReadStream works correctly", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       const formData = await req.formData();
@@ -67,10 +67,10 @@ fetch('http://localhost:${server.port}', {
   });
 
   // Install dependencies
-  const installProc = Bun.spawn({
-    cmd: [bunExe(), "install"],
+  const installProc = Fun.spawn({
+    cmd: [funExe(), "install"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -78,10 +78,10 @@ fetch('http://localhost:${server.port}', {
   expect(installExitCode).toBe(0);
 
   // Run the client
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "client.js"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "client.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -105,7 +105,7 @@ fetch('http://localhost:${server.port}', {
 
 // Test that regular async iterables still work
 test("node-fetch with async iterable body still works", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       const text = await req.text();
@@ -150,10 +150,10 @@ fetch('http://localhost:${server.port}', {
   });
 
   // Install dependencies
-  const installProc = Bun.spawn({
-    cmd: [bunExe(), "install"],
+  const installProc = Fun.spawn({
+    cmd: [funExe(), "install"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -161,10 +161,10 @@ fetch('http://localhost:${server.port}', {
   expect(installExitCode).toBe(0);
 
   // Run the client
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "client.js"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "client.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -186,7 +186,7 @@ fetch('http://localhost:${server.port}', {
 test("node-fetch with form-data and large file stream", async () => {
   const fileSize = 1024 * 100; // 100KB
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       const formData = await req.formData();
@@ -253,10 +253,10 @@ fetch('http://localhost:${server.port}', {
   });
 
   // Install dependencies
-  const installProc = Bun.spawn({
-    cmd: [bunExe(), "install"],
+  const installProc = Fun.spawn({
+    cmd: [funExe(), "install"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -264,10 +264,10 @@ fetch('http://localhost:${server.port}', {
   expect(installExitCode).toBe(0);
 
   // Run the client
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "client.js"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "client.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

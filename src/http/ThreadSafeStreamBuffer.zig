@@ -1,7 +1,7 @@
 const ThreadSafeStreamBuffer = @This();
 
-buffer: bun.io.StreamBuffer = .{},
-mutex: bun.Mutex = .{},
+buffer: fun.io.StreamBuffer = .{},
+mutex: fun.Mutex = .{},
 ref_count: StreamBufferRefCount = .initExactRefs(2), // 1 for main thread and 1 for http thread
 // callback will be called passing the context for the http callback
 // this is used to report when the buffer is drained and only if end chunk was not sent/reported
@@ -20,12 +20,12 @@ const Callback = struct {
     }
 };
 
-const StreamBufferRefCount = bun.ptr.ThreadSafeRefCount(@This(), "ref_count", ThreadSafeStreamBuffer.deinit, .{});
+const StreamBufferRefCount = fun.ptr.ThreadSafeRefCount(@This(), "ref_count", ThreadSafeStreamBuffer.deinit, .{});
 pub const ref = StreamBufferRefCount.ref;
 pub const deref = StreamBufferRefCount.deref;
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
-pub fn acquire(this: *ThreadSafeStreamBuffer) *bun.io.StreamBuffer {
+pub fn acquire(this: *ThreadSafeStreamBuffer) *fun.io.StreamBuffer {
     this.mutex.lock();
     return &this.buffer;
 }
@@ -55,7 +55,7 @@ pub fn reportDrain(this: *ThreadSafeStreamBuffer) void {
 
 pub fn deinit(this: *ThreadSafeStreamBuffer) void {
     this.buffer.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");

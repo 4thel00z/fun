@@ -1,7 +1,7 @@
 // Test that napi_reference_unref CANNOT be called from a finalizer in experimental NAPI
 // This verifies the GC check is enforced for experimental modules
 // This test is expected to CRASH/ABORT when the finalizer runs
-// This is a regression test for https://github.com/oven-sh/bun/issues/22596
+// This is a regression test for https://github.com/underdoc-org/fun/issues/22596
 
 // NAPI_VERSION_EXPERIMENTAL is defined in binding.gyp
 #define NAPI_EXPERIMENTAL
@@ -17,7 +17,7 @@
 #if defined(__linux__) || defined(__APPLE__)
 #include <sys/resource.h>
 static void suppress_core_dumps() {
-  if (getenv("BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
+  if (getenv("FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
     struct rlimit rl;
     rl.rlim_cur = 0;
     rl.rlim_max = 0;
@@ -28,7 +28,7 @@ static void suppress_core_dumps() {
 #include <windows.h>
 #include <dbghelp.h>
 static void suppress_core_dumps() {
-  if (getenv("BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
+  if (getenv("FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT")) {
     // Disable Windows Error Reporting dialogs
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     // Disable the default crash handler

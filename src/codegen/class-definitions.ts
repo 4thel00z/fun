@@ -3,7 +3,7 @@ interface PropertyAttribute {
   configurable?: boolean;
   /**
    * The name for a private symbol to use as the property name. The value should
-   * be a private symbol from `BunBuiltinNames.h`. This will omit the property
+   * be a private symbol from `FunBuiltinNames.h`. This will omit the property
    * from the prototype hash table, instead setting it using `putDirect()`.
    */
   privateSymbol?: string;
@@ -124,36 +124,36 @@ export class ClassDefinition {
    * ```zig
    * pub const NativeClass = struct {
    *
-   *   fn constructor(global: *JSC.JSGlobalObject, frame: *JSC.CallFrame) bun.JSError!*SocketAddress {
+   *   fn constructor(global: *JSC.JSGlobalObject, frame: *JSC.CallFrame) fun.JSError!*SocketAddress {
    *     // do stuff
-   *     return bun.new(NativeClass, .{
+   *     return fun.new(NativeClass, .{
    *       // ...
    *     });
    *   }
    *
    *   fn finalize(this: *NativeClass) void {
    *     // free allocations owned by this class, then free the struct itself.
-   *     bun.destroy(this);
+   *     fun.destroy(this);
    *   }
    * };
    * ```
    * Example with ref counting:
    * ```
    * pub const RefCountedNativeClass = struct {
-   *   const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+   *   const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
    *   pub const ref = RefCount.ref;
    *   pub const deref = RefCount.deref;
    *
-   *   fn constructor(global: *JSC.JSGlobalObject, frame: *JSC.CallFrame) bun.JSError!*SocketAddress {
+   *   fn constructor(global: *JSC.JSGlobalObject, frame: *JSC.CallFrame) fun.JSError!*SocketAddress {
    *     // do stuff
-   *     return bun.new(NativeClass, .{
+   *     return fun.new(NativeClass, .{
    *       // ...
    *     });
    *   }
    *
    *   fn deinit(this: *NativeClass) void {
    *     // free allocations owned by this class, then free the struct itself.
-   *     bun.destroy(this);
+   *     fun.destroy(this);
    *   }
    *
    *   pub const finalize = deref; // GC will deref, which can free if no references are left.
@@ -252,7 +252,7 @@ export interface CustomField {
 }
 
 /**
- * Define a native class written in ZIg. Bun's codegen step will create CPP wrappers
+ * Define a native class written in ZIg. Fun's codegen step will create CPP wrappers
  * for interacting with JSC.
  */
 export function define(

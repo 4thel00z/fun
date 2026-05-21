@@ -1,6 +1,6 @@
 "use strict";
 
-import { describe, expect, it, test } from "bun:test";
+import { describe, expect, it, test } from "fun:test";
 import {
   createCipheriv,
   createDecipheriv,

@@ -217,7 +217,7 @@ pub fn scan(
                             result.* = alias;
                         }
                         strings.sortDesc(sorted);
-                        bun.handleOom(p.named_imports.ensureUnusedCapacity(p.allocator, sorted.len));
+                        fun.handleOom(p.named_imports.ensureUnusedCapacity(p.allocator, sorted.len));
 
                         // Create named imports for these property accesses. This will
                         // cause missing imports to generate useful warnings.
@@ -236,7 +236,7 @@ pub fn scan(
                                     .namespace_ref = namespace_ref,
                                     .import_record_index = st.import_record_index,
                                 },
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
 
                             const name: LocRef = item;
                             const name_ref = name.ref.?;
@@ -262,7 +262,7 @@ pub fn scan(
                     p.named_imports.ensureUnusedCapacity(
                         p.allocator,
                         st.items.len + @as(usize, @intFromBool(st.default_name != null)) + @as(usize, @intFromBool(st.star_name_loc != null)),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
 
                     if (st.star_name_loc) |loc| {
                         record.flags.contains_import_star = true;
@@ -308,7 +308,7 @@ pub fn scan(
                 } else {
                     // ESM requires live bindings
                     // CommonJS does not require live bindings
-                    // We load ESM in browsers & in Bun.js
+                    // We load ESM in browsers & in Fun.js
                     // We have to simulate live bindings for cases where the code is bundled
                     // We do not know at this stage whether or not the import statement is bundled
                     // This keeps track of the `namespace_alias` incase, at printing time, we determine that we should print it with the namespace
@@ -428,7 +428,7 @@ pub fn scan(
                 // Rewrite this export to be:
                 // exports.default =
                 // But only if it's anonymous
-                if (!hot_module_reloading_transformations and will_transform_to_common_js and P != bun.bundle_v2.AstBuilder) {
+                if (!hot_module_reloading_transformations and will_transform_to_common_js and P != fun.bundle_v2.AstBuilder) {
                     const expr = st.value.toExpr();
                     var export_default_args = try p.allocator.alloc(Expr, 2);
                     export_default_args[0] = p.@"module.exports"(expr.loc);
@@ -507,12 +507,12 @@ pub fn scan(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const ImportRecord = bun.ImportRecord;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const ImportRecord = fun.ImportRecord;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Binding = js_ast.Binding;
 const Expr = js_ast.Expr;
 const G = js_ast.G;
@@ -521,7 +521,7 @@ const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 const Symbol = js_ast.Symbol;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const ConvertESMExportsForHmr = js_parser.ConvertESMExportsForHmr;
 const ImportItemForNamespaceMap = js_parser.ImportItemForNamespaceMap;
 const ImportScanner = js_parser.ImportScanner;

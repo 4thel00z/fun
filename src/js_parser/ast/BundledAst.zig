@@ -17,7 +17,7 @@ import_records: ImportRecord.List = .{},
 
 hashbang: string = "",
 parts: Part.List = .{},
-css: ?*bun.css.BundlerStyleSheet = null,
+css: ?*fun.css.BundlerStyleSheet = null,
 url_for_css: []const u8 = "",
 symbols: Symbol.List = .{},
 module_scope: Scope = .{},
@@ -45,7 +45,7 @@ redirect_import_record_index: u32 = std.math.maxInt(u32),
 /// Only populated when bundling. When --server-components is passed, this
 /// will be .browser when it is a client component, and the server's target
 /// on the server.
-target: bun.options.Target = .browser,
+target: fun.options.Target = .browser,
 
 // const_values: ConstValuesMap = .{},
 ts_enums: Ast.TsEnumsMap = .{},
@@ -186,7 +186,7 @@ pub fn addUrlForCss(
     force_inline: bool,
 ) void {
     {
-        const mime_type = if (mime_type_) |m| m else MimeType.byExtension(bun.strings.trimLeadingChar(std.fs.path.extension(source.path.text), '.')).value;
+        const mime_type = if (mime_type_) |m| m else MimeType.byExtension(fun.strings.trimLeadingChar(std.fs.path.extension(source.path.text), '.')).value;
         const contents = source.contents;
         // TODO: make this configurable
         const COPY_THRESHOLD = 128 * 1024; // 128kb
@@ -195,12 +195,12 @@ pub fn addUrlForCss(
         this.url_for_css = url_for_css: {
 
             // Encode as base64
-            const encode_len = bun.base64.encodeLen(contents);
+            const encode_len = fun.base64.encodeLen(contents);
             const data_url_prefix_len = "data:".len + mime_type.len + ";base64,".len;
             const total_buffer_len = data_url_prefix_len + encode_len;
-            var encoded = bun.handleOom(allocator.alloc(u8, total_buffer_len));
+            var encoded = fun.handleOom(allocator.alloc(u8, total_buffer_len));
             _ = std.fmt.bufPrint(encoded[0..data_url_prefix_len], "data:{s};base64,", .{mime_type}) catch unreachable;
-            const len = bun.base64.encode(encoded[data_url_prefix_len..], contents);
+            const len = fun.base64.encode(encoded[data_url_prefix_len..], contents);
             break :url_for_css encoded[0 .. data_url_prefix_len + len];
         };
     }
@@ -216,13 +216,13 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const ImportRecord = bun.ImportRecord;
-const logger = bun.logger;
-const strings = bun.strings;
-const MimeType = bun.http.MimeType;
+const fun = @import("fun");
+const ImportRecord = fun.ImportRecord;
+const logger = fun.logger;
+const strings = fun.strings;
+const MimeType = fun.http.MimeType;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Ast = js_ast.Ast;
 const BundledAst = js_ast.BundledAst;
 const CharFreq = js_ast.CharFreq;

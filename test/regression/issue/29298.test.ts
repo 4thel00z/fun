@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "node:path";
 
-// https://github.com/oven-sh/bun/issues/29298
+// https://github.com/underdoc-org/fun/issues/29298
 
 const SVG_BODY = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 4"><rect width="4" height="4" fill="#fbf0df"/></svg>`;
 
@@ -21,20 +21,20 @@ console.log(logo);`,
     "src/logo.svg": SVG_BODY,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "--compile", "--target", "browser", "--outdir", "./dist", "./src/index.html"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "--compile", "--target", "browser", "--outdir", "./dist", "./src/index.html"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
   const exitCode = await proc.exited;
 
   // Only index.html should exist in dist/ — standalone HTML is meant to be self-contained.
-  const distFiles = await Array.fromAsync(new Bun.Glob("*").scan({ cwd: join(String(dir), "dist") }));
+  const distFiles = await Array.fromAsync(new Fun.Glob("*").scan({ cwd: join(String(dir), "dist") }));
   expect(distFiles).toEqual(["index.html"]);
 
-  const html = await Bun.file(join(String(dir), "dist", "index.html")).text();
+  const html = await Fun.file(join(String(dir), "dist", "index.html")).text();
 
   // The JS-imported SVG must NOT be referenced as a sidecar path.
   expect(html).not.toMatch(/logo-[a-z0-9]+\.svg/);
@@ -59,16 +59,16 @@ document.body.dataset.logo = logo;`,
     "src/logo.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"><rect width="2" height="2" fill="#00ff00"/></svg>`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "--compile", "--target", "browser", "--outdir", "./dist", "./src/index.html"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "--compile", "--target", "browser", "--outdir", "./dist", "./src/index.html"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
   const exitCode = await proc.exited;
 
-  const html = await Bun.file(join(String(dir), "dist", "index.html")).text();
+  const html = await Fun.file(join(String(dir), "dist", "index.html")).text();
   expect(html).not.toMatch(/\.svg"/); // no sidecar refs anywhere
 
   // Both SVGs end up inlined — count base64-encoded data URIs for SVG.

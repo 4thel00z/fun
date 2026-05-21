@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("WebSocket error event snapshot", async () => {
   const ws = new WebSocket("ws://127.0.0.1:8080");
@@ -12,7 +12,7 @@ test("WebSocket error event snapshot", async () => {
   message: "WebSocket connection to 'ws://127.0.0.1:8080/' failed: Failed to connect", 
   error: [Error: WebSocket connection to 'ws://127.0.0.1:8080/' failed: Failed to connect]
 }`);
-  expect(Bun.inspect(error)).toMatchInlineSnapshot(`
+  expect(Fun.inspect(error)).toMatchInlineSnapshot(`
     "ErrorEvent {
       type: "error",
       message: "WebSocket connection to 'ws://127.0.0.1:8080/' failed: Failed to connect",
@@ -25,7 +25,7 @@ test("WebSocket error event snapshot", async () => {
 test("ErrorEvent with no message", async () => {
   const error = new ErrorEvent("error");
   expect(error.message).toBe("");
-  expect(Bun.inspect(error)).toMatchInlineSnapshot(`
+  expect(Fun.inspect(error)).toMatchInlineSnapshot(`
     "ErrorEvent {
       type: "error",
       message: "",

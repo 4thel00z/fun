@@ -1,6 +1,6 @@
-// This script is JS so that it can run in Node.js due to issues with happy dom and Bun
-// - https://github.com/oven-sh/bun/issues/16363
-// - https://github.com/oven-sh/bun/issues/6044
+// This script is JS so that it can run in Node.js due to issues with happy dom and Fun
+// - https://github.com/underdoc-org/fun/issues/16363
+// - https://github.com/underdoc-org/fun/issues/6044
 import { Window } from "happy-dom";
 import assert from "node:assert/strict";
 import util from "node:util";
@@ -71,7 +71,7 @@ function createWindow(windowUrl) {
     height: 768,
   });
 
-  window[globalThis[Symbol.for("bun testing api, may change at any time")]] = internal => {
+  window[globalThis[Symbol.for("fun testing api, may change at any time")]] = internal => {
     window.internal = internal;
   };
 
@@ -183,7 +183,7 @@ function createWindow(windowUrl) {
       originalConsole.warn(...args);
     },
     info: (...args) => {
-      if (args[0]?.startsWith("[Bun] Hot-module-reloading socket connected")) {
+      if (args[0]?.startsWith("[Fun] Hot-module-reloading socket connected")) {
         // Wait for all CSS assets to be fully loaded before emitting the event
         let checkAttempts = 0;
         const MAX_CHECK_ATTEMPTS = 20; // Prevent infinite waiting
@@ -496,7 +496,7 @@ process.on("message", async message => {
   if (message.type === "get-errors") {
     const [messageId] = message.args;
     try {
-      const overlay = window.document.querySelector("bun-hmr");
+      const overlay = window.document.querySelector("fun-hmr");
       if (!overlay) {
         process.send({
           type: `get-errors-result-${messageId}`,
@@ -550,7 +550,7 @@ process.on("disconnect", () => {
 });
 process.on("exit", () => {
   if (window) {
-    const message = window.sessionStorage.getItem("bun:hmr:message");
+    const message = window.sessionStorage.getItem("fun:hmr:message");
     if (message) {
       const decoded = JSON.parse(message);
       if (decoded.kind === "warn") {

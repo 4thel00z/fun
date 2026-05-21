@@ -2,17 +2,17 @@
 #include "StrongRef.h"
 #include <JavaScriptCore/Strong.h>
 #include <JavaScriptCore/StrongInlines.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "wtf/DebugHeap.h"
 #include "ZigGlobalObject.h"
 
-extern "C" void Bun__StrongRef__delete(JSC::JSValue* _Nonnull handleSlot)
+extern "C" void Fun__StrongRef__delete(JSC::JSValue* _Nonnull handleSlot)
 {
     // deallocate() will correctly remove the handle from the strong list if it's currently on it.
     JSC::HandleSet::heapFor(handleSlot)->deallocate(handleSlot);
 }
 
-extern "C" JSC::JSValue* Bun__StrongRef__new(JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue)
+extern "C" JSC::JSValue* Fun__StrongRef__new(JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue)
 {
     auto& vm = globalObject->vm();
     JSC::HandleSet* handleSet = vm.heap.handleSet();
@@ -27,7 +27,7 @@ extern "C" JSC::JSValue* Bun__StrongRef__new(JSC::JSGlobalObject* globalObject, 
     return handleSlot;
 }
 
-extern "C" void Bun__StrongRef__set(JSC::JSValue* _Nonnull handleSlot, JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue)
+extern "C" void Fun__StrongRef__set(JSC::JSValue* _Nonnull handleSlot, JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue)
 {
     auto& vm = globalObject->vm();
     JSC::JSValue value = JSC::JSValue::decode(encodedValue);
@@ -40,7 +40,7 @@ extern "C" void Bun__StrongRef__set(JSC::JSValue* _Nonnull handleSlot, JSC::JSGl
     *handleSlot = value;
 }
 
-extern "C" void Bun__StrongRef__clear(JSC::JSValue* _Nonnull handleSlot)
+extern "C" void Fun__StrongRef__clear(JSC::JSValue* _Nonnull handleSlot)
 {
     // The write barrier must be called *before* the value is cleared
     // to correctly remove the handle from the strong list if it held a cell.

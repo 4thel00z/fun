@@ -85,7 +85,7 @@ pub const BaselinePosition = enum {
             last,
         };
 
-        const BaselinePositionMap = bun.ComptimeEnumMap(BaselinePositionIdent);
+        const BaselinePositionMap = fun.ComptimeEnumMap(BaselinePositionIdent);
         if (BaselinePositionMap.getASCIIICaseInsensitive(ident)) |value|
             switch (value) {
                 .baseline => return .{ .result = BaselinePosition.first },
@@ -203,7 +203,7 @@ pub const JustifyContent = union(enum) {
             right,
         };
 
-        const JustifyContentIdentMap = bun.ComptimeEnumMap(JustifyContentIdent);
+        const JustifyContentIdentMap = fun.ComptimeEnumMap(JustifyContentIdent);
         if (JustifyContentIdentMap.getASCIIICaseInsensitive(ident)) |value|
             return switch (value) {
                 .left => .{ .result = .{ .left = .{ .overflow = overflow } } },
@@ -394,7 +394,7 @@ pub const JustifySelf = union(enum) {
             .err => |e| return .{ .err = e },
         };
         const Enum = enum { left, right };
-        const Map = bun.ComptimeEnumMap(Enum);
+        const Map = fun.ComptimeEnumMap(Enum);
         if (Map.getASCIIICaseInsensitive(ident)) |val| return .{ .result = switch (val) {
             .left => .{ .left = .{ .overflow = overflow } },
             .right => .{ .right = .{ .overflow = overflow } },
@@ -589,7 +589,7 @@ pub const JustifyItems = union(enum) {
         };
 
         const Enum = enum { left, right };
-        const Map = bun.ComptimeEnumMap(Enum);
+        const Map = fun.ComptimeEnumMap(Enum);
         if (Map.getASCIIICaseInsensitive(ident)) |val| return .{ .result = switch (val) {
             .left => .{ .left = .{ .overflow = overflow } },
             .right => .{ .right = .{ .overflow = overflow } },
@@ -659,7 +659,7 @@ pub const LegacyJustify = enum {
             center,
         };
 
-        const LegacyJustifyMap = bun.ComptimeEnumMap(LegacyJustifyIdent);
+        const LegacyJustifyMap = fun.ComptimeEnumMap(LegacyJustifyIdent);
         if (LegacyJustifyMap.getASCIIICaseInsensitive(ident)) |value| {
             switch (value) {
                 .legacy => {
@@ -669,7 +669,7 @@ pub const LegacyJustify = enum {
                         .result => |v| v,
                     };
                     const InnerEnum = enum { left, right, center };
-                    const InnerLegacyJustifyMap = bun.ComptimeEnumMap(InnerEnum);
+                    const InnerLegacyJustifyMap = fun.ComptimeEnumMap(InnerEnum);
                     if (InnerLegacyJustifyMap.getASCIIICaseInsensitive(inner_ident)) |inner_value| {
                         return switch (inner_value) {
                             .left => .{ .result = .left },
@@ -1190,7 +1190,7 @@ pub const AlignHandler = struct {
             .unparsed => |*val| {
                 if (isAlignProperty(val.property_id)) {
                     this.flush(dest, context);
-                    bun.handleOom(dest.append(context.allocator, property.*));
+                    fun.handleOom(dest.append(context.allocator, property.*));
                 } else {
                     return false;
                 }
@@ -1212,30 +1212,30 @@ pub const AlignHandler = struct {
 
         this.has_any = false;
 
-        var align_content = bun.take(&this.align_content);
-        var justify_content = bun.take(&this.justify_content);
-        var align_self = bun.take(&this.align_self);
-        var justify_self = bun.take(&this.justify_self);
-        var align_items = bun.take(&this.align_items);
-        var justify_items = bun.take(&this.justify_items);
-        const row_gap = bun.take(&this.row_gap);
-        const column_gap = bun.take(&this.column_gap);
-        var box_align = bun.take(&this.box_align);
-        var box_pack = bun.take(&this.box_pack);
-        var flex_line_pack = bun.take(&this.flex_line_pack);
-        var flex_pack = bun.take(&this.flex_pack);
-        var flex_align = bun.take(&this.flex_align);
-        var flex_item_align = bun.take(&this.flex_item_align);
+        var align_content = fun.take(&this.align_content);
+        var justify_content = fun.take(&this.justify_content);
+        var align_self = fun.take(&this.align_self);
+        var justify_self = fun.take(&this.justify_self);
+        var align_items = fun.take(&this.align_items);
+        var justify_items = fun.take(&this.justify_items);
+        const row_gap = fun.take(&this.row_gap);
+        const column_gap = fun.take(&this.column_gap);
+        var box_align = fun.take(&this.box_align);
+        var box_pack = fun.take(&this.box_pack);
+        var flex_line_pack = fun.take(&this.flex_line_pack);
+        var flex_pack = fun.take(&this.flex_pack);
+        var flex_align = fun.take(&this.flex_align);
+        var flex_item_align = fun.take(&this.flex_item_align);
 
         // 2009 properties
-        this.flushPrefixedProperty(dest, context, "box-align", bun.take(&box_align));
-        this.flushPrefixedProperty(dest, context, "box-pack", bun.take(&box_pack));
+        this.flushPrefixedProperty(dest, context, "box-align", fun.take(&box_align));
+        this.flushPrefixedProperty(dest, context, "box-pack", fun.take(&box_pack));
 
         // 2012 properties
-        this.flushPrefixedProperty(dest, context, "flex-pack", bun.take(&flex_pack));
-        this.flushPrefixedProperty(dest, context, "flex-align", bun.take(&flex_align));
-        this.flushPrefixedProperty(dest, context, "flex-item-align", bun.take(&flex_item_align));
-        this.flushPrefixedProperty(dest, context, "flex-line-pack", bun.take(&flex_line_pack));
+        this.flushPrefixedProperty(dest, context, "flex-pack", fun.take(&flex_pack));
+        this.flushPrefixedProperty(dest, context, "flex-align", fun.take(&flex_align));
+        this.flushPrefixedProperty(dest, context, "flex-item-align", fun.take(&flex_item_align));
+        this.flushPrefixedProperty(dest, context, "flex-line-pack", fun.take(&flex_line_pack));
 
         this.flushLegacyProperty(dest, context, Feature.align_content, &align_content, null, .{ FlexLinePack, "flex-line-pack" });
         this.flushLegacyProperty(dest, context, Feature.justify_content, &justify_content, .{ BoxPack, "box-pack" }, .{ FlexPack, "flex-pack" });
@@ -1250,35 +1250,35 @@ pub const AlignHandler = struct {
                 .{ .feature = Feature.justify_content, .prop = "justify-content" },
             );
         }
-        this.flushStandardPropertyHelper(dest, context, "align-content", bun.take(&align_content), Feature.align_content);
-        this.flushStandardPropertyHelper(dest, context, "justify-content", bun.take(&justify_content), Feature.justify_content);
+        this.flushStandardPropertyHelper(dest, context, "align-content", fun.take(&align_content), Feature.align_content);
+        this.flushStandardPropertyHelper(dest, context, "justify-content", fun.take(&justify_content), Feature.justify_content);
 
         this.flushLegacyProperty(dest, context, Feature.align_self, &align_self, null, .{ FlexItemAlign, "flex-item-align" });
         if (context.targets.isCompatible(.place_self)) {
             this.flushShorthandHelper(dest, context, .{ .prop = "place-self", .ty = PlaceSelf }, .{ .feature = Feature.align_self, .prop = "align-self" }, &align_self, &justify_self, null);
         }
-        this.flushStandardPropertyHelper(dest, context, "align-self", bun.take(&align_self), Feature.align_self);
-        this.flushUnprefixProperty(dest, context, "justify-self", bun.take(&justify_self));
+        this.flushStandardPropertyHelper(dest, context, "align-self", fun.take(&align_self), Feature.align_self);
+        this.flushUnprefixProperty(dest, context, "justify-self", fun.take(&justify_self));
 
         this.flushLegacyProperty(dest, context, Feature.align_items, &align_items, .{ BoxAlign, "box-align" }, .{ FlexAlign, "flex-align" });
         if (context.targets.isCompatible(css.compat.Feature.place_items)) {
             this.flushShorthandHelper(dest, context, .{ .prop = "place-items", .ty = PlaceItems }, .{ .feature = Feature.align_items, .prop = "align-items" }, &align_items, &justify_items, null);
         }
-        this.flushStandardPropertyHelper(dest, context, "align-items", bun.take(&align_items), Feature.align_items);
-        this.flushUnprefixProperty(dest, context, "justify-items", bun.take(&justify_items));
+        this.flushStandardPropertyHelper(dest, context, "align-items", fun.take(&align_items), Feature.align_items);
+        this.flushUnprefixProperty(dest, context, "justify-items", fun.take(&justify_items));
 
         if (row_gap != null and column_gap != null) {
             dest.append(context.allocator, Property{ .gap = Gap{
                 .row = row_gap.?,
                 .column = column_gap.?,
-            } }) catch |err| bun.handleOom(err);
+            } }) catch |err| fun.handleOom(err);
         } else {
             if (row_gap != null) {
-                bun.handleOom(dest.append(context.allocator, Property{ .@"row-gap" = row_gap.? }));
+                fun.handleOom(dest.append(context.allocator, Property{ .@"row-gap" = row_gap.? }));
             }
 
             if (column_gap != null) {
-                bun.handleOom(dest.append(context.allocator, Property{ .@"column-gap" = column_gap.? }));
+                fun.handleOom(dest.append(context.allocator, Property{ .@"column-gap" = column_gap.? }));
             }
         }
     }
@@ -1287,7 +1287,7 @@ pub const AlignHandler = struct {
         // If two vendor prefixes for the same property have different
         // values, we need to flush what we have immediately to preserve order.
         if (@field(this, prop)) |*v| {
-            if (!val.eql(&v[0]) and !bun.bits.contains(VendorPrefix, v[1], vp)) {
+            if (!val.eql(&v[0]) and !fun.bits.contains(VendorPrefix, v[1], vp)) {
                 this.flush(dest, context);
             }
         }
@@ -1298,7 +1298,7 @@ pub const AlignHandler = struct {
         // Otherwise, update the value and add the prefix.
         if (@field(this, prop)) |*tuple| {
             tuple.*[0] = css.generic.deepClone(@TypeOf(val.*), val, context.allocator);
-            bun.bits.insert(VendorPrefix, &tuple.*[1], vp);
+            fun.bits.insert(VendorPrefix, &tuple.*[1], vp);
         } else {
             @field(this, prop) = .{ css.generic.deepClone(@TypeOf(val.*), val, context.allocator), vp };
             this.has_any = true;
@@ -1321,7 +1321,7 @@ pub const AlignHandler = struct {
             var prefix = v[1];
             // If we have an unprefixed property, override necessary prefixes.
             prefix = if (prefix.none) flushPrefixesHelper(this, context, feature) else prefix;
-            bun.handleOom(dest.append(context.allocator, @unionInit(Property, prop, .{ val, prefix })));
+            fun.handleOom(dest.append(context.allocator, @unionInit(Property, prop, .{ val, prefix })));
         }
     }
 
@@ -1362,7 +1362,7 @@ pub const AlignHandler = struct {
                                 dest.append(context.allocator, @unionInit(Property, p2009[1], .{
                                     a,
                                     prefixes_2009,
-                                })) catch |err| bun.handleOom(err);
+                                })) catch |err| fun.handleOom(err);
                             }
                         }
                     }
@@ -1381,7 +1381,7 @@ pub const AlignHandler = struct {
                         dest.append(context.allocator, @unionInit(Property, p2012[1], .{
                             q,
                             VendorPrefix.MS,
-                        })) catch |err| bun.handleOom(err);
+                        })) catch |err| fun.handleOom(err);
                     }
                 }
             }
@@ -1397,7 +1397,7 @@ pub const AlignHandler = struct {
         if (key) |v| {
             const val = v[0];
             const prefix = v[1];
-            bun.handleOom(dest.append(context.allocator, @unionInit(Property, prop, .{ val, prefix })));
+            fun.handleOom(dest.append(context.allocator, @unionInit(Property, prop, .{ val, prefix })));
         }
     }
 
@@ -1405,7 +1405,7 @@ pub const AlignHandler = struct {
         _ = this; // autofix
         if (key) |v| {
             const val = v;
-            bun.handleOom(dest.append(context.allocator, @unionInit(Property, prop, val)));
+            fun.handleOom(dest.append(context.allocator, @unionInit(Property, prop, val)));
         }
     }
 
@@ -1442,7 +1442,7 @@ pub const AlignHandler = struct {
                         dest.append(
                             context.allocator,
                             @unionInit(Property, align_prop.prop, .{ css.generic.deepClone(@TypeOf(@"align".*), @"align", context.allocator), align_prefix.* }),
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     }
 
                     if (comptime justify_prop != null) {
@@ -1455,7 +1455,7 @@ pub const AlignHandler = struct {
                             dest.append(
                                 context.allocator,
                                 @unionInit(Property, justify_prop.?.prop, .{ css.generic.deepClone(@TypeOf(justify_actual.*), justify_actual, context.allocator), justify_prefix.* }),
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
                         }
 
                         // Add shorthand.
@@ -1465,7 +1465,7 @@ pub const AlignHandler = struct {
                                 .@"align" = css.generic.deepClone(@TypeOf(@"align".*), @"align", context.allocator),
                                 .justify = css.generic.deepClone(@TypeOf(justify_actual.*), justify_actual, context.allocator),
                             }),
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     } else {
 
                         // Add shorthand.
@@ -1475,7 +1475,7 @@ pub const AlignHandler = struct {
                                 .@"align" = css.generic.deepClone(@TypeOf(@"align".*), @"align", context.allocator),
                                 .justify = css.generic.deepClone(@TypeOf(justify.*), justify, context.allocator),
                             }),
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     }
 
                     align_val.* = null;
@@ -1511,6 +1511,6 @@ fn isAlignProperty(property_id: css.PropertyId) bool {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

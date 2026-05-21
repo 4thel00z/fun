@@ -21,8 +21,8 @@ pub const MySQLConnection = @import("./mysql/JSMySQLConnection.zig");
 pub const MySQLContext = @import("./mysql/MySQLContext.zig");
 pub const MySQLQuery = @import("./mysql/JSMySQLQuery.zig");
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

@@ -1,7 +1,7 @@
-import { spawn } from "bun";
-import { expect, test } from "bun:test";
+import { spawn } from "fun";
+import { expect, test } from "fun:test";
 import { mkdir, readFile, stat, writeFile } from "fs/promises";
-import { bunExe, bunEnv as env, isWindows, runBunInstall, tmpdirSync } from "harness";
+import { funExe, funEnv as env, isWindows, runFunInstall, tmpdirSync } from "harness";
 import { join } from "path";
 
 test.skipIf(isWindows)("bin linking normalizes CRLF in shebang", async () => {
@@ -29,7 +29,7 @@ test.skipIf(isWindows)("bin linking normalizes CRLF in shebang", async () => {
 
   // Link the package
   const linkResult = spawn({
-    cmd: [bunExe(), "link"],
+    cmd: [funExe(), "link"],
     cwd: pkgDir,
     env,
     stdout: "pipe",
@@ -52,7 +52,7 @@ test.skipIf(isWindows)("bin linking normalizes CRLF in shebang", async () => {
   );
 
   // Install
-  await runBunInstall(env, consumerDir);
+  await runFunInstall(env, consumerDir);
 
   // Check that the linked bin file has normalized shebang
   const binPath = join(consumerDir, "node_modules", "test-pkg-crlf", "test-bin.py");

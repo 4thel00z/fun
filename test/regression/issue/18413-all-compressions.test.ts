@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { expect, test } from "bun:test";
+import { serve } from "fun";
+import { expect, test } from "fun:test";
 
 /**
  * Comprehensive test to ensure all compression algorithms handle empty streams correctly
@@ -71,7 +71,7 @@ test("empty chunked zstd response should work", async () => {
     port: 0,
     async fetch(req) {
       // Create an empty zstd buffer using the proper API
-      const emptyZstd = Bun.zstdCompressSync(Buffer.alloc(0));
+      const emptyZstd = Fun.zstdCompressSync(Buffer.alloc(0));
 
       // Return as chunked response
       return new Response(
@@ -105,7 +105,7 @@ test("empty non-chunked zstd response", async () => {
     port: 0,
     async fetch(req) {
       // Create an empty zstd buffer using the proper API
-      const emptyZstd = Bun.zstdCompressSync(Buffer.alloc(0));
+      const emptyZstd = Fun.zstdCompressSync(Buffer.alloc(0));
 
       return new Response(emptyZstd, {
         headers: {
@@ -129,7 +129,7 @@ test("empty chunked deflate response should work", async () => {
     port: 0,
     async fetch(req) {
       // Create an empty deflate buffer
-      const emptyDeflate = Bun.deflateSync(Buffer.alloc(0));
+      const emptyDeflate = Fun.deflateSync(Buffer.alloc(0));
 
       // Return as chunked response
       return new Response(
@@ -163,7 +163,7 @@ test("empty non-chunked deflate response", async () => {
     port: 0,
     async fetch(req) {
       // Create an empty deflate buffer
-      const emptyDeflate = Bun.deflateSync(Buffer.alloc(0));
+      const emptyDeflate = Fun.deflateSync(Buffer.alloc(0));
 
       return new Response(emptyDeflate, {
         headers: {

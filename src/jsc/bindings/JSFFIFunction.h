@@ -9,7 +9,7 @@ class GlobalObject;
 #include <JavaScriptCore/VM.h>
 
 #include "headers-handwritten.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/CallFrame.h>
 
 namespace JSC {
@@ -33,7 +33,7 @@ using CFFIFunction = FFIFunction;
  *
  * The C function is expected to know how to get the arguments out of the JSC::CallFrame and
  * return a JSC::EncodedJSValue. To do that, the argumentOffset is inlined at compile-time
- * into Bun's binary and again inlined into the C function.
+ * into Fun's binary and again inlined into the C function.
  *
  * This is used by functions compiled with TinyCC
  *

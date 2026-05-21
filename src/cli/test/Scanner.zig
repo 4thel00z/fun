@@ -10,18 +10,18 @@ filter_names: []const []const u8 = &.{},
 path_ignore_patterns: []const []const u8 = &.{},
 dirs_to_scan: Fifo,
 /// Paths to test files found while scanning.
-test_files: std.ArrayListUnmanaged(bun.PathString),
+test_files: std.ArrayListUnmanaged(fun.PathString),
 fs: *FileSystem,
-open_dir_buf: bun.PathBuffer = undefined,
-scan_dir_buf: bun.PathBuffer = undefined,
+open_dir_buf: fun.PathBuffer = undefined,
+scan_dir_buf: fun.PathBuffer = undefined,
 options: *BundleOptions,
 has_iterated: bool = false,
 search_count: usize = 0,
 
-const log = bun.Output.scoped(.jest, .hidden);
-const Fifo = bun.LinearFifo(ScanEntry, .Dynamic);
+const log = fun.Output.scoped(.jest, .hidden);
+const Fifo = fun.LinearFifo(ScanEntry, .Dynamic);
 const ScanEntry = struct {
-    relative_dir: bun.FD,
+    relative_dir: fun.FD,
     dir_path: []const u8,
     name: StringOrTinyString,
 };
@@ -36,7 +36,7 @@ pub fn init(
     transpiler: *Transpiler,
     initial_results_capacity: usize,
 ) Allocator.Error!Scanner {
-    const results = try std.ArrayListUnmanaged(bun.PathString).initCapacity(
+    const results = try std.ArrayListUnmanaged(fun.PathString).initCapacity(
         alloc,
         initial_results_capacity,
     );
@@ -56,7 +56,7 @@ pub fn deinit(this: *Scanner) void {
 
 /// Take the list of test files out of this scanner. Caller owns the returned
 /// allocation.
-pub fn takeFoundTestFiles(this: *Scanner) Allocator.Error![]bun.PathString {
+pub fn takeFoundTestFiles(this: *Scanner) Allocator.Error![]fun.PathString {
     return this.test_files.toOwnedSlice(this.allocator());
 }
 
@@ -70,8 +70,8 @@ pub fn scan(this: *Scanner, path_literal: []const u8) Error!void {
         switch (root.err.original_err) {
             error.NotDir, error.ENOTDIR => {
                 if (this.isTestFile(path)) {
-                    const rel_path = bun.PathString.init(bun.handleOom(this.fs.filename_store.append([]const u8, path)));
-                    bun.handleOom(this.test_files.append(this.allocator(), rel_path));
+                    const rel_path = fun.PathString.init(fun.handleOom(this.fs.filename_store.append([]const u8, path)));
+                    fun.handleOom(this.test_files.append(this.allocator(), rel_path));
                 }
             },
             error.ENOENT => return error.DoesNotExist,
@@ -84,7 +84,7 @@ pub fn scan(this: *Scanner, path_literal: []const u8) Error!void {
         if (@as(FileSystem.RealFS.EntriesOption.Tag, root.*) == .entries) {
             var iter = root.entries.data.iterator();
             const fd = root.entries.fd;
-            bun.assert(fd != bun.invalid_fd);
+            fun.assert(fd != fun.invalid_fd);
             while (iter.next()) |entry| {
                 this.next(entry.value_ptr.*, fd);
             }
@@ -92,22 +92,22 @@ pub fn scan(this: *Scanner, path_literal: []const u8) Error!void {
     }
 
     while (this.dirs_to_scan.readItem()) |entry| {
-        bun.assert(entry.relative_dir.isValid());
-        if (!bun.Environment.isWindows) {
+        fun.assert(entry.relative_dir.isValid());
+        if (!fun.Environment.isWindows) {
             const dir = entry.relative_dir.stdDir();
 
             const parts2 = &[_][]const u8{ entry.dir_path, entry.name.slice() };
             var path2 = this.fs.absBuf(parts2, &this.open_dir_buf);
             this.open_dir_buf[path2.len] = 0;
             const pathZ = this.open_dir_buf[path2.len - entry.name.slice().len .. path2.len :0];
-            const child_dir = bun.openDir(dir, pathZ) catch continue;
+            const child_dir = fun.openDir(dir, pathZ) catch continue;
             path2 = try this.fs.dirname_store.append([]const u8, path2);
             FileSystem.setMaxFd(child_dir.fd);
             _ = this.readDirWithName(path2, child_dir) catch return error.OutOfMemory;
         } else {
             const parts2 = &[_][]const u8{ entry.dir_path, entry.name.slice() };
             const path2 = this.fs.absBufZ(parts2, &this.open_dir_buf);
-            const child_dir = bun.openDirNoRenamingOrDeletingWindows(bun.invalid_fd, path2) catch continue;
+            const child_dir = fun.openDirNoRenamingOrDeletingWindows(fun.invalid_fd, path2) catch continue;
             _ = this.readDirWithName(
                 try this.fs.dirname_store.append([]const u8, path2),
                 child_dir,
@@ -163,7 +163,7 @@ pub fn doesPathMatchFilter(this: *Scanner, name: []const u8) bool {
 /// The path is matched as a relative path from the project root.
 pub fn matchesPathIgnorePattern(this: *Scanner, abs_path: []const u8) bool {
     if (this.path_ignore_patterns.len == 0) return false;
-    const rel_path = bun.path.relative(this.fs.top_level_dir, abs_path);
+    const rel_path = fun.path.relative(this.fs.top_level_dir, abs_path);
 
     // Build rel_path + '/' once. rel_path is a relative path from the project
     // root; 4096 bytes covers any sane test directory depth (POSIX PATH_MAX).
@@ -178,13 +178,13 @@ pub fn matchesPathIgnorePattern(this: *Scanner, abs_path: []const u8) bool {
     } else null;
 
     for (this.path_ignore_patterns) |pattern| {
-        if (bun.glob.match(pattern, rel_path).matches()) return true;
+        if (fun.glob.match(pattern, rel_path).matches()) return true;
         // Only try trailing separator for ** patterns (e.g. "vendor/**").
         // Single-star patterns like "vendor/*" must not prune entire
         // directories because * doesn't cross directory boundaries.
         if (rel_with_slash) |p| {
             if (strings.indexOf(pattern, "**") != null) {
-                if (bun.glob.match(pattern, p).matches()) return true;
+                if (fun.glob.match(pattern, p).matches()) return true;
             }
         }
     }
@@ -195,7 +195,7 @@ pub fn isTestFile(this: *Scanner, name: []const u8) bool {
     return this.couldBeTestFile(name, false) and this.doesPathMatchFilter(name) and !this.matchesPathIgnorePattern(name);
 }
 
-pub fn next(this: *Scanner, entry: *FileSystem.Entry, fd: bun.FD) void {
+pub fn next(this: *Scanner, entry: *FileSystem.Entry, fd: fun.FD) void {
     const name = entry.base_lowercase();
     this.has_iterated = true;
     switch (entry.kind(&this.fs.fs, true)) {
@@ -204,8 +204,8 @@ pub fn next(this: *Scanner, entry: *FileSystem.Entry, fd: bun.FD) void {
                 return;
             }
 
-            if (comptime bun.Environment.allow_assert)
-                bun.assert(!strings.contains(name, std.fs.path.sep_str ++ "node_modules" ++ std.fs.path.sep_str));
+            if (comptime fun.Environment.allow_assert)
+                fun.assert(!strings.contains(name, std.fs.path.sep_str ++ "node_modules" ++ std.fs.path.sep_str));
 
             for (this.exclusion_names) |exclude_name| {
                 if (strings.eql(exclude_name, name)) return;
@@ -237,13 +237,13 @@ pub fn next(this: *Scanner, entry: *FileSystem.Entry, fd: bun.FD) void {
             const path = this.fs.absBuf(parts, &this.open_dir_buf);
 
             if (!this.doesAbsolutePathMatchFilter(path)) {
-                const rel_path = bun.path.relative(this.fs.top_level_dir, path);
+                const rel_path = fun.path.relative(this.fs.top_level_dir, path);
                 if (!this.doesPathMatchFilter(rel_path)) return;
             }
 
             if (this.matchesPathIgnorePattern(path)) return;
 
-            entry.abs_path = bun.PathString.init(this.fs.filename_store.append(@TypeOf(path), path) catch unreachable);
+            entry.abs_path = fun.PathString.init(this.fs.filename_store.append(@TypeOf(path), path) catch unreachable);
             this.test_files.append(this.allocator(), entry.abs_path) catch unreachable;
         },
     }
@@ -257,12 +257,12 @@ const std = @import("std");
 const BundleOptions = @import("../../bundler/options.zig").BundleOptions;
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Transpiler = bun.Transpiler;
-const FileSystem = bun.fs.FileSystem;
+const fun = @import("fun");
+const Transpiler = fun.Transpiler;
+const FileSystem = fun.fs.FileSystem;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const jest = jsc.Jest;
 
-const strings = bun.strings;
+const strings = fun.strings;
 const StringOrTinyString = strings.StringOrTinyString;

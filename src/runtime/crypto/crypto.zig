@@ -1,5 +1,5 @@
 pub fn createCryptoError(globalThis: *jsc.JSGlobalObject, err_code: u32) JSValue {
-    return bun.BoringSSL.ERR_toJS(globalThis, err_code);
+    return fun.BoringSSL.ERR_toJS(globalThis, err_code);
 }
 
 pub const PasswordObject = @import("./PasswordObject.zig").PasswordObject;
@@ -21,8 +21,8 @@ comptime {
     CryptoHasher.Extern.@"export"();
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

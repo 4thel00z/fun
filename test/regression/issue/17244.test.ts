@@ -1,7 +1,7 @@
-import { $ } from "bun";
-import { expect, test } from "bun:test";
+import { $ } from "fun";
+import { expect, test } from "fun:test";
 
-// https://github.com/oven-sh/bun/issues/17244
+// https://github.com/underdoc-org/fun/issues/17244
 // Shell template literals leaked __bunstr_N when the first interpolated value
 // contained a space and a subsequent value contained a multi-byte UTF-8 character.
 

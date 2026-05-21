@@ -1,6 +1,6 @@
 "use strict";
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import fs from "fs";
 import jws from "jws";
 import path from "path";

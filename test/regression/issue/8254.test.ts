@@ -1,11 +1,11 @@
-// https://github.com/oven-sh/bun/issues/8254
-// Bun.write() should correctly write files larger than 2GB without data corruption
+// https://github.com/underdoc-org/fun/issues/8254
+// Fun.write() should correctly write files larger than 2GB without data corruption
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tempDir } from "harness";
 import { join } from "path";
 
-test("Bun.write() should write past 2GB boundary without corruption", async () => {
+test("Fun.write() should write past 2GB boundary without corruption", async () => {
   using tmpbase = tempDir("issue-8254", {});
 
   const TWO_GB = 2 ** 31;
@@ -22,11 +22,11 @@ test("Bun.write() should write past 2GB boundary without corruption", async () =
   }
 
   const blob = new Blob(chunks);
-  const written = await Bun.write(path, blob);
+  const written = await Fun.write(path, blob);
 
   expect(written).toBeGreaterThan(TWO_GB);
 
-  const file = Bun.file(path);
+  const file = Fun.file(path);
 
   // Check bytes just before and after 2GB boundary
   const positions = [TWO_GB - 1, TWO_GB, TWO_GB + 1];

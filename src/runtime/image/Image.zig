@@ -1,4 +1,4 @@
-//! `Bun.Image` — Sharp-shaped image pipeline backed by the statically linked
+//! `Fun.Image` — Sharp-shaped image pipeline backed by the statically linked
 //! libjpeg-turbo / libspng / libwebp codecs and the highway resize kernel.
 //!
 //! Shape: the constructor only captures the *input* (path or bytes). Chainable
@@ -15,7 +15,7 @@ pub const fromJS = js.fromJS;
 pub const fromJSDirect = js.fromJSDirect;
 pub const toJS = js.toJS;
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 source: Source,
 pipeline: Pipeline = .{},
@@ -48,12 +48,12 @@ pub const Source = union(enum) {
     ///    materialisation when actually going off-thread — and that costs no
     ///    more than the dupe it replaces.
     js_buffer,
-    /// Owned by `bun.default_allocator` — Blob inputs (the Blob's store may be
+    /// Owned by `fun.default_allocator` — Blob inputs (the Blob's store may be
     /// sliced/freed independently) and decoded data: URLs.
     owned: []u8,
-    /// Owned by `bun.default_allocator`. Read on the worker thread.
+    /// Owned by `fun.default_allocator`. Read on the worker thread.
     path: [:0]u8,
-    /// `Bun.file()`, `Bun.s3()`, an fd-backed Blob — anything whose bytes
+    /// `Fun.file()`, `Fun.s3()`, an fd-backed Blob — anything whose bytes
     /// don't exist until read. We hold a Strong on the JS Blob and, at
     /// terminal time, just call its own `.bytes()` (whatever that means for
     /// that kind of Blob — file, S3, pipe, slice) and chain the pipeline
@@ -64,8 +64,8 @@ pub const Source = union(enum) {
     fn deinit(self: *Source) void {
         switch (self.*) {
             .js_buffer => {},
-            .owned => |b| bun.default_allocator.free(b),
-            .path => |p| bun.default_allocator.free(p),
+            .owned => |b| fun.default_allocator.free(b),
+            .path => |p| fun.default_allocator.free(p),
             .blob => |*s| s.deinit(),
         }
     }
@@ -81,7 +81,7 @@ extern fn JSC__JSValue__borrowBytesForOffThread(v: jsc.JSValue, out_ptr: *[*]con
 pub const Fit = enum {
     fill,
     inside,
-    pub const Map = bun.ComptimeEnumMap(Fit);
+    pub const Map = fun.ComptimeEnumMap(Fit);
 };
 
 pub const Resize = struct {
@@ -136,21 +136,21 @@ const max_input_file_bytes: u64 = 256 << 20;
 
 // ───────────────────────────── lifecycle ────────────────────────────────────
 
-pub fn constructor(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, this_value: jsc.JSValue) bun.JSError!*Image {
+pub fn constructor(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, this_value: jsc.JSValue) fun.JSError!*Image {
     const args = callframe.arguments();
     if (args.len < 1 or args[0].isUndefinedOrNull())
         return global.throwInvalidArguments("Image() expects a path, ArrayBuffer, TypedArray, Blob or data: URL", .{});
     return fromInputJS(global, args[0], if (args.len > 1) args[1] else .js_undefined, this_value);
 }
 
-/// `Bun.file("…").image()` / `Bun.s3("…").image()` / `Blob#image()`. Same
-/// allocation as `new Bun.Image(blob, opts)`. Everything that can throw runs
+/// `Fun.file("…").image()` / `Fun.s3("…").image()` / `Blob#image()`. Same
+/// allocation as `new Fun.Image(blob, opts)`. Everything that can throw runs
 /// BEFORE `toJS()` — once the wrapper exists its `m_ctx` owns the *Image and
 /// the generated `~JSImage` will `finalize()` on GC, so a manual `finalize()`
 /// after `toJS()` is a double-free. (Contrast `fromInputJS` where the codegen
 /// constructor only wires `m_ctx` after the Zig fn returns, so its `errdefer`
 /// is safe.)
-pub fn fromBlobJS(global: *jsc.JSGlobalObject, blob_value: jsc.JSValue, options: jsc.JSValue) bun.JSError!jsc.JSValue {
+pub fn fromBlobJS(global: *jsc.JSGlobalObject, blob_value: jsc.JSValue, options: jsc.JSValue) fun.JSError!jsc.JSValue {
     var img = Image.new(.{ .source = .js_buffer });
     errdefer img.finalize();
     try applyOptions(img, global, options);
@@ -160,11 +160,11 @@ pub fn fromBlobJS(global: *jsc.JSGlobalObject, blob_value: jsc.JSValue, options:
     // reason `sourceFromJS` takes `this_value` at all is to set that slot
     // for ArrayBuffer inputs — pass `.zero` and assert below.
     img.source = try sourceFromJS(global, blob_value, .zero);
-    bun.debugAssert(img.source != .js_buffer);
+    fun.debugAssert(img.source != .js_buffer);
     return img.toJS(global);
 }
 
-fn fromInputJS(global: *jsc.JSGlobalObject, input: jsc.JSValue, options: jsc.JSValue, this_value: jsc.JSValue) bun.JSError!*Image {
+fn fromInputJS(global: *jsc.JSGlobalObject, input: jsc.JSValue, options: jsc.JSValue, this_value: jsc.JSValue) fun.JSError!*Image {
     var img = Image.new(.{ .source = .js_buffer });
     // `opt.get` can throw (Proxy/getter); without this the heap-allocated
     // *Image and the duplicated source bytes leak.
@@ -174,7 +174,7 @@ fn fromInputJS(global: *jsc.JSGlobalObject, input: jsc.JSValue, options: jsc.JSV
     return img;
 }
 
-fn applyOptions(img: *Image, global: *jsc.JSGlobalObject, opt: jsc.JSValue) bun.JSError!void {
+fn applyOptions(img: *Image, global: *jsc.JSGlobalObject, opt: jsc.JSValue) fun.JSError!void {
     if (!opt.isObject()) return;
     if (try opt.get(global, "maxPixels")) |v| if (v.isNumber()) {
         img.max_pixels = coerceInt(u64, v.asNumber(), 0, 1e15);
@@ -185,7 +185,7 @@ fn applyOptions(img: *Image, global: *jsc.JSGlobalObject, opt: jsc.JSValue) bun.
 pub fn finalize(this: *Image) void {
     this.this_ref.finalize();
     this.source.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn estimatedSize(this: *Image) usize {
@@ -199,33 +199,33 @@ pub fn estimatedSize(this: *Image) usize {
     };
 }
 
-fn sourceFromJS(global: *jsc.JSGlobalObject, value: jsc.JSValue, this_value: jsc.JSValue) bun.JSError!Source {
+fn sourceFromJS(global: *jsc.JSGlobalObject, value: jsc.JSValue, this_value: jsc.JSValue) fun.JSError!Source {
     // String → file path or data:/base64 URL. Everything else → bytes.
     if (value.isString()) {
-        const str = try value.toBunString(global);
+        const str = try value.toFunString(global);
         defer str.deref();
-        const utf8 = str.toUTF8(bun.default_allocator);
+        const utf8 = str.toUTF8(fun.default_allocator);
         defer utf8.deinit();
         const s = utf8.slice();
         // `data:[<mime>][;base64],<payload>` — accept any image MIME (we sniff
         // anyway) and decode base64 here. Non-base64 data URLs aren't useful
         // for image bytes.
-        if (bun.strings.hasPrefixComptime(s, "data:")) {
-            const comma = bun.strings.indexOfChar(s, ',') orelse
+        if (fun.strings.hasPrefixComptime(s, "data:")) {
+            const comma = fun.strings.indexOfChar(s, ',') orelse
                 return global.throwInvalidArguments("Image(): malformed data: URL (no comma)", .{});
             const meta = s[5..comma];
             const payload = s[comma + 1 ..];
-            if (!bun.strings.contains(meta, ";base64"))
+            if (!fun.strings.contains(meta, ";base64"))
                 return global.throwInvalidArguments("Image(): only base64 data: URLs are supported", .{});
-            const out = try bun.default_allocator.alloc(u8, bun.base64.decodeLen(payload));
-            const r = bun.base64.decode(out, payload);
+            const out = try fun.default_allocator.alloc(u8, fun.base64.decodeLen(payload));
+            const r = fun.base64.decode(out, payload);
             if (!r.isSuccessful()) {
-                bun.default_allocator.free(out);
+                fun.default_allocator.free(out);
                 return global.throwInvalidArguments("Image(): invalid base64 in data: URL", .{});
             }
             return .{ .owned = out[0..r.count] };
         }
-        return .{ .path = try bun.default_allocator.dupeZ(u8, s) };
+        return .{ .path = try fun.default_allocator.dupeZ(u8, s) };
     }
     if (value.asArrayBuffer(global)) |ab| {
         // A resizable/growable buffer can shrink or reallocate underneath any
@@ -247,9 +247,9 @@ fn sourceFromJS(global: *jsc.JSGlobalObject, value: jsc.JSValue, this_value: jsc
         // independently).
         const view = blob.sharedView();
         if (view.len > 0)
-            return .{ .owned = try bun.default_allocator.dupe(u8, view) };
+            return .{ .owned = try fun.default_allocator.dupe(u8, view) };
         // Anything with a backing store but no in-memory view yet
-        // (`Bun.file()`, `Bun.s3()`, fd, …) — keep the JS object and read it
+        // (`Fun.file()`, `Fun.s3()`, fd, …) — keep the JS object and read it
         // through ITS OWN `.bytes()` at terminal time, so we inherit whatever
         // that store type does (file → ReadFile, S3 → fetch, etc.) without
         // knowing about it here.
@@ -261,7 +261,7 @@ fn sourceFromJS(global: *jsc.JSGlobalObject, value: jsc.JSValue, this_value: jsc
 
 // ───────────────────────────── chainable ops ────────────────────────────────
 
-pub fn doResize(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doResize(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.arguments();
     if (args.len < 1 or !args[0].isNumber())
         return global.throwInvalidArguments("resize(width, height?, options?)", .{});
@@ -283,7 +283,7 @@ pub fn doResize(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallF
     return callframe.this();
 }
 
-pub fn doRotate(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doRotate(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.arguments();
     if (args.len < 1 or !args[0].isNumber())
         return global.throwInvalidArguments("rotate(degrees) expects 90, 180 or 270", .{});
@@ -297,17 +297,17 @@ pub fn doRotate(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallF
     return callframe.this();
 }
 
-pub fn doFlip(this: *Image, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFlip(this: *Image, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     this.pipeline.flip = true;
     return callframe.this();
 }
 
-pub fn doFlop(this: *Image, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFlop(this: *Image, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     this.pipeline.flop = true;
     return callframe.this();
 }
 
-pub fn doModulate(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doModulate(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.arguments();
     var m: Modulate = this.pipeline.modulate orelse .{};
     if (args.len > 0 and args[0].isObject()) {
@@ -327,7 +327,7 @@ pub fn doModulate(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.Cal
     return callframe.this();
 }
 
-fn setFormat(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, fmt: codecs.Format) bun.JSError!jsc.JSValue {
+fn setFormat(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, fmt: codecs.Format) fun.JSError!jsc.JSValue {
     var enc: codecs.EncodeOptions = this.pipeline.output orelse .{ .format = fmt };
     enc.format = fmt;
     const args = callframe.arguments();
@@ -351,19 +351,19 @@ fn setFormat(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFram
     return callframe.this();
 }
 
-pub fn doFormatJpeg(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFormatJpeg(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.setFormat(g, cf, .jpeg);
 }
-pub fn doFormatPng(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFormatPng(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.setFormat(g, cf, .png);
 }
-pub fn doFormatWebp(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFormatWebp(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.setFormat(g, cf, .webp);
 }
-pub fn doFormatHeic(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFormatHeic(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.setFormat(g, cf, .heic);
 }
-pub fn doFormatAvif(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doFormatAvif(this: *Image, g: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.setFormat(g, cf, .avif);
 }
 
@@ -447,7 +447,7 @@ fn pinForTask(this: *Image, this_value: jsc.JSValue, _: *jsc.JSGlobalObject) err
                 // FastTypedArray (≤ fastSizeLimit elements, GC-movable): tiny
                 // by definition — dupe instead of forcing JSC to copy via
                 // tryCreate(span()) + allocate a butterfly.
-                1 => if (len == 0) error.Detached else .{ .copied = try bun.default_allocator.dupe(u8, ptr[0..len]) },
+                1 => if (len == 0) error.Detached else .{ .copied = try fun.default_allocator.dupe(u8, ptr[0..len]) },
                 // Oversize/Wasteful/DataView/JSArrayBuffer: pinned by the
                 // helper. For Oversize, possiblySharedBuffer() adopts the
                 // existing fastMalloc storage in-place (zero byte copy);
@@ -467,28 +467,28 @@ fn pinForTask(this: *Image, this_value: jsc.JSValue, _: *jsc.JSGlobalObject) err
     }
 }
 
-// ───────────────────────── static `Bun.Image.backend` ───────────────────────
+// ───────────────────────── static `Fun.Image.backend` ───────────────────────
 
-pub fn getBackend(global: *jsc.JSGlobalObject, _: jsc.JSValue, _: jsc.JSValue) bun.JSError!jsc.JSValue {
-    return bun.String.static(@tagName(codecs.backend)).toJS(global);
+pub fn getBackend(global: *jsc.JSGlobalObject, _: jsc.JSValue, _: jsc.JSValue) fun.JSError!jsc.JSValue {
+    return fun.String.static(@tagName(codecs.backend)).toJS(global);
 }
 
 pub fn setBackend(_: jsc.JSValue, global: *jsc.JSGlobalObject, value: jsc.JSValue) bool {
-    codecs.backend = value.toEnum(global, "Bun.Image.backend", codecs.Backend) catch return false;
+    codecs.backend = value.toEnum(global, "Fun.Image.backend", codecs.Backend) catch return false;
     return true;
 }
 
-// ───────────── static `Bun.Image.fromClipboard()` / `.hasClipboardImage()` ──
+// ───────────── static `Fun.Image.fromClipboard()` / `.hasClipboardImage()` ──
 //
 // JS-thread synchronous read of the system clipboard for an image
-// representation, returning a fresh `Bun.Image` wrapping the raw container
+// representation, returning a fresh `Fun.Image` wrapping the raw container
 // bytes. Decode/encode still go through the normal off-thread pipeline; only
 // the pasteboard fetch is synchronous, and that's a memcpy of bytes the OS
 // already has in-process. `null` ⇔ no image present. Linux returns `null`
 // unconditionally — there's no stable native API to dlopen and shelling out
-// to `wl-paste`/`xclip` from inside `Bun.Image` is the wrong layer.
+// to `wl-paste`/`xclip` from inside `Fun.Image` is the wrong layer.
 
-pub fn fromClipboard(global: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn fromClipboard(global: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     if (comptime codecs.system_backend) |sb| {
         const bytes = sb.clipboard() catch |e| switch (e) {
             error.OutOfMemory => return global.throwOutOfMemory(),
@@ -500,7 +500,7 @@ pub fn fromClipboard(global: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError
     return .null;
 }
 
-pub fn hasClipboardImage(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn hasClipboardImage(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     if (comptime codecs.system_backend) |sb| return jsc.JSValue.jsBoolean(sb.hasClipboardImage());
     return .false;
 }
@@ -510,7 +510,7 @@ pub fn hasClipboardImage(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!
 /// clipboard-change notification, so polling this and calling
 /// `hasClipboardImage()` only when it moves is the cheapest hint-UI pattern.
 /// `-1` on Linux.
-pub fn clipboardChangeCount(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn clipboardChangeCount(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     if (comptime codecs.system_backend) |sb| return jsc.JSValue.jsNumber(sb.clipboardChangeCount());
     return jsc.JSValue.jsNumber(@as(i64, -1));
 }
@@ -527,7 +527,7 @@ pub fn getHeight(this: *Image, _: *jsc.JSGlobalObject) jsc.JSValue {
 
 // ───────────────────────────── async terminals ──────────────────────────────
 
-pub fn doMetadata(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doMetadata(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     // Header-only probe is a few dozen byte reads — when the bytes are already
     // in memory it's cheaper to do it inline than to bounce off the WorkPool
     // (~0.4 ms roundtrip). Path-backed sources still go async for the file I/O.
@@ -555,25 +555,25 @@ pub fn doMetadata(this: *Image, global: *jsc.JSGlobalObject, callframe: *jsc.Cal
     return this.schedule(global, callframe.this(), .metadata, .uint8array);
 }
 
-pub fn doBytes(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doBytes(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.schedule(global, cf.this(), .{ .encode = this.pipeline.output }, .uint8array);
 }
 
-pub fn doBuffer(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doBuffer(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.schedule(global, cf.this(), .{ .encode = this.pipeline.output }, .buffer);
 }
 
-pub fn doBlob(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doBlob(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.schedule(global, cf.this(), .{ .encode = this.pipeline.output }, .blob);
 }
 
-pub fn doToBase64(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doToBase64(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.schedule(global, cf.this(), .{ .encode = this.pipeline.output }, .base64);
 }
 
 /// `data:image/{format};base64,{…}`. Same encode as `.toBase64()` plus the
 /// MIME prefix, so it drops straight into `<img src>`.
-pub fn doDataUrl(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doDataUrl(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return this.schedule(global, cf.this(), .{ .encode = this.pipeline.output }, .dataurl);
 }
 
@@ -582,13 +582,13 @@ pub fn doDataUrl(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) 
 /// src>` / Next's `blurDataURL`. Runs entirely on the work pool; the
 /// pipeline ops (resize/rotate/…) are skipped — a placeholder is OF the
 /// source, not of the output.
-pub fn doPlaceholder(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doPlaceholder(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = cf.arguments();
     // Single positional `"dataurl"` for now — leaves room for `"hash"` /
     // `"color"` without growing methods. Anything else throws so the
     // option space isn't accidentally squatted.
     if (args.len > 0 and !args[0].isUndefinedOrNull()) {
-        const s = try args[0].toBunString(global);
+        const s = try args[0].toFunString(global);
         defer s.deref();
         if (!s.eqlComptime("dataurl"))
             return global.throwInvalidArguments("Image.placeholder(): only \"dataurl\" is supported", .{});
@@ -597,24 +597,24 @@ pub fn doPlaceholder(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFra
 }
 
 /// Terminal: encode and write to `path` on the work pool (no round-trip of
-/// then `Bun.write(dest, encoded)` — same path as `await Bun.write(...)`, so
-/// `dest` may be a path string, `Bun.file()`, `Bun.s3()`, or an fd. Resolves
+/// then `Fun.write(dest, encoded)` — same path as `await Fun.write(...)`, so
+/// `dest` may be a path string, `Fun.file()`, `Fun.s3()`, or an fd. Resolves
 /// with bytes written. If no format method was chained and `dest` is a path
 /// string, the encode format is inferred from its extension, falling back to
 /// the source format — so `img.resize(100).write("thumb.webp")` Just Works.
-pub fn doWrite(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doWrite(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = cf.arguments();
     if (args.len < 1 or args[0].isUndefinedOrNull())
-        return global.throwInvalidArguments("Image.write(dest): expected a path, Bun.file, Bun.s3 or fd", .{});
+        return global.throwInvalidArguments("Image.write(dest): expected a path, Fun.file, Fun.s3 or fd", .{});
 
     var output = this.pipeline.output;
-    // Extension inference only when dest is a plain string. BunFile/S3 dests
+    // Extension inference only when dest is a plain string. FunFile/S3 dests
     // carry no extension contract, so the explicit `.png()` etc. (or source
     // format) decides.
     if (output == null and args[0].isString()) {
-        const str = try args[0].toBunString(global);
+        const str = try args[0].toFunString(global);
         defer str.deref();
-        const utf8 = str.toUTF8(bun.default_allocator);
+        const utf8 = str.toUTF8(fun.default_allocator);
         defer utf8.deinit();
         if (codecs.Format.fromExtension(utf8.slice())) |f| switch (f) {
             // Only infer formats we can ENCODE; decode-only extensions
@@ -626,7 +626,7 @@ pub fn doWrite(this: *Image, global: *jsc.JSGlobalObject, cf: *jsc.CallFrame) bu
     return this.schedule(global, cf.this(), .{ .encode = output }, .{ .write_dest = .create(args[0], global) });
 }
 
-fn schedule(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue, kind: PipelineTask.Kind, deliver: PipelineTask.Deliver) bun.JSError!jsc.JSValue {
+fn schedule(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue, kind: PipelineTask.Kind, deliver: PipelineTask.Deliver) fun.JSError!jsc.JSValue {
     if (this.source == .blob)
         return BlobReadChain.start(this, global, this_value, kind, deliver);
     const input = this.pinForTask(this_value, global) catch |e| {
@@ -634,7 +634,7 @@ fn schedule(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue, 
         // deinit() is never created on this branch.
         var d = deliver;
         d.deinit();
-        if (e == error.OutOfMemory) bun.outOfMemory();
+        if (e == error.OutOfMemory) fun.outOfMemory();
         return jsc.JSPromise.rejectedPromise(
             global,
             errorWithCode(global, "ERR_INVALID_STATE", "Image: source ArrayBuffer was detached"),
@@ -657,7 +657,7 @@ fn schedule(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue, 
     // `then()` drops the count back to 0.
     if (this.pending_tasks == 0) this.this_ref.setStrong(this_value, global);
     this.pending_tasks += 1;
-    var task = AsyncImageTask.createOnJSThread(bun.default_allocator, global, job);
+    var task = AsyncImageTask.createOnJSThread(fun.default_allocator, global, job);
     task.schedule();
     return task.promise.value();
 }
@@ -670,14 +670,14 @@ fn schedule(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue, 
 ///
 /// A later refinement is to return a `.Locked` body and resolve it from the
 /// worker pool; this is the simple, correct first cut.
-pub fn encodeForBody(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue) bun.JSError!struct { bytes: codecs.Encoded, mime: [:0]const u8 } {
+pub fn encodeForBody(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue) fun.JSError!struct { bytes: codecs.Encoded, mime: [:0]const u8 } {
     // The body-init contract is synchronous, so a `.blob` source can't go
     // through the async read chain here. For the common case (file by path)
     // fall back to the `.path` source — `run()` reads it inline. fd/S3-backed
-    // BunFiles would block or need network; refuse with a clear message until
+    // FunFiles would block or need network; refuse with a clear message until
     // the body path is made `.Locked`.
     if (this.source == .blob) {
-        const refuse = "Image: fd/S3-backed Bun.file as a Response body — pass `await file.bytes()` or a path string";
+        const refuse = "Image: fd/S3-backed Fun.file as a Response body — pass `await file.bytes()` or a path string";
         const blob_js = this.source.blob.get() orelse return global.throw("Image: Blob source was collected", .{});
         const blob = blob_js.as(jsc.WebCore.Blob) orelse return global.throw(refuse, .{});
         // Braced so the `else` can't dangle onto the inner `if` — a null
@@ -686,14 +686,14 @@ pub fn encodeForBody(this: *Image, global: *jsc.JSGlobalObject, this_value: jsc.
         // unreachable, but this path should throw, not abort, when it isn't.)
         if (blob.store) |store| {
             if (store.data == .file and store.data.file.pathlike == .path) {
-                const p = try bun.default_allocator.dupeZ(u8, store.data.file.pathlike.path.slice());
+                const p = try fun.default_allocator.dupeZ(u8, store.data.file.pathlike.path.slice());
                 this.source.deinit();
                 this.source = .{ .path = p };
             } else return global.throw(refuse, .{});
         } else return global.throw(refuse, .{});
     }
     const input = this.pinForTask(this_value, global) catch |e| {
-        if (e == error.OutOfMemory) bun.outOfMemory();
+        if (e == error.OutOfMemory) fun.outOfMemory();
         return global.throw("Image: source ArrayBuffer was detached", .{});
     };
     defer input.release();
@@ -737,7 +737,7 @@ const BlobReadChain = struct {
     deliver: PipelineTask.Deliver,
     outer: jsc.JSPromise.Strong,
 
-    fn start(image: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue, kind: PipelineTask.Kind, deliver: PipelineTask.Deliver) bun.JSError!jsc.JSValue {
+    fn start(image: *Image, global: *jsc.JSGlobalObject, this_value: jsc.JSValue, kind: PipelineTask.Kind, deliver: PipelineTask.Deliver) fun.JSError!jsc.JSValue {
         // `deliver` may carry a `.write_dest` Strong; on these defensive
         // early-returns the chain is never created so its deinit() can't
         // free it. (Same contract as schedule()'s detached-buffer branch.)
@@ -757,7 +757,7 @@ const BlobReadChain = struct {
         if (image.pending_tasks == 0) image.this_ref.setStrong(this_value, global);
         image.pending_tasks += 1;
 
-        var chain = bun.new(BlobReadChain, .{
+        var chain = fun.new(BlobReadChain, .{
             .image = image,
             .global = global,
             .kind = kind,
@@ -770,14 +770,14 @@ const BlobReadChain = struct {
     }
 
     /// JS thread — `readBytesToHandler` guarantees this. `r.ok` is
-    /// `bun.default_allocator`-owned by us.
+    /// `fun.default_allocator`-owned by us.
     pub fn onReadBytes(self: *BlobReadChain, r: jsc.WebCore.Blob.ReadBytesResult) void {
         const global = self.global;
         const image = self.image;
         var outer = self.outer;
         const kind = self.kind;
         var deliver = self.deliver;
-        bun.destroy(self);
+        fun.destroy(self);
 
         image.pending_tasks -= 1;
         if (image.pending_tasks == 0) image.this_ref.downgrade();
@@ -797,7 +797,7 @@ const BlobReadChain = struct {
                     image.source.deinit();
                     image.source = .{ .owned = bytes };
                 } else {
-                    bun.default_allocator.free(bytes);
+                    fun.default_allocator.free(bytes);
                 }
                 const this_value = image.this_ref.tryGet() orelse {
                     outer.reject(global, global.createErrorInstance("Image: collected before read completed", .{})) catch {};
@@ -823,7 +823,7 @@ const BlobReadChain = struct {
 pub const AsyncImageTask = jsc.ConcurrentPromiseTask(PipelineTask);
 
 pub const PipelineTask = struct {
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     image: *Image,
     global: *jsc.JSGlobalObject,
@@ -851,7 +851,7 @@ pub const PipelineTask = struct {
         }
         fn release(self: @This()) void {
             if (self.pinned != .zero) JSC__JSValue__unpinArrayBuffer(self.pinned);
-            if (self.copied) |c| bun.default_allocator.free(c);
+            if (self.copied) |c| fun.default_allocator.free(c);
         }
     };
 
@@ -863,9 +863,9 @@ pub const PipelineTask = struct {
         /// Like `.base64` plus a `data:{mime};base64,` prefix — same encode
         /// path, the prefix is the only difference.
         dataurl,
-        /// `.write(dest)` — `then()` hands the encoded bytes to `Bun.write`'s
-        /// implementation with this as the destination. Anything `Bun.write`
-        /// accepts (path string / BunFile / S3 / fd) works here unchanged.
+        /// `.write(dest)` — `then()` hands the encoded bytes to `Fun.write`'s
+        /// implementation with this as the destination. Anything `Fun.write`
+        /// accepts (path string / FunFile / S3 / fd) works here unchanged.
         write_dest: jsc.Strong.Optional,
 
         fn deinit(self: *Deliver) void {
@@ -888,7 +888,7 @@ pub const PipelineTask = struct {
         encoded: struct { out: codecs.Encoded, format: codecs.Format, w: u32, h: u32 },
         meta: struct { w: u32, h: u32, format: codecs.Format },
         err: codecs.Error,
-        io_err: bun.sys.Error,
+        io_err: fun.sys.Error,
     };
 
     /// Runs on a `WorkPool` thread. No JSC access.
@@ -897,7 +897,7 @@ pub const PipelineTask = struct {
         // pinned ArrayBuffer slice (pin lives until `then()` unpins), an owned
         // buffer, or a path to read here.
         var owned_file: ?[]u8 = null;
-        defer if (owned_file) |f| bun.default_allocator.free(f);
+        defer if (owned_file) |f| fun.default_allocator.free(f);
         const input: []const u8 = if (this.input.path) |p| blk: {
             // The path string came straight from the constructor, so treat
             // it as untrusted: open + fstat first instead of `readFrom`.
@@ -913,8 +913,8 @@ pub const PipelineTask = struct {
             // handle) and the subsequent sync read fails EINVAL. Windows has
             // no open-blocking FIFOs in the same sense; the !S_ISREG check
             // below still rejects pipes/devices.
-            const oflags = bun.O.RDONLY | if (bun.Environment.isPosix) bun.O.NONBLOCK else @as(@TypeOf(bun.O.RDONLY), 0);
-            const file = switch (bun.sys.File.openat(bun.FD.cwd(), p, oflags, 0)) {
+            const oflags = fun.O.RDONLY | if (fun.Environment.isPosix) fun.O.NONBLOCK else @as(@TypeOf(fun.O.RDONLY), 0);
+            const file = switch (fun.sys.File.openat(fun.FD.cwd(), p, oflags, 0)) {
                 .result => |f| f,
                 .err => |e| {
                     this.result = .{ .io_err = e.withPath(p) };
@@ -929,15 +929,15 @@ pub const PipelineTask = struct {
                     return;
                 },
             };
-            if (!bun.S.ISREG(@intCast(st.mode))) {
-                this.result = .{ .io_err = .{ .errno = @intFromEnum(bun.sys.E.NODEV), .syscall = .read, .path = p } };
+            if (!fun.S.ISREG(@intCast(st.mode))) {
+                this.result = .{ .io_err = .{ .errno = @intFromEnum(fun.sys.E.NODEV), .syscall = .read, .path = p } };
                 return;
             }
             if (@as(u64, @intCast(@max(st.size, 0))) > max_input_file_bytes) {
                 this.result = .{ .err = error.TooManyPixels };
                 return;
             }
-            const r = file.readToEnd(bun.default_allocator);
+            const r = file.readToEnd(fun.default_allocator);
             if (r.err) |e| {
                 var bytes = r.bytes;
                 bytes.deinit();
@@ -1063,7 +1063,7 @@ pub const PipelineTask = struct {
         var w = sw;
         var h = sh;
         var owned: ?[]u8 = null;
-        defer if (owned) |o| bun.default_allocator.free(o);
+        defer if (owned) |o| fun.default_allocator.free(o);
         var pixels = rgba;
         if (w > max_in or h > max_in) {
             const r = @as(f32, @floatFromInt(w)) / @as(f32, @floatFromInt(h));
@@ -1080,7 +1080,7 @@ pub const PipelineTask = struct {
         var buf: [thumbhash.max_len]u8 = undefined;
         const hash = thumbhash.encode(&buf, w, h, pixels);
         const rendered = try thumbhash.decode(hash);
-        defer bun.default_allocator.free(rendered.rgba);
+        defer fun.default_allocator.free(rendered.rgba);
         // Placeholder is a synthetic ThumbHash render, not the source image —
         // no ICC profile attaches to it.
         const png_out = try codecs.png.encode(rendered.rgba, rendered.w, rendered.h, -1, null);
@@ -1088,7 +1088,7 @@ pub const PipelineTask = struct {
     }
 
     /// Back on the JS thread.
-    pub fn then(this: *PipelineTask, promise: *jsc.JSPromise) bun.JSTerminated!void {
+    pub fn then(this: *PipelineTask, promise: *jsc.JSPromise) fun.JSTerminated!void {
         defer this.deinit();
         // JS thread again — release the per-task pin so user code can
         // transfer/detach the source now.
@@ -1116,9 +1116,9 @@ pub const PipelineTask = struct {
                 .buffer => try promise.resolve(global, jsc.JSValue.createBufferWithCtx(global, enc.out.bytes, null, enc.out.free)),
                 .blob => {
                     // Blob.Store frees via an Allocator; dupe for that path.
-                    const owned = bun.handleOom(bun.default_allocator.dupe(u8, enc.out.bytes));
+                    const owned = fun.handleOom(fun.default_allocator.dupe(u8, enc.out.bytes));
                     enc.out.deinit();
-                    var blob = jsc.WebCore.Blob.init(owned, bun.default_allocator, global);
+                    var blob = jsc.WebCore.Blob.init(owned, fun.default_allocator, global);
                     blob.content_type = enc.format.mime();
                     blob.content_type_was_set = true;
                     try promise.resolve(global, jsc.WebCore.Blob.new(blob).toJS(global));
@@ -1132,19 +1132,19 @@ pub const PipelineTask = struct {
                         std.fmt.bufPrint(&pre_buf, "data:{s};base64,", .{enc.format.mime()}) catch unreachable
                     else
                         "";
-                    const buf = bun.handleOom(bun.default_allocator.alloc(u8, pre.len + bun.base64.encodeLen(enc.out.bytes)));
-                    defer bun.default_allocator.free(buf);
+                    const buf = fun.handleOom(fun.default_allocator.alloc(u8, pre.len + fun.base64.encodeLen(enc.out.bytes)));
+                    defer fun.default_allocator.free(buf);
                     @memcpy(buf[0..pre.len], pre);
-                    const wrote = pre.len + bun.base64.encode(buf[pre.len..], enc.out.bytes);
-                    const str = bun.String.createUTF8ForJS(global, buf[0..wrote]) catch
+                    const wrote = pre.len + fun.base64.encode(buf[pre.len..], enc.out.bytes);
+                    const str = fun.String.createUTF8ForJS(global, buf[0..wrote]) catch
                         return promise.reject(global, error.JSError);
                     try promise.resolve(global, str);
                 },
                 // `.write(dest)` — wrap the codec buffer as a Buffer (codec's
                 // own free is the finalizer; no dupe), hand it to the SAME
-                // implementation `Bun.write` uses, and resolve our promise
+                // implementation `Fun.write` uses, and resolve our promise
                 // with that Promise<number>. So `dest` may be a path string,
-                // `Bun.file()`, `Bun.s3()`, or an fd — anything `Bun.write`
+                // `Fun.file()`, `Fun.s3()`, or an fd — anything `Fun.write`
                 // accepts — and we don't reimplement any of it.
                 .write_dest => |*dest| {
                     const dest_js = dest.get() orelse {
@@ -1152,7 +1152,7 @@ pub const PipelineTask = struct {
                         return promise.reject(global, global.createErrorInstance("Image.write: destination was collected", .{}));
                     };
                     const data = jsc.JSValue.createBufferWithCtx(global, enc.out.bytes, null, enc.out.free);
-                    var arg_slice = jsc.CallFrame.ArgumentsSlice.init(global.bunVM(), &.{dest_js});
+                    var arg_slice = jsc.CallFrame.ArgumentsSlice.init(global.funVM(), &.{dest_js});
                     defer arg_slice.deinit();
                     var path_or_blob = jsc.Node.PathOrBlob.fromJSNoCopy(global, &arg_slice) catch
                         return promise.reject(global, error.JSError);
@@ -1185,19 +1185,19 @@ pub const PipelineTask = struct {
         const p = this.pipeline;
         if (p.rotate != 0) {
             const next = try codecs.rotate(d.rgba, d.width, d.height, p.rotate);
-            bun.default_allocator.free(d.rgba);
+            fun.default_allocator.free(d.rgba);
             d.rgba = next.rgba;
             d.width = next.width;
             d.height = next.height;
         }
         if (p.flip) {
             const next = try codecs.flip(d.rgba, d.width, d.height, false);
-            bun.default_allocator.free(d.rgba);
+            fun.default_allocator.free(d.rgba);
             d.rgba = next;
         }
         if (p.flop) {
             const next = try codecs.flip(d.rgba, d.width, d.height, true);
-            bun.default_allocator.free(d.rgba);
+            fun.default_allocator.free(d.rgba);
             d.rgba = next;
         }
         if (p.resize) |r| {
@@ -1213,7 +1213,7 @@ pub const PipelineTask = struct {
                 return error.TooManyPixels;
             if (t.w != d.width or t.h != d.height) {
                 const next = try codecs.resize(d.rgba, d.width, d.height, t.w, t.h, r.filter);
-                bun.default_allocator.free(d.rgba);
+                fun.default_allocator.free(d.rgba);
                 d.rgba = next;
                 d.width = t.w;
                 d.height = t.h;
@@ -1248,19 +1248,19 @@ pub const PipelineTask = struct {
         const t = orient.transform();
         if (t.flip) {
             const next = try codecs.flip(d.rgba, d.width, d.height, false);
-            bun.default_allocator.free(d.rgba);
+            fun.default_allocator.free(d.rgba);
             d.rgba = next;
         }
         if (t.flop) {
             const next = try codecs.flip(d.rgba, d.width, d.height, true);
-            bun.default_allocator.free(d.rgba);
+            fun.default_allocator.free(d.rgba);
             d.rgba = next;
         }
         if (t.rotate != 0) {
             // Swap pixel slots only — `next` carries no ICC profile, and the
             // one on `d` (set by decode) must survive EXIF auto-orient.
             const next = try codecs.rotate(d.rgba, d.width, d.height, t.rotate);
-            bun.default_allocator.free(d.rgba);
+            fun.default_allocator.free(d.rgba);
             d.rgba = next.rgba;
             d.width = next.width;
             d.height = next.height;
@@ -1273,7 +1273,7 @@ pub const PipelineTask = struct {
         this.deliver.deinit();
         this.image.pending_tasks -= 1;
         if (this.image.pending_tasks == 0) this.image.this_ref.downgrade();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
@@ -1284,5 +1284,5 @@ const exif = @import("./exif.zig");
 const std = @import("std");
 const thumbhash = @import("./thumbhash.zig");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

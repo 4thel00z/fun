@@ -1,9 +1,9 @@
-import { spawn } from "bun";
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { spawn } from "fun";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
-// https://github.com/oven-sh/bun/issues/2499
+// https://github.com/underdoc-org/fun/issues/2499
 it("onAborted() and onWritable are not called after receiving an empty response body due to a promise rejection", async testDone => {
   var timeout = AbortSignal.timeout(10_000);
   timeout.onabort = e => {
@@ -31,17 +31,17 @@ it("onAborted() and onWritable are not called after receiving an empty response 
   //
   // In debug builds, this test should complete in 1-2 seconds.
   for (let i = 0; i < 40; i++) {
-    let bunProcess;
+    let funProcess;
     try {
-      bunProcess = spawn({
-        cmd: [bunExe(), "run", join(import.meta.dir, "./02499.fixture.ts")],
+      funProcess = spawn({
+        cmd: [funExe(), "run", join(import.meta.dir, "./02499.fixture.ts")],
         stdin: "pipe",
         stderr: "ignore",
         stdout: "pipe",
-        env: bunEnv,
+        env: funEnv,
       });
 
-      const reader = bunProcess.stdout.getReader();
+      const reader = funProcess.stdout.getReader();
       let hostname, port;
       {
         const chunks: Buffer[] = [];
@@ -74,16 +74,16 @@ it("onAborted() and onWritable are not called after receiving an empty response 
         });
       } catch (e) {}
 
-      bunProcess.stdin?.write("--CLOSE--");
-      await bunProcess.stdin?.flush();
-      await bunProcess.stdin?.end();
-      expect(await bunProcess.exited).toBe(0);
+      funProcess.stdin?.write("--CLOSE--");
+      await funProcess.stdin?.flush();
+      await funProcess.stdin?.end();
+      expect(await funProcess.exited).toBe(0);
     } catch (e) {
       timeout.onabort = () => {};
       testDone(e);
       throw e;
     } finally {
-      bunProcess?.kill(9);
+      funProcess?.kill(9);
     }
   }
   timeout.onabort = () => {};

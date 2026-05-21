@@ -119,7 +119,7 @@ pub const SymbolSlot = struct {
 };
 
 pub const MinifyRenamer = struct {
-    reserved_names: bun.StringHashMapUnmanaged(u32),
+    reserved_names: fun.StringHashMapUnmanaged(u32),
     allocator: std.mem.Allocator,
     slots: SymbolSlot.List = undefined,
     top_level_symbol_to_slot: TopLevelSymbolSlotMap,
@@ -131,7 +131,7 @@ pub const MinifyRenamer = struct {
         allocator: std.mem.Allocator,
         symbols: js_ast.Symbol.Map,
         first_top_level_slots: js_ast.SlotCounts,
-        reserved_names: bun.StringHashMapUnmanaged(u32),
+        reserved_names: fun.StringHashMapUnmanaged(u32),
     ) !*MinifyRenamer {
         const renamer = try allocator.create(MinifyRenamer);
         var slots = SymbolSlot.List.initUndefined();
@@ -450,11 +450,11 @@ const SlotAndCount = packed struct(u64) {
 
 pub const NumberRenamer = struct {
     symbols: js_ast.Symbol.Map,
-    names: []bun.BabyList(string) = &.{},
+    names: []fun.BabyList(string) = &.{},
     allocator: std.mem.Allocator,
     temp_allocator: std.mem.Allocator,
-    number_scope_pool: bun.HiveArray(NumberScope, 128).Fallback,
-    arena: bun.ArenaAllocator,
+    number_scope_pool: fun.HiveArray(NumberScope, 128).Fallback,
+    arena: fun.ArenaAllocator,
     root: NumberScope = .{},
     name_stack_fallback: std.heap.StackFallbackAllocator(512) = undefined,
     name_temp_allocator: std.mem.Allocator = undefined,
@@ -484,7 +484,7 @@ pub const NumberRenamer = struct {
         const ref = r.symbols.follow(input_ref);
 
         // Don't rename the same symbol more than once
-        var inner: *bun.BabyList(string) = &r.names[ref.sourceIndex()];
+        var inner: *fun.BabyList(string) = &r.names[ref.sourceIndex()];
         if (inner.len > ref.innerIndex() and inner.at(ref.innerIndex()).len > 0) return;
 
         // Don't rename unbound symbols, symbols marked as reserved names, labels, or private names
@@ -513,16 +513,16 @@ pub const NumberRenamer = struct {
         allocator: std.mem.Allocator,
         temp_allocator: std.mem.Allocator,
         symbols: js_ast.Symbol.Map,
-        root_names: bun.StringHashMapUnmanaged(u32),
+        root_names: fun.StringHashMapUnmanaged(u32),
     ) !*NumberRenamer {
         var renamer = try allocator.create(NumberRenamer);
         renamer.* = NumberRenamer{
             .symbols = symbols,
             .allocator = allocator,
             .temp_allocator = temp_allocator,
-            .names = try allocator.alloc(bun.BabyList(string), symbols.symbols_for_source.len),
+            .names = try allocator.alloc(fun.BabyList(string), symbols.symbols_for_source.len),
             .number_scope_pool = undefined,
-            .arena = bun.ArenaAllocator.init(temp_allocator),
+            .arena = fun.ArenaAllocator.init(temp_allocator),
         };
         renamer.name_stack_fallback = .{
             .buffer = undefined,
@@ -533,7 +533,7 @@ pub const NumberRenamer = struct {
         renamer.number_scope_pool = .init(renamer.arena.allocator());
         renamer.root.name_counts = root_names;
         if (comptime Environment.allow_assert and !Environment.isWindows) {
-            if (std.posix.getenv("BUN_DUMP_SYMBOLS") != null)
+            if (std.posix.getenv("FUN_DUMP_SYMBOLS") != null)
                 symbols.dump();
         }
 
@@ -571,12 +571,12 @@ pub const NumberRenamer = struct {
             var value_iter = scope.members.valueIterator();
             while (value_iter.next()) |value_ref| {
                 if (comptime Environment.allow_assert)
-                    bun.assert(!value_ref.ref.isSourceContentsSlice());
+                    fun.assert(!value_ref.ref.isSourceContentsSlice());
 
                 remaining[0] = value_ref.ref.innerIndex();
                 remaining = remaining[1..];
             }
-            bun.assert(remaining.len == 0);
+            fun.assert(remaining.len == 0);
             std.sort.pdq(u32, sorted.items, {}, std.sort.asc(u32));
 
             for (sorted.items) |inner_index| {
@@ -633,7 +633,7 @@ pub const NumberRenamer = struct {
 
     pub fn nameForSymbol(renamer: *NumberRenamer, ref: Ref) string {
         if (ref.isSourceContentsSlice()) {
-            bun.unreachablePanic("Unexpected unbound symbol!\n{f}", .{ref});
+            fun.unreachablePanic("Unexpected unbound symbol!\n{f}", .{ref});
         }
 
         const resolved = renamer.symbols.follow(ref);
@@ -655,7 +655,7 @@ pub const NumberRenamer = struct {
 
     pub const NumberScope = struct {
         parent: ?*NumberScope = null,
-        name_counts: bun.StringHashMapUnmanaged(u32) = .{},
+        name_counts: fun.StringHashMapUnmanaged(u32) = .{},
 
         pub fn deinit(this: *NumberScope, allocator: std.mem.Allocator) void {
             this.name_counts.deinit(allocator);
@@ -670,10 +670,10 @@ pub const NumberRenamer = struct {
             pub fn find(this: *NumberScope, name: []const u8) NameUse {
                 // This version doesn't allocate
                 if (comptime Environment.allow_assert)
-                    bun.assert(JSLexer.isIdentifier(name));
+                    fun.assert(JSLexer.isIdentifier(name));
 
                 // avoid rehashing the same string over for each scope
-                const ctx = bun.StringHashMapContext.pre(name);
+                const ctx = fun.StringHashMapContext.pre(name);
 
                 if (this.name_counts.getAdapted(name, ctx)) |count| {
                     return .{ .same_scope = count };
@@ -698,7 +698,7 @@ pub const NumberRenamer = struct {
 
         /// Caller must use an arena allocator
         pub fn findUnusedName(this: *NumberScope, allocator: std.mem.Allocator, temp_allocator: std.mem.Allocator, input_name: []const u8) UnusedName {
-            var name = bun.MutableString.ensureValidIdentifier(input_name, temp_allocator) catch unreachable;
+            var name = fun.MutableString.ensureValidIdentifier(input_name, temp_allocator) catch unreachable;
 
             switch (NameUse.find(this, name)) {
                 .unused => {},
@@ -790,14 +790,14 @@ pub const NumberRenamer = struct {
 };
 
 pub const ExportRenamer = struct {
-    string_buffer: bun.MutableString,
-    used: bun.StringHashMap(u32),
+    string_buffer: fun.MutableString,
+    used: fun.StringHashMap(u32),
     count: isize = 0,
 
     pub fn init(allocator: std.mem.Allocator) ExportRenamer {
         return ExportRenamer{
             .string_buffer = MutableString.initEmpty(allocator),
-            .used = bun.StringHashMap(u32).init(allocator),
+            .used = fun.StringHashMap(u32).init(allocator),
         };
     }
 
@@ -848,13 +848,13 @@ pub const ExportRenamer = struct {
 
 pub fn computeInitialReservedNames(
     allocator: std.mem.Allocator,
-    output_format: bun.options.Format,
-) !bun.StringHashMapUnmanaged(u32) {
-    if (comptime bun.Environment.isWasm) {
+    output_format: fun.options.Format,
+) !fun.StringHashMapUnmanaged(u32) {
+    if (comptime fun.Environment.isWasm) {
         unreachable;
     }
 
-    var names = bun.StringHashMapUnmanaged(u32){};
+    var names = fun.StringHashMapUnmanaged(u32){};
 
     const extras = .{
         "Promise",
@@ -872,7 +872,7 @@ pub fn computeInitialReservedNames(
         allocator,
         cjs_names_len +
             @as(u32, @truncate(JSLexer.Keywords.keys().len + JSLexer.StrictModeReservedWords.keys().len + 1 + extras.len)),
-        bun.StringHashMapContext{},
+        fun.StringHashMapContext{},
     );
 
     for (JSLexer.Keywords.keys()) |keyword| {
@@ -906,7 +906,7 @@ pub fn computeInitialReservedNames(
 pub fn computeReservedNamesForScope(
     scope: *js_ast.Scope,
     symbols: *const js_ast.Symbol.Map,
-    names_: *bun.StringHashMapUnmanaged(u32),
+    names_: *fun.StringHashMapUnmanaged(u32),
     allocator: std.mem.Allocator,
 ) void {
     var names = names_.*;
@@ -944,13 +944,13 @@ const string = []const u8;
 const JSLexer = @import("../js_parser/lexer.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
-const Ref = bun.ast.Ref;
-const RefCtx = bun.ast.RefCtx;
+const js_ast = fun.ast;
+const Ref = fun.ast.Ref;
+const RefCtx = fun.ast.RefCtx;

@@ -1,8 +1,8 @@
-import { file, spawn, write } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { file, spawn, write } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { existsSync, lstatSync, readlinkSync } from "fs";
 import { mkdir, readlink, rm, symlink } from "fs/promises";
-import { VerdaccioRegistry, bunEnv, bunExe, readdirSorted, runBunInstall, tempDir } from "harness";
+import { VerdaccioRegistry, funEnv, funExe, readdirSorted, runFunInstall, tempDir } from "harness";
 import { dirname, join } from "path";
 
 const registry = new VerdaccioRegistry();
@@ -18,7 +18,7 @@ function withoutEntryHash(link: string): string {
 
 // Extract just the `<storepath>-<hash>` segment from a global-store link
 // target. Tests that compare entries across two test dirs need this because
-// each `createTestDir` gets its own `.bun-cache/` (so the absolute targets
+// each `createTestDir` gets its own `.fun-cache/` (so the absolute targets
 // always differ) but the hash suffix is what proves sharing/isolation.
 function entryStoreName(link: string): string {
   return link.slice(link.lastIndexOf("links") + "links".length + 1);
@@ -34,7 +34,7 @@ afterAll(() => {
 
 describe("basic", () => {
   test("single dependency", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await write(
       packageJson,
@@ -46,17 +46,17 @@ describe("basic", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     expect(readlinkSync(join(packageDir, "node_modules", "no-deps"))).toBe(
-      join(".bun", "no-deps@1.0.0", "node_modules", "no-deps"),
+      join(".fun", "no-deps@1.0.0", "node_modules", "no-deps"),
     );
-    expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "no-deps"))).toBe(
+    expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "no-deps"))).toBe(
       join("..", "no-deps@1.0.0", "node_modules", "no-deps"),
     );
     expect(
       await file(
-        join(packageDir, "node_modules", ".bun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
+        join(packageDir, "node_modules", ".fun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
       ).json(),
     ).toEqual({
       name: "no-deps",
@@ -65,7 +65,7 @@ describe("basic", () => {
   });
 
   test("scope package", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await write(
       packageJson,
@@ -77,12 +77,12 @@ describe("basic", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     expect(readlinkSync(join(packageDir, "node_modules", "@types", "is-number"))).toBe(
-      join("..", ".bun", "@types+is-number@1.0.0", "node_modules", "@types", "is-number"),
+      join("..", ".fun", "@types+is-number@1.0.0", "node_modules", "@types", "is-number"),
     );
-    expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "@types", "is-number"))).toBe(
+    expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "@types", "is-number"))).toBe(
       join("..", "..", "@types+is-number@1.0.0", "node_modules", "@types", "is-number"),
     );
     expect(
@@ -90,7 +90,7 @@ describe("basic", () => {
         join(
           packageDir,
           "node_modules",
-          ".bun",
+          ".fun",
           "@types+is-number@1.0.0",
           "node_modules",
           "@types",
@@ -105,7 +105,7 @@ describe("basic", () => {
   });
 
   test("transitive dependencies", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await write(
       packageJson,
@@ -117,19 +117,19 @@ describe("basic", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
-    expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".bun", "two-range-deps"]);
+    expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".fun", "two-range-deps"]);
     expect(readlinkSync(join(packageDir, "node_modules", "two-range-deps"))).toBe(
-      join(".bun", "two-range-deps@1.0.0", "node_modules", "two-range-deps"),
+      join(".fun", "two-range-deps@1.0.0", "node_modules", "two-range-deps"),
     );
-    expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "two-range-deps"))).toBe(
+    expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "two-range-deps"))).toBe(
       join("..", "two-range-deps@1.0.0", "node_modules", "two-range-deps"),
     );
-    expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "no-deps"))).toBe(
+    expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "no-deps"))).toBe(
       join("..", "no-deps@1.1.0", "node_modules", "no-deps"),
     );
-    expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "@types", "is-number"))).toBe(
+    expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "@types", "is-number"))).toBe(
       join("..", "..", "@types+is-number@2.0.0", "node_modules", "@types", "is-number"),
     );
     expect(
@@ -137,7 +137,7 @@ describe("basic", () => {
         join(
           packageDir,
           "node_modules",
-          ".bun",
+          ".fun",
           "two-range-deps@1.0.0",
           "node_modules",
           "two-range-deps",
@@ -153,23 +153,23 @@ describe("basic", () => {
       },
     });
     expect(
-      await readdirSorted(join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0", "node_modules")),
+      await readdirSorted(join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0", "node_modules")),
     ).toEqual(["@types", "no-deps", "two-range-deps"]);
     expect(
       withoutEntryHash(
         readlinkSync(
-          join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0", "node_modules", "@types", "is-number"),
+          join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0", "node_modules", "@types", "is-number"),
         ),
       ),
     ).toBe(join("..", "..", "..", "@types+is-number@2.0.0", "node_modules", "@types", "is-number"));
     expect(
       withoutEntryHash(
-        readlinkSync(join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0", "node_modules", "no-deps")),
+        readlinkSync(join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0", "node_modules", "no-deps")),
       ),
     ).toBe(join("..", "..", "no-deps@1.1.0", "node_modules", "no-deps"));
     expect(
       await file(
-        join(packageDir, "node_modules", ".bun", "no-deps@1.1.0", "node_modules", "no-deps", "package.json"),
+        join(packageDir, "node_modules", ".fun", "no-deps@1.1.0", "node_modules", "no-deps", "package.json"),
       ).json(),
     ).toEqual({
       name: "no-deps",
@@ -180,7 +180,7 @@ describe("basic", () => {
         join(
           packageDir,
           "node_modules",
-          ".bun",
+          ".fun",
           "@types+is-number@2.0.0",
           "node_modules",
           "@types",
@@ -196,7 +196,7 @@ describe("basic", () => {
 });
 
 test("handles cyclic dependencies", async () => {
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await write(
     packageJson,
@@ -208,20 +208,20 @@ test("handles cyclic dependencies", async () => {
     }),
   );
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
   expect(readlinkSync(join(packageDir, "node_modules", "a-dep-b"))).toBe(
-    join(".bun", "a-dep-b@1.0.0", "node_modules", "a-dep-b"),
+    join(".fun", "a-dep-b@1.0.0", "node_modules", "a-dep-b"),
   );
-  expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "a-dep-b"))).toBe(
+  expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "a-dep-b"))).toBe(
     join("..", "a-dep-b@1.0.0", "node_modules", "a-dep-b"),
   );
-  expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "b-dep-a"))).toBe(
+  expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "b-dep-a"))).toBe(
     join("..", "b-dep-a@1.0.0", "node_modules", "b-dep-a"),
   );
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "a-dep-b@1.0.0", "node_modules", "a-dep-b", "package.json"),
+      join(packageDir, "node_modules", ".fun", "a-dep-b@1.0.0", "node_modules", "a-dep-b", "package.json"),
     ).json(),
   ).toEqual({
     name: "a-dep-b",
@@ -233,12 +233,12 @@ test("handles cyclic dependencies", async () => {
 
   expect(
     withoutEntryHash(
-      readlinkSync(join(packageDir, "node_modules", ".bun", "a-dep-b@1.0.0", "node_modules", "b-dep-a")),
+      readlinkSync(join(packageDir, "node_modules", ".fun", "a-dep-b@1.0.0", "node_modules", "b-dep-a")),
     ),
   ).toBe(join("..", "..", "b-dep-a@1.0.0", "node_modules", "b-dep-a"));
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "a-dep-b@1.0.0", "node_modules", "b-dep-a", "package.json"),
+      join(packageDir, "node_modules", ".fun", "a-dep-b@1.0.0", "node_modules", "b-dep-a", "package.json"),
     ).json(),
   ).toEqual({
     name: "b-dep-a",
@@ -250,7 +250,7 @@ test("handles cyclic dependencies", async () => {
 });
 
 test("package with dependency on previous self works", async () => {
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await write(
     packageJson,
@@ -262,7 +262,7 @@ test("package with dependency on previous self works", async () => {
     }),
   );
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
   expect(
     await Promise.all([
@@ -285,7 +285,7 @@ test("package with dependency on previous self works", async () => {
 });
 
 test("can install folder dependencies", async () => {
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await write(
     packageJson,
@@ -299,14 +299,14 @@ test("can install folder dependencies", async () => {
 
   await write(join(packageDir, "pkg-1", "package.json"), JSON.stringify({ name: "folder-dep", version: "1.0.0" }));
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
   expect(readlinkSync(join(packageDir, "node_modules", "folder-dep"))).toBe(
-    join(".bun", "folder-dep@file+pkg-1", "node_modules", "folder-dep"),
+    join(".fun", "folder-dep@file+pkg-1", "node_modules", "folder-dep"),
   );
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "folder-dep@file+pkg-1", "node_modules", "folder-dep", "package.json"),
+      join(packageDir, "node_modules", ".fun", "folder-dep@file+pkg-1", "node_modules", "folder-dep", "package.json"),
     ).json(),
   ).toEqual({
     name: "folder-dep",
@@ -315,19 +315,19 @@ test("can install folder dependencies", async () => {
 
   await write(join(packageDir, "pkg-1", "index.js"), "module.exports = 'hello from pkg-1';");
 
-  await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+  await runFunInstall(funEnv, packageDir, { savesLockfile: false });
   expect(readlinkSync(join(packageDir, "node_modules", "folder-dep"))).toBe(
-    join(".bun", "folder-dep@file+pkg-1", "node_modules", "folder-dep"),
+    join(".fun", "folder-dep@file+pkg-1", "node_modules", "folder-dep"),
   );
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "folder-dep@file+pkg-1", "node_modules", "folder-dep", "index.js"),
+      join(packageDir, "node_modules", ".fun", "folder-dep@file+pkg-1", "node_modules", "folder-dep", "index.js"),
     ).text(),
   ).toBe("module.exports = 'hello from pkg-1';");
 });
 
 test("can install folder dependencies on root package", async () => {
-  const { packageDir, packageJson } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageDir, packageJson } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await Promise.all([
     write(
@@ -351,7 +351,7 @@ test("can install folder dependencies on root package", async () => {
     ),
   ]);
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
   expect(
     await Promise.all([
@@ -360,15 +360,15 @@ test("can install folder dependencies on root package", async () => {
       file(join(packageDir, "node_modules", "self", "package.json")).json(),
     ]),
   ).toEqual([
-    join(".bun", "root-file-dep@root", "node_modules", "root-file-dep"),
-    join("..", "..", "..", "node_modules", ".bun", "root-file-dep@root", "node_modules", "root-file-dep"),
+    join(".fun", "root-file-dep@root", "node_modules", "root-file-dep"),
+    join("..", "..", "..", "node_modules", ".fun", "root-file-dep@root", "node_modules", "root-file-dep"),
     await file(packageJson).json(),
   ]);
 });
 
 describe("isolated workspaces", () => {
   test("basic", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await Promise.all([
       write(
@@ -407,18 +407,18 @@ describe("isolated workspaces", () => {
       ),
     ]);
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     expect(existsSync(join(packageDir, "node_modules", "pkg-1"))).toBeFalse();
     expect(readlinkSync(join(packageDir, "pkg-1", "node_modules", "pkg-2"))).toBe(join("..", "..", "pkg-2"));
-    expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".bun", "no-deps"]);
+    expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".fun", "no-deps"]);
     expect(readlinkSync(join(packageDir, "node_modules", "no-deps"))).toBe(
-      join(".bun", "no-deps@1.0.0", "node_modules", "no-deps"),
+      join(".fun", "no-deps@1.0.0", "node_modules", "no-deps"),
     );
 
     expect(await readdirSorted(join(packageDir, "pkg-1", "node_modules"))).toEqual(["@types", "a-dep", "pkg-2"]);
     expect(await readdirSorted(join(packageDir, "pkg-2", "node_modules"))).toEqual(["b-dep-a"]);
-    expect(await readdirSorted(join(packageDir, "node_modules", ".bun"))).toEqual([
+    expect(await readdirSorted(join(packageDir, "node_modules", ".fun"))).toEqual([
       "@types+is-number@1.0.0",
       "a-dep-b@1.0.0",
       "a-dep@1.0.1",
@@ -427,12 +427,12 @@ describe("isolated workspaces", () => {
       "node_modules",
     ]);
 
-    expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "no-deps"))).toBe(
+    expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "no-deps"))).toBe(
       join("..", "no-deps@1.0.0", "node_modules", "no-deps"),
     );
     expect(
       await file(
-        join(packageDir, "node_modules", ".bun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
+        join(packageDir, "node_modules", ".fun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
       ).json(),
     ).toEqual({
       name: "no-deps",
@@ -442,7 +442,7 @@ describe("isolated workspaces", () => {
 
   test("workspace self dependencies create symlinks", async () => {
     const { packageDir } = await registry.createTestDir({
-      bunfigOpts: { linker: "isolated" },
+      funfigOpts: { linker: "isolated" },
       files: {
         "package.json": JSON.stringify({
           name: "monorepo-workspace-self-dep",
@@ -470,7 +470,7 @@ describe("isolated workspaces", () => {
       },
     });
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     expect(
       await Promise.all([
@@ -481,7 +481,7 @@ describe("isolated workspaces", () => {
         file(join(packageDir, "packages", "pkg3", "node_modules", "different-name", "package.json")).json(),
       ]),
     ).toEqual([
-      [".bun"],
+      [".fun"],
       { name: "pkg1", dependencies: { pkg1: "workspace:*" } },
       { name: "pkg1", dependencies: { pkg1: "workspace:*" } },
       { name: "pkg2", dependencies: { pkg1: "workspace:*", pkg2: "workspace:*" } },
@@ -529,7 +529,7 @@ describe("optional peers", () => {
   for (const { deps, expected, name } of tests) {
     test(`will resolve if available through another importer (${name})`, async () => {
       const { packageDir } = await registry.createTestDir({
-        bunfigOpts: { linker: "isolated" },
+        funfigOpts: { linker: "isolated" },
         files: {
           "package.json": JSON.stringify({
             name: "optional-peers",
@@ -548,15 +548,15 @@ describe("optional peers", () => {
 
       async function checkInstall() {
         const { exited } = spawn({
-          cmd: [bunExe(), "install"],
+          cmd: [funExe(), "install"],
           cwd: packageDir,
-          env: bunEnv,
+          env: funEnv,
           stdout: "ignore",
           stderr: "ignore",
         });
 
         expect(await exited).toBe(0);
-        expect(await readdirSorted(join(packageDir, "node_modules/.bun"))).toEqual(expected);
+        expect(await readdirSorted(join(packageDir, "node_modules/.fun"))).toEqual(expected);
       }
 
       // without lockfile
@@ -570,7 +570,7 @@ describe("optional peers", () => {
 
       // without lockfile
       // with node_modules
-      await rm(join(packageDir, "bun.lock"), { force: true });
+      await rm(join(packageDir, "fun.lock"), { force: true });
       await checkInstall();
 
       // with lockfile
@@ -581,7 +581,7 @@ describe("optional peers", () => {
 
   test("successfully resolves optional peer with nested package", async () => {
     const { packageDir } = await registry.createTestDir({
-      bunfigOpts: { linker: "isolated" },
+      funfigOpts: { linker: "isolated" },
       files: {
         "package.json": JSON.stringify({
           name: "optional-peer-nested-resolve",
@@ -602,14 +602,14 @@ describe("optional peers", () => {
 
     async function checkInstall() {
       let { exited } = spawn({
-        cmd: [bunExe(), "install"],
+        cmd: [funExe(), "install"],
         cwd: packageDir,
-        env: bunEnv,
+        env: funEnv,
       });
       expect(await exited).toBe(0);
 
-      expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".bun", "one-dep", "one-one-dep"]);
-      expect(await readdirSorted(join(packageDir, "node_modules/.bun"))).toEqual([
+      expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".fun", "one-dep", "one-one-dep"]);
+      expect(await readdirSorted(join(packageDir, "node_modules/.fun"))).toEqual([
         "no-deps@1.0.1",
         "node_modules",
         "one-dep@1.0.0",
@@ -624,7 +624,7 @@ describe("optional peers", () => {
 
 for (const backend of ["clonefile", "hardlink", "copyfile"]) {
   test(`isolated install with backend: ${backend}`, async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await Promise.all([
       write(
@@ -655,9 +655,9 @@ for (const backend of ["clonefile", "hardlink", "copyfile"]) {
     ]);
 
     const { stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "install", "--backend", backend],
+      cmd: [funExe(), "install", "--backend", backend],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -671,7 +671,7 @@ for (const backend of ["clonefile", "hardlink", "copyfile"]) {
 
     expect(
       await file(
-        join(packageDir, "node_modules", ".bun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
+        join(packageDir, "node_modules", ".fun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
       ).json(),
     ).toEqual({
       name: "no-deps",
@@ -679,12 +679,12 @@ for (const backend of ["clonefile", "hardlink", "copyfile"]) {
     });
 
     expect(readlinkSync(join(packageDir, "node_modules", "file-dep"))).toBe(
-      join(".bun", "file-dep@file+file-dep", "node_modules", "file-dep"),
+      join(".fun", "file-dep@file+file-dep", "node_modules", "file-dep"),
     );
 
     expect(
       await file(
-        join(packageDir, "node_modules", ".bun", "file-dep@file+file-dep", "node_modules", "file-dep", "package.json"),
+        join(packageDir, "node_modules", ".fun", "file-dep@file+file-dep", "node_modules", "file-dep", "package.json"),
       ).json(),
     ).toEqual({
       name: "file-dep",
@@ -696,7 +696,7 @@ for (const backend of ["clonefile", "hardlink", "copyfile"]) {
         join(
           packageDir,
           "node_modules",
-          ".bun",
+          ".fun",
           "file-dep@file+file-dep",
           "node_modules",
           "file-dep",
@@ -711,7 +711,7 @@ for (const backend of ["clonefile", "hardlink", "copyfile"]) {
     ).toBe("module.exports = 'hello from file-dep';");
 
     expect(readlinkSync(join(packageDir, "node_modules", "@scoped", "file-dep"))).toBe(
-      join("..", ".bun", "@scoped+file-dep@file+scoped-file-dep", "node_modules", "@scoped", "file-dep"),
+      join("..", ".fun", "@scoped+file-dep@file+scoped-file-dep", "node_modules", "@scoped", "file-dep"),
     );
 
     expect(
@@ -719,7 +719,7 @@ for (const backend of ["clonefile", "hardlink", "copyfile"]) {
         join(
           packageDir,
           "node_modules",
-          ".bun",
+          ".fun",
           "@scoped+file-dep@file+scoped-file-dep",
           "node_modules",
           "@scoped",
@@ -734,10 +734,10 @@ for (const backend of ["clonefile", "hardlink", "copyfile"]) {
   });
 }
 
-describe("existing node_modules, missing node_modules/.bun", () => {
+describe("existing node_modules, missing node_modules/.fun", () => {
   test("root and workspace node_modules are reset", async () => {
     const { packageDir } = await registry.createTestDir({
-      bunfigOpts: { linker: "isolated" },
+      funfigOpts: { linker: "isolated" },
       files: {
         "package.json": JSON.stringify({
           name: "delete-node-modules",
@@ -766,9 +766,9 @@ describe("existing node_modules, missing node_modules/.bun", () => {
     });
 
     let { exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     });
@@ -780,11 +780,11 @@ describe("existing node_modules, missing node_modules/.bun", () => {
         readdirSorted(join(packageDir, "packages", "pkg1", "node_modules")),
         readdirSorted(join(packageDir, "packages", "pkg2", "node_modules")),
       ]),
-    ).toEqual([[".bun", expect.stringContaining(".old_modules-"), "a-dep", "no-deps"], ["no-deps"], ["no-deps"]]);
+    ).toEqual([[".fun", expect.stringContaining(".old_modules-"), "a-dep", "no-deps"], ["no-deps"], ["no-deps"]]);
   });
   test("some workspaces don't have node_modules", async () => {
     const { packageDir } = await registry.createTestDir({
-      bunfigOpts: { linker: "isolated" },
+      funfigOpts: { linker: "isolated" },
       files: {
         "package.json": JSON.stringify({
           name: "missing-workspace-node_modules",
@@ -793,7 +793,7 @@ describe("existing node_modules, missing node_modules/.bun", () => {
             "no-deps": "1.0.0",
           },
         }),
-        "node_modules/hi": "BUN",
+        "node_modules/hi": "FUN",
         "packages/pkg1/package.json": JSON.stringify({
           name: "pkg-one",
           dependencies: {
@@ -811,9 +811,9 @@ describe("existing node_modules, missing node_modules/.bun", () => {
     });
 
     let { exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     });
@@ -825,7 +825,7 @@ describe("existing node_modules, missing node_modules/.bun", () => {
         readdirSorted(join(packageDir, "packages", "pkg1", "node_modules")),
         readdirSorted(join(packageDir, "packages", "pkg2", "node_modules")),
       ]),
-    ).toEqual([[".bun", expect.stringContaining(".old_modules-"), "no-deps"], ["no-deps"], ["a-dep"]]);
+    ).toEqual([[".fun", expect.stringContaining(".old_modules-"), "no-deps"], ["no-deps"], ["a-dep"]]);
 
     // another install will not reset the node_modules
 
@@ -836,7 +836,7 @@ describe("existing node_modules, missing node_modules/.bun", () => {
         await rm(join(packageDir, "node_modules", entry), { recursive: true, force: true });
       }
     }
-    expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".bun", "no-deps"]);
+    expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".fun", "no-deps"]);
 
     // add things to workspace node_modules. these will go undetected
     await Promise.all([
@@ -845,9 +845,9 @@ describe("existing node_modules, missing node_modules/.bun", () => {
     ]);
 
     ({ exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     }));
@@ -861,7 +861,7 @@ describe("existing node_modules, missing node_modules/.bun", () => {
         readdirSorted(join(packageDir, "packages", "pkg2", "node_modules")),
       ]),
     ).toEqual([
-      [".bun", "no-deps"],
+      [".fun", "no-deps"],
       ["no-deps", "oops1"],
       ["a-dep", "oops2"],
     ]);
@@ -869,8 +869,8 @@ describe("existing node_modules, missing node_modules/.bun", () => {
 });
 
 describe("--linker flag", () => {
-  test("can override linker from bunfig", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  test("can override linker from funfig", async () => {
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await write(
       packageJson,
@@ -883,9 +883,9 @@ describe("--linker flag", () => {
     );
 
     let { exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     });
@@ -897,9 +897,9 @@ describe("--linker flag", () => {
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
 
     ({ exited } = spawn({
-      cmd: [bunExe(), "install", "--linker", "hoisted"],
+      cmd: [funExe(), "install", "--linker", "hoisted"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     }));
@@ -911,9 +911,9 @@ describe("--linker flag", () => {
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
 
     ({ exited } = spawn({
-      cmd: [bunExe(), "install", "--linker", "isolated"],
+      cmd: [funExe(), "install", "--linker", "isolated"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     }));
@@ -937,9 +937,9 @@ describe("--linker flag", () => {
     );
 
     let { exited } = spawn({
-      cmd: [bunExe(), "install", "--linker", "isolated"],
+      cmd: [funExe(), "install", "--linker", "isolated"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     });
@@ -951,9 +951,9 @@ describe("--linker flag", () => {
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
 
     ({ exited } = spawn({
-      cmd: [bunExe(), "install", "--linker", "hoisted"],
+      cmd: [funExe(), "install", "--linker", "hoisted"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     }));
@@ -965,9 +965,9 @@ describe("--linker flag", () => {
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
 
     ({ exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     }));
@@ -979,9 +979,9 @@ describe("--linker flag", () => {
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
 
     ({ exited } = spawn({
-      cmd: [bunExe(), "install", "--linker", "isolated"],
+      cmd: [funExe(), "install", "--linker", "isolated"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "ignore",
       stderr: "ignore",
     }));
@@ -992,7 +992,7 @@ describe("--linker flag", () => {
   });
 });
 test("many transitive dependencies", async () => {
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await write(
     packageJson,
@@ -1008,10 +1008,10 @@ test("many transitive dependencies", async () => {
     }),
   );
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
   expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([
-    ".bun",
+    ".fun",
     "1-peer-dep-a",
     "alias-loop-1",
     "alias-loop-2",
@@ -1019,17 +1019,17 @@ test("many transitive dependencies", async () => {
     "is-number",
   ]);
   expect(readlinkSync(join(packageDir, "node_modules", "alias-loop-1"))).toBe(
-    join(".bun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1"),
+    join(".fun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1"),
   );
-  expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "alias-loop-1"))).toBe(
+  expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "alias-loop-1"))).toBe(
     join("..", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1"),
   );
-  expect(readlinkSync(join(packageDir, "node_modules", ".bun", "node_modules", "alias-loop-2"))).toBe(
+  expect(readlinkSync(join(packageDir, "node_modules", ".fun", "node_modules", "alias-loop-2"))).toBe(
     join("..", "alias-loop-2@1.0.0", "node_modules", "alias-loop-2"),
   );
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1", "package.json"),
+      join(packageDir, "node_modules", ".fun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1", "package.json"),
     ).json(),
   ).toEqual({
     name: "alias-loop-1",
@@ -1040,7 +1040,7 @@ test("many transitive dependencies", async () => {
   });
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "alias-loop-2@1.0.0", "node_modules", "alias-loop-2", "package.json"),
+      join(packageDir, "node_modules", ".fun", "alias-loop-2@1.0.0", "node_modules", "alias-loop-2", "package.json"),
     ).json(),
   ).toEqual({
     name: "alias-loop-2",
@@ -1049,28 +1049,28 @@ test("many transitive dependencies", async () => {
       "alias2": "npm:alias-loop-1@*",
     },
   });
-  expect(await readdirSorted(join(packageDir, "node_modules", ".bun", "alias-loop-1@1.0.0", "node_modules"))).toEqual([
+  expect(await readdirSorted(join(packageDir, "node_modules", ".fun", "alias-loop-1@1.0.0", "node_modules"))).toEqual([
     "alias-loop-1",
     "alias1",
   ]);
-  expect(await readdirSorted(join(packageDir, "node_modules", ".bun", "alias-loop-2@1.0.0", "node_modules"))).toEqual([
+  expect(await readdirSorted(join(packageDir, "node_modules", ".fun", "alias-loop-2@1.0.0", "node_modules"))).toEqual([
     "alias-loop-2",
     "alias2",
   ]);
   expect(
     withoutEntryHash(
-      readlinkSync(join(packageDir, "node_modules", ".bun", "alias-loop-1@1.0.0", "node_modules", "alias1")),
+      readlinkSync(join(packageDir, "node_modules", ".fun", "alias-loop-1@1.0.0", "node_modules", "alias1")),
     ),
   ).toBe(join("..", "..", "alias-loop-2@1.0.0", "node_modules", "alias-loop-2"));
   expect(
     withoutEntryHash(
-      readlinkSync(join(packageDir, "node_modules", ".bun", "alias-loop-2@1.0.0", "node_modules", "alias2")),
+      readlinkSync(join(packageDir, "node_modules", ".fun", "alias-loop-2@1.0.0", "node_modules", "alias2")),
     ),
   ).toBe(join("..", "..", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1"));
 });
 
 test("dependency names are preserved", async () => {
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await write(
     packageJson,
@@ -1082,33 +1082,33 @@ test("dependency names are preserved", async () => {
     }),
   );
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
-  expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".bun", "alias-loop-1"]);
+  expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".fun", "alias-loop-1"]);
   expect(readlinkSync(join(packageDir, "node_modules", "alias-loop-1"))).toBe(
-    join(".bun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1"),
+    join(".fun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1"),
   );
-  expect(await readdirSorted(join(packageDir, "node_modules", ".bun", "alias-loop-1@1.0.0", "node_modules"))).toEqual([
+  expect(await readdirSorted(join(packageDir, "node_modules", ".fun", "alias-loop-1@1.0.0", "node_modules"))).toEqual([
     "alias-loop-1",
     "alias1",
   ]);
-  expect(await readdirSorted(join(packageDir, "node_modules", ".bun", "alias-loop-2@1.0.0", "node_modules"))).toEqual([
+  expect(await readdirSorted(join(packageDir, "node_modules", ".fun", "alias-loop-2@1.0.0", "node_modules"))).toEqual([
     "alias-loop-2",
     "alias2",
   ]);
   expect(
     withoutEntryHash(
-      readlinkSync(join(packageDir, "node_modules", ".bun", "alias-loop-1@1.0.0", "node_modules", "alias1")),
+      readlinkSync(join(packageDir, "node_modules", ".fun", "alias-loop-1@1.0.0", "node_modules", "alias1")),
     ),
   ).toBe(join("..", "..", "alias-loop-2@1.0.0", "node_modules", "alias-loop-2"));
   expect(
     withoutEntryHash(
-      readlinkSync(join(packageDir, "node_modules", ".bun", "alias-loop-2@1.0.0", "node_modules", "alias2")),
+      readlinkSync(join(packageDir, "node_modules", ".fun", "alias-loop-2@1.0.0", "node_modules", "alias2")),
     ),
   ).toBe(join("..", "..", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1"));
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1", "package.json"),
+      join(packageDir, "node_modules", ".fun", "alias-loop-1@1.0.0", "node_modules", "alias-loop-1", "package.json"),
     ).json(),
   ).toEqual({
     name: "alias-loop-1",
@@ -1119,7 +1119,7 @@ test("dependency names are preserved", async () => {
   });
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "alias-loop-2@1.0.0", "node_modules", "alias-loop-2", "package.json"),
+      join(packageDir, "node_modules", ".fun", "alias-loop-2@1.0.0", "node_modules", "alias-loop-2", "package.json"),
     ).json(),
   ).toEqual({
     name: "alias-loop-2",
@@ -1131,7 +1131,7 @@ test("dependency names are preserved", async () => {
 });
 
 test("same resolution, different dependency name", async () => {
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await write(
     packageJson,
@@ -1144,28 +1144,28 @@ test("same resolution, different dependency name", async () => {
     }),
   );
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
-  expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".bun", "no-deps-1", "no-deps-2"]);
+  expect(await readdirSorted(join(packageDir, "node_modules"))).toEqual([".fun", "no-deps-1", "no-deps-2"]);
   expect(readlinkSync(join(packageDir, "node_modules", "no-deps-1"))).toBe(
-    join(".bun", "no-deps@1.0.0", "node_modules", "no-deps"),
+    join(".fun", "no-deps@1.0.0", "node_modules", "no-deps"),
   );
   expect(readlinkSync(join(packageDir, "node_modules", "no-deps-2"))).toBe(
-    join(".bun", "no-deps@1.0.0", "node_modules", "no-deps"),
+    join(".fun", "no-deps@1.0.0", "node_modules", "no-deps"),
   );
   expect(
     await file(
-      join(packageDir, "node_modules", ".bun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
+      join(packageDir, "node_modules", ".fun", "no-deps@1.0.0", "node_modules", "no-deps", "package.json"),
     ).json(),
   ).toEqual({
     name: "no-deps",
     version: "1.0.0",
   });
-  expect(await readdirSorted(join(packageDir, "node_modules", ".bun"))).toEqual(["no-deps@1.0.0", "node_modules"]);
+  expect(await readdirSorted(join(packageDir, "node_modules", ".fun"))).toEqual(["no-deps@1.0.0", "node_modules"]);
 });
 
 test("successfully removes and corrects symlinks", async () => {
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
   await Promise.all([
     write(join(packageDir, "old-package", "package.json"), JSON.stringify({ name: "old-package", version: "1.0.0" })),
     mkdir(join(packageDir, "node_modules")),
@@ -1183,12 +1183,12 @@ test("successfully removes and corrects symlinks", async () => {
     symlink(join("..", "old-package"), join(packageDir, "node_modules", "no-deps"), "dir"),
   ]);
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
   expect(existsSync(join(packageDir, "node_modules", "no-deps"))).toBeTrue();
 
   expect(readlinkSync(join(packageDir, "node_modules", "no-deps"))).toBe(
-    join(".bun", "no-deps@1.0.0", "node_modules", "no-deps"),
+    join(".fun", "no-deps@1.0.0", "node_modules", "no-deps"),
   );
 });
 
@@ -1199,7 +1199,7 @@ test("runs lifecycle scripts correctly", async () => {
   // 2. only postinstall (or any other script that isn't preinstall)
   // 3. preinstall and any other script
 
-  const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
   await write(
     packageJson,
@@ -1214,7 +1214,7 @@ test("runs lifecycle scripts correctly", async () => {
     }),
   );
 
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 
   const [
     preinstallLink,
@@ -1225,7 +1225,7 @@ test("runs lifecycle scripts correctly", async () => {
     allScriptsPreinstallFile,
     allScriptsInstallFile,
     allScriptsPostinstallFile,
-    bunDir,
+    funDir,
     lifecyclePreinstallDir,
     lifecyclePostinstallDir,
     allLifecycleScriptsDir,
@@ -1238,15 +1238,15 @@ test("runs lifecycle scripts correctly", async () => {
     file(join(packageDir, "node_modules", "all-lifecycle-scripts", "preinstall.txt")).text(),
     file(join(packageDir, "node_modules", "all-lifecycle-scripts", "install.txt")).text(),
     file(join(packageDir, "node_modules", "all-lifecycle-scripts", "postinstall.txt")).text(),
-    readdirSorted(join(packageDir, "node_modules", ".bun")),
-    readdirSorted(join(packageDir, "node_modules", ".bun", "lifecycle-preinstall@1.0.0", "node_modules")),
-    readdirSorted(join(packageDir, "node_modules", ".bun", "lifecycle-postinstall@1.0.0", "node_modules")),
-    readdirSorted(join(packageDir, "node_modules", ".bun", "all-lifecycle-scripts@1.0.0", "node_modules")),
+    readdirSorted(join(packageDir, "node_modules", ".fun")),
+    readdirSorted(join(packageDir, "node_modules", ".fun", "lifecycle-preinstall@1.0.0", "node_modules")),
+    readdirSorted(join(packageDir, "node_modules", ".fun", "lifecycle-postinstall@1.0.0", "node_modules")),
+    readdirSorted(join(packageDir, "node_modules", ".fun", "all-lifecycle-scripts@1.0.0", "node_modules")),
   ]);
 
-  expect(preinstallLink).toBe(join(".bun", "lifecycle-preinstall@1.0.0", "node_modules", "lifecycle-preinstall"));
-  expect(postinstallLink).toBe(join(".bun", "lifecycle-postinstall@1.0.0", "node_modules", "lifecycle-postinstall"));
-  expect(allScriptsLink).toBe(join(".bun", "all-lifecycle-scripts@1.0.0", "node_modules", "all-lifecycle-scripts"));
+  expect(preinstallLink).toBe(join(".fun", "lifecycle-preinstall@1.0.0", "node_modules", "lifecycle-preinstall"));
+  expect(postinstallLink).toBe(join(".fun", "lifecycle-postinstall@1.0.0", "node_modules", "lifecycle-postinstall"));
+  expect(allScriptsLink).toBe(join(".fun", "all-lifecycle-scripts@1.0.0", "node_modules", "all-lifecycle-scripts"));
 
   expect(preinstallFile).toBe("preinstall!");
   expect(postinstallFile).toBe("postinstall!");
@@ -1254,7 +1254,7 @@ test("runs lifecycle scripts correctly", async () => {
   expect(allScriptsInstallFile).toBe("install!");
   expect(allScriptsPostinstallFile).toBe("postinstall!");
 
-  expect(bunDir).toEqual([
+  expect(funDir).toEqual([
     "all-lifecycle-scripts@1.0.0",
     "lifecycle-postinstall@1.0.0",
     "lifecycle-preinstall@1.0.0",
@@ -1279,7 +1279,7 @@ test("transitive peer deps are resolved when resolution is fully synchronous", a
   // Self-contained HTTP server that serves package manifests & tarballs
   // directly from the Verdaccio fixtures, with Cache-Control: max-age=300
   // to replicate npmjs.org behavior (fully synchronous on warm cache).
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       const url = new URL(req.url);
@@ -1326,9 +1326,9 @@ test("transitive peer deps are resolved when resolution is fully synchronous", a
 
   using packageDir = tempDir("transitive-peer-test-", {});
   const packageJson = join(String(packageDir), "package.json");
-  const cacheDir = join(String(packageDir), ".bun-cache");
-  const bunfig = `[install]\ncache = "${cacheDir.replaceAll("\\", "\\\\")}"\nregistry = "http://localhost:${server.port}/"\nlinker = "isolated"\n`;
-  await write(join(String(packageDir), "bunfig.toml"), bunfig);
+  const cacheDir = join(String(packageDir), ".fun-cache");
+  const funfig = `[install]\ncache = "${cacheDir.replaceAll("\\", "\\\\")}"\nregistry = "http://localhost:${server.port}/"\nlinker = "isolated"\n`;
+  await write(join(String(packageDir), "funfig.toml"), funfig);
 
   await write(
     packageJson,
@@ -1346,17 +1346,17 @@ test("transitive peer deps are resolved when resolution is fully synchronous", a
   );
 
   // First install: populates manifest cache (with max-age=300 from server)
-  await runBunInstall(bunEnv, String(packageDir), { allowWarnings: true });
+  await runFunInstall(funEnv, String(packageDir), { allowWarnings: true });
 
   // Second install with NO lockfile and WARM cache. Manifests are fresh
   // (within max-age) so all loads are synchronous — this is the bug trigger.
   await rm(join(String(packageDir), "node_modules"), { recursive: true, force: true });
-  await rm(join(String(packageDir), "bun.lock"), { force: true });
-  await runBunInstall(bunEnv, String(packageDir), { allowWarnings: true });
+  await rm(join(String(packageDir), "fun.lock"), { force: true });
+  await runFunInstall(funEnv, String(packageDir), { allowWarnings: true });
 
   // Entry names have peer hashes; find them dynamically
-  const bunDir = join(String(packageDir), "node_modules", ".bun");
-  const entries = await readdirSorted(bunDir);
+  const funDir = join(String(packageDir), "node_modules", ".fun");
+  const entries = await readdirSorted(funDir);
   const strictPeerEntry = entries.find(e => e.startsWith("strict-peer-dep@1.0.0"));
   const usesStrictEntry = entries.find(e => e.startsWith("uses-strict-peer@1.0.0"));
 
@@ -1367,21 +1367,21 @@ test("transitive peer deps are resolved when resolution is fully synchronous", a
   // strict-peer-dep's own peer `no-deps` must be resolved and symlinked.
   // Without the fix: this symlink is missing because the transitive peer
   // queue was never drained after drainDependencyList re-queued it.
-  expect(existsSync(join(bunDir, strictPeerEntry!, "node_modules", "no-deps"))).toBe(true);
+  expect(existsSync(join(funDir, strictPeerEntry!, "node_modules", "no-deps"))).toBe(true);
 
   // Verify the chain is intact
-  expect(withoutEntryHash(readlinkSync(join(bunDir, usesStrictEntry!, "node_modules", "strict-peer-dep")))).toBe(
+  expect(withoutEntryHash(readlinkSync(join(funDir, usesStrictEntry!, "node_modules", "strict-peer-dep")))).toBe(
     join("..", "..", strictPeerEntry!, "node_modules", "strict-peer-dep"),
   );
 });
 
 describe("global virtual store", () => {
   // The global virtual store is off by default; tests that exercise it opt
-  // in via bunfig `install.globalStore = true`.
+  // in via funfig `install.globalStore = true`.
   const gvsBunfigOpts = { linker: "isolated", globalStore: true } as const;
 
   test("is disabled by default", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await write(
       packageJson,
@@ -1391,18 +1391,18 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     // With the global store disabled (the default) the entry is a real
-    // directory under `node_modules/.bun/` (the pre-global-store layout).
-    const entry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    // directory under `node_modules/.fun/` (the pre-global-store layout).
+    const entry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(entry).isSymbolicLink()).toBe(false);
     expect(lstatSync(entry).isDirectory()).toBe(true);
     expect(existsSync(join(entry, "node_modules", "no-deps", "package.json"))).toBe(true);
   });
 
-  test("can be enabled via BUN_INSTALL_GLOBAL_STORE=1", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: { linker: "isolated" } });
+  test("can be enabled via FUN_INSTALL_GLOBAL_STORE=1", async () => {
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: { linker: "isolated" } });
 
     await write(
       packageJson,
@@ -1412,33 +1412,33 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall({ ...bunEnv, BUN_INSTALL_GLOBAL_STORE: "1" }, packageDir);
+    await runFunInstall({ ...funEnv, FUN_INSTALL_GLOBAL_STORE: "1" }, packageDir);
 
-    const entry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    const entry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(entry).isSymbolicLink()).toBe(true);
     expect(readlinkSync(entry)).toMatch(/links[\/\\]no-deps@1\.0\.0-[0-9a-f]{16}$/);
   });
 
-  test("can be enabled via bunfig install.globalStore", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+  test("can be enabled via funfig install.globalStore", async () => {
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
       JSON.stringify({
-        name: "test-pkg-global-store-on-bunfig",
+        name: "test-pkg-global-store-on-funfig",
         dependencies: { "no-deps": "1.0.0" },
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
-    const entry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    const entry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(entry).isSymbolicLink()).toBe(true);
     expect(readlinkSync(entry)).toMatch(/links[\/\\]no-deps@1\.0\.0-[0-9a-f]{16}$/);
   });
 
   test("survives node_modules wipe", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1449,11 +1449,11 @@ describe("global virtual store", () => {
     );
 
     // First install: populates `<cache>/links/` and creates project symlinks.
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
-    // `node_modules/.bun/<storepath>` is a symlink (to the global virtual store),
+    // `node_modules/.fun/<storepath>` is a symlink (to the global virtual store),
     // not a real directory containing a clonefiled copy of the package.
-    const entry = join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0");
+    const entry = join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0");
     expect(lstatSync(entry).isSymbolicLink()).toBe(true);
     const target = readlinkSync(entry);
     expect(target).toMatch(/links[\/\\]two-range-deps@1\.0\.0-[0-9a-f]{16}$/);
@@ -1467,7 +1467,7 @@ describe("global virtual store", () => {
     // the project entry is re-created as a symlink to the *same* global path
     // without re-materialising package files.
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
-    await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+    await runFunInstall(funEnv, packageDir, { savesLockfile: false });
 
     expect(lstatSync(entry).isSymbolicLink()).toBe(true);
     expect(readlinkSync(entry)).toBe(target);
@@ -1476,7 +1476,7 @@ describe("global virtual store", () => {
         join(
           packageDir,
           "node_modules",
-          ".bun",
+          ".fun",
           "two-range-deps@1.0.0",
           "node_modules",
           "two-range-deps",
@@ -1487,7 +1487,7 @@ describe("global virtual store", () => {
   });
 
   test("--force replaces a corrupted global-store entry", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1497,9 +1497,9 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
-    const entry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    const entry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(entry).isSymbolicLink()).toBe(true);
     const gvsTarget = readlinkSync(entry);
     const pkgDir = join(gvsTarget, "node_modules", "no-deps");
@@ -1519,17 +1519,17 @@ describe("global virtual store", () => {
     // present and reuses it. (This pins the warm-hit semantics so the
     // assertion below is meaningful.)
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
-    await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+    await runFunInstall(funEnv, packageDir, { savesLockfile: false });
     expect(existsSync(pkgJsonPath)).toBe(false);
 
     // --force must rebuild staging and swap it into place over the corrupt
     // final directory instead of discarding the fresh tree on EEXIST.
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
     {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install", "--force"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install", "--force"],
         cwd: packageDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -1550,8 +1550,8 @@ describe("global virtual store", () => {
     expect(siblings.some(n => n.includes(".old-") || n.includes(".tmp-"))).toBe(false);
   });
 
-  test("BUN_INSTALL_GLOBAL_STORE=0 overrides bunfig globalStore = true", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+  test("FUN_INSTALL_GLOBAL_STORE=0 overrides funfig globalStore = true", async () => {
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1561,18 +1561,18 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall({ ...bunEnv, BUN_INSTALL_GLOBAL_STORE: "0" }, packageDir);
+    await runFunInstall({ ...funEnv, FUN_INSTALL_GLOBAL_STORE: "0" }, packageDir);
 
     // With the global store disabled the entry is a real directory under
-    // `node_modules/.bun/` (the pre-global-store layout).
-    const entry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    // `node_modules/.fun/` (the pre-global-store layout).
+    const entry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(entry).isSymbolicLink()).toBe(false);
     expect(lstatSync(entry).isDirectory()).toBe(true);
     expect(existsSync(join(entry, "node_modules", "no-deps", "package.json"))).toBe(true);
   });
 
   test("entry hash is deterministic across fresh installs", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1582,19 +1582,19 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
-    const target1 = readlinkSync(join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0"));
+    await runFunInstall(funEnv, packageDir);
+    const target1 = readlinkSync(join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0"));
 
     // Full reset (lockfile + node_modules + global links). The hash is derived
     // from the resolved dependency closure, so a fresh resolve must reproduce
     // it exactly — otherwise warm-hit reuse across machines/CI is broken.
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
-    await rm(join(packageDir, "bun.lock"), { force: true });
+    await rm(join(packageDir, "fun.lock"), { force: true });
     const linksDir = target1.slice(0, target1.lastIndexOf("links") + "links".length);
     await rm(linksDir, { recursive: true, force: true });
 
-    await runBunInstall(bunEnv, packageDir);
-    const target2 = readlinkSync(join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0"));
+    await runFunInstall(funEnv, packageDir);
+    const target2 = readlinkSync(join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0"));
 
     expect(target2).toBe(target1);
   });
@@ -1604,8 +1604,8 @@ describe("global virtual store", () => {
     // versions of one of its transitive deps must NOT share a global entry —
     // the dep symlink inside the entry would point at the wrong version for
     // one of them.
-    const a = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
-    const b = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const a = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
+    const b = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       a.packageJson,
@@ -1624,30 +1624,30 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, a.packageDir);
-    await runBunInstall(bunEnv, b.packageDir);
+    await runFunInstall(funEnv, a.packageDir);
+    await runFunInstall(funEnv, b.packageDir);
 
-    const targetA = entryStoreName(readlinkSync(join(a.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0")));
-    const targetB = entryStoreName(readlinkSync(join(b.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0")));
+    const targetA = entryStoreName(readlinkSync(join(a.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0")));
+    const targetB = entryStoreName(readlinkSync(join(b.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0")));
     expect(targetA).not.toBe(targetB);
 
     // Each entry's dep symlink resolves to the version that *its* project
     // overrode — proving the entries really are independent on disk.
     expect(
       await file(
-        join(a.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0", "node_modules", "no-deps", "package.json"),
+        join(a.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0", "node_modules", "no-deps", "package.json"),
       ).json(),
     ).toMatchObject({ version: "1.0.0" });
     expect(
       await file(
-        join(b.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0", "node_modules", "no-deps", "package.json"),
+        join(b.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0", "node_modules", "no-deps", "package.json"),
       ).json(),
     ).toMatchObject({ version: "1.1.0" });
   });
 
   test("two projects with the same closure share one global entry", async () => {
-    const a = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
-    const b = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const a = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
+    const b = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     for (const { packageJson } of [a, b]) {
       await write(
@@ -1659,11 +1659,11 @@ describe("global virtual store", () => {
       );
     }
 
-    await runBunInstall(bunEnv, a.packageDir);
-    await runBunInstall(bunEnv, b.packageDir);
+    await runFunInstall(funEnv, a.packageDir);
+    await runFunInstall(funEnv, b.packageDir);
 
-    const targetA = entryStoreName(readlinkSync(join(a.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0")));
-    const targetB = entryStoreName(readlinkSync(join(b.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0")));
+    const targetA = entryStoreName(readlinkSync(join(a.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0")));
+    const targetB = entryStoreName(readlinkSync(join(b.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0")));
     expect(targetA).toMatch(/^two-range-deps@1\.0\.0-[0-9a-f]{16}$/);
     expect(targetA).toBe(targetB);
   });
@@ -1675,7 +1675,7 @@ describe("global virtual store", () => {
     // dangling for any other project that shared the entry. The eligibility
     // check propagates: an entry that links to anything project-local is
     // itself project-local.
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await mkdir(join(packageDir, "packages", "ws-pkg"), { recursive: true });
     await write(
@@ -1691,10 +1691,10 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     // `no-deps` has no project-local deps so it stays global.
-    const noDepsEntry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    const noDepsEntry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(noDepsEntry).isSymbolicLink()).toBe(true);
     expect(readlinkSync(noDepsEntry)).toMatch(/links[\/\\]no-deps@1\.0\.0-[0-9a-f]{16}$/);
 
@@ -1704,7 +1704,7 @@ describe("global virtual store", () => {
   });
 
   test("packages with trusted lifecycle scripts stay project-local", async () => {
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1715,39 +1715,39 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
 
     // The script may mutate the install dir, so the entry must not be shared.
-    const scriptEntry = join(packageDir, "node_modules", ".bun", "lifecycle-postinstall@1.0.0");
+    const scriptEntry = join(packageDir, "node_modules", ".fun", "lifecycle-postinstall@1.0.0");
     expect(lstatSync(scriptEntry).isSymbolicLink()).toBe(false);
     expect(lstatSync(scriptEntry).isDirectory()).toBe(true);
 
     // A neighbouring scriptless package is unaffected and stays global.
-    const noDepsEntry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    const noDepsEntry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(noDepsEntry).isSymbolicLink()).toBe(true);
 
-    // `meta.hasInstallScript` isn't serialised in `bun.lock`, so a warm
+    // `meta.hasInstallScript` isn't serialised in `fun.lock`, so a warm
     // install must reach the same conclusion from the trustedDependencies
     // list alone — the cold install above isn't sufficient on its own.
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
-    await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+    await runFunInstall(funEnv, packageDir, { savesLockfile: false });
     expect(lstatSync(scriptEntry).isSymbolicLink()).toBe(false);
     expect(lstatSync(scriptEntry).isDirectory()).toBe(true);
     expect(lstatSync(noDepsEntry).isSymbolicLink()).toBe(true);
   });
 
   test("concurrent installs into a cold global store both succeed", async () => {
-    // Two `bun install` processes may race to create the same content-addressed
+    // Two `fun install` processes may race to create the same content-addressed
     // global entry; the loser sees EEXIST from clonefile/symlink/bin-link and
     // must treat it as success rather than failing the install.
-    const a = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
-    const b = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const a = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
+    const b = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     // Both projects must share one cache for the race to be real; the harness
-    // gives each test dir its own `.bun-cache/` by default.
-    const sharedCache = join(a.packageDir, ".bun-cache");
+    // gives each test dir its own `.fun-cache/` by default.
+    const sharedCache = join(a.packageDir, ".fun-cache");
     await write(
-      join(b.packageDir, "bunfig.toml"),
+      join(b.packageDir, "funfig.toml"),
       `[install]\ncache = "${sharedCache.replaceAll("\\", "\\\\")}"\nregistry = "${registry.registryUrl()}"\nlinker = "isolated"\nglobalStore = true\n`,
     );
 
@@ -1765,7 +1765,7 @@ describe("global virtual store", () => {
 
     // Prime the package cache so the parallel installs only race on
     // global-store creation, not network downloads.
-    await runBunInstall(bunEnv, a.packageDir);
+    await runFunInstall(funEnv, a.packageDir);
     const linksDir = join(sharedCache, "links");
 
     for (let i = 0; i < 3; i++) {
@@ -1774,24 +1774,24 @@ describe("global virtual store", () => {
       await rm(join(b.packageDir, "node_modules"), { recursive: true, force: true });
 
       const [ra, rb] = await Promise.all([
-        spawn({ cmd: [bunExe(), "install"], cwd: a.packageDir, env: bunEnv, stderr: "pipe", stdout: "pipe" }).exited,
-        spawn({ cmd: [bunExe(), "install"], cwd: b.packageDir, env: bunEnv, stderr: "pipe", stdout: "pipe" }).exited,
+        spawn({ cmd: [funExe(), "install"], cwd: a.packageDir, env: funEnv, stderr: "pipe", stdout: "pipe" }).exited,
+        spawn({ cmd: [funExe(), "install"], cwd: b.packageDir, env: funEnv, stderr: "pipe", stdout: "pipe" }).exited,
       ]);
       expect({ iter: i, a: ra, b: rb }).toEqual({ iter: i, a: 0, b: 0 });
     }
 
-    // Both projects' `.bun/<X>` symlinks point at the same physical directory
+    // Both projects' `.fun/<X>` symlinks point at the same physical directory
     // in the shared cache.
-    expect(readlinkSync(join(a.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0"))).toBe(
-      readlinkSync(join(b.packageDir, "node_modules", ".bun", "two-range-deps@1.0.0")),
+    expect(readlinkSync(join(a.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0"))).toBe(
+      readlinkSync(join(b.packageDir, "node_modules", ".fun", "two-range-deps@1.0.0")),
     );
     for (const { packageDir } of [a, b]) {
       expect(
         await file(
-          join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0", "node_modules", "no-deps", "package.json"),
+          join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0", "node_modules", "no-deps", "package.json"),
         ).json(),
       ).toMatchObject({ name: "no-deps" });
-      const bin = process.platform === "win32" ? "what-bin.bunx" : "what-bin";
+      const bin = process.platform === "win32" ? "what-bin.funx" : "what-bin";
       expect(existsSync(join(packageDir, "node_modules", ".bin", bin))).toBe(true);
     }
   });
@@ -1801,7 +1801,7 @@ describe("global virtual store", () => {
     // `<entry>/` as the final step, so a published entry is always complete.
     // A crashed earlier install can leave a staging directory behind; the
     // warm-hit check must look at the final path only.
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1811,33 +1811,33 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
-    const target = readlinkSync(join(packageDir, "node_modules", ".bun", "no-deps@1.0.0"));
+    await runFunInstall(funEnv, packageDir);
+    const target = readlinkSync(join(packageDir, "node_modules", ".fun", "no-deps@1.0.0"));
     expect(existsSync(join(target, "node_modules", "no-deps", "package.json"))).toBe(true);
     // No stamp file: the directory existing *is* the completeness signal.
-    expect(existsSync(join(target, ".bun-ok"))).toBe(false);
+    expect(existsSync(join(target, ".fun-ok"))).toBe(false);
 
     // Fake a leftover staging sibling and re-install — the published entry
     // should warm-hit unchanged.
     await mkdir(`${target}.tmp-deadbeef`, { recursive: true });
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
-    await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+    await runFunInstall(funEnv, packageDir, { savesLockfile: false });
 
-    expect(readlinkSync(join(packageDir, "node_modules", ".bun", "no-deps@1.0.0"))).toBe(target);
+    expect(readlinkSync(join(packageDir, "node_modules", ".fun", "no-deps@1.0.0"))).toBe(target);
     expect(existsSync(join(target, "node_modules", "no-deps", "package.json"))).toBe(true);
   });
 
-  test("bun's resolver follows the double-hop chain into the global store", async () => {
-    // Regression test for the Windows EISDIR: `node_modules/.bun/<pkg>` is a
+  test("fun's resolver follows the double-hop chain into the global store", async () => {
+    // Regression test for the Windows EISDIR: `node_modules/.fun/<pkg>` is a
     // symlink into `<cache>/links/`, and the dep symlinks inside the global
     // entry are *relative* to the entry's physical location. The Windows
     // `RealFS.kind()` symlink walk used to join those relative targets
     // against the *logical* `dirname()` (which still contains the
-    // `node_modules/.bun/<pkg>` segment), miss, fall back to `.file`, and the
+    // `node_modules/.fun/<pkg>` segment), miss, fall back to `.file`, and the
     // resolver would then `ReadFile` a directory. Exercising an actual
     // `require()` through a transitive dep proves the chain resolves
     // end-to-end on every platform.
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1857,15 +1857,15 @@ describe("global virtual store", () => {
       }));`,
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
     // The entry must actually be a global-store symlink for this test to mean
     // anything (guards against a future default flip silently neutering it).
-    expect(lstatSync(join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0")).isSymbolicLink()).toBe(true);
+    expect(lstatSync(join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0")).isSymbolicLink()).toBe(true);
 
     const { stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "index.js"],
+      cmd: [funExe(), "index.js"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1878,11 +1878,11 @@ describe("global virtual store", () => {
   test("an entry that loses global-store eligibility detaches without mutating the shared entry", async () => {
     // Regression: a previously-GVS entry that becomes project-local on the
     // next install (newly patched, newly trusted, …) used to write its new
-    // tree *through* the stale `node_modules/.bun/<storepath>` symlink into
+    // tree *through* the stale `node_modules/.fun/<storepath>` symlink into
     // the shared cache. On Windows the `.expect_missing` dep-symlink rewrite
     // then baked a project-absolute junction target into the shared entry,
     // which dangled after `rm -rf node_modules`.
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1892,8 +1892,8 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
-    const entry = join(packageDir, "node_modules", ".bun", "two-range-deps@1.0.0");
+    await runFunInstall(funEnv, packageDir);
+    const entry = join(packageDir, "node_modules", ".fun", "two-range-deps@1.0.0");
     expect(lstatSync(entry).isSymbolicLink()).toBe(true);
     const gvsTarget = readlinkSync(entry);
     const gvsDepLink = readlinkSync(join(gvsTarget, "node_modules", "no-deps"));
@@ -1908,7 +1908,7 @@ describe("global virtual store", () => {
         trustedDependencies: ["two-range-deps"],
       }),
     );
-    await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+    await runFunInstall(funEnv, packageDir, { savesLockfile: false });
 
     // The project entry is now a real directory…
     expect(lstatSync(entry).isSymbolicLink()).toBe(false);
@@ -1920,11 +1920,11 @@ describe("global virtual store", () => {
   });
 
   test("upgrades a pre-global-store node_modules in place", async () => {
-    // A project installed before this change has `node_modules/.bun/<X>` as a
+    // A project installed before this change has `node_modules/.fun/<X>` as a
     // real directory. Re-running install with the global store enabled must
     // replace that directory with a symlink (not fail with EEXIST or leave the
     // stale tree behind).
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1934,23 +1934,23 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall({ ...bunEnv, BUN_INSTALL_GLOBAL_STORE: "0" }, packageDir);
-    const entry = join(packageDir, "node_modules", ".bun", "no-deps@1.0.0");
+    await runFunInstall({ ...funEnv, FUN_INSTALL_GLOBAL_STORE: "0" }, packageDir);
+    const entry = join(packageDir, "node_modules", ".fun", "no-deps@1.0.0");
     expect(lstatSync(entry).isDirectory()).toBe(true);
     expect(lstatSync(entry).isSymbolicLink()).toBe(false);
 
-    await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+    await runFunInstall(funEnv, packageDir, { savesLockfile: false });
     expect(lstatSync(entry).isSymbolicLink()).toBe(true);
     expect(existsSync(join(entry, "node_modules", "no-deps", "package.json"))).toBe(true);
   });
 
-  test("preserves bun patch workspace when install runs before --commit", async () => {
-    // Regression: `bun patch <pkg>` detaches the project store entry from the
+  test("preserves fun patch workspace when install runs before --commit", async () => {
+    // Regression: `fun patch <pkg>` detaches the project store entry from the
     // global virtual store (symlink → real directory) so the user can edit it.
-    // A subsequent `bun install` (e.g. to add another dep) before `--commit`
+    // A subsequent `fun install` (e.g. to add another dep) before `--commit`
     // must not see that real directory as a stale pre-GVS layout and
     // `deleteTree` the user's in-progress edits.
-    const { packageJson, packageDir } = await registry.createTestDir({ bunfigOpts: gvsBunfigOpts });
+    const { packageJson, packageDir } = await registry.createTestDir({ funfigOpts: gvsBunfigOpts });
 
     await write(
       packageJson,
@@ -1960,14 +1960,14 @@ describe("global virtual store", () => {
       }),
     );
 
-    await runBunInstall(bunEnv, packageDir);
+    await runFunInstall(funEnv, packageDir);
     const workspace = join(packageDir, "node_modules", "no-deps");
     expect(lstatSync(workspace).isSymbolicLink()).toBe(true);
 
     await using proc = spawn({
-      cmd: [bunExe(), "patch", "no-deps"],
+      cmd: [funExe(), "patch", "no-deps"],
       cwd: packageDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -1976,15 +1976,15 @@ describe("global virtual store", () => {
     expect(stdout).toContain("To patch");
     expect(exitCode).toBe(0);
 
-    // `bun patch` detached the top-level dep symlink into a real directory
-    // for the user to edit. The `.bun/<storepath>` GVS symlink is untouched.
+    // `fun patch` detached the top-level dep symlink into a real directory
+    // for the user to edit. The `.fun/<storepath>` GVS symlink is untouched.
     expect(lstatSync(workspace).isSymbolicLink()).toBe(false);
     expect(lstatSync(workspace).isDirectory()).toBe(true);
 
     const edited = join(workspace, "index.js");
     await write(edited, "module.exports = 'USER_EDITS';\n");
 
-    await runBunInstall(bunEnv, packageDir, { savesLockfile: false });
+    await runFunInstall(funEnv, packageDir, { savesLockfile: false });
 
     // The real-directory workspace is preserved across the install; before
     // this fix `.expect_existing` would `deleteTree` it on readlink EINVAL

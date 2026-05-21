@@ -1,6 +1,6 @@
 'use strict';
 const common = require('../common');
-if ('Bun' in globalThis) common.skip("BUN: we don't use a pool");
+if ('Fun' in globalThis) common.skip("FUN: we don't use a pool");
 const assert = require('assert');
 const { MessageChannel } = require('worker_threads');
 

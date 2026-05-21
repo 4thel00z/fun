@@ -6,13 +6,13 @@ pub const adler32 = hashWrap(std.hash.Adler32);
 pub const crc32 = hashWrap(struct {
     pub fn hash(seed: u32, bytes: []const u8) u32 {
         // zlib takes a 32-bit length, so chunk large inputs to avoid truncation.
-        var crc: bun.zlib.uLong = seed;
+        var crc: fun.zlib.uLong = seed;
         var offset: usize = 0;
         while (offset < bytes.len) {
             const remaining = bytes.len - offset;
             const max_len: usize = std.math.maxInt(u32);
             const chunk_len: u32 = if (remaining > max_len) @intCast(max_len) else @intCast(remaining);
-            crc = bun.zlib.crc32(crc, bytes.ptr + offset, chunk_len);
+            crc = fun.zlib.crc32(crc, bytes.ptr + offset, chunk_len);
             offset += chunk_len;
         }
         return @intCast(crc);
@@ -44,7 +44,7 @@ pub const xxHash3 = hashWrap(struct {
 pub const murmur32v2 = hashWrap(std.hash.murmur.Murmur2_32);
 pub const murmur32v3 = hashWrap(std.hash.murmur.Murmur3_32);
 pub const murmur64v2 = hashWrap(std.hash.murmur.Murmur2_64);
-pub const rapidhash = hashWrap(bun.deprecated.RapidHash);
+pub const rapidhash = hashWrap(fun.deprecated.RapidHash);
 
 pub fn create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
     const function = jsc.JSFunction.create(globalThis, "hash", wyhash, 1, .{});
@@ -73,9 +73,9 @@ pub fn create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
 fn hashWrap(comptime Hasher_: anytype) jsc.JSHostFnZig {
     return struct {
         const Hasher = Hasher_;
-        pub fn hash(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn hash(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(2).slice();
-            var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments);
+            var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments);
             defer args.deinit();
 
             var input: []const u8 = "";
@@ -108,7 +108,7 @@ fn hashWrap(comptime Hasher_: anytype) jsc.JSHostFnZig {
                             input = array_buffer.byteSlice();
                         },
                         else => {
-                            input_slice = try arg.toSlice(globalThis, bun.default_allocator);
+                            input_slice = try arg.toSlice(globalThis, fun.default_allocator);
                             input = input_slice.slice();
                         },
                     }
@@ -128,7 +128,7 @@ fn hashWrap(comptime Hasher_: anytype) jsc.JSHostFnZig {
                         seed = arg.toUInt64NoTruncate();
                     }
                 }
-                if (comptime bun.trait.isNumber(@TypeOf(function_args[0]))) {
+                if (comptime fun.trait.isNumber(@TypeOf(function_args[0]))) {
                     function_args[0] = @as(@TypeOf(function_args[0]), @truncate(seed));
                     function_args[1] = input;
                 } else {
@@ -147,10 +147,10 @@ fn hashWrap(comptime Hasher_: anytype) jsc.JSHostFnZig {
     }.hash;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

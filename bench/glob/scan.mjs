@@ -10,7 +10,7 @@ const multiLevelPattern = "node_modules/*/lib/*.js";
 const benchFdir = false;
 const cwd = undefined;
 
-const bunOpts = {
+const funOpts = {
   cwd,
   followSymlinks: false,
   absolute: true,
@@ -23,7 +23,7 @@ const fgOpts = {
   absolute: true,
 };
 
-const Glob = "Bun" in globalThis ? globalThis.Bun.Glob : undefined;
+const Glob = "Fun" in globalThis ? globalThis.Fun.Glob : undefined;
 
 group({ name: `async pattern="${normalPattern}"`, summary: true }, () => {
   bench("fast-glob", async () => {
@@ -31,8 +31,8 @@ group({ name: `async pattern="${normalPattern}"`, summary: true }, () => {
   });
 
   if (Glob)
-    bench("Bun.Glob", async () => {
-      const entries = await Array.fromAsync(new Glob(normalPattern).scan(bunOpts));
+    bench("Fun.Glob", async () => {
+      const entries = await Array.fromAsync(new Glob(normalPattern).scan(funOpts));
     });
 
   if (benchFdir)
@@ -47,8 +47,8 @@ group({ name: `async-recursive pattern="${recursivePattern}"`, summary: true }, 
   });
 
   if (Glob)
-    bench("Bun.Glob", async () => {
-      const entries = await Array.fromAsync(new Glob(recursivePattern).scan(bunOpts));
+    bench("Fun.Glob", async () => {
+      const entries = await Array.fromAsync(new Glob(recursivePattern).scan(funOpts));
     });
 
   if (benchFdir)
@@ -63,8 +63,8 @@ group({ name: `sync pattern="${normalPattern}"`, summary: true }, () => {
   });
 
   if (Glob)
-    bench("Bun.Glob", () => {
-      const entries = [...new Glob(normalPattern).scanSync(bunOpts)];
+    bench("Fun.Glob", () => {
+      const entries = [...new Glob(normalPattern).scanSync(funOpts)];
     });
 
   if (benchFdir)
@@ -79,8 +79,8 @@ group({ name: `sync-recursive pattern="${recursivePattern}"`, summary: true }, (
   });
 
   if (Glob)
-    bench("Bun.Glob", () => {
-      const entries = [...new Glob(recursivePattern).scanSync(bunOpts)];
+    bench("Fun.Glob", () => {
+      const entries = [...new Glob(recursivePattern).scanSync(funOpts)];
     });
 
   if (benchFdir)
@@ -95,8 +95,8 @@ group({ name: `node_modules pattern="${nodeModulesPattern}"`, summary: true }, (
   });
 
   if (Glob)
-    bench("Bun.Glob", async () => {
-      const entries = await Array.fromAsync(new Glob(nodeModulesPattern).scan(bunOpts));
+    bench("Fun.Glob", async () => {
+      const entries = await Array.fromAsync(new Glob(nodeModulesPattern).scan(funOpts));
     });
 
   if (benchFdir)
@@ -111,8 +111,8 @@ group({ name: `multi-level pattern="${multiLevelPattern}"`, summary: true }, () 
   });
 
   if (Glob)
-    bench("Bun.Glob", async () => {
-      const entries = await Array.fromAsync(new Glob(multiLevelPattern).scan(bunOpts));
+    bench("Fun.Glob", async () => {
+      const entries = await Array.fromAsync(new Glob(multiLevelPattern).scan(funOpts));
     });
 
   if (benchFdir)
@@ -127,8 +127,8 @@ group({ name: `sync multi-level pattern="${multiLevelPattern}"`, summary: true }
   });
 
   if (Glob)
-    bench("Bun.Glob", () => {
-      const entries = [...new Glob(multiLevelPattern).scanSync(bunOpts)];
+    bench("Fun.Glob", () => {
+      const entries = [...new Glob(multiLevelPattern).scanSync(funOpts)];
     });
 
   if (benchFdir)

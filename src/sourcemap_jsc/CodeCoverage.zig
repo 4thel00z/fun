@@ -1,4 +1,4 @@
-const LinesHits = bun.collections.BabyList(u32);
+const LinesHits = fun.collections.BabyList(u32);
 
 /// Our code coverage currently only deals with lines of code, not statements or branches.
 /// JSC doesn't expose function names in their coverage data, so we don't include that either :(.
@@ -15,7 +15,7 @@ const LinesHits = bun.collections.BabyList(u32);
 /// bitsets are simple and bitsets are relatively fast to construct and query
 ///
 pub const Report = struct {
-    source_url: bun.jsc.ZigString.Slice,
+    source_url: fun.jsc.ZigString.Slice,
     executable_lines: Bitset,
     lines_which_have_executed: Bitset,
     line_hits: LinesHits = .{},
@@ -26,8 +26,8 @@ pub const Report = struct {
     total_lines: u32 = 0,
 
     pub fn linesCoverageFraction(this: *const Report) f64 {
-        var intersected = bun.handleOom(this.executable_lines.clone(bun.default_allocator));
-        defer intersected.deinit(bun.default_allocator);
+        var intersected = fun.handleOom(this.executable_lines.clone(fun.default_allocator));
+        defer intersected.deinit(fun.default_allocator);
         intersected.setIntersection(this.lines_which_have_executed);
 
         const total_count: f64 = @floatFromInt(this.executable_lines.count());
@@ -137,7 +137,7 @@ pub const Report = struct {
 
             var filename = report.source_url.slice();
             if (base_path.len > 0) {
-                filename = bun.path.relative(base_path, filename);
+                filename = fun.path.relative(base_path, filename);
             }
 
             try writeFormatWithValues(
@@ -153,8 +153,8 @@ pub const Report = struct {
 
             try writer.writeAll(comptime prettyFmt("<r><d> | <r>", enable_colors));
 
-            var executable_lines_that_havent_been_executed = bun.handleOom(report.lines_which_have_executed.clone(bun.default_allocator));
-            defer executable_lines_that_havent_been_executed.deinit(bun.default_allocator);
+            var executable_lines_that_havent_been_executed = fun.handleOom(report.lines_which_have_executed.clone(fun.default_allocator));
+            defer executable_lines_that_havent_been_executed.deinit(fun.default_allocator);
             executable_lines_that_havent_been_executed.toggleAll();
 
             // This sets statements in executed scopes
@@ -215,7 +215,7 @@ pub const Report = struct {
         ) !void {
             var filename = report.source_url.slice();
             if (base_path.len > 0) {
-                filename = bun.path.relative(base_path, filename);
+                filename = fun.path.relative(base_path, filename);
             }
 
             // TN: test name
@@ -237,8 +237,8 @@ pub const Report = struct {
 
             // ** Track all executable lines **
             // Executable lines that were not hit should be marked as 0
-            var executable_lines = bun.handleOom(report.executable_lines.clone(bun.default_allocator));
-            defer executable_lines.deinit(bun.default_allocator);
+            var executable_lines = fun.handleOom(report.executable_lines.clone(fun.default_allocator));
+            defer executable_lines.deinit(fun.default_allocator);
             var iter = executable_lines.iterator(.{});
 
             // ** Branch coverage not supported yet, since JSC does not support those yet. ** //
@@ -272,7 +272,7 @@ pub const Report = struct {
     }
 
     extern fn CodeCoverage__withBlocksAndFunctions(
-        *bun.jsc.VM,
+        *fun.jsc.VM,
         i32,
         *anyopaque,
         bool,
@@ -318,12 +318,12 @@ pub const Report = struct {
     };
 
     pub fn generate(
-        globalThis: *bun.jsc.JSGlobalObject,
+        globalThis: *fun.jsc.JSGlobalObject,
         allocator: std.mem.Allocator,
         byte_range_mapping: *ByteRangeMapping,
         ignore_sourcemap_: bool,
     ) ?Report {
-        bun.jsc.markBinding(@src());
+        fun.jsc.markBinding(@src());
         const vm = globalThis.vm();
 
         var result: ?Report = null;
@@ -358,33 +358,33 @@ const BasicBlockRange = extern struct {
 pub const ByteRangeMapping = struct {
     line_offset_table: LineOffsetTable.List = .{},
     source_id: i32,
-    source_url: bun.jsc.ZigString.Slice,
+    source_url: fun.jsc.ZigString.Slice,
 
     pub fn isLessThan(_: void, a: ByteRangeMapping, b: ByteRangeMapping) bool {
-        return bun.strings.order(a.source_url.slice(), b.source_url.slice()) == .lt;
+        return fun.strings.order(a.source_url.slice(), b.source_url.slice()) == .lt;
     }
 
-    pub const HashMap = std.HashMap(u64, ByteRangeMapping, bun.IdentityContext(u64), std.hash_map.default_max_load_percentage);
+    pub const HashMap = std.HashMap(u64, ByteRangeMapping, fun.IdentityContext(u64), std.hash_map.default_max_load_percentage);
 
     pub fn deinit(this: *ByteRangeMapping) void {
-        this.line_offset_table.deinit(bun.default_allocator);
+        this.line_offset_table.deinit(fun.default_allocator);
     }
 
     pub threadlocal var map: ?*HashMap = null;
-    pub fn generate(str: bun.String, source_contents_str: bun.String, source_id: i32) callconv(.c) void {
+    pub fn generate(str: fun.String, source_contents_str: fun.String, source_id: i32) callconv(.c) void {
         var _map = map orelse brk: {
-            map = bun.handleOom(bun.jsc.VirtualMachine.get().allocator.create(HashMap));
-            map.?.* = HashMap.init(bun.jsc.VirtualMachine.get().allocator);
+            map = fun.handleOom(fun.jsc.VirtualMachine.get().allocator.create(HashMap));
+            map.?.* = HashMap.init(fun.jsc.VirtualMachine.get().allocator);
             break :brk map.?;
         };
-        var slice = str.toUTF8(bun.default_allocator);
-        const hash = bun.hash(slice.slice());
-        var entry = bun.handleOom(_map.getOrPut(hash));
+        var slice = str.toUTF8(fun.default_allocator);
+        const hash = fun.hash(slice.slice());
+        var entry = fun.handleOom(_map.getOrPut(hash));
         if (entry.found_existing) {
             entry.value_ptr.deinit();
         }
 
-        var source_contents = source_contents_str.toUTF8(bun.default_allocator);
+        var source_contents = source_contents_str.toUTF8(fun.default_allocator);
         defer source_contents.deinit();
 
         entry.value_ptr.* = compute(source_contents.slice(), source_id, slice);
@@ -394,12 +394,12 @@ pub const ByteRangeMapping = struct {
         return this.source_id;
     }
 
-    pub fn find(path: bun.String) callconv(.c) ?*ByteRangeMapping {
-        var slice = path.toUTF8(bun.default_allocator);
+    pub fn find(path: fun.String) callconv(.c) ?*ByteRangeMapping {
+        var slice = path.toUTF8(fun.default_allocator);
         defer slice.deinit();
 
         var map_ = map orelse return null;
-        const hash = bun.hash(slice.slice());
+        const hash = fun.hash(slice.slice());
         const entry = map_.getPtr(hash) orelse return null;
         return entry;
     }
@@ -407,7 +407,7 @@ pub const ByteRangeMapping = struct {
     pub fn generateReportFromBlocks(
         this: *ByteRangeMapping,
         allocator: std.mem.Allocator,
-        source_url: bun.jsc.ZigString.Slice,
+        source_url: fun.jsc.ZigString.Slice,
         blocks: []const BasicBlockRange,
         function_blocks: []const BasicBlockRange,
         ignore_sourcemap: bool,
@@ -416,7 +416,7 @@ pub const ByteRangeMapping = struct {
 
         var executable_lines: Bitset = Bitset{};
         var lines_which_have_executed: Bitset = Bitset{};
-        const parsed_mappings_ = bun.jsc.VirtualMachine.get().source_mappings.get(source_url.slice());
+        const parsed_mappings_ = fun.jsc.VirtualMachine.get().source_mappings.get(source_url.slice());
         defer if (parsed_mappings_) |parsed_mapping| parsed_mapping.deref();
         var line_hits = LinesHits{};
 
@@ -537,7 +537,7 @@ pub const ByteRangeMapping = struct {
             @memset(line_hits_slice, 0);
             errdefer line_hits.deinit(allocator);
 
-            var cur_: ?bun.SourceMap.InternalSourceMap.Cursor = parsed_mapping.internalCursor();
+            var cur_: ?fun.SourceMap.InternalSourceMap.Cursor = parsed_mapping.internalCursor();
 
             for (blocks, 0..) |block, i| {
                 if (block.endOffset < 0 or block.startOffset < 0) continue; // does not map to anything
@@ -660,30 +660,30 @@ pub const ByteRangeMapping = struct {
     }
 
     pub fn findExecutedLines(
-        globalThis: *bun.jsc.JSGlobalObject,
-        source_url: bun.String,
+        globalThis: *fun.jsc.JSGlobalObject,
+        source_url: fun.String,
         blocks_ptr: [*]const BasicBlockRange,
         blocks_len: usize,
         function_start_offset: usize,
         ignore_sourcemap: bool,
-    ) callconv(.c) bun.jsc.JSValue {
-        var this = ByteRangeMapping.find(source_url) orelse return bun.jsc.JSValue.null;
+    ) callconv(.c) fun.jsc.JSValue {
+        var this = ByteRangeMapping.find(source_url) orelse return fun.jsc.JSValue.null;
 
         const blocks: []const BasicBlockRange = blocks_ptr[0..function_start_offset];
         var function_blocks: []const BasicBlockRange = blocks_ptr[function_start_offset..blocks_len];
         if (function_blocks.len > 1) {
             function_blocks = function_blocks[1..];
         }
-        var url_slice = source_url.toUTF8(bun.default_allocator);
+        var url_slice = source_url.toUTF8(fun.default_allocator);
         defer url_slice.deinit();
-        var report = this.generateReportFromBlocks(bun.default_allocator, url_slice, blocks, function_blocks, ignore_sourcemap) catch {
+        var report = this.generateReportFromBlocks(fun.default_allocator, url_slice, blocks, function_blocks, ignore_sourcemap) catch {
             return globalThis.throwOutOfMemoryValue();
         };
-        defer report.deinit(bun.default_allocator);
+        defer report.deinit(fun.default_allocator);
 
         var coverage_fraction = Fraction{};
 
-        var allocating_writer = std.Io.Writer.Allocating.init(bun.default_allocator);
+        var allocating_writer = std.Io.Writer.Allocating.init(fun.default_allocator);
         defer allocating_writer.deinit();
         const buffered_writer = &allocating_writer.writer;
 
@@ -695,12 +695,12 @@ pub const ByteRangeMapping = struct {
             return globalThis.throwOutOfMemoryValue();
         };
 
-        return bun.String.createUTF8ForJS(globalThis, allocating_writer.written()) catch return .zero;
+        return fun.String.createUTF8ForJS(globalThis, allocating_writer.written()) catch return .zero;
     }
 
-    pub fn compute(source_contents: []const u8, source_id: i32, source_url: bun.jsc.ZigString.Slice) ByteRangeMapping {
+    pub fn compute(source_contents: []const u8, source_id: i32, source_url: fun.jsc.ZigString.Slice) ByteRangeMapping {
         return ByteRangeMapping{
-            .line_offset_table = LineOffsetTable.generate(bun.jsc.VirtualMachine.get().allocator, source_contents, 0),
+            .line_offset_table = LineOffsetTable.generate(fun.jsc.VirtualMachine.get().allocator, source_contents, 0),
             .source_id = source_id,
             .source_url = source_url,
         };
@@ -708,7 +708,7 @@ pub const ByteRangeMapping = struct {
 };
 
 comptime {
-    if (bun.Environment.isNative) {
+    if (fun.Environment.isNative) {
         @export(&ByteRangeMapping.generate, .{ .name = "ByteRangeMapping__generate" });
         @export(&ByteRangeMapping.findExecutedLines, .{ .name = "ByteRangeMapping__findExecutedLines" });
         @export(&ByteRangeMapping.find, .{ .name = "ByteRangeMapping__find" });
@@ -733,9 +733,9 @@ pub const Block = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Bitset = bun.bit_set.DynamicBitSetUnmanaged;
-const LineOffsetTable = bun.SourceMap.LineOffsetTable;
+const fun = @import("fun");
+const Bitset = fun.bit_set.DynamicBitSetUnmanaged;
+const LineOffsetTable = fun.SourceMap.LineOffsetTable;
 
-const Output = bun.Output;
+const Output = fun.Output;
 const prettyFmt = Output.prettyFmt;

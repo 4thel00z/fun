@@ -3,7 +3,7 @@ title: "Overrides and resolutions"
 description: "Control metadependency versions with npm overrides and Yarn resolutions"
 ---
 
-Bun supports npm's `"overrides"` and Yarn's `"resolutions"` in `package.json`. These are mechanisms for specifying a version range for _metadependencies_—the dependencies of your dependencies.
+Fun supports npm's `"overrides"` and Yarn's `"resolutions"` in `package.json`. These are mechanisms for specifying a version range for _metadependencies_—the dependencies of your dependencies.
 
 {/* prettier-ignore */}
 ```json package.json icon="file-json"
@@ -18,7 +18,7 @@ Bun supports npm's `"overrides"` and Yarn's `"resolutions"` in `package.json`. T
 }
 ```
 
-By default, Bun will install the latest version of all dependencies and metadependencies, according to the ranges specified in each package's `package.json`. Let's say you have a project with one dependency, `foo`, which in turn has a dependency on `bar`. This means `bar` is a _metadependency_ of our project.
+By default, Fun will install the latest version of all dependencies and metadependencies, according to the ranges specified in each package's `package.json`. Let's say you have a project with one dependency, `foo`, which in turn has a dependency on `bar`. This means `bar` is a _metadependency_ of our project.
 
 ```json package.json icon="file-json"
 {
@@ -29,7 +29,7 @@ By default, Bun will install the latest version of all dependencies and metadepe
 }
 ```
 
-When you run `bun install`, Bun will install the latest versions of each package.
+When you run `fun install`, Fun will install the latest versions of each package.
 
 ```txt tree layout of node_modules icon="list-tree"
 node_modules
@@ -43,10 +43,10 @@ But what if a security vulnerability was introduced in `bar@4.5.6`? We may want 
 
 ## `"overrides"`
 
-Add `bar` to the `"overrides"` field in `package.json`. Bun will defer to the specified version range when determining which version of `bar` to install, whether it's a dependency or a metadependency.
+Add `bar` to the `"overrides"` field in `package.json`. Fun will defer to the specified version range when determining which version of `bar` to install, whether it's a dependency or a metadependency.
 
 <Note>
-  Bun currently only supports top-level `"overrides"`. [Nested
+  Fun currently only supports top-level `"overrides"`. [Nested
   overrides](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#overrides) are not supported.
 </Note>
 
@@ -65,7 +65,7 @@ Add `bar` to the `"overrides"` field in `package.json`. Bun will defer to the sp
 
 ## `"resolutions"`
 
-The syntax is similar for `"resolutions"`, which is Yarn's alternative to `"overrides"`. Bun supports this feature to make migration from Yarn easier.
+The syntax is similar for `"resolutions"`, which is Yarn's alternative to `"overrides"`. Fun supports this feature to make migration from Yarn easier.
 
 As with `"overrides"`, _nested resolutions_ are not currently supported.
 

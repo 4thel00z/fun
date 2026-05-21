@@ -48,13 +48,13 @@ async function generateCode(property_defs: Record<string, PropertyDef>) {
     const completed = Object.entries(property_defs)
       .map(([name, meta]) => `- [x] \`${name}\``)
       .join("\n");
-    await Bun.$`echo ${completed} > completed.md`;
+    await Fun.$`echo ${completed} > completed.md`;
   }
-  await Bun.$`echo ${prelude()} > ${OUTPUT_FILE}`;
-  await Bun.$`echo ${generateProperty(property_defs)} >> ${OUTPUT_FILE}`;
-  await Bun.$`echo ${generatePropertyId(property_defs)} >> ${OUTPUT_FILE}`;
-  await Bun.$`echo ${generatePropertyIdTag(property_defs)} >> ${OUTPUT_FILE}`;
-  await Bun.$`vendor/zig/zig.exe fmt ${OUTPUT_FILE}`;
+  await Fun.$`echo ${prelude()} > ${OUTPUT_FILE}`;
+  await Fun.$`echo ${generateProperty(property_defs)} >> ${OUTPUT_FILE}`;
+  await Fun.$`echo ${generatePropertyId(property_defs)} >> ${OUTPUT_FILE}`;
+  await Fun.$`echo ${generatePropertyIdTag(property_defs)} >> ${OUTPUT_FILE}`;
+  await Fun.$`vendor/zig/zig.exe fmt ${OUTPUT_FILE}`;
 }
 
 function generatePropertyIdTag(property_defs: Record<string, PropertyDef>): string {
@@ -398,7 +398,7 @@ function generatePropertyIdImpl(property_defs: Record<string, PropertyDef>): str
         ([prop_name, def], i) => `${escapeIdent(prop_name)}${i === Object.keys(property_defs).length - 1 ? "" : ", "}`,
       )
       .join("")} };
-    const Map = comptime bun.ComptimeEnumMap(Enum);
+    const Map = comptime fun.ComptimeEnumMap(Enum);
     if (Map.getASCIIICaseInsensitive(name1)) |prop| {
       switch (prop) {
         ${Object.entries(property_defs).map(([name, meta]) => {
@@ -443,7 +443,7 @@ function generatePropertyIdImpl(property_defs: Record<string, PropertyDef>): str
 
   pub fn eql(lhs: *const PropertyId, rhs: *const PropertyId) bool {
     if (@intFromEnum(lhs.*) != @intFromEnum(rhs.*)) return false;
-    inline for (bun.meta.EnumFields(PropertyId), std.meta.fields(PropertyId)) |enum_field, union_field| {
+    inline for (fun.meta.EnumFields(PropertyId), std.meta.fields(PropertyId)) |enum_field, union_field| {
       if (enum_field.value == @intFromEnum(lhs.*)) {
         if (comptime union_field.type == css.VendorPrefix) {
           return @field(lhs, union_field.name).eql(@field(rhs, union_field.name));
@@ -491,7 +491,7 @@ function generatePropertyIdImplFromNameAndPrefix(property_defs: Record<string, P
   return Object.entries(property_defs)
     .map(([name, meta]) => {
       if (name === "unparsed") return "";
-      return `if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name1, "${name}")) {
+      return `if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name1, "${name}")) {
   const allowed_prefixes = ${constructVendorPrefix(meta.valid_prefixes)};
   if (allowed_prefixes.contains(pre)) return ${meta.valid_prefixes === undefined ? `.${escapeIdent(name)}` : `.{ .${escapeIdent(name)} = pre }`};
 } else `;
@@ -1785,7 +1785,7 @@ generateCode({
 
 function prelude() {
   return /* zig */ `const std = @import("std");
-const bun = @import("bun");
+const fun = @import("fun");
 const Allocator = std.mem.Allocator;
 
 pub const css = @import("../css_parser.zig");
@@ -2039,7 +2039,7 @@ const Position = position.Position;
 
 const Result = css.Result;
 
-const BabyList = bun.BabyList;
+const BabyList = fun.BabyList;
 const ArrayList = std.ArrayListUnmanaged;
 const SmallList = css.SmallList;
 

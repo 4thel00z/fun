@@ -23,7 +23,7 @@ import grpc, { sendUnaryData, ServerUnaryCall, ServiceError } from "@grpc/grpc-j
 import { CallCredentials } from "@grpc/grpc-js/build/src/call-credentials";
 import { ChannelCredentials } from "@grpc/grpc-js/build/src/channel-credentials";
 import { ServiceClient, ServiceClientConstructor } from "@grpc/grpc-js/build/src/make-client";
-import { afterEach, beforeEach, describe, it } from "bun:test";
+import { afterEach, beforeEach, describe, it } from "fun:test";
 import assert from "node:assert";
 
 import { assert2, loadProtoFile, mockFunction } from "./common";

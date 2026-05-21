@@ -394,7 +394,7 @@ const inspectDefaultOptions = ObjectSeal({
 });
 const inspectReplDefaults = ObjectSeal({
   ...inspectDefaultOptions,
-  colors: Bun.enableANSIColors,
+  colors: Fun.enableANSIColors,
   showProxy: true,
 });
 
@@ -1770,7 +1770,7 @@ function formatError(err, constructor, tag, ctx, keys) {
   const name = err.name != null ? String(err.name) : "Error";
   let stack = getStackString(err);
 
-  //! temp fix for Bun losing the error name from inherited errors + extraneous ": " with no message
+  //! temp fix for Fun losing the error name from inherited errors + extraneous ": " with no message
   stack = stack.replace(/^Error: /, `${name}${err.message ? ": " : ""}`);
 
   removeDuplicateErrorKeys(ctx, keys, err, stack);
@@ -2270,7 +2270,7 @@ function formatWeakMap(ctx, value, recurseTimes) {
 function formatIterator(braces, ctx, value, recurseTimes) {
   const { 0: entries, 1: isKeyValue } = previewEntries(value, true);
   if (isKeyValue) {
-    // TODO(bun): JSC can also differ between the keys and values iterator, maybe we should also distinguish those in the future?
+    // TODO(fun): JSC can also differ between the keys and values iterator, maybe we should also distinguish those in the future?
     // Mark entry iterators as such.
     braces[0] = RegExpPrototypeSymbolReplace(/ Iterator] {$/, braces[0], " Entries] {");
     return formatMapIterInner(ctx, recurseTimes, entries, kMapEntries);
@@ -2643,7 +2643,7 @@ function formatWithOptionsInternal(inspectOptions, args) {
   }
   return str;
 }
-const stripANSI = Bun.stripANSI;
+const stripANSI = Fun.stripANSI;
 const internalGetStringWidth = $newZigFunction("string.zig", "String.jsGetStringWidth", 1);
 /**
  * Returns the number of columns required to display the given string.
@@ -2704,7 +2704,7 @@ function previewEntries(val, isIterator = false) {
     // for Sets:           1 = keys|values, 2 = entries
     const kind = $getInternalField(val, 3 /*iteratorFieldKind*/);
     const isEntries = kind === 2;
-    // TODO(bun): improve performance by not using Array.from and instead using the iterator directly to only get the first
+    // TODO(fun): improve performance by not using Array.from and instead using the iterator directly to only get the first
     // few entries which will actually be displayed (this requires changing some logic in the call sites of this function)
     if ($isMap(iteratedObject)) {
       if (isEntries) return [ArrayPrototypeFlat(ArrayFrom(iteratedObject)), true];
@@ -2714,11 +2714,11 @@ function previewEntries(val, isIterator = false) {
       if (isEntries) return [ArrayPrototypeFlat(ArrayFrom(SetPrototypeEntries(iteratedObject))), true];
       else return [ArrayFrom(iteratedObject), false];
     }
-    // TODO(bun): This function is currently only called for Map and Set iterators
+    // TODO(fun): This function is currently only called for Map and Set iterators
     // perhaps we should add support for other iterators in the future? (e.g. ArrayIterator and StringIterator)
     else throw new Error("previewEntries(): Invalid iterator received");
   }
-  // TODO(bun): are there any JSC APIs for viewing the contents of these in JS?
+  // TODO(fun): are there any JSC APIs for viewing the contents of these in JS?
   if (isWeakMap(val)) return [];
   if (isWeakSet(val)) return [];
   else throw new Error("previewEntries(): Invalid object received");

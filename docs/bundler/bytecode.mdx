@@ -1,6 +1,6 @@
 ---
 title: Bytecode Caching
-description: Speed up JavaScript execution with bytecode caching in Bun's bundler
+description: Speed up JavaScript execution with bytecode caching in Fun's bundler
 ---
 
 Bytecode caching is a build-time optimization that dramatically improves application startup time by pre-compiling your JavaScript to bytecode. For example, when compiling TypeScript's `tsc` with bytecode enabled, startup time improves by **2x**.
@@ -12,7 +12,7 @@ Bytecode caching is a build-time optimization that dramatically improves applica
 Enable bytecode caching with the `--bytecode` flag. Without `--format`, this defaults to CommonJS:
 
 ```bash terminal icon="terminal"
-bun build ./index.ts --target=bun --bytecode --outdir=./dist
+fun build ./index.ts --target=fun --bytecode --outdir=./dist
 ```
 
 This generates two files:
@@ -20,10 +20,10 @@ This generates two files:
 - `dist/index.js` - Your bundled JavaScript (CommonJS)
 - `dist/index.jsc` - The bytecode cache file
 
-At runtime, Bun automatically detects and uses the `.jsc` file:
+At runtime, Fun automatically detects and uses the `.jsc` file:
 
 ```bash terminal icon="terminal"
-bun ./dist/index.js  # Automatically uses index.jsc
+fun ./dist/index.js  # Automatically uses index.jsc
 ```
 
 ### With standalone executables
@@ -32,17 +32,17 @@ When creating executables with `--compile`, bytecode is embedded into the binary
 
 ```bash terminal icon="terminal"
 # ESM (requires --compile)
-bun build ./cli.ts --compile --bytecode --format=esm --outfile=mycli
+fun build ./cli.ts --compile --bytecode --format=esm --outfile=mycli
 
 # CommonJS (works with or without --compile)
-bun build ./cli.ts --compile --bytecode --outfile=mycli
+fun build ./cli.ts --compile --bytecode --outfile=mycli
 ```
 
 The resulting executable contains both the code and bytecode, giving you maximum performance in a single file.
 
 ### ESM bytecode
 
-ESM bytecode requires `--compile` because Bun embeds module metadata (import/export information) in the compiled binary. This metadata allows the JavaScript engine to skip parsing entirely at runtime.
+ESM bytecode requires `--compile` because Fun embeds module metadata (import/export information) in the compiled binary. This metadata allows the JavaScript engine to skip parsing entirely at runtime.
 
 Without `--compile`, ESM bytecode would still require parsing the source to analyze module dependencies—defeating the purpose of bytecode caching.
 
@@ -51,7 +51,7 @@ Without `--compile`, ESM bytecode would still require parsing the source to anal
 Bytecode works great with minification and source maps:
 
 ```bash terminal icon="terminal"
-bun build --compile --bytecode --minify --sourcemap ./cli.ts --outfile=mycli
+fun build --compile --bytecode --minify --sourcemap ./cli.ts --outfile=mycli
 ```
 
 - `--minify` reduces code size before generating bytecode (less code -> less bytecode)
@@ -105,18 +105,18 @@ Larger applications benefit more because they have more code to parse.
 
 ### Version compatibility
 
-Bytecode is **not portable across Bun versions**. The bytecode format is tied to JavaScriptCore's internal representation, which changes between versions.
+Bytecode is **not portable across Fun versions**. The bytecode format is tied to JavaScriptCore's internal representation, which changes between versions.
 
-When you update Bun, you must regenerate bytecode:
+When you update Fun, you must regenerate bytecode:
 
 ```bash terminal icon="terminal"
-# After updating Bun
-bun build --bytecode ./index.ts --outdir=./dist
+# After updating Fun
+fun build --bytecode ./index.ts --outdir=./dist
 ```
 
-If bytecode doesn't match the current Bun version, it's automatically ignored and your code falls back to parsing the JavaScript source. Your app still runs — the performance optimization is skipped.
+If bytecode doesn't match the current Fun version, it's automatically ignored and your code falls back to parsing the JavaScript source. Your app still runs — the performance optimization is skipped.
 
-**Best practice**: Generate bytecode as part of your CI/CD build process. Don't commit `.jsc` files to git. Regenerate them whenever you update Bun.
+**Best practice**: Generate bytecode as part of your CI/CD build process. Don't commit `.jsc` files to git. Regenerate them whenever you update Fun.
 
 ### Source code still required
 
@@ -125,11 +125,11 @@ If bytecode doesn't match the current Bun version, it's automatically ignored an
 
 At runtime:
 
-1. Bun loads the `.js` file, sees a `@bytecode` pragma, and checks the `.jsc` file
-2. Bun loads the `.jsc` file
-3. Bun validates the bytecode hash matches the source
-4. If valid, Bun uses the bytecode
-5. If invalid, Bun falls back to parsing the source
+1. Fun loads the `.js` file, sees a `@bytecode` pragma, and checks the `.jsc` file
+2. Fun loads the `.jsc` file
+3. Fun validates the bytecode hash matches the source
+4. If valid, Fun uses the bytecode
+5. If invalid, Fun falls back to parsing the source
 
 ### Bytecode is not obfuscation
 
@@ -142,19 +142,19 @@ Bytecode **does not obscure your source code**. It's an optimization, not a secu
 Include bytecode generation in your Dockerfile:
 
 ```dockerfile Dockerfile icon="docker"
-FROM oven/bun:1 AS builder
+FROM underdoc-org/fun:1 AS builder
 WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+COPY package.json fun.lock ./
+RUN fun install --frozen-lockfile
 
 COPY . .
-RUN bun build --bytecode --minify --sourcemap \
-  --target=bun \
+RUN fun build --bytecode --minify --sourcemap \
+  --target=fun \
   --outdir=./dist \
   --compile \
   ./src/server.ts --outfile=./dist/server
 
-FROM oven/bun:1 AS runner
+FROM underdoc-org/fun:1 AS runner
 WORKDIR /app
 COPY --from=builder /dist/server /app/server
 CMD ["./server"]
@@ -170,10 +170,10 @@ Generate bytecode during your build pipeline:
 # GitHub Actions
 - name: Build with bytecode
   run: |
-    bun install
-    bun build --bytecode --minify \
+    fun install
+    fun build --bytecode --minify \
       --outdir=./dist \
-      --target=bun \
+      --target=fun \
       ./src/index.ts
 ```
 
@@ -194,7 +194,7 @@ ls -lh dist/
 
 The `.jsc` file should be 2-8x larger than the `.js` file.
 
-To log if bytecode is being used, set `BUN_JSC_verboseDiskCache=1` in your environment.
+To log if bytecode is being used, set `FUN_JSC_verboseDiskCache=1` in your environment.
 
 On success, it will log something like:
 
@@ -208,11 +208,11 @@ If you see a cache miss, it will log something like:
 [Disk cache] cache miss for sourceCode
 ```
 
-It's normal for it it to log a cache miss multiple times since Bun doesn't currently bytecode cache JavaScript code used in builtin modules.
+It's normal for it it to log a cache miss multiple times since Fun doesn't currently bytecode cache JavaScript code used in builtin modules.
 
 ### Common issues
 
-**Bytecode silently ignored**: Usually caused by a Bun version update. The cache version doesn't match, so bytecode is rejected. Regenerate to fix.
+**Bytecode silently ignored**: Usually caused by a Fun version update. The cache version doesn't match, so bytecode is rejected. Regenerate to fix.
 
 **File size too large**: This is expected. Consider:
 
@@ -232,7 +232,7 @@ Bytecode is an intermediate representation - it's lower-level than JavaScript so
 
 This happens **every single time** you run your code. If you have a CLI tool that runs 100 times a day, your code gets parsed 100 times. If you have a serverless function with frequent cold starts, parsing happens on every cold start.
 
-With bytecode caching, Bun moves steps 1 and 2 to the build step. At runtime, the engine loads the pre-compiled bytecode and jumps straight to execution.
+With bytecode caching, Fun moves steps 1 and 2 to the build step. At runtime, the engine loads the pre-compiled bytecode and jumps straight to execution.
 
 ### Why lazy parsing makes this even better
 
@@ -261,12 +261,12 @@ A `.jsc` file contains a serialized bytecode structure. Understanding what's ins
 
 **Header section** (validated on every load):
 
-- **Cache version**: A hash tied to the JavaScriptCore framework version. This ensures bytecode generated with one version of Bun only runs with that exact version.
+- **Cache version**: A hash tied to the JavaScriptCore framework version. This ensures bytecode generated with one version of Fun only runs with that exact version.
 - **Code block type tag**: Identifies whether this is a Program, Module, Eval, or Function code block.
 
 **SourceCodeKey** (validates bytecode matches source):
 
-- **Source code hash**: A hash of the original JavaScript source code. Bun verifies this matches before using the bytecode.
+- **Source code hash**: A hash of the original JavaScript source code. Fun verifies this matches before using the bytecode.
 - **Source code length**: The exact length of the source, for additional validation.
 - **Compilation flags**: Critical compilation context like strict mode, whether it's a script vs module, eval context type, etc. The same source code compiled with different flags produces different bytecode.
 
@@ -302,7 +302,7 @@ Importantly, **bytecode does not embed your source code**. Instead:
 
 - The JavaScript source is stored separately (in the `.js` file)
 - The bytecode only stores a hash and length of the source
-- At load time, Bun validates the bytecode matches the current source code
+- At load time, Fun validates the bytecode matches the current source code
 
 This is why you need to deploy both the `.js` and `.jsc` files. The `.jsc` file is useless without its corresponding `.js` file.
 
@@ -387,18 +387,18 @@ The bytecode contains abstract instructions that work on any architecture. Archi
 
 ### Cross-version portability: ❌
 
-Bytecode is **not stable across Bun versions**. Here's why:
+Bytecode is **not stable across Fun versions**. Here's why:
 
 **Bytecode format changes**:
 JavaScriptCore's bytecode format evolves. New opcodes get added, old ones get removed or changed, metadata structures change. Each version of JavaScriptCore has a different bytecode format.
 
 **Version validation**:
-The cache version in the `.jsc` file header is a hash of the JavaScriptCore framework. When Bun loads bytecode:
+The cache version in the `.jsc` file header is a hash of the JavaScriptCore framework. When Fun loads bytecode:
 
 1. It extracts the cache version from the `.jsc` file
 2. It computes the current JavaScriptCore version
 3. If they don't match, the bytecode is **silently rejected**
-4. Bun falls back to parsing the `.js` source code
+4. Fun falls back to parsing the `.js` source code
 
 Your application still runs — the performance optimization is skipped.
 
@@ -429,7 +429,7 @@ Unlinked bytecode is **immutable and shareable**. Multiple executions of the sam
 
 ### Linked bytecode (runtime execution)
 
-When Bun runs bytecode, it "links" it - creating a runtime wrapper that adds:
+When Fun runs bytecode, it "links" it - creating a runtime wrapper that adds:
 
 - **Call link information**: As your code runs, the engine learns which functions call which and optimizes those call sites.
 - **Profiling data**: The engine tracks how many times each instruction executes, what types of values flow through the code, array access patterns, etc.

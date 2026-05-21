@@ -17,15 +17,15 @@ pub const IOReader = Interpreter.IOReader;
 pub const Yield = @import("./Yield.zig").Yield;
 pub const unreachableState = interpret.unreachableState;
 
-const GlobWalker = bun.glob.GlobWalker(null, true);
-// const GlobWalker = Glob.BunGlobWalker;
+const GlobWalker = fun.glob.GlobWalker(null, true);
+// const GlobWalker = Glob.FunGlobWalker;
 
 pub const SUBSHELL_TODO_ERROR = "Subshells are not implemented, please open GitHub issue!";
 
 /// Using these instead of the file descriptor decl literals to make sure we use LivUV fds on Windows
-pub const STDIN_FD: bun.FD = .fromUV(0);
-pub const STDOUT_FD: bun.FD = .fromUV(1);
-pub const STDERR_FD: bun.FD = .fromUV(2);
+pub const STDIN_FD: fun.FD = .fromUV(0);
+pub const STDOUT_FD: fun.FD = .fromUV(1);
+pub const STDERR_FD: fun.FD = .fromUV(2);
 
 pub const POSIX_DEV_NULL: [:0]const u8 = "/dev/null";
 pub const WINDOWS_DEV_NULL: [:0]const u8 = "NUL";
@@ -49,14 +49,14 @@ pub const ShellErr = union(enum) {
 
     pub fn format(this: *const ShellErr, writer: *std.Io.Writer) !void {
         return switch (this.*) {
-            .sys => |e| writer.print("bun: {f}: {f}", .{ e.message, e.path }),
-            .custom => |msg| writer.print("bun: {s}", .{msg}),
-            .invalid_arguments => |args| writer.print("bun: invalid arguments: {s}", .{args.val}),
-            .todo => |msg| writer.print("bun: TODO: {s}", .{msg}),
+            .sys => |e| writer.print("fun: {f}: {f}", .{ e.message, e.path }),
+            .custom => |msg| writer.print("fun: {s}", .{msg}),
+            .invalid_arguments => |args| writer.print("fun: invalid arguments: {s}", .{args.val}),
+            .todo => |msg| writer.print("fun: TODO: {s}", .{msg}),
         };
     }
 
-    pub fn throwJS(this: *const @This(), globalThis: *jsc.JSGlobalObject) bun.JSError {
+    pub fn throwJS(this: *const @This(), globalThis: *jsc.JSGlobalObject) fun.JSError {
         defer {
             // basically `transferToJS`. don't want to double deref the sys error
             switch (this.*) {
@@ -64,7 +64,7 @@ pub const ShellErr = union(enum) {
                     // sys.toErrorInstance handles decrementing the ref count
                 },
                 .custom, .invalid_arguments, .todo => {
-                    this.deinit(bun.default_allocator);
+                    this.deinit(fun.default_allocator);
                 },
             }
         }
@@ -74,9 +74,9 @@ pub const ShellErr = union(enum) {
                 return globalThis.throwValue(err);
             },
             .custom => {
-                const err_value = bun.String.cloneUTF8(this.custom).toErrorInstance(globalThis);
+                const err_value = fun.String.cloneUTF8(this.custom).toErrorInstance(globalThis);
                 return globalThis.throwValue(err_value);
-                // this.bunVM().allocator.free(jsc.ZigString.untagged(str._unsafe_ptr_do_not_use)[0..str.len]);
+                // this.funVM().allocator.free(jsc.ZigString.untagged(str._unsafe_ptr_do_not_use)[0..str.len]);
             },
             .invalid_arguments => {
                 return globalThis.throwInvalidArguments("{s}", .{this.invalid_arguments.val});
@@ -88,22 +88,22 @@ pub const ShellErr = union(enum) {
     }
 
     pub fn throwMini(this: @This()) noreturn {
-        defer this.deinit(bun.default_allocator);
+        defer this.deinit(fun.default_allocator);
         switch (this) {
             .sys => |err| {
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>bunsh: {f}: {f}<r>", .{ err.message, err.path });
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>funsh: {f}: {f}<r>", .{ err.message, err.path });
             },
             .custom => |custom| {
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>{s}<r>", .{custom});
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>{s}<r>", .{custom});
             },
             .invalid_arguments => |invalid_arguments| {
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>bunsh: invalid arguments: {s}<r>", .{invalid_arguments.val});
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>funsh: invalid arguments: {s}<r>", .{invalid_arguments.val});
             },
             .todo => |todo| {
-                bun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>TODO: {s}<r>", .{todo});
+                fun.Output.prettyErrorln("<r><red>error<r>: Failed due to error: <b>TODO: {s}<r>", .{todo});
             },
         }
-        bun.Global.exit(1);
+        fun.Global.exit(1);
     }
 
     pub fn deinit(this: *const @This(), allocator: Allocator) void {
@@ -152,9 +152,9 @@ fn setEnv(name: [*:0]const u8, value: [*:0]const u8) void {
 
 /// [0] => read end
 /// [1] => write end
-pub const Pipe = [2]bun.FD;
+pub const Pipe = [2]fun.FD;
 
-const log = bun.Output.scoped(.SHELL, .hidden);
+const log = fun.Output.scoped(.SHELL, .hidden);
 
 pub const GlobalJS = struct {
     globalThis: *jsc.JSGlobalObject,
@@ -166,61 +166,61 @@ pub const GlobalJS = struct {
     }
 
     pub inline fn allocator(this: @This()) Allocator {
-        return this.globalThis.bunVM().allocator;
+        return this.globalThis.funVM().allocator;
     }
 
     pub inline fn eventLoopCtx(this: @This()) *jsc.VirtualMachine {
-        return this.globalThis.bunVM();
+        return this.globalThis.funVM();
     }
 
     pub inline fn throwInvalidArguments(this: @This(), comptime fmt: []const u8, args: anytype) ShellErr {
         return .{
-            .invalid_arguments = .{ .val = bun.handleOom(std.fmt.allocPrint(this.globalThis.bunVM().allocator, fmt, args)) },
+            .invalid_arguments = .{ .val = fun.handleOom(std.fmt.allocPrint(this.globalThis.funVM().allocator, fmt, args)) },
         };
     }
 
     pub inline fn throwTODO(this: @This(), msg: []const u8) ShellErr {
         return .{
-            .todo = bun.handleOom(std.fmt.allocPrint(this.globalThis.bunVM().allocator, "{s}", .{msg})),
+            .todo = fun.handleOom(std.fmt.allocPrint(this.globalThis.funVM().allocator, "{s}", .{msg})),
         };
     }
 
-    pub inline fn throwError(this: @This(), err: bun.sys.Error) void {
+    pub inline fn throwError(this: @This(), err: fun.sys.Error) void {
         this.globalThis.throwValue(err.toJS(this.globalThis));
     }
 
     pub inline fn handleError(this: @This(), err: anytype, comptime fmt: []const u8) ShellErr {
-        const str = bun.handleOom(std.fmt.allocPrint(this.globalThis.bunVM().allocator, "{s} " ++ fmt, .{@errorName(err)}));
+        const str = fun.handleOom(std.fmt.allocPrint(this.globalThis.funVM().allocator, "{s} " ++ fmt, .{@errorName(err)}));
         return .{
             .custom = str,
         };
     }
 
     pub inline fn throw(this: @This(), comptime fmt: []const u8, args: anytype) ShellErr {
-        const str = bun.handleOom(std.fmt.allocPrint(this.globalThis.bunVM().allocator, fmt, args));
+        const str = fun.handleOom(std.fmt.allocPrint(this.globalThis.funVM().allocator, fmt, args));
         return .{
             .custom = str,
         };
     }
 
     pub inline fn createNullDelimitedEnvMap(this: @This(), alloc: Allocator) ![:null]?[*:0]const u8 {
-        return this.globalThis.bunVM().transpiler.env.map.createNullDelimitedEnvMap(alloc);
+        return this.globalThis.funVM().transpiler.env.map.createNullDelimitedEnvMap(alloc);
     }
 
     pub inline fn getAllocator(this: @This()) Allocator {
-        return this.globalThis.bunVM().allocator;
+        return this.globalThis.funVM().allocator;
     }
 
     pub inline fn enqueueTaskConcurrentWaitPid(this: @This(), task: anytype) void {
-        this.globalThis.bunVMConcurrently().enqueueTaskConcurrent(jsc.ConcurrentTask.create(jsc.Task.init(task)));
+        this.globalThis.funVMConcurrently().enqueueTaskConcurrent(jsc.ConcurrentTask.create(jsc.Task.init(task)));
     }
 
     pub inline fn topLevelDir(this: @This()) []const u8 {
-        return this.globalThis.bunVM().transpiler.fs.top_level_dir;
+        return this.globalThis.funVM().transpiler.fs.top_level_dir;
     }
 
-    pub inline fn env(this: @This()) *bun.DotEnv.Loader {
-        return this.globalThis.bunVM().transpiler.env;
+    pub inline fn env(this: @This()) *fun.DotEnv.Loader {
+        return this.globalThis.funVM().transpiler.env;
     }
 
     pub inline fn platformEventLoop(this: @This()) *jsc.PlatformEventLoop {
@@ -242,7 +242,7 @@ pub const GlobalMini = struct {
         };
     }
 
-    pub inline fn env(this: @This()) *bun.DotEnv.Loader {
+    pub inline fn env(this: @This()) *fun.DotEnv.Loader {
         return this.mini.env.?;
     }
 
@@ -258,18 +258,18 @@ pub const GlobalMini = struct {
 
     pub inline fn throwTODO(this: @This(), msg: []const u8) ShellErr {
         return .{
-            .todo = bun.handleOom(std.fmt.allocPrint(this.mini.allocator, "{s}", .{msg})),
+            .todo = fun.handleOom(std.fmt.allocPrint(this.mini.allocator, "{s}", .{msg})),
         };
     }
 
     pub inline fn throwInvalidArguments(this: @This(), comptime fmt: []const u8, args: anytype) ShellErr {
         return .{
-            .invalid_arguments = .{ .val = bun.handleOom(std.fmt.allocPrint(this.allocator(), fmt, args)) },
+            .invalid_arguments = .{ .val = fun.handleOom(std.fmt.allocPrint(this.allocator(), fmt, args)) },
         };
     }
 
     pub inline fn handleError(this: @This(), err: anytype, comptime fmt: []const u8) ShellErr {
-        const str = bun.handleOom(std.fmt.allocPrint(this.mini.allocator, "{s} " ++ fmt, .{@errorName(err)}));
+        const str = fun.handleOom(std.fmt.allocPrint(this.mini.allocator, "{s} " ++ fmt, .{@errorName(err)}));
         return .{
             .custom = str,
         };
@@ -284,7 +284,7 @@ pub const GlobalMini = struct {
     }
 
     pub inline fn enqueueTaskConcurrentWaitPid(this: @This(), task: anytype) void {
-        var anytask = bun.handleOom(bun.default_allocator.create(jsc.AnyTaskWithExtraContext));
+        var anytask = fun.handleOom(fun.default_allocator.create(jsc.AnyTaskWithExtraContext));
         _ = anytask.from(task, "runFromMainThreadMini");
         this.mini.enqueueTaskConcurrent(anytask);
     }
@@ -294,7 +294,7 @@ pub const GlobalMini = struct {
     }
 
     pub inline fn throw(this: @This(), comptime fmt: []const u8, args: anytype) ShellErr {
-        const str = bun.handleOom(std.fmt.allocPrint(this.allocator(), fmt, args));
+        const str = fun.handleOom(std.fmt.allocPrint(this.allocator(), fmt, args));
         return .{
             .custom = str,
         };
@@ -770,7 +770,7 @@ pub const AST = struct {
     };
 
     /// A "buffer" from a JS object can be piped from and to, and also have
-    /// output from commands redirected into it. Only BunFile, ArrayBufferView
+    /// output from commands redirected into it. Only FunFile, ArrayBufferView
     /// are supported.
     pub const JSBuf = struct {
         idx: u32,
@@ -866,8 +866,8 @@ pub const AST = struct {
         }
 
         pub fn toFlags(this: RedirectFlags) i32 {
-            const read_write_flags: i32 = if (this.stdin) bun.O.RDONLY else bun.O.WRONLY | bun.O.CREAT;
-            const extra: i32 = if (this.append) bun.O.APPEND else bun.O.TRUNC;
+            const read_write_flags: i32 = if (this.stdin) fun.O.RDONLY else fun.O.WRONLY | fun.O.CREAT;
+            const extra: i32 = if (this.append) fun.O.APPEND else fun.O.TRUNC;
             const final_flags: i32 = if (this.stdin) read_write_flags else extra | read_write_flags;
             return final_flags;
         }
@@ -1302,7 +1302,7 @@ pub const Parser = struct {
 
     fn expectIfClauseTextToken(self: *Parser, comptime if_clause_token: @TypeOf(.enum_literal)) Token {
         const tagname = comptime extractIfClauseTextToken(if_clause_token);
-        if (bun.Environment.allow_assert) assert(@as(TokenTag, self.peek()) == .Text);
+        if (fun.Environment.allow_assert) assert(@as(TokenTag, self.peek()) == .Text);
         if (self.peek() == .Text and
             self.delimits(self.peek_n(1)) and
             std.mem.eql(u8, self.text(self.peek().Text), tagname))
@@ -1323,7 +1323,7 @@ pub const Parser = struct {
 
     fn isIfClauseTextTokenImpl(self: *Parser, range: Token.TextRange, comptime if_clause_token: @TypeOf(.enum_literal)) bool {
         const tagname = comptime extractIfClauseTextToken(if_clause_token);
-        return bun.strings.eqlComptime(self.text(range), tagname);
+        return fun.strings.eqlComptime(self.text(range), tagname);
     }
 
     fn skip_newlines(self: *Parser) void {
@@ -1385,7 +1385,7 @@ pub const Parser = struct {
                 if (txt[0] == '-') {
                     // Is a potential single arg op
                     inline for (AST.CondExpr.Op.SINGLE_ARG_OPS) |single_arg_op| {
-                        if (bun.strings.eqlComptime(txt, single_arg_op.name)) {
+                        if (fun.strings.eqlComptime(txt, single_arg_op.name)) {
                             const is_supported = comptime AST.CondExpr.Op.isSupported(@enumFromInt(single_arg_op.value));
                             if (!is_supported) {
                                 try self.add_error("Conditional expression operation: {s}, is not supported right now. Please open a GitHub issue if you would like it to be supported.", .{single_arg_op.name});
@@ -1445,7 +1445,7 @@ pub const Parser = struct {
         const txt = self.text(op.Text);
 
         inline for (AST.CondExpr.Op.BINARY_OPS) |binary_op| {
-            if (bun.strings.eqlComptime(txt, binary_op.name)) {
+            if (fun.strings.eqlComptime(txt, binary_op.name)) {
                 const is_supported = comptime AST.CondExpr.Op.isSupported(@enumFromInt(binary_op.value));
                 if (!is_supported) {
                     try self.add_error("Conditional expression operation: {s}, is not supported right now. Please open a GitHub issue if you would like it to be supported.", .{binary_op.name});
@@ -1491,11 +1491,11 @@ pub const Parser = struct {
         }
 
         pub fn fromText(txt: []const u8) ?IfClauseTok {
-            if (bun.strings.eqlComptime(txt, "if")) return .@"if";
-            if (bun.strings.eqlComptime(txt, "else")) return .@"else";
-            if (bun.strings.eqlComptime(txt, "elif")) return .elif;
-            if (bun.strings.eqlComptime(txt, "then")) return .then;
-            if (bun.strings.eqlComptime(txt, "fi")) return .fi;
+            if (fun.strings.eqlComptime(txt, "if")) return .@"if";
+            if (fun.strings.eqlComptime(txt, "else")) return .@"else";
+            if (fun.strings.eqlComptime(txt, "elif")) return .elif;
+            if (fun.strings.eqlComptime(txt, "then")) return .then;
+            if (fun.strings.eqlComptime(txt, "fi")) return .fi;
 
             return null;
         }
@@ -1904,7 +1904,7 @@ pub const Parser = struct {
         return switch (atoms.items.len) {
             0 => null,
             1 => {
-                if (bun.Environment.allow_assert) assert(atoms.capacity == 1);
+                if (fun.Environment.allow_assert) assert(atoms.capacity == 1);
                 return AST.Atom.new_simple(atoms.items[0]);
             },
             else => .{ .compound = .{
@@ -1937,7 +1937,7 @@ pub const Parser = struct {
     }
 
     fn expect(self: *Parser, toktag: TokenTag) Token {
-        if (bun.Environment.allow_assert) assert(toktag == @as(TokenTag, self.peek()));
+        if (fun.Environment.allow_assert) assert(toktag == @as(TokenTag, self.peek()));
         if (self.check(toktag)) {
             return self.advance();
         }
@@ -1958,7 +1958,7 @@ pub const Parser = struct {
     }
 
     fn expect_delimit(self: *Parser) Token {
-        if (bun.Environment.allow_assert) assert(self.delimits(self.peek()));
+        if (fun.Environment.allow_assert) assert(self.delimits(self.peek()));
         if (self.check(.Delimit) or self.check(.Semicolon) or self.check(.Newline) or self.check(.Eof) or (self.inside_subshell != null and self.check(self.inside_subshell.?.closing_tok()))) {
             return self.advance();
         }
@@ -1968,7 +1968,7 @@ pub const Parser = struct {
     fn match_if_clausetok(self: *Parser, toktag: IfClauseTok) bool {
         if (self.peek() == .Text and
             self.delimits(self.peek_n(1)) and
-            bun.strings.eql(self.text(self.peek().Text), @tagName(toktag)))
+            fun.strings.eql(self.text(self.peek().Text), @tagName(toktag)))
         {
             _ = self.advance();
             _ = self.expect_delimit();
@@ -2015,7 +2015,7 @@ pub const Parser = struct {
 
         const txt = self.text(peektok.Text);
         for (toktags) |tag| {
-            if (bun.strings.eql(txt, @tagName(tag))) {
+            if (fun.strings.eql(txt, @tagName(tag))) {
                 return true;
             }
         }
@@ -2029,7 +2029,7 @@ pub const Parser = struct {
 
         const txt = self.text(peektok.Text);
         inline for (toktags) |tag| {
-            if (bun.strings.eqlComptime(txt, @tagName(tag))) {
+            if (fun.strings.eqlComptime(txt, @tagName(tag))) {
                 return true;
             }
         }
@@ -2106,7 +2106,7 @@ pub const Parser = struct {
                 }
                 break :size i;
             };
-            var buf = bun.handleOom(self.alloc.alloc(u8, size));
+            var buf = fun.handleOom(self.alloc.alloc(u8, size));
             var i: usize = 0;
             for (errors) |e| {
                 @memcpy(buf[i .. i + e.msg.len], e.msg);
@@ -2222,7 +2222,7 @@ pub const Token = union(TokenTag) {
         end: u32,
 
         pub fn len(range: TextRange) u32 {
-            if (bun.Environment.allow_assert) assert(range.start <= range.end);
+            if (fun.Environment.allow_assert) assert(range.start <= range.end);
             return range.end - range.start;
         }
 
@@ -2292,7 +2292,7 @@ pub const LexResult = struct {
                 }
                 break :size i;
             };
-            var buf = bun.handleOom(arena.alloc(u8, size));
+            var buf = fun.handleOom(arena.alloc(u8, size));
             var i: usize = 0;
             for (errors) |e| {
                 @memcpy(buf[i .. i + e.msg.len()], e.msg.slice(this.strpool));
@@ -2315,7 +2315,7 @@ pub const LexError = struct {
 /// easy for the user to accidentally use this char in their script.
 ///
 const SPECIAL_JS_CHAR = 8;
-pub const LEX_JS_OBJREF_PREFIX = &[_]u8{SPECIAL_JS_CHAR} ++ "__bun_";
+pub const LEX_JS_OBJREF_PREFIX = &[_]u8{SPECIAL_JS_CHAR} ++ "__fun_";
 pub const LEX_JS_STRING_PREFIX = &[_]u8{SPECIAL_JS_CHAR} ++ "__bunstr_";
 
 pub fn NewLexer(comptime encoding: StringEncoding) type {
@@ -2339,7 +2339,7 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
 
         /// Contains a list of strings we need to escape
         /// Not owned by this struct
-        string_refs: []bun.String,
+        string_refs: []fun.String,
 
         /// Number of JS object references expected (for bounds validation)
         jsobjs_len: u32 = 0,
@@ -2360,7 +2360,7 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
             CodepointTooLarge,
         };
 
-        pub const js_objref_prefix = "$__bun_";
+        pub const js_objref_prefix = "$__fun_";
 
         const State = Chars.State;
 
@@ -2373,7 +2373,7 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
             delimit_quote: bool,
         };
 
-        pub fn new(alloc: Allocator, src: []const u8, strings_to_escape: []bun.String, jsobjs_len: u32) @This() {
+        pub fn new(alloc: Allocator, src: []const u8, strings_to_escape: []fun.String, jsobjs_len: u32) @This() {
             return .{
                 .chars = Chars.init(src),
                 .tokens = ArrayList(Token).init(alloc),
@@ -2394,9 +2394,9 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
 
         pub fn add_error(self: *@This(), msg: []const u8) void {
             const start = self.strpool.items.len;
-            bun.handleOom(self.strpool.appendSlice(msg));
+            fun.handleOom(self.strpool.appendSlice(msg));
             const end = self.strpool.items.len;
-            bun.handleOom(self.errors.append(.{ .msg = .{ .start = @intCast(start), .end = @intCast(end) } }));
+            fun.handleOom(self.errors.append(.{ .msg = .{ .start = @intCast(start), .end = @intCast(end) } }));
         }
 
         fn make_sublexer(self: *@This(), kind: SubShellKind) @This() {
@@ -2463,9 +2463,9 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
                 // we use 8 or \b which is a non printable char
                 if (char == SPECIAL_JS_CHAR) {
                     if (self.looksLikeJSStringRef()) {
-                        if (self.eatJSStringRef()) |bunstr| {
+                        if (self.eatJSStringRef()) |funstr| {
                             try self.break_word(false);
-                            try self.handleJSStringRef(bunstr);
+                            try self.handleJSStringRef(funstr);
                             continue;
                         }
                     } else if (self.looksLikeJSObjRef()) {
@@ -2844,7 +2844,7 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
                 }
                 // Treat newline preceded by backslash as whitespace
                 else if (char == '\n') {
-                    if (comptime bun.Environment.allow_assert) {
+                    if (comptime fun.Environment.allow_assert) {
                         assert(input.escaped);
                     }
                     if (self.chars.state != .Double) {
@@ -2887,7 +2887,7 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
 
             const ichar: i32 = @intCast(char);
             var bytes: [4]u8 = undefined;
-            const n = bun.strings.encodeWTF8Rune(&bytes, ichar);
+            const n = fun.strings.encodeWTF8Rune(&bytes, ichar);
             self.j += n;
             try self.strpool.appendSlice(bytes[0..n]);
         }
@@ -3219,34 +3219,34 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
             self.chars.state = prev_quote_state;
         }
 
-        fn appendStringToStrPool(self: *@This(), bunstr: bun.String) !void {
+        fn appendStringToStrPool(self: *@This(), funstr: fun.String) !void {
             const start = self.strpool.items.len;
-            if (bunstr.isUTF16()) {
-                const utf16 = bunstr.utf16();
-                const additional = bun.simdutf.simdutf__utf8_length_from_utf16le(utf16.ptr, utf16.len);
+            if (funstr.isUTF16()) {
+                const utf16 = funstr.utf16();
+                const additional = fun.simdutf.simdutf__utf8_length_from_utf16le(utf16.ptr, utf16.len);
                 try self.strpool.ensureUnusedCapacity(additional);
-                try bun.strings.convertUTF16ToUTF8Append(&self.strpool, bunstr.utf16());
-            } else if (bunstr.isUTF8()) {
-                try self.strpool.appendSlice(bunstr.byteSlice());
-            } else if (bunstr.is8Bit()) {
-                if (isAllAscii(bunstr.byteSlice())) {
-                    try self.strpool.appendSlice(bunstr.byteSlice());
+                try fun.strings.convertUTF16ToUTF8Append(&self.strpool, funstr.utf16());
+            } else if (funstr.isUTF8()) {
+                try self.strpool.appendSlice(funstr.byteSlice());
+            } else if (funstr.is8Bit()) {
+                if (isAllAscii(funstr.byteSlice())) {
+                    try self.strpool.appendSlice(funstr.byteSlice());
                 } else {
-                    const bytes = bunstr.byteSlice();
-                    const non_ascii_idx = bun.strings.firstNonASCII(bytes) orelse 0;
+                    const bytes = funstr.byteSlice();
+                    const non_ascii_idx = fun.strings.firstNonASCII(bytes) orelse 0;
 
                     if (non_ascii_idx > 0) {
                         try self.strpool.appendSlice(bytes[0..non_ascii_idx]);
                     }
-                    self.strpool = try bun.strings.allocateLatin1IntoUTF8WithList(self.strpool, self.strpool.items.len, bytes[non_ascii_idx..]);
+                    self.strpool = try fun.strings.allocateLatin1IntoUTF8WithList(self.strpool, self.strpool.items.len, bytes[non_ascii_idx..]);
                 }
             }
             const end = self.strpool.items.len;
             self.j += @intCast(end - start);
         }
 
-        fn handleJSStringRef(self: *@This(), bunstr: bun.String) !void {
-            if (bunstr.length() == 0) {
+        fn handleJSStringRef(self: *@This(), funstr: fun.String) !void {
+            if (funstr.length() == 0) {
                 // Empty JS string ref: emit a zero-length DoubleQuotedText token directly.
                 // The parser converts this to a quoted_empty atom, preserving the empty arg.
                 // This works regardless of the lexer's current quote state (Normal/Single/Double)
@@ -3255,7 +3255,7 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
                 try self.tokens.append(@unionInit(Token, "DoubleQuotedText", .{ .start = pos, .end = pos }));
                 return;
             }
-            try self.appendStringToStrPool(bunstr);
+            try self.appendStringToStrPool(funstr);
         }
 
         fn looksLikeJSObjRef(self: *@This()) bool {
@@ -3352,8 +3352,8 @@ pub fn NewLexer(comptime encoding: StringEncoding) type {
             return null;
         }
 
-        /// __NOTE__: Do not store references to the returned bun.String, it does not have its ref count incremented
-        fn eatJSStringRef(self: *@This()) ?bun.String {
+        /// __NOTE__: Do not store references to the returned fun.String, it does not have its ref count incremented
+        fn eatJSStringRef(self: *@This()) ?fun.String {
             if (self.eatJSSubstitutionIdx(
                 LEX_JS_STRING_PREFIX,
                 "JS string ref",
@@ -3739,11 +3739,11 @@ fn isValidVarNameAscii(var_name: []const u8) bool {
     return true;
 }
 
-var stderr_mutex = bun.Mutex{};
+var stderr_mutex = fun.Mutex{};
 
 pub fn hasEqSign(str: []const u8) ?u32 {
     if (isAllAscii(str)) {
-        return bun.strings.indexOfChar(str, '=');
+        return fun.strings.indexOfChar(str, '=');
     }
 
     // TODO actually i think that this can also use the simd stuff
@@ -3759,8 +3759,8 @@ pub fn hasEqSign(str: []const u8) ?u32 {
 }
 
 pub const CmdEnvIter = struct {
-    env: *const bun.StringArrayHashMap([:0]const u8),
-    iter: bun.StringArrayHashMap([:0]const u8).Iterator,
+    env: *const fun.StringArrayHashMap([:0]const u8),
+    iter: fun.StringArrayHashMap([:0]const u8).Iterator,
 
     const Entry = struct {
         key: Key,
@@ -3783,11 +3783,11 @@ pub const CmdEnvIter = struct {
         }
 
         pub fn eqlComptime(this: Key, comptime str: []const u8) bool {
-            return bun.strings.eqlComptime(this.val, str);
+            return fun.strings.eqlComptime(this.val, str);
         }
     };
 
-    pub fn fromEnv(env: *const bun.StringArrayHashMap([:0]const u8)) CmdEnvIter {
+    pub fn fromEnv(env: *const fun.StringArrayHashMap([:0]const u8)) CmdEnvIter {
         const iter = env.iterator();
         return .{
             .env = env,
@@ -3895,10 +3895,10 @@ pub fn shellCmdFromJS(
     string_args: JSValue,
     template_args: *jsc.JSArrayIterator,
     out_jsobjs: *std.array_list.Managed(JSValue),
-    jsstrings: *std.array_list.Managed(bun.String),
+    jsstrings: *std.array_list.Managed(fun.String),
     out_script: *std.array_list.Managed(u8),
     marked_argument_buffer: *jsc.MarkedArgumentBuffer,
-) bun.JSError!void {
+) fun.JSError!void {
     var builder = ShellSrcBuilder.init(globalThis, out_script, jsstrings);
     var jsobjref_buf: [128]u8 = [_]u8{0} ** 128;
 
@@ -3927,10 +3927,10 @@ pub fn handleTemplateValue(
     template_value: JSValue,
     out_jsobjs: *std.array_list.Managed(JSValue),
     out_script: *std.array_list.Managed(u8),
-    jsstrings: *std.array_list.Managed(bun.String),
+    jsstrings: *std.array_list.Managed(fun.String),
     jsobjref_buf: []u8,
     marked_argument_buffer: *jsc.MarkedArgumentBuffer,
-) bun.JSError!void {
+) fun.JSError!void {
     var builder = ShellSrcBuilder.init(globalThis, out_script, jsstrings);
     if (template_value != .zero) {
         if (template_value.asArrayBuffer(globalThis)) |array_buffer| {
@@ -3950,8 +3950,8 @@ pub fn handleTemplateValue(
                         const path = store.data.file.pathlike.path.slice();
 
                         // Check for null bytes in path (security: prevent null byte injection)
-                        if (bun.strings.indexOfChar(path, 0) != null) {
-                            return globalThis.ERR(.INVALID_ARG_VALUE, "The shell argument must be a string without null bytes. Received {f}", .{bun.fmt.quote(path)}).throw();
+                        if (fun.strings.indexOfChar(path, 0) != null) {
+                            return globalThis.ERR(.INVALID_ARG_VALUE, "The shell argument must be a string without null bytes. Received {f}", .{fun.fmt.quote(path)}).throw();
                         }
 
                         if (!try builder.appendUTF8(path, true)) {
@@ -4006,8 +4006,8 @@ pub fn handleTemplateValue(
             while (try array.next()) |arr| : (i += 1) {
                 try handleTemplateValue(globalThis, arr, out_jsobjs, out_script, jsstrings, jsobjref_buf, marked_argument_buffer);
                 if (i < last) {
-                    const str = bun.String.static(" ");
-                    if (!try builder.appendBunStr(str, false)) {
+                    const str = fun.String.static(" ");
+                    if (!try builder.appendFunStr(str, false)) {
                         return globalThis.throw("Shell script string contains invalid UTF-16", .{});
                     }
                 }
@@ -4017,15 +4017,15 @@ pub fn handleTemplateValue(
 
         if (template_value.isObject()) {
             if (try template_value.getOwnTruthy(globalThis, "raw")) |maybe_str| {
-                const bunstr = try maybe_str.toBunString(globalThis);
-                defer bunstr.deref();
+                const funstr = try maybe_str.toFunString(globalThis);
+                defer funstr.deref();
 
                 // Check for null bytes in shell argument (security: prevent null byte injection)
-                if (bunstr.indexOfAsciiChar(0) != null) {
-                    return globalThis.ERR(.INVALID_ARG_VALUE, "The shell argument must be a string without null bytes. Received \"{f}\"", .{bunstr.toZigString()}).throw();
+                if (funstr.indexOfAsciiChar(0) != null) {
+                    return globalThis.ERR(.INVALID_ARG_VALUE, "The shell argument must be a string without null bytes. Received \"{f}\"", .{funstr.toZigString()}).throw();
                 }
 
-                if (!try builder.appendBunStr(bunstr, false)) {
+                if (!try builder.appendFunStr(funstr, false)) {
                     return globalThis.throw("Shell script string contains invalid UTF-16", .{});
                 }
                 return;
@@ -4055,13 +4055,13 @@ pub fn handleTemplateValue(
 pub const ShellSrcBuilder = struct {
     globalThis: *jsc.JSGlobalObject,
     outbuf: *std.array_list.Managed(u8),
-    jsstrs_to_escape: *std.array_list.Managed(bun.String),
+    jsstrs_to_escape: *std.array_list.Managed(fun.String),
     jsstr_ref_buf: [128]u8 = [_]u8{0} ** 128,
 
     pub fn init(
         globalThis: *jsc.JSGlobalObject,
         outbuf: *std.array_list.Managed(u8),
-        jsstrs_to_escape: *std.array_list.Managed(bun.String),
+        jsstrs_to_escape: *std.array_list.Managed(fun.String),
     ) ShellSrcBuilder {
         return .{
             .globalThis = globalThis,
@@ -4070,58 +4070,58 @@ pub const ShellSrcBuilder = struct {
         };
     }
 
-    pub fn appendJSValueStr(this: *ShellSrcBuilder, jsval: JSValue, comptime allow_escape: bool) bun.JSError!bool {
-        const bunstr = try jsval.toBunString(this.globalThis);
-        defer bunstr.deref();
+    pub fn appendJSValueStr(this: *ShellSrcBuilder, jsval: JSValue, comptime allow_escape: bool) fun.JSError!bool {
+        const funstr = try jsval.toFunString(this.globalThis);
+        defer funstr.deref();
 
         // Check for null bytes in shell argument (security: prevent null byte injection)
-        if (bunstr.indexOfAsciiChar(0) != null) {
-            return this.globalThis.ERR(.INVALID_ARG_VALUE, "The shell argument must be a string without null bytes. Received \"{f}\"", .{bunstr.toZigString()}).throw();
+        if (funstr.indexOfAsciiChar(0) != null) {
+            return this.globalThis.ERR(.INVALID_ARG_VALUE, "The shell argument must be a string without null bytes. Received \"{f}\"", .{funstr.toZigString()}).throw();
         }
 
-        return try this.appendBunStr(bunstr, allow_escape);
+        return try this.appendFunStr(funstr, allow_escape);
     }
 
-    pub fn appendBunStr(
+    pub fn appendFunStr(
         this: *ShellSrcBuilder,
-        bunstr: bun.String,
+        funstr: fun.String,
         comptime allow_escape: bool,
-    ) bun.OOM!bool {
-        const invalid = (bunstr.isUTF16() and !bun.simdutf.validate.utf16le(bunstr.utf16())) or (bunstr.isUTF8() and !bun.simdutf.validate.utf8(bunstr.byteSlice()));
+    ) fun.OOM!bool {
+        const invalid = (funstr.isUTF16() and !fun.simdutf.validate.utf16le(funstr.utf16())) or (funstr.isUTF8() and !fun.simdutf.validate.utf8(funstr.byteSlice()));
         if (invalid) return false;
         // Empty interpolated values must still produce an argument (e.g. `${''}` should
         // pass "" as an arg). Route through appendJSStrRef so the \x08 marker is recognized
         // by the lexer regardless of quote context (e.g. inside single quotes).
-        if (allow_escape and bunstr.length() == 0) {
-            try this.appendJSStrRef(bunstr);
+        if (allow_escape and funstr.length() == 0) {
+            try this.appendJSStrRef(funstr);
             return true;
         }
         if (allow_escape) {
-            if (needsEscapeBunstr(bunstr)) {
-                try this.appendJSStrRef(bunstr);
+            if (needsEscapeBunstr(funstr)) {
+                try this.appendJSStrRef(funstr);
                 return true;
             }
         }
-        if (bunstr.isUTF16()) {
-            try this.appendUTF16Impl(bunstr.utf16());
+        if (funstr.isUTF16()) {
+            try this.appendUTF16Impl(funstr.utf16());
             return true;
         }
-        if (bunstr.isUTF8() or bun.strings.isAllASCII(bunstr.byteSlice())) {
-            try this.appendUTF8Impl(bunstr.byteSlice());
+        if (funstr.isUTF8() or fun.strings.isAllASCII(funstr.byteSlice())) {
+            try this.appendUTF8Impl(funstr.byteSlice());
             return true;
         }
-        try this.appendLatin1Impl(bunstr.byteSlice());
+        try this.appendLatin1Impl(funstr.byteSlice());
         return true;
     }
 
     pub fn appendUTF8(this: *ShellSrcBuilder, utf8: []const u8, comptime allow_escape: bool) !bool {
-        const invalid = bun.simdutf.validate.utf8(utf8);
+        const invalid = fun.simdutf.validate.utf8(utf8);
         if (!invalid) return false;
         if (allow_escape) {
             if (needsEscapeUtf8AsciiLatin1(utf8)) {
-                const bunstr = bun.String.cloneUTF8(utf8);
-                defer bunstr.deref();
-                try this.appendJSStrRef(bunstr);
+                const funstr = fun.String.cloneUTF8(utf8);
+                defer funstr.deref();
+                try this.appendJSStrRef(funstr);
                 return true;
             }
         }
@@ -4131,9 +4131,9 @@ pub const ShellSrcBuilder = struct {
     }
 
     pub fn appendUTF16Impl(this: *ShellSrcBuilder, utf16: []const u16) !void {
-        const size = bun.simdutf.simdutf__utf8_length_from_utf16le(utf16.ptr, utf16.len);
+        const size = fun.simdutf.simdutf__utf8_length_from_utf16le(utf16.ptr, utf16.len);
         try this.outbuf.ensureUnusedCapacity(size);
-        try bun.strings.convertUTF16ToUTF8Append(this.outbuf, utf16);
+        try fun.strings.convertUTF16ToUTF8Append(this.outbuf, utf16);
     }
 
     pub fn appendUTF8Impl(this: *ShellSrcBuilder, utf8: []const u8) !void {
@@ -4141,48 +4141,48 @@ pub const ShellSrcBuilder = struct {
     }
 
     pub fn appendLatin1Impl(this: *ShellSrcBuilder, latin1: []const u8) !void {
-        const non_ascii_idx = bun.strings.firstNonASCII(latin1) orelse 0;
+        const non_ascii_idx = fun.strings.firstNonASCII(latin1) orelse 0;
 
         if (non_ascii_idx > 0) {
             try this.appendUTF8Impl(latin1[0..non_ascii_idx]);
         }
 
-        this.outbuf.* = try bun.strings.allocateLatin1IntoUTF8WithList(this.outbuf.*, this.outbuf.items.len, latin1);
+        this.outbuf.* = try fun.strings.allocateLatin1IntoUTF8WithList(this.outbuf.*, this.outbuf.items.len, latin1);
     }
 
-    pub fn appendJSStrRef(this: *ShellSrcBuilder, bunstr: bun.String) bun.OOM!void {
+    pub fn appendJSStrRef(this: *ShellSrcBuilder, funstr: fun.String) fun.OOM!void {
         const idx = this.jsstrs_to_escape.items.len;
         const str = std.fmt.bufPrint(this.jsstr_ref_buf[0..], "{s}{d}", .{ LEX_JS_STRING_PREFIX, idx }) catch {
             @panic("Impossible");
         };
         try this.outbuf.appendSlice(str);
-        bunstr.ref();
-        try this.jsstrs_to_escape.append(bunstr);
+        funstr.ref();
+        try this.jsstrs_to_escape.append(funstr);
     }
 };
 
 /// Characters that need to escaped
 const SPECIAL_CHARS = [_]u8{ '~', '[', ']', '#', ';', '\n', '*', '{', ',', '}', '`', '$', '=', '(', ')', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '|', '>', '<', '&', '\'', '"', ' ', '\\', SPECIAL_JS_CHAR };
-const SPECIAL_CHARS_TABLE: bun.bit_set.IntegerBitSet(256) = brk: {
-    var table = bun.bit_set.IntegerBitSet(256).initEmpty();
+const SPECIAL_CHARS_TABLE: fun.bit_set.IntegerBitSet(256) = brk: {
+    var table = fun.bit_set.IntegerBitSet(256).initEmpty();
     for (SPECIAL_CHARS) |c| {
         table.set(c);
     }
     break :brk table;
 };
 pub fn assertSpecialChar(comptime c: u8) void {
-    bun.assert(SPECIAL_CHARS_TABLE.isSet(c));
+    fun.assert(SPECIAL_CHARS_TABLE.isSet(c));
 }
 /// Characters that need to be backslashed inside double quotes
 const BACKSLASHABLE_CHARS = [_]u8{ '$', '`', '"', '\\' };
 
-pub fn escapeBunStr(bunstr: bun.String, outbuf: *std.array_list.Managed(u8), comptime add_quotes: bool) bun.OOM!bool {
-    if (bunstr.isUTF16()) {
-        const res = try escapeUtf16(bunstr.utf16(), outbuf, add_quotes);
+pub fn escapeFunStr(funstr: fun.String, outbuf: *std.array_list.Managed(u8), comptime add_quotes: bool) fun.OOM!bool {
+    if (funstr.isUTF16()) {
+        const res = try escapeUtf16(funstr.utf16(), outbuf, add_quotes);
         return !res.is_invalid;
     }
     // otherwise should be utf-8, latin-1, or ascii
-    try escape8Bit(bunstr.byteSlice(), outbuf, add_quotes);
+    try escape8Bit(funstr.byteSlice(), outbuf, add_quotes);
     return true;
 }
 
@@ -4211,7 +4211,7 @@ pub fn escape8Bit(str: []const u8, outbuf: *std.array_list.Managed(u8), comptime
 pub fn escapeUtf16(str: []const u16, outbuf: *std.array_list.Managed(u8), comptime add_quotes: bool) !struct { is_invalid: bool = false } {
     if (add_quotes) try outbuf.append('"');
 
-    const non_ascii = bun.strings.firstNonASCII16(str) orelse 0;
+    const non_ascii = fun.strings.firstNonASCII16(str) orelse 0;
     var cp_buf: [4]u8 = undefined;
 
     var i: usize = 0;
@@ -4221,7 +4221,7 @@ pub fn escapeUtf16(str: []const u16, outbuf: *std.array_list.Managed(u8), compti
                 defer i += 1;
                 break :brk str[i];
             }
-            const ret = bun.strings.utf16Codepoint(str[i..]);
+            const ret = fun.strings.utf16Codepoint(str[i..]);
             if (ret.fail) return .{ .is_invalid = true };
             i += ret.len;
             break :brk ret.code_point;
@@ -4234,17 +4234,17 @@ pub fn escapeUtf16(str: []const u16, outbuf: *std.array_list.Managed(u8), compti
             }
         }
 
-        const len = bun.strings.encodeWTF8RuneT(&cp_buf, u32, char);
+        const len = fun.strings.encodeWTF8RuneT(&cp_buf, u32, char);
         try outbuf.appendSlice(cp_buf[0..len]);
     }
     if (add_quotes) try outbuf.append('"');
     return .{ .is_invalid = false };
 }
 
-pub fn needsEscapeBunstr(bunstr: bun.String) bool {
-    if (bunstr.isUTF16()) return needsEscapeUTF16(bunstr.utf16());
+pub fn needsEscapeBunstr(funstr: fun.String) bool {
+    if (funstr.isUTF16()) return needsEscapeUTF16(funstr.utf16());
     // Otherwise is utf-8, ascii, or latin-1
-    return needsEscapeUtf8AsciiLatin1(bunstr.byteSlice());
+    return needsEscapeUtf8AsciiLatin1(funstr.byteSlice());
 }
 
 pub fn needsEscapeUTF16(str: []const u16) bool {
@@ -4266,13 +4266,13 @@ pub fn needsEscapeUtf8AsciiLatin1(str: []const u8) bool {
     return false;
 }
 
-/// A list that can store its items inlined, and promote itself to a heap allocated bun.BabyList(T)
+/// A list that can store its items inlined, and promote itself to a heap allocated fun.BabyList(T)
 pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
     return union(enum) {
         inlined: Inlined,
         heap: ByteList,
 
-        const ByteList = bun.BabyList(T);
+        const ByteList = fun.BabyList(T);
 
         pub fn initWith(val: T) @This() {
             var this: @This() = @This().zeroes;
@@ -4285,7 +4285,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
             var cost: usize = @sizeOf(@This());
             switch (this.*) {
                 .inlined => |*inlined| {
-                    if (comptime bun.trait.isContainer(T) and @hasDecl(T, "memoryCost")) {
+                    if (comptime fun.trait.isContainer(T) and @hasDecl(T, "memoryCost")) {
                         for (inlined.slice()) |*item| {
                             cost += item.memoryCost();
                         }
@@ -4294,7 +4294,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
                     }
                 },
                 .heap => {
-                    if (comptime bun.trait.isContainer(T) and @hasDecl(T, "memoryCost")) {
+                    if (comptime fun.trait.isContainer(T) and @hasDecl(T, "memoryCost")) {
                         for (this.heap.slice()) |*item| {
                             cost += item.memoryCost();
                         }
@@ -4309,7 +4309,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
         }
 
         pub fn initWithSlice(vals: []const T) @This() {
-            if (bun.Environment.allow_assert) assert(vals.len <= std.math.maxInt(u32));
+            if (fun.Environment.allow_assert) assert(vals.len <= std.math.maxInt(u32));
             if (vals.len <= INLINED_MAX) {
                 var this: @This() = @This().zeroes;
                 @memcpy(this.inlined.items[0..vals.len], vals);
@@ -4317,7 +4317,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
                 return this;
             }
             var this: @This() = .{
-                .heap = bun.handleOom(ByteList.initCapacity(bun.default_allocator, vals.len)),
+                .heap = fun.handleOom(ByteList.initCapacity(fun.default_allocator, vals.len)),
             };
             this.heap.appendSliceAssumeCapacity(vals);
             return this;
@@ -4349,10 +4349,10 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
                 return &this.items;
             }
 
-            pub fn promote(this: *Inlined, n: usize, new: T) bun.BabyList(T) {
-                var list = bun.handleOom(bun.BabyList(T).initCapacity(bun.default_allocator, n));
-                bun.handleOom(list.appendSlice(bun.default_allocator, this.items[0..INLINED_MAX]));
-                bun.handleOom(list.append(bun.default_allocator, new));
+            pub fn promote(this: *Inlined, n: usize, new: T) fun.BabyList(T) {
+                var list = fun.handleOom(fun.BabyList(T).initCapacity(fun.default_allocator, n));
+                fun.handleOom(list.appendSlice(fun.default_allocator, this.items[0..INLINED_MAX]));
+                fun.handleOom(list.append(fun.default_allocator, new));
                 return list;
             }
 
@@ -4381,7 +4381,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
         pub fn deinit(this: *@This()) void {
             switch (this.*) {
                 .inlined => {},
-                .heap => |*heap| heap.deinit(bun.default_allocator),
+                .heap => |*heap| heap.deinit(fun.default_allocator),
             }
             this.* = zeroes;
         }
@@ -4433,12 +4433,12 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
                 .inlined => {
                     if (starting_idx >= this.inlined.len) return;
                     const slice_to_move = this.inlined.items[starting_idx..this.inlined.len];
-                    bun.copy(T, this.inlined.items[0..starting_idx], slice_to_move);
+                    fun.copy(T, this.inlined.items[0..starting_idx], slice_to_move);
                     this.inlined.len = @intCast(slice_to_move.len);
                 },
                 .heap => {
                     const slc = this.heap.ptr[starting_idx..this.heap.len];
-                    bun.copy(T, this.heap.ptr[0..slc.len], slc);
+                    fun.copy(T, this.heap.ptr[0..slc.len], slc);
                     this.heap.len = @intCast(slc.len);
                 },
             }
@@ -4473,7 +4473,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
         pub inline fn get(this: *@This(), idx: usize) *T {
             return switch (this.*) {
                 .inlined => {
-                    if (bun.Environment.allow_assert) {
+                    if (fun.Environment.allow_assert) {
                         if (idx >= this.inlined.len) @panic("Index out of bounds");
                     }
                     return &this.inlined.items[idx];
@@ -4485,7 +4485,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
         pub inline fn getConst(this: *const @This(), idx: usize) *const T {
             return switch (this.*) {
                 .inlined => {
-                    if (bun.Environment.allow_assert) {
+                    if (fun.Environment.allow_assert) {
                         if (idx >= this.inlined.len) @panic("Index out of bounds");
                     }
                     return &this.inlined.items[idx];
@@ -4506,7 +4506,7 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
                     this.inlined.len += 1;
                 },
                 .heap => {
-                    bun.handleOom(this.heap.append(bun.default_allocator, new));
+                    fun.handleOom(this.heap.append(fun.default_allocator, new));
                 },
             }
         }
@@ -4539,22 +4539,22 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
 
 /// Used in JS tests, see `internal-for-testing.ts` and shell tests.
 pub const TestingAPIs = struct {
-    pub fn disabledOnThisPlatform(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-        if (comptime bun.Environment.isWindows) return .false;
+    pub fn disabledOnThisPlatform(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+        if (comptime fun.Environment.isWindows) return .false;
 
         const arguments_ = callframe.arguments_old(1);
-        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments_.slice());
         const string = arguments.nextEat() orelse {
             return globalThis.throw("shellInternals.disabledOnPosix: expected 1 arguments, got 0", .{});
         };
 
-        const bunstr = try string.toBunString(globalThis);
-        defer bunstr.deref();
-        const utf8str = bunstr.toUTF8(bun.default_allocator);
+        const funstr = try string.toFunString(globalThis);
+        defer funstr.deref();
+        const utf8str = funstr.toUTF8(fun.default_allocator);
         defer utf8str.deinit();
 
         inline for (Interpreter.Builtin.Kind.DISABLED_ON_POSIX) |disabled| {
-            if (bun.strings.eqlComptime(utf8str.byteSlice(), @tagName(disabled))) {
+            if (fun.strings.eqlComptime(utf8str.byteSlice(), @tagName(disabled))) {
                 return .true;
             }
         }
@@ -4567,25 +4567,25 @@ pub const TestingAPIs = struct {
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
         marked_argument_buffer: *jsc.MarkedArgumentBuffer,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments_.slice());
         const string_args = arguments.nextEat() orelse {
             return globalThis.throw("shell_parse: expected 2 arguments, got 0", .{});
         };
 
-        var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+        var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
 
         const template_args_js = arguments.nextEat() orelse {
             return globalThis.throw("shell: expected 2 arguments, got 0", .{});
         };
         var template_args = try template_args_js.arrayIterator(globalThis);
-        var stack_alloc = std.heap.stackFallback(@sizeOf(bun.String) * 4, arena.allocator());
-        var jsstrings = try std.array_list.Managed(bun.String).initCapacity(stack_alloc.get(), 4);
+        var stack_alloc = std.heap.stackFallback(@sizeOf(fun.String) * 4, arena.allocator());
+        var jsstrings = try std.array_list.Managed(fun.String).initCapacity(stack_alloc.get(), 4);
         defer {
-            for (jsstrings.items[0..]) |bunstr| {
-                bunstr.deref();
+            for (jsstrings.items[0..]) |funstr| {
+                funstr.deref();
             }
             jsstrings.deinit();
         }
@@ -4597,7 +4597,7 @@ pub const TestingAPIs = struct {
 
         const jsobjs_len: u32 = @intCast(jsobjs.items.len);
         const lex_result = brk: {
-            if (bun.strings.isAllASCII(script.items[0..])) {
+            if (fun.strings.isAllASCII(script.items[0..])) {
                 var lexer = LexerAscii.new(arena.allocator(), script.items[0..], jsstrings.items[0..], jsobjs_len);
                 lexer.lex() catch |err| {
                     return globalThis.throwError(err, "failed to lex shell");
@@ -4622,11 +4622,11 @@ pub const TestingAPIs = struct {
             try test_tokens.append(test_tok);
         }
 
-        const str = bun.handleOom(std.fmt.allocPrint(globalThis.bunVM().allocator, "{f}", .{std.json.fmt(test_tokens.items[0..], .{})}));
+        const str = fun.handleOom(std.fmt.allocPrint(globalThis.funVM().allocator, "{f}", .{std.json.fmt(test_tokens.items[0..], .{})}));
 
-        defer globalThis.bunVM().allocator.free(str);
-        var bun_str = bun.String.fromBytes(str);
-        return bun_str.toJS(globalThis);
+        defer globalThis.funVM().allocator.free(str);
+        var fun_str = fun.String.fromBytes(str);
+        return fun_str.toJS(globalThis);
     }
 
     pub const shellParse = jsc.MarkedArgumentBuffer.wrap(shellParseImpl);
@@ -4635,25 +4635,25 @@ pub const TestingAPIs = struct {
         globalThis: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
         marked_argument_buffer: *jsc.MarkedArgumentBuffer,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments_.slice());
         const string_args = arguments.nextEat() orelse {
             return globalThis.throw("shell_parse: expected 2 arguments, got 0", .{});
         };
 
-        var arena = bun.ArenaAllocator.init(bun.default_allocator);
+        var arena = fun.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
 
         const template_args_js = arguments.nextEat() orelse {
             return globalThis.throw("shell: expected 2 arguments, got 0", .{});
         };
         var template_args = try template_args_js.arrayIterator(globalThis);
-        var stack_alloc = std.heap.stackFallback(@sizeOf(bun.String) * 4, arena.allocator());
-        var jsstrings = try std.array_list.Managed(bun.String).initCapacity(stack_alloc.get(), 4);
+        var stack_alloc = std.heap.stackFallback(@sizeOf(fun.String) * 4, arena.allocator());
+        var jsstrings = try std.array_list.Managed(fun.String).initCapacity(stack_alloc.get(), 4);
         defer {
-            for (jsstrings.items[0..]) |bunstr| {
-                bunstr.deref();
+            for (jsstrings.items[0..]) |funstr| {
+                funstr.deref();
             }
             jsstrings.deinit();
         }
@@ -4667,7 +4667,7 @@ pub const TestingAPIs = struct {
 
         const script_ast = Interpreter.parse(arena.allocator(), script.items[0..], jsobjs.items[0..], jsstrings.items[0..], &out_parser, &out_lex_result) catch |err| {
             if (err == ParseError.Lex) {
-                if (bun.Environment.allow_assert) assert(out_lex_result != null);
+                if (fun.Environment.allow_assert) assert(out_lex_result != null);
                 const str = out_lex_result.?.combineErrors(arena.allocator());
                 return globalThis.throwPretty("{s}", .{str});
             }
@@ -4680,10 +4680,10 @@ pub const TestingAPIs = struct {
             return globalThis.throwError(err, "failed to lex/parse shell");
         };
 
-        const str = bun.handleOom(std.fmt.allocPrint(globalThis.bunVM().allocator, "{f}", .{std.json.fmt(script_ast, .{})}));
+        const str = fun.handleOom(std.fmt.allocPrint(globalThis.funVM().allocator, "{f}", .{std.json.fmt(script_ast, .{})}));
 
-        defer globalThis.bunVM().allocator.free(str);
-        return bun.String.createUTF8ForJS(globalThis, str);
+        defer globalThis.funVM().allocator.free(str);
+        return fun.String.createUTF8ForJS(globalThis, str);
     }
 };
 
@@ -4695,12 +4695,12 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.array_list.Managed;
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
-const jsc = bun.jsc;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const CodepointIterator = bun.strings.UnsignedCodepointIterator;
-const isAllAscii = bun.strings.isAllASCII;
+const CodepointIterator = fun.strings.UnsignedCodepointIterator;
+const isAllAscii = fun.strings.isAllASCII;

@@ -18,7 +18,7 @@ pub const Loader = struct {
     @".env": ?logger.Source = null,
 
     // only populated with files specified explicitly (e.g. --env-file arg)
-    custom_files_loaded: bun.StringArrayHashMap(logger.Source),
+    custom_files_loaded: fun.StringArrayHashMap(logger.Source),
 
     quiet: bool = false,
 
@@ -39,22 +39,22 @@ pub const Loader = struct {
     }
 
     pub fn isProduction(this: *const Loader) bool {
-        const env = this.get("BUN_ENV") orelse this.get("NODE_ENV") orelse return false;
+        const env = this.get("FUN_ENV") orelse this.get("NODE_ENV") orelse return false;
         return strings.eqlComptime(env, "production");
     }
 
     pub fn isTest(this: *const Loader) bool {
-        const env = this.get("BUN_ENV") orelse this.get("NODE_ENV") orelse return false;
+        const env = this.get("FUN_ENV") orelse this.get("NODE_ENV") orelse return false;
         return strings.eqlComptime(env, "test");
     }
 
-    pub fn getNodePath(this: *Loader, fs: *Fs.FileSystem, buf: *bun.PathBuffer) ?[:0]const u8 {
+    pub fn getNodePath(this: *Loader, fs: *Fs.FileSystem, buf: *fun.PathBuffer) ?[:0]const u8 {
         // Check NODE or npm_node_execpath env var, but only use it if the file actually exists
         if (this.get("NODE") orelse this.get("npm_node_execpath")) |node| {
-            if (node.len > 0 and node.len < bun.MAX_PATH_BYTES) {
+            if (node.len > 0 and node.len < fun.MAX_PATH_BYTES) {
                 @memcpy(buf[0..node.len], node);
                 buf[node.len] = 0;
-                if (bun.sys.isExecutableFilePath(buf[0..node.len :0])) {
+                if (fun.sys.isExecutableFilePath(buf[0..node.len :0])) {
                     return buf[0..node.len :0];
                 }
             }
@@ -107,11 +107,11 @@ pub const Loader = struct {
             region = region_;
         }
         if (this.get("S3_ENDPOINT")) |endpoint_| {
-            const url = bun.URL.parse(endpoint_);
+            const url = fun.URL.parse(endpoint_);
             endpoint = url.hostWithPath();
             insecure_http = url.isHTTP();
         } else if (this.get("AWS_ENDPOINT")) |endpoint_| {
-            const url = bun.URL.parse(endpoint_);
+            const url = fun.URL.parse(endpoint_);
             endpoint = url.hostWithPath();
             insecure_http = url.isHTTP();
         }
@@ -300,8 +300,8 @@ pub const Loader = struct {
 
         // if they have ccache installed, put it in env variable `CMAKE_CXX_COMPILER_LAUNCHER` so
         // cmake can use it to hopefully speed things up
-        var buf: bun.PathBuffer = undefined;
-        const ccache_path = bun.which(
+        var buf: fun.PathBuffer = undefined;
+        const ccache_path = fun.which(
             &buf,
             this.get("PATH") orelse return,
             fs.top_level_dir,
@@ -330,7 +330,7 @@ pub const Loader = struct {
 
     var node_path_to_use_set_once: []const u8 = "";
     pub fn loadNodeJSConfig(this: *Loader, fs: *Fs.FileSystem, override_node: []const u8) !bool {
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
 
         var node_path_to_use = override_node;
         if (node_path_to_use.len == 0) {
@@ -338,7 +338,7 @@ pub const Loader = struct {
                 node_path_to_use = node_path_to_use_set_once;
             } else {
                 const node = this.getNodePath(fs, &buf) orelse return false;
-                node_path_to_use = try fs.dirname_store.append([]const u8, bun.asByteSlice(node));
+                node_path_to_use = try fs.dirname_store.append([]const u8, fun.asByteSlice(node));
             }
         }
         node_path_to_use_set_once = node_path_to_use;
@@ -364,9 +364,9 @@ pub const Loader = struct {
     }
 
     pub var has_no_clear_screen_cli_flag: ?bool = null;
-    /// Returns whether the `BUN_CONFIG_NO_CLEAR_TERMINAL_ON_RELOAD` env var is set to something truthy
+    /// Returns whether the `FUN_CONFIG_NO_CLEAR_TERMINAL_ON_RELOAD` env var is set to something truthy
     pub fn hasSetNoClearTerminalOnReload(this: *const Loader, default_value: bool) bool {
-        return (has_no_clear_screen_cli_flag orelse this.getAs(bool, "BUN_CONFIG_NO_CLEAR_TERMINAL_ON_RELOAD")) orelse default_value;
+        return (has_no_clear_screen_cli_flag orelse this.getAs(bool, "FUN_CONFIG_NO_CLEAR_TERMINAL_ON_RELOAD")) orelse default_value;
     }
 
     pub fn get(this: *const Loader, key: string) ?string {
@@ -420,7 +420,7 @@ pub const Loader = struct {
         for (framework_defaults.keys, 0..) |key, i| {
             if (key.len > "process.env.".len and strings.eqlComptime(key[0.."process.env.".len], "process.env.")) {
                 const hashable_segment = key["process.env.".len..];
-                string_map_hashes[i] = bun.hash(hashable_segment);
+                string_map_hashes[i] = fun.hash(hashable_segment);
             }
         }
 
@@ -430,14 +430,14 @@ pub const Loader = struct {
 
         if (behavior != .disable and behavior != .load_all_without_inlining) {
             if (behavior == .prefix) {
-                bun.assert(prefix.len > 0);
+                fun.assert(prefix.len > 0);
 
                 while (iter.next()) |entry| {
                     if (strings.startsWith(entry.key_ptr.*, prefix)) {
                         key_buf_len += entry.key_ptr.len;
                         key_count += 1;
                         e_strings_to_allocate += 1;
-                        bun.assert(entry.key_ptr.len > 0);
+                        fun.assert(entry.key_ptr.len > 0);
                     }
                 }
             } else {
@@ -447,7 +447,7 @@ pub const Loader = struct {
                         key_count += 1;
                         e_strings_to_allocate += 1;
 
-                        bun.assert(entry.key_ptr.len > 0);
+                        fun.assert(entry.key_ptr.len > 0);
                     }
                 }
             }
@@ -456,7 +456,7 @@ pub const Loader = struct {
                 iter.reset();
                 key_buf = try allocator.alloc(u8, key_buf_len + key_count * "process.env.".len);
                 var key_writer = std.Io.Writer.fixed(key_buf);
-                const js_ast = bun.ast;
+                const js_ast = fun.ast;
 
                 var e_strings = try allocator.alloc(js_ast.E.String, e_strings_to_allocate * 2);
                 errdefer allocator.free(e_strings);
@@ -491,9 +491,9 @@ pub const Loader = struct {
                             );
                             e_strings = e_strings[1..];
                         } else {
-                            const hash = bun.hash(entry.key_ptr.*);
+                            const hash = fun.hash(entry.key_ptr.*);
 
-                            bun.assert(hash != invalid_hash);
+                            fun.assert(hash != invalid_hash);
 
                             if (std.mem.indexOfScalar(u64, string_map_hashes, hash)) |key_i| {
                                 e_strings[0] = js_ast.E.String{
@@ -563,7 +563,7 @@ pub const Loader = struct {
         return Loader{
             .map = map,
             .allocator = allocator,
-            .custom_files_loaded = bun.StringArrayHashMap(logger.Source).init(allocator),
+            .custom_files_loaded = fun.StringArrayHashMap(logger.Source).init(allocator),
         };
     }
 
@@ -572,7 +572,7 @@ pub const Loader = struct {
 
         try this.map.map.ensureTotalCapacity(std.os.environ.len);
         for (std.os.environ) |_env| {
-            var env = bun.span(_env);
+            var env = fun.span(_env);
             if (strings.indexOfChar(env, '=')) |i| {
                 const key = env[0..i];
                 const value = env[i + 1 ..];
@@ -614,12 +614,12 @@ pub const Loader = struct {
         if (env_files.len > 0) {
             try this.loadExplicitFiles(env_files, &value_buffer);
         } else {
-            // Do not automatically load .env files in `bun run <script>`
-            // Instead, it is the responsibility of the script's instance of `bun` to load .env,
+            // Do not automatically load .env files in `fun run <script>`
+            // Instead, it is the responsibility of the script's instance of `fun` to load .env,
             // so that if the script runner is NODE_ENV=development, but the script is
-            // "NODE_ENV=production bun ...", there should be no development env loaded.
+            // "NODE_ENV=production fun ...", there should be no development env loaded.
             //
-            // See https://github.com/oven-sh/bun/issues/9635#issuecomment-2021350123
+            // See https://github.com/underdoc-org/fun/issues/9635#issuecomment-2021350123
             // for more details on how this edge case works.
             if (!skip_default_env)
                 try this.loadDefaultFiles(dir, suffix, &value_buffer);
@@ -881,7 +881,7 @@ pub const Loader = struct {
             return;
         }
 
-        var file = bun.openFile(file_path, .{ .mode = .read_only }) catch {
+        var file = fun.openFile(file_path, .{ .mode = .read_only }) catch {
             // prevent retrying
             try this.custom_files_loaded.put(file_path, logger.Source.initPathString(file_path, ""));
             return;
@@ -1008,7 +1008,7 @@ const Parser = struct {
     }
 
     fn parseQuoted(this: *Parser, comptime quote: u8) !?string {
-        if (comptime Environment.allow_assert) bun.assert(this.src[this.pos] == quote);
+        if (comptime Environment.allow_assert) fun.assert(this.src[this.pos] == quote);
         const start = this.pos;
         this.value_buffer.clearRetainingCapacity(); // Reset the buffer
         var end = start + 1;
@@ -1028,7 +1028,7 @@ const Parser = struct {
                         while (i < end) {
                             switch (this.src[i]) {
                                 '\\' => if (comptime quote == '"') {
-                                    if (comptime Environment.allow_assert) bun.assert(i + 1 < end);
+                                    if (comptime Environment.allow_assert) fun.assert(i + 1 < end);
                                     switch (this.src[i + 1]) {
                                         'n' => {
                                             try this.value_buffer.append('\n');
@@ -1162,7 +1162,7 @@ const Parser = struct {
             if (entry.found_existing) {
                 if (entry.index < count) {
                     // Allow keys defined later in the same file to override keys defined earlier
-                    // https://github.com/oven-sh/bun/issues/1262
+                    // https://github.com/underdoc-org/fun/issues/1262
                     if (comptime !override) continue;
                 } else {
                     allocator.free(entry.value_ptr.value);
@@ -1217,7 +1217,7 @@ pub const Map = struct {
     // An issue with this exact implementation is unicode characters can technically appear in these
     // keys, and we use a simple toLowercase function that only applies to ascii, so this will make
     // some strings collide.
-    pub const HashTable = (if (Environment.isWindows) bun.CaseInsensitiveASCIIStringArrayHashMap else bun.StringArrayHashMap)(HashTableValue);
+    pub const HashTable = (if (Environment.isWindows) fun.CaseInsensitiveASCIIStringArrayHashMap else fun.StringArrayHashMap)(HashTableValue);
 
     const GetOrPutResult = HashTable.GetOrPutResult;
 
@@ -1233,18 +1233,18 @@ pub const Map = struct {
             var i: usize = 0;
             while (it.next()) |pair| : (i += 1) {
                 const env_buf = try arena.allocSentinel(u8, pair.key_ptr.len + pair.value_ptr.value.len + 1, 0);
-                bun.copy(u8, env_buf, pair.key_ptr.*);
+                fun.copy(u8, env_buf, pair.key_ptr.*);
                 env_buf[pair.key_ptr.len] = '=';
-                bun.copy(u8, env_buf[pair.key_ptr.len + 1 ..], pair.value_ptr.value);
+                fun.copy(u8, env_buf[pair.key_ptr.len + 1 ..], pair.value_ptr.value);
                 envp_buf[i] = env_buf.ptr;
             }
-            if (comptime Environment.allow_assert) bun.assert(i == envp_count);
+            if (comptime Environment.allow_assert) fun.assert(i == envp_count);
         }
         return envp_buf;
     }
 
     /// Returns a wrapper around the std.process.EnvMap that does not duplicate the memory of
-    /// the keys and values, but instead points into the memory of the bun env map.
+    /// the keys and values, but instead points into the memory of the fun env map.
     ///
     /// To prevent
     pub fn stdEnvMap(this: *Map, allocator: std.mem.Allocator) OOM!StdEnvMapWrapper {
@@ -1276,11 +1276,11 @@ pub const Map = struct {
         var it = this.map.iterator();
         var i: usize = 0;
         while (it.next()) |pair| {
-            i += bun.strings.convertUTF8toUTF16InBuffer(result[i..], pair.key_ptr.*).len;
+            i += fun.strings.convertUTF8toUTF16InBuffer(result[i..], pair.key_ptr.*).len;
             if (i + 7 >= result.len) return error.TooManyEnvironmentVariables;
             result[i] = '=';
             i += 1;
-            i += bun.strings.convertUTF8toUTF16InBuffer(result[i..], pair.value_ptr.*.value).len;
+            i += fun.strings.convertUTF8toUTF16InBuffer(result[i..], pair.value_ptr.*.value).len;
             if (i + 5 >= result.len) return error.TooManyEnvironmentVariables;
             result[i] = 0;
             i += 1;
@@ -1307,7 +1307,7 @@ pub const Map = struct {
 
     pub inline fn put(this: *Map, key: string, value: string) OOM!void {
         if (Environment.isWindows and Environment.allow_assert) {
-            bun.assert(bun.strings.indexOfChar(key, '\x00') == null);
+            fun.assert(fun.strings.indexOfChar(key, '\x00') == null);
         }
         try this.map.put(key, .{
             .value = value,
@@ -1321,7 +1321,7 @@ pub const Map = struct {
 
     pub fn putAssumeCapacity(this: *Map, key: string, value: string) void {
         if (Environment.isWindows and Environment.allow_assert) {
-            bun.assert(bun.strings.indexOfChar(key, '\x00') == null);
+            fun.assert(fun.strings.indexOfChar(key, '\x00') == null);
         }
         this.map.putAssumeCapacity(key, .{
             .value = value,
@@ -1422,12 +1422,12 @@ const std = @import("std");
 const URL = @import("../url/url.zig").URL;
 const which = @import("../which/which.zig").which;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const analytics = bun.analytics;
-const logger = bun.logger;
-const s3 = bun.S3;
-const strings = bun.strings;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const analytics = fun.analytics;
+const logger = fun.logger;
+const s3 = fun.S3;
+const strings = fun.strings;
+const api = fun.schema.api;

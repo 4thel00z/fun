@@ -41,7 +41,7 @@ if (process.argv[2] === "child") {
   const child = fork(process.argv[1], ["child"], {
     // env: {
     //   ...process.env,
-    //   "BUN_DEBUG": "out2",
+    //   "FUN_DEBUG": "out2",
     // },
   });
   child.on("message", message => {

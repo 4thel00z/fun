@@ -1,5 +1,5 @@
 //! Confusingly, this is the barely used epoll/kqueue event loop
-//! This is only used by Bun.write() and Bun.file(path).text() & friends.
+//! This is only used by Fun.write() and Fun.file(path).text() & friends.
 //!
 //! Most I/O happens on the main thread.
 
@@ -8,18 +8,18 @@ pub const heap = @import("./heap.zig");
 pub const openForWriting = @import("./openForWriting.zig").openForWriting;
 pub const openForWritingImpl = @import("./openForWriting.zig").openForWritingImpl;
 
-const log = bun.Output.scoped(.loop, .visible);
+const log = fun.Output.scoped(.loop, .visible);
 
 pub const Source = @import("./source.zig").Source;
 
 pub const Loop = struct {
     pending: Request.Queue = .{},
-    waker: bun.Async.Waker,
-    epoll_fd: if (Environment.isLinux) bun.FD else void = if (Environment.isLinux) .invalid,
+    waker: fun.Async.Waker,
+    epoll_fd: if (Environment.isLinux) fun.FD else void = if (Environment.isLinux) .invalid,
     /// FreeBSD's `Waker` is `LinuxWaker` (an eventfd), so unlike macOS the
     /// waker fd is NOT itself a kqueue. We create one here and register the
     /// eventfd on it, mirroring how Linux registers the eventfd on epoll_fd.
-    kqueue_fd: if (Environment.isFreeBSD) bun.FD else void = if (Environment.isFreeBSD) .invalid,
+    kqueue_fd: if (Environment.isFreeBSD) fun.FD else void = if (Environment.isFreeBSD) .invalid,
 
     cached_now: posix.timespec = .{
         .nsec = 0,
@@ -31,7 +31,7 @@ pub const Loop = struct {
 
     fn load() void {
         loop = Loop{
-            .waker = bun.Async.Waker.init() catch @panic("failed to initialize waker"),
+            .waker = fun.Async.Waker.init() catch @panic("failed to initialize waker"),
         };
         if (comptime Environment.isLinux) {
             loop.epoll_fd = .fromNative(std.posix.epoll_create1(std.os.linux.EPOLL.CLOEXEC | 0) catch @panic("Failed to create epoll file descriptor"));
@@ -42,9 +42,9 @@ pub const Loop = struct {
                 epoll.data.ptr = @intFromPtr(&loop);
                 const rc = std.os.linux.epoll_ctl(loop.epoll_fd.cast(), std.os.linux.EPOLL.CTL_ADD, loop.waker.getFd().cast(), &epoll);
 
-                switch (bun.sys.getErrno(rc)) {
+                switch (fun.sys.getErrno(rc)) {
                     .SUCCESS => {},
-                    else => |err| bun.Output.panic("Failed to wait on epoll {s}", .{@tagName(err)}),
+                    else => |err| fun.Output.panic("Failed to wait on epoll {s}", .{@tagName(err)}),
                 }
             }
         }
@@ -59,13 +59,13 @@ pub const Loop = struct {
             change.filter = std.c.EVFILT.READ;
             change.flags = std.c.EV.ADD | std.c.EV.CLEAR;
             const rc = std.c.kevent(loop.kqueue_fd.cast(), @as([*]const KEvent, @ptrCast(&change)), 1, undefined, 0, null);
-            switch (bun.sys.getErrno(rc)) {
+            switch (fun.sys.getErrno(rc)) {
                 .SUCCESS => {},
-                else => |err| bun.Output.panic("Failed to register waker on kqueue: {s}", .{@tagName(err)}),
+                else => |err| fun.Output.panic("Failed to register waker on kqueue: {s}", .{@tagName(err)}),
             }
         }
         var thread = std.Thread.spawn(.{
-            .allocator = bun.default_allocator,
+            .allocator = fun.default_allocator,
 
             // smaller thread, since it's not doing much.
             .stack_size = 1024 * 1024 * 2,
@@ -89,14 +89,14 @@ pub const Loop = struct {
     }
 
     pub fn schedule(this: *Loop, request: *Request) void {
-        bun.assert(!request.scheduled);
+        fun.assert(!request.scheduled);
         request.scheduled = true;
         this.pending.push(request);
         this.waker.wake();
     }
 
     pub fn tick(this: *Loop) void {
-        bun.Output.Source.configureNamedThread("IO Watcher");
+        fun.Output.Source.configureNamedThread("IO Watcher");
 
         if (comptime Environment.isLinux) {
             this.tickEpoll();
@@ -168,10 +168,10 @@ pub const Loop = struct {
                 std.math.maxInt(i32),
             );
 
-            switch (bun.sys.getErrno(rc)) {
+            switch (fun.sys.getErrno(rc)) {
                 .INTR => continue,
                 .SUCCESS => {},
-                else => |e| bun.Output.panic("epoll_wait: {s}", .{@tagName(e)}),
+                else => |e| fun.Output.panic("epoll_wait: {s}", .{@tagName(e)}),
             }
 
             this.updateNow();
@@ -194,7 +194,7 @@ pub const Loop = struct {
         }
     }
 
-    pub fn pollfd(this: *const Loop) bun.FD {
+    pub fn pollfd(this: *const Loop) fun.FD {
         if (comptime Environment.isLinux) {
             return this.epoll_fd;
         }
@@ -205,7 +205,7 @@ pub const Loop = struct {
         return this.waker.getFd();
     }
 
-    pub fn fd(this: *const Loop) bun.FD {
+    pub fn fd(this: *const Loop) fun.FD {
         return this.waker.getFd();
     }
 
@@ -217,7 +217,7 @@ pub const Loop = struct {
         this.updateNow();
 
         while (true) {
-            var stack_fallback = std.heap.stackFallback(@sizeOf([256]EventType), bun.default_allocator);
+            var stack_fallback = std.heap.stackFallback(@sizeOf([256]EventType), fun.default_allocator);
             var events_list: std.array_list.Managed(EventType) = std.array_list.Managed(EventType).initCapacity(stack_fallback.get(), 256) catch unreachable;
             defer events_list.deinit();
 
@@ -225,7 +225,7 @@ pub const Loop = struct {
             {
                 var pending_batch = this.pending.popBatch();
                 var pending = pending_batch.iterator();
-                bun.handleOom(events_list.ensureUnusedCapacity(pending.batch.count));
+                fun.handleOom(events_list.ensureUnusedCapacity(pending.batch.count));
                 @memset(std.mem.sliceAsBytes(events_list.items.ptr[0..events_list.capacity]), 0);
 
                 while (pending.next()) |request| {
@@ -290,10 +290,10 @@ pub const Loop = struct {
                 null,
             );
 
-            switch (bun.sys.getErrno(rc)) {
+            switch (fun.sys.getErrno(rc)) {
                 .INTR => continue,
                 .SUCCESS => {},
-                else => |e| bun.Output.panic("kevent failed: {s}", .{@tagName(e)}),
+                else => |e| fun.Output.panic("kevent failed: {s}", .{@tagName(e)}),
             }
 
             this.updateNow();
@@ -365,7 +365,7 @@ pub const Request = struct {
     callback: *const fn (*Request) Action,
     scheduled: bool = false,
 
-    pub const Queue = bun.UnboundedQueue(Request, .next);
+    pub const Queue = fun.UnboundedQueue(Request, .next);
 };
 
 pub const Action = union(enum) {
@@ -374,7 +374,7 @@ pub const Action = union(enum) {
     close: CloseAction,
 
     pub const FileAction = struct {
-        fd: bun.FD,
+        fd: fun.FD,
         poll: *Poll,
         ctx: *anyopaque,
         tag: Pollable.Tag,
@@ -382,7 +382,7 @@ pub const Action = union(enum) {
     };
 
     pub const CloseAction = struct {
-        fd: bun.FD,
+        fd: fun.FD,
         poll: *Poll,
         ctx: *anyopaque,
         tag: Pollable.Tag,
@@ -391,7 +391,7 @@ pub const Action = union(enum) {
 };
 
 const Pollable = struct {
-    const Tag = enum(bun.TaggedPointer.Tag) {
+    const Tag = enum(fun.TaggedPointer.Tag) {
         empty,
         ReadFile,
         WriteFile,
@@ -405,16 +405,16 @@ const Pollable = struct {
         }
     };
 
-    value: bun.TaggedPointer,
+    value: fun.TaggedPointer,
 
     pub fn init(t: Tag, p: *Poll) Pollable {
         return Pollable{
-            .value = bun.TaggedPointer.init(p, @intFromEnum(t)),
+            .value = fun.TaggedPointer.init(p, @intFromEnum(t)),
         };
     }
 
     pub fn from(int: u64) Pollable {
-        return Pollable{ .value = bun.TaggedPointer.from(int) };
+        return Pollable{ .value = fun.TaggedPointer.from(int) };
     }
 
     pub fn poll(this: Pollable) *Poll {
@@ -541,7 +541,7 @@ pub const Poll = struct {
             comptime action: @Type(.enum_literal),
             tag: Pollable.Tag,
             poll: *Poll,
-            fd: bun.FD,
+            fd: fun.FD,
             kqueue_event: *KEvent,
         ) void {
             log("register({s}, {f})", .{ @tagName(action), fd });
@@ -596,7 +596,7 @@ pub const Poll = struct {
         }
     };
 
-    pub fn unregisterWithFd(this: *Poll, watcher_fd: bun.FD, fd: bun.FD) void {
+    pub fn unregisterWithFd(this: *Poll, watcher_fd: fun.FD, fd: fun.FD) void {
         _ = linux.epoll_ctl(
             watcher_fd.cast(),
             linux.EPOLL.CTL_DEL,
@@ -626,7 +626,7 @@ pub const Poll = struct {
                 var this: *Pollable.Tag.Type(t) = @alignCast(@fieldParentPtr("io_poll", poll));
                 if (event.flags == std.c.EV.ERROR) {
                     log("error({d}) = {d}", .{ event.ident, event.data });
-                    this.onIOError(bun.sys.Error.fromCode(@enumFromInt(event.data), .kevent));
+                    this.onIOError(fun.sys.Error.fromCode(@enumFromInt(event.data), .kevent));
                 } else {
                     log("ready({d}) = {d}", .{ event.ident, event.data });
                     this.onReady();
@@ -647,9 +647,9 @@ pub const Poll = struct {
             inline else => |t| {
                 var this: *Pollable.Tag.Type(t) = @alignCast(@fieldParentPtr("io_poll", poll));
                 if (event.events & linux.EPOLL.ERR != 0) {
-                    const errno = bun.sys.getErrno(event.events);
+                    const errno = fun.sys.getErrno(event.events);
                     log("error() = {s}", .{@tagName(errno)});
-                    this.onIOError(bun.sys.Error.fromCode(errno, .epoll_ctl));
+                    this.onIOError(fun.sys.Error.fromCode(errno, .epoll_ctl));
                 } else {
                     log("ready()", .{});
                     this.onReady();
@@ -658,12 +658,12 @@ pub const Poll = struct {
         }
     }
 
-    pub fn registerForEpoll(this: *Poll, tag: Pollable.Tag, loop: *Loop, comptime flag: Flags, one_shot: bool, fd: bun.FD) bun.sys.Maybe(void) {
+    pub fn registerForEpoll(this: *Poll, tag: Pollable.Tag, loop: *Loop, comptime flag: Flags, one_shot: bool, fd: fun.FD) fun.sys.Maybe(void) {
         const watcher_fd = loop.pollfd();
 
         log("register: {s} ({f})", .{ @tagName(flag), fd });
 
-        bun.assert(fd != bun.invalid_fd);
+        fun.assert(fd != fun.invalid_fd);
 
         if (one_shot) {
             this.flags.insert(.one_shot);
@@ -692,7 +692,7 @@ pub const Poll = struct {
                 &event,
             );
 
-            if (bun.sys.Maybe(void).errnoSys(ctl, .epoll_ctl)) |errno| {
+            if (fun.sys.Maybe(void).errnoSys(ctl, .epoll_ctl)) |errno| {
                 return errno;
             }
             // Only mark if it successfully registered.
@@ -716,7 +716,7 @@ pub const Poll = struct {
     }
 };
 
-pub const retry = bun.sys.E.AGAIN;
+pub const retry = fun.sys.E.AGAIN;
 
 pub const ReadState = @import("./pipes.zig").ReadState;
 pub const PipeReader = @import("./PipeReader.zig").PipeReader;
@@ -729,12 +729,12 @@ pub const StreamBuffer = @import("./PipeWriter.zig").StreamBuffer;
 pub const FileType = @import("./pipes.zig").FileType;
 pub const MaxBuf = @import("./MaxBuf.zig");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const sys = bun.sys;
-const ReadFile = bun.webcore.Blob.read_file.ReadFile;
-const WriteFile = bun.webcore.Blob.write_file.WriteFile;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const sys = fun.sys;
+const ReadFile = fun.webcore.Blob.read_file.ReadFile;
+const WriteFile = fun.webcore.Blob.write_file.WriteFile;
 
 const std = @import("std");
 const posix = std.posix;

@@ -1,6 +1,6 @@
 # Hot Reload Files Stress Test
 
-This is a stress test for Bun's hot reloading functionality, designed to test performance with a high number of interdependent files.
+This is a stress test for Fun's hot reloading functionality, designed to test performance with a high number of interdependent files.
 
 ## What It Does
 
@@ -26,7 +26,7 @@ This will:
 
 The test utilizes Node.js's child_process fork API for communication:
 
-1. The main process (stress-test.ts) creates a child process running Bun with hot reloading
+1. The main process (stress-test.ts) creates a child process running Fun with hot reloading
 2. The modules communicate with the parent process via IPC when they're reloaded
 3. After detecting a successful reload, the parent modifies another file
 4. This continues for 1,000 iterations
@@ -35,7 +35,7 @@ The test utilizes Node.js's child_process fork API for communication:
 ## Architecture
 
 - **generate.ts**: Creates 1000 interconnected modules with IPC signaling
-- **stress-test.ts**: Controls the test, forks Bun, and tracks metrics
+- **stress-test.ts**: Controls the test, forks Fun, and tracks metrics
 - **run-stress-test.sh**: Script to run the entire test from scratch
 
 ## Performance Metrics

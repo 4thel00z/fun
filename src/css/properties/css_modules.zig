@@ -16,7 +16,7 @@ pub const Composes = struct {
     /// Where the class names are composed from.
     from: ?Specifier,
     /// The source location of the `composes` property.
-    loc: bun.logger.Loc,
+    loc: fun.logger.Loc,
     cssparser_loc: Location,
 
     pub fn parse(input: *css.Parser) css.Result(Composes) {
@@ -38,7 +38,7 @@ pub const Composes = struct {
             .result = Composes{
                 .names = names,
                 .from = from,
-                .loc = bun.logger.Loc{ .start = @intCast(loc) },
+                .loc = fun.logger.Loc{ .start = @intCast(loc) },
                 .cssparser_loc = Location.fromSourceLocation(loc2),
             },
         };
@@ -67,7 +67,7 @@ pub const Composes = struct {
             .err => |e| return .{ .err = e },
         };
 
-        if (bun.strings.eqlCaseInsensitiveASCII(name.v, "from", true)) return .{ .err = input.newErrorForNextToken() };
+        if (fun.strings.eqlCaseInsensitiveASCII(name.v, "from", true)) return .{ .err = input.newErrorForNextToken() };
 
         return .{ .result = name };
     }
@@ -133,6 +133,6 @@ pub const Specifier = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

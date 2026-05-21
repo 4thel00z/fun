@@ -24,7 +24,7 @@ pub fn Errorable(comptime Type: type) type {
             return @This(){ .result = .{ .value = val }, .success = true };
         }
 
-        pub fn err(code: anyerror, err_value: bun.jsc.JSValue) @This() {
+        pub fn err(code: anyerror, err_value: fun.jsc.JSValue) @This() {
             return @This(){
                 .result = .{
                     .err = .{
@@ -38,6 +38,6 @@ pub fn Errorable(comptime Type: type) type {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const ErrorCode = @import("./ErrorCode.zig").ErrorCode;
 const ZigErrorType = @import("./ZigErrorType.zig").ZigErrorType;

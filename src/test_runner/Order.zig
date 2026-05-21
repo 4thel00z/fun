@@ -19,7 +19,7 @@ pub fn deinit(this: *Order) void {
     this.sequences.deinit();
 }
 
-pub fn generateOrderSub(this: *Order, current: TestScheduleEntry) bun.JSError!void {
+pub fn generateOrderSub(this: *Order, current: TestScheduleEntry) fun.JSError!void {
     switch (current) {
         .describe => |describe| try generateOrderDescribe(this, describe),
         .test_callback => |test_callback| try generateOrderTest(this, test_callback),
@@ -41,10 +41,10 @@ pub const Config = struct {
     always_use_hooks: bool,
     randomize: ?std.Random,
 };
-pub fn generateAllOrder(this: *Order, entries: []const *ExecutionEntry) bun.JSError!AllOrderResult {
+pub fn generateAllOrder(this: *Order, entries: []const *ExecutionEntry) fun.JSError!AllOrderResult {
     const start = this.groups.items.len;
     for (entries) |entry| {
-        if (bun.Environment.ci_assert and entry.added_in_phase != .preload) bun.assert(entry.next == null);
+        if (fun.Environment.ci_assert and entry.added_in_phase != .preload) fun.assert(entry.next == null);
         entry.next = null;
         entry.failure_skip_past = null;
         const sequences_start = this.sequences.items.len;
@@ -59,7 +59,7 @@ pub fn generateAllOrder(this: *Order, entries: []const *ExecutionEntry) bun.JSEr
     const end = this.groups.items.len;
     return .{ .start = start, .end = end };
 }
-pub fn generateOrderDescribe(this: *Order, current: *DescribeScope) bun.JSError!void {
+pub fn generateOrderDescribe(this: *Order, current: *DescribeScope) fun.JSError!void {
     if (current.failed) return; // do not schedule any tests in a failed describe scope
     const use_hooks = this.cfg.always_use_hooks or current.base.has_callback;
 
@@ -96,10 +96,10 @@ const EntryList = struct {
         if (this.last == null) this.last = current;
     }
     pub fn append(this: *EntryList, current: *ExecutionEntry) void {
-        if (bun.Environment.ci_assert and current.added_in_phase != .preload) bun.assert(current.next == null);
+        if (fun.Environment.ci_assert and current.added_in_phase != .preload) fun.assert(current.next == null);
         current.next = null;
         if (this.last) |last| {
-            if (bun.Environment.ci_assert and last.added_in_phase != .preload) bun.assert(last.next == null);
+            if (fun.Environment.ci_assert and last.added_in_phase != .preload) fun.assert(last.next == null);
             last.next = current;
             this.last = current;
         } else {
@@ -109,8 +109,8 @@ const EntryList = struct {
     }
 };
 
-pub fn generateOrderTest(this: *Order, current: *ExecutionEntry) bun.JSError!void {
-    bun.assert(current.base.has_callback == (current.callback != null));
+pub fn generateOrderTest(this: *Order, current: *ExecutionEntry) fun.JSError!void {
+    fun.assert(current.base.has_callback == (current.callback != null));
     const use_each_hooks = current.base.has_callback;
 
     var list: EntryList = .{};
@@ -122,7 +122,7 @@ pub fn generateOrderTest(this: *Order, current: *ExecutionEntry) bun.JSError!voi
             // prepend in reverse so they end up in forwards order
             var i: usize = p.beforeEach.items.len;
             while (i > 0) : (i -= 1) {
-                list.prepend(bun.create(this.arena, ExecutionEntry, p.beforeEach.items[i - 1].*));
+                list.prepend(fun.create(this.arena, ExecutionEntry, p.beforeEach.items[i - 1].*));
             }
         }
     }
@@ -135,7 +135,7 @@ pub fn generateOrderTest(this: *Order, current: *ExecutionEntry) bun.JSError!voi
         var parent: ?*DescribeScope = current.base.parent;
         while (parent) |p| : (parent = p.base.parent) {
             for (p.afterEach.items) |entry| {
-                list.append(bun.create(this.arena, ExecutionEntry, entry.*));
+                list.append(fun.create(this.arena, ExecutionEntry, entry.*));
             }
         }
     }
@@ -160,7 +160,7 @@ pub fn generateOrderTest(this: *Order, current: *ExecutionEntry) bun.JSError!voi
     try appendOrExtendConcurrentGroup(this, current.base.concurrent, sequences_start, sequences_end); // add or extend the concurrent group
 }
 
-pub fn appendOrExtendConcurrentGroup(this: *Order, concurrent: bool, sequences_start: usize, sequences_end: usize) bun.JSError!void {
+pub fn appendOrExtendConcurrentGroup(this: *Order, concurrent: bool, sequences_start: usize, sequences_end: usize) fun.JSError!void {
     defer this.previous_group_was_concurrent = concurrent;
     if (concurrent and this.groups.items.len > 0) {
         const previous_group = &this.groups.items[this.groups.items.len - 1];
@@ -172,15 +172,15 @@ pub fn appendOrExtendConcurrentGroup(this: *Order, concurrent: bool, sequences_s
     try this.groups.append(.init(sequences_start, sequences_end, this.groups.items.len + 1)); // otherwise, add a new concurrentgroup to order
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const bun_test = bun.jsc.Jest.bun_test;
-const DescribeScope = bun_test.DescribeScope;
-const ExecutionEntry = bun_test.ExecutionEntry;
-const Order = bun_test.Order;
-const TestScheduleEntry = bun_test.TestScheduleEntry;
+const fun_test = fun.jsc.Jest.fun_test;
+const DescribeScope = fun_test.DescribeScope;
+const ExecutionEntry = fun_test.ExecutionEntry;
+const Order = fun_test.Order;
+const TestScheduleEntry = fun_test.TestScheduleEntry;
 
-const Execution = bun_test.Execution;
-const ConcurrentGroup = bun_test.Execution.ConcurrentGroup;
-const ExecutionSequence = bun_test.Execution.ExecutionSequence;
+const Execution = fun_test.Execution;
+const ConcurrentGroup = fun_test.Execution.ConcurrentGroup;
+const ExecutionSequence = fun_test.Execution.ExecutionSequence;

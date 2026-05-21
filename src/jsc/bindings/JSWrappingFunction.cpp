@@ -20,14 +20,14 @@ const ClassInfo JSWrappingFunction::s_info = { "Function"_s, &Base::s_info, null
 JS_EXPORT_PRIVATE JSWrappingFunction* JSWrappingFunction::create(
     VM& vm,
     Zig::GlobalObject* globalObject,
-    const BunString* symbolName,
+    const FunString* symbolName,
     Zig::NativeFunctionPtr functionPointer,
     JSC::JSValue wrappedFnValue)
 {
     JSC::JSObject* wrappedFn = wrappedFnValue.getObject();
     ASSERT(wrappedFn != nullptr);
 
-    auto nameStr = symbolName->tag == BunStringTag::Empty ? WTF::emptyString() : symbolName->toWTFString();
+    auto nameStr = symbolName->tag == FunStringTag::Empty ? WTF::emptyString() : symbolName->toWTFString();
     auto name = Identifier::fromString(vm, nameStr);
     NativeExecutable* executable = vm.getHostFunction(functionPointer, ImplementationVisibility::Public, nullptr, nameStr);
 
@@ -58,10 +58,10 @@ void JSWrappingFunction::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 
 DEFINE_VISIT_CHILDREN(JSWrappingFunction);
 
-extern "C" JSC::EncodedJSValue Bun__JSWrappingFunction__create(
+extern "C" JSC::EncodedJSValue Fun__JSWrappingFunction__create(
     Zig::GlobalObject* globalObject,
-    const BunString* symbolName,
-    Bun::NativeFunctionPtr functionPointer,
+    const FunString* symbolName,
+    Fun::NativeFunctionPtr functionPointer,
     JSC::EncodedJSValue wrappedFnEncoded)
 {
     auto& vm = JSC::getVM(globalObject);
@@ -70,7 +70,7 @@ extern "C" JSC::EncodedJSValue Bun__JSWrappingFunction__create(
     return JSC::JSValue::encode(function);
 }
 
-extern "C" JSC::EncodedJSValue Bun__JSWrappingFunction__getWrappedFunction(
+extern "C" JSC::EncodedJSValue Fun__JSWrappingFunction__getWrappedFunction(
     JSC::EncodedJSValue thisValueEncoded,
     Zig::GlobalObject* globalObject)
 {

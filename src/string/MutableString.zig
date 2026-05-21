@@ -30,7 +30,7 @@ pub fn deinit(str: *MutableString) void {
 }
 
 pub fn owns(this: *const MutableString, items: []const u8) bool {
-    return bun.isSliceInBuffer(items, this.list.items.ptr[0..this.list.capacity]);
+    return fun.isSliceInBuffer(items, this.list.items.ptr[0..this.list.capacity]);
 }
 
 pub inline fn growIfNeeded(self: *MutableString, amount: usize) Allocator.Error!void {
@@ -38,7 +38,7 @@ pub inline fn growIfNeeded(self: *MutableString, amount: usize) Allocator.Error!
 }
 
 pub fn writableNBytesAssumeCapacity(self: *MutableString, amount: usize) []u8 {
-    bun.assert(self.list.items.len + amount <= self.list.capacity);
+    fun.assert(self.list.items.len + amount <= self.list.capacity);
     self.list.items.len += amount;
     return self.list.items[self.list.items.len - amount ..];
 }
@@ -51,7 +51,7 @@ pub fn writableNBytes(self: *MutableString, amount: usize) Allocator.Error![]u8 
 }
 
 pub fn write(self: *MutableString, bytes: anytype) Allocator.Error!usize {
-    bun.debugAssert(bytes.len == 0 or !bun.isSliceInBuffer(bytes, self.list.allocatedSlice()));
+    fun.debugAssert(bytes.len == 0 or !fun.isSliceInBuffer(bytes, self.list.allocatedSlice()));
     try self.list.appendSlice(self.allocator, bytes);
     return bytes.len;
 }
@@ -121,7 +121,7 @@ pub fn ensureValidIdentifier(str: string, allocator: Allocator) Allocator.Error!
     if (needs_gap) {
         var mutable = try MutableString.initCopy(allocator, if (start_i == 0)
             // the first letter can be a non-identifier start
-            // https://github.com/oven-sh/bun/issues/2946
+            // https://github.com/underdoc-org/fun/issues/2946
             "_"
         else
             str[0..start_i]);
@@ -152,8 +152,8 @@ pub fn ensureValidIdentifier(str: string, allocator: Allocator) Allocator.Error!
             has_needed_gap = true;
         }
 
-        if (comptime bun.Environment.allow_assert) {
-            bun.assert(js_lexer.isIdentifier(mutable.list.items));
+        if (comptime fun.Environment.allow_assert) {
+            fun.assert(js_lexer.isIdentifier(mutable.list.items));
         }
 
         return try mutable.list.toOwnedSlice(allocator);
@@ -202,7 +202,7 @@ pub inline fn resetTo(
     self: *MutableString,
     index: usize,
 ) void {
-    bun.assert(index <= self.list.capacity);
+    fun.assert(index <= self.list.capacity);
     self.list.items.len = index;
 }
 
@@ -224,11 +224,11 @@ pub inline fn append(self: *MutableString, char: []const u8) Allocator.Error!voi
     try self.list.appendSlice(self.allocator, char);
 }
 pub inline fn appendInt(self: *MutableString, int: u64) Allocator.Error!void {
-    const count = bun.fmt.fastDigitCount(int);
+    const count = fun.fmt.fastDigitCount(int);
     try self.list.ensureUnusedCapacity(self.allocator, count);
     const old = self.list.items.len;
     self.list.items.len += count;
-    bun.assert(count == std.fmt.printInt(self.list.items.ptr[old .. old + count], int, 10, .lower, .{}));
+    fun.assert(count == std.fmt.printInt(self.list.items.ptr[old .. old + count], int, 10, .lower, .{}));
 }
 
 pub inline fn appendAssumeCapacity(self: *MutableString, char: []const u8) void {
@@ -247,16 +247,16 @@ pub fn takeSlice(self: *MutableString) []u8 {
 }
 
 pub fn toOwnedSlice(self: *MutableString) []u8 {
-    return bun.handleOom(self.list.toOwnedSlice(self.allocator)); // TODO
+    return fun.handleOom(self.list.toOwnedSlice(self.allocator)); // TODO
 }
 
 pub fn toDynamicOwned(self: *MutableString) DynamicOwned([]u8) {
     return .fromRawIn(self.toOwnedSlice(), self.allocator);
 }
 
-/// `self.allocator` must be `bun.default_allocator`.
+/// `self.allocator` must be `fun.default_allocator`.
 pub fn toDefaultOwned(self: *MutableString) Owned([]u8) {
-    bun.safety.alloc.assertEq(self.allocator, bun.default_allocator);
+    fun.safety.alloc.assertEq(self.allocator, fun.default_allocator);
     return .fromRaw(self.toOwnedSlice());
 }
 
@@ -267,7 +267,7 @@ pub fn slice(self: *MutableString) []u8 {
 /// Appends `0` if needed
 pub fn sliceWithSentinel(self: *MutableString) [:0]u8 {
     if (self.list.items.len > 0 and self.list.items[self.list.items.len - 1] != 0) {
-        bun.handleOom(self.list.append(self.allocator, 0));
+        fun.handleOom(self.list.append(self.allocator, 0));
     }
     return self.list.items[0 .. self.list.items.len - 1 :0];
 }
@@ -350,7 +350,7 @@ pub const BufferedWriter = struct {
         return pending.len;
     }
 
-    const E = bun.ast.E;
+    const E = fun.ast.E;
 
     /// Write a E.String to the buffer.
     /// This automatically encodes UTF-16 into UTF-8 using
@@ -465,9 +465,9 @@ const string = []const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const js_lexer = bun.js_lexer;
-const strings = bun.strings;
+const fun = @import("fun");
+const js_lexer = fun.js_lexer;
+const strings = fun.strings;
 
-const DynamicOwned = bun.ptr.DynamicOwned;
-const Owned = bun.ptr.Owned;
+const DynamicOwned = fun.ptr.DynamicOwned;
+const Owned = fun.ptr.Owned;

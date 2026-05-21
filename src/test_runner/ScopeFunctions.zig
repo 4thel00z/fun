@@ -1,68 +1,68 @@
 const Mode = enum { describe, @"test" };
 mode: Mode,
-cfg: bun_test.BaseScopeCfg,
+cfg: fun_test.BaseScopeCfg,
 /// typically `.zero`. not Strong.Optional because codegen visits the C++ `m_each`
 /// WriteBarrier on the JS wrapper (see `values: ["each"]` in jest.classes.ts). This
 /// field is kept in sync with that slot via `js.eachSetCached` in `createUnbound`.
 each: jsc.JSValue,
 
 pub const strings = struct {
-    pub const describe = bun.String.static("describe");
-    pub const xdescribe = bun.String.static("xdescribe");
-    pub const @"test" = bun.String.static("test");
-    pub const xtest = bun.String.static("xtest");
-    pub const skip = bun.String.static("skip");
-    pub const todo = bun.String.static("todo");
-    pub const failing = bun.String.static("failing");
-    pub const concurrent = bun.String.static("concurrent");
-    pub const serial = bun.String.static("serial");
-    pub const only = bun.String.static("only");
-    pub const @"if" = bun.String.static("if");
-    pub const skipIf = bun.String.static("skipIf");
-    pub const todoIf = bun.String.static("todoIf");
-    pub const failingIf = bun.String.static("failingIf");
-    pub const concurrentIf = bun.String.static("concurrentIf");
-    pub const serialIf = bun.String.static("serialIf");
-    pub const each = bun.String.static("each");
+    pub const describe = fun.String.static("describe");
+    pub const xdescribe = fun.String.static("xdescribe");
+    pub const @"test" = fun.String.static("test");
+    pub const xtest = fun.String.static("xtest");
+    pub const skip = fun.String.static("skip");
+    pub const todo = fun.String.static("todo");
+    pub const failing = fun.String.static("failing");
+    pub const concurrent = fun.String.static("concurrent");
+    pub const serial = fun.String.static("serial");
+    pub const only = fun.String.static("only");
+    pub const @"if" = fun.String.static("if");
+    pub const skipIf = fun.String.static("skipIf");
+    pub const todoIf = fun.String.static("todoIf");
+    pub const failingIf = fun.String.static("failingIf");
+    pub const concurrentIf = fun.String.static("concurrentIf");
+    pub const serialIf = fun.String.static("serialIf");
+    pub const each = fun.String.static("each");
 };
 
-pub fn getSkip(this: *ScopeFunctions, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+pub fn getSkip(this: *ScopeFunctions, globalThis: *JSGlobalObject) fun.JSError!JSValue {
     return genericExtend(this, globalThis, .{ .self_mode = .skip }, "get .skip", strings.skip);
 }
-pub fn getTodo(this: *ScopeFunctions, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+pub fn getTodo(this: *ScopeFunctions, globalThis: *JSGlobalObject) fun.JSError!JSValue {
     return genericExtend(this, globalThis, .{ .self_mode = .todo }, "get .todo", strings.todo);
 }
-pub fn getFailing(this: *ScopeFunctions, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+pub fn getFailing(this: *ScopeFunctions, globalThis: *JSGlobalObject) fun.JSError!JSValue {
     return genericExtend(this, globalThis, .{ .self_mode = .failing }, "get .failing", strings.failing);
 }
-pub fn getConcurrent(this: *ScopeFunctions, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+pub fn getConcurrent(this: *ScopeFunctions, globalThis: *JSGlobalObject) fun.JSError!JSValue {
     return genericExtend(this, globalThis, .{ .self_concurrent = .yes }, "get .concurrent", strings.concurrent);
 }
-pub fn getSerial(this: *ScopeFunctions, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+pub fn getSerial(this: *ScopeFunctions, globalThis: *JSGlobalObject) fun.JSError!JSValue {
     return genericExtend(this, globalThis, .{ .self_concurrent = .no }, "get .serial", strings.serial);
 }
-pub fn getOnly(this: *ScopeFunctions, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+pub fn getOnly(this: *ScopeFunctions, globalThis: *JSGlobalObject) fun.JSError!JSValue {
     return genericExtend(this, globalThis, .{ .self_only = true }, "get .only", strings.only);
 }
-pub fn fnIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn fnIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     return genericIf(this, globalThis, callFrame, .{ .self_mode = .skip }, "call .if()", true, strings.@"if");
 }
-pub fn fnSkipIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn fnSkipIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     return genericIf(this, globalThis, callFrame, .{ .self_mode = .skip }, "call .skipIf()", false, strings.skipIf);
 }
-pub fn fnTodoIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn fnTodoIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     return genericIf(this, globalThis, callFrame, .{ .self_mode = .todo }, "call .todoIf()", false, strings.todoIf);
 }
-pub fn fnFailingIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn fnFailingIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     return genericIf(this, globalThis, callFrame, .{ .self_mode = .failing }, "call .failingIf()", false, strings.failingIf);
 }
-pub fn fnConcurrentIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn fnConcurrentIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     return genericIf(this, globalThis, callFrame, .{ .self_concurrent = .yes }, "call .concurrentIf()", false, strings.concurrentIf);
 }
-pub fn fnSerialIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn fnSerialIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     return genericIf(this, globalThis, callFrame, .{ .self_concurrent = .no }, "call .serialIf()", false, strings.serialIf);
 }
-pub fn fnEach(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn fnEach(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     groupLog.begin(@src());
     defer groupLog.end();
 
@@ -77,24 +77,24 @@ pub fn fnEach(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *Ca
     return createBound(globalThis, this.mode, array, this.cfg, strings.each);
 }
 
-pub fn callAsFunction(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn callAsFunction(globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     groupLog.begin(@src());
     defer groupLog.end();
 
     const this = ScopeFunctions.fromJS(callFrame.this()) orelse return globalThis.throw("Expected callee to be ScopeFunctions", .{});
     const line_no = jsc.Jest.captureTestLineNumber(callFrame, globalThis);
 
-    var buntest_strong = try bun_test.js_fns.cloneActiveStrong(globalThis, .{ .signature = .{ .scope_functions = this }, .allow_in_preload = false });
-    defer buntest_strong.deinit();
-    const bunTest = buntest_strong.get();
+    var funtest_strong = try fun_test.js_fns.cloneActiveStrong(globalThis, .{ .signature = .{ .scope_functions = this }, .allow_in_preload = false });
+    defer funtest_strong.deinit();
+    const funTest = funtest_strong.get();
 
     const callback_mode: CallbackMode = switch (this.cfg.self_mode) {
         .skip, .todo => .allow,
         else => .require,
     };
 
-    var args = try parseArguments(globalThis, callFrame, .{ .scope_functions = this }, bunTest.gpa, .{ .callback = callback_mode });
-    defer args.deinit(bunTest.gpa);
+    var args = try parseArguments(globalThis, callFrame, .{ .scope_functions = this }, funTest.gpa, .{ .callback = callback_mode });
+    defer args.deinit(funTest.gpa);
 
     const callback_length = if (args.callback) |callback| try callback.getLength(globalThis) else 0;
 
@@ -109,35 +109,35 @@ pub fn callAsFunction(globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JS
         while (try iter.next()) |item| : (test_idx += 1) {
             if (item == .zero) break;
 
-            var args_list: std.array_list.Managed(Strong) = .init(bunTest.gpa);
+            var args_list: std.array_list.Managed(Strong) = .init(funTest.gpa);
             defer args_list.deinit();
             defer for (args_list.items) |*arg| arg.deinit();
 
             if (item.isArray()) {
                 // Spread array as args_list (matching Jest & Vitest)
-                bun.handleOom(args_list.ensureUnusedCapacity(try item.getLength(globalThis)));
+                fun.handleOom(args_list.ensureUnusedCapacity(try item.getLength(globalThis)));
 
                 var item_iter = try item.arrayIterator(globalThis);
                 var idx: usize = 0;
                 while (try item_iter.next()) |array_item| : (idx += 1) {
-                    bun.handleOom(args_list.append(.init(bunTest.gpa, array_item)));
+                    fun.handleOom(args_list.append(.init(funTest.gpa, array_item)));
                 }
             } else {
-                bun.handleOom(args_list.append(.init(bunTest.gpa, item)));
+                fun.handleOom(args_list.append(.init(funTest.gpa, item)));
             }
 
-            var args_list_raw = bun.handleOom(std.array_list.Managed(jsc.JSValue).initCapacity(bunTest.gpa, args_list.items.len)); // safe because the items are held strongly in args_list
+            var args_list_raw = fun.handleOom(std.array_list.Managed(jsc.JSValue).initCapacity(funTest.gpa, args_list.items.len)); // safe because the items are held strongly in args_list
             defer args_list_raw.deinit();
-            for (args_list.items) |arg| bun.handleOom(args_list_raw.append(arg.get()));
+            for (args_list.items) |arg| fun.handleOom(args_list_raw.append(arg.get()));
 
-            const formatted_label: ?[]const u8 = if (args.description) |desc| try jsc.Jest.formatLabel(globalThis, desc, args_list_raw.items, test_idx, bunTest.gpa) else null;
-            defer if (formatted_label) |label| bunTest.gpa.free(label);
+            const formatted_label: ?[]const u8 = if (args.description) |desc| try jsc.Jest.formatLabel(globalThis, desc, args_list_raw.items, test_idx, funTest.gpa) else null;
+            defer if (formatted_label) |label| funTest.gpa.free(label);
 
-            const bound = if (args.callback) |cb| try cb.bind(globalThis, item, &bun.String.static("cb"), 0, args_list_raw.items) else null;
-            try this.enqueueDescribeOrTestCallback(bunTest, globalThis, callFrame, bound, formatted_label, args.options, callback_length -| args_list.items.len, line_no);
+            const bound = if (args.callback) |cb| try cb.bind(globalThis, item, &fun.String.static("cb"), 0, args_list_raw.items) else null;
+            try this.enqueueDescribeOrTestCallback(funTest, globalThis, callFrame, bound, formatted_label, args.options, callback_length -| args_list.items.len, line_no);
         }
     } else {
-        try this.enqueueDescribeOrTestCallback(bunTest, globalThis, callFrame, args.callback, args.description, args.options, callback_length, line_no);
+        try this.enqueueDescribeOrTestCallback(funTest, globalThis, callFrame, args.callback, args.description, args.options, callback_length, line_no);
     }
 
     return .js_undefined;
@@ -153,14 +153,14 @@ const Write = struct {
     buf: []u8,
     fn writeEnd(this: *Write, write: []const u8) void {
         if (this.buf.len < write.len) {
-            bun.debugAssert(false);
+            fun.debugAssert(false);
             return;
         }
         @memcpy(this.buf[this.buf.len - write.len ..], write);
         this.buf = this.buf[0 .. this.buf.len - write.len];
     }
 };
-fn filterNames(comptime Rem: type, rem: *Rem, description: ?[]const u8, parent_in: ?*bun_test.DescribeScope) void {
+fn filterNames(comptime Rem: type, rem: *Rem, description: ?[]const u8, parent_in: ?*fun_test.DescribeScope) void {
     const sep = " ";
     rem.writeEnd(description orelse "");
     var parent = parent_in;
@@ -171,19 +171,19 @@ fn filterNames(comptime Rem: type, rem: *Rem, description: ?[]const u8, parent_i
     }
 }
 
-fn enqueueDescribeOrTestCallback(this: *ScopeFunctions, bunTest: *bun_test.BunTest, globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, callback: ?jsc.JSValue, description: ?[]const u8, options: ParseArgumentsOptions, callback_length: usize, line_no: u32) bun.JSError!void {
+fn enqueueDescribeOrTestCallback(this: *ScopeFunctions, funTest: *fun_test.FunTest, globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, callback: ?jsc.JSValue, description: ?[]const u8, options: ParseArgumentsOptions, callback_length: usize, line_no: u32) fun.JSError!void {
     groupLog.begin(@src());
     defer groupLog.end();
 
     // only allow in collection phase
-    switch (bunTest.phase) {
+    switch (funTest.phase) {
         .collection => {}, // ok
         .execution => return globalThis.throw("Cannot call {f}() inside a test. Call it inside describe() instead.", .{this}),
         .done => return globalThis.throw("Cannot call {f}() after the test run has completed", .{this}),
     }
 
     // handle test reporter agent for debugger
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
     var test_id_for_debugger: i32 = 0;
     if (vm.debugger) |*debugger| {
         if (debugger.test_reporter_agent.isEnabled()) {
@@ -191,8 +191,8 @@ fn enqueueDescribeOrTestCallback(this: *ScopeFunctions, bunTest: *bun_test.BunTe
                 var max_test_id_for_debugger: i32 = 0;
             };
             globals.max_test_id_for_debugger += 1;
-            var name = bun.String.init(description orelse "(unnamed)");
-            const parent = bunTest.collection.active_scope;
+            var name = fun.String.init(description orelse "(unnamed)");
+            const parent = funTest.collection.active_scope;
             const parent_id = if (parent.base.test_id_for_debugger != 0) parent.base.test_id_for_debugger else -1;
             debugger.test_reporter_agent.reportTestFound(callFrame, globals.max_test_id_for_debugger, &name, switch (this.mode) {
                 .describe => .describe,
@@ -208,7 +208,7 @@ fn enqueueDescribeOrTestCallback(this: *ScopeFunctions, bunTest: *bun_test.BunTe
     base.test_id_for_debugger = test_id_for_debugger;
     // Use the file's default concurrent setting (determined once when entering the file)
     // or the global concurrent flag from the runner
-    if (bunTest.default_concurrent or (bun.jsc.Jest.Jest.runner != null and bun.jsc.Jest.Jest.runner.?.concurrent)) {
+    if (funTest.default_concurrent or (fun.jsc.Jest.Jest.runner != null and fun.jsc.Jest.Jest.runner.?.concurrent)) {
         // Only set to concurrent if still inheriting
         if (base.self_concurrent == .inherit) {
             base.self_concurrent = .yes;
@@ -217,27 +217,27 @@ fn enqueueDescribeOrTestCallback(this: *ScopeFunctions, bunTest: *bun_test.BunTe
 
     switch (this.mode) {
         .describe => {
-            const new_scope = try bunTest.collection.active_scope.appendDescribe(bunTest.gpa, description, base);
-            try bunTest.collection.enqueueDescribeCallback(new_scope, callback);
+            const new_scope = try funTest.collection.active_scope.appendDescribe(funTest.gpa, description, base);
+            try funTest.collection.enqueueDescribeCallback(new_scope, callback);
         },
         .@"test" => {
 
             // check for filter match
             var matches_filter = true;
-            if (bunTest.reporter) |reporter| if (reporter.jest.filter_regex) |filter_regex| {
+            if (funTest.reporter) |reporter| if (reporter.jest.filter_regex) |filter_regex| {
                 groupLog.log("matches_filter begin", .{});
-                bun.assert(bunTest.collection.filter_buffer.items.len == 0);
-                defer bunTest.collection.filter_buffer.clearRetainingCapacity();
+                fun.assert(funTest.collection.filter_buffer.items.len == 0);
+                defer funTest.collection.filter_buffer.clearRetainingCapacity();
 
                 var len: Measure = .{ .len = 0 };
-                filterNames(Measure, &len, description, bunTest.collection.active_scope);
-                const slice = try bunTest.collection.filter_buffer.addManyAsSlice(len.len);
+                filterNames(Measure, &len, description, funTest.collection.active_scope);
+                const slice = try funTest.collection.filter_buffer.addManyAsSlice(len.len);
                 var rem: Write = .{ .buf = slice };
-                filterNames(Write, &rem, description, bunTest.collection.active_scope);
-                bun.debugAssert(rem.buf.len == 0);
+                filterNames(Write, &rem, description, funTest.collection.active_scope);
+                fun.debugAssert(rem.buf.len == 0);
 
-                const str = bun.String.fromBytes(bunTest.collection.filter_buffer.items);
-                groupLog.log("matches_filter \"{f}\"", .{std.zig.fmtString(bunTest.collection.filter_buffer.items)});
+                const str = fun.String.fromBytes(funTest.collection.filter_buffer.items);
+                groupLog.log("matches_filter \"{f}\"", .{std.zig.fmtString(funTest.collection.filter_buffer.items)});
                 matches_filter = filter_regex.matches(str);
             };
 
@@ -245,10 +245,10 @@ fn enqueueDescribeOrTestCallback(this: *ScopeFunctions, bunTest: *bun_test.BunTe
                 base.self_mode = .filtered_out;
             }
 
-            bun.assert(!bunTest.collection.locked);
-            groupLog.log("enqueueTestCallback / {s} / in scope: {s}", .{ description orelse "(unnamed)", bunTest.collection.active_scope.base.name orelse "(unnamed)" });
+            fun.assert(!funTest.collection.locked);
+            groupLog.log("enqueueTestCallback / {s} / in scope: {s}", .{ description orelse "(unnamed)", funTest.collection.active_scope.base.name orelse "(unnamed)" });
 
-            _ = try bunTest.collection.active_scope.appendTest(bunTest.gpa, description, if (matches_filter) callback else null, .{
+            _ = try funTest.collection.active_scope.appendTest(funTest.gpa, description, if (matches_filter) callback else null, .{
                 .has_done_parameter = has_done_parameter,
                 .timeout = options.timeout,
                 .retry_count = options.retry orelse 0,
@@ -258,7 +258,7 @@ fn enqueueDescribeOrTestCallback(this: *ScopeFunctions, bunTest: *bun_test.BunTe
     }
 }
 
-fn genericIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame, conditional_cfg: bun_test.BaseScopeCfg, name: []const u8, invert: bool, fn_name: bun.String) bun.JSError!JSValue {
+fn genericIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *CallFrame, conditional_cfg: fun_test.BaseScopeCfg, name: []const u8, invert: bool, fn_name: fun.String) fun.JSError!JSValue {
     groupLog.begin(@src());
     defer groupLog.end();
 
@@ -271,7 +271,7 @@ fn genericIf(this: *ScopeFunctions, globalThis: *JSGlobalObject, callFrame: *Cal
         return createBound(globalThis, this.mode, this.each, this.cfg, fn_name);
     }
 }
-fn genericExtend(this: *ScopeFunctions, globalThis: *JSGlobalObject, cfg: bun_test.BaseScopeCfg, name: []const u8, fn_name: bun.String) bun.JSError!JSValue {
+fn genericExtend(this: *ScopeFunctions, globalThis: *JSGlobalObject, cfg: fun_test.BaseScopeCfg, name: []const u8, fn_name: fun.String) fun.JSError!JSValue {
     groupLog.begin(@src());
     defer groupLog.end();
 
@@ -281,8 +281,8 @@ fn genericExtend(this: *ScopeFunctions, globalThis: *JSGlobalObject, cfg: bun_te
     return createBound(globalThis, this.mode, this.each, extended, fn_name);
 }
 
-fn errorInCI(globalThis: *jsc.JSGlobalObject, signature: []const u8) bun.JSError!void {
-    if (bun.ci.isCI()) {
+fn errorInCI(globalThis: *jsc.JSGlobalObject, signature: []const u8) fun.JSError!void {
+    if (fun.ci.isCI()) {
         return globalThis.throwPretty("{s} is disabled in CI environments to prevent accidentally skipping tests. To override, set the environment variable CI=false.", .{signature});
     }
 }
@@ -303,7 +303,7 @@ const ParseArgumentsOptions = struct {
 pub const CallbackMode = enum { require, allow };
 pub const FunctionKind = enum { test_or_describe, hook };
 
-fn getDescription(gpa: std.mem.Allocator, globalThis: *jsc.JSGlobalObject, description: jsc.JSValue, signature: Signature) bun.JSError![]const u8 {
+fn getDescription(gpa: std.mem.Allocator, globalThis: *jsc.JSGlobalObject, description: jsc.JSValue, signature: Signature) fun.JSError![]const u8 {
     if (description == .zero) {
         return "";
     }
@@ -335,7 +335,7 @@ fn getDescription(gpa: std.mem.Allocator, globalThis: *jsc.JSGlobalObject, descr
     return globalThis.throwPretty("{f}() expects first argument to be a named class, named function, number, or string", .{signature});
 }
 
-pub fn parseArguments(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, signature: Signature, gpa: std.mem.Allocator, cfg: struct { callback: CallbackMode, kind: FunctionKind = .test_or_describe }) bun.JSError!ParseArgumentsResult {
+pub fn parseArguments(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, signature: Signature, gpa: std.mem.Allocator, cfg: struct { callback: CallbackMode, kind: FunctionKind = .test_or_describe }) fun.JSError!ParseArgumentsResult {
     var a1, var a2, var a3 = callframe.argumentsAsArray(3);
 
     const len: enum { three, two, one, zero } = if (!a3.isUndefinedOrNull()) .three else if (!a2.isUndefinedOrNull()) .two else if (!a1.isUndefinedOrNull()) .one else .zero;
@@ -407,7 +407,7 @@ pub fn parseArguments(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame
     result.description = if (description.isUndefinedOrNull()) null else try getDescription(gpa, globalThis, description, signature);
 
     if (result.options.retry == null) {
-        if (bun.jsc.Jest.Jest.runner) |runner| {
+        if (fun.jsc.Jest.Jest.runner) |runner| {
             result.options.retry = runner.test_options.retry;
         }
     }
@@ -415,8 +415,8 @@ pub fn parseArguments(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame
         return globalThis.throwPretty("{f}(): Cannot set both retry and repeats", .{signature});
     }
 
-    const default_timeout_ms: ?u32 = if (bun.jsc.Jest.Jest.runner) |runner| if (runner.default_timeout_ms != 0) runner.default_timeout_ms else null else null;
-    const override_timeout_ms: ?u32 = if (bun.jsc.Jest.Jest.runner) |runner| if (runner.default_timeout_override != std.math.maxInt(u32)) runner.default_timeout_override else null else null;
+    const default_timeout_ms: ?u32 = if (fun.jsc.Jest.Jest.runner) |runner| if (runner.default_timeout_ms != 0) runner.default_timeout_ms else null else null;
+    const override_timeout_ms: ?u32 = if (fun.jsc.Jest.Jest.runner) |runner| if (runner.default_timeout_override != std.math.maxInt(u32)) runner.default_timeout_override else null else null;
     const timeout_option_ms: ?u32 = if (timeout_option) |timeout| std.math.lossyCast(u32, timeout) else null;
     result.options.timeout = timeout_option_ms orelse override_timeout_ms orelse default_timeout_ms orelse 0;
 
@@ -449,11 +449,11 @@ pub fn finalize(
     VirtualMachine.get().allocator.destroy(this);
 }
 
-pub fn createUnbound(globalThis: *JSGlobalObject, mode: Mode, each: jsc.JSValue, cfg: bun_test.BaseScopeCfg) JSValue {
+pub fn createUnbound(globalThis: *JSGlobalObject, mode: Mode, each: jsc.JSValue, cfg: fun_test.BaseScopeCfg) JSValue {
     groupLog.begin(@src());
     defer groupLog.end();
 
-    var scope_functions = bun.handleOom(globalThis.bunVM().allocator.create(ScopeFunctions));
+    var scope_functions = fun.handleOom(globalThis.funVM().allocator.create(ScopeFunctions));
     scope_functions.* = .{ .mode = mode, .cfg = cfg, .each = each };
 
     const value = scope_functions.toJS(globalThis);
@@ -465,14 +465,14 @@ pub fn createUnbound(globalThis: *JSGlobalObject, mode: Mode, each: jsc.JSValue,
     return value;
 }
 
-pub fn bind(value: JSValue, globalThis: *JSGlobalObject, name: bun.String) bun.JSError!JSValue {
+pub fn bind(value: JSValue, globalThis: *JSGlobalObject, name: fun.String) fun.JSError!JSValue {
     const callFn = jsc.JSFunction.create(globalThis, name, callAsFunction, 1, .{});
     const bound = try callFn.bind(globalThis, value, &name, 1, &.{});
     try bound.setPrototypeDirect(value.getPrototype(globalThis), globalThis);
     return bound;
 }
 
-pub fn createBound(globalThis: *JSGlobalObject, mode: Mode, each: jsc.JSValue, cfg: bun_test.BaseScopeCfg, name: bun.String) bun.JSError!JSValue {
+pub fn createBound(globalThis: *JSGlobalObject, mode: Mode, each: jsc.JSValue, cfg: fun_test.BaseScopeCfg, name: fun.String) fun.JSError!JSValue {
     groupLog.begin(@src());
     defer groupLog.end();
 
@@ -480,18 +480,18 @@ pub fn createBound(globalThis: *JSGlobalObject, mode: Mode, each: jsc.JSValue, c
     return bind(value, globalThis, name);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VirtualMachine = jsc.VirtualMachine;
 const Strong = jsc.Strong.Deprecated;
 
-const bun_test = jsc.Jest.bun_test;
-const BunTest = bun_test.BunTest;
-const ScopeFunctions = bun_test.ScopeFunctions;
-const Signature = bun_test.js_fns.Signature;
-const groupLog = bun_test.debug.group;
+const fun_test = jsc.Jest.fun_test;
+const FunTest = fun_test.FunTest;
+const ScopeFunctions = fun_test.ScopeFunctions;
+const Signature = fun_test.js_fns.Signature;
+const groupLog = fun_test.debug.group;

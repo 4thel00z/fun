@@ -1,5 +1,5 @@
 #include "BakeProduction.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "JavaScriptCore/CallData.h"
 #include "WebCoreJSBuiltins.h"
 #include "JavaScriptCore/JSPromise.h"
@@ -9,7 +9,7 @@ namespace Bake {
 
 extern "C" JSC::JSPromise* BakeRenderRoutesForProdStatic(
     JSC::JSGlobalObject* global,
-    BunString outBase,
+    FunString outBase,
     JSC::JSValue allServerFiles,
     JSC::JSValue renderStatic,
     JSC::JSValue getParams,

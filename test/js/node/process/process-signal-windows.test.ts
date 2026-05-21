@@ -19,13 +19,13 @@
 // after the fix the names resolve and uv_kill returns ENOSYS, which matches
 // Node.js.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 
 test.skipIf(!isWindows)("SIGHUP and SIGBREAK are recognised as signal names on Windows", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       const os = require("node:os");
@@ -49,7 +49,7 @@ test.skipIf(!isWindows)("SIGHUP and SIGBREAK are recognised as signal names on W
       }
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-test("bun build --no-bundle with HTML entrypoint should error with helpful message - issue #23569", async () => {
+test("fun build --no-bundle with HTML entrypoint should error with helpful message - issue #23569", async () => {
   using dir = tempDir("23569-html-no-bundle", {
     "index.html": `<!DOCTYPE html>
 <html>
@@ -15,9 +15,9 @@ test("bun build --no-bundle with HTML entrypoint should error with helpful messa
     "script.js": `console.log('Hello');`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "./index.html", "--no-bundle"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "./index.html", "--no-bundle"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -29,7 +29,7 @@ test("bun build --no-bundle with HTML entrypoint should error with helpful messa
   expect(stderr).toContain("HTML imports are only supported when bundling");
 });
 
-test("bun build --no-bundle with HTML entrypoint and --outdir should also error - issue #23569", async () => {
+test("fun build --no-bundle with HTML entrypoint and --outdir should also error - issue #23569", async () => {
   using dir = tempDir("23569-html-no-bundle-outdir", {
     "index.html": `<!DOCTYPE html>
 <html>
@@ -43,9 +43,9 @@ test("bun build --no-bundle with HTML entrypoint and --outdir should also error 
     "script.js": `console.log('Hello');`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "./index.html", "--outdir", "./build", "--no-bundle"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "./index.html", "--outdir", "./build", "--no-bundle"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -57,7 +57,7 @@ test("bun build --no-bundle with HTML entrypoint and --outdir should also error 
   expect(stderr).toContain("HTML imports are only supported when bundling");
 });
 
-test("bun build with HTML entrypoint without --no-bundle should succeed", async () => {
+test("fun build with HTML entrypoint without --no-bundle should succeed", async () => {
   using dir = tempDir("23569-html-bundle", {
     "index.html": `<!DOCTYPE html>
 <html>
@@ -71,9 +71,9 @@ test("bun build with HTML entrypoint without --no-bundle should succeed", async 
     "script.js": `console.log('Hello');`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "./index.html", "--outdir", "./build"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "./index.html", "--outdir", "./build"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

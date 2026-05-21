@@ -22,6 +22,6 @@ const interpreter = @import("../interpreter.zig");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const Yield = bun.shell.Yield;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const Yield = fun.shell.Yield;

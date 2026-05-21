@@ -1,6 +1,6 @@
-import { deserialize, serialize } from "bun:jsc";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { deserialize, serialize } from "fun:jsc";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import v8 from "node:v8";
 
 describe("structuredClone with Blob and File", () => {
@@ -346,7 +346,7 @@ describe("structuredClone with Blob and File", () => {
     // JSON summary. On a vulnerable build this either prints a non-zero length
     // (OOB heap bytes) or the process dies before printing anything.
     const childScript = `
-      const { serialize, deserialize } = require("bun:jsc");
+      const { serialize, deserialize } = require("fun:jsc");
       const v8 = require("node:v8");
       const [, atStr, offsetStr] = process.argv;
       const at = Number(atStr);
@@ -373,9 +373,9 @@ describe("structuredClone with Blob and File", () => {
       ["> u52", (1n << 52n) + 123n],
       ["u64 max", (1n << 64n) - 1n],
     ])("offset %s does not expose out-of-store bytes", async (_name, offset) => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", childScript, String(offsetFieldIndex), String(offset)],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", childScript, String(offsetFieldIndex), String(offset)],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -499,10 +499,10 @@ describe("structuredClone with Blob and File", () => {
       // the five cut points, so the measured window grows by ~750 MiB;
       // with it the window is flat modulo a few MiB of noise.
       for (let i = 0; i < 1000; i++) attempt();
-      Bun.gc(true);
+      Fun.gc(true);
       const rssBefore = process.memoryUsage.rss();
       for (let i = 0; i < 1500; i++) attempt();
-      Bun.gc(true);
+      Fun.gc(true);
       const rssAfter = process.memoryUsage.rss();
 
       const deltaMiB = (rssAfter - rssBefore) / 1024 / 1024;

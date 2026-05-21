@@ -5,22 +5,22 @@ pub const AsyncModule = @import("./AsyncModule.zig").AsyncModule;
 pub const RuntimeTranspilerStore = @import("./RuntimeTranspilerStore.zig").RuntimeTranspilerStore;
 pub const HardcodedModule = @import("../resolve_builtins/HardcodedModule.zig").HardcodedModule;
 
-transpile_source_code_arena: ?*bun.ArenaAllocator = null,
+transpile_source_code_arena: ?*fun.ArenaAllocator = null,
 eval_source: ?*logger.Source = null,
 
 comptime {
-    _ = Bun__transpileVirtualModule;
-    _ = Bun__runVirtualModule;
-    _ = Bun__transpileFile;
-    _ = Bun__fetchBuiltinModule;
-    _ = Bun__getDefaultLoader;
+    _ = Fun__transpileVirtualModule;
+    _ = Fun__runVirtualModule;
+    _ = Fun__transpileFile;
+    _ = Fun__fetchBuiltinModule;
+    _ = Fun__getDefaultLoader;
 }
 
 pub var is_allowed_to_use_internal_testing_apis = false;
 
 /// This must be called after calling transpileSourceCode
 pub fn resetArena(this: *ModuleLoader, jsc_vm: *VirtualMachine) void {
-    bun.assert(&jsc_vm.module_loader == this);
+    fun.assert(&jsc_vm.module_loader == this);
     if (this.transpile_source_code_arena) |arena| {
         if (jsc_vm.smol) {
             _ = arena.reset(.free_all);
@@ -30,7 +30,7 @@ pub fn resetArena(this: *ModuleLoader, jsc_vm: *VirtualMachine) void {
     }
 }
 
-pub fn resolveEmbeddedFile(vm: *VirtualMachine, path_buf: *bun.PathBuffer, input_path: []const u8, extname: []const u8) ?[]const u8 {
+pub fn resolveEmbeddedFile(vm: *VirtualMachine, path_buf: *fun.PathBuffer, input_path: []const u8, extname: []const u8) ?[]const u8 {
     if (input_path.len == 0) return null;
     var graph = vm.standalone_module_graph orelse return null;
     const file = graph.find(input_path) orelse return null;
@@ -40,17 +40,17 @@ pub fn resolveEmbeddedFile(vm: *VirtualMachine, path_buf: *bun.PathBuffer, input
     }
 
     // atomically write to a tmpfile and then move it to the final destination
-    const tmpname_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(tmpname_buf);
-    const tmpfilename = bun.fs.FileSystem.tmpname(extname, tmpname_buf, bun.hash(file.name)) catch return null;
+    const tmpname_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(tmpname_buf);
+    const tmpfilename = fun.fs.FileSystem.tmpname(extname, tmpname_buf, fun.hash(file.name)) catch return null;
 
-    const tmpdir: bun.FD = .fromStdDir(bun.fs.FileSystem.instance.tmpdir() catch return null);
+    const tmpdir: fun.FD = .fromStdDir(fun.fs.FileSystem.instance.tmpdir() catch return null);
 
     // First we open the tmpfile, to avoid any other work in the event of failure.
-    const tmpfile = bun.Tmpfile.create(tmpdir, tmpfilename).unwrap() catch return null;
+    const tmpfile = fun.Tmpfile.create(tmpdir, tmpfilename).unwrap() catch return null;
     defer tmpfile.fd.close();
 
-    switch (bun.api.node.fs.NodeFS.writeFileWithPathBuffer(
+    switch (fun.api.node.fs.NodeFS.writeFileWithPathBuffer(
         tmpname_buf, // not used
 
         .{
@@ -67,11 +67,11 @@ pub fn resolveEmbeddedFile(vm: *VirtualMachine, path_buf: *bun.PathBuffer, input
         },
         else => {},
     }
-    return bun.path.joinAbsStringBuf(bun.fs.FileSystem.RealFS.tmpdirPath(), path_buf, &[_]string{tmpfilename}, .auto);
+    return fun.path.joinAbsStringBuf(fun.fs.FileSystem.RealFS.tmpdirPath(), path_buf, &[_]string{tmpfilename}, .auto);
 }
 
-pub export fn Bun__getDefaultLoader(global: *JSGlobalObject, str: *const bun.String) api.Loader {
-    var jsc_vm = global.bunVM();
+pub export fn Fun__getDefaultLoader(global: *JSGlobalObject, str: *const fun.String) api.Loader {
+    var jsc_vm = global.funVM();
     const filename = str.toUTF8(jsc_vm.allocator);
     defer filename.deinit();
     const loader = jsc_vm.transpiler.options.loader(Fs.PathName.init(filename.slice()).ext).toAPI();
@@ -104,7 +104,7 @@ pub fn transpileSourceCode(
             // Don't print "export default <file path>"
             return ResolvedSource{
                 .allocator = null,
-                .source_code = bun.String.empty,
+                .source_code = fun.String.empty,
                 .specifier = input_specifier,
                 .source_url = input_specifier.createIfDifferent(path.text),
             };
@@ -120,12 +120,12 @@ pub fn transpileSourceCode(
 
             jsc_vm.transpiled_count += 1;
             jsc_vm.transpiler.resetStore();
-            const hash = bun.Watcher.getHash(path.text);
+            const hash = fun.Watcher.getHash(path.text);
             const is_main = jsc_vm.main.len == path.text.len and
                 jsc_vm.main_hash == hash and
                 strings.eqlLong(jsc_vm.main, path.text, false);
 
-            var arena_: ?*bun.ArenaAllocator = brk: {
+            var arena_: ?*fun.ArenaAllocator = brk: {
                 // Attempt to reuse the Arena from the parser when we can
                 // This code is potentially re-entrant, so only one Arena can be reused at a time
                 // That's why we have to check if the Arena is null
@@ -137,8 +137,8 @@ pub fn transpileSourceCode(
                 }
 
                 // we must allocate the arena so that the pointer it points to is always valid.
-                const arena = try jsc_vm.allocator.create(bun.ArenaAllocator);
-                arena.* = bun.ArenaAllocator.init(bun.default_allocator);
+                const arena = try jsc_vm.allocator.create(fun.ArenaAllocator);
+                arena.* = fun.ArenaAllocator.init(fun.default_allocator);
                 break :brk arena;
             };
 
@@ -170,15 +170,15 @@ pub fn transpileSourceCode(
             var fd: ?FD = null;
             var package_json: ?*PackageJSON = null;
 
-            if (jsc_vm.bun_watcher.indexOf(hash)) |index| {
-                fd = jsc_vm.bun_watcher.watchlist().items(.fd)[index].unwrapValid();
-                package_json = jsc_vm.bun_watcher.watchlist().items(.package_json)[index];
+            if (jsc_vm.fun_watcher.indexOf(hash)) |index| {
+                fd = jsc_vm.fun_watcher.watchlist().items(.fd)[index].unwrapValid();
+                package_json = jsc_vm.fun_watcher.watchlist().items(.package_json)[index];
             }
 
             var cache = jsc.RuntimeTranspilerCache{
                 .output_code_allocator = allocator,
-                .sourcemap_allocator = bun.default_allocator,
-                .esm_record_allocator = bun.default_allocator,
+                .sourcemap_allocator = fun.default_allocator,
+                .esm_record_allocator = fun.default_allocator,
             };
 
             const old = jsc_vm.transpiler.log;
@@ -221,12 +221,12 @@ pub fn transpileSourceCode(
                 else => .unknown,
             };
 
-            var input_file_fd: FD = bun.invalid_fd;
+            var input_file_fd: FD = fun.invalid_fd;
             var parse_options = Transpiler.ParseOptions{
                 .allocator = allocator,
                 .path = path,
                 .loader = loader,
-                .dirname_fd = bun.invalid_fd,
+                .dirname_fd = fun.invalid_fd,
                 .file_descriptor = fd,
                 .file_fd_ptr = &input_file_fd,
                 .file_hash = hash,
@@ -249,9 +249,9 @@ pub fn transpileSourceCode(
                 .remove_cjs_module_wrapper = is_main and jsc_vm.module_loader.eval_source != null,
             };
             defer {
-                if (should_close_input_file_fd and input_file_fd != bun.invalid_fd) {
+                if (should_close_input_file_fd and input_file_fd != fun.invalid_fd) {
                     input_file_fd.close();
-                    input_file_fd = bun.invalid_fd;
+                    input_file_fd = fun.invalid_fd;
                 }
             }
 
@@ -276,7 +276,7 @@ pub fn transpileSourceCode(
                                 if (input_file_fd.isValid()) {
                                     if (!is_node_override and std.fs.path.isAbsolute(path.text) and !strings.contains(path.text, "node_modules")) {
                                         should_close_input_file_fd = false;
-                                        _ = jsc_vm.bun_watcher.addFile(
+                                        _ = jsc_vm.fun_watcher.addFile(
                                             input_file_fd,
                                             path.text,
                                             hash,
@@ -321,7 +321,7 @@ pub fn transpileSourceCode(
                     if (input_file_fd.isValid()) {
                         if (!is_node_override and std.fs.path.isAbsolute(path.text) and !strings.contains(path.text, "node_modules")) {
                             should_close_input_file_fd = false;
-                            _ = jsc_vm.bun_watcher.addFile(
+                            _ = jsc_vm.fun_watcher.addFile(
                                 input_file_fd,
                                 path.text,
                                 hash,
@@ -343,7 +343,7 @@ pub fn transpileSourceCode(
             if (loader == .json) {
                 return ResolvedSource{
                     .allocator = null,
-                    .source_code = bun.String.cloneUTF8(source.contents),
+                    .source_code = fun.String.cloneUTF8(source.contents),
                     .specifier = input_specifier,
                     .source_url = input_specifier.createIfDifferent(path.text),
                     .tag = ResolvedSource.Tag.json_for_object_loader,
@@ -354,8 +354,8 @@ pub fn transpileSourceCode(
                 return ResolvedSource{
                     .allocator = null,
                     .source_code = switch (comptime flags) {
-                        .print_source_and_clone => bun.String.init(jsc_vm.allocator.dupe(u8, source.contents) catch unreachable),
-                        .print_source => bun.String.init(source.contents),
+                        .print_source_and_clone => fun.String.init(jsc_vm.allocator.dupe(u8, source.contents) catch unreachable),
+                        .print_source => fun.String.init(source.contents),
                         else => @compileError("unreachable"),
                     },
                     .specifier = input_specifier,
@@ -387,7 +387,7 @@ pub fn transpileSourceCode(
                 const bytecode_slice = parse_result.already_bundled.bytecodeSlice();
                 return ResolvedSource{
                     .allocator = null,
-                    .source_code = bun.String.cloneLatin1(source.contents),
+                    .source_code = fun.String.cloneLatin1(source.contents),
                     .specifier = input_specifier,
                     .source_url = input_specifier.createIfDifferent(path.text),
                     .already_bundled = true,
@@ -405,7 +405,7 @@ pub fn transpileSourceCode(
                 if (was_cjs) {
                     return .{
                         .allocator = null,
-                        .source_code = bun.String.static("(function(){})"),
+                        .source_code = fun.String.static("(function(){})"),
                         .specifier = input_specifier,
                         .source_url = input_specifier.createIfDifferent(path.text),
                         .is_commonjs_module = true,
@@ -417,7 +417,7 @@ pub fn transpileSourceCode(
             if (cache.entry) |*entry| {
                 jsc_vm.source_mappings.putMappings(source, .{
                     .list = .{ .items = @constCast(entry.sourcemap), .capacity = entry.sourcemap.len },
-                    .allocator = bun.default_allocator,
+                    .allocator = fun.default_allocator,
                 }) catch {};
 
                 if (comptime Environment.allow_assert) {
@@ -426,7 +426,7 @@ pub fn transpileSourceCode(
 
                 const module_info: ?*analyze_transpiled_module.ModuleInfoDeserialized =
                     if (jsc_vm.useIsolationSourceProviderCache() and entry.metadata.module_type != .cjs and entry.esm_record.len > 0)
-                        analyze_transpiled_module.ModuleInfoDeserialized.createFromCachedRecord(entry.esm_record, bun.default_allocator)
+                        analyze_transpiled_module.ModuleInfoDeserialized.createFromCachedRecord(entry.esm_record, fun.default_allocator)
                     else
                         null;
 
@@ -435,7 +435,7 @@ pub fn transpileSourceCode(
                     .source_code = switch (entry.output_code) {
                         .string => entry.output_code.string,
                         .utf8 => brk: {
-                            const result = bun.String.cloneUTF8(entry.output_code.utf8);
+                            const result = fun.String.cloneUTF8(entry.output_code.utf8);
                             cache.output_code_allocator.free(entry.output_code.utf8);
                             entry.output_code.utf8 = "";
                             break :brk result;
@@ -516,7 +516,7 @@ pub fn transpileSourceCode(
             const is_commonjs_module = parse_result.ast.has_commonjs_export_names or parse_result.ast.exports_kind == .cjs;
             const module_info: ?*analyze_transpiled_module.ModuleInfo =
                 if (jsc_vm.useIsolationSourceProviderCache() and !is_commonjs_module and loader.isJavaScriptLike())
-                    analyze_transpiled_module.ModuleInfo.create(bun.default_allocator, loader.isTypeScript()) catch null
+                    analyze_transpiled_module.ModuleInfo.create(fun.default_allocator, loader.isTypeScript()) catch null
                 else
                     null;
             errdefer if (module_info) |mi| mi.destroy();
@@ -576,7 +576,7 @@ pub fn transpileSourceCode(
                 .allocator = null,
                 .source_code = brk: {
                     const written = printer.ctx.getWritten();
-                    const result = cache.output_code orelse bun.String.cloneLatin1(written);
+                    const result = cache.output_code orelse fun.String.cloneLatin1(written);
 
                     if (written.len > 1024 * 1024 * 2 or jsc_vm.smol) {
                         printer.ctx.buffer.deinit();
@@ -651,7 +651,7 @@ pub fn transpileSourceCode(
                 }
                 return ResolvedSource{
                     .allocator = null,
-                    .source_code = bun.String.static(@embedFile("../js/wasi-runner.js")),
+                    .source_code = fun.String.static(@embedFile("../js/wasi-runner.js")),
                     .specifier = input_specifier,
                     .source_url = input_specifier.createIfDifferent(path.text),
                     .tag = .esm,
@@ -680,11 +680,11 @@ pub fn transpileSourceCode(
                 if (jsc_vm.hot_reload == .hot) {
                     break :brk 
                     \\// Generated code
-                    \\import {Database} from 'bun:sqlite';
+                    \\import {Database} from 'fun:sqlite';
                     \\const {path} = import.meta;
                     \\
                     \\// Don't reload the database if it's already loaded
-                    \\const registry = (globalThis[Symbol.for("bun:sqlite:hot")] ??= new Map());
+                    \\const registry = (globalThis[Symbol.for("fun:sqlite:hot")] ??= new Map());
                     \\
                     \\export let db = registry.get(path);
                     \\export const __esModule = true;
@@ -700,7 +700,7 @@ pub fn transpileSourceCode(
 
                 break :brk 
                 \\// Generated code
-                \\import {Database} from 'bun:sqlite';
+                \\import {Database} from 'fun:sqlite';
                 \\export const db = new Database(import.meta.path);
                 \\
                 \\export const __esModule = true;
@@ -710,7 +710,7 @@ pub fn transpileSourceCode(
 
             return ResolvedSource{
                 .allocator = null,
-                .source_code = bun.String.cloneUTF8(sqlite_module_source_code_string),
+                .source_code = fun.String.cloneUTF8(sqlite_module_source_code_string),
                 .specifier = input_specifier,
                 .source_url = input_specifier.createIfDifferent(path.text),
                 .tag = .esm,
@@ -721,7 +721,7 @@ pub fn transpileSourceCode(
             if (flags.disableTranspiling()) {
                 return ResolvedSource{
                     .allocator = null,
-                    .source_code = bun.String.empty,
+                    .source_code = fun.String.empty,
                     .specifier = input_specifier,
                     .source_url = input_specifier.createIfDifferent(path.text),
                     .tag = .esm,
@@ -746,7 +746,7 @@ pub fn transpileSourceCode(
             if (flags.disableTranspiling()) {
                 return ResolvedSource{
                     .allocator = null,
-                    .source_code = bun.String.empty,
+                    .source_code = fun.String.empty,
                     .specifier = input_specifier,
                     .source_url = input_specifier.createIfDifferent(path.text),
                     .tag = .esm,
@@ -756,12 +756,12 @@ pub fn transpileSourceCode(
             if (virtual_source == null) {
                 if (jsc_vm.isWatcherEnabled()) auto_watch: {
                     if (std.fs.path.isAbsolute(path.text) and !strings.contains(path.text, "node_modules")) {
-                        const input_fd: bun.FD = brk: {
+                        const input_fd: fun.FD = brk: {
                             // kqueue watchers need a file descriptor to receive event notifications on it.
-                            if (bun.Watcher.requires_file_descriptors) {
-                                switch (bun.sys.open(
+                            if (fun.Watcher.requires_file_descriptors) {
+                                switch (fun.sys.open(
                                     &(std.posix.toPosixPath(path.text) catch break :auto_watch),
-                                    bun.Watcher.watch_open_flags,
+                                    fun.Watcher.watch_open_flags,
                                     0,
                                 )) {
                                     .err => break :auto_watch,
@@ -772,8 +772,8 @@ pub fn transpileSourceCode(
                                 break :brk .invalid;
                             }
                         };
-                        const hash = bun.Watcher.getHash(path.text);
-                        switch (jsc_vm.bun_watcher.addFile(
+                        const hash = fun.Watcher.getHash(path.text);
+                        switch (jsc_vm.fun_watcher.addFile(
                             input_fd,
                             path.text,
                             hash,
@@ -804,14 +804,14 @@ pub fn transpileSourceCode(
 
             const value = brk: {
                 if (!jsc_vm.origin.isEmpty()) {
-                    var buf = bun.handleOom(MutableString.init2048(jsc_vm.allocator));
+                    var buf = fun.handleOom(MutableString.init2048(jsc_vm.allocator));
                     defer buf.deinit();
                     var writer = buf.writer();
-                    jsc.API.Bun.getPublicPath(specifier, jsc_vm.origin, @TypeOf(&writer), &writer);
-                    break :brk try bun.String.createUTF8ForJS(globalObject.?, buf.slice());
+                    jsc.API.Fun.getPublicPath(specifier, jsc_vm.origin, @TypeOf(&writer), &writer);
+                    break :brk try fun.String.createUTF8ForJS(globalObject.?, buf.slice());
                 }
 
-                break :brk try bun.String.createUTF8ForJS(globalObject.?, path.text);
+                break :brk try fun.String.createUTF8ForJS(globalObject.?, path.text);
             };
 
             return ResolvedSource{
@@ -825,19 +825,19 @@ pub fn transpileSourceCode(
     }
 }
 
-pub export fn Bun__resolveAndFetchBuiltinModule(
+pub export fn Fun__resolveAndFetchBuiltinModule(
     jsc_vm: *VirtualMachine,
-    specifier: *bun.String,
+    specifier: *fun.String,
     ret: *jsc.ErrorableResolvedSource,
 ) bool {
     jsc.markBinding(@src());
     var log = logger.Log.init(jsc_vm.transpiler.allocator);
     defer log.deinit();
 
-    const alias = HardcodedModule.Alias.bun_aliases.getWithEql(specifier.*, bun.String.eqlComptime) orelse
+    const alias = HardcodedModule.Alias.fun_aliases.getWithEql(specifier.*, fun.String.eqlComptime) orelse
         return false;
     const hardcoded = HardcodedModule.map.get(alias.path) orelse {
-        bun.debugAssert(false);
+        fun.debugAssert(false);
         return false;
     };
     ret.* = .ok(
@@ -847,11 +847,11 @@ pub export fn Bun__resolveAndFetchBuiltinModule(
     return true;
 }
 
-pub export fn Bun__fetchBuiltinModule(
+pub export fn Fun__fetchBuiltinModule(
     jsc_vm: *VirtualMachine,
     globalObject: *JSGlobalObject,
-    specifier: *bun.String,
-    referrer: *bun.String,
+    specifier: *fun.String,
+    referrer: *fun.String,
     ret: *jsc.ErrorableResolvedSource,
 ) bool {
     jsc.markBinding(@src());
@@ -878,19 +878,19 @@ pub export fn Bun__fetchBuiltinModule(
 
 const always_sync_modules = .{"reflect-metadata"};
 
-pub export fn Bun__transpileFile(
+pub export fn Fun__transpileFile(
     jsc_vm: *VirtualMachine,
     globalObject: *JSGlobalObject,
-    specifier_ptr: *bun.String,
-    referrer: *bun.String,
-    type_attribute: ?*const bun.String,
+    specifier_ptr: *fun.String,
+    referrer: *fun.String,
+    type_attribute: ?*const fun.String,
     ret: *jsc.ErrorableResolvedSource,
     allow_promise: bool,
     is_commonjs_require: bool,
-    _force_loader_type: bun.schema.api.Loader,
+    _force_loader_type: fun.schema.api.Loader,
 ) ?*anyopaque {
     jsc.markBinding(@src());
-    const force_loader_type: bun.options.Loader.Optional = .fromAPI(_force_loader_type);
+    const force_loader_type: fun.options.Loader.Optional = .fromAPI(_force_loader_type);
     var log = logger.Log.init(jsc_vm.transpiler.allocator);
     defer log.deinit();
 
@@ -914,7 +914,7 @@ pub export fn Bun__transpileFile(
 
     if (force_loader_type.unwrap()) |loader_type| {
         @branchHint(.unlikely);
-        bun.assert(!is_commonjs_require);
+        fun.assert(!is_commonjs_require);
         lr.loader = loader_type;
     } else if (is_commonjs_require and jsc_vm.has_mutated_built_in_extensions > 0) {
         @branchHint(.unlikely);
@@ -926,7 +926,7 @@ pub export fn Bun__transpileFile(
                 .custom => |strong| {
                     ret.* = jsc.ErrorableResolvedSource.ok(ResolvedSource{
                         .allocator = null,
-                        .source_code = bun.String.empty,
+                        .source_code = fun.String.empty,
                         .specifier = .empty,
                         .source_url = .empty,
                         .cjs_custom_extension_index = strong.get(),
@@ -978,7 +978,7 @@ pub export fn Bun__transpileFile(
     //   Import Expressions (import('foo'))
     //
     transpile_async: {
-        if (comptime bun.FeatureFlags.concurrent_transpiler) {
+        if (comptime fun.FeatureFlags.concurrent_transpiler) {
             const concurrent_loader = lr.loader orelse .file;
             if (blob_to_deinit == null and
                 allow_promise and
@@ -1012,7 +1012,7 @@ pub export fn Bun__transpileFile(
                 // doesn't record them.
                 if (pkg_name) |pkg_name_| {
                     inline for (always_sync_modules) |always_sync_specifier| {
-                        if (bun.strings.eqlComptime(pkg_name_, always_sync_specifier)) {
+                        if (fun.strings.eqlComptime(pkg_name_, always_sync_specifier)) {
                             break :transpile_async;
                         }
                     }
@@ -1051,7 +1051,7 @@ pub export fn Bun__transpileFile(
                             .custom => |strong| {
                                 ret.* = jsc.ErrorableResolvedSource.ok(ResolvedSource{
                                     .allocator = null,
-                                    .source_code = bun.String.empty,
+                                    .source_code = fun.String.empty,
                                     .specifier = .empty,
                                     .source_url = .empty,
                                     .cjs_custom_extension_index = strong.get(),
@@ -1068,11 +1068,11 @@ pub export fn Bun__transpileFile(
                 break :loader .ts;
             }
 
-            // For ESM, Bun treats unknown extensions as file loader
+            // For ESM, Fun treats unknown extensions as file loader
             break :loader .file;
         } else {
             // Unless it's potentially the main module
-            // This is important so that "bun run ./foo-i-have-no-extension" works
+            // This is important so that "fun run ./foo-i-have-no-extension" works
             break :loader .tsx;
         }
     };
@@ -1101,7 +1101,7 @@ pub export fn Bun__transpileFile(
         ) catch |err| {
             switch (err) {
                 error.AsyncModule => {
-                    bun.assert(promise != null);
+                    fun.assert(promise != null);
                     return promise;
                 },
                 error.PluginError => return null,
@@ -1119,11 +1119,11 @@ pub export fn Bun__transpileFile(
     return promise;
 }
 
-export fn Bun__runVirtualModule(globalObject: *JSGlobalObject, specifier_ptr: *const bun.String) JSValue {
+export fn Fun__runVirtualModule(globalObject: *JSGlobalObject, specifier_ptr: *const fun.String) JSValue {
     jsc.markBinding(@src());
-    if (globalObject.bunVM().plugin_runner == null) return JSValue.zero;
+    if (globalObject.funVM().plugin_runner == null) return JSValue.zero;
 
-    const specifier_slice = specifier_ptr.toUTF8(bun.default_allocator);
+    const specifier_slice = specifier_ptr.toUTF8(fun.default_allocator);
     defer specifier_slice.deinit();
     const specifier = specifier_slice.slice();
 
@@ -1137,30 +1137,30 @@ export fn Bun__runVirtualModule(globalObject: *JSGlobalObject, specifier_ptr: *c
     else
         specifier[@min(namespace.len + 1, specifier.len)..];
 
-    return globalObject.runOnLoadPlugins(bun.String.init(namespace), bun.String.init(after_namespace), .bun) catch {
+    return globalObject.runOnLoadPlugins(fun.String.init(namespace), fun.String.init(after_namespace), .fun) catch {
         return JSValue.zero;
     } orelse return .zero;
 }
 
-fn getHardcodedModule(jsc_vm: *VirtualMachine, specifier: bun.String, hardcoded: HardcodedModule) ?ResolvedSource {
+fn getHardcodedModule(jsc_vm: *VirtualMachine, specifier: fun.String, hardcoded: HardcodedModule) ?ResolvedSource {
     analytics.Features.builtin_modules.insert(hardcoded);
     return switch (hardcoded) {
-        .@"bun:main" => if (jsc_vm.entry_point.generated) .{
+        .@"fun:main" => if (jsc_vm.entry_point.generated) .{
             .allocator = null,
-            .source_code = bun.String.cloneUTF8(jsc_vm.entry_point.contents),
+            .source_code = fun.String.cloneUTF8(jsc_vm.entry_point.contents),
             .specifier = specifier,
             .source_url = specifier,
             .tag = .esm,
             .source_code_needs_deref = true,
         } else null,
-        .@"bun:internal-for-testing" => {
+        .@"fun:internal-for-testing" => {
             if (!Environment.isDebug) {
                 if (!is_allowed_to_use_internal_testing_apis)
                     return null;
             }
-            return jsSyntheticModule(.@"bun:internal-for-testing", specifier);
+            return jsSyntheticModule(.@"fun:internal-for-testing", specifier);
         },
-        .@"bun:wrap" => .{
+        .@"fun:wrap" => .{
             .allocator = null,
             .source_code = String.init(Runtime.Runtime.sourceCode()),
             .specifier = specifier,
@@ -1170,30 +1170,30 @@ fn getHardcodedModule(jsc_vm: *VirtualMachine, specifier: bun.String, hardcoded:
     };
 }
 
-pub fn fetchBuiltinModule(jsc_vm: *VirtualMachine, specifier: bun.String) !?ResolvedSource {
-    if (HardcodedModule.map.getWithEql(specifier, bun.String.eqlComptime)) |hardcoded| {
+pub fn fetchBuiltinModule(jsc_vm: *VirtualMachine, specifier: fun.String) !?ResolvedSource {
+    if (HardcodedModule.map.getWithEql(specifier, fun.String.eqlComptime)) |hardcoded| {
         return getHardcodedModule(jsc_vm, specifier, hardcoded);
     }
 
     if (specifier.hasPrefixComptime(js_ast.Macro.namespaceWithColon)) {
-        const spec = specifier.toUTF8(bun.default_allocator);
+        const spec = specifier.toUTF8(fun.default_allocator);
         defer spec.deinit();
         if (jsc_vm.macro_entry_points.get(MacroEntryPoint.generateIDFromSpecifier(spec.slice()))) |entry| {
             return .{
                 .allocator = null,
-                .source_code = bun.String.cloneUTF8(entry.source.contents),
+                .source_code = fun.String.cloneUTF8(entry.source.contents),
                 .specifier = specifier,
                 .source_url = specifier.dupeRef(),
             };
         }
     } else if (jsc_vm.standalone_module_graph) |graph| {
-        const specifier_utf8 = specifier.toUTF8(bun.default_allocator);
+        const specifier_utf8 = specifier.toUTF8(fun.default_allocator);
         defer specifier_utf8.deinit();
         if (graph.files.getPtr(specifier_utf8.slice())) |file| {
             if (file.loader == .sqlite or file.loader == .sqlite_embedded) {
                 const code =
                     \\/* Generated code */
-                    \\import {Database} from 'bun:sqlite';
+                    \\import {Database} from 'fun:sqlite';
                     \\import {readFileSync} from 'node:fs';
                     \\export const db = new Database(readFileSync(import.meta.path));
                     \\
@@ -1202,7 +1202,7 @@ pub fn fetchBuiltinModule(jsc_vm: *VirtualMachine, specifier: bun.String) !?Reso
                 ;
                 return .{
                     .allocator = null,
-                    .source_code = bun.String.static(code),
+                    .source_code = fun.String.static(code),
                     .specifier = specifier,
                     .source_url = specifier.dupeRef(),
                     .source_code_needs_deref = false,
@@ -1215,12 +1215,12 @@ pub fn fetchBuiltinModule(jsc_vm: *VirtualMachine, specifier: bun.String) !?Reso
                 .specifier = specifier,
                 .source_url = specifier.dupeRef(),
                 // bytecode_origin_path is the path used when generating bytecode; must match for cache hits
-                .bytecode_origin_path = if (file.bytecode_origin_path.len > 0) bun.String.fromBytes(file.bytecode_origin_path) else bun.String.empty,
+                .bytecode_origin_path = if (file.bytecode_origin_path.len > 0) fun.String.fromBytes(file.bytecode_origin_path) else fun.String.empty,
                 .source_code_needs_deref = false,
                 .bytecode_cache = if (file.bytecode.len > 0) file.bytecode.ptr else null,
                 .bytecode_cache_size = file.bytecode.len,
                 .module_info = if (file.module_info.len > 0)
-                    analyze_transpiled_module.ModuleInfoDeserialized.createFromCachedRecord(file.module_info, bun.default_allocator)
+                    analyze_transpiled_module.ModuleInfoDeserialized.createFromCachedRecord(file.module_info, fun.default_allocator)
                 else
                     null,
                 .is_commonjs_module = file.module_format == .cjs,
@@ -1231,18 +1231,18 @@ pub fn fetchBuiltinModule(jsc_vm: *VirtualMachine, specifier: bun.String) !?Reso
     return null;
 }
 
-export fn Bun__transpileVirtualModule(
+export fn Fun__transpileVirtualModule(
     globalObject: *JSGlobalObject,
-    specifier_ptr: *const bun.String,
-    referrer_ptr: *const bun.String,
+    specifier_ptr: *const fun.String,
+    referrer_ptr: *const fun.String,
     source_code: *ZigString,
     loader_: api.Loader,
     ret: *jsc.ErrorableResolvedSource,
 ) bool {
     jsc.markBinding(@src());
-    const jsc_vm = globalObject.bunVM();
+    const jsc_vm = globalObject.funVM();
     // Plugin runner is not required for virtual modules created via build.module()
-    // bun.assert(jsc_vm.plugin_runner != null);
+    // fun.assert(jsc_vm.plugin_runner != null);
 
     var specifier_slice = specifier_ptr.toUTF8(jsc_vm.allocator);
     const specifier = specifier_slice.slice();
@@ -1306,15 +1306,15 @@ export fn Bun__transpileVirtualModule(
 inline fn jsSyntheticModule(name: ResolvedSource.Tag, specifier: String) ResolvedSource {
     return ResolvedSource{
         .allocator = null,
-        .source_code = bun.String.empty,
+        .source_code = fun.String.empty,
         .specifier = specifier,
-        .source_url = bun.String.static(@tagName(name)),
+        .source_url = fun.String.static(@tagName(name)),
         .tag = name,
         .source_code_needs_deref = false,
     };
 }
 
-/// Dumps the module source to a file in /tmp/bun-debug-src/{filepath}
+/// Dumps the module source to a file in /tmp/fun-debug-src/{filepath}
 ///
 /// This can technically fail if concurrent access across processes happens, or permission issues.
 /// Errors here should always be ignored.
@@ -1329,21 +1329,21 @@ pub const FetchFlags = enum {
 };
 
 /// Support embedded .node files
-export fn Bun__resolveEmbeddedNodeFile(vm: *VirtualMachine, in_out_str: *bun.String) bool {
+export fn Fun__resolveEmbeddedNodeFile(vm: *VirtualMachine, in_out_str: *fun.String) bool {
     if (vm.standalone_module_graph == null) return false;
 
-    const input_path = in_out_str.toUTF8(bun.default_allocator);
+    const input_path = in_out_str.toUTF8(fun.default_allocator);
     defer input_path.deinit();
-    const path_buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(path_buf);
+    const path_buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(path_buf);
     const result = ModuleLoader.resolveEmbeddedFile(vm, path_buf, input_path.slice(), "node") orelse return false;
-    in_out_str.* = bun.String.cloneUTF8(result);
+    in_out_str.* = fun.String.cloneUTF8(result);
     return true;
 }
 
 export fn ModuleLoader__isBuiltin(data: [*]const u8, len: usize) bool {
     const str = data[0..len];
-    return HardcodedModule.Alias.bun_aliases.get(str) != null;
+    return HardcodedModule.Alias.fun_aliases.get(str) != null;
 }
 
 const debug = Output.scoped(.ModuleLoader, .hidden);
@@ -1368,29 +1368,29 @@ const dumpSource = @import("./RuntimeTranspilerStore.zig").dumpSource;
 const dumpSourceString = @import("./RuntimeTranspilerStore.zig").dumpSourceString;
 const setBreakPointOnFirstLine = @import("./RuntimeTranspilerStore.zig").setBreakPointOnFirstLine;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const String = bun.String;
-const Transpiler = bun.Transpiler;
-const analytics = bun.analytics;
-const js_ast = bun.ast;
-const js_printer = bun.js_printer;
-const logger = bun.logger;
-const strings = bun.strings;
-const Arena = bun.allocators.MimallocArena;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const String = fun.String;
+const Transpiler = fun.Transpiler;
+const analytics = fun.analytics;
+const js_ast = fun.ast;
+const js_printer = fun.js_printer;
+const logger = fun.logger;
+const strings = fun.strings;
+const Arena = fun.allocators.MimallocArena;
+const api = fun.schema.api;
 
-const jsc = bun.jsc;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
-const ResolvedSource = bun.jsc.ResolvedSource;
-const VirtualMachine = bun.jsc.VirtualMachine;
-const ZigString = bun.jsc.ZigString;
-const Bun = jsc.API.Bun;
+const jsc = fun.jsc;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
+const ResolvedSource = fun.jsc.ResolvedSource;
+const VirtualMachine = fun.jsc.VirtualMachine;
+const ZigString = fun.jsc.ZigString;
+const Fun = jsc.API.Fun;
 
-const ParseResult = bun.transpiler.ParseResult;
-const PluginRunner = bun.transpiler.PluginRunner;
-const MacroEntryPoint = bun.transpiler.EntryPoints.MacroEntryPoint;
+const ParseResult = fun.transpiler.ParseResult;
+const PluginRunner = fun.transpiler.PluginRunner;
+const MacroEntryPoint = fun.transpiler.EntryPoints.MacroEntryPoint;

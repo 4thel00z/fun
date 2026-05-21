@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <wtf/text/MakeString.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace WebViewProto;
 
@@ -96,7 +96,7 @@ HostBlockHandle makeHostBlock(WebViewHost& host)
 }
 
 // Console capture: wrap console.{log,warn,...} to postMessage the args
-// (each JSON.stringify'd) via webkit.messageHandlers.bunConsole before
+// (each JSON.stringify'd) via webkit.messageHandlers.funConsole before
 // calling the original. Injected at document-start for all frames.
 // postMessage is fire-and-forget on the WebContent side but queues on the
 // same IPC connection as callAsyncJavaScript completions — so a
@@ -104,7 +104,7 @@ HostBlockHandle makeHostBlock(WebViewHost& host)
 // completion, and the parent-side callback fires before the await resumes.
 static constexpr const char* kConsoleCaptureJS = R"js(
 (() => {
-  const h = webkit.messageHandlers.bunConsole;
+  const h = webkit.messageHandlers.funConsole;
   const wrap = (t, orig) => (...a) => {
     try { h.postMessage({type: t, args: a.map(x => { try { return JSON.stringify(x) ?? String(x) } catch { return String(x) } })}); } catch {}
     return orig.apply(console, a);
@@ -133,7 +133,7 @@ Ref<WebViewHost> WebViewHost::createForIPC(uint32_t viewId, uint32_t width, uint
     // backlink to WebViewHost is OBJC_ASSOCIATION_ASSIGN (non-retaining) so
     // there's no cycle. clearHost() on close makes late posts no-op.
     objc::WKUserContentController ucc(cfg.userContentController());
-    ucc.addScriptMessageHandler(host->m_delegate, objc::NSString::fromWTF("bunConsole"_s));
+    ucc.addScriptMessageHandler(host->m_delegate, objc::NSString::fromWTF("funConsole"_s));
     auto script = objc::WKUserScript::createAtDocumentStart(
         objc::NSString::fromWTF(WTF::String::fromUTF8(kConsoleCaptureJS)));
     ucc.addUserScript(script);
@@ -164,7 +164,7 @@ Ref<WebViewHost> WebViewHost::createForIPC(uint32_t viewId, uint32_t width, uint
     // only for tests that don't need rendering.
     //
     // alpha=0 + ignoresMouseEvents makes it user-invisible. The
-    // BunHostWindow overrides (isVisible/isKeyWindow/screen all forced) are
+    // FunHostWindow overrides (isVisible/isKeyWindow/screen all forced) are
     // redundant with a real on-screen window but kept as belt-and-suspenders
     // against the orderBack-before-setContentView timing on older macOS.
     //
@@ -292,7 +292,7 @@ void WebViewHost::screenshotIPC(uint8_t format, uint8_t quality)
 
 static unsigned long expandModifiers(uint8_t m)
 {
-    using namespace Bun::WebViewProto;
+    using namespace Fun::WebViewProto;
     using NSEvent = objc::NSEvent;
     unsigned long r = 0;
     if (m & ModShift) r |= NSEvent::ModShift;
@@ -804,7 +804,7 @@ void WebViewHost::onScreenshotComplete(id nsimage, id error)
     // we'd collide with O_EXCL.
     static uint32_t shmSeq = 0;
     char name[48];
-    snprintf(name, sizeof(name), "/bun-webview-%d-%u", getpid(), ++shmSeq);
+    snprintf(name, sizeof(name), "/fun-webview-%d-%u", getpid(), ++shmSeq);
     int fd = shm_open(name, O_CREAT | O_RDWR | O_EXCL, 0600);
     if (fd < 0) {
         hostWriter()->sendReplyStr(m_viewId, Reply::ScreenshotFailed, makeString("shm_open: "_s, WTF::String::fromUTF8(strerror(errno))));
@@ -840,6 +840,6 @@ void WebViewHost::onScreenshotComplete(id nsimage, id error)
     hostWriter()->sendReply(m_viewId, Reply::ScreenshotDone, payload.span().data(), static_cast<uint32_t>(payload.size()));
 }
 
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(DARWIN)

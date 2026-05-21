@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe("issue #3192", () => {
   test("yarn lockfile quotes workspace:* versions correctly", async () => {
@@ -22,9 +22,9 @@ describe("issue #3192", () => {
       }),
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "install", "--yarn"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "install", "--yarn"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -35,7 +35,7 @@ describe("issue #3192", () => {
     expect(exitCode).toBe(0);
 
     // Read the generated yarn.lock
-    const yarnLock = await Bun.file(`${dir}/yarn.lock`).text();
+    const yarnLock = await Fun.file(`${dir}/yarn.lock`).text();
 
     // The workspace:* version should be quoted
     // Bad output: "package-b@packages/package-b", package-b@workspace:*:

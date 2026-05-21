@@ -1,6 +1,6 @@
 "use strict";
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { createServer as createTcpServer } from "node:net";
 
 // Test that fetch sends headers with proper case on the wire.

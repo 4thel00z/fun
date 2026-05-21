@@ -72,7 +72,7 @@ pub const InputFile = struct {
     secondary_path: []const u8 = "",
     loader: options.Loader = options.Loader.file,
     side_effects: _resolver.SideEffects,
-    allocator: std.mem.Allocator = bun.default_allocator,
+    allocator: std.mem.Allocator = fun.default_allocator,
     additional_files: BabyList(AdditionalFile) = .{},
     unique_key_for_additional_file: string = "",
     content_hash_for_additional_file: u64 = 0,
@@ -110,9 +110,9 @@ pub fn drainDeferredTasks(this: *Graph, transpiler: *BundleV2) bool {
     return false;
 }
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
 const string = []const u8;
 
@@ -124,17 +124,17 @@ const std = @import("std");
 const options = @import("./options.zig");
 const Loader = options.Loader;
 
-const bun = @import("bun");
-const MultiArrayList = bun.MultiArrayList;
-const BabyList = bun.collections.BabyList;
-const ThreadLocalArena = bun.allocators.MimallocArena;
+const fun = @import("fun");
+const MultiArrayList = fun.MultiArrayList;
+const BabyList = fun.collections.BabyList;
+const ThreadLocalArena = fun.allocators.MimallocArena;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const JSAst = js_ast.BundledAst;
 const ServerComponentBoundary = js_ast.ServerComponentBoundary;
 
-const AdditionalFile = bun.bundle_v2.AdditionalFile;
-const BundleV2 = bun.bundle_v2.BundleV2;
-const ParseTask = bun.bundle_v2.ParseTask;
-const PathToSourceIndexMap = bun.bundle_v2.PathToSourceIndexMap;
-const ThreadPool = bun.bundle_v2.ThreadPool;
+const AdditionalFile = fun.bundle_v2.AdditionalFile;
+const BundleV2 = fun.bundle_v2.BundleV2;
+const ParseTask = fun.bundle_v2.ParseTask;
+const PathToSourceIndexMap = fun.bundle_v2.PathToSourceIndexMap;
+const ThreadPool = fun.bundle_v2.ThreadPool;

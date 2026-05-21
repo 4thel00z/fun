@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDirWithFiles } from "harness";
 import { join } from "path";
 
-// https://github.com/oven-sh/bun/issues/23649
+// https://github.com/underdoc-org/fun/issues/23649
 test("parser should not crash with assertion error on invalid async function syntax", async () => {
   // This used to cause: panic(main thread): reached unreachable code
   // when parsing invalid syntax where async function appears after missing comma
@@ -18,9 +18,9 @@ const object = {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", join(dir, "input.js")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", join(dir, "input.js")],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -35,7 +35,7 @@ const object = {
   const output = stderr + stdout;
 
   // Should report parse errors, not crash with assertion
-  expect(normalizeBunSnapshot(output, dir)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(output, dir)).toMatchInlineSnapshot(`
     "5 |   b: async function(first) {
           ^
     error: Expected "}" but found "b"
@@ -73,9 +73,9 @@ b: async function(first) {
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", join(dir, "input.js")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", join(dir, "input.js")],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -90,7 +90,7 @@ b: async function(first) {
   const output = stderr + stdout;
 
   // Should report parse errors, not crash
-  expect(normalizeBunSnapshot(output, dir)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(output, dir)).toMatchInlineSnapshot(`
     "2 | b: async function(first) {
            ^
     error: Cannot use a declaration in a single-statement context

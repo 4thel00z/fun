@@ -3,9 +3,9 @@
 #include "root.h"
 #include <JavaScriptCore/JSDestructibleObject.h>
 #include <JavaScriptCore/JSObject.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSConnectionsList final : public JSC::JSNonFinalObject {
 public:
@@ -69,4 +69,4 @@ public:
 
 void setupConnectionsListClassStructure(JSC::LazyClassStructure::Initializer&);
 
-} // namespace Bun
+} // namespace Fun

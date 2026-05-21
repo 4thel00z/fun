@@ -4,11 +4,11 @@ pub fn generateCompileResultForJSChunk(task: *ThreadPoolLib.Task) void {
     var worker = ThreadPool.Worker.get(@fieldParentPtr("linker", ctx.c));
     defer worker.unget();
 
-    const prev_action = if (Environment.show_crash_trace) bun.crash_handler.current_action;
+    const prev_action = if (Environment.show_crash_trace) fun.crash_handler.current_action;
     defer if (Environment.show_crash_trace) {
-        bun.crash_handler.current_action = prev_action;
+        fun.crash_handler.current_action = prev_action;
     };
-    if (Environment.show_crash_trace) bun.crash_handler.current_action = .{ .bundle_generate_chunk = .{
+    if (Environment.show_crash_trace) fun.crash_handler.current_action = .{ .bundle_generate_chunk = .{
         .chunk = ctx.chunk,
         .context = ctx.c,
         .part_range = &part_range.part_range,
@@ -16,7 +16,7 @@ pub fn generateCompileResultForJSChunk(task: *ThreadPoolLib.Task) void {
 
     if (Environment.show_crash_trace) {
         const path = ctx.c.parse_graph.input_files.items(.source)[part_range.part_range.source_index.get()].path;
-        if (bun.cli.debug_flags.hasPrintBreakpoint(path)) {
+        if (fun.cli.debug_flags.hasPrintBreakpoint(path)) {
             @breakpoint();
         }
     }
@@ -25,7 +25,7 @@ pub fn generateCompileResultForJSChunk(task: *ThreadPoolLib.Task) void {
 }
 
 fn generateCompileResultForJSChunkImpl(worker: *ThreadPool.Worker, c: *LinkerContext, chunk: *Chunk, part_range: PartRange) CompileResult {
-    const trace = bun.perf.trace("Bundler.generateCodeForFileInChunkJS");
+    const trace = fun.perf.trace("Bundler.generateCodeForFileInChunkJS");
     defer trace.end();
 
     // Client and server bundles for Bake must be globally allocated, as they
@@ -84,27 +84,27 @@ fn generateCompileResultForJSChunkImpl(worker: *ThreadPool.Worker, c: *LinkerCon
     };
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const DeclCollector = @import("./generateCodeForFileInChunkJS.zig").DeclCollector;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const ThreadPoolLib = bun.ThreadPool;
-const default_allocator = bun.default_allocator;
-const js_printer = bun.js_printer;
-const renamer = bun.renamer;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const ThreadPoolLib = fun.ThreadPool;
+const default_allocator = fun.default_allocator;
+const js_printer = fun.js_printer;
+const renamer = fun.renamer;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Scope = js_ast.Scope;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const CompileResult = bundler.CompileResult;
-const Index = bun.bundle_v2.Index;
+const Index = fun.bundle_v2.Index;
 const PartRange = bundler.PartRange;
-const ThreadPool = bun.bundle_v2.ThreadPool;
+const ThreadPool = fun.bundle_v2.ThreadPool;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const PendingPartRange = LinkerContext.PendingPartRange;

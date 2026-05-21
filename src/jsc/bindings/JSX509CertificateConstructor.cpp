@@ -4,8 +4,8 @@
 #include "ZigGlobalObject.h"
 #include <JavaScriptCore/JSCInlines.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
-} // namespace Bun
+} // namespace Fun

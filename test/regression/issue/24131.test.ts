@@ -1,6 +1,6 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 describe("issue #24131 - 'l' key should select package in interactive update", () => {
@@ -16,11 +16,11 @@ describe("issue #24131 - 'l' key should select package in interactive update", (
       }),
     });
 
-    // First, run bun install to create initial node_modules and lockfile
-    await using installProc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    // First, run fun install to create initial node_modules and lockfile
+    await using installProc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -35,10 +35,10 @@ describe("issue #24131 - 'l' key should select package in interactive update", (
     // Now run update --interactive
     // Press 'l' to toggle use_latest (which should also select the package)
     // Then press 'y' or Enter to confirm
-    await using updateProc = Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive"],
+    await using updateProc = Fun.spawn({
+      cmd: [funExe(), "update", "--interactive"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",

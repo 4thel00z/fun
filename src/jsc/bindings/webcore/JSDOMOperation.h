@@ -73,10 +73,10 @@ public:
 
 // Rewrite all usages of JSC::createNotEnoughArgumentsError to use our own version.
 // Our version adds the "code" property from Node.js.
-JSC::JSObject* createNotEnoughArgumentsErrorBun(JSGlobalObject* globalObject);
+JSC::JSObject* createNotEnoughArgumentsErrorFun(JSGlobalObject* globalObject);
 
 #ifndef createNotEnoughArgumentsError
-#define createNotEnoughArgumentsError WebCore::createNotEnoughArgumentsErrorBun
+#define createNotEnoughArgumentsError WebCore::createNotEnoughArgumentsErrorFun
 #endif
 
 void throwNodeRangeError(JSGlobalObject* lexicalGlobalObject, ThrowScope& scope, ASCIILiteral message);

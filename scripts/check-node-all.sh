@@ -17,13 +17,13 @@ case $1 in
     ;;
 esac
 
-export BUN_DEBUG_QUIET_LOGS=1
+export FUN_DEBUG_QUIET_LOGS=1
 
 for x in $(find test/js/node/test/parallel -type f -name "test-$1*.js" | sort)
 do
   i=$((i+1))
   echo ./$x
-  if timeout 2 $PWD/build/debug/bun-debug ./$x
+  if timeout 2 $PWD/build/debug/fun-debug ./$x
   then
     j=$((j+1))
     git add $x

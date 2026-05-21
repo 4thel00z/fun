@@ -6,7 +6,7 @@
 
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 namespace JSSocketAddressDTO {
 
 static constexpr PropertyOffset addressOffset = 0;
@@ -65,7 +65,7 @@ Structure* createStructure(VM& vm, JSGlobalObject* globalObject)
 }
 
 } // namespace JSSocketAddress
-} // namespace Bun
+} // namespace Fun
 
 extern "C" JSC::EncodedJSValue JSSocketAddressDTO__create(JSGlobalObject* globalObject, EncodedJSValue address, uint16_t port, bool isIPv6)
 {
@@ -75,9 +75,9 @@ extern "C" JSC::EncodedJSValue JSSocketAddressDTO__create(JSGlobalObject* global
     auto* af = isIPv6 ? global->commonStrings().IPv6String(global) : global->commonStrings().IPv4String(global);
 
     JSObject* thisObject = constructEmptyObject(vm, global->JSSocketAddressDTOStructure());
-    thisObject->putDirectOffset(vm, Bun::JSSocketAddressDTO::addressOffset, JSValue::decode(address));
-    thisObject->putDirectOffset(vm, Bun::JSSocketAddressDTO::familyOffset, af);
-    thisObject->putDirectOffset(vm, Bun::JSSocketAddressDTO::portOffset, jsNumber(port));
+    thisObject->putDirectOffset(vm, Fun::JSSocketAddressDTO::addressOffset, JSValue::decode(address));
+    thisObject->putDirectOffset(vm, Fun::JSSocketAddressDTO::familyOffset, af);
+    thisObject->putDirectOffset(vm, Fun::JSSocketAddressDTO::portOffset, jsNumber(port));
 
     return JSValue::encode(thisObject);
 }

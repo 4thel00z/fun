@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { Hono } from "hono";
 
 describe("Hono Hello World", () => {
@@ -6,7 +6,7 @@ describe("Hono Hello World", () => {
     const app = new Hono();
     app.get("/", c => c.text("Hello World!"));
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       fetch: app.fetch,
       port: 0,
     });

@@ -7,7 +7,7 @@ on:
 
 jobs:
   check-and-update:
-    if: github.repository == 'oven-sh/bun'
+    if: github.repository == 'underdoc-org/fun'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -17,16 +17,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
+      - name: Setup Fun
+        uses: oven-sh/setup-fun@f4d14e03ff726c06358e5557344e1da148b56cf7 # v1
         with:
-          bun-version: latest
+          fun-version: latest
 
       - name: Generate root certs and capture output
         id: generate-certs
         run: |
-          cd packages/bun-usockets/
-          OUTPUT=$(bun generate-root-certs.mjs -v)
+          cd packages/fun-usockets/
+          OUTPUT=$(fun generate-root-certs.mjs -v)
           echo "cert_output<<EOF" >> $GITHUB_ENV
           echo "$OUTPUT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV

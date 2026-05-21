@@ -6,11 +6,11 @@
 #include <JavaScriptCore/JSTypedArrays.h>
 #include <wtf/text/WTFString.h>
 #include "ncrypto.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "openssl/ssl.h"
 #include "KeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSKeyObject : public JSC::JSDestructibleObject {
     WTF_MAKE_TZONE_ALLOCATED(JSKeyObject);
@@ -64,4 +64,4 @@ public:
 
 void setupKeyObjectClassStructure(JSC::LazyClassStructure::Initializer&);
 
-} // namespace Bun
+} // namespace Fun

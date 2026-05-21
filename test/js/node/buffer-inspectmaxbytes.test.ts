@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import buffer, { INSPECT_MAX_BYTES } from "node:buffer";
 
 test("buffer.INSPECT_MAX_BYTES is a number and not a custom getter/setter", () => {

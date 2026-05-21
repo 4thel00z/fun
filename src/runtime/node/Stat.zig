@@ -1,12 +1,12 @@
 /// Stats and BigIntStats classes from node:fs
 pub fn StatType(comptime big: bool) type {
     return struct {
-        pub const new = bun.TrivialNew(@This());
-        pub const deinit = bun.TrivialDeinit(@This());
+        pub const new = fun.TrivialNew(@This());
+        pub const deinit = fun.TrivialDeinit(@This());
 
         value: Syscall.PosixStat,
 
-        const StatTimespec = bun.timespec;
+        const StatTimespec = fun.timespec;
         const Float = if (big) i64 else f64;
 
         pub inline fn init(stat_: *const Syscall.PosixStat) @This() {
@@ -15,13 +15,13 @@ pub fn StatType(comptime big: bool) type {
 
         inline fn toNanoseconds(ts: StatTimespec) u64 {
             if (ts.sec < 0) {
-                return @intCast(@max(bun.timespec.nsSigned(&bun.timespec{
+                return @intCast(@max(fun.timespec.nsSigned(&fun.timespec{
                     .sec = @intCast(ts.sec),
                     .nsec = @intCast(ts.nsec),
                 }), 0));
             }
 
-            return bun.timespec.ns(&bun.timespec{
+            return fun.timespec.ns(&fun.timespec{
                 .sec = @intCast(ts.sec),
                 .nsec = @intCast(ts.nsec),
             });
@@ -53,15 +53,15 @@ pub fn StatType(comptime big: bool) type {
             return stat_.birthtim;
         }
 
-        pub fn toJS(this: *const @This(), globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        pub fn toJS(this: *const @This(), globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
             return statToJS(&this.value, globalObject);
         }
 
         pub fn getConstructor(globalObject: *jsc.JSGlobalObject) jsc.JSValue {
-            return if (big) Bun__JSBigIntStatsObjectConstructor(globalObject) else Bun__JSStatsObjectConstructor(globalObject);
+            return if (big) Fun__JSBigIntStatsObjectConstructor(globalObject) else Fun__JSStatsObjectConstructor(globalObject);
         }
 
-        fn statToJS(stat_: *const Syscall.PosixStat, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        fn statToJS(stat_: *const Syscall.PosixStat, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
             const aTime = stat_.atime();
             const mTime = stat_.mtime();
             const cTime = stat_.ctime();
@@ -72,7 +72,7 @@ pub fn StatType(comptime big: bool) type {
             const birthtime_ms: Float = toTimeMS(bTime);
 
             if (big) {
-                return bun.jsc.fromJSHostCall(globalObject, @src(), Bun__createJSBigIntStatsObject, .{
+                return fun.jsc.fromJSHostCall(globalObject, @src(), Fun__createJSBigIntStatsObject, .{
                     globalObject,
                     stat_.dev,
                     stat_.ino,
@@ -95,7 +95,7 @@ pub fn StatType(comptime big: bool) type {
                 });
             }
 
-            return Bun__createJSStatsObject(
+            return Fun__createJSStatsObject(
                 globalObject,
                 stat_.dev,
                 stat_.ino,
@@ -115,10 +115,10 @@ pub fn StatType(comptime big: bool) type {
         }
     };
 }
-extern fn Bun__JSBigIntStatsObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
-extern fn Bun__JSStatsObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
+extern fn Fun__JSBigIntStatsObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
+extern fn Fun__JSStatsObjectConstructor(*jsc.JSGlobalObject) jsc.JSValue;
 
-extern fn Bun__createJSStatsObject(
+extern fn Fun__createJSStatsObject(
     globalObject: *jsc.JSGlobalObject,
     dev: u64,
     ino: u64,
@@ -136,7 +136,7 @@ extern fn Bun__createJSStatsObject(
     birthtimeMs: f64,
 ) jsc.JSValue;
 
-extern fn Bun__createJSBigIntStatsObject(
+extern fn Fun__createJSBigIntStatsObject(
     globalObject: *jsc.JSGlobalObject,
     dev: u64,
     ino: u64,
@@ -164,7 +164,7 @@ pub const StatsBig = StatType(true);
 /// Test-only: build a Stats/BigIntStats from a raw u64 ino via the real
 /// statToJS path, so regression tests can exercise high-inode values without
 /// a filesystem that hands them out.
-pub fn createStatsForIno(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn createStatsForIno(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const ino_arg, const big_arg = callFrame.argumentsAsArray(2);
     var stat_ = std.mem.zeroes(Syscall.PosixStat);
     stat_.ino = ino_arg.toUInt64NoTruncate();
@@ -184,7 +184,7 @@ pub const Stats = union(enum) {
         }
     }
 
-    pub fn toJSNewlyCreated(this: *const Stats, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn toJSNewlyCreated(this: *const Stats, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         return switch (this.*) {
             .big => this.big.toJS(globalObject),
             .small => this.small.toJS(globalObject),
@@ -201,7 +201,7 @@ pub const Stats = union(enum) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Syscall = bun.sys;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Syscall = fun.sys;
+const jsc = fun.jsc;

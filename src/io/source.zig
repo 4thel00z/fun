@@ -1,4 +1,4 @@
-const log = bun.Output.scoped(.PipeSource, .hidden);
+const log = fun.Output.scoped(.PipeSource, .hidden);
 
 pub const Source = union(enum) {
     pipe: *Pipe,
@@ -66,8 +66,8 @@ pub const Source = union(enum) {
         /// Mark the file as in-use for an operation.
         /// Must only be called when canStart() returns true.
         pub fn prepare(this: *File) void {
-            bun.assert(this.state == .deinitialized);
-            bun.assert(this.fs.data != null);
+            fun.assert(this.state == .deinitialized);
+            fun.assert(this.fs.data != null);
             this.state = .operating;
             this.close_after_operation = false;
         }
@@ -101,9 +101,9 @@ pub const Source = union(enum) {
         /// Mark the operation as complete and clean up.
         /// Must be called first in the callback before processing data.
         pub fn complete(this: *File, was_canceled: bool) void {
-            bun.assert(this.state == .operating or this.state == .canceling);
+            fun.assert(this.state == .operating or this.state == .canceling);
             if (was_canceled) {
-                bun.assert(this.state == .canceling);
+                fun.assert(this.state == .canceling);
             }
 
             this.fs.deinit();
@@ -116,16 +116,16 @@ pub const Source = union(enum) {
         }
 
         fn startClose(this: *File) void {
-            bun.assert(this.state == .deinitialized);
+            fun.assert(this.state == .deinitialized);
             this.state = .closing;
             _ = uv.uv_fs_close(uv.Loop.get(), &this.fs, this.file, onCloseComplete);
         }
 
         fn onCloseComplete(fs: *uv.fs_t) callconv(.c) void {
             const file = File.fromFS(fs);
-            bun.assert(file.state == .closing);
+            fun.assert(file.state == .closing);
             fs.deinit();
-            bun.default_allocator.destroy(file);
+            fun.default_allocator.destroy(file);
         }
     };
 
@@ -160,7 +160,7 @@ pub const Source = union(enum) {
         };
     }
 
-    pub fn getFd(this: Source) bun.FD {
+    pub fn getFd(this: Source) fun.FD {
         return switch (this) {
             .pipe => |pipe| pipe.fd(),
             .tty => |tty| tty.fd(),
@@ -208,13 +208,13 @@ pub const Source = union(enum) {
         };
     }
 
-    pub fn openPipe(loop: *uv.Loop, fd: bun.FD) bun.sys.Maybe(*Source.Pipe) {
+    pub fn openPipe(loop: *uv.Loop, fd: fun.FD) fun.sys.Maybe(*Source.Pipe) {
         log("openPipe (fd = {f})", .{fd});
-        const pipe = bun.new(Source.Pipe, std.mem.zeroes(Source.Pipe));
+        const pipe = fun.new(Source.Pipe, std.mem.zeroes(Source.Pipe));
         // we should never init using IPC here see ipc.zig
         switch (pipe.init(loop, false)) {
             .err => |err| {
-                bun.destroy(pipe);
+                fun.destroy(pipe);
                 return .{ .err = err };
             },
             else => {},
@@ -235,7 +235,7 @@ pub const Source = union(enum) {
 
     pub const StdinTTY = struct {
         var data: uv.uv_tty_t = undefined;
-        var lock: bun.Mutex = .{};
+        var lock: fun.Mutex = .{};
         var initialized = std.atomic.Value(bool).init(false);
         const value: *uv.uv_tty_t = &data;
 
@@ -243,7 +243,7 @@ pub const Source = union(enum) {
             return tty == StdinTTY.value;
         }
 
-        fn getStdinTTY(loop: *uv.Loop) bun.sys.Maybe(*Source.Tty) {
+        fn getStdinTTY(loop: *uv.Loop) fun.sys.Maybe(*Source.Tty) {
             StdinTTY.lock.lock();
             defer StdinTTY.lock.unlock();
 
@@ -259,7 +259,7 @@ pub const Source = union(enum) {
         }
     };
 
-    pub fn openTty(loop: *uv.Loop, fd: bun.FD) bun.sys.Maybe(*Source.Tty) {
+    pub fn openTty(loop: *uv.Loop, fd: fun.FD) fun.sys.Maybe(*Source.Tty) {
         log("openTTY (fd = {f})", .{fd});
 
         const uv_fd = fd.uv();
@@ -268,10 +268,10 @@ pub const Source = union(enum) {
             return StdinTTY.getStdinTTY(loop);
         }
 
-        const tty = bun.default_allocator.create(Source.Tty) catch |err| bun.handleOom(err);
+        const tty = fun.default_allocator.create(Source.Tty) catch |err| fun.handleOom(err);
         switch (tty.init(loop, uv_fd)) {
             .err => |err| {
-                bun.default_allocator.destroy(tty);
+                fun.default_allocator.destroy(tty);
                 return .{ .err = err };
             },
             .result => {},
@@ -280,18 +280,18 @@ pub const Source = union(enum) {
         return .{ .result = tty };
     }
 
-    pub fn openFile(fd: bun.FD) *Source.File {
-        bun.assert(fd.isValid() and fd.uv() != -1);
+    pub fn openFile(fd: fun.FD) *Source.File {
+        fun.assert(fd.isValid() and fd.uv() != -1);
         log("openFile (fd = {f})", .{fd});
-        const file = bun.handleOom(bun.default_allocator.create(Source.File));
+        const file = fun.handleOom(fun.default_allocator.create(Source.File));
 
         file.* = std.mem.zeroes(Source.File);
         file.file = fd.uv();
         return file;
     }
 
-    pub fn open(loop: *uv.Loop, fd: bun.FD) bun.sys.Maybe(Source) {
-        const rc = bun.windows.libuv.uv_guess_handle(fd.uv());
+    pub fn open(loop: *uv.Loop, fd: fun.FD) fun.sys.Maybe(Source) {
+        const rc = fun.windows.libuv.uv_guess_handle(fd.uv());
         log("open(fd: {f}, type: {s})", .{ fd, @tagName(rc) });
 
         switch (rc) {
@@ -315,7 +315,7 @@ pub const Source = union(enum) {
                 };
             },
             else => {
-                const errno = bun.windows.getLastErrno();
+                const errno = fun.windows.getLastErrno();
 
                 if (errno == .SUCCESS) {
                     return .{
@@ -325,12 +325,12 @@ pub const Source = union(enum) {
                     };
                 }
 
-                return .{ .err = bun.sys.Error.fromCode(errno, .open) };
+                return .{ .err = fun.sys.Error.fromCode(errno, .open) };
             },
         }
     }
 
-    pub fn setRawMode(this: Source, value: bool) bun.sys.Maybe(void) {
+    pub fn setRawMode(this: Source, value: bool) fun.sys.Maybe(void) {
         return switch (this) {
             .tty => |tty| {
                 if (tty
@@ -344,7 +344,7 @@ pub const Source = union(enum) {
             },
             else => .{
                 .err = .{
-                    .errno = @intFromEnum(bun.sys.E.NOTSUP),
+                    .errno = @intFromEnum(fun.sys.E.NOTSUP),
                     .syscall = .uv_tty_set_mode,
                     .fd = this.getFd(),
                 },
@@ -354,7 +354,7 @@ pub const Source = union(enum) {
 };
 
 export fn Source__setRawModeStdin(raw: bool) c_int {
-    const tty = switch (Source.openTty(bun.jsc.VirtualMachine.get().uvLoop(), .stdin())) {
+    const tty = switch (Source.openTty(fun.jsc.VirtualMachine.get().uvLoop(), .stdin())) {
         .result => |tty| tty,
         .err => |e| return e.errno,
     };
@@ -370,6 +370,6 @@ export fn Source__setRawModeStdin(raw: bool) c_int {
     return 0;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
-const uv = bun.windows.libuv;
+const uv = fun.windows.libuv;

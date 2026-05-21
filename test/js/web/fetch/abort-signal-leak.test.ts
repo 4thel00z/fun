@@ -1,4 +1,4 @@
-import { afterAll, test } from "bun:test";
+import { afterAll, test } from "fun:test";
 import {
   server,
   testReqSignalAbortEvent,
@@ -14,7 +14,7 @@ test("req.signal getter should not cause AbortSignal to never be GCed", async ()
   await testReqSignalGetter();
 });
 
-// https://github.com/oven-sh/bun/issues/4517
+// https://github.com/underdoc-org/fun/issues/4517
 test("'abort' event on req.signal should not cause AbortSignal to never be GCed", async () => {
   await testReqSignalAbortEvent();
 });

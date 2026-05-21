@@ -1,15 +1,15 @@
 {
-  "name": "bun-react-template",
+  "name": "fun-react-template",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --hot src/index.ts",
-    "start": "NODE_ENV=production bun src/index.ts",
-    "build": "bun run build.ts"
+    "dev": "fun --hot src/index.ts",
+    "start": "NODE_ENV=production fun src/index.ts",
+    "build": "fun run build.ts"
   },
   "dependencies": {
-    "bun-plugin-tailwind": "^0.1.2",
+    "fun-plugin-tailwind": "^0.1.2",
     "react": "^19",
     "react-dom": "^19",
     "tailwindcss": "^4.1.11"
@@ -17,6 +17,6 @@
   "devDependencies": {
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/bun": "latest"
+    "@types/fun": "latest"
   }
 }

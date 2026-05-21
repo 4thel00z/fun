@@ -10,9 +10,9 @@ if (!process.execArgv.includes("--dns-result-order=ipv6first")) {
   process.exit(0);
 }
 
-const originalLookup = Bun.dns.lookup;
+const originalLookup = Fun.dns.lookup;
 const calls = [];
-Bun.dns.lookup = common.mustCallAtLeast((...args) => {
+Fun.dns.lookup = common.mustCallAtLeast((...args) => {
   calls.push(args);
   return originalLookup(...args);
 }, 1);

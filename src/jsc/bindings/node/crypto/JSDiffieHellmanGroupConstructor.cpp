@@ -7,7 +7,7 @@
 #include <JavaScriptCore/JSCJSValueInlines.h>
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSDiffieHellmanGroupConstructor::s_info = { "Function"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSDiffieHellmanGroupConstructor) };
 
@@ -40,7 +40,7 @@ JSC_DEFINE_HOST_FUNCTION(constructDiffieHellmanGroup, (JSC::JSGlobalObject * glo
 
     auto dh = ncrypto::DHPointer::FromGroup(name);
     if (!dh) {
-        return Bun::ERR::CRYPTO_UNKNOWN_DH_GROUP(scope, globalObject);
+        return Fun::ERR::CRYPTO_UNKNOWN_DH_GROUP(scope, globalObject);
     }
 
     // Get the appropriate structure and create the DiffieHellmanGroup object
@@ -64,4 +64,4 @@ JSC_DEFINE_HOST_FUNCTION(constructDiffieHellmanGroup, (JSC::JSGlobalObject * glo
     return JSC::JSValue::encode(JSDiffieHellmanGroup::create(vm, structure, globalObject, WTF::move(dh)));
 }
 
-} // namespace Bun
+} // namespace Fun

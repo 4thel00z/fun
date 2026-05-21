@@ -7,7 +7,7 @@ pub const OutdatedCommand = struct {
     };
 
     pub fn exec(ctx: Command.Context) !void {
-        Output.prettyln("<r><b>bun outdated <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+        Output.prettyln("<r><b>fun outdated <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
         Output.flush();
 
         const cli = try PackageManager.CommandLineArguments.parse(ctx.allocator, .outdated);
@@ -17,7 +17,7 @@ pub const OutdatedCommand = struct {
                 if (err == error.MissingPackageJSON) {
                     Output.errGeneric("missing package.json, nothing outdated", .{});
                 }
-                Output.errGeneric("failed to initialize bun install: {s}", .{@errorName(err)});
+                Output.errGeneric("failed to initialize fun install: {s}", .{@errorName(err)});
             }
 
             Global.crash();
@@ -74,18 +74,18 @@ pub const OutdatedCommand = struct {
                 if (manager.options.filter_patterns.len > 0) {
                     const filters = manager.options.filter_patterns;
                     const workspace_pkg_ids = findMatchingWorkspaces(
-                        bun.default_allocator,
+                        fun.default_allocator,
                         original_cwd,
                         manager,
                         filters,
-                    ) catch |err| bun.handleOom(err);
-                    defer bun.default_allocator.free(workspace_pkg_ids);
+                    ) catch |err| fun.handleOom(err);
+                    defer fun.default_allocator.free(workspace_pkg_ids);
 
                     try manager.populateManifestCache(.{ .ids = workspace_pkg_ids });
                     try printOutdatedInfoTable(manager, workspace_pkg_ids, true, enable_ansi_colors);
                 } else if (manager.options.do.recursive) {
-                    const all_workspaces = bun.handleOom(getAllWorkspaces(bun.default_allocator, manager));
-                    defer bun.default_allocator.free(all_workspaces);
+                    const all_workspaces = fun.handleOom(getAllWorkspaces(fun.default_allocator, manager));
+                    defer fun.default_allocator.free(all_workspaces);
 
                     try manager.populateManifestCache(.{ .ids = all_workspaces });
                     try printOutdatedInfoTable(manager, all_workspaces, true, enable_ansi_colors);
@@ -100,7 +100,7 @@ pub const OutdatedCommand = struct {
         }
     }
 
-    // TODO: use in `bun pack, publish, run, ...`
+    // TODO: use in `fun pack, publish, run, ...`
     const FilterType = union(enum) {
         all,
         name: []const u8,
@@ -154,7 +154,7 @@ pub const OutdatedCommand = struct {
             try workspace_pkg_ids.append(allocator, @intCast(pkg_id));
         }
 
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
 
         const converted_filters = converted_filters: {
             const buf = try allocator.alloc(WorkspaceFilter, filters.len);
@@ -231,7 +231,7 @@ pub const OutdatedCommand = struct {
         outdated_items: []const OutdatedInfo,
         _: []const PackageID,
     ) !std.ArrayListUnmanaged(GroupedOutdatedInfo) {
-        const allocator = bun.default_allocator;
+        const allocator = fun.default_allocator;
         const lockfile = manager.lockfile;
         const string_buf = lockfile.buffers.string_bytes.items;
         const packages = lockfile.packages.slice();
@@ -256,9 +256,9 @@ pub const OutdatedCommand = struct {
         for (outdated_items) |item| {
             if (item.is_catalog) {
                 const dep = dependencies[item.dep_id];
-                const name_hash = bun.hash(dep.name.slice(string_buf));
+                const name_hash = fun.hash(dep.name.slice(string_buf));
                 const catalog_name = dep.version.value.catalog.slice(string_buf);
-                const catalog_name_hash = bun.hash(catalog_name);
+                const catalog_name_hash = fun.hash(catalog_name);
                 const key = CatalogKey{ .name_hash = name_hash, .catalog_name_hash = catalog_name_hash, .behavior = dep.behavior };
 
                 const entry = try catalog_map.getOrPut(key);
@@ -282,9 +282,9 @@ pub const OutdatedCommand = struct {
             if (!item.is_catalog) continue;
 
             const dep = dependencies[item.dep_id];
-            const name_hash = bun.hash(dep.name.slice(string_buf));
+            const name_hash = fun.hash(dep.name.slice(string_buf));
             const catalog_name = dep.version.value.catalog.slice(string_buf);
-            const catalog_name_hash = bun.hash(catalog_name);
+            const catalog_name_hash = fun.hash(catalog_name);
             const key = CatalogKey{ .name_hash = name_hash, .catalog_name_hash = catalog_name_hash, .behavior = dep.behavior };
 
             const workspace_list = catalog_map.get(key) orelse continue;
@@ -332,7 +332,7 @@ pub const OutdatedCommand = struct {
 
             var at_least_one_greater_than_zero = false;
 
-            const patterns_buf = bun.handleOom(bun.default_allocator.alloc(FilterType, args.len));
+            const patterns_buf = fun.handleOom(fun.default_allocator.alloc(FilterType, args.len));
             for (args, patterns_buf) |arg, *converted| {
                 if (arg.len == 0) {
                     converted.* = FilterType.init(&.{}, false);
@@ -357,9 +357,9 @@ pub const OutdatedCommand = struct {
         defer {
             if (package_patterns) |patterns| {
                 for (patterns) |pattern| {
-                    pattern.deinit(bun.default_allocator);
+                    pattern.deinit(fun.default_allocator);
                 }
-                bun.default_allocator.free(patterns);
+                fun.default_allocator.free(patterns);
             }
         }
 
@@ -378,7 +378,7 @@ pub const OutdatedCommand = struct {
         const pkg_resolutions = packages.items(.resolution);
         const pkg_dependencies = packages.items(.dependencies);
 
-        var version_buf = std.array_list.Managed(u8).init(bun.default_allocator);
+        var version_buf = std.array_list.Managed(u8).init(fun.default_allocator);
         defer version_buf.deinit();
         const version_writer = version_buf.writer();
 
@@ -457,23 +457,23 @@ pub const OutdatedCommand = struct {
 
                 if (package_name_len > max_name) max_name = package_name_len;
 
-                bun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
+                fun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
                 if (version_buf.items.len > max_current) max_current = version_buf.items.len;
                 version_buf.clearRetainingCapacity();
 
                 if (update_version.unwrap()) |update_version_| {
-                    bun.handleOom(version_writer.print("{f}", .{update_version_.version.fmt(manifest.string_buf)}));
+                    fun.handleOom(version_writer.print("{f}", .{update_version_.version.fmt(manifest.string_buf)}));
                 } else {
-                    bun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(manifest.string_buf)}));
+                    fun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(manifest.string_buf)}));
                 }
                 const update_version_len = version_buf.items.len + (if (has_filtered_update) " *".len else 0);
                 if (update_version_len > max_update) max_update = update_version_len;
                 version_buf.clearRetainingCapacity();
 
                 if (latest.unwrap()) |latest_version| {
-                    bun.handleOom(version_writer.print("{f}", .{latest_version.version.fmt(manifest.string_buf)}));
+                    fun.handleOom(version_writer.print("{f}", .{latest_version.version.fmt(manifest.string_buf)}));
                 } else {
-                    bun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(manifest.string_buf)}));
+                    fun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(manifest.string_buf)}));
                 }
                 const latest_version_len = version_buf.items.len + (if (has_filtered_latest) " *".len else 0);
                 if (latest_version_len > max_latest) max_latest = latest_version_len;
@@ -483,14 +483,14 @@ pub const OutdatedCommand = struct {
                 if (workspace_name.len > max_workspace) max_workspace = workspace_name.len;
 
                 outdated_ids.append(
-                    bun.default_allocator,
+                    fun.default_allocator,
                     .{
                         .package_id = package_id,
                         .dep_id = @intCast(dep_id),
                         .workspace_pkg_id = workspace_pkg_id,
                         .is_catalog = dep.version.tag == .catalog,
                     },
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             }
         }
 
@@ -498,7 +498,7 @@ pub const OutdatedCommand = struct {
 
         // Group catalog dependencies
         var grouped_ids = try groupCatalogDependencies(manager, outdated_ids.items, workspace_pkg_ids);
-        defer grouped_ids.deinit(bun.default_allocator);
+        defer grouped_ids.deinit(fun.default_allocator);
 
         // Recalculate max workspace length after grouping
         var new_max_workspace: usize = max_workspace;
@@ -617,7 +617,7 @@ pub const OutdatedCommand = struct {
                     Output.pretty("{s}", .{table.symbols.verticalEdge()});
                     for (0..column_left_pad) |_| Output.pretty(" ", .{});
 
-                    bun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
+                    fun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
                     Output.pretty("{s}", .{version_buf.items});
                     for (version_buf.items.len..current_column_inside_length + column_right_pad) |_| Output.pretty(" ", .{});
                     version_buf.clearRetainingCapacity();
@@ -628,10 +628,10 @@ pub const OutdatedCommand = struct {
                     Output.pretty("{s}", .{table.symbols.verticalEdge()});
                     for (0..column_left_pad) |_| Output.pretty(" ", .{});
                     if (update.unwrap()) |update_version| {
-                        bun.handleOom(version_writer.print("{f}", .{update_version.version.fmt(manifest.string_buf)}));
+                        fun.handleOom(version_writer.print("{f}", .{update_version.version.fmt(manifest.string_buf)}));
                         Output.pretty("{f}", .{update_version.version.diffFmt(resolution.value.npm.version, manifest.string_buf, string_buf)});
                     } else {
-                        bun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
+                        fun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
                         Output.pretty("<d>{s}<r>", .{version_buf.items});
                     }
                     var update_version_len: usize = version_buf.items.len;
@@ -648,10 +648,10 @@ pub const OutdatedCommand = struct {
                     Output.pretty("{s}", .{table.symbols.verticalEdge()});
                     for (0..column_left_pad) |_| Output.pretty(" ", .{});
                     if (latest.unwrap()) |latest_version| {
-                        bun.handleOom(version_writer.print("{f}", .{latest_version.version.fmt(manifest.string_buf)}));
+                        fun.handleOom(version_writer.print("{f}", .{latest_version.version.fmt(manifest.string_buf)}));
                         Output.pretty("{f}", .{latest_version.version.diffFmt(resolution.value.npm.version, manifest.string_buf, string_buf)});
                     } else {
-                        bun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
+                        fun.handleOom(version_writer.print("{f}", .{resolution.value.npm.version.fmt(string_buf)}));
                         Output.pretty("<d>{s}<r>", .{version_buf.items});
                     }
                     var latest_version_len: usize = version_buf.items.len;
@@ -692,19 +692,19 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Global = bun.Global;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const PathBuffer = bun.PathBuffer;
-const glob = bun.glob;
-const path = bun.path;
-const strings = bun.strings;
-const Command = bun.cli.Command;
-const FileSystem = bun.fs.FileSystem;
-const Table = bun.fmt.Table;
+const fun = @import("fun");
+const Global = fun.Global;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const PathBuffer = fun.PathBuffer;
+const glob = fun.glob;
+const path = fun.path;
+const strings = fun.strings;
+const Command = fun.cli.Command;
+const FileSystem = fun.fs.FileSystem;
+const Table = fun.fmt.Table;
 
-const Install = bun.install;
+const Install = fun.install;
 const DependencyID = Install.DependencyID;
 const PackageID = Install.PackageID;
 const invalid_package_id = Install.invalid_package_id;

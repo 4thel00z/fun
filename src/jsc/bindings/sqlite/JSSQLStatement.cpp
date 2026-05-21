@@ -40,7 +40,7 @@
 #include <JavaScriptCore/DFGAbstractHeap.h>
 #include "wtf/SIMDUTF.h"
 #include <JavaScriptCore/ObjectPrototype.h>
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "sqlite3_error_codes.h"
 #include "wtf/BitVector.h"
 #include "wtf/FastBitVector.h"
@@ -49,12 +49,12 @@
 #include "wtf/LazyRef.h"
 #include "wtf/text/StringToIntegerConversion.h"
 #include <JavaScriptCore/InternalFieldTuple.h>
-#include "BunString.h"
+#include "FunString.h"
 static constexpr int32_t kSafeIntegersFlag = 1 << 1;
 static constexpr int32_t kStrictFlag = 1 << 2;
 
-#ifndef BREAKING_CHANGES_BUN_1_2
-#define BREAKING_CHANGES_BUN_1_2 0
+#ifndef BREAKING_CHANGES_FUN_1_2
+#define BREAKING_CHANGES_FUN_1_2 0
 #endif
 
 /* ******************************************************************************** */
@@ -250,7 +250,7 @@ static Vector<VersionSqlite3*>& databases()
     return _instance->databases;
 }
 
-extern "C" void Bun__closeAllSQLiteDatabasesForTermination()
+extern "C" void Fun__closeAllSQLiteDatabasesForTermination()
 {
     if (!_instance) {
         return;
@@ -550,10 +550,10 @@ static JSValue toJS(JSC::VM& vm, JSC::JSGlobalObject* globalObject, sqlite3_stmt
     switch (sqlite3_column_type(stmt, i)) {
     case SQLITE_INTEGER: {
         if constexpr (!useBigInt64) {
-            // https://github.com/oven-sh/bun/issues/1536
+            // https://github.com/underdoc-org/fun/issues/1536
             return jsNumberFromSQLite(stmt, i);
         } else {
-            // https://github.com/oven-sh/bun/issues/1536
+            // https://github.com/underdoc-org/fun/issues/1536
             auto bint = jsBigIntFromSQLite(globalObject, stmt, i);
             RETURN_IF_EXCEPTION(throwScope, {});
             return bint;
@@ -577,7 +577,7 @@ static JSValue toJS(JSC::VM& vm, JSC::JSGlobalObject* globalObject, sqlite3_stmt
             return jsString(vm, WTF::String::fromUTF8({ text, len }));
         }
 
-        auto encoded = Bun__encoding__toStringUTF8(text, len, globalObject);
+        auto encoded = Fun__encoding__toStringUTF8(text, len, globalObject);
         RETURN_IF_EXCEPTION(throwScope, {});
         return JSC::JSValue::decode(encoded);
     }
@@ -696,8 +696,8 @@ static void initializeColumnNames(JSC::JSGlobalObject* lexicalGlobalObject, JSSQ
     // Fast path:
     if (count <= JSFinalObject::maxInlineCapacity) {
         // 64 is the maximum we can preallocate here
-        // see https://github.com/oven-sh/bun/issues/987
-        // also see https://github.com/oven-sh/bun/issues/1646
+        // see https://github.com/underdoc-org/fun/issues/987
+        // also see https://github.com/underdoc-org/fun/issues/1646
         auto& globalObject = *lexicalGlobalObject;
 
         auto columnNames = castedThis->columnNames.get();
@@ -760,7 +760,7 @@ static void initializeColumnNames(JSC::JSGlobalObject* lexicalGlobalObject, JSSQ
     // Slow path:
 
     // 64 is the maximum we can preallocate here
-    // see https://github.com/oven-sh/bun/issues/987
+    // see https://github.com/underdoc-org/fun/issues/987
     JSObject* prototype = castedThis->userPrototype ? castedThis->userPrototype.get() : lexicalGlobalObject->objectPrototype();
     JSC::JSObject* object = JSC::constructEmptyObject(lexicalGlobalObject, prototype, std::min(static_cast<unsigned>(count), JSFinalObject::maxInlineCapacity));
 
@@ -1393,7 +1393,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSQLStatementExecuteFunction, (JSC::JSGlobalObject * l
         return {};
     }
 
-    Bun::UTF8View utf8 = Bun::UTF8View(jsSqlString->view(lexicalGlobalObject));
+    Fun::UTF8View utf8 = Fun::UTF8View(jsSqlString->view(lexicalGlobalObject));
 
     const char* sqlStringHead = utf8.span().data();
     const char* end = utf8.span().data() + utf8.span().size();
@@ -1571,7 +1571,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSQLStatementPrepareStatementFunction, (JSC::JSGlobalO
     }
     auto sqlString = jsSqlString->view(lexicalGlobalObject);
     RETURN_IF_EXCEPTION(scope, {});
-    Bun::UTF8View utf8 = Bun::UTF8View(sqlString);
+    Fun::UTF8View utf8 = Fun::UTF8View(sqlString);
 
     unsigned int flags = DEFAULT_SQLITE_PREPARE_FLAGS;
     if (prepareFlagsValue.isNumber()) {
@@ -1882,7 +1882,7 @@ static inline JSC::JSValue constructResultObject(JSC::JSGlobalObject* lexicalGlo
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     // 64 is the maximum we can preallocate here
-    // see https://github.com/oven-sh/bun/issues/987
+    // see https://github.com/underdoc-org/fun/issues/987
     JSC::JSObject* result;
 
     auto* stmt = castedThis->stmt;
@@ -2307,7 +2307,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSQLStatementExecuteStatementFunctionRows, (JSC::JSGlo
             result = resultArray;
         }
     } else if (status == SQLITE_DONE && columnCount != 0) {
-        // breaking change in Bun v0.6.8
+        // breaking change in Fun v0.6.8
         result = JSC::constructEmptyArray(lexicalGlobalObject, nullptr, 0);
         RETURN_IF_EXCEPTION(scope, {});
     }
@@ -2397,7 +2397,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSQLStatementExecuteStatementFunctionRawRows, (JSC::JS
             result = resultArray;
         }
     } else if (status == SQLITE_DONE && columnCount != 0) {
-        // breaking change in Bun v0.6.8
+        // breaking change in Fun v0.6.8
         result = JSC::constructEmptyArray(lexicalGlobalObject, static_cast<ArrayAllocationProfile*>(nullptr), 0);
         RETURN_IF_EXCEPTION(scope, {});
     }

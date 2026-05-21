@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { expect, test } from "bun:test";
+import { serve } from "fun";
+import { expect, test } from "fun:test";
 import { brotliCompressSync } from "node:zlib";
 
 /**
@@ -18,16 +18,16 @@ function createTruncatedServer(compression: "gzip" | "br" | "zstd" | "deflate", 
 
       switch (compression) {
         case "gzip":
-          compressed = Bun.gzipSync(data);
+          compressed = Fun.gzipSync(data);
           break;
         case "br":
           compressed = brotliCompressSync(data);
           break;
         case "zstd":
-          compressed = Bun.zstdCompressSync(data);
+          compressed = Fun.zstdCompressSync(data);
           break;
         case "deflate":
-          compressed = Bun.deflateSync(data);
+          compressed = Fun.deflateSync(data);
           break;
       }
 
@@ -55,16 +55,16 @@ function createDelayedChunksServer(compression: "gzip" | "br" | "zstd" | "deflat
 
       switch (compression) {
         case "gzip":
-          compressed = Bun.gzipSync(data);
+          compressed = Fun.gzipSync(data);
           break;
         case "br":
           compressed = brotliCompressSync(data);
           break;
         case "zstd":
-          compressed = Bun.zstdCompressSync(data);
+          compressed = Fun.zstdCompressSync(data);
           break;
         case "deflate":
-          compressed = Bun.deflateSync(data);
+          compressed = Fun.deflateSync(data);
           break;
       }
 
@@ -79,7 +79,7 @@ function createDelayedChunksServer(compression: "gzip" | "br" | "zstd" | "deflat
             // Send first chunk
             controller.enqueue(chunk1);
             // Delay before sending second chunk
-            await Bun.sleep(delayMs);
+            await Fun.sleep(delayMs);
             controller.enqueue(chunk2);
             controller.close();
           },
@@ -190,7 +190,7 @@ test("mismatched Content-Encoding should fail gracefully", async () => {
     port: 0,
     async fetch(req) {
       // Send gzip data but claim it's brotli
-      const gzipped = Bun.gzipSync(Buffer.from("Hello World"));
+      const gzipped = Fun.gzipSync(Buffer.from("Hello World"));
 
       return new Response(gzipped, {
         headers: {
@@ -262,14 +262,14 @@ test("empty first chunk followed by valid gzip should succeed", async () => {
   using server = serve({
     port: 0,
     async fetch(req) {
-      const gzipped = Bun.gzipSync(Buffer.from("Hello World"));
+      const gzipped = Fun.gzipSync(Buffer.from("Hello World"));
 
       return new Response(
         new ReadableStream({
           async start(controller) {
             // Send empty chunk first
             controller.enqueue(new Uint8Array(0));
-            await Bun.sleep(50);
+            await Fun.sleep(50);
             // Then send the actual compressed data
             controller.enqueue(gzipped);
             controller.close();

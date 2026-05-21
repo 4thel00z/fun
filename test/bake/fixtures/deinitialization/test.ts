@@ -1,7 +1,7 @@
-import { getDevServerDeinitCount } from "bun:internal-for-testing";
+import { getDevServerDeinitCount } from "fun:internal-for-testing";
 import html from "./index.html";
-import { expect, test } from "bun:test";
-import { fullGC } from "bun:jsc";
+import { expect, test } from "fun:test";
+import { fullGC } from "fun:jsc";
 
 expect(process.cwd()).toBe(import.meta.dir);
 
@@ -13,7 +13,7 @@ async function run({ closeActiveConnections = false, sendAnyRequests = true, web
   async function main() {
     globalThis.pluginLoaded = undefined;
 
-    const server = Bun.serve({
+    const server = Fun.serve({
       routes: {
         "/": html,
       },
@@ -30,7 +30,7 @@ async function run({ closeActiveConnections = false, sendAnyRequests = true, web
       const opens: Promise<void>[] = [];
       for (let i = 0; i < websocket; i++) {
         const { promise, resolve, reject } = Promise.withResolvers<void>();
-        const ws = new WebSocket(server.url.origin + "/_bun/hmr");
+        const ws = new WebSocket(server.url.origin + "/_fun/hmr");
         let opened = false;
         ws.onopen = () => {
           opened = true;
@@ -81,7 +81,7 @@ async function run({ closeActiveConnections = false, sendAnyRequests = true, web
   const targetCount = lastDevServerDeinitCount + 1;
   let attempts = 0;
   while (getDevServerDeinitCount() === lastDevServerDeinitCount) {
-    Bun.gc(true);
+    Fun.gc(true);
     fullGC();
     await new Promise(resolve => setTimeout(resolve, 100));
     attempts++;

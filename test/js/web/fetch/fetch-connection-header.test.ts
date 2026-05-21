@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { describe, expect, it, test } from "bun:test";
+import { serve } from "fun";
+import { describe, expect, it, test } from "fun:test";
 
 describe("fetch Connection header", () => {
   // Helper function to capture headers from a request

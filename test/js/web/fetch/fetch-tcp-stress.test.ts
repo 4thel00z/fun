@@ -1,7 +1,7 @@
 // If port exhaustion occurs, these tests fail.
 // These tests fail by timing out.
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { getMaxFD, isCI, isMacOS } from "harness";
 
 // Since we bumped MAX_CONNECTIONS to 4, we should halve the threshold on macOS.
@@ -28,7 +28,7 @@ async function runStressTest({
     });
   }
 
-  const server = await Bun.listen({
+  const server = await Fun.listen({
     port: 0,
     socket: {
       open(socket) {},
@@ -97,7 +97,7 @@ async function runStressTest({
     }
   }
   server.stop(true);
-  await Bun.sleep(10);
+  await Fun.sleep(10);
   expect(getMaxFD()).toBeLessThan(initialMaxFD + 10);
 }
 

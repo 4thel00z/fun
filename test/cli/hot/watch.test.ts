@@ -1,6 +1,6 @@
-import { spawn } from "bun";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, forEachLine, isBroken, isWindows, tempDirWithFiles } from "harness";
+import { spawn } from "fun";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, forEachLine, isBroken, isWindows, tempDirWithFiles } from "harness";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -12,12 +12,12 @@ describe.todoIf(isBroken && isWindows)("--watch works", async () => {
         "entry.js": "import './tmp.js'",
         "package.json": JSON.stringify({ name: "foo", version: "0.0.1" }),
       });
-      await Bun.sleep(1000);
+      await Fun.sleep(1000);
       const tmpfile = join(tmpdir_, "tmp.js");
       const process = spawn({
-        cmd: [bunExe(), "--watch", join(tmpdir_, watchedFile)],
+        cmd: [funExe(), "--watch", join(tmpdir_, watchedFile)],
         cwd: tmpdir_,
-        env: bunEnv,
+        env: funEnv,
         stdio: ["ignore", "pipe", "inherit"],
       });
       const { stdout } = process;

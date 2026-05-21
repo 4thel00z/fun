@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { spawn } from "bun";
 import path from "path";
 import { writeIfNotChanged } from "./helpers";
@@ -9,7 +11,7 @@ const platform = process.env.TARGET_PLATFORM ?? process.platform;
 
 const create_hash_table = path.join(import.meta.dir, "./create_hash_table");
 
-const input_text = await Bun.file(input).text();
+const input_text = await Fun.file(input).text();
 const to_preprocess = [...input_text.matchAll(/@begin\s+.+?@end/gs)].map(m => m[0]).join("\n");
 
 const os = platform === "win32" ? "WINDOWS" : platform.toUpperCase();

@@ -1,5 +1,5 @@
 const JSMySQLQuery = @This();
-const RefCount = bun.ptr.RefCount(@This(), "__ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "__ref_count", deinit, .{});
 
 #thisValue: JSRef = JSRef.empty(),
 // unfortunally we cannot use #ref_count here
@@ -16,14 +16,14 @@ pub fn estimatedSize(this: *@This()) usize {
     return @sizeOf(@This());
 }
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*@This() {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*@This() {
     _ = callframe;
     return globalThis.throwInvalidArguments("MySQLQuery cannot be constructed directly", .{});
 }
 
 fn deinit(this: *@This()) void {
     this.#query.cleanup();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn finalize(this: *@This()) void {
@@ -33,9 +33,9 @@ pub fn finalize(this: *@This()) void {
     this.deref();
 }
 
-pub fn createInstance(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn createInstance(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments();
-    var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments);
+    var args = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments);
     defer args.deinit();
     const query = args.nextEat() orelse {
         return globalThis.throw("query must be a string", .{});
@@ -71,14 +71,14 @@ pub fn createInstance(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame
         return globalThis.throwInvalidArgumentType("query", "pendingValue", "Array");
     }
 
-    var this = bun.new(@This(), .{
+    var this = fun.new(@This(), .{
         .#query = MySQLQuery.init(
-            try query.toBunString(globalThis),
+            try query.toFunString(globalThis),
             bigint,
             simple,
         ),
         .#globalObject = globalThis,
-        .#vm = globalThis.bunVM(),
+        .#vm = globalThis.funVM(),
     });
 
     const this_value = this.toJS(globalThis);
@@ -94,7 +94,7 @@ pub fn createInstance(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame
     return this_value;
 }
 
-pub fn doRun(this: *@This(), globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doRun(this: *@This(), globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     debug("doRun", .{});
     this.ref();
     defer this.deref();
@@ -120,18 +120,18 @@ pub fn doRun(this: *@This(), globalObject: *jsc.JSGlobalObject, callframe: *jsc.
     connection.enqueueRequest(this);
     return .js_undefined;
 }
-pub fn doCancel(_: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doCancel(_: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     // TODO: we can cancel a query that is pending aka not pipelined yet we just need fail it
     // if is running is not worth/viable to cancel the whole connection
     return .js_undefined;
 }
 
-pub fn doDone(_: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn doDone(_: *@This(), _: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
     // TODO: investigate why this function is needed
     return .js_undefined;
 }
 
-pub fn setModeFromJS(this: *@This(), globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn setModeFromJS(this: *@This(), globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     const js_mode = callframe.argument(0);
     if (js_mode.isEmptyOrUndefinedOrNull() or !js_mode.isNumber()) {
         return globalObject.throwInvalidArgumentType("setMode", "mode", "Number");
@@ -145,7 +145,7 @@ pub fn setModeFromJS(this: *@This(), globalObject: *jsc.JSGlobalObject, callfram
     return .js_undefined;
 }
 
-pub fn setPendingValueFromJS(this: *@This(), _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn setPendingValueFromJS(this: *@This(), _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     const result = callframe.argument(0);
     this.setPendingValue(result);
     return .js_undefined;
@@ -176,11 +176,11 @@ pub fn resolve(
     const thisValue = this.#thisValue.tryGet() orelse return;
     thisValue.ensureStillAlive();
     const tag: CommandTag = .{ .SELECT = result.result_count };
-    const js_tag = tag.toJSTag(this.#globalObject) catch return bun.assertf(false, "in MySQLQuery Tag should always be a number", .{});
+    const js_tag = tag.toJSTag(this.#globalObject) catch return fun.assertf(false, "in MySQLQuery Tag should always be a number", .{});
     js_tag.ensureStillAlive();
 
     const function = this.#vm.rareData().mysql_context.onQueryResolveFn.get() orelse return;
-    bun.assertf(function.isCallable(), "onQueryResolveFn is not callable", .{});
+    fun.assertf(function.isCallable(), "onQueryResolveFn is not callable", .{});
 
     const event_loop = this.#vm.eventLoop();
 
@@ -247,10 +247,10 @@ pub fn rejectWithJSValue(this: *@This(), queries_array: JSValue, err: JSValue) v
     if (js_error == .zero) {
         js_error = AnyMySQLError.mysqlErrorToJS(this.#globalObject, "Query failed", error.UnknownError);
     }
-    bun.assertf(js_error != .zero, "js_error is zero", .{});
+    fun.assertf(js_error != .zero, "js_error is zero", .{});
     js_error.ensureStillAlive();
     const function = this.#vm.rareData().mysql_context.onQueryRejectFn.get() orelse return;
-    bun.assertf(function.isCallable(), "onQueryRejectFn is not callable", .{});
+    fun.assertf(function.isCallable(), "onQueryRejectFn is not callable", .{});
     const event_loop = this.#vm.eventLoop();
     const js_array = if (queries_array == .zero) .js_undefined else queries_array;
     js_array.ensureStillAlive();
@@ -385,18 +385,18 @@ pub const fromJS = js.fromJS;
 pub const fromJSDirect = js.fromJSDirect;
 pub const toJS = js.toJS;
 
-const debug = bun.Output.scoped(.MySQLQuery, .visible);
+const debug = fun.Output.scoped(.MySQLQuery, .visible);
 
 const AnyMySQLError = @import("../../sql/mysql/protocol/AnyMySQLError.zig");
 const MySQLConnection = @import("./JSMySQLConnection.zig");
 const MySQLQuery = @import("./MySQLQuery.zig");
 const MySQLQueryResult = @import("../../sql/mysql/MySQLQueryResult.zig");
 const MySQLStatement = @import("./MySQLStatement.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const CommandTag = @import("../../sql/postgres/CommandTag.zig").CommandTag;
 const SQLQueryResultMode = @import("../../sql/shared/SQLQueryResultMode.zig").SQLQueryResultMode;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSRef = jsc.JSRef;
 const JSValue = jsc.JSValue;

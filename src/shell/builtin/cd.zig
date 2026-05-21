@@ -112,7 +112,7 @@ fn handleChangeCwdErr(this: *Cd, err: Syscall.Error, new_cwd_: []const u8) Yield
 }
 
 pub fn onIOWriterChunk(this: *Cd, _: usize, e: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .waiting_write_stderr);
     }
 
@@ -136,7 +136,7 @@ pub fn deinit(this: *Cd) void {
 }
 
 // --
-const log = bun.Output.scoped(.Cd, .hidden);
+const log = fun.Output.scoped(.Cd, .hidden);
 
 const interpreter = @import("../interpreter.zig");
 const std = @import("std");
@@ -144,10 +144,10 @@ const std = @import("std");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const Syscall = bun.sys;
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Syscall = fun.sys;
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
-const Yield = bun.shell.Yield;
+const shell = fun.shell;
+const Yield = fun.shell.Yield;

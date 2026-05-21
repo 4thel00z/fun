@@ -1,7 +1,7 @@
-pub const ScanImportsAndExportsError = bun.OOM || error{ImportResolutionFailed};
+pub const ScanImportsAndExportsError = fun.OOM || error{ImportResolutionFailed};
 
 pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!void {
-    const outer_trace = bun.perf.trace("Bundler.scanImportsAndExports");
+    const outer_trace = fun.perf.trace("Bundler.scanImportsAndExports");
     defer outer_trace.end();
     const reachable = this.graph.reachable_files;
     const output_format = this.options.output_format;
@@ -22,14 +22,14 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
         const module_refs: []Ref = this.graph.ast.items(.module_ref);
         const ast_flags_list = this.graph.ast.items(.flags);
 
-        const css_asts: []?*bun.css.BundlerStyleSheet = this.graph.ast.items(.css);
+        const css_asts: []?*fun.css.BundlerStyleSheet = this.graph.ast.items(.css);
 
         var symbols = &this.graph.symbols;
         defer this.graph.symbols = symbols.*;
 
         // Step 1: Figure out what modules must be CommonJS
         for (reachable) |source_index_| {
-            const trace = bun.perf.trace("Bundler.FigureOutCommonJS");
+            const trace = fun.perf.trace("Bundler.FigureOutCommonJS");
             defer trace.end();
             const id = source_index_.get();
 
@@ -196,7 +196,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
         // bundle time.
 
         {
-            const trace = bun.perf.trace("Bundler.WrapDependencies");
+            const trace = fun.perf.trace("Bundler.WrapDependencies");
             defer trace.end();
             var dependency_wrapper = DependencyWrapper{
                 .linker = this,
@@ -247,7 +247,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
         // are ignored for those modules.
         {
             var export_star_ctx: ?ExportStarContext = null;
-            const trace = bun.perf.trace("Bundler.ResolveExportStarStatements");
+            const trace = fun.perf.trace("Bundler.ResolveExportStarStatements");
             defer trace.end();
             defer {
                 if (export_star_ctx) |*export_ctx| {
@@ -308,7 +308,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
         // export stars because imports can bind to export star re-exports.
         {
             this.cycle_detector.clearRetainingCapacity();
-            const trace = bun.perf.trace("Bundler.MatchImportsWithExports");
+            const trace = fun.perf.trace("Bundler.MatchImportsWithExports");
             defer trace.end();
             const wrapper_part_indices = this.graph.meta.items(.wrapper_part_index);
             const imports_to_bind = this.graph.meta.items(.imports_to_bind);
@@ -388,7 +388,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
     // parts that declare the export to all parts that use the import. Also
     // generate wrapper parts for wrapped files.
     {
-        const trace = bun.perf.trace("Bundler.BindImportsToExports");
+        const trace = fun.perf.trace("Bundler.BindImportsToExports");
         defer trace.end();
         // const needs_export_symbol_from_runtime: []const bool = this.graph.meta.items(.needs_export_symbol_from_runtime);
 
@@ -424,7 +424,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                 var count: usize = 0;
                 if (is_entry_point and output_format == .esm) {
                     for (aliases) |alias| {
-                        count += std.fmt.count("export_{f}", .{bun.fmt.fmtIdentifier(alias)});
+                        count += std.fmt.count("export_{f}", .{fun.fmt.fmtIdentifier(alias)});
                     }
                 }
 
@@ -446,13 +446,13 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
             };
 
             const string_buffer = try this.allocator().alloc(u8, string_buffer_len);
-            var builder = bun.StringBuilder{
+            var builder = fun.StringBuilder{
                 .len = 0,
                 .cap = string_buffer.len,
                 .ptr = string_buffer.ptr,
             };
 
-            defer bun.assert(builder.len == builder.cap); // ensure we used all of it
+            defer fun.assert(builder.len == builder.cap); // ensure we used all of it
 
             // Pre-generate symbols for re-exports CommonJS symbols in case they
             // are necessary later. This is done now because the symbols map cannot be
@@ -461,7 +461,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                 const copies = try this.allocator().alloc(Ref, aliases.len);
 
                 for (aliases, copies) |alias, *copy| {
-                    const original_name = builder.fmt("export_{f}", .{bun.fmt.fmtIdentifier(alias)});
+                    const original_name = builder.fmt("export_{f}", .{fun.fmt.fmtIdentifier(alias)});
                     copy.* = this.graph.generateNewSymbol(source_index, .other, original_name);
                 }
                 this.graph.meta.items(.cjs_export_copies)[id] = copies;
@@ -514,7 +514,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                     runtime_export_symbol_ref = this.runtimeFunction("__export");
                 }
 
-                bun.assert(runtime_export_symbol_ref.isValid());
+                fun.assert(runtime_export_symbol_ref.isValid());
 
                 try this.graph.generateSymbolImportAndUse(
                     id,
@@ -543,7 +543,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
 
                         const total_len = parts_declaring_symbol.len + @as(usize, import.re_exports.len) + @as(usize, part.dependencies.len);
                         if (part.dependencies.cap < total_len) {
-                            bun.handleOom(part.dependencies.ensureTotalCapacity(this.allocator(), total_len));
+                            fun.handleOom(part.dependencies.ensureTotalCapacity(this.allocator(), total_len));
                         }
 
                         // Depend on the file containing the imported symbol
@@ -571,7 +571,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                 const extra_count = @as(usize, @intFromBool(force_include_exports)) +
                     @as(usize, @intFromBool(add_wrapper));
 
-                var dependencies = bun.handleOom(std.array_list.Managed(js_ast.Dependency).initCapacity(this.allocator(), extra_count));
+                var dependencies = fun.handleOom(std.array_list.Managed(js_ast.Dependency).initCapacity(this.allocator(), extra_count));
 
                 var resolved_exports_list: *ResolvedExports = &this.graph.meta.items(.resolved_exports)[id];
                 for (aliases) |alias| {
@@ -584,12 +584,12 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                         target_source_index = import_data.data.source_index;
                         target_ref = import_data.data.import_ref;
 
-                        bun.handleOom(dependencies.appendSlice(import_data.re_exports.slice()));
+                        fun.handleOom(dependencies.appendSlice(import_data.re_exports.slice()));
                     }
 
                     // Pull in all declarations of this symbol
                     const top_to_parts = this.topLevelSymbolsToParts(target_source_index.get(), target_ref);
-                    bun.handleOom(dependencies.ensureUnusedCapacity(top_to_parts.len));
+                    fun.handleOom(dependencies.ensureUnusedCapacity(top_to_parts.len));
                     for (top_to_parts) |part_index| {
                         dependencies.appendAssumeCapacity(.{
                             .source_index = target_source_index,
@@ -598,7 +598,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                     }
                 }
 
-                bun.handleOom(dependencies.ensureUnusedCapacity(extra_count));
+                fun.handleOom(dependencies.ensureUnusedCapacity(extra_count));
 
                 // Ensure "exports" is included if the current output format needs it
                 if (force_include_exports) {
@@ -624,7 +624,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                         .dependencies = js_ast.Dependency.List.moveFromList(&dependencies),
                         .can_be_removed_if_unused = false,
                     },
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
 
                 parts = parts_list[id].slice();
                 this.graph.meta.items(.entry_point_part_index)[id] = Index.part(entry_point_part_index);
@@ -720,7 +720,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                         continue;
                     }
 
-                    bun.assert(@as(usize, @intCast(other_id)) < this.graph.meta.len);
+                    fun.assert(@as(usize, @intCast(other_id)) < this.graph.meta.len);
                     const other_flags = flags[other_id];
                     const other_export_kind = exports_kind[other_id];
                     const other_source_index = other_id;
@@ -800,7 +800,7 @@ pub fn scanImportsAndExports(this: *LinkerContext) ScanImportsAndExportsError!vo
                     if (record.source_index.isValid()) {
                         const other_source_index = record.source_index.get();
                         const other_id = other_source_index;
-                        bun.assert(@as(usize, @intCast(other_id)) < this.graph.meta.len);
+                        fun.assert(@as(usize, @intCast(other_id)) < this.graph.meta.len);
                         const other_export_kind = exports_kind[other_id];
                         if (other_source_index != source_index and other_export_kind.isDynamic()) {
                             happens_at_runtime = true;
@@ -976,7 +976,7 @@ const ExportStarContext = struct {
             if (i == source_index)
                 return;
         }
-        bun.handleOom(this.source_index_stack.append(source_index));
+        fun.handleOom(this.source_index_stack.append(source_index));
         const stack_end_pos = this.source_index_stack.items.len;
         defer this.source_index_stack.shrinkRetainingCapacity(stack_end_pos - 1);
 
@@ -1016,7 +1016,7 @@ const ExportStarContext = struct {
                     }
                 }
 
-                const gop = bun.handleOom(resolved_exports.getOrPut(this.allocator, alias));
+                const gop = fun.handleOom(resolved_exports.getOrPut(this.allocator, alias));
                 if (!gop.found_existing) {
                     // Initialize the re-export
                     gop.value_ptr.* = .{
@@ -1034,7 +1034,7 @@ const ExportStarContext = struct {
                             .import_ref = name.ref,
                             .source_index = Index.source(other_source_index),
                         },
-                    }) catch |err| bun.handleOom(err);
+                    }) catch |err| fun.handleOom(err);
                 } else if (gop.value_ptr.data.source_index.get() != other_source_index) {
                     // Two different re-exports colliding makes it potentially ambiguous
                     gop.value_ptr.potentially_ambiguous_export_star_refs.append(this.allocator, .{
@@ -1043,7 +1043,7 @@ const ExportStarContext = struct {
                             .import_ref = name.ref,
                             .name_loc = name.alias_loc,
                         },
-                    }) catch |err| bun.handleOom(err);
+                    }) catch |err| fun.handleOom(err);
                 }
             }
 
@@ -1082,19 +1082,19 @@ const ExportStarContext = struct {
 fn validateComposesFromProperties(
     this: *LinkerContext,
     index: Index.Int,
-    root_css_ast: *bun.css.BundlerStyleSheet,
+    root_css_ast: *fun.css.BundlerStyleSheet,
     import_records_list: []ImportRecord.List,
-    all_css_asts: []const ?*bun.css.BundlerStyleSheet,
+    all_css_asts: []const ?*fun.css.BundlerStyleSheet,
 ) void {
     const PropertyInFile = struct {
         source_index: Index.Int,
-        range: bun.logger.Range,
+        range: fun.logger.Range,
     };
     const Visitor = struct {
         visited: std.AutoArrayHashMap(Ref, void),
-        properties: bun.StringArrayHashMap(PropertyInFile),
+        properties: fun.StringArrayHashMap(PropertyInFile),
         all_import_records: []const ImportRecord.List,
-        all_css_asts: []const ?*bun.css.BundlerStyleSheet,
+        all_css_asts: []const ?*fun.css.BundlerStyleSheet,
         all_symbols: *const Symbol.Map,
         all_sources: []const Logger.Source,
         temp_allocator: std.mem.Allocator,
@@ -1106,8 +1106,8 @@ fn validateComposesFromProperties(
             v.properties.deinit();
         }
 
-        fn addPropertyOrWarn(v: *@This(), local: Ref, property_name: []const u8, source_index: Index.Int, range: bun.logger.Range) void {
-            const entry = bun.handleOom(v.properties.getOrPut(property_name));
+        fn addPropertyOrWarn(v: *@This(), local: Ref, property_name: []const u8, source_index: Index.Int, range: fun.logger.Range) void {
+            const entry = fun.handleOom(v.properties.getOrPut(property_name));
 
             if (!entry.found_existing) {
                 entry.value_ptr.* = .{
@@ -1132,26 +1132,26 @@ fn validateComposesFromProperties(
                         v.allocator,
                         "<r>The value of <b>{s}<r> in the class <b>{s}<r> is undefined.",
                         .{ property_name, local_original_name },
-                    ) catch |err| bun.handleOom(err),
-                ).cloneLineText(v.log.clone_line_text, v.log.msgs.allocator) catch |err| bun.handleOom(err),
+                    ) catch |err| fun.handleOom(err),
+                ).cloneLineText(v.log.clone_line_text, v.log.msgs.allocator) catch |err| fun.handleOom(err),
                 .notes = v.allocator.dupe(
                     Logger.Data,
                     &.{
-                        bun.logger.rangeData(
+                        fun.logger.rangeData(
                             &v.all_sources[entry.value_ptr.source_index],
                             entry.value_ptr.range,
-                            bun.handleOom(Logger.Log.allocPrint(v.allocator, "The first definition of {s} is in this style rule:", .{property_name})),
+                            fun.handleOom(Logger.Log.allocPrint(v.allocator, "The first definition of {s} is in this style rule:", .{property_name})),
                         ),
                         .{ .text = std.fmt.allocPrint(
                             v.allocator,
                             "The specification of \"composes\" does not define an order when class declarations from separate files are composed together. " ++
                                 "The value of the {f} property for {f} may change unpredictably as the code is edited. " ++
                                 "Make sure that all definitions of {f} for {f} are in a single file.",
-                            .{ bun.fmt.quote(property_name), bun.fmt.quote(local_original_name), bun.fmt.quote(property_name), bun.fmt.quote(local_original_name) },
-                        ) catch |err| bun.handleOom(err) },
+                            .{ fun.fmt.quote(property_name), fun.fmt.quote(local_original_name), fun.fmt.quote(property_name), fun.fmt.quote(local_original_name) },
+                        ) catch |err| fun.handleOom(err) },
                     },
-                ) catch |err| bun.handleOom(err),
-            }) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err),
+            }) catch |err| fun.handleOom(err);
 
             // Don't warn more than once
             entry.value_ptr.source_index = Index.invalid.get();
@@ -1162,7 +1162,7 @@ fn validateComposesFromProperties(
             v.properties.clearRetainingCapacity();
         }
 
-        fn visit(v: *@This(), idx: Index.Int, ast: *bun.css.BundlerStyleSheet, ref: Ref) void {
+        fn visit(v: *@This(), idx: Index.Int, ast: *fun.css.BundlerStyleSheet, ref: Ref) void {
             if (v.visited.contains(ref)) return;
             v.visited.put(ref, {}) catch unreachable;
 
@@ -1182,7 +1182,7 @@ fn validateComposesFromProperties(
                                 v.visit(record.source_index.get(), other_ast, other_name_ref);
                             }
                         } else {
-                            bun.assert(compose.from.? == .global);
+                            fun.assert(compose.from.? == .global);
                             // Otherwise it is composed from the global scope.
                             //
                             // See comment above for why we are skipping checking this for now.
@@ -1201,9 +1201,9 @@ fn validateComposesFromProperties(
             // Warn about cross-file composition with the same CSS properties
             var iter = property_usage.bitset.iterator(.{});
             while (iter.next()) |property_tag| {
-                const property_id_tag: bun.css.PropertyIdTag = @enumFromInt(@as(u16, @intCast(property_tag)));
-                bun.assert(property_id_tag != .custom);
-                bun.assert(property_id_tag != .unparsed);
+                const property_id_tag: fun.css.PropertyIdTag = @enumFromInt(@as(u16, @intCast(property_tag)));
+                fun.assert(property_id_tag != .custom);
+                fun.assert(property_id_tag != .unparsed);
                 v.addPropertyOrWarn(ref, @tagName(property_id_tag), idx, property_usage.range);
             }
 
@@ -1216,7 +1216,7 @@ fn validateComposesFromProperties(
     const temp_allocator = sfb.get();
     var visitor = Visitor{
         .visited = std.AutoArrayHashMap(Ref, void).init(temp_allocator),
-        .properties = bun.StringArrayHashMap(PropertyInFile).init(temp_allocator),
+        .properties = fun.StringArrayHashMap(PropertyInFile).init(temp_allocator),
         .all_import_records = import_records_list,
         .all_css_asts = all_css_asts,
         .all_symbols = &this.graph.symbols,
@@ -1234,28 +1234,28 @@ fn validateComposesFromProperties(
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const ImportRecord = bun.ImportRecord;
-const Loader = bun.Loader;
-const Logger = bun.logger;
-const options = bun.options;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const ImportRecord = fun.ImportRecord;
+const Loader = fun.Loader;
+const Logger = fun.logger;
+const options = fun.options;
+const strings = fun.strings;
 
-const EntryPoint = bun.bundle_v2.EntryPoint;
-const ExportData = bun.bundle_v2.ExportData;
-const ImportData = bun.bundle_v2.ImportData;
-const Index = bun.bundle_v2.Index;
-const JSMeta = bun.bundle_v2.JSMeta;
-const Part = bun.bundle_v2.Part;
-const RefImportData = bun.bundle_v2.RefImportData;
-const ResolvedExports = bun.bundle_v2.ResolvedExports;
-const Symbol = bun.bundle_v2.Symbol;
+const EntryPoint = fun.bundle_v2.EntryPoint;
+const ExportData = fun.bundle_v2.ExportData;
+const ImportData = fun.bundle_v2.ImportData;
+const Index = fun.bundle_v2.Index;
+const JSMeta = fun.bundle_v2.JSMeta;
+const Part = fun.bundle_v2.Part;
+const RefImportData = fun.bundle_v2.RefImportData;
+const ResolvedExports = fun.bundle_v2.ResolvedExports;
+const Symbol = fun.bundle_v2.Symbol;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const debug = LinkerContext.debug;
 
-const js_ast = bun.bundle_v2.js_ast;
+const js_ast = fun.bundle_v2.js_ast;
 const Dependency = js_ast.Dependency;
-const Ref = bun.bundle_v2.js_ast.Ref;
+const Ref = fun.bundle_v2.js_ast.Ref;

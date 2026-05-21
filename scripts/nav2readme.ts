@@ -1,8 +1,10 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 // Regenerate the Table of Contents in the README by reading through nav.ts
 //
 // To run this:
 //
-//   bun ./scripts/nav2readme.ts
+//   fun ./scripts/nav2readme.ts
 //
 //
 import { readdirSync } from "fs";
@@ -16,7 +18,7 @@ function getQuickLinks() {
     if (item.type === "divider") {
       md += "\n" + `- ${item.title}` + "\n";
     } else {
-      md += `  - [${item.title}](https://bun.com/docs/${item.slug})` + "\n";
+      md += `  - [${item.title}](https://fun.dev/docs/${item.slug})` + "\n";
     }
   }
 
@@ -32,7 +34,7 @@ async function getGuides() {
     if (guide.isFile() && guide.name.endsWith(".md")) {
       const joined = path.join(basePath, guide.name);
       promises.push(
-        Bun.file(joined)
+        Fun.file(joined)
           .text()
           .then(text => {
             const nameI = text.indexOf("name: ");
@@ -70,13 +72,13 @@ async function getGuides() {
       prevDirname = dirname;
     }
     md +=
-      `  - [${name}](https://bun.com/guides/${path.dirname(file)}/${path.basename(file, path.extname(file))})` + "\n";
+      `  - [${name}](https://fun.dev/guides/${path.dirname(file)}/${path.basename(file, path.extname(file))})` + "\n";
   }
 
   return md;
 }
 
-const text = await Bun.file(Bun.fileURLToPath(import.meta.resolve("../README.md"))).text();
+const text = await Fun.file(Fun.fileURLToPath(import.meta.resolve("../README.md"))).text();
 const startI = text.indexOf("## Quick links\n");
 if (startI === -1) {
   throw new Error("Could not find ## Quick links in README");
@@ -95,7 +97,7 @@ const combined =
   [text.slice(0, start), getQuickLinks(), guides, text.slice(contributing)].map(text => text.trim()).join("\n\n") +
   "\n";
 
-await Bun.write(Bun.fileURLToPath(import.meta.resolve("../README.md")), combined);
+await Fun.write(Fun.fileURLToPath(import.meta.resolve("../README.md")), combined);
 
 function normalizeSectionName(name: string) {
   if (name.includes("-")) {

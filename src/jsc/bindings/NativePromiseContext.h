@@ -1,10 +1,10 @@
 #pragma once
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "root.h"
 #include <wtf/CompactPointerTuple.h>
 
-namespace Bun {
+namespace Fun {
 
 // Opaque marker type so CompactPointerTuple's allowCompactPointers check
 // passes. The actual pointee is one of several Zig-side native types; we
@@ -97,4 +97,4 @@ private:
     WTF::CompactPointerTuple<NativePromiseContextPointee*, Tag> m_data;
 };
 
-} // namespace Bun
+} // namespace Fun

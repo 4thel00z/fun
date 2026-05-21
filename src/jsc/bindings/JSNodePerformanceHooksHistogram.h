@@ -2,7 +2,7 @@
 
 #include "root.h"
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "headers-handwritten.h"
 #include "wtf/Assertions.h"
 #include "wtf/Lock.h"
@@ -17,7 +17,7 @@
 #include <memory>
 #include <limits>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -173,4 +173,4 @@ private:
 
 void setupJSNodePerformanceHooksHistogramClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

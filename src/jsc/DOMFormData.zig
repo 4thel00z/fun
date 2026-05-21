@@ -102,13 +102,13 @@ pub const DOMFormData = opaque {
                 filename: ?*ZigString,
                 is_blob: u8,
             ) callconv(.c) void {
-                const ctx_ = bun.cast(*Context, ctx_ptr.?);
+                const ctx_ = fun.cast(*Context, ctx_ptr.?);
                 const value = if (is_blob == 0)
-                    FormDataEntry{ .string = bun.cast(*ZigString, value_ptr).* }
+                    FormDataEntry{ .string = fun.cast(*ZigString, value_ptr).* }
                 else
                     FormDataEntry{
                         .file = .{
-                            .blob = bun.cast(*jsc.WebCore.Blob, value_ptr),
+                            .blob = fun.cast(*jsc.WebCore.Blob, value_ptr),
                             .filename = (filename orelse &ZigString.Empty).*,
                         },
                     };
@@ -121,9 +121,9 @@ pub const DOMFormData = opaque {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VM = jsc.VM;

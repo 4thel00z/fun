@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("CSS bundler maps logical border-radius properties to correct physical properties", async () => {
   using dir = tempDir("css-logical-border-radius", {
@@ -12,9 +12,9 @@ test("CSS bundler maps logical border-radius properties to correct physical prop
 `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "input.css", "--target=browser", "--outdir", "out"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "input.css", "--target=browser", "--outdir", "out"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -22,7 +22,7 @@ test("CSS bundler maps logical border-radius properties to correct physical prop
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  const output = await Bun.file(`${dir}/out/input.css`).text();
+  const output = await Fun.file(`${dir}/out/input.css`).text();
 
   // Each logical property must map to its own distinct physical property.
   // The output contains LTR and RTL variants (with :lang() selectors), so

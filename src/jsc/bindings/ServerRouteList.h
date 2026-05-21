@@ -1,6 +1,6 @@
 
 
-namespace Bun {
+namespace Fun {
 JSC::Structure* createServerRouteListStructure(JSC::VM&, Zig::GlobalObject*);
-JSC::JSObject* createJSBunRequestParamsPrototype(JSC::VM&, Zig::GlobalObject*);
+JSC::JSObject* createJSFunRequestParamsPrototype(JSC::VM&, Zig::GlobalObject*);
 }

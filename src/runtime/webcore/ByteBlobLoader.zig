@@ -7,7 +7,7 @@ remain: Blob.SizeType = 1024 * 1024 * 2,
 done: bool = false,
 pulled: bool = false,
 
-/// https://github.com/oven-sh/bun/issues/14988
+/// https://github.com/underdoc-org/fun/issues/14988
 /// Necessary for converting a ByteBlobLoader from a Blob -> back into a Blob
 /// Especially for DOMFormData, where the specific content-type might've been serialized into the data.
 content_type: []const u8 = "",
@@ -42,7 +42,7 @@ pub fn setup(
     const content_type, const content_type_allocated = brk: {
         if (blob.content_type_was_set) {
             if (blob.content_type_allocated) {
-                break :brk .{ bun.handleOom(bun.default_allocator.dupe(u8, blob.content_type)), true };
+                break :brk .{ fun.handleOom(fun.default_allocator.dupe(u8, blob.content_type)), true };
             }
 
             break :brk .{ blob.content_type, false };
@@ -90,7 +90,7 @@ pub fn onPull(this: *ByteBlobLoader, buffer: []u8, array: JSValue) streams.Resul
 
     this.remain -|= copied;
     this.offset +|= copied;
-    bun.assert(buffer.ptr != temporary.ptr);
+    fun.assert(buffer.ptr != temporary.ptr);
     @memcpy(buffer[0..temporary.len], temporary);
     if (this.remain == 0) {
         return .{ .into_array_and_done = .{ .value = array, .len = copied } };
@@ -114,7 +114,7 @@ pub fn toAnyBlob(this: *ByteBlobLoader, globalThis: *JSGlobalObject) ?Blob.Any {
         blob.size = this.remain;
 
         // Make sure to preserve the content-type.
-        // https://github.com/oven-sh/bun/issues/14988
+        // https://github.com/underdoc-org/fun/issues/14988
         if (this.content_type.len > 0) {
             blob.content_type = this.content_type;
             blob.content_type_was_set = this.content_type.len > 0;
@@ -149,7 +149,7 @@ pub fn deinit(this: *ByteBlobLoader) void {
 
 fn clearData(this: *ByteBlobLoader) void {
     if (this.content_type_allocated) {
-        bun.default_allocator.free(this.content_type);
+        fun.default_allocator.free(this.content_type);
         this.content_type = "";
         this.content_type_allocated = false;
     }
@@ -160,21 +160,21 @@ fn clearData(this: *ByteBlobLoader) void {
     }
 }
 
-pub fn drain(this: *ByteBlobLoader) bun.ByteList {
+pub fn drain(this: *ByteBlobLoader) fun.ByteList {
     const store = this.store orelse return .{};
     var temporary = store.sharedView();
     temporary = temporary[this.offset..];
     temporary = temporary[0..@min(16384, @min(temporary.len, this.remain))];
 
-    var byte_list = bun.ByteList.fromBorrowedSliceDangerous(temporary);
-    const cloned = bun.handleOom(byte_list.clone(bun.default_allocator));
+    var byte_list = fun.ByteList.fromBorrowedSliceDangerous(temporary);
+    const cloned = fun.handleOom(byte_list.clone(fun.default_allocator));
     this.offset +|= @as(Blob.SizeType, cloned.len);
     this.remain -|= @as(Blob.SizeType, cloned.len);
 
     return cloned;
 }
 
-pub fn toBufferedValue(this: *ByteBlobLoader, globalThis: *JSGlobalObject, action: streams.BufferAction.Tag) bun.JSError!JSValue {
+pub fn toBufferedValue(this: *ByteBlobLoader, globalThis: *JSGlobalObject, action: streams.BufferAction.Tag) fun.JSError!JSValue {
     if (this.toAnyBlob(globalThis)) |blob_| {
         var blob = blob_;
         return blob.toPromise(globalThis, action);
@@ -191,12 +191,12 @@ pub fn memoryCost(this: *const ByteBlobLoader) usize {
     return 0;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 
-const webcore = bun.webcore;
+const webcore = fun.webcore;
 const Blob = webcore.Blob;
 const streams = webcore.streams;

@@ -14,12 +14,12 @@ namespace api_internal {
 
 void ToLocalEmpty()
 {
-    BUN_PANIC("Attempt to unwrap an empty v8::MaybeLocal");
+    FUN_PANIC("Attempt to unwrap an empty v8::MaybeLocal");
 }
 
 void FromJustIsNothing()
 {
-    BUN_PANIC("Attempt to call FromJust on an empty v8::Maybe");
+    FUN_PANIC("Attempt to call FromJust on an empty v8::Maybe");
 }
 
 uintptr_t* GlobalizeReference(internal::Isolate* i_isolate, uintptr_t address)

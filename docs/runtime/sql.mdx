@@ -1,12 +1,12 @@
 ---
 title: SQL
-description: Bun provides native bindings for working with SQL databases through a unified Promise-based API that supports PostgreSQL, MySQL, and SQLite.
+description: Fun provides native bindings for working with SQL databases through a unified Promise-based API that supports PostgreSQL, MySQL, and SQLite.
 ---
 
 The interface is designed to be performant, using tagged template literals for queries and offering features like connection pooling, transactions, and prepared statements.
 
 ```ts title="db.ts" icon="/icons/typescript.svg"
-import { sql, SQL } from "bun";
+import { sql, SQL } from "fun";
 
 // PostgreSQL (default)
 const users = await sql`
@@ -48,7 +48,7 @@ const sqliteResults = await sqlite`
 
 ## Database Support
 
-`Bun.SQL` provides a unified API for multiple database systems:
+`Fun.SQL` provides a unified API for multiple database systems:
 
 ### PostgreSQL
 
@@ -59,21 +59,21 @@ PostgreSQL is used when:
 - No connection string is provided and environment variables point to PostgreSQL
 
 ```ts title="db.ts" icon="/icons/typescript.svg"
-import { sql } from "bun";
+import { sql } from "fun";
 // Uses PostgreSQL if DATABASE_URL is not set or is a PostgreSQL URL
 await sql`SELECT ...`;
 
-import { SQL } from "bun";
+import { SQL } from "fun";
 const pg = new SQL("postgres://user:pass@localhost:5432/mydb");
 await pg`SELECT ...`;
 ```
 
 ### MySQL
 
-MySQL support is built into Bun.SQL, providing the same tagged template literal interface with full compatibility for MySQL 5.7+ and MySQL 8.0+:
+MySQL support is built into Fun.SQL, providing the same tagged template literal interface with full compatibility for MySQL 5.7+ and MySQL 8.0+:
 
 ```ts title="db.ts" icon="/icons/typescript.svg"
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 // MySQL connection
 const mysql = new SQL("mysql://user:password@localhost:3306/database");
@@ -143,10 +143,10 @@ MySQL databases support:
 
 ### SQLite
 
-SQLite support is built into Bun.SQL, providing the same tagged template literal interface:
+SQLite support is built into Fun.SQL, providing the same tagged template literal interface:
 
 ```ts
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 // In-memory database
 const memory = new SQL(":memory:");
@@ -214,7 +214,7 @@ const sql = new SQL({
   create: true, // Create database if it doesn't exist
   readwrite: true, // Open for reading and writing
 
-  // Additional Bun:sqlite options
+  // Additional Fun:sqlite options
   strict: true, // Enable strict mode
   safeIntegers: false, // Use JavaScript numbers for integers
 });
@@ -233,7 +233,7 @@ Query parameters in the URL are parsed to set these options:
 You can pass JavaScript values directly to the SQL template literal and escaping will be handled for you.
 
 ```ts
-import { sql } from "bun";
+import { sql } from "fun";
 
 // Basic insert with direct values
 const [user] = await sql`
@@ -288,7 +288,7 @@ await sql`INSERT INTO users ${sql(user, "name", "email")}`;
 
 ## Query Results
 
-By default, Bun's SQL client returns query results as arrays of objects, where each object represents a row with column names as keys. However, there are cases where you might want the data in a different format. The client provides two additional methods for this purpose.
+By default, Fun's SQL client returns query results as arrays of objects, where each object represents a row with column names as keys. However, there are cases where you might want the data in a different format. The client provides two additional methods for this purpose.
 
 ### `sql``.values()` format
 
@@ -323,7 +323,7 @@ console.log(rows); // [[Buffer, Buffer], [Buffer, Buffer], [Buffer, Buffer]]
 
 ## SQL Fragments
 
-A common need in database applications is the ability to construct queries dynamically based on runtime conditions. Bun provides safe ways to do this without risking SQL injection.
+A common need in database applications is the ability to construct queries dynamically based on runtime conditions. Fun provides safe ways to do this without risking SQL injection.
 
 ### Dynamic Table Names
 
@@ -439,7 +439,7 @@ const result = await sql.unsafe("SELECT " + dangerous + " FROM users WHERE id = 
 
 ### Execute and Cancelling Queries
 
-Bun's SQL is lazy, which means it will only start executing when awaited or executed with `.execute()`.
+Fun's SQL is lazy, which means it will only start executing when awaited or executed with `.execute()`.
 You can cancel a query that is currently executing by calling the `cancel()` method on the query object.
 
 ```ts
@@ -456,7 +456,7 @@ await query;
 
 ### Automatic Database Detection
 
-When using `Bun.sql()` without arguments or `new SQL()` with a connection string, the adapter is automatically detected based on the URL format:
+When using `Fun.sql()` without arguments or `new SQL()` with a connection string, the adapter is automatically detected based on the URL format:
 
 #### MySQL Auto-Detection
 
@@ -471,8 +471,8 @@ const sql1 = new SQL("mysql://user:pass@localhost/mydb");
 const sql2 = new SQL("mysql2://user:pass@localhost:3306/mydb");
 
 // Works with DATABASE_URL environment variable
-DATABASE_URL="mysql://user:pass@localhost/mydb" bun run app.js
-DATABASE_URL="mysql2://user:pass@localhost:3306/mydb" bun run app.js
+DATABASE_URL="mysql://user:pass@localhost/mydb" fun run app.js
+DATABASE_URL="mysql2://user:pass@localhost:3306/mydb" fun run app.js
 ```
 
 #### SQLite Auto-Detection
@@ -492,9 +492,9 @@ const sql2 = new SQL("sqlite://app.db");
 const sql3 = new SQL("file://./database.db");
 
 // Works with DATABASE_URL environment variable
-DATABASE_URL=":memory:" bun run app.js
-DATABASE_URL="sqlite://myapp.db" bun run app.js
-DATABASE_URL="file://./data/app.db" bun run app.js
+DATABASE_URL=":memory:" fun run app.js
+DATABASE_URL="sqlite://myapp.db" fun run app.js
+DATABASE_URL="file://./data/app.db" fun run app.js
 ```
 
 #### PostgreSQL Auto-Detection
@@ -503,11 +503,11 @@ PostgreSQL is the default for connection strings that don't match MySQL or SQLit
 
 ```bash
 # PostgreSQL is detected for these patterns
-DATABASE_URL="postgres://user:pass@localhost:5432/mydb" bun run app.js
-DATABASE_URL="postgresql://user:pass@localhost:5432/mydb" bun run app.js
+DATABASE_URL="postgres://user:pass@localhost:5432/mydb" fun run app.js
+DATABASE_URL="postgresql://user:pass@localhost:5432/mydb" fun run app.js
 
 # Or any URL that doesn't match MySQL or SQLite patterns
-DATABASE_URL="localhost:5432/mydb" bun run app.js
+DATABASE_URL="localhost:5432/mydb" fun run app.js
 ```
 
 ### MySQL Environment Variables
@@ -575,17 +575,17 @@ DATABASE_URL="file:///absolute/path/to/db.sqlite"
 
 ## Runtime Preconnection
 
-Bun can preconnect to PostgreSQL at startup to improve performance by establishing database connections before your application code runs. This is useful for reducing connection latency on the first database query.
+Fun can preconnect to PostgreSQL at startup to improve performance by establishing database connections before your application code runs. This is useful for reducing connection latency on the first database query.
 
 ```bash
 # Enable PostgreSQL preconnection
-bun --sql-preconnect index.js
+fun --sql-preconnect index.js
 
 # Works with DATABASE_URL environment variable
-DATABASE_URL=postgres://user:pass@localhost:5432/db bun --sql-preconnect index.js
+DATABASE_URL=postgres://user:pass@localhost:5432/db fun --sql-preconnect index.js
 
 # Can be combined with other runtime flags
-bun --sql-preconnect --hot index.js
+fun --sql-preconnect --hot index.js
 ```
 
 The `--sql-preconnect` flag will automatically establish a PostgreSQL connection using your configured environment variables at startup. If the connection fails, it won't crash your application - the error will be handled gracefully.
@@ -599,7 +599,7 @@ You can configure your database connection manually by passing options to the SQ
 ### MySQL Options
 
 ```ts
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 const sql = new SQL({
   // Required for MySQL when using options object
@@ -647,7 +647,7 @@ const sql = new SQL({
 ### PostgreSQL Options
 
 ```ts
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 const sql = new SQL({
   // Connection details (adapter is auto-detected as PostgreSQL)
@@ -692,7 +692,7 @@ const sql = new SQL({
 ### SQLite Options
 
 ```ts
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 const sql = new SQL({
   // Required for SQLite
@@ -734,7 +734,7 @@ const sql = new SQL({
 When clients need to use alternative authentication schemes such as access tokens or connections to databases with rotating passwords, provide either a synchronous or asynchronous function that will resolve the dynamic password value at connection time.
 
 ```ts
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 const sql = new SQL(url, {
   // Other connection config
@@ -882,7 +882,7 @@ await sql.rollbackDistributed("tx1");
 
 ## Authentication
 
-Bun supports SCRAM-SHA-256 (SASL), MD5, and Clear Text authentication. SASL is recommended for better security. Check [Postgres SASL Authentication](https://www.postgresql.org/docs/current/sasl-authentication.html) for more information.
+Fun supports SCRAM-SHA-256 (SASL), MD5, and Clear Text authentication. SASL is recommended for better security. Check [Postgres SASL Authentication](https://www.postgresql.org/docs/current/sasl-authentication.html) for more information.
 
 ### SSL Modes Overview
 
@@ -921,7 +921,7 @@ const sql = new SQL("postgres://user:password@localhost/mydb?sslmode=verify-full
 
 ## Connection Pooling
 
-Bun's SQL client automatically manages a connection pool, which is a pool of database connections that are reused for multiple queries. This helps to reduce the overhead of establishing and closing connections for each query, and it also helps to manage the number of concurrent connections to the database.
+Fun's SQL client automatically manages a connection pool, which is a pool of database connections that are reused for multiple queries. This helps to reduce the overhead of establishing and closing connections for each query, and it also helps to manage the number of concurrent connections to the database.
 
 ```ts
 const sql = new SQL({
@@ -936,7 +936,7 @@ const sql = new SQL({
 No connection will be made until a query is made.
 
 ```ts
-const sql = Bun.SQL(); // no connection are created
+const sql = Fun.SQL(); // no connection are created
 
 await sql`...`; // pool is started until max is reached (if possible), first available connection is used
 await sql`...`; // previous connection is reused
@@ -956,7 +956,7 @@ await sql.close({ timeout: 0 }); // close all connections from the pool immediat
 
 ## Reserved Connections
 
-Bun enables you to reserve a connection from the pool, and returns a client that wraps the single connection. This can be used for running queries on an isolated connection.
+Fun enables you to reserve a connection from the pool, and returns a client that wraps the single connection. This can be used for running queries on an isolated connection.
 
 ```ts
 // Get exclusive connection from pool
@@ -980,7 +980,7 @@ try {
 
 ## Prepared Statements
 
-By default, Bun's SQL client automatically creates named prepared statements for queries where it can be inferred that the query is static. This provides better performance. However, you can change this behavior by setting `prepare: false` in the connection options:
+By default, Fun's SQL client automatically creates named prepared statements for queries where it can be inferred that the query is static. This provides better performance. However, you can change this behavior by setting `prepare: false` in the connection options:
 
 ```ts
 const sql = new SQL({
@@ -1015,7 +1015,7 @@ The client provides typed errors for different failure scenarios. Errors are dat
 ### Error Classes
 
 ```ts
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 try {
   await sql`SELECT * FROM users`;
@@ -1153,10 +1153,10 @@ try {
 
 ## Numbers and BigInt
 
-Bun's SQL client includes special handling for large numbers that exceed the range of a 53-bit integer. Here's how it works:
+Fun's SQL client includes special handling for large numbers that exceed the range of a 53-bit integer. Here's how it works:
 
 ```ts
-import { sql } from "bun";
+import { sql } from "fun";
 
 const [{ x, y }] = await sql`SELECT 9223372036854777 as x, 12345 as y`;
 
@@ -1186,7 +1186,7 @@ console.log(typeof x, x); // "bigint" 9223372036854777n
 
 There's still some things we haven't finished yet.
 
-- Connection preloading via `--db-preconnect` Bun CLI flag
+- Connection preloading via `--db-preconnect` Fun CLI flag
 - Column name transforms (e.g. `snake_case` to `camelCase`). This is mostly blocked on a unicode-aware implementation of changing the case in C++ using WebKit's `WTF::String`.
 - Column type transforms
 
@@ -1242,16 +1242,16 @@ const multiResults = await mysql`
 
 #### Character Sets & Collations
 
-Bun.SQL automatically uses `utf8mb4` character set for MySQL connections, ensuring full Unicode support including emojis. This is the recommended character set for modern MySQL applications.
+Fun.SQL automatically uses `utf8mb4` character set for MySQL connections, ensuring full Unicode support including emojis. This is the recommended character set for modern MySQL applications.
 
 #### Connection Attributes
 
-Bun automatically sends client information to MySQL for better monitoring:
+Fun automatically sends client information to MySQL for better monitoring:
 
 ```ts
 // These attributes are sent automatically:
-// _client_name: "Bun"
-// _client_version: <bun version>
+// _client_name: "Fun"
+// _client_version: <fun version>
 // You can see these in MySQL's performance_schema.session_connect_attrs
 ```
 
@@ -1280,7 +1280,7 @@ MySQL types are automatically converted to JavaScript types:
 
 While the API is unified, there are some behavioral differences:
 
-1. **Parameter placeholders**: MySQL uses `?` internally but Bun converts `$1, $2` style automatically
+1. **Parameter placeholders**: MySQL uses `?` internally but Fun converts `$1, $2` style automatically
 2. **RETURNING clause**: MySQL doesn't support RETURNING; use `result.lastInsertRowid` or a separate SELECT
 3. **Array types**: MySQL doesn't have native array types like PostgreSQL
 
@@ -1353,7 +1353,7 @@ try {
 ## Frequently Asked Questions
 
 <AccordionGroup>
-	<Accordion title="Why is this `Bun.sql` and not `Bun.postgres`?">
+	<Accordion title="Why is this `Fun.sql` and not `Fun.postgres`?">
 		The plan was to add more database drivers in the future. Now with MySQL support added, this unified API supports PostgreSQL, MySQL, and SQLite.
 	</Accordion>
 	<Accordion title="How do I know which database adapter is being used?">
@@ -1392,11 +1392,11 @@ try {
 
 ## Why not just use an existing library?
 
-npm packages like postgres.js, pg, and node-postgres can be used in Bun too. They're great options.
+npm packages like postgres.js, pg, and node-postgres can be used in Fun too. They're great options.
 
 Two reasons why:
 
-1. We think it's simpler for developers to have a database driver built into Bun. The time you spend library shopping is time you could be building your app.
+1. We think it's simpler for developers to have a database driver built into Fun. The time you spend library shopping is time you could be building your app.
 2. We leverage some JavaScriptCore engine internals to make it faster to create objects that would be difficult to implement in a library
 
 ## Credits

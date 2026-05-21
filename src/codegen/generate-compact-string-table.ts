@@ -1,4 +1,6 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 
 /**
  * Compact String Table Generator
@@ -23,7 +25,7 @@
  * echo -e "application/json\\ntext/html\\ntext/plain" > strings.txt
  *
  * # Generate Zig code
- * bun src/codegen/generate-compact-string-table.ts strings.txt output.zig MyStrings
+ * fun src/codegen/generate-compact-string-table.ts strings.txt output.zig MyStrings
  * ```
  *
  * ## Trade-offs:
@@ -309,7 +311,7 @@ export function generateCompactStringTable(
 //! Do not edit manually
 //! To regenerate, run:
 //! \`\`\`
-//!   bun run src/codegen/generate-compact-string-table.ts ${inputPath} ${outputPath} ${enumName}
+//!   fun run src/codegen/generate-compact-string-table.ts ${inputPath} ${outputPath} ${enumName}
 //! \`\`\`
 `;
 
@@ -382,7 +384,7 @@ ${entries.map(entry => `        .${escapeZigIdentifier(entry.name)},`).join("\n"
 // CLI interface
 
 // Read strings from stdin
-const input = await Bun.file(inputPath).text();
+const input = await Fun.file(inputPath).text();
 const strings: { name: string; value: string }[] = [];
 
 for (const line of input.trim().split("\n")) {

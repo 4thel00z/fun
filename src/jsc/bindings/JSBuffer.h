@@ -30,12 +30,12 @@
 
 extern "C" JSC::EncodedJSValue JSBuffer__bufferFromLength(JSC::JSGlobalObject* lexicalGlobalObject, int64_t length);
 extern "C" JSC::EncodedJSValue JSBuffer__bufferFromPointerAndLengthAndDeinit(JSC::JSGlobalObject* lexicalGlobalObject, char* ptr, size_t length, void* ctx, JSTypedArrayBytesDeallocator bytesDeallocator);
-extern "C" JSC::EncodedJSValue Bun__encoding__toString(const uint8_t* input, size_t len, JSC::JSGlobalObject* globalObject, Encoding encoding);
-extern "C" JSC::EncodedJSValue Bun__encoding__toStringUTF8(const uint8_t* input, size_t len, JSC::JSGlobalObject* globalObject);
-extern "C" bool Bun__Buffer_fill(ZigString*, void*, size_t, WebCore::BufferEncodingType);
+extern "C" JSC::EncodedJSValue Fun__encoding__toString(const uint8_t* input, size_t len, JSC::JSGlobalObject* globalObject, Encoding encoding);
+extern "C" JSC::EncodedJSValue Fun__encoding__toStringUTF8(const uint8_t* input, size_t len, JSC::JSGlobalObject* globalObject);
+extern "C" bool Fun__Buffer_fill(ZigString*, void*, size_t, WebCore::BufferEncodingType);
 extern "C" bool JSBuffer__isBuffer(JSC::JSGlobalObject*, JSC::EncodedJSValue);
 
-namespace Bun {
+namespace Fun {
 
 std::optional<double> byteLength(JSC::JSString* str, WebCore::BufferEncodingType encoding);
 

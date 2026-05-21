@@ -94,7 +94,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsFooGetter_prop, (JSGlobalObject* globalObject, Encode
     auto scope = DECLARE_THROW_SCOPE(vm);
     JSFoo* thisObject = jsDynamicCast<JSFoo*>(JSValue::decode(thisValue));
     if (UNLIKELY(!thisObject)) {
-        Bun::throwThisTypeError(*globalObject, scope, "JSFoo"_s, "prop"_s);
+        Fun::throwThisTypeError(*globalObject, scope, "JSFoo"_s, "prop"_s);
         return {};
     }
     return JSValue::encode(jsBoolean(thisObject->value()));
@@ -106,7 +106,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFooProtoFuncMethod, (JSGlobalObject* globalObject, Ca
     auto scope = DECLARE_THROW_SCOPE(vm);
     auto* thisObject = jsDynamicCast<JSFoo*>(callFrame->thisValue());
     if (UNLIKELY(!thisObject)) {
-        Bun::throwThisTypeError(*globalObject, scope, "Foo"_s, "method"_s);
+        Fun::throwThisTypeError(*globalObject, scope, "Foo"_s, "method"_s);
         return {};
     }
     return JSValue::encode(thisObject->doSomething(vm, globalObject));
@@ -158,7 +158,7 @@ Initialize in `ZigGlobalObject.cpp`:
 
 ```cpp
 m_JSFooClassStructure.initLater([](LazyClassStructure::Initializer& init) {
-    Bun::initJSFooClassStructure(init);
+    Fun::initJSFooClassStructure(init);
 });
 ```
 
@@ -171,11 +171,11 @@ m_JSFooClassStructure.visit(visitor);
 ## Expose to Zig
 
 ```cpp
-extern "C" JSC::EncodedJSValue Bun__JSFooConstructor(Zig::GlobalObject* globalObject) {
+extern "C" JSC::EncodedJSValue Fun__JSFooConstructor(Zig::GlobalObject* globalObject) {
     return JSValue::encode(globalObject->m_JSFooClassStructure.constructor(globalObject));
 }
 
-extern "C" EncodedJSValue Bun__Foo__toJS(Zig::GlobalObject* globalObject, Foo* foo) {
+extern "C" EncodedJSValue Fun__Foo__toJS(Zig::GlobalObject* globalObject, Foo* foo) {
     auto* structure = globalObject->m_JSFooClassStructure.get(globalObject);
     return JSValue::encode(JSFoo::create(globalObject->vm(), structure, globalObject, WTFMove(foo)));
 }

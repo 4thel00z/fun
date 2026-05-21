@@ -1,9 +1,9 @@
 ---
 title: "Dates and times"
-description: "Learn how to manipulate time and dates in your Bun tests using setSystemTime and Jest compatibility functions"
+description: "Learn how to manipulate time and dates in your Fun tests using setSystemTime and Jest compatibility functions"
 ---
 
-`bun:test` lets you change what time it is in your tests.
+`fun:test` lets you change what time it is in your tests.
 
 This works with any of the following:
 
@@ -11,14 +11,14 @@ This works with any of the following:
 - `new Date()`
 - `new Intl.DateTimeFormat().format()`
 
-<Note>Timers are not impacted yet, but may be in a future release of Bun.</Note>
+<Note>Timers are not impacted yet, but may be in a future release of Fun.</Note>
 
 ## setSystemTime
 
 To change the system time, use `setSystemTime`:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { setSystemTime, beforeAll, test, expect } from "bun:test";
+import { setSystemTime, beforeAll, test, expect } from "fun:test";
 
 beforeAll(() => {
   setSystemTime(new Date("2020-01-01T00:00:00.000Z"));
@@ -43,13 +43,13 @@ test("just like in jest", () => {
 test("unlike in jest", () => {
   const OriginalDate = Date;
   jest.useFakeTimers();
-  if (typeof Bun === "undefined") {
+  if (typeof Fun === "undefined") {
     // In Jest, the Date constructor changes
     // That can cause all sorts of bugs because suddenly Date !== Date before the test.
     expect(Date).not.toBe(OriginalDate);
     expect(Date.now).not.toBe(OriginalDate.now);
   } else {
-    // In bun:test, Date constructor does not change when you useFakeTimers
+    // In fun:test, Date constructor does not change when you useFakeTimers
     expect(Date).toBe(OriginalDate);
     expect(Date.now).toBe(OriginalDate.now);
   }
@@ -65,7 +65,7 @@ test("unlike in jest", () => {
 To reset the system time, pass no arguments to `setSystemTime`:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { setSystemTime, expect, test } from "bun:test";
+import { setSystemTime, expect, test } from "fun:test";
 
 test("it was 2020, for a moment.", () => {
   // Set it to something!
@@ -84,7 +84,7 @@ test("it was 2020, for a moment.", () => {
 When you're using mocked time (with `setSystemTime` or `useFakeTimers`), you can use `jest.now()` to get the current mocked timestamp:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect, jest } from "bun:test";
+import { test, expect, jest } from "fun:test";
 
 test("get the current mocked time", () => {
   jest.useFakeTimers();
@@ -101,16 +101,16 @@ This is useful when you need to access the mocked time directly without creating
 
 ## Set the time zone
 
-By default, the time zone for all `bun test` runs is set to UTC (`Etc/UTC`) unless overridden. To change the time zone, either pass the `$TZ` environment variable to `bun test`:
+By default, the time zone for all `fun test` runs is set to UTC (`Etc/UTC`) unless overridden. To change the time zone, either pass the `$TZ` environment variable to `fun test`:
 
 ```bash terminal icon="terminal"
-TZ=America/Los_Angeles bun test
+TZ=America/Los_Angeles fun test
 ```
 
 Or set `process.env.TZ` at runtime:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("Welcome to California!", () => {
   process.env.TZ = "America/Los_Angeles";

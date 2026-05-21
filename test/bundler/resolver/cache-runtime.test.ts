@@ -1,11 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { promises as fs } from "fs";
 import { tempDir } from "harness";
 import * as path from "path";
 
 // These tests verify that the resolver properly invalidates cache at runtime
 // when using require() across file system changes within the same process.
-// These test the same cache invalidation logic as the Bun.build tests but for runtime require().
+// These test the same cache invalidation logic as the Fun.build tests but for runtime require().
 
 describe.concurrent("runtime cache invalidation", () => {
   test("directory with index.js deleted then recreated", async () => {

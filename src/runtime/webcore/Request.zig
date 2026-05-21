@@ -2,7 +2,7 @@
 
 const Request = @This();
 
-url: bun.String = bun.String.empty,
+url: fun.String = fun.String.empty,
 
 #headers: ?*FetchHeaders = null,
 signal: ?*AbortSignal = null,
@@ -28,7 +28,7 @@ pub const js = jsc.Codegen.JSRequest;
 pub const fromJS = js.fromJS;
 pub const fromJSDirect = js.fromJSDirect;
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 const RequestMixin = BodyMixin(@This());
 pub const getText = RequestMixin.getText;
@@ -40,7 +40,7 @@ pub const getArrayBuffer = RequestMixin.getArrayBuffer;
 pub const getBlob = RequestMixin.getBlob;
 pub const getFormData = RequestMixin.getFormData;
 pub const getBlobWithoutCallFrame = RequestMixin.getBlobWithoutCallFrame;
-pub const WeakRef = bun.ptr.WeakPtr(Request, "weak_ptr_data");
+pub const WeakRef = fun.ptr.WeakPtr(Request, "weak_ptr_data");
 
 pub fn memoryCost(this: *const Request) usize {
     return @sizeOf(Request) + this.request_context.memoryCost() + this.url.byteSlice().len + this.#body.value.memoryCost();
@@ -76,7 +76,7 @@ pub export fn Request__setTimeout(this: *Request, seconds: jsc.JSValue, globalTh
 }
 
 pub export fn Request__clone(this: *Request, globalThis: *jsc.JSGlobalObject) ?*Request {
-    return this.clone(bun.default_allocator, globalThis) catch null;
+    return this.clone(fun.default_allocator, globalThis) catch null;
 }
 
 comptime {
@@ -134,7 +134,7 @@ pub fn init(
 
 /// TODO: do we need this?
 pub fn init2(
-    url: bun.String,
+    url: fun.String,
     headers: ?*FetchHeaders,
     body: *Body.Value.HiveRef,
     method: Method,
@@ -149,7 +149,7 @@ pub fn init2(
 
 pub fn getContentType(
     this: *Request,
-) bun.JSError!?ZigString.Slice {
+) fun.JSError!?ZigString.Slice {
     if (this.request_context.getRequest()) |req| {
         if (req.header("content-type")) |value| {
             return ZigString.Slice.fromUTF8NeverFree(value);
@@ -158,7 +158,7 @@ pub fn getContentType(
 
     if (this.#headers) |headers| {
         if (headers.fastGet(.ContentType)) |value| {
-            return value.toSlice(bun.default_allocator);
+            return value.toSlice(fun.default_allocator);
         }
     }
 
@@ -170,14 +170,14 @@ pub fn getContentType(
     return null;
 }
 
-pub fn getFormDataEncoding(this: *Request) bun.JSError!?*bun.FormData.AsyncFormData {
+pub fn getFormDataEncoding(this: *Request) fun.JSError!?*fun.FormData.AsyncFormData {
     var content_type_slice: ZigString.Slice = (try this.getContentType()) orelse return null;
     defer content_type_slice.deinit();
-    const encoding = bun.FormData.Encoding.get(content_type_slice.slice()) orelse return null;
-    return bun.FormData.AsyncFormData.init(bun.default_allocator, encoding);
+    const encoding = fun.FormData.Encoding.get(content_type_slice.slice()) orelse return null;
+    return fun.FormData.AsyncFormData.init(fun.default_allocator, encoding);
 }
 
-pub fn estimatedSize(this: *Request) callconv(bun.jsc.conv) usize {
+pub fn estimatedSize(this: *Request) callconv(fun.jsc.conv) usize {
     return this.reported_estimated_size;
 }
 
@@ -193,7 +193,7 @@ pub fn calculateEstimatedByteSize(this: *Request) void {
     this.reported_estimated_size = this.#body.value.estimatedSize() + this.sizeOfURL() + @sizeOf(Request);
 }
 
-pub export fn Bun__JSRequest__calculateEstimatedByteSize(this: *Request) void {
+pub export fn Fun__JSRequest__calculateEstimatedByteSize(this: *Request) void {
     this.calculateEstimatedByteSize();
 }
 
@@ -235,28 +235,28 @@ pub fn toJS(this: *Request, globalObject: *JSGlobalObject) JSValue {
     return js_value;
 }
 
-extern "C" fn Bun__JSRequest__createForBake(globalObject: *jsc.JSGlobalObject, requestPtr: *Request) callconv(jsc.conv) jsc.JSValue;
-pub fn toJSForBake(this: *Request, globalObject: *JSGlobalObject) bun.JSError!JSValue {
-    return bun.jsc.fromJSHostCall(
+extern "C" fn Fun__JSRequest__createForBake(globalObject: *jsc.JSGlobalObject, requestPtr: *Request) callconv(jsc.conv) jsc.JSValue;
+pub fn toJSForBake(this: *Request, globalObject: *JSGlobalObject) fun.JSError!JSValue {
+    return fun.jsc.fromJSHostCall(
         globalObject,
         @src(),
-        Bun__JSRequest__createForBake,
+        Fun__JSRequest__createForBake,
         .{ globalObject, this },
     );
 }
 
-extern "JS" fn Bun__getParamsIfBunRequest(this_value: JSValue) JSValue;
+extern "JS" fn Fun__getParamsIfFunRequest(this_value: JSValue) JSValue;
 
 pub fn writeFormat(this: *Request, this_value: JSValue, comptime Formatter: type, formatter: *Formatter, writer: anytype, comptime enable_ansi_colors: bool) !void {
     const Writer = @TypeOf(writer);
 
-    const params_object = Bun__getParamsIfBunRequest(this_value);
+    const params_object = Fun__getParamsIfFunRequest(this_value);
 
     const class_label = switch (params_object) {
         .zero => "Request",
-        else => "BunRequest",
+        else => "FunRequest",
     };
-    try writer.print("{s} ({f}) {{\n", .{ class_label, bun.fmt.size(this.#body.value.size(), .{}) });
+    try writer.print("{s} ({f}) {{\n", .{ class_label, fun.fmt.size(this.#body.value.size(), .{}) });
     {
         formatter.indent += 1;
         defer formatter.indent -|= 1;
@@ -264,7 +264,7 @@ pub fn writeFormat(this: *Request, this_value: JSValue, comptime Formatter: type
         try formatter.writeIndent(Writer, writer);
         try writer.writeAll(comptime Output.prettyFmt("<r>method<d>:<r> \"", enable_ansi_colors));
 
-        try writer.writeAll(bun.asByteSlice(@tagName(this.method)));
+        try writer.writeAll(fun.asByteSlice(@tagName(this.method)));
         try writer.writeAll("\"");
         formatter.printComma(Writer, writer, enable_ansi_colors) catch unreachable;
         try writer.writeAll("\n");
@@ -399,7 +399,7 @@ pub fn finalizeWithoutDeinit(this: *Request) void {
     }
 
     this.url.deref();
-    this.url = bun.String.empty;
+    this.url = fun.String.empty;
 
     if (this.signal) |signal| {
         signal.unref();
@@ -413,7 +413,7 @@ pub fn finalize(this: *Request) void {
     this.finalizeWithoutDeinit();
     _ = this.#body.unref();
     if (this.weak_ptr_data.onFinalize()) {
-        bun.destroy(this);
+        fun.destroy(this);
     }
 }
 
@@ -441,7 +441,7 @@ pub fn getReferrerPolicy(
 ) jsc.JSValue {
     return ZigString.init("").toJS(globalThis);
 }
-pub fn getUrl(this: *Request, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn getUrl(this: *Request, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     try this.ensureURL();
     return this.url.toJS(globalObject);
 }
@@ -454,7 +454,7 @@ pub fn sizeOfURL(this: *const Request) usize {
         const req_url = req.url();
         if (req_url.len > 0 and req_url[0] == '/') {
             if (req.header("host")) |host| {
-                const fmt = bun.fmt.HostFormatter{
+                const fmt = fun.fmt.HostFormatter{
                     .is_https = this.flags.https,
                     .host = host,
                 };
@@ -474,14 +474,14 @@ pub fn getProtocol(this: *const Request) []const u8 {
     return "http://";
 }
 
-pub fn ensureURL(this: *Request) bun.OOM!void {
+pub fn ensureURL(this: *Request) fun.OOM!void {
     if (!this.url.isEmpty()) return;
 
     if (this.request_context.getRequest()) |req| {
         const req_url = req.url();
         if (req_url.len > 0 and req_url[0] == '/') {
             if (req.header("host")) |host| {
-                const fmt = bun.fmt.HostFormatter{
+                const fmt = fun.fmt.HostFormatter{
                     .is_https = this.flags.https,
                     .host = host,
                 };
@@ -492,7 +492,7 @@ pub fn ensureURL(this: *Request) bun.OOM!void {
                 });
 
                 if (comptime Environment.allow_assert) {
-                    bun.assert(this.sizeOfURL() == url_bytelength);
+                    fun.assert(this.sizeOfURL() == url_bytelength);
                 }
 
                 if (url_bytelength < 128) {
@@ -504,27 +504,27 @@ pub fn ensureURL(this: *Request) bun.OOM!void {
                     }) catch @panic("Unexpected error while printing URL");
 
                     if (comptime Environment.allow_assert) {
-                        bun.assert(this.sizeOfURL() == url.len);
+                        fun.assert(this.sizeOfURL() == url.len);
                     }
 
-                    var href = bun.jsc.URL.hrefFromString(bun.String.fromBytes(url));
+                    var href = fun.jsc.URL.hrefFromString(fun.String.fromBytes(url));
                     if (!href.isEmpty()) {
                         if (href.byteSlice().ptr == url.ptr) {
-                            this.url = bun.String.cloneLatin1(url[0..href.length()]);
+                            this.url = fun.String.cloneLatin1(url[0..href.length()]);
                             href.deref();
                         } else {
                             this.url = href;
                         }
                     } else {
                         // TODO: what is the right thing to do for invalid URLS?
-                        this.url = bun.String.cloneUTF8(url);
+                        this.url = fun.String.cloneUTF8(url);
                     }
 
                     return;
                 }
 
                 if (strings.isAllASCII(host) and strings.isAllASCII(req_url)) {
-                    this.url, const bytes = bun.String.createUninitialized(.latin1, url_bytelength);
+                    this.url, const bytes = fun.String.createUninitialized(.latin1, url_bytelength);
                     _ = std.fmt.bufPrint(bytes, "{s}{f}{s}", .{
                         this.getProtocol(),
                         fmt,
@@ -534,16 +534,16 @@ pub fn ensureURL(this: *Request) bun.OOM!void {
                     };
                 } else {
                     // slow path
-                    const temp_url = try std.fmt.allocPrint(bun.default_allocator, "{s}{f}{s}", .{
+                    const temp_url = try std.fmt.allocPrint(fun.default_allocator, "{s}{f}{s}", .{
                         this.getProtocol(),
                         fmt,
                         req_url,
                     });
-                    defer bun.default_allocator.free(temp_url);
-                    this.url = bun.String.cloneUTF8(temp_url);
+                    defer fun.default_allocator.free(temp_url);
+                    this.url = fun.String.cloneUTF8(temp_url);
                 }
 
-                const href = bun.jsc.URL.hrefFromString(this.url);
+                const href = fun.jsc.URL.hrefFromString(this.url);
                 // TODO: what is the right thing to do for invalid URLS?
                 if (!href.isEmpty()) {
                     this.url.deref();
@@ -555,9 +555,9 @@ pub fn ensureURL(this: *Request) bun.OOM!void {
         }
 
         if (comptime Environment.allow_assert) {
-            bun.assert(this.sizeOfURL() == req_url.len);
+            fun.assert(this.sizeOfURL() == req_url.len);
         }
-        this.url = bun.String.cloneUTF8(req_url);
+        this.url = fun.String.cloneUTF8(req_url);
     }
 }
 
@@ -593,9 +593,9 @@ fn checkBodyStreamRef(this: *Request, globalObject: *JSGlobalObject) void {
         }
     }
 }
-pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSValue, this_value: jsc.JSValue) bun.JSError!Request {
+pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSValue, this_value: jsc.JSValue) fun.JSError!Request {
     var success = false;
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
     const body = try vm.initRequestBodyValue(.{ .Null = {} });
     var req = Request{
         .#body = body,
@@ -628,7 +628,7 @@ pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSV
         url_or_object.as(jsc.DOMURL) != null;
 
     if (is_first_argument_a_url) {
-        const str = try bun.String.fromJS(arguments[0], globalThis);
+        const str = try fun.String.fromJS(arguments[0], globalThis);
         req.url = str;
 
         if (!req.url.isEmpty())
@@ -654,7 +654,7 @@ pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSV
         if (value_type == .DOMWrapper) {
             if (value.asDirect(Request)) |request| {
                 if (values_to_try.len == 1) {
-                    try request.cloneInto(&req, bun.default_allocator, globalThis, fields.contains(.url));
+                    try request.cloneInto(&req, fun.default_allocator, globalThis, fields.contains(.url));
                     success = true;
                     return req;
                 }
@@ -746,7 +746,7 @@ pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSV
 
         if (!fields.contains(.url)) {
             if (try value.fastGet(globalThis, .url)) |url| {
-                req.url = try bun.String.fromJS(url, globalThis);
+                req.url = try fun.String.fromJS(url, globalThis);
                 if (!req.url.isEmpty())
                     fields.insert(.url);
 
@@ -754,7 +754,7 @@ pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSV
             } else if (@intFromEnum(value) == @intFromEnum(values_to_try[values_to_try.len - 1]) and !is_first_argument_a_url and
                 try value.implementsToString(globalThis))
             {
-                const str = try bun.String.fromJS(value, globalThis);
+                const str = try fun.String.fromJS(value, globalThis);
                 req.url = str;
                 if (!req.url.isEmpty())
                     fields.insert(.url);
@@ -876,7 +876,7 @@ pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSV
     return req;
 }
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, this_value: jsc.JSValue) bun.JSError!*Request {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, this_value: jsc.JSValue) fun.JSError!*Request {
     const arguments_ = callframe.arguments_old(2);
     const arguments = arguments_.ptr[0..arguments_.len];
 
@@ -894,9 +894,9 @@ pub fn doClone(
     this: *Request,
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     const this_value = callframe.this();
-    const cloned = try this.clone(bun.default_allocator, globalThis);
+    const cloned = try this.clone(fun.default_allocator, globalThis);
 
     const js_wrapper = cloned.toJS(globalThis);
     if (js_wrapper != .zero) {
@@ -945,7 +945,7 @@ pub fn setFetchHeaders(
 pub fn ensureFetchHeaders(
     this: *Request,
     globalThis: *jsc.JSGlobalObject,
-) bun.JSError!*FetchHeaders {
+) fun.JSError!*FetchHeaders {
     if (this.#headers) |headers| {
         // headers is already set
         return headers;
@@ -1004,11 +1004,11 @@ pub fn getFetchHeaders(
 pub fn getHeaders(
     this: *Request,
     globalThis: *jsc.JSGlobalObject,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     return (try this.ensureFetchHeaders(globalThis)).toJS(globalThis);
 }
 
-pub fn cloneHeaders(this: *Request, globalThis: *JSGlobalObject) bun.JSError!?*FetchHeaders {
+pub fn cloneHeaders(this: *Request, globalThis: *JSGlobalObject) fun.JSError!?*FetchHeaders {
     if (this.#headers == null) {
         if (this.request_context.getRequest()) |uws_req| {
             this.#headers = FetchHeaders.createFromUWS(uws_req);
@@ -1032,10 +1032,10 @@ pub fn cloneInto(
     allocator: std.mem.Allocator,
     globalThis: *JSGlobalObject,
     preserve_url: bool,
-) bun.JSError!void {
+) fun.JSError!void {
     _ = allocator;
     this.ensureURL() catch {};
-    const vm = globalThis.bunVM();
+    const vm = globalThis.funVM();
     var body_ = brk: {
         if (this.#js_ref.tryGet()) |js_ref| {
             if (js.gc.stream.get(js_ref)) |stream| {
@@ -1068,9 +1068,9 @@ pub fn cloneInto(
     }
 }
 
-pub fn clone(this: *Request, allocator: std.mem.Allocator, globalThis: *JSGlobalObject) bun.JSError!*Request {
+pub fn clone(this: *Request, allocator: std.mem.Allocator, globalThis: *JSGlobalObject) fun.JSError!*Request {
     const req = Request.new(undefined);
-    errdefer bun.destroy(req);
+    errdefer fun.destroy(req);
     try this.cloneInto(req, allocator, globalThis, false);
     return req;
 }
@@ -1084,22 +1084,22 @@ pub fn setTimeout(
 
 const string = []const u8;
 
-const Environment = @import("../../bun_core/env.zig");
+const Environment = @import("../../fun_core/env.zig");
 const std = @import("std");
 const FetchCacheMode = @import("../../http_types/FetchCacheMode.zig").FetchCacheMode;
 const FetchRedirect = @import("../../http_types/FetchRedirect.zig").FetchRedirect;
 const FetchRequestMode = @import("../../http_types/FetchRequestMode.zig").FetchRequestMode;
 const Method = @import("../../http_types/Method.zig").Method;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
-const uws = bun.uws;
-const FetchHeaders = bun.webcore.FetchHeaders;
-const MimeType = bun.http.MimeType;
+const fun = @import("fun");
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
+const uws = fun.uws;
+const FetchHeaders = fun.webcore.FetchHeaders;
+const MimeType = fun.http.MimeType;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

@@ -2,18 +2,18 @@ pub noinline fn computeChunks(
     this: *LinkerContext,
     unique_key: u64,
 ) ![]Chunk {
-    const trace = bun.perf.trace("Bundler.computeChunks");
+    const trace = fun.perf.trace("Bundler.computeChunks");
     defer trace.end();
 
-    bun.assert(this.dev_server == null); // use
+    fun.assert(this.dev_server == null); // use
 
     var stack_fallback = std.heap.stackFallback(4096, this.allocator());
     const stack_all = stack_fallback.get();
-    var arena = bun.ArenaAllocator.init(stack_all);
+    var arena = fun.ArenaAllocator.init(stack_all);
     defer arena.deinit();
 
     var temp_allocator = arena.allocator();
-    var js_chunks = bun.StringArrayHashMap(Chunk).init(temp_allocator);
+    var js_chunks = fun.StringArrayHashMap(Chunk).init(temp_allocator);
     try js_chunks.ensureUnusedCapacity(this.graph.entry_points.len);
 
     // Key is the hash of the CSS order. This deduplicates identical CSS files.
@@ -27,7 +27,7 @@ pub noinline fn computeChunks(
 
     const entry_source_indices = this.graph.entry_points.items(.source_index);
     const css_asts = this.graph.ast.items(.css);
-    var html_chunks = bun.StringArrayHashMap(Chunk).init(temp_allocator);
+    var html_chunks = fun.StringArrayHashMap(Chunk).init(temp_allocator);
     const loaders = this.parse_graph.input_files.items(.loader);
     const ast_targets = this.graph.ast.items(.target);
 
@@ -87,10 +87,10 @@ pub noinline fn computeChunks(
             // Create a chunk for the entry point here to ensure that the chunk is
             // always generated even if the resulting file is empty
             const hash_to_use = if (!this.options.css_chunking)
-                bun.hash(try temp_allocator.dupe(u8, entry_bits.bytes(this.graph.entry_points.len)))
+                fun.hash(try temp_allocator.dupe(u8, entry_bits.bytes(this.graph.entry_points.len)))
             else brk: {
                 var hasher = std.hash.Wyhash.init(5);
-                bun.writeAnyToHasher(&hasher, order.len);
+                fun.writeAnyToHasher(&hasher, order.len);
                 for (order.slice()) |x| x.hash(&hasher);
                 break :brk hasher.final();
             };
@@ -107,7 +107,7 @@ pub noinline fn computeChunks(
                     .content = .{
                         .css = .{
                             .imports_in_chunk_in_order = order,
-                            .asts = bun.handleOom(this.allocator().alloc(bun.css.BundlerStyleSheet, order.len)),
+                            .asts = fun.handleOom(this.allocator().alloc(fun.css.BundlerStyleSheet, order.len)),
                         },
                     },
                     .output_source_map = SourceMap.SourceMapPieces.init(this.allocator()),
@@ -159,7 +159,7 @@ pub noinline fn computeChunks(
                 // than producing duplicates that collide on hash-based naming.
                 const hash_to_use = brk: {
                     var hasher = std.hash.Wyhash.init(5);
-                    bun.writeAnyToHasher(&hasher, order.len);
+                    fun.writeAnyToHasher(&hasher, order.len);
                     for (order.slice()) |x| x.hash(&hasher);
                     break :brk hasher.final();
                 };
@@ -175,7 +175,7 @@ pub noinline fn computeChunks(
                     var css_files_with_parts_in_chunk = std.AutoArrayHashMapUnmanaged(Index.Int, usize){};
                     for (order.slice()) |entry| {
                         if (entry.kind == .source_index) {
-                            bun.handleOom(css_files_with_parts_in_chunk.put(this.allocator(), entry.kind.source_index.get(), 0));
+                            fun.handleOom(css_files_with_parts_in_chunk.put(this.allocator(), entry.kind.source_index.get(), 0));
                         }
                     }
                     css_chunk_entry.value_ptr.* = .{
@@ -188,7 +188,7 @@ pub noinline fn computeChunks(
                         .content = .{
                             .css = .{
                                 .imports_in_chunk_in_order = order,
-                                .asts = bun.handleOom(this.allocator().alloc(bun.css.BundlerStyleSheet, order.len)),
+                                .asts = fun.handleOom(this.allocator().alloc(fun.css.BundlerStyleSheet, order.len)),
                             },
                         },
                         .files_with_parts_in_chunk = css_files_with_parts_in_chunk,
@@ -292,7 +292,7 @@ pub noinline fn computeChunks(
         // sort by entry_point_id to ensure the main entry point (id=0) comes first,
         // then by key for determinism among the rest.
         const ChunkSortContext = struct {
-            chunks: *const bun.StringArrayHashMap(Chunk),
+            chunks: *const fun.StringArrayHashMap(Chunk),
 
             pub fn lessThan(ctx: @This(), a_key: string, b_key: string) bool {
                 const a_chunk = ctx.chunks.get(a_key) orelse return true;
@@ -305,7 +305,7 @@ pub noinline fn computeChunks(
                 if (b_id == 0 and a_id != 0) return false;
 
                 // Otherwise sort alphabetically by key for determinism
-                return bun.strings.order(a_key, b_key) == .lt;
+                return fun.strings.order(a_key, b_key) == .lt;
             }
         };
 
@@ -383,8 +383,8 @@ pub noinline fn computeChunks(
         return chunks;
     }
 
-    const unique_key_item_len = std.fmt.count("{f}C{d:0>8}", .{ bun.fmt.hexIntLower(unique_key), chunks.len });
-    var unique_key_builder = try bun.StringBuilder.initCapacity(this.allocator(), unique_key_item_len * chunks.len);
+    const unique_key_item_len = std.fmt.count("{f}C{d:0>8}", .{ fun.fmt.hexIntLower(unique_key), chunks.len });
+    var unique_key_builder = try fun.StringBuilder.initCapacity(this.allocator(), unique_key_item_len * chunks.len);
     this.unique_key_buf = unique_key_builder.allocatedSlice();
 
     errdefer {
@@ -399,9 +399,9 @@ pub noinline fn computeChunks(
         // Assign a unique key to each chunk. This key encodes the index directly so
         // we can easily recover it later without needing to look it up in a map. The
         // last 8 numbers of the key are the chunk index.
-        chunk.unique_key = unique_key_builder.fmt("{f}C{d:0>8}", .{ bun.fmt.hexIntLower(unique_key), chunk_id });
+        chunk.unique_key = unique_key_builder.fmt("{f}C{d:0>8}", .{ fun.fmt.hexIntLower(unique_key), chunk_id });
         if (this.unique_key_prefix.len == 0)
-            this.unique_key_prefix = chunk.unique_key[0..std.fmt.count("{f}", .{bun.fmt.hexIntLower(unique_key)})];
+            this.unique_key_prefix = chunk.unique_key[0..std.fmt.count("{f}", .{fun.fmt.hexIntLower(unique_key)})];
 
         if (chunk.entry_point.is_entry_point and
             (chunk.content == .html or (kinds[chunk.entry_point.source_index] == .user_specified and !chunk.flags.has_html_chunk)))
@@ -439,20 +439,20 @@ pub noinline fn computeChunks(
             const chunk_target = ast_targets[chunk.entry_point.source_index];
             chunk.template.placeholder.target = switch (chunk_target) {
                 .browser => "browser",
-                .bun => "bun",
+                .fun => "fun",
                 .node => "node",
-                .bun_macro => "macro",
+                .fun_macro => "macro",
                 .bake_server_components_ssr => "ssr",
             };
         }
 
         if (chunk.template.needs(.dir)) {
-            // this if check is a specific fix for `bun build hi.ts --external '*'`, without leading `./`
+            // this if check is a specific fix for `fun build hi.ts --external '*'`, without leading `./`
             const dir_path = if (pathname.dir.len > 0) pathname.dir else ".";
-            var real_path_buf: bun.PathBuffer = undefined;
+            var real_path_buf: fun.PathBuffer = undefined;
             const dir = dir: {
-                var dir = bun.sys.openatA(.cwd(), dir_path, bun.O.PATH | bun.O.DIRECTORY, 0).unwrap() catch {
-                    break :dir bun.path.normalizeBuf(dir_path, &real_path_buf, .auto);
+                var dir = fun.sys.openatA(.cwd(), dir_path, fun.O.PATH | fun.O.DIRECTORY, 0).unwrap() catch {
+                    break :dir fun.path.normalizeBuf(dir_path, &real_path_buf, .auto);
                 };
                 defer dir.close();
 
@@ -479,25 +479,25 @@ const JSChunkKeyFormatter = struct {
     }
 };
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const SourceMap = bun.SourceMap;
-const options = bun.options;
-const AutoBitSet = bun.bit_set.AutoBitSet;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const SourceMap = fun.SourceMap;
+const options = fun.options;
+const AutoBitSet = fun.bit_set.AutoBitSet;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const EntryPoint = bundler.EntryPoint;
-const Fs = bun.bundle_v2.Fs;
-const Index = bun.bundle_v2.Index;
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const Fs = fun.bundle_v2.Fs;
+const Index = fun.bundle_v2.Index;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const PathTemplate = bundler.PathTemplate;
-const resolve_path = bun.bundle_v2.resolve_path;
+const resolve_path = fun.bundle_v2.resolve_path;

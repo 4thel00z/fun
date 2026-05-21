@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, test } from "fun:test";
 
 const originalResponse = globalThis.Response;
 const originalRequest = globalThis.Request;
@@ -7,7 +7,7 @@ afterEach(() => {
   globalThis.Response = originalResponse;
   globalThis.Request = originalRequest;
   globalThis.Headers = originalHeaders;
-  globalThis.fetch = Bun.fetch;
+  globalThis.fetch = Fun.fetch;
 });
 
 test("fetch, Response, Request can be overriden", async () => {
@@ -18,7 +18,7 @@ test("fetch, Response, Request can be overriden", async () => {
 
   const fetch = require("node-fetch").fetch;
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       return new Response("Hello, World!");

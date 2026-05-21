@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, test } from "bun:test";
+import { afterAll, beforeAll, describe, test } from "fun:test";
 
 let unpredictableVar: string;
 

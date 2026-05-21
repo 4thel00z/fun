@@ -1,5 +1,5 @@
-import { $ } from "bun";
-import { describe, expect, test } from "bun:test";
+import { $ } from "fun";
+import { describe, expect, test } from "fun:test";
 import { tempDir } from "harness";
 
 describe("shell .quiet() should preserve exit codes", () => {

@@ -90,5 +90,5 @@ pub fn BodyReaderMixin(
 
 const std = @import("std");
 
-const bun = @import("bun");
-const uws = bun.uws;
+const fun = @import("fun");
+const uws = fun.uws;

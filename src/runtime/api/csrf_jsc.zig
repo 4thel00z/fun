@@ -1,11 +1,11 @@
-//! `Bun.CSRF.generate` / `Bun.CSRF.verify` host fns. The pure
+//! `Fun.CSRF.generate` / `Fun.CSRF.verify` host fns. The pure
 //! `generate()`/`verify()` halves stay in `src/csrf/`.
 
 /// JS binding function for generating CSRF tokens
 /// First argument is secret (required), second is options (optional)
-pub fn csrf__generate(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    if (bun.analytics.Features.csrf_generate < std.math.maxInt(usize))
-        bun.analytics.Features.csrf_generate += 1;
+pub fn csrf__generate(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    if (fun.analytics.Features.csrf_generate < std.math.maxInt(usize))
+        fun.analytics.Features.csrf_generate += 1;
 
     // We should have at least one argument (secret)
     const args = callframe.arguments();
@@ -19,14 +19,14 @@ pub fn csrf__generate(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
         if (!jsSecret.isString() or try jsSecret.getLength(globalObject) == 0) {
             return globalObject.throwInvalidArguments("Secret must be a non-empty string", .{});
         }
-        secret = try jsSecret.toSlice(globalObject, bun.default_allocator);
+        secret = try jsSecret.toSlice(globalObject, fun.default_allocator);
     }
     defer if (secret) |s| s.deinit();
 
     // Default values
     var expires_in: u64 = csrf.DEFAULT_EXPIRATION_MS;
     var encoding: csrf.TokenFormat = .base64url;
-    var algorithm: jsc.API.Bun.Crypto.EVP.Algorithm = csrf.DEFAULT_ALGORITHM;
+    var algorithm: jsc.API.Fun.Crypto.EVP.Algorithm = csrf.DEFAULT_ALGORITHM;
 
     // Check if we have options object
     if (args.len > 1 and args[1].isObject()) {
@@ -54,7 +54,7 @@ pub fn csrf__generate(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
             if (!algorithm_js.isString()) {
                 return globalObject.throwInvalidArgumentTypeValue("algorithm", "string", algorithm_js);
             }
-            algorithm = try jsc.API.Bun.Crypto.EVP.Algorithm.map.fromJSCaseInsensitive(globalObject, algorithm_js) orelse {
+            algorithm = try jsc.API.Fun.Crypto.EVP.Algorithm.map.fromJSCaseInsensitive(globalObject, algorithm_js) orelse {
                 return globalObject.throwInvalidArguments("Algorithm not supported", .{});
             };
             switch (algorithm) {
@@ -69,7 +69,7 @@ pub fn csrf__generate(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
 
     // Generate the token
     const token_bytes = csrf.generate(.{
-        .secret = if (secret) |s| s.slice() else globalObject.bunVM().rareData().defaultCSRFSecret(),
+        .secret = if (secret) |s| s.slice() else globalObject.funVM().rareData().defaultCSRFSecret(),
         .expires_in_ms = expires_in,
         .encoding = encoding,
         .algorithm = algorithm,
@@ -86,9 +86,9 @@ pub fn csrf__generate(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFra
 
 /// JS binding function for verifying CSRF tokens
 /// First argument is token (required), second is options (optional)
-pub fn csrf__verify(globalObject: *jsc.JSGlobalObject, call_frame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    if (bun.analytics.Features.csrf_verify < std.math.maxInt(usize)) {
-        bun.analytics.Features.csrf_verify += 1;
+pub fn csrf__verify(globalObject: *jsc.JSGlobalObject, call_frame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    if (fun.analytics.Features.csrf_verify < std.math.maxInt(usize)) {
+        fun.analytics.Features.csrf_verify += 1;
     }
     // We should have at least one argument (token)
     const args = call_frame.arguments();
@@ -103,7 +103,7 @@ pub fn csrf__verify(globalObject: *jsc.JSGlobalObject, call_frame: *jsc.CallFram
     if (!jsToken.isString() or try jsToken.getLength(globalObject) == 0) {
         return globalObject.throwInvalidArguments("Token must be a non-empty string", .{});
     }
-    const token = try jsToken.toSlice(globalObject, bun.default_allocator);
+    const token = try jsToken.toSlice(globalObject, fun.default_allocator);
     defer token.deinit();
 
     // Default values
@@ -112,7 +112,7 @@ pub fn csrf__verify(globalObject: *jsc.JSGlobalObject, call_frame: *jsc.CallFram
     var max_age: u64 = csrf.DEFAULT_EXPIRATION_MS;
     var encoding: csrf.TokenFormat = .base64url;
 
-    var algorithm: jsc.API.Bun.Crypto.EVP.Algorithm = csrf.DEFAULT_ALGORITHM;
+    var algorithm: jsc.API.Fun.Crypto.EVP.Algorithm = csrf.DEFAULT_ALGORITHM;
 
     // Check if we have options object
     if (args.len > 1 and args[1].isObject()) {
@@ -147,7 +147,7 @@ pub fn csrf__verify(globalObject: *jsc.JSGlobalObject, call_frame: *jsc.CallFram
             if (!algorithm_js.isString()) {
                 return globalObject.throwInvalidArgumentTypeValue("algorithm", "string", algorithm_js);
             }
-            algorithm = try jsc.API.Bun.Crypto.EVP.Algorithm.map.fromJSCaseInsensitive(globalObject, algorithm_js) orelse {
+            algorithm = try jsc.API.Fun.Crypto.EVP.Algorithm.map.fromJSCaseInsensitive(globalObject, algorithm_js) orelse {
                 return globalObject.throwInvalidArguments("Algorithm not supported", .{});
             };
             switch (algorithm) {
@@ -159,7 +159,7 @@ pub fn csrf__verify(globalObject: *jsc.JSGlobalObject, call_frame: *jsc.CallFram
     // Verify the token
     const is_valid = csrf.verify(.{
         .token = token.slice(),
-        .secret = if (secret) |s| s.slice() else globalObject.bunVM().rareData().defaultCSRFSecret(),
+        .secret = if (secret) |s| s.slice() else globalObject.funVM().rareData().defaultCSRFSecret(),
         .max_age_ms = max_age,
         .encoding = encoding,
         .algorithm = algorithm,
@@ -171,6 +171,6 @@ pub fn csrf__verify(globalObject: *jsc.JSGlobalObject, call_frame: *jsc.CallFram
 const csrf = @import("../../csrf/csrf.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const boring = bun.BoringSSL.c;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const boring = fun.BoringSSL.c;

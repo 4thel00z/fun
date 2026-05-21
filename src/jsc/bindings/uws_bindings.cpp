@@ -5,7 +5,7 @@
 #include "JavaScriptCore/JSArray.h"
 #include "JavaScriptCore/ObjectConstructor.h"
 #include "wtf/text/WTFString.h"
-#include <bun-uws/src/App.h>
+#include <fun-uws/src/App.h>
 #include <span>
 #include <string_view>
 

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,11 +8,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 test.skipIf(isWindows)("stdin pause should stop reading so child can read from stdin", async () => {
   const script = join(__dirname, "stdin-pause-child-reads.mjs");
   const pty = join(__dirname, "run-with-pty.py");
-  const runtime = process.env.TEST_RUNTIME || bunExe();
+  const runtime = process.env.TEST_RUNTIME || funExe();
 
-  await using proc = Bun.spawn({
-    cmd: [Bun.which("python3") ?? Bun.which("python") ?? "python", pty, runtime, script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [Fun.which("python3") ?? Fun.which("python") ?? "python", pty, runtime, script],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

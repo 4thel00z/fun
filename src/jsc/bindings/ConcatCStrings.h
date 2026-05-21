@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Bun {
+namespace Fun {
 
 namespace Detail {
 template<typename T>

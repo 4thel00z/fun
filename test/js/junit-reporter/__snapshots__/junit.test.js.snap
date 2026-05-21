@@ -1,8 +1,8 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`junit reporter more scenarios 1`] = `
 "<?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="bun test" tests="22" assertions="16" failures="1" skipped="6">
+<testsuites name="fun test" tests="22" assertions="16" failures="1" skipped="6">
   <testsuite name="comprehensive.test.js" file="comprehensive.test.js" tests="22" assertions="16" failures="1" skipped="6">
     <testsuite name="comprehensive test suite" file="comprehensive.test.js" line="4" tests="22" assertions="16" failures="1" skipped="6">
       <testsuite name="division suite 10 / 5" file="comprehensive.test.js" line="8" tests="1" assertions="1" failures="0" skipped="0">
@@ -57,7 +57,7 @@ exports[`junit reporter more scenarios 1`] = `
 
 exports[`junit reporter more scenarios 2`] = `
 "<?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="bun test" tests="22" assertions="1" failures="0" skipped="21">
+<testsuites name="fun test" tests="22" assertions="1" failures="0" skipped="21">
   <testsuite name="comprehensive.test.js" file="comprehensive.test.js" tests="22" assertions="1" failures="0" skipped="21">
     <testsuite name="comprehensive test suite" file="comprehensive.test.js" line="4" tests="22" assertions="1" failures="0" skipped="21">
       <testsuite name="division suite 10 / 5" file="comprehensive.test.js" line="8" tests="1" assertions="0" failures="0" skipped="1">

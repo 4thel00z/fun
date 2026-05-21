@@ -14,7 +14,7 @@ pub const ArrayBuffer = extern struct {
     }
 
     // require('buffer').kMaxLength.
-    // keep in sync with Bun::Buffer::kMaxLength
+    // keep in sync with Fun::Buffer::kMaxLength
     pub const max_size = std.math.maxInt(c_uint);
 
     extern fn JSBuffer__fromMmap(*jsc.JSGlobalObject, addr: *anyopaque, len: usize) jsc.JSValue;
@@ -35,8 +35,8 @@ pub const ArrayBuffer = extern struct {
 
     /// Only use this when reading from the file descriptor is _very_ cheap. Like, for example, an in-memory file descriptor.
     /// Do not use this for pipes, however tempting it may seem.
-    pub fn toJSBufferFromFd(fd: bun.FD, size: usize, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
-        const buffer_value = Bun__createUint8ArrayForCopy(globalObject, null, size, true);
+    pub fn toJSBufferFromFd(fd: fun.FD, size: usize, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
+        const buffer_value = Fun__createUint8ArrayForCopy(globalObject, null, size, true);
         if (buffer_value == .zero) {
             return .zero;
         }
@@ -48,7 +48,7 @@ pub const ArrayBuffer = extern struct {
 
         var read: isize = 0;
         while (bytes.len > 0) {
-            switch (bun.sys.pread(fd, bytes, read)) {
+            switch (fun.sys.pread(fd, bytes, read)) {
                 .result => |amount| {
                     bytes = bytes[amount..];
                     read += @intCast(amount);
@@ -74,8 +74,8 @@ pub const ArrayBuffer = extern struct {
     extern fn ArrayBuffer__fromSharedMemfd(fd: i64, globalObject: *jsc.JSGlobalObject, byte_offset: usize, byte_length: usize, total_size: usize, jsc.JSValue.JSType) jsc.JSValue;
     pub const toArrayBufferFromSharedMemfd = ArrayBuffer__fromSharedMemfd;
 
-    pub fn toJSBufferFromMemfd(fd: bun.FD, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
-        const stat = switch (bun.sys.fstat(fd)) {
+    pub fn toJSBufferFromMemfd(fd: fun.FD, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
+        const stat = switch (fun.sys.fstat(fd)) {
             .err => |err| {
                 fd.close();
                 return globalObject.throwValue(try err.toJS(globalObject));
@@ -100,7 +100,7 @@ pub const ArrayBuffer = extern struct {
             return result;
         }
 
-        const result = bun.sys.mmap(
+        const result = fun.sys.mmap(
             null,
             @intCast(@max(size, 0)),
             std.posix.PROT.READ | std.posix.PROT.WRITE,
@@ -125,7 +125,7 @@ pub const ArrayBuffer = extern struct {
         held: jsc.Strong.Optional = .empty,
 
         pub fn clear(this: *ArrayBuffer.Strong) void {
-            var ref: *bun.api.napi.Ref = this.ref orelse return;
+            var ref: *fun.api.napi.Ref = this.ref orelse return;
             ref.set(jsc.JSValue.zero);
         }
 
@@ -140,56 +140,56 @@ pub const ArrayBuffer = extern struct {
 
     pub const empty = ArrayBuffer{ .len = 0, .byte_len = 0, .typed_array_type = .Uint8Array, .ptr = &.{} };
 
-    pub const name = "Bun__ArrayBuffer";
+    pub const name = "Fun__ArrayBuffer";
     pub const Stream = std.io.FixedBufferStream([]u8);
 
     pub inline fn stream(this: ArrayBuffer) Stream {
         return Stream{ .pos = 0, .buf = this.slice() };
     }
 
-    pub fn create(globalThis: *jsc.JSGlobalObject, bytes: []const u8, comptime kind: jsc.JSValue.JSType) bun.JSError!jsc.JSValue {
+    pub fn create(globalThis: *jsc.JSGlobalObject, bytes: []const u8, comptime kind: jsc.JSValue.JSType) fun.JSError!jsc.JSValue {
         jsc.markBinding(@src());
         return switch (comptime kind) {
-            .Uint8Array => bun.jsc.fromJSHostCall(globalThis, @src(), Bun__createUint8ArrayForCopy, .{ globalThis, bytes.ptr, bytes.len, false }),
-            .ArrayBuffer => bun.jsc.fromJSHostCall(globalThis, @src(), Bun__createArrayBufferForCopy, .{ globalThis, bytes.ptr, bytes.len }),
+            .Uint8Array => fun.jsc.fromJSHostCall(globalThis, @src(), Fun__createUint8ArrayForCopy, .{ globalThis, bytes.ptr, bytes.len, false }),
+            .ArrayBuffer => fun.jsc.fromJSHostCall(globalThis, @src(), Fun__createArrayBufferForCopy, .{ globalThis, bytes.ptr, bytes.len }),
             else => @compileError("Not implemented yet"),
         };
     }
 
-    pub fn createEmpty(globalThis: *jsc.JSGlobalObject, comptime kind: jsc.JSValue.JSType) bun.JSError!jsc.JSValue {
+    pub fn createEmpty(globalThis: *jsc.JSGlobalObject, comptime kind: jsc.JSValue.JSType) fun.JSError!jsc.JSValue {
         jsc.markBinding(@src());
         return switch (comptime kind) {
-            .Uint8Array => bun.jsc.fromJSHostCall(Bun__createUint8ArrayForCopy, .{ globalThis, null, 0, false }),
-            .ArrayBuffer => bun.jsc.fromJSHostCall(Bun__createArrayBufferForCopy, .{ globalThis, null, 0 }),
+            .Uint8Array => fun.jsc.fromJSHostCall(Fun__createUint8ArrayForCopy, .{ globalThis, null, 0, false }),
+            .ArrayBuffer => fun.jsc.fromJSHostCall(Fun__createArrayBufferForCopy, .{ globalThis, null, 0 }),
             else => @compileError("Not implemented yet"),
         };
     }
 
-    pub fn createBuffer(globalThis: *jsc.JSGlobalObject, bytes: []const u8) bun.JSError!jsc.JSValue {
+    pub fn createBuffer(globalThis: *jsc.JSGlobalObject, bytes: []const u8) fun.JSError!jsc.JSValue {
         jsc.markBinding(@src());
-        return bun.jsc.fromJSHostCall(globalThis, @src(), Bun__createUint8ArrayForCopy, .{ globalThis, bytes.ptr, bytes.len, true });
+        return fun.jsc.fromJSHostCall(globalThis, @src(), Fun__createUint8ArrayForCopy, .{ globalThis, bytes.ptr, bytes.len, true });
     }
 
-    pub fn createUint8Array(globalThis: *jsc.JSGlobalObject, bytes: []const u8) bun.JSError!jsc.JSValue {
+    pub fn createUint8Array(globalThis: *jsc.JSGlobalObject, bytes: []const u8) fun.JSError!jsc.JSValue {
         jsc.markBinding(@src());
-        return bun.jsc.fromJSHostCall(globalThis, @src(), Bun__createUint8ArrayForCopy, .{ globalThis, bytes.ptr, bytes.len, false });
+        return fun.jsc.fromJSHostCall(globalThis, @src(), Fun__createUint8ArrayForCopy, .{ globalThis, bytes.ptr, bytes.len, false });
     }
 
-    extern "c" fn Bun__allocUint8ArrayForCopy(*jsc.JSGlobalObject, usize, **anyopaque) jsc.JSValue;
-    extern "c" fn Bun__allocArrayBufferForCopy(*jsc.JSGlobalObject, usize, **anyopaque) jsc.JSValue;
+    extern "c" fn Fun__allocUint8ArrayForCopy(*jsc.JSGlobalObject, usize, **anyopaque) jsc.JSValue;
+    extern "c" fn Fun__allocArrayBufferForCopy(*jsc.JSGlobalObject, usize, **anyopaque) jsc.JSValue;
 
     pub fn alloc(global: *jsc.JSGlobalObject, comptime kind: jsc.JSValue.JSType, len: u32) JSError!struct { jsc.JSValue, []u8 } {
         var ptr: [*]u8 = undefined;
         const buf = switch (comptime kind) {
-            .Uint8Array => try bun.jsc.fromJSHostCall(global, @src(), Bun__allocUint8ArrayForCopy, .{ global, len, @ptrCast(&ptr) }),
-            .ArrayBuffer => try bun.jsc.fromJSHostCall(global, @src(), Bun__allocArrayBufferForCopy, .{ global, len, @ptrCast(&ptr) }),
+            .Uint8Array => try fun.jsc.fromJSHostCall(global, @src(), Fun__allocUint8ArrayForCopy, .{ global, len, @ptrCast(&ptr) }),
+            .ArrayBuffer => try fun.jsc.fromJSHostCall(global, @src(), Fun__allocArrayBufferForCopy, .{ global, len, @ptrCast(&ptr) }),
             else => @compileError("Not implemented yet"),
         };
         return .{ buf, ptr[0..len] };
     }
 
-    extern "c" fn Bun__createUint8ArrayForCopy(*jsc.JSGlobalObject, ptr: ?*const anyopaque, len: usize, buffer: bool) jsc.JSValue;
-    extern "c" fn Bun__createArrayBufferForCopy(*jsc.JSGlobalObject, ptr: ?*const anyopaque, len: usize) jsc.JSValue;
+    extern "c" fn Fun__createUint8ArrayForCopy(*jsc.JSGlobalObject, ptr: ?*const anyopaque, len: usize, buffer: bool) jsc.JSValue;
+    extern "c" fn Fun__createArrayBufferForCopy(*jsc.JSGlobalObject, ptr: ?*const anyopaque, len: usize) jsc.JSValue;
 
     pub fn fromTypedArray(ctx: *jsc.JSGlobalObject, value: jsc.JSValue) ArrayBuffer {
         return value.asArrayBuffer(ctx).?;
@@ -212,7 +212,7 @@ pub const ArrayBuffer = extern struct {
         return ArrayBuffer{ .len = @as(u32, @intCast(bytes.len)), .byte_len = @as(u32, @intCast(bytes.len)), .typed_array_type = typed_array_type, .ptr = bytes.ptr };
     }
 
-    pub fn toJSUnchecked(this: ArrayBuffer, ctx: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn toJSUnchecked(this: ArrayBuffer, ctx: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         // The reason for this is
         // JSC C API returns a detached arraybuffer
         // if you pass it a zero-length TypedArray
@@ -236,7 +236,7 @@ pub const ArrayBuffer = extern struct {
                 this.ptr,
                 this.byte_len,
                 MarkedArrayBuffer_deallocator,
-                @as(*anyopaque, @ptrFromInt(@intFromPtr(&bun.default_allocator))),
+                @as(*anyopaque, @ptrFromInt(@intFromPtr(&fun.default_allocator))),
             );
         }
 
@@ -246,19 +246,19 @@ pub const ArrayBuffer = extern struct {
             this.ptr,
             this.byte_len,
             MarkedArrayBuffer_deallocator,
-            @as(*anyopaque, @ptrFromInt(@intFromPtr(&bun.default_allocator))),
+            @as(*anyopaque, @ptrFromInt(@intFromPtr(&fun.default_allocator))),
         );
     }
 
     const log = Output.scoped(.ArrayBuffer, .visible);
 
-    pub fn toJS(this: ArrayBuffer, ctx: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn toJS(this: ArrayBuffer, ctx: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         if (this.value != .zero) {
             return this.value;
         }
 
         // If it's not a mimalloc heap buffer, we're not going to call a deallocator
-        if (this.len > 0 and !bun.mimalloc.mi_is_in_heap_region(this.ptr)) {
+        if (this.len > 0 and !fun.mimalloc.mi_is_in_heap_region(this.ptr)) {
             log("toJS but will never free: {d} bytes", .{this.len});
 
             if (this.typed_array_type == .ArrayBuffer) {
@@ -289,7 +289,7 @@ pub const ArrayBuffer = extern struct {
         ctx: *jsc.JSGlobalObject,
         deallocator: ?*anyopaque,
         callback: jsc.C.JSTypedArrayBytesDeallocator,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         if (this.value != .zero) {
             return this.value;
         }
@@ -413,7 +413,7 @@ pub const ArrayBuffer = extern struct {
             };
         }
 
-        pub const Map = bun.ComptimeStringMap(
+        pub const Map = fun.ComptimeStringMap(
             BinaryType,
             .{
                 .{ "ArrayBuffer", .ArrayBuffer },
@@ -448,18 +448,18 @@ pub const ArrayBuffer = extern struct {
             return Map.get(input);
         }
 
-        pub fn fromJSValue(globalThis: *jsc.JSGlobalObject, input: jsc.JSValue) bun.JSError!?BinaryType {
+        pub fn fromJSValue(globalThis: *jsc.JSGlobalObject, input: jsc.JSValue) fun.JSError!?BinaryType {
             if (input.isString()) {
-                const str = try input.toBunString(globalThis);
+                const str = try input.toFunString(globalThis);
                 defer str.deref();
-                return Map.getWithEql(str, bun.String.eqlComptime);
+                return Map.getWithEql(str, fun.String.eqlComptime);
             }
 
             return null;
         }
 
         /// This clones bytes
-        pub fn toJS(this: BinaryType, bytes: []const u8, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        pub fn toJS(this: BinaryType, bytes: []const u8, globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
             switch (this) {
                 .Buffer => return jsc.ArrayBuffer.createBuffer(globalThis, bytes),
                 .ArrayBuffer => return jsc.ArrayBuffer.create(globalThis, bytes, .ArrayBuffer),
@@ -521,7 +521,7 @@ pub const ArrayBuffer = extern struct {
             };
         }
 
-        pub fn toNapi(this: TypedArrayType) ?bun.api.napi.napi_typedarray_type {
+        pub fn toNapi(this: TypedArrayType) ?fun.api.napi.napi_typedarray_type {
             return switch (this) {
                 .TypeNone => null,
                 .TypeInt8 => .int8_array,
@@ -605,7 +605,7 @@ pub const MarkedArrayBuffer = struct {
         return jsc.JSValue.createBuffer(ctx, this.buffer.byteSlice());
     }
 
-    pub fn toJS(this: *const MarkedArrayBuffer, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn toJS(this: *const MarkedArrayBuffer, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         if (!this.buffer.value.isEmptyOrUndefinedOrNull()) {
             return this.buffer.value;
         }
@@ -631,12 +631,12 @@ pub const MarkedArrayBuffer = struct {
 };
 
 pub export fn MarkedArrayBuffer_deallocator(bytes_: *anyopaque, _: *anyopaque) void {
-    const mimalloc = bun.mimalloc;
+    const mimalloc = fun.mimalloc;
     // zig's memory allocator interface won't work here
     // mimalloc knows the size of things
     // but we don't
     // if (comptime Environment.allow_assert) {
-    //     bun.assert(mimalloc.mi_check_owned(bytes_) or
+    //     fun.assert(mimalloc.mi_check_owned(bytes_) or
     //         mimalloc.mi_heap_check_owned(jsc.VirtualMachine.get().arena.heap.?, bytes_));
     // }
 
@@ -647,30 +647,30 @@ pub export fn BlobArrayBuffer_deallocator(_: *anyopaque, blob: *anyopaque) void 
     // zig's memory allocator interface won't work here
     // mimalloc knows the size of things
     // but we don't
-    var store = bun.cast(*jsc.WebCore.Blob.Store, blob);
+    var store = fun.cast(*jsc.WebCore.Blob.Store, blob);
     store.deref();
 }
 
-extern fn Bun__makeArrayBufferWithBytesNoCopy(*jsc.JSGlobalObject, ?*anyopaque, usize, jsc.C.JSTypedArrayBytesDeallocator, ?*anyopaque) jsc.JSValue;
-extern fn Bun__makeTypedArrayWithBytesNoCopy(*jsc.JSGlobalObject, ArrayBuffer.TypedArrayType, ?*anyopaque, usize, jsc.C.JSTypedArrayBytesDeallocator, ?*anyopaque) jsc.JSValue;
+extern fn Fun__makeArrayBufferWithBytesNoCopy(*jsc.JSGlobalObject, ?*anyopaque, usize, jsc.C.JSTypedArrayBytesDeallocator, ?*anyopaque) jsc.JSValue;
+extern fn Fun__makeTypedArrayWithBytesNoCopy(*jsc.JSGlobalObject, ArrayBuffer.TypedArrayType, ?*anyopaque, usize, jsc.C.JSTypedArrayBytesDeallocator, ?*anyopaque) jsc.JSValue;
 
-pub fn makeArrayBufferWithBytesNoCopy(globalObject: *jsc.JSGlobalObject, ptr: ?*anyopaque, len: usize, deallocator: jsc.C.JSTypedArrayBytesDeallocator, deallocatorContext: ?*anyopaque) bun.JSError!jsc.JSValue {
-    return bun.jsc.fromJSHostCall(globalObject, @src(), Bun__makeArrayBufferWithBytesNoCopy, .{ globalObject, ptr, len, deallocator, deallocatorContext });
+pub fn makeArrayBufferWithBytesNoCopy(globalObject: *jsc.JSGlobalObject, ptr: ?*anyopaque, len: usize, deallocator: jsc.C.JSTypedArrayBytesDeallocator, deallocatorContext: ?*anyopaque) fun.JSError!jsc.JSValue {
+    return fun.jsc.fromJSHostCall(globalObject, @src(), Fun__makeArrayBufferWithBytesNoCopy, .{ globalObject, ptr, len, deallocator, deallocatorContext });
 }
 
-pub fn makeTypedArrayWithBytesNoCopy(globalObject: *jsc.JSGlobalObject, arrayType: ArrayBuffer.TypedArrayType, ptr: ?*anyopaque, len: usize, deallocator: jsc.C.JSTypedArrayBytesDeallocator, deallocatorContext: ?*anyopaque) bun.JSError!jsc.JSValue {
-    return bun.jsc.fromJSHostCall(globalObject, @src(), Bun__makeTypedArrayWithBytesNoCopy, .{ globalObject, arrayType, ptr, len, deallocator, deallocatorContext });
+pub fn makeTypedArrayWithBytesNoCopy(globalObject: *jsc.JSGlobalObject, arrayType: ArrayBuffer.TypedArrayType, ptr: ?*anyopaque, len: usize, deallocator: jsc.C.JSTypedArrayBytesDeallocator, deallocatorContext: ?*anyopaque) fun.JSError!jsc.JSValue {
+    return fun.jsc.fromJSHostCall(globalObject, @src(), Fun__makeTypedArrayWithBytesNoCopy, .{ globalObject, arrayType, ptr, len, deallocator, deallocatorContext });
 }
 
 /// Corresponds to `JSC::ArrayBuffer`.
 pub const JSCArrayBuffer = opaque {
     const Self = @This();
 
-    extern fn JSC__ArrayBuffer__asBunArrayBuffer(self: *Self, out: *ArrayBuffer) void;
+    extern fn JSC__ArrayBuffer__asFunArrayBuffer(self: *Self, out: *ArrayBuffer) void;
     extern fn JSC__ArrayBuffer__ref(self: *Self) void;
     extern fn JSC__ArrayBuffer__deref(self: *Self) void;
 
-    pub const Ref = bun.ptr.ExternalShared(Self);
+    pub const Ref = fun.ptr.ExternalShared(Self);
 
     pub const external_shared_descriptor = struct {
         pub const ref = JSC__ArrayBuffer__ref;
@@ -679,14 +679,14 @@ pub const JSCArrayBuffer = opaque {
 
     pub fn asArrayBuffer(self: *Self) ArrayBuffer {
         var out: ArrayBuffer = undefined;
-        JSC__ArrayBuffer__asBunArrayBuffer(self, &out);
+        JSC__ArrayBuffer__asFunArrayBuffer(self, &out);
         return out;
     }
 };
 
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const Output = bun.Output;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const Output = fun.Output;
+const jsc = fun.jsc;

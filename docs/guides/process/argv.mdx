@@ -4,10 +4,10 @@ sidebarTitle: Parse command-line arguments
 mode: center
 ---
 
-The _argument vector_ is the list of arguments passed to the program when it is run. It is available as `Bun.argv`.
+The _argument vector_ is the list of arguments passed to the program when it is run. It is available as `Fun.argv`.
 
 ```ts cli.ts icon="/icons/typescript.svg"
-console.log(Bun.argv);
+console.log(Fun.argv);
 ```
 
 ---
@@ -15,11 +15,11 @@ console.log(Bun.argv);
 Running this file with arguments results in the following:
 
 ```sh terminal icon="terminal"
-bun run cli.ts --flag1 --flag2 value
+fun run cli.ts --flag1 --flag2 value
 ```
 
 ```txt
-[ '/path/to/bun', '/path/to/cli.ts', '--flag1', '--flag2', 'value' ]
+[ '/path/to/fun', '/path/to/cli.ts', '--flag1', '--flag2', 'value' ]
 ```
 
 ---
@@ -32,7 +32,7 @@ Example:
 import { parseArgs } from "util";
 
 const { values, positionals } = parseArgs({
-  args: Bun.argv,
+  args: Fun.argv,
   options: {
     flag1: {
       type: "boolean",
@@ -54,7 +54,7 @@ console.log(positionals);
 then it outputs
 
 ```sh terminal icon="terminal"
-bun run cli.ts --flag1 --flag2 value
+fun run cli.ts --flag1 --flag2 value
 ```
 
 ```txt
@@ -62,5 +62,5 @@ bun run cli.ts --flag1 --flag2 value
   flag1: true,
   flag2: "value",
 }
-[ "/path/to/bun", "/path/to/cli.ts" ]
+[ "/path/to/fun", "/path/to/cli.ts" ]
 ```

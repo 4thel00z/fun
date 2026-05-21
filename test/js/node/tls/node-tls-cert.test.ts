@@ -1,7 +1,7 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { once } from "events";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe, invalidTls, isASAN, isDebug, tmpdirSync } from "harness";
+import { funEnv, funExe, invalidTls, isASAN, isDebug, tmpdirSync } from "harness";
 import type { AddressInfo } from "node:net";
 import type { Server, TLSSocket } from "node:tls";
 import { join } from "path";
@@ -462,7 +462,7 @@ async function createTLSServer(options: tls.TlsOptions) {
 
 it("tls.connect should load extra CA from NODE_EXTRA_CA_CERTS", async () => {
   const caPath = join(tmpdirSync(), "ca.pem");
-  await Bun.write(caPath, serverTls.ca);
+  await Fun.write(caPath, serverTls.ca);
 
   await using server = await createTLSServer({
     key: serverTls.key,
@@ -470,16 +470,16 @@ it("tls.connect should load extra CA from NODE_EXTRA_CA_CERTS", async () => {
     passphrase: "123123123",
   });
 
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     env: {
-      ...bunEnv,
+      ...funEnv,
       SERVER_PORT: server.address.port.toString(),
       NODE_EXTRA_CA_CERTS: caPath,
     },
     stderr: "pipe",
     stdout: "inherit",
     stdin: "inherit",
-    cmd: [bunExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
+    cmd: [funExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
   });
 
   expect(await proc.exited).toBe(0);
@@ -488,7 +488,7 @@ it("tls.connect should load extra CA from NODE_EXTRA_CA_CERTS", async () => {
 it("tls.connect should use NODE_EXTRA_CA_CERTS even if the used CA is not first in bundle", async () => {
   const bundlePath = join(tmpdirSync(), "bundle.pem");
   const bundleContent = `${clientTls.cert}\n${serverTls.ca}`;
-  await Bun.write(bundlePath, bundleContent);
+  await Fun.write(bundlePath, bundleContent);
 
   await using server = await createTLSServer({
     key: serverTls.key,
@@ -496,16 +496,16 @@ it("tls.connect should use NODE_EXTRA_CA_CERTS even if the used CA is not first 
     passphrase: "123123123",
   });
 
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     env: {
-      ...bunEnv,
+      ...funEnv,
       SERVER_PORT: server.address.port.toString(),
       NODE_EXTRA_CA_CERTS: bundlePath,
     },
     stderr: "pipe",
     stdout: "inherit",
     stdin: "inherit",
-    cmd: [bunExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
+    cmd: [funExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
   });
 
   expect(await proc.exited).toBe(0);
@@ -519,16 +519,16 @@ it("tls.connect should ignore invalid NODE_EXTRA_CA_CERTS", async () => {
   });
 
   for (const invalid of ["not-exist.pem", "", " "]) {
-    const proc = Bun.spawn({
+    const proc = Fun.spawn({
       env: {
-        ...bunEnv,
+        ...funEnv,
         SERVER_PORT: server.address.port.toString(),
         NODE_EXTRA_CA_CERTS: invalid,
       },
       stderr: "pipe",
       stdout: "inherit",
       stdin: "inherit",
-      cmd: [bunExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
+      cmd: [funExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
     });
 
     expect(await proc.exited).toBe(1);
@@ -539,10 +539,10 @@ it("tls.connect should ignore invalid NODE_EXTRA_CA_CERTS", async () => {
 
 it("tls.connect should ignore NODE_EXTRA_CA_CERTS if it contains invalid cert", async () => {
   const mixedValidAndInvalidCertsBundlePath = join(tmpdirSync(), "mixed-valid-and-invalid-certs-bundle.pem");
-  await Bun.write(mixedValidAndInvalidCertsBundlePath, `${invalidTls.cert}\n${serverTls.ca}`);
+  await Fun.write(mixedValidAndInvalidCertsBundlePath, `${invalidTls.cert}\n${serverTls.ca}`);
 
   const mixedInvalidAndValidCertsBundlePath = join(tmpdirSync(), "mixed-invalid-and-valid-certs-bundle.pem");
-  await Bun.write(mixedInvalidAndValidCertsBundlePath, `${serverTls.ca}\n${invalidTls.cert}`);
+  await Fun.write(mixedInvalidAndValidCertsBundlePath, `${serverTls.ca}\n${invalidTls.cert}`);
 
   await using server = await createTLSServer({
     key: serverTls.key,
@@ -551,16 +551,16 @@ it("tls.connect should ignore NODE_EXTRA_CA_CERTS if it contains invalid cert", 
   });
 
   for (const invalid of [mixedValidAndInvalidCertsBundlePath, mixedInvalidAndValidCertsBundlePath]) {
-    const proc = Bun.spawn({
+    const proc = Fun.spawn({
       env: {
-        ...bunEnv,
+        ...funEnv,
         SERVER_PORT: server.address.port.toString(),
         NODE_EXTRA_CA_CERTS: invalid,
       },
       stderr: "pipe",
       stdout: "inherit",
       stdin: "inherit",
-      cmd: [bunExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
+      cmd: [funExe(), join(import.meta.dir, "node-tls-cert-extra-ca.fixture.js")],
     });
 
     expect(await proc.exited).toBe(1);
@@ -650,8 +650,8 @@ it("server-side getPeerCertificate() should not leak", async () => {
         serverSocket.getPeerCertificate();
         serverSocket.getPeerCertificate(false);
       }
-      Bun.gc(true);
-      Bun.gc(true);
+      Fun.gc(true);
+      Fun.gc(true);
     }
 
     // Run in fixed-size rounds with a GC after each so the steady-state

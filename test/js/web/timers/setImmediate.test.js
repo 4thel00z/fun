@@ -1,5 +1,5 @@
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 import path from "path";
 
 it("setImmediate", async () => {
@@ -58,11 +58,11 @@ it("clearImmediate", async () => {
 it("setImmediate should not keep the process alive forever", async () => {
   let process = null;
   const success = async () => {
-    process = Bun.spawn({
-      cmd: [bunExe(), "run", path.join(import.meta.dir, "process-setImmediate-fixture.js")],
+    process = Fun.spawn({
+      cmd: [funExe(), "run", path.join(import.meta.dir, "process-setImmediate-fixture.js")],
       stdout: "ignore",
       env: {
-        ...bunEnv,
+        ...funEnv,
         NODE_ENV: undefined,
       },
     });
@@ -72,7 +72,7 @@ it("setImmediate should not keep the process alive forever", async () => {
   };
 
   const fail = async () => {
-    await Bun.sleep(500);
+    await Fun.sleep(500);
     process?.kill();
     return false;
   };

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 const weirdInternalSpecifiers = [
   "_http_agent",
@@ -17,7 +17,7 @@ const weirdInternalSpecifiers = [
   "_tls_wrap",
 ];
 
-// Check that all the node modules comply with the expected interface in bun
+// Check that all the node modules comply with the expected interface in fun
 var specifiers = [
   "assert",
   "assert/strict",
@@ -94,9 +94,9 @@ for (let specifier of specifiers) {
   });
 }
 
-test("you can import bun:test", async () => {
-  const bunTest1 = await import("bun:test" + String(""));
-  const bunTest2 = require("bun:test" + String(""));
+test("you can import fun:test", async () => {
+  const funTest1 = await import("fun:test" + String(""));
+  const funTest2 = require("fun:test" + String(""));
 });
 
 describe("v8.getHeapStatistics", () => {

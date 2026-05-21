@@ -2,8 +2,8 @@
 
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
-JSC_DECLARE_HOST_FUNCTION(jsFunctionBunSliceAnsi);
+JSC_DECLARE_HOST_FUNCTION(jsFunctionFunSliceAnsi);
 
 }

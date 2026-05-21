@@ -1,14 +1,14 @@
 ---
 title: Streams
-description: Use Bun's streams API to work with binary data without loading it all into memory at once
+description: Use Fun's streams API to work with binary data without loading it all into memory at once
 ---
 
 Streams are an important abstraction for working with binary data without loading it all into memory at once. They are commonly used for reading and writing files, sending and receiving network requests, and processing large amounts of data.
 
-Bun implements the Web APIs [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream) and [`WritableStream`](https://developer.mozilla.org/en-US/docs/Web/API/WritableStream).
+Fun implements the Web APIs [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream) and [`WritableStream`](https://developer.mozilla.org/en-US/docs/Web/API/WritableStream).
 
 <Note>
-  Bun also implements the `node:stream` module, including
+  Fun also implements the `node:stream` module, including
   [`Readable`](https://nodejs.org/api/stream.html#stream_readable_streams),
   [`Writable`](https://nodejs.org/api/stream.html#stream_writable_streams), and
   [`Duplex`](https://nodejs.org/api/stream.html#stream_duplex_and_transform_streams). For complete documentation, refer
@@ -42,7 +42,7 @@ for await (const chunk of stream) {
 
 ## Direct `ReadableStream`
 
-Bun implements an optimized version of `ReadableStream` that avoid unnecessary data copying & queue management logic.
+Fun implements an optimized version of `ReadableStream` that avoid unnecessary data copying & queue management logic.
 
 With a traditional `ReadableStream`, chunks of data are _enqueued_. Each chunk is copied into a queue, where it sits until the stream is ready to send more data.
 
@@ -74,7 +74,7 @@ When using a direct `ReadableStream`, the destination handles all chunk queueing
 
 ## Async generator streams
 
-Bun also supports async generator functions as a source for `Response` and `Request`. Use async generators to create a `ReadableStream` that fetches data from an asynchronous source.
+Fun also supports async generator functions as a source for `Response` and `Request`. Use async generators to create a `ReadableStream` that fetches data from an asynchronous source.
 
 ```ts
 const response = new Response(
@@ -115,12 +115,12 @@ await response.text(); // "hello"
 
 ---
 
-## `Bun.ArrayBufferSink`
+## `Fun.ArrayBufferSink`
 
-The `Bun.ArrayBufferSink` class is a fast incremental writer for constructing an `ArrayBuffer` of unknown size.
+The `Fun.ArrayBufferSink` class is a fast incremental writer for constructing an `ArrayBuffer` of unknown size.
 
 ```ts
-const sink = new Bun.ArrayBufferSink();
+const sink = new Fun.ArrayBufferSink();
 
 sink.write("h");
 sink.write("e");
@@ -135,7 +135,7 @@ sink.end();
 To instead retrieve the data as a `Uint8Array`, pass the `asUint8Array` option to the `start` method.
 
 ```ts
-const sink = new Bun.ArrayBufferSink();
+const sink = new Fun.ArrayBufferSink();
 sink.start({
   asUint8Array: true, // [!code ++]
 });
@@ -163,7 +163,7 @@ sink.end();
 Once `.end()` is called, no more data can be written to the `ArrayBufferSink`. However, in the context of buffering a stream, it's useful to continuously write data and periodically `.flush()` the contents (say, into a `WriteableStream`). To support this, pass `stream: true` to the constructor.
 
 ```ts
-const sink = new Bun.ArrayBufferSink();
+const sink = new Fun.ArrayBufferSink();
 sink.start({
   stream: true, // [!code ++]
 });
@@ -185,7 +185,7 @@ The `.flush()` method returns the buffered data as an `ArrayBuffer` (or `Uint8Ar
 To manually set the size of the internal buffer in bytes, pass a value for `highWaterMark`:
 
 ```ts
-const sink = new Bun.ArrayBufferSink();
+const sink = new Fun.ArrayBufferSink();
 sink.start({
   highWaterMark: 1024 * 1024, // 1 MB  // [!code ++]
 });

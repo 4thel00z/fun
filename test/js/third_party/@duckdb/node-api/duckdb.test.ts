@@ -7,7 +7,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Copied from https://github.com/duckdb/duckdb-node-neo/blob/3f85023c6b42d6b288a2e0f92dd7c7b40cf2a63c/api/test/api.test.ts,
-// with minor modifications to work as a Bun test
+// with minor modifications to work as a Fun test
 
 import { libcFamily } from "harness";
 if (libcFamily == "musl") {
@@ -19,7 +19,7 @@ if (process.platform === "win32" && process.arch === "arm64") {
   process.exit(0);
 }
 
-import { describe, test } from "bun:test";
+import { describe, test } from "fun:test";
 import assert from "node:assert";
 // Must be CJS require so that the above code can exit before we attempt to import DuckDB
 const {

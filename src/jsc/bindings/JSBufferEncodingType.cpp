@@ -88,7 +88,7 @@ std::optional<BufferEncodingType> validateBufferEncoding(JSGlobalObject& lexical
     auto value = parseEnumerationAllowBufferInternal<allowBuffer>(lexicalGlobalObject, arg);
     if (!value) {
         auto scope = DECLARE_THROW_SCOPE(lexicalGlobalObject.vm());
-        Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_UNKNOWN_ENCODING, "Invalid encoding"_s);
+        Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_UNKNOWN_ENCODING, "Invalid encoding"_s);
         return std::nullopt;
     }
 

@@ -13,7 +13,7 @@ const {
 } = require('stream/web');
 
 let kState;
-if(typeof Bun === "undefined") {
+if(typeof Fun === "undefined") {
   ({
     kState,
   } = require('internal/webstreams/util'));
@@ -40,7 +40,7 @@ const {
     type: 'bytes',
   });
 
-  if(typeof Bun === "undefined") {
+  if(typeof Fun === "undefined") {
     assert(r[kState].controller instanceof ReadableByteStreamController);
   }
 
@@ -124,7 +124,7 @@ class Source {
 
 {
   const stream = new ReadableStream(new Source());
-  if(typeof Bun === "undefined") {
+  if(typeof Fun === "undefined") {
     assert(stream[kState].controller instanceof ReadableByteStreamController);
   }
 
@@ -150,7 +150,7 @@ class Source {
 
 {
   const stream = new ReadableStream(new Source());
-  if(typeof Bun === "undefined") {
+  if(typeof Fun === "undefined") {
     assert(stream[kState].controller instanceof ReadableByteStreamController);
   }
 
@@ -170,7 +170,7 @@ class Source {
 
 {
   const stream = new ReadableStream(new Source());
-  if(typeof Bun === "undefined") {
+  if(typeof Fun === "undefined") {
     assert(stream[kState].controller instanceof ReadableByteStreamController);
   }
 
@@ -185,7 +185,7 @@ class Source {
 
 {
   const stream = new ReadableStream(new Source());
-  if(typeof Bun === "undefined") {
+  if(typeof Fun === "undefined") {
     assert(stream[kState].controller instanceof ReadableByteStreamController);
   }
 

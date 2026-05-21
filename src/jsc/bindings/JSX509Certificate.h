@@ -2,7 +2,7 @@
 
 #include "root.h"
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ncrypto.h"
 #include "headers-handwritten.h"
 
@@ -17,7 +17,7 @@ namespace Zig {
 class GlobalObject;
 }
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsIsX509Certificate);
 
@@ -154,4 +154,4 @@ private:
 
 void setupX509CertificateClassStructure(LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

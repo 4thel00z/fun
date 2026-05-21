@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 import crypto from "node:crypto";
 import { PassThrough, Readable } from "node:stream";
@@ -34,7 +34,7 @@ it("crypto.randomInt with a callback", async () => {
   expect(result).toBeLessThanOrEqual(10);
 });
 
-// https://github.com/oven-sh/bun/issues/1839
+// https://github.com/underdoc-org/fun/issues/1839
 describe("createHash", () => {
   const nodeValues = {
     "RSA-MD5": {
@@ -439,7 +439,7 @@ describe("createHash", () => {
     });
     s.write("Hello world");
     s.pipe(hash);
-    s.write("Bun!");
+    s.write("Fun!");
     s.end();
   });
 
@@ -623,13 +623,13 @@ it("web crypto", async () => {
   await crypto.subtle.digest("SHA-256", bytes);
 });
 
-// https://github.com/oven-sh/bun/issues/2110
+// https://github.com/underdoc-org/fun/issues/2110
 it("hash regression #2110", () => {
   var s = "6fbf7e2948e0c2f29eaacac1733546a4af5ca482";
   expect(crypto.createHash("sha1").update(s, "binary").digest("hex")).toBe("e7c8b3c6f114c523d07ee355c534ee9bef3c044b");
 });
 
-// https://github.com/oven-sh/bun/issues/3680
+// https://github.com/underdoc-org/fun/issues/3680
 it("createDecipheriv should validate iv and password", () => {
   const key = Buffer.alloc(16);
 

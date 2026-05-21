@@ -13,7 +13,7 @@ pub const Timer = opaque {
         // never fallthrough poll
         // the problem is uSockets hardcodes it on the other end
         // so we can never free non-fallthrough polls
-        return c.us_create_timer(loop, 0, @sizeOf(Type)) orelse bun.Output.panic("us_create_timer: returned null: {d}", .{std.c._errno().*});
+        return c.us_create_timer(loop, 0, @sizeOf(Type)) orelse fun.Output.panic("us_create_timer: returned null: {d}", .{std.c._errno().*});
     }
 
     pub fn createFallthrough(loop: *Loop, ptr: anytype) *Timer {
@@ -22,7 +22,7 @@ pub const Timer = opaque {
         // never fallthrough poll
         // the problem is uSockets hardcodes it on the other end
         // so we can never free non-fallthrough polls
-        return c.us_create_timer(loop, 1, @sizeOf(Type)) orelse bun.Output.panic("us_create_timer: returned null: {d}", .{std.c._errno().*});
+        return c.us_create_timer(loop, 1, @sizeOf(Type)) orelse fun.Output.panic("us_create_timer: returned null: {d}", .{std.c._errno().*});
     }
 
     pub fn set(this: *Timer, ptr: anytype, cb: ?*const fn (*Timer) callconv(.c) void, ms: i32, repeat_ms: i32) void {
@@ -55,10 +55,10 @@ const c = struct {
     pub extern fn us_timer_loop(t: ?*Timer) ?*Loop;
 };
 
-const debug = bun.Output.scoped(.uws, .visible);
+const debug = fun.Output.scoped(.uws, .visible);
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const uws = bun.uws;
+const uws = fun.uws;
 const Loop = uws.Loop;

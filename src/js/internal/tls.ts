@@ -48,6 +48,6 @@ function isValidTLSArray(obj: unknown) {
   return false;
 }
 
-const VALID_TLS_ERROR_MESSAGE_TYPES = "string or an instance of Buffer, TypedArray, DataView, or BunFile";
+const VALID_TLS_ERROR_MESSAGE_TYPES = "string or an instance of Buffer, TypedArray, DataView, or FunFile";
 
 export { VALID_TLS_ERROR_MESSAGE_TYPES, isValidTLSArray, isValidTLSItem, throwOnInvalidTLSArray };

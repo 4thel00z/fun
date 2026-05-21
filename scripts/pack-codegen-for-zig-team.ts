@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { $ } from "bun";
 import { dirname, join, relative } from "path";
 
@@ -15,13 +17,13 @@ async function revertUnstagedChanges() {
   // Discard ONLY worktree changes; keep index (staged) intact.
   // Prefer `git restore` (Git ≥2.23), fall back to `git checkout` for older Git.
   try {
-    const restore = Bun.spawn({
+    const restore = Fun.spawn({
       cmd: ["git", "restore", "--worktree", "--", "."],
       stdio: ["ignore", "ignore", "inherit"],
     });
     await restore.exited;
     if (restore.exitCode !== 0) {
-      const checkout = Bun.spawn({
+      const checkout = Fun.spawn({
         cmd: ["git", "checkout", "--", "."],
         stdio: ["ignore", "ignore", "inherit"],
       });
@@ -43,7 +45,7 @@ const args = process.argv.slice(2).filter((arg, i) => {
   return true;
 });
 if (args.length === 0) {
-  console.error(`Usage: bun scripts/pack-codegen-for-zig-team <full crashing zig command>
+  console.error(`Usage: fun scripts/pack-codegen-for-zig-team <full crashing zig command>
 
 The full command should be displayed in the build failure message. It should start with /path/to/zig build-obj ..... and end with --listen=-`);
   process.exit(1);
@@ -76,7 +78,7 @@ for (const arg of args) {
 for (const file of resolvedZigFiles) {
   let content: string;
   try {
-    content = await Bun.file(file).text();
+    content = await Fun.file(file).text();
   } catch (e) {
     console.error("Failed to read file: ", file);
     resolvedZigFiles.delete(file);
@@ -97,11 +99,11 @@ for (const file of resolvedZigFiles) {
 const out_args = "build/all.args";
 const out = "codegen-for-zig-team.tar.gz";
 try {
-  await Bun.file(out).delete();
+  await Fun.file(out).delete();
 } catch (e) {}
 
 const a0 = args.shift();
-await Bun.write(
+await Fun.write(
   out_args,
   args
     .filter(arg => {
@@ -120,7 +122,7 @@ await Bun.write(
 
 // Prepare zig source for use with the upstream compiler
 {
-  const fmt = Bun.spawn({
+  const fmt = Fun.spawn({
     cmd: ["./vendor/zig/zig", "fmt", "--upstream", "src"],
     stdio: ["inherit", "inherit", "inherit"],
   });
@@ -133,7 +135,7 @@ await Bun.write(
 }
 
 try {
-  const spawned = Bun.spawn({
+  const spawned = Fun.spawn({
     cmd: ["tar", "--no-xattrs", "-zcf", out, out_args, ...resolvedZigFiles],
     stdio: ["inherit", "inherit", "inherit"],
   });

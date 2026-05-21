@@ -1,10 +1,10 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import path from "path";
 import sharp from "sharp";
 
 describe("sharp integration tests", () => {
   it("should resize an image", async () => {
-    const inputBuffer = await sharp(path.join(import.meta.dir, "bun.png"))
+    const inputBuffer = await sharp(path.join(import.meta.dir, "fun.png"))
       .resize(200, 200)
       .toBuffer();
 
@@ -16,7 +16,7 @@ describe("sharp integration tests", () => {
   });
 
   it("should convert image format", async () => {
-    const inputBuffer = await sharp(path.join(import.meta.dir, "bun.png"))
+    const inputBuffer = await sharp(path.join(import.meta.dir, "fun.png"))
       .toFormat("jpeg")
       .toBuffer();
     const image = sharp(inputBuffer);
@@ -26,7 +26,7 @@ describe("sharp integration tests", () => {
   });
 
   it("should adjust image quality", async () => {
-    const inputBuffer = await sharp(path.join(import.meta.dir, "bun.png"))
+    const inputBuffer = await sharp(path.join(import.meta.dir, "fun.png"))
       .jpeg({ quality: 70 })
       .toBuffer();
     const image = sharp(inputBuffer);
@@ -38,7 +38,7 @@ describe("sharp integration tests", () => {
   });
 
   it("should crop the image", async () => {
-    const inputBuffer = await sharp(path.join(import.meta.dir, "bun.png"))
+    const inputBuffer = await sharp(path.join(import.meta.dir, "fun.png"))
       .extract({ width: 100, height: 100, left: 10, top: 10 })
       .toBuffer();
     const image = sharp(inputBuffer);
@@ -49,7 +49,7 @@ describe("sharp integration tests", () => {
   });
 
   it("should rotate the image", async () => {
-    const inputBuffer = await sharp(path.join(import.meta.dir, "bun.png"))
+    const inputBuffer = await sharp(path.join(import.meta.dir, "fun.png"))
       .rotate(90)
       .toBuffer();
     const image = sharp(inputBuffer);

@@ -7,8 +7,8 @@ class NotImplementedError extends Error {
   constructor(feature: string, issue?: number, extra?: string) {
     super(
       feature +
-        " is not yet implemented in Bun." +
-        (issue ? " Track the status & thumbs up the issue: https://github.com/oven-sh/bun/issues/" + issue : "") +
+        " is not yet implemented in Fun." +
+        (issue ? " Track the status & thumbs up the issue: https://github.com/underdoc-org/fun/issues/" + issue : "") +
         (extra ? ". " + extra : ""),
     );
     this.name = "NotImplementedError";
@@ -32,7 +32,7 @@ function throwNotImplemented(feature: string, issue?: number, extra?: string): n
 function hideFromStack(...fns: Function[]) {
   for (const fn of fns) {
     Object.defineProperty(fn, "name", {
-      value: "::bunternal::",
+      value: "::funternal::",
     });
   }
 }

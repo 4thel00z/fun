@@ -4,16 +4,16 @@ sidebarTitle: Simple server
 mode: center
 ---
 
-Start a simple WebSocket server using [`Bun.serve`](/runtime/http/server).
+Start a simple WebSocket server using [`Fun.serve`](/runtime/http/server).
 
 Inside `fetch`, we attempt to upgrade incoming `ws:` or `wss:` requests to WebSocket connections.
 
 ```ts server.ts icon="/icons/typescript.svg"
-const server = Bun.serve({
+const server = Fun.serve({
   fetch(req, server) {
     const success = server.upgrade(req);
     if (success) {
-      // Bun automatically returns a 101 Switching Protocols
+      // Fun automatically returns a 101 Switching Protocols
       // if the upgrade succeeds
       return undefined;
     }

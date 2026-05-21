@@ -73,8 +73,8 @@ const c = struct {
     pub extern fn us_connecting_socket_get_loop(s: *ConnectingSocket) *uws.Loop;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const uws = bun.uws;
+const uws = fun.uws;
 const SocketGroup = uws.SocketGroup;
 const SocketKind = uws.SocketKind;

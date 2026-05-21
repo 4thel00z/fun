@@ -1,9 +1,9 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
-// Test for https://github.com/oven-sh/bun/issues/26039
-// When parsing a bun.lock file with an empty registry URL for a scoped package,
-// bun should use the scope-specific registry from bunfig.toml, not the default npm registry.
+// Test for https://github.com/underdoc-org/fun/issues/26039
+// When parsing a fun.lock file with an empty registry URL for a scoped package,
+// fun should use the scope-specific registry from funfig.toml, not the default npm registry.
 test("frozen lockfile should use scope-specific registry for scoped packages", async () => {
   const dir = tempDirWithFiles("scoped-registry-test", {
     "package.json": JSON.stringify({
@@ -13,12 +13,12 @@ test("frozen lockfile should use scope-specific registry for scoped packages", a
         "@example/test-package": "^1.0.0",
       },
     }),
-    "bunfig.toml": `
+    "funfig.toml": `
 [install.scopes]
 example = { url = "https://npm.pkg.github.com" }
 `,
-    // bun.lock with empty string for registry URL - this should trigger the scope lookup
-    "bun.lock": JSON.stringify(
+    // fun.lock with empty string for registry URL - this should trigger the scope lookup
+    "fun.lock": JSON.stringify(
       {
         lockfileVersion: 1,
         workspaces: {
@@ -37,12 +37,12 @@ example = { url = "https://npm.pkg.github.com" }
     ),
   });
 
-  // Run bun install --frozen-lockfile. It will fail because the package doesn't exist,
+  // Run fun install --frozen-lockfile. It will fail because the package doesn't exist,
   // but the error message should show the correct registry URL (npm.pkg.github.com, not registry.npmjs.org)
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "install", "--frozen-lockfile"],
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "install", "--frozen-lockfile"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
   });
 
   const stderrText = stderr.toString();
@@ -65,12 +65,12 @@ test("frozen lockfile should use default registry for non-scoped packages", asyn
         "fake-nonexistent-package": "^1.0.0",
       },
     }),
-    "bunfig.toml": `
+    "funfig.toml": `
 [install.scopes]
 example = { url = "https://npm.pkg.github.com" }
 `,
-    // bun.lock with empty string for registry URL for non-scoped package
-    "bun.lock": JSON.stringify(
+    // fun.lock with empty string for registry URL for non-scoped package
+    "fun.lock": JSON.stringify(
       {
         lockfileVersion: 1,
         workspaces: {
@@ -89,10 +89,10 @@ example = { url = "https://npm.pkg.github.com" }
     ),
   });
 
-  const { stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "install", "--frozen-lockfile"],
+  const { stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "install", "--frozen-lockfile"],
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
   });
 
   const stderrText = stderr.toString();

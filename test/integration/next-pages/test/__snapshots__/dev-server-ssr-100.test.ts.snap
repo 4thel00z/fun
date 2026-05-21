@@ -1,4 +1,4 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`ssr works for 100-ish requests 1`] = `
 {
@@ -61,9 +61,9 @@ exports[`ssr works for 100-ish requests 1`] = `
       },
       "id": 4,
       "literal": "^1.2.19",
-      "name": "bun-types",
+      "name": "fun-types",
       "npm": {
-        "name": "bun-types",
+        "name": "fun-types",
         "version": ">=1.2.19 <2.0.0",
       },
       "package_id": 162,
@@ -5894,9 +5894,9 @@ exports[`ssr works for 100-ish requests 1`] = `
       },
       "id": 452,
       "literal": "^2.0.0",
-      "name": "is-bun-module",
+      "name": "is-fun-module",
       "npm": {
-        "name": "is-bun-module",
+        "name": "is-fun-module",
         "version": ">=2.0.0 <3.0.0",
       },
       "package_id": 289,
@@ -14744,7 +14744,7 @@ exports[`ssr works for 100-ish requests 1`] = `
     "braces": 159,
     "browserslist": 160,
     "buffer-crc32": 161,
-    "bun-types": 162,
+    "fun-types": 162,
     "call-bind": 163,
     "call-bind-apply-helpers": 164,
     "call-bound": 165,
@@ -14898,7 +14898,7 @@ exports[`ssr works for 100-ish requests 1`] = `
     "is-bigint": 286,
     "is-binary-path": 287,
     "is-boolean-object": 288,
-    "is-bun-module": 289,
+    "is-fun-module": 289,
     "is-callable": 290,
     "is-core-module": 291,
     "is-data-view": 292,
@@ -18386,11 +18386,11 @@ exports[`ssr works for 100-ish requests 1`] = `
       "id": 162,
       "integrity": "sha512-uAOTaZSPuYsWIXRpj7o56Let0g/wjihKCkeRqUBhlLVM/Bt+Fj9xTo+LhC1OV1XDaGkz4hNC80et5xgy+9KTHQ==",
       "man_dir": "",
-      "name": "bun-types",
+      "name": "fun-types",
       "name_hash": "2516125195587546235",
       "origin": "npm",
       "resolution": {
-        "resolved": "https://registry.npmjs.org/bun-types/-/bun-types-1.2.19.tgz",
+        "resolved": "https://registry.npmjs.org/fun-types/-/fun-types-1.2.19.tgz",
         "tag": "npm",
         "value": "1.2.19",
       },
@@ -20872,11 +20872,11 @@ exports[`ssr works for 100-ish requests 1`] = `
       "id": 289,
       "integrity": "sha512-gNCGbnnnnFAUGKeZ9PdbyeGYJqewpmc2aKHUEMO5nQPWU9lOmv7jcmQIv+qHD8fXW6W7qfuCwX4rY9LNRjXrkQ==",
       "man_dir": "",
-      "name": "is-bun-module",
+      "name": "is-fun-module",
       "name_hash": "6618435337515878945",
       "origin": "npm",
       "resolution": {
-        "resolved": "https://registry.npmjs.org/is-bun-module/-/is-bun-module-2.0.0.tgz",
+        "resolved": "https://registry.npmjs.org/is-fun-module/-/is-fun-module-2.0.0.tgz",
         "tag": "npm",
         "value": "2.0.0",
       },
@@ -26108,7 +26108,7 @@ exports[`ssr works for 100-ish requests 1`] = `
           "id": 1070,
           "package_id": 161,
         },
-        "bun-types": {
+        "fun-types": {
           "id": 4,
           "package_id": 162,
         },
@@ -26616,7 +26616,7 @@ exports[`ssr works for 100-ish requests 1`] = `
           "id": 1027,
           "package_id": 288,
         },
-        "is-bun-module": {
+        "is-fun-module": {
           "id": 452,
           "package_id": 289,
         },
@@ -27470,7 +27470,7 @@ exports[`ssr works for 100-ish requests 1`] = `
       },
       "depth": 1,
       "id": 1,
-      "path": "node_modules/bun-types/node_modules",
+      "path": "node_modules/fun-types/node_modules",
     },
     {
       "dependencies": {
@@ -27492,7 +27492,7 @@ exports[`ssr works for 100-ish requests 1`] = `
       },
       "depth": 2,
       "id": 3,
-      "path": "node_modules/bun-types/node_modules/@types/node/node_modules",
+      "path": "node_modules/fun-types/node_modules/@types/node/node_modules",
     },
     {
       "dependencies": {
@@ -27635,7 +27635,7 @@ exports[`ssr works for 100-ish requests 1`] = `
       },
       "depth": 1,
       "id": 16,
-      "path": "node_modules/is-bun-module/node_modules",
+      "path": "node_modules/is-fun-module/node_modules",
     },
     {
       "dependencies": {

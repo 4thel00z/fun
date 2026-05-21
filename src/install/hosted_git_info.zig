@@ -93,7 +93,7 @@ pub const HostedGitInfo = struct {
     /// Therefore, we use this function to first take a URL string, encode it into a *jsc.URL and
     /// then decode it back to a normal string. Kind of a lot of work, but it works.
     fn decodeAndAppend(
-        sb: *bun.StringBuilder,
+        sb: *fun.StringBuilder,
         input: []const u8,
     ) error{ OutOfMemory, InvalidURL }![]const u8 {
         const writable = sb.writable();
@@ -117,7 +117,7 @@ pub const HostedGitInfo = struct {
         default_representation: Representation,
         allocator: std.mem.Allocator,
     ) error{ OutOfMemory, InvalidURL }!Self {
-        var sb = bun.StringBuilder{};
+        var sb = fun.StringBuilder{};
 
         if (user) |u| sb.count(u);
         sb.count(project);
@@ -194,7 +194,7 @@ pub const HostedGitInfo = struct {
             //
             // TODO(markovejnovic): Perhaps we can avoid this allocation...
             // This one seems quite easy to get rid of.
-            git_url_mut = bun.handleOom(bun.strings.concat(allocator, &.{ "github:", git_url }));
+            git_url_mut = fun.handleOom(fun.strings.concat(allocator, &.{ "github:", git_url }));
         }
 
         const parsed = parseUrl(allocator, git_url_mut) catch {
@@ -223,17 +223,17 @@ pub const HostedGitInfo = struct {
         defer allocator.free(pathname_owned);
 
         // Strip leading / (from-url.js line 69)
-        var pathname = bun.strings.trimPrefixComptime(u8, pathname_owned, "/");
+        var pathname = fun.strings.trimPrefixComptime(u8, pathname_owned, "/");
 
         // Strip auth (from-url.js line 70-74)
-        if (bun.strings.indexOfChar(pathname, '@')) |first_at| {
+        if (fun.strings.indexOfChar(pathname, '@')) |first_at| {
             pathname = pathname[first_at + 1 ..];
         }
 
         // extract user and project from pathname (from-url.js line 76-86)
         var user_part: ?[]const u8 = null;
         const project_part: []const u8 = blk: {
-            if (bun.strings.lastIndexOfChar(pathname, '/')) |last_slash| {
+            if (fun.strings.lastIndexOfChar(pathname, '/')) |last_slash| {
                 const user_str = pathname[0..last_slash];
                 // We want nulls only, never empty strings (from-url.js line 79-82)
                 if (user_str.len > 0) {
@@ -246,7 +246,7 @@ pub const HostedGitInfo = struct {
         };
 
         // Strip .git suffix (from-url.js line 88-90)
-        const project_trimmed = bun.strings.trimSuffixComptime(project_part, ".git");
+        const project_trimmed = fun.strings.trimSuffixComptime(project_part, ".git");
 
         // Get committish from URL fragment (from-url.js line 92-94)
         const fragment = try parsed.url.fragmentIdentifier().toOwnedSlice(allocator);
@@ -318,7 +318,7 @@ pub const WellDefinedProtocol = enum {
     sourcehut,
 
     /// Mapping from protocol string (without colon) to WellDefinedProtocol.
-    pub const strings = bun.ComptimeStringMap(Self, .{
+    pub const strings = fun.ComptimeStringMap(Self, .{
         .{ "bitbucket", .bitbucket },
         .{ "gist", .gist },
         .{ "git+file", .git_plus_file },
@@ -342,7 +342,7 @@ pub const WellDefinedProtocol = enum {
         return if (protocol_with_colon.len == 0)
             return null
         else
-            strings.get(bun.strings.trimSuffixComptime(protocol_with_colon, ":"));
+            strings.get(fun.strings.trimSuffixComptime(protocol_with_colon, ":"));
     }
 
     /// Maximum length of any protocol string in the strings map (computed at compile time).
@@ -568,9 +568,9 @@ pub const UrlProtocolPair = struct {
     fn concatPartsToUrl(allocator: std.mem.Allocator, parts: []const []const u8) ?*jsc.URL {
         // TODO(markovejnovic): There is a sad unnecessary allocation here that I don't know how to
         // get rid of -- in theory, URL.zig could allocate once.
-        const new_str = bun.handleOom(bun.strings.concat(allocator, parts));
+        const new_str = fun.handleOom(fun.strings.concat(allocator, parts));
         defer allocator.free(new_str);
-        return jsc.URL.fromString(bun.String.init(new_str));
+        return jsc.URL.fromString(fun.String.init(new_str));
     }
 };
 
@@ -584,7 +584,7 @@ pub const UrlProtocolPair = struct {
 /// This mirrors the `correctProtocol` function in `hosted-git-info/parse-url.js`.
 fn normalizeProtocol(npa_str: []const u8) UrlProtocolPair {
     var first_colon_idx: i32 = -1;
-    if (bun.strings.indexOfChar(npa_str, ':')) |idx| {
+    if (fun.strings.indexOfChar(npa_str, ':')) |idx| {
         first_colon_idx = @intCast(idx);
     }
 
@@ -594,11 +594,11 @@ fn normalizeProtocol(npa_str: []const u8) UrlProtocolPair {
     if (WellDefinedProtocol.fromStringWithColon(proto_slice)) |url_protocol| {
         // We need to slice off the protocol from the string. Note there are two very annoying
         // cases -- one where the protocol string is foo://bar and one where it is foo:bar.
-        var post_colon = bun.strings.substring(npa_str, @intCast(first_colon_idx + 1), null);
+        var post_colon = fun.strings.substring(npa_str, @intCast(first_colon_idx + 1), null);
 
         return .{
             .url = .{
-                .unmanaged = if (bun.strings.hasPrefixComptime(post_colon, "//"))
+                .unmanaged = if (fun.strings.hasPrefixComptime(post_colon, "//"))
                     post_colon[2..post_colon.len]
                 else
                     post_colon,
@@ -608,7 +608,7 @@ fn normalizeProtocol(npa_str: []const u8) UrlProtocolPair {
     }
 
     // Now we search for the @ character to see if we have a user@host:path GIT+SSH style URL.
-    const first_at_idx = bun.strings.indexOfChar(npa_str, '@');
+    const first_at_idx = fun.strings.indexOfChar(npa_str, '@');
     if (first_at_idx) |at_idx| {
         // We have an @ in the string
         if (first_colon_idx != -1) {
@@ -661,11 +661,11 @@ fn normalizeProtocol(npa_str: []const u8) UrlProtocolPair {
     //
     // Our goal is to be bug-for-bug compatible, at least for now, so this is how I re-implemented
     // it.
-    const maybe_dup_slash_idx = bun.strings.indexOf(npa_str, "//");
+    const maybe_dup_slash_idx = fun.strings.indexOf(npa_str, "//");
     if (maybe_dup_slash_idx) |dup_slash_idx| {
         if (dup_slash_idx == first_colon_idx + 1) {
             return .{
-                .url = .{ .unmanaged = bun.strings.substring(npa_str, dup_slash_idx + 2, null) },
+                .url = .{ .unmanaged = fun.strings.substring(npa_str, dup_slash_idx + 2, null) },
                 .protocol = .{ .custom = npa_str[0..dup_slash_idx] },
             };
         }
@@ -676,7 +676,7 @@ fn normalizeProtocol(npa_str: []const u8) UrlProtocolPair {
     if (first_colon_idx != -1) {
         return .{
             .url = .{
-                .unmanaged = bun.strings.substring(npa_str, @intCast(first_colon_idx + 1), null),
+                .unmanaged = fun.strings.substring(npa_str, @intCast(first_colon_idx + 1), null),
             },
             .protocol = .{ .custom = npa_str[0..@intCast(first_colon_idx + 1)] },
         };
@@ -693,7 +693,7 @@ pub fn correctUrl(
     url_proto_pair: *const UrlProtocolPair,
     allocator: std.mem.Allocator,
 ) error{OutOfMemory}!UrlProtocolPair {
-    const at_idx: isize = if (bun.strings.lastIndexBeforeChar(
+    const at_idx: isize = if (fun.strings.lastIndexBeforeChar(
         url_proto_pair.urlSlice(),
         '@',
         '#',
@@ -702,7 +702,7 @@ pub fn correctUrl(
     else
         -1;
 
-    const col_idx: isize = if (bun.strings.lastIndexBeforeChar(
+    const col_idx: isize = if (fun.strings.lastIndexBeforeChar(
         url_proto_pair.urlSlice(),
         ':',
         '#',
@@ -825,7 +825,7 @@ const HostProvider = enum {
             fn requiresUser(user: ?[]const u8) void {
                 if (user == null) {
                     @panic("Attempted to format a default SSH URL without a user. This is an " ++
-                        "irrecoverable programming bug in Bun. Please report this issue " ++
+                        "irrecoverable programming bug in Fun. Please report this issue " ++
                         "on GitHub.");
                 }
             }
@@ -1074,7 +1074,7 @@ const HostProvider = enum {
                         allocator: std.mem.Allocator,
                     } {
                         if (self._owned_buffer == null) {
-                            @panic("Cannot move an empty Result. This is a bug in Bun. Please " ++
+                            @panic("Cannot move an empty Result. This is a bug in Fun. Please " ++
                                 "report this issue on GitHub.");
                         }
 
@@ -1101,7 +1101,7 @@ const HostProvider = enum {
                 ) error{ OutOfMemory, InvalidURL }!?Result {
                     const pathname_owned = try url.pathname().toOwnedSlice(allocator);
                     defer allocator.free(pathname_owned);
-                    const pathname = bun.strings.trimPrefixComptime(u8, pathname_owned, "/");
+                    const pathname = fun.strings.trimPrefixComptime(u8, pathname_owned, "/");
 
                     var iter = std.mem.splitScalar(u8, pathname, '/');
                     const user_part = iter.next() orelse return null;
@@ -1109,7 +1109,7 @@ const HostProvider = enum {
                     const type_part = iter.next();
                     const committish_part = iter.next();
 
-                    const project = bun.strings.trimSuffixComptime(project_part, ".git");
+                    const project = fun.strings.trimSuffixComptime(project_part, ".git");
 
                     if (user_part.len == 0 or project.len == 0) {
                         return null;
@@ -1137,7 +1137,7 @@ const HostProvider = enum {
                         committish = committish_part;
                     }
 
-                    var sb = bun.StringBuilder{};
+                    var sb = fun.StringBuilder{};
                     sb.count(user_part);
                     sb.count(project);
                     if (committish) |c| sb.count(c);
@@ -1167,7 +1167,7 @@ const HostProvider = enum {
                 ) error{ InvalidURL, OutOfMemory }!?Result {
                     const pathname_owned = try url.pathname().toOwnedSlice(allocator);
                     defer allocator.free(pathname_owned);
-                    const pathname = bun.strings.trimPrefixComptime(u8, pathname_owned, "/");
+                    const pathname = fun.strings.trimPrefixComptime(u8, pathname_owned, "/");
 
                     var iter = std.mem.splitScalar(u8, pathname, '/');
                     const user_part = iter.next() orelse return null;
@@ -1180,7 +1180,7 @@ const HostProvider = enum {
                         }
                     }
 
-                    const project = bun.strings.trimSuffixComptime(project_part, ".git");
+                    const project = fun.strings.trimSuffixComptime(project_part, ".git");
 
                     if (user_part.len == 0 or project.len == 0) {
                         return null;
@@ -1193,7 +1193,7 @@ const HostProvider = enum {
                     const fragment = fragment_utf8.slice();
                     const committish = if (fragment.len > 0) fragment else null;
 
-                    var sb = bun.StringBuilder{};
+                    var sb = fun.StringBuilder{};
                     sb.count(user_part);
                     sb.count(project);
                     if (committish) |c| sb.count(c);
@@ -1223,19 +1223,19 @@ const HostProvider = enum {
                 ) error{ OutOfMemory, InvalidURL }!?Result {
                     const pathname_owned = try url.pathname().toOwnedSlice(allocator);
                     defer allocator.free(pathname_owned);
-                    const pathname = bun.strings.trimPrefixComptime(u8, pathname_owned, "/");
+                    const pathname = fun.strings.trimPrefixComptime(u8, pathname_owned, "/");
 
-                    if (bun.strings.contains(pathname, "/-/") or
-                        bun.strings.contains(pathname, "/archive.tar.gz"))
+                    if (fun.strings.contains(pathname, "/-/") or
+                        fun.strings.contains(pathname, "/archive.tar.gz"))
                     {
                         return null;
                     }
 
-                    const end_slash = bun.strings.lastIndexOfChar(pathname, '/') orelse return null;
+                    const end_slash = fun.strings.lastIndexOfChar(pathname, '/') orelse return null;
                     const project_part = pathname[end_slash + 1 ..];
                     const user_part = pathname[0..end_slash];
 
-                    const project = bun.strings.trimSuffixComptime(project_part, ".git");
+                    const project = fun.strings.trimSuffixComptime(project_part, ".git");
 
                     if (user_part.len == 0 or project.len == 0) {
                         return null;
@@ -1247,7 +1247,7 @@ const HostProvider = enum {
                     defer fragment_utf8.deinit();
                     const committish = fragment_utf8.slice();
 
-                    var sb = bun.StringBuilder{};
+                    var sb = fun.StringBuilder{};
                     sb.count(user_part);
                     sb.count(project);
                     if (committish.len > 0) sb.count(committish);
@@ -1277,7 +1277,7 @@ const HostProvider = enum {
                 ) error{ OutOfMemory, InvalidURL }!?Result {
                     const pathname_owned = try url.pathname().toOwnedSlice(allocator);
                     defer allocator.free(pathname_owned);
-                    const pathname = bun.strings.trimPrefixComptime(u8, pathname_owned, "/");
+                    const pathname = fun.strings.trimPrefixComptime(u8, pathname_owned, "/");
 
                     var iter = std.mem.splitScalar(u8, pathname, '/');
                     var user_part = iter.next() orelse return null;
@@ -1295,7 +1295,7 @@ const HostProvider = enum {
                         user_part = "";
                     }
 
-                    const project = bun.strings.trimSuffixComptime(project_part.?, ".git");
+                    const project = fun.strings.trimSuffixComptime(project_part.?, ".git");
                     const user = if (user_part.len > 0) user_part else null;
 
                     if (project.len == 0) {
@@ -1309,7 +1309,7 @@ const HostProvider = enum {
                     const fragment = fragment_utf8.slice();
                     const committish = if (fragment.len > 0) fragment else null;
 
-                    var sb = bun.StringBuilder{};
+                    var sb = fun.StringBuilder{};
                     if (user) |u| sb.count(u);
                     sb.count(project);
                     if (committish) |c| sb.count(c);
@@ -1344,7 +1344,7 @@ const HostProvider = enum {
                 ) error{ InvalidURL, OutOfMemory }!?Result {
                     const pathname_owned = try url.pathname().toOwnedSlice(allocator);
                     defer allocator.free(pathname_owned);
-                    const pathname = bun.strings.trimPrefixComptime(u8, pathname_owned, "/");
+                    const pathname = fun.strings.trimPrefixComptime(u8, pathname_owned, "/");
 
                     var iter = std.mem.splitScalar(u8, pathname, '/');
                     const user_part = iter.next() orelse return null;
@@ -1357,7 +1357,7 @@ const HostProvider = enum {
                         }
                     }
 
-                    const project = bun.strings.trimSuffixComptime(project_part, ".git");
+                    const project = fun.strings.trimSuffixComptime(project_part, ".git");
 
                     if (user_part.len == 0 or project.len == 0) {
                         return null;
@@ -1370,7 +1370,7 @@ const HostProvider = enum {
                     const fragment = fragment_utf8.slice();
                     const committish = if (fragment.len > 0) fragment else null;
 
-                    var sb = bun.StringBuilder{};
+                    var sb = fun.StringBuilder{};
                     sb.count(user_part);
                     sb.count(project);
                     if (committish) |c| sb.count(c);
@@ -1634,7 +1634,7 @@ const HostProvider = enum {
         var fba = std.heap.FixedBufferAllocator.init(&fba_mem);
         const hostname_utf8 = hostname_str.toUTF8(fba.allocator());
         defer hostname_utf8.deinit();
-        const hostname = bun.strings.withoutPrefixComptime(hostname_utf8.slice(), "www.");
+        const hostname = fun.strings.withoutPrefixComptime(hostname_utf8.slice(), "www.");
 
         return HostProvider.fromDomain(hostname);
     }
@@ -1648,5 +1648,5 @@ pub const TestingAPIs = struct {
 const std = @import("std");
 const PercentEncoding = @import("../url/url.zig").PercentEncoding;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

@@ -11,7 +11,7 @@ pub const FolderResolution = union(Tag) {
         quoted: bool = true,
 
         pub fn format(this: PackageWorkspaceSearchPathFormatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
-            var joined: [bun.MAX_PATH_BYTES + 2]u8 = undefined;
+            var joined: [fun.MAX_PATH_BYTES + 2]u8 = undefined;
             const str_to_use = this.manager.lockfile.workspace_paths.getPtr(
                 @truncate(String.Builder.stringHash(this.manager.lockfile.str(&this.version.value.workspace))),
             ) orelse &this.version.value.workspace;
@@ -23,7 +23,7 @@ pub const FolderResolution = union(Tag) {
             }
 
             if (this.quoted) {
-                const quoted = bun.fmt.QuotedFormatter{
+                const quoted = fun.fmt.QuotedFormatter{
                     .text = paths.rel,
                 };
                 try quoted.format(writer);
@@ -40,7 +40,7 @@ pub const FolderResolution = union(Tag) {
     }
 
     pub fn hash(normalized_path: string) u64 {
-        return bun.hash(normalized_path);
+        return fun.hash(normalized_path);
     }
 
     fn NewResolver(comptime tag: Resolution.Tag) type {
@@ -93,7 +93,7 @@ pub const FolderResolution = union(Tag) {
         abs: stringZ,
         rel: string,
     };
-    fn normalizePackageJSONPath(global_or_relative: GlobalOrRelative, joined: *bun.PathBuffer, non_normalized_path: string) Paths {
+    fn normalizePackageJSONPath(global_or_relative: GlobalOrRelative, joined: *fun.PathBuffer, non_normalized_path: string) Paths {
         var abs: string = "";
         var rel: string = "";
         // We consider it valid if there is a package.json in the folder
@@ -105,9 +105,9 @@ pub const FolderResolution = union(Tag) {
             std.mem.trimRight(u8, normalize(non_normalized_path), std.fs.path.sep_str);
 
         if (strings.startsWithChar(normalized, '.')) {
-            var tempcat: bun.PathBuffer = undefined;
+            var tempcat: fun.PathBuffer = undefined;
 
-            bun.copy(u8, &tempcat, normalized);
+            fun.copy(u8, &tempcat, normalized);
             tempcat[normalized.len..][0.."/package.json".len].* = (std.fs.path.sep_str ++ "package.json").*;
             var parts = [_]string{ FileSystem.instance.top_level_dir, tempcat[0 .. normalized.len + "/package.json".len] };
             abs = FileSystem.instance.absBuf(&parts, joined);
@@ -132,7 +132,7 @@ pub const FolderResolution = union(Tag) {
                 },
                 .relative => {},
             }
-            bun.copy(u8, remain, normalized);
+            fun.copy(u8, remain, normalized);
             remain[normalized.len..][0.."/package.json".len].* = (std.fs.path.sep_str ++ "package.json").*;
             remain = remain[normalized.len + "/package.json".len ..];
             abs = joined[0 .. joined.len - remain.len];
@@ -161,7 +161,7 @@ pub const FolderResolution = union(Tag) {
         var package = Lockfile.Package{};
 
         if (comptime ResolverType == WorkspaceResolver) {
-            const tracer = bun.perf.trace("FolderResolver.readPackageJSONFromDisk.workspace");
+            const tracer = fun.perf.trace("FolderResolver.readPackageJSONFromDisk.workspace");
             defer tracer.end();
 
             const json = try manager.workspace_package_json_cache.getWithPath(manager.allocator, manager.log, abs, .{}).unwrap();
@@ -178,14 +178,14 @@ pub const FolderResolution = union(Tag) {
                 features,
             );
         } else {
-            const tracer = bun.perf.trace("FolderResolver.readPackageJSONFromDisk.folder");
+            const tracer = fun.perf.trace("FolderResolver.readPackageJSONFromDisk.folder");
             defer tracer.end();
 
             const source = &brk: {
-                var file = bun.sys.File.from(try bun.sys.openatA(
-                    bun.FD.cwd(),
+                var file = fun.sys.File.from(try fun.sys.openatA(
+                    fun.FD.cwd(),
                     abs,
-                    bun.O.RDONLY,
+                    fun.O.RDONLY,
                     0,
                 ).unwrap());
                 defer file.close();
@@ -214,12 +214,12 @@ pub const FolderResolution = union(Tag) {
 
         const has_scripts = package.scripts.hasAny() or brk: {
             const dir = std.fs.path.dirname(abs) orelse "";
-            const binding_dot_gyp_path = bun.path.joinAbsStringZ(
+            const binding_dot_gyp_path = fun.path.joinAbsStringZ(
                 dir,
                 &[_]string{"binding.gyp"},
                 .auto,
             );
-            break :brk bun.sys.exists(binding_dot_gyp_path);
+            break :brk fun.sys.exists(binding_dot_gyp_path);
         };
 
         package.meta.setHasInstallScript(has_scripts);
@@ -240,15 +240,15 @@ pub const FolderResolution = union(Tag) {
     };
 
     pub fn getOrPut(global_or_relative: GlobalOrRelative, version: Dependency.Version, non_normalized_path: string, manager: *PackageManager) FolderResolution {
-        var joined: bun.PathBuffer = undefined;
+        var joined: fun.PathBuffer = undefined;
         const paths = normalizePackageJSONPath(global_or_relative, &joined, non_normalized_path);
         const abs = paths.abs;
         const rel = paths.rel;
 
         // replace before getting hash. rel may or may not be contained in abs
-        if (comptime bun.Environment.isWindows) {
-            bun.path.dangerouslyConvertPathToPosixInPlace(u8, @constCast(abs));
-            bun.path.dangerouslyConvertPathToPosixInPlace(u8, @constCast(rel));
+        if (comptime fun.Environment.isWindows) {
+            fun.path.dangerouslyConvertPathToPosixInPlace(u8, @constCast(abs));
+            fun.path.dangerouslyConvertPathToPosixInPlace(u8, @constCast(rel));
         }
         const abs_hash = hash(abs);
 
@@ -257,7 +257,7 @@ pub const FolderResolution = union(Tag) {
 
         const package: Lockfile.Package = switch (global_or_relative) {
             .global => global: {
-                var path: bun.PathBuffer = undefined;
+                var path: fun.PathBuffer = undefined;
                 std.mem.copyForwards(u8, &path, non_normalized_path);
                 var resolver: SymlinkResolver = .{
                     .folder_path = path[0..non_normalized_path.len],
@@ -343,10 +343,10 @@ const Lockfile = @import("../install.zig").Lockfile;
 const PackageID = @import("../install.zig").PackageID;
 const PackageManager = @import("../install.zig").PackageManager;
 
-const bun = @import("bun");
-const JSAst = bun.ast;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const JSAst = fun.ast;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const Semver = bun.Semver;
-const String = bun.Semver.String;
+const Semver = fun.Semver;
+const String = fun.Semver.String;

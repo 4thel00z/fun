@@ -5,14 +5,14 @@
 #if OS(DARWIN)
 
 // Include SDK headers for types only — all calls go through dlsym'd pointers.
-// This keeps `otool -L bun` at its current 4 dylibs.
+// This keeps `otool -L fun` at its current 4 dylibs.
 #include <objc/runtime.h>
 #include <objc/message.h>
 #include <CoreGraphics/CGGeometry.h>
 #include <wtf/text/WTFString.h>
 #include <wtf/text/CString.h>
 
-namespace Bun {
+namespace Fun {
 
 class WebViewHost;
 
@@ -207,7 +207,7 @@ struct NSApplication : Ref {
 struct NSWindow : Ref {
     using Ref::Ref;
     static Class cls;
-    // BunHostWindow — runtime-registered subclass. Overrides:
+    // FunHostWindow — runtime-registered subclass. Overrides:
     //   noResponderFor:  no-op (NSResponder's default beeps on unhandled
     //                    keyDown — press("Escape") without preventDefault)
     //   isVisible        YES (TestWebKitAPI/OffscreenWindow.mm does the
@@ -354,7 +354,7 @@ struct NSProcessInfo : Ref {
         // Leak the assertion — process-lifetime. The return is autoreleased;
         // retain so ARPool pop doesn't release and end the activity.
         id assertion = info.msg<id>(s_beginActivityWithOptions_reason, opts,
-            NSString::fromWTF("Bun WebView host"_s).m_id);
+            NSString::fromWTF("Fun WebView host"_s).m_id);
         Ref(assertion).msg<id>(s_retain);
     }
 };
@@ -766,6 +766,6 @@ private:
     bool load();
 };
 
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(DARWIN)

@@ -6,7 +6,7 @@ class JSVMClientData;
 
 #include <JavaScriptCore/DeferredWorkTimer.h>
 
-namespace Bun {
+namespace Fun {
 
 class JSCTaskScheduler {
 public:

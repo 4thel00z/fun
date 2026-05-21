@@ -19,7 +19,7 @@ pub const JSFunction = opaque {
 
     extern fn JSFunction__createFromZig(
         global: *JSGlobalObject,
-        fn_name: bun.String,
+        fn_name: fun.String,
         implementation: *const JSHostFn,
         arg_count: u32,
         implementation_visibility: ImplementationVisibility,
@@ -37,8 +37,8 @@ pub const JSFunction = opaque {
         return JSFunction__createFromZig(
             global,
             switch (@TypeOf(fn_name)) {
-                bun.String => fn_name,
-                else => bun.String.init(fn_name),
+                fun.String => fn_name,
+                else => fun.String.init(fn_name),
             },
             switch (@TypeOf(implementation)) {
                 jsc.JSHostFnZig => jsc.toJSHostFn(implementation),
@@ -59,16 +59,16 @@ pub const JSFunction = opaque {
 
     extern fn JSC__JSFunction__getSourceCode(value: JSValue, out: *ZigString) bool;
 
-    pub fn getSourceCode(value: JSValue) ?bun.String {
+    pub fn getSourceCode(value: JSValue) ?fun.String {
         var str: ZigString = undefined;
-        return if (JSC__JSFunction__getSourceCode(value, &str)) bun.String.init(str) else null;
+        return if (JSC__JSFunction__getSourceCode(value, &str)) fun.String.init(str) else null;
     }
 };
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSHostFn = jsc.JSHostFn;
 const JSValue = jsc.JSValue;

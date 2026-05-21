@@ -7,8 +7,8 @@
 /// type Diff = { operation: DiffType, text: string };
 /// declare function myersDiff(actual: string, expected: string): Diff[];
 /// ```
-pub fn myersDiff(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    var stack_fallback = std.heap.stackFallback(1024 * 2, bun.default_allocator);
+pub fn myersDiff(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    var stack_fallback = std.heap.stackFallback(1024 * 2, fun.default_allocator);
     var arena = std.heap.ArenaAllocator.init(stack_fallback.get());
     defer arena.deinit();
     const allocator = arena.allocator();
@@ -30,13 +30,13 @@ pub fn myersDiff(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
     if (!actual_arg.isString()) return global.throwInvalidArgumentTypeValue("actual", "string", actual_arg);
     if (!expected_arg.isString()) return global.throwInvalidArgumentTypeValue("expected", "string", expected_arg);
 
-    const actual_str = try actual_arg.toBunString(global);
+    const actual_str = try actual_arg.toFunString(global);
     defer actual_str.deref();
-    const expected_str = try expected_arg.toBunString(global);
+    const expected_str = try expected_arg.toFunString(global);
     defer expected_str.deref();
 
-    bun.assertWithLocation(actual_str.tag != .Dead, @src());
-    bun.assertWithLocation(expected_str.tag != .Dead, @src());
+    fun.assertWithLocation(actual_str.tag != .Dead, @src());
+    fun.assertWithLocation(expected_str.tag != .Dead, @src());
 
     return assert.myersDiff(
         allocator,
@@ -49,14 +49,14 @@ pub fn myersDiff(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
 }
 
 const StrDiffList = DiffList([]const u8);
-fn diffListToJS(global: *jsc.JSGlobalObject, diff_list: StrDiffList) bun.JSError!jsc.JSValue {
+fn diffListToJS(global: *jsc.JSGlobalObject, diff_list: StrDiffList) fun.JSError!jsc.JSValue {
     // todo: replace with toJS
     var array = try jsc.JSValue.createEmptyArray(global, diff_list.items.len);
     for (diff_list.items, 0..) |*line, i| {
         var obj = jsc.JSValue.createEmptyObjectWithNullPrototype(global);
         if (obj == .zero) return global.throwOutOfMemory();
-        obj.put(global, bun.String.static("kind"), jsc.JSValue.jsNumber(@as(u32, @intFromEnum(line.kind))));
-        obj.put(global, bun.String.static("value"), .fromAny(global, []const u8, line.value));
+        obj.put(global, fun.String.static("kind"), jsc.JSValue.jsNumber(@as(u32, @intFromEnum(line.kind))));
+        obj.put(global, fun.String.static("value"), .fromAny(global, []const u8, line.value));
         array.putIndex(global, @truncate(i), obj);
     }
     return array;
@@ -69,7 +69,7 @@ pub fn generate(global: *jsc.JSGlobalObject) jsc.JSValue {
 
     exports.put(
         global,
-        bun.String.static("myersDiff"),
+        fun.String.static("myersDiff"),
         jsc.JSFunction.create(global, "myersDiff", myersDiff, 2, .{}),
     );
 
@@ -77,9 +77,9 @@ pub fn generate(global: *jsc.JSGlobalObject) jsc.JSValue {
 }
 
 const assert = @import("./node_assert.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const DiffList = @import("./assert/myers_diff.zig").DiffList;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

@@ -1,7 +1,7 @@
 pub const Symlinker = struct {
-    dest: bun.Path(.{ .sep = .auto }),
-    target: bun.RelPath(.{ .sep = .auto }),
-    fallback_junction_target: bun.AbsPath(.{ .sep = .auto }),
+    dest: fun.Path(.{ .sep = .auto }),
+    target: fun.RelPath(.{ .sep = .auto }),
+    fallback_junction_target: fun.AbsPath(.{ .sep = .auto }),
 
     pub fn symlink(this: *const @This()) sys.Maybe(void) {
         if (comptime Environment.isWindows) {
@@ -59,8 +59,8 @@ pub const Symlinker = struct {
                 };
             },
             .expect_existing => {
-                const current_link_buf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(current_link_buf);
+                const current_link_buf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(current_link_buf);
                 var current_link: []const u8 = switch (sys.readlink(this.dest.sliceZ(), current_link_buf)) {
                     .result => |res| res,
                     .err => |readlink_err| return switch (readlink_err.getErrno()) {
@@ -80,7 +80,7 @@ pub const Symlinker = struct {
                         },
                         // readlink failed for a reason other than NOENT —
                         // dest exists but isn't a symlink. If it's a real
-                        // directory, leave it: this is the `bun patch <pkg>`
+                        // directory, leave it: this is the `fun patch <pkg>`
                         // workspace (a detached copy the user is editing
                         // before `--commit`), and `deleteTree` here would
                         // silently destroy their in-progress edits. If it's
@@ -136,8 +136,8 @@ pub const Symlinker = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const strings = bun.strings;
-const sys = bun.sys;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const strings = fun.strings;
+const sys = fun.sys;

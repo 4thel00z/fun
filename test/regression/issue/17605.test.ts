@@ -1,5 +1,5 @@
-import { write } from "bun";
-import { expect, test } from "bun:test";
+import { write } from "fun";
+import { expect, test } from "fun:test";
 import { tmpdirSync } from "harness";
 import { join } from "path";
 

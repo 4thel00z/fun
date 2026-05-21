@@ -110,24 +110,24 @@ pub fn deinitFromInterpreter(this: *Script) void {
     this.io.deinit();
     // Let the interpreter deinitialize the shell state
     // this.base.shell.deinitImpl(false, false);
-    bun.default_allocator.destroy(this);
+    fun.default_allocator.destroy(this);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Expansion = bun.shell.Interpreter.Expansion;
-const IO = bun.shell.Interpreter.IO;
+const Interpreter = fun.shell.Interpreter;
+const Expansion = fun.shell.Interpreter.Expansion;
+const IO = fun.shell.Interpreter.IO;
 const InterpreterChildPtr = Interpreter.InterpreterChildPtr;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
-const Subshell = bun.shell.Interpreter.Subshell;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
+const Subshell = fun.shell.Interpreter.Subshell;
 
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

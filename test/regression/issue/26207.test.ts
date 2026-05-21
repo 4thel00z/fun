@@ -1,12 +1,12 @@
-// https://github.com/oven-sh/bun/issues/26207
-// bun run --filter and --workspaces should fall back to bun's node symlink
+// https://github.com/underdoc-org/fun/issues/26207
+// fun run --filter and --workspaces should fall back to fun's node symlink
 // when NODE env var points to a non-existent path
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { chmodSync } from "fs";
-import { bunEnv, bunExe, isWindows, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isWindows, tempDirWithFiles } from "harness";
 
-test("bun run --workspaces creates node symlink when NODE env points to non-existent path", async () => {
+test("fun run --workspaces creates node symlink when NODE env points to non-existent path", async () => {
   const dir = tempDirWithFiles("workspaces-node-fallback", {
     "package.json": JSON.stringify({
       name: "root",
@@ -22,13 +22,13 @@ test("bun run --workspaces creates node symlink when NODE env points to non-exis
 
   // Set NODE to a non-existent path and remove system node from PATH
   const env = {
-    ...bunEnv,
+    ...funEnv,
     NODE: "/nonexistent/path/to/node",
     PATH: "/usr/bin", // PATH without node
   };
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "run", "--workspaces", "test"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "run", "--workspaces", "test"],
     env,
     cwd: dir,
     stdout: "pipe",
@@ -37,12 +37,12 @@ test("bun run --workspaces creates node symlink when NODE env points to non-exis
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  // Should succeed because bun creates a symlink to its own node
+  // Should succeed because fun creates a symlink to its own node
   expect(stdout).toContain("node works");
   expect(exitCode).toBe(0);
 });
 
-test("bun run --filter creates node symlink when NODE env points to non-existent path", async () => {
+test("fun run --filter creates node symlink when NODE env points to non-existent path", async () => {
   const dir = tempDirWithFiles("filter-node-fallback", {
     "package.json": JSON.stringify({
       name: "root",
@@ -58,13 +58,13 @@ test("bun run --filter creates node symlink when NODE env points to non-existent
 
   // Set NODE to a non-existent path and remove system node from PATH
   const env = {
-    ...bunEnv,
+    ...funEnv,
     NODE: "/nonexistent/path/to/node",
     PATH: "/usr/bin", // PATH without node
   };
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "run", "--filter", "*", "test"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "run", "--filter", "*", "test"],
     env,
     cwd: dir,
     stdout: "pipe",
@@ -73,13 +73,13 @@ test("bun run --filter creates node symlink when NODE env points to non-existent
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  // Should succeed because bun creates a symlink to its own node
+  // Should succeed because fun creates a symlink to its own node
   expect(stdout).toContain("node works from filter");
   expect(exitCode).toBe(0);
 });
 
 // Skip on Windows: shebang scripts (#!/usr/bin/env node) are Unix-specific
-test.skipIf(isWindows)("bun run --workspaces runs scripts that have #!/usr/bin/env node shebang", async () => {
+test.skipIf(isWindows)("fun run --workspaces runs scripts that have #!/usr/bin/env node shebang", async () => {
   const dir = tempDirWithFiles("workspaces-shebang", {
     "package.json": JSON.stringify({
       name: "root",
@@ -99,16 +99,16 @@ test.skipIf(isWindows)("bun run --workspaces runs scripts that have #!/usr/bin/e
   chmodSync(`${dir}/packages/a/build.js`, 0o755);
 
   // Remove system node from PATH, and clear NODE/npm_node_execpath to avoid
-  // interfering with bun's node symlink creation
+  // interfering with fun's node symlink creation
   const env = {
-    ...bunEnv,
+    ...funEnv,
     NODE: undefined,
     npm_node_execpath: undefined,
     PATH: "/usr/bin", // PATH without node
   };
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "run", "--workspaces", "build"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "run", "--workspaces", "build"],
     env,
     cwd: dir,
     stdout: "pipe",
@@ -117,7 +117,7 @@ test.skipIf(isWindows)("bun run --workspaces runs scripts that have #!/usr/bin/e
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  // Should succeed because bun creates a symlink to its own node
+  // Should succeed because fun creates a symlink to its own node
   expect(stdout).toContain("build script ran");
   expect(exitCode).toBe(0);
 });

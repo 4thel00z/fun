@@ -2,15 +2,15 @@ pub const SQLDataCell = @import("../shared/SQLDataCell.zig").SQLDataCell;
 
 fn parseBytea(hex: []const u8) !SQLDataCell {
     const len = hex.len / 2;
-    const buf = try bun.default_allocator.alloc(u8, len);
-    errdefer bun.default_allocator.free(buf);
+    const buf = try fun.default_allocator.alloc(u8, len);
+    errdefer fun.default_allocator.free(buf);
 
     return SQLDataCell{
         .tag = .bytea,
         .value = .{
             .bytea = .{
                 @intFromPtr(buf.ptr),
-                try bun.strings.decodeHexToBytes(buf, u8, hex),
+                try fun.strings.decodeHexToBytes(buf, u8, hex),
             },
         },
         .free_value = 1,
@@ -83,7 +83,7 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
         for (array.items) |*cell| {
             cell.deinit();
         }
-        if (array.capacity > 0) array.deinit(bun.default_allocator);
+        if (array.capacity > 0) array.deinit(fun.default_allocator);
     }
     var slice = bytes[1..];
     var reached_end = false;
@@ -107,7 +107,7 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                 var sub_array_offset: usize = 0;
                 var sub_array = try parseArray(slice, bigint, arrayType, globalObject, &sub_array_offset, is_json_sub_array);
                 errdefer sub_array.deinit();
-                try array.append(bun.default_allocator, sub_array);
+                try array.append(fun.default_allocator, sub_array);
                 slice = trySlice(slice, sub_array_offset);
                 continue;
             },
@@ -130,9 +130,9 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                     .bytea_array => {
                         // this is a bytea array so we need to parse the bytea strings
                         const bytea_bytes = slice[1..current_idx];
-                        if (bun.strings.startsWith(bytea_bytes, "\\\\x")) {
+                        if (fun.strings.startsWith(bytea_bytes, "\\\\x")) {
                             // its a bytea string lets parse it as a bytea
-                            try array.append(bun.default_allocator, try parseBytea(bytea_bytes[3..][0 .. bytea_bytes.len - 3]));
+                            try array.append(fun.default_allocator, try parseBytea(bytea_bytes[3..][0 .. bytea_bytes.len - 3]));
                             slice = trySlice(slice, current_idx + 1);
                             continue;
                         }
@@ -144,9 +144,9 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                     .date_array,
                     => {
                         const date_str = slice[1..current_idx];
-                        var str = bun.String.init(date_str);
+                        var str = fun.String.init(date_str);
                         defer str.deref();
-                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = try str.parseDate(globalObject) } });
+                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = try str.parseDate(globalObject) } });
 
                         slice = trySlice(slice, current_idx + 1);
                         continue;
@@ -156,10 +156,10 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                     => {
                         const str_bytes = slice[1..current_idx];
                         const needs_dynamic_buffer = str_bytes.len > stack_buffer.len;
-                        const buffer = if (needs_dynamic_buffer) try bun.default_allocator.alloc(u8, str_bytes.len) else stack_buffer[0..str_bytes.len];
-                        defer if (needs_dynamic_buffer) bun.default_allocator.free(buffer);
+                        const buffer = if (needs_dynamic_buffer) try fun.default_allocator.alloc(u8, str_bytes.len) else stack_buffer[0..str_bytes.len];
+                        defer if (needs_dynamic_buffer) fun.default_allocator.free(buffer);
                         const unescaped = unescapePostgresString(str_bytes, buffer) catch return error.InvalidByteSequence;
-                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .json, .value = .{ .json = if (unescaped.len > 0) String.cloneUTF8(unescaped).value.WTFStringImpl else null }, .free_value = 1 });
+                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .json, .value = .{ .json = if (unescaped.len > 0) String.cloneUTF8(unescaped).value.WTFStringImpl else null }, .free_value = 1 });
                         slice = trySlice(slice, current_idx + 1);
                         continue;
                     },
@@ -168,15 +168,15 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                 const str_bytes = slice[1..current_idx];
                 if (str_bytes.len == 0) {
                     // empty string
-                    try array.append(bun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = null }, .free_value = 1 });
+                    try array.append(fun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = null }, .free_value = 1 });
                     slice = trySlice(slice, current_idx + 1);
                     continue;
                 }
                 const needs_dynamic_buffer = str_bytes.len > stack_buffer.len;
-                const buffer = if (needs_dynamic_buffer) try bun.default_allocator.alloc(u8, str_bytes.len) else stack_buffer[0..str_bytes.len];
-                defer if (needs_dynamic_buffer) bun.default_allocator.free(buffer);
+                const buffer = if (needs_dynamic_buffer) try fun.default_allocator.alloc(u8, str_bytes.len) else stack_buffer[0..str_bytes.len];
+                defer if (needs_dynamic_buffer) fun.default_allocator.free(buffer);
                 const string_bytes = unescapePostgresString(str_bytes, buffer) catch return error.InvalidByteSequence;
-                try array.append(bun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = if (string_bytes.len > 0) String.cloneUTF8(string_bytes).value.WTFStringImpl else null }, .free_value = 1 });
+                try array.append(fun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = if (string_bytes.len > 0) String.cloneUTF8(string_bytes).value.WTFStringImpl else null }, .free_value = 1 });
 
                 slice = trySlice(slice, current_idx + 1);
                 continue;
@@ -220,7 +220,7 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                     .pg_database_array,
                     .pg_database_array2,
                     => {
-                        // this is also a string until we reach "," or "}" but a single word string like Bun
+                        // this is also a string until we reach "," or "}" but a single word string like Fun
                         var current_idx: usize = 0;
 
                         for (slice, 0..slice.len) |byte, index| {
@@ -235,21 +235,21 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                         if (current_idx == 0) return error.UnsupportedArrayFormat;
                         const element = slice[0..current_idx];
                         // lets handle NULL case here, if is a string "NULL" it will have quotes, if its a NULL it will be just NULL
-                        if (bun.strings.eqlComptime(element, "NULL")) {
-                            try array.append(bun.default_allocator, SQLDataCell{ .tag = .null, .value = .{ .null = 0 } });
+                        if (fun.strings.eqlComptime(element, "NULL")) {
+                            try array.append(fun.default_allocator, SQLDataCell{ .tag = .null, .value = .{ .null = 0 } });
                             slice = trySlice(slice, current_idx);
                             continue;
                         }
                         if (arrayType == .date_array) {
-                            var str = bun.String.init(element);
+                            var str = fun.String.init(element);
                             defer str.deref();
-                            try array.append(bun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = try str.parseDate(globalObject) } });
+                            try array.append(fun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = try str.parseDate(globalObject) } });
                         } else {
                             // the only escape sequency possible here is \b
-                            if (bun.strings.eqlComptime(element, "\\b")) {
-                                try array.append(bun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = bun.String.cloneUTF8("\x08").value.WTFStringImpl }, .free_value = 1 });
+                            if (fun.strings.eqlComptime(element, "\\b")) {
+                                try array.append(fun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = fun.String.cloneUTF8("\x08").value.WTFStringImpl }, .free_value = 1 });
                             } else {
-                                try array.append(bun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = if (element.len > 0) bun.String.cloneUTF8(element).value.WTFStringImpl else null }, .free_value = 1 });
+                                try array.append(fun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = if (element.len > 0) fun.String.cloneUTF8(element).value.WTFStringImpl else null }, .free_value = 1 });
                             }
                         }
                         slice = trySlice(slice, current_idx);
@@ -262,14 +262,14 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                                 // null or nan
                                 if (slice.len < 3) return error.UnsupportedArrayFormat;
                                 if (slice.len >= 4) {
-                                    if (bun.strings.eqlComptime(slice[0..4], "NULL")) {
-                                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .null, .value = .{ .null = 0 } });
+                                    if (fun.strings.eqlComptime(slice[0..4], "NULL")) {
+                                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .null, .value = .{ .null = 0 } });
                                         slice = trySlice(slice, 4);
                                         continue;
                                     }
                                 }
-                                if (bun.strings.eqlComptime(slice[0..3], "NaN")) {
-                                    try array.append(bun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = std.math.nan(f64) } });
+                                if (fun.strings.eqlComptime(slice[0..3], "NaN")) {
+                                    try array.append(fun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = std.math.nan(f64) } });
                                     slice = trySlice(slice, 3);
                                     continue;
                                 }
@@ -279,13 +279,13 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                                 // false
                                 if (arrayType == .json_array or arrayType == .jsonb_array) {
                                     if (slice.len < 5) return error.UnsupportedArrayFormat;
-                                    if (bun.strings.eqlComptime(slice[0..5], "false")) {
-                                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 0 } });
+                                    if (fun.strings.eqlComptime(slice[0..5], "false")) {
+                                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 0 } });
                                         slice = trySlice(slice, 5);
                                         continue;
                                     }
                                 } else {
-                                    try array.append(bun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 0 } });
+                                    try array.append(fun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 0 } });
                                     slice = trySlice(slice, 1);
                                     continue;
                                 }
@@ -294,13 +294,13 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                                 // true
                                 if (arrayType == .json_array or arrayType == .jsonb_array) {
                                     if (slice.len < 4) return error.UnsupportedArrayFormat;
-                                    if (bun.strings.eqlComptime(slice[0..4], "true")) {
-                                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 1 } });
+                                    if (fun.strings.eqlComptime(slice[0..4], "true")) {
+                                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 1 } });
                                         slice = trySlice(slice, 4);
                                         continue;
                                     }
                                 } else {
-                                    try array.append(bun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 1 } });
+                                    try array.append(fun.default_allocator, SQLDataCell{ .tag = .bool, .value = .{ .bool = 1 } });
                                     slice = trySlice(slice, 1);
                                     continue;
                                 }
@@ -311,11 +311,11 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                                 // infinity
                                 if (slice.len < 8) return error.UnsupportedArrayFormat;
 
-                                if (bun.strings.eqlCaseInsensitiveASCII(slice[0..8], "Infinity", false)) {
+                                if (fun.strings.eqlCaseInsensitiveASCII(slice[0..8], "Infinity", false)) {
                                     if (arrayType == .date_array or arrayType == .timestamp_array or arrayType == .timestamptz_array) {
-                                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = std.math.inf(f64) } });
+                                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = std.math.inf(f64) } });
                                     } else {
-                                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = std.math.inf(f64) } });
+                                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = std.math.inf(f64) } });
                                     }
                                     slice = trySlice(slice, 8);
                                     continue;
@@ -377,11 +377,11 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                                             is_infinity = true;
                                             const element = if (is_negative) slice[1..] else slice;
                                             if (element.len < 8) return error.UnsupportedArrayFormat;
-                                            if (bun.strings.eqlCaseInsensitiveASCII(element[0..8], "Infinity", false)) {
+                                            if (fun.strings.eqlCaseInsensitiveASCII(element[0..8], "Infinity", false)) {
                                                 if (arrayType == .date_array or arrayType == .timestamp_array or arrayType == .timestamptz_array) {
-                                                    try array.append(bun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = if (is_negative) -std.math.inf(f64) else std.math.inf(f64) } });
+                                                    try array.append(fun.default_allocator, SQLDataCell{ .tag = .date, .value = .{ .date = if (is_negative) -std.math.inf(f64) else std.math.inf(f64) } });
                                                 } else {
-                                                    try array.append(bun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = if (is_negative) -std.math.inf(f64) else std.math.inf(f64) } });
+                                                    try array.append(fun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = if (is_negative) -std.math.inf(f64) else std.math.inf(f64) } });
                                                 }
                                                 slice = trySlice(slice, 8 + @as(usize, @intFromBool(is_negative)));
                                                 break;
@@ -400,29 +400,29 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                                 if (current_idx == 0) return error.UnsupportedArrayFormat;
                                 const element = slice[0..current_idx];
                                 if (is_float or arrayType == .float8_array) {
-                                    try array.append(bun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = bun.parseDouble(element) catch std.math.nan(f64) } });
+                                    try array.append(fun.default_allocator, SQLDataCell{ .tag = .float8, .value = .{ .float8 = fun.parseDouble(element) catch std.math.nan(f64) } });
                                     slice = trySlice(slice, current_idx);
                                     continue;
                                 }
                                 switch (arrayType) {
                                     .int8_array => {
                                         if (bigint) {
-                                            try array.append(bun.default_allocator, SQLDataCell{ .tag = .int8, .value = .{ .int8 = std.fmt.parseInt(i64, element, 0) catch return error.UnsupportedArrayFormat } });
+                                            try array.append(fun.default_allocator, SQLDataCell{ .tag = .int8, .value = .{ .int8 = std.fmt.parseInt(i64, element, 0) catch return error.UnsupportedArrayFormat } });
                                         } else {
-                                            try array.append(bun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = if (element.len > 0) bun.String.cloneUTF8(element).value.WTFStringImpl else null }, .free_value = 1 });
+                                            try array.append(fun.default_allocator, SQLDataCell{ .tag = .string, .value = .{ .string = if (element.len > 0) fun.String.cloneUTF8(element).value.WTFStringImpl else null }, .free_value = 1 });
                                         }
                                         slice = trySlice(slice, current_idx);
                                         continue;
                                     },
                                     .cid_array, .xid_array, .oid_array => {
-                                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .uint4, .value = .{ .uint4 = std.fmt.parseInt(u32, element, 0) catch 0 } });
+                                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .uint4, .value = .{ .uint4 = std.fmt.parseInt(u32, element, 0) catch 0 } });
                                         slice = trySlice(slice, current_idx);
                                         continue;
                                     },
                                     else => {
                                         const value = std.fmt.parseInt(i32, element, 0) catch return error.UnsupportedArrayFormat;
 
-                                        try array.append(bun.default_allocator, SQLDataCell{ .tag = .int4, .value = .{ .int4 = @intCast(value) } });
+                                        try array.append(fun.default_allocator, SQLDataCell{ .tag = .int4, .value = .{ .int4 = @intCast(value) } });
                                         slice = trySlice(slice, current_idx);
                                         continue;
                                     },
@@ -434,7 +434,7 @@ fn parseArray(bytes: []const u8, bigint: bool, comptime arrayType: types.Tag, gl
                                         var sub_array_offset: usize = 0;
                                         var sub_array = try parseArray(slice, bigint, arrayType, globalObject, &sub_array_offset, true);
                                         errdefer sub_array.deinit();
-                                        try array.append(bun.default_allocator, sub_array);
+                                        try array.append(fun.default_allocator, sub_array);
                                         slice = trySlice(slice, sub_array_offset);
                                         continue;
                                     }
@@ -561,14 +561,14 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
                 // .int8 is a 64-bit integer always string
                 return SQLDataCell{ .tag = .int8, .value = .{ .int8 = std.fmt.parseInt(i64, bytes, 0) catch 0 } };
             } else {
-                return SQLDataCell{ .tag = .string, .value = .{ .string = if (bytes.len > 0) bun.String.cloneUTF8(bytes).value.WTFStringImpl else null }, .free_value = 1 };
+                return SQLDataCell{ .tag = .string, .value = .{ .string = if (bytes.len > 0) fun.String.cloneUTF8(bytes).value.WTFStringImpl else null }, .free_value = 1 };
             }
         },
         .float8 => {
             if (binary and bytes.len == 8) {
                 return SQLDataCell{ .tag = .float8, .value = .{ .float8 = try parseBinary(.float8, f64, bytes) } };
             } else {
-                const float8: f64 = bun.parseDouble(bytes) catch std.math.nan(f64);
+                const float8: f64 = fun.parseDouble(bytes) catch std.math.nan(f64);
                 return SQLDataCell{ .tag = .float8, .value = .{ .float8 = float8 } };
             }
         },
@@ -576,14 +576,14 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
             if (binary and bytes.len == 4) {
                 return SQLDataCell{ .tag = .float8, .value = .{ .float8 = try parseBinary(.float4, f32, bytes) } };
             } else {
-                const float4: f64 = bun.parseDouble(bytes) catch std.math.nan(f64);
+                const float4: f64 = fun.parseDouble(bytes) catch std.math.nan(f64);
                 return SQLDataCell{ .tag = .float8, .value = .{ .float8 = float4 } };
             }
         },
         .numeric => {
             if (binary) {
                 // this is probrably good enough for most cases
-                var stack_buffer = std.heap.stackFallback(1024, bun.default_allocator);
+                var stack_buffer = std.heap.stackFallback(1024, fun.default_allocator);
                 const allocator = stack_buffer.get();
                 var numeric_buffer = std.array_list.Managed(u8).fromOwnedSlice(allocator, &stack_buffer.buffer);
                 numeric_buffer.items.len = 0;
@@ -591,7 +591,7 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
 
                 // if is binary format lets display as a string because JS cant handle it in a safe way
                 const result = parseBinaryNumeric(bytes, &numeric_buffer) catch return error.UnsupportedNumericFormat;
-                return SQLDataCell{ .tag = .string, .value = .{ .string = bun.String.cloneUTF8(result.slice()).value.WTFStringImpl }, .free_value = 1 };
+                return SQLDataCell{ .tag = .string, .value = .{ .string = fun.String.cloneUTF8(result.slice()).value.WTFStringImpl }, .free_value = 1 };
             } else {
                 // nice text is actually what we want here
                 return SQLDataCell{ .tag = .string, .value = .{ .string = if (bytes.len > 0) String.cloneUTF8(bytes).value.WTFStringImpl else null }, .free_value = 1 };
@@ -618,10 +618,10 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
                     else => unreachable,
                 }
             } else {
-                if (bun.strings.eqlCaseInsensitiveASCII(bytes, "NULL", true)) {
+                if (fun.strings.eqlCaseInsensitiveASCII(bytes, "NULL", true)) {
                     return SQLDataCell{ .tag = .null, .value = .{ .null = 0 } };
                 }
-                var str = bun.String.init(bytes);
+                var str = fun.String.init(bytes);
                 defer str.deref();
                 return SQLDataCell{ .tag = .date, .value = .{ .date = try str.parseDate(globalObject) } };
             }
@@ -639,7 +639,7 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
                     var buffer: [32]u8 = undefined;
                     const len = Postgres__formatTime(microseconds, &buffer, buffer.len);
 
-                    return SQLDataCell{ .tag = .string, .value = .{ .string = bun.String.cloneUTF8(buffer[0..len]).value.WTFStringImpl }, .free_value = 1 };
+                    return SQLDataCell{ .tag = .string, .value = .{ .string = fun.String.cloneUTF8(buffer[0..len]).value.WTFStringImpl }, .free_value = 1 };
                 } else if (tag == .timetz and bytes.len == 12) {
                     // PostgreSQL sends timetz as microseconds since midnight (8 bytes) + timezone offset in seconds (4 bytes)
                     const microseconds = @byteSwap(@as(i64, @bitCast(bytes[0..8].*)));
@@ -649,13 +649,13 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
                     var buffer: [48]u8 = undefined;
                     const len = Postgres__formatTimeTz(microseconds, tz_offset_seconds, &buffer, buffer.len);
 
-                    return SQLDataCell{ .tag = .string, .value = .{ .string = bun.String.cloneUTF8(buffer[0..len]).value.WTFStringImpl }, .free_value = 1 };
+                    return SQLDataCell{ .tag = .string, .value = .{ .string = fun.String.cloneUTF8(buffer[0..len]).value.WTFStringImpl }, .free_value = 1 };
                 } else {
                     return error.InvalidBinaryData;
                 }
             } else {
                 // Text format - just return as string
-                return SQLDataCell{ .tag = .string, .value = .{ .string = if (bytes.len > 0) bun.String.cloneUTF8(bytes).value.WTFStringImpl else null }, .free_value = 1 };
+                return SQLDataCell{ .tag = .string, .value = .{ .string = if (bytes.len > 0) fun.String.cloneUTF8(bytes).value.WTFStringImpl else null }, .free_value = 1 };
             }
         },
 
@@ -663,7 +663,7 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
             if (binary) {
                 return SQLDataCell{ .tag = .bytea, .value = .{ .bytea = .{ @intFromPtr(bytes.ptr), bytes.len } } };
             } else {
-                if (bun.strings.hasPrefixComptime(bytes, "\\x")) {
+                if (fun.strings.hasPrefixComptime(bytes, "\\x")) {
                     return try parseBytea(bytes[2..]);
                 }
                 return error.UnsupportedByteaFormat;
@@ -722,7 +722,7 @@ pub fn fromBytes(binary: bool, bigint: bool, oid: types.Tag, bytes: []const u8, 
             return try parseArray(bytes, bigint, tag, globalObject, null, false);
         },
         else => {
-            return SQLDataCell{ .tag = .string, .value = .{ .string = if (bytes.len > 0) bun.String.cloneUTF8(bytes).value.WTFStringImpl else null }, .free_value = 1 };
+            return SQLDataCell{ .tag = .string, .value = .{ .string = if (bytes.len > 0) fun.String.cloneUTF8(bytes).value.WTFStringImpl else null }, .free_value = 1 };
         },
     }
 }
@@ -1010,13 +1010,13 @@ pub const Putter = struct {
     }
 };
 
-const debug = bun.Output.scoped(.Postgres, .visible);
+const debug = fun.Output.scoped(.Postgres, .visible);
 
 // External C++ formatting functions
 extern fn Postgres__formatTime(microseconds: i64, buffer: [*]u8, bufferSize: usize) usize;
 extern fn Postgres__formatTimeTz(microseconds: i64, tzOffsetSeconds: i32, buffer: [*]u8, bufferSize: usize) usize;
 
-const log = bun.Output.scoped(.PostgresDataCell, .visible);
+const log = fun.Output.scoped(.PostgresDataCell, .visible);
 
 const PostgresCachedStructure = @import("../shared/CachedStructure.zig");
 const protocol = @import("../../sql/postgres/PostgresProtocol.zig");
@@ -1029,8 +1029,8 @@ const AnyPostgresError = types.AnyPostgresError;
 const int4 = types.int4;
 const short = types.short;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/29242
+// https://github.com/underdoc-org/fun/issues/29242
 //
 // The parser handles string-literal names in `export { ... } from 'mod'`
 // clauses, but when transpiling without bundling the printer dropped the
@@ -8,8 +8,8 @@
 //   export { "a b c" } from './b.mjs';   // input
 //   export { a b c } from './b.mjs';     // old output — SyntaxError
 //   export { "a b c" } from './b.mjs';   // fixed output
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test.concurrent("re-export with string literal local name (export { 'a b c' } from 'mod')", async () => {
   using dir = tempDir("issue-29242-bare", {
@@ -18,9 +18,9 @@ test.concurrent("re-export with string literal local name (export { 'a b c' } fr
     "main.mjs": `import { "a b c" as a } from './a.mjs';\nconsole.log(a);`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.mjs"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.mjs"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -38,9 +38,9 @@ test.concurrent("re-export aliasing from string literal to identifier", async ()
     "main.mjs": `import { a } from './a.mjs';\nconsole.log(a);`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.mjs"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.mjs"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -58,9 +58,9 @@ test.concurrent("re-export aliasing string literal to string literal", async () 
     "main.mjs": `import { "x y z" as a } from './a.mjs';\nconsole.log(a);`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.mjs"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.mjs"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -83,9 +83,9 @@ test.concurrent.each([
     "input.ts": source,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "input.ts", "--target=bun", "--no-bundle"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "input.ts", "--target=fun", "--no-bundle"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -109,9 +109,9 @@ test.concurrent("transpiler preserves string literal names under --minify-identi
     "input.ts": [`export { "a b c" as aliased } from './mod';`, `export { foo as bar } from './mod';`].join("\n"),
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "input.ts", "--target=bun", "--no-bundle", "--minify-identifiers"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "input.ts", "--target=fun", "--no-bundle", "--minify-identifiers"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

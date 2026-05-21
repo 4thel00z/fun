@@ -14,7 +14,7 @@
 #include "NodeValidator.h"
 #include "KeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSCipher::s_info = { "Cipher"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSCipher) };
 
@@ -235,4 +235,4 @@ JSC_DEFINE_HOST_FUNCTION(jsPrivateDecrypt, (JSC::JSGlobalObject * globalObject, 
     return JSValue::encode(rsaFunction(globalObject, callFrame, KeyType::Private, CipherOperation::decrypt, RSA_PKCS1_OAEP_PADDING));
 }
 
-} // namespace Bun
+} // namespace Fun

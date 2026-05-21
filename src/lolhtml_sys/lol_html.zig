@@ -10,13 +10,13 @@ pub const SourceLocationBytes = extern struct {
 };
 
 inline fn auto_disable() void {
-    if (comptime bun.FeatureFlags.disable_lolhtml)
+    if (comptime fun.FeatureFlags.disable_lolhtml)
         unreachable;
 }
 
 /// rust panics if the pointer itself is zero, even if the passed length is zero
 /// to work around that, we use a static null-terminated pointer
-/// https://github.com/oven-sh/bun/issues/2323
+/// https://github.com/underdoc-org/fun/issues/2323
 fn ptrWithoutPanic(buf: []const u8) [*]const u8 {
     const null_terminated_ptr = struct {
         // we must use a static pointer so the lifetime of this pointer is long enough
@@ -600,13 +600,13 @@ pub const HTMLString = extern struct {
         lol_html_str_free(.{ .ptr = @as([*]const u8, @ptrCast(ptr)), .len = len });
     }
 
-    pub fn toString(this: HTMLString) bun.String {
+    pub fn toString(this: HTMLString) fun.String {
         const bytes = this.slice();
-        if (bytes.len > 0 and bun.strings.isAllASCII(bytes)) {
-            return bun.String.createExternal([*]u8, bytes, true, @constCast(bytes.ptr), &deinit_external);
+        if (bytes.len > 0 and fun.strings.isAllASCII(bytes)) {
+            return fun.String.createExternal([*]u8, bytes, true, @constCast(bytes.ptr), &deinit_external);
         }
         defer this.deinit();
-        return bun.String.cloneUTF8(bytes);
+        return fun.String.cloneUTF8(bytes);
     }
 
     pub const toJS = @import("../runtime/api/lolhtml_jsc.zig").htmlStringToJS;
@@ -863,5 +863,5 @@ pub const Encoding = enum {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

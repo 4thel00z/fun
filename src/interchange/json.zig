@@ -4,7 +4,7 @@ const LEXER_DEBUGGER_WORKAROUND = false;
 
 const HashMapPool = struct {
     const HashMap = std.HashMap(u64, void, IdentityContext, 80);
-    const LinkedList = bun.deprecated.SinglyLinkedList(HashMap);
+    const LinkedList = fun.deprecated.SinglyLinkedList(HashMap);
     threadlocal var list: LinkedList = undefined;
     threadlocal var loaded: bool = false;
 
@@ -52,9 +52,9 @@ fn newExpr(t: anytype, loc: logger.Loc) Expr {
         if (comptime Type == E.Object) {
             for (t.properties.slice()) |prop| {
                 // json should never have an initializer set
-                bun.assert(prop.initializer == null);
-                bun.assert(prop.key != null);
-                bun.assert(prop.value != null);
+                fun.assert(prop.initializer == null);
+                fun.assert(prop.key != null);
+                fun.assert(prop.value != null);
             }
         }
     }
@@ -103,7 +103,7 @@ fn JSONLikeParser_(
         log: *logger.Log,
         allocator: std.mem.Allocator,
         list_allocator: std.mem.Allocator,
-        stack_check: bun.StackCheck,
+        stack_check: fun.StackCheck,
 
         pub fn init(allocator: std.mem.Allocator, source_: *const logger.Source, log: *logger.Log) !Parser {
             return initWithListAllocator(allocator, allocator, source_, log);
@@ -118,7 +118,7 @@ fn JSONLikeParser_(
                 .allocator = allocator,
                 .log = log,
                 .list_allocator = list_allocator,
-                .stack_check = bun.StackCheck.init(),
+                .stack_check = fun.StackCheck.init(),
             };
         }
 
@@ -130,7 +130,7 @@ fn JSONLikeParser_(
 
         pub fn parseExpr(p: *Parser, comptime maybe_auto_quote: bool, comptime force_utf8: bool) anyerror!Expr {
             if (!p.stack_check.isSafeToRecurse()) {
-                try bun.throwStackOverflow();
+                try fun.throwStackOverflow();
             }
 
             const loc = p.lexer.loc();
@@ -324,7 +324,7 @@ pub const PackageJSONVersionChecker = struct {
     log: *logger.Log,
     allocator: std.mem.Allocator,
     depth: usize = 0,
-    stack_check: bun.StackCheck,
+    stack_check: fun.StackCheck,
 
     found_version_buf: [1024]u8 = undefined,
     found_name_buf: [1024]u8 = undefined,
@@ -350,7 +350,7 @@ pub const PackageJSONVersionChecker = struct {
             .allocator = allocator,
             .log = log,
             .source = source,
-            .stack_check = bun.StackCheck.init(),
+            .stack_check = fun.StackCheck.init(),
         };
     }
 
@@ -358,7 +358,7 @@ pub const PackageJSONVersionChecker = struct {
 
     pub fn parseExpr(p: *Parser) anyerror!Expr {
         if (!p.stack_check.isSafeToRecurse()) {
-            try bun.throwStackOverflow();
+            try fun.throwStackOverflow();
         }
 
         const loc = p.lexer.loc();
@@ -450,7 +450,7 @@ pub const PackageJSONVersionChecker = struct {
                                     p.found_name_buf.len,
                                 );
 
-                                bun.copy(u8, &p.found_name_buf, value.data.e_string.data[0..len]);
+                                fun.copy(u8, &p.found_name_buf, value.data.e_string.data[0..len]);
                                 p.found_name = p.found_name_buf[0..len];
                                 p.has_found_name = true;
                                 p.name_loc = value.loc;
@@ -459,7 +459,7 @@ pub const PackageJSONVersionChecker = struct {
                                     value.data.e_string.data.len,
                                     p.found_version_buf.len,
                                 );
-                                bun.copy(u8, &p.found_version_buf, value.data.e_string.data[0..len]);
+                                fun.copy(u8, &p.found_version_buf, value.data.e_string.data[0..len]);
                                 p.found_version = p.found_version_buf[0..len];
                                 p.has_found_version = true;
                             }
@@ -601,7 +601,7 @@ pub fn toAST(
 
             return toAST(allocator, string, @as(string, @tagName(value)));
         },
-        .error_set => return try toAST(allocator, []const u8, bun.asByteSlice(@errorName(value))),
+        .error_set => return try toAST(allocator, []const u8, fun.asByteSlice(@errorName(value))),
         .@"union" => |Union| {
             const info = Union;
             if (info.tag_type) |UnionTagType| {
@@ -736,7 +736,7 @@ pub fn parsePackageJSONUTF8(
         .allow_comments = true,
         .allow_trailing_commas = true,
     }).init(allocator, source, log);
-    bun.assert(parser.source().contents.len > 0);
+    fun.assert(parser.source().contents.len > 0);
 
     return try parser.parseExpr(false, true);
 }
@@ -775,7 +775,7 @@ pub fn parsePackageJSONUTF8WithOpts(
     }
 
     var parser = try JSONLikeParser(opts).init(allocator, source, log);
-    bun.assert(parser.source().contents.len > 0);
+    fun.assert(parser.source().contents.len > 0);
 
     const root = try parser.parseExpr(false, true);
 
@@ -825,7 +825,7 @@ pub fn parseUTF8Impl(
     }
 
     var parser = try JSONParser.init(allocator, source, log);
-    bun.assert(parser.source().contents.len > 0);
+    fun.assert(parser.source().contents.len > 0);
 
     const result = try parser.parseExpr(false, true);
     if (comptime check_len) {
@@ -982,7 +982,7 @@ fn expectPrintedJSON(_contents: string, expected: string) !void {
         Stmt.Data.Store.reset();
     }
     var contents = default_allocator.alloc(u8, _contents.len + 1) catch unreachable;
-    bun.copy(u8, contents, _contents);
+    fun.copy(u8, contents, _contents);
     contents[contents.len - 1] = ';';
     var log = logger.Log.init(default_allocator);
     defer log.msgs.deinit();
@@ -1022,23 +1022,23 @@ const string = []const u8;
 const std = @import("std");
 const expect = std.testing.expect;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const js_printer = bun.js_printer;
-const logger = bun.logger;
-const strings = bun.strings;
-const BabyList = bun.collections.BabyList;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const js_printer = fun.js_printer;
+const logger = fun.logger;
+const strings = fun.strings;
+const BabyList = fun.collections.BabyList;
 const Indentation = js_printer.Options.Indentation;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const ExprNodeList = js_ast.ExprNodeList;
 const G = js_ast.G;
 const Stmt = js_ast.Stmt;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;

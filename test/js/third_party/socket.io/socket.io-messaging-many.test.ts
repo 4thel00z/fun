@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { Server } from "socket.io";
 import { createClient, createPartialDone, fail, success, waitFor } from "./support/util";
 

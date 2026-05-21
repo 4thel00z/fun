@@ -2,7 +2,7 @@
 'use strict';
 
 const common = require('../common');
-const { sleep } = typeof Bun === "object" ? { sleep: Bun.sleepSync } : require('internal/util');
+const { sleep } = typeof Fun === "object" ? { sleep: Fun.sleepSync } : require('internal/util');
 
 // This test verifies that the next tick queue runs after each
 // individual Timeout, as well as each individual Immediate.

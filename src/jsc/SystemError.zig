@@ -20,8 +20,8 @@ pub const SystemError = extern struct {
     extern fn SystemError__toErrorInstance(this: *const SystemError, global: *JSGlobalObject) JSValue;
     extern fn SystemError__toErrorInstanceWithInfoObject(this: *const SystemError, global: *jsc.JSGlobalObject) JSValue;
 
-    pub fn getErrno(this: *const SystemError) bun.sys.E {
-        // The inverse in bun.sys.Error.toSystemError()
+    pub fn getErrno(this: *const SystemError) fun.sys.E {
+        // The inverse in fun.sys.Error.toSystemError()
         return @enumFromInt(this.errno * -1);
     }
 
@@ -85,9 +85,9 @@ pub const SystemError = extern struct {
     pub fn format(self: SystemError, writer: *std.Io.Writer) !void {
         if (!self.path.isEmpty()) {
             // TODO: remove this hardcoding
-            switch (bun.Output.enable_ansi_colors_stderr) {
+            switch (fun.Output.enable_ansi_colors_stderr) {
                 inline else => |enable_colors| try writer.print(
-                    comptime bun.Output.prettyFmt(
+                    comptime fun.Output.prettyFmt(
                         "<r><red>{f}<r><d>:<r> <b>{f}<r>: {f} <d>({f}())<r>",
                         enable_colors,
                     ),
@@ -101,9 +101,9 @@ pub const SystemError = extern struct {
             }
         } else
         // TODO: remove this hardcoding
-        switch (bun.Output.enable_ansi_colors_stderr) {
+        switch (fun.Output.enable_ansi_colors_stderr) {
             inline else => |enable_colors| try writer.print(
-                comptime bun.Output.prettyFmt(
+                comptime fun.Output.prettyFmt(
                     "<r><red>{f}<r><d>:<r> {f} <d>({f}())<r>",
                     enable_colors,
                 ),
@@ -119,9 +119,9 @@ pub const SystemError = extern struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

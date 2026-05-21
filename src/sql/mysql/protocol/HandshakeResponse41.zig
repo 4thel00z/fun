@@ -7,7 +7,7 @@ username: Data,
 auth_response: Data,
 database: Data,
 auth_plugin_name: Data,
-connect_attrs: bun.StringHashMapUnmanaged([]const u8) = .{},
+connect_attrs: fun.StringHashMapUnmanaged([]const u8) = .{},
 sequence_id: u8,
 
 pub fn deinit(this: *HandshakeResponse41) void {
@@ -18,10 +18,10 @@ pub fn deinit(this: *HandshakeResponse41) void {
 
     var it = this.connect_attrs.iterator();
     while (it.next()) |entry| {
-        bun.default_allocator.free(entry.key_ptr.*);
-        bun.default_allocator.free(entry.value_ptr.*);
+        fun.default_allocator.free(entry.key_ptr.*);
+        fun.default_allocator.free(entry.value_ptr.*);
     }
-    this.connect_attrs.deinit(bun.default_allocator);
+    this.connect_attrs.deinit(fun.default_allocator);
 }
 
 pub fn writeInternal(this: *HandshakeResponse41, comptime Context: type, writer: NewWriter(Context)) !void {
@@ -89,7 +89,7 @@ pub fn writeInternal(this: *HandshakeResponse41, comptime Context: type, writer:
 
     if (this.capability_flags.CLIENT_ZSTD_COMPRESSION_ALGORITHM) {
         // try writer.writeInt(u8, this.zstd_compression_algorithm);
-        bun.assertf(false, "zstd compression algorithm is not supported", .{});
+        fun.assertf(false, "zstd compression algorithm is not supported", .{});
     }
 
     try packet.end();
@@ -97,10 +97,10 @@ pub fn writeInternal(this: *HandshakeResponse41, comptime Context: type, writer:
 
 pub const write = writeWrap(HandshakeResponse41, writeInternal).write;
 
-const debug = bun.Output.scoped(.MySQLConnection, .hidden);
+const debug = fun.Output.scoped(.MySQLConnection, .hidden);
 
 const Capabilities = @import("../Capabilities.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const CharacterSet = @import("./CharacterSet.zig").CharacterSet;
 const Data = @import("../../shared/Data.zig").Data;
 const encodeLengthInt = @import("./EncodeInt.zig").encodeLengthInt;

@@ -12,31 +12,31 @@ pub fn isEnabled() bool {
         .no => false,
         .unknown => {
             enabled = detect: {
-                if (bun.env_var.DO_NOT_TRACK.get()) {
+                if (fun.env_var.DO_NOT_TRACK.get()) {
                     break :detect .no;
                 }
-                if (bun.env_var.HYPERFINE_RANDOMIZED_ENVIRONMENT_OFFSET.get() != null) {
+                if (fun.env_var.HYPERFINE_RANDOMIZED_ENVIRONMENT_OFFSET.get() != null) {
                     break :detect .no;
                 }
                 break :detect .yes;
             };
-            bun.assert(enabled == .yes or enabled == .no);
+            fun.assert(enabled == .yes or enabled == .no);
             return enabled == .yes;
         },
     };
 }
 
-/// This answers, "What parts of bun are people actually using?"
+/// This answers, "What parts of fun are people actually using?"
 pub const Features = struct {
-    pub var builtin_modules = std.enums.EnumSet(bun.jsc.ModuleLoader.HardcodedModule).initEmpty();
+    pub var builtin_modules = std.enums.EnumSet(fun.jsc.ModuleLoader.HardcodedModule).initEmpty();
 
-    pub var @"Bun.stderr": usize = 0;
-    pub var @"Bun.stdin": usize = 0;
-    pub var @"Bun.stdout": usize = 0;
+    pub var @"Fun.stderr": usize = 0;
+    pub var @"Fun.stdin": usize = 0;
+    pub var @"Fun.stdout": usize = 0;
     pub var WebSocket: usize = 0;
     pub var abort_signal: usize = 0;
     pub var binlinks: usize = 0;
-    pub var bunfig: usize = 0;
+    pub var funfig: usize = 0;
     pub var define: usize = 0;
     pub var dotenv: usize = 0;
     pub var debugger: usize = 0;
@@ -45,9 +45,9 @@ pub const Features = struct {
     pub var fetch: usize = 0;
     pub var git_dependencies: usize = 0;
     pub var html_rewriter: usize = 0;
-    /// TCP server from `Bun.listen`
+    /// TCP server from `Fun.listen`
     pub var tcp_server: usize = 0;
-    /// TLS server from `Bun.listen`
+    /// TLS server from `Fun.listen`
     pub var tls_server: usize = 0;
     pub var http_server: usize = 0;
     pub var https_server: usize = 0;
@@ -60,8 +60,8 @@ pub const Features = struct {
     pub var loaders: usize = 0;
     pub var lockfile_migration_from_package_lock: usize = 0;
     pub var text_lockfile: usize = 0;
-    pub var isolated_bun_install: usize = 0;
-    pub var hoisted_bun_install: usize = 0;
+    pub var isolated_fun_install: usize = 0;
+    pub var hoisted_fun_install: usize = 0;
     pub var macros: usize = 0;
     pub var no_avx2: usize = 0;
     pub var no_avx: usize = 0;
@@ -95,11 +95,11 @@ pub const Features = struct {
     pub var webview_webkit: usize = 0;
 
     comptime {
-        @export(&napi_module_register, .{ .name = "Bun__napi_module_register_count" });
-        @export(&process_dlopen, .{ .name = "Bun__process_dlopen_count" });
-        @export(&heap_snapshot, .{ .name = "Bun__Feature__heap_snapshot" });
-        @export(&webview_chrome, .{ .name = "Bun__Feature__webview_chrome" });
-        @export(&webview_webkit, .{ .name = "Bun__Feature__webview_webkit" });
+        @export(&napi_module_register, .{ .name = "Fun__napi_module_register_count" });
+        @export(&process_dlopen, .{ .name = "Fun__process_dlopen_count" });
+        @export(&heap_snapshot, .{ .name = "Fun__Feature__heap_snapshot" });
+        @export(&webview_chrome, .{ .name = "Fun__Feature__webview_chrome" });
+        @export(&webview_webkit, .{ .name = "Fun__Feature__webview_webkit" });
     }
 
     pub fn formatter() Formatter {
@@ -257,7 +257,7 @@ pub const GenerateHeader = struct {
             // That is less useful than "kern.osproductversion", which is the macOS version
             if (std.c.sysctlbyname("kern.osproductversion", &osversion_name, &len, null, 0) == -1) return platform;
 
-            platform.version = bun.sliceTo(&osversion_name, 0);
+            platform.version = fun.sliceTo(&osversion_name, 0);
             return platform;
         }
 
@@ -272,7 +272,7 @@ pub const GenerateHeader = struct {
                 } else if (comptime Environment.isLinux) {
                     platform_ = forLinux();
 
-                    const release = bun.sliceTo(&linux_os_name.release, 0);
+                    const release = fun.sliceTo(&linux_os_name.release, 0);
                     const sliced_string = Semver.SlicedString.init(release, release);
                     const result = Semver.Version.parse(sliced_string);
                     linux_kernel_version = result.version.min();
@@ -300,7 +300,7 @@ pub const GenerateHeader = struct {
             const version = Semver.Version.parseUTF8(forOS().version);
             use_msgx_on_macos_14_or_later = version.valid and version.version.max().major >= 14;
         }
-        pub export fn Bun__doesMacOSVersionSupportSendRecvMsgX() i32 {
+        pub export fn Fun__doesMacOSVersionSupportSendRecvMsgX() i32 {
             if (comptime !Environment.isMac) {
                 // this should not be used on non-mac platforms.
                 return 0;
@@ -319,7 +319,7 @@ pub const GenerateHeader = struct {
             return linux_kernel_version;
         }
 
-        export fn Bun__isEpollPwait2SupportedOnLinuxKernel() i32 {
+        export fn Fun__isEpollPwait2SupportedOnLinuxKernel() i32 {
             if (comptime !Environment.isLinux) {
                 return 0;
             }
@@ -344,7 +344,7 @@ pub const GenerateHeader = struct {
             _ = std.c.uname(&linux_os_name);
 
             // Confusingly, the "release" tends to contain the kernel version much more frequently than the "version" field.
-            const release = bun.sliceTo(&linux_os_name.release, 0);
+            const release = fun.sliceTo(&linux_os_name.release, 0);
 
             if (comptime Environment.isAndroid) {
                 return analytics.Platform{ .os = analytics.OperatingSystem.android, .version = release, .arch = platform_arch };
@@ -359,13 +359,13 @@ pub const GenerateHeader = struct {
         }
 
         // Zig std's `std.c.utsname` has no FreeBSD branch; use translate-c's.
-        var freebsd_os_name: if (Environment.isFreeBSD) bun.c.struct_utsname else void = undefined;
+        var freebsd_os_name: if (Environment.isFreeBSD) fun.c.struct_utsname else void = undefined;
         fn forFreeBSD() analytics.Platform {
             freebsd_os_name = std.mem.zeroes(@TypeOf(freebsd_os_name));
-            _ = bun.c.uname(&freebsd_os_name);
+            _ = fun.c.uname(&freebsd_os_name);
             return analytics.Platform{
                 .os = analytics.OperatingSystem.freebsd,
-                .version = bun.sliceTo(&freebsd_os_name.release, 0),
+                .version = fun.sliceTo(&freebsd_os_name.release, 0),
                 .arch = platform_arch,
             };
         }
@@ -375,6 +375,6 @@ pub const GenerateHeader = struct {
 const std = @import("std");
 const analytics = @import("./schema.zig").analytics;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Semver = bun.Semver;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Semver = fun.Semver;

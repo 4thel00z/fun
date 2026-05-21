@@ -1,18 +1,18 @@
 const JSCScheduler = @This();
 
 pub const JSCDeferredWorkTask = opaque {
-    extern fn Bun__runDeferredWork(task: *JSCScheduler.JSCDeferredWorkTask) void;
-    pub fn run(task: *JSCScheduler.JSCDeferredWorkTask) bun.JSTerminated!void {
-        const globalThis = bun.jsc.VirtualMachine.get().global;
-        var scope: bun.jsc.ExceptionValidationScope = undefined;
+    extern fn Fun__runDeferredWork(task: *JSCScheduler.JSCDeferredWorkTask) void;
+    pub fn run(task: *JSCScheduler.JSCDeferredWorkTask) fun.JSTerminated!void {
+        const globalThis = fun.jsc.VirtualMachine.get().global;
+        var scope: fun.jsc.ExceptionValidationScope = undefined;
         scope.init(globalThis, @src());
         defer scope.deinit();
-        Bun__runDeferredWork(task);
+        Fun__runDeferredWork(task);
         try scope.assertNoExceptionExceptTermination();
     }
 };
 
-export fn Bun__eventLoop__incrementRefConcurrently(jsc_vm: *VirtualMachine, delta: c_int) void {
+export fn Fun__eventLoop__incrementRefConcurrently(jsc_vm: *VirtualMachine, delta: c_int) void {
     jsc.markBinding(@src());
 
     if (delta > 0) {
@@ -22,7 +22,7 @@ export fn Bun__eventLoop__incrementRefConcurrently(jsc_vm: *VirtualMachine, delt
     }
 }
 
-export fn Bun__queueJSCDeferredWorkTaskConcurrently(jsc_vm: *VirtualMachine, task: *JSCScheduler.JSCDeferredWorkTask) void {
+export fn Fun__queueJSCDeferredWorkTaskConcurrently(jsc_vm: *VirtualMachine, task: *JSCScheduler.JSCDeferredWorkTask) void {
     jsc.markBinding(@src());
     var loop = jsc_vm.eventLoop();
     loop.enqueueTaskConcurrent(ConcurrentTask.new(.{
@@ -31,20 +31,20 @@ export fn Bun__queueJSCDeferredWorkTaskConcurrently(jsc_vm: *VirtualMachine, tas
     }));
 }
 
-export fn Bun__tickWhilePaused(paused: *bool) void {
+export fn Fun__tickWhilePaused(paused: *bool) void {
     jsc.markBinding(@src());
     VirtualMachine.get().eventLoop().tickWhilePaused(paused);
 }
 
 comptime {
-    _ = Bun__eventLoop__incrementRefConcurrently;
-    _ = Bun__queueJSCDeferredWorkTaskConcurrently;
-    _ = Bun__tickWhilePaused;
+    _ = Fun__eventLoop__incrementRefConcurrently;
+    _ = Fun__queueJSCDeferredWorkTaskConcurrently;
+    _ = Fun__tickWhilePaused;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ConcurrentTask = jsc.ConcurrentTask;
 const Task = jsc.Task;
 const VirtualMachine = jsc.VirtualMachine;

@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
-// https://github.com/oven-sh/bun/issues/26411
+// https://github.com/underdoc-org/fun/issues/26411
 // Tab completion with node:readline/promises threw
 // "TypeError: this._refreshLine is not a function"
 test("tab completion works with node:readline/promises", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
 import readline from "node:readline/promises";
@@ -27,7 +27,7 @@ setTimeout(() => {
 rl.write("", { name: "tab" });
 `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

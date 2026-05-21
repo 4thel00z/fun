@@ -1,11 +1,11 @@
 import assert from "assert";
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_ts_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/
+// For debug, all files are written to $TEMP/fun-bundle-tests/
 
 describe("bundler", () => {
   itBundled("ts/DeclareConst", {
@@ -1297,18 +1297,18 @@ describe("bundler", () => {
           static bar(x = this) { return [x, this]; }
         }
 
-        assert.deepEqual(foo('bun'), ['bun', undefined]);
+        assert.deepEqual(foo('fun'), ['fun', undefined]);
         assert.deepEqual(foo.call('this'), ['this', 'this']);
-        assert.deepEqual(foo.call('this', 'bun'), ['bun', 'this']);
-        assert.deepEqual(objFoo.foo('bun'), ['bun', objFoo]);
+        assert.deepEqual(foo.call('this', 'fun'), ['fun', 'this']);
+        assert.deepEqual(objFoo.foo('fun'), ['fun', objFoo]);
         assert.deepEqual(objFoo.foo(), [objFoo, objFoo]);
         const fooInstance = new Foo();
         assert(fooInstance.x === fooInstance, 'Foo#x');
         assert(Foo.y === 456, 'Foo.y');
-        assert.deepEqual(Foo.bar('bun'), ['bun', Foo]);
+        assert.deepEqual(Foo.bar('fun'), ['fun', Foo]);
         assert.deepEqual(Foo.bar(), [Foo, Foo]);
         assert.deepEqual(fooInstance.foo(), [fooInstance, fooInstance]);
-        assert.deepEqual(fooInstance.foo('bun'), ['bun', fooInstance]);
+        assert.deepEqual(fooInstance.foo('fun'), ['fun', fooInstance]);
 
         if (nested) {
           function bar(x = this) { return [x, this]; }
@@ -1323,18 +1323,18 @@ describe("bundler", () => {
             static bar(x = this) { return [x, this]; }
           }
 
-          assert.deepEqual(bar('bun'), ['bun', undefined]);
+          assert.deepEqual(bar('fun'), ['fun', undefined]);
           assert.deepEqual(bar.call('this'), ['this', 'this']);
-          assert.deepEqual(bar.call('this', 'bun'), ['bun', 'this']);
-          assert.deepEqual(objBar.foo('bun'), ['bun', objBar]);
+          assert.deepEqual(bar.call('this', 'fun'), ['fun', 'this']);
+          assert.deepEqual(objBar.foo('fun'), ['fun', objBar]);
           assert.deepEqual(objBar.foo(), [objBar, objBar]);
           const barInstance = new Bar();
           assert(barInstance.x === barInstance, 'Bar#x');
           assert(Bar.y === 456, 'Bar.y');
-          assert.deepEqual(Bar.bar('bun'), ['bun', Bar]);
+          assert.deepEqual(Bar.bar('fun'), ['fun', Bar]);
           assert.deepEqual(Bar.bar(), [Bar, Bar]);
           assert.deepEqual(barInstance.foo(), [barInstance, barInstance]);
-          assert.deepEqual(barInstance.foo('bun'), ['bun', barInstance]);
+          assert.deepEqual(barInstance.foo('fun'), ['fun', barInstance]);
         }
       `,
     },
@@ -1364,18 +1364,18 @@ describe("bundler", () => {
           static bar(x = this) { return [x, this]; }
         }
 
-        assert.deepEqual(foo('bun'), ['bun', undefined]);
+        assert.deepEqual(foo('fun'), ['fun', undefined]);
         assert.deepEqual(foo.call('this'), ['this', 'this']);
-        assert.deepEqual(foo.call('this', 'bun'), ['bun', 'this']);
-        assert.deepEqual(objFoo.foo('bun'), ['bun', objFoo]);
+        assert.deepEqual(foo.call('this', 'fun'), ['fun', 'this']);
+        assert.deepEqual(objFoo.foo('fun'), ['fun', objFoo]);
         assert.deepEqual(objFoo.foo(), [objFoo, objFoo]);
         const fooInstance = new Foo();
         assert(fooInstance.x === fooInstance, 'Foo#x');
         assert(Foo.y === 456, 'Foo.y');
-        assert.deepEqual(Foo.bar('bun'), ['bun', Foo]);
+        assert.deepEqual(Foo.bar('fun'), ['fun', Foo]);
         assert.deepEqual(Foo.bar(), [Foo, Foo]);
         assert.deepEqual(fooInstance.foo(), [fooInstance, fooInstance]);
-        assert.deepEqual(fooInstance.foo('bun'), ['bun', fooInstance]);
+        assert.deepEqual(fooInstance.foo('fun'), ['fun', fooInstance]);
 
         if (nested) {
           function bar(x = this) { return [x, this]; }
@@ -1390,18 +1390,18 @@ describe("bundler", () => {
             static bar(x = this) { return [x, this]; }
           }
 
-          assert.deepEqual(bar('bun'), ['bun', undefined]);
+          assert.deepEqual(bar('fun'), ['fun', undefined]);
           assert.deepEqual(bar.call('this'), ['this', 'this']);
-          assert.deepEqual(bar.call('this', 'bun'), ['bun', 'this']);
-          assert.deepEqual(objBar.foo('bun'), ['bun', objBar]);
+          assert.deepEqual(bar.call('this', 'fun'), ['fun', 'this']);
+          assert.deepEqual(objBar.foo('fun'), ['fun', objBar]);
           assert.deepEqual(objBar.foo(), [objBar, objBar]);
           const barInstance = new Bar();
           assert(barInstance.x === barInstance, 'Bar#x');
           assert(Bar.y === 456, 'Bar.y');
-          assert.deepEqual(Bar.bar('bun'), ['bun', Bar]);
+          assert.deepEqual(Bar.bar('fun'), ['fun', Bar]);
           assert.deepEqual(Bar.bar(), [Bar, Bar]);
           assert.deepEqual(barInstance.foo(), [barInstance, barInstance]);
-          assert.deepEqual(barInstance.foo('bun'), ['bun', barInstance]);
+          assert.deepEqual(barInstance.foo('fun'), ['fun', barInstance]);
         }
       `,
     },
@@ -1432,18 +1432,18 @@ describe("bundler", () => {
           static bar(x = this) { return [x, this]; }
         }
 
-        assert.deepEqual(foo('bun'), ['bun', undefined]);
+        assert.deepEqual(foo('fun'), ['fun', undefined]);
         assert.deepEqual(foo.call('this'), ['this', 'this']);
-        assert.deepEqual(foo.call('this', 'bun'), ['bun', 'this']);
-        assert.deepEqual(objFoo.foo('bun'), ['bun', objFoo]);
+        assert.deepEqual(foo.call('this', 'fun'), ['fun', 'this']);
+        assert.deepEqual(objFoo.foo('fun'), ['fun', objFoo]);
         assert.deepEqual(objFoo.foo(), [objFoo, objFoo]);
         const fooInstance = new Foo();
         assert(fooInstance.x === fooInstance, 'Foo#x');
         assert(Foo.y === 456, 'Foo.y');
-        assert.deepEqual(Foo.bar('bun'), ['bun', Foo]);
+        assert.deepEqual(Foo.bar('fun'), ['fun', Foo]);
         assert.deepEqual(Foo.bar(), [Foo, Foo]);
         assert.deepEqual(fooInstance.foo(), [fooInstance, fooInstance]);
-        assert.deepEqual(fooInstance.foo('bun'), ['bun', fooInstance]);
+        assert.deepEqual(fooInstance.foo('fun'), ['fun', fooInstance]);
 
         if (nested) {
           function bar(x = this) { return [x, this]; }
@@ -1458,18 +1458,18 @@ describe("bundler", () => {
             static bar(x = this) { return [x, this]; }
           }
 
-          assert.deepEqual(bar('bun'), ['bun', undefined]);
+          assert.deepEqual(bar('fun'), ['fun', undefined]);
           assert.deepEqual(bar.call('this'), ['this', 'this']);
-          assert.deepEqual(bar.call('this', 'bun'), ['bun', 'this']);
-          assert.deepEqual(objBar.foo('bun'), ['bun', objBar]);
+          assert.deepEqual(bar.call('this', 'fun'), ['fun', 'this']);
+          assert.deepEqual(objBar.foo('fun'), ['fun', objBar]);
           assert.deepEqual(objBar.foo(), [objBar, objBar]);
           const barInstance = new Bar();
           assert(barInstance.x === barInstance, 'Bar#x');
           assert(Bar.y === 456, 'Bar.y');
-          assert.deepEqual(Bar.bar('bun'), ['bun', Bar]);
+          assert.deepEqual(Bar.bar('fun'), ['fun', Bar]);
           assert.deepEqual(Bar.bar(), [Bar, Bar]);
           assert.deepEqual(barInstance.foo(), [barInstance, barInstance]);
-          assert.deepEqual(barInstance.foo('bun'), ['bun', barInstance]);
+          assert.deepEqual(barInstance.foo('fun'), ['fun', barInstance]);
         }
       `,
     },
@@ -1500,18 +1500,18 @@ describe("bundler", () => {
           static bar(x = this) { return [x, this]; }
         }
 
-        assert.deepEqual(foo('bun'), ['bun', undefined]);
+        assert.deepEqual(foo('fun'), ['fun', undefined]);
         assert.deepEqual(foo.call('this'), ['this', 'this']);
-        assert.deepEqual(foo.call('this', 'bun'), ['bun', 'this']);
-        assert.deepEqual(objFoo.foo('bun'), ['bun', objFoo]);
+        assert.deepEqual(foo.call('this', 'fun'), ['fun', 'this']);
+        assert.deepEqual(objFoo.foo('fun'), ['fun', objFoo]);
         assert.deepEqual(objFoo.foo(), [objFoo, objFoo]);
         const fooInstance = new Foo();
         assert(fooInstance.x === fooInstance, 'Foo#x');
         assert(Foo.y === 456, 'Foo.y');
-        assert.deepEqual(Foo.bar('bun'), ['bun', Foo]);
+        assert.deepEqual(Foo.bar('fun'), ['fun', Foo]);
         assert.deepEqual(Foo.bar(), [Foo, Foo]);
         assert.deepEqual(fooInstance.foo(), [fooInstance, fooInstance]);
-        assert.deepEqual(fooInstance.foo('bun'), ['bun', fooInstance]);
+        assert.deepEqual(fooInstance.foo('fun'), ['fun', fooInstance]);
 
         if (nested) {
           function bar(x = this) { return [x, this]; }
@@ -1526,18 +1526,18 @@ describe("bundler", () => {
             static bar(x = this) { return [x, this]; }
           }
 
-          assert.deepEqual(bar('bun'), ['bun', undefined]);
+          assert.deepEqual(bar('fun'), ['fun', undefined]);
           assert.deepEqual(bar.call('this'), ['this', 'this']);
-          assert.deepEqual(bar.call('this', 'bun'), ['bun', 'this']);
-          assert.deepEqual(objBar.foo('bun'), ['bun', objBar]);
+          assert.deepEqual(bar.call('this', 'fun'), ['fun', 'this']);
+          assert.deepEqual(objBar.foo('fun'), ['fun', objBar]);
           assert.deepEqual(objBar.foo(), [objBar, objBar]);
           const barInstance = new Bar();
           assert(barInstance.x === barInstance, 'Bar#x');
           assert(Bar.y === 456, 'Bar.y');
-          assert.deepEqual(Bar.bar('bun'), ['bun', Bar]);
+          assert.deepEqual(Bar.bar('fun'), ['fun', Bar]);
           assert.deepEqual(Bar.bar(), [Bar, Bar]);
           assert.deepEqual(barInstance.foo(), [barInstance, barInstance]);
-          assert.deepEqual(barInstance.foo('bun'), ['bun', barInstance]);
+          assert.deepEqual(barInstance.foo('fun'), ['fun', barInstance]);
         }
       `,
     },

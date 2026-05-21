@@ -1,8 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 
 /**
- * Tests for bun.intFromFloat function
+ * Tests for fun.intFromFloat function
  *
  * This function implements Rust-like semantics for float-to-integer conversion:
  * - If finite and within target integer range: truncates toward zero
@@ -20,14 +20,14 @@ function normalizeCSSOutput(output: string): string {
     .trim();
 }
 
-describe("bun.intFromFloat function", () => {
+describe("fun.intFromFloat function", () => {
   test("handles normal finite values within range", async () => {
     // Test CSS dimension serialization which uses intFromFloat(i32, value)
     const dir = tempDirWithFiles("int-from-float-normal", {
       "input.css": ".test { width: 42px; height: -10px; margin: 0px; }",
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/input.css`],
       outdir: dir,
     });
@@ -55,7 +55,7 @@ describe("bun.intFromFloat function", () => {
 `,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/input.css`],
       outdir: dir,
     });
@@ -86,7 +86,7 @@ describe("bun.intFromFloat function", () => {
 `,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/input.css`],
       outdir: dir,
     });
@@ -123,7 +123,7 @@ describe("bun.intFromFloat function", () => {
 `,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/input.css`],
       outdir: dir,
     });

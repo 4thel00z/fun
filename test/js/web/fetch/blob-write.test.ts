@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { expectMaxObjectTypeCount, tempDirWithFiles } from "harness";
 import path from "path";
 
@@ -9,8 +9,8 @@ test("blob.write() throws for data-backed blob", () => {
   );
 });
 
-test("Bun.file(path).write() does not throw", async () => {
-  const file = Bun.file(path.join(tempDirWithFiles("bun-write", { a: "Hello, world!" }), "a"));
+test("Fun.file(path).write() does not throw", async () => {
+  const file = Fun.file(path.join(tempDirWithFiles("fun-write", { a: "Hello, world!" }), "a"));
   expect(() => file.write(new Blob(["Hello, world!!"]))).not.toThrow();
   expect(await file.text()).toBe("Hello, world!!");
 });
@@ -29,18 +29,18 @@ test("blob.delete() throws for data-backed blob", () => {
   );
 });
 
-test("Bun.file(path).unlink() does not throw", async () => {
-  const dir = tempDirWithFiles("bun-unlink", { a: "Hello, world!" });
-  const file = Bun.file(path.join(dir, "a"));
+test("Fun.file(path).unlink() does not throw", async () => {
+  const dir = tempDirWithFiles("fun-unlink", { a: "Hello, world!" });
+  const file = Fun.file(path.join(dir, "a"));
   expect(file.unlink()).resolves.toBeUndefined();
-  expect(await Bun.file(path.join(dir, "a")).exists()).toBe(false);
+  expect(await Fun.file(path.join(dir, "a")).exists()).toBe(false);
 });
 
-test("Bun.file(path).delete() does not throw", async () => {
-  const dir = tempDirWithFiles("bun-unlink", { a: "Hello, world!" });
-  const file = Bun.file(path.join(dir, "a"));
+test("Fun.file(path).delete() does not throw", async () => {
+  const dir = tempDirWithFiles("fun-unlink", { a: "Hello, world!" });
+  const file = Fun.file(path.join(dir, "a"));
   expect(file.delete()).resolves.toBeUndefined();
-  expect(await Bun.file(path.join(dir, "a")).exists()).toBe(false);
+  expect(await Fun.file(path.join(dir, "a")).exists()).toBe(false);
 });
 
 test("blob.writer() throws for data-backed blob", () => {
@@ -50,10 +50,10 @@ test("blob.writer() throws for data-backed blob", () => {
   );
 });
 
-test("Bun.file(path).writer() does not throw", async () => {
+test("Fun.file(path).writer() does not throw", async () => {
   async function iterate() {
-    const dir = tempDirWithFiles("bun-writer", {});
-    const file = Bun.file(path.join(dir, "test.txt"));
+    const dir = tempDirWithFiles("fun-writer", {});
+    const file = Fun.file(path.join(dir, "test.txt"));
     const writer = file.writer();
     expect(writer).toBeDefined();
     writer.write("New content");
@@ -62,12 +62,12 @@ test("Bun.file(path).writer() does not throw", async () => {
   }
   await iterate();
   // Force GC before capturing baseline to ensure first iteration's FileSink is collected
-  Bun.gc(true);
-  const initialObjectTypeCount = require("bun:jsc").heapStats().objectTypeCounts.FileSink || 0;
+  Fun.gc(true);
+  const initialObjectTypeCount = require("fun:jsc").heapStats().objectTypeCounts.FileSink || 0;
   for (let i = 0; i < 5; i++) {
     await iterate();
   }
-  Bun.gc(true);
+  Fun.gc(true);
   await expectMaxObjectTypeCount(expect, "FileSink", initialObjectTypeCount);
 });
 
@@ -77,9 +77,9 @@ test("blob.stat() returns undefined for data-backed blob", async () => {
   expect(stat).toBeUndefined();
 });
 
-test("Bun.file(path).stat() returns stats", async () => {
-  const dir = tempDirWithFiles("bun-stat", { a: "Hello, world!" });
-  const file = Bun.file(path.join(dir, "a"));
+test("Fun.file(path).stat() returns stats", async () => {
+  const dir = tempDirWithFiles("fun-stat", { a: "Hello, world!" });
+  const file = Fun.file(path.join(dir, "a"));
   const stat = await file.stat();
   expect(stat).toBeDefined();
   expect(stat.size).toBe(13); // "Hello, world!" is 13 bytes

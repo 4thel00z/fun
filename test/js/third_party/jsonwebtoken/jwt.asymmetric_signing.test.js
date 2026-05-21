@@ -1,5 +1,5 @@
 const PS_SUPPORTED = true;
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import fs from "fs";
 import jwt from "jsonwebtoken";
 import path from "path";

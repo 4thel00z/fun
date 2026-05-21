@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // TOCTOU guards for Buffer#copy and Buffer#fill. Both functions coerce their
 // numeric (and encoding) arguments via user-visible toNumber / toString /
@@ -9,7 +9,7 @@ import { bunEnv, bunExe } from "harness";
 // NULL-deref crash and a resize turns into an out-of-bounds read from the
 // physical (still-mapped) allocation.
 //
-// Each case runs the PoC in a fresh subprocess via `bun -e`. If the current
+// Each case runs the PoC in a fresh subprocess via `fun -e`. If the current
 // build lacks the fix, the subprocess segfaults (exit 139 / SIGSEGV) and
 // the test fails with a readable error — rather than taking the in-process
 // test runner down mid-run. The expected semantics match Node.js: copy()
@@ -17,15 +17,15 @@ import { bunEnv, bunExe } from "harness";
 // writable, and both clamp the range to the post-resize logical length.
 
 // stderr lines emitted by the runtime itself (ASAN / JSC banners) that don't
-// indicate a test failure. Under bun bd, ASAN prints a WARNING on startup;
-// anything else on stderr (Bun crash banner, sanitizer DEADLYSIGNAL dump,
+// indicate a test failure. Under fun bd, ASAN prints a WARNING on startup;
+// anything else on stderr (Fun crash banner, sanitizer DEADLYSIGNAL dump,
 // thrown exception text) is a real failure.
 const BENIGN_STDERR = /^WARNING: ASAN interferes with JSC signal handlers;[^\n]*\n$/;
 
 async function runPoc(script: string): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -254,7 +254,7 @@ describe("Buffer.fill with detach / resize via valueOf", () => {
 // The string branch of fill() is reached when `value` is a primitive string;
 // inside that branch, parseEncoding() on the 4th argument is what runs user
 // toString callbacks. Node rejects non-string encoding with
-// ERR_INVALID_ARG_TYPE so it never sees this TOCTOU. Bun currently coerces
+// ERR_INVALID_ARG_TYPE so it never sees this TOCTOU. Fun currently coerces
 // the encoding via toString, so the detach/resize is observable and the
 // guard must cover it.
 describe("Buffer.fill string branch with detaching encoding toString", () => {
@@ -350,7 +350,7 @@ describe("Buffer.copy / fill argument evaluation order (Node-compat)", () => {
     // sourceStart=100 is valid against original length 1024. sourceEnd's
     // valueOf resizes to 50, then returns 200. Node bounds-checks
     // sourceStart against the pre-sourceEnd-coercion length (1024, so
-    // passing) and the copy then computes 0 bytes. Bun must not throw
+    // passing) and the copy then computes 0 bytes. Fun must not throw
     // ERR_OUT_OF_RANGE against the post-resize length (50).
     const { stderr, exitCode, stdout } = await runPoc(`
       const rab = new ArrayBuffer(1024, { maxByteLength: 1024 });

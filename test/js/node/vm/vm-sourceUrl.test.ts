@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { runInNewContext } from "node:vm";
 
 test("can get sourceURL from eval inside node:vm", () => {
@@ -22,14 +22,14 @@ test("can get sourceURL inside node:vm", () => {
     `
 
 function hello() {
-    return Bun.inspect(new Error("hello"));
+    return Fun.inspect(new Error("hello"));
 }
 
 hello();
 
 //# sourceURL=hellohello.js
 `,
-    { Bun },
+    { Fun },
   );
 
   expect(err.replaceAll(import.meta.path, "<this-url>")).toMatchSnapshot();
@@ -40,7 +40,7 @@ test("eval sourceURL is correct", () => {
     `
 
 function hello() {
-    return Bun.inspect(new Error("hello"));
+    return Fun.inspect(new Error("hello"));
 }
 
 hello();

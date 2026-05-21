@@ -38,9 +38,9 @@
 #include "ZigGlobalObject.h"
 #include "ZigGeneratedClasses.h"
 #include "helpers.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "IDLTypes.h"
-#include "BunIDLConvert.h"
+#include "FunIDLConvert.h"
 #include <JavaScriptCore/JSFunction.h>
 #include <JavaScriptCore/JSPromise.h>
 #include <JavaScriptCore/ThrowScope.h>
@@ -98,7 +98,7 @@ ExceptionOr<Ref<ReadableStream>> ReadableStream::create(JSC::JSGlobalObject& lex
 
     auto objectOrException = invokeConstructor(lexicalGlobalObject, builtinNames.ReadableStreamPrivateName(), [&source, nativePtr](auto& args, auto& lexicalGlobalObject, auto& globalObject) {
         auto sourceStream = toJSNewlyCreated(&lexicalGlobalObject, &globalObject, source.releaseNonNull());
-        auto tag = WebCore::clientData(lexicalGlobalObject.vm())->builtinNames().bunNativePtrPrivateName();
+        auto tag = WebCore::clientData(lexicalGlobalObject.vm())->builtinNames().funNativePtrPrivateName();
         sourceStream.getObject()->putDirect(lexicalGlobalObject.vm(), tag, nativePtr, JSC::PropertyAttribute::DontDelete | JSC::PropertyAttribute::DontEnum);
         args.append(sourceStream);
     });
@@ -278,7 +278,7 @@ extern "C" bool ReadableStream__tee(JSC::EncodedJSValue possibleReadableStream, 
 
     auto lexicalGlobalObject = globalObject;
     auto& vm = JSC::getVM(lexicalGlobalObject);
-    auto* clientData = static_cast<Bun::JSVMClientData*>(vm.clientData);
+    auto* clientData = static_cast<Fun::JSVMClientData*>(vm.clientData);
     auto& privateName = clientData->builtinFunctions().readableStreamInternalsBuiltins().readableStreamTeePrivateName();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
@@ -297,7 +297,7 @@ extern "C" bool ReadableStream__tee(JSC::EncodedJSValue possibleReadableStream, 
         auto result = JSC::call(lexicalGlobalObject, function, callData, thisValue, arguments);
 #if ASSERT_ENABLED
         if (scope.exception()) [[unlikely]] {
-            Bun__reportError(lexicalGlobalObject, JSC::JSValue::encode(scope.exception()));
+            Fun__reportError(lexicalGlobalObject, JSC::JSValue::encode(scope.exception()));
         }
 #endif
         EXCEPTION_ASSERT(!scope.exception() || vm.hasPendingTerminationException());
@@ -313,7 +313,7 @@ extern "C" bool ReadableStream__tee(JSC::EncodedJSValue possibleReadableStream, 
     RETURN_IF_EXCEPTION(scope, false);
     if (!returnedValue) return false;
 
-    auto results = convert<IDLSequence<Bun::IDLRawAny, std::array<JSValue, 2>>>(*lexicalGlobalObject, *returnedValue);
+    auto results = convert<IDLSequence<Fun::IDLRawAny, std::array<JSValue, 2>>>(*lexicalGlobalObject, *returnedValue);
     RETURN_IF_EXCEPTION(scope, false);
 
     *possibleReadableStream1 = JSValue::encode(results[0]);
@@ -331,7 +331,7 @@ extern "C" void ReadableStream__cancel(JSC::EncodedJSValue possibleReadableStrea
         return;
     }
 
-    WebCore::Exception exception { Bun::AbortError };
+    WebCore::Exception exception { Fun::AbortError };
     WebCore::ReadableStream::cancel(*globalObject, readableStream, exception);
 }
 

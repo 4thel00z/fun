@@ -12,13 +12,13 @@ referenced_source_maps: std.AutoHashMapUnmanaged(SourceMapStore.Key, void),
 inspector_connection_id: i32 = -1,
 
 pub fn new(dev: *DevServer, res: anytype) *HmrSocket {
-    return bun.create(dev.allocator(), HmrSocket, .{
+    return fun.create(dev.allocator(), HmrSocket, .{
         .dev = dev,
         .is_from_localhost = if (res.getRemoteSocketInfo()) |addr|
             if (addr.is_ipv6)
-                bun.strings.eqlComptime(addr.ip, "::1")
+                fun.strings.eqlComptime(addr.ip, "::1")
             else
-                bun.strings.eqlComptime(addr.ip, "127.0.0.1")
+                fun.strings.eqlComptime(addr.ip, "127.0.0.1")
         else
             false,
         .subscriptions = .{},
@@ -55,7 +55,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
             const source_map_id = SourceMapStore.Key.init(@as(u64, generation) << 32);
             if (s.dev.source_maps.removeOrUpgradeWeakRef(source_map_id, .upgrade)) {
                 s.referenced_source_maps.put(s.dev.allocator(), source_map_id, {}) catch
-                    bun.outOfMemory();
+                    fun.outOfMemory();
             }
         },
         .subscribe => {
@@ -75,7 +75,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
                     _ = ws.subscribe(&.{@intFromEnum(field)});
 
                     // on-subscribe hooks
-                    if (bun.FeatureFlags.bake_debugging_features) switch (field) {
+                    if (fun.FeatureFlags.bake_debugging_features) switch (field) {
                         .incremental_visualizer => {
                             s.dev.emit_incremental_visualizer_events += 1;
                             s.dev.emitVisualizerMessageIfNeeded();
@@ -84,10 +84,10 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
                             s.dev.emit_memory_visualizer_events += 1;
                             s.dev.emitMemoryVisualizerMessage();
                             if (s.dev.emit_memory_visualizer_events == 1) {
-                                bun.assert(s.dev.memory_visualizer_timer.state != .ACTIVE);
+                                fun.assert(s.dev.memory_visualizer_timer.state != .ACTIVE);
                                 s.dev.vm.timer.update(
                                     &s.dev.memory_visualizer_timer,
-                                    &bun.timespec.msFromNow(.allow_mocked_time, 1000),
+                                    &fun.timespec.msFromNow(.allow_mocked_time, 1000),
                                 );
                             }
                         },
@@ -97,9 +97,9 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
                     _ = ws.unsubscribe(&.{@intFromEnum(field)});
                 }
             }
-            onUnsubscribe(s, bun.bits.@"and"(
+            onUnsubscribe(s, fun.bits.@"and"(
                 HmrTopic.Bits,
-                bun.bits.invert(HmrTopic.Bits, new_bits),
+                fun.bits.invert(HmrTopic.Bits, new_bits),
                 s.subscriptions,
             ));
             s.subscriptions = new_bits;
@@ -109,7 +109,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
             const maybe_rbi = s.dev.routeToBundleIndexSlow(pattern);
             if (s.dev.inspector()) |agent| {
                 if (s.inspector_connection_id > -1) {
-                    var pattern_str = bun.String.init(pattern);
+                    var pattern_str = fun.String.init(pattern);
                     defer pattern_str.deref();
                     agent.notifyClientNavigated(
                         s.dev.inspector_server_id,
@@ -145,7 +145,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
             },
             .enable_after_bundle => {
                 // do not expose a websocket event that panics a release build
-                bun.debugAssert(false);
+                fun.debugAssert(false);
                 ws.close();
             },
             .enabled => |event_const| {
@@ -164,7 +164,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
                     event.entry_points,
                     true,
                     std.time.Timer.start() catch @panic("timers unsupported"),
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
 
                 event.entry_points.deinit(s.dev.allocator());
             },
@@ -187,7 +187,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
             const data = msg[2..];
 
             if (s.dev.inspector()) |agent| {
-                var log_str = bun.String.init(data);
+                var log_str = fun.String.init(data);
                 defer log_str.deref();
                 agent.notifyConsoleLog(s.dev.inspector_server_id, kind, &log_str);
             }
@@ -195,13 +195,13 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
             if (s.dev.broadcast_console_log_from_browser_to_server) {
                 switch (kind) {
                     .log => {
-                        bun.Output.pretty("<r><d>[browser]<r> {s}<r>\n", .{data});
+                        fun.Output.pretty("<r><d>[browser]<r> {s}<r>\n", .{data});
                     },
                     .err => {
-                        bun.Output.prettyError("<r><d>[browser]<r> {s}<r>\n", .{data});
+                        fun.Output.prettyError("<r><d>[browser]<r> {s}<r>\n", .{data});
                     },
                 }
-                bun.Output.flush();
+                fun.Output.flush();
             }
         },
         .unref_source_map => {
@@ -211,7 +211,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
             const source_map_id = SourceMapStore.Key.init(r.readInt(u64, .little) catch
                 return ws.close());
             const kv = s.referenced_source_maps.fetchRemove(source_map_id) orelse {
-                bun.Output.debugWarn("unref_source_map: no entry found: {x}\n", .{source_map_id.get()});
+                fun.Output.debugWarn("unref_source_map: no entry found: {x}\n", .{source_map_id.get()});
                 return; // no entry may happen.
             };
             s.dev.source_maps.unref(kv.key);
@@ -221,7 +221,7 @@ pub fn onMessage(s: *HmrSocket, ws: AnyWebSocket, msg: []const u8, opcode: uws.O
 }
 
 fn onUnsubscribe(s: *HmrSocket, field: HmrTopic.Bits) void {
-    if (bun.FeatureFlags.bake_debugging_features) {
+    if (fun.FeatureFlags.bake_debugging_features) {
         if (field.incremental_visualizer) {
             s.dev.emit_incremental_visualizer_events -= 1;
         }
@@ -257,14 +257,14 @@ pub fn onClose(s: *HmrSocket, ws: AnyWebSocket, exit_code: i32, message: []const
         s.dev.source_maps.unref(key.*);
     }
     s.referenced_source_maps.deinit(s.dev.allocator());
-    bun.debugAssert(s.dev.active_websocket_connections.remove(s));
+    fun.debugAssert(s.dev.active_websocket_connections.remove(s));
     s.dev.allocator().destroy(s);
 }
 
 fn notifyInspectorClientNavigation(s: *const HmrSocket, pattern: []const u8, rbi: RouteBundle.Index.Optional) void {
     if (s.inspector_connection_id > -1) {
         if (s.dev.inspector()) |agent| {
-            var pattern_str = bun.String.init(pattern);
+            var pattern_str = fun.String.init(pattern);
             defer pattern_str.deref();
             agent.notifyClientNavigated(
                 s.dev.inspector_server_id,
@@ -278,10 +278,10 @@ fn notifyInspectorClientNavigation(s: *const HmrSocket, pattern: []const u8, rbi
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Output = bun.Output;
-const assert = bun.assert;
-const bake = bun.bake;
+const fun = @import("fun");
+const Output = fun.Output;
+const assert = fun.assert;
+const bake = fun.bake;
 
 const DevServer = bake.DevServer;
 const ConsoleLogKind = DevServer.ConsoleLogKind;
@@ -291,5 +291,5 @@ const MessageId = DevServer.MessageId;
 const RouteBundle = DevServer.RouteBundle;
 const SourceMapStore = DevServer.SourceMapStore;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const AnyWebSocket = uws.AnyWebSocket;

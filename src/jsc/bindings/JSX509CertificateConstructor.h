@@ -8,8 +8,8 @@ namespace Zig {
 class GlobalObject;
 }
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
-} // namespace Bun
+} // namespace Fun

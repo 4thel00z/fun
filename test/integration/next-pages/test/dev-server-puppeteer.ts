@@ -1,5 +1,5 @@
 import assert from "assert";
-import { which } from "bun";
+import { which } from "fun";
 import { copyFileSync } from "fs";
 import { join } from "path";
 import type { ConsoleMessage, Page } from "puppeteer";
@@ -107,7 +107,7 @@ async function main() {
   await Promise.all([p.goto(url), console_promise]);
 
   console.error("Loaded page");
-  assert.strictEqual(await p.$eval("code.font-bold", x => x.innerText), Bun.version);
+  assert.strictEqual(await p.$eval("code.font-bold", x => x.innerText), Fun.version);
 
   let counter_root = (await p.$("#counter-fixture"))!;
   console.error("Loaded counter");
@@ -146,7 +146,7 @@ async function main() {
   const reload_promise = waitForConsoleMessage(p, /counter a/);
   await Promise.all([p.reload({}), reload_promise]);
 
-  assert.strictEqual(await p.$eval("code.font-bold", x => x.innerText), Bun.version);
+  assert.strictEqual(await p.$eval("code.font-bold", x => x.innerText), Fun.version);
 
   counter_root = (await p.$("#counter-fixture"))!;
 

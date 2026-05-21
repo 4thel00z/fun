@@ -1,8 +1,8 @@
-import { RedisClient } from "bun";
-import { describe, expect, test } from "bun:test";
+import { RedisClient } from "fun";
+import { describe, expect, test } from "fun:test";
 import { DEFAULT_REDIS_OPTIONS, DEFAULT_REDIS_URL, isEnabled } from "../test-utils";
 
-// https://github.com/oven-sh/bun/issues/29925
+// https://github.com/underdoc-org/fun/issues/29925
 //
 // Regression: after the valkey client lifecycle refactor (#23141), the old
 // `.failed` connection status became a sticky `flags.failed` boolean. Once

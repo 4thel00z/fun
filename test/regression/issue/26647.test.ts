@@ -1,12 +1,12 @@
-// Test for UTF-8 path encoding bug in Bun.file().stat() and Bun.file().unlink()
-// Issue: https://github.com/oven-sh/bun/issues/26647
-import { expect, test } from "bun:test";
+// Test for UTF-8 path encoding bug in Fun.file().stat() and Fun.file().unlink()
+// Issue: https://github.com/underdoc-org/fun/issues/26647
+import { expect, test } from "fun:test";
 import { existsSync, statSync } from "fs";
 import { tempDirWithFiles } from "harness";
 import { join } from "path";
 
 // Test case: German umlaut characters
-test("Bun.file().stat() should handle UTF-8 paths with German umlauts", async () => {
+test("Fun.file().stat() should handle UTF-8 paths with German umlauts", async () => {
   const content = "test content for umlaut file";
   const dir = tempDirWithFiles("utf8-german-umlaut", {
     "über café résumé.txt": content,
@@ -19,15 +19,15 @@ test("Bun.file().stat() should handle UTF-8 paths with German umlauts", async ()
   expect(nodeStat.isFile()).toBe(true);
   expect(nodeStat.size).toBe(Buffer.byteLength(content));
 
-  // Verify Bun.file().stat() works correctly
-  const bunFile = Bun.file(filepath);
-  const bunStat = await bunFile.stat();
-  expect(bunStat.isFile()).toBe(true);
-  expect(bunStat.size).toBe(nodeStat.size);
+  // Verify Fun.file().stat() works correctly
+  const funFile = Fun.file(filepath);
+  const funStat = await funFile.stat();
+  expect(funStat.isFile()).toBe(true);
+  expect(funStat.size).toBe(nodeStat.size);
 });
 
 // Test case: Japanese characters
-test("Bun.file().stat() should handle UTF-8 paths with Japanese characters", async () => {
+test("Fun.file().stat() should handle UTF-8 paths with Japanese characters", async () => {
   const content = "Japanese content";
   const dir = tempDirWithFiles("utf8-japanese", {
     "日本語ファイル.txt": content,
@@ -35,13 +35,13 @@ test("Bun.file().stat() should handle UTF-8 paths with Japanese characters", asy
   const filepath = join(dir, "日本語ファイル.txt");
 
   expect(existsSync(filepath)).toBe(true);
-  const bunStat = await Bun.file(filepath).stat();
-  expect(bunStat.isFile()).toBe(true);
-  expect(bunStat.size).toBe(Buffer.byteLength(content));
+  const funStat = await Fun.file(filepath).stat();
+  expect(funStat.isFile()).toBe(true);
+  expect(funStat.size).toBe(Buffer.byteLength(content));
 });
 
 // Test case: Emoji characters
-test("Bun.file().stat() should handle UTF-8 paths with emoji", async () => {
+test("Fun.file().stat() should handle UTF-8 paths with emoji", async () => {
   const content = "emoji file";
   const dir = tempDirWithFiles("utf8-emoji", {
     "🌟.txt": content,
@@ -49,13 +49,13 @@ test("Bun.file().stat() should handle UTF-8 paths with emoji", async () => {
   const filepath = join(dir, "🌟.txt");
 
   expect(existsSync(filepath)).toBe(true);
-  const bunStat = await Bun.file(filepath).stat();
-  expect(bunStat.isFile()).toBe(true);
-  expect(bunStat.size).toBe(Buffer.byteLength(content));
+  const funStat = await Fun.file(filepath).stat();
+  expect(funStat.isFile()).toBe(true);
+  expect(funStat.size).toBe(Buffer.byteLength(content));
 });
 
 // Test case: Mixed special characters
-test("Bun.file().stat() should handle UTF-8 paths with mixed special characters", async () => {
+test("Fun.file().stat() should handle UTF-8 paths with mixed special characters", async () => {
   const content = "mixed content";
   const dir = tempDirWithFiles("utf8-mixed", {
     "café_résumé_ñ_test.md": content,
@@ -63,13 +63,13 @@ test("Bun.file().stat() should handle UTF-8 paths with mixed special characters"
   const filepath = join(dir, "café_résumé_ñ_test.md");
 
   expect(existsSync(filepath)).toBe(true);
-  const bunStat = await Bun.file(filepath).stat();
-  expect(bunStat.isFile()).toBe(true);
-  expect(bunStat.size).toBe(Buffer.byteLength(content));
+  const funStat = await Fun.file(filepath).stat();
+  expect(funStat.isFile()).toBe(true);
+  expect(funStat.size).toBe(Buffer.byteLength(content));
 });
 
 // Test that .delete() also works with UTF-8 paths
-test("Bun.file().delete() should handle UTF-8 paths", async () => {
+test("Fun.file().delete() should handle UTF-8 paths", async () => {
   const dir = tempDirWithFiles("utf8-unlink", {
     "delete_üñíçödé.txt": "delete me",
   });
@@ -78,20 +78,20 @@ test("Bun.file().delete() should handle UTF-8 paths", async () => {
   expect(existsSync(filepath)).toBe(true);
 
   // Delete should succeed
-  await Bun.file(filepath).delete();
+  await Fun.file(filepath).delete();
 
   // File should be deleted
   expect(existsSync(filepath)).toBe(false);
 });
 
 // Test .text() to ensure it still works (this uses a different code path)
-test("Bun.file().text() should handle UTF-8 paths with special characters", async () => {
+test("Fun.file().text() should handle UTF-8 paths with special characters", async () => {
   const content = "content with umlauts: äöü";
   const dir = tempDirWithFiles("utf8-text", {
     "read_äöü.txt": content,
   });
   const filepath = join(dir, "read_äöü.txt");
 
-  const text = await Bun.file(filepath).text();
+  const text = await Fun.file(filepath).text();
   expect(text).toBe(content);
 });

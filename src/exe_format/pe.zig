@@ -18,8 +18,8 @@ pub const Error = error{
     SecurityDirInsideImage,
     UnexpectedOverlayPresent,
     InvalidSectionData,
-    BunSectionNotFound,
-    InvalidBunSection,
+    FunSectionNotFound,
+    InvalidFunSection,
     InsufficientSpace,
     SizeOfImageMismatch,
 };
@@ -146,7 +146,7 @@ pub const PEFile = struct {
     const IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY: u16 = 0x0080;
 
     // Section name constant for exact comparison
-    const BUN_SECTION_NAME = [_]u8{ '.', 'b', 'u', 'n', 0, 0, 0, 0 };
+    const FUN_SECTION_NAME = [_]u8{ '.', 'b', 'u', 'n', 0, 0, 0, 0 };
 
     // Safe access helpers for unaligned views
     fn viewAtConst(comptime T: type, buf: []const u8, off: usize) !*align(1) const T {
@@ -434,8 +434,8 @@ pub const PEFile = struct {
         opt.checksum = final_sum;
     }
 
-    /// Add a new section to the PE file for storing Bun module data
-    pub fn addBunSection(self: *PEFile, data_to_embed: []const u8, strip: StripMode) !void {
+    /// Add a new section to the PE file for storing Fun module data
+    pub fn addFunSection(self: *PEFile, data_to_embed: []const u8, strip: StripMode) !void {
         // 1. Optional strip (before any addition)
         if (strip == .strip_always) {
             try self.stripAuthenticode(.{ .require_overlay = true, .recompute_checksum = true });
@@ -451,10 +451,10 @@ pub const PEFile = struct {
         // 2. Re-read PE/Optional (pointers may have moved due to resize in strip)
         const opt = try self.getOptionalHeaderMut();
 
-        // 3. Duplicate .bun guard - compare all 8 bytes exactly
+        // 3. Duplicate .fun guard - compare all 8 bytes exactly
         const section_headers = try self.getSectionHeaders();
         for (section_headers) |section| {
-            if (std.mem.eql(u8, section.name[0..8], &BUN_SECTION_NAME)) {
+            if (std.mem.eql(u8, section.name[0..8], &FUN_SECTION_NAME)) {
                 return error.SectionExists;
             }
         }
@@ -568,58 +568,58 @@ pub const PEFile = struct {
         try self.recomputePEChecksum();
     }
 
-    /// Find the .bun section and return its data
-    pub fn getBunSectionData(self: *const PEFile) ![]const u8 {
+    /// Find the .fun section and return its data
+    pub fn getFunSectionData(self: *const PEFile) ![]const u8 {
         const section_headers = try self.getSectionHeaders();
         for (section_headers) |section| {
-            if (std.mem.eql(u8, section.name[0..8], &BUN_SECTION_NAME)) {
+            if (std.mem.eql(u8, section.name[0..8], &FUN_SECTION_NAME)) {
                 // Header: 8 bytes size (u64)
                 if (section.size_of_raw_data < @sizeOf(u64)) {
-                    return error.InvalidBunSection;
+                    return error.InvalidFunSection;
                 }
 
                 // Bounds check
                 if (section.pointer_to_raw_data >= self.data.items.len or
                     section.pointer_to_raw_data + section.size_of_raw_data > self.data.items.len)
                 {
-                    return error.InvalidBunSection;
+                    return error.InvalidFunSection;
                 }
 
                 const section_data = self.data.items[section.pointer_to_raw_data..][0..section.size_of_raw_data];
                 const data_size = std.mem.readInt(u64, section_data[0..8], .little);
 
                 if (data_size + @sizeOf(u64) > section.size_of_raw_data) {
-                    return error.InvalidBunSection;
+                    return error.InvalidFunSection;
                 }
 
                 // Data starts at offset 8 (after u64 size)
                 return section_data[8..][0..data_size];
             }
         }
-        return error.BunSectionNotFound;
+        return error.FunSectionNotFound;
     }
 
-    /// Get the length of the Bun section data
-    pub fn getBunSectionLength(self: *const PEFile) !u64 {
+    /// Get the length of the Fun section data
+    pub fn getFunSectionLength(self: *const PEFile) !u64 {
         const section_headers = try self.getSectionHeaders();
         for (section_headers) |section| {
-            if (std.mem.eql(u8, section.name[0..8], &BUN_SECTION_NAME)) {
+            if (std.mem.eql(u8, section.name[0..8], &FUN_SECTION_NAME)) {
                 if (section.size_of_raw_data < @sizeOf(u64)) {
-                    return error.InvalidBunSection;
+                    return error.InvalidFunSection;
                 }
 
                 // Bounds check
                 if (section.pointer_to_raw_data >= self.data.items.len or
                     section.pointer_to_raw_data + @sizeOf(u64) > self.data.items.len)
                 {
-                    return error.InvalidBunSection;
+                    return error.InvalidFunSection;
                 }
 
                 const section_data = self.data.items[section.pointer_to_raw_data..];
                 return std.mem.readInt(u64, section_data[0..8], .little);
             }
         }
-        return error.BunSectionNotFound;
+        return error.FunSectionNotFound;
     }
 
     /// Write the modified PE file
@@ -731,17 +731,17 @@ pub const utils = struct {
     }
 };
 
-/// Windows-specific external interface for accessing embedded Bun data
+/// Windows-specific external interface for accessing embedded Fun data
 /// This matches the macOS interface but for PE files
-pub const BUN_COMPILED_SECTION_NAME = ".bun";
+pub const FUN_COMPILED_SECTION_NAME = ".fun";
 
 /// External C interface declarations - these are implemented in C++ bindings
-/// The C++ code uses Windows PE APIs to directly access the .bun section
+/// The C++ code uses Windows PE APIs to directly access the .fun section
 /// from the current process memory without loading the entire executable
-extern "C" fn Bun__getStandaloneModuleGraphPELength() u32;
-extern "C" fn Bun__getStandaloneModuleGraphPEData() ?[*]u8;
+extern "C" fn Fun__getStandaloneModuleGraphPELength() u32;
+extern "C" fn Fun__getStandaloneModuleGraphPEData() ?[*]u8;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
 const mem = std.mem;

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { mkdirSync, writeFileSync } from "fs";
 import { mkdir } from "fs/promises";
 import { tmpdirSync } from "harness";

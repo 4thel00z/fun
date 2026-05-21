@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isASAN } from "harness";
 
 const ASAN_MULTIPLIER = isASAN ? 1 / 10 : 1;
@@ -57,21 +57,21 @@ const constructorArgs = [
 for (let i = 0; i < constructorArgs.length; i++) {
   const args = constructorArgs[i];
   test("new Request(test #" + i + ")", () => {
-    Bun.gc(true);
+    Fun.gc(true);
 
     for (let i = 0; i < 1000 * ASAN_MULTIPLIER; i++) {
       new Request(...args);
     }
 
-    Bun.gc(true);
+    Fun.gc(true);
     const baseline = (process.memoryUsage.rss() / 1024 / 1024) | 0;
     for (let i = 0; i < 2000 * ASAN_MULTIPLIER; i++) {
       for (let j = 0; j < 500; j++) {
         new Request(...args);
       }
-      Bun.gc();
+      Fun.gc();
     }
-    Bun.gc(true);
+    Fun.gc(true);
 
     const memory = (process.memoryUsage.rss() / 1024 / 1024) | 0;
     const delta = Math.max(memory, baseline) - Math.min(baseline, memory);
@@ -80,23 +80,23 @@ for (let i = 0; i < constructorArgs.length; i++) {
   });
 
   test("request.clone(test #" + i + ")", () => {
-    Bun.gc(true);
+    Fun.gc(true);
 
     for (let i = 0; i < 1000 * ASAN_MULTIPLIER; i++) {
       const request = new Request(...args);
       request.clone();
     }
 
-    Bun.gc(true);
+    Fun.gc(true);
     const baseline = (process.memoryUsage.rss() / 1024 / 1024) | 0;
     for (let i = 0; i < 2000 * ASAN_MULTIPLIER; i++) {
       for (let j = 0; j < 500 * ASAN_MULTIPLIER; j++) {
         const request = new Request(...args);
         request.clone();
       }
-      Bun.gc();
+      Fun.gc();
     }
-    Bun.gc(true);
+    Fun.gc(true);
 
     const memory = (process.memoryUsage.rss() / 1024 / 1024) | 0;
     const delta = Math.max(memory, baseline) - Math.min(baseline, memory);

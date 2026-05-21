@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 
 function expectInvalidCharacters(val) {
   expect(() => atob(val)).toThrow("The string contains invalid characters.");
@@ -65,5 +65,5 @@ it("btoa", () => {
   // check for utf16
   expect(btoa("🧐éé".substring("🧐".length))).toBe("6ek=");
   expect(btoa("\u0080\u0081")).toBe("gIE=");
-  expect(btoa(Bun)).toBe(btoa("[object Bun]"));
+  expect(btoa(Fun)).toBe(btoa("[object Fun]"));
 });

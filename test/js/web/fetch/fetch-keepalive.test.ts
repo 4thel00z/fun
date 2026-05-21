@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("keepalive", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       return new Response(JSON.stringify(req.headers.toJSON()));

@@ -293,7 +293,7 @@ const values = [
     assert.strictEqual(err.message, 'Promise was rejected with a falsy value');
     assert.strictEqual(err.code, 'ERR_FALSY_VALUE_REJECTION');
     assert.strictEqual(err.reason, null);
-    // skipped, bun doesn't hide callbackifyOnRejected from the stack trace
+    // skipped, fun doesn't hide callbackifyOnRejected from the stack trace
     // const stack = err.stack.split(/[\r\n]+/);
     // assert.match(stack[1], /at process\.processTicksAndRejections/);
   });

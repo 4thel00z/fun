@@ -7,7 +7,7 @@ This is a simple benchmark of uploading a file to a web server in different runt
 Generate a file to upload (default is `hello.txt`):
 
 ```bash
-bun generate-file.js
+fun generate-file.js
 ```
 
 Run the server:
@@ -16,10 +16,10 @@ Run the server:
 node server-node.mjs
 ```
 
-Run the benchmark in bun:
+Run the benchmark in fun:
 
 ```bash
-bun stream-file-bun.js
+fun stream-file-fun.js
 ```
 
 Run the benchmark in node:

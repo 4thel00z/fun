@@ -13,26 +13,26 @@ pub const Version = struct {
     size: u32 = 0,
 
     pub fn name(this: Version) ?string {
-        if (this.tag.len <= "bun-v".len or !strings.hasPrefixComptime(this.tag, "bun-v")) {
+        if (this.tag.len <= "fun-v".len or !strings.hasPrefixComptime(this.tag, "fun-v")) {
             if (strings.eqlComptime(this.tag, "canary")) {
                 const Cli = @import("./cli.zig");
 
                 return std.fmt.allocPrint(
-                    bun.default_allocator,
-                    "bun-canary-timestamp-{f}",
+                    fun.default_allocator,
+                    "fun-canary-timestamp-{f}",
                     .{
-                        bun.fmt.hexIntLower(
-                            bun.hash(
+                        fun.fmt.hexIntLower(
+                            fun.hash(
                                 std.mem.asBytes(&Cli.start_time),
                             ),
                         ),
                     },
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             }
             return this.tag;
         }
 
-        return this.tag["bun-v".len..];
+        return this.tag["fun-v".len..];
     }
 
     pub const platform_label = switch (Environment.os) {
@@ -40,7 +40,7 @@ pub const Version = struct {
         .linux => "linux",
         .windows => "windows",
         .freebsd => "freebsd",
-        .wasm => @compileError("Unsupported OS for Bun Upgrade"),
+        .wasm => @compileError("Unsupported OS for Fun Upgrade"),
     };
 
     pub const arch_label = if (Environment.isAarch64) "aarch64" else "x64";
@@ -48,22 +48,22 @@ pub const Version = struct {
     const suffix_abi = if (Environment.isMusl) "-musl" else if (Environment.isAndroid) "-android" else "";
     const suffix_cpu = if (Environment.baseline) "-baseline" else "";
     const suffix = suffix_abi ++ suffix_cpu;
-    pub const folder_name = "bun-" ++ triplet ++ suffix;
-    pub const baseline_folder_name = "bun-" ++ triplet ++ "-baseline";
+    pub const folder_name = "fun-" ++ triplet ++ suffix;
+    pub const baseline_folder_name = "fun-" ++ triplet ++ "-baseline";
     pub const zip_filename = folder_name ++ ".zip";
     pub const baseline_zip_filename = baseline_folder_name ++ ".zip";
 
-    pub const profile_folder_name = "bun-" ++ triplet ++ suffix ++ "-profile";
+    pub const profile_folder_name = "fun-" ++ triplet ++ suffix ++ "-profile";
     pub const profile_zip_filename = profile_folder_name ++ ".zip";
 
-    const current_version: string = "bun-v" ++ Global.package_json_version;
+    const current_version: string = "fun-v" ++ Global.package_json_version;
 
-    pub export const Bun__githubURL: [*:0]const u8 = std.fmt.comptimePrint("https://github.com/oven-sh/bun/releases/download/bun-v{s}/{s}", .{
+    pub export const Fun__githubURL: [*:0]const u8 = std.fmt.comptimePrint("https://github.com/underdoc-org/fun/releases/download/fun-v{s}/{s}", .{
         Global.package_json_version,
         zip_filename,
     });
 
-    pub const Bun__githubBaselineURL: [:0]const u8 = std.fmt.comptimePrint("https://github.com/oven-sh/bun/releases/download/bun-v{s}/{s}", .{
+    pub const Fun__githubBaselineURL: [:0]const u8 = std.fmt.comptimePrint("https://github.com/underdoc-org/fun/releases/download/fun-v{s}/{s}", .{
         Global.package_json_version,
         baseline_zip_filename,
     });
@@ -73,19 +73,19 @@ pub const Version = struct {
     }
 
     pub fn @"export"() void {
-        _ = &Bun__githubURL;
-        _ = &Bun__githubBaselineURL;
+        _ = &Fun__githubURL;
+        _ = &Fun__githubBaselineURL;
     }
 };
 
 pub const UpgradeCommand = struct {
-    pub const Bun__githubBaselineURL = Version.Bun__githubBaselineURL;
+    pub const Fun__githubBaselineURL = Version.Fun__githubBaselineURL;
 
     const default_github_headers: string = "Acceptapplication/vnd.github.v3+json";
-    var github_repository_url_buf: bun.PathBuffer = undefined;
-    var current_executable_buf: bun.PathBuffer = undefined;
-    var unzip_path_buf: bun.PathBuffer = undefined;
-    var tmpdir_path_buf: bun.PathBuffer = undefined;
+    var github_repository_url_buf: fun.PathBuffer = undefined;
+    var current_executable_buf: fun.PathBuffer = undefined;
+    var unzip_path_buf: fun.PathBuffer = undefined;
+    var tmpdir_path_buf: fun.PathBuffer = undefined;
 
     pub fn getLatestVersion(
         allocator: std.mem.Allocator,
@@ -122,7 +122,7 @@ pub const UpgradeCommand = struct {
         const api_url = URL.parse(
             try std.fmt.bufPrint(
                 &github_repository_url_buf,
-                "https://{s}/repos/Jarred-Sumner/bun-releases-for-updater/releases/latest",
+                "https://{s}/repos/Jarred-Sumner/fun-releases-for-updater/releases/latest",
                 .{
                     github_api_domain,
                 },
@@ -294,7 +294,7 @@ pub const UpgradeCommand = struct {
             progress.?.end();
             refresher.?.refresh();
             if (version.name()) |name| {
-                Output.prettyErrorln("Bun v{s} is out, but not for this platform ({s}) yet.", .{
+                Output.prettyErrorln("Fun v{s} is out, but not for this platform ({s}) yet.", .{
                     name, Version.triplet,
                 });
             }
@@ -307,25 +307,25 @@ pub const UpgradeCommand = struct {
 
     const exe_suffix = if (Environment.isWindows) ".exe" else "";
 
-    const exe_subpath = Version.folder_name ++ std.fs.path.sep_str ++ "bun" ++ exe_suffix;
-    const profile_exe_subpath = Version.profile_folder_name ++ std.fs.path.sep_str ++ "bun-profile" ++ exe_suffix;
+    const exe_subpath = Version.folder_name ++ std.fs.path.sep_str ++ "fun" ++ exe_suffix;
+    const profile_exe_subpath = Version.profile_folder_name ++ std.fs.path.sep_str ++ "fun-profile" ++ exe_suffix;
 
     const manual_upgrade_command = switch (Environment.os) {
-        .linux, .mac => "curl -fsSL https://bun.com/install | bash",
-        .windows => "powershell -c 'irm bun.sh/install.ps1|iex'",
+        .linux, .mac => "curl -fsSL https://fun.dev/install | bash",
+        .windows => "powershell -c 'irm fun.dev/install.ps1|iex'",
         else => "(TODO: Install script for " ++ Environment.os.displayString() ++ ")",
     };
 
     pub fn exec(ctx: Command.Context) !void {
         @branchHint(.cold);
 
-        const args = bun.argv;
+        const args = fun.argv;
         if (args.len > 2) {
             for (args[2..]) |arg| {
                 if (!strings.contains(arg, "--")) {
                     Output.prettyError(
-                        \\<r><red>error<r><d>:<r> This command updates Bun itself, and does not take package names.
-                        \\<blue>note<r><d>:<r> Use `bun update
+                        \\<r><red>error<r><d>:<r> This command updates Fun itself, and does not take package names.
+                        \\<blue>note<r><d>:<r> Use `fun update
                     , .{});
                     for (args[2..]) |arg_err| {
                         Output.prettyError(" {s}", .{arg_err});
@@ -338,7 +338,7 @@ pub const UpgradeCommand = struct {
 
         _exec(ctx) catch |err| {
             Output.prettyErrorln(
-                \\<r>Bun upgrade failed with error: <red><b>{s}<r>
+                \\<r>Fun upgrade failed with error: <red><b>{s}<r>
                 \\
                 \\<cyan>Please upgrade manually<r>:
                 \\  <b>{s}<r>
@@ -364,14 +364,14 @@ pub const UpgradeCommand = struct {
         const use_canary = brk: {
             const default_use_canary = Environment.is_canary;
 
-            if (default_use_canary and strings.containsAny(bun.argv, "--stable"))
+            if (default_use_canary and strings.containsAny(fun.argv, "--stable"))
                 break :brk false;
 
-            break :brk strings.eqlComptime(env_loader.map.get("BUN_CANARY") orelse "0", "1") or
-                strings.containsAny(bun.argv, "--canary") or default_use_canary;
+            break :brk strings.eqlComptime(env_loader.map.get("FUN_CANARY") orelse "0", "1") or
+                strings.containsAny(fun.argv, "--canary") or default_use_canary;
         };
 
-        const use_profile = strings.containsAny(bun.argv, "--profile");
+        const use_profile = strings.containsAny(fun.argv, "--profile");
 
         var version: Version = if (!use_canary) v: {
             var refresher = Progress{};
@@ -385,7 +385,7 @@ pub const UpgradeCommand = struct {
             if (!Environment.is_canary) {
                 if (version.name() != null and version.isCurrent()) {
                     Output.prettyErrorln(
-                        "<r><green>Congrats!<r> You're already on the latest version of Bun <d>(which is v{s})<r>",
+                        "<r><green>Congrats!<r> You're already on the latest version of Fun <d>(which is v{s})<r>",
                         .{
                             version.name().?,
                         },
@@ -396,25 +396,25 @@ pub const UpgradeCommand = struct {
 
             if (version.name() == null) {
                 Output.prettyErrorln(
-                    "<r><red>error:<r> Bun versions are currently unavailable (the latest version name didn't match the expeccted format)",
+                    "<r><red>error:<r> Fun versions are currently unavailable (the latest version name didn't match the expeccted format)",
                     .{},
                 );
                 Global.exit(1);
             }
 
             if (!Environment.is_canary) {
-                Output.prettyErrorln("<r><b>Bun <cyan>v{s}<r> is out<r>! You're on <blue>v{s}<r>\n", .{ version.name().?, Global.package_json_version });
+                Output.prettyErrorln("<r><b>Fun <cyan>v{s}<r> is out<r>! You're on <blue>v{s}<r>\n", .{ version.name().?, Global.package_json_version });
             } else {
-                Output.prettyErrorln("<r><b>Downgrading from Bun <blue>{s}-canary<r> to Bun <cyan>v{s}<r><r>\n", .{ Global.package_json_version, version.name().? });
+                Output.prettyErrorln("<r><b>Downgrading from Fun <blue>{s}-canary<r> to Fun <cyan>v{s}<r><r>\n", .{ Global.package_json_version, version.name().? });
             }
             Output.flush();
 
             break :v version;
         } else Version{
             .tag = "canary",
-            .zip_url = "https://github.com/oven-sh/bun/releases/download/canary/" ++ Version.zip_filename,
+            .zip_url = "https://github.com/underdoc-org/fun/releases/download/canary/" ++ Version.zip_filename,
             .size = 0,
-            .buf = MutableString.initEmpty(bun.default_allocator),
+            .buf = MutableString.initEmpty(fun.default_allocator),
         };
 
         const zip_url = URL.parse(version.zip_url);
@@ -452,7 +452,7 @@ pub const UpgradeCommand = struct {
                         Output.prettyErrorln(
                             \\<r><red>error:<r> Canary builds are not available for this platform yet
                             \\
-                            \\   Release: <cyan>https://github.com/oven-sh/bun/releases/tag/canary<r>
+                            \\   Release: <cyan>https://github.com/underdoc-org/fun/releases/tag/canary<r>
                             \\  Filename: <b>{s}<r>
                             \\
                         , .{
@@ -476,7 +476,7 @@ pub const UpgradeCommand = struct {
             refresher.refresh();
 
             if (bytes.len == 0) {
-                Output.prettyErrorln("<r><red>error:<r> Failed to download the latest version of Bun. Received empty content", .{});
+                Output.prettyErrorln("<r><red>error:<r> Failed to download the latest version of Fun. Received empty content", .{});
                 Global.exit(1);
             }
 
@@ -492,16 +492,16 @@ pub const UpgradeCommand = struct {
                 Global.exit(1);
             };
             const save_dir = save_dir_it;
-            const tmpdir_path = bun.FD.fromStdDir(save_dir).getFdPath(&tmpdir_path_buf) catch |err| {
+            const tmpdir_path = fun.FD.fromStdDir(save_dir).getFdPath(&tmpdir_path_buf) catch |err| {
                 Output.errGeneric("Failed to read temporary directory: {s}", .{@errorName(err)});
                 Global.exit(1);
             };
 
             tmpdir_path_buf[tmpdir_path.len] = 0;
             const tmpdir_z = tmpdir_path_buf[0..tmpdir_path.len :0];
-            _ = bun.sys.chdir("", tmpdir_z);
+            _ = fun.sys.chdir("", tmpdir_z);
 
-            const tmpname = "bun.zip";
+            const tmpname = "fun.zip";
             const exe =
                 if (use_profile) profile_exe_subpath else exe_subpath;
 
@@ -527,7 +527,7 @@ pub const UpgradeCommand = struct {
                 if (comptime Environment.isPosix) {
                     const unzip_exe = which(&unzip_path_buf, env_loader.map.get("PATH") orelse "", filesystem.top_level_dir, "unzip") orelse {
                         save_dir.deleteFileZ(tmpname) catch {};
-                        Output.prettyErrorln("<r><red>error:<r> Failed to locate \"unzip\" in PATH. bun upgrade needs \"unzip\" to work.", .{});
+                        Output.prettyErrorln("<r><red>error:<r> Failed to locate \"unzip\" in PATH. fun upgrade needs \"unzip\" to work.", .{});
                         Global.exit(1);
                     };
 
@@ -536,7 +536,7 @@ pub const UpgradeCommand = struct {
                     // xattrs are used for codesigning
                     // it'd be easy to mess that up
                     var unzip_argv = [_]string{
-                        bun.asByteSlice(unzip_exe),
+                        fun.asByteSlice(unzip_exe),
                         "-q",
                         "-o",
                         tmpname,
@@ -565,18 +565,18 @@ pub const UpgradeCommand = struct {
                         ctx.allocator,
                         "$global:ProgressPreference='SilentlyContinue';Expand-Archive -Path \"{f}\" \"{f}\" -Force",
                         .{
-                            bun.fmt.escapePowershell(tmpname),
-                            bun.fmt.escapePowershell(tmpdir_path),
+                            fun.fmt.escapePowershell(tmpname),
+                            fun.fmt.escapePowershell(tmpdir_path),
                         },
                     );
 
-                    var buf: bun.PathBuffer = undefined;
+                    var buf: fun.PathBuffer = undefined;
                     const powershell_path =
-                        bun.which(&buf, bun.env_var.PATH.get() orelse "", "", "powershell") orelse
+                        fun.which(&buf, fun.env_var.PATH.get() orelse "", "", "powershell") orelse
                         hardcoded_system_powershell: {
-                            const system_root = bun.env_var.SYSTEMROOT.get() orelse "C:\\Windows";
-                            const hardcoded_system_powershell = bun.path.joinAbsStringBuf(system_root, &buf, &.{ system_root, "System32\\WindowsPowerShell\\v1.0\\powershell.exe" }, .windows);
-                            if (bun.sys.exists(hardcoded_system_powershell)) {
+                            const system_root = fun.env_var.SYSTEMROOT.get() orelse "C:\\Windows";
+                            const hardcoded_system_powershell = fun.path.joinAbsStringBuf(system_root, &buf, &.{ system_root, "System32\\WindowsPowerShell\\v1.0\\powershell.exe" }, .windows);
+                            if (fun.sys.exists(hardcoded_system_powershell)) {
                                 break :hardcoded_system_powershell hardcoded_system_powershell;
                             }
                             Output.prettyErrorln("<r><red>error:<r> Failed to unzip {s} due to PowerShell not being installed.", .{tmpname});
@@ -592,7 +592,7 @@ pub const UpgradeCommand = struct {
                         unzip_script,
                     };
 
-                    _ = (bun.spawnSync(&.{
+                    _ = (fun.spawnSync(&.{
                         .argv = &unzip_argv,
 
                         .envp = null,
@@ -603,7 +603,7 @@ pub const UpgradeCommand = struct {
                         .stdin = .inherit,
 
                         .windows = if (Environment.isWindows) .{
-                            .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+                            .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
                         },
                     }) catch |err| {
                         Output.prettyErrorln("<r><red>error:<r> Failed to spawn Expand-Archive on {s} due to error {s}", .{ tmpname, @errorName(err) });
@@ -638,12 +638,12 @@ pub const UpgradeCommand = struct {
                             // extra patching, so we will print a message deferring them to their system
                             // package manager.
                             Output.prettyErrorln(
-                                \\<r><red>error<r><d>:<r> 'bun upgrade' is unsupported on systems without ld
+                                \\<r><red>error<r><d>:<r> 'fun upgrade' is unsupported on systems without ld
                                 \\
                                 \\You are likely on an immutable system such as NixOS, where dynamic
                                 \\libraries are stored in a global cache.
                                 \\
-                                \\Please use your system's package manager to properly upgrade bun.
+                                \\Please use your system's package manager to properly upgrade fun.
                                 \\
                             , .{});
                             Global.exit(1);
@@ -651,13 +651,13 @@ pub const UpgradeCommand = struct {
                         } else |_| {}
                     }
 
-                    Output.prettyErrorln("<r><red>error<r><d>:<r> Failed to verify Bun (code: {s})<r>", .{@errorName(err)});
+                    Output.prettyErrorln("<r><red>error<r><d>:<r> Failed to verify Fun (code: {s})<r>", .{@errorName(err)});
                     Global.exit(1);
                 };
 
                 if (result.term.Exited != 0) {
                     save_dir_.deleteTree(version_name) catch {};
-                    Output.prettyErrorln("<r><red>error<r><d>:<r> failed to verify Bun<r> (exit code: {d})", .{result.term.Exited});
+                    Output.prettyErrorln("<r><red>error<r><d>:<r> failed to verify Fun<r> (exit code: {d})", .{result.term.Exited});
                     Global.exit(1);
                 }
 
@@ -678,7 +678,7 @@ pub const UpgradeCommand = struct {
                         save_dir_.deleteTree(version_name) catch {};
 
                         Output.prettyErrorln(
-                            "<r><red>error<r>: The downloaded version of Bun (<red>{s}<r>) doesn't match the expected version (<b>{s}<r>)<r>. Cancelled upgrade",
+                            "<r><red>error<r>: The downloaded version of Fun (<red>{s}<r>) doesn't match the expected version (<b>{s}<r>)<r>. Cancelled upgrade",
                             .{
                                 version_string[0..@min(version_string.len, 512)],
                                 version_name,
@@ -689,7 +689,7 @@ pub const UpgradeCommand = struct {
                 }
             }
 
-            const destination_executable = bun.selfExePath() catch return error.UpgradeFailedMissingExecutable;
+            const destination_executable = fun.selfExePath() catch return error.UpgradeFailedMissingExecutable;
             @memcpy((&current_executable_buf).ptr, destination_executable);
             current_executable_buf[destination_executable.len] = 0;
 
@@ -701,7 +701,7 @@ pub const UpgradeCommand = struct {
             const target_dirname = current_executable_buf[0..target_dir_.len :0];
             const target_dir_it = std.fs.openDirAbsoluteZ(target_dirname, .{}) catch |err| {
                 save_dir_.deleteTree(version_name) catch {};
-                Output.prettyErrorln("<r><red>error:<r> Failed to open Bun's install directory {s}", .{@errorName(err)});
+                Output.prettyErrorln("<r><red>error:<r> Failed to open Fun's install directory {s}", .{@errorName(err)});
                 Global.exit(1);
             };
             var target_dir = target_dir_it;
@@ -724,24 +724,24 @@ pub const UpgradeCommand = struct {
                 if (target_stat.size == dest_stat.size and target_stat.size > 0) {
                     const input_buf = try ctx.allocator.alloc(u8, target_stat.size);
 
-                    const target_hash = bun.hash(target_dir.readFile(target_filename, input_buf) catch |err| {
+                    const target_hash = fun.hash(target_dir.readFile(target_filename, input_buf) catch |err| {
                         save_dir_.deleteTree(version_name) catch {};
-                        Output.prettyErrorln("<r><red>error:<r> Failed to read target bun {s}", .{@errorName(err)});
+                        Output.prettyErrorln("<r><red>error:<r> Failed to read target fun {s}", .{@errorName(err)});
                         Global.exit(1);
                     });
 
-                    const source_hash = bun.hash(save_dir.readFile(exe, input_buf) catch |err| {
+                    const source_hash = fun.hash(save_dir.readFile(exe, input_buf) catch |err| {
                         save_dir_.deleteTree(version_name) catch {};
-                        Output.prettyErrorln("<r><red>error:<r> Failed to read source bun {s}", .{@errorName(err)});
+                        Output.prettyErrorln("<r><red>error:<r> Failed to read source fun {s}", .{@errorName(err)});
                         Global.exit(1);
                     });
 
                     if (target_hash == source_hash) {
                         save_dir_.deleteTree(version_name) catch {};
                         Output.prettyErrorln(
-                            \\<r><green>Congrats!<r> You're already on the latest <b>canary<r><green> build of Bun
+                            \\<r><green>Congrats!<r> You're already on the latest <b>canary<r><green> build of Fun
                             \\
-                            \\To downgrade to the latest stable release, run <b><cyan>bun upgrade --stable<r>
+                            \\To downgrade to the latest stable release, run <b><cyan>fun upgrade --stable<r>
                             \\
                         ,
                             .{},
@@ -753,7 +753,7 @@ pub const UpgradeCommand = struct {
 
             var outdated_filename: if (Environment.isWindows) ?stringZ else ?void = null;
 
-            if (env_loader.map.get("BUN_DRY_RUN") == null) {
+            if (env_loader.map.get("FUN_DRY_RUN") == null) {
                 if (comptime Environment.isWindows) {
                     // On Windows, we cannot replace the running executable directly.
                     // we rename the old executable to a temporary name, and then move the new executable to the old name.
@@ -771,14 +771,14 @@ pub const UpgradeCommand = struct {
                     current_executable_buf[target_dir_.len] = 0;
                 }
 
-                bun.sys.moveFileZ(.fromStdDir(save_dir), exe, .fromStdDir(target_dir), target_filename) catch |err| {
+                fun.sys.moveFileZ(.fromStdDir(save_dir), exe, .fromStdDir(target_dir), target_filename) catch |err| {
                     defer save_dir_.deleteTree(version_name) catch {};
 
                     if (comptime Environment.isWindows) {
-                        // Attempt to restore the old executable. If this fails, the user will be left without a working copy of bun.
+                        // Attempt to restore the old executable. If this fails, the user will be left without a working copy of fun.
                         std.posix.rename(outdated_filename.?, destination_executable) catch {
                             Output.errGeneric(
-                                \\Failed to move new version of Bun to {s} due to {s}
+                                \\Failed to move new version of Fun to {s} due to {s}
                             ,
                                 .{
                                     destination_executable,
@@ -786,9 +786,9 @@ pub const UpgradeCommand = struct {
                                 },
                             );
                             Output.errGeneric(
-                                \\Failed to restore the working copy of Bun. The installation is now corrupt.
+                                \\Failed to restore the working copy of Fun. The installation is now corrupt.
                                 \\
-                                \\Please reinstall Bun manually with the following command:
+                                \\Please reinstall Fun manually with the following command:
                                 \\   {s}
                                 \\
                             ,
@@ -799,9 +799,9 @@ pub const UpgradeCommand = struct {
                     }
 
                     Output.errGeneric(
-                        \\Failed to move new version of Bun to {s} to {s}
+                        \\Failed to move new version of Fun to {s} to {s}
                         \\
-                        \\Please reinstall Bun manually with the following command:
+                        \\Please reinstall Fun manually with the following command:
                         \\   {s}
                         \\
                     ,
@@ -822,7 +822,7 @@ pub const UpgradeCommand = struct {
                     "completions",
                 };
 
-                bun.handleOom(env_loader.map.put("IS_BUN_AUTO_UPDATE", "true"));
+                fun.handleOom(env_loader.map.put("IS_FUN_AUTO_UPDATE", "true"));
                 var std_map = try env_loader.map.stdEnvMap(ctx.allocator);
                 defer std_map.deinit();
                 _ = std.process.Child.run(.{
@@ -840,41 +840,41 @@ pub const UpgradeCommand = struct {
                 Output.prettyErrorln(
                     \\<r> Upgraded.
                     \\
-                    \\<b><green>Welcome to Bun's latest canary build!<r>
+                    \\<b><green>Welcome to Fun's latest canary build!<r>
                     \\
                     \\Report any bugs:
                     \\
-                    \\    https://github.com/oven-sh/bun/issues
+                    \\    https://github.com/underdoc-org/fun/issues
                     \\
                     \\Changelog:
                     \\
-                    \\    https://github.com/oven-sh/bun/compare/{s}...{s}
+                    \\    https://github.com/underdoc-org/fun/compare/{s}...{s}
                     \\
                 ,
                     .{ Environment.git_sha_short, version.tag },
                 );
             } else {
-                const bun_v = "bun-v" ++ Global.package_json_version;
+                const fun_v = "fun-v" ++ Global.package_json_version;
 
                 Output.prettyErrorln(
                     \\<r> Upgraded.
                     \\
-                    \\<b><green>Welcome to Bun v{s}!<r>
+                    \\<b><green>Welcome to Fun v{s}!<r>
                     \\
-                    \\What's new in Bun v{s}:
+                    \\What's new in Fun v{s}:
                     \\
-                    \\    <cyan>https://bun.com/blog/release-notes/{s}<r>
+                    \\    <cyan>https://fun.dev/blog/release-notes/{s}<r>
                     \\
                     \\Report any bugs:
                     \\
-                    \\    https://github.com/oven-sh/bun/issues
+                    \\    https://github.com/underdoc-org/fun/issues
                     \\
                     \\Commit log:
                     \\
-                    \\    https://github.com/oven-sh/bun/compare/{s}...{s}
+                    \\    https://github.com/underdoc-org/fun/compare/{s}...{s}
                     \\
                 ,
-                    .{ version_name, version_name, version.tag, bun_v, version.tag },
+                    .{ version_name, version_name, version.tag, fun_v, version.tag },
                 );
             }
 
@@ -895,11 +895,11 @@ pub const UpgradeCommand = struct {
 };
 
 pub const upgrade_js_bindings = struct {
-    const jsc = bun.jsc;
+    const jsc = fun.jsc;
     const JSValue = jsc.JSValue;
     const ZigString = jsc.ZigString;
 
-    var tempdir_fd: ?bun.FD = null;
+    var tempdir_fd: ?fun.FD = null;
 
     pub fn generate(global: *jsc.JSGlobalObject) jsc.JSValue {
         const obj = JSValue.createEmptyObject(global, 2);
@@ -912,13 +912,13 @@ pub const upgrade_js_bindings = struct {
 
     /// For testing upgrades when the temp directory has an open handle without FILE_SHARE_DELETE.
     /// Windows only
-    pub fn jsOpenTempDirWithoutSharingDelete(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!bun.jsc.JSValue {
+    pub fn jsOpenTempDirWithoutSharingDelete(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!fun.jsc.JSValue {
         if (comptime !Environment.isWindows) return .js_undefined;
         const w = std.os.windows;
 
-        var buf: bun.WPathBuffer = undefined;
+        var buf: fun.WPathBuffer = undefined;
         const tmpdir_path = fs.FileSystem.RealFS.getDefaultTempDir();
-        const path = switch (bun.sys.normalizePathWindows(u8, bun.invalid_fd, tmpdir_path, &buf, .{})) {
+        const path = switch (fun.sys.normalizePathWindows(u8, fun.invalid_fd, tmpdir_path, &buf, .{})) {
             .err => return .js_undefined,
             .result => |norm| norm,
         };
@@ -958,7 +958,7 @@ pub const upgrade_js_bindings = struct {
             0,
         );
 
-        switch (bun.windows.Win32Error.fromNTStatus(rc)) {
+        switch (fun.windows.Win32Error.fromNTStatus(rc)) {
             .SUCCESS => tempdir_fd = .fromNative(fd),
             else => {},
         }
@@ -966,7 +966,7 @@ pub const upgrade_js_bindings = struct {
         return .js_undefined;
     }
 
-    pub fn jsCloseTempDirHandle(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn jsCloseTempDirHandle(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!JSValue {
         if (comptime !Environment.isWindows) return .js_undefined;
 
         if (tempdir_fd) |fd| {
@@ -994,17 +994,17 @@ const Command = @import("./cli.zig").Command;
 const URL = @import("../url/url.zig").URL;
 const which = @import("../which/which.zig").which;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const Progress = bun.Progress;
-const default_allocator = bun.default_allocator;
-const js_ast = bun.ast;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const Progress = fun.Progress;
+const default_allocator = fun.default_allocator;
+const js_ast = fun.ast;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const HTTP = bun.http;
-const Headers = bun.http.Headers;
+const HTTP = fun.http;
+const Headers = fun.http.Headers;

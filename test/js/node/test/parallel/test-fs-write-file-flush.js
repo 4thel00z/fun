@@ -4,7 +4,7 @@ const tmpdir = require('../common/tmpdir');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
-const { it, describe, jest } = require('bun:test');
+const { it, describe, jest } = require('fun:test');
 const data = 'foo';
 let cnt = 0;
 
@@ -58,7 +58,7 @@ describe('callback version', () => {
     }
   });
 
-  // Bun: fsync is called in native code, so it is not possible to spy on it
+  // Fun: fsync is called in native code, so it is not possible to spy on it
   // it('performs flush', async() => {
   //   const { promise, resolve: done } = Promise.withResolvers();
   //   const spy = jest.spyOn(fs, 'fsync');

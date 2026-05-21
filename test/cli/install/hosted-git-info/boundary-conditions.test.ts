@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe("hosted-git-info boundary conditions", () => {
   test.each([{ description: "git with pound", dependency: "https://github.com/#" }])(
@@ -14,10 +14,10 @@ describe("hosted-git-info boundary conditions", () => {
         }),
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "install"],
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "install"],
         cwd: String(dir),
-        env: bunEnv,
+        env: funEnv,
         stderr: "pipe",
         stdout: "pipe",
       });

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("override is an accessibility modifier", () => {
   class FooParent {}

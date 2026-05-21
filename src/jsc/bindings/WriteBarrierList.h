@@ -4,7 +4,7 @@
 #include <wtf/Vector.h>
 #include <JavaScriptCore/WriteBarrier.h>
 
-namespace Bun {
+namespace Fun {
 
 /**
  * A variable-length list of JSValue objects with garbage collection support.

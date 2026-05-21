@@ -1,4 +1,4 @@
-pub fn toBeTruthy(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn toBeTruthy(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     defer this.postMatch(globalThis);
     const thisValue = callFrame.this();
     const value: JSValue = try this.getValue(globalThis, thisValue, "toBeTruthy", "");
@@ -29,12 +29,12 @@ pub fn toBeTruthy(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFr
     return this.throw(globalThis, signature, "\n\n" ++ received_line, .{value_fmt});
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

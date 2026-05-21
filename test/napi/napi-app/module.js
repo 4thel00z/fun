@@ -11,8 +11,8 @@ async function gcUntil(fn) {
     await new Promise(resolve => {
       setTimeout(resolve, 1);
     });
-    if (typeof Bun == "object") {
-      Bun.gc(true);
+    if (typeof Fun == "object") {
+      Fun.gc(true);
     } else {
       // if this fails, you need to pass --expose-gc to node
       global.gc();
@@ -33,7 +33,7 @@ nativeTests.test_napi_class_constructor_handle_scope = () => {
 nativeTests.test_napi_handle_scope_finalizer = async () => {
   // Create a weak reference, which will be collected eventually
   // Pass false in Node.js so it does not create a handle scope
-  nativeTests.create_ref_with_finalizer(Boolean(process.isBun));
+  nativeTests.create_ref_with_finalizer(Boolean(process.isFun));
 
   // Wait until it actually has been collected by ticking the event loop and forcing GC
   await gcUntil(() => nativeTests.was_finalize_called());
@@ -447,7 +447,7 @@ nativeTests.test_reflect_construct_no_prototype_crash = () => {
 };
 
 nativeTests.test_napi_create_object_structured_clone = () => {
-  // https://github.com/oven-sh/bun/issues/25658
+  // https://github.com/underdoc-org/fun/issues/25658
   const obj = nativeTests.make_empty_object();
   assert.deepStrictEqual(obj, {});
   const cloned = structuredClone(obj);
@@ -786,8 +786,8 @@ nativeTests.test_ref_unref_underflow = () => {
 
 nativeTests.test_get_value_string = () => {
   function to16Bit(string) {
-    if (typeof Bun != "object") return string;
-    const jsc = require("bun:jsc");
+    if (typeof Fun != "object") return string;
+    const jsc = require("fun:jsc");
     const codeUnits = new DataView(new ArrayBuffer(2 * string.length));
     for (let i = 0; i < string.length; i++) {
       codeUnits.setUint16(2 * i, string.charCodeAt(i), true);
@@ -799,8 +799,8 @@ nativeTests.test_get_value_string = () => {
     return string16Bit;
   }
   function assert8Bit(string) {
-    if (typeof Bun != "object") return string;
-    const jsc = require("bun:jsc");
+    if (typeof Fun != "object") return string;
+    const jsc = require("fun:jsc");
     // make sure we succeeded in making a Latin-1 string
     assert(jsc.jscDescribe(string).includes("8Bit:(1)"));
     return string;
@@ -862,7 +862,7 @@ nativeTests.test_cleanup_hook_modification_during_iteration = () => {
 };
 
 // Test for napi_typeof with boxed primitive objects (String, Number, Boolean)
-// See: https://github.com/oven-sh/bun/issues/25351
+// See: https://github.com/underdoc-org/fun/issues/25351
 nativeTests.test_napi_typeof_boxed_primitives = () => {
   // napi_valuetype enum values (from node_api_types.h):
   // napi_undefined = 0, napi_null = 1, napi_boolean = 2, napi_number = 3,
@@ -911,7 +911,7 @@ nativeTests.test_napi_typeof_boxed_primitives = () => {
   console.log("All boxed primitive tests passed!");
 };
 
-// https://github.com/oven-sh/bun/issues/25933
+// https://github.com/underdoc-org/fun/issues/25933
 // Test that napi_typeof returns napi_function for callbacks wrapped in
 // AsyncContextFrame (which happens inside AsyncLocalStorage.run()).
 nativeTests.test_napi_typeof_async_context_frame = async () => {
@@ -921,7 +921,7 @@ nativeTests.test_napi_typeof_async_context_frame = async () => {
   await als.run({ key: "value" }, () => {
     return new Promise(resolve => {
       // Pass a callback to the native addon. Because we're inside
-      // AsyncLocalStorage.run(), Bun wraps it in AsyncContextFrame.
+      // AsyncLocalStorage.run(), Fun wraps it in AsyncContextFrame.
       // The native call_js_cb will call napi_typeof on the received
       // js_callback and print the result.
       nativeTests.test_issue_25933(() => {});

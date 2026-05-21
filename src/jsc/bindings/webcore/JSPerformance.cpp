@@ -116,10 +116,10 @@ static JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(functionPerformanceNowWith
 static inline JSC::EncodedJSValue functionPerformanceNowBody(VM& vm)
 {
     // nanoseconds to seconds
-    double time = static_cast<double>(Bun__readOriginTimer(Bun::vm(vm)));
+    double time = static_cast<double>(Fun__readOriginTimer(Fun::vm(vm)));
     double result = time / 1000000.0;
 
-    // https://github.com/oven-sh/bun/issues/5604
+    // https://github.com/underdoc-org/fun/issues/5604
     // Must be EncodeAsDouble because the DOMJIT signature has SpecDoubleReal.
     return JSValue::encode(jsDoubleNumber(result));
 }
@@ -285,7 +285,7 @@ void JSPerformance::finishCreation(VM& vm)
     this->putDirect(
         vm,
         JSC::Identifier::fromString(vm, "timeOrigin"_s),
-        jsNumber(Bun__readOriginTimerStart(static_cast<Zig::GlobalObject*>(this->globalObject())->bunVM())),
+        jsNumber(Fun__readOriginTimerStart(static_cast<Zig::GlobalObject*>(this->globalObject())->funVM())),
         PropertyAttribute::ReadOnly | 0);
 }
 

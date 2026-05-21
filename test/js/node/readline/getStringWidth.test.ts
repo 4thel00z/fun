@@ -3,7 +3,7 @@ import readline from "node:readline";
 var {
   utils: { getStringWidth },
   // @ts-ignore
-} = readline[Symbol.for("__BUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
+} = readline[Symbol.for("__FUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")];
 
 it("handles invisible ASCII character at any position", () => {
   const visible = "a";

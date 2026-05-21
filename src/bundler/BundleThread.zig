@@ -1,5 +1,5 @@
 /// Used to keep the bundle thread from spinning on Windows
-pub fn timerCallback(_: *bun.windows.libuv.Timer) callconv(.c) void {}
+pub fn timerCallback(_: *fun.windows.libuv.Timer) callconv(.c) void {}
 
 /// Originally, bake.DevServer required a separate bundling thread, but that was
 /// later removed. The bundling thread's scheduling logic is generalized over
@@ -13,10 +13,10 @@ pub fn BundleThread(CompletionStruct: type) type {
     return struct {
         const Self = @This();
 
-        waker: bun.Async.Waker,
+        waker: fun.Async.Waker,
         ready_event: std.Thread.ResetEvent,
-        queue: bun.UnboundedQueue(CompletionStruct, .next),
-        generation: bun.Generation = 0,
+        queue: fun.UnboundedQueue(CompletionStruct, .next),
+        generation: fun.Generation = 0,
 
         /// To initialize, put this somewhere in memory, and then call `spawn()`
         pub const uninitialized: Self = .{
@@ -32,22 +32,22 @@ pub fn BundleThread(CompletionStruct: type) type {
             return thread;
         }
 
-        /// Lazily-initialized singleton. This is used for `Bun.build` since the
+        /// Lazily-initialized singleton. This is used for `Fun.build` since the
         /// bundle thread may not be needed.
         pub const singleton = struct {
             var once = std.once(loadOnceImpl);
             var instance: ?*Self = null;
 
-            // Blocks the calling thread until the bun build thread is created.
+            // Blocks the calling thread until the fun build thread is created.
             // std.once also blocks other callers of this function until the first caller is done.
             fn loadOnceImpl() void {
-                const bundle_thread = bun.handleOom(bun.default_allocator.create(Self));
+                const bundle_thread = fun.handleOom(fun.default_allocator.create(Self));
                 bundle_thread.* = uninitialized;
                 instance = bundle_thread;
 
-                // 2. Spawn the bun build thread.
+                // 2. Spawn the fun build thread.
                 const os_thread = bundle_thread.spawn() catch
-                    Output.panic("Failed to spawn bun build thread", .{});
+                    Output.panic("Failed to spawn fun build thread", .{});
                 os_thread.detach();
             }
 
@@ -69,13 +69,13 @@ pub fn BundleThread(CompletionStruct: type) type {
         fn threadMain(instance: *Self) void {
             Output.Source.configureNamedThread("Bundler");
 
-            instance.waker = bun.Async.Waker.init() catch @panic("Failed to create waker");
+            instance.waker = fun.Async.Waker.init() catch @panic("Failed to create waker");
 
             // Unblock the calling thread so it can continue.
             instance.ready_event.set();
 
-            var timer: bun.windows.libuv.Timer = undefined;
-            if (bun.Environment.isWindows) {
+            var timer: fun.windows.libuv.Timer = undefined;
+            if (fun.Environment.isWindows) {
                 timer.init(instance.waker.loop.uv_loop);
                 timer.start(std.math.maxInt(u64), std.math.maxInt(u64), &timerCallback);
             }
@@ -92,7 +92,7 @@ pub fn BundleThread(CompletionStruct: type) type {
                 instance.generation +|= 1;
 
                 if (has_bundled) {
-                    bun.mimalloc.mi_collect(false);
+                    fun.mimalloc.mi_collect(false);
                     has_bundled = false;
                 }
 
@@ -100,8 +100,8 @@ pub fn BundleThread(CompletionStruct: type) type {
             }
         }
 
-        /// This is called from `Bun.build` in JavaScript.
-        fn generateInNewThread(completion: *CompletionStruct, generation: bun.Generation) !void {
+        /// This is called from `Fun.build` in JavaScript.
+        fn generateInNewThread(completion: *CompletionStruct, generation: fun.Generation) !void {
             var heap = ThreadLocalArena.init();
             defer heap.deinit();
 
@@ -111,7 +111,7 @@ pub fn BundleThread(CompletionStruct: type) type {
             ast_memory_allocator.reset();
             ast_memory_allocator.push();
 
-            const transpiler = try allocator.create(bun.Transpiler);
+            const transpiler = try allocator.create(fun.Transpiler);
 
             try completion.configureBundler(transpiler, allocator);
 
@@ -149,28 +149,28 @@ pub fn BundleThread(CompletionStruct: type) type {
                 this.linker.source_maps.line_offset_wait_group.wait();
                 this.linker.source_maps.quoted_contents_wait_group.wait();
 
-                var out_log = Logger.Log.init(bun.default_allocator);
-                bun.handleOom(this.transpiler.log.appendToWithRecycled(&out_log, true));
+                var out_log = Logger.Log.init(fun.default_allocator);
+                fun.handleOom(this.transpiler.log.appendToWithRecycled(&out_log, true));
                 completion.log = out_log;
             }
 
             completion.result = .{ .value = try this.runFromJSInNewThread(transpiler.options.entry_points) };
 
-            var out_log = Logger.Log.init(bun.default_allocator);
-            bun.handleOom(this.transpiler.log.appendToWithRecycled(&out_log, true));
+            var out_log = Logger.Log.init(fun.default_allocator);
+            fun.handleOom(this.transpiler.log.appendToWithRecycled(&out_log, true));
             completion.log = out_log;
             completion.completeOnBundleThread();
         }
     };
 }
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const Logger = @import("../logger/logger.zig");
 const Timer = @import("../perf/system_timer.zig");
@@ -178,18 +178,18 @@ const linker = @import("./linker.zig");
 const options = @import("./options.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
-const Output = bun.Output;
-const Transpiler = bun.Transpiler;
-const bake = bun.bake;
-const default_allocator = bun.default_allocator;
-const js_ast = bun.ast;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;
+const Output = fun.Output;
+const Transpiler = fun.Transpiler;
+const bake = fun.bake;
+const default_allocator = fun.default_allocator;
+const js_ast = fun.ast;
+const jsc = fun.jsc;
 
-const allocators = bun.allocators;
-const ThreadLocalArena = bun.allocators.MimallocArena;
+const allocators = fun.allocators;
+const ThreadLocalArena = fun.allocators.MimallocArena;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const BundleV2 = bundler.BundleV2;

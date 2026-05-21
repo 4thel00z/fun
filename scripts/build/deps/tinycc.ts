@@ -1,5 +1,5 @@
 /**
- * TinyCC — small embeddable C compiler. Powers bun:ffi's JIT-compile path,
+ * TinyCC — small embeddable C compiler. Powers fun:ffi's JIT-compile path,
  * where user-provided C gets compiled and linked at runtime.
  *
  * Disabled on windows-arm64 (tinycc doesn't have an arm64-coff backend).
@@ -53,7 +53,7 @@ export const tinycc: Dependency = {
       defines.CONFIG_CODESIGN = true;
       defines.CONFIG_NEW_MACHO = true;
       // CONFIG_USR_INCLUDE was set to sysroot in the cmake version. tccrun
-      // uses it to find system headers at runtime; bun:ffi doesn't exercise
+      // uses it to find system headers at runtime; fun:ffi doesn't exercise
       // that path (we only use libtcc as a backend, not the full preprocessor
       // driver) so we leave it at the default.
     }

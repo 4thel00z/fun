@@ -2,7 +2,7 @@
 #include "helpers.h"
 #include "NodeValidator.h"
 #include "CryptoUtil.h"
-#include "BunProcess.h"
+#include "FunProcess.h"
 #include "JSPublicKeyObject.h"
 #include "JSPrivateKeyObject.h"
 #include <JavaScriptCore/ObjectConstructor.h>
@@ -15,7 +15,7 @@
 
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 
 void KeyPairJobCtx::runTask(JSGlobalObject* globalObject, ncrypto::EVPKeyCtxPointer& keyCtx)
 {
@@ -35,12 +35,12 @@ void KeyPairJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callb
     ThrowScope scope = DECLARE_THROW_SCOPE(vm);
 
     auto exceptionCallback = [lexicalGlobalObject, callback](JSValue exceptionValue) {
-        Bun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(exceptionValue));
+        Fun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(exceptionValue));
     };
 
     if (!m_keyObj.data()) {
         JSValue err = createCryptoError(lexicalGlobalObject, scope, m_opensslError, "key generation failed"_s);
-        Bun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
+        Fun__EventLoop__runCallback1(lexicalGlobalObject, JSValue::encode(callback), JSValue::encode(jsUndefined()), JSValue::encode(err));
         return;
     }
 
@@ -60,7 +60,7 @@ void KeyPairJobCtx::runFromJS(JSGlobalObject* lexicalGlobalObject, JSValue callb
         return;
     }
 
-    Bun__EventLoop__runCallback3(
+    Fun__EventLoop__runCallback3(
         lexicalGlobalObject,
         JSValue::encode(callback),
         JSValue::encode(jsUndefined()),
@@ -314,4 +314,4 @@ JSC_DEFINE_HOST_FUNCTION(jsGenerateKeyPairSync, (JSGlobalObject * globalObject, 
     return JSValue::encode(result);
 }
 
-} // namespace Bun
+} // namespace Fun

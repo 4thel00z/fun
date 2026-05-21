@@ -1,7 +1,7 @@
 #pragma once
 
 #include "root.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/ArrayBuffer.h>
 #include <JavaScriptCore/ArrayBufferView.h>
 #include <JavaScriptCore/JSDestructibleObject.h>
@@ -12,7 +12,7 @@
 #include <JavaScriptCore/LazyProperty.h>
 #include <JavaScriptCore/LazyPropertyInlines.h>
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(callHmac);
 JSC_DECLARE_HOST_FUNCTION(constructHmac);
@@ -123,4 +123,4 @@ JSC_DECLARE_HOST_FUNCTION(jsHmacProtoFuncDigest);
 
 void setupJSHmacClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

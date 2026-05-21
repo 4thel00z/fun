@@ -8,12 +8,12 @@
 // Without the bounds check this panics in debug builds (index out of bounds)
 // and is a silent heap overflow in release builds.
 
-import { SQL } from "bun";
+import { SQL } from "fun";
 
 const url = process.env.MYSQL_URL;
 if (!url) throw new Error("MYSQL_URL is required");
 
-const tls = process.env.CA_PATH ? { ca: Bun.file(process.env.CA_PATH) } : undefined;
+const tls = process.env.CA_PATH ? { ca: Fun.file(process.env.CA_PATH) } : undefined;
 const sql = new SQL({ url, tls, max: 1 });
 
 try {

@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/25648
+// https://github.com/underdoc-org/fun/issues/25648
 // Named function expression names should be renamed when they shadow an outer symbol
 // that's referenced inside the function body. This prevents infinite recursion.
 
@@ -30,9 +30,9 @@ console.log(test());
   });
 
   // Bundle and run the code
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "index.ts", "--bundle", "--outfile=out.js"],
-    env: bunEnv,
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "index.ts", "--bundle", "--outfile=out.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -48,9 +48,9 @@ console.log(test());
   expect(buildExitCode).toBe(0);
 
   // Run the bundled output
-  await using runProc = Bun.spawn({
-    cmd: [bunExe(), "out.js"],
-    env: bunEnv,
+  await using runProc = Fun.spawn({
+    cmd: [funExe(), "out.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -108,9 +108,9 @@ console.log(result);
   });
 
   // Bundle and run the code
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "index.ts", "--bundle", "--outfile=out.js"],
-    env: bunEnv,
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "index.ts", "--bundle", "--outfile=out.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -126,9 +126,9 @@ console.log(result);
   expect(buildExitCode).toBe(0);
 
   // Run the bundled output
-  await using runProc = Bun.spawn({
-    cmd: [bunExe(), "out.js"],
-    env: bunEnv,
+  await using runProc = Fun.spawn({
+    cmd: [funExe(), "out.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -185,9 +185,9 @@ console.log(instance.clone().getValue());
   });
 
   // Bundle and run the code
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "index.ts", "--bundle", "--outfile=out.js"],
-    env: bunEnv,
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "index.ts", "--bundle", "--outfile=out.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -203,9 +203,9 @@ console.log(instance.clone().getValue());
   expect(buildExitCode).toBe(0);
 
   // Run the bundled output
-  await using runProc = Bun.spawn({
-    cmd: [bunExe(), "out.js"],
-    env: bunEnv,
+  await using runProc = Fun.spawn({
+    cmd: [funExe(), "out.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

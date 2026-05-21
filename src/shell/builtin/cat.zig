@@ -99,7 +99,7 @@ pub fn next(this: *Cat) Yield {
             const arg = std.mem.span(exec.args[exec.idx]);
             exec.idx += 1;
             const dir = this.bltn().parentCmd().base.shell.cwd_fd;
-            const fd = switch (ShellSyscall.openat(dir, arg, bun.O.RDONLY, 0)) {
+            const fd = switch (ShellSyscall.openat(dir, arg, fun.O.RDONLY, 0)) {
                 .result => |fd| fd,
                 .err => |e| {
                     const buf = this.bltn().taskErrorToString(.cat, e);
@@ -333,7 +333,7 @@ const Opts = struct {
     }
 };
 
-const debug = bun.Output.scoped(.ShellCat, .hidden);
+const debug = fun.Output.scoped(.ShellCat, .hidden);
 
 const std = @import("std");
 
@@ -348,10 +348,10 @@ const unsupportedFlag = interpreter.unsupportedFlag;
 const Builtin = Interpreter.Builtin;
 const Result = Interpreter.Builtin.Result;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
 const IOReader = shell.IOReader;
-const Yield = bun.shell.Yield;
+const Yield = fun.shell.Yield;

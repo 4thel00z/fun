@@ -13,7 +13,7 @@ pub const PosixLoop = extern struct {
     /// Loop's own file descriptor
     fd: i32,
 
-    /// Number of polls owned by Bun
+    /// Number of polls owned by Fun
     active: u32 = 0,
 
     /// Incremented atomically by wakeup(), swapped to 0 before epoll/kqueue.
@@ -119,16 +119,16 @@ pub const PosixLoop = extern struct {
     pub const wake = wakeup;
 
     pub fn tick(this: *PosixLoop) void {
-        c.us_loop_run_bun_tick(this, null);
+        c.us_loop_run_fun_tick(this, null);
     }
 
     pub fn tickWithoutIdle(this: *PosixLoop) void {
-        const timespec = bun.timespec{ .sec = 0, .nsec = 0 };
-        c.us_loop_run_bun_tick(this, &timespec);
+        const timespec = fun.timespec{ .sec = 0, .nsec = 0 };
+        c.us_loop_run_fun_tick(this, &timespec);
     }
 
-    pub fn tickWithTimeout(this: *PosixLoop, timespec: ?*const bun.timespec) void {
-        c.us_loop_run_bun_tick(this, timespec);
+    pub fn tickWithTimeout(this: *PosixLoop, timespec: ?*const fun.timespec) void {
+        c.us_loop_run_fun_tick(this, timespec);
     }
 
     /// Free everything queued on `loop->data.closed_head` /
@@ -203,7 +203,7 @@ pub const PosixLoop = extern struct {
 };
 
 pub const WindowsLoop = extern struct {
-    const uv = bun.windows.libuv;
+    const uv = fun.windows.libuv;
 
     internal_loop_data: InternalLoopData align(16),
 
@@ -221,7 +221,7 @@ pub const WindowsLoop = extern struct {
     }
 
     pub fn get() *WindowsLoop {
-        return c.uws_get_loop_with_native(bun.windows.libuv.Loop.get());
+        return c.uws_get_loop_with_native(fun.windows.libuv.Loop.get());
     }
 
     pub fn iterationNumber(this: *const WindowsLoop) u64 {
@@ -246,7 +246,7 @@ pub const WindowsLoop = extern struct {
 
     pub const wake = wakeup;
 
-    pub fn tickWithTimeout(this: *WindowsLoop, _: ?*const bun.timespec) void {
+    pub fn tickWithTimeout(this: *WindowsLoop, _: ?*const fun.timespec) void {
         c.us_loop_run(this);
     }
 
@@ -329,7 +329,7 @@ pub const WindowsLoop = extern struct {
     }
 };
 
-pub const Loop = if (bun.Environment.isWindows) WindowsLoop else PosixLoop;
+pub const Loop = if (fun.Environment.isWindows) WindowsLoop else PosixLoop;
 
 const c = struct {
     pub extern fn us_create_loop(
@@ -351,7 +351,7 @@ const c = struct {
     pub extern fn uws_loop_removePostHandler(loop: *Loop, ctx: *anyopaque, cb: *const (fn (ctx: *anyopaque, loop: *Loop) callconv(.c) void)) void;
     pub extern fn uws_loop_addPreHandler(loop: *Loop, ctx: *anyopaque, cb: *const (fn (ctx: *anyopaque, loop: *Loop) callconv(.c) void)) void;
     pub extern fn uws_loop_removePreHandler(loop: *Loop, ctx: *anyopaque, cb: *const (fn (ctx: *anyopaque, loop: *Loop) callconv(.c) void)) void;
-    pub extern fn us_loop_run_bun_tick(loop: ?*Loop, timouetMs: ?*const bun.timespec) void;
+    pub extern fn us_loop_run_fun_tick(loop: ?*Loop, timouetMs: ?*const fun.timespec) void;
     pub extern fn us_internal_free_closed_sockets(loop: *Loop) void;
     pub extern fn us_loop_close_all_groups(loop: *Loop) c_int;
     pub extern fn uws_get_loop() *Loop;
@@ -361,12 +361,12 @@ const c = struct {
     pub extern fn uws_loop_date_header_timer_update(loop: *Loop) void;
 };
 
-const log = bun.Output.scoped(.Loop, .visible);
+const log = fun.Output.scoped(.Loop, .visible);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const InternalLoopData = uws.InternalLoopData;

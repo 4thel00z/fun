@@ -54,7 +54,7 @@ pub fn parse(possibly_encoded_pathname_: string) !URLPath {
             possibly_encoded_pathname.len,
         )];
 
-        bun.copy(u8, possibly_encoded_pathname, possibly_encoded_pathname_[0..possibly_encoded_pathname.len]);
+        fun.copy(u8, possibly_encoded_pathname, possibly_encoded_pathname_[0..possibly_encoded_pathname.len]);
         const clone = possibly_encoded_pathname[0..possibly_encoded_pathname.len];
 
         var fbs = std.io.fixedBufferStream(possibly_encoded_pathname);
@@ -146,5 +146,5 @@ const string = []const u8;
 const std = @import("std");
 const PercentEncoding = @import("../url/url.zig").PercentEncoding;
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;

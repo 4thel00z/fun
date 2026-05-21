@@ -10,7 +10,7 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
         const This = @This();
 
         /// Use like Resolution.init(.{ .npm = VersionedURL{ ... } })
-        pub inline fn init(value: bun.meta.Tagged(Value, Tag)) This {
+        pub inline fn init(value: fun.meta.Tagged(Value, Tag)) This {
             return .{
                 .tag = std.meta.activeTag(value),
                 .value = Value.init(value),
@@ -272,7 +272,7 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
             };
         }
 
-        pub fn fmt(this: *const This, string_bytes: []const u8, path_sep: bun.fmt.PathFormatOptions.Sep) Formatter {
+        pub fn fmt(this: *const This, string_bytes: []const u8, path_sep: fun.fmt.PathFormatOptions.Sep) Formatter {
             return Formatter{
                 .resolution = this,
                 .buf = string_bytes,
@@ -384,7 +384,7 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
                 const value = formatter.resolution.value;
                 switch (formatter.resolution.tag) {
                     .npm => try writer.writeAll(value.npm.url.slice(formatter.buf)),
-                    .local_tarball => try bun.fmt.fmtPath(u8, value.local_tarball.slice(buf), .{ .path_sep = .posix }).format(writer),
+                    .local_tarball => try fun.fmt.fmtPath(u8, value.local_tarball.slice(buf), .{ .path_sep = .posix }).format(writer),
                     .folder => try writer.writeAll(value.folder.slice(formatter.buf)),
                     .remote_tarball => try writer.writeAll(value.remote_tarball.slice(formatter.buf)),
                     .git => try value.git.formatAs("git+", formatter.buf, writer),
@@ -400,22 +400,22 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
         pub const Formatter = struct {
             resolution: *const This,
             buf: []const u8,
-            path_sep: bun.fmt.PathFormatOptions.Sep,
+            path_sep: fun.fmt.PathFormatOptions.Sep,
 
             pub fn format(formatter: Formatter, writer: *std.Io.Writer) std.Io.Writer.Error!void {
                 const buf = formatter.buf;
                 const value = formatter.resolution.value;
                 switch (formatter.resolution.tag) {
                     .npm => try value.npm.version.fmt(buf).format(writer),
-                    .local_tarball => try bun.fmt.fmtPath(u8, value.local_tarball.slice(buf), .{ .path_sep = formatter.path_sep }).format(writer),
-                    .folder => try bun.fmt.fmtPath(u8, value.folder.slice(buf), .{ .path_sep = formatter.path_sep }).format(writer),
+                    .local_tarball => try fun.fmt.fmtPath(u8, value.local_tarball.slice(buf), .{ .path_sep = formatter.path_sep }).format(writer),
+                    .folder => try fun.fmt.fmtPath(u8, value.folder.slice(buf), .{ .path_sep = formatter.path_sep }).format(writer),
                     .remote_tarball => try writer.writeAll(value.remote_tarball.slice(buf)),
                     .git => try value.git.formatAs("git+", buf, writer),
                     .github => try value.github.formatAs("github:", buf, writer),
-                    .workspace => try writer.print("workspace:{f}", .{bun.fmt.fmtPath(u8, value.workspace.slice(buf), .{
+                    .workspace => try writer.print("workspace:{f}", .{fun.fmt.fmtPath(u8, value.workspace.slice(buf), .{
                         .path_sep = formatter.path_sep,
                     })}),
-                    .symlink => try writer.print("link:{f}", .{bun.fmt.fmtPath(u8, value.symlink.slice(buf), .{
+                    .symlink => try writer.print("link:{f}", .{fun.fmt.fmtPath(u8, value.symlink.slice(buf), .{
                         .path_sep = formatter.path_sep,
                     })}),
                     .single_file_module => try writer.print("module:{s}", .{value.single_file_module.slice(buf)}),
@@ -430,7 +430,7 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
 
             pub fn format(formatter: DebugFormatter, writer: *std.Io.Writer) !void {
                 try writer.writeAll("Resolution{ .");
-                try writer.writeAll(bun.tagName(Tag, formatter.resolution.tag) orelse "invalid");
+                try writer.writeAll(fun.tagName(Tag, formatter.resolution.tag) orelse "invalid");
                 try writer.writeAll(" = ");
                 switch (formatter.resolution.tag) {
                     .npm => try formatter.resolution.value.npm.version.fmt(formatter.buf).format(writer),
@@ -476,7 +476,7 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
             pub var zero: Value = @bitCast(std.mem.zeroes([@sizeOf(Value)]u8));
 
             /// To avoid undefined memory between union values, we must zero initialize the union first.
-            pub fn init(field: bun.meta.Tagged(Value, Tag)) Value {
+            pub fn init(field: fun.meta.Tagged(Value, Tag)) Value {
                 var value = zero;
                 switch (field) {
                     inline else => |v, t| {
@@ -510,7 +510,7 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
             //
             // There are many ways to do it, but perhaps one way to be maximally compatible is just removing the protocol part of the URL.
             //
-            // For example, bun would transform this input:
+            // For example, fun would transform this input:
             //
             //   import _ from "https://github.com/lodash/lodash/lodash.min.js";
             //
@@ -520,7 +520,7 @@ pub fn ResolutionType(comptime SemverIntType: type) type {
             //
             // github.com would become a package, with it's own package.json
             // This is similar to how Go does it, except it wouldn't clone the whole repo.
-            // There are more efficient ways to do this, e.g. generate a .bun file just for all URL imports.
+            // There are more efficient ways to do this, e.g. generate a .fun file just for all URL imports.
             // There are questions of determinism, but perhaps that's what Integrity would do.
             single_file_module = 100,
 
@@ -543,10 +543,10 @@ const std = @import("std");
 const Repository = @import("./repository.zig").Repository;
 const VersionedURLType = @import("./versioned_url.zig").VersionedURLType;
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const strings = bun.strings;
-const Dependency = bun.install.Dependency;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const strings = fun.strings;
+const Dependency = fun.install.Dependency;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;

@@ -1,11 +1,11 @@
-// https://github.com/oven-sh/bun/issues/13696
+// https://github.com/underdoc-org/fun/issues/13696
 // node:http ClientRequest: a single req.write() without req.end() never sent
 // the request, and in duplex mode 'response' was held back until req.end().
 // docker-modem relies on write-once-keep-open for container.exec stdin, which
 // is why testcontainers' default HostPortWaitStrategy hung until timeout.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "node:path";
 
 // Runs a fixture that simulates docker-modem's chunked POST with an open
@@ -101,9 +101,9 @@ for (const socketMode of ["tcp", "unix"] as const) {
     using dir = tempDir("issue-13696", {});
     const socketPath = socketMode === "unix" ? join(String(dir), "docker.sock") : undefined;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", fixture(socketPath)],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", fixture(socketPath)],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -172,9 +172,9 @@ server.listen(0, "127.0.0.1", () => {
 setTimeout(() => process.exit(0), 3000).unref();
 `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", src],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", src],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

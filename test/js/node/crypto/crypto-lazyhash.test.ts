@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { Hash, createHash } from "crypto";
 import { Transform } from "stream";
 

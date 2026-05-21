@@ -10,12 +10,12 @@ const ScriptConfig = struct {
 const PipeReader = struct {
     const This = @This();
 
-    reader: bun.io.BufferedReader = bun.io.BufferedReader.init(This),
+    reader: fun.io.BufferedReader = fun.io.BufferedReader.init(This),
     handle: *ProcessHandle = undefined, // set in ProcessHandle.start()
     is_stderr: bool,
-    line_buffer: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(bun.default_allocator),
+    line_buffer: std.array_list.Managed(u8) = std.array_list.Managed(u8).init(fun.default_allocator),
 
-    pub fn onReadChunk(this: *This, chunk: []const u8, hasMore: bun.io.ReadState) bool {
+    pub fn onReadChunk(this: *This, chunk: []const u8, hasMore: fun.io.ReadState) bool {
         _ = hasMore;
         this.handle.state.readChunk(this, chunk) catch {};
         return true;
@@ -25,17 +25,17 @@ const PipeReader = struct {
         _ = this;
     }
 
-    pub fn onReaderError(this: *This, err: bun.sys.Error) void {
+    pub fn onReaderError(this: *This, err: fun.sys.Error) void {
         _ = this;
         _ = err;
     }
 
-    pub fn eventLoop(this: *This) *bun.jsc.MiniEventLoop {
+    pub fn eventLoop(this: *This) *fun.jsc.MiniEventLoop {
         return this.handle.state.event_loop;
     }
 
-    pub fn loop(this: *This) *bun.Async.Loop {
-        if (comptime bun.Environment.isWindows) {
+    pub fn loop(this: *This) *fun.Async.Loop {
+        if (comptime fun.Environment.isWindows) {
             return this.handle.state.event_loop.loop.uv_loop;
         } else {
             return this.handle.state.event_loop.loop;
@@ -54,10 +54,10 @@ pub const ProcessHandle = struct {
     stderr_reader: PipeReader = .{ .is_stderr = true },
 
     process: ?struct {
-        ptr: *bun.spawn.Process,
-        status: bun.spawn.Status = .running,
+        ptr: *fun.spawn.Process,
+        status: fun.spawn.Status = .running,
     } = null,
-    options: bun.spawn.SpawnOptions,
+    options: fun.spawn.SpawnOptions,
 
     start_time: ?std.time.Instant = null,
     end_time: ?std.time.Instant = null,
@@ -65,10 +65,10 @@ pub const ProcessHandle = struct {
     remaining_dependencies: usize = 0,
     /// Dependents within the same script group (pre->main->post chain).
     /// These are NOT started if this handle fails, even with --no-exit-on-error.
-    group_dependents: std.array_list.Managed(*This) = std.array_list.Managed(*This).init(bun.default_allocator),
+    group_dependents: std.array_list.Managed(*This) = std.array_list.Managed(*This).init(fun.default_allocator),
     /// Dependents across sequential groups (group N -> group N+1).
     /// These ARE started even if this handle fails when --no-exit-on-error is set.
-    next_dependents: std.array_list.Managed(*This) = std.array_list.Managed(*This).init(bun.default_allocator),
+    next_dependents: std.array_list.Managed(*This) = std.array_list.Managed(*This).init(fun.default_allocator),
 
     fn start(this: *This) !void {
         this.state.remaining_scripts += 1;
@@ -81,14 +81,14 @@ pub const ProcessHandle = struct {
         };
 
         this.start_time = std.time.Instant.now() catch null;
-        var spawned: bun.spawn.process.SpawnProcessResult = brk: {
-            var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+        var spawned: fun.spawn.process.SpawnProcessResult = brk: {
+            var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
             defer arena.deinit();
             const original_path = this.state.env.map.get("PATH") orelse "";
-            bun.handleOom(this.state.env.map.put("PATH", this.config.PATH));
-            defer bun.handleOom(this.state.env.map.put("PATH", original_path));
+            fun.handleOom(this.state.env.map.put("PATH", this.config.PATH));
+            defer fun.handleOom(this.state.env.map.put("PATH", original_path));
             const envp = try this.state.env.map.createNullDelimitedEnvMap(arena.allocator());
-            break :brk try (try bun.spawn.spawnProcess(&this.options, argv[0..], envp)).unwrap();
+            break :brk try (try fun.spawn.spawnProcess(&this.options, argv[0..], envp)).unwrap();
         };
         var process = spawned.toProcess(this.state.event_loop, false);
 
@@ -104,11 +104,11 @@ pub const ProcessHandle = struct {
 
         if (Environment.isPosix) {
             if (spawned.stdout) |stdout_fd| {
-                _ = bun.sys.setNonblocking(stdout_fd);
+                _ = fun.sys.setNonblocking(stdout_fd);
                 try this.stdout_reader.reader.start(stdout_fd, true).unwrap();
             }
             if (spawned.stderr) |stderr_fd| {
-                _ = bun.sys.setNonblocking(stderr_fd);
+                _ = fun.sys.setNonblocking(stderr_fd);
                 try this.stderr_reader.reader.start(stderr_fd, true).unwrap();
             }
         } else {
@@ -123,24 +123,24 @@ pub const ProcessHandle = struct {
             .result => {},
             .err => |err| {
                 if (!process.hasExited())
-                    process.onExit(.{ .err = err }, &std.mem.zeroes(bun.spawn.Rusage));
+                    process.onExit(.{ .err = err }, &std.mem.zeroes(fun.spawn.Rusage));
             },
         }
     }
 
-    pub fn onProcessExit(this: *This, proc: *bun.spawn.Process, status: bun.spawn.Status, _: *const bun.spawn.Rusage) void {
+    pub fn onProcessExit(this: *This, proc: *fun.spawn.Process, status: fun.spawn.Status, _: *const fun.spawn.Rusage) void {
         this.process.?.status = status;
         this.end_time = std.time.Instant.now() catch null;
         _ = proc;
         this.state.processExit(this) catch {};
     }
 
-    pub fn eventLoop(this: *This) *bun.jsc.MiniEventLoop {
+    pub fn eventLoop(this: *This) *fun.jsc.MiniEventLoop {
         return this.state.event_loop;
     }
 
-    pub fn loop(this: *This) *bun.Async.Loop {
-        if (comptime bun.Environment.isWindows) {
+    pub fn loop(this: *This) *fun.Async.Loop {
+        if (comptime fun.Environment.isWindows) {
             return this.state.event_loop.loop.uv_loop;
         } else {
             return this.state.event_loop.loop;
@@ -162,20 +162,20 @@ const State = struct {
     const This = @This();
 
     handles: []ProcessHandle,
-    event_loop: *bun.jsc.MiniEventLoop,
+    event_loop: *fun.jsc.MiniEventLoop,
     remaining_scripts: usize = 0,
     max_label_len: usize,
     shell_bin: [:0]const u8,
     aborted: bool = false,
     no_exit_on_error: bool,
-    env: *bun.DotEnv.Loader,
+    env: *fun.DotEnv.Loader,
     use_colors: bool,
 
     pub fn isDone(this: *This) bool {
         return this.remaining_scripts == 0;
     }
 
-    fn readChunk(this: *This, pipe: *PipeReader, chunk: []const u8) (std.Io.Writer.Error || bun.OOM)!void {
+    fn readChunk(this: *This, pipe: *PipeReader, chunk: []const u8) (std.Io.Writer.Error || fun.OOM)!void {
         try pipe.line_buffer.appendSlice(chunk);
 
         // Route to correct parent stream: child stdout -> parent stdout, child stderr -> parent stderr
@@ -367,14 +367,14 @@ const AbortHandler = struct {
 
     pub fn install() void {
         if (Environment.isPosix) {
-            const action = bun.sys.Sigaction{
+            const action = fun.sys.Sigaction{
                 .handler = .{ .sigaction = AbortHandler.posixSignalHandler },
-                .mask = bun.sys.sigemptyset(),
+                .mask = fun.sys.sigemptyset(),
                 .flags = std.posix.SA.SIGINFO | std.posix.SA.RESTART | std.posix.SA.RESETHAND,
             };
-            bun.sys.sigaction(std.posix.SIG.INT, &action, null);
+            fun.sys.sigaction(std.posix.SIG.INT, &action, null);
         } else {
-            const res = bun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.TRUE);
+            const res = fun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.TRUE);
             if (res == 0) {
                 if (Environment.isDebug) {
                     Output.warn("Failed to set abort handler\n", .{});
@@ -385,7 +385,7 @@ const AbortHandler = struct {
 
     pub fn uninstall() void {
         if (Environment.isWindows) {
-            _ = bun.c.SetConsoleCtrlHandler(null, std.os.windows.FALSE);
+            _ = fun.c.SetConsoleCtrlHandler(null, std.os.windows.FALSE);
         }
     }
 };
@@ -425,7 +425,7 @@ fn addScriptConfigs(
     configs: *std.array_list.Managed(ScriptConfig),
     group_infos: *std.array_list.Managed(GroupInfo),
     raw_name: []const u8,
-    scripts_map: ?*const bun.StringArrayHashMap([]const u8),
+    scripts_map: ?*const fun.StringArrayHashMap([]const u8),
     allocator: std.mem.Allocator,
     cwd: []const u8,
     PATH: []const u8,
@@ -486,14 +486,14 @@ fn addScriptConfigs(
         }
     } else {
         // Not a package.json script - run as a raw command
-        // If it looks like a file path, prefix with bun executable
+        // If it looks like a file path, prefix with fun executable
         const is_file = raw_name.len > 0 and (raw_name[0] == '.' or raw_name[0] == '/' or
             (Environment.isWindows and raw_name[0] == '\\') or hasRunnableExtension(raw_name));
         const command_z = if (is_file) brk: {
-            const bun_path = bun.selfExePath() catch "bun";
-            // Quote the bun path so that backslashes on Windows are not
-            // interpreted as escape characters by `bun exec` (Bun's shell).
-            const cmd_str = try std.fmt.allocPrint(allocator, "\"{s}\" {s}" ++ "\x00", .{ bun_path, raw_name });
+            const fun_path = fun.selfExePath() catch "fun";
+            // Quote the fun path so that backslashes on Windows are not
+            // interpreted as escape characters by `fun exec` (Fun's shell).
+            const cmd_str = try std.fmt.allocPrint(allocator, "\"{s}\" {s}" ++ "\x00", .{ fun_path, raw_name });
             break :brk cmd_str[0 .. cmd_str.len - 1 :0];
         } else try allocator.dupeZ(u8, raw_name);
         try configs.append(.{
@@ -544,20 +544,20 @@ pub fn run(ctx: Command.Context) !noreturn {
     }
 
     // Set up the transpiler/environment
-    const fsinstance = try bun.fs.FileSystem.init(null);
+    const fsinstance = try fun.fs.FileSystem.init(null);
     var this_transpiler: transpiler.Transpiler = undefined;
     _ = try RunCommand.configureEnvForRun(ctx, &this_transpiler, null, true, false);
     const cwd = fsinstance.top_level_dir;
 
-    const event_loop = bun.jsc.MiniEventLoop.initGlobal(this_transpiler.env, null);
+    const event_loop = fun.jsc.MiniEventLoop.initGlobal(this_transpiler.env, null);
     // --no-orphans: register the macOS kqueue parent watch on this MiniEventLoop
     // (the VirtualMachine.init path is never reached for --parallel). Linux is
     // already covered by prctl in enable() + linux_pdeathsig on each spawn.
-    bun.ParentDeathWatchdog.installOnEventLoop(bun.jsc.EventLoopHandle.init(event_loop));
+    fun.ParentDeathWatchdog.installOnEventLoop(fun.jsc.EventLoopHandle.init(event_loop));
     const shell_bin: [:0]const u8 = if (Environment.isPosix)
         RunCommand.findShell(this_transpiler.env.get("PATH") orelse "", cwd) orelse return error.MissingShell
     else
-        bun.selfExePath() catch return error.MissingShell;
+        fun.selfExePath() catch return error.MissingShell;
 
     // Build ScriptConfigs and ProcessHandles
     // Each script name can produce up to 3 handles (pre, main, post)
@@ -574,7 +574,7 @@ pub fn run(ctx: Command.Context) !noreturn {
         var filter_instance = try FilterArg.FilterSet.init(ctx.allocator, filters_to_use, cwd);
         var patterns = std.array_list.Managed([]u8).init(ctx.allocator);
 
-        var root_buf: bun.PathBuffer = undefined;
+        var root_buf: fun.PathBuffer = undefined;
         const resolve_root = try FilterArg.getCandidatePackagePatterns(ctx.allocator, ctx.log, &patterns, cwd, &root_buf);
 
         var package_json_iter = try FilterArg.PackageFilterIterator.init(ctx.allocator, patterns.items, resolve_root);
@@ -584,21 +584,21 @@ pub fn run(ctx: Command.Context) !noreturn {
         const MatchedPackage = struct {
             name: []const u8,
             dirpath: []const u8,
-            scripts: *const bun.StringArrayHashMap([]const u8),
+            scripts: *const fun.StringArrayHashMap([]const u8),
             PATH: []const u8,
         };
         var matched_packages = std.array_list.Managed(MatchedPackage).init(ctx.allocator);
 
         while (try package_json_iter.next()) |package_json_path| {
             const dirpath = try ctx.allocator.dupe(u8, std.fs.path.dirname(package_json_path) orelse Global.crash());
-            const path = bun.strings.withoutTrailingSlash(dirpath);
+            const path = fun.strings.withoutTrailingSlash(dirpath);
 
             // When using --workspaces, skip the root package to prevent recursion
             if (ctx.workspaces and strings.eql(path, resolve_root)) {
                 continue;
             }
 
-            const pkgjson = bun.PackageJSON.parse(&this_transpiler.resolver, dirpath, .invalid, null, .include_scripts, .main) orelse {
+            const pkgjson = fun.PackageJSON.parse(&this_transpiler.resolver, dirpath, .invalid, null, .include_scripts, .main) orelse {
                 continue;
             };
 
@@ -606,12 +606,12 @@ pub fn run(ctx: Command.Context) !noreturn {
                 continue;
 
             const pkg_scripts = pkgjson.scripts orelse continue;
-            const pkg_PATH = try RunCommand.configurePathForRunWithPackageJsonDir(ctx, dirpath, &this_transpiler, null, dirpath, ctx.debug.run_in_bun);
+            const pkg_PATH = try RunCommand.configurePathForRunWithPackageJsonDir(ctx, dirpath, &this_transpiler, null, dirpath, ctx.debug.run_in_fun);
             const pkg_name = if (pkgjson.name.len > 0)
                 pkgjson.name
             else
                 // Fallback: use relative path from workspace root
-                try ctx.allocator.dupe(u8, bun.path.relativePlatform(resolve_root, path, .posix, false));
+                try ctx.allocator.dupe(u8, fun.path.relativePlatform(resolve_root, path, .posix, false));
 
             try matched_packages.append(.{
                 .name = pkg_name,
@@ -673,7 +673,7 @@ pub fn run(ctx: Command.Context) !noreturn {
         }
     } else {
         // Single-package mode: use the root package.json
-        const PATH = try RunCommand.configurePathForRunWithPackageJsonDir(ctx, "", &this_transpiler, null, cwd, ctx.debug.run_in_bun);
+        const PATH = try RunCommand.configurePathForRunWithPackageJsonDir(ctx, "", &this_transpiler, null, cwd, ctx.debug.run_in_fun);
 
         // Load package.json scripts
         const root_dir_info = this_transpiler.resolver.readDirInfo(cwd) catch {
@@ -685,7 +685,7 @@ pub fn run(ctx: Command.Context) !noreturn {
         };
 
         const package_json = root_dir_info.enclosing_package_json;
-        const scripts_map: ?*const bun.StringArrayHashMap([]const u8) = if (package_json) |pkg| pkg.scripts else null;
+        const scripts_map: ?*const fun.StringArrayHashMap([]const u8) = if (package_json) |pkg| pkg.scripts else null;
 
         for (script_names.items) |raw_name| {
             // Check if this is a glob pattern
@@ -766,10 +766,10 @@ pub fn run(ctx: Command.Context) !noreturn {
             .color_idx = color_idx,
             .options = .{
                 .stdin = .ignore,
-                .stdout = if (Environment.isPosix) .buffer else .{ .buffer = bun.new(bun.windows.libuv.Pipe, std.mem.zeroes(bun.windows.libuv.Pipe)) },
-                .stderr = if (Environment.isPosix) .buffer else .{ .buffer = bun.new(bun.windows.libuv.Pipe, std.mem.zeroes(bun.windows.libuv.Pipe)) },
+                .stdout = if (Environment.isPosix) .buffer else .{ .buffer = fun.new(fun.windows.libuv.Pipe, std.mem.zeroes(fun.windows.libuv.Pipe)) },
+                .stderr = if (Environment.isPosix) .buffer else .{ .buffer = fun.new(fun.windows.libuv.Pipe, std.mem.zeroes(fun.windows.libuv.Pipe)) },
                 .cwd = config.cwd,
-                .windows = if (Environment.isWindows) .{ .loop = bun.jsc.EventLoopHandle.init(event_loop) },
+                .windows = if (Environment.isWindows) .{ .loop = fun.jsc.EventLoopHandle.init(event_loop) },
                 .stream = true,
             },
         };
@@ -826,20 +826,20 @@ pub fn run(ctx: Command.Context) !noreturn {
 
 fn hasRunnableExtension(name: []const u8) bool {
     const ext = std.fs.path.extension(name);
-    const loader = bun.options.defaultLoaders.get(ext) orelse return false;
-    return loader.canBeRunByBun();
+    const loader = fun.options.defaultLoaders.get(ext) orelse return false;
+    return loader.canBeRunByFun();
 }
 
 const FilterArg = @import("./filter_arg.zig");
 const std = @import("std");
 const RunCommand = @import("./run_command.zig").RunCommand;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const strings = bun.strings;
-const transpiler = bun.transpiler;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const strings = fun.strings;
+const transpiler = fun.transpiler;
 
-const CLI = bun.cli;
+const CLI = fun.cli;
 const Command = CLI.Command;

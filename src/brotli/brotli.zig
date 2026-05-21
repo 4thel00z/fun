@@ -4,17 +4,17 @@ const BrotliEncoder = c.BrotliEncoder;
 
 pub const BrotliAllocator = struct {
     pub fn alloc(_: ?*anyopaque, len: usize) callconv(.c) *anyopaque {
-        if (bun.heap_breakdown.enabled) {
-            const zone = bun.heap_breakdown.getZone("brotli");
-            return zone.malloc_zone_malloc(len) orelse bun.outOfMemory();
+        if (fun.heap_breakdown.enabled) {
+            const zone = fun.heap_breakdown.getZone("brotli");
+            return zone.malloc_zone_malloc(len) orelse fun.outOfMemory();
         }
 
-        return mimalloc.mi_malloc(len) orelse bun.outOfMemory();
+        return mimalloc.mi_malloc(len) orelse fun.outOfMemory();
     }
 
     pub fn free(_: ?*anyopaque, data: ?*anyopaque) callconv(.c) void {
-        if (bun.heap_breakdown.enabled) {
-            const zone = bun.heap_breakdown.getZone("brotli");
+        if (fun.heap_breakdown.enabled) {
+            const zone = fun.heap_breakdown.getZone("brotli");
             zone.malloc_zone_free(data);
             return;
         }
@@ -52,7 +52,7 @@ pub const BrotliReaderArrayList = struct {
     finishFlushOp: BrotliEncoder.Operation,
     fullFlushOp: BrotliEncoder.Operation,
 
-    pub const new = bun.TrivialNew(BrotliReaderArrayList);
+    pub const new = fun.TrivialNew(BrotliReaderArrayList);
 
     pub fn newWithOptions(input: []const u8, list: *std.ArrayListUnmanaged(u8), allocator: std.mem.Allocator, options: DecoderOptions) !*BrotliReaderArrayList {
         return BrotliReaderArrayList.new(try initWithOptions(input, list, allocator, options, .process, .finish, .flush));
@@ -77,7 +77,7 @@ pub const BrotliReaderArrayList = struct {
         if (options.params.DISABLE_RING_BUFFER_REALLOCATION)
             _ = brotli.setParameter(c.BrotliDecoderParameter.DISABLE_RING_BUFFER_REALLOCATION, 1);
 
-        bun.assert(list.items.ptr != input.ptr);
+        fun.assert(list.items.ptr != input.ptr);
 
         return .{
             .input = input,
@@ -102,7 +102,7 @@ pub const BrotliReaderArrayList = struct {
             return;
         }
 
-        bun.assert(this.list.items.ptr != this.input.ptr);
+        fun.assert(this.list.items.ptr != this.input.ptr);
 
         while (this.state == State.Uninitialized or this.state == State.Inflating) {
             var unused_capacity = this.list.unusedCapacitySlice();
@@ -112,7 +112,7 @@ pub const BrotliReaderArrayList = struct {
                 unused_capacity = this.list.unusedCapacitySlice();
             }
 
-            bun.assert(unused_capacity.len > 0);
+            fun.assert(unused_capacity.len > 0);
 
             var next_in = this.input[this.total_in..];
 
@@ -136,17 +136,17 @@ pub const BrotliReaderArrayList = struct {
 
             switch (result) {
                 .success => {
-                    if (comptime bun.Environment.allow_assert) {
-                        bun.assert(this.brotli.isFinished());
+                    if (comptime fun.Environment.allow_assert) {
+                        fun.assert(this.brotli.isFinished());
                     }
                     this.end();
                     return;
                 },
                 .err => {
                     this.state = .Error;
-                    if (comptime bun.Environment.allow_assert) {
+                    if (comptime fun.Environment.allow_assert) {
                         const code = this.brotli.getErrorCode();
-                        bun.Output.debugWarn("Brotli error: {s} ({d})", .{ @tagName(code), @intFromEnum(code) });
+                        fun.Output.debugWarn("Brotli error: {s} ({d})", .{ @tagName(code), @intFromEnum(code) });
                     }
 
                     return error.BrotliDecompressionError;
@@ -175,7 +175,7 @@ pub const BrotliReaderArrayList = struct {
 
     pub fn deinit(this: *BrotliReaderArrayList) void {
         this.brotli.destroyInstance();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
@@ -283,5 +283,5 @@ pub const BrotliCompressionStream = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const mimalloc = bun.mimalloc;
+const fun = @import("fun");
+const mimalloc = fun.mimalloc;

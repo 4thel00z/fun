@@ -8,12 +8,12 @@
 // field_count (lenenc 0xFE + 0xFF*8 = 2^64-1). Under ASAN, builds without the fix abort
 // with use-after-poison inside ColumnDefinition41.deinit; with the fix, the error path
 // leaves columns = &.{} and the process exits cleanly after rejecting the query.
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 const fixture = /* js */ `
 const net = require("net");
-const { SQL } = require("bun");
+const { SQL } = require("fun");
 
 function u16le(n) { return Buffer.from([n & 0xff, (n >> 8) & 0xff]); }
 function u24le(n) { return Buffer.from([n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff]); }
@@ -97,7 +97,7 @@ function stmtPrepareOK(seq) {
 }
 
 // Result-set header claiming 2^64-1 columns via a length-encoded integer with
-// a 0xFE prefix. Bun reads this as field_count, sees it differs from the 1
+// a 0xFE prefix. Fun reads this as field_count, sees it differs from the 1
 // column cached at prepare time, frees the old slice, and attempts
 // alloc(ColumnDefinition41, 2^64-1), which fails with OutOfMemory.
 function hugeResultSetHeader(seq) {
@@ -151,9 +151,9 @@ server.listen(0, "127.0.0.1", async () => {
   // JSMySQLConnection.deinit -> MySQLConnection.cleanup runs and derefs the
   // cached prepared statement, triggering MySQLStatement.deinit.
   await sql.close().catch(() => {});
-  Bun.gc(true);
-  await Bun.sleep(0);
-  Bun.gc(true);
+  Fun.gc(true);
+  await Fun.sleep(0);
+  Fun.gc(true);
 
   console.log(JSON.stringify({ code: err?.code ?? null, name: err?.name ?? null }));
 
@@ -162,9 +162,9 @@ server.listen(0, "127.0.0.1", async () => {
 `;
 
 test("MySQL: OOM reallocating statement.columns does not leave a dangling slice", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", fixture],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", fixture],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

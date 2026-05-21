@@ -4,7 +4,7 @@
 const { throwNotImplemented } = require("internal/shared");
 
 const builtinModules = [
-  "bun",
+  "fun",
   "ffi",
   "assert",
   "assert/strict",

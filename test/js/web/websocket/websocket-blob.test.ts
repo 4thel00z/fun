@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("WebSocket should send Blob data", async () => {
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     websocket: {
       open(ws) {
@@ -77,7 +77,7 @@ test("WebSocket should send Blob data", async () => {
 });
 
 test("WebSocket should send empty Blob", async () => {
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     websocket: {
       message(ws, message) {
@@ -143,7 +143,7 @@ test("WebSocket should send empty Blob", async () => {
 });
 
 test("WebSocket should ping with Blob", async () => {
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     websocket: {
       ping(ws, data) {

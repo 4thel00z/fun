@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/29925
+// https://github.com/underdoc-org/fun/issues/29925
 //
 // Regression: after the valkey client lifecycle refactor (#23141), the old
 // `.failed` connection status became a sticky `flags.failed` boolean. Once
@@ -15,25 +15,25 @@
 // `test/js/valkey/reliability/recovery.test.ts` but spawns a local
 // `redis-server` so the gate runs it without docker.
 
-import { describe, expect, test } from "bun:test";
-import { bunEnv, isWindows, randomPort } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, isWindows, randomPort } from "harness";
 
-const REDIS_SERVER = Bun.which("redis-server");
-const REDIS_CLI = Bun.which("redis-cli");
+const REDIS_SERVER = Fun.which("redis-server");
+const REDIS_CLI = Fun.which("redis-cli");
 const redisAvailable = !isWindows && !!REDIS_SERVER && !!REDIS_CLI;
 
 async function spawnRedis(): Promise<{ port: number; stop: () => void }> {
   const port = randomPort();
-  const proc = Bun.spawn({
+  const proc = Fun.spawn({
     cmd: [REDIS_SERVER!, "--port", String(port), "--save", "", "--appendonly", "no"],
     stdout: "pipe",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
 
   const deadline = Date.now() + 10_000;
   while (Date.now() < deadline) {
-    const ping = Bun.spawnSync({
+    const ping = Fun.spawnSync({
       cmd: [REDIS_CLI!, "-p", String(port), "ping"],
       stdout: "pipe",
       stderr: "ignore",
@@ -46,7 +46,7 @@ async function spawnRedis(): Promise<{ port: number; stop: () => void }> {
         },
       };
     }
-    await Bun.sleep(50);
+    await Fun.sleep(50);
   }
   proc.kill();
   throw new Error(`redis-server did not start on port ${port} within 10s`);
@@ -55,7 +55,7 @@ async function spawnRedis(): Promise<{ port: number; stop: () => void }> {
 describe.skipIf(!redisAvailable)("RedisClient connection recovery (#29925)", () => {
   test("client.connect() recovers after the client enters the failed state", async () => {
     const { port, stop } = await spawnRedis();
-    const client = new Bun.RedisClient(`redis://127.0.0.1:${port}`, {
+    const client = new Fun.RedisClient(`redis://127.0.0.1:${port}`, {
       connectionTimeout: 2000,
       autoReconnect: false,
       maxRetries: 0,
@@ -101,7 +101,7 @@ describe.skipIf(!redisAvailable)("RedisClient connection recovery (#29925)", () 
   // dropped and the connect promise to hang.
   test("repeated close()/connect()/send() cycles do not lock up", async () => {
     const { port, stop } = await spawnRedis();
-    const client = new Bun.RedisClient(`redis://127.0.0.1:${port}`);
+    const client = new Fun.RedisClient(`redis://127.0.0.1:${port}`);
     try {
       for (let i = 0; i < 3; i++) {
         if (client.connected) {

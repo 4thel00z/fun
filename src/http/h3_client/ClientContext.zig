@@ -8,13 +8,13 @@ qctx: *quic.Context,
 sessions: std.ArrayListUnmanaged(*ClientSession) = .{},
 
 /// One instance per HTTP-thread loop. Stored as a process global only
-/// because `bun.http.http_thread` is itself a process singleton — the
+/// because `fun.http.http_thread` is itself a process singleton — the
 /// underlying lsquic engine is bound to the `loop` passed to
 /// `quic.Context.createClient` (it lives on `loop->data.quic_head` and is
 /// driven by that loop's pre/post hooks), so a second loop would get its
 /// own engine; this var would just need to become per-loop storage.
 var instance: ?*ClientContext = null;
-var lsquic_init_once = bun.once(quic.globalInit);
+var lsquic_init_once = fun.once(quic.globalInit);
 
 pub fn get() ?*ClientContext {
     return instance;
@@ -31,7 +31,7 @@ pub fn getOrCreate(loop: *uws.Loop) ?*ClientContext {
     ) orelse return null;
     callbacks.register(qctx);
 
-    const self = bun.handleOom(bun.default_allocator.create(ClientContext));
+    const self = fun.handleOom(fun.default_allocator.create(ClientContext));
     self.* = .{ .qctx = qctx };
     instance = self;
     return self;
@@ -48,7 +48,7 @@ pub fn connect(this: *ClientContext, client: *HTTPClient, hostname: []const u8, 
         }
     }
 
-    const host_z = bun.handleOom(bun.default_allocator.dupeZ(u8, hostname));
+    const host_z = fun.handleOom(fun.default_allocator.dupeZ(u8, hostname));
     const session = ClientSession.new(.{
         .qsocket = null,
         .hostname = host_z,
@@ -57,7 +57,7 @@ pub fn connect(this: *ClientContext, client: *HTTPClient, hostname: []const u8, 
     });
     _ = H3.live_sessions.fetchAdd(1, .monotonic);
     session.registry_index = @intCast(this.sessions.items.len);
-    bun.handleOom(this.sessions.append(bun.default_allocator, session));
+    fun.handleOom(this.sessions.append(fun.default_allocator, session));
     session.enqueue(client);
 
     switch (this.qctx.connect(host_z.ptr, port, host_z.ptr, reject, session)) {
@@ -101,7 +101,7 @@ pub fn streamBodyByHttpId(async_http_id: u32, ended: bool) void {
     for (this.sessions.items) |s| s.streamBodyByHttpId(async_http_id, ended);
 }
 
-const log = bun.Output.scoped(.h3_client, .hidden);
+const log = fun.Output.scoped(.h3_client, .hidden);
 
 const ClientSession = @import("./ClientSession.zig");
 const H3 = @import("../H3Client.zig");
@@ -110,8 +110,8 @@ const Stream = @import("./Stream.zig");
 const callbacks = @import("./callbacks.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const HTTPClient = bun.http;
+const fun = @import("fun");
+const HTTPClient = fun.http;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const quic = uws.quic;

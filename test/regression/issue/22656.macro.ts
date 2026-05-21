@@ -1,5 +1,5 @@
 // Issue #22656 - Panic when macros return collections with 3+ arrays/objects
-// https://github.com/oven-sh/bun/issues/22656
+// https://github.com/underdoc-org/fun/issues/22656
 
 export function collectionOfArrays() {
   // Returns an array containing 3+ arrays - this triggers the crash

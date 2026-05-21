@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import path from "node:path";
 import { itBundled } from "./expectBundled";
 

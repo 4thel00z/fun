@@ -1,6 +1,6 @@
 /**
  * Google Highway — portable SIMD intrinsics with runtime dispatch. Used by
- * bun's string search (indexOf fastpaths), base64 codec, and the bundler's
+ * fun's string search (indexOf fastpaths), base64 codec, and the bundler's
  * chunk hashing.
  *
  * Highway compiles every function for multiple targets (SSE2/AVX2/NEON/etc.)

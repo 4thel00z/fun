@@ -1,4 +1,4 @@
-import { heapStats } from "bun:jsc";
+import { heapStats } from "fun:jsc";
 
 const { SERVER } = process.env;
 
@@ -27,8 +27,8 @@ await (async function runAll() {
   fetches.length = 0;
   fetches = [];
 })();
-await Bun.sleep(10);
-Bun.gc(true);
+await Fun.sleep(10);
+Fun.gc(true);
 if ((heapStats().objectTypeCounts.Response ?? 0) > 1 + ((COUNT / 2) | 0)) {
   throw new Error("Too many Response objects: " + heapStats().objectTypeCounts.Response);
 }

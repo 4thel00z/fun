@@ -1,12 +1,12 @@
 import assert from "assert";
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { readdirSync } from "fs";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_splitting_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/splitting
+// For debug, all files are written to $TEMP/fun-bundle-tests/splitting
 
 describe("bundler", () => {
   itBundled("splitting/SharedES6IntoES6", {
@@ -358,7 +358,7 @@ describe("bundler", () => {
     },
     entryPoints: ["/a.js", "/b.js", "/c.js"],
     splitting: true,
-    target: "bun",
+    target: "fun",
     runtimeFiles: {
       "/test.js": /* js */ `
         import './out/c.js';
@@ -548,7 +548,7 @@ describe("bundler", () => {
     splitting: true,
     publicPath: "/www/",
     onAfterBundle(api) {
-      const t = new Bun.Transpiler();
+      const t = new Fun.Transpiler();
       const imports = t.scanImports(api.readFile("/out/a.js"));
       expect(imports.length).toBe(1);
       expect(imports[0].kind).toBe("dynamic-import");
@@ -613,7 +613,7 @@ describe("bundler", () => {
   // The dynamic import should properly unwrap the default export using __toESM.
   // Regression test for: dynamic import of CJS chunk returns { default: { __esModule, ... } }
   // and needs .then((m)=>__toESM(m.default)) to unwrap correctly.
-  // Note: __esModule is required because bun optimizes simple CJS to ESM otherwise.
+  // Note: __esModule is required because fun optimizes simple CJS to ESM otherwise.
   itBundled("splitting/CJSDynamicImportOfCJSChunk", {
     files: {
       "/main.js": /* js */ `

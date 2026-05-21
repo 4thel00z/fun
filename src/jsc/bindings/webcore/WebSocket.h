@@ -54,14 +54,14 @@ class ArrayBuffer;
 class ArrayBufferView;
 }
 
-extern "C" void Bun__WebSocket__freeSSLConfig(void* sslConfig);
+extern "C" void Fun__WebSocket__freeSSLConfig(void* sslConfig);
 
 namespace WebCore {
 
 class Blob;
 
 // Move-only owning handle for the Zig heap-allocated SSLConfig returned by
-// Bun__WebSocket__parseSSLConfig. The SSLConfig holds duped cert/key/CA
+// Fun__WebSocket__parseSSLConfig. The SSLConfig holds duped cert/key/CA
 // strings, so every exception / early-return path between parsing and the
 // Zig upgrade client taking ownership must free it. Wrapping the raw `void*`
 // in this RAII type lets normal C++ destruction handle all of those paths
@@ -99,7 +99,7 @@ private:
     void reset()
     {
         if (m_ptr) {
-            Bun__WebSocket__freeSSLConfig(m_ptr);
+            Fun__WebSocket__freeSSLConfig(m_ptr);
             m_ptr = nullptr;
         }
     }
@@ -201,7 +201,7 @@ public:
     void didClose(unsigned unhandledBufferedAmount, unsigned short code, const String& reason);
     void didConnect(us_socket_t* socket, char* bufferedData, size_t bufferedDataSize, const PerMessageDeflateParams* deflate_params, void* customSSLCtx);
     void didConnectWithTunnel(void* tunnel, char* bufferedData, size_t bufferedDataSize, const PerMessageDeflateParams* deflate_params);
-    void didFailWithErrorCode(Bun::WebSocketErrorCode code);
+    void didFailWithErrorCode(Fun::WebSocketErrorCode code);
 
     void didReceiveMessage(String&& message);
     void didReceiveData(const char* data, size_t length);

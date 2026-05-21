@@ -1,29 +1,29 @@
-// Minimal WPT testharness.js shim mapped onto bun:test. Only the surface
+// Minimal WPT testharness.js shim mapped onto fun:test. Only the surface
 // the vendored .h2.any.js files touch is implemented. Tests whose names
 // appear in `knownFailures` are registered via test.todo so the suite
 // stays green while still surfacing the gap.
 
-import { test as bunTest, expect } from "bun:test";
+import { test as funTest, expect } from "fun:test";
 
 export const knownFailures = new Set<string>([
-  // Bun's Request constructor doesn't read RequestInit.duplex (general fetch
+  // Fun's Request constructor doesn't read RequestInit.duplex (general fetch
   // spec gap, not h2-specific).
   "Synchronous feature detect",
-  // Spec requires TypeError when a streamed chunk is not a BufferSource; Bun
+  // Spec requires TypeError when a streamed chunk is not a BufferSource; Fun
   // currently coerces strings and treats null as empty.
   "Streaming upload with body containing a String",
   "Streaming upload with body containing null",
   // Spec requires TypeError on a 401 challenge with a non-replayable body;
-  // Bun returns the 401 response instead.
+  // Fun returns the 401 response instead.
   "Streaming upload should fail on a 401 response",
 ]);
 
 function register(name: string, body: () => unknown | Promise<unknown>) {
   if (knownFailures.has(name)) {
-    bunTest.todo(name);
+    funTest.todo(name);
     return;
   }
-  bunTest(name, async () => {
+  funTest(name, async () => {
     await body();
   });
 }
@@ -34,7 +34,7 @@ g.promise_test = (fn: (t: unknown) => Promise<unknown>, name: string) => {
   register(name, () => fn({}));
 };
 
-// Exported (not installed on globalThis) because bun:test injects its own
+// Exported (not installed on globalThis) because fun:test injects its own
 // `test` binding into every module it loads, including dynamic imports, and
 // that per-module binding shadows globalThis. run.test.ts feeds this in as
 // a Function-constructor parameter instead.

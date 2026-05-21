@@ -67,7 +67,7 @@ export abstract class LooseNullableType extends Type {}
 export function looseNullable(payload: Type): LooseNullableType {
   return new (class extends LooseNullableType {
     get idlType() {
-      return `::Bun::IDLLooseNullable<${payload.idlType}>`;
+      return `::Fun::IDLLooseNullable<${payload.idlType}>`;
     }
     get bindgenType() {
       return bindgenOptional(payload);
@@ -77,7 +77,7 @@ export function looseNullable(payload: Type): LooseNullableType {
     }
     toCpp(value: any): string {
       if (!value) {
-        return `::Bun::IDLLooseNullable<${payload.idlType}>::nullValue()`;
+        return `::Fun::IDLLooseNullable<${payload.idlType}>::nullValue()`;
       }
       return payload.toCpp(value);
     }
@@ -87,7 +87,7 @@ export function looseNullable(payload: Type): LooseNullableType {
 /** For use in unions, to represent an optional union. */
 const Undefined = new (class extends Type {
   get idlType() {
-    return `::Bun::IDLStrictUndefined`;
+    return `::Fun::IDLStrictUndefined`;
   }
   get bindgenType() {
     return `bindgen.BindgenNull`;
@@ -103,7 +103,7 @@ const Undefined = new (class extends Type {
 /** For use in unions, to represent a nullable union. */
 const Null = new (class extends Type {
   get idlType() {
-    return `::Bun::IDLStrictNull`;
+    return `::Fun::IDLStrictNull`;
   }
   get bindgenType() {
     return `bindgen.BindgenNull`;

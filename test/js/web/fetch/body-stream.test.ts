@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { ServeOptions } from "bun";
-import { afterAll, describe, expect, it, test } from "bun:test";
+import { ServeOptions } from "fun";
+import { afterAll, describe, expect, it, test } from "fun:test";
 import { tls } from "harness";
 
 const port = 0;
@@ -27,7 +27,7 @@ describe.each([
             type: "direct",
             async pull(controller) {
               controller.write("hey");
-              await Bun.sleep(1);
+              await Fun.sleep(1);
               await controller.end();
             },
           });
@@ -85,7 +85,7 @@ describe.each([
     for (let RequestPrototypeMixin of BodyMixin) {
       for (let useRequestObject of useRequestObjectValues) {
         // When you do req.body
-        // We go through Bun.readableStreamTo${Method}(stream)
+        // We go through Fun.readableStreamTo${Method}(stream)
         for (let forceReadableStreamConversionFastPath of [true, false]) {
           describe(`Request.prototoype.${RequestPrototypeMixin.name}() ${
             useRequestObject
@@ -139,7 +139,7 @@ describe.each([
                           expect(await result.text()).toBe(name);
                         } else {
                           expect(result.byteLength).toBe(Buffer.from(input).byteLength);
-                          expect(Bun.SHA1.hash(result, "base64")).toBe(Bun.SHA1.hash(input, "base64"));
+                          expect(Fun.SHA1.hash(result, "base64")).toBe(Fun.SHA1.hash(input, "base64"));
                         }
                       }
                       return new Response(result, {
@@ -272,7 +272,7 @@ describe.each([
     };
 
     if (!existingServer) {
-      existingServer = server = Bun.serve(handler);
+      existingServer = server = Fun.serve(handler);
     } else {
       server = existingServer;
       server.reload(handler);
@@ -305,7 +305,7 @@ describe.each([
   }
 
   function gc() {
-    Bun.gc(true);
+    Fun.gc(true);
   }
 
   for (let doClone of [true, false]) {
@@ -374,8 +374,8 @@ describe.each([
 
                     const expectedHash =
                       huge instanceof Blob
-                        ? Bun.SHA1.hash(await huge.bytes(), "base64")
-                        : Bun.SHA1.hash(huge, "base64");
+                        ? Fun.SHA1.hash(await huge.bytes(), "base64")
+                        : Fun.SHA1.hash(huge, "base64");
                     const expectedSize = huge instanceof Blob ? huge.size : huge.byteLength;
 
                     const out = await runInServer(
@@ -403,7 +403,7 @@ describe.each([
                               }
                               let out = new Blob(buffers);
                               expect(out.size).toBe(expectedSize);
-                              expect(Bun.SHA1.hash(await out.arrayBuffer(), "base64")).toBe(expectedHash);
+                              expect(Fun.SHA1.hash(await out.arrayBuffer(), "base64")).toBe(expectedHash);
                               expect(req.headers.get("x-custom")).toBe("hello");
                               expect(req.headers.get("content-type")).toBe("text/plain");
                               expect(req.headers.get("user-agent")).toBe(navigator.userAgent);
@@ -451,7 +451,7 @@ describe.each([
                         for (let body of doClone ? [response, originalResponse] : [response]) {
                           const response_body = await body.bytes();
                           expect(response_body.byteLength).toBe(expectedSize);
-                          expect(Bun.SHA1.hash(response_body, "base64")).toBe(expectedHash);
+                          expect(Fun.SHA1.hash(response_body, "base64")).toBe(expectedHash);
                         }
 
                         expect(response.headers.get("content-type")).toBe("text/plain");
@@ -478,8 +478,8 @@ describe.each([
 
                           const expectedHash =
                             huge instanceof Blob
-                              ? Bun.SHA1.hash(await huge.bytes(), "base64")
-                              : Bun.SHA1.hash(huge, "base64");
+                              ? Fun.SHA1.hash(await huge.bytes(), "base64")
+                              : Fun.SHA1.hash(huge, "base64");
                           const expectedSize = huge instanceof Blob ? huge.size : huge.byteLength;
 
                           const out = await runInServer(
@@ -573,7 +573,7 @@ describe.each([
                               for (let body of doClone ? [response, originalResponse] : [response]) {
                                 const response_body = await body.bytes();
                                 expect(response_body.byteLength).toBe(expectedSize);
-                                expect(Bun.SHA1.hash(response_body, "base64")).toBe(expectedHash);
+                                expect(Fun.SHA1.hash(response_body, "base64")).toBe(expectedHash);
                               }
 
                               if (!response.headers.has("content-type")) {

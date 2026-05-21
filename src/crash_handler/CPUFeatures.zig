@@ -2,7 +2,7 @@ const CPUFeatures = @This();
 
 flags: Flags,
 
-extern "c" fn bun_cpu_features() u8;
+extern "c" fn fun_cpu_features() u8;
 
 pub const Flags = switch (@import("builtin").cpu.arch) {
     .x86_64 => packed struct(u8) {
@@ -34,8 +34,8 @@ pub const Flags = switch (@import("builtin").cpu.arch) {
 pub fn format(features: @This(), writer: *std.Io.Writer) !void {
     var is_first = true;
     inline for (@typeInfo(Flags).@"struct".fields) |field| brk: {
-        if (comptime (bun.strings.eql(field.name, "padding") or
-            bun.strings.eql(field.name, "none")))
+        if (comptime (fun.strings.eql(field.name, "padding") or
+            fun.strings.eql(field.name, "none")))
             break :brk;
 
         if (@field(features.flags, field.name)) {
@@ -56,16 +56,16 @@ pub fn hasAnyAVX(features: CPUFeatures) bool {
 }
 
 pub fn get() CPUFeatures {
-    const flags: Flags = @bitCast(bun_cpu_features());
-    bun.debugAssert(flags.none == false and flags.padding == 0); // sanity check
+    const flags: Flags = @bitCast(fun_cpu_features());
+    fun.debugAssert(flags.none == false and flags.padding == 0); // sanity check
 
-    if (bun.Environment.isX64) {
-        bun.analytics.Features.no_avx += @as(usize, @intFromBool(!flags.avx));
-        bun.analytics.Features.no_avx2 += @as(usize, @intFromBool(!flags.avx2));
+    if (fun.Environment.isX64) {
+        fun.analytics.Features.no_avx += @as(usize, @intFromBool(!flags.avx));
+        fun.analytics.Features.no_avx2 += @as(usize, @intFromBool(!flags.avx2));
     }
 
     return .{ .flags = flags };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

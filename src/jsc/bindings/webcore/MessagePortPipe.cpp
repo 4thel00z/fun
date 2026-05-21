@@ -7,7 +7,7 @@
 // The body below references symbols that only exist on the pipe-backed
 // MessagePort.h (dispatchOneMessage, the struct TransferredMessagePort), so
 // compile it only when that header is present.
-#if BUN_MESSAGEPORT_USES_PIPE
+#if FUN_MESSAGEPORT_USES_PIPE
 
 #include "MessagePortPipe.h"
 #include "ScriptExecutionContext.h"
@@ -257,4 +257,4 @@ void MessagePortPipe::close(uint8_t side)
 
 } // namespace WebCore
 
-#endif // BUN_MESSAGEPORT_USES_PIPE
+#endif // FUN_MESSAGEPORT_USES_PIPE

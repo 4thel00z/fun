@@ -2,7 +2,7 @@ const WorkspaceMap = @This();
 
 map: Map,
 
-const Map = bun.StringArrayHashMap(Entry);
+const Map = fun.StringArrayHashMap(Entry);
 pub const Entry = struct {
     name: string,
     version: ?string,
@@ -29,7 +29,7 @@ pub fn count(self: WorkspaceMap) usize {
 
 pub fn insert(self: *WorkspaceMap, key: string, value: Entry) !void {
     if (comptime Environment.isDebug) {
-        if (!bun.sys.exists(key)) {
+        if (!fun.sys.exists(key)) {
             Output.debugWarn("WorkspaceMap.insert: key {s} does not exist", .{key});
         }
     }
@@ -112,7 +112,7 @@ pub fn processNamesArray(
 
     var workspace_globs = std.array_list.Managed(string).init(allocator);
     defer workspace_globs.deinit();
-    const filepath_bufOS = allocator.create(bun.PathBuffer) catch unreachable;
+    const filepath_bufOS = allocator.create(fun.PathBuffer) catch unreachable;
     const filepath_buf = std.mem.asBytes(filepath_bufOS);
     defer allocator.destroy(filepath_bufOS);
 
@@ -131,7 +131,7 @@ pub fn processNamesArray(
         if (input_path.len == 0 or input_path.len == 1 and input_path[0] == '.' or strings.eqlComptime(input_path, "./") or strings.eqlComptime(input_path, ".\\")) continue;
 
         if (glob.detectGlobSyntax(input_path)) {
-            bun.handleOom(workspace_globs.append(input_path));
+            fun.handleOom(workspace_globs.append(input_path));
             continue;
         }
 
@@ -143,7 +143,7 @@ pub fn processNamesArray(
         );
 
         // skip root package.json
-        if (strings.eqlLong(bun.path.dirname(abs_package_json_path, .auto), source.path.name.dir, true)) continue;
+        if (strings.eqlLong(fun.path.dirname(abs_package_json_path, .auto), source.path.name.dir, true)) continue;
 
         const workspace_entry = processWorkspaceName(
             allocator,
@@ -151,7 +151,7 @@ pub fn processNamesArray(
             abs_package_json_path,
             log,
         ) catch |err| {
-            bun.handleErrorReturnTrace(err, @errorReturnTrace());
+            fun.handleErrorReturnTrace(err, @errorReturnTrace());
             switch (err) {
                 error.EISNOTDIR, error.EISDIR, error.EACCESS, error.EPERM, error.ENOENT, error.FileNotFound => {
                     log.addErrorFmt(
@@ -177,7 +177,7 @@ pub fn processNamesArray(
                         item.loc,
                         allocator,
                         "{s} reading package.json for workspace package \"{s}\" from \"{s}\"",
-                        .{ @errorName(err), input_path, bun.getcwd(allocator.alloc(u8, bun.MAX_PATH_BYTES) catch unreachable) catch unreachable },
+                        .{ @errorName(err), input_path, fun.getcwd(allocator.alloc(u8, fun.MAX_PATH_BYTES) catch unreachable) catch unreachable },
                     ) catch {};
                 },
             }
@@ -199,7 +199,7 @@ pub fn processNamesArray(
         if (string_builder) |builder| {
             builder.count(workspace_entry.name);
             builder.count(rel_input_path);
-            builder.cap += bun.MAX_PATH_BYTES;
+            builder.cap += fun.MAX_PATH_BYTES;
             if (workspace_entry.version) |version_string| {
                 builder.count(version_string);
             }
@@ -220,12 +220,12 @@ pub fn processNamesArray(
 
             const glob_pattern = if (user_pattern.len == 0) "package.json" else brk: {
                 const parts = [_][]const u8{ user_pattern, "package.json" };
-                break :brk bun.handleOom(arena.allocator().dupe(u8, bun.path.join(parts, .auto)));
+                break :brk fun.handleOom(arena.allocator().dupe(u8, fun.path.join(parts, .auto)));
             };
 
             var walker: GlobWalker = .{};
-            var cwd = bun.path.dirname(source.path.text, .auto);
-            cwd = if (bun.strings.eql(cwd, "")) bun.fs.FileSystem.instance.top_level_dir else cwd;
+            var cwd = fun.path.dirname(source.path.text, .auto);
+            cwd = if (fun.strings.eql(cwd, "")) fun.fs.FileSystem.instance.top_level_dir else cwd;
             if ((try walker.initWithCwd(&arena, glob_pattern, cwd, false, false, false, false, true)).asErr()) |e| {
                 log.addErrorFmt(
                     source,
@@ -276,7 +276,7 @@ pub fn processNamesArray(
 
                     // check if it's negated by any remaining patterns
                     for (workspace_globs.items[i + 1 ..]) |next_pattern| {
-                        switch (bun.glob.match(next_pattern, matched_path_without_package_json)) {
+                        switch (fun.glob.match(next_pattern, matched_path_without_package_json)) {
                             .no_match,
                             .match,
                             .negate_match,
@@ -309,7 +309,7 @@ pub fn processNamesArray(
                     abs_package_json_path,
                     log,
                 ) catch |err| {
-                    bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                    fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
                     const entry_base: []const u8 = Path.basename(matched_path);
                     switch (err) {
@@ -352,7 +352,7 @@ pub fn processNamesArray(
                 if (string_builder) |builder| {
                     builder.count(workspace_entry.name);
                     builder.count(workspace_path);
-                    builder.cap += bun.MAX_PATH_BYTES;
+                    builder.cap += fun.MAX_PATH_BYTES;
                     if (workspace_entry.version) |version| {
                         builder.count(version);
                     }
@@ -393,7 +393,7 @@ const IGNORED_PATHS: []const []const u8 = &.{
 };
 fn ignoredWorkspacePaths(path: []const u8) bool {
     inline for (IGNORED_PATHS) |ignored| {
-        if (bun.strings.eqlComptime(path, ignored)) return true;
+        if (fun.strings.eqlComptime(path, ignored)) return true;
     }
     return false;
 }
@@ -406,17 +406,17 @@ const stringZ = [:0]const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const JSAst = bun.ast;
-const Output = bun.Output;
-const Path = bun.path;
-const glob = bun.glob;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const JSAst = fun.ast;
+const Output = fun.Output;
+const Path = fun.path;
+const glob = fun.glob;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const install = bun.install;
-const PackageManager = bun.install.PackageManager;
+const install = fun.install;
+const PackageManager = fun.install.PackageManager;
 
 const Lockfile = install.Lockfile;
 const StringBuilder = Lockfile.StringBuilder;

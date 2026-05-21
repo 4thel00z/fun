@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 const util = require("node:util");
 const buffer = require("node:buffer");
 buffer.kMaxLength = 64;

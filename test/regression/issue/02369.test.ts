@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("can read json() from request", async () => {
   for (let i = 0; i < 10; i++) {

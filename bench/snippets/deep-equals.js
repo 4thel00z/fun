@@ -489,7 +489,7 @@ for (let { tests, description } of fixture) {
   for (let { description: describe, value1, value2, equal } of tests) {
     var expected;
     group(describe, () => {
-      for (let equalsFn of [Bun.deepEquals, fastDeepEquals]) {
+      for (let equalsFn of [Fun.deepEquals, fastDeepEquals]) {
         bench(`${describe}: ${equalsFn.name}`, () => {
           expected = equalsFn(value1, value2);
           if (expected !== equal) {

@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 // Regression test for ENG-22942: Crash when calling expect.extend with non-function values
 // The crash occurred because JSWrappingFunction assumed all callable objects are JSFunction,
 // but class constructors like Expect are callable but not JSFunction instances.
 
 test("expect.extend with jest object should throw TypeError, not crash", () => {
-  const jest = Bun.jest(import.meta.path);
+  const jest = Fun.jest(import.meta.path);
 
   expect(() => {
     jest.expect.extend(jest);
@@ -13,7 +13,7 @@ test("expect.extend with jest object should throw TypeError, not crash", () => {
 });
 
 test("expect.extend with object containing non-function values should throw", () => {
-  const jest = Bun.jest(import.meta.path);
+  const jest = Fun.jest(import.meta.path);
 
   expect(() => {
     jest.expect.extend({
@@ -23,7 +23,7 @@ test("expect.extend with object containing non-function values should throw", ()
 });
 
 test("expect.extend with valid matchers still works", () => {
-  const jest = Bun.jest(import.meta.path);
+  const jest = Fun.jest(import.meta.path);
 
   jest.expect.extend({
     toBeEven(received: number) {

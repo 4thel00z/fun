@@ -19,7 +19,7 @@ import assert from "assert";
 
 import * as grpc from "@grpc/grpc-js/build/src";
 import { StatusBuilder } from "@grpc/grpc-js/build/src/status-builder";
-import { describe, it } from "bun:test";
+import { describe, it } from "fun:test";
 
 describe("StatusBuilder", () => {
   it("is exported by the module", () => {

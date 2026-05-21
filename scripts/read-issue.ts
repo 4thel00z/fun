@@ -33,7 +33,7 @@ if (features.includes("shell")) {
 
 const lines = body.split("\n");
 for (const line of lines) {
-  if (line.startsWith("Bun v") && line.includes(" on ")) {
+  if (line.startsWith("Fun v") && line.includes(" on ")) {
     const onI = line.indexOf(" on ");
     const onI2 = line.indexOf("\n", onI + 1);
     const on = line

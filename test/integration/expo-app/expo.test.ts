@@ -1,6 +1,6 @@
-import { beforeAll, expect, setDefaultTimeout, test } from "bun:test";
+import { beforeAll, expect, setDefaultTimeout, test } from "fun:test";
 import fs from "fs/promises";
-import { bunEnv, bunExe, tmpdirSync } from "../../harness";
+import { funEnv, funExe, tmpdirSync } from "../../harness";
 
 const tmpdir = tmpdirSync();
 
@@ -12,21 +12,21 @@ beforeAll(async () => {
 
 test("expo export works (no ajv issues)", async () => {
   console.log({ tmpdir });
-  let { exitCode } = Bun.spawnSync([bunExe(), "install"], {
+  let { exitCode } = Fun.spawnSync([funExe(), "install"], {
     stderr: "inherit",
     stdout: "inherit",
     cwd: tmpdir,
-    env: bunEnv,
+    env: funEnv,
   });
   expect(exitCode).toBe(0);
 
-  ({ exitCode } = Bun.spawnSync([bunExe(), "run", "export"], {
+  ({ exitCode } = Fun.spawnSync([funExe(), "run", "export"], {
     stdout: "inherit",
     stderr: "inherit",
     stdin: "inherit",
     cwd: tmpdir,
     env: {
-      ...bunEnv,
+      ...funEnv,
       PORT: "0",
     },
   }));

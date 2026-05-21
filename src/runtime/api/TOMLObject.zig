@@ -18,12 +18,12 @@ pub fn create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
 pub fn parse(
     globalThis: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
-    var arena = bun.ArenaAllocator.init(globalThis.allocator());
+) fun.JSError!jsc.JSValue {
+    var arena = fun.ArenaAllocator.init(globalThis.allocator());
     const allocator = arena.allocator();
     defer arena.deinit();
 
-    var ast_memory_allocator = bun.handleOom(allocator.create(ast.ASTMemoryAllocator));
+    var ast_memory_allocator = fun.handleOom(allocator.create(ast.ASTMemoryAllocator));
     var ast_scope = ast_memory_allocator.enter(allocator);
     defer ast_scope.exit();
 
@@ -34,7 +34,7 @@ pub fn parse(
         return globalThis.throwInvalidArguments("Expected a string to parse", .{});
     }
 
-    var input_slice = try input_value.toSlice(globalThis, bun.default_allocator);
+    var input_slice = try input_value.toSlice(globalThis, fun.default_allocator);
     defer input_slice.deinit();
     const source = &logger.Source.initPathString("input.toml", input_slice.slice());
     const parse_result = TOML.parse(source, &log, allocator, false) catch |err| {
@@ -60,20 +60,20 @@ pub fn parse(
     };
 
     const slice = writer.ctx.buffer.slice();
-    var out = bun.String.borrowUTF8(slice);
+    var out = fun.String.borrowUTF8(slice);
     defer out.deref();
 
     return out.toJSByParseJSON(globalThis);
 }
 
-const bun = @import("bun");
-const ast = bun.ast;
-const default_allocator = bun.default_allocator;
-const js_printer = bun.js_printer;
-const logger = bun.logger;
-const TOML = bun.interchange.toml.TOML;
+const fun = @import("fun");
+const ast = fun.ast;
+const default_allocator = fun.default_allocator;
+const js_printer = fun.js_printer;
+const logger = fun.logger;
+const TOML = fun.interchange.toml.TOML;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

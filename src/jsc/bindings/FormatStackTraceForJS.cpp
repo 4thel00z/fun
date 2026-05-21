@@ -19,7 +19,7 @@
 #include "JavaScriptCore/StackFrame.h"
 #include "JavaScriptCore/VM.h"
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "CallSite.h"
 #include "ErrorStackTrace.h"
 #include "headers-handwritten.h"
@@ -27,7 +27,7 @@
 using namespace JSC;
 using namespace WebCore;
 
-namespace Bun {
+namespace Fun {
 
 static JSValue formatStackTraceToJSValue(JSC::VM& vm, Zig::GlobalObject* globalObject, JSC::JSGlobalObject* lexicalGlobalObject, JSC::JSObject* errorObject, JSC::JSArray* callSites)
 {
@@ -164,12 +164,12 @@ WTF::String formatStackTrace(
     size_t framesCount = stackTrace.size();
 
     bool hasSet = false;
-    void* bunVM = nullptr;
-    const auto getBunVM = [&]() -> void* {
-        if (!bunVM) {
-            bunVM = clientData(vm)->bunVM;
+    void* funVM = nullptr;
+    const auto getFunVM = [&]() -> void* {
+        if (!funVM) {
+            funVM = clientData(vm)->funVM;
         }
-        return bunVM;
+        return funVM;
     };
 
     if (errorInstance) {
@@ -191,11 +191,11 @@ WTF::String formatStackTrace(
 
                 // If it's not a Zig::GlobalObject, don't bother source-mapping it.
                 if (globalObject && !sourceURLForFrame.isEmpty()) {
-                    // https://github.com/oven-sh/bun/issues/3595
+                    // https://github.com/underdoc-org/fun/issues/3595
                     if (!sourceURLForFrame.isEmpty()) {
-                        remappedFrame.source_url = Bun::toStringRef(sourceURLForFrame);
+                        remappedFrame.source_url = Fun::toStringRef(sourceURLForFrame);
                         // This ensures the lifetime of the sourceURL is accounted for correctly
-                        Bun__remapStackFramePositions(getBunVM(), &remappedFrame, 1);
+                        Fun__remapStackFramePositions(getFunVM(), &remappedFrame, 1);
 
                         sourceURLForFrame = remappedFrame.source_url.toWTFString();
                     }
@@ -275,18 +275,18 @@ WTF::String formatStackTrace(
         bool isDefinitelyNotRunninginNodeVMGlobalObject = globalObject == globalObjectForFrame;
         bool isDefaultGlobalObjectInAFinalizer = (globalObject && !lexicalGlobalObject && !errorInstance);
         if (isDefinitelyNotRunninginNodeVMGlobalObject || isDefaultGlobalObjectInAFinalizer) {
-            // https://github.com/oven-sh/bun/issues/3595
+            // https://github.com/underdoc-org/fun/issues/3595
             if (!sourceURLs[i].isEmpty()) {
                 remappedFrame.position.line_zero_based = OrdinalNumber::fromOneBasedInt(originalLineColumns[i].line).zeroBasedInt();
                 remappedFrame.position.column_zero_based = OrdinalNumber::fromOneBasedInt(originalLineColumns[i].column).zeroBasedInt();
-                remappedFrame.source_url = Bun::toStringRef(sourceURLs[i]);
+                remappedFrame.source_url = Fun::toStringRef(sourceURLs[i]);
                 anyRemap = true;
             }
         }
     }
 
     if (anyRemap) {
-        Bun__remapStackFramePositions(getBunVM(), remappedFrames.begin(), framesCount);
+        Fun__remapStackFramePositions(getFunVM(), remappedFrames.begin(), framesCount);
     }
 
     // Pass 2: format. Everything except (display line/col, source_url) is
@@ -422,7 +422,7 @@ static String computeErrorInfoWithoutPrepareStackTrace(
         globalObject = defaultGlobalObject();
     }
 
-    return Bun::formatStackTrace(vm, globalObject, lexicalGlobalObject, name, message, line, column, sourceURL, stackTrace, errorInstance);
+    return Fun::formatStackTrace(vm, globalObject, lexicalGlobalObject, name, message, line, column, sourceURL, stackTrace, errorInstance);
 }
 
 static JSValue computeErrorInfoWithPrepareStackTrace(JSC::VM& vm, Zig::GlobalObject* globalObject, JSC::JSGlobalObject* lexicalGlobalObject, Vector<StackFrame>& stackFrames, OrdinalNumber& line, OrdinalNumber& column, String& sourceURL, JSObject* errorObject, JSObject* prepareStackTrace)
@@ -459,14 +459,14 @@ static JSValue computeErrorInfoWithPrepareStackTrace(JSC::VM& vm, Zig::GlobalObj
         frame.position.byte_position = -1;
 
         // When you use node:vm, the global object can be different on a
-        // per-frame basis. We should sourcemap the frames which are in Bun's
+        // per-frame basis. We should sourcemap the frames which are in Fun's
         // global object, and not sourcemap the frames which are in a different
         // global object.
         JSGlobalObject* globalObjectForFrame = lexicalGlobalObject;
 
         if (stackFrame.hasLineAndColumnInfo()) {
             auto* callee = stackFrame.callee();
-            // https://github.com/oven-sh/bun/issues/17698
+            // https://github.com/underdoc-org/fun/issues/17698
             if (callee) {
                 if (auto* object = callee->getObject()) {
                     globalObjectForFrame = object->globalObject();
@@ -481,7 +481,7 @@ static JSValue computeErrorInfoWithPrepareStackTrace(JSC::VM& vm, Zig::GlobalObj
             }
 
             if (!sourceURLs[i].isEmpty()) {
-                frame.source_url = Bun::toStringRef(sourceURLs[i]);
+                frame.source_url = Fun::toStringRef(sourceURLs[i]);
                 didRemap[i] = true;
                 anyRemap = true;
             }
@@ -489,7 +489,7 @@ static JSValue computeErrorInfoWithPrepareStackTrace(JSC::VM& vm, Zig::GlobalObj
     }
 
     if (anyRemap) {
-        Bun__remapStackFramePositions(globalObject->bunVM(), remappedFrames.begin(), n);
+        Fun__remapStackFramePositions(globalObject->funVM(), remappedFrames.begin(), n);
     }
 
     for (int i = 0; i < n; i++) {
@@ -522,9 +522,9 @@ static String computeErrorInfoToString(JSC::VM& vm, Vector<StackFrame>& stackTra
     return computeErrorInfoWithoutPrepareStackTrace(vm, globalObject, lexicalGlobalObject, stackTrace, line, column, sourceURL, nullptr);
 }
 
-static JSValue computeErrorInfoToJSValueWithoutSkipping(JSC::VM& vm, Vector<StackFrame>& stackTrace, OrdinalNumber& line, OrdinalNumber& column, String& sourceURL, JSObject* errorInstance, void* bunErrorData)
+static JSValue computeErrorInfoToJSValueWithoutSkipping(JSC::VM& vm, Vector<StackFrame>& stackTrace, OrdinalNumber& line, OrdinalNumber& column, String& sourceURL, JSObject* errorInstance, void* funErrorData)
 {
-    UNUSED_PARAM(bunErrorData);
+    UNUSED_PARAM(funErrorData);
 
     Zig::GlobalObject* globalObject = nullptr;
     JSC::JSGlobalObject* lexicalGlobalObject = nullptr;
@@ -567,14 +567,14 @@ static JSValue computeErrorInfoToJSValueWithoutSkipping(JSC::VM& vm, Vector<Stac
     return jsString(vm, result);
 }
 
-static JSValue computeErrorInfoToJSValue(JSC::VM& vm, Vector<StackFrame>& stackTrace, OrdinalNumber& line, OrdinalNumber& column, String& sourceURL, JSObject* errorInstance, void* bunErrorData)
+static JSValue computeErrorInfoToJSValue(JSC::VM& vm, Vector<StackFrame>& stackTrace, OrdinalNumber& line, OrdinalNumber& column, String& sourceURL, JSObject* errorInstance, void* funErrorData)
 {
-    return computeErrorInfoToJSValueWithoutSkipping(vm, stackTrace, line, column, sourceURL, errorInstance, bunErrorData);
+    return computeErrorInfoToJSValueWithoutSkipping(vm, stackTrace, line, column, sourceURL, errorInstance, funErrorData);
 }
 
-WTF::String computeErrorInfoWrapperToString(JSC::VM& vm, Vector<StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, String& sourceURL, void* bunErrorData)
+WTF::String computeErrorInfoWrapperToString(JSC::VM& vm, Vector<StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, String& sourceURL, void* funErrorData)
 {
-    UNUSED_PARAM(bunErrorData);
+    UNUSED_PARAM(funErrorData);
 
     OrdinalNumber line = OrdinalNumber::fromOneBasedInt(line_in);
     OrdinalNumber column = OrdinalNumber::fromOneBasedInt(column_in);
@@ -607,9 +607,9 @@ void computeLineColumnWithSourcemap(JSC::VM& vm, JSC::SourceProvider* _Nonnull s
     ZigStackFrame frame = {};
     frame.position.line_zero_based = line.zeroBasedInt();
     frame.position.column_zero_based = column.zeroBasedInt();
-    frame.source_url = Bun::toStringRef(sourceURL);
+    frame.source_url = Fun::toStringRef(sourceURL);
 
-    Bun__remapStackFramePositions(Bun::vm(vm), &frame, 1);
+    Fun__remapStackFramePositions(Fun::vm(vm), &frame, 1);
 
     if (frame.remapped) {
         lineColumn.line = frame.position.line().oneBasedInt();
@@ -618,12 +618,12 @@ void computeLineColumnWithSourcemap(JSC::VM& vm, JSC::SourceProvider* _Nonnull s
     }
 }
 
-JSC::JSValue computeErrorInfoWrapperToJSValue(JSC::VM& vm, Vector<StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, String& sourceURL, JSObject* errorInstance, void* bunErrorData)
+JSC::JSValue computeErrorInfoWrapperToJSValue(JSC::VM& vm, Vector<StackFrame>& stackTrace, unsigned int& line_in, unsigned int& column_in, String& sourceURL, JSObject* errorInstance, void* funErrorData)
 {
     OrdinalNumber line = OrdinalNumber::fromOneBasedInt(line_in);
     OrdinalNumber column = OrdinalNumber::fromOneBasedInt(column_in);
 
-    JSValue result = computeErrorInfoToJSValue(vm, stackTrace, line, column, sourceURL, errorInstance, bunErrorData);
+    JSValue result = computeErrorInfoToJSValue(vm, stackTrace, line, column, sourceURL, errorInstance, funErrorData);
 
     line_in = line.oneBasedInt();
     column_in = column.oneBasedInt();
@@ -782,7 +782,7 @@ JSC_DEFINE_HOST_FUNCTION(errorConstructorFuncCaptureStackTrace, (JSC::JSGlobalOb
     return JSC::JSValue::encode(JSC::jsUndefined());
 }
 
-} // namespace Bun
+} // namespace Fun
 
 namespace Zig {
 

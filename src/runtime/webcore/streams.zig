@@ -13,8 +13,8 @@ pub const Start = union(Tag) {
     H3ResponseSink: void,
     NetworkSink: void,
     ready: void,
-    owned_and_done: bun.ByteList,
-    done: bun.ByteList,
+    owned_and_done: fun.ByteList,
+    done: fun.ByteList,
 
     pub const Tag = enum {
         empty,
@@ -31,7 +31,7 @@ pub const Start = union(Tag) {
         done,
     };
 
-    pub fn toJS(this: Start, globalThis: *JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn toJS(this: Start, globalThis: *JSGlobalObject) fun.JSError!jsc.JSValue {
         switch (this) {
             .empty, .ready => {
                 return .js_undefined;
@@ -54,7 +54,7 @@ pub const Start = union(Tag) {
         }
     }
 
-    pub fn fromJS(globalThis: *JSGlobalObject, value: JSValue) bun.JSError!Start {
+    pub fn fromJS(globalThis: *JSGlobalObject, value: JSValue) fun.JSError!Start {
         if (value.isEmptyOrUndefinedOrNull() or !value.isObject()) {
             return .{ .empty = {} };
         }
@@ -71,7 +71,7 @@ pub const Start = union(Tag) {
         globalThis: *JSGlobalObject,
         value: JSValue,
         comptime tag: Tag,
-    ) bun.JSError!Start {
+    ) fun.JSError!Start {
         if (value.isEmptyOrUndefinedOrNull() or !value.isObject()) {
             return .{ .empty = {} };
         }
@@ -126,7 +126,7 @@ pub const Start = union(Tag) {
                     if (!path.isString()) {
                         return .{
                             .err = Syscall.Error{
-                                .errno = @intFromEnum(bun.sys.SystemErrno.EINVAL),
+                                .errno = @intFromEnum(fun.sys.SystemErrno.EINVAL),
                                 .syscall = .write,
                             },
                         };
@@ -136,7 +136,7 @@ pub const Start = union(Tag) {
                         .FileSink = .{
                             .chunk_size = chunk_size,
                             .input_path = .{
-                                .path = try path.toSlice(globalThis, globalThis.bunVM().allocator),
+                                .path = try path.toSlice(globalThis, globalThis.funVM().allocator),
                             },
                         },
                     };
@@ -144,13 +144,13 @@ pub const Start = union(Tag) {
                     if (!fd_value.isAnyInt()) {
                         return .{
                             .err = Syscall.Error{
-                                .errno = @intFromEnum(bun.sys.SystemErrno.EBADF),
+                                .errno = @intFromEnum(fun.sys.SystemErrno.EBADF),
                                 .syscall = .write,
                             },
                         };
                     }
 
-                    if (bun.FD.fromJS(fd_value)) |fd| {
+                    if (fun.FD.fromJS(fd_value)) |fd| {
                         return .{
                             .FileSink = .{
                                 .chunk_size = chunk_size,
@@ -159,7 +159,7 @@ pub const Start = union(Tag) {
                         };
                     } else {
                         return .{ .err = Syscall.Error{
-                            .errno = @intFromEnum(bun.sys.SystemErrno.EBADF),
+                            .errno = @intFromEnum(fun.sys.SystemErrno.EBADF),
                             .syscall = .write,
                         } };
                     }
@@ -167,7 +167,7 @@ pub const Start = union(Tag) {
 
                 return .{
                     .FileSink = .{
-                        .input_path = .{ .fd = bun.invalid_fd },
+                        .input_path = .{ .fd = fun.invalid_fd },
                         .chunk_size = chunk_size,
                     },
                 };
@@ -200,17 +200,17 @@ pub const Result = union(Tag) {
     pending: *Pending,
     err: StreamError,
     done: void,
-    owned: bun.ByteList,
-    owned_and_done: bun.ByteList,
-    temporary_and_done: bun.ByteList,
-    temporary: bun.ByteList,
+    owned: fun.ByteList,
+    owned_and_done: fun.ByteList,
+    temporary_and_done: fun.ByteList,
+    temporary: fun.ByteList,
     into_array: IntoArray,
     into_array_and_done: IntoArray,
 
     pub fn deinit(this: *Result) void {
         switch (this.*) {
-            .owned => |*owned| owned.clearAndFree(bun.default_allocator),
-            .owned_and_done => |*owned_and_done| owned_and_done.clearAndFree(bun.default_allocator),
+            .owned => |*owned| owned.clearAndFree(fun.default_allocator),
+            .owned_and_done => |*owned_and_done| owned_and_done.clearAndFree(fun.default_allocator),
             .err => |err| {
                 if (err == .JSValue) {
                     err.JSValue.unprotect();
@@ -345,7 +345,7 @@ pub const Result = union(Tag) {
                     this.handler = struct {
                         const handler = handler_fn;
                         pub fn onHandle(ctx_: *anyopaque, result: Result.Writable) void {
-                            @call(bun.callmod_inline, handler, .{ bun.cast(*Context, ctx_), result });
+                            @call(fun.callmod_inline, handler, .{ fun.cast(*Context, ctx_), result });
                         }
                     }.onHandle;
                 }
@@ -447,7 +447,7 @@ pub const Result = union(Tag) {
                 return;
             }
 
-            const clone = bun.create(bun.default_allocator, Pending, this.*);
+            const clone = fun.create(fun.default_allocator, Pending, this.*);
             this.state = .none;
             this.result = .{ .done = {} };
             vm.eventLoop().enqueueTask(jsc.Task.init(clone));
@@ -456,7 +456,7 @@ pub const Result = union(Tag) {
         pub fn runFromJSThread(this: *Pending) void {
             this.run();
 
-            bun.destroy(this);
+            fun.destroy(this);
         }
 
         pub const Future = union(enum) {
@@ -485,7 +485,7 @@ pub const Result = union(Tag) {
                 this.handler = struct {
                     const handler = handler_fn;
                     pub fn onHandle(ctx_: *anyopaque, result: Result) void {
-                        @call(bun.callmod_inline, handler, .{ bun.cast(*Context, ctx_), result });
+                        @call(fun.callmod_inline, handler, .{ fun.cast(*Context, ctx_), result });
                     }
                 }.onHandle;
             }
@@ -519,7 +519,7 @@ pub const Result = union(Tag) {
     }
 
     pub fn fulfillPromise(result: *Result, promise: *jsc.JSPromise, globalThis: *jsc.JSGlobalObject) void {
-        const vm = globalThis.bunVM();
+        const vm = globalThis.funVM();
         const loop = vm.eventLoop();
         const promise_value = promise.toJS();
         defer promise_value.unprotect();
@@ -557,7 +557,7 @@ pub const Result = union(Tag) {
         }
     }
 
-    pub fn toJS(this: *const Result, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn toJS(this: *const Result, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         if (jsc.VirtualMachine.get().isShuttingDown()) {
             var that = this.*;
             that.deinit();
@@ -704,7 +704,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
     return struct {
         const UWSResponse = if (http3) uws.H3.Response else uws.NewApp(ssl).Response;
         res: ?*UWSResponse,
-        buffer: bun.ByteList,
+        buffer: fun.ByteList,
         pooled_buffer: ?*WebCore.ByteListPool.Node = null,
         offset: Blob.SizeType = 0,
 
@@ -772,7 +772,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             return this.has_backpressure and this.end_len > 0;
         }
         fn sendWithoutAutoFlusher(this: *@This(), buf: []const u8) bool {
-            bun.assert(!this.done);
+            fun.assert(!this.done);
             defer log("send: {d} bytes (backpressure: {})", .{ buf.len, this.has_backpressure });
 
             const res = this.res orelse {
@@ -879,7 +879,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             return true;
         }
 
-        pub fn start(this: *@This(), stream_start: Start) bun.sys.Maybe(void) {
+        pub fn start(this: *@This(), stream_start: Start) fun.sys.Maybe(void) {
             if (this.aborted or this.res == null or this.res.?.hasResponded()) {
                 this.markDone();
                 this.signal.close(null);
@@ -891,7 +891,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             this.flushPromise() catch {}; // TODO: properly propagate exception upwards
 
             if (this.buffer.cap == 0) {
-                bun.assert(this.pooled_buffer == null);
+                fun.assert(this.pooled_buffer == null);
                 if (comptime FeatureFlags.http_buffer_pooling) {
                     if (WebCore.ByteListPool.getIfExists()) |pooled_node| {
                         this.pooled_buffer = pooled_node;
@@ -921,7 +921,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             return .success;
         }
 
-        fn flushFromJSNoWait(this: *@This()) bun.sys.Maybe(JSValue) {
+        fn flushFromJSNoWait(this: *@This()) fun.sys.Maybe(JSValue) {
             log("flushFromJSNoWait", .{});
 
             return .{ .result = JSValue.jsNumber(this.flushNoWait()) };
@@ -945,7 +945,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             return 0;
         }
 
-        pub fn flushFromJS(this: *@This(), globalThis: *JSGlobalObject, wait: bool) bun.sys.Maybe(JSValue) {
+        pub fn flushFromJS(this: *@This(), globalThis: *JSGlobalObject, wait: bool) fun.sys.Maybe(JSValue) {
             log("flushFromJS({})", .{wait});
             this.unregisterAutoFlusher();
 
@@ -978,7 +978,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             return .{ .result = promise_value };
         }
 
-        pub fn flush(this: *@This()) bun.sys.Maybe(void) {
+        pub fn flush(this: *@This()) fun.sys.Maybe(void) {
             log("flush()", .{});
             this.unregisterAutoFlusher();
 
@@ -1132,7 +1132,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
         }
 
         // In this case, it's always an error
-        pub fn end(this: *@This(), err: ?Syscall.Error) bun.sys.Maybe(void) {
+        pub fn end(this: *@This(), err: ?Syscall.Error) fun.sys.Maybe(void) {
             log("end({?f})", .{err});
 
             if (this.requested_end) {
@@ -1161,7 +1161,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             return .success;
         }
 
-        pub fn endFromJS(this: *@This(), globalThis: *JSGlobalObject) bun.sys.Maybe(JSValue) {
+        pub fn endFromJS(this: *@This(), globalThis: *JSGlobalObject) fun.sys.Maybe(JSValue) {
             log("endFromJS()", .{});
 
             if (this.requested_end) {
@@ -1222,7 +1222,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
 
         fn unregisterAutoFlusher(this: *@This()) void {
             if (this.auto_flusher.registered)
-                AutoFlusher.unregisterDeferredMicrotaskWithTypeUnchecked(@This(), this, this.globalThis.bunVM());
+                AutoFlusher.unregisterDeferredMicrotaskWithTypeUnchecked(@This(), this, this.globalThis.funVM());
         }
 
         fn registerAutoFlusher(this: *@This()) void {
@@ -1230,7 +1230,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             // if we enqueue data we should reset the timeout
             res.resetTimeout();
             if (!this.auto_flusher.registered)
-                AutoFlusher.registerDeferredMicrotaskWithTypeUnchecked(@This(), this, this.globalThis.bunVM());
+                AutoFlusher.registerDeferredMicrotaskWithTypeUnchecked(@This(), this, this.globalThis.funVM());
         }
 
         pub fn onAutoFlush(this: *@This()) bool {
@@ -1298,18 +1298,18 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             if (this.pooled_buffer) |pooled| {
                 this.buffer.len = 0;
                 if (this.buffer.cap > 64 * 1024) {
-                    this.buffer.clearAndFree(bun.default_allocator);
+                    this.buffer.clearAndFree(fun.default_allocator);
                 }
                 pooled.data = this.buffer;
 
-                this.buffer = bun.ByteList.empty;
+                this.buffer = fun.ByteList.empty;
                 this.pooled_buffer = null;
                 pooled.release();
             } else if (this.buffer.cap == 0) {
                 //
             } else if (FeatureFlags.http_buffer_pooling and !WebCore.ByteListPool.full()) {
                 const buffer = this.buffer;
-                this.buffer = bun.ByteList.empty;
+                this.buffer = fun.ByteList.empty;
                 WebCore.ByteListPool.push(this.allocator, buffer);
             } else {
                 // Don't release this buffer until destroy() is called
@@ -1317,7 +1317,7 @@ pub fn HTTPServerWritable(comptime ssl: bool, comptime http3: bool) type {
             }
         }
 
-        pub fn flushPromise(this: *@This()) bun.JSTerminated!void {
+        pub fn flushPromise(this: *@This()) fun.JSTerminated!void {
             if (this.pending_flush) |prom| {
                 log("flushPromise()", .{});
 
@@ -1337,10 +1337,10 @@ pub const HTTPSResponseSink = HTTPServerWritable(true, false);
 pub const HTTPResponseSink = HTTPServerWritable(false, false);
 pub const H3ResponseSink = HTTPServerWritable(true, true);
 pub const NetworkSink = struct {
-    pub const new = bun.TrivialNew(@This());
-    pub const deinit = bun.TrivialDeinit(@This());
+    pub const new = fun.TrivialNew(@This());
+    pub const deinit = fun.TrivialDeinit(@This());
 
-    task: ?*bun.S3.MultiPartUpload = null,
+    task: ?*fun.S3.MultiPartUpload = null,
     signal: Signal = .{},
     globalThis: *JSGlobalObject = undefined,
     highWaterMark: Blob.SizeType = 2048,
@@ -1350,7 +1350,7 @@ pub const NetworkSink = struct {
     done: bool = false,
     cancel: bool = false,
 
-    const log = bun.Output.scoped(.NetworkSink, .visible);
+    const log = fun.Output.scoped(.NetworkSink, .visible);
 
     fn getHighWaterMark(this: *@This()) Blob.SizeType {
         if (this.task) |task| {
@@ -1366,7 +1366,7 @@ pub const NetworkSink = struct {
         return null;
     }
 
-    pub fn start(this: *@This(), stream_start: Start) bun.sys.Maybe(void) {
+    pub fn start(this: *@This(), stream_start: Start) fun.sys.Maybe(void) {
         if (this.ended) {
             return .success;
         }
@@ -1404,18 +1404,18 @@ pub const NetworkSink = struct {
         }
     }
 
-    pub fn onWritable(task: *bun.S3.MultiPartUpload, this: *@This(), flushed: u64) bun.JSTerminated!void {
+    pub fn onWritable(task: *fun.S3.MultiPartUpload, this: *@This(), flushed: u64) fun.JSTerminated!void {
         log("onWritable flushed: {d} state: {s}", .{ flushed, @tagName(task.state) });
         if (this.flushPromise.hasValue()) {
             try this.flushPromise.resolve(this.globalThis, jsc.JSValue.jsNumber(flushed));
         }
     }
 
-    pub fn flush(_: *@This()) bun.sys.Maybe(void) {
+    pub fn flush(_: *@This()) fun.sys.Maybe(void) {
         return .success;
     }
 
-    pub fn flushFromJS(this: *@This(), globalThis: *JSGlobalObject, _: bool) bun.sys.Maybe(JSValue) {
+    pub fn flushFromJS(this: *@This(), globalThis: *JSGlobalObject, _: bool) fun.sys.Maybe(JSValue) {
         // still waiting for more data tobe flushed
         if (this.flushPromise.hasValue()) {
             return .{ .result = this.flushPromise.value() };
@@ -1438,7 +1438,7 @@ pub const NetworkSink = struct {
     }
     pub fn finalizeAndDestroy(this: *@This()) void {
         this.finalize();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     pub fn abort(this: *@This()) void {
@@ -1496,7 +1496,7 @@ pub const NetworkSink = struct {
         return .{ .owned = @as(Blob.SizeType, @intCast(bytes.len)) };
     }
 
-    pub fn end(this: *@This(), err: ?Syscall.Error) bun.sys.Maybe(void) {
+    pub fn end(this: *@This(), err: ?Syscall.Error) fun.sys.Maybe(void) {
         if (this.ended) {
             return .success;
         }
@@ -1505,13 +1505,13 @@ pub const NetworkSink = struct {
         this.ended = true;
         // flush everything and send EOF
         if (this.task) |task| {
-            _ = bun.handleOom(task.writeBytes("", true));
+            _ = fun.handleOom(task.writeBytes("", true));
         }
 
         this.signal.close(err);
         return .success;
     }
-    pub fn endFromJS(this: *@This(), _: *JSGlobalObject) bun.sys.Maybe(JSValue) {
+    pub fn endFromJS(this: *@This(), _: *JSGlobalObject) fun.sys.Maybe(JSValue) {
         _ = this.end(null);
         if (this.endPromise.hasValue()) {
             // we are already waiting for the end
@@ -1524,7 +1524,7 @@ pub const NetworkSink = struct {
             if (!this.ended) {
                 this.ended = true;
                 // we need to send EOF
-                _ = bun.handleOom(task.writeBytes("", true));
+                _ = fun.handleOom(task.writeBytes("", true));
                 this.signal.close(null);
             }
             return .{ .result = value };
@@ -1558,15 +1558,15 @@ pub const BufferAction = union(enum) {
 
     pub const Tag = @typeInfo(BufferAction).@"union".tag_type.?;
 
-    pub fn fulfill(this: *BufferAction, global: *jsc.JSGlobalObject, blob: *AnyBlob) bun.JSTerminated!void {
+    pub fn fulfill(this: *BufferAction, global: *jsc.JSGlobalObject, blob: *AnyBlob) fun.JSTerminated!void {
         return blob.wrap(.{ .normal = this.swap() }, global, this.*);
     }
 
-    pub fn reject(this: *BufferAction, global: *jsc.JSGlobalObject, err: Result.StreamError) bun.JSTerminated!void {
+    pub fn reject(this: *BufferAction, global: *jsc.JSGlobalObject, err: Result.StreamError) fun.JSTerminated!void {
         return this.swap().reject(global, err.toJSWeak(global)[0]);
     }
 
-    pub fn resolve(this: *BufferAction, global: *jsc.JSGlobalObject, result: jsc.JSValue) bun.JSTerminated!void {
+    pub fn resolve(this: *BufferAction, global: *jsc.JSGlobalObject, result: jsc.JSValue) fun.JSTerminated!void {
         return this.swap().resolve(global, result);
     }
 
@@ -1621,9 +1621,9 @@ pub const ReadResult = union(enum) {
                 const done = is_done or (close_on_empty and slice.len == 0);
 
                 break :brk if (owned and done)
-                    Result{ .owned_and_done = bun.ByteList.fromOwnedSlice(slice) }
+                    Result{ .owned_and_done = fun.ByteList.fromOwnedSlice(slice) }
                 else if (owned)
-                    Result{ .owned = bun.ByteList.fromOwnedSlice(slice) }
+                    Result{ .owned = fun.ByteList.fromOwnedSlice(slice) }
                 else if (done)
                     Result{ .into_array_and_done = .{ .len = @as(Blob.SizeType, @truncate(slice.len)), .value = view } }
                 else
@@ -1635,16 +1635,16 @@ pub const ReadResult = union(enum) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const FeatureFlags = bun.FeatureFlags;
-const Output = bun.Output;
-const Syscall = bun.sys;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
-const uws = bun.uws;
+const fun = @import("fun");
+const FeatureFlags = fun.FeatureFlags;
+const Output = fun.Output;
+const Syscall = fun.sys;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
+const uws = fun.uws;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ArrayBuffer = jsc.ArrayBuffer;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSPromise = jsc.JSPromise;
@@ -1657,5 +1657,5 @@ const FileSink = WebCore.FileSink;
 const Response = jsc.WebCore.Response;
 const Sink = WebCore.Sink;
 
-const Blob = bun.webcore.Blob;
-const AnyBlob = bun.webcore.Blob.Any;
+const Blob = fun.webcore.Blob;
+const AnyBlob = fun.webcore.Blob.Any;

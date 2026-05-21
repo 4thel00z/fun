@@ -1,8 +1,8 @@
 import assert, { AssertionError } from "assert";
-import { beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it } from "fun:test";
 
 describe("assert(expr)", () => {
-  // https://github.com/oven-sh/bun/issues/941
+  // https://github.com/underdoc-org/fun/issues/941
   it.each([true, 1, "foo"])(`assert(%p) does not throw`, expr => {
     expect(() => assert(expr)).not.toThrow();
   });

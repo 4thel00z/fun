@@ -22,7 +22,7 @@
 // Tests adapted from https://github.com/nodejs/node/blob/main/test/parallel/test-util.js
 
 import assert from "assert";
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import "harness";
 import util from "util";
 // const context = require('vm').runInNewContext; // TODO: Use a vm polyfill
@@ -316,7 +316,7 @@ describe("util", () => {
   //   });
 
   describe("TextEncoder", () => {
-    // test/bun.js/text-encoder.test.js covers test cases for TextEncoder
+    // test/fun.js/text-encoder.test.js covers test cases for TextEncoder
     // here we test only if we use the same via util.TextEncoder
     it("is same as global TextEncoder", () => {
       expect(util.TextEncoder === globalThis.TextEncoder).toBe(true);
@@ -324,7 +324,7 @@ describe("util", () => {
   });
 
   describe("TextDecoder", () => {
-    // test/bun.js/text-decoder.test.js covers test cases for TextDecoder
+    // test/fun.js/text-decoder.test.js covers test cases for TextDecoder
     // here we test only if we use the same via util.TextDecoder
     it("is same as global TextDecoder", () => {
       expect(util.TextDecoder === globalThis.TextDecoder).toBe(true);
@@ -395,7 +395,7 @@ describe("util", () => {
     // Batch all node lookups into a single subprocess instead of one per code (was 74 spawns).
     const negativeSpaceCodes = [];
     for (let i = -4095; i <= -4023; i++) negativeSpaceCodes.push(i);
-    const proc = Bun.spawnSync({
+    const proc = Fun.spawnSync({
       cmd: [
         "node",
         "-e",

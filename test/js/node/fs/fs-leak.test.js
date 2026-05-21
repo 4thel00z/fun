@@ -1,8 +1,8 @@
 // This file is a .cjs file so you can run it in node+jest to verify node behaves exactly the same.
-const { expect, test } = require("bun:test");
+const { expect, test } = require("fun:test");
 const fs = require("fs");
 const { tmpdir, devNull } = require("os");
-const { fsStreamInternals } = require("bun:internal-for-testing");
+const { fsStreamInternals } = require("fun:internal-for-testing");
 
 function getMaxFd() {
   const dev_null = fs.openSync(devNull, "r");

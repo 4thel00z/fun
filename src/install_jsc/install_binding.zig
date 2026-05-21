@@ -1,4 +1,4 @@
-pub const bun_install_js_bindings = struct {
+pub const fun_install_js_bindings = struct {
     const JSValue = jsc.JSValue;
     const ZigString = jsc.ZigString;
     const JSGlobalObject = jsc.JSGlobalObject;
@@ -10,8 +10,8 @@ pub const bun_install_js_bindings = struct {
         return obj;
     }
 
-    pub fn jsParseLockfile(globalObject: *JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!JSValue {
-        const allocator = bun.default_allocator;
+    pub fn jsParseLockfile(globalObject: *JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!JSValue {
+        const allocator = fun.default_allocator;
         var log = logger.Log.init(allocator);
         defer log.deinit();
 
@@ -19,21 +19,21 @@ pub const bun_install_js_bindings = struct {
         const cwd = try args[0].toSliceOrNull(globalObject);
         defer cwd.deinit();
 
-        var dir = bun.openDirAbsoluteNotForDeletingOrRenaming(cwd.slice()) catch |err| {
+        var dir = fun.openDirAbsoluteNotForDeletingOrRenaming(cwd.slice()) catch |err| {
             return globalObject.throw("failed to open: {s}, '{s}'", .{ @errorName(err), cwd.slice() });
         };
         defer dir.close();
 
-        const lockfile_path = Path.joinAbsStringZ(cwd.slice(), &[_]string{"bun.lockb"}, .auto);
+        const lockfile_path = Path.joinAbsStringZ(cwd.slice(), &[_]string{"fun.lockb"}, .auto);
 
         var lockfile: Lockfile = undefined;
         lockfile.initEmpty(allocator);
-        if (globalObject.bunVM().transpiler.resolver.env_loader == null) {
-            globalObject.bunVM().transpiler.resolver.env_loader = globalObject.bunVM().transpiler.env;
+        if (globalObject.funVM().transpiler.resolver.env_loader == null) {
+            globalObject.funVM().transpiler.resolver.env_loader = globalObject.funVM().transpiler.env;
         }
 
         // as long as we aren't migration from `package-lock.json`, leaving this undefined is okay
-        const manager = globalObject.bunVM().transpiler.resolver.getPackageManager();
+        const manager = globalObject.funVM().transpiler.resolver.getPackageManager();
 
         const load_result: Lockfile.LoadResult = lockfile.loadFromDir(.fromStdDir(dir), manager, allocator, &log, true);
 
@@ -47,14 +47,14 @@ pub const bun_install_js_bindings = struct {
             .ok => {},
         }
 
-        const stringified = bun.handleOom(std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(lockfile, .{
+        const stringified = fun.handleOom(std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(lockfile, .{
             .whitespace = .indent_2,
             .emit_null_optional_fields = true,
             .emit_nonportable_numbers_as_strings = true,
         })}));
         defer allocator.free(stringified);
 
-        var str = bun.String.cloneUTF8(stringified);
+        var str = fun.String.cloneUTF8(stringified);
         defer str.deref();
 
         return str.toJSByParseJSON(globalObject);
@@ -65,8 +65,8 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Path = bun.path;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const Lockfile = bun.install.Lockfile;
+const fun = @import("fun");
+const Path = fun.path;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const Lockfile = fun.install.Lockfile;

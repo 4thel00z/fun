@@ -89,9 +89,9 @@ pub const Location = struct {
 
     /// 1-based line number.
     /// Line <= 0 means there is no line and column information.
-    // TODO: move to `bun.Ordinal`
+    // TODO: move to `fun.Ordinal`
     line: i32,
-    // TODO: figure out how this is interpreted, convert to `bun.Ordinal`
+    // TODO: figure out how this is interpreted, convert to `fun.Ordinal`
     // original docs: 0-based, in bytes.
     // but there is a place where this is emitted in output, implying one based character offset
     column: i32,
@@ -298,7 +298,7 @@ pub const Data = struct {
                         line_offset_for_second_line += std.fmt.count("{d} | ", .{location.line});
                     }
 
-                    try to.print("{f}\n", .{bun.fmt.fmtJavaScript(line_text, .{
+                    try to.print("{f}\n", .{fun.fmt.fmtJavaScript(line_text, .{
                         .enable_colors = enable_ansi_colors,
                         .redact_sensitive_information = redact_sensitive_information,
                     })});
@@ -355,7 +355,7 @@ pub const Data = struct {
                 }
 
                 if (Environment.isDebug) {
-                    // comptime magic: do not print byte when using Bun.inspect, but only print
+                    // comptime magic: do not print byte when using Fun.inspect, but only print
                     // when you the writer is to a file (like standard out)
                     if ((comptime std.mem.indexOf(u8, @typeName(@TypeOf(to)), "fs.file") != null) and Output.enable_ansi_colors_stderr) {
                         try to.print(comptime Output.prettyFmt(" <d>byte={d}<r>", enable_ansi_colors), .{
@@ -415,7 +415,7 @@ pub const Msg = struct {
             .kind = this.kind,
             .data = try this.data.clone(allocator),
             .metadata = this.metadata,
-            .notes = try bun.clone(this.notes, allocator),
+            .notes = try fun.clone(this.notes, allocator),
         };
     }
 
@@ -644,7 +644,7 @@ pub const Log = struct {
             map.set(Level.err, "error");
             break :brk map;
         };
-        pub const Map = bun.ComptimeStringMap(Level, .{
+        pub const Map = fun.ComptimeStringMap(Level, .{
             .{ "verbose", Level.verbose },
             .{ "debug", Level.debug },
             .{ "info", Level.info },
@@ -923,8 +923,8 @@ pub const Log = struct {
         return log.addFormattedMsg(.err, opts.source, .{ .loc = opts.loc, .len = opts.len }, try allocPrint(allocator, fmt, args), &.{}, true, opts.redact_sensitive_information);
     }
 
-    // Use a bun.sys.Error's message in addition to some extra context.
-    pub fn addSysError(log: *Log, alloc: std.mem.Allocator, e: bun.sys.Error, comptime fmt: string, args: anytype) OOM!void {
+    // Use a fun.sys.Error's message in addition to some extra context.
+    pub fn addSysError(log: *Log, alloc: std.mem.Allocator, e: fun.sys.Error, comptime fmt: string, args: anytype) OOM!void {
         const tag_name, const sys_errno = e.getErrorCodeTagName() orelse {
             try log.addErrorFmt(null, Loc.Empty, alloc, fmt, args);
             return;
@@ -934,7 +934,7 @@ pub const Log = struct {
             Loc.Empty,
             alloc,
             "{s}: " ++ fmt,
-            .{bun.sys.coreutils_error_map.get(sys_errno) orelse tag_name} ++ args,
+            .{fun.sys.coreutils_error_map.get(sys_errno) orelse tag_name} ++ args,
         );
     }
 
@@ -1264,7 +1264,7 @@ pub const Source = struct {
 
     index: Index = Index.source(0),
 
-    pub fn fmtIdentifier(this: *const Source) bun.fmt.FormatValidIdentifier {
+    pub fn fmtIdentifier(this: *const Source) fun.fmt.FormatValidIdentifier {
         return this.path.name.fmtIdentifier();
     }
 
@@ -1273,7 +1273,7 @@ pub const Source = struct {
             return this.identifier_name;
         }
 
-        bun.assert(this.path.text.len > 0);
+        fun.assert(this.path.text.len > 0);
         const name = try this.path.name.nonUniqueNameString(allocator);
         this.identifier_name = name;
         return name;
@@ -1386,7 +1386,7 @@ pub const Source = struct {
     }
 
     pub fn initErrorPosition(self: *const Source, offset_loc: Loc) ErrorPosition {
-        bun.assert(!offset_loc.isEmpty());
+        fun.assert(!offset_loc.isEmpty());
         var prev_code_point: i32 = 0;
         const offset: usize = @min(@as(usize, @intCast(offset_loc.start)), @max(self.contents.len, 1) - 1);
 
@@ -1511,12 +1511,12 @@ const fs = @import("../resolver/fs.zig");
 const std = @import("std");
 const ImportKind = @import("../options_types/import_record.zig").ImportKind;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const StringBuilder = bun.StringBuilder;
-const assert = bun.assert;
-const strings = bun.strings;
-const Index = bun.ast.Index;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const StringBuilder = fun.StringBuilder;
+const assert = fun.assert;
+const strings = fun.strings;
+const Index = fun.ast.Index;
+const api = fun.schema.api;

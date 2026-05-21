@@ -10,8 +10,8 @@ namespace v8 {
 
 class Function : public Object {
 public:
-    BUN_EXPORT void SetName(Local<String> name);
-    BUN_EXPORT Local<Value> GetName() const;
+    FUN_EXPORT void SetName(Local<String> name);
+    FUN_EXPORT Local<Value> GetName() const;
 };
 
 } // namespace v8

@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/26284
+// https://github.com/underdoc-org/fun/issues/26284
 // After useRealTimers(), hasOwnProperty('clock') should return false
-import { afterEach, expect, jest, test } from "bun:test";
+import { afterEach, expect, jest, test } from "fun:test";
 
 // Simulates testing-library/react's jestFakeTimersAreEnabled() function
 function jestFakeTimersAreEnabled(): boolean {

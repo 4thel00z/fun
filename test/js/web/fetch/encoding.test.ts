@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "node:events";
 import { createServer } from "node:http";
 import { createBrotliCompress, createDeflate, createGzip } from "node:zlib";

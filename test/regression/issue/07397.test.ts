@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("Response.redirect clones string from Location header", () => {
   const url = new URL("http://example.com");

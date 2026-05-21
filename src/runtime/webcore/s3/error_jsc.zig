@@ -14,7 +14,7 @@ pub fn getJSSignError(err: anyerror, globalThis: *jsc.JSGlobalObject) jsc.JSValu
     };
 }
 
-pub fn throwSignError(err: anyerror, globalThis: *jsc.JSGlobalObject) bun.JSError {
+pub fn throwSignError(err: anyerror, globalThis: *jsc.JSGlobalObject) fun.JSError {
     return switch (err) {
         error.MissingCredentials => globalThis.ERR(.S3_MISSING_CREDENTIALS, getSignErrorMessage(error.MissingCredentials), .{}).throw(),
         error.InvalidMethod => globalThis.ERR(.S3_INVALID_METHOD, getSignErrorMessage(error.InvalidMethod), .{}).throw(),
@@ -26,16 +26,16 @@ pub fn throwSignError(err: anyerror, globalThis: *jsc.JSGlobalObject) bun.JSErro
 }
 
 const JSS3Error = extern struct {
-    code: bun.String = bun.String.empty,
-    message: bun.String = bun.String.empty,
-    path: bun.String = bun.String.empty,
+    code: fun.String = fun.String.empty,
+    message: fun.String = fun.String.empty,
+    path: fun.String = fun.String.empty,
 
     pub fn init(code: []const u8, message: []const u8, path: ?[]const u8) @This() {
         return .{
             // lets make sure we can reuse code and message and keep it service independent
-            .code = bun.String.createAtomIfPossible(code),
-            .message = bun.String.createAtomIfPossible(message),
-            .path = if (path) |p| bun.String.init(p) else bun.String.empty,
+            .code = fun.String.createAtomIfPossible(code),
+            .message = fun.String.createAtomIfPossible(message),
+            .path = if (path) |p| fun.String.init(p) else fun.String.empty,
         };
     }
 
@@ -54,7 +54,7 @@ const JSS3Error = extern struct {
 
 pub fn s3ErrorToJS(err: *const S3Error, globalObject: *jsc.JSGlobalObject, path: ?[]const u8) jsc.JSValue {
     const value = JSS3Error.init(err.code, err.message, path).toErrorInstance(globalObject);
-    bun.assert(!globalObject.hasException());
+    fun.assert(!globalObject.hasException());
     return value;
 }
 
@@ -70,5 +70,5 @@ pub fn s3ErrorToJSWithAsyncStack(err: *const S3Error, globalObject: *jsc.JSGloba
 const s3_error = @import("../../../s3_signing/error.zig");
 const getSignErrorMessage = s3_error.getSignErrorMessage;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

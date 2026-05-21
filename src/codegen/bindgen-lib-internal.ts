@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 // While working on this file, it is important to have very rigorous errors
 // and checking on input data. The goal is to allow people not aware of
 // various footguns in JavaScript, C++, and the bindings generator to
@@ -152,7 +154,7 @@ export class TypeImpl<K extends TypeKind = TypeKind> {
         h += this.data.map(({ key, required, type }) => `${key}:${required}:${type.hash()}`).join(",");
         break;
     }
-    let hash = String(Bun.hash(h));
+    let hash = String(Fun.hash(h));
     this.#hash = hash;
     return hash;
   }
@@ -187,7 +189,7 @@ export class TypeImpl<K extends TypeKind = TypeKind> {
       case "DOMString":
       case "USVString":
       case "UTF8String":
-        return "bun.String";
+        return "fun.String";
       case "boolean":
         return "bool";
       case "strictBoolean":
@@ -481,7 +483,7 @@ export class TypeImpl<K extends TypeKind = TypeKind> {
       case "USVString":
       case "UTF8String":
         if (typeof value === "string") {
-          w.add("Bun::BunStringEmpty");
+          w.add("Fun::FunStringEmpty");
         } else {
           throw new Error(`TODO: non-empty string default`);
         }
@@ -519,7 +521,7 @@ export class TypeImpl<K extends TypeKind = TypeKind> {
   }
 
   [Symbol.toStringTag] = "Type";
-  [Bun.inspect.custom](depth, options, inspect) {
+  [Fun.inspect.custom](depth, options, inspect) {
     return (
       `${options.stylize("Type", "special")} ${
         this.lowersToNamedType() && this.nameDeduplicated
@@ -671,7 +673,7 @@ export function cAbiTypeForEnum(length: number): CAbiType {
 }
 
 export function inspect(value: any) {
-  return Bun.inspect(value, { colors: Bun.enableANSIColors });
+  return Fun.inspect(value, { colors: Fun.enableANSIColors });
 }
 
 export function oneOfImpl(types: TypeImpl[]): TypeImpl {
@@ -758,7 +760,7 @@ export type ArgStrategy =
       prefix: string;
       /**
        * For compound complex types, such as `?union(enum) { a: u32, b:
-       * bun.String }`, the child item is assigned the prefix
+       * fun.String }`, the child item is assigned the prefix
        * `{prefix_of_optional}_value`. The interpretation of this array depends
        * on `arg.type.kind`.
        */
@@ -897,7 +899,7 @@ export type CAbiType =
   | "JSValue"
   | "JSValue.MaybeException"
   | "u0"
-  | "bun.String"
+  | "fun.String"
   | "bool"
   | "u8"
   | "u16"
@@ -938,7 +940,7 @@ export function cAbiTypeInfo(type: CAbiType): [size: number, align: number] {
     case "JSValue":
     case "JSValue.MaybeException":
       return [8, 8]; // pointer size
-    case "bun.String":
+    case "fun.String":
       return [24, 8];
     default:
       throw new Error("unexpected: " + (type satisfies never));
@@ -966,7 +968,7 @@ export function cAbiTypeName(type: CAbiType) {
       "i64": "int64_t",
       "f64": "double",
       "usize": "size_t",
-      "bun.String": "BunString",
+      "fun.String": "FunString",
       u0: "void",
     } satisfies Record<Extract<CAbiType, string>, string>
   )[type];
@@ -1008,7 +1010,7 @@ export class Struct {
 
   hash() {
     return (this.#hash ??= String(
-      Bun.hash(
+      Fun.hash(
         this.fields
           .map(f => {
             if (f.type instanceof Struct) {

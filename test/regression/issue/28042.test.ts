@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/28042
+// https://github.com/underdoc-org/fun/issues/28042
 // Dynamic import() with { with: { type: 'text' } } on .html files
 // was not applying the loader from import attributes, causing
 // --compile builds to fail with "require_bar is not defined".
@@ -14,10 +14,10 @@ console.log(foo.default);`,
   });
 
   // Build with --compile
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "index.ts", "--compile", "--outfile", `${dir}/out`],
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "index.ts", "--compile", "--outfile", `${dir}/out`],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -28,9 +28,9 @@ console.log(foo.default);`,
   expect(buildExitCode).toBe(0);
 
   // Run the compiled binary
-  await using runProc = Bun.spawn({
+  await using runProc = Fun.spawn({
     cmd: [`${dir}/out`],
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -49,10 +49,10 @@ console.log(foo.default);`,
   });
 
   // Build without --compile (regular bundle)
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "index.ts", "--outfile", `${dir}/out.js`],
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "index.ts", "--outfile", `${dir}/out.js`],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });
@@ -63,9 +63,9 @@ console.log(foo.default);`,
   expect(buildExitCode).toBe(0);
 
   // Run the bundled output
-  await using runProc = Bun.spawn({
-    cmd: [bunExe(), `${dir}/out.js`],
-    env: bunEnv,
+  await using runProc = Fun.spawn({
+    cmd: [funExe(), `${dir}/out.js`],
+    env: funEnv,
     stderr: "pipe",
     stdout: "pipe",
   });

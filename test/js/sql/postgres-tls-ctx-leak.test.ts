@@ -1,6 +1,6 @@
-import { SQL } from "bun";
-import { heapStats } from "bun:jsc";
-import { expect, test } from "bun:test";
+import { SQL } from "fun";
+import { heapStats } from "fun:jsc";
+import { expect, test } from "fun:test";
 import net from "net";
 
 // PostgresSQLConnection.deinit() must free the per-connection SSL SocketContext
@@ -20,14 +20,14 @@ import net from "net";
 // deinit() exercise the teardown path.
 
 async function countPostgresConnectionsAfterGC(maxWait = 3000): Promise<number> {
-  Bun.gc(true);
+  Fun.gc(true);
   let count = heapStats().objectTypeCounts["PostgresSQLConnection"] || 0;
-  // Use wall-clock time — Bun.gc(true) under ASAN can take >100ms per call,
+  // Use wall-clock time — Fun.gc(true) under ASAN can take >100ms per call,
   // so a fixed-iteration loop would wildly overshoot maxWait.
   const deadline = performance.now() + maxWait;
   while (count > 2 && performance.now() < deadline) {
-    await Bun.sleep(20);
-    Bun.gc(true);
+    await Fun.sleep(20);
+    Fun.gc(true);
     count = heapStats().objectTypeCounts["PostgresSQLConnection"] || 0;
   }
   return count;

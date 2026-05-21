@@ -20,7 +20,7 @@ pub const InternalLoopData = extern struct {
     low_prio_budget: i32,
     dns_ready_head: *ConnectingSocket,
     closed_connecting_head: *ConnectingSocket,
-    mutex: bun.Mutex.ReleaseImpl.Type,
+    mutex: fun.Mutex.ReleaseImpl.Type,
     parent_ptr: ?*anyopaque,
     parent_tag: c_char,
     iteration_nr: usize,
@@ -52,8 +52,8 @@ pub const InternalLoopData = extern struct {
         const parent = this.parent_ptr orelse @panic("Parent loop not set - pointer is null");
         return switch (this.parent_tag) {
             0 => @panic("Parent loop not set - tag is zero"),
-            1 => .{ .js = bun.cast(*jsc.EventLoop, parent) },
-            2 => .{ .mini = bun.cast(*jsc.MiniEventLoop, parent) },
+            1 => .{ .js = fun.cast(*jsc.EventLoop, parent) },
+            2 => .{ .mini = fun.cast(*jsc.MiniEventLoop, parent) },
             else => @panic("Parent loop data corrupted - tag is invalid"),
         };
     }
@@ -61,10 +61,10 @@ pub const InternalLoopData = extern struct {
     const LIBUS_RECV_BUFFER_LENGTH = 524288;
 };
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const ConnectingSocket = uws.ConnectingSocket;
 const Loop = uws.Loop;
 const SocketGroup = uws.SocketGroup;

@@ -1,10 +1,10 @@
-# Upgrading Bun's Self-Reported Node.js Version
+# Upgrading Fun's Self-Reported Node.js Version
 
-This guide explains how to upgrade the Node.js version that Bun reports for compatibility with Node.js packages and native addons.
+This guide explains how to upgrade the Node.js version that Fun reports for compatibility with Node.js packages and native addons.
 
 ## Overview
 
-Bun reports a Node.js version for compatibility with the Node.js ecosystem. This affects:
+Fun reports a Node.js version for compatibility with the Node.js ecosystem. This affects:
 - `process.version` output
 - Node-API (N-API) compatibility
 - Native addon ABI compatibility
@@ -22,9 +22,9 @@ Bun reports a Node.js version for compatibility with the Node.js ecosystem. This
   - `NODEJS_ABI_VERSION` - The ABI version number (find using command below)
 
 ### 3. Version Strings
-- `src/jsc/bindings/BunProcess.cpp`
-  - Update `Bun__versions_node` with the Node.js version
-  - Update `Bun__versions_v8` with the V8 version (find using command below)
+- `src/jsc/bindings/FunProcess.cpp`
+  - Update `Fun__versions_node` with the Node.js version
+  - Update `Fun__versions_v8` with the V8 version (find using command below)
 
 ### 4. N-API Version
 - `src/napi/js_native_api.h`
@@ -58,11 +58,11 @@ curl -s https://raw.githubusercontent.com/nodejs/node/main/doc/abi_version_regis
 2. **Update the required files** listed in the sections above
 3. **Build and test**:
    ```bash
-   bun bd
-   bun bd -e "console.log(process.version)"
-   bun bd -e "console.log(process.versions.v8)"
-   bun bd test test/v8/v8.test.ts
-   bun bd test test/napi/napi.test.ts
+   fun bd
+   fun bd -e "console.log(process.version)"
+   fun bd -e "console.log(process.versions.v8)"
+   fun bd test test/v8/v8.test.ts
+   fun bd test test/napi/napi.test.ts
    ```
 
 4. **Check for V8 API changes** only if build fails or tests crash:

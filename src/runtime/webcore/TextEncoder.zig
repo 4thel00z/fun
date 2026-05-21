@@ -6,7 +6,7 @@ pub export fn TextEncoder__encode8(
     len: usize,
 ) JSValue {
     // as much as possible, rely on jsc to own the memory
-    // their code is more battle-tested than bun's code
+    // their code is more battle-tested than fun's code
     // so we do a stack allocation here
     // and then copy into jsc memory
     // unless it's huge
@@ -19,17 +19,17 @@ pub export fn TextEncoder__encode8(
     if (slice.len <= buf.len / 2) {
         const result = strings.copyLatin1IntoUTF8(&buf, slice);
         const uint8array = jsc.JSValue.createUninitializedUint8Array(globalThis, result.written) catch return .zero;
-        bun.assert(result.written <= buf.len);
-        bun.assert(result.read == slice.len);
+        fun.assert(result.written <= buf.len);
+        fun.assert(result.read == slice.len);
         const array_buffer = uint8array.asArrayBuffer(globalThis) orelse return .zero;
-        bun.assert(result.written == array_buffer.len);
+        fun.assert(result.written == array_buffer.len);
         @memcpy(array_buffer.byteSlice()[0..result.written], buf[0..result.written]);
         return uint8array;
     } else {
-        const bytes = strings.allocateLatin1IntoUTF8(globalThis.bunVM().allocator, slice) catch {
+        const bytes = strings.allocateLatin1IntoUTF8(globalThis.funVM().allocator, slice) catch {
             return globalThis.throwOutOfMemoryValue();
         };
-        bun.assert(bytes.len >= slice.len);
+        fun.assert(bytes.len >= slice.len);
         return ArrayBuffer.fromBytes(bytes, .Uint8Array).toJSUnchecked(globalThis) catch .zero;
     }
 }
@@ -40,7 +40,7 @@ pub export fn TextEncoder__encode16(
     len: usize,
 ) JSValue {
     // as much as possible, rely on jsc to own the memory
-    // their code is more battle-tested than bun's code
+    // their code is more battle-tested than fun's code
     // so we do a stack allocation here
     // and then copy into jsc memory
     // unless it's huge
@@ -62,15 +62,15 @@ pub export fn TextEncoder__encode16(
             return uint8array;
         }
         const uint8array = jsc.JSValue.createUninitializedUint8Array(globalThis, result.written) catch return .zero;
-        bun.assert(result.written <= buf.len);
-        bun.assert(result.read == slice.len);
+        fun.assert(result.written <= buf.len);
+        fun.assert(result.read == slice.len);
         const array_buffer = uint8array.asArrayBuffer(globalThis).?;
-        bun.assert(result.written == array_buffer.len);
+        fun.assert(result.written == array_buffer.len);
         @memcpy(array_buffer.slice()[0..result.written], buf[0..result.written]);
         return uint8array;
     } else {
         const bytes = strings.toUTF8AllocWithType(
-            bun.default_allocator,
+            fun.default_allocator,
             slice,
         ) catch {
             return globalThis.toInvalidArguments("Out of memory", .{});
@@ -85,7 +85,7 @@ pub export fn c(
     len: usize,
 ) JSValue {
     // as much as possible, rely on jsc to own the memory
-    // their code is more battle-tested than bun's code
+    // their code is more battle-tested than fun's code
     // so we do a stack allocation here
     // and then copy into jsc memory
     // unless it's huge
@@ -107,15 +107,15 @@ pub export fn c(
             return uint8array;
         }
         const uint8array = jsc.JSValue.createUninitializedUint8Array(globalThis, result.written) catch return .zero;
-        bun.assert(result.written <= buf.len);
-        bun.assert(result.read == slice.len);
+        fun.assert(result.written <= buf.len);
+        fun.assert(result.read == slice.len);
         const array_buffer = uint8array.asArrayBuffer(globalThis).?;
-        bun.assert(result.written == array_buffer.len);
+        fun.assert(result.written == array_buffer.len);
         @memcpy(array_buffer.slice()[0..result.written], buf[0..result.written]);
         return uint8array;
     } else {
         const bytes = strings.toUTF8AllocWithType(
-            bun.default_allocator,
+            fun.default_allocator,
             slice,
         ) catch {
             return globalThis.throwOutOfMemoryValue();
@@ -133,7 +133,7 @@ const RopeStringEncoder = struct {
     any_non_ascii: bool = false,
 
     pub fn append8(it: *jsc.JSString.Iterator, ptr: [*]const u8, len: u32) callconv(.c) void {
-        var this = bun.cast(*RopeStringEncoder, it.data.?);
+        var this = fun.cast(*RopeStringEncoder, it.data.?);
         const result = strings.copyLatin1IntoUTF8StopOnNonASCII(this.buf[this.tail..], ptr[0..len], true);
         if (result.read == std.math.maxInt(u32) and result.written == std.math.maxInt(u32)) {
             it.stop = 1;
@@ -143,12 +143,12 @@ const RopeStringEncoder = struct {
         }
     }
     pub fn append16(it: *jsc.JSString.Iterator, _: [*]const u16, _: u32) callconv(.c) void {
-        var this = bun.cast(*RopeStringEncoder, it.data.?);
+        var this = fun.cast(*RopeStringEncoder, it.data.?);
         this.any_non_ascii = true;
         it.stop = 1;
     }
     pub fn write8(it: *jsc.JSString.Iterator, ptr: [*]const u8, len: u32, offset: u32) callconv(.c) void {
-        var this = bun.cast(*RopeStringEncoder, it.data.?);
+        var this = fun.cast(*RopeStringEncoder, it.data.?);
         const result = strings.copyLatin1IntoUTF8StopOnNonASCII(this.buf[offset..], ptr[0..len], true);
         if (result.read == std.math.maxInt(u32) and result.written == std.math.maxInt(u32)) {
             it.stop = 1;
@@ -156,7 +156,7 @@ const RopeStringEncoder = struct {
         }
     }
     pub fn write16(it: *jsc.JSString.Iterator, _: [*]const u16, _: u32, _: u32) callconv(.c) void {
-        var this = bun.cast(*RopeStringEncoder, it.data.?);
+        var this = fun.cast(*RopeStringEncoder, it.data.?);
         this.any_non_ascii = true;
         it.stop = 1;
     }
@@ -180,7 +180,7 @@ pub export fn TextEncoder__encodeRopeString(
     globalThis: *JSGlobalObject,
     rope_str: *jsc.JSString,
 ) JSValue {
-    if (comptime Environment.allow_assert) bun.assert(rope_str.is8Bit());
+    if (comptime Environment.allow_assert) fun.assert(rope_str.is8Bit());
     var stack_buf: [2048]u8 = undefined;
     var buf_to_use: []u8 = &stack_buf;
     const length = rope_str.length();
@@ -255,11 +255,11 @@ comptime {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ArrayBuffer = jsc.ArrayBuffer;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

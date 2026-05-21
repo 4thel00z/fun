@@ -4,10 +4,10 @@
 
 // Check that the offset of a field in our ImplicitArgs struct matches the array index
 // that V8 uses to access that field
-#define CHECK_IMPLICIT_ARG(BUN_NAME, V8_NAME)                                          \
-    static_assert(offsetof(v8::ImplicitArgs, BUN_NAME)                                 \
+#define CHECK_IMPLICIT_ARG(FUN_NAME, V8_NAME)                                          \
+    static_assert(offsetof(v8::ImplicitArgs, FUN_NAME)                                 \
             == sizeof(void*) * real_v8::FunctionCallbackInfo<real_v8::Value>::V8_NAME, \
-        "Position of `" #BUN_NAME "` in implicit arguments does not match V8");
+        "Position of `" #FUN_NAME "` in implicit arguments does not match V8");
 
 CHECK_IMPLICIT_ARG(unused, kUnusedIndex)
 CHECK_IMPLICIT_ARG(isolate, kIsolateIndex)

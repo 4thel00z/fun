@@ -65,7 +65,7 @@ napi_value test_function(napi_env env, napi_callback_info info) {
     
     printf("Expected behavior differences:\n");
     printf("- Node.js: Should handle removal/addition gracefully during iteration\n");
-    printf("- Bun: May have undefined behavior due to direct list modification\n");
+    printf("- Fun: May have undefined behavior due to direct list modification\n");
     
     return NULL;
 }

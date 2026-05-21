@@ -3,7 +3,7 @@ import path from "path";
 import { readdirRecursive, resolveSyncOrNull } from "./helpers";
 
 export function createInternalModuleRegistry(basedir: string) {
-  const moduleList = ["bun", "node", "thirdparty", "internal"]
+  const moduleList = ["fun", "node", "thirdparty", "internal"]
     .flatMap(dir => readdirRecursive(path.join(basedir, dir)))
     .filter(file => file.endsWith(".js") || (file.endsWith(".ts") && !file.endsWith(".d.ts")))
     .map(file => file.slice(basedir.length + 1))
@@ -15,8 +15,8 @@ export function createInternalModuleRegistry(basedir: string) {
   for (let i = 0; i < moduleList.length; i++) {
     const prefix = moduleList[i].startsWith("node/")
       ? "node:"
-      : moduleList[i].startsWith("bun:")
-        ? "bun:"
+      : moduleList[i].startsWith("fun:")
+        ? "fun:"
         : moduleList[i].startsWith("internal/")
           ? "internal/"
           : undefined;
@@ -27,7 +27,7 @@ export function createInternalModuleRegistry(basedir: string) {
   }
 
   moduleList.push("internal-for-testing.ts");
-  internalRegistry.set("bun:internal-for-testing", moduleList.length - 1);
+  internalRegistry.set("fun:internal-for-testing", moduleList.length - 1);
 
   let nextNativeModuleId = 0;
   const nativeModuleIds: Record<string, number> = {};
@@ -54,7 +54,7 @@ export function createInternalModuleRegistry(basedir: string) {
 
   if (nextNativeModuleId === 0) {
     throw new Error(
-      "Could not find BUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE in _NativeModule.h. Knowing native module IDs is a part of the codegen process.",
+      "Could not find FUN_FOREACH_ESM_AND_CJS_NATIVE_MODULE in _NativeModule.h. Knowing native module IDs is a part of the codegen process.",
     );
   }
 
@@ -70,7 +70,7 @@ export function createInternalModuleRegistry(basedir: string) {
       resolveSyncOrNull(specifier, path.join(basedir, path.dirname(from))) ?? resolveSyncOrNull(specifier, basedir);
 
     const suffix =
-      'Only files in "src/js" besides "src/js/builtins" can be imported here. Note that the "node:" or "bun:" prefix is required here.';
+      'Only files in "src/js" besides "src/js/builtins" can be imported here. Note that the "node:" or "fun:" prefix is required here.';
 
     if (relativeMatch) {
       const found = moduleList.indexOf(path.relative(basedir, relativeMatch).replaceAll("\\", "/"));

@@ -1,8 +1,8 @@
-import { bunExe } from "harness";
+import { funExe } from "harness";
 
 test("order", async () => {
-  const res = Bun.spawnSync({
-    cmd: [bunExe(), import.meta.dir + "/order-fixture.js"],
+  const res = Fun.spawnSync({
+    cmd: [funExe(), import.meta.dir + "/order-fixture.js"],
     stdio: ["pipe", "pipe", "pipe"],
   });
   expect({
@@ -17,8 +17,8 @@ test("order", async () => {
 });
 
 test("exit", async () => {
-  const res = Bun.spawnSync({
-    cmd: [bunExe(), import.meta.dir + "/exit-fixture.js"],
+  const res = Fun.spawnSync({
+    cmd: [funExe(), import.meta.dir + "/exit-fixture.js"],
     stdio: ["pipe", "pipe", "pipe"],
   });
   expect({

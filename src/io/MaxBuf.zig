@@ -13,7 +13,7 @@ pub fn createForSubprocess(owner: *Subprocess, ptr: *?*MaxBuf, initial: ?i64) vo
         ptr.* = null;
         return;
     }
-    const maxbuf = bun.handleOom(bun.default_allocator.create(MaxBuf));
+    const maxbuf = fun.handleOom(fun.default_allocator.create(MaxBuf));
     maxbuf.* = .{
         .owned_by_subprocess = owner,
         .owned_by_reader = false,
@@ -25,13 +25,13 @@ fn disowned(this: *MaxBuf) bool {
     return this.owned_by_subprocess == null and this.owned_by_reader == false;
 }
 fn destroy(this: *MaxBuf) void {
-    bun.assert(this.disowned());
-    bun.default_allocator.destroy(this);
+    fun.assert(this.disowned());
+    fun.default_allocator.destroy(this);
 }
 pub fn removeFromSubprocess(ptr: *?*MaxBuf) void {
     if (ptr.* == null) return;
     const this = ptr.*.?;
-    bun.assert(this.owned_by_subprocess != null);
+    fun.assert(this.owned_by_subprocess != null);
     this.owned_by_subprocess = null;
     ptr.* = null;
     if (this.disowned()) {
@@ -40,15 +40,15 @@ pub fn removeFromSubprocess(ptr: *?*MaxBuf) void {
 }
 pub fn addToPipereader(value: ?*MaxBuf, ptr: *?*MaxBuf) void {
     if (value == null) return;
-    bun.assert(ptr.* == null);
+    fun.assert(ptr.* == null);
     ptr.* = value;
-    bun.assert(!value.?.owned_by_reader);
+    fun.assert(!value.?.owned_by_reader);
     value.?.owned_by_reader = true;
 }
 pub fn removeFromPipereader(ptr: *?*MaxBuf) void {
     if (ptr.* == null) return;
     const this = ptr.*.?;
-    bun.assert(this.owned_by_reader);
+    fun.assert(this.owned_by_reader);
     this.owned_by_reader = false;
     ptr.* = null;
     if (this.disowned()) {
@@ -71,7 +71,7 @@ pub fn onReadBytes(this: *MaxBuf, bytes: u64) void {
             MaxBuf.removeFromSubprocess(&owned_by.stdout_maxbuf);
             owned_by.onMaxBuffer(.stdout);
         } else {
-            bun.assert(false);
+            fun.assert(false);
         }
     }
 }
@@ -81,6 +81,6 @@ pub const Kind = enum {
     stderr,
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
-const Subprocess = bun.jsc.Subprocess;
+const Subprocess = fun.jsc.Subprocess;

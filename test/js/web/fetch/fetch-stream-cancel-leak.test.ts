@@ -1,5 +1,5 @@
-import { heapStats } from "bun:jsc";
-import { expect, test } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { expect, test } from "fun:test";
 
 // Test that ReadableStream objects from cancelled fetch responses are properly GC'd.
 //
@@ -7,7 +7,7 @@ import { expect, test } from "bun:test";
 // readable_stream_ref (a Strong GC root) is not released because:
 //   1. ByteStream.onCancel() doesn't notify the FetchTasklet
 //   2. The HTTP connection stays open, so has_more never becomes false
-//   3. Bun__FetchResponse_finalize sees the Strong ref and skips cleanup
+//   3. Fun__FetchResponse_finalize sees the Strong ref and skips cleanup
 //
 // This creates a circular dependency where the Strong ref prevents GC,
 // and the GC finalizer skips cleanup because the Strong ref exists.
@@ -16,7 +16,7 @@ test("ReadableStream from fetch should be GC'd after reader.cancel()", async () 
   // Use a raw TCP server to avoid server-side JS ReadableStream objects
   // that would add noise to objectTypeCounts.
   // The server sends one HTTP chunk immediately, then keeps the connection open.
-  using server = Bun.listen({
+  using server = Fun.listen({
     port: 0,
     hostname: "127.0.0.1",
     socket: {
@@ -49,9 +49,9 @@ test("ReadableStream from fetch should be GC'd after reader.cancel()", async () 
     await reader.cancel();
   }
 
-  Bun.gc(true);
-  await Bun.sleep(10);
-  Bun.gc(true);
+  Fun.gc(true);
+  await Fun.sleep(10);
+  Fun.gc(true);
 
   const baseline = heapStats().objectTypeCounts.ReadableStream ?? 0;
 
@@ -64,11 +64,11 @@ test("ReadableStream from fetch should be GC'd after reader.cancel()", async () 
   }
 
   // Allow finalizers to run, then GC aggressively
-  Bun.gc(true);
-  await Bun.sleep(50);
-  Bun.gc(true);
-  await Bun.sleep(50);
-  Bun.gc(true);
+  Fun.gc(true);
+  await Fun.sleep(50);
+  Fun.gc(true);
+  await Fun.sleep(50);
+  Fun.gc(true);
 
   const after = heapStats().objectTypeCounts.ReadableStream ?? 0;
   const leaked = after - baseline;
@@ -79,7 +79,7 @@ test("ReadableStream from fetch should be GC'd after reader.cancel()", async () 
 });
 
 test("ReadableStream from fetch should be GC'd after body.cancel()", async () => {
-  using server = Bun.listen({
+  using server = Fun.listen({
     port: 0,
     hostname: "127.0.0.1",
     socket: {
@@ -112,9 +112,9 @@ test("ReadableStream from fetch should be GC'd after body.cancel()", async () =>
     await response.body!.cancel();
   }
 
-  Bun.gc(true);
-  await Bun.sleep(10);
-  Bun.gc(true);
+  Fun.gc(true);
+  await Fun.sleep(10);
+  Fun.gc(true);
 
   const baseline = heapStats().objectTypeCounts.ReadableStream ?? 0;
 
@@ -127,11 +127,11 @@ test("ReadableStream from fetch should be GC'd after body.cancel()", async () =>
     await response.body!.cancel();
   }
 
-  Bun.gc(true);
-  await Bun.sleep(50);
-  Bun.gc(true);
-  await Bun.sleep(50);
-  Bun.gc(true);
+  Fun.gc(true);
+  await Fun.sleep(50);
+  Fun.gc(true);
+  await Fun.sleep(50);
+  Fun.gc(true);
 
   const after = heapStats().objectTypeCounts.ReadableStream ?? 0;
   const leaked = after - baseline;

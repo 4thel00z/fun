@@ -3,7 +3,7 @@
 //! told to emit RGBA, encoders are fed RGBA, so Image.zig never branches on
 //! channel layout.
 //!
-//! Memory ownership: decode returns `bun.default_allocator`-owned RGBA. Encode
+//! Memory ownership: decode returns `fun.default_allocator`-owned RGBA. Encode
 //! returns `Encoded{bytes, free}` carrying the codec's own deallocator so the
 //! JS layer can hand the buffer to `ArrayBuffer.toJSWithContext` without a
 //! dupe — see `Encoded` below.
@@ -12,14 +12,14 @@
 /// written one for) so the dispatch in `decode`/`encode` compiles away. The
 /// backend module is only `@import`ed inside the matching arm so non-target
 /// platforms never see its symbols. Exposed for `Image.fromClipboard()`.
-pub const system_backend: ?type = if (bun.Environment.isMac)
+pub const system_backend: ?type = if (fun.Environment.isMac)
     @import("./backend_coregraphics.zig")
-else if (bun.Environment.isWindows)
+else if (fun.Environment.isWindows)
     @import("./backend_wic.zig")
 else
     null;
 
-/// Process-global selector exposed as `Bun.Image.backend`.
+/// Process-global selector exposed as `Fun.Image.backend`.
 ///
 /// `.system` (default on darwin/windows) is the perf-optimal hybrid:
 ///   • jpeg/png/webp decode+encode → static codecs (turbo/spng/libwebp).
@@ -31,7 +31,7 @@ else
 ///     kernel on the geometry step).
 ///   • heic/avif decode+encode → ImageIO/WIC (no static codec).
 ///
-/// `.bun` skips the OS layer entirely (Highway geometry, heic/avif throw)
+/// `.fun` skips the OS layer entirely (Highway geometry, heic/avif throw)
 /// so behaviour is byte-identical to a Linux build.
 ///
 /// Unsynchronised: written from JS, read from WorkPool — a torn read of a
@@ -39,10 +39,10 @@ else
 /// mode.
 pub const Backend = enum {
     system,
-    bun,
-    pub const Map = bun.ComptimeEnumMap(Backend);
+    fun,
+    pub const Map = fun.ComptimeEnumMap(Backend);
 };
-pub var backend: Backend = if (system_backend != null) .system else .bun;
+pub var backend: Backend = if (system_backend != null) .system else .fun;
 
 /// Runtime half of the dispatch check; the comptime half is the
 /// `if (system_backend) |b|` capture at each call site (types can't be
@@ -119,7 +119,7 @@ pub const Format = enum(u8) {
         return ExtMap.get(ext);
     }
 
-    const ExtMap = bun.ComptimeStringMap(Format, .{
+    const ExtMap = fun.ComptimeStringMap(Format, .{
         .{ "jpg", .jpeg },  .{ "jpeg", .jpeg }, .{ "png", .png },
         .{ "webp", .webp }, .{ "heic", .heic }, .{ "heif", .heic },
         .{ "avif", .avif }, .{ "bmp", .bmp },   .{ "gif", .gif },
@@ -141,11 +141,11 @@ pub const Format = enum(u8) {
 };
 
 pub const Decoded = struct {
-    rgba: []u8, // bun.default_allocator
+    rgba: []u8, // fun.default_allocator
     width: u32,
     height: u32,
     /// ICC color profile bytes pulled from the source container (JPEG APP2,
-    /// PNG iCCP, WebP ICCP), `bun.default_allocator`-owned. `null` when the
+    /// PNG iCCP, WebP ICCP), `fun.default_allocator`-owned. `null` when the
     /// source didn't carry one or the decode path doesn't extract it —
     /// BMP/GIF (no ICC chunk) and system backends (which already colour-
     /// manage into sRGB during decode, so the profile is no longer
@@ -158,8 +158,8 @@ pub const Decoded = struct {
     icc_profile: ?[]u8 = null,
 
     pub fn deinit(self: *Decoded) void {
-        bun.default_allocator.free(self.rgba);
-        if (self.icc_profile) |p| bun.default_allocator.free(p);
+        fun.default_allocator.free(self.rgba);
+        if (self.icc_profile) |p| fun.default_allocator.free(p);
     }
 };
 
@@ -202,13 +202,13 @@ pub fn decode(bytes: []const u8, max_pixels: u64, hint: DecodeHint) Error!Decode
         // ImageIO is no faster (AppleJPEG ≈ libjpeg-turbo since Huffman is the
         // bottleneck and isn't vectorisable; spng+zlib-ng beats ImageIO's
         // system libz). The OS backend is purely a *capability* fallback for
-        // containers we don't link a decoder for — and `backend == .bun` opts
+        // containers we don't link a decoder for — and `backend == .fun` opts
         // out of even that so behaviour is identical to Linux.
         .heic, .avif, .tiff => decodeViaSystem(bytes, max_pixels) catch |e| switch (e) {
             error.BackendUnavailable => error.UnsupportedOnPlatform,
             else => |narrowed| narrowed,
         },
-        // BMP/GIF have static decoders so Linux (and `backend == .bun`) work;
+        // BMP/GIF have static decoders so Linux (and `backend == .fun`) work;
         // the system backend is tried first because ImageIO/WIC handle the
         // long tail (RLE BMP, animated GIF disposal, etc.) we don't.
         .bmp => decodeViaSystem(bytes, max_pixels) catch |e| switch (e) {
@@ -323,7 +323,7 @@ pub const EncodeOptions = struct {
 
 /// Encoded output paired with the free function for its allocator. The C
 /// codecs each malloc internally (turbojpeg's allocator, libwebp's, libc for
-/// libspng); rather than dupe into `bun.default_allocator` so JS can own it,
+/// libspng); rather than dupe into `fun.default_allocator` so JS can own it,
 /// we hand the original buffer to JS via `ArrayBuffer.toJSWithContext` with
 /// the matching free — one allocation, zero copies, for the final output.
 ///
@@ -348,7 +348,7 @@ pub const Encoded = struct {
     }
 
     pub fn fromOwned(bytes: []u8) Encoded {
-        return .{ .bytes = bytes, .free = wrap(bun.mimalloc.mi_free) };
+        return .{ .bytes = bytes, .free = wrap(fun.mimalloc.mi_free) };
     }
 };
 
@@ -399,7 +399,7 @@ pub const Filter = enum(i32) {
     /// `JSValue.toEnum` lookup table. Hand-listed (not `ComptimeEnumMap`) so
     /// Sharp's `'linear'` alias can map to `.bilinear`; the auto-generated
     /// error message still lists only the canonical tags.
-    pub const Map = bun.ComptimeStringMap(Filter, .{
+    pub const Map = fun.ComptimeStringMap(Filter, .{
         .{ "box", .box },
         .{ "bilinear", .bilinear },
         .{ "linear", .bilinear },
@@ -413,8 +413,8 @@ pub const Filter = enum(i32) {
     });
 };
 
-extern fn bun_image_resize_scratch_size(src_w: i32, src_h: i32, dst_w: i32, dst_h: i32, filter: i32) usize;
-extern fn bun_image_resize_rgba8(
+extern fn fun_image_resize_scratch_size(src_w: i32, src_h: i32, dst_w: i32, dst_h: i32, filter: i32) usize;
+extern fn fun_image_resize_rgba8(
     src: [*]const u8,
     src_w: i32,
     src_h: i32,
@@ -424,15 +424,15 @@ extern fn bun_image_resize_rgba8(
     filter: i32,
     scratch: [*]u8,
 ) c_int;
-extern fn bun_image_rotate_rgba8(src: [*]const u8, w: i32, h: i32, dst: [*]u8, deg: i32) void;
-extern fn bun_image_flip_rgba8(src: [*]const u8, w: i32, h: i32, dst: [*]u8, horiz: i32) void;
-extern fn bun_image_modulate_rgba8(buf: [*]u8, len: usize, brightness: f32, saturation: f32) void;
+extern fn fun_image_rotate_rgba8(src: [*]const u8, w: i32, h: i32, dst: [*]u8, deg: i32) void;
+extern fn fun_image_flip_rgba8(src: [*]const u8, w: i32, h: i32, dst: [*]u8, horiz: i32) void;
+extern fn fun_image_modulate_rgba8(buf: [*]u8, len: usize, brightness: f32, saturation: f32) void;
 
 /// In-place brightness/saturation. brightness multiplies V (so 1.0 is
 /// identity); saturation linearly interpolates each channel toward the pixel's
 /// luma (0 = greyscale, 1 = identity, >1 = boost).
 pub fn modulate(rgba: []u8, brightness: f32, saturation: f32) void {
-    bun_image_modulate_rgba8(rgba.ptr, rgba.len, brightness, saturation);
+    fun_image_modulate_rgba8(rgba.ptr, rgba.len, brightness, saturation);
 }
 
 pub fn resize(src: []const u8, sw: u32, sh: u32, dw: u32, dh: u32, f: Filter) Error![]u8 {
@@ -447,14 +447,14 @@ pub fn resize(src: []const u8, sw: u32, sh: u32, dw: u32, dh: u32, f: Filter) Er
     // C++; mimalloc here is faster than libc, and the over-allocation rounds
     // into the same size class as the row buffer alone.
     const out_sz: usize = @as(usize, dw) * dh * 4;
-    const scratch_sz = bun_image_resize_scratch_size(@intCast(sw), @intCast(sh), @intCast(dw), @intCast(dh), @intFromEnum(f));
-    const block = try bun.default_allocator.alloc(u8, out_sz + scratch_sz);
-    errdefer bun.default_allocator.free(block);
-    if (bun_image_resize_rgba8(src.ptr, @intCast(sw), @intCast(sh), block.ptr, @intCast(dw), @intCast(dh), @intFromEnum(f), block.ptr + out_sz) != 0)
+    const scratch_sz = fun_image_resize_scratch_size(@intCast(sw), @intCast(sh), @intCast(dw), @intCast(dh), @intFromEnum(f));
+    const block = try fun.default_allocator.alloc(u8, out_sz + scratch_sz);
+    errdefer fun.default_allocator.free(block);
+    if (fun_image_resize_rgba8(src.ptr, @intCast(sw), @intCast(sh), block.ptr, @intCast(dw), @intCast(dh), @intFromEnum(f), block.ptr + out_sz) != 0)
         return error.OutOfMemory;
     // Drop the scratch tail; mimalloc's shrink is in-place when the new size
     // fits the same block, so this is free.
-    return bun.handleOom(bun.default_allocator.realloc(block, out_sz));
+    return fun.handleOom(fun.default_allocator.realloc(block, out_sz));
 }
 
 pub fn rotate(src: []const u8, w: u32, h: u32, degrees: u32) Error!Decoded {
@@ -467,8 +467,8 @@ pub fn rotate(src: []const u8, w: u32, h: u32, degrees: u32) Error!Decoded {
             else => |narrowed| return narrowed,
         }
     };
-    const out = try bun.default_allocator.alloc(u8, @as(usize, dw) * dh * 4);
-    bun_image_rotate_rgba8(src.ptr, @intCast(w), @intCast(h), out.ptr, @intCast(degrees));
+    const out = try fun.default_allocator.alloc(u8, @as(usize, dw) * dh * 4);
+    fun_image_rotate_rgba8(src.ptr, @intCast(w), @intCast(h), out.ptr, @intCast(degrees));
     return .{ .rgba = out, .width = dw, .height = dh };
 }
 
@@ -479,8 +479,8 @@ pub fn flip(src: []const u8, w: u32, h: u32, horizontal: bool) Error![]u8 {
             else => |narrowed| return narrowed,
         }
     };
-    const out = try bun.default_allocator.alloc(u8, @as(usize, w) * h * 4);
-    bun_image_flip_rgba8(src.ptr, @intCast(w), @intCast(h), out.ptr, @intFromBool(horizontal));
+    const out = try fun.default_allocator.alloc(u8, @as(usize, w) * h * 4);
+    fun_image_flip_rgba8(src.ptr, @intCast(w), @intCast(h), out.ptr, @intFromBool(horizontal));
     return out;
 }
 
@@ -494,5 +494,5 @@ pub const webp = @import("./codec_webp.zig");
 pub const bmp = @import("./codec_bmp.zig");
 pub const gif = @import("./codec_gif.zig");
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

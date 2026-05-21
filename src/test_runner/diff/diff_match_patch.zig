@@ -2990,5 +2990,5 @@ pub fn DMP(comptime Unit: type) type {
     };
 }
 
-const bun = @import("bun");
-const StringHashMapUnmanaged = bun.StringHashMapUnmanaged;
+const fun = @import("fun");
+const StringHashMapUnmanaged = fun.StringHashMapUnmanaged;

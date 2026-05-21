@@ -1,5 +1,5 @@
 const PS_SUPPORTED = true;
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { generateKeyPairSync } from "crypto";
 import jwt from "jsonwebtoken";
 

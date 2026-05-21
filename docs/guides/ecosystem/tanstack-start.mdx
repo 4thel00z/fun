@@ -1,6 +1,6 @@
 ---
-title: Use TanStack Start with Bun
-sidebarTitle: TanStack Start with Bun
+title: Use TanStack Start with Fun
+sidebarTitle: TanStack Start with Fun
 mode: center
 ---
 
@@ -13,30 +13,30 @@ mode: center
     Use the interactive CLI to create a new TanStack Start app.
 
     ```sh terminal icon="terminal"
-    bunx @tanstack/cli create my-tanstack-app
+    funx @tanstack/cli create my-tanstack-app
     ```
 
   </Step>
   <Step title="Start the dev server">
-    Change to the project directory and run the dev server with Bun.
+    Change to the project directory and run the dev server with Fun.
 
     ```sh terminal icon="terminal"
     cd my-tanstack-app
-    bun --bun run dev
+    fun --fun run dev
     ```
 
-    This starts the Vite dev server with Bun.
+    This starts the Vite dev server with Fun.
 
   </Step>
   <Step title="Update scripts in package.json">
-   Modify the scripts field in your `package.json` by prefixing the Vite CLI commands with `bun --bun`. This ensures that Bun executes the Vite CLI for common tasks like `dev`, `build`, and `preview`.
+   Modify the scripts field in your `package.json` by prefixing the Vite CLI commands with `fun --fun`. This ensures that Fun executes the Vite CLI for common tasks like `dev`, `build`, and `preview`.
 
     ```json package.json icon="file-json"
     {
       "scripts": {
-        "dev": "bun --bun vite dev", // [!code ++]
-        "build": "bun --bun vite build", // [!code ++]
-        "serve": "bun --bun vite preview" // [!code ++]
+        "dev": "fun --fun vite dev", // [!code ++]
+        "build": "fun --fun vite build", // [!code ++]
+        "serve": "fun --fun vite preview" // [!code ++]
       }
     }
     ```
@@ -48,7 +48,7 @@ mode: center
 
 ## Hosting
 
-To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a custom Bun server for production deployments.
+To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a custom Fun server for production deployments.
 
 <Tabs>
   <Tab title="Nitro">
@@ -57,12 +57,12 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         Add [Nitro](https://nitro.build/) to your project. This tool allows you to deploy your TanStack Start app to different platforms.
 
         ```sh terminal icon="terminal"
-        bun add nitro
+        fun add nitro
         ```
 
       </Step>
       <Step title={<span>Update your <code>vite.config.ts</code> file</span>}>
-        Update your `vite.config.ts` file to include the necessary plugins for TanStack Start with Bun.
+        Update your `vite.config.ts` file to include the necessary plugins for TanStack Start with Fun.
 
         ```ts vite.config.ts icon="/icons/typescript.svg"
         // other imports...
@@ -71,7 +71,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         const config = defineConfig({
           plugins: [
             tanstackStart(),
-            nitro({ preset: "bun" }), // [!code ++]
+            nitro({ preset: "fun" }), // [!code ++]
             // other plugins...
           ],
         });
@@ -80,7 +80,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         ```
 
         <Note>
-          The `bun` preset is optional, but it configures the build output specifically for Bun's runtime.
+          The `fun` preset is optional, but it configures the build output specifically for Fun's runtime.
         </Note>
 
       </Step>
@@ -90,10 +90,10 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         ```json package.json icon="file-json"
           {
             "scripts": {
-              "build": "bun --bun vite build", // [!code ++]
-              // The .output files are created by Nitro when you run `bun run build`.
+              "build": "fun --fun vite build", // [!code ++]
+              // The .output files are created by Nitro when you run `fun run build`.
               // Not necessary when deploying to Vercel.
-              "start": "bun run .output/server/index.mjs" // [!code ++]
+              "start": "fun run .output/server/index.mjs" // [!code ++]
             }
           }
         ```
@@ -107,10 +107,10 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         Check out one of our guides to deploy your app to a hosting provider.
 
         <Note>
-          When deploying to Vercel, you can either add the `"bunVersion": "1.x"` to your `vercel.json` file, or add it to the `nitro` config in your `vite.config.ts` file:
+          When deploying to Vercel, you can either add the `"funVersion": "1.x"` to your `vercel.json` file, or add it to the `nitro` config in your `vite.config.ts` file:
 
           <Warning>
-            Do **not** use the `bun` Nitro preset when deploying to Vercel.
+            Do **not** use the `fun` Nitro preset when deploying to Vercel.
           </Warning>
 
           ```ts vite.config.ts icon="/icons/typescript.svg"
@@ -118,7 +118,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
             plugins: [
               tanstackStart(),
               nitro({
-                preset: "bun", // [!code --]
+                preset: "fun", // [!code --]
                 vercel: { // [!code ++]
                   functions: { // [!code ++]
                     runtime: "bun1.x", // [!code ++]
@@ -135,7 +135,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
   </Tab>
   <Tab title="Custom Server">
     <Note>
-      This custom server implementation is based on [TanStack's Bun template](https://github.com/TanStack/router/blob/main/examples/react/start-bun/server.ts). It provides fine-grained control over static asset serving, including configurable memory management that preloads small files into memory for fast serving while serving larger files on-demand. This approach is useful when you need precise control over resource usage and asset loading behavior in production deployments.
+      This custom server implementation is based on [TanStack's Fun template](https://github.com/TanStack/router/blob/main/examples/react/start-fun/server.ts). It provides fine-grained control over static asset serving, including configurable memory management that preloads small files into memory for fast serving while serving larger files on-demand. This approach is useful when you need precise control over resource usage and asset loading behavior in production deployments.
     </Note>
 
     <Steps>
@@ -144,7 +144,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
 
         ```ts server.ts icon="/icons/typescript.svg" expandable
         /**
-        * TanStack Start Production Server with Bun
+        * TanStack Start Production Server with Fun
         *
         * A high-performance production server for TanStack Start applications that
         * implements intelligent static asset loading with configurable memory management.
@@ -205,7 +205,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         *   - Default: text/,application/javascript,application/json,application/xml,image/svg+xml
         *
         * Usage:
-        *   bun run server.ts
+        *   fun run server.ts
         */
 
         import path from 'node:path'
@@ -286,7 +286,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         * Compute ETag for a given data buffer
         */
         function computeEtag(data: Uint8Array): string {
-          const hash = Bun.hash(data)
+          const hash = Fun.hash(data)
           return `W/"${hash.toString(16)}-${data.byteLength.toString()}"`
         }
 
@@ -361,7 +361,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
           if (data.byteLength < GZIP_MIN_BYTES) return undefined
           if (!isMimeTypeCompressible(mimeType)) return undefined
           try {
-            return Bun.gzipSync(data.buffer as ArrayBuffer)
+            return Fun.gzipSync(data.buffer as ArrayBuffer)
           } catch {
             return undefined
           }
@@ -412,14 +412,14 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         /**
         * Create composite glob pattern from include patterns
         */
-        function createCompositeGlobPattern(): Bun.Glob {
+        function createCompositeGlobPattern(): Fun.Glob {
           const raw = (process.env.ASSET_PRELOAD_INCLUDE_PATTERNS ?? '')
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean)
-          if (raw.length === 0) return new Bun.Glob('**/*')
-          if (raw.length === 1) return new Bun.Glob(raw[0])
-          return new Bun.Glob(`{${raw.join(',')}}`)
+          if (raw.length === 0) return new Fun.Glob('**/*')
+          if (raw.length === 1) return new Fun.Glob(raw[0])
+          return new Fun.Glob(`{${raw.join(',')}}`)
         }
 
         /**
@@ -461,7 +461,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
 
               try {
                 // Get file metadata
-                const file = Bun.file(filepath)
+                const file = Fun.file(filepath)
 
                 // Skip if file doesn't exist or is empty
                 if (!(await file.exists()) || file.size === 0) {
@@ -498,7 +498,7 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
                 } else {
                   // Serve large or filtered files on-demand
                   routes[route] = () => {
-                    const fileOnDemand = Bun.file(filepath)
+                    const fileOnDemand = Fun.file(filepath)
                     return new Response(fileOnDemand, {
                       headers: {
                         'Content-Type': metadata.type,
@@ -663,8 +663,8 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
           // Build static routes with intelligent preloading
           const { routes } = await initializeStaticRoutes(CLIENT_DIRECTORY)
 
-          // Create Bun server
-          const server = Bun.serve({
+          // Create Fun server
+          const server = Fun.serve({
             port: SERVER_PORT,
 
             routes: {
@@ -708,8 +708,8 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         ```json package.json icon="file-json"
         {
           "scripts": {
-            "build": "bun --bun vite build",
-            "start": "bun run server.ts" // [!code ++]
+            "build": "fun --fun vite build",
+            "start": "fun run server.ts" // [!code ++]
           }
         }
         ```
@@ -719,8 +719,8 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
         Build your application and start the server:
 
         ```sh terminal icon="terminal"
-        bun run build
-        bun run start
+        fun run build
+        fun run start
         ```
 
         The server will start on port 3000 by default (configurable via `PORT` environment variable).
@@ -758,31 +758,31 @@ To host your TanStack Start app, you can use [Nitro](https://nitro.build/) or a 
 
 <Columns cols={2}>
   <Card
-    title="Todo App with Tanstack + Bun"
-    img="/images/templates/bun-tanstack-todo.png"
-    href="https://github.com/bun-templates/bun-tanstack-todo"
+    title="Todo App with Tanstack + Fun"
+    img="/images/templates/fun-tanstack-todo.png"
+    href="https://github.com/fun-templates/fun-tanstack-todo"
     arrow="true"
     cta="Go to template"
   >
-    A Todo application built with Bun, TanStack Start, and PostgreSQL.
+    A Todo application built with Fun, TanStack Start, and PostgreSQL.
   </Card>
   <Card
-    title="Bun + TanStack Start Application"
-    img="/images/templates/bun-tanstack-basic.png"
-    href="https://github.com/bun-templates/bun-tanstack-basic"
+    title="Fun + TanStack Start Application"
+    img="/images/templates/fun-tanstack-basic.png"
+    href="https://github.com/fun-templates/fun-tanstack-basic"
     arrow="true"
     cta="Go to template"
   >
-    A TanStack Start template using Bun with SSR and file-based routing.
+    A TanStack Start template using Fun with SSR and file-based routing.
   </Card>
   <Card
-    title="Basic Bun + Tanstack Starter"
-    img="/images/templates/bun-tanstack-start.png"
-    href="https://github.com/bun-templates/bun-tanstack-start"
+    title="Basic Fun + Tanstack Starter"
+    img="/images/templates/fun-tanstack-start.png"
+    href="https://github.com/fun-templates/fun-tanstack-start"
     arrow="true"
     cta="Go to template"
   >
-    The basic TanStack starter using the Bun runtime and Bun's file APIs.
+    The basic TanStack starter using the Fun runtime and Fun's file APIs.
   </Card>
 </Columns>
 

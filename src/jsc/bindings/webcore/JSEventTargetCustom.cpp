@@ -36,7 +36,7 @@
 // #include "JSWindowProxy.h"
 // #include "JSWorkerGlobalScope.h"
 // #include "WorkerGlobalScope.h"
-#include "BunWorkerGlobalScope.h"
+#include "FunWorkerGlobalScope.h"
 
 #if ENABLE(OFFSCREEN_CANVAS)
 #include "OffscreenCanvas.h"

@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/23292
+// https://github.com/underdoc-org/fun/issues/23292
 // fs.access() and fs.accessSync() should work with Windows named pipes
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isWindows } from "harness";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";
@@ -8,7 +8,7 @@ import fs from "node:fs";
 import net from "node:net";
 
 test.if(isWindows)("fs.accessSync should work with named pipes", async () => {
-  const pipeName = `\\\\.\\pipe\\bun-test-${randomUUID()}`;
+  const pipeName = `\\\\.\\pipe\\fun-test-${randomUUID()}`;
 
   const server = net.createServer();
   server.listen(pipeName);
@@ -26,7 +26,7 @@ test.if(isWindows)("fs.accessSync should work with named pipes", async () => {
 });
 
 test.if(isWindows)("fs.access should work with named pipes", async () => {
-  const pipeName = `\\\\.\\pipe\\bun-test-${randomUUID()}`;
+  const pipeName = `\\\\.\\pipe\\fun-test-${randomUUID()}`;
 
   const server = net.createServer();
   server.listen(pipeName);
@@ -49,7 +49,7 @@ test.if(isWindows)("fs.access should work with named pipes", async () => {
 });
 
 test.if(isWindows)("fs.promises.access should work with named pipes", async () => {
-  const pipeName = `\\\\.\\pipe\\bun-test-${randomUUID()}`;
+  const pipeName = `\\\\.\\pipe\\fun-test-${randomUUID()}`;
 
   const server = net.createServer();
   server.listen(pipeName);
@@ -64,7 +64,7 @@ test.if(isWindows)("fs.promises.access should work with named pipes", async () =
 });
 
 test.if(isWindows)("fs.accessSync should throw ENOENT for non-existent named pipe", () => {
-  const pipeName = `\\\\.\\pipe\\bun-test-nonexistent-${randomUUID()}`;
+  const pipeName = `\\\\.\\pipe\\fun-test-nonexistent-${randomUUID()}`;
 
   expect(() => {
     fs.accessSync(pipeName, fs.constants.F_OK);

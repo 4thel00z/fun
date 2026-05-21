@@ -3,21 +3,21 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include "ZigGlobalObject.h"
 #include <JavaScriptCore/Structure.h>
-#include <bun-uws/src/App.h>
-#include <bun-uws/src/Http3Request.h>
+#include <fun-uws/src/App.h>
+#include <fun-uws/src/Http3Request.h>
 #include "ZigGeneratedClasses.h"
 #include "AsyncContextFrame.h"
 #include "ServerRouteList.h"
 #include "decodeURIComponentSIMD.h"
-#include "JSBunRequest.h"
+#include "JSFunRequest.h"
 #include <JavaScriptCore/PropertyName.h>
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 using namespace WebCore;
 
 /**
-  ServerRouteList holds all the callbacks used by routes in Bun.serve()
+  ServerRouteList holds all the callbacks used by routes in Fun.serve()
 
   The easier approach would be an std.array_list.Managed of JSC.Strong in Zig, but that
   would mean that now we're holding a Strong reference for every single
@@ -184,7 +184,7 @@ Structure* ServerRouteList::structureForParamsObject(JSC::VM& vm, JSC::JSGlobalO
 
     if (!m_paramsObjectStructures.at(index)) {
         auto* zigGlobalObject = defaultGlobalObject(globalObject);
-        auto* prototype = zigGlobalObject->m_JSBunRequestParamsPrototype.get(zigGlobalObject);
+        auto* prototype = zigGlobalObject->m_JSFunRequestParamsPrototype.get(zigGlobalObject);
         unsigned inlineCapacity = std::min(identifiers.size(), static_cast<size_t>(JSC::JSFinalObject::maxInlineCapacity));
         auto* structure = Structure::create(vm, globalObject, prototype, TypeInfo(FinalObjectType, StructureFlags), JSFinalObject::info(), NonArray, inlineCapacity);
 
@@ -245,11 +245,11 @@ JSValue ServerRouteList::callRoute(Zig::GlobalObject* globalObject, uint32_t ind
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
-    auto* structure = globalObject->m_JSBunRequestStructure.get(globalObject);
+    auto* structure = globalObject->m_JSFunRequestStructure.get(globalObject);
 
     auto* params = paramsObjectForRoute(vm, globalObject, index, req);
 
-    JSBunRequest* request = JSBunRequest::create(vm, structure, requestPtr, params);
+    JSFunRequest* request = JSFunRequest::create(vm, structure, requestPtr, params);
     scope.assertNoException();
     *requestObject = JSValue::encode(request);
 
@@ -265,7 +265,7 @@ JSValue ServerRouteList::callRoute(Zig::GlobalObject* globalObject, uint32_t ind
     return result;
 }
 
-extern "C" JSC::EncodedJSValue Bun__ServerRouteList__callRoute(
+extern "C" JSC::EncodedJSValue Fun__ServerRouteList__callRoute(
     Zig::GlobalObject* globalObject,
     uint32_t index,
     void* requestPtr,
@@ -279,7 +279,7 @@ extern "C" JSC::EncodedJSValue Bun__ServerRouteList__callRoute(
     return JSValue::encode(routeList->callRoute(globalObject, index, requestPtr, serverObject, requestObject, req));
 }
 
-extern "C" JSC::EncodedJSValue Bun__ServerRouteList__callRouteH3(
+extern "C" JSC::EncodedJSValue Fun__ServerRouteList__callRouteH3(
     Zig::GlobalObject* globalObject,
     uint32_t index,
     void* requestPtr,
@@ -293,7 +293,7 @@ extern "C" JSC::EncodedJSValue Bun__ServerRouteList__callRouteH3(
     return JSValue::encode(routeList->callRoute(globalObject, index, requestPtr, serverObject, requestObject, req));
 }
 
-extern "C" JSC::EncodedJSValue Bun__ServerRouteList__create(Zig::GlobalObject* globalObject, EncodedJSValue* callbacks, ZigString* paths, size_t pathsLength)
+extern "C" JSC::EncodedJSValue Fun__ServerRouteList__create(Zig::GlobalObject* globalObject, EncodedJSValue* callbacks, ZigString* paths, size_t pathsLength)
 {
     auto* structure = globalObject->m_ServerRouteListStructure.get(globalObject);
     auto* routeList = ServerRouteList::create(globalObject->vm(), structure, std::span<EncodedJSValue>(callbacks, pathsLength), std::span<ZigString>(paths, pathsLength));
@@ -305,7 +305,7 @@ Structure* createServerRouteListStructure(JSC::VM& vm, Zig::GlobalObject* global
     return ServerRouteList::createStructure(vm, globalObject);
 }
 
-JSObject* createJSBunRequestParamsPrototype(JSC::VM& vm, Zig::GlobalObject* globalObject)
+JSObject* createJSFunRequestParamsPrototype(JSC::VM& vm, Zig::GlobalObject* globalObject)
 {
     auto* prototype = constructEmptyObject(vm, globalObject->nullPrototypeObjectStructure());
     prototype->putDirect(vm, vm.propertyNames->toStringTagSymbol, jsString(vm, String("RequestParams"_s)), JSC::PropertyAttribute::DontEnum | 0);
@@ -314,4 +314,4 @@ JSObject* createJSBunRequestParamsPrototype(JSC::VM& vm, Zig::GlobalObject* glob
     return JSC::constructEmptyObject(vm, structure);
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -25,7 +25,7 @@ const isWindows = @import("builtin").os.tag == .windows;
 
 // const Codepoint = u32;
 
-const log = bun.Output.scoped(.Glob, .visible);
+const log = fun.Output.scoped(.Glob, .visible);
 
 const CursorState = struct {
     cursor: CodepointIterator.Cursor = .{},
@@ -95,9 +95,9 @@ fn dummyFilterFalse(val: []const u8) bool {
     return false;
 }
 
-pub fn statatWindows(fd: bun.FD, path: [:0]const u8) Maybe(bun.Stat) {
-    if (comptime !bun.Environment.isWindows) @compileError("oi don't use this");
-    var buf: bun.PathBuffer = undefined;
+pub fn statatWindows(fd: fun.FD, path: [:0]const u8) Maybe(fun.Stat) {
+    if (comptime !fun.Environment.isWindows) @compileError("oi don't use this");
+    var buf: fun.PathBuffer = undefined;
     const dir = switch (Syscall.getFdPath(fd, &buf)) {
         .err => |e| return .{ .err = e },
         .result => |s| s,
@@ -114,7 +114,7 @@ pub const SyscallAccessor = struct {
     const count_fds = true;
 
     const Handle = struct {
-        value: bun.FD,
+        value: fun.FD,
 
         const empty: Handle = .{ .value = .invalid };
 
@@ -144,14 +144,14 @@ pub const SyscallAccessor = struct {
     };
 
     pub fn open(path: [:0]const u8) !Maybe(Handle) {
-        return switch (Syscall.open(path, bun.O.DIRECTORY | bun.O.RDONLY, 0)) {
+        return switch (Syscall.open(path, fun.O.DIRECTORY | fun.O.RDONLY, 0)) {
             .err => |err| .{ .err = err },
             .result => |fd| .{ .result = Handle{ .value = fd } },
         };
     }
 
-    pub fn statat(handle: Handle, path: [:0]const u8) Maybe(bun.Stat) {
-        if (comptime bun.Environment.isWindows) return statatWindows(handle.value, path);
+    pub fn statat(handle: Handle, path: [:0]const u8) Maybe(fun.Stat) {
+        if (comptime fun.Environment.isWindows) return statatWindows(handle.value, path);
         return switch (Syscall.fstatat(handle.value, path)) {
             .err => |err| .{ .err = err },
             .result => |s| .{ .result = s },
@@ -159,13 +159,13 @@ pub const SyscallAccessor = struct {
     }
 
     /// Like statat but does not follow symlinks.
-    pub fn lstatat(handle: Handle, path: [:0]const u8) Maybe(bun.Stat) {
-        if (comptime bun.Environment.isWindows) return statatWindows(handle.value, path);
+    pub fn lstatat(handle: Handle, path: [:0]const u8) Maybe(fun.Stat) {
+        if (comptime fun.Environment.isWindows) return statatWindows(handle.value, path);
         return Syscall.lstatat(handle.value, path);
     }
 
     pub fn openat(handle: Handle, path: [:0]const u8) !Maybe(Handle) {
-        return switch (Syscall.openat(handle.value, path, bun.O.DIRECTORY | bun.O.RDONLY, 0)) {
+        return switch (Syscall.openat(handle.value, path, fun.O.DIRECTORY | fun.O.RDONLY, 0)) {
             .err => |err| .{ .err = err },
             .result => |fd| .{ .result = Handle{ .value = fd } },
         };
@@ -175,13 +175,13 @@ pub const SyscallAccessor = struct {
         return handle.value.closeAllowingBadFileDescriptor(@returnAddress());
     }
 
-    pub fn getcwd(path_buf: *bun.PathBuffer) Maybe([]const u8) {
+    pub fn getcwd(path_buf: *fun.PathBuffer) Maybe([]const u8) {
         return Syscall.getcwd(path_buf);
     }
 };
 
 pub const DirEntryAccessor = struct {
-    const FS = bun.fs.FileSystem;
+    const FS = fun.fs.FileSystem;
 
     const count_fds = false;
 
@@ -244,12 +244,12 @@ pub const DirEntryAccessor = struct {
         }
     };
 
-    pub fn statat(handle: Handle, path_: [:0]const u8) Maybe(bun.Stat) {
+    pub fn statat(handle: Handle, path_: [:0]const u8) Maybe(fun.Stat) {
         var path: [:0]const u8 = path_;
-        var buf: bun.PathBuffer = undefined;
-        if (!bun.path.Platform.auto.isAbsolute(path)) {
+        var buf: fun.PathBuffer = undefined;
+        if (!fun.path.Platform.auto.isAbsolute(path)) {
             if (handle.value) |entry| {
-                const slice = bun.path.joinStringBuf(&buf, [_][]const u8{ entry.dir, path }, .auto);
+                const slice = fun.path.joinStringBuf(&buf, [_][]const u8{ entry.dir, path }, .auto);
                 buf[slice.len] = 0;
                 path = buf[0..slice.len :0];
             }
@@ -258,16 +258,16 @@ pub const DirEntryAccessor = struct {
     }
 
     /// Like statat but does not follow symlinks.
-    pub fn lstatat(handle: Handle, path_: [:0]const u8) Maybe(bun.Stat) {
+    pub fn lstatat(handle: Handle, path_: [:0]const u8) Maybe(fun.Stat) {
         var path: [:0]const u8 = path_;
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
         if (handle.value) |entry| {
             return Syscall.lstatat(entry.fd, path);
         }
 
-        if (!bun.path.Platform.auto.isAbsolute(path)) {
+        if (!fun.path.Platform.auto.isAbsolute(path)) {
             if (handle.value) |entry| {
-                const slice = bun.path.joinStringBuf(&buf, [_][]const u8{ entry.dir, path }, .auto);
+                const slice = fun.path.joinStringBuf(&buf, [_][]const u8{ entry.dir, path }, .auto);
                 buf[slice.len] = 0;
                 path = buf[0..slice.len :0];
             }
@@ -281,16 +281,16 @@ pub const DirEntryAccessor = struct {
 
     pub fn openat(handle: Handle, path_: [:0]const u8) !Maybe(Handle) {
         var path: []const u8 = path_;
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
 
-        if (!bun.path.Platform.auto.isAbsolute(path)) {
+        if (!fun.path.Platform.auto.isAbsolute(path)) {
             if (handle.value) |entry| {
-                path = bun.path.joinStringBuf(&buf, [_][]const u8{ entry.dir, path }, .auto);
+                path = fun.path.joinStringBuf(&buf, [_][]const u8{ entry.dir, path }, .auto);
             }
         }
         // TODO do we want to propagate ENOTDIR through the 'Maybe' to match the SyscallAccessor?
         // The glob implementation specifically checks for this error when dealing with symlinks
-        // return .{ .err = Syscall.Error.fromCode(bun.sys.E.NOTDIR, Syscall.Tag.open) };
+        // return .{ .err = Syscall.Error.fromCode(fun.sys.E.NOTDIR, Syscall.Tag.open) };
         const res = try FS.instance.fs.readDirectory(path, null, 0, false);
         switch (res.*) {
             .entries => |entry| {
@@ -308,8 +308,8 @@ pub const DirEntryAccessor = struct {
         return null;
     }
 
-    pub fn getcwd(path_buf: *bun.PathBuffer) Maybe([]const u8) {
-        @memcpy(path_buf, bun.fs.FileSystem.instance.fs.cwd);
+    pub fn getcwd(path_buf: *fun.PathBuffer) Maybe([]const u8) {
+        @memcpy(path_buf, fun.fs.FileSystem.instance.fs.cwd);
     }
 };
 
@@ -320,10 +320,10 @@ pub fn GlobWalker_(
 ) type {
     const is_ignored: *const fn ([]const u8) bool = if (comptime ignore_filter_fn) |func| func else dummyFilterFalse;
 
-    const count_fds = Accessor.count_fds and bun.Environment.isDebug;
+    const count_fds = Accessor.count_fds and fun.Environment.isDebug;
 
     const stdJoin = comptime if (!sentinel) std.fs.path.join else std.fs.path.joinZ;
-    const bunJoin = comptime if (!sentinel) ResolvePath.join else ResolvePath.joinZ;
+    const funJoin = comptime if (!sentinel) ResolvePath.join else ResolvePath.joinZ;
     const MatchedPath = comptime if (!sentinel) []const u8 else [:0]const u8;
 
     return struct {
@@ -353,14 +353,14 @@ pub fn GlobWalker_(
         error_on_broken_symlinks: bool = false,
         only_files: bool = true,
 
-        pathBuf: bun.PathBuffer = undefined,
+        pathBuf: fun.PathBuffer = undefined,
         // iteration state
         workbuf: ArrayList(WorkItem) = ArrayList(WorkItem){},
 
         /// Array hashmap used as a set (values are the keys)
         /// to store matched paths and prevent duplicates
         ///
-        /// BunString is used so that we can call BunString.toJSArray()
+        /// FunString is used so that we can call FunString.toJSArray()
         /// on the result of `.keys()` to give the result back to JS
         ///
         /// The only type of string impl we use is ZigString since
@@ -373,9 +373,9 @@ pub fn GlobWalker_(
         /// `foo/**/*`
         ///
         /// Use `.keys()` to get the matched paths
-        const MatchedMap = std.ArrayHashMapUnmanaged(BunString, void, struct {
-            pub fn hash(_: @This(), this: BunString) u32 {
-                bun.assert(this.tag == .ZigString);
+        const MatchedMap = std.ArrayHashMapUnmanaged(FunString, void, struct {
+            pub fn hash(_: @This(), this: FunString) u32 {
+                fun.assert(this.tag == .ZigString);
                 const slice = this.byteSlice();
                 if (comptime sentinel) {
                     const slicez = slice[0 .. slice.len - 1 :0];
@@ -385,7 +385,7 @@ pub fn GlobWalker_(
                 return std.array_hash_map.hashString(slice);
             }
 
-            pub fn eql(_: @This(), this: BunString, other: BunString, _: usize) bool {
+            pub fn eql(_: @This(), this: FunString, other: FunString, _: usize) bool {
                 return this.eql(other);
             }
         }, true);
@@ -397,7 +397,7 @@ pub fn GlobWalker_(
         ///
         /// Uses AutoBitSet (inline up to 127 bits, heap-backed beyond) so any
         /// component count works.
-        const ComponentSet = bun.bit_set.AutoBitSet;
+        const ComponentSet = fun.bit_set.AutoBitSet;
 
         /// The glob walker references the .directory.path so its not safe to
         /// copy/move this
@@ -425,7 +425,7 @@ pub fn GlobWalker_(
             const Directory = struct {
                 fd: Accessor.Handle,
                 iter: Accessor.DirIter,
-                path: bun.PathBuffer,
+                path: fun.PathBuffer,
                 dir_path: [:0]const u8,
 
                 /// Active component indices. Multiple indices mean one readdir
@@ -453,8 +453,8 @@ pub fn GlobWalker_(
                 log("Iterator init pattern={s}", .{this.walker.pattern});
                 var was_absolute = false;
                 const root_work_item = brk: {
-                    var use_posix = bun.Environment.isPosix;
-                    const is_absolute = if (bun.Environment.isPosix) std.fs.path.isAbsolute(this.walker.pattern) else std.fs.path.isAbsolute(this.walker.pattern) or is_absolute: {
+                    var use_posix = fun.Environment.isPosix;
+                    const is_absolute = if (fun.Environment.isPosix) std.fs.path.isAbsolute(this.walker.pattern) else std.fs.path.isAbsolute(this.walker.pattern) or is_absolute: {
                         use_posix = true;
                         break :is_absolute std.fs.path.isAbsolutePosix(this.walker.pattern);
                     };
@@ -467,7 +467,7 @@ pub fn GlobWalker_(
                     var starting_component_idx = this.walker.basename_excluding_special_syntax_component_idx;
 
                     if (path_without_special_syntax.len == 0) {
-                        path_without_special_syntax = if (!bun.Environment.isWindows) "/" else ResolvePath.windowsFilesystemRoot(this.walker.cwd);
+                        path_without_special_syntax = if (!fun.Environment.isWindows) "/" else ResolvePath.windowsFilesystemRoot(this.walker.cwd);
                     } else {
                         // Skip the components associated with the literal path
                         starting_component_idx += 1;
@@ -480,12 +480,12 @@ pub fn GlobWalker_(
                             const path = try this.walker.arena.allocator().dupeZ(u8, path_without_special_syntax);
                             const fd = switch (try Accessor.open(path)) {
                                 .err => |e| {
-                                    if (e.getErrno() == bun.sys.E.NOTDIR) {
+                                    if (e.getErrno() == fun.sys.E.NOTDIR) {
                                         this.iter_state = .{ .matched = path };
                                         return .success;
                                     }
                                     // Doesn't exist
-                                    if (e.getErrno() == bun.sys.E.NOENT) {
+                                    if (e.getErrno() == fun.sys.E.NOENT) {
                                         this.iter_state = .get_next;
                                         return .success;
                                     }
@@ -503,7 +503,7 @@ pub fn GlobWalker_(
                         //
                         // So if we see that `end_byte_of_basename_excluding_special_syntax < this.walker.pattern.len` we
                         // miscalculated the values
-                        bun.assert(this.walker.end_byte_of_basename_excluding_special_syntax < this.walker.pattern.len);
+                        fun.assert(this.walker.end_byte_of_basename_excluding_special_syntax < this.walker.pattern.len);
                     }
 
                     break :brk WorkItem.new(
@@ -513,7 +513,7 @@ pub fn GlobWalker_(
                     );
                 };
 
-                var path_buf: *bun.PathBuffer = &this.walker.pathBuf;
+                var path_buf: *fun.PathBuffer = &this.walker.pathBuf;
                 const root_path = root_work_item.path;
                 if (root_path.len >= path_buf.len) {
                     return .{ .err = Syscall.Error.fromCode(.NAMETOOLONG, .open).withPath(root_path) };
@@ -547,7 +547,7 @@ pub fn GlobWalker_(
 
             pub fn deinit(this: *Iterator) void {
                 defer {
-                    bun.debugAssert(this.fds_open == 0);
+                    fun.debugAssert(this.fds_open == 0);
                 }
                 this.closeCwdFd();
                 switch (this.iter_state) {
@@ -566,7 +566,7 @@ pub fn GlobWalker_(
                 }
 
                 if (comptime count_fds) {
-                    bun.debugAssert(this.fds_open == 0);
+                    fun.debugAssert(this.fds_open == 0);
                 }
             }
 
@@ -586,7 +586,7 @@ pub fn GlobWalker_(
                 if (comptime count_fds) {
                     this.fds_open += 1;
                     // If this is over 2 then this means that there is a bug in the iterator code
-                    bun.debugAssert(this.fds_open <= 2);
+                    fun.debugAssert(this.fds_open <= 2);
                 }
             }
 
@@ -688,9 +688,9 @@ pub fn GlobWalker_(
                         const stackbuf_size = 256;
                         var stfb = std.heap.stackFallback(stackbuf_size, this.walker.arena.allocator());
                         const pathz = try stfb.get().dupeZ(u8, this.walker.patternComponents.items[idx].patternSlice(this.walker.pattern));
-                        const stat_result: bun.Stat = switch (Accessor.statat(fd, pathz)) {
+                        const stat_result: fun.Stat = switch (Accessor.statat(fd, pathz)) {
                             .err => |e_| {
-                                var e: bun.sys.Error = e_;
+                                var e: fun.sys.Error = e_;
                                 if (e.getErrno() == .NOENT) {
                                     this.iter_state = .get_next;
                                     return .success;
@@ -699,7 +699,7 @@ pub fn GlobWalker_(
                             },
                             .result => |stat| stat,
                         };
-                        const matches = (bun.S.ISDIR(@intCast(stat_result.mode)) and !this.walker.only_files) or bun.S.ISREG(@intCast(stat_result.mode)) or !this.walker.only_files;
+                        const matches = (fun.S.ISDIR(@intCast(stat_result.mode)) and !this.walker.only_files) or fun.S.ISREG(@intCast(stat_result.mode)) or !this.walker.only_files;
                         if (matches) {
                             if (try this.walker.prepareMatchedPath(pathz, dir_path)) |path| {
                                 this.iter_state = .{ .matched = path };
@@ -767,9 +767,9 @@ pub fn GlobWalker_(
                 // `<` `>` `"` are NT wildcards; treating them as literals would over-match,
                 // but they are invalid in Windows filenames so such a pattern never matches
                 // anyway.
-                if (bun.strings.indexOfAny(slice, "?[{\\!<>\"") != null) return null;
+                if (fun.strings.indexOfAny(slice, "?[{\\!<>\"") != null) return null;
 
-                const wide = bun.strings.convertUTF8toUTF16InBuffer(&this.nt_filter_buf, slice);
+                const wide = fun.strings.convertUTF8toUTF16InBuffer(&this.nt_filter_buf, slice);
                 return wide;
             }
 
@@ -793,7 +793,7 @@ pub fn GlobWalker_(
                                     continue;
                                 },
                                 .symlink => {
-                                    var scratch_path_buf: *bun.PathBuffer = &this.walker.pathBuf;
+                                    var scratch_path_buf: *fun.PathBuffer = &this.walker.pathBuf;
                                     if (work_item.path.len >= scratch_path_buf.len) {
                                         return .{ .err = Syscall.Error.fromCode(.NAMETOOLONG, .open).withPath(work_item.path) };
                                     }
@@ -819,7 +819,7 @@ pub fn GlobWalker_(
                                     this.iter_state = .get_next;
                                     const maybe_dir_fd: ?Accessor.Handle = switch (try Accessor.openat(this.cwd_fd, symlink_full_path_z)) {
                                         .err => |err| brk: {
-                                            if (@as(usize, @intCast(err.errno)) == @as(usize, @intFromEnum(bun.sys.E.NOTDIR))) {
+                                            if (@as(usize, @intCast(err.errno)) == @as(usize, @intFromEnum(fun.sys.E.NOTDIR))) {
                                                 break :brk null;
                                             }
                                             if (this.walker.error_on_broken_symlinks) return .{ .err = this.walker.handleSysErrWithPath(err, symlink_full_path_z) };
@@ -938,10 +938,10 @@ pub fn GlobWalker_(
 
                                     const stackbuf_size = 256;
                                     var stfb = std.heap.stackFallback(stackbuf_size, this.walker.arena.allocator());
-                                    const name_z = bun.handleOom(stfb.get().dupeZ(u8, entry_name));
+                                    const name_z = fun.handleOom(stfb.get().dupeZ(u8, entry_name));
                                     const stat_result = Accessor.lstatat(dir.fd, name_z);
                                     const real_kind = switch (stat_result) {
-                                        .result => |st| bun.sys.kindFromMode(@intCast(st.mode)),
+                                        .result => |st| fun.sys.kindFromMode(@intCast(st.mode)),
                                         .err => continue,
                                     };
 
@@ -1084,7 +1084,7 @@ pub fn GlobWalker_(
             return try this.initWithCwd(
                 arena,
                 pattern,
-                bun.fs.FileSystem.instance.top_level_dir,
+                fun.fs.FileSystem.instance.top_level_dir,
                 dot,
                 absolute,
                 follow_symlinks,
@@ -1147,7 +1147,7 @@ pub fn GlobWalker_(
             // copy arena after all allocations are successful
             this.arena = arena.*;
 
-            if (bun.Environment.allow_assert) {
+            if (fun.Environment.allow_assert) {
                 this.debugPatternComponents();
             }
 
@@ -1168,7 +1168,7 @@ pub fn GlobWalker_(
             path_buf: [:0]const u8,
         ) Syscall.Error {
             const copy_len = @min(path_buf.len, this.pathBuf.len);
-            bun.copy(u8, this.pathBuf[0..copy_len], path_buf[0..copy_len]);
+            fun.copy(u8, this.pathBuf[0..copy_len], path_buf[0..copy_len]);
             return err.withPath(this.pathBuf[0..copy_len]);
         }
 
@@ -1200,7 +1200,7 @@ pub fn GlobWalker_(
             this: *GlobWalker,
             idx: u32,
             dir_path: *[:0]u8,
-            path_buf: *bun.PathBuffer,
+            path_buf: *fun.PathBuffer,
             encountered_dot_dot: *bool,
         ) Maybe(u32) {
             var component_idx = idx;
@@ -1209,7 +1209,7 @@ pub fn GlobWalker_(
                 switch (this.patternComponents.items[component_idx].syntax_hint) {
                     .Dot => {
                         defer component_idx += 1;
-                        if (len + 2 >= bun.MAX_PATH_BYTES) {
+                        if (len + 2 >= fun.MAX_PATH_BYTES) {
                             return .{ .err = this.handleSysErrWithPath(Syscall.Error.fromCode(.NAMETOOLONG, .open), path_buf[0..len :0]) };
                         }
                         if (len == 0) {
@@ -1226,7 +1226,7 @@ pub fn GlobWalker_(
                     .DotBack => {
                         defer component_idx += 1;
                         encountered_dot_dot.* = true;
-                        if (len + 3 >= bun.MAX_PATH_BYTES) {
+                        if (len + 3 >= fun.MAX_PATH_BYTES) {
                             return .{ .err = this.handleSysErrWithPath(Syscall.Error.fromCode(.NAMETOOLONG, .open), path_buf[0..len :0]) };
                         }
                         if (len == 0) {
@@ -1267,7 +1267,7 @@ pub fn GlobWalker_(
             this: *GlobWalker,
             work_item_idx: u32,
             dir_path: *[:0]u8,
-            scratch_path_buf: *bun.PathBuffer,
+            scratch_path_buf: *fun.PathBuffer,
             encountered_dot_dot: *bool,
         ) Maybe(u32) {
             var component_idx = work_item_idx;
@@ -1316,8 +1316,8 @@ pub fn GlobWalker_(
             if (pattern.syntax_hint == .Double) {
                 // Stop the double wildcard if it matches the pattern afer it
                 // Example: src/**/*.js
-                // - Matches: src/bun.js/
-                //            src/bun.js/foo/bar/baz.js
+                // - Matches: src/fun.js/
+                //            src/fun.js/foo/bar/baz.js
                 if (!is_last and this.matchPatternImpl(next_pattern.?, entry_name)) {
                     // But if the next pattern is the last
                     // component, it should match and propagate the
@@ -1403,7 +1403,7 @@ pub fn GlobWalker_(
         }
 
         fn matchPatternSlow(this: *GlobWalker, pattern_component: *Component, filepath: []const u8) bool {
-            return bun.glob.match(
+            return fun.glob.match(
                 pattern_component.patternSlice(this.pattern),
                 filepath,
             ).matches();
@@ -1411,7 +1411,7 @@ pub fn GlobWalker_(
 
         /// Create an empty ComponentSet sized for this pattern.
         fn makeSet(this: *GlobWalker) ComponentSet {
-            return bun.handleOom(ComponentSet.initEmpty(
+            return fun.handleOom(ComponentSet.initEmpty(
                 this.arena.allocator(),
                 this.patternComponents.items.len,
             ));
@@ -1481,26 +1481,26 @@ pub fn GlobWalker_(
             return idx;
         }
 
-        inline fn matchedPathToBunString(matched_path: MatchedPath) BunString {
+        inline fn matchedPathToFunString(matched_path: MatchedPath) FunString {
             if (comptime sentinel) {
-                return BunString.fromBytes(matched_path[0 .. matched_path.len + 1]);
+                return FunString.fromBytes(matched_path[0 .. matched_path.len + 1]);
             }
-            return BunString.fromBytes(matched_path);
+            return FunString.fromBytes(matched_path);
         }
 
         fn prepareMatchedPathSymlink(this: *GlobWalker, symlink_full_path: []const u8) !?MatchedPath {
-            const result = try this.matchedPaths.getOrPut(this.arena.allocator(), BunString.fromBytes(symlink_full_path));
+            const result = try this.matchedPaths.getOrPut(this.arena.allocator(), FunString.fromBytes(symlink_full_path));
             if (result.found_existing) {
                 log("(dupe) prepared match: {s}", .{symlink_full_path});
                 return null;
             }
             if (comptime !sentinel) {
                 const slice = try this.arena.allocator().dupe(u8, symlink_full_path);
-                result.key_ptr.* = matchedPathToBunString(slice);
+                result.key_ptr.* = matchedPathToFunString(slice);
                 return slice;
             }
             const slicez = try this.arena.allocator().dupeZ(u8, symlink_full_path);
-            result.key_ptr.* = matchedPathToBunString(slicez);
+            result.key_ptr.* = matchedPathToFunString(slicez);
             return slicez;
         }
 
@@ -1510,7 +1510,7 @@ pub fn GlobWalker_(
                 entry_name,
             };
             const name_matched_path = try this.join(subdir_parts);
-            const name = matchedPathToBunString(name_matched_path);
+            const name = matchedPathToFunString(name_matched_path);
             const result = try this.matchedPaths.getOrPutValue(this.arena.allocator(), name, {});
             if (result.found_existing) {
                 log("(dupe) prepared match: {s}", .{name_matched_path});
@@ -1532,7 +1532,7 @@ pub fn GlobWalker_(
                 entry_name,
             };
             const name_matched_path = try this.join(subdir_parts);
-            const name = matchedPathToBunString(name_matched_path);
+            const name = matchedPathToFunString(name_matched_path);
             const result = try this.matchedPaths.getOrPut(this.arena.allocator(), name);
             if (result.found_existing) {
                 log("(dupe) prepared match: {s}", .{name_matched_path});
@@ -1543,7 +1543,7 @@ pub fn GlobWalker_(
 
         fn appendMatchedPathSymlink(this: *GlobWalker, symlink_full_path: []const u8) !void {
             const name = try this.arena.allocator().dupe(u8, symlink_full_path);
-            try this.matchedPaths.put(this.arena.allocator(), BunString.fromBytes(name), {});
+            try this.matchedPaths.put(this.arena.allocator(), FunString.fromBytes(name), {});
         }
 
         inline fn join(this: *GlobWalker, subdir_parts: []const []const u8) !MatchedPath {
@@ -1553,7 +1553,7 @@ pub fn GlobWalker_(
                 return try stdJoin(this.arena.allocator(), subdir_parts);
             }
 
-            const out = try this.arena.allocator().dupe(u8, bunJoin(subdir_parts, .auto));
+            const out = try this.arena.allocator().dupe(u8, funJoin(subdir_parts, .auto));
             if (comptime sentinel) return out[0 .. out.len - 1 :0];
 
             return out;
@@ -1566,7 +1566,7 @@ pub fn GlobWalker_(
         const syntax_tokens = "*[{?!";
 
         fn checkSpecialSyntax(pattern: []const u8) bool {
-            return bun.strings.indexOfAny(pattern, syntax_tokens) != null;
+            return fun.strings.indexOfAny(pattern, syntax_tokens) != null;
         }
 
         fn makeComponent(
@@ -1582,12 +1582,12 @@ pub fn GlobWalker_(
             if (component.len == 0) return null;
 
             out: {
-                if (bun.strings.eqlComptime(pattern[component.start .. component.start + component.len], ".")) {
+                if (fun.strings.eqlComptime(pattern[component.start .. component.start + component.len], ".")) {
                     component.syntax_hint = .Dot;
                     has_relative_patterns.* = true;
                     break :out;
                 }
-                if (bun.strings.eqlComptime(pattern[component.start .. component.start + component.len], "..")) {
+                if (fun.strings.eqlComptime(pattern[component.start .. component.start + component.len], "..")) {
                     component.syntax_hint = .DotBack;
                     has_relative_patterns.* = true;
                     break :out;
@@ -1655,7 +1655,7 @@ pub fn GlobWalker_(
 
             if (pattern[component.start + component.len -| 1] == '/') {
                 component.trailing_sep = true;
-            } else if (comptime bun.Environment.isWindows) {
+            } else if (comptime fun.Environment.isWindows) {
                 component.trailing_sep = pattern[component.start + component.len -| 1] == '\\';
             }
 
@@ -1700,7 +1700,7 @@ pub fn GlobWalker_(
             var width: u32 = 0;
             while (i < pattern.len) : (i += 1) {
                 const c = pattern[i];
-                width = bun.strings.utf8ByteSequenceLength(c);
+                width = fun.strings.utf8ByteSequenceLength(c);
 
                 switch (c) {
                     '\\' => {
@@ -1759,7 +1759,7 @@ pub fn GlobWalker_(
                     else => {},
                 }
             }
-            bun.assert(i == 0 or i == pattern.len);
+            fun.assert(i == 0 or i == pattern.len);
             i -|= 1;
 
             if (makeComponent(
@@ -1837,19 +1837,19 @@ pub fn matchWildcardLiteral(literal: []const u8, path: []const u8) bool {
 const DirIterator = @import("../runtime/node/dir_iterator.zig");
 const ResolvePath = @import("../paths/resolve_path.zig");
 
-const bun = @import("bun");
-const BunString = bun.String;
-const CodepointIterator = bun.strings.UnsignedCodepointIterator;
-const isAllAscii = bun.strings.isAllASCII;
+const fun = @import("fun");
+const FunString = fun.String;
+const CodepointIterator = fun.strings.UnsignedCodepointIterator;
+const isAllAscii = fun.strings.isAllASCII;
 
-const jsc = bun.jsc;
-const ZigString = bun.jsc.ZigString;
+const jsc = fun.jsc;
+const ZigString = fun.jsc.ZigString;
 
 const Cursor = CodepointIterator.Cursor;
 const Codepoint = CodepointIterator.Cursor.CodePointType;
 
-const Syscall = bun.sys;
-const Maybe = bun.sys.Maybe;
+const Syscall = fun.sys;
+const Maybe = fun.sys.Maybe;
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

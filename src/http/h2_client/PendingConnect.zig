@@ -2,7 +2,7 @@
 //! concurrent h2-capable requests to the same origin coalesce onto its
 //! eventual session instead of each opening a separate socket.
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 hostname: []const u8,
 port: u16,
@@ -24,16 +24,16 @@ pub fn unregisterFrom(this: *@This(), ctx: *NewHTTPContext(true)) void {
 }
 
 pub fn deinit(this: *@This()) void {
-    bun.default_allocator.free(this.hostname);
-    this.waiters.deinit(bun.default_allocator);
-    bun.destroy(this);
+    fun.default_allocator.free(this.hostname);
+    this.waiters.deinit(fun.default_allocator);
+    fun.destroy(this);
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const strings = fun.strings;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
-const HTTPClient = bun.http;
+const HTTPClient = fun.http;
 const NewHTTPContext = HTTPClient.NewHTTPContext;

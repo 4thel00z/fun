@@ -2,7 +2,7 @@
 
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 // for CREATE_METHOD_TABLE
 namespace JSCastingHelpers = JSC::JSCastingHelpers;
@@ -25,4 +25,4 @@ NapiTypeTag* NapiTypeTag::create(JSC::VM& vm,
     return tag;
 }
 
-} // namespace Bun
+} // namespace Fun

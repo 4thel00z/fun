@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 // A malformed multipart Content-Type with a lone double-quote after boundary=
 // used to panic in FormData.getBoundary (src/url.zig) because it treated the

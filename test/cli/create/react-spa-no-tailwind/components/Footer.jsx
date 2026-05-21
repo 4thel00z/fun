@@ -2,10 +2,10 @@ import React from "react";
 import classNames from "classnames";
 
 const LINKS = [
-  { text: "Documentation", url: "https://bun.com/docs" },
-  { text: "GitHub", url: "https://github.com/oven-sh/bun" },
-  { text: "Discord", url: "https://bun.com/discord" },
-  { text: "Blog", url: "https://bun.com/blog" },
+  { text: "Documentation", url: "https://fun.dev/docs" },
+  { text: "GitHub", url: "https://github.com/underdoc-org/fun" },
+  { text: "Discord", url: "https://fun.dev/discord" },
+  { text: "Blog", url: "https://fun.dev/blog" },
 ];
 
 export default function Footer() {
@@ -14,7 +14,7 @@ export default function Footer() {
       <div className="footer-content">
         <div className="footer-logo">
           <span className="logo-small">🥟</span>
-          <span className="footer-text">Built with Bun</span>
+          <span className="footer-text">Built with Fun</span>
         </div>
         <nav className="footer-links">
           {LINKS.map(({ text, url }) => (

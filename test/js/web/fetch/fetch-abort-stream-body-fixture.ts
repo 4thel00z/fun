@@ -5,7 +5,7 @@
 
 let onServerGotChunk: () => void = () => {};
 
-using server = Bun.serve({
+using server = Fun.serve({
   port: 0,
   async fetch(req) {
     const reader = req.body!.getReader();
@@ -60,9 +60,9 @@ for (let i = 0; i < ITERATIONS; i++) {
 
   // Give the HTTP-thread failure callback a chance to land and call
   // sink.cancel() a second time.
-  await Bun.sleep(0);
-  await Bun.sleep(0);
-  Bun.gc(true);
+  await Fun.sleep(0);
+  await Fun.sleep(0);
+  Fun.gc(true);
 }
 
 console.log(`done ${ITERATIONS}`);

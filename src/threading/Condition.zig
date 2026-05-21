@@ -1,4 +1,4 @@
-//! Copy of std.Thread.Condition, but uses Bun's Mutex and Futex.
+//! Copy of std.Thread.Condition, but uses Fun's Mutex and Futex.
 //! Synchronized with std as of Zig 0.14.1.
 //!
 //! Condition variables are used with a Mutex to efficiently wait for an arbitrary condition to occur.
@@ -269,10 +269,10 @@ const FutexImpl = struct {
 
 const builtin = @import("builtin");
 
-const bun = @import("bun");
-const Futex = bun.Futex;
-const Mutex = bun.Mutex;
-const assert = bun.assert;
+const fun = @import("fun");
+const Futex = fun.Futex;
+const Mutex = fun.Mutex;
+const assert = fun.assert;
 
 const std = @import("std");
 const os = std.os;

@@ -5,12 +5,12 @@ description: Guides writing bundler tests using itBundled/expectBundled in test/
 
 # Writing Bundler Tests
 
-Bundler tests use `itBundled()` from `test/bundler/expectBundled.ts` to test Bun's bundler.
+Bundler tests use `itBundled()` from `test/bundler/expectBundled.ts` to test Fun's bundler.
 
 ## Basic Usage
 
 ```typescript
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled, dedent } from "./expectBundled";
 
 describe("bundler", () => {
@@ -50,7 +50,7 @@ Test ID format: `category/TestName` (e.g., `banner/CommentBanner`, `minify/Empty
   outfile: "/out.js",
   outdir: "/out",
   format: "esm" | "cjs" | "iife",
-  target: "bun" | "browser" | "node",
+  target: "fun" | "browser" | "node",
 
   // Minification
   minifyWhitespace: true,
@@ -82,7 +82,7 @@ Test ID format: `category/TestName` (e.g., `banner/CommentBanner`, `minify/Empty
     stderr: "error output",
     exitCode: 1,
     env: { NODE_ENV: "production" },
-    runtime: "bun" | "node",
+    runtime: "fun" | "node",
 
     // Runtime errors
     error: "ReferenceError: x is not defined",
@@ -208,9 +208,9 @@ test/bundler/
 ## Running Tests
 
 ```bash
-bun bd test test/bundler/bundler_banner.test.ts
-BUN_BUNDLER_TEST_FILTER="banner/Comment" bun bd test bundler_banner.test.ts
-BUN_BUNDLER_TEST_DEBUG=1 bun bd test bundler_minify.test.ts
+fun bd test test/bundler/bundler_banner.test.ts
+FUN_FUNDLER_TEST_FILTER="banner/Comment" fun bd test bundler_banner.test.ts
+FUN_FUNDLER_TEST_DEBUG=1 fun bd test bundler_minify.test.ts
 ```
 
 ## Key Points

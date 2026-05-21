@@ -39,7 +39,7 @@ pub fn next(this: *Pwd) Yield {
     while (!(this.state == .err or this.state == .done)) {
         switch (this.state) {
             .waiting_io => return .suspended,
-            .idle => @panic("Unexpected \"idle\" state in Pwd. This indicates a bug in Bun. Please file a GitHub issue."),
+            .idle => @panic("Unexpected \"idle\" state in Pwd. This indicates a bug in Fun. Please file a GitHub issue."),
             .done, .err => unreachable,
         }
     }
@@ -52,7 +52,7 @@ pub fn next(this: *Pwd) Yield {
 }
 
 pub fn onIOWriterChunk(this: *Pwd, _: usize, e: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .waiting_io);
     }
 
@@ -86,9 +86,9 @@ const interpreter = @import("../interpreter.zig");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const Yield = shell.Yield;

@@ -1,4 +1,4 @@
-//! The `ptr` module contains smart pointer types that are used throughout Bun.
+//! The `ptr` module contains smart pointer types that are used throughout Fun.
 pub const Cow = @import("./Cow.zig").Cow;
 
 pub const CowSlice = @import("./CowSlice.zig").CowSlice;

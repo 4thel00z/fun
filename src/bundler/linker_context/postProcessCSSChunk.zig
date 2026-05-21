@@ -8,7 +8,7 @@ pub fn postProcessCSSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, ch
         },
     };
 
-    var line_offset: bun.SourceMap.LineColumnOffset.Optional = if (c.options.source_maps != .none) .{ .value = .{} } else .{ .null = {} };
+    var line_offset: fun.SourceMap.LineColumnOffset.Optional = if (c.options.source_maps != .none) .{ .value = .{} } else .{ .null = {} };
 
     var newline_before_comment = false;
 
@@ -31,7 +31,7 @@ pub fn postProcessCSSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, ch
     const compile_results = chunk.compile_results_for_chunk;
 
     var compile_results_for_source_map: std.MultiArrayList(CompileResultForSourceMap) = .{};
-    bun.handleOom(compile_results_for_source_map.setCapacity(worker.allocator, compile_results.len));
+    fun.handleOom(compile_results_for_source_map.setCapacity(worker.allocator, compile_results.len));
 
     const sources: []const Logger.Source = c.parse_graph.input_files.items(.source);
     for (compile_results) |compile_result| {
@@ -60,7 +60,7 @@ pub fn postProcessCSSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, ch
         }
 
         // Save the offset to the start of the stored JavaScript
-        j.push(compile_result.code(), bun.default_allocator);
+        j.push(compile_result.code(), fun.default_allocator);
 
         if (compile_result.sourceMapChunk()) |source_map_chunk| {
             if (c.options.source_maps != .none) {
@@ -93,7 +93,7 @@ pub fn postProcessCSSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, ch
         worker.allocator,
         &j,
         @as(u32, @truncate(ctx.chunks.len)),
-    ) catch |err| bun.handleOom(err);
+    ) catch |err| fun.handleOom(err);
     // TODO: meta contents
 
     chunk.isolated_hash = c.generateIsolatedHash(chunk);
@@ -113,15 +113,15 @@ pub fn postProcessCSSChunk(ctx: GenerateChunkCtx, worker: *ThreadPool.Worker, ch
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Logger = bun.logger;
-const StringJoiner = bun.StringJoiner;
-const options = bun.options;
+const fun = @import("fun");
+const Logger = fun.logger;
+const StringJoiner = fun.StringJoiner;
+const options = fun.options;
 
-const Chunk = bun.bundle_v2.Chunk;
-const CompileResultForSourceMap = bun.bundle_v2.CompileResultForSourceMap;
-const Index = bun.bundle_v2.Index;
-const ThreadPool = bun.bundle_v2.ThreadPool;
+const Chunk = fun.bundle_v2.Chunk;
+const CompileResultForSourceMap = fun.bundle_v2.CompileResultForSourceMap;
+const Index = fun.bundle_v2.Index;
+const ThreadPool = fun.bundle_v2.ThreadPool;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const GenerateChunkCtx = bun.bundle_v2.LinkerContext.GenerateChunkCtx;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const GenerateChunkCtx = fun.bundle_v2.LinkerContext.GenerateChunkCtx;

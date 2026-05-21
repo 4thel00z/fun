@@ -1,15 +1,15 @@
-// Use bun:test in Bun, or node:test in Node.js
+// Use fun:test in Fun, or node:test in Node.js
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "fs";
 import Module from "module";
 import { tmpdir } from "os";
 import { dirname, join, resolve } from "path";
 
 // Detect runtime and import appropriate test framework
-const isBun = typeof Bun !== "undefined";
+const isFun = typeof Fun !== "undefined";
 let test, expect;
 
-if (isBun) {
-  ({ test, expect } = await import("bun:test"));
+if (isFun) {
+  ({ test, expect } = await import("fun:test"));
 } else {
   // Node.js
   const { createRequire } = await import("module");
@@ -20,7 +20,7 @@ if (isBun) {
   globalThis.require = createRequire(import.meta.url);
 
   test = nodeTest.test;
-  // Create Bun-compatible expect from Node assert
+  // Create Fun-compatible expect from Node assert
   expect = value => ({
     toBe: expected => assert.strictEqual(value, expected),
     toEqual: expected => assert.deepStrictEqual(value, expected),
@@ -32,7 +32,7 @@ if (isBun) {
   });
 }
 
-// Helper to create temp directory - works in both Bun and Node
+// Helper to create temp directory - works in both Fun and Node
 function createTempDir(prefix, files) {
   // Use realpathSync to resolve symlinks (handles /tmp -> /private/tmp on macOS)
   const dir = realpathSync(mkdtempSync(join(tmpdir(), prefix + "-")));

@@ -1,6 +1,6 @@
 pub fn write(data: []const u8) void {
     debug("SocketMonitor: write {x}", .{data});
-    if (comptime bun.Environment.isDebug) {
+    if (comptime fun.Environment.isDebug) {
         DebugSocketMonitorWriter.check.call();
         if (DebugSocketMonitorWriter.enabled) {
             DebugSocketMonitorWriter.write(data);
@@ -10,7 +10,7 @@ pub fn write(data: []const u8) void {
 
 pub fn read(data: []const u8) void {
     debug("SocketMonitor: read {x}", .{data});
-    if (comptime bun.Environment.isDebug) {
+    if (comptime fun.Environment.isDebug) {
         DebugSocketMonitorReader.check.call();
         if (DebugSocketMonitorReader.enabled) {
             DebugSocketMonitorReader.write(data);
@@ -18,8 +18,8 @@ pub fn read(data: []const u8) void {
     }
 }
 
-const debug = bun.Output.scoped(.SocketMonitor, .visible);
+const debug = fun.Output.scoped(.SocketMonitor, .visible);
 
 const DebugSocketMonitorReader = @import("./DebugSocketMonitorReader.zig");
 const DebugSocketMonitorWriter = @import("./DebugSocketMonitorWriter.zig");
-const bun = @import("bun");
+const fun = @import("fun");

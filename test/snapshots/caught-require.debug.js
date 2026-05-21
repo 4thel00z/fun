@@ -1,6 +1,6 @@
 import {
 __require as require
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 var this_package_should_not_exist_f335_0 = (() => ({}));
 var this_package_should_not_exist_f335_1 = (() => ({}));
 try {

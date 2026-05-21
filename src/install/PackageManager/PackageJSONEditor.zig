@@ -93,7 +93,7 @@ pub fn editTrustedDependencies(allocator: std.mem.Allocator, package_json: *Expr
                 for (deps) |dep| {
                     if (dep.data == .e_missing) has_missing = true;
                 }
-                bun.assert(has_missing);
+                fun.assert(has_missing);
             }
 
             var i = deps.len;
@@ -113,7 +113,7 @@ pub fn editTrustedDependencies(allocator: std.mem.Allocator, package_json: *Expr
         }
 
         if (comptime Environment.allow_assert) {
-            for (deps) |dep| bun.assert(dep.data != .e_missing);
+            for (deps) |dep| fun.assert(dep.data != .e_missing);
         }
 
         break :brk .fromOwnedSlice(deps);
@@ -183,7 +183,7 @@ pub fn editTrustedDependencies(allocator: std.mem.Allocator, package_json: *Expr
     }
 }
 
-/// When `bun update` is called without package names, all dependencies are updated.
+/// When `fun update` is called without package names, all dependencies are updated.
 /// This function will identify the current workspace and update all changed package
 /// versions.
 pub fn editUpdateNoArgs(
@@ -212,7 +212,7 @@ pub fn editUpdateNoArgs(
                         const value = dep.value orelse continue;
                         if (value.data != .e_string) continue;
 
-                        const version_literal = try value.asStringCloned(allocator) orelse bun.outOfMemory();
+                        const version_literal = try value.asStringCloned(allocator) orelse fun.outOfMemory();
                         var tag = Dependency.Version.Tag.infer(version_literal);
 
                         // only updating dependencies with npm versions, dist-tags if `--latest`, and catalog versions.
@@ -230,7 +230,7 @@ pub fn editUpdateNoArgs(
                         }
 
                         const key_str = try key.asStringCloned(allocator) orelse unreachable;
-                        const entry = bun.handleOom(manager.updating_packages.getOrPut(allocator, key_str));
+                        const entry = fun.handleOom(manager.updating_packages.getOrPut(allocator, key_str));
 
                         // If a dependency is present in more than one dependency group, only one of it's versions
                         // will be updated. The group is determined by the order of `dependency_groups`, the same
@@ -246,9 +246,9 @@ pub fn editUpdateNoArgs(
                         if (manager.options.do.update_to_latest) {
                             // is it an aliased package
                             const temp_version = if (alias_at_index) |at_index|
-                                bun.handleOom(std.fmt.allocPrint(allocator, "{s}@latest", .{version_literal[0..at_index]}))
+                                fun.handleOom(std.fmt.allocPrint(allocator, "{s}@latest", .{version_literal[0..at_index]}))
                             else
-                                bun.handleOom(allocator.dupe(u8, "latest"));
+                                fun.handleOom(allocator.dupe(u8, "latest"));
 
                             dep.value = Expr.allocate(allocator, E.String, .{
                                 .data = temp_version,
@@ -272,7 +272,7 @@ pub fn editUpdateNoArgs(
                         const value = dep.value orelse continue;
                         if (value.data != .e_string) continue;
 
-                        const key_str = key.asString(allocator) orelse bun.outOfMemory();
+                        const key_str = key.asString(allocator) orelse fun.outOfMemory();
 
                         updated: {
                             // fetchSwapRemove because we want to update the first dependency with a matching
@@ -423,7 +423,7 @@ pub fn edit(
 
                                             if (tag != .npm and tag != .dist_tag) break :add_packages_to_update;
 
-                                            const entry = bun.handleOom(manager.updating_packages.getOrPut(allocator, name));
+                                            const entry = fun.handleOom(manager.updating_packages.getOrPut(allocator, name));
 
                                             // first come, first serve
                                             if (entry.found_existing) break :add_packages_to_update;
@@ -492,7 +492,7 @@ pub fn edit(
             .initCapacity(allocator, dependencies.len + remaining - replacing);
         new_dependencies.expandToCapacity();
 
-        bun.copy(G.Property, new_dependencies.items, dependencies);
+        fun.copy(G.Property, new_dependencies.items, dependencies);
         @memset(new_dependencies.items[dependencies.len..], G.Property{});
 
         var trusted_dependencies: []Expr = &[_]Expr{};
@@ -518,7 +518,7 @@ pub fn edit(
                     for (deps) |dep| {
                         if (dep.data == .e_missing) has_missing = true;
                     }
-                    bun.assert(has_missing);
+                    fun.assert(has_missing);
                 }
 
                 var i = deps.len;
@@ -534,7 +534,7 @@ pub fn edit(
             }
 
             if (comptime Environment.allow_assert) {
-                for (deps) |dep| bun.assert(dep.data != .e_missing);
+                for (deps) |dep| fun.assert(dep.data != .e_missing);
             }
 
             break :brk .fromOwnedSlice(deps);
@@ -542,7 +542,7 @@ pub fn edit(
 
         for (updates.*) |*request| {
             if (request.e_string != null) continue;
-            defer if (comptime Environment.allow_assert) bun.assert(request.e_string != null);
+            defer if (comptime Environment.allow_assert) fun.assert(request.e_string != null);
 
             var k: usize = 0;
             while (k < new_dependencies.items.len) : (k += 1) {
@@ -781,19 +781,19 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Semver = bun.Semver;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Semver = fun.Semver;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const JSAst = bun.ast;
+const JSAst = fun.ast;
 const E = JSAst.E;
 const Expr = JSAst.Expr;
 const G = JSAst.G;
 
-const Dependency = bun.install.Dependency;
-const invalid_package_id = bun.install.invalid_package_id;
+const Dependency = fun.install.Dependency;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const PackageManager = bun.install.PackageManager;
-const UpdateRequest = bun.install.PackageManager.UpdateRequest;
+const PackageManager = fun.install.PackageManager;
+const UpdateRequest = fun.install.PackageManager.UpdateRequest;

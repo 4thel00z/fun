@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot as normalizeBunSnapshot_, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot as normalizeFunSnapshot_, tempDirWithFiles } from "harness";
 
-const normalizeBunSnapshot = (str: string) => {
-  str = normalizeBunSnapshot_(str);
+const normalizeFunSnapshot = (str: string) => {
+  str = normalizeFunSnapshot_(str);
   str = str.replace(/.*Resolved, downloaded and extracted.*\n?/g, "");
   str = str.replaceAll("fstatat()", "stat()");
   str = str.replace(/ \(v[\d.]+ available\)/g, "");
@@ -30,9 +30,9 @@ test("patch application should handle out-of-bounds line numbers gracefully", as
 +// Add this line way beyond the actual file bounds`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "install", "--linker=hoisted"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "install", "--linker=hoisted"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -42,12 +42,12 @@ test("patch application should handle out-of-bounds line numbers gracefully", as
 
   // Should fail gracefully with proper error message, not crash
   expect(exitCode).toBe(1);
-  expect(normalizeBunSnapshot(stderr)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stderr)).toMatchInlineSnapshot(`
     "Resolving dependencies
     error: failed applying patch file: EINVAL: Invalid argument (stat())
     error: failed to apply patchfile (patches/lodash+4.17.21.patch)"
   `);
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`"bun install <version> (<revision>)"`);
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`"fun install <version> (<revision>)"`);
 });
 
 test("patch application should handle deletion beyond file bounds", async () => {
@@ -72,9 +72,9 @@ test("patch application should handle deletion beyond file bounds", async () => 
 -line 5`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "install", "--linker=hoisted"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "install", "--linker=hoisted"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -84,12 +84,12 @@ test("patch application should handle deletion beyond file bounds", async () => 
 
   // Should fail gracefully, not crash
   expect(exitCode).toBe(1);
-  expect(normalizeBunSnapshot(stderr)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stderr)).toMatchInlineSnapshot(`
     "Resolving dependencies
     error: failed to parse patchfile: hunk_header_integrity_check_failed
     error: failed to apply patchfile (patches/lodash+4.17.21.patch)"
   `);
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`"bun install <version> (<revision>)"`);
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`"fun install <version> (<revision>)"`);
 });
 
 test("patch application should work correctly with valid patches", async () => {
@@ -111,9 +111,9 @@ test("patch application should work correctly with valid patches", async () => {
  module.exports = require('./lodash');`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "install", "--linker=hoisted"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "install", "--linker=hoisted"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -123,12 +123,12 @@ test("patch application should work correctly with valid patches", async () => {
 
   // Valid patch should succeed
   expect(exitCode).toBe(0);
-  expect(normalizeBunSnapshot(stderr)).toMatchInlineSnapshot(`
+  expect(normalizeFunSnapshot(stderr)).toMatchInlineSnapshot(`
     "Resolving dependencies
     Saved lockfile"
   `);
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`
-    "bun install <version> (<revision>)
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`
+    "fun install <version> (<revision>)
 
     + lodash@4.17.21
 
@@ -136,7 +136,7 @@ test("patch application should work correctly with valid patches", async () => {
   `);
 
   // Verify the patch was applied
-  const patchedFile = await Bun.file(`${dir}/node_modules/lodash/index.js`).text();
+  const patchedFile = await Fun.file(`${dir}/node_modules/lodash/index.js`).text();
   expect(patchedFile).toMatchInlineSnapshot(`
     "// Valid patch comment
     module.exports = require('./lodash');"

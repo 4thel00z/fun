@@ -1,5 +1,5 @@
 import assert from "assert";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 function makeBlock(f: Function, ...args: any[]) {
   return function () {

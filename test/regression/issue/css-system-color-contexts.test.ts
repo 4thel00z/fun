@@ -1,5 +1,5 @@
-import { cssInternals } from "bun:internal-for-testing";
-import { test } from "bun:test";
+import { cssInternals } from "fun:internal-for-testing";
+import { test } from "fun:test";
 
 test("CSS system colors in various contexts should not crash", () => {
   // Test system colors in contexts where they might be converted/processed

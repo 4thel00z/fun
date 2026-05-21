@@ -553,12 +553,12 @@ pub const SubscriptionPushMessage = enum(u2) {
     subscribe,
     unsubscribe,
 
-    pub const map = bun.ComptimeStringMap(SubscriptionPushMessage, .{
+    pub const map = fun.ComptimeStringMap(SubscriptionPushMessage, .{
         .{ "message", .message },
         .{ "subscribe", .subscribe },
         .{ "unsubscribe", .unsubscribe },
     });
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

@@ -2,7 +2,7 @@
  * Warm a read-only prefetch cache for the build's network downloads.
  *
  * Run at CI-image bake time from bootstrap.{sh,ps1}. Produces a directory
- * that, when pointed at via `BUN_BUILD_PREFETCH_DIR`, lets a fresh build
+ * that, when pointed at via `FUN_BUILD_PREFETCH_DIR`, lets a fresh build
  * complete with no network round-trips for matching dep versions.
  *
  * Layout written (matches what scripts/build/download.ts consults):
@@ -15,7 +15,7 @@
  * becomes a partial hit until the next image refresh.
  *
  * Usage:
- *   bun scripts/prefetch-deps.ts <prefetchDir>
+ *   fun scripts/prefetch-deps.ts <prefetchDir>
  *
  * Enumerates variants on the dimensions that affect download URLs (asan, lto,
  * baseline, musl) for the current host os/arch. Variants without a published
@@ -33,7 +33,7 @@ import { zigCompilerSafe, zigDownloadUrl } from "./build/zig.ts";
 
 const dest = process.argv[2];
 if (dest === undefined) {
-  process.stderr.write("Usage: bun scripts/prefetch-deps.ts <prefetchDir>\n");
+  process.stderr.write("Usage: fun scripts/prefetch-deps.ts <prefetchDir>\n");
   process.exit(1);
 }
 const byUrlDir = resolve(dest, "by-url");

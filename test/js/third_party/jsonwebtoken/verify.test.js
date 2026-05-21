@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "fun:test";
 import fs from "fs";
 import jwt from "jsonwebtoken";
 import jws from "jws";

@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // Regression test for a re-entrancy bug in the native zlib/brotli/zstd
 // handle's emitError(): it used to clear `write_in_progress = false`
@@ -49,9 +49,9 @@ describe("zlib native handle onerror re-entrancy", () => {
   // dropped write), so exercise it a few times.
   for (let i = 0; i < 3; i++) {
     test.concurrent(`re-entrant write()+close() from onerror completes both writes (iteration ${i})`, async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", fixture],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", fixture],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });

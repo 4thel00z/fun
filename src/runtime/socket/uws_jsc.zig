@@ -2,14 +2,14 @@
 //! Exports here are referenced via aliases on the original structs so call
 //! sites do not change.
 
-// ── create_bun_socket_error_t.toJS / us_bun_verify_error_t.toJS ────────────
-pub fn createBunSocketErrorToJS(this: uws.create_bun_socket_error_t, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
+// ── create_fun_socket_error_t.toJS / us_fun_verify_error_t.toJS ────────────
+pub fn createFunSocketErrorToJS(this: uws.create_fun_socket_error_t, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
     return switch (this) {
         // us_ssl_ctx_from_options only sets *err for the CA/cipher cases;
         // bad cert/key/DH return NULL with .none and the detail is on the
         // BoringSSL error queue. Surfacing it here keeps every
         // `createSSLContext(...) orelse return err.toJS()` site correct.
-        .none => bun.BoringSSL.ERR_toJS(globalObject, bun.BoringSSL.c.ERR_get_error()),
+        .none => fun.BoringSSL.ERR_toJS(globalObject, fun.BoringSSL.c.ERR_get_error()),
         .load_ca_file => globalObject.ERR(.BORINGSSL, "Failed to load CA file", .{}).toJS(),
         .invalid_ca_file => globalObject.ERR(.BORINGSSL, "Invalid CA file", .{}).toJS(),
         .invalid_ca => globalObject.ERR(.BORINGSSL, "Invalid CA", .{}).toJS(),
@@ -17,13 +17,13 @@ pub fn createBunSocketErrorToJS(this: uws.create_bun_socket_error_t, globalObjec
     };
 }
 
-pub fn verifyErrorToJS(this: *const uws.us_bun_verify_error_t, globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
-    const code = if (this.code == null) "" else this.code[0..bun.len(this.code)];
-    const reason = if (this.reason == null) "" else this.reason[0..bun.len(this.reason)];
+pub fn verifyErrorToJS(this: *const uws.us_fun_verify_error_t, globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
+    const code = if (this.code == null) "" else this.code[0..fun.len(this.code)];
+    const reason = if (this.reason == null) "" else this.reason[0..fun.len(this.reason)];
 
     const fallback = jsc.SystemError{
-        .code = bun.String.cloneUTF8(code),
-        .message = bun.String.cloneUTF8(reason),
+        .code = fun.String.cloneUTF8(code),
+        .message = fun.String.cloneUTF8(reason),
     };
 
     return fallback.toErrorInstance(globalObject);
@@ -57,7 +57,7 @@ export fn us_socket_buffered_js_write(
         buffer.wrote(total_written);
     }
 
-    var stack_fallback = std.heap.stackFallback(16 * 1024, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(16 * 1024, fun.default_allocator);
     const node_buffer: jsc.Node.BlobOrStringOrBuffer = if (data.isUndefined())
         jsc.Node.BlobOrStringOrBuffer{ .string_or_buffer = jsc.Node.StringOrBuffer.empty }
     else
@@ -83,7 +83,7 @@ export fn us_socket_buffered_js_write(
         total_written +|= written;
         if (written < to_flush.len) {
             if (data_slice.len > 0) {
-                bun.handleOom(stream_buffer.write(data_slice));
+                fun.handleOom(stream_buffer.write(data_slice));
             }
             return .false;
         }
@@ -93,7 +93,7 @@ export fn us_socket_buffered_js_write(
         const written: u32 = @max(0, socket.write(data_slice));
         total_written +|= written;
         if (written < data_slice.len) {
-            bun.handleOom(stream_buffer.write(data_slice[written..]));
+            fun.handleOom(stream_buffer.write(data_slice[written..]));
             return .false;
         }
     }
@@ -109,8 +109,8 @@ comptime {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const us_socket_stream_buffer_t = uws.us_socket_stream_buffer_t;

@@ -1,4 +1,4 @@
-import { beforeAll } from "bun:test";
+import { beforeAll } from "fun:test";
 
 const FOO = process.env.FOO ?? "";
 

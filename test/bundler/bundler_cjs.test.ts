@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 // Tests for CommonJS <> ESM interop, specifically the __toESM helper behavior.
@@ -170,8 +170,8 @@ describe("bundler", () => {
     },
   });
 
-  // Test 9: target=bun
-  itBundled("cjs/__toESM_target_bun", {
+  // Test 9: target=fun
+  itBundled("cjs/__toESM_target_fun", {
     files: {
       "/entry.js": /* js */ `
         import lib from './lib.cjs';
@@ -182,7 +182,7 @@ describe("bundler", () => {
         exports.y = 2;
       `,
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: '{"x":1,"y":2}',
     },

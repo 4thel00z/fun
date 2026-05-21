@@ -30,7 +30,7 @@ process.once('uncaughtException', common.mustCall((err, errorOrigin) => {
 }));
 
 // The domain part of this test is commented out because it's not planned to be
-// supported in Bun. The rest of this test is untouched and still tests the behavior
+// supported in Fun. The rest of this test is untouched and still tests the behavior
 // of throwing errors in setImmediate callbacks exactly like Node.js.
 
 // const d1 = domain.create();

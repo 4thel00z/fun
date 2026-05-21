@@ -1,10 +1,10 @@
 #pragma once
 #include "root.h"
 #include "headers-handwritten.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "headers-handwritten.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 using namespace WebCore;
 
@@ -12,9 +12,9 @@ using namespace WebCore;
 class JSBakeResponse;
 void setupJSBakeResponseClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-BUN_DECLARE_HOST_FUNCTION(jsFunctionBakeGetAsyncLocalStorage);
-BUN_DECLARE_HOST_FUNCTION(jsFunctionBakeEnsureAsyncLocalStorage);
-BUN_DECLARE_HOST_FUNCTION(jsFunctionBakeGetBundleNewRouteJSFunction);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionBakeGetAsyncLocalStorage);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionBakeEnsureAsyncLocalStorage);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionBakeGetBundleNewRouteJSFunction);
 
 extern "C" SYSV_ABI JSC::EncodedJSValue Bake__getEnsureAsyncLocalStorageInstanceJSFunction(JSC::JSGlobalObject* globalObject);
 extern "C" SYSV_ABI JSC::EncodedJSValue Bake__getAsyncLocalStorage(JSC::JSGlobalObject* globalObject);
@@ -44,7 +44,7 @@ struct BakeAdditionsToGlobalObject {
     {
         m_JSBakeResponseClassStructure.initLater(
             [](LazyClassStructure::Initializer& init) {
-                Bun::setupJSBakeResponseClassStructure(init);
+                Fun::setupJSBakeResponseClassStructure(init);
             });
 
         m_bakeGetAsyncLocalStorage.initLater(
@@ -69,7 +69,7 @@ struct BakeAdditionsToGlobalObject {
 
         m_DevServerFrameworkRequestArgsClassStructure.initLater(
             [](LazyClassStructure::Initializer& init) {
-                Bun::createDevServerFrameworkRequestArgsStructure(init);
+                Fun::createDevServerFrameworkRequestArgsStructure(init);
             });
     }
 
@@ -131,4 +131,4 @@ private:
     LazyProperty<JSGlobalObject, JSFunction> m_bakeGetNewRouteParams;
 };
 
-} // namespace Bun
+} // namespace Fun

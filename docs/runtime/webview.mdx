@@ -1,23 +1,23 @@
 ---
 title: WebView
-description: Control a headless browser from Bun for automation, testing, and scraping — zero dependencies on macOS, Chrome DevTools Protocol everywhere else
+description: Control a headless browser from Fun for automation, testing, and scraping — zero dependencies on macOS, Chrome DevTools Protocol everywhere else
 ---
 
-`Bun.WebView` is a headless browser built into the runtime. Use it to load pages, run JavaScript inside them, simulate real user input, and capture screenshots — without Puppeteer, Playwright, or a separate browser download.
+`Fun.WebView` is a headless browser built into the runtime. Use it to load pages, run JavaScript inside them, simulate real user input, and capture screenshots — without Puppeteer, Playwright, or a separate browser download.
 
 <Warning>This API is experimental and may change in future releases.</Warning>
 
 ```ts
-await using view = new Bun.WebView();
+await using view = new Fun.WebView();
 
 await view.navigate("https://example.com");
 await view.click("a[href]"); // waits for the link to be clickable
 const title = await view.evaluate("document.title");
 
-await Bun.write("page.png", await view.screenshot());
+await Fun.write("page.png", await view.screenshot());
 ```
 
-On macOS, `Bun.WebView` uses the system's `WKWebView` — nothing to install. On Linux and Windows it drives an installed Chrome, Chromium, Edge, or Brave over the Chrome DevTools Protocol.
+On macOS, `Fun.WebView` uses the system's `WKWebView` — nothing to install. On Linux and Windows it drives an installed Chrome, Chromium, Edge, or Brave over the Chrome DevTools Protocol.
 
 Each view runs its page in a separate renderer process. All input methods (`click`, `type`, `press`, `scroll`) dispatch **native** browser events, so the page sees `isTrusted: true` — the same as a real user.
 
@@ -26,10 +26,10 @@ Each view runs its page in a separate renderer process. All input methods (`clic
 ## Creating a view
 
 ```ts
-const view = new Bun.WebView({
+const view = new Fun.WebView({
   width: 1280, // viewport width in CSS pixels (1-16384, default 800)
   height: 720, // viewport height in CSS pixels (1-16384, default 600)
-  url: "https://bun.com", // optional: start navigating immediately
+  url: "https://fun.dev", // optional: start navigating immediately
 });
 ```
 
@@ -39,11 +39,11 @@ If you pass `url`, the view begins navigating before the constructor returns. Th
 
 ### Automatic cleanup with `using`
 
-`Bun.WebView` implements `Symbol.dispose` and `Symbol.asyncDispose`, so you can use `using` or `await using` to close the view automatically when it goes out of scope:
+`Fun.WebView` implements `Symbol.dispose` and `Symbol.asyncDispose`, so you can use `using` or `await using` to close the view automatically when it goes out of scope:
 
 ```ts
 {
-  await using view = new Bun.WebView();
+  await using view = new Fun.WebView();
   await view.navigate("https://example.com");
   // ...
 } // view.close() called automatically here
@@ -54,7 +54,7 @@ If you pass `url`, the view begins navigating before the constructor returns. Th
 By default, each view uses **ephemeral** in-memory storage — cookies, `localStorage`, IndexedDB, and cache are discarded when the view closes. To persist state across runs, pass a directory:
 
 ```ts
-const view = new Bun.WebView({
+const view = new Fun.WebView({
   dataStore: { directory: "./browser-profile" },
 });
 ```
@@ -63,7 +63,7 @@ Views that share the same `directory` share cookies and storage. Pass `dataStore
 
 <Note>
   With the Chrome backend, `dataStore.directory` maps to `--user-data-dir` and applies to the **entire Chrome process**,
-  not per-view. Since Chrome is spawned once per Bun process, the first view's directory wins for all subsequent views.
+  not per-view. Since Chrome is spawned once per Fun process, the first view's directory wins for all subsequent views.
 </Note>
 
 <Note>
@@ -75,7 +75,7 @@ Views that share the same `directory` share cookies and storage. Pass `dataStore
 
 ## Backends
 
-`Bun.WebView` supports two rendering engines. The default depends on your platform:
+`Fun.WebView` supports two rendering engines. The default depends on your platform:
 
 | Backend    | Engine    | Platforms     | Requirements                                                                         |
 | ---------- | --------- | ------------- | ------------------------------------------------------------------------------------ |
@@ -86,25 +86,25 @@ On macOS the default is `"webkit"`; elsewhere it's `"chrome"`. Requesting `backe
 
 ```ts
 // Force Chrome on macOS
-const view = new Bun.WebView({ backend: "chrome" });
+const view = new Fun.WebView({ backend: "chrome" });
 ```
 
 ### How the WebKit backend works
 
-Bun spawns a lightweight host subprocess (the `bun` binary itself, re-executed in a special mode) that owns the `WKWebView` on its main thread. Your Bun process talks to it over a Unix socket using a compact binary protocol. The host process is spawned once and shared by every `"webkit"` view in your program.
+Fun spawns a lightweight host subprocess (the `fun` binary itself, re-executed in a special mode) that owns the `WKWebView` on its main thread. Your Fun process talks to it over a Unix socket using a compact binary protocol. The host process is spawned once and shared by every `"webkit"` view in your program.
 
 ### How the Chrome backend works
 
-Bun either **connects** to an already-running Chrome over a WebSocket, or **spawns** a headless Chrome subprocess and talks to it over a pipe (`--remote-debugging-pipe`). Either way, communication uses the [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/).
+Fun either **connects** to an already-running Chrome over a WebSocket, or **spawns** a headless Chrome subprocess and talks to it over a pipe (`--remote-debugging-pipe`). Either way, communication uses the [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/).
 
-Chrome is spawned (or connected) once per Bun process. Each `new Bun.WebView({ backend: "chrome" })` creates a new tab via `Target.createTarget` in that single Chrome instance.
+Chrome is spawned (or connected) once per Fun process. Each `new Fun.WebView({ backend: "chrome" })` creates a new tab via `Target.createTarget` in that single Chrome instance.
 
 #### Finding the Chrome executable
 
-When Bun needs to spawn Chrome, it searches in this order:
+When Fun needs to spawn Chrome, it searches in this order:
 
 1. The `path` you passed in `backend: { type: "chrome", path: "..." }`
-2. The `BUN_CHROME_PATH` environment variable
+2. The `FUN_CHROME_PATH` environment variable
 3. `$PATH` (`google-chrome-stable`, `google-chrome`, `chromium-browser`, `chromium`, `brave-browser`, `microsoft-edge`, `chrome`)
 4. Standard install locations (`/Applications/Google Chrome.app`, `~/Applications/...`, `/usr/bin/...`, `/snap/bin/...`, etc.)
 5. Playwright's cache (`~/Library/Caches/ms-playwright` or `~/.cache/ms-playwright`) for `chrome-headless-shell`
@@ -113,7 +113,7 @@ If none is found, the constructor throws.
 
 #### Connecting to an already-running Chrome {#existing-chrome}
 
-By default, before spawning, Bun checks whether a Chrome-family browser is **already running** with remote debugging enabled by reading the `DevToolsActivePort` file from standard profile directories. If found, Bun connects to that browser over WebSocket instead of spawning a new one — your views open as tabs in your existing browser.
+By default, before spawning, Fun checks whether a Chrome-family browser is **already running** with remote debugging enabled by reading the `DevToolsActivePort` file from standard profile directories. If found, Fun connects to that browser over WebSocket instead of spawning a new one — your views open as tabs in your existing browser.
 
 To enable remote debugging in a running Chrome, visit `chrome://inspect/#remote-debugging` and flip the toggle, or launch Chrome with `--remote-debugging-port=9222`. Chrome will prompt for permission on each new connection when using the `chrome://inspect` toggle.
 
@@ -121,12 +121,12 @@ To control this behavior explicitly, use the object form of `backend`:
 
 ```ts
 // Always spawn a fresh headless Chrome; never auto-connect
-new Bun.WebView({
+new Fun.WebView({
   backend: { type: "chrome", url: false },
 });
 
 // Connect to a specific DevTools WebSocket URL
-new Bun.WebView({
+new Fun.WebView({
   backend: {
     type: "chrome",
     url: "ws://127.0.0.1:9222/devtools/browser/abc123...",
@@ -134,7 +134,7 @@ new Bun.WebView({
 });
 ```
 
-If auto-detect finds a stale `DevToolsActivePort` file (Chrome crashed or restarted), the WebSocket connect fails and Bun transparently falls back to spawning its own Chrome. An explicit `url: "ws://..."` does **not** fall back — a failed connection throws.
+If auto-detect finds a stale `DevToolsActivePort` file (Chrome crashed or restarted), the WebSocket connect fails and Fun transparently falls back to spawning its own Chrome. An explicit `url: "ws://..."` does **not** fall back — a failed connection throws.
 
 <Note>
   Passing `path` or `argv` implies spawn mode and skips auto-detect. `url: "ws://..."` cannot be combined with `path` or
@@ -143,7 +143,7 @@ If auto-detect finds a stale `DevToolsActivePort` file (Chrome crashed or restar
 
 #### Launch flags
 
-When spawning, Bun passes a minimal flag set:
+When spawning, Fun passes a minimal flag set:
 
 ```
 --user-data-dir=<temp> --remote-debugging-pipe --headless --no-first-run
@@ -156,7 +156,7 @@ When spawning, Bun passes a minimal flag set:
 Append your own with `argv` — Chrome resolves duplicate switches last-wins, so you can override any default:
 
 ```ts
-new Bun.WebView({
+new Fun.WebView({
   backend: {
     type: "chrome",
     argv: ["--headless=new", "--lang=ja-JP", "--window-size=1920,1080"],
@@ -169,7 +169,7 @@ new Bun.WebView({
 Browser subprocess stdout/stderr are silenced by default. Chrome in particular is noisy on stderr (font-config warnings, GCM registration, updater checks). To see it — useful when Chrome crashes silently — route it through:
 
 ```ts
-new Bun.WebView({
+new Fun.WebView({
   backend: { type: "chrome", stderr: "inherit", stdout: "inherit" },
 });
 ```
@@ -227,7 +227,7 @@ Run an expression in the page's main frame and get its result back as a native J
 ```ts
 const title = await view.evaluate("document.title");
 const items = await view.evaluate("[...document.querySelectorAll('li')].map(li => li.textContent)");
-const user = await view.evaluate("({ name: 'bun', ok: true })");
+const user = await view.evaluate("({ name: 'fun', ok: true })");
 ```
 
 The script is wrapped as `await (<your script>)`, so:
@@ -235,7 +235,7 @@ The script is wrapped as `await (<your script>)`, so:
 - It must be an **expression**, not a statement sequence. For multiple statements, wrap in an IIFE: `evaluate("(() => { let x = foo(); return x + 1 })()")`.
 - If it evaluates to a `Promise`, the promise is awaited and its resolved value is returned.
 
-The result round-trips through `JSON.stringify` in the page and `JSON.parse` in Bun. Arrays and plain objects come back as real structures; `undefined`, functions, and symbols resolve to `undefined`; circular references reject.
+The result round-trips through `JSON.stringify` in the page and `JSON.parse` in Fun. Arrays and plain objects come back as real structures; `undefined`, functions, and symbols resolve to `undefined`; circular references reject.
 
 ```ts
 await view.evaluate("42"); // 42
@@ -257,7 +257,7 @@ Capture the current viewport as an image:
 
 ```ts
 const png = await view.screenshot();
-await Bun.write("page.png", png);
+await Fun.write("page.png", png);
 ```
 
 ### Image format
@@ -276,7 +276,7 @@ The `encoding` option controls how the image bytes are handed back:
 
 | `encoding`           | Returns                          | Notes                                                                                                    |
 | -------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `"blob"` _(default)_ | `Blob`                           | MIME type set automatically. Zero-copy mmap-backed on WebKit. Works with `Bun.write()`, `new Response()` |
+| `"blob"` _(default)_ | `Blob`                           | MIME type set automatically. Zero-copy mmap-backed on WebKit. Works with `Fun.write()`, `new Response()` |
 | `"buffer"`           | `Buffer`                         | Node `Buffer`. Zero-copy mmap-backed on WebKit                                                           |
 | `"base64"`           | `string`                         | Base64-encoded. Zero-decode on Chrome (CDP returns base64 natively)                                      |
 | `"shmem"`            | `{ name: string, size: number }` | POSIX shared-memory segment name. Caller owns `shm_unlink`. Not supported on Windows                     |
@@ -291,7 +291,7 @@ console.log(`<img src="data:image/png;base64,${b64}">`);
 
 #### Shared memory for terminal graphics
 
-`encoding: "shmem"` is designed for Kitty's [terminal graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) `t=s` transmission mode — Bun writes the image to a POSIX shared-memory segment and returns its name; the terminal reads it directly and unlinks it when done. No copying through the pipe.
+`encoding: "shmem"` is designed for Kitty's [terminal graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) `t=s` transmission mode — Fun writes the image to a POSIX shared-memory segment and returns its name; the terminal reads it directly and unlinks it when done. No copying through the pipe.
 
 ```ts
 const { name, size } = await view.screenshot({ encoding: "shmem" });
@@ -299,7 +299,7 @@ process.stdout.write(`\x1b_Gf=100,t=s,a=T,S=${size};${btoa(name)}\x1b\\`);
 // Kitty reads the PNG from shared memory and unlinks the segment
 ```
 
-On WebKit, the shm name looks like `/bun-webview-<pid>-<seq>`; on Chrome, `/bun-chrome-<pid>-<seq>`. If you request `"shmem"` and don't hand the name to something that will `shm_unlink` it, the segment leaks until your process exits.
+On WebKit, the shm name looks like `/fun-webview-<pid>-<seq>`; on Chrome, `/fun-chrome-<pid>-<seq>`. If you request `"shmem"` and don't hand the name to something that will `shm_unlink` it, the segment leaks until your process exits.
 
 ---
 
@@ -322,7 +322,7 @@ The promise resolves **after** the page has processed the full `mousedown` → `
 
 #### Clicking by selector
 
-Pass a CSS selector instead of coordinates and Bun will wait for the element to become **actionable**, then click its center:
+Pass a CSS selector instead of coordinates and Fun will wait for the element to become **actionable**, then click its center:
 
 ```ts
 await view.click("#submit");
@@ -402,14 +402,14 @@ Width and height must each be between `1` and `16384`.
 
 ## Console capture
 
-Forward `console.*` calls from the page to your Bun process by passing the `console` option to the constructor.
+Forward `console.*` calls from the page to your Fun process by passing the `console` option to the constructor.
 
-### Mirror to Bun's console
+### Mirror to Fun's console
 
-Pass `globalThis.console` (the actual object, by reference) and page-side `console.log("hi")` prints `hi` to your stdout with Bun's formatter; `console.error` goes to stderr. This path dispatches directly through Bun's console implementation with no per-call JavaScript overhead.
+Pass `globalThis.console` (the actual object, by reference) and page-side `console.log("hi")` prints `hi` to your stdout with Fun's formatter; `console.error` goes to stderr. This path dispatches directly through Fun's console implementation with no per-call JavaScript overhead.
 
 ```ts
-const view = new Bun.WebView({
+const view = new Fun.WebView({
   console: globalThis.console,
 });
 ```
@@ -419,7 +419,7 @@ const view = new Bun.WebView({
 Pass a function to receive each call yourself:
 
 ```ts
-const view = new Bun.WebView({
+const view = new Fun.WebView({
   console: (type, ...args) => {
     // type is "log" | "warn" | "error" | "info" | "debug" | ...
     if (type === "error") reportError(args);
@@ -448,7 +448,7 @@ When using `backend: "chrome"`, you can drop down to raw [CDP](https://chromedev
 ### Sending commands
 
 ```ts
-const view = new Bun.WebView({ backend: "chrome" });
+const view = new Fun.WebView({ backend: "chrome" });
 await view.navigate("https://example.com"); // required: sets up the CDP session
 
 await view.cdp("Emulation.setUserAgentOverride", {
@@ -471,7 +471,7 @@ Commands are scoped to this view's session (they target this tab). You must `awa
 
 ### Subscribing to events
 
-`Bun.WebView` extends `EventTarget`. With the Chrome backend, CDP events are dispatched as DOM events whose `type` is the CDP method name and whose `data` is the parsed `params` object:
+`Fun.WebView` extends `EventTarget`. With the Chrome backend, CDP events are dispatched as DOM events whose `type` is the CDP method name and whose `data` is the parsed `params` object:
 
 ```ts
 await view.navigate("about:blank");
@@ -505,16 +505,16 @@ Closing is synchronous and idempotent. It destroys the page's renderer process, 
 ### Killing all browsers
 
 ```ts
-Bun.WebView.closeAll();
+Fun.WebView.closeAll();
 ```
 
-Force-kills (`SIGKILL`) both the Chrome subprocess and the WebKit host subprocess. Pending promises on every view reject on the next event-loop tick. Subsequent `new Bun.WebView()` calls respawn as needed.
+Force-kills (`SIGKILL`) both the Chrome subprocess and the WebKit host subprocess. Pending promises on every view reject on the next event-loop tick. Subsequent `new Fun.WebView()` calls respawn as needed.
 
-Bun calls this automatically at process exit, so browser subprocesses never outlive your script.
+Fun calls this automatically at process exit, so browser subprocesses never outlive your script.
 
 ### Event-loop behavior
 
-The browser subprocess does **not** keep Bun's event loop alive on its own. An open `WebView` keeps the process alive only while it has a pending operation (an unsettled `navigate()`, `evaluate()`, etc.). Once you `close()` the last view — or the last pending operation settles — Bun exits naturally.
+The browser subprocess does **not** keep Fun's event loop alive on its own. An open `WebView` keeps the process alive only while it has a pending operation (an unsettled `navigate()`, `evaluate()`, etc.). Once you `close()` the last view — or the last pending operation settles — Fun exits naturally.
 
 ### Subprocess death
 
@@ -540,7 +540,7 @@ Operations on **different views** are fully independent and run in parallel — 
 
 ## Reference
 
-### `new Bun.WebView(options?)`
+### `new Fun.WebView(options?)`
 
 | Option      | Type                                            | Default                                   | Description                                                                                    |
 | ----------- | ----------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -560,8 +560,8 @@ Operations on **different views** are fully independent and run in parallel — 
 | `path`   | `string`                  | (`chrome` only) Path to the Chrome/Chromium executable. Forces spawn mode.                                                                             |
 | `argv`   | `string[]`                | (`chrome` only) Extra launch flags, appended after the defaults. Forces spawn mode.                                                                    |
 | `url`    | `string` \| `false`       | (`chrome` only) `ws://` URL of an existing Chrome's DevTools endpoint, or `false` to skip auto-detect and always spawn. See [above](#existing-chrome). |
-| `stdout` | `"inherit"` \| `"ignore"` | Route the subprocess's stdout to Bun's. Default `"ignore"`.                                                                                            |
-| `stderr` | `"inherit"` \| `"ignore"` | Route the subprocess's stderr to Bun's. Default `"ignore"`.                                                                                            |
+| `stdout` | `"inherit"` \| `"ignore"` | Route the subprocess's stdout to Fun's. Default `"ignore"`.                                                                                            |
+| `stderr` | `"inherit"` \| `"ignore"` | Route the subprocess's stderr to Fun's. Default `"ignore"`.                                                                                            |
 
 ### Instance properties
 

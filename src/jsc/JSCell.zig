@@ -28,15 +28,15 @@ pub const JSCell = opaque {
     }
 
     pub fn getGetterSetter(this: *JSCell) *GetterSetter {
-        if (comptime bun.Environment.allow_assert) {
-            bun.assert(JSValue.fromCell(this).isGetterSetter());
+        if (comptime fun.Environment.allow_assert) {
+            fun.assert(JSValue.fromCell(this).isGetterSetter());
         }
         return @as(*GetterSetter, @ptrCast(@alignCast(this)));
     }
 
     pub fn getCustomGetterSetter(this: *JSCell) *CustomGetterSetter {
-        if (comptime bun.Environment.allow_assert) {
-            bun.assert(JSValue.fromCell(this).isCustomGetterSetter());
+        if (comptime fun.Environment.allow_assert) {
+            fun.assert(JSValue.fromCell(this).isCustomGetterSetter());
         }
         return @as(*CustomGetterSetter, @ptrCast(@alignCast(this)));
     }
@@ -54,11 +54,11 @@ pub const JSCell = opaque {
     extern fn JSC__JSCell__getType(this: *JSCell) u8;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const CustomGetterSetter = @import("./CustomGetterSetter.zig").CustomGetterSetter;
 const GetterSetter = @import("./GetterSetter.zig").GetterSetter;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

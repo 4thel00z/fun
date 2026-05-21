@@ -17,7 +17,7 @@ pub inline fn external(this: SlicedString) ExternalString {
         assert(@intFromPtr(this.buf.ptr) <= @intFromPtr(this.slice.ptr) and ((@intFromPtr(this.slice.ptr) + this.slice.len) <= (@intFromPtr(this.buf.ptr) + this.buf.len)));
     }
 
-    return ExternalString.init(this.buf, this.slice, bun.Wyhash11.hash(0, this.slice));
+    return ExternalString.init(this.buf, this.slice, fun.Wyhash11.hash(0, this.slice));
 }
 
 pub inline fn value(this: SlicedString) String {
@@ -30,13 +30,13 @@ pub inline fn value(this: SlicedString) String {
 
 pub inline fn sub(this: SlicedString, input: string) SlicedString {
     if (Environment.allow_assert) {
-        if (!bun.isSliceInBuffer(input, this.buf)) {
+        if (!fun.isSliceInBuffer(input, this.buf)) {
             const start_buf = @intFromPtr(this.buf.ptr);
             const end_buf = @intFromPtr(this.buf.ptr) + this.buf.len;
             const start_i = @intFromPtr(input.ptr);
             const end_i = @intFromPtr(input.ptr) + input.len;
 
-            bun.Output.panic("SlicedString.sub input [{}, {}) is not a substring of the " ++
+            fun.Output.panic("SlicedString.sub input [{}, {}) is not a substring of the " ++
                 "slice [{}, {})", .{ start_i, end_i, start_buf, end_buf });
         }
     }
@@ -45,9 +45,9 @@ pub inline fn sub(this: SlicedString, input: string) SlicedString {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
 
-const ExternalString = bun.Semver.ExternalString;
-const String = bun.Semver.String;
+const ExternalString = fun.Semver.ExternalString;
+const String = fun.Semver.String;

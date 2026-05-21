@@ -1,6 +1,6 @@
-//! `bun test --parallel`: process-pool coordinator and worker.
+//! `fun test --parallel`: process-pool coordinator and worker.
 //!
-//! The coordinator lazily spawns up to N `bun test --test-worker --isolate`
+//! The coordinator lazily spawns up to N `fun test --test-worker --isolate`
 //! processes (starting with one, adding another whenever every live worker
 //! has been busy for ≥`scale_up_after_ms`), hands out one file at a time over
 //! stdin, and reads per-test events back over fd 3. Per-test status lines are

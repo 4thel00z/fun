@@ -1,5 +1,5 @@
 {
-  "name": "bun-api",
+  "name": "fun-api",
   "private": true,
   "dependencies": {
     "peechy": "0.4.32"

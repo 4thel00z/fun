@@ -1,9 +1,9 @@
-pub const import_path = "/bun-vfs$$/node_modules/";
+pub const import_path = "/fun-vfs$$/node_modules/";
 
 comptime {
-    // Ensure that checking for the prefix should be a cheap lookup (bun.strings.hasPrefixComptime)
+    // Ensure that checking for the prefix should be a cheap lookup (fun.strings.hasPrefixComptime)
     // because 24 bytes == 8 * 3 --> read and compare three u64s
-    bun.assert(import_path.len % 8 == 0);
+    fun.assert(import_path.len % 8 == 0);
 }
 
 pub const FallbackModule = struct {
@@ -11,17 +11,17 @@ pub const FallbackModule = struct {
     package_json: *const PackageJSON,
     code: *const fn () string,
 
-    // This workaround exists to allow bun.runtimeEmbedFile to work.
+    // This workaround exists to allow fun.runtimeEmbedFile to work.
     // Using `@embedFile` forces you to wait for the Zig build to finish in
     // debug builds, even when you only changed JS builtins.
     fn createSourceCodeGetter(comptime code_path: string) *const fn () string {
         const Getter = struct {
             fn get() string {
-                if (bun.Environment.codegen_embed) {
+                if (fun.Environment.codegen_embed) {
                     return @embedFile(code_path);
                 }
 
-                return bun.runtimeEmbedFile(.codegen, code_path);
+                return fun.runtimeEmbedFile(.codegen, code_path);
             }
         };
 
@@ -48,7 +48,7 @@ pub const FallbackModule = struct {
     }
 };
 
-pub const Map = bun.ComptimeStringMap(FallbackModule, .{
+pub const Map = fun.ComptimeStringMap(FallbackModule, .{
     .{ "assert", FallbackModule.init("assert") },
     .{ "buffer", FallbackModule.init("buffer") },
     .{ "console", FallbackModule.init("console") },
@@ -76,7 +76,7 @@ pub const Map = bun.ComptimeStringMap(FallbackModule, .{
 
 pub fn contentsFromPath(path: string) ?string {
     if (Environment.allow_assert)
-        bun.assert(bun.strings.hasPrefixComptime(path, import_path));
+        fun.assert(fun.strings.hasPrefixComptime(path, import_path));
 
     var module_name = path[import_path.len..];
     module_name = module_name[0 .. std.mem.indexOfScalar(u8, module_name, '/') orelse module_name.len];
@@ -94,6 +94,6 @@ const Fs = @import("./fs.zig");
 const std = @import("std");
 const PackageJSON = @import("./package_json.zig").PackageJSON;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const logger = bun.logger;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const logger = fun.logger;

@@ -1,6 +1,6 @@
 pub const FallbackEntryPoint = struct {
     code_buffer: [8192]u8 = undefined,
-    path_buffer: bun.PathBuffer = undefined,
+    path_buffer: fun.PathBuffer = undefined,
     source: logger.Source = undefined,
     built_code: string = "",
 
@@ -26,9 +26,9 @@ pub const FallbackEntryPoint = struct {
 
         if (disable_css_imports) {
             const fmt =
-                \\globalThis.Bun_disableCSSImports = true;
+                \\globalThis.Fun_disableCSSImports = true;
                 \\import boot from '{s}';
-                \\boot(globalThis.__BUN_DATA__);
+                \\boot(globalThis.__FUN_DATA__);
             ;
 
             const args = .{
@@ -44,7 +44,7 @@ pub const FallbackEntryPoint = struct {
         } else {
             const fmt =
                 \\import boot from '{s}';
-                \\boot(globalThis.__BUN_DATA__);
+                \\boot(globalThis.__FUN_DATA__);
             ;
 
             const args = .{
@@ -66,7 +66,7 @@ pub const FallbackEntryPoint = struct {
 
 pub const ClientEntryPoint = struct {
     code_buffer: [8192]u8 = undefined,
-    path_buffer: bun.PathBuffer = undefined,
+    path_buffer: fun.PathBuffer = undefined,
     source: logger.Source = undefined,
 
     pub fn isEntryPointPath(extname: string) bool {
@@ -77,9 +77,9 @@ pub const ClientEntryPoint = struct {
         var joined_base_and_dir_parts = [_]string{ original_path.dir, original_path.base };
         var generated_path = Fs.FileSystem.instance.absBuf(&joined_base_and_dir_parts, outbuffer);
 
-        bun.copy(u8, outbuffer[generated_path.len..], ".entry");
+        fun.copy(u8, outbuffer[generated_path.len..], ".entry");
         generated_path = outbuffer[0 .. generated_path.len + ".entry".len];
-        bun.copy(u8, outbuffer[generated_path.len..], original_path.ext);
+        fun.copy(u8, outbuffer[generated_path.len..], original_path.ext);
         return outbuffer[0 .. generated_path.len + original_path.ext.len];
     }
 
@@ -91,7 +91,7 @@ pub const ClientEntryPoint = struct {
             original_ext = original_path.ext[entry_i + "entry".len ..];
         }
 
-        bun.copy(u8, outbuffer[generated_path.len..], original_ext);
+        fun.copy(u8, outbuffer[generated_path.len..], original_ext);
 
         return outbuffer[0 .. generated_path.len + original_ext.len];
     }
@@ -116,7 +116,7 @@ pub const ClientEntryPoint = struct {
         if (disable_css_imports) {
             code = try std.fmt.bufPrint(
                 &entry.code_buffer,
-                \\globalThis.Bun_disableCSSImports = true;
+                \\globalThis.Fun_disableCSSImports = true;
                 \\import boot from '{s}';
                 \\import * as EntryPoint from '{s}{s}';
                 \\boot(EntryPoint);
@@ -149,15 +149,15 @@ pub const ClientEntryPoint = struct {
 };
 
 pub const ServerEntryPoint = struct {
-    /// The generated wrapper source for `bun:main`. Always a valid slice
-    /// (either empty or owned by `bun.default_allocator`) so readers never
+    /// The generated wrapper source for `fun:main`. Always a valid slice
+    /// (either empty or owned by `fun.default_allocator`) so readers never
     /// see `undefined` memory regardless of the `generated` flag's state.
     contents: []const u8 = "",
     generated: bool = false,
 
     pub fn deinit(entry: *ServerEntryPoint) void {
         if (entry.contents.len > 0) {
-            bun.default_allocator.free(entry.contents);
+            fun.default_allocator.free(entry.contents);
         }
         entry.contents = "";
         entry.generated = false;
@@ -172,14 +172,14 @@ pub const ServerEntryPoint = struct {
         // from whichever arena the caller's VM happens to be using; the
         // slice is read later from `getHardcodedModule` which outlives any
         // per-transpile arena.
-        const allocator = bun.default_allocator;
+        const allocator = fun.default_allocator;
         const code = brk: {
             if (is_hot_reload_enabled) {
                 break :brk try std.fmt.allocPrint(
                     allocator,
-                    \\// @bun
+                    \\// @fun
                     \\import * as start from '{f}';
-                    \\var hmrSymbol = Symbol("BunServerHMR");
+                    \\var hmrSymbol = Symbol("FunServerHMR");
                     \\var entryNamespace = start;
                     \\function isServerConfig(def) {{
                     \\   return def && def !== globalThis && (typeof def.fetch === 'function' || def.app != undefined) && typeof def.stop !== 'function';
@@ -193,7 +193,7 @@ pub const ServerEntryPoint = struct {
                     \\           server.reload(def);
                     \\           console.debug(`Reloaded ${{server.development ? 'development ' : ''}}server: ${{server.protocol}}://${{server.hostname}}:${{server.port}}`);
                     \\        }} else {{
-                    \\           server = globalThis[hmrSymbol] = Bun.serve(def);
+                    \\           server = globalThis[hmrSymbol] = Fun.serve(def);
                     \\           console.debug(`Started ${{server.development ? 'development ' : ''}}server: ${{server.protocol}}://${{server.hostname}}:${{server.port}}`);
                     \\        }}
                     \\      }}
@@ -204,7 +204,7 @@ pub const ServerEntryPoint = struct {
                     \\      server.reload(entryNamespace.default);
                     \\      console.debug(`Reloaded ${{server.development ? 'development ' : ''}}server: ${{server.protocol}}://${{server.hostname}}:${{server.port}}`);
                     \\   }} else {{
-                    \\      server = globalThis[hmrSymbol] = Bun.serve(entryNamespace.default);
+                    \\      server = globalThis[hmrSymbol] = Fun.serve(entryNamespace.default);
                     \\      console.debug(`Started ${{server.development ? 'development ' : ''}}server: ${{server.protocol}}://${{server.hostname}}:${{server.port}}`);
                     \\   }}
                     \\}}
@@ -217,7 +217,7 @@ pub const ServerEntryPoint = struct {
             }
             break :brk try std.fmt.allocPrint(
                 allocator,
-                \\// @bun
+                \\// @fun
                 \\import * as start from "{f}";
                 \\var entryNamespace = start;
                 \\function isServerConfig(def) {{
@@ -226,12 +226,12 @@ pub const ServerEntryPoint = struct {
                 \\if (typeof entryNamespace?.then === 'function') {{
                 \\   entryNamespace = entryNamespace.then((entryNamespace) => {{
                 \\      if (isServerConfig(entryNamespace?.default))  {{
-                \\        const server = Bun.serve(entryNamespace.default);
+                \\        const server = Fun.serve(entryNamespace.default);
                 \\        console.debug(`Started ${{server.development ? 'development ' : ''}}server: ${{server.protocol}}://${{server.hostname}}:${{server.port}}`);
                 \\      }}
                 \\   }}, reportError);
                 \\}} else if (isServerConfig(entryNamespace?.default)) {{
-                \\   const server = Bun.serve(entryNamespace.default);
+                \\   const server = Fun.serve(entryNamespace.default);
                 \\   console.debug(`Started ${{server.development ? 'development ' : ''}}server: ${{server.protocol}}://${{server.hostname}}:${{server.port}}`);
                 \\}}
                 \\
@@ -258,17 +258,17 @@ pub const ServerEntryPoint = struct {
 // protected. This is mostly a workaround for being unable to call ESM exported
 // functions from C++. When that is resolved, we should remove this.
 pub const MacroEntryPoint = struct {
-    code_buffer: [bun.MAX_PATH_BYTES * 2 + 500]u8 = undefined,
-    output_code_buffer: [bun.MAX_PATH_BYTES * 8 + 500]u8 = undefined,
+    code_buffer: [fun.MAX_PATH_BYTES * 2 + 500]u8 = undefined,
+    output_code_buffer: [fun.MAX_PATH_BYTES * 8 + 500]u8 = undefined,
     source: logger.Source = undefined,
 
     pub fn generateID(entry_path: string, function_name: string, buf: []u8, len: *u32) i32 {
-        var hasher = bun.Wyhash11.init(0);
+        var hasher = fun.Wyhash11.init(0);
         hasher.update(js_ast.Macro.namespaceWithColon);
         hasher.update(entry_path);
         hasher.update(function_name);
         const hash = hasher.final();
-        const fmt = bun.fmt.hexIntLower(hash);
+        const fmt = fun.fmt.hexIntLower(hash);
 
         const specifier = std.fmt.bufPrint(buf, js_ast.Macro.namespaceWithColon ++ "//{f}.js", .{fmt}) catch unreachable;
         len.* = @as(u32, @truncate(specifier.len));
@@ -277,7 +277,7 @@ pub const MacroEntryPoint = struct {
     }
 
     pub fn generateIDFromSpecifier(specifier: string) i32 {
-        return @as(i32, @bitCast(@as(u32, @truncate(bun.hash(specifier)))));
+        return @as(i32, @bitCast(@as(u32, @truncate(fun.hash(specifier)))));
     }
 
     pub fn generate(
@@ -289,27 +289,27 @@ pub const MacroEntryPoint = struct {
         macro_label_: string,
     ) !void {
         const dir_to_use: string = if (import_path.dir.len == 0) "" else import_path.dirWithTrailingSlash();
-        bun.copy(u8, &entry.code_buffer, macro_label_);
+        fun.copy(u8, &entry.code_buffer, macro_label_);
         const macro_label = entry.code_buffer[0..macro_label_.len];
 
         const code = brk: {
-            if (strings.eqlComptime(import_path.base, "bun")) {
+            if (strings.eqlComptime(import_path.base, "fun")) {
                 break :brk try std.fmt.bufPrint(
                     entry.code_buffer[macro_label.len..],
                     \\//Auto-generated file
                     \\var Macros;
                     \\try {{
-                    \\  Macros = globalThis.Bun;
+                    \\  Macros = globalThis.Fun;
                     \\}} catch (err) {{
                     \\   console.error("Error importing macro");
                     \\   throw err;
                     \\}}
                     \\const macro = Macros['{s}'];
                     \\if (!macro) {{
-                    \\  throw new Error("Macro '{s}' not found in 'bun'");
+                    \\  throw new Error("Macro '{s}' not found in 'fun'");
                     \\}}
                     \\
-                    \\Bun.registerMacro({d}, macro);
+                    \\Fun.registerMacro({d}, macro);
                 ,
                     .{
                         function_name,
@@ -333,21 +333,21 @@ pub const MacroEntryPoint = struct {
                 \\  throw new Error("Macro '{s}' not found in '{f}{f}'");
                 \\}}
                 \\
-                \\Bun.registerMacro({d}, Macros['{s}']);
+                \\Fun.registerMacro({d}, Macros['{s}']);
             ,
                 .{
-                    bun.fmt.fmtPath(u8, dir_to_use, .{
+                    fun.fmt.fmtPath(u8, dir_to_use, .{
                         .escape_backslashes = true,
                     }),
-                    bun.fmt.fmtPath(u8, import_path.filename, .{
+                    fun.fmt.fmtPath(u8, import_path.filename, .{
                         .escape_backslashes = true,
                     }),
                     function_name,
                     function_name,
-                    bun.fmt.fmtPath(u8, dir_to_use, .{
+                    fun.fmt.fmtPath(u8, dir_to_use, .{
                         .escape_backslashes = true,
                     }),
-                    bun.fmt.fmtPath(u8, import_path.filename, .{
+                    fun.fmt.fmtPath(u8, import_path.filename, .{
                         .escape_backslashes = true,
                     }),
                     macro_id,
@@ -367,8 +367,8 @@ const string = []const u8;
 const Fs = @import("../resolver/fs.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Transpiler = bun.Transpiler;
-const js_ast = bun.ast;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Transpiler = fun.Transpiler;
+const js_ast = fun.ast;
+const logger = fun.logger;
+const strings = fun.strings;

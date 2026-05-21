@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tempDir } from "harness";
 
-test("bun build produces valid JS for unused dynamic imports", async () => {
+test("fun build produces valid JS for unused dynamic imports", async () => {
   using dir = tempDir("issue-24709", {
     "void-import.ts": `
 export function main() {
@@ -16,11 +16,11 @@ export function main() {
     "dep.ts": `export const x = 1;`,
   });
 
-  const transpiler = new Bun.Transpiler();
+  const transpiler = new Fun.Transpiler();
 
   // Test void import("...")
   {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/void-import.ts`],
     });
 
@@ -36,7 +36,7 @@ export function main() {
 
   // Test bare import("...")
   {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/bare-import.ts`],
     });
 

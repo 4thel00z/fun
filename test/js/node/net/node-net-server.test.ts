@@ -259,7 +259,7 @@ describe("net.createServer listen", () => {
 
         let err: Error | null = null;
         try {
-          await Bun.connect({
+          await Fun.connect({
             hostname: "0.0.0.0",
             port: address.port,
             socket: {
@@ -272,7 +272,7 @@ describe("net.createServer listen", () => {
         expect(err).toBeNull();
 
         try {
-          await Bun.connect({
+          await Fun.connect({
             hostname: "::",
             port: address.port,
             socket: {
@@ -330,7 +330,7 @@ describe("net.createServer events", () => {
     server.listen(
       mustCall(async () => {
         const address = server.address() as AddressInfo;
-        client = await Bun.connect({
+        client = await Fun.connect({
           hostname: address.address,
           port: address.port,
           socket: {
@@ -376,7 +376,7 @@ describe("net.createServer events", () => {
     server.listen(
       mustCall(async () => {
         const address = server.address() as AddressInfo;
-        await Bun.connect({
+        await Fun.connect({
           hostname: address.address,
           port: address.port,
           socket: {
@@ -441,7 +441,7 @@ describe("net.createServer events", () => {
         const address = server.address() as AddressInfo;
 
         async function spawnClient() {
-          await Bun.connect({
+          await Fun.connect({
             port: address?.port,
             hostname: address?.address,
             socket: {
@@ -521,7 +521,7 @@ describe("net.createServer events", () => {
 
     server.listen(async () => {
       const address = server.address() as AddressInfo;
-      client = await Bun.connect({
+      client = await Fun.connect({
         hostname: address.address,
         port: address.port,
         socket: {
@@ -557,7 +557,7 @@ describe("net.createServer events", () => {
       const address = server.address() as string;
       expect(address).toBe(socketPath);
 
-      const client = await Bun.connect({
+      const client = await Fun.connect({
         unix: socketPath,
         socket: {
           data() {},

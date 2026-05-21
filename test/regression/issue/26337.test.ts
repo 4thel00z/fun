@@ -1,11 +1,11 @@
-// https://github.com/oven-sh/bun/issues/26337
-// Test that `bun install` with a stale lockfile that has a `file:` dependency path
+// https://github.com/underdoc-org/fun/issues/26337
+// Test that `fun install` with a stale lockfile that has a `file:` dependency path
 // that differs from the package.json shows a helpful error message indicating which
-// dependency caused the issue, rather than the misleading "Bun could not find a
+// dependency caused the issue, rather than the misleading "Fun could not find a
 // package.json file to install from" error.
 
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe("issue #26337 - missing file: dependency error should show dependency name", () => {
   it("should show which dependency path is missing when lockfile has stale file: path", async () => {
@@ -24,10 +24,10 @@ describe("issue #26337 - missing file: dependency error should show dependency n
     });
 
     // First install to create a lockfile with the valid path
-    await using installProc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using installProc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -42,7 +42,7 @@ describe("issue #26337 - missing file: dependency error should show dependency n
 
     // Now update the package.json to point to a non-existent path
     // This creates the stale lockfile scenario
-    await Bun.write(
+    await Fun.write(
       `${dir}/package.json`,
       JSON.stringify({
         name: "repro",
@@ -52,11 +52,11 @@ describe("issue #26337 - missing file: dependency error should show dependency n
       }),
     );
 
-    // Run bun install again - this should show a helpful error
-    await using failProc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    // Run fun install again - this should show a helpful error
+    await using failProc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

@@ -1,6 +1,6 @@
-import { spawn } from "bun";
-import { expect, it, test } from "bun:test";
-import { bunEnv, bunExe, isLinux, isMacOS, isWindows, withoutAggressiveGC } from "harness";
+import { spawn } from "fun";
+import { expect, it, test } from "fun:test";
+import { funEnv, funExe, isLinux, isMacOS, isWindows, withoutAggressiveGC } from "harness";
 
 test("exists", () => {
   expect(typeof URL !== "undefined").toBe(true);
@@ -231,8 +231,8 @@ it("URL.prototype.origin", () => {
 
 test("navigator", () => {
   expect(globalThis.navigator !== undefined).toBe(true);
-  const version = process.versions.bun;
-  const userAgent = `Bun/${version}`;
+  const version = process.versions.fun;
+  const userAgent = `Fun/${version}`;
   expect(navigator.hardwareConcurrency > 0).toBe(true);
   expect(navigator.userAgent).toBe(userAgent);
   if (isMacOS) {
@@ -246,9 +246,9 @@ test("navigator", () => {
 
 test("confirm (yes) unix newline", async () => {
   const proc = spawn({
-    cmd: [bunExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
+    cmd: [funExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
     stdio: ["pipe", "pipe", "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
 
   proc.stdin.write("Y");
@@ -264,9 +264,9 @@ test("confirm (yes) unix newline", async () => {
 
 test("confirm (yes) windows newline", async () => {
   const proc = spawn({
-    cmd: [bunExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
+    cmd: [funExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
     stdio: ["pipe", "pipe", "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
 
   proc.stdin.write("Y");
@@ -282,9 +282,9 @@ test("confirm (yes) windows newline", async () => {
 
 test("confirm (no) unix newline", async () => {
   const proc = spawn({
-    cmd: [bunExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
+    cmd: [funExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
     stdio: ["pipe", "pipe", "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
 
   proc.stdin.write("poask\n");
@@ -296,9 +296,9 @@ test("confirm (no) unix newline", async () => {
 
 test("confirm (no) windows newline", async () => {
   const proc = spawn({
-    cmd: [bunExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
+    cmd: [funExe(), require("path").join(import.meta.dir, "./confirm-fixture.js")],
     stdio: ["pipe", "pipe", "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
 
   proc.stdin.write("poask\r\n");

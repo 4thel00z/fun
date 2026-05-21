@@ -33,11 +33,11 @@ comptime {
 const tables = blk: {
     var t = std.EnumArray(SocketKind, ?*const VTable).initFill(null);
 
-    // Bun.connect / Bun.listen
-    t.set(.bun_socket_tcp, vtable.make(handlers.BunSocket(false)));
-    t.set(.bun_socket_tls, vtable.make(handlers.BunSocket(true)));
-    t.set(.bun_listener_tcp, vtable.make(handlers.BunListener(false)));
-    t.set(.bun_listener_tls, vtable.make(handlers.BunListener(true)));
+    // Fun.connect / Fun.listen
+    t.set(.fun_socket_tcp, vtable.make(handlers.FunSocket(false)));
+    t.set(.fun_socket_tls, vtable.make(handlers.FunSocket(true)));
+    t.set(.fun_listener_tcp, vtable.make(handlers.FunListener(false)));
+    t.set(.fun_listener_tls, vtable.make(handlers.FunListener(true)));
 
     // HTTP client thread
     t.set(.http_client, vtable.make(handlers.HTTPClient(false)));
@@ -66,7 +66,7 @@ const tables = blk: {
 inline fn vt(s: *us_socket_t) *const VTable {
     const kind = s.kind();
     return switch (kind) {
-        .invalid => bun.Output.panic("us_socket_t with kind=invalid (group={*})", .{s.rawGroup()}),
+        .invalid => fun.Output.panic("us_socket_t with kind=invalid (group={*})", .{s.rawGroup()}),
         // Per-group vtable: uWS C++ installs a different `HttpContext<SSL>*`
         // closure per server, so the table can't be static per kind.
         .dynamic, .uws_http, .uws_http_tls, .uws_ws, .uws_ws_tls => s.rawGroup().vtable.?,
@@ -77,7 +77,7 @@ inline fn vt(s: *us_socket_t) *const VTable {
 inline fn vtc(c: *ConnectingSocket) *const VTable {
     const kind = c.kind();
     return switch (kind) {
-        .invalid => bun.Output.panic("us_connecting_socket_t with kind=invalid", .{}),
+        .invalid => fun.Output.panic("us_connecting_socket_t with kind=invalid", .{}),
         .dynamic, .uws_http, .uws_http_tls, .uws_ws, .uws_ws_tls => c.rawGroup().vtable.?,
         else => tables.get(kind).?,
     };
@@ -113,16 +113,16 @@ export fn us_dispatch_connect_error(s: *us_socket_t, code: c_int) ?*us_socket_t 
 export fn us_dispatch_connecting_error(c: *ConnectingSocket, code: c_int) ?*ConnectingSocket {
     return if (vtc(c).on_connecting_error) |f| f(c, code) else c;
 }
-export fn us_dispatch_handshake(s: *us_socket_t, ok: c_int, err: uws.us_bun_verify_error_t) void {
+export fn us_dispatch_handshake(s: *us_socket_t, ok: c_int, err: uws.us_fun_verify_error_t) void {
     if (vt(s).on_handshake) |f| f(s, ok, err, null);
 }
 
 /// Ciphertext tap for `socket.upgradeTLS()` — fires on the `[raw, _]` half of
-/// the returned pair before decryption. Only `bun_socket_tls` ever sets the
+/// the returned pair before decryption. Only `fun_socket_tls` ever sets the
 /// `ssl_raw_tap` bit, so this isn't part of the per-kind vtable.
 export fn us_dispatch_ssl_raw_tap(s: *us_socket_t, data: [*c]u8, len: c_int) ?*us_socket_t {
-    bun.debugAssert(s.kind() == .bun_socket_tls);
-    const TLSSocket = bun.jsc.API.NewSocket(true);
+    fun.debugAssert(s.kind() == .fun_socket_tls);
+    const TLSSocket = fun.jsc.API.NewSocket(true);
     const tls = s.ext(*TLSSocket).*;
     if (tls.twin) |raw| {
         raw.onData(TLSSocket.Socket.from(s), data[0..@intCast(len)]);
@@ -130,12 +130,12 @@ export fn us_dispatch_ssl_raw_tap(s: *us_socket_t, data: [*c]u8, len: c_int) ?*u
     return s;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const handlers = @import("./uws_handlers.zig");
 const std = @import("std");
 const vtable = @import("../../uws_sys/vtable.zig");
 
-const uws = bun.uws;
+const uws = fun.uws;
 const ConnectingSocket = uws.ConnectingSocket;
 const SocketKind = uws.SocketKind;
 const us_socket_t = uws.us_socket_t;

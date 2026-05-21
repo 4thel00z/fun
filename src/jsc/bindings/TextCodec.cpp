@@ -26,7 +26,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// config.h removed - not needed in Bun
+// config.h removed - not needed in Fun
 #include "TextCodec.h"
 #include <unicode/uchar.h>
 #include <wtf/TZoneMallocInlines.h>

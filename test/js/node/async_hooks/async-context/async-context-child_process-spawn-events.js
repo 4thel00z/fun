@@ -6,7 +6,7 @@ const asyncLocalStorage = new AsyncLocalStorage();
 let failed = false;
 
 asyncLocalStorage.run({ test: "child_process.spawn" }, () => {
-  const child = spawn("bun", ["-e", "Bun.sleepSync(100)"]);
+  const child = spawn("fun", ["-e", "Fun.sleepSync(100)"]);
 
   child.on("spawn", () => {
     if (asyncLocalStorage.getStore()?.test !== "child_process.spawn") {

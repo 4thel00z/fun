@@ -1,7 +1,7 @@
-import { spawnSync, which } from "bun";
-import { describe, expect, it } from "bun:test";
+import { spawnSync, which } from "fun";
+import { describe, expect, it } from "fun:test";
 import { familySync } from "detect-libc";
-import { bunEnv, bunExe, isMacOS, isWindows, tempDir, tmpdirSync } from "harness";
+import { funEnv, funExe, isMacOS, isWindows, tempDir, tmpdirSync } from "harness";
 import { basename, join, resolve } from "path";
 
 const process_sleep = resolve(import.meta.dir, "process-sleep.js");
@@ -14,9 +14,9 @@ async function runInlineFixture(script, expectedStdout = null, expectedCode = 0)
     "index.js": script,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(String(dir), "index.js")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(String(dir), "index.js")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -33,9 +33,9 @@ async function runInlineFixture(script, expectedStdout = null, expectedCode = 0)
 
 it("process", () => {
   // this property isn't implemented yet but it should at least return a string
-  const isNode = !process.isBun;
+  const isNode = !process.isFun;
 
-  if (!isNode && process.platform !== "win32" && process.title !== "bun") throw new Error("process.title is not 'bun'");
+  if (!isNode && process.platform !== "win32" && process.title !== "fun") throw new Error("process.title is not 'fun'");
 
   if (process.platform !== "win32" && typeof process.env.USER !== "string")
     throw new Error("process.env is not an object");
@@ -46,7 +46,7 @@ it("process", () => {
   if (process.platform !== "darwin" && process.platform !== "linux" && process.platform !== "win32")
     throw new Error("process.platform is invalid");
 
-  if (isNode) throw new Error("process.isBun is invalid");
+  if (isNode) throw new Error("process.isFun is invalid");
 
   // partially to test it doesn't crash due to various strange types
   process.env.BACON = "yummy";
@@ -72,7 +72,7 @@ it("process", () => {
   }
 
   // Make sure it doesn't crash
-  expect(Bun.inspect(process).length > 0).toBe(true);
+  expect(Fun.inspect(process).length > 0).toBe(true);
 
   let cwd = process.cwd();
   process.chdir("../");
@@ -95,11 +95,11 @@ it("process.title with UTF-16 characters", () => {
   expect(process.title).toBe("Test 测试 тест");
 
   // Test with emoji and text
-  process.title = "Bun 🐰";
-  expect(process.title).toBe("Bun 🐰");
+  process.title = "Fun 🐰";
+  expect(process.title).toBe("Fun 🐰");
 
-  process.title = "bun";
-  expect(process.title).toBe("bun");
+  process.title = "fun";
+  expect(process.title).toBe("fun");
 });
 
 it("process.chdir() on root dir", () => {
@@ -125,7 +125,7 @@ it("process.hrtime()", async () => {
   expect(end[0]).toBe(0);
 
   // Flaky on Ubuntu & Windows.
-  await Bun.sleep(16);
+  await Fun.sleep(16);
   const end2 = process.hrtime();
 
   expect(end2[1] > start[1]).toBe(true);
@@ -142,8 +142,8 @@ it("process.release", () => {
   const platform = process.platform == "win32" ? "windows" : process.platform;
   const arch = { arm64: "aarch64", x64: "x64" }[process.arch] || process.arch;
   const abi = familySync() === "musl" ? "-musl" : "";
-  const nonbaseline = `https://github.com/oven-sh/bun/releases/download/bun-v${process.versions.bun}/bun-${platform}-${arch}${abi}.zip`;
-  const baseline = `https://github.com/oven-sh/bun/releases/download/bun-v${process.versions.bun}/bun-${platform}-${arch}${abi}-baseline.zip`;
+  const nonbaseline = `https://github.com/underdoc-org/fun/releases/download/fun-v${process.versions.fun}/fun-${platform}-${arch}${abi}.zip`;
+  const baseline = `https://github.com/underdoc-org/fun/releases/download/fun-v${process.versions.fun}/fun-${platform}-${arch}${abi}-baseline.zip`;
 
   expect(process.release.sourceUrl).toBeOneOf([nonbaseline, baseline]);
 });
@@ -168,8 +168,8 @@ it("process.env is spreadable and editable", () => {
   expect(rest).toEqual(process.env);
   const orig = (getter => process.env[getter])("USER");
   expect(process.env).toEqual(process.env);
-  eval(`globalThis.process.env.USER = 'bun';`);
-  expect(eval(`globalThis.process.env.USER`)).toBe("bun");
+  eval(`globalThis.process.env.USER = 'fun';`);
+  expect(eval(`globalThis.process.env.USER`)).toBe("fun");
   expect(eval(`globalThis.process.env.USER = "${orig}"`)).toBe(String(orig));
 });
 
@@ -270,7 +270,7 @@ it("process.umask()", () => {
 
 it("process.versions", () => {
   // Expected dependency versions — must match scripts/build/deps/*.ts commits.
-  // These are the ACTUAL commits built into bun (not derived values, so
+  // These are the ACTUAL commits built into fun (not derived values, so
   // bumping a dep requires updating this test too).
   const expectedVersions = {
     boringssl: "0c5fce43b7ed5eb6001487ee48ac65766f5ddcd1",
@@ -380,8 +380,8 @@ describe("process.exitCode", () => {
 
   it("works with implicit process.exit", () => {
     const { exitCode, stdout } = spawnSync({
-      cmd: [bunExe(), join(import.meta.dir, "process-exitCode-with-exit.js"), "42"],
-      env: bunEnv,
+      cmd: [funExe(), join(import.meta.dir, "process-exitCode-with-exit.js"), "42"],
+      env: funEnv,
     });
     expect(exitCode).toBe(42);
     expect(stdout.toString().trim()).toBe("PASS");
@@ -389,8 +389,8 @@ describe("process.exitCode", () => {
 
   it("works with explicit process.exit", () => {
     const { exitCode, stdout } = spawnSync({
-      cmd: [bunExe(), join(import.meta.dir, "process-exitCode-fixture.js"), "42"],
-      env: bunEnv,
+      cmd: [funExe(), join(import.meta.dir, "process-exitCode-fixture.js"), "42"],
+      env: funEnv,
     });
     expect(exitCode).toBe(42);
     expect(stdout.toString().trim()).toBe("PASS");
@@ -399,8 +399,8 @@ describe("process.exitCode", () => {
 
 it("process exitCode range (#6284)", () => {
   const { exitCode, stdout } = spawnSync({
-    cmd: [bunExe(), join(import.meta.dir, "process-exitCode-fixture.js"), "255"],
-    env: bunEnv,
+    cmd: [funExe(), join(import.meta.dir, "process-exitCode-fixture.js"), "255"],
+    env: funEnv,
   });
   expect(exitCode).toBe(255);
   expect(stdout.toString().trim()).toBe("PASS");
@@ -408,8 +408,8 @@ it("process exitCode range (#6284)", () => {
 
 it("process.exit", () => {
   const { exitCode, stdout } = spawnSync({
-    cmd: [bunExe(), join(import.meta.dir, "process-exit-fixture.js")],
-    env: bunEnv,
+    cmd: [funExe(), join(import.meta.dir, "process-exit-fixture.js")],
+    env: funEnv,
   });
   expect(exitCode).toBe(0);
   expect(stdout.toString().trim()).toBe("PASS");
@@ -417,12 +417,12 @@ it("process.exit", () => {
 
 describe.concurrent(() => {
   it.todoIf(isMacOS)("should be the node version on the host that we expect", async () => {
-    const subprocess = Bun.spawn({
+    const subprocess = Fun.spawn({
       cmd: ["node", "--version"],
       stdout: "pipe",
       stdin: "inherit",
       stderr: "pipe",
-      env: bunEnv,
+      env: funEnv,
     });
 
     let [out, exited] = await Promise.all([new Response(subprocess.stdout).text(), subprocess.exited]);
@@ -431,9 +431,9 @@ describe.concurrent(() => {
   });
 
   it("process.mainModule (CJS)", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), join(import.meta.dir, "process-mainModule-fixture.js")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), join(import.meta.dir, "process-mainModule-fixture.js")],
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
       stdin: "inherit",
@@ -443,9 +443,9 @@ describe.concurrent(() => {
   });
 
   it("process.mainModule (ESM)", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), join(import.meta.dir, "process-mainModule-fixture.esm.mjs")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), join(import.meta.dir, "process-mainModule-fixture.esm.mjs")],
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
       stdin: "inherit",
@@ -456,9 +456,9 @@ describe.concurrent(() => {
 
   describe("process.onBeforeExit", () => {
     it("emitted", async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), join(import.meta.dir, "process-onBeforeExit-fixture.js")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), join(import.meta.dir, "process-onBeforeExit-fixture.js")],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -468,9 +468,9 @@ describe.concurrent(() => {
     });
 
     it("works with explicit process.exit", async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), join(import.meta.dir, "process-onBeforeExit-keepAlive.js")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), join(import.meta.dir, "process-onBeforeExit-keepAlive.js")],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -480,9 +480,9 @@ describe.concurrent(() => {
     });
 
     it("throwing inside preserves exit code", async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", `process.on("beforeExit", () => {throw new Error("boom")});`],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", `process.on("beforeExit", () => {throw new Error("boom")});`],
+        env: funEnv,
         stdio: ["inherit", "pipe", "pipe"],
       });
       const [stderr, stdout, exitCode] = await Promise.all([proc.stderr.text(), proc.stdout.text(), proc.exited]);
@@ -494,9 +494,9 @@ describe.concurrent(() => {
 
   describe("process.onExit", () => {
     it("throwing inside preserves exit code", async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", `process.on("exit", () => {throw new Error("boom")});`],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", `process.on("exit", () => {throw new Error("boom")});`],
+        env: funEnv,
         stdio: ["inherit", "pipe", "pipe"],
       });
       const [stderr, stdout, exitCode] = await Promise.all([proc.stderr.text(), proc.stdout.text(), proc.exited]);
@@ -621,9 +621,9 @@ describe.concurrent(() => {
   describe("signal", () => {
     const fixture = join(import.meta.dir, "./process-signal-handler.fixture.js");
     it.skipIf(isWindows)("simple case works", async () => {
-      await using child = Bun.spawn({
-        cmd: [bunExe(), fixture, "SIGUSR1"],
-        env: bunEnv,
+      await using child = Fun.spawn({
+        cmd: [funExe(), fixture, "SIGUSR1"],
+        env: funEnv,
         stderr: "inherit",
       });
 
@@ -631,9 +631,9 @@ describe.concurrent(() => {
       expect(await new Response(child.stdout).text()).toBe("PASS\n");
     });
     it.skipIf(isWindows)("process.emit will call signal events", async () => {
-      await using child = Bun.spawn({
-        cmd: [bunExe(), fixture, "SIGUSR2"],
-        env: bunEnv,
+      await using child = Fun.spawn({
+        cmd: [funExe(), fixture, "SIGUSR2"],
+        env: funEnv,
       });
 
       expect(await child.exited).toBe(0);
@@ -641,11 +641,11 @@ describe.concurrent(() => {
     });
 
     it.serial("process.kill(2) works", async () => {
-      await using child = Bun.spawn({
-        cmd: [bunExe(), process_sleep, "1000000"],
+      await using child = Fun.spawn({
+        cmd: [funExe(), process_sleep, "1000000"],
         stdout: "pipe",
         cwd: import.meta.dir,
-        env: bunEnv,
+        env: funEnv,
         stderr: "inherit",
       });
       const prom = child.exited;
@@ -660,10 +660,10 @@ describe.concurrent(() => {
     });
 
     it.serial("process._kill(2) works", async () => {
-      await using child = Bun.spawn({
-        cmd: [bunExe(), process_sleep, "1000000"],
+      await using child = Fun.spawn({
+        cmd: [funExe(), process_sleep, "1000000"],
         stdout: "pipe",
-        env: bunEnv,
+        env: funEnv,
       });
       const prom = child.exited;
       // SIGKILL as a number
@@ -768,9 +768,9 @@ describe.concurrent(() => {
   });
 
   it("process.exit with jsDoubleNumber that is an integer", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), join(import.meta.dir, "./process-exit-decimal-fixture.js")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), join(import.meta.dir, "./process-exit-decimal-fixture.js")],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -787,27 +787,27 @@ describe.concurrent(() => {
   }
 
   it("catches exceptions with process.setUncaughtExceptionCaptureCallback", async () => {
-    const proc = Bun.spawn([bunExe(), join(import.meta.dir, "process-uncaughtExceptionCaptureCallback.js")]);
+    const proc = Fun.spawn([funExe(), join(import.meta.dir, "process-uncaughtExceptionCaptureCallback.js")]);
     expect(await proc.exited).toBe(42);
   });
 
   it("catches exceptions with process.on('uncaughtException', fn)", async () => {
-    const proc = Bun.spawn([bunExe(), join(import.meta.dir, "process-onUncaughtException.js")]);
+    const proc = Fun.spawn([funExe(), join(import.meta.dir, "process-onUncaughtException.js")]);
     expect(await proc.exited).toBe(42);
   });
 
   it("catches exceptions with process.on('uncaughtException', fn) from setTimeout", async () => {
-    const proc = Bun.spawn([bunExe(), join(import.meta.dir, "process-onUncaughtExceptionSetTimeout.js")]);
+    const proc = Fun.spawn([funExe(), join(import.meta.dir, "process-onUncaughtExceptionSetTimeout.js")]);
     expect(await proc.exited).toBe(42);
   });
 
   it("catches exceptions with process.on('unhandledRejection', fn)", async () => {
-    const proc = Bun.spawn([bunExe(), join(import.meta.dir, "process-onUnhandledRejection.js")]);
+    const proc = Fun.spawn([funExe(), join(import.meta.dir, "process-onUnhandledRejection.js")]);
     expect(await proc.exited).toBe(42);
   });
 
   it("aborts when the uncaughtException handler throws", async () => {
-    const proc = Bun.spawn([bunExe(), join(import.meta.dir, "process-onUncaughtExceptionAbort.js")], {
+    const proc = Fun.spawn([funExe(), join(import.meta.dir, "process-onUncaughtExceptionAbort.js")], {
       stderr: "pipe",
     });
     expect(await proc.exited).toBe(7);
@@ -815,7 +815,7 @@ describe.concurrent(() => {
   });
 
   it("aborts when the uncaughtExceptionCaptureCallback throws", async () => {
-    const proc = Bun.spawn([bunExe(), join(import.meta.dir, "process-uncaughtExceptionCaptureCallbackAbort.js")], {
+    const proc = Fun.spawn([funExe(), join(import.meta.dir, "process-uncaughtExceptionCaptureCallbackAbort.js")], {
       stderr: "pipe",
     });
     expect(await proc.exited).toBe(1);
@@ -833,15 +833,15 @@ it("process.hasUncaughtExceptionCaptureCallback", () => {
 
 it("process.execArgv", async () => {
   const fixtures = [
-    ["index.ts --bun -a -b -c", [], ["--bun", "-a", "-b", "-c"]],
-    ["--bun index.ts index.ts", ["--bun"], ["index.ts"]],
+    ["index.ts --fun -a -b -c", [], ["--fun", "-a", "-b", "-c"]],
+    ["--fun index.ts index.ts", ["--fun"], ["index.ts"]],
     ["run -e bruh -b index.ts foo -a -b -c", ["-e", "bruh", "-b"], ["foo", "-a", "-b", "-c"]],
   ];
 
   for (const [cmd, execArgv, argv] of fixtures) {
-    const replacedCmd = cmd.replace("index.ts", Bun.$.escape(join(__dirname, "print-process-execArgv.js")));
-    const result = await Bun.$`${bunExe()} ${{ raw: replacedCmd }}`.json();
-    expect(result, `bun ${cmd}`).toEqual({ execArgv, argv });
+    const replacedCmd = cmd.replace("index.ts", Fun.$.escape(join(__dirname, "print-process-execArgv.js")));
+    const result = await Fun.$`${funExe()} ${{ raw: replacedCmd }}`.json();
+    expect(result, `fun ${cmd}`).toEqual({ execArgv, argv });
   }
 });
 

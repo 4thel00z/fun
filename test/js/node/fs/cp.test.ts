@@ -1,6 +1,6 @@
-import { describe, expect, jest, test } from "bun:test";
+import { describe, expect, jest, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, isArm64, isPosix, isWindows, tempDir, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isArm64, isPosix, isWindows, tempDir, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 const impls = [
@@ -369,9 +369,9 @@ test("cp with missing callback throws", () => {
 // source symlink to resolve its target via GetFinalPathNameByHandleW. Previously
 // that handle was never closed, leaking one OS handle per symlink copied. Over a
 // large tree (e.g. node_modules with junctions) this eventually exhausts the
-// process handle table. bun:ffi (TinyCC) is unavailable on Windows arm64.
+// process handle table. fun:ffi (TinyCC) is unavailable on Windows arm64.
 test.skipIf(!isWindows || isArm64)("cpSync over symlinks does not leak Windows handles", () => {
-  const { dlopen } = require("bun:ffi");
+  const { dlopen } = require("fun:ffi");
   const k32 = dlopen("kernel32.dll", {
     GetCurrentProcess: { args: [], returns: "ptr" },
     GetProcessHandleCount: { args: ["ptr", "ptr"], returns: "i32" },
@@ -430,7 +430,7 @@ describe.skipIf(isWindows).each(["cp", "cpSync"] as const)(
       // level without ever building interior path strings).
       const seg = Buffer.alloc(200, "a").toString();
       for (const root of [src, dst]) {
-        await using mktree = Bun.spawn({
+        await using mktree = Fun.spawn({
           cmd: [
             "/bin/sh",
             "-c",
@@ -439,7 +439,7 @@ describe.skipIf(isWindows).each(["cp", "cpSync"] as const)(
             root,
             seg,
           ],
-          env: bunEnv,
+          env: funEnv,
           stdout: "pipe",
           stderr: "pipe",
         });
@@ -466,9 +466,9 @@ describe.skipIf(isWindows).each(["cp", "cpSync"] as const)(
           fs.promises.cp(src, dst, { recursive: true }).then(() => done(), done);
         }
       `;
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "-e", script],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "-e", script],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -529,9 +529,9 @@ test.skipIf(!isPosix)(
         console.log("ok");
       })();
     `;
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

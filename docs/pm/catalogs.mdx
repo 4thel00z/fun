@@ -3,7 +3,7 @@ title: "Catalogs"
 description: "Share common dependency versions across multiple packages in a monorepo"
 ---
 
-Catalogs in Bun let you share common dependency versions across multiple packages in a monorepo. Rather than specifying the same versions repeatedly in each workspace package, you define them once in the root package.json and reference them consistently throughout your project.
+Catalogs in Fun let you share common dependency versions across multiple packages in a monorepo. Rather than specifying the same versions repeatedly in each workspace package, you define them once in the root package.json and reference them consistently throughout your project.
 
 ## Overview
 
@@ -24,7 +24,7 @@ Consider a monorepo with the following structure:
 ```
 my-monorepo/
 ├── package.json
-├── bun.lock
+├── fun.lock
 └── packages/
     ├── app/
     │   └── package.json
@@ -88,13 +88,13 @@ In your workspace packages, use the `catalog:` protocol to reference versions:
 }
 ```
 
-### 3. Run Bun Install
+### 3. Run Fun Install
 
-Run `bun install` to install all dependencies according to the catalog versions.
+Run `fun install` to install all dependencies according to the catalog versions.
 
 ## Catalog vs Catalogs
 
-Bun supports two ways to define catalogs:
+Fun supports two ways to define catalogs:
 
 1. **`catalog`** (singular): A single default catalog for commonly used dependencies
 
@@ -231,16 +231,16 @@ To update versions across all packages, change the version in the root package.j
 }
 ```
 
-Then run `bun install` to update all packages.
+Then run `fun install` to update all packages.
 
 ## Lockfile Integration
 
-Bun's lockfile tracks catalog versions, ensuring consistent installations across different environments. The lockfile includes:
+Fun's lockfile tracks catalog versions, ensuring consistent installations across different environments. The lockfile includes:
 
 - The catalog definitions from your package.json
 - The resolution of each cataloged dependency
 
-```json bun.lock(excerpt) icon="file-json"
+```json fun.lock(excerpt) icon="file-json"
 {
   "lockfileVersion": 1,
   "workspaces": {
@@ -279,14 +279,14 @@ Bun's lockfile tracks catalog versions, ensuring consistent installations across
 
 - Catalog references must match a dependency defined in either `catalog` or one of the named `catalogs`
 - Empty strings and whitespace in catalog names are ignored (treated as default catalog)
-- Invalid dependency versions in catalogs will fail to resolve during `bun install`
+- Invalid dependency versions in catalogs will fail to resolve during `fun install`
 - Catalogs are only available within workspaces; they cannot be used outside the monorepo
 
-Bun's catalog system maintains consistency across your monorepo without introducing additional complexity to your workflow.
+Fun's catalog system maintains consistency across your monorepo without introducing additional complexity to your workflow.
 
 ## Publishing
 
-When you run `bun publish` or `bun pm pack`, Bun automatically replaces
+When you run `fun publish` or `fun pm pack`, Fun automatically replaces
 `catalog:` references in your `package.json` with the resolved version numbers.
 The published package includes regular semver strings and no longer depends on
 your catalog definitions.

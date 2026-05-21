@@ -1,10 +1,10 @@
 // Assume they're not going to have hundreds of main fields or browser map
 // so use an array-backed hash table instead of bucketed
-pub const BrowserMap = bun.StringMap;
-pub const MacroImportReplacementMap = bun.StringArrayHashMap(string);
-pub const MacroMap = bun.StringArrayHashMapUnmanaged(MacroImportReplacementMap);
+pub const BrowserMap = fun.StringMap;
+pub const MacroImportReplacementMap = fun.StringArrayHashMap(string);
+pub const MacroMap = fun.StringArrayHashMapUnmanaged(MacroImportReplacementMap);
 
-const ScriptsMap = bun.StringArrayHashMap(string);
+const ScriptsMap = fun.StringArrayHashMap(string);
 
 pub const DependencyMap = struct {
     map: HashMap = .{},
@@ -25,8 +25,8 @@ pub const PackageJSON = struct {
         production,
     };
 
-    pub const new = bun.TrivialNew(@This());
-    pub const deinit = bun.TrivialDeinit(@This());
+    pub const new = fun.TrivialNew(@This());
+    pub const deinit = fun.TrivialDeinit(@This());
 
     const node_modules_path = std.fs.path.sep_str ++ "node_modules" ++ std.fs.path.sep_str;
 
@@ -38,7 +38,7 @@ pub const PackageJSON = struct {
             if (strings.indexOf(parent, fs.FileSystem.instance.top_level_dir)) |i| {
                 const relative_dir = parent[i + fs.FileSystem.instance.top_level_dir.len ..];
                 var out_dir = try allocator.alloc(u8, relative_dir.len + 2);
-                bun.copy(u8, out_dir[2..], relative_dir);
+                fun.copy(u8, out_dir[2..], relative_dir);
                 out_dir[0..2].* = ("." ++ std.fs.path.sep_str).*;
                 return out_dir;
             }
@@ -60,7 +60,7 @@ pub const PackageJSON = struct {
     version: string = "",
 
     scripts: ?*ScriptsMap = null,
-    config: ?*bun.StringArrayHashMap(string) = null,
+    config: ?*fun.StringArrayHashMap(string) = null,
 
     arch: Architecture = Architecture.all,
     os: OperatingSystem = OperatingSystem.all,
@@ -126,9 +126,9 @@ pub const PackageJSON = struct {
         mixed: MixedPatterns,
 
         pub const Map = std.HashMapUnmanaged(
-            bun.StringHashMapUnowned.Key,
+            fun.StringHashMapUnowned.Key,
             void,
-            bun.StringHashMapUnowned.Adapter,
+            fun.StringHashMapUnowned.Adapter,
             80,
         );
 
@@ -143,11 +143,11 @@ pub const PackageJSON = struct {
             return switch (side_effects) {
                 .unspecified => true,
                 .false => false,
-                .map => |map| map.contains(bun.StringHashMapUnowned.Key.init(path)),
+                .map => |map| map.contains(fun.StringHashMapUnowned.Key.init(path)),
                 .glob => |glob_list| {
                     // Normalize path for cross-platform glob matching
-                    const normalized_path = normalizePathForGlob(bun.default_allocator, path) catch return true;
-                    defer bun.default_allocator.free(normalized_path);
+                    const normalized_path = normalizePathForGlob(fun.default_allocator, path) catch return true;
+                    defer fun.default_allocator.free(normalized_path);
 
                     for (glob_list.items) |pattern| {
                         if (glob.match(pattern, normalized_path).matches()) {
@@ -158,12 +158,12 @@ pub const PackageJSON = struct {
                 },
                 .mixed => |mixed| {
                     // First check exact matches
-                    if (mixed.exact.contains(bun.StringHashMapUnowned.Key.init(path))) {
+                    if (mixed.exact.contains(fun.StringHashMapUnowned.Key.init(path))) {
                         return true;
                     }
                     // Then check glob patterns with normalized path
-                    const normalized_path = normalizePathForGlob(bun.default_allocator, path) catch return true;
-                    defer bun.default_allocator.free(normalized_path);
+                    const normalized_path = normalizePathForGlob(fun.default_allocator, path) catch return true;
+                    defer fun.default_allocator.free(normalized_path);
 
                     for (mixed.globs.items) |pattern| {
                         if (glob.match(pattern, normalized_path).matches()) {
@@ -576,7 +576,7 @@ pub const PackageJSON = struct {
                         json_source,
                         remap_value.loc,
                         allocator,
-                        "Invalid macro remapping for import \"{s}\": expected string to remap to. e.g. \"graphql\": \"bun-macro-relay\" ",
+                        "Invalid macro remapping for import \"{s}\": expected string to remap to. e.g. \"graphql\": \"fun-macro-relay\" ",
                         .{import_name},
                     ) catch unreachable;
                     continue;
@@ -612,7 +612,7 @@ pub const PackageJSON = struct {
 
         // DirInfo cache is reused globally
         // So we cannot free these
-        const allocator = bun.default_allocator;
+        const allocator = fun.default_allocator;
 
         var entry = r.caches.fs.readFileWithAllocator(
             allocator,
@@ -781,13 +781,13 @@ pub const PackageJSON = struct {
         }
 
         if (json.asProperty("exports")) |exports_prop| {
-            if (ExportsMap.parse(bun.default_allocator, &json_source, r.log, exports_prop.expr, exports_prop.loc)) |exports_map| {
+            if (ExportsMap.parse(fun.default_allocator, &json_source, r.log, exports_prop.expr, exports_prop.loc)) |exports_map| {
                 package_json.exports = exports_map;
             }
         }
 
         if (json.asProperty("imports")) |imports_prop| {
-            if (ExportsMap.parse(bun.default_allocator, &json_source, r.log, imports_prop.expr, imports_prop.loc)) |imports_map| {
+            if (ExportsMap.parse(fun.default_allocator, &json_source, r.log, imports_prop.expr, imports_prop.loc)) |imports_map| {
                 package_json.imports = imports_map;
             }
         }
@@ -847,7 +847,7 @@ pub const PackageJSON = struct {
                                     glob_list.appendAssumeCapacity(normalized_pattern);
                                 } else {
                                     _ = map.getOrPutAssumeCapacity(
-                                        bun.StringHashMapUnowned.Key.init(pattern),
+                                        fun.StringHashMapUnowned.Key.init(pattern),
                                     );
                                 }
                             }
@@ -886,7 +886,7 @@ pub const PackageJSON = struct {
                                 };
 
                                 _ = map.getOrPutAssumeCapacity(
-                                    bun.StringHashMapUnowned.Key.init(r.fs.join(&joined)),
+                                    fun.StringHashMapUnowned.Key.init(r.fs.join(&joined)),
                                 );
                             }
                         }
@@ -940,7 +940,7 @@ pub const PackageJSON = struct {
                         var array = array_const;
                         var arch = Architecture.none.negatable();
                         while (array.next()) |item| {
-                            if (item.asString(bun.default_allocator)) |str| {
+                            if (item.asString(fun.default_allocator)) |str| {
                                 arch.apply(str);
                             }
                         }
@@ -954,7 +954,7 @@ pub const PackageJSON = struct {
                     if (tmp) |*array| {
                         var os = OperatingSystem.none.negatable();
                         while (array.next()) |item| {
-                            if (item.asString(bun.default_allocator)) |str| {
+                            if (item.asString(fun.default_allocator)) |str| {
                                 os.apply(str);
                             }
                         }
@@ -1065,7 +1065,7 @@ pub const PackageJSON = struct {
             }
         }
 
-        // used by `bun run`
+        // used by `fun run`
         if (include_scripts) {
             if (json.asPropertyStringMap("scripts", allocator)) |scripts| {
                 package_json.scripts = scripts;
@@ -1079,7 +1079,7 @@ pub const PackageJSON = struct {
     }
 
     pub fn hashModule(this: *const PackageJSON, module: string) u32 {
-        var hasher = bun.Wyhash.init(0);
+        var hasher = fun.Wyhash.init(0);
         hasher.update(std.mem.asBytes(&this.hash));
         hasher.update(module);
 
@@ -1300,7 +1300,7 @@ pub const ExportsMap = struct {
 };
 
 pub const ESModule = struct {
-    pub const ConditionsMap = bun.StringArrayHashMap(void);
+    pub const ConditionsMap = fun.StringArrayHashMap(void);
 
     debug_logs: ?*resolver.DebugLogs = null,
     conditions: ConditionsMap,
@@ -1487,7 +1487,7 @@ pub const ESModule = struct {
                 return;
             }
             subpath_buf[0] = '.';
-            bun.copy(u8, subpath_buf[1..], specifier);
+            fun.copy(u8, subpath_buf[1..], specifier);
             subpath.* = subpath_buf[0 .. specifier.len + 1];
         }
     };
@@ -1504,12 +1504,12 @@ pub const ESModule = struct {
         "%5C",
     };
 
-    const module_bufs = bun.ThreadlocalBuffers(struct {
-        resolved_path_buf_percent: bun.PathBuffer = undefined,
-        resolve_target_buf: bun.PathBuffer = undefined,
-        resolve_target_buf2: bun.PathBuffer = undefined,
-        resolve_target_reverse_prefix_buf: bun.PathBuffer = undefined,
-        resolve_target_reverse_prefix_buf2: bun.PathBuffer = undefined,
+    const module_bufs = fun.ThreadlocalBuffers(struct {
+        resolved_path_buf_percent: fun.PathBuffer = undefined,
+        resolve_target_buf: fun.PathBuffer = undefined,
+        resolve_target_buf2: fun.PathBuffer = undefined,
+        resolve_target_reverse_prefix_buf: fun.PathBuffer = undefined,
+        resolve_target_reverse_prefix_buf2: fun.PathBuffer = undefined,
     });
 
     pub fn resolve(r: *const ESModule, package_url: string, subpath: string, exports: ExportsMap.Entry) Resolution {
@@ -2168,19 +2168,19 @@ const std = @import("std");
 const Architecture = @import("../install/npm.zig").Architecture;
 const OperatingSystem = @import("../install/npm.zig").OperatingSystem;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const MainFieldMap = bun.StringMap;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const glob = bun.glob;
-const js_ast = bun.ast;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const MainFieldMap = fun.StringMap;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const glob = fun.glob;
+const js_ast = fun.ast;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;
+const api = fun.schema.api;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 const Version = Semver.Version;

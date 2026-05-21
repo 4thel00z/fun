@@ -1,5 +1,5 @@
 pub fn findAllImportedPartsInJSOrder(this: *LinkerContext, temp_allocator: std.mem.Allocator, chunks: []Chunk) !void {
-    const trace = bun.perf.trace("Bundler.findAllImportedPartsInJSOrder");
+    const trace = fun.perf.trace("Bundler.findAllImportedPartsInJSOrder");
     defer trace.end();
 
     var part_ranges_shared = std.array_list.Managed(PartRange).init(temp_allocator);
@@ -144,7 +144,7 @@ pub fn findImportedPartsInJSOrder(
                     v.c.graph.files.items(.entry_point_chunk_index)[source_index] = v.chunk_index;
                 }
 
-                bun.handleOom(v.files.append(source_index));
+                fun.handleOom(v.files.append(source_index));
 
                 // CommonJS files are all-or-nothing so all parts must be contiguous
                 if (!can_be_split) {
@@ -154,7 +154,7 @@ pub fn findImportedPartsInJSOrder(
                             .part_index_begin = 0,
                             .part_index_end = @as(u32, @truncate(parts.len)),
                         },
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             }
         }
@@ -195,7 +195,7 @@ pub fn findImportedPartsInJSOrder(
     }
 
     const parts_in_chunk_order = try this.allocator().alloc(PartRange, visitor.part_ranges.items.len + visitor.parts_prefix.items.len);
-    bun.concat(PartRange, parts_in_chunk_order, &.{
+    fun.concat(PartRange, parts_in_chunk_order, &.{
         visitor.parts_prefix.items,
         visitor.part_ranges.items,
     });
@@ -203,19 +203,19 @@ pub fn findImportedPartsInJSOrder(
     chunk.content.javascript.parts_in_chunk_in_order = parts_in_chunk_order;
 }
 
-pub const BitSet = bun.bit_set.DynamicBitSetUnmanaged;
+pub const BitSet = fun.bit_set.DynamicBitSetUnmanaged;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const ImportRecord = bun.ImportRecord;
-const AutoBitSet = bun.bit_set.AutoBitSet;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const ImportRecord = fun.ImportRecord;
+const AutoBitSet = fun.bit_set.AutoBitSet;
 
-const Chunk = bun.bundle_v2.Chunk;
-const Index = bun.bundle_v2.Index;
-const JSMeta = bun.bundle_v2.JSMeta;
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const Part = bun.bundle_v2.Part;
-const PartRange = bun.bundle_v2.PartRange;
-const js_ast = bun.bundle_v2.js_ast;
+const Chunk = fun.bundle_v2.Chunk;
+const Index = fun.bundle_v2.Index;
+const JSMeta = fun.bundle_v2.JSMeta;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const Part = fun.bundle_v2.Part;
+const PartRange = fun.bundle_v2.PartRange;
+const js_ast = fun.bundle_v2.js_ast;

@@ -1,4 +1,4 @@
-//! Bun's filesystem watcher implementation for linux using inotify
+//! Fun's filesystem watcher implementation for linux using inotify
 //! https://man7.org/linux/man-pages/man7/inotify.7.html
 
 const INotifyWatcher = @This();
@@ -11,10 +11,10 @@ const log = Output.scoped(.watcher, .visible);
 // read if the paths are short. the buffer is sized not to the maximum possible,
 // but an arbitrary but reasonable size. when reading, the strategy is to read
 // as much as possible, then process the buffer in `max_count` chunks, since
-// `bun.Watcher` has the same hardcoded `max_count`.
+// `fun.Watcher` has the same hardcoded `max_count`.
 const eventlist_bytes_size = (Event.largest_size / 2) * max_count;
 const EventListBytes = [eventlist_bytes_size]u8;
-fd: bun.FD = bun.invalid_fd,
+fd: fun.FD = fun.invalid_fd,
 loaded: bool = false,
 
 // Avoid statically allocating because it increases the binary size.
@@ -49,12 +49,12 @@ pub const Event = extern struct {
     /// sizeof(struct inotify_event)+len.
     name_len: u32,
 
-    const largest_size = std.mem.alignForward(usize, @sizeOf(Event) + bun.MAX_PATH_BYTES, @alignOf(Event));
+    const largest_size = std.mem.alignForward(usize, @sizeOf(Event) + fun.MAX_PATH_BYTES, @alignOf(Event));
 
     pub fn name(event: *align(1) Event) [:0]u8 {
-        if (comptime Environment.allow_assert) bun.assertf(event.name_len > 0, "INotifyWatcher.Event.name() called with name_len == 0, you should check it before calling this function.", .{});
+        if (comptime Environment.allow_assert) fun.assertf(event.name_len > 0, "INotifyWatcher.Event.name() called with name_len == 0, you should check it before calling this function.", .{});
         const name_first_char_ptr = std.mem.asBytes(&event.name_len).ptr + @sizeOf(u32);
-        return bun.sliceTo(@as([*:0]u8, @ptrCast(name_first_char_ptr)), 0);
+        return fun.sliceTo(@as([*:0]u8, @ptrCast(name_first_char_ptr)), 0);
     }
 
     pub fn size(event: *align(1) Event) u32 {
@@ -62,48 +62,48 @@ pub const Event = extern struct {
     }
 };
 
-pub fn watchPath(this: *INotifyWatcher, pathname: [:0]const u8) bun.sys.Maybe(EventListIndex) {
-    bun.assert(this.loaded);
+pub fn watchPath(this: *INotifyWatcher, pathname: [:0]const u8) fun.sys.Maybe(EventListIndex) {
+    fun.assert(this.loaded);
     const old_count = this.watch_count.fetchAdd(1, .release);
     defer if (old_count == 0) Futex.wake(&this.watch_count, 10);
     const watch_file_mask = IN.EXCL_UNLINK | IN.MOVE_SELF | IN.DELETE_SELF | IN.MOVED_TO | IN.MODIFY;
     const rc = system.inotify_add_watch(this.fd.cast(), pathname, watch_file_mask);
     log("inotify_add_watch({f}) = {}", .{ this.fd, rc });
-    return bun.sys.Maybe(EventListIndex).errnoSysP(rc, .watch, pathname) orelse
+    return fun.sys.Maybe(EventListIndex).errnoSysP(rc, .watch, pathname) orelse
         .{ .result = rc };
 }
 
-pub fn watchDir(this: *INotifyWatcher, pathname: [:0]const u8) bun.sys.Maybe(EventListIndex) {
-    bun.assert(this.loaded);
+pub fn watchDir(this: *INotifyWatcher, pathname: [:0]const u8) fun.sys.Maybe(EventListIndex) {
+    fun.assert(this.loaded);
     const old_count = this.watch_count.fetchAdd(1, .release);
     defer if (old_count == 0) Futex.wake(&this.watch_count, 10);
     const watch_dir_mask = IN.EXCL_UNLINK | IN.DELETE | IN.DELETE_SELF | IN.CREATE | IN.MOVE_SELF | IN.ONLYDIR | IN.MOVED_TO | IN.MODIFY;
     const rc = system.inotify_add_watch(this.fd.cast(), pathname, watch_dir_mask);
     log("inotify_add_watch({f}) = {}", .{ this.fd, rc });
-    return bun.sys.Maybe(EventListIndex).errnoSysP(rc, .watch, pathname) orelse
+    return fun.sys.Maybe(EventListIndex).errnoSysP(rc, .watch, pathname) orelse
         .{ .result = rc };
 }
 
 pub fn unwatch(this: *INotifyWatcher, wd: EventListIndex) void {
-    bun.assert(this.loaded);
+    fun.assert(this.loaded);
     _ = this.watch_count.fetchSub(1, .release);
     _ = system.inotify_rm_watch(this.fd, wd);
 }
 
 pub fn init(this: *INotifyWatcher, _: []const u8) !void {
-    bun.assert(!this.loaded);
+    fun.assert(!this.loaded);
     this.loaded = true;
 
-    this.coalesce_interval = std.math.cast(isize, bun.env_var.BUN_INOTIFY_COALESCE_INTERVAL.get()) orelse 100_000;
+    this.coalesce_interval = std.math.cast(isize, fun.env_var.FUN_INOTIFY_COALESCE_INTERVAL.get()) orelse 100_000;
 
-    // TODO: convert to bun.sys.Error
+    // TODO: convert to fun.sys.Error
     this.fd = .fromNative(try std.posix.inotify_init1(IN.CLOEXEC));
-    this.eventlist_bytes = &(try bun.default_allocator.alignedAlloc(EventListBytes, .of(Event), 1))[0];
+    this.eventlist_bytes = &(try fun.default_allocator.alignedAlloc(EventListBytes, .of(Event), 1))[0];
     log("{f} init", .{this.fd});
 }
 
-pub fn read(this: *INotifyWatcher) bun.sys.Maybe([]const *align(1) Event) {
-    bun.assert(this.loaded);
+pub fn read(this: *INotifyWatcher) fun.sys.Maybe([]const *align(1) Event) {
+    fun.assert(this.loaded);
     // This is what replit does as of Jaunary 2023.
     // 1) CREATE .http.ts.3491171321~
     // 2) OPEN .http.ts.3491171321~
@@ -146,7 +146,7 @@ pub fn read(this: *INotifyWatcher) bun.sys.Maybe([]const *align(1) Event) {
                     if ((std.posix.ppoll(&fds, &timespec, null) catch 0) > 0) {
                         inner: while (true) {
                             const rest = this.eventlist_bytes[read_eventlist_bytes.len..];
-                            bun.assert(rest.len > 0);
+                            fun.assert(rest.len > 0);
                             const new_rc = std.posix.system.read(this.fd.cast(), rest.ptr, rest.len);
                             // Output.warn("wapa {} {} = {}", .{ this.fd, rest.len, new_rc });
                             const e = std.posix.errno(new_rc);
@@ -170,7 +170,7 @@ pub fn read(this: *INotifyWatcher) bun.sys.Maybe([]const *align(1) Event) {
             .AGAIN, .INTR => continue :outer,
             .INVAL => {
                 if (Environment.isDebug) {
-                    bun.Output.err("EINVAL", "inotify read({f}, {d})", .{ this.fd, this.eventlist_bytes.len });
+                    fun.Output.err("EINVAL", "inotify read({f}, {d})", .{ this.fd, this.eventlist_bytes.len });
                 }
                 return .{ .err = .{
                     .errno = @truncate(@intFromEnum(errno)),
@@ -197,7 +197,7 @@ pub fn read(this: *INotifyWatcher) bun.sys.Maybe([]const *align(1) Event) {
                 event.watch_descriptor,
                 event.cookie,
                 event.mask,
-                bun.fmt.quote(if (event.name_len > 0) event.name() else ""),
+                fun.fmt.quote(if (event.name_len > 0) event.name() else ""),
             });
 
         // when under high load with short file paths, it is very easy to
@@ -218,14 +218,14 @@ pub fn read(this: *INotifyWatcher) bun.sys.Maybe([]const *align(1) Event) {
 
 pub fn stop(this: *INotifyWatcher) void {
     log("{f} stop", .{this.fd});
-    if (this.fd != bun.invalid_fd) {
+    if (this.fd != fun.invalid_fd) {
         this.fd.close();
-        this.fd = bun.invalid_fd;
+        this.fd = fun.invalid_fd;
     }
 }
 
 /// Repeatedly called by the main watcher until the watcher is terminated.
-pub fn watchLoopCycle(this: *bun.Watcher) bun.sys.Maybe(void) {
+pub fn watchLoopCycle(this: *fun.Watcher) fun.sys.Maybe(void) {
     defer Output.flush();
 
     const events = switch (this.platform.read()) {
@@ -316,7 +316,7 @@ pub fn watchLoopCycle(this: *bun.Watcher) bun.sys.Maybe(void) {
     return .success;
 }
 
-fn processINotifyEventBatch(this: *bun.Watcher, event_count: usize, temp_name_list: []?[:0]u8) bun.sys.Maybe(void) {
+fn processINotifyEventBatch(this: *fun.Watcher, event_count: usize, temp_name_list: []?[:0]u8) fun.sys.Maybe(void) {
     if (event_count == 0) {
         return .success;
     }
@@ -375,11 +375,11 @@ const std = @import("std");
 const system = std.posix.system;
 const IN = std.os.linux.IN;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Futex = bun.Futex;
-const Output = bun.Output;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Futex = fun.Futex;
+const Output = fun.Output;
 
-const WatchEvent = bun.Watcher.Event;
-const WatchItemIndex = bun.Watcher.WatchItemIndex;
-const max_count = bun.Watcher.max_count;
+const WatchEvent = fun.Watcher.Event;
+const WatchItemIndex = fun.Watcher.WatchItemIndex;
+const max_count = fun.Watcher.max_count;

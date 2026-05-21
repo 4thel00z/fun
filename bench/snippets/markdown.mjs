@@ -97,17 +97,17 @@ const renderCallbacks = {
 };
 
 summary(() => {
-  if (typeof Bun !== "undefined" && Bun.markdown) {
-    bench(`small (${small.length} chars) - Bun.markdown.html`, () => {
-      return Bun.markdown.html(small);
+  if (typeof Fun !== "undefined" && Fun.markdown) {
+    bench(`small (${small.length} chars) - Fun.markdown.html`, () => {
+      return Fun.markdown.html(small);
     });
 
-    bench(`small (${small.length} chars) - Bun.markdown.render`, () => {
-      return Bun.markdown.render(small, renderCallbacks);
+    bench(`small (${small.length} chars) - Fun.markdown.render`, () => {
+      return Fun.markdown.render(small, renderCallbacks);
     });
 
-    bench(`small (${small.length} chars) - Bun.markdown.react`, () => {
-      return Bun.markdown.react(small);
+    bench(`small (${small.length} chars) - Fun.markdown.react`, () => {
+      return Fun.markdown.react(small);
     });
   }
 
@@ -121,17 +121,17 @@ summary(() => {
 });
 
 summary(() => {
-  if (typeof Bun !== "undefined" && Bun.markdown) {
-    bench(`medium (${medium.length} chars) - Bun.markdown.html`, () => {
-      return Bun.markdown.html(medium);
+  if (typeof Fun !== "undefined" && Fun.markdown) {
+    bench(`medium (${medium.length} chars) - Fun.markdown.html`, () => {
+      return Fun.markdown.html(medium);
     });
 
-    bench(`medium (${medium.length} chars) - Bun.markdown.render`, () => {
-      return Bun.markdown.render(medium, renderCallbacks);
+    bench(`medium (${medium.length} chars) - Fun.markdown.render`, () => {
+      return Fun.markdown.render(medium, renderCallbacks);
     });
 
-    bench(`medium (${medium.length} chars) - Bun.markdown.react`, () => {
-      return Bun.markdown.react(medium);
+    bench(`medium (${medium.length} chars) - Fun.markdown.react`, () => {
+      return Fun.markdown.react(medium);
     });
   }
 
@@ -145,17 +145,17 @@ summary(() => {
 });
 
 summary(() => {
-  if (typeof Bun !== "undefined" && Bun.markdown) {
-    bench(`large (${large.length} chars) - Bun.markdown.html`, () => {
-      return Bun.markdown.html(large);
+  if (typeof Fun !== "undefined" && Fun.markdown) {
+    bench(`large (${large.length} chars) - Fun.markdown.html`, () => {
+      return Fun.markdown.html(large);
     });
 
-    bench(`large (${large.length} chars) - Bun.markdown.render`, () => {
-      return Bun.markdown.render(large, renderCallbacks);
+    bench(`large (${large.length} chars) - Fun.markdown.render`, () => {
+      return Fun.markdown.render(large, renderCallbacks);
     });
 
-    bench(`large (${large.length} chars) - Bun.markdown.react`, () => {
-      return Bun.markdown.react(large);
+    bench(`large (${large.length} chars) - Fun.markdown.react`, () => {
+      return Fun.markdown.react(large);
     });
   }
 

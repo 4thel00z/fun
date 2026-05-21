@@ -24,7 +24,7 @@ using namespace JSC;
 using namespace WebCore;
 using namespace ncrypto;
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsKeyObjectConstructor_from);
 
@@ -126,4 +126,4 @@ JSC_DEFINE_HOST_FUNCTION(jsKeyObjectConstructor_from, (JSGlobalObject * lexicalG
     RELEASE_AND_RETURN(scope, JSValue::encode(jsUndefined()));
 }
 
-} // namespace Bun
+} // namespace Fun

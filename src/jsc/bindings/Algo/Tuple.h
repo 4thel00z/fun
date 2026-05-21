@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace Bun::Algo::Tuple {
+namespace Fun::Algo::Tuple {
 
 namespace detail {
 
@@ -36,4 +36,4 @@ void forEachIndexed(Tuple&& t, Func&& f)
         std::make_index_sequence<std::tuple_size_v<std::decay_t<Tuple>>> {});
 }
 
-} // namespace Bun::Algo::Tuple
+} // namespace Fun::Algo::Tuple

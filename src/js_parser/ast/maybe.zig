@@ -68,7 +68,7 @@ pub fn AstMaybe(
                                     .loc = name_loc,
                                     .ref = p.newSymbol(.import, name) catch unreachable,
                                 };
-                                bun.handleOom(p.module_scope.generated.append(p.allocator, new_item.ref.?));
+                                fun.handleOom(p.module_scope.generated.append(p.allocator, new_item.ref.?));
 
                                 import_items.put(name, new_item) catch unreachable;
                                 p.is_import_item.put(p.allocator, new_item.ref.?, {}) catch unreachable;
@@ -212,9 +212,9 @@ pub fn AstMaybe(
                                     if (!named_export_entry.found_existing) {
                                         const new_ref = p.newSymbol(
                                             .other,
-                                            std.fmt.allocPrint(p.allocator, "${f}", .{bun.fmt.fmtIdentifier(key)}) catch unreachable,
+                                            std.fmt.allocPrint(p.allocator, "${f}", .{fun.fmt.fmtIdentifier(key)}) catch unreachable,
                                         ) catch unreachable;
-                                        bun.handleOom(p.module_scope.generated.append(p.allocator, new_ref));
+                                        fun.handleOom(p.module_scope.generated.append(p.allocator, new_ref));
                                         named_export_entry.value_ptr.* = .{
                                             .loc_ref = LocRef{
                                                 .loc = name_loc,
@@ -318,9 +318,9 @@ pub fn AstMaybe(
                                 if (!named_export_entry.found_existing) {
                                     const new_ref = p.newSymbol(
                                         .other,
-                                        std.fmt.allocPrint(p.allocator, "${f}", .{bun.fmt.fmtIdentifier(name)}) catch unreachable,
+                                        std.fmt.allocPrint(p.allocator, "${f}", .{fun.fmt.fmtIdentifier(name)}) catch unreachable,
                                     ) catch unreachable;
-                                    bun.handleOom(p.module_scope.generated.append(p.allocator, new_ref));
+                                    fun.handleOom(p.module_scope.generated.append(p.allocator, new_ref));
                                     named_export_entry.value_ptr.* = .{
                                         .loc_ref = LocRef{
                                             .loc = name_loc,
@@ -391,7 +391,7 @@ pub fn AstMaybe(
                                     prop.key != null and
                                     prop.key.?.data == .e_string and
                                     prop.key.?.data.e_string.eql([]const u8, name) and
-                                    !bun.strings.eqlComptime(name, "__proto__"))
+                                    !fun.strings.eqlComptime(name, "__proto__"))
                                 {
                                     return prop.value.?;
                                 }
@@ -423,9 +423,9 @@ pub fn AstMaybe(
                             return p.newExpr(E.String.init(p.source.path.text), name_loc);
                         } else if (strings.eqlComptime(name, "url")) {
                             // Inline import.meta.url as file:// URL
-                            const bunstr = bun.String.fromBytes(p.source.path.text);
-                            defer bunstr.deref();
-                            const url = std.fmt.allocPrint(p.allocator, "{f}", .{jsc.URL.fileURLFromString(bunstr)}) catch unreachable;
+                            const funstr = fun.String.fromBytes(p.source.path.text);
+                            defer funstr.deref();
+                            const url = std.fmt.allocPrint(p.allocator, "{f}", .{jsc.URL.fileURLFromString(funstr)}) catch unreachable;
                             return p.newExpr(E.String.init(url), name_loc);
                         }
                     }
@@ -459,12 +459,12 @@ pub fn AstMaybe(
                             p.allocator,
                             id.ref,
                             .{},
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         const inner_use = gop.value_ptr.getOrPutValue(
                             p.allocator,
                             name,
                             .{},
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         inner_use.value_ptr.count_estimate += 1;
                     }
                 },
@@ -491,9 +491,9 @@ pub fn AstMaybe(
                                     if (!named_export_entry.found_existing) {
                                         const new_ref = p.newSymbol(
                                             .other,
-                                            std.fmt.allocPrint(p.allocator, "${f}", .{bun.fmt.fmtIdentifier(name)}) catch unreachable,
+                                            std.fmt.allocPrint(p.allocator, "${f}", .{fun.fmt.fmtIdentifier(name)}) catch unreachable,
                                         ) catch unreachable;
-                                        bun.handleOom(p.module_scope.generated.append(p.allocator, new_ref));
+                                        fun.handleOom(p.module_scope.generated.append(p.allocator, new_ref));
                                         named_export_entry.value_ptr.* = .{
                                             .loc_ref = LocRef{
                                                 .loc = name_loc,
@@ -524,13 +524,13 @@ pub fn AstMaybe(
                     },
                     .hot_enabled, .hot_disabled => {
                         const enabled = p.options.features.hot_module_reloading;
-                        if (bun.strings.eqlComptime(name, "data")) {
+                        if (fun.strings.eqlComptime(name, "data")) {
                             return if (enabled)
                                 .{ .data = .{ .e_special = .hot_data }, .loc = loc }
                             else
                                 Expr.init(E.Object, .{}, loc);
                         }
-                        if (bun.strings.eqlComptime(name, "accept")) {
+                        if (fun.strings.eqlComptime(name, "accept")) {
                             if (!enabled) {
                                 p.method_call_must_be_replaced_with_undefined = true;
                                 return .{ .data = .e_undefined, .loc = loc };
@@ -539,7 +539,7 @@ pub fn AstMaybe(
                                 .e_special = .hot_accept,
                             }, .loc = loc };
                         }
-                        const lookup_table = comptime bun.ComptimeStringMap(void, [_]struct { [:0]const u8, void }{
+                        const lookup_table = comptime fun.ComptimeStringMap(void, [_]struct { [:0]const u8, void }{
                             .{ "decline", {} },
                             .{ "dispose", {} },
                             .{ "prune", {} },
@@ -572,8 +572,8 @@ pub fn AstMaybe(
                                     p.allocator,
                                     "import.meta.hot.{s} does not exist",
                                     .{name},
-                                ) catch |err| bun.handleOom(err),
-                            ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err),
+                            ) catch |err| fun.handleOom(err);
                             return .{ .data = .e_undefined, .loc = loc };
                         }
                     },
@@ -692,16 +692,16 @@ pub fn AstMaybe(
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const assert = bun.assert;
-const js_lexer = bun.js_lexer;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const assert = fun.assert;
+const js_lexer = fun.js_lexer;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -716,7 +716,7 @@ const G = js_ast.G;
 const Decl = G.Decl;
 const Property = G.Property;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const IdentifierOpts = js_parser.IdentifierOpts;
 const JSXTransformType = js_parser.JSXTransformType;
 const RelocateVars = js_parser.RelocateVars;

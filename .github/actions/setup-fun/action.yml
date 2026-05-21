@@ -1,0 +1,51 @@
+name: Setup Fun
+description: An internal version of the 'oven-sh/setup-fun' action.
+
+inputs:
+  fun-version:
+    type: string
+    description: "The version of fun to install: 'latest', 'canary', 'fun-v1.2.0', etc."
+    default: latest
+    required: false
+  baseline:
+    type: boolean
+    description: "Whether to use the baseline version of fun."
+    default: false
+    required: false
+  download-url:
+    type: string
+    description: "The base URL to download fun from."
+    default: "https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Fun
+      shell: bash
+      run: |
+        case "$(uname -s)" in
+          Linux*)  os=linux;;
+          Darwin*) os=darwin;;
+          *)       os=windows;;
+        esac
+        case "$(uname -m)" in
+          arm64 | aarch64)  arch=aarch64;;
+          *)                arch=x64;;
+        esac
+        case "${{ inputs.baseline }}" in
+          true | 1) target="fun-${os}-${arch}-baseline";;
+          *)        target="fun-${os}-${arch}";;
+        esac
+        case "${{ inputs.fun-version }}" in
+          latest) release="latest";;
+          canary) release="canary";;
+          *)      release="fun-v${{ inputs.fun-version }}";;
+        esac
+        curl -LO "${{ inputs.download-url }}/${release}/${target}.zip" --retry 5
+        unzip ${target}.zip
+        mkdir -p ${{ runner.temp }}/.fun/bin
+        mv ${target}/fun* ${{ runner.temp }}/.fun/bin/
+        chmod +x ${{ runner.temp }}/.fun/bin/*
+        ln -fs ${{ runner.temp }}/.fun/bin/fun ${{ runner.temp }}/.fun/bin/funx
+        echo "${{ runner.temp }}/.fun/bin" >> ${GITHUB_PATH}

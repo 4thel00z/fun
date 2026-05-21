@@ -1,5 +1,5 @@
 import { Blob, resolveObjectURL } from "buffer";
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { URL } from "url";
 
 // https://github.com/nodejs/node/blob/2eff28fb7a93d3f672f80b582f664a7c701569fb/lib/internal/blob.js#L441

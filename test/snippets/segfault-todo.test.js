@@ -1,5 +1,5 @@
-// This file will segfault the test runner with BUN_GARBAGE_COLLECTOR_LEVEL=2
-import { expect, it, describe } from "bun:test";
+// This file will segfault the test runner with FUN_GARBAGE_COLLECTOR_LEVEL=2
+import { expect, it, describe } from "fun:test";
 
 it("TEST 1", () => {});
 

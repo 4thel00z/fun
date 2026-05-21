@@ -72,16 +72,16 @@ pub fn parseWithError(
     // add
     // remove
     outer: for (positionals) |positional| {
-        var input: []u8 = bun.handleOom(bun.default_allocator.dupe(u8, std.mem.trim(u8, positional, " \n\r\t")));
+        var input: []u8 = fun.handleOom(fun.default_allocator.dupe(u8, std.mem.trim(u8, positional, " \n\r\t")));
         {
             // Replacing "\\\\" (2 bytes) with "/" (1 byte) never grows the string, so a
             // buffer of `input.len` bytes is always sufficient. Previously this was a
             // fixed `[2048]u8` stack array which overflowed for longer positionals.
-            const temp = bun.handleOom(bun.default_allocator.alloc(u8, input.len));
-            defer bun.default_allocator.free(temp);
+            const temp = fun.handleOom(fun.default_allocator.alloc(u8, input.len));
+            defer fun.default_allocator.free(temp);
             const len = std.mem.replace(u8, input, "\\\\", "/", temp);
             const input2 = temp[0 .. input.len - len];
-            bun.path.platformToPosixInPlace(u8, input2);
+            fun.path.platformToPosixInPlace(u8, input2);
             @memcpy(input[0..input2.len], input2);
             input.len = input2.len;
         }
@@ -125,7 +125,7 @@ pub fn parseWithError(
             } else {
                 log.addErrorFmt(null, logger.Loc.Empty, allocator, "unrecognised dependency format: {s}", .{
                     positional,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
             }
 
             return error.UnrecognizedDependencyFormat;
@@ -157,7 +157,7 @@ pub fn parseWithError(
             } else {
                 log.addErrorFmt(null, logger.Loc.Empty, allocator, "unrecognised dependency format: {s}", .{
                     positional,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
             }
 
             return error.UnrecognizedDependencyFormat;
@@ -180,7 +180,7 @@ pub fn parseWithError(
         for (update_requests.items) |*prev| {
             if (prev.name_hash == request.name_hash and request.name.len == prev.name.len) continue :outer;
         }
-        bun.handleOom(update_requests.append(allocator, request));
+        fun.handleOom(update_requests.append(allocator, request));
     }
 
     return update_requests.items;
@@ -196,23 +196,23 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Global = bun.Global;
-const JSAst = bun.ast;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Global = fun.Global;
+const JSAst = fun.ast;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const SlicedString = Semver.SlicedString;
 const String = Semver.String;
 
-const Dependency = bun.install.Dependency;
-const Lockfile = bun.install.Lockfile;
-const PackageID = bun.install.PackageID;
-const PackageNameHash = bun.install.PackageNameHash;
-const invalid_package_id = bun.install.invalid_package_id;
+const Dependency = fun.install.Dependency;
+const Lockfile = fun.install.Lockfile;
+const PackageID = fun.install.PackageID;
+const PackageNameHash = fun.install.PackageNameHash;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const UpdateRequest = PackageManager.UpdateRequest;

@@ -47,7 +47,7 @@ JSC_DEFINE_HOST_FUNCTION(jsBufferConstructorFunction_isUtf8,
         }
 
         if (impl->isDetached()) [[unlikely]] {
-            return Bun::ERR::INVALID_STATE(throwScope, lexicalGlobalObject,
+            return Fun::ERR::INVALID_STATE(throwScope, lexicalGlobalObject,
                 "Cannot validate on a detached buffer"_s);
         }
 
@@ -59,8 +59,8 @@ JSC_DEFINE_HOST_FUNCTION(jsBufferConstructorFunction_isUtf8,
 
         ptr = reinterpret_cast<const char*>(impl->data());
     } else {
-        Bun::throwError(lexicalGlobalObject, throwScope,
-            Bun::ErrorCode::ERR_INVALID_ARG_TYPE,
+        Fun::throwError(lexicalGlobalObject, throwScope,
+            Fun::ErrorCode::ERR_INVALID_ARG_TYPE,
             "First argument must be an ArrayBufferView"_s);
         return {};
     }
@@ -82,7 +82,7 @@ JSC_DEFINE_HOST_FUNCTION(jsBufferConstructorFunction_isAscii,
     if (bufferView) {
 
         if (bufferView->isDetached()) [[unlikely]] {
-            return Bun::ERR::INVALID_STATE(throwScope, lexicalGlobalObject,
+            return Fun::ERR::INVALID_STATE(throwScope, lexicalGlobalObject,
                 "Cannot validate on a detached buffer"_s);
         }
 
@@ -96,7 +96,7 @@ JSC_DEFINE_HOST_FUNCTION(jsBufferConstructorFunction_isAscii,
     } else if (auto* arrayBuffer = dynamicDowncast<JSC::JSArrayBuffer>(buffer)) {
         auto* impl = arrayBuffer->impl();
         if (impl->isDetached()) [[unlikely]] {
-            return Bun::ERR::INVALID_STATE(throwScope, lexicalGlobalObject,
+            return Fun::ERR::INVALID_STATE(throwScope, lexicalGlobalObject,
                 "Cannot validate on a detached buffer"_s);
         }
 
@@ -112,8 +112,8 @@ JSC_DEFINE_HOST_FUNCTION(jsBufferConstructorFunction_isAscii,
 
         ptr = reinterpret_cast<const char*>(impl->data());
     } else {
-        Bun::throwError(lexicalGlobalObject, throwScope,
-            Bun::ErrorCode::ERR_INVALID_ARG_TYPE,
+        Fun::throwError(lexicalGlobalObject, throwScope,
+            Fun::ErrorCode::ERR_INVALID_ARG_TYPE,
             "First argument must be an ArrayBufferView"_s);
         return {};
     }
@@ -123,7 +123,7 @@ JSC_DEFINE_HOST_FUNCTION(jsBufferConstructorFunction_isAscii,
         JSValue::encode(jsBoolean(simdutf::validate_ascii(ptr, byteLength))));
 }
 
-BUN_DECLARE_HOST_FUNCTION(jsFunctionResolveObjectURL);
+FUN_DECLARE_HOST_FUNCTION(jsFunctionResolveObjectURL);
 
 JSC_DEFINE_HOST_FUNCTION(jsFunctionNotImplemented,
     (JSGlobalObject * globalObject,
@@ -149,7 +149,7 @@ JSC_DEFINE_CUSTOM_SETTER(jsSetter_INSPECT_MAX_BYTES, (JSGlobalObject * lexicalGl
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
     auto val = JSValue::decode(value);
-    Bun::V::validateNumber(scope, globalObject, val, jsString(vm, String("INSPECT_MAX_BYTES"_s)), jsNumber(0), jsUndefined());
+    Fun::V::validateNumber(scope, globalObject, val, jsString(vm, String("INSPECT_MAX_BYTES"_s)), jsNumber(0), jsUndefined());
     RETURN_IF_EXCEPTION(scope, {});
     globalObject->INSPECT_MAX_BYTES = val.asNumber();
     return JSValue::encode(jsUndefined());
@@ -183,12 +183,12 @@ DEFINE_NATIVE_MODULE(NodeBuffer)
         __NATIVE_MODULE_ASSERT_INCR;
     }
 
-    put(JSC::Identifier::fromString(vm, "kMaxLength"_s), JSC::jsNumber(Bun::Buffer::kMaxLength));
-    put(JSC::Identifier::fromString(vm, "kStringMaxLength"_s), JSC::jsNumber(Bun::Buffer::kStringMaxLength));
+    put(JSC::Identifier::fromString(vm, "kMaxLength"_s), JSC::jsNumber(Fun::Buffer::kMaxLength));
+    put(JSC::Identifier::fromString(vm, "kStringMaxLength"_s), JSC::jsNumber(Fun::Buffer::kStringMaxLength));
 
     JSC::JSObject* constants = JSC::constructEmptyObject(lexicalGlobalObject, globalObject->objectPrototype(), 2);
-    constants->putDirect(vm, JSC::Identifier::fromString(vm, "MAX_LENGTH"_s), JSC::jsNumber(Bun::Buffer::MAX_LENGTH));
-    constants->putDirect(vm, JSC::Identifier::fromString(vm, "MAX_STRING_LENGTH"_s), JSC::jsNumber(Bun::Buffer::MAX_STRING_LENGTH));
+    constants->putDirect(vm, JSC::Identifier::fromString(vm, "MAX_LENGTH"_s), JSC::jsNumber(Fun::Buffer::MAX_LENGTH));
+    constants->putDirect(vm, JSC::Identifier::fromString(vm, "MAX_STRING_LENGTH"_s), JSC::jsNumber(Fun::Buffer::MAX_STRING_LENGTH));
 
     put(JSC::Identifier::fromString(vm, "constants"_s), constants);
 

@@ -1,6 +1,6 @@
 // Hardcoded module "node:os"
 var tmpdir = function () {
-  var env = Bun.env;
+  var env = Fun.env;
 
   tmpdir = function () {
     if (process.platform === "win32") {

@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -7,7 +7,7 @@ describe("bundler", () => {
     files: {
       "/entry.ts": /* js */ `
         // In compiled executables, execArgv should be empty
-        // since arguments like "-a" and "--b" are for the script, not bun
+        // since arguments like "-a" and "--b" are for the script, not fun
         if (process.execArgv.length !== 0) {
           console.error("FAIL: execArgv should be empty but got:", process.execArgv);
           process.exit(1);

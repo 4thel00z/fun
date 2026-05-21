@@ -1,10 +1,10 @@
 import {
-__HMRClient as Bun
-} from "http://localhost:8080/bun:wrap";
-Bun.activate(true);
+__HMRClient as Fun
+} from "http://localhost:8080/fun:wrap";
+Fun.activate(true);
 import {
 __HMRModule as HMR
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 var hmr = new HMR(3305050967, "ts-fallback-rewrite-works.ts"), exports = hmr.exports;
 (hmr._load = function() {
   function test() {

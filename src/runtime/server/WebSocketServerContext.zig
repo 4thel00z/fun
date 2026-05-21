@@ -46,7 +46,7 @@ pub const Handler = struct {
         _ = vm.uncaughtException(globalObject, error_value, false);
     }
 
-    pub fn fromJS(globalObject: *jsc.JSGlobalObject, object: jsc.JSValue) bun.JSError!Handler {
+    pub fn fromJS(globalObject: *jsc.JSGlobalObject, object: jsc.JSValue) fun.JSError!Handler {
         var handler = Handler{ .globalObject = globalObject, .vm = VirtualMachine.get() };
 
         var valid = false;
@@ -125,7 +125,7 @@ pub fn unprotect(this: WebSocketServerContext) void {
     this.handler.unprotect();
 }
 
-const CompressTable = bun.ComptimeStringMap(i32, .{
+const CompressTable = fun.ComptimeStringMap(i32, .{
     .{ "disable", 0 },
     .{ "shared", uws.SHARED_COMPRESSOR },
     .{ "dedicated", uws.DEDICATED_COMPRESSOR },
@@ -139,7 +139,7 @@ const CompressTable = bun.ComptimeStringMap(i32, .{
     .{ "256KB", uws.DEDICATED_COMPRESSOR_256KB },
 });
 
-const DecompressTable = bun.ComptimeStringMap(i32, .{
+const DecompressTable = fun.ComptimeStringMap(i32, .{
     .{ "disable", 0 },
     .{ "shared", uws.SHARED_DECOMPRESSOR },
     .{ "dedicated", uws.DEDICATED_DECOMPRESSOR },
@@ -153,7 +153,7 @@ const DecompressTable = bun.ComptimeStringMap(i32, .{
     .{ "256KB", uws.DEDICATED_COMPRESSOR_256KB },
 });
 
-pub fn onCreate(globalObject: *jsc.JSGlobalObject, object: JSValue) bun.JSError!WebSocketServerContext {
+pub fn onCreate(globalObject: *jsc.JSGlobalObject, object: JSValue) fun.JSError!WebSocketServerContext {
     var server = WebSocketServerContext{};
     server.handler = try Handler.fromJS(globalObject, object);
 
@@ -273,11 +273,11 @@ pub fn onCreate(globalObject: *jsc.JSGlobalObject, object: JSValue) bun.JSError!
     return server;
 }
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const uws = bun.uws;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const uws = fun.uws;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const VirtualMachine = jsc.VirtualMachine;

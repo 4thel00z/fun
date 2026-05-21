@@ -20,7 +20,7 @@
 
 #include "../vm/SigintWatcher.h"
 
-namespace Bun {
+namespace Fun {
 using namespace NodeVM;
 
 NodeVMSyntheticModule* NodeVMSyntheticModule::create(VM& vm, JSGlobalObject* globalObject, ArgList args)
@@ -237,4 +237,4 @@ DEFINE_VISIT_CHILDREN(NodeVMSyntheticModule);
 
 const JSC::ClassInfo NodeVMSyntheticModule::s_info = { "NodeVMSyntheticModule"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(NodeVMSyntheticModule) };
 
-} // namespace Bun
+} // namespace Fun

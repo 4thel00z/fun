@@ -3,7 +3,7 @@
 #include "root.h"
 #include <JavaScriptCore/InternalFunction.h>
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(callDiffieHellmanGroup);
 JSC_DECLARE_HOST_FUNCTION(constructDiffieHellmanGroup);
@@ -46,4 +46,4 @@ private:
     }
 };
 
-} // namespace Bun
+} // namespace Fun

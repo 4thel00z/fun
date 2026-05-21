@@ -51,23 +51,23 @@ pub const Fallback = struct {
 
     pub inline fn errorJS() string {
         return if (Environment.codegen_embed)
-            @embedFile("bun-error/index.js")
+            @embedFile("fun-error/index.js")
         else
-            bun.runtimeEmbedFile(.codegen, "bun-error/index.js");
+            fun.runtimeEmbedFile(.codegen, "fun-error/index.js");
     }
 
     pub inline fn errorCSS() string {
         return if (Environment.codegen_embed)
-            @embedFile("bun-error/bun-error.css")
+            @embedFile("fun-error/fun-error.css")
         else
-            bun.runtimeEmbedFile(.codegen, "bun-error/bun-error.css");
+            fun.runtimeEmbedFile(.codegen, "fun-error/fun-error.css");
     }
 
     pub inline fn fallbackDecoderJS() string {
         return if (Environment.codegen_embed)
             @embedFile("fallback-decoder.js")
         else
-            bun.runtimeEmbedFile(.codegen, "fallback-decoder.js");
+            fun.runtimeEmbedFile(.codegen, "fallback-decoder.js");
     }
 
     pub const version_hash = @import("build_options").fallback_html_version;
@@ -113,16 +113,16 @@ pub const Fallback = struct {
     ) !void {
         const PrintArgs = struct {
             blob: Base64FallbackMessage,
-            bun_error_css: string,
-            bun_error: string,
+            fun_error_css: string,
+            fun_error: string,
             fallback: string,
-            bun_error_page_css: string,
+            fun_error_page_css: string,
         };
         try writer.print(HTMLBackendTemplate, PrintArgs{
             .blob = Base64FallbackMessage{ .msg = msg, .allocator = allocator },
-            .bun_error_css = errorCSS(),
-            .bun_error = errorJS(),
-            .bun_error_page_css = "",
+            .fun_error_css = errorCSS(),
+            .fun_error = errorJS(),
+            .fun_error_page_css = "",
             .fallback = fallbackDecoderJS(),
         });
     }
@@ -133,11 +133,11 @@ pub const Runtime = struct {
         return if (Environment.codegen_embed)
             @embedFile("runtime.out.js")
         else
-            bun.runtimeEmbedFile(.codegen, "runtime.out.js");
+            fun.runtimeEmbedFile(.codegen, "runtime.out.js");
     }
 
     pub fn versionHash() u32 {
-        const hash = bun.Wyhash11.hash(0, sourceCode());
+        const hash = fun.Wyhash11.hash(0, sourceCode());
         return @truncate(hash);
     }
 
@@ -145,7 +145,7 @@ pub const Runtime = struct {
         /// Enable the React Fast Refresh transform. What this does exactly
         /// is documented in js_parser, search for `const ReactRefresh`
         react_fast_refresh: bool = false,
-        /// `hot_module_reloading` is specific to if we are using bun.bake.DevServer.
+        /// `hot_module_reloading` is specific to if we are using fun.bake.DevServer.
         /// It can be enabled on the command line with --format=internal_bake_dev
         ///
         /// Standalone usage of this flag / usage of this flag
@@ -182,8 +182,8 @@ pub const Runtime = struct {
 
         replace_exports: ReplaceableExport.Map = .{},
 
-        /// Scan for '// @bun' at the top of this file, halting a parse if it is
-        /// seen. This is used in `bun run` after a `bun build --target=bun`,
+        /// Scan for '// @fun' at the top of this file, halting a parse if it is
+        /// seen. This is used in `fun run` after a `fun build --target=fun`,
         /// and you know the contents is already correct.
         ///
         /// This comment must never be used manually.
@@ -207,14 +207,14 @@ pub const Runtime = struct {
         /// This is used for `--print` entry points so we can get the result.
         remove_cjs_module_wrapper: bool = false,
 
-        runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = null,
+        runtime_transpiler_cache: ?*fun.jsc.RuntimeTranspilerCache = null,
 
         // TODO: make this a bitset of all unsupported features
         lower_using: bool = true,
 
-        /// Feature flags for dead-code elimination via `import { feature } from "bun:bundle"`
+        /// Feature flags for dead-code elimination via `import { feature } from "fun:bundle"`
         /// When `feature("FLAG_NAME")` is called, it returns true if FLAG_NAME is in this set.
-        bundler_feature_flags: *const bun.StringSet = &empty_bundler_feature_flags,
+        bundler_feature_flags: *const fun.StringSet = &empty_bundler_feature_flags,
 
         /// REPL mode: transforms code for interactive evaluation
         /// - Wraps lone object literals `{...}` in parentheses
@@ -223,20 +223,20 @@ pub const Runtime = struct {
         /// - Assigns functions to context for persistence
         repl_mode: bool = false,
 
-        pub const empty_bundler_feature_flags: bun.StringSet = bun.StringSet.initComptime();
+        pub const empty_bundler_feature_flags: fun.StringSet = fun.StringSet.initComptime();
 
-        /// Initialize bundler feature flags for dead-code elimination via `import { feature } from "bun:bundle"`.
+        /// Initialize bundler feature flags for dead-code elimination via `import { feature } from "fun:bundle"`.
         /// Returns a pointer to a StringSet containing the enabled flags, or the empty set if no flags are provided.
         /// Keys are kept sorted so iteration order is deterministic (for RuntimeTranspilerCache hashing).
-        pub fn initBundlerFeatureFlags(allocator: std.mem.Allocator, feature_flags: []const []const u8) *const bun.StringSet {
+        pub fn initBundlerFeatureFlags(allocator: std.mem.Allocator, feature_flags: []const []const u8) *const fun.StringSet {
             if (feature_flags.len == 0) {
                 return &empty_bundler_feature_flags;
             }
 
-            const set = bun.handleOom(allocator.create(bun.StringSet));
-            set.* = bun.StringSet.init(allocator);
+            const set = fun.handleOom(allocator.create(fun.StringSet));
+            set.* = fun.StringSet.init(allocator);
             for (feature_flags) |flag| {
-                bun.handleOom(set.insert(flag));
+                fun.handleOom(set.insert(flag));
             }
             set.map.sort(struct {
                 keys: []const []const u8,
@@ -270,7 +270,7 @@ pub const Runtime = struct {
         };
 
         pub fn hashForRuntimeTranspiler(this: *const Features, hasher: *std.hash.Wyhash) void {
-            bun.assert(this.runtime_transpiler_cache != null);
+            fun.assert(this.runtime_transpiler_cache != null);
 
             var bools: [std.meta.fieldNames(@TypeOf(hash_fields_for_runtime_transpiler)).len]bool = undefined;
             inline for (hash_fields_for_runtime_transpiler, 0..) |field, i| {
@@ -301,7 +301,7 @@ pub const Runtime = struct {
                 value: JSAst.Expr,
             },
 
-            pub const Map = bun.StringArrayHashMapUnmanaged(ReplaceableExport);
+            pub const Map = fun.StringArrayHashMapUnmanaged(ReplaceableExport);
         };
 
         pub const ServerComponentsMode = enum {
@@ -432,8 +432,8 @@ pub const Runtime = struct {
             break :brk out;
         };
 
-        pub const Name = "bun:wrap";
-        pub const alt_name = "bun:wrap";
+        pub const Name = "fun:wrap";
+        pub const alt_name = "fun:wrap";
 
         pub const Iterator = struct {
             i: usize = 0,
@@ -522,13 +522,13 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const strings = fun.strings;
 
-const JSAst = bun.ast;
-const Ref = bun.ast.Ref;
+const JSAst = fun.ast;
+const Ref = fun.ast.Ref;
 
-const schema = bun.schema;
+const schema = fun.schema;
 const api = schema.api;

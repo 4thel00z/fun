@@ -5,7 +5,7 @@ pub const Options = struct {
     // If non-null, the shared pointer will always use the provided allocator. This saves a small
     // amount of memory, but it means the shared pointer will be a different type from shared
     // pointers that use different allocators.
-    Allocator: type = bun.DefaultAllocator,
+    Allocator: type = fun.DefaultAllocator,
 
     /// Whether to use an atomic type to store the ref count. This makes the shared pointer
     /// thread-safe, assuming the underlying data is also thread-safe.
@@ -31,7 +31,7 @@ pub const Options = struct {
 /// This type is not thread-safe: all pointers to the same piece of data must live on the same
 /// thread. See `AtomicShared` for a thread-safe version.
 pub fn Shared(comptime Pointer: type) type {
-    return SharedIn(Pointer, bun.DefaultAllocator);
+    return SharedIn(Pointer, fun.DefaultAllocator);
 }
 
 /// A thread-safe shared pointer, allocated using the default allocator.
@@ -40,12 +40,12 @@ pub fn Shared(comptime Pointer: type) type {
 /// synchronization of the data itself. You must ensure proper concurrency using mutexes or
 /// atomics.
 pub fn AtomicShared(comptime Pointer: type) type {
-    return AtomicSharedIn(Pointer, bun.DefaultAllocator);
+    return AtomicSharedIn(Pointer, fun.DefaultAllocator);
 }
 
 /// A shared pointer allocated using a specific type of allocator.
 ///
-/// The requirements for `Allocator` are the same as `bun.ptr.OwnedIn`.
+/// The requirements for `Allocator` are the same as `fun.ptr.OwnedIn`.
 /// `Allocator` may be `std.mem.Allocator` to allow any kind of allocator.
 pub fn SharedIn(comptime Pointer: type, comptime Allocator: type) type {
     return WithOptions(Pointer, .{ .Allocator = Allocator });
@@ -65,7 +65,7 @@ pub fn WithOptions(comptime Pointer: type, comptime options: Options) type {
         // Weak pointers only make sense if `deinit` will be called, since their only function
         // is to ensure `deinit` can be called before the memory is freed (weak pointers keep
         // the memory alive but not the object itself).
-        bun.assertf(
+        fun.assertf(
             options.deinit,
             "shared.Options.allow_weak is useless if `deinit` is false",
             .{},
@@ -97,7 +97,7 @@ pub fn WithOptions(comptime Pointer: type, comptime options: Options) type {
         ///
         /// Call `deinit` when done.
         pub fn alloc(value: Child) AllocError!Self {
-            return .allocImpl(bun.memory.initDefault(Allocator), value);
+            return .allocImpl(fun.memory.initDefault(Allocator), value);
         }
 
         /// Allocates a shared value using the provided allocator.
@@ -107,13 +107,13 @@ pub fn WithOptions(comptime Pointer: type, comptime options: Options) type {
             return .allocImpl(allocator, value);
         }
 
-        /// Allocates a shared value, calling `bun.outOfMemory` if allocation fails.
+        /// Allocates a shared value, calling `fun.outOfMemory` if allocation fails.
         ///
         /// It must be possible to default-initialize `Allocator`.
         ///
         /// Call `deinit` when done.
         pub fn new(value: Child) Self {
-            return bun.handleOom(Self.alloc(value));
+            return fun.handleOom(Self.alloc(value));
         }
 
         /// Returns a pointer to the shared value.
@@ -268,7 +268,7 @@ pub fn WithOptions(comptime Pointer: type, comptime options: Options) type {
 }
 
 fn Weak(comptime Pointer: type, comptime options: Options) type {
-    bun.assertf(
+    fun.assertf(
         options.allow_weak and options.deinit,
         "options incompatible with shared.Weak",
         .{},
@@ -388,7 +388,7 @@ fn FullData(comptime Child: type, comptime options: Options) type {
         /// When the last strong pointer is deinitialized, this value is decremented.
         weak_count: if (options.allow_weak) Count else void = if (options.allow_weak) .init(1),
         allocator: Allocator,
-        thread_lock: if (options.atomic) void else bun.safety.ThreadLock,
+        thread_lock: if (options.atomic) void else fun.safety.ThreadLock,
 
         const Count = if (options.atomic) AtomicCount else NonAtomicCount;
 
@@ -404,7 +404,7 @@ fn FullData(comptime Child: type, comptime options: Options) type {
         }
 
         pub fn alloc(allocator: Allocator, value: Child) !*Self {
-            return bun.memory.create(Self, bun.allocators.asStd(allocator), .{
+            return fun.memory.create(Self, fun.allocators.asStd(allocator), .{
                 .value = value,
                 .allocator = allocator,
                 .thread_lock = if (comptime !options.atomic) .initLocked(),
@@ -452,19 +452,19 @@ fn FullData(comptime Child: type, comptime options: Options) type {
             // .acq_rel because we need to make sure other threads are done using the object before
             // we free it.
             if ((comptime !options.allow_weak) or self.weak_count.decrement() == 0) {
-                if (bun.Environment.ci_assert) bun.assert(self.strong_count.get(.monotonic) == 0);
+                if (fun.Environment.ci_assert) fun.assert(self.strong_count.get(.monotonic) == 0);
                 self.destroy();
             }
         }
 
         fn deinitValue(self: *Self) void {
             if (comptime options.deinit) {
-                bun.memory.deinit(&self.value);
+                fun.memory.deinit(&self.value);
             }
         }
 
         fn destroy(self: *Self) void {
-            bun.memory.destroy(bun.allocators.asStd(self.allocator), self);
+            fun.memory.destroy(fun.allocators.asStd(self.allocator), self);
         }
 
         fn assertThreadSafety(self: Self) void {
@@ -525,7 +525,7 @@ const AtomicCount = struct {
         // * There are no side effects in this thread that other threads depend on, so the
         //   store can be .monotonic.
         const old = self.value.fetchAdd(1, .monotonic);
-        bun.assertf(old != std.math.maxInt(RawCount), "overflow of atomic ref count", .{});
+        fun.assertf(old != std.math.maxInt(RawCount), "overflow of atomic ref count", .{});
     }
 
     pub fn tryIncrement(self: *Self) bool {
@@ -547,7 +547,7 @@ const AtomicCount = struct {
     /// Returns the new number of references.
     pub fn decrement(self: *Self) RawCount {
         const old = self.value.fetchSub(1, .acq_rel);
-        bun.assertf(old != 0, "underflow of atomic ref count", .{});
+        fun.assertf(old != 0, "underflow of atomic ref count", .{});
         return old - 1;
     }
 };
@@ -559,7 +559,7 @@ fn parsePointer(comptime Pointer: type) PointerInfo {
     });
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const AtomicOrder = std.builtin.AtomicOrder;
 const AllocError = std.mem.Allocator.Error;

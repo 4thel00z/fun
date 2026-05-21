@@ -1,4 +1,4 @@
-//! HTTP/3 client over lsquic via packages/bun-usockets/src/quic.c.
+//! HTTP/3 client over lsquic via packages/fun-usockets/src/quic.c.
 //!
 //! One `ClientContext` per HTTP-thread loop wraps the lsquic client engine;
 //! each `ClientSession` is one QUIC connection to an origin and multiplexes
@@ -29,5 +29,5 @@ pub var live_streams = std.atomic.Value(u32).init(0);
 
 pub const TestingAPIs = @import("../http_jsc/headers_jsc.zig").H3TestingAPIs;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

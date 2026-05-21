@@ -1,8 +1,8 @@
 import { bench, run } from "../runner.mjs";
 
-var writer = globalThis.Bun ? Bun.stderr.writer() : undefined;
+var writer = globalThis.Fun ? Fun.stderr.writer() : undefined;
 if (writer)
-  bench('Bun.stderr.write("Hello World")', () => {
+  bench('Fun.stderr.write("Hello World")', () => {
     writer.write("Hello World\n");
     writer.flush();
   });

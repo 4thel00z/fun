@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("--no-env-file disables .env loading", async () => {
   using dir = tempDir("no-env-file", {
@@ -9,9 +9,9 @@ test("--no-env-file disables .env loading", async () => {
 
   // Without --no-env-file, .env should be loaded
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -26,9 +26,9 @@ test("--no-env-file disables .env loading", async () => {
 
   // With --no-env-file, .env should NOT be loaded
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--no-env-file", "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--no-env-file", "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -51,9 +51,9 @@ test("--no-env-file disables .env.local loading", async () => {
 
   // Without --no-env-file, .env.local should override .env
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -68,9 +68,9 @@ test("--no-env-file disables .env.local loading", async () => {
 
   // With --no-env-file, neither should be loaded
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--no-env-file", "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--no-env-file", "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -93,9 +93,9 @@ test("--no-env-file disables .env.development.local loading", async () => {
 
   // Without --no-env-file, .env.development.local should be loaded
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -110,9 +110,9 @@ test("--no-env-file disables .env.development.local loading", async () => {
 
   // With --no-env-file, it should NOT be loaded
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--no-env-file", "index.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--no-env-file", "index.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -126,19 +126,19 @@ test("--no-env-file disables .env.development.local loading", async () => {
   }
 });
 
-test("bunfig env.file = false disables .env loading", async () => {
-  using dir = tempDir("bunfig-env-file-false", {
+test("funfig env.file = false disables .env loading", async () => {
+  using dir = tempDir("funfig-env-file-false", {
     ".env": "FOO=bar",
-    "bunfig.toml": `
+    "funfig.toml": `
 [env]
 file = false
 `,
     "index.js": "console.log(process.env.FOO);",
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -151,18 +151,18 @@ file = false
   expect(exitCode).toBe(0);
 });
 
-test("bunfig env = false disables .env loading", async () => {
-  using dir = tempDir("bunfig-env-false", {
+test("funfig env = false disables .env loading", async () => {
+  using dir = tempDir("funfig-env-false", {
     ".env": "FOO=bar",
-    "bunfig.toml": `
+    "funfig.toml": `
 env = false
 `,
     "index.js": "console.log(process.env.FOO);",
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -180,9 +180,9 @@ test("--no-env-file with -e flag", async () => {
     ".env": "FOO=bar",
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--no-env-file", "-e", "console.log(process.env.FOO)"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--no-env-file", "-e", "console.log(process.env.FOO)"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -203,9 +203,9 @@ test("--no-env-file combined with --env-file still loads explicit file", async (
   });
 
   // --no-env-file should skip .env but --env-file should load .env.custom
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--no-env-file", "--env-file", ".env.custom", "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--no-env-file", "--env-file", ".env.custom", "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -218,18 +218,18 @@ test("--no-env-file combined with --env-file still loads explicit file", async (
   expect(exitCode).toBe(0);
 });
 
-test("bunfig env = true still loads .env files", async () => {
-  using dir = tempDir("bunfig-env-true", {
+test("funfig env = true still loads .env files", async () => {
+  using dir = tempDir("funfig-env-true", {
     ".env": "FOO=bar",
-    "bunfig.toml": `
+    "funfig.toml": `
 env = true
 `,
     "index.js": "console.log(process.env.FOO);",
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -249,9 +249,9 @@ test("--no-env-file in production mode", async () => {
     "index.js": "console.log(process.env.FOO);",
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--no-env-file", "index.js"],
-    env: { ...bunEnv, NODE_ENV: "production" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--no-env-file", "index.js"],
+    env: { ...funEnv, NODE_ENV: "production" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

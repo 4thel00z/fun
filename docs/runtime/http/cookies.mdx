@@ -1,16 +1,16 @@
 ---
 title: Cookies
-description: Work with cookies in HTTP requests and responses using Bun's built-in Cookie API.
+description: Work with cookies in HTTP requests and responses using Fun's built-in Cookie API.
 ---
 
-Bun provides a built-in API for working with cookies in HTTP requests and responses. The `BunRequest` object includes a `cookies` property that provides a `CookieMap` for accessing and manipulating cookies. When using `routes`, `Bun.serve()` automatically tracks `request.cookies.set` and applies them to the response.
+Fun provides a built-in API for working with cookies in HTTP requests and responses. The `FunRequest` object includes a `cookies` property that provides a `CookieMap` for accessing and manipulating cookies. When using `routes`, `Fun.serve()` automatically tracks `request.cookies.set` and applies them to the response.
 
 ## Reading cookies
 
-Read cookies from incoming requests using the `cookies` property on the `BunRequest` object:
+Read cookies from incoming requests using the `cookies` property on the `FunRequest` object:
 
 ```ts
-Bun.serve({
+Fun.serve({
   routes: {
     "/profile": req => {
       // Access cookies from the request
@@ -29,10 +29,10 @@ Bun.serve({
 
 ## Setting cookies
 
-To set cookies, use the `set` method on the `CookieMap` from the `BunRequest` object.
+To set cookies, use the `set` method on the `CookieMap` from the `FunRequest` object.
 
 ```ts
-Bun.serve({
+Fun.serve({
   routes: {
     "/login": req => {
       const cookies = req.cookies;
@@ -55,14 +55,14 @@ Bun.serve({
 });
 ```
 
-`Bun.serve()` automatically tracks modified cookies from the request and applies them to the response.
+`Fun.serve()` automatically tracks modified cookies from the request and applies them to the response.
 
 ## Deleting cookies
 
 To delete a cookie, use the `delete` method on the `request.cookies` (`CookieMap`) object:
 
 ```ts
-Bun.serve({
+Fun.serve({
   routes: {
     "/logout": req => {
       // Delete the user_id cookie

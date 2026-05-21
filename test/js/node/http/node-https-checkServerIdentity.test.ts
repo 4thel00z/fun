@@ -12,8 +12,8 @@
 // Previously any CN-only cert (no SAN) would hit this, because the
 // native checkX509ServerIdentity never fell back to the Subject CN.
 
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -29,9 +29,9 @@ describe("https.request checkServerIdentity", () => {
   // match the cert. Before the fix this hit use-after-poison in
   // HTTPContext.onHandshake on ASAN builds instead of emitting 'error'.
   test("hostname mismatch emits error without crashing", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const https = require("https");
@@ -57,7 +57,7 @@ describe("https.request checkServerIdentity", () => {
           });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -71,9 +71,9 @@ describe("https.request checkServerIdentity", () => {
   // certificate carries no DNS/IP/URI SANs. agent1's cert is CN=agent1 with
   // no SAN. With `servername: "agent1"` the request must succeed.
   test("falls back to Subject CN when no SAN is present", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const https = require("https");
@@ -103,7 +103,7 @@ describe("https.request checkServerIdentity", () => {
           });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -118,9 +118,9 @@ describe("https.request checkServerIdentity", () => {
   // would fail; the custom callback makes the request succeed and must
   // actually be invoked.
   test("custom checkServerIdentity overrides the native check", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const https = require("https");
@@ -154,7 +154,7 @@ describe("https.request checkServerIdentity", () => {
           });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -168,9 +168,9 @@ describe("https.request checkServerIdentity", () => {
   // Passing `ca` alone must not make the server reject clients that don't
   // present one.
   test("https.Server with ca but no requestCert accepts clients without a cert", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const https = require("https");
@@ -201,7 +201,7 @@ describe("https.request checkServerIdentity", () => {
           });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

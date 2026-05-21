@@ -1,8 +1,8 @@
 const dest = require.resolve("./leak-fixture-small-ast.js");
 
 let gc = globalThis.gc;
-if (typeof Bun !== "undefined") {
-  gc = () => Bun.gc(true);
+if (typeof Fun !== "undefined") {
+  gc = () => Fun.gc(true);
 }
 
 if (!gc) {

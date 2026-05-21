@@ -1,7 +1,7 @@
 pub const ZigErrorType = extern struct {
     code: ErrorCode,
-    value: bun.jsc.JSValue,
+    value: fun.jsc.JSValue,
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const ErrorCode = @import("./ErrorCode.zig").ErrorCode;

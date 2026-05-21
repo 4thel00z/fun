@@ -9,11 +9,11 @@
 #include <cmath>
 
 // Zig exports for visible width calculation
-extern "C" size_t Bun__visibleWidthExcludeANSI_utf16(const uint16_t* ptr, size_t len, bool ambiguous_as_wide);
-extern "C" size_t Bun__visibleWidthExcludeANSI_latin1(const uint8_t* ptr, size_t len);
-extern "C" uint8_t Bun__codepointWidth(uint32_t cp, bool ambiguous_as_wide);
+extern "C" size_t Fun__visibleWidthExcludeANSI_utf16(const uint16_t* ptr, size_t len, bool ambiguous_as_wide);
+extern "C" size_t Fun__visibleWidthExcludeANSI_latin1(const uint8_t* ptr, size_t len);
+extern "C" uint8_t Fun__codepointWidth(uint32_t cp, bool ambiguous_as_wide);
 
-namespace Bun {
+namespace Fun {
 using namespace WTF;
 
 // UTF-16 decoding and codepoint width are in ANSIHelpers.h (shared with
@@ -26,7 +26,7 @@ static inline char32_t decodeUTF16(const UChar* ptr, size_t available, size_t& o
 
 static inline uint8_t getVisibleWidth(char32_t cp, bool ambiguousIsWide)
 {
-    return Bun__codepointWidth(cp, ambiguousIsWide);
+    return Fun__codepointWidth(cp, ambiguousIsWide);
 }
 
 // Options for wrapping
@@ -52,9 +52,9 @@ static size_t stringWidth(const Char* start, const Char* end, bool ambiguousIsNa
         // 8-bit JSC strings are Latin1, not UTF-8
         // Note: Latin1 doesn't have ambiguous width characters (all are in U+0000-U+00FF)
         (void)ambiguousIsNarrow;
-        return Bun__visibleWidthExcludeANSI_latin1(reinterpret_cast<const uint8_t*>(start), len);
+        return Fun__visibleWidthExcludeANSI_latin1(reinterpret_cast<const uint8_t*>(start), len);
     } else {
-        return Bun__visibleWidthExcludeANSI_utf16(reinterpret_cast<const uint16_t*>(start), len, !ambiguousIsNarrow);
+        return Fun__visibleWidthExcludeANSI_utf16(reinterpret_cast<const uint16_t*>(start), len, !ambiguousIsNarrow);
     }
 }
 
@@ -679,7 +679,7 @@ static WTF::String wrapAnsiImpl(std::span<const Char> input, size_t columns, con
 // JavaScript Binding
 // ============================================================================
 
-JSC_DEFINE_HOST_FUNCTION(jsFunctionBunWrapAnsi, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
+JSC_DEFINE_HOST_FUNCTION(jsFunctionFunWrapAnsi, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -747,4 +747,4 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionBunWrapAnsi, (JSC::JSGlobalObject * globalObj
     return JSC::JSValue::encode(JSC::jsString(vm, result));
 }
 
-} // namespace Bun
+} // namespace Fun

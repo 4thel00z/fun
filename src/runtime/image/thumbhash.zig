@@ -5,7 +5,7 @@
 //! opponent-colour planes, optionally A) of a ≤100×100 image. Decoding gives a
 //! ≤32px blur with the right average colour, aspect ratio and rough structure.
 //!
-//! `Bun.Image.placeholder()` runs `decode → box-resize ≤100 → encode()` →
+//! `Fun.Image.placeholder()` runs `decode → box-resize ≤100 → encode()` →
 //! `decode()` → PNG-encode → `data:` URL, all on the work pool. The hash
 //! itself is exposed as the intermediate so a future `as: "hash"` option is
 //! one switch away. The encode/decode are scalar f32 and tiny (≤100²·7² mults
@@ -16,8 +16,8 @@
 pub const max_len = 25;
 
 pub fn encode(out: *[max_len]u8, w: u32, h: u32, rgba: []const u8) []u8 {
-    bun.debugAssert(w > 0 and w <= 100 and h > 0 and h <= 100);
-    bun.debugAssert(rgba.len == @as(usize, w) * h * 4);
+    fun.debugAssert(w > 0 and w <= 100 and h > 0 and h <= 100);
+    fun.debugAssert(rgba.len == @as(usize, w) * h * 4);
 
     // Average colour (alpha-weighted so transparent pixels don't tug it).
     var avg: [4]f32 = .{0} ** 4;
@@ -140,7 +140,7 @@ fn dct(chan: []const f32, w: u32, h: u32, nx: u32, ny: u32) Channel {
 }
 
 /// Decode `hash` to a ≤32px RGBA image. Returns `error.DecodeFailed` if the
-/// hash is too short. Output is `bun.default_allocator`-owned.
+/// hash is too short. Output is `fun.default_allocator`-owned.
 pub fn decode(hash: []const u8) error{ DecodeFailed, OutOfMemory }!struct { rgba: []u8, w: u32, h: u32 } {
     if (hash.len < 5) return error.DecodeFailed;
     const h24: u32 = @as(u32, hash[0]) | @as(u32, hash[1]) << 8 | @as(u32, hash[2]) << 16;
@@ -181,8 +181,8 @@ pub fn decode(hash: []const u8) error{ DecodeFailed, OutOfMemory }!struct { rgba
     const ratio = @as(f32, @floatFromInt(lx)) / @as(f32, @floatFromInt(ly));
     const w: u32 = if (ratio > 1) 32 else @intFromFloat(@round(32 * ratio));
     const h: u32 = if (ratio > 1) @intFromFloat(@round(32 / ratio)) else 32;
-    const rgba = try bun.default_allocator.alloc(u8, @as(usize, w) * h * 4);
-    errdefer bun.default_allocator.free(rgba);
+    const rgba = try fun.default_allocator.alloc(u8, @as(usize, w) * h * 4);
+    errdefer fun.default_allocator.free(rgba);
 
     var fx: [7]f32 = undefined;
     var fy: [7]f32 = undefined;
@@ -256,5 +256,5 @@ inline fn clamp8(v: f32) u8 {
     return @intFromFloat(std.math.clamp(v, 0, 1) * 255);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

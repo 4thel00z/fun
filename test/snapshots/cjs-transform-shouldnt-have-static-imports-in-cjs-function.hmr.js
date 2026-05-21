@@ -1,13 +1,13 @@
 import {
-__HMRClient as Bun
-} from "http://localhost:8080/bun:wrap";
-Bun.activate(false);
+__HMRClient as Fun
+} from "http://localhost:8080/fun:wrap";
+Fun.activate(false);
 import {
 __FastRefreshModule as FastHMR
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
 __FastRefreshRuntime as FastRefresh
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import _login from "http://localhost:8080/_login.js";
 import _auth from "http://localhost:8080/_auth.js";
 import * as _loginReally from "http://localhost:8080/_login.js";

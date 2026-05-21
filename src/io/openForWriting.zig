@@ -1,8 +1,8 @@
 pub fn openForWriting(
-    dir: bun.FD,
+    dir: fun.FD,
     input_path: anytype,
     input_flags: i32,
-    mode: bun.Mode,
+    mode: fun.Mode,
     pollable: *bool,
     is_socket: *bool,
     force_sync: bool,
@@ -10,8 +10,8 @@ pub fn openForWriting(
     comptime Ctx: type,
     ctx: Ctx,
     comptime onForceSyncOrIsaTTY: *const fn (Ctx) void,
-    comptime isPollable: *const fn (mode: bun.Mode) bool,
-) bun.sys.Maybe(bun.FD) {
+    comptime isPollable: *const fn (mode: fun.Mode) bool,
+) fun.sys.Maybe(fun.FD) {
     return openForWritingImpl(
         dir,
         input_path,
@@ -25,15 +25,15 @@ pub fn openForWriting(
         ctx,
         onForceSyncOrIsaTTY,
         isPollable,
-        bun.sys.openat,
+        fun.sys.openat,
     );
 }
 
 pub fn openForWritingImpl(
-    dir: bun.FD,
+    dir: fun.FD,
     input_path: anytype,
     input_flags: i32,
-    mode: bun.Mode,
+    mode: fun.Mode,
     pollable: *bool,
     is_socket: *bool,
     force_sync: bool,
@@ -41,11 +41,11 @@ pub fn openForWritingImpl(
     comptime Ctx: type,
     ctx: Ctx,
     comptime onForceSyncOrIsaTTY: *const fn (Ctx) void,
-    comptime isPollable: *const fn (mode: bun.Mode) bool,
-    comptime openat: *const fn (dir: bun.FD, path: [:0]const u8, flags: i32, mode: bun.Mode) bun.sys.Maybe(bun.FD),
-) bun.sys.Maybe(bun.FD) {
+    comptime isPollable: *const fn (mode: fun.Mode) bool,
+    comptime openat: *const fn (dir: fun.FD, path: [:0]const u8, flags: i32, mode: fun.Mode) fun.sys.Maybe(fun.FD),
+) fun.sys.Maybe(fun.FD) {
     const PathT = @TypeOf(input_path);
-    if (PathT != bun.webcore.PathOrFileDescriptor and PathT != [:0]const u8 and PathT != [:0]u8) {
+    if (PathT != fun.webcore.PathOrFileDescriptor and PathT != [:0]const u8 and PathT != [:0]u8) {
         @compileError("Only string or PathOrFileDescriptor is supported but got: " ++ @typeName(PathT));
     }
 
@@ -54,13 +54,13 @@ pub fn openForWritingImpl(
     var is_nonblocking = false;
     const result =
         switch (PathT) {
-            bun.webcore.PathOrFileDescriptor => switch (input_path) {
+            fun.webcore.PathOrFileDescriptor => switch (input_path) {
                 .path => |path| brk: {
                     is_nonblocking = true;
-                    break :brk bun.sys.openatA(dir, path.slice(), input_flags, mode);
+                    break :brk fun.sys.openatA(dir, path.slice(), input_flags, mode);
                 },
                 .fd => |fd_| brk: {
-                    const duped = bun.sys.dupWithFlags(fd_, 0);
+                    const duped = fun.sys.dupWithFlags(fd_, 0);
 
                     break :brk duped;
                 },
@@ -74,13 +74,13 @@ pub fn openForWritingImpl(
     };
 
     if (comptime Environment.isPosix) {
-        switch (bun.sys.fstat(fd)) {
+        switch (fun.sys.fstat(fd)) {
             .err => |err| {
                 fd.close();
                 return .{ .err = err };
             },
             .result => |stat| {
-                // pollable.* = bun.sys.isPollable(stat.mode);
+                // pollable.* = fun.sys.isPollable(stat.mode);
                 pollable.* = isPollable(stat.mode);
                 if (!pollable.*) {
                     isatty = std.posix.isatty(fd.native());
@@ -98,23 +98,23 @@ pub fn openForWritingImpl(
                     // this behavior has become expected due historical functionality on OS X,
                     // even though it was originally intended to change in v1.0.2 (Libuv 1.2.1).
                     // Ref: https://github.com/nodejs/node/pull/1771#issuecomment-119351671
-                    _ = bun.sys.updateNonblocking(fd, false);
+                    _ = fun.sys.updateNonblocking(fd, false);
                     is_nonblocking = false;
                     // this.force_sync = true;
                     // this.writer.force_sync = true;
                     onForceSyncOrIsaTTY(ctx);
                 } else if (!is_nonblocking) {
-                    const flags = switch (bun.sys.getFcntlFlags(fd)) {
+                    const flags = switch (fun.sys.getFcntlFlags(fd)) {
                         .result => |flags| flags,
                         .err => |err| {
                             fd.close();
                             return .{ .err = err };
                         },
                     };
-                    is_nonblocking = (flags & @as(@TypeOf(flags), bun.O.NONBLOCK)) != 0;
+                    is_nonblocking = (flags & @as(@TypeOf(flags), fun.O.NONBLOCK)) != 0;
 
                     if (!is_nonblocking) {
-                        if (bun.sys.setNonblocking(fd) == .result) {
+                        if (fun.sys.setNonblocking(fd) == .result) {
                             is_nonblocking = true;
                         }
                     }
@@ -128,12 +128,12 @@ pub fn openForWritingImpl(
     }
 
     if (comptime Environment.isWindows) {
-        pollable.* = (bun.windows.GetFileType(fd.cast()) & bun.windows.FILE_TYPE_PIPE) != 0 and !force_sync;
+        pollable.* = (fun.windows.GetFileType(fd.cast()) & fun.windows.FILE_TYPE_PIPE) != 0 and !force_sync;
         return .{ .result = fd };
     }
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

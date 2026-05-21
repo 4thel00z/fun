@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { createServer } from "http";
 
 describe("HTTP numeric headers", () => {

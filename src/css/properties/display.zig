@@ -136,7 +136,7 @@ pub const DisplayPair = struct {
             .err => |e| return .{ .err = e },
         };
 
-        const displayIdentMap = bun.ComptimeStringMap(DisplayPair, .{
+        const displayIdentMap = fun.ComptimeStringMap(DisplayPair, .{
             .{ "inline-block", DisplayPair{ .outside = .@"inline", .inside = .flow_root, .is_list_item = false } },
             .{ "inline-table", DisplayPair{ .outside = .@"inline", .inside = .table, .is_list_item = false } },
             .{ "inline-flex", DisplayPair{ .outside = .@"inline", .inside = .{ .flex = css.VendorPrefix{ .none = true } }, .is_list_item = false } },
@@ -229,7 +229,7 @@ pub const DisplayInside = union(enum) {
     ruby,
 
     pub fn parse(input: *css.Parser) css.Result(@This()) {
-        const displayInsideMap = bun.ComptimeStringMap(DisplayInside, .{
+        const displayInsideMap = fun.ComptimeStringMap(DisplayInside, .{
             .{ "flow", DisplayInside.flow },
             .{ "flow-root", DisplayInside.flow_root },
             .{ "table", DisplayInside.table },
@@ -282,6 +282,6 @@ pub const DisplayInside = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

@@ -2,17 +2,17 @@ pub fn createMySQLError(
     globalObject: *JSC.JSGlobalObject,
     message: []const u8,
     options: MySQLErrorOptions,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const opts_obj = JSValue.createEmptyObject(globalObject, 0);
     opts_obj.ensureStillAlive();
-    opts_obj.put(globalObject, JSC.ZigString.static("code"), try bun.String.createUTF8ForJS(globalObject, options.code));
+    opts_obj.put(globalObject, JSC.ZigString.static("code"), try fun.String.createUTF8ForJS(globalObject, options.code));
     if (options.errno) |errno| {
         opts_obj.put(globalObject, JSC.ZigString.static("errno"), JSC.JSValue.jsNumber(errno));
     }
     if (options.sqlState) |state| {
-        opts_obj.put(globalObject, JSC.ZigString.static("sqlState"), try bun.String.createUTF8ForJS(globalObject, state[0..]));
+        opts_obj.put(globalObject, JSC.ZigString.static("sqlState"), try fun.String.createUTF8ForJS(globalObject, state[0..]));
     }
-    opts_obj.put(globalObject, JSC.ZigString.static("message"), try bun.String.createUTF8ForJS(globalObject, message));
+    opts_obj.put(globalObject, JSC.ZigString.static("message"), try fun.String.createUTF8ForJS(globalObject, message));
 
     return opts_obj;
 }
@@ -30,11 +30,11 @@ pub fn toJS(this: ErrorPacket, globalObject: *JSC.JSGlobalObject) JSValue {
     }) catch |err| globalObject.takeException(err);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const ErrorPacket = @import("../../../sql/mysql/protocol/ErrorPacket.zig");
 const MySQLErrorOptions = ErrorPacket.MySQLErrorOptions;
 
-const JSC = bun.jsc;
-const jsc = bun.jsc;
+const JSC = fun.jsc;
+const jsc = fun.jsc;
 const JSValue = JSC.JSValue;

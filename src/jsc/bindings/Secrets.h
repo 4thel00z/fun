@@ -12,7 +12,7 @@ namespace JSC {
 class JSValue;
 }
 
-namespace Bun {
+namespace Fun {
 
 // Platform-agnostic secrets interface
 namespace Secrets {
@@ -47,4 +47,4 @@ bool deletePassword(const WTF::CString& service, const WTF::CString& name, Error
 // JS binding function
 JSC::JSObject* createSecretsObject(JSC::VM& vm, JSC::JSGlobalObject* globalObject);
 
-} // namespace Bun
+} // namespace Fun

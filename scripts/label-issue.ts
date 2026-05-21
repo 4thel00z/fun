@@ -1,59 +1,61 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 const labels = [
   {
     name: "build",
-    description: "An issue related to building or compiling Bun (not bun build)",
+    description: "An issue related to building or compiling Fun (not fun build)",
   },
   {
-    name: "bun:crypto",
+    name: "fun:crypto",
     description: "",
   },
   {
-    name: "bun:dns",
-    description: "Bun's DNS resolver",
+    name: "fun:dns",
+    description: "Fun's DNS resolver",
   },
   {
-    name: "bun:ffi",
-    description: "Something related with FFI in Bun",
+    name: "fun:ffi",
+    description: "Something related with FFI in Fun",
   },
   {
-    name: "bun:fs",
+    name: "fun:fs",
     description: "",
   },
   {
-    name: "bun:glob",
-    description: "Related to Bun.Glob",
+    name: "fun:glob",
+    description: "Related to Fun.Glob",
   },
   {
-    name: "bun:http",
-    description: "Bun.serve",
+    name: "fun:http",
+    description: "Fun.serve",
   },
   {
-    name: "bun:jsc",
+    name: "fun:jsc",
     description: "",
   },
   {
-    name: "bun:semver",
-    description: "Bun.semver",
+    name: "fun:semver",
+    description: "Fun.semver",
   },
   {
-    name: "bun:serve",
-    description: "Bun.serve and HTTP server",
+    name: "fun:serve",
+    description: "Fun.serve and HTTP server",
   },
   {
-    name: "bun:spawn",
-    description: "Bun.spawn, Bun.spawnSync",
+    name: "fun:spawn",
+    description: "Fun.spawn, Fun.spawnSync",
   },
   {
-    name: "bun:sqlite",
-    description: "Something to do with bun:sqlite",
+    name: "fun:sqlite",
+    description: "Something to do with fun:sqlite",
   },
   {
-    name: "bun:tcp",
-    description: "TCP sockets in Bun's API (Bun.connect, Bun.listen)",
+    name: "fun:tcp",
+    description: "TCP sockets in Fun's API (Fun.connect, Fun.listen)",
   },
   {
-    name: "bun:udp",
-    description: "UDP sockets in Bun's API (Bun.udpSocket())",
+    name: "fun:udp",
+    description: "UDP sockets in Fun's API (Fun.udpSocket())",
   },
 
   {
@@ -61,8 +63,8 @@ const labels = [
     description: "Something to do with the bundler",
   },
   {
-    name: "bunx",
-    description: "Something that has to do with `bunx`",
+    name: "funx",
+    description: "Something that has to do with `funx`",
   },
   {
     name: "chore",
@@ -78,7 +80,7 @@ const labels = [
   },
   {
     name: "debugger",
-    description: "Something to do with `bun --inspect` or the debugger",
+    description: "Something to do with `fun --inspect` or the debugger",
   },
   {
     name: "docker",
@@ -106,11 +108,11 @@ const labels = [
   },
   {
     name: "jest",
-    description: "Something related to the `bun test` runner",
+    description: "Something related to the `fun test` runner",
   },
   {
     name: "jsc",
-    description: "Something related to JavaScriptCore, bun's JS engine",
+    description: "Something related to JavaScriptCore, fun's JS engine",
   },
   {
     name: "lambda",
@@ -126,7 +128,7 @@ const labels = [
   },
   {
     name: "minifier",
-    description: "bun's javascript minifier",
+    description: "fun's javascript minifier",
   },
   {
     name: "napi",
@@ -194,11 +196,11 @@ const labels = [
   },
   {
     name: "npm",
-    description: "Installing npm packages, npm registry, etc related to bun install",
+    description: "Installing npm packages, npm registry, etc related to fun install",
   },
   {
     name: "npm:patch",
-    description: "bun patch subcommand",
+    description: "fun patch subcommand",
   },
   {
     name: "performance",
@@ -206,7 +208,7 @@ const labels = [
   },
   {
     name: "repl",
-    description: "An issue with `bun repl`",
+    description: "An issue with `fun repl`",
   },
   {
     name: "runtime",
@@ -214,7 +216,7 @@ const labels = [
   },
   {
     name: "shell",
-    description: "Something to do with Bun as a shell",
+    description: "Something to do with Fun as a shell",
   },
   {
     name: "sourcemaps",

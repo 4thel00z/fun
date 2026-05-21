@@ -1,14 +1,14 @@
-import { spawn } from "bun";
-import { jscDescribe } from "bun:jsc";
-import { beforeAll, describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, isASAN, isBroken, isMusl, isWindows, nodeExe, tmpdirSync } from "harness";
+import { spawn } from "fun";
+import { jscDescribe } from "fun:jsc";
+import { beforeAll, describe, expect, it } from "fun:test";
+import { funEnv, funExe, isASAN, isBroken, isMusl, isWindows, nodeExe, tmpdirSync } from "harness";
 import assert from "node:assert";
 import fs from "node:fs/promises";
 import { basename, join } from "path";
 
 enum Runtime {
   node,
-  bun,
+  fun,
 }
 
 enum BuildMode {
@@ -18,26 +18,26 @@ enum BuildMode {
 
 // clang-cl does not work on Windows with node-gyp 10.2.0, so we should not let that affect the
 // test environment
-delete bunEnv.CC;
-delete bunEnv.CXX;
+delete funEnv.CC;
+delete funEnv.CXX;
 
 // Node.js 24.3.0 requires C++20
-bunEnv.CXXFLAGS ??= "";
+funEnv.CXXFLAGS ??= "";
 if (process.platform == "darwin") {
-  bunEnv.CXXFLAGS += " -std=gnu++20";
+  funEnv.CXXFLAGS += " -std=gnu++20";
 } else {
-  bunEnv.CXXFLAGS += " -std=c++20";
+  funEnv.CXXFLAGS += " -std=c++20";
 }
 // https://github.com/isaacs/node-tar/blob/bef7b1e4ffab822681fea2a9b22187192ed14717/lib/get-write-flag.js
 // prevent node-tar from using UV_FS_O_FILEMAP
 if (process.platform == "win32") {
-  bunEnv.__FAKE_PLATFORM__ = "linux";
+  funEnv.__FAKE_PLATFORM__ = "linux";
 }
 
 const srcDir = join(__dirname, "v8-module");
 const directories = {
-  bunRelease: "",
-  bunDebug: "",
+  funRelease: "",
+  funDebug: "",
   node: "",
   badModules: "",
 };
@@ -45,9 +45,9 @@ const directories = {
 async function install(srcDir: string, tmpDir: string, runtime: Runtime): Promise<void> {
   await fs.cp(srcDir, tmpDir, { recursive: true, force: true });
   const install = spawn({
-    cmd: [bunExe(), "install", "--ignore-scripts"],
+    cmd: [funExe(), "install", "--ignore-scripts"],
     cwd: tmpDir,
-    env: bunEnv,
+    env: funEnv,
     stdin: "inherit",
     stdout: "inherit",
     stderr: "inherit",
@@ -66,10 +66,10 @@ async function build(
 ): Promise<{ out: string; err: string; description: string }> {
   const build = spawn({
     cmd:
-      runtime == Runtime.bun
+      runtime == Runtime.fun
         ? [
-            bunExe(),
-            "--bun",
+            funExe(),
+            "--fun",
             "run",
             "node-gyp",
             "rebuild",
@@ -77,9 +77,9 @@ async function build(
             "-j",
             "max",
           ]
-        : [bunExe(), "run", "node-gyp", "rebuild", "--release", "-j", "max"], // for node.js we don't bother with debug mode
+        : [funExe(), "run", "node-gyp", "rebuild", "--release", "-j", "max"], // for node.js we don't bother with debug mode
     cwd: tmpDir,
-    env: bunEnv,
+    env: funEnv,
     stdin: "inherit",
     stdout: "pipe",
     stderr: "pipe",
@@ -107,18 +107,18 @@ async function build(
 describe.todoIf(isBroken && isMusl)("node:v8", () => {
   beforeAll(async () => {
     // set up clean directories for our 4 builds
-    directories.bunRelease = tmpdirSync();
-    directories.bunDebug = tmpdirSync();
+    directories.funRelease = tmpdirSync();
+    directories.funDebug = tmpdirSync();
     directories.node = tmpdirSync();
     directories.badModules = tmpdirSync();
 
-    await install(srcDir, directories.bunRelease, Runtime.bun);
-    await install(srcDir, directories.bunDebug, Runtime.bun);
+    await install(srcDir, directories.funRelease, Runtime.fun);
+    await install(srcDir, directories.funDebug, Runtime.fun);
     await install(srcDir, directories.node, Runtime.node);
     await install(join(__dirname, "bad-modules"), directories.badModules, Runtime.node);
 
-    await build(srcDir, directories.bunRelease, Runtime.bun, BuildMode.release);
-    await build(srcDir, directories.bunDebug, Runtime.bun, BuildMode.debug);
+    await build(srcDir, directories.funRelease, Runtime.fun, BuildMode.release);
+    await build(srcDir, directories.funDebug, Runtime.fun, BuildMode.debug);
     await build(srcDir, directories.node, Runtime.node, BuildMode.release);
     await build(join(__dirname, "bad-modules"), directories.badModules, Runtime.node, BuildMode.release);
   });
@@ -288,7 +288,7 @@ describe.todoIf(isBroken && isMusl)("node:v8", () => {
       await checkSameOutput("test_many_v8_locals");
     });
     // Skip on ASAN: false positives due to dynamic library boundary crossing where
-    // Bun is built with ASAN+UBSAN but the native addon is not
+    // Fun is built with ASAN+UBSAN but the native addon is not
     it.skipIf(isASAN)(
       "keeps GC objects alive",
       async () => {
@@ -324,28 +324,28 @@ describe.todoIf(isBroken && isMusl)("node:v8", () => {
 });
 
 async function checkSameOutput(testName: string, args?: string, thisValue?: any) {
-  const [nodeResultResolution, bunReleaseResultResolution, bunDebugResultResolution] = await Promise.allSettled([
+  const [nodeResultResolution, funReleaseResultResolution, funDebugResultResolution] = await Promise.allSettled([
     runOn(Runtime.node, BuildMode.release, testName, args, thisValue),
-    runOn(Runtime.bun, BuildMode.release, testName, args, thisValue),
-    runOn(Runtime.bun, BuildMode.debug, testName, args, thisValue),
+    runOn(Runtime.fun, BuildMode.release, testName, args, thisValue),
+    runOn(Runtime.fun, BuildMode.debug, testName, args, thisValue),
   ]);
-  const errors = [nodeResultResolution, bunReleaseResultResolution, bunDebugResultResolution]
+  const errors = [nodeResultResolution, funReleaseResultResolution, funDebugResultResolution]
     .filter(r => r.status === "rejected")
     .map(r => r.reason);
   if (errors.length > 0) {
     throw new AggregateError(errors);
   }
-  let [nodeResult, bunReleaseResult, bunDebugResult] = [
+  let [nodeResult, funReleaseResult, funDebugResult] = [
     nodeResultResolution,
-    bunReleaseResultResolution,
-    bunDebugResultResolution,
+    funReleaseResultResolution,
+    funDebugResultResolution,
   ].map(r => (r as any).value);
   // remove all debug logs
-  bunReleaseResult = bunReleaseResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
-  bunDebugResult = bunDebugResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
+  funReleaseResult = funReleaseResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
+  funDebugResult = funDebugResult.replaceAll(/^\[\w+\].+$/gm, "").trim();
 
-  expect(bunReleaseResult, `test ${testName} printed different output under bun vs. under node`).toBe(nodeResult);
-  expect(bunDebugResult, `test ${testName} printed different output under bun in debug mode vs. under node`).toBe(
+  expect(funReleaseResult, `test ${testName} printed different output under fun vs. under node`).toBe(nodeResult);
+  expect(funDebugResult, `test ${testName} printed different output under fun in debug mode vs. under node`).toBe(
     nodeResult,
   );
   return nodeResult;
@@ -363,13 +363,13 @@ async function runOn(runtime: Runtime, buildMode: BuildMode, testName: string, j
     runtime == Runtime.node
       ? directories.node
       : buildMode == BuildMode.debug
-        ? directories.bunDebug
-        : directories.bunRelease;
-  const exe = runtime == Runtime.node ? (nodeExe() ?? "node") : bunExe();
+        ? directories.funDebug
+        : directories.funRelease;
+  const exe = runtime == Runtime.node ? (nodeExe() ?? "node") : funExe();
 
   const cmd = [
     exe,
-    ...(runtime == Runtime.bun ? ["--smol"] : []),
+    ...(runtime == Runtime.fun ? ["--smol"] : []),
     join(baseDir, "main.js"),
     testName,
     jsArgs ?? "[]",
@@ -382,7 +382,7 @@ async function runOn(runtime: Runtime, buildMode: BuildMode, testName: string, j
   const proc = spawn({
     cmd,
     cwd: baseDir,
-    env: bunEnv,
+    env: funEnv,
     stdio: ["inherit", "pipe", "pipe"],
   });
   const [exitCode, out, err] = await Promise.all([proc.exited, proc.stdout.text(), proc.stderr.text()]);

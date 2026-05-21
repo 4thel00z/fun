@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import net from "net";
 
-// Regression test for https://github.com/oven-sh/bun/issues/8893
+// Regression test for https://github.com/underdoc-org/fun/issues/8893
 // Bytes >= 0x80 in HTTP header values were incorrectly stripped because
 // the whitespace trimming in HttpParser.h compared signed chars against 33.
 // On platforms where char is signed (x86_64), bytes 0x80-0xFF are negative
@@ -10,7 +10,7 @@ import net from "net";
 test("header values preserve bytes >= 0x80", async () => {
   let receivedValue: string | null = null;
 
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       receivedValue = req.headers.get("x-test");
@@ -50,7 +50,7 @@ test("header values preserve bytes >= 0x80", async () => {
 test("header values still trim actual whitespace (SP, HTAB)", async () => {
   let receivedValue: string | null = null;
 
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       receivedValue = req.headers.get("x-test");

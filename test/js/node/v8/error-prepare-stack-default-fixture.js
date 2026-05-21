@@ -1,4 +1,4 @@
-// @bun
+// @fun
 // This tests that Error.prepareStackTrace behaves the same when it is set to undefined as when it was never set.
 const orig = Error.prepareStackTrace;
 

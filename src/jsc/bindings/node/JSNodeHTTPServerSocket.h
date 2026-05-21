@@ -3,7 +3,7 @@
 #include "root.h"
 #include <JavaScriptCore/JSDestructibleObject.h>
 #include <JavaScriptCore/JSObject.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 extern "C" {
 struct us_socket_stream_buffer_t {
@@ -36,7 +36,7 @@ namespace WebCore {
 class JSNodeHTTPResponse;
 }
 
-namespace Bun {
+namespace Fun {
 
 class JSNodeHTTPServerSocketPrototype;
 
@@ -105,4 +105,4 @@ public:
     void finishCreation(JSC::VM& vm);
 };
 
-} // namespace Bun
+} // namespace Fun

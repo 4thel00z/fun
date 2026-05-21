@@ -1,10 +1,10 @@
 //! Extracted from `install/PackageManager/PackageManagerOptions.zig` so
-//! `options_types/schema.zig`, `cli/bunfig.zig`, and `ini/` can name the
+//! `options_types/schema.zig`, `cli/funfig.zig`, and `ini/` can name the
 //! linker mode without depending on the full package manager.
 pub const NodeLinker = enum(u8) {
     // If workspaces are used: isolated
     // If not: hoisted
-    // Used when nodeLinker is absent from package.json/bun.lock/bun.lockb
+    // Used when nodeLinker is absent from package.json/fun.lock/fun.lockb
     auto,
 
     hoisted,
@@ -21,5 +21,5 @@ pub const NodeLinker = enum(u8) {
     }
 };
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;

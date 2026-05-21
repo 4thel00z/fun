@@ -33,7 +33,7 @@ static void fuzzilliSignalHandler(int sig)
     raise(sig);
 }
 
-// Implementation of the global fuzzilli() function for Bun
+// Implementation of the global fuzzilli() function for Fun
 // This function is used by Fuzzilli to:
 // 1. Test crash detection with fuzzilli('FUZZILLI_CRASH', type)
 // 2. Print output with fuzzilli('FUZZILLI_PRINT', value)
@@ -254,8 +254,8 @@ JSC_DEFINE_HOST_FUNCTION(jsResetCoverage, (JSC::JSGlobalObject * globalObject, J
     return JSC::JSValue::encode(JSC::jsUndefined());
 }
 
-// Register the fuzzilli() function on a Bun global object
-void Bun__REPRL__registerFuzzilliFunctions(Zig::GlobalObject* globalObject)
+// Register the fuzzilli() function on a Fun global object
+void Fun__REPRL__registerFuzzilliFunctions(Zig::GlobalObject* globalObject)
 {
     JSC::VM& vm = globalObject->vm();
 

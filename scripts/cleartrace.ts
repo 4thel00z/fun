@@ -1,4 +1,6 @@
-// `fish -c "bun run watch 2>&1 | bun scripts/cleartrace"`
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
+// `fish -c "fun run watch 2>&1 | fun scripts/cleartrace"`
 
 import { createInterface } from "node:readline";
 
@@ -21,8 +23,8 @@ async function doNow() {
   const eatChunk = chunk;
   chunk = [];
   if (eatChunk.length > 0) {
-    const proc = Bun.spawn({
-      cmd: ["bun", "scripts/cleartrace-impl.js"],
+    const proc = Fun.spawn({
+      cmd: ["fun", "scripts/cleartrace-impl.js"],
       stdio: ["pipe", "inherit", "inherit"],
     });
     proc.stdin.write(eatChunk.join("\n"));

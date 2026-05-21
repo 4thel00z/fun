@@ -87,8 +87,8 @@ const State = struct {
 
     fn showTrace(self: *State) void {
         if (comptime !traces_enabled) return;
-        bun.Output.err("race condition", "`CriticalSection` first entered here:", .{});
-        bun.crash_handler.dumpStackTrace(
+        fun.Output.err("race condition", "`CriticalSection` first entered here:", .{});
+        fun.crash_handler.dumpStackTrace(
             self.owner_trace.trace(),
             .{ .frame_count = 10, .stop_at_jsc_llint = true },
         );
@@ -191,12 +191,12 @@ pub fn end(self: *Self) void {
     if (comptime enabled) self.internal_state.unlock();
 }
 
-pub const enabled = bun.Environment.ci_assert;
+pub const enabled = fun.Environment.ci_assert;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const invalid_thread_id = @import("./thread_id.zig").invalid;
-const StoredTrace = bun.crash_handler.StoredTrace;
-const traces_enabled = bun.Environment.isDebug;
+const StoredTrace = fun.crash_handler.StoredTrace;
+const traces_enabled = fun.Environment.isDebug;
 
 const std = @import("std");
 const Thread = std.Thread;

@@ -32,7 +32,7 @@
 #include <JavaScriptCore/JSCJSValueInlines.h>
 #include <wtf/CrossThreadCopier.h>
 
-// -- BUN --
+// -- FUN --
 #include <openssl/curve25519.h>
 
 namespace WebCore {

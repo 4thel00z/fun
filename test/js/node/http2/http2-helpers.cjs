@@ -3,7 +3,7 @@ const path = require("path");
 const TLS_CERT = require("harness").tls;
 module.exports.TLS_CERT = TLS_CERT;
 module.exports.TLS_OPTIONS = { ca: TLS_CERT.cert };
-const nodeExecutable = typeof Bun !== "undefined" ? Bun.which("node") : "node";
+const nodeExecutable = typeof Fun !== "undefined" ? Fun.which("node") : "node";
 
 exports.nodeEchoServer = async function nodeEchoServer(paddingStrategy = 0) {
   if (!nodeExecutable) throw new Error("node executable not found");

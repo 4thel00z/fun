@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug } from "harness";
 import { join } from "node:path";
 
 // The getHeapSnapshot() round-trip must never let the worker thread touch
@@ -24,9 +24,9 @@ test(
     const fixture = join(import.meta.dir, "heap-snapshot-gc-race-fixture.js");
 
     for (let i = 0; i < attempts; i++) {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), fixture],
-        env: { ...bunEnv, ITERS: iters },
+      await using proc = Fun.spawn({
+        cmd: [funExe(), fixture],
+        env: { ...funEnv, ITERS: iters },
         stdout: "pipe",
         stderr: "pipe",
       });

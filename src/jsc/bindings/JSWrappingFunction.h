@@ -9,7 +9,7 @@ class GlobalObject;
 #include <JavaScriptCore/VM.h>
 
 #include "headers-handwritten.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/CallFrame.h>
 
 namespace JSC {
@@ -24,7 +24,7 @@ using NativeFunctionPtr = SYSV_ABI JSC::EncodedJSValue (*)(JSC::JSGlobalObject* 
  * Subclass of JSC::JSFunction that holds an additional single native JSFunction as property.
  * Can be used to wrap JS function calls with additional logic at native level.
  *
- * Used for example for bun test to implement support for `expect.extends()`.
+ * Used for example for fun test to implement support for `expect.extends()`.
  */
 class JSWrappingFunction final : public JSC::JSFunction {
 public:
@@ -50,7 +50,7 @@ public:
     }
 
     DECLARE_EXPORT_INFO;
-    static JSWrappingFunction* create(JSC::VM& vm, Zig::GlobalObject* globalObject, const BunString* symbolName, NativeFunctionPtr functionPointer, JSC::JSValue wrappedFn);
+    static JSWrappingFunction* create(JSC::VM& vm, Zig::GlobalObject* globalObject, const FunString* symbolName, NativeFunctionPtr functionPointer, JSC::JSValue wrappedFn);
 
     static JSC::Structure* createStructure(JSC::VM& vm, JSC::JSGlobalObject* globalObject, JSC::JSValue prototype)
     {

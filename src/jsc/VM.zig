@@ -20,7 +20,7 @@ pub const VM = opaque {
     }
 
     pub fn isJITEnabled() bool {
-        return bun.cpp.JSC__VM__isJITEnabled();
+        return fun.cpp.JSC__VM__isJITEnabled();
     }
 
     extern fn JSC__VM__hasExecutionTimeLimit(vm: *VM) bool;
@@ -147,8 +147,8 @@ pub const VM = opaque {
         return JSC__VM__isEntered(vm);
     }
 
-    pub fn isTerminationException(vm: *VM, exception: *bun.jsc.Exception) bool {
-        return bun.cpp.JSC__VM__isTerminationException(vm, exception);
+    pub fn isTerminationException(vm: *VM, exception: *fun.jsc.Exception) bool {
+        return fun.cpp.JSC__VM__isTerminationException(vm, exception);
     }
 
     extern fn JSC__VM__hasTerminationRequest(vm: *VM) bool;
@@ -163,7 +163,7 @@ pub const VM = opaque {
 
     extern fn JSC__VM__throwError(*VM, *JSGlobalObject, JSValue) void;
     pub fn throwError(vm: *VM, global_object: *JSGlobalObject, value: JSValue) error{JSError} {
-        var scope: bun.jsc.ExceptionValidationScope = undefined;
+        var scope: fun.jsc.ExceptionValidationScope = undefined;
         scope.init(global_object, @src());
         defer scope.deinit();
         scope.assertNoException();
@@ -203,8 +203,8 @@ pub const VM = opaque {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

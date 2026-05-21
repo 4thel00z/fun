@@ -39,12 +39,12 @@ const session = await new Promise<Buffer>((resolve, reject) => {
 });
 
 // Call native setSession() `n` times from the `open` handler of a single TLS
-// client connection. For an SSL socket, Bun only invokes `open` (before the
+// client connection. For an SSL socket, Fun only invokes `open` (before the
 // handshake) when both `open` and `handshake` handlers are supplied.
 function runSetSessionLoop(n: number) {
   const { promise, resolve, reject } = Promise.withResolvers<number>();
   let calls = 0;
-  Bun.connect({
+  Fun.connect({
     hostname: "127.0.0.1",
     port,
     tls: { rejectUnauthorized: false },
@@ -73,11 +73,11 @@ function runSetSessionLoop(n: number) {
 // Warm up the allocator so the measured window isn't dominated by first-use
 // growth (mimalloc page commit, JIT, etc.).
 await runSetSessionLoop(500);
-Bun.gc(true);
+Fun.gc(true);
 const before = process.memoryUsage.rss();
 
 const calls = await runSetSessionLoop(iterations);
-Bun.gc(true);
+Fun.gc(true);
 const after = process.memoryUsage.rss();
 
 console.log(JSON.stringify({ calls, growthBytes: after - before }));

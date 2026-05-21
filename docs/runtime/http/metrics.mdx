@@ -8,7 +8,7 @@ description: Monitor server activity with built-in metrics
 Monitor server activity with built-in counters:
 
 ```ts
-const server = Bun.serve({
+const server = Fun.serve({
   fetch(req, server) {
     return new Response(
       `Active requests: ${server.pendingRequests}\n` + `Active WebSockets: ${server.pendingWebSockets}`,
@@ -22,7 +22,7 @@ const server = Bun.serve({
 Get count of subscribers for a WebSocket topic:
 
 ```ts
-const server = Bun.serve({
+const server = Fun.serve({
   fetch(req, server) {
     const chatUsers = server.subscriberCount("chat");
     return new Response(`${chatUsers} users in chat`);

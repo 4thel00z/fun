@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import path from "path";
 
 test("SharedArrayBuffer with workers doesn't crash", async () => {

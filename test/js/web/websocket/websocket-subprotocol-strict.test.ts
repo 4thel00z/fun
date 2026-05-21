@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, mock } from "fun:test";
 import crypto from "node:crypto";
 import net from "node:net";
 

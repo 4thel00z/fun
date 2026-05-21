@@ -7,14 +7,14 @@ function closeHandler() {
   console.log("closeHandler called");
 }
 
-let bunExe = process.execPath;
-if ((process.versions.bun || "").endsWith("_debug")) {
-  bunExe = "bun-debug";
-} else if (bunExe.endsWith("node")) {
-  bunExe = "bun";
+let funExe = process.execPath;
+if ((process.versions.fun || "").endsWith("_debug")) {
+  funExe = "fun-debug";
+} else if (funExe.endsWith("node")) {
+  funExe = "fun";
 }
 
-const p = spawn(bunExe, ["--version"]);
+const p = spawn(funExe, ["--version"]);
 
 p.on("exit", exitHandler);
 p.on("close", closeHandler);

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tempDir } from "harness";
 
 // Type definitions for metafile structure
@@ -37,7 +37,7 @@ describe("bundler metafile", () => {
       "foo.js": `export const foo = "hello";`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.js`],
       metafile: true,
     });
@@ -60,7 +60,7 @@ describe("bundler metafile", () => {
       "helper.js": `export function helper() { return 42; }`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -88,7 +88,7 @@ describe("bundler metafile", () => {
       "main.js": `export const value = 123;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/main.js`],
       metafile: true,
     });
@@ -119,7 +119,7 @@ describe("bundler metafile", () => {
       "b.js": `export const b = 10;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.js`],
       metafile: true,
     });
@@ -148,7 +148,7 @@ describe("bundler metafile", () => {
       "lib/helper.js": `export const foo = 42;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -182,7 +182,7 @@ describe("bundler metafile", () => {
       "test.js": `console.log("test");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/test.js`],
       // metafile is not set (defaults to false)
     });
@@ -196,7 +196,7 @@ describe("bundler metafile", () => {
       "lib.js": `export const foo = 1; export const bar = 2; export default function() {}`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/lib.js`],
       metafile: true,
     });
@@ -219,7 +219,7 @@ describe("bundler metafile", () => {
       "entry.js": `console.log("entry");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -247,7 +247,7 @@ describe("bundler metafile", () => {
       "esm.js": `export const x = 1;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/esm.js`],
       metafile: true,
     });
@@ -274,7 +274,7 @@ describe("bundler metafile", () => {
       "foo.js": `module.exports = { value: 42 };`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -301,7 +301,7 @@ describe("bundler metafile", () => {
       "index.js": `import fs from "fs"; console.log(fs);`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.js`],
       metafile: true,
       external: ["fs"],
@@ -333,7 +333,7 @@ describe("bundler metafile", () => {
       "shared.js": `export const shared = "shared value";`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/a.js`, `${dir}/b.js`],
       metafile: true,
       splitting: true,
@@ -355,7 +355,7 @@ describe("bundler metafile", () => {
       "data.json": `{"key": "value"}`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -389,7 +389,7 @@ describe("bundler metafile", () => {
       "foo.js": `module.exports = { value: 42 };`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -422,7 +422,7 @@ describe("bundler metafile", () => {
       "dynamic.js": `export const value = 123;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
       splitting: true,
@@ -464,7 +464,7 @@ describe("bundler metafile", () => {
       "styles.css": `.foo { color: red; }`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -494,7 +494,7 @@ describe("bundler metafile", () => {
       "b.js": `import { a } from "./a.js"; export const b = 2; console.log(a);`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/a.js`],
       metafile: true,
     });
@@ -525,14 +525,14 @@ describe("bundler metafile", () => {
   });
 });
 
-describe("Bun.build metafile option variants", () => {
+describe("Fun.build metafile option variants", () => {
   test("metafile: string writes JSON to file path", async () => {
     using dir = tempDir("metafile-string-path", {
       "entry.js": `import { foo } from "./foo.js"; console.log(foo);`,
       "foo.js": `export const foo = "hello";`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       outdir: `${dir}/dist`,
       metafile: "output-meta.json",
@@ -541,7 +541,7 @@ describe("Bun.build metafile option variants", () => {
     expect(result.success).toBe(true);
 
     // Check JSON file was written (relative to outdir)
-    const jsonFile = Bun.file(`${dir}/dist/output-meta.json`);
+    const jsonFile = Fun.file(`${dir}/dist/output-meta.json`);
     expect(await jsonFile.exists()).toBe(true);
 
     // Verify JSON content
@@ -563,7 +563,7 @@ describe("Bun.build metafile option variants", () => {
       "main.js": `export const value = 42;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/main.js`],
       outdir: `${dir}/dist`,
       metafile: { json: "custom-meta.json" },
@@ -572,7 +572,7 @@ describe("Bun.build metafile option variants", () => {
     expect(result.success).toBe(true);
 
     // Check JSON file was written (relative to outdir)
-    const jsonFile = Bun.file(`${dir}/dist/custom-meta.json`);
+    const jsonFile = Fun.file(`${dir}/dist/custom-meta.json`);
     expect(await jsonFile.exists()).toBe(true);
 
     // Verify content
@@ -587,7 +587,7 @@ describe("Bun.build metafile option variants", () => {
       "util.js": `console.log("util");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/app.js`],
       outdir: `${dir}/dist`,
       metafile: { markdown: "analysis.md" },
@@ -596,7 +596,7 @@ describe("Bun.build metafile option variants", () => {
     expect(result.success).toBe(true);
 
     // Check markdown file was written (relative to outdir)
-    const mdFile = Bun.file(`${dir}/dist/analysis.md`);
+    const mdFile = Fun.file(`${dir}/dist/analysis.md`);
     expect(await mdFile.exists()).toBe(true);
 
     // Verify markdown content
@@ -616,7 +616,7 @@ describe("Bun.build metafile option variants", () => {
       "helper.js": `export function helper() { return "help"; }`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/index.js`],
       outdir: `${dir}/dist`,
       metafile: {
@@ -628,8 +628,8 @@ describe("Bun.build metafile option variants", () => {
     expect(result.success).toBe(true);
 
     // Check both files exist (relative to outdir)
-    const jsonFile = Bun.file(`${dir}/dist/meta.json`);
-    const mdFile = Bun.file(`${dir}/dist/meta.md`);
+    const jsonFile = Fun.file(`${dir}/dist/meta.json`);
+    const mdFile = Fun.file(`${dir}/dist/meta.md`);
     expect(await jsonFile.exists()).toBe(true);
     expect(await mdFile.exists()).toBe(true);
 
@@ -653,7 +653,7 @@ describe("Bun.build metafile option variants", () => {
       "entry.js": `export const x = 1;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/entry.js`],
       metafile: true,
     });
@@ -677,7 +677,7 @@ describe("Bun.build metafile option variants", () => {
       "test.js": `console.log("test");`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/test.js`],
       metafile: true,
     });
@@ -695,7 +695,7 @@ describe("Bun.build metafile option variants", () => {
       "test.js": `export const a = 1;`,
     });
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [`${dir}/test.js`],
       outdir: `${dir}/dist`,
       metafile: { markdown: "meta.md" },
@@ -711,18 +711,18 @@ describe("Bun.build metafile option variants", () => {
 });
 
 // CLI tests for --metafile-md
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 
-describe("bun build --metafile-md", () => {
+describe("fun build --metafile-md", () => {
   test("generates markdown metafile with default name", async () => {
     using dir = tempDir("metafile-md-test", {
       "index.js": `import { foo } from "./foo.js"; console.log(foo);`,
       "foo.js": `export const foo = "hello";`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "index.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "index.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -733,7 +733,7 @@ describe("bun build --metafile-md", () => {
     expect(exitCode).toBe(0);
 
     // Check meta.md was created
-    const metaFile = Bun.file(`${dir}/meta.md`);
+    const metaFile = Fun.file(`${dir}/meta.md`);
     expect(await metaFile.exists()).toBe(true);
 
     const content = await metaFile.text();
@@ -754,9 +754,9 @@ describe("bun build --metafile-md", () => {
       "main.js": `export const value = 42;`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "main.js", "--metafile-md=build-graph.md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "main.js", "--metafile-md=build-graph.md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -767,7 +767,7 @@ describe("bun build --metafile-md", () => {
     expect(exitCode).toBe(0);
 
     // Check custom-named file was created
-    const metaFile = Bun.file(`${dir}/build-graph.md`);
+    const metaFile = Fun.file(`${dir}/build-graph.md`);
     expect(await metaFile.exists()).toBe(true);
 
     const content = await metaFile.text();
@@ -781,9 +781,9 @@ describe("bun build --metafile-md", () => {
       "util.js": `console.log("util");`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "app.js", "--metafile=meta.json", "--metafile-md=meta.md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "app.js", "--metafile=meta.json", "--metafile-md=meta.md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -794,8 +794,8 @@ describe("bun build --metafile-md", () => {
     expect(exitCode).toBe(0);
 
     // Check both files exist
-    const jsonFile = Bun.file(`${dir}/meta.json`);
-    const mdFile = Bun.file(`${dir}/meta.md`);
+    const jsonFile = Fun.file(`${dir}/meta.json`);
+    const mdFile = Fun.file(`${dir}/meta.md`);
 
     expect(await jsonFile.exists()).toBe(true);
     expect(await mdFile.exists()).toBe(true);
@@ -818,9 +818,9 @@ describe("bun build --metafile-md", () => {
       "b.js": `export const b = 2;`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -830,7 +830,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Verify summary table
     expect(content).toContain("| Input modules |");
@@ -846,9 +846,9 @@ describe("bun build --metafile-md", () => {
       "entry.js": `import { x } from "./esm.js"; const cjs = require("./cjs.js"); console.log(x, cjs);`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -858,7 +858,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Should indicate both esm and cjs formats
     expect(content).toContain("**Format**: esm");
@@ -870,9 +870,9 @@ describe("bun build --metafile-md", () => {
       "app.js": `import fs from "fs"; console.log(fs);`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "app.js", "--metafile-md", "--external=fs", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "app.js", "--metafile-md", "--external=fs", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -882,7 +882,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Check external is noted in summary
     expect(content).toContain("External imports");
@@ -896,9 +896,9 @@ describe("bun build --metafile-md", () => {
       "lib.js": `export const foo = 1; export const bar = 2; export default function main() {}`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "lib.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "lib.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -908,7 +908,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Check exports are listed
     expect(content).toContain("**Exports**:");
@@ -923,9 +923,9 @@ describe("bun build --metafile-md", () => {
       "utils.js": `export function utils() { return "utility"; }`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "index.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "index.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -935,7 +935,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Check bundled modules table
     expect(content).toContain("**Bundled modules**");
@@ -948,9 +948,9 @@ describe("bun build --metafile-md", () => {
       "styles.css": `.foo { color: red; }`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "app.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "app.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -960,7 +960,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Check CSS bundle reference
     expect(content).toContain("**CSS bundle**:");
@@ -979,9 +979,9 @@ describe("bun build --metafile-md", () => {
       "required.js": `module.exports = { required_value: 3 };`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "entry.js", "--metafile-md", "--outdir=dist", "--splitting"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "entry.js", "--metafile-md", "--outdir=dist", "--splitting"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -991,7 +991,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Check import kinds are shown
     expect(content).toContain("import-statement");
@@ -1008,9 +1008,9 @@ describe("bun build --metafile-md", () => {
       "entry.js": `import "./a.js"; import "./b.js"; import "./c.js";`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1020,7 +1020,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Verify the Dependency Chains section exists
     expect(content).toContain("## Dependency Chains");
@@ -1042,9 +1042,9 @@ describe("bun build --metafile-md", () => {
       "large.js": `export const large = "${"x".repeat(500)}";`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1054,7 +1054,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Verify bloat analysis section
     expect(content).toContain("## Largest Modules by Output Contribution");
@@ -1067,9 +1067,9 @@ describe("bun build --metafile-md", () => {
       "entry.js": `export const x = 1;`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "entry.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1079,7 +1079,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Should show output contribution in Full Module Graph
     expect(content).toContain("**Output contribution**:");
@@ -1092,9 +1092,9 @@ describe("bun build --metafile-md", () => {
       "helper.js": `export const helper = "utility";`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "main.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "main.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1104,7 +1104,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Should have table of contents
     expect(content).toContain("## Table of Contents");
@@ -1132,9 +1132,9 @@ describe("bun build --metafile-md", () => {
       "app.js": `console.log("app");`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "app.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "app.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1144,7 +1144,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Should have entry point marker in raw data
     expect(content).toContain("[ENTRY:");
@@ -1157,9 +1157,9 @@ describe("bun build --metafile-md", () => {
       "index.js": `import fs from "fs"; console.log(fs);`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "index.js", "--metafile-md", "--external=fs", "--outdir=dist", "--target=node"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "index.js", "--metafile-md", "--external=fs", "--outdir=dist", "--target=node"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1169,7 +1169,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Should have external marker in raw data
     expect(content).toContain("[EXTERNAL:");
@@ -1182,9 +1182,9 @@ describe("bun build --metafile-md", () => {
       "node_modules/lodash/index.js": `export default { version: "4.0.0" };`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "app.js", "--metafile-md", "--outdir=dist"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "app.js", "--metafile-md", "--outdir=dist"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -1194,7 +1194,7 @@ describe("bun build --metafile-md", () => {
 
     expect(exitCode).toBe(0);
 
-    const content = await Bun.file(`${dir}/meta.md`).text();
+    const content = await Fun.file(`${dir}/meta.md`).text();
 
     // Should have node_modules marker in raw data
     expect(content).toContain("[NODE_MODULES:");

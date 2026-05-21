@@ -721,7 +721,7 @@ pub const visible = struct {
     // wrapping-subtract trick as the C++ ANSI helpers:
     //   c in [Lo, Hi]  <=>  (c - Lo) <= (Hi - Lo) unsigned
     fn scanLaneInRange(comptime T: type, comptime Lo: T, comptime Hi: T, slice: []const T) ?usize {
-        comptime bun.assert(Lo <= Hi);
+        comptime fun.assert(Lo <= Hi);
         const stride = 16 / @sizeOf(T);
         const MaskInt = std.meta.Int(.unsigned, stride);
         var i: usize = 0;
@@ -745,7 +745,7 @@ pub const visible = struct {
     // SIMD scan for the first lane equal to any of `targets`. Returns null if
     // not found. Used to find OSC terminators (BEL/ESC and the C1 ST 0x9C).
     fn scanLaneAnyOf(comptime T: type, comptime targets: []const T, slice: []const T) ?usize {
-        comptime bun.assert(targets.len > 0);
+        comptime fun.assert(targets.len > 0);
         const stride = 16 / @sizeOf(T);
         const MaskInt = std.meta.Int(.unsigned, stride);
         var i: usize = 0;
@@ -827,12 +827,12 @@ pub const visible = struct {
     fn visibleUTF8WidthFn(input: []const u8, comptime asciiFn: anytype) usize {
         var bytes = input;
         var len: usize = 0;
-        while (bun.strings.firstNonASCII(bytes)) |i| {
+        while (fun.strings.firstNonASCII(bytes)) |i| {
             len += asciiFn(bytes[0..i]);
             const this_chunk = bytes[i..];
             const byte = this_chunk[0];
 
-            const skip = bun.strings.wtf8ByteSequenceLengthWithInvalid(byte);
+            const skip = fun.strings.wtf8ByteSequenceLengthWithInvalid(byte);
             const cp_bytes: [4]u8 = switch (@min(@as(usize, skip), this_chunk.len)) {
                 inline 1, 2, 3, 4 => |cp_len| .{
                     byte,
@@ -1343,7 +1343,7 @@ pub const visible = struct {
             }
             const this_chunk = bytes[i..];
             const byte = this_chunk[0];
-            const skip = bun.strings.wtf8ByteSequenceLengthWithInvalid(byte);
+            const skip = fun.strings.wtf8ByteSequenceLengthWithInvalid(byte);
             const cp_bytes: [4]u8 = switch (@min(@as(usize, skip), this_chunk.len)) {
                 inline 1, 2, 3, 4 => |cp_len| .{
                     byte,
@@ -1379,33 +1379,33 @@ extern fn icu_hasBinaryProperty(c: u32, which: c_uint) bool;
 // C exports for wrapAnsi.cpp
 
 /// Calculate visible width of UTF-8 string excluding ANSI escape codes
-export fn Bun__visibleWidthExcludeANSI_utf8(ptr: [*]const u8, len: usize, ambiguous_as_wide: bool) usize {
+export fn Fun__visibleWidthExcludeANSI_utf8(ptr: [*]const u8, len: usize, ambiguous_as_wide: bool) usize {
     _ = ambiguous_as_wide; // UTF-8 version doesn't use this parameter
     const input = ptr[0..len];
     return visible.width.exclude_ansi_colors.utf8(input);
 }
 
 /// Calculate visible width of UTF-16 string excluding ANSI escape codes
-export fn Bun__visibleWidthExcludeANSI_utf16(ptr: [*]const u16, len: usize, ambiguous_as_wide: bool) usize {
+export fn Fun__visibleWidthExcludeANSI_utf16(ptr: [*]const u16, len: usize, ambiguous_as_wide: bool) usize {
     const input = ptr[0..len];
     return visible.width.exclude_ansi_colors.utf16(input, ambiguous_as_wide);
 }
 
 /// Calculate visible width of Latin-1 string excluding ANSI escape codes
-export fn Bun__visibleWidthExcludeANSI_latin1(ptr: [*]const u8, len: usize) usize {
+export fn Fun__visibleWidthExcludeANSI_latin1(ptr: [*]const u8, len: usize) usize {
     const input = ptr[0..len];
     return visible.width.exclude_ansi_colors.latin1(input);
 }
 
 /// Calculate visible width of a single codepoint
-export fn Bun__codepointWidth(cp: u32, ambiguous_as_wide: bool) u8 {
+export fn Fun__codepointWidth(cp: u32, ambiguous_as_wide: bool) u8 {
     return @intCast(visibleCodepointWidth(cp, ambiguous_as_wide));
 }
 
 /// Grapheme break detection for C++ callers.
 /// Returns true if there should be a grapheme break between cp1 and cp2.
 /// `state` is an opaque u8 that must be initialized to 0 and passed between calls.
-export fn Bun__graphemeBreak(cp1: u32, cp2: u32, state_ptr: *u8) bool {
+export fn Fun__graphemeBreak(cp1: u32, cp2: u32, state_ptr: *u8) bool {
     var state: grapheme.BreakState = @enumFromInt(state_ptr.*);
     const result = grapheme.graphemeBreak(@truncate(cp1), @truncate(cp2), &state);
     state_ptr.* = @intFromEnum(state);
@@ -1413,7 +1413,7 @@ export fn Bun__graphemeBreak(cp1: u32, cp2: u32, state_ptr: *u8) bool {
 }
 
 /// Check if a codepoint has the Emoji property (using ICU).
-export fn Bun__isEmojiPresentation(cp: u32) bool {
+export fn Fun__isEmojiPresentation(cp: u32) bool {
     if (cp < 0x203C) return false;
     if (cp >= 0x2C00 and cp < 0x1F000) return false;
     if (cp == 0xFE0E or cp == 0xFE0F or cp == 0x200D) return false;
@@ -1421,10 +1421,10 @@ export fn Bun__isEmojiPresentation(cp: u32) bool {
     return icu_hasBinaryProperty(cp, 57);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const strings = bun.strings;
+const strings = fun.strings;
 const decodeWTF8RuneTMultibyte = strings.decodeWTF8RuneTMultibyte;
 const firstNonASCII = strings.firstNonASCII;
 const firstNonASCII16 = strings.firstNonASCII16;

@@ -6,13 +6,13 @@
 // closed, handleClose's single deref left the struct at refcount 1 forever.
 //
 // The wss:// endpoint and the CONNECT proxy are both node:net/tls-based so
-// everything stays on the JS thread — using Bun.serve here races the debug
+// everything stays on the JS thread — using Fun.serve here races the debug
 // scoped logger's per-scope mutex against the server's own allocations and
 // sporadically deadlocks the fixture (unrelated to the leak under test).
 //
-// Runs under BUN_DEBUG_alloc=1 so the test can count
+// Runs under FUN_DEBUG_alloc=1 so the test can count
 //   new(…NewHTTPUpgradeClient(…))   vs   destroy(…NewHTTPUpgradeClient(…))
-// emitted by `bun.new`/`bun.destroy` on debug builds.
+// emitted by `fun.new`/`fun.destroy` on debug builds.
 import net from "node:net";
 import tls from "node:tls";
 import crypto from "node:crypto";
@@ -91,7 +91,7 @@ const proxyPort = (proxy.address() as net.AddressInfo).port;
 
 async function roundTrip() {
   const ws = new WebSocket(`wss://127.0.0.1:${wssPort}/`, {
-    // @ts-ignore Bun-specific options
+    // @ts-ignore Fun-specific options
     tls: { rejectUnauthorized: false },
     proxy: `http://127.0.0.1:${proxyPort}`,
   });

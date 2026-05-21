@@ -1,4 +1,4 @@
-const log = bun.Output.scoped(.parseArgs, .hidden);
+const log = fun.Output.scoped(.parseArgs, .hidden);
 
 /// Represents a slice of a JSValue array
 const ArgsSlice = struct {
@@ -6,7 +6,7 @@ const ArgsSlice = struct {
     start: u32,
     end: u32,
 
-    pub inline fn get(this: ArgsSlice, globalThis: *JSGlobalObject, i: u32) bun.JSError!JSValue {
+    pub inline fn get(this: ArgsSlice, globalThis: *JSGlobalObject, i: u32) fun.JSError!JSValue {
         return this.array.getIndex(globalThis, this.start + i);
     }
 };
@@ -15,21 +15,21 @@ const ArgsSlice = struct {
 /// used in order to avoid creating unneeded JSValue as much as possible
 const ValueRef = union(Tag) {
     jsvalue: JSValue,
-    bunstr: String,
+    funstr: String,
 
-    const Tag = enum { jsvalue, bunstr };
+    const Tag = enum { jsvalue, funstr };
 
-    pub fn asBunString(this: ValueRef, globalObject: *JSGlobalObject) bun.String {
+    pub fn asFunString(this: ValueRef, globalObject: *JSGlobalObject) fun.String {
         return switch (this) {
-            .jsvalue => |str| str.toBunString(globalObject) catch @panic("unexpected exception"),
-            .bunstr => |str| return str,
+            .jsvalue => |str| str.toFunString(globalObject) catch @panic("unexpected exception"),
+            .funstr => |str| return str,
         };
     }
 
-    pub fn asJSValue(this: ValueRef, globalObject: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn asJSValue(this: ValueRef, globalObject: *JSGlobalObject) fun.JSError!JSValue {
         return switch (this) {
             .jsvalue => |str| str,
-            .bunstr => |str| return str.toJS(globalObject),
+            .funstr => |str| return str.toJS(globalObject),
         };
     }
 };
@@ -73,7 +73,7 @@ const OptionToken = struct {
         /// Formats the raw name of the arg (includes any dashes and excludes inline values)
         pub fn format(this: RawNameFormatter, writer: *std.Io.Writer) !void {
             const token = this.token;
-            const raw = token.raw.asBunString(this.globalThis);
+            const raw = token.raw.asFunString(this.globalThis);
             if (token.optgroup_idx) |optgroup_idx| {
                 try raw.substringWithLen(optgroup_idx, optgroup_idx + 1).format(writer);
             } else {
@@ -96,9 +96,9 @@ const OptionToken = struct {
     };
 
     /// Returns the raw name of the arg (includes any dashes and excludes inline values), as a JSValue
-    fn makeRawNameJSValue(this: OptionToken, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    fn makeRawNameJSValue(this: OptionToken, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         if (this.optgroup_idx) |optgroup_idx| {
-            const raw = this.raw.asBunString(globalThis);
+            const raw = this.raw.asFunString(globalThis);
             var buf: [8]u8 = undefined;
             const str = std.fmt.bufPrint(&buf, "-{f}", .{raw.substringWithLen(optgroup_idx, optgroup_idx + 1)}) catch unreachable;
             return String.borrowUTF8(str).toJS(globalThis);
@@ -108,12 +108,12 @@ const OptionToken = struct {
                     return try this.raw.asJSValue(globalThis);
                 },
                 .short_option_and_value => {
-                    var raw = this.raw.asBunString(globalThis);
+                    var raw = this.raw.asFunString(globalThis);
                     var substr = raw.substringWithLen(0, 2);
                     return substr.toJS(globalThis);
                 },
                 .long_option_and_value => {
-                    var raw = this.raw.asBunString(globalThis);
+                    var raw = this.raw.asFunString(globalThis);
                     const equal_index = raw.indexOfAsciiChar('=').?;
                     var substr = raw.substringWithLen(0, equal_index);
                     return substr.toJS(globalThis);
@@ -136,13 +136,13 @@ pub fn findOptionByLongName(long_name: String, options: []const OptionDefinition
 fn getDefaultArgs(globalThis: *JSGlobalObject) !ArgsSlice {
     // Work out where to slice process.argv for user supplied arguments
 
-    const exec_argv = bun.api.node.process.getExecArgv(globalThis);
-    const argv = bun.api.node.process.getArgv(globalThis);
+    const exec_argv = fun.api.node.process.getExecArgv(globalThis);
+    const argv = fun.api.node.process.getArgv(globalThis);
     if (argv.isArray() and exec_argv.isArray()) {
         var iter = try exec_argv.arrayIterator(globalThis);
         while (try iter.next()) |item| {
             if (item.isString()) {
-                const str = try item.toBunString(globalThis);
+                const str = try item.toFunString(globalThis);
                 defer str.deref();
                 if (str.eqlComptime("-e") or str.eqlComptime("--eval") or str.eqlComptime("-p") or str.eqlComptime("--print")) {
                     return .{
@@ -164,20 +164,20 @@ fn getDefaultArgs(globalThis: *JSGlobalObject) !ArgsSlice {
 }
 
 /// In strict mode, throw for possible usage errors like "--foo --bar" where foo was defined as a string-valued arg
-fn checkOptionLikeValue(globalThis: *JSGlobalObject, token: OptionToken) bun.JSError!void {
-    if (!token.inline_value and isOptionLikeValue(token.value.asBunString(globalThis))) {
+fn checkOptionLikeValue(globalThis: *JSGlobalObject, token: OptionToken) fun.JSError!void {
+    if (!token.inline_value and isOptionLikeValue(token.value.asFunString(globalThis))) {
         const raw_name = OptionToken.RawNameFormatter{ .token = token, .globalThis = globalThis };
 
         // Only show short example if user used short option.
         var err: JSValue = undefined;
-        if (token.raw.asBunString(globalThis).hasPrefixComptime("--")) {
+        if (token.raw.asFunString(globalThis).hasPrefixComptime("--")) {
             err = globalThis.toTypeError(
                 .PARSE_ARGS_INVALID_OPTION_VALUE,
                 "Option '{f}' argument is ambiguous.\nDid you forget to specify the option argument for '{f}'?\nTo specify an option argument starting with a dash use '{f}=-XYZ'.",
                 .{ raw_name, raw_name, raw_name },
             );
         } else {
-            const token_name = token.name.asBunString(globalThis);
+            const token_name = token.name.asFunString(globalThis);
             err = globalThis.toTypeError(
                 .PARSE_ARGS_INVALID_OPTION_VALUE,
                 "Option '{f}' argument is ambiguous.\nDid you forget to specify the option argument for '{f}'?\nTo specify an option argument starting with a dash use '--{f}=-XYZ' or '{f}-XYZ'.",
@@ -189,7 +189,7 @@ fn checkOptionLikeValue(globalThis: *JSGlobalObject, token: OptionToken) bun.JSE
 }
 
 /// In strict mode, throw for usage errors.
-fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefinition, allow_positionals: bool, token: OptionToken) bun.JSError!void {
+fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefinition, allow_positionals: bool, token: OptionToken) fun.JSError!void {
     if (token.option_idx) |option_idx| {
         const option = options[option_idx];
         switch (option.type) {
@@ -208,7 +208,7 @@ fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefiniti
                         if (!option.short_name.isEmpty()) "-" else "",
                         option.short_name,
                         if (!option.short_name.isEmpty()) ", " else "",
-                        token.name.asBunString(globalThis),
+                        token.name.asFunString(globalThis),
                     },
                 );
                 return globalThis.throwValue(err);
@@ -221,7 +221,7 @@ fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefiniti
                         if (!option.short_name.isEmpty()) "-" else "",
                         option.short_name,
                         if (!option.short_name.isEmpty()) ", " else "",
-                        token.name.asBunString(globalThis),
+                        token.name.asFunString(globalThis),
                     },
                 );
                 return globalThis.throwValue(err);
@@ -249,8 +249,8 @@ fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefiniti
 /// - `option_value`: value from user args
 /// - `options`: option configs, from `parseArgs({ options })`
 /// - `values`: option values returned in `values` by parseArgs
-fn storeOption(globalThis: *JSGlobalObject, option_name: ValueRef, option_value: ValueRef, option_idx: ?usize, negative: bool, options: []const OptionDefinition, values: JSValue) bun.JSError!void {
-    var key = option_name.asBunString(globalThis);
+fn storeOption(globalThis: *JSGlobalObject, option_name: ValueRef, option_value: ValueRef, option_idx: ?usize, negative: bool, options: []const OptionDefinition, values: JSValue) fun.JSError!void {
+    var key = option_name.asFunString(globalThis);
     if (key.eqlComptime("__proto__")) {
         return;
     }
@@ -279,7 +279,7 @@ fn storeOption(globalThis: *JSGlobalObject, option_name: ValueRef, option_value:
     }
 }
 
-fn parseOptionDefinitions(globalThis: *JSGlobalObject, options_obj: JSValue, option_definitions: *std.array_list.Managed(OptionDefinition)) bun.JSError!void {
+fn parseOptionDefinitions(globalThis: *JSGlobalObject, options_obj: JSValue, option_definitions: *std.array_list.Managed(OptionDefinition)) fun.JSError!void {
     try validators.validateObject(globalThis, options_obj, "options", .{}, .{});
 
     var iter = try jsc.JSPropertyIterator(.{ .skip_empty_name = false, .include_value = true }).init(
@@ -303,7 +303,7 @@ fn parseOptionDefinitions(globalThis: *JSGlobalObject, options_obj: JSValue, opt
 
         if (try obj.getOwn(globalThis, "short")) |short_option| {
             try validators.validateString(globalThis, short_option, "options.{f}.short", .{option.long_name});
-            var short_option_str = try short_option.toBunString(globalThis);
+            var short_option_str = try short_option.toFunString(globalThis);
             if (short_option_str.length() != 1) {
                 const err = globalThis.toTypeError(.INVALID_ARG_VALUE, "options.{f}.short must be a single character", .{option.long_name});
                 return globalThis.throwValue(err);
@@ -344,7 +344,7 @@ fn parseOptionDefinitions(globalThis: *JSGlobalObject, options_obj: JSValue, opt
             @tagName(option.type),
             if (!option.short_name.isEmpty()) option.short_name else String.static("none"),
             @intFromBool(option.multiple),
-            if (option.default_value) |dv| bun.tagName(JSValue, dv) else null,
+            if (option.default_value) |dv| fun.tagName(JSValue, dv) else null,
         });
 
         try option_definitions.append(option);
@@ -360,12 +360,12 @@ fn tokenizeArgs(
     globalThis: *JSGlobalObject,
     args: ArgsSlice,
     options: []const OptionDefinition,
-) bun.JSError!void {
+) fun.JSError!void {
     const num_args: u32 = args.end - args.start;
     var index: u32 = 0;
     while (index < num_args) : (index += 1) {
         const arg_ref: ValueRef = ValueRef{ .jsvalue = try args.get(globalThis, index) };
-        const arg = arg_ref.asBunString(globalThis);
+        const arg = arg_ref.asFunString(globalThis);
 
         const token_rawtype = classifyToken(arg, options);
         log(" [Arg #{d}] {s} ({f})", .{ index, @tagName(token_rawtype), arg });
@@ -407,7 +407,7 @@ fn tokenizeArgs(
                     .index = index,
                     .value = value,
                     .inline_value = has_inline_value,
-                    .name = ValueRef{ .bunstr = if (option_idx) |idx| options[idx].long_name else arg.substringWithLen(1, 2) },
+                    .name = ValueRef{ .funstr = if (option_idx) |idx| options[idx].long_name else arg.substringWithLen(1, 2) },
                     .parse_type = .lone_short_option,
                     .raw = arg_ref,
                     .option_idx = option_idx,
@@ -442,7 +442,7 @@ fn tokenizeArgs(
                             .optgroup_idx = @intCast(idx_in_optgroup),
                             .value = value,
                             .inline_value = has_inline_value,
-                            .name = ValueRef{ .bunstr = if (option_idx) |i| options[i].long_name else short_option },
+                            .name = ValueRef{ .funstr = if (option_idx) |i| options[i].long_name else short_option },
                             .parse_type = .lone_short_option,
                             .raw = arg_ref,
                             .option_idx = option_idx,
@@ -457,9 +457,9 @@ fn tokenizeArgs(
                         try ctx.handleToken(.{ .option = .{
                             .index = original_arg_idx,
                             .optgroup_idx = @intCast(idx_in_optgroup),
-                            .value = ValueRef{ .bunstr = arg.substring(idx_in_optgroup + 1) },
+                            .value = ValueRef{ .funstr = arg.substring(idx_in_optgroup + 1) },
                             .inline_value = true,
-                            .name = ValueRef{ .bunstr = if (option_idx) |i| options[i].long_name else short_option },
+                            .name = ValueRef{ .funstr = if (option_idx) |i| options[i].long_name else short_option },
                             .parse_type = .short_option_and_value,
                             .raw = arg_ref,
                             .option_idx = option_idx,
@@ -478,11 +478,11 @@ fn tokenizeArgs(
 
                 try ctx.handleToken(.{ .option = .{
                     .index = index,
-                    .value = ValueRef{ .bunstr = value },
+                    .value = ValueRef{ .funstr = value },
                     .inline_value = true,
-                    .name = ValueRef{ .bunstr = if (option_idx) |idx| options[idx].long_name else arg.substringWithLen(1, 2) },
+                    .name = ValueRef{ .funstr = if (option_idx) |idx| options[idx].long_name else arg.substringWithLen(1, 2) },
                     .parse_type = .short_option_and_value,
-                    .raw = ValueRef{ .bunstr = arg.substringWithLen(0, 2) },
+                    .raw = ValueRef{ .funstr = arg.substringWithLen(0, 2) },
                     .option_idx = option_idx,
                 } });
             },
@@ -510,7 +510,7 @@ fn tokenizeArgs(
                     .index = index,
                     .value = ValueRef{ .jsvalue = value orelse .js_undefined },
                     .inline_value = (value == null),
-                    .name = ValueRef{ .bunstr = long_option },
+                    .name = ValueRef{ .funstr = long_option },
                     .parse_type = .lone_long_option,
                     .raw = arg_ref,
                     .option_idx = option_idx,
@@ -528,9 +528,9 @@ fn tokenizeArgs(
 
                 try ctx.handleToken(.{ .option = .{
                     .index = index,
-                    .value = ValueRef{ .bunstr = value },
+                    .value = ValueRef{ .funstr = value },
                     .inline_value = true,
-                    .name = ValueRef{ .bunstr = long_option },
+                    .name = ValueRef{ .funstr = long_option },
                     .parse_type = .long_option_and_value,
                     .raw = arg_ref,
                     .option_idx = findOptionByLongName(long_option, options),
@@ -563,7 +563,7 @@ const ParseArgsState = struct {
     /// To reuse JSValue for the "kind" field in the output tokens array ("positional", "option", "option-terminator")
     kinds_jsvalues: [TokenKind.COUNT]?JSValue = [_]?JSValue{null} ** TokenKind.COUNT,
 
-    pub fn handleToken(this: *ParseArgsState, token_generic: Token) bun.JSError!void {
+    pub fn handleToken(this: *ParseArgsState, token_generic: Token) fun.JSError!void {
         var globalThis = this.globalThis;
 
         switch (token_generic) {
@@ -579,7 +579,7 @@ const ParseArgsState = struct {
                     const err = globalThis.toTypeError(
                         .PARSE_ARGS_UNEXPECTED_POSITIONAL,
                         "Unexpected argument '{f}'. This command does not take positional arguments",
-                        .{token.value.asBunString(globalThis)},
+                        .{token.value.asFunString(globalThis)},
                     );
                     return globalThis.throwValue(err);
                 }
@@ -634,10 +634,10 @@ const ParseArgsState = struct {
 
 comptime {
     const parseArgsFn = jsc.toJSHostFn(parseArgs);
-    @export(&parseArgsFn, .{ .name = "Bun__NodeUtil__jsParseArgs" });
+    @export(&parseArgsFn, .{ .name = "Fun__NodeUtil__jsParseArgs" });
 }
 
-pub fn parseArgs(globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn parseArgs(globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
     const config_value = callframe.argumentsAsArray(1)[0];
     //
@@ -755,10 +755,10 @@ const classifyToken = utils.classifyToken;
 const findOptionByShortName = utils.findOptionByShortName;
 const isOptionLikeValue = utils.isOptionLikeValue;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

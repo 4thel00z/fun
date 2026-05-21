@@ -9,7 +9,7 @@ const stream = new Response(await renderToReadableStream(<HelloWorld />));
 console.log(await stream.text());
 
 if (!process.env.NO_BUILD) {
-  const self = await Bun.build({
+  const self = await Fun.build({
     entrypoints: [import.meta.path],
     define: {
       "process.env.NODE_ENV": JSON.stringify(process.env.CHILD_NODE_ENV),

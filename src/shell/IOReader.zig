@@ -4,11 +4,11 @@
 //! the event loop. This was done to prevent bugs.
 pub const IOReader = @This();
 
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", asyncDeinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", asyncDeinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
-fd: bun.FD,
+fd: fun.FD,
 reader: ReaderImpl,
 buf: std.ArrayListUnmanaged(u8) = .{},
 readers: Readers = .{ .inlined = .{} },
@@ -18,11 +18,11 @@ err: ?jsc.SystemError = null,
 evtloop: jsc.EventLoopHandle,
 concurrent_task: jsc.EventLoopTask,
 async_deinit: AsyncDeinitReader,
-is_reading: if (bun.Environment.isWindows) bool else u0 = if (bun.Environment.isWindows) false else 0,
+is_reading: if (fun.Environment.isWindows) bool else u0 = if (fun.Environment.isWindows) false else 0,
 started: bool = false,
 
 pub const ChildPtr = IOReaderChildPtr;
-pub const ReaderImpl = bun.io.BufferedReader;
+pub const ReaderImpl = fun.io.BufferedReader;
 
 const InitFlags = packed struct(u8) {
     pollable: bool = false,
@@ -47,16 +47,16 @@ pub fn eventLoop(this: *IOReader) jsc.EventLoopHandle {
     return this.evtloop;
 }
 
-pub fn loop(this: *IOReader) *bun.Async.Loop {
-    if (comptime bun.Environment.isWindows) {
+pub fn loop(this: *IOReader) *fun.Async.Loop {
+    if (comptime fun.Environment.isWindows) {
         return this.evtloop.loop().uv_loop;
     } else {
         return this.evtloop.loop();
     }
 }
 
-pub fn init(fd: bun.FD, evtloop: jsc.EventLoopHandle) *IOReader {
-    const this = bun.new(IOReader, .{
+pub fn init(fd: fun.FD, evtloop: jsc.EventLoopHandle) *IOReader {
+    const this = fun.new(IOReader, .{
         .ref_count = .init(),
         .fd = fd,
         .reader = ReaderImpl.init(@This()),
@@ -66,12 +66,12 @@ pub fn init(fd: bun.FD, evtloop: jsc.EventLoopHandle) *IOReader {
     });
     log("IOReader(0x{x}, fd={f}) create", .{ @intFromPtr(this), fd });
 
-    if (bun.Environment.isPosix) {
+    if (fun.Environment.isPosix) {
         this.reader.flags.close_handle = false;
     }
 
-    if (bun.Environment.isWindows) {
-        this.reader.source = .{ .file = bun.io.Source.openFile(fd) };
+    if (fun.Environment.isWindows) {
+        this.reader.source = .{ .file = fun.io.Source.openFile(fd) };
     }
     this.reader.setParent(this);
 
@@ -81,7 +81,7 @@ pub fn init(fd: bun.FD, evtloop: jsc.EventLoopHandle) *IOReader {
 /// Idempotent function to start the reading
 pub fn start(this: *IOReader) Yield {
     this.started = true;
-    if (bun.Environment.isPosix) {
+    if (fun.Environment.isPosix) {
         if (this.reader.handle == .closed or !this.reader.handle.poll.isRegistered()) {
             if (this.reader.start(this.fd, true).asErr()) |e| {
                 this.onReaderError(e);
@@ -101,7 +101,7 @@ pub fn start(this: *IOReader) Yield {
 
 /// Only does things on windows
 pub inline fn setReading(this: *IOReader, reading: bool) void {
-    if (bun.Environment.isWindows) {
+    if (fun.Environment.isWindows) {
         log("IOReader(0x{x}) setReading({})", .{ @intFromPtr(this), reading });
         this.is_reading = reading;
     }
@@ -135,7 +135,7 @@ pub fn removeReader(this: *IOReader, reader_: anytype) void {
     }
 }
 
-pub fn onReadChunk(ptr: *anyopaque, chunk: []const u8, has_more: bun.io.ReadState) bool {
+pub fn onReadChunk(ptr: *anyopaque, chunk: []const u8, has_more: fun.io.ReadState) bool {
     var this: *IOReader = @ptrCast(@alignCast(ptr));
     log("IOReader(0x{x}, fd={f}) onReadChunk(chunk_len={d}, has_more={s})", .{ @intFromPtr(this), this.fd, chunk.len, @tagName(has_more) });
     this.setReading(false);
@@ -156,7 +156,7 @@ pub fn onReadChunk(ptr: *anyopaque, chunk: []const u8, has_more: bun.io.ReadStat
     if (should_continue) {
         if (this.readers.len() > 0) {
             this.setReading(true);
-            if (bun.Environment.isPosix)
+            if (fun.Environment.isPosix)
                 this.reader.registerPoll()
             else switch (this.reader.startWithCurrentPipe()) {
                 .err => |e| {
@@ -171,7 +171,7 @@ pub fn onReadChunk(ptr: *anyopaque, chunk: []const u8, has_more: bun.io.ReadStat
     return should_continue;
 }
 
-pub fn onReaderError(this: *IOReader, err: bun.sys.Error) void {
+pub fn onReaderError(this: *IOReader, err: fun.sys.Error) void {
     log("IOReader(0x{x}.onReaderError({f}) ", .{ @intFromPtr(this), err });
     this.setReading(false);
     this.err = err.toShellSystemError();
@@ -207,9 +207,9 @@ fn asyncDeinit(this: *@This()) void {
 }
 
 fn asyncDeinitCallback(this: *@This()) void {
-    if (this.fd != bun.invalid_fd) {
+    if (this.fd != fun.invalid_fd) {
         // windows reader closes the file descriptor
-        if (bun.Environment.isWindows) {
+        if (fun.Environment.isWindows) {
             if (this.reader.source != null and !this.reader.source.?.isClosed()) {
                 this.reader.closeImpl(false);
             }
@@ -226,10 +226,10 @@ fn asyncDeinitCallback(this: *@This()) void {
     }
     if (this.err) |*e| e.deref();
     this.readers.deinit();
-    this.buf.deinit(bun.default_allocator);
+    this.buf.deinit(fun.default_allocator);
     this.reader.disableKeepingProcessAlive({});
     this.reader.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub const Reader = struct {
@@ -241,7 +241,7 @@ pub const Readers = SmolList(ChildPtr, 4);
 pub const IOReaderChildPtr = struct {
     ptr: ChildPtrRaw,
 
-    pub const ChildPtrRaw = bun.TaggedPointerUnion(.{
+    pub const ChildPtrRaw = fun.TaggedPointerUnion(.{
         Interpreter.Builtin.Cat,
     });
 
@@ -301,11 +301,11 @@ pub const AsyncDeinitReader = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const shell = bun.shell;
-const Interpreter = bun.shell.Interpreter;
-const SmolList = bun.shell.SmolList;
+const shell = fun.shell;
+const Interpreter = fun.shell.Interpreter;
+const SmolList = fun.shell.SmolList;
 const Yield = shell.Yield;
-const log = bun.shell.interpret.log;
+const log = fun.shell.interpret.log;

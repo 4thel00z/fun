@@ -4,7 +4,7 @@
 #include <JavaScriptCore/PropertySlot.h>
 #include <JavaScriptCore/JSGlobalObject.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 

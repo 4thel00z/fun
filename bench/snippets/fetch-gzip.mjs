@@ -7,7 +7,7 @@ import zlib from "node:zlib";
 const html = Buffer.from("<div>Hello World</div>".repeat(500));
 const htmlGz = zlib.gzipSync(html, { level: 6 });
 
-using server = Bun.serve({
+using server = Fun.serve({
   port: 0,
   fetch(req) {
     const url = new URL(req.url);

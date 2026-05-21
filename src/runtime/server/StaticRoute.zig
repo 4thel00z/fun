@@ -3,7 +3,7 @@
 
 const StaticRoute = @This();
 
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -16,35 +16,35 @@ blob: AnyBlob,
 cached_blob_size: u64,
 has_content_disposition: bool = false,
 headers: Headers = .{
-    .allocator = bun.default_allocator,
+    .allocator = fun.default_allocator,
 },
 
 pub const InitFromBytesOptions = struct {
     server: ?AnyServer,
-    mime_type: ?*const bun.http.MimeType = null,
+    mime_type: ?*const fun.http.MimeType = null,
     status_code: u16 = 200,
     headers: ?*jsc.WebCore.FetchHeaders = null,
 };
 
 /// Ownership of `blob` is transferred to this function.
 pub fn initFromAnyBlob(blob: *const AnyBlob, options: InitFromBytesOptions) *StaticRoute {
-    var headers = bun.handleOom(Headers.from(options.headers, bun.default_allocator, .{ .body = blob }));
+    var headers = fun.handleOom(Headers.from(options.headers, fun.default_allocator, .{ .body = blob }));
     if (headers.getContentType() == null) {
         if (options.mime_type) |mime_type| {
-            bun.handleOom(headers.append("Content-Type", mime_type.value));
+            fun.handleOom(headers.append("Content-Type", mime_type.value));
         } else if (blob.hasContentTypeFromUser()) {
-            bun.handleOom(headers.append("Content-Type", blob.contentType()));
+            fun.handleOom(headers.append("Content-Type", blob.contentType()));
         }
     }
 
     // Generate ETag if not already present
     if (headers.get("etag") == null) {
         if (blob.slice().len > 0) {
-            bun.handleOom(ETag.appendToHeaders(blob.slice(), &headers));
+            fun.handleOom(ETag.appendToHeaders(blob.slice(), &headers));
         }
     }
 
-    return bun.new(StaticRoute, .{
+    return fun.new(StaticRoute, .{
         .ref_count = .init(),
         .blob = blob.*,
         .cached_blob_size = blob.size(),
@@ -66,14 +66,14 @@ fn deinit(this: *StaticRoute) void {
     this.blob.detach();
     this.headers.deinit();
 
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn clone(this: *StaticRoute, globalThis: *jsc.JSGlobalObject) !*StaticRoute {
     var blob = this.blob.toBlob(globalThis);
     this.blob = .{ .Blob = blob };
 
-    return bun.new(StaticRoute, .{
+    return fun.new(StaticRoute, .{
         .ref_count = .init(),
         .blob = .{ .Blob = blob.dupe() },
         .cached_blob_size = this.cached_blob_size,
@@ -88,7 +88,7 @@ pub fn memoryCost(this: *const StaticRoute) usize {
     return @sizeOf(StaticRoute) + this.blob.memoryCost() + this.headers.memoryCost();
 }
 
-pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSError!?*StaticRoute {
+pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) fun.JSError!?*StaticRoute {
     if (argument.as(jsc.WebCore.Response)) |response| {
 
         // The user may want to pass in the same Response object multiple endpoints
@@ -106,18 +106,18 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSErro
                 .Null, .Empty => {
                     break :brk .{
                         .InternalBlob = .{
-                            .bytes = std.array_list.Managed(u8).init(bun.default_allocator),
+                            .bytes = std.array_list.Managed(u8).init(fun.default_allocator),
                         },
                     };
                 },
 
                 .Blob, .InternalBlob, .WTFStringImpl => {
                     if (bodyValue.* == .Blob and bodyValue.Blob.needsToReadFile()) {
-                        return globalThis.throwTODO("TODO: support Bun.file(path) in static routes");
+                        return globalThis.throwTODO("TODO: support Fun.file(path) in static routes");
                     }
                     var blob = bodyValue.use();
                     blob.globalThis = globalThis;
-                    bun.assertf(
+                    fun.assertf(
                         !blob.isHeapAllocated(),
                         "expected blob not to be heap-allocated",
                         .{},
@@ -142,7 +142,7 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSErro
         }
 
         var headers: Headers = if (response.getInitHeaders()) |h|
-            Headers.from(h, bun.default_allocator, .{
+            Headers.from(h, fun.default_allocator, .{
                 .body = &blob,
             }) catch {
                 blob.detach();
@@ -151,11 +151,11 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSErro
             }
         else
             .{
-                .allocator = bun.default_allocator,
+                .allocator = fun.default_allocator,
             };
 
         if (was_string and headers.getContentType() == null) {
-            bun.handleOom(headers.append("Content-Type", bun.http.MimeType.Table.@"text/plain; charset=utf-8".slice()));
+            fun.handleOom(headers.append("Content-Type", fun.http.MimeType.Table.@"text/plain; charset=utf-8".slice()));
         }
 
         // Generate ETag if not already present
@@ -165,7 +165,7 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSErro
             }
         }
 
-        return bun.new(StaticRoute, .{
+        return fun.new(StaticRoute, .{
             .ref_count = .init(),
             .blob = blob,
             .cached_blob_size = blob.size(),
@@ -194,7 +194,7 @@ pub fn onHEADRequest(this: *StaticRoute, req: uws.AnyRequest, resp: AnyResponse)
 }
 
 pub fn onHEAD(this: *StaticRoute, resp: AnyResponse) void {
-    bun.debugAssert(this.server != null);
+    fun.debugAssert(this.server != null);
     this.ref();
     if (this.server) |server| {
         server.onPendingRequest();
@@ -211,7 +211,7 @@ fn renderMetadataAndEnd(this: *StaticRoute, resp: AnyResponse) void {
 }
 
 pub fn onRequest(this: *StaticRoute, req: uws.AnyRequest, resp: AnyResponse) void {
-    const method = bun.http.Method.find(req.method()) orelse .GET;
+    const method = fun.http.Method.find(req.method()) orelse .GET;
     if (method == .GET) {
         this.onGET(req, resp);
     } else if (method == .HEAD) {
@@ -237,7 +237,7 @@ pub fn onGET(this: *StaticRoute, req: uws.AnyRequest, resp: AnyResponse) void {
 }
 
 pub fn on(this: *StaticRoute, resp: AnyResponse) void {
-    bun.debugAssert(this.server != null);
+    fun.debugAssert(this.server != null);
     this.ref();
     if (this.server) |server| {
         server.onPendingRequest();
@@ -357,7 +357,7 @@ fn renderMetadata(this: *StaticRoute, resp: AnyResponse) void {
     this.doWriteHeaders(resp);
 }
 
-pub fn onWithMethod(this: *StaticRoute, method: bun.http.Method, resp: AnyResponse) void {
+pub fn onWithMethod(this: *StaticRoute, method: fun.http.Method, resp: AnyResponse) void {
     switch (method) {
         .GET => this.on(resp),
         .HEAD => this.onHEAD(resp),
@@ -395,15 +395,15 @@ fn render304NotModifiedIfNoneMatch(this: *StaticRoute, req: uws.AnyRequest, resp
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const api = bun.schema.api;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const api = fun.schema.api;
 const AnyServer = jsc.API.AnyServer;
-const writeStatus = bun.api.server.writeStatus;
+const writeStatus = fun.api.server.writeStatus;
 const AnyBlob = jsc.WebCore.Blob.Any;
 
-const ETag = bun.http.ETag;
-const Headers = bun.http.Headers;
+const ETag = fun.http.ETag;
+const Headers = fun.http.Headers;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const AnyResponse = uws.AnyResponse;

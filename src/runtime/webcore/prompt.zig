@@ -9,14 +9,14 @@ comptime {
 }
 
 /// https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-alert
-fn alert(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn alert(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
-    var output = bun.Output.writer();
+    var output = fun.Output.writer();
     const has_message = arguments.len != 0;
 
     // 2. If the method was invoked with no arguments, then let message be the empty string; otherwise, let message be the method's first argument.
     if (has_message) {
-        var state = std.heap.stackFallback(2048, bun.default_allocator);
+        var state = std.heap.stackFallback(2048, fun.default_allocator);
         const allocator = state.get();
         const message = try arguments[0].toSlice(globalObject, allocator);
         defer message.deinit();
@@ -43,7 +43,7 @@ fn alert(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSErr
 
     // 6. Invoke WebDriver BiDi user prompt opened with this, "alert", and message.
     // *  Not pertinent to use their complex system in a server context.
-    bun.Output.flush();
+    fun.Output.flush();
 
     // 7. Optionally, pause while waiting for the user to acknowledge the message.
     var stdin = std.fs.File.stdin();
@@ -61,13 +61,13 @@ fn alert(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSErr
     return .js_undefined;
 }
 
-fn confirm(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn confirm(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
-    var output = bun.Output.writer();
+    var output = fun.Output.writer();
     const has_message = arguments.len != 0;
 
     if (has_message) {
-        var state = std.heap.stackFallback(1024, bun.default_allocator);
+        var state = std.heap.stackFallback(1024, fun.default_allocator);
         const allocator = state.get();
         // 2. Set message to the result of normalizing newlines given message.
         // *  Not pertinent to a server runtime so we will just let the terminal handle this.
@@ -93,7 +93,7 @@ fn confirm(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
 
     // 5. Invoke WebDriver BiDi user prompt opened with this, "confirm", and message.
     // *  Not relevant in a server context.
-    bun.Output.flush();
+    fun.Output.flush();
 
     // 6. Pause until the user responds either positively or negatively.
     var stdin = std.fs.File.stdin();
@@ -199,11 +199,11 @@ pub const prompt = struct {
     pub fn call(
         globalObject: *jsc.JSGlobalObject,
         callframe: *jsc.CallFrame,
-    ) bun.JSError!jsc.JSValue {
+    ) fun.JSError!jsc.JSValue {
         const arguments = callframe.arguments_old(3).slice();
-        var state = std.heap.stackFallback(2048, bun.default_allocator);
+        var state = std.heap.stackFallback(2048, fun.default_allocator);
         const allocator = state.get();
-        var output = bun.Output.writer();
+        var output = fun.Output.writer();
         const has_message = arguments.len != 0;
         const has_default = arguments.len >= 2;
         // 4. Set default to the result of optionally truncating default.
@@ -248,21 +248,21 @@ pub const prompt = struct {
 
         // 6. Invoke WebDriver BiDi user prompt opened with this, "prompt" and message.
         // *  Not relevant in a server context.
-        bun.Output.flush();
+        fun.Output.flush();
 
         // unset `ENABLE_VIRTUAL_TERMINAL_INPUT` on windows. This prevents backspace from
         // deleting the entire line
-        const original_mode: if (Environment.isWindows) ?bun.windows.DWORD else void = if (comptime Environment.isWindows)
-            bun.windows.updateStdioModeFlags(.std_in, .{ .unset = c.ENABLE_VIRTUAL_TERMINAL_INPUT }) catch null;
+        const original_mode: if (Environment.isWindows) ?fun.windows.DWORD else void = if (comptime Environment.isWindows)
+            fun.windows.updateStdioModeFlags(.std_in, .{ .unset = c.ENABLE_VIRTUAL_TERMINAL_INPUT }) catch null;
 
         defer if (comptime Environment.isWindows) {
             if (original_mode) |mode| {
-                _ = bun.c.SetConsoleMode(bun.FD.stdin().native(), mode);
+                _ = fun.c.SetConsoleMode(fun.FD.stdin().native(), mode);
             }
         };
 
         // 7. Pause while waiting for the user's response.
-        const reader = bun.Output.buffered_stdin.reader();
+        const reader = fun.Output.buffered_stdin.reader();
         var second_byte: ?u8 = null;
         const first_byte = reader.readByte() catch {
             // 8. Let result be null if the user aborts, or otherwise the string
@@ -327,8 +327,8 @@ pub const prompt = struct {
         }
 
         if (comptime Environment.allow_assert) {
-            bun.assert(input.items.len > 0);
-            bun.assert(input.items[input.items.len - 1] != '\r');
+            fun.assert(input.items.len > 0);
+            fun.assert(input.items[input.items.len - 1] != '\r');
         }
 
         // 8. Let result be null if the user aborts, or otherwise the string
@@ -347,7 +347,7 @@ pub const prompt = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const c = bun.c;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const c = fun.c;
+const jsc = fun.jsc;

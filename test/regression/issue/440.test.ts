@@ -1,14 +1,14 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("exporting globalThis should not start a server", async () => {
   using dir = tempDir("issue-440", {
     "test.js": `module.exports = globalThis;`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -28,9 +28,9 @@ test("default export of globalThis should not start a server", async () => {
     "test.js": `export default globalThis;`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

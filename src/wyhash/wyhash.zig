@@ -1,7 +1,7 @@
 //
 // this file is a copy of Wyhash from the zig standard library, version v0.11.0-dev.2609+5e19250a1
 //
-const assert = if (@hasDecl(@import("root"), "bun")) @import("root").bun.assert else @import("std").debug.assert;
+const assert = if (@hasDecl(@import("root"), "fun")) @import("root").fun.assert else @import("std").debug.assert;
 
 const primes = [_]u64{
     0xa0761d6478bd642f,
@@ -68,7 +68,7 @@ const WyhashStateless = struct {
         var off: usize = 0;
         while (off < b.len) : (off += 32) {
             self.round(b[off .. off + 32]);
-            // @call(bun.callmod_inline, self.round, .{b[off .. off + 32]});
+            // @call(fun.callmod_inline, self.round, .{b[off .. off + 32]});
         }
 
         self.msg_len += b.len;
@@ -125,9 +125,9 @@ const WyhashStateless = struct {
 
         var c = WyhashStateless.init(seed);
         c.update(input[0..aligned_len]);
-        // @call(bun.callmod_inline, c.update, .{input[0..aligned_len]});
+        // @call(fun.callmod_inline, c.update, .{input[0..aligned_len]});
         return c.final(input[aligned_len..]);
-        // return @call(bun.callmod_inline, c.final, .{input[aligned_len..]});
+        // return @call(fun.callmod_inline, c.final, .{input[aligned_len..]});
     }
 };
 

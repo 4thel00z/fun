@@ -1,5 +1,5 @@
 import assert, { AssertionError } from "assert";
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 describe("assert.rejects", () => {
   it("accepts a rejecting function", async () => {

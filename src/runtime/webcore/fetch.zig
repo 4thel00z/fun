@@ -31,35 +31,35 @@ pub const fetch_type_error_strings: JSTypeErrorEnum = brk: {
     var errors = JSTypeErrorEnum.initUndefined();
     errors.set(
         JSType.kJSTypeUndefined,
-        bun.asByteSlice(fetch_type_error_string_values[0]),
+        fun.asByteSlice(fetch_type_error_string_values[0]),
     );
     errors.set(
         JSType.kJSTypeNull,
-        bun.asByteSlice(fetch_type_error_string_values[1]),
+        fun.asByteSlice(fetch_type_error_string_values[1]),
     );
     errors.set(
         JSType.kJSTypeBoolean,
-        bun.asByteSlice(fetch_type_error_string_values[2]),
+        fun.asByteSlice(fetch_type_error_string_values[2]),
     );
     errors.set(
         JSType.kJSTypeNumber,
-        bun.asByteSlice(fetch_type_error_string_values[3]),
+        fun.asByteSlice(fetch_type_error_string_values[3]),
     );
     errors.set(
         JSType.kJSTypeString,
-        bun.asByteSlice(fetch_type_error_string_values[4]),
+        fun.asByteSlice(fetch_type_error_string_values[4]),
     );
     errors.set(
         JSType.kJSTypeObject,
-        bun.asByteSlice(fetch_type_error_string_values[5]),
+        fun.asByteSlice(fetch_type_error_string_values[5]),
     );
     errors.set(
         JSType.kJSTypeSymbol,
-        bun.asByteSlice(fetch_type_error_string_values[6]),
+        fun.asByteSlice(fetch_type_error_string_values[6]),
     );
     errors.set(
         JSType.kJSTypeBigInt,
-        bun.asByteSlice(fetch_type_error_string_values[7]),
+        fun.asByteSlice(fetch_type_error_string_values[7]),
     );
     break :brk errors;
 };
@@ -80,16 +80,16 @@ fn dataURLResponse(
     var blob = Blob.init(data, allocator, globalThis);
 
     var allocated = false;
-    const mime_type = bun.http.MimeType.init(data_url.mime_type, allocator, &allocated);
+    const mime_type = fun.http.MimeType.init(data_url.mime_type, allocator, &allocated);
     blob.content_type = mime_type.value;
     if (allocated) {
         blob.content_type_allocated = true;
     }
 
-    var response = bun.new(Response, Response.init(
+    var response = fun.new(Response, Response.init(
         .{
             .status_code = 200,
-            .status_text = bun.String.createAtomASCII("OK"),
+            .status_text = fun.String.createAtomASCII("OK"),
         },
         Body{
             .value = .{ .Blob = blob },
@@ -102,13 +102,13 @@ fn dataURLResponse(
 }
 
 comptime {
-    const Bun__fetchPreconnect = jsc.toJSHostFn(Bun__fetchPreconnect_);
-    @export(&Bun__fetchPreconnect, .{ .name = "Bun__fetchPreconnect" });
+    const Fun__fetchPreconnect = jsc.toJSHostFn(Fun__fetchPreconnect_);
+    @export(&Fun__fetchPreconnect, .{ .name = "Fun__fetchPreconnect" });
 }
-pub fn Bun__fetchPreconnect_(
+pub fn Fun__fetchPreconnect_(
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
 
     if (arguments.len < 1) {
@@ -130,30 +130,30 @@ pub fn Bun__fetchPreconnect_(
         return globalObject.ERR(.INVALID_ARG_TYPE, fetch_error_blank_url, .{}).throw();
     }
 
-    const url = ZigURL.parse(bun.handleOom(url_str.toOwnedSlice(bun.default_allocator)));
+    const url = ZigURL.parse(fun.handleOom(url_str.toOwnedSlice(fun.default_allocator)));
     if (!url.isHTTP() and !url.isHTTPS() and !url.isS3()) {
-        bun.default_allocator.free(url.href);
+        fun.default_allocator.free(url.href);
         return globalObject.throwInvalidArguments("URL must be HTTP or HTTPS", .{});
     }
 
     if (url.hostname.len == 0) {
-        bun.default_allocator.free(url.href);
+        fun.default_allocator.free(url.href);
         return globalObject.ERR(.INVALID_ARG_TYPE, fetch_error_blank_url, .{}).throw();
     }
 
     if (!url.hasValidPort()) {
-        bun.default_allocator.free(url.href);
+        fun.default_allocator.free(url.href);
         return globalObject.throwInvalidArguments("Invalid port", .{});
     }
 
-    bun.http.AsyncHTTP.preconnect(url, true);
+    fun.http.AsyncHTTP.preconnect(url, true);
     return .js_undefined;
 }
 
 const StringOrURL = struct {
-    pub fn fromJS(value: jsc.JSValue, globalThis: *jsc.JSGlobalObject) bun.JSError!?bun.String {
+    pub fn fromJS(value: jsc.JSValue, globalThis: *jsc.JSGlobalObject) fun.JSError!?fun.String {
         if (value.isString()) {
-            return try bun.String.fromJS(value, globalThis);
+            return try fun.String.fromJS(value, globalThis);
         }
 
         const out = try jsc.URL.hrefFromJS(value, globalThis);
@@ -163,15 +163,15 @@ const StringOrURL = struct {
 };
 
 comptime {
-    const Bun__fetch = jsc.toJSHostFn(Bun__fetch_);
-    @export(&Bun__fetch, .{ .name = "Bun__fetch" });
+    const Fun__fetch = jsc.toJSHostFn(Fun__fetch_);
+    @export(&Fun__fetch, .{ .name = "Fun__fetch" });
 }
 
-/// Public entry point for `Bun.fetch` - validates body on GET/HEAD/OPTIONS
-pub fn Bun__fetch_(
+/// Public entry point for `Fun.fetch` - validates body on GET/HEAD/OPTIONS
+pub fn Fun__fetch_(
     ctx: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     return fetchImpl(false, ctx, callframe);
 }
 
@@ -179,7 +179,7 @@ pub fn Bun__fetch_(
 pub fn nodeHttpClient(
     ctx: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     return fetchImpl(true, ctx, callframe);
 }
 
@@ -188,11 +188,11 @@ fn fetchImpl(
     comptime allow_get_body: bool,
     ctx: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     jsc.markBinding(@src());
     const globalThis = ctx;
     const arguments = callframe.arguments_old(2);
-    bun.analytics.Features.fetch += 1;
+    fun.analytics.Features.fetch += 1;
     const vm = jsc.VirtualMachine.get();
 
     // used to clean up dynamically allocated memory on error (a poor man's errdefer)
@@ -201,7 +201,7 @@ fn fetchImpl(
     var force_http2 = false;
     var force_http3 = false;
     var force_http1 = false;
-    var allocator = bun.default_allocator;
+    var allocator = fun.default_allocator;
 
     if (arguments.len == 0) {
         const err = ctx.toTypeError(.MISSING_ARGS, fetch_error_no_args, .{});
@@ -221,7 +221,7 @@ fn fetchImpl(
     // set in the Headers
     //
     // which is important for FormData.
-    // https://github.com/oven-sh/bun/issues/2264
+    // https://github.com/underdoc-org/fun/issues/2264
     //
     var body: FetchTasklet.HTTPRequestBody = FetchTasklet.HTTPRequestBody.Empty;
 
@@ -274,11 +274,11 @@ fn fetchImpl(
 
         // clean hostname if any
         if (hostname) |hn| {
-            bun.default_allocator.free(hn);
+            fun.default_allocator.free(hn);
             hostname = null;
         }
         if (range) |range_| {
-            bun.default_allocator.free(range_);
+            fun.default_allocator.free(range_);
             range = null;
         }
 
@@ -324,19 +324,19 @@ fn fetchImpl(
         if (url_str_optional) |str| break :extract_url str;
 
         if (request) |req| {
-            bun.handleOom(req.ensureURL());
+            fun.handleOom(req.ensureURL());
             break :extract_url req.url.dupeRef();
         }
 
         if (request_init_object) |request_init| {
             if (try request_init.fastGet(globalThis, .url)) |url_| {
                 if (!url_.isUndefined()) {
-                    break :extract_url try bun.String.fromJS(url_, globalThis);
+                    break :extract_url try fun.String.fromJS(url_, globalThis);
                 }
             }
         }
 
-        break :extract_url bun.String.empty;
+        break :extract_url fun.String.empty;
     };
     defer url_str.deref();
 
@@ -529,7 +529,7 @@ fn fetchImpl(
             if (objects_to_try[i] != .zero) {
                 if (try objects_to_try[i].get(globalThis, "protocol")) |protocol_val| {
                     if (protocol_val.isString()) {
-                        const str = try protocol_val.toBunString(globalThis);
+                        const str = try protocol_val.toFunString(globalThis);
                         defer str.deref();
                         if (str.eqlComptime("http2") or str.eqlComptime("h2")) {
                             force_http2 = true;
@@ -737,10 +737,10 @@ fn fetchImpl(
                                     if (try proxy_arg.get(globalThis, "headers")) |headers_value| {
                                         if (!headers_value.isUndefinedOrNull()) {
                                             if (headers_value.as(FetchHeaders)) |fetch_hdrs| {
-                                                proxy_headers = Headers.from(fetch_hdrs, allocator, .{}) catch |err| bun.handleOom(err);
+                                                proxy_headers = Headers.from(fetch_hdrs, allocator, .{}) catch |err| fun.handleOom(err);
                                             } else if (try FetchHeaders.createFromJS(ctx, headers_value)) |fetch_hdrs| {
                                                 defer fetch_hdrs.deref();
-                                                proxy_headers = Headers.from(fetch_hdrs, allocator, .{}) catch |err| bun.handleOom(err);
+                                                proxy_headers = Headers.from(fetch_hdrs, allocator, .{}) catch |err| fun.handleOom(err);
                                             }
                                         }
                                     }
@@ -874,14 +874,14 @@ fn fetchImpl(
 
     // headers: Headers | undefined;
     headers = extract_headers: {
-        var fetch_headers_to_deref: ?*bun.webcore.FetchHeaders = null;
+        var fetch_headers_to_deref: ?*fun.webcore.FetchHeaders = null;
         defer {
             if (fetch_headers_to_deref) |fetch_headers| {
                 fetch_headers.deref();
             }
         }
 
-        const fetch_headers: ?*bun.webcore.FetchHeaders = brk: {
+        const fetch_headers: ?*fun.webcore.FetchHeaders = brk: {
             if (options_object) |options| {
                 if (try options.fastGet(globalThis, .headers)) |headers_value| {
                     if (!headers_value.isUndefined()) {
@@ -951,33 +951,33 @@ fn fetchImpl(
         }
 
         if (fetch_headers) |headers_| {
-            if (headers_.fastGet(bun.webcore.FetchHeaders.HTTPHeaderName.Host)) |_hostname| {
+            if (headers_.fastGet(fun.webcore.FetchHeaders.HTTPHeaderName.Host)) |_hostname| {
                 if (hostname) |host| {
                     hostname = null;
                     allocator.free(host);
                 }
-                hostname = bun.handleOom(_hostname.toOwnedSliceZ(allocator));
+                hostname = fun.handleOom(_hostname.toOwnedSliceZ(allocator));
             }
             if (url.isS3()) {
-                if (headers_.fastGet(bun.webcore.FetchHeaders.HTTPHeaderName.Range)) |_range| {
+                if (headers_.fastGet(fun.webcore.FetchHeaders.HTTPHeaderName.Range)) |_range| {
                     if (range) |range_| {
                         range = null;
                         allocator.free(range_);
                     }
-                    range = bun.handleOom(_range.toOwnedSliceZ(allocator));
+                    range = fun.handleOom(_range.toOwnedSliceZ(allocator));
                 }
             }
 
-            if (headers_.fastGet(bun.webcore.FetchHeaders.HTTPHeaderName.Upgrade)) |_upgrade| {
-                const upgrade = _upgrade.toSlice(bun.default_allocator);
+            if (headers_.fastGet(fun.webcore.FetchHeaders.HTTPHeaderName.Upgrade)) |_upgrade| {
+                const upgrade = _upgrade.toSlice(fun.default_allocator);
                 defer upgrade.deinit();
                 const slice = upgrade.slice();
-                if (!bun.strings.eqlComptime(slice, "h2") and !bun.strings.eqlComptime(slice, "h2c")) {
+                if (!fun.strings.eqlComptime(slice, "h2") and !fun.strings.eqlComptime(slice, "h2c")) {
                     upgraded_connection = true;
                 }
             }
 
-            break :extract_headers Headers.from(headers_, allocator, .{ .body = body.getAnyBlob() }) catch |err| bun.handleOom(err);
+            break :extract_headers Headers.from(headers_, allocator, .{ .body = body.getAnyBlob() }) catch |err| fun.handleOom(err);
         }
 
         break :extract_headers headers;
@@ -1004,9 +1004,9 @@ fn fetchImpl(
     // But it's better than status quo.
     if (url_type != .remote) {
         defer unix_socket_path.deinit();
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
         const PercentEncoding = @import("../../url/url.zig").PercentEncoding;
-        var path_buf2: bun.PathBuffer = undefined;
+        var path_buf2: fun.PathBuffer = undefined;
         var stream = std.io.fixedBufferStream(&path_buf2);
         var url_path_decoded = path_buf2[0 .. PercentEncoding.decode(
             @TypeOf(&stream.writer()),
@@ -1019,7 +1019,7 @@ fn fetchImpl(
         ) catch |err| {
             return globalThis.throwError(err, "Failed to decode file url");
         }];
-        var url_string: bun.String = bun.String.empty;
+        var url_string: fun.String = fun.String.empty;
         defer url_string.deref();
         // This can be a blob: url or a file: url.
         const blob_to_use = blob: {
@@ -1027,7 +1027,7 @@ fn fetchImpl(
             // Support blob: urls
             if (url_type == URLType.blob) {
                 if (jsc.WebCore.ObjectURLRegistry.singleton().resolveAndDupe(url_path_decoded)) |blob| {
-                    url_string = bun.String.createFormat("blob:{s}", .{url_path_decoded}) catch |err| bun.handleOom(err);
+                    url_string = fun.String.createFormat("blob:{s}", .{url_path_decoded}) catch |err| fun.handleOom(err);
                     break :blob blob;
                 } else {
                     // Consistent with what Node.js does - it rejects, not a 404.
@@ -1053,16 +1053,16 @@ fn fetchImpl(
                     break :brk url_path_decoded;
                 }
 
-                var cwd_buf: bun.PathBuffer = undefined;
-                const cwd = if (Environment.isWindows) (bun.getcwd(&cwd_buf) catch |err| {
+                var cwd_buf: fun.PathBuffer = undefined;
+                const cwd = if (Environment.isWindows) (fun.getcwd(&cwd_buf) catch |err| {
                     return globalThis.throwError(err, "Failed to resolve file url");
-                }) else globalThis.bunVM().transpiler.fs.top_level_dir;
+                }) else globalThis.funVM().transpiler.fs.top_level_dir;
 
-                const fullpath = bun.path.joinAbsStringBuf(
+                const fullpath = fun.path.joinAbsStringBuf(
                     cwd,
                     &path_buf,
                     &[_]string{
-                        globalThis.bunVM().main,
+                        globalThis.funVM().main,
                         "../",
                         url_path_decoded,
                     },
@@ -1076,11 +1076,11 @@ fn fetchImpl(
                 break :brk fullpath;
             };
 
-            url_string = jsc.URL.fileURLFromString(bun.String.borrowUTF8(temp_file_path));
+            url_string = jsc.URL.fileURLFromString(fun.String.borrowUTF8(temp_file_path));
 
             var pathlike: jsc.Node.PathOrFileDescriptor = .{
                 .path = .{
-                    .encoded_slice = ZigString.Slice.init(bun.default_allocator, try bun.default_allocator.dupe(u8, temp_file_path)),
+                    .encoded_slice = ZigString.Slice.init(fun.default_allocator, try fun.default_allocator.dupe(u8, temp_file_path)),
                 },
             };
 
@@ -1091,7 +1091,7 @@ fn fetchImpl(
             );
         };
 
-        const response = bun.new(Response, Response.init(
+        const response = fun.new(Response, Response.init(
             Response.Init{
                 .status_code = 200,
             },
@@ -1124,7 +1124,7 @@ fn fetchImpl(
             null,
             allocator,
             .{ .body = body.getAnyBlob() },
-        ) catch |err| bun.handleOom(err);
+        ) catch |err| fun.handleOom(err);
     }
 
     var http_body = body;
@@ -1146,9 +1146,9 @@ fn fetchImpl(
     }
     if (body.needsToReadFile()) {
         prepare_body: {
-            const opened_fd_res: bun.sys.Maybe(bun.FD) = switch (body.store().?.data.file.pathlike) {
-                .fd => |fd| bun.sys.dup(fd),
-                .path => |path| bun.sys.open(path.sliceZ(&globalThis.bunVM().nodeFS().sync_error_buf), if (Environment.isWindows) bun.O.RDONLY else bun.O.RDONLY | bun.O.NOCTTY, 0),
+            const opened_fd_res: fun.sys.Maybe(fun.FD) = switch (body.store().?.data.file.pathlike) {
+                .fd => |fd| fun.sys.dup(fd),
+                .path => |path| fun.sys.open(path.sliceZ(&globalThis.funVM().nodeFS().sync_error_buf), if (Environment.isWindows) fun.O.RDONLY else fun.O.RDONLY | fun.O.NOCTTY, 0),
             };
 
             const opened_fd = switch (opened_fd_res) {
@@ -1160,9 +1160,9 @@ fn fetchImpl(
                 .result => |fd| fd,
             };
 
-            if (proxy == null and bun.http.SendFile.isEligible(url)) {
+            if (proxy == null and fun.http.SendFile.isEligible(url)) {
                 use_sendfile: {
-                    const stat: bun.Stat = switch (bun.sys.fstat(opened_fd)) {
+                    const stat: fun.Stat = switch (fun.sys.fstat(opened_fd)) {
                         .result => |result| result,
                         // bail out for any reason
                         .err => break :use_sendfile,
@@ -1170,7 +1170,7 @@ fn fetchImpl(
 
                     if (Environment.isMac) {
                         // macOS only supports regular files for sendfile()
-                        if (!bun.isRegularFile(stat.mode)) {
+                        if (!fun.isRegularFile(stat.mode)) {
                             break :use_sendfile;
                         }
                     }
@@ -1182,7 +1182,7 @@ fn fetchImpl(
 
                     const original_size = body.AnyBlob.Blob.size;
                     const stat_size = @as(Blob.SizeType, @intCast(stat.size));
-                    const blob_size = if (bun.isRegularFile(stat.mode))
+                    const blob_size = if (fun.isRegularFile(stat.mode))
                         stat_size
                     else
                         @min(original_size, stat_size);
@@ -1196,7 +1196,7 @@ fn fetchImpl(
                         },
                     };
 
-                    if (bun.isRegularFile(stat.mode)) {
+                    if (fun.isRegularFile(stat.mode)) {
                         http_body.Sendfile.offset = @min(http_body.Sendfile.offset, stat_size);
                         http_body.Sendfile.remain = @min(@max(http_body.Sendfile.remain, http_body.Sendfile.offset), stat_size) -| http_body.Sendfile.offset;
                     }
@@ -1208,7 +1208,7 @@ fn fetchImpl(
 
             // TODO: make this async + lazy
             const res = jsc.Node.fs.NodeFS.readFile(
-                globalThis.bunVM().nodeFS(),
+                globalThis.funVM().nodeFS(),
                 .{
                     .encoding = .buffer,
                     .path = .{ .fd = opened_fd },
@@ -1242,7 +1242,7 @@ fn fetchImpl(
     if (url.isS3()) {
         // get ENV config
         var credentialsWithOptions: s3.S3CredentialsWithOptions = .{
-            .credentials = globalThis.bunVM().transpiler.env.getS3Credentials(),
+            .credentials = globalThis.funVM().transpiler.env.getS3Credentials(),
             .options = .{},
             .acl = null,
             .storage_class = null,
@@ -1269,15 +1269,15 @@ fn fetchImpl(
                 url_proxy_buffer: []const u8,
                 global: *jsc.JSGlobalObject,
 
-                pub const new = bun.TrivialNew(@This());
+                pub const new = fun.TrivialNew(@This());
 
-                pub fn resolve(result: s3.S3UploadResult, self: *@This()) bun.JSTerminated!void {
+                pub fn resolve(result: s3.S3UploadResult, self: *@This()) fun.JSTerminated!void {
                     const global = self.global;
-                    defer bun.destroy(self);
-                    defer bun.default_allocator.free(self.url_proxy_buffer);
+                    defer fun.destroy(self);
+                    defer fun.default_allocator.free(self.url_proxy_buffer);
                     switch (result) {
                         .success => {
-                            const response = bun.new(Response, Response.init(
+                            const response = fun.new(Response, Response.init(
                                 Response.Init{
                                     .method = .PUT,
                                     .status_code = 200,
@@ -1285,7 +1285,7 @@ fn fetchImpl(
                                 Body{
                                     .value = .Empty,
                                 },
-                                bun.String.createAtomIfPossible(self.url.href),
+                                fun.String.createAtomIfPossible(self.url.href),
                                 false,
                             ));
                             const response_js = Response.makeMaybePooled(@as(*jsc.JSGlobalObject, global), response);
@@ -1293,21 +1293,21 @@ fn fetchImpl(
                             try self.promise.resolve(global, response_js);
                         },
                         .failure => |err| {
-                            const response = bun.new(Response, Response.init(
+                            const response = fun.new(Response, Response.init(
                                 .{
                                     .method = .PUT,
                                     .status_code = 500,
-                                    .status_text = bun.String.createAtomIfPossible(err.code),
+                                    .status_text = fun.String.createAtomIfPossible(err.code),
                                 },
                                 .{
                                     .value = .{
                                         .InternalBlob = .{
-                                            .bytes = std.array_list.Managed(u8).fromOwnedSlice(bun.default_allocator, bun.handleOom(bun.default_allocator.dupe(u8, err.message))),
+                                            .bytes = std.array_list.Managed(u8).fromOwnedSlice(fun.default_allocator, fun.handleOom(fun.default_allocator.dupe(u8, err.message))),
                                             .was_string = true,
                                         },
                                     },
                                 },
-                                bun.String.createAtomIfPossible(self.url.href),
+                                fun.String.createAtomIfPossible(self.url.href),
                                 false,
                             ));
 
@@ -1332,7 +1332,7 @@ fn fetchImpl(
 
             const promise_value = promise.value();
             const proxy_url = if (proxy) |p| p.href else "";
-            _ = try bun.S3.uploadStream(
+            _ = try fun.S3.uploadStream(
                 credentialsWithOptions.credentials.dupe(),
                 url.s3Path(),
                 body.ReadableStream.get(globalThis).?,
@@ -1368,9 +1368,9 @@ fn fetchImpl(
             // proxy and url are in the same buffer lets replace it
             const old_buffer = url_proxy_buffer;
             defer allocator.free(old_buffer);
-            var buffer = bun.handleOom(allocator.alloc(u8, result.url.len + proxy_.href.len));
-            bun.copy(u8, buffer[0..result.url.len], result.url);
-            bun.copy(u8, buffer[proxy_.href.len..], proxy_.href);
+            var buffer = fun.handleOom(allocator.alloc(u8, result.url.len + proxy_.href.len));
+            fun.copy(u8, buffer[0..result.url.len], result.url);
+            fun.copy(u8, buffer[proxy_.href.len..], proxy_.href);
             url_proxy_buffer = buffer;
 
             url = ZigURL.parse(url_proxy_buffer[0..result.url.len]);
@@ -1449,9 +1449,9 @@ fn fetchImpl(
         },
         // Pass the Strong value instead of creating a new one, or else we
         // will leak it
-        // see https://github.com/oven-sh/bun/issues/2985
+        // see https://github.com/underdoc-org/fun/issues/2985
         promise,
-    ) catch |err| bun.handleOom(err);
+    ) catch |err| fun.handleOom(err);
 
     if (Environment.isDebug) {
         if (body.store()) |store| {
@@ -1483,7 +1483,7 @@ fn fetchImpl(
 }
 fn setHeaders(headers: *?Headers, new_headers: []const picohttp.Header, allocator: std.mem.Allocator) void {
     var old = headers.*;
-    headers.* = bun.handleOom(Headers.fromPicoHttpHeaders(new_headers, allocator));
+    headers.* = fun.handleOom(Headers.fromPicoHttpHeaders(new_headers, allocator));
 
     if (old) |*headers_| {
         headers_.deinit();
@@ -1497,20 +1497,20 @@ const DataURL = @import("../../resolver/data_url.zig").DataURL;
 const Method = @import("../../http_types/Method.zig").Method;
 const ZigURL = @import("../../url/url.zig").URL;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const picohttp = bun.picohttp;
-const s3 = bun.S3;
-const FetchHeaders = bun.webcore.FetchHeaders;
-const PosixToWinNormalizer = bun.path.PosixToWinNormalizer;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const picohttp = fun.picohttp;
+const s3 = fun.S3;
+const FetchHeaders = fun.webcore.FetchHeaders;
+const PosixToWinNormalizer = fun.path.PosixToWinNormalizer;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
-const http = bun.http;
+const http = fun.http;
 const FetchRedirect = http.FetchRedirect;
-const Headers = bun.http.Headers;
+const Headers = fun.http.Headers;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSPromise = jsc.JSPromise;
 const JSValue = jsc.JSValue;

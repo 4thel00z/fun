@@ -144,7 +144,7 @@ pub const BorderRadiusHandler = struct {
                         .@"border-end-start-radius" => logicalPropertyHelper(this, dest, context, "end_start", property),
                         else => {
                             this.flush(dest, context);
-                            bun.handleOom(dest.append(context.allocator, Property{ .unparsed = unparsed.getPrefixed(context.allocator, context.targets, css.prefixes.Feature.border_radius) }));
+                            fun.handleOom(dest.append(context.allocator, Property{ .unparsed = unparsed.getPrefixed(context.allocator, context.targets, css.prefixes.Feature.border_radius) }));
                         },
                     }
                 } else return false;
@@ -164,14 +164,14 @@ pub const BorderRadiusHandler = struct {
 
         this.has_any = false;
 
-        var top_left = bun.take(&this.top_left);
-        var top_right = bun.take(&this.top_right);
-        var bottom_right = bun.take(&this.bottom_right);
-        var bottom_left = bun.take(&this.bottom_left);
-        const start_start = bun.take(&this.start_start);
-        const start_end = bun.take(&this.start_end);
-        const end_end = bun.take(&this.end_end);
-        const end_start = bun.take(&this.end_start);
+        var top_left = fun.take(&this.top_left);
+        var top_right = fun.take(&this.top_right);
+        var bottom_right = fun.take(&this.bottom_right);
+        var bottom_left = fun.take(&this.bottom_left);
+        const start_start = fun.take(&this.start_start);
+        const start_end = fun.take(&this.start_end);
+        const end_end = fun.take(&this.end_end);
+        const end_start = fun.take(&this.end_start);
 
         if (top_left != null and top_right != null and bottom_right != null and bottom_left != null) {
             const intersection = top_left.?[1].bitwiseAnd(top_right.?[1]).bitwiseAnd(bottom_right.?[1]).bitwiseAnd(bottom_left.?[1]);
@@ -185,11 +185,11 @@ pub const BorderRadiusHandler = struct {
                         .bottom_left = bottom_left.?[0].deepClone(context.allocator),
                     },
                     prefix,
-                } }) catch |err| bun.handleOom(err);
-                bun.bits.remove(VendorPrefix, &top_left.?[1], intersection);
-                bun.bits.remove(VendorPrefix, &top_right.?[1], intersection);
-                bun.bits.remove(VendorPrefix, &bottom_right.?[1], intersection);
-                bun.bits.remove(VendorPrefix, &bottom_left.?[1], intersection);
+                } }) catch |err| fun.handleOom(err);
+                fun.bits.remove(VendorPrefix, &top_left.?[1], intersection);
+                fun.bits.remove(VendorPrefix, &top_right.?[1], intersection);
+                fun.bits.remove(VendorPrefix, &bottom_right.?[1], intersection);
+                fun.bits.remove(VendorPrefix, &bottom_left.?[1], intersection);
             }
         }
 
@@ -210,7 +210,7 @@ pub const BorderRadiusHandler = struct {
         if (val) |v| {
             if (!v[1].isEmpty()) {
                 const prefix = ctx.targets.prefixes(v[1], css.prefixes.Feature.border_radius);
-                bun.handleOom(d.append(ctx.allocator, @unionInit(css.Property, prop, .{ v[0], prefix })));
+                fun.handleOom(d.append(ctx.allocator, @unionInit(css.Property, prop, .{ v[0], prefix })));
             }
         }
     }
@@ -218,7 +218,7 @@ pub const BorderRadiusHandler = struct {
     fn logicalProperty(d: *css.DeclarationList, ctx: *css.PropertyHandlerContext, val: ?css.Property, comptime ltr: []const u8, comptime rtl: []const u8, logical_supported: bool) void {
         if (val) |v| {
             if (logical_supported) {
-                bun.handleOom(d.append(ctx.allocator, v));
+                fun.handleOom(d.append(ctx.allocator, v));
             } else {
                 const prefix = ctx.targets.prefixes(css.VendorPrefix{ .none = true }, css.prefixes.Feature.border_radius);
                 switch (v) {
@@ -250,7 +250,7 @@ pub const BorderRadiusHandler = struct {
         // If two vendor prefixes for the same property have different
         // values, we need to flush what we have immediately to preserve order.
         if (@field(self, prop)) |*existing| {
-            if (!existing.*[0].eql(val) and !bun.bits.contains(VendorPrefix, existing.*[1], vp)) {
+            if (!existing.*[0].eql(val) and !fun.bits.contains(VendorPrefix, existing.*[1], vp)) {
                 self.flush(d, ctx);
             }
         }
@@ -316,6 +316,6 @@ pub fn isLogicalBorderRadiusProperty(property_id: PropertyIdTag) bool {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

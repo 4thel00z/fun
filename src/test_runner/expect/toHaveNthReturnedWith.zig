@@ -1,4 +1,4 @@
-pub fn toHaveNthReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
+pub fn toHaveNthReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callframe: *CallFrame) fun.JSError!JSValue {
     jsc.markBinding(@src());
     const thisValue = callframe.this();
     defer this.postMatch(globalThis);
@@ -17,7 +17,7 @@ pub fn toHaveNthReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callfra
     }
 
     this.incrementExpectCallCounter();
-    const returns = try bun.cpp.JSMockFunction__getReturns(globalThis, value);
+    const returns = try fun.cpp.JSMockFunction__getReturns(globalThis, value);
     if (!returns.jsType().isArray()) {
         var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis, .quote_strings = true };
         defer formatter.deinit();
@@ -39,7 +39,7 @@ pub fn toHaveNthReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callfra
         if (nth_result.isObject()) {
             const result_type = try nth_result.get(globalThis, "type") orelse .js_undefined;
             if (result_type.isString()) {
-                const type_str = try result_type.toBunString(globalThis);
+                const type_str = try result_type.toFunString(globalThis);
                 defer type_str.deref();
                 if (type_str.eqlComptime("return")) {
                     nth_return_value = try nth_result.get(globalThis, "value") orelse .js_undefined;
@@ -85,14 +85,14 @@ pub fn toHaveNthReturnedWith(this: *Expect, globalThis: *JSGlobalObject, callfra
     return this.throw(globalThis, signature, "\n\nCall {d}:\nExpected: <green>{f}<r>\nReceived: <red>{f}<r>", .{ n, expected.toFmt(&formatter), nth_return_value.toFmt(&formatter) });
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const DiffFormatter = @import("../diff_format.zig").DiffFormatter;
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
-const mock = bun.jsc.Expect.mock;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
+const mock = fun.jsc.Expect.mock;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

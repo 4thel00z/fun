@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 const { HTTPParser, ConnectionsList } = process.binding("http_parser");
 
 const kOnHeaders = HTTPParser.kOnHeaders;

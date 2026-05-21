@@ -4,7 +4,7 @@
 
 #include "../vm/SigintReceiver.h"
 
-namespace Bun {
+namespace Fun {
 
 class ScriptOptions : public BaseVMOptions {
 public:
@@ -110,4 +110,4 @@ public:
     bool fromJS(JSC::JSGlobalObject* globalObject, JSC::VM& vm, JSC::ThrowScope& scope, JSC::JSValue optionsArg);
 };
 
-} // namespace Bun
+} // namespace Fun

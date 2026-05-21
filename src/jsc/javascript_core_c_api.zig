@@ -4,8 +4,8 @@
 /// To generate a new class exposed to JavaScript, look at *.classes.ts
 /// Otherwise, use `jsc.JSValue`.
 /// ************************************
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 const generic = opaque {
     pub fn value(this: *const generic) jsc.JSValue {
         return @enumFromInt(@as(jsc.JSValue.backing_int, @bitCast(@intFromPtr(this))));

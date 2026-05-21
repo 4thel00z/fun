@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 
 const body = process.env.GITHUB_ISSUE_BODY || "";
 const title = process.env.GITHUB_ISSUE_TITLE || "";
@@ -23,7 +23,7 @@ if (bodyLower.includes("workers_terminated")) {
   closeAction = {
     reason: "not_planned",
     comment: `Duplicate of #15964
-We are tracking worker stability issues in https://github.com/oven-sh/bun/issues/15964. For now, I recommend against terminating workers when possible.`,
+We are tracking worker stability issues in https://github.com/underdoc-org/fun/issues/15964. For now, I recommend against terminating workers when possible.`,
   };
 }
 
@@ -35,7 +35,7 @@ else if (
   closeAction = {
     reason: "not_planned",
     comment: `Duplicate of #4290.
-better-sqlite3 is not supported yet in Bun due to missing V8 C++ APIs. For now, you can try [bun:sqlite](https://bun.com/docs/api/sqlite) for an almost drop-in replacement.`,
+better-sqlite3 is not supported yet in Fun due to missing V8 C++ APIs. For now, you can try [fun:sqlite](https://fun.dev/docs/api/sqlite) for an almost drop-in replacement.`,
   };
 }
 
@@ -49,10 +49,10 @@ else if (
   closeAction = {
     reason: "completed",
     comment: `Duplicate of #23342.
-This issue was fixed in Bun v1.3. Please upgrade to the latest version:
+This issue was fixed in Fun v1.3. Please upgrade to the latest version:
 
 \`\`\`sh
-bun upgrade
+fun upgrade
 \`\`\``,
   };
 }
@@ -64,9 +64,9 @@ else if (bodyLower.includes("wasm_trampoline_wasm_ipint_call_wide32")) {
     comment: `Duplicate of #17841.
 This is a known issue with JavaScriptCore's WASM In-place interpreter on Linux x64. You can work around it by:
 
-1. Setting \`BUN_JSC_useWasmIPInt=0\` to disable IPInt (reverts to older Wasm interpreter)
+1. Setting \`FUN_JSC_useWasmIPInt=0\` to disable IPInt (reverts to older Wasm interpreter)
 2. Using an aarch64 CPU instead of x86_64
-3. Using \`BUN_JSC_jitPolicyScale=0\` to force JIT compilation (may impact startup performance)
+3. Using \`FUN_JSC_jitPolicyScale=0\` to force JIT compilation (may impact startup performance)
 
 We've reported this to WebKit and are tracking the issue in #17841.`,
   };
@@ -79,7 +79,7 @@ else if (
     bodyLower.includes("illegalinstruction")) &&
   bodyLower.includes("no_avx")
 ) {
-  let comment = `Bun requires a CPU with the micro-architecture [\`nehalem\`](https://en.wikipedia.org/wiki/Nehalem_(microarchitecture)) or later (released in 2008). If you're using a CPU emulator like qemu, then try enabling x86-64-v2.`;
+  let comment = `Fun requires a CPU with the micro-architecture [\`nehalem\`](https://en.wikipedia.org/wiki/Nehalem_(microarchitecture)) or later (released in 2008). If you're using a CPU emulator like qemu, then try enabling x86-64-v2.`;
 
   // Check if it's macOS
   const platformMatch = body.match(/Platform:\s*([^\n]+)/i) || body.match(/on\s+(macos|darwin)/i);
@@ -88,7 +88,7 @@ else if (
     (platformMatch[1]?.toLowerCase().includes("darwin") || platformMatch[1]?.toLowerCase().includes("macos"));
 
   if (isMacOS) {
-    comment += `\n\nIf you're on a macOS silicon device, you're running Bun via the Rosetta CPU emulator and your best option is to run Bun natively instead.`;
+    comment += `\n\nIf you're on a macOS silicon device, you're running Fun via the Rosetta CPU emulator and your best option is to run Fun natively instead.`;
   }
 
   closeAction = {

@@ -1,12 +1,12 @@
 #include "root.h"
 #include "ChromeBackend.h"
-#include "bun-uws/src/SocketKinds.h"
+#include "fun-uws/src/SocketKinds.h"
 #include "JSWebView.h"
 #include "ipc_protocol.h"
 #include "ZigGlobalObject.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ScriptExecutionContext.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "../bindings/webcore/WebSocket.h"
 #include "../bindings/webcore/MessageEvent.h"
 #include <JavaScriptCore/ConsoleClient.h>
@@ -64,13 +64,13 @@ struct Shm {
 };
 Shm s_shm;
 } // namespace
-#define BUN_SHM_OPEN(n, f, m) s_shm.open((n), (f), (m))
-#define BUN_SHM_UNLINK(n) s_shm.unlink((n))
-#define BUN_SHM_LOAD() s_shm.load()
+#define FUN_SHM_OPEN(n, f, m) s_shm.open((n), (f), (m))
+#define FUN_SHM_UNLINK(n) s_shm.unlink((n))
+#define FUN_SHM_LOAD() s_shm.load()
 #elif OS(DARWIN) || OS(FREEBSD)
-#define BUN_SHM_OPEN(n, f, m) ::shm_open((n), (f), (m))
-#define BUN_SHM_UNLINK(n) ::shm_unlink((n))
-#define BUN_SHM_LOAD() true
+#define FUN_SHM_OPEN(n, f, m) ::shm_open((n), (f), (m))
+#define FUN_SHM_UNLINK(n) ::shm_unlink((n))
+#define FUN_SHM_LOAD() true
 #endif
 
 #include "libusockets.h"
@@ -78,7 +78,7 @@ Shm s_shm;
 
 // LIBUS_SOCKET_DESCRIPTOR is SOCKET on Windows, int on POSIX. us_socket_
 // from_fd takes one; its failure-path close needs the matching close.
-// Bun__Chrome__ensure returns -1 on Windows (no socketpair) so the branch
+// Fun__Chrome__ensure returns -1 on Windows (no socketpair) so the branch
 // is unreachable there, but the compiler needs the decl to type-check.
 #if OS(WINDOWS)
 static inline void closefd(LIBUS_SOCKET_DESCRIPTOR s) { closesocket(s); }
@@ -86,7 +86,7 @@ static inline void closefd(LIBUS_SOCKET_DESCRIPTOR s) { closesocket(s); }
 static inline void closefd(LIBUS_SOCKET_DESCRIPTOR fd) { ::close(fd); }
 #endif
 
-namespace Bun {
+namespace Fun {
 namespace CDP {
 
 using namespace JSC;
@@ -94,15 +94,15 @@ using namespace JSC;
 // From ChromeProcess.zig. Returns the parent's socketpair fd (bidirectional).
 // path overrides auto-detection; extraArgv (count entries, each NUL-
 // terminated) appends after core flags. All pointers nullable.
-extern "C" int32_t Bun__Chrome__ensure(Zig::GlobalObject*, const char* userDataDir,
+extern "C" int32_t Fun__Chrome__ensure(Zig::GlobalObject*, const char* userDataDir,
     const char* path, const char* const* extraArgv, uint32_t extraArgvLen,
     bool stdoutInherit, bool stderrInherit);
 extern "C" void* Blob__fromBytesWithType(JSC::JSGlobalObject*, const uint8_t* ptr, size_t len, const char* mime);
 extern "C" JSC::EncodedJSValue SYSV_ABI Blob__create(Zig::GlobalObject*, void* impl);
-extern "C" void Bun__eventLoop__incrementRefConcurrently(void* bunVM, int delta);
-extern "C" void Bun__EventLoop__enter(Zig::GlobalObject*);
-extern "C" void Bun__EventLoop__exit(Zig::GlobalObject*);
-extern "C" void Bun__EventLoop__runCallback2(JSGlobalObject*, EncodedJSValue cb,
+extern "C" void Fun__eventLoop__incrementRefConcurrently(void* funVM, int delta);
+extern "C" void Fun__EventLoop__enter(Zig::GlobalObject*);
+extern "C" void Fun__EventLoop__exit(Zig::GlobalObject*);
+extern "C" void Fun__EventLoop__runCallback2(JSGlobalObject*, EncodedJSValue cb,
     EncodedJSValue thisVal, EncodedJSValue arg0, EncodedJSValue arg1);
 
 // --- JSON field scanner -----------------------------------------------------
@@ -298,14 +298,14 @@ bool Transport::ensureSpawned(Zig::GlobalObject* zig, const WTF::String& userDat
     WTF::CString dir = userDataDir.utf8();
     WTF::CString pathC = path.utf8();
     // Two-level pack: CString owns the bytes, ptrVec holds data() pointers.
-    // Both live until Bun__Chrome__ensure returns (spawn copies argv).
+    // Both live until Fun__Chrome__ensure returns (spawn copies argv).
     WTF::Vector<WTF::CString, 8> argvC;
     WTF::Vector<const char*, 8> argvPtrs;
     for (auto& s : extraArgv) {
         argvC.append(s.utf8());
         argvPtrs.append(argvC.last().data());
     }
-    int32_t fd = Bun__Chrome__ensure(zig,
+    int32_t fd = Fun__Chrome__ensure(zig,
         dir.length() ? dir.data() : nullptr,
         pathC.length() ? pathC.data() : nullptr,
         argvPtrs.isEmpty() ? nullptr : argvPtrs.span().data(),
@@ -329,7 +329,7 @@ bool Transport::ensureSpawned(Zig::GlobalObject* zig, const WTF::String& userDat
     // care about READABLE — writable events on a read-end pipe fire
     // constantly, but onWritable is a no-op when m_txQueue is empty so
     // they're harmless. kind=1 (.dynamic) → dispatch via s_cdpVTable.
-    m_readSock = us_socket_from_fd(&s_cdpGroup, BUN_SOCKET_KIND_DYNAMIC, nullptr, sizeof(void*), fd, 0);
+    m_readSock = us_socket_from_fd(&s_cdpGroup, FUN_SOCKET_KIND_DYNAMIC, nullptr, sizeof(void*), fd, 0);
     if (!m_readSock) {
         closefd(fd);
         m_dead = true;
@@ -431,7 +431,7 @@ static void wsOnClose(void* ctx, unsigned short code)
             // terminator the pipe protocol needs.
             for (auto& cmd : pending) {
                 if (cmd.id && !t.m_pending.contains(cmd.id)) continue;
-                Bun::UTF8View view(cmd.body);
+                Fun::UTF8View view(cmd.body);
                 auto s = view.span();
                 t.writeRaw(s.data(), s.size());
                 t.writeRaw("\0", 1);
@@ -537,7 +537,7 @@ void Transport::onData(const char* data, int length)
 
     auto& vm = m_global->vm();
     auto catchScope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
-    Bun__EventLoop__enter(m_global);
+    Fun__EventLoop__enter(m_global);
 
     // NUL-delimited. memchr for the first \0, dispatch the message, repeat.
     size_t off = 0;
@@ -559,7 +559,7 @@ void Transport::onData(const char* data, int length)
     }
     if (off) m_rx.removeAt(0, off);
 
-    Bun__EventLoop__exit(m_global);
+    Fun__EventLoop__exit(m_global);
 }
 
 void Transport::handleMessage(std::span<const char> msg)
@@ -594,7 +594,7 @@ static std::span<const char> sidSpan(const WTF::String& s)
     return { reinterpret_cast<const char*>(span.data()), span.size() };
 }
 
-// Bun click button → CDP button enum string. CDP's Input.dispatchMouseEvent
+// Fun click button → CDP button enum string. CDP's Input.dispatchMouseEvent
 // takes a string: "none", "left", "middle", "right".
 static constexpr ASCIILiteral cdpButton(uint8_t b)
 {
@@ -608,7 +608,7 @@ static constexpr ASCIILiteral cdpButton(uint8_t b)
     }
 }
 
-// Bun modifier bits → CDP modifier integer. CDP uses bit 0=Alt, 1=Ctrl,
+// Fun modifier bits → CDP modifier integer. CDP uses bit 0=Alt, 1=Ctrl,
 // 2=Meta, 3=Shift. ipc_protocol.h's ModShift=1 ModCtrl=2 ModAlt=4 ModMeta=8.
 static constexpr int32_t cdpModifiers(uint8_t m)
 {
@@ -652,7 +652,7 @@ static void settle(JSGlobalObject* g, JSWebView* view, PendingSlot slot, bool ok
 //
 // WTF::JSON parses to a C++ tree — no JSValue allocation, no GC pressure.
 // The tree is small (exceptionDetails is error-path only, ~200B). Stamp
-// .stack with description directly; Bun's V8StackTraceIterator
+// .stack with description directly; Fun's V8StackTraceIterator
 // (ZigException.cpp) already parses V8 stacks when it needs frames.
 // ErrorInstance::create stackString overload sets .stack without capturing
 // a JSC-side trace (which would show ChromeBackend.cpp, not page frames).
@@ -913,15 +913,15 @@ void Transport::handleResponse(uint32_t id, std::span<const char> result, std::s
             // Name uses our pid + a monotonic counter — same scheme as the
             // WebKit child, different namespace (chrome- prefix) so they
             // never collide even if someone mixes backends in one process.
-            if (!BUN_SHM_LOAD()) {
+            if (!FUN_SHM_LOAD()) {
                 settle(g, view, entry.slot, false,
                     createError(g, "shm_open unavailable (librt not found)"_s));
                 return;
             }
             static uint32_t shmSeq = 0;
             char name[48];
-            snprintf(name, sizeof(name), "/bun-chrome-%d-%u", getpid(), ++shmSeq);
-            int fd = BUN_SHM_OPEN(name, O_CREAT | O_RDWR | O_EXCL, 0600);
+            snprintf(name, sizeof(name), "/fun-chrome-%d-%u", getpid(), ++shmSeq);
+            int fd = FUN_SHM_OPEN(name, O_CREAT | O_RDWR | O_EXCL, 0600);
             if (fd < 0) {
                 settle(g, view, entry.slot, false,
                     createError(g, makeString("shm_open: "_s, WTF::String::fromUTF8(strerror(errno)))));
@@ -931,7 +931,7 @@ void Transport::handleResponse(uint32_t id, std::span<const char> result, std::s
             if (ftruncate(fd, static_cast<off_t>(sz)) != 0) {
                 int err = errno; // close/unlink can clobber errno
                 ::close(fd);
-                BUN_SHM_UNLINK(name);
+                FUN_SHM_UNLINK(name);
                 settle(g, view, entry.slot, false,
                     createError(g, makeString("ftruncate: "_s, WTF::String::fromUTF8(strerror(err)))));
                 return;
@@ -940,7 +940,7 @@ void Transport::handleResponse(uint32_t id, std::span<const char> result, std::s
             int mmap_err = (map == MAP_FAILED) ? errno : 0;
             ::close(fd);
             if (map == MAP_FAILED) {
-                BUN_SHM_UNLINK(name);
+                FUN_SHM_UNLINK(name);
                 settle(g, view, entry.slot, false,
                     createError(g, makeString("mmap: "_s, WTF::String::fromUTF8(strerror(mmap_err)))));
                 return;
@@ -961,7 +961,7 @@ void Transport::handleResponse(uint32_t id, std::span<const char> result, std::s
 
         // Blob — the default. Blob__fromBytes copies via mimalloc
         // (handleOom crashes on failure, no JS exception). m_screenshotFormat
-        // picks the MIME so `Bun.write(path, blob)` / `new Response(blob)`
+        // picks the MIME so `Fun.write(path, blob)` / `new Response(blob)`
         // don't need the user to remember what format they asked for.
         void* impl = Blob__fromBytesWithType(g, decoded->span().data(), decoded->size(),
             screenshotMimeType(view->m_screenshotFormat));
@@ -1102,7 +1102,7 @@ void Transport::handleEvent(std::span<const char> method, std::span<const char> 
         // m_loading stays true — loadEventFired flips it.
 
         if (JSObject* cb = view->m_onNavigated.get()) {
-            Bun__EventLoop__runCallback2(g, JSValue::encode(cb), JSValue::encode(jsUndefined()),
+            Fun__EventLoop__runCallback2(g, JSValue::encode(cb), JSValue::encode(jsUndefined()),
                 JSValue::encode(jsString(vm, urlStr)), JSValue::encode(jsUndefined()));
         }
         return;
@@ -1182,7 +1182,7 @@ void Transport::handleEvent(std::span<const char> method, std::span<const char> 
             // ConsoleClient::logWithLevel — the same path console.log()
             // takes after argument collection. ScriptArguments holds
             // Vector<Strong<Unknown>> which GC-roots across the call
-            // (util.format allocates). Inspector forwarding + Bun's
+            // (util.format allocates). Inspector forwarding + Fun's
             // console formatter apply.
             //
             // CDP type → MessageLevel. trace/dir/table/assert all render
@@ -1263,7 +1263,7 @@ void Transport::rejectAllAndMarkDead(const WTF::String& reason)
     m_dead = true;
     // us_socket_close is idempotent (checks is_closed internally) so calling
     // it from the cdpOnClose path is a no-op. When this runs via
-    // Bun__Chrome__died (EVFILT_PROC won the race against EOF) the socket
+    // Fun__Chrome__died (EVFILT_PROC won the race against EOF) the socket
     // is still polling — close it. us_socket_close fires cdpOnClose
     // synchronously; the m_dead guard above short-circuits that reentrant
     // call so the caller's `reason` survives.
@@ -1306,16 +1306,16 @@ void Transport::updateKeepAlive()
     bool want = !m_views.isEmpty() || !m_pending.isEmpty();
     if (want == m_sockRefd || !m_global) return;
     m_sockRefd = want;
-    Bun__eventLoop__incrementRefConcurrently(
-        WebCore::clientData(m_global->vm())->bunVM, want ? 1 : -1);
+    Fun__eventLoop__incrementRefConcurrently(
+        WebCore::clientData(m_global->vm())->funVM, want ? 1 : -1);
 
     // WebSocket mode: close the connection when the last view is gone.
     // We're connected to the USER'S Chrome — keeping the WS open after
-    // they're done holds a DevTools session (shows "<Bun> is debugging
+    // they're done holds a DevTools session (shows "<Fun> is debugging
     // this browser" in Chrome's UI). Pipe mode keeps the subprocess
     // alive (it's OURS), but the user's Chrome should be released.
     //
-    // m_mode reset to None means the next `new Bun.WebView()` re-runs
+    // m_mode reset to None means the next `new Fun.WebView()` re-runs
     // auto-detect → reconnect (pops the Allow dialog again, which is
     // correct — it's a new session). The close handshake is async but
     // we don't wait; setNativeCallbacks({}) prevents wsOnClose from
@@ -1443,7 +1443,7 @@ JSPromise* evaluate(JSGlobalObject* g, JSWebView* view, const WTF::String& scrip
 // level commands (Target.*, Browser.*) need the sessionId omitted —
 // if m_sessionId is empty (first-navigate chain not yet complete) we send
 // browser-level. For explicit browser-level after attach, the user can
-// construct a second WebView or await Bun-side Target APIs (v2).
+// construct a second WebView or await Fun-side Target APIs (v2).
 JSPromise* cdp(JSGlobalObject* g, JSWebView* view, const WTF::String& method, const WTF::String& paramsJson)
 {
     auto& t = transport();
@@ -1738,7 +1738,7 @@ void close(JSWebView* view)
 } // namespace CDP
 
 // Called from ChromeProcess.zig's onProcessExit. Idempotent with onClose.
-extern "C" void Bun__Chrome__died(int32_t signo)
+extern "C" void Fun__Chrome__died(int32_t signo)
 {
     auto& t = CDP::transport();
     if (t.m_dead) return;
@@ -1747,4 +1747,4 @@ extern "C" void Bun__Chrome__died(int32_t signo)
             : "Chrome exited"_s);
 }
 
-} // namespace Bun
+} // namespace Fun

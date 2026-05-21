@@ -1,6 +1,6 @@
 "use strict";
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import util from "util";
 import testUtils from "./test-utils";
 

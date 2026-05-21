@@ -1,9 +1,9 @@
 ---
 title: HTMLRewriter
-description: Use Bun's HTMLRewriter to transform HTML documents with CSS selectors
+description: Use Fun's HTMLRewriter to transform HTML documents with CSS selectors
 ---
 
-HTMLRewriter lets you use CSS selectors to transform HTML documents. It works with `Request`, `Response`, as well as `string`. Bun's implementation is based on Cloudflare's [lol-html](https://github.com/cloudflare/lol-html).
+HTMLRewriter lets you use CSS selectors to transform HTML documents. It works with `Request`, `Response`, as well as `string`. Fun's implementation is based on Cloudflare's [lol-html](https://github.com/cloudflare/lol-html).
 
 ---
 
@@ -86,7 +86,7 @@ rewriter.transform(new TextEncoder().encode("<div>content</div>").buffer);
 rewriter.transform(new Blob(["<div>content</div>"]));
 
 // From File
-rewriter.transform(Bun.file("index.html"));
+rewriter.transform(Fun.file("index.html"));
 ```
 
 Note that Cloudflare Workers implementation of HTMLRewriter only supports `Response` objects.
@@ -118,7 +118,7 @@ The handlers can be asynchronous and return a Promise. Note that async operation
 ```ts
 rewriter.on("div", {
   async element(element) {
-    await Bun.sleep(1000);
+    await Fun.sleep(1000);
     element.setInnerContent("<span>replace</span>", { html: true });
   },
 });

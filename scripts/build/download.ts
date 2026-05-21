@@ -63,16 +63,16 @@ const tarExe =
  * the network. No image rebuild needed when versions change; the baked cache
  * just becomes a partial hit until the image is next refreshed.
  *
- * Resolved from `BUN_BUILD_PREFETCH_DIR` if set, else the platform's
+ * Resolved from `FUN_BUILD_PREFETCH_DIR` if set, else the platform's
  * well-known bake path. The fallback is what makes this robust on CI: getting
  * an env var from image-bake time into a Buildkite job's shell crosses
  * systemd / non-login-shell / agent-hook boundaries that vary per platform,
  * whereas "look at the path bootstrap writes to" doesn't.
  */
 export const prefetchDir: string | undefined = (() => {
-  const env = process.env.BUN_BUILD_PREFETCH_DIR;
+  const env = process.env.FUN_BUILD_PREFETCH_DIR;
   if (env) return env;
-  const wellKnown = process.platform === "win32" ? "C:\\bun-prefetch" : "/opt/bun-prefetch";
+  const wellKnown = process.platform === "win32" ? "C:\\fun-prefetch" : "/opt/fun-prefetch";
   return existsSync(wellKnown) ? wellKnown : undefined;
 })();
 
@@ -166,7 +166,7 @@ export async function downloadWithRetry(url: string, dest: string, logPrefix: st
 
     const tmpPath = `${dest}.${process.pid}.partial`;
     try {
-      const res = await fetch(url, { headers: { "User-Agent": "bun-build-system" } });
+      const res = await fetch(url, { headers: { "User-Agent": "fun-build-system" } });
       if (!res.ok || res.body === null) {
         lastError = new BuildError(`HTTP ${res.status} ${res.statusText} for ${url}`);
         // 4xx is deterministic — a bad URL/missing artifact won't succeed on
@@ -215,7 +215,7 @@ export async function downloadWithRetry(url: string, dest: string, logPrefix: st
  *
  * @param stripComponents How many top-level dirs to strip. 1 for github
  *   archives. 0 for tarballs that are already flat (e.g. prebuilt WebKit
- *   has `bun-webkit/` that the caller wants to keep for a rename step).
+ *   has `fun-webkit/` that the caller wants to keep for a rename step).
  */
 export async function extractTarGz(tarball: string, dest: string, stripComponents = 1): Promise<void> {
   const args = ["-xzmf", tarball, "-C", dest];
@@ -282,7 +282,7 @@ export async function extractZip(zipPath: string, dest: string): Promise<void> {
  *
  * Tarball layout assumption: single top-level directory. We extract to a
  * staging dir, hoist the single child into `dest/`. Matches GitHub release
- * asset conventions (WebKit's `bun-webkit/`, future deps' similar layouts).
+ * asset conventions (WebKit's `fun-webkit/`, future deps' similar layouts).
  * If a tarball has multiple top-level entries, the whole staging dir becomes
  * `dest/` (no hoist).
  *
@@ -328,7 +328,7 @@ export async function fetchPrebuilt(
   // ─── Extract ───
   // Extract to a private staging dir, then hoist. We don't extract directly
   // into dest/ because the tarball's top-level dir name is unpredictable
-  // (e.g. `bun-webkit/` vs `libfoo-1.2.3/`).
+  // (e.g. `fun-webkit/` vs `libfoo-1.2.3/`).
   const stagingDir = `${dest}${suffix}.staging`;
   await mkdir(stagingDir, { recursive: true });
 

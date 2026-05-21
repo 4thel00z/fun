@@ -1,7 +1,7 @@
-/// ELF file manipulation for `bun build --compile` on Linux.
+/// ELF file manipulation for `fun build --compile` on Linux.
 ///
 /// Analogous to `macho.zig` (macOS) and `pe.zig` (Windows).
-/// Finds the `.bun` ELF section (placed by a linker symbol in c-bindings.cpp)
+/// Finds the `.fun` ELF section (placed by a linker symbol in c-bindings.cpp)
 /// and expands it to hold the standalone module graph data.
 ///
 /// Must work on any host platform (macOS, Windows, Linux) for cross-compilation.
@@ -15,12 +15,12 @@ pub const ElfFile = struct {
         const ehdr = readEhdr(elf_data);
 
         // Validate ELF magic
-        if (!bun.strings.eqlComptime(ehdr.e_ident[0..4], "\x7fELF")) return error.InvalidElfFile;
+        if (!fun.strings.eqlComptime(ehdr.e_ident[0..4], "\x7fELF")) return error.InvalidElfFile;
 
         // Must be 64-bit
         if (ehdr.e_ident[elf.EI_CLASS] != elf.ELFCLASS64) return error.Not64Bit;
 
-        // Must be little-endian (bun only supports x64 + arm64, both LE)
+        // Must be little-endian (fun only supports x64 + arm64, both LE)
         if (ehdr.e_ident[elf.EI_DATA] != elf.ELFDATA2LSB) return error.NotLittleEndian;
 
         var data = try std.array_list.Managed(u8).initCapacity(allocator, elf_data.len);
@@ -44,15 +44,15 @@ pub const ElfFile = struct {
     }
 
     /// If PT_INTERP points into a Nix/Guix store path, rewrite it to the
-    /// standard FHS path so `bun build --compile` output stays portable when
-    /// the bun binary itself was patchelf'd (NixOS autoPatchelfHook). See #24742.
+    /// standard FHS path so `fun build --compile` output stays portable when
+    /// the fun binary itself was patchelf'd (NixOS autoPatchelfHook). See #24742.
     ///
     /// Skipped when the host system itself uses a Nix/Guix store interpreter
-    /// (i.e. the running bun process has a store-path PT_INTERP): on NixOS
+    /// (i.e. the running fun process has a store-path PT_INTERP): on NixOS
     /// `/lib64/ld-linux-x86-64.so.2` is a stub that refuses to run generic
     /// binaries, so normalizing there would break locally-run compiled output
     /// (#29290). Cross-compile-style portability is preserved on any non-Nix
-    /// Linux host that happens to have a patchelf'd bun installed.
+    /// Linux host that happens to have a patchelf'd fun installed.
     ///
     /// Store paths are always longer than the FHS path, so this is an in-place
     /// shrink — no segment moves. No-op for any other interpreter.
@@ -80,8 +80,8 @@ pub const ElfFile = struct {
             const interp_region = self.data.items[interp_offset..][0..interp_filesz];
             const current = std.mem.sliceTo(interp_region, 0);
 
-            if (!bun.strings.hasPrefixComptime(current, "/nix/store/") and
-                !bun.strings.hasPrefixComptime(current, "/gnu/store/"))
+            if (!fun.strings.hasPrefixComptime(current, "/nix/store/") and
+                !fun.strings.hasPrefixComptime(current, "/gnu/store/"))
             {
                 return;
             }
@@ -90,7 +90,7 @@ pub const ElfFile = struct {
             const basename = current[last_slash + 1 ..];
 
             const replacement: []const u8 = inline for (interp_map) |entry| {
-                if (bun.strings.eqlComptime(basename, entry[0])) break entry[1];
+                if (fun.strings.eqlComptime(basename, entry[0])) break entry[1];
             } else return;
 
             // FHS path + NUL must fit in the existing segment (always true for
@@ -132,7 +132,7 @@ pub const ElfFile = struct {
             const shdr = self.readShdr(ehdr.e_shoff, @intCast(i));
             if (shdr.sh_name >= strtab.len) continue;
             const name = std.mem.sliceTo(strtab[shdr.sh_name..], 0);
-            if (!bun.strings.eqlComptime(name, ".interp")) continue;
+            if (!fun.strings.eqlComptime(name, ".interp")) continue;
 
             // sh_size @ +32 in Elf64_Shdr
             const shdr_offset = @as(usize, @intCast(ehdr.e_shoff)) + i * shdr_size;
@@ -148,9 +148,9 @@ pub const ElfFile = struct {
         .{ "ld-musl-aarch64.so.1", "/lib/ld-musl-aarch64.so.1" },
     };
 
-    /// Find the `.bun` section and write `payload` so the kernel `mmap`s it at
+    /// Find the `.fun` section and write `payload` so the kernel `mmap`s it at
     /// exec time alongside the rest of the binary. Stores the data's vaddr at
-    /// the original BUN_COMPILED location so the runtime can dereference it
+    /// the original FUN_COMPILED location so the runtime can dereference it
     /// directly.
     ///
     /// We extend the existing writable `PT_LOAD` to cover the appended payload
@@ -162,21 +162,21 @@ pub const ElfFile = struct {
     /// WSL1 while preserving the mmap-at-execve contract (no file I/O at
     /// startup, works with execute-only permissions).
     ///
-    /// We always append rather than writing in-place because `.bun` is in the
+    /// We always append rather than writing in-place because `.fun` is in the
     /// middle of a `PT_LOAD` segment — sections like `.dynamic`, `.got`,
     /// `.got.plt` come after it, and expanding in-place would invalidate their
     /// absolute virtual addresses.
-    pub fn writeBunSection(self: *ElfFile, payload: []const u8) !void {
+    pub fn writeFunSection(self: *ElfFile, payload: []const u8) !void {
         const ehdr = readEhdr(self.data.items);
-        const bun_section = try self.findBunSection(ehdr);
-        const bun_section_offset = bun_section.file_offset;
+        const fun_section = try self.findFunSection(ehdr);
+        const fun_section_offset = fun_section.file_offset;
         const page_size = pageSize(ehdr);
 
         const header_size: u64 = @sizeOf(u64);
         const new_content_size: u64 = header_size + payload.len;
         const aligned_new_size = alignUp(new_content_size, page_size);
 
-        // Locate the writable PT_LOAD we'll extend. .bun lives in this
+        // Locate the writable PT_LOAD we'll extend. .fun lives in this
         // segment already (BlobHeader is `aligned(16K)` + PROGBITS with WA
         // flags). Growing an existing PT_LOAD is the layout a linker would
         // naturally produce; WSL1's kernel loader rejects binaries that
@@ -233,7 +233,7 @@ pub const ElfFile = struct {
         //                                              extended RW PT_LOAD; must read as
         //                                              zero to keep BSS semantics)
         //   [new_file_offset, +aligned_new_size)      [u64 LE size][payload][zero pad]
-        //                                             (new .bun contents — vaddr = new_vaddr)
+        //                                             (new .fun contents — vaddr = new_vaddr)
         //   [payload_end, +moved_tail_size)           relocated non-ALLOC sections + old
         //                                             section header table
         //
@@ -264,7 +264,7 @@ pub const ElfFile = struct {
         // MB of debug info past the RW segment), the destination overlaps
         // the source, so memmove is required.
         if (moved_tail_size != 0) {
-            bun.memmove(
+            fun.memmove(
                 self.data.items[move_dst_start..move_dst_end],
                 self.data.items[move_src_start..move_src_end],
             );
@@ -285,15 +285,15 @@ pub const ElfFile = struct {
             @memset(self.data.items[payload_end..move_dst_start], 0);
         }
 
-        // Write the vaddr of the appended data at the ORIGINAL .bun section location
-        // (where BUN_COMPILED symbol points). At runtime, BUN_COMPILED.size will be
+        // Write the vaddr of the appended data at the ORIGINAL .fun section location
+        // (where FUN_COMPILED symbol points). At runtime, FUN_COMPILED.size will be
         // this vaddr (always non-zero), which the runtime dereferences as a pointer.
-        // Non-standalone binaries have BUN_COMPILED.size = 0, so 0 means "no data".
-        std.mem.writeInt(u64, self.data.items[bun_section_offset..][0..8], new_vaddr, .little);
+        // Non-standalone binaries have FUN_COMPILED.size = 0, so 0 means "no data".
+        std.mem.writeInt(u64, self.data.items[fun_section_offset..][0..8], new_vaddr, .little);
 
         // Update every section header whose sh_offset pointed into the moved
         // tail so tools like `readelf -S`, `objdump`, and `gdb` still find
-        // the right bytes. Special-case the .bun header — it moves to the
+        // the right bytes. Special-case the .fun header — it moves to the
         // payload's new position, not to the shifted tail.
         //
         // The section header table itself is part of the moved tail, so we
@@ -312,7 +312,7 @@ pub const ElfFile = struct {
             const shdr_bytes = self.data.items[shdr_file_offset..][0..@sizeOf(Elf64_Shdr)];
             var shdr = std.mem.bytesAsValue(Elf64_Shdr, shdr_bytes).*;
 
-            if (i == bun_section.section_index) {
+            if (i == fun_section.section_index) {
                 shdr.sh_offset = new_file_offset;
                 shdr.sh_size = new_content_size;
                 shdr.sh_addr = new_vaddr;
@@ -356,20 +356,20 @@ pub const ElfFile = struct {
 
     // --- Internal helpers ---
 
-    const BunSectionInfo = struct {
-        /// File offset of the .bun section's data (sh_offset).
+    const FunSectionInfo = struct {
+        /// File offset of the .fun section's data (sh_offset).
         file_offset: u64,
-        /// Index of the .bun section in the section header table.
+        /// Index of the .fun section in the section header table.
         section_index: u16,
     };
 
-    /// Returns the file offset and section index of the `.bun` section.
-    fn findBunSection(self: *const ElfFile, ehdr: Elf64_Ehdr) !BunSectionInfo {
+    /// Returns the file offset and section index of the `.fun` section.
+    fn findFunSection(self: *const ElfFile, ehdr: Elf64_Ehdr) !FunSectionInfo {
         const shdr_size = @sizeOf(Elf64_Shdr);
         const shdr_table_offset = ehdr.e_shoff;
         const shnum = ehdr.e_shnum;
 
-        if (shnum == 0) return error.BunSectionNotFound;
+        if (shnum == 0) return error.FunSectionNotFound;
         if (shdr_table_offset + @as(u64, shnum) * shdr_size > self.data.items.len)
             return error.InvalidElfFile;
 
@@ -381,14 +381,14 @@ pub const ElfFile = struct {
         if (strtab_offset + strtab_size > self.data.items.len) return error.InvalidElfFile;
         const strtab = self.data.items[strtab_offset..][0..strtab_size];
 
-        // Search for .bun section
+        // Search for .fun section
         for (0..shnum) |i| {
             const shdr = self.readShdr(shdr_table_offset, @intCast(i));
             const name_offset = shdr.sh_name;
 
             if (name_offset < strtab.len) {
                 const name = std.mem.sliceTo(strtab[name_offset..], 0);
-                if (bun.strings.eqlComptime(name, ".bun")) {
+                if (fun.strings.eqlComptime(name, ".fun")) {
                     return .{
                         .file_offset = shdr.sh_offset,
                         .section_index = @intCast(i),
@@ -397,7 +397,7 @@ pub const ElfFile = struct {
             }
         }
 
-        return error.BunSectionNotFound;
+        return error.FunSectionNotFound;
     }
 
     fn readShdr(self: *const ElfFile, table_offset: u64, index: u16) Elf64_Shdr {
@@ -428,29 +428,29 @@ fn alignUp(value: u64, alignment: u64) u64 {
     return (value + mask) & ~mask;
 }
 
-/// True iff the host bun is running on is managed by Nix or Guix — in which
+/// True iff the host fun is running on is managed by Nix or Guix — in which
 /// case the "generic" FHS linker path `/lib64/ld-linux-x86-64.so.2` is a stub
 /// that rejects generic binaries, and rewriting PT_INTERP to it would break
-/// locally-run `bun build --compile` output. See #29290.
+/// locally-run `fun build --compile` output. See #29290.
 ///
 /// Checks (any one is sufficient):
-///   1. `BUN_DEBUG_FORCE_NIX_HOST` — test-only override used by #29290's
+///   1. `FUN_DEBUG_FORCE_NIX_HOST` — test-only override used by #29290's
 ///      regression test to exercise this branch without writing to `/etc`.
-///   2. The running bun process's own PT_INTERP (via `/proc/self/exe`). NixOS
+///   2. The running fun process's own PT_INTERP (via `/proc/self/exe`). NixOS
 ///      `autoPatchelfHook` rewrites installed binaries to `/nix/store/...`
 ///      loaders; this is the most precise signal.
 ///   3. `/etc/NIXOS` — canonical NixOS marker, present on every NixOS system
-///      regardless of how bun itself was installed (e.g. a statically-linked
-///      bun built elsewhere).
+///      regardless of how fun itself was installed (e.g. a statically-linked
+///      fun built elsewhere).
 ///   4. `/gnu/store` directory — Guix's equivalent of /nix/store.
 ///
-/// Result is cached — this is called once per `bun build --compile`.
+/// Result is cached — this is called once per `fun build --compile`.
 ///
-/// Always `false` on non-Linux hosts: `bun build --compile` for a Linux target
+/// Always `false` on non-Linux hosts: `fun build --compile` for a Linux target
 /// can run on macOS/Windows, in which case the host's linker layout is
 /// irrelevant and we want to normalize for portability (#24742).
 fn hostUsesNixStoreInterpreter() bool {
-    if (comptime !bun.Environment.isLinux) return false;
+    if (comptime !fun.Environment.isLinux) return false;
 
     const cache = struct {
         var computed: std.atomic.Value(u8) = .init(0); // 0 unknown, 1 no, 2 yes
@@ -458,34 +458,34 @@ fn hostUsesNixStoreInterpreter() bool {
             // Test-only override: lets #29290's regression test force the
             // Nix-host branch without mutating `/etc/NIXOS` on the shared
             // rootfs (which would poison concurrent test workers).
-            if (bun.env_var.BUN_DEBUG_FORCE_NIX_HOST.get()) return true;
+            if (fun.env_var.FUN_DEBUG_FORCE_NIX_HOST.get()) return true;
             if (selfInterpIsNixStore()) return true;
-            // Canonical NixOS marker — present even when bun itself was not
-            // installed via Nix (statically-linked bun, downloaded tarball).
-            if (bun.sys.exists("/etc/NIXOS")) return true;
+            // Canonical NixOS marker — present even when fun itself was not
+            // installed via Nix (statically-linked fun, downloaded tarball).
+            if (fun.sys.exists("/etc/NIXOS")) return true;
             // Guix equivalent.
-            if (bun.sys.directoryExistsAt(bun.FD.cwd(), "/gnu/store").unwrapOr(false)) return true;
+            if (fun.sys.directoryExistsAt(fun.FD.cwd(), "/gnu/store").unwrapOr(false)) return true;
             return false;
         }
 
         fn selfInterpIsNixStore() bool {
             // 4 KiB is enough: PT_INTERP on a glibc-linked binary points into
             // the first page. Read just the leading bytes to avoid slurping
-            // the whole bun binary.
+            // the whole fun binary.
             var buf: [4096]u8 = undefined;
-            const fd = switch (bun.sys.open("/proc/self/exe", bun.O.RDONLY, 0)) {
+            const fd = switch (fun.sys.open("/proc/self/exe", fun.O.RDONLY, 0)) {
                 .result => |fd| fd,
                 .err => return false,
             };
             defer fd.close();
-            const n = switch (bun.sys.read(fd, &buf)) {
+            const n = switch (fun.sys.read(fd, &buf)) {
                 .result => |n| n,
                 .err => return false,
             };
             if (n < @sizeOf(Elf64_Ehdr)) return false;
             const data = buf[0..n];
 
-            if (!bun.strings.eqlComptime(data[0..4], "\x7fELF")) return false;
+            if (!fun.strings.eqlComptime(data[0..4], "\x7fELF")) return false;
             if (data[elf.EI_CLASS] != elf.ELFCLASS64) return false;
             if (data[elf.EI_DATA] != elf.ELFDATA2LSB) return false;
 
@@ -504,8 +504,8 @@ fn hostUsesNixStoreInterpreter() bool {
                 if (interp_off + interp_sz > data.len) return false;
 
                 const interp = std.mem.sliceTo(data[interp_off..][0..interp_sz], 0);
-                return bun.strings.hasPrefixComptime(interp, "/nix/store/") or
-                    bun.strings.hasPrefixComptime(interp, "/gnu/store/");
+                return fun.strings.hasPrefixComptime(interp, "/nix/store/") or
+                    fun.strings.hasPrefixComptime(interp, "/gnu/store/");
             }
             return false;
         }
@@ -521,9 +521,9 @@ fn hostUsesNixStoreInterpreter() bool {
     return result;
 }
 
-const log = bun.Output.scoped(.elf, .visible);
+const log = fun.Output.scoped(.elf, .visible);
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const Allocator = std.mem.Allocator;

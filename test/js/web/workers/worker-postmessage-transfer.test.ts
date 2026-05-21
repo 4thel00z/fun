@@ -6,11 +6,11 @@
 // was treated as an options object whose .transfer is undefined, so buffers
 // were cloned (not detached) and MessagePorts failed to serialize.
 //
-// https://github.com/oven-sh/bun/issues/18705
-// https://github.com/oven-sh/bun/issues/23294
-// https://github.com/oven-sh/bun/issues/15931
+// https://github.com/underdoc-org/fun/issues/18705
+// https://github.com/underdoc-org/fun/issues/23294
+// https://github.com/underdoc-org/fun/issues/15931
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("self.postMessage transfer list", () => {
   async function roundtrip(body: string, expectedMessages: number) {

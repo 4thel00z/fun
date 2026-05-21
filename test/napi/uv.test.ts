@@ -1,5 +1,5 @@
-import { afterEach, beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, makeTree, tempDirWithFiles } from "harness";
+import { afterEach, beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, makeTree, tempDirWithFiles } from "harness";
 import path from "node:path";
 import { symbols, test_skipped } from "../../src/jsc/bindings/libuv/generate_uv_posix_stubs_constants";
 import source from "./uv-stub-stuff/uv_impl.c";
@@ -15,13 +15,13 @@ describe.if(!isWindows)("uv stubs", () => {
 
   beforeAll(async () => {
     const files = {
-      "uv_impl.c": await Bun.file(source).text(),
+      "uv_impl.c": await Fun.file(source).text(),
       "package.json": JSON.stringify({
         "name": "fake-plugin",
         "module": "index.ts",
         "type": "module",
         "devDependencies": {
-          "@types/bun": "latest",
+          "@types/fun": "latest",
         },
         "peerDependencies": {
           "typescript": "^5.0.0",
@@ -53,8 +53,8 @@ describe.if(!isWindows)("uv stubs", () => {
     process.chdir(tempdir);
 
     const libuvDir = path.join(__dirname, "../../src/jsc/bindings/libuv");
-    await Bun.$`cp -R ${libuvDir} ${path.join(tempdir, "libuv")}`;
-    await Bun.$`${bunExe()} i && ${bunExe()} build:napi`.env(bunEnv).cwd(tempdir);
+    await Fun.$`cp -R ${libuvDir} ${path.join(tempdir, "libuv")}`;
+    await Fun.$`${funExe()} i && ${funExe()} build:napi`.env(funEnv).cwd(tempdir);
 
     nativeModule = require(path.join(tempdir, "./build/Release/uv_test.node"));
   });

@@ -6,7 +6,7 @@
 #include <JavaScriptCore/JSString.h>
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 JSC_DEFINE_HOST_FUNCTION(jsFunctionIsUTF16String,
@@ -68,4 +68,4 @@ JSC::JSValue createJSCTestingHelpers(Zig::GlobalObject* globalObject)
     return object;
 }
 
-} // namespace Bun
+} // namespace Fun

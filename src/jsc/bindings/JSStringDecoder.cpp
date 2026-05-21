@@ -10,7 +10,7 @@
 #include "JSDOMConvertEnumeration.h"
 #include "JSBufferEncodingType.h"
 #include <JavaScriptCore/JSArrayBufferView.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "wtf/text/ASCIILiteral.h"
 #include "wtf/text/StringImpl.h"
 #include "wtf/unicode/CharacterNames.h"
@@ -69,12 +69,12 @@ ALWAYS_INLINE bool isContinuation(uint8_t byte)
     return (byte & 0xC0) == 0x80;
 }
 
-// Wraps Bun__encoding__toString so callers get a JSString* directly.
+// Wraps Fun__encoding__toString so callers get a JSString* directly.
 // Returns nullptr with an exception pending when encoding fails (e.g.
 // ERR_STRING_TOO_LONG).
 static ALWAYS_INLINE JSString* encodingToString(const uint8_t* input, size_t len, JSGlobalObject* globalObject, BufferEncodingType encoding)
 {
-    EncodedJSValue encoded = Bun__encoding__toString(input, len, globalObject, static_cast<uint8_t>(encoding));
+    EncodedJSValue encoded = Fun__encoding__toString(input, len, globalObject, static_cast<uint8_t>(encoding));
     if (!encoded) [[unlikely]]
         return nullptr;
     return asString(JSValue::decode(encoded));
@@ -421,7 +421,7 @@ static inline JSC::EncodedJSValue jsStringDecoderPrototypeFunction_writeBody(JSC
             return JSC::JSValue::encode(buffer);
         }
 
-        return Bun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "buf"_s, "Buffer, TypedArray, or DataView"_s, buffer);
+        return Fun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "buf"_s, "Buffer, TypedArray, or DataView"_s, buffer);
     }
     RELEASE_AND_RETURN(throwScope, JSC::JSValue::encode(castedThis->write(vm, lexicalGlobalObject, reinterpret_cast<uint8_t*>(view->vector()), view->byteLength())));
 }
@@ -575,7 +575,7 @@ JSC::EncodedJSValue JSStringDecoderConstructor::construct(JSC::JSGlobalObject* l
             auto* encodingString = jsEncoding.toString(lexicalGlobalObject);
             RETURN_IF_EXCEPTION(throwScope, {});
             const auto& view = encodingString->view(lexicalGlobalObject);
-            return Bun::ERR::UNKNOWN_ENCODING(throwScope, lexicalGlobalObject, view);
+            return Fun::ERR::UNKNOWN_ENCODING(throwScope, lexicalGlobalObject, view);
         }
     }
     JSValue thisValue = callFrame->newTarget();

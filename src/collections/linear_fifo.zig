@@ -85,7 +85,7 @@ pub fn LinearFifo(
         pub fn realign(self: *Self) void {
             if (self.buf.len - self.head >= self.count) {
                 // this copy overlaps
-                bun.copy(T, self.buf[0..self.count], self.buf[self.head..][0..self.count]);
+                fun.copy(T, self.buf[0..self.count], self.buf[self.head..][0..self.count]);
                 self.head = 0;
             } else {
                 var tmp: [std.heap.page_size_min / 2 / @sizeOf(T)]T = undefined;
@@ -93,10 +93,10 @@ pub fn LinearFifo(
                 while (self.head != 0) {
                     const n = @min(self.head, tmp.len);
                     const m = self.buf.len - n;
-                    bun.copy(T, tmp[0..n], self.buf[0..n]);
+                    fun.copy(T, tmp[0..n], self.buf[0..n]);
                     // this middle copy overlaps; the others here don't
-                    bun.copy(T, self.buf[0..m], self.buf[n..][0..m]);
-                    bun.copy(T, self.buf[m..], tmp[0..n]);
+                    fun.copy(T, self.buf[0..m], self.buf[n..][0..m]);
+                    fun.copy(T, self.buf[m..], tmp[0..n]);
                     self.head -= n;
                 }
             }
@@ -174,7 +174,7 @@ pub fn LinearFifo(
         pub fn discard(self: *Self, count: usize) void {
             assert(count <= self.count);
 
-            if (comptime bun.Environment.allow_assert) {
+            if (comptime fun.Environment.allow_assert) {
                 // set old range to undefined. Note: may be wrapped around
                 const slice = self.readableSliceMut(0);
                 if (slice.len >= count) {
@@ -217,7 +217,7 @@ pub fn LinearFifo(
                 const slice = self.readableSlice(0);
                 if (slice.len == 0) break;
                 const n = @min(slice.len, dst_left.len);
-                bun.copy(T, dst_left, slice[0..n]);
+                fun.copy(T, dst_left, slice[0..n]);
                 self.discard(n);
                 dst_left = dst_left[n..];
             }
@@ -266,7 +266,7 @@ pub fn LinearFifo(
                 slice = self.writableSlice(0);
             }
 
-            bun.assert(slice.len >= size);
+            fun.assert(slice.len >= size);
             return slice[0..size];
         }
 
@@ -286,7 +286,7 @@ pub fn LinearFifo(
                 const writable_slice = self.writableSlice(0);
                 assert(writable_slice.len != 0);
                 const n = @min(writable_slice.len, src_left.len);
-                bun.copy(T, writable_slice, src_left[0..n]);
+                fun.copy(T, writable_slice, src_left[0..n]);
                 self.update(n);
                 src_left = src_left[n..];
             }
@@ -350,11 +350,11 @@ pub fn LinearFifo(
 
             const slice = self.readableSliceMut(0);
             if (src.len < slice.len) {
-                bun.copy(T, slice, src);
+                fun.copy(T, slice, src);
             } else {
-                bun.copy(T, slice, src[0..slice.len]);
+                fun.copy(T, slice, src[0..slice.len]);
                 const slice2 = self.readableSliceMut(slice.len);
-                bun.copy(T, slice2, src[slice.len..]);
+                fun.copy(T, slice2, src[slice.len..]);
             }
         }
 
@@ -395,7 +395,7 @@ pub fn LinearFifo(
             if (self.buf.len - self.head >= self.count) {
                 // If it doesnt overflow past the end, there is one copy to be done
                 const rest = self.buf[self.head + offset ..];
-                bun.copy(T, rest[0 .. rest.len - 1], rest[1..]);
+                fun.copy(T, rest[0 .. rest.len - 1], rest[1..]);
             } else {
                 var index = self.head + offset;
                 if (powers_of_two) {
@@ -406,15 +406,15 @@ pub fn LinearFifo(
                 if (index < self.head) {
                     // If the item to remove is before the head, one slice is moved.
                     const rest = self.buf[index .. self.count - self.head];
-                    bun.copy(T, rest[0 .. rest.len - 1], rest[1..]);
+                    fun.copy(T, rest[0 .. rest.len - 1], rest[1..]);
                 } else {
                     // The items before and after the head have to be shifted
                     const wrap = self.buf[0];
                     const right = self.buf[index..];
-                    bun.copy(T, right[0 .. right.len - 1], right[1..]);
+                    fun.copy(T, right[0 .. right.len - 1], right[1..]);
                     self.buf[self.buf.len - 1] = wrap;
                     const left = self.buf[0 .. self.head - self.count];
-                    bun.copy(T, left[0 .. left.len - 1], left[1..]);
+                    fun.copy(T, left[0 .. left.len - 1], left[1..]);
                 }
             }
             self.count -= 1;
@@ -575,7 +575,7 @@ test "LinearFifo" {
     }
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const math = std.math;

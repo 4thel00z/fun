@@ -1,5 +1,5 @@
-import { spawn, spawnSync } from "bun";
-import { bunExe, bunEnv, isCI, isMusl } from "../../harness";
+import { spawn, spawnSync } from "fun";
+import { funExe, funEnv, isCI, isMusl } from "../../harness";
 
 // Tests that intentionally abort and should not generate core dumps when they abort
 // due to a Node-API error
@@ -7,15 +7,15 @@ const abortingJsNativeApiTests = ["test_finalizer/test_fatal_finalize.js"];
 
 export async function build(dir: string) {
   const child = spawn({
-    cmd: [bunExe(), "x", "node-gyp@11", "rebuild", "--debug", "-j", "max", "--verbose"],
+    cmd: [funExe(), "x", "node-gyp@11", "rebuild", "--debug", "-j", "max", "--verbose"],
     cwd: dir,
     stderr: "pipe",
     stdout: "ignore",
     stdin: "inherit",
     env: {
-      ...bunEnv,
+      ...funEnv,
       npm_config_target: "v24.3.0",
-      CXXFLAGS: (bunEnv.CXXFLAGS ?? "") + (process.platform == "win32" ? " -std=c++20" : " -std=gnu++20"),
+      CXXFLAGS: (funEnv.CXXFLAGS ?? "") + (process.platform == "win32" ? " -std=c++20" : " -std=gnu++20"),
       // on linux CI, node-gyp will default to g++ and the version installed there is very old,
       // so we make it use clang instead
       ...(process.platform == "linux" && isCI
@@ -37,10 +37,10 @@ export async function build(dir: string) {
 
 export function run(dir: string, test: string) {
   const env = abortingJsNativeApiTests.includes(test)
-    ? { ...bunEnv, BUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT: "1" }
-    : bunEnv;
+    ? { ...funEnv, FUN_INTERNAL_SUPPRESS_CRASH_ON_NAPI_ABORT: "1" }
+    : funEnv;
   const result = spawnSync({
-    cmd: [bunExe(), "run", test],
+    cmd: [funExe(), "run", test],
     cwd: dir,
     stderr: "inherit",
     stdout: "ignore",

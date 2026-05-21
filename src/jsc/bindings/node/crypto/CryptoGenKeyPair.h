@@ -4,7 +4,7 @@
 #include "ncrypto.h"
 #include "KeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsGenerateKeyPair);
 JSC_DECLARE_HOST_FUNCTION(jsGenerateKeyPairSync);
@@ -38,4 +38,4 @@ public:
 
 KeyEncodingConfig parseKeyEncodingConfig(JSC::JSGlobalObject*, JSC::ThrowScope&, JSC::JSValue keyTypeValue, JSC::JSValue optionsValue);
 
-} // namespace Bun
+} // namespace Fun

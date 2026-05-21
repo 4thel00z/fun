@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("should import and execute ES module from string", async () => {
   const code = `export default function test(arg) { return arg + arg };`;

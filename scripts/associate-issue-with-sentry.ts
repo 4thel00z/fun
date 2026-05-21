@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 const body = process.env.GITHUB_ISSUE_BODY;
 const SENTRY_AUTH_TOKEN = process.env.SENTRY_AUTH_TOKEN;
 
@@ -45,7 +47,7 @@ if (!shortId || !permalink) {
 console.log(`Sentry ID: ${shortId}`);
 console.log(`Sentry permalink: ${permalink}`);
 
-await Bun.write("sentry-id.txt", shortId);
-await Bun.write("sentry-link.txt", permalink);
+await Fun.write("sentry-id.txt", shortId);
+await Fun.write("sentry-link.txt", permalink);
 
 export {};

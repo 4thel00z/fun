@@ -583,7 +583,7 @@ pub const FlexHandler = struct {
                 // If two vendor prefixes for the same property have different
                 // values, we need to flush what we have immediately to preserve order.
                 if (@field(self, prop)) |*field| {
-                    if (!std.meta.eql(field[0], val.*) and !bun.bits.contains(css.VendorPrefix, field[1], vp.*)) {
+                    if (!std.meta.eql(field[0], val.*) and !fun.bits.contains(css.VendorPrefix, field[1], vp.*)) {
                         self.flush(d, ctx);
                     }
                 }
@@ -604,7 +604,7 @@ pub const FlexHandler = struct {
                 // Otherwise, update the value and add the prefix
                 if (@field(self, prop)) |*field| {
                     field[0] = css.generic.deepClone(@TypeOf(val.*), val, ctx.allocator);
-                    bun.bits.insert(css.VendorPrefix, &field[1], vp.*);
+                    fun.bits.insert(css.VendorPrefix, &field[1], vp.*);
                 } else {
                     @field(self, prop) = .{
                         css.generic.deepClone(@TypeOf(val.*), val, ctx.allocator),
@@ -711,32 +711,32 @@ pub const FlexHandler = struct {
 
         this.has_any = false;
 
-        var direction: ?struct { FlexDirection, VendorPrefix } = bun.take(&this.direction);
-        var wrap: ?struct { FlexWrap, VendorPrefix } = bun.take(&this.wrap);
-        var grow: ?struct { CSSNumber, VendorPrefix } = bun.take(&this.grow);
-        var shrink: ?struct { CSSNumber, VendorPrefix } = bun.take(&this.shrink);
-        var basis = bun.take(&this.basis);
-        var box_orient = bun.take(&this.box_orient);
-        var box_direction = bun.take(&this.box_direction);
-        var box_flex = bun.take(&this.box_flex);
-        var box_ordinal_group = bun.take(&this.box_ordinal_group);
-        var box_lines = bun.take(&this.box_lines);
-        var flex_positive = bun.take(&this.flex_positive);
-        var flex_negative = bun.take(&this.flex_negative);
-        var preferred_size = bun.take(&this.preferred_size);
-        var order = bun.take(&this.order);
-        var flex_order = bun.take(&this.flex_order);
+        var direction: ?struct { FlexDirection, VendorPrefix } = fun.take(&this.direction);
+        var wrap: ?struct { FlexWrap, VendorPrefix } = fun.take(&this.wrap);
+        var grow: ?struct { CSSNumber, VendorPrefix } = fun.take(&this.grow);
+        var shrink: ?struct { CSSNumber, VendorPrefix } = fun.take(&this.shrink);
+        var basis = fun.take(&this.basis);
+        var box_orient = fun.take(&this.box_orient);
+        var box_direction = fun.take(&this.box_direction);
+        var box_flex = fun.take(&this.box_flex);
+        var box_ordinal_group = fun.take(&this.box_ordinal_group);
+        var box_lines = fun.take(&this.box_lines);
+        var flex_positive = fun.take(&this.flex_positive);
+        var flex_negative = fun.take(&this.flex_negative);
+        var preferred_size = fun.take(&this.preferred_size);
+        var order = fun.take(&this.order);
+        var flex_order = fun.take(&this.flex_order);
 
         // Legacy properties. These are only set if the final standard properties were unset.
-        legacyProperty(this, "box-orient", bun.take(&box_orient), dest, context);
-        legacyProperty(this, "box-direction", bun.take(&box_direction), dest, context);
-        legacyProperty(this, "box-ordinal-group", bun.take(&box_ordinal_group), dest, context);
-        legacyProperty(this, "box-flex", bun.take(&box_flex), dest, context);
-        legacyProperty(this, "box-lines", bun.take(&box_lines), dest, context);
-        legacyProperty(this, "flex-positive", bun.take(&flex_positive), dest, context);
-        legacyProperty(this, "flex-negative", bun.take(&flex_negative), dest, context);
-        legacyProperty(this, "flex-preferred-size", bun.take(&preferred_size), dest, context);
-        legacyProperty(this, "flex-order", bun.take(&flex_order), dest, context);
+        legacyProperty(this, "box-orient", fun.take(&box_orient), dest, context);
+        legacyProperty(this, "box-direction", fun.take(&box_direction), dest, context);
+        legacyProperty(this, "box-ordinal-group", fun.take(&box_ordinal_group), dest, context);
+        legacyProperty(this, "box-flex", fun.take(&box_flex), dest, context);
+        legacyProperty(this, "box-lines", fun.take(&box_lines), dest, context);
+        legacyProperty(this, "flex-positive", fun.take(&flex_positive), dest, context);
+        legacyProperty(this, "flex-negative", fun.take(&flex_negative), dest, context);
+        legacyProperty(this, "flex-preferred-size", fun.take(&preferred_size), dest, context);
+        legacyProperty(this, "flex-order", fun.take(&flex_order), dest, context);
 
         if (direction) |val| {
             const dir = val[0];
@@ -751,8 +751,8 @@ pub const FlexHandler = struct {
                 }
                 if (!prefixes_2009.isEmpty()) {
                     const orient, const newdir = dir.to2009();
-                    bun.handleOom(dest.append(context.allocator, Property{ .@"box-orient" = .{ orient, prefixes_2009 } }));
-                    bun.handleOom(dest.append(context.allocator, Property{ .@"box-direction" = .{ newdir, prefixes_2009 } }));
+                    fun.handleOom(dest.append(context.allocator, Property{ .@"box-orient" = .{ orient, prefixes_2009 } }));
+                    fun.handleOom(dest.append(context.allocator, Property{ .@"box-direction" = .{ newdir, prefixes_2009 } }));
                 }
             }
         }
@@ -774,14 +774,14 @@ pub const FlexHandler = struct {
                         .wrap = wrapinner.*,
                     },
                     prefix,
-                } }) catch |err| bun.handleOom(err);
-                bun.bits.remove(css.VendorPrefix, dir_prefix, intersection);
-                bun.bits.remove(css.VendorPrefix, wrap_prefix, intersection);
+                } }) catch |err| fun.handleOom(err);
+                fun.bits.remove(css.VendorPrefix, dir_prefix, intersection);
+                fun.bits.remove(css.VendorPrefix, wrap_prefix, intersection);
             }
         }
 
-        this.singleProperty("flex-direction", bun.take(&direction), null, null, dest, context, "flex_direction");
-        this.singleProperty("flex-wrap", bun.take(&wrap), null, .{ BoxLines, "box-lines" }, dest, context, "flex_wrap");
+        this.singleProperty("flex-direction", fun.take(&direction), null, null, dest, context, "flex_direction");
+        this.singleProperty("flex-wrap", fun.take(&wrap), null, .{ BoxLines, "box-lines" }, dest, context, "flex_wrap");
 
         if (context.targets.browsers) |targets| {
             if (grow) |val| {
@@ -795,7 +795,7 @@ pub const FlexHandler = struct {
                     prefixes_2009.moz = true;
                 }
                 if (!prefixes_2009.isEmpty()) {
-                    bun.handleOom(dest.append(context.allocator, Property{ .@"box-flex" = .{ g, prefixes_2009 } }));
+                    fun.handleOom(dest.append(context.allocator, Property{ .@"box-flex" = .{ g, prefixes_2009 } }));
                 }
             }
         }
@@ -820,17 +820,17 @@ pub const FlexHandler = struct {
                         .basis = b,
                     },
                     prefix,
-                } }) catch |err| bun.handleOom(err);
-                bun.bits.remove(css.VendorPrefix, g_prefix, intersection);
-                bun.bits.remove(css.VendorPrefix, s_prefix, intersection);
-                bun.bits.remove(css.VendorPrefix, b_prefix, intersection);
+                } }) catch |err| fun.handleOom(err);
+                fun.bits.remove(css.VendorPrefix, g_prefix, intersection);
+                fun.bits.remove(css.VendorPrefix, s_prefix, intersection);
+                fun.bits.remove(css.VendorPrefix, b_prefix, intersection);
             }
         }
 
-        this.singleProperty("flex-grow", bun.take(&grow), "flex-positive", null, dest, context, "flex_grow");
-        this.singleProperty("flex-shrink", bun.take(&shrink), "flex-negative", null, dest, context, "flex_shrink");
-        this.singleProperty("flex-basis", bun.take(&basis), "flex-preferred-size", null, dest, context, "flex_basis");
-        this.singleProperty("order", bun.take(&order), "flex-order", .{ BoxOrdinalGroup, "box-ordinal-group" }, dest, context, "order");
+        this.singleProperty("flex-grow", fun.take(&grow), "flex-positive", null, dest, context, "flex_grow");
+        this.singleProperty("flex-shrink", fun.take(&shrink), "flex-negative", null, dest, context, "flex_shrink");
+        this.singleProperty("flex-basis", fun.take(&basis), "flex-preferred-size", null, dest, context, "flex_basis");
+        this.singleProperty("order", fun.take(&order), "flex-order", .{ BoxOrdinalGroup, "box-ordinal-group" }, dest, context, "order");
     }
 
     fn singleProperty(
@@ -870,7 +870,7 @@ pub const FlexHandler = struct {
                                     dest.append(ctx.allocator, @unionInit(Property, p2009[1], .{
                                         v,
                                         prefixes_2009,
-                                    })) catch |err| bun.handleOom(err);
+                                    })) catch |err| fun.handleOom(err);
                                 }
                             }
                         }
@@ -883,7 +883,7 @@ pub const FlexHandler = struct {
                         dest.append(ctx.allocator, @unionInit(Property, p2012, .{
                             val,
                             css.VendorPrefix.MS,
-                        })) catch |err| bun.handleOom(err);
+                        })) catch |err| fun.handleOom(err);
                         ms = false;
                     }
 
@@ -897,7 +897,7 @@ pub const FlexHandler = struct {
                 dest.append(ctx.allocator, @unionInit(Property, prop, .{
                     val,
                     prefix,
-                })) catch |err| bun.handleOom(err);
+                })) catch |err| fun.handleOom(err);
             }
         }
     }
@@ -911,7 +911,7 @@ pub const FlexHandler = struct {
                 dest.append(ctx.allocator, @unionInit(Property, field_name, .{
                     val,
                     prefix,
-                })) catch |err| bun.handleOom(err);
+                })) catch |err| fun.handleOom(err);
             } else {
                 // css.generic.eql(comptime T: type, lhs: *const T, rhs: *const T)
                 // css.generic.deinit(@TypeOf(val), &val, ctx.allocator);
@@ -944,6 +944,6 @@ pub const FlexHandler = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

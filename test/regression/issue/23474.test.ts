@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("request.cookies.set() should set websocket upgrade response cookie - issue #23474", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     routes: {
       "/ws": req => {
@@ -27,8 +27,8 @@ test("request.cookies.set() should set websocket upgrade response cookie - issue
 
   const { promise, resolve, reject } = Promise.withResolvers();
 
-  // Use Bun.connect to send a WebSocket upgrade request and check response headers
-  const socket = await Bun.connect({
+  // Use Fun.connect to send a WebSocket upgrade request and check response headers
+  const socket = await Fun.connect({
     hostname: "localhost",
     port: server.port,
     socket: {
@@ -71,7 +71,7 @@ test("request.cookies.set() should set websocket upgrade response cookie - issue
 });
 
 test("request.cookies.set() should work with custom headers in upgrade - issue #23474", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     routes: {
       "/ws": req => {
@@ -99,7 +99,7 @@ test("request.cookies.set() should work with custom headers in upgrade - issue #
 
   const { promise, resolve, reject } = Promise.withResolvers();
 
-  const socket = await Bun.connect({
+  const socket = await Fun.connect({
     hostname: "localhost",
     port: server.port,
     socket: {

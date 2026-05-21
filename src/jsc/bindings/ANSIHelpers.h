@@ -5,7 +5,7 @@
 #include <span>
 #include <unicode/utf16.h>
 
-namespace Bun {
+namespace Fun {
 namespace ANSI {
 
 // Check if a character is an ANSI escape sequence introducer
@@ -495,4 +495,4 @@ static inline bool isSgrEndCode(uint32_t code)
 }
 
 } // namespace ANSI
-} // namespace Bun
+} // namespace Fun

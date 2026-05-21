@@ -38,7 +38,7 @@ pub fn VersionedURLType(comptime SemverIntType: type) type {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;

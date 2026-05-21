@@ -11,7 +11,7 @@ const ReadyState_CLOSED = 3;
 const EventEmitter = require("node:events");
 const http = require("node:http");
 const onceObject = { once: true };
-const kBunInternals = Symbol.for("::bunternal::");
+const kFunInternals = Symbol.for("::funternal::");
 const readyStates = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"];
 
 const encoder = new TextEncoder();
@@ -87,7 +87,7 @@ function emitWarning(type, message) {
   if (emittedWarnings.has(type)) return;
   emittedWarnings.add(type);
   // process.emitWarning(message); // our printing is bad
-  console.warn("[bun] Warning:", message);
+  console.warn("[fun] Warning:", message);
 }
 
 // TODO: add private method on WebSocket to avoid these allocations
@@ -107,13 +107,13 @@ function normalizeData(data, opts) {
   return data;
 }
 
-// https://github.com/oven-sh/bun/issues/11866
+// https://github.com/underdoc-org/fun/issues/11866
 let WebSocket;
 
 /**
  * @link https://github.com/websockets/ws/blob/master/doc/ws.md#class-websocket
  */
-class BunWebSocket extends EventEmitter {
+class FunWebSocket extends EventEmitter {
   static [Symbol.toStringTag] = "WebSocket";
   static CONNECTING = ReadyState_CONNECTING;
   static OPEN = ReadyState_OPEN;
@@ -129,7 +129,7 @@ class BunWebSocket extends EventEmitter {
 
   constructor(url, protocols, options) {
     super();
-    // https://github.com/oven-sh/bun/issues/11866
+    // https://github.com/underdoc-org/fun/issues/11866
     if (!WebSocket) {
       WebSocket = $cpp("JSWebSocket.cpp", "getWebSocketConstructor");
     }
@@ -272,7 +272,7 @@ class BunWebSocket extends EventEmitter {
 
   #onOrOnce(event, listener, once) {
     if (event === "unexpected-response" || event === "upgrade" || event === "redirect") {
-      emitWarning(event, "ws.WebSocket '" + event + "' event is not implemented in bun");
+      emitWarning(event, "ws.WebSocket '" + event + "' event is not implemented in fun");
     }
     const mask = 1 << eventIds[event];
     const hasPersistentListener = mask && (this.#eventId & mask) === mask;
@@ -540,7 +540,7 @@ class BunWebSocket extends EventEmitter {
     this.#paused = true;
 
     // deviation: we dont support pause()
-    emitWarning("pause()", "ws.WebSocket.pause() is not implemented in bun");
+    emitWarning("pause()", "ws.WebSocket.pause() is not implemented in fun");
   }
 
   resume() {
@@ -553,10 +553,10 @@ class BunWebSocket extends EventEmitter {
     this.#paused = false;
 
     // deviation: we dont support resume()
-    emitWarning("resume()", "ws.WebSocket.resume() is not implemented in bun");
+    emitWarning("resume()", "ws.WebSocket.resume() is not implemented in fun");
   }
 }
-Object.defineProperty(BunWebSocket, "name", { value: "WebSocket" });
+Object.defineProperty(FunWebSocket, "name", { value: "WebSocket" });
 
 const wsKeyRegex = /^[+/0-9A-Za-z]{22}==$/;
 const wsTokenChars = [
@@ -785,7 +785,7 @@ const RUNNING = 0;
 const CLOSING = 1;
 const CLOSED = 2;
 
-class BunWebSocketMocked extends EventEmitter {
+class FunWebSocketMocked extends EventEmitter {
   #ws;
   #state;
   #enquedMessages = [];
@@ -821,7 +821,7 @@ class BunWebSocketMocked extends EventEmitter {
     const ping = this.#ping.bind(this);
     const pong = this.#pong.bind(this);
 
-    this[kBunInternals] = {
+    this[kFunInternals] = {
       message, // a message is received
       open, // a socket is opened
       close, // a socket is closed
@@ -1344,8 +1344,8 @@ class WebSocketServer extends EventEmitter {
    */
   completeUpgrade(extensions, key, protocols, request, socket, head, cb) {
     const response = socket._httpMessage;
-    const server = socket.server[kBunInternals];
-    const req = socket[kBunInternals];
+    const server = socket.server[kFunInternals];
+    const req = socket[kFunInternals];
 
     if (this._state > RUNNING) return abortHandshake(response, 503);
 
@@ -1358,14 +1358,14 @@ class WebSocketServer extends EventEmitter {
         ? this.options.handleProtocols(protocols, request)
         : protocols.values().next().value;
     }
-    const ws = new BunWebSocketMocked(request.url, protocol, extensions, "nodebuffer");
+    const ws = new FunWebSocketMocked(request.url, protocol, extensions, "nodebuffer");
 
     const headers = ["HTTP/1.1 101 Switching Protocols", "Upgrade: websocket", "Connection: Upgrade"];
     this.emit("headers", headers, request);
 
     if (
       server.upgrade(req, {
-        data: ws[kBunInternals],
+        data: ws[kFunInternals],
         headers: protocol ? { "sec-websocket-protocol": protocol } : undefined,
       })
     ) {
@@ -1396,7 +1396,7 @@ class WebSocketServer extends EventEmitter {
    */
   handleUpgrade(req, socket, head, cb) {
     // socket is actually fake so we use internal http_res
-    const response = socket._httpMessage || socket[kBunInternals];
+    const response = socket._httpMessage || socket[kFunInternals];
 
     // socket.on("error", socketOnError);
 
@@ -1496,87 +1496,87 @@ class WebSocketServer extends EventEmitter {
   }
 }
 
-Object.defineProperty(BunWebSocket, "CONNECTING", {
+Object.defineProperty(FunWebSocket, "CONNECTING", {
   enumerable: true,
   value: readyStates.indexOf("CONNECTING"),
 });
 
-Object.defineProperty(BunWebSocket.prototype, "CONNECTING", {
+Object.defineProperty(FunWebSocket.prototype, "CONNECTING", {
   enumerable: true,
   value: readyStates.indexOf("CONNECTING"),
 });
 
-Object.defineProperty(BunWebSocket, "OPEN", {
+Object.defineProperty(FunWebSocket, "OPEN", {
   enumerable: true,
   value: readyStates.indexOf("OPEN"),
 });
 
-Object.defineProperty(BunWebSocket.prototype, "OPEN", {
+Object.defineProperty(FunWebSocket.prototype, "OPEN", {
   enumerable: true,
   value: readyStates.indexOf("OPEN"),
 });
 
-Object.defineProperty(BunWebSocket, "CLOSING", {
+Object.defineProperty(FunWebSocket, "CLOSING", {
   enumerable: true,
   value: readyStates.indexOf("CLOSING"),
 });
 
-Object.defineProperty(BunWebSocket.prototype, "CLOSING", {
+Object.defineProperty(FunWebSocket.prototype, "CLOSING", {
   enumerable: true,
   value: readyStates.indexOf("CLOSING"),
 });
 
-Object.defineProperty(BunWebSocket, "CLOSED", {
+Object.defineProperty(FunWebSocket, "CLOSED", {
   enumerable: true,
   value: readyStates.indexOf("CLOSED"),
 });
 
-Object.defineProperty(BunWebSocket.prototype, "CLOSED", {
+Object.defineProperty(FunWebSocket.prototype, "CLOSED", {
   enumerable: true,
   value: readyStates.indexOf("CLOSED"),
 });
 
-Object.defineProperty(BunWebSocketMocked.prototype, "CONNECTING", {
+Object.defineProperty(FunWebSocketMocked.prototype, "CONNECTING", {
   enumerable: true,
   value: readyStates.indexOf("CONNECTING"),
 });
 
-Object.defineProperty(BunWebSocketMocked.prototype, "OPEN", {
+Object.defineProperty(FunWebSocketMocked.prototype, "OPEN", {
   enumerable: true,
   value: readyStates.indexOf("OPEN"),
 });
 
-Object.defineProperty(BunWebSocketMocked.prototype, "CLOSING", {
+Object.defineProperty(FunWebSocketMocked.prototype, "CLOSING", {
   enumerable: true,
   value: readyStates.indexOf("CLOSING"),
 });
 
-Object.defineProperty(BunWebSocketMocked.prototype, "CLOSED", {
+Object.defineProperty(FunWebSocketMocked.prototype, "CLOSED", {
   enumerable: true,
   value: readyStates.indexOf("CLOSED"),
 });
 
 class Sender {
   constructor() {
-    throw new Error("Not supported yet in Bun");
+    throw new Error("Not supported yet in Fun");
   }
 }
 
 class Receiver {
   constructor() {
-    throw new Error("Not supported yet in Bun");
+    throw new Error("Not supported yet in Fun");
   }
 }
 
 var createWebSocketStream = _ws => {
-  throw new Error("Not supported yet in Bun");
+  throw new Error("Not supported yet in Fun");
 };
 
-export default Object.assign(BunWebSocket, {
+export default Object.assign(FunWebSocket, {
   createWebSocketStream,
   Receiver,
   Sender,
-  WebSocket: BunWebSocket,
+  WebSocket: FunWebSocket,
   Server: WebSocketServer,
   WebSocketServer: WebSocketServer,
 });

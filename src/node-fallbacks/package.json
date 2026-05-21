@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-gen": "bun build-fallbacks.ts",
-    "build": "bun run build-gen"
+    "build-gen": "fun build-fallbacks.ts",
+    "build": "fun run build-gen"
   },
   "author": "",
   "license": "ISC",

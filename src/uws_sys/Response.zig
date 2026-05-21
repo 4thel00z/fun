@@ -22,8 +22,8 @@ pub fn NewResponse(ssl_flag: i32) type {
             return @as(*c.uws_res, @ptrCast(@alignCast(res)));
         }
 
-        pub inline fn downcastSocket(res: *Response) *bun.uws.us_socket_t {
-            return @as(*bun.uws.us_socket_t, @ptrCast(@alignCast(res)));
+        pub inline fn downcastSocket(res: *Response) *fun.uws.us_socket_t {
+            return @as(*fun.uws.us_socket_t, @ptrCast(@alignCast(res)));
         }
 
         pub fn end(res: *Response, data: []const u8, close_connection: bool) void {
@@ -124,7 +124,7 @@ pub fn NewResponse(ssl_flag: i32) type {
             c.uws_res_write_mark(ssl_flag, res.downcast());
         }
 
-        pub fn getNativeHandle(res: *Response) bun.FD {
+        pub fn getNativeHandle(res: *Response) fun.FD {
             if (comptime Environment.isWindows) {
                 // on windows uSockets exposes SOCKET
                 return .fromNative(@ptrCast(c.uws_res_get_native_handle(ssl_flag, res.downcast())));
@@ -163,10 +163,10 @@ pub fn NewResponse(ssl_flag: i32) type {
             const Wrapper = struct {
                 pub fn handle(this: *c.uws_res, amount: u64, data: ?*anyopaque) callconv(.c) bool {
                     if (comptime UserDataType == void) {
-                        return @call(bun.callmod_inline, handler, .{ {}, amount, castRes(this) });
+                        return @call(fun.callmod_inline, handler, .{ {}, amount, castRes(this) });
                     } else if (data) |user_data_ptr| {
                         // null should always be treated as a no-op, there's no case where it should have any effect.
-                        return @call(bun.callmod_inline, handler, .{
+                        return @call(fun.callmod_inline, handler, .{
                             @as(UserDataType, @ptrCast(@alignCast(user_data_ptr))),
                             amount,
                             castRes(this),
@@ -190,10 +190,10 @@ pub fn NewResponse(ssl_flag: i32) type {
             const Wrapper = struct {
                 pub fn handle(this: *c.uws_res, user_data: ?*anyopaque) callconv(.c) void {
                     if (comptime UserDataType == void) {
-                        @call(bun.callmod_inline, handler, .{ {}, castRes(this), {} });
+                        @call(fun.callmod_inline, handler, .{ {}, castRes(this), {} });
                     } else if (user_data) |user_data_ptr| {
                         // null should always be treated as a no-op, there's no case where it should have any effect.
-                        @call(bun.callmod_inline, handler, .{ @as(UserDataType, @ptrCast(@alignCast(user_data_ptr))), castRes(this) });
+                        @call(fun.callmod_inline, handler, .{ @as(UserDataType, @ptrCast(@alignCast(user_data_ptr))), castRes(this) });
                     }
                 }
             };
@@ -207,10 +207,10 @@ pub fn NewResponse(ssl_flag: i32) type {
             const Wrapper = struct {
                 pub fn handle(this: *c.uws_res, user_data: ?*anyopaque) callconv(.c) void {
                     if (comptime UserDataType == void) {
-                        @call(bun.callmod_inline, handler, .{ {}, castRes(this) });
+                        @call(fun.callmod_inline, handler, .{ {}, castRes(this) });
                     } else if (user_data) |user_data_ptr| {
                         // null should always be treated as a no-op, there's no case where it should have any effect.
-                        @call(bun.callmod_inline, handler, .{ @as(UserDataType, @ptrCast(@alignCast(user_data_ptr))), castRes(this) });
+                        @call(fun.callmod_inline, handler, .{ @as(UserDataType, @ptrCast(@alignCast(user_data_ptr))), castRes(this) });
                     }
                 }
             };
@@ -234,7 +234,7 @@ pub fn NewResponse(ssl_flag: i32) type {
                 const handler_fn = handler;
                 pub fn handle(this: *c.uws_res, chunk_ptr: [*c]const u8, len: usize, last: bool, user_data: ?*anyopaque) callconv(.c) void {
                     if (comptime UserDataType == void) {
-                        @call(bun.callmod_inline, handler_fn, .{
+                        @call(fun.callmod_inline, handler_fn, .{
                             {},
                             castRes(this),
                             if (len > 0) chunk_ptr[0..len] else "",
@@ -242,7 +242,7 @@ pub fn NewResponse(ssl_flag: i32) type {
                         });
                     } else if (user_data) |user_data_ptr| {
                         // null should always be treated as a no-op, there's no case where it should have any effect.
-                        @call(bun.callmod_inline, handler_fn, .{
+                        @call(fun.callmod_inline, handler_fn, .{
                             @as(UserDataType, @ptrCast(@alignCast(user_data_ptr))),
                             castRes(this),
                             if (len > 0) chunk_ptr[0..len] else "",
@@ -269,7 +269,7 @@ pub fn NewResponse(ssl_flag: i32) type {
                 const Args = *@TypeOf(args_tuple);
                 pub fn handle(user_data: ?*anyopaque) callconv(.c) void {
                     const args: Args = @ptrCast(@alignCast(user_data.?));
-                    @call(bun.callmod_inline, handler_fn, args.*);
+                    @call(fun.callmod_inline, handler_fn, args.*);
                 }
             };
 
@@ -285,11 +285,11 @@ pub fn NewResponse(ssl_flag: i32) type {
             const Wrapper = struct {
                 pub fn handle(user_data: ?*anyopaque) callconv(.c) void {
                     if (comptime UserDataType == void) {
-                        @call(bun.callmod_inline, handler, .{
+                        @call(fun.callmod_inline, handler, .{
                             {},
                         });
                     } else {
-                        @call(bun.callmod_inline, handler, .{
+                        @call(fun.callmod_inline, handler, .{
                             @as(UserDataType, @ptrCast(@alignCast(user_data.?))),
                         });
                     }
@@ -335,16 +335,16 @@ pub const AnyResponse = union(enum) {
     pub fn assertSSL(this: AnyResponse) *uws.NewApp(true).Response {
         return switch (this) {
             .SSL => |resp| resp,
-            .TCP => bun.Output.panic("Expected SSL response, got TCP response", .{}),
-            .H3 => bun.Output.panic("Expected SSL response, got H3 response", .{}),
+            .TCP => fun.Output.panic("Expected SSL response, got TCP response", .{}),
+            .H3 => fun.Output.panic("Expected SSL response, got H3 response", .{}),
         };
     }
 
     pub fn assertNoSSL(this: AnyResponse) *uws.NewApp(false).Response {
         return switch (this) {
-            .SSL => bun.Output.panic("Expected TCP response, got SSL response", .{}),
+            .SSL => fun.Output.panic("Expected TCP response, got SSL response", .{}),
             .TCP => |resp| resp,
-            .H3 => bun.Output.panic("Expected TCP response, got H3 response", .{}),
+            .H3 => fun.Output.panic("Expected TCP response, got H3 response", .{}),
         };
     }
 
@@ -374,7 +374,7 @@ pub const AnyResponse = union(enum) {
 
     pub fn socket(this: AnyResponse) *c.uws_res {
         return switch (this) {
-            .H3 => bun.Output.panic("socket() is not available for HTTP/3 responses", .{}),
+            .H3 => fun.Output.panic("socket() is not available for HTTP/3 responses", .{}),
             inline else => |resp| resp.downcast(),
         };
     }
@@ -446,12 +446,12 @@ pub const AnyResponse = union(enum) {
         switch (this) {
             inline .SSL, .TCP => |resp, ssl| resp.onData(UserDataType, struct {
                 pub fn onDataCallback(user_data: UserDataType, _: *uws.NewApp(ssl == .SSL).Response, data: []const u8, last: bool) void {
-                    @call(bun.callmod_inline, handler, .{ user_data, data, last });
+                    @call(fun.callmod_inline, handler, .{ user_data, data, last });
                 }
             }.onDataCallback, optional_data),
             .H3 => |resp| resp.onData(UserDataType, struct {
                 pub fn onDataCallback(user_data: UserDataType, _: *H3Response, data: []const u8, last: bool) void {
-                    @call(bun.callmod_inline, handler, .{ user_data, data, last });
+                    @call(fun.callmod_inline, handler, .{ user_data, data, last });
                 }
             }.onDataCallback, optional_data),
         }
@@ -525,9 +525,9 @@ pub const AnyResponse = union(enum) {
         }
     }
 
-    pub fn getNativeHandle(this: AnyResponse) bun.FD {
+    pub fn getNativeHandle(this: AnyResponse) fun.FD {
         return switch (this) {
-            .H3 => bun.invalid_fd,
+            .H3 => fun.invalid_fd,
             inline else => |resp| resp.getNativeHandle(),
         };
     }
@@ -774,9 +774,9 @@ const c = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const Socket = uws.Socket;
 const SocketAddress = uws.SocketAddress;

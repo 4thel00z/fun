@@ -1,10 +1,10 @@
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import path from "path";
 
 test("works with prompts", async () => {
-  var child = Bun.spawn({
-    cmd: [bunExe(), path.join(import.meta.dir, "prompts.js")],
-    env: bunEnv,
+  var child = Fun.spawn({
+    cmd: [funExe(), path.join(import.meta.dir, "prompts.js")],
+    env: funEnv,
     stdout: "pipe",
     stdin: "pipe",
   });
@@ -15,9 +15,9 @@ test("works with prompts", async () => {
   reader.releaseLock();
 
   child.stdin.write("dylan\n");
-  await Bun.sleep(100);
+  await Fun.sleep(100);
   child.stdin.write("999\n");
-  await Bun.sleep(100);
+  await Fun.sleep(100);
   child.stdin.write("hi\n");
   expect(await child.exited).toBe(0);
 

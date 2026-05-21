@@ -1,8 +1,8 @@
-import { bunExe } from "harness";
+import { funExe } from "harness";
 
 test("child_process_ipc_large_disconnect", () => {
   const file = __dirname + "/fixtures/child-process-ipc-large-disconect.mjs";
-  const actual = Bun.spawnSync([bunExe(), file]);
+  const actual = Fun.spawnSync([funExe(), file]);
 
   expect(actual.stderr.toString()).toBe("");
   expect(actual.exitCode).toBe(0);

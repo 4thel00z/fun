@@ -9,10 +9,10 @@
 #include <JavaScriptCore/JSCJSValueInlines.h>
 #include <JavaScriptCore/VMTrapsInlines.h>
 #include <wtf/text/WTFString.h>
-#include <bun-uws/src/App.h>
+#include <fun-uws/src/App.h>
 
-extern "C" void Bun__NodeHTTPResponse_setClosed(void* zigResponse);
-extern "C" void Bun__NodeHTTPResponse_onClose(void* zigResponse, JSC::EncodedJSValue jsValue);
+extern "C" void Fun__NodeHTTPResponse_setClosed(void* zigResponse);
+extern "C" void Fun__NodeHTTPResponse_onClose(void* zigResponse, JSC::EncodedJSValue jsValue);
 extern "C" void us_socket_free_stream_buffer(us_socket_stream_buffer_t* streamBuffer);
 extern "C" uint64_t uws_res_get_remote_address_info(void* res, const char** dest, int* port, bool* is_ipv6);
 extern "C" uint64_t uws_res_get_local_address_info(void* res, const char** dest, int* port, bool* is_ipv6);
@@ -20,7 +20,7 @@ extern "C" EncodedJSValue us_socket_buffered_js_write(void* socket, bool is_ssl,
 extern "C" int us_socket_is_ssl_handshake_finished(struct us_socket_t* s);
 extern "C" int us_socket_ssl_handshake_callback_has_fired(struct us_socket_t* s);
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;
@@ -130,14 +130,14 @@ void JSNodeHTTPServerSocket::onClose()
 {
     this->socket = nullptr;
     if (auto* res = this->currentResponseObject.get(); res != nullptr && res->m_ctx != nullptr) {
-        Bun__NodeHTTPResponse_setClosed(res->m_ctx);
+        Fun__NodeHTTPResponse_setClosed(res->m_ctx);
     }
 
     // This function can be called during GC!
     Zig::GlobalObject* globalObject = static_cast<Zig::GlobalObject*>(this->globalObject());
     if (!functionToCallOnClose) {
         if (auto* res = this->currentResponseObject.get(); res != nullptr && res->m_ctx != nullptr) {
-            Bun__NodeHTTPResponse_onClose(res->m_ctx, JSValue::encode(res));
+            Fun__NodeHTTPResponse_onClose(res->m_ctx, JSValue::encode(res));
         }
         this->detach();
         return;
@@ -153,7 +153,7 @@ void JSNodeHTTPServerSocket::onClose()
             auto* callbackObject = thisObject->functionToCallOnClose.get();
             if (!callbackObject) {
                 if (auto* res = thisObject->currentResponseObject.get(); res != nullptr && res->m_ctx != nullptr) {
-                    Bun__NodeHTTPResponse_onClose(res->m_ctx, JSValue::encode(res));
+                    Fun__NodeHTTPResponse_onClose(res->m_ctx, JSValue::encode(res));
                 }
                 thisObject->detach();
                 return;
@@ -164,7 +164,7 @@ void JSNodeHTTPServerSocket::onClose()
 
             if (globalObject->scriptExecutionStatus(globalObject, thisObject) == ScriptExecutionStatus::Running) {
                 if (auto* res = thisObject->currentResponseObject.get(); res != nullptr && res->m_ctx != nullptr) {
-                    Bun__NodeHTTPResponse_onClose(res->m_ctx, JSValue::encode(res));
+                    Fun__NodeHTTPResponse_onClose(res->m_ctx, JSValue::encode(res));
                 }
 
                 profiledCall(globalObject, JSC::ProfilingReason::API, callbackObject, callData, thisObject, args, exception);
@@ -327,7 +327,7 @@ static WebCore::JSNodeHTTPResponse* getNodeHTTPResponse(us_socket_t* socket)
     return serverSocket->currentResponseObject.get();
 }
 
-extern "C" JSC::EncodedJSValue Bun__getNodeHTTPResponseThisValue(bool is_ssl, us_socket_t* socket)
+extern "C" JSC::EncodedJSValue Fun__getNodeHTTPResponseThisValue(bool is_ssl, us_socket_t* socket)
 {
     if (is_ssl) {
         return JSValue::encode(getNodeHTTPResponse<true>(socket));
@@ -335,7 +335,7 @@ extern "C" JSC::EncodedJSValue Bun__getNodeHTTPResponseThisValue(bool is_ssl, us
     return JSValue::encode(getNodeHTTPResponse<false>(socket));
 }
 
-extern "C" JSC::EncodedJSValue Bun__getNodeHTTPServerSocketThisValue(bool is_ssl, us_socket_t* socket)
+extern "C" JSC::EncodedJSValue Fun__getNodeHTTPServerSocketThisValue(bool is_ssl, us_socket_t* socket)
 {
     if (is_ssl) {
         return JSValue::encode(getNodeHTTPServerSocket<true>(socket));
@@ -343,7 +343,7 @@ extern "C" JSC::EncodedJSValue Bun__getNodeHTTPServerSocketThisValue(bool is_ssl
     return JSValue::encode(getNodeHTTPServerSocket<false>(socket));
 }
 
-extern "C" JSC::EncodedJSValue Bun__createNodeHTTPServerSocketForClientError(bool isSSL, us_socket_t* us_socket, Zig::GlobalObject* globalObject)
+extern "C" JSC::EncodedJSValue Fun__createNodeHTTPServerSocketForClientError(bool isSSL, us_socket_t* us_socket, Zig::GlobalObject* globalObject)
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -390,4 +390,4 @@ JSC::Structure* createNodeHTTPServerSocketStructure(JSC::VM& vm, JSC::JSGlobalOb
     return JSNodeHTTPServerSocket::createStructure(vm, globalObject);
 }
 
-} // namespace Bun
+} // namespace Fun

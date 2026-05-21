@@ -1,23 +1,23 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 /**
- * CLI Flag Parser for Bun Commands
+ * CLI Flag Parser for Fun Commands
  *
- * This script reads the --help menu for every Bun command and generates JSON
+ * This script reads the --help menu for every Fun command and generates JSON
  * containing all flag information, descriptions, and whether they support
  * positional or non-positional arguments.
  *
  * Handles complex cases like:
- * - Nested subcommands (bun pm cache rm)
- * - Command aliases (bun i = bun install, bun a = bun add)
+ * - Nested subcommands (fun pm cache rm)
+ * - Command aliases (fun i = fun install, fun a = fun add)
  * - Dynamic completions (scripts, packages, files)
  * - Context-aware flags
- * - Special cases like bare 'bun' vs 'bun run'
+ * - Special cases like bare 'fun' vs 'fun run'
  *
- * Output is saved to completions/bun-cli.json for use in generating
+ * Output is saved to completions/fun-cli.json for use in generating
  * shell completions (fish, bash, zsh).
  */
 
-import { spawn } from "bun";
+import { spawn } from "fun";
 import { mkdirSync, writeFileSync, mkdtempSync, rmSync } from "fs";
 import { join } from "path";
 
@@ -89,18 +89,18 @@ interface CompletionData {
       };
     };
   };
-  bunGetCompletes: {
+  funGetCompletes: {
     available: boolean;
     commands: {
-      scripts: string; // "bun getcompletes s" or "bun getcompletes z"
-      binaries: string; // "bun getcompletes b"
-      packages: string; // "bun getcompletes a <prefix>"
-      files: string; // "bun getcompletes j"
+      scripts: string; // "fun getcompletes s" or "fun getcompletes z"
+      binaries: string; // "fun getcompletes b"
+      packages: string; // "fun getcompletes a <prefix>"
+      files: string; // "fun getcompletes j"
     };
   };
 }
 
-const BUN_EXECUTABLE = process.env.BUN_DEBUG_BUILD || "bun";
+const FUN_EXECUTABLE = process.env.FUN_DEBUG_BUILD || "fun";
 
 /**
  * Parse flag line from help output
@@ -283,12 +283,12 @@ process.once("beforeExit", () => {
 });
 
 /**
- * Execute bun command and get help output
+ * Execute fun command and get help output
  */
 async function getHelpOutput(command: string[]): Promise<string> {
   try {
     const proc = spawn({
-      cmd: [BUN_EXECUTABLE, ...command, "--help"],
+      cmd: [FUN_EXECUTABLE, ...command, "--help"],
       stdout: "pipe",
       stderr: "pipe",
       cwd: temppackagejson,
@@ -325,9 +325,9 @@ function parsePmSubcommands(helpText: string): Record<string, SubcommandInfo> {
       break;
     }
 
-    if (inCommands && line.match(/^\s+bun pm \w+/)) {
-      // Parse lines like: "bun pm pack                 create a tarball of the current workspace"
-      const match = line.match(/^\s+bun pm (\S+)(?:\s+(.+))?$/);
+    if (inCommands && line.match(/^\s+fun pm \w+/)) {
+      // Parse lines like: "fun pm pack                 create a tarball of the current workspace"
+      const match = line.match(/^\s+fun pm (\S+)(?:\s+(.+))?$/);
       if (match) {
         const [, name, description = ""] = match;
         subcommands[name] = {
@@ -446,7 +446,7 @@ function parseHelpOutput(helpText: string, commandName: string): CommandInfo {
 
     // Parse examples
     if (inExamples && trimmed && !trimmed.startsWith("Full documentation")) {
-      if (trimmed.startsWith("bun ") || trimmed.startsWith("./") || trimmed.startsWith("Bundle")) {
+      if (trimmed.startsWith("fun ") || trimmed.startsWith("./") || trimmed.startsWith("Bundle")) {
         command.examples.push(trimmed);
       }
     }
@@ -511,7 +511,7 @@ function parseHelpOutput(helpText: string, commandName: string): CommandInfo {
 }
 
 /**
- * Get list of main commands from bun --help
+ * Get list of main commands from fun --help
  */
 async function getMainCommands(): Promise<string[]> {
   const helpText = await getHelpOutput([]);
@@ -591,7 +591,7 @@ function addCommandAliases(commands: Record<string, CommandInfo>): void {
     "add": ["a"],
     "remove": ["rm"],
     "create": ["c"],
-    "x": ["bunx"], // bunx is an alias for bun x
+    "x": ["funx"], // funx is an alias for fun x
   };
 
   for (const [command, aliases] of Object.entries(aliasMap)) {
@@ -605,7 +605,7 @@ function addCommandAliases(commands: Record<string, CommandInfo>): void {
  * Main function to generate completion data
  */
 async function generateCompletions(): Promise<void> {
-  console.log("🔍 Discovering Bun commands...");
+  console.log("🔍 Discovering Fun commands...");
 
   // Get main help and extract commands
   const mainHelpText = await getHelpOutput([]);
@@ -629,13 +629,13 @@ async function generateCompletions(): Promise<void> {
         },
       },
     },
-    bunGetCompletes: {
+    funGetCompletes: {
       available: true,
       commands: {
-        scripts: "bun getcompletes s", // or "bun getcompletes z" for scripts with descriptions
-        binaries: "bun getcompletes b",
-        packages: "bun getcompletes a", // takes prefix as argument
-        files: "bun getcompletes j", // JavaScript/TypeScript files
+        scripts: "fun getcompletes s", // or "fun getcompletes z" for scripts with descriptions
+        binaries: "fun getcompletes b",
+        packages: "fun getcompletes a", // takes prefix as argument
+        files: "fun getcompletes j", // JavaScript/TypeScript files
       },
     },
   };
@@ -685,7 +685,7 @@ async function generateCompletions(): Promise<void> {
   }
 
   // Write the JSON file
-  const outputPath = join(completionsDir, "bun-cli.json");
+  const outputPath = join(completionsDir, "fun-cli.json");
   const jsonData = JSON.stringify(completionData, null, 2);
 
   writeFileSync(outputPath, jsonData, "utf8");

@@ -1,16 +1,16 @@
 import {
 __FastRefreshRuntime as FastRefresh
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
-__HMRClient as Bun
-} from "http://localhost:8080/bun:wrap";
-Bun.activate(false);
+__HMRClient as Fun
+} from "http://localhost:8080/fun:wrap";
+Fun.activate(false);
 import {
 __require as require
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
 __FastRefreshModule as FastHMR
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import * as $a77976b9 from "http://localhost:8080/node_modules/react/jsx-dev-runtime.js";
 var JSX = require($a77976b9);
 var jsx = require(JSX).jsxDEV;

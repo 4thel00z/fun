@@ -6,7 +6,7 @@
 #include "JavaScriptCore/LazyClassStructure.h"
 #include "JavaScriptCore/LazyClassStructureInlines.h"
 #include "JavaScriptCore/VMTrapsInlines.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 #include "JavaScriptCore/ArgList.h"
 #include "JavaScriptCore/JSType.h"
 #include "JavaScriptCore/ObjectInitializationScope.h"
@@ -21,7 +21,7 @@
 #include <JavaScriptCore/PropertyNameArray.h>
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;
@@ -141,8 +141,8 @@ JSC::Structure* createJSDirentObjectStructure(JSC::VM& vm, JSC::JSGlobalObject* 
     // Add property transitions for all dirent fields
     PropertyOffset offset = 0;
     structure = structure->addPropertyTransition(vm, structure, vm.propertyNames->name, 0, offset);
-    structure = structure->addPropertyTransition(vm, structure, Bun::builtinNames(vm).pathPublicName(), 0, offset);
-    structure = structure->addPropertyTransition(vm, structure, Bun::builtinNames(vm).dataPrivateName(), 0, offset);
+    structure = structure->addPropertyTransition(vm, structure, Fun::builtinNames(vm).pathPublicName(), 0, offset);
+    structure = structure->addPropertyTransition(vm, structure, Fun::builtinNames(vm).dataPrivateName(), 0, offset);
     structure = structure->addPropertyTransition(vm, structure, Identifier::fromString(vm, "parentPath"_s), 0, offset);
 
     return structure;
@@ -152,7 +152,7 @@ JSC_DEFINE_HOST_FUNCTION(callDirent, (JSC::JSGlobalObject * globalObject, JSC::C
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
-    return Bun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR, "Dirent constructor cannot be called as a function"_s);
+    return Fun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR, "Dirent constructor cannot be called as a function"_s);
 }
 
 JSC_DEFINE_HOST_FUNCTION(constructDirent, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
@@ -184,8 +184,8 @@ JSC_DEFINE_HOST_FUNCTION(constructDirent, (JSC::JSGlobalObject * globalObject, J
     auto* object = JSC::JSFinalObject::create(vm, structure);
     if (structure->id() != originalStructure->id()) {
         object->putDirect(vm, vm.propertyNames->name, name, 0);
-        object->putDirect(vm, Bun::builtinNames(vm).pathPublicName(), path, 0);
-        object->putDirect(vm, Bun::builtinNames(vm).dataPrivateName(), type, 0);
+        object->putDirect(vm, Fun::builtinNames(vm).pathPublicName(), path, 0);
+        object->putDirect(vm, Fun::builtinNames(vm).dataPrivateName(), type, 0);
         object->putDirect(vm, Identifier::fromString(vm, "parentPath"_s), path, 0);
     } else {
         object->putDirectOffset(vm, 0, name);
@@ -206,7 +206,7 @@ static inline int32_t getType(JSC::VM& vm, JSValue value, Zig::GlobalObject* glo
     auto* structure = getStructure(globalObject);
     JSValue type;
     if (structure->id() != object->structure()->id()) {
-        type = object->get(globalObject, Bun::builtinNames(vm).dataPrivateName());
+        type = object->get(globalObject, Fun::builtinNames(vm).dataPrivateName());
         if (!type) [[unlikely]] {
             return std::numeric_limits<int32_t>::max();
         }
@@ -323,12 +323,12 @@ void initJSDirentClassStructure(JSC::LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-extern "C" JSC::EncodedJSValue Bun__JSDirentObjectConstructor(Zig::GlobalObject* globalobject)
+extern "C" JSC::EncodedJSValue Fun__JSDirentObjectConstructor(Zig::GlobalObject* globalobject)
 {
     return JSValue::encode(globalobject->m_JSDirentClassStructure.constructor(globalobject));
 }
 
-extern "C" JSC::EncodedJSValue Bun__Dirent__toJS(Zig::GlobalObject* globalObject, int type, BunString* name, BunString* path, JSString** previousPath)
+extern "C" JSC::EncodedJSValue Fun__Dirent__toJS(Zig::GlobalObject* globalObject, int type, FunString* name, FunString* path, JSString** previousPath)
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -336,7 +336,7 @@ extern "C" JSC::EncodedJSValue Bun__Dirent__toJS(Zig::GlobalObject* globalObject
     auto* structure = globalObject->m_JSDirentClassStructure.get(globalObject);
     auto* object = JSC::JSFinalObject::create(vm, structure);
     JSString* pathValue = nullptr;
-    if (path && path->tag == BunStringTag::WTFStringImpl && previousPath && *previousPath && (*previousPath)->length() == path->impl.wtf->length()) {
+    if (path && path->tag == FunStringTag::WTFStringImpl && previousPath && *previousPath && (*previousPath)->length() == path->impl.wtf->length()) {
         auto view = (*previousPath)->view(globalObject);
         RETURN_IF_EXCEPTION(scope, {});
         if (view == path->impl.wtf) {
@@ -369,4 +369,4 @@ extern "C" JSC::EncodedJSValue Bun__Dirent__toJS(Zig::GlobalObject* globalObject
 const ClassInfo JSDirentPrototype::s_info = { "Dirent"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSDirentPrototype) };
 const ClassInfo JSDirentConstructor::s_info = { "Dirent"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSDirentConstructor) };
 
-} // namespace Bun
+} // namespace Fun

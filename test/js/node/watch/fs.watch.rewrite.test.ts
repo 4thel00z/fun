@@ -1,13 +1,13 @@
 // Tests that exercise the decoupled fs.watch backend (src/runtime/node/path_watcher.zig),
-// which no longer routes through bun.Watcher.
+// which no longer routes through fun.Watcher.
 //
 // The old backend piggy-backed on the bundler's watcher, carrying
 // `options.Loader`/`*PackageJSON` per watch item and doing a one-shot WorkPool
 // directory crawl for recursive. The rewrite owns inotify/FSEvents/kqueue directly
 // and dedupes by (realpath, recursive). These tests pin behaviour the old design
 // couldn't provide.
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isFreeBSD, isWindows, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isFreeBSD, isWindows, tempDir } from "harness";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -32,7 +32,7 @@ describe.skipIf(isFreeBSD)("fs.watch recursive tracks post-watch structure", () 
     try {
       // Give the backend a beat to register the root (FSEvents has ~50ms latency,
       // inotify is synchronous).
-      await Bun.sleep(100);
+      await Fun.sleep(100);
 
       const sub = path.join(root, "made-after");
       fs.mkdirSync(sub);
@@ -44,7 +44,7 @@ describe.skipIf(isFreeBSD)("fs.watch recursive tracks post-watch structure", () 
       let ok = false;
       for (let i = 0; i < 80 && !ok; i++) {
         fs.writeFileSync(target, String(i));
-        await Bun.sleep(50);
+        await Fun.sleep(50);
         ok = seen.some(p => p === "made-after/inside.txt" || p.endsWith("inside.txt"));
       }
 
@@ -76,7 +76,7 @@ test.skipIf(isFreeBSD)("recursive watch reports new path after subdirectory rena
     // Poke until the backend has picked up the subdir (sync on Linux, ~50ms on FSEvents).
     for (let i = 0; i < 80 && !seen.some(p => p.startsWith("a/")); i++) {
       fs.writeFileSync(path.join(root, "a", "seed.txt"), String(i));
-      await Bun.sleep(50);
+      await Fun.sleep(50);
     }
 
     fs.renameSync(path.join(root, "a"), path.join(root, "b"));
@@ -85,7 +85,7 @@ test.skipIf(isFreeBSD)("recursive watch reports new path after subdirectory rena
     let ok = false;
     for (let i = 0; i < 80 && !ok; i++) {
       fs.writeFileSync(path.join(root, "b", "inside.txt"), String(i));
-      await Bun.sleep(50);
+      await Fun.sleep(50);
       ok = seen.some(p => p === "b/inside.txt");
     }
 
@@ -99,7 +99,7 @@ test.skipIf(isFreeBSD)("recursive watch reports new path after subdirectory rena
 
 // Dedup: two fs.watch() calls on the same path share one OS watch. Both must receive
 // events, and closing one must not silence the other. Previously each call routed to
-// a shared bun.Watcher but through separate PathWatcher shims with their own
+// a shared fun.Watcher but through separate PathWatcher shims with their own
 // file-path refcounting; the new design puts both handlers on one PathWatcher.
 test("two watchers on the same path both receive events; closing one keeps the other alive", async () => {
   using dir = tempDir("fs-watch-dedup", { "a.txt": "1" });
@@ -111,10 +111,10 @@ test("two watchers on the same path both receive events; closing one keeps the o
   const wb = fs.watch(root, () => void got.b++);
 
   try {
-    await Bun.sleep(100);
+    await Fun.sleep(100);
     for (let i = 0; i < 60 && (got.a === 0 || got.b === 0); i++) {
       fs.writeFileSync(file, String(i));
-      await Bun.sleep(50);
+      await Fun.sleep(50);
     }
     expect(got.a).toBeGreaterThan(0);
     expect(got.b).toBeGreaterThan(0);
@@ -125,7 +125,7 @@ test("two watchers on the same path both receive events; closing one keeps the o
     const bBefore = got.b;
     for (let i = 0; i < 60 && got.b === bBefore; i++) {
       fs.writeFileSync(file, "after-" + i);
-      await Bun.sleep(50);
+      await Fun.sleep(50);
     }
     expect(got.b).toBeGreaterThan(bBefore);
   } finally {
@@ -151,14 +151,14 @@ test.skipIf(isFreeBSD)("closing an inner watch does not break an overlapping rec
   const parent = fs.watch(root, { recursive: true }, () => void parentHits++);
   const inner = fs.watch(sub, () => {});
   try {
-    await Bun.sleep(100);
+    await Fun.sleep(100);
     // Close the inner watch. On Linux this must drop *its* ownership of the shared
     // wd without issuing inotify_rm_watch (parent still owns it).
     inner.close();
 
     for (let i = 0; i < 60 && parentHits === 0; i++) {
       fs.writeFileSync(target, String(i));
-      await Bun.sleep(50);
+      await Fun.sleep(50);
     }
     expect(parentHits).toBeGreaterThan(0);
   } finally {
@@ -168,7 +168,7 @@ test.skipIf(isFreeBSD)("closing an inner watch does not break an overlapping rec
 });
 
 // The old PathWatcherManager was created with `vm.transpiler.fs` and wired into
-// bun.Watcher's `top_level_dir`. The new backend has no such dependency — fs.watch()
+// fun.Watcher's `top_level_dir`. The new backend has no such dependency — fs.watch()
 // must work even on a completely cold VM that never touched the transpiler. Run a
 // child process that does nothing but fs.watch to prove there's no hidden ordering
 // dependency on the module-graph watcher.
@@ -201,10 +201,10 @@ test.skipIf(isWindows)("fs.watch works without any module-graph watcher state", 
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

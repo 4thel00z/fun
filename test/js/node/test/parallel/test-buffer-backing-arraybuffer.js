@@ -3,7 +3,7 @@ require('../common');
 const assert = require('assert');
 // const { internalBinding } = require('internal/test/binding');
 // const { arrayBufferViewHasBuffer } = internalBinding('util');
-const { arrayBufferViewHasBuffer } = require('bun:internal-for-testing');
+const { arrayBufferViewHasBuffer } = require('fun:internal-for-testing');
 
 const tests = [
   { length: 0 },

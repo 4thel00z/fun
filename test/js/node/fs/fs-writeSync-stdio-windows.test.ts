@@ -4,21 +4,21 @@
 // handle against the *live* `GetStdHandle()` result, so a user-space
 // `SetStdHandle` (or `AllocConsole`/`AttachConsole`) made the round-trip fail
 // and `fs.writeSync(1, ...)` panicked with:
-//   "Cast bun.FD.uv(N[handle]) makes closing impossible!"
+//   "Cast fun.FD.uv(N[handle]) makes closing impossible!"
 // Now `fromJS`/`fromJSValidated` return `.fromUV(0|1|2)` directly, and
 // `FD.uv()` checks the cached stdio handles before `GetStdHandle`.
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isArm64, isWindows, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isArm64, isWindows, tempDir } from "harness";
 import { join } from "node:path";
 
 describe.concurrent.skipIf(!isWindows)("fs.writeSync on Windows stdio/handles", () => {
-  // bun:ffi (TinyCC) is unavailable on Windows arm64, so this repro can only
+  // fun:ffi (TinyCC) is unavailable on Windows arm64, so this repro can only
   // run on x64. The second test below covers the plain openSync→writeSync path
   // on all Windows arches.
   test.skipIf(isArm64)("fs.writeSync(1, ...) does not panic after SetStdHandle swaps stdout", async () => {
     const fixture = `
       const fs = require("node:fs");
-      const { dlopen } = require("bun:ffi");
+      const { dlopen } = require("fun:ffi");
 
       const k32 = dlopen("kernel32.dll", {
         SetStdHandle: { args: ["u32", "ptr"], returns: "i32" },
@@ -70,9 +70,9 @@ describe.concurrent.skipIf(!isWindows)("fs.writeSync on Windows stdio/handles", 
       process.stderr.write("wrote=" + n + "\\n");
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", fixture],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", fixture],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -95,9 +95,9 @@ describe.concurrent.skipIf(!isWindows)("fs.writeSync on Windows stdio/handles", 
       process.stdout.write("wrote=" + n + " body=" + fs.readFileSync(${JSON.stringify(out)}, "utf8"));
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", fixture],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", fixture],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

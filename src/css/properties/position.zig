@@ -32,7 +32,7 @@ pub const Position = union(enum) {
             @"-webkit-sticky",
         };
 
-        const keyword_map = bun.ComptimeStringMap(PositionKeyword, .{
+        const keyword_map = fun.ComptimeStringMap(PositionKeyword, .{
             .{ "static", .static },
             .{ "relative", .relative },
             .{ "absolute", .absolute },
@@ -77,6 +77,6 @@ pub const Position = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

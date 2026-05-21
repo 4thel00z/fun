@@ -144,30 +144,30 @@ JsonWebKey CryptoKeyRSA::exportJwk() const
         return result;
 
     // public key
-    result.n = Bun::base64URLEncodeToString(rsaComponents->modulus());
-    result.e = Bun::base64URLEncodeToString(rsaComponents->exponent());
+    result.n = Fun::base64URLEncodeToString(rsaComponents->modulus());
+    result.e = Fun::base64URLEncodeToString(rsaComponents->exponent());
     if (rsaComponents->type() == CryptoKeyRSAComponents::Type::Public)
         return result;
 
     // private key
-    result.d = Bun::base64URLEncodeToString(rsaComponents->privateExponent());
+    result.d = Fun::base64URLEncodeToString(rsaComponents->privateExponent());
     if (!rsaComponents->hasAdditionalPrivateKeyParameters())
         return result;
 
-    result.p = Bun::base64URLEncodeToString(rsaComponents->firstPrimeInfo().primeFactor);
-    result.q = Bun::base64URLEncodeToString(rsaComponents->secondPrimeInfo().primeFactor);
-    result.dp = Bun::base64URLEncodeToString(rsaComponents->firstPrimeInfo().factorCRTExponent);
-    result.dq = Bun::base64URLEncodeToString(rsaComponents->secondPrimeInfo().factorCRTExponent);
-    result.qi = Bun::base64URLEncodeToString(rsaComponents->secondPrimeInfo().factorCRTCoefficient);
+    result.p = Fun::base64URLEncodeToString(rsaComponents->firstPrimeInfo().primeFactor);
+    result.q = Fun::base64URLEncodeToString(rsaComponents->secondPrimeInfo().primeFactor);
+    result.dp = Fun::base64URLEncodeToString(rsaComponents->firstPrimeInfo().factorCRTExponent);
+    result.dq = Fun::base64URLEncodeToString(rsaComponents->secondPrimeInfo().factorCRTExponent);
+    result.qi = Fun::base64URLEncodeToString(rsaComponents->secondPrimeInfo().factorCRTCoefficient);
     if (rsaComponents->otherPrimeInfos().isEmpty())
         return result;
 
     Vector<RsaOtherPrimesInfo> oth;
     for (const auto& info : rsaComponents->otherPrimeInfos()) {
         RsaOtherPrimesInfo otherInfo;
-        otherInfo.r = Bun::base64URLEncodeToString(info.primeFactor);
-        otherInfo.d = Bun::base64URLEncodeToString(info.factorCRTExponent);
-        otherInfo.t = Bun::base64URLEncodeToString(info.factorCRTCoefficient);
+        otherInfo.r = Fun::base64URLEncodeToString(info.primeFactor);
+        otherInfo.d = Fun::base64URLEncodeToString(info.factorCRTExponent);
+        otherInfo.t = Fun::base64URLEncodeToString(info.factorCRTCoefficient);
         oth.append(WTF::move(otherInfo));
     }
     result.oth = WTF::move(oth);

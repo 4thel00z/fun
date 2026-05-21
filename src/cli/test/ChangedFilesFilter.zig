@@ -1,4 +1,4 @@
-//! Implements `bun test --changed` (vitest-compatible).
+//! Implements `fun test --changed` (vitest-compatible).
 //!
 //! 1. Ask git for the set of changed files relative to HEAD (uncommitted,
 //!    staged, and untracked) or relative to a user-supplied ref.
@@ -13,7 +13,7 @@
 pub const Result = struct {
     /// The filtered list of test files. Slice of the original `test_files`
     /// allocation, owned by the caller.
-    test_files: []bun.PathString,
+    test_files: []fun.PathString,
     /// Number of files git reported as changed.
     changed_count: usize,
     /// Number of test files before filtering.
@@ -32,7 +32,7 @@ pub const Result = struct {
 pub fn filter(
     ctx: Command.Context,
     vm: *jsc.VirtualMachine,
-    test_files: []bun.PathString,
+    test_files: []fun.PathString,
     changed_since: []const u8,
 ) !Result {
     const allocator = ctx.allocator;
@@ -96,7 +96,7 @@ pub fn filter(
         Output.errGeneric("Failed to initialize module graph scanner for --changed: {s}", .{@errorName(err)});
         Global.exit(1);
     };
-    scan_transpiler.options.target = .bun;
+    scan_transpiler.options.target = .fun;
     // Do not follow bare specifiers into node_modules; changes there are not
     // considered local edits.
     scan_transpiler.options.packages = .external;
@@ -126,7 +126,7 @@ pub fn filter(
         };
     };
     // The bundler's ThreadLocalArena and worker pool are intentionally
-    // left in place for the remainder of the process. `bun test --watch`
+    // left in place for the remainder of the process. `fun test --watch`
     // exec()s a fresh process on each reload, so nothing accumulates
     // across restarts; tearing the pool down here blocks on worker
     // shutdown and competes with the runtime VM's own parse threads.
@@ -136,7 +136,7 @@ pub fn filter(
 
     // Map absolute source path -> source index for paths that participate in
     // the graph. This lets us look up changed-file paths quickly.
-    var path_to_index = bun.StringHashMap(u32).init(allocator);
+    var path_to_index = fun.StringHashMap(u32).init(allocator);
     defer path_to_index.deinit();
     try path_to_index.ensureTotalCapacity(@intCast(sources.len));
 
@@ -195,7 +195,7 @@ pub fn filter(
     }
 
     // BFS backward from every changed file that participates in the graph.
-    var affected = try bun.bit_set.DynamicBitSetUnmanaged.initEmpty(allocator, sources.len);
+    var affected = try fun.bit_set.DynamicBitSetUnmanaged.initEmpty(allocator, sources.len);
     defer affected.deinit(allocator);
     var queue: std.ArrayListUnmanaged(u32) = .{};
     defer queue.deinit(allocator);
@@ -248,7 +248,7 @@ pub fn filter(
 /// exec()ing. Set once by `initWatchTrigger` in the first process and
 /// inherited through every restart. The value is a short path, never
 /// the list itself, so there is no env size concern.
-pub const trigger_file_env_var = "BUN_INTERNAL_TEST_CHANGED_TRIGGER_FILE";
+pub const trigger_file_env_var = "FUN_INTERNAL_TEST_CHANGED_TRIGGER_FILE";
 
 /// Make sure the trigger-file env var is set (generating a fresh temp
 /// path if this is the first process in the --watch chain) and wire up
@@ -256,7 +256,7 @@ pub const trigger_file_env_var = "BUN_INTERNAL_TEST_CHANGED_TRIGGER_FILE";
 /// and the path string intentionally live for the rest of the process;
 /// --watch exec()s on reload so nothing accumulates across restarts.
 pub fn initWatchTrigger(allocator: std.mem.Allocator) void {
-    if (bun.Environment.isWindows) {
+    if (fun.Environment.isWindows) {
         // Windows --watch restarts via TerminateProcess + parent
         // respawn with the parent's (unchanged) env, so a setenv in
         // the first child would not reach subsequent children. Fall
@@ -264,15 +264,15 @@ pub fn initWatchTrigger(allocator: std.mem.Allocator) void {
         return;
     }
 
-    const path: [:0]const u8 = if (bun.getenvZ(trigger_file_env_var)) |existing|
-        bun.handleOom(allocator.dupeZ(u8, existing))
+    const path: [:0]const u8 = if (fun.getenvZ(trigger_file_env_var)) |existing|
+        fun.handleOom(allocator.dupeZ(u8, existing))
     else brk: {
         var rng = std.Random.DefaultPrng.init(@as(u64, @bitCast(std.time.milliTimestamp())) ^
             @as(u64, @intCast(std.c.getpid())));
-        const tmpdir = bun.fs.FileSystem.RealFS.tmpdirPath();
-        const fresh = bun.handleOom(std.fmt.allocPrintSentinel(
+        const tmpdir = fun.fs.FileSystem.RealFS.tmpdirPath();
+        const fresh = fun.handleOom(std.fmt.allocPrintSentinel(
             allocator,
-            "{s}{c}.bun-test-changed-{x}.trigger",
+            "{s}{c}.fun-test-changed-{x}.trigger",
             .{ strings.withoutTrailingSlash(tmpdir), std.fs.path.sep, rng.random().int(u64) },
             0,
         ));
@@ -284,8 +284,8 @@ pub fn initWatchTrigger(allocator: std.mem.Allocator) void {
         break :brk fresh;
     };
 
-    const set = bun.handleOom(allocator.create(bun.StringSet));
-    set.* = bun.StringSet.init(allocator);
+    const set = fun.handleOom(allocator.create(fun.StringSet));
+    set.* = fun.StringSet.init(allocator);
     jsc.hot_reloader.watch_changed_paths = set;
     jsc.hot_reloader.watch_changed_trigger_file = path;
 }
@@ -297,15 +297,15 @@ extern "c" fn setenv(name: [*:0]const u8, value: [*:0]const u8, overwrite: c_int
 /// the trigger file, delete the file, and return the set. Returns null
 /// if the file is absent, empty, or every path no longer exists (in
 /// which case the caller falls back to querying git).
-fn consumeWatchTrigger(allocator: std.mem.Allocator) ?bun.StringSet {
-    if (bun.Environment.isWindows) return null;
+fn consumeWatchTrigger(allocator: std.mem.Allocator) ?fun.StringSet {
+    if (fun.Environment.isWindows) return null;
 
-    const trigger_path_raw = bun.getenvZ(trigger_file_env_var) orelse return null;
+    const trigger_path_raw = fun.getenvZ(trigger_file_env_var) orelse return null;
     if (trigger_path_raw.len == 0) return null;
-    const trigger_path = bun.handleOom(allocator.dupeZ(u8, trigger_path_raw));
+    const trigger_path = fun.handleOom(allocator.dupeZ(u8, trigger_path_raw));
     defer allocator.free(trigger_path);
 
-    const contents = switch (bun.sys.File.readFrom(bun.FD.cwd(), trigger_path, allocator)) {
+    const contents = switch (fun.sys.File.readFrom(fun.FD.cwd(), trigger_path, allocator)) {
         .result => |bytes| bytes,
         .err => return null,
     };
@@ -313,9 +313,9 @@ fn consumeWatchTrigger(allocator: std.mem.Allocator) ?bun.StringSet {
     // Consume-once: the next restart writes a fresh list. If the
     // process restarts for any other reason (crash + auto-reload) it
     // should fall back to git, not re-read a stale list.
-    _ = bun.sys.unlink(trigger_path);
+    _ = fun.sys.unlink(trigger_path);
 
-    var set = bun.StringSet.init(allocator);
+    var set = fun.StringSet.init(allocator);
     var it = std.mem.tokenizeAny(u8, contents, "\r\n");
     while (it.next()) |path| {
         if (path.len == 0) continue;
@@ -323,8 +323,8 @@ fn consumeWatchTrigger(allocator: std.mem.Allocator) ?bun.StringSet {
         // that no longer exists cannot appear in the module graph this
         // run, so drop it; its importers will still be picked up if the
         // importer file itself was touched.
-        if (!bun.sys.exists(path)) continue;
-        bun.handleOom(set.insert(path));
+        if (!fun.sys.exists(path)) continue;
+        fun.handleOom(set.insert(path));
     }
     // If every triggering path was a deletion, fall back to git so the
     // user at least gets the same behaviour as the initial run rather
@@ -349,9 +349,9 @@ fn getChangedFiles(
     allocator: std.mem.Allocator,
     top_level_dir: []const u8,
     since: []const u8,
-) GitError!bun.StringSet {
-    var which_buf: bun.PathBuffer = undefined;
-    const git_path = bun.which(&which_buf, bun.env_var.PATH.get() orelse "", top_level_dir, "git") orelse {
+) GitError!fun.StringSet {
+    var which_buf: fun.PathBuffer = undefined;
+    const git_path = fun.which(&which_buf, fun.env_var.PATH.get() orelse "", top_level_dir, "git") orelse {
         return error.GitNotFound;
     };
 
@@ -376,7 +376,7 @@ fn getChangedFiles(
     };
     defer allocator.free(git_root);
 
-    var set = bun.StringSet.init(allocator);
+    var set = fun.StringSet.init(allocator);
     errdefer set.deinit();
 
     if (since.len == 0) {
@@ -416,7 +416,7 @@ fn getChangedFiles(
             } else if (diff.stderr.items.len > 0) {
                 Output.errGeneric("--changed: {s}", .{strings.trim(diff.stderr.items, " \r\n\t")});
             } else {
-                Output.errGeneric("--changed: git diff against {f} failed", .{bun.fmt.quote(since)});
+                Output.errGeneric("--changed: git diff against {f} failed", .{fun.fmt.quote(since)});
             }
             return error.GitFailed;
         }
@@ -468,7 +468,7 @@ fn runGit(
     argv.appendAssumeCapacity("core.quotePath=off");
     argv.appendSliceAssumeCapacity(args);
 
-    const proc = bun.spawnSync(&.{
+    const proc = fun.spawnSync(&.{
         .argv = argv.items,
         .cwd = cwd,
         .stdout = .buffer,
@@ -511,35 +511,35 @@ fn runGit(
 /// Parse newline-delimited repo-relative paths from git output, join each
 /// with the repository root, and insert existing files into `set`.
 fn appendPaths(
-    set: *bun.StringSet,
+    set: *fun.StringSet,
     git_root: []const u8,
     stdout: []const u8,
 ) void {
-    var buf: bun.PathBuffer = undefined;
+    var buf: fun.PathBuffer = undefined;
     var it = std.mem.tokenizeAny(u8, stdout, "\r\n");
     while (it.next()) |line| {
         const rel = strings.trim(line, " \t");
         if (rel.len == 0) continue;
-        const abs = bun.path.joinAbsStringBuf(git_root, &buf, &[_][]const u8{rel}, .auto);
+        const abs = fun.path.joinAbsStringBuf(git_root, &buf, &[_][]const u8{rel}, .auto);
         // Skip deletions; the bundler can only parse files that exist.
-        if (!bun.sys.exists(abs)) continue;
+        if (!fun.sys.exists(abs)) continue;
         // `StringSet.insert` dupes the key internally; abort on OOM rather
         // than propagating so the set can never be left holding a pointer
         // into our stack `buf` on the errdefer cleanup path.
-        bun.handleOom(set.insert(abs));
+        fun.handleOom(set.insert(abs));
     }
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const Transpiler = bun.Transpiler;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const BundleV2 = bun.bundle_v2.BundleV2;
-const Command = bun.cli.Command;
-const Index = bun.ast.Index;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const Transpiler = fun.Transpiler;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const BundleV2 = fun.bundle_v2.BundleV2;
+const Command = fun.cli.Command;
+const Index = fun.ast.Index;

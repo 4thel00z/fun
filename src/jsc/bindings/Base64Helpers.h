@@ -1,6 +1,6 @@
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
 namespace Base64 {
 

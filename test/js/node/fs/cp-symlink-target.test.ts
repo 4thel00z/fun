@@ -1,8 +1,8 @@
 /**
- * This test runs under `bun test` and (via node:test/node:assert) under
+ * This test runs under `fun test` and (via node:test/node:assert) under
  * `node --experimental-strip-types --test`.
  *
- * On Linux/FreeBSD, Bun's native fs.cp fallback for symlinks used to call
+ * On Linux/FreeBSD, Fun's native fs.cp fallback for symlinks used to call
  * symlink(src, dest) — creating a link whose *target string* was the path of
  * the source symlink instead of what the source symlink pointed at. Every
  * copied link therefore pointed back into the source tree, and removing the

@@ -5,20 +5,20 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for submitting a bug report. It helps make Bun better.
+        Thank you for submitting a bug report. It helps make Fun better.
 
-        If you need help or support using Bun, and are not reporting a bug, please
+        If you need help or support using Fun, and are not reporting a bug, please
         join our [Discord](https://discord.gg/CXdq2DP29u) server, where you can ask questions in the [`#help`](https://discord.gg/32EtH6p7HN) forum.
 
-        Make sure you are running the [latest](https://bun.com/docs/installation#upgrading) version of Bun.
+        Make sure you are running the [latest](https://fun.dev/docs/installation#upgrading) version of Fun.
         The bug you are experiencing may already have been fixed.
 
         Please try to include as much information as possible.
 
   - type: input
     attributes:
-      label: What version of Bun is running?
-      description: Copy the output of `bun --revision`
+      label: What version of Fun is running?
+      description: Copy the output of `fun --revision`
   - type: input
     attributes:
       label: What platform is your computer?

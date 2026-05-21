@@ -1,6 +1,6 @@
-//! Bun REPL - A modern, feature-rich Read-Eval-Print Loop
+//! Fun REPL - A modern, feature-rich Read-Eval-Print Loop
 //!
-//! This is a native Zig implementation of Bun's REPL with advanced TUI features:
+//! This is a native Zig implementation of Fun's REPL with advanced TUI features:
 //! - Syntax highlighting using QuickAndDirtySyntaxHighlighter
 //! - Full line editing with cursor movement (Emacs-style keybindings)
 //! - Persistent history with file storage
@@ -17,7 +17,7 @@ const Repl = @This();
 // C++ Bindings
 // ============================================================================
 
-extern fn Bun__REPL__evaluate(
+extern fn Fun__REPL__evaluate(
     globalObject: *jsc.JSGlobalObject,
     sourcePtr: [*]const u8,
     sourceLen: usize,
@@ -26,7 +26,7 @@ extern fn Bun__REPL__evaluate(
     exception: *jsc.JSValue,
 ) jsc.JSValue;
 
-extern fn Bun__REPL__getCompletions(
+extern fn Fun__REPL__getCompletions(
     globalObject: *jsc.JSGlobalObject,
     targetValue: jsc.JSValue,
     prefixPtr: [*]const u8,
@@ -38,7 +38,7 @@ extern fn Bun__REPL__getCompletions(
 
 const MAX_HISTORY_SIZE: usize = 1000;
 const MAX_LINE_LENGTH: usize = 16384;
-const HISTORY_FILENAME = ".bun_repl_history";
+const HISTORY_FILENAME = ".fun_repl_history";
 const TAB_WIDTH: usize = 2;
 
 // ANSI escape codes
@@ -182,14 +182,14 @@ const History = struct {
     }
 
     pub fn load(self: *History) !void {
-        const home_path = bun.env_var.HOME.get() orelse return;
+        const home_path = fun.env_var.HOME.get() orelse return;
         if (home_path.len == 0) return;
 
-        var path_buf: bun.PathBuffer = undefined;
-        const path = bun.path.joinZBuf(&path_buf, &[_][]const u8{ home_path, HISTORY_FILENAME }, .auto);
+        var path_buf: fun.PathBuffer = undefined;
+        const path = fun.path.joinZBuf(&path_buf, &[_][]const u8{ home_path, HISTORY_FILENAME }, .auto);
         self.file_path = try self.allocator.dupe(u8, path);
 
-        const content = switch (bun.sys.File.readFrom(bun.FD.cwd(), path, self.allocator)) {
+        const content = switch (fun.sys.File.readFrom(fun.FD.cwd(), path, self.allocator)) {
             .result => |bytes| bytes,
             .err => return,
         };
@@ -229,8 +229,8 @@ const History = struct {
             content.append('\n') catch return;
         }
 
-        const file = switch (bun.sys.openA(path, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o644)) {
-            .result => |fd| bun.sys.File{ .handle = fd },
+        const file = switch (fun.sys.openA(path, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o644)) {
+            .result => |fd| fun.sys.File{ .handle = fd },
             .err => return,
         };
         defer file.close();
@@ -584,9 +584,9 @@ fn cmdLoad(repl: *Repl, args: []const u8) ReplResult {
         return .skip_eval;
     }
 
-    var path_buf: bun.PathBuffer = undefined;
-    const pathZ = bun.path.z(filename, &path_buf);
-    const content = switch (bun.sys.File.readFrom(bun.FD.cwd(), pathZ, repl.allocator)) {
+    var path_buf: fun.PathBuffer = undefined;
+    const pathZ = fun.path.z(filename, &path_buf);
+    const content = switch (fun.sys.File.readFrom(fun.FD.cwd(), pathZ, repl.allocator)) {
         .result => |bytes| bytes,
         .err => |err| {
             repl.printError("{f}\n", .{err});
@@ -615,8 +615,8 @@ fn cmdSave(repl: *Repl, args: []const u8) ReplResult {
         content.append('\n') catch return .skip_eval;
     }
 
-    const file = switch (bun.sys.openA(filename, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o644)) {
-        .result => |fd| bun.sys.File{ .handle = fd },
+    const file = switch (fun.sys.openA(filename, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o644)) {
+        .result => |fd| fun.sys.File{ .handle = fd },
         .err => |err| {
             repl.printError("{f}\n", .{err});
             return .skip_eval;
@@ -696,7 +696,7 @@ last_result: jsc.JSValue = .js_undefined,
 last_error: jsc.JSValue = .js_undefined,
 
 // Windows: saved console mode for restoration
-original_windows_mode: if (Environment.isWindows) ?bun.windows.DWORD else void = if (Environment.isWindows) null else {},
+original_windows_mode: if (Environment.isWindows) ?fun.windows.DWORD else void = if (Environment.isWindows) null else {},
 
 pub fn init(allocator: Allocator) Repl {
     return .{
@@ -744,7 +744,7 @@ fn setupTerminal(self: *Repl) void {
     }
 
     // Check for NO_COLOR
-    self.use_colors = !bun.env_var.NO_COLOR.get();
+    self.use_colors = !fun.env_var.NO_COLOR.get();
 
     // Get terminal size
     if (Output.terminal_size.col > 0) {
@@ -754,21 +754,21 @@ fn setupTerminal(self: *Repl) void {
 
     // Enable raw mode
     if (Environment.isPosix) {
-        _ = bun.tty.setMode(0, .raw);
+        _ = fun.tty.setMode(0, .raw);
     } else if (Environment.isWindows) {
-        self.original_windows_mode = bun.windows.updateStdioModeFlags(.std_in, .{
-            .set = bun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT | bun.windows.ENABLE_PROCESSED_INPUT,
-            .unset = bun.windows.ENABLE_LINE_INPUT | bun.windows.ENABLE_ECHO_INPUT,
+        self.original_windows_mode = fun.windows.updateStdioModeFlags(.std_in, .{
+            .set = fun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT | fun.windows.ENABLE_PROCESSED_INPUT,
+            .unset = fun.windows.ENABLE_LINE_INPUT | fun.windows.ENABLE_ECHO_INPUT,
         }) catch null;
     }
 }
 
 fn restoreTerminal(self: *Repl) void {
     if (Environment.isPosix) {
-        _ = bun.tty.setMode(0, .normal);
+        _ = fun.tty.setMode(0, .normal);
     } else if (Environment.isWindows) {
         if (self.original_windows_mode) |mode| {
-            _ = bun.c.SetConsoleMode(bun.FD.stdin().native(), mode);
+            _ = fun.c.SetConsoleMode(fun.FD.stdin().native(), mode);
             self.original_windows_mode = null;
         }
     }
@@ -791,15 +791,15 @@ fn enableSignalsDuringWait(self: *Repl) void {
 
     if (Environment.isPosix) {
         // Switch to normal terminal mode (has ISIG) so Ctrl+C generates SIGINT
-        _ = bun.tty.setMode(0, .normal);
+        _ = fun.tty.setMode(0, .normal);
 
         // Install SIGINT handler
-        const act = bun.sys.Sigaction{
+        const act = fun.sys.Sigaction{
             .handler = .{ .handler = sigintHandler },
-            .mask = bun.sys.sigemptyset(),
+            .mask = fun.sys.sigemptyset(),
             .flags = 0,
         };
-        bun.sys.sigaction(std.posix.SIG.INT, &act, null);
+        fun.sys.sigaction(std.posix.SIG.INT, &act, null);
     }
     // On Windows, ENABLE_PROCESSED_INPUT is already set so Ctrl+C works
 }
@@ -811,15 +811,15 @@ fn disableSignalsDuringWait(self: *Repl) void {
 
     if (Environment.isPosix) {
         // Back to raw mode
-        _ = bun.tty.setMode(0, .raw);
+        _ = fun.tty.setMode(0, .raw);
 
         // Restore default SIGINT handling
-        const act = bun.sys.Sigaction{
+        const act = fun.sys.Sigaction{
             .handler = .{ .handler = std.posix.SIG.DFL },
-            .mask = bun.sys.sigemptyset(),
+            .mask = fun.sys.sigemptyset(),
             .flags = 0,
         };
-        bun.sys.sigaction(std.posix.SIG.INT, &act, null);
+        fun.sys.sigaction(std.posix.SIG.INT, &act, null);
     }
 }
 
@@ -846,7 +846,7 @@ fn readByte(self: *Repl) ?u8 {
         return b;
     }
     // Refill buffer
-    const stdin = bun.sys.File{ .handle = bun.FD.stdin() };
+    const stdin = fun.sys.File{ .handle = fun.FD.stdin() };
     const n = switch (stdin.read(&self.stdin_buf)) {
         .result => |n| n,
         .err => return null,
@@ -1080,7 +1080,7 @@ fn evaluateAndPrint(self: *Repl, code: []const u8) void {
 
     // Evaluate the transformed code
     var exception: jsc.JSValue = .js_undefined;
-    const result = Bun__REPL__evaluate(
+    const result = Fun__REPL__evaluate(
         global,
         transformed_code.ptr,
         transformed_code.len,
@@ -1182,7 +1182,7 @@ fn evaluateAndPrint(self: *Repl, code: []const u8) void {
     vm.tick();
 }
 
-/// Evaluate a script from `bun repl -e/--eval` or `-p/--print` non-interactively.
+/// Evaluate a script from `fun repl -e/--eval` or `-p/--print` non-interactively.
 /// Uses the REPL transform pipeline (TypeScript/JSX, top-level await, object literal
 /// wrapping, declaration hoisting), drains the event loop, and optionally prints the
 /// result to stdout. Errors are written to stderr.
@@ -1192,7 +1192,7 @@ pub fn evalScript(self: *Repl, code: []const u8, print_result: bool) bool {
     const global = self.global orelse return true;
     const vm = self.vm orelse return true;
 
-    const no_color = bun.env_var.NO_COLOR.get();
+    const no_color = fun.env_var.NO_COLOR.get();
     self.use_colors = Output.enable_ansi_colors_stdout and !no_color;
     const stderr_colors = Output.enable_ansi_colors_stderr and !no_color;
 
@@ -1211,7 +1211,7 @@ pub fn evalScript(self: *Repl, code: []const u8, print_result: bool) bool {
     const transformed_code = self.transformForRepl(code) orelse {
         // Transform failed — fall back to raw evaluation for the error message
         var exception: jsc.JSValue = .js_undefined;
-        _ = Bun__REPL__evaluate(global, code.ptr, code.len, "[eval]".ptr, "[eval]".len, &exception);
+        _ = Fun__REPL__evaluate(global, code.ptr, code.len, "[eval]".ptr, "[eval]".len, &exception);
         if (!exception.isUndefined() and !exception.isNull()) {
             self.printJSErrorTo(exception, Output.errorWriter(), stderr_colors);
         }
@@ -1220,7 +1220,7 @@ pub fn evalScript(self: *Repl, code: []const u8, print_result: bool) bool {
     defer self.allocator.free(transformed_code);
 
     var exception: jsc.JSValue = .js_undefined;
-    const result = Bun__REPL__evaluate(
+    const result = Fun__REPL__evaluate(
         global,
         transformed_code.ptr,
         transformed_code.len,
@@ -1287,12 +1287,12 @@ pub fn evalScript(self: *Repl, code: []const u8, print_result: bool) bool {
 }
 
 /// Evaluate code without REPL transforms (fallback for errors)
-/// The C++ Bun__REPL__evaluate handles setting _ and _error
+/// The C++ Fun__REPL__evaluate handles setting _ and _error
 fn evaluateRaw(self: *Repl, code: []const u8) void {
     const global = self.global orelse return;
 
     var exception: jsc.JSValue = .js_undefined;
-    const result = Bun__REPL__evaluate(
+    const result = Fun__REPL__evaluate(
         global,
         code.ptr,
         code.len,
@@ -1336,7 +1336,7 @@ fn evaluateAndCopy(self: *Repl, code: []const u8) void {
     defer self.allocator.free(transformed_code);
 
     var exception: jsc.JSValue = .js_undefined;
-    const result = Bun__REPL__evaluate(
+    const result = Fun__REPL__evaluate(
         global,
         transformed_code.ptr,
         transformed_code.len,
@@ -1405,7 +1405,7 @@ fn evaluateAndCopy(self: *Repl, code: []const u8) void {
 
 /// Format a JS value as a string suitable for clipboard.
 /// Returns null on allocator OOM; propagates JS exceptions (e.g. throwing getters).
-fn valueToClipboardString(self: *Repl, value: jsc.JSValue) bun.JSError!?[]const u8 {
+fn valueToClipboardString(self: *Repl, value: jsc.JSValue) fun.JSError!?[]const u8 {
     const global = self.global orelse return null;
 
     if (value.isUndefined()) return self.allocator.dupe(u8, "undefined") catch null;
@@ -1418,7 +1418,7 @@ fn valueToClipboardString(self: *Repl, value: jsc.JSValue) bun.JSError!?[]const 
         return self.allocator.dupe(u8, slice.slice()) catch null;
     }
 
-    // For everything else, use Bun.inspect without colors
+    // For everything else, use Fun.inspect without colors
     var array = std.Io.Writer.Allocating.init(self.allocator);
     defer array.deinit();
     try jsc.ConsoleObject.format2(.Log, global, @ptrCast(&value), 1, &array.writer, .{
@@ -1435,7 +1435,7 @@ fn valueToClipboardString(self: *Repl, value: jsc.JSValue) bun.JSError!?[]const 
 
 /// Copy a JS value to the system clipboard via OSC 52.
 /// Propagates JS exceptions from value formatting; swallows I/O errors.
-fn copyValueToClipboard(self: *Repl, value: jsc.JSValue) bun.JSError!void {
+fn copyValueToClipboard(self: *Repl, value: jsc.JSValue) fun.JSError!void {
     const text = (try self.valueToClipboardString(value)) orelse {
         self.printError("Failed to format value for clipboard\n", .{});
         return;
@@ -1460,7 +1460,7 @@ fn copyToClipboardOSC52(self: *Repl, text: []const u8) !void {
 
     if (first.len == text.len) {
         // No ANSI sequences - encode the original directly
-        var encoded = try bun.base64.encodeAlloc(self.allocator, text);
+        var encoded = try fun.base64.encodeAlloc(self.allocator, text);
         defer encoded.deinit(self.allocator);
         self.write("\x1b]52;c;");
         self.write(encoded.slice());
@@ -1474,7 +1474,7 @@ fn copyToClipboardOSC52(self: *Repl, text: []const u8) !void {
         while (it.next()) |slice| {
             clean.appendSliceAssumeCapacity(slice);
         }
-        var encoded = try bun.base64.encodeAlloc(self.allocator, clean.items);
+        var encoded = try fun.base64.encodeAlloc(self.allocator, clean.items);
         defer encoded.deinit(self.allocator);
         self.write("\x1b]52;c;");
         self.write(encoded.slice());
@@ -1520,7 +1520,7 @@ fn transformForRepl(self: *Repl, code: []const u8) ?[]const u8 {
 
     // Initialize macro context from transpiler (required for import processing)
     if (vm.transpiler.macro_context == null) {
-        vm.transpiler.macro_context = bun.ast.Macro.MacroContext.init(&vm.transpiler);
+        vm.transpiler.macro_context = fun.ast.Macro.MacroContext.init(&vm.transpiler);
     }
     opts.macro_context = &vm.transpiler.macro_context.?;
 
@@ -1553,8 +1553,8 @@ fn transformForRepl(self: *Repl, code: []const u8) ?[]const u8 {
     defer buffer_printer.ctx.buffer.deinit();
 
     // Create symbol map from ast.symbols
-    const symbols_nested = bun.ast.Symbol.NestedList.fromBorrowedSliceDangerous(&.{ast.symbols});
-    const symbols_map = bun.ast.Symbol.Map.initList(symbols_nested);
+    const symbols_nested = fun.ast.Symbol.NestedList.fromBorrowedSliceDangerous(&.{ast.symbols});
+    const symbols_map = fun.ast.Symbol.Map.initList(symbols_nested);
 
     _ = js_printer.printAst(
         @TypeOf(&buffer_printer),
@@ -1612,7 +1612,7 @@ fn printJSError(self: *Repl, error_value: jsc.JSValue) void {
 
 fn printJSErrorTo(self: *Repl, error_value: jsc.JSValue, writer: *std.Io.Writer, enable_colors: bool) void {
     const global = self.global orelse return;
-    // Use .Error level for proper error formatting with Bun.inspect
+    // Use .Error level for proper error formatting with Fun.inspect
     jsc.ConsoleObject.format2(.Error, global, @ptrCast(&error_value), 1, writer, .{
         .enable_colors = enable_colors,
         .add_newline = true,
@@ -1627,7 +1627,7 @@ fn printJSErrorTo(self: *Repl, error_value: jsc.JSValue, writer: *std.Io.Writer,
     };
 }
 
-/// Format and print a JS value using Bun's console formatter (same as console.log)
+/// Format and print a JS value using Fun's console formatter (same as console.log)
 fn printFormattedValue(self: *Repl, value: jsc.JSValue) void {
     const global = self.global orelse return;
     const writer = Output.writer();
@@ -1666,7 +1666,7 @@ pub fn runWithVM(self: *Repl, vm: ?*jsc.VirtualMachine) !void {
     try self.history.load();
 
     // Print welcome message
-    self.print("Welcome to Bun v{s}\n", .{VERSION});
+    self.print("Welcome to Fun v{s}\n", .{VERSION});
     self.print("Type {s}.copy [code]{s} to copy to clipboard. {s}.help{s} for more info.\n\n", .{ Color.cyan, Color.reset, Color.cyan, Color.reset });
 
     self.running = true;
@@ -1958,7 +1958,7 @@ fn handleTab(self: *Repl) void {
     const prefix = line[word_start..];
 
     // Get completions from global object
-    const completions = Bun__REPL__getCompletions(
+    const completions = Fun__REPL__getCompletions(
         global,
         .js_undefined,
         prefix.ptr,
@@ -2033,7 +2033,7 @@ fn handleTab(self: *Repl) void {
 // Public Entry Point (for CLI integration)
 // ============================================================================
 
-pub fn exec(ctx: bun.cli.Command.Context) !void {
+pub fn exec(ctx: fun.cli.Command.Context) !void {
     var repl = Repl.init(ctx.allocator);
     defer repl.deinit();
 
@@ -2044,15 +2044,15 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.array_list.Managed;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const fmt = bun.fmt;
-const js_parser = bun.js_parser;
-const js_printer = bun.js_printer;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const MimallocArena = bun.allocators.MimallocArena;
+const fun = @import("fun");
+const Output = fun.Output;
+const fmt = fun.fmt;
+const js_parser = fun.js_parser;
+const js_printer = fun.js_printer;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const MimallocArena = fun.allocators.MimallocArena;
 
-const Environment = bun.Environment;
+const Environment = fun.Environment;
 const VERSION = Environment.version_string;

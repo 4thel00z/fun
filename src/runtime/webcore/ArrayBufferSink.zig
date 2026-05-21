@@ -2,7 +2,7 @@ const ArrayBufferSink = @This();
 
 pub const JSSink = webcore.Sink.JSSink(@This(), "ArrayBufferSink");
 
-bytes: bun.ByteList,
+bytes: fun.ByteList,
 allocator: std.mem.Allocator,
 done: bool = false,
 signal: Signal = .{},
@@ -11,11 +11,11 @@ streaming: bool = false,
 as_uint8array: bool = false,
 
 pub fn connect(this: *ArrayBufferSink, signal: Signal) void {
-    bun.assert(this.reader == null);
+    fun.assert(this.reader == null);
     this.signal = signal;
 }
 
-pub fn start(this: *ArrayBufferSink, stream_start: streams.Start) bun.sys.Maybe(void) {
+pub fn start(this: *ArrayBufferSink, stream_start: streams.Start) fun.sys.Maybe(void) {
     this.bytes.clearRetainingCapacity();
 
     switch (stream_start) {
@@ -37,11 +37,11 @@ pub fn start(this: *ArrayBufferSink, stream_start: streams.Start) bun.sys.Maybe(
     return .success;
 }
 
-pub fn flush(_: *ArrayBufferSink) bun.sys.Maybe(void) {
+pub fn flush(_: *ArrayBufferSink) fun.sys.Maybe(void) {
     return .success;
 }
 
-pub fn flushFromJS(this: *ArrayBufferSink, globalThis: *JSGlobalObject, wait: bool) bun.sys.Maybe(JSValue) {
+pub fn flushFromJS(this: *ArrayBufferSink, globalThis: *JSGlobalObject, wait: bool) fun.sys.Maybe(JSValue) {
     if (this.streaming) {
         const value: JSValue = switch (this.as_uint8array) {
             true => jsc.ArrayBuffer.create(globalThis, this.bytes.slice(), .Uint8Array) catch .zero, // TODO: properly propagate exception upwards
@@ -60,8 +60,8 @@ pub fn finalize(this: *ArrayBufferSink) void {
 }
 
 pub fn init(allocator: std.mem.Allocator, next: ?Sink) !*ArrayBufferSink {
-    return bun.new(ArrayBufferSink, .{
-        .bytes = bun.ByteList.empty,
+    return fun.new(ArrayBufferSink, .{
+        .bytes = fun.ByteList.empty,
         .allocator = allocator,
         .next = next,
     });
@@ -72,7 +72,7 @@ pub fn construct(
     allocator: std.mem.Allocator,
 ) void {
     this.* = ArrayBufferSink{
-        .bytes = bun.ByteList{},
+        .bytes = fun.ByteList{},
         .allocator = allocator,
         .next = null,
     };
@@ -111,7 +111,7 @@ pub fn writeUTF16(this: *@This(), data: streams.Result) streams.Result.Writable 
     return .{ .owned = len };
 }
 
-pub fn end(this: *ArrayBufferSink, err: ?Syscall.Error) bun.sys.Maybe(void) {
+pub fn end(this: *ArrayBufferSink, err: ?Syscall.Error) fun.sys.Maybe(void) {
     if (this.next) |*next| {
         return next.end(err);
     }
@@ -120,7 +120,7 @@ pub fn end(this: *ArrayBufferSink, err: ?Syscall.Error) bun.sys.Maybe(void) {
 }
 pub fn destroy(this: *ArrayBufferSink) void {
     this.bytes.deinit(this.allocator);
-    bun.destroy(this);
+    fun.destroy(this);
 }
 pub fn toJS(this: *ArrayBufferSink, globalThis: *JSGlobalObject, as_uint8array: bool) JSValue {
     if (this.streaming) {
@@ -132,7 +132,7 @@ pub fn toJS(this: *ArrayBufferSink, globalThis: *JSGlobalObject, as_uint8array: 
         return value;
     }
 
-    defer this.bytes = bun.ByteList.empty;
+    defer this.bytes = fun.ByteList.empty;
     return ArrayBuffer.fromBytes(
         try this.bytes.toOwnedSlice(this.allocator),
         if (as_uint8array)
@@ -142,17 +142,17 @@ pub fn toJS(this: *ArrayBufferSink, globalThis: *JSGlobalObject, as_uint8array: 
     ).toJS(globalThis, null);
 }
 
-pub fn endFromJS(this: *ArrayBufferSink, _: *JSGlobalObject) bun.sys.Maybe(ArrayBuffer) {
+pub fn endFromJS(this: *ArrayBufferSink, _: *JSGlobalObject) fun.sys.Maybe(ArrayBuffer) {
     if (this.done) {
         return .{ .result = ArrayBuffer.fromBytes(&[_]u8{}, .ArrayBuffer) };
     }
 
-    bun.assert(this.next == null);
+    fun.assert(this.next == null);
     this.done = true;
     this.signal.close(null);
-    defer this.bytes = bun.ByteList.empty;
+    defer this.bytes = fun.ByteList.empty;
     return .{ .result = ArrayBuffer.fromBytes(
-        bun.handleOom(this.bytes.toOwnedSlice(this.allocator)),
+        fun.handleOom(this.bytes.toOwnedSlice(this.allocator)),
         if (this.as_uint8array)
             .Uint8Array
         else
@@ -171,15 +171,15 @@ pub fn memoryCost(this: *const ArrayBufferSink) usize {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Syscall = bun.sys;
+const fun = @import("fun");
+const Syscall = fun.sys;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ArrayBuffer = jsc.ArrayBuffer;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 
-const webcore = bun.webcore;
+const webcore = fun.webcore;
 const Sink = webcore.Sink;
 
 const streams = webcore.streams;

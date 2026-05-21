@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isWindows, tempDir } from "harness";
 import { closeSync, constants, open as openCb, openSync, readFileSync, writeSync } from "node:fs";
 import { open } from "node:fs/promises";

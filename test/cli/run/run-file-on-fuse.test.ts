@@ -1,6 +1,6 @@
-import { type ReadableSubprocess, spawn } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isLinux, tmpdirSync } from "harness";
+import { type ReadableSubprocess, spawn } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, isLinux, tmpdirSync } from "harness";
 import fs from "node:fs";
 import { join } from "node:path";
 
@@ -29,7 +29,7 @@ describe.skipIf(!isLinux)("running files on a FUSE mount", () => {
     let tries = 0;
     while (!fs.existsSync(join(mountpoint, "main.js")) && tries < 1600 && pythonProcess.exitCode === null) {
       tries++;
-      await Bun.sleep(5);
+      await Fun.sleep(5);
     }
     if (pythonProcess.exitCode !== null && pythonProcess.exitCode !== 0) {
       throw new Error(
@@ -43,7 +43,7 @@ describe.skipIf(!isLinux)("running files on a FUSE mount", () => {
     if (!pythonProcess) return;
     const umount = spawn({ cmd: ["fusermount", "-u", mountpoint] });
     await umount.exited;
-    await Promise.race([pythonProcess.exited, Bun.sleep(1000)]);
+    await Promise.race([pythonProcess.exited, Fun.sleep(1000)]);
     if (pythonProcess.exitCode === null) {
       pythonProcess.kill("SIGKILL");
       console.error("python process errored:", await pythonProcess.stderr.text());
@@ -51,15 +51,15 @@ describe.skipIf(!isLinux)("running files on a FUSE mount", () => {
   });
 
   async function doTest(pathOnMount: string): Promise<void> {
-    const bun = spawn({
-      cmd: [bunExe(), join(mountpoint, pathOnMount)],
+    const fun = spawn({
+      cmd: [funExe(), join(mountpoint, pathOnMount)],
       cwd: __dirname,
       stdout: "pipe",
-      env: bunEnv,
+      env: funEnv,
     });
-    await Promise.race([bun.exited, Bun.sleep(1000)]);
-    expect(bun.exitCode).toBe(0);
-    expect(await new Response(bun.stdout).text()).toBe("hello world\n");
+    await Promise.race([fun.exited, Fun.sleep(1000)]);
+    expect(fun.exitCode).toBe(0);
+    expect(await new Response(fun.stdout).text()).toBe("hello world\n");
   }
 
   test("regular file", () => doTest("main.js"));

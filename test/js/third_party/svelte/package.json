@@ -1,4 +1,4 @@
 {
-  "name": "bun-loader-svelte",
-  "module": "./bun-loader-svelte.ts"
+  "name": "fun-loader-svelte",
+  "module": "./fun-loader-svelte.ts"
 }

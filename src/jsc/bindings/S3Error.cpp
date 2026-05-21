@@ -7,12 +7,12 @@
 #include "ZigGeneratedClasses.h"
 #include "S3Error.h"
 
-namespace Bun {
+namespace Fun {
 
 typedef struct S3Error {
-    BunString code;
-    BunString message;
-    BunString path;
+    FunString code;
+    FunString message;
+    FunString path;
 } S3Error;
 
 Structure* createS3ErrorStructure(JSC::VM& vm, JSC::JSGlobalObject* globalObject)
@@ -30,7 +30,7 @@ SYSV_ABI JSC::EncodedJSValue S3Error__toErrorInstance(const S3Error* arg0,
     auto scope = DECLARE_TOP_EXCEPTION_SCOPE(vm);
 
     WTF::String message;
-    if (err.message.tag != BunStringTag::Empty) {
+    if (err.message.tag != FunStringTag::Empty) {
         message = err.message.toWTFString();
     }
 
@@ -39,8 +39,8 @@ SYSV_ABI JSC::EncodedJSValue S3Error__toErrorInstance(const S3Error* arg0,
     auto prototype = defaultGlobalObject(globalObject)->m_S3ErrorStructure.getInitializedOnMainThread(globalObject);
     JSC::JSObject* result = JSC::ErrorInstance::create(vm, prototype, message, {});
     result->putDirect(vm, vm.propertyNames->name, defaultGlobalObject(globalObject)->commonStrings().s3ErrorString(globalObject), JSC::PropertyAttribute::DontEnum | 0);
-    if (err.code.tag != BunStringTag::Empty) {
-        JSC::JSValue code = Bun::toJS(globalObject, err.code);
+    if (err.code.tag != FunStringTag::Empty) {
+        JSC::JSValue code = Fun::toJS(globalObject, err.code);
         if (scope.exception()) {
             scope.clearException();
         } else {
@@ -49,8 +49,8 @@ SYSV_ABI JSC::EncodedJSValue S3Error__toErrorInstance(const S3Error* arg0,
         }
     }
 
-    if (err.path.tag != BunStringTag::Empty) {
-        JSC::JSValue path = Bun::toJS(globalObject, err.path);
+    if (err.path.tag != FunStringTag::Empty) {
+        JSC::JSValue path = Fun::toJS(globalObject, err.path);
         if (scope.exception()) {
             scope.clearException();
         } else {

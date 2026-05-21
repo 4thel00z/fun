@@ -1,4 +1,4 @@
-import { beforeAll, describe, it } from "bun:test";
+import { beforeAll, describe, it } from "fun:test";
 
 describe("thing", () => {
   let thing;

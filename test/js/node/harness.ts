@@ -7,7 +7,7 @@ import assertNode from "node:assert";
 type DoneCb = (err?: Error) => any;
 function noop() {}
 export function createTest(path: string) {
-  const { expect, test, it, describe, beforeAll, afterAll, beforeEach, afterEach, mock } = Bun.jest(path);
+  const { expect, test, it, describe, beforeAll, afterAll, beforeEach, afterEach, mock } = Fun.jest(path);
 
   hideFromStackTrace(expect);
 
@@ -261,6 +261,6 @@ export function createTest(path: string) {
   };
 }
 export { exampleSite };
-declare namespace Bun {
-  function jest(path: string): typeof import("bun:test");
+declare namespace Fun {
+  function jest(path: string): typeof import("fun:test");
 }

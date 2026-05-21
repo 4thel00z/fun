@@ -4,10 +4,10 @@ sidebarTitle: Read stdout
 mode: center
 ---
 
-When using [`Bun.spawn()`](/runtime/child-process), the `stdout` of the child process can be consumed as a `ReadableStream` via `proc.stdout`.
+When using [`Fun.spawn()`](/runtime/child-process), the `stdout` of the child process can be consumed as a `ReadableStream` via `proc.stdout`.
 
 ```ts
-const proc = Bun.spawn(["echo", "hello"]);
+const proc = Fun.spawn(["echo", "hello"]);
 
 const output = await proc.stdout.text();
 output; // => "hello"
@@ -18,7 +18,7 @@ output; // => "hello"
 To instead pipe the `stdout` of the child process to `stdout` of the parent process, set "inherit".
 
 ```ts
-const proc = Bun.spawn(["echo", "hello"], {
+const proc = Fun.spawn(["echo", "hello"], {
   stdout: "inherit",
 });
 ```

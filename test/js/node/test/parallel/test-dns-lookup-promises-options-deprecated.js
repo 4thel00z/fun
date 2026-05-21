@@ -2,7 +2,7 @@
 const common = require('../common');
 const assert = require('assert');
 
-Bun.dns.lookup = hostname => {
+Fun.dns.lookup = hostname => {
   throw Object.assign(new Error('Out of memory'), {
     name: 'DNSException',
     code: 'ENOMEM',

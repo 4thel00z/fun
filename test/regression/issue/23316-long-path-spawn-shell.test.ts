@@ -1,6 +1,6 @@
-import { $ } from "bun";
-import { expect, test } from "bun:test";
-import { bunExe, isWindows, tempDir } from "harness";
+import { $ } from "fun";
+import { expect, test } from "fun:test";
+import { funExe, isWindows, tempDir } from "harness";
 import { join } from "path";
 
 test("shell should handle cwd paths >= MAX_PATH on Windows", async () => {
@@ -28,7 +28,7 @@ test("shell should handle cwd paths >= MAX_PATH on Windows", async () => {
   let deepPath = String(dir);
   for (const segment of segments) {
     deepPath = join(deepPath, segment);
-    await Bun.write(join(deepPath, ".keep"), "");
+    await Fun.write(join(deepPath, ".keep"), "");
   }
 
   console.log(`Created deep path (length: ${deepPath.length}): ${deepPath}`);
@@ -39,7 +39,7 @@ test("shell should handle cwd paths >= MAX_PATH on Windows", async () => {
   // 2. Fail gracefully with an error (not panic with UV_ENOTCONN)
   let err;
   try {
-    await $`${bunExe()} --version`.cwd(deepPath).quiet();
+    await $`${funExe()} --version`.cwd(deepPath).quiet();
   } catch (e) {
     err = e;
   }
@@ -60,7 +60,7 @@ test("shell should handle cwd paths with disabled 8.3 names on Windows", async (
   let deepPath = String(dir);
   for (const segment of segments) {
     deepPath = join(deepPath, segment);
-    await Bun.write(join(deepPath, ".keep"), "");
+    await Fun.write(join(deepPath, ".keep"), "");
   }
 
   console.log(`Created path for 8.3 test (length: ${deepPath.length}): ${deepPath}`);
@@ -68,7 +68,7 @@ test("shell should handle cwd paths with disabled 8.3 names on Windows", async (
   // Attempt to copy test.js to the deep path
   let err;
   try {
-    await Bun.write(join(deepPath, "test.js"), `console.log("hello");`);
+    await Fun.write(join(deepPath, "test.js"), `console.log("hello");`);
   } catch (e) {
     err = e;
   }
@@ -77,7 +77,7 @@ test("shell should handle cwd paths with disabled 8.3 names on Windows", async (
   // This should not panic, even if GetShortPathNameW fails
   err = undefined;
   try {
-    await $`${bunExe()} test.js`.cwd(deepPath).quiet();
+    await $`${funExe()} test.js`.cwd(deepPath).quiet();
   } catch (e) {
     err = e;
   }

@@ -6,7 +6,7 @@
 #include "CryptoUtil.h"
 #include "KeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsHkdf);
 JSC_DECLARE_HOST_FUNCTION(jsHkdfSync);
@@ -45,4 +45,4 @@ struct HkdfJob {
     void schedule();
 };
 
-} // namespace Bun
+} // namespace Fun

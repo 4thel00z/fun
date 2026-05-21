@@ -415,13 +415,13 @@ pub fn ParseImportExport(
 const std = @import("std");
 const ListManaged = std.array_list.Managed;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const assert = fun.assert;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const LocRef = js_ast.LocRef;
@@ -429,7 +429,7 @@ const LocRef = js_ast.LocRef;
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const ExportClauseResult = js_parser.ExportClauseResult;
 const ImportClause = js_parser.ImportClause;
 const JSXTransformType = js_parser.JSXTransformType;

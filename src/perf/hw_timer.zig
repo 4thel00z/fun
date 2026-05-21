@@ -8,7 +8,7 @@
 //! it replaces `GetTickCount64`'s ~15.6 ms granularity.
 //!
 //! `nowNs()` is calibrated once against the OS monotonic clock so its values
-//! share an epoch with `bun.getRoughTickCount()`. For pure A→B deltas where the
+//! share an epoch with `fun.getRoughTickCount()`. For pure A→B deltas where the
 //! epoch doesn't matter, `readCounter()` is the cheapest possible read.
 //!
 //! On x64 Linux/Windows where the TSC frequency isn't exposed by CPUID 0x15,
@@ -18,7 +18,7 @@
 //! See WebKit r312153 (UnbarrieredMonotonicTime) for the original design and
 //! drift/monotonicity measurements on Darwin/arm64.
 
-/// True on every target Bun ships. Kept for callers that want to gate on it.
+/// True on every target Fun ships. Kept for callers that want to gate on it.
 pub const is_supported = Environment.isAarch64 or Environment.isX64;
 
 /// Raw counter read. No barriers.
@@ -42,7 +42,7 @@ pub inline fn readCounter() u64 {
     @compileError("hw_timer.readCounter: unsupported architecture");
 }
 
-/// Monotonic nanoseconds, calibrated to the same epoch as `bun.getRoughTickCount()`.
+/// Monotonic nanoseconds, calibrated to the same epoch as `fun.getRoughTickCount()`.
 /// Falls back to the OS high-res clock if the HW counter frequency couldn't be
 /// resolved without measuring it. Never recurses into `getRoughTickCount`.
 pub inline fn nowNs() u64 {
@@ -152,7 +152,7 @@ fn osMonotonicNs() u64 {
         const freq = std.os.windows.QueryPerformanceFrequency();
         return @intCast(std.math.mulWide(u64, counter, std.time.ns_per_s) / freq);
     }
-    var spec = bun.timespec{ .sec = 0, .nsec = 0 };
+    var spec = fun.timespec{ .sec = 0, .nsec = 0 };
     if (comptime Environment.isLinux) {
         // CLOCK_MONOTONIC, not _RAW: guaranteed vDSO (no syscall). _RAW only
         // joined the vDSO in 5.3.
@@ -167,5 +167,5 @@ fn osMonotonicNs() u64 {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

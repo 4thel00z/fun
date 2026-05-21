@@ -5,7 +5,7 @@
 #include "JSNodePerformanceHooksHistogramPrototype.h"
 #include "ZigGlobalObject.h"
 #include "ErrorCode.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "wtf/text/ASCIILiteral.h"
 #include "wtf/Vector.h"
 #include <wtf/MathExtras.h>
@@ -18,7 +18,7 @@
 #include <JavaScriptCore/Options.h>
 #include <JavaScriptCore/JSBigInt.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -76,7 +76,7 @@ static JSNodePerformanceHooksHistogram* createHistogramInternal(JSGlobalObject* 
 JSC_DEFINE_HOST_FUNCTION(jsNodePerformanceHooksHistogramConstructorCall, (JSGlobalObject * globalObject, CallFrame* callFrame))
 {
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
-    Bun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR, "Histogram constructor cannot be invoked without 'new'"_s);
+    Fun::throwError(globalObject, scope, ErrorCode::ERR_ILLEGAL_CONSTRUCTOR, "Histogram constructor cannot be invoked without 'new'"_s);
     return {};
 }
 
@@ -109,4 +109,4 @@ void setupJSNodePerformanceHooksHistogramClassStructure(LazyClassStructure::Init
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

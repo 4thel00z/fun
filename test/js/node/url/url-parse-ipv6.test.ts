@@ -1,5 +1,5 @@
 // prettier-ignore
-import { beforeAll,describe,expect,it } from "bun:test";
+import { beforeAll,describe,expect,it } from "fun:test";
 import url from "node:url";
 
 // url.parse is deprecated.

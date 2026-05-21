@@ -61,7 +61,7 @@ pub fn next(this: *ObjectIterator) ?jsc.JSValue {
     return value;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

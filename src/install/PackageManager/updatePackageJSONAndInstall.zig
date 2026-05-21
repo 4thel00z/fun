@@ -3,7 +3,7 @@ pub fn updatePackageJSONAndInstallWithManager(
     ctx: Command.Context,
     original_cwd: string,
 ) !void {
-    var update_requests = bun.handleOom(UpdateRequest.Array.initCapacity(manager.allocator, 64));
+    var update_requests = fun.handleOom(UpdateRequest.Array.initCapacity(manager.allocator, 64));
     defer update_requests.deinit(manager.allocator);
 
     if (manager.options.positionals.len <= 1) {
@@ -100,7 +100,7 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
 
     // If there originally was a newline at the end of their package.json, preserve it
     // so that we don't cause unnecessary diffs in their git history.
-    // https://github.com/oven-sh/bun/issues/1375
+    // https://github.com/underdoc-org/fun/issues/1375
     const preserve_trailing_newline_at_eof_for_package_json = current_package_json.source.contents.len > 0 and
         current_package_json.source.contents[current_package_json.source.contents.len - 1] == '\n';
 
@@ -182,7 +182,7 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
         },
 
         .link, .add, .update => {
-            // `bun update <package>` is basically the same as `bun add <package>`, except
+            // `fun update <package>` is basically the same as `fun add <package>`, except
             // update will not exceed the current dependency range if it exists
 
             if (updates.len != 0) {
@@ -209,7 +209,7 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
         },
         else => {
             if (manager.options.patch_features == .commit) {
-                var pathbuf: bun.PathBuffer = undefined;
+                var pathbuf: fun.PathBuffer = undefined;
                 if (try manager.doPatchCommit(&pathbuf, log_level)) |stuff| {
                     // we're inside a workspace package, we need to edit the
                     // root json, not the `current_package_json`
@@ -255,9 +255,9 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
         Global.crash();
     };
 
-    // There are various tradeoffs with how we commit updates when you run `bun add` or `bun remove`
+    // There are various tradeoffs with how we commit updates when you run `fun add` or `fun remove`
     // The one we chose here is to effectively pretend a human did:
-    // 1. "bun add react@latest"
+    // 1. "fun add react@latest"
     // 2. open lockfile, find what react resolved to
     // 3. open package.json
     // 4. replace "react" : "latest" with "react" : "^16.2.0"
@@ -271,7 +271,7 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
     // may or may not be the package json we are editing
     const top_level_dir_without_trailing_slash = strings.withoutTrailingSlash(FileSystem.instance.top_level_dir);
 
-    var root_package_json_path_buf: bun.PathBuffer = undefined;
+    var root_package_json_path_buf: fun.PathBuffer = undefined;
     const root_package_json_path = root_package_json_path: {
         @memcpy(root_package_json_path_buf[0..top_level_dir_without_trailing_slash.len], top_level_dir_without_trailing_slash);
         @memcpy(root_package_json_path_buf[top_level_dir_without_trailing_slash.len..][0.."/package.json".len], "/package.json");
@@ -279,7 +279,7 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
         root_package_json_path_buf[root_package_json_path.len] = 0;
 
         // The lifetime of this pointer is only valid until the next call to `getWithPath`, which can happen after this scope.
-        // https://github.com/oven-sh/bun/issues/12288
+        // https://github.com/underdoc-org/fun/issues/12288
         const root_package_json = switch (manager.workspace_package_json_cache.getWithPath(
             manager.allocator,
             manager.log,
@@ -416,10 +416,10 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
 
         // Now that we've run the install step
         // We can save our in-memory package.json to disk
-        const workspace_package_json_file = (try bun.sys.File.openat(
+        const workspace_package_json_file = (try fun.sys.File.openat(
             .cwd(),
             path,
-            bun.O.RDWR,
+            fun.O.RDWR,
             0,
         ).unwrap()).handle.stdFile();
 
@@ -435,8 +435,8 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
 
             var cwd = std.fs.cwd();
             // This is not exactly correct
-            var node_modules_buf: bun.PathBuffer = undefined;
-            bun.copy(u8, &node_modules_buf, "node_modules" ++ std.fs.path.sep_str);
+            var node_modules_buf: fun.PathBuffer = undefined;
+            fun.copy(u8, &node_modules_buf, "node_modules" ++ std.fs.path.sep_str);
             const offset_buf = node_modules_buf["node_modules/".len..];
             const name_hashes = manager.lockfile.packages.items(.name_hash);
             for (updates.*) |request| {
@@ -445,14 +445,14 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
                 // It does not handle nested dependencies
                 // This is a quick & dirty cleanup intended for when deleting top-level dependencies
                 if (std.mem.indexOfScalar(PackageNameHash, name_hashes, String.Builder.stringHash(request.name)) == null) {
-                    bun.copy(u8, offset_buf, request.name);
+                    fun.copy(u8, offset_buf, request.name);
                     cwd.deleteTree(node_modules_buf[0 .. "node_modules/".len + request.name.len]) catch {};
                 }
             }
 
             // This is where we clean dangling symlinks
             // This could be slow if there are a lot of symlinks
-            if (bun.openDir(cwd, manager.options.bin_path)) |node_modules_bin_handle| {
+            if (fun.openDir(cwd, manager.options.bin_path)) |node_modules_bin_handle| {
                 var node_modules_bin: std.fs.Dir = node_modules_bin_handle;
                 defer node_modules_bin.close();
                 var iter: std.fs.Dir.Iterator = node_modules_bin.iterate();
@@ -462,7 +462,7 @@ fn updatePackageJSONAndInstallWithManagerWithUpdates(
 
                             // any symlinks which we are unable to open are assumed to be dangling
                             // note that using access won't work here, because access doesn't resolve symlinks
-                            bun.copy(u8, &node_modules_buf, entry.name);
+                            fun.copy(u8, &node_modules_buf, entry.name);
                             node_modules_buf[entry.name.len] = 0;
                             const buf: [:0]u8 = node_modules_buf[0..entry.name.len :0];
 
@@ -495,9 +495,9 @@ pub fn updatePackageJSONAndInstallCatchError(
             error.InstallFailed,
             error.InvalidPackageJSON,
             => {
-                const log = &bun.cli.Cli.log_;
-                log.print(bun.Output.errorWriter()) catch {};
-                bun.Global.exit(1);
+                const log = &fun.cli.Cli.log_;
+                log.print(fun.Output.errorWriter()) catch {};
+                fun.Global.exit(1);
                 return;
             },
             else => return err,
@@ -537,11 +537,11 @@ fn updatePackageJSONAndInstallAndCLI(
     defer ctx.allocator.free(original_cwd);
 
     if (manager.options.shouldPrintCommandName()) {
-        Output.prettyln("<r><b>bun {s} <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{@tagName(subcommand)});
+        Output.prettyln("<r><b>fun {s} <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{@tagName(subcommand)});
         Output.flush();
     }
 
-    // When you run `bun add -g <pkg>` or `bun install -g <pkg>` and the global bin dir is not in $PATH
+    // When you run `fun add -g <pkg>` or `fun install -g <pkg>` and the global bin dir is not in $PATH
     // We should tell the user to add it to $PATH so they don't get confused.
     if (subcommand.canGloballyInstallPackages()) {
         if (manager.options.global and manager.options.log_level != .silent) {
@@ -568,8 +568,8 @@ fn updatePackageJSONAndInstallAndCLI(
     if (subcommand.canGloballyInstallPackages()) {
         if (manager.options.global) {
             if (manager.options.bin_path.len > 0 and manager.track_installed_bin == .basename) {
-                var path_buf: bun.PathBuffer = undefined;
-                const needs_to_print = if (bun.env_var.PATH.get()) |PATH|
+                var path_buf: fun.PathBuffer = undefined;
+                const needs_to_print = if (fun.env_var.PATH.get()) |PATH|
                     // This is not perfect
                     //
                     // If you already have a different binary of the same
@@ -582,7 +582,7 @@ fn updatePackageJSONAndInstallAndCLI(
                     // appears unnecessarily. It's kind of okay if it doesn't appear
                     // when it should.
                     //
-                    // If you set BUN_INSTALL_BIN to "/tmp/woo" on macOS and
+                    // If you set FUN_INSTALL_BIN to "/tmp/woo" on macOS and
                     // we just checked for "/tmp/woo" in $PATH, it would
                     // incorrectly print a warning because /tmp/ on macOS is
                     // aliased to /private/tmp/
@@ -591,10 +591,10 @@ fn updatePackageJSONAndInstallAndCLI(
                     // have a binary called "esbuild" in /tmp/TeST and you
                     // install esbuild, it will not detect that case if we naively
                     // just checked for "esbuild" in $PATH where "$PATH" is /tmp/test
-                    bun.which(
+                    fun.which(
                         &path_buf,
                         PATH,
-                        bun.fs.FileSystem.instance.top_level_dir,
+                        fun.fs.FileSystem.instance.top_level_dir,
                         manager.track_installed_bin.basename,
                     ) == null
                 else
@@ -602,7 +602,7 @@ fn updatePackageJSONAndInstallAndCLI(
 
                 if (needs_to_print) {
                     const MoreInstructions = struct {
-                        shell: bun.cli.ShellCompletions.Shell = .unknown,
+                        shell: fun.cli.ShellCompletions.Shell = .unknown,
                         folder: []const u8,
 
                         // Convert "/Users/Jarred Sumner" => "/Users/Jarred\ Sumner"
@@ -611,10 +611,10 @@ fn updatePackageJSONAndInstallAndCLI(
 
                             pub fn format(instructions: @This(), writer: *std.Io.Writer) !void {
                                 var remaining = instructions.folder;
-                                while (bun.strings.indexOfChar(remaining, ' ')) |space| {
+                                while (fun.strings.indexOfChar(remaining, ' ')) |space| {
                                     try writer.print(
                                         "{f}",
-                                        .{bun.fmt.fmtPath(u8, remaining[0..space], .{
+                                        .{fun.fmt.fmtPath(u8, remaining[0..space], .{
                                             .escape_backslashes = true,
                                             .path_sep = if (Environment.isWindows) .windows else .posix,
                                         })},
@@ -625,7 +625,7 @@ fn updatePackageJSONAndInstallAndCLI(
 
                                 try writer.print(
                                     "{f}",
-                                    .{bun.fmt.fmtPath(u8, remaining, .{
+                                    .{fun.fmt.fmtPath(u8, remaining, .{
                                         .escape_backslashes = true,
                                         .path_sep = if (Environment.isWindows) .windows else .posix,
                                     })},
@@ -648,7 +648,7 @@ fn updatePackageJSONAndInstallAndCLI(
                                 },
                                 .fish => {
                                     // Regular quotes will do here.
-                                    try writer.print("fish_add_path {f}", .{bun.fmt.quote(instructions.folder)});
+                                    try writer.print("fish_add_path {f}", .{fun.fmt.quote(instructions.folder)});
                                 },
                                 .pwsh => {
                                     try writer.print("$env:PATH += \";{f}\"", .{path});
@@ -666,8 +666,8 @@ fn updatePackageJSONAndInstallAndCLI(
                         \\
                     ,
                         .{
-                            bun.fmt.quote(manager.track_installed_bin.basename),
-                            MoreInstructions{ .shell = bun.cli.ShellCompletions.Shell.fromEnv([]const u8, bun.env_var.SHELL.platformGet() orelse ""), .folder = manager.options.bin_path },
+                            fun.fmt.quote(manager.track_installed_bin.basename),
+                            MoreInstructions{ .shell = fun.cli.ShellCompletions.Shell.fromEnv([]const u8, fun.env_var.SHELL.platformGet() orelse ""), .folder = manager.options.bin_path },
                         },
                     );
                     Output.flush();
@@ -697,12 +697,12 @@ pub fn updatePackageJSONAndInstall(
             subcommand: Subcommand,
             pub fn onAnalyze(
                 this: *@This(),
-                result: *bun.bundle_v2.BundleV2.DependenciesScanner.Result,
+                result: *fun.bundle_v2.BundleV2.DependenciesScanner.Result,
             ) anyerror!void {
                 // TODO: add separate argument that makes it so positionals[1..] is not done and instead the positionals are passed
-                var positionals = bun.handleOom(bun.default_allocator.alloc(string, result.dependencies.keys().len + 1));
+                var positionals = fun.handleOom(fun.default_allocator.alloc(string, result.dependencies.keys().len + 1));
                 positionals[0] = "add";
-                bun.copy(string, positionals[1..], result.dependencies.keys());
+                fun.copy(string, positionals[1..], result.dependencies.keys());
                 this.cli.positionals = positionals;
 
                 try updatePackageJSONAndInstallAndCLI(this.ctx, this.subcommand, this.cli.*);
@@ -715,14 +715,14 @@ pub fn updatePackageJSONAndInstall(
             .cli = &cli,
             .subcommand = subcommand,
         };
-        var fetcher = bun.bundle_v2.BundleV2.DependenciesScanner{
+        var fetcher = fun.bundle_v2.BundleV2.DependenciesScanner{
             .ctx = &analyzer,
             .entry_points = cli.positionals[1..],
             .onFetch = @ptrCast(&Analyzer.onAnalyze),
         };
 
         // This runs the bundler.
-        try bun.cli.BuildCommand.exec(bun.cli.Command.get(), &fetcher);
+        try fun.cli.BuildCommand.exec(fun.cli.Command.get(), &fetcher);
         return;
     }
 
@@ -733,26 +733,26 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const JSPrinter = bun.js_printer;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
-const Command = bun.cli.Command;
-const File = bun.sys.File;
-const PackageNameHash = bun.install.PackageNameHash;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const JSPrinter = fun.js_printer;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;
+const Command = fun.cli.Command;
+const File = fun.sys.File;
+const PackageNameHash = fun.install.PackageNameHash;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const CommandLineArguments = PackageManager.CommandLineArguments;
 const PackageJSONEditor = PackageManager.PackageJSONEditor;
 const PatchCommitResult = PackageManager.PatchCommitResult;

@@ -131,6 +131,6 @@ describe("execution order", () => {
 
 after(() => {
   console.log("%AFTER%");
-  Bun.jest("/").expect(order).toEqual(node);
+  Fun.jest("/").expect(order).toEqual(node);
   assert.deepEqual(order, node);
 });

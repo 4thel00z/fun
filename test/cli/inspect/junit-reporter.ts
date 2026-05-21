@@ -8,10 +8,10 @@
 // - LifecycleReporter.error
 
 const debug = false;
-import { listen, type Socket } from "bun";
+import { listen, type Socket } from "fun";
 
 import { SocketFramer } from "./socket-framer.ts";
-import type { JSC } from "../../../packages/bun-inspector-protocol/src/protocol/jsc";
+import type { JSC } from "../../../packages/fun-inspector-protocol/src/protocol/jsc";
 
 interface Message {
   id?: number;

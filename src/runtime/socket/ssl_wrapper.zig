@@ -1,4 +1,4 @@
-const log = bun.Output.scoped(.SSLWrapper, .hidden);
+const log = fun.Output.scoped(.SSLWrapper, .hidden);
 
 /// Mimics the behavior of openssl.c in uSockets, wrapping data that can be received from any where (network, DuplexStream, etc)
 pub fn SSLWrapper(comptime T: type) type {
@@ -47,7 +47,7 @@ pub fn SSLWrapper(comptime T: type) type {
         pub const Handlers = struct {
             ctx: T,
             onOpen: *const fn (T) void,
-            onHandshake: *const fn (T, bool, uws.us_bun_verify_error_t) void,
+            onHandshake: *const fn (T, bool, uws.us_fun_verify_error_t) void,
             write: *const fn (T, []const u8) void,
             onData: *const fn (T, []const u8) void,
             onClose: *const fn (T) void,
@@ -55,7 +55,7 @@ pub fn SSLWrapper(comptime T: type) type {
 
         /// Initialize the SSLWrapper with a specific SSL_CTX*, remember to call SSL_CTX_up_ref if you want to keep the SSL_CTX alive after the SSLWrapper is deinitialized
         pub fn initWithCTX(ctx: *BoringSSL.SSL_CTX, is_client: bool, handlers: Handlers) !This {
-            bun.BoringSSL.load();
+            fun.BoringSSL.load();
             const ssl = BoringSSL.SSL_new(ctx) orelse return error.OutOfMemory;
             errdefer BoringSSL.SSL_free(ssl);
 
@@ -74,7 +74,7 @@ pub fn SSLWrapper(comptime T: type) type {
                 // the JS-side `rejectUnauthorized` decision; load the shared
                 // system roots per-SSL so a server using the same CTX never
                 // sees CertificateRequest. (Pre-redesign this happened by
-                // accident: net.ts forced `requestCert: true` after `[buntls]`
+                // accident: net.ts forced `requestCert: true` after `[funtls]`
                 // and `SSLConfig.fromJS` rebuilt the CTX with roots from that.)
                 if (BoringSSL.SSL_CTX_get_verify_mode(ctx) == BoringSSL.SSL_VERIFY_NONE) {
                     BoringSSL.SSL_set_verify(ssl, BoringSSL.SSL_VERIFY_PEER, alwaysContinueVerify);
@@ -106,10 +106,10 @@ pub fn SSLWrapper(comptime T: type) type {
         }
 
         pub fn init(ssl_options: jsc.API.ServerConfig.SSLConfig, is_client: bool, handlers: Handlers) !This {
-            bun.BoringSSL.load();
+            fun.BoringSSL.load();
 
-            const ctx_opts: uws.SocketContext.BunSocketContextOptions = ssl_options.asUSockets();
-            var err: uws.create_bun_socket_error_t = .none;
+            const ctx_opts: uws.SocketContext.FunSocketContextOptions = ssl_options.asUSockets();
+            var err: uws.create_fun_socket_error_t = .none;
             const ssl_ctx = ctx_opts.createSSLContext(&err) orelse return error.InvalidOptions;
             // initWithCTX adopts the SSL_CTX* (one ref). The passphrase was
             // already freed inside createSSLContext, so SSL_CTX_free is
@@ -291,7 +291,7 @@ pub fn SSLWrapper(comptime T: type) type {
             }
         }
 
-        fn triggerHandshakeCallback(this: *This, success: bool, result: uws.us_bun_verify_error_t) void {
+        fn triggerHandshakeCallback(this: *This, success: bool, result: uws.us_fun_verify_error_t) void {
             if (this.flags.closed_notified) return;
 
             this.flags.authorized = success;
@@ -320,7 +320,7 @@ pub fn SSLWrapper(comptime T: type) type {
             this.handlers.onClose(this.handlers.ctx);
         }
 
-        fn getVerifyError(this: *This) uws.us_bun_verify_error_t {
+        fn getVerifyError(this: *This) uws.us_fun_verify_error_t {
             if (this.isShutdown()) {
                 return .{};
             }
@@ -536,7 +536,7 @@ fn alwaysContinueVerify(_: c_int, _: ?*BoringSSL.X509_STORE_CTX) callconv(.c) c_
 /// CTX. Returns null if root loading fails (treated as "no roots").
 extern fn us_get_shared_default_ca_store() ?*BoringSSL.X509_STORE;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const uws = bun.uws;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const uws = fun.uws;
+const BoringSSL = fun.BoringSSL.c;

@@ -1,1 +1,1 @@
-Bun.unsafe.segfault();
+Fun.unsafe.segfault();

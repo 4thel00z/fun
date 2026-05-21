@@ -1,5 +1,5 @@
 // Downloads tests from Deno and does AST transformation to convert APIs
-// like Deno.test() to use Bun's test() and expect() APIs.
+// like Deno.test() to use Fun's test() and expect() APIs.
 //
 // 2024-02-14:
 // As of https://github.com/denoland/deno/pull/22402 (move all the tests)
@@ -80,7 +80,7 @@ async function downloadTest(test: Test): Promise<ParsedTest> {
   try {
     mkdirSync(dirname(path));
   } catch {}
-  await Bun.write(path, dst);
+  await Fun.write(path, dst);
   return {
     ...test,
     tests,

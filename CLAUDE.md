@@ -1,27 +1,29 @@
-This is the Bun repository - an all-in-one JavaScript runtime & toolkit designed for speed, with a bundler, test runner, and Node.js-compatible package manager. It's written primarily in Zig with C++ for JavaScriptCore integration, powered by WebKit's JavaScriptCore engine.
+This is the **Fun** repository — an all-in-one JavaScript runtime & toolkit designed for speed, with a bundler, test runner, and Node.js-compatible package manager. It's written primarily in Zig with C++ for JavaScriptCore integration, powered by WebKit's JavaScriptCore engine.
 
-## Building and Running Bun
+> **Note:** The codebase has been renamed from `bun` to `fun` throughout — binary outputs are `fun-debug` / `fun`, the Zig root module is `@import("fun")`, env vars are `FUN_*`, config files are `funfig.toml` / `fun.lock`, JS globals and module IDs are `Fun.serve` / `fun:ffi` / `fun:sqlite`. The system `bun` binary in `$PATH` is still upstream Bun and is used to bootstrap the build (`fun bd` invokes the `bd` script in `package.json` via system Bun). Lockfiles still on disk (`fun.lock`, `Cargo.lock`) may reference old names until regenerated.
+
+## Building and Running Fun
 
 ### Build Commands
 
-- **Build Bun**: `bun bd`
-  - Creates a debug build at `./build/debug/bun-debug`
-  - **CRITICAL**: do not set a timeout when running `bun bd`
-- **Run tests with your debug build**: `bun bd test <test-file>`
-  - **CRITICAL**: Never use `bun test` directly - it won't include your changes
-- **Run any command with debug build**: `bun bd <command>`
-- **Run with JavaScript exception scope verification**: `BUN_JSC_validateExceptionChecks=1
-BUN_JSC_dumpSimulatedThrows=1 bun bd <command>`
+- **Build Fun**: `fun bd`
+  - Creates a debug build at `./build/debug/fun-debug`
+  - **CRITICAL**: do not set a timeout when running `fun bd`
+- **Run tests with your debug build**: `fun bd test <test-file>`
+  - **CRITICAL**: Never use `fun test` directly - it won't include your changes
+- **Run any command with debug build**: `fun bd <command>`
+- **Run with JavaScript exception scope verification**: `FUN_JSC_validateExceptionChecks=1
+FUN_JSC_dumpSimulatedThrows=1 fun bd <command>`
 
-Tip: Bun is already installed and in $PATH. The `bd` subcommand is a package.json script.
+Tip: Fun is already installed and in $PATH. The `bd` subcommand is a package.json script.
 
-**All build scripts support build-then-exec.** Any `bun run build*` command (and `bun bd`, and `bun scripts/build.ts` directly) accepts trailing args which are passed to the built executable after building. This is the recommended way to run your build — you never invoke `./build/debug/bun-debug` directly.
+**All build scripts support build-then-exec.** Any `fun run build*` command (and `fun bd`, and `fun scripts/build.ts` directly) accepts trailing args which are passed to the built executable after building. This is the recommended way to run your build — you never invoke `./build/debug/fun-debug` directly.
 
 ```sh
-bun bd test foo.test.ts                    # debug build + quiet debug logs
-bun run build test foo.test.ts             # debug build
-bun run build:release -p 'Bun.version'     # release build
-bun run build:local run script.ts          # debug build with local WebKit
+fun bd test foo.test.ts                    # debug build + quiet debug logs
+fun run build test foo.test.ts             # debug build
+fun run build:release -p 'Fun.version'     # release build
+fun run build:local run script.ts          # debug build with local WebKit
 ```
 
 When exec args are present, build output is suppressed unless the build fails — you see only the binary's output. Build flags (e.g. `--asan=off`) go before the exec args; see `scripts/build.ts` header for the full arg routing rules.
@@ -29,32 +31,32 @@ When exec args are present, build output is suppressed unless the build fails �
 **Comparing builds:** normally use the default `build/<profile>/` dir. If you need to preserve a build as a comparison point (rare — e.g. benchmarking before/after a change), `--build-dir` parks it somewhere the next build won't overwrite:
 
 ```sh
-bun run build:release --build-dir=build/baseline
+fun run build:release --build-dir=build/baseline
 ```
 
 ### Changes that don't require a build
 
-Edits to **TypeScript type declarations** (`packages/bun-types/**/*.d.ts`) do not touch any compiled code, so `bun bd` is unnecessary. The types test just packs the `.d.ts` files and runs `tsc` against fixtures — it never executes your build. Run it directly with the system Bun:
+Edits to **TypeScript type declarations** (`packages/fun-types/**/*.d.ts`) do not touch any compiled code, so `fun bd` is unnecessary. The types test just packs the `.d.ts` files and runs `tsc` against fixtures — it never executes your build. Run it directly with the system Fun:
 
 ```sh
-bun test test/integration/bun-types/bun-types.test.ts
+fun test test/integration/fun-types/fun-types.test.ts
 ```
 
-This is an explicit exception to the "never use `bun test` directly" rule. There are no native changes for a debug build to pick up, so don't wait on one.
+This is an explicit exception to the "never use `fun test` directly" rule. There are no native changes for a debug build to pick up, so don't wait on one.
 
 ## Testing
 
 ### Running Tests
 
-- **Single test file**: `bun bd test test/js/bun/http/serve.test.ts`
-- **Fuzzy match test file**: `bun bd test http/serve.test.ts`
-- **With filter**: `bun bd test test/js/bun/http/serve.test.ts -t "should handle"`
+- **Single test file**: `fun bd test test/js/fun/http/serve.test.ts`
+- **Fuzzy match test file**: `fun bd test http/serve.test.ts`
+- **With filter**: `fun bd test test/js/fun/http/serve.test.ts -t "should handle"`
 
 ### Test Organization
 
-**Default: add your test to the existing test file for the code you're changing.** Do not create a new file. A fetch bug goes in `test/js/web/fetch/fetch.test.ts`, a `Bun.serve` bug goes in `test/js/bun/http/serve.test.ts`, and so on. Keeping tests next to related coverage is what makes them discoverable and prevents duplicated setup.
+**Default: add your test to the existing test file for the code you're changing.** Do not create a new file. A fetch bug goes in `test/js/web/fetch/fetch.test.ts`, a `Fun.serve` bug goes in `test/js/fun/http/serve.test.ts`, and so on. Keeping tests next to related coverage is what makes them discoverable and prevents duplicated setup.
 
-- `test/js/bun/` - Bun-specific API tests (http, crypto, ffi, shell, etc.)
+- `test/js/fun/` - Fun-specific API tests (http, crypto, ffi, shell, etc.)
 - `test/js/node/` - Node.js compatibility tests
 - `test/js/web/` - Web API tests (fetch, WebSocket, streams, etc.)
 - `test/cli/` - CLI command tests (install, run, test, etc.)
@@ -67,19 +69,19 @@ This is an explicit exception to the "never use `bun test` directly" rule. There
 
 ### Writing Tests
 
-Tests use Bun's Jest-compatible test runner with proper test fixtures.
+Tests use Fun's Jest-compatible test runner with proper test fixtures.
 
 - For **single-file tests**, prefer `-e` over `tempDir`.
-- For **multi-file tests**, prefer `tempDir` and `Bun.spawn`.
+- For **multi-file tests**, prefer `tempDir` and `Fun.spawn`.
 
 ```typescript
-import { test, expect } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir } from "harness";
+import { test, expect } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir } from "harness";
 
 test("(single-file test) my feature", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log('Hello, world!')"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log('Hello, world!')"],
+    env: funEnv,
   });
 
   const [stdout, stderr, exitCode] = await Promise.all([
@@ -88,7 +90,7 @@ test("(single-file test) my feature", async () => {
     proc.exited,
   ]);
 
-  expect(normalizeBunSnapshot(stdout)).toMatchInlineSnapshot(`"Hello, world!"`);
+  expect(normalizeFunSnapshot(stdout)).toMatchInlineSnapshot(`"Hello, world!"`);
   expect(exitCode).toBe(0);
 });
 
@@ -99,10 +101,10 @@ test("(multi-file test) my feature", async () => {
     "foo.ts": `export function foo() { console.log("foo"); }`,
   });
 
-  // Spawn Bun process
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.js"],
-    env: bunEnv,
+  // Spawn Fun process
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -114,7 +116,7 @@ test("(multi-file test) my feature", async () => {
   ]);
 
   // Prefer snapshot tests over expect(stdout).toBe("hello\n");
-  expect(normalizeBunSnapshot(stdout, dir)).toMatchInlineSnapshot(`"hello"`);
+  expect(normalizeFunSnapshot(stdout, dir)).toMatchInlineSnapshot(`"hello"`);
 
   // Assert the exit code last. This gives you a more useful error message on test failure.
   expect(exitCode).toBe(0);
@@ -122,12 +124,12 @@ test("(multi-file test) my feature", async () => {
 ```
 
 - Always use `port: 0`. Do not hardcode ports. Do not use your own random port number function.
-- Use `normalizeBunSnapshot` to normalize snapshot output of the test.
+- Use `normalizeFunSnapshot` to normalize snapshot output of the test.
 - NEVER write tests that check for no "panic" or "uncaught exception" or similar in the test output. These tests will never fail in CI.
 - Use `tempDir` from `"harness"` to create a temporary directory. **Do not** use `tmpdirSync` or `fs.mkdtempSync` to create temporary directories.
 - When spawning processes, tests should expect(stdout).toBe(...) BEFORE expect(exitCode).toBe(0). This gives you a more useful error message on test failure.
 - **CRITICAL**: Do not write flaky tests. Do not use `setTimeout` in tests. Instead, `await` the condition to be met. You are not testing the TIME PASSING, you are testing the CONDITION.
-- **CRITICAL**: Verify your test fails with `USE_SYSTEM_BUN=1 bun test <file>` and passes with `bun bd test <file>`. Your test is NOT VALID if it passes with `USE_SYSTEM_BUN=1`.
+- **CRITICAL**: Verify your test fails with `USE_SYSTEM_FUN=1 fun test <file>` and passes with `fun bd test <file>`. Your test is NOT VALID if it passes with `USE_SYSTEM_FUN=1`.
 
 ## Code Architecture
 
@@ -136,13 +138,13 @@ test("(multi-file test) my feature", async () => {
 - **Zig code** (`src/*.zig`): Core runtime, JavaScript bindings, package manager
 - **C++ code** (`src/jsc/bindings/*.cpp`): JavaScriptCore bindings, Web APIs
 - **TypeScript** (`src/js/`): Built-in JavaScript modules with special syntax (see JavaScript Modules section)
-- **Generated code**: Many files are auto-generated from `.classes.ts` and other sources. Bun will automatically rebuild these files when you make changes to them.
+- **Generated code**: Many files are auto-generated from `.classes.ts` and other sources. Fun will automatically rebuild these files when you make changes to them.
 
 ### Core Source Organization
 
 #### Runtime Core (`src/`)
 
-- `bun.zig` - Main entry point
+- `fun.zig` - Main entry point
 - `cli.zig` - CLI command orchestration
 - `js_parser.zig`, `js_lexer.zig`, `js_printer.zig` - JavaScript parsing/printing
 - `transpiler.zig` - Wrapper around js_parser with sourcemap support
@@ -154,7 +156,7 @@ test("(multi-file test) my feature", async () => {
 - `src/jsc/bindings/` - C++ JavaScriptCore bindings
   - Generated classes from `.classes.ts` files
   - Manual bindings for complex APIs
-- `src/runtime/api/` - Bun-specific APIs
+- `src/runtime/api/` - Fun-specific APIs
   - `server.zig` - HTTP server implementation
   - `FFI.zig` - Foreign Function Interface
   - `crypto.zig` - Cryptographic operations
@@ -237,14 +239,14 @@ Code generation happens automatically as part of the build process. The main scr
 - `src/codegen/bundle-modules.ts` - Bundles built-in modules like `node:fs`
 - `src/codegen/bundle-functions.ts` - Bundles global functions like `ReadableStream`
 
-In development, bundled modules can be reloaded without rebuilding Zig by running `bun run build`.
+In development, bundled modules can be reloaded without rebuilding Zig by running `fun run build`.
 
 ## JavaScript Modules (`src/js/`)
 
 Built-in JavaScript modules use special syntax and are organized as:
 
 - `node/` - Node.js compatibility modules (`node:fs`, `node:path`, etc.)
-- `bun/` - Bun-specific modules (`bun:ffi`, `bun:sqlite`, etc.)
+- `fun/` - Fun-specific modules (`fun:ffi`, `fun:sqlite`, etc.)
 - `thirdparty/` - NPM modules we replace (like `ws`)
 - `internal/` - Internal modules not exposed to users
 - `builtins/` - Core JavaScript builtins (streams, console, etc.)
@@ -257,43 +259,43 @@ Built-in JavaScript modules use special syntax and are organized as:
 
 ## Important Development Notes
 
-1. **Never use `bun test` or `bun <file>` directly** - always use `bun bd test` or `bun bd <command>`. `bun bd` compiles & runs the debug build.
+1. **Never use `fun test` or `fun <file>` directly** - always use `fun bd test` or `fun bd <command>`. `fun bd` compiles & runs the debug build.
 2. **All changes must be tested** - if you're not testing your changes, you're not done.
 3. **Get your tests to pass**. If you didn't run the tests, your code does not work.
 4. **Follow existing code style** - check neighboring files for patterns
 5. **Create tests in the right folder** in `test/` and the test must end in `.test.ts` or `.test.tsx`
 6. **Use absolute paths** - Always use absolute paths in file operations
-7. **Avoid shell commands** - Don't use `find` or `grep` in tests; use Bun's Glob and built-in tools
+7. **Avoid shell commands** - Don't use `find` or `grep` in tests; use Fun's Glob and built-in tools
 8. **Memory management** - In Zig code, be careful with allocators and use defer for cleanup
-9. **Cross-platform** - Run `bun run zig:check-all` to compile the Zig code on all platforms when making platform-specific changes
-10. **Debug builds** - Use `BUN_DEBUG_QUIET_LOGS=1` to disable debug logging, or `BUN_DEBUG_<scopeName>=1` to enable specific `Output.scoped(.${scopeName}, .visible)`s
+9. **Cross-platform** - Run `fun run zig:check-all` to compile the Zig code on all platforms when making platform-specific changes
+10. **Debug builds** - Use `FUN_DEBUG_QUIET_LOGS=1` to disable debug logging, or `FUN_DEBUG_<scopeName>=1` to enable specific `Output.scoped(.${scopeName}, .visible)`s
 11. **Be humble & honest** - NEVER overstate what you got done or what actually works in commits, PRs or in messages to the user.
 12. **Branch names must start with `claude/`** - This is a requirement for the CI to work.
 
-**ONLY** push up changes after running `bun bd test <file>` and ensuring your tests pass.
+**ONLY** push up changes after running `fun bd test <file>` and ensuring your tests pass.
 
 ## Debugging CI Failures
 
-Requires the BuildKite CLI (`brew install buildkite/buildkite/bk`) and a read-scoped token in `BUILDKITE_API_TOKEN`. The repo's `.bk.yaml` sets the org/pipeline so `-p bun` is not needed.
+Requires the BuildKite CLI (`brew install buildkite/buildkite/bk`) and a read-scoped token in `BUILDKITE_API_TOKEN`. The repo's `.bk.yaml` sets the org/pipeline so `-p fun` is not needed.
 
 ```bash
 # Show rendered test-failure output for the current branch's latest build,
 # tagged [new] vs [also on main]
-bun run ci:errors
-bun run ci:errors '#26173'          # or a PR number / URL / branch / build number
+fun run ci:errors
+fun run ci:errors '#26173'          # or a PR number / URL / branch / build number
 
 # One-screen progress summary (job counts, failed jobs, failing tests so far)
-bun run ci:status
+fun run ci:status
 
 # Save full logs for every failed job to ./tmp/ci-<build>/
-bun run ci:logs
+fun run ci:logs
 
 # Just the build number, for composing with raw `bk`
-bun run ci:find
-bk job log <job-uuid> -b $(bun run ci:find)
+fun run ci:find
+bk job log <job-uuid> -b $(fun run ci:find)
 
 # Watch the current branch's build until it finishes
-bun run ci:watch
+fun run ci:watch
 ```
 
 For anything else, use `bk` directly — `bk build list`, `bk api`, `bk artifacts`, etc.
@@ -304,18 +306,18 @@ If output from these commands looks wrong — mis-parsed annotation HTML, confus
 
 `gh pr view --comments` is fine for a quick look at the Conversation tab, but it has a footgun worth knowing about: it only returns issue-stream comments and silently omits review summaries and line-level review comments. If a reviewer leaves an inline comment on a specific file line, it will not show up — no error, no hint that anything is missing.
 
-When you want the complete picture — especially when responding to a review or checking whether anyone requested changes — use `bun run pr:comments`. It fetches all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and prints them in one chronological listing, each labelled with its actual type (issue comment, review verdict, line comment, reply, suggestion block).
+When you want the complete picture — especially when responding to a review or checking whether anyone requested changes — use `fun run pr:comments`. It fetches all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and prints them in one chronological listing, each labelled with its actual type (issue comment, review verdict, line comment, reply, suggestion block).
 
 ```bash
-bun run pr:comments                    # current branch's PR — XML, resolved threads hidden
-bun run pr:comments 28838              # by PR number
-bun run pr:comments '#28838'           # also works
-bun run pr:comments https://github.com/oven-sh/bun/pull/28838
-bun run pr:comments --include-resolved # also show threads already marked resolved
+fun run pr:comments                    # current branch's PR — XML, resolved threads hidden
+fun run pr:comments 28838              # by PR number
+fun run pr:comments '#28838'           # also works
+fun run pr:comments https://github.com/underdoc-org/fun/pull/28838
+fun run pr:comments --include-resolved # also show threads already marked resolved
 
 # Machine-readable output for jq pipelines — one object per entry with
 # { when, user, tag, state?, suggestion?, location?, body, url?, resolved?, outdated? }.
-# Resolved threads and bot noise (robobun's CI status comment, CodeRabbit
+# Resolved threads and bot noise (robofun's CI status comment, CodeRabbit
 # body-level summaries) are filtered out; --include-resolved restores the former.
-bun run pr:comments --json | jq '.[] | select(.user == "Jarred-Sumner")'
+fun run pr:comments --json | jq '.[] | select(.user == "Jarred-Sumner")'
 ```

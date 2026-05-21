@@ -1,5 +1,5 @@
 /**
- * Compiler, linker, and define flags for the bun target.
+ * Compiler, linker, and define flags for the fun target.
  *
  * Design: ONE flat table per flag category. Each entry has a `when` predicate
  * and a `desc`. To find out why a flag is set, grep for it in this file.
@@ -8,11 +8,11 @@
  *
  * Note: dependency include paths (WebKit, boringssl, etc.) are NOT here —
  * they come from each dep's `Provides.includes`. This file covers only flags
- * that apply uniformly to bun's own C/C++ sources.
+ * that apply uniformly to fun's own C/C++ sources.
  */
 
 import { join } from "node:path";
-import { bunExeName, type Config } from "./config.ts";
+import { funExeName, type Config } from "./config.ts";
 import { slash } from "./shell.ts";
 
 export type FlagValue = string | string[] | ((cfg: Config) => string | string[]);
@@ -70,7 +70,7 @@ export const cpuTargetFlags: Flag[] = [
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GLOBAL COMPILER FLAGS
-//   Applied to BOTH bun's own sources AND forwarded to vendored deps
+//   Applied to BOTH fun's own sources AND forwarded to vendored deps
 //   via -DCMAKE_C_FLAGS / -DCMAKE_CXX_FLAGS.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -175,7 +175,7 @@ export const globalFlags: Flag[] = [
     // CMAKE_<LANG>_FLAGS_<TYPE> automatically; nested-cmake deps got it
     // from there. Direct deps only see globalFlags, so it must be here
     // too — otherwise every assert() in zstd/boringssl/mimalloc/etc.
-    // stays live in release. (bun's own NDEBUG in `defines` below is
+    // stays live in release. (fun's own NDEBUG in `defines` below is
     // redundant after this, but harmless.)
     flag: "-DNDEBUG",
     when: c => c.release,
@@ -242,7 +242,7 @@ export const globalFlags: Flag[] = [
   },
 
   // ─── ASAN (global — passed to deps so they link against the same runtime) ───
-  // Unlike UBSan (bun-target-only below), ASAN must be global: the runtime
+  // Unlike UBSan (fun-target-only below), ASAN must be global: the runtime
   // library has to match across all linked objects or you get crashes at init.
   {
     flag: "-fsanitize=address",
@@ -443,12 +443,12 @@ export const globalFlags: Flag[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BUN-ONLY COMPILER FLAGS
-//   Applied ONLY to bun's own .c/.cpp files, NOT forwarded to deps.
-//   This is where -Werror, sanitizer flags, and bun-specific tweaks live.
+// FUN-ONLY COMPILER FLAGS
+//   Applied ONLY to fun's own .c/.cpp files, NOT forwarded to deps.
+//   This is where -Werror, sanitizer flags, and fun-specific tweaks live.
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const bunOnlyFlags: Flag[] = [
+export const funOnlyFlags: Flag[] = [
   // ─── Build profiling ───
   {
     flag: "-ftime-trace",
@@ -496,9 +496,9 @@ export const bunOnlyFlags: Flag[] = [
     desc: "C17 standard (MSVC-mode flag for clang-cl; no GNU extensions in MSVC mode)",
   },
 
-  // ─── Sanitizers (bun only — deps would break with -Werror + UBSan) ───
+  // ─── Sanitizers (fun only — deps would break with -Werror + UBSan) ───
   // Note: -fsanitize=address is in globalFlags (deps need ABI consistency).
-  // UBSan is bun-only because it's stricter and vendored code often violates it.
+  // UBSan is fun-only because it's stricter and vendored code often violates it.
   // Enabled: debug builds (non-musl — musl's implementation hits false positives),
   // and release-asan builds (if you're debugging memory you want UBSan too).
   {
@@ -522,7 +522,7 @@ export const bunOnlyFlags: Flag[] = [
     desc: "Fuzzilli coverage instrumentation",
   },
 
-  // ─── Bun-target-specific ───
+  // ─── Fun-target-specific ───
   {
     flag: ["-fconstexpr-steps=2542484", "-fconstexpr-depth=54"],
     when: c => c.unix,
@@ -583,7 +583,7 @@ export const bunOnlyFlags: Flag[] = [
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREPROCESSOR DEFINES
-//   -D flags passed to every bun compilation unit.
+//   -D flags passed to every fun compilation unit.
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const defines: Flag[] = [
@@ -598,13 +598,13 @@ export const defines: Flag[] = [
       "STATICALLY_LINKED_WITH_BMALLOC=1",
       "BUILDING_WITH_CMAKE=1",
       "JSC_OBJC_API_ENABLED=0",
-      "BUN_SINGLE_THREADED_PER_VM_ENTRY_SCOPE=1",
+      "FUN_SINGLE_THREADED_PER_VM_ENTRY_SCOPE=1",
       "NAPI_EXPERIMENTAL=ON",
       "NOMINMAX",
       "IS_BUILD",
       "BUILDING_JSCONLY__",
     ],
-    desc: "Core bun defines (always on)",
+    desc: "Core fun defines (always on)",
   },
   {
     // Shell-escaped quotes so clang receives literal quotes in the define
@@ -618,7 +618,7 @@ export const defines: Flag[] = [
   },
   {
     // Hardcoded ON — experimental flag not exposed in config
-    flag: "USE_BUN_MIMALLOC=1",
+    flag: "USE_FUN_MIMALLOC=1",
     desc: "Use mimalloc as default allocator",
   },
 
@@ -629,13 +629,13 @@ export const defines: Flag[] = [
     desc: "Enable runtime assertions",
   },
   {
-    flag: "BUN_DEBUG=1",
+    flag: "FUN_DEBUG=1",
     when: c => c.debug,
     desc: "Enable debug-only code paths",
   },
   {
     // slash(): path becomes a C string literal — `\U` would be a unicode escape.
-    flag: c => `BUN_DYNAMIC_JS_LOAD_PATH=\\"${slash(join(c.buildDir, "js"))}\\"`,
+    flag: c => `FUN_DYNAMIC_JS_LOAD_PATH=\\"${slash(join(c.buildDir, "js"))}\\"`,
     when: c => c.debug && !c.ci,
     desc: "Hot-reload built-in JS from build dir (dev convenience)",
   },
@@ -684,7 +684,7 @@ export const defines: Flag[] = [
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LINKER FLAGS
-//   For the final bun executable link step only.
+//   For the final fun executable link step only.
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const linkerFlags: Flag[] = [
@@ -806,7 +806,7 @@ export const linkerFlags: Flag[] = [
     desc: "Suppress all linker warnings (workaround: no selective suppress for alignment warnings as of 2025-07)",
   },
   {
-    flag: c => ["-dead_strip", "-dead_strip_dylibs", `-Wl,-map,${c.buildDir}/${bunExeName(c)}.linker-map`],
+    flag: c => ["-dead_strip", "-dead_strip_dylibs", `-Wl,-map,${c.buildDir}/${funExeName(c)}.linker-map`],
     when: c => c.darwin && c.release,
     desc: "Dead-code strip + emit linker map",
   },
@@ -907,7 +907,7 @@ export const linkerFlags: Flag[] = [
     desc: "Garbage-collect unused sections (release only; debug keeps Zig dbHelper symbols)",
   },
   {
-    flag: c => ["-Wl,-icf=safe", `-Wl,-Map=${c.buildDir}/${bunExeName(c)}.linker-map`],
+    flag: c => ["-Wl,-icf=safe", `-Wl,-Map=${c.buildDir}/${funExeName(c)}.linker-map`],
     when: c => c.linux && c.release && !c.asan && !c.valgrind,
     desc: "Safe identical-code-folding + linker map (release only)",
   },
@@ -1004,7 +1004,7 @@ export function linkDepends(cfg: Config): string[] {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Strip step only runs for plain release builds (bun-profile → bun).
+ * Strip step only runs for plain release builds (fun-profile → fun).
  * Not for debug/asan/valgrind/assertions variants — those keep symbols.
  *
  * Always: --strip-all --strip-debug --discard-all.
@@ -1047,20 +1047,20 @@ export const stripFlags: Flag[] = [
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INCLUDE DIRECTORIES
-//   Bun's own source tree + build-time generated code.
+//   Fun's own source tree + build-time generated code.
 //   Dependency includes (WebKit, boringssl, ...) come from resolveDep().
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Bun's source-tree include paths. These are the -I dirs for bun's own code
+ * Fun's source-tree include paths. These are the -I dirs for fun's own code
  * (not vendored deps — those come from each dep's `Provides.includes`).
  */
-export function bunIncludes(cfg: Config): string[] {
+export function funIncludes(cfg: Config): string[] {
   const { cwd, codegenDir, vendorDir } = cfg;
   const includes: string[] = [
     join(cwd, "packages"),
-    join(cwd, "packages/bun-usockets"),
-    join(cwd, "packages/bun-usockets/src"),
+    join(cwd, "packages/fun-usockets"),
+    join(cwd, "packages/fun-usockets/src"),
     join(cwd, "src/jsc/bindings"),
     join(cwd, "src/jsc/bindings/webcore"),
     join(cwd, "src/jsc/bindings/webcrypto"),
@@ -1137,7 +1137,7 @@ export interface ComputedFlags {
   cxxflags: string[];
   /** Preprocessor defines, without -D prefix. */
   defines: string[];
-  /** Linker flags for the final bun link. */
+  /** Linker flags for the final fun link. */
   ldflags: string[];
   /** Strip flags for post-link. */
   stripflags: string[];
@@ -1170,8 +1170,8 @@ function evalTable(table: Flag[], cfg: Config, c: string[], cxx: string[]): void
 }
 
 /**
- * Evaluate all flag predicates for bun's own source files.
- * Combines global flags + bun-only flags.
+ * Evaluate all flag predicates for fun's own source files.
+ * Combines global flags + fun-only flags.
  */
 export function computeFlags(cfg: Config): ComputedFlags {
   const cflags: string[] = [];
@@ -1180,9 +1180,9 @@ export function computeFlags(cfg: Config): ComputedFlags {
   const ldflags: string[] = [];
   const stripflags: string[] = [];
 
-  // Compile: global first, then bun-only
+  // Compile: global first, then fun-only
   evalTable(globalFlags, cfg, cflags, cxxflags);
-  evalTable(bunOnlyFlags, cfg, cflags, cxxflags);
+  evalTable(funOnlyFlags, cfg, cflags, cxxflags);
 
   // Defines, linker, strip
   for (const f of defines) {
@@ -1203,7 +1203,7 @@ export function computeFlags(cfg: Config): ComputedFlags {
 
 /**
  * Flags forwarded to vendored dependencies via -DCMAKE_C_FLAGS/-DCMAKE_CXX_FLAGS.
- * This is ONLY the global table — no -Werror, no bun-specific defines, no UBSan.
+ * This is ONLY the global table — no -Werror, no fun-specific defines, no UBSan.
  */
 export function computeDepFlags(cfg: Config): { cflags: string[]; cxxflags: string[] } {
   const cflags: string[] = [];
@@ -1215,7 +1215,7 @@ export function computeDepFlags(cfg: Config): { cflags: string[]; cxxflags: stri
 /**
  * Just the -march/-mcpu/-mtune flags. For deps (WebKit) whose own build system
  * sets -O/-g/sanitizer flags but never sets a CPU target, so without this they
- * end up targeting generic x86-64 while the rest of bun targets haswell.
+ * end up targeting generic x86-64 while the rest of fun targets haswell.
  */
 export function computeCpuTargetFlags(cfg: Config): string[] {
   const out: string[] = [];
@@ -1259,8 +1259,8 @@ export function explainFlags(cfg: Config): string {
     }
   };
 
-  explainTable("Global compiler flags (bun + deps)", globalFlags);
-  explainTable("Bun-only compiler flags", bunOnlyFlags);
+  explainTable("Global compiler flags (fun + deps)", globalFlags);
+  explainTable("Fun-only compiler flags", funOnlyFlags);
   explainTable("Defines", defines);
   explainTable("Linker flags", linkerFlags);
   explainTable("Strip flags", stripFlags);

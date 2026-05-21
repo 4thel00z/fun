@@ -277,9 +277,9 @@ const datesObject = {
 
 // Stringify benchmarks
 group("stringify small object", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(smallObject);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(smallObject);
     });
   }
 
@@ -293,9 +293,9 @@ group("stringify small object", () => {
 });
 
 group("stringify medium object", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(mediumObject);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(mediumObject);
     });
   }
 
@@ -309,9 +309,9 @@ group("stringify medium object", () => {
 });
 
 group("stringify large object", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(largeObject);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(largeObject);
     });
   }
 
@@ -325,9 +325,9 @@ group("stringify large object", () => {
 });
 
 group("stringify object with anchors", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(objectWithAnchors);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(objectWithAnchors);
     });
   }
 
@@ -341,9 +341,9 @@ group("stringify object with anchors", () => {
 });
 
 group("stringify array", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(arrayObject);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(arrayObject);
     });
   }
 
@@ -357,9 +357,9 @@ group("stringify array", () => {
 });
 
 group("stringify object with multiline strings", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(multilineObject);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(multilineObject);
     });
   }
 
@@ -373,9 +373,9 @@ group("stringify object with multiline strings", () => {
 });
 
 group("stringify object with numbers", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(numbersObject);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(numbersObject);
     });
   }
 
@@ -389,9 +389,9 @@ group("stringify object with numbers", () => {
 });
 
 group("stringify object with dates", () => {
-  if (typeof Bun !== "undefined" && Bun.YAML) {
-    bench("Bun.YAML.stringify", () => {
-      return Bun.YAML.stringify(datesObject);
+  if (typeof Fun !== "undefined" && Fun.YAML) {
+    bench("Fun.YAML.stringify", () => {
+      return Fun.YAML.stringify(datesObject);
     });
   }
 

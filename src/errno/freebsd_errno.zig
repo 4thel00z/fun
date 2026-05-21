@@ -127,7 +127,7 @@ pub const UV_E = struct {
     pub const BADF: i32 = @intFromEnum(SystemErrno.EBADF);
     pub const BUSY: i32 = @intFromEnum(SystemErrno.EBUSY);
     pub const CANCELED: i32 = @intFromEnum(SystemErrno.ECANCELED);
-    pub const CHARSET: i32 = -bun.windows.libuv.UV_ECHARSET;
+    pub const CHARSET: i32 = -fun.windows.libuv.UV_ECHARSET;
     pub const CONNABORTED: i32 = @intFromEnum(SystemErrno.ECONNABORTED);
     pub const CONNREFUSED: i32 = @intFromEnum(SystemErrno.ECONNREFUSED);
     pub const CONNRESET: i32 = @intFromEnum(SystemErrno.ECONNRESET);
@@ -151,14 +151,14 @@ pub const UV_E = struct {
     pub const NODEV: i32 = @intFromEnum(SystemErrno.ENODEV);
     pub const NOENT: i32 = @intFromEnum(SystemErrno.ENOENT);
     pub const NOMEM: i32 = @intFromEnum(SystemErrno.ENOMEM);
-    pub const NONET: i32 = -bun.windows.libuv.UV_ENONET;
+    pub const NONET: i32 = -fun.windows.libuv.UV_ENONET;
     pub const NOSPC: i32 = @intFromEnum(SystemErrno.ENOSPC);
     pub const NOSYS: i32 = @intFromEnum(SystemErrno.ENOSYS);
     pub const NOTCONN: i32 = @intFromEnum(SystemErrno.ENOTCONN);
     pub const NOTDIR: i32 = @intFromEnum(SystemErrno.ENOTDIR);
     pub const NOTEMPTY: i32 = @intFromEnum(SystemErrno.ENOTEMPTY);
     pub const NOTSOCK: i32 = @intFromEnum(SystemErrno.ENOTSOCK);
-    pub const NOTSUP: i32 = -bun.windows.libuv.UV_ENOTSUP;
+    pub const NOTSUP: i32 = -fun.windows.libuv.UV_ENOTSUP;
     pub const PERM: i32 = @intFromEnum(SystemErrno.EPERM);
     pub const PIPE: i32 = @intFromEnum(SystemErrno.EPIPE);
     pub const PROTO: i32 = @intFromEnum(SystemErrno.EPROTO);
@@ -177,14 +177,14 @@ pub const UV_E = struct {
     pub const NXIO: i32 = @intFromEnum(SystemErrno.ENXIO);
     pub const MLINK: i32 = @intFromEnum(SystemErrno.EMLINK);
     pub const HOSTDOWN: i32 = @intFromEnum(SystemErrno.EHOSTDOWN);
-    pub const REMOTEIO: i32 = -bun.windows.libuv.UV_EREMOTEIO;
+    pub const REMOTEIO: i32 = -fun.windows.libuv.UV_EREMOTEIO;
     pub const NOTTY: i32 = @intFromEnum(SystemErrno.ENOTTY);
     pub const FTYPE: i32 = @intFromEnum(SystemErrno.EFTYPE);
     pub const ILSEQ: i32 = @intFromEnum(SystemErrno.EILSEQ);
     pub const OVERFLOW: i32 = @intFromEnum(SystemErrno.EOVERFLOW);
     pub const SOCKTNOSUPPORT: i32 = @intFromEnum(SystemErrno.ESOCKTNOSUPPORT);
-    pub const NODATA: i32 = -bun.windows.libuv.UV_ENODATA;
-    pub const UNATCH: i32 = -bun.windows.libuv.UV_EUNATCH;
+    pub const NODATA: i32 = -fun.windows.libuv.UV_ENODATA;
+    pub const UNATCH: i32 = -fun.windows.libuv.UV_EUNATCH;
     pub const NOEXEC: i32 = @intFromEnum(SystemErrno.ENOEXEC);
 };
 
@@ -206,5 +206,5 @@ pub fn getErrno(rc: anytype) E {
     return .SUCCESS;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

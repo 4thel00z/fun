@@ -11,7 +11,7 @@ This guide demonstrates how to use the `concurrentTestGlob` option to selectivel
 
 ```sh title="Project Structure" icon="folder-tree"
 my-project/
-├── bunfig.toml
+├── funfig.toml
 ├── tests/
 │   ├── unit/
 │   │   ├── math.test.ts          # Sequential
@@ -23,9 +23,9 @@ my-project/
 
 ## Configuration
 
-Configure your `bunfig.toml` to run test files with "concurrent-" prefix concurrently:
+Configure your `funfig.toml` to run test files with "concurrent-" prefix concurrently:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [test]
 # Run all test files with "concurrent-" prefix concurrently
 concurrentTestGlob = "**/concurrent-*.test.ts"
@@ -38,7 +38,7 @@ concurrentTestGlob = "**/concurrent-*.test.ts"
 Sequential tests are good for tests that share state or have specific ordering requirements:
 
 ```ts title="tests/unit/math.test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 // These tests run sequentially by default
 let sharedState = 0;
@@ -59,7 +59,7 @@ test("uses previous state", () => {
 Tests in files matching the glob pattern automatically run concurrently:
 
 ```ts title="tests/integration/concurrent-api.test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 // These tests automatically run concurrently due to filename matching the glob pattern.
 // Using test() is equivalent to test.concurrent() when the file matches concurrentTestGlob.
@@ -87,17 +87,17 @@ test.serial("fetch comments", async () => {
 
 ```bash terminal icon="terminal"
 # Run all tests - concurrent-*.test.ts files will run concurrently
-bun test
+fun test
 
 # Override: Force ALL tests to run concurrently
-# Note: This overrides bunfig.toml and runs all tests concurrently, regardless of glob
-bun test --concurrent
+# Note: This overrides funfig.toml and runs all tests concurrently, regardless of glob
+fun test --concurrent
 
 # Run only unit tests (sequential)
-bun test tests/unit
+fun test tests/unit
 
 # Run only integration tests (concurrent due to glob pattern)
-bun test tests/integration
+fun test tests/integration
 ```
 
 ## Benefits
@@ -114,7 +114,7 @@ To migrate existing tests to concurrent execution:
 
 1. **Start with independent integration tests** - These typically don't share state
 2. **Rename files to match the glob pattern**: `mv api.test.ts concurrent-api.test.ts`
-3. **Verify tests still pass** - Run `bun test` to ensure no race conditions
+3. **Verify tests still pass** - Run `fun test` to ensure no race conditions
 4. **Monitor for shared state issues** - Watch for flaky tests or unexpected failures
 5. **Continue migrating stable tests incrementally** - Don't rush the migration
 
@@ -130,7 +130,7 @@ To migrate existing tests to concurrent execution:
 
 You can specify multiple patterns for different test categories:
 
-```toml title="bunfig.toml" icon="settings"
+```toml title="funfig.toml" icon="settings"
 [test]
 concurrentTestGlob = [
   "**/integration/*.test.ts",

@@ -404,7 +404,7 @@ pub const Identifier = struct {
             else => return null,
         }
     }
-    pub const IMap = bun.ComptimeStringMap(Kind, .{
+    pub const IMap = fun.ComptimeStringMap(Kind, .{
         .{ "unique", .unique },
         .{ "abstract", .abstract },
         .{ "asserts", .asserts },
@@ -458,13 +458,13 @@ pub const SkipTypeOptions = enum {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const Ref = js_parser.Ref;
 const TypeScript = js_parser.TypeScript;
 

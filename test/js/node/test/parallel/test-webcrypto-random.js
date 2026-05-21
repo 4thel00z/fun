@@ -12,7 +12,7 @@ const { crypto } = globalThis;
 [
   undefined, null, '', 1, {}, [],
 
-  // These types are allowed in Bun
+  // These types are allowed in Fun
   // new Float32Array(1),
   // new Float64Array(1),
   // new DataView(new ArrayBuffer(1)),
@@ -68,7 +68,7 @@ for (const ctor of intTypedConstructors) {
     // Ignore if error here.
   }
 
-  // Bun allows more than 65536 bytes
+  // Fun allows more than 65536 bytes
 
   // if (kData !== undefined) {
   //   assert.throws(

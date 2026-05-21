@@ -1,21 +1,21 @@
 ---
 title: Redis
-description: Use Bun's native Redis client with a Promise-based API
+description: Use Fun's native Redis client with a Promise-based API
 ---
 
-<Note>Bun's Redis client supports Redis server versions 7.2 and up.</Note>
+<Note>Fun's Redis client supports Redis server versions 7.2 and up.</Note>
 
-Bun provides native bindings for working with Redis databases with a modern, Promise-based API. The interface is designed to be performant, with built-in connection management, fully typed responses, and TLS support.
+Fun provides native bindings for working with Redis databases with a modern, Promise-based API. The interface is designed to be performant, with built-in connection management, fully typed responses, and TLS support.
 
 ```ts redis.ts icon="/icons/typescript.svg"
-import { redis } from "bun";
+import { redis } from "fun";
 
 // Set a key
-await redis.set("greeting", "Hello from Bun!");
+await redis.set("greeting", "Hello from Fun!");
 
 // Get a key
 const greeting = await redis.get("greeting");
-console.log(greeting); // "Hello from Bun!"
+console.log(greeting); // "Hello from Fun!"
 
 // Increment a counter
 await redis.set("counter", 0);
@@ -35,7 +35,7 @@ await redis.del("greeting");
 To use the Redis client, you first need to create a connection:
 
 ```ts redis.ts icon="/icons/typescript.svg"
-import { redis, RedisClient } from "bun";
+import { redis, RedisClient } from "fun";
 
 // Using the default client (reads connection info from environment)
 // process.env.REDIS_URL is used by default
@@ -177,8 +177,8 @@ const poppedTag = await redis.spop("tags");
 
 ## Pub/Sub
 
-Bun provides native bindings for the [Redis
-Pub/Sub](https://redis.io/docs/latest/develop/pubsub/) protocol. **New in Bun
+Fun provides native bindings for the [Redis
+Pub/Sub](https://redis.io/docs/latest/develop/pubsub/) protocol. **New in Fun
 1.2.23**
 
 <Warning>
@@ -192,7 +192,7 @@ To get started publishing messages, you can set up a publisher in
 `publisher.ts`:
 
 ```typescript publisher.ts icon="/icons/typescript.svg"
-import { RedisClient } from "bun";
+import { RedisClient } from "fun";
 
 const writer = new RedisClient("redis://localhost:6739");
 await writer.connect();
@@ -205,7 +205,7 @@ writer.close();
 In another file, create the subscriber in `subscriber.ts`:
 
 ```typescript subscriber.ts icon="/icons/typescript.svg"
-import { RedisClient } from "bun";
+import { RedisClient } from "fun";
 
 const listener = new RedisClient("redis://localhost:6739");
 await listener.connect();
@@ -218,13 +218,13 @@ await listener.subscribe("general", (message, channel) => {
 In one shell, run your subscriber:
 
 ```bash terminal icon="terminal"
-bun run subscriber.ts
+fun run subscriber.ts
 ```
 
 and, in another, run your publisher:
 
 ```bash terminal icon="terminal"
-bun run publisher.ts
+fun run publisher.ts
 ```
 
 <Note>
@@ -234,7 +234,7 @@ other words, applications which need to message Redis need a separate
 connection, acquirable through `.duplicate()`:
 
 ```ts redis.ts icon="/icons/typescript.svg"
-import { RedisClient } from "bun";
+import { RedisClient } from "fun";
 
 const redis = new RedisClient("redis://localhost:6379");
 await redis.connect();
@@ -256,7 +256,7 @@ await client.publish(channelName, message);
 
 ### Subscriptions
 
-The Bun `RedisClient` allows you to subscribe to channels through the
+The Fun `RedisClient` allows you to subscribe to channels through the
 `.subscribe()` method:
 
 ```typescript redis.ts icon="/icons/typescript.svg"
@@ -567,7 +567,7 @@ async function getSession(sessionId) {
 
 ## Implementation Notes
 
-Bun's Redis client is implemented in Zig and uses the Redis Serialization Protocol (RESP3). It manages connections efficiently and provides automatic reconnection with exponential backoff.
+Fun's Redis client is implemented in Zig and uses the Redis Serialization Protocol (RESP3). It manages connections efficiently and provides automatic reconnection with exponential backoff.
 
 The client supports pipelining commands, meaning multiple commands can be sent without waiting for the replies to previous commands. This significantly improves performance when sending multiple commands in succession.
 

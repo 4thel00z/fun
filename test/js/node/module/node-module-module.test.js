@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, ospath } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, ospath } from "harness";
 import Module, { _nodeModulePaths, builtinModules, createRequire, isBuiltin, wrap } from "module";
 import path from "path";
 
@@ -34,7 +34,7 @@ describe.concurrent("node-module-module", () => {
   });
 
   test("createRequire trailing slash file url", () => {
-    const req = createRequire(Bun.pathToFileURL(import.meta.dir + "/"));
+    const req = createRequire(Fun.pathToFileURL(import.meta.dir + "/"));
     expect(req.resolve("./node-module-module.test.js")).toBe(
       ospath(path.resolve(import.meta.dir, "./node-module-module.test.js")),
     );
@@ -82,9 +82,9 @@ describe.concurrent("node-module-module", () => {
   });
 
   test("Overwriting _resolveFilename", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", path.join(import.meta.dir, "resolveFilenameOverwrite.cjs")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", path.join(import.meta.dir, "resolveFilenameOverwrite.cjs")],
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });
@@ -95,9 +95,9 @@ describe.concurrent("node-module-module", () => {
   });
 
   test("Overwriting Module.prototype.require", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", path.join(import.meta.dir, "modulePrototypeOverwrite.cjs")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", path.join(import.meta.dir, "modulePrototypeOverwrite.cjs")],
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });
@@ -185,14 +185,14 @@ describe.concurrent("node-module-module", () => {
   });
 
   test("Module.runMain", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "--require",
         path.join(import.meta.dir, "overwrite-module-run-main-1.cjs"),
         path.join(import.meta.dir, "overwrite-module-run-main-2.cjs"),
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });
@@ -202,14 +202,14 @@ describe.concurrent("node-module-module", () => {
     expect(await proc.exited).toBe(0);
   });
   test("Module.runMain 2", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "--require",
         path.join(import.meta.dir, "overwrite-module-run-main-3.cjs"),
         path.join(import.meta.dir, "overwrite-module-run-main-2.cjs"),
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });
@@ -219,9 +219,9 @@ describe.concurrent("node-module-module", () => {
     expect(await proc.exited).toBe(0);
   });
   test.each(["no args", "--access-early"])("children, %s", async arg => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), path.join(import.meta.dir, "children-fixture/a.cjs"), arg],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), path.join(import.meta.dir, "children-fixture/a.cjs"), arg],
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });

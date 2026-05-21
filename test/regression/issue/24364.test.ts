@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -15,11 +15,11 @@ test("react-tailwind template passes tsc --noEmit", async () => {
     "tsconfig.json": tsconfigJson,
   });
 
-  // Install typescript and bun types
-  await using install = Bun.spawn({
-    cmd: [bunExe(), "add", "-d", "typescript", "@types/bun", "@types/react", "bun-plugin-tailwind"],
+  // Install typescript and fun types
+  await using install = Fun.spawn({
+    cmd: [funExe(), "add", "-d", "typescript", "@types/fun", "@types/react", "fun-plugin-tailwind"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -27,11 +27,11 @@ test("react-tailwind template passes tsc --noEmit", async () => {
   const [, , installExitCode] = await Promise.all([install.stdout.text(), install.stderr.text(), install.exited]);
   expect(installExitCode).toBe(0);
 
-  // Run tsc --noEmit (use bunExe() x for cross-platform compatibility)
-  await using tsc = Bun.spawn({
-    cmd: [bunExe(), "x", "tsc", "--noEmit"],
+  // Run tsc --noEmit (use funExe() x for cross-platform compatibility)
+  await using tsc = Fun.spawn({
+    cmd: [funExe(), "x", "tsc", "--noEmit"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

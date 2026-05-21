@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("JSArrayIterator butterfly fast path", () => {
   test("basic string array", async () => {

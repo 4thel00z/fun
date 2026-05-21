@@ -1,32 +1,32 @@
 pub const InstallCompletionsCommand = struct {
     pub fn testPath(_: string) !std.fs.Dir {}
 
-    const bunx_name = if (Environment.isDebug) "bunx-debug" else "bunx";
+    const funx_name = if (Environment.isDebug) "funx-debug" else "funx";
 
     fn installBunxSymlinkPosix(cwd: []const u8) !void {
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
 
         // don't install it if it's already there
-        if (bun.which(&buf, bun.env_var.PATH.get() orelse cwd, cwd, bunx_name) != null)
+        if (fun.which(&buf, fun.env_var.PATH.get() orelse cwd, cwd, funx_name) != null)
             return;
 
-        // first try installing the symlink into the same directory as the bun executable
-        const exe = try bun.selfExePath();
-        var target_buf: bun.PathBuffer = undefined;
-        var target = std.fmt.bufPrint(&target_buf, "{s}/" ++ bunx_name, .{std.fs.path.dirname(exe).?}) catch unreachable;
+        // first try installing the symlink into the same directory as the fun executable
+        const exe = try fun.selfExePath();
+        var target_buf: fun.PathBuffer = undefined;
+        var target = std.fmt.bufPrint(&target_buf, "{s}/" ++ funx_name, .{std.fs.path.dirname(exe).?}) catch unreachable;
         std.posix.symlink(exe, target) catch {
             outer: {
-                if (bun.env_var.BUN_INSTALL.get()) |install_dir| {
-                    target = std.fmt.bufPrint(&target_buf, "{s}/bin/" ++ bunx_name, .{install_dir}) catch unreachable;
+                if (fun.env_var.FUN_INSTALL.get()) |install_dir| {
+                    target = std.fmt.bufPrint(&target_buf, "{s}/bin/" ++ funx_name, .{install_dir}) catch unreachable;
                     std.posix.symlink(exe, target) catch break :outer;
                     return;
                 }
             }
 
-            // if that fails, try $HOME/.bun/bin
+            // if that fails, try $HOME/.fun/bin
             outer: {
-                if (bun.env_var.HOME.get()) |home_dir| {
-                    target = std.fmt.bufPrint(&target_buf, "{s}/.bun/bin/" ++ bunx_name, .{home_dir}) catch unreachable;
+                if (fun.env_var.HOME.get()) |home_dir| {
+                    target = std.fmt.bufPrint(&target_buf, "{s}/.fun/bin/" ++ funx_name, .{home_dir}) catch unreachable;
                     std.posix.symlink(exe, target) catch break :outer;
                     return;
                 }
@@ -34,8 +34,8 @@ pub const InstallCompletionsCommand = struct {
 
             // if that fails, try $HOME/.local/bin
             outer: {
-                if (bun.env_var.HOME.get()) |home_dir| {
-                    target = std.fmt.bufPrint(&target_buf, "{s}/.local/bin/" ++ bunx_name, .{home_dir}) catch unreachable;
+                if (fun.env_var.HOME.get()) |home_dir| {
+                    target = std.fmt.bufPrint(&target_buf, "{s}/.local/bin/" ++ funx_name, .{home_dir}) catch unreachable;
                     std.posix.symlink(exe, target) catch break :outer;
                     return;
                 }
@@ -48,40 +48,40 @@ pub const InstallCompletionsCommand = struct {
 
     fn installBunxSymlinkWindows(_: []const u8) !void {
         // Because symlinks are not always allowed on windows,
-        // `bunx.exe` on windows is a hardlink to `bun.exe`
+        // `funx.exe` on windows is a hardlink to `fun.exe`
         // for this to work, we need to delete and recreate the hardlink every time
-        const image_path = bun.windows.exePathW();
+        const image_path = fun.windows.exePathW();
         const image_dirname = image_path[0 .. (std.mem.lastIndexOfScalar(u16, image_path, '\\') orelse unreachable) + 1];
 
-        var bunx_path_buf: bun.WPathBuffer = undefined;
+        var funx_path_buf: fun.WPathBuffer = undefined;
 
-        std.os.windows.DeleteFile(try bun.strings.concatBufT(u16, &bunx_path_buf, .{
-            &bun.windows.nt_object_prefix,
+        std.os.windows.DeleteFile(try fun.strings.concatBufT(u16, &funx_path_buf, .{
+            &fun.windows.nt_object_prefix,
             image_dirname,
-            comptime bun.strings.literal(u16, bunx_name ++ ".cmd"),
+            comptime fun.strings.literal(u16, funx_name ++ ".cmd"),
         }), .{ .dir = null }) catch {};
 
-        const bunx_path_with_z = try bun.strings.concatBufT(u16, &bunx_path_buf, .{
-            &bun.windows.nt_object_prefix,
+        const funx_path_with_z = try fun.strings.concatBufT(u16, &funx_path_buf, .{
+            &fun.windows.nt_object_prefix,
             image_dirname,
-            comptime bun.strings.literal(u16, bunx_name ++ ".exe\x00"),
+            comptime fun.strings.literal(u16, funx_name ++ ".exe\x00"),
         });
-        const bunx_path = bunx_path_with_z[0 .. bunx_path_with_z.len - 1 :0];
-        std.os.windows.DeleteFile(bunx_path, .{ .dir = null }) catch {};
+        const funx_path = funx_path_with_z[0 .. funx_path_with_z.len - 1 :0];
+        std.os.windows.DeleteFile(funx_path, .{ .dir = null }) catch {};
 
-        if (bun.windows.CreateHardLinkW(bunx_path, image_path, null) == 0) {
+        if (fun.windows.CreateHardLinkW(funx_path, image_path, null) == 0) {
             // if hard link fails, use a cmd script
-            const script = "@%~dp0bun.exe x %*\n";
+            const script = "@%~dp0fun.exe x %*\n";
 
-            const bunx_cmd_with_z = try bun.strings.concatBufT(u16, &bunx_path_buf, .{
-                &bun.windows.nt_object_prefix,
+            const funx_cmd_with_z = try fun.strings.concatBufT(u16, &funx_path_buf, .{
+                &fun.windows.nt_object_prefix,
                 image_dirname,
-                comptime bun.strings.literal(u16, bunx_name ++ ".exe\x00"),
+                comptime fun.strings.literal(u16, funx_name ++ ".exe\x00"),
             });
-            const bunx_cmd = bunx_cmd_with_z[0 .. bunx_cmd_with_z.len - 1 :0];
+            const funx_cmd = funx_cmd_with_z[0 .. funx_cmd_with_z.len - 1 :0];
             // TODO: fix this zig bug, it is one line change to a few functions.
-            // const file = try std.fs.createFileAbsoluteW(bunx_cmd, .{});
-            const file = try std.fs.cwd().createFileW(bunx_cmd, .{});
+            // const file = try std.fs.createFileAbsoluteW(funx_cmd, .{});
+            const file = try std.fs.cwd().createFileW(funx_cmd, .{});
             defer file.close();
             try file.writeAll(script);
         }
@@ -97,22 +97,22 @@ pub const InstallCompletionsCommand = struct {
 
     fn installUninstallerWindows() !void {
         // This uninstaller file is only written if the current exe is within a path
-        // like `bun\bin\<whatever>.exe` so that it probably only runs when the
+        // like `fun\bin\<whatever>.exe` so that it probably only runs when the
         // powershell `install.ps1` was used to install.
 
-        const image_path = bun.windows.exePathW();
+        const image_path = fun.windows.exePathW();
         const image_dirname = image_path[0..(std.mem.lastIndexOfScalar(u16, image_path, '\\') orelse unreachable)];
 
-        if (!std.mem.endsWith(u16, image_dirname, comptime bun.strings.literal(u16, "bun\\bin")))
+        if (!std.mem.endsWith(u16, image_dirname, comptime fun.strings.literal(u16, "fun\\bin")))
             return;
 
         const content = @embedFile("uninstall.ps1");
 
-        var bunx_path_buf: bun.WPathBuffer = undefined;
-        const uninstaller_path = try bun.strings.concatBufT(u16, &bunx_path_buf, .{
-            &bun.windows.nt_object_prefix,
+        var funx_path_buf: fun.WPathBuffer = undefined;
+        const uninstaller_path = try fun.strings.concatBufT(u16, &funx_path_buf, .{
+            &fun.windows.nt_object_prefix,
             image_dirname[0 .. image_dirname.len - 3],
-            comptime bun.strings.literal(u16, "uninstall.ps1"),
+            comptime fun.strings.literal(u16, "uninstall.ps1"),
         });
 
         const file = try std.fs.cwd().createFileW(uninstaller_path, .{});
@@ -123,18 +123,18 @@ pub const InstallCompletionsCommand = struct {
 
     pub fn exec(allocator: std.mem.Allocator) !void {
         // Fail silently on auto-update.
-        const fail_exit_code: u8 = if (!bun.env_var.IS_BUN_AUTO_UPDATE.get()) 1 else 0;
+        const fail_exit_code: u8 = if (!fun.env_var.IS_FUN_AUTO_UPDATE.get()) 1 else 0;
 
-        var cwd_buf: bun.PathBuffer = undefined;
+        var cwd_buf: fun.PathBuffer = undefined;
 
         var stdout = std.fs.File.stdout();
 
         var shell = ShellCompletions.Shell.unknown;
-        if (bun.env_var.SHELL.platformGet()) |shell_name| {
+        if (fun.env_var.SHELL.platformGet()) |shell_name| {
             shell = ShellCompletions.Shell.fromEnv(@TypeOf(shell_name), shell_name);
         }
 
-        const cwd = bun.getcwd(&cwd_buf) catch {
+        const cwd = fun.getcwd(&cwd_buf) catch {
             // don't fail on this if we don't actually need to
             if (fail_exit_code == 1) {
                 if (!stdout.isTty()) {
@@ -156,23 +156,23 @@ pub const InstallCompletionsCommand = struct {
             installUninstallerWindows() catch {};
         }
 
-        // TODO: https://github.com/oven-sh/bun/issues/8939
+        // TODO: https://github.com/underdoc-org/fun/issues/8939
         if (Environment.isWindows) {
-            Output.errGeneric("PowerShell completions are not yet written for Bun yet.", .{});
-            Output.printErrorln("See https://github.com/oven-sh/bun/issues/8939", .{});
+            Output.errGeneric("PowerShell completions are not yet written for Fun yet.", .{});
+            Output.printErrorln("See https://github.com/underdoc-org/fun/issues/8939", .{});
             return;
         }
 
         switch (shell) {
             .unknown => {
                 Output.errGeneric("Unknown or unsupported shell. Please set $SHELL to one of zsh, fish, or bash.", .{});
-                Output.note("To manually output completions, run 'bun getcompletes'", .{});
+                Output.note("To manually output completions, run 'fun getcompletes'", .{});
                 Global.exit(fail_exit_code);
             },
             else => {},
         }
 
-        if (!bun.env_var.IS_BUN_AUTO_UPDATE.get()) {
+        if (!fun.env_var.IS_FUN_AUTO_UPDATE.get()) {
             if (!stdout.isTty()) {
                 stdout.writeAll(shell.completions()) catch |err| switch (err) {
                     error.BrokenPipe => Global.exit(0),
@@ -184,10 +184,10 @@ pub const InstallCompletionsCommand = struct {
 
         var completions_dir: string = "";
         var output_dir: std.fs.Dir = found: {
-            for (bun.argv, 0..) |arg, i| {
+            for (fun.argv, 0..) |arg, i| {
                 if (strings.eqlComptime(arg, "completions")) {
-                    if (bun.argv.len > i + 1) {
-                        const input = bun.argv[i + 1];
+                    if (fun.argv.len > i + 1) {
+                        const input = fun.argv[i + 1];
 
                         if (!std.fs.path.isAbsolute(input)) {
                             completions_dir = resolve_path.joinAbs(
@@ -216,7 +216,7 @@ pub const InstallCompletionsCommand = struct {
 
             switch (shell) {
                 .fish => {
-                    if (bun.env_var.XDG_CONFIG_HOME.get()) |config_dir| {
+                    if (fun.env_var.XDG_CONFIG_HOME.get()) |config_dir| {
                         outer: {
                             var paths = [_]string{ config_dir, "./fish/completions" };
                             completions_dir = resolve_path.joinAbsString(cwd, &paths, .auto);
@@ -225,7 +225,7 @@ pub const InstallCompletionsCommand = struct {
                         }
                     }
 
-                    if (bun.env_var.XDG_DATA_HOME.get()) |data_dir| {
+                    if (fun.env_var.XDG_DATA_HOME.get()) |data_dir| {
                         outer: {
                             var paths = [_]string{ data_dir, "./fish/completions" };
                             completions_dir = resolve_path.joinAbsString(cwd, &paths, .auto);
@@ -235,7 +235,7 @@ pub const InstallCompletionsCommand = struct {
                         }
                     }
 
-                    if (bun.env_var.HOME.get()) |home_dir| {
+                    if (fun.env_var.HOME.get()) |home_dir| {
                         outer: {
                             var paths = [_]string{ home_dir, "./.config/fish/completions" };
                             completions_dir = resolve_path.joinAbsString(cwd, &paths, .auto);
@@ -266,7 +266,7 @@ pub const InstallCompletionsCommand = struct {
                     }
                 },
                 .zsh => {
-                    if (bun.env_var.fpath.get()) |fpath| {
+                    if (fun.env_var.fpath.get()) |fpath| {
                         var splitter = std.mem.splitScalar(u8, fpath, ' ');
 
                         while (splitter.next()) |dir| {
@@ -275,7 +275,7 @@ pub const InstallCompletionsCommand = struct {
                         }
                     }
 
-                    if (bun.env_var.XDG_DATA_HOME.get()) |data_dir| {
+                    if (fun.env_var.XDG_DATA_HOME.get()) |data_dir| {
                         outer: {
                             var paths = [_]string{ data_dir, "./zsh-completions" };
                             completions_dir = resolve_path.joinAbsString(cwd, &paths, .auto);
@@ -285,7 +285,7 @@ pub const InstallCompletionsCommand = struct {
                         }
                     }
 
-                    if (bun.env_var.BUN_INSTALL.get()) |home_dir| {
+                    if (fun.env_var.FUN_INSTALL.get()) |home_dir| {
                         outer: {
                             completions_dir = home_dir;
                             break :found std.fs.openDirAbsolute(home_dir, .{}) catch
@@ -293,7 +293,7 @@ pub const InstallCompletionsCommand = struct {
                         }
                     }
 
-                    if (bun.env_var.HOME.get()) |home_dir| {
+                    if (fun.env_var.HOME.get()) |home_dir| {
                         {
                             outer: {
                                 var paths = [_]string{ home_dir, "./.oh-my-zsh/completions" };
@@ -305,7 +305,7 @@ pub const InstallCompletionsCommand = struct {
 
                         {
                             outer: {
-                                var paths = [_]string{ home_dir, "./.bun" };
+                                var paths = [_]string{ home_dir, "./.fun" };
                                 completions_dir = resolve_path.joinAbsString(cwd, &paths, .auto);
                                 break :found std.fs.openDirAbsolute(completions_dir, .{}) catch
                                     break :outer;
@@ -326,7 +326,7 @@ pub const InstallCompletionsCommand = struct {
                     }
                 },
                 .bash => {
-                    if (bun.env_var.XDG_DATA_HOME.get()) |data_dir| {
+                    if (fun.env_var.XDG_DATA_HOME.get()) |data_dir| {
                         outer: {
                             var paths = [_]string{ data_dir, "./bash-completion/completions" };
                             completions_dir = resolve_path.joinAbsString(cwd, &paths, .auto);
@@ -335,7 +335,7 @@ pub const InstallCompletionsCommand = struct {
                         }
                     }
 
-                    if (bun.env_var.XDG_CONFIG_HOME.get()) |config_dir| {
+                    if (fun.env_var.XDG_CONFIG_HOME.get()) |config_dir| {
                         outer: {
                             var paths = [_]string{ config_dir, "./bash-completion/completions" };
                             completions_dir = resolve_path.joinAbsString(cwd, &paths, .auto);
@@ -345,7 +345,7 @@ pub const InstallCompletionsCommand = struct {
                         }
                     }
 
-                    if (bun.env_var.HOME.get()) |home_dir| {
+                    if (fun.env_var.HOME.get()) |home_dir| {
                         {
                             outer: {
                                 var paths = [_]string{ home_dir, "./.oh-my-bash/custom/completions" };
@@ -386,26 +386,26 @@ pub const InstallCompletionsCommand = struct {
 
             if (shell == .zsh) {
                 Output.prettyErrorln(
-                    "\nzsh tip: One of the directories in $fpath might work. If you use oh-my-zsh, try mkdir $HOME/.oh-my-zsh/completions; and bun completions again\n.",
+                    "\nzsh tip: One of the directories in $fpath might work. If you use oh-my-zsh, try mkdir $HOME/.oh-my-zsh/completions; and fun completions again\n.",
                     .{},
                 );
             }
 
             Output.printErrorln(
-                "Please either pipe it:\n   bun completions > /to/a/file\n\n Or pass a directory:\n\n   bun completions /my/completions/dir\n",
+                "Please either pipe it:\n   fun completions > /to/a/file\n\n Or pass a directory:\n\n   fun completions /my/completions/dir\n",
                 .{},
             );
             Global.exit(fail_exit_code);
         };
 
         const filename = switch (shell) {
-            .fish => "bun.fish",
-            .zsh => "_bun",
-            .bash => "bun.completion.bash",
+            .fish => "fun.fish",
+            .zsh => "_fun",
+            .bash => "fun.completion.bash",
             else => unreachable,
         };
 
-        bun.assert(completions_dir.len > 0);
+        fun.assert(completions_dir.len > 0);
 
         var output_file = output_dir.createFileZ(filename, .{
             .truncate = true,
@@ -430,9 +430,9 @@ pub const InstallCompletionsCommand = struct {
 
         // Check if they need to load the zsh completions file into their .zshrc
         if (shell == .zsh) {
-            var completions_absolute_path_buf: bun.PathBuffer = undefined;
-            const completions_path = bun.getFdPath(.fromStdFile(output_file), &completions_absolute_path_buf) catch unreachable;
-            var zshrc_filepath: bun.PathBuffer = undefined;
+            var completions_absolute_path_buf: fun.PathBuffer = undefined;
+            const completions_path = fun.getFdPath(.fromStdFile(output_file), &completions_absolute_path_buf) catch unreachable;
+            var zshrc_filepath: fun.PathBuffer = undefined;
             const needs_to_tell_them_to_add_completions_file = brk: {
                 var dot_zshrc: std.fs.File = zshrc: {
                     first: {
@@ -445,9 +445,9 @@ pub const InstallCompletionsCommand = struct {
                         // $ZDOTDIR/.zlogin
                         // $ZDOTDIR/.zlogout
 
-                        if (bun.env_var.ZDOTDIR.get()) |zdot_dir| {
-                            bun.copy(u8, &zshrc_filepath, zdot_dir);
-                            bun.copy(u8, zshrc_filepath[zdot_dir.len..], "/.zshrc");
+                        if (fun.env_var.ZDOTDIR.get()) |zdot_dir| {
+                            fun.copy(u8, &zshrc_filepath, zdot_dir);
+                            fun.copy(u8, zshrc_filepath[zdot_dir.len..], "/.zshrc");
                             zshrc_filepath[zdot_dir.len + "/.zshrc".len] = 0;
                             const filepath = zshrc_filepath[0 .. zdot_dir.len + "/.zshrc".len :0];
                             break :zshrc std.fs.openFileAbsoluteZ(filepath, .{ .mode = .read_write }) catch break :first;
@@ -455,9 +455,9 @@ pub const InstallCompletionsCommand = struct {
                     }
 
                     second: {
-                        if (bun.env_var.HOME.get()) |zdot_dir| {
-                            bun.copy(u8, &zshrc_filepath, zdot_dir);
-                            bun.copy(u8, zshrc_filepath[zdot_dir.len..], "/.zshrc");
+                        if (fun.env_var.HOME.get()) |zdot_dir| {
+                            fun.copy(u8, &zshrc_filepath, zdot_dir);
+                            fun.copy(u8, zshrc_filepath[zdot_dir.len..], "/.zshrc");
                             zshrc_filepath[zdot_dir.len + "/.zshrc".len] = 0;
                             const filepath = zshrc_filepath[0 .. zdot_dir.len + "/.zshrc".len :0];
                             break :zshrc std.fs.openFileAbsoluteZ(filepath, .{ .mode = .read_write }) catch break :second;
@@ -465,9 +465,9 @@ pub const InstallCompletionsCommand = struct {
                     }
 
                     third: {
-                        if (bun.env_var.HOME.get()) |zdot_dir| {
-                            bun.copy(u8, &zshrc_filepath, zdot_dir);
-                            bun.copy(u8, zshrc_filepath[zdot_dir.len..], "/.zshenv");
+                        if (fun.env_var.HOME.get()) |zdot_dir| {
+                            fun.copy(u8, &zshrc_filepath, zdot_dir);
+                            fun.copy(u8, zshrc_filepath[zdot_dir.len..], "/.zshenv");
                             zshrc_filepath[zdot_dir.len + "/.zshenv".len] = 0;
                             const filepath = zshrc_filepath[0 .. zdot_dir.len + "/.zshenv".len :0];
                             break :zshrc std.fs.openFileAbsoluteZ(filepath, .{ .mode = .read_write }) catch break :third;
@@ -500,7 +500,7 @@ pub const InstallCompletionsCommand = struct {
                 const contents = buf[0..read];
 
                 // Do they possibly have it in the file already?
-                if (strings.contains(contents, completions_path) or strings.contains(contents, "# bun completions\n")) {
+                if (strings.contains(contents, completions_path) or strings.contains(contents, "# fun completions\n")) {
                     break :brk false;
                 }
 
@@ -508,14 +508,14 @@ pub const InstallCompletionsCommand = struct {
 
                 // We need to add it to the end of the file
                 const remaining = buf[read..];
-                const extra = std.fmt.bufPrint(remaining, "\n# bun completions\n[ -s \"{s}\" ] && source \"{s}\"\n", .{
+                const extra = std.fmt.bufPrint(remaining, "\n# fun completions\n[ -s \"{s}\" ] && source \"{s}\"\n", .{
                     completions_path,
                     completions_path,
                 }) catch unreachable;
 
                 dot_zshrc.pwriteAll(extra, read) catch break :brk true;
 
-                Output.prettyErrorln("<r><d>Enabled loading bun's completions in .zshrc<r>", .{});
+                Output.prettyErrorln("<r><d>Enabled loading fun's completions in .zshrc<r>", .{});
                 break :brk false;
             };
 
@@ -543,8 +543,8 @@ const resolve_path = @import("../paths/resolve_path.zig");
 const std = @import("std");
 const which = @import("../which/which.zig").which;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const strings = fun.strings;

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("HTMLRewriter DOCTYPE handler", () => {
   test("remove and removed property work on DOCTYPE", () => {

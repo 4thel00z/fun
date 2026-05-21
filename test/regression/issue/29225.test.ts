@@ -1,7 +1,7 @@
-// https://github.com/oven-sh/bun/issues/29225
+// https://github.com/underdoc-org/fun/issues/29225
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { ReadableStreamBYOBReader } from "node:stream/web";
 
 const streamWebClasses = [
@@ -34,14 +34,14 @@ test.concurrent("node:stream/web classes inspect as [class X], not [class Functi
         console.log(name + ": MISSING");
         continue;
       }
-      // Bun.inspect() uses the same formatter as console.log.
-      console.log(name + ": " + Bun.inspect(klass));
+      // Fun.inspect() uses the same formatter as console.log.
+      console.log(name + ": " + Fun.inspect(klass));
     }
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", source],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", source],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -66,16 +66,16 @@ test.concurrent("other DOM / WebCore constructors inspect as [class X]", async (
   // InternalFunction exposed as a global. Keep this list small — it's
   // a regression guard, not an audit.
   const code = `
-    console.log("URL: " + Bun.inspect(URL));
-    console.log("Request: " + Bun.inspect(Request));
-    console.log("Response: " + Bun.inspect(Response));
-    console.log("Blob: " + Bun.inspect(Blob));
-    console.log("Event: " + Bun.inspect(Event));
+    console.log("URL: " + Fun.inspect(URL));
+    console.log("Request: " + Fun.inspect(Request));
+    console.log("Response: " + Fun.inspect(Response));
+    console.log("Blob: " + Fun.inspect(Blob));
+    console.log("Event: " + Fun.inspect(Event));
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", code],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", code],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -98,14 +98,14 @@ test.concurrent("user-defined classes and extends still render correctly", async
     class Bar extends Foo {}
     const Anon = class {};
 
-    console.log("Foo: " + Bun.inspect(Foo));
-    console.log("Bar: " + Bun.inspect(Bar));
-    console.log("Anon: " + Bun.inspect(Anon));
+    console.log("Foo: " + Fun.inspect(Foo));
+    console.log("Bar: " + Fun.inspect(Bar));
+    console.log("Anon: " + Fun.inspect(Anon));
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", code],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", code],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

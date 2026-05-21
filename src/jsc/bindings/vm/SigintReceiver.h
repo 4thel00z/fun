@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Bun {
+namespace Fun {
 
 class SigintReceiver {
 public:
@@ -20,4 +20,4 @@ protected:
     bool m_sigintReceived = false;
 };
 
-} // namespace Bun
+} // namespace Fun

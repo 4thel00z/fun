@@ -4,7 +4,7 @@
 #include "JSHTTPParserConstructor.h"
 #include <JavaScriptCore/FunctionPrototype.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -49,4 +49,4 @@ void setupHTTPParserClassStructure(LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

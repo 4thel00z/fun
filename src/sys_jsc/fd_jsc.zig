@@ -1,4 +1,4 @@
-//! JSC bridge for `bun.FD`. Keeps `src/sys/` free of JSC types.
+//! JSC bridge for `fun.FD`. Keeps `src/sys/` free of JSC types.
 
 /// fd "fails" if not given an int32, returning null in that case
 pub fn fromJS(value: JSValue) ?FD {
@@ -18,7 +18,7 @@ pub fn fromJS(value: JSValue) ?FD {
 
 // If a non-number is given, returns null.
 // If the given number is not an fd (negative), an error is thrown and error.JSException is returned.
-pub fn fromJSValidated(value: JSValue, global: *jsc.JSGlobalObject) bun.JSError!?FD {
+pub fn fromJSValidated(value: JSValue, global: *jsc.JSGlobalObject) fun.JSError!?FD {
     if (!value.isNumber())
         return null;
     const float = value.asNumber();
@@ -44,8 +44,8 @@ pub fn toJS(any_fd: FD, global: *jsc.JSGlobalObject) JSValue {
     const uv_owned_fd = any_fd.makeLibUVOwned() catch {
         any_fd.close();
         const err_instance = (jsc.SystemError{
-            .message = bun.String.static("EMFILE, too many open files"),
-            .code = bun.String.static("EMFILE"),
+            .message = fun.String.static("EMFILE, too many open files"),
+            .code = fun.String.static("EMFILE"),
         }).toErrorInstance(global);
         return global.vm().throwError(global, err_instance) catch .zero;
     };
@@ -72,9 +72,9 @@ pub fn toJSWithoutMakingLibUVOwned(any_fd: FD) JSValue {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

@@ -1,7 +1,7 @@
-import { Server, file } from "bun";
+import { Server, file } from "fun";
 import { dirname, join } from "node:path";
 
-const __dirname = dirname(Bun.fileURLToPath(import.meta.url));
+const __dirname = dirname(Fun.fileURLToPath(import.meta.url));
 
 export class SimpleRegistry {
   private debugLogs: boolean;
@@ -29,7 +29,7 @@ export class SimpleRegistry {
   async start(): Promise<number> {
     const self = this;
 
-    this.server = Bun.serve({
+    this.server = Fun.serve({
       port: 0,
       async fetch(req) {
         const url = new URL(req.url);

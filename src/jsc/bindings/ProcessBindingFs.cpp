@@ -3,12 +3,12 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 static WTF::String makeNotImplementedError(const ASCIILiteral name)
 {
-    return makeString("process.binding('fs')."_s, name, " is not implemented in Bun. If that breaks something, please file an issue and include a reproducible code sample."_s);
+    return makeString("process.binding('fs')."_s, name, " is not implemented in Fun. If that breaks something, please file an issue and include a reproducible code sample."_s);
 }
 
 #define PROCESS_BINDING_NOT_IMPLEMENTED(str)                                                                                   \
@@ -211,6 +211,6 @@ void ProcessBindingFs::finishCreation(JSC::VM& vm)
     ASSERT(inherits(info()));
 }
 
-} // namespace Bun
+} // namespace Fun
 
 #undef PROCESS_BINDING_NOT_IMPLEMENTED

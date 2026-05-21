@@ -5,8 +5,8 @@
 #include "helpers.h"
 #include "ncrypto.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC::JSValue createNodeCryptoBinding(Zig::GlobalObject* globalObject);
 
-} // namespace Bun
+} // namespace Fun

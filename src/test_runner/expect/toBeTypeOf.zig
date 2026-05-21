@@ -1,4 +1,4 @@
-const JSTypeOfMap = bun.ComptimeStringMap([]const u8, .{
+const JSTypeOfMap = fun.ComptimeStringMap([]const u8, .{
     .{ "function", "function" },
     .{ "object", "object" },
     .{ "bigint", "bigint" },
@@ -9,7 +9,7 @@ const JSTypeOfMap = bun.ComptimeStringMap([]const u8, .{
     .{ "undefined", "undefined" },
 });
 
-pub fn toBeTypeOf(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) bun.JSError!JSValue {
+pub fn toBeTypeOf(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFrame) fun.JSError!JSValue {
     defer this.postMatch(globalThis);
 
     const thisValue = callFrame.this();
@@ -29,7 +29,7 @@ pub fn toBeTypeOf(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFr
         return globalThis.throwInvalidArguments("toBeTypeOf() requires a string argument", .{});
     }
 
-    const expected_type = try expected.toBunString(globalThis);
+    const expected_type = try expected.toFunString(globalThis);
     defer expected_type.deref();
     this.incrementExpectCallCounter();
 
@@ -81,13 +81,13 @@ pub fn toBeTypeOf(this: *Expect, globalThis: *JSGlobalObject, callFrame: *CallFr
     return this.throw(globalThis, signature, "\n\n" ++ "Expected type: <green>{f}<r>\n" ++ "Received type: <red>\"{s}\"<r>\nReceived value: <red>{f}<r>\n", .{ expected_str, whatIsTheType, received });
 }
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

@@ -1,10 +1,10 @@
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 it("using pino does not crash, particularly on windows", async () => {
-  const proc = Bun.spawnSync({
+  const proc = Fun.spawnSync({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       const pino = require("pino");
@@ -17,7 +17,7 @@ it("using pino does not crash, particularly on windows", async () => {
       logger.info("hi");
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdio: ["inherit", "pipe", "pipe"],
     cwd: import.meta.dir,
   });

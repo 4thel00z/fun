@@ -1,29 +1,29 @@
 // most of this file is copy pasted from other files in misctools
 const std = @import("std");
-const bun = @import("bun");
+const fun = @import("fun");
 const string = []const u8;
-const Output = bun.Output;
-const Global = bun.Global;
-const Environment = bun.Environment;
-const strings = bun.strings;
-const MutableString = bun.MutableString;
+const Output = fun.Output;
+const Global = fun.Global;
+const Environment = fun.Environment;
+const strings = fun.strings;
+const MutableString = fun.MutableString;
 const stringZ = [:0]const u8;
-const default_allocator = bun.default_allocator;
+const default_allocator = fun.default_allocator;
 const clap = @import("../src/deps/zig-clap/clap.zig");
 
 const URL = @import("../src/url.zig").URL;
-const Headers = bun.http.Headers;
+const Headers = fun.http.Headers;
 const Method = @import("../src/http/Method.zig").Method;
 const ColonListType = @import("../src/cli/colon_list_type.zig").ColonListType;
 const HeadersTuple = ColonListType(string, noop_resolver);
 const path_handler = @import("../src/resolver/resolve_path.zig");
-const NetworkThread = bun.http.NetworkThread;
-const HTTP = bun.http;
+const NetworkThread = fun.http.NetworkThread;
+const HTTP = fun.http;
 fn noop_resolver(in: string) !string {
     return in;
 }
 
-var waker: bun.Async.Waker = undefined;
+var waker: fun.Async.Waker = undefined;
 
 fn spamMe(count: usize) void {
     Output.Source.configureNamedThread("1");
@@ -39,9 +39,9 @@ fn spamMe(count: usize) void {
 const thread_count = 1;
 pub fn machMain(runs: usize) anyerror!void {
     defer Output.flush();
-    waker = try bun.Async.Waker.init(bun.default_allocator);
+    waker = try fun.Async.Waker.init(fun.default_allocator);
 
-    var args = try std.process.argsAlloc(bun.default_allocator);
+    var args = try std.process.argsAlloc(fun.default_allocator);
     const count = std.fmt.parseInt(usize, args[args.len - 1], 10) catch 1024;
     var elapsed: u64 = 0;
 
@@ -68,7 +68,7 @@ pub fn machMain(runs: usize) anyerror!void {
 
     Output.prettyErrorln("[EVFILT_MACHPORT] Recv {any}", .{std.fmt.fmtDuration(elapsed)});
 }
-var user_waker: bun.Async.UserFilterWaker = undefined;
+var user_waker: fun.Async.UserFilterWaker = undefined;
 
 fn spamMeUserFilter(count: usize) void {
     Output.Source.configureNamedThread("2");
@@ -83,9 +83,9 @@ fn spamMeUserFilter(count: usize) void {
 }
 pub fn userMain(runs: usize) anyerror!void {
     defer Output.flush();
-    user_waker = try bun.Async.UserFilterWaker.init(bun.default_allocator);
+    user_waker = try fun.Async.UserFilterWaker.init(fun.default_allocator);
 
-    var args = try std.process.argsAlloc(bun.default_allocator);
+    var args = try std.process.argsAlloc(fun.default_allocator);
     const count = std.fmt.parseInt(usize, args[args.len - 1], 10) catch 1024;
     var remaining_runs = runs;
     var elapsed: u64 = 0;
@@ -120,7 +120,7 @@ pub fn main() anyerror!void {
     var output_source = Output.Source.init(stdout_, stderr_);
     Output.Source.set(&output_source);
 
-    var args = try std.process.argsAlloc(bun.default_allocator);
+    var args = try std.process.argsAlloc(fun.default_allocator);
     const count = std.fmt.parseInt(usize, args[args.len - 1], 10) catch 1024;
     Output.prettyErrorln("For {d} messages and {d} threads:", .{ count, thread_count });
     Output.flush();

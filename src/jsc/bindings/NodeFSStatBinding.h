@@ -1,7 +1,7 @@
 
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
 void initJSStatsClassStructure(JSC::LazyClassStructure::Initializer& init);
 void initJSBigIntStatsClassStructure(JSC::LazyClassStructure::Initializer& init);

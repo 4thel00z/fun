@@ -161,16 +161,16 @@ export default [
       // Non-standard, but consistent!
       bytes: { fn: "getBytes", async: true },
 
-      // `new Bun.Image(this, opts)` — synchronous (the read happens lazily
+      // `new Fun.Image(this, opts)` — synchronous (the read happens lazily
       // when an Image terminal is awaited), so this is just a constructor
-      // call with the receiver as input. Covers BunFile/S3File.
+      // call with the receiver as input. Covers FunFile/S3File.
       image: { fn: "doImage", length: 0 },
 
       type: {
         getter: "getType",
       },
 
-      // TODO: Move this to a separate `File` object or BunFile
+      // TODO: Move this to a separate `File` object or FunFile
       // This is *not* spec-compliant.
       name: {
         this: true,
@@ -179,13 +179,13 @@ export default [
         setter: "setName",
       },
 
-      // TODO: Move this to a separate `File` object or BunFile
+      // TODO: Move this to a separate `File` object or FunFile
       // This is *not* spec-compliant.
       lastModified: {
         getter: "getLastModified",
       },
 
-      // Non-standard, s3 + BunFile support
+      // Non-standard, s3 + FunFile support
       unlink: { fn: "doUnlink", length: 0 },
       delete: { fn: "doUnlink", length: 0 },
       write: { fn: "doWrite", length: 2 },

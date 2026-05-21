@@ -22,7 +22,7 @@ function isFunction(value) {
   return typeof value === "function";
 }
 
-const deepEquals = Bun.deepEquals;
+const deepEquals = Fun.deepEquals;
 const isDeepStrictEqual = (a, b) => deepEquals(a, b, true);
 
 const parseArgs = $newZigFunction("parse_args.zig", "parseArgs", 1);

@@ -91,16 +91,16 @@ const chunks: string[] = [];
 chunks.push(`// Auto-generated file. Do not edit.
 // To regenerate this file, run:
 // 
-//   bun misctools/generate-add-completions.ts
+//   fun misctools/generate-add-completions.ts
 //
 // If you update add_completions.txt, then you should run this script again.
 //
 // This used to be a comptime block, but it made the build too slow.
 // Compressing the completions list saves about 100 KB of binary size.
 const std = @import("std");
-const bun = @import("bun");
-const zstd = bun.zstd;
-const Environment = bun.Environment;
+const fun = @import("fun");
+const zstd = fun.zstd;
+const Environment = fun.Environment;
 
 pub const FirstLetter = enum(u8) {
     a = 'a',

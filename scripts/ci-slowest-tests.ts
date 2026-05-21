@@ -1,16 +1,16 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 // Find the slowest test files in a CI build.
 //
-// Downloads every test-bun job log from a BuildKite build, parses per-file
+// Downloads every test-fun job log from a BuildKite build, parses per-file
 // wall-clock from the `_bk;t=<ms>` timestamps that prefix each
 // `--- [N/TOTAL] <file>` group header, aggregates as MAX across all
 // platforms, and prints the top N.
 //
 // Usage:
-//   bun scripts/ci-slowest-tests.ts                 # auto-pick a recent merged-PR build, top 500
-//   bun scripts/ci-slowest-tests.ts 47324           # specific build
-//   bun scripts/ci-slowest-tests.ts 47324 100       # top 100
-//   bun scripts/ci-slowest-tests.ts --json          # JSON output
+//   fun scripts/ci-slowest-tests.ts                 # auto-pick a recent merged-PR build, top 500
+//   fun scripts/ci-slowest-tests.ts 47324           # specific build
+//   fun scripts/ci-slowest-tests.ts 47324 100       # top 100
+//   fun scripts/ci-slowest-tests.ts --json          # JSON output
 //
 // Requires BUILDKITE_TOKEN (or BUILDKITE_API_TOKEN) and `bk` + `gh` CLIs.
 
@@ -55,7 +55,7 @@ if (!BUILD) {
   }
 }
 
-const CACHE = join(tmpdir(), `bun-ci-logs-${BUILD}`);
+const CACHE = join(tmpdir(), `fun-ci-logs-${BUILD}`);
 mkdirSync(CACHE, { recursive: true });
 
 type Job = { id: string; name: string; raw_log_url: string; retried?: boolean };
@@ -64,13 +64,13 @@ const buildJson = JSON.parse(
   await new Response(spawn({ cmd: ["bk", "build", "view", BUILD], stdout: "pipe" }).stdout).text(),
 );
 const jobs: Job[] = buildJson.jobs.filter(
-  (j: any) => j.name && j.raw_log_url && j.name.includes("test-bun") && !j.retried,
+  (j: any) => j.name && j.raw_log_url && j.name.includes("test-fun") && !j.retried,
 );
-console.error(`build #${BUILD}: ${jobs.length} test-bun jobs across ${new Set(jobs.map(j => j.name)).size} platforms`);
+console.error(`build #${BUILD}: ${jobs.length} test-fun jobs across ${new Set(jobs.map(j => j.name)).size} platforms`);
 
 const platOf = (name: string) =>
   name
-    .replace(/ - test-bun$/, "")
+    .replace(/ - test-fun$/, "")
     .replace(/^:([a-z]+):/, "$1")
     .trim();
 

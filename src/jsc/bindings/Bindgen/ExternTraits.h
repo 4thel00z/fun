@@ -13,7 +13,7 @@
 #include <StrongRef.h>
 #include "ExternUnion.h"
 
-namespace Bun::Bindgen {
+namespace Fun::Bindgen {
 
 template<typename T>
 struct ExternTraits;
@@ -122,10 +122,10 @@ template<> struct ExternTraits<JSC::JSValue> {
     }
 };
 
-template<> struct ExternTraits<Bun::StrongRef> {
+template<> struct ExternTraits<Fun::StrongRef> {
     using ExternType = JSC::JSValue*;
 
-    static ExternType convertToExtern(Bun::StrongRef&& cppValue)
+    static ExternType convertToExtern(Fun::StrongRef&& cppValue)
     {
         return cppValue.release();
     }

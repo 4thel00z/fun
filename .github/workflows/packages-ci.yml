@@ -23,33 +23,33 @@ on:
       - "!**/*.md"
 
 env:
-  BUN_VERSION: "canary"
+  FUN_VERSION: "canary"
 
 jobs:
-  bun-plugin-svelte:
+  fun-plugin-svelte:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          fun-version: ${{ env.FUN_VERSION }}
 
       - name: Install dependencies
         run: |
-          bun install
-          pushd ./packages/bun-plugin-svelte && bun install
+          fun install
+          pushd ./packages/fun-plugin-svelte && fun install
 
       - name: Lint
         run: |
-          bunx oxlint@0.15 --format github --deny-warnings
-          bunx prettier --config ../../.prettierrc --check .
-        working-directory: ./packages/bun-plugin-svelte
+          funx oxlint@0.15 --format github --deny-warnings
+          funx prettier --config ../../.prettierrc --check .
+        working-directory: ./packages/fun-plugin-svelte
 
       - name: Check types
-        run: bun check:types
-        working-directory: ./packages/bun-plugin-svelte
+        run: fun check:types
+        working-directory: ./packages/fun-plugin-svelte
 
       - name: Test
-        run: bun test
-        working-directory: ./packages/bun-plugin-svelte
+        run: fun test
+        working-directory: ./packages/fun-plugin-svelte

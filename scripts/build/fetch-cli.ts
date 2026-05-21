@@ -1,7 +1,7 @@
 /**
  * Fetch CLI — the single entry point ninja invokes for all downloads.
  *
- * Ninja rules reference this file via `cfg.bun <this-file> <kind> <args...>`.
+ * Ninja rules reference this file via `cfg.fun <this-file> <kind> <args...>`.
  * This is BUILD-time code (runs under ninja), not CONFIGURE-time. The
  * configure-time modules (source.ts, zig.ts) emit ninja rules that call
  * into here but don't execute any of it themselves.
@@ -14,7 +14,7 @@
  *
  * ## Args format
  *
- *   argv: [bun, fetch-cli.ts, <kind>, ...kind-specific-positional-args]
+ *   argv: [fun, fetch-cli.ts, <kind>, ...kind-specific-positional-args]
  *
  * Positional, not flags — these commands are only invoked by ninja with
  * args we control, never by humans. Named flags would be YAGNI.
@@ -35,7 +35,7 @@ import { fetchZig } from "./zig.ts";
  *
  * This is a stable way for library modules to build the ninja command
  * without knowing where fetch-cli.ts lives — import this constant and
- * use it in `command: "${cfg.bun} ${fetchCliPath} <kind> ..."`.
+ * use it in `command: "${cfg.fun} ${fetchCliPath} <kind> ..."`.
  */
 export const fetchCliPath: string = import.meta.filename;
 
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
 }
 
 const USAGE = `\
-Usage: bun fetch-cli.ts <kind> <args...>
+Usage: fun fetch-cli.ts <kind> <args...>
 
 Kinds:
   dep      <name> <repo> <commit> <dest> <cache> [...patches]
@@ -283,7 +283,7 @@ function applyPatch(dest: string, patchPath: string, patchBody: string): void {
 // import anyway.
 if (process.argv[1] === import.meta.filename) {
   main().catch(err => {
-    // Format BuildError nicely; rethrow anything else to bun's default
+    // Format BuildError nicely; rethrow anything else to fun's default
     // uncaught handler (gets a stack trace, which is what you want for bugs).
     if (err instanceof BuildError) {
       process.stderr.write(err.format());

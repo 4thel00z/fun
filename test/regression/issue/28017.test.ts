@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { statSync, utimesSync } from "fs";
 import { stat } from "fs/promises";
 import { tempDir } from "harness";

@@ -1,6 +1,6 @@
 "use strict";
 
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "fun:test";
 import jwt from "jsonwebtoken";
 import sinon from "sinon";
 import util from "util";

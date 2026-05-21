@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
 // Self-signed cert with ONLY DNS:localhost in SANs (no IP SANs).
@@ -19,7 +19,7 @@ const localhostOnlyTls = {
 // lacking system CA certificates (Windows, Alpine).
 describe("custom lookup with HTTPS", () => {
   test("https.request with custom lookup should not break TLS", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       tls: localhostOnlyTls,
       port: 0,
       fetch() {
@@ -27,9 +27,9 @@ describe("custom lookup with HTTPS", () => {
       },
     });
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
 const https = require("https");
@@ -63,7 +63,7 @@ req.on("error", (e) => {
 req.end();
 `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });
@@ -78,7 +78,7 @@ req.end();
   }, 30_000);
 
   test("https.request without custom lookup should still work", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       tls: localhostOnlyTls,
       port: 0,
       fetch() {
@@ -86,9 +86,9 @@ req.end();
       },
     });
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
 const https = require("https");
@@ -109,7 +109,7 @@ req.on("error", (e) => {
 req.end();
 `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });
@@ -130,7 +130,7 @@ req.end();
     // for SNI and certificate SAN matching.
     // The cert only has DNS:localhost (no IP SANs), so if SNI is broken
     // and the IP is used for cert verification, it WILL fail.
-    using server = Bun.serve({
+    using server = Fun.serve({
       tls: localhostOnlyTls,
       port: 0,
       fetch() {
@@ -138,9 +138,9 @@ req.end();
       },
     });
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
 const https = require("https");
@@ -181,7 +181,7 @@ req.on("error", (e) => {
 req.end();
 `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });

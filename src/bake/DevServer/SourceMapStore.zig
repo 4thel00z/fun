@@ -1,4 +1,4 @@
-//! Storage for source maps on `/_bun/client/{id}.js.map`
+//! Storage for source maps on `/_fun/client/{id}.js.map`
 //!
 //! All source maps are referenced counted, so that when a websocket disconnects
 //! or a bundle is replaced, the unreachable source map URLs are revoked. Source
@@ -8,7 +8,7 @@
 const Self = @This();
 
 /// See `SourceId` for what the content of u64 is.
-pub const Key = bun.GenericIndex(u64, .{ "Key of", Self });
+pub const Key = fun.GenericIndex(u64, .{ "Key of", Self });
 
 entries: AutoArrayHashMapUnmanaged(Key, Entry),
 /// When a HTML bundle is loaded, it places a "weak reference" to the
@@ -16,7 +16,7 @@ entries: AutoArrayHashMapUnmanaged(Key, Entry),
 /// - The script loads and moves the ref into "strongly held" by the HmrSocket
 /// - The expiry time passes
 /// - Too many different weak references exist
-weak_refs: bun.LinearFifo(WeakRef, .{ .Static = weak_ref_entry_max }),
+weak_refs: fun.LinearFifo(WeakRef, .{ .Static = weak_ref_entry_max }),
 /// Shared
 weak_ref_sweep_timer: EventLoopTimer,
 
@@ -63,13 +63,13 @@ pub const Entry = struct {
     /// Outer slice is owned, inner slice is shared with IncrementalGraph.
     paths: []const []const u8,
     /// Indexes are off by one because this excludes the HMR Runtime.
-    files: bun.MultiArrayList(PackedMap.Shared),
+    files: fun.MultiArrayList(PackedMap.Shared),
     /// The memory cost can be shared between many entries and IncrementalGraph
     /// So this is only used for eviction logic, to pretend this was the only
     /// entry. To compute the memory cost of DevServer, this cannot be used.
     overlapping_memory_cost: u32,
 
-    pub fn sourceContents(entry: Entry) []const bun.StringPointer {
+    pub fn sourceContents(entry: Entry) []const fun.StringPointer {
         return entry.source_contents[0..entry.file_paths.len];
     }
 
@@ -87,20 +87,20 @@ pub const Entry = struct {
         var j: StringJoiner = .{ .allocator = arena };
 
         j.pushStatic(
-            \\{"version":3,"sources":["bun://Bun/Bun HMR Runtime"
+            \\{"version":3,"sources":["fun://Fun/Fun HMR Runtime"
         );
 
         // This buffer is temporary, holding the quoted source paths, joined with commas.
         var source_map_strings = std.array_list.Managed(u8).init(arena);
         defer source_map_strings.deinit();
 
-        const buf = bun.path_buffer_pool.get();
-        defer bun.path_buffer_pool.put(buf);
+        const buf = fun.path_buffer_pool.get();
+        defer fun.path_buffer_pool.put(buf);
 
         for (paths) |native_file_path| {
             try source_map_strings.appendSlice(",");
             const path = if (Environment.isWindows)
-                bun.path.pathToPosixBuf(u8, native_file_path, buf)
+                fun.path.pathToPosixBuf(u8, native_file_path, buf)
             else
                 native_file_path;
 
@@ -143,8 +143,8 @@ pub const Entry = struct {
                 }
                 try source_map_strings.appendSlice("\"");
             } else {
-                try source_map_strings.appendSlice("\"bun://");
-                bun.strings.percentEncodeWrite(path, &source_map_strings) catch |err| switch (err) {
+                try source_map_strings.appendSlice("\"fun://");
+                fun.strings.percentEncodeWrite(path, &source_map_strings) catch |err| switch (err) {
                     error.IncompleteUTF8 => @panic("Unexpected: asset with incomplete UTF-8 as file path"),
                     error.OutOfMemory => |e| return e,
                 };
@@ -153,7 +153,7 @@ pub const Entry = struct {
         }
         j.pushStatic(source_map_strings.items);
         j.pushStatic(
-            \\],"sourcesContent":["// (Bun's internal HMR runtime is minified)"
+            \\],"sourcesContent":["// (Fun's internal HMR runtime is minified)"
         );
         for (0..map_files.len) |i| {
             const chunk = map_files.get(i);
@@ -166,8 +166,8 @@ pub const Entry = struct {
             j.pushStatic(",");
             const quoted_slice = source_map.quotedContents();
             if (quoted_slice.len == 0) {
-                bun.debugAssert(false); // vlq without source contents!
-                j.pushStatic(",\"// Did not have source contents for this file.\n// This is a bug in Bun's bundler and should be reported with a reproduction.\"");
+                fun.debugAssert(false); // vlq without source contents!
+                j.pushStatic(",\"// Did not have source contents for this file.\n// This is a bug in Fun's bundler and should be reported with a reproduction.\"");
                 continue;
             }
             // Store the location of the source file. Since it is going
@@ -176,8 +176,8 @@ pub const Entry = struct {
             // reading from disk, as well as ensuring that remaps to
             // this exact sourcemap can print the previous state of
             // the code when it was modified.
-            bun.assert(quoted_slice[0] == '"');
-            bun.assert(quoted_slice[quoted_slice.len - 1] == '"');
+            fun.assert(quoted_slice[0] == '"');
+            fun.assert(quoted_slice[quoted_slice.len - 1] == '"');
             j.pushStatic(quoted_slice);
         }
         // This first mapping makes the bytes from line 0 column 0 to the next mapping
@@ -189,10 +189,10 @@ pub const Entry = struct {
         const json_bytes = try j.doneWithEnd(gpa, "\"}");
         errdefer @compileError("last try should be the final alloc");
 
-        if (bun.FeatureFlags.bake_debugging_features) if (dev.dump_dir) |dump_dir| {
+        if (fun.FeatureFlags.bake_debugging_features) if (dev.dump_dir) |dump_dir| {
             const rel_path_escaped = if (side == .client) "latest_chunk.js.map" else "latest_hmr.js.map";
             dumpBundle(dump_dir, if (side == .client) .client else .server, rel_path_escaped, json_bytes, false) catch |err| {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
                 Output.warn("Could not dump bundle: {}", .{err});
             };
         };
@@ -207,11 +207,11 @@ pub const Entry = struct {
     ) error{ OutOfMemory, IncompleteUTF8 }!void {
         // On the client, percent encode everything so it works in the browser
         if (side == .client) {
-            return bun.strings.percentEncodeWrite(utf8_input, array_list);
+            return fun.strings.percentEncodeWrite(utf8_input, array_list);
         }
 
         const writer = array_list.writer();
-        try bun.js_printer.writePreQuotedString(utf8_input, @TypeOf(writer), writer, '"', false, true, .utf8);
+        try fun.js_printer.writePreQuotedString(utf8_input, @TypeOf(writer), writer, '"', false, true, .utf8);
     }
 
     fn joinVLQ(map: *const Entry, kind: ChunkKind, j: *StringJoiner, arena: Allocator, side: bake.Side) !void {
@@ -219,8 +219,8 @@ pub const Entry = struct {
         const map_files = map.files.slice();
 
         const runtime: bake.HmrRuntime = switch (kind) {
-            .initial_response => bun.bake.getHmrRuntime(.client),
-            .hmr_chunk => comptime .init("self[Symbol.for(\"bun:hmr\")]({\n"),
+            .initial_response => fun.bake.getHmrRuntime(.client),
+            .hmr_chunk => comptime .init("self[Symbol.for(\"fun:hmr\")]({\n"),
         };
 
         var prev_end_state: SourceMap.SourceMapState = .{
@@ -275,7 +275,7 @@ pub const Entry = struct {
                 // have been freed already. For example, a HMR chunk is never persisted.
                 // We could return an error here but what would be a better behavior for renderJSON and renderMappings?
                 // This is a dev server, crashing is not a good DX, we could fail the request but that's not a good DX either.
-                if (bun.Environment.enable_logs) {
+                if (fun.Environment.enable_logs) {
                     mapLog("Skipping source map entry with missing line count at index {d}", .{i});
                 }
             },
@@ -355,7 +355,7 @@ const PutOrIncrementRefCount = union(enum) {
 pub fn putOrIncrementRefCount(store: *Self, script_id: Key, ref_count: u32) !PutOrIncrementRefCount {
     const gop = try store.entries.getOrPut(store.allocator(), script_id);
     if (!gop.found_existing) {
-        bun.debugAssert(ref_count > 0); // invalid state
+        fun.debugAssert(ref_count > 0); // invalid state
         gop.value_ptr.* = .{
             .dev_allocator = store.dev_allocator(),
             .ref_count = ref_count,
@@ -365,7 +365,7 @@ pub fn putOrIncrementRefCount(store: *Self, script_id: Key, ref_count: u32) !Put
         };
         return .{ .uninitialized = gop.value_ptr };
     } else {
-        bun.debugAssert(ref_count >= 0); // okay since ref_count is already 1
+        fun.debugAssert(ref_count >= 0); // okay since ref_count is already 1
         gop.value_ptr.*.ref_count += ref_count;
         return .{ .shared = gop.value_ptr };
     }
@@ -377,14 +377,14 @@ pub fn unref(store: *Self, key: Key) void {
 
 pub fn unrefCount(store: *Self, key: Key, count: u32) void {
     const index = store.entries.getIndex(key) orelse
-        return bun.debugAssert(false);
+        return fun.debugAssert(false);
     unrefAtIndex(store, index, count);
 }
 
 fn unrefAtIndex(store: *Self, index: usize, count: u32) void {
     const e = &store.entries.values()[index];
     e.ref_count -= count;
-    if (bun.Environment.enable_logs) {
+    if (fun.Environment.enable_logs) {
         mapLog("dec {x}, {d} | {d} -> {d}", .{ store.entries.keys()[index].get(), count, e.ref_count + count, e.ref_count });
     }
     if (e.ref_count == 0) {
@@ -396,7 +396,7 @@ fn unrefAtIndex(store: *Self, index: usize, count: u32) void {
 pub fn addWeakRef(store: *Self, key: Key) void {
     // This function expects that `weak_ref_entry_max` is low.
     const entry = store.entries.getPtr(key) orelse
-        return bun.debugAssert(false);
+        return fun.debugAssert(false);
     entry.ref_count += 1;
 
     var new_weak_ref_count: u32 = 1;
@@ -419,7 +419,7 @@ pub fn addWeakRef(store: *Self, key: Key) void {
         }
     }
 
-    const expire = bun.timespec.msFromNow(.allow_mocked_time, weak_ref_expiry_seconds * 1000);
+    const expire = fun.timespec.msFromNow(.allow_mocked_time, weak_ref_expiry_seconds * 1000);
     store.weak_refs.writeItem(.init(
         key,
         new_weak_ref_count,
@@ -473,7 +473,7 @@ pub fn locateWeakRef(store: *Self, key: Key) ?struct { index: usize, ref: WeakRe
     return null;
 }
 
-pub fn sweepWeakRefs(timer: *EventLoopTimer, now_ts: *const bun.timespec) void {
+pub fn sweepWeakRefs(timer: *EventLoopTimer, now_ts: *const fun.timespec) void {
     mapLog("sweepWeakRefs", .{});
     const store: *Self = @fieldParentPtr("weak_ref_sweep_timer", timer);
     assert(store.owner().magic == .valid);
@@ -501,10 +501,10 @@ pub fn sweepWeakRefs(timer: *EventLoopTimer, now_ts: *const bun.timespec) void {
 }
 
 pub const GetResult = struct {
-    index: bun.GenericIndex(u32, Entry),
+    index: fun.GenericIndex(u32, Entry),
     mappings: SourceMap.Mapping.List,
     file_paths: []const []const u8,
-    entry_files: *const bun.MultiArrayList(PackedMap.Shared),
+    entry_files: *const fun.MultiArrayList(PackedMap.Shared),
 
     pub fn deinit(self: *@This(), alloc: Allocator) void {
         self.mappings.deinit(alloc);
@@ -520,7 +520,7 @@ pub fn getParsedSourceMap(store: *Self, script_id: Key, arena: Allocator, gpa: A
     const entry = &store.entries.values()[index];
 
     const script_id_decoded: SourceId = @bitCast(script_id.get());
-    const vlq_bytes = bun.handleOom(entry.renderMappings(script_id_decoded.kind, arena, arena));
+    const vlq_bytes = fun.handleOom(entry.renderMappings(script_id_decoded.kind, arena, arena));
 
     switch (SourceMap.Mapping.parse(
         gpa,
@@ -545,17 +545,17 @@ pub fn getParsedSourceMap(store: *Self, script_id: Key, arena: Allocator, gpa: A
     }
 }
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const SourceMap = bun.SourceMap;
-const StringJoiner = bun.StringJoiner;
-const assert = bun.assert;
-const bake = bun.bake;
-const useAllFields = bun.meta.useAllFields;
-const EventLoopTimer = bun.api.Timer.EventLoopTimer;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const SourceMap = fun.SourceMap;
+const StringJoiner = fun.StringJoiner;
+const assert = fun.assert;
+const bake = fun.bake;
+const useAllFields = fun.meta.useAllFields;
+const EventLoopTimer = fun.api.Timer.EventLoopTimer;
 
-const DevServer = bun.bake.DevServer;
+const DevServer = fun.bake.DevServer;
 const ChunkKind = DevServer.ChunkKind;
 const DevAllocator = DevServer.DevAllocator;
 const PackedMap = DevServer.PackedMap;

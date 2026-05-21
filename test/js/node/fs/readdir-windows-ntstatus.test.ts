@@ -16,12 +16,12 @@
 // junction (the reported trigger) and asserts that any failure surfaces as a
 // catchable Error rather than terminating the process.
 //
-// https://github.com/oven-sh/bun/issues/26496
-// https://github.com/oven-sh/bun/issues/28721
-// https://github.com/oven-sh/bun/issues/29158
+// https://github.com/underdoc-org/fun/issues/26496
+// https://github.com/underdoc-org/fun/issues/28721
+// https://github.com/underdoc-org/fun/issues/29158
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -53,9 +53,9 @@ test.skipIf(!isWindows)("fs.readdir through a junction returns or throws, never 
     process.stdout.write(JSON.stringify(out));
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", fixture, link],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", fixture, link],
+    env: funEnv,
     cwd: root,
     stdout: "pipe",
     stderr: "pipe",

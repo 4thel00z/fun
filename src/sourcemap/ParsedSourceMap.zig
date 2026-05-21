@@ -1,6 +1,6 @@
 const ParsedSourceMap = @This();
 
-const RefCount = bun.ptr.ThreadSafeRefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.ThreadSafeRefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -11,7 +11,7 @@ ref_count: RefCount,
 input_line_count: usize = 0,
 mappings: Mapping.List = .{},
 /// Set when this map's mappings are backed by an InternalSourceMap blob (e.g.
-/// embedded in a `bun build --compile` executable) instead of a materialized
+/// embedded in a `fun build --compile` executable) instead of a materialized
 /// `Mapping.List`. The blob's bytes are borrowed (they live in the standalone
 /// module graph's section), so `deinit` does not free them.
 internal: ?InternalSourceMap = null,
@@ -27,7 +27,7 @@ external_source_names: []const []const u8 = &.{},
 ///
 /// Source contents are large, we don't preserve them in memory. This has
 /// the downside of repeatedly re-decoding sourcemaps if multiple errors
-/// are emitted (specifically with Bun.inspect / unhandled; the ones that
+/// are emitted (specifically with Fun.inspect / unhandled; the ones that
 /// rely on source contents)
 underlying_provider: SourceContentPtr = .none,
 
@@ -93,7 +93,7 @@ pub fn isExternal(psm: *ParsedSourceMap) bool {
     return psm.external_source_names.len != 0;
 }
 
-pub fn findMapping(this: *const ParsedSourceMap, line: bun.Ordinal, column: bun.Ordinal) ?Mapping {
+pub fn findMapping(this: *const ParsedSourceMap, line: fun.Ordinal, column: fun.Ordinal) ?Mapping {
     if (this.internal) |ism| return ism.find(line, column);
     return this.mappings.find(line, column);
 }
@@ -103,7 +103,7 @@ pub fn internalCursor(this: *const ParsedSourceMap) ?InternalSourceMap.Cursor {
 }
 
 fn deinit(this: *ParsedSourceMap) void {
-    const allocator = bun.default_allocator;
+    const allocator = fun.default_allocator;
 
     if (this.internal) |ism| {
         if (!this.is_standalone_module_graph) ism.deinit();
@@ -116,11 +116,11 @@ fn deinit(this: *ParsedSourceMap) void {
         allocator.free(this.external_source_names);
     }
 
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
-pub fn standaloneModuleGraphData(this: *ParsedSourceMap) *bun.StandaloneModuleGraph.SerializedSourceMap.Loaded {
-    bun.assert(this.is_standalone_module_graph);
+pub fn standaloneModuleGraphData(this: *ParsedSourceMap) *fun.StandaloneModuleGraph.SerializedSourceMap.Loaded {
+    fun.assert(this.is_standalone_module_graph);
     return @ptrFromInt(this.underlying_provider.data);
 }
 
@@ -131,7 +131,7 @@ pub fn memoryCost(this: *const ParsedSourceMap) usize {
 
 pub fn writeVLQs(map: *const ParsedSourceMap, writer: anytype) !void {
     if (map.internal) |ism| {
-        var buf = bun.MutableString.initEmpty(bun.default_allocator);
+        var buf = fun.MutableString.initEmpty(fun.default_allocator);
         defer buf.deinit();
         ism.appendVLQTo(&buf);
         try writer.writeAll(buf.list.items);
@@ -188,5 +188,5 @@ const SourceMapLoadHint = SourceMap.SourceMapLoadHint;
 const SourceProviderMap = SourceMap.SourceProviderMap;
 const VLQ = SourceMap.VLQ;
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;

@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { Readable } from "node:stream";
 import zlib from "node:zlib";
 
 test("yields data in more than one chunk", () => {
-  const hasher_in = new Bun.CryptoHasher("sha256");
-  const hasher_out = new Bun.CryptoHasher("sha256");
+  const hasher_in = new Fun.CryptoHasher("sha256");
+  const hasher_out = new Fun.CryptoHasher("sha256");
 
   // Generate 512 KB of random data
   const randomData = Buffer.alloc(512 * 1024);

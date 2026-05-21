@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe.concurrent("bundler", () => {
@@ -10,7 +10,7 @@ describe.concurrent("bundler", () => {
         "/entry.ts": /* js */ `
         import index from "./index.html";
         
-        using server = Bun.serve({
+        using server = Fun.serve({
           port: 0,
           routes: {
             "/": index,
@@ -61,7 +61,7 @@ describe.concurrent("bundler", () => {
         import home from "./home.html";
         import about from "./about.html";
         
-        using server = Bun.serve({
+        using server = Fun.serve({
           port: 0,
           routes: {
             "/": home,

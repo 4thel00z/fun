@@ -1267,8 +1267,8 @@ export async function getBuildkiteBuildNumber() {
  * @returns {Promise<BuildArtifact[]>}
  */
 export async function getBuildkiteArtifacts(buildId) {
-  const orgId = getEnv("BUILDKITE_ORGANIZATION_SLUG", false) || "bun";
-  const pipelineId = getEnv("BUILDKITE_PIPELINE_SLUG", false) || "bun";
+  const orgId = getEnv("BUILDKITE_ORGANIZATION_SLUG", false) || "fun";
+  const pipelineId = getEnv("BUILDKITE_PIPELINE_SLUG", false) || "fun";
   const { jobs } = await curlSafe(`https://buildkite.com/${orgId}/${pipelineId}/builds/${buildId}.json`, {
     json: true,
   });
@@ -1350,7 +1350,7 @@ export async function getLastSuccessfulBuild() {
       const { state, prev_branch_build: previousBuild, steps } = body;
       if (depth++) {
         if (state === "failed" || state === "passed" || state === "canceled") {
-          const buildSteps = steps.filter(({ label }) => label.endsWith("build-bun"));
+          const buildSteps = steps.filter(({ label }) => label.endsWith("build-fun"));
           if (buildSteps.length) {
             if (buildSteps.every(({ outcome }) => outcome === "passed")) {
               return body;
@@ -1492,7 +1492,7 @@ export function tmpdir() {
  * @returns {string}
  */
 export function mkdtemp(prefix, filename) {
-  const tmpPath = mkdtempSync(join(tmpdir(), prefix || "bun-"));
+  const tmpPath = mkdtempSync(join(tmpdir(), prefix || "fun-"));
   return filename ? join(tmpPath, filename) : tmpPath;
 }
 
@@ -1701,7 +1701,7 @@ export function parseTarget(string) {
 export async function getTargetDownloadUrl(target, release) {
   const { label, os, arch, abi, baseline } = parseTarget(target);
   const baseUrl = "https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/";
-  const filename = `bun-${label}.zip`;
+  const filename = `fun-${label}.zip`;
 
   const exists = async url => {
     const { status } = await curl(url, { method: "HEAD" });
@@ -1716,9 +1716,9 @@ export async function getTargetDownloadUrl(target, release) {
     }
   }
 
-  if (/^(bun-v|v)?(\d+\.\d+\.\d+)$/i.test(release)) {
+  if (/^(fun-v|v)?(\d+\.\d+\.\d+)$/i.test(release)) {
     const [, major, minor, patch] = /(\d+)\.(\d+)\.(\d+)/i.exec(release);
-    const url = new URL(`bun-v${major}.${minor}.${patch}/${filename}`, baseUrl);
+    const url = new URL(`fun-v${major}.${minor}.${patch}/${filename}`, baseUrl);
     if (await exists(url)) {
       return url;
     }
@@ -1739,7 +1739,7 @@ export async function getTargetDownloadUrl(target, release) {
       return canaryUrl;
     }
 
-    const statusUrl = new URL(`repos/oven-sh/bun/commits/${release}/status`, getGithubApiUrl());
+    const statusUrl = new URL(`repos/underdoc-org/fun/commits/${release}/status`, getGithubApiUrl());
     const { error, body } = await curl(statusUrl, { json: true });
     if (error) {
       throw new Error(`Failed to fetch commit status: ${release}`, { cause: error });
@@ -1768,7 +1768,7 @@ export async function getTargetDownloadUrl(target, release) {
       const job = jobs.find(
         ({ step_key: key }) =>
           key &&
-          key.includes("build-bun") &&
+          key.includes("build-fun") &&
           key.includes(os) &&
           key.includes(arch) &&
           (!baseline || key.includes("baseline")) &&
@@ -1810,20 +1810,20 @@ export async function downloadTarget(target, release) {
     throw new Error(`Failed to download target: ${target} at ${release}`, { cause: error });
   }
 
-  const tmpPath = mkdtempSync(join(tmpdir(), "bun-download-"));
-  const zipPath = join(tmpPath, "bun.zip");
+  const tmpPath = mkdtempSync(join(tmpdir(), "fun-download-"));
+  const zipPath = join(tmpPath, "fun.zip");
 
   writeFileSync(zipPath, new Uint8Array(body));
   const unzipPath = await unzip(zipPath, tmpPath);
 
   for (const entry of readdirSync(unzipPath, { recursive: true, encoding: "utf-8" })) {
     const exePath = join(unzipPath, entry);
-    if (/bun(?:\.exe)?$/i.test(entry)) {
+    if (/fun(?:\.exe)?$/i.test(entry)) {
       return exePath;
     }
   }
 
-  throw new Error(`Failed to find bun executable: ${unzipPath}`);
+  throw new Error(`Failed to find fun executable: ${unzipPath}`);
 }
 
 /**
@@ -2348,7 +2348,7 @@ export async function getCanaryRevision() {
     return 1;
   }
 
-  const repository = getRepository() || "oven-sh/bun";
+  const repository = getRepository() || "underdoc-org/fun";
   const { error: releaseError, body: release } = await curl(
     new URL(`repos/${repository}/releases/latest`, getGithubApiUrl()),
     { json: true },
@@ -2909,8 +2909,8 @@ export function printEnvironment() {
     console.log("Username:", getUsername());
     console.log("Working Directory:", process.cwd());
     console.log("Temporary Directory:", tmpdir());
-    if (process.isBun) {
-      console.log("Bun Version:", Bun.version, Bun.revision);
+    if (process.isFun) {
+      console.log("Fun Version:", Fun.version, Fun.revision);
     } else {
       console.log("Node Version:", process.version);
     }

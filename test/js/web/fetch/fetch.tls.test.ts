@@ -1,5 +1,5 @@
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, isASAN, tmpdirSync } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, isASAN, tmpdirSync } from "harness";
 import { join } from "node:path";
 import tls from "node:tls";
 
@@ -14,11 +14,11 @@ import { expiredTls, invalidTls, tls as validTls } from "harness";
 const CERT_LOCALHOST_IP = { ...validTls };
 const CERT_EXPIRED = { ...expiredTls };
 
-// Note: Do not use bun.sh as the example domain
+// Note: Do not use fun.dev as the example domain
 // Cloudflare sometimes blocks automated requests to it.
 // so it will cause flaky tests.
 async function createServer(cert: TLSOptions, callback: (port: number) => Promise<any>) {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     tls: cert,
     fetch() {
@@ -189,7 +189,7 @@ describe.concurrent("fetch-tls", () => {
         controller?.abort();
         if (controller) expect(controller.signal.aborted).toBe(true);
       } finally {
-        // Not awaited: Bun's tls.Server currently doesn't decrement its
+        // Not awaited: Fun's tls.Server currently doesn't decrement its
         // connection count when the server-side socket is destroyed, so the
         // close callback never fires here. The listening handle is released
         // immediately regardless.
@@ -287,16 +287,16 @@ describe.concurrent("fetch-tls", () => {
 
       const promises = [];
       for (let i = 0; i < 2; i++) {
-        const proc = Bun.spawn({
+        const proc = Fun.spawn({
           env: {
-            ...bunEnv,
+            ...funEnv,
             SERVER: url,
             NODE_TLS_REJECT_UNAUTHORIZED: i.toString(),
           },
           stderr: "inherit",
           stdout: "inherit",
           stdin: "inherit",
-          cmd: [bunExe(), join(import.meta.dir, "fetch-reject-authorized-env-fixture.js")],
+          cmd: [funExe(), join(import.meta.dir, "fetch-reject-authorized-env-fixture.js")],
         });
 
         promises.push(proc.exited);
@@ -309,7 +309,7 @@ describe.concurrent("fetch-tls", () => {
   });
 
   it("fetch timeout works on tls", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       tls: validTls,
       hostname: "localhost",
       port: 0,
@@ -317,7 +317,7 @@ describe.concurrent("fetch-tls", () => {
       async fetch() {
         async function* body() {
           yield "Hello, ";
-          await Bun.sleep(700); // should only take 200ms-350ms
+          await Fun.sleep(700); // should only take 200ms-350ms
           yield "World!";
         }
         return new Response(body);
@@ -343,7 +343,7 @@ describe.concurrent("fetch-tls", () => {
   });
 
   it("fetch should use NODE_EXTRA_CA_CERTS", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: validTls,
       fetch() {
@@ -351,25 +351,25 @@ describe.concurrent("fetch-tls", () => {
       },
     });
     const cert_path = join(tmpdirSync(), "cert.pem");
-    await Bun.write(cert_path, validTls.cert);
+    await Fun.write(cert_path, validTls.cert);
 
-    const proc = Bun.spawn({
+    const proc = Fun.spawn({
       env: {
-        ...bunEnv,
+        ...funEnv,
         SERVER: server.url,
         NODE_EXTRA_CA_CERTS: cert_path,
       },
       stderr: "inherit",
       stdout: "inherit",
       stdin: "inherit",
-      cmd: [bunExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
+      cmd: [funExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
     });
 
     expect(await proc.exited).toBe(0);
   });
 
   it("fetch should use NODE_EXTRA_CA_CERTS even if the used CA is not first in bundle", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: validTls,
       fetch() {
@@ -379,25 +379,25 @@ describe.concurrent("fetch-tls", () => {
 
     const bundlePath = join(tmpdirSync(), "bundle.pem");
     const bundleContent = `${expiredTls.cert}\n${validTls.cert}`;
-    await Bun.write(bundlePath, bundleContent);
+    await Fun.write(bundlePath, bundleContent);
 
-    const proc = Bun.spawn({
+    const proc = Fun.spawn({
       env: {
-        ...bunEnv,
+        ...funEnv,
         SERVER: server.url,
         NODE_EXTRA_CA_CERTS: bundlePath,
       },
       stderr: "inherit",
       stdout: "inherit",
       stdin: "inherit",
-      cmd: [bunExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
+      cmd: [funExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
     });
 
     expect(await proc.exited).toBe(0);
   });
 
   it("fetch should ignore invalid NODE_EXTRA_CA_CERTS", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: validTls,
       fetch() {
@@ -406,16 +406,16 @@ describe.concurrent("fetch-tls", () => {
     });
 
     for (const invalid of ["not-exist.pem", "", " "]) {
-      const proc = Bun.spawn({
+      const proc = Fun.spawn({
         env: {
-          ...bunEnv,
+          ...funEnv,
           SERVER: server.url,
           NODE_EXTRA_CA_CERTS: invalid,
         },
         stderr: "pipe",
         stdout: "inherit",
         stdin: "inherit",
-        cmd: [bunExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
+        cmd: [funExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
       });
 
       expect(await proc.exited).toBe(1);
@@ -424,7 +424,7 @@ describe.concurrent("fetch-tls", () => {
   });
 
   it("fetch should ignore NODE_EXTRA_CA_CERTS if it's contains invalid cert", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: validTls,
       fetch() {
@@ -433,22 +433,22 @@ describe.concurrent("fetch-tls", () => {
     });
 
     const mixedValidAndInvalidCertsBundlePath = join(tmpdirSync(), "mixed-valid-and-invalid-certs-bundle.pem");
-    await Bun.write(mixedValidAndInvalidCertsBundlePath, `${invalidTls.cert}\n${validTls.cert}`);
+    await Fun.write(mixedValidAndInvalidCertsBundlePath, `${invalidTls.cert}\n${validTls.cert}`);
 
     const mixedInvalidAndValidCertsBundlePath = join(tmpdirSync(), "mixed-invalid-and-valid-certs-bundle.pem");
-    await Bun.write(mixedInvalidAndValidCertsBundlePath, `${validTls.cert}\n${invalidTls.cert}`);
+    await Fun.write(mixedInvalidAndValidCertsBundlePath, `${validTls.cert}\n${invalidTls.cert}`);
 
     for (const invalid of [mixedValidAndInvalidCertsBundlePath, mixedInvalidAndValidCertsBundlePath]) {
-      const proc = Bun.spawn({
+      const proc = Fun.spawn({
         env: {
-          ...bunEnv,
+          ...funEnv,
           SERVER: server.url,
           NODE_EXTRA_CA_CERTS: invalid,
         },
         stderr: "pipe",
         stdout: "inherit",
         stdin: "inherit",
-        cmd: [bunExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
+        cmd: [funExe(), join(import.meta.dir, "fetch.tls.extra-cert.fixture.js")],
       });
 
       expect(await proc.exited).toBe(1);

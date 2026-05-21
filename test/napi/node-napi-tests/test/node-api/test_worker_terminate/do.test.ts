@@ -5,7 +5,7 @@ test("build", async () => {
   await build(import.meta.dir);
 });
 
-for (const file of Array.from(new Bun.Glob("*.js").scanSync(import.meta.dir))) {
+for (const file of Array.from(new Fun.Glob("*.js").scanSync(import.meta.dir))) {
   // Assertion failed: (status == napi_pending_exception), function Test, file test_worker_terminate.c, line 21.
   test.todoIf(["test.js"].includes(file))(file, () => {
     run(dirname(import.meta.dir), basename(import.meta.dir) + sep + file);

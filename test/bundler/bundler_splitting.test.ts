@@ -1,11 +1,11 @@
-import { describe } from "bun:test";
-import { bunEnv } from "harness";
+import { describe } from "fun:test";
+import { funEnv } from "harness";
 import { itBundled } from "./expectBundled";
 
 const env = {
-  ...bunEnv,
+  ...funEnv,
   // Deflake these tests that check import evaluation order is consistent.
-  BUN_FEATURE_FLAG_DISABLE_ASYNC_TRANSPILER: "1",
+  FUN_FEATURE_FLAG_DISABLE_ASYNC_TRANSPILER: "1",
 };
 
 describe("bundler", () => {

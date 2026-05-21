@@ -6,8 +6,8 @@ namespace v8 {
 
 class EscapableHandleScope : public EscapableHandleScopeBase {
 public:
-    BUN_EXPORT EscapableHandleScope(Isolate* isolate);
-    BUN_EXPORT ~EscapableHandleScope();
+    FUN_EXPORT EscapableHandleScope(Isolate* isolate);
+    FUN_EXPORT ~EscapableHandleScope();
 
     template<class T>
     Local<T> Escape(Local<T> value)

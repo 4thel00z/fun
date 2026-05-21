@@ -58,7 +58,7 @@ const string = []const u8;
 const HTTPClient = @import("./http.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const StringBuilder = bun.StringBuilder;
-const Headers = bun.http.Headers;
-const api = bun.schema.api;
+const fun = @import("fun");
+const StringBuilder = fun.StringBuilder;
+const Headers = fun.http.Headers;
+const api = fun.schema.api;

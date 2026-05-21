@@ -1,7 +1,7 @@
-/// There are constraints on Bun's shell interpreter which are unique to shells in
+/// There are constraints on Fun's shell interpreter which are unique to shells in
 /// general:
-/// 1. We try to keep everything in the Bun process as much as possible for
-///    performance reasons and also to leverage Bun's existing IO/FS code
+/// 1. We try to keep everything in the Fun process as much as possible for
+///    performance reasons and also to leverage Fun's existing IO/FS code
 /// 2. We try to use non-blocking IO as much as possible so the shell
 ///    does not block the main JS thread
 /// 3. Zig does not have coroutines (yet)
@@ -73,7 +73,7 @@ pub const Yield = union(enum) {
 
     pub fn run(this: Yield) void {
         if (comptime Environment.isDebug) log("Yield({s}) _dbg_catch_exec_within_exec = {d} + 1 = {d}", .{ @tagName(this), _dbg_catch_exec_within_exec, _dbg_catch_exec_within_exec + 1 });
-        bun.debugAssert(_dbg_catch_exec_within_exec <= MAX_DEPTH);
+        fun.debugAssert(_dbg_catch_exec_within_exec <= MAX_DEPTH);
         if (comptime Environment.isDebug) _dbg_catch_exec_within_exec += 1;
         defer {
             if (comptime Environment.isDebug) log("Yield({s}) _dbg_catch_exec_within_exec = {d} - 1 = {d}", .{ @tagName(this), _dbg_catch_exec_within_exec, _dbg_catch_exec_within_exec - 1 });
@@ -91,9 +91,9 @@ pub const Yield = union(enum) {
         //
         // This means we need to store a reference to the pipeline. And
         // there can be nested pipelines, so we need a stack.
-        var sfb = std.heap.stackFallback(@sizeOf(*Pipeline) * 4, bun.default_allocator);
+        var sfb = std.heap.stackFallback(@sizeOf(*Pipeline) * 4, fun.default_allocator);
         const alloc = sfb.get();
-        var pipeline_stack = bun.handleOom(std.array_list.Managed(*Pipeline).initCapacity(alloc, 4));
+        var pipeline_stack = fun.handleOom(std.array_list.Managed(*Pipeline).initCapacity(alloc, 4));
         defer pipeline_stack.deinit();
 
         // Note that we're using labelled switch statements but _not_
@@ -108,8 +108,8 @@ pub const Yield = union(enum) {
                     }
                     continue :state x.next();
                 }
-                bun.assert_eql(std.mem.indexOfScalar(*Pipeline, pipeline_stack.items, x), null);
-                bun.handleOom(pipeline_stack.append(x));
+                fun.assert_eql(std.mem.indexOfScalar(*Pipeline, pipeline_stack.items, x), null);
+                fun.handleOom(pipeline_stack.append(x));
                 continue :state x.next();
             },
             .cmd => |x| continue :state x.next(),
@@ -150,23 +150,23 @@ pub const Yield = union(enum) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
-const shell = bun.shell;
-const log = bun.shell.interpret.log;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;
+const shell = fun.shell;
+const log = fun.shell.interpret.log;
 
-const Interpreter = bun.shell.Interpreter;
-const Assigns = bun.shell.Interpreter.Assigns;
-const Cmd = bun.shell.Interpreter.Cmd;
-const CondExpr = bun.shell.Interpreter.CondExpr;
-const Expansion = bun.shell.Interpreter.Expansion;
-const IO = bun.shell.Interpreter.IO;
-const If = bun.shell.Interpreter.If;
-const Pipeline = bun.shell.Interpreter.Pipeline;
-const Script = bun.shell.Interpreter.Script;
-const Stmt = bun.shell.Interpreter.Stmt;
-const Subshell = bun.shell.Interpreter.Subshell;
+const Interpreter = fun.shell.Interpreter;
+const Assigns = fun.shell.Interpreter.Assigns;
+const Cmd = fun.shell.Interpreter.Cmd;
+const CondExpr = fun.shell.Interpreter.CondExpr;
+const Expansion = fun.shell.Interpreter.Expansion;
+const IO = fun.shell.Interpreter.IO;
+const If = fun.shell.Interpreter.If;
+const Pipeline = fun.shell.Interpreter.Pipeline;
+const Script = fun.shell.Interpreter.Script;
+const Stmt = fun.shell.Interpreter.Stmt;
+const Subshell = fun.shell.Interpreter.Subshell;
 
-const IOWriter = bun.shell.Interpreter.IOWriter;
+const IOWriter = fun.shell.Interpreter.IOWriter;
 const IOWriterChildPtr = IOWriter.IOWriterChildPtr;

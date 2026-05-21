@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
-test("bun publish --help shows correct message for --dry-run", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "publish", "--help"],
-    env: bunEnv,
+test("fun publish --help shows correct message for --dry-run", async () => {
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "publish", "--help"],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -12,7 +12,7 @@ test("bun publish --help shows correct message for --dry-run", async () => {
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
   // The --dry-run flag should have a generic description that works for all commands
-  // It should NOT say "Don't install anything" when used with "bun publish"
+  // It should NOT say "Don't install anything" when used with "fun publish"
   expect(stdout).toContain("--dry-run");
   expect(stdout).toContain("Perform a dry run without making changes");
 

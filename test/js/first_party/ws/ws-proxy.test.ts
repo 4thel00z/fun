@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { gc, tls as tlsCerts } from "harness";
 import type { HttpsProxyAgent as HttpsProxyAgentType } from "https-proxy-agent";
 import net from "net";
@@ -15,8 +15,8 @@ const { HttpsProxyAgent } = require("https-proxy-agent") as {
 let proxy: net.Server;
 let authProxy: net.Server;
 let httpsProxy: tls.Server;
-let wsServer: ReturnType<typeof Bun.serve>;
-let wssServer: ReturnType<typeof Bun.serve>;
+let wsServer: ReturnType<typeof Fun.serve>;
+let wssServer: ReturnType<typeof Fun.serve>;
 let proxyPort: number;
 let authProxyPort: number;
 let httpsProxyPort: number;
@@ -37,7 +37,7 @@ beforeAll(async () => {
   httpsProxyPort = await startProxy(httpsProxy);
 
   // Create WebSocket echo server
-  wsServer = Bun.serve({
+  wsServer = Fun.serve({
     port: 0,
     fetch(req, server) {
       if (server.upgrade(req)) {
@@ -58,7 +58,7 @@ beforeAll(async () => {
   wsPort = wsServer.port;
 
   // Create secure WebSocket echo server (wss://)
-  wssServer = Bun.serve({
+  wssServer = Fun.serve({
     port: 0,
     tls: {
       key: tlsCerts.key,

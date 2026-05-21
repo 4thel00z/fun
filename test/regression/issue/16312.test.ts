@@ -1,6 +1,6 @@
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { cleanup } from "@testing-library/react";
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, test } from "fun:test";
 
 expect.extend(matchers);
 afterEach(() => {

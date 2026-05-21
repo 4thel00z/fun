@@ -78,7 +78,7 @@ pub const Qpack = enum(u8) {
         return map.getAnyCase(name);
     }
 
-    const map = bun.ComptimeStringMap(Class, .{
+    const map = fun.ComptimeStringMap(Class, .{
         .{ "connection", .forbidden },
         .{ "host", .host },
         .{ "keep-alive", .forbidden },
@@ -117,4 +117,4 @@ pub const Qpack = enum(u8) {
     });
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

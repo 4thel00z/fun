@@ -1,7 +1,7 @@
-//! "api" in this context means "the Bun APIs", as in "the exposed JS APIs"
+//! "api" in this context means "the Fun APIs", as in "the exposed JS APIs"
 
-/// `globalThis.Bun`
-pub const Bun = @import("./api/BunObject.zig");
+/// `globalThis.Fun`
+pub const Fun = @import("./api/FunObject.zig");
 
 pub const server = @import("./server/server.zig");
 pub const NativePromiseContext = @import("./api/NativePromiseContext.zig");
@@ -27,12 +27,12 @@ pub const NewSocket = @import("./socket/socket.zig").NewSocket;
 comptime {
     _ = @import("./socket/uws_jsc.zig"); // export fn us_socket_buffered_js_write
 }
-pub const SecureContext = @import("./api/bun/SecureContext.zig");
-pub const SSLContextCache = @import("./api/bun/SSLContextCache.zig");
+pub const SecureContext = @import("./api/fun/SecureContext.zig");
+pub const SSLContextCache = @import("./api/fun/SSLContextCache.zig");
 
-pub const Subprocess = @import("./api/bun/subprocess.zig");
+pub const Subprocess = @import("./api/fun/subprocess.zig");
 pub const cron = @import("./api/cron.zig");
-pub const Terminal = @import("./api/bun/Terminal.zig");
+pub const Terminal = @import("./api/fun/Terminal.zig");
 pub const WebViewHostProcess = @import("./webview/HostProcess.zig");
 pub const ChromeProcess = @import("./webview/ChromeProcess.zig");
 pub const HashObject = @import("./api/HashObject.zig");
@@ -53,7 +53,7 @@ pub const FileSystemRouter = @import("./api/filesystem_router.zig").FileSystemRo
 pub const Archive = @import("./api/Archive.zig");
 pub const Glob = @import("./api/glob.zig");
 pub const Image = @import("./image/Image.zig");
-pub const H2FrameParser = @import("./api/bun/h2_frame_parser.zig").H2FrameParser;
+pub const H2FrameParser = @import("./api/fun/h2_frame_parser.zig").H2FrameParser;
 pub const JSBundler = @import("./api/JSBundler.zig").JSBundler;
 pub const JSTranspiler = @import("./api/JSTranspiler.zig");
 pub const MatchedRoute = @import("./api/filesystem_router.zig").MatchedRoute;

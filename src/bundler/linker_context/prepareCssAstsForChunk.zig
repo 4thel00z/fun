@@ -13,7 +13,7 @@ pub fn prepareCssAstsForChunk(task: *ThreadPoolLib.Task) void {
 }
 
 fn prepareCssAstsForChunkImpl(c: *LinkerContext, chunk: *Chunk, allocator: std.mem.Allocator) void {
-    const asts: []const ?*bun.css.BundlerStyleSheet = c.graph.ast.items(.css);
+    const asts: []const ?*fun.css.BundlerStyleSheet = c.graph.ast.items(.css);
 
     // Prepare CSS asts
     // Remove duplicate rules across files. This must be done in serial, not
@@ -26,34 +26,34 @@ fn prepareCssAstsForChunkImpl(c: *LinkerContext, chunk: *Chunk, allocator: std.m
             switch (entry.kind) {
                 .layers => |layers| {
                     const len = layers.inner().len;
-                    var rules = bun.css.BundlerCssRuleList{};
+                    var rules = fun.css.BundlerCssRuleList{};
                     if (len > 0) {
-                        rules.v.append(allocator, bun.css.BundlerCssRule{
-                            .layer_statement = bun.css.LayerStatementRule{
-                                .names = bun.css.SmallList(bun.css.LayerName, 1).fromBabyListNoDeinit(layers.inner().*),
-                                .loc = bun.css.Location.dummy(),
+                        rules.v.append(allocator, fun.css.BundlerCssRule{
+                            .layer_statement = fun.css.LayerStatementRule{
+                                .names = fun.css.SmallList(fun.css.LayerName, 1).fromBabyListNoDeinit(layers.inner().*),
+                                .loc = fun.css.Location.dummy(),
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                     }
-                    var ast = bun.css.BundlerStyleSheet{
+                    var ast = fun.css.BundlerStyleSheet{
                         .rules = rules,
                         .sources = .{},
                         .source_map_urls = .{},
                         .license_comments = .{},
-                        .options = bun.css.ParserOptions.default(allocator, null),
+                        .options = fun.css.ParserOptions.default(allocator, null),
                         .composes = .{},
                     };
                     wrapRulesWithConditions(&ast, allocator, &entry.conditions);
                     chunk.content.css.asts[i] = ast;
                 },
                 .external_path => |*p| {
-                    var conditions: ?*bun.css.ImportConditions = null;
+                    var conditions: ?*fun.css.ImportConditions = null;
                     if (entry.conditions.len > 0) {
                         conditions = entry.conditions.mut(0);
                         entry.condition_import_records.append(
                             allocator,
-                            bun.ImportRecord{ .kind = .at, .path = p.*, .range = Logger.Range{} },
-                        ) catch |err| bun.handleOom(err);
+                            fun.ImportRecord{ .kind = .at, .path = p.*, .range = Logger.Range{} },
+                        ) catch |err| fun.handleOom(err);
 
                         // Handling a chain of nested conditions is complicated. We can't
                         // necessarily join them together because a) there may be multiple
@@ -67,29 +67,29 @@ fn prepareCssAstsForChunkImpl(c: *LinkerContext, chunk: *Chunk, allocator: std.m
                         while (j != 1) {
                             j -= 1;
 
-                            const ast_import = bun.css.BundlerStyleSheet{
-                                .options = bun.css.ParserOptions.default(allocator, null),
+                            const ast_import = fun.css.BundlerStyleSheet{
+                                .options = fun.css.ParserOptions.default(allocator, null),
                                 .license_comments = .{},
                                 .sources = .{},
                                 .source_map_urls = .{},
                                 .rules = rules: {
-                                    var rules = bun.css.BundlerCssRuleList{};
-                                    var import_rule = bun.css.ImportRule{
+                                    var rules = fun.css.BundlerCssRuleList{};
+                                    var import_rule = fun.css.ImportRule{
                                         .url = p.pretty,
                                         .import_record_idx = entry.condition_import_records.len,
-                                        .loc = bun.css.Location.dummy(),
+                                        .loc = fun.css.Location.dummy(),
                                     };
                                     import_rule.conditionsMut().* = entry.conditions.at(j).*;
-                                    rules.v.append(allocator, bun.css.BundlerCssRule{
+                                    rules.v.append(allocator, fun.css.BundlerCssRule{
                                         .import = import_rule,
-                                    }) catch |err| bun.handleOom(err);
+                                    }) catch |err| fun.handleOom(err);
                                     break :rules rules;
                                 },
                                 .composes = .{},
                             };
 
-                            const printer_options = bun.css.PrinterOptions{
-                                .targets = bun.css.Targets.forBundlerTarget(c.options.target),
+                            const printer_options = fun.css.PrinterOptions{
+                                .targets = fun.css.Targets.forBundlerTarget(c.options.target),
                                 // TODO: make this more configurable
                                 .minify = c.options.minify_whitespace or c.options.minify_syntax or c.options.minify_identifiers,
                             };
@@ -107,37 +107,37 @@ fn prepareCssAstsForChunkImpl(c: *LinkerContext, chunk: *Chunk, allocator: std.m
                             )) {
                                 .result => |v| v,
                                 .err => |e| {
-                                    bun.handleOom(c.log.addErrorFmt(null, Loc.Empty, c.allocator(), "Error generating CSS for import: {f}", .{e}));
+                                    fun.handleOom(c.log.addErrorFmt(null, Loc.Empty, c.allocator(), "Error generating CSS for import: {f}", .{e}));
                                     continue;
                                 },
                             };
-                            p.* = bun.fs.Path.init(DataURL.encodeStringAsShortestDataURL(allocator, "text/css", std.mem.trim(u8, print_result.code, " \n\r\t")));
+                            p.* = fun.fs.Path.init(DataURL.encodeStringAsShortestDataURL(allocator, "text/css", std.mem.trim(u8, print_result.code, " \n\r\t")));
                         }
                     }
 
-                    var empty_conditions = bun.css.ImportConditions{};
+                    var empty_conditions = fun.css.ImportConditions{};
                     const actual_conditions = if (conditions) |cc| cc else &empty_conditions;
 
-                    entry.condition_import_records.append(allocator, bun.ImportRecord{
+                    entry.condition_import_records.append(allocator, fun.ImportRecord{
                         .kind = .at,
                         .path = p.*,
                         .range = Logger.Range.none,
-                    }) catch |err| bun.handleOom(err);
+                    }) catch |err| fun.handleOom(err);
 
-                    chunk.content.css.asts[i] = bun.css.BundlerStyleSheet{
+                    chunk.content.css.asts[i] = fun.css.BundlerStyleSheet{
                         .rules = rules: {
-                            var rules = bun.css.BundlerCssRuleList{};
-                            var import_rule = bun.css.ImportRule.fromUrlAndImportRecordIdx(p.pretty, entry.condition_import_records.len);
+                            var rules = fun.css.BundlerCssRuleList{};
+                            var import_rule = fun.css.ImportRule.fromUrlAndImportRecordIdx(p.pretty, entry.condition_import_records.len);
                             import_rule.conditionsMut().* = actual_conditions.*;
-                            rules.v.append(allocator, bun.css.BundlerCssRule{
+                            rules.v.append(allocator, fun.css.BundlerCssRule{
                                 .import = import_rule,
-                            }) catch |err| bun.handleOom(err);
+                            }) catch |err| fun.handleOom(err);
                             break :rules rules;
                         },
                         .sources = .{},
                         .source_map_urls = .{},
                         .license_comments = .{},
-                        .options = bun.css.ParserOptions.default(allocator, null),
+                        .options = fun.css.ParserOptions.default(allocator, null),
                         .composes = .{},
                     };
                 },
@@ -202,14 +202,14 @@ fn prepareCssAstsForChunkImpl(c: *LinkerContext, chunk: *Chunk, allocator: std.m
                             // so we don't mutate the shared backing array.
                             // Preserve the "@layer" statements from the
                             // prefix and append the remaining tail.
-                            var new_rules = bun.css.BundlerCssRuleList{};
+                            var new_rules = fun.css.BundlerCssRuleList{};
                             for (original_rules[0..prefix_end]) |rule| {
                                 if (rule == .layer_statement) {
-                                    new_rules.v.append(allocator, rule) catch |err| bun.handleOom(err);
+                                    new_rules.v.append(allocator, rule) catch |err| fun.handleOom(err);
                                 }
                             }
                             for (original_rules[prefix_end..]) |rule| {
-                                new_rules.v.append(allocator, rule) catch |err| bun.handleOom(err);
+                                new_rules.v.append(allocator, rule) catch |err| fun.handleOom(err);
                             }
                             ast.rules = new_rules;
                         }
@@ -224,12 +224,12 @@ fn prepareCssAstsForChunkImpl(c: *LinkerContext, chunk: *Chunk, allocator: std.m
 }
 
 fn wrapRulesWithConditions(
-    ast: *bun.css.BundlerStyleSheet,
+    ast: *fun.css.BundlerStyleSheet,
     temp_allocator: std.mem.Allocator,
-    conditions: *const BabyList(bun.css.ImportConditions),
+    conditions: *const BabyList(fun.css.ImportConditions),
 ) void {
-    var dummy_import_records = bun.BabyList(bun.ImportRecord){};
-    defer bun.debugAssert(dummy_import_records.len == 0);
+    var dummy_import_records = fun.BabyList(fun.ImportRecord){};
+    defer fun.debugAssert(dummy_import_records.len == 0);
 
     var i: usize = conditions.len;
     while (i > 0) {
@@ -253,20 +253,20 @@ fn wrapRulesWithConditions(
             }
 
             ast.rules = brk: {
-                var new_rules = bun.css.BundlerCssRuleList{};
+                var new_rules = fun.css.BundlerCssRuleList{};
                 new_rules.v.append(
                     temp_allocator,
-                    if (do_block_rule) .{ .layer_block = bun.css.BundlerLayerBlockRule{
+                    if (do_block_rule) .{ .layer_block = fun.css.BundlerLayerBlockRule{
                         .name = layer,
                         .rules = ast.rules,
-                        .loc = bun.css.Location.dummy(),
+                        .loc = fun.css.Location.dummy(),
                     } } else .{
                         .layer_statement = .{
-                            .names = if (layer) |ly| bun.css.SmallList(bun.css.LayerName, 1).withOne(ly) else .{},
-                            .loc = bun.css.Location.dummy(),
+                            .names = if (layer) |ly| fun.css.SmallList(fun.css.LayerName, 1).withOne(ly) else .{},
+                            .loc = fun.css.Location.dummy(),
                         },
                     },
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
 
                 break :brk new_rules;
             };
@@ -277,17 +277,17 @@ fn wrapRulesWithConditions(
         if (ast.rules.v.items.len > 0) {
             if (item.supports) |*supports| {
                 ast.rules = brk: {
-                    var new_rules = bun.css.BundlerCssRuleList{};
+                    var new_rules = fun.css.BundlerCssRuleList{};
                     new_rules.v.append(temp_allocator, .{
-                        .supports = bun.css.BundlerSupportsRule{
+                        .supports = fun.css.BundlerSupportsRule{
                             .condition = supports.cloneWithImportRecords(
                                 temp_allocator,
                                 &dummy_import_records,
                             ),
                             .rules = ast.rules,
-                            .loc = bun.css.Location.dummy(),
+                            .loc = fun.css.Location.dummy(),
                         },
-                    }) catch |err| bun.handleOom(err);
+                    }) catch |err| fun.handleOom(err);
                     break :brk new_rules;
                 };
             }
@@ -297,35 +297,35 @@ fn wrapRulesWithConditions(
         // empty because empty "@media" rules have no effect.
         if (ast.rules.v.items.len > 0 and item.media.media_queries.items.len > 0) {
             ast.rules = brk: {
-                var new_rules = bun.css.BundlerCssRuleList{};
+                var new_rules = fun.css.BundlerCssRuleList{};
                 new_rules.v.append(temp_allocator, .{
-                    .media = bun.css.BundlerMediaRule{
+                    .media = fun.css.BundlerMediaRule{
                         .query = item.media.cloneWithImportRecords(temp_allocator, &dummy_import_records),
                         .rules = ast.rules,
-                        .loc = bun.css.Location.dummy(),
+                        .loc = fun.css.Location.dummy(),
                     },
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
                 break :brk new_rules;
             };
         }
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const ImportRecord = bun.ImportRecord;
-const ThreadPoolLib = bun.ThreadPool;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const ImportRecord = fun.ImportRecord;
+const ThreadPoolLib = fun.ThreadPool;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
-const DataURL = bun.bundle_v2.DataURL;
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const DataURL = fun.bundle_v2.DataURL;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 
-const Logger = bun.logger;
+const Logger = fun.logger;
 const Loc = Logger.Loc;

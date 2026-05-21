@@ -11,7 +11,7 @@ pub const Component = parser.Component;
 pub const PseudoClass = parser.PseudoClass;
 pub const PseudoElement = parser.PseudoElement;
 
-const debug = bun.Output.scoped(.CSS_SELECTORS, .visible);
+const debug = fun.Output.scoped(.CSS_SELECTORS, .visible);
 
 /// Our implementation of the `SelectorImpl` interface
 ///
@@ -94,7 +94,7 @@ pub fn downlevelSelectors(allocator: Allocator, selectors: []Selector, targets: 
     var necessary_prefixes = css.VendorPrefix{};
     for (selectors) |*selector| {
         for (selector.components.items) |*component| {
-            bun.bits.insert(css.VendorPrefix, &necessary_prefixes, downlevelComponent(allocator, component, targets));
+            fun.bits.insert(css.VendorPrefix, &necessary_prefixes, downlevelComponent(allocator, component, targets));
         }
     }
     return necessary_prefixes;
@@ -136,7 +136,7 @@ pub fn downlevelComponent(allocator: Allocator, component: *Component, targets: 
                 }
                 break :brk true;
             }) {
-                bun.bits.insert(css.VendorPrefix, &necessary_prefixes, targets.prefixes(css.VendorPrefix{ .none = true }, .any_pseudo));
+                fun.bits.insert(css.VendorPrefix, &necessary_prefixes, targets.prefixes(css.VendorPrefix{ .none = true }, .any_pseudo));
             } else {
                 necessary_prefixes.none = true;
             }
@@ -151,20 +151,20 @@ pub fn downlevelComponent(allocator: Allocator, component: *Component, targets: 
             // https://drafts.csswg.org/selectors/#specificity-rules
             if (selectors.len > 1 and css.targets.Targets.shouldCompileSame(&targets, .not_selector_list)) {
                 const is: Selector = Selector.fromComponent(allocator, Component{ .is = selectors: {
-                    const new_selectors = bun.handleOom(allocator.alloc(Selector, selectors.len));
+                    const new_selectors = fun.handleOom(allocator.alloc(Selector, selectors.len));
                     for (new_selectors, selectors) |*new, *sel| {
                         new.* = sel.deepClone(allocator);
                     }
                     break :selectors new_selectors;
                 } });
-                var list = bun.handleOom(ArrayList(Selector).initCapacity(allocator, 1));
+                var list = fun.handleOom(ArrayList(Selector).initCapacity(allocator, 1));
                 list.appendAssumeCapacity(is);
                 component.* = .{ .negation = list.items };
 
                 if (targets.shouldCompileSame(.is_selector)) {
-                    bun.bits.insert(css.VendorPrefix, &necessary_prefixes, targets.prefixes(css.VendorPrefix{ .none = true }, .any_pseudo));
+                    fun.bits.insert(css.VendorPrefix, &necessary_prefixes, targets.prefixes(css.VendorPrefix{ .none = true }, .any_pseudo));
                 } else {
-                    bun.bits.insert(css.VendorPrefix, &necessary_prefixes, css.VendorPrefix{ .none = true });
+                    fun.bits.insert(css.VendorPrefix, &necessary_prefixes, css.VendorPrefix{ .none = true });
                 }
             }
 
@@ -188,7 +188,7 @@ fn downlevelDir(allocator: Allocator, dir: parser.Direction, targets: css.target
         const c = Component{
             .non_ts_pseudo_class = PseudoClass{
                 .lang = .{ .languages = lang: {
-                    var list = bun.handleOom(ArrayList([]const u8).initCapacity(allocator, RTL_LANGS.len));
+                    var list = fun.handleOom(ArrayList([]const u8).initCapacity(allocator, RTL_LANGS.len));
                     list.appendSliceAssumeCapacity(RTL_LANGS);
                     break :lang list;
                 } },
@@ -196,7 +196,7 @@ fn downlevelDir(allocator: Allocator, dir: parser.Direction, targets: css.target
         };
         if (dir == .ltr) return Component{
             .negation = negation: {
-                var list = bun.handleOom(allocator.alloc(Selector, 1));
+                var list = fun.handleOom(allocator.alloc(Selector, 1));
                 list[0] = Selector.fromComponent(allocator, c);
                 break :negation list;
             },
@@ -209,12 +209,12 @@ fn downlevelDir(allocator: Allocator, dir: parser.Direction, targets: css.target
 }
 
 fn langListToSelectors(allocator: Allocator, langs: []const []const u8) []Selector {
-    var selectors = bun.handleOom(allocator.alloc(Selector, langs.len));
+    var selectors = fun.handleOom(allocator.alloc(Selector, langs.len));
     for (langs, selectors[0..]) |lang, *sel| {
         sel.* = Selector.fromComponent(allocator, Component{
             .non_ts_pseudo_class = PseudoClass{
                 .lang = .{ .languages = langs: {
-                    var list = bun.handleOom(ArrayList([]const u8).initCapacity(allocator, 1));
+                    var list = fun.handleOom(ArrayList([]const u8).initCapacity(allocator, 1));
                     list.appendAssumeCapacity(lang);
                     break :langs list;
                 } },
@@ -252,7 +252,7 @@ pub fn getPrefix(selectors: *const SelectorList) css.VendorPrefix {
                 var prefix_without_none = prefix;
                 prefix_without_none.none = false;
                 if (prefix_without_none.isEmpty() or prefix_without_none == p) {
-                    bun.bits.insert(css.VendorPrefix, &prefix, p);
+                    fun.bits.insert(css.VendorPrefix, &prefix, p);
                 } else {
                     return css.VendorPrefix{};
                 }
@@ -508,7 +508,7 @@ pub const serialize = struct {
     ) PrintErr!void {
         var is_relative = __is_relative;
 
-        if (comptime bun.Environment.isDebug) {
+        if (comptime fun.Environment.isDebug) {
             debug("Selector components:\n", .{});
             for (selector.components.items) |*comp| {
                 debug(" {f}\n", .{comp});
@@ -542,7 +542,7 @@ pub const serialize = struct {
         var first = true;
         var combinators_exhausted = false;
         while (compound_selectors.next()) |_compound_| {
-            bun.debugAssert(!combinators_exhausted);
+            fun.debugAssert(!combinators_exhausted);
             var compound = _compound_;
 
             // Skip implicit :scope in relative selectors (e.g. :has(:scope > foo) -> :has(> foo))
@@ -871,7 +871,7 @@ pub const serialize = struct {
                 try d.writeChar(':');
                 // If the printer has a vendor prefix override, use that.
                 const vp = if (!d.vendor_prefix.isEmpty())
-                    bun.bits.@"or"(css.VendorPrefix, d.vendor_prefix, prefix).orNone()
+                    fun.bits.@"or"(css.VendorPrefix, d.vendor_prefix, prefix).orNone()
                 else
                     prefix;
 
@@ -1222,7 +1222,7 @@ pub const tocss_servo = struct {
 
         var combinators_exhausted = false;
         while (compound_selectors.next()) |compound| {
-            bun.debugAssert(!combinators_exhausted);
+            fun.debugAssert(!combinators_exhausted);
 
             // https://drafts.csswg.org/cssom/#serializing-selectors
             if (compound.len == 0) continue;
@@ -1413,12 +1413,12 @@ pub const tocss_servo = struct {
                 const nth_data = nth_of_data.nthData();
                 try nth_data.writeStart(dest, true);
                 // A selector must be a function to hold An+B notation
-                bun.debugAssert(nth_data.is_function);
+                fun.debugAssert(nth_data.is_function);
                 try nth_data.writeAffine(dest);
                 // Only :nth-child or :nth-last-child can be of a selector list
-                bun.debugAssert(nth_data.ty == .child or nth_data.ty == .last_child);
+                fun.debugAssert(nth_data.ty == .child or nth_data.ty == .last_child);
                 // The selector list should not be empty
-                bun.debugAssert(nth_of_data.selectors.len != 0);
+                fun.debugAssert(nth_of_data.selectors.len != 0);
                 try dest.writeStr(" of ");
                 try tocss_servo.toCss_SelectorList(nth_of_data.selectors, dest);
                 try dest.writeChar(')');
@@ -1605,8 +1605,8 @@ const CompoundSelectorIter = struct {
     }
 };
 
-const bun = @import("bun");
-const bits = bun.bits;
+const fun = @import("fun");
+const bits = fun.bits;
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

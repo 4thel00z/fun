@@ -12,7 +12,7 @@ pub fn writeRequest(session: *ClientSession, stream: *Stream, qs: *quic.Stream) 
         HTTPClient.printRequest(.http3, request, client.url.href, !client.flags.reject_unauthorized, client.state.request_body, client.verbose == .curl);
     }
 
-    var sfa = std.heap.stackFallback(2048, bun.default_allocator);
+    var sfa = std.heap.stackFallback(2048, fun.default_allocator);
     const alloc = sfa.get();
     var headers: std.ArrayListUnmanaged(quic.Header) = .{};
     defer headers.deinit(alloc);
@@ -126,7 +126,7 @@ const ClientSession = @import("./ClientSession.zig");
 const Stream = @import("./Stream.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const HTTPClient = bun.http;
-const strings = bun.strings;
-const quic = bun.uws.quic;
+const fun = @import("fun");
+const HTTPClient = fun.http;
+const strings = fun.strings;
+const quic = fun.uws.quic;

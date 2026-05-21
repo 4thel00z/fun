@@ -1,21 +1,21 @@
 ---
 title: UDP
-description: Use Bun's UDP API to implement services with advanced real-time requirements, such as voice chat.
+description: Use Fun's UDP API to implement services with advanced real-time requirements, such as voice chat.
 ---
 
-## Bind a UDP socket (`Bun.udpSocket()`)
+## Bind a UDP socket (`Fun.udpSocket()`)
 
 To create a new (bound) UDP socket:
 
 ```ts
-const socket = await Bun.udpSocket({});
+const socket = await Fun.udpSocket({});
 console.log(socket.port); // assigned by the operating system
 ```
 
 Specify a port:
 
 ```ts
-const socket = await Bun.udpSocket({
+const socket = await Fun.udpSocket({
   port: 41234, // [!code ++]
 });
 
@@ -38,7 +38,7 @@ DNS resolution, as it is intended for low-latency operations.
 When creating your socket, add a callback to specify what should be done when packets are received:
 
 ```ts server.ts icon="/icons/typescript.svg"
-const server = await Bun.udpSocket({
+const server = await Fun.udpSocket({
   socket: {
     data(socket, buf, port, addr) {
       console.log(`message from ${addr}:${port}:`);
@@ -47,7 +47,7 @@ const server = await Bun.udpSocket({
   },
 });
 
-const client = await Bun.udpSocket({});
+const client = await Fun.udpSocket({});
 client.send("Hello!", server.port, "127.0.0.1");
 ```
 
@@ -58,7 +58,7 @@ In such cases it can be beneficial to connect the socket to that peer, which spe
 and restricts incoming packets to that peer only.
 
 ```ts server.ts icon="/icons/typescript.svg"
-const server = await Bun.udpSocket({
+const server = await Fun.udpSocket({
   socket: {
     data(socket, buf, port, addr) {
       console.log(`message from ${addr}:${port}:`);
@@ -67,7 +67,7 @@ const server = await Bun.udpSocket({
   },
 });
 
-const client = await Bun.udpSocket({
+const client = await Fun.udpSocket({
   connect: {
     port: server.port,
     hostname: "127.0.0.1",
@@ -88,7 +88,7 @@ For an unconnected socket, `sendMany` takes an array as its only argument. Each 
 The first item is the data to be sent, the second is the target port, and the last is the target address.
 
 ```ts server.ts icon="/icons/typescript.svg"
-const socket = await Bun.udpSocket({});
+const socket = await Fun.udpSocket({});
 
 // sends 'Hello' to 127.0.0.1:41234, and 'foo' to 1.1.1.1:53 in a single operation
 socket.sendMany(["Hello", 41234, "127.0.0.1", "foo", 53, "1.1.1.1"]);
@@ -97,7 +97,7 @@ socket.sendMany(["Hello", 41234, "127.0.0.1", "foo", 53, "1.1.1.1"]);
 With a connected socket, `sendMany` takes an array, where each element represents the data to be sent to the peer.
 
 ```ts server.ts icon="/icons/typescript.svg"
-const socket = await Bun.udpSocket({
+const socket = await Fun.udpSocket({
   connect: {
     port: 41234,
     hostname: "localhost",
@@ -119,7 +119,7 @@ has happened when:
 - `sendMany` returns a number smaller than the number of packets you specified. In this case, the `drain` socket handler will be called once the socket becomes writable again:
 
 ```ts
-const socket = await Bun.udpSocket({
+const socket = await Fun.udpSocket({
   socket: {
     drain(socket) {
       // continue sending data
@@ -133,7 +133,7 @@ const socket = await Bun.udpSocket({
 UDP sockets support setting various socket options:
 
 ```ts
-const socket = await Bun.udpSocket({});
+const socket = await Fun.udpSocket({});
 
 // Enable broadcasting to send packets to a broadcast address
 socket.setBroadcast(true);
@@ -144,10 +144,10 @@ socket.setTTL(64);
 
 ### Multicast
 
-Bun supports multicast operations for UDP sockets. Use `addMembership` and `dropMembership` to join and leave multicast groups:
+Fun supports multicast operations for UDP sockets. Use `addMembership` and `dropMembership` to join and leave multicast groups:
 
 ```ts
-const socket = await Bun.udpSocket({});
+const socket = await Fun.udpSocket({});
 
 // Join a multicast group
 socket.addMembership("224.0.0.1");

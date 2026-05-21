@@ -6,4 +6,4 @@
 
 # Types
 *.d.ts @alii
-/packages/bun-types/ @alii
+/packages/fun-types/ @alii

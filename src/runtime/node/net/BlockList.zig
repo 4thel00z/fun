@@ -1,5 +1,5 @@
-const RefCount = bun.ptr.ThreadSafeRefCount(@This(), "ref_count", deinit, .{});
-pub const new = bun.TrivialNew(@This());
+const RefCount = fun.ptr.ThreadSafeRefCount(@This(), "ref_count", deinit, .{});
+pub const new = fun.TrivialNew(@This());
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -9,16 +9,16 @@ pub const toJS = js.toJS;
 ref_count: RefCount = .init(),
 globalThis: *jsc.JSGlobalObject,
 da_rules: std.array_list.Managed(Rule),
-mutex: bun.Mutex = .{},
+mutex: fun.Mutex = .{},
 
 /// We cannot lock/unlock a mutex
 estimated_size: std.atomic.Value(u32) = .init(0),
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!*@This() {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!*@This() {
     _ = callFrame;
     const ptr = @This().new(.{
         .globalThis = globalThis,
-        .da_rules = .init(bun.default_allocator),
+        .da_rules = .init(fun.default_allocator),
     });
     return ptr;
 }
@@ -34,19 +34,19 @@ pub fn finalize(this: *@This()) void {
 
 pub fn deinit(this: *@This()) void {
     this.da_rules.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
-pub fn isBlockList(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn isBlockList(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     _ = globalThis;
     const value = callframe.argumentsAsArray(1)[0];
     return .jsBoolean(value.as(@This()) != null);
 }
 
-pub fn addAddress(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn addAddress(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsAsArray(2);
     const address_js, var family_js = arguments;
-    if (family_js.isUndefined()) family_js = try bun.String.static("ipv4").toJS(globalThis);
+    if (family_js.isUndefined()) family_js = try fun.String.static("ipv4").toJS(globalThis);
     const address = if (address_js.as(SocketAddress)) |sa| sa._addr else blk: {
         try validators.validateString(globalThis, address_js, "address", .{});
         try validators.validateString(globalThis, family_js, "family", .{});
@@ -60,10 +60,10 @@ pub fn addAddress(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *j
     return .js_undefined;
 }
 
-pub fn addRange(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn addRange(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsAsArray(3);
     const start_js, const end_js, var family_js = arguments;
-    if (family_js.isUndefined()) family_js = try bun.String.static("ipv4").toJS(globalThis);
+    if (family_js.isUndefined()) family_js = try fun.String.static("ipv4").toJS(globalThis);
     const start = if (start_js.as(SocketAddress)) |sa| sa._addr else blk: {
         try validators.validateString(globalThis, start_js, "start", .{});
         try validators.validateString(globalThis, family_js, "family", .{});
@@ -86,10 +86,10 @@ pub fn addRange(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc
     return .js_undefined;
 }
 
-pub fn addSubnet(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn addSubnet(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsAsArray(3);
     const network_js, const prefix_js, var family_js = arguments;
-    if (family_js.isUndefined()) family_js = try bun.String.static("ipv4").toJS(globalThis);
+    if (family_js.isUndefined()) family_js = try fun.String.static("ipv4").toJS(globalThis);
     const network = if (network_js.as(SocketAddress)) |sa| sa._addr else blk: {
         try validators.validateString(globalThis, network_js, "network", .{});
         try validators.validateString(globalThis, family_js, "family", .{});
@@ -108,15 +108,15 @@ pub fn addSubnet(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *js
     return .js_undefined;
 }
 
-pub fn check(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn check(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsAsArray(2);
     const address_js, var family_js = arguments;
-    if (family_js.isUndefined()) family_js = try bun.String.static("ipv4").toJS(globalThis);
+    if (family_js.isUndefined()) family_js = try fun.String.static("ipv4").toJS(globalThis);
     const address = &(if (address_js.as(SocketAddress)) |sa| sa._addr else blk: {
         try validators.validateString(globalThis, address_js, "address", .{});
         try validators.validateString(globalThis, family_js, "family", .{});
         break :blk (SocketAddress.initFromAddrFamily(globalThis, address_js, family_js) catch |err| {
-            bun.debugAssert(err == error.JSError);
+            fun.debugAssert(err == error.JSError);
             globalThis.clearException();
             return .false;
         })._addr;
@@ -159,7 +159,7 @@ pub fn check(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.Ca
     return .false;
 }
 
-pub fn rules(this: *@This(), globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn rules(this: *@This(), globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
 
     // GC must be able to visit
     var array = try jsc.JSArray.createEmpty(globalThis, 0);
@@ -170,16 +170,16 @@ pub fn rules(this: *@This(), globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JS
         switch (rule.*) {
             .addr => |*a| {
                 var buf: [SocketAddress.inet.INET6_ADDRSTRLEN]u8 = @splat(0);
-                try array.push(globalThis, try bun.String.createFormatForJS(globalThis, "Address: {s} {s}", .{ a.family().upper(), a.fmt(&buf) }));
+                try array.push(globalThis, try fun.String.createFormatForJS(globalThis, "Address: {s} {s}", .{ a.family().upper(), a.fmt(&buf) }));
             },
             .range => |*r| {
                 var buf_s: [SocketAddress.inet.INET6_ADDRSTRLEN]u8 = @splat(0);
                 var buf_e: [SocketAddress.inet.INET6_ADDRSTRLEN]u8 = @splat(0);
-                try array.push(globalThis, try bun.String.createFormatForJS(globalThis, "Range: {s} {s}-{s}", .{ r.start.family().upper(), r.start.fmt(&buf_s), r.end.fmt(&buf_e) }));
+                try array.push(globalThis, try fun.String.createFormatForJS(globalThis, "Range: {s} {s}-{s}", .{ r.start.family().upper(), r.start.fmt(&buf_s), r.end.fmt(&buf_e) }));
             },
             .subnet => |*s| {
                 var buf: [SocketAddress.inet.INET6_ADDRSTRLEN]u8 = @splat(0);
-                try array.push(globalThis, try bun.String.createFormatForJS(globalThis, "Subnet: {s} {s}/{d}", .{ s.network.family().upper(), s.network.fmt(&buf), s.prefix }));
+                try array.push(globalThis, try fun.String.createFormatForJS(globalThis, "Subnet: {s} {s}/{d}", .{ s.network.family().upper(), s.network.fmt(&buf), s.prefix }));
             },
         }
     }
@@ -208,7 +208,7 @@ const StructuredCloneWriter = struct {
     }
 };
 
-pub fn onStructuredCloneDeserialize(globalThis: *jsc.JSGlobalObject, ptr: *[*]u8, end: [*]u8) bun.JSError!jsc.JSValue {
+pub fn onStructuredCloneDeserialize(globalThis: *jsc.JSGlobalObject, ptr: *[*]u8, end: [*]u8) fun.JSError!jsc.JSValue {
     const total_length: usize = @intFromPtr(end) - @intFromPtr(ptr.*);
     var buffer_stream = std.io.fixedBufferStream(ptr.*[0..total_length]);
     const reader = buffer_stream.reader();
@@ -223,7 +223,7 @@ pub fn onStructuredCloneDeserialize(globalThis: *jsc.JSGlobalObject, ptr: *[*]u8
     // (e.g. BroadcastChannel fan-out), so each wrapper must own its own ref
     // instead of adopting the one taken in serialize. The serialize ref is
     // what keeps the backing alive while the pointer sits in the byte buffer;
-    // SerializedScriptValue has no destroy hook for Bun-native tags, so that
+    // SerializedScriptValue has no destroy hook for Fun-native tags, so that
     // ref is retained until a buffer-level deref exists (preferable to UAF).
     this.ref();
     return this.toJS(globalThis);
@@ -248,9 +248,9 @@ fn _compare_ipv6(l: *const sockaddr.in6, r: *const sockaddr.in6) std.math.Order 
 const std = @import("std");
 const validators = @import("../util/validators.zig");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 const js = jsc.Codegen.JSBlockList;
 
-const SocketAddress = bun.jsc.GeneratedClassesList.SocketAddress;
+const SocketAddress = fun.jsc.GeneratedClassesList.SocketAddress;
 const sockaddr = SocketAddress.sockaddr;

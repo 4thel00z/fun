@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  BUN_VERSION: "1.2.10"
+  FUN_VERSION: "1.2.10"
 
 jobs:
   lint-js:
@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          fun-version: ${{ env.FUN_VERSION }}
       - name: Lint
-        run: bun lint
+        run: fun lint

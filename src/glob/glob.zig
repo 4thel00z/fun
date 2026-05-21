@@ -1,8 +1,8 @@
 pub const match = @import("./matcher.zig").match;
 pub const walk = @import("./GlobWalker.zig");
 pub const GlobWalker = walk.GlobWalker_;
-pub const BunGlobWalker = GlobWalker(null, walk.SyscallAccessor, false);
-pub const BunGlobWalkerZ = GlobWalker(null, walk.SyscallAccessor, true);
+pub const FunGlobWalker = GlobWalker(null, walk.SyscallAccessor, false);
+pub const FunGlobWalkerZ = GlobWalker(null, walk.SyscallAccessor, true);
 
 /// Returns true if the given string contains glob syntax,
 /// excluding those escaped with backslashes

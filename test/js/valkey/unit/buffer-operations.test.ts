@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "fun:test";
 import { ConnectionType, createClient, ctx, isEnabled } from "../test-utils";
 
 describe.skipIf(!isEnabled)("Valkey: Buffer Operations", () => {
@@ -90,7 +90,7 @@ describe.skipIf(!isEnabled)("Valkey: Buffer Operations", () => {
   });
 
   test("set and getBuffer with ArrayBuffer key", async () => {
-    const keyBuffer = new Uint8Array([0x62, 0x75, 0x6e, 0x21]).buffer; // "bun!"
+    const keyBuffer = new Uint8Array([0x62, 0x75, 0x6e, 0x21]).buffer; // "fun!"
     expect(keyBuffer).toBeInstanceOf(ArrayBuffer);
     const value = new Uint8Array([0x0a, 0x0b]);
     await ctx.redis.set(keyBuffer, value);

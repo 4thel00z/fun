@@ -25,7 +25,7 @@ pub const AnyRequest = union(enum) {
             inline else => |r| r.setYield(y),
         }
     }
-    pub fn dateForHeader(this: AnyRequest, name: []const u8) bun.JSError!?u64 {
+    pub fn dateForHeader(this: AnyRequest, name: []const u8) fun.JSError!?u64 {
         return switch (this) {
             inline else => |r| r.dateForHeader(name),
         };
@@ -52,19 +52,19 @@ pub const Request = opaque {
         return ptr[0..c.uws_req_get_method(req, &ptr)];
     }
     pub fn header(req: *Request, name: []const u8) ?[]const u8 {
-        bun.assert(std.ascii.isLower(name[0]));
+        fun.assert(std.ascii.isLower(name[0]));
 
         var ptr: [*]const u8 = undefined;
         const len = c.uws_req_get_header(req, name.ptr, name.len, &ptr);
         if (len == 0) return null;
         return ptr[0..len];
     }
-    pub fn dateForHeader(req: *Request, name: []const u8) bun.JSError!?u64 {
+    pub fn dateForHeader(req: *Request, name: []const u8) fun.JSError!?u64 {
         const value = header(req, name);
         if (value == null) return null;
-        var string = bun.String.init(value.?);
+        var string = fun.String.init(value.?);
         defer string.deref();
-        const date_f64 = try bun.String.parseDate(&string, bun.jsc.VirtualMachine.get().global);
+        const date_f64 = try fun.String.parseDate(&string, fun.jsc.VirtualMachine.get().global);
         if (!std.math.isNan(date_f64) and std.math.isFinite(date_f64) and date_f64 >= 0) {
             return @intFromFloat(date_f64);
         }
@@ -93,5 +93,5 @@ const c = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const uws = bun.uws;
+const fun = @import("fun");
+const uws = fun.uws;

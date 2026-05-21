@@ -1,6 +1,6 @@
 import grpc from "@grpc/grpc-js";
 import protoLoader from "@grpc/proto-loader";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { rmSync } from "fs";
 import { chmod, cp, mkdir } from "fs/promises";
 import { tmpdirSync } from "harness";
@@ -34,7 +34,7 @@ const packageDefinition = protoLoader.loadSync(join(import.meta.dir, "fixtures/t
 
 type Server = { address: string; kill: () => Promise<void> };
 
-const cargoBin = Bun.which("cargo") as string;
+const cargoBin = Fun.which("cargo") as string;
 async function startServer(): Promise<Server> {
   const tmpDir = tmpdirSync();
   await cp(join(import.meta.dir, "fixtures/tonic-server"), tmpDir, { recursive: true });
@@ -46,7 +46,7 @@ async function startServer(): Promise<Server> {
   const protocExec = join(protocPath, binPath);
   await chmod(protocExec, 0o755);
 
-  const server = Bun.spawn([cargoBin, "run", "--quiet", path.join(tmpDir, "server")], {
+  const server = Fun.spawn([cargoBin, "run", "--quiet", path.join(tmpDir, "server")], {
     cwd: tmpDir,
     env: {
       PROTOC: protocExec,
@@ -109,7 +109,7 @@ describe.skipIf(!cargoBin || !releases[release])("test tonic server", () => {
 
     // Create client
     const client = new hello_proto.Greeter(server.address, grpc.credentials.createInsecure());
-    const payload = Buffer.alloc(1024 * 1024, "bun").toString();
+    const payload = Buffer.alloc(1024 * 1024, "fun").toString();
     for (let i = 0; i < 20; i++) {
       const { promise, reject, resolve } = Promise.withResolvers<string>();
       // Call SayHello

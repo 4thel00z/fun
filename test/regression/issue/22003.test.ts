@@ -1,16 +1,16 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/22003
+// https://github.com/underdoc-org/fun/issues/22003
 test.skipIf(isWindows)("tab character in filename should be escaped in sourcemap JSON", async () => {
   using dir = tempDir("22003", {
     // Filename with tab character
     "file\ttab.js": "module.exports = 42;",
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "file\ttab.js", "--outfile=out.js", "--sourcemap"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "file\ttab.js", "--outfile=out.js", "--sourcemap"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -20,9 +20,9 @@ test.skipIf(isWindows)("tab character in filename should be escaped in sourcemap
   expect(exitCode).toBe(0);
   expect(stderr).not.toContain("InvalidSourceMap");
 
-  const sourcemapContent = await Bun.file(`${dir}/out.js.map`).text();
+  const sourcemapContent = await Fun.file(`${dir}/out.js.map`).text();
 
-  // Must be valid JSON (system bun would produce invalid JSON with literal tab)
+  // Must be valid JSON (system fun would produce invalid JSON with literal tab)
   let sourcemap;
   expect(() => {
     sourcemap = JSON.parse(sourcemapContent);

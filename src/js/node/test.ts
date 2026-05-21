@@ -1,7 +1,7 @@
 // Hardcoded module "node:test"
 // This follows the Node.js API as described in: https://nodejs.org/api/test.html
 
-const { jest } = Bun;
+const { jest } = Fun;
 const { kEmptyObject, throwNotImplemented } = require("internal/shared");
 
 const kDefaultName = "<anonymous>";
@@ -9,19 +9,19 @@ const kDefaultFunction = () => {};
 const kDefaultOptions = kEmptyObject;
 
 function run() {
-  throwNotImplemented("run()", 5090, "Use `bun:test` in the interim.");
+  throwNotImplemented("run()", 5090, "Use `fun:test` in the interim.");
 }
 
 function mock() {
-  throwNotImplemented("mock()", 5090, "Use `bun:test` in the interim.");
+  throwNotImplemented("mock()", 5090, "Use `fun:test` in the interim.");
 }
 
 function fileSnapshot(_value: unknown, _path: string, _options: { serializers?: Function[] } = kEmptyObject) {
-  throwNotImplemented("fileSnapshot()", 5090, "Use `bun:test` in the interim.");
+  throwNotImplemented("fileSnapshot()", 5090, "Use `fun:test` in the interim.");
 }
 
 function snapshot(_value: unknown, _options: { serializers?: Function[] } = kEmptyObject) {
-  throwNotImplemented("snapshot()", 5090, "Use `bun:test` in the interim.");
+  throwNotImplemented("snapshot()", 5090, "Use `fun:test` in the interim.");
 }
 
 const assert = {
@@ -90,7 +90,7 @@ class TestContext {
   }
 
   plan(_count: number, _options: { wait?: boolean } = kEmptyObject) {
-    throwNotImplemented("plan()", 5090, "Use `bun:test` in the interim.");
+    throwNotImplemented("plan()", 5090, "Use `fun:test` in the interim.");
   }
 
   get assert() {
@@ -98,48 +98,48 @@ class TestContext {
   }
 
   get mock() {
-    throwNotImplemented("mock", 5090, "Use `bun:test` in the interim.");
+    throwNotImplemented("mock", 5090, "Use `fun:test` in the interim.");
     return undefined;
   }
 
   runOnly(_value?: boolean) {
-    throwNotImplemented("runOnly()", 5090, "Use `bun:test` in the interim.");
+    throwNotImplemented("runOnly()", 5090, "Use `fun:test` in the interim.");
   }
 
   skip(_message?: string) {
-    throwNotImplemented("skip()", 5090, "Use `bun:test` in the interim.");
+    throwNotImplemented("skip()", 5090, "Use `fun:test` in the interim.");
   }
 
   todo(_message?: string) {
-    throwNotImplemented("todo()", 5090, "Use `bun:test` in the interim.");
+    throwNotImplemented("todo()", 5090, "Use `fun:test` in the interim.");
   }
 
   before(arg0: unknown, arg1: unknown) {
     const { fn } = createHook(arg0, arg1);
-    const { beforeAll } = bunTest();
+    const { beforeAll } = funTest();
     beforeAll(fn);
   }
 
   after(arg0: unknown, arg1: unknown) {
     const { fn } = createHook(arg0, arg1);
-    const { afterAll } = bunTest();
+    const { afterAll } = funTest();
     afterAll(fn);
   }
 
   beforeEach(arg0: unknown, arg1: unknown) {
     const { fn } = createHook(arg0, arg1);
-    const { beforeEach } = bunTest();
+    const { beforeEach } = funTest();
     beforeEach(fn);
   }
 
   afterEach(arg0: unknown, arg1: unknown) {
     const { fn } = createHook(arg0, arg1);
-    const { afterEach } = bunTest();
+    const { afterEach } = funTest();
     afterEach(fn);
   }
 
   waitFor(_condition: unknown, _options: { timeout?: number } = kEmptyObject) {
-    throwNotImplemented("waitFor()", 5090, "Use `bun:test` in the interim.");
+    throwNotImplemented("waitFor()", 5090, "Use `fun:test` in the interim.");
   }
 
   test(arg0: unknown, arg1: unknown, arg2: unknown) {
@@ -147,7 +147,7 @@ class TestContext {
 
     this.#checkNotInsideTest("test");
 
-    const { test } = bunTest();
+    const { test } = funTest();
     if (options.only) {
       test.only(name, fn);
     } else if (options.todo) {
@@ -164,13 +164,13 @@ class TestContext {
 
     this.#checkNotInsideTest("describe");
 
-    const { describe } = bunTest();
+    const { describe } = funTest();
     describe(name, fn);
   }
 
   #checkNotInsideTest(fn: string) {
     if (this.#insideTest) {
-      throwNotImplemented(`${fn}() inside another test()`, 5090, "Use `bun:test` in the interim.");
+      throwNotImplemented(`${fn}() inside another test()`, 5090, "Use `fun:test` in the interim.");
     }
   }
 
@@ -182,41 +182,41 @@ class TestContext {
   }
 }
 
-function bunTest() {
-  return jest(Bun.main);
+function funTest() {
+  return jest(Fun.main);
 }
 
 let ctx: TestContext | undefined = undefined;
 
 function describe(arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn } = createDescribe(arg0, arg1, arg2);
-  const { describe } = bunTest();
+  const { describe } = funTest();
   describe(name, fn);
 }
 
 describe.skip = function (arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn } = createDescribe(arg0, arg1, arg2);
-  const { describe } = bunTest();
+  const { describe } = funTest();
   describe.skip(name, fn);
 };
 
 describe.todo = function (arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn } = createDescribe(arg0, arg1, arg2);
-  const { describe } = bunTest();
+  const { describe } = funTest();
   describe.todo(name, fn);
 };
 
 describe.only = function (arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn } = createDescribe(arg0, arg1, arg2);
-  const { describe } = bunTest();
+  const { describe } = funTest();
   describe.only(name, fn);
 };
 
 function test(arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn, options } = createTest(arg0, arg1, arg2);
-  const { test } = bunTest();
+  const { test } = funTest();
   // Node's {only: true} is intentionally not routed to test.only() here:
-  // in Node it is a no-op unless --test-only is passed, whereas bun:test's
+  // in Node it is a no-op unless --test-only is passed, whereas fun:test's
   // test.only() unconditionally skips siblings.
   if (options.todo) {
     test.todo(name, fn, options);
@@ -229,43 +229,43 @@ function test(arg0: unknown, arg1: unknown, arg2: unknown) {
 
 test.skip = function (arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn, options } = createTest(arg0, arg1, arg2);
-  const { test } = bunTest();
+  const { test } = funTest();
   test.skip(name, fn, options);
 };
 
 test.todo = function (arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn, options } = createTest(arg0, arg1, arg2);
-  const { test } = bunTest();
+  const { test } = funTest();
   test.todo(name, fn, options);
 };
 
 test.only = function (arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn, options } = createTest(arg0, arg1, arg2);
-  const { test } = bunTest();
+  const { test } = funTest();
   test.only(name, fn, options);
 };
 
 function before(arg0: unknown, arg1: unknown) {
   const { fn } = createHook(arg0, arg1);
-  const { beforeAll } = bunTest();
+  const { beforeAll } = funTest();
   beforeAll(fn);
 }
 
 function after(arg0: unknown, arg1: unknown) {
   const { fn } = createHook(arg0, arg1);
-  const { afterAll } = bunTest();
+  const { afterAll } = funTest();
   afterAll(fn);
 }
 
 function beforeEach(arg0: unknown, arg1: unknown) {
   const { fn } = createHook(arg0, arg1);
-  const { beforeEach } = bunTest();
+  const { beforeEach } = funTest();
   beforeEach(fn);
 }
 
 function afterEach(arg0: unknown, arg1: unknown) {
   const { fn } = createHook(arg0, arg1);
-  const { afterEach } = bunTest();
+  const { afterEach } = funTest();
   afterEach(fn);
 }
 
@@ -311,7 +311,7 @@ function createTest(arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, options, fn } = parseTestOptions(arg0, arg1, arg2);
 
   checkNotInsideTest(ctx, "test");
-  const context = new TestContext(true, name, Bun.main, ctx);
+  const context = new TestContext(true, name, Fun.main, ctx);
 
   const runTest = (done: (error?: unknown) => void) => {
     const originalContext = ctx;
@@ -345,7 +345,7 @@ function createDescribe(arg0: unknown, arg1: unknown, arg2: unknown) {
   const { name, fn, options } = parseTestOptions(arg0, arg1, arg2);
 
   checkNotInsideTest(ctx, "describe");
-  const context = new TestContext(false, name, Bun.main, ctx);
+  const context = new TestContext(false, name, Fun.main, ctx);
 
   const runDescribe = () => {
     const originalContext = ctx;
@@ -423,11 +423,11 @@ type HookOptions = {
 };
 
 function setDefaultSnapshotSerializer(_serializers: unknown[]) {
-  throwNotImplemented("setDefaultSnapshotSerializer()", 5090, "Use `bun:test` in the interim.");
+  throwNotImplemented("setDefaultSnapshotSerializer()", 5090, "Use `fun:test` in the interim.");
 }
 
 function setResolveSnapshotPath(_fn: unknown) {
-  throwNotImplemented("setResolveSnapshotPath()", 5090, "Use `bun:test` in the interim.");
+  throwNotImplemented("setResolveSnapshotPath()", 5090, "Use `fun:test` in the interim.");
 }
 
 test.describe = describe;

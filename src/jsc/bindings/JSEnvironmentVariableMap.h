@@ -8,7 +8,7 @@ namespace JSC {
 class JSValue;
 }
 
-namespace Bun {
+namespace Fun {
 
 JSC::JSValue createEnvironmentVariablesMap(Zig::GlobalObject* globalObject);
 

@@ -77,7 +77,7 @@ pub const KeepAlive = struct {
         if (this.status != .active)
             return;
         this.status = .inactive;
-        // TODO: https://github.com/oven-sh/bun/pull/4410#discussion_r1317326194
+        // TODO: https://github.com/underdoc-org/fun/pull/4410#discussion_r1317326194
         vm.event_loop_handle.?.dec();
     }
 
@@ -113,7 +113,7 @@ pub const KeepAlive = struct {
 };
 
 pub const FilePoll = struct {
-    fd: bun.FD,
+    fd: fun.FD,
     owner: Owner = undefined,
     flags: Flags.Set = Flags.Set{},
     next_to_free: ?*FilePoll = null,
@@ -151,11 +151,11 @@ pub const FilePoll = struct {
         // vm.event_loop_handle.?.active_handles -= @as(u32, @intFromBool(this.flags.contains(.has_incremented_poll_count)));
     }
 
-    pub fn init(vm: *jsc.VirtualMachine, fd: bun.FD, flags: Flags.Struct, comptime Type: type, owner: *Type) *FilePoll {
+    pub fn init(vm: *jsc.VirtualMachine, fd: fun.FD, flags: Flags.Struct, comptime Type: type, owner: *Type) *FilePoll {
         return initWithOwner(vm, fd, flags, Owner.init(owner));
     }
 
-    pub fn initWithOwner(vm: *jsc.VirtualMachine, fd: bun.FD, flags: Flags.Struct, owner: Owner) *FilePoll {
+    pub fn initWithOwner(vm: *jsc.VirtualMachine, fd: fun.FD, flags: Flags.Struct, owner: Owner) *FilePoll {
         var poll = vm.rareData().filePolls(vm).get();
         poll.fd = fd;
         poll.flags = Flags.Set.init(flags);
@@ -170,7 +170,7 @@ pub const FilePoll = struct {
         this.deinitWithVM(vm);
     }
 
-    pub inline fn fileDescriptor(this: *FilePoll) bun.FD {
+    pub inline fn fileDescriptor(this: *FilePoll) fun.FD {
         return this.fd;
     }
 
@@ -192,7 +192,7 @@ pub const FilePoll = struct {
 
         const was_ever_registered = this.flags.contains(.was_ever_registered);
         this.flags = Flags.Set{};
-        this.fd = bun.invalid_fd;
+        this.fd = fun.invalid_fd;
         polls.put(this, vm, was_ever_registered);
     }
 
@@ -245,7 +245,7 @@ pub const FilePoll = struct {
 
     /// Only intended to be used from EventLoop.Pollable
     pub fn deactivate(this: *FilePoll, loop: *Loop) void {
-        bun.assert(this.flags.contains(.has_incremented_poll_count));
+        fun.assert(this.flags.contains(.has_incremented_poll_count));
         loop.subActive(@as(u32, @intFromBool(this.flags.contains(.has_incremented_poll_count))));
         log("deactivate - {d}", .{loop.active_handles});
         this.flags.remove(.has_incremented_poll_count);
@@ -298,7 +298,7 @@ pub const FilePoll = struct {
         this.activate(event_loop_ctx.platformEventLoop());
     }
 
-    const HiveArray = bun.HiveArray(FilePoll, 128).Fallback;
+    const HiveArray = fun.HiveArray(FilePoll, 128).Fallback;
 
     pub const Store = struct {
         hive: HiveArray,
@@ -309,7 +309,7 @@ pub const FilePoll = struct {
 
         pub fn init() Store {
             return .{
-                .hive = HiveArray.init(bun.typedAllocator(FilePoll)),
+                .hive = HiveArray.init(fun.typedAllocator(FilePoll)),
             };
         }
 
@@ -334,24 +334,24 @@ pub const FilePoll = struct {
                 return;
             }
 
-            bun.assert(poll.next_to_free == null);
+            fun.assert(poll.next_to_free == null);
 
             if (this.pending_free_tail) |tail| {
-                bun.assert(this.pending_free_head != null);
-                bun.assert(tail.next_to_free == null);
+                fun.assert(this.pending_free_head != null);
+                fun.assert(tail.next_to_free == null);
                 tail.next_to_free = poll;
             }
 
             if (this.pending_free_head == null) {
                 this.pending_free_head = poll;
-                bun.assert(this.pending_free_tail == null);
+                fun.assert(this.pending_free_tail == null);
             }
 
             poll.flags.insert(.ignore_updates);
             this.pending_free_tail = poll;
 
             const callback = jsc.OpaqueWrap(Store, processDeferredFrees);
-            bun.assert(vm.after_event_loop_callback == null or vm.after_event_loop_callback == @as(?jsc.OpaqueCallback, callback));
+            fun.assert(vm.after_event_loop_callback == null or vm.after_event_loop_callback == @as(?jsc.OpaqueCallback, callback));
             vm.after_event_loop_callback = callback;
             vm.after_event_loop_callback_ctx = this;
         }
@@ -359,17 +359,17 @@ pub const FilePoll = struct {
 };
 
 pub const Waker = struct {
-    loop: *bun.uws.WindowsLoop,
+    loop: *fun.uws.WindowsLoop,
 
     pub fn init() !Waker {
-        return .{ .loop = bun.uws.WindowsLoop.get() };
+        return .{ .loop = fun.uws.WindowsLoop.get() };
     }
 
-    pub fn getFd(_: *const Waker) bun.FD {
+    pub fn getFd(_: *const Waker) fun.FD {
         @compileError("Waker.getFd is unsupported on Windows");
     }
 
-    pub fn initWithFileDescriptor(_: bun.FD) Waker {
+    pub fn initWithFileDescriptor(_: fun.FD) Waker {
         @compileError("Waker.initWithFileDescriptor is unsupported on Windows");
     }
 
@@ -385,20 +385,20 @@ pub const Waker = struct {
 pub const Closer = struct {
     io_request: uv.fs_t,
 
-    pub fn close(fd: bun.FD, loop: *uv.Loop) void {
-        const closer = bun.new(Closer, .{ .io_request = std.mem.zeroes(uv.fs_t) });
+    pub fn close(fd: fun.FD, loop: *uv.Loop) void {
+        const closer = fun.new(Closer, .{ .io_request = std.mem.zeroes(uv.fs_t) });
         // data is not overridden by libuv when calling uv_fs_close, its ok to set it here
         closer.io_request.data = closer;
         if (uv.uv_fs_close(loop, &closer.io_request, fd.uv(), onClose).errEnum()) |err| {
             Output.debugWarn("libuv close() failed = {}", .{err});
-            bun.destroy(closer);
+            fun.destroy(closer);
         }
     }
 
     fn onClose(req: *uv.fs_t) callconv(.c) void {
         var closer: *Closer = @fieldParentPtr("io_request", req);
-        bun.assert(closer == @as(*Closer, @ptrCast(@alignCast(req.data.?))));
-        bun.sys.syslog("uv_fs_close({f}) = {f}", .{ bun.FD.fromUV(req.file.fd), req.result });
+        fun.assert(closer == @as(*Closer, @ptrCast(@alignCast(req.data.?))));
+        fun.sys.syslog("uv_fs_close({f}) = {f}", .{ fun.FD.fromUV(req.file.fd), req.result });
 
         if (comptime Environment.allow_assert) {
             if (closer.io_request.result.errEnum()) |err| {
@@ -407,16 +407,16 @@ pub const Closer = struct {
         }
 
         req.deinit();
-        bun.destroy(closer);
+        fun.destroy(closer);
     }
 };
 
 const Posix = @import("./posix_event_loop.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const jsc = bun.jsc;
-const uws = bun.uws;
-const uv = bun.windows.libuv;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const jsc = fun.jsc;
+const uws = fun.uws;
+const uv = fun.windows.libuv;

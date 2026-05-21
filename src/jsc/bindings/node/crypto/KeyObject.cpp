@@ -15,11 +15,11 @@
 #include "JSCryptoKey.h"
 #include "CryptoGenKeyPair.h"
 #include "JSBuffer.h"
-#include "BunString.h"
+#include "FunString.h"
 
-namespace Bun {
+namespace Fun {
 
-using namespace Bun;
+using namespace Fun;
 using namespace JSC;
 using namespace ncrypto;
 using namespace WebCore;

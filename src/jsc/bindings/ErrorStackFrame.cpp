@@ -5,7 +5,7 @@
 #include "wtf/Assertions.h"
 #include "wtf/text/OrdinalNumber.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 /// Adjust a `ZigStackFramePosition` by a number of bytes. This accounts for when the adjustment
@@ -33,7 +33,7 @@ void adjustPositionBackwards(ZigStackFramePosition& pos, int amount, CodeBlock* 
         auto source = provider->source();
         if (!source.is8Bit()) {
             // Debug-only assertion
-            // Bun does not yet use 16-bit sources anywhere. The transpiler ensures everything
+            // Fun does not yet use 16-bit sources anywhere. The transpiler ensures everything
             // fit's into latin1 / 8-bit strings for on-average lower memory usage.
             ASSERT_NOT_REACHED("16-bit source re-mapping is not implemented here.");
 
@@ -98,4 +98,4 @@ ZigStackFramePosition getAdjustedPositionForBytecode(JSC::CodeBlock* code, JSC::
     return pos;
 }
 
-} // namespace Bun
+} // namespace Fun

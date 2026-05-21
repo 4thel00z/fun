@@ -3,5 +3,5 @@ bench
 vendor
 *-fixture.{js,ts}
 zig-cache
-packages/bun-uws/fuzzing
+packages/fun-uws/fuzzing
 build

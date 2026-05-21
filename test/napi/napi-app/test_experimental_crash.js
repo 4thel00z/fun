@@ -11,8 +11,8 @@ arr = null;
 if (global.gc) {
   global.gc();
   console.log('GC triggered - should crash now');
-} else if (process.isBun && Bun.gc) {
-  Bun.gc(true);
+} else if (process.isFun && Fun.gc) {
+  Fun.gc(true);
   console.log('GC triggered - should crash now');
 }
 

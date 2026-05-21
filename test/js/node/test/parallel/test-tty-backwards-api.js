@@ -4,7 +4,7 @@ const common = require('../common');
 const assert = require('assert');
 const readline = require('readline');
 
-if(typeof Bun === "undefined") {
+if(typeof Fun === "undefined") {
   const noop = () => {};
   const { internalBinding } = require('internal/test/binding');
   const TTY = internalBinding('tty_wrap').TTY = function() {};

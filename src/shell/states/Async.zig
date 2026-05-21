@@ -100,7 +100,7 @@ pub fn next(this: *Async) Yield {
                         this.io.copy(),
                     )),
                     else => {
-                        @panic("Encountered an unexpected child of an async command, this indicates a bug in Bun. Please open a GitHub issue.");
+                        @panic("Encountered an unexpected child of an async command, this indicates a bug in Fun. Please open a GitHub issue.");
                     },
                 }
             };
@@ -158,24 +158,24 @@ pub fn runFromMainThreadMini(this: *Async, _: *void) void {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const shell = bun.shell;
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const shell = fun.shell;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Binary = bun.shell.Interpreter.Binary;
-const Cmd = bun.shell.Interpreter.Cmd;
-const CondExpr = bun.shell.Interpreter.CondExpr;
-const IO = bun.shell.Interpreter.IO;
-const If = bun.shell.Interpreter.If;
-const Pipeline = bun.shell.Interpreter.Pipeline;
+const Interpreter = fun.shell.Interpreter;
+const Binary = fun.shell.Interpreter.Binary;
+const Cmd = fun.shell.Interpreter.Cmd;
+const CondExpr = fun.shell.Interpreter.CondExpr;
+const IO = fun.shell.Interpreter.IO;
+const If = fun.shell.Interpreter.If;
+const Pipeline = fun.shell.Interpreter.Pipeline;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Stmt = bun.shell.Interpreter.Stmt;
+const State = fun.shell.Interpreter.State;
+const Stmt = fun.shell.Interpreter.Stmt;
 
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const log = bun.shell.interpret.log;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const log = fun.shell.interpret.log;

@@ -1,12 +1,12 @@
-// https://github.com/oven-sh/bun/issues/24850
+// https://github.com/underdoc-org/fun/issues/24850
 //
 // Calling a MySQL stored procedure via the prepared-statement path returned
 // the first result set and then leaked an error for the trailing OK packet,
 // because the prepared branch of onResolveMySQLQuery resolved on the first
 // result instead of waiting for SERVER_MORE_RESULTS_EXISTS to clear.
 
-import { SQL } from "bun";
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { SQL } from "fun";
+import { afterAll, beforeAll, expect, test } from "fun:test";
 import { describeWithContainer } from "harness";
 
 describeWithContainer(
@@ -18,13 +18,13 @@ describeWithContainer(
     beforeAll(async () => {
       await container.ready;
       sql = new SQL({
-        url: `mysql://root:@${container.host}:${container.port}/bun_sql_test`,
+        url: `mysql://root:@${container.host}:${container.port}/fun_sql_test`,
         max: 1,
       });
 
-      await sql.unsafe(`DROP PROCEDURE IF EXISTS bun_24850`);
+      await sql.unsafe(`DROP PROCEDURE IF EXISTS fun_24850`);
       await sql.unsafe(`
-        CREATE PROCEDURE bun_24850(IN p JSON)
+        CREATE PROCEDURE fun_24850(IN p JSON)
         BEGIN
           SELECT JSON_VALUE(p, '$.id') + 0 AS id, JSON_VALUE(p, '$.value') AS value;
         END
@@ -33,13 +33,13 @@ describeWithContainer(
 
     afterAll(async () => {
       if (!sql) return;
-      await sql.unsafe(`DROP PROCEDURE IF EXISTS bun_24850`).catch(() => {});
+      await sql.unsafe(`DROP PROCEDURE IF EXISTS fun_24850`).catch(() => {});
       await sql.close();
     });
 
     test("CALL via prepared statement returns rows without leaking an error", async () => {
       const param = JSON.stringify({ id: 7, value: "hello" });
-      const result = await sql`CALL bun_24850(${param})`;
+      const result = await sql`CALL fun_24850(${param})`;
 
       // CALL produces the SELECT result set followed by a final OK packet, so
       // the resolved value is an array of result sets.
@@ -57,7 +57,7 @@ describeWithContainer(
     });
 
     test("CALL via sql.unsafe with params (prepared) returns rows without leaking an error", async () => {
-      const result = await sql.unsafe(`CALL bun_24850(?)`, [JSON.stringify({ id: 3, value: "world" })]);
+      const result = await sql.unsafe(`CALL fun_24850(?)`, [JSON.stringify({ id: 3, value: "world" })]);
       expect(result.length).toBe(2);
       const [rows, ok] = result as any;
       expect(rows[0]).toEqual({ id: 3, value: "world" });

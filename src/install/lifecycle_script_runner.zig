@@ -24,31 +24,31 @@ pub const LifecycleScriptSubprocess = struct {
 
     ctx: ?InstallCtx,
 
-    heap: bun.io.heap.IntrusiveField(LifecycleScriptSubprocess) = .{},
+    heap: fun.io.heap.IntrusiveField(LifecycleScriptSubprocess) = .{},
 
     pub const InstallCtx = struct {
         entry_id: Store.Entry.Id,
         installer: *Store.Installer,
     };
 
-    pub const List = bun.io.heap.Intrusive(LifecycleScriptSubprocess, *PackageManager, sortByStartedAt);
+    pub const List = fun.io.heap.Intrusive(LifecycleScriptSubprocess, *PackageManager, sortByStartedAt);
 
     fn sortByStartedAt(_: *PackageManager, a: *LifecycleScriptSubprocess, b: *LifecycleScriptSubprocess) bool {
         return a.started_at < b.started_at;
     }
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub const min_milliseconds_to_log = 500;
 
     pub var alive_count: std.atomic.Value(usize) = .init(0);
 
-    const uv = bun.windows.libuv;
+    const uv = fun.windows.libuv;
 
-    pub const OutputReader = bun.io.BufferedReader;
+    pub const OutputReader = fun.io.BufferedReader;
 
-    pub fn loop(this: *const LifecycleScriptSubprocess) *bun.Async.Loop {
-        if (comptime bun.Environment.isWindows) {
+    pub fn loop(this: *const LifecycleScriptSubprocess) *fun.Async.Loop {
+        if (comptime fun.Environment.isWindows) {
             return this.manager.event_loop.loop().uv_loop;
         } else {
             return this.manager.event_loop.loop();
@@ -60,19 +60,19 @@ pub const LifecycleScriptSubprocess = struct {
     }
 
     pub fn scriptName(this: *const LifecycleScriptSubprocess) []const u8 {
-        bun.assert(this.current_script_index < Lockfile.Scripts.names.len);
+        fun.assert(this.current_script_index < Lockfile.Scripts.names.len);
         return Lockfile.Scripts.names[this.current_script_index];
     }
 
     pub fn onReaderDone(this: *LifecycleScriptSubprocess) void {
-        bun.assert(this.remaining_fds > 0);
+        fun.assert(this.remaining_fds > 0);
         this.remaining_fds -= 1;
 
         this.maybeFinished();
     }
 
-    pub fn onReaderError(this: *LifecycleScriptSubprocess, err: bun.sys.Error) void {
-        bun.assert(this.remaining_fds > 0);
+    pub fn onReaderError(this: *LifecycleScriptSubprocess, err: fun.sys.Error) void {
+        fun.assert(this.remaining_fds > 0);
         this.remaining_fds -= 1;
 
         Output.prettyErrorln("<r><red>error<r>: Failed to read <b>{s}<r> script output from \"<b>{s}<r>\" due to error <b>{d} {s}<r>", .{
@@ -94,7 +94,7 @@ pub const LifecycleScriptSubprocess = struct {
         this.handleExit(process.status);
     }
 
-    fn resetOutputFlags(output: *OutputReader, fd: bun.FD) void {
+    fn resetOutputFlags(output: *OutputReader, fd: fun.FD) void {
         output.flags.nonblocking = true;
         output.flags.socket = true;
         output.flags.memfd = false;
@@ -102,11 +102,11 @@ pub const LifecycleScriptSubprocess = struct {
         output.flags.closed_without_reporting = false;
 
         if (comptime Environment.allow_assert) {
-            const flags = bun.sys.getFcntlFlags(fd).unwrap() catch @panic("Failed to get fcntl flags");
-            bun.assertWithLocation(flags & bun.O.NONBLOCK != 0, @src());
+            const flags = fun.sys.getFcntlFlags(fd).unwrap() catch @panic("Failed to get fcntl flags");
+            fun.assertWithLocation(flags & fun.O.NONBLOCK != 0, @src());
 
-            const stat = bun.sys.fstat(fd).unwrap() catch @panic("Failed to fstat");
-            bun.assertWithLocation(std.posix.S.ISSOCK(stat.mode), @src());
+            const stat = fun.sys.fstat(fd).unwrap() catch @panic("Failed to fstat");
+            fun.assertWithLocation(std.posix.S.ISSOCK(stat.mode), @src());
         }
     }
 
@@ -119,7 +119,7 @@ pub const LifecycleScriptSubprocess = struct {
     /// Used to be called from multiple threads during isolated installs; now single-threaded
     /// TODO: re-evaluate whether some variables still need to be atomic
     pub fn spawnNextScript(this: *LifecycleScriptSubprocess, next_script_index: u8) !void {
-        bun.analytics.Features.lifecycle_scripts += 1;
+        fun.analytics.Features.lifecycle_scripts += 1;
 
         if (!this.has_incremented_alive_count) {
             this.has_incremented_alive_count = true;
@@ -151,7 +151,7 @@ pub const LifecycleScriptSubprocess = struct {
 
         var copy_script = try std.array_list.Managed(u8).initCapacity(manager.allocator, original_script.len + 1);
         defer copy_script.deinit();
-        try bun.cli.RunCommand.replacePackageManagerRun(&copy_script, original_script);
+        try fun.cli.RunCommand.replacePackageManagerRun(&copy_script, original_script);
         try copy_script.append(0);
 
         const combined_script: [:0]u8 = copy_script.items[0 .. copy_script.items.len - 1 :0];
@@ -181,16 +181,16 @@ pub const LifecycleScriptSubprocess = struct {
             combined_script,
             null,
         } else [_]?[*:0]const u8{
-            try bun.selfExePath(),
+            try fun.selfExePath(),
             "exec",
             combined_script,
             null,
         };
         if (Environment.isWindows) {
-            this.stdout.source = .{ .pipe = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) };
-            this.stderr.source = .{ .pipe = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) };
+            this.stdout.source = .{ .pipe = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) };
+            this.stderr.source = .{ .pipe = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) };
         }
-        const spawn_options = bun.spawn.SpawnOptions{
+        const spawn_options = fun.spawn.SpawnOptions{
             .stdin = if (this.foreground)
                 .inherit
             else
@@ -226,15 +226,15 @@ pub const LifecycleScriptSubprocess = struct {
         };
 
         this.remaining_fds = 0;
-        this.started_at = bun.timespec.now(.allow_mocked_time).ns();
+        this.started_at = fun.timespec.now(.allow_mocked_time).ns();
         this.manager.active_lifecycle_scripts.insert(this);
-        var spawned = try (try bun.spawn.spawnProcess(&spawn_options, @ptrCast(&argv), this.envp)).unwrap();
+        var spawned = try (try fun.spawn.spawnProcess(&spawn_options, @ptrCast(&argv), this.envp)).unwrap();
 
         if (comptime Environment.isPosix) {
             if (spawned.stdout) |stdout| {
                 if (!spawned.memfds[1]) {
                     this.stdout.setParent(this);
-                    _ = bun.sys.setNonblocking(stdout);
+                    _ = fun.sys.setNonblocking(stdout);
                     this.remaining_fds += 1;
 
                     resetOutputFlags(&this.stdout, stdout);
@@ -250,7 +250,7 @@ pub const LifecycleScriptSubprocess = struct {
             if (spawned.stderr) |stderr| {
                 if (!spawned.memfds[2]) {
                     this.stderr.setParent(this);
-                    _ = bun.sys.setNonblocking(stderr);
+                    _ = fun.sys.setNonblocking(stderr);
                     this.remaining_fds += 1;
 
                     resetOutputFlags(&this.stderr, stderr);
@@ -282,14 +282,14 @@ pub const LifecycleScriptSubprocess = struct {
             false,
         );
 
-        bun.assertf(this.process == null, "forgot to call `resetPolls`", .{});
+        fun.assertf(this.process == null, "forgot to call `resetPolls`", .{});
         this.process = process;
         process.setExitHandler(this);
 
         switch (process.watchOrReap()) {
             .err => |err| {
                 if (!process.hasExited())
-                    process.onExit(.{ .err = err }, &std.mem.zeroes(bun.spawn.Rusage));
+                    process.onExit(.{ .err = err }, &std.mem.zeroes(fun.spawn.Rusage));
             },
             .result => {},
         }
@@ -302,7 +302,7 @@ pub const LifecycleScriptSubprocess = struct {
             // Reuse the memory
             if (stdout.items.len == 0 and stdout.capacity > 0 and this.stderr.buffer().capacity == 0) {
                 this.stderr.buffer().* = stdout.*;
-                stdout.* = std.array_list.Managed(u8).init(bun.default_allocator);
+                stdout.* = std.array_list.Managed(u8).init(fun.default_allocator);
             }
 
             var stderr = this.stderr.finalBuffer();
@@ -328,7 +328,7 @@ pub const LifecycleScriptSubprocess = struct {
         }
     }
 
-    fn handleExit(this: *LifecycleScriptSubprocess, status: bun.spawn.Status) void {
+    fn handleExit(this: *LifecycleScriptSubprocess, status: fun.spawn.Status) void {
         log("{s} - {s} finished {f}", .{ this.package_name, this.scriptName(), status });
 
         if (this.has_incremented_alive_count) {
@@ -395,7 +395,7 @@ pub const LifecycleScriptSubprocess = struct {
                         // preinstall
                         0 => {
                             const previous_step = ctx.installer.store.entries.items(.step)[ctx.entry_id.get()].swap(.binaries, .release);
-                            bun.debugAssert(previous_step == .run_preinstall);
+                            fun.debugAssert(previous_step == .run_preinstall);
                             ctx.installer.startTask(ctx.entry_id);
                             this.decrementPendingScriptTasks();
                             this.deinit();
@@ -421,15 +421,15 @@ pub const LifecycleScriptSubprocess = struct {
 
                 if (PackageManager.verbose_install) {
                     Output.prettyErrorln("<r><d>[Scripts]<r> Finished scripts for <b>{f}<r>", .{
-                        bun.fmt.quote(this.package_name),
+                        fun.fmt.quote(this.package_name),
                     });
                 }
 
                 if (this.ctx) |ctx| {
                     const previous_step = ctx.installer.store.entries.items(.step)[ctx.entry_id.get()].swap(.done, .release);
                     if (comptime Environment.ci_assert) {
-                        bun.assertWithLocation(this.current_script_index != 0, @src());
-                        bun.assertWithLocation(previous_step == .@"run (post)install and (pre/post)prepare", @src());
+                        fun.assertWithLocation(this.current_script_index != 0, @src());
+                        fun.assertWithLocation(previous_step == .@"run (post)install and (pre/post)prepare", @src());
                     }
                     ctx.installer.onTaskComplete(ctx.entry_id, .success);
                 }
@@ -440,7 +440,7 @@ pub const LifecycleScriptSubprocess = struct {
             },
             .signaled => |signal| {
                 this.printOutput();
-                const signal_code = bun.SignalCode.from(signal);
+                const signal_code = fun.SignalCode.from(signal);
 
                 Output.prettyErrorln("<r><red>error<r><d>:<r> <b>{s}<r> script from \"<b>{s}<r>\" terminated by {f}<r>", .{
                     this.scriptName(),
@@ -481,7 +481,7 @@ pub const LifecycleScriptSubprocess = struct {
     }
 
     /// This function may free the *LifecycleScriptSubprocess
-    pub fn onProcessExit(this: *LifecycleScriptSubprocess, proc: *Process, _: bun.spawn.Status, _: *const bun.spawn.Rusage) void {
+    pub fn onProcessExit(this: *LifecycleScriptSubprocess, proc: *Process, _: fun.spawn.Status, _: *const fun.spawn.Rusage) void {
         if (this.process != proc) {
             Output.debugWarn("<d>[LifecycleScriptSubprocess]<r> onProcessExit called with wrong process", .{});
             return;
@@ -492,7 +492,7 @@ pub const LifecycleScriptSubprocess = struct {
 
     pub fn resetPolls(this: *LifecycleScriptSubprocess) void {
         if (comptime Environment.allow_assert) {
-            bun.assert(this.remaining_fds == 0);
+            fun.assert(this.remaining_fds == 0);
         }
 
         if (this.process) |process| {
@@ -517,7 +517,7 @@ pub const LifecycleScriptSubprocess = struct {
         }
 
         this.* = undefined;
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     pub fn deinitAndDeletePackage(this: *LifecycleScriptSubprocess) void {
@@ -530,7 +530,7 @@ pub const LifecycleScriptSubprocess = struct {
         try_delete_dir: {
             const dirname = std.fs.path.dirname(this.scripts.cwd) orelse break :try_delete_dir;
             const basename = std.fs.path.basename(this.scripts.cwd);
-            const dir = bun.openDirAbsolute(dirname) catch break :try_delete_dir;
+            const dir = fun.openDirAbsolute(dirname) catch break :try_delete_dir;
             dir.deleteTree(basename) catch break :try_delete_dir;
         }
 
@@ -596,10 +596,10 @@ const std = @import("std");
 const PackageManager = @import("./install.zig").PackageManager;
 const Timer = std.time.Timer;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const jsc = bun.jsc;
-const Process = bun.spawn.Process;
-const Store = bun.install.Store;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const jsc = fun.jsc;
+const Process = fun.spawn.Process;
+const Store = fun.install.Store;

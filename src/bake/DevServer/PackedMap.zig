@@ -19,7 +19,7 @@ end_state: struct {
     original_column: i32,
 },
 
-pub fn newNonEmpty(chunk: *SourceMap.Chunk, escaped_source: Owned([]u8)) bun.ptr.Shared(*Self) {
+pub fn newNonEmpty(chunk: *SourceMap.Chunk, escaped_source: Owned([]u8)) fun.ptr.Shared(*Self) {
     var buffer = &chunk.buffer;
     assert(!buffer.isEmpty());
     const dev_allocator = DevAllocator.downcast(buffer.allocator);
@@ -61,13 +61,13 @@ comptime {
 
 const PackedMap = Self;
 
-pub const LineCount = bun.GenericIndex(u32, u8);
+pub const LineCount = fun.GenericIndex(u32, u8);
 
 /// HTML, CSS, Assets, and failed files do not have source maps. These cases
 /// should never allocate an object. There is still relevant state for these
 /// files to encode, so a tagged union is used.
 pub const Shared = union(enum) {
-    some: bun.ptr.Shared(*PackedMap),
+    some: fun.ptr.Shared(*PackedMap),
     none: void,
     line_count: LineCount,
 
@@ -78,7 +78,7 @@ pub const Shared = union(enum) {
         };
     }
 
-    pub fn take(self: *Shared) ?bun.ptr.Shared(*PackedMap) {
+    pub fn take(self: *Shared) ?fun.ptr.Shared(*PackedMap) {
         switch (self.*) {
             .some => |ptr| {
                 self.* = .none;
@@ -112,13 +112,13 @@ pub const Shared = union(enum) {
     }
 };
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const SourceMap = bun.SourceMap;
-const assert = bun.assert;
-const assert_eql = bun.assert_eql;
-const Chunk = bun.bundle_v2.Chunk;
-const DevAllocator = bun.bake.DevServer.DevAllocator;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const SourceMap = fun.SourceMap;
+const assert = fun.assert;
+const assert_eql = fun.assert_eql;
+const Chunk = fun.bundle_v2.Chunk;
+const DevAllocator = fun.bake.DevServer.DevAllocator;
 
-const Owned = bun.ptr.Owned;
-const OwnedIn = bun.ptr.OwnedIn;
+const Owned = fun.ptr.Owned;
+const OwnedIn = fun.ptr.OwnedIn;

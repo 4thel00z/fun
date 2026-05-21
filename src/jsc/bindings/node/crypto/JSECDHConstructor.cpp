@@ -11,7 +11,7 @@
 #include "openssl/err.h"
 #include "ncrypto.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsECDHConvertKey);
 
@@ -50,7 +50,7 @@ JSC_DEFINE_HOST_FUNCTION(constructECDH, (JSC::JSGlobalObject * globalObject, JSC
 
     JSValue curveValue = callFrame->argument(0);
 
-    Bun::V::validateString(scope, globalObject, curveValue, "curve"_s);
+    Fun::V::validateString(scope, globalObject, curveValue, "curve"_s);
     RETURN_IF_EXCEPTION(scope, {});
 
     WTF::String curveString = curveValue.toWTFString(globalObject);
@@ -60,12 +60,12 @@ JSC_DEFINE_HOST_FUNCTION(constructECDH, (JSC::JSGlobalObject * globalObject, JSC
 
     int nid = OBJ_sn2nid(curve.data());
     if (nid == NID_undef) {
-        return Bun::ERR::CRYPTO_INVALID_CURVE(scope, globalObject);
+        return Fun::ERR::CRYPTO_INVALID_CURVE(scope, globalObject);
     }
 
     auto key = ncrypto::ECKeyPointer::NewByCurveName(nid);
     if (!key) {
-        return Bun::ERR::CRYPTO_OPERATION_FAILED(scope, globalObject, "Failed to create key using named curve"_s);
+        return Fun::ERR::CRYPTO_OPERATION_FAILED(scope, globalObject, "Failed to create key using named curve"_s);
     }
 
     auto* zigGlobalObject = defaultGlobalObject(globalObject);
@@ -82,7 +82,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHConvertKey, (JSC::JSGlobalObject * lexicalGlobalO
     ncrypto::ClearErrorOnReturn clearErrorOnReturn;
 
     JSValue curveValue = callFrame->argument(1);
-    Bun::V::validateString(scope, lexicalGlobalObject, curveValue, "curve"_s);
+    Fun::V::validateString(scope, lexicalGlobalObject, curveValue, "curve"_s);
     RETURN_IF_EXCEPTION(scope, {});
 
     JSValue keyValue = callFrame->argument(0);
@@ -101,7 +101,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHConvertKey, (JSC::JSGlobalObject * lexicalGlobalO
 
     int nid = OBJ_sn2nid(curveName.utf8().data());
     if (nid == NID_undef)
-        return Bun::ERR::CRYPTO_INVALID_CURVE(scope, lexicalGlobalObject);
+        return Fun::ERR::CRYPTO_INVALID_CURVE(scope, lexicalGlobalObject);
 
     auto group = ncrypto::ECGroupPointer::NewByCurveName(nid);
     if (!group)
@@ -115,7 +115,7 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHConvertKey, (JSC::JSGlobalObject * lexicalGlobalO
     size_t key_length = buffer.size();
 
     if (!point.setFromBuffer({ key_data, key_length }, group)) {
-        return Bun::ERR::CRYPTO_OPERATION_FAILED(scope, lexicalGlobalObject, "Failed to convert Buffer to EC_POINT"_s);
+        return Fun::ERR::CRYPTO_OPERATION_FAILED(scope, lexicalGlobalObject, "Failed to convert Buffer to EC_POINT"_s);
     }
 
     size_t size = EC_POINT_point2oct(group, point, form, nullptr, 0, nullptr);
@@ -140,4 +140,4 @@ JSC_DEFINE_HOST_FUNCTION(jsECDHConvertKey, (JSC::JSGlobalObject * lexicalGlobalO
     RELEASE_AND_RETURN(scope, StringBytes::encode(lexicalGlobalObject, scope, buf.span(), outEnc));
 }
 
-} // namespace Bun
+} // namespace Fun

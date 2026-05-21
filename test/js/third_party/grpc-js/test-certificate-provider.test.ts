@@ -16,7 +16,7 @@
  */
 
 import * as grpc from "@grpc/grpc-js";
-import { beforeAll, describe, it } from "bun:test";
+import { beforeAll, describe, it } from "fun:test";
 import * as fs from "fs/promises";
 import assert from "node:assert";
 import * as path from "path";

@@ -1,9 +1,9 @@
-// Bun.Image vs sharp — wall-clock + RSS for the common server-side image
+// Fun.Image vs sharp — wall-clock + RSS for the common server-side image
 // pipeline (decode, fit-inside resize, JPEG/WebP encode).
 //
 // Fixture is generated in-process so nothing binary is committed and the
 // numbers are reproducible across machines. Run with --sharp to include the
-// sharp column (requires `bun install` in this dir first).
+// sharp column (requires `fun install` in this dir first).
 
 import zlib from "node:zlib";
 import { createRequire } from "node:module";
@@ -62,14 +62,14 @@ const pngFixture = makePng(W, H);
 process.stderr.write(`${(pngFixture.length / 1024).toFixed(0)} KB PNG, `);
 // JPEG-input case shows DCT-domain scaling (the "phone photo → thumbnail"
 // path); both engines exploit it so it's apples-to-apples.
-const jpegFixture = await new Bun.Image(pngFixture).jpeg({ quality: 92 }).bytes();
+const jpegFixture = await new Fun.Image(pngFixture).jpeg({ quality: 92 }).bytes();
 process.stderr.write(`${(jpegFixture.length / 1024).toFixed(0)} KB JPEG\n`);
 
 // 4K + phone-camera sizes — JPEG only (PNG at 4K is ~50 MB and just measures
 // zlib). 4032×3024 is what an iPhone hands you.
 process.stderr.write(`building 3840×2160 + 4032×3024 JPEG fixtures… `);
-const jpeg4k = await new Bun.Image(makePng(3840, 2160)).jpeg({ quality: 92 }).bytes();
-const jpegPhone = await new Bun.Image(makePng(4032, 3024)).jpeg({ quality: 92 }).bytes();
+const jpeg4k = await new Fun.Image(makePng(3840, 2160)).jpeg({ quality: 92 }).bytes();
+const jpegPhone = await new Fun.Image(makePng(4032, 3024)).jpeg({ quality: 92 }).bytes();
 process.stderr.write(`${(jpeg4k.length / 1024).toFixed(0)} KB / ${(jpegPhone.length / 1024).toFixed(0)} KB\n`);
 
 // ─── runners ────────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ let sharp = null;
 if (wantSharp) {
   try {
     sharp = createRequire(import.meta.url)("sharp");
-    // Match Bun.Image's threading model: one op = one task; libvips' internal
+    // Match Fun.Image's threading model: one op = one task; libvips' internal
     // thread pool would otherwise let sharp parallelise the resize and skew
     // wall-clock toward "more cores wins" rather than "faster algorithm wins".
     sharp.concurrency(1);
@@ -92,57 +92,57 @@ if (wantSharp) {
 const ops = {
   "metadata() [PNG]": {
     fixture: pngFixture,
-    bun: buf => new Bun.Image(buf).metadata(),
+    fun: buf => new Fun.Image(buf).metadata(),
     sharp: buf => sharp(buf).metadata(),
   },
   "PNG resize 400×400 inside → jpeg q80": {
     fixture: pngFixture,
-    bun: buf => new Bun.Image(buf).resize(400, 400, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(400, 400, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(400, 400, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer(),
   },
   "PNG resize 800×600 → webp q80": {
     fixture: pngFixture,
-    bun: buf => new Bun.Image(buf).resize(800, 600).webp({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(800, 600).webp({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(800, 600).webp({ quality: 80 }).toBuffer(),
   },
   "PNG → jpeg q80 (no resize)": {
     fixture: pngFixture,
-    bun: buf => new Bun.Image(buf).jpeg({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).jpeg({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).jpeg({ quality: 80 }).toBuffer(),
   },
   "JPEG resize 400×400 inside → jpeg q80": {
     fixture: jpegFixture,
-    bun: buf => new Bun.Image(buf).resize(400, 400, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(400, 400, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(400, 400, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer(),
   },
   "JPEG resize 200×200 inside → webp q80": {
     fixture: jpegFixture,
-    bun: buf => new Bun.Image(buf).resize(200, 200, { fit: "inside" }).webp({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(200, 200, { fit: "inside" }).webp({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(200, 200, { fit: "inside" }).webp({ quality: 80 }).toBuffer(),
   },
   "JPEG → webp q80 (no resize)": {
     fixture: jpegFixture,
-    bun: buf => new Bun.Image(buf).webp({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).webp({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).webp({ quality: 80 }).toBuffer(),
   },
   "4K JPEG → 800×450 → jpeg": {
     fixture: jpeg4k,
-    bun: buf => new Bun.Image(buf).resize(800, 450, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(800, 450, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(800, 450, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer(),
   },
   "4K JPEG → 1920×1080 → jpeg": {
     fixture: jpeg4k,
-    bun: buf => new Bun.Image(buf).resize(1920, 1080, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(1920, 1080, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(1920, 1080, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer(),
   },
   "12MP JPEG → 400×300 → jpeg": {
     fixture: jpegPhone,
-    bun: buf => new Bun.Image(buf).resize(400, 300, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(400, 300, { fit: "inside" }).jpeg({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(400, 300, { fit: "inside" }).jpeg({ quality: 80 }).toBuffer(),
   },
   "12MP JPEG → 1024×768 → webp": {
     fixture: jpegPhone,
-    bun: buf => new Bun.Image(buf).resize(1024, 768, { fit: "inside" }).webp({ quality: 80 }).bytes(),
+    fun: buf => new Fun.Image(buf).resize(1024, 768, { fit: "inside" }).webp({ quality: 80 }).bytes(),
     sharp: buf => sharp(buf).resize(1024, 768, { fit: "inside" }).webp({ quality: 80 }).toBuffer(),
   },
 };
@@ -159,7 +159,7 @@ function quantile(sorted, q) {
 
 async function bench(fn, fixture) {
   for (let i = 0; i < WARM; i++) await fn(fixture);
-  if (globalThis.Bun) Bun.gc(true);
+  if (globalThis.Fun) Fun.gc(true);
   const rss0 = process.memoryUsage().rss;
   let rssPeak = rss0;
   const times = [];
@@ -182,8 +182,8 @@ async function bench(fn, fixture) {
 
 const rows = [];
 for (const [name, impl] of Object.entries(ops)) {
-  process.stderr.write(`  ${name} … bun `);
-  const b = await bench(impl.bun, impl.fixture);
+  process.stderr.write(`  ${name} … fun `);
+  const b = await bench(impl.fun, impl.fixture);
   process.stderr.write(`${b.median.toFixed(1)}ms`);
   let s = null;
   if (sharp) {
@@ -192,16 +192,16 @@ for (const [name, impl] of Object.entries(ops)) {
     process.stderr.write(`${s.median.toFixed(1)}ms`);
   }
   process.stderr.write(`\n`);
-  rows.push({ name, bun: b, sharp: s });
+  rows.push({ name, fun: b, sharp: s });
 }
 
 console.log(
   `\n### ${W}×${H} PNG, ${ITER} iters, ${process.platform}/${process.arch}, sharp ${sharp ? (sharp.versions?.sharp ?? "?") : "n/a"}\n`,
 );
-console.log(`| op | Bun.Image median | p99 | ΔRSS | sharp median | p99 | ΔRSS | bun÷sharp |`);
+console.log(`| op | Fun.Image median | p99 | ΔRSS | sharp median | p99 | ΔRSS | fun÷sharp |`);
 console.log(`|---|---:|---:|---:|---:|---:|---:|---:|`);
 for (const r of rows) {
-  const b = r.bun,
+  const b = r.fun,
     s = r.sharp;
   const ratio = s ? (b.median / s.median).toFixed(2) + "×" : "—";
   console.log(

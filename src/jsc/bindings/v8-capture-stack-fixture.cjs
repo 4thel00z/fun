@@ -1,6 +1,6 @@
 let e = new Error();
 
-const { noInline } = require("bun:jsc");
+const { noInline } = require("fun:jsc");
 
 function sloppyWrapperFn() {
   sloppyFn();

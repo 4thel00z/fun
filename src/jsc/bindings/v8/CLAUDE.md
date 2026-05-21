@@ -1,10 +1,10 @@
 # V8 C++ API Implementation Guide
 
-This directory contains Bun's implementation of the V8 C++ API on top of JavaScriptCore. This allows native Node.js modules that use V8 APIs to work with Bun.
+This directory contains Fun's implementation of the V8 C++ API on top of JavaScriptCore. This allows native Node.js modules that use V8 APIs to work with Fun.
 
 ## Architecture Overview
 
-Bun implements V8 APIs by creating a compatibility layer that:
+Fun implements V8 APIs by creating a compatibility layer that:
 
 - Maps V8's `Local<T>` handles to JSC's `JSValue` system
 - Uses handle scopes to manage memory lifetimes similar to V8
@@ -13,9 +13,9 @@ Bun implements V8 APIs by creating a compatibility layer that:
 
 For detailed background, see the blog series:
 
-- [Part 1: Introduction and challenges](https://bun.com/blog/how-bun-supports-v8-apis-without-using-v8-part-1.md)
-- [Part 2: Memory layout and object representation](https://bun.com/blog/how-bun-supports-v8-apis-without-using-v8-part-2.md)
-- [Part 3: Garbage collection and primitives](https://bun.com/blog/how-bun-supports-v8-apis-without-using-v8-part-3.md)
+- [Part 1: Introduction and challenges](https://fun.dev/blog/how-fun-supports-v8-apis-without-using-v8-part-1.md)
+- [Part 2: Memory layout and object representation](https://fun.dev/blog/how-fun-supports-v8-apis-without-using-v8-part-2.md)
+- [Part 3: Garbage collection and primitives](https://fun.dev/blog/how-fun-supports-v8-apis-without-using-v8-part-3.md)
 
 ## Directory Structure
 
@@ -54,8 +54,8 @@ namespace v8 {
 
 class NewClass : public Data {
 public:
-    BUN_EXPORT static Local<NewClass> New(Isolate* isolate, /* parameters */);
-    BUN_EXPORT /* return_type */ SomeMethod() const;
+    FUN_EXPORT static Local<NewClass> New(Isolate* isolate, /* parameters */);
+    FUN_EXPORT /* return_type */ SomeMethod() const;
 
     // Add other methods as needed
 };
@@ -106,7 +106,7 @@ For each new C++ method, you must add the mangled symbol names to multiple files
 Find the `V8API` struct (around line 1801) and add entries for both GCC/Clang and MSVC:
 
 ```zig
-const V8API = if (!bun.Environment.isWindows) struct {
+const V8API = if (!fun.Environment.isWindows) struct {
     // ... existing functions ...
     pub extern fn _ZN2v88NewClass3NewEPNS_7IsolateE/* parameters */() *anyopaque;
     pub extern fn _ZNK2v88NewClass10SomeMethodEv() *anyopaque;
@@ -123,17 +123,17 @@ For **GCC/Clang** (Unix):
 
 ```bash
 # Build your changes first
-bun bd --help  # This compiles your code
+fun bd --help  # This compiles your code
 
 # Extract symbols
-nm build/CMakeFiles/bun-debug.dir/src/jsc/bindings/v8/V8NewClass.cpp.o | grep "T _ZN2v8"
+nm build/CMakeFiles/fun-debug.dir/src/jsc/bindings/v8/V8NewClass.cpp.o | grep "T _ZN2v8"
 ```
 
 For **MSVC** (Windows):
 
 ```powershell
 # Use the provided PowerShell script in the comments:
-dumpbin .\build\CMakeFiles\bun-debug.dir\src\bun.js\bindings\v8\V8NewClass.cpp.obj /symbols | where-object { $_.Contains(' v8::') } | foreach-object { (($_ -split "\|")[1] -split " ")[1] } | ForEach-Object { "extern fn @`"${_}`"() *anyopaque;" }
+dumpbin .\build\CMakeFiles\fun-debug.dir\src\fun.js\bindings\v8\V8NewClass.cpp.obj /symbols | where-object { $_.Contains(' v8::') } | foreach-object { (($_ -split "\|")[1] -split " ")[1] } | ForEach-Object { "extern fn @`"${_}`"() *anyopaque;" }
 ```
 
 #### b. Add to Symbol Files
@@ -239,9 +239,9 @@ For `ObjectTemplate` or `FunctionTemplate` implementations, see existing pattern
 
 ### Comprehensive Testing
 
-The V8 test suite compares output between Node.js and Bun for the same C++ code:
+The V8 test suite compares output between Node.js and Fun for the same C++ code:
 
-1. **Install Phase**: Sets up identical module builds for Node.js and Bun
+1. **Install Phase**: Sets up identical module builds for Node.js and Fun
 2. **Build Phase**: Compiles native modules using node-gyp
 3. **Test Phase**: Runs identical C++ functions and compares output
 
@@ -259,7 +259,7 @@ The V8 test suite compares output between Node.js and Bun for the same C++ code:
 1. Add C++ test function to `test/v8/v8-module/main.cpp`
 2. Register function in the module exports
 3. Add test case to `test/v8/v8.test.ts` using `checkSameOutput()`
-4. Run with: `bun bd test test/v8/v8.test.ts -t "your test name"`
+4. Run with: `fun bd test test/v8/v8.test.ts -t "your test name"`
 
 ## Debugging Tips
 
@@ -267,13 +267,13 @@ The V8 test suite compares output between Node.js and Bun for the same C++ code:
 
 ```bash
 # Build debug version (takes ~5 minutes)
-bun bd --help
+fun bd --help
 
 # Run V8 tests
-bun bd test test/v8/v8.test.ts
+fun bd test test/v8/v8.test.ts
 
 # Run specific test
-bun bd test test/v8/v8.test.ts -t "can create small integer"
+fun bd test test/v8/v8.test.ts -t "can create small integer"
 ```
 
 ### Common Issues
@@ -311,7 +311,7 @@ Many V8 functions are inline and compiled into native modules. The memory layout
 
 - Symbol mangling differs between GCC/Clang and MSVC
 - Handle calling conventions (JSC uses System V on Unix)
-- Ensure `BUN_EXPORT` visibility on all public functions
+- Ensure `FUN_EXPORT` visibility on all public functions
 - Test on all target platforms via CI
 
 ## Contributing

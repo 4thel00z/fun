@@ -4,8 +4,8 @@ pub const ScanCommand = struct {
 
         const manager, const cwd = PackageManager.init(ctx, cli, .scan) catch |err| {
             if (err == error.MissingPackageJSON) {
-                Output.errGeneric("No package.json found. 'bun pm scan' requires a lockfile to analyze dependencies.", .{});
-                Output.note("Run \"bun install\" first to generate a lockfile", .{});
+                Output.errGeneric("No package.json found. 'fun pm scan' requires a lockfile to analyze dependencies.", .{});
+                Output.note("Run \"fun install\" first to generate a lockfile", .{});
                 Global.exit(1);
             }
             return err;
@@ -20,7 +20,7 @@ pub const ScanCommand = struct {
             Output.prettyErrorln("<r><red>error<r>: no security scanner configured", .{});
             Output.pretty(
                 \\
-                \\To use 'bun pm scan', configure a security scanner in bunfig.toml:
+                \\To use 'fun pm scan', configure a security scanner in funfig.toml:
                 \\  [install.security]
                 \\  scanner = "<cyan>package_name<r>"
                 \\
@@ -30,12 +30,12 @@ pub const ScanCommand = struct {
             Global.exit(1);
         }
 
-        Output.prettyError(comptime Output.prettyFmt("<r><b>bun pm scan <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", true), .{});
+        Output.prettyError(comptime Output.prettyFmt("<r><b>fun pm scan <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", true), .{});
         Output.flush();
 
         const load_lockfile = manager.lockfile.loadFromCwd(manager, ctx.allocator, ctx.log, true);
         if (load_lockfile == .not_found) {
-            Output.errGeneric("Lockfile not found. Run 'bun install' first to generate a lockfile.", .{});
+            Output.errGeneric("Lockfile not found. Run 'fun install' first to generate a lockfile.", .{});
             Global.exit(1);
         }
         if (load_lockfile == .err) {
@@ -71,6 +71,6 @@ const security_scanner = @import("../install/PackageManager/security_scanner.zig
 const Command = @import("./cli.zig").Command;
 const PackageManager = @import("../install/install.zig").PackageManager;
 
-const bun = @import("bun");
-const Global = bun.Global;
-const Output = bun.Output;
+const fun = @import("fun");
+const Global = fun.Global;
+const Output = fun.Output;

@@ -378,24 +378,24 @@ pub fn load(stream: *Stream, allocator: Allocator, log: *logger.Log, pm_: ?*Pack
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
-const logger = bun.logger;
-const strings = bun.strings;
-const Bitset = bun.bit_set.DynamicBitSetUnmanaged;
-const String = bun.Semver.String;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
+const logger = fun.logger;
+const strings = fun.strings;
+const Bitset = fun.bit_set.DynamicBitSetUnmanaged;
+const String = fun.Semver.String;
 
-const install = bun.install;
+const install = fun.install;
 const Aligner = install.Aligner;
-const Dependency = bun.install.Dependency;
+const Dependency = fun.install.Dependency;
 const DependencyID = install.DependencyID;
 const PackageID = install.PackageID;
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const invalid_package_id = install.invalid_package_id;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const DependencyIDList = Lockfile.DependencyIDList;
 const DependencyList = Lockfile.DependencyList;
 const ExternalStringBuffer = Lockfile.ExternalStringBuffer;

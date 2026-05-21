@@ -1,6 +1,6 @@
-// This file is part of Bun!
+// This file is part of Fun!
 // You can find the original source:
-// https://github.com/oven-sh/bun/blob/main/src/runtime/api/FFI.h
+// https://github.com/underdoc-org/fun/blob/main/src/runtime/api/FFI.h
 //
 // clang-format off
 // This file is only compatible with 64 bit CPUs
@@ -16,9 +16,9 @@
 #define ZIG_REPR_TYPE int64_t
 
 #ifdef _WIN32
-#define BUN_FFI_IMPORT __declspec(dllimport)
+#define FUN_FFI_IMPORT __declspec(dllimport)
 #else
-#define BUN_FFI_IMPORT
+#define FUN_FFI_IMPORT
 #endif
 
 // /* 7.18.1.1  Exact-width integer types */
@@ -65,9 +65,9 @@ typedef enum {
   napi_detachable_arraybuffer_expected,
   napi_would_deadlock // unused
 } napi_status;
-BUN_FFI_IMPORT void* NapiHandleScope__open(void* napi_env, bool detached);
-BUN_FFI_IMPORT void NapiHandleScope__close(void* napi_env, void* handleScope);
-BUN_FFI_IMPORT extern struct NapiEnv Bun__thisFFIModuleNapiEnv;
+FUN_FFI_IMPORT void* NapiHandleScope__open(void* napi_env, bool detached);
+FUN_FFI_IMPORT void NapiHandleScope__close(void* napi_env, void* handleScope);
+FUN_FFI_IMPORT extern struct NapiEnv Fun__thisFFIModuleNapiEnv;
 #endif
 
 
@@ -130,18 +130,18 @@ EncodedJSValue ValueTrue = { TagValueTrue };
 
 typedef void* JSContext;
 
-// Bun_FFI_PointerOffsetToArgumentsList is injected into the build 
+// Fun_FFI_PointerOffsetToArgumentsList is injected into the build 
 // The value is generated in `make sizegen`
 // The value is 6.
 // On ARM64_32, the value is something else but it really doesn't matter for our case
 // However, I don't want this to subtly break amidst future upgrades to JavaScriptCore
 #define LOAD_ARGUMENTS_FROM_CALL_FRAME \
-  int64_t *argsPtr = (int64_t*)((size_t*)callFrame + Bun_FFI_PointerOffsetToArgumentsList)
+  int64_t *argsPtr = (int64_t*)((size_t*)callFrame + Fun_FFI_PointerOffsetToArgumentsList)
 
 
 #ifdef IS_CALLBACK
 void* callback_ctx;
-BUN_FFI_IMPORT ZIG_REPR_TYPE FFI_Callback_call(void* ctx, size_t argCount, ZIG_REPR_TYPE* args);
+FUN_FFI_IMPORT ZIG_REPR_TYPE FFI_Callback_call(void* ctx, size_t argCount, ZIG_REPR_TYPE* args);
 // We wrap 
 static EncodedJSValue _FFI_Callback_call(void* ctx, size_t argCount, ZIG_REPR_TYPE* args)  __attribute__((__always_inline__));
 static EncodedJSValue _FFI_Callback_call(void* ctx, size_t argCount, ZIG_REPR_TYPE* args) {
@@ -356,7 +356,7 @@ static EncodedJSValue INT64_TO_JSVALUE(void* jsGlobalObject, int64_t val) {
 }
 
 #ifndef IS_CALLBACK
-BUN_FFI_IMPORT ZIG_REPR_TYPE JSFunctionCall(void* jsGlobalObject, void* callFrame);
+FUN_FFI_IMPORT ZIG_REPR_TYPE JSFunctionCall(void* jsGlobalObject, void* callFrame);
 
 #endif
 

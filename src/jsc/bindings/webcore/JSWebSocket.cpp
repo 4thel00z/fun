@@ -217,7 +217,7 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
     // WebSocket::create() on success.
     WebSocketSSLConfigPtr sslConfig;
     auto headersInit = std::optional<Converter<IDLUnion<IDLSequence<IDLSequence<IDLByteString>>, IDLRecord<IDLByteString, IDLByteString>>>::ReturnType>();
-    // Default true — matches Bun's existing behavior of always offering permessage-deflate.
+    // Default true — matches Fun's existing behavior of always offering permessage-deflate.
     // ws.WebSocket passes `perMessageDeflate: false` to opt out.
     bool offerPerMessageDeflate = true;
 
@@ -227,7 +227,7 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
 
     if (JSC::JSObject* options = optionsObjectValue.getObject()) {
         const auto& builtinnames = WebCore::builtinNames(vm);
-        auto headersValue = Bun::getOwnPropertyIfExists(globalObject, options, builtinnames.headersPublicName());
+        auto headersValue = Fun::getOwnPropertyIfExists(globalObject, options, builtinnames.headersPublicName());
         RETURN_IF_EXCEPTION(throwScope, {});
         if (headersValue) {
             if (!headersValue.isUndefinedOrNull()) {
@@ -236,7 +236,7 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
             }
         }
 
-        auto protocolsValue = Bun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "protocols"_s)));
+        auto protocolsValue = Fun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "protocols"_s)));
         RETURN_IF_EXCEPTION(throwScope, {});
         if (protocolsValue) {
             if (!protocolsValue.isUndefinedOrNull()) {
@@ -244,7 +244,7 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
                 RETURN_IF_EXCEPTION(throwScope, {});
             }
         } else {
-            auto protocolValue = Bun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "protocol"_s)));
+            auto protocolValue = Fun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "protocol"_s)));
             RETURN_IF_EXCEPTION(throwScope, {});
             if (protocolValue) {
                 if (!protocolValue.isUndefinedOrNull()) {
@@ -255,12 +255,12 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
         }
 
         // Parse TLS options using Zig's SSLConfig.fromJS for full TLS option support
-        JSValue tlsOptionsValue = Bun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "tls"_s)));
+        JSValue tlsOptionsValue = Fun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "tls"_s)));
         RETURN_IF_EXCEPTION(throwScope, {});
         if (tlsOptionsValue && !tlsOptionsValue.isUndefinedOrNull() && tlsOptionsValue.isObject()) {
             // Also extract rejectUnauthorized for backwards compatibility
             if (JSC::JSObject* tlsOptions = tlsOptionsValue.getObject()) {
-                auto rejectUnauthorizedValue = Bun::getOwnPropertyIfExists(globalObject, tlsOptions, PropertyName(Identifier::fromString(vm, "rejectUnauthorized"_s)));
+                auto rejectUnauthorizedValue = Fun::getOwnPropertyIfExists(globalObject, tlsOptions, PropertyName(Identifier::fromString(vm, "rejectUnauthorized"_s)));
                 RETURN_IF_EXCEPTION(throwScope, {});
                 if (rejectUnauthorizedValue && !rejectUnauthorizedValue.isUndefinedOrNull() && rejectUnauthorizedValue.isBoolean()) {
                     rejectUnauthorized = rejectUnauthorizedValue.asBoolean() ? 1 : 0;
@@ -268,7 +268,7 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
             }
 
             // Parse full TLS options using Zig's SSLConfig.fromJS
-            sslConfig = WebSocketSSLConfigPtr { Bun__WebSocket__parseSSLConfig(globalObject, JSValue::encode(tlsOptionsValue)) };
+            sslConfig = WebSocketSSLConfigPtr { Fun__WebSocket__parseSSLConfig(globalObject, JSValue::encode(tlsOptionsValue)) };
             RETURN_IF_EXCEPTION(throwScope, {});
         }
 
@@ -283,7 +283,7 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
         }
 
         // Parse proxy option - can be string or { url, headers }
-        auto proxyValue = Bun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "proxy"_s)));
+        auto proxyValue = Fun::getOwnPropertyIfExists(globalObject, options, PropertyName(Identifier::fromString(vm, "proxy"_s)));
         RETURN_IF_EXCEPTION(throwScope, {});
         if (proxyValue) {
             if (!proxyValue.isUndefinedOrNull()) {
@@ -294,14 +294,14 @@ static inline JSC::EncodedJSValue constructJSWebSocket3(JSGlobalObject* lexicalG
                 } else if (proxyValue.isObject()) {
                     // proxy: { url: "http://proxy:8080", headers: {...} }
                     if (JSC::JSObject* proxyOptions = proxyValue.getObject()) {
-                        auto proxyUrlValue = Bun::getOwnPropertyIfExists(globalObject, proxyOptions, PropertyName(Identifier::fromString(vm, "url"_s)));
+                        auto proxyUrlValue = Fun::getOwnPropertyIfExists(globalObject, proxyOptions, PropertyName(Identifier::fromString(vm, "url"_s)));
                         RETURN_IF_EXCEPTION(throwScope, {});
                         if (proxyUrlValue && !proxyUrlValue.isUndefinedOrNull()) {
                             proxyUrl = convert<IDLUSVString>(*lexicalGlobalObject, proxyUrlValue);
                             RETURN_IF_EXCEPTION(throwScope, {});
                         }
 
-                        auto proxyHeadersValue = Bun::getOwnPropertyIfExists(globalObject, proxyOptions, builtinnames.headersPublicName());
+                        auto proxyHeadersValue = Fun::getOwnPropertyIfExists(globalObject, proxyOptions, builtinnames.headersPublicName());
                         RETURN_IF_EXCEPTION(throwScope, {});
                         if (proxyHeadersValue && !proxyHeadersValue.isUndefinedOrNull()) {
                             // Check if it's already a Headers instance (like fetch does)
@@ -1037,7 +1037,7 @@ WebSocket* JSWebSocket::toWrapped(JSC::VM&, JSC::JSValue value)
     return nullptr;
 }
 
-// https://github.com/oven-sh/bun/issues/11866
+// https://github.com/underdoc-org/fun/issues/11866
 JSC::JSValue getWebSocketConstructor(Zig::GlobalObject* globalObject)
 {
     return WebCore::JSWebSocket::getConstructor(globalObject->vm(), globalObject);

@@ -19,12 +19,12 @@
 namespace Bake {
 
   
-extern "C" BunString BakeSourceProvider__getSourceSlice(SourceProvider* provider)
+extern "C" FunString BakeSourceProvider__getSourceSlice(SourceProvider* provider)
 {
-    return Bun::toStringView(provider->source());
+    return Fun::toStringView(provider->source());
 }
 
-extern "C" JSC::EncodedJSValue BakeLoadInitialServerCode(JSC::JSGlobalObject* global, BunString source, bool separateSSRGraph) {
+extern "C" JSC::EncodedJSValue BakeLoadInitialServerCode(JSC::JSGlobalObject* global, FunString source, bool separateSSRGraph) {
   auto& vm = JSC::getVM(global);
   auto scope = DECLARE_THROW_SCOPE(vm);
 
@@ -58,7 +58,7 @@ extern "C" JSC::JSPromise* BakeLoadModuleByKey(GlobalObject* global, JSC::JSStri
   return JSC::loadAndEvaluateModule(global, key->getString(global), nullptr, nullptr);
 }
 
-extern "C" JSC::EncodedJSValue BakeLoadServerHmrPatch(GlobalObject* global, BunString source) {
+extern "C" JSC::EncodedJSValue BakeLoadServerHmrPatch(GlobalObject* global, FunString source) {
   JSC::VM&vm = global->vm();
   auto scope = DECLARE_THROW_SCOPE(vm);
 
@@ -80,7 +80,7 @@ extern "C" JSC::EncodedJSValue BakeLoadServerHmrPatch(GlobalObject* global, BunS
   return JSC::JSValue::encode(result);
 }
 
-extern "C" JSC::EncodedJSValue BakeLoadServerHmrPatchWithSourceMap(GlobalObject* global, BunString source, const char* sourceMapJSONPtr, size_t sourceMapJSONLength) {
+extern "C" JSC::EncodedJSValue BakeLoadServerHmrPatchWithSourceMap(GlobalObject* global, FunString source, const char* sourceMapJSONPtr, size_t sourceMapJSONLength) {
   JSC::VM&vm = global->vm();
   auto scope = DECLARE_THROW_SCOPE(vm);
 
@@ -146,7 +146,7 @@ extern "C" JSC::EncodedJSValue BakeGetOnModuleNamespace(
   return JSC::JSValue::encode(moduleNamespace->get(global, property));
 }
 
-extern "C" JSC::EncodedJSValue BakeRegisterProductionChunk(JSC::JSGlobalObject* global, BunString virtualPathName, BunString source) {
+extern "C" JSC::EncodedJSValue BakeRegisterProductionChunk(JSC::JSGlobalObject* global, FunString virtualPathName, FunString source) {
   auto& vm = JSC::getVM(global);
   auto scope = DECLARE_THROW_SCOPE(vm);
 

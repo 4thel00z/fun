@@ -1,10 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 describe("pnpm-lock.yaml migration", () => {
-  test("simple pnpm lockfile migration produces correct bun.lock", async () => {
+  test("simple pnpm lockfile migration produces correct fun.lock", async () => {
     const tempDir = tempDirWithFiles("pnpm-migrate-simple", {
       "package.json": JSON.stringify(
         {
@@ -53,11 +53,11 @@ snapshots:
 `,
     });
 
-    // Run bun pm migrate
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    // Run fun pm migrate
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -73,18 +73,18 @@ snapshots:
     // Check migration message in stderr
     expect(stderr).toContain("migrated lockfile from pnpm-lock.yaml");
 
-    // Check that bun.lock was created
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    // Check that fun.lock was created
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
     // Read and snapshot the migrated lockfile
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("simple-pnpm-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("simple-pnpm-migration");
 
     // Verify install works with migrated lockfile
-    await using installProc = Bun.spawn({
-      cmd: [bunExe(), "install", "--frozen-lockfile"],
+    await using installProc = Fun.spawn({
+      cmd: [funExe(), "install", "--frozen-lockfile"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -98,7 +98,7 @@ snapshots:
     if (installExitCode !== 0) {
       console.log("Install stdout:", installStdout);
       console.log("Install stderr:", installStderr);
-      console.log("Lockfile content:", bunLockContent);
+      console.log("Lockfile content:", funLockContent);
     }
     expect(installExitCode).toBe(0);
 
@@ -234,10 +234,10 @@ snapshots:
 `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -253,10 +253,10 @@ snapshots:
     // Check migration message in stderr
     expect(stderr).toContain("migrated lockfile from pnpm-lock.yaml");
 
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("workspace-pnpm-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("workspace-pnpm-migration");
     const packageJson = JSON.parse(fs.readFileSync(join(tempDir, "package.json"), "utf8"));
     expect(packageJson).toMatchSnapshot("workspace-pnpm-migration-package-json");
   });
@@ -322,10 +322,10 @@ snapshots:
 `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -341,10 +341,10 @@ snapshots:
     // Check migration message in stderr
     expect(stderr).toContain("migrated lockfile from pnpm-lock.yaml");
 
-    expect(fs.existsSync(join(tempDir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(tempDir, "fun.lock"))).toBe(true);
 
-    const bunLockContent = fs.readFileSync(join(tempDir, "bun.lock"), "utf8");
-    expect(bunLockContent).toMatchSnapshot("npm-aliases-pnpm-migration");
+    const funLockContent = fs.readFileSync(join(tempDir, "fun.lock"), "utf8");
+    expect(funLockContent).toMatchSnapshot("npm-aliases-pnpm-migration");
   });
 
   test("handles different pnpm lockfile versions", async () => {
@@ -365,17 +365,17 @@ snapshots:
   lodash@4.17.21: {}`,
     });
 
-    await using v8Proc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    await using v8Proc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: v8Dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
 
     const v8ExitCode = await v8Proc.exited;
     expect(v8ExitCode).toBe(0);
-    expect(fs.existsSync(join(v8Dir, "bun.lock"))).toBe(true);
+    expect(fs.existsSync(join(v8Dir, "fun.lock"))).toBe(true);
   });
 
   test("handles missing pnpm-lock.yaml gracefully", async () => {
@@ -386,10 +386,10 @@ snapshots:
       }),
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "pm", "migrate"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "pm", "migrate"],
       cwd: tempDir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

@@ -1,19 +1,19 @@
 ---
 title: "Single-file executable"
-description: "Generate standalone executables from TypeScript or JavaScript files with Bun"
+description: "Generate standalone executables from TypeScript or JavaScript files with Fun"
 ---
 
-Bun's bundler implements a `--compile` flag for generating a standalone binary from a TypeScript or JavaScript file.
+Fun's bundler implements a `--compile` flag for generating a standalone binary from a TypeScript or JavaScript file.
 
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./cli.ts --compile --outfile mycli
+    fun build ./cli.ts --compile --outfile mycli
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./cli.ts"],
       compile: {
         outfile: "./mycli",
@@ -37,55 +37,55 @@ This bundles `cli.ts` into an executable that can be executed directly:
 Hello world!
 ```
 
-All imported files and packages are bundled into the executable, along with a copy of the Bun runtime. All built-in Bun and Node.js APIs are supported.
+All imported files and packages are bundled into the executable, along with a copy of the Fun runtime. All built-in Fun and Node.js APIs are supported.
 
 ---
 
 ## Cross-compile to other platforms
 
-The `--target` flag lets you compile your standalone executable for a different operating system, architecture, or version of Bun than the machine you're running `bun build` on.
+The `--target` flag lets you compile your standalone executable for a different operating system, architecture, or version of Fun than the machine you're running `fun build` on.
 
 To build for Linux x64 (most servers):
 
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --target=bun-linux-x64 ./index.ts --outfile myapp
+    fun build --compile --target=fun-linux-x64 ./index.ts --outfile myapp
 
     # To support CPUs from before 2013, use the baseline version (nehalem)
-    bun build --compile --target=bun-linux-x64-baseline ./index.ts --outfile myapp
+    fun build --compile --target=fun-linux-x64-baseline ./index.ts --outfile myapp
 
     # To explicitly only support CPUs from 2013 and later, use the modern version (haswell)
     # modern is faster, but baseline is more compatible.
-    bun build --compile --target=bun-linux-x64-modern ./index.ts --outfile myapp
+    fun build --compile --target=fun-linux-x64-modern ./index.ts --outfile myapp
     ```
 
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
     // Standard Linux x64
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts"],
       compile: {
-        target: "bun-linux-x64",
+        target: "fun-linux-x64",
         outfile: "./myapp",
       },
     });
 
     // Baseline (pre-2013 CPUs)
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts"],
       compile: {
-        target: "bun-linux-x64-baseline",
+        target: "fun-linux-x64-baseline",
         outfile: "./myapp",
       },
     });
 
     // Modern (2013+ CPUs, faster)
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts"],
       compile: {
-        target: "bun-linux-x64-modern",
+        target: "fun-linux-x64-modern",
         outfile: "./myapp",
       },
     });
@@ -100,15 +100,15 @@ To build for Linux ARM64 (e.g. Graviton or Raspberry Pi):
   <Tab title="CLI">
     ```bash icon="terminal" terminal
     # Note: the default architecture is x64 if no architecture is specified.
-    bun build --compile --target=bun-linux-arm64 ./index.ts --outfile myapp
+    fun build --compile --target=fun-linux-arm64 ./index.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts"],
       compile: {
-        target: "bun-linux-arm64",
+        target: "fun-linux-arm64",
         outfile: "./myapp",
       },
     });
@@ -121,34 +121,34 @@ To build for Windows x64:
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --target=bun-windows-x64 ./path/to/my/app.ts --outfile myapp
+    fun build --compile --target=fun-windows-x64 ./path/to/my/app.ts --outfile myapp
 
     # To support CPUs from before 2013, use the baseline version (nehalem)
-    bun build --compile --target=bun-windows-x64-baseline ./path/to/my/app.ts --outfile myapp
+    fun build --compile --target=fun-windows-x64-baseline ./path/to/my/app.ts --outfile myapp
 
     # To explicitly only support CPUs from 2013 and later, use the modern version (haswell)
-    bun build --compile --target=bun-windows-x64-modern ./path/to/my/app.ts --outfile myapp
+    fun build --compile --target=fun-windows-x64-modern ./path/to/my/app.ts --outfile myapp
 
-    # note: if no .exe extension is provided, Bun will automatically add it for Windows executables
+    # note: if no .exe extension is provided, Fun will automatically add it for Windows executables
     ```
 
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
     // Standard Windows x64
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./path/to/my/app.ts"],
       compile: {
-        target: "bun-windows-x64",
+        target: "fun-windows-x64",
         outfile: "./myapp", // .exe added automatically
       },
     });
 
     // Baseline or modern variants
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./path/to/my/app.ts"],
       compile: {
-        target: "bun-windows-x64-baseline",
+        target: "fun-windows-x64-baseline",
         outfile: "./myapp",
       },
     });
@@ -162,18 +162,18 @@ To build for Windows arm64:
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --target=bun-windows-arm64 ./path/to/my/app.ts --outfile myapp
+    fun build --compile --target=fun-windows-arm64 ./path/to/my/app.ts --outfile myapp
 
-    # note: if no .exe extension is provided, Bun will automatically add it for Windows executables
+    # note: if no .exe extension is provided, Fun will automatically add it for Windows executables
     ```
 
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./path/to/my/app.ts"],
       compile: {
-        target: "bun-windows-arm64",
+        target: "fun-windows-arm64",
         outfile: "./myapp", // .exe added automatically
       },
     });
@@ -187,15 +187,15 @@ To build for macOS arm64:
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --target=bun-darwin-arm64 ./path/to/my/app.ts --outfile myapp
+    fun build --compile --target=fun-darwin-arm64 ./path/to/my/app.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./path/to/my/app.ts"],
       compile: {
-        target: "bun-darwin-arm64",
+        target: "fun-darwin-arm64",
         outfile: "./myapp",
       },
     });
@@ -208,15 +208,15 @@ To build for macOS x64:
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --target=bun-darwin-x64 ./path/to/my/app.ts --outfile myapp
+    fun build --compile --target=fun-darwin-x64 ./path/to/my/app.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./path/to/my/app.ts"],
       compile: {
-        target: "bun-darwin-x64",
+        target: "fun-darwin-x64",
         outfile: "./myapp",
       },
     });
@@ -230,18 +230,18 @@ The order of the `--target` flag does not matter, as long as they're delimited b
 
 | --target             | Operating System | Architecture | Modern | Baseline | Libc  |
 | -------------------- | ---------------- | ------------ | ------ | -------- | ----- |
-| bun-linux-x64        | Linux            | x64          | ✅     | ✅       | glibc |
-| bun-linux-arm64      | Linux            | arm64        | ✅     | N/A      | glibc |
-| bun-windows-x64      | Windows          | x64          | ✅     | ✅       | -     |
-| bun-windows-arm64    | Windows          | arm64        | ✅     | N/A      | -     |
-| bun-darwin-x64       | macOS            | x64          | ✅     | ✅       | -     |
-| bun-darwin-arm64     | macOS            | arm64        | ✅     | N/A      | -     |
-| bun-linux-x64-musl   | Linux            | x64          | ✅     | ✅       | musl  |
-| bun-linux-arm64-musl | Linux            | arm64        | ✅     | N/A      | musl  |
+| fun-linux-x64        | Linux            | x64          | ✅     | ✅       | glibc |
+| fun-linux-arm64      | Linux            | arm64        | ✅     | N/A      | glibc |
+| fun-windows-x64      | Windows          | x64          | ✅     | ✅       | -     |
+| fun-windows-arm64    | Windows          | arm64        | ✅     | N/A      | -     |
+| fun-darwin-x64       | macOS            | x64          | ✅     | ✅       | -     |
+| fun-darwin-arm64     | macOS            | arm64        | ✅     | N/A      | -     |
+| fun-linux-x64-musl   | Linux            | x64          | ✅     | ✅       | musl  |
+| fun-linux-arm64-musl | Linux            | arm64        | ✅     | N/A      | musl  |
 
 <Warning>
-  On x64 platforms, Bun uses SIMD optimizations which require a modern CPU supporting AVX2 instructions. The `-baseline`
-  build of Bun is for older CPUs that don't support these optimizations. Normally, when you install Bun we automatically
+  On x64 platforms, Fun uses SIMD optimizations which require a modern CPU supporting AVX2 instructions. The `-baseline`
+  build of Fun is for older CPUs that don't support these optimizations. Normally, when you install Fun we automatically
   detect which version to use but this can be harder to do when cross-compiling since you might not know the target CPU.
   You usually don't need to worry about it on Darwin x64, but it is relevant for Windows x64 and Linux x64. If you or
   your users see `"Illegal instruction"` errors, you might need to use the baseline version.
@@ -256,12 +256,12 @@ Use the `--define` flag to inject build-time constants into your executable, suc
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --define BUILD_VERSION='"1.2.3"' --define BUILD_TIME='"2024-01-15T10:30:00Z"' src/cli.ts --outfile mycli
+    fun build --compile --define BUILD_VERSION='"1.2.3"' --define BUILD_TIME='"2024-01-15T10:30:00Z"' src/cli.ts --outfile mycli
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./src/cli.ts"],
       compile: {
         outfile: "./mycli",
@@ -286,9 +286,9 @@ These constants are embedded directly into your compiled binary at build time, p
 
 ## Deploying to production
 
-Compiled executables reduce memory usage and improve Bun's start time.
+Compiled executables reduce memory usage and improve Fun's start time.
 
-Normally, Bun reads and transpiles JavaScript and TypeScript files on `import` and `require`. This is part of what makes so much of Bun "just work", but it's not free. It costs time and memory to read files from disk, resolve file paths, parse, transpile, and print source code.
+Normally, Fun reads and transpiles JavaScript and TypeScript files on `import` and `require`. This is part of what makes so much of Fun "just work", but it's not free. It costs time and memory to read files from disk, resolve file paths, parse, transpile, and print source code.
 
 With compiled executables, you can move that cost from runtime to build-time.
 
@@ -297,12 +297,12 @@ When deploying to production, we recommend the following:
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --minify --sourcemap ./path/to/my/app.ts --outfile myapp
+    fun build --compile --minify --sourcemap ./path/to/my/app.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./path/to/my/app.ts"],
       compile: {
         outfile: "./myapp",
@@ -321,12 +321,12 @@ To improve startup time, enable bytecode compilation:
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --minify --sourcemap --bytecode ./path/to/my/app.ts --outfile myapp
+    fun build --compile --minify --sourcemap --bytecode ./path/to/my/app.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./path/to/my/app.ts"],
       compile: {
         outfile: "./myapp",
@@ -345,7 +345,7 @@ Using bytecode compilation, `tsc` starts 2x faster:
   ![Bytecode performance comparison](https://github.com/user-attachments/assets/dc8913db-01d2-48f8-a8ef-ac4e984f9763)
 </Frame>
 
-Bytecode compilation moves parsing overhead for large input files from runtime to bundle time. Your app starts faster, in exchange for making the `bun build` command a little slower. It doesn't obscure source code.
+Bytecode compilation moves parsing overhead for large input files from runtime to bundle time. Your app starts faster, in exchange for making the `fun build` command a little slower. It doesn't obscure source code.
 
 <Note>Bytecode compilation supports both `cjs` and `esm` formats when used with `--compile`.</Note>
 
@@ -353,9 +353,9 @@ Bytecode compilation moves parsing overhead for large input files from runtime t
 
 The `--minify` argument optimizes the size of the transpiled output code. If you have a large application, this can save megabytes of space. For smaller applications, it might still improve start time a little.
 
-The `--sourcemap` argument embeds a sourcemap compressed with zstd, so that errors & stacktraces point to their original locations instead of the transpiled location. Bun will automatically decompress & resolve the sourcemap when an error occurs.
+The `--sourcemap` argument embeds a sourcemap compressed with zstd, so that errors & stacktraces point to their original locations instead of the transpiled location. Fun will automatically decompress & resolve the sourcemap when an error occurs.
 
-The `--bytecode` argument enables bytecode compilation. Every time you run JavaScript code in Bun, JavaScriptCore (the engine) will compile your source code into bytecode. We can move this parsing work from runtime to bundle time, saving you startup time.
+The `--bytecode` argument enables bytecode compilation. Every time you run JavaScript code in Fun, JavaScriptCore (the engine) will compile your source code into bytecode. We can move this parsing work from runtime to bundle time, saving you startup time.
 
 ---
 
@@ -366,12 +366,12 @@ The `--bytecode` argument enables bytecode compilation. Every time you run JavaS
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
-    bun build --compile --compile-exec-argv="--smol --user-agent=MyBot" ./app.ts --outfile myapp
+    fun build --compile --compile-exec-argv="--smol --user-agent=MyBot" ./app.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./app.ts"],
       compile: {
         execArgv: ["--smol", "--user-agent=MyBot"],
@@ -387,19 +387,19 @@ The `--bytecode` argument enables bytecode compilation. Every time you run JavaS
 console.log(process.execArgv); // ["--smol", "--user-agent=MyBot"]
 ```
 
-### Runtime arguments via `BUN_OPTIONS`
+### Runtime arguments via `FUN_OPTIONS`
 
-The `BUN_OPTIONS` environment variable is applied to standalone executables, allowing you to pass runtime flags without recompiling:
+The `FUN_OPTIONS` environment variable is applied to standalone executables, allowing you to pass runtime flags without recompiling:
 
 ```bash terminal icon="terminal"
 # Enable CPU profiling on a compiled executable
-BUN_OPTIONS="--cpu-prof" ./myapp
+FUN_OPTIONS="--cpu-prof" ./myapp
 
 # Enable heap profiling with markdown output
-BUN_OPTIONS="--heap-prof-md" ./myapp
+FUN_OPTIONS="--heap-prof-md" ./myapp
 
 # Combine multiple flags
-BUN_OPTIONS="--smol --cpu-prof-md" ./myapp
+FUN_OPTIONS="--smol --cpu-prof-md" ./myapp
 ```
 
 This is useful for debugging or profiling production executables without rebuilding them.
@@ -411,10 +411,10 @@ This is useful for debugging or profiling production executables without rebuild
 Standalone executables can automatically load configuration files from the directory where they are run. By default:
 
 - **`tsconfig.json`** and **`package.json`** loading is **disabled** — these are typically only needed at development time, and the bundler already uses them when compiling
-- **`.env`** and **`bunfig.toml`** loading is **enabled** — these often contain runtime configuration that may vary per deployment
+- **`.env`** and **`funfig.toml`** loading is **enabled** — these often contain runtime configuration that may vary per deployment
 
 <Note>
-  In a future version of Bun, `.env` and `bunfig.toml` may also be disabled by default for more deterministic behavior.
+  In a future version of Fun, `.env` and `funfig.toml` may also be disabled by default for more deterministic behavior.
 </Note>
 
 ### Enabling config loading at runtime
@@ -423,45 +423,45 @@ If your executable needs to read `tsconfig.json` or `package.json` at runtime, y
 
 ```bash icon="terminal" terminal
 # Enable runtime loading of tsconfig.json
-bun build --compile --compile-autoload-tsconfig ./app.ts --outfile myapp
+fun build --compile --compile-autoload-tsconfig ./app.ts --outfile myapp
 
 # Enable runtime loading of package.json
-bun build --compile --compile-autoload-package-json ./app.ts --outfile myapp
+fun build --compile --compile-autoload-package-json ./app.ts --outfile myapp
 
 # Enable both
-bun build --compile --compile-autoload-tsconfig --compile-autoload-package-json ./app.ts --outfile myapp
+fun build --compile --compile-autoload-tsconfig --compile-autoload-package-json ./app.ts --outfile myapp
 ```
 
 ### Disabling config loading at runtime
 
-To disable `.env` or `bunfig.toml` loading for deterministic execution:
+To disable `.env` or `funfig.toml` loading for deterministic execution:
 
 <Tabs>
   <Tab title="CLI">
     ```bash icon="terminal" terminal
     # Disable .env loading
-    bun build --compile --no-compile-autoload-dotenv ./app.ts --outfile myapp
+    fun build --compile --no-compile-autoload-dotenv ./app.ts --outfile myapp
 
-    # Disable bunfig.toml loading
-    bun build --compile --no-compile-autoload-bunfig ./app.ts --outfile myapp
+    # Disable funfig.toml loading
+    fun build --compile --no-compile-autoload-funfig ./app.ts --outfile myapp
 
     # Disable all config loading
-    bun build --compile --no-compile-autoload-dotenv --no-compile-autoload-bunfig ./app.ts --outfile myapp
+    fun build --compile --no-compile-autoload-dotenv --no-compile-autoload-funfig ./app.ts --outfile myapp
     ```
 
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./app.ts"],
       compile: {
         // tsconfig.json and package.json are disabled by default
         autoloadTsconfig: true, // Enable tsconfig.json loading
         autoloadPackageJson: true, // Enable package.json loading
 
-        // .env and bunfig.toml are enabled by default
+        // .env and funfig.toml are enabled by default
         autoloadDotenv: false, // Disable .env loading
-        autoloadBunfig: false, // Disable bunfig.toml loading
+        autoloadBunfig: false, // Disable funfig.toml loading
         outfile: "./myapp",
       },
     });
@@ -472,61 +472,61 @@ To disable `.env` or `bunfig.toml` loading for deterministic execution:
 
 ---
 
-## Act as the Bun CLI
+## Act as the Fun CLI
 
-<Note>New in Bun v1.2.16</Note>
+<Note>New in Fun v1.2.16</Note>
 
-You can run a standalone executable as if it were the `bun` CLI itself by setting the `BUN_BE_BUN=1` environment variable. When this variable is set, the executable will ignore its bundled entrypoint and instead expose all the features of Bun's CLI.
+You can run a standalone executable as if it were the `fun` CLI itself by setting the `FUN_BE_FUN=1` environment variable. When this variable is set, the executable will ignore its bundled entrypoint and instead expose all the features of Fun's CLI.
 
 For example, consider an executable compiled from this script:
 
 ```bash icon="terminal" terminal
-echo "console.log(\"you shouldn't see this\");" > such-bun.js
-bun build --compile ./such-bun.js
+echo "console.log(\"you shouldn't see this\");" > such-fun.js
+fun build --compile ./such-fun.js
 ```
 
 ```txt
 [3ms] bundle 1 modules
-[89ms] compile such-bun
+[89ms] compile such-fun
 ```
 
-Normally, running `./such-bun` with arguments would execute the script.
+Normally, running `./such-fun` with arguments would execute the script.
 
 ```bash icon="terminal" terminal
 # Executable runs its own entrypoint by default
-./such-bun install
+./such-fun install
 ```
 
 ```txt
 you shouldn't see this
 ```
 
-However, with the `BUN_BE_BUN=1` environment variable, it acts just like the `bun` binary:
+However, with the `FUN_BE_FUN=1` environment variable, it acts just like the `fun` binary:
 
 ```bash icon="terminal" terminal
-# With the env var, the executable acts like the `bun` CLI
-BUN_BE_BUN=1 ./such-bun install
+# With the env var, the executable acts like the `fun` CLI
+FUN_BE_FUN=1 ./such-fun install
 ```
 
 ```txt
-bun install v1.2.16-canary.1 (1d1db811)
+fun install v1.2.16-canary.1 (1d1db811)
 Checked 63 installs across 64 packages (no changes) [5.00ms]
 ```
 
-This is useful for building CLI tools on top of Bun that may need to install packages, bundle dependencies, run different or local files and more without needing to download a separate binary or install bun.
+This is useful for building CLI tools on top of Fun that may need to install packages, bundle dependencies, run different or local files and more without needing to download a separate binary or install fun.
 
 ---
 
 ## Full-stack executables
 
-<Note>New in Bun v1.2.17</Note>
+<Note>New in Fun v1.2.17</Note>
 
-Bun's `--compile` flag can create standalone executables that contain both server and client code, making it ideal for full-stack applications. When you import an HTML file in your server code, Bun automatically bundles all frontend assets (JavaScript, CSS, etc.) and embeds them into the executable. When Bun sees the HTML import on the server, it kicks off a frontend build process to bundle JavaScript, CSS, and other assets.
+Fun's `--compile` flag can create standalone executables that contain both server and client code, making it ideal for full-stack applications. When you import an HTML file in your server code, Fun automatically bundles all frontend assets (JavaScript, CSS, etc.) and embeds them into the executable. When Fun sees the HTML import on the server, it kicks off a frontend build process to bundle JavaScript, CSS, and other assets.
 
 <CodeGroup>
 
 ```ts server.ts icon="/icons/typescript.svg"
-import { serve } from "bun";
+import { serve } from "fun";
 import index from "./index.html";
 
 const server = serve({
@@ -570,12 +570,12 @@ To build this into a single executable:
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build --compile ./server.ts --outfile myapp
+    fun build --compile ./server.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./server.ts"],
       compile: {
         outfile: "./myapp",
@@ -588,19 +588,19 @@ To build this into a single executable:
 This creates a self-contained binary that includes:
 
 - Your server code
-- The Bun runtime
+- The Fun runtime
 - All frontend assets (HTML, CSS, JavaScript)
 - Any npm packages used by your server
 
-The result is a single file that can be deployed anywhere without needing Node.js, Bun, or any dependencies installed. Just run:
+The result is a single file that can be deployed anywhere without needing Node.js, Fun, or any dependencies installed. Just run:
 
 ```bash terminal icon="terminal"
 ./myapp
 ```
 
-Bun automatically handles serving the frontend assets with proper MIME types and cache headers. The HTML import is replaced with a manifest object that `Bun.serve` uses to efficiently serve pre-bundled assets.
+Fun automatically handles serving the frontend assets with proper MIME types and cache headers. The HTML import is replaced with a manifest object that `Fun.serve` uses to efficiently serve pre-bundled assets.
 
-For more details on building full-stack applications with Bun, see the [full-stack guide](/bundler/fullstack).
+For more details on building full-stack applications with Fun, see the [full-stack guide](/bundler/fullstack).
 
 ---
 
@@ -611,12 +611,12 @@ To use workers in a standalone executable, add the worker's entrypoint to the bu
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build --compile ./index.ts ./my-worker.ts --outfile myapp
+    fun build --compile ./index.ts ./my-worker.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts", "./my-worker.ts"],
       compile: {
         outfile: "./myapp",
@@ -629,7 +629,7 @@ To use workers in a standalone executable, add the worker's entrypoint to the bu
 Then, reference the worker in your code:
 
 ```ts index.ts icon="/icons/typescript.svg"
-console.log("Hello from Bun!");
+console.log("Hello from Fun!");
 
 // Any of these will work:
 new Worker("./my-worker.ts");
@@ -647,7 +647,7 @@ If you use a relative path to a file not included in the standalone executable, 
 
 ## SQLite
 
-You can use `bun:sqlite` imports with `bun build --compile`.
+You can use `fun:sqlite` imports with `fun build --compile`.
 
 By default, the database is resolved relative to the current working directory of the process.
 
@@ -679,24 +679,24 @@ import icon from "./icon.png" with { type: "file" };
 
 console.log(icon);
 // During development: "./icon.png"
-// After compilation: "$bunfs/icon-a1b2c3d4.png" (internal path)
+// After compilation: "$funfs/icon-a1b2c3d4.png" (internal path)
 ```
 
-The import returns a **path string** that points to the embedded file. At build time, Bun:
+The import returns a **path string** that points to the embedded file. At build time, Fun:
 
 1. Reads the file contents
 2. Embeds the data into the executable
-3. Replaces the import with an internal path (prefixed with `$bunfs/`)
+3. Replaces the import with an internal path (prefixed with `$funfs/`)
 
-You can then read this embedded file using `Bun.file()` or Node.js `fs` APIs.
+You can then read this embedded file using `Fun.file()` or Node.js `fs` APIs.
 
-### Reading embedded files with Bun.file()
+### Reading embedded files with Fun.file()
 
-`Bun.file()` is the recommended way to read embedded files:
+`Fun.file()` is the recommended way to read embedded files:
 
 ```ts index.ts icon="/icons/typescript.svg"
 import icon from "./icon.png" with { type: "file" };
-import { file } from "bun";
+import { file } from "fun";
 
 // Get file contents as different types
 const bytes = await file(icon).arrayBuffer(); // ArrayBuffer
@@ -740,7 +740,7 @@ console.log(`Icon size: ${stats.size} bytes`);
 
 ```ts index.ts icon="/icons/typescript.svg"
 import configPath from "./default-config.json" with { type: "file" };
-import { file } from "bun";
+import { file } from "fun";
 
 // Load the embedded default configuration
 const defaultConfig = await file(configPath).json();
@@ -754,13 +754,13 @@ const config = { ...defaultConfig, ...userConfig };
 
 #### Serving static assets in an HTTP server
 
-Use `static` routes in `Bun.serve()` for efficient static file serving:
+Use `static` routes in `Fun.serve()` for efficient static file serving:
 
 ```ts server.ts icon="/icons/typescript.svg"
 import favicon from "./favicon.ico" with { type: "file" };
 import logo from "./logo.png" with { type: "file" };
 import styles from "./styles.css" with { type: "file" };
-import { file, serve } from "bun";
+import { file, serve } from "fun";
 
 serve({
   static: {
@@ -774,13 +774,13 @@ serve({
 });
 ```
 
-Bun automatically handles Content-Type headers and caching for static routes.
+Fun automatically handles Content-Type headers and caching for static routes.
 
 #### Embedding templates
 
 ```ts index.ts icon="/icons/typescript.svg"
 import templatePath from "./email-template.html" with { type: "file" };
-import { file } from "bun";
+import { file } from "fun";
 
 async function sendWelcomeEmail(user: { name: string; email: string }) {
   const template = await file(templatePath).text();
@@ -795,7 +795,7 @@ async function sendWelcomeEmail(user: { name: string; email: string }) {
 ```ts index.ts icon="/icons/typescript.svg"
 import wasmPath from "./processor.wasm" with { type: "file" };
 import fontPath from "./font.ttf" with { type: "file" };
-import { file } from "bun";
+import { file } from "fun";
 
 // Load a WebAssembly module
 const wasmBytes = await file(wasmPath).arrayBuffer();
@@ -820,12 +820,12 @@ console.log(myEmbeddedDb.query("select * from users LIMIT 1").get());
 Finally, compile it into a standalone executable:
 
 ```bash terminal icon="terminal"
-bun build --compile ./index.ts --outfile mycli
+fun build --compile ./index.ts --outfile mycli
 ```
 
 <Note>
-  The database file must exist on disk when you run `bun build --compile`. The `embed: "true"` attribute tells the
-  bundler to include the database contents inside the compiled executable. When running normally with `bun run`, the
+  The database file must exist on disk when you run `fun build --compile`. The `embed: "true"` attribute tells the
+  bundler to include the database contents inside the compiled executable. When running normally with `fun run`, the
   database file is loaded from disk just like a regular SQLite import.
 </Note>
 
@@ -845,23 +845,23 @@ Unfortunately, if you're using `@mapbox/node-pre-gyp` or other similar tools, yo
 
 ### Embed directories
 
-To embed a directory with `bun build --compile`, include file patterns in your build:
+To embed a directory with `fun build --compile`, include file patterns in your build:
 
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build --compile ./index.ts ./public/**/*.png
+    fun build --compile ./index.ts ./public/**/*.png
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    import { Glob } from "bun";
+    import { Glob } from "fun";
 
     // Expand glob pattern to file list
     const glob = new Glob("./public/**/*.png");
     const pngFiles = Array.from(glob.scanSync("."));
 
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts", ...pngFiles],
       compile: {
         outfile: "./myapp",
@@ -876,7 +876,7 @@ Then, you can reference the files in your code:
 
 ```ts index.ts icon="/icons/typescript.svg"
 import icon from "./public/assets/icon.png" with { type: "file" };
-import { file } from "bun";
+import { file } from "fun";
 
 export default {
   fetch(req) {
@@ -890,13 +890,13 @@ This is honestly a workaround, and we expect to improve this in the future with 
 
 ### Listing embedded files
 
-`Bun.embeddedFiles` gives you access to all embedded files as `Blob` objects:
+`Fun.embeddedFiles` gives you access to all embedded files as `Blob` objects:
 
 ```ts index.ts icon="/icons/typescript.svg"
 import "./icon.png" with { type: "file" };
 import "./data.json" with { type: "file" };
 import "./template.html" with { type: "file" };
-import { embeddedFiles } from "bun";
+import { embeddedFiles } from "fun";
 
 // List all embedded files
 for (const blob of embeddedFiles) {
@@ -908,7 +908,7 @@ for (const blob of embeddedFiles) {
 //   template-i9j0k1l2.html - 1024 bytes
 ```
 
-Each item in `Bun.embeddedFiles` is a `Blob` with a `name` property:
+Each item in `Fun.embeddedFiles` is a `Blob` with a `name` property:
 
 ```ts
 embeddedFiles: ReadonlyArray<Blob>;
@@ -920,7 +920,7 @@ This is useful for dynamically serving all embedded assets using `static` routes
 import "./public/favicon.ico" with { type: "file" };
 import "./public/logo.png" with { type: "file" };
 import "./public/styles.css" with { type: "file" };
-import { embeddedFiles, serve } from "bun";
+import { embeddedFiles, serve } from "fun";
 
 // Build static routes from all embedded files
 const staticRoutes: Record<string, Blob> = {};
@@ -939,7 +939,7 @@ serve({
 ```
 
 <Note>
-  `Bun.embeddedFiles` excludes bundled source code (`.ts`, `.js`, etc.) to help protect your application's source.
+  `Fun.embeddedFiles` excludes bundled source code (`.ts`, `.js`, etc.) to help protect your application's source.
 </Note>
 
 #### Content hash
@@ -951,12 +951,12 @@ To disable the content hash, configure asset naming:
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build --compile --asset-naming="[name].[ext]" ./index.ts
+    fun build --compile --asset-naming="[name].[ext]" ./index.ts
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts"],
       compile: {
         outfile: "./myapp",
@@ -978,12 +978,12 @@ To trim down the size of the executable, enable minification:
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build --compile --minify ./index.ts --outfile myapp
+    fun build --compile --minify ./index.ts --outfile myapp
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts"],
       compile: {
         outfile: "./myapp",
@@ -992,7 +992,7 @@ To trim down the size of the executable, enable minification:
     });
 
     // Or granular control:
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.ts"],
       compile: {
         outfile: "./myapp",
@@ -1008,7 +1008,7 @@ To trim down the size of the executable, enable minification:
   </Tab>
 </Tabs>
 
-This uses Bun's minifier to reduce the code size. Overall though, Bun's binary is still way too big and we need to make it smaller.
+This uses Fun's minifier to reduce the code size. Overall though, Fun's binary is still way too big and we need to make it smaller.
 
 ---
 
@@ -1020,16 +1020,16 @@ When compiling a standalone executable on Windows, there are platform-specific o
   <Tab title="CLI">
     ```bash terminal icon="terminal"
     # Custom icon
-    bun build --compile --windows-icon=path/to/icon.ico ./app.ts --outfile myapp
+    fun build --compile --windows-icon=path/to/icon.ico ./app.ts --outfile myapp
 
     # Hide console window (for GUI apps)
-    bun build --compile --windows-hide-console ./app.ts --outfile myapp
+    fun build --compile --windows-hide-console ./app.ts --outfile myapp
     ```
 
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./app.ts"],
       compile: {
         outfile: "./myapp",
@@ -1106,7 +1106,7 @@ codesign -vvv --verify ./myapp
 ./myapp: satisfies its Designated Requirement
 ```
 
-<Warning>Codesign support requires Bun v1.2.4 or newer.</Warning>
+<Warning>Codesign support requires Fun v1.2.4 or newer.</Warning>
 
 ---
 
@@ -1117,12 +1117,12 @@ Standalone executables support code splitting. Use `--compile` with `--splitting
 <Tabs>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build --compile --splitting ./src/entry.ts --outdir ./build
+    fun build --compile --splitting ./src/entry.ts --outdir ./build
     ```
   </Tab>
   <Tab title="JavaScript">
     ```ts build.ts icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./src/entry.ts"],
       compile: true,
       splitting: true,
@@ -1164,14 +1164,14 @@ Lazy module loaded
 Plugins work with standalone executables, allowing you to transform files during the build process:
 
 ```ts build.ts icon="/icons/typescript.svg"
-import type { BunPlugin } from "bun";
+import type { FunPlugin } from "fun";
 
-const envPlugin: BunPlugin = {
+const envPlugin: FunPlugin = {
   name: "env-loader",
   setup(build) {
     build.onLoad({ filter: /\.env\.json$/ }, async args => {
       // Transform .env.json files into validated config objects
-      const env = await Bun.file(args.path).json();
+      const env = await Fun.file(args.path).json();
 
       return {
         contents: `export default ${JSON.stringify(env)};`,
@@ -1181,7 +1181,7 @@ const envPlugin: BunPlugin = {
   },
 };
 
-await Bun.build({
+await Fun.build({
   entrypoints: ["./cli.ts"],
   compile: {
     outfile: "./mycli",
@@ -1217,23 +1217,23 @@ Currently, the `--compile` flag can only accept a single entrypoint at a time an
 
 ## API reference
 
-The `compile` option in `Bun.build()` accepts three forms:
+The `compile` option in `Fun.build()` accepts three forms:
 
 ```ts title="types" icon="/icons/typescript.svg"
 interface BuildConfig {
   entrypoints: string[];
-  compile: boolean | Bun.Build.Target | CompileBuildOptions;
+  compile: boolean | Fun.Build.Target | CompileBuildOptions;
   // ... other BuildConfig options (minify, sourcemap, define, plugins, etc.)
 }
 
 interface CompileBuildOptions {
-  target?: Bun.Build.Target; // Cross-compilation target
+  target?: Fun.Build.Target; // Cross-compilation target
   outfile?: string; // Output executable path
   execArgv?: string[]; // Runtime arguments (process.execArgv)
   autoloadTsconfig?: boolean; // Load tsconfig.json (default: false)
   autoloadPackageJson?: boolean; // Load package.json (default: false)
   autoloadDotenv?: boolean; // Load .env files (default: true)
-  autoloadBunfig?: boolean; // Load bunfig.toml (default: true)
+  autoloadBunfig?: boolean; // Load funfig.toml (default: true)
   windows?: {
     icon?: string; // Path to .ico file
     hideConsole?: boolean; // Hide console window
@@ -1253,50 +1253,50 @@ Usage forms:
 compile: true
 
 // Target string - cross-compile (uses entrypoint name as output)
-compile: "bun-linux-x64"
+compile: "fun-linux-x64"
 
 // Full options object - specify outfile and other options
 compile: {
-  target: "bun-linux-x64",
+  target: "fun-linux-x64",
   outfile: "./myapp",
 }
 ```
 
 ### Supported targets
 
-```ts title="Bun.Build.Target" icon="/icons/typescript.svg"
+```ts title="Fun.Build.Target" icon="/icons/typescript.svg"
 type Target =
-  | "bun-darwin-x64"
-  | "bun-darwin-x64-baseline"
-  | "bun-darwin-arm64"
-  | "bun-linux-x64"
-  | "bun-linux-x64-baseline"
-  | "bun-linux-x64-modern"
-  | "bun-linux-arm64"
-  | "bun-linux-x64-musl"
-  | "bun-linux-arm64-musl"
-  | "bun-windows-x64"
-  | "bun-windows-x64-baseline"
-  | "bun-windows-x64-modern"
-  | "bun-windows-arm64";
+  | "fun-darwin-x64"
+  | "fun-darwin-x64-baseline"
+  | "fun-darwin-arm64"
+  | "fun-linux-x64"
+  | "fun-linux-x64-baseline"
+  | "fun-linux-x64-modern"
+  | "fun-linux-arm64"
+  | "fun-linux-x64-musl"
+  | "fun-linux-arm64-musl"
+  | "fun-windows-x64"
+  | "fun-windows-x64-baseline"
+  | "fun-windows-x64-modern"
+  | "fun-windows-arm64";
 ```
 
 ### Complete example
 
 ```ts build.ts icon="/icons/typescript.svg"
-import type { BunPlugin } from "bun";
+import type { FunPlugin } from "fun";
 
-const myPlugin: BunPlugin = {
+const myPlugin: FunPlugin = {
   name: "my-plugin",
   setup(build) {
     // Plugin implementation
   },
 };
 
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints: ["./src/cli.ts"],
   compile: {
-    target: "bun-linux-x64",
+    target: "fun-linux-x64",
     outfile: "./dist/mycli",
     execArgv: ["--smol"],
     autoloadDotenv: false,

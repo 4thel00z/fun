@@ -1,4 +1,4 @@
-// @runtime bun,node
+// @runtime fun,node
 import { bench, group, run } from "../runner.mjs";
 
 const small = Buffer.alloc(64, 0x42);

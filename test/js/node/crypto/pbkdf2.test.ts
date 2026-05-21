@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const common = require("../test/common");
 
-import { describe, expect, jest, test } from "bun:test";
+import { describe, expect, jest, test } from "fun:test";
 function testPBKDF2_(password, salt, iterations, keylen, expected) {
   async function runPBKDF2(password, salt, iterations, keylen, hash) {
     const syncResult = crypto.pbkdf2Sync(password, salt, iterations, keylen, hash);

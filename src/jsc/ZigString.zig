@@ -1,4 +1,4 @@
-/// Prefer using bun.String instead of ZigString in new code.
+/// Prefer using fun.String instead of ZigString in new code.
 pub const ZigString = extern struct {
     /// This can be a UTF-16, Latin1, or UTF-8 string.
     /// The pointer itself is tagged, so it cannot be used without untagging it first
@@ -24,7 +24,7 @@ pub const ZigString = extern struct {
     }
 
     pub fn encode(this: ZigString, encoding: jsc.Node.Encoding) []u8 {
-        return this.encodeWithAllocator(bun.default_allocator, encoding);
+        return this.encodeWithAllocator(fun.default_allocator, encoding);
     }
 
     pub fn encodeWithAllocator(this: ZigString, allocator: std.mem.Allocator, encoding: jsc.Node.Encoding) []u8 {
@@ -59,7 +59,7 @@ pub const ZigString = extern struct {
 
     /// This function is not optimized!
     pub fn eqlCaseInsensitive(this: ZigString, other: ZigString) bool {
-        var fallback = std.heap.stackFallback(1024, bun.default_allocator);
+        var fallback = std.heap.stackFallback(1024, fun.default_allocator);
         const fallback_allocator = fallback.get();
 
         var utf16_slice = this.toSliceLowercase(fallback_allocator);
@@ -123,8 +123,8 @@ pub const ZigString = extern struct {
         }
 
         // slow path
-        var utf16_slice = utf16.toSlice(bun.default_allocator);
-        var latin1_slice = latin1.toSlice(bun.default_allocator);
+        var utf16_slice = utf16.toSlice(fun.default_allocator);
+        var latin1_slice = latin1.toSlice(fun.default_allocator);
         defer utf16_slice.deinit();
         defer latin1_slice.deinit();
         return strings.eqlLong(utf16_slice.slice(), latin1_slice.slice(), true);
@@ -145,11 +145,11 @@ pub const ZigString = extern struct {
         return ZigString__toJSONObject(&this, globalThis);
     }
 
-    extern fn BunString__toURL(this: *const ZigString, *jsc.JSGlobalObject) callconv(.c) jsc.JSValue;
+    extern fn FunString__toURL(this: *const ZigString, *jsc.JSGlobalObject) callconv(.c) jsc.JSValue;
 
     pub fn toURL(this: ZigString, globalThis: *jsc.JSGlobalObject) JSValue {
         jsc.markBinding(@src());
-        return BunString__toURL(&this, globalThis);
+        return FunString__toURL(&this, globalThis);
     }
 
     pub fn hasPrefixChar(this: ZigString, char: u8) bool {
@@ -198,7 +198,7 @@ pub const ZigString = extern struct {
 
     pub fn utf16ByteLength(this: ZigString) usize {
         if (this.isUTF8()) {
-            return bun.simdutf.length.utf16.from.utf8(this.slice());
+            return fun.simdutf.length.utf16.from.utf8(this.slice());
         }
 
         if (this.is16Bit()) {
@@ -227,7 +227,7 @@ pub const ZigString = extern struct {
             return strings.elementLengthUTF16IntoUTF8(this.utf16SliceAligned());
         }
 
-        return bun.webcore.encoding.byteLengthU8(this.slice().ptr, this.slice().len, .utf8);
+        return fun.webcore.encoding.byteLengthU8(this.slice().ptr, this.slice().len, .utf8);
     }
 
     pub fn toOwnedSlice(this: ZigString, allocator: std.mem.Allocator) OOM![]u8 {
@@ -312,14 +312,14 @@ pub const ZigString = extern struct {
         pub fn reportExtraMemory(this: *const Slice, vm: *jsc.VM) void {
             if (this.allocator.get()) |allocator| {
                 // Don't report it if the memory is actually owned by jsc.
-                if (!bun.String.isWTFAllocator(allocator)) {
+                if (!fun.String.isWTFAllocator(allocator)) {
                     vm.reportExtraMemory(this.len);
                 }
             }
         }
 
         pub fn isWTFAllocated(this: *const Slice) bool {
-            return bun.String.isWTFAllocator(this.allocator.get() orelse return false);
+            return fun.String.isWTFAllocator(this.allocator.get() orelse return false);
         }
 
         pub fn init(allocator: std.mem.Allocator, input: []const u8) Slice {
@@ -379,7 +379,7 @@ pub const ZigString = extern struct {
             if (this.allocator.get()) |this_allocator| blk: {
                 if (allocator.vtable != this_allocator.vtable) break :blk;
                 // Can add support for more allocators here
-                if (allocator.vtable == bun.default_allocator.vtable) {
+                if (allocator.vtable == fun.default_allocator.vtable) {
                     return this.slice();
                 }
             }
@@ -398,7 +398,7 @@ pub const ZigString = extern struct {
         }
 
         /// Note that the returned slice is not guaranteed to be allocated by `allocator`.
-        pub fn cloneIfBorrowed(this: Slice, allocator: std.mem.Allocator) bun.OOM!Slice {
+        pub fn cloneIfBorrowed(this: Slice, allocator: std.mem.Allocator) fun.OOM!Slice {
             if (this.isAllocated()) {
                 return this;
             }
@@ -417,7 +417,7 @@ pub const ZigString = extern struct {
         }
 
         pub fn mut(this: Slice) []u8 {
-            bun.assertf(!this.allocator.isNull(), "cannot mutate a borrowed ZigString.Slice", .{});
+            fun.assertf(!this.allocator.isNull(), "cannot mutate a borrowed ZigString.Slice", .{});
             return @constCast(this.ptr)[0..this.len];
         }
 
@@ -432,7 +432,7 @@ pub const ZigString = extern struct {
     }
 
     pub inline fn utf16Slice(this: *const ZigString) []align(1) const u16 {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             if (this.len > 0 and !this.is16Bit()) {
                 @panic("ZigString.utf16Slice() called on a latin1 string.\nPlease use .toSlice() instead or carefully check that .is16Bit() is false first.");
             }
@@ -442,7 +442,7 @@ pub const ZigString = extern struct {
     }
 
     pub inline fn utf16SliceAligned(this: *const ZigString) []const u16 {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             if (this.len > 0 and !this.is16Bit()) {
                 @panic("ZigString.utf16SliceAligned() called on a latin1 string.\nPlease use .toSlice() instead or carefully check that .is16Bit() is false first.");
             }
@@ -509,9 +509,9 @@ pub const ZigString = extern struct {
         text: ZigString,
 
         pub fn format(this: GithubActionFormatter, writer: *std.Io.Writer) !void {
-            var bytes = this.text.toSlice(bun.default_allocator);
+            var bytes = this.text.toSlice(fun.default_allocator);
             defer bytes.deinit();
-            try bun.fmt.githubActionWriter(writer, bytes.slice());
+            try fun.fmt.githubActionWriter(writer, bytes.slice());
         }
     };
 
@@ -570,7 +570,7 @@ pub const ZigString = extern struct {
     extern fn ZigString__toExternalU16(ptr: [*]const u16, len: usize, global: *JSGlobalObject) JSValue;
     pub fn toExternalU16(ptr: [*]const u16, len: usize, global: *JSGlobalObject) JSValue {
         if (len > String.max_length()) {
-            bun.default_allocator.free(ptr[0..len]);
+            fun.default_allocator.free(ptr[0..len]);
             global.ERR(.STRING_TOO_LONG, "Cannot create a string longer than 2^32-1 characters", .{}).throw() catch {}; // TODO: propagate?
             return .zero;
         }
@@ -599,7 +599,7 @@ pub const ZigString = extern struct {
     }
 
     pub inline fn deinitGlobal(this: ZigString) void {
-        bun.default_allocator.free(this.slice());
+        fun.default_allocator.free(this.slice());
     }
 
     pub inline fn markGlobal(this: *ZigString) void {
@@ -613,11 +613,11 @@ pub const ZigString = extern struct {
         }
 
         if (self.is16Bit()) {
-            try bun.fmt.formatUTF16Type(self.utf16SliceAligned(), writer);
+            try fun.fmt.formatUTF16Type(self.utf16SliceAligned(), writer);
             return;
         }
 
-        try bun.fmt.formatLatin1(self.slice(), writer);
+        try fun.fmt.formatLatin1(self.slice(), writer);
     }
 
     pub inline fn toRef(slice_: []const u8, global: *JSGlobalObject) C_API.JSValueRef {
@@ -633,7 +633,7 @@ pub const ZigString = extern struct {
     }
 
     pub fn slice(this: *const ZigString) []const u8 {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             if (this.len > 0 and this.is16Bit()) {
                 @panic("ZigString.slice() called on a UTF-16 string.\nPlease use .toSlice() instead or carefully check that .is16Bit() is false first.");
             }
@@ -646,7 +646,7 @@ pub const ZigString = extern struct {
         if (this.len == 0)
             return Slice.empty;
         if (is16Bit(&this)) {
-            const buffer = bun.handleOom(this.toOwnedSlice(allocator));
+            const buffer = fun.handleOom(this.toOwnedSlice(allocator));
             return Slice{
                 .allocator = NullableAllocator.init(allocator),
                 .ptr = buffer.ptr,
@@ -666,7 +666,7 @@ pub const ZigString = extern struct {
         if (this.len == 0)
             return Slice.empty;
         if (is16Bit(&this)) {
-            const buffer = bun.handleOom(this.toOwnedSlice(allocator));
+            const buffer = fun.handleOom(this.toOwnedSlice(allocator));
             return Slice{
                 .allocator = NullableAllocator.init(allocator),
                 .ptr = buffer.ptr,
@@ -675,7 +675,7 @@ pub const ZigString = extern struct {
         }
 
         if (!this.isUTF8() and !strings.isAllASCII(untagged(this._unsafe_ptr_do_not_use)[0..this.len])) {
-            const buffer = bun.handleOom(this.toOwnedSlice(allocator));
+            const buffer = fun.handleOom(this.toOwnedSlice(allocator));
             return Slice{
                 .allocator = NullableAllocator.init(allocator),
                 .ptr = buffer.ptr,
@@ -701,7 +701,7 @@ pub const ZigString = extern struct {
         };
     }
 
-    pub fn sliceZBuf(this: ZigString, buf: *bun.PathBuffer) ![:0]const u8 {
+    pub fn sliceZBuf(this: ZigString, buf: *fun.PathBuffer) ![:0]const u8 {
         return try std.fmt.bufPrintZ(buf, "{f}", .{this});
     }
 
@@ -714,7 +714,7 @@ pub const ZigString = extern struct {
     }
 
     inline fn assertGlobalIfNeeded(this: *const ZigString) void {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             if (this.isGloballyAllocated()) {
                 this.assertGlobal();
             }
@@ -722,21 +722,21 @@ pub const ZigString = extern struct {
     }
 
     inline fn assertGlobal(this: *const ZigString) void {
-        if (comptime bun.Environment.allow_assert) {
-            bun.assert(this.len == 0 or
-                bun.mimalloc.mi_is_in_heap_region(untagged(this._unsafe_ptr_do_not_use)) or
-                bun.mimalloc.mi_check_owned(untagged(this._unsafe_ptr_do_not_use)));
+        if (comptime fun.Environment.allow_assert) {
+            fun.assert(this.len == 0 or
+                fun.mimalloc.mi_is_in_heap_region(untagged(this._unsafe_ptr_do_not_use)) or
+                fun.mimalloc.mi_check_owned(untagged(this._unsafe_ptr_do_not_use)));
         }
     }
 
     pub fn toExternalValue(this: *const ZigString, global: *JSGlobalObject) JSValue {
         this.assertGlobal();
         if (this.len > String.max_length()) {
-            bun.default_allocator.free(@constCast(this.byteSlice()));
+            fun.default_allocator.free(@constCast(this.byteSlice()));
             global.ERR(.STRING_TOO_LONG, "Cannot create a string longer than 2^32-1 characters", .{}).throw() catch {}; // TODO: propagate?
             return .zero;
         }
-        return bun.cpp.ZigString__toExternalValue(this, global);
+        return fun.cpp.ZigString__toExternalValue(this, global);
     }
 
     extern fn ZigString__toExternalValueWithCallback(
@@ -786,7 +786,7 @@ pub const ZigString = extern struct {
     }
 
     pub fn toJSStringRef(this: *const ZigString) C_API.JSStringRef {
-        if (comptime @hasDecl(@import("bun"), "bindgen")) {
+        if (comptime @hasDecl(@import("fun"), "bindgen")) {
             return undefined;
         }
 
@@ -831,7 +831,7 @@ export fn ZigString__free(raw: [*]const u8, len: usize, allocator_: ?*anyopaque)
     var allocator: std.mem.Allocator = @as(*std.mem.Allocator, @ptrCast(@alignCast(allocator_ orelse return))).*;
     var ptr = ZigString.init(raw[0..len]).slice().ptr;
     if (comptime Environment.allow_assert) {
-        bun.assert(Mimalloc.mi_is_in_heap_region(ptr));
+        fun.assert(Mimalloc.mi_is_in_heap_region(ptr));
     }
     const str = ptr[0..len];
 
@@ -841,7 +841,7 @@ export fn ZigString__free(raw: [*]const u8, len: usize, allocator_: ?*anyopaque)
 export fn ZigString__freeGlobal(ptr: [*]const u8, len: usize) void {
     const untagged = @as(*anyopaque, @ptrFromInt(@intFromPtr(ZigString.init(ptr[0..len]).slice().ptr)));
     if (comptime Environment.allow_assert) {
-        bun.assert(Mimalloc.mi_is_in_heap_region(ptr));
+        fun.assert(Mimalloc.mi_is_in_heap_region(ptr));
     }
     // we must untag the string pointer
     Mimalloc.mi_free(untagged);
@@ -851,15 +851,15 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Mimalloc = bun.mimalloc;
-const NullableAllocator = bun.NullableAllocator;
-const OOM = bun.OOM;
-const String = bun.String;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Mimalloc = fun.mimalloc;
+const NullableAllocator = fun.NullableAllocator;
+const OOM = fun.OOM;
+const String = fun.String;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
-const C_API = bun.jsc.C;
+const jsc = fun.jsc;
+const C_API = fun.jsc.C;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

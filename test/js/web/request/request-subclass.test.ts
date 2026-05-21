@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { RequestInit } from "undici-types";
 
-// https://github.com/oven-sh/bun/issues/4718
+// https://github.com/underdoc-org/fun/issues/4718
 test("fetch() calls request.method & request.url getters on subclass", async () => {
   class MyRequest extends Request {
     constructor(input: string, init?: RequestInit, actual_url?: string) {
@@ -28,7 +28,7 @@ test("fetch() calls request.method & request.url getters on subclass", async () 
     }
   }
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     fetch(req) {
       return new Response(req.method, { headers: req.headers });
     },

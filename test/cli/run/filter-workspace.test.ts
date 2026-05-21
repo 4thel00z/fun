@@ -1,6 +1,6 @@
-import { spawnSync } from "bun";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { spawnSync } from "fun";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 const cwd_root = tempDirWithFiles("testworkspace", {
@@ -13,7 +13,7 @@ const cwd_root = tempDirWithFiles("testworkspace", {
         name: "pkga",
         scripts: {
           present: "echo scripta",
-          long: `${bunExe()} run sleep.js`,
+          long: `${funExe()} run sleep.js`,
         },
       }),
     },
@@ -25,7 +25,7 @@ const cwd_root = tempDirWithFiles("testworkspace", {
         name: "@scoped/scoped",
         scripts: {
           present: "echo scriptd",
-          long: `${bunExe()} run sleep.js`,
+          long: `${funExe()} run sleep.js`,
         },
       }),
     },
@@ -37,7 +37,7 @@ const cwd_root = tempDirWithFiles("testworkspace", {
         name: "pkgb",
         scripts: {
           present: "echo scriptb",
-          long: `${bunExe()} run sleep.js`,
+          long: `${funExe()} run sleep.js`,
         },
       }),
     },
@@ -98,7 +98,7 @@ function runInCwdSuccess({
   env?: Record<string, string | undefined>;
   elideCount?: number;
 }) {
-  const cmd = auto ? [bunExe()] : [bunExe(), "run"];
+  const cmd = auto ? [funExe()] : [funExe(), "run"];
 
   // Add elide-lines first if specified
   if (elideCount !== undefined) {
@@ -120,7 +120,7 @@ function runInCwdSuccess({
   const { exitCode, stdout, stderr } = spawnSync({
     cwd,
     cmd,
-    env: { ...bunEnv, ...env },
+    env: { ...funEnv, ...env },
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -140,8 +140,8 @@ function runInCwdSuccess({
 function runInCwdFailure(cwd: string, pkgname: string, scriptname: string, result: RegExp) {
   const { exitCode, stdout, stderr } = spawnSync({
     cwd: cwd,
-    cmd: [bunExe(), "run", "--filter", pkgname, scriptname],
-    env: bunEnv,
+    cmd: [funExe(), "run", "--filter", pkgname, scriptname],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -150,7 +150,7 @@ function runInCwdFailure(cwd: string, pkgname: string, scriptname: string, resul
   expect(exitCode).not.toBe(0);
 }
 
-describe("bun", () => {
+describe("fun", () => {
   const dirs = [cwd_root, cwd_packages, cwd_a, cwd_b, cwd_c, cwd_d];
   const packages = [
     {
@@ -250,15 +250,15 @@ describe("bun", () => {
   test("run pre and post scripts, in order", () => {
     const dir = tempDirWithFiles("testworkspace", {
       dep0: {
-        "write.js": "await Bun.write('out.txt', 'success')",
-        "readwrite.js": "console.log(await Bun.file('out.txt').text()); await Bun.write('post.txt', 'great success')",
-        "read.js": "console.log(await Bun.file('post.txt').text())",
+        "write.js": "await Fun.write('out.txt', 'success')",
+        "readwrite.js": "console.log(await Fun.file('out.txt').text()); await Fun.write('post.txt', 'great success')",
+        "read.js": "console.log(await Fun.file('post.txt').text())",
         "package.json": JSON.stringify({
           name: "dep0",
           scripts: {
-            prescript: `${bunExe()} run write.js`,
-            script: `${bunExe()} run readwrite.js`,
-            postscript: `${bunExe()} run read.js`,
+            prescript: `${funExe()} run write.js`,
+            script: `${funExe()} run readwrite.js`,
+            postscript: `${funExe()} run read.js`,
           },
         }),
       },
@@ -277,24 +277,24 @@ describe("bun", () => {
       dep0: {
         "index.js": [
           "await new Promise((resolve) => setTimeout(resolve, 100))",
-          "Bun.write('out.txt', 'success')",
+          "Fun.write('out.txt', 'success')",
         ].join(";"),
         "package.json": JSON.stringify({
           name: "dep0",
           scripts: {
-            script: `${bunExe()} run index.js`,
+            script: `${funExe()} run index.js`,
           },
         }),
       },
       dep1: {
-        "index.js": 'console.log(await Bun.file("../dep0/out.txt").text())',
+        "index.js": 'console.log(await Fun.file("../dep0/out.txt").text())',
         "package.json": JSON.stringify({
           name: "dep1",
           dependencies: {
             dep0: "*",
           },
           scripts: {
-            script: `${bunExe()} run index.js`,
+            script: `${funExe()} run index.js`,
           },
         }),
       },
@@ -314,25 +314,25 @@ describe("bun", () => {
     const largeNamePkg = {
       "index.js": [
         "await new Promise((resolve) => setTimeout(resolve, 100))",
-        `Bun.write('out.txt', '${fileContent}')`,
+        `Fun.write('out.txt', '${fileContent}')`,
       ].join(";"),
       "package.json": JSON.stringify({
         name: largeNamePkgName,
         scripts: {
-          script: `${bunExe()} run index.js`,
+          script: `${funExe()} run index.js`,
         },
       }),
     };
     const dir = tempDirWithFiles("testworkspace", {
       main: {
-        "index.js": `console.log(await Bun.file("../${largeNamePkgName}/out.txt").text())`,
+        "index.js": `console.log(await Fun.file("../${largeNamePkgName}/out.txt").text())`,
         "package.json": JSON.stringify({
           name: "main",
           dependencies: {
             [largeNamePkgName]: "*",
           },
           scripts: {
-            script: `${bunExe()} run index.js`,
+            script: `${funExe()} run index.js`,
           },
         }),
       },
@@ -349,16 +349,16 @@ describe("bun", () => {
   test("ignore dependency order on cycle, preserving pre and post script order", () => {
     const dir = tempDirWithFiles("testworkspace", {
       dep0: {
-        "write.js": "await Bun.write('out.txt', 'success')",
+        "write.js": "await Fun.write('out.txt', 'success')",
         "readwrite.js":
-          "console.log(await Bun.file('out.txt').text()); await Bun.write('post.txt', 'great success'); setTimeout(() => {}, 300)",
-        "read.js": "console.log(await Bun.file('post.txt').text())",
+          "console.log(await Fun.file('out.txt').text()); await Fun.write('post.txt', 'great success'); setTimeout(() => {}, 300)",
+        "read.js": "console.log(await Fun.file('post.txt').text())",
         "package.json": JSON.stringify({
           name: "dep0",
           scripts: {
-            prescript: `${bunExe()} run write.js`,
-            script: `${bunExe()} run readwrite.js`,
-            postscript: `${bunExe()} run read.js`,
+            prescript: `${funExe()} run write.js`,
+            script: `${funExe()} run readwrite.js`,
+            postscript: `${funExe()} run read.js`,
           },
           dependencies: {
             dep1: "*",
@@ -373,7 +373,7 @@ describe("bun", () => {
             dep0: "*",
           },
           scripts: {
-            script: `${bunExe()} run index.js`,
+            script: `${funExe()} run index.js`,
           },
         }),
       },
@@ -459,8 +459,8 @@ describe("bun", () => {
     });
     const { exitCode, stdout } = spawnSync({
       cwd: dir,
-      cmd: [bunExe(), "run", "--filter", "*", "script"],
-      env: bunEnv,
+      cmd: [funExe(), "run", "--filter", "*", "script"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -486,7 +486,7 @@ describe("bun", () => {
           "package.json": JSON.stringify({
             name: "dep0",
             scripts: {
-              script: `${bunExe()} run index.js`,
+              script: `${funExe()} run index.js`,
             },
           }),
         },
@@ -509,8 +509,8 @@ describe("bun", () => {
       // code path.
       const { exitCode, stderr, stdout } = spawnSync({
         cwd: dir,
-        cmd: [bunExe(), "run", "--filter", "./packages/dep0", "--elide-lines", String(elideLines), "script"],
-        env: { ...bunEnv, FORCE_COLOR: "1", NO_COLOR: "0" },
+        cmd: [funExe(), "run", "--filter", "./packages/dep0", "--elide-lines", String(elideLines), "script"],
+        env: { ...funEnv, FORCE_COLOR: "1", NO_COLOR: "0" },
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -565,7 +565,7 @@ describe("bun", () => {
       packages: {
         dep0: {
           "index.js": Array(20).fill("console.log('log_line');").join("\n"),
-          "package.json": JSON.stringify({ name: "dep0", scripts: { script: `${bunExe()} run index.js` } }),
+          "package.json": JSON.stringify({ name: "dep0", scripts: { script: `${funExe()} run index.js` } }),
         },
       },
       "package.json": JSON.stringify({ name: "ws", workspaces: ["packages/*"] }),
@@ -576,8 +576,8 @@ describe("bun", () => {
     // would only surface 5 log_line entries and the 20-match regex would fail.
     const { exitCode, stderr, stdout } = spawnSync({
       cwd: dir,
-      cmd: [bunExe(), "run", "--filter", "./packages/dep0", "--elide-lines", "5", "script"],
-      env: { ...bunEnv, FORCE_COLOR: undefined, NO_COLOR: "1" },
+      cmd: [funExe(), "run", "--filter", "./packages/dep0", "--elide-lines", "5", "script"],
+      env: { ...funEnv, FORCE_COLOR: undefined, NO_COLOR: "1" },
       stdout: "pipe",
       stderr: "pipe",
     });

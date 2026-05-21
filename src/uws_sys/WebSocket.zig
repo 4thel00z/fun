@@ -34,7 +34,7 @@ pub fn NewWebSocket(comptime ssl_flag: c_int) type {
             const ContextType = @TypeOf(ctx);
             const Wrapper = struct {
                 pub fn wrap(user_data: ?*anyopaque) callconv(.c) void {
-                    @call(bun.callmod_inline, callback, .{bun.cast(ContextType, user_data.?)});
+                    @call(fun.callmod_inline, callback, .{fun.cast(ContextType, user_data.?)});
                 }
             };
 
@@ -63,7 +63,7 @@ pub fn NewWebSocket(comptime ssl_flag: c_int) type {
         pub fn getRemoteAddress(this: *WebSocket, buf: []u8) []u8 {
             var ptr: [*]u8 = undefined;
             const len = c.uws_ws_get_remote_address(ssl_flag, this.raw(), &ptr);
-            bun.copy(u8, buf, ptr[0..len]);
+            fun.copy(u8, buf, ptr[0..len]);
             return buf[0..len];
         }
     };
@@ -136,7 +136,7 @@ pub const AnyWebSocket = union(enum) {
         const ContextType = @TypeOf(ctx);
         const Wrapper = struct {
             pub fn wrap(user_data: ?*anyopaque) callconv(.c) void {
-                @call(bun.callmod_inline, callback, .{bun.cast(ContextType, user_data.?)});
+                @call(fun.callmod_inline, callback, .{fun.cast(ContextType, user_data.?)});
             }
         };
 
@@ -227,7 +227,7 @@ pub const WebSocketBehavior = extern struct {
             pub fn onOpen(raw_ws: *RawWebSocket) callconv(.c) void {
                 const ws = @unionInit(AnyWebSocket, active_field_name, @as(*WebSocket, @ptrCast(raw_ws)));
                 const this = ws.as(Type).?;
-                @call(bun.callmod_inline, Type.onOpen, .{
+                @call(fun.callmod_inline, Type.onOpen, .{
                     this,
                     ws,
                 });
@@ -236,7 +236,7 @@ pub const WebSocketBehavior = extern struct {
             pub fn onMessage(raw_ws: *RawWebSocket, message: [*c]const u8, length: usize, opcode: Opcode) callconv(.c) void {
                 const ws = @unionInit(AnyWebSocket, active_field_name, @as(*WebSocket, @ptrCast(raw_ws)));
                 const this = ws.as(Type).?;
-                @call(bun.callmod_inline, Type.onMessage, .{
+                @call(fun.callmod_inline, Type.onMessage, .{
                     this,
                     ws,
                     if (length > 0) message[0..length] else "",
@@ -247,7 +247,7 @@ pub const WebSocketBehavior = extern struct {
             pub fn onDrain(raw_ws: *RawWebSocket) callconv(.c) void {
                 const ws = @unionInit(AnyWebSocket, active_field_name, @as(*WebSocket, @ptrCast(raw_ws)));
                 const this = ws.as(Type).?;
-                @call(bun.callmod_inline, Type.onDrain, .{
+                @call(fun.callmod_inline, Type.onDrain, .{
                     this,
                     ws,
                 });
@@ -256,7 +256,7 @@ pub const WebSocketBehavior = extern struct {
             pub fn onPing(raw_ws: *RawWebSocket, message: [*c]const u8, length: usize) callconv(.c) void {
                 const ws = @unionInit(AnyWebSocket, active_field_name, @as(*WebSocket, @ptrCast(raw_ws)));
                 const this = ws.as(Type).?;
-                @call(bun.callmod_inline, Type.onPing, .{
+                @call(fun.callmod_inline, Type.onPing, .{
                     this,
                     ws,
                     if (length > 0) message[0..length] else "",
@@ -266,7 +266,7 @@ pub const WebSocketBehavior = extern struct {
             pub fn onPong(raw_ws: *RawWebSocket, message: [*c]const u8, length: usize) callconv(.c) void {
                 const ws = @unionInit(AnyWebSocket, active_field_name, @as(*WebSocket, @ptrCast(raw_ws)));
                 const this = ws.as(Type).?;
-                @call(bun.callmod_inline, Type.onPong, .{
+                @call(fun.callmod_inline, Type.onPong, .{
                     this,
                     ws,
                     if (length > 0) message[0..length] else "",
@@ -276,7 +276,7 @@ pub const WebSocketBehavior = extern struct {
             pub fn onClose(raw_ws: *RawWebSocket, code: i32, message: [*c]const u8, length: usize) callconv(.c) void {
                 const ws = @unionInit(AnyWebSocket, active_field_name, @as(*WebSocket, @ptrCast(raw_ws)));
                 const this = ws.as(Type).?;
-                @call(bun.callmod_inline, Type.onClose, .{
+                @call(fun.callmod_inline, Type.onClose, .{
                     this,
                     ws,
                     code,
@@ -285,8 +285,8 @@ pub const WebSocketBehavior = extern struct {
             }
 
             pub fn onUpgrade(ptr: *anyopaque, res: *uws_res, req: *Request, context: *uws.WebSocketUpgradeContext, id: usize) callconv(.c) void {
-                @call(bun.callmod_inline, Server.onWebSocketUpgrade, .{
-                    bun.cast(*Server, ptr),
+                @call(fun.callmod_inline, Server.onWebSocketUpgrade, .{
+                    fun.cast(*Server, ptr),
                     @as(*NewApp(is_ssl).Response, @ptrCast(res)),
                     req,
                     context,
@@ -350,11 +350,11 @@ pub const c = struct {
     pub const uws_compress_options_t = i32;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const uws_app_t = @import("./App.zig").uws_app_t;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const NewApp = uws.NewApp;
 const Opcode = uws.Opcode;
 const Request = uws.Request;

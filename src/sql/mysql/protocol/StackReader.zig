@@ -62,7 +62,7 @@ pub fn read(this: StackReader, count: usize) AnyMySQLError.Error!Data {
 
 pub fn readZ(this: StackReader) AnyMySQLError.Error!Data {
     const remaining = this.peek();
-    if (bun.strings.indexOfChar(remaining, 0)) |zero| {
+    if (fun.strings.indexOfChar(remaining, 0)) |zero| {
         this.skip(@intCast(zero + 1));
         return Data{
             .temporary = remaining[0..zero],
@@ -73,6 +73,6 @@ pub fn readZ(this: StackReader) AnyMySQLError.Error!Data {
 }
 
 const AnyMySQLError = @import("./AnyMySQLError.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const Data = @import("../../shared/Data.zig").Data;
 const NewReader = @import("./NewReader.zig").NewReader;

@@ -1,7 +1,7 @@
-import { spawn } from "bun";
-import { describe, expect, it, setDefaultTimeout } from "bun:test";
+import { spawn } from "fun";
+import { describe, expect, it, setDefaultTimeout } from "fun:test";
 import { access, lstat, readlink, rm, writeFile } from "fs/promises";
-import { bunExe, bunEnv as env, tempDir } from "harness";
+import { funExe, funEnv as env, tempDir } from "harness";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -124,7 +124,7 @@ function createTarball(
     offset += block.length;
   }
 
-  return Bun.gzipSync(tarball);
+  return Fun.gzipSync(tarball);
 }
 
 // Skip on Windows - symlink extraction is POSIX-only
@@ -154,7 +154,7 @@ describe.concurrent.skipIf(isWindows)("symlink path traversal protection", () =>
       { name: "test-package/symlink-to-tmp/pwned.txt", type: "file", content: "Arbitrary file write" },
     ]);
 
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 0,
       fetch(req) {
         const url = new URL(req.url);
@@ -181,10 +181,10 @@ describe.concurrent.skipIf(isWindows)("symlink path traversal protection", () =>
         }),
       );
 
-      await writeFile(join(installDir, "bunfig.toml"), `[install]\ncache = false\n`);
+      await writeFile(join(installDir, "funfig.toml"), `[install]\ncache = false\n`);
 
       const proc = spawn({
-        cmd: [bunExe(), "install"],
+        cmd: [funExe(), "install"],
         cwd: installDir,
         stdout: "pipe",
         stderr: "pipe",
@@ -248,7 +248,7 @@ describe.concurrent.skipIf(isWindows)("symlink path traversal protection", () =>
       { name: "test-package/abs-symlink", type: "symlink", linkname: systemTmpDir },
     ]);
 
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 0,
       fetch(req) {
         const url = new URL(req.url);
@@ -275,10 +275,10 @@ describe.concurrent.skipIf(isWindows)("symlink path traversal protection", () =>
         }),
       );
 
-      await writeFile(join(installDir, "bunfig.toml"), `[install]\ncache = false\n`);
+      await writeFile(join(installDir, "funfig.toml"), `[install]\ncache = false\n`);
 
       const proc = spawn({
-        cmd: [bunExe(), "install"],
+        cmd: [funExe(), "install"],
         cwd: installDir,
         stdout: "pipe",
         stderr: "pipe",
@@ -315,7 +315,7 @@ describe.concurrent.skipIf(isWindows)("symlink path traversal protection", () =>
 
   it("should allow safe relative symlinks within the package (install succeeds)", async () => {
     // This test verifies that safe symlinks don't cause extraction to fail.
-    // Note: Safe symlinks ARE created in the cache during extraction, but bun's
+    // Note: Safe symlinks ARE created in the cache during extraction, but fun's
     // install process doesn't preserve them in the final node_modules.
     // We verify the install succeeds, which proves safe symlinks are allowed.
     const tarball = createTarball([
@@ -333,7 +333,7 @@ describe.concurrent.skipIf(isWindows)("symlink path traversal protection", () =>
       { name: "test-package/src/link-to-index", type: "symlink", linkname: "./index.js" },
     ]);
 
-    const server = Bun.serve({
+    const server = Fun.serve({
       port: 0,
       fetch(req) {
         const url = new URL(req.url);
@@ -360,10 +360,10 @@ describe.concurrent.skipIf(isWindows)("symlink path traversal protection", () =>
         }),
       );
 
-      await writeFile(join(installDir, "bunfig.toml"), `[install]\ncache = false\n`);
+      await writeFile(join(installDir, "funfig.toml"), `[install]\ncache = false\n`);
 
       const proc = spawn({
-        cmd: [bunExe(), "install"],
+        cmd: [funExe(), "install"],
         cwd: installDir,
         stdout: "pipe",
         stderr: "pipe",

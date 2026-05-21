@@ -6,8 +6,8 @@ import { Worker, isMainThread, workerData } from "worker_threads";
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const actions = {
-  async ["Bun.connect"](port) {
-    await Bun.connect({
+  async ["Fun.connect"](port) {
+    await Fun.connect({
       hostname: "localhost",
       port,
       socket: {
@@ -19,8 +19,8 @@ const actions = {
       },
     });
   },
-  async ["Bun.listen"](port) {
-    const server = Bun.listen({
+  async ["Fun.listen"](port) {
+    const server = Fun.listen({
       hostname: "localhost",
       port: 0,
       socket: {
@@ -42,7 +42,7 @@ if (isMainThread) {
   let action = process.argv.at(-1);
   if (actions[action!] === undefined) throw new Error("not found");
 
-  const server = Bun.serve({
+  const server = Fun.serve({
     port: 0,
     fetch() {
       return new Response();
@@ -77,11 +77,11 @@ if (isMainThread) {
 
     await Promise.all(promises);
     console.log(`Spawned ${CONCURRENCY} workers`, "RSS", (process.memoryUsage().rss / 1024 / 1024) | 0, "MB");
-    Bun.gc(true);
+    Fun.gc(true);
   }
   server.stop(true);
 } else {
-  Bun.gc(true);
+  Fun.gc(true);
   const { action, port } = workerData;
   await actions[action](port);
 }

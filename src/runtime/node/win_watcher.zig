@@ -6,11 +6,11 @@ pub const PathWatcherManager = struct {
     const options = @import("../../bundler/options.zig");
     const log = Output.scoped(.PathWatcherManager, .visible);
 
-    watchers: bun.StringArrayHashMapUnmanaged(*PathWatcher) = .{},
+    watchers: fun.StringArrayHashMapUnmanaged(*PathWatcher) = .{},
     vm: *jsc.VirtualMachine,
     deinit_on_last_watcher: bool = false,
 
-    pub const new = bun.TrivialNew(PathWatcherManager);
+    pub const new = fun.TrivialNew(PathWatcherManager);
 
     pub fn init(vm: *jsc.VirtualMachine) *PathWatcherManager {
         return PathWatcherManager.new(.{
@@ -28,12 +28,12 @@ pub const PathWatcherManager = struct {
         }
 
         if (std.mem.indexOfScalar(*PathWatcher, this.watchers.values(), watcher)) |index| {
-            if (comptime bun.Environment.isDebug) {
+            if (comptime fun.Environment.isDebug) {
                 if (path.len > 0)
-                    bun.assert(bun.strings.eql(this.watchers.keys()[index], path));
+                    fun.assert(fun.strings.eql(this.watchers.keys()[index], path));
             }
 
-            bun.default_allocator.free(this.watchers.keys()[index]);
+            fun.default_allocator.free(this.watchers.keys()[index]);
             _ = this.watchers.swapRemoveAt(index);
         }
     }
@@ -55,11 +55,11 @@ pub const PathWatcherManager = struct {
         }
 
         for (this.watchers.keys()) |path| {
-            bun.default_allocator.free(path);
+            fun.default_allocator.free(path);
         }
 
-        this.watchers.deinit(bun.default_allocator);
-        bun.destroy(this);
+        this.watchers.deinit(fun.default_allocator);
+        fun.destroy(this);
     }
 };
 
@@ -69,7 +69,7 @@ pub const PathWatcher = struct {
     emit_in_progress: bool = false,
     handlers: std.AutoArrayHashMapUnmanaged(*anyopaque, ChangeEvent) = .{},
 
-    pub const new = bun.TrivialNew(PathWatcher);
+    pub const new = fun.TrivialNew(PathWatcher);
 
     const log = Output.scoped(.@"fs.watch", .visible);
 
@@ -101,8 +101,8 @@ pub const PathWatcher = struct {
             return;
         }
         const this: *PathWatcher = @alignCast(@fieldParentPtr("handle", event));
-        if (comptime bun.Environment.isDebug) {
-            bun.assert(event.data == @as(?*anyopaque, @ptrCast(this)));
+        if (comptime fun.Environment.isDebug) {
+            fun.assert(event.data == @as(?*anyopaque, @ptrCast(this)));
         }
 
         const timestamp = event.loop.time;
@@ -121,7 +121,7 @@ pub const PathWatcher = struct {
             return;
         }
 
-        const path = if (filename) |file| file[0..bun.len(file) :0] else return;
+        const path = if (filename) |file| file[0..fun.len(file) :0] else return;
 
         this.emit(
             path,
@@ -134,20 +134,20 @@ pub const PathWatcher = struct {
 
     pub fn emit(this: *PathWatcher, path: string, hash: Watcher.HashType, timestamp: u64, is_file: bool, event_type: EventType) void {
         this.emit_in_progress = true;
-        var debug_count: if (bun.Environment.isDebug) usize else u0 = 0;
+        var debug_count: if (fun.Environment.isDebug) usize else u0 = 0;
         for (this.handlers.values(), 0..) |*event, i| {
             if (event.emit(hash, timestamp, event_type)) {
                 const ctx: *FSWatcher = @ptrCast(@alignCast(this.handlers.keys()[i]));
                 onPathUpdateFn(ctx, event_type.toEvent(switch (ctx.encoding) {
-                    .utf8 => .{ .string = bun.String.cloneUTF8(path) },
-                    else => .{ .bytes_to_free = bun.handleOom(bun.default_allocator.dupeZ(u8, path)) },
+                    .utf8 => .{ .string = fun.String.cloneUTF8(path) },
+                    else => .{ .bytes_to_free = fun.handleOom(fun.default_allocator.dupeZ(u8, path)) },
                 }), is_file);
-                if (comptime bun.Environment.isDebug)
+                if (comptime fun.Environment.isDebug)
                     debug_count += 1;
                 onUpdateEndFn(ctx);
             }
         }
-        if (comptime bun.Environment.isDebug)
+        if (comptime fun.Environment.isDebug)
             log("emit({s}, {s}, {s}, at {d}) x {d}", .{
                 path,
                 if (is_file) "file" else "dir",
@@ -160,11 +160,11 @@ pub const PathWatcher = struct {
         this.maybeDeinit();
     }
 
-    pub fn init(manager: *PathWatcherManager, path: [:0]const u8, recursive: bool) bun.sys.Maybe(*PathWatcher) {
-        var outbuf: bun.PathBuffer = undefined;
-        const event_path = switch (bun.sys.readlink(path, &outbuf)) {
+    pub fn init(manager: *PathWatcherManager, path: [:0]const u8, recursive: bool) fun.sys.Maybe(*PathWatcher) {
+        var outbuf: fun.PathBuffer = undefined;
+        const event_path = switch (fun.sys.readlink(path, &outbuf)) {
             .err => |err| brk: {
-                if (err.errno == @intFromEnum(bun.sys.E.NOENT)) {
+                if (err.errno == @intFromEnum(fun.sys.E.NOENT)) {
                     return .{ .err = .{
                         .errno = err.errno,
                         .syscall = .open,
@@ -176,7 +176,7 @@ pub const PathWatcher = struct {
             .result => |event_path| event_path,
         };
 
-        const watchers_entry = bun.handleOom(manager.watchers.getOrPut(bun.default_allocator, @as([]const u8, event_path)));
+        const watchers_entry = fun.handleOom(manager.watchers.getOrPut(fun.default_allocator, @as([]const u8, event_path)));
         if (watchers_entry.found_existing) {
             return .{ .result = watchers_entry.value_ptr.* };
         }
@@ -187,8 +187,8 @@ pub const PathWatcher = struct {
         });
 
         // uv_fs_event_init on Windows unconditionally returns 0 (vendor/libuv/src/win/fs-event.c).
-        // bun.assert evaluates its argument before the inline early-return, so this runs in release too.
-        bun.assert(uv.uv_fs_event_init(manager.vm.uvLoop(), &this.handle) == .zero);
+        // fun.assert evaluates its argument before the inline early-return, so this runs in release too.
+        fun.assert(uv.uv_fs_event_init(manager.vm.uvLoop(), &this.handle) == .zero);
         this.handle.data = this;
 
         // UV_FS_EVENT_RECURSIVE only works for Windows and OSX
@@ -210,16 +210,16 @@ pub const PathWatcher = struct {
         uv.uv_unref(@ptrCast(&this.handle));
 
         watchers_entry.value_ptr.* = this;
-        watchers_entry.key_ptr.* = bun.handleOom(bun.default_allocator.dupeZ(u8, event_path));
+        watchers_entry.key_ptr.* = fun.handleOom(fun.default_allocator.dupeZ(u8, event_path));
 
         return .{ .result = this };
     }
 
     fn uvClosedCallback(handler: *anyopaque) callconv(.c) void {
         log("onClose", .{});
-        const event = bun.cast(*uv.uv_fs_event_t, handler);
-        const this = bun.cast(*PathWatcher, event.data);
-        bun.destroy(this);
+        const event = fun.cast(*uv.uv_fs_event_t, handler);
+        const this = fun.cast(*PathWatcher, event.data);
+        fun.destroy(this);
     }
 
     pub fn detach(this: *PathWatcher, handler: *anyopaque) void {
@@ -236,18 +236,18 @@ pub const PathWatcher = struct {
 
     fn deinit(this: *PathWatcher) void {
         log("deinit", .{});
-        this.handlers.clearAndFree(bun.default_allocator);
+        this.handlers.clearAndFree(fun.default_allocator);
 
         if (this.manager) |manager| {
             this.manager = null;
             if (this.handle.path) |path| {
-                manager.unregisterWatcher(this, bun.sliceTo(path, 0));
+                manager.unregisterWatcher(this, fun.sliceTo(path, 0));
             } else {
                 manager.unregisterWatcher(this, "");
             }
         }
         if (uv.uv_is_closed(@ptrCast(&this.handle))) {
-            bun.destroy(this);
+            fun.destroy(this);
         } else {
             _ = uv.uv_fs_event_stop(&this.handle);
             _ = uv.uv_close(@ptrCast(&this.handle), PathWatcher.uvClosedCallback);
@@ -262,7 +262,7 @@ pub fn watch(
     comptime callback: PathWatcher.Callback,
     comptime updateEnd: PathWatcher.UpdateEndCallback,
     ctx: *anyopaque,
-) bun.sys.Maybe(*PathWatcher) {
+) fun.sys.Maybe(*PathWatcher) {
     comptime {
         if (callback != onPathUpdateFn) {
             @compileError("callback must be onPathUpdateFn");
@@ -273,7 +273,7 @@ pub fn watch(
         }
     }
 
-    if (!bun.Environment.isWindows) {
+    if (!fun.Environment.isWindows) {
         @compileError("win_watcher should only be used on Windows");
     }
 
@@ -285,7 +285,7 @@ pub fn watch(
         .err => |err| return .{ .err = err },
         .result => |watcher| watcher,
     };
-    bun.handleOom(watcher.handlers.put(bun.default_allocator, ctx, .{}));
+    fun.handleOom(watcher.handlers.put(fun.default_allocator, ctx, .{}));
     return .{ .result = watcher };
 }
 
@@ -294,17 +294,17 @@ const string = []const u8;
 const std = @import("std");
 const EventType = @import("./path_watcher.zig").PathWatcher.EventType;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const Watcher = bun.Watcher;
+const fun = @import("fun");
+const Output = fun.Output;
+const Watcher = fun.Watcher;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;
 
-const FSWatcher = bun.jsc.Node.fs.Watcher;
+const FSWatcher = fun.jsc.Node.fs.Watcher;
 const Event = FSWatcher.Event;
 const onPathUpdateFn = jsc.Node.fs.Watcher.onPathUpdate;
 const onUpdateEndFn = jsc.Node.fs.Watcher.onUpdateEnd;
 
-const windows = bun.windows;
+const windows = fun.windows;
 const uv = windows.libuv;

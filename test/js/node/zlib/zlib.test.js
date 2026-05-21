@@ -1,5 +1,5 @@
-import { deflateSync, gunzipSync, gzipSync, inflateSync } from "bun";
-import { describe, expect, it } from "bun:test";
+import { deflateSync, gunzipSync, gzipSync, inflateSync } from "fun";
+import { describe, expect, it } from "fun:test";
 import { tmpdirSync } from "harness";
 import * as buffer from "node:buffer";
 import * as fs from "node:fs";
@@ -238,8 +238,8 @@ describe("zlib.brotli", () => {
       await promise;
     }
     {
-      const expected = await Bun.file(import.meta.filename).text();
-      const actual = await Bun.file(out_path_d).text();
+      const expected = await Fun.file(import.meta.filename).text();
+      const actual = await Fun.file(out_path_d).text();
       expect(actual).toEqual(expected);
     }
   });
@@ -346,7 +346,7 @@ describe.each(["Deflate", "DeflateRaw", "Gzip"])("%s", constructor_name => {
     "should throw if options.%s is",
     option_name => {
       // [], // error: Test "-3.4416124249222144e-103" timed out after 5000ms
-      it.each(["test", Symbol("bun"), 2n, {}, true])("%p", value => {
+      it.each(["test", Symbol("fun"), 2n, {}, true])("%p", value => {
         expect(() => new zlib[constructor_name]({ [option_name]: value })).toThrow(TypeError);
       });
       it.each([Number.MIN_SAFE_INTEGER - 1, Number.MAX_SAFE_INTEGER + 1, Infinity, -Infinity, -2])("%p", value => {
@@ -602,8 +602,8 @@ describe("zlib.zstd", () => {
       await promise;
     }
     {
-      const expected = await Bun.file(import.meta.filename).text();
-      const actual = await Bun.file(out_path_d).text();
+      const expected = await Fun.file(import.meta.filename).text();
+      const actual = await Fun.file(out_path_d).text();
       expect(actual).toEqual(expected);
     }
   });

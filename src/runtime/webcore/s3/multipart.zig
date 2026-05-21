@@ -96,7 +96,7 @@ pub const MultiPartUpload = struct {
     const MAX_QUEUE_SIZE = MultiPartUploadOptions.MAX_QUEUE_SIZE;
     const AWS = S3Credentials;
     queue: ?[]UploadPart = null,
-    available: bun.bit_set.IntegerBitSet(MAX_QUEUE_SIZE) = bun.bit_set.IntegerBitSet(MAX_QUEUE_SIZE).initFull(),
+    available: fun.bit_set.IntegerBitSet(MAX_QUEUE_SIZE) = fun.bit_set.IntegerBitSet(MAX_QUEUE_SIZE).initFull(),
 
     currentPartNumber: u16 = 1,
     ref_count: RefCount,
@@ -107,11 +107,11 @@ pub const MultiPartUpload = struct {
     storage_class: ?Storageclass = null,
     request_payer: bool = false,
     credentials: *S3Credentials,
-    poll_ref: bun.Async.KeepAlive = bun.Async.KeepAlive.init(),
+    poll_ref: fun.Async.KeepAlive = fun.Async.KeepAlive.init(),
     vm: *jsc.VirtualMachine,
     globalThis: *jsc.JSGlobalObject,
 
-    buffered: bun.io.StreamBuffer = .{},
+    buffered: fun.io.StreamBuffer = .{},
 
     path: []const u8,
     proxy: []const u8,
@@ -119,10 +119,10 @@ pub const MultiPartUpload = struct {
     content_disposition: ?[]const u8 = null,
     content_encoding: ?[]const u8 = null,
     upload_id: []const u8 = "",
-    uploadid_buffer: bun.MutableString = .{ .allocator = bun.default_allocator, .list = .{} },
+    uploadid_buffer: fun.MutableString = .{ .allocator = fun.default_allocator, .list = .{} },
 
     multipart_etags: std.ArrayListUnmanaged(UploadPart.UploadPartResult) = .{},
-    multipart_upload_list: bun.ByteList = .{},
+    multipart_upload_list: fun.ByteList = .{},
 
     state: enum {
         wait_stream_check,
@@ -133,16 +133,16 @@ pub const MultiPartUpload = struct {
         finished,
     } = .not_started,
 
-    callback: *const fn (S3SimpleRequest.S3UploadResult, *anyopaque) bun.JSTerminated!void,
+    callback: *const fn (S3SimpleRequest.S3UploadResult, *anyopaque) fun.JSTerminated!void,
     onWritable: ?*const fn (task: *MultiPartUpload, ctx: *anyopaque, flushed: u64) void = null,
     callback_context: *anyopaque,
 
     const Self = @This();
-    const RefCount = bun.ptr.RefCount(Self, "ref_count", deinit, .{});
+    const RefCount = fun.ptr.RefCount(Self, "ref_count", deinit, .{});
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
 
-    const log = bun.Output.scoped(.S3MultiPartUpload, .hidden);
+    const log = fun.Output.scoped(.S3MultiPartUpload, .hidden);
 
     pub const UploadPart = struct {
         data: []const u8,
@@ -171,7 +171,7 @@ pub const MultiPartUpload = struct {
         fn freeAllocatedSlice(this: *@This()) void {
             const slice = this.allocatedSlice();
             if (slice.len > 0) {
-                bun.default_allocator.free(slice);
+                fun.default_allocator.free(slice);
             }
             this.data = "";
             this.allocated_size = 0;
@@ -184,7 +184,7 @@ pub const MultiPartUpload = struct {
             return "";
         }
 
-        pub fn onPartResponse(result: S3SimpleRequest.S3PartResult, this: *@This()) bun.JSTerminated!void {
+        pub fn onPartResponse(result: S3SimpleRequest.S3PartResult, this: *@This()) fun.JSTerminated!void {
             if (this.state == .canceled or this.ctx.state == .finished) {
                 log("onPartResponse {} canceled", .{this.partNumber});
                 this.freeAllocatedSlice();
@@ -215,10 +215,10 @@ pub const MultiPartUpload = struct {
                     const sent = this.data.len;
                     this.freeAllocatedSlice();
                     // we will need to order this
-                    this.ctx.multipart_etags.append(bun.default_allocator, .{
+                    this.ctx.multipart_etags.append(fun.default_allocator, .{
                         .number = this.partNumber,
-                        .etag = bun.handleOom(bun.default_allocator.dupe(u8, etag)),
-                    }) catch |err| bun.handleOom(err);
+                        .etag = fun.handleOom(fun.default_allocator.dupe(u8, etag)),
+                    }) catch |err| fun.handleOom(err);
                     this.state = .not_assigned;
                     defer this.ctx.deref();
                     // mark as available
@@ -229,7 +229,7 @@ pub const MultiPartUpload = struct {
             }
         }
 
-        fn perform(this: *@This()) bun.JSTerminated!void {
+        fn perform(this: *@This()) fun.JSTerminated!void {
             var params_buffer: [2048]u8 = undefined;
             const search_params = std.fmt.bufPrint(&params_buffer, "?partNumber={}&uploadId={s}&x-id=UploadPart", .{
                 this.partNumber,
@@ -244,7 +244,7 @@ pub const MultiPartUpload = struct {
                 .request_payer = this.ctx.request_payer,
             }, .{ .part = @ptrCast(&onPartResponse) }, this);
         }
-        pub fn start(this: *@This()) bun.JSTerminated!void {
+        pub fn start(this: *@This()) fun.JSTerminated!void {
             if (this.state != .pending or this.ctx.state != .multipart_completed) return;
             this.ctx.ref();
             this.state = .started;
@@ -268,41 +268,41 @@ pub const MultiPartUpload = struct {
         log("deinit", .{});
         if (this.queue) |queue| {
             this.queue = null;
-            bun.default_allocator.free(queue);
+            fun.default_allocator.free(queue);
         }
         this.poll_ref.unref(this.vm);
-        bun.default_allocator.free(this.path);
+        fun.default_allocator.free(this.path);
         if (this.proxy.len > 0) {
-            bun.default_allocator.free(this.proxy);
+            fun.default_allocator.free(this.proxy);
         }
         if (this.content_type) |ct| {
             if (ct.len > 0) {
-                bun.default_allocator.free(ct);
+                fun.default_allocator.free(ct);
             }
         }
         if (this.content_disposition) |cd| {
             if (cd.len > 0) {
-                bun.default_allocator.free(cd);
+                fun.default_allocator.free(cd);
             }
         }
         if (this.content_encoding) |ce| {
             if (ce.len > 0) {
-                bun.default_allocator.free(ce);
+                fun.default_allocator.free(ce);
             }
         }
         this.credentials.deref();
         this.uploadid_buffer.deinit();
         for (this.multipart_etags.items) |tag| {
-            bun.default_allocator.free(tag.etag);
+            fun.default_allocator.free(tag.etag);
         }
         if (this.multipart_etags.capacity > 0)
-            this.multipart_etags.deinit(bun.default_allocator);
+            this.multipart_etags.deinit(fun.default_allocator);
         if (this.multipart_upload_list.cap > 0)
-            this.multipart_upload_list.deinit(bun.default_allocator);
-        bun.destroy(this);
+            this.multipart_upload_list.deinit(fun.default_allocator);
+        fun.destroy(this);
     }
 
-    pub fn singleSendUploadResponse(result: S3SimpleRequest.S3UploadResult, this: *@This()) bun.JSError!void {
+    pub fn singleSendUploadResponse(result: S3SimpleRequest.S3UploadResult, this: *@This()) fun.JSError!void {
         if (this.state == .finished) return;
         switch (result) {
             .failure => |err| {
@@ -354,7 +354,7 @@ pub const MultiPartUpload = struct {
         defer this.currentPartNumber += 1;
         if (this.queue == null) {
             // queueSize will never change and is small (max 255)
-            const queue = bun.handleOom(bun.default_allocator.alloc(UploadPart, queueSize));
+            const queue = fun.handleOom(fun.default_allocator.alloc(UploadPart, queueSize));
             // zero set just in case
             @memset(queue, UploadPart{
                 .data = "",
@@ -367,7 +367,7 @@ pub const MultiPartUpload = struct {
             });
             this.queue = queue;
         }
-        const data = if (needs_clone) bun.handleOom(bun.default_allocator.dupe(u8, chunk)) else chunk;
+        const data = if (needs_clone) fun.handleOom(fun.default_allocator.dupe(u8, chunk)) else chunk;
         const allocated_len = if (needs_clone) data.len else allocated_size;
 
         const queue_item = &this.queue.?[index];
@@ -385,7 +385,7 @@ pub const MultiPartUpload = struct {
     }
 
     /// Drain the parts, this is responsible for starting the parts and processing the buffered data
-    fn drainEnqueuedParts(this: *@This(), flushed: u64) bun.JSTerminated!void {
+    fn drainEnqueuedParts(this: *@This(), flushed: u64) fun.JSTerminated!void {
         if (this.state == .finished or this.state == .singlefile_started) {
             return;
         }
@@ -422,7 +422,7 @@ pub const MultiPartUpload = struct {
         }
     }
     /// Finalize the upload with a failure
-    pub fn fail(this: *@This(), _err: S3Error) bun.JSTerminated!void {
+    pub fn fail(this: *@This(), _err: S3Error) fun.JSTerminated!void {
         log("fail {s}:{s}", .{ _err.code, _err.message });
         this.ended = true;
         if (this.queue) |queue| {
@@ -448,26 +448,26 @@ pub const MultiPartUpload = struct {
         }
     }
     /// Finalize successful the upload
-    fn done(this: *@This()) bun.JSTerminated!void {
+    fn done(this: *@This()) fun.JSTerminated!void {
         if (this.state == .multipart_completed) {
             // we are a multipart upload so we need to send the etags and commit
             this.state = .finished;
             // sort the etags
             std.sort.block(UploadPart.UploadPartResult, this.multipart_etags.items, this, UploadPart.sortEtags);
             // start the multipart upload list
-            bun.handleOom(this.multipart_upload_list.appendSlice(
-                bun.default_allocator,
+            fun.handleOom(this.multipart_upload_list.appendSlice(
+                fun.default_allocator,
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?><CompleteMultipartUpload xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">",
             ));
             for (this.multipart_etags.items) |tag| {
-                bun.handleOom(this.multipart_upload_list.appendFmt(bun.default_allocator, "<Part><PartNumber>{}</PartNumber><ETag>{s}</ETag></Part>", .{ tag.number, tag.etag }));
+                fun.handleOom(this.multipart_upload_list.appendFmt(fun.default_allocator, "<Part><PartNumber>{}</PartNumber><ETag>{s}</ETag></Part>", .{ tag.number, tag.etag }));
 
-                bun.default_allocator.free(tag.etag);
+                fun.default_allocator.free(tag.etag);
             }
-            this.multipart_etags.deinit(bun.default_allocator);
+            this.multipart_etags.deinit(fun.default_allocator);
             this.multipart_etags = .{};
-            bun.handleOom(this.multipart_upload_list.appendSlice(
-                bun.default_allocator,
+            fun.handleOom(this.multipart_upload_list.appendSlice(
+                fun.default_allocator,
                 "</CompleteMultipartUpload>",
             ));
             // will deref and ends after commit
@@ -481,7 +481,7 @@ pub const MultiPartUpload = struct {
     }
 
     /// Result of the Multipart request, after this we can start draining the parts
-    pub fn startMultiPartRequestResult(result: S3SimpleRequest.S3DownloadResult, this: *@This()) bun.JSError!void {
+    pub fn startMultiPartRequestResult(result: S3SimpleRequest.S3DownloadResult, this: *@This()) fun.JSError!void {
         defer this.deref();
         if (this.state == .finished) return;
         switch (result) {
@@ -521,7 +521,7 @@ pub const MultiPartUpload = struct {
     }
 
     /// We do a best effort to commit the multipart upload, if it fails we will retry, if it still fails we will fail the upload
-    pub fn onCommitMultiPartRequest(result: S3SimpleRequest.S3CommitResult, this: *@This()) bun.JSTerminated!void {
+    pub fn onCommitMultiPartRequest(result: S3SimpleRequest.S3CommitResult, this: *@This()) fun.JSTerminated!void {
         log("onCommitMultiPartRequest {s}", .{this.upload_id});
 
         switch (result) {
@@ -544,7 +544,7 @@ pub const MultiPartUpload = struct {
         }
     }
     /// We do a best effort to rollback the multipart upload, if it fails we will retry, if it still we just deinit the upload
-    pub fn onRollbackMultiPartRequest(result: S3SimpleRequest.S3UploadResult, this: *@This()) bun.JSTerminated!void {
+    pub fn onRollbackMultiPartRequest(result: S3SimpleRequest.S3UploadResult, this: *@This()) fun.JSTerminated!void {
         log("onRollbackMultiPartRequest {s}", .{this.upload_id});
         switch (result) {
             .failure => {
@@ -562,7 +562,7 @@ pub const MultiPartUpload = struct {
         }
     }
 
-    fn commitMultiPartRequest(this: *@This()) bun.JSTerminated!void {
+    fn commitMultiPartRequest(this: *@This()) fun.JSTerminated!void {
         log("commitMultiPartRequest {s}", .{this.upload_id});
         var params_buffer: [2048]u8 = undefined;
         const searchParams = std.fmt.bufPrint(&params_buffer, "?uploadId={s}", .{
@@ -578,7 +578,7 @@ pub const MultiPartUpload = struct {
             .request_payer = this.request_payer,
         }, .{ .commit = @ptrCast(&onCommitMultiPartRequest) }, this);
     }
-    fn rollbackMultiPartRequest(this: *@This()) bun.JSTerminated!void {
+    fn rollbackMultiPartRequest(this: *@This()) fun.JSTerminated!void {
         log("rollbackMultiPartRequest {s}", .{this.upload_id});
         var params_buffer: [2048]u8 = undefined;
         const search_params = std.fmt.bufPrint(&params_buffer, "?uploadId={s}", .{
@@ -594,7 +594,7 @@ pub const MultiPartUpload = struct {
             .request_payer = this.request_payer,
         }, .{ .upload = @ptrCast(&onRollbackMultiPartRequest) }, this);
     }
-    fn enqueuePart(this: *@This(), chunk: []const u8, allocated_size: usize, needs_clone: bool) bun.JSTerminated!bool {
+    fn enqueuePart(this: *@This(), chunk: []const u8, allocated_size: usize, needs_clone: bool) fun.JSTerminated!bool {
         const part = this.getCreatePart(chunk, allocated_size, needs_clone) orelse return false;
 
         if (this.state == .not_started) {
@@ -620,7 +620,7 @@ pub const MultiPartUpload = struct {
         return true;
     }
 
-    fn processMultiPart(this: *@This(), part_size: usize) bun.JSTerminated!void {
+    fn processMultiPart(this: *@This(), part_size: usize) fun.JSTerminated!void {
         log("processMultiPart {s} {d}", .{ this.path, part_size });
         if (this.buffered.isEmpty() and this.isQueueEmpty() and this.ended) {
             // no more data to send and we are done
@@ -729,7 +729,7 @@ pub const MultiPartUpload = struct {
         utf16,
     };
 
-    fn write(this: *@This(), chunk: []const u8, is_last: bool, comptime encoding: WriteEncoding) bun.OOM!ResumableSinkBackpressure {
+    fn write(this: *@This(), chunk: []const u8, is_last: bool, comptime encoding: WriteEncoding) fun.OOM!ResumableSinkBackpressure {
         if (this.ended) return .done; // no backpressure since we are done
         // we may call done inside processBuffered so we ensure that we keep a ref until we are done
         this.ref();
@@ -771,15 +771,15 @@ pub const MultiPartUpload = struct {
         return if (this.hasBackpressure()) .backpressure else .want_more;
     }
 
-    pub fn writeLatin1(this: *@This(), chunk: []const u8, is_last: bool) bun.OOM!ResumableSinkBackpressure {
+    pub fn writeLatin1(this: *@This(), chunk: []const u8, is_last: bool) fun.OOM!ResumableSinkBackpressure {
         return try this.write(chunk, is_last, .latin1);
     }
 
-    pub fn writeUTF16(this: *@This(), chunk: []const u8, is_last: bool) bun.OOM!ResumableSinkBackpressure {
+    pub fn writeUTF16(this: *@This(), chunk: []const u8, is_last: bool) fun.OOM!ResumableSinkBackpressure {
         return try this.write(chunk, is_last, .utf16);
     }
 
-    pub fn writeBytes(this: *@This(), chunk: []const u8, is_last: bool) bun.OOM!ResumableSinkBackpressure {
+    pub fn writeBytes(this: *@This(), chunk: []const u8, is_last: bool) fun.OOM!ResumableSinkBackpressure {
         return try this.write(chunk, is_last, .bytes);
     }
 };
@@ -794,7 +794,7 @@ const Storageclass = @import("../../../s3_signing/storage_class.zig").StorageCla
 const S3SimpleRequest = @import("./simple_request.zig");
 const executeSimpleS3Request = S3SimpleRequest.executeSimpleS3Request;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const strings = bun.strings;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const strings = fun.strings;
 const ResumableSinkBackpressure = jsc.WebCore.ResumableSinkBackpressure;

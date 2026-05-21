@@ -255,7 +255,7 @@
 #define EUNATCH 4023
 #endif
 
-#define BUN_UV_ERRNO_MAP(macro) \
+#define FUN_UV_ERRNO_MAP(macro) \
   macro(E2BIG, "argument list too long") \
   macro(EACCES, "permission denied") \
   macro(EADDRINUSE, "address already in use") \
@@ -342,7 +342,7 @@
   macro(EUNATCH, "protocol driver not attached")
 
 // clang-format on
-namespace Bun {
+namespace Fun {
 namespace ProcessBindingUV {
 
 JSC_DEFINE_HOST_FUNCTION(jsErrname, (JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
@@ -361,7 +361,7 @@ JSC_DEFINE_HOST_FUNCTION(jsErrname, (JSGlobalObject * globalObject, JSC::CallFra
 #define CASE(name, desc) \
     if (err == -name) return JSValue::encode(JSC::jsString(vm, String(#name##_s)));
 
-    BUN_UV_ERRNO_MAP(CASE)
+    FUN_UV_ERRNO_MAP(CASE)
 #undef CASE
 
     return JSValue::encode(jsString(vm, makeString("Unknown system error: "_s, err)));
@@ -382,7 +382,7 @@ JSC_DEFINE_HOST_FUNCTION(jsGetErrorMap, (JSGlobalObject * globalObject, JSC::Cal
     };
 
 #define PUT_PROPERTY(name, desc) putProperty(vm, map, globalObject, #name##_s, -name, desc##_s);
-    BUN_UV_ERRNO_MAP(PUT_PROPERTY)
+    FUN_UV_ERRNO_MAP(PUT_PROPERTY)
 #undef PUT_PROPERTY
 
     return JSValue::encode(map);
@@ -403,7 +403,7 @@ JSObject* create(VM& vm, JSGlobalObject* globalObject)
 
 #define PUT_PROPERTY(name, desc) \
     putNamedProperty(vm, bindingObject, "UV_" #name##_s, -name);
-    BUN_UV_ERRNO_MAP(PUT_PROPERTY)
+    FUN_UV_ERRNO_MAP(PUT_PROPERTY)
 #undef PUT_PROPERTY
 
     bindingObject->putDirect(vm, JSC::Identifier::fromString(vm, "getErrorMap"_s), JSC::JSFunction::create(vm, globalObject, 0, "getErrorMap"_s, jsGetErrorMap, ImplementationVisibility::Public));
@@ -412,4 +412,4 @@ JSObject* create(VM& vm, JSGlobalObject* globalObject)
 }
 
 } // namespace ProcessBindingUV
-} // namespace Bun
+} // namespace Fun

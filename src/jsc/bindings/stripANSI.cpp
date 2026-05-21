@@ -5,7 +5,7 @@
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
 
-namespace Bun {
+namespace Fun {
 using namespace WTF;
 
 template<typename Char>
@@ -85,7 +85,7 @@ static std::optional<WTF::String> stripANSI(const std::span<const Char> input)
     return String::adopt(std::move(buffer));
 }
 
-struct BunANSIIterator {
+struct FunANSIIterator {
     const unsigned char* input;
     size_t input_len;
     size_t cursor;
@@ -93,7 +93,7 @@ struct BunANSIIterator {
     size_t slice_len;
 };
 
-extern "C" bool Bun__ANSI__next(BunANSIIterator* it)
+extern "C" bool Fun__ANSI__next(FunANSIIterator* it)
 {
     auto start = it->input + it->cursor;
     const auto end = it->input + it->input_len;
@@ -125,7 +125,7 @@ extern "C" bool Bun__ANSI__next(BunANSIIterator* it)
     it->cursor = slice_end - it->input;
     return true;
 }
-JSC_DEFINE_HOST_FUNCTION(jsFunctionBunStripANSI, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
+JSC_DEFINE_HOST_FUNCTION(jsFunctionFunStripANSI, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);

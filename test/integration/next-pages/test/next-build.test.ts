@@ -1,9 +1,9 @@
-import { install_test_helpers } from "bun:internal-for-testing";
-import { expect, test } from "bun:test";
+import { install_test_helpers } from "fun:internal-for-testing";
+import { expect, test } from "fun:test";
 import { copyFileSync, cpSync, promises as fs, readFileSync, rmSync } from "fs";
 import { cp } from "fs/promises";
 import { join } from "path";
-import { bunEnv, bunExe, isDebug, tmpdirSync, toMatchNodeModulesAt } from "../../../harness";
+import { funEnv, funExe, isDebug, tmpdirSync, toMatchNodeModulesAt } from "../../../harness";
 const { parseLockfile } = install_test_helpers;
 
 expect.extend({ toMatchNodeModulesAt });
@@ -17,22 +17,22 @@ async function tempDirToBuildIn() {
   console.log("Temp dir: " + dir);
   const copy = [
     ".eslintrc.json",
-    "bun.lock",
+    "fun.lock",
     "next.config.js",
     "package.json",
     "postcss.config.js",
     "public",
     "src",
     "tailwind.config.ts",
-    "bunfig.toml",
+    "funfig.toml",
   ];
   await Promise.all(copy.map(x => cp(join(root, x), join(dir, x), { recursive: true })));
   cpSync(join(root, "src/Counter1.txt"), join(dir, "src/Counter.tsx"));
   cpSync(join(root, "tsconfig_for_build.json"), join(dir, "tsconfig.json"));
 
-  const install = Bun.spawnSync([bunExe(), "i"], {
+  const install = Fun.spawnSync([funExe(), "i"], {
     cwd: dir,
-    env: bunEnv,
+    env: funEnv,
     stdin: "inherit",
     stdout: "inherit",
     stderr: "inherit",
@@ -55,7 +55,7 @@ async function hashFile(file: string, path: string, hashes: Record<string, strin
       contents.replace(/,e.ids=\[(\d+)\,(\d+)\,(\d+)\],/, `,e.ids=[${nums}],`);
     }
 
-    hashes[file] = Bun.CryptoHasher.hash("sha256", contents, "hex");
+    hashes[file] = Fun.CryptoHasher.hash("sha256", contents, "hex");
   } catch (error) {
     console.error("error", error, "in", path);
     throw error;
@@ -95,7 +95,7 @@ function normalizeOutput(stdout: string) {
       // remove "in Xms" timing at end of lines (e.g., "in 36.8ms")
       .replace(/\bin \d+(?:\.\d+)?m?s\b/gi, data => " ".repeat(data.length))
       // displayed file sizes are in post-gzip compression, however
-      // the gzip / node:zlib implementation is different in bun and node
+      // the gzip / node:zlib implementation is different in fun and node
       .replace(/\d+(\.\d+)? [km]?b/gi, data => " ".repeat(data.length))
       // normalize counter logging that may appear in different spots
       .replaceAll("\ncounter a", "")
@@ -112,27 +112,27 @@ test(
     rmSync(join(root, ".next"), { recursive: true, force: true });
     copyFileSync(join(root, "src/Counter1.txt"), join(root, "src/Counter.tsx"));
 
-    const bunDir = await tempDirToBuildIn();
-    let lockfile = parseLockfile(bunDir);
-    expect(lockfile).toMatchNodeModulesAt(bunDir);
-    expect(parseLockfile(bunDir)).toMatchSnapshot("bun");
+    const funDir = await tempDirToBuildIn();
+    let lockfile = parseLockfile(funDir);
+    expect(lockfile).toMatchNodeModulesAt(funDir);
+    expect(parseLockfile(funDir)).toMatchSnapshot("fun");
 
     const nodeDir = await tempDirToBuildIn();
     lockfile = parseLockfile(nodeDir);
     expect(lockfile).toMatchNodeModulesAt(nodeDir);
     expect(lockfile).toMatchSnapshot("node");
 
-    console.log("Bun Dir: " + bunDir);
+    console.log("Fun Dir: " + funDir);
     console.log("Node Dir: " + nodeDir);
 
     const nextPath = "node_modules/next/dist/bin/next";
     const tmp1 = tmpdirSync();
-    console.time("[bun] next build");
-    const bunBuild = Bun.spawn([bunExe(), "--bun", nextPath, "build"], {
-      cwd: bunDir,
+    console.time("[fun] next build");
+    const funBuild = Fun.spawn([funExe(), "--fun", nextPath, "build"], {
+      cwd: funDir,
       stdio: ["ignore", "pipe", "inherit"],
       env: {
-        ...bunEnv,
+        ...funEnv,
         NODE_NO_WARNINGS: "1",
         NODE_ENV: "production",
         TMPDIR: tmp1,
@@ -143,10 +143,10 @@ test(
 
     const tmp2 = tmpdirSync();
     console.time("[node] next build");
-    const nodeBuild = Bun.spawn(["node", nextPath, "build"], {
+    const nodeBuild = Fun.spawn(["node", nextPath, "build"], {
       cwd: nodeDir,
       env: {
-        ...bunEnv,
+        ...funEnv,
         NODE_NO_WARNINGS: "1",
         NODE_ENV: "production",
         TMPDIR: tmp2,
@@ -156,8 +156,8 @@ test(
       stdio: ["ignore", "pipe", "inherit"],
     });
     await Promise.all([
-      bunBuild.exited.then(a => {
-        console.timeEnd("[bun] next build");
+      funBuild.exited.then(a => {
+        console.timeEnd("[fun] next build");
         return a;
       }),
       nodeBuild.exited.then(a => {
@@ -166,17 +166,17 @@ test(
       }),
     ]);
     expect(nodeBuild.exitCode).toBe(0);
-    expect(bunBuild.exitCode).toBe(0);
+    expect(funBuild.exitCode).toBe(0);
 
-    const bunCliOutput = normalizeOutput(await new Response(bunBuild.stdout).text());
+    const funCliOutput = normalizeOutput(await new Response(funBuild.stdout).text());
     const nodeCliOutput = normalizeOutput(await new Response(nodeBuild.stdout).text());
 
-    console.log("bun", bunCliOutput);
+    console.log("fun", funCliOutput);
     console.log("node", nodeCliOutput);
 
-    expect(bunCliOutput).toBe(nodeCliOutput);
+    expect(funCliOutput).toBe(nodeCliOutput);
 
-    const bunBuildDir = join(bunDir, ".next");
+    const funBuildDir = join(funDir, ".next");
     const nodeBuildDir = join(nodeDir, ".next");
 
     // Remove some build files that Next.js does not make deterministic.
@@ -194,7 +194,7 @@ test(
       "next-server.js.nft.json",
       // this file is not deterministically sorted
       "server/pages-manifest.json",
-      // non-deterministic between bun and node builds
+      // non-deterministic between fun and node builds
       "server/server-reference-manifest.json",
       "server/server-reference-manifest.js",
       "build-manifest.json",
@@ -204,17 +204,17 @@ test(
       "lock",
     ];
     for (const key of toRemove) {
-      rmSync(join(bunBuildDir, key), { recursive: true, force: true });
+      rmSync(join(funBuildDir, key), { recursive: true, force: true });
       rmSync(join(nodeBuildDir, key), { recursive: true, force: true });
     }
 
     console.log("Hashing files...");
-    const [bunBuildHash, nodeBuildHash] = await Promise.all([hashAllFiles(bunBuildDir), hashAllFiles(nodeBuildDir)]);
+    const [funBuildHash, nodeBuildHash] = await Promise.all([hashAllFiles(funBuildDir), hashAllFiles(nodeBuildDir)]);
 
     // Remove non-deterministic file basenames from hash comparison.
     // hashAllFiles uses file.name (basename) as key, so files at different
     // paths with the same name collide. These turbopack outputs differ
-    // between bun and node runtimes.
+    // between fun and node runtimes.
     const nonDeterministicNames = [
       "build-manifest.json",
       "client-build-manifest.json",
@@ -226,22 +226,22 @@ test(
       "[turbopack]_runtime.js",
     ];
     for (const name of nonDeterministicNames) {
-      delete bunBuildHash[name];
+      delete funBuildHash[name];
       delete nodeBuildHash[name];
     }
 
     try {
-      expect(bunBuildHash).toEqual(nodeBuildHash);
+      expect(funBuildHash).toEqual(nodeBuildHash);
     } catch (error) {
-      console.log("bunBuildDir", bunBuildDir);
+      console.log("funBuildDir", funBuildDir);
       console.log("nodeBuildDir", nodeBuildDir);
 
       // print diffs for every file if not the same
-      for (const key in bunBuildHash) {
-        if (bunBuildHash[key] !== nodeBuildHash[key]) {
+      for (const key in funBuildHash) {
+        if (funBuildHash[key] !== nodeBuildHash[key]) {
           console.log(key + ":");
           try {
-            expect(readFileSync(join(bunBuildDir, key)).toString()).toBe(
+            expect(readFileSync(join(funBuildDir, key)).toString()).toBe(
               readFileSync(join(nodeBuildDir, key)).toString(),
             );
           } catch (error) {

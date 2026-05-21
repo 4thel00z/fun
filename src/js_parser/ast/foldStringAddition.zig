@@ -182,7 +182,7 @@ pub fn foldStringAddition(l: Expr, r: Expr, allocator: std.mem.Allocator, kind: 
                                             allocator,
                                             E.TemplatePart,
                                             &.{ left.parts, right.parts },
-                                        ) catch |err| bun.handleOom(err);
+                                        ) catch |err| fun.handleOom(err);
                                     return lhs;
                                 }
                             } else {
@@ -224,10 +224,10 @@ const string = []const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const E = js_ast.E;
 const Expr = js_ast.Expr;

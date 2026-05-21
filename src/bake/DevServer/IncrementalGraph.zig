@@ -136,8 +136,8 @@ const ClientFile = struct {
 
         comptime {
             if (!Environment.allow_assert) {
-                bun.assert_eql(@sizeOf(@This()), @sizeOf(u64) * 4);
-                bun.assert_eql(@alignOf(@This()), @alignOf([*]u8));
+                fun.assert_eql(@sizeOf(@This()), @sizeOf(u64) * 4);
+                fun.assert_eql(@alignOf(@This()), @alignOf([*]u8));
             }
         }
     };
@@ -236,7 +236,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         /// pretty-formatted path value that appear in imports. Absolute paths
         /// are stored so the watcher can quickly query and invalidate them.
         /// Key slices are owned by `dev.allocator()`
-        bundled_files: bun.StringArrayHashMapUnmanaged(File.Packed),
+        bundled_files: fun.StringArrayHashMapUnmanaged(File.Packed),
         /// Track bools for files which are "stale", meaning they should be
         /// re-bundled before being used. Resizing this is usually deferred
         /// until after a bundle, since resizing the bit-set requires an
@@ -270,13 +270,13 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         current_chunk_parts: ArrayListUnmanaged(switch (side) {
             .client => FileIndex,
             // This memory is allocated by the dev server allocator
-            .server => bun.ptr.OwnedIn(
+            .server => fun.ptr.OwnedIn(
                 []const u8,
-                bun.bake.DevServer.DevAllocator,
+                fun.bake.DevServer.DevAllocator,
             ),
         }),
 
-        /// Asset IDs, which can be printed as hex in '/_bun/asset/{hash}.css'
+        /// Asset IDs, which can be printed as hex in '/_fun/asset/{hash}.css'
         current_css_files: switch (side) {
             .client => ArrayListUnmanaged(CssAssetId),
             .server => void,
@@ -327,7 +327,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             css: enum { unref_css, ignore_css },
         ) void {
             comptime {
-                bun.assertf(side == .client, "freeFileContent requires client graph", .{});
+                fun.assertf(side == .client, "freeFileContent requires client graph", .{});
             }
             if (file.source_map.take()) |ptr| {
                 var ptr_mut = ptr;
@@ -369,11 +369,11 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
         /// An index into `bundled_files`, `stale_files`, `first_dep`, `first_import`
         /// Top bits cannot be relied on due to `SerializedFailure.Owner.Packed`
-        pub const FileIndex = bun.GenericIndex(u30, File);
+        pub const FileIndex = fun.GenericIndex(u30, File);
         pub const react_refresh_index = if (side == .client) FileIndex.init(0);
 
         /// An index into `edges`
-        pub const EdgeIndex = bun.GenericIndex(u32, Edge);
+        pub const EdgeIndex = fun.GenericIndex(u32, Edge);
 
         pub fn deinit(g: *Self) void {
             const alloc = g.allocator();
@@ -475,7 +475,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         pub fn receiveChunk(
             g: *Self,
             ctx: *HotUpdateContext,
-            index: bun.ast.Index,
+            index: fun.ast.Index,
             _content: union(enum) {
                 js: struct {
                     code: JsCode,
@@ -495,15 +495,15 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             const path = ctx.sources[index.get()].path;
             const key = path.keyForIncrementalGraph();
 
-            const log = bun.Output.scoped(.IncrementalGraphReceiveChunk, .visible);
+            const log = fun.Output.scoped(.IncrementalGraphReceiveChunk, .visible);
             log("receiveChunk({s}, {s})", .{ @tagName(side), key });
 
             if (Environment.allow_assert) {
                 switch (content) {
                     .css => {},
-                    .js => |js| if (bun.strings.isAllWhitespace(js.code)) {
+                    .js => |js| if (fun.strings.isAllWhitespace(js.code)) {
                         // Should at least contain the function wrapper
-                        bun.Output.panic("Empty chunk is impossible: {s} {s}", .{
+                        fun.Output.panic("Empty chunk is impossible: {s} {s}", .{
                             key,
                             switch (side) {
                                 .client => "client",
@@ -515,7 +515,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             }
 
             // Dump to filesystem if enabled
-            if (bun.FeatureFlags.bake_debugging_features and content == .js) if (dev.dump_dir) |dump_dir| {
+            if (fun.FeatureFlags.bake_debugging_features and content == .js) if (dev.dump_dir) |dump_dir| {
                 DevServer.dumpBundleForChunk(dev, dump_dir, side, key, content.js.code, true, is_ssr_graph);
             };
 
@@ -577,7 +577,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                             .js => |*js| blk: {
                                 // Insert new source map or patch existing empty source map.
                                 if (js.source_map) |*source_map| {
-                                    bun.assert(html_route_bundle_index == null); // suspect behind #17956
+                                    fun.assert(html_route_bundle_index == null); // suspect behind #17956
                                     if (source_map.chunk.buffer.len() > 0) {
                                         break :blk .{ .some = PackedMap.newNonEmpty(
                                             &source_map.chunk,
@@ -590,7 +590,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
                                 // Must precompute this. Otherwise, source maps won't have
                                 // the info needed to concatenate VLQ mappings.
-                                const count: u32 = @intCast(bun.strings.countChar(js.code, '\n'));
+                                const count: u32 = @intCast(fun.strings.countChar(js.code, '\n'));
                                 break :blk .{ .line_count = .init(count) };
                             },
                         },
@@ -668,7 +668,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                     if (content == .js) {
                         try g.current_chunk_parts.append(
                             dev.allocator(),
-                            bun.ptr.OwnedIn([]const u8, bun.bake.DevServer.DevAllocator).fromRawIn(
+                            fun.ptr.OwnedIn([]const u8, fun.bake.DevServer.DevAllocator).fromRawIn(
                                 content.js.code,
                                 dev.dev_allocator(),
                             ),
@@ -700,7 +700,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
                             // Must precompute this. Otherwise, source maps won't have
                             // the info needed to concatenate VLQ mappings.
-                            const count: u32 = @intCast(bun.strings.countChar(content.js.code, '\n'));
+                            const count: u32 = @intCast(fun.strings.countChar(content.js.code, '\n'));
                             try g.current_chunk_source_maps.append(dev.allocator(), .{
                                 .file_index = file_index,
                                 .source_map = PackedMap.Shared{
@@ -727,15 +727,15 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             g: *Self,
             ctx: *HotUpdateContext,
             comptime mode: enum { normal, css },
-            bundle_graph_index: bun.ast.Index,
+            bundle_graph_index: fun.ast.Index,
             temp_alloc: Allocator,
-        ) bun.OOM!void {
-            const log = bun.Output.scoped(.processChunkDependencies, .visible);
+        ) fun.OOM!void {
+            const log = fun.Output.scoped(.processChunkDependencies, .visible);
             const file_index: FileIndex = ctx.getCachedIndex(side, bundle_graph_index).*.unwrap() orelse
                 @panic("unresolved index"); // do not process for failed chunks
             log("index id={d} {f}:", .{
                 file_index.get(),
-                bun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
+                fun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
             });
 
             // Build a map from the existing import list. Later, entries that
@@ -782,7 +782,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                     // const ssr_index = ctx.scbs.getSSRIndex(bundle_graph_index.get()) orelse {
                     //     @panic("Unexpected missing server-component-boundary entry");
                     // };
-                    // try g.processChunkImportRecords(ctx, &quick_lookup, &new_imports, file_index, bun.ast.Index.init(ssr_index));
+                    // try g.processChunkImportRecords(ctx, &quick_lookup, &new_imports, file_index, fun.ast.Index.init(ssr_index));
                 }
             }
 
@@ -831,13 +831,13 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         fn disconnectEdgeFromDependencyList(g: *Self, edge_index: EdgeIndex) void {
             const edge = &g.edges.items[edge_index.get()];
             const imported = edge.imported.get();
-            const log = bun.Output.scoped(.disconnectEdgeFromDependencyList, .hidden);
+            const log = fun.Output.scoped(.disconnectEdgeFromDependencyList, .hidden);
             log("detach edge={d} | id={d} {f} -> id={d} {f} (first_dep={d})", .{
                 edge_index.get(),
                 edge.dependency.get(),
-                bun.fmt.quote(g.bundled_files.keys()[edge.dependency.get()]),
+                fun.fmt.quote(g.bundled_files.keys()[edge.dependency.get()]),
                 imported,
-                bun.fmt.quote(g.bundled_files.keys()[edge.imported.get()]),
+                fun.fmt.quote(g.bundled_files.keys()[edge.imported.get()]),
                 if (g.first_dep.items[imported].unwrap()) |first_dep| first_dep.get() else 42069000,
             });
 
@@ -873,17 +873,17 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             quick_lookup: *TempLookup.HashTable,
             new_imports: *EdgeIndex.Optional,
             file_index: FileIndex,
-            bundler_index: bun.ast.Index,
+            bundler_index: fun.ast.Index,
         ) !void {
-            bun.assert(bundler_index.isValid());
-            bun.assert(ctx.loaders[bundler_index.get()].isCSS());
+            fun.assert(bundler_index.isValid());
+            fun.assert(ctx.loaders[bundler_index.get()].isCSS());
 
-            var sfb = std.heap.stackFallback(@sizeOf(bun.ast.Index) * 64, temp_alloc);
+            var sfb = std.heap.stackFallback(@sizeOf(fun.ast.Index) * 64, temp_alloc);
             const queue_alloc = sfb.get();
 
             // This queue avoids stack overflow.
             // Infinite loop is prevented by the tracing bits in `processEdgeAttachment`.
-            var queue: ArrayListUnmanaged(bun.ast.Index) = .empty;
+            var queue: ArrayListUnmanaged(fun.ast.Index) = .empty;
             defer queue.deinit(queue_alloc);
 
             for (ctx.import_records[bundler_index.get()].slice()) |import_record| {
@@ -910,7 +910,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             quick_lookup: *TempLookup.HashTable,
             new_imports: *EdgeIndex.Optional,
             file_index: FileIndex,
-            import_record: bun.ImportRecord,
+            import_record: fun.ImportRecord,
             comptime mode: enum {
                 js_or_html,
                 /// When set, the graph tracing state bits are used to prevent
@@ -919,8 +919,8 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                 /// - Does not use its tracing bits for anything else
                 css,
             },
-        ) bun.OOM!enum { @"continue", stop } {
-            const log = bun.Output.scoped(.processEdgeAttachment, .visible);
+        ) fun.OOM!enum { @"continue", stop } {
+            const log = fun.Output.scoped(.processEdgeAttachment, .visible);
 
             // When an import record is duplicated, it gets marked unused.
             // This happens in `ConvertESMExportsForHmr.deduplicatedImport`
@@ -967,7 +967,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             };
 
             if (Environment.isDebug) {
-                bun.assert(imported_file_index.get() < g.bundled_files.count());
+                fun.assert(imported_file_index.get() < g.bundled_files.count());
             }
 
             // For CSS files visiting other CSS files, prevent infinite
@@ -1017,9 +1017,9 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                 log("attach edge={d} | id={d} {f} -> id={d} {f}", .{
                     edge.get(),
                     file_index.get(),
-                    bun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
+                    fun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
                     imported_file_index.get(),
-                    bun.fmt.quote(g.bundled_files.keys()[imported_file_index.get()]),
+                    fun.fmt.quote(g.bundled_files.keys()[imported_file_index.get()]),
                 });
             }
 
@@ -1033,13 +1033,13 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             quick_lookup: *TempLookup.HashTable,
             new_imports: *EdgeIndex.Optional,
             file_index: FileIndex,
-            index: bun.ast.Index,
+            index: fun.ast.Index,
         ) !void {
-            bun.assert(index.isValid());
+            fun.assert(index.isValid());
             // don't call this function for CSS sources
-            bun.assert(ctx.loaders[index.get()] != .css);
+            fun.assert(ctx.loaders[index.get()] != .css);
 
-            const log = bun.Output.scoped(.processChunkDependencies, .visible);
+            const log = fun.Output.scoped(.processChunkDependencies, .visible);
             for (ctx.import_records[index.get()].slice()) |import_record| {
                 // When an import record is duplicated, it gets marked unused.
                 // This happens in `ConvertESMExportsForHmr.deduplicatedImport`
@@ -1062,7 +1062,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                     };
 
                     if (Environment.isDebug) {
-                        bun.assert(imported_file_index.get() < g.bundled_files.count());
+                        fun.assert(imported_file_index.get() < g.bundled_files.count());
                     }
 
                     const gop = try quick_lookup.getOrPut(temp_alloc, imported_file_index);
@@ -1103,9 +1103,9 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                         log("attach edge={d} | id={d} {f} -> id={d} {f}", .{
                             edge.get(),
                             file_index.get(),
-                            bun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
+                            fun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
                             imported_file_index.get(),
-                            bun.fmt.quote(g.bundled_files.keys()[imported_file_index.get()]),
+                            fun.fmt.quote(g.bundled_files.keys()[imported_file_index.get()]),
                         });
                     }
                 }
@@ -1129,7 +1129,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             if (Environment.enable_logs) {
                 igLog("traceDependencies(.{s}, {f}{s})", .{
                     @tagName(side),
-                    bun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
+                    fun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
                     if (gts.bits(side).isSet(file_index.get())) " [already visited]" else "",
                 });
             }
@@ -1145,7 +1145,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                     const dev = g.owner();
                     if (file.is_route) {
                         const route_index = dev.route_lookup.get(file_index) orelse
-                            Output.panic("Route not in lookup index: {d} {f}", .{ file_index.get(), bun.fmt.quote(g.bundled_files.keys()[file_index.get()]) });
+                            Output.panic("Route not in lookup index: {d} {f}", .{ file_index.get(), fun.fmt.quote(g.bundled_files.keys()[file_index.get()]) });
                         igLog("\\<- Route", .{});
 
                         try dev.incremental_result.framework_routes_affected.append(dev.allocator(), route_index);
@@ -1159,7 +1159,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                     if (file.is_hmr_root) {
                         const key = g.bundled_files.keys()[file_index.get()];
                         const index = dev.server_graph.getFileIndex(key) orelse
-                            Output.panic("Server Incremental Graph is missing component for {f}", .{bun.fmt.quote(key)});
+                            Output.panic("Server Incremental Graph is missing component for {f}", .{fun.fmt.quote(key)});
                         try dev.server_graph.traceDependencies(index, gts, goal, index);
                     } else if (file.html_route_bundle_index) |route_bundle_index| {
                         // If the HTML file itself was modified, or an asset was
@@ -1210,7 +1210,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                 igLog("traceImports(.{s}, .{s}, {f}{s})", .{
                     @tagName(side),
                     @tagName(goal),
-                    bun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
+                    fun.fmt.quote(g.bundled_files.keys()[file_index.get()]),
                     if (gts.bits(side).isSet(file_index.get())) " [already visited]" else "",
                 });
             }
@@ -1227,13 +1227,13 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                         const dev = g.owner();
                         const key = g.bundled_files.keys()[file_index.get()];
                         const index = dev.client_graph.getFileIndex(key) orelse
-                            Output.panic("Client Incremental Graph is missing component for {f}", .{bun.fmt.quote(key)});
+                            Output.panic("Client Incremental Graph is missing component for {f}", .{fun.fmt.quote(key)});
                         try dev.client_graph.traceImports(index, gts, goal);
 
                         if (Environment.isDebug and file.kind == .css) {
                             // Server CSS files never have imports. They are
                             // purely a reference to the client graph.
-                            bun.assert(g.first_import.items[file_index.get()] == .none);
+                            fun.assert(g.first_import.items[file_index.get()] == .none);
                         }
                     }
                     if (goal == .find_errors and file.failed) {
@@ -1248,7 +1248,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                 .client => {
                     switch (file.content) {
                         .css_child => {
-                            bun.assertf(false, "only CSS roots should be found by tracing", .{});
+                            fun.assertf(false, "only CSS roots should be found by tracing", .{});
                         },
                         .css_root => |id| {
                             if (goal == .find_css) {
@@ -1292,12 +1292,12 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
         /// Never takes ownership of `abs_path`
         /// Marks a chunk but without any content. Used to track dependencies to files that don't exist.
-        pub fn insertStale(g: *Self, abs_path: []const u8, is_ssr_graph: bool) bun.OOM!FileIndex {
+        pub fn insertStale(g: *Self, abs_path: []const u8, is_ssr_graph: bool) fun.OOM!FileIndex {
             return g.insertStaleExtra(abs_path, is_ssr_graph, false);
         }
 
         // TODO: `is_route` is unused in client graph
-        pub fn insertStaleExtra(g: *Self, abs_path: []const u8, is_ssr_graph: bool, is_route: bool) bun.OOM!FileIndex {
+        pub fn insertStaleExtra(g: *Self, abs_path: []const u8, is_ssr_graph: bool, is_route: bool) fun.OOM!FileIndex {
             g.owner().graph_safety_lock.assertLocked();
             const dev_alloc = g.allocator();
 
@@ -1351,7 +1351,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         }
 
         /// Returns the key that was inserted.
-        pub fn insertEmpty(g: *Self, abs_path: []const u8, kind: FileKind) bun.OOM!struct {
+        pub fn insertEmpty(g: *Self, abs_path: []const u8, kind: FileKind) fun.OOM!struct {
             index: FileIndex,
             key: []const u8,
         } {
@@ -1387,7 +1387,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
         /// Server CSS files are just used to be targets for graph traversal.
         /// Its content lives only on the client.
-        pub fn insertCssFileOnServer(g: *Self, ctx: *HotUpdateContext, index: bun.ast.Index, abs_path: []const u8) bun.OOM!void {
+        pub fn insertCssFileOnServer(g: *Self, ctx: *HotUpdateContext, index: fun.ast.Index, abs_path: []const u8) fun.OOM!void {
             g.owner().graph_safety_lock.assertLocked();
             const dev_alloc = g.allocator();
 
@@ -1425,12 +1425,12 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             },
             log: *const Log,
             is_ssr_graph: bool,
-        ) bun.OOM!void {
+        ) fun.OOM!void {
             g.owner().graph_safety_lock.assertLocked();
 
             const dev_alloc = g.allocator();
 
-            const Gop = bun.StringArrayHashMapUnmanaged(File.Packed).GetOrPutResult;
+            const Gop = fun.StringArrayHashMapUnmanaged(File.Packed).GetOrPutResult;
             // found_existing is destructured separately so that it is
             // comptime-known true when mode == .index
             const gop: Gop, const found_existing, const file_index = switch (mode) {
@@ -1506,8 +1506,8 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             // the error list as it changes while also supporting a REPL
             log.print(Output.errorWriter()) catch {};
             const failure = failure: {
-                const relative_path_buf = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(relative_path_buf);
+                const relative_path_buf = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(relative_path_buf);
                 // this string is just going to be memcpy'd into the log buffer
                 const owner_display_name = dev.relativePath(relative_path_buf, gop.key_ptr.*);
                 break :failure try SerializedFailure.initFromLog(
@@ -1525,7 +1525,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             }
         }
 
-        pub fn onFileDeleted(g: *Self, abs_path: []const u8, bv2: *bun.BundleV2) void {
+        pub fn onFileDeleted(g: *Self, abs_path: []const u8, bv2: *fun.BundleV2) void {
             const index = g.getFileIndex(abs_path) orelse return;
 
             const keys = g.bundled_files.keys();
@@ -1553,9 +1553,9 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                     keys[dep.dependency.get()],
                     switch (side) {
                         .client => .browser,
-                        .server => .bun,
+                        .server => .fun,
                     },
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             }
 
             // Bust the resolution caches of the dir containing this file,
@@ -1706,7 +1706,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         ) ![]u8 {
             var chunk = std.array_list.Managed(u8).init(g.allocator());
             try g.takeJSBundleToList(&chunk, options);
-            bun.assert(chunk.items.len == chunk.capacity);
+            fun.assert(chunk.items.len == chunk.capacity);
             return chunk.items;
         }
 
@@ -1722,10 +1722,10 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             assert(g.current_chunk_len > 0);
 
             const runtime: bake.HmrRuntime = switch (kind) {
-                .initial_response => bun.bake.getHmrRuntime(side),
+                .initial_response => fun.bake.getHmrRuntime(side),
                 .hmr_chunk => switch (side) {
                     .server => comptime .init("({"),
-                    .client => comptime .init("self[Symbol.for(\"bun:hmr\")]({\n"),
+                    .client => comptime .init("self[Symbol.for(\"fun:hmr\")]({\n"),
                 },
             };
 
@@ -1744,9 +1744,9 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                         try w.writeAll("}, {\n  main: ");
                         const initial_response_entry_point = options.initial_response_entry_point;
                         if (initial_response_entry_point.len > 0) {
-                            const relative_path_buf = bun.path_buffer_pool.get();
-                            defer bun.path_buffer_pool.put(relative_path_buf);
-                            try bun.js_printer.writeJSONString(
+                            const relative_path_buf = fun.path_buffer_pool.get();
+                            defer fun.path_buffer_pool.put(relative_path_buf);
+                            try fun.js_printer.writeJSONString(
                                 g.owner().relativePath(relative_path_buf, initial_response_entry_point),
                                 @TypeOf(w),
                                 w,
@@ -1755,7 +1755,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                         } else {
                             try w.writeAll("null");
                         }
-                        try w.writeAll(",\n  bun: \"" ++ bun.Global.package_json_version_with_canary ++ "\"");
+                        try w.writeAll(",\n  fun: \"" ++ fun.Global.package_json_version_with_canary ++ "\"");
                         try w.writeAll(",\n  generation: \"");
                         const generation: u32 = @intCast(options.script_id.get() >> 32);
                         try w.print("{x}", .{std.mem.asBytes(&generation)});
@@ -1770,9 +1770,9 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
                         if (options.react_refresh_entry_point.len > 0) {
                             try w.writeAll(",\n  refresh: ");
-                            const relative_path_buf = bun.path_buffer_pool.get();
-                            defer bun.path_buffer_pool.put(relative_path_buf);
-                            try bun.js_printer.writeJSONString(
+                            const relative_path_buf = fun.path_buffer_pool.get();
+                            defer fun.path_buffer_pool.put(relative_path_buf);
+                            try fun.js_printer.writeJSONString(
                                 g.owner().relativePath(relative_path_buf, options.react_refresh_entry_point),
                                 @TypeOf(w),
                                 w,
@@ -1818,7 +1818,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
             }
             list.appendSliceAssumeCapacity(end);
 
-            if (bun.FeatureFlags.bake_debugging_features) if (g.owner().dump_dir) |dump_dir| {
+            if (fun.FeatureFlags.bake_debugging_features) if (g.owner().dump_dir) |dump_dir| {
                 const rel_path_escaped = switch (kind) {
                     .initial_response => "latest_chunk.js",
                     .hmr_chunk => "latest_hmr.js",
@@ -1827,7 +1827,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                     .client => .client,
                     .server => .server,
                 }, rel_path_escaped, list.items[start..], false) catch |err| {
-                    bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                    fun.handleErrorReturnTrace(err, @errorReturnTrace());
                     Output.warn("Could not dump bundle: {}", .{err});
                 };
             };
@@ -1835,24 +1835,24 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
         pub const SourceMapGeneration = struct {
             json: []u8,
-            mappings: bun.StringPointer,
+            mappings: fun.StringPointer,
             file_paths: [][]const u8,
         };
 
         /// Uses `arena` as a temporary allocator, fills in all fields of `out` except ref_count
-        pub fn takeSourceMap(g: *@This(), _: std.mem.Allocator, gpa: Allocator, out: *SourceMapStore.Entry) bun.OOM!void {
+        pub fn takeSourceMap(g: *@This(), _: std.mem.Allocator, gpa: Allocator, out: *SourceMapStore.Entry) fun.OOM!void {
             const paths = g.bundled_files.keys();
 
             switch (side) {
                 .client => {
                     const files = g.bundled_files.values();
 
-                    const buf = bun.path_buffer_pool.get();
-                    defer bun.path_buffer_pool.put(buf);
+                    const buf = fun.path_buffer_pool.get();
+                    defer fun.path_buffer_pool.put(buf);
 
                     var file_paths = try ArrayListUnmanaged([]const u8).initCapacity(gpa, g.current_chunk_parts.items.len);
                     errdefer file_paths.deinit(gpa);
-                    var contained_maps: bun.MultiArrayList(PackedMap.Shared) = .empty;
+                    var contained_maps: fun.MultiArrayList(PackedMap.Shared) = .empty;
                     try contained_maps.ensureTotalCapacity(gpa, g.current_chunk_parts.items.len);
                     errdefer contained_maps.deinit(gpa);
 
@@ -1881,7 +1881,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
                 .server => {
                     var file_paths = try ArrayListUnmanaged([]const u8).initCapacity(gpa, g.current_chunk_parts.items.len);
                     errdefer file_paths.deinit(gpa);
-                    var contained_maps: bun.MultiArrayList(PackedMap.Shared) = .empty;
+                    var contained_maps: fun.MultiArrayList(PackedMap.Shared) = .empty;
                     try contained_maps.ensureTotalCapacity(gpa, g.current_chunk_parts.items.len);
                     errdefer contained_maps.deinit(gpa);
 
@@ -1908,7 +1908,7 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         }
 
         fn disconnectAndDeleteFile(g: *Self, file_index: FileIndex) void {
-            bun.assert(g.first_dep.items[file_index.get()] == .none); // must have no dependencies
+            fun.assert(g.first_dep.items[file_index.get()] == .none); // must have no dependencies
 
             // Disconnect all imports
             {
@@ -1987,18 +1987,18 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
         fn checkEdgeRemoval(g: *Self, edge_index: EdgeIndex) void {
             // Enable this on any builds with asan enabled so we can catch stuff
             // in CI too
-            const enabled = bun.asan.enabled or bun.Environment.ci_assert;
+            const enabled = fun.asan.enabled or fun.Environment.ci_assert;
             if (comptime !enabled) return;
 
             for (g.first_dep.items) |maybe_first_dep| {
                 if (maybe_first_dep.unwrap()) |first_dep| {
-                    bun.assert_neql(first_dep.get(), edge_index.get());
+                    fun.assert_neql(first_dep.get(), edge_index.get());
                 }
             }
 
             for (g.first_import.items) |maybe_first_import| {
                 if (maybe_first_import.unwrap()) |first_import| {
-                    bun.assert_neql(first_import.get(), edge_index.get());
+                    fun.assert_neql(first_import.get(), edge_index.get());
                 }
             }
 
@@ -2014,9 +2014,9 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
 
                 if (in_free_list) continue;
 
-                bun.assert_neql(edge.prev_dependency.unwrapGet(), edge_index.get());
-                bun.assert_neql(edge.next_import.unwrapGet(), edge_index.get());
-                bun.assert_neql(edge.next_dependency.unwrapGet(), edge_index.get());
+                fun.assert_neql(edge.prev_dependency.unwrapGet(), edge_index.get());
+                fun.assert_neql(edge.next_import.unwrapGet(), edge_index.get());
+                fun.assert_neql(edge.next_dependency.unwrapGet(), edge_index.get());
             }
         }
 
@@ -2035,17 +2035,17 @@ pub fn IncrementalGraph(comptime side: bake.Side) type {
     };
 }
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
-const assert_eql = bun.assert_eql;
-const bake = bun.bake;
-const DynamicBitSetUnmanaged = bun.bit_set.DynamicBitSetUnmanaged;
-const Log = bun.logger.Log;
-const useAllFields = bun.meta.useAllFields;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
+const assert_eql = fun.assert_eql;
+const bake = fun.bake;
+const DynamicBitSetUnmanaged = fun.bit_set.DynamicBitSetUnmanaged;
+const Log = fun.logger.Log;
+const useAllFields = fun.meta.useAllFields;
 
-const SourceMap = bun.SourceMap;
+const SourceMap = fun.SourceMap;
 const VLQ = SourceMap.VLQ;
 
 const DevServer = bake.DevServer;
@@ -2067,11 +2067,11 @@ const LineCount = PackedMap.LineCount;
 const FrameworkRouter = bake.FrameworkRouter;
 const Route = FrameworkRouter.Route;
 
-const BundleV2 = bun.bundle_v2.BundleV2;
-const Chunk = bun.bundle_v2.Chunk;
+const BundleV2 = fun.bundle_v2.BundleV2;
+const Chunk = fun.bundle_v2.Chunk;
 
-const Owned = bun.ptr.Owned;
-const Shared = bun.ptr.Shared;
+const Owned = fun.ptr.Owned;
+const Shared = fun.ptr.Shared;
 
 const std = @import("std");
 const ArrayListUnmanaged = std.ArrayListUnmanaged;

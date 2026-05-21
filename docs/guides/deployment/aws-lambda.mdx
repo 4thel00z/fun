@@ -1,17 +1,17 @@
 ---
-title: Deploy a Bun application on AWS Lambda
+title: Deploy a Fun application on AWS Lambda
 sidebarTitle: Deploy on AWS Lambda
 mode: center
 ---
 
 [AWS Lambda](https://aws.amazon.com/lambda/) is a serverless compute service that lets you run code without provisioning or managing servers.
 
-In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfile`.
+In this guide, we will deploy a Fun HTTP server to AWS Lambda using a `Dockerfile`.
 
 <Note>
 	Before continuing, make sure you have:
 
-    	- A Bun application ready for deployment
+    	- A Fun application ready for deployment
     	- An [AWS account](https://aws.amazon.com/)
     	- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html) installed and configured
     	- [Docker](https://docs.docker.com/get-started/get-docker/) installed and added to your `PATH`
@@ -28,8 +28,8 @@ In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfil
     	# Use the official AWS Lambda adapter image to handle the Lambda runtime
     	FROM public.ecr.aws/awsguru/aws-lambda-adapter:0.9.0 AS aws-lambda-adapter
 
-    	# Use the official Bun image to run the application
-    	FROM oven/bun:debian AS bun_latest
+    	# Use the official Fun image to run the application
+    	FROM underdoc-org/fun:debian AS fun_latest
 
     	# Copy the Lambda adapter into the container
     	COPY --from=aws-lambda-adapter /lambda-adapter /opt/extensions/lambda-adapter
@@ -40,23 +40,23 @@ In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfil
     	# Set the work directory to `/var/task`. This is the default work directory for Lambda.
     	WORKDIR "/var/task"
 
-    	# Copy the package.json and bun.lock into the container
-    	COPY package.json bun.lock ./
+    	# Copy the package.json and fun.lock into the container
+    	COPY package.json fun.lock ./
 
     	# Install the dependencies
-    	RUN bun install --production --frozen-lockfile
+    	RUN fun install --production --frozen-lockfile
 
     	# Copy the rest of the application into the container
     	COPY . /var/task
 
     	# Run the application.
-    	CMD ["bun", "index.ts"]
+    	CMD ["fun", "index.ts"]
     	```
 
     	<Note>
-    		Make sure that the start command corresponds to your application's entry point. This can also be `CMD ["bun", "run", "start"]` if you have a start script in your `package.json`.
+    		Make sure that the start command corresponds to your application's entry point. This can also be `CMD ["fun", "run", "start"]` if you have a start script in your `package.json`.
 
-    		This image installs dependencies and runs your app with Bun inside a container. If your app doesn't have dependencies, you can omit the `RUN bun install --production --frozen-lockfile` line.
+    		This image installs dependencies and runs your app with Fun inside a container. If your app doesn't have dependencies, you can omit the `RUN fun install --production --frozen-lockfile` line.
     	</Note>
 
     	Create a new `.dockerignore` file in the root of your project. This file contains the files and directories that should be _excluded_ from the container image, such as `node_modules`. This makes your builds faster and smaller:
@@ -75,26 +75,26 @@ In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfil
     	```
     </Step>
     <Step title="Build the Docker image">
-    	Make sure you're in the directory containing your `Dockerfile`, then build the Docker image. In this case, we'll call the image `bun-lambda-demo` and tag it as `latest`.
+    	Make sure you're in the directory containing your `Dockerfile`, then build the Docker image. In this case, we'll call the image `fun-lambda-demo` and tag it as `latest`.
 
     	```bash terminal icon="terminal"
     	# cd /path/to/your/app
-    	docker build --provenance=false --platform linux/amd64 -t bun-lambda-demo:latest .
+    	docker build --provenance=false --platform linux/amd64 -t fun-lambda-demo:latest .
     	```
     </Step>
     <Step title="Create an ECR repository">
     	To push the image to AWS Lambda, we first need to create an [ECR repository](https://aws.amazon.com/ecr/) to push the image to.
 
     	By running the following command, we:
-    	- Create an ECR repository named `bun-lambda-demo` in the `us-east-1` region
+    	- Create an ECR repository named `fun-lambda-demo` in the `us-east-1` region
     	- Get the repository URI, and export the repository URI as an environment variable. This is optional, but make the next steps easier.
 
     	```bash terminal icon="terminal"
-    	export ECR_URI=$(aws ecr create-repository --repository-name bun-lambda-demo --region us-east-1 --query 'repository.repositoryUri' --output text)
+    	export ECR_URI=$(aws ecr create-repository --repository-name fun-lambda-demo --region us-east-1 --query 'repository.repositoryUri' --output text)
     	echo $ECR_URI
     	```
     	```txt
-    	[id].dkr.ecr.us-east-1.amazonaws.com/bun-lambda-demo
+    	[id].dkr.ecr.us-east-1.amazonaws.com/fun-lambda-demo
     	```
 
     	<Note>
@@ -103,7 +103,7 @@ In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfil
     		For example, if your profile is named `my-sso-app`, use `--profile my-sso-app`. Check your AWS CLI configuration with `aws configure list-profiles` to see available profiles.
 
     		```bash terminal icon="terminal"
-    		export ECR_URI=$(aws ecr create-repository --repository-name bun-lambda-demo --region us-east-1 --profile my-sso-app --query 'repository.repositoryUri' --output text)
+    		export ECR_URI=$(aws ecr create-repository --repository-name fun-lambda-demo --region us-east-1 --profile my-sso-app --query 'repository.repositoryUri' --output text)
     		echo $ECR_URI
     		```
     	</Note>
@@ -133,7 +133,7 @@ In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfil
     	Make sure you're in the directory containing your `Dockerfile`, then tag the docker image with the ECR repository URI.
 
     	```bash terminal icon="terminal"
-    	docker tag bun-lambda-demo:latest ${ECR_URI}:latest
+    	docker tag fun-lambda-demo:latest ${ECR_URI}:latest
     	```
 
     	Then, push the image to the ECR repository.
@@ -151,7 +151,7 @@ In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfil
     	![Create Function](/images/guides/lambda1.png)
     	</Frame>
 
-    	Give the function a name, like `my-bun-function`.
+    	Give the function a name, like `my-fun-function`.
     </Step>
     <Step title="Select the container image">
     	Then, go to the **Container image URI** section, click on **Browse images**. Select the image we just pushed to the ECR repository.
@@ -197,7 +197,7 @@ In this guide, we will deploy a Bun HTTP server to AWS Lambda using a `Dockerfil
     	curl -X GET https://[your-function-id].lambda-url.us-east-1.on.aws/
     	```
     	```txt
-    	Hello from Bun on Lambda!
+    	Hello from Fun on Lambda!
     	```
     </Step>
 

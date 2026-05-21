@@ -1,17 +1,17 @@
 import * as harness from "./harness";
 
-// We make Bun.env read-only
-// so process.env = {} causes them to be out of sync and we assume Bun.env is
+// We make Fun.env read-only
+// so process.env = {} causes them to be out of sync and we assume Fun.env is
 for (let key in process.env) {
   if (key === "TZ") continue;
-  if (key in harness.bunEnv) continue;
+  if (key in harness.funEnv) continue;
   delete process.env[key];
 }
 
-for (let key in harness.bunEnv) {
+for (let key in harness.funEnv) {
   if (key === "TZ") continue;
-  if (harness.bunEnv[key] === undefined) continue;
-  process.env[key] = harness.bunEnv[key] + "";
+  if (harness.funEnv[key] === undefined) continue;
+  process.env[key] = harness.funEnv[key] + "";
 }
 
-if (Bun.$?.env) Bun.$.env(process.env);
+if (Fun.$?.env) Fun.$.env(process.env);

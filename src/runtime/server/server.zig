@@ -31,20 +31,20 @@ pub const AnyRoute = union(enum) {
     /// Bundle an HTML import
     /// import html from "./index.html";
     /// "/": html,
-    html: bun.ptr.RefPtr(HTMLBundle.Route),
+    html: fun.ptr.RefPtr(HTMLBundle.Route),
     /// Use file system routing.
     /// "/*": {
     ///   "dir": import.meta.resolve("./pages"),
     ///   "style": "nextjs-pages",
     /// }
-    framework_router: bun.bake.FrameworkRouter.Type.Index,
+    framework_router: fun.bake.FrameworkRouter.Type.Index,
 
     pub fn memoryCost(this: AnyRoute) usize {
         return switch (this) {
             .static => |static_route| static_route.memoryCost(),
             .file => |file_route| file_route.memoryCost(),
             .html => |html_bundle_route| html_bundle_route.data.memoryCost(),
-            .framework_router => @sizeOf(bun.bake.Framework.FileSystemRouterType),
+            .framework_router => @sizeOf(fun.bake.Framework.FileSystemRouterType),
         };
     }
 
@@ -75,12 +75,12 @@ pub const AnyRoute = union(enum) {
         }
     }
 
-    fn bundledHTMLManifestItemFromJS(argument: jsc.JSValue, index_path: []const u8, init_ctx: *ServerInitContext) bun.JSError!?AnyRoute {
+    fn bundledHTMLManifestItemFromJS(argument: jsc.JSValue, index_path: []const u8, init_ctx: *ServerInitContext) fun.JSError!?AnyRoute {
         if (!argument.isObject()) return null;
 
-        var path_string = try bun.String.fromJS(try argument.get(init_ctx.global, "path") orelse return null, init_ctx.global);
+        var path_string = try fun.String.fromJS(try argument.get(init_ctx.global, "path") orelse return null, init_ctx.global);
         defer path_string.deref();
-        var path = jsc.Node.PathOrFileDescriptor{ .path = try jsc.Node.PathLike.fromBunString(init_ctx.global, &path_string, false, bun.default_allocator) };
+        var path = jsc.Node.PathOrFileDescriptor{ .path = try jsc.Node.PathLike.fromFunString(init_ctx.global, &path_string, false, fun.default_allocator) };
         defer path.deinit();
 
         // Construct the route by stripping paths above the root.
@@ -90,13 +90,13 @@ pub const AnyRoute = union(enum) {
         //    "/index-abc.js" -> "/index-abc.js"
         //    "index-abc.js" -> "/index-abc.js"
         //
-        const cwd = if (bun.StandaloneModuleGraph.isBunStandaloneFilePath(path.path.slice()))
-            bun.StandaloneModuleGraph.targetBasePublicPath(bun.Environment.os, "root/")
+        const cwd = if (fun.StandaloneModuleGraph.isFunStandaloneFilePath(path.path.slice()))
+            fun.StandaloneModuleGraph.targetBasePublicPath(fun.Environment.os, "root/")
         else
-            bun.fs.FileSystem.instance.top_level_dir;
+            fun.fs.FileSystem.instance.top_level_dir;
 
-        const abs_path = bun.fs.FileSystem.instance.abs(&[_][]const u8{path.path.slice()});
-        var relative_path = bun.fs.FileSystem.instance.relative(cwd, abs_path);
+        const abs_path = fun.fs.FileSystem.instance.abs(&[_][]const u8{path.path.slice()});
+        var relative_path = fun.fs.FileSystem.instance.relative(cwd, abs_path);
 
         if (strings.hasPrefixComptime(relative_path, "./")) {
             relative_path = relative_path[2..];
@@ -105,8 +105,8 @@ pub const AnyRoute = union(enum) {
                 relative_path = relative_path[3..];
             }
         }
-        const is_index_route = bun.strings.eql(path.path.slice(), index_path);
-        var builder = std.array_list.Managed(u8).init(bun.default_allocator);
+        const is_index_route = fun.strings.eql(path.path.slice(), index_path);
+        var builder = std.array_list.Managed(u8).init(fun.default_allocator);
         defer builder.deinit();
         if (!strings.hasPrefixComptime(relative_path, "/")) {
             try builder.append('/');
@@ -139,7 +139,7 @@ pub const AnyRoute = union(enum) {
     /// This is the JS representation of an HTMLImportManifest
     ///
     /// See ./src/bundler/HTMLImportManifest.zig
-    fn bundledHTMLManifestFromJS(argument: jsc.JSValue, init_ctx: *ServerInitContext) bun.JSError!?AnyRoute {
+    fn bundledHTMLManifestFromJS(argument: jsc.JSValue, init_ctx: *ServerInitContext) fun.JSError!?AnyRoute {
         if (!argument.isObject()) return null;
 
         const index = try argument.getOptional(init_ctx.global, "index", ZigString.Slice) orelse return null;
@@ -170,14 +170,14 @@ pub const AnyRoute = union(enum) {
             // and the process exits with a non-zero status code.
             if (blob.store) |store| {
                 if (store.getPath()) |store_path| {
-                    switch (bun.sys.existsAtType(bun.FD.cwd(), store_path)) {
+                    switch (fun.sys.existsAtType(fun.FD.cwd(), store_path)) {
                         .result => |file_type| {
                             if (file_type == .directory) {
-                                return global.throwInvalidArguments("Bundled file {f} cannot be a directory. You may want to configure --asset-naming or `naming` when bundling.", .{bun.fmt.quote(store_path)});
+                                return global.throwInvalidArguments("Bundled file {f} cannot be a directory. You may want to configure --asset-naming or `naming` when bundling.", .{fun.fmt.quote(store_path)});
                             }
                         },
                         .err => {
-                            return global.throwInvalidArguments("Bundled file {f} not found. You may want to configure --asset-naming or `naming` when bundling.", .{bun.fmt.quote(store_path)});
+                            return global.throwInvalidArguments("Bundled file {f} not found. You may want to configure --asset-naming or `naming` when bundling.", .{fun.fmt.quote(store_path)});
                         },
                     }
                 }
@@ -189,9 +189,9 @@ pub const AnyRoute = union(enum) {
         return AnyRoute{ .static = StaticRoute.initFromAnyBlob(&.{ .Blob = blob }, .{ .server = null, .headers = headers }) };
     }
 
-    pub fn htmlRouteFromJS(argument: jsc.JSValue, init_ctx: *ServerInitContext) bun.JSError!?AnyRoute {
+    pub fn htmlRouteFromJS(argument: jsc.JSValue, init_ctx: *ServerInitContext) fun.JSError!?AnyRoute {
         if (argument.as(HTMLBundle)) |html_bundle| {
-            const entry = bun.handleOom(init_ctx.dedupe_html_bundle_map.getOrPut(html_bundle));
+            const entry = fun.handleOom(init_ctx.dedupe_html_bundle_map.getOrPut(html_bundle));
             if (!entry.found_existing) {
                 entry.value_ptr.* = HTMLBundle.Route.init(html_bundle);
                 return .{ .html = entry.value_ptr.* };
@@ -209,10 +209,10 @@ pub const AnyRoute = union(enum) {
 
     pub const ServerInitContext = struct {
         arena: std.heap.ArenaAllocator,
-        dedupe_html_bundle_map: std.AutoHashMap(*HTMLBundle, bun.ptr.RefPtr(HTMLBundle.Route)),
-        js_string_allocations: bun.bake.StringRefList,
+        dedupe_html_bundle_map: std.AutoHashMap(*HTMLBundle, fun.ptr.RefPtr(HTMLBundle.Route)),
+        js_string_allocations: fun.bake.StringRefList,
         global: *jsc.JSGlobalObject,
-        framework_router_list: std.array_list.Managed(bun.bake.Framework.FileSystemRouterType),
+        framework_router_list: std.array_list.Managed(fun.bake.Framework.FileSystemRouterType),
         user_routes: *std.array_list.Managed(ServerConfig.StaticRouteEntry),
     };
 
@@ -221,14 +221,14 @@ pub const AnyRoute = union(enum) {
         path: []const u8,
         argument: jsc.JSValue,
         init_ctx: *ServerInitContext,
-    ) bun.JSError!?AnyRoute {
+    ) fun.JSError!?AnyRoute {
         if (try AnyRoute.htmlRouteFromJS(argument, init_ctx)) |html_route| {
             return html_route;
         }
 
         if (argument.isObject()) {
-            const FrameworkRouter = bun.bake.FrameworkRouter;
-            if (try argument.getOptional(global, "dir", bun.String.Slice)) |dir| {
+            const FrameworkRouter = fun.bake.FrameworkRouter;
+            if (try argument.getOptional(global, "dir", fun.String.Slice)) |dir| {
                 var alloc = init_ctx.js_string_allocations;
                 const relative_root = alloc.track(dir);
 
@@ -238,7 +238,7 @@ pub const AnyRoute = union(enum) {
                     .nextjs_pages;
                 errdefer style.deinit();
 
-                if (!bun.strings.endsWith(path, "/*")) {
+                if (!fun.strings.endsWith(path, "/*")) {
                     return global.throwInvalidArguments("To mount a directory, make sure the path ends in `/*`", .{});
                 }
 
@@ -250,8 +250,8 @@ pub const AnyRoute = union(enum) {
                     .prefix = if (path.len == 2) "/" else path[0 .. path.len - 2],
 
                     // TODO: customizable framework option.
-                    .entry_client = "bun-framework-react/client.tsx",
-                    .entry_server = "bun-framework-react/server.tsx",
+                    .entry_client = "fun-framework-react/client.tsx",
+                    .entry_server = "fun-framework-react/server.tsx",
                     .ignore_underscores = true,
                     .ignore_dirs = &.{ "node_modules", ".git" },
                     .extensions = &.{ ".tsx", ".jsx" },
@@ -283,7 +283,7 @@ const ServePlugins = struct {
     ref_count: RefCount,
 
     /// Reference count is incremented while there are other objects that are waiting on plugin loads.
-    const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+    const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
 
@@ -291,30 +291,30 @@ const ServePlugins = struct {
         unqueued: []const []const u8,
         pending: struct {
             /// Promise may be empty if the plugin load finishes synchronously.
-            plugin: *bun.jsc.API.JSBundler.Plugin,
+            plugin: *fun.jsc.API.JSBundler.Plugin,
             promise: jsc.JSPromise.Strong,
             html_bundle_routes: std.ArrayListUnmanaged(*HTMLBundle.Route),
-            dev_server: ?*bun.bake.DevServer,
+            dev_server: ?*fun.bake.DevServer,
         },
-        loaded: *bun.jsc.API.JSBundler.Plugin,
+        loaded: *fun.jsc.API.JSBundler.Plugin,
         /// Error information is not stored as it is already reported.
         err,
     };
 
     pub const GetOrStartLoadResult = union(enum) {
         /// null = no plugins, used by server implementation
-        ready: ?*bun.jsc.API.JSBundler.Plugin,
+        ready: ?*fun.jsc.API.JSBundler.Plugin,
         pending,
         err,
     };
 
     pub const Callback = union(enum) {
         html_bundle_route: *HTMLBundle.Route,
-        dev_server: *bun.bake.DevServer,
+        dev_server: *fun.bake.DevServer,
     };
 
     pub fn init(plugins: []const []const u8) *ServePlugins {
-        return bun.new(ServePlugins, .{ .ref_count = .init(), .state = .{ .unqueued = plugins } });
+        return fun.new(ServePlugins, .{ .ref_count = .init(), .state = .{ .unqueued = plugins } });
     }
 
     fn deinit(this: *ServePlugins) void {
@@ -324,10 +324,10 @@ const ServePlugins = struct {
             .loaded => |loaded| loaded.deinit(),
             .err => {},
         }
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
-    pub fn getOrStartLoad(this: *ServePlugins, global: *jsc.JSGlobalObject, cb: Callback) bun.JSError!GetOrStartLoadResult {
+    pub fn getOrStartLoad(this: *ServePlugins, global: *jsc.JSGlobalObject, cb: Callback) fun.JSError!GetOrStartLoadResult {
         sw: switch (this.state) {
             .unqueued => {
                 try this.loadAndResolvePlugins(global);
@@ -337,7 +337,7 @@ const ServePlugins = struct {
                 switch (cb) {
                     .html_bundle_route => |route| {
                         route.ref();
-                        try pending.html_bundle_routes.append(bun.default_allocator, route);
+                        try pending.html_bundle_routes.append(fun.default_allocator, route);
                     },
                     .dev_server => |server| {
                         assert(pending.dev_server == null or pending.dev_server == server); // one dev server per server
@@ -352,29 +352,29 @@ const ServePlugins = struct {
     }
 
     extern fn JSBundlerPlugin__loadAndResolvePluginsForServe(
-        plugin: *bun.jsc.API.JSBundler.Plugin,
+        plugin: *fun.jsc.API.JSBundler.Plugin,
         plugins: jsc.JSValue,
-        bunfig_folder: jsc.JSValue,
+        funfig_folder: jsc.JSValue,
     ) JSValue;
 
-    fn loadAndResolvePlugins(this: *ServePlugins, global: *jsc.JSGlobalObject) bun.JSError!void {
-        bun.assert(this.state == .unqueued);
+    fn loadAndResolvePlugins(this: *ServePlugins, global: *jsc.JSGlobalObject) fun.JSError!void {
+        fun.assert(this.state == .unqueued);
         const plugin_list = this.state.unqueued;
-        const bunfig_folder = bun.path.dirname(global.bunVM().transpiler.options.bunfig_path, .auto);
+        const funfig_folder = fun.path.dirname(global.funVM().transpiler.options.funfig_path, .auto);
 
         this.ref();
         defer this.deref();
 
-        const plugin = bun.jsc.API.JSBundler.Plugin.create(global, .browser);
-        var sfb = std.heap.stackFallback(@sizeOf(bun.String) * 4, bun.default_allocator);
+        const plugin = fun.jsc.API.JSBundler.Plugin.create(global, .browser);
+        var sfb = std.heap.stackFallback(@sizeOf(fun.String) * 4, fun.default_allocator);
         const alloc = sfb.get();
-        const bunstring_array = bun.handleOom(alloc.alloc(bun.String, plugin_list.len));
-        defer alloc.free(bunstring_array);
-        for (plugin_list, bunstring_array) |raw_plugin, *out| {
-            out.* = bun.String.init(raw_plugin);
+        const funstring_array = fun.handleOom(alloc.alloc(fun.String, plugin_list.len));
+        defer alloc.free(funstring_array);
+        for (plugin_list, funstring_array) |raw_plugin, *out| {
+            out.* = fun.String.init(raw_plugin);
         }
-        const plugin_js_array = try bun.String.toJSArray(global, bunstring_array);
-        const bunfig_folder_bunstr = try bun.String.createUTF8ForJS(global, bunfig_folder);
+        const plugin_js_array = try fun.String.toJSArray(global, funstring_array);
+        const funfig_folder_bunstr = try fun.String.createUTF8ForJS(global, funfig_folder);
 
         this.state = .{ .pending = .{
             .promise = jsc.JSPromise.Strong.init(global),
@@ -383,9 +383,9 @@ const ServePlugins = struct {
             .dev_server = null,
         } };
 
-        global.bunVM().eventLoop().enter();
-        const result = try bun.jsc.fromJSHostCall(global, @src(), JSBundlerPlugin__loadAndResolvePluginsForServe, .{ plugin, plugin_js_array, bunfig_folder_bunstr });
-        global.bunVM().eventLoop().exit();
+        global.funVM().eventLoop().enter();
+        const result = try fun.jsc.fromJSHostCall(global, @src(), JSBundlerPlugin__loadAndResolvePluginsForServe, .{ plugin, plugin_js_array, funfig_folder_bunstr });
+        global.funVM().eventLoop().exit();
 
         // handle the case where js synchronously throws an error
         if (global.tryTakeException()) |e| {
@@ -428,7 +428,7 @@ const ServePlugins = struct {
     pub const onResolve = jsc.toJSHostFn(onResolveImpl);
     pub const onReject = jsc.toJSHostFn(onRejectImpl);
 
-    pub fn onResolveImpl(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn onResolveImpl(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
         ctxLog("onResolve", .{});
 
         const plugins_result, const plugins_js = callframe.argumentsAsArray(2);
@@ -442,28 +442,28 @@ const ServePlugins = struct {
     }
 
     pub fn handleOnResolve(this: *ServePlugins) void {
-        bun.assert(this.state == .pending);
+        fun.assert(this.state == .pending);
         const pending = &this.state.pending;
         const plugin = pending.plugin;
         const dev_server = pending.dev_server;
         var html_bundle_routes = pending.html_bundle_routes;
         pending.html_bundle_routes = .empty;
-        defer html_bundle_routes.deinit(bun.default_allocator);
+        defer html_bundle_routes.deinit(fun.default_allocator);
 
         pending.promise.deinit();
 
         this.state = .{ .loaded = plugin };
 
         for (html_bundle_routes.items) |route| {
-            bun.handleOom(route.onPluginsResolved(plugin));
+            fun.handleOom(route.onPluginsResolved(plugin));
             route.deref();
         }
         if (dev_server) |server| {
-            bun.handleOom(server.onPluginsResolved(plugin));
+            fun.handleOom(server.onPluginsResolved(plugin));
         }
     }
 
-    pub fn onRejectImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+    pub fn onRejectImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
         ctxLog("onReject", .{});
 
         const error_js, const plugin_js = callframe.argumentsAsArray(2);
@@ -475,38 +475,38 @@ const ServePlugins = struct {
     }
 
     pub fn handleOnReject(this: *ServePlugins, global: *jsc.JSGlobalObject, err: JSValue) void {
-        bun.assert(this.state == .pending);
+        fun.assert(this.state == .pending);
         const pending = &this.state.pending;
         const dev_server = pending.dev_server;
         var html_bundle_routes = pending.html_bundle_routes;
         pending.html_bundle_routes = .empty;
-        defer html_bundle_routes.deinit(bun.default_allocator);
+        defer html_bundle_routes.deinit(fun.default_allocator);
         pending.plugin.deinit();
         pending.promise.deinit();
 
         this.state = .err;
 
         for (html_bundle_routes.items) |route| {
-            bun.handleOom(route.onPluginsRejected());
+            fun.handleOom(route.onPluginsRejected());
             route.deref();
         }
         if (dev_server) |server| {
-            bun.handleOom(server.onPluginsRejected());
+            fun.handleOom(server.onPluginsRejected());
         }
 
-        Output.errGeneric("Failed to load plugins for Bun.serve:", .{});
-        global.bunVM().runErrorHandler(err, null);
+        Output.errGeneric("Failed to load plugins for Fun.serve:", .{});
+        global.funVM().runErrorHandler(err, null);
     }
 
     comptime {
-        @export(&onResolve, .{ .name = "BunServe__onResolvePlugins" });
-        @export(&onReject, .{ .name = "BunServe__onRejectPlugins" });
+        @export(&onResolve, .{ .name = "FunServe__onResolvePlugins" });
+        @export(&onReject, .{ .name = "FunServe__onRejectPlugins" });
     }
 };
 
 const PluginsResult = union(enum) {
     pending,
-    found: ?*bun.jsc.API.JSBundler.Plugin,
+    found: ?*fun.jsc.API.JSBundler.Plugin,
     err,
 };
 
@@ -514,19 +514,19 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
     return struct {
         pub const js = switch (protocol_enum) {
             .http => switch (development_kind) {
-                .debug => bun.jsc.Codegen.JSDebugHTTPServer,
-                .production => bun.jsc.Codegen.JSHTTPServer,
+                .debug => fun.jsc.Codegen.JSDebugHTTPServer,
+                .production => fun.jsc.Codegen.JSHTTPServer,
             },
             .https => switch (development_kind) {
-                .debug => bun.jsc.Codegen.JSDebugHTTPSServer,
-                .production => bun.jsc.Codegen.JSHTTPSServer,
+                .debug => fun.jsc.Codegen.JSDebugHTTPSServer,
+                .production => fun.jsc.Codegen.JSHTTPSServer,
             },
         };
         pub const fromJS = js.fromJS;
         pub const toJS = js.toJS;
         pub const toJSDirect = js.toJSDirect;
 
-        pub const new = bun.TrivialNew(@This());
+        pub const new = fun.TrivialNew(@This());
 
         pub const ssl_enabled = protocol_enum == .https;
         pub const debug_mode = development_kind == .debug;
@@ -567,7 +567,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
         plugins: ?*ServePlugins = null,
 
-        dev_server: ?*bun.bake.DevServer,
+        dev_server: ?*fun.bake.DevServer,
 
         /// These associate a route to the index in RouteList.cpp.
         /// User routes may get applied multiple times due to SNI.
@@ -612,7 +612,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             if (server.plugins) |p| {
                 return p.getOrStartLoad(server.globalThis, callback) catch |err| switch (err) {
                     error.JSError => std.debug.panic("unhandled exception from ServePlugins.getStartOrLoad", .{}),
-                    error.OutOfMemory => bun.outOfMemory(),
+                    error.OutOfMemory => fun.outOfMemory(),
                     error.JSTerminated => std.debug.panic("unhandled exception from ServePlugins.getStartOrLoad", .{}),
                 };
             }
@@ -620,7 +620,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             return .{ .ready = null };
         }
 
-        pub fn doSubscriberCount(this: *ThisServer, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn doSubscriberCount(this: *ThisServer, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(1);
             if (arguments.len < 1) {
                 return globalThis.throwNotEnoughArguments("subscriberCount", 1, 0);
@@ -630,7 +630,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 return globalThis.throwInvalidArguments("subscriberCount requires a topic name as a string", .{});
             }
 
-            var topic = try arguments.ptr[0].toSlice(globalThis, bun.default_allocator);
+            var topic = try arguments.ptr[0].toSlice(globalThis, fun.default_allocator);
             defer topic.deinit();
 
             if (topic.len == 0) {
@@ -640,16 +640,16 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             return JSValue.jsNumber((this.app.?.numSubscribers(topic.slice())));
         }
 
-        pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!*ThisServer {
+        pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!*ThisServer {
             return globalThis.throw2("Server() is not a constructor", .{});
         }
 
         pub fn jsValueAssertAlive(server: *ThisServer) jsc.JSValue {
-            bun.assert(server.js_value.isNotEmpty());
+            fun.assert(server.js_value.isNotEmpty());
             return server.js_value.tryGet().?;
         }
 
-        pub fn requestIP(this: *ThisServer, request: *jsc.WebCore.Request) bun.JSError!jsc.JSValue {
+        pub fn requestIP(this: *ThisServer, request: *jsc.WebCore.Request) fun.JSError!jsc.JSValue {
             if (this.config.address == .unix) return JSValue.jsNull();
             const info = request.request_context.getRemoteSocketInfo() orelse return JSValue.jsNull();
             return SocketAddress.createDTO(this.globalThis, info.ip, @intCast(info.port), info.is_ipv6);
@@ -662,7 +662,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 (if (this.dev_server) |dev| dev.memoryCost() else 0);
         }
 
-        pub fn timeout(this: *ThisServer, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn timeout(this: *ThisServer, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(2).slice();
             if (arguments.len < 2 or arguments[0].isEmptyOrUndefinedOrNull()) {
                 return globalObject.throwNotEnoughArguments("timeout", 2, arguments.len);
@@ -710,7 +710,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             try this.config.appendStaticRoute(path, route, method);
         }
 
-        pub fn publish(this: *ThisServer, globalThis: *jsc.JSGlobalObject, topic: ZigString, message_value: JSValue, compress_value: ?JSValue) bun.JSError!JSValue {
+        pub fn publish(this: *ThisServer, globalThis: *jsc.JSGlobalObject, topic: ZigString, message_value: JSValue, compress_value: ?JSValue) fun.JSError!JSValue {
             if (this.config.websocket == null)
                 return JSValue.jsNumber(0);
 
@@ -721,7 +721,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 return globalThis.throw("publish requires a topic string", .{});
             }
 
-            var topic_slice = topic.toSlice(bun.default_allocator);
+            var topic_slice = topic.toSlice(fun.default_allocator);
             defer topic_slice.deinit();
             if (topic_slice.len == 0) {
                 return globalThis.throw("publish requires a non-empty topic", .{});
@@ -742,7 +742,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             {
                 var js_string = try message_value.toJSString(globalThis);
                 const view = js_string.view(globalThis);
-                const slice = view.toSlice(bun.default_allocator);
+                const slice = view.toSlice(fun.default_allocator);
                 defer slice.deinit();
 
                 defer js_string.ensureStillAlive();
@@ -756,9 +756,9 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
         }
 
-        pub fn onUpgrade(this: *ThisServer, globalThis: *jsc.JSGlobalObject, object: jsc.JSValue, optional: ?JSValue) bun.JSError!JSValue {
+        pub fn onUpgrade(this: *ThisServer, globalThis: *jsc.JSGlobalObject, object: jsc.JSValue, optional: ?JSValue) fun.JSError!JSValue {
             if (this.config.websocket == null) {
-                return globalThis.throwInvalidArguments("To enable websocket support, set the \"websocket\" object in Bun.serve({})", .{});
+                return globalThis.throwInvalidArguments("To enable websocket support, set the \"websocket\" object in Fun.serve({})", .{});
             }
 
             if (this.flags.terminated) {
@@ -837,7 +837,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
                             if (fetch_headers_to_use.fastGet(.SecWebSocketProtocol)) |protocol| {
                                 // Clone before fastRemove frees the backing StringImpl.
-                                sec_websocket_protocol_owned = bun.handleOom(protocol.toSliceClone(bun.default_allocator));
+                                sec_websocket_protocol_owned = fun.handleOom(protocol.toSliceClone(fun.default_allocator));
                                 sec_websocket_protocol = sec_websocket_protocol_owned.toZigString();
                                 // Remove from headers so it's not written twice (once here and once by upgrade())
                                 fetch_headers_to_use.fastRemove(.SecWebSocketProtocol);
@@ -845,7 +845,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
                             if (fetch_headers_to_use.fastGet(.SecWebSocketExtensions)) |extensions| {
                                 // Clone before fastRemove frees the backing StringImpl.
-                                sec_websocket_extensions_owned = bun.handleOom(extensions.toSliceClone(bun.default_allocator));
+                                sec_websocket_extensions_owned = fun.handleOom(extensions.toSliceClone(fun.default_allocator));
                                 sec_websocket_extensions = sec_websocket_extensions_owned.toZigString();
                                 // Remove from headers so it's not written twice (once here and once by upgrade())
                                 fetch_headers_to_use.fastRemove(.SecWebSocketExtensions);
@@ -915,15 +915,15 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
             if (request.getFetchHeaders()) |head| {
                 if (head.fastGet(.SecWebSocketKey)) |key| {
-                    sec_websocket_key_owned = bun.handleOom(key.toSliceClone(bun.default_allocator));
+                    sec_websocket_key_owned = fun.handleOom(key.toSliceClone(fun.default_allocator));
                     sec_websocket_key_str = sec_websocket_key_owned.toZigString();
                 }
                 if (head.fastGet(.SecWebSocketProtocol)) |protocol| {
-                    sec_websocket_protocol_owned = bun.handleOom(protocol.toSliceClone(bun.default_allocator));
+                    sec_websocket_protocol_owned = fun.handleOom(protocol.toSliceClone(fun.default_allocator));
                     sec_websocket_protocol = sec_websocket_protocol_owned.toZigString();
                 }
                 if (head.fastGet(.SecWebSocketExtensions)) |extensions| {
-                    sec_websocket_extensions_owned = bun.handleOom(extensions.toSliceClone(bun.default_allocator));
+                    sec_websocket_extensions_owned = fun.handleOom(extensions.toSliceClone(fun.default_allocator));
                     sec_websocket_extensions = sec_websocket_extensions_owned.toZigString();
                 }
             }
@@ -1011,7 +1011,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                         if (fetch_headers_to_use.?.fastGet(.SecWebSocketProtocol)) |protocol| {
                             // Clone before fastRemove frees the backing StringImpl.
                             sec_websocket_protocol_owned.deinit();
-                            sec_websocket_protocol_owned = bun.handleOom(protocol.toSliceClone(bun.default_allocator));
+                            sec_websocket_protocol_owned = fun.handleOom(protocol.toSliceClone(fun.default_allocator));
                             sec_websocket_protocol = sec_websocket_protocol_owned.toZigString();
                             // Remove from headers so it's not written twice (once here and once by upgrade())
                             fetch_headers_to_use.?.fastRemove(.SecWebSocketProtocol);
@@ -1020,7 +1020,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                         if (fetch_headers_to_use.?.fastGet(.SecWebSocketExtensions)) |extensions| {
                             // Clone before fastRemove frees the backing StringImpl.
                             sec_websocket_extensions_owned.deinit();
-                            sec_websocket_extensions_owned = bun.handleOom(extensions.toSliceClone(bun.default_allocator));
+                            sec_websocket_extensions_owned = fun.handleOom(extensions.toSliceClone(fun.default_allocator));
                             sec_websocket_extensions = sec_websocket_extensions_owned.toZigString();
                             // Remove from headers so it's not written twice (once here and once by upgrade())
                             fetch_headers_to_use.?.fastRemove(.SecWebSocketExtensions);
@@ -1068,7 +1068,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
 
             // --- After this point, do not throw an exception
-            // See https://github.com/oven-sh/bun/issues/1339
+            // See https://github.com/underdoc-org/fun/issues/1339
 
             // obviously invalid pointer marks it as used
             upgrader.upgrade_context = @ptrFromInt(std.math.maxInt(usize));
@@ -1082,9 +1082,9 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             const ws = ServerWebSocket.init(&this.config.websocket.?.handler, data_value, signal);
             data_value.ensureStillAlive();
 
-            var sec_websocket_protocol_str = sec_websocket_protocol.toSlice(bun.default_allocator);
+            var sec_websocket_protocol_str = sec_websocket_protocol.toSlice(fun.default_allocator);
             defer sec_websocket_protocol_str.deinit();
-            var sec_websocket_extensions_str = sec_websocket_extensions.toSlice(bun.default_allocator);
+            var sec_websocket_extensions_str = sec_websocket_extensions.toSlice(fun.default_allocator);
             defer sec_websocket_extensions_str.deinit();
 
             resp.clearAborted();
@@ -1151,7 +1151,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
 
             var static_routes = this.config.static_routes;
-            this.config.static_routes = .init(bun.default_allocator);
+            this.config.static_routes = .init(fun.default_allocator);
             for (static_routes.items) |*route| {
                 route.deinit();
             }
@@ -1159,7 +1159,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             this.config.static_routes = new_config.static_routes;
 
             for (this.config.negative_routes.items) |route| {
-                bun.default_allocator.free(route);
+                fun.default_allocator.free(route);
             }
             this.config.negative_routes.clearAndFree();
             this.config.negative_routes = new_config.negative_routes;
@@ -1173,7 +1173,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 for (this.user_routes.items) |*route| {
                     route.deinit();
                 }
-                this.user_routes.clearAndFree(bun.default_allocator);
+                this.user_routes.clearAndFree(fun.default_allocator);
             }
 
             const route_list_value = this.setRoutes();
@@ -1189,7 +1189,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 if (this.vm.debugger) |*debugger| {
                     debugger.http_server_agent.notifyServerRoutesUpdated(
                         AnyServer.from(this),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             }
         }
@@ -1213,13 +1213,13 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             return true;
         }
 
-        pub fn onReload(this: *ThisServer, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn onReload(this: *ThisServer, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments();
             if (arguments.len < 1) {
                 return globalThis.throwNotEnoughArguments("reload", 1, 0);
             }
 
-            var args_slice = jsc.CallFrame.ArgumentsSlice.init(globalThis.bunVM(), arguments);
+            var args_slice = jsc.CallFrame.ArgumentsSlice.init(globalThis.funVM(), arguments);
             defer args_slice.deinit();
 
             var new_config: ServerConfig = .{};
@@ -1238,7 +1238,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             return this.js_value.tryGet() orelse .js_undefined;
         }
 
-        pub fn onFetch(this: *ThisServer, ctx: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn onFetch(this: *ThisServer, ctx: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             jsc.markBinding(@src());
 
             if (this.config.onRequest == .zero) {
@@ -1253,7 +1253,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
             var headers: ?*WebCore.FetchHeaders = null;
             var method = HTTP.Method.GET;
-            var args = jsc.CallFrame.ArgumentsSlice.init(ctx.bunVM(), arguments);
+            var args = jsc.CallFrame.ArgumentsSlice.init(ctx.funVM(), arguments);
             defer args.deinit();
 
             var first_arg = args.nextEat().?;
@@ -1263,7 +1263,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             // TODO: set User-Agent header
             // TODO: unify with fetch() implementation.
             if (first_arg.isString()) {
-                const url_zig_str = try arguments[0].toSlice(ctx, bun.default_allocator);
+                const url_zig_str = try arguments[0].toSlice(ctx, fun.default_allocator);
                 defer url_zig_str.deinit();
                 const temp_url_str = url_zig_str.slice();
 
@@ -1275,19 +1275,19 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 var url = URL.parse(temp_url_str);
 
                 // Both branches produce a heap-owned buffer that `url.href` borrows.
-                // `bun.String.cloneUTF8(url.href)` below makes its own copy, so this
+                // `fun.String.cloneUTF8(url.href)` below makes its own copy, so this
                 // buffer must be freed before we leave the block.
                 const owned_url_buf: []const u8 = if (url.hostname.len == 0)
-                    bun.handleOom(strings.append(this.allocator, this.base_url_string_for_joining, url.pathname))
+                    fun.handleOom(strings.append(this.allocator, this.base_url_string_for_joining, url.pathname))
                 else
-                    bun.handleOom(this.allocator.dupe(u8, temp_url_str));
+                    fun.handleOom(this.allocator.dupe(u8, temp_url_str));
                 defer this.allocator.free(owned_url_buf);
                 url = URL.parse(owned_url_buf);
 
                 if (arguments.len >= 2 and arguments[1].isObject()) {
                     var opts = arguments[1];
                     if (try opts.fastGet(ctx, .method)) |method_| {
-                        var slice_ = try method_.toSlice(ctx, bun.default_allocator);
+                        var slice_ = try method_.toSlice(ctx, fun.default_allocator);
                         defer slice_.deinit();
                         method = HTTP.Method.which(slice_.slice()) orelse method;
                     }
@@ -1310,20 +1310,20 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 }
 
                 existing_request = Request.init2(
-                    bun.String.cloneUTF8(url.href),
+                    fun.String.cloneUTF8(url.href),
                     headers,
-                    bun.handleOom(this.vm.initRequestBodyValue(body)),
+                    fun.handleOom(this.vm.initRequestBodyValue(body)),
                     method,
                 );
             } else if (first_arg.as(Request)) |request_| {
                 try request_.cloneInto(
                     &existing_request,
-                    bun.default_allocator,
+                    fun.default_allocator,
                     ctx,
                     false,
                 );
             } else {
-                const fetch_error = jsc.WebCore.Fetch.fetch_type_error_strings.get(bun.jsc.C.JSValueGetType(ctx, first_arg.asRef()));
+                const fetch_error = jsc.WebCore.Fetch.fetch_type_error_strings.get(fun.jsc.C.JSValueGetType(ctx, first_arg.asRef()));
                 const err = ctx.toTypeError(.INVALID_ARG_TYPE, "{s}", .{fetch_error});
 
                 return JSPromise.dangerouslyCreateRejectedPromiseValueWithoutNotifyingVM(ctx, err);
@@ -1331,7 +1331,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
             var request = Request.new(existing_request);
 
-            bun.assert(this.config.onRequest != .zero); // confirmed above
+            fun.assert(this.config.onRequest != .zero); // confirmed above
             const response_value = this.config.onRequest.call(
                 this.globalThis,
                 this.jsValueAssertAlive(),
@@ -1356,7 +1356,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             return jsc.JSPromise.resolvedPromiseValue(ctx, response_value);
         }
 
-        pub fn closeIdleConnections(this: *ThisServer, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn closeIdleConnections(this: *ThisServer, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             _ = globalObject;
             _ = callframe;
             if (this.app == null) return .js_undefined;
@@ -1404,8 +1404,8 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             return jsc.JSValue.jsNumber(this.config.address.tcp.port);
         }
 
-        pub fn getId(this: *ThisServer, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
-            return bun.String.createUTF8ForJS(globalThis, this.config.id);
+        pub fn getId(this: *ThisServer, globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
+            return fun.String.createUTF8ForJS(globalThis, this.config.id);
         }
 
         pub fn getPendingRequests(this: *ThisServer, _: *jsc.JSGlobalObject) jsc.JSValue {
@@ -1416,10 +1416,10 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             return jsc.JSValue.jsNumber(@as(i32, @intCast(@as(u31, @truncate(this.activeSocketsCount())))));
         }
 
-        pub fn getAddress(this: *ThisServer, globalThis: *JSGlobalObject) bun.JSError!jsc.JSValue {
+        pub fn getAddress(this: *ThisServer, globalThis: *JSGlobalObject) fun.JSError!jsc.JSValue {
             switch (this.config.address) {
                 .unix => |unix| {
-                    var value = bun.String.cloneUTF8(unix);
+                    var value = fun.String.cloneUTF8(unix);
                     defer value.deref();
                     return value.toJS(globalThis);
                 },
@@ -1452,18 +1452,18 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
         }
 
-        pub fn getURLAsString(this: *const ThisServer) bun.OOM!bun.String {
+        pub fn getURLAsString(this: *const ThisServer) fun.OOM!fun.String {
             const fmt = switch (this.config.address) {
                 .unix => |unix| brk: {
                     if (unix.len > 1 and unix[0] == 0) {
                         // abstract domain socket, let's give it an "abstract" URL
-                        break :brk bun.fmt.URLFormatter{
+                        break :brk fun.fmt.URLFormatter{
                             .proto = .abstract,
                             .hostname = unix[1..],
                         };
                     }
 
-                    break :brk bun.fmt.URLFormatter{
+                    break :brk fun.fmt.URLFormatter{
                         .proto = .unix,
                         .hostname = unix,
                     };
@@ -1475,9 +1475,9 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                     } else if (comptime has_h3) if (this.h3_listener) |h3l| {
                         port = @intCast(h3l.getLocalPort());
                     };
-                    break :blk bun.fmt.URLFormatter{
+                    break :blk fun.fmt.URLFormatter{
                         .proto = if (comptime ssl_enabled) .https else .http,
-                        .hostname = if (tcp.hostname) |hostname| bun.sliceTo(@constCast(hostname), 0) else null,
+                        .hostname = if (tcp.hostname) |hostname| fun.sliceTo(@constCast(hostname), 0) else null,
                         .port = port,
                     };
                 },
@@ -1486,10 +1486,10 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             const buf = try std.fmt.allocPrint(default_allocator, "{f}", .{fmt});
             defer default_allocator.free(buf);
 
-            return bun.String.cloneUTF8(buf);
+            return fun.String.cloneUTF8(buf);
         }
 
-        pub fn getURL(this: *ThisServer, globalThis: *JSGlobalObject) bun.OOM!jsc.JSValue {
+        pub fn getURL(this: *ThisServer, globalThis: *JSGlobalObject) fun.OOM!jsc.JSValue {
             var url = try this.getURLAsString();
             defer url.deref();
 
@@ -1507,7 +1507,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
                     if (listener.socket().remoteAddress(buf[0..1024])) |addr| {
                         if (addr.len > 0) {
-                            return bun.String.createUTF8ForJS(globalThis, addr);
+                            return fun.String.createUTF8ForJS(globalThis, addr);
                         }
                     }
                 }
@@ -1515,9 +1515,9 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                     switch (this.config.address) {
                         .tcp => |tcp| {
                             if (tcp.hostname) |hostname| {
-                                return bun.String.createUTF8ForJS(globalThis, bun.sliceTo(hostname, 0));
+                                return fun.String.createUTF8ForJS(globalThis, fun.sliceTo(hostname, 0));
                             } else {
-                                return bun.String.static("localhost").toJS(globalThis);
+                                return fun.String.static("localhost").toJS(globalThis);
                             }
                         },
                         .unix => unreachable,
@@ -1527,9 +1527,9 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             @panic("unreachable");
         }
 
-        pub fn getProtocol(this: *ThisServer, globalThis: *JSGlobalObject) bun.JSError!jsc.JSValue {
+        pub fn getProtocol(this: *ThisServer, globalThis: *JSGlobalObject) fun.JSError!jsc.JSValue {
             _ = this;
-            return bun.String.static(if (ssl_enabled) "https" else "http").toJS(globalThis);
+            return fun.String.static(if (ssl_enabled) "https" else "http").toJS(globalThis);
         }
 
         pub fn getDevelopment(_: *ThisServer, _: *jsc.JSGlobalObject) jsc.JSValue {
@@ -1596,7 +1596,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                     this.js_value == .finalized,
                 });
 
-            const vm = this.globalThis.bunVM();
+            const vm = this.globalThis.funVM();
 
             if (this.pending_requests == 0 and
                 !this.hasListener() and
@@ -1683,7 +1683,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             if (this.config.address == .unix) {
                 const path = this.config.address.unix;
                 if (path.len > 0 and path[0] != 0) {
-                    _ = bun.sys.unlink(path);
+                    _ = fun.sys.unlink(path);
                 }
             }
 
@@ -1703,7 +1703,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 this.js_value.downgrade();
             }
             if (this.config.allow_hot and this.config.id.len > 0) {
-                if (this.globalThis.bunVM().hotMap()) |hot| {
+                if (this.globalThis.funVM().hotMap()) |hot| {
                     hot.remove(this.config.id);
                 }
             }
@@ -1725,12 +1725,12 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 // scheduleDeinit can be called inside a finalizer.
                 // Therefore, we split it into two tasks.
                 this.flags.terminated = true;
-                const task = bun.default_allocator.create(jsc.AnyTask) catch unreachable;
+                const task = fun.default_allocator.create(jsc.AnyTask) catch unreachable;
                 task.* = jsc.AnyTask.New(App, App.close).init(this.app.?);
                 this.vm.enqueueTask(jsc.Task.init(task));
             }
 
-            const task = bun.default_allocator.create(jsc.AnyTask) catch unreachable;
+            const task = fun.default_allocator.create(jsc.AnyTask) catch unreachable;
             task.* = jsc.AnyTask.New(ThisServer, deinit).init(this);
             this.vm.enqueueTask(jsc.Task.init(task));
         }
@@ -1759,7 +1759,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             for (this.user_routes.items) |*user_route| {
                 user_route.deinit();
             }
-            this.user_routes.deinit(bun.default_allocator);
+            this.user_routes.deinit(fun.default_allocator);
 
             this.config.deinit();
 
@@ -1771,7 +1771,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 }
             }
             if (comptime has_h3) if (this.h3_alt_svc.len > 0)
-                bun.default_allocator.free(this.h3_alt_svc);
+                fun.default_allocator.free(this.h3_alt_svc);
             if (this.app) |app| {
                 this.app = null;
                 app.destroy();
@@ -1785,20 +1785,20 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 plugins.deref();
             }
 
-            bun.destroy(this);
+            fun.destroy(this);
         }
 
-        pub fn init(config: *ServerConfig, global: *JSGlobalObject) bun.JSOOM!*ThisServer {
-            const base_url = try bun.default_allocator.dupe(u8, strings.trim(config.base_url.href, "/"));
-            errdefer bun.default_allocator.free(base_url);
+        pub fn init(config: *ServerConfig, global: *JSGlobalObject) fun.JSOOM!*ThisServer {
+            const base_url = try fun.default_allocator.dupe(u8, strings.trim(config.base_url.href, "/"));
+            errdefer fun.default_allocator.free(base_url);
 
             const dev_server = if (config.bake) |*bake_options|
-                try bun.bake.DevServer.init(.{
+                try fun.bake.DevServer.init(.{
                     .arena = bake_options.arena.allocator(),
                     .root = bake_options.root,
                     .framework = bake_options.framework,
                     .bundler_options = bake_options.bundler_options,
-                    .vm = global.bunVM(),
+                    .vm = global.funVM(),
                     .broadcast_console_log_from_browser_to_server = config.broadcast_console_log_from_browser_to_server_for_bake,
                 })
             else
@@ -1810,15 +1810,15 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 .config = config.*,
                 .base_url_string_for_joining = base_url,
                 .vm = jsc.VirtualMachine.get(),
-                .allocator = bun.default_allocator,
+                .allocator = fun.default_allocator,
                 .dev_server = dev_server,
             });
 
             if (RequestContext.pool == null) {
-                RequestContext.pool = bun.create(
+                RequestContext.pool = fun.create(
                     server.allocator,
                     RequestContext.RequestContextStackAllocator,
-                    RequestContext.RequestContextStackAllocator.init(bun.typedAllocator(RequestContext)),
+                    RequestContext.RequestContextStackAllocator.init(fun.typedAllocator(RequestContext)),
                 );
             }
 
@@ -1826,10 +1826,10 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
             if (comptime has_h3) {
                 if (H3RequestContext.pool == null) {
-                    H3RequestContext.pool = bun.create(
+                    H3RequestContext.pool = fun.create(
                         server.allocator,
                         H3RequestContext.RequestContextStackAllocator,
-                        H3RequestContext.RequestContextStackAllocator.init(bun.typedAllocator(H3RequestContext)),
+                        H3RequestContext.RequestContextStackAllocator.init(fun.typedAllocator(H3RequestContext)),
                     );
                 }
                 server.h3_request_pool_allocator = H3RequestContext.pool.?;
@@ -1912,33 +1912,33 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                             if (comptime Environment.isLinux) {
                                 const rc: i32 = -1;
                                 const code = Sys.getErrno(rc);
-                                if (code == bun.sys.E.ACCES) {
+                                if (code == fun.sys.E.ACCES) {
                                     error_instance = (jsc.SystemError{
-                                        .message = bun.String.init(std.fmt.bufPrint(&output_buf, "permission denied {s}:{d}", .{ tcp.hostname orelse "0.0.0.0", tcp.port }) catch "Failed to start server"),
-                                        .code = bun.String.static("EACCES"),
-                                        .syscall = bun.String.static("listen"),
+                                        .message = fun.String.init(std.fmt.bufPrint(&output_buf, "permission denied {s}:{d}", .{ tcp.hostname orelse "0.0.0.0", tcp.port }) catch "Failed to start server"),
+                                        .code = fun.String.static("EACCES"),
+                                        .syscall = fun.String.static("listen"),
                                     }).toErrorInstance(globalThis);
                                     break :error_set;
                                 }
                             }
                             error_instance = (jsc.SystemError{
-                                .message = bun.String.init(std.fmt.bufPrint(&output_buf, "Failed to start server. Is port {d} in use?", .{tcp.port}) catch "Failed to start server"),
-                                .code = bun.String.static("EADDRINUSE"),
-                                .syscall = bun.String.static("listen"),
+                                .message = fun.String.init(std.fmt.bufPrint(&output_buf, "Failed to start server. Is port {d} in use?", .{tcp.port}) catch "Failed to start server"),
+                                .code = fun.String.static("EADDRINUSE"),
+                                .syscall = fun.String.static("listen"),
                             }).toErrorInstance(globalThis);
                         }
                     },
                     .unix => |unix| {
-                        switch (bun.sys.getErrno(@as(i32, -1))) {
+                        switch (fun.sys.getErrno(@as(i32, -1))) {
                             .SUCCESS => {
                                 error_instance = (jsc.SystemError{
-                                    .message = bun.String.init(std.fmt.bufPrint(&output_buf, "Failed to listen on unix socket {f}", .{bun.fmt.QuotedFormatter{ .text = unix }}) catch "Failed to start server"),
-                                    .code = bun.String.static("EADDRINUSE"),
-                                    .syscall = bun.String.static("listen"),
+                                    .message = fun.String.init(std.fmt.bufPrint(&output_buf, "Failed to listen on unix socket {f}", .{fun.fmt.QuotedFormatter{ .text = unix }}) catch "Failed to start server"),
+                                    .code = fun.String.static("EADDRINUSE"),
+                                    .syscall = fun.String.static("listen"),
                                 }).toErrorInstance(globalThis);
                             },
                             else => |e| {
-                                var sys_err = bun.sys.Error.fromCode(e, .listen);
+                                var sys_err = fun.sys.Error.fromCode(e, .listen);
                                 sys_err.path = unix;
                                 error_instance = sys_err.toJS(globalThis) catch return;
                             },
@@ -1972,7 +1972,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             this.h3_listener = socket;
             if (socket) |s| {
                 this.h3_alt_svc = std.fmt.allocPrintSentinel(
-                    bun.default_allocator,
+                    fun.default_allocator,
                     "h3=\":{d}\"; ma=86400",
                     .{s.getLocalPort()},
                     0,
@@ -2009,21 +2009,21 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             this.poll_ref.unref(this.vm);
         }
 
-        pub fn doRef(this: *ThisServer, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn doRef(this: *ThisServer, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const this_value = callframe.this();
             this.ref();
 
             return this_value;
         }
 
-        pub fn doUnref(this: *ThisServer, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn doUnref(this: *ThisServer, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const this_value = callframe.this();
             this.unref();
 
             return this_value;
         }
 
-        pub fn onBunInfoRequest(this: *ThisServer, req: *uws.Request, resp: *App.Response) void {
+        pub fn onFunInfoRequest(this: *ThisServer, req: *uws.Request, resp: *App.Response) void {
             jsc.markBinding(@src());
             this.pending_requests += 1;
             defer this.pending_requests -= 1;
@@ -2038,7 +2038,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             _ = js_printer.printJSON(
                 *js_printer.BufferPrinter,
                 &writer,
-                bun.Global.BunInfo.generate(*Transpiler, &jsc.VirtualMachine.get().transpiler, allocator) catch unreachable,
+                fun.Global.FunInfo.generate(*Transpiler, &jsc.VirtualMachine.get().transpiler, allocator) catch unreachable,
                 source,
                 .{ .mangled_props = null },
             ) catch unreachable;
@@ -2082,12 +2082,12 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 }
             }
 
-            const result: JSValue = bun.jsc.fromJSHostCall(globalThis, @src(), onNodeHTTPRequestFn, .{
+            const result: JSValue = fun.jsc.fromJSHostCall(globalThis, @src(), onNodeHTTPRequestFn, .{
                 @intFromPtr(AnyServer.from(this).ptr.ptr()),
                 globalThis,
                 thisObject,
                 this.config.onNodeHTTPRequest,
-                if (bun.http.Method.find(req.method())) |method|
+                if (fun.http.Method.find(req.method())) |method|
                     method.toJS(globalThis)
                 else
                     .js_undefined,
@@ -2150,7 +2150,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
                                 node_response.promise = strong_promise;
                                 strong_promise = .empty;
-                                result.then2(globalThis, strong_self, NodeHTTPResponse.Bun__NodeHTTPRequest__onResolve, NodeHTTPResponse.Bun__NodeHTTPRequest__onReject) catch {}; // TODO: properly propagate exception upwards
+                                result.then2(globalThis, strong_self, NodeHTTPResponse.Fun__NodeHTTPRequest__onResolve, NodeHTTPResponse.Fun__NodeHTTPRequest__onReject) catch {}; // TODO: properly propagate exception upwards
                                 is_async = true;
                             }
 
@@ -2216,9 +2216,9 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
         var did_send_idletimeout_warning_once = false;
         fn onTimeoutForIdleWarn(_: *anyopaque, _: ?*anyopaque) void {
             if (debug_mode and !did_send_idletimeout_warning_once) {
-                if (!bun.cli.Command.get().debug.silent) {
+                if (!fun.cli.Command.get().debug.silent) {
                     did_send_idletimeout_warning_once = true;
-                    Output.prettyErrorln("<r><yellow>[Bun.serve]<r><d>:<r> request timed out after 10 seconds. Pass <d><cyan>`idleTimeout`<r> to configure.", .{});
+                    Output.prettyErrorln("<r><yellow>[Fun.serve]<r><d>:<r> request timed out after 10 seconds. Pass <d><cyan>`idleTimeout`<r> to configure.", .{});
                     Output.flush();
                 }
             }
@@ -2226,7 +2226,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
         fn shouldAddTimeoutHandlerForWarning(server: *ThisServer) bool {
             if (comptime debug_mode) {
-                if (!did_send_idletimeout_warning_once and !bun.cli.Command.get().debug.silent) {
+                if (!did_send_idletimeout_warning_once and !fun.cli.Command.get().debug.silent) {
                     return !server.config.has_idleTimeout;
                 }
             }
@@ -2249,8 +2249,8 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }) orelse return;
 
             const server_request_list = js.routeListGetCached(server.jsValueAssertAlive()).?;
-            const callRoute = if (Ctx.is_h3) Bun__ServerRouteList__callRouteH3 else Bun__ServerRouteList__callRoute;
-            const response_value = bun.jsc.fromJSHostCall(server.globalThis, @src(), callRoute, .{ server.globalThis, index, prepared.request_object, server.jsValueAssertAlive(), server_request_list, &prepared.js_request, req }) catch |err| server.globalThis.takeException(err);
+            const callRoute = if (Ctx.is_h3) Fun__ServerRouteList__callRouteH3 else Fun__ServerRouteList__callRoute;
+            const response_value = fun.jsc.fromJSHostCall(server.globalThis, @src(), callRoute, .{ server.globalThis, index, prepared.request_object, server.jsValueAssertAlive(), server_request_list, &prepared.js_request, req }) catch |err| server.globalThis.takeException(err);
 
             server.handleRequestFor(Ctx, &should_deinit_context, prepared, req, response_value);
         }
@@ -2296,7 +2296,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             var should_deinit_context = false;
             const prepared = this.prepareJsRequestContextFor(Ctx, req, resp, &should_deinit_context, .yes, null) orelse return;
 
-            bun.assert(this.config.onRequest != .zero);
+            fun.assert(this.config.onRequest != .zero);
 
             const js_value = this.jsValueAssertAlive();
             const response_value = this.config.onRequest.call(
@@ -2327,7 +2327,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             };
             const ctx = prepared.ctx;
 
-            bun.assert(callback != .zero);
+            fun.assert(callback != .zero);
             const args = .{prepared.js_request} ++ extra_args;
             const response_value = callback.call(
                 this.globalThis,
@@ -2407,7 +2407,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             resp: *App.Response,
             should_deinit_context: ?*bool,
             create_js_request: CreateJsRequest,
-            method: ?bun.http.Method,
+            method: ?fun.http.Method,
         ) ?PreparedRequest {
             return this.prepareJsRequestContextFor(RequestContext, req, resp, should_deinit_context, create_js_request, method);
         }
@@ -2419,7 +2419,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             resp: *Ctx.Resp,
             should_deinit_context: ?*bool,
             create_js_request: CreateJsRequest,
-            method: ?bun.http.Method,
+            method: ?fun.http.Method,
         ) ?PreparedRequestFor(Ctx) {
             jsc.markBinding(@src());
 
@@ -2485,7 +2485,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
 
             const pool_allocator = if (comptime Ctx.is_h3) this.h3_request_pool_allocator else this.request_pool_allocator;
-            const ctx = bun.handleOom(pool_allocator.tryGet());
+            const ctx = fun.handleOom(pool_allocator.tryGet());
             ctx.create(this, req, resp, should_deinit_context, method);
             this.vm.jsc_vm.reportExtraMemory(@sizeOf(Ctx));
             const body = this.vm.initRequestBodyValue(.{ .Null = {} }) catch unreachable;
@@ -2513,13 +2513,13 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 const path = req.url();
                 if (path.len > 0 and path[0] == '/') {
                     if (req.header("host")) |host| {
-                        const fmt = bun.fmt.HostFormatter{ .is_https = true, .host = host };
-                        request_object.url = bun.handleOom(bun.String.createFormat("https://{f}{s}", .{ fmt, path }));
+                        const fmt = fun.fmt.HostFormatter{ .is_https = true, .host = host };
+                        request_object.url = fun.handleOom(fun.String.createFormat("https://{f}{s}", .{ fmt, path }));
                     } else {
-                        request_object.url = bun.String.cloneUTF8(path);
+                        request_object.url = fun.String.cloneUTF8(path);
                     }
                 } else {
-                    request_object.url = bun.String.cloneUTF8(path);
+                    request_object.url = fun.String.cloneUTF8(path);
                 }
                 ctx.req = null;
             }
@@ -2565,7 +2565,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 .js_request = switch (create_js_request) {
                     .yes => request_object.toJS(this.globalThis),
                     .bake => request_object.toJSForBake(this.globalThis) catch |err| switch (err) {
-                        error.OutOfMemory => bun.outOfMemory(),
+                        error.OutOfMemory => fun.outOfMemory(),
                         else => return null,
                     },
                     .no => .zero,
@@ -2575,7 +2575,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             };
         }
 
-        fn upgradeWebSocketUserRoute(this: *UserRoute, resp: *App.Response, req: *uws.Request, upgrade_ctx: *uws.WebSocketUpgradeContext, method: ?bun.http.Method) void {
+        fn upgradeWebSocketUserRoute(this: *UserRoute, resp: *App.Response, req: *uws.Request, upgrade_ctx: *uws.WebSocketUpgradeContext, method: ?fun.http.Method) void {
             const server = this.server;
             const index = this.id;
 
@@ -2583,7 +2583,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             var prepared = server.prepareJsRequestContext(req, resp, &should_deinit_context, .no, method) orelse return;
             prepared.ctx.upgrade_context = upgrade_ctx; // set the upgrade context
             const server_request_list = js.routeListGetCached(server.jsValueAssertAlive()).?;
-            const response_value = bun.jsc.fromJSHostCall(server.globalThis, @src(), Bun__ServerRouteList__callRoute, .{ server.globalThis, index, prepared.request_object, server.jsValueAssertAlive(), server_request_list, &prepared.js_request, req }) catch |err| server.globalThis.takeException(err);
+            const response_value = fun.jsc.fromJSHostCall(server.globalThis, @src(), Fun__ServerRouteList__callRoute, .{ server.globalThis, index, prepared.request_object, server.jsValueAssertAlive(), server_request_list, &prepared.js_request, req }) catch |err| server.globalThis.takeException(err);
 
             server.handleRequest(&should_deinit_context, prepared, req, response_value);
         }
@@ -2596,7 +2596,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 return;
             }
             // Access `this` as *ThisServer only if id is 0
-            bun.assert(id == 0);
+            fun.assert(id == 0);
             if (this.config.onNodeHTTPRequest != .zero) {
                 onNodeHTTPRequestWithUpgradeCtx(this, req, resp, upgrade_ctx);
                 return;
@@ -2610,7 +2610,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
             this.pending_requests += 1;
             req.setYield(false);
-            var ctx = bun.handleOom(this.request_pool_allocator.tryGet());
+            var ctx = fun.handleOom(this.request_pool_allocator.tryGet());
             var should_deinit_context = false;
             ctx.create(this, req, resp, &should_deinit_context, null);
             var body = this.vm.initRequestBodyValue(.{ .Null = {} }) catch unreachable;
@@ -2700,25 +2700,25 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
             // So we first use a hash of the main field:
             const first_hash_segment: [8]u8 = brk: {
-                const buffer = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(buffer);
+                const buffer = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(buffer);
                 const main = jsc.VirtualMachine.get().main;
                 const len = @min(main.len, buffer.len);
-                break :brk @bitCast(bun.hash(bun.strings.copyLowercase(main[0..len], buffer[0..len])));
+                break :brk @bitCast(fun.hash(fun.strings.copyLowercase(main[0..len], buffer[0..len])));
             };
 
             // And then we use a hash of their project root directory:
             const second_hash_segment: [8]u8 = brk: {
-                const buffer = bun.path_buffer_pool.get();
-                defer bun.path_buffer_pool.put(buffer);
+                const buffer = fun.path_buffer_pool.get();
+                defer fun.path_buffer_pool.put(buffer);
                 const root = this.dev_server.?.root;
                 const len = @min(root.len, buffer.len);
-                break :brk @bitCast(bun.hash(bun.strings.copyLowercase(root[0..len], buffer[0..len])));
+                break :brk @bitCast(fun.hash(fun.strings.copyLowercase(root[0..len], buffer[0..len])));
             };
 
             // We combine it together to get a 16 byte uuid.
             const hash_bytes: [16]u8 = first_hash_segment ++ second_hash_segment;
-            const uuid = bun.UUID.initWith(&hash_bytes);
+            const uuid = fun.UUID.initWith(&hash_bytes);
 
             // interface DevToolsJSON {
             //   workspace?: {
@@ -2726,11 +2726,11 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             //     uuid: string,
             //   }
             // }
-            const json_string = std.fmt.allocPrint(bun.default_allocator, "{{ \"workspace\": {{ \"root\": {f}, \"uuid\": \"{f}\" }} }}", .{
-                bun.fmt.formatJSONStringUTF8(this.dev_server.?.root, .{}),
+            const json_string = std.fmt.allocPrint(fun.default_allocator, "{{ \"workspace\": {{ \"root\": {f}, \"uuid\": \"{f}\" }} }}", .{
+                fun.fmt.formatJSONStringUTF8(this.dev_server.?.root, .{}),
                 uuid,
-            }) catch |err| bun.handleOom(err);
-            defer bun.default_allocator.free(json_string);
+            }) catch |err| fun.handleOom(err);
+            defer fun.default_allocator.free(json_string);
 
             resp.writeStatus("200 OK");
             resp.writeHeader("Content-Type", "application/json");
@@ -2756,13 +2756,13 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                 var old_user_routes = this.user_routes;
                 defer {
                     for (old_user_routes.items) |*r| r.route.deinit();
-                    old_user_routes.deinit(bun.default_allocator);
+                    old_user_routes.deinit(fun.default_allocator);
                 }
-                this.user_routes = std.ArrayListUnmanaged(UserRoute).initCapacity(bun.default_allocator, user_routes_to_build_list.items.len) catch @panic("OOM");
-                const paths_zig = bun.default_allocator.alloc(ZigString, user_routes_to_build_list.items.len) catch @panic("OOM");
-                defer bun.default_allocator.free(paths_zig);
-                const callbacks_js = bun.default_allocator.alloc(jsc.JSValue, user_routes_to_build_list.items.len) catch @panic("OOM");
-                defer bun.default_allocator.free(callbacks_js);
+                this.user_routes = std.ArrayListUnmanaged(UserRoute).initCapacity(fun.default_allocator, user_routes_to_build_list.items.len) catch @panic("OOM");
+                const paths_zig = fun.default_allocator.alloc(ZigString, user_routes_to_build_list.items.len) catch @panic("OOM");
+                defer fun.default_allocator.free(paths_zig);
+                const callbacks_js = fun.default_allocator.alloc(jsc.JSValue, user_routes_to_build_list.items.len) catch @panic("OOM");
+                defer fun.default_allocator.free(callbacks_js);
 
                 for (user_routes_to_build_list.items, paths_zig, callbacks_js, 0..) |*builder, *p_zig, *cb_js, i| {
                     p_zig.* = ZigString.init(builder.route.path);
@@ -2774,9 +2774,9 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                     });
                     builder.route = .{}; // Mark as moved
                 }
-                route_list_value = Bun__ServerRouteList__create(this.globalThis, callbacks_js.ptr, paths_zig.ptr, user_routes_to_build_list.items.len);
+                route_list_value = Fun__ServerRouteList__create(this.globalThis, callbacks_js.ptr, paths_zig.ptr, user_routes_to_build_list.items.len);
                 for (user_routes_to_build_list.items) |*builder| builder.deinit();
-                user_routes_to_build_list.deinit(bun.default_allocator);
+                user_routes_to_build_list.deinit(fun.default_allocator);
             }
 
             // --- 2. Setup WebSocket handler's app reference ---
@@ -2787,7 +2787,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
 
             // --- 3. Register compiled user routes (this.user_routes) & Track "/*" Coverage ---
-            var star_methods_covered_by_user = bun.http.Method.Set.initEmpty();
+            var star_methods_covered_by_user = fun.http.Method.Set.initEmpty();
             var has_any_user_route_for_star_path = false; // True if "/*" path appears in user_routes at all
             var has_any_ws_route_for_star_path = false;
 
@@ -2903,7 +2903,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                             if (comptime has_h3) if (this.h3_app) |h3_app|
                                 ServerConfig.applyStaticRouteH3(any_server, h3_app, *HTMLBundle.Route, html_bundle_route.data, entry.path, entry.method);
                             if (dev_server) |dev| {
-                                bun.handleOom(dev.html_router.put(dev.allocator(), entry.path, html_bundle_route.data));
+                                fun.handleOom(dev.html_router.put(dev.allocator(), entry.path, html_bundle_route.data));
                             }
                             needs_plugins = true;
                         },
@@ -2923,7 +2923,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
 
             // --- 7. Debug mode specific routes ---
             if (debug_mode) {
-                app.get("/bun:info", *ThisServer, this, onBunInfoRequest);
+                app.get("/fun:info", *ThisServer, this, onFunInfoRequest);
             }
 
             // Snapshot "/*" coverage from user/static routes before DevServer
@@ -2936,7 +2936,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             var has_dev_server_for_star_path = false;
             if (dev_server) |dev| {
                 // dev.setRoutes might register its own "/*" HTTP handler
-                has_dev_server_for_star_path = bun.handleOom(dev.setRoutes(this));
+                has_dev_server_for_star_path = fun.handleOom(dev.setRoutes(this));
                 if (has_dev_server_for_star_path) {
                     // Assume dev server "/*" covers all methods if it exists
                     star_methods_covered_by_user = .initFull();
@@ -2956,7 +2956,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             }
 
             // --- 9. Consolidated "/*" HTTP Fallback Registration ---
-            if (star_methods_covered_by_user.eql(bun.http.Method.Set.initFull())) {
+            if (star_methods_covered_by_user.eql(fun.http.Method.Set.initFull())) {
                 // User/Static/Dev has already provided a "/*" handler for ALL methods.
                 // No further global "/*" HTTP fallback needed.
             } else if (has_any_user_route_for_star_path or has_static_route_for_star_path or has_dev_server_for_star_path) {
@@ -2991,7 +2991,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             // for method-specific "/*" routes fill the complement per method.
             if (comptime has_h3) {
                 if (this.h3_app) |h3_app| {
-                    if (h3_star_covered.eql(bun.http.Method.Set.initFull())) {
+                    if (h3_star_covered.eql(fun.http.Method.Set.initFull())) {
                         // user/static "/*" already covers every method
                     } else if (has_any_user_route_for_star_path or has_static_route_for_star_path) {
                         var uncovered = h3_star_covered;
@@ -3042,7 +3042,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
             const globalThis = this.globalThis;
             var route_list_value = jsc.JSValue.zero;
             if (ssl_enabled) {
-                bun.BoringSSL.load();
+                fun.BoringSSL.load();
                 const ssl_config = this.config.ssl_config orelse @panic("Assertion failure: ssl_config");
                 const ssl_options = ssl_config.asUSockets();
 
@@ -3163,7 +3163,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                     var host_buff: [1024:0]u8 = undefined;
 
                     if (tcp.hostname) |existing| {
-                        const hostname = bun.span(existing);
+                        const hostname = fun.span(existing);
 
                         if (hostname.len > 2 and hostname[0] == '[') {
                             // remove "[" and "]" from hostname
@@ -3207,7 +3207,7 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
                         // QUIC over AF_UNIX is non-standard and Alt-Svc can't
                         // advertise it. Drop the H3 listener rather than wire
                         // an exotic transport nobody can reach.
-                        bun.Output.warn("http3: true with a unix socket — HTTP/3 listener skipped", .{});
+                        fun.Output.warn("http3: true with a unix socket — HTTP/3 listener skipped", .{});
                         h3a.destroy();
                         this.h3_app = null;
                     };
@@ -3241,12 +3241,12 @@ pub fn NewServer(protocol_enum: enum { http, https }, development_kind: enum { d
         pub fn onClientErrorCallback(this: *ThisServer, socket: *uws.Socket, error_code: u8, raw_packet: []const u8) void {
             if (this.on_clienterror.get()) |callback| {
                 const is_ssl = protocol_enum == .https;
-                const node_socket = bun.jsc.fromJSHostCall(this.globalThis, @src(), Bun__createNodeHTTPServerSocketForClientError, .{ is_ssl, socket, this.globalThis }) catch return;
+                const node_socket = fun.jsc.fromJSHostCall(this.globalThis, @src(), Fun__createNodeHTTPServerSocketForClientError, .{ is_ssl, socket, this.globalThis }) catch return;
                 if (node_socket.isUndefinedOrNull()) return;
 
                 const error_code_value = JSValue.jsNumber(error_code);
                 const raw_packet_value = jsc.ArrayBuffer.createBuffer(this.globalThis, raw_packet) catch return; // TODO: properly propagate exception upwards
-                const loop = this.globalThis.bunVM().eventLoop();
+                const loop = this.globalThis.funVM().eventLoop();
                 loop.enter();
                 defer loop.exit();
                 _ = callback.call(this.globalThis, .js_undefined, &.{ JSValue.jsBoolean(is_ssl), node_socket, error_code_value, raw_packet_value }) catch |err| {
@@ -3283,7 +3283,7 @@ pub const SavedRequest = struct {
         /// deferred (e.g., async operations, waiting for framework initialization).
         /// Contains strong references to JavaScript objects and all context needed
         /// to complete the request later.
-        saved: bun.jsc.API.SavedRequest,
+        saved: fun.jsc.API.SavedRequest,
     };
 };
 
@@ -3292,14 +3292,14 @@ pub const ServerAllConnectionsClosedTask = struct {
     promise: jsc.JSPromise.Strong,
     tracker: jsc.Debugger.AsyncTaskTracker,
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn schedule(this: ServerAllConnectionsClosedTask, vm: *VirtualMachine) void {
         const ptr = new(this);
         vm.eventLoop().enqueueTask(jsc.Task.init(ptr));
     }
 
-    pub fn runFromJSThread(this: *ServerAllConnectionsClosedTask, vm: *jsc.VirtualMachine) bun.JSTerminated!void {
+    pub fn runFromJSThread(this: *ServerAllConnectionsClosedTask, vm: *jsc.VirtualMachine) fun.JSTerminated!void {
         httplog("ServerAllConnectionsClosedTask runFromJSThread", .{});
 
         const globalObject = this.globalObject;
@@ -3309,7 +3309,7 @@ pub const ServerAllConnectionsClosedTask = struct {
 
         var promise = this.promise;
         defer promise.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
 
         if (!vm.isShuttingDown()) {
             try promise.resolve(globalObject, .js_undefined);
@@ -3324,7 +3324,7 @@ pub const DebugHTTPSServer = NewServer(.https, .debug);
 pub const AnyServer = struct {
     ptr: Ptr,
 
-    pub const Ptr = bun.TaggedPointerUnion(.{
+    pub const Ptr = fun.TaggedPointerUnion(.{
         HTTPServer,
         HTTPSServer,
         DebugHTTPServer,
@@ -3344,17 +3344,17 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => .{ .HTTPSServer = this.ptr.as(HTTPSServer).user_routes.items },
             Ptr.case(DebugHTTPServer) => .{ .DebugHTTPServer = this.ptr.as(DebugHTTPServer).user_routes.items },
             Ptr.case(DebugHTTPSServer) => .{ .DebugHTTPSServer = this.ptr.as(DebugHTTPSServer).user_routes.items },
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
-    pub fn getURLAsString(this: AnyServer) bun.OOM!bun.String {
+    pub fn getURLAsString(this: AnyServer) fun.OOM!fun.String {
         return switch (this.ptr.tag()) {
             Ptr.case(HTTPServer) => this.ptr.as(HTTPServer).getURLAsString(),
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).getURLAsString(),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).getURLAsString(),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).getURLAsString(),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
     pub fn vm(this: AnyServer) *jsc.VirtualMachine {
@@ -3363,7 +3363,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).vm,
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).vm,
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).vm,
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
     /// Cached `h3=":<port>"; ma=86400` for Alt-Svc on H1/H2 responses, or
@@ -3403,7 +3403,7 @@ pub const AnyServer = struct {
                     dev_server.inspector_server_id = id;
                 }
             },
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         }
     }
 
@@ -3413,7 +3413,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).inspector_server_id,
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).inspector_server_id,
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).inspector_server_id,
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3423,7 +3423,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).plugins,
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).plugins,
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).plugins,
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3433,17 +3433,17 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).getPlugins(),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).getPlugins(),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).getPlugins(),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
-    pub fn loadAndResolvePlugins(this: AnyServer, bundle: *HTMLBundle.HTMLBundleRoute, raw_plugins: []const []const u8, bunfig_path: []const u8) void {
+    pub fn loadAndResolvePlugins(this: AnyServer, bundle: *HTMLBundle.HTMLBundleRoute, raw_plugins: []const []const u8, funfig_path: []const u8) void {
         return switch (this.ptr.tag()) {
-            Ptr.case(HTTPServer) => this.ptr.as(HTTPServer).getPluginsAsync(bundle, raw_plugins, bunfig_path),
-            Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).getPluginsAsync(bundle, raw_plugins, bunfig_path),
-            Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).getPluginsAsync(bundle, raw_plugins, bunfig_path),
-            Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).getPluginsAsync(bundle, raw_plugins, bunfig_path),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            Ptr.case(HTTPServer) => this.ptr.as(HTTPServer).getPluginsAsync(bundle, raw_plugins, funfig_path),
+            Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).getPluginsAsync(bundle, raw_plugins, funfig_path),
+            Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).getPluginsAsync(bundle, raw_plugins, funfig_path),
+            Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).getPluginsAsync(bundle, raw_plugins, funfig_path),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3457,7 +3457,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => server.ptr.as(HTTPSServer).getOrLoadPlugins(callback),
             Ptr.case(DebugHTTPServer) => server.ptr.as(DebugHTTPServer).getOrLoadPlugins(callback),
             Ptr.case(DebugHTTPSServer) => server.ptr.as(DebugHTTPSServer).getOrLoadPlugins(callback),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3467,7 +3467,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).reloadStaticRoutes(),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).reloadStaticRoutes(),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).reloadStaticRoutes(),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3477,7 +3477,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).appendStaticRoute(path, route, method),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).appendStaticRoute(path, route, method),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).appendStaticRoute(path, route, method),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3487,7 +3487,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).globalThis,
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).globalThis,
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).globalThis,
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3497,7 +3497,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => &this.ptr.as(HTTPSServer).config,
             Ptr.case(DebugHTTPServer) => &this.ptr.as(DebugHTTPServer).config,
             Ptr.case(DebugHTTPSServer) => &this.ptr.as(DebugHTTPSServer).config,
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3507,7 +3507,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => &this.ptr.as(HTTPSServer).config,
             Ptr.case(DebugHTTPServer) => &this.ptr.as(DebugHTTPServer).config,
             Ptr.case(DebugHTTPSServer) => &this.ptr.as(DebugHTTPSServer).config,
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
         if (server_config.websocket == null) return null;
         return &server_config.websocket.?.handler;
@@ -3516,14 +3516,14 @@ pub const AnyServer = struct {
     pub fn onRequest(
         this: AnyServer,
         req: *uws.Request,
-        resp: bun.uws.AnyResponse,
+        resp: fun.uws.AnyResponse,
     ) void {
         return switch (this.ptr.tag()) {
             Ptr.case(HTTPServer) => this.ptr.as(HTTPServer).onRequest(req, resp.assertNoSSL()),
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).onRequest(req, resp.assertSSL()),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).onRequest(req, resp.assertNoSSL()),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).onRequest(req, resp.assertSSL()),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3537,7 +3537,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).onPendingRequest(),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).onPendingRequest(),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).onPendingRequest(),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         }
     }
 
@@ -3547,7 +3547,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).onRequestComplete(),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).onRequestComplete(),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).onRequestComplete(),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         }
     }
 
@@ -3557,7 +3557,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).onStaticRequestComplete(),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).onStaticRequestComplete(),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).onStaticRequestComplete(),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         }
     }
 
@@ -3567,7 +3567,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).app.?.publish(topic, message, opcode, compress),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).app.?.publish(topic, message, opcode, compress),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).app.?.publish(topic, message, opcode, compress),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3584,7 +3584,7 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).onSavedRequest(req, resp.SSL, callback, extra_arg_count, extra_args),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).onSavedRequest(req, resp.TCP, callback, extra_arg_count, extra_args),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).onSavedRequest(req, resp.SSL, callback, extra_arg_count, extra_args),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
@@ -3593,14 +3593,14 @@ pub const AnyServer = struct {
         req: *uws.Request,
         resp: uws.AnyResponse,
         global: *jsc.JSGlobalObject,
-        method: ?bun.http.Method,
-    ) bun.JSError!?SavedRequest {
+        method: ?fun.http.Method,
+    ) fun.JSError!?SavedRequest {
         return switch (server.ptr.tag()) {
             Ptr.case(HTTPServer) => (server.ptr.as(HTTPServer).prepareJsRequestContext(req, resp.TCP, null, .bake, method) orelse return null).save(global, req, resp.TCP),
             Ptr.case(HTTPSServer) => (server.ptr.as(HTTPSServer).prepareJsRequestContext(req, resp.SSL, null, .bake, method) orelse return null).save(global, req, resp.SSL),
             Ptr.case(DebugHTTPServer) => (server.ptr.as(DebugHTTPServer).prepareJsRequestContext(req, resp.TCP, null, .bake, method) orelse return null).save(global, req, resp.TCP),
             Ptr.case(DebugHTTPSServer) => (server.ptr.as(DebugHTTPSServer).prepareJsRequestContext(req, resp.SSL, null, .bake, method) orelse return null).save(global, req, resp.SSL),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
     pub fn numSubscribers(this: AnyServer, topic: []const u8) u32 {
@@ -3609,17 +3609,17 @@ pub const AnyServer = struct {
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).app.?.numSubscribers(topic),
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).app.?.numSubscribers(topic),
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).app.?.numSubscribers(topic),
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 
-    pub fn devServer(this: AnyServer) ?*bun.bake.DevServer {
+    pub fn devServer(this: AnyServer) ?*fun.bake.DevServer {
         return switch (this.ptr.tag()) {
             Ptr.case(HTTPServer) => this.ptr.as(HTTPServer).dev_server,
             Ptr.case(HTTPSServer) => this.ptr.as(HTTPSServer).dev_server,
             Ptr.case(DebugHTTPServer) => this.ptr.as(DebugHTTPServer).dev_server,
             Ptr.case(DebugHTTPSServer) => this.ptr.as(DebugHTTPSServer).dev_server,
-            else => bun.unreachablePanic("Invalid pointer tag", .{}),
+            else => fun.unreachablePanic("Invalid pointer tag", .{}),
         };
     }
 };
@@ -3634,7 +3634,7 @@ pub export fn Server__setIdleTimeout(server: jsc.JSValue, seconds: jsc.JSValue, 
     };
 }
 
-pub fn Server__setIdleTimeout_(server: jsc.JSValue, seconds: jsc.JSValue, globalThis: *jsc.JSGlobalObject) bun.JSError!void {
+pub fn Server__setIdleTimeout_(server: jsc.JSValue, seconds: jsc.JSValue, globalThis: *jsc.JSGlobalObject) fun.JSError!void {
     if (!server.isObject()) {
         return globalThis.throw("Failed to set timeout: The 'this' value is not a Server.", .{});
     }
@@ -3656,7 +3656,7 @@ pub fn Server__setIdleTimeout_(server: jsc.JSValue, seconds: jsc.JSValue, global
     }
 }
 
-pub fn Server__setOnClientError_(globalThis: *jsc.JSGlobalObject, server: jsc.JSValue, callback: jsc.JSValue) bun.JSError!jsc.JSValue {
+pub fn Server__setOnClientError_(globalThis: *jsc.JSGlobalObject, server: jsc.JSValue, callback: jsc.JSValue) fun.JSError!jsc.JSValue {
     if (!server.isObject()) {
         return globalThis.throw("Failed to set clientError: The 'this' value is not a Server.", .{});
     }
@@ -3690,12 +3690,12 @@ pub fn Server__setOnClientError_(globalThis: *jsc.JSGlobalObject, server: jsc.JS
             app.onClientError(*DebugHTTPSServer, this, DebugHTTPSServer.onClientErrorCallback);
         }
     } else {
-        bun.debugAssert(false);
+        fun.debugAssert(false);
     }
     return .js_undefined;
 }
 
-pub fn Server__setAppFlags_(globalThis: *jsc.JSGlobalObject, server: jsc.JSValue, require_host_header: bool, use_strict_method_validation: bool) bun.JSError!jsc.JSValue {
+pub fn Server__setAppFlags_(globalThis: *jsc.JSGlobalObject, server: jsc.JSValue, require_host_header: bool, use_strict_method_validation: bool) fun.JSError!jsc.JSValue {
     if (!server.isObject()) {
         return globalThis.throw("Failed to set requireHostHeader: The 'this' value is not a Server.", .{});
     }
@@ -3714,7 +3714,7 @@ pub fn Server__setAppFlags_(globalThis: *jsc.JSGlobalObject, server: jsc.JSValue
     return .js_undefined;
 }
 
-pub fn Server__setMaxHTTPHeaderSize_(globalThis: *jsc.JSGlobalObject, server: jsc.JSValue, max_header_size: u64) bun.JSError!jsc.JSValue {
+pub fn Server__setMaxHTTPHeaderSize_(globalThis: *jsc.JSGlobalObject, server: jsc.JSValue, max_header_size: u64) fun.JSError!jsc.JSValue {
     if (!server.isObject()) {
         return globalThis.throw("Failed to set maxHeaderSize: The 'this' value is not a Server.", .{});
     }
@@ -3764,9 +3764,9 @@ extern fn NodeHTTPServer__onRequest_https(
     node_response_ptr: *?*NodeHTTPResponse,
 ) jsc.JSValue;
 
-extern fn Bun__createNodeHTTPServerSocketForClientError(bool, *anyopaque, *jsc.JSGlobalObject) jsc.JSValue;
+extern fn Fun__createNodeHTTPServerSocketForClientError(bool, *anyopaque, *jsc.JSGlobalObject) jsc.JSValue;
 
-extern "c" fn Bun__ServerRouteList__callRoute(
+extern "c" fn Fun__ServerRouteList__callRoute(
     globalObject: *jsc.JSGlobalObject,
     index: u32,
     requestPtr: *Request,
@@ -3776,7 +3776,7 @@ extern "c" fn Bun__ServerRouteList__callRoute(
     req: *uws.Request,
 ) jsc.JSValue;
 
-extern "c" fn Bun__ServerRouteList__callRouteH3(
+extern "c" fn Fun__ServerRouteList__callRouteH3(
     globalObject: *jsc.JSGlobalObject,
     index: u32,
     requestPtr: *Request,
@@ -3786,7 +3786,7 @@ extern "c" fn Bun__ServerRouteList__callRouteH3(
     req: *anyopaque,
 ) jsc.JSValue;
 
-extern "c" fn Bun__ServerRouteList__create(
+extern "c" fn Fun__ServerRouteList__create(
     globalObject: *jsc.JSGlobalObject,
     callbacks: [*]jsc.JSValue,
     paths: [*]ZigString,
@@ -3797,7 +3797,7 @@ fn throwSSLErrorIfNecessary(globalThis: *jsc.JSGlobalObject) bool {
     const err_code = BoringSSL.ERR_get_error();
     if (err_code != 0) {
         defer BoringSSL.ERR_clear_error();
-        globalThis.throwValue(jsc.API.Bun.Crypto.createCryptoError(globalThis, err_code)) catch {};
+        globalThis.throwValue(jsc.API.Fun.Crypto.createCryptoError(globalThis, err_code)) catch {};
         return true;
     }
 
@@ -3818,36 +3818,36 @@ const Allocator = std.mem.Allocator;
 const Runtime = @import("../../js_parser/runtime.zig");
 const Fallback = Runtime.Fallback;
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const Transpiler = bun.Transpiler;
-const analytics = bun.analytics;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const js_printer = bun.js_printer;
-const logger = bun.logger;
-const strings = bun.strings;
-const uws = bun.uws;
-const BoringSSL = bun.BoringSSL.c;
-const SocketAddress = bun.api.socket.SocketAddress;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const Transpiler = fun.Transpiler;
+const analytics = fun.analytics;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const js_printer = fun.js_printer;
+const logger = fun.logger;
+const strings = fun.strings;
+const uws = fun.uws;
+const BoringSSL = fun.BoringSSL.c;
+const SocketAddress = fun.api.socket.SocketAddress;
 
-const HTTP = bun.http;
+const HTTP = fun.http;
 const MimeType = HTTP.MimeType;
 
-const jsc = bun.jsc;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSPromise = bun.jsc.JSPromise;
-const JSValue = bun.jsc.JSValue;
-const Node = bun.jsc.Node;
-const VM = bun.jsc.VM;
+const jsc = fun.jsc;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSPromise = fun.jsc.JSPromise;
+const JSValue = fun.jsc.JSValue;
+const Node = fun.jsc.Node;
+const VM = fun.jsc.VM;
 const VirtualMachine = jsc.VirtualMachine;
-const ZigString = bun.jsc.ZigString;
+const ZigString = fun.jsc.ZigString;
 const host_fn = jsc.host_fn;
 
-const WebCore = bun.jsc.WebCore;
+const WebCore = fun.jsc.WebCore;
 const Blob = jsc.WebCore.Blob;
 const Fetch = WebCore.Fetch;
 const Headers = WebCore.Headers;

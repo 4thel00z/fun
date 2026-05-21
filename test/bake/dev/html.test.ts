@@ -159,9 +159,9 @@ devTest("external links", {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>index | Powered by Bun</title>
+        <title>index | Powered by Fun</title>
         <link rel="stylesheet" href="./index.css" />
-        <link rel="icon" type="image/x-icon" href="https://bun.sh/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="https://fun.dev/favicon.ico" />
       </head>
       <body>
         <div id="root"></div>
@@ -183,7 +183,7 @@ devTest("external links", {
     await c.expectMessage("hello");
 
     const ico: string = await c.js`document.querySelector("link[rel='icon']").href`;
-    expect(ico).toBe("https://bun.sh/favicon.ico");
+    expect(ico).toBe("https://fun.dev/favicon.ico");
   },
 });
 devTest("memory leak case 1", {

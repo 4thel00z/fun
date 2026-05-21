@@ -1,5 +1,5 @@
-import { SQL, randomUUIDv7 } from "bun";
-import { beforeEach, expect, test } from "bun:test";
+import { SQL, randomUUIDv7 } from "fun";
+import { beforeEach, expect, test } from "fun:test";
 import { describeWithContainer } from "harness";
 
 describeWithContainer(
@@ -11,7 +11,7 @@ describeWithContainer(
   },
   container => {
     const getOptions = () => ({
-      url: `mysql://root@${container.host}:${container.port}/bun_sql_test`,
+      url: `mysql://root@${container.host}:${container.port}/fun_sql_test`,
       max: 1,
       bigint: true,
     });
@@ -20,8 +20,8 @@ describeWithContainer(
       await container.ready;
     });
 
-    // Regression test for https://github.com/oven-sh/bun/issues/26030
-    // Bun hangs when executing multiple sequential MySQL transactions in a loop where:
+    // Regression test for https://github.com/underdoc-org/fun/issues/26030
+    // Fun hangs when executing multiple sequential MySQL transactions in a loop where:
     // 1. An INSERT is awaited inside the transaction callback
     // 2. A SELECT query (e.g., SELECT LAST_INSERT_ID()) is returned as an array without being awaited
     test("Sequential transactions with INSERT and returned SELECT should not hang", async () => {

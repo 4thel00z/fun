@@ -1,4 +1,4 @@
-//! Node.js APIs in Bun. Access this namespace with `bun.api.node`
+//! Node.js APIs in Fun. Access this namespace with `fun.api.node`
 comptime {
     _ = process.getTitle;
     _ = process.setTitle;
@@ -47,8 +47,8 @@ pub const StatFSSmall = statfs.StatFSSmall;
 pub const StatFSBig = statfs.StatFSBig;
 pub const StatFS = statfs.StatFS;
 
-pub const uid_t = if (Environment.isPosix) std.posix.uid_t else bun.windows.libuv.uv_uid_t;
-pub const gid_t = if (Environment.isPosix) std.posix.gid_t else bun.windows.libuv.uv_gid_t;
+pub const uid_t = if (Environment.isPosix) std.posix.uid_t else fun.windows.libuv.uv_uid_t;
+pub const gid_t = if (Environment.isPosix) std.posix.gid_t else fun.windows.libuv.uv_gid_t;
 
 pub const time_like = @import("./node/time_like.zig");
 pub const TimeLike = time_like.TimeLike;
@@ -93,7 +93,7 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
                 if (comptime ReturnType == void) {
                     @panic("TODO called!");
                 }
-                @panic(comptime "TODO: Maybe(" ++ bun.meta.typeName(ReturnType) ++ ")");
+                @panic(comptime "TODO: Maybe(" ++ fun.meta.typeName(ReturnType) ++ ")");
             }
             if (has_todo) {
                 return .{ .err = ErrorType.todo() };
@@ -112,7 +112,7 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
         pub fn unwrap(this: @This()) !ReturnType {
             return switch (this) {
                 .result => |r| r,
-                .err => |e| bun.errnoToZigErr(e.errno),
+                .err => |e| fun.errnoToZigErr(e.errno),
             };
         }
 
@@ -128,7 +128,7 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
             return .{ .err = e };
         }
 
-        pub inline fn initErrWithP(e: bun.sys.SystemErrno, syscall: sys.Tag, file_path: anytype) Maybe(ReturnType, ErrorType) {
+        pub inline fn initErrWithP(e: fun.sys.SystemErrno, syscall: sys.Tag, file_path: anytype) Maybe(ReturnType, ErrorType) {
             return .{ .err = .{
                 .errno = @intFromEnum(e),
                 .syscall = syscall,
@@ -171,20 +171,20 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
             };
         }
 
-        pub inline fn toCssResult(this: @This()) Maybe(ReturnType, bun.css.ParseError(bun.css.ParserError)) {
+        pub inline fn toCssResult(this: @This()) Maybe(ReturnType, fun.css.ParseError(fun.css.ParserError)) {
             return switch (ErrorTypeT) {
-                bun.css.BasicParseError => {
+                fun.css.BasicParseError => {
                     return switch (this) {
                         .result => |v| return .{ .result = v },
                         .err => |e| return .{ .err = e.intoDefaultParseError() },
                     };
                 },
-                bun.css.ParseError(bun.css.ParserError) => @compileError("Already a ParseError(ParserError)"),
+                fun.css.ParseError(fun.css.ParserError) => @compileError("Already a ParseError(ParserError)"),
                 else => @compileError("Bad!"),
             };
         }
 
-        pub fn toJS(this: @This(), globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        pub fn toJS(this: @This(), globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
             return switch (this) {
                 .result => |r| switch (ReturnType) {
                     jsc.JSValue => r,
@@ -199,8 +199,8 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
                         .int, .float, .comptime_int, .comptime_float => jsc.JSValue.jsNumber(r),
                         .@"struct", .@"enum", .@"opaque", .@"union" => r.toJS(globalObject),
                         .pointer => {
-                            if (bun.trait.isZigString(ReturnType))
-                                jsc.ZigString.init(bun.asByteSlice(r)).withEncoding().toJS(globalObject);
+                            if (fun.trait.isZigString(ReturnType))
+                                jsc.ZigString.init(fun.asByteSlice(r)).withEncoding().toJS(globalObject);
 
                             return r.toJS(globalObject);
                         },
@@ -252,7 +252,7 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
             };
         }
 
-        pub fn errnoSysFd(rc: anytype, syscall: sys.Tag, fd: bun.FD) ?@This() {
+        pub fn errnoSysFd(rc: anytype, syscall: sys.Tag, fd: fun.FD) ?@This() {
             if (comptime Environment.isWindows) {
                 if (comptime @TypeOf(rc) == std.os.windows.NTSTATUS) {} else {
                     if (rc != 0) return null;
@@ -272,7 +272,7 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
         }
 
         pub fn errnoSysP(rc: anytype, syscall: sys.Tag, file_path: anytype) ?@This() {
-            if (bun.meta.Item(@TypeOf(file_path)) == u16) {
+            if (fun.meta.Item(@TypeOf(file_path)) == u16) {
                 @compileError("Do not pass WString path to errnoSysP, it needs the path encoded as utf8");
             }
             if (comptime Environment.isWindows) {
@@ -287,13 +287,13 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
                     .err = .{
                         .errno = translateToErrInt(e),
                         .syscall = syscall,
-                        .path = bun.asByteSlice(file_path),
+                        .path = fun.asByteSlice(file_path),
                     },
                 },
             };
         }
 
-        pub fn errnoSysFP(rc: anytype, syscall: sys.Tag, fd: bun.FD, file_path: anytype) ?@This() {
+        pub fn errnoSysFP(rc: anytype, syscall: sys.Tag, fd: fun.FD, file_path: anytype) ?@This() {
             if (comptime Environment.isWindows) {
                 if (comptime @TypeOf(rc) == std.os.windows.NTSTATUS) {} else {
                     if (rc != 0) return null;
@@ -307,14 +307,14 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
                         .errno = translateToErrInt(e),
                         .syscall = syscall,
                         .fd = fd,
-                        .path = bun.asByteSlice(file_path),
+                        .path = fun.asByteSlice(file_path),
                     },
                 },
             };
         }
 
         pub fn errnoSysPD(rc: anytype, syscall: sys.Tag, file_path: anytype, dest: anytype) ?@This() {
-            if (bun.meta.Item(@TypeOf(file_path)) == u16) {
+            if (fun.meta.Item(@TypeOf(file_path)) == u16) {
                 @compileError("Do not pass WString path to errnoSysPD, it needs the path encoded as utf8");
             }
             if (comptime Environment.isWindows) {
@@ -329,8 +329,8 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
                     .err = .{
                         .errno = translateToErrInt(e),
                         .syscall = syscall,
-                        .path = bun.asByteSlice(file_path),
-                        .dest = bun.asByteSlice(dest),
+                        .path = fun.asByteSlice(file_path),
+                        .dest = fun.asByteSlice(dest),
                     },
                 },
             };
@@ -339,15 +339,15 @@ pub fn Maybe(comptime ReturnTypeT: type, comptime ErrorTypeT: type) type {
         pub fn format(this: @This(), writer: *std.Io.Writer) !void {
             return switch (this) {
                 .result => try writer.print("Result(...)", .{}),
-                .err => |e| try writer.print("Error(" ++ bun.deprecated.autoFormatLabelFallback(ErrorType, "{any}") ++ ")", .{e}),
+                .err => |e| try writer.print("Error(" ++ fun.deprecated.autoFormatLabelFallback(ErrorType, "{any}") ++ ")", .{e}),
             };
         }
     };
 }
 
-fn translateToErrInt(err: anytype) bun.sys.Error.Int {
+fn translateToErrInt(err: anytype) fun.sys.Error.Int {
     return switch (@TypeOf(err)) {
-        bun.windows.NTSTATUS => @intFromEnum(bun.windows.translateNTStatusToErrno(err)),
+        fun.windows.NTSTATUS => @intFromEnum(fun.windows.translateNTStatusToErrno(err)),
         else => @truncate(@intFromEnum(err)),
     };
 }
@@ -356,12 +356,12 @@ const stat = @import("./node/Stat.zig");
 const statfs = @import("./node/StatFS.zig");
 const types = @import("./node/types.zig");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
-const meta = bun.meta;
-const sys = bun.sys;
-const windows = bun.windows;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;
+const meta = fun.meta;
+const sys = fun.sys;
+const windows = fun.windows;
 
 const std = @import("std");
 const posix = std.posix;

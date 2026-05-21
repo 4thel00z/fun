@@ -1,16 +1,16 @@
 ---
 title: "Writing tests"
-description: "Learn how to write tests using Bun's Jest-compatible API with support for async tests, timeouts, and various test modifiers"
+description: "Learn how to write tests using Fun's Jest-compatible API with support for async tests, timeouts, and various test modifiers"
 ---
 
-Define tests with a Jest-like API imported from the built-in `bun:test` module. Long term, Bun aims for complete Jest compatibility; at the moment, a limited set of expect matchers are supported.
+Define tests with a Jest-like API imported from the built-in `fun:test` module. Long term, Fun aims for complete Jest compatibility; at the moment, a limited set of expect matchers are supported.
 
 ## Basic Usage
 
 To define a test:
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("2 + 2", () => {
   expect(2 + 2).toBe(4);
@@ -22,7 +22,7 @@ test("2 + 2", () => {
 Tests can be grouped into suites with `describe`.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { expect, test, describe } from "bun:test";
+import { expect, test, describe } from "fun:test";
 
 describe("arithmetic", () => {
   test("2 + 2", () => {
@@ -40,7 +40,7 @@ describe("arithmetic", () => {
 Tests can be async.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("2 * 2", async () => {
   const result = await Promise.resolve(2 * 2);
@@ -51,7 +51,7 @@ test("2 * 2", async () => {
 Alternatively, use the `done` callback to signal completion. If you include the `done` callback as a parameter in your test definition, you must call it or the test will hang.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("2 * 2", done => {
   Promise.resolve(2 * 2).then(result => {
@@ -66,7 +66,7 @@ test("2 * 2", done => {
 Optionally specify a per-test timeout in milliseconds by passing a number as the third argument to `test`.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test("wat", async () => {
   const data = await slowOperation();
@@ -74,7 +74,7 @@ test("wat", async () => {
 }, 500); // test must run in <500ms
 ```
 
-In `bun:test`, test timeouts throw an uncatchable exception to force the test to stop running and fail. We also kill any child processes that were spawned in the test to avoid leaving behind zombie processes lurking in the background.
+In `fun:test`, test timeouts throw an uncatchable exception to force the test to stop running and fail. We also kill any child processes that were spawned in the test to avoid leaving behind zombie processes lurking in the background.
 
 The default timeout for each test is 5000ms (5 seconds) if not overridden by this timeout option or `jest.setDefaultTimeout()`.
 
@@ -85,7 +85,7 @@ The default timeout for each test is 5000ms (5 seconds) if not overridden by thi
 Use the `retry` option to automatically retry a test if it fails. The test passes if it succeeds within the specified number of attempts. This is useful for flaky tests that may fail intermittently.
 
 ```ts title="example.test.ts" icon="/icons/typescript.svg"
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test(
   "flaky network request",
@@ -102,7 +102,7 @@ test(
 Use the `repeats` option to run a test multiple times regardless of pass/fail status. The test fails if any iteration fails. This is useful for detecting flaky tests or stress testing. Note that `repeats: N` runs the test N+1 times total (1 initial run + N repeats).
 
 ```ts title="example.test.ts" icon="/icons/typescript.svg"
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test(
   "ensure test is stable",
@@ -117,7 +117,7 @@ test(
 
 ### 🧟 Zombie Process Killer
 
-When a test times out and processes spawned in the test via `Bun.spawn`, `Bun.spawnSync`, or `node:child_process` are not killed, they will be automatically killed and a message will be logged to the console. This prevents zombie processes from lingering in the background after timed-out tests.
+When a test times out and processes spawned in the test via `Fun.spawn`, `Fun.spawnSync`, or `node:child_process` are not killed, they will be automatically killed and a message will be logged to the console. This prevents zombie processes from lingering in the background after timed-out tests.
 
 ## Test Modifiers
 
@@ -126,7 +126,7 @@ When a test times out and processes spawned in the test via `Bun.spawn`, `Bun.sp
 Skip individual tests with `test.skip`. These tests will not be run.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test.skip("wat", () => {
   // TODO: fix this
@@ -139,17 +139,17 @@ test.skip("wat", () => {
 Mark a test as a todo with `test.todo`. These tests will not be run.
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test.todo("fix this", () => {
   myTestFunction();
 });
 ```
 
-To run todo tests and find any which are passing, use `bun test --todo`.
+To run todo tests and find any which are passing, use `fun test --todo`.
 
 ```bash terminal icon="terminal"
-bun test --todo
+fun test --todo
 ```
 
 ```
@@ -169,7 +169,7 @@ With this flag, failing todo tests will not cause an error, but todo tests which
 To run a particular test or suite of tests use `test.only()` or `describe.only()`.
 
 ```ts title="example.test.ts" icon="/icons/typescript.svg"
-import { test, describe } from "bun:test";
+import { test, describe } from "fun:test";
 
 test("test #1", () => {
   // does not run
@@ -189,13 +189,13 @@ describe.only("only", () => {
 The following command will only execute tests #2 and #3.
 
 ```bash terminal icon="terminal"
-bun test --only
+fun test --only
 ```
 
 The following command will only execute tests #1, #2 and #3.
 
 ```bash terminal icon="terminal"
-bun test
+fun test
 ```
 
 ### test.if
@@ -398,7 +398,7 @@ test.each(["apple", "banana"])("fruit #%# is %s", fruit => {
 
 ## Assertion Counting
 
-Bun supports verifying that a specific number of assertions were called during a test:
+Fun supports verifying that a specific number of assertions were called during a test:
 
 ### expect.hasAssertions()
 
@@ -432,7 +432,7 @@ This helps ensure all your assertions run, especially in complex async code with
 
 ## Type Testing
 
-Bun includes `expectTypeOf` for testing TypeScript types, compatible with Vitest.
+Fun includes `expectTypeOf` for testing TypeScript types, compatible with Vitest.
 
 ### expectTypeOf
 
@@ -443,10 +443,10 @@ Bun includes `expectTypeOf` for testing TypeScript types, compatible with Vitest
 The `expectTypeOf` function provides type-level assertions that are checked by TypeScript's type checker. To test your types:
 
 1. Write your type assertions using `expectTypeOf`
-2. Run `bunx tsc --noEmit` to check that your types are correct
+2. Run `funx tsc --noEmit` to check that your types are correct
 
 ```ts title="example.test.ts" icon="/icons/typescript.svg"
-import { expectTypeOf } from "bun:test";
+import { expectTypeOf } from "fun:test";
 
 // Basic type assertions
 expectTypeOf<string>().toEqualTypeOf<string>();
@@ -472,11 +472,11 @@ expectTypeOf([1, 2, 3]).items.toBeNumber();
 expectTypeOf(Promise.resolve(42)).resolves.toBeNumber();
 ```
 
-For full documentation on expectTypeOf matchers, see the [API Reference](https://bun.com/reference/bun/test/expectTypeOf).
+For full documentation on expectTypeOf matchers, see the [API Reference](https://fun.dev/reference/fun/test/expectTypeOf).
 
 ## Matchers
 
-Bun implements the following matchers. Full Jest compatibility is on the roadmap; [track progress here](https://github.com/oven-sh/bun/issues/1825).
+Fun implements the following matchers. Full Jest compatibility is on the roadmap; [track progress here](https://github.com/underdoc-org/fun/issues/1825).
 
 ### Basic Matchers
 
@@ -654,7 +654,7 @@ test("should handle async errors", async () => {
 ### Use Setup and Teardown
 
 ```ts title="example.test.ts" icon="/icons/typescript.svg"
-import { beforeEach, afterEach, test } from "bun:test";
+import { beforeEach, afterEach, test } from "fun:test";
 
 let testUser;
 

@@ -279,7 +279,7 @@ pub const InlinedEnumValue = struct {
             .number => |num| @as(u64, @bitCast(purifyNaN(num))) + double_encode_offset,
         } };
         if (Environment.allow_assert) {
-            bun.assert(switch (encoded.decode()) {
+            fun.assert(switch (encoded.decode()) {
                 .string => |str| str == decoded.string,
                 .number => |num| @as(u64, @bitCast(num)) ==
                     @as(u64, @bitCast(purifyNaN(decoded.number))),
@@ -346,7 +346,7 @@ pub const ExportsKind = enum {
         return try writer.write(@tagName(self));
     }
 
-    pub fn toModuleType(self: @This()) bun.options.ModuleType {
+    pub fn toModuleType(self: @This()) fun.options.ModuleType {
         return switch (self) {
             .none => .unknown,
             .cjs => .cjs,
@@ -364,7 +364,7 @@ pub const DeclaredSymbol = struct {
     is_top_level: bool = false,
 
     pub const List = struct {
-        entries: bun.MultiArrayList(DeclaredSymbol) = .{},
+        entries: fun.MultiArrayList(DeclaredSymbol) = .{},
 
         pub fn refs(this: *const List) []Ref {
             return this.entries.items(.ref);
@@ -420,7 +420,7 @@ pub const DeclaredSymbol = struct {
         }
 
         pub fn initCapacity(allocator: std.mem.Allocator, capacity: usize) !List {
-            var entries = bun.MultiArrayList(DeclaredSymbol){};
+            var entries = fun.MultiArrayList(DeclaredSymbol){};
             try entries.ensureUnusedCapacity(allocator, capacity);
             return List{ .entries = entries };
         }
@@ -444,7 +444,7 @@ pub const DeclaredSymbol = struct {
         // TODO: SIMD
         for (is_top_level, refs) |top, ref| {
             if (top) {
-                @call(bun.callmod_inline, Fn, .{ ctx, ref });
+                @call(fun.callmod_inline, Fn, .{ ctx, ref });
             }
         }
     }
@@ -523,14 +523,14 @@ pub const Part = struct {
         cjs_imports,
         react_fast_refresh,
         dirname_filename,
-        bun_test,
+        fun_test,
         dead_due_to_inlining,
         commonjs_named_export,
         import_to_convert_from_require,
     };
 
     pub const SymbolUseMap = std.ArrayHashMapUnmanaged(Ref, Symbol.Use, RefHashCtx, false);
-    pub const SymbolPropertyUseMap = std.ArrayHashMapUnmanaged(Ref, bun.StringHashMapUnmanaged(Symbol.Use), RefHashCtx, false);
+    pub const SymbolPropertyUseMap = std.ArrayHashMapUnmanaged(Ref, fun.StringHashMapUnmanaged(Symbol.Use), RefHashCtx, false);
 
     pub fn jsonStringify(self: *const Part, writer: anytype) !void {
         return writer.write(self.stmts);
@@ -543,8 +543,8 @@ pub const Result = union(enum) {
     ast: Ast,
 
     pub const AlreadyBundled = enum {
-        bun,
-        bun_cjs,
+        fun,
+        fun_cjs,
         bytecode,
         bytecode_cjs,
     };
@@ -640,7 +640,7 @@ pub fn NewBatcher(comptime Type: type) type {
         }
 
         pub fn done(this: *@This()) void {
-            bun.assert(this.head.len == 0); // count to init() was too large, overallocation
+            fun.assert(this.head.len == 0); // count to init() was too large, overallocation
         }
 
         pub fn eat(this: *@This(), value: Type) *Type {
@@ -697,15 +697,15 @@ pub const Ref = @import("./ast/base.zig").Ref;
 pub const RefCtx = @import("./ast/base.zig").RefCtx;
 pub const RefHashCtx = @import("./ast/base.zig").RefHashCtx;
 
-pub const BabyList = bun.BabyList;
+pub const BabyList = fun.BabyList;
 
 const string = []const u8;
 
 const std = @import("std");
 const TypeScript = @import("./parser.zig").TypeScript;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const logger = fun.logger;
+const strings = fun.strings;

@@ -1,18 +1,18 @@
 ---
-title: Install TypeScript declarations for Bun
+title: Install TypeScript declarations for Fun
 sidebarTitle: TypeScript types
 mode: center
 ---
 
-To install TypeScript definitions for Bun's built-in APIs in your project, install `@types/bun`.
+To install TypeScript definitions for Fun's built-in APIs in your project, install `@types/fun`.
 
 ```sh terminal icon="terminal"
-bun add -d @types/bun # dev dependency
+fun add -d @types/fun # dev dependency
 ```
 
 ---
 
-Below is the full set of recommended `compilerOptions` for a Bun project. With this `tsconfig.json`, you can use top-level await, extensioned or extensionless imports, and JSX.
+Below is the full set of recommended `compilerOptions` for a Fun project. With this `tsconfig.json`, you can use top-level await, extensioned or extensionless imports, and JSX.
 
 ```json tsconfig.json icon="file-json"
 {
@@ -24,7 +24,7 @@ Below is the full set of recommended `compilerOptions` for a Bun project. With t
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-    "types": ["bun"],
+    "types": ["fun"],
 
     // Bundler mode
     "moduleResolution": "bundler",
@@ -49,8 +49,8 @@ Below is the full set of recommended `compilerOptions` for a Bun project. With t
 
 ---
 
-If you're using TypeScript 6.0 or later, you'll also need to add `"types": ["bun"]` to your `compilerOptions`. See [TypeScript 6 and 7](/typescript-6) for details.
+If you're using TypeScript 6.0 or later, you'll also need to add `"types": ["fun"]` to your `compilerOptions`. See [TypeScript 6 and 7](/typescript-6) for details.
 
 ---
 
-Refer to [Ecosystem > TypeScript](/runtime/typescript) for a complete guide to TypeScript support in Bun.
+Refer to [Ecosystem > TypeScript](/runtime/typescript) for a complete guide to TypeScript support in Fun.

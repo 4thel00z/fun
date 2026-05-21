@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { realpathSync } from "fs";
 import { isWindows } from "harness";
 import * as os from "node:os";
@@ -44,7 +44,7 @@ it("loadavg", () => {
   if (isWindows) {
     expect(os.loadavg()).toEqual([0, 0, 0]);
   } else {
-    const out = Bun.spawnSync(["uptime"]).stdout.toString();
+    const out = Fun.spawnSync(["uptime"]).stdout.toString();
     const regex = /load averages?: ([\d\.]+),? ([\d\.]+),? ([\d\.]+)/;
     const result = regex.exec(out);
     const expected = [parseFloat(result[1]), parseFloat(result[2]), parseFloat(result[3])];
@@ -202,7 +202,7 @@ it("loadavg", () => {
   expect(loadavg.every(avg => typeof avg === "number")).toBeTrue();
 });
 
-// https://github.com/oven-sh/bun/issues/10259
+// https://github.com/underdoc-org/fun/issues/10259
 describe("toString works like node", () => {
   const exportsWithStrings = [
     "arch",

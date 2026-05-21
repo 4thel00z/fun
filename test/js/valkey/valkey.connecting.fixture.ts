@@ -1,13 +1,13 @@
-import { RedisClient } from "bun";
+import { RedisClient } from "fun";
 
 function getOptions() {
-  if (process.env.BUN_VALKEY_TLS) {
-    const paths = JSON.parse(process.env.BUN_VALKEY_TLS);
+  if (process.env.FUN_VALKEY_TLS) {
+    const paths = JSON.parse(process.env.FUN_VALKEY_TLS);
     return {
       tls: {
-        key: Bun.file(paths.key),
-        cert: Bun.file(paths.cert),
-        ca: Bun.file(paths.ca),
+        key: Fun.file(paths.key),
+        cert: Fun.file(paths.cert),
+        ca: Fun.file(paths.ca),
         rejectUnauthorized: false,
       },
     };
@@ -16,7 +16,7 @@ function getOptions() {
 }
 
 {
-  const client = new RedisClient(process.env.BUN_VALKEY_URL, getOptions());
+  const client = new RedisClient(process.env.FUN_VALKEY_URL, getOptions());
   client
     .connect()
     .then(redis => {

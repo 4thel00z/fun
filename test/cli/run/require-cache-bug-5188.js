@@ -9,7 +9,7 @@ const { strictEqual, ok } = require("assert");
 require("msgpackr-extract");
 
 strictEqual(require.cache["extract"], undefined);
-ok(!("extract" in require.cache)); // https://github.com/oven-sh/bun/issues/5898
+ok(!("extract" in require.cache)); // https://github.com/underdoc-org/fun/issues/5898
 ok(!Object.hasOwnProperty.call(require.cache, "extract"));
 ok(!Object.getOwnPropertyNames(require.cache).includes("extract"));
 

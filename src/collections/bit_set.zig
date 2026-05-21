@@ -78,7 +78,7 @@ pub fn IntegerBitSet(comptime size: u16) type {
         }
 
         /// Returns the number of bits in this bit set
-        pub fn capacity(self: Self) callconv(bun.callconv_inline) usize {
+        pub fn capacity(self: Self) callconv(fun.callconv_inline) usize {
             _ = self;
             return bit_length;
         }
@@ -86,7 +86,7 @@ pub fn IntegerBitSet(comptime size: u16) type {
         /// Returns true if the bit at the specified index
         /// is present in the set, false otherwise.
         pub fn isSet(self: Self, index: usize) bool {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             return (self.mask & maskBit(index)) != 0;
         }
 
@@ -98,7 +98,7 @@ pub fn IntegerBitSet(comptime size: u16) type {
         /// Changes the value of the specified bit of the bit
         /// set to match the passed boolean.
         pub fn setValue(self: *Self, index: usize, value: bool) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             if (MaskInt == u0) return;
             const bit = maskBit(index);
             const new_bit = bit & std.math.boolMask(MaskInt, value);
@@ -107,7 +107,7 @@ pub fn IntegerBitSet(comptime size: u16) type {
 
         /// Adds a specific bit to the bit set
         pub fn set(self: *Self, index: usize) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             self.mask |= maskBit(index);
         }
 
@@ -115,8 +115,8 @@ pub fn IntegerBitSet(comptime size: u16) type {
         /// match the passed boolean.
         pub fn setRangeValue(self: *Self, range: Range, value: bool) void {
             if (comptime Environment.allow_assert) {
-                bun.assert(range.end <= bit_length);
-                bun.assert(range.start <= range.end);
+                fun.assert(range.end <= bit_length);
+                fun.assert(range.start <= range.end);
             }
             if (range.start == range.end) return;
             if (MaskInt == u0) return;
@@ -140,7 +140,7 @@ pub fn IntegerBitSet(comptime size: u16) type {
 
         /// Removes a specific bit from the bit set
         pub fn unset(self: *Self, index: usize) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             // Workaround for #7953
             if (MaskInt == u0) return;
             self.mask &= ~maskBit(index);
@@ -148,7 +148,7 @@ pub fn IntegerBitSet(comptime size: u16) type {
 
         /// Flips a specific bit in the bit set
         pub fn toggle(self: *Self, index: usize) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             self.mask ^= maskBit(index);
         }
 
@@ -403,7 +403,7 @@ pub fn ArrayBitSet(comptime MaskIntType: type, comptime size: usize) type {
         }
 
         /// Returns the number of bits in this bit set
-        pub fn capacity(self: Self) callconv(bun.callconv_inline) usize {
+        pub fn capacity(self: Self) callconv(fun.callconv_inline) usize {
             _ = self;
             return bit_length;
         }
@@ -411,7 +411,7 @@ pub fn ArrayBitSet(comptime MaskIntType: type, comptime size: usize) type {
         /// Returns true if the bit at the specified index
         /// is present in the set, false otherwise.
         pub fn isSet(self: *const Self, index: usize) bool {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             if (num_masks == 0) return false; // doesn't compile in this case
             return (self.masks[maskIndex(index)] & maskBit(index)) != 0;
         }
@@ -428,7 +428,7 @@ pub fn ArrayBitSet(comptime MaskIntType: type, comptime size: usize) type {
         /// Changes the value of the specified bit of the bit
         /// set to match the passed boolean.
         pub fn setValue(self: *Self, index: usize, value: bool) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             if (num_masks == 0) return; // doesn't compile in this case
             const bit = maskBit(index);
             const mask_index = maskIndex(index);
@@ -438,7 +438,7 @@ pub fn ArrayBitSet(comptime MaskIntType: type, comptime size: usize) type {
 
         /// Adds a specific bit to the bit set
         pub fn set(self: *Self, index: usize) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             if (num_masks == 0) return; // doesn't compile in this case
             self.masks[maskIndex(index)] |= maskBit(index);
         }
@@ -447,8 +447,8 @@ pub fn ArrayBitSet(comptime MaskIntType: type, comptime size: usize) type {
         /// match the passed boolean.
         pub fn setRangeValue(self: *Self, range: Range, value: bool) void {
             if (comptime Environment.allow_assert) {
-                bun.assert(range.end <= bit_length);
-                bun.assert(range.start <= range.end);
+                fun.assert(range.end <= bit_length);
+                fun.assert(range.start <= range.end);
             }
             if (range.start == range.end) return;
             if (num_masks == 0) return;
@@ -492,14 +492,14 @@ pub fn ArrayBitSet(comptime MaskIntType: type, comptime size: usize) type {
 
         /// Removes a specific bit from the bit set
         pub fn unset(self: *Self, index: usize) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             if (num_masks == 0) return; // doesn't compile in this case
             self.masks[maskIndex(index)] &= ~maskBit(index);
         }
 
         /// Flips a specific bit in the bit set
         pub fn toggle(self: *Self, index: usize) void {
-            if (comptime Environment.allow_assert) bun.assert(index < bit_length);
+            if (comptime Environment.allow_assert) fun.assert(index < bit_length);
             if (num_masks == 0) return; // doesn't compile in this case
             self.masks[maskIndex(index)] ^= maskBit(index);
         }
@@ -664,13 +664,13 @@ pub fn ArrayBitSet(comptime MaskIntType: type, comptime size: usize) type {
             return BitSetIterator(MaskInt, options);
         }
 
-        fn maskBit(index: usize) callconv(bun.callconv_inline) MaskInt {
+        fn maskBit(index: usize) callconv(fun.callconv_inline) MaskInt {
             return @as(MaskInt, 1) << @as(ShiftInt, @truncate(index));
         }
-        fn maskIndex(index: usize) callconv(bun.callconv_inline) usize {
+        fn maskIndex(index: usize) callconv(fun.callconv_inline) usize {
             return index >> @bitSizeOf(ShiftInt);
         }
-        fn boolMaskBit(index: usize, value: bool) callconv(bun.callconv_inline) MaskInt {
+        fn boolMaskBit(index: usize, value: bool) callconv(fun.callconv_inline) MaskInt {
             return @as(MaskInt, @intFromBool(value)) << @as(ShiftInt, @intCast(index));
         }
     };
@@ -795,7 +795,7 @@ pub const DynamicBitSetUnmanaged = struct {
         const old_allocation = (self.masks - 1)[0..(self.masks - 1)[0]];
 
         if (new_masks == 0) {
-            if (comptime Environment.allow_assert) bun.assert(new_len == 0);
+            if (comptime Environment.allow_assert) fun.assert(new_len == 0);
             allocator.free(old_allocation);
             self.masks = empty_masks_ptr;
             self.bit_length = 0;
@@ -858,19 +858,19 @@ pub const DynamicBitSetUnmanaged = struct {
         const num_masks = numMasks(self.bit_length);
         var copy = Self{};
         try copy.resize(new_allocator, self.bit_length, false);
-        bun.copy(MaskInt, copy.masks[0..num_masks], self.masks[0..num_masks]);
+        fun.copy(MaskInt, copy.masks[0..num_masks], self.masks[0..num_masks]);
         return copy;
     }
 
     /// Returns the number of bits in this bit set
-    pub fn capacity(self: Self) callconv(bun.callconv_inline) usize {
+    pub fn capacity(self: Self) callconv(fun.callconv_inline) usize {
         return self.bit_length;
     }
 
     /// Returns true if the bit at the specified index
     /// is present in the set, false otherwise.
     pub fn isSet(self: Self, index: usize) bool {
-        if (comptime Environment.allow_assert) bun.assert(index < self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(index < self.bit_length);
         return (self.masks[maskIndex(index)] & maskBit(index)) != 0;
     }
 
@@ -906,7 +906,7 @@ pub const DynamicBitSetUnmanaged = struct {
     /// Changes the value of the specified bit of the bit
     /// set to match the passed boolean.
     pub fn setValue(self: *Self, index: usize, value: bool) void {
-        if (comptime Environment.allow_assert) bun.assert(index < self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(index < self.bit_length);
         const bit = maskBit(index);
         const mask_index = maskIndex(index);
         const new_bit = bit & std.math.boolMask(MaskInt, value);
@@ -915,15 +915,15 @@ pub const DynamicBitSetUnmanaged = struct {
 
     /// Adds a specific bit to the bit set
     pub fn set(self: *Self, index: usize) void {
-        if (comptime Environment.allow_assert) bun.assert(index < self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(index < self.bit_length);
         self.masks[maskIndex(index)] |= maskBit(index);
     }
 
     /// Changes the value of all bits in the specified range to
     /// match the passed boolean.
     pub fn setRangeValue(self: *Self, range: Range, value: bool) void {
-        if (comptime Environment.allow_assert) bun.assert(range.end <= self.bit_length);
-        if (comptime Environment.allow_assert) bun.assert(range.start <= range.end);
+        if (comptime Environment.allow_assert) fun.assert(range.end <= self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(range.start <= range.end);
         if (range.start == range.end) return;
 
         const start_mask_index = maskIndex(range.start);
@@ -965,13 +965,13 @@ pub const DynamicBitSetUnmanaged = struct {
 
     /// Removes a specific bit from the bit set
     pub fn unset(self: *Self, index: usize) void {
-        if (comptime Environment.allow_assert) bun.assert(index < self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(index < self.bit_length);
         self.masks[maskIndex(index)] &= ~maskBit(index);
     }
 
     /// Flips a specific bit in the bit set
     pub fn toggle(self: *Self, index: usize) void {
-        if (comptime Environment.allow_assert) bun.assert(index < self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(index < self.bit_length);
         self.masks[maskIndex(index)] ^= maskBit(index);
     }
 
@@ -979,7 +979,7 @@ pub const DynamicBitSetUnmanaged = struct {
     /// in the toggles bit set.  Both sets must have the
     /// same bit_length.
     pub fn toggleSet(self: *Self, toggles: Self) void {
-        if (comptime Environment.allow_assert) bun.assert(toggles.bit_length == self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(toggles.bit_length == self.bit_length);
         const bit_length = self.bit_length;
         if (bit_length == 0) return;
         const num_masks = numMasks(self.bit_length);
@@ -1041,7 +1041,7 @@ pub const DynamicBitSetUnmanaged = struct {
     /// set if the corresponding bits were set in either input.
     /// The two sets must both be the same bit_length.
     pub fn setUnion(self: *Self, other: Self) void {
-        if (comptime Environment.allow_assert) bun.assert(other.bit_length == self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(other.bit_length == self.bit_length);
         const num_masks = numMasks(self.bit_length);
         for (self.masks[0..num_masks], other.masks) |*mask, other_mask| {
             mask.* |= other_mask;
@@ -1053,7 +1053,7 @@ pub const DynamicBitSetUnmanaged = struct {
     /// set if the corresponding bits were set in both inputs.
     /// The two sets must both be the same bit_length.
     pub fn setIntersection(self: *Self, other: Self) void {
-        if (comptime Environment.allow_assert) bun.assert(other.bit_length == self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(other.bit_length == self.bit_length);
         const num_masks = numMasks(self.bit_length);
         for (self.masks[0..num_masks], other.masks) |*mask, other_mask| {
             mask.* &= other_mask;
@@ -1061,7 +1061,7 @@ pub const DynamicBitSetUnmanaged = struct {
     }
 
     pub fn setExcludeTwo(self: *Self, other: Self, third: Self) void {
-        if (comptime Environment.allow_assert) bun.assert(other.bit_length == self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(other.bit_length == self.bit_length);
         const num_masks = numMasks(self.bit_length);
         for (self.masks[0..num_masks], other.masks[0..num_masks], third.masks[0..num_masks]) |*mask, other_mask, third_mask| {
             mask.* &= ~other_mask;
@@ -1070,7 +1070,7 @@ pub const DynamicBitSetUnmanaged = struct {
     }
 
     pub fn setExclude(self: *Self, other: Self) void {
-        if (comptime Environment.allow_assert) bun.assert(other.bit_length == self.bit_length);
+        if (comptime Environment.allow_assert) fun.assert(other.bit_length == self.bit_length);
         const num_masks = numMasks(self.bit_length);
         for (self.masks[0..num_masks], other.masks) |*mask, other_mask| {
             mask.* &= ~other_mask;
@@ -1186,7 +1186,7 @@ pub const AutoBitSet = union(enum) {
     static: Static,
     dynamic: DynamicBitSetUnmanaged,
 
-    pub fn needsDynamic(bit_length: usize) callconv(bun.callconv_inline) bool {
+    pub fn needsDynamic(bit_length: usize) callconv(fun.callconv_inline) bool {
         return bit_length > Static.bit_length;
     }
 
@@ -1250,11 +1250,11 @@ pub const AutoBitSet = union(enum) {
     }
 
     pub fn eql(this: *const AutoBitSet, b: *const AutoBitSet) bool {
-        return bun.strings.eqlLong(this.rawBytes(), b.rawBytes(), true);
+        return fun.strings.eqlLong(this.rawBytes(), b.rawBytes(), true);
     }
 
     pub fn hash(this: *const AutoBitSet) u64 {
-        return bun.hash(this.rawBytes());
+        return fun.hash(this.rawBytes());
     }
 
     pub fn forEach(this: *const AutoBitSet, comptime Ctx: type, ctx: *Ctx, comptime Function: fn (*Ctx, usize) void) void {
@@ -1378,7 +1378,7 @@ pub const DynamicBitSet = struct {
     }
 
     /// Returns the number of bits in this bit set
-    pub fn capacity(self: Self) callconv(bun.callconv_inline) usize {
+    pub fn capacity(self: Self) callconv(fun.callconv_inline) usize {
         return self.unmanaged.capacity();
     }
 
@@ -1570,7 +1570,7 @@ pub fn BitSetIterator(comptime MaskInt: type, comptime options: IteratorOptions)
         // isn't a next word.  If the next word is the
         // last word, mask off the padding bits so we
         // don't visit them.
-        fn nextWord(self: *Self, comptime is_first_word: bool) callconv(bun.callconv_inline) void {
+        fn nextWord(self: *Self, comptime is_first_word: bool) callconv(fun.callconv_inline) void {
             var word = switch (direction) {
                 .forward => self.words_remain[0],
                 .reverse => self.words_remain[self.words_remain.len - 1],
@@ -1960,8 +1960,8 @@ fn testStaticBitSet(comptime Set: type, comptime Container: @Type(.enum_literal)
     try testPureBitSet(Set);
 }
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;
 
 const std = @import("std");
 const testing = std.testing;

@@ -1,5 +1,5 @@
 import { createCanvas } from "@napi-rs/canvas";
-import { it as bunIt, test as bunTest, describe, expect } from "bun:test";
+import { it as funIt, test as funTest, describe, expect } from "fun:test";
 import { appendFile } from "fs/promises";
 import { getSecret, isCI } from "harness";
 import { generate, generateClient } from "./helper.ts";
@@ -29,7 +29,7 @@ for (const type of ["sqlite", "postgres" /*"mssql", "mongodb"*/]) {
   });
 
   async function test(label: string, callback: Function, timeout: number = 5000) {
-    const it = Client && (database_url || type === "sqlite") ? bunTest : bunTest.skip;
+    const it = Client && (database_url || type === "sqlite") ? funTest : funTest.skip;
 
     it(
       label,
@@ -55,7 +55,7 @@ for (const type of ["sqlite", "postgres" /*"mssql", "mongodb"*/]) {
     );
   }
 
-  // these tests run `bun x prisma` without `--bun` so theyre not actually testing what we think they are.
+  // these tests run `fun x prisma` without `--fun` so theyre not actually testing what we think they are.
   // additionally,
   //   these depend on prisma 5.8
   //   alpine switched lib location from /lib to /usr/lib in 3.20 to 3.21
@@ -64,7 +64,7 @@ for (const type of ["sqlite", "postgres" /*"mssql", "mongodb"*/]) {
   //     so for now i decided to put a pin in it
   describe.skipIf(isCI)(`prisma ${type}`, () => {
     if (type === "postgres") {
-      // https://github.com/oven-sh/bun/issues/7864
+      // https://github.com/underdoc-org/fun/issues/7864
       test("memory issue reproduction issue #7864", async (client, testId) => {
         async function causeError() {
           // 1. Some DB query
@@ -107,7 +107,7 @@ for (const type of ["sqlite", "postgres" /*"mssql", "mongodb"*/]) {
             totalIters++;
             // GC occasionally to make memory usage more deterministic
             if (totalIters % gcPeriod == gcPeriod - 1) {
-              Bun.gc(true);
+              Fun.gc(true);
               const line = `${totalIters * batchSize},${(process.memoryUsage.rss() / 1024 / 1024) | 0}`;
               console.log(line);
               if (!isCI) await appendFile("rss.csv", line + "\n");
@@ -156,7 +156,7 @@ for (const type of ["sqlite", "postgres" /*"mssql", "mongodb"*/]) {
             totalIters++;
             // GC occasionally to make memory usage more deterministic
             if (totalIters % gcPeriod == gcPeriod - 1) {
-              Bun.gc(true);
+              Fun.gc(true);
               const line = `${totalIters},${(process.memoryUsage.rss() / 1024 / 1024) | 0}`;
               // console.log(line);
               // await appendFile("rss.csv", line + "\n");
@@ -306,7 +306,7 @@ for (const type of ["sqlite", "postgres" /*"mssql", "mongodb"*/]) {
           for (const users of loadAllUsers10Times) {
             expect(users).toEqual(createdUsers);
           }
-          Bun.gc(true);
+          Fun.gc(true);
         }
 
         const deletedUser = await prisma.user.deleteMany({ where: { testId } });
@@ -316,7 +316,7 @@ for (const type of ["sqlite", "postgres" /*"mssql", "mongodb"*/]) {
       20000,
     );
 
-    bunIt("generates client successfully", async () => {
+    funIt("generates client successfully", async () => {
       try {
         generate(type);
       } catch (err: any) {

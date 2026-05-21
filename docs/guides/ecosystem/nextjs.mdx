@@ -1,10 +1,10 @@
 ---
-title: Build an app with Next.js and Bun
-sidebarTitle: Next.js with Bun
+title: Build an app with Next.js and Fun
+sidebarTitle: Next.js with Fun
 mode: center
 ---
 
-[Next.js](https://nextjs.org/) is a React framework for building full-stack web applications. It supports server-side rendering, static site generation, API routes, and more. Bun provides fast package installation and can run Next.js development and production servers.
+[Next.js](https://nextjs.org/) is a React framework for building full-stack web applications. It supports server-side rendering, static site generation, API routes, and more. Fun provides fast package installation and can run Next.js development and production servers.
 
 ---
 
@@ -13,32 +13,32 @@ mode: center
     Use the interactive CLI to create a new Next.js app. This will scaffold a new Next.js project and automatically install dependencies.
 
     ```sh terminal icon="terminal"
-    bun create next-app@latest my-bun-app
+    fun create next-app@latest my-fun-app
     ```
 
   </Step>
   <Step title="Start the dev server">
-    Change to the project directory and run the dev server with Bun.
+    Change to the project directory and run the dev server with Fun.
 
     ```sh terminal icon="terminal"
-    cd my-bun-app
-    bun --bun run dev
+    cd my-fun-app
+    fun --fun run dev
     ```
 
-    This starts the Next.js dev server with Bun's runtime.
+    This starts the Next.js dev server with Fun's runtime.
 
     Open [`http://localhost:3000`](http://localhost:3000) with your browser to see the result. Any changes you make to `app/page.tsx` will be hot-reloaded in the browser.
 
   </Step>
   <Step title="Update scripts in package.json">
-    Modify the scripts field in your `package.json` by prefixing the Next.js CLI commands with `bun --bun`. This ensures that Bun executes the Next.js CLI for common tasks like `dev`, `build`, and `start`.
+    Modify the scripts field in your `package.json` by prefixing the Next.js CLI commands with `fun --fun`. This ensures that Fun executes the Next.js CLI for common tasks like `dev`, `build`, and `start`.
 
     ```json package.json icon="file-json"
     {
       "scripts": {
-        "dev": "bun --bun next dev", // [!code ++]
-        "build": "bun --bun next build", // [!code ++]
-        "start": "bun --bun next start", // [!code ++]
+        "dev": "fun --fun next dev", // [!code ++]
+        "build": "fun --fun next build", // [!code ++]
+        "start": "fun --fun next start", // [!code ++]
       }
     }
     ```
@@ -50,7 +50,7 @@ mode: center
 
 ## Hosting
 
-Next.js applications on Bun can be deployed to various platforms.
+Next.js applications on Fun can be deployed to various platforms.
 
 <Columns cols={3}>
   <Card title="Vercel" href="/guides/deployment/vercel" icon="/icons/ecosystem/vercel.svg">
@@ -79,22 +79,22 @@ Next.js applications on Bun can be deployed to various platforms.
 
 <Columns cols={2}>
   <Card
-    title="Bun + Next.js Basic Starter"
-    img="/images/templates/bun-nextjs-basic.png"
-    href="https://github.com/bun-templates/bun-nextjs-basic"
+    title="Fun + Next.js Basic Starter"
+    img="/images/templates/fun-nextjs-basic.png"
+    href="https://github.com/fun-templates/fun-nextjs-basic"
     arrow="true"
     cta="Go to template"
   >
-    A simple App Router starter with Bun, Next.js, and Tailwind CSS.
+    A simple App Router starter with Fun, Next.js, and Tailwind CSS.
   </Card>
   <Card
-    title="Todo App with Next.js + Bun"
-    img="/images/templates/bun-nextjs-todo.png"
-    href="https://github.com/bun-templates/bun-nextjs-todo"
+    title="Todo App with Next.js + Fun"
+    img="/images/templates/fun-nextjs-todo.png"
+    href="https://github.com/fun-templates/fun-nextjs-todo"
     arrow="true"
     cta="Go to template"
   >
-    A full-stack todo application built with Bun, Next.js, and PostgreSQL.
+    A full-stack todo application built with Fun, Next.js, and PostgreSQL.
   </Card>
 </Columns>
 

@@ -3,7 +3,7 @@ const common = require('../common');
 const assert = require('assert');
 
 // Stub `getnameinfo` to *always* error.
-Bun.dns.lookupService = (addr, port) => {
+Fun.dns.lookupService = (addr, port) => {
   throw Object.assign(new Error(`getnameinfo ENOENT ${addr}`), {code: 'ENOENT', syscall: 'getnameinfo'});
 };
 

@@ -5,7 +5,7 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include "JSKeyObjectPrototype.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSSecretKeyObjectPrototype final : public JSC::JSNonFinalObject {
 public:
@@ -43,4 +43,4 @@ private:
     void finishCreation(JSC::VM&);
 };
 
-} // namespace Bun
+} // namespace Fun

@@ -215,7 +215,7 @@ pub fn generate(
         first_input = false;
 
         j.pushStatic("\n    ");
-        j.push(try std.fmt.allocPrint(allocator, "{f}", .{bun.fmt.formatJSONStringUTF8(path, .{})}), allocator);
+        j.push(try std.fmt.allocPrint(allocator, "{f}", .{fun.fmt.formatJSONStringUTF8(path, .{})}), allocator);
         j.push(try std.fmt.allocPrint(allocator, ": {{\n      \"bytes\": {d}", .{source.contents.len}), allocator);
 
         // Write imports
@@ -234,7 +234,7 @@ pub fn generate(
                 j.pushStatic("\n        {\n          \"path\": ");
                 // Write path with JSON escaping - chunk references (unique_keys) will be resolved
                 // by breakOutputIntoPieces and code() below
-                j.push(try std.fmt.allocPrint(allocator, "{f}", .{bun.fmt.formatJSONStringUTF8(record.path.text, .{})}), allocator);
+                j.push(try std.fmt.allocPrint(allocator, "{f}", .{fun.fmt.formatJSONStringUTF8(record.path.text, .{})}), allocator);
                 j.pushStatic(",\n          \"kind\": \"");
                 j.pushStatic(record.kind.label());
                 j.pushStatic("\"");
@@ -242,7 +242,7 @@ pub fn generate(
                 // Add "original" field if different from path
                 if (record.original_path.len > 0 and !std.mem.eql(u8, record.original_path, record.path.text)) {
                     j.pushStatic(",\n          \"original\": ");
-                    j.push(try std.fmt.allocPrint(allocator, "{f}", .{bun.fmt.formatJSONStringUTF8(record.original_path, .{})}), allocator);
+                    j.push(try std.fmt.allocPrint(allocator, "{f}", .{fun.fmt.formatJSONStringUTF8(record.original_path, .{})}), allocator);
                 }
 
                 // Add "external": true for external imports
@@ -341,7 +341,7 @@ pub fn generate(
 }
 
 fn writeJSONString(writer: anytype, str: []const u8) !void {
-    try writer.print("{f}", .{bun.fmt.formatJSONStringUTF8(str, .{})});
+    try writer.print("{f}", .{fun.fmt.formatJSONStringUTF8(str, .{})});
 }
 
 /// Generates a markdown visualization of the module graph from metafile JSON.
@@ -394,7 +394,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
 
     // Build a map of module path -> bytesInOutput (bytes contributed to output)
     // This aggregates from all outputs since a module may appear in multiple chunks
-    var bytes_in_output = bun.StringHashMap(u64).init(allocator);
+    var bytes_in_output = fun.StringHashMap(u64).init(allocator);
     defer bytes_in_output.deinit();
 
     // First pass through outputs to collect bytesInOutput for each module
@@ -440,7 +440,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
     var input_files: std.ArrayListUnmanaged(InputFileInfo) = .{};
     defer input_files.deinit(allocator);
 
-    var imported_by = bun.StringHashMap(std.ArrayListUnmanaged([]const u8)).init(allocator);
+    var imported_by = fun.StringHashMap(std.ArrayListUnmanaged([]const u8)).init(allocator);
     defer {
         var it = imported_by.valueIterator();
         while (it.next()) |list| {
@@ -580,7 +580,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
     // Summary table
     try writer.writeAll("| Metric | Value |\n");
     try writer.writeAll("|--------|-------|\n");
-    try writer.print("| Total output size | {f} |\n", .{bun.fmt.size(total_output_bytes, .{})});
+    try writer.print("| Total output size | {f} |\n", .{fun.fmt.size(total_output_bytes, .{})});
     try writer.print("| Input modules | {d} |\n", .{inputs.object.count()});
     if (entry_point_count > 0) {
         try writer.print("| Entry points | {d} |\n", .{entry_point_count});
@@ -589,7 +589,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
         try writer.print("| Code-split chunks | {d} |\n", .{chunk_count});
     }
     if (node_modules_count > 0) {
-        try writer.print("| node_modules contribution | {d} files ({f}) |\n", .{ node_modules_count, bun.fmt.size(node_modules_bytes, .{}) });
+        try writer.print("| node_modules contribution | {d} files ({f}) |\n", .{ node_modules_count, fun.fmt.size(node_modules_bytes, .{}) });
     }
     if (esm_count > 0) try writer.print("| ESM modules | {d} |\n", .{esm_count});
     if (cjs_count > 0) try writer.print("| CommonJS modules | {d} |\n", .{cjs_count});
@@ -619,7 +619,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
         else
             0.0;
         try writer.print("| {f} | {d:.1}% | `{s}` | {s} |\n", .{
-            bun.fmt.size(info.bytes_in_output, .{}),
+            fun.fmt.size(info.bytes_in_output, .{}),
             pct,
             info.path,
             if (info.format.len > 0) info.format else "-",
@@ -657,7 +657,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
 
         if (output.object.get("bytes")) |bytes| {
             if (bytes == .integer) {
-                try writer.print("**Bundle size**: {f}\n", .{bun.fmt.size(@as(u64, @intCast(bytes.integer)), .{})});
+                try writer.print("**Bundle size**: {f}\n", .{fun.fmt.size(@as(u64, @intCast(bytes.integer)), .{})});
             }
         }
 
@@ -705,7 +705,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
                                         if (bytes == .integer) {
                                             try writer.print("- `{s}` ({f}, {s})\n", .{
                                                 path.string,
-                                                bun.fmt.size(@as(u64, @intCast(bytes.integer)), .{}),
+                                                fun.fmt.size(@as(u64, @intCast(bytes.integer)), .{}),
                                                 kind.string,
                                             });
                                             continue;
@@ -754,7 +754,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
                 const max_modules: usize = 15;
                 for (module_sizes.items, 0..) |ms, i| {
                     if (i >= max_modules) break;
-                    try writer.print("| {f} | `{s}` |\n", .{ bun.fmt.size(ms.bytes, .{}), ms.path });
+                    try writer.print("| {f} | `{s}` |\n", .{ fun.fmt.size(ms.bytes, .{}), ms.path });
                 }
                 if (module_sizes.items.len > max_modules) {
                     try writer.print("\n*...and {d} more modules*\n", .{module_sizes.items.len - max_modules});
@@ -845,7 +845,7 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
         // Show bytes contributed to output
         if (bytes_in_output.get(input_path)) |contrib| {
             if (contrib > 0) {
-                try writer.print("- **Output contribution**: {f}\n", .{bun.fmt.size(contrib, .{})});
+                try writer.print("- **Output contribution**: {f}\n", .{fun.fmt.size(contrib, .{})});
             }
         }
 
@@ -910,9 +910,9 @@ pub fn generateMarkdown(allocator: std.mem.Allocator, metafile_json: []const u8)
                         } else if (imported_contrib) |contrib| {
                             if (contrib > 0) {
                                 if (original) |orig| {
-                                    try writer.print("  - `{s}` ({s}, contributes {f}, specifier: `{s}`)\n", .{ path.string, kind.string, bun.fmt.size(contrib, .{}), orig });
+                                    try writer.print("  - `{s}` ({s}, contributes {f}, specifier: `{s}`)\n", .{ path.string, kind.string, fun.fmt.size(contrib, .{}), orig });
                                 } else {
-                                    try writer.print("  - `{s}` ({s}, contributes {f})\n", .{ path.string, kind.string, bun.fmt.size(contrib, .{}) });
+                                    try writer.print("  - `{s}` ({s}, contributes {f})\n", .{ path.string, kind.string, fun.fmt.size(contrib, .{}) });
                                 }
                             } else {
                                 if (original) |orig| {
@@ -1077,9 +1077,9 @@ fn stripParentRefs(path: []const u8) []const u8 {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const StringJoiner = bun.StringJoiner;
+const fun = @import("fun");
+const StringJoiner = fun.StringJoiner;
 
-const Chunk = bun.bundle_v2.Chunk;
-const Index = bun.bundle_v2.Index;
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const Chunk = fun.bundle_v2.Chunk;
+const Index = fun.bundle_v2.Index;
+const LinkerContext = fun.bundle_v2.LinkerContext;

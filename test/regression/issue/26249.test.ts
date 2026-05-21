@@ -1,9 +1,9 @@
-// https://github.com/oven-sh/bun/issues/26249
-// Test that bun:ffi's cc() respects C_INCLUDE_PATH and LIBRARY_PATH environment variables.
+// https://github.com/underdoc-org/fun/issues/26249
+// Test that fun:ffi's cc() respects C_INCLUDE_PATH and LIBRARY_PATH environment variables.
 // This is important for systems like NixOS where standard FHS paths don't exist.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir } from "harness";
 import path from "path";
 
 test.skipIf(isWindows)("cc() respects C_INCLUDE_PATH environment variable", async () => {
@@ -21,7 +21,7 @@ int get_magic() {
 }
 `,
     "test.js": `
-import { cc } from "bun:ffi";
+import { cc } from "fun:ffi";
 import path from "path";
 
 const {
@@ -40,11 +40,11 @@ console.log(get_magic());
   });
 
   // Run with C_INCLUDE_PATH set to our custom include directory
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
     cwd: String(dir),
     env: {
-      ...bunEnv,
+      ...funEnv,
       C_INCLUDE_PATH: path.join(String(dir), "custom_include"),
     },
     stdout: "pipe",
@@ -80,7 +80,7 @@ int get_sum() {
 }
 `,
     "test.js": `
-import { cc } from "bun:ffi";
+import { cc } from "fun:ffi";
 import path from "path";
 
 const {
@@ -102,11 +102,11 @@ console.log(get_sum());
   const include1 = path.join(String(dir), "include1");
   const include2 = path.join(String(dir), "include2");
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
     cwd: String(dir),
     env: {
-      ...bunEnv,
+      ...funEnv,
       C_INCLUDE_PATH: `${include1}:${include2}`,
     },
     stdout: "pipe",

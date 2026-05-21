@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import path from "node:path";
 
 // NodeHTTPResponse.setOnData used to take an unbalanced `this.ref()` and re-acquire the
@@ -7,9 +7,9 @@ import path from "node:path";
 // after the request body had finished. No code path released either ref, so the
 // NodeHTTPResponse leaked and `vm.active_tasks` never reached zero — the process hung.
 test("re-registering ondata after request body completes does not leak NodeHTTPResponse", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), path.join(import.meta.dir, "node-http-ondata-reregister-leak.fixture.js")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), path.join(import.meta.dir, "node-http-ondata-reregister-leak.fixture.js")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

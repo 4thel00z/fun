@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "fun:test";
 import { ConnectionType, createClient, ctx, isEnabled } from "../test-utils";
 
 describe.skipIf(!isEnabled)("Valkey: PING Command", () => {
@@ -35,7 +35,7 @@ describe.skipIf(!isEnabled)("Valkey: PING Command", () => {
 
       // redis ping always returns a string
       expect(result).toBeTypeOf("string");
-      expect(result).toBe("bun");
+      expect(result).toBe("fun");
     });
   });
 });

@@ -1,7 +1,7 @@
 const MySQLQuery = @This();
 
 #statement: ?*MySQLStatement = null,
-#query: bun.String,
+#query: fun.String,
 
 #status: Status,
 #flags: packed struct(u8) {
@@ -12,16 +12,16 @@ const MySQLQuery = @This();
     _padding: u3 = 0,
 },
 
-fn bind(this: *MySQLQuery, execute: *PreparedStatement.Execute, globalObject: *JSGlobalObject, binding_value: JSValue, columns_value: JSValue, roots: *bun.jsc.MarkedArgumentBuffer) AnyMySQLError.Error!void {
+fn bind(this: *MySQLQuery, execute: *PreparedStatement.Execute, globalObject: *JSGlobalObject, binding_value: JSValue, columns_value: JSValue, roots: *fun.jsc.MarkedArgumentBuffer) AnyMySQLError.Error!void {
     var iter = try QueryBindingIterator.init(binding_value, columns_value, globalObject);
 
     var i: u32 = 0;
-    var params = try bun.default_allocator.alloc(Value, execute.param_types.len);
+    var params = try fun.default_allocator.alloc(Value, execute.param_types.len);
     errdefer {
         for (params[0..i]) |*param| {
-            param.deinit(bun.default_allocator);
+            param.deinit(fun.default_allocator);
         }
-        bun.default_allocator.free(params);
+        fun.default_allocator.free(params);
     }
     while (try iter.next()) |js_value| {
         if (i >= params.len) {
@@ -57,7 +57,7 @@ fn bind(this: *MySQLQuery, execute: *PreparedStatement.Execute, globalObject: *J
 }
 
 fn bindAndExecute(this: *MySQLQuery, writer: anytype, statement: *MySQLStatement, globalObject: *JSGlobalObject, binding_value: JSValue, columns_value: JSValue) AnyMySQLError.Error!void {
-    bun.assertf(statement.params.len == statement.params_received and statement.statement_id > 0, "statement is not prepared", .{});
+    fun.assertf(statement.params.len == statement.params_received and statement.statement_id > 0, "statement is not prepared", .{});
     if (statement.signature.fields.len != statement.params.len) {
         return error.WrongNumberOfParametersProvided;
     }
@@ -77,7 +77,7 @@ fn bindAndExecute(this: *MySQLQuery, writer: anytype, statement: *MySQLStatement
         columns_value: JSValue,
         result: AnyMySQLError.Error!void,
 
-        pub fn run(ctx: *@This(), roots: *bun.jsc.MarkedArgumentBuffer) callconv(.c) void {
+        pub fn run(ctx: *@This(), roots: *fun.jsc.MarkedArgumentBuffer) callconv(.c) void {
             ctx.result = bindAndExecuteImpl(ctx.this, ctx.writer, ctx.statement, ctx.globalObject, ctx.binding_value, ctx.columns_value, roots);
         }
     };
@@ -90,11 +90,11 @@ fn bindAndExecute(this: *MySQLQuery, writer: anytype, statement: *MySQLStatement
         .columns_value = columns_value,
         .result = {},
     };
-    bun.jsc.MarkedArgumentBuffer.run(Ctx, &ctx, &Ctx.run);
+    fun.jsc.MarkedArgumentBuffer.run(Ctx, &ctx, &Ctx.run);
     return ctx.result;
 }
 
-fn bindAndExecuteImpl(this: *MySQLQuery, writer: anytype, statement: *MySQLStatement, globalObject: *JSGlobalObject, binding_value: JSValue, columns_value: JSValue, roots: *bun.jsc.MarkedArgumentBuffer) AnyMySQLError.Error!void {
+fn bindAndExecuteImpl(this: *MySQLQuery, writer: anytype, statement: *MySQLStatement, globalObject: *JSGlobalObject, binding_value: JSValue, columns_value: JSValue, roots: *fun.jsc.MarkedArgumentBuffer) AnyMySQLError.Error!void {
     var execute = PreparedStatement.Execute{
         .statement_id = statement.statement_id,
         .param_types = statement.signature.fields,
@@ -119,11 +119,11 @@ fn runSimpleQuery(this: *@This(), connection: *MySQLConnection) !void {
         // cannot execute query
         return;
     }
-    var query_str = this.#query.toUTF8(bun.default_allocator);
+    var query_str = this.#query.toUTF8(fun.default_allocator);
     defer query_str.deinit();
     const writer = connection.getWriter();
     if (this.#statement == null) {
-        const stmt = bun.new(MySQLStatement, .{
+        const stmt = fun.new(MySQLStatement, .{
             .signature = Signature.empty(),
             .status = .parsing,
             .ref_count = .initExactRefs(1),
@@ -142,11 +142,11 @@ fn runPreparedQuery(
     columns_value: JSValue,
     binding_value: JSValue,
 ) !void {
-    var query_str: ?bun.ZigString.Slice = null;
+    var query_str: ?fun.ZigString.Slice = null;
     defer if (query_str) |str| str.deinit();
 
     if (this.#statement == null) {
-        const query = this.#query.toUTF8(bun.default_allocator);
+        const query = this.#query.toUTF8(fun.default_allocator);
         query_str = query;
         var signature = Signature.generate(globalObject, query.slice(), binding_value, columns_value) catch |err| {
             if (!globalObject.hasException())
@@ -154,7 +154,7 @@ fn runPreparedQuery(
             return error.JSError;
         };
         errdefer signature.deinit();
-        const entry = connection.getStatementFromSignatureHash(bun.hash(signature.name)) catch |err| {
+        const entry = connection.getStatementFromSignatureHash(fun.hash(signature.name)) catch |err| {
             return globalObject.throwError(err, "failed to allocate statement");
         };
 
@@ -170,7 +170,7 @@ fn runPreparedQuery(
             signature.deinit();
             signature = Signature{};
         } else {
-            const stmt = bun.new(MySQLStatement, .{
+            const stmt = fun.new(MySQLStatement, .{
                 .signature = signature,
                 .ref_count = .initExactRefs(2),
                 .status = .pending,
@@ -207,7 +207,7 @@ fn runPreparedQuery(
             if (connection.canPrepareQuery()) {
                 debug("prepareRequest", .{});
                 const writer = connection.getWriter();
-                const query = query_str orelse this.#query.toUTF8(bun.default_allocator);
+                const query = query_str orelse this.#query.toUTF8(fun.default_allocator);
                 MySQLRequest.prepareRequest(query.slice(), MySQLConnection.Writer, writer) catch |err| {
                     return globalObject.throwError(err, "failed to prepare query");
                 };
@@ -218,8 +218,8 @@ fn runPreparedQuery(
 }
 
 /// Takes ownership of `query` (caller must have already ref'd it, e.g. via
-/// `JSValue.toBunString`). `cleanup()` will deref it exactly once.
-pub fn init(query: bun.String, bigint: bool, simple: bool) @This() {
+/// `JSValue.toFunString`). `cleanup()` will deref it exactly once.
+pub fn init(query: fun.String, bigint: bool, simple: bool) @This() {
     return .{
         .#query = query,
         .#status = .pending,
@@ -268,7 +268,7 @@ pub fn cleanup(this: *@This()) void {
     }
     var query = this.#query;
     defer query.deref();
-    this.#query = bun.String.empty;
+    this.#query = fun.String.empty;
 }
 
 pub inline fn isCompleted(this: *const @This()) bool {
@@ -316,7 +316,7 @@ pub inline fn getStatement(this: *const @This()) ?*MySQLStatement {
     return this.#statement;
 }
 
-const debug = bun.Output.scoped(.MySQLQuery, .visible);
+const debug = fun.Output.scoped(.MySQLQuery, .visible);
 
 const AnyMySQLError = @import("../../sql/mysql/protocol/AnyMySQLError.zig");
 const MySQLConnection = @import("./JSMySQLConnection.zig");
@@ -324,11 +324,11 @@ const MySQLRequest = @import("../../sql/mysql/MySQLRequest.zig");
 const MySQLStatement = @import("./MySQLStatement.zig");
 const PreparedStatement = @import("../../sql/mysql/protocol/PreparedStatement.zig");
 const Signature = @import("../../sql_jsc/mysql/protocol/Signature.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const QueryBindingIterator = @import("../../sql_jsc/shared/QueryBindingIterator.zig").QueryBindingIterator;
 const SQLQueryResultMode = @import("../../sql/shared/SQLQueryResultMode.zig").SQLQueryResultMode;
 const Status = @import("../../sql/mysql/QueryStatus.zig").Status;
 const Value = @import("../../sql/mysql/MySQLTypes.zig").Value;
 
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;

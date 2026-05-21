@@ -13,7 +13,7 @@
 #include <JavaScriptCore/JSMap.h>
 #include <JavaScriptCore/JSMapInlines.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -60,7 +60,7 @@ JSC_DEFINE_HOST_FUNCTION(jsNodePerformanceHooksHistogramProtoFuncRecord, (JSGlob
     }
 
     if (callFrame->argumentCount() < 1) {
-        Bun::ERR::MISSING_ARGS(scope, globalObject, "record requires at least one argument"_s);
+        Fun::ERR::MISSING_ARGS(scope, globalObject, "record requires at least one argument"_s);
         return {};
     }
 
@@ -72,12 +72,12 @@ JSC_DEFINE_HOST_FUNCTION(jsNodePerformanceHooksHistogramProtoFuncRecord, (JSGlob
         auto* bigInt = uncheckedDowncast<JSBigInt>(arg);
         value = JSBigInt::toBigInt64(bigInt);
     } else {
-        Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "value"_s, "number or BigInt"_s, arg);
+        Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "value"_s, "number or BigInt"_s, arg);
         return {};
     }
 
     if (value < 1) {
-        Bun::ERR::OUT_OF_RANGE(scope, globalObject, "value is out of range (must be >= 1)"_s);
+        Fun::ERR::OUT_OF_RANGE(scope, globalObject, "value is out of range (must be >= 1)"_s);
         return {};
     }
 
@@ -112,14 +112,14 @@ JSC_DEFINE_HOST_FUNCTION(jsNodePerformanceHooksHistogramProtoFuncAdd, (JSGlobalO
     }
 
     if (callFrame->argumentCount() < 1) {
-        Bun::ERR::MISSING_ARGS(scope, globalObject, "add requires at least one argument"_s);
+        Fun::ERR::MISSING_ARGS(scope, globalObject, "add requires at least one argument"_s);
         return {};
     }
 
     JSValue otherArg = callFrame->uncheckedArgument(0);
     JSNodePerformanceHooksHistogram* otherHistogram = dynamicDowncast<JSNodePerformanceHooksHistogram>(otherArg);
     if (!otherHistogram) [[unlikely]] {
-        Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "argument"_s, "Histogram"_s, otherArg);
+        Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "argument"_s, "Histogram"_s, otherArg);
         return {};
     }
 
@@ -144,14 +144,14 @@ JSC_DEFINE_HOST_FUNCTION(jsNodePerformanceHooksHistogramProtoFuncReset, (JSGloba
 
 static double toPercentile(JSC::ThrowScope& scope, JSGlobalObject* globalObject, JSValue value)
 {
-    Bun::V::validateNumber(scope, globalObject, value, "percentile"_s, jsNumber(0), jsNumber(100));
+    Fun::V::validateNumber(scope, globalObject, value, "percentile"_s, jsNumber(0), jsNumber(100));
     RETURN_IF_EXCEPTION(scope, {});
 
     // TODO: rewrite validateNumber to return the validated value.
     double percentile = value.toNumber(globalObject);
     scope.assertNoException();
     if (percentile <= 0 || percentile > 100 || std::isnan(percentile)) {
-        Bun::ERR::OUT_OF_RANGE(scope, globalObject, "percentile"_s, "> 0 && <= 100"_s, value);
+        Fun::ERR::OUT_OF_RANGE(scope, globalObject, "percentile"_s, "> 0 && <= 100"_s, value);
         return {};
     }
     return percentile;
@@ -168,7 +168,7 @@ JSC_DEFINE_HOST_FUNCTION(jsNodePerformanceHooksHistogramProtoFuncPercentile, (JS
     }
 
     if (callFrame->argumentCount() < 1) {
-        Bun::ERR::MISSING_ARGS(scope, globalObject, "percentile requires an argument"_s);
+        Fun::ERR::MISSING_ARGS(scope, globalObject, "percentile requires an argument"_s);
         return {};
     }
 
@@ -190,7 +190,7 @@ JSC_DEFINE_HOST_FUNCTION(jsNodePerformanceHooksHistogramProtoFuncPercentileBigIn
     }
 
     if (callFrame->argumentCount() < 1) {
-        Bun::ERR::MISSING_ARGS(scope, globalObject, "percentileBigInt requires an argument"_s);
+        Fun::ERR::MISSING_ARGS(scope, globalObject, "percentileBigInt requires an argument"_s);
         return {};
     }
 
@@ -487,7 +487,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunction_enableEventLoopDelay, (JSGlobalObject * glob
     histogram->reset();
 
     // Enable the event loop delay monitor in Timer.zig
-    Timer_enableEventLoopDelayMonitoring(bunVM(globalObject), JSValue::encode(histogram), resolution);
+    Timer_enableEventLoopDelayMonitoring(funVM(globalObject), JSValue::encode(histogram), resolution);
 
     RELEASE_AND_RETURN(scope, JSValue::encode(jsUndefined()));
 }
@@ -512,7 +512,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunction_disableEventLoopDelay, (JSGlobalObject * glo
     }
 
     // Call into Zig to disable monitoring
-    Timer_disableEventLoopDelayMonitoring(bunVM(globalObject));
+    Timer_disableEventLoopDelayMonitoring(funVM(globalObject));
 
     return JSValue::encode(jsUndefined());
 }
@@ -526,4 +526,4 @@ extern "C" void JSNodePerformanceHooksHistogram_recordDelay(JSC::EncodedJSValue 
     hist->record(delay_ns);
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -77,7 +77,7 @@ const CalcUnit = enum {
     sqrt,
     tan,
 
-    pub const Map = bun.ComptimeEnumMap(CalcUnit);
+    pub const Map = fun.ComptimeEnumMap(CalcUnit);
 };
 
 /// A mathematical expression used within the `calc()` function.
@@ -115,7 +115,7 @@ pub fn Calc(comptime V: type) type {
             return switch (this.*) {
                 .value => |v| {
                     return .{
-                        .value = bun.create(
+                        .value = fun.create(
                             allocator,
                             V,
                             if (needs_deepclone) v.deepClone(allocator) else v.*,
@@ -125,21 +125,21 @@ pub fn Calc(comptime V: type) type {
                 .number => this.*,
                 .sum => |sum| {
                     return .{ .sum = .{
-                        .left = bun.create(allocator, This, sum.left.deepClone(allocator)),
-                        .right = bun.create(allocator, This, sum.right.deepClone(allocator)),
+                        .left = fun.create(allocator, This, sum.left.deepClone(allocator)),
+                        .right = fun.create(allocator, This, sum.right.deepClone(allocator)),
                     } };
                 },
                 .product => |product| {
                     return .{
                         .product = .{
                             .number = product.number,
-                            .expression = bun.create(allocator, This, product.expression.deepClone(allocator)),
+                            .expression = fun.create(allocator, This, product.expression.deepClone(allocator)),
                         },
                     };
                 },
                 .function => |function| {
                     return .{
-                        .function = bun.create(
+                        .function = fun.create(
                             allocator,
                             MathFunction(V),
                             function.deepClone(allocator),
@@ -225,7 +225,7 @@ pub fn Calc(comptime V: type) type {
                     } },
                 },
                 Length => return .{ .result = Length{
-                    .calc = bun.create(allocator, Calc(Length), this),
+                    .calc = fun.create(allocator, Calc(Length), this),
                 } },
                 Percentage => return switch (this) {
                     .value => |v| .{ .result = v.* },
@@ -241,12 +241,12 @@ pub fn Calc(comptime V: type) type {
                         .location = css.SourceLocation{ .line = 0, .column = 0 },
                     } },
                 },
-                DimensionPercentage(LengthValue) => return .{ .result = DimensionPercentage(LengthValue){ .calc = bun.create(
+                DimensionPercentage(LengthValue) => return .{ .result = DimensionPercentage(LengthValue){ .calc = fun.create(
                     allocator,
                     Calc(DimensionPercentage(LengthValue)),
                     this,
                 ) } },
-                DimensionPercentage(Angle) => return .{ .result = DimensionPercentage(Angle){ .calc = bun.create(
+                DimensionPercentage(Angle) => return .{ .result = DimensionPercentage(Angle){ .calc = fun.create(
                     allocator,
                     Calc(DimensionPercentage(Angle)),
                     this,
@@ -257,7 +257,7 @@ pub fn Calc(comptime V: type) type {
 
         pub fn intoCalc(val: V, allocator: std.mem.Allocator) This {
             return switch (V) {
-                f32 => .{ .value = bun.create(allocator, f32, val) },
+                f32 => .{ .value = fun.create(allocator, f32, val) },
                 else => val.intoCalc(allocator),
             };
         }
@@ -286,15 +286,15 @@ pub fn Calc(comptime V: type) type {
             } else if (this == .function) {
                 return .{ .result = This{
                     .sum = .{
-                        .left = bun.create(allocator, This, this),
-                        .right = bun.create(allocator, This, rhs),
+                        .left = fun.create(allocator, This, this),
+                        .right = fun.create(allocator, This, rhs),
                     },
                 } };
             } else if (rhs == .function) {
                 return .{ .result = This{
                     .sum = .{
-                        .left = bun.create(allocator, This, this),
-                        .right = bun.create(allocator, This, rhs),
+                        .left = fun.create(allocator, This, this),
+                        .right = fun.create(allocator, This, rhs),
                     },
                 } };
             } else {
@@ -347,7 +347,7 @@ pub fn Calc(comptime V: type) type {
                     };
                     if (calc == .value or calc == .number) return .{ .result = calc };
                     return .{ .result = This{
-                        .function = bun.create(
+                        .function = fun.create(
                             input.allocator(),
                             MathFunction(V),
                             MathFunction(V){ .calc = calc },
@@ -378,7 +378,7 @@ pub fn Calc(comptime V: type) type {
                         return .{ .result = reduced.swapRemove(0) };
                     }
                     return .{ .result = This{
-                        .function = bun.create(
+                        .function = fun.create(
                             input.allocator(),
                             MathFunction(V),
                             MathFunction(V){ .min = reduced },
@@ -407,7 +407,7 @@ pub fn Calc(comptime V: type) type {
                         return .{ .result = reduced.orderedRemove(0) };
                     }
                     return .{ .result = This{
-                        .function = bun.create(
+                        .function = fun.create(
                             input.allocator(),
                             MathFunction(V),
                             MathFunction(V){ .max = reduced },
@@ -476,7 +476,7 @@ pub fn Calc(comptime V: type) type {
                     return .{ .result = switch (switch_val) {
                         0b00 => center,
                         0b10 => This{
-                            .function = bun.create(
+                            .function = fun.create(
                                 input.allocator(),
                                 MathFunction(V),
                                 MathFunction(V){
@@ -489,7 +489,7 @@ pub fn Calc(comptime V: type) type {
                             ),
                         },
                         0b01 => This{
-                            .function = bun.create(
+                            .function = fun.create(
                                 input.allocator(),
                                 MathFunction(V),
                                 MathFunction(V){
@@ -502,7 +502,7 @@ pub fn Calc(comptime V: type) type {
                             ),
                         },
                         0b11 => This{
-                            .function = bun.create(
+                            .function = fun.create(
                                 input.allocator(),
                                 MathFunction(V),
                                 MathFunction(V){
@@ -654,7 +654,7 @@ pub fn Calc(comptime V: type) type {
                             };
                             if (css.generic.tryFromAngle(V, res)) |v| {
                                 return .{ .result = This{
-                                    .value = bun.create(
+                                    .value = fun.create(
                                         i.allocator(),
                                         V,
                                         v,
@@ -685,7 +685,7 @@ pub fn Calc(comptime V: type) type {
                             };
 
                             return .{ .result = This{
-                                .number = bun.powf(a, b),
+                                .number = fun.powf(a, b),
                             } };
                         }
                     };
@@ -735,7 +735,7 @@ pub fn Calc(comptime V: type) type {
                             if (val) |v| return .{ .result = v };
 
                             return .{ .result = This{
-                                .function = bun.create(
+                                .function = fun.create(
                                     i.allocator(),
                                     MathFunction(V),
                                     MathFunction(V){ .hypot = args },
@@ -760,7 +760,7 @@ pub fn Calc(comptime V: type) type {
                             };
                             return .{
                                 .result = if (This.applyMap(&v, i.allocator(), absf)) |vv| vv else This{
-                                    .function = bun.create(
+                                    .function = fun.create(
                                         i.allocator(),
                                         MathFunction(V),
                                         MathFunction(V){ .abs = v },
@@ -794,7 +794,7 @@ pub fn Calc(comptime V: type) type {
                                         // sign() alwasy resolves to a number.
                                         return .{
                                             .result = This{
-                                                // .number = css.generic.trySign(V, &new_v) orelse bun.unreachablePanic("sign always resolved to a number.", .{}),
+                                                // .number = css.generic.trySign(V, &new_v) orelse fun.unreachablePanic("sign always resolved to a number.", .{}),
                                                 .number = css.generic.trySign(V, &new_v) orelse @panic("sign() always resolves to a number."),
                                             },
                                         };
@@ -804,7 +804,7 @@ pub fn Calc(comptime V: type) type {
                             }
 
                             return .{ .result = This{
-                                .function = bun.create(
+                                .function = fun.create(
                                     i.allocator(),
                                     MathFunction(V),
                                     MathFunction(V){ .sign = v },
@@ -859,7 +859,7 @@ pub fn Calc(comptime V: type) type {
             };
 
             const val = This.applyOp(&a, &b, input.allocator(), ctx_for_op_and_fallback, op) orelse This{
-                .function = bun.create(
+                .function = fun.create(
                     input.allocator(),
                     MathFunction(V),
                     fallback(ctx_for_op_and_fallback, a, b),
@@ -1034,7 +1034,7 @@ pub fn Calc(comptime V: type) type {
                 .err => |e| return .{ .err = e },
             };
             return .{ .result = .{
-                .value = bun.create(
+                .value = fun.create(
                     input.allocator(),
                     V,
                     value,
@@ -1097,7 +1097,7 @@ pub fn Calc(comptime V: type) type {
                     if (this.to_angle and !std.math.isNan(rad)) {
                         if (css.generic.tryFromAngle(V, .{ .rad = rad })) |val| {
                             return .{ .result = .{
-                                .value = bun.create(
+                                .value = fun.create(
                                     i.allocator(),
                                     V,
                                     val,
@@ -1269,7 +1269,7 @@ pub fn Calc(comptime V: type) type {
             for (args.items[i..]) |*arg| {
                 const Fn = struct {
                     pub fn applyOpFn(_: void, a: f32, b: f32) f32 {
-                        return a + bun.powf(b, 2);
+                        return a + fun.powf(b, 2);
                     }
                 };
                 sum = This.applyOp(&sum, arg, allocator, {}, Fn.applyOpFn) orelse {
@@ -1293,7 +1293,7 @@ pub fn Calc(comptime V: type) type {
             if (a.* == .value and b.* == .value) {
                 if (css.generic.tryOp(V, a.value, b.value, ctx, op)) |v| {
                     return This{
-                        .value = bun.create(
+                        .value = fun.create(
                             allocator,
                             V,
                             v,
@@ -1318,7 +1318,7 @@ pub fn Calc(comptime V: type) type {
                 .value => |v| {
                     if (css.generic.tryMap(V, v, op)) |new_v| {
                         return This{
-                            .value = bun.create(
+                            .value = fun.create(
                                 allocator,
                                 V,
                                 new_v,
@@ -1402,16 +1402,16 @@ pub fn Calc(comptime V: type) type {
 
             return switch (this) {
                 // PERF: why not reuse the allocation here?
-                .value => This{ .value = bun.create(allocator, V, mulValueF32(this.value.*, allocator, other)) },
+                .value => This{ .value = fun.create(allocator, V, mulValueF32(this.value.*, allocator, other)) },
                 .number => This{ .number = this.number * other },
                 // PERF: why not reuse the allocation here?
                 .sum => This{ .sum = .{
-                    .left = bun.create(
+                    .left = fun.create(
                         allocator,
                         This,
                         this.sum.left.mulF32(allocator, other),
                     ),
-                    .right = bun.create(
+                    .right = fun.create(
                         allocator,
                         This,
                         this.sum.right.mulF32(allocator, other),
@@ -1432,7 +1432,7 @@ pub fn Calc(comptime V: type) type {
                 .function => switch (this.function.*) {
                     // PERF: why not reuse the allocation here?
                     .calc => This{
-                        .function = bun.create(
+                        .function = fun.create(
                             allocator,
                             MathFunction(V),
                             MathFunction(V){
@@ -1443,7 +1443,7 @@ pub fn Calc(comptime V: type) type {
                     else => This{
                         .product = .{
                             .number = other,
-                            .expression = bun.create(allocator, This, this),
+                            .expression = fun.create(allocator, This, this),
                         },
                     },
                 },
@@ -1492,7 +1492,7 @@ pub fn Calc(comptime V: type) type {
                         continue;
                     }
                 } else {
-                    bun.handleOom(reduced.append(allocator, arg.*));
+                    fun.handleOom(reduced.append(allocator, arg.*));
                     // set to dummy value since we moved it into `reduced`
                     arg.* = This{ .number = 420 };
                     continue;
@@ -1820,7 +1820,7 @@ fn arr2(allocator: std.mem.Allocator, a: anytype, b: anytype) ArrayList(@TypeOf(
         @compileError("arr2: types must match");
     }
     var arr = ArrayList(T){};
-    bun.handleOom(arr.appendSlice(allocator, &.{ a, b }));
+    fun.handleOom(arr.appendSlice(allocator, &.{ a, b }));
     return arr;
 }
 
@@ -1839,7 +1839,7 @@ fn hypot(_: void, a: f32, b: f32) f32 {
 }
 
 fn powi2(v: f32) f32 {
-    return bun.powf(v, 2);
+    return fun.powf(v, 2);
 }
 
 fn sqrtf32(v: f32) f32 {
@@ -1885,7 +1885,7 @@ fn absf(a: f32) f32 {
     return @abs(a);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

@@ -3,13 +3,13 @@
 To install dependencies:
 
 ```bash
-bun install
+fun install
 ```
 
-To run in Bun:
+To run in Fun:
 
 ```bash
-bun ./index.mjs
+fun ./index.mjs
 ```
 
 To run in Node.js:

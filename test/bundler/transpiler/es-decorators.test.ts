@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 // ES standard decorators are used for .js files (always) and for .ts files
 // when experimentalDecorators is NOT set in tsconfig.
@@ -20,9 +20,9 @@ async function runDecorator(code: string) {
     "test.js": code,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -383,9 +383,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test.js"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test.js"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });
@@ -410,9 +410,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });
@@ -437,9 +437,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });
@@ -489,9 +489,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "entry.js"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "entry.js"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });
@@ -517,9 +517,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "entry.js"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "entry.js"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });
@@ -545,9 +545,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "entry.js"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "entry.js"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });
@@ -574,9 +574,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });
@@ -602,9 +602,9 @@ describe("ES Decorators", () => {
         `,
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
       });

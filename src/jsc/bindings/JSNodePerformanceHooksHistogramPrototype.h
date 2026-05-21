@@ -3,7 +3,7 @@
 #include "root.h"
 #include "ZigGlobalObject.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -43,4 +43,4 @@ private:
     void finishCreation(JSC::VM& vm);
 };
 
-} // namespace Bun
+} // namespace Fun

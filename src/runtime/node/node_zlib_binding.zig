@@ -1,6 +1,6 @@
-const debug = bun.Output.scoped(.zlib, .hidden);
+const debug = fun.Output.scoped(.zlib, .hidden);
 
-pub fn crc32(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn crc32(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(2).ptr;
 
     const data: ZigString.Slice = blk: {
@@ -10,10 +10,10 @@ pub fn crc32(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
             return globalThis.throwInvalidArgumentTypeValue("data", "string or an instance of Buffer, TypedArray, or DataView", .js_undefined);
         }
         if (data.isString()) {
-            break :blk data.asString().toSlice(globalThis, bun.default_allocator);
+            break :blk data.asString().toSlice(globalThis, fun.default_allocator);
         }
         const buffer: Buffer = Buffer.fromJS(globalThis, data) orelse {
-            const ty_str = data.jsTypeString(globalThis).toSlice(globalThis, bun.default_allocator);
+            const ty_str = data.jsTypeString(globalThis).toSlice(globalThis, fun.default_allocator);
             defer ty_str.deinit();
             return globalThis.ERR(.INVALID_ARG_TYPE, "The \"data\" property must be an instance of Buffer, TypedArray, DataView, or ArrayBuffer. Received {s}", .{ty_str.slice()}).throw();
         };
@@ -44,12 +44,12 @@ pub fn crc32(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
 
     // crc32 returns a u64 but the data will always be within a u32 range so the outer @intCast is always safe.
     const slice_u8 = data.slice();
-    return jsc.JSValue.jsNumber(@as(u32, @intCast(bun.zlib.crc32(value, slice_u8.ptr, @intCast(slice_u8.len)))));
+    return jsc.JSValue.jsNumber(@as(u32, @intCast(fun.zlib.crc32(value, slice_u8.ptr, @intCast(slice_u8.len)))));
 }
 
 pub fn CompressionStream(comptime T: type) type {
     return struct {
-        pub fn write(this: *T, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn write(this: *T, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.argumentsUndef(7).slice();
 
             if (arguments.len != 7) {
@@ -70,7 +70,7 @@ pub fn CompressionStream(comptime T: type) type {
                 return globalThis.ERR(.INVALID_ARG_VALUE, "flush value is required", .{}).throw();
             }
             flush = arguments[0].toU32();
-            _ = std.meta.intToEnum(bun.zlib.FlushValue, flush) catch {
+            _ = std.meta.intToEnum(fun.zlib.FlushValue, flush) catch {
                 return globalThis.ERR(.INVALID_ARG_VALUE, "Invalid flush value", .{}).throw();
             };
 
@@ -117,7 +117,7 @@ pub fn CompressionStream(comptime T: type) type {
             // And make sure to clear it when we are done.
             this.this_value.set(globalThis, this_value);
 
-            const vm = globalThis.bunVM();
+            const vm = globalThis.funVM();
             this.task = .{ .callback = &AsyncJob.runTask };
             this.poll_ref.ref(vm);
             jsc.WorkPool.schedule(&this.task);
@@ -133,7 +133,7 @@ pub fn CompressionStream(comptime T: type) type {
 
             pub fn run(this: *T) void {
                 const globalThis: *jsc.JSGlobalObject = this.globalThis;
-                const vm = globalThis.bunVMConcurrently();
+                const vm = globalThis.funVMConcurrently();
 
                 this.stream.doWork();
 
@@ -143,7 +143,7 @@ pub fn CompressionStream(comptime T: type) type {
 
         pub fn runFromJSThread(this: *T) void {
             const global: *jsc.JSGlobalObject = this.globalThis;
-            const vm = global.bunVM();
+            const vm = global.funVM();
             defer this.deref();
             defer this.poll_ref.unref(vm);
 
@@ -172,7 +172,7 @@ pub fn CompressionStream(comptime T: type) type {
             if (this.pending_close) _ = closeInternal(this);
         }
 
-        pub fn writeSync(this: *T, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn writeSync(this: *T, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.argumentsUndef(7).slice();
 
             if (arguments.len != 7) {
@@ -191,7 +191,7 @@ pub fn CompressionStream(comptime T: type) type {
                 return globalThis.ERR(.INVALID_ARG_VALUE, "flush value is required", .{}).throw();
             }
             flush = arguments[0].toU32();
-            _ = std.meta.intToEnum(bun.zlib.FlushValue, flush) catch {
+            _ = std.meta.intToEnum(fun.zlib.FlushValue, flush) catch {
                 return globalThis.ERR(.INVALID_ARG_VALUE, "Invalid flush value", .{}).throw();
             };
 
@@ -267,7 +267,7 @@ pub fn CompressionStream(comptime T: type) type {
             }
         }
 
-        pub fn close(this: *T, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        pub fn close(this: *T, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             _ = globalThis;
             _ = callframe;
             closeInternal(this);
@@ -313,16 +313,16 @@ pub fn CompressionStream(comptime T: type) type {
             // runs doWork().
             this.write_in_progress = false;
 
-            var msg_str = bun.handleOom(bun.String.createFormat("{s}", .{std.mem.sliceTo(err_.msg, 0) orelse ""}));
+            var msg_str = fun.handleOom(fun.String.createFormat("{s}", .{std.mem.sliceTo(err_.msg, 0) orelse ""}));
             const msg_value = msg_str.transferToJS(globalThis) catch return;
             const err_value: jsc.JSValue = .jsNumber(err_.err);
-            var code_str = bun.handleOom(bun.String.createFormat("{s}", .{std.mem.sliceTo(err_.code, 0) orelse ""}));
+            var code_str = fun.handleOom(fun.String.createFormat("{s}", .{std.mem.sliceTo(err_.code, 0) orelse ""}));
             const code_value = code_str.transferToJS(globalThis) catch return;
 
             const callback: jsc.JSValue = T.js.errorCallbackGetCached(this_value) orelse
                 Output.panic("Assertion failure: cachedErrorCallback is null in node:zlib binding", .{});
 
-            const vm = globalThis.bunVM();
+            const vm = globalThis.funVM();
             vm.eventLoop().runCallback(callback, globalThis, this_value, &.{ msg_value, err_value, code_value });
 
             if (this.pending_reset) resetInternal(this, globalThis, this_value);
@@ -342,7 +342,7 @@ pub const NativeBrotli = jsc.Codegen.JSNativeBrotli.getConstructor;
 pub const NativeZstd = jsc.Codegen.JSNativeZstd.getConstructor;
 
 pub const CountedKeepAlive = struct {
-    keep_alive: bun.Async.KeepAlive = .{},
+    keep_alive: fun.Async.KeepAlive = .{},
     ref_count: u32 = 0,
 
     pub fn ref(this: *@This(), vm: *jsc.VirtualMachine) void {
@@ -388,9 +388,9 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Output = bun.Output;
-const Buffer = bun.api.node.Buffer;
+const fun = @import("fun");
+const Output = fun.Output;
+const Buffer = fun.api.node.Buffer;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ZigString = jsc.ZigString;

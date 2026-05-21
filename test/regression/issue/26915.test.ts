@@ -3,7 +3,7 @@ import { once } from "node:events";
 import http2 from "node:http2";
 import { test } from "node:test";
 
-// Regression test for https://github.com/oven-sh/bun/issues/26915
+// Regression test for https://github.com/underdoc-org/fun/issues/26915
 // setLocalWindowSize() must send a connection-level WINDOW_UPDATE frame.
 // Without this, the peer's connection-level window stays at the default
 // 65,535 bytes and streams stall when receiving larger payloads.

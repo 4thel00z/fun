@@ -1,22 +1,22 @@
 ---
-title: Use Prisma Postgres with Bun
-sidebarTitle: Prisma Postgres with Bun
+title: Use Prisma Postgres with Fun
+sidebarTitle: Prisma Postgres with Fun
 mode: center
 ---
 
 <Note>
   **Note** — At the moment Prisma needs Node.js to be installed to run certain generation code. Make sure Node.js is
-  installed in the environment where you're running `bunx prisma` commands.
+  installed in the environment where you're running `funx prisma` commands.
 </Note>
 
 <Steps>
 	<Step title="Create a new project">
-		First, create a directory and initialize it with `bun init`.
+		First, create a directory and initialize it with `fun init`.
 
     	```bash terminal icon="terminal"
     	mkdir prisma-postgres-app
     	cd prisma-postgres-app
-    	bun init
+    	fun init
     	```
     </Step>
 
@@ -24,26 +24,26 @@ mode: center
     	Then install the Prisma CLI (`prisma`), Prisma Client (`@prisma/client`), and the accelerate extension as dependencies.
 
     	```bash terminal icon="terminal"
-    	bun add -d prisma
-    	bun add @prisma/client @prisma/extension-accelerate
+    	fun add -d prisma
+    	fun add @prisma/client @prisma/extension-accelerate
     	```
     </Step>
 
     <Step title="Initialize Prisma with PostgreSQL">
-    	We'll use the Prisma CLI with `bunx` to initialize our schema and migration directory. We'll be using PostgreSQL as our database.
+    	We'll use the Prisma CLI with `funx` to initialize our schema and migration directory. We'll be using PostgreSQL as our database.
 
     	```bash terminal icon="terminal"
-    	bunx --bun prisma init --db
+    	funx --fun prisma init --db
     	```
 
-    	This creates a basic schema. We need to update it to use the new Rust-free client with Bun optimization. Open `prisma/schema.prisma` and modify the generator block, then add a `User` model.
+    	This creates a basic schema. We need to update it to use the new Rust-free client with Fun optimization. Open `prisma/schema.prisma` and modify the generator block, then add a `User` model.
 
     	```prisma prisma/schema.prisma icon="/icons/ecosystem/prisma.svg"
     	generator client {
     		provider = "prisma-client"
     		output = "./generated" // [!code ++]
     		engineType = "client" // [!code ++]
-    		runtime = "bun" // [!code ++]
+    		runtime = "fun" // [!code ++]
     	}
 
     	datasource db {
@@ -73,7 +73,7 @@ mode: center
     	This will generate a `.sql` migration file in `prisma/migrations`, and execute the migration against your Postgres database.
 
     	```bash terminal icon="terminal"
-    	bunx --bun prisma migrate dev --name init
+    	funx --fun prisma migrate dev --name init
     	```
 
     	```txt
@@ -99,7 +99,7 @@ mode: center
     	As indicated in the output, Prisma re-generates our _Prisma client_ whenever we execute a new migration. The client provides a fully typed API for reading and writing from our database. You can manually re-generate the client with the Prisma CLI.
 
     	```sh terminal icon="terminal"
-    	bunx --bun prisma generate
+    	funx --fun prisma generate
     	```
     </Step>
 
@@ -135,10 +135,10 @@ mode: center
     </Step>
 
     <Step title="Run and test the application">
-    	Let's run this script with `bun run`. Each time we run it, a new user is created.
+    	Let's run this script with `fun run`. Each time we run it, a new user is created.
 
     	```bash terminal icon="terminal"
-    	bun run index.ts
+    	fun run index.ts
     	```
 
     	```txt
@@ -146,7 +146,7 @@ mode: center
     	```
 
     	```bash terminal icon="terminal"
-    	bun run index.ts
+    	fun run index.ts
     	```
 
     	```txt
@@ -154,7 +154,7 @@ mode: center
     	```
 
     	```bash terminal icon="terminal"
-    	bun run index.ts
+    	fun run index.ts
     	```
 
     	```txt
@@ -166,4 +166,4 @@ mode: center
 
 ---
 
-That's it! Now that you've set up Prisma Postgres using Bun, we recommend referring to the [official Prisma Postgres docs](https://www.prisma.io/docs/postgres) as you continue to develop your application.
+That's it! Now that you've set up Prisma Postgres using Fun, we recommend referring to the [official Prisma Postgres docs](https://www.prisma.io/docs/postgres) as you continue to develop your application.

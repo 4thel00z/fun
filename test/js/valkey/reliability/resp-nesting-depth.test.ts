@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import net from "net";
 
 /**
@@ -99,7 +99,7 @@ describe("Valkey: RESP Nesting Depth Handling", () => {
 
     const { server, port } = await createMockRedisServer(deepPayload);
     try {
-      const client = new Bun.RedisClient(`redis://127.0.0.1:${port}`, {
+      const client = new Fun.RedisClient(`redis://127.0.0.1:${port}`, {
         autoReconnect: false,
         connectionTimeout: 2000,
       });
@@ -126,7 +126,7 @@ describe("Valkey: RESP Nesting Depth Handling", () => {
 
     const { server, port } = await createMockRedisServer(shallowPayload);
     try {
-      const client = new Bun.RedisClient(`redis://127.0.0.1:${port}`, {
+      const client = new Fun.RedisClient(`redis://127.0.0.1:${port}`, {
         autoReconnect: false,
         connectionTimeout: 2000,
       });
@@ -145,9 +145,9 @@ describe("Valkey: RESP Nesting Depth Handling", () => {
 
   test("should not crash the process on extremely deep nesting", async () => {
     // Run in a subprocess to verify the process doesn't crash (e.g. SIGSEGV)
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         import net from "net";
@@ -201,7 +201,7 @@ describe("Valkey: RESP Nesting Depth Handling", () => {
         server.listen(0, "127.0.0.1", async () => {
           const port = server.address().port;
           try {
-            const client = new Bun.RedisClient("redis://127.0.0.1:" + port, {
+            const client = new Fun.RedisClient("redis://127.0.0.1:" + port, {
               autoReconnect: false,
               connectionTimeout: 2000,
             });
@@ -224,7 +224,7 @@ describe("Valkey: RESP Nesting Depth Handling", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
       stdout: "pipe",
     });

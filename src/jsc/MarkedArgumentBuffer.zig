@@ -9,11 +9,11 @@ pub const MarkedArgumentBuffer = opaque {
         MarkedArgumentBuffer__run(@ptrCast(ctx), @ptrCast(func));
     }
 
-    pub fn wrap(comptime function: *const fn (globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, marked_argument_buffer: *MarkedArgumentBuffer) bun.JSError!jsc.JSValue) jsc.JSHostFnZig {
+    pub fn wrap(comptime function: *const fn (globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, marked_argument_buffer: *MarkedArgumentBuffer) fun.JSError!jsc.JSValue) jsc.JSHostFnZig {
         return struct {
-            pub fn wrapper(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+            pub fn wrapper(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
                 const Context = struct {
-                    result: bun.JSError!jsc.JSValue,
+                    result: fun.JSError!jsc.JSValue,
                     globalThis: *jsc.JSGlobalObject,
                     callframe: *jsc.CallFrame,
                     pub fn run(this: *@This(), marked_argument_buffer: *MarkedArgumentBuffer) callconv(.c) void {
@@ -33,7 +33,7 @@ pub const MarkedArgumentBuffer = opaque {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

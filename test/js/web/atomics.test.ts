@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("Atomics", () => {
   describe("basic operations", () => {
@@ -245,8 +245,8 @@ describe("Atomics", () => {
   });
 
   describe("error cases", () => {
-    test("works on regular ArrayBuffer in Bun", () => {
-      // Note: Bun allows Atomics on regular ArrayBuffer, unlike some other engines
+    test("works on regular ArrayBuffer in Fun", () => {
+      // Note: Fun allows Atomics on regular ArrayBuffer, unlike some other engines
       const buffer = new ArrayBuffer(16);
       const view = new Int32Array(buffer);
 

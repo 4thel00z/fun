@@ -62,14 +62,14 @@ if ($debug) {
 
 // TODO:
 // Port rest of node tests
-// Fix exit codes with Bun.spawn
+// Fix exit codes with Fun.spawn
 // ------------------------------
 // Fix errors
 // Support file descriptors being passed in for stdio
 // ------------------------------
 // TODO: Look at Pipe to see if we can support passing Node Pipe objects to stdio param
 
-// TODO: Add these params after support added in Bun.spawn
+// TODO: Add these params after support added in Fun.spawn
 // uid <number> Sets the user identity of the process (see setuid(2)).
 // gid <number> Sets the group identity of the process (see setgid(2)).
 
@@ -506,14 +506,14 @@ function spawnSync(file, args, options) {
   options.killSignal = sanitizeKillSignal(options.killSignal);
 
   const stdio = options.stdio || "pipe";
-  const bunStdio = getBunStdioFromOptions(stdio);
+  const funStdio = getFunStdioFromOptions(stdio);
 
   var { input } = options;
   if (input) {
     if (ArrayBufferIsView(input)) {
-      bunStdio[0] = input;
+      funStdio[0] = input;
     } else if (typeof input === "string") {
-      bunStdio[0] = Buffer.from(input, encoding || "utf8");
+      funStdio[0] = Buffer.from(input, encoding || "utf8");
     } else {
       throw $ERR_INVALID_ARG_TYPE(`options.stdio[0]`, ["string", "Buffer", "TypedArray", "DataView"], input);
     }
@@ -529,14 +529,14 @@ function spawnSync(file, args, options) {
       exitedDueToTimeout,
       exitedDueToMaxBuffer,
       pid,
-    } = Bun.spawnSync({
+    } = Fun.spawnSync({
       // normalizeSpawnargs has already prepended argv0 to the spawnargs array
-      // Bun.spawn() expects cmd[0] to be the command to run, and argv0 to replace the first arg when running the command,
+      // Fun.spawn() expects cmd[0] to be the command to run, and argv0 to replace the first arg when running the command,
       // so we have to set argv0 to spawnargs[0] and cmd[0] to file
       cmd: [options.file, ...Array.prototype.slice.$call(options.args, 1)],
       env: options.env || undefined,
       cwd: options.cwd || undefined,
-      stdio: bunStdio,
+      stdio: funStdio,
       windowsVerbatimArguments: options.windowsVerbatimArguments,
       windowsHide: options.windowsHide,
       argv0: options.args[0],
@@ -550,7 +550,7 @@ function spawnSync(file, args, options) {
     stderr = null;
   }
 
-  // When stdio is redirected to a file descriptor, Bun.spawnSync returns the fd number
+  // When stdio is redirected to a file descriptor, Fun.spawnSync returns the fd number
   // instead of the actual output. We should treat this as no output available.
   const outputStdout = typeof stdout === "number" ? null : stdout;
   const outputStderr = typeof stderr === "number" ? null : stderr;
@@ -558,7 +558,7 @@ function spawnSync(file, args, options) {
   const result = {
     signal: signalCode ?? null,
     status: exitCode,
-    // TODO: Need to expose extra pipes from Bun.spawnSync to child_process
+    // TODO: Need to expose extra pipes from Fun.spawnSync to child_process
     output: [null, outputStdout, outputStderr],
     pid,
   };
@@ -864,7 +864,7 @@ function normalizeExecArgs(command, options, callback) {
   };
 }
 
-const kBunEnv = Symbol("bunEnv");
+const kFunEnv = Symbol("funEnv");
 function normalizeSpawnArguments(file, args, options) {
   validateString(file, "file");
   validateArgumentNullCheck(file, "file");
@@ -962,7 +962,7 @@ function normalizeSpawnArguments(file, args, options) {
   }
 
   const env = options.env || process.env;
-  const bunEnv = {};
+  const funEnv = {};
 
   // // process.env.NODE_V8_COVERAGE always propagates, making it possible to
   // // collect coverage for programs that spawn with white-listed environment.
@@ -991,7 +991,7 @@ function normalizeSpawnArguments(file, args, options) {
     if (value !== undefined) {
       validateArgumentNullCheck(key, `options.env['${key}']`);
       validateArgumentNullCheck(value, `options.env['${key}']`);
-      bunEnv[key] = value;
+      funEnv[key] = value;
     }
   }
 
@@ -1003,7 +1003,7 @@ function normalizeSpawnArguments(file, args, options) {
     cwd,
 
     detached: !!options.detached,
-    [kBunEnv]: bunEnv,
+    [kFunEnv]: funEnv,
     file,
     windowsHide: !!options.windowsHide,
     windowsVerbatimArguments: !!windowsVerbatimArguments,
@@ -1083,13 +1083,13 @@ class ChildProcess extends EventEmitter {
         stderr = this.#stderr;
 
       if (stdout === undefined) {
-        this.#stdout = this.#getBunSpawnIo(1, this.#encoding, true);
+        this.#stdout = this.#getFunSpawnIo(1, this.#encoding, true);
       } else if (stdout && this.#stdioOptions[1] === "pipe" && !stdout?.destroyed) {
         stdout.resume?.();
       }
 
       if (stderr === undefined) {
-        this.#stderr = this.#getBunSpawnIo(2, this.#encoding, true);
+        this.#stderr = this.#getFunSpawnIo(2, this.#encoding, true);
       } else if (stderr && this.#stdioOptions[2] === "pipe" && !stderr?.destroyed) {
         stderr.resume?.();
       }
@@ -1121,12 +1121,12 @@ class ChildProcess extends EventEmitter {
     this.#maybeClose();
   }
 
-  #getBunSpawnIo(i, encoding, autoResume = false) {
+  #getFunSpawnIo(i, encoding, autoResume = false) {
     if ($debug && !this.#handle) {
       if (this.#handle === null) {
-        $debug("ChildProcess: getBunSpawnIo: this.#handle is null. This means the subprocess already exited");
+        $debug("ChildProcess: getFunSpawnIo: this.#handle is null. This means the subprocess already exited");
       } else {
-        $debug("ChildProcess: getBunSpawnIo: this.#handle is undefined");
+        $debug("ChildProcess: getFunSpawnIo: this.#handle is undefined");
       }
     }
 
@@ -1254,7 +1254,7 @@ class ChildProcess extends EventEmitter {
           result[i] = this.stderr;
           continue;
         default:
-          result[i] = this.#getBunSpawnIo(i, this.#encoding, false);
+          result[i] = this.#getFunSpawnIo(i, this.#encoding, false);
           continue;
       }
     }
@@ -1262,15 +1262,15 @@ class ChildProcess extends EventEmitter {
   }
 
   get stdin() {
-    return (this.#stdin ??= this.#getBunSpawnIo(0, this.#encoding, false));
+    return (this.#stdin ??= this.#getFunSpawnIo(0, this.#encoding, false));
   }
 
   get stdout() {
-    return (this.#stdout ??= this.#getBunSpawnIo(1, this.#encoding, false));
+    return (this.#stdout ??= this.#getFunSpawnIo(1, this.#encoding, false));
   }
 
   get stderr() {
-    return (this.#stderr ??= this.#getBunSpawnIo(2, this.#encoding, false));
+    return (this.#stderr ??= this.#getFunSpawnIo(2, this.#encoding, false));
   }
 
   get stdio() {
@@ -1294,7 +1294,7 @@ class ChildProcess extends EventEmitter {
     const serialization = options.serialization || "json";
 
     const stdio = options.stdio || ["pipe", "pipe", "pipe"];
-    const bunStdio = getBunStdioFromOptions(stdio);
+    const funStdio = getFunStdioFromOptions(stdio);
 
     const has_ipc = $isJSArray(stdio) && stdio.includes("ipc");
 
@@ -1305,11 +1305,11 @@ class ChildProcess extends EventEmitter {
       }
     }
 
-    var env = options[kBunEnv] || parseEnvPairs(options.envPairs) || process.env;
+    var env = options[kFunEnv] || parseEnvPairs(options.envPairs) || process.env;
 
     const detachedOption = options.detached;
     this.#encoding = options.encoding || undefined;
-    this.#stdioOptions = bunStdio;
+    this.#stdioOptions = funStdio;
     const stdioCount = stdio.length;
     const hasSocketsToEagerlyLoad = stdioCount >= 3;
 
@@ -1326,13 +1326,13 @@ class ChildProcess extends EventEmitter {
       spawnargs = this.spawnargs = options.args;
     }
     // normalizeSpawnargs has already prepended argv0 to the spawnargs array
-    // Bun.spawn() expects cmd[0] to be the command to run, and argv0 to replace the first arg when running the command,
+    // Fun.spawn() expects cmd[0] to be the command to run, and argv0 to replace the first arg when running the command,
     // so we have to set argv0 to spawnargs[0] and cmd[0] to file
 
     try {
-      this.#handle = Bun.spawn({
+      this.#handle = Fun.spawn({
         cmd: [file, ...Array.prototype.slice.$call(spawnargs, 1)],
-        stdio: bunStdio,
+        stdio: funStdio,
         cwd: options.cwd || undefined,
         env: env,
         detached: typeof detachedOption !== "undefined" ? !!detachedOption : false,
@@ -1523,7 +1523,7 @@ class ChildProcess extends EventEmitter {
     Object.defineProperties(this.prototype, {
       stdin: {
         get: function () {
-          const value = (this.#stdin ??= this.#getBunSpawnIo(0, this.#encoding, false));
+          const value = (this.#stdin ??= this.#getFunSpawnIo(0, this.#encoding, false));
           // Define as own enumerable property on first access
           Object.defineProperty(this, "stdin", {
             value: value,
@@ -1538,7 +1538,7 @@ class ChildProcess extends EventEmitter {
       },
       stdout: {
         get: function () {
-          const value = (this.#stdout ??= this.#getBunSpawnIo(1, this.#encoding, false));
+          const value = (this.#stdout ??= this.#getFunSpawnIo(1, this.#encoding, false));
           // Define as own enumerable property on first access
           Object.defineProperty(this, "stdout", {
             value: value,
@@ -1553,7 +1553,7 @@ class ChildProcess extends EventEmitter {
       },
       stderr: {
         get: function () {
-          const value = (this.#stderr ??= this.#getBunSpawnIo(2, this.#encoding, false));
+          const value = (this.#stderr ??= this.#getFunSpawnIo(2, this.#encoding, false));
           // Define as own enumerable property on first access
           Object.defineProperty(this, "stderr", {
             value: value,
@@ -1588,7 +1588,7 @@ class ChildProcess extends EventEmitter {
 //------------------------------------------------------------------------------
 // Section 4. ChildProcess helpers
 //------------------------------------------------------------------------------
-const nodeToBunLookup = {
+const nodeToFunLookup = {
   ignore: null,
   pipe: "pipe",
   overlapped: "pipe", // TODO: this may need to work differently for Windows
@@ -1596,7 +1596,7 @@ const nodeToBunLookup = {
   ipc: "ipc",
 };
 
-function nodeToBun(item: string, index: number): string | number | null | NodeJS.TypedArray | ArrayBufferView {
+function nodeToFun(item: string, index: number): string | number | null | NodeJS.TypedArray | ArrayBufferView {
   // If not defined, use the default.
   // For stdin/stdout/stderr, it's pipe. For others, it's ignore.
   if (item == null) {
@@ -1617,7 +1617,7 @@ function nodeToBun(item: string, index: number): string | number | null | NodeJS
     if (item._handle && typeof item._handle.fd === "number") return item._handle.fd;
     throw new Error(`TODO: stream.Writable stdio @ ${index}`);
   }
-  const result = nodeToBunLookup[item];
+  const result = nodeToFunLookup[item];
   if (result === undefined) {
     throw new Error(`Invalid stdio option[${index}] "${item}"`);
   }
@@ -1665,7 +1665,7 @@ function fdToStdioName(fd: number) {
   }
 }
 
-function getBunStdioFromOptions(stdio) {
+function getFunStdioFromOptions(stdio) {
   const normalizedStdio = normalizeStdio(stdio);
   if (normalizedStdio.filter(v => v === "ipc").length > 1) throw $ERR_IPC_ONE_PIPE();
   // Node options:
@@ -1673,25 +1673,25 @@ function getBunStdioFromOptions(stdio) {
   // ipc = can only be one in array
   // overlapped -- same as pipe on Unix based systems
   // inherit -- 'inherit': equivalent to ['inherit', 'inherit', 'inherit'] or [0, 1, 2]
-  // ignore -- > /dev/null, more or less same as null option for Bun.spawn stdio
+  // ignore -- > /dev/null, more or less same as null option for Fun.spawn stdio
   // TODO: Stream -- use this stream
   // number -- used as FD
-  // null, undefined: Use default value. Not same as ignore, which is Bun.spawn null.
+  // null, undefined: Use default value. Not same as ignore, which is Fun.spawn null.
   // null/undefined: For stdio fds 0, 1, and 2 (in other words, stdin, stdout, and stderr) a pipe is created. For fd 3 and up, the default is 'ignore'
 
-  // Important Bun options
+  // Important Fun options
   // pipe
   // fd
   // null - no stdin/stdout/stderr
 
-  // Translations: node -> bun
+  // Translations: node -> fun
   // pipe -> pipe
   // overlapped -> pipe
   // ignore -> null
   // inherit -> inherit (stdin/stdout/stderr)
   // Stream -> throw err for now
-  const bunStdio = normalizedStdio.map(nodeToBun);
-  return bunStdio;
+  const funStdio = normalizedStdio.map(nodeToFun);
+  return funStdio;
 }
 
 function normalizeStdio(stdio): string[] {
@@ -1823,7 +1823,7 @@ function isURLInstance(fileURLOrPath) {
 
 function toPathIfFileURL(fileURLOrPath) {
   if (!isURLInstance(fileURLOrPath)) return fileURLOrPath;
-  return Bun.fileURLToPath(fileURLOrPath);
+  return Fun.fileURLToPath(fileURLOrPath);
 }
 
 //------------------------------------------------------------------------------

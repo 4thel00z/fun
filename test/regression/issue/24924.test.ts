@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import * as http2 from "http2";
 
 test("Http2Server.setTimeout returns server instance for method chaining", () => {

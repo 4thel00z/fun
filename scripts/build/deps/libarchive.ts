@@ -1,7 +1,7 @@
 /**
- * libarchive — multi-format archive reader/writer. Bun uses it for tarball
- * extraction during `bun install` (npm packages ship as tarballs) and
- * `bun pm pack`.
+ * libarchive — multi-format archive reader/writer. Fun uses it for tarball
+ * extraction during `fun install` (npm packages ship as tarballs) and
+ * `fun pm pack`.
  *
  * Minimal config: tar + gzip only. Every other codec backend (bz2/lzma/lz4/
  * zstd/openssl/iconv/...) is left out of config.h, so the corresponding
@@ -11,7 +11,7 @@
  * to fill in config.h. We replace it with a static per-target header and
  * compile the source list straight into our ninja graph. Side benefit:
  * the cmake build was non-hermetic — it would detect host libacl/libmd
- * and emit references bun never links. The hand-written config.h omits
+ * and emit references fun never links. The hand-written config.h omits
  * those entirely.
  */
 
@@ -24,7 +24,7 @@ const LIBARCHIVE_COMMIT = "ded82291ab41d5e355831b96b0e1ff49e24d8939";
 // The unconditional list from libarchive/CMakeLists.txt + the two blake2
 // reference impls (added when libb2 isn't linked, which it never is here).
 // All formats/filters compile even though most are stubbed at runtime —
-// bun's bindings call archive_read_support_{format,filter}_all, which
+// fun's bindings call archive_read_support_{format,filter}_all, which
 // reference every registration symbol.
 // prettier-ignore
 const SOURCES = [
@@ -105,13 +105,13 @@ export const libarchive: Dependency = {
     "patches/libarchive/archive_write_add_filter_gzip.c.patch",
     // Propagate ARCHIVE_RETRY from the client read callback up through
     // the gzip filter and tar reader so the worker-thread extract loop
-    // in `bun install` can yield and resume as HTTP chunks arrive. See
+    // in `fun install` can yield and resume as HTTP chunks arrive. See
     // src/install/TarballStream.zig.
     "patches/libarchive/nonblocking-read.patch",
   ],
 
   // zlib-ng generates zlib.h during its own build; libarchive's gzip filter
-  // includes it. We don't link zlib here (bun's final link does), just need
+  // includes it. We don't link zlib here (fun's final link does), just need
   // the header on -I.
   fetchDeps: ["zlib"],
 
@@ -160,7 +160,7 @@ export const libarchive: Dependency = {
 //     LIBB2}_H — codecs we don't ship.
 //   - HAVE_LIB{ACL,ATTR,MD} / ARCHIVE_ACL_* / ARCHIVE_CRYPTO_* — the cmake
 //     build would pick these up if dev headers happen to be installed,
-//     producing a non-hermetic binary. Bun never calls the ACL/digest entry
+//     producing a non-hermetic binary. Fun never calls the ACL/digest entry
 //     points, so the extra code was dead-stripped anyway.
 //
 // If a libarchive bump adds a new HAVE_* check, the worst case is a missed
@@ -246,7 +246,7 @@ const FREEBSD = def1([
 
 // prettier-ignore
 const DARWIN = def1([
-  // arc4random_buf: BSD libc + glibc≥2.36 only. Bun's Linux CI targets
+  // arc4random_buf: BSD libc + glibc≥2.36 only. Fun's Linux CI targets
   // older glibc, so Linux falls back to /dev/urandom.
   "HAVE_ARC4RANDOM_BUF",
   "HAVE_SYS_XATTR_H", "HAVE_COPYFILE_H",

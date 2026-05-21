@@ -1,4 +1,4 @@
-// @runtime node, bun, deno
+// @runtime node, fun, deno
 import { Buffer } from "node:buffer";
 import { openSync, writeSync as write } from "node:fs";
 import { writeFile } from "node:fs/promises";

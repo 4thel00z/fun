@@ -18,12 +18,12 @@ const QueuedDescribe = struct {
     }
 };
 
-pub fn init(gpa: std.mem.Allocator, bun_test_root: *bun_test.BunTestRoot) Collection {
+pub fn init(gpa: std.mem.Allocator, fun_test_root: *fun_test.FunTestRoot) Collection {
     group.begin(@src());
     defer group.end();
 
     const root_scope = DescribeScope.create(gpa, .{
-        .parent = bun_test_root.hook_scope,
+        .parent = fun_test_root.hook_scope,
         .name = null,
         .concurrent = false,
         .mode = .normal,
@@ -42,7 +42,7 @@ pub fn init(gpa: std.mem.Allocator, bun_test_root: *bun_test.BunTestRoot) Collec
     };
 }
 pub fn deinit(this: *Collection) void {
-    this.root_scope.destroy(this.bunTest().gpa);
+    this.root_scope.destroy(this.funTest().gpa);
     for (this.describe_callback_queue.items) |*item| {
         item.deinit();
     }
@@ -54,29 +54,29 @@ pub fn deinit(this: *Collection) void {
     this.filter_buffer.deinit();
 }
 
-fn bunTest(this: *Collection) *BunTest {
+fn funTest(this: *Collection) *FunTest {
     return @fieldParentPtr("collection", this);
 }
 
-pub fn enqueueDescribeCallback(this: *Collection, new_scope: *DescribeScope, callback: ?jsc.JSValue) bun.JSError!void {
+pub fn enqueueDescribeCallback(this: *Collection, new_scope: *DescribeScope, callback: ?jsc.JSValue) fun.JSError!void {
     group.begin(@src());
     defer group.end();
 
-    bun.assert(!this.locked);
-    const buntest = this.bunTest();
+    fun.assert(!this.locked);
+    const funtest = this.funTest();
 
     if (callback) |cb| {
         group.log("enqueueDescribeCallback / {s} / in scope: {s}", .{ new_scope.base.name orelse "(unnamed)", this.active_scope.base.name orelse "(unnamed)" });
 
         try this.current_scope_callback_queue.append(.{
             .active_scope = this.active_scope,
-            .callback = .init(buntest.gpa, cb),
+            .callback = .init(funtest.gpa, cb),
             .new_scope = new_scope,
         });
     }
 }
 
-pub fn runOneCompleted(this: *Collection, globalThis: *jsc.JSGlobalObject, _: ?jsc.JSValue, data: bun_test.BunTest.RefDataValue) bun.JSError!void {
+pub fn runOneCompleted(this: *Collection, globalThis: *jsc.JSGlobalObject, _: ?jsc.JSValue, data: fun_test.FunTest.RefDataValue) fun.JSError!void {
     group.begin(@src());
     defer group.end();
 
@@ -86,7 +86,7 @@ pub fn runOneCompleted(this: *Collection, globalThis: *jsc.JSGlobalObject, _: ?j
     const prev_scope: *DescribeScope = switch (data) {
         .collection => |c| c.active_scope,
         else => blk: {
-            bun.assert(false); // this probably can't happen
+            fun.assert(false); // this probably can't happen
             break :blk this.active_scope;
         },
     };
@@ -96,11 +96,11 @@ pub fn runOneCompleted(this: *Collection, globalThis: *jsc.JSGlobalObject, _: ?j
     group.log("collection:runOneCompleted reset scope back to {s}", .{this.active_scope.base.name orelse "undefined"});
 }
 
-pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject, data: bun_test.BunTest.RefDataValue) bun.JSError!bun_test.StepResult {
+pub fn step(funtest_strong: fun_test.FunTestPtr, globalThis: *jsc.JSGlobalObject, data: fun_test.FunTest.RefDataValue) fun.JSError!fun_test.StepResult {
     group.begin(@src());
     defer group.end();
-    const buntest = buntest_strong.get();
-    const this = &buntest.collection;
+    const funtest = funtest_strong.get();
+    const this = &funtest.collection;
 
     if (data != .start) try this.runOneCompleted(globalThis, null, data);
 
@@ -115,7 +115,7 @@ pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject
         if (item.new_scope.failed) { // if there was an error in the describe callback, don't run any describe callbacks in this scope
             item.deinit();
         } else {
-            bun.handleOom(this.describe_callback_queue.append(item.*));
+            fun.handleOom(this.describe_callback_queue.append(item.*));
         }
     }
     this.current_scope_callback_queue.clearRetainingCapacity();
@@ -137,11 +137,11 @@ pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject
         this.active_scope = new_scope;
         group.log("collection:runOne set scope to {s}", .{this.active_scope.base.name orelse "undefined"});
 
-        if (BunTest.runTestCallback(buntest_strong, globalThis, callback.get(), false, .{
+        if (FunTest.runTestCallback(funtest_strong, globalThis, callback.get(), false, .{
             .collection = .{ .active_scope = previous_scope },
         }, &.epoch)) |cfg_data| {
             // the result is available immediately; queue
-            buntest.addResult(cfg_data);
+            funtest.addResult(cfg_data);
         }
 
         return .{ .waiting = .{} };
@@ -149,7 +149,7 @@ pub fn step(buntest_strong: bun_test.BunTestPtr, globalThis: *jsc.JSGlobalObject
     return .complete;
 }
 
-pub fn handleUncaughtException(this: *Collection, _: bun_test.BunTest.RefDataValue) bun_test.HandleUncaughtExceptionResult {
+pub fn handleUncaughtException(this: *Collection, _: fun_test.FunTest.RefDataValue) fun_test.HandleUncaughtExceptionResult {
     group.begin(@src());
     defer group.end();
 
@@ -160,11 +160,11 @@ pub fn handleUncaughtException(this: *Collection, _: bun_test.BunTest.RefDataVal
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const bun_test = jsc.Jest.bun_test;
-const BunTest = bun_test.BunTest;
-const Collection = bun_test.Collection;
-const DescribeScope = bun_test.DescribeScope;
-const group = bun_test.debug.group;
+const fun_test = jsc.Jest.fun_test;
+const FunTest = fun_test.FunTest;
+const Collection = fun_test.Collection;
+const DescribeScope = fun_test.DescribeScope;
+const group = fun_test.debug.group;

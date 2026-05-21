@@ -1,10 +1,10 @@
 // @ts-nocheck
 // can't use @types/express or @types/body-parser because they
-// depend on @types/node which conflicts with bun-types
-import { expect, test } from "bun:test";
+// depend on @types/node which conflicts with fun-types
+import { expect, test } from "fun:test";
 import express from "express";
 import { isIPv6 } from "node:net";
-// https://github.com/oven-sh/bun/issues/8926
+// https://github.com/underdoc-org/fun/issues/8926
 test("should respond with 404 when wrong method is used", async () => {
   const { promise: serve, resolve } = Promise.withResolvers();
   const app = express();

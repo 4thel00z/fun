@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import { isWindows } from "harness";
 import { join } from "path";
 

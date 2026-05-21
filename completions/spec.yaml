@@ -1,5 +1,5 @@
 ---
-name: bun
+name: fun
 appspec: { version: "0.001" }
 plugins: [-Meta]
 title: A tool for installing and managing JavaScript packages
@@ -11,7 +11,7 @@ options:
     summary: "Change directory"
 
 # subcommands:
-#   bun:
+#   fun:
 
 subcommands:
   run:
@@ -21,7 +21,7 @@ subcommands:
         multiple: false
         completion:
           command_string: >
-            SHELL=zsh bun getcompletes r
+            SHELL=zsh fun getcompletes r
 
     options:
       - silent --Don't echo the command
@@ -45,7 +45,7 @@ subcommands:
             type: file
             required: true
 
-  bun:
+  fun:
     summary: Generate a bundle
     parameters:
       - name: file
@@ -58,14 +58,14 @@ subcommands:
         summary: Use a framework, e.g. "next"
 
   upgrade:
-    summary: Upgrade to the latest version of bun
+    summary: Upgrade to the latest version of fun
 
   dev:
     summary: Start a dev server
     options:
-      - name: bunfile
+      - name: funfile
         type: string
-        summary: "Use a specific .bun file (default: node_modules.bun)"
+        summary: "Use a specific .fun file (default: node_modules.fun)"
 
       - name: origin
         type: string
@@ -75,9 +75,9 @@ subcommands:
         type: string
         summary: "Rewrite import paths to start from a different url. Default: http://localhost:3000"
 
-      - name: server-bunfile
+      - name: server-funfile
         type: string
-        summary: "Use a specific .bun file for SSR in bun dev (default: node_modules.server.bun)"
+        summary: "Use a specific .fun file for SSR in fun dev (default: node_modules.server.fun)"
       - name: env-file
         type: string
         summary: "Load environment variables from the specified file(s)"
@@ -110,7 +110,7 @@ subcommands:
     options:
       - name: registry
         type: string
-        summary: "Change default registry (default: $BUN_CONFIG_REGISTRY || $npm_config_registry)"
+        summary: "Change default registry (default: $FUN_CONFIG_REGISTRY || $npm_config_registry)"
       - name: token
         type: string
         summary: "Authentication token used for npm registry requests (default: $npm_config_token)"
@@ -142,7 +142,7 @@ subcommands:
     options:
       - name: registry
         type: string
-        summary: "Change default registry (default: $BUN_CONFIG_REGISTRY || $npm_config_registry)"
+        summary: "Change default registry (default: $FUN_CONFIG_REGISTRY || $npm_config_registry)"
       - name: token
         type: string
         summary: "Authentication token used for npm registry requests (default: $npm_config_token)"
@@ -183,7 +183,7 @@ subcommands:
     options:
       - name: registry
         type: string
-        summary: "Change default registry (default: $BUN_CONFIG_REGISTRY || $npm_config_registry)"
+        summary: "Change default registry (default: $FUN_CONFIG_REGISTRY || $npm_config_registry)"
       - name: token
         type: string
         summary: "Authentication token used for npm registry requests (default: $npm_config_token)"
@@ -220,7 +220,7 @@ parameters:
   - name: sasdasdds
     completion:
       command_string: >
-        SHELL=zsh bun getcompletes r
+        SHELL=zsh fun getcompletes r
 
 # vim:et:sts=2:sws=2:sw=2:foldmethod=indent
 

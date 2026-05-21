@@ -4,9 +4,9 @@
 
 // Implemented in Zig (src/runtime/api/NativePromiseContext.zig). Switches on
 // tag to release the ref on the right native type.
-extern "C" void Bun__NativePromiseContext__destroy(void* ctx, uint8_t tag);
+extern "C" void Fun__NativePromiseContext__destroy(void* ctx, uint8_t tag);
 
-namespace Bun {
+namespace Fun {
 
 namespace JSCastingHelpers = JSC::JSCastingHelpers;
 
@@ -30,7 +30,7 @@ NativePromiseContext* NativePromiseContext::create(JSC::VM& vm, JSC::Structure* 
 NativePromiseContext::~NativePromiseContext()
 {
     if (void* ctx = pointer()) {
-        Bun__NativePromiseContext__destroy(ctx, static_cast<uint8_t>(tag()));
+        Fun__NativePromiseContext__destroy(ctx, static_cast<uint8_t>(tag()));
     }
 }
 
@@ -39,21 +39,21 @@ void NativePromiseContext::destroy(JSC::JSCell* cell)
     static_cast<NativePromiseContext*>(cell)->~NativePromiseContext();
 }
 
-} // namespace Bun
+} // namespace Fun
 
-extern "C" JSC::EncodedJSValue Bun__NativePromiseContext__create(Zig::GlobalObject* globalObject, void* ctx, uint8_t tag)
+extern "C" JSC::EncodedJSValue Fun__NativePromiseContext__create(Zig::GlobalObject* globalObject, void* ctx, uint8_t tag)
 {
     auto& vm = JSC::getVM(globalObject);
-    auto* cell = Bun::NativePromiseContext::create(
+    auto* cell = Fun::NativePromiseContext::create(
         vm,
         globalObject->NativePromiseContextStructure(),
         ctx,
-        static_cast<Bun::NativePromiseContext::Tag>(tag));
+        static_cast<Fun::NativePromiseContext::Tag>(tag));
     return JSC::JSValue::encode(cell);
 }
 
-extern "C" void* Bun__NativePromiseContext__take(JSC::EncodedJSValue encodedValue)
+extern "C" void* Fun__NativePromiseContext__take(JSC::EncodedJSValue encodedValue)
 {
-    auto* cell = uncheckedDowncast<Bun::NativePromiseContext>(JSC::JSValue::decode(encodedValue));
+    auto* cell = uncheckedDowncast<Fun::NativePromiseContext>(JSC::JSValue::decode(encodedValue));
     return cell->take();
 }

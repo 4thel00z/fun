@@ -1,13 +1,13 @@
-import { spawn } from "bun";
-import { describe, expect, test } from "bun:test";
+import { spawn } from "fun";
+import { describe, expect, test } from "fun:test";
 import { writeFile } from "fs/promises";
-import { bunExe, tmpdirSync } from "harness";
+import { funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 const testWord = "bunny";
 const testString = `${testWord} ${testWord}`;
 
-describe("bun", () => {
+describe("fun", () => {
   test("should resolve self-imports by name", async () => {
     const tempDir = tmpdirSync();
 
@@ -26,7 +26,7 @@ describe("bun", () => {
       );
 
       let subprocess = spawn({
-        cmd: [bunExe(), "run", "other.js"],
+        cmd: [funExe(), "run", "other.js"],
         cwd: tempDir,
         stdout: "pipe",
       });
@@ -43,7 +43,7 @@ describe("bun", () => {
       );
 
       subprocess = spawn({
-        cmd: [bunExe(), "run", "other.js"],
+        cmd: [funExe(), "run", "other.js"],
         cwd: tempDir,
         stdout: "pipe",
       });
@@ -57,7 +57,7 @@ describe("bun", () => {
       );
 
       subprocess = spawn({
-        cmd: [bunExe(), "run", "other.js"],
+        cmd: [funExe(), "run", "other.js"],
         cwd: tempDir,
         stdout: "pipe",
       });

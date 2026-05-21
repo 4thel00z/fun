@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { symlinkSync } from "fs";
-import { bunRun, tmpdirSync } from "../../harness";
+import { funRun, tmpdirSync } from "../../harness";
 
 if (process.env.IS_SUBPROCESS) {
   console.log(process.argv[1]);
-  console.log(Bun.main);
+  console.log(Fun.main);
   console.log(import.meta.main);
   console.log(import.meta.dir);
   console.log(import.meta.file);
@@ -24,7 +24,7 @@ test("absolute path to a file that is symlinked has import.meta.main", () => {
     throw e;
   }
 
-  const result = bunRun(root + "/main.js", {
+  const result = funRun(root + "/main.js", {
     IS_SUBPROCESS: "1",
   });
   expect(result.stdout.trim()).toBe(

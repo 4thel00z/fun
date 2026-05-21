@@ -21,7 +21,7 @@ pub fn MultiArrayList(comptime T: type) type {
         bytes: [*]align(@alignOf(T)) u8 = undefined,
         len: usize = 0,
         capacity: usize = 0,
-        #allocator: bun.safety.CheckedAllocator = .{},
+        #allocator: fun.safety.CheckedAllocator = .{},
 
         pub const empty: Self = .{
             .bytes = undefined,
@@ -637,8 +637,8 @@ pub fn MultiArrayList(comptime T: type) type {
 
 const builtin = @import("builtin");
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
 const std = @import("std");
 const meta = std.meta;

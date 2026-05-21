@@ -1,4 +1,4 @@
-import { expect, spyOn, test } from "bun:test";
+import { expect, spyOn, test } from "fun:test";
 
 // This tests that when a mocked function appears in a stack trace
 // It doesn't crash when generating the stack trace.
@@ -23,6 +23,6 @@ test("#8794", () => {
       expect(e.stack).toContain("at method ");
       expect(e.stack).toContain("at a ");
     }
-    Bun.gc(false);
+    Fun.gc(false);
   }
 });

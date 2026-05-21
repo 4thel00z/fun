@@ -20,7 +20,7 @@ pub fn whoami(allocator: std.mem.Allocator, manager: *PackageManager) WhoamiErro
     }
 
     const auth_type = if (manager.options.publish_config.auth_type) |auth_type| @tagName(auth_type) else "web";
-    const ci_name = bun.ci.detectCIName();
+    const ci_name = fun.ci.detectCIName();
 
     var print_buf = std.array_list.Managed(u8).init(allocator);
     defer print_buf.deinit();
@@ -148,7 +148,7 @@ pub fn whoami(allocator: std.mem.Allocator, manager: *PackageManager) WhoamiErro
 pub fn responseError(
     allocator: std.mem.Allocator,
     req: *const http.AsyncHTTP,
-    res: *const bun.picohttp.Response,
+    res: *const fun.picohttp.Response,
     // `<name>@<version>`
     pkg_id: ?struct { string, string },
     response_body: *MutableString,
@@ -172,7 +172,7 @@ pub fn responseError(
         res.status_code,
         if (res.status.len > 0) " " else "",
         res.status,
-        bun.fmt.redactedNpmUrl(req.url.href),
+        fun.fmt.redactedNpmUrl(req.url.href),
     });
 
     if (res.status_code == 404 and pkg_id != null) {
@@ -195,7 +195,7 @@ pub fn responseError(
 
 pub const Registry = struct {
     pub const default_url = "https://registry.npmjs.org/";
-    pub const default_url_hash = bun.Wyhash11.hash(0, strings.withoutTrailingSlash(default_url));
+    pub const default_url_hash = fun.Wyhash11.hash(0, strings.withoutTrailingSlash(default_url));
     pub const BodyPool = ObjectPool(MutableString, MutableString.init2048, true, 8);
 
     pub const Scope = struct {
@@ -389,7 +389,7 @@ pub const Registry = struct {
         not_found: void,
     };
 
-    const Pico = bun.picohttp;
+    const Pico = fun.picohttp;
     pub fn getPackageMetadata(
         allocator: std.mem.Allocator,
         scope: *const Registry.Scope,
@@ -433,7 +433,7 @@ pub const Registry = struct {
         var new_etag_buf: [64]u8 = undefined;
 
         if (new_etag.len < new_etag_buf.len) {
-            bun.copy(u8, &new_etag_buf, new_etag);
+            fun.copy(u8, &new_etag_buf, new_etag);
             new_etag = new_etag_buf[0..new_etag.len];
         }
 
@@ -658,7 +658,7 @@ pub const OperatingSystem = enum(u16) {
         return (@intFromEnum(this) & other) != 0;
     }
 
-    pub const NameMap = bun.ComptimeStringMap(u16, .{
+    pub const NameMap = fun.ComptimeStringMap(u16, .{
         .{ "aix", aix },
         .{ "darwin", darwin },
         .{ "freebsd", freebsd },
@@ -694,7 +694,7 @@ pub const Libc = enum(u8) {
 
     pub const all_value: u8 = glibc | musl;
 
-    pub const NameMap = bun.ComptimeStringMap(u8, .{
+    pub const NameMap = fun.ComptimeStringMap(u8, .{
         .{ "glibc", glibc },
         .{ "musl", musl },
     });
@@ -750,7 +750,7 @@ pub const Architecture = enum(u16) {
         .wasm => @compileError("Unsupported architecture: " ++ @tagName(current)),
     };
 
-    pub const NameMap = bun.ComptimeStringMap(u16, .{
+    pub const NameMap = fun.ComptimeStringMap(u16, .{
         .{ "arm", arm },
         .{ "arm64", arm64 },
         .{ "ia32", ia32 },
@@ -898,8 +898,8 @@ pub const PackageManifest = struct {
         // - v0.0.5: added bundled dependencies
         // - v0.0.6: changed semver major/minor/patch to each use u64 instead of u32
         // - v0.0.7: added version publish times and extended manifest flag for minimum release age
-        pub const version = "bun-npm-manifest-cache-v0.0.7\n";
-        const header_bytes: string = "#!/usr/bin/env bun\n" ++ version;
+        pub const version = "fun-npm-manifest-cache-v0.0.7\n";
+        const header_bytes: string = "#!/usr/bin/env fun\n" ++ version;
 
         pub const sizes = blk: {
             if (header_bytes.len != 49)
@@ -1008,9 +1008,9 @@ pub const PackageManifest = struct {
             cache_dir_std: std.fs.Dir,
             outpath: [:0]const u8,
         ) !void {
-            const cache_dir: bun.FD = .fromStdDir(cache_dir_std);
+            const cache_dir: fun.FD = .fromStdDir(cache_dir_std);
             // 64 KB sounds like a lot but when you consider that this is only about 6 levels deep in the stack, it's not that much.
-            var stack_fallback = std.heap.stackFallback(64 * 1024, bun.default_allocator);
+            var stack_fallback = std.heap.stackFallback(64 * 1024, fun.default_allocator);
 
             const allocator = stack_fallback.get();
             var buffer = try std.array_list.Managed(u8).initCapacity(allocator, this.byteLength(scope) + 64);
@@ -1020,40 +1020,40 @@ pub const PackageManifest = struct {
             // --- Perf Improvement #1 ----
             // Do not forget to buffer writes!
             //
-            // PS C:\bun> hyperfine "bun-debug install --ignore-scripts" "bun install --ignore-scripts" --prepare="del /s /q bun.lockb && del /s /q C:\Users\window\.bun\install\cache"
-            // Benchmark 1: bun-debug install --ignore-scripts
+            // PS C:\fun> hyperfine "fun-debug install --ignore-scripts" "fun install --ignore-scripts" --prepare="del /s /q fun.lockb && del /s /q C:\Users\window\.fun\install\cache"
+            // Benchmark 1: fun-debug install --ignore-scripts
             //   Time (mean ± σ):      1.266 s ±  0.284 s    [User: 1.631 s, System: 0.205 s]
             //   Range (min … max):    1.071 s …  1.804 s    10 runs
             //
             //   Warning: Statistical outliers were detected. Consider re-running this benchmark on a quiet system without any interferences from other programs. It might help to use the '--warmup' or '--prepare' options.
             //
-            // Benchmark 2: bun install --ignore-scripts
+            // Benchmark 2: fun install --ignore-scripts
             //   Time (mean ± σ):      3.202 s ±  0.095 s    [User: 0.255 s, System: 0.172 s]
             //   Range (min … max):    3.058 s …  3.371 s    10 runs
             //
             // Summary
-            //   bun-debug install --ignore-scripts ran
-            //     2.53 ± 0.57 times faster than bun install --ignore-scripts
+            //   fun-debug install --ignore-scripts ran
+            //     2.53 ± 0.57 times faster than fun install --ignore-scripts
             // --- Perf Improvement #2 ----
             // GetFinalPathnameByHandle is very expensive if called many times
             // We skip calling it when we are giving an absolute file path.
             // This needs many more call sites, doesn't have much impact on this location.
-            var realpath_buf: bun.PathBuffer = undefined;
+            var realpath_buf: fun.PathBuffer = undefined;
             const path_to_use_for_opening_file = if (Environment.isWindows)
-                bun.path.joinAbsStringBufZ(PackageManager.get().getTemporaryDirectory().path, &realpath_buf, &.{tmp_path}, .auto)
+                fun.path.joinAbsStringBufZ(PackageManager.get().getTemporaryDirectory().path, &realpath_buf, &.{tmp_path}, .auto)
             else
                 tmp_path;
 
             var is_using_o_tmpfile = if (Environment.isLinux) false;
             const file = brk: {
-                const flags = bun.O.WRONLY;
+                const flags = fun.O.WRONLY;
                 const mask = if (Environment.isPosix) 0o664 else 0;
 
                 // Do our best to use O_TMPFILE, so that if this process is interrupted, we don't leave a temporary file behind.
                 // O_TMPFILE is Linux-only. Not all filesystems support O_TMPFILE.
                 // https://manpages.debian.org/testing/manpages-dev/openat.2.en.html#O_TMPFILE
                 if (Environment.isLinux) {
-                    switch (bun.sys.File.openat(cache_dir, ".", flags | bun.O.TMPFILE, mask)) {
+                    switch (fun.sys.File.openat(cache_dir, ".", flags | fun.O.TMPFILE, mask)) {
                         .err => {
                             const warner = struct {
                                 var did_warn = std.atomic.Value(bool).init(false);
@@ -1079,10 +1079,10 @@ pub const PackageManifest = struct {
                     }
                 }
 
-                break :brk try bun.sys.File.openat(
+                break :brk try fun.sys.File.openat(
                     .fromStdDir(tmpdir),
                     path_to_use_for_opening_file,
-                    flags | bun.O.CREAT | bun.O.TRUNC,
+                    flags | fun.O.CREAT | fun.O.TRUNC,
                     if (Environment.isPosix) 0o664 else 0,
                 ).unwrap();
             };
@@ -1092,36 +1092,36 @@ pub const PackageManifest = struct {
                 try file.writeAll(buffer.items).unwrap();
             }
             if (comptime Environment.isWindows) {
-                var realpath2_buf: bun.PathBuffer = undefined;
+                var realpath2_buf: fun.PathBuffer = undefined;
                 var did_close = false;
                 errdefer if (!did_close) file.close();
 
                 const cache_dir_abs = PackageManager.get().cache_directory_path;
-                const cache_path_abs = bun.path.joinAbsStringBufZ(cache_dir_abs, &realpath2_buf, &.{ cache_dir_abs, outpath }, .auto);
+                const cache_path_abs = fun.path.joinAbsStringBufZ(cache_dir_abs, &realpath2_buf, &.{ cache_dir_abs, outpath }, .auto);
                 file.close();
                 did_close = true;
-                try bun.sys.renameat(bun.FD.cwd(), path_to_use_for_opening_file, bun.FD.cwd(), cache_path_abs).unwrap();
+                try fun.sys.renameat(fun.FD.cwd(), path_to_use_for_opening_file, fun.FD.cwd(), cache_path_abs).unwrap();
             } else if (Environment.isLinux and is_using_o_tmpfile) {
                 defer file.close();
                 // Attempt #1.
-                bun.sys.linkatTmpfile(file.handle, cache_dir, outpath).unwrap() catch {
+                fun.sys.linkatTmpfile(file.handle, cache_dir, outpath).unwrap() catch {
                     // Attempt #2: the file may already exist. Let's unlink and try again.
-                    bun.sys.unlinkat(cache_dir, outpath).unwrap() catch {};
-                    try bun.sys.linkatTmpfile(file.handle, cache_dir, outpath).unwrap();
+                    fun.sys.unlinkat(cache_dir, outpath).unwrap() catch {};
+                    try fun.sys.linkatTmpfile(file.handle, cache_dir, outpath).unwrap();
 
                     // There is no attempt #3. This is a cache, so it's not essential.
                 };
             } else {
                 defer file.close();
                 // Attempt #1. Rename the file.
-                const rc = bun.sys.renameat(.fromStdDir(tmpdir), tmp_path, cache_dir, outpath);
+                const rc = fun.sys.renameat(.fromStdDir(tmpdir), tmp_path, cache_dir, outpath);
 
                 switch (rc) {
                     .err => |err| {
                         // Fallback path: atomically swap from <tmp>/*.npm -> <cache>/*.npm, then unlink the temporary file.
                         defer {
                             // If atomically swapping fails, then we should still unlink the temporary file as a courtesy.
-                            bun.sys.unlinkat(.fromStdDir(tmpdir), tmp_path).unwrap() catch {};
+                            fun.sys.unlinkat(.fromStdDir(tmpdir), tmp_path).unwrap() catch {};
                         }
 
                         if (switch (err.getErrno()) {
@@ -1130,7 +1130,7 @@ pub const PackageManifest = struct {
                         }) {
 
                             // Atomically swap the old file with the new file.
-                            try bun.sys.renameat2(
+                            try fun.sys.renameat2(
                                 .fromStdDir(tmpdir),
                                 tmp_path,
                                 cache_dir,
@@ -1164,15 +1164,15 @@ pub const PackageManifest = struct {
                 tmpdir: std.fs.Dir,
                 cache_dir: std.fs.Dir,
 
-                task: bun.ThreadPool.Task = .{ .callback = &run },
-                pub const new = bun.TrivialNew(@This());
+                task: fun.ThreadPool.Task = .{ .callback = &run },
+                pub const new = fun.TrivialNew(@This());
 
-                pub fn run(task: *bun.ThreadPool.Task) void {
-                    const tracer = bun.perf.trace("PackageManifest.Serializer.save");
+                pub fn run(task: *fun.ThreadPool.Task) void {
+                    const tracer = fun.perf.trace("PackageManifest.Serializer.save");
                     defer tracer.end();
 
                     const save_task: *@This() = @fieldParentPtr("task", task);
-                    defer bun.destroy(save_task);
+                    defer fun.destroy(save_task);
 
                     Serializer.save(&save_task.manifest, save_task.scope, save_task.tmpdir, save_task.cache_dir) catch |err| {
                         if (PackageManager.verbose_install) {
@@ -1190,27 +1190,27 @@ pub const PackageManifest = struct {
                 .cache_dir = cache_dir,
             });
 
-            const batch = bun.ThreadPool.Batch.from(&task.task);
+            const batch = fun.ThreadPool.Batch.from(&task.task);
             PackageManager.get().thread_pool.schedule(batch);
         }
 
         fn manifestFileName(buf: []u8, file_id: u64, scope: *const Registry.Scope) ![:0]const u8 {
-            const file_id_hex_fmt = bun.fmt.hexIntLower(file_id);
+            const file_id_hex_fmt = fun.fmt.hexIntLower(file_id);
             return if (scope.url_hash == Registry.default_url_hash)
                 try std.fmt.bufPrintZ(buf, "{f}.npm", .{file_id_hex_fmt})
             else
-                try std.fmt.bufPrintZ(buf, "{f}-{f}.npm", .{ file_id_hex_fmt, bun.fmt.hexIntLower(scope.url_hash) });
+                try std.fmt.bufPrintZ(buf, "{f}-{f}.npm", .{ file_id_hex_fmt, fun.fmt.hexIntLower(scope.url_hash) });
         }
 
         pub fn save(this: *const PackageManifest, scope: *const Registry.Scope, tmpdir: std.fs.Dir, cache_dir: std.fs.Dir) !void {
-            const file_id = bun.Wyhash11.hash(0, this.name());
+            const file_id = fun.Wyhash11.hash(0, this.name());
             var dest_path_buf: [512 + 64]u8 = undefined;
             var out_path_buf: [("18446744073709551615".len * 2) + "_".len + ".npm".len + 1]u8 = undefined;
             var dest_path_stream = std.io.fixedBufferStream(&dest_path_buf);
             var dest_path_stream_writer = dest_path_stream.writer();
-            const file_id_hex_fmt = bun.fmt.hexIntLower(file_id);
+            const file_id_hex_fmt = fun.fmt.hexIntLower(file_id);
             const hex_timestamp: usize = @intCast(@max(std.time.milliTimestamp(), 0));
-            const hex_timestamp_fmt = bun.fmt.hexIntLower(hex_timestamp);
+            const hex_timestamp_fmt = fun.fmt.hexIntLower(hex_timestamp);
             try dest_path_stream_writer.print("{f}.npm-{f}", .{ file_id_hex_fmt, hex_timestamp_fmt });
             try dest_path_stream_writer.writeByte(0);
             const tmp_path: [:0]u8 = dest_path_buf[0 .. dest_path_stream.pos - 1 :0];
@@ -1221,7 +1221,7 @@ pub const PackageManifest = struct {
         pub fn loadByFileID(allocator: std.mem.Allocator, scope: *const Registry.Scope, cache_dir: std.fs.Dir, file_id: u64) !?PackageManifest {
             var file_path_buf: [512 + 64]u8 = undefined;
             const file_name = try manifestFileName(&file_path_buf, file_id, scope);
-            const cache_file = File.openat(.fromStdDir(cache_dir), file_name, bun.O.RDONLY, 0).unwrap() catch return null;
+            const cache_file = File.openat(.fromStdDir(cache_dir), file_name, fun.O.RDONLY, 0).unwrap() catch return null;
             defer cache_file.close();
 
             delete: {
@@ -1229,12 +1229,12 @@ pub const PackageManifest = struct {
             }
 
             // delete the outdated/invalid manifest
-            try bun.sys.unlinkat(.fromStdDir(cache_dir), file_name).unwrap();
+            try fun.sys.unlinkat(.fromStdDir(cache_dir), file_name).unwrap();
             return null;
         }
 
         pub fn loadByFile(allocator: std.mem.Allocator, scope: *const Registry.Scope, manifest_file: File) !?PackageManifest {
-            const tracer = bun.perf.trace("PackageManifest.Serializer.loadByFile");
+            const tracer = fun.perf.trace("PackageManifest.Serializer.loadByFile");
             defer tracer.end();
             const bytes = try manifest_file.readToEnd(allocator).unwrap();
             errdefer allocator.free(bytes);
@@ -1371,7 +1371,7 @@ pub const PackageManifest = struct {
         package_version: *const PackageVersion,
         minimum_release_age_ms: f64,
     ) bool {
-        const current_timestamp_ms: f64 = @floatFromInt(@divTrunc(bun.start_time, std.time.ns_per_ms));
+        const current_timestamp_ms: f64 = @floatFromInt(@divTrunc(fun.start_time, std.time.ns_per_ms));
         return package_version.publish_timestamp_ms > current_timestamp_ms - minimum_release_age_ms;
     }
 
@@ -1387,7 +1387,7 @@ pub const PackageManifest = struct {
         var prev_package_blocked_from_age: ?*const PackageVersion = null;
         var best_version: ?FindResult = null;
 
-        const current_timestamp_ms: f64 = @floatFromInt(@divTrunc(bun.start_time, std.time.ns_per_ms));
+        const current_timestamp_ms: f64 = @floatFromInt(@divTrunc(fun.start_time, std.time.ns_per_ms));
         const seven_days_ms: f64 = 7 * std.time.ms_per_day;
         const stability_window_ms: f64 = @min(minimum_release_age_ms, seven_days_ms);
 
@@ -1496,7 +1496,7 @@ pub const PackageManifest = struct {
         const min_age_ms = min_age_gate_ms orelse {
             return .{ .found = dist_result };
         };
-        const current_timestamp_ms: f64 = @floatFromInt(@divTrunc(bun.start_time, std.time.ns_per_ms));
+        const current_timestamp_ms: f64 = @floatFromInt(@divTrunc(fun.start_time, std.time.ns_per_ms));
         const seven_days_ms: f64 = 7 * std.time.ms_per_day;
         const stability_window_ms = @min(min_age_ms, seven_days_ms);
 
@@ -1595,7 +1595,7 @@ pub const PackageManifest = struct {
             if (result) |r| return .{ .found = r };
             return .{ .err = .not_found };
         };
-        bun.debugAssert(this.pkg.has_extended_manifest);
+        fun.debugAssert(this.pkg.has_extended_manifest);
 
         const left = group.head.head.range.left;
         var newest_filtered: ?Semver.Version = null;
@@ -1732,8 +1732,8 @@ pub const PackageManifest = struct {
     ) !?PackageManifest {
         const source = &logger.Source.initPathString(expected_name, json_buffer);
         initializeStore();
-        defer bun.ast.Stmt.Data.Store.memory_allocator.?.pop();
-        var arena = bun.ArenaAllocator.init(allocator);
+        defer fun.ast.Stmt.Data.Store.memory_allocator.?.pop();
+        var arena = fun.ArenaAllocator.init(allocator);
         defer arena.deinit();
         const json = JSON.parseUTF8(
             source,
@@ -1741,7 +1741,7 @@ pub const PackageManifest = struct {
             arena.allocator(),
         ) catch {
             // don't use the arena memory!
-            var cloned_log: logger.Log = .init(bun.default_allocator);
+            var cloned_log: logger.Log = .init(fun.default_allocator);
             try log.cloneToWithRecycled(&cloned_log, true);
             log.* = cloned_log;
 
@@ -1755,7 +1755,7 @@ pub const PackageManifest = struct {
             }
         }
 
-        var result: PackageManifest = bun.serializable(PackageManifest{});
+        var result: PackageManifest = fun.serializable(PackageManifest{});
 
         var string_pool = String.Builder.StringPool.init(default_allocator);
         defer string_pool.deinit();
@@ -1766,7 +1766,7 @@ pub const PackageManifest = struct {
         var optional_peer_dep_names = std.array_list.Managed(u64).init(default_allocator);
         defer optional_peer_dep_names.deinit();
 
-        var bundled_deps_set = bun.StringSet.init(allocator);
+        var bundled_deps_set = fun.StringSet.init(allocator);
         defer bundled_deps_set.deinit();
         var bundle_all_deps = false;
 
@@ -1781,7 +1781,7 @@ pub const PackageManifest = struct {
                 const received_name = name_q.expr.asString(allocator) orelse return null;
                 // If this manifest is coming from the default registry, make sure it's the expected one. If it's not
                 // from the default registry we don't check because the registry might have a different name in the manifest.
-                // https://github.com/oven-sh/bun/issues/4925
+                // https://github.com/underdoc-org/fun/issues/4925
                 if (scope.url_hash == Registry.default_url_hash and !strings.eqlLong(expected_name, received_name, true)) {
                     Output.warn("Package name mismatch. Expected <b>\"{s}\"<r> but received <red>\"{s}\"<r>", .{ expected_name, received_name });
                 }
@@ -1819,7 +1819,7 @@ pub const PackageManifest = struct {
                     const sliced_version = SlicedString.init(version_name, version_name);
                     const parsed_version = Semver.Version.parse(sliced_version);
 
-                    if (Environment.allow_assert) bun.assertWithLocation(parsed_version.valid, @src());
+                    if (Environment.allow_assert) fun.assertWithLocation(parsed_version.valid, @src());
                     if (!parsed_version.valid) {
                         log.addErrorFmt(source, prop.value.?.loc, allocator, "Failed to parse dependency {s}", .{version_name}) catch unreachable;
                         continue;
@@ -2038,7 +2038,7 @@ pub const PackageManifest = struct {
                 var dependency_values = version_extern_strings;
                 var dependency_names = all_dependency_names_and_values;
                 var prev_extern_bin_group: ?[]ExternalString = null;
-                const empty_version = bun.serializable(PackageVersion{
+                const empty_version = fun.serializable(PackageVersion{
                     .bin = Bin.init(),
                 });
 
@@ -2047,15 +2047,15 @@ pub const PackageManifest = struct {
                     var sliced_version = SlicedString.init(version_name, version_name);
                     var parsed_version = Semver.Version.parse(sliced_version);
 
-                    if (Environment.allow_assert) bun.assertWithLocation(parsed_version.valid, @src());
+                    if (Environment.allow_assert) fun.assertWithLocation(parsed_version.valid, @src());
                     // We only need to copy the version tags if it contains pre and/or build
                     if (parsed_version.version.tag.hasBuild() or parsed_version.version.tag.hasPre()) {
                         const version_string = string_builder.append(String, version_name);
                         sliced_version = version_string.sliced(string_buf);
                         parsed_version = Semver.Version.parse(sliced_version);
                         if (Environment.allow_assert) {
-                            bun.assertWithLocation(parsed_version.valid, @src());
-                            bun.assertWithLocation(parsed_version.version.tag.hasBuild() or parsed_version.version.tag.hasPre(), @src());
+                            fun.assertWithLocation(parsed_version.valid, @src());
+                            fun.assertWithLocation(parsed_version.version.tag.hasBuild() or parsed_version.version.tag.hasPre(), @src());
                         }
                     }
                     if (!parsed_version.valid) continue;
@@ -2286,8 +2286,8 @@ pub const PackageManifest = struct {
                                 var this_names = dependency_names[0..count];
                                 var this_versions = dependency_values[0..count];
 
-                                var name_hasher = bun.Wyhash11.init(0);
-                                var version_hasher = bun.Wyhash11.init(0);
+                                var name_hasher = fun.Wyhash11.init(0);
+                                var version_hasher = fun.Wyhash11.init(0);
 
                                 const is_peer = comptime strings.eqlComptime(pair.prop, "peerDependencies");
 
@@ -2478,13 +2478,13 @@ pub const PackageManifest = struct {
                                 if (comptime Environment.allow_assert) {
                                     const dependencies_list = @field(package_version, pair.field);
 
-                                    bun.assertWithLocation(dependencies_list.name.off < all_extern_strings.len, @src());
-                                    bun.assertWithLocation(dependencies_list.value.off < all_extern_strings.len, @src());
-                                    bun.assertWithLocation(dependencies_list.name.off + dependencies_list.name.len < all_extern_strings.len, @src());
-                                    bun.assertWithLocation(dependencies_list.value.off + dependencies_list.value.len < all_extern_strings.len, @src());
+                                    fun.assertWithLocation(dependencies_list.name.off < all_extern_strings.len, @src());
+                                    fun.assertWithLocation(dependencies_list.value.off < all_extern_strings.len, @src());
+                                    fun.assertWithLocation(dependencies_list.name.off + dependencies_list.name.len < all_extern_strings.len, @src());
+                                    fun.assertWithLocation(dependencies_list.value.off + dependencies_list.value.len < all_extern_strings.len, @src());
 
-                                    bun.assertWithLocation(std.meta.eql(dependencies_list.name.get(all_extern_strings), this_names), @src());
-                                    bun.assertWithLocation(std.meta.eql(dependencies_list.value.get(version_extern_strings), this_versions), @src());
+                                    fun.assertWithLocation(std.meta.eql(dependencies_list.name.get(all_extern_strings), this_names), @src());
+                                    fun.assertWithLocation(std.meta.eql(dependencies_list.value.get(version_extern_strings), this_versions), @src());
                                     var j: usize = 0;
                                     const name_dependencies = dependencies_list.name.get(all_extern_strings);
 
@@ -2492,31 +2492,31 @@ pub const PackageManifest = struct {
                                         if (optional_peer_dep_names.items.len == 0) {
                                             while (j < name_dependencies.len) : (j += 1) {
                                                 const dep_name = name_dependencies[j];
-                                                bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_names[j].slice(string_buf)), @src());
-                                                bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].key.?.asString(allocator).?), @src());
+                                                fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_names[j].slice(string_buf)), @src());
+                                                fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].key.?.asString(allocator).?), @src());
                                             }
 
                                             j = 0;
                                             while (j < dependencies_list.value.len) : (j += 1) {
                                                 const dep_name = dependencies_list.value.get(version_extern_strings)[j];
 
-                                                bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_versions[j].slice(string_buf)), @src());
-                                                bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].value.?.asString(allocator).?), @src());
+                                                fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_versions[j].slice(string_buf)), @src());
+                                                fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].value.?.asString(allocator).?), @src());
                                             }
                                         }
                                     } else {
                                         while (j < name_dependencies.len) : (j += 1) {
                                             const dep_name = name_dependencies[j];
-                                            bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_names[j].slice(string_buf)), @src());
-                                            bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].key.?.asString(allocator).?), @src());
+                                            fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_names[j].slice(string_buf)), @src());
+                                            fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].key.?.asString(allocator).?), @src());
                                         }
 
                                         j = 0;
                                         while (j < dependencies_list.value.len) : (j += 1) {
                                             const dep_name = dependencies_list.value.get(version_extern_strings)[j];
 
-                                            bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_versions[j].slice(string_buf)), @src());
-                                            bun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].value.?.asString(allocator).?), @src());
+                                            fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), this_versions[j].slice(string_buf)), @src());
+                                            fun.assertWithLocation(std.mem.eql(u8, dep_name.slice(string_buf), items[j].value.?.asString(allocator).?), @src());
                                         }
                                     }
                                 }
@@ -2527,7 +2527,7 @@ pub const PackageManifest = struct {
                     if (json.asProperty("time")) |time_obj| {
                         if (time_obj.expr.get(version_name)) |publish_time_expr| {
                             if (publish_time_expr.asString(allocator)) |publish_time_str| {
-                                if (bun.jsc.wtf.parseES5Date(publish_time_str) catch null) |time| {
+                                if (fun.jsc.wtf.parseES5Date(publish_time_str) catch null) |time| {
                                     package_version.publish_timestamp_ms = time;
                                 }
                             }
@@ -2579,8 +2579,8 @@ pub const PackageManifest = struct {
                 };
 
                 if (comptime Environment.allow_assert) {
-                    bun.assertWithLocation(std.meta.eql(result.pkg.dist_tags.versions.get(all_semver_versions), dist_tag_versions[0..dist_tag_i]), @src());
-                    bun.assertWithLocation(std.meta.eql(result.pkg.dist_tags.tags.get(all_extern_strings), extern_strings_slice[0..dist_tag_i]), @src());
+                    fun.assertWithLocation(std.meta.eql(result.pkg.dist_tags.versions.get(all_semver_versions), dist_tag_versions[0..dist_tag_i]), @src());
+                    fun.assertWithLocation(std.meta.eql(result.pkg.dist_tags.tags.get(all_extern_strings), extern_strings_slice[0..dist_tag_i]), @src());
                 }
 
                 extern_strings = extern_strings[dist_tag_i..];
@@ -2612,7 +2612,7 @@ pub const PackageManifest = struct {
         // Sort the list of packages in a deterministic order
         // Usually, npm will do this for us.
         // But, not always.
-        // See https://github.com/oven-sh/bun/pull/6611
+        // See https://github.com/underdoc-org/fun/pull/6611
         //
         // The tricky part about this code is we need to sort two different arrays.
         // To do that, we create a 3rd array, containing indices into the other 2 arrays.
@@ -2644,15 +2644,15 @@ pub const PackageManifest = struct {
                     }
                 };
 
-                var all_indices = try bun.default_allocator.alloc(Int, max_versions_count);
-                defer bun.default_allocator.free(all_indices);
+                var all_indices = try fun.default_allocator.alloc(Int, max_versions_count);
+                defer fun.default_allocator.free(all_indices);
                 const releases_list = .{ &result.pkg.releases, &result.pkg.prereleases };
 
-                var all_cloned_versions = try bun.default_allocator.alloc(Semver.Version, max_versions_count);
-                defer bun.default_allocator.free(all_cloned_versions);
+                var all_cloned_versions = try fun.default_allocator.alloc(Semver.Version, max_versions_count);
+                defer fun.default_allocator.free(all_cloned_versions);
 
-                var all_cloned_packages = try bun.default_allocator.alloc(PackageVersion, max_versions_count);
-                defer bun.default_allocator.free(all_cloned_packages);
+                var all_cloned_packages = try fun.default_allocator.alloc(PackageVersion, max_versions_count);
+                defer fun.default_allocator.free(all_cloned_packages);
 
                 inline for (0..2) |release_i| {
                     var release = releases_list[release_i];
@@ -2689,13 +2689,13 @@ pub const PackageManifest = struct {
                             const first = semver_versions_[0];
                             const second = semver_versions_[1];
                             const order = second.order(first, string_buf, string_buf);
-                            bun.assertWithLocation(order == .gt, @src());
+                            fun.assertWithLocation(order == .gt, @src());
                         }
                     }
                 }
             },
             else => {
-                bun.assertWithLocation(max_versions_count == 0, @src());
+                fun.assertWithLocation(max_versions_count == 0, @src());
             },
         }
 
@@ -2703,7 +2703,7 @@ pub const PackageManifest = struct {
             const src = std.mem.sliceAsBytes(all_tarball_url_strings[0 .. all_tarball_url_strings.len - tarball_url_strings.len]);
             if (src.len > 0) {
                 var dst = std.mem.sliceAsBytes(all_extern_strings[all_extern_strings.len - extern_strings.len ..]);
-                bun.assertWithLocation(dst.len >= src.len, @src());
+                fun.assertWithLocation(dst.len >= src.len, @src());
                 @memcpy(dst[0..src.len], src);
             }
 
@@ -2751,25 +2751,25 @@ const PackageManager = @import("./install.zig").PackageManager;
 const VersionSlice = @import("./install.zig").VersionSlice;
 const initializeStore = @import("./install.zig").initializeMiniStore;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const HTTPClient = bun.http;
-const JSON = bun.json;
-const MutableString = bun.MutableString;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const default_allocator = bun.default_allocator;
-const http = bun.http;
-const logger = bun.logger;
-const strings = bun.strings;
-const File = bun.sys.File;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const HTTPClient = fun.http;
+const JSON = fun.json;
+const MutableString = fun.MutableString;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const default_allocator = fun.default_allocator;
+const http = fun.http;
+const logger = fun.logger;
+const strings = fun.strings;
+const File = fun.sys.File;
+const api = fun.schema.api;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const ExternalString = Semver.ExternalString;
 const SlicedString = Semver.SlicedString;
 const String = Semver.String;
 
-const ExternalPackageNameHashList = bun.install.ExternalPackageNameHashList;
-const PackageNameHash = bun.install.PackageNameHash;
+const ExternalPackageNameHashList = fun.install.ExternalPackageNameHashList;
+const PackageNameHash = fun.install.PackageNameHash;

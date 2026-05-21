@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import EventEmitter, { EventEmitterAsyncResource } from "events";
 
 describe("EventEmitterAsyncResource", () => {

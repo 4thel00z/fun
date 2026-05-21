@@ -1,11 +1,11 @@
 /**
- * Test that Bun.Glob and fs.globSync work correctly on FUSE filesystems
+ * Test that Fun.Glob and fs.globSync work correctly on FUSE filesystems
  * where d_type returns DT_UNKNOWN.
  *
  * Related to issue #24007 and PR #18172
  */
-import { spawn, type ReadableSubprocess } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { spawn, type ReadableSubprocess } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
 import { isLinux, tmpdirSync } from "harness";
 import fs from "node:fs";
 import { join } from "node:path";
@@ -36,7 +36,7 @@ describe.skipIf(!isLinux)("glob on a FUSE mount", () => {
     let tries = 0;
     while (!fs.existsSync(join(mountpoint, "main.js")) && tries < 1600 && pythonProcess.exitCode === null) {
       tries++;
-      await Bun.sleep(5);
+      await Fun.sleep(5);
     }
     if (pythonProcess.exitCode !== null && pythonProcess.exitCode !== 0) {
       throw new Error(
@@ -50,15 +50,15 @@ describe.skipIf(!isLinux)("glob on a FUSE mount", () => {
     if (!pythonProcess) return;
     const umount = spawn({ cmd: ["fusermount", "-u", mountpoint] });
     await umount.exited;
-    await Promise.race([pythonProcess.exited, Bun.sleep(1000)]);
+    await Promise.race([pythonProcess.exited, Fun.sleep(1000)]);
     if (pythonProcess.exitCode === null) {
       pythonProcess.kill("SIGKILL");
       console.error("python process errored:", await pythonProcess.stderr.text());
     }
   });
 
-  test("Bun.Glob.scanSync finds files on FUSE mount", () => {
-    const glob = new Bun.Glob("*.js");
+  test("Fun.Glob.scanSync finds files on FUSE mount", () => {
+    const glob = new Fun.Glob("*.js");
     const results = Array.from(glob.scanSync({ cwd: mountpoint }));
 
     // fuse-fs.py provides main.js and main-symlink.js

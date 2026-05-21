@@ -121,23 +121,23 @@ Created ${count} files in ${output}
 ${
   saveStack
     ? "The evaluation order will be dumped to stdout"
-    : "To dump the evaluation order, run: \n  bun run create.js -- --save-stack"
+    : "To dump the evaluation order, run: \n  fun run create.js -- --save-stack"
 }
 
 Run:
 
-  bun ./meta.require.mjs
-  bun ./meta.require.js
+  fun ./meta.require.mjs
+  fun ./meta.require.js
 
 Run:
 
-  bun ./import.mjs
+  fun ./import.mjs
   node ./import.mjs
   deno run -A ./import.mjs
 
 Run:
 
-  bun ./require.js
+  fun ./require.js
   node ./require.js
 
 `);

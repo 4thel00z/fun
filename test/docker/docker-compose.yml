@@ -25,7 +25,7 @@ services:
     build:
       context: ../js/sql/docker-tls
       dockerfile: Dockerfile
-    image: bun-postgres-tls:local
+    image: fun-postgres-tls:local
     ports:
       - target: 5432
         published: 0
@@ -80,7 +80,7 @@ services:
     image: mysql:8.4
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_DATABASE: bun_sql_test
+      MYSQL_DATABASE: fun_sql_test
     ports:
       - target: 3306
         published: 0
@@ -102,8 +102,8 @@ services:
   mysql_native_password:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: bun
-      MYSQL_DATABASE: bun_sql_test
+      MYSQL_ROOT_PASSWORD: fun
+      MYSQL_DATABASE: fun_sql_test
       MYSQL_ROOT_HOST: "%"
     command: --default-authentication-plugin=mysql_native_password
     ports:
@@ -113,7 +113,7 @@ services:
     tmpfs:
       - /var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysql", "-h", "127.0.0.1", "-uroot", "-pbun", "-e", "SELECT 1"]
+      test: ["CMD", "mysql", "-h", "127.0.0.1", "-uroot", "-pfun", "-e", "SELECT 1"]
       interval: 1h # Effectively disable after startup
       timeout: 5s
       retries: 30
@@ -126,10 +126,10 @@ services:
       dockerfile: Dockerfile
       args:
         MYSQL_VERSION: 8.4
-    image: bun-mysql-tls:local
+    image: fun-mysql-tls:local
     environment:
-      MYSQL_ROOT_PASSWORD: bun
-      MYSQL_DATABASE: bun_sql_test
+      MYSQL_ROOT_PASSWORD: fun
+      MYSQL_DATABASE: fun_sql_test
     ports:
       - target: 3306
         published: 0
@@ -137,7 +137,7 @@ services:
     tmpfs:
       - /var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysql", "-h", "127.0.0.1", "-uroot", "-pbun", "-e", "SELECT 1"]
+      test: ["CMD", "mysql", "-h", "127.0.0.1", "-uroot", "-pfun", "-e", "SELECT 1"]
       interval: 1h # Effectively disable after startup
       timeout: 5s
       retries: 30
@@ -159,7 +159,7 @@ services:
     build:
       context: ../js/valkey/docker-unified
       dockerfile: Dockerfile
-    image: bun-redis-unified:local
+    image: fun-redis-unified:local
     ports:
       - target: 6379
         published: 0

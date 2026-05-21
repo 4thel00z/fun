@@ -224,7 +224,7 @@ const types = {
 
 var opened;
 try {
-  opened = dlopen("/tmp/bun-ffi-test.dylib", types);
+  opened = dlopen("/tmp/fun-ffi-test.dylib", types);
 } catch (e) {
   throw new Error("Please run `make compile-ffi-test` to compile the ffi test library");
 }

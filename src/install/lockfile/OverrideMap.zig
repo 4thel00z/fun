@@ -167,7 +167,7 @@ pub fn parseFromOverrides(
                 if (value_expr.asProperty(".")) |dot| {
                     if (dot.expr.data == .e_string) {
                         if (value_expr.data.e_object.properties.len > 1) {
-                            try log.addWarningFmt(source, value_expr.loc, lockfile.allocator, "Bun currently does not support nested \"overrides\"", .{});
+                            try log.addWarningFmt(source, value_expr.loc, lockfile.allocator, "Fun currently does not support nested \"overrides\"", .{});
                         }
                         break :value dot.expr;
                     } else {
@@ -175,7 +175,7 @@ pub fn parseFromOverrides(
                         continue;
                     }
                 } else {
-                    try log.addWarningFmt(source, value_expr.loc, lockfile.allocator, "Bun currently does not support nested \"overrides\"", .{});
+                    try log.addWarningFmt(source, value_expr.loc, lockfile.allocator, "Fun currently does not support nested \"overrides\"", .{});
                     continue;
                 }
             }
@@ -186,7 +186,7 @@ pub fn parseFromOverrides(
         const version_str = value.data.e_string.slice(lockfile.allocator);
         if (strings.hasPrefixComptime(version_str, "patch:")) {
             // TODO(dylan-conway): apply .patch files to packages
-            try log.addWarningFmt(source, key.loc, lockfile.allocator, "Bun currently does not support patched package \"overrides\"", .{});
+            try log.addWarningFmt(source, key.loc, lockfile.allocator, "Fun currently does not support patched package \"overrides\"", .{});
             continue;
         }
 
@@ -247,18 +247,18 @@ pub fn parseFromResolutions(
                 continue;
             };
             if (strings.indexOfChar(k[first_slash + 1 ..], '/') != null) {
-                try log.addWarningFmt(source, key.loc, lockfile.allocator, "Bun currently does not support nested \"resolutions\"", .{});
+                try log.addWarningFmt(source, key.loc, lockfile.allocator, "Fun currently does not support nested \"resolutions\"", .{});
                 continue;
             }
         } else if (strings.indexOfChar(k, '/') != null) {
-            try log.addWarningFmt(source, key.loc, lockfile.allocator, "Bun currently does not support nested \"resolutions\"", .{});
+            try log.addWarningFmt(source, key.loc, lockfile.allocator, "Fun currently does not support nested \"resolutions\"", .{});
             continue;
         }
 
         const version_str = value.data.e_string.data;
         if (strings.hasPrefixComptime(version_str, "patch:")) {
             // TODO(dylan-conway): apply .patch files to packages
-            try log.addWarningFmt(source, key.loc, lockfile.allocator, "Bun currently does not support patched package \"resolutions\"", .{});
+            try log.addWarningFmt(source, key.loc, lockfile.allocator, "Fun currently does not support patched package \"resolutions\"", .{});
             continue;
         }
 
@@ -344,17 +344,17 @@ const string = []const u8;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const ArrayIdentityContext = bun.ArrayIdentityContext;
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
-const logger = bun.logger;
-const strings = bun.strings;
-const Expr = bun.ast.Expr;
-const String = bun.Semver.String;
+const fun = @import("fun");
+const ArrayIdentityContext = fun.ArrayIdentityContext;
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
+const logger = fun.logger;
+const strings = fun.strings;
+const Expr = fun.ast.Expr;
+const String = fun.Semver.String;
 
-const Dependency = bun.install.Dependency;
-const Lockfile = bun.install.Lockfile;
-const PackageManager = bun.install.PackageManager;
-const PackageNameHash = bun.install.PackageNameHash;
+const Dependency = fun.install.Dependency;
+const Lockfile = fun.install.Lockfile;
+const PackageManager = fun.install.PackageManager;
+const PackageNameHash = fun.install.PackageNameHash;

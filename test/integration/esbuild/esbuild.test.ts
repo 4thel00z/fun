@@ -1,7 +1,7 @@
-import { spawn } from "bun";
-import { beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
+import { spawn } from "fun";
+import { beforeAll, describe, expect, setDefaultTimeout, test } from "fun:test";
 import { cp, rm, writeFile } from "fs/promises";
-import { bunExe, bunEnv as env, isArm64, isWindows, tempDir } from "harness";
+import { funExe, funEnv as env, isArm64, isWindows, tempDir } from "harness";
 import { join } from "path";
 
 // esbuild@0.19.8 does not support win32-arm64 at runtime
@@ -15,14 +15,14 @@ describe.concurrent("esbuild integration test", () => {
   test("install and use esbuild", async () => {
     using dir = tempDir("esbuild-test", {
       "package.json": JSON.stringify({
-        name: "bun-esbuild-test",
+        name: "fun-esbuild-test",
         version: "1.0.0",
       }),
     });
     const packageDir = dir + "";
 
     var { stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "install", "esbuild@0.19.8"],
+      cmd: [funExe(), "install", "esbuild@0.19.8"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -37,7 +37,7 @@ describe.concurrent("esbuild integration test", () => {
     expect(await exited).toBe(0);
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "esbuild", "--version"],
+      cmd: [funExe(), "esbuild", "--version"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -55,14 +55,14 @@ describe.concurrent("esbuild integration test", () => {
   test.skipIf(isWindowsArm64)("install and use estrella", async () => {
     using dir = tempDir("esbuild-estrella-test", {
       "package.json": JSON.stringify({
-        name: "bun-esbuild-estrella-test",
+        name: "fun-esbuild-estrella-test",
         version: "1.0.0",
       }),
     });
     const packageDir = dir + "";
 
     let { stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "install", "estrella@1.4.1"],
+      cmd: [funExe(), "install", "estrella@1.4.1"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -79,7 +79,7 @@ describe.concurrent("esbuild integration test", () => {
     expect(exitCode).toBe(0);
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "estrella", "--estrella-version"],
+      cmd: [funExe(), "estrella", "--estrella-version"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -95,7 +95,7 @@ describe.concurrent("esbuild integration test", () => {
     await cp(join(import.meta.dir, "build-file.js"), join(packageDir, "build-file.js"));
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "estrella", "build-file.js"],
+      cmd: [funExe(), "estrella", "build-file.js"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -106,12 +106,12 @@ describe.concurrent("esbuild integration test", () => {
     [err, out, exitCode] = await Promise.all([stderr.text(), stdout.text(), exited]);
 
     await rm(join(packageDir, "node_modules"), { recursive: true, force: true });
-    await rm(join(packageDir, "bun.lockb"), { force: true });
+    await rm(join(packageDir, "fun.lockb"), { force: true });
 
     await writeFile(
       join(packageDir, "package.json"),
       JSON.stringify({
-        name: "bun-esbuild-estrella-test",
+        name: "fun-esbuild-estrella-test",
         version: "1.0.0",
         dependencies: {
           "estrella": "1.4.1",
@@ -122,7 +122,7 @@ describe.concurrent("esbuild integration test", () => {
     );
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -137,7 +137,7 @@ describe.concurrent("esbuild integration test", () => {
     expect(exitCode).toBe(0);
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "estrella", "--estrella-version"],
+      cmd: [funExe(), "estrella", "--estrella-version"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -151,7 +151,7 @@ describe.concurrent("esbuild integration test", () => {
     expect(exitCode).toBe(0);
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "esbuild", "--version"],
+      cmd: [funExe(), "esbuild", "--version"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",
@@ -165,7 +165,7 @@ describe.concurrent("esbuild integration test", () => {
     expect(exitCode).toBe(0);
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "esbuild", "--version"],
+      cmd: [funExe(), "esbuild", "--version"],
       cwd: join(packageDir, "node_modules/estrella"),
       stdout: "pipe",
       stdin: "pipe",
@@ -179,7 +179,7 @@ describe.concurrent("esbuild integration test", () => {
     expect(exitCode).toBe(0);
 
     ({ stdout, stderr, exited } = spawn({
-      cmd: [bunExe(), "estrella", "build-file.js"],
+      cmd: [funExe(), "estrella", "build-file.js"],
       cwd: packageDir,
       stdout: "pipe",
       stdin: "pipe",

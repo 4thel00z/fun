@@ -1,10 +1,10 @@
 ---
-title: Install dependencies with Bun in GitHub Actions
-sidebarTitle: Install Bun in GitHub Actions
+title: Install dependencies with Fun in GitHub Actions
+sidebarTitle: Install Fun in GitHub Actions
 mode: center
 ---
 
-Use the official [`setup-bun`](https://github.com/oven-sh/setup-bun) GitHub Action to install `bun` in your GitHub Actions runner.
+Use the official [`setup-fun`](https://github.com/oven-sh/setup-fun) GitHub Action to install `fun` in your GitHub Actions runner.
 
 ```yaml workflow.yml icon="file-code"
 title: my-workflow
@@ -15,15 +15,15 @@ jobs:
     steps:
       # ...
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2 // [!code ++]
+      - uses: oven-sh/setup-fun@v2 // [!code ++]
 
-      # run any `bun` or `bunx` command
-      - run: bun install // [!code ++]
+      # run any `fun` or `funx` command
+      - run: fun install // [!code ++]
 ```
 
 ---
 
-To specify a version of Bun to install:
+To specify a version of Fun to install:
 
 ```yaml workflow.yml icon="file-code"
 title: my-workflow
@@ -33,11 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # ...
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-fun@v2
          with: # [!code ++]
           version: "latest" # or "canary" # [!code ++]
 ```
 
 ---
 
-Refer to the [README.md](https://github.com/oven-sh/setup-bun) for complete documentation of the `setup-bun` GitHub Action.
+Refer to the [README.md](https://github.com/oven-sh/setup-fun) for complete documentation of the `setup-fun` GitHub Action.

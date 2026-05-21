@@ -24,14 +24,14 @@ interpreter: *Interpreter,
 /// only see `this.base.shell.deinit()` in `Script`, `Subshell`, and the
 /// children of a `Pipeline`.
 shell: *ShellExecEnv,
-__alloc_scope: if (bun.Environment.enableAllocScopes) AllocScope else void,
+__alloc_scope: if (fun.Environment.enableAllocScopes) AllocScope else void,
 
 const AllocScope = union(enum) {
-    owned: bun.AllocationScope,
-    borrowed: *bun.AllocationScope,
+    owned: fun.AllocationScope,
+    borrowed: *fun.AllocationScope,
 
     pub fn deinit(this: *AllocScope) void {
-        if (comptime bun.Environment.enableAllocScopes) {
+        if (comptime fun.Environment.enableAllocScopes) {
             if (this.* == .owned) this.owned.deinit();
         }
     }
@@ -43,7 +43,7 @@ const AllocScope = union(enum) {
         };
     }
 
-    pub fn scopedAllocator(this: *AllocScope) *bun.AllocationScope {
+    pub fn scopedAllocator(this: *AllocScope) *fun.AllocationScope {
         return switch (this.*) {
             .borrowed => |scope| scope,
             .owned => |*scope| scope,
@@ -51,7 +51,7 @@ const AllocScope = union(enum) {
     }
 
     pub fn leakSlice(this: *AllocScope, memory: anytype) void {
-        if (comptime bun.Environment.enableAllocScopes) {
+        if (comptime fun.Environment.enableAllocScopes) {
             _ = @typeInfo(@TypeOf(memory)).pointer;
             this.scopedAllocator().trackExternalFree(memory, null) catch |err|
                 std.debug.panic("invalid free: {}", .{err});
@@ -65,17 +65,17 @@ pub fn initWithNewAllocScope(kind: StateKind, interpreter: *Interpreter, shell: 
         .kind = kind,
         .interpreter = interpreter,
         .shell = shell,
-        .__alloc_scope = if (comptime bun.Environment.enableAllocScopes) .{ .owned = bun.AllocationScope.init(bun.default_allocator) } else {},
+        .__alloc_scope = if (comptime fun.Environment.enableAllocScopes) .{ .owned = fun.AllocationScope.init(fun.default_allocator) } else {},
     };
 }
 
 /// This will use the allocation scope provided by `scope`
-pub fn initBorrowedAllocScope(kind: StateKind, interpreter: *Interpreter, shell: *ShellExecEnv, scope: if (bun.Environment.enableAllocScopes) *bun.AllocationScope else void) Base {
+pub fn initBorrowedAllocScope(kind: StateKind, interpreter: *Interpreter, shell: *ShellExecEnv, scope: if (fun.Environment.enableAllocScopes) *fun.AllocationScope else void) Base {
     return .{
         .kind = kind,
         .interpreter = interpreter,
         .shell = shell,
-        .__alloc_scope = if (comptime bun.Environment.enableAllocScopes) .{ .borrowed = scope } else {},
+        .__alloc_scope = if (comptime fun.Environment.enableAllocScopes) .{ .borrowed = scope } else {},
     };
 }
 
@@ -85,7 +85,7 @@ pub fn initBorrowedAllocScope(kind: StateKind, interpreter: *Interpreter, shell:
 ///
 /// This also does nothing in release builds.
 pub fn endScope(this: *Base) void {
-    if (comptime bun.Environment.enableAllocScopes) {
+    if (comptime fun.Environment.enableAllocScopes) {
         this.__alloc_scope.deinit();
     }
 }
@@ -95,7 +95,7 @@ pub inline fn eventLoop(this: *const Base) jsc.EventLoopHandle {
 }
 
 /// FIXME: We should get rid of this
-pub fn throw(this: *const Base, err: *const bun.shell.ShellErr) void {
+pub fn throw(this: *const Base, err: *const fun.shell.ShellErr) void {
     throwShellErr(err, this.eventLoop()) catch {}; //TODO:
 }
 
@@ -105,7 +105,7 @@ pub inline fn try_(this: *Base, m: anytype) error{Sys}!@TypeOf(m).ReturnType {
     return this.interpreter.try_(m);
 }
 
-pub inline fn takeErr(this: *Base) bun.sys.Error {
+pub inline fn takeErr(this: *Base) fun.sys.Error {
     return this.interpreter.takeErr();
 }
 
@@ -114,14 +114,14 @@ pub fn rootIO(this: *const Base) *const IO {
 }
 
 pub fn allocator(this: *Base) std.mem.Allocator {
-    if (comptime bun.Environment.enableAllocScopes) {
+    if (comptime fun.Environment.enableAllocScopes) {
         return this.__alloc_scope.allocator();
     }
-    return bun.default_allocator;
+    return fun.default_allocator;
 }
 
-pub fn allocScope(this: *Base) if (bun.Environment.enableAllocScopes) *bun.AllocationScope else void {
-    if (comptime bun.Environment.enableAllocScopes) {
+pub fn allocScope(this: *Base) if (fun.Environment.enableAllocScopes) *fun.AllocationScope else void {
+    if (comptime fun.Environment.enableAllocScopes) {
         return switch (this.__alloc_scope) {
             .borrowed => |scope| scope,
             .owned => |*scope| scope,
@@ -132,19 +132,19 @@ pub fn allocScope(this: *Base) if (bun.Environment.enableAllocScopes) *bun.Alloc
 
 /// Stop tracking `memory`
 pub fn leakSlice(this: *Base, memory: anytype) void {
-    if (comptime bun.Environment.enableAllocScopes) {
+    if (comptime fun.Environment.enableAllocScopes) {
         this.__alloc_scope.leakSlice(memory);
     }
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const Interpreter = bun.shell.Interpreter;
-const IO = bun.shell.Interpreter.IO;
+const Interpreter = fun.shell.Interpreter;
+const IO = fun.shell.Interpreter.IO;
 const ShellExecEnv = Interpreter.ShellExecEnv;
 
-const StateKind = bun.shell.interpret.StateKind;
-const throwShellErr = bun.shell.interpret.throwShellErr;
+const StateKind = fun.shell.interpret.StateKind;
+const throwShellErr = fun.shell.interpret.throwShellErr;

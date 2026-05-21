@@ -1,10 +1,10 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_importstar_ts_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/ts
+// For debug, all files are written to $TEMP/fun-bundle-tests/ts
 describe("bundler", () => {
   itBundled("importstar_ts/Unused", {
     files: {
@@ -207,7 +207,7 @@ describe("bundler", () => {
         console.log(foo)
       `,
     },
-    target: "bun",
+    target: "fun",
     bundling: false,
     run: { stdout: "234" },
   });
@@ -219,7 +219,7 @@ describe("bundler", () => {
         console.log(JSON.stringify(ns), ns.foo, foo)
       `,
     },
-    target: "bun",
+    target: "fun",
     bundling: false,
     runtimeFiles: {
       "/foo.js": `
@@ -236,7 +236,7 @@ describe("bundler", () => {
         console.log(ns.foo, ns.foo, foo)
       `,
     },
-    target: "bun",
+    target: "fun",
     bundling: false,
     runtimeFiles: {
       "/foo.js": `
@@ -254,7 +254,7 @@ describe("bundler", () => {
       `,
     },
     minifySyntax: true,
-    target: "bun",
+    target: "fun",
     bundling: false,
     runtimeFiles: {
       "/foo.js": `

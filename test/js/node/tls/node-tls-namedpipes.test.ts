@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import { expectMaxObjectTypeCount, isWindows, tls } from "harness";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";

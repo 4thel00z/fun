@@ -1,15 +1,15 @@
 #include "EventLoopTaskNoContext.h"
 
-namespace Bun {
+namespace Fun {
 
-extern "C" void Bun__EventLoopTaskNoContext__performTask(EventLoopTaskNoContext* task)
+extern "C" void Fun__EventLoopTaskNoContext__performTask(EventLoopTaskNoContext* task)
 {
     task->performTask();
 }
 
-extern "C" void* Bun__EventLoopTaskNoContext__createdInBunVm(const EventLoopTaskNoContext* task)
+extern "C" void* Fun__EventLoopTaskNoContext__createdInFunVm(const EventLoopTaskNoContext* task)
 {
-    return task->createdInBunVm();
+    return task->createdInFunVm();
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -40,7 +40,7 @@ pub fn mysqlErrorToJS(globalObject: *jsc.JSGlobalObject, message: ?[]const u8, e
             return globalObject.createOutOfMemoryError();
         },
         error.ShortRead => {
-            bun.unreachablePanic("Assertion failed: ShortRead should be handled by the caller in mysql", .{});
+            fun.unreachablePanic("Assertion failed: ShortRead should be handled by the caller in mysql", .{});
         },
     };
 
@@ -51,10 +51,10 @@ pub fn mysqlErrorToJS(globalObject: *jsc.JSGlobalObject, message: ?[]const u8, e
     }) catch |ex| globalObject.takeException(ex);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const Error = @import("../../../sql/mysql/protocol/AnyMySQLError.zig").Error;
 const createMySQLError = @import("./error_packet_jsc.zig").createMySQLError;
 
-const JSC = bun.jsc;
-const jsc = bun.jsc;
+const JSC = fun.jsc;
+const jsc = fun.jsc;
 const JSValue = JSC.JSValue;

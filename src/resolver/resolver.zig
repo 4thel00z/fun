@@ -7,7 +7,7 @@ pub fn isPackagePath(path: string) bool {
     // Always check for posix absolute paths (starts with "/")
     // But don't check window's style on posix
     // For a more in depth explanation, look above where `isPackagePathNotAbsolute` is used.
-    return !std.fs.path.isAbsolute(path) and @call(bun.callmod_inline, isPackagePathNotAbsolute, .{path});
+    return !std.fs.path.isAbsolute(path) and @call(fun.callmod_inline, isPackagePathNotAbsolute, .{path});
 }
 
 pub fn isPackagePathNotAbsolute(non_absolute_path: string) bool {
@@ -37,51 +37,51 @@ pub const SideEffectsData = struct {
 /// A temporary threadlocal buffer with a lifetime more than the current
 /// function call.
 ///
-/// These used to be individual `threadlocal var x: bun.PathBuffer = undefined`
+/// These used to be individual `threadlocal var x: fun.PathBuffer = undefined`
 /// declarations. On Windows each `PathBuffer` is 96 KB (vs 4 KB on POSIX) and
 /// PE/COFF has no TLS-BSS, so 25 of them here cost ~2.5 MB of raw zeros in
-/// bun.exe and in every thread's TLS block. Grouping them behind a lazily
-/// allocated pointer brings that down to 8 bytes. See `bun.ThreadlocalBuffers`.
+/// fun.exe and in every thread's TLS block. Grouping them behind a lazily
+/// allocated pointer brings that down to 8 bytes. See `fun.ThreadlocalBuffers`.
 ///
 /// Experimenting with making this one struct instead of a bunch of different
 /// threadlocal vars yielded no performance improvement on macOS when bundling
-/// 10 copies of Three.js. Potentially revisit after https://github.com/oven-sh/bun/issues/2716
+/// 10 copies of Three.js. Potentially revisit after https://github.com/underdoc-org/fun/issues/2716
 const Bufs = struct {
-    extension_path: bun.PathBuffer = undefined,
-    tsconfig_match_full_buf: bun.PathBuffer = undefined,
-    tsconfig_match_full_buf2: bun.PathBuffer = undefined,
-    tsconfig_match_full_buf3: bun.PathBuffer = undefined,
+    extension_path: fun.PathBuffer = undefined,
+    tsconfig_match_full_buf: fun.PathBuffer = undefined,
+    tsconfig_match_full_buf2: fun.PathBuffer = undefined,
+    tsconfig_match_full_buf3: fun.PathBuffer = undefined,
 
     esm_subpath: [512]u8 = undefined,
-    esm_absolute_package_path: bun.PathBuffer = undefined,
-    esm_absolute_package_path_joined: bun.PathBuffer = undefined,
+    esm_absolute_package_path: fun.PathBuffer = undefined,
+    esm_absolute_package_path_joined: fun.PathBuffer = undefined,
 
     dir_entry_paths_to_resolve: [256]DirEntryResolveQueueItem = undefined,
     open_dirs: [256]FD = undefined,
-    resolve_without_remapping: bun.PathBuffer = undefined,
-    index: bun.PathBuffer = undefined,
-    dir_info_uncached_filename: bun.PathBuffer = undefined,
-    node_bin_path: bun.PathBuffer = undefined,
-    dir_info_uncached_path: bun.PathBuffer = undefined,
-    tsconfig_base_url: bun.PathBuffer = undefined,
-    relative_abs_path: bun.PathBuffer = undefined,
-    load_as_file_or_directory_via_tsconfig_base_path: bun.PathBuffer = undefined,
-    node_modules_check: bun.PathBuffer = undefined,
-    field_abs_path: bun.PathBuffer = undefined,
-    tsconfig_path_abs: bun.PathBuffer = undefined,
-    check_browser_map: bun.PathBuffer = undefined,
-    remap_path: bun.PathBuffer = undefined,
-    load_as_file: bun.PathBuffer = undefined,
-    remap_path_trailing_slash: bun.PathBuffer = undefined,
-    path_in_global_disk_cache: bun.PathBuffer = undefined,
-    abs_to_rel: bun.PathBuffer = undefined,
-    node_modules_paths_buf: bun.PathBuffer = undefined,
-    import_path_for_standalone_module_graph: bun.PathBuffer = undefined,
+    resolve_without_remapping: fun.PathBuffer = undefined,
+    index: fun.PathBuffer = undefined,
+    dir_info_uncached_filename: fun.PathBuffer = undefined,
+    node_bin_path: fun.PathBuffer = undefined,
+    dir_info_uncached_path: fun.PathBuffer = undefined,
+    tsconfig_base_url: fun.PathBuffer = undefined,
+    relative_abs_path: fun.PathBuffer = undefined,
+    load_as_file_or_directory_via_tsconfig_base_path: fun.PathBuffer = undefined,
+    node_modules_check: fun.PathBuffer = undefined,
+    field_abs_path: fun.PathBuffer = undefined,
+    tsconfig_path_abs: fun.PathBuffer = undefined,
+    check_browser_map: fun.PathBuffer = undefined,
+    remap_path: fun.PathBuffer = undefined,
+    load_as_file: fun.PathBuffer = undefined,
+    remap_path_trailing_slash: fun.PathBuffer = undefined,
+    path_in_global_disk_cache: fun.PathBuffer = undefined,
+    abs_to_rel: fun.PathBuffer = undefined,
+    node_modules_paths_buf: fun.PathBuffer = undefined,
+    import_path_for_standalone_module_graph: fun.PathBuffer = undefined,
 
-    win32_normalized_dir_info_cache: if (Environment.isWindows) [bun.MAX_PATH_BYTES * 2]u8 else void = undefined,
+    win32_normalized_dir_info_cache: if (Environment.isWindows) [fun.MAX_PATH_BYTES * 2]u8 else void = undefined,
 };
 
-const bufs_storage = bun.ThreadlocalBuffers(Bufs);
+const bufs_storage = fun.ThreadlocalBuffers(Bufs);
 
 inline fn bufs(comptime field: std.meta.FieldEnum(Bufs)) *@FieldType(Bufs, @tagName(field)) {
     return &@field(bufs_storage.get(), @tagName(field));
@@ -275,10 +275,10 @@ pub const Result = struct {
         if (strings.lastIndexOf(module, node_module_root)) |end_| {
             const end: usize = end_ + node_module_root.len;
 
-            return @as(u32, @truncate(bun.hash(module[end..])));
+            return @as(u32, @truncate(fun.hash(module[end..])));
         }
 
-        return @as(u32, @truncate(bun.hash(this.path_pair.primary.text)));
+        return @as(u32, @truncate(fun.hash(this.path_pair.primary.text)));
     }
 };
 
@@ -325,8 +325,8 @@ pub const DebugLogs = struct {
         const len = d.indent.len();
         if (len > 0) {
             var __text = d.notes.allocator.alloc(u8, text.len + len) catch unreachable;
-            bun.copy(u8, __text, d.indent.list.items);
-            bun.copy(u8, __text[len..], _text);
+            fun.copy(u8, __text, d.indent.list.items);
+            fun.copy(u8, __text[len..], _text);
             text = __text;
             d.notes.allocator.free(_text);
         }
@@ -420,7 +420,7 @@ pub const LoadResult = struct {
 var resolver_Mutex: Mutex = undefined;
 var resolver_Mutex_loaded: bool = false;
 
-const BinFolderArray = bun.BoundedArray(string, 128);
+const BinFolderArray = fun.BoundedArray(string, 128);
 var bin_folders: BinFolderArray = undefined;
 var bin_folders_lock: Mutex = .{};
 var bin_folders_loaded: bool = false;
@@ -443,7 +443,7 @@ pub fn ResolveWatcher(comptime Context: type, comptime onWatch: anytype) type {
             };
         }
         pub fn watch(this: *anyopaque, dir_path: string, fd: FD) void {
-            onWatch(bun.cast(Context, this), dir_path, fd);
+            onWatch(fun.cast(Context, this), dir_path, fd);
         }
     };
 }
@@ -461,7 +461,7 @@ pub const Resolver = struct {
     care_about_scripts: bool = false,
 
     /// Read the "browser" field in package.json files?
-    /// For Bun's runtime, we don't.
+    /// For Fun's runtime, we don't.
     care_about_browser_field: bool = true,
 
     debug_logs: ?DebugLogs = null,
@@ -470,20 +470,20 @@ pub const Resolver = struct {
     watcher: ?AnyResolveWatcher = null,
 
     caches: CacheSet,
-    generation: bun.Generation = 0,
+    generation: fun.Generation = 0,
 
     package_manager: ?*PackageManager = null,
     onWakePackageManager: PackageManager.WakeHandler = .{},
     env_loader: ?*DotEnv.Loader = null,
     store_fd: bool = false,
 
-    standalone_module_graph: ?*bun.StandaloneModuleGraph = null,
+    standalone_module_graph: ?*fun.StandaloneModuleGraph = null,
 
     // These are sets that represent various conditions for the "exports" field
     // in package.json.
-    // esm_conditions_default: bun.StringHashMap(bool),
-    // esm_conditions_import: bun.StringHashMap(bool),
-    // esm_conditions_require: bun.StringHashMap(bool),
+    // esm_conditions_default: fun.StringHashMap(bool),
+    // esm_conditions_import: fun.StringHashMap(bool),
+    // esm_conditions_require: fun.StringHashMap(bool),
 
     // A special filtered import order for CSS "@import" imports.
     //
@@ -533,17 +533,17 @@ pub const Resolver = struct {
     /// is overwritten while the resolution happens.
     ///
     /// When this is null, it is as if it is set to `&.{ path.dirname(referrer) }`.
-    custom_dir_paths: ?[]const bun.String = null,
+    custom_dir_paths: ?[]const fun.String = null,
 
     pub fn getPackageManager(this: *Resolver) *PackageManager {
         return this.package_manager orelse brk: {
-            bun.HTTPThread.init(&.{});
+            fun.HTTPThread.init(&.{});
             const pm = PackageManager.initWithRuntime(
                 this.log,
                 this.opts.install,
 
                 // This cannot be the threadlocal allocator. It goes to the HTTP thread.
-                bun.default_allocator,
+                fun.default_allocator,
 
                 .{},
                 this.env_loader.?,
@@ -586,7 +586,7 @@ pub const Resolver = struct {
 
         return ThisResolver{
             .allocator = allocator,
-            .dir_cache = DirInfo.HashMap.init(bun.default_allocator),
+            .dir_cache = DirInfo.HashMap.init(fun.default_allocator),
             .mutex = &resolver_Mutex,
             .caches = CacheSet.init(allocator),
             .opts = opts,
@@ -665,23 +665,23 @@ pub const Resolver = struct {
         kind: ast.ImportKind,
         global_cache: GlobalCache,
     ) Result.Union {
-        const tracer = bun.perf.trace("ModuleResolver.resolve");
+        const tracer = fun.perf.trace("ModuleResolver.resolve");
         defer tracer.end();
 
         // Only setting 'current_action' in debug mode because module resolution
         // is done very often, and has a very low crash rate.
-        const prev_action = if (Environment.show_crash_trace) bun.crash_handler.current_action;
-        if (Environment.show_crash_trace) bun.crash_handler.current_action = .{ .resolver = .{
+        const prev_action = if (Environment.show_crash_trace) fun.crash_handler.current_action;
+        if (Environment.show_crash_trace) fun.crash_handler.current_action = .{ .resolver = .{
             .source_dir = source_dir,
             .import_path = import_path,
             .kind = kind,
         } };
         defer if (Environment.show_crash_trace) {
-            bun.crash_handler.current_action = prev_action;
+            fun.crash_handler.current_action = prev_action;
         };
 
-        if (Environment.show_crash_trace and bun.cli.debug_flags.hasResolveBreakpoint(import_path)) {
-            bun.Output.debug("Resolving <green>{s}<r> from <blue>{s}<r>", .{
+        if (Environment.show_crash_trace and fun.cli.debug_flags.hasResolveBreakpoint(import_path)) {
+            fun.Output.debug("Resolving <green>{s}<r> from <blue>{s}<r>", .{
                 import_path,
                 source_dir,
             });
@@ -717,8 +717,8 @@ pub const Resolver = struct {
 
         if (r.opts.mark_builtins_as_external) {
             if (strings.hasPrefixComptime(import_path, "node:") or
-                strings.hasPrefixComptime(import_path, "bun:") or
-                bun.jsc.ModuleLoader.HardcodedModule.Alias.has(import_path, r.opts.target, .{ .rewrite_jest_for_tests = r.opts.rewrite_jest_for_tests }))
+                strings.hasPrefixComptime(import_path, "fun:") or
+                fun.jsc.ModuleLoader.HardcodedModule.Alias.has(import_path, r.opts.target, .{ .rewrite_jest_for_tests = r.opts.rewrite_jest_for_tests }))
             {
                 return .{
                     .success = Result{
@@ -826,16 +826,16 @@ pub const Resolver = struct {
             };
         }
 
-        // When using `bun build --compile`, module resolution is never
-        // relative to our special /$bunfs/ directory.
+        // When using `fun build --compile`, module resolution is never
+        // relative to our special /$funfs/ directory.
         //
         // It's always relative to the current working directory of the project root.
         //
         // ...unless you pass a relative path that exists in the standalone module graph executable.
-        var source_dir_resolver: bun.path.PosixToWinNormalizer = .{};
+        var source_dir_resolver: fun.path.PosixToWinNormalizer = .{};
         const source_dir_normalized = brk: {
             if (r.standalone_module_graph) |graph| {
-                if (bun.StandaloneModuleGraph.isBunStandaloneFilePath(import_path)) {
+                if (fun.StandaloneModuleGraph.isFunStandaloneFilePath(import_path)) {
                     if (graph.findAssumeStandalonePath(import_path) != null) {
                         return .{
                             .success = Result{
@@ -850,10 +850,10 @@ pub const Resolver = struct {
                     }
 
                     return .{ .not_found = {} };
-                } else if (bun.StandaloneModuleGraph.isBunStandaloneFilePath(source_dir)) {
+                } else if (fun.StandaloneModuleGraph.isFunStandaloneFilePath(source_dir)) {
                     if (import_path.len > 2 and isDotSlash(import_path[0..2])) {
                         const buf = bufs(.import_path_for_standalone_module_graph);
-                        const joined = bun.path.joinAbsStringBuf(source_dir, buf, &.{import_path}, .loose);
+                        const joined = fun.path.joinAbsStringBuf(source_dir, buf, &.{import_path}, .loose);
 
                         // Support relative paths in the graph
                         if (graph.findAssumeStandalonePath(joined)) |file| {
@@ -878,8 +878,8 @@ pub const Resolver = struct {
             //
             // TODO: This is skipped for now because it is impossible to set a
             // resolveDir so we default to the top level directory instead (this
-            // is backwards compat with Bun 1.0 behavior)
-            // See https://github.com/oven-sh/bun/issues/8994 for more details.
+            // is backwards compat with Fun 1.0 behavior)
+            // See https://github.com/underdoc-org/fun/issues/8994 for more details.
             if (source_dir.len == 0) {
                 // if (r.debug_logs) |*debug| {
                 //     debug.addNote("Cannot resolve this path without a directory");
@@ -891,7 +891,7 @@ pub const Resolver = struct {
             }
 
             // This can also be hit if you use plugins with non-file namespaces,
-            // or call the module resolver from javascript (Bun.resolveSync)
+            // or call the module resolver from javascript (Fun.resolveSync)
             // with a faulty parent specifier.
             if (!std.fs.path.isAbsolute(source_dir)) {
                 // if (r.debug_logs) |*debug| {
@@ -912,7 +912,7 @@ pub const Resolver = struct {
 
         // A path with a null byte cannot exist on the filesystem. Continuing
         // anyways would cause assertion failures.
-        if (bun.strings.containsChar(import_path, 0)) {
+        if (fun.strings.containsChar(import_path, 0)) {
             r.flushDebugLogs(.fail) catch {};
             return .{ .not_found = {} };
         }
@@ -922,7 +922,7 @@ pub const Resolver = struct {
         // Fragments in URLs in CSS imports are technically expected to work
         if (tmp == .not_found and kind.isFromCSS()) try_without_suffix: {
             // If resolution failed, try again with the URL query and/or hash removed
-            const maybe_suffix = bun.strings.indexOfAny(import_path, "?#");
+            const maybe_suffix = fun.strings.indexOfAny(import_path, "?#");
             if (maybe_suffix == null or maybe_suffix.? < 1)
                 break :try_without_suffix;
 
@@ -947,21 +947,21 @@ pub const Resolver = struct {
                         debuglog(
                             "resolve({f}, from: {f}, {s}) = {f} (secondary: {f})",
                             .{
-                                bun.fmt.fmtPath(u8, import_path, .{}),
-                                bun.fmt.fmtPath(u8, source_dir, .{}),
+                                fun.fmt.fmtPath(u8, import_path, .{}),
+                                fun.fmt.fmtPath(u8, source_dir, .{}),
                                 kind.label(),
-                                bun.fmt.fmtPath(u8, if (result.path()) |path| path.text else "<NULL>", .{}),
-                                bun.fmt.fmtPath(u8, secondary.text, .{}),
+                                fun.fmt.fmtPath(u8, if (result.path()) |path| path.text else "<NULL>", .{}),
+                                fun.fmt.fmtPath(u8, secondary.text, .{}),
                             },
                         );
                     } else {
                         debuglog(
                             "resolve({f}, from: {f}, {s}) = {f}",
                             .{
-                                bun.fmt.fmtPath(u8, import_path, .{}),
-                                bun.fmt.fmtPath(u8, source_dir, .{}),
+                                fun.fmt.fmtPath(u8, import_path, .{}),
+                                fun.fmt.fmtPath(u8, source_dir, .{}),
                                 kind.label(),
-                                bun.fmt.fmtPath(u8, if (result.path()) |path| path.text else "<NULL>", .{}),
+                                fun.fmt.fmtPath(u8, if (result.path()) |path| path.text else "<NULL>", .{}),
                             },
                         );
                     }
@@ -992,7 +992,7 @@ pub const Resolver = struct {
         }
     }
 
-    /// Runs a resolution but also checking if a Bun Bake framework has an
+    /// Runs a resolution but also checking if a Fun Bake framework has an
     /// override. This is used in one place in the bundler.
     pub fn resolveWithFramework(r: *ThisResolver, source_dir: string, import_path: string, kind: ast.ImportKind) !Result {
         if (r.opts.framework) |f| {
@@ -1015,7 +1015,7 @@ pub const Resolver = struct {
         return r.resolve(source_dir, import_path, kind);
     }
 
-    const ModuleTypeMap = bun.ComptimeStringMap(options.ModuleType, .{
+    const ModuleTypeMap = fun.ComptimeStringMap(options.ModuleType, .{
         .{ ".mjs", options.ModuleType.esm },
         .{ ".mts", options.ModuleType.esm },
         .{ ".cjs", options.ModuleType.cjs },
@@ -1039,7 +1039,7 @@ pub const Resolver = struct {
                 result.primary_side_effects_data = switch (existing.side_effects) {
                     .unspecified => .has_side_effects,
                     .false => .no_side_effects__package_json,
-                    .map => |map| if (map.contains(bun.StringHashMapUnowned.Key.init(path.text))) .has_side_effects else .no_side_effects__package_json,
+                    .map => |map| if (map.contains(fun.StringHashMapUnowned.Key.init(path.text))) .has_side_effects else .no_side_effects__package_json,
                     .glob => if (existing.side_effects.hasSideEffects(path.text)) .has_side_effects else .no_side_effects__package_json,
                     .mixed => if (existing.side_effects.hasSideEffects(path.text)) .has_side_effects else .no_side_effects__package_json,
                 };
@@ -1054,7 +1054,7 @@ pub const Resolver = struct {
                     result.primary_side_effects_data = switch (package_json.side_effects) {
                         .unspecified => .has_side_effects,
                         .false => .no_side_effects__package_json,
-                        .map => |map| if (map.contains(bun.StringHashMapUnowned.Key.init(path.text))) .has_side_effects else .no_side_effects__package_json,
+                        .map => |map| if (map.contains(fun.StringHashMapUnowned.Key.init(path.text))) .has_side_effects else .no_side_effects__package_json,
                         .glob => if (package_json.side_effects.hasSideEffects(path.text)) .has_side_effects else .no_side_effects__package_json,
                         .mixed => if (package_json.side_effects.hasSideEffects(path.text)) .has_side_effects else .no_side_effects__package_json,
                     };
@@ -1087,7 +1087,7 @@ pub const Resolver = struct {
                     } else if (dir.abs_real_path.len > 0) {
                         // When the directory is a symlink, we don't need to call getFdPath.
                         var parts = [_]string{ dir.abs_real_path, query.entry.base() };
-                        var buf: bun.PathBuffer = undefined;
+                        var buf: fun.PathBuffer = undefined;
 
                         const out = r.fs.absBuf(&parts, &buf);
 
@@ -1096,7 +1096,7 @@ pub const Resolver = struct {
                         if (!query.entry.cache.fd.isValid() and store_fd) {
                             buf[out.len] = 0;
                             const span = buf[0..out.len :0];
-                            var file: bun.FD = .fromStdFile(try std.fs.openFileAbsoluteZ(span, .{ .mode = .read_only }));
+                            var file: fun.FD = .fromStdFile(try std.fs.openFileAbsoluteZ(span, .{ .mode = .read_only }));
                             query.entry.cache.fd = file;
                             Fs.FileSystem.setMaxFd(file.native());
                         }
@@ -1166,8 +1166,8 @@ pub const Resolver = struct {
             // Collapse relative directory specifiers if they exist. Extremely
             // loose check to avoid always doing this copy, but avoid spending
             // too much time on the check.
-            if (bun.strings.indexOf(import_path, "..") != null) {
-                const platform = bun.path.Platform.auto;
+            if (fun.strings.indexOf(import_path, "..") != null) {
+                const platform = fun.path.Platform.auto;
                 const ends_with_dir = platform.isSeparator(import_path[import_path.len - 1]) or
                     (import_path.len > 3 and
                         platform.isSeparator(import_path[import_path.len - 3]) and
@@ -1253,7 +1253,7 @@ pub const Resolver = struct {
             if (r.custom_dir_paths) |custom_paths| {
                 @branchHint(.unlikely);
                 for (custom_paths) |custom_path| {
-                    const custom_utf8 = custom_path.toUTF8WithoutRef(bun.default_allocator);
+                    const custom_utf8 = custom_path.toUTF8WithoutRef(fun.default_allocator);
                     defer custom_utf8.deinit();
                     switch (r.checkRelativePath(custom_utf8.slice(), import_path, kind, global_cache)) {
                         .success => |res| return .{ .success = res },
@@ -1262,7 +1262,7 @@ pub const Resolver = struct {
                         .not_found => {},
                     }
                 }
-                bun.debugAssert(!check_package); // always from JavaScript
+                fun.debugAssert(!check_package); // always from JavaScript
                 return .{ .not_found = {} }; // bail out now since there isn't anywhere else to check
             } else {
                 switch (r.checkRelativePath(source_dir, import_path, kind, global_cache)) {
@@ -1289,7 +1289,7 @@ pub const Resolver = struct {
 
                 if (had_node_prefix) {
                     // Module resolution fails automatically for unknown node builtins
-                    if (!bun.jsc.ModuleLoader.HardcodedModule.Alias.has(import_path_without_node_prefix, .node, .{})) {
+                    if (!fun.jsc.ModuleLoader.HardcodedModule.Alias.has(import_path_without_node_prefix, .node, .{})) {
                         return .{ .not_found = {} };
                     }
 
@@ -1349,7 +1349,7 @@ pub const Resolver = struct {
             if (r.custom_dir_paths) |custom_paths| {
                 @branchHint(.unlikely);
                 for (custom_paths) |custom_path| {
-                    const custom_utf8 = custom_path.toUTF8WithoutRef(bun.default_allocator);
+                    const custom_utf8 = custom_path.toUTF8WithoutRef(fun.default_allocator);
                     defer custom_utf8.deinit();
                     switch (r.checkPackagePath(custom_utf8.slice(), import_path, kind, global_cache)) {
                         .success => |res| return .{ .success = res },
@@ -1384,7 +1384,7 @@ pub const Resolver = struct {
             }
 
             return .{ .success = .{
-                .path_pair = .{ .primary = Path.init(bun.handleOom(r.fs.dirname_store.append(@TypeOf(abs_path), abs_path))) },
+                .path_pair = .{ .primary = Path.init(fun.handleOom(r.fs.dirname_store.append(@TypeOf(abs_path), abs_path))) },
                 .flags = .{ .is_external = true },
             } };
         }
@@ -1466,20 +1466,20 @@ pub const Resolver = struct {
             //
             // For case B in Node.js, they use `_resolveLookupPaths` in
             // combination with `_nodeModulePaths` to collect a listing of
-            // all possible parent `node_modules` [2]. Bun has a much smarter
+            // all possible parent `node_modules` [2]. Fun has a much smarter
             // approach that caches directory entries, but it (correctly) does
             // not cache non-existing directories. To successfully resolve this,
-            // Bun finds the nearest existing directory, and uses that as the base
+            // Fun finds the nearest existing directory, and uses that as the base
             // for `node_modules` resolution. Since that directory entry knows how
             // to resolve concrete node_modules, this iteration stops at the first
             // existing directory, regardless of what it is.
             //
             // The resulting `source_dir_info` cannot resolve relative files.
             //
-            // [1]: https://github.com/oven-sh/bun/issues/16705
+            // [1]: https://github.com/underdoc-org/fun/issues/16705
             // [2]: https://github.com/nodejs/node/blob/e346323109b49fa6b9a4705f4e3816fc3a30c151/lib/internal/modules/cjs/loader.js#L1934
             if (Environment.allow_assert)
-                bun.assert(isPackagePath(import_path));
+                fun.assert(isPackagePath(import_path));
             var closest_dir = source_dir;
             // Use std.fs.path.dirname to get `null` once the entire
             // directory tree has been visited. `null` is theoretically
@@ -1698,7 +1698,7 @@ pub const Resolver = struct {
     /// very very subtle cache invalidation issues to happen, which will cause modules to
     /// mysteriously fail to resolve.
     ///
-    /// The rules for this changed in https://github.com/oven-sh/bun/pull/9144 after multiple
+    /// The rules for this changed in https://github.com/underdoc-org/fun/pull/9144 after multiple
     /// cache issues were found on Windows. These issues extended to other platforms because
     /// we never checked if the cache key was following the rules.
     ///
@@ -1707,7 +1707,7 @@ pub const Resolver = struct {
     /// But drive roots MUST have a trailing slash ('/' and 'C:\')
     /// UNC paths, even if the root, must not have the trailing slash.
     ///
-    /// The helper function bun.strings.withoutTrailingSlashWindowsPath can be used
+    /// The helper function fun.strings.withoutTrailingSlashWindowsPath can be used
     /// to remove the trailing slash from a path
     pub fn assertValidCacheKey(path: []const u8) void {
         if (Environment.allow_assert) {
@@ -1735,19 +1735,19 @@ pub const Resolver = struct {
     /// to `./hello.js` or `./hello/index.js`
     pub fn bustDirCacheFromSpecifier(r: *ThisResolver, import_source_file: []const u8, specifier: []const u8) bool {
         if (std.fs.path.isAbsolute(specifier)) {
-            const dir = bun.path.dirname(specifier, .auto);
+            const dir = fun.path.dirname(specifier, .auto);
             const a = r.bustDirCache(dir);
             const b = r.bustDirCache(specifier);
             return a or b;
         }
 
-        if (!(bun.strings.startsWith(specifier, "./") or
-            bun.strings.startsWith(specifier, "../"))) return false;
+        if (!(fun.strings.startsWith(specifier, "./") or
+            fun.strings.startsWith(specifier, "../"))) return false;
         if (!std.fs.path.isAbsolute(import_source_file))
             return false;
 
-        const joined = bun.path.joinAbs(bun.path.dirname(import_source_file, .auto), .auto, specifier);
-        const dir = bun.path.dirname(joined, .auto);
+        const joined = fun.path.joinAbs(fun.path.dirname(import_source_file, .auto), .auto, specifier);
+        const dir = fun.path.dirname(joined, .auto);
 
         const a = r.bustDirCache(dir);
         const b = r.bustDirCache(joined);
@@ -2247,25 +2247,25 @@ pub const Resolver = struct {
         const dir_path = strings.withoutTrailingSlashWindowsPath(dir_path_maybe_trail_slash);
 
         assertValidCacheKey(dir_path);
-        var dir_cache_info_result = bun.handleOom(r.dir_cache.getOrPut(dir_path));
+        var dir_cache_info_result = fun.handleOom(r.dir_cache.getOrPut(dir_path));
         if (dir_cache_info_result.status == .exists) {
             // we've already looked up this package before
             return r.dir_cache.atIndex(dir_cache_info_result.index).?;
         }
         var rfs = &r.fs.fs;
-        var cached_dir_entry_result = bun.handleOom(rfs.entries.getOrPut(dir_path));
+        var cached_dir_entry_result = fun.handleOom(rfs.entries.getOrPut(dir_path));
 
         var dir_entries_option: *Fs.FileSystem.RealFS.EntriesOption = undefined;
         var needs_iter = true;
         var in_place: ?*Fs.FileSystem.DirEntry = null;
-        const open_dir = bun.openDirForIteration(FD.cwd(), dir_path).unwrap() catch |err| {
+        const open_dir = fun.openDirForIteration(FD.cwd(), dir_path).unwrap() catch |err| {
             // TODO: handle this error better
             r.log.addErrorFmt(
                 null,
                 logger.Loc.Empty,
                 r.allocator,
                 "Unable to open directory: {s}",
-                .{bun.asByteSlice(@errorName(err))},
+                .{fun.asByteSlice(@errorName(err))},
             ) catch unreachable;
             return err;
         };
@@ -2282,13 +2282,13 @@ pub const Resolver = struct {
         }
 
         if (needs_iter) {
-            const allocator = bun.default_allocator;
+            const allocator = fun.default_allocator;
             var new_entry = Fs.FileSystem.DirEntry.init(
                 if (in_place) |existing| existing.dir else Fs.FileSystem.DirnameStore.instance.append(string, dir_path) catch unreachable,
                 r.generation,
             );
 
-            var dir_iterator = bun.iterateDir(open_dir);
+            var dir_iterator = fun.iterateDir(open_dir);
             while (dir_iterator.next().unwrap() catch null) |_value| {
                 new_entry.addEntry(
                     if (in_place) |existing| &existing.data else null,
@@ -2309,7 +2309,7 @@ pub const Resolver = struct {
                 dir_entries_ptr.fd = open_dir;
             }
 
-            bun.fs.debug("readdir({f}, {s}) = {d}", .{ open_dir, dir_path, dir_entries_ptr.data.count() });
+            fun.fs.debug("readdir({f}, {s}) = {d}", .{ open_dir, dir_path, dir_entries_ptr.data.count() });
 
             dir_entries_option = rfs.entries.put(&cached_dir_entry_result, .{
                 .entries = dir_entries_ptr,
@@ -2450,7 +2450,7 @@ pub const Resolver = struct {
             }
         }
 
-        bun.unreachablePanic("TODO: implement enqueueDependencyToResolve for non-root packages", .{});
+        fun.unreachablePanic("TODO: implement enqueueDependencyToResolve for non-root packages", .{});
     }
 
     fn handleESMResolution(r: *ThisResolver, esm_resolution_: ESModule.Resolution, abs_package_path: string, kind: ast.ImportKind, package_json: *PackageJSON, package_subpath: string) ?MatchResult {
@@ -2491,10 +2491,10 @@ pub const Resolver = struct {
 
                     // Try to have a friendly error message if people forget the extension
                     if (ends_with_star) {
-                        bun.copy(u8, bufs(.load_as_file), base);
+                        fun.copy(u8, bufs(.load_as_file), base);
                         for (extension_order) |ext| {
                             var file_name = bufs(.load_as_file)[0 .. base.len + ext.len];
-                            bun.copy(u8, file_name[base.len..], ext);
+                            fun.copy(u8, file_name[base.len..], ext);
                             if (entries.get(file_name) != null) {
                                 if (r.debug_logs) |*debug| {
                                     const parts = [_]string{ package_json.name, package_subpath };
@@ -2518,10 +2518,10 @@ pub const Resolver = struct {
                         if (r.dirInfoCached(abs_esm_path) catch null) |dir_info| {
                             if (dir_info.getEntries(r.generation)) |dir_entries| {
                                 const index = "index";
-                                bun.copy(u8, bufs(.load_as_file), index);
+                                fun.copy(u8, bufs(.load_as_file), index);
                                 for (extension_order) |ext| {
                                     var file_name = bufs(.load_as_file)[0 .. index.len + ext.len];
-                                    bun.copy(u8, file_name[index.len..], ext);
+                                    fun.copy(u8, file_name[index.len..], ext);
                                     const index_query = dir_entries.get(file_name);
                                     if (index_query != null and index_query.?.entry.kind(&r.fs.fs, r.store_fd) == .file) {
                                         if (r.debug_logs) |*debug| {
@@ -2605,7 +2605,7 @@ pub const Resolver = struct {
         // Since tsconfig.json is cached permanently, in our DirEntries cache
         // we must use the global allocator
         var entry = try r.caches.fs.readFileWithAllocator(
-            bun.default_allocator,
+            fun.default_allocator,
             r.fs,
             file,
             dirname_fd,
@@ -2622,7 +2622,7 @@ pub const Resolver = struct {
         const source = &logger.Source.initPathString(key_path.text, entry.contents);
         const file_dir = source.path.sourceDir();
 
-        var result = (try TSConfigJSON.parse(bun.default_allocator, r.log, source, &r.caches.json)) orelse return null;
+        var result = (try TSConfigJSON.parse(fun.default_allocator, r.log, source, &r.caches.json)) orelse return null;
 
         if (result.hasBaseURL()) {
 
@@ -2710,7 +2710,7 @@ pub const Resolver = struct {
         // A path longer than MAX_PATH_BYTES cannot name a real directory.
         // Bailing here also prevents overflowing `dir_info_uncached_path`
         // below when called with user-controlled absolute import paths.
-        if (input_path.len > bun.MAX_PATH_BYTES) return null;
+        if (input_path.len > fun.MAX_PATH_BYTES) return null;
 
         if (comptime Environment.isWindows) {
             const win32_normalized_dir_info_cache_buf = bufs(.win32_normalized_dir_info_cache);
@@ -2719,22 +2719,22 @@ pub const Resolver = struct {
             if ((input_path.len == 2 and input_path[1] == ':') or
                 (input_path.len == 3 and input_path[1] == ':' and input_path[2] == '.'))
             {
-                bun.unsafeAssert(input_path.ptr == win32_normalized_dir_info_cache_buf);
+                fun.unsafeAssert(input_path.ptr == win32_normalized_dir_info_cache_buf);
                 win32_normalized_dir_info_cache_buf[2] = '\\';
                 input_path.len = 3;
             }
 
             // Filter out \\hello\, a UNC server path but without a share.
             // When there isn't a share name, such path is not considered to exist.
-            if (bun.strings.hasPrefixComptime(input_path, "\\\\")) {
-                const first_slash = bun.strings.indexOfChar(input_path[2..], '\\') orelse
+            if (fun.strings.hasPrefixComptime(input_path, "\\\\")) {
+                const first_slash = fun.strings.indexOfChar(input_path[2..], '\\') orelse
                     return null;
-                _ = bun.strings.indexOfChar(input_path[2 + first_slash ..], '\\') orelse
+                _ = fun.strings.indexOfChar(input_path[2 + first_slash ..], '\\') orelse
                     return null;
             }
         }
 
-        bun.assertf(std.fs.path.isAbsolute(input_path), "cannot resolve DirInfo for non-absolute path: {s}", .{input_path});
+        fun.assertf(std.fs.path.isAbsolute(input_path), "cannot resolve DirInfo for non-absolute path: {s}", .{input_path});
 
         const path_without_trailing_slash = strings.withoutTrailingSlashWindowsPath(input_path);
         assertValidCacheKey(path_without_trailing_slash);
@@ -2746,7 +2746,7 @@ pub const Resolver = struct {
         var dir_info_uncached_path_buf = bufs(.dir_info_uncached_path);
 
         var i: i32 = 1;
-        bun.copy(u8, dir_info_uncached_path_buf, input_path);
+        fun.copy(u8, dir_info_uncached_path_buf, input_path);
         var path = dir_info_uncached_path_buf[0..input_path.len];
 
         bufs(.dir_entry_paths_to_resolve)[0] = DirEntryResolveQueueItem{ .result = top_result, .unsafe_path = path, .safe_path = "" };
@@ -2758,7 +2758,7 @@ pub const Resolver = struct {
             .status = .not_found,
         };
         const root_path = if (Environment.isWindows)
-            bun.strings.withoutTrailingSlashWindowsPath(ResolvePath.windowsFilesystemRoot(path))
+            fun.strings.withoutTrailingSlashWindowsPath(ResolvePath.windowsFilesystemRoot(path))
         else
             // we cannot just use "/"
             // we will write to the buffer past the ptr len so it must be a non-const buffer
@@ -2881,7 +2881,7 @@ pub const Resolver = struct {
                     ) catch |err| break :open_req err;
                     break :open_req FD.fromStdDir(dir_result);
                 } else if (comptime Environment.isWindows) open_req: {
-                    const dirfd_result = bun.sys.openDirAtWindowsA(bun.invalid_fd, sentinel, .{
+                    const dirfd_result = fun.sys.openDirAtWindowsA(fun.invalid_fd, sentinel, .{
                         .iterable = true,
                         .no_follow = !follow_symlinks,
                         .read_only = true,
@@ -2893,7 +2893,7 @@ pub const Resolver = struct {
                     }
                 };
 
-                bun.fs.debug("open({s})", .{sentinel});
+                fun.fs.debug("open({s})", .{sentinel});
 
                 break :open_dir open_req catch |err| switch (@as(anyerror, err)) {
                     // Ignore "ENOTDIR" here so that calling "ReadDirectory" on a file behaves
@@ -2990,13 +2990,13 @@ pub const Resolver = struct {
             }
 
             if (needs_iter) {
-                const allocator = bun.default_allocator;
+                const allocator = fun.default_allocator;
                 var new_entry = Fs.FileSystem.DirEntry.init(
                     if (in_place) |existing| existing.dir else Fs.FileSystem.DirnameStore.instance.append(string, dir_path) catch unreachable,
                     r.generation,
                 );
 
-                var dir_iterator = bun.iterateDir(open_dir);
+                var dir_iterator = fun.iterateDir(open_dir);
                 while (dir_iterator.next().unwrap() catch null) |_value| {
                     new_entry.addEntry(
                         if (in_place) |existing| &existing.data else null,
@@ -3015,7 +3015,7 @@ pub const Resolver = struct {
                 dir_entries_option = try rfs.entries.put(&cached_dir_entry_result, .{
                     .entries = dir_entries_ptr,
                 });
-                bun.fs.debug("readdir({f}, {s}) = {d}", .{ open_dir, dir_path, dir_entries_ptr.data.count() });
+                fun.fs.debug("readdir({f}, {s}) = {d}", .{ open_dir, dir_path, dir_entries_ptr.data.count() });
             }
 
             // We must initialize it as empty so that the result index is correct.
@@ -3151,7 +3151,7 @@ pub const Resolver = struct {
                     const suffix = std.mem.trimLeft(u8, original_path[total_length orelse original_path.len ..], "*");
                     matched_text_with_suffix_len = matched_text.len + suffix.len;
                     if (matched_text_with_suffix_len > matched_text_with_suffix.len) continue;
-                    bun.concat(u8, matched_text_with_suffix, &.{ matched_text, suffix });
+                    fun.concat(u8, matched_text_with_suffix, &.{ matched_text, suffix });
                 }
 
                 // 1. Normalize the base path
@@ -3211,8 +3211,8 @@ pub const Resolver = struct {
         const esm_resolution = esmodule.resolveImports(import_path, imports_map.root);
 
         if (esm_resolution.status == .PackageResolve) {
-            // https://github.com/oven-sh/bun/issues/4972
-            // Resolve a subpath import to a Bun or Node.js builtin
+            // https://github.com/underdoc-org/fun/issues/4972
+            // Resolve a subpath import to a Fun or Node.js builtin
             //
             // Code example:
             //
@@ -3224,11 +3224,11 @@ pub const Resolver = struct {
             //       "#fs": "node:fs"
             //     }
             //
-            if (r.opts.mark_builtins_as_external or r.opts.target.isBun()) {
+            if (r.opts.mark_builtins_as_external or r.opts.target.isFun()) {
                 if (jsc.ModuleLoader.HardcodedModule.Alias.get(esm_resolution.path, r.opts.target, .{})) |alias| {
                     return .{
                         .success = .{
-                            .path_pair = .{ .primary = bun.fs.Path.init(alias.path) },
+                            .path_pair = .{ .primary = fun.fs.Path.init(alias.path) },
                             .is_external = true,
                         },
                     };
@@ -3277,12 +3277,12 @@ pub const Resolver = struct {
             var ext_buf = bufs(.extension_path);
 
             if (cleaned.len <= ext_buf.len) {
-                bun.copy(u8, ext_buf, cleaned);
+                fun.copy(u8, ext_buf, cleaned);
 
                 // If that failed, try adding implicit extensions
                 for (this.extension_order) |ext| {
                     if (cleaned.len + ext.len > ext_buf.len) continue;
-                    bun.copy(u8, ext_buf[cleaned.len..], ext);
+                    fun.copy(u8, ext_buf[cleaned.len..], ext);
                     const new_path = ext_buf[0 .. cleaned.len + ext.len];
                     // if (r.debug_logs) |*debug| {
                     //     debug.addNoteFmt("Checking for \"{s}\" ", .{new_path});
@@ -3311,11 +3311,11 @@ pub const Resolver = struct {
             }
 
             if (index_path.len <= ext_buf.len) {
-                bun.copy(u8, ext_buf, index_path);
+                fun.copy(u8, ext_buf, index_path);
 
                 for (this.extension_order) |ext| {
                     if (index_path.len + ext.len > ext_buf.len) continue;
-                    bun.copy(u8, ext_buf[index_path.len..], ext);
+                    fun.copy(u8, ext_buf[index_path.len..], ext);
                     const new_path = ext_buf[0 .. index_path.len + ext.len];
                     // if (r.debug_logs) |*debug| {
                     //     debug.addNoteFmt("Checking for \"{s}\" ", .{new_path});
@@ -3387,7 +3387,7 @@ pub const Resolver = struct {
             switch (comptime kind) {
                 .AbsolutePath => {
                     abs_to_rel[0..2].* = "./".*;
-                    bun.copy(u8, abs_to_rel[2..], checker.input_path);
+                    fun.copy(u8, abs_to_rel[2..], checker.input_path);
                     if (checker.checkPath(abs_to_rel[0 .. checker.input_path.len + 2])) {
                         return checker.remapped;
                     }
@@ -3407,7 +3407,7 @@ pub const Resolver = struct {
 
                     if (isInSamePackage) {
                         abs_to_rel[0..2].* = "./".*;
-                        bun.copy(u8, abs_to_rel[2..], checker.input_path);
+                        fun.copy(u8, abs_to_rel[2..], checker.input_path);
 
                         if (checker.checkPath(abs_to_rel[0 .. checker.input_path.len + 2])) {
                             return checker.remapped;
@@ -3518,7 +3518,7 @@ pub const Resolver = struct {
 
         var base = ext_buf[0 .. "index".len + ext.len];
         base[0.."index".len].* = "index".*;
-        bun.copy(u8, base["index".len..], ext);
+        fun.copy(u8, base["index".len..], ext);
 
         if (dir_info.getEntries(r.generation)) |entries| {
             if (entries.get(base)) |lookup| {
@@ -3568,7 +3568,7 @@ pub const Resolver = struct {
         var path = path_;
         if (!strings.endsWithChar(path_, std.fs.path.sep)) {
             var path_buf = bufs(.remap_path_trailing_slash);
-            bun.copy(u8, path_buf, path);
+            fun.copy(u8, path_buf, path);
             path_buf[path.len] = std.fs.path.sep;
             path_buf[path.len + 1] = 0;
             path = path_buf[0 .. path.len + 1];
@@ -3793,7 +3793,7 @@ pub const Resolver = struct {
             }
         }
 
-        const dir_path = bun.strings.withoutTrailingSlashWindowsPath(Dirname.dirname(path));
+        const dir_path = fun.strings.withoutTrailingSlashWindowsPath(Dirname.dirname(path));
 
         const dir_entry: *Fs.FileSystem.RealFS.EntriesOption = rfs.readDirectory(
             dir_path,
@@ -3857,7 +3857,7 @@ pub const Resolver = struct {
         }
 
         // Try the path with extensions
-        bun.copy(u8, bufs(.load_as_file), path);
+        fun.copy(u8, bufs(.load_as_file), path);
         for (extension_order) |ext| {
             if (loadExtension(r, base, path, ext, entries)) |result| {
                 return result;
@@ -3892,7 +3892,7 @@ pub const Resolver = struct {
             {
                 const segment = base[0..last_dot];
                 var tail = bufs(.load_as_file)[path.len - base.len ..];
-                bun.copy(u8, tail, segment);
+                fun.copy(u8, tail, segment);
 
                 const exts: []const string = if (strings.eqlComptime(ext, ".mjs"))
                     &.{".mts"}
@@ -3954,7 +3954,7 @@ pub const Resolver = struct {
     fn loadExtension(r: *ThisResolver, base: string, path: string, ext: string, entries: *Fs.FileSystem.DirEntry) ?LoadResult {
         const rfs: *Fs.FileSystem.RealFS = &r.fs.fs;
         const buffer = bufs(.load_as_file)[0 .. path.len + ext.len];
-        bun.copy(u8, buffer[path.len..], ext);
+        fun.copy(u8, buffer[path.len..], ext);
         const file_name = buffer[path.len - base.len .. buffer.len];
 
         if (r.debug_logs) |*debug| {
@@ -4008,7 +4008,7 @@ pub const Resolver = struct {
             // `path` is stored in the permanent `dir_cache` as `DirInfo.abs_path`. It must not
             // point into a reused threadlocal scratch buffer, or a later resolution will
             // corrupt cached entries. Callers must intern it (e.g. via `DirnameStore`) first.
-            bun.assertf(
+            fun.assertf(
                 !allocators.isSliceInBuffer(path, bufs(.path_in_global_disk_cache)),
                 "DirInfo.abs_path must not point into the threadlocal path_in_global_disk_cache buffer (got \"{s}\")",
                 .{path},
@@ -4047,7 +4047,7 @@ pub const Resolver = struct {
                         }
 
                         const this_dir = fd.stdDir();
-                        var file = bun.FD.fromStdDir(this_dir.openDirZ(bun.pathLiteral("node_modules/.bin"), .{}) catch
+                        var file = fun.FD.fromStdDir(this_dir.openDirZ(fun.pathLiteral("node_modules/.bin"), .{}) catch
                             break :append_bin_dir);
                         defer file.close();
                         const bin_path = file.getFdPath(bufs(.node_bin_path)) catch break :append_bin_dir;
@@ -4075,7 +4075,7 @@ pub const Resolver = struct {
                             const this_dir = fd.stdDir();
                             var file = this_dir.openDirZ(".bin", .{}) catch break :append_bin_dir;
                             defer file.close();
-                            const bin_path = bun.getFdPath(.fromStdDir(file), bufs(.node_bin_path)) catch break :append_bin_dir;
+                            const bin_path = fun.getFdPath(.fromStdDir(file), bufs(.node_bin_path)) catch break :append_bin_dir;
                             bin_folders_lock.lock();
                             defer bin_folders_lock.unlock();
 
@@ -4100,7 +4100,7 @@ pub const Resolver = struct {
             info.enclosing_tsconfig_json = parent_.enclosing_tsconfig_json;
 
             if (parent_.package_json) |parent_package_json| {
-                // https://github.com/oven-sh/bun/issues/229
+                // https://github.com/underdoc-org/fun/issues/229
                 if (parent_package_json.name.len > 0 or r.care_about_bin_folder) {
                     info.enclosing_package_json = parent_package_json;
                 }
@@ -4210,23 +4210,23 @@ pub const Resolver = struct {
                 ) catch |err| brk: {
                     const pretty = tsconfigpath;
                     if (err == error.ENOENT or err == error.FileNotFound) {
-                        r.log.addErrorFmt(null, logger.Loc.Empty, r.allocator, "Cannot find tsconfig file {f}", .{bun.fmt.QuotedFormatter{ .text = pretty }}) catch {};
+                        r.log.addErrorFmt(null, logger.Loc.Empty, r.allocator, "Cannot find tsconfig file {f}", .{fun.fmt.QuotedFormatter{ .text = pretty }}) catch {};
                     } else if (err != error.ParseErrorAlreadyLogged and err != error.IsDir and err != error.EISDIR) {
-                        r.log.addErrorFmt(null, logger.Loc.Empty, r.allocator, "Cannot read file {f}: {s}", .{ bun.fmt.QuotedFormatter{ .text = pretty }, @errorName(err) }) catch {};
+                        r.log.addErrorFmt(null, logger.Loc.Empty, r.allocator, "Cannot read file {f}: {s}", .{ fun.fmt.QuotedFormatter{ .text = pretty }, @errorName(err) }) catch {};
                     }
                     break :brk null;
                 };
                 if (info.tsconfig_json) |tsconfig_json| {
-                    var parent_configs = try bun.BoundedArray(*TSConfigJSON, 64).init(0);
+                    var parent_configs = try fun.BoundedArray(*TSConfigJSON, 64).init(0);
                     try parent_configs.append(tsconfig_json);
                     var current = tsconfig_json;
                     while (current.extends.len > 0) {
                         const ts_dir_name = Dirname.dirname(current.abs_path);
                         const abs_path = ResolvePath.joinAbsStringBuf(ts_dir_name, bufs(.tsconfig_path_abs), &[_]string{ ts_dir_name, current.extends }, .auto);
-                        const parent_config_maybe = r.parseTSConfig(abs_path, bun.invalid_fd) catch |err| {
+                        const parent_config_maybe = r.parseTSConfig(abs_path, fun.invalid_fd) catch |err| {
                             r.log.addDebugFmt(null, logger.Loc.Empty, r.allocator, "{s} loading tsconfig.json extends {f}", .{
                                 @errorName(err),
-                                bun.fmt.QuotedFormatter{
+                                fun.fmt.QuotedFormatter{
                                     .text = abs_path,
                                 },
                             }) catch {};
@@ -4267,7 +4267,7 @@ pub const Resolver = struct {
                             // deeper config doesn't leak. Each value is a []string slice
                             // that was separately heap-allocated in TSConfigJSON.parse()
                             // (tsconfig_json.zig), so free those before the map itself.
-                            for (merged_config.paths.values()) |v| bun.default_allocator.free(v);
+                            for (merged_config.paths.values()) |v| fun.default_allocator.free(v);
                             merged_config.paths.deinit();
                             merged_config.paths = parent_config.paths;
                             merged_config.base_url_for_paths = parent_config.base_url_for_paths;
@@ -4284,7 +4284,7 @@ pub const Resolver = struct {
                         // without this, every intermediate config in an extends chain leaks on
                         // each dirInfoUncached() call, which is especially bad under HMR where
                         // bustDirCache triggers a re-parse of the whole chain on every reload.
-                        bun.destroy(parent_config);
+                        fun.destroy(parent_config);
                     }
                     info.tsconfig_json = merged_config;
                 }
@@ -4312,19 +4312,19 @@ pub const Dirname = struct {
         };
 
         var end_index: usize = path.len - 1;
-        while (bun.path.isSepAny(path[end_index])) {
+        while (fun.path.isSepAny(path[end_index])) {
             if (end_index == 0)
                 return root;
             end_index -= 1;
         }
 
-        while (!bun.path.isSepAny(path[end_index])) {
+        while (!fun.path.isSepAny(path[end_index])) {
             if (end_index == 0)
                 return root;
             end_index -= 1;
         }
 
-        if (end_index == 0 and bun.path.isSepAny(path[0]))
+        if (end_index == 0 and fun.path.isSepAny(path[0]))
             return path[0..1];
 
         if (end_index == 0)
@@ -4368,21 +4368,21 @@ const BrowserMap = @import("./package_json.zig").BrowserMap;
 const ESModule = @import("./package_json.zig").ESModule;
 const PackageJSON = @import("./package_json.zig").PackageJSON;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const FeatureFlags = bun.FeatureFlags;
-const FileDescriptorType = bun.FD;
-const MutableString = bun.MutableString;
-const Mutex = bun.Mutex;
-const Output = bun.Output;
-const PathString = bun.PathString;
-const Semver = bun.Semver;
-const allocators = bun.allocators;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const FeatureFlags = fun.FeatureFlags;
+const FileDescriptorType = fun.FD;
+const MutableString = fun.MutableString;
+const Mutex = fun.Mutex;
+const Output = fun.Output;
+const PathString = fun.PathString;
+const Semver = fun.Semver;
+const allocators = fun.allocators;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const strings = fun.strings;
 
-const logger = bun.logger;
+const logger = fun.logger;
 const Msg = logger.Msg;

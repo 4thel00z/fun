@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "fun:test";
 import { ConnectionType, createClient, ctx, expectType, isEnabled } from "../test-utils";
 
 /**

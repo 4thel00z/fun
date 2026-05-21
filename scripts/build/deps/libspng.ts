@@ -1,5 +1,7 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 /**
- * libspng — simple, fast PNG codec. Backs Bun.Image PNG decode/encode.
+ * libspng — simple, fast PNG codec. Backs Fun.Image PNG decode/encode.
  *
  * Single-TU library; the only external dep is zlib for the deflate stream.
  * We point it at our vendored zlib-ng (ZLIB_COMPAT) via fetchDeps so the

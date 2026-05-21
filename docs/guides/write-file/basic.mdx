@@ -6,11 +6,11 @@ mode: center
 
 This code snippet writes a string to disk at a particular _absolute path_.
 
-It uses the fast [`Bun.write()`](/runtime/file-io#writing-files-bun-write) API to efficiently write data to disk. The first argument is a _destination_; the second is the _data_ to write.
+It uses the fast [`Fun.write()`](/runtime/file-io#writing-files-fun-write) API to efficiently write data to disk. The first argument is a _destination_; the second is the _data_ to write.
 
 ```ts
 const path = "/path/to/file.txt";
-await Bun.write(path, "Lorem ipsum");
+await Fun.write(path, "Lorem ipsum");
 ```
 
 ---
@@ -19,28 +19,28 @@ Any relative paths will be resolved relative to the project root (the nearest di
 
 ```ts
 const path = "./file.txt";
-await Bun.write(path, "Lorem ipsum");
+await Fun.write(path, "Lorem ipsum");
 ```
 
 ---
 
-You can pass a `BunFile` as the destination. `Bun.write()` will write the data to its associated path.
+You can pass a `FunFile` as the destination. `Fun.write()` will write the data to its associated path.
 
 ```ts
-const path = Bun.file("./file.txt");
-await Bun.write(path, "Lorem ipsum");
+const path = Fun.file("./file.txt");
+await Fun.write(path, "Lorem ipsum");
 ```
 
 ---
 
-`Bun.write()` returns the number of bytes written to disk.
+`Fun.write()` returns the number of bytes written to disk.
 
 ```ts
 const path = "./file.txt";
-const bytes = await Bun.write(path, "Lorem ipsum");
+const bytes = await Fun.write(path, "Lorem ipsum");
 // => 11
 ```
 
 ---
 
-See [Docs > API > File I/O](/runtime/file-io#writing-files-bun-write) for complete documentation of `Bun.write()`.
+See [Docs > API > File I/O](/runtime/file-io#writing-files-fun-write) for complete documentation of `Fun.write()`.

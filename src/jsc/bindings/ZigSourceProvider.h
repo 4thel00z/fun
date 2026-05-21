@@ -60,12 +60,12 @@ public:
     void freeSourceCode();
 
 private:
-    SourceProvider(void* bunVM, ResolvedSource resolvedSource, Ref<WTF::StringImpl>&& sourceImpl,
+    SourceProvider(void* funVM, ResolvedSource resolvedSource, Ref<WTF::StringImpl>&& sourceImpl,
         JSC::SourceTaintedOrigin taintedness,
         const SourceOrigin& sourceOrigin, WTF::String&& sourceURL,
         const TextPosition& startPosition, JSC::SourceProviderSourceType sourceType)
         : Base(sourceOrigin, WTF::move(sourceURL), String(), taintedness, startPosition, sourceType)
-        , m_bunVM(bunVM)
+        , m_funVM(funVM)
         , m_source(sourceImpl)
     {
         m_resolvedSource = resolvedSource;
@@ -73,7 +73,7 @@ private:
 
     // Stored directly (not via the creating global) so the destructor stays
     // valid when the provider outlives its global under --isolate caching.
-    void* m_bunVM;
+    void* m_funVM;
     RefPtr<JSC::CachedBytecode> m_cachedBytecode;
     Ref<WTF::StringImpl> m_source;
     unsigned m_hash = 0;

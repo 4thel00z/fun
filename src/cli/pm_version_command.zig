@@ -35,10 +35,10 @@ pub const PmVersionCommand = struct {
 
         try verifyGit(package_json_dir, pm);
 
-        var path_buf: bun.PathBuffer = undefined;
-        const package_json_path = bun.path.joinAbsStringBufZ(package_json_dir, &path_buf, &.{"package.json"}, .auto);
+        var path_buf: fun.PathBuffer = undefined;
+        const package_json_path = fun.path.joinAbsStringBufZ(package_json_dir, &path_buf, &.{"package.json"}, .auto);
 
-        const package_json_contents = bun.sys.File.readFrom(bun.FD.cwd(), package_json_path, ctx.allocator).unwrap() catch |err| {
+        const package_json_contents = fun.sys.File.readFrom(fun.FD.cwd(), package_json_path, ctx.allocator).unwrap() catch |err| {
             Output.errGeneric("Failed to read package.json: {s}", .{@errorName(err)});
             Global.exit(1);
         };
@@ -184,17 +184,17 @@ pub const PmVersionCommand = struct {
         Output.flush();
     }
 
-    fn findPackageDir(allocator: std.mem.Allocator, start_dir: []const u8) bun.OOM![]const u8 {
-        var path_buf: bun.PathBuffer = undefined;
+    fn findPackageDir(allocator: std.mem.Allocator, start_dir: []const u8) fun.OOM![]const u8 {
+        var path_buf: fun.PathBuffer = undefined;
         var current_dir = start_dir;
 
         while (true) {
-            const package_json_path_z = bun.path.joinAbsStringBufZ(current_dir, &path_buf, &.{"package.json"}, .auto);
-            if (bun.FD.cwd().existsAt(package_json_path_z)) {
+            const package_json_path_z = fun.path.joinAbsStringBufZ(current_dir, &path_buf, &.{"package.json"}, .auto);
+            if (fun.FD.cwd().existsAt(package_json_path_z)) {
                 return try allocator.dupe(u8, current_dir);
             }
 
-            const parent = bun.path.dirname(current_dir, .auto);
+            const parent = fun.path.dirname(current_dir, .auto);
             if (strings.eql(parent, current_dir)) {
                 break;
             }
@@ -207,9 +207,9 @@ pub const PmVersionCommand = struct {
     fn verifyGit(cwd: []const u8, pm: *PackageManager) !void {
         if (!pm.options.git_tag_version) return;
 
-        var path_buf: bun.PathBuffer = undefined;
-        const git_dir_path = bun.path.joinAbsStringBuf(cwd, &path_buf, &.{".git"}, .auto);
-        if (!bun.FD.cwd().directoryExistsAt(git_dir_path).isTrue()) {
+        var path_buf: fun.PathBuffer = undefined;
+        const git_dir_path = fun.path.joinAbsStringBuf(cwd, &path_buf, &.{".git"}, .auto);
+        if (!fun.FD.cwd().directoryExistsAt(git_dir_path).isTrue()) {
             pm.options.git_tag_version = false;
             return;
         }
@@ -236,10 +236,10 @@ pub const PmVersionCommand = struct {
     }
 
     fn getCurrentVersion(ctx: Command.Context, cwd: []const u8) ?[]const u8 {
-        var path_buf: bun.PathBuffer = undefined;
-        const package_json_path = bun.path.joinAbsStringBufZ(cwd, &path_buf, &.{"package.json"}, .auto);
+        var path_buf: fun.PathBuffer = undefined;
+        const package_json_path = fun.path.joinAbsStringBufZ(cwd, &path_buf, &.{"package.json"}, .auto);
 
-        const package_json_contents = bun.sys.File.readFrom(bun.FD.cwd(), package_json_path, ctx.allocator).unwrap() catch {
+        const package_json_contents = fun.sys.File.readFrom(fun.FD.cwd(), package_json_path, ctx.allocator).unwrap() catch {
             return null;
         };
 
@@ -260,11 +260,11 @@ pub const PmVersionCommand = struct {
         return null;
     }
 
-    fn showHelp(ctx: Command.Context, pm: *PackageManager, cwd: []const u8) bun.OOM!void {
+    fn showHelp(ctx: Command.Context, pm: *PackageManager, cwd: []const u8) fun.OOM!void {
         const _current_version = getCurrentVersion(ctx, cwd);
         const current_version = _current_version orelse "1.0.0";
 
-        Output.prettyln("<r><b>bun pm version<r> <d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+        Output.prettyln("<r><b>fun pm version<r> <d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
         if (_current_version) |version| {
             Output.prettyln("Current package version: <green>v{s}<r>", .{version});
         }
@@ -330,18 +330,18 @@ pub const PmVersionCommand = struct {
             \\  <cyan>--force<r>, <cyan>-f<r>          <d>Bypass dirty git history check<r>
             \\
             \\<b>Examples<r>:
-            \\  <d>$<r> <b><green>bun pm version<r> <cyan>patch<r>
-            \\  <d>$<r> <b><green>bun pm version<r> <blue>1.2.3<r> <cyan>--no-git-tag-version<r>
-            \\  <d>$<r> <b><green>bun pm version<r> <cyan>prerelease<r> <cyan>--preid<r> <blue>beta<r> <cyan>--message<r> <blue>"Release beta: %s"<r>
+            \\  <d>$<r> <b><green>fun pm version<r> <cyan>patch<r>
+            \\  <d>$<r> <b><green>fun pm version<r> <blue>1.2.3<r> <cyan>--no-git-tag-version<r>
+            \\  <d>$<r> <b><green>fun pm version<r> <cyan>prerelease<r> <cyan>--preid<r> <blue>beta<r> <cyan>--message<r> <blue>"Release beta: %s"<r>
             \\
-            \\More info: <magenta>https://bun.com/docs/cli/pm#version<r>
+            \\More info: <magenta>https://fun.dev/docs/cli/pm#version<r>
             \\
         ;
         Output.pretty(set_specific_version_help_text, .{beta_prerelease_version});
         Output.flush();
     }
 
-    fn calculateNewVersion(allocator: std.mem.Allocator, current_str: []const u8, version_type: VersionType, specific_version: ?[]const u8, preid: []const u8, cwd: []const u8) bun.OOM![]const u8 {
+    fn calculateNewVersion(allocator: std.mem.Allocator, current_str: []const u8, version_type: VersionType, specific_version: ?[]const u8, preid: []const u8, cwd: []const u8) fun.OOM![]const u8 {
         if (version_type == .specific) {
             return try allocator.dupe(u8, specific_version.?);
         }
@@ -377,7 +377,7 @@ pub const PmVersionCommand = struct {
         return try incrementVersion(allocator, current_str, current, version_type, prerelease_id);
     }
 
-    fn incrementVersion(allocator: std.mem.Allocator, current_str: []const u8, current: Semver.Version.ParseResult, version_type: VersionType, preid: []const u8) bun.OOM![]const u8 {
+    fn incrementVersion(allocator: std.mem.Allocator, current_str: []const u8, current: Semver.Version.ParseResult, version_type: VersionType, preid: []const u8) fun.OOM![]const u8 {
         var new_version = current.version.min();
 
         switch (version_type) {
@@ -446,14 +446,14 @@ pub const PmVersionCommand = struct {
         return try std.fmt.allocPrint(allocator, "{d}.{d}.{d}", .{ new_version.major, new_version.minor, new_version.patch });
     }
 
-    fn isGitClean(cwd: []const u8) bun.OOM!bool {
-        var path_buf: bun.PathBuffer = undefined;
-        const git_path = bun.which(&path_buf, bun.env_var.PATH.get() orelse "", cwd, "git") orelse {
-            Output.errGeneric("git must be installed to use `bun pm version --git-tag-version`", .{});
+    fn isGitClean(cwd: []const u8) fun.OOM!bool {
+        var path_buf: fun.PathBuffer = undefined;
+        const git_path = fun.which(&path_buf, fun.env_var.PATH.get() orelse "", cwd, "git") orelse {
+            Output.errGeneric("git must be installed to use `fun pm version --git-tag-version`", .{});
             Global.exit(1);
         };
 
-        const proc = bun.spawnSync(&.{
+        const proc = fun.spawnSync(&.{
             .argv = &.{ git_path, "status", "--porcelain" },
             .stdout = .buffer,
             .stderr = .ignore,
@@ -461,7 +461,7 @@ pub const PmVersionCommand = struct {
             .cwd = cwd,
             .envp = null,
             .windows = if (Environment.isWindows) .{
-                .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+                .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
             },
         }) catch |err| {
             Output.errGeneric("Failed to spawn git process: {s}", .{@errorName(err)});
@@ -479,14 +479,14 @@ pub const PmVersionCommand = struct {
         }
     }
 
-    fn getVersionFromGit(allocator: std.mem.Allocator, cwd: []const u8) bun.OOM![]const u8 {
-        var path_buf: bun.PathBuffer = undefined;
-        const git_path = bun.which(&path_buf, bun.env_var.PATH.get() orelse "", cwd, "git") orelse {
-            Output.errGeneric("git must be installed to use `bun pm version from-git`", .{});
+    fn getVersionFromGit(allocator: std.mem.Allocator, cwd: []const u8) fun.OOM![]const u8 {
+        var path_buf: fun.PathBuffer = undefined;
+        const git_path = fun.which(&path_buf, fun.env_var.PATH.get() orelse "", cwd, "git") orelse {
+            Output.errGeneric("git must be installed to use `fun pm version from-git`", .{});
             Global.exit(1);
         };
 
-        const proc = bun.spawnSync(&.{
+        const proc = fun.spawnSync(&.{
             .argv = &.{ git_path, "describe", "--tags", "--abbrev=0" },
             .stdout = .buffer,
             .stderr = .buffer,
@@ -494,7 +494,7 @@ pub const PmVersionCommand = struct {
             .cwd = cwd,
             .envp = null,
             .windows = if (Environment.isWindows) .{
-                .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+                .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
             },
         }) catch |err| {
             Output.err(err, "Failed to spawn git process", .{});
@@ -526,14 +526,14 @@ pub const PmVersionCommand = struct {
         }
     }
 
-    fn gitCommitAndTag(allocator: std.mem.Allocator, version: []const u8, custom_message: ?[]const u8, cwd: []const u8) bun.OOM!void {
-        var path_buf: bun.PathBuffer = undefined;
-        const git_path = bun.which(&path_buf, bun.env_var.PATH.get() orelse "", cwd, "git") orelse {
-            Output.errGeneric("git must be installed to use `bun pm version --git-tag-version`", .{});
+    fn gitCommitAndTag(allocator: std.mem.Allocator, version: []const u8, custom_message: ?[]const u8, cwd: []const u8) fun.OOM!void {
+        var path_buf: fun.PathBuffer = undefined;
+        const git_path = fun.which(&path_buf, fun.env_var.PATH.get() orelse "", cwd, "git") orelse {
+            Output.errGeneric("git must be installed to use `fun pm version --git-tag-version`", .{});
             Global.exit(1);
         };
 
-        const stage_proc = bun.spawnSync(&.{
+        const stage_proc = fun.spawnSync(&.{
             .argv = &.{ git_path, "add", "package.json" },
             .cwd = cwd,
             .stdout = .buffer,
@@ -541,7 +541,7 @@ pub const PmVersionCommand = struct {
             .stdin = .ignore,
             .envp = null,
             .windows = if (Environment.isWindows) .{
-                .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+                .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
             },
         }) catch |err| {
             Output.errGeneric("Git add failed: {s}", .{@errorName(err)});
@@ -567,7 +567,7 @@ pub const PmVersionCommand = struct {
             try std.fmt.allocPrint(allocator, "v{s}", .{version});
         defer allocator.free(commit_message);
 
-        const commit_proc = bun.spawnSync(&.{
+        const commit_proc = fun.spawnSync(&.{
             .argv = &.{ git_path, "commit", "-m", commit_message },
             .cwd = cwd,
             .stdout = .buffer,
@@ -575,7 +575,7 @@ pub const PmVersionCommand = struct {
             .stdin = .ignore,
             .envp = null,
             .windows = if (Environment.isWindows) .{
-                .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+                .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
             },
         }) catch |err| {
             Output.errGeneric("Git commit failed: {s}", .{@errorName(err)});
@@ -598,7 +598,7 @@ pub const PmVersionCommand = struct {
         const tag_name = try std.fmt.allocPrint(allocator, "v{s}", .{version});
         defer allocator.free(tag_name);
 
-        const tag_proc = bun.spawnSync(&.{
+        const tag_proc = fun.spawnSync(&.{
             .argv = &.{ git_path, "tag", "-a", tag_name, "-m", tag_name },
             .cwd = cwd,
             .stdout = .buffer,
@@ -606,7 +606,7 @@ pub const PmVersionCommand = struct {
             .stdin = .ignore,
             .envp = null,
             .windows = if (Environment.isWindows) .{
-                .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null, null)),
+                .loop = fun.jsc.EventLoopHandle.init(fun.jsc.MiniEventLoop.initGlobal(null, null)),
             },
         }) catch |err| {
             Output.errGeneric("Git tag failed: {s}", .{@errorName(err)});
@@ -632,15 +632,15 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const JSPrinter = bun.js_printer;
-const Output = bun.Output;
-const RunCommand = bun.RunCommand;
-const Semver = bun.Semver;
-const logger = bun.logger;
-const strings = bun.strings;
-const Command = bun.cli.Command;
-const PackageManager = bun.install.PackageManager;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const JSPrinter = fun.js_printer;
+const Output = fun.Output;
+const RunCommand = fun.RunCommand;
+const Semver = fun.Semver;
+const logger = fun.logger;
+const strings = fun.strings;
+const Command = fun.cli.Command;
+const PackageManager = fun.install.PackageManager;

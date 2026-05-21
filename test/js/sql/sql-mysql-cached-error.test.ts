@@ -6,8 +6,8 @@
 //
 // Uses a minimal mock MySQL server so it can run without Docker.
 
-import { SQL } from "bun";
-import { expect, test } from "bun:test";
+import { SQL } from "fun";
+import { expect, test } from "fun:test";
 import { once } from "events";
 import net from "net";
 

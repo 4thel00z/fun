@@ -1,7 +1,7 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// `bun test --shard=M/N` splits discovered test files across N shards.
+// `fun test --shard=M/N` splits discovered test files across N shards.
 // Files are sorted by path first for determinism, then distributed
 // round-robin: file i goes to shard (i % N) + 1.
 
@@ -9,15 +9,15 @@ function makeFixture(name: string, fileCount: number) {
   const files: Record<string, string> = {};
   for (let i = 0; i < fileCount; i++) {
     const id = String(i).padStart(2, "0");
-    files[`f${id}.test.ts`] = `import { test } from "bun:test"; test("t", () => { console.log("RAN f${id}"); });`;
+    files[`f${id}.test.ts`] = `import { test } from "fun:test"; test("t", () => { console.log("RAN f${id}"); });`;
   }
   return tempDir(name, files);
 }
 
 async function runShard(cwd: string, shard: string, extra: string[] = []) {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", `--shard=${shard}`, ...extra],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", `--shard=${shard}`, ...extra],
+    env: funEnv,
     cwd,
     stdout: "pipe",
     stderr: "pipe",
@@ -122,9 +122,9 @@ describe.concurrent("--shard", () => {
     using dir = tempDir("shard-no-files", {
       "not-a-test.ts": "export const x = 1;",
     });
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--shard=1/3"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--shard=1/3"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -161,9 +161,9 @@ describe.concurrent("--shard", () => {
     ["1/b", "count must be a positive integer"],
   ])("rejects invalid --shard=%s", async (arg, needle) => {
     using dir = makeFixture("shard-invalid", 1);
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", `--shard=${arg}`],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", `--shard=${arg}`],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -182,12 +182,12 @@ describe.concurrent("--shard", () => {
     for (let i = 0; i < 4; i++) {
       const id = String(i).padStart(2, "0");
       files[`f${id}.test.ts`] =
-        `import {test} from "bun:test"; test("t", () => console.log("RAN f${id} WID="+process.env.JEST_WORKER_ID));`;
+        `import {test} from "fun:test"; test("t", () => console.log("RAN f${id} WID="+process.env.JEST_WORKER_ID));`;
     }
     using dir = tempDir("shard-parallel", files);
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--shard=1/2", "--parallel=2"],
-      env: { ...bunEnv, BUN_TEST_PARALLEL_SCALE_MS: "0" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--shard=1/2", "--parallel=2"],
+      env: { ...funEnv, FUN_TEST_PARALLEL_SCALE_MS: "0" },
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",

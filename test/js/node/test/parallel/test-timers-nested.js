@@ -3,7 +3,7 @@
 
 require('../common');
 const assert = require('assert');
-const { sleep } = typeof Bun == 'object' ? { sleep: Bun.sleepSync } : require('internal/util');
+const { sleep } = typeof Fun == 'object' ? { sleep: Fun.sleepSync } : require('internal/util');
 
 // Make sure we test 0ms timers, since they would had always wanted to run on
 // the current tick, and greater than 0ms timers, for scenarios where the

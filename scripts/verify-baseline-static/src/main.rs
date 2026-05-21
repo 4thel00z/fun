@@ -1,4 +1,4 @@
-//! Static ISA verifier for Bun baseline builds.
+//! Static ISA verifier for Fun baseline builds.
 //!
 //! Disassembles every executable section of a binary and flags any instruction
 //! that requires a CPU feature beyond the baseline target (x64 Nehalem for now).
@@ -23,7 +23,7 @@ use object::{Object, ObjectSection, ObjectSymbol, SectionKind, SymbolKind, Symbo
 
 /// Nehalem's exact feature set per iced-x86's CpuidFeature taxonomy.
 ///
-/// Nehalem (Core i7, 2008) is the last Intel microarch before AVX. Bun's
+/// Nehalem (Core i7, 2008) is the last Intel microarch before AVX. Fun's
 /// baseline build targets it via `-march=nehalem` (cmake/CompilerFlags.cmake:33)
 /// and `std.Target.x86.cpu.nehalem` (build.zig).
 ///
@@ -300,7 +300,7 @@ fn build_symbol_table(file: &object::File) -> Vec<Sym> {
 
     let mut raw = collect(file.symbols());
     if raw.is_empty() {
-        // Fallback for stripped binaries. Release bun keeps .symtab but
+        // Fallback for stripped binaries. Release fun keeps .symtab but
         // musl static builds sometimes strip harder.
         raw = collect(file.dynamic_symbols());
     }
@@ -1025,7 +1025,7 @@ fn run() -> Result<bool, String> {
         };
         total_insns += res.total_insns;
         // Merge per-section buckets into the global ones. Sections are small
-        // in number (5 in a real bun binary); this is cheap.
+        // in number (5 in a real fun binary); this is cheap.
         for (sym, rep) in res.violations {
             let e = violations.entry(sym).or_default();
             e.features.extend(rep.features);

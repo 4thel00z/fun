@@ -32,13 +32,13 @@ buf: std.ArrayListUnmanaged(u8) = .empty,
 pub fn begin(self: *Frame, kind: Kind) void {
     self.buf.clearRetainingCapacity();
     // reserve header; payload_len patched in send()
-    bun.handleOom(self.buf.appendNTimes(bun.default_allocator, 0, 4));
-    bun.handleOom(self.buf.append(bun.default_allocator, @intFromEnum(kind)));
+    fun.handleOom(self.buf.appendNTimes(fun.default_allocator, 0, 4));
+    fun.handleOom(self.buf.append(fun.default_allocator, @intFromEnum(kind)));
 }
 pub fn u32_(self: *Frame, v: u32) void {
     var le: [4]u8 = undefined;
     std.mem.writeInt(u32, &le, v, .little);
-    bun.handleOom(self.buf.appendSlice(bun.default_allocator, &le));
+    fun.handleOom(self.buf.appendSlice(fun.default_allocator, &le));
 }
 pub fn str(self: *Frame, s: []const u8) void {
     // Never let a single frame exceed `max_payload` — the receiver treats that
@@ -51,24 +51,24 @@ pub fn str(self: *Frame, s: []const u8) void {
     const room: usize = if (max_payload > used + headroom) max_payload - used - headroom else 0;
     if (s.len <= room) {
         self.u32_(@intCast(s.len));
-        bun.handleOom(self.buf.appendSlice(bun.default_allocator, s));
+        fun.handleOom(self.buf.appendSlice(fun.default_allocator, s));
         return;
     }
     const keep: usize = if (room > trunc.len) room - trunc.len else 0;
     self.u32_(@intCast(keep + trunc.len));
-    bun.handleOom(self.buf.appendSlice(bun.default_allocator, s[0..keep]));
-    bun.handleOom(self.buf.appendSlice(bun.default_allocator, trunc));
+    fun.handleOom(self.buf.appendSlice(fun.default_allocator, s[0..keep]));
+    fun.handleOom(self.buf.appendSlice(fun.default_allocator, trunc));
 }
 /// Finalize the header and return the encoded bytes. Caller hands them to
 /// `Channel.send`. Valid until the next `begin()`.
 pub fn finish(self: *Frame) []const u8 {
     const payload_len: u32 = @intCast(self.buf.items.len - 5);
-    bun.assert(payload_len <= max_payload);
+    fun.assert(payload_len <= max_payload);
     std.mem.writeInt(u32, self.buf.items[0..4], payload_len, .little);
     return self.buf.items;
 }
 pub fn deinit(self: *Frame) void {
-    self.buf.deinit(bun.default_allocator);
+    self.buf.deinit(fun.default_allocator);
 }
 
 /// Payload reader; bounds-checked, returns zero/empty on truncation.
@@ -89,5 +89,5 @@ pub const Reader = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

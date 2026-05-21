@@ -45,9 +45,9 @@ class FSWatcher extends EventEmitter {
     super();
 
     if (path instanceof URL) {
-      path = Bun.fileURLToPath(path);
+      path = Fun.fileURLToPath(path);
     } else if (typeof path === "string" && path.startsWith("file:")) {
-      path = Bun.fileURLToPath(path);
+      path = Fun.fileURLToPath(path);
     }
 
     if (typeof options === "function") {
@@ -118,7 +118,7 @@ interface StatWatcherHandle {
 }
 
 function openAsBlob(path, options) {
-  return Promise.$resolve(Bun.file(path, options));
+  return Promise.$resolve(Fun.file(path, options));
 }
 
 function emitStop(self: StatWatcher) {
@@ -650,9 +650,9 @@ defineCustomPromisifyArgs(writev, ["bytesWritten", "buffers"]);
 // of this means we need to do path validation in the js side of things
 const statWatchers = new Map();
 function getValidatedPath(p: any) {
-  if (p instanceof URL) return Bun.fileURLToPath(p as URL);
+  if (p instanceof URL) return Fun.fileURLToPath(p as URL);
   if (typeof p !== "string") throw $ERR_INVALID_ARG_TYPE("path", "string or URL", p);
-  if (p.startsWith("file:")) return Bun.fileURLToPath(p);
+  if (p.startsWith("file:")) return Fun.fileURLToPath(p);
   return require("node:path").resolve(p);
 }
 function watchFile(filename, options, listener) {
@@ -751,7 +751,7 @@ const realpathSync: typeof import("node:fs").realpathSync =
           if (p.pathname.indexOf("%00") != -1) {
             throw $ERR_INVALID_ARG_VALUE("path", "string without null bytes", p.pathname);
           }
-          p = Bun.fileURLToPath(p as URL);
+          p = Fun.fileURLToPath(p as URL);
         } else {
           if (typeof p !== "string") {
             p += "";
@@ -870,7 +870,7 @@ const realpath: typeof import("node:fs").realpath =
           if (p.pathname.indexOf("%00") != -1) {
             throw $ERR_INVALID_ARG_VALUE("path", "string without null bytes", p.pathname);
           }
-          p = Bun.fileURLToPath(p as URL);
+          p = Fun.fileURLToPath(p as URL);
         } else {
           if (typeof p !== "string") {
             p += "";

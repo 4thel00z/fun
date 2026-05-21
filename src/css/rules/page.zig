@@ -32,7 +32,7 @@ pub const PageSelector = struct {
                         .result => |vv| vv,
                         .err => |e| return .{ .err = e },
                     },
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             } else {
                 input.reset(&state);
                 break;
@@ -355,7 +355,7 @@ pub const PageRuleParser = struct {
                     .line = loc.line,
                     .column = loc.column,
                 },
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
             return .success;
         }
 
@@ -378,7 +378,7 @@ pub const PageRuleParser = struct {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

@@ -1,4 +1,4 @@
-// @runtime bun,node,deno
+// @runtime fun,node,deno
 import { Buffer } from "node:buffer";
 import process from "node:process";
 import { bench, run } from "../runner.mjs";

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { setImmediate, setTimeout } from "node:timers/promises";
 
 describe("setTimeout", () => {

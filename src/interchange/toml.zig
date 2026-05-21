@@ -1,6 +1,6 @@
 const HashMapPool = struct {
     const HashMap = std.HashMap(u64, void, IdentityContext, 80);
-    const LinkedList = bun.deprecated.SinglyLinkedList(HashMap);
+    const LinkedList = fun.deprecated.SinglyLinkedList(HashMap);
     threadlocal var list: LinkedList = undefined;
     threadlocal var loaded: bool = false;
 
@@ -32,14 +32,14 @@ pub const TOML = struct {
     lexer: Lexer,
     log: *logger.Log,
     allocator: std.mem.Allocator,
-    stack_check: bun.StackCheck,
+    stack_check: fun.StackCheck,
 
     pub fn init(allocator: std.mem.Allocator, source_: logger.Source, log: *logger.Log, redact_logs: bool) !TOML {
         return TOML{
             .lexer = try Lexer.init(log, source_, allocator, redact_logs),
             .allocator = allocator,
             .log = log,
-            .stack_check = bun.StackCheck.init(),
+            .stack_check = fun.StackCheck.init(),
         };
     }
 
@@ -233,7 +233,7 @@ pub const TOML = struct {
 
     pub fn parseValue(p: *TOML) anyerror!Expr {
         if (!p.stack_check.isSafeToRecurse()) {
-            try bun.throwStackOverflow();
+            try fun.throwStackOverflow();
         }
 
         const loc = p.lexer.loc();
@@ -382,11 +382,11 @@ const std = @import("std");
 const IdentityContext = @import("../collections/identity_context.zig").IdentityContext;
 const expect = std.testing.expect;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
+const fun = @import("fun");
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;

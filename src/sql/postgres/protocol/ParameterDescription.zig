@@ -7,7 +7,7 @@ pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReade
     remaining_bytes -|= 4;
 
     const count = try reader.short();
-    const parameters = try bun.default_allocator.alloc(int4, @intCast(@max(count, 0)));
+    const parameters = try fun.default_allocator.alloc(int4, @intCast(@max(count, 0)));
 
     var data = try reader.read(@as(usize, @intCast(@max(count, 0))) * @sizeOf((int4)));
     defer data.deinit();
@@ -28,7 +28,7 @@ fn toInt32Slice(comptime Int: type, slice: []const u8) []align(1) const Int {
     return @as([*]align(1) const Int, @ptrCast(slice.ptr))[0 .. slice.len / @sizeOf((Int))];
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const DecoderWrap = @import("./DecoderWrap.zig").DecoderWrap;
 const NewReader = @import("./NewReader.zig").NewReader;
 

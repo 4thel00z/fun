@@ -1,11 +1,11 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 
 describe("dgram implicit bind on send", () => {
   test("reusePort option works with dgram sockets", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const dgram = require("dgram");
@@ -51,7 +51,7 @@ describe("dgram implicit bind on send", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -67,9 +67,9 @@ describe("dgram implicit bind on send", () => {
   });
 
   test("send() without bind() implicitly binds and delivers the message", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const dgram = require("dgram");
@@ -98,7 +98,7 @@ describe("dgram implicit bind on send", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -110,9 +110,9 @@ describe("dgram implicit bind on send", () => {
   });
 
   test("listening event fires after implicit bind", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const dgram = require("dgram");
@@ -136,7 +136,7 @@ describe("dgram implicit bind on send", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -148,9 +148,9 @@ describe("dgram implicit bind on send", () => {
   });
 
   test("multiple sends without bind() are all delivered", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const dgram = require("dgram");
@@ -177,7 +177,7 @@ describe("dgram implicit bind on send", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -189,9 +189,9 @@ describe("dgram implicit bind on send", () => {
   });
 
   test("send(buffer, port, address, callback) short form works without bind", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const dgram = require("dgram");
@@ -216,7 +216,7 @@ describe("dgram implicit bind on send", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -228,9 +228,9 @@ describe("dgram implicit bind on send", () => {
   });
 
   test("bidirectional communication works with implicit bind (k-rpc pattern)", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const dgram = require("dgram");
@@ -255,7 +255,7 @@ describe("dgram implicit bind on send", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

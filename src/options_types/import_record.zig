@@ -1,7 +1,7 @@
 pub const ImportKind = enum(u8) {
-    /// An entry point provided to `bun run` or `bun`
+    /// An entry point provided to `fun run` or `fun`
     entry_point_run = 0,
-    /// An entry point provided to `bun build` or `Bun.build`
+    /// An entry point provided to `fun build` or `Fun.build`
     entry_point_build = 1,
     /// An ES6 import or re-export statement
     stmt = 2,
@@ -28,7 +28,7 @@ pub const ImportKind = enum(u8) {
     pub const all_labels: Label = brk: {
         // If these are changed, make sure to update
         // - src/js/builtins/codegen/replacements.ts
-        // - packages/bun-types/bun.d.ts
+        // - packages/fun-types/fun.d.ts
         var labels = Label.initFill("");
         labels.set(ImportKind.entry_point_run, "entry-point-run");
         labels.set(ImportKind.entry_point_build, "entry-point-build");
@@ -54,7 +54,7 @@ pub const ImportKind = enum(u8) {
         labels.set(ImportKind.require_resolve, "require.resolve()");
         labels.set(ImportKind.at, "@import");
         labels.set(ImportKind.url, "url()");
-        labels.set(ImportKind.internal, "<bun internal>");
+        labels.set(ImportKind.internal, "<fun internal>");
         labels.set(ImportKind.composes, "composes");
         labels.set(ImportKind.html_manifest, "HTML import");
         break :brk labels;
@@ -98,15 +98,15 @@ pub const ImportKind = enum(u8) {
 };
 
 pub const ImportRecord = struct {
-    pub const Index = bun.GenericIndex(u32, ImportRecord);
+    pub const Index = fun.GenericIndex(u32, ImportRecord);
 
     range: logger.Range,
     path: fs.Path,
     kind: ImportKind,
     tag: Tag = .none,
-    loader: ?bun.options.Loader = null,
+    loader: ?fun.options.Loader = null,
 
-    source_index: bun.ast.Index = .invalid,
+    source_index: fun.ast.Index = .invalid,
 
     /// The original import specifier as written in source code (e.g., "./foo.js").
     /// This is preserved before resolution overwrites `path` with the resolved path.
@@ -179,21 +179,21 @@ pub const ImportRecord = struct {
         _padding: u1 = 0,
     };
 
-    pub const List = bun.BabyList(ImportRecord);
+    pub const List = fun.BabyList(ImportRecord);
 
     pub const Tag = enum {
         /// A normal import to a user's source file
         none,
-        /// An import to 'bun'
-        bun,
-        /// A builtin module, such as `node:fs` or `bun:sqlite`
+        /// An import to 'fun'
+        fun,
+        /// A builtin module, such as `node:fs` or `fun:sqlite`
         builtin,
         /// An import to the internal runtime
         runtime,
         /// A 'macro:' import namespace or 'with { type: "macro" }'
         macro,
 
-        /// For Bun Kit, if a module in the server graph should actually
+        /// For Fun Kit, if a module in the server graph should actually
         /// crossover to the SSR graph. See bake.Framework.ServerComponents.separate_ssr_graph
         bake_resolve_to_ssr_graph,
 
@@ -218,8 +218,8 @@ pub const ImportRecord = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const fs = bun.fs;
-const logger = bun.logger;
-const Index = bun.ast.Index;
-const api = bun.schema.api;
+const fun = @import("fun");
+const fs = fun.fs;
+const logger = fun.logger;
+const Index = fun.ast.Index;
+const api = fun.schema.api;

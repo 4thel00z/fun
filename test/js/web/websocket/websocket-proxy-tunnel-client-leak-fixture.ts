@@ -8,13 +8,13 @@
 // (send/receive FIFOs + deflate state + poll_ref).
 //
 // The wss:// endpoint and CONNECT proxy run in-process on node:net/tls so
-// everything stays single-threaded — using Bun.serve here races the debug
+// everything stays single-threaded — using Fun.serve here races the debug
 // scoped logger's per-scope mutex against the server's own allocations and
 // sporadically deadlocks the fixture.
 //
-// Runs under BUN_DEBUG_alloc=1 so the test can count
+// Runs under FUN_DEBUG_alloc=1 so the test can count
 //   new(…NewWebSocketClient(…))   vs   destroy(…NewWebSocketClient(…))
-// emitted by `bun.new`/`bun.destroy` on debug builds.
+// emitted by `fun.new`/`fun.destroy` on debug builds.
 import net from "node:net";
 import tls from "node:tls";
 import crypto from "node:crypto";
@@ -112,7 +112,7 @@ const proxyPort = (proxy.address() as net.AddressInfo).port;
 
 async function roundTrip(mode: "clean" | "terminate" | "abrupt") {
   const ws = new WebSocket(`wss://127.0.0.1:${wssPort}/`, {
-    // @ts-ignore Bun-specific options
+    // @ts-ignore Fun-specific options
     tls: { rejectUnauthorized: false },
     proxy: `http://127.0.0.1:${proxyPort}`,
   });
@@ -141,7 +141,7 @@ async function roundTrip(mode: "clean" | "terminate" | "abrupt") {
     // never runs — cancel() must drop the C++ ref itself. On the unfixed
     // path onclose never fired, so don't block on it here; the alloc-log
     // new/destroy count still proves the leak.
-    // @ts-ignore Bun-specific method
+    // @ts-ignore Fun-specific method
     ws.terminate();
     // Tear down the proxy side so the upgrade client's socket ref drops too.
     for (const s of clientSockets.splice(0)) s.destroy();

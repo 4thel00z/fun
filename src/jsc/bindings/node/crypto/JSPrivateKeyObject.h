@@ -6,11 +6,11 @@
 #include <JavaScriptCore/JSTypedArrays.h>
 #include <wtf/text/WTFString.h>
 #include "ncrypto.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "openssl/ssl.h"
 #include "JSKeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSPrivateKeyObject final : public JSKeyObject {
 public:
@@ -57,4 +57,4 @@ public:
 
 void setupPrivateKeyObjectClassStructure(JSC::LazyClassStructure::Initializer&);
 
-} // namespace Bun
+} // namespace Fun

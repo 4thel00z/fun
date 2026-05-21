@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import * as crypto from "node:crypto";
 import * as net from "node:net";
 
@@ -59,9 +59,9 @@ test("WebSocket.protocol should not mutate after receiving frames", async () => 
     // manifests when the WebSocket client reads frames into the same buffer
     // that held the HTTP upgrade response, which requires going through
     // the full network path (not an in-process WebSocket).
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
 const PROTOCOL = "v1.kernel.websocket.jupyter.org";
@@ -79,7 +79,7 @@ const result = await new Promise((resolve, reject) => {
 console.log(JSON.stringify(result));
 `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

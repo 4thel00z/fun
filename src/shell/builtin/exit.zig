@@ -52,7 +52,7 @@ pub fn next(this: *Exit) Yield {
 }
 
 pub fn onIOWriterChunk(this: *Exit, _: usize, maybe_e: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .waiting_io);
     }
     if (maybe_e) |e| {
@@ -81,10 +81,10 @@ const std = @import("std");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
 const Yield = shell.Yield;

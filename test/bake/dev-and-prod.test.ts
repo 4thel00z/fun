@@ -9,7 +9,7 @@ const hmrSelfAcceptingModule = (label: string) => `
   }
 `;
 
-devAndProductionTest("define config via bunfig.toml", {
+devAndProductionTest("define config via funfig.toml", {
   files: {
     "index.html": emptyHtmlFile({
       styles: [],
@@ -18,7 +18,7 @@ devAndProductionTest("define config via bunfig.toml", {
     "index.ts": `
       console.log("a=" + DEFINE);
     `,
-    "bunfig.toml": `
+    "funfig.toml": `
       [serve.static]
       define = {
         "DEFINE" = "\\"HELLO\\""
@@ -256,7 +256,7 @@ devTest("hmr handles rapid consecutive edits", {
         onMessage();
       });
 
-    // Regression coverage for https://github.com/oven-sh/bun/issues/19736:
+    // Regression coverage for https://github.com/underdoc-org/fun/issues/19736:
     // when multiple hot_update payloads with the SAME sourceMapId reach the
     // client before earlier <script> callbacks fire, the runtime must queue
     // them (Map<id, entry[]>) rather than overwrite (Map<id, entry>, which
@@ -265,7 +265,7 @@ devTest("hmr handles rapid consecutive edits", {
     // Writing IDENTICAL content N times forces same-sourceMapId duplicates
     // on every platform. Use synchronous writeFileSync so truncate + write
     // + close happen back-to-back on the calling thread; the previous
-    // `Bun.write` here is two separate async libuv ops on Windows with a
+    // `Fun.write` here is two separate async libuv ops on Windows with a
     // JS-thread round-trip in between, giving the bundler a multi-ms window
     // to read 0 bytes. writeFileSync shrinks that window to microseconds —
     // usually enough, but the residual race is why allowUnlimitedReloads is
@@ -291,7 +291,7 @@ devTest("hmr handles rapid consecutive edits", {
     // Watcher coalescing / double-firing makes the exact count
     // non-deterministic, but every message must be one of the two values
     // we wrote. If #19736 regresses, "Unknown HMR script: ..." is thrown
-    // inside the bun:hmr callback, which propagates as an unhandled
+    // inside the fun:hmr callback, which propagates as an unhandled
     // rejection in client-fixture.mjs and exits the subprocess non-zero —
     // failing this test at disposal without an explicit assertion here.
     const expected = new Set(["render rapid", "render sentinel"]);

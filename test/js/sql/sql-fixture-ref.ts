@@ -11,7 +11,7 @@
 //
 // Therefore, we must not keep any references to the promises returned by
 // first() or yo(). We must not top-level await the results.
-import { sql } from "bun";
+import { sql } from "fun";
 process.exitCode = 1;
 
 let values = [];
@@ -29,9 +29,9 @@ async function yo() {
 }
 
 first();
-Bun.gc(true);
+Fun.gc(true);
 yo();
-Bun.gc(true);
+Fun.gc(true);
 
 function maybeDone() {
   if (values.length === 2) {

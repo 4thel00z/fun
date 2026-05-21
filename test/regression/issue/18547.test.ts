@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("18547", async () => {
-  using serve = Bun.serve({
+  using serve = Fun.serve({
     routes: {
       "/:foo": request => {
         request.cookies.set("sessionToken", "123456");

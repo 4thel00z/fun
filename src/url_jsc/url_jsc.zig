@@ -11,6 +11,6 @@ pub fn urlFromJS(js_value: jsc.JSValue, globalObject: *jsc.JSGlobalObject, alloc
 
 const std = @import("std");
 
-const bun = @import("bun");
-const URL = bun.URL;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const URL = fun.URL;
+const jsc = fun.jsc;

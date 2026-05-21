@@ -170,7 +170,7 @@ pub const Bin = extern struct {
                             i += 1;
                         }
                         if (comptime Environment.allow_assert) {
-                            bun.assert(i == new.len);
+                            fun.assert(i == new.len);
                         }
                         return .{
                             .tag = .map,
@@ -217,7 +217,7 @@ pub const Bin = extern struct {
         writer: *std.Io.Writer,
         writeIndent: *const fn (*std.Io.Writer, *u32) std.Io.Writer.Error!void,
     ) std.Io.Writer.Error!void {
-        bun.debugAssert(this.tag != .none);
+        fun.debugAssert(this.tag != .none);
         if (comptime style == .single_line) {
             switch (this.tag) {
                 .none => {},
@@ -309,7 +309,7 @@ pub const Bin = extern struct {
     }
 
     pub fn init() Bin {
-        return bun.serializable(Bin{ .tag = .none, .value = Value.init(.{ .none = {} }) });
+        return fun.serializable(Bin{ .tag = .none, .value = Value.init(.{ .none = {} }) });
     }
 
     pub const Value = extern union {
@@ -348,7 +348,7 @@ pub const Bin = extern struct {
 
         /// To avoid undefined memory between union values, we must zero initialize the union first.
         pub fn init(field: anytype) Value {
-            return bun.serializableInto(Value, field);
+            return fun.serializableInto(Value, field);
         }
     };
 
@@ -395,8 +395,8 @@ pub const Bin = extern struct {
         done: bool = false,
         dir_iterator: ?std.fs.Dir.Iterator = null,
         package_name: String,
-        destination_node_modules: std.fs.Dir = bun.invalid_fd.stdDir(),
-        buf: bun.PathBuffer = undefined,
+        destination_node_modules: std.fs.Dir = fun.invalid_fd.stdDir(),
+        buf: fun.PathBuffer = undefined,
         string_buffer: []const u8,
         extern_string_buf: []const ExternalString,
 
@@ -414,7 +414,7 @@ pub const Bin = extern struct {
                 const joined = path.joinStringBuf(&this.buf, &parts, .auto);
                 this.buf[joined.len] = 0;
                 const joined_: [:0]u8 = this.buf[0..joined.len :0];
-                var child_dir = try bun.openDir(dir, joined_);
+                var child_dir = try fun.openDir(dir, joined_);
                 this.dir_iterator = child_dir.iterate();
             }
 
@@ -506,7 +506,7 @@ pub const Bin = extern struct {
 
         /// Usually will be the same as `node_modules_path`.
         /// Used to support native bin linking.
-        target_node_modules_path: *bun.AbsPath(.{}),
+        target_node_modules_path: *fun.AbsPath(.{}),
 
         /// Usually will be the same as `package_name`.
         /// Used to support native bin linking.
@@ -514,9 +514,9 @@ pub const Bin = extern struct {
 
         // Hash map of seen destination paths for this `node_modules/.bin` folder. PackageInstaller will reset it before
         // linking each tree.
-        seen: ?*bun.StringHashMap(void),
+        seen: ?*fun.StringHashMap(void),
 
-        node_modules_path: *bun.AbsPath(.{}),
+        node_modules_path: *fun.AbsPath(.{}),
 
         /// Used for generating relative paths
         package_name: strings.StringOrTinyString,
@@ -533,38 +533,38 @@ pub const Bin = extern struct {
         err: ?anyerror = null,
         skipped_due_to_missing_bin: bool = false,
 
-        pub var umask: bun.Mode = 0;
+        pub var umask: fun.Mode = 0;
 
         var has_set_umask = false;
 
         pub fn ensureUmask() void {
             if (!has_set_umask) {
                 has_set_umask = true;
-                umask = bun.sys.umask(0);
+                umask = fun.sys.umask(0);
             }
         }
 
         fn unlinkBinOrShim(abs_dest: [:0]const u8) void {
             if (comptime !Environment.isWindows) {
-                _ = bun.sys.unlink(abs_dest);
+                _ = fun.sys.unlink(abs_dest);
                 return;
             }
 
-            var dest_buf: bun.WPathBuffer = undefined;
+            var dest_buf: fun.WPathBuffer = undefined;
             const abs_dest_w = strings.convertUTF8toUTF16InBuffer(&dest_buf, abs_dest);
-            @memcpy(dest_buf[abs_dest_w.len..][0..".bunx\x00".len], comptime strings.literal(u16, ".bunx\x00"));
-            const abs_bunx_file: [:0]const u16 = dest_buf[0 .. abs_dest_w.len + ".bunx".len :0];
-            _ = bun.sys.unlinkW(abs_bunx_file);
+            @memcpy(dest_buf[abs_dest_w.len..][0..".funx\x00".len], comptime strings.literal(u16, ".funx\x00"));
+            const abs_bunx_file: [:0]const u16 = dest_buf[0 .. abs_dest_w.len + ".funx".len :0];
+            _ = fun.sys.unlinkW(abs_bunx_file);
             @memcpy(dest_buf[abs_dest_w.len..][0..".exe\x00".len], comptime strings.literal(u16, ".exe\x00"));
             const abs_exe_file: [:0]const u16 = dest_buf[0 .. abs_dest_w.len + ".exe".len :0];
-            _ = bun.sys.unlinkW(abs_exe_file);
+            _ = fun.sys.unlinkW(abs_exe_file);
         }
 
         fn linkBinOrCreateShim(this: *Linker, abs_target: [:0]const u8, abs_dest: [:0]const u8, global: bool) void {
-            bun.assertWithLocation(std.fs.path.isAbsolute(abs_target), @src());
-            bun.assertWithLocation(std.fs.path.isAbsolute(abs_dest), @src());
-            bun.assertWithLocation(abs_target[abs_target.len - 1] != std.fs.path.sep, @src());
-            bun.assertWithLocation(abs_dest[abs_dest.len - 1] != std.fs.path.sep, @src());
+            fun.assertWithLocation(std.fs.path.isAbsolute(abs_target), @src());
+            fun.assertWithLocation(std.fs.path.isAbsolute(abs_dest), @src());
+            fun.assertWithLocation(abs_target[abs_target.len - 1] != std.fs.path.sep, @src());
+            fun.assertWithLocation(abs_dest[abs_dest.len - 1] != std.fs.path.sep, @src());
 
             if (this.seen) |seen| {
                 // Skip seen destinations for this tree
@@ -576,24 +576,24 @@ pub const Bin = extern struct {
 
             // Skip if the target does not exist. This is important because placing a dangling
             // shim in path might break a postinstall
-            if (!bun.sys.exists(abs_target)) {
+            if (!fun.sys.exists(abs_target)) {
                 this.skipped_due_to_missing_bin = true;
                 return;
             }
 
             if (this.seen) |seen| {
-                const entry = bun.handleOom(seen.getOrPut(abs_dest));
+                const entry = fun.handleOom(seen.getOrPut(abs_dest));
                 if (!entry.found_existing) {
-                    entry.key_ptr.* = bun.handleOom(seen.allocator.dupe(u8, abs_dest));
+                    entry.key_ptr.* = fun.handleOom(seen.allocator.dupe(u8, abs_dest));
                 }
             }
 
-            bun.analytics.Features.binlinks += 1;
+            fun.analytics.Features.binlinks += 1;
 
             if (comptime !Environment.isWindows)
                 this.createSymlink(abs_target, abs_dest, global)
             else {
-                const target = bun.sys.openat(.cwd(), abs_target, bun.O.RDONLY, 0).unwrap() catch |err| {
+                const target = fun.sys.openat(.cwd(), abs_target, fun.O.RDONLY, 0).unwrap() catch |err| {
                     if (err != error.EISDIR) {
                         // ignore directories, creating a shim for one won't do anything
                         this.err = err;
@@ -620,7 +620,7 @@ pub const Bin = extern struct {
 
             // any error here is ignored
             const chunk = brk: {
-                const bin_for_reading = bun.sys.File.openat(.cwd(), abs_target, bun.O.RDONLY, 0).unwrap() catch return;
+                const bin_for_reading = fun.sys.File.openat(.cwd(), abs_target, fun.O.RDONLY, 0).unwrap() catch return;
                 defer bin_for_reading.close();
 
                 const read = bin_for_reading.readAll(&shebang_buf).unwrap() catch return;
@@ -641,19 +641,19 @@ pub const Bin = extern struct {
 
             // We have to do an atomic replace here, use a randomly generated
             // filename in the same folder, read the entire original file
-            // contents using bun.sys.File.readFrom, then write the temporary file, then
-            // overwite the old one with the new one via bun.sys.renameat. And
+            // contents using fun.sys.File.readFrom, then write the temporary file, then
+            // overwite the old one with the new one via fun.sys.renameat. And
             // always unlink the old one. If it fails for any reason then exit
             // early.
             var tmpname_buf: [1024]u8 = undefined;
-            const tmpname = bun.fs.FileSystem.tmpname(std.fs.path.basename(abs_target), &tmpname_buf, bun.hash(chunk_without_newline)) catch return;
+            const tmpname = fun.fs.FileSystem.tmpname(std.fs.path.basename(abs_target), &tmpname_buf, fun.hash(chunk_without_newline)) catch return;
 
             const dir_path = std.fs.path.dirname(abs_target) orelse return;
 
             const content: []const u8, const content_to_free: []const u8 = brk: {
                 if (chunk.len >= shebang_buf.len) {
                     // Partial read. Need to read the rest of the file.
-                    const original_contents = switch (bun.sys.File.readFrom(bun.FD.cwd(), abs_target, bun.default_allocator)) {
+                    const original_contents = switch (fun.sys.File.readFrom(fun.FD.cwd(), abs_target, fun.default_allocator)) {
                         .result => |contents| contents,
                         .err => return,
                     };
@@ -662,23 +662,23 @@ pub const Bin = extern struct {
 
                 break :brk .{ chunk, "" };
             };
-            defer bun.default_allocator.free(content_to_free);
+            defer fun.default_allocator.free(content_to_free);
 
             // Get original file permissions to preserve them (including setuid/setgid/sticky bits)
-            const original_stat = bun.sys.fstatat(.cwd(), abs_target).unwrap() catch return;
-            const original_mode = @as(bun.Mode, @intCast(original_stat.mode));
+            const original_stat = fun.sys.fstatat(.cwd(), abs_target).unwrap() catch return;
+            const original_mode = @as(fun.Mode, @intCast(original_stat.mode));
 
             // Create temporary file path
-            var tmppath_buf: [bun.MAX_PATH_BYTES]u8 = undefined;
-            const tmppath = bun.path.joinAbsStringBufZ(dir_path, &tmppath_buf, &.{tmpname}, .auto);
+            var tmppath_buf: [fun.MAX_PATH_BYTES]u8 = undefined;
+            const tmppath = fun.path.joinAbsStringBufZ(dir_path, &tmppath_buf, &.{tmpname}, .auto);
             var needs_unlink = true;
             defer {
-                if (needs_unlink) _ = bun.sys.unlinkat(.cwd(), tmppath);
+                if (needs_unlink) _ = fun.sys.unlinkat(.cwd(), tmppath);
             }
 
             // Write to temporary file with corrected content
             {
-                const tmpfile = bun.sys.File.openat(.cwd(), tmppath, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, original_mode).unwrap() catch return;
+                const tmpfile = fun.sys.File.openat(.cwd(), tmppath, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, original_mode).unwrap() catch return;
                 defer tmpfile.close();
 
                 // Write the corrected shebang (without \r)
@@ -691,11 +691,11 @@ pub const Bin = extern struct {
                 }
 
                 // Reapply original permissions (umask was applied during openat, so we need to restore)
-                _ = bun.sys.fchmodat(.cwd(), tmppath, @as(bun.Mode, @intCast(original_stat.mode & 0o777)), 0).unwrap() catch return;
+                _ = fun.sys.fchmodat(.cwd(), tmppath, @as(fun.Mode, @intCast(original_stat.mode & 0o777)), 0).unwrap() catch return;
             }
 
             // Atomic replace: rename temp file to original
-            switch (bun.sys.renameat(.cwd(), tmppath, .cwd(), abs_target)) {
+            switch (fun.sys.renameat(.cwd(), tmppath, .cwd(), abs_target)) {
                 .result => {
                     needs_unlink = false;
                 },
@@ -703,20 +703,20 @@ pub const Bin = extern struct {
             }
         }
 
-        fn createWindowsShim(this: *Linker, target: bun.FD, abs_target: [:0]const u8, abs_dest: [:0]const u8, global: bool) void {
+        fn createWindowsShim(this: *Linker, target: fun.FD, abs_target: [:0]const u8, abs_dest: [:0]const u8, global: bool) void {
             const WinBinLinkingShim = @import("./windows-shim/BinLinkingShim.zig");
 
             var shim_buf: [65536]u8 = undefined;
             var read_in_buf: [WinBinLinkingShim.Shebang.max_shebang_input_length]u8 = undefined;
-            var dest_buf: bun.WPathBuffer = undefined;
-            var target_buf: bun.WPathBuffer = undefined;
+            var dest_buf: fun.WPathBuffer = undefined;
+            var target_buf: fun.WPathBuffer = undefined;
 
             const abs_dest_w = strings.convertUTF8toUTF16InBuffer(&dest_buf, abs_dest);
-            @memcpy(dest_buf[abs_dest_w.len..][0..".bunx\x00".len], comptime strings.literal(u16, ".bunx\x00"));
+            @memcpy(dest_buf[abs_dest_w.len..][0..".funx\x00".len], comptime strings.literal(u16, ".funx\x00"));
 
-            const abs_bunx_file: [:0]const u16 = dest_buf[0 .. abs_dest_w.len + ".bunx".len :0];
+            const abs_bunx_file: [:0]const u16 = dest_buf[0 .. abs_dest_w.len + ".funx".len :0];
 
-            const bunx_file = bun.sys.File.openatOSPath(bun.invalid_fd, abs_bunx_file, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o664).unwrap() catch |err| bunx_file: {
+            const funx_file = fun.sys.File.openatOSPath(fun.invalid_fd, abs_bunx_file, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o664).unwrap() catch |err| funx_file: {
                 if (err != error.ENOENT or global) {
                     this.err = err;
                     return;
@@ -724,18 +724,18 @@ pub const Bin = extern struct {
 
                 const node_modules_path_save = this.node_modules_path.save();
                 this.node_modules_path.append(".bin");
-                bun.makePath(std.fs.cwd(), this.node_modules_path.slice()) catch {};
+                fun.makePath(std.fs.cwd(), this.node_modules_path.slice()) catch {};
                 node_modules_path_save.restore();
 
-                break :bunx_file bun.sys.File.openatOSPath(bun.invalid_fd, abs_bunx_file, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o664).unwrap() catch |real_err| {
+                break :funx_file fun.sys.File.openatOSPath(fun.invalid_fd, abs_bunx_file, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o664).unwrap() catch |real_err| {
                     this.err = real_err;
                     return;
                 };
             };
-            defer bunx_file.close();
+            defer funx_file.close();
 
             const rel_target = path.relativeBufZ(this.rel_buf, path.dirname(abs_dest, .auto), abs_target);
-            bun.assertWithLocation(strings.hasPrefixComptime(rel_target, "..\\"), @src());
+            fun.assertWithLocation(strings.hasPrefixComptime(rel_target, "..\\"), @src());
 
             const rel_target_w = strings.toWPathNormalized(&target_buf, rel_target["..\\".len..]);
 
@@ -775,7 +775,7 @@ pub const Bin = extern struct {
                 return;
             };
 
-            bunx_file.writer().writeAll(metadata) catch |err| {
+            funx_file.writer().writeAll(metadata) catch |err| {
                 this.err = err;
                 return;
             };
@@ -783,9 +783,9 @@ pub const Bin = extern struct {
             @memcpy(dest_buf[abs_dest_w.len..][0..".exe\x00".len], comptime strings.literal(u16, ".exe\x00"));
             const abs_exe_file: [:0]const u16 = dest_buf[0 .. abs_dest_w.len + ".exe".len :0];
 
-            bun.sys.File.writeFile(bun.invalid_fd, abs_exe_file, WinBinLinkingShim.embedded_executable_data).unwrap() catch |err| {
+            fun.sys.File.writeFile(fun.invalid_fd, abs_exe_file, WinBinLinkingShim.embedded_executable_data).unwrap() catch |err| {
                 if (err == error.EBUSY) {
-                    // exe is most likely running. bunx file has already been updated, ignore error
+                    // exe is most likely running. funx file has already been updated, ignore error
                     return;
                 }
 
@@ -797,16 +797,16 @@ pub const Bin = extern struct {
         fn createSymlink(this: *Linker, abs_target: [:0]const u8, abs_dest: [:0]const u8, global: bool) void {
             defer {
                 if (this.err == null) {
-                    _ = bun.sys.chmod(abs_target, umask | 0o777);
+                    _ = fun.sys.chmod(abs_target, umask | 0o777);
                 }
             }
 
             const abs_dest_dir = path.dirname(abs_dest, .auto);
             const rel_target = path.relativeBufZ(this.rel_buf, abs_dest_dir, abs_target);
 
-            bun.assertWithLocation(strings.hasPrefixComptime(rel_target, ".."), @src());
+            fun.assertWithLocation(strings.hasPrefixComptime(rel_target, ".."), @src());
 
-            switch (bun.sys.symlinkRunningExecutable(rel_target, abs_dest)) {
+            switch (fun.sys.symlinkRunningExecutable(rel_target, abs_dest)) {
                 .err => |err| {
                     if (err.getErrno() != .EXIST and err.getErrno() != .NOENT) {
                         this.err = err.toZigErr();
@@ -822,10 +822,10 @@ pub const Bin = extern struct {
 
                         const node_modules_path_save = this.node_modules_path.save();
                         this.node_modules_path.append(".bin");
-                        bun.makePath(std.fs.cwd(), this.node_modules_path.slice()) catch {};
+                        fun.makePath(std.fs.cwd(), this.node_modules_path.slice()) catch {};
                         node_modules_path_save.restore();
 
-                        switch (bun.sys.symlinkRunningExecutable(rel_target, abs_dest)) {
+                        switch (fun.sys.symlinkRunningExecutable(rel_target, abs_dest)) {
                             .err => |real_error| {
                                 // It was just created, no need to delete destination and symlink again
                                 this.err = real_error.toZigErr();
@@ -833,21 +833,21 @@ pub const Bin = extern struct {
                             },
                             .result => return,
                         }
-                        bun.sys.symlinkRunningExecutable(rel_target, abs_dest).unwrap() catch |real_err| {
+                        fun.sys.symlinkRunningExecutable(rel_target, abs_dest).unwrap() catch |real_err| {
                             this.err = real_err;
                         };
                         return;
                     }
 
                     // beyond this error can only be `.EXIST`
-                    bun.assertWithLocation(err.getErrno() == .EXIST, @src());
+                    fun.assertWithLocation(err.getErrno() == .EXIST, @src());
                 },
                 .result => return,
             }
 
             // delete and try again
             std.fs.deleteTreeAbsolute(abs_dest) catch {};
-            bun.sys.symlinkRunningExecutable(rel_target, abs_dest).unwrap() catch |err| {
+            fun.sys.symlinkRunningExecutable(rel_target, abs_dest).unwrap() catch |err| {
                 this.err = err;
             };
         }
@@ -884,13 +884,13 @@ pub const Bin = extern struct {
                 return primary;
             }
 
-            if (bun.sys.exists(primary)) {
+            if (fun.sys.exists(primary)) {
                 return primary;
             }
 
             if (bin_name.len > 0) {
                 const at_root = path.joinAbsStringZ(package_dir, &.{bin_name}, .auto);
-                if (bun.sys.exists(at_root)) {
+                if (fun.sys.exists(at_root)) {
                     return at_root;
                 }
             }
@@ -947,7 +947,7 @@ pub const Bin = extern struct {
             const package_dir = this.buildTargetPackageDir();
             var abs_dest_buf_remain = this.buildDestinationDir(global);
 
-            bun.assertWithLocation(this.bin.tag != .none, @src());
+            fun.assertWithLocation(this.bin.tag != .none, @src());
 
             switch (this.bin.tag) {
                 .none => {},
@@ -1016,7 +1016,7 @@ pub const Bin = extern struct {
                     // for normalizing `target`
                     const abs_target_dir = path.joinAbsStringZ(package_dir, &.{target}, .auto);
 
-                    var target_dir = bun.openDirAbsolute(abs_target_dir) catch |err| {
+                    var target_dir = fun.openDirAbsolute(abs_target_dir) catch |err| {
                         if (err == error.ENOENT) {
                             // https://github.com/npm/cli/blob/366c07e2f3cb9d1c6ddbd03e624a4d73fbd2676e/node_modules/bin-links/lib/link-gently.js#L43
                             // avoid erroring when the directory does not exist
@@ -1056,7 +1056,7 @@ pub const Bin = extern struct {
             const package_dir = this.buildTargetPackageDir();
             var abs_dest_buf_remain = this.buildDestinationDir(global);
 
-            bun.assertWithLocation(this.bin.tag != .none, @src());
+            fun.assertWithLocation(this.bin.tag != .none, @src());
 
             switch (this.bin.tag) {
                 .none => {},
@@ -1110,7 +1110,7 @@ pub const Bin = extern struct {
 
                     const abs_target_dir = path.joinAbsStringZ(package_dir, &.{target}, .auto);
 
-                    var target_dir = bun.openDirAbsolute(abs_target_dir) catch |err| {
+                    var target_dir = fun.openDirAbsolute(abs_target_dir) catch |err| {
                         this.err = err;
                         return;
                     };
@@ -1140,23 +1140,23 @@ pub const Bin = extern struct {
     };
 };
 
-const log = bun.Output.scoped(.BinLinker, .hidden);
+const log = fun.Output.scoped(.BinLinker, .hidden);
 const string = []const u8;
 const stringZ = [:0]const u8;
 
 const Dependency = @import("./dependency.zig");
-const Environment = @import("../bun_core/env.zig");
+const Environment = @import("../fun_core/env.zig");
 const std = @import("std");
 
 const Install = @import("./install.zig");
 const ExternalStringList = @import("./install.zig").ExternalStringList;
 
-const bun = @import("bun");
-const JSON = bun.json;
-const OOM = bun.OOM;
-const path = bun.path;
-const strings = bun.strings;
+const fun = @import("fun");
+const JSON = fun.json;
+const OOM = fun.OOM;
+const path = fun.path;
+const strings = fun.strings;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const ExternalString = Semver.ExternalString;
 const String = Semver.String;

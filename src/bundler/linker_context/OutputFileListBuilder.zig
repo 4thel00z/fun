@@ -37,8 +37,8 @@ total_insertions: u32,
 
 pub fn init(
     allocator: std.mem.Allocator,
-    c: *const bun.bundle_v2.LinkerContext,
-    chunks: []const bun.bundle_v2.Chunk,
+    c: *const fun.bundle_v2.LinkerContext,
+    chunks: []const fun.bundle_v2.Chunk,
     _: usize,
 ) !@This() {
     const length, const supplementary_file_count = OutputFileList.calculateOutputFileListCapacity(c, chunks);
@@ -59,15 +59,15 @@ pub fn init(
 
 pub fn take(this: *@This()) std.array_list.Managed(options.OutputFile) {
     // TODO: should this return an error
-    bun.assertf(this.total_insertions == this.output_files.items.len, "total_insertions ({d}) != output_files.items.len ({d})", .{ this.total_insertions, this.output_files.items.len });
+    fun.assertf(this.total_insertions == this.output_files.items.len, "total_insertions ({d}) != output_files.items.len ({d})", .{ this.total_insertions, this.output_files.items.len });
     // Set the length just in case so the list doesn't have undefined memory
     this.output_files.items.len = this.total_insertions;
     const list = this.output_files;
-    this.output_files = std.array_list.Managed(options.OutputFile).init(bun.default_allocator);
+    this.output_files = std.array_list.Managed(options.OutputFile).init(fun.default_allocator);
     return list;
 }
 
-pub fn calculateOutputFileListCapacity(c: *const bun.bundle_v2.LinkerContext, chunks: []const bun.bundle_v2.Chunk) struct { u32, u32 } {
+pub fn calculateOutputFileListCapacity(c: *const fun.bundle_v2.LinkerContext, chunks: []const fun.bundle_v2.Chunk) struct { u32, u32 } {
     const source_map_count = if (c.options.source_maps.hasExternalFiles()) brk: {
         var count: usize = 0;
         for (chunks) |*chunk| {
@@ -80,7 +80,7 @@ pub fn calculateOutputFileListCapacity(c: *const bun.bundle_v2.LinkerContext, ch
     const bytecode_count = if (c.options.generate_bytecode_cache) bytecode_count: {
         var bytecode_count: usize = 0;
         for (chunks) |*chunk| {
-            const loader: bun.options.Loader = if (chunk.entry_point.is_entry_point)
+            const loader: fun.options.Loader = if (chunk.entry_point.is_entry_point)
                 c.parse_graph.input_files.items(.loader)[
                     chunk.entry_point.source_index
                 ]
@@ -103,7 +103,7 @@ pub fn calculateOutputFileListCapacity(c: *const bun.bundle_v2.LinkerContext, ch
 
 pub fn insertForChunk(this: *OutputFileList, output_file: options.OutputFile) u32 {
     const index = this.indexForChunk();
-    bun.assertf(index < this.index_for_sourcemaps_and_bytecode orelse std.math.maxInt(u32), "index ({d}) \\< index_for_sourcemaps_and_bytecode ({d})", .{ index, this.index_for_sourcemaps_and_bytecode orelse std.math.maxInt(u32) });
+    fun.assertf(index < this.index_for_sourcemaps_and_bytecode orelse std.math.maxInt(u32), "index ({d}) \\< index_for_sourcemaps_and_bytecode ({d})", .{ index, this.index_for_sourcemaps_and_bytecode orelse std.math.maxInt(u32) });
     this.output_files.items[index] = output_file;
     this.total_insertions += 1;
     return index;
@@ -111,15 +111,15 @@ pub fn insertForChunk(this: *OutputFileList, output_file: options.OutputFile) u3
 
 pub fn insertForSourcemapOrBytecode(this: *OutputFileList, output_file: options.OutputFile) !u32 {
     const index = this.indexForSourcemapOrBytecode() orelse return error.NoSourceMapsOrBytecode;
-    bun.assertf(index < this.additional_output_files_start, "index ({d}) \\< additional_output_files_start ({d})", .{ index, this.additional_output_files_start });
+    fun.assertf(index < this.additional_output_files_start, "index ({d}) \\< additional_output_files_start ({d})", .{ index, this.additional_output_files_start });
     this.output_files.items[index] = output_file;
     this.total_insertions += 1;
     return index;
 }
 
 pub fn insertAdditionalOutputFiles(this: *OutputFileList, additional_output_files: []const options.OutputFile) void {
-    bun.assertf(this.index_for_sourcemaps_and_bytecode orelse 0 <= this.additional_output_files_start, "index_for_sourcemaps_and_bytecode ({d}) \\< additional_output_files_start ({d})", .{ this.index_for_sourcemaps_and_bytecode orelse 0, this.additional_output_files_start });
-    bun.copy(
+    fun.assertf(this.index_for_sourcemaps_and_bytecode orelse 0 <= this.additional_output_files_start, "index_for_sourcemaps_and_bytecode ({d}) \\< additional_output_files_start ({d})", .{ this.index_for_sourcemaps_and_bytecode orelse 0, this.additional_output_files_start });
+    fun.copy(
         options.OutputFile,
         this.getMutableAdditionalOutputFiles(),
         additional_output_files,
@@ -143,8 +143,8 @@ fn indexForSourcemapOrBytecode(this: *@This()) ?u32 {
     return result;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const options = bun.options;
+const options = fun.options;
 const OutputFile = options.OutputFile;

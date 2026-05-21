@@ -3,7 +3,7 @@
 #include "root.h"
 #include "ncrypto.h"
 
-namespace Bun {
+namespace Fun {
 
 struct SecretKeyJobCtx {
     SecretKeyJobCtx(size_t length);
@@ -34,4 +34,4 @@ struct SecretKeyJob {
 JSC_DECLARE_HOST_FUNCTION(jsGenerateKey);
 JSC_DECLARE_HOST_FUNCTION(jsGenerateKeySync);
 
-} // namespace Bun
+} // namespace Fun

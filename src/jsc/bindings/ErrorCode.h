@@ -5,7 +5,7 @@
 #include "root.h"
 #include <JavaScriptCore/JSInternalFieldObjectImpl.h>
 #include <JavaScriptCore/JSInternalFieldObjectImplInlines.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ErrorCode+List.h"
 #include "CryptoKeyType.h"
 
@@ -21,7 +21,7 @@
         }                                                                                                          \
     } while (false)
 
-namespace Bun {
+namespace Fun {
 
 class ErrorCodeCache : public JSC::JSInternalFieldObjectImpl<NODE_ERROR_COUNT> {
 public:

@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/28632
-import { SQL } from "bun";
-import { beforeAll, expect, test } from "bun:test";
+// https://github.com/underdoc-org/fun/issues/28632
+import { SQL } from "fun";
+import { beforeAll, expect, test } from "fun:test";
 import { describeWithContainer, isASAN, isDockerEnabled } from "harness";
 
 if (isDockerEnabled()) {
@@ -16,7 +16,7 @@ if (isDockerEnabled()) {
       beforeAll(async () => {
         await container.ready;
         sql = new SQL({
-          url: `mysql://root@${container.host}:${container.port}/bun_sql_test`,
+          url: `mysql://root@${container.host}:${container.port}/fun_sql_test`,
           max: 1,
         });
       });
@@ -50,16 +50,16 @@ if (isDockerEnabled()) {
         for (let i = 0; i < 500; i++) {
           await sql`SELECT * FROM leak_test_28632 WHERE primary_id = ${"123"} LIMIT 1`;
         }
-        Bun.gc(true);
-        await Bun.sleep(50);
+        Fun.gc(true);
+        await Fun.sleep(50);
         const rssAfterWarmup = process.memoryUsage.rss();
 
         // Run queries — each re-decodes 50 column definitions
         for (let i = 0; i < 5000; i++) {
           await sql`SELECT * FROM leak_test_28632 WHERE primary_id = ${"123"} LIMIT 1`;
         }
-        Bun.gc(true);
-        await Bun.sleep(50);
+        Fun.gc(true);
+        await Fun.sleep(50);
         const rssAfterQueries = process.memoryUsage.rss();
 
         const growthMB = (rssAfterQueries - rssAfterWarmup) / 1024 / 1024;

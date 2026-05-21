@@ -14,7 +14,7 @@ pub const DefaultTrustedCommand = struct {
 pub const UntrustedCommand = struct {
     pub fn exec(ctx: Command.Context, pm: *PackageManager, args: [][:0]u8) !void {
         _ = args;
-        Output.prettyError("<r><b>bun pm untrusted <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n\n", .{});
+        Output.prettyError("<r><b>fun pm untrusted <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n\n", .{});
         Output.flush();
 
         const load_lockfile = pm.lockfile.loadFromCwd(pm, ctx.allocator, ctx.log, true);
@@ -53,7 +53,7 @@ pub const UntrustedCommand = struct {
 
         var tree_iterator = Lockfile.Tree.Iterator(.node_modules).init(pm.lockfile);
 
-        var node_modules_path: bun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
+        var node_modules_path: fun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
         defer node_modules_path.deinit();
 
         while (tree_iterator.next(null)) |node_modules| {
@@ -117,7 +117,7 @@ pub const UntrustedCommand = struct {
         Output.pretty(
             \\These dependencies had their lifecycle scripts blocked during install.
             \\
-            \\If you trust them and wish to run their scripts, use <d>`<r><blue>bun pm trust<r><d>`<r>.
+            \\If you trust them and wish to run their scripts, use <d>`<r><blue>fun pm trust<r><d>`<r>.
             \\
         , .{});
     }
@@ -128,7 +128,7 @@ pub const UntrustedCommand = struct {
             \\
             \\This means all packages with scripts are in "trustedDependencies" or none of your dependencies have scripts.
             \\
-            \\For more information, visit <magenta>https://bun.com/docs/install/lifecycle#trusteddependencies<r>
+            \\For more information, visit <magenta>https://fun.dev/docs/install/lifecycle#trusteddependencies<r>
             \\
         , .{});
     }
@@ -159,7 +159,7 @@ pub const TrustCommand = struct {
     }
 
     pub fn exec(ctx: Command.Context, pm: *PackageManager, args: [][:0]u8) !void {
-        Output.prettyError("<r><b>bun pm trust <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
+        Output.prettyError("<r><b>fun pm trust <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>\n", .{});
         Output.flush();
 
         if (args.len == 2) errorExpectedArgs();
@@ -207,10 +207,10 @@ pub const TrustCommand = struct {
         // in the correct order as they would during a normal install
         var tree_iter = Lockfile.Tree.Iterator(.node_modules).init(pm.lockfile);
 
-        var node_modules_path: bun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
+        var node_modules_path: fun.AbsPath(.{ .sep = .auto }) = .initTopLevelDir();
         defer node_modules_path.deinit();
 
-        var package_names_to_add: bun.StringArrayHashMapUnmanaged(void) = .{};
+        var package_names_to_add: fun.StringArrayHashMapUnmanaged(void) = .{};
         var scripts_at_depth: std.AutoArrayHashMapUnmanaged(usize, std.ArrayListUnmanaged(struct {
             package_id: PackageID,
             scripts_list: Lockfile.Package.Scripts.List,
@@ -224,7 +224,7 @@ pub const TrustCommand = struct {
             defer node_modules_path_save.restore();
             node_modules_path.append(node_modules.relative_path);
 
-            var node_modules_dir = bun.openDir(std.fs.cwd(), node_modules.relative_path) catch |err| {
+            var node_modules_dir = fun.openDir(std.fs.cwd(), node_modules.relative_path) catch |err| {
                 if (err == error.ENOENT) continue;
                 return err;
             };
@@ -352,7 +352,7 @@ pub const TrustCommand = struct {
 
         const package_json_source = logger.Source.initPathString(PackageManager.root_package_json_path, package_json_contents);
 
-        var package_json = bun.json.parseUTF8(&package_json_source, ctx.log, ctx.allocator) catch |err| {
+        var package_json = fun.json.parseUTF8(&package_json_source, ctx.log, ctx.allocator) catch |err| {
             ctx.log.print(Output.errorWriter()) catch {};
 
             Output.errGeneric("failed to parse package.json: {s}", .{@errorName(err)});
@@ -362,7 +362,7 @@ pub const TrustCommand = struct {
         // now add the package names to lockfile.trustedDependencies and package.json `trustedDependencies`
         const names = package_names_to_add.keys();
         if (comptime Environment.allow_assert) {
-            bun.assertWithLocation(names.len > 0, @src());
+            fun.assertWithLocation(names.len > 0, @src());
         }
 
         // could be null if these are the first packages to be trusted
@@ -400,12 +400,12 @@ pub const TrustCommand = struct {
 
         pm.lockfile.saveToDisk(&load_lockfile, &pm.options);
 
-        var buffer_writer = bun.js_printer.BufferWriter.init(ctx.allocator);
+        var buffer_writer = fun.js_printer.BufferWriter.init(ctx.allocator);
         try buffer_writer.buffer.list.ensureTotalCapacity(ctx.allocator, package_json_contents.len + 1);
         buffer_writer.append_newline = package_json_contents.len > 0 and package_json_contents[package_json_contents.len - 1] == '\n';
-        var package_json_writer = bun.js_printer.BufferPrinter.init(buffer_writer);
+        var package_json_writer = fun.js_printer.BufferPrinter.init(buffer_writer);
 
-        _ = bun.js_printer.printJSON(@TypeOf(&package_json_writer), &package_json_writer, package_json, &package_json_source, .{ .mangled_props = null }) catch |err| {
+        _ = fun.js_printer.printJSON(@TypeOf(&package_json_writer), &package_json_writer, package_json, &package_json_source, .{ .mangled_props = null }) catch |err| {
             Output.errGeneric("failed to print package.json: {s}", .{@errorName(err)});
             Global.crash();
         };
@@ -417,7 +417,7 @@ pub const TrustCommand = struct {
         pm.root_package_json_file.close();
 
         if (comptime Environment.allow_assert) {
-            bun.assertWithLocation(total_scripts_ran > 0, @src());
+            fun.assertWithLocation(total_scripts_ran > 0, @src());
         }
 
         Output.pretty(" <green>{d}<r> script{s} ran across {d} package{s} ", .{
@@ -427,7 +427,7 @@ pub const TrustCommand = struct {
             if (total_packages_with_scripts > 1) "s" else "",
         });
 
-        Output.printStartEndStdout(bun.start_time, std.time.nanoTimestamp());
+        Output.printStartEndStdout(fun.start_time, std.time.nanoTimestamp());
         Output.print("\n", .{});
 
         if (total_skipped_packages > 0) {
@@ -453,12 +453,12 @@ const Lockfile = Install.Lockfile;
 const PackageID = Install.PackageID;
 const PackageManager = Install.PackageManager;
 
-const bun = @import("bun");
-const ArrayIdentityContext = bun.ArrayIdentityContext;
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const Progress = bun.Progress;
-const logger = bun.logger;
-const strings = bun.strings;
-const String = bun.Semver.String;
+const fun = @import("fun");
+const ArrayIdentityContext = fun.ArrayIdentityContext;
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const Progress = fun.Progress;
+const logger = fun.logger;
+const strings = fun.strings;
+const String = fun.Semver.String;

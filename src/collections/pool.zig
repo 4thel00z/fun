@@ -154,8 +154,8 @@ pub fn ObjectPool(
         }
 
         pub fn push(allocator: std.mem.Allocator, pooled: Type) void {
-            if (comptime @import("../bun_core/env.zig").allow_assert)
-                bun.assert(!full());
+            if (comptime @import("../fun_core/env.zig").allow_assert)
+                fun.assert(!full());
 
             const new_node = allocator.create(LinkedList.Node) catch unreachable;
             new_node.* = LinkedList.Node{
@@ -247,16 +247,16 @@ pub fn ObjectPool(
 
         fn destroyNode(node: *LinkedList.Node) void {
             // TODO: Once a generic-allocator version of `BabyList` is added, change
-            // `ByteListPool` in `bun.js/webcore.zig` to use a managed default-allocator
+            // `ByteListPool` in `fun.js/webcore.zig` to use a managed default-allocator
             // `ByteList` instead, and then get rid of the special-casing for `ByteList`
             // here. This will fix a memory leak.
-            if (comptime Type != bun.ByteList) {
-                bun.memory.deinit(&node.data);
+            if (comptime Type != fun.ByteList) {
+                fun.memory.deinit(&node.data);
             }
             node.allocator.destroy(node);
         }
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

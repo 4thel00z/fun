@@ -4,7 +4,7 @@
 
 // This addon exercises re-entrant napi_module_register: the init callback
 // of a module registered via a static constructor itself calls
-// napi_module_register() for more modules. Bun iterates the pending-module
+// napi_module_register() for more modules. Fun iterates the pending-module
 // vector after dlopen returns, and appending to that vector while iterating
 // it used to reallocate the backing buffer and leave the range-for iterator
 // dangling (heap-use-after-free under ASAN).

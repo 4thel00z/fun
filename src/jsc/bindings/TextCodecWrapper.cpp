@@ -24,7 +24,7 @@ using namespace PAL;
 extern "C" {
 
 // Create codec for a specific encoding
-void* Bun__createTextCodec(const char* encodingName, size_t encodingNameLen)
+void* Fun__createTextCodec(const char* encodingName, size_t encodingNameLen)
 {
     std::span<const char> span(encodingName, encodingNameLen);
     StringView encodingView(span);
@@ -40,12 +40,12 @@ void* Bun__createTextCodec(const char* encodingName, size_t encodingNameLen)
     return codec.release();
 }
 
-// Decode bytes using a codec and return as BunString
-BunString Bun__decodeWithTextCodec(void* codecPtr, const uint8_t* data, size_t length, bool flush, bool stopOnError, bool* outSawError)
+// Decode bytes using a codec and return as FunString
+FunString Fun__decodeWithTextCodec(void* codecPtr, const uint8_t* data, size_t length, bool flush, bool stopOnError, bool* outSawError)
 {
     if (!codecPtr || !outSawError) {
         if (outSawError) *outSawError = false;
-        return { BunStringTag::Empty, {} };
+        return { FunStringTag::Empty, {} };
     }
 
     TextCodec* codec = static_cast<TextCodec*>(codecPtr);
@@ -56,13 +56,13 @@ BunString Bun__decodeWithTextCodec(void* codecPtr, const uint8_t* data, size_t l
 
     *outSawError = sawError;
 
-    // Convert WTF::String to BunString
+    // Convert WTF::String to FunString
     // This properly manages the memory using WTF's reference counting
-    return Bun::toStringRef(result);
+    return Fun::toStringRef(result);
 }
 
 // Delete a codec
-void Bun__deleteTextCodec(void* codecPtr)
+void Fun__deleteTextCodec(void* codecPtr)
 {
     if (codecPtr) {
         TextCodec* codec = static_cast<TextCodec*>(codecPtr);
@@ -71,7 +71,7 @@ void Bun__deleteTextCodec(void* codecPtr)
 }
 
 // Strip BOM from codec
-void Bun__stripBOMFromTextCodec(void* codecPtr)
+void Fun__stripBOMFromTextCodec(void* codecPtr)
 {
     if (codecPtr) {
         TextCodec* codec = static_cast<TextCodec*>(codecPtr);
@@ -80,7 +80,7 @@ void Bun__stripBOMFromTextCodec(void* codecPtr)
 }
 
 // Check if an encoding is supported
-bool Bun__isEncodingSupported(const char* encodingName, size_t encodingNameLen)
+bool Fun__isEncodingSupported(const char* encodingName, size_t encodingNameLen)
 {
     std::span<const char> span(encodingName, encodingNameLen);
     StringView encodingView(span);
@@ -89,7 +89,7 @@ bool Bun__isEncodingSupported(const char* encodingName, size_t encodingNameLen)
 }
 
 // Get canonical encoding name
-const char* Bun__getCanonicalEncodingName(const char* encodingName, size_t encodingNameLen, size_t* outLen)
+const char* Fun__getCanonicalEncodingName(const char* encodingName, size_t encodingNameLen, size_t* outLen)
 {
     std::span<const char> span(encodingName, encodingNameLen);
     StringView encodingView(span);

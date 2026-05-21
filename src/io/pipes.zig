@@ -2,7 +2,7 @@ pub const PollOrFd = union(enum) {
     /// When it's a pipe/fifo
     poll: *Async.FilePoll,
 
-    fd: bun.FD,
+    fd: fun.FD,
     closed: void,
 
     pub fn setOwner(this: *const PollOrFd, owner: anytype) void {
@@ -11,9 +11,9 @@ pub const PollOrFd = union(enum) {
         }
     }
 
-    pub fn getFd(this: *const PollOrFd) bun.FD {
+    pub fn getFd(this: *const PollOrFd) fun.FD {
         return switch (this.*) {
-            .closed => bun.invalid_fd,
+            .closed => fun.invalid_fd,
             .fd => this.fd,
             .poll => this.poll.fd,
         };
@@ -50,14 +50,14 @@ pub const PollOrFd = union(enum) {
             this.* = .{ .closed = {} };
         }
 
-        if (fd != bun.invalid_fd) {
+        if (fd != fun.invalid_fd) {
             this.* = .{ .closed = {} };
 
-            //TODO: We should make this call compatible using bun.FD
+            //TODO: We should make this call compatible using fun.FD
             if (Environment.isWindows) {
-                bun.Async.Closer.close(fd, bun.windows.libuv.Loop.get());
+                fun.Async.Closer.close(fd, fun.windows.libuv.Loop.get());
             } else if (close_async and close_fd) {
-                bun.Async.Closer.close(fd, {});
+                fun.Async.Closer.close(fd, {});
             } else {
                 if (close_fd) _ = fd.closeAllowingBadFileDescriptor(null);
             }
@@ -100,6 +100,6 @@ pub const ReadState = enum {
     drained,
 };
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;

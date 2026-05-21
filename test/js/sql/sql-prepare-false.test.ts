@@ -1,5 +1,5 @@
-import { SQL } from "bun";
-import { afterAll, describe, expect, test } from "bun:test";
+import { SQL } from "fun";
+import { afterAll, describe, expect, test } from "fun:test";
 import * as dockerCompose from "../../docker/index.ts";
 
 // Tests for `prepare: false` (unnamed prepared statements).
@@ -18,8 +18,8 @@ describe("PostgreSQL prepare: false", async () => {
   }
 
   const options = {
-    db: "bun_sql_test",
-    username: "bun_sql_test",
+    db: "fun_sql_test",
+    username: "fun_sql_test",
     host: container.host,
     port: container.port,
     max: 1,
@@ -27,7 +27,7 @@ describe("PostgreSQL prepare: false", async () => {
   };
 
   afterAll(async () => {
-    if (!process.env.BUN_KEEP_DOCKER) {
+    if (!process.env.FUN_KEEP_DOCKER) {
       await dockerCompose.down();
     }
   });

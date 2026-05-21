@@ -241,7 +241,7 @@ const LinuxImpl = struct {
             },
             .INVAL => {}, // possibly timeout overflow
             .FAULT => @panic("futex_wait() returned EFAULT unexpectedly"), // ptr was invalid
-            else => |err| bun.Output.panic("Unexpected futex_wait() return code: {d} - {s}", .{ rc, std.enums.tagName(linux.E, err) orelse "unknown" }),
+            else => |err| fun.Output.panic("Unexpected futex_wait() return code: {d} - {s}", .{ rc, std.enums.tagName(linux.E, err) orelse "unknown" }),
         }
     }
 
@@ -410,8 +410,8 @@ pub const Deadline = struct {
 
 const builtin = @import("builtin");
 
-const bun = @import("bun");
-const assert = bun.assert;
+const fun = @import("fun");
+const assert = fun.assert;
 
 const std = @import("std");
 const atomic = std.atomic;

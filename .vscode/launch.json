@@ -1,31 +1,31 @@
 {
   // Notes:
-  // - BUN_GARBAGE_COLLECTOR_LEVEL=2 forces GC to run after every `expect()`, but is slower
-  // - BUN_DEBUG_QUIET_LOGS=1 disables the debug logs
+  // - FUN_GARBAGE_COLLECTOR_LEVEL=2 forces GC to run after every `expect()`, but is slower
+  // - FUN_DEBUG_QUIET_LOGS=1 disables the debug logs
   // - FORCE_COLOR=1 forces colors in the terminal
-  // - "${workspaceFolder}/test" is the cwd for `bun test` so it matches CI, we should fix this later
+  // - "${workspaceFolder}/test" is the cwd for `fun test` so it matches CI, we should fix this later
   // - "cppvsdbg" is used instead of "lldb" on Windows, because "lldb" is too slow
   // - Seeing WebKit files requires `vendor/WebKit` to exist and have code from the right commit.
-  //   Run `bun sync-webkit-source` to ensure that folder is at the right commit. If you haven't
+  //   Run `fun sync-webkit-source` to ensure that folder is at the right commit. If you haven't
   //   cloned it at all, that script will suggest how.
   "version": "0.2.0",
   "configurations": [
-    // bun test [file]
+    // fun test [file]
     {
       "type": "lldb",
       "request": "launch",
-      "name": "bun test [file]",
-      "program": "${workspaceFolder}/build/debug/bun-debug",
+      "name": "fun test [file]",
+      "program": "${workspaceFolder}/build/debug/fun-debug",
       "args": ["test", "--timeout=3600000", "${file}"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_DEBUG_jest": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "1",
-        // "BUN_JSC_validateExceptionChecks": "1",
-        // "BUN_JSC_dumpSimulatedThrows": "1",
-        // "BUN_JSC_unexpectedExceptionStackTraceLimit": "20",
-        // "BUN_DESTRUCT_VM_ON_EXIT": "1",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_DEBUG_jest": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "1",
+        // "FUN_JSC_validateExceptionChecks": "1",
+        // "FUN_JSC_dumpSimulatedThrows": "1",
+        // "FUN_JSC_unexpectedExceptionStackTraceLimit": "20",
+        // "FUN_DESTRUCT_VM_ON_EXIT": "1",
         // "ASAN_OPTIONS": "allow_user_segv_handler=1:disable_coredump=0:detect_leaks=1:abort_on_error=1",
         // "LSAN_OPTIONS": "malloc_context_size=100:print_suppressions=1:suppressions=${workspaceFolder}/test/leaksan.supp",
       },
@@ -53,22 +53,22 @@
         "/webkitbuild/.WTF/Headers": "${workspaceFolder}/vendor/WebKit/Source/WTF",
       },
     },
-    // bun run [file]
+    // fun run [file]
     {
       "type": "lldb",
       "request": "launch",
-      "name": "bun run [file]",
-      "program": "${workspaceFolder}/build/debug/bun-debug",
+      "name": "fun run [file]",
+      "program": "${workspaceFolder}/build/debug/fun-debug",
       "args": ["${file}"],
       "cwd": "${workspaceFolder}",
       "env": {
         "FORCE_COLOR": "0",
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "2",
-        // "BUN_JSC_validateExceptionChecks": "1",
-        // "BUN_JSC_dumpSimulatedThrows": "1",
-        // "BUN_JSC_unexpectedExceptionStackTraceLimit": "20",
-        // "BUN_DESTRUCT_VM_ON_EXIT": "1",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "2",
+        // "FUN_JSC_validateExceptionChecks": "1",
+        // "FUN_JSC_dumpSimulatedThrows": "1",
+        // "FUN_JSC_unexpectedExceptionStackTraceLimit": "20",
+        // "FUN_DESTRUCT_VM_ON_EXIT": "1",
         // "ASAN_OPTIONS": "allow_user_segv_handler=1:disable_coredump=0:detect_leaks=1:abort_on_error=1",
         // "LSAN_OPTIONS": "malloc_context_size=100:print_suppressions=1:suppressions=${workspaceFolder}/test/leaksan.supp",
       },
@@ -82,18 +82,18 @@
         "/webkitbuild/.WTF/Headers": "${workspaceFolder}/vendor/WebKit/Source/WTF",
       },
     },
-    // bun test [...]
+    // fun test [...]
     {
       "type": "lldb",
       "request": "launch",
-      "name": "bun test [...]",
-      "program": "${workspaceFolder}/build/debug/bun-debug",
+      "name": "fun test [...]",
+      "program": "${workspaceFolder}/build/debug/fun-debug",
       "args": ["test", "--timeout=3600000", "${input:testName}"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_DEBUG_jest": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "2",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_DEBUG_jest": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "2",
       },
       "console": "internalConsole",
       "sourceMap": {
@@ -105,17 +105,17 @@
         "/webkitbuild/.WTF/Headers": "${workspaceFolder}/vendor/WebKit/Source/WTF",
       },
     },
-    // bun exec [...]
+    // fun exec [...]
     {
       "type": "lldb",
       "request": "launch",
-      "name": "bun exec [...]",
-      "program": "${workspaceFolder}/build/debug/bun-debug",
+      "name": "fun exec [...]",
+      "program": "${workspaceFolder}/build/debug/fun-debug",
       "args": ["exec", "${input:testName}"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "2",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "2",
       },
       "console": "internalConsole",
       "sourceMap": {
@@ -127,17 +127,17 @@
         "/webkitbuild/.WTF/Headers": "${workspaceFolder}/vendor/WebKit/Source/WTF",
       },
     },
-    // bun test [*]
+    // fun test [*]
     {
       "type": "lldb",
       "request": "launch",
-      "name": "bun test [*]",
-      "program": "${workspaceFolder}/build/debug/bun-debug",
+      "name": "fun test [*]",
+      "program": "${workspaceFolder}/build/debug/fun-debug",
       "args": ["test"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "2",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "2",
       },
       "console": "internalConsole",
       "sourceMap": {
@@ -152,13 +152,13 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "bun install [folder]",
-      "program": "${workspaceFolder}/build/debug/bun-debug",
+      "name": "fun install [folder]",
+      "program": "${workspaceFolder}/build/debug/fun-debug",
       "args": ["install"],
       "cwd": "${fileDirname}",
       "env": {
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "2",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "2",
       },
       "console": "internalConsole",
       "sourceMap": {
@@ -170,54 +170,54 @@
         "/webkitbuild/.WTF/Headers": "${workspaceFolder}/vendor/WebKit/Source/WTF",
       },
     },
-    // Windows: bun test [file]
+    // Windows: fun test [file]
     {
       "type": "cppvsdbg",
       "sourceFileMap": {
-        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\bun.js\\WebKit\\Source",
+        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\fun.js\\WebKit\\Source",
       },
       "request": "launch",
-      "name": "Windows: bun test [file]",
-      "program": "${workspaceFolder}/build/debug/bun-debug.exe",
+      "name": "Windows: fun test [file]",
+      "program": "${workspaceFolder}/build/debug/fun-debug.exe",
       "args": ["test", "--timeout=3600000", "${file}"],
       "cwd": "${workspaceFolder}",
       "environment": [
         {
-          "name": "BUN_DEBUG_QUIET_LOGS",
+          "name": "FUN_DEBUG_QUIET_LOGS",
           "value": "1",
         },
         {
-          "name": "BUN_DEBUG_jest",
+          "name": "FUN_DEBUG_jest",
           "value": "1",
         },
         {
-          "name": "BUN_GARBAGE_COLLECTOR_LEVEL",
+          "name": "FUN_GARBAGE_COLLECTOR_LEVEL",
           "value": "1",
         },
       ],
     },
-    // Windows: bun run [file]
+    // Windows: fun run [file]
     {
       "type": "cppvsdbg",
       "sourceFileMap": {
-        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\bun.js\\WebKit\\Source",
+        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\fun.js\\WebKit\\Source",
       },
       "request": "launch",
-      "name": "Windows: bun run [file]",
-      "program": "${workspaceFolder}/build/debug/bun-debug.exe",
+      "name": "Windows: fun run [file]",
+      "program": "${workspaceFolder}/build/debug/fun-debug.exe",
       "args": ["run", "${fileBasename}"],
       "cwd": "${fileDirname}",
       "environment": [
         {
-          "name": "BUN_DEBUG_QUIET_LOGS",
+          "name": "FUN_DEBUG_QUIET_LOGS",
           "value": "1",
         },
         {
-          "name": "BUN_DEBUG_jest",
+          "name": "FUN_DEBUG_jest",
           "value": "1",
         },
         {
-          "name": "BUN_GARBAGE_COLLECTOR_LEVEL",
+          "name": "FUN_GARBAGE_COLLECTOR_LEVEL",
           "value": "2",
         },
       ],
@@ -225,114 +225,114 @@
     {
       "type": "cppvsdbg",
       "sourceFileMap": {
-        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\bun.js\\WebKit\\Source",
+        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\fun.js\\WebKit\\Source",
       },
       "request": "launch",
-      "name": "Windows: bun install",
-      "program": "${workspaceFolder}/build/debug/bun-debug.exe",
+      "name": "Windows: fun install",
+      "program": "${workspaceFolder}/build/debug/fun-debug.exe",
       "args": ["install"],
       "cwd": "${fileDirname}",
       "environment": [
         {
-          "name": "BUN_DEBUG_QUIET_LOGS",
+          "name": "FUN_DEBUG_QUIET_LOGS",
           "value": "1",
         },
         {
-          "name": "BUN_GARBAGE_COLLECTOR_LEVEL",
+          "name": "FUN_GARBAGE_COLLECTOR_LEVEL",
           "value": "0",
         },
       ],
     },
-    // Windows: bun test [...]
+    // Windows: fun test [...]
     {
       "type": "cppvsdbg",
       "sourceFileMap": {
-        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\bun.js\\WebKit\\Source",
+        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\fun.js\\WebKit\\Source",
       },
       "request": "launch",
-      "name": "Windows: bun test [...]",
-      "program": "${workspaceFolder}/build/debug/bun-debug.exe",
+      "name": "Windows: fun test [...]",
+      "program": "${workspaceFolder}/build/debug/fun-debug.exe",
       "args": ["test", "--timeout=3600000", "${input:testName}"],
       "cwd": "${workspaceFolder}",
       "environment": [
         {
-          "name": "BUN_DEBUG_QUIET_LOGS",
+          "name": "FUN_DEBUG_QUIET_LOGS",
           "value": "1",
         },
         {
-          "name": "BUN_DEBUG_jest",
+          "name": "FUN_DEBUG_jest",
           "value": "1",
         },
         {
-          "name": "BUN_GARBAGE_COLLECTOR_LEVEL",
+          "name": "FUN_GARBAGE_COLLECTOR_LEVEL",
           "value": "2",
         },
       ],
     },
-    // Windows: bun exec [...]
+    // Windows: fun exec [...]
     {
       "type": "cppvsdbg",
       "sourceFileMap": {
-        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\bun.js\\WebKit\\Source",
+        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\fun.js\\WebKit\\Source",
       },
       "request": "launch",
-      "name": "Windows: bun exec [...]",
-      "program": "${workspaceFolder}/build/debug/bun-debug.exe",
+      "name": "Windows: fun exec [...]",
+      "program": "${workspaceFolder}/build/debug/fun-debug.exe",
       "args": ["exec", "${input:testName}"],
       "cwd": "${workspaceFolder}",
       "environment": [
         {
-          "name": "BUN_DEBUG_QUIET_LOGS",
+          "name": "FUN_DEBUG_QUIET_LOGS",
           "value": "1",
         },
         {
-          "name": "BUN_GARBAGE_COLLECTOR_LEVEL",
+          "name": "FUN_GARBAGE_COLLECTOR_LEVEL",
           "value": "2",
         },
       ],
     },
-    // Windows: bun test [*]
+    // Windows: fun test [*]
     {
       "type": "cppvsdbg",
       "sourceFileMap": {
-        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\bun.js\\WebKit\\Source",
+        "D:\\a\\WebKit\\WebKit\\Source": "${workspaceFolder}\\src\\fun.js\\WebKit\\Source",
       },
       "request": "launch",
-      "name": "Windows: bun test [*]",
-      "program": "${workspaceFolder}/build/debug/bun-debug.exe",
+      "name": "Windows: fun test [*]",
+      "program": "${workspaceFolder}/build/debug/fun-debug.exe",
       "args": ["test"],
       "cwd": "${workspaceFolder}",
       "environment": [
         {
-          "name": "BUN_DEBUG_QUIET_LOGS",
+          "name": "FUN_DEBUG_QUIET_LOGS",
           "value": "1",
         },
         {
-          "name": "BUN_GARBAGE_COLLECTOR_LEVEL",
+          "name": "FUN_GARBAGE_COLLECTOR_LEVEL",
           "value": "2",
         },
       ],
     },
     {
-      "type": "bun",
-      "name": "[JS] bun test [file]",
-      "runtime": "${workspaceFolder}/build/debug/bun-debug",
+      "type": "fun",
+      "name": "[JS] fun test [file]",
+      "runtime": "${workspaceFolder}/build/debug/fun-debug",
       "runtimeArgs": ["test", "${file}"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "2",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "2",
       },
     },
     {
-      "type": "bun",
-      "name": "[JS] bun run [file]",
-      "runtime": "${workspaceFolder}/build/debug/bun-debug",
+      "type": "fun",
+      "name": "[JS] fun run [file]",
+      "runtime": "${workspaceFolder}/build/debug/fun-debug",
       "runtimeArgs": ["run", "${file}"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "BUN_DEBUG_QUIET_LOGS": "1",
-        "BUN_GARBAGE_COLLECTOR_LEVEL": "2",
+        "FUN_DEBUG_QUIET_LOGS": "1",
+        "FUN_GARBAGE_COLLECTOR_LEVEL": "2",
       },
     },
     {
@@ -356,12 +356,12 @@
     {
       "id": "commandLine",
       "type": "promptString",
-      "description": "Usage: bun [...]",
+      "description": "Usage: fun [...]",
     },
     {
       "id": "testName",
       "type": "promptString",
-      "description": "Usage: bun test [...]",
+      "description": "Usage: fun test [...]",
     },
   ],
 }

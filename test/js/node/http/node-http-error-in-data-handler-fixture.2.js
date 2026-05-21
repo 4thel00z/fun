@@ -11,7 +11,7 @@ server.listen(0, function () {
     .request(`http://localhost:${port}`, res => {
       res
         .on("data", async data => {
-          await Bun.sleep(1);
+          await Fun.sleep(1);
           // base64 the message to ensure we don't confuse source code with the error message
           throw new Error(Buffer.from("VGVzdCBwYXNzZWQ=", "base64"));
         })

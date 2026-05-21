@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { zstdCompressSync } from "node:zlib";
 
 test("issue #20053 - multi-frame zstd responses should be fully decompressed", async () => {
@@ -11,7 +11,7 @@ test("issue #20053 - multi-frame zstd responses should be fully decompressed", a
   const compressed1 = zstdCompressSync(Buffer.from(part1));
   const compressed2 = zstdCompressSync(Buffer.from(part2));
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       // Concatenate two zstd frames (simulating chunked response with multiple frames)
@@ -43,7 +43,7 @@ test("issue #20053 - zstd with chunked encoding splits JSON into multiple frames
   const largeData = { data: "A".repeat(20000) };
   const jsonString = JSON.stringify(largeData);
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       // Simulate chunked encoding by compressing in parts
@@ -90,7 +90,7 @@ test("issue #20053 - streaming zstd decompression handles frame boundaries corre
   const compressed1 = zstdCompressSync(Buffer.from(part1));
   const compressed2 = zstdCompressSync(Buffer.from(part2));
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req) {
       // Simulate streaming by sending frames separately

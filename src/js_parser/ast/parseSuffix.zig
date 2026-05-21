@@ -936,9 +936,9 @@ pub fn ParseSuffix(
 const Continuation = enum { next, done };
 const string = []const u8;
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const OptionalChain = js_ast.OptionalChain;
@@ -946,10 +946,10 @@ const OptionalChain = js_ast.OptionalChain;
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const DeferredErrors = js_parser.DeferredErrors;
 const JSXTransformType = js_parser.JSXTransformType;
 const SideEffects = js_parser.SideEffects;

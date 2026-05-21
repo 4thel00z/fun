@@ -486,7 +486,7 @@ pub const BorderImageHandler = struct {
                 this.width = val.width.deepClone(allocator);
                 this.outset = val.outset.deepClone(allocator);
                 this.repeat = val.repeat.deepClone(allocator);
-                this.vendor_prefix = bun.bits.@"or"(VendorPrefix, this.vendor_prefix, vp);
+                this.vendor_prefix = fun.bits.@"or"(VendorPrefix, this.vendor_prefix, vp);
                 this.has_any = true;
             },
             .unparsed => |unparsed| {
@@ -501,8 +501,8 @@ pub const BorderImageHandler = struct {
                         unparsed.deepClone(allocator);
 
                     context.addUnparsedFallbacks(&unparsed_clone);
-                    bun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.tryFromPropertyId(unparsed_clone.property_id).?);
-                    bun.handleOom(dest.append(allocator, Property{ .unparsed = unparsed_clone }));
+                    fun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.tryFromPropertyId(unparsed_clone.property_id).?);
+                    fun.handleOom(dest.append(allocator, Property{ .unparsed = unparsed_clone }));
                 } else return false;
             },
             else => return false,
@@ -548,11 +548,11 @@ pub const BorderImageHandler = struct {
 
         this.has_any = false;
 
-        var source = bun.take(&this.source);
-        const slice = bun.take(&this.slice);
-        const width = bun.take(&this.width);
-        const outset = bun.take(&this.outset);
-        const repeat = bun.take(&this.repeat);
+        var source = fun.take(&this.source);
+        const slice = fun.take(&this.slice);
+        const width = fun.take(&this.width);
+        const outset = fun.take(&this.outset);
+        const repeat = fun.take(&this.repeat);
 
         if (source != null and slice != null and width != null and outset != null and repeat != null) {
             var border_image = BorderImage{
@@ -572,52 +572,52 @@ pub const BorderImageHandler = struct {
                         // Match prefix of fallback. e.g. -webkit-linear-gradient
                         // can only be used in -webkit-border-image, not -moz-border-image.
                         // However, if border-image is unprefixed, gradients can still be.
-                        var p = bun.bits.@"and"(VendorPrefix, fallback.source.getVendorPrefix(), prefix);
+                        var p = fun.bits.@"and"(VendorPrefix, fallback.source.getVendorPrefix(), prefix);
                         if (p.isEmpty()) {
                             p = prefix;
                         }
-                        bun.handleOom(dest.append(allocator, css.Property{ .@"border-image" = .{ fallback, p } }));
+                        fun.handleOom(dest.append(allocator, css.Property{ .@"border-image" = .{ fallback, p } }));
                     }
                 }
             }
 
-            const p = bun.bits.@"and"(css.VendorPrefix, border_image.source.getVendorPrefix(), prefix);
+            const p = fun.bits.@"and"(css.VendorPrefix, border_image.source.getVendorPrefix(), prefix);
             if (!p.isEmpty()) {
                 prefix = p;
             }
 
-            bun.handleOom(dest.append(allocator, Property{ .@"border-image" = .{ border_image, prefix } }));
-            bun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image");
+            fun.handleOom(dest.append(allocator, Property{ .@"border-image" = .{ border_image, prefix } }));
+            fun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image");
         } else {
             if (source) |*mut_source| {
-                if (!bun.bits.contains(BorderImageProperty, this.flushed_properties, BorderImageProperty.@"border-image-source")) {
+                if (!fun.bits.contains(BorderImageProperty, this.flushed_properties, BorderImageProperty.@"border-image-source")) {
                     for (mut_source.getFallbacks(allocator, context.targets).slice()) |fallback| {
-                        bun.handleOom(dest.append(allocator, Property{ .@"border-image-source" = fallback }));
+                        fun.handleOom(dest.append(allocator, Property{ .@"border-image-source" = fallback }));
                     }
                 }
 
-                bun.handleOom(dest.append(allocator, Property{ .@"border-image-source" = mut_source.* }));
-                bun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-source");
+                fun.handleOom(dest.append(allocator, Property{ .@"border-image-source" = mut_source.* }));
+                fun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-source");
             }
 
             if (slice) |s| {
-                bun.handleOom(dest.append(allocator, Property{ .@"border-image-slice" = s }));
-                bun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-slice");
+                fun.handleOom(dest.append(allocator, Property{ .@"border-image-slice" = s }));
+                fun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-slice");
             }
 
             if (width) |w| {
-                bun.handleOom(dest.append(allocator, Property{ .@"border-image-width" = w }));
-                bun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-width");
+                fun.handleOom(dest.append(allocator, Property{ .@"border-image-width" = w }));
+                fun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-width");
             }
 
             if (outset) |o| {
-                bun.handleOom(dest.append(allocator, Property{ .@"border-image-outset" = o }));
-                bun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-outset");
+                fun.handleOom(dest.append(allocator, Property{ .@"border-image-outset" = o }));
+                fun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-outset");
             }
 
             if (repeat) |r| {
-                bun.handleOom(dest.append(allocator, Property{ .@"border-image-repeat" = r }));
-                bun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-repeat");
+                fun.handleOom(dest.append(allocator, Property{ .@"border-image-repeat" = r }));
+                fun.bits.insert(BorderImageProperty, &this.flushed_properties, BorderImageProperty.@"border-image-repeat");
             }
         }
 
@@ -632,6 +632,6 @@ pub fn isBorderImageProperty(property_id: css.PropertyId) bool {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

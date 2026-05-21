@@ -1,7 +1,7 @@
 'use strict';
 
 const common = require('../common');
-if ('Bun' in globalThis) common.skip("BUN: we don't want to emit this warning");
+if ('Fun' in globalThis) common.skip("FUN: we don't want to emit this warning");
 const fixtures = require('../common/fixtures');
 const { spawnSyncAndAssert } = require('../common/child_process');
 

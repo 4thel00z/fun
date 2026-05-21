@@ -4,7 +4,7 @@ sidebarTitle: Import HTML
 mode: center
 ---
 
-To import a `.html` file in Bun as a text file, use the `type: "text"` attribute in the import statement.
+To import a `.html` file in Fun as a text file, use the `type: "text"` attribute in the import statement.
 
 ```ts file.ts icon="/icons/typescript.svg"
 import html from "./file.html" with { type: "text" };
@@ -12,4 +12,4 @@ import html from "./file.html" with { type: "text" };
 console.log(html); // <!DOCTYPE html><html><head>...
 ```
 
-This can also be used with hot module reloading and/or watch mode to force Bun to reload whenever the `./file.html` file changes.
+This can also be used with hot module reloading and/or watch mode to force Fun to reload whenever the `./file.html` file changes.

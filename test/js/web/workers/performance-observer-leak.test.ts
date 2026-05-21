@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 // Performance <-> PerformanceObserver RefPtr cycle: Performance holds
 // RefPtr<PerformanceObserver> in its registered-observer list, and each
@@ -37,8 +37,8 @@ test("PerformanceObserver without disconnect() does not leak Performance when Wo
 
       async function runBatch(n) {
         for (let i = 0; i < n; i++) await runOne();
-        Bun.gc(true);
-        Bun.gc(true);
+        Fun.gc(true);
+        Fun.gc(true);
       }
 
       // Warm up: establish allocator / JIT high-water mark.
@@ -61,9 +61,9 @@ test("PerformanceObserver without disconnect() does not leak Performance when Wo
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--smol", "main.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--smol", "main.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

@@ -1,5 +1,7 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 /**
- * libjpeg-turbo — the de-facto JPEG codec. Backs Bun.Image JPEG
+ * libjpeg-turbo — the de-facto JPEG codec. Backs Fun.Image JPEG
  * decode/encode via the high-level TurboJPEG API (turbojpeg.h).
  *
  * DirectBuild. SIMD: arm64 uses the full Neon intrinsics path (no GAS, no
@@ -10,7 +12,7 @@
  * matter are sizeof(size_t) and __builtin_ctzl, both known per target.
  *
  * 12/16-bit sample depths and the lossless codec are compiled out
- * (turbojpeg.c gates them on `#ifdef NO_PRECISION_EXT`); Bun.Image only
+ * (turbojpeg.c gates them on `#ifdef NO_PRECISION_EXT`); Fun.Image only
  * deals in 8-bit RGB(A).
  */
 
@@ -42,7 +44,7 @@ const JPEG8 = [
 ];
 
 // 8bit-only.patch gates the BMP/PPM file-I/O entry points and the 12/16-bit
-// turbojpeg-mp.c re-includes behind BUN_8BIT_ONLY, so rdbmp/rdppm/wrbmp/wrppm
+// turbojpeg-mp.c re-includes behind FUN_8BIT_ONLY, so rdbmp/rdppm/wrbmp/wrppm
 // and the second/third-precision JPEG12/JPEG16 source sets are dropped.
 const TURBOJPEG = ["turbojpeg", "transupp", "jdatadst-tj", "jdatasrc-tj"];
 
@@ -78,7 +80,7 @@ export const libjpegTurbo: Dependency = {
     commit: LIBJPEG_TURBO_COMMIT,
   }),
 
-  patches: ["patches/libjpeg-turbo/8bit-only.patch", "patches/libjpeg-turbo/jbun_stubs.c"],
+  patches: ["patches/libjpeg-turbo/8bit-only.patch", "patches/libjpeg-turbo/jfun_stubs.c"],
 
   build: cfg => {
     const simd = cfg.arm64; // x64 NASM path TODO
@@ -91,7 +93,7 @@ export const libjpegTurbo: Dependency = {
       sources: [
         ...JPEG8.map(f => `src/${f}.c`),
         ...TURBOJPEG.map(f => `src/${f}.c`),
-        "jbun_stubs.c",
+        "jfun_stubs.c",
         ...(cfg.arm64 ? SIMD_ARM64.map(f => `simd/${f}.c`) : []),
       ],
       // simd/arm is needed for the bare `#include "align.h"` / `"neon-compat.h"`
@@ -100,7 +102,7 @@ export const libjpegTurbo: Dependency = {
       // the same).
       includes: ["src", ...(cfg.arm64 ? ["simd/arm"] : [])],
       defines: {
-        BUN_8BIT_ONLY: true,
+        FUN_8BIT_ONLY: true,
         ...(simd ? { NEON_INTRINSICS: true } : {}),
       },
       headers: {
@@ -118,7 +120,7 @@ export const libjpegTurbo: Dependency = {
         "jconfigint.h": {
           from: "src/jconfigint.h.in",
           replace: [
-            ["@BUILD@", "bun"],
+            ["@BUILD@", "fun"],
             ["@HIDDEN@", cfg.windows ? "" : '__attribute__((visibility("hidden")))'],
             ["@INLINE@", cfg.windows ? "__forceinline" : "inline __attribute__((always_inline))"],
             ["@THREAD_LOCAL@", cfg.windows ? "__declspec(thread)" : "__thread"],

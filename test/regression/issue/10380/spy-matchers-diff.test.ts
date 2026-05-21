@@ -1,4 +1,4 @@
-import { expect, mock, test } from "bun:test";
+import { expect, mock, test } from "fun:test";
 
 const stripAnsi = (str: string) => str.replaceAll(/\x1b\[[0-9;]*m/g, "");
 

@@ -1,4 +1,4 @@
-import { BunPlugin } from "bun";
+import { FunPlugin } from "fun";
 
 globalThis.pluginLoaded = true;
 
@@ -13,4 +13,4 @@ export default {
       return { loader: "tsx", contents: "console.log('hello')" };
     });
   },
-} satisfies BunPlugin;
+} satisfies FunPlugin;

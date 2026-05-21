@@ -28,7 +28,7 @@
 #include "IDLTypes.h"
 #include "JSDOMConvertBase.h"
 #include "JSDOMGlobalObject.h"
-#include "BunIDLConvertBase.h"
+#include "FunIDLConvertBase.h"
 
 namespace WebCore {
 
@@ -45,7 +45,7 @@ template<typename T> struct Converter<IDLEnumeration<T>> : DefaultConverter<IDLE
     static constexpr bool takesContext = true;
 
     // `tryConvert` for enumerations is strict: it returns null if the value is not a string.
-    template<Bun::IDLConversionContext Ctx>
+    template<Fun::IDLConversionContext Ctx>
     static std::optional<T> tryConvert(
         JSC::JSGlobalObject& lexicalGlobalObject,
         JSC::JSValue value,
@@ -58,7 +58,7 @@ template<typename T> struct Converter<IDLEnumeration<T>> : DefaultConverter<IDLE
     }
 
     // When converting with Context, the conversion is stricter: non-strings are disallowed.
-    template<Bun::IDLConversionContext Ctx>
+    template<Fun::IDLConversionContext Ctx>
     static T convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, Ctx& ctx)
     {
         auto& vm = JSC::getVM(&lexicalGlobalObject);
@@ -77,7 +77,7 @@ template<typename T> struct Converter<IDLEnumeration<T>> : DefaultConverter<IDLE
     }
 
     template<typename ExceptionThrower = DefaultExceptionThrower>
-        requires(!Bun::IDLConversionContext<std::decay_t<ExceptionThrower>>)
+        requires(!Fun::IDLConversionContext<std::decay_t<ExceptionThrower>>)
     static T convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, ExceptionThrower&& exceptionThrower = ExceptionThrower())
     {
         auto& vm = JSC::getVM(&lexicalGlobalObject);

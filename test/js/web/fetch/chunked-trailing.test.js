@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import net from "node:net";
 
 it("handles trailing headers split across packets", async () => {

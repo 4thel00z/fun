@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { test } from "fun:test";
 import { once } from "node:events";
 import { createServer } from "node:http";
 test.todo("abort the request on the other side if the stream is canceled", async () => {

@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 
 declare global {
   var process: {
@@ -223,7 +223,7 @@ async function autoCloseDuplicates(): Promise<void> {
   console.log("[DEBUG] GitHub token found");
 
   // Parse GITHUB_REPOSITORY (format: "owner/repo")
-  const repository = process.env.GITHUB_REPOSITORY || "oven-sh/bun";
+  const repository = process.env.GITHUB_REPOSITORY || "underdoc-org/fun";
   const [owner, repo] = repository.split("/");
   if (!owner || !repo) {
     throw new Error(`Invalid GITHUB_REPOSITORY format: ${repository}`);

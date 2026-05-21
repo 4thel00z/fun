@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/23966
-// Buffer.isEncoding() behaves differently in Bun compared to Node.js
-import { expect, test } from "bun:test";
+// https://github.com/underdoc-org/fun/issues/23966
+// Buffer.isEncoding() behaves differently in Fun compared to Node.js
+import { expect, test } from "fun:test";
 import { Buffer } from "node:buffer";
 
 test.concurrent("Buffer.isEncoding('') should return false", () => {

@@ -1,5 +1,5 @@
 import fs from "fs";
-import { bunEnv, bunExe, isLinux } from "harness";
+import { funEnv, funExe, isLinux } from "harness";
 import path from "path";
 const cwd = import.meta.dir;
 
@@ -16,9 +16,9 @@ export async function generateClient(type: string, env: Record<string, string>) 
   return (await import(`./prisma/${type}/client`)).PrismaClient;
 }
 export function migrate(type: string, env: Record<string, string>) {
-  const result = Bun.spawnSync(
+  const result = Fun.spawnSync(
     [
-      bunExe(),
+      funExe(),
       "x",
       "prisma",
       "migrate",
@@ -31,7 +31,7 @@ export function migrate(type: string, env: Record<string, string>) {
     {
       cwd,
       env: {
-        ...bunEnv,
+        ...funEnv,
         NODE_ENV: undefined,
         ...env,
       },
@@ -56,10 +56,10 @@ export function generate(type: string, env: Record<string, string>) {
 
   fs.writeFileSync(schema, content);
 
-  const result = Bun.spawnSync([bunExe(), "prisma", "generate", "--schema", schema], {
+  const result = Fun.spawnSync([funExe(), "prisma", "generate", "--schema", schema], {
     cwd,
     env: {
-      ...bunEnv,
+      ...funEnv,
       NODE_ENV: undefined,
       ...env,
     },

@@ -16,7 +16,7 @@ import { isatty } from "node:tty";
  */
 export const interactive: boolean = isatty(2);
 
-const useColor = interactive && (globalThis.Bun?.enableANSIColors ?? true);
+const useColor = interactive && (globalThis.Fun?.enableANSIColors ?? true);
 
 export const dim = (s: string): string => (useColor ? `\x1b[2m${s}\x1b[22m` : s);
 export const cyan = (s: string): string => (useColor ? `\x1b[36m${s}\x1b[39m` : s);

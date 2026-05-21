@@ -10,7 +10,7 @@
 #include <wtf/Ref.h>
 #include <wtf/text/WTFString.h>
 
-namespace Bun {
+namespace Fun {
 
 // WKWebView wrapper. Runs in the host subprocess on thread 0 under
 // CFRunLoopRun(). Completions (delegate IMPs, blocks) fire inside CFRunLoop
@@ -108,6 +108,6 @@ private:
     bool m_selIsScrollTo = false;
 };
 
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(DARWIN)

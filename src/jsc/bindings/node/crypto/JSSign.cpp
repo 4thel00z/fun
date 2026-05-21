@@ -12,14 +12,14 @@
 #include "NodeValidator.h"
 #include "JSBuffer.h"
 #include "CryptoUtil.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "JSVerify.h"
 #include "CryptoAlgorithmRegistry.h"
 #include "CryptoKeyRSA.h"
 #include "KeyObject.h"
 #include <openssl/rsa.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -153,7 +153,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncInit, (JSC::JSGlobalObject * globalObjec
     // Get the JSSign object from thisValue and verify it's valid
     JSSign* thisObject = dynamicDowncast<JSSign>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        Bun::throwThisTypeError(*globalObject, scope, "Sign"_s, "init"_s);
+        Fun::throwThisTypeError(*globalObject, scope, "Sign"_s, "init"_s);
         return {};
     }
 
@@ -177,7 +177,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncInit, (JSC::JSGlobalObject * globalObjec
     // Get the EVP_MD* for the digest using ncrypto helper
     auto* digest = ncrypto::getDigestByName(digestName);
     if (!digest) {
-        return Bun::ERR::CRYPTO_INVALID_DIGEST(scope, globalObject, digestName);
+        return Fun::ERR::CRYPTO_INVALID_DIGEST(scope, globalObject, digestName);
     }
 
     // Create a new EVPMDCtxPointer using ncrypto's wrapper
@@ -233,7 +233,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
     // Get the JSSign object from thisValue and verify it's valid
     JSSign* thisObject = dynamicDowncast<JSSign>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        Bun::throwThisTypeError(*globalObject, scope, "Sign"_s, "update"_s);
+        Fun::throwThisTypeError(*globalObject, scope, "Sign"_s, "update"_s);
         return {};
     }
 
@@ -258,7 +258,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
         RETURN_IF_EXCEPTION(scope, {});
 
         if (encoding == BufferEncodingType::hex && dataString->length() % 2 != 0) {
-            return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, dataString->length()));
+            return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, dataString->length()));
         }
 
         auto dataView = dataString->view(globalObject);
@@ -276,7 +276,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
     }
 
     if (!data.isCell() || !JSC::isTypedArrayTypeIncludingDataView(data.asCell()->type())) {
-        return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
     }
 
     // Handle ArrayBufferView input
@@ -288,7 +288,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
         return JSValue::encode(wrappedSign);
     }
 
-    return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
+    return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, data);
 }
 
 JSUint8Array* signWithKey(JSC::JSGlobalObject* lexicalGlobalObject, JSSign* thisObject, const ncrypto::EVPKeyPointer& pkey, DSASigEnc dsa_sig_enc, int padding, std::optional<int> salt_len)
@@ -407,7 +407,7 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncSign, (JSC::JSGlobalObject * lexicalGlob
     // Get the JSSign object from thisValue and verify it's valid
     JSSign* thisObject = dynamicDowncast<JSSign>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        Bun::throwThisTypeError(*lexicalGlobalObject, scope, "Sign"_s, "sign"_s);
+        Fun::throwThisTypeError(*lexicalGlobalObject, scope, "Sign"_s, "sign"_s);
         return {};
     }
 
@@ -419,11 +419,11 @@ JSC_DEFINE_HOST_FUNCTION(jsSignProtoFuncSign, (JSC::JSGlobalObject * lexicalGlob
 
     // https://github.com/nodejs/node/blob/1b2d2f7e682268228b1352cba7389db01614812a/lib/internal/crypto/sig.js#L116
     if (!optionsBool) {
-        return Bun::ERR::CRYPTO_SIGN_KEY_REQUIRED(scope, lexicalGlobalObject);
+        return Fun::ERR::CRYPTO_SIGN_KEY_REQUIRED(scope, lexicalGlobalObject);
     }
 
     if (!options.isCell()) {
-        return Bun::ERR::INVALID_ARG_TYPE(scope, lexicalGlobalObject, "key"_s, "ArrayBuffer, Buffer, TypedArray, DataView, string, KeyObject, or CryptoKey"_s, options);
+        return Fun::ERR::INVALID_ARG_TYPE(scope, lexicalGlobalObject, "key"_s, "ArrayBuffer, Buffer, TypedArray, DataView, string, KeyObject, or CryptoKey"_s, options);
     }
 
     JSValue outputEncodingValue = callFrame->argument(1);
@@ -524,4 +524,4 @@ void setupJSSignClassStructure(LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

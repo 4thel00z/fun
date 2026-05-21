@@ -7,14 +7,14 @@
 #   ./scripts/update-uucode.sh https://url.tar.gz # update from URL
 #
 # After running, verify with:
-#   bun bd test test/js/bun/util/stringWidth.test.ts
+#   fun bd test test/js/fun/util/stringWidth.test.ts
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BUN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-UUCODE_DIR="$BUN_ROOT/src/unicode/uucode_lib"
-ZIG="$BUN_ROOT/vendor/zig/zig"
+FUN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+UUCODE_DIR="$FUN_ROOT/src/unicode/uucode_lib"
+ZIG="$FUN_ROOT/vendor/zig/zig"
 
 if [ ! -x "$ZIG" ]; then
     echo "error: zig not found at $ZIG"
@@ -68,7 +68,7 @@ fi
 
 echo ""
 echo "Regenerating grapheme tables..."
-cd "$BUN_ROOT"
+cd "$FUN_ROOT"
 "$ZIG" build generate-grapheme-tables
 
 echo ""
@@ -77,6 +77,6 @@ echo "  src/unicode/uucode_lib/         (vendored library)"
 echo "  src/string/immutable/grapheme_tables.zig (regenerated)"
 echo ""
 echo "Next steps:"
-echo "  1. bun bd test test/js/bun/util/stringWidth.test.ts"
+echo "  1. fun bd test test/js/fun/util/stringWidth.test.ts"
 echo "  2. git add src/unicode/uucode_lib src/string/immutable/grapheme_tables.zig"
 echo "  3. git commit -m 'Update uucode to <version>'"

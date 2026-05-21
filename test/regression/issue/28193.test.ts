@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-test("bun install prints error when security scanner is unavailable", async () => {
+test("fun install prints error when security scanner is unavailable", async () => {
   using dir = tempDir("issue-28193", {
     "package.json": JSON.stringify({
       name: "test-28193",
@@ -9,12 +9,12 @@ test("bun install prints error when security scanner is unavailable", async () =
         "is-even": "1.0.0",
       },
     }),
-    "bunfig.toml": `[install.security]\nscanner = "@nonexistent-scanner/does-not-exist"\n`,
+    "funfig.toml": `[install.security]\nscanner = "@nonexistent-scanner/does-not-exist"\n`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "install"],
-    env: { ...bunEnv, BUN_INSTALL_CACHE_DIR: String(dir) + "/.cache" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "install"],
+    env: { ...funEnv, FUN_INSTALL_CACHE_DIR: String(dir) + "/.cache" },
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -27,7 +27,7 @@ test("bun install prints error when security scanner is unavailable", async () =
   expect(exitCode).toBe(1);
 }, 30_000);
 
-test("bun install prints error when scanner package is invalid", async () => {
+test("fun install prints error when scanner package is invalid", async () => {
   // When the scanner is a devDependency but not a valid scanner module,
   // the install should fail with a clear error message
   using dir = tempDir("issue-28193-invalid", {
@@ -37,12 +37,12 @@ test("bun install prints error when scanner package is invalid", async () => {
         "is-even": "1.0.0",
       },
     }),
-    "bunfig.toml": `[install.security]\nscanner = "is-even"\n`,
+    "funfig.toml": `[install.security]\nscanner = "is-even"\n`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "install"],
-    env: { ...bunEnv, BUN_INSTALL_CACHE_DIR: String(dir) + "/.cache" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "install"],
+    env: { ...funEnv, FUN_INSTALL_CACHE_DIR: String(dir) + "/.cache" },
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

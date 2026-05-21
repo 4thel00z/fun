@@ -88,7 +88,7 @@ extern "C" int rescle__setWindowsMetadata(
     }
 
     // Remove the "Original Filename" field by setting it to empty
-    // This prevents the compiled executable from showing "bun.exe" as the original filename
+    // This prevents the compiled executable from showing "fun.exe" as the original filename
     if (!updater.SetVersionString(RU_VS_ORIGINAL_FILENAME, L""))
         return -13;
 

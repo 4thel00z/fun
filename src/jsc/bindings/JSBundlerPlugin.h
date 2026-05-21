@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bun-native-bundler-plugin-api/bundler_plugin.h"
+#include "fun-native-bundler-plugin-api/bundler_plugin.h"
 #include "root.h"
 #include "headers-handwritten.h"
 #include <JavaScriptCore/JSGlobalObject.h>
@@ -14,7 +14,7 @@ typedef void (*JSBundlerPluginOnLoadAsyncCallback)(void*, void*, JSC::EncodedJSV
 typedef void (*JSBundlerPluginOnResolveAsyncCallback)(void*, void*, JSC::EncodedJSValue, JSC::EncodedJSValue, JSC::EncodedJSValue);
 typedef void (*JSBundlerPluginNativeOnBeforeParseCallback)(const OnBeforeParseArguments*, OnBeforeParseResult*);
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -49,7 +49,7 @@ public:
         Vector<FilterRegExp> fileNamespace = {};
         Vector<String> namespaces = {};
         Vector<Vector<FilterRegExp>> groups = {};
-        BunPluginTarget target { BunPluginTargetBun };
+        FunPluginTarget target { FunPluginTargetFun };
 
         Vector<FilterRegExp>* group(const String& namespaceStr, unsigned& index)
         {
@@ -74,9 +74,9 @@ public:
 
     struct NativePluginCallback {
         JSBundlerPluginNativeOnBeforeParseCallback callback;
-        Bun::NapiExternal* external;
+        Fun::NapiExternal* external;
         /// This refers to the string exported in the native plugin under
-        /// the symbol BUN_PLUGIN_NAME
+        /// the symbol FUN_PLUGIN_NAME
         ///
         /// Right now we do not close NAPI modules opened with dlopen and
         /// so we do not worry about lifetimes right now.
@@ -90,12 +90,12 @@ public:
         Vector<FilterRegExp> fileNamespace = {};
         Vector<String> namespaces = {};
         Vector<Vector<FilterRegExp>> groups = {};
-        BunPluginTarget target { BunPluginTargetBun };
+        FunPluginTarget target { FunPluginTargetFun };
 
         PerNamespaceCallbackList fileCallbacks = {};
         Vector<PerNamespaceCallbackList> namespaceCallbacks = {};
 
-        int call(JSC::VM& vm, BundlerPlugin* plugin, int* shouldContinue, void* bunContextPtr, const BunString* namespaceStr, const BunString* pathString, OnBeforeParseArguments* onBeforeParseArgs, OnBeforeParseResult* onBeforeParseResult);
+        int call(JSC::VM& vm, BundlerPlugin* plugin, int* shouldContinue, void* funContextPtr, const FunString* namespaceStr, const FunString* pathString, OnBeforeParseArguments* onBeforeParseArgs, OnBeforeParseResult* onBeforeParseResult);
         void append(JSC::VM& vm, JSC::RegExp* filter, String& namespaceString, JSBundlerPluginNativeOnBeforeParseCallback callback, const char* name, NapiExternal* external);
 
         Vector<FilterRegExp>* group(const String& namespaceStr, unsigned& index)
@@ -118,10 +118,10 @@ public:
     };
 
 public:
-    bool anyMatchesCrossThread(JSC::VM&, const BunString* namespaceStr, const BunString* path, bool isOnLoad);
+    bool anyMatchesCrossThread(JSC::VM&, const FunString* namespaceStr, const FunString* path, bool isOnLoad);
     void tombstone() { tombstoned = true; }
 
-    BundlerPlugin(void* config, BunPluginTarget target, JSBundlerPluginAddErrorCallback addError, JSBundlerPluginOnLoadAsyncCallback onLoadAsync, JSBundlerPluginOnResolveAsyncCallback onResolveAsync)
+    BundlerPlugin(void* config, FunPluginTarget target, JSBundlerPluginAddErrorCallback addError, JSBundlerPluginOnLoadAsyncCallback onLoadAsync, JSBundlerPluginOnResolveAsyncCallback onResolveAsync)
         : addError(addError)
         , onLoadAsync(onLoadAsync)
         , onResolveAsync(onResolveAsync)
@@ -133,7 +133,7 @@ public:
     NamespaceList onLoad = {};
     NamespaceList onResolve = {};
     NativePluginList onBeforeParse = {};
-    BunPluginTarget target { BunPluginTargetBrowser };
+    FunPluginTarget target { FunPluginTargetBrowser };
 
     WriteBarrierList<JSC::JSPromise> deferredPromises = {};
 

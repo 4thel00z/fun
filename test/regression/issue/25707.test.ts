@@ -1,7 +1,7 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/25707
+// https://github.com/underdoc-org/fun/issues/25707
 // Dynamic import() of non-existent node: modules inside CJS files should not
 // fail at transpile/require time. They should be deferred to runtime so that
 // try/catch can handle the error gracefully.
@@ -36,10 +36,10 @@ test("require() of CJS file containing dynamic import of non-existent node: modu
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -66,10 +66,10 @@ test("require() of CJS file with bare dynamic import of non-existent node: modul
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -98,10 +98,10 @@ test("dynamic import of non-existent node: module in CJS rejects at runtime with
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("09041", async () => {
-  let { exited, stderr, stdout } = Bun.spawn({
-    cmd: [bunExe(), "test", import.meta.dirname + "/09041/09041-fixture.ts"],
-    env: bunEnv,
+  let { exited, stderr, stdout } = Fun.spawn({
+    cmd: [funExe(), "test", import.meta.dirname + "/09041/09041-fixture.ts"],
+    env: funEnv,
     stdio: ["ignore", "pipe", "pipe"],
   });
 

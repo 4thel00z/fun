@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/fun": "latest"
   },
   "dependencies": {
     "es-module-lexer": "1.3.0"

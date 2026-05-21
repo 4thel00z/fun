@@ -264,7 +264,7 @@ function asyncWrap(fn: any, name: string) {
     }
 
     getAsyncId() {
-      throw new Error("BUN TODO FileHandle.getAsyncId");
+      throw new Error("FUN TODO FileHandle.getAsyncId");
     }
 
     get fd() {
@@ -560,7 +560,7 @@ function asyncWrap(fn: any, name: string) {
       const fd = this[kFd];
       throwEBADFIfNecessary("readableWebStream", fd);
 
-      return Bun.file(fd).stream();
+      return Fun.file(fd).stream();
     }
 
     createReadStream(options = kEmptyObject) {
@@ -584,15 +584,15 @@ function asyncWrap(fn: any, name: string) {
     }
 
     [kTransfer]() {
-      throw new Error("BUN TODO FileHandle.kTransfer");
+      throw new Error("FUN TODO FileHandle.kTransfer");
     }
 
     [kTransferList]() {
-      throw new Error("BUN TODO FileHandle.kTransferList");
+      throw new Error("FUN TODO FileHandle.kTransferList");
     }
 
     [kDeserialize](_) {
-      throw new Error("BUN TODO FileHandle.kDeserialize");
+      throw new Error("FUN TODO FileHandle.kDeserialize");
     }
 
     [kRef]() {
@@ -620,7 +620,7 @@ function throwEBADFIfNecessary(fn: string, fd) {
 }
 
 async function writeFileAsyncIteratorInner(fd, iterable, encoding, signal: AbortSignal | null) {
-  const writer = Bun.file(fd).writer();
+  const writer = Fun.file(fd).writer();
 
   const mustRencode = !(encoding === "utf8" || encoding === "utf-8" || encoding === "binary" || encoding === "buffer");
   let totalBytesWritten = 0;

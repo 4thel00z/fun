@@ -27,12 +27,12 @@ public:
     Isolate(shim::GlobalInternals* globalInternals);
 
     // Returns the isolate inside which the current thread is running or nullptr.
-    BUN_EXPORT static Isolate* TryGetCurrent();
+    FUN_EXPORT static Isolate* TryGetCurrent();
 
     // Returns the isolate inside which the current thread is running.
-    BUN_EXPORT static Isolate* GetCurrent();
+    FUN_EXPORT static Isolate* GetCurrent();
 
-    BUN_EXPORT Local<Context> GetCurrentContext();
+    FUN_EXPORT Local<Context> GetCurrentContext();
 
     Zig::GlobalObject* globalObject() { return m_globalObject; }
     JSC::VM& vm() { return globalObject()->vm(); }

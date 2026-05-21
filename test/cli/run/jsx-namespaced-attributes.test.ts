@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import { nsExample1, nsExample2, nsExample3, nsExample4 } from "../../snippets/jsx-attributes.tsx";
 
 it("parses namespaced attributes correctly", () => {

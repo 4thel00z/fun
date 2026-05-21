@@ -1,9 +1,9 @@
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 
-// https://github.com/oven-sh/bun/issues/12701
+// https://github.com/underdoc-org/fun/issues/12701
 it("fetch() preserves body on redirect", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
 
     async fetch(req) {
@@ -48,7 +48,7 @@ it("fetch() does not leak intermediate redirect URLs in multi-hop chains", async
 
   // Server runs in the parent so its allocations are excluded from the
   // child's RSS measurement.
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     idleTimeout: 0,
     fetch(req) {
@@ -74,7 +74,7 @@ it("fetch() does not leak intermediate redirect URLs in multi-hop chains", async
       const res = await fetch(url, { redirect: "follow" });
       if (await res.text() !== "ok") throw new Error("unexpected body: " + res.status);
     }
-    function sample() { Bun.gc(true); return process.memoryUsage.rss(); }
+    function sample() { Fun.gc(true); return process.memoryUsage.rss(); }
     for (let i = 0; i < 15; i++) await once();
     const rss0 = sample();
     for (let i = 0; i < 25; i++) await once();
@@ -84,9 +84,9 @@ it("fetch() does not leak intermediate redirect URLs in multi-hop chains", async
     console.log(JSON.stringify({ rss0, rss1, rss2 }));
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

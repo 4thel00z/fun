@@ -9,14 +9,14 @@ pub const SecretsJob = struct {
 
     // Opaque pointer to C++ SecretsJobOptions struct
     const SecretsJobOptions = opaque {
-        pub extern fn Bun__SecretsJobOptions__runTask(ctx: *SecretsJobOptions, global: *jsc.JSGlobalObject) void;
-        pub extern fn Bun__SecretsJobOptions__runFromJS(ctx: *SecretsJobOptions, global: *jsc.JSGlobalObject, promise: jsc.JSValue) void;
-        pub extern fn Bun__SecretsJobOptions__deinit(ctx: *SecretsJobOptions) void;
+        pub extern fn Fun__SecretsJobOptions__runTask(ctx: *SecretsJobOptions, global: *jsc.JSGlobalObject) void;
+        pub extern fn Fun__SecretsJobOptions__runFromJS(ctx: *SecretsJobOptions, global: *jsc.JSGlobalObject, promise: jsc.JSValue) void;
+        pub extern fn Fun__SecretsJobOptions__deinit(ctx: *SecretsJobOptions) void;
     };
 
     pub fn create(global: *jsc.JSGlobalObject, ctx: *SecretsJobOptions, promise: jsc.JSValue) *SecretsJob {
-        const vm = global.bunVM();
-        const job = bun.new(SecretsJob, .{
+        const vm = global.funVM();
+        const job = fun.new(SecretsJob, .{
             .vm = vm,
             .task = .{
                 .callback = &runTask,
@@ -34,7 +34,7 @@ pub const SecretsJob = struct {
         var vm = job.vm;
         defer vm.enqueueTaskConcurrent(jsc.ConcurrentTask.create(job.any_task.task()));
 
-        SecretsJobOptions.Bun__SecretsJobOptions__runTask(job.ctx, vm.global);
+        SecretsJobOptions.Fun__SecretsJobOptions__runTask(job.ctx, vm.global);
     }
 
     pub fn runFromJS(this: *SecretsJob) void {
@@ -48,14 +48,14 @@ pub const SecretsJob = struct {
         const promise = this.promise.get();
         if (promise == .zero) return;
 
-        SecretsJobOptions.Bun__SecretsJobOptions__runFromJS(this.ctx, vm.global, promise);
+        SecretsJobOptions.Fun__SecretsJobOptions__runFromJS(this.ctx, vm.global, promise);
     }
 
     fn deinit(this: *SecretsJob) void {
-        SecretsJobOptions.Bun__SecretsJobOptions__deinit(this.ctx);
+        SecretsJobOptions.Fun__SecretsJobOptions__deinit(this.ctx);
         this.poll.unref(this.vm);
         this.promise.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     pub fn schedule(this: *SecretsJob) void {
@@ -65,14 +65,14 @@ pub const SecretsJob = struct {
 };
 
 // Helper function for C++ to call with opaque pointer
-export fn Bun__Secrets__scheduleJob(global: *jsc.JSGlobalObject, options: *SecretsJob.SecretsJobOptions, promise: jsc.JSValue) void {
+export fn Fun__Secrets__scheduleJob(global: *jsc.JSGlobalObject, options: *SecretsJob.SecretsJobOptions, promise: jsc.JSValue) void {
     const job = SecretsJob.create(global, options, promise);
     job.schedule();
 }
 
 // Prevent dead code elimination
 pub fn fixDeadCodeElimination() void {
-    std.mem.doNotOptimizeAway(&Bun__Secrets__scheduleJob);
+    std.mem.doNotOptimizeAway(&Fun__Secrets__scheduleJob);
 }
 
 comptime {
@@ -81,6 +81,6 @@ comptime {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Async = fun.Async;
+const jsc = fun.jsc;

@@ -1,9 +1,9 @@
-/// Storage for hashed assets on `/_bun/asset/{hash}.ext`
+/// Storage for hashed assets on `/_fun/asset/{hash}.ext`
 pub const Assets = @This();
 
 /// Keys are absolute paths, sharing memory with the keys in IncrementalGraph(.client)
 /// Values are indexes into files
-path_map: bun.StringArrayHashMapUnmanaged(EntryIndex),
+path_map: fun.StringArrayHashMapUnmanaged(EntryIndex),
 /// Content-addressable store. Multiple paths can point to the same content
 /// hash, which is tracked by the `refs` array. One reference is held to
 /// contained StaticRoute instances when they are stored.
@@ -13,7 +13,7 @@ refs: ArrayListUnmanaged(u32),
 /// When mutating `files`'s keys, the map must be reindexed to function.
 needs_reindex: bool = false,
 
-pub const EntryIndex = bun.GenericIndex(u30, Assets);
+pub const EntryIndex = fun.GenericIndex(u30, Assets);
 
 fn owner(assets: *Assets) *DevServer {
     return @alignCast(@fieldParentPtr("assets", assets));
@@ -43,7 +43,7 @@ pub fn replacePath(
     defer assert(assets.files.count() == assets.refs.items.len);
     const alloc = assets.owner().allocator();
     debug.log("replacePath {f} {} - {s}/{s} ({s})", .{
-        bun.fmt.quote(abs_path),
+        fun.fmt.quote(abs_path),
         content_hash,
         DevServer.asset_prefix,
         &std.fmt.bytesToHex(std.mem.asBytes(&content_hash), .lower),
@@ -173,13 +173,13 @@ pub fn memoryCost(assets: *Assets) usize {
     return cost;
 }
 
-const bun = @import("bun");
-const Output = bun.Output;
-const assert = bun.assert;
-const bake = bun.bake;
-const jsc = bun.jsc;
-const MimeType = bun.http.MimeType;
-const StaticRoute = bun.api.server.StaticRoute;
+const fun = @import("fun");
+const Output = fun.Output;
+const assert = fun.assert;
+const bake = fun.bake;
+const jsc = fun.jsc;
+const MimeType = fun.http.MimeType;
+const StaticRoute = fun.api.server.StaticRoute;
 const AnyBlob = jsc.WebCore.Blob.Any;
 
 const DevServer = bake.DevServer;

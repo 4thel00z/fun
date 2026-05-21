@@ -10,7 +10,7 @@
 #include <wtf/NeverDestroyed.h>
 #include <cstring>
 
-namespace Bun {
+namespace Fun {
 namespace Secrets {
 
 using namespace WTF;
@@ -343,7 +343,7 @@ Error setPassword(const CString& service, const CString& name, CString&& passwor
     SecAccessRef accessRef = nullptr;
     if (allowUnrestrictedAccess) {
         ScopedCFRef accessDescription(framework->CFStringCreateWithCString(
-            framework->kCFAllocatorDefault, "Bun secrets access", kCFStringEncodingUTF8));
+            framework->kCFAllocatorDefault, "Fun secrets access", kCFStringEncodingUTF8));
 
         if (accessDescription) {
             OSStatus accessStatus = framework->SecAccessCreate(
@@ -461,6 +461,6 @@ bool deletePassword(const CString& service, const CString& name, Error& err)
 }
 
 } // namespace Secrets
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(DARWIN)

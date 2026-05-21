@@ -2,7 +2,7 @@
 #include "ZigGlobalObject.h"
 #include <wtf/PlatformCallingConventions.h>
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsCleanupLater);
 JSC_DECLARE_HOST_FUNCTION(jsSetAsyncHooksEnabled);

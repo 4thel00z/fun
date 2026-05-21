@@ -6,8 +6,8 @@
 #include <JavaScriptCore/JSTypedArrays.h>
 #include <wtf/text/WTFString.h>
 #include "ncrypto.h"
-#include "BunClientData.h"
-namespace Bun {
+#include "FunClientData.h"
+namespace Fun {
 
 class JSDiffieHellman final : public JSC::JSDestructibleObject {
 public:
@@ -61,4 +61,4 @@ private:
 
 void setupDiffieHellmanClassStructure(JSC::LazyClassStructure::Initializer&);
 
-} // namespace Bun
+} // namespace Fun

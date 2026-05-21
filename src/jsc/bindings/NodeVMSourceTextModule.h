@@ -3,7 +3,7 @@
 #include "NodeVM.h"
 #include "NodeVMModule.h"
 
-namespace Bun {
+namespace Fun {
 
 class NodeVMSourceTextModule final : public NodeVMModule {
 public:
@@ -73,4 +73,4 @@ private:
     friend class NodeVMModule;
 };
 
-} // namespace Bun
+} // namespace Fun

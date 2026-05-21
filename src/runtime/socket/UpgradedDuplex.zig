@@ -9,7 +9,7 @@
 //! file descriptors),
 //!
 //! The duplex stream manages the SSL handshake, certificate validation, encryption/decryption,
-//! and integrates with Bun's event loop for timeouts and async operations. It maintains
+//! and integrates with Fun's event loop for timeouts and async operations. It maintains
 //! JavaScript callbacks for handling connection events and errors.
 
 const UpgradedDuplex = @This();
@@ -37,10 +37,10 @@ pub const CertError = struct {
 
     pub fn deinit(this: *CertError) void {
         if (this.code.len > 0) {
-            bun.default_allocator.free(this.code);
+            fun.default_allocator.free(this.code);
         }
         if (this.reason.len > 0) {
-            bun.default_allocator.free(this.reason);
+            fun.default_allocator.free(this.reason);
         }
     }
 };
@@ -50,7 +50,7 @@ const WrapperType = SSLWrapper(*UpgradedDuplex);
 pub const Handlers = struct {
     ctx: *anyopaque,
     onOpen: *const fn (*anyopaque) void,
-    onHandshake: *const fn (*anyopaque, bool, uws.us_bun_verify_error_t) void,
+    onHandshake: *const fn (*anyopaque, bool, uws.us_fun_verify_error_t) void,
     onData: *const fn (*anyopaque, []const u8) void,
     onClose: *const fn (*anyopaque) void,
     onEnd: *const fn (*anyopaque) void,
@@ -69,13 +69,13 @@ fn onData(this: *UpgradedDuplex, decoded_data: []const u8) void {
     this.handlers.onData(this.handlers.ctx, decoded_data);
 }
 
-fn onHandshake(this: *UpgradedDuplex, handshake_success: bool, ssl_error: uws.us_bun_verify_error_t) void {
+fn onHandshake(this: *UpgradedDuplex, handshake_success: bool, ssl_error: uws.us_fun_verify_error_t) void {
     log("onHandshake", .{});
 
     this.ssl_error = .{
         .error_no = ssl_error.error_no,
-        .code = if (ssl_error.code == null or ssl_error.error_no == 0) "" else bun.handleOom(bun.default_allocator.dupeZ(u8, ssl_error.code[0..bun.len(ssl_error.code) :0])),
-        .reason = if (ssl_error.reason == null or ssl_error.error_no == 0) "" else bun.handleOom(bun.default_allocator.dupeZ(u8, ssl_error.reason[0..bun.len(ssl_error.reason) :0])),
+        .code = if (ssl_error.code == null or ssl_error.error_no == 0) "" else fun.handleOom(fun.default_allocator.dupeZ(u8, ssl_error.code[0..fun.len(ssl_error.code) :0])),
+        .reason = if (ssl_error.reason == null or ssl_error.error_no == 0) "" else fun.handleOom(fun.default_allocator.dupeZ(u8, ssl_error.reason[0..fun.len(ssl_error.reason) :0])),
     };
     this.handlers.onHandshake(this.handlers.ctx, handshake_success, ssl_error);
 }
@@ -141,7 +141,7 @@ fn onInternalReceiveData(this: *UpgradedDuplex, data: []const u8) void {
 fn onReceivedData(
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     log("onReceivedData", .{});
 
     const function = callframe.callee();
@@ -174,7 +174,7 @@ fn onReceivedData(
 fn onEnd(
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     log("onEnd", .{});
     _ = globalObject;
     const function = callframe.callee();
@@ -192,7 +192,7 @@ fn onEnd(
 fn onWritable(
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     log("onWritable", .{});
 
     _ = globalObject;
@@ -214,7 +214,7 @@ fn onWritable(
 fn onCloseJS(
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
+) fun.JSError!jsc.JSValue {
     log("onCloseJS", .{});
 
     _ = globalObject;
@@ -252,7 +252,7 @@ pub fn from(
     handlers: UpgradedDuplex.Handlers,
 ) UpgradedDuplex {
     return UpgradedDuplex{
-        .vm = globalThis.bunVM(),
+        .vm = globalThis.funVM(),
         .origin = .create(origin, globalThis),
         .global = globalThis,
         .wrapper = null,
@@ -260,7 +260,7 @@ pub fn from(
     };
 }
 
-pub fn getJSHandlers(this: *UpgradedDuplex, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn getJSHandlers(this: *UpgradedDuplex, globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     const array = try jsc.JSValue.createEmptyArray(globalThis, 4);
     array.ensureStillAlive();
 
@@ -358,8 +358,8 @@ pub fn startTLS(this: *UpgradedDuplex, ssl_options: jsc.API.ServerConfig.SSLConf
 /// error. Mirrors `startTLS` but skips the
 /// `SSLConfig.asUSockets() → us_ssl_ctx_from_options()` round-trip so a
 /// memoised `SecureContext` can be reused on the duplex/named-pipe path.
-pub fn startTLSWithCTX(this: *UpgradedDuplex, ctx: *bun.BoringSSL.c.SSL_CTX, is_client: bool) !void {
-    errdefer bun.BoringSSL.c.SSL_CTX_free(ctx);
+pub fn startTLSWithCTX(this: *UpgradedDuplex, ctx: *fun.BoringSSL.c.SSL_CTX, is_client: bool) !void {
+    errdefer fun.BoringSSL.c.SSL_CTX_free(ctx);
     this.wrapper = try WrapperType.initWithCTX(ctx, is_client, .{
         .ctx = this,
         .onOpen = UpgradedDuplex.onOpen,
@@ -428,7 +428,7 @@ pub fn ssl(this: *UpgradedDuplex) ?*BoringSSL.SSL {
     return null;
 }
 
-pub fn sslError(this: *UpgradedDuplex) us_bun_verify_error_t {
+pub fn sslError(this: *UpgradedDuplex) us_fun_verify_error_t {
     return .{
         .error_no = this.ssl_error.error_no,
         .code = @ptrCast(this.ssl_error.code.ptr),
@@ -451,7 +451,7 @@ pub fn setTimeoutInMilliseconds(this: *UpgradedDuplex, ms: c_uint) void {
     }
 
     // reschedule the timer
-    this.event_loop_timer.next = bun.timespec.msFromNow(.allow_mocked_time, ms);
+    this.event_loop_timer.next = fun.timespec.msFromNow(.allow_mocked_time, ms);
     this.vm.timer.insert(&this.event_loop_timer);
 }
 pub fn setTimeout(this: *UpgradedDuplex, seconds: c_uint) void {
@@ -491,14 +491,14 @@ pub fn deinit(this: *UpgradedDuplex) void {
     this.ssl_error = .{};
 }
 
-const log = bun.Output.scoped(.UpgradedDuplex, .visible);
+const log = fun.Output.scoped(.UpgradedDuplex, .visible);
 
 const SSLWrapper = @import("./ssl_wrapper.zig").SSLWrapper;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const BoringSSL = bun.BoringSSL.c;
-const EventLoopTimer = bun.api.Timer.EventLoopTimer;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const BoringSSL = fun.BoringSSL.c;
+const EventLoopTimer = fun.api.Timer.EventLoopTimer;
 
-const uws = bun.uws;
-const us_bun_verify_error_t = uws.us_bun_verify_error_t;
+const uws = fun.uws;
+const us_fun_verify_error_t = uws.us_fun_verify_error_t;

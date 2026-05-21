@@ -1,6 +1,6 @@
-import { spawnSync } from "bun";
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { spawnSync } from "fun";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // This is consistent with what Node.js does, probably for polyfills to continue to work.
 it("crypto.subtle setter should not throw", () => {
@@ -11,11 +11,11 @@ it("crypto.subtle setter should not throw", () => {
 });
 
 describe("Web Crypto", () => {
-  // https://github.com/oven-sh/bun/issues/3795
+  // https://github.com/underdoc-org/fun/issues/3795
   it("keeps event loop alive", () => {
     const { stdout, exitCode } = spawnSync({
-      cmd: [bunExe(), import.meta.resolveSync("./keeps-alive-fixture.js")],
-      env: bunEnv,
+      cmd: [funExe(), import.meta.resolveSync("./keeps-alive-fixture.js")],
+      env: funEnv,
     });
 
     const lines = stdout.toString().trim().split("\n").sort();
@@ -156,7 +156,7 @@ describe("Web Crypto", () => {
       // guardedObjects set and the JSPromise stayed alive. Count live Promise
       // cells in the JSC heap to detect the leak.
       const fixture = /* js */ `
-        const { heapStats } = require("bun:jsc");
+        const { heapStats } = require("fun:jsc");
         const keyData = new Uint8Array(32).fill(1);
         const iv = new Uint8Array(12).fill(2);
         const key = await crypto.subtle.importKey("raw", keyData, { name: "AES-GCM" }, false, [
@@ -174,23 +174,23 @@ describe("Web Crypto", () => {
         }
         const batch = () => Promise.all(Array.from({ length: 50 }, once));
         for (let i = 0; i < 4; i++) await batch();
-        Bun.gc(true);
-        await Bun.sleep(1);
-        Bun.gc(true);
+        Fun.gc(true);
+        await Fun.sleep(1);
+        Fun.gc(true);
         const before = heapStats().objectTypeCounts.Promise ?? 0;
         for (let i = 0; i < 40; i++) await batch();
-        Bun.gc(true);
-        await Bun.sleep(1);
-        Bun.gc(true);
-        await Bun.sleep(1);
-        Bun.gc(true);
+        Fun.gc(true);
+        await Fun.sleep(1);
+        Fun.gc(true);
+        await Fun.sleep(1);
+        Fun.gc(true);
         const after = heapStats().objectTypeCounts.Promise ?? 0;
         console.log(JSON.stringify({ before, after, growth: after - before }));
         process.exit(0);
       `;
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "--smol", "-e", fixture],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "--smol", "-e", fixture],
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });

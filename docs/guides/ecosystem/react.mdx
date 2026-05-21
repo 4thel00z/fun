@@ -1,40 +1,40 @@
 ---
-title: Build a React app with Bun
-sidebarTitle: React with Bun
+title: Build a React app with Fun
+sidebarTitle: React with Fun
 mode: center
 ---
 
-Bun supports `.jsx` and `.tsx` files out of the box. React works with Bun.
+Fun supports `.jsx` and `.tsx` files out of the box. React works with Fun.
 
-Create a new React app with `bun init --react`. This gives you a template with a React app and an API server together in one full-stack app.
+Create a new React app with `fun init --react`. This gives you a template with a React app and an API server together in one full-stack app.
 
 ```bash terminal icon="terminal"
 # Create a new React app
-bun init --react
+fun init --react
 
 # Run the app in development mode
-bun dev
+fun dev
 
 # Build as a static site for production
-bun run build
+fun run build
 
 # Run the server in production
-bun start
+fun start
 ```
 
 ---
 
 ### Hot Reloading
 
-Run `bun dev` to start the app in development mode. This will start the API server and the React app with hot reloading.
+Run `fun dev` to start the app in development mode. This will start the API server and the React app with hot reloading.
 
 ### Full-Stack App
 
-Run `bun start` to start the API server and frontend together in one process.
+Run `fun start` to start the API server and frontend together in one process.
 
 ### Static Site
 
-Run `bun run build` to build the app as a static site. This will create a `dist` directory with the built app and all the assets.
+Run `fun run build` to build the app as a static site. This will create a `dist` directory with the built app and all the assets.
 
 ```txt File Tree icon="folder-tree"
 ├── src/
@@ -47,6 +47,6 @@ Run `bun run build` to build the app as a static site. This will create a `dist`
 │   └── *.svg           # Static assets
 ├── package.json        # Dependencies and scripts
 ├── tsconfig.json       # TypeScript configuration
-├── bunfig.toml         # Bun configuration
-└── bun.lock            # Lock file
+├── funfig.toml         # Fun configuration
+└── fun.lock            # Lock file
 ```

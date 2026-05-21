@@ -1,18 +1,18 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-test("BUN_WATCHER_TRACE creates trace file with watch events", async () => {
+test("FUN_WATCHER_TRACE creates trace file with watch events", async () => {
   using dir = tempDir("watcher-trace", {
     "script.js": `console.log("ready");`,
   });
 
   const traceFile = join(String(dir), "trace.log");
-  const env = { ...bunEnv, BUN_WATCHER_TRACE: traceFile };
+  const env = { ...funEnv, FUN_WATCHER_TRACE: traceFile };
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "--watch", "script.js"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "--watch", "script.js"],
     env,
     cwd: String(dir),
     stdout: "pipe",
@@ -27,7 +27,7 @@ test("BUN_WATCHER_TRACE creates trace file with watch events", async () => {
     const str = decoder.decode(chunk);
     if (!wroteModification && str.includes("ready")) {
       wroteModification = true;
-      await Bun.write(join(String(dir), "script.js"), `console.log("modified");`);
+      await Fun.write(join(String(dir), "script.js"), `console.log("modified");`);
       continue;
     }
     if (wroteModification && str.includes("modified")) {
@@ -75,16 +75,16 @@ test("BUN_WATCHER_TRACE creates trace file with watch events", async () => {
   }
 }, 10000);
 
-test("BUN_WATCHER_TRACE with --watch flag", async () => {
+test("FUN_WATCHER_TRACE with --watch flag", async () => {
   using dir = tempDir("watcher-trace-watch", {
     "script.js": `console.log("run", 0);`,
   });
 
   const traceFile = join(String(dir), "watch-trace.log");
-  const env = { ...bunEnv, BUN_WATCHER_TRACE: traceFile };
+  const env = { ...funEnv, FUN_WATCHER_TRACE: traceFile };
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "--watch", "script.js"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "--watch", "script.js"],
     env,
     cwd: String(dir),
     stdout: "pipe",
@@ -98,7 +98,7 @@ test("BUN_WATCHER_TRACE with --watch flag", async () => {
     if (str.includes(`run ${i}`)) {
       i++;
       if (i === 3) break; // Stop after 3 runs
-      await Bun.write(join(String(dir), "script.js"), `console.log("run", ${i});`);
+      await Fun.write(join(String(dir), "script.js"), `console.log("run", ${i});`);
     }
   }
 
@@ -149,15 +149,15 @@ test("BUN_WATCHER_TRACE with --watch flag", async () => {
   expect(foundScriptEvent).toBe(true);
 }, 10000);
 
-test("BUN_WATCHER_TRACE with empty path does not create trace", async () => {
+test("FUN_WATCHER_TRACE with empty path does not create trace", async () => {
   using dir = tempDir("watcher-trace-empty", {
     "test.js": `console.log("ready");`,
   });
 
-  const env = { ...bunEnv, BUN_WATCHER_TRACE: "" };
+  const env = { ...funEnv, FUN_WATCHER_TRACE: "" };
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "--watch", "test.js"],
+  const proc = Fun.spawn({
+    cmd: [funExe(), "--watch", "test.js"],
     env,
     cwd: String(dir),
     stdout: "pipe",
@@ -177,21 +177,21 @@ test("BUN_WATCHER_TRACE with empty path does not create trace", async () => {
   await proc.exited;
 
   // Should not create any trace file in the directory
-  const files = Array.from(new Bun.Glob("*.log").scanSync({ cwd: String(dir) }));
+  const files = Array.from(new Fun.Glob("*.log").scanSync({ cwd: String(dir) }));
   expect(files.length).toBe(0);
 });
 
-test("BUN_WATCHER_TRACE appends across reloads", async () => {
+test("FUN_WATCHER_TRACE appends across reloads", async () => {
   using dir = tempDir("watcher-trace-append", {
     "app.js": `console.log("first-0");`,
   });
 
   const traceFile = join(String(dir), "append-trace.log");
-  const env = { ...bunEnv, BUN_WATCHER_TRACE: traceFile };
+  const env = { ...funEnv, FUN_WATCHER_TRACE: traceFile };
 
   // First run
-  const proc1 = Bun.spawn({
-    cmd: [bunExe(), "--watch", "app.js"],
+  const proc1 = Fun.spawn({
+    cmd: [funExe(), "--watch", "app.js"],
     env,
     cwd: String(dir),
     stdout: "pipe",
@@ -205,7 +205,7 @@ test("BUN_WATCHER_TRACE appends across reloads", async () => {
     if (str.includes(`first-${i}`)) {
       i++;
       if (i === 2) break; // Stop after 2 runs
-      await Bun.write(join(String(dir), "app.js"), `console.log("first-${i}");`);
+      await Fun.write(join(String(dir), "app.js"), `console.log("first-${i}");`);
     }
   }
 
@@ -220,8 +220,8 @@ test("BUN_WATCHER_TRACE appends across reloads", async () => {
   expect(firstLines.length).toBeGreaterThan(0);
 
   // Second run - should append to the same file
-  const proc2 = Bun.spawn({
-    cmd: [bunExe(), "--watch", "app.js"],
+  const proc2 = Fun.spawn({
+    cmd: [funExe(), "--watch", "app.js"],
     env,
     cwd: String(dir),
     stdout: "pipe",
@@ -235,10 +235,10 @@ test("BUN_WATCHER_TRACE appends across reloads", async () => {
     if (str.includes(`second-${j}`)) {
       j++;
       if (j === 2) break; // Stop after 2 runs
-      await Bun.write(join(String(dir), "app.js"), `console.log("second-${j}");`);
+      await Fun.write(join(String(dir), "app.js"), `console.log("second-${j}");`);
     } else if (str.includes("first-1")) {
       // Second process starts with previous file content ("first-1"), trigger first modification
-      await Bun.write(join(String(dir), "app.js"), `console.log("second-0");`);
+      await Fun.write(join(String(dir), "app.js"), `console.log("second-0");`);
     }
   }
 

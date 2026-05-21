@@ -38,7 +38,7 @@ namespace WebCore {
 class WebSocket;
 }
 
-namespace Bun {
+namespace Fun {
 
 class JSWebView;
 enum class ScreenshotFormat : uint8_t;
@@ -372,7 +372,7 @@ enum class TransportMode : uint8_t {
 class Transport {
 public:
     // Lazy-spawn Chrome. Returns false on spawn failure; caller throws.
-    // path overrides auto-detection (BUN_CHROME_PATH > path > app bundles >
+    // path overrides auto-detection (FUN_CHROME_PATH > path > app bundles >
     // playwright cache). extraArgv appends after the core flags so user
     // flags can override built-ins. stdoutInherit/stderrInherit route
     // Chrome's output (chatty on stderr — GCM/updater/font-config noise).
@@ -527,4 +527,4 @@ void close(JSWebView*);
 
 } // namespace CDP
 
-} // namespace Bun
+} // namespace Fun

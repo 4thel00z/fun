@@ -1,7 +1,7 @@
 # verify-baseline-static — triage guide
 
 Static ISA scanner. Disassembles every instruction in `.text` of a baseline
-Bun binary and flags anything the baseline CPU can't decode. Catches `-march`
+Fun binary and flags anything the baseline CPU can't decode. Catches `-march`
 leaks at compile time, before they SIGILL on a user's machine.
 
 This file is for triaging CI failures. For architecture details see
@@ -21,7 +21,7 @@ check — together they catch most things; neither alone is bulletproof.
   baseline instructions on a baseline CPU, this tool is blind to it. The
   emulator's `--jit-stress` path covers this.
 - **Dynamically loaded code.** N-API addons, FFI callees, dlopen'd shared
-  libs. Scanner only reads the `bun-profile` binary.
+  libs. Scanner only reads the `fun-profile` binary.
 - **Gate correctness.** The tool does not verify that a CPUID gate actually
   checks the right bits. It trusts the allowlist. Feature ceilings catch the
   "code grew new features, gate wasn't updated" case, but a gate that was
@@ -69,9 +69,9 @@ The scanner runs on the _CI-built_ `-profile` artifact. You can't reproduce by
 building locally unless you build with the exact baseline toolchain. Download
 the artifact instead.
 
-1. Get `<triplet>-profile.zip` from the failing build's `build-bun` step
-   (Artifacts tab in Buildkite). Triplets look like `bun-linux-x64-baseline`,
-   `bun-linux-aarch64-musl`, `bun-windows-x64-baseline`.
+1. Get `<triplet>-profile.zip` from the failing build's `build-fun` step
+   (Artifacts tab in Buildkite). Triplets look like `fun-linux-x64-baseline`,
+   `fun-linux-aarch64-musl`, `fun-windows-x64-baseline`.
 
 2. Build and run the scanner (host arch is irrelevant — the scanner reads the
    binary's headers, it doesn't execute it):
@@ -81,17 +81,17 @@ the artifact instead.
 
    # Linux x64 baseline
    ./scripts/verify-baseline-static/target/release/verify-baseline-static \
-     --binary bun-linux-x64-baseline-profile/bun-profile \
+     --binary fun-linux-x64-baseline-profile/fun-profile \
      --allowlist scripts/verify-baseline-static/allowlist-x64.txt
 
    # Linux aarch64
    ./scripts/verify-baseline-static/target/release/verify-baseline-static \
-     --binary bun-linux-aarch64-profile/bun-profile \
+     --binary fun-linux-aarch64-profile/fun-profile \
      --allowlist scripts/verify-baseline-static/allowlist-aarch64.txt
 
    # Windows x64 baseline (PDB auto-discovered at <binary>.pdb)
    ./scripts/verify-baseline-static/target/release/verify-baseline-static \
-     --binary bun-windows-x64-baseline-profile/bun-profile.exe \
+     --binary fun-windows-x64-baseline-profile/fun-profile.exe \
      --allowlist scripts/verify-baseline-static/allowlist-x64-windows.txt
    ```
 
@@ -145,7 +145,7 @@ executed. Real bug, will SIGILL on baseline hardware. Fix the compile flags.
 ### Deciding which
 
 **Identify the dependency.** Demangle the symbol (`c++filt`, or recognize the
-prefix: `_ZN7simdutf` = simdutf, `_ZN3bun` + `N_AVX2`/`N_SVE` = Bun's Highway
+prefix: `_ZN7simdutf` = simdutf, `_ZN3fun` + `N_AVX2`/`N_SVE` = Fun's Highway
 code, `_RNv` + `memchr` = Rust memchr, etc). Search the allowlist for that
 dependency — if neighbors are there under an existing `# Gate: ...` header,
 this is almost certainly (A).
@@ -157,7 +157,7 @@ table, an HWCAP test. Known patterns:
 | Dependency                            | Gate                                                        | Where                                      |
 | ------------------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
 | simdutf                               | `set_best()` — CPUID first call, cached atomic ptr          | `vendor/` or WebKit's bundled copy         |
-| Highway (Bun)                         | `HWY_DYNAMIC_DISPATCH` → `hwy::SupportedTargets()`          | `src/jsc/bindings/highway_strings.cpp`     |
+| Highway (Fun)                         | `HWY_DYNAMIC_DISPATCH` → `hwy::SupportedTargets()`          | `src/jsc/bindings/highway_strings.cpp`     |
 | BoringSSL                             | `OPENSSL_ia32cap_P` global, set at init                     | `vendor/boringssl/crypto/cpu_intel.c`      |
 | zstd                                  | `ZSTD_cpuid()`                                              | `vendor/zstd/lib/common/cpu.h`             |
 | libdeflate                            | `libdeflate_init_x86_cpu_features()` / `HWCAP_ASIMDDP`      | `vendor/libdeflate/lib/x86/cpu_features.c` |
@@ -170,8 +170,8 @@ table, an HWCAP test. Known patterns:
 ground-truth check):
 
 ```sh
-qemu-x86_64 -cpu Nehalem ./bun-profile <code path that hits it>   # x64 → SIGILL = bug
-qemu-aarch64 -cpu cortex-a53 ./bun-profile <code path>             # aarch64
+qemu-x86_64 -cpu Nehalem ./fun-profile <code path that hits it>   # x64 → SIGILL = bug
+qemu-aarch64 -cpu cortex-a53 ./fun-profile <code path>             # aarch64
 ```
 
 ### Data-in-`.text` false positives (x64, mostly Windows)

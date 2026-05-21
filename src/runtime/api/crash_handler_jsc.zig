@@ -2,7 +2,7 @@
 //! `src/crash_handler/` free of JSC types.
 
 pub const js_bindings = struct {
-    const jsc = bun.jsc;
+    const jsc = fun.jsc;
     const JSValue = jsc.JSValue;
 
     pub fn generate(global: *jsc.JSGlobalObject) jsc.JSValue {
@@ -23,8 +23,8 @@ pub const js_bindings = struct {
         return obj;
     }
 
-    pub fn jsGetMachOImageZeroOffset(_: *bun.jsc.JSGlobalObject, _: *bun.jsc.CallFrame) bun.JSError!JSValue {
-        if (!bun.Environment.isMac) return .js_undefined;
+    pub fn jsGetMachOImageZeroOffset(_: *fun.jsc.JSGlobalObject, _: *fun.jsc.CallFrame) fun.JSError!JSValue {
+        if (!fun.Environment.isMac) return .js_undefined;
 
         const header = std.c._dyld_get_image_header(0) orelse return .js_undefined;
         const base_address = @intFromPtr(header);
@@ -33,7 +33,7 @@ pub const js_bindings = struct {
         return JSValue.jsNumber(base_address - vmaddr_slide);
     }
 
-    pub fn jsSegfault(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn jsSegfault(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         @setRuntimeSafety(false);
         crash_handler.suppressCoreDumpsIfNecessary();
         const ptr: [*]align(1) u64 = @ptrFromInt(0xDEADBEEF);
@@ -42,50 +42,50 @@ pub const js_bindings = struct {
         return .js_undefined;
     }
 
-    pub fn jsPanic(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn jsPanic(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         crash_handler.suppressCoreDumpsIfNecessary();
-        bun.crash_handler.panicImpl("invoked crashByPanic() handler", null, null);
+        fun.crash_handler.panicImpl("invoked crashByPanic() handler", null, null);
     }
 
-    pub fn jsRootError(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-        bun.crash_handler.handleRootError(error.Test, null);
+    pub fn jsRootError(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+        fun.crash_handler.handleRootError(error.Test, null);
     }
 
-    pub fn jsOutOfMemory(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn jsOutOfMemory(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         crash_handler.suppressCoreDumpsIfNecessary();
-        bun.outOfMemory();
+        fun.outOfMemory();
     }
 
-    pub fn jsRaiseIgnoringPanicHandler(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn jsRaiseIgnoringPanicHandler(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         crash_handler.suppressCoreDumpsIfNecessary();
-        bun.Global.raiseIgnoringPanicHandler(.SIGSEGV);
+        fun.Global.raiseIgnoringPanicHandler(.SIGSEGV);
     }
 
-    pub fn jsGetFeaturesAsVLQ(global: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-        const bits = bun.analytics.packedFeatures();
-        var buf = bun.BoundedArray(u8, 16){};
+    pub fn jsGetFeaturesAsVLQ(global: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+        const bits = fun.analytics.packedFeatures();
+        var buf = fun.BoundedArray(u8, 16){};
         crash_handler.writeU64AsTwoVLQs(buf.writer(), @bitCast(bits)) catch {
             // there is definitely enough space in the bounded array
             unreachable;
         };
-        var str = bun.String.cloneLatin1(buf.slice());
+        var str = fun.String.cloneLatin1(buf.slice());
         return str.transferToJS(global);
     }
 
-    pub fn jsGetFeatureData(global: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn jsGetFeatureData(global: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const obj = JSValue.createEmptyObject(global, 5);
-        const list = bun.analytics.packed_features_list;
+        const list = fun.analytics.packed_features_list;
         const array = try JSValue.createEmptyArray(global, list.len);
         for (list, 0..) |feature, i| {
-            try array.putIndex(global, @intCast(i), try bun.String.static(feature).toJS(global));
+            try array.putIndex(global, @intCast(i), try fun.String.static(feature).toJS(global));
         }
         obj.put(global, jsc.ZigString.static("features"), array);
-        obj.put(global, jsc.ZigString.static("version"), try bun.String.init(Global.package_json_version).toJS(global));
-        obj.put(global, jsc.ZigString.static("is_canary"), jsc.JSValue.jsBoolean(bun.Environment.is_canary));
+        obj.put(global, jsc.ZigString.static("version"), try fun.String.init(Global.package_json_version).toJS(global));
+        obj.put(global, jsc.ZigString.static("is_canary"), jsc.JSValue.jsBoolean(fun.Environment.is_canary));
 
         // This is the source of truth for the git sha.
         // Not the github ref or the git tag.
-        obj.put(global, jsc.ZigString.static("revision"), try bun.String.init(bun.Environment.git_sha).toJS(global));
+        obj.put(global, jsc.ZigString.static("revision"), try fun.String.init(fun.Environment.git_sha).toJS(global));
 
         obj.put(global, jsc.ZigString.static("generated_at"), JSValue.jsNumberFromInt64(@max(std.time.milliTimestamp(), 0)));
         return obj;
@@ -94,6 +94,6 @@ pub const js_bindings = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Global = bun.Global;
-const crash_handler = bun.crash_handler;
+const fun = @import("fun");
+const Global = fun.Global;
+const crash_handler = fun.crash_handler;

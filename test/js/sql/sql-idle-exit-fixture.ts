@@ -1,5 +1,5 @@
-const tls = process.env.CA_PATH ? { ca: Bun.file(process.env.CA_PATH) } : undefined;
-const sql = new Bun.SQL({
+const tls = process.env.CA_PATH ? { ca: Fun.file(process.env.CA_PATH) } : undefined;
+const sql = new Fun.SQL({
   url: process.env.MYSQL_URL,
   tls,
   max: 1,

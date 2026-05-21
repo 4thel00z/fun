@@ -177,7 +177,7 @@ pub const BufferReadStream = struct {
 /// The check works by resolving the symlink target relative to the symlink's
 /// directory location using a fake root, then checking if the result stays
 /// within that fake root.
-fn isSymlinkTargetSafe(symlink_path: []const u8, link_target: [:0]const u8, symlink_join_buf: *?*bun.PathBuffer) bool {
+fn isSymlinkTargetSafe(symlink_path: []const u8, link_target: [:0]const u8, symlink_join_buf: *?*fun.PathBuffer) bool {
     // Absolute symlink targets are never safe - they could point anywhere
     if (link_target.len > 0 and link_target[0] == '/') {
         return false;
@@ -190,11 +190,11 @@ fn isSymlinkTargetSafe(symlink_path: []const u8, link_target: [:0]const u8, syml
     const fake_root = "/packages/";
 
     const join_buf = symlink_join_buf.* orelse join_buf: {
-        symlink_join_buf.* = bun.path_buffer_pool.get();
+        symlink_join_buf.* = fun.path_buffer_pool.get();
         break :join_buf symlink_join_buf.*.?;
     };
 
-    const resolved = bun.path.joinAbsStringBuf(
+    const resolved = fun.path.joinAbsStringBuf(
         fake_root,
         join_buf,
         &.{ symlink_dir, link_target },
@@ -212,7 +212,7 @@ pub const Archiver = struct {
 
     pub const Context = struct {
         pluckers: []Plucker = &[_]Plucker{},
-        overwrite_list: bun.StringArrayHashMap(void),
+        overwrite_list: fun.StringArrayHashMap(void),
         all_files: EntryMap,
         pub const EntryMap = std.ArrayHashMap(u64, [*c]u8, U64Context, false);
 
@@ -232,10 +232,10 @@ pub const Archiver = struct {
         found: bool = false,
         fd: FileDescriptorType,
 
-        pub fn init(filepath: bun.OSPathSlice, estimated_size: usize, allocator: std.mem.Allocator) !Plucker {
+        pub fn init(filepath: fun.OSPathSlice, estimated_size: usize, allocator: std.mem.Allocator) !Plucker {
             return Plucker{
                 .contents = try MutableString.init(allocator, estimated_size),
-                .filename_hash = bun.hash(std.mem.sliceAsBytes(filepath)),
+                .filename_hash = fun.hash(std.mem.sliceAsBytes(filepath)),
                 .fd = .invalid,
                 .found = false,
             };
@@ -280,7 +280,7 @@ pub const Archiver = struct {
                     // it will require us to pull in libiconv
                     // though we should probably validate the utf8 here nonetheless
                     var pathname = entry.pathname();
-                    var tokenizer = std.mem.tokenizeScalar(u8, bun.asByteSlice(pathname), std.fs.path.sep);
+                    var tokenizer = std.mem.tokenizeScalar(u8, fun.asByteSlice(pathname), std.fs.path.sep);
                     comptime var depth_i: usize = 0;
                     inline while (depth_i < depth_to_skip) : (depth_i += 1) {
                         if (tokenizer.next() == null) continue :loop;
@@ -288,7 +288,7 @@ pub const Archiver = struct {
 
                     var pathname_ = tokenizer.rest();
                     pathname = std.mem.sliceTo(pathname_.ptr[0..pathname_.len :0], 0);
-                    const dirname = std.mem.trim(u8, std.fs.path.dirname(bun.asByteSlice(pathname)) orelse "", std.fs.path.sep_str);
+                    const dirname = std.mem.trim(u8, std.fs.path.dirname(fun.asByteSlice(pathname)) orelse "", std.fs.path.sep_str);
 
                     const size: usize = @intCast(@max(entry.size(), 0));
                     if (size > 0) {
@@ -299,7 +299,7 @@ pub const Archiver = struct {
                         if (stat_size > 0) {
                             const is_already_top_level = dirname.len == 0;
                             const path_to_use_: string = brk: {
-                                const __pathname: string = bun.asByteSlice(pathname);
+                                const __pathname: string = fun.asByteSlice(pathname);
 
                                 if (is_already_top_level) break :brk __pathname;
 
@@ -307,7 +307,7 @@ pub const Archiver = struct {
                                 break :brk __pathname[0..index];
                             };
                             var temp_buf: [1024]u8 = undefined;
-                            bun.copy(u8, &temp_buf, path_to_use_);
+                            fun.copy(u8, &temp_buf, path_to_use_);
                             var path_to_use: string = temp_buf[0..path_to_use_.len];
                             if (!is_already_top_level) {
                                 temp_buf[path_to_use_.len] = std.fs.path.sep;
@@ -350,10 +350,10 @@ pub const Archiver = struct {
         var count: u32 = 0;
         const dir_fd = dir.fd;
 
-        var symlink_join_buf: ?*bun.PathBuffer = null;
-        defer if (symlink_join_buf) |join_buf| bun.path_buffer_pool.put(join_buf);
+        var symlink_join_buf: ?*fun.PathBuffer = null;
+        defer if (symlink_join_buf) |join_buf| fun.path_buffer_pool.put(join_buf);
 
-        var normalized_buf: bun.OSPathBuffer = undefined;
+        var normalized_buf: fun.OSPathBuffer = undefined;
         var use_pwrite = Environment.isPosix;
         var use_lseek = true;
 
@@ -373,7 +373,7 @@ pub const Archiver = struct {
                     //
                     // Ideally, we find a way to tell libarchive to not convert the strings to wide characters and also to not
                     // replace path separators. We can do both of these with our own normalization and utf8/utf16 string conversion code.
-                    var pathname: bun.OSPathSliceZ = if (comptime Environment.isWindows)
+                    var pathname: fun.OSPathSliceZ = if (comptime Environment.isWindows)
                         entry.pathnameW()
                     else
                         entry.pathname();
@@ -387,12 +387,12 @@ pub const Archiver = struct {
                                 defer result.deinit();
                                 appender.onFirstDirectoryName(strings.withoutTrailingSlash(result.items));
                             } else {
-                                appender.onFirstDirectoryName(strings.withoutTrailingSlash(bun.asByteSlice(pathname)));
+                                appender.onFirstDirectoryName(strings.withoutTrailingSlash(fun.asByteSlice(pathname)));
                             }
                         }
                     }
 
-                    const kind = bun.sys.kindFromMode(entry.filetype());
+                    const kind = fun.sys.kindFromMode(entry.filetype());
 
                     if (options.npm) {
                         // - ignore entries other than files (`true` can only be returned if type is file)
@@ -404,7 +404,7 @@ pub const Archiver = struct {
                     }
 
                     // strip and normalize the path
-                    var tokenizer = std.mem.tokenizeScalar(bun.OSPathChar, pathname, '/');
+                    var tokenizer = std.mem.tokenizeScalar(fun.OSPathChar, pathname, '/');
                     for (0..options.depth_to_skip) |_| {
                         if (tokenizer.next() == null) continue :loop;
                     }
@@ -412,9 +412,9 @@ pub const Archiver = struct {
                     const rest = tokenizer.rest();
                     pathname = rest.ptr[0..rest.len :0];
 
-                    const normalized = bun.path.normalizeBufT(bun.OSPathChar, pathname, &normalized_buf, .auto);
+                    const normalized = fun.path.normalizeBufT(fun.OSPathChar, pathname, &normalized_buf, .auto);
                     normalized_buf[normalized.len] = 0;
-                    const path: [:0]bun.OSPathChar = normalized_buf[0..normalized.len :0];
+                    const path: [:0]fun.OSPathChar = normalized_buf[0..normalized.len :0];
                     if (path.len == 0 or path.len == 1 and path[0] == '.') continue;
 
                     // Skip entries whose normalized path is absolute on Windows.
@@ -432,7 +432,7 @@ pub const Archiver = struct {
                         // 0xf000 higher-encoded versions.
                         // https://github.com/isaacs/node-tar/blob/0510c9ea6d000c40446d56674a7efeec8e72f052/lib/winchars.js
                         var remain = path;
-                        if (strings.startsWithWindowsDriveLetterT(bun.OSPathChar, remain)) {
+                        if (strings.startsWithWindowsDriveLetterT(fun.OSPathChar, remain)) {
                             // don't encode `:` from the drive letter
                             // https://github.com/npm/cli/blob/93883bb6459208a916584cad8c6c72a315cf32af/node_modules/tar/lib/unpack.js#L327
                             remain = remain[2..];
@@ -446,10 +446,10 @@ pub const Archiver = struct {
                         }
                     }
 
-                    const path_slice: bun.OSPathSlice = path.ptr[0..path.len];
+                    const path_slice: fun.OSPathSlice = path.ptr[0..path.len];
 
                     if (options.log) {
-                        Output.prettyln(" {f}", .{bun.fmt.fmtOSPath(path_slice, .{})});
+                        Output.prettyln(" {f}", .{fun.fmt.fmtOSPath(path_slice, .{})});
                     }
 
                     count += 1;
@@ -468,14 +468,14 @@ pub const Archiver = struct {
                                 mode |= 0o1;
 
                             if (comptime Environment.isWindows) {
-                                try bun.MakePath.makePath(u16, dir, path);
+                                try fun.MakePath.makePath(u16, dir, path);
                             } else {
                                 std.posix.mkdiratZ(dir_fd, path, @intCast(mode)) catch |err| {
                                     // It's possible for some tarballs to return a directory twice, with and
                                     // without `./` in the beginning. So if it already exists, continue to the
                                     // next entry.
                                     if (err == error.PathAlreadyExists or err == error.NotDir) continue;
-                                    bun.makePath(dir, std.fs.path.dirname(path_slice) orelse return err) catch {};
+                                    fun.makePath(dir, std.fs.path.dirname(path_slice) orelse return err) catch {};
                                     std.posix.mkdiratZ(dir_fd, path, 0o777) catch {};
                                 };
                             }
@@ -490,17 +490,17 @@ pub const Archiver = struct {
                                     // Skip symlinks that would escape the extraction directory
                                     if (options.log) {
                                         Output.warn("Skipping symlink with unsafe target: {f} -> {s}\n", .{
-                                            bun.fmt.fmtOSPath(path_slice, .{}),
+                                            fun.fmt.fmtOSPath(path_slice, .{}),
                                             link_target,
                                         });
                                     }
                                     continue;
                                 }
-                                bun.sys.symlinkat(link_target, .fromNative(dir_fd), path).unwrap() catch |err| brk: {
+                                fun.sys.symlinkat(link_target, .fromNative(dir_fd), path).unwrap() catch |err| brk: {
                                     switch (err) {
                                         error.EPERM, error.ENOENT => {
                                             dir.makePath(std.fs.path.dirname(path_slice) orelse return err) catch {};
-                                            break :brk try bun.sys.symlinkat(link_target, .fromNative(dir_fd), path).unwrap();
+                                            break :brk try fun.sys.symlinkat(link_target, .fromNative(dir_fd), path).unwrap();
                                         },
                                         else => return err,
                                     }
@@ -514,20 +514,20 @@ pub const Archiver = struct {
                             // then https://github.com/npm/cli/blob/feb54f7e9a39bd52519221bae4fafc8bc70f235e/node_modules/pacote/lib/fetcher.js#L402-L411
                             //
                             // we simplify and turn it into `entry.mode || 0o666` because we aren't accepting a umask or fmask option.
-                            const mode: bun.Mode = if (comptime Environment.isWindows) 0 else @intCast(entry.perm() | 0o666);
+                            const mode: fun.Mode = if (comptime Environment.isWindows) 0 else @intCast(entry.perm() | 0o666);
 
-                            const flags = bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC;
-                            const file_handle_native: bun.FD = if (Environment.isWindows)
-                                switch (bun.sys.openatWindows(.fromNative(dir_fd), path, flags, 0)) {
+                            const flags = fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC;
+                            const file_handle_native: fun.FD = if (Environment.isWindows)
+                                switch (fun.sys.openatWindows(.fromNative(dir_fd), path, flags, 0)) {
                                     .result => |fd| fd,
                                     .err => |e| switch (e.errno) {
-                                        @intFromEnum(bun.sys.E.PERM),
-                                        @intFromEnum(bun.sys.E.NOENT),
+                                        @intFromEnum(fun.sys.E.PERM),
+                                        @intFromEnum(fun.sys.E.NOENT),
                                         => brk: {
-                                            bun.MakePath.makePath(u16, dir, bun.Dirname.dirname(u16, path_slice) orelse return bun.errnoToZigErr(e.errno)) catch {};
-                                            break :brk try bun.sys.openatWindows(.fromNative(dir_fd), path, flags, 0).unwrap();
+                                            fun.MakePath.makePath(u16, dir, fun.Dirname.dirname(u16, path_slice) orelse return fun.errnoToZigErr(e.errno)) catch {};
+                                            break :brk try fun.sys.openatWindows(.fromNative(dir_fd), path, flags, 0).unwrap();
                                         },
-                                        else => return bun.errnoToZigErr(e.errno),
+                                        else => return fun.errnoToZigErr(e.errno),
                                     },
                                 }
                             else
@@ -554,7 +554,7 @@ pub const Archiver = struct {
                             var plucked_file = false;
                             defer if (options.close_handles and !plucked_file) {
                                 // On windows, AV hangs these closes really badly.
-                                // 'bun i @mui/icons-material' takes like 20 seconds to extract
+                                // 'fun i @mui/icons-material' takes like 20 seconds to extract
                                 // mostly spend on waiting for things to close closing
                                 //
                                 // Using Async.Closer defers closing the file to a different thread,
@@ -574,7 +574,7 @@ pub const Archiver = struct {
                             if (size > 0) {
                                 if (ctx) |ctx_| {
                                     const hash: u64 = if (ctx_.pluckers.len > 0)
-                                        bun.hash(std.mem.sliceAsBytes(path_slice))
+                                        fun.hash(std.mem.sliceAsBytes(path_slice))
                                     else
                                         @as(u64, 0);
 
@@ -602,7 +602,7 @@ pub const Archiver = struct {
                                 // #define    MAX_WRITE    (1024 * 1024)
                                 if (comptime Environment.isLinux) {
                                     if (size > 1_000_000) {
-                                        bun.sys.preallocate_file(
+                                        fun.sys.preallocate_file(
                                             file_handle.cast(),
                                             0,
                                             @intCast(size),
@@ -619,7 +619,7 @@ pub const Archiver = struct {
                                         .retry => {
                                             if (options.log) {
                                                 Output.err("libarchive error", "extracting {f}, retry {d} / {d}", .{
-                                                    bun.fmt.fmtOSPath(path_slice, .{}),
+                                                    fun.fmt.fmtOSPath(path_slice, .{}),
                                                     retries_remaining,
                                                     5,
                                                 });
@@ -627,9 +627,9 @@ pub const Archiver = struct {
                                         },
                                         else => {
                                             if (options.log) {
-                                                const archive_error = bun.sliceTo(lib.Archive.errorString(@ptrCast(archive)), 0);
+                                                const archive_error = fun.sliceTo(lib.Archive.errorString(@ptrCast(archive)), 0);
                                                 Output.err("libarchive error", "extracting {f}: {s}", .{
-                                                    bun.fmt.fmtOSPath(path_slice, .{}),
+                                                    fun.fmt.fmtOSPath(path_slice, .{}),
                                                     archive_error,
                                                 });
                                             }
@@ -678,11 +678,11 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FileDescriptorType = bun.FD;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const c = bun.c;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FileDescriptorType = fun.FD;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const c = fun.c;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;

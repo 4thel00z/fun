@@ -73,18 +73,18 @@ pub fn start(this: *Echo) Yield {
                 if (thearg.len > 0 and thearg[thearg.len - 1] == '\n') {
                     has_leading_newline = true;
                 }
-                bun.handleOom(this.output.appendSlice(bun.strings.trimSubsequentLeadingChars(thearg, '\n')));
+                fun.handleOom(this.output.appendSlice(fun.strings.trimSubsequentLeadingChars(thearg, '\n')));
             } else {
-                bun.handleOom(this.output.appendSlice(thearg));
+                fun.handleOom(this.output.appendSlice(thearg));
             }
         }
 
         if (!stop_output and !is_last) {
-            bun.handleOom(this.output.append(' '));
+            fun.handleOom(this.output.append(' '));
         }
     }
 
-    if (!stop_output and !has_leading_newline and !no_newline) bun.handleOom(this.output.append('\n'));
+    if (!stop_output and !has_leading_newline and !no_newline) fun.handleOom(this.output.append('\n'));
 
     if (this.bltn().stdout.needsIO()) |safeguard| {
         this.state = .waiting;
@@ -103,15 +103,15 @@ fn appendWithEscapes(output: *std.array_list.Managed(u8), input: []const u8) boo
         if (input[i] == '\\' and i + 1 < input.len) {
             switch (input[i + 1]) {
                 '\\' => {
-                    bun.handleOom(output.append('\\'));
+                    fun.handleOom(output.append('\\'));
                     i += 2;
                 },
                 'a' => {
-                    bun.handleOom(output.append('\x07'));
+                    fun.handleOom(output.append('\x07'));
                     i += 2;
                 },
                 'b' => {
-                    bun.handleOom(output.append('\x08'));
+                    fun.handleOom(output.append('\x08'));
                     i += 2;
                 },
                 'c' => {
@@ -119,27 +119,27 @@ fn appendWithEscapes(output: *std.array_list.Managed(u8), input: []const u8) boo
                     return true;
                 },
                 'e', 'E' => {
-                    bun.handleOom(output.append('\x1b'));
+                    fun.handleOom(output.append('\x1b'));
                     i += 2;
                 },
                 'f' => {
-                    bun.handleOom(output.append('\x0c'));
+                    fun.handleOom(output.append('\x0c'));
                     i += 2;
                 },
                 'n' => {
-                    bun.handleOom(output.append('\n'));
+                    fun.handleOom(output.append('\n'));
                     i += 2;
                 },
                 'r' => {
-                    bun.handleOom(output.append('\r'));
+                    fun.handleOom(output.append('\r'));
                     i += 2;
                 },
                 't' => {
-                    bun.handleOom(output.append('\t'));
+                    fun.handleOom(output.append('\t'));
                     i += 2;
                 },
                 'v' => {
-                    bun.handleOom(output.append('\x0b'));
+                    fun.handleOom(output.append('\x0b'));
                     i += 2;
                 },
                 '0' => {
@@ -152,7 +152,7 @@ fn appendWithEscapes(output: *std.array_list.Managed(u8), input: []const u8) boo
                         i += 1;
                         digits += 1;
                     }
-                    bun.handleOom(output.append(val));
+                    fun.handleOom(output.append(val));
                 },
                 'x' => {
                     // \xHH: hex value (up to 2 hex digits)
@@ -170,21 +170,21 @@ fn appendWithEscapes(output: *std.array_list.Managed(u8), input: []const u8) boo
                         }
                     }
                     if (digits > 0) {
-                        bun.handleOom(output.append(val));
+                        fun.handleOom(output.append(val));
                     } else {
                         // No valid hex digits: output \x literally
-                        bun.handleOom(output.appendSlice("\\x"));
+                        fun.handleOom(output.appendSlice("\\x"));
                     }
                 },
                 else => {
                     // Unknown escape: output backslash and the character as-is
-                    bun.handleOom(output.append('\\'));
-                    bun.handleOom(output.append(input[i + 1]));
+                    fun.handleOom(output.append('\\'));
+                    fun.handleOom(output.append(input[i + 1]));
                     i += 2;
                 },
             }
         } else {
-            bun.handleOom(output.append(input[i]));
+            fun.handleOom(output.append(input[i]));
             i += 1;
         }
     }
@@ -199,7 +199,7 @@ fn hexDigitValue(c: u8) ?u8 {
 }
 
 pub fn onIOWriterChunk(this: *Echo, _: usize, e: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state == .waiting or this.state == .waiting_write_err);
     }
 
@@ -223,7 +223,7 @@ pub inline fn bltn(this: *Echo) *Builtin {
     return @fieldParentPtr("impl", impl);
 }
 
-const log = bun.Output.scoped(.echo, .hidden);
+const log = fun.Output.scoped(.echo, .hidden);
 
 const interpreter = @import("../interpreter.zig");
 const std = @import("std");
@@ -231,9 +231,9 @@ const std = @import("std");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;

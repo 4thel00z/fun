@@ -3,7 +3,7 @@
 #include <openssl/err.h>
 #include "ErrorCode.h"
 #include "ncrypto.h"
-#include "BunString.h"
+#include "FunString.h"
 #include "JSBuffer.h"
 #include "JSDOMConvertEnumeration.h"
 #include "JSBufferEncodingType.h"
@@ -14,7 +14,7 @@
 #include "CryptoKeyRaw.h"
 #include "JSKeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace ncrypto;
@@ -22,41 +22,41 @@ using namespace ncrypto;
 namespace ExternZigHash {
 struct Hasher;
 
-extern "C" Hasher* Bun__CryptoHasherExtern__getByName(Zig::GlobalObject* globalObject, const char* name, size_t nameLen);
+extern "C" Hasher* Fun__CryptoHasherExtern__getByName(Zig::GlobalObject* globalObject, const char* name, size_t nameLen);
 Hasher* getByName(Zig::GlobalObject* globalObject, const StringView& name)
 {
     auto utf8 = name.utf8();
-    return Bun__CryptoHasherExtern__getByName(globalObject, utf8.data(), utf8.length());
+    return Fun__CryptoHasherExtern__getByName(globalObject, utf8.data(), utf8.length());
 }
 
-extern "C" Hasher* Bun__CryptoHasherExtern__getFromOther(Zig::GlobalObject* global, Hasher* hasher);
+extern "C" Hasher* Fun__CryptoHasherExtern__getFromOther(Zig::GlobalObject* global, Hasher* hasher);
 Hasher* getFromOther(Zig::GlobalObject* globalObject, Hasher* hasher)
 {
-    return Bun__CryptoHasherExtern__getFromOther(globalObject, hasher);
+    return Fun__CryptoHasherExtern__getFromOther(globalObject, hasher);
 }
 
-extern "C" void Bun__CryptoHasherExtern__destroy(Hasher* hasher);
+extern "C" void Fun__CryptoHasherExtern__destroy(Hasher* hasher);
 void destroy(Hasher* hasher)
 {
-    Bun__CryptoHasherExtern__destroy(hasher);
+    Fun__CryptoHasherExtern__destroy(hasher);
 }
 
-extern "C" bool Bun__CryptoHasherExtern__update(Hasher* hasher, const uint8_t* data, size_t len);
+extern "C" bool Fun__CryptoHasherExtern__update(Hasher* hasher, const uint8_t* data, size_t len);
 bool update(Hasher* hasher, std::span<const uint8_t> data)
 {
-    return Bun__CryptoHasherExtern__update(hasher, data.data(), data.size());
+    return Fun__CryptoHasherExtern__update(hasher, data.data(), data.size());
 }
 
-extern "C" uint32_t Bun__CryptoHasherExtern__digest(Hasher* hasher, Zig::GlobalObject* globalObject, uint8_t* out, size_t outLen);
+extern "C" uint32_t Fun__CryptoHasherExtern__digest(Hasher* hasher, Zig::GlobalObject* globalObject, uint8_t* out, size_t outLen);
 uint32_t digest(Hasher* hasher, Zig::GlobalObject* globalObject, std::span<uint8_t> out)
 {
-    return Bun__CryptoHasherExtern__digest(hasher, globalObject, out.data(), out.size());
+    return Fun__CryptoHasherExtern__digest(hasher, globalObject, out.data(), out.size());
 }
 
-extern "C" uint32_t Bun__CryptoHasherExtern__getDigestSize(Hasher* hasher);
+extern "C" uint32_t Fun__CryptoHasherExtern__getDigestSize(Hasher* hasher);
 uint32_t getDigestSize(Hasher* hasher)
 {
-    return Bun__CryptoHasherExtern__getDigestSize(hasher);
+    return Fun__CryptoHasherExtern__getDigestSize(hasher);
 }
 
 }; // namespace ExternZigHash
@@ -162,7 +162,7 @@ std::optional<ncrypto::EVPKeyPointer> keyFromString(JSGlobalObject* lexicalGloba
     }
 
     if (res.error.value() == ncrypto::EVPKeyPointer::PKParseError::NEED_PASSPHRASE) {
-        Bun::ERR::MISSING_PASSPHRASE(scope, lexicalGlobalObject, "Passphrase required for encrypted key"_s);
+        Fun::ERR::MISSING_PASSPHRASE(scope, lexicalGlobalObject, "Passphrase required for encrypted key"_s);
         return std::nullopt;
     }
 
@@ -179,7 +179,7 @@ ncrypto::EVPKeyPointer::PKFormatType parseKeyFormat(JSC::JSGlobalObject* globalO
     }
 
     if (!formatValue.isString()) {
-        Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, formatValue);
+        Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, formatValue);
         return {};
     }
 
@@ -198,7 +198,7 @@ ncrypto::EVPKeyPointer::PKFormatType parseKeyFormat(JSC::JSGlobalObject* globalO
         return ncrypto::EVPKeyPointer::PKFormatType::JWK;
     }
 
-    Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, formatValue);
+    Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, formatValue);
     return {};
 }
 
@@ -211,7 +211,7 @@ std::optional<ncrypto::EVPKeyPointer::PKEncodingType> parseKeyType(JSC::JSGlobal
     }
 
     if (!typeValue.isString()) {
-        Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, typeValue);
+        Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, typeValue);
         return std::nullopt;
     }
 
@@ -220,7 +220,7 @@ std::optional<ncrypto::EVPKeyPointer::PKEncodingType> parseKeyType(JSC::JSGlobal
 
     if (typeStr == "pkcs1"_s) {
         if (keyType && keyType != "rsa"_s) {
-            Bun::ERR::CRYPTO_INCOMPATIBLE_KEY_OPTIONS(scope, globalObject, "pkcs1"_s, "can only be used for RSA keys"_s);
+            Fun::ERR::CRYPTO_INCOMPATIBLE_KEY_OPTIONS(scope, globalObject, "pkcs1"_s, "can only be used for RSA keys"_s);
             return std::nullopt;
         }
         return ncrypto::EVPKeyPointer::PKEncodingType::PKCS1;
@@ -230,13 +230,13 @@ std::optional<ncrypto::EVPKeyPointer::PKEncodingType> parseKeyType(JSC::JSGlobal
         return ncrypto::EVPKeyPointer::PKEncodingType::PKCS8;
     } else if (typeStr == "sec1"_s && isPublic != true) {
         if (keyType && keyType != "ec"_s) {
-            Bun::ERR::CRYPTO_INCOMPATIBLE_KEY_OPTIONS(scope, globalObject, "sec1"_s, "can only be used for EC keys"_s);
+            Fun::ERR::CRYPTO_INCOMPATIBLE_KEY_OPTIONS(scope, globalObject, "sec1"_s, "can only be used for EC keys"_s);
             return std::nullopt;
         }
         return ncrypto::EVPKeyPointer::PKEncodingType::SEC1;
     }
 
-    Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, typeValue);
+    Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, optionName, typeValue);
     return std::nullopt;
 }
 
@@ -365,7 +365,7 @@ JSValue createCryptoError(JSC::JSGlobalObject* globalObject, ThrowScope& scope, 
     return errorObject;
 }
 
-extern "C" EncodedJSValue Bun__NodeCrypto__createCryptoError(JSC::JSGlobalObject* globalObject, uint32_t err, const char* message)
+extern "C" EncodedJSValue Fun__NodeCrypto__createCryptoError(JSC::JSGlobalObject* globalObject, uint32_t err, const char* message)
 {
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     return JSValue::encode(createCryptoError(globalObject, scope, err, message));
@@ -389,7 +389,7 @@ std::optional<int32_t> getIntOption(JSC::JSGlobalObject* globalObject, ThrowScop
         return std::nullopt;
 
     if (!value.isInt32()) {
-        Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, makeString("options."_s, name), value);
+        Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, makeString("options."_s, name), value);
         return std::nullopt;
     }
 
@@ -421,7 +421,7 @@ DSASigEnc getDSASigEnc(JSC::JSGlobalObject* globalObject, ThrowScope& scope, JSV
     }
 
     if (!dsaEncoding.isString()) {
-        Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "options.dsaEncoding"_s, dsaEncoding);
+        Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "options.dsaEncoding"_s, dsaEncoding);
         return {};
     }
 
@@ -438,7 +438,7 @@ DSASigEnc getDSASigEnc(JSC::JSGlobalObject* globalObject, ThrowScope& scope, JSV
         return DSASigEnc::P1363;
     }
 
-    Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "options.dsaEncoding"_s, dsaEncoding);
+    Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "options.dsaEncoding"_s, dsaEncoding);
     return {};
 }
 
@@ -508,7 +508,7 @@ JSC::JSArrayBufferView* getArrayBufferOrView(JSGlobalObject* globalObject, Throw
 
         auto* view = dynamicDowncast<JSC::JSArrayBufferView>(buf);
         if (!view) {
-            Bun::ERR::INVALID_ARG_INSTANCE(scope, globalObject, argName, "Buffer, TypedArray, or DataView"_s, value);
+            Fun::ERR::INVALID_ARG_INSTANCE(scope, globalObject, argName, "Buffer, TypedArray, or DataView"_s, value);
             return {};
         }
 
@@ -589,7 +589,7 @@ JSC::JSArrayBufferView* getArrayBufferOrView(JSGlobalObject* globalObject, Throw
         auto encoding = maybeEncoding.has_value() ? maybeEncoding.value() : BufferEncodingType::buffer;
 
         if (encoding == BufferEncodingType::hex && dataString->length() % 2 != 0) {
-            Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, dataString->length()));
+            Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, dataString->length()));
             return {};
         }
 

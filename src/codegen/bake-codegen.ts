@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import assert from "node:assert";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -12,7 +14,7 @@ if (!codegenRoot) {
 }
 
 const base_dir = join(import.meta.dirname, "../bake");
-process.chdir(base_dir); // to make bun build predictable in development
+process.chdir(base_dir); // to make fun build predictable in development
 
 function convertZigEnum(zig: string, names: string[]) {
   let output = "/** Generated from DevServer.zig */\n";
@@ -31,7 +33,7 @@ function convertZigEnum(zig: string, names: string[]) {
 }
 
 function css(file: string, is_development: boolean): string {
-  const { success, stdout, stderr } = Bun.spawnSync({
+  const { success, stdout, stderr } = Fun.spawnSync({
     cmd: [process.execPath, "build", file, "--minify"],
     cwd: import.meta.dir,
     stdio: ["ignore", "pipe", "pipe"],
@@ -47,12 +49,12 @@ async function run() {
   const results = await Promise.allSettled(
     ["client", "server", "error"].map(async file => {
       const side = file === "error" ? "client" : file;
-      let result = await Bun.build({
+      let result = await Fun.build({
         entrypoints: [join(base_dir, `hmr-runtime-${file}.ts`)],
         define: {
           side: JSON.stringify(side),
           IS_ERROR_RUNTIME: String(file === "error"),
-          IS_BUN_DEVELOPMENT: String(!!debug),
+          IS_FUN_DEVELOPMENT: String(!!debug),
           OVERLAY_CSS: css("../bake/client/overlay.css", !!debug),
         },
         minify: {
@@ -89,7 +91,7 @@ async function run() {
 
       writeIfNotChanged(generated_entrypoint, combined_source);
 
-      result = await Bun.build({
+      result = await Fun.build({
         entrypoints: [generated_entrypoint],
         minify: !debug,
         drop: debug ? [] : ["DEBUG"],

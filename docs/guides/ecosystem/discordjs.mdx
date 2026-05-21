@@ -1,15 +1,15 @@
 ---
 title: Create a Discord bot
-sidebarTitle: "Discord.js with Bun"
+sidebarTitle: "Discord.js with Fun"
 mode: center
 ---
 
-Discord.js works out of the box with Bun. Let's write a bot. First create a directory and initialize it with `bun init`.
+Discord.js works out of the box with Fun. Let's write a bot. First create a directory and initialize it with `fun init`.
 
 ```sh terminal icon="terminal"
 mkdir my-bot
 cd my-bot
-bun init
+fun init
 ```
 
 ---
@@ -17,7 +17,7 @@ bun init
 Now install Discord.js.
 
 ```sh terminal icon="terminal"
-bun add discord.js
+fun add discord.js
 ```
 
 ---
@@ -26,7 +26,7 @@ Before we go further, we need to go to the [Discord developer portal](https://di
 
 ---
 
-Once complete, you'll be presented with your bot's _private key_. Let's add this to a file called `.env.local`. Bun automatically reads this file and loads it into `process.env`.
+Once complete, you'll be presented with your bot's _private key_. Let's add this to a file called `.env.local`. Fun automatically reads this file and loads it into `process.env`.
 
 <Note>This is an example token that has already been invalidated.</Note>
 
@@ -65,10 +65,10 @@ client.login(process.env.DISCORD_TOKEN);
 
 ---
 
-Now we can run our bot with `bun run`. It may take a several seconds for the client to initialize the first time you run the file.
+Now we can run our bot with `fun run`. It may take a several seconds for the client to initialize the first time you run the file.
 
 ```sh terminal icon="terminal"
-bun run bot.ts
+fun run bot.ts
 ```
 
 ```txt
@@ -77,4 +77,4 @@ Ready! Logged in as my-bot#1234
 
 ---
 
-You're up and running with a bare-bones Discord.js bot! This is a basic guide to setting up your bot with Bun; we recommend the [official discord.js docs](https://discordjs.guide/) for complete information on the `discord.js` API.
+You're up and running with a bare-bones Discord.js bot! This is a basic guide to setting up your bot with Fun; we recommend the [official discord.js docs](https://discordjs.guide/) for complete information on the `discord.js` API.

@@ -8,7 +8,7 @@
 
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 
 JSC_DEFINE_HOST_FUNCTION(jsCreateSecretKey, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callFrame))
 {
@@ -98,4 +98,4 @@ JSC_DEFINE_HOST_FUNCTION(jsCreatePrivateKey, (JSGlobalObject * lexicalGlobalObje
     return JSValue::encode(privateKey);
 }
 
-} // namespace Bun
+} // namespace Fun

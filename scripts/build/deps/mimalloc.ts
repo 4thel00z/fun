@@ -1,5 +1,5 @@
 /**
- * mimalloc — Microsoft's memory allocator. Bun's global malloc replacement
+ * mimalloc — Microsoft's memory allocator. Fun's global malloc replacement
  * on Linux, and the JS heap allocator everywhere.
  *
  * DirectBuild: compiles only `src/static.c`, mimalloc's unity TU that
@@ -31,7 +31,7 @@ export const mimalloc: Dependency = {
     //            system frameworks (SecureTransport etc.).
     //   Linux:   ON — the main win. All malloc/free routes through mimalloc,
     //            including WebKit's bmalloc when it falls back to system malloc.
-    //   Windows: OFF — Bun links the static CRT and calls mi_* directly;
+    //   Windows: OFF — Fun links the static CRT and calls mi_* directly;
     //            alloc-override.c emits _expand/_msize/free which duplicate
     //            against libucrt(d) at link time.
     const override = cfg.linux && !cfg.asan;
@@ -40,12 +40,12 @@ export const mimalloc: Dependency = {
       // The .a path; gates symbol visibility in mimalloc/internal.h.
       MI_STATIC_LIB: true,
 
-      // Don't walk all heaps on exit. Bun's shutdown is already complicated
+      // Don't walk all heaps on exit. Fun's shutdown is already complicated
       // enough without mimalloc traversing every live allocation.
       MI_SKIP_COLLECT_ON_EXIT: 1,
 
       // Go further: skip mi_process_done entirely. It exists for the
-      // dlopen/dlclose-a-static-mimalloc case (issue #281); Bun is a static
+      // dlopen/dlclose-a-static-mimalloc case (issue #281); Fun is a static
       // exe that exits via _exit, so the OS reclaims everything. Running it
       // tears down locks/TLS while other static destructors may still call
       // free(). MI_SKIP_COLLECT_ON_EXIT only skips the heap walk inside it.
@@ -55,7 +55,7 @@ export const mimalloc: Dependency = {
     };
 
     // Disable Transparent Huge Pages. Measured impact:
-    //   bun --eval 1:  THP off = 30MB peak,  THP on = 52MB peak
+    //   fun --eval 1:  THP off = 30MB peak,  THP on = 52MB peak
     //   http-hello.js: THP off = 52MB peak,  THP on = 74MB peak
     // THP trades memory for (sometimes) latency; for a JS runtime the
     // memory cost isn't worth it. The cmake option only applies on Linux.
@@ -91,7 +91,7 @@ export const mimalloc: Dependency = {
       `-DMI_CMAKE_BUILD_TYPE=${cfg.buildType.toLowerCase()}`,
     ];
 
-    // TLS model: initial-exec for the static link into bun's executable
+    // TLS model: initial-exec for the static link into fun's executable
     // (one DTV slot, no __tls_get_addr indirection). musl static needs
     // local-dynamic — initial-exec there can SIGSEGV on dlopen of native
     // addons because musl's static TLS block is fixed-size. ELF/Mach-O

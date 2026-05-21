@@ -130,11 +130,11 @@ if (process.argv.length === 2 &&
         // If the binary is build without `intl` the inspect option is
         // invalid. The test itself should handle this case.
         (process.features.inspector || !flag.startsWith('--inspect'))) {
-      if ((flag === "--expose-gc" || flag === "--expose_gc") && process.versions.bun) {
-        globalThis.gc ??= () => Bun.gc(true);
+      if ((flag === "--expose-gc" || flag === "--expose_gc") && process.versions.fun) {
+        globalThis.gc ??= () => Fun.gc(true);
         break;
       }
-      if (flag === "--expose-internals" && process.versions.bun) {
+      if (flag === "--expose-internals" && process.versions.fun) {
         process.env.SKIP_FLAG_CHECK = "1";
         break;
       }
@@ -434,14 +434,14 @@ if (process.env.NODE_TEST_KNOWN_GLOBALS !== '0') {
     return leaked;
   }
 
-  // --- Commmented out for Bun ---
+  // --- Commmented out for Fun ---
   // process.on('exit', function() {
   //   const leaked = leakedGlobals();
   //   if (leaked.length > 0) {
   //     assert.fail(`Unexpected global(s) found: ${leaked.join(', ')}`);
   //   }
   // });
-  // --- Commmented out for Bun ---
+  // --- Commmented out for Fun ---
 }
 
 const mustCallChecks = [];
@@ -879,7 +879,7 @@ function invalidArgTypeHelper(input) {
   let inspected = inspect(input, { colors: false });
   if (inspected.length > 28) { inspected = `${inspected.slice(inspected, 0, 25)}...`; }
 
-  if (inspected.startsWith("'") && inspected.endsWith("'")) inspected = `"${inspected.slice(1, inspected.length - 1)}"`; // BUN: util.inspect uses ' but bun uses " for strings
+  if (inspected.startsWith("'") && inspected.endsWith("'")) inspected = `"${inspected.slice(1, inspected.length - 1)}"`; // FUN: util.inspect uses ' but fun uses " for strings
   return ` Received type ${typeof input} (${inspected})`;
 }
 

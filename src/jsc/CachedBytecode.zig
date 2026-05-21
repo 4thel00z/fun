@@ -1,8 +1,8 @@
 pub const CachedBytecode = opaque {
-    extern fn generateCachedModuleByteCodeFromSourceCode(sourceProviderURL: *bun.String, input_code: [*]const u8, inputSourceCodeSize: usize, outputByteCode: *?[*]u8, outputByteCodeSize: *usize, cached_bytecode: *?*CachedBytecode) bool;
-    extern fn generateCachedCommonJSProgramByteCodeFromSourceCode(sourceProviderURL: *bun.String, input_code: [*]const u8, inputSourceCodeSize: usize, outputByteCode: *?[*]u8, outputByteCodeSize: *usize, cached_bytecode: *?*CachedBytecode) bool;
+    extern fn generateCachedModuleByteCodeFromSourceCode(sourceProviderURL: *fun.String, input_code: [*]const u8, inputSourceCodeSize: usize, outputByteCode: *?[*]u8, outputByteCodeSize: *usize, cached_bytecode: *?*CachedBytecode) bool;
+    extern fn generateCachedCommonJSProgramByteCodeFromSourceCode(sourceProviderURL: *fun.String, input_code: [*]const u8, inputSourceCodeSize: usize, outputByteCode: *?[*]u8, outputByteCodeSize: *usize, cached_bytecode: *?*CachedBytecode) bool;
 
-    pub fn generateForESM(sourceProviderURL: *bun.String, input: []const u8) ?struct { []const u8, *CachedBytecode } {
+    pub fn generateForESM(sourceProviderURL: *fun.String, input: []const u8) ?struct { []const u8, *CachedBytecode } {
         var this: ?*CachedBytecode = null;
 
         var input_code_size: usize = 0;
@@ -14,7 +14,7 @@ pub const CachedBytecode = opaque {
         return null;
     }
 
-    pub fn generateForCJS(sourceProviderURL: *bun.String, input: []const u8) ?struct { []const u8, *CachedBytecode } {
+    pub fn generateForCJS(sourceProviderURL: *fun.String, input: []const u8) ?struct { []const u8, *CachedBytecode } {
         var this: ?*CachedBytecode = null;
         var input_code_size: usize = 0;
         var input_code_ptr: ?[*]u8 = null;
@@ -30,7 +30,7 @@ pub const CachedBytecode = opaque {
         return CachedBytecode__deref(this);
     }
 
-    pub fn generate(format: bun.options.Format, input: []const u8, source_provider_url: *bun.String) ?struct { []const u8, *CachedBytecode } {
+    pub fn generate(format: fun.options.Format, input: []const u8, source_provider_url: *fun.String) ?struct { []const u8, *CachedBytecode } {
         return switch (format) {
             .esm => generateForESM(source_provider_url, input),
             .cjs => generateForCJS(source_provider_url, input),
@@ -72,5 +72,5 @@ pub const CachedBytecode = opaque {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

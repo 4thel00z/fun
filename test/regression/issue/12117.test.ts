@@ -4,7 +4,7 @@
 // Previously, the raw socket's has_pending_activity was never set to
 // false on close, causing it (and all its retained objects) to leak.
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { tls as COMMON_CERT, expectMaxObjectTypeCount } from "harness";
 import { once } from "node:events";
 import net from "node:net";

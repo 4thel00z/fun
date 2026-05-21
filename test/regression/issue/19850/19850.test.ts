@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 describe("when beforeEach callback throws", () => {
   test("test name is not garbled", async () => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "test", "./err-in-hook-and-multiple-tests.ts"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "test", "./err-in-hook-and-multiple-tests.ts"],
       cwd: import.meta.dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, "pipe", "pipe"],
     });
     await proc.exited;
@@ -21,7 +21,7 @@ describe("when beforeEach callback throws", () => {
       .replaceAll("\\", "/");
     expect(err).toBe(`
 err-in-hook-and-multiple-tests.ts:
-1 | import { beforeEach, test } from "bun:test";
+1 | import { beforeEach, test } from "fun:test";
 2 | 
 3 | beforeEach(() => {
 4 |   throw new Error("beforeEach");
@@ -29,7 +29,7 @@ err-in-hook-and-multiple-tests.ts:
 error: beforeEach
       at <anonymous> (/err-in-hook-and-multiple-tests.ts:4:31)
 (fail) test 0
-1 | import { beforeEach, test } from "bun:test";
+1 | import { beforeEach, test } from "fun:test";
 2 | 
 3 | beforeEach(() => {
 4 |   throw new Error("beforeEach");
@@ -46,10 +46,10 @@ Ran 2 tests across 1 file.
 
   test("times reported are reasonable", async () => {
     const start = Date.now();
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "test", "./err-and-sleep-in-hook.ts"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "test", "./err-and-sleep-in-hook.ts"],
       cwd: import.meta.dir,
-      env: bunEnv,
+      env: funEnv,
       stdio: [null, "pipe", "pipe"],
     });
     await proc.exited;

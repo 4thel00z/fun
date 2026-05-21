@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { ChildProcess, spawn } from "child_process";
-import { bunEnv, bunExe, isASAN, isBroken, isMacOS } from "harness";
+import { funEnv, funExe, isASAN, isBroken, isMacOS } from "harness";
 import { join } from "path";
 
 const REQUESTS_COUNT = isASAN ? 5_000 : 50_000;
@@ -13,9 +13,9 @@ interface ServerInfo {
 
 async function spawnServer(): Promise<{ child: ChildProcess; serverInfo: ServerInfo }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(bunExe(), [join(import.meta.dir, "express-memory-leak-fixture.mjs")], {
+    const child = spawn(funExe(), [join(import.meta.dir, "express-memory-leak-fixture.mjs")], {
       stdio: ["inherit", "inherit", "inherit", "ipc"],
-      env: bunEnv,
+      env: funEnv,
 
       serialization: "json",
     });
@@ -187,7 +187,7 @@ async function createAbortedRequestBatch(serverInfo: ServerInfo): Promise<void> 
       .catch(e => {});
   }
 
-  await Bun.sleep(1);
+  await Fun.sleep(1);
   signal.abort();
   await Promise.allSettled(batch);
 }
@@ -215,8 +215,8 @@ test.skipIf(isBroken && isMacOS)(
       console.log(`After ${REQUESTS_COUNT} aborted requests: RSS = ${formatBytes(rss1.rss)}`);
 
       // Run garbage collection if available
-      if (typeof Bun !== "undefined") {
-        Bun.gc(true);
+      if (typeof Fun !== "undefined") {
+        Fun.gc(true);
       }
 
       // Run second batch of aborted requests

@@ -1,19 +1,19 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isArm64, isBroken, isCI, isIntelMacOS, isMacOS, isWindows, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isArm64, isBroken, isCI, isIntelMacOS, isMacOS, isWindows, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 describe.concurrent("require.cache", () => {
   test("require.cache is not an empty object literal when inspected", () => {
-    const inspected = Bun.inspect(require.cache);
+    const inspected = Fun.inspect(require.cache);
     expect(inspected).not.toBe("{}");
     expect(inspected).toContain("Module {");
   });
 
   // This also tests __dirname and __filename
   test("require.cache", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", join(import.meta.dir, "require-cache-fixture.cjs")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", join(import.meta.dir, "require-cache-fixture.cjs")],
+      env: funEnv,
       stderr: "inherit",
     });
 
@@ -23,12 +23,12 @@ describe.concurrent("require.cache", () => {
     expect(exitCode).toBe(0);
   });
 
-  // https://github.com/oven-sh/bun/issues/5188
+  // https://github.com/underdoc-org/fun/issues/5188
   // msgpackr-extract has no prebuilt binary for win32-arm64, so it's unavailable there
   test.skipIf(isWindows && isArm64)("require.cache does not include unevaluated modules", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", join(import.meta.dir, "require-cache-bug-5188.js")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", join(import.meta.dir, "require-cache-bug-5188.js")],
+      env: funEnv,
       stderr: "inherit",
     });
 
@@ -51,7 +51,7 @@ describe.concurrent("require.cache", () => {
         "index.js": text,
         "require-cache-bug-leak-fixture.js": `
           const path = require.resolve("./index.js");
-          const gc = global.gc || globalThis?.Bun?.gc || (() => {});
+          const gc = global.gc || globalThis?.Fun?.gc || (() => {});
           const noChildren = module.children = { indexOf() { return 0; } }; // disable children tracking
           function bust() {
             const mod = require.cache[path];
@@ -78,7 +78,7 @@ describe.concurrent("require.cache", () => {
           console.log("RSS diff", (diff / 1024 / 1024) | 0, "MB");
           console.log("RSS", (diff / 1024 / 1024) | 0, "MB");
           if (diff > 100 * 1024 * 1024) {
-            // Bun v1.1.21 reported 844 MB here on macOS arm64.
+            // Fun v1.1.21 reported 844 MB here on macOS arm64.
             throw new Error("Memory leak detected");
           }
 
@@ -86,9 +86,9 @@ describe.concurrent("require.cache", () => {
         `,
       });
       console.log({ dir });
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
+        env: funEnv,
         stdio: ["inherit", "inherit", "inherit"],
       });
 
@@ -109,7 +109,7 @@ describe.concurrent("require.cache", () => {
         "index.js": text,
         "require-cache-bug-leak-fixture.js": `
           const path = require.resolve("./index.js");
-          const gc = global.gc || globalThis?.Bun?.gc || (() => {});
+          const gc = global.gc || globalThis?.Fun?.gc || (() => {});
           function bust() {
             delete require.cache[path];
           }
@@ -130,17 +130,17 @@ describe.concurrent("require.cache", () => {
           console.log("RSS diff", (diff / 1024 / 1024) | 0, "MB");
           console.log("RSS", (diff / 1024 / 1024) | 0, "MB");
           if (diff > 64 * 1024 * 1024) {
-            // Bun v1.1.22 reported 1 MB here on macoS arm64.
-            // Bun v1.1.21 reported 257 MB here on macoS arm64.
+            // Fun v1.1.22 reported 1 MB here on macoS arm64.
+            // Fun v1.1.21 reported 257 MB here on macoS arm64.
             throw new Error("Memory leak detected");
           }
 
           export default 123;
         `,
       });
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
+        env: funEnv,
         stdio: ["inherit", "inherit", "inherit"],
       });
 
@@ -158,7 +158,7 @@ describe.concurrent("require.cache", () => {
         "index.js": text,
         "require-cache-bug-leak-fixture.js": `
           const path = require.resolve("./index.js");
-          const gc = global.gc || globalThis?.Bun?.gc || (() => {});
+          const gc = global.gc || globalThis?.Fun?.gc || (() => {});
           function bust() {
             delete require.cache[path];
           }
@@ -179,8 +179,8 @@ describe.concurrent("require.cache", () => {
           console.log("RSS diff", (diff / 1024 / 1024) | 0, "MB");
           console.log("RSS", (diff / 1024 / 1024) | 0, "MB");
           if (diff > 64 * 1024 * 1024) {
-            // Bun v1.1.21 reported 423 MB here on macoS arm64.
-            // Bun v1.1.22 reported 4 MB here on macoS arm64.
+            // Fun v1.1.21 reported 423 MB here on macoS arm64.
+            // Fun v1.1.22 reported 4 MB here on macoS arm64.
             throw new Error("Memory leak detected");
           }
 
@@ -188,9 +188,9 @@ describe.concurrent("require.cache", () => {
         `,
       });
       console.log({ dir });
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
+        env: funEnv,
         stdio: ["inherit", "inherit", "inherit"],
       });
 
@@ -216,7 +216,7 @@ describe.concurrent("require.cache", () => {
           "index.js": text,
           "require-cache-bug-leak-fixture.js": `
           const path = require.resolve("./index.js");
-          const gc = global.gc || globalThis?.Bun?.gc || (() => {});
+          const gc = global.gc || globalThis?.Fun?.gc || (() => {});
           function bust() {
             const mod = require.cache[path];
             if (mod) {
@@ -242,17 +242,17 @@ describe.concurrent("require.cache", () => {
           console.log("RSS diff", (diff / 1024 / 1024) | 0, "MB");
           console.log("RSS", (diff / 1024 / 1024) | 0, "MB");
           if (diff > 64 * 1024 * 1024) {
-            // Bun v1.1.22 reported 4 MB here on macoS arm64.
-            // Bun v1.1.21 reported 248 MB here on macoS arm64.
+            // Fun v1.1.22 reported 4 MB here on macoS arm64.
+            // Fun v1.1.21 reported 248 MB here on macoS arm64.
             throw new Error("Memory leak detected");
           }
 
           exports.abc = 123;
         `,
         });
-        await using proc = Bun.spawn({
-          cmd: [bunExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
-          env: bunEnv,
+        await using proc = Fun.spawn({
+          cmd: [funExe(), "run", "--smol", join(dir, "require-cache-bug-leak-fixture.js")],
+          env: funEnv,
           stdio: ["inherit", "inherit", "inherit"],
         });
 
@@ -265,9 +265,9 @@ describe.concurrent("require.cache", () => {
 
   describe("files transpiled and loaded don't leak the AST", () => {
     test("via require()", async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "run", join(import.meta.dir, "require-cache-bug-leak-fixture.js")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "run", join(import.meta.dir, "require-cache-bug-leak-fixture.js")],
+        env: funEnv,
         stderr: "inherit",
       });
 
@@ -278,9 +278,9 @@ describe.concurrent("require.cache", () => {
     }, 20000);
 
     test("via import()", async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "run", join(import.meta.dir, "esm-bug-leak-fixture.mjs")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "run", join(import.meta.dir, "esm-bug-leak-fixture.mjs")],
+        env: funEnv,
         stderr: "inherit",
       });
 
@@ -294,9 +294,9 @@ describe.concurrent("require.cache", () => {
   // These tests are extra slow in debug builds
   describe("files transpiled and loaded don't leak file paths", () => {
     test("via require()", async () => {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "--smol", "run", join(import.meta.dir, "cjs-fixture-leak-small.js")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "--smol", "run", join(import.meta.dir, "cjs-fixture-leak-small.js")],
+        env: funEnv,
         stderr: "inherit",
       });
 
@@ -309,9 +309,9 @@ describe.concurrent("require.cache", () => {
     test(
       "via import()",
       async () => {
-        await using proc = Bun.spawn({
-          cmd: [bunExe(), "--smol", "run", join(import.meta.dir, "esm-fixture-leak-small.mjs")],
-          env: bunEnv,
+        await using proc = Fun.spawn({
+          cmd: [funExe(), "--smol", "run", join(import.meta.dir, "esm-fixture-leak-small.mjs")],
+          env: funEnv,
           stderr: "inherit",
         });
 

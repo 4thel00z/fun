@@ -1,5 +1,5 @@
-import { $ } from "bun";
-import { describe, expect, test } from "bun:test";
+import { $ } from "fun";
+import { describe, expect, test } from "fun:test";
 
 describe("http response does not include an extraneous terminating 0\\r\\n\\r\\n", () => {
   const scenarios = [
@@ -32,7 +32,7 @@ describe("http response does not include an extraneous terminating 0\\r\\n\\r\\n
             type: "direct",
             async pull(controller) {
               controller.write("hello");
-              await Bun.sleep(5);
+              await Fun.sleep(5);
               await controller.end();
             },
           }),
@@ -73,7 +73,7 @@ describe("http response does not include an extraneous terminating 0\\r\\n\\r\\n
           new ReadableStream({
             type: "direct",
             async pull(controller) {
-              await Bun.sleep(1);
+              await Fun.sleep(1);
               controller.write("hello");
               await controller.flush();
               await controller.close();
@@ -90,7 +90,7 @@ describe("http response does not include an extraneous terminating 0\\r\\n\\r\\n
   ];
   for (let i = 0; i < scenarios.length; i++) {
     test("scenario " + i, async () => {
-      using server = Bun.serve(scenarios[i]);
+      using server = Fun.serve(scenarios[i]);
       const { stdout, stderr } = await $`curl ${server.url} --verbose`.quiet();
       expect(stdout.toString()).toBe("hello");
       expect(stderr.toString()).toContain("left intact");

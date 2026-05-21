@@ -791,13 +791,13 @@ pub fn ParsePrefix(
     };
 }
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
@@ -811,10 +811,10 @@ const Property = G.Property;
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const AsyncPrefixExpression = js_parser.AsyncPrefixExpression;
 const DeferredErrors = js_parser.DeferredErrors;
 const FnOrArrowDataParse = js_parser.FnOrArrowDataParse;

@@ -1,6 +1,6 @@
 'use strict';
 const common = require('../common');
-if (common.isWindows) return; // TODO: BUN https://github.com/oven-sh/bun/issues/12827
+if (common.isWindows) return; // TODO: FUN https://github.com/underdoc-org/fun/issues/12827
 const assert = require('assert');
 const EventEmitter = require('events');
 

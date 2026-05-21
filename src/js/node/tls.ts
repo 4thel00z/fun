@@ -12,7 +12,7 @@ const { Server: NetServer, Socket: NetSocket } = net;
 const getBundledRootCertificates = $newCppFunction("NodeTLS.cpp", "getBundledRootCertificates", 1);
 const getExtraCACertificates = $newCppFunction("NodeTLS.cpp", "getExtraCACertificates", 1);
 const getSystemCACertificates = $newCppFunction("NodeTLS.cpp", "getSystemCACertificates", 1);
-const canonicalizeIP = $newCppFunction("NodeTLS.cpp", "Bun__canonicalizeIP", 1);
+const canonicalizeIP = $newCppFunction("NodeTLS.cpp", "Fun__canonicalizeIP", 1);
 
 const getTLSDefaultCiphers = $newCppFunction("NodeTLS.cpp", "getDefaultCiphers", 0);
 const setTLSDefaultCiphers = $newCppFunction("NodeTLS.cpp", "setDefaultCiphers", 1);
@@ -397,7 +397,7 @@ function checkServerIdentity(hostname, cert) {
 
 // Native SSL_CTX wrapper. `intern()` is WeakGCMap-memoised by config digest
 // (the native `SSLContextCache` underneath is shared with every Zig consumer
-// — Postgres, Valkey, `Bun.connect`, …), so identical options return the same
+// — Postgres, Valkey, `Fun.connect`, …), so identical options return the same
 // native handle and the same `SSL_CTX*`. Replaces the SHA-256/WeakRef cache
 // that used to live in this file.
 const NativeSecureContext = $zig("SecureContext.zig", "js.getConstructor");
@@ -483,7 +483,7 @@ const kcheckServerIdentity = Symbol("kcheckServerIdentity");
 const ksession = Symbol("ksession");
 const krenegotiationDisabled = Symbol("renegotiationDisabled");
 
-const buntls = Symbol.for("::buntls::");
+const funtls = Symbol.for("::funtls::");
 
 function TLSSocket(socket?, options?) {
   this[ksecureContext] = undefined;
@@ -680,7 +680,7 @@ TLSSocket.prototype.getX509Certificate = function getX509Certificate() {
   return this._handle?.getX509Certificate?.();
 };
 
-TLSSocket.prototype[buntls] = function (port, host) {
+TLSSocket.prototype[funtls] = function (port, host) {
   const ctx = this[ksecureContext];
   // RFC 6066 forbids IP literals in SNI. Match Node.js: only default servername to host
   // when host is not an IP. For IP hosts, pass "" so the native layer skips SNI instead of
@@ -814,14 +814,14 @@ function Server(options, secureConnectionListener): void {
   };
 
   Server.prototype.getTicketKeys = function () {
-    throw Error("Not implented in Bun yet");
+    throw Error("Not implented in Fun yet");
   };
 
   Server.prototype.setTicketKeys = function () {
-    throw Error("Not implented in Bun yet");
+    throw Error("Not implented in Fun yet");
   };
 
-  this[buntls] = function (port, host, isClient) {
+  this[funtls] = function (port, host, isClient) {
     return [
       {
         serverName: this.servername || host || "localhost",
@@ -951,7 +951,7 @@ function cacheBundledRootCertificates(): string[] {
   bundledRootCertificates ||= getBundledRootCertificates() as string[];
   return bundledRootCertificates;
 }
-const getUseSystemCA = $newZigFunction("bun.zig", "getUseSystemCA", 0);
+const getUseSystemCA = $newZigFunction("fun.zig", "getUseSystemCA", 0);
 
 let defaultCACertificates: string[] | undefined;
 function cacheDefaultCACertificates() {

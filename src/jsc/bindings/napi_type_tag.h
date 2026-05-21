@@ -1,10 +1,10 @@
 #pragma once
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "root.h"
 #include "napi.h"
 
-namespace Bun {
+namespace Fun {
 
 // An object used to store the 128-bit type UUID provided by a native module in napi_type_tag_object.
 // This is a JSCell because we store it in a weak map
@@ -53,4 +53,4 @@ private:
     napi_type_tag m_tag;
 };
 
-} // namespace Bun
+} // namespace Fun

@@ -92,7 +92,7 @@ var fsevents_default_loop: ?*FSEventsLoop = null;
 
 fn dlsym(handle: ?*anyopaque, comptime Type: type, comptime symbol: [:0]const u8) ?Type {
     if (std.c.dlsym(handle, symbol)) |ptr| {
-        return bun.cast(Type, ptr);
+        return fun.cast(Type, ptr);
     }
     return null;
 }
@@ -170,7 +170,7 @@ var fsevents_cf: ?CoreFoundation = null;
 var fsevents_cs: ?CoreServices = null;
 
 fn InitLibrary() void {
-    const fsevents_cf_handle = bun.sys.dlopen("/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation", .{ .LAZY = true, .LOCAL = true });
+    const fsevents_cf_handle = fun.sys.dlopen("/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation", .{ .LAZY = true, .LOCAL = true });
     if (fsevents_cf_handle == null) @panic("Cannot Load CoreFoundation");
 
     fsevents_cf = CoreFoundation{
@@ -189,7 +189,7 @@ fn InitLibrary() void {
         .RunLoopDefaultMode = dlsym(fsevents_cf_handle, *CFStringRef, "kCFRunLoopDefaultMode") orelse @panic("Cannot Load CoreFoundation"),
     };
 
-    const fsevents_cs_handle = bun.sys.dlopen("/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices", .{ .LAZY = true, .LOCAL = true });
+    const fsevents_cs_handle = fun.sys.dlopen("/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices", .{ .LAZY = true, .LOCAL = true });
     if (fsevents_cs_handle == null) @panic("Cannot Load CoreServices");
 
     fsevents_cs = CoreServices{
@@ -210,7 +210,7 @@ pub const FSEventsLoop = struct {
     sem: Semaphore = .{},
     thread: std.Thread = undefined,
     tasks: ConcurrentTask.Queue = ConcurrentTask.Queue{},
-    watchers: bun.BabyList(?*FSEventsWatcher) = .{},
+    watchers: fun.BabyList(?*FSEventsWatcher) = .{},
     watcher_count: u32 = 0,
     fsevent_stream: FSEventStreamRef = null,
     paths: ?[]?*anyopaque = null,
@@ -237,7 +237,7 @@ pub const FSEventsLoop = struct {
                 }
 
                 pub fn wrap(this: ?*anyopaque) void {
-                    @call(bun.callmod_inline, Callback, .{@as(*Type, @ptrCast(@alignCast(this.?)))});
+                    @call(fun.callmod_inline, Callback, .{@as(*Type, @ptrCast(@alignCast(this.?)))});
                 }
             };
         }
@@ -261,7 +261,7 @@ pub const FSEventsLoop = struct {
     };
 
     pub fn CFThreadLoop(this: *FSEventsLoop) void {
-        bun.Output.Source.configureNamedThread("CFThreadLoop");
+        fun.Output.Source.configureNamedThread("CFThreadLoop");
 
         const CF = CoreFoundation.get();
 
@@ -280,7 +280,7 @@ pub const FSEventsLoop = struct {
     // Runs in CF thread, executed after `enqueueTaskConcurrent()`
     fn CFLoopCallback(arg: ?*anyopaque) callconv(.c) void {
         if (arg) |self| {
-            const this = bun.cast(*FSEventsLoop, self);
+            const this = fun.cast(*FSEventsLoop, self);
 
             var concurrent = this.tasks.popBatch();
             const count = concurrent.count;
@@ -290,13 +290,13 @@ pub const FSEventsLoop = struct {
             var iter = concurrent.iterator();
             while (iter.next()) |task| {
                 task.task.run();
-                if (task.auto_delete) bun.default_allocator.destroy(task);
+                if (task.auto_delete) fun.default_allocator.destroy(task);
             }
         }
     }
 
     pub fn init() !*FSEventsLoop {
-        const this = bun.default_allocator.create(FSEventsLoop) catch unreachable;
+        const this = fun.default_allocator.create(FSEventsLoop) catch unreachable;
 
         const CF = CoreFoundation.get();
 
@@ -322,7 +322,7 @@ pub const FSEventsLoop = struct {
 
     fn enqueueTaskConcurrent(this: *FSEventsLoop, task: Task) void {
         const CF = CoreFoundation.get();
-        var concurrent = bun.default_allocator.create(ConcurrentTask) catch unreachable;
+        var concurrent = fun.default_allocator.create(ConcurrentTask) catch unreachable;
         this.tasks.push(concurrent.from(task, true));
         CF.RunLoopSourceSignal(this.signal_source);
         CF.RunLoopWakeUp(this.loop);
@@ -330,10 +330,10 @@ pub const FSEventsLoop = struct {
 
     // Runs in CF thread, when there're events in FSEventStream
     fn _events_cb(_: FSEventStreamRef, info: ?*anyopaque, numEvents: usize, eventPaths: ?*anyopaque, eventFlags: *FSEventStreamEventFlags, _: *FSEventStreamEventId) callconv(.c) void {
-        const paths_ptr = bun.cast([*][*:0]const u8, eventPaths);
+        const paths_ptr = fun.cast([*][*:0]const u8, eventPaths);
         const paths = paths_ptr[0..numEvents];
-        var loop = bun.cast(*FSEventsLoop, info);
-        const event_flags = bun.cast([*]FSEventStreamEventFlags, eventFlags);
+        var loop = fun.cast(*FSEventsLoop, info);
+        const event_flags = fun.cast([*]FSEventStreamEventFlags, eventFlags);
 
         // Hold the mutex for the whole iteration. `unregisterWatcher` on the
         // main thread nulls the entry under this same mutex and then the
@@ -350,9 +350,9 @@ pub const FSEventsLoop = struct {
 
                 for (paths, 0..) |path_ptr, i| {
                     var flags = event_flags[i];
-                    var path = path_ptr[0..bun.len(path_ptr)];
+                    var path = path_ptr[0..fun.len(path_ptr)];
                     // Filter out paths that are outside handle's request
-                    if (path.len < handle_path.len or !bun.strings.startsWith(path, handle_path)) {
+                    if (path.len < handle_path.len or !fun.strings.startsWith(path, handle_path)) {
                         continue;
                     }
                     const is_file = (flags & kFSEventStreamEventFlagItemIsDir) == 0;
@@ -368,20 +368,20 @@ pub const FSEventsLoop = struct {
 
                         if (path.len == 0) {
                             // Since we're using fsevents to watch the file itself handle_path == path, and we now need to get the basename of the file back
-                            const basename = bun.strings.lastIndexOfChar(handle_path, '/') orelse handle_path.len;
+                            const basename = fun.strings.lastIndexOfChar(handle_path, '/') orelse handle_path.len;
                             path = handle_path[basename..];
                             // Created and Removed seem to be always set, but don't make sense
                             flags &= ~kFSEventsRenamed;
                         }
 
-                        if (bun.strings.startsWithChar(path, '/')) {
+                        if (fun.strings.startsWithChar(path, '/')) {
                             // Skip forward slash
                             path = path[1..];
                         }
                     }
 
                     // Do not emit events from subdirectories (without option set)
-                    if (path.len == 0 or (bun.strings.containsChar(path, '/') and !handle.recursive)) {
+                    if (path.len == 0 or (fun.strings.containsChar(path, '/') and !handle.recursive)) {
                         continue;
                     }
 
@@ -426,7 +426,7 @@ pub const FSEventsLoop = struct {
         if (this.paths) |p| {
             this.paths = null;
             for (p) |s| if (s) |str| CF.Release(str);
-            bun.default_allocator.free(p);
+            fun.default_allocator.free(p);
         }
         if (this.cf_paths) |cf| {
             this.cf_paths = null;
@@ -437,7 +437,7 @@ pub const FSEventsLoop = struct {
             return;
         }
 
-        const paths = bun.default_allocator.alloc(?*anyopaque, watcher_count) catch unreachable;
+        const paths = fun.default_allocator.alloc(?*anyopaque, watcher_count) catch unreachable;
         var count: u32 = 0;
         for (watchers) |w| {
             if (w) |watcher| {
@@ -478,7 +478,7 @@ pub const FSEventsLoop = struct {
             // FSEventStreamCreate can fail under rapid stream churn (resource
             // exhaustion); passing NULL into ScheduleWithRunLoop crashes the CF thread.
             for (paths[0..count]) |s| if (s) |str| CF.Release(str);
-            bun.default_allocator.free(paths);
+            fun.default_allocator.free(paths);
             CF.Release(cf_paths);
             return;
         }
@@ -487,7 +487,7 @@ pub const FSEventsLoop = struct {
         if (CS.FSEventStreamStart(ref) == 0) {
             //clean in case of failure
             for (paths[0..count]) |s| if (s) |str| CF.Release(str);
-            bun.default_allocator.free(paths);
+            fun.default_allocator.free(paths);
             CF.Release(cf_paths);
             CS.FSEventStreamInvalidate(ref);
             CS.FSEventStreamRelease(ref);
@@ -503,7 +503,7 @@ pub const FSEventsLoop = struct {
         defer this.mutex.unlock();
         if (this.watcher_count == this.watchers.len) {
             this.watcher_count += 1;
-            bun.handleOom(this.watchers.append(bun.default_allocator, watcher));
+            fun.handleOom(this.watchers.append(fun.default_allocator, watcher));
         } else {
             var watchers = this.watchers.slice();
             for (watchers, 0..) |w, i| {
@@ -573,8 +573,8 @@ pub const FSEventsLoop = struct {
             }
         }
 
-        this.watchers.deinit(bun.default_allocator);
-        bun.default_allocator.destroy(this);
+        this.watchers.deinit(fun.default_allocator);
+        fun.default_allocator.destroy(this);
     }
 };
 
@@ -590,7 +590,7 @@ pub const FSEventsWatcher = struct {
     pub const UpdateEndCallback = *const fn (ctx: ?*anyopaque) void;
 
     pub fn init(loop: *FSEventsLoop, path: string, recursive: bool, callback: Callback, updateEnd: UpdateEndCallback, ctx: ?*anyopaque) *FSEventsWatcher {
-        const this = bun.default_allocator.create(FSEventsWatcher) catch unreachable;
+        const this = fun.default_allocator.create(FSEventsWatcher) catch unreachable;
 
         this.* = FSEventsWatcher{
             .path = path,
@@ -617,7 +617,7 @@ pub const FSEventsWatcher = struct {
         if (this.loop) |loop| {
             loop.unregisterWatcher(this);
         }
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 };
 
@@ -635,7 +635,7 @@ pub fn watch(path: string, recursive: bool, callback: FSEventsWatcher.Callback, 
 }
 
 pub fn closeAndWait() void {
-    if (!bun.Environment.isMac) {
+    if (!fun.Environment.isMac) {
         return;
     }
 
@@ -653,7 +653,7 @@ const std = @import("std");
 const EventType = @import("./path_watcher.zig").PathWatcher.EventType;
 const Semaphore = std.Thread.Semaphore;
 
-const bun = @import("bun");
-const Mutex = bun.Mutex;
-const UnboundedQueue = bun.threading.UnboundedQueue;
-const Event = bun.jsc.Node.fs.Watcher.Event;
+const fun = @import("fun");
+const Mutex = fun.Mutex;
+const UnboundedQueue = fun.threading.UnboundedQueue;
+const Event = fun.jsc.Node.fs.Watcher.Event;

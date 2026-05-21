@@ -1,4 +1,4 @@
-import { expect, jest, test } from "bun:test";
+import { expect, jest, test } from "fun:test";
 
 test("#7827", () => {
   for (let i = 0; i < 10; i++)
@@ -18,5 +18,5 @@ test("#7827", () => {
       expect(element).toHaveBeenCalledTimes(2);
     })();
 
-  Bun.gc(true);
+  Fun.gc(true);
 });

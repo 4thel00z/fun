@@ -1,5 +1,5 @@
-import { TCPSocketListener } from "bun";
-import { describe, expect, test } from "bun:test";
+import { TCPSocketListener } from "fun";
+import { describe, expect, test } from "fun:test";
 
 const hostname = "127.0.0.1";
 const port = 0;
@@ -13,7 +13,7 @@ describe("WebSocket", () => {
     let handshakeComplete = false;
 
     try {
-      server = Bun.listen({
+      server = Fun.listen({
         socket: {
           data(socket, data) {
             if (handshakeComplete) {
@@ -51,7 +51,7 @@ describe("WebSocket", () => {
               throw new Error("Missing Sec-WebSocket-Key");
             }
 
-            const hasher = new Bun.CryptoHasher("sha1");
+            const hasher = new Fun.CryptoHasher("sha1");
             hasher.update(magic[1].trim());
             hasher.update("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
             const accept = hasher.digest("base64");

@@ -1,6 +1,6 @@
 pub const Ctx = union(enum) {
     disabled: Disabled,
-    enabled: switch (bun.Environment.os) {
+    enabled: switch (fun.Environment.os) {
         .mac => Darwin,
         .linux => Linux,
         else => Disabled,
@@ -19,24 +19,24 @@ pub const Ctx = union(enum) {
 var is_enabled_once = std.once(isEnabledOnce);
 var is_enabled = std.atomic.Value(bool).init(false);
 fn isEnabledOnMacOSOnce() void {
-    if (bun.env_var.DYLD_ROOT_PATH.get() != null or bun.feature_flag.BUN_INSTRUMENTS.get()) {
+    if (fun.env_var.DYLD_ROOT_PATH.get() != null or fun.feature_flag.FUN_INSTRUMENTS.get()) {
         is_enabled.store(true, .seq_cst);
     }
 }
 
 fn isEnabledOnLinuxOnce() void {
-    if (bun.feature_flag.BUN_TRACE.get()) {
+    if (fun.feature_flag.FUN_TRACE.get()) {
         is_enabled.store(true, .seq_cst);
     }
 }
 
 fn isEnabledOnce() void {
-    if (comptime bun.Environment.isMac) {
+    if (comptime fun.Environment.isMac) {
         isEnabledOnMacOSOnce();
         if (Darwin.get() == null) {
             is_enabled.store(false, .seq_cst);
         }
-    } else if (comptime bun.Environment.isLinux) {
+    } else if (comptime fun.Environment.isLinux) {
         isEnabledOnLinuxOnce();
         if (!Linux.isSupported()) {
             is_enabled.store(false, .seq_cst);
@@ -55,7 +55,7 @@ pub fn isEnabled() bool {
 ///
 /// When adding a new event, you must run `scripts/generate-perf-trace-events.sh` to update the list of trace events.
 ///
-/// Tip: Make sure you write bun.perf.trace() with a string literal exactly instead of passing a variable.
+/// Tip: Make sure you write fun.perf.trace() with a string literal exactly instead of passing a variable.
 ///
 /// It has to be compile-time known this way because they need to become string literals in C.
 pub fn trace(comptime name: [:0]const u8) Ctx {
@@ -68,7 +68,7 @@ pub fn trace(comptime name: [:0]const u8) Ctx {
                 \\
                 \\  bash scripts/generate-perf-trace-events.sh
                 \\
-                \\Tip: Make sure you write bun.perf.trace as a string literal exactly instead of passing a variable.
+                \\Tip: Make sure you write fun.perf.trace as a string literal exactly instead of passing a variable.
             ,
                 .{
                     name,
@@ -82,9 +82,9 @@ pub fn trace(comptime name: [:0]const u8) Ctx {
         return .{ .disabled = .{} };
     }
 
-    if (comptime bun.Environment.isMac) {
+    if (comptime fun.Environment.isMac) {
         return .{ .enabled = Darwin.init(@intFromEnum(@field(PerfEvent, name))) };
-    } else if (comptime bun.Environment.isLinux) {
+    } else if (comptime fun.Environment.isLinux) {
         return .{ .enabled = Linux.init(@field(PerfEvent, name)) };
     }
 
@@ -92,7 +92,7 @@ pub fn trace(comptime name: [:0]const u8) Ctx {
 }
 
 pub const Darwin = struct {
-    const OSLog = bun.darwin.OSLog;
+    const OSLog = fun.darwin.OSLog;
     interval: OSLog.Signpost.Interval,
 
     pub fn init(comptime name: i32) @This() {
@@ -124,12 +124,12 @@ pub const Linux = struct {
     var is_initialized = std.atomic.Value(bool).init(false);
     var init_once = std.once(initOnce);
 
-    extern "c" fn Bun__linux_trace_init() c_int;
-    extern "c" fn Bun__linux_trace_close() void;
-    extern "c" fn Bun__linux_trace_emit(event_name: [*:0]const u8, duration_ns: i64) c_int;
+    extern "c" fn Fun__linux_trace_init() c_int;
+    extern "c" fn Fun__linux_trace_close() void;
+    extern "c" fn Fun__linux_trace_emit(event_name: [*:0]const u8, duration_ns: i64) c_int;
 
     fn initOnce() void {
-        const result = Bun__linux_trace_init();
+        const result = Fun__linux_trace_init();
         is_initialized.store(result != 0, .monotonic);
     }
 
@@ -140,7 +140,7 @@ pub const Linux = struct {
 
     pub fn init(event: PerfEvent) @This() {
         return .{
-            .start_time = bun.timespec.now(.force_real_time).ns(),
+            .start_time = fun.timespec.now(.force_real_time).ns(),
             .event = event,
         };
     }
@@ -148,12 +148,12 @@ pub const Linux = struct {
     pub fn end(this: *const @This()) void {
         if (!isSupported()) return;
 
-        const duration = bun.timespec.now(.force_real_time).ns() -| this.start_time;
+        const duration = fun.timespec.now(.force_real_time).ns() -| this.start_time;
 
-        _ = Bun__linux_trace_emit(@tagName(this.event).ptr, @intCast(duration));
+        _ = Fun__linux_trace_emit(@tagName(this.event).ptr, @intCast(duration));
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const PerfEvent = @import("./generated_perf_trace_events.zig").PerfEvent;

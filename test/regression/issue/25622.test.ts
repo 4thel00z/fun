@@ -1,9 +1,9 @@
-// https://github.com/oven-sh/bun/issues/25622
-// Bun incorrectly merged tsconfig paths across extends instead of replacing.
+// https://github.com/underdoc-org/fun/issues/25622
+// Fun incorrectly merged tsconfig paths across extends instead of replacing.
 // TypeScript semantics: child's paths completely override parent's paths.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("child tsconfig paths replace parent paths (not merge)", async () => {
   using dir = tempDir("issue-25622", {
@@ -31,9 +31,9 @@ test("child tsconfig paths replace parent paths (not merge)", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run", "src/index.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run", "src/index.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -41,7 +41,7 @@ test("child tsconfig paths replace parent paths (not merge)", async () => {
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  // Before the fix, Bun merged paths and this would print "should not resolve"
+  // Before the fix, Fun merged paths and this would print "should not resolve"
   // with exit 0. Now it should fail to resolve @helpers/x.
   expect(stderr).toContain("Cannot find module '@helpers/x'");
   expect(stdout).not.toContain("should not resolve");
@@ -73,9 +73,9 @@ test("child tsconfig paths still work after replacing parent paths", async () =>
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "run", "src/index.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "run", "src/index.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

@@ -8,7 +8,7 @@
 #include "ZigGlobalObject.h"
 #include "JavaScriptCore/ObjectConstructor.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -49,7 +49,7 @@ extern "C" JSC::EncodedJSValue JSC__JSValue__callCustomInspectFunction(
     auto& vm = JSC::getVM(globalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    JSObject* options = Bun::createInspectOptionsObject(vm, globalObject, max_depth, colors);
+    JSObject* options = Fun::createInspectOptionsObject(vm, globalObject, max_depth, colors);
     RETURN_IF_EXCEPTION(scope, {});
 
     JSFunction* inspectFn = globalObject->utilInspectFunction();

@@ -3,7 +3,7 @@ title: "Isolated installs"
 description: "Strict dependency isolation similar to pnpm's approach"
 ---
 
-Bun provides an alternative package installation strategy called **isolated installs** that creates strict dependency isolation similar to pnpm's approach. This mode prevents phantom dependencies and ensures reproducible, deterministic builds.
+Fun provides an alternative package installation strategy called **isolated installs** that creates strict dependency isolation similar to pnpm's approach. This mode prevents phantom dependencies and ensures reproducible, deterministic builds.
 
 This is the default installation strategy for **new** workspace/monorepo projects (with `configVersion = 1` in the lockfile). Existing projects continue using hoisted installs unless explicitly configured.
 
@@ -26,17 +26,17 @@ Use the `--linker` flag to specify the installation strategy:
 
 ```bash terminal icon="terminal"
 # Use isolated installs
-bun install --linker isolated
+fun install --linker isolated
 
 # Use traditional hoisted installs
-bun install --linker hoisted
+fun install --linker hoisted
 ```
 
 ### Configuration file
 
-Set the default linker strategy in your `bunfig.toml` or globally in `$HOME/.bunfig.toml`:
+Set the default linker strategy in your `funfig.toml` or globally in `$HOME/.funfig.toml`:
 
-```toml bunfig.toml icon="settings"
+```toml funfig.toml icon="settings"
 [install]
 linker = "isolated"
 ```
@@ -54,7 +54,7 @@ The default linker strategy depends on your project's lockfile `configVersion`:
 
 **New projects**: Default to `configVersion = 1`. In workspaces, v1 uses the isolated linker by default; otherwise it uses hoisted linking.
 
-**Existing Bun projects (made pre-v1.3.2)**: If your existing lockfile doesn't have a version yet, Bun sets `configVersion = 0` when you run `bun install`, preserving the previous hoisted linker default.
+**Existing Fun projects (made pre-v1.3.2)**: If your existing lockfile doesn't have a version yet, Fun sets `configVersion = 0` when you run `fun install`, preserving the previous hoisted linker default.
 
 **Migrations from other package managers**:
 
@@ -71,7 +71,7 @@ Instead of hoisting dependencies, isolated installs create a two-tier structure:
 
 ```bash tree layout of node_modules icon="list-tree"
 node_modules/
-├── .bun/                          # Central package store
+├── .fun/                          # Central package store
 │   ├── package@1.0.0/             # Versioned package installations
 │   │   └── node_modules/
 │   │       └── package/           # Actual package files
@@ -80,12 +80,12 @@ node_modules/
 │   │       └── @scope/
 │   │           └── package/
 │   └── ...
-└── package-name -> .bun/package@1.0.0/node_modules/package  # Symlinks
+└── package-name -> .fun/package@1.0.0/node_modules/package  # Symlinks
 ```
 
 ### Resolution algorithm
 
-1. **Central store** — All packages are installed in `node_modules/.bun/package@version/` directories
+1. **Central store** — All packages are installed in `node_modules/.fun/package@version/` directories
 2. **Symlinks** — Top-level `node_modules` contains symlinks pointing to the central store
 3. **Peer resolution** — Complex peer dependencies create specialized directory names
 4. **Deduplication** — Packages with identical package IDs and peer dependency sets are shared
@@ -117,18 +117,18 @@ Isolated installs handle peer dependencies through sophisticated resolution:
 
 ```bash tree layout of node_modules icon="list-tree"
 # Package with peer dependencies creates specialized paths
-node_modules/.bun/package@1.0.0_react@18.2.0/
+node_modules/.fun/package@1.0.0_react@18.2.0/
 ```
 
 The directory name encodes both the package version and its peer dependency versions, ensuring each unique combination gets its own installation.
 
 ### Global virtual store
 
-When [`install.globalStore`](/runtime/bunfig#install-globalstore) is enabled, store entries are materialized once into a [global virtual store](/pm/global-store) at `<cache>/links/` and `node_modules/.bun/<pkg>@<ver>` is a symlink into it. Warm installs after `rm -rf node_modules` only create one symlink per package instead of copying every package's files again, which is roughly **7× faster** on a typical mid-size project. The global store is **off by default**; see the [global store docs](/pm/global-store) for how to enable it, the full layout, benchmarks, and tradeoffs.
+When [`install.globalStore`](/runtime/funfig#install-globalstore) is enabled, store entries are materialized once into a [global virtual store](/pm/global-store) at `<cache>/links/` and `node_modules/.fun/<pkg>@<ver>` is a symlink into it. Warm installs after `rm -rf node_modules` only create one symlink per package instead of copying every package's files again, which is roughly **7× faster** on a typical mid-size project. The global store is **off by default**; see the [global store docs](/pm/global-store) for how to enable it, the full layout, benchmarks, and tradeoffs.
 
 ### Backend strategies
 
-When the global store is disabled (the default) or an entry isn't eligible for it, Bun materializes the entry under the project using one of:
+When the global store is disabled (the default) or an entry isn't eligible for it, Fun materializes the entry under the project using one of:
 
 - **Clonefile** (macOS) — Copy-on-write filesystem clones for maximum efficiency
 - **Hardlink** (Linux/Windows) — Hardlinks to save disk space
@@ -139,7 +139,7 @@ When the global store is disabled (the default) or an entry isn't eligible for i
 Enable verbose logging to understand the installation process:
 
 ```bash terminal icon="terminal"
-bun install --linker isolated --verbose
+fun install --linker isolated --verbose
 ```
 
 This shows:
@@ -164,7 +164,7 @@ If you encounter issues, you can:
 1. **Switch to hoisted mode** for specific projects:
 
    ```bash terminal icon="terminal"
-   bun install --linker hoisted
+   fun install --linker hoisted
    ```
 
 2. **Report compatibility issues** to help improve isolated install support
@@ -184,7 +184,7 @@ If you encounter issues, you can:
 rm -rf node_modules package-lock.json yarn.lock
 
 # Install with isolated linker
-bun install --linker isolated
+fun install --linker isolated
 ```
 
 ### From pnpm
@@ -195,11 +195,11 @@ Isolated installs are conceptually similar to pnpm, so migration is direct:
 # Remove pnpm files
 rm -rf node_modules pnpm-lock.yaml
 
-# Install with Bun's isolated linker
-bun install --linker isolated
+# Install with Fun's isolated linker
+fun install --linker isolated
 ```
 
-The main difference is that Bun uses symlinks in `node_modules` while pnpm uses a global store with symlinks.
+The main difference is that Fun uses symlinks in `node_modules` while pnpm uses a global store with symlinks.
 
 ## When to use isolated installs
 
@@ -220,5 +220,5 @@ The main difference is that Bun uses symlinks in `node_modules` while pnpm uses 
 ## Related documentation
 
 - [Package manager > Workspaces](/pm/workspaces) — Monorepo workspace management
-- [Package manager > Lockfile](/pm/lockfile) — Understanding Bun's lockfile format
-- [CLI > install](/pm/cli/install) — Complete `bun install` command reference
+- [Package manager > Lockfile](/pm/lockfile) — Understanding Fun's lockfile format
+- [CLI > install](/pm/cli/install) — Complete `fun install` command reference

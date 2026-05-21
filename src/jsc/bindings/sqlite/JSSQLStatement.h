@@ -32,7 +32,7 @@
 #include <JavaScriptCore/VM.h>
 
 #include "headers-handwritten.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/CallFrame.h>
 
 #ifndef LAZY_LOAD_SQLITE_DEFAULT_SETTING

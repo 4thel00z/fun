@@ -1,6 +1,6 @@
 import { AsyncLocalStorage, AsyncResource } from "async_hooks";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 describe("AsyncLocalStorage", () => {
   test("throw inside of AsyncLocalStorage.run() will be passed out", () => {
@@ -106,7 +106,7 @@ describe("async context passes through", () => {
       expect(s.getStore()).toBe("value");
       await Promise.resolve(1);
       expect(s.getStore()).toBe("value");
-      await Bun.sleep(2);
+      await Fun.sleep(2);
       expect(s.getStore()).toBe("value");
     });
     expect(s.getStore()).toBe(undefined);
@@ -212,7 +212,7 @@ describe("async context passes through", () => {
     expect(s.getStore()).toBe(undefined);
   });
   test("fetch", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch() {
         return new Response("OK");
@@ -231,7 +231,7 @@ describe("async context passes through", () => {
     });
     expect(s.getStore()).toBe(undefined);
   });
-  test("Bun.spawn() onExit", async () => {
+  test("Fun.spawn() onExit", async () => {
     const s = new AsyncLocalStorage<string>();
     let value: string | undefined;
     let resolve!: () => void;
@@ -239,9 +239,9 @@ describe("async context passes through", () => {
     await s.run("value", () => {
       expect(s.getStore()).toBe("value");
 
-      const x = Bun.spawn({
-        cmd: [bunExe(), "help"],
-        env: bunEnv,
+      const x = Fun.spawn({
+        cmd: [funExe(), "help"],
+        env: funEnv,
         onExit(subprocess, exitCode, signalCode, error) {
           value = s.getStore()!;
           resolve();
@@ -254,12 +254,12 @@ describe("async context passes through", () => {
     await promise;
     expect(value).toBe("value");
   });
-  test("Bun.serve", async () => {
+  test("Fun.serve", async () => {
     const s = new AsyncLocalStorage<string>();
     await s.run("value", async () => {
       expect(s.getStore()).toBe("value");
 
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(request, server) {
           return new Response(s.getStore()!);
@@ -450,7 +450,7 @@ describe("async context passes through", () => {
     await s.run("value", async () => {
       expect(s.getStore()).toBe("value");
 
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(request, server) {
           if (server.upgrade(request)) return null as any;
@@ -489,7 +489,7 @@ describe("async context passes through", () => {
     await s.run("value", async () => {
       expect(s.getStore()).toBe("value");
 
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         fetch(request, server) {
           if (server.upgrade(request)) return null as any;
@@ -547,13 +547,13 @@ describe("async context passes through", () => {
     expect(s.getStore()).toBe(undefined);
     expect(v).toBe("value");
   });
-  test("Bun.build plugin", async () => {
+  test("Fun.build plugin", async () => {
     const s = new AsyncLocalStorage<string>();
     let a = undefined;
     await s.run("value", async () => {
-      return Bun.build({
+      return Fun.build({
         entrypoints: [import.meta.path],
-        target: "bun",
+        target: "fun",
         plugins: [
           {
             name: "test",

@@ -260,7 +260,7 @@ pub const UnicodeRange = struct {
 
     fn consumeQuestionMarks(text: *[]const u8) usize {
         var question_marks: usize = 0;
-        while (bun.strings.splitFirstWithExpected(text.*, '?')) |rest| {
+        while (fun.strings.splitFirstWithExpected(text.*, '?')) |rest| {
             question_marks += 1;
             text.* = rest;
         }
@@ -270,7 +270,7 @@ pub const UnicodeRange = struct {
     fn consumeHex(text: *[]const u8) struct { u32, usize } {
         var value: u32 = 0;
         var digits: usize = 0;
-        while (bun.strings.splitFirst(text.*)) |result| {
+        while (fun.strings.splitFirst(text.*)) |result| {
             if (toHexDigit(result.first)) |digit_value| {
                 value = value * 0x10 + digit_value;
                 digits += 1;
@@ -377,19 +377,19 @@ pub const FontFormat = union(enum) {
             .err => |e| return .{ .err = e },
         };
 
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("woff", s)) {
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("woff", s)) {
             return .{ .result = .woff };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("woff2", s)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("woff2", s)) {
             return .{ .result = .woff2 };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("truetype", s)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("truetype", s)) {
             return .{ .result = .truetype };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("opentype", s)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("opentype", s)) {
             return .{ .result = .opentype };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("embedded-opentype", s)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("embedded-opentype", s)) {
             return .{ .result = .embedded_opentype };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("collection", s)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("collection", s)) {
             return .{ .result = .collection };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("svg", s)) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("svg", s)) {
             return .{ .result = .svg };
         } else {
             return .{ .result = .{ .string = s } };
@@ -668,35 +668,35 @@ pub const FontFaceDeclarationParser = struct {
             _ = this; // autofix
             const state = input.state();
             // todo_stuff.match_ignore_ascii_case
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "src")) {
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "src")) {
                 if (input.parseCommaSeparated(Source, Source.parse).asValue()) |sources| {
                     return .{ .result = .{ .source = sources } };
                 }
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-family")) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-family")) {
                 if (FontFamily.parse(input).asValue()) |c| {
                     if (input.expectExhausted().isOk()) {
                         return .{ .result = .{ .font_family = c } };
                     }
                 }
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-weight")) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-weight")) {
                 if (Size2D(FontWeight).parse(input).asValue()) |c| {
                     if (input.expectExhausted().isOk()) {
                         return .{ .result = .{ .font_weight = c } };
                     }
                 }
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-style")) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-style")) {
                 if (FontStyle.parse(input).asValue()) |c| {
                     if (input.expectExhausted().isOk()) {
                         return .{ .result = .{ .font_style = c } };
                     }
                 }
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-stretch")) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "font-stretch")) {
                 if (Size2D(FontStretch).parse(input).asValue()) |c| {
                     if (input.expectExhausted().isOk()) {
                         return .{ .result = .{ .font_stretch = c } };
                     }
                 }
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "unicode-range")) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, "unicode-range")) {
                 if (input.parseList(UnicodeRange, UnicodeRange.parse).asValue()) |c| {
                     if (input.expectExhausted().isOk()) {
                         return .{ .result = .{ .unicode_range = c } };
@@ -732,7 +732,7 @@ pub const FontFaceDeclarationParser = struct {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

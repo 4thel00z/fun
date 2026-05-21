@@ -4,7 +4,7 @@ sidebarTitle: Import YAML
 mode: center
 ---
 
-Bun natively supports `.yaml` and `.yml` imports.
+Fun natively supports `.yaml` and `.yml` imports.
 
 ```yaml config.yaml icon="file-code"
 database:
@@ -47,7 +47,7 @@ console.log(features.rateLimit); // => true
 
 ---
 
-Bun also supports [Import Attributes](https://github.com/tc39/proposal-import-attributes) syntax:
+Fun also supports [Import Attributes](https://github.com/tc39/proposal-import-attributes) syntax:
 
 ```ts config.ts icon="/icons/typescript.svg"
 import config from "./config.yaml" with { type: "yaml" };
@@ -57,7 +57,7 @@ config.database.port; // => 5432
 
 ---
 
-For parsing YAML strings at runtime, use `Bun.YAML.parse()`:
+For parsing YAML strings at runtime, use `Fun.YAML.parse()`:
 
 ```ts config.ts icon="/icons/typescript.svg"
 const yamlString = `
@@ -68,7 +68,7 @@ hobbies:
   - coding
 `;
 
-const data = Bun.YAML.parse(yamlString);
+const data = Fun.YAML.parse(yamlString);
 console.log(data.name); // => "John Doe"
 console.log(data.hobbies); // => ["reading", "coding"]
 ```
@@ -101,4 +101,4 @@ export = contents;
 
 ---
 
-See [Docs > API > YAML](/runtime/yaml) for complete documentation on YAML support in Bun.
+See [Docs > API > YAML](/runtime/yaml) for complete documentation on YAML support in Fun.

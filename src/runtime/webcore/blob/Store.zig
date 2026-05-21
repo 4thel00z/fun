@@ -7,7 +7,7 @@ ref_count: std.atomic.Value(u32) = .init(1),
 is_all_ascii: ?bool = null,
 allocator: std.mem.Allocator,
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 pub fn memoryCost(this: *const Store) usize {
     return if (this.hasOneRef()) @sizeOf(@This()) + switch (this.data) {
@@ -32,7 +32,7 @@ pub fn size(this: *const Store) SizeType {
     };
 }
 
-pub const Map = std.HashMap(u64, *jsc.WebCore.Blob.Store, bun.IdentityContext(u64), 80);
+pub const Map = std.HashMap(u64, *jsc.WebCore.Blob.Store, fun.IdentityContext(u64), 80);
 
 pub const Data = union(enum) {
     bytes: Bytes,
@@ -62,10 +62,10 @@ pub fn toAnyBlob(this: *Store) ?Blob.Any {
 
 pub fn external(ptr: ?*anyopaque, _: ?*anyopaque, _: usize) callconv(.c) void {
     if (ptr == null) return;
-    var this = bun.cast(*Store, ptr);
+    var this = fun.cast(*Store, ptr);
     this.deref();
 }
-pub fn initS3WithReferencedCredentials(pathlike: node.PathLike, mime_type: ?MimeType, credentials: *bun.S3.S3Credentials, allocator: std.mem.Allocator) !*Store {
+pub fn initS3WithReferencedCredentials(pathlike: node.PathLike, mime_type: ?MimeType, credentials: *fun.S3.S3Credentials, allocator: std.mem.Allocator) !*Store {
     var path = pathlike;
     // this actually protects/refs the pathlike
     path.toThreadSafe();
@@ -94,7 +94,7 @@ pub fn initS3WithReferencedCredentials(pathlike: node.PathLike, mime_type: ?Mime
     return store;
 }
 
-pub fn initS3(pathlike: node.PathLike, mime_type: ?MimeType, credentials: bun.S3.S3Credentials, allocator: std.mem.Allocator) !*Store {
+pub fn initS3(pathlike: node.PathLike, mime_type: ?MimeType, credentials: fun.S3.S3Credentials, allocator: std.mem.Allocator) !*Store {
     var path = pathlike;
     // this actually protects/refs the pathlike
     path.toThreadSafe();
@@ -197,7 +197,7 @@ pub fn deinit(this: *Blob.Store) void {
         },
     }
 
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub const SerializeTag = enum(u8) {
@@ -251,22 +251,22 @@ pub const File = struct {
     pathlike: jsc.Node.PathOrFileDescriptor,
     mime_type: MimeType = MimeType.other,
     is_atty: ?bool = null,
-    mode: bun.Mode = 0,
+    mode: fun.Mode = 0,
     seekable: ?bool = null,
     max_size: SizeType = Blob.max_size,
     // milliseconds since ECMAScript epoch
     last_modified: jsc.JSTimeType = jsc.init_timestamp,
 
-    pub fn unlink(this: *const File, globalThis: *JSGlobalObject) bun.JSError!JSValue {
+    pub fn unlink(this: *const File, globalThis: *JSGlobalObject) fun.JSError!JSValue {
         return switch (this.pathlike) {
             .path => |path_like| jsc.Node.fs.Async.unlink.create(globalThis, undefined, .{
                 .path = .{
                     .encoded_slice = switch (path_like) {
-                        .encoded_slice => |slice| try slice.toOwned(bun.default_allocator),
-                        else => try jsc.ZigString.fromUTF8(path_like.slice()).toSliceClone(bun.default_allocator),
+                        .encoded_slice => |slice| try slice.toOwned(fun.default_allocator),
+                        else => try jsc.ZigString.fromUTF8(path_like.slice()).toSliceClone(fun.default_allocator),
                     },
                 },
-            }, globalThis.bunVM()),
+            }, globalThis.funVM()),
             .fd => jsc.JSPromise.resolvedPromiseValue(globalThis, globalThis.createInvalidArgs("Is not possible to unlink a file descriptor", .{})),
         };
     }
@@ -276,7 +276,7 @@ pub const File = struct {
         }
 
         if (this.mode != 0) {
-            return bun.isRegularFile(this.mode);
+            return fun.isRegularFile(this.mode);
         }
 
         return null;
@@ -292,9 +292,9 @@ pub const S3 = struct {
     pathlike: node.PathLike,
     mime_type: MimeType = .other,
     credentials: ?*S3Credentials,
-    options: bun.S3.MultiPartUploadOptions = .{},
-    acl: ?bun.S3.ACL = null,
-    storage_class: ?bun.S3.StorageClass = null,
+    options: fun.S3.MultiPartUploadOptions = .{},
+    acl: ?fun.S3.ACL = null,
+    storage_class: ?fun.S3.StorageClass = null,
     request_payer: bool = false,
 
     pub fn isSeekable(_: *const @This()) ?bool {
@@ -302,16 +302,16 @@ pub const S3 = struct {
     }
 
     pub fn getCredentials(this: *const @This()) *S3Credentials {
-        bun.assert(this.credentials != null);
+        fun.assert(this.credentials != null);
         return this.credentials.?;
     }
 
-    pub fn getCredentialsWithOptions(this: *const @This(), options: ?JSValue, globalObject: *JSGlobalObject) bun.JSError!bun.S3.S3CredentialsWithOptions {
+    pub fn getCredentialsWithOptions(this: *const @This(), options: ?JSValue, globalObject: *JSGlobalObject) fun.JSError!fun.S3.S3CredentialsWithOptions {
         return S3Credentials.getCredentialsWithOptions(this.getCredentials().*, this.options, options, this.acl, this.storage_class, this.request_payer, globalObject);
     }
 
     pub fn path(this: *@This()) []const u8 {
-        var path_name = bun.URL.parse(this.pathlike.slice()).s3Path();
+        var path_name = fun.URL.parse(this.pathlike.slice()).s3Path();
         // normalize start and ending
         if (strings.endsWith(path_name, "/")) {
             path_name = path_name[0..path_name.len];
@@ -326,15 +326,15 @@ pub const S3 = struct {
         return path_name;
     }
 
-    pub fn unlink(this: *@This(), store: *Store, globalThis: *JSGlobalObject, extra_options: ?JSValue) bun.JSError!JSValue {
+    pub fn unlink(this: *@This(), store: *Store, globalThis: *JSGlobalObject, extra_options: ?JSValue) fun.JSError!JSValue {
         const Wrapper = struct {
             promise: jsc.JSPromise.Strong,
             store: *Store,
             global: *JSGlobalObject,
 
-            pub const new = bun.TrivialNew(@This());
+            pub const new = fun.TrivialNew(@This());
 
-            pub fn resolve(result: bun.S3.S3DeleteResult, opaque_self: *anyopaque) bun.JSTerminated!void {
+            pub fn resolve(result: fun.S3.S3DeleteResult, opaque_self: *anyopaque) fun.JSTerminated!void {
                 const self: *@This() = @ptrCast(@alignCast(opaque_self));
                 defer self.deinit();
                 const globalObject = self.global;
@@ -351,18 +351,18 @@ pub const S3 = struct {
             fn deinit(wrap: *@This()) void {
                 wrap.store.deref();
                 wrap.promise.deinit();
-                bun.destroy(wrap);
+                fun.destroy(wrap);
             }
         };
         const promise = jsc.JSPromise.Strong.init(globalThis);
         const value = promise.value();
-        const proxy_url = globalThis.bunVM().transpiler.env.getHttpProxy(true, null, null);
+        const proxy_url = globalThis.funVM().transpiler.env.getHttpProxy(true, null, null);
         const proxy = if (proxy_url) |url| url.href else null;
         var aws_options = try this.getCredentialsWithOptions(extra_options, globalThis);
         defer aws_options.deinit();
         store.ref();
 
-        try bun.S3.delete(&aws_options.credentials, this.path(), @ptrCast(&Wrapper.resolve), Wrapper.new(.{
+        try fun.S3.delete(&aws_options.credentials, this.path(), @ptrCast(&Wrapper.resolve), Wrapper.new(.{
             .promise = promise,
             .store = store, // store is needed in case of not found error
             .global = globalThis,
@@ -371,7 +371,7 @@ pub const S3 = struct {
         return value;
     }
 
-    pub fn listObjects(this: *@This(), store: *Store, globalThis: *JSGlobalObject, listOptions: JSValue, extra_options: ?JSValue) bun.JSError!JSValue {
+    pub fn listObjects(this: *@This(), store: *Store, globalThis: *JSGlobalObject, listOptions: JSValue, extra_options: ?JSValue) fun.JSError!JSValue {
         if (!listOptions.isEmptyOrUndefinedOrNull() and !listOptions.isObject()) {
             return globalThis.throwInvalidArguments("S3Client.listObjects() needs a S3ListObjectsOption as it's first argument", .{});
         }
@@ -379,10 +379,10 @@ pub const S3 = struct {
         const Wrapper = struct {
             promise: jsc.JSPromise.Strong,
             store: *Store,
-            resolvedlistOptions: bun.S3.S3ListObjectsOptions,
+            resolvedlistOptions: fun.S3.S3ListObjectsOptions,
             global: *JSGlobalObject,
 
-            pub fn resolve(result: bun.S3.S3ListObjectsResult, opaque_self: *anyopaque) bun.JSTerminated!void {
+            pub fn resolve(result: fun.S3.S3ListObjectsResult, opaque_self: *anyopaque) fun.JSTerminated!void {
                 const self: *@This() = @ptrCast(@alignCast(opaque_self));
                 defer self.deinit();
                 const globalObject = self.global;
@@ -408,21 +408,21 @@ pub const S3 = struct {
             }
 
             pub inline fn destroy(self: *@This()) void {
-                bun.destroy(self);
+                fun.destroy(self);
             }
         };
 
         const promise = jsc.JSPromise.Strong.init(globalThis);
         const value = promise.value();
-        const proxy_url = globalThis.bunVM().transpiler.env.getHttpProxy(true, null, null);
+        const proxy_url = globalThis.funVM().transpiler.env.getHttpProxy(true, null, null);
         const proxy = if (proxy_url) |url| url.href else null;
         var aws_options = try this.getCredentialsWithOptions(extra_options, globalThis);
         defer aws_options.deinit();
 
-        const options = try bun.S3.getListObjectsOptionsFromJS(globalThis, listOptions);
+        const options = try fun.S3.getListObjectsOptionsFromJS(globalThis, listOptions);
         store.ref();
 
-        try bun.S3.listObjects(&aws_options.credentials, options, @ptrCast(&Wrapper.resolve), bun.new(Wrapper, .{
+        try fun.S3.listObjects(&aws_options.credentials, options, @ptrCast(&Wrapper.resolve), fun.new(Wrapper, .{
             .promise = promise,
             .store = store, // store is needed in case of not found error
             .resolvedlistOptions = options,
@@ -458,7 +458,7 @@ pub const S3 = struct {
             this.pathlike.deinit();
         }
         this.pathlike = .{
-            .string = bun.PathString.empty,
+            .string = fun.PathString.empty,
         };
         if (this.credentials) |credentials| {
             credentials.deref();
@@ -466,7 +466,7 @@ pub const S3 = struct {
         }
     }
 
-    const S3Credentials = bun.S3.S3Credentials;
+    const S3Credentials = fun.S3.S3Credentials;
 };
 
 pub const Bytes = struct {
@@ -476,7 +476,7 @@ pub const Bytes = struct {
     allocator: std.mem.Allocator,
 
     /// Used by standalone module graph and the File constructor
-    stored_name: bun.PathString = bun.PathString.empty,
+    stored_name: fun.PathString = fun.PathString.empty,
 
     /// Takes ownership of `bytes`, which must have been allocated with
     /// `allocator`.
@@ -488,7 +488,7 @@ pub const Bytes = struct {
             .allocator = allocator,
         };
     }
-    pub fn initEmptyWithName(name: bun.PathString, allocator: std.mem.Allocator) Bytes {
+    pub fn initEmptyWithName(name: fun.PathString, allocator: std.mem.Allocator) Bytes {
         return .{
             .ptr = null,
             .len = 0,
@@ -519,7 +519,7 @@ pub const Bytes = struct {
             },
         };
 
-        this.allocator = bun.default_allocator;
+        this.allocator = fun.default_allocator;
         this.len = 0;
         this.cap = 0;
         return result;
@@ -539,7 +539,7 @@ pub const Bytes = struct {
     }
 
     pub fn deinit(this: *Bytes) void {
-        bun.default_allocator.free(this.stored_name.slice());
+        fun.default_allocator.free(this.stored_name.slice());
         if (this.ptr) |ptr| {
             this.allocator.free(ptr[0..this.cap]);
         }
@@ -562,14 +562,14 @@ pub const Bytes = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const assert = bun.assert;
-const strings = bun.strings;
-const webcore = bun.webcore;
-const MimeType = bun.http.MimeType;
-const node = bun.api.node;
+const fun = @import("fun");
+const assert = fun.assert;
+const strings = fun.strings;
+const webcore = fun.webcore;
+const MimeType = fun.http.MimeType;
+const node = fun.api.node;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 

@@ -1,21 +1,21 @@
 ---
 title: Spawn
-description: Spawn child processes with `Bun.spawn` or `Bun.spawnSync`
+description: Spawn child processes with `Fun.spawn` or `Fun.spawnSync`
 ---
 
-## Spawn a process (`Bun.spawn()`)
+## Spawn a process (`Fun.spawn()`)
 
-Provide a command as an array of strings. The result of `Bun.spawn()` is a `Bun.Subprocess` object.
+Provide a command as an array of strings. The result of `Fun.spawn()` is a `Fun.Subprocess` object.
 
 ```ts
-const proc = Bun.spawn(["bun", "--version"]);
+const proc = Fun.spawn(["fun", "--version"]);
 console.log(await proc.exited); // 0
 ```
 
-The second argument to `Bun.spawn` is a parameters object that can be used to configure the subprocess.
+The second argument to `Fun.spawn` is a parameters object that can be used to configure the subprocess.
 
 ```ts
-const proc = Bun.spawn(["bun", "--version"], {
+const proc = Fun.spawn(["fun", "--version"], {
   cwd: "./path/to/subdir", // specify a working directory
   env: { ...process.env, FOO: "bar" }, // specify environment variables
   onExit(proc, exitCode, signalCode, error) {
@@ -31,8 +31,8 @@ proc.pid; // process ID of subprocess
 By default, the input stream of the subprocess is undefined; it can be configured with the `stdin` parameter.
 
 ```ts
-const proc = Bun.spawn(["cat"], {
-  stdin: await fetch("https://raw.githubusercontent.com/oven-sh/bun/main/examples/hashing.js"),
+const proc = Fun.spawn(["cat"], {
+  stdin: await fetch("https://raw.githubusercontent.com/underdoc-org/fun/main/examples/hashing.js"),
 });
 
 const text = await proc.stdout.text();
@@ -44,7 +44,7 @@ console.log(text); // "const input = "hello world".repeat(400); ..."
 | `null`                   | **Default.** Provide no input to the subprocess  |
 | `"pipe"`                 | Return a `FileSink` for fast incremental writing |
 | `"inherit"`              | Inherit the `stdin` of the parent process        |
-| `Bun.file()`             | Read from the specified file                     |
+| `Fun.file()`             | Read from the specified file                     |
 | `TypedArray \| DataView` | Use a binary buffer as input                     |
 | `Response`               | Use the response `body` as input                 |
 | `Request`                | Use the request `body` as input                  |
@@ -55,7 +55,7 @@ console.log(text); // "const input = "hello world".repeat(400); ..."
 The `"pipe"` option lets incrementally write to the subprocess's input stream from the parent process.
 
 ```ts
-const proc = Bun.spawn(["cat"], {
+const proc = Fun.spawn(["cat"], {
   stdin: "pipe", // return a FileSink for writing
 });
 
@@ -84,7 +84,7 @@ const stream = new ReadableStream({
   },
 });
 
-const proc = Bun.spawn(["cat"], {
+const proc = Fun.spawn(["cat"], {
   stdin: stream,
   stdout: "pipe",
 });
@@ -98,7 +98,7 @@ console.log(output); // "Hello from ReadableStream!"
 You can read results from the subprocess via the `stdout` and `stderr` properties. By default these are instances of `ReadableStream`.
 
 ```ts
-const proc = Bun.spawn(["bun", "--version"]);
+const proc = Fun.spawn(["fun", "--version"]);
 const text = await proc.stdout.text();
 console.log(text); // => "1.3.3\n"
 ```
@@ -110,7 +110,7 @@ Configure the output stream by passing one of the following values to `stdout/st
 | `"pipe"`     | **Default for `stdout`.** Pipe the output to a `ReadableStream` on the returned `Subprocess` object |
 | `"inherit"`  | **Default for `stderr`.** Inherit from the parent process                                           |
 | `"ignore"`   | Discard the output                                                                                  |
-| `Bun.file()` | Write to the specified file                                                                         |
+| `Fun.file()` | Write to the specified file                                                                         |
 | `number`     | Write to the file with the given file descriptor                                                    |
 
 ## Exit handling
@@ -118,7 +118,7 @@ Configure the output stream by passing one of the following values to `stdout/st
 Use the `onExit` callback to listen for the process exiting or being killed.
 
 ```ts index.ts icon="/icons/typescript.svg"
-const proc = Bun.spawn(["bun", "--version"], {
+const proc = Fun.spawn(["fun", "--version"], {
   onExit(proc, exitCode, signalCode, error) {
     // exit handler
   },
@@ -128,7 +128,7 @@ const proc = Bun.spawn(["bun", "--version"], {
 For convenience, the `exited` property is a `Promise` that resolves when the process exits.
 
 ```ts index.ts icon="/icons/typescript.svg"
-const proc = Bun.spawn(["bun", "--version"]);
+const proc = Fun.spawn(["fun", "--version"]);
 
 await proc.exited; // resolves when process exit
 proc.killed; // boolean — was the process killed?
@@ -139,7 +139,7 @@ proc.signalCode; // null | "SIGABRT" | "SIGALRM" | ...
 To kill a process:
 
 ```ts index.ts icon="/icons/typescript.svg"
-const proc = Bun.spawn(["bun", "--version"]);
+const proc = Fun.spawn(["fun", "--version"]);
 proc.kill();
 proc.killed; // true
 
@@ -147,10 +147,10 @@ proc.kill(15); // specify a signal code
 proc.kill("SIGTERM"); // specify a signal name
 ```
 
-The parent `bun` process will not terminate until all child processes have exited. Use `proc.unref()` to detach the child process from the parent.
+The parent `fun` process will not terminate until all child processes have exited. Use `proc.unref()` to detach the child process from the parent.
 
 ```ts index.ts icon="/icons/typescript.svg"
-const proc = Bun.spawn(["bun", "--version"]);
+const proc = Fun.spawn(["fun", "--version"]);
 proc.unref();
 ```
 
@@ -159,7 +159,7 @@ proc.unref();
 You can get information about the process's resource usage after it has exited:
 
 ```ts index.ts icon="/icons/typescript.svg"
-const proc = Bun.spawn(["bun", "--version"]);
+const proc = Fun.spawn(["fun", "--version"]);
 await proc.exited;
 
 const usage = proc.resourceUsage();
@@ -176,7 +176,7 @@ You can abort a subprocess using an `AbortSignal`:
 const controller = new AbortController();
 const { signal } = controller;
 
-const proc = Bun.spawn({
+const proc = Fun.spawn({
   cmd: ["sleep", "100"],
   signal,
 });
@@ -191,7 +191,7 @@ You can set a timeout for a subprocess to automatically terminate after a specif
 
 ```ts index.ts icon="/icons/typescript.svg"
 // Kill the process after 5 seconds
-const proc = Bun.spawn({
+const proc = Fun.spawn({
   cmd: ["sleep", "10"],
   timeout: 5000, // 5 seconds in milliseconds
 });
@@ -203,7 +203,7 @@ By default, timed-out processes are killed with the `SIGTERM` signal. You can sp
 
 ```ts index.ts icon="/icons/typescript.svg"
 // Kill the process with SIGKILL after 5 seconds
-const proc = Bun.spawn({
+const proc = Fun.spawn({
   cmd: ["sleep", "10"],
   timeout: 5000,
   killSignal: "SIGKILL", // Can be string name or signal number
@@ -218,8 +218,8 @@ For spawnSync, you can limit the maximum number of bytes of output before the pr
 
 ```ts index.ts icon="/icons/typescript.svg"
 // Kill 'yes' after it emits over 100 bytes of output
-const result = Bun.spawnSync({
-  cmd: ["yes"], // or ["bun", "exec", "yes"] on Windows
+const result = Fun.spawnSync({
+  cmd: ["yes"], // or ["fun", "exec", "yes"] on Windows
   maxBuffer: 100,
 });
 // process exits
@@ -227,10 +227,10 @@ const result = Bun.spawnSync({
 
 ## Inter-process communication (IPC)
 
-Bun supports direct inter-process communication channel between two `bun` processes. To receive messages from a spawned Bun subprocess, specify an `ipc` handler.
+Fun supports direct inter-process communication channel between two `fun` processes. To receive messages from a spawned Fun subprocess, specify an `ipc` handler.
 
 ```ts parent.ts icon="/icons/typescript.svg"
-const child = Bun.spawn(["bun", "child.ts"], {
+const child = Fun.spawn(["fun", "child.ts"], {
   ipc(message) {
     /**
      * The message received from the sub process
@@ -242,7 +242,7 @@ const child = Bun.spawn(["bun", "child.ts"], {
 The parent process can send messages to the subprocess using the `.send()` method on the returned `Subprocess` instance. A reference to the sending subprocess is also available as the second argument in the `ipc` handler.
 
 ```ts parent.ts icon="/icons/typescript.svg"
-const childProc = Bun.spawn(["bun", "child.ts"], {
+const childProc = Fun.spawn(["fun", "child.ts"], {
   ipc(message, childProc) {
     /**
      * The message received from the sub process
@@ -285,14 +285,14 @@ To disconnect the IPC channel from the parent process, call:
 childProc.disconnect();
 ```
 
-### IPC between Bun & Node.js
+### IPC between Fun & Node.js
 
-To use IPC between a `bun` process and a Node.js process, set `serialization: "json"` in `Bun.spawn`. This is because Node.js and Bun use different JavaScript engines with different object serialization formats.
+To use IPC between a `fun` process and a Node.js process, set `serialization: "json"` in `Fun.spawn`. This is because Node.js and Fun use different JavaScript engines with different object serialization formats.
 
-```js bun-node-ipc.js icon="file-code"
-if (typeof Bun !== "undefined") {
-  const prefix = `[bun ${process.versions.bun} 🐇]`;
-  const node = Bun.spawn({
+```js fun-node-ipc.js icon="file-code"
+if (typeof Fun !== "undefined") {
+  const prefix = `[fun ${process.versions.fun} 🐇]`;
+  const node = Fun.spawn({
     cmd: ["node", __filename],
     ipc({ message }) {
       console.log(message);
@@ -308,7 +308,7 @@ if (typeof Bun !== "undefined") {
   const prefix = `[node ${process.version}]`;
   process.on("message", ({ message }) => {
     console.log(message);
-    process.send({ message: `${prefix} 👋 hey bun` });
+    process.send({ message: `${prefix} 👋 hey fun` });
   });
 }
 ```
@@ -320,7 +320,7 @@ if (typeof Bun !== "undefined") {
 For interactive terminal applications, you can spawn a subprocess with a pseudo-terminal (PTY) attached using the `terminal` option. This makes the subprocess think it's running in a real terminal, enabling features like colored output, cursor movement, and interactive prompts.
 
 ```ts
-const proc = Bun.spawn(["bash"], {
+const proc = Fun.spawn(["bash"], {
   terminal: {
     cols: 80,
     rows: 24,
@@ -386,7 +386,7 @@ proc.terminal.close();
 You can create a terminal independently and reuse it across multiple subprocesses:
 
 ```ts
-await using terminal = new Bun.Terminal({
+await using terminal = new Fun.Terminal({
   cols: 80,
   rows: 24,
   data(term, data) {
@@ -395,11 +395,11 @@ await using terminal = new Bun.Terminal({
 });
 
 // Spawn first process
-const proc1 = Bun.spawn(["echo", "first"], { terminal });
+const proc1 = Fun.spawn(["echo", "first"], { terminal });
 await proc1.exited;
 
 // Reuse terminal for another process
-const proc2 = Bun.spawn(["echo", "second"], { terminal });
+const proc2 = Fun.spawn(["echo", "second"], { terminal });
 await proc2.exited;
 
 // Terminal is closed automatically by `await using`
@@ -416,7 +416,7 @@ This is useful for running multiple commands in sequence through the same termin
 
 ### Platform differences
 
-`Bun.Terminal` uses `openpty()` on Linux and macOS, and ConPTY (`CreatePseudoConsole`) on Windows. The core behaviour — child sees a TTY, `write()` reaches the child's stdin, child output reaches the `data` callback, `resize()` updates the child's view — is the same on every platform. A few details differ:
+`Fun.Terminal` uses `openpty()` on Linux and macOS, and ConPTY (`CreatePseudoConsole`) on Windows. The core behaviour — child sees a TTY, `write()` reaches the child's stdin, child output reaches the `data` callback, `resize()` updates the child's view — is the same on every platform. A few details differ:
 
 - **No termios on Windows.** `inputFlags`, `outputFlags`, `localFlags`, and `controlFlags` always read as `0` and setting them is a no-op. `setRawMode()` records the flag but has no effect on the child; the child controls its own console mode.
 - **No echo without a child process on Windows.** On POSIX, the kernel line discipline echoes `write()` input back to the `data` callback even with no process attached. ConPTY has no line discipline; input is buffered for the next reader. If you need echo, spawn a process that echoes.
@@ -427,41 +427,41 @@ This is useful for running multiple commands in sequence through the same termin
 
 ---
 
-## Blocking API (`Bun.spawnSync()`)
+## Blocking API (`Fun.spawnSync()`)
 
-Bun provides a synchronous equivalent of `Bun.spawn` called `Bun.spawnSync`. This is a blocking API that supports the same inputs and parameters as `Bun.spawn`. It returns a `SyncSubprocess` object, which differs from `Subprocess` in a few ways.
+Fun provides a synchronous equivalent of `Fun.spawn` called `Fun.spawnSync`. This is a blocking API that supports the same inputs and parameters as `Fun.spawn`. It returns a `SyncSubprocess` object, which differs from `Subprocess` in a few ways.
 
 1. It contains a `success` property that indicates whether the process exited with a zero exit code.
 2. The `stdout` and `stderr` properties are instances of `Buffer` instead of `ReadableStream`.
-3. There is no `stdin` property. Use `Bun.spawn` to incrementally write to the subprocess's input stream.
+3. There is no `stdin` property. Use `Fun.spawn` to incrementally write to the subprocess's input stream.
 
 ```ts
-const proc = Bun.spawnSync(["echo", "hello"]);
+const proc = Fun.spawnSync(["echo", "hello"]);
 
 console.log(proc.stdout.toString());
 // => "hello\n"
 ```
 
-As a rule of thumb, the asynchronous `Bun.spawn` API is better for HTTP servers and apps, and `Bun.spawnSync` is better for building command-line tools.
+As a rule of thumb, the asynchronous `Fun.spawn` API is better for HTTP servers and apps, and `Fun.spawnSync` is better for building command-line tools.
 
 ---
 
 ## Benchmarks
 
 <Note>
-  ⚡️ Under the hood, `Bun.spawn` and `Bun.spawnSync` use
+  ⚡️ Under the hood, `Fun.spawn` and `Fun.spawnSync` use
   [`posix_spawn(3)`](https://man7.org/linux/man-pages/man3/posix_spawn.3.html).
 </Note>
 
-Bun's `spawnSync` spawns processes 60% faster than the Node.js `child_process` module.
+Fun's `spawnSync` spawns processes 60% faster than the Node.js `child_process` module.
 
 ```bash terminal icon="terminal"
-bun spawn.mjs
+fun spawn.mjs
 ```
 
 ```txt
 cpu: Apple M1 Max
-runtime: bun 1.x (arm64-darwin)
+runtime: fun 1.x (arm64-darwin)
 
 benchmark              time (avg)             (min … max)       p75       p99      p995
 --------------------------------------------------------- -----------------------------
@@ -485,10 +485,10 @@ spawnSync echo hi    1.47 ms/iter     (1.14 ms … 2.64 ms)   1.57 ms   2.37 ms 
 
 ## Reference
 
-A reference of the Spawn API and types are shown below. The real types have complex generics to strongly type the `Subprocess` streams with the options passed to `Bun.spawn` and `Bun.spawnSync`. For full details, find these types as defined [bun.d.ts](https://github.com/oven-sh/bun/blob/main/packages/bun-types/bun.d.ts).
+A reference of the Spawn API and types are shown below. The real types have complex generics to strongly type the `Subprocess` streams with the options passed to `Fun.spawn` and `Fun.spawnSync`. For full details, find these types as defined [fun.d.ts](https://github.com/underdoc-org/fun/blob/main/packages/fun-types/fun.d.ts).
 
 ```ts See Typescript Definitions expandable
-interface Bun {
+interface Fun {
   spawn(command: string[], options?: SpawnOptions.OptionsObject): Subprocess;
   spawnSync(command: string[], options?: SpawnOptions.OptionsObject): SyncSubprocess;
 
@@ -528,7 +528,7 @@ namespace SpawnOptions {
     | "ignore"
     | null // equivalent to "ignore"
     | undefined // to use default
-    | BunFile
+    | FunFile
     | ArrayBufferView
     | number;
 
@@ -538,7 +538,7 @@ namespace SpawnOptions {
     | "ignore"
     | null // equivalent to "ignore"
     | undefined // to use default
-    | BunFile
+    | FunFile
     | ArrayBufferView
     | number
     | ReadableStream

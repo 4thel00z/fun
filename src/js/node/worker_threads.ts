@@ -19,7 +19,7 @@ const {
 };
 const SHARE_ENV = Symbol("nodejs.worker_threads.SHARE_ENV");
 
-const isMainThread = Bun.isMainThread;
+const isMainThread = Fun.isMainThread;
 const {
   0: _workerData,
   1: _threadId,
@@ -249,7 +249,7 @@ class Worker extends EventEmitter {
       }
     }
     try {
-      this.#worker = new WebWorker(filename, options as Bun.WorkerOptions, this);
+      this.#worker = new WebWorker(filename, options as Fun.WorkerOptions, this);
     } catch (e) {
       if (this.#urlToRevoke) {
         URL.revokeObjectURL(this.#urlToRevoke);

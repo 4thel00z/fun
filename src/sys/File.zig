@@ -1,36 +1,36 @@
 //! This is a similar API to std.fs.File, except it:
 //! - Preserves errors from the operating system
 //! - Supports normalizing BOM to UTF-8
-//! - Has several optimizations somewhat specific to Bun
+//! - Has several optimizations somewhat specific to Fun
 //! - Potentially goes through libuv on Windows
 //! - Does not use unreachable in system calls.
 
 const File = @This();
 
 // "handle" matches std.fs.File
-handle: bun.FD,
+handle: fun.FD,
 
-pub fn openat(dir: bun.FD, path: [:0]const u8, flags: i32, mode: bun.Mode) Maybe(File) {
+pub fn openat(dir: fun.FD, path: [:0]const u8, flags: i32, mode: fun.Mode) Maybe(File) {
     return switch (sys.openat(dir, path, flags, mode)) {
         .result => |fd| .{ .result = .{ .handle = fd } },
         .err => |err| .{ .err = err },
     };
 }
 
-pub fn open(path: [:0]const u8, flags: i32, mode: bun.Mode) Maybe(File) {
-    return File.openat(bun.FD.cwd(), path, flags, mode);
+pub fn open(path: [:0]const u8, flags: i32, mode: fun.Mode) Maybe(File) {
+    return File.openat(fun.FD.cwd(), path, flags, mode);
 }
 
-pub fn makeOpen(path: [:0]const u8, flags: i32, mode: bun.Mode) Maybe(File) {
-    return File.makeOpenat(bun.FD.cwd(), path, flags, mode);
+pub fn makeOpen(path: [:0]const u8, flags: i32, mode: fun.Mode) Maybe(File) {
+    return File.makeOpenat(fun.FD.cwd(), path, flags, mode);
 }
 
-pub fn makeOpenat(other: bun.FD, path: [:0]const u8, flags: i32, mode: bun.Mode) Maybe(File) {
+pub fn makeOpenat(other: fun.FD, path: [:0]const u8, flags: i32, mode: fun.Mode) Maybe(File) {
     const fd = switch (sys.openat(other, path, flags, mode)) {
         .result => |fd| fd,
         .err => |err| fd: {
             if (std.fs.path.dirname(path)) |dir_path| {
-                bun.makePath(other.stdDir(), dir_path) catch {};
+                fun.makePath(other.stdDir(), dir_path) catch {};
                 break :fd switch (sys.openat(other, path, flags, mode)) {
                     .result => |fd| fd,
                     .err => |err2| return .{ .err = err2 },
@@ -44,7 +44,7 @@ pub fn makeOpenat(other: bun.FD, path: [:0]const u8, flags: i32, mode: bun.Mode)
     return .{ .result = .{ .handle = fd } };
 }
 
-pub fn openatOSPath(other: bun.FD, path: bun.OSPathSliceZ, flags: i32, mode: bun.Mode) Maybe(File) {
+pub fn openatOSPath(other: fun.FD, path: fun.OSPathSliceZ, flags: i32, mode: fun.Mode) Maybe(File) {
     return switch (sys.openatOSPath(other, path, flags, mode)) {
         .result => |fd| .{ .result = .{ .handle = fd } },
         .err => |err| .{ .err = err },
@@ -62,7 +62,7 @@ pub fn from(other: anytype) File {
         return .{ .handle = .fromNative(other) };
     }
 
-    if (T == bun.FD) {
+    if (T == fun.FD) {
         return .{ .handle = other };
     }
 
@@ -80,7 +80,7 @@ pub fn from(other: anytype) File {
         }
     }
 
-    @compileError("Unsupported type " ++ bun.meta.typeName(T));
+    @compileError("Unsupported type " ++ fun.meta.typeName(T));
 }
 
 pub fn write(self: File, buf: []const u8) Maybe(usize) {
@@ -135,10 +135,10 @@ pub fn writeAll(self: File, buf: []const u8) Maybe(void) {
 
 pub fn writeFile(
     relative_dir_or_cwd: anytype,
-    path: bun.OSPathSliceZ,
+    path: fun.OSPathSliceZ,
     data: []const u8,
 ) Maybe(void) {
-    const file = switch (File.openatOSPath(relative_dir_or_cwd, path, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o664)) {
+    const file = switch (File.openatOSPath(relative_dir_or_cwd, path, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o664)) {
         .err => |err| return .{ .err = err },
         .result => |fd| fd,
     };
@@ -157,8 +157,8 @@ pub fn closeAndMoveTo(this: File, src: [:0]const u8, dest: [:0]const u8) !void {
     defer if (Environment.isPosix) this.close();
     // On Windows, close the file before moving it.
     if (Environment.isWindows) this.close();
-    const cwd = bun.FD.cwd();
-    try bun.sys.moveFileZWithHandle(this.handle, cwd, src, cwd, dest);
+    const cwd = fun.FD.cwd();
+    try fun.sys.moveFileZWithHandle(this.handle, cwd, src, cwd, dest);
 }
 
 fn stdIoRead(this: File, buf: []u8) ReadError!usize {
@@ -179,8 +179,8 @@ fn stdIoWrite(this: File, bytes: []const u8) WriteError!usize {
 }
 
 fn stdIoWriteQuietDebug(this: File, bytes: []const u8) WriteError!usize {
-    bun.Output.disableScopedDebugWriter();
-    defer bun.Output.enableScopedDebugWriter();
+    fun.Output.disableScopedDebugWriter();
+    defer fun.Output.enableScopedDebugWriter();
     try this.writeAll(bytes).unwrap();
 
     return bytes.len;
@@ -210,7 +210,7 @@ pub fn getEndPos(self: File) Maybe(usize) {
     return getFileSize(self.handle);
 }
 
-pub fn stat(self: File) Maybe(bun.Stat) {
+pub fn stat(self: File) Maybe(fun.Stat) {
     return fstat(self.handle);
 }
 
@@ -266,7 +266,7 @@ pub const ReadToEndResult = struct {
 
     pub fn unwrap(self: *const ReadToEndResult) ![]u8 {
         if (self.err) |err| {
-            try (bun.sys.Maybe(void){ .err = err }).unwrap();
+            try (fun.sys.Maybe(void){ .err = err }).unwrap();
         }
         return self.bytes.items;
     }
@@ -297,7 +297,7 @@ pub fn readFillBuf(this: File, buf: []u8) Maybe([]u8) {
 
 pub fn readToEndWithArrayList(this: File, list: *std.array_list.Managed(u8), size_guess: enum { probably_small, unknown_size }) Maybe(usize) {
     if (size_guess == .probably_small) {
-        bun.handleOom(list.ensureUnusedCapacity(64));
+        fun.handleOom(list.ensureUnusedCapacity(64));
     } else {
         list.ensureTotalCapacityPrecise(
             switch (this.getEndPos()) {
@@ -306,13 +306,13 @@ pub fn readToEndWithArrayList(this: File, list: *std.array_list.Managed(u8), siz
                 },
                 .result => |s| s,
             } + 16,
-        ) catch |err| bun.handleOom(err);
+        ) catch |err| fun.handleOom(err);
     }
 
     var total: i64 = 0;
     while (true) {
         if (list.unusedCapacitySlice().len == 0) {
-            bun.handleOom(list.ensureUnusedCapacity(16));
+            fun.handleOom(list.ensureUnusedCapacity(16));
         }
 
         switch (if (comptime Environment.isPosix)
@@ -356,7 +356,7 @@ pub fn readToEndSmall(this: File, allocator: std.mem.Allocator) ReadToEndResult 
     };
 }
 
-pub fn getPath(this: File, out_buffer: *bun.PathBuffer) Maybe([]u8) {
+pub fn getPath(this: File, out_buffer: *fun.PathBuffer) Maybe([]u8) {
     return getFdPath(this.handle, out_buffer);
 }
 
@@ -365,9 +365,9 @@ pub fn getPath(this: File, out_buffer: *bun.PathBuffer) Maybe([]u8) {
 /// 2. Read the file to a buffer
 /// 3. Return the File handle and the buffer
 pub fn readFromUserInput(dir_fd: anytype, input_path: anytype, allocator: std.mem.Allocator) Maybe([]u8) {
-    var buf: bun.PathBuffer = undefined;
-    const normalized = bun.path.joinAbsStringBufZ(
-        bun.fs.FileSystem.instance.top_level_dir,
+    var buf: fun.PathBuffer = undefined;
+    const normalized = fun.path.joinAbsStringBufZ(
+        fun.fs.FileSystem.instance.top_level_dir,
         &buf,
         &.{input_path},
         .loose,
@@ -433,35 +433,35 @@ const ToSourceOptions = struct {
     convert_bom: bool = false,
 };
 
-pub fn toSourceAt(dir_fd: anytype, path: anytype, allocator: std.mem.Allocator, opts: ToSourceOptions) Maybe(bun.logger.Source) {
+pub fn toSourceAt(dir_fd: anytype, path: anytype, allocator: std.mem.Allocator, opts: ToSourceOptions) Maybe(fun.logger.Source) {
     var bytes = switch (readFrom(dir_fd, path, allocator)) {
         .err => |err| return .{ .err = err },
         .result => |bytes| bytes,
     };
 
     if (opts.convert_bom) {
-        if (bun.strings.BOM.detect(bytes)) |bom| {
-            bytes = bun.handleOom(bom.removeAndConvertToUTF8AndFree(allocator, bytes));
+        if (fun.strings.BOM.detect(bytes)) |bom| {
+            bytes = fun.handleOom(bom.removeAndConvertToUTF8AndFree(allocator, bytes));
         }
     }
 
-    return .{ .result = bun.logger.Source.initPathString(path, bytes) };
+    return .{ .result = fun.logger.Source.initPathString(path, bytes) };
 }
 
-pub fn toSource(path: anytype, allocator: std.mem.Allocator, opts: ToSourceOptions) Maybe(bun.logger.Source) {
+pub fn toSource(path: anytype, allocator: std.mem.Allocator, opts: ToSourceOptions) Maybe(fun.logger.Source) {
     return toSourceAt(std.fs.cwd(), path, allocator, opts);
 }
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const default_allocator = bun.default_allocator;
-const windows = bun.windows;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const default_allocator = fun.default_allocator;
+const windows = fun.windows;
 
-const sys = bun.sys;
-const Error = bun.sys.Error;
-const Maybe = bun.sys.Maybe;
+const sys = fun.sys;
+const Error = fun.sys.Error;
+const Maybe = fun.sys.Maybe;
 const O = sys.O;
-const SystemErrno = bun.sys.SystemErrno;
+const SystemErrno = fun.sys.SystemErrno;
 const fstat = sys.fstat;
 const getFdPath = sys.getFdPath;
 const getFileSize = sys.getFileSize;

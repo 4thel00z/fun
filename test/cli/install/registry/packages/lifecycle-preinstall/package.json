@@ -5,7 +5,7 @@
 			"name": "lifecycle-preinstall",
 			"version": "1.0.0",
 			"scripts": {
-				"preinstall": "bun preinstall.js"
+				"preinstall": "fun preinstall.js"
 			},
 			"_id": "lifecycle-preinstall@1.0.0",
 			"_integrity": "sha512-62WGgQIgbtfaxP+eiW2XThZ4m7XOElX/3Wx7afjM5A60XYbPmRXw9TasVm0DXM+wYjf5HLwc0lsvlvJzetyD/A==",

@@ -29,7 +29,7 @@ export function initializeReadableStream(
   underlyingSource: UnderlyingSource,
   strategy: QueuingStrategy,
 ) {
-  if (underlyingSource === undefined) underlyingSource = { $bunNativePtr: undefined, $lazy: false } as UnderlyingSource;
+  if (underlyingSource === undefined) underlyingSource = { $funNativePtr: undefined, $lazy: false } as UnderlyingSource;
   if (strategy === undefined) strategy = {};
 
   if (!$isObject(underlyingSource)) throw new TypeError("ReadableStream constructor takes an object as first argument");
@@ -47,7 +47,7 @@ export function initializeReadableStream(
 
   // Initialized with null value to enable distinction with undefined case.
   $putByIdDirectPrivate(this, "readableStreamController", null);
-  this.$bunNativePtr = $getByIdDirectPrivate(underlyingSource, "bunNativePtr") ?? undefined;
+  this.$funNativePtr = $getByIdDirectPrivate(underlyingSource, "funNativePtr") ?? undefined;
 
   $putByIdDirectPrivate(this, "asyncContext", $getInternalField($asyncContext, 0));
 
@@ -153,7 +153,7 @@ export function readableStreamToArrayBuffer(stream: ReadableStream<ArrayBuffer>)
     return result;
   }
 
-  result = Bun.readableStreamToArray(stream);
+  result = Fun.readableStreamToArray(stream);
 
   function toArrayBuffer(result: unknown[]) {
     switch (result.length) {
@@ -191,10 +191,10 @@ export function readableStreamToArrayBuffer(stream: ReadableStream<ArrayBuffer>)
         }
 
         if (!anyStrings) {
-          return Bun.concatArrayBuffers(result, false);
+          return Fun.concatArrayBuffers(result, false);
         }
 
-        const sink = new Bun.ArrayBufferSink();
+        const sink = new Fun.ArrayBufferSink();
         sink.start();
 
         for (const chunk of result) {
@@ -207,7 +207,7 @@ export function readableStreamToArrayBuffer(stream: ReadableStream<ArrayBuffer>)
   }
 
   if ($isPromise(result)) {
-    const completedResult = Bun.peek(result);
+    const completedResult = Fun.peek(result);
     if (completedResult !== result) {
       result = completedResult;
     } else {
@@ -234,7 +234,7 @@ export function readableStreamToBytes(stream: ReadableStream<ArrayBuffer>): Prom
     return result;
   }
 
-  result = Bun.readableStreamToArray(stream);
+  result = Fun.readableStreamToArray(stream);
 
   function toBytes(result: unknown[]) {
     switch (result.length) {
@@ -269,10 +269,10 @@ export function readableStreamToBytes(stream: ReadableStream<ArrayBuffer>): Prom
         }
 
         if (!anyStrings) {
-          return Bun.concatArrayBuffers(result, true);
+          return Fun.concatArrayBuffers(result, true);
         }
 
-        const sink = new Bun.ArrayBufferSink();
+        const sink = new Fun.ArrayBufferSink();
         sink.start({ asUint8Array: true });
 
         for (const chunk of result) {
@@ -285,7 +285,7 @@ export function readableStreamToBytes(stream: ReadableStream<ArrayBuffer>): Prom
   }
 
   if ($isPromise(result)) {
-    const completedResult = Bun.peek(result);
+    const completedResult = Fun.peek(result);
     if (completedResult !== result) {
       result = completedResult;
     } else {
@@ -303,7 +303,7 @@ export function readableStreamToFormData(
 ): Promise<FormData> {
   if (!$isReadableStream(stream)) throw $ERR_INVALID_ARG_TYPE("stream", "ReadableStream", typeof stream);
   if ($isReadableStreamLocked(stream)) return Promise.$reject($ERR_INVALID_STATE_TypeError("ReadableStream is locked"));
-  return Bun.readableStreamToBlob(stream).then(blob => {
+  return Fun.readableStreamToBlob(stream).then(blob => {
     return FormData.from(blob, contentType);
   });
 }
@@ -317,8 +317,8 @@ export function readableStreamToJSON(stream: ReadableStream): unknown {
     return result;
   }
 
-  let text = Bun.readableStreamToText(stream);
-  const peeked = Bun.peek(text);
+  let text = Fun.readableStreamToText(stream);
+  const peeked = Fun.peek(text);
   if (peeked !== text) {
     try {
       return $createFulfilledPromise(globalThis.JSON.parse(peeked));
@@ -337,7 +337,7 @@ export function readableStreamToBlob(stream: ReadableStream): Promise<Blob> {
 
   return (
     $tryUseReadableStreamBufferedFastPath(stream, "blob") ||
-    Promise.$resolve(Bun.readableStreamToArray(stream)).then(array => new Blob(array))
+    Promise.$resolve(Fun.readableStreamToArray(stream)).then(array => new Blob(array))
   );
 }
 
@@ -364,7 +364,7 @@ export function createNativeReadableStream(nativePtr, autoAllocateChunkSize) {
   $assert(nativePtr, "nativePtr must be a valid pointer");
   return new ReadableStream({
     $lazy: true,
-    $bunNativePtr: nativePtr,
+    $funNativePtr: nativePtr,
     autoAllocateChunkSize: autoAllocateChunkSize,
   });
 }

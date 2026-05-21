@@ -1,9 +1,9 @@
 /**
  * See `./expectBundled.md` for how this works.
  */
-import { BuildConfig, BuildOutput, BunPlugin, CompileBuildOptions, fileURLToPath, Loader, PluginBuilder } from "bun";
-import { callerSourceOrigin } from "bun:jsc";
-import type { Matchers } from "bun:test";
+import { BuildConfig, BuildOutput, FunPlugin, CompileBuildOptions, fileURLToPath, Loader, PluginBuilder } from "fun";
+import { callerSourceOrigin } from "fun:jsc";
+import type { Matchers } from "fun:test";
 import * as esbuild from "esbuild";
 import filenamify from "filenamify";
 import {
@@ -17,7 +17,7 @@ import {
   rmSync,
   writeFileSync,
 } from "fs";
-import { bunEnv, bunExe, isCI, isDebug } from "harness";
+import { funEnv, funExe, isCI, isDebug } from "harness";
 import { tmpdir } from "os";
 import path from "path";
 import { SourceMapConsumer } from "source-map";
@@ -89,33 +89,33 @@ function errorOrWarnParser(isError = true) {
 const errorParser = errorOrWarnParser(true);
 const warnParser = errorOrWarnParser(false);
 
-type BunTestExports = typeof import("bun:test");
-export function testForFile(file: string): BunTestExports {
+type FunTestExports = typeof import("fun:test");
+export function testForFile(file: string): FunTestExports {
   if (file.startsWith("file://")) {
     file = fileURLToPath(new URL(file));
   }
 
   var testFile = testFiles.get(file);
   if (!testFile) {
-    testFile = Bun.jest(file);
+    testFile = Fun.jest(file);
     testFiles.set(file, testFile);
   }
   return testFile;
 }
 
-/** Use `esbuild` instead of `bun build` */
-export const ESBUILD = process.env.BUN_BUNDLER_TEST_USE_ESBUILD;
+/** Use `esbuild` instead of `fun build` */
+export const ESBUILD = process.env.FUN_FUNDLER_TEST_USE_ESBUILD;
 /** Write extra files to disk and log extra info. */
-const DEBUG = process.env.BUN_BUNDLER_TEST_DEBUG;
+const DEBUG = process.env.FUN_FUNDLER_TEST_DEBUG;
 /** Set this to the id of a bundle test to run just that test */
-const FILTER = process.env.BUN_BUNDLER_TEST_FILTER;
+const FILTER = process.env.FUN_FUNDLER_TEST_FILTER;
 /** Set this to hide skips */
-const HIDE_SKIP = process.env.BUN_BUNDLER_TEST_HIDE_SKIP;
-/** Path to the bun. */
-const BUN_EXE = (process.env.BUN_EXE && Bun.which(process.env.BUN_EXE)) ?? bunExe();
+const HIDE_SKIP = process.env.FUN_FUNDLER_TEST_HIDE_SKIP;
+/** Path to the fun. */
+const FUN_EXE = (process.env.FUN_EXE && Fun.which(process.env.FUN_EXE)) ?? funExe();
 export const RUN_UNCHECKED_TESTS = false;
 
-const tempDirectoryTemplate = path.join(realpathSync(tmpdir()), "bun-build-tests", `${ESBUILD ? "esbuild" : "bun"}-`);
+const tempDirectoryTemplate = path.join(realpathSync(tmpdir()), "fun-build-tests", `${ESBUILD ? "esbuild" : "fun"}-`);
 if (!existsSync(path.dirname(tempDirectoryTemplate)))
   mkdirSync(path.dirname(tempDirectoryTemplate), { recursive: true });
 const tempDirectory = mkdtempSync(tempDirectoryTemplate);
@@ -140,7 +140,7 @@ function resolveBackend(opts: BundlerTestInput): "cli" | "api" {
 }
 
 if (ESBUILD) {
-  console.warn("NOTE: using esbuild for bun build tests");
+  console.warn("NOTE: using esbuild for fun build tests");
 }
 
 export const ESBUILD_PATH = import.meta.resolveSync("esbuild/bin/esbuild");
@@ -179,7 +179,7 @@ export interface BundlerTestInput {
   footer?: string;
   define?: Record<string, string | number>;
   drop?: string[];
-  /** Feature flags for dead-code elimination via `import { feature } from "bun:bundle"` */
+  /** Feature flags for dead-code elimination via `import { feature } from "fun:bundle"` */
   features?: string[];
   /** Package names whose barrel files should be optimized */
   optimizeImports?: string[];
@@ -217,8 +217,8 @@ export interface BundlerTestInput {
   outfile?: string;
   /** Defaults to `/out` */
   outdir?: string;
-  /** Defaults to "browser". "bun" is set to "node" when using esbuild. */
-  target?: "bun" | "node" | "browser";
+  /** Defaults to "browser". "fun" is set to "node" when using esbuild. */
+  target?: "fun" | "node" | "browser";
   publicPath?: string;
   keepNames?: boolean;
   legalComments?: "none" | "inline" | "eof" | "linked" | "external";
@@ -239,7 +239,7 @@ export interface BundlerTestInput {
   /** if set to true or false, create or edit tsconfig.json to set compilerOptions.useDefineForClassFields */
   useDefineForClassFields?: boolean;
   sourceMap?: "inline" | "external" | "linked" | "none";
-  plugins?: BunPlugin[] | ((builder: PluginBuilder) => void | Promise<void>);
+  plugins?: FunPlugin[] | ((builder: PluginBuilder) => void | Promise<void>);
   install?: string[];
   production?: boolean;
 
@@ -261,7 +261,7 @@ export interface BundlerTestInput {
    */
   bundleWarnings?: true | Record<string, string[]>;
   /**
-   * Setting to true or an object will cause the file to be run with bun.
+   * Setting to true or an object will cause the file to be run with fun.
    * Pass an array to run multiple times with different options.
    */
   run?: boolean | BundlerTestRunOptions | BundlerTestRunOptions[];
@@ -318,7 +318,7 @@ export interface BundlerTestInput {
   /* determines whether or not anything should be passed to outfile, outdir, etc. */
   generateOutput?: boolean;
 
-  /** Run after the bun.build function is called with its output */
+  /** Run after the fun.build function is called with its output */
   onAfterApiBundle?(build: BuildOutput): Promise<void> | void;
 }
 
@@ -326,7 +326,7 @@ export interface SourceMapTests {
   /** Should be verbaitim equal to the input */
   files: string[];
   /**
-   * some tests do not use bun snapshots because they are huge, and doing byte
+   * some tests do not use fun snapshots because they are huge, and doing byte
    * for byte snapshots will not be sustainable. Instead, we will sample a few mappings to make sure
    * the map is correct. This can be used to test for a single mapping.
    */
@@ -373,8 +373,8 @@ export interface BundlerTestRunOptions {
   file?: string;
   /** Pass args to the program */
   args?: string[];
-  /** Pass args to bun itself (before the filename) */
-  bunArgs?: string[];
+  /** Pass args to fun itself (before the filename) */
+  funArgs?: string[];
   /** match exact stdout */
   stdout?: string | RegExp;
   stderr?: string;
@@ -391,7 +391,7 @@ export interface BundlerTestRunOptions {
 
   env?: Record<string, string>;
 
-  runtime?: "bun" | "node";
+  runtime?: "fun" | "node";
 
   setCwd?: boolean;
   /** Expect a certain non-zero exit code */
@@ -437,7 +437,7 @@ function expectBundled(
 ): Promise<BundlerTestRef> | BundlerTestRef {
   if (!new Error().stack!.includes("test/bundler/")) {
     throw new Error(
-      `All bundler tests must be placed in ./test/bundler/ so that regressions can be quickly detected locally via the 'bun test bundler' command`,
+      `All bundler tests must be placed in ./test/bundler/ so that regressions can be quickly detected locally via the 'fun test bundler' command`,
     );
   }
 
@@ -539,7 +539,7 @@ function expectBundled(
 
   if (bytecode) {
     format ??= "cjs";
-    target ??= "bun";
+    target ??= "fun";
   }
 
   format ??= "esm";
@@ -565,26 +565,26 @@ function expectBundled(
   }
 
   if (!ESBUILD && legalComments) {
-    throw new Error("legalComments not implemented in bun build");
+    throw new Error("legalComments not implemented in fun build");
   }
   if (!ESBUILD && unsupportedJSFeatures && unsupportedJSFeatures.length) {
-    throw new Error("unsupportedJSFeatures not implemented in bun build");
+    throw new Error("unsupportedJSFeatures not implemented in fun build");
   }
   if (!ESBUILD && unsupportedCSSFeatures && unsupportedCSSFeatures.length) {
-    throw new Error("unsupportedCSSFeatures not implemented in bun build");
+    throw new Error("unsupportedCSSFeatures not implemented in fun build");
   }
   if (!ESBUILD && mainFields) {
-    throw new Error("mainFields not implemented in bun build");
+    throw new Error("mainFields not implemented in fun build");
   }
   if (!ESBUILD && inject) {
-    throw new Error("inject not implemented in bun build");
+    throw new Error("inject not implemented in fun build");
   }
   if (!ESBUILD && loader) {
     const loaderValues = [...new Set(Object.values(loader))];
     const supportedLoaderTypes = ["js", "jsx", "ts", "tsx", "css", "json", "text", "file", "wtf", "toml"];
     const unsupportedLoaderTypes = loaderValues.filter(x => !supportedLoaderTypes.includes(x));
     if (unsupportedLoaderTypes.length > 0) {
-      throw new Error(`loader '${unsupportedLoaderTypes.join("', '")}' not implemented in bun build`);
+      throw new Error(`loader '${unsupportedLoaderTypes.join("', '")}' not implemented in fun build`);
     }
   }
   if (ESBUILD && bytecode) {
@@ -670,8 +670,8 @@ function expectBundled(
     }
     mkdirSync(root, { recursive: true });
     if (install) {
-      const installProcess = Bun.spawn({
-        cmd: [bunExe(), "install", ...install, "--linker=hoisted"],
+      const installProcess = Fun.spawn({
+        cmd: [funExe(), "install", ...install, "--linker=hoisted"],
         cwd: root,
         stdio: ["ignore", "inherit", "inherit"],
       });
@@ -711,7 +711,7 @@ function expectBundled(
       }
     }
 
-    // Run bun build cli. In the future we can move to using `Bun.Transpiler.`
+    // Run fun build cli. In the future we can move to using `Fun.Transpiler.`
     let warningReference: Record<string, ErrorMeta[]> = {};
     const expectedErrors = bundleErrors
       ? Object.entries(bundleErrors).flatMap(([file, v]) => v.map(error => ({ file, error })))
@@ -737,8 +737,8 @@ function expectBundled(
       const cmd = (
         !ESBUILD
           ? [
-              ...(process.env.BUN_DEBUGGER ? ["lldb-server", "g:1234", "--"] : []),
-              BUN_EXE,
+              ...(process.env.FUN_DEBUGGER ? ["lldb-server", "g:1234", "--"] : []),
+              FUN_EXE,
               "build",
               ...entryPaths,
               ...(entryPointsRaw ?? []),
@@ -748,7 +748,7 @@ function expectBundled(
                 ? `--compile-exec-argv=${Array.isArray(compile.execArgv) ? compile.execArgv.join(" ") : compile.execArgv}`
                 : [],
               compileFlag("autoloadDotenv", "--compile-autoload-dotenv", "--no-compile-autoload-dotenv"),
-              compileFlag("autoloadBunfig", "--compile-autoload-bunfig", "--no-compile-autoload-bunfig"),
+              compileFlag("autoloadBunfig", "--compile-autoload-funfig", "--no-compile-autoload-funfig"),
               compileFlag("autoloadTsconfig", "--compile-autoload-tsconfig", "--no-compile-autoload-tsconfig"),
               compileFlag(
                 "autoloadPackageJson",
@@ -806,7 +806,7 @@ function expectBundled(
               bundling && "--bundle",
               outfile ? `--outfile=${outfile}` : `--outdir=${outdir}`,
               `--format=${format}`,
-              `--platform=${target === "bun" ? "node" : target}`,
+              `--platform=${target === "fun" ? "node" : target}`,
               minifyIdentifiers && `--minify-identifiers`,
               minifySyntax && `--minify-syntax`,
               minifyWhitespace && `--minify-whitespace`,
@@ -891,7 +891,7 @@ function expectBundled(
                 {
                   "type": process.platform !== "win32" ? "lldb" : "cppvsdbg",
                   "request": "launch",
-                  "name": "bun test",
+                  "name": "fun test",
                   "program": cmd[0],
                   "args": cmd.slice(1),
                   "cwd": root,
@@ -904,7 +904,7 @@ function expectBundled(
         );
       }
 
-      const bundlerEnv = { ...bunEnv, ...env };
+      const bundlerEnv = { ...funEnv, ...env };
       // remove undefined keys instead of passing "undefined" and resolve {{root}}
       for (const key in bundlerEnv) {
         const value = bundlerEnv[key];
@@ -915,7 +915,7 @@ function expectBundled(
         }
       }
 
-      await using buildProc = Bun.spawn({
+      await using buildProc = Fun.spawn({
         cmd,
         cwd: root,
         stdio: ["ignore", "pipe", "pipe"],
@@ -932,7 +932,7 @@ function expectBundled(
       const success = exitCode === 0;
       if (buildProc.signalCode) {
         throw new Error(
-          `[${id}] 'bun build' subprocess killed by ${buildProc.signalCode}\n` +
+          `[${id}] 'fun build' subprocess killed by ${buildProc.signalCode}\n` +
             `cmd: ${cmd.join(" ")}\n` +
             `STDOUT: ${stdout.toUnixString().slice(0, 2000)}\n` +
             `STDERR: ${stderr.toUnixString().slice(0, 2000)}`,
@@ -945,7 +945,7 @@ function expectBundled(
           const errorText = stderr.toUnixString();
 
           var skip = false;
-          if (errorText.includes("----- bun meta -----")) {
+          if (errorText.includes("----- fun meta -----")) {
             skip = true;
           }
 
@@ -957,10 +957,10 @@ function expectBundled(
                     if (error === "FileNotFound") {
                       return null;
                     }
-                    return { error, file: "<bun>" };
+                    return { error, file: "<fun>" };
                   }
                   const [_str2, fullFilename, line, col] =
-                    source?.match?.(/bun-build-tests[\/\\](.*):(\d+):(\d+)/) ?? [];
+                    source?.match?.(/fun-build-tests[\/\\](.*):(\d+):(\d+)/) ?? [];
                   const file = fullFilename
                     ?.slice?.(id.length + path.basename(tempDirectory).length + 1)
                     .replaceAll("\\", "/");
@@ -977,9 +977,9 @@ function expectBundled(
             errorText.includes("panic: reached unreachable code") ||
             errorText.includes("Panic: reached unreachable code") ||
             errorText.includes("Segmentation fault") ||
-            errorText.includes("bun has crashed")
+            errorText.includes("fun has crashed")
           ) {
-            throw new Error("Bun crashed during build");
+            throw new Error("Fun crashed during build");
           }
 
           if (DEBUG && allErrors.length) {
@@ -1046,7 +1046,7 @@ function expectBundled(
         const allWarnings = warnParser(warningText)
           .map(([error, source]) => {
             if (!source) return;
-            const [_str2, fullFilename, line, col] = source.match(/bun-build-tests[\/\\](.*):(\d+):(\d+)/)!;
+            const [_str2, fullFilename, line, col] = source.match(/fun-build-tests[\/\\](.*):(\d+):(\d+)/)!;
             const file = fullFilename.slice(id.length + path.basename(tempDirectory).length + 1).replaceAll("\\", "/");
             return { error, file, line, col };
           })
@@ -1191,9 +1191,9 @@ import assert from 'assert';
 const {plugins} = (${x})({ root: ${JSON.stringify(root)} });
 const options = ${JSON.stringify({ ...buildConfig, plugins: undefined }, null, 2)};
 options.plugins = typeof plugins === "function" ? [{ name: "plugin", setup: plugins }] : plugins;
-const build = await Bun.build(options);
+const build = await Fun.build(options);
 for (const [key, blob] of build.outputs) {
-  await Bun.write(path.join(options.outdir, blob.path), blob.result);
+  await Fun.write(path.join(options.outdir, blob.path), blob.result);
 }
 `;
             writeFileSync(path.join(root, "run.js"), debugFile);
@@ -1208,7 +1208,7 @@ for (const [key, blob] of build.outputs) {
         try {
           process.chdir(root);
           try {
-            build = await Bun.build(buildConfig);
+            build = await Fun.build(buildConfig);
           } finally {
             process.chdir(originalCwd);
           }
@@ -1236,7 +1236,7 @@ for (const [key, blob] of build.outputs) {
         }
         if (onAfterApiBundle) await onAfterApiBundle(build);
         configRef = null!;
-        Bun.gc(true);
+        Fun.gc(true);
 
         // Write metafile if requested
         if (metafile && build.success && (build as any).metafile) {
@@ -1266,7 +1266,7 @@ for (const [key, blob] of build.outputs) {
               ? position.namespace === "file"
                 ? "/" + path.relative(root, position.file)
                 : `${position.namespace}:${position.file.replace(root, "")}`
-              : "<bun>";
+              : "<fun>";
 
             allErrors.push({
               file: filename,
@@ -1579,7 +1579,7 @@ for (const [key, blob] of build.outputs) {
       for (const file_input of readdirSync(outdir, { recursive: true })) {
         const file = file_input.toString("utf8"); // type bug? `file_input` is `Buffer|string`
         if (file.endsWith(".map")) {
-          const parsed = await Bun.file(path.join(outdir, file)).json();
+          const parsed = await Fun.file(path.join(outdir, file)).json();
           const mappedLocations = new Map();
           await SourceMapConsumer.with(parsed, null, async map => {
             map.eachMapping(m => {
@@ -1613,7 +1613,7 @@ for (const [key, blob] of build.outputs) {
                 expect(sourcemap_content).toBe(actual_content);
               }
 
-              const generated_code = await Bun.file(path.join(outdir!, file.replace(".map", ""))).text();
+              const generated_code = await Fun.file(path.join(outdir!, file.replace(".map", ""))).text();
 
               if (map_tests.mappings)
                 for (const mapping of map_tests.mappings) {
@@ -1665,16 +1665,16 @@ for (const [key, blob] of build.outputs) {
           throw new Error(prefix + "run.file is required when there is more than one entrypoint.");
         }
         const args = [
-          ...(compile ? [] : [(run.runtime ?? "bun") === "bun" ? bunExe() : "node"]),
-          ...(run.bunArgs ?? []),
+          ...(compile ? [] : [(run.runtime ?? "fun") === "fun" ? funExe() : "node"]),
+          ...(run.funArgs ?? []),
           file,
           ...(run.args ?? []),
         ] as [string, ...string[]];
 
-        await using runProc = Bun.spawn({
+        await using runProc = Fun.spawn({
           cmd: args,
           env: {
-            ...bunEnv,
+            ...funEnv,
             ...(run.env || {}),
             FORCE_COLOR: "0",
             IS_TEST_RUNNER: "1",
@@ -1722,7 +1722,7 @@ for (const [key, blob] of build.outputs) {
             const lines = stderr!
               .toUnixString()
               .split("\n")
-              // remove `Bun v1.0.0...` line
+              // remove `Fun v1.0.0...` line
               .slice(0, -2)
               .filter(Boolean)
               .map(x => x.trim())

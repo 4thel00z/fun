@@ -1,8 +1,8 @@
-pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) bun.OOM!void {
+pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) fun.OOM!void {
     const exports_kind = this.graph.ast.items(.exports_kind)[source_index];
     const all_sources = this.parse_graph.input_files.items(.source);
     const all_css_asts = this.graph.ast.items(.css);
-    const maybe_css_ast: ?*bun.css.BundlerStyleSheet = all_css_asts[source_index];
+    const maybe_css_ast: ?*fun.css.BundlerStyleSheet = all_css_asts[source_index];
     var parts = &this.graph.ast.items(.parts)[source_index];
 
     if (parts.len < 1) {
@@ -32,7 +32,7 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
             var exports = E.Object{};
 
             const symbols: *const Symbol.List = &this.graph.ast.items(.symbols)[source_index];
-            const all_import_records: []const BabyList(bun.css.ImportRecord) = this.graph.ast.items(.import_records);
+            const all_import_records: []const BabyList(fun.css.ImportRecord) = this.graph.ast.items(.import_records);
 
             const values = css_ast.local_scope.values();
             if (values.len == 0) break :out;
@@ -46,15 +46,15 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
 
             var inner_visited = try BitSet.initEmpty(this.allocator(), size);
             defer inner_visited.deinit(this.allocator());
-            var composes_visited = std.AutoArrayHashMap(bun.bundle_v2.Ref, void).init(this.allocator());
+            var composes_visited = std.AutoArrayHashMap(fun.bundle_v2.Ref, void).init(this.allocator());
             defer composes_visited.deinit();
 
             const Visitor = struct {
                 inner_visited: *BitSet,
-                composes_visited: *std.AutoArrayHashMap(bun.bundle_v2.Ref, void),
+                composes_visited: *std.AutoArrayHashMap(fun.bundle_v2.Ref, void),
                 parts: *std.array_list.Managed(E.TemplatePart),
-                all_import_records: []const BabyList(bun.css.ImportRecord),
-                all_css_asts: []?*bun.css.BundlerStyleSheet,
+                all_import_records: []const BabyList(fun.css.ImportRecord),
+                all_css_asts: []?*fun.css.BundlerStyleSheet,
                 all_sources: []const Logger.Source,
                 all_symbols: []const Symbol.List,
                 source_index: Index.Int,
@@ -67,8 +67,8 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                     visitor.composes_visited.clearRetainingCapacity();
                 }
 
-                fn visitName(visitor: *@This(), ast: *bun.css.BundlerStyleSheet, ref: bun.css.CssRef, idx: Index.Int) void {
-                    bun.assert(ref.canBeComposed());
+                fn visitName(visitor: *@This(), ast: *fun.css.BundlerStyleSheet, ref: fun.css.CssRef, idx: Index.Int) void {
+                    fun.assert(ref.canBeComposed());
                     const from_this_file = ref.sourceIndex(idx) == visitor.source_index;
                     if ((from_this_file and visitor.inner_visited.isSet(ref.innerIndex())) or
                         (!from_this_file and visitor.composes_visited.contains(ref.toRealRef(idx))))
@@ -89,7 +89,7 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                             .cooked = E.String.init(" "),
                         },
                         .tail_loc = visitor.loc,
-                    }) catch |err| bun.handleOom(err);
+                    }) catch |err| fun.handleOom(err);
 
                     if (from_this_file) {
                         visitor.inner_visited.set(ref.innerIndex());
@@ -98,7 +98,7 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                     }
                 }
 
-                fn warnNonSingleClassComposes(visitor: *@This(), ast: *bun.css.BundlerStyleSheet, css_ref: bun.css.CssRef, idx: Index.Int, compose_loc: Loc) void {
+                fn warnNonSingleClassComposes(visitor: *@This(), ast: *fun.css.BundlerStyleSheet, css_ref: fun.css.CssRef, idx: Index.Int, compose_loc: Loc) void {
                     const ref = css_ref.toRealRef(idx);
                     _ = ref;
                     const syms: *const Symbol.List = &visitor.all_symbols[css_ref.sourceIndex(idx)];
@@ -111,32 +111,32 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                         visitor.allocator,
                         "The composes property cannot be used with {f}, because it is not a single class name.",
                         .{
-                            bun.fmt.quote(name),
+                            fun.fmt.quote(name),
                         },
                         "The definition of {f} is here.",
                         .{
-                            bun.fmt.quote(name),
+                            fun.fmt.quote(name),
                         },
 
                         .{
                             .loc = loc,
                         },
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
 
-                fn visitComposes(visitor: *@This(), ast: *bun.css.BundlerStyleSheet, css_ref: bun.css.CssRef, idx: Index.Int) void {
+                fn visitComposes(visitor: *@This(), ast: *fun.css.BundlerStyleSheet, css_ref: fun.css.CssRef, idx: Index.Int) void {
                     const ref = css_ref.toRealRef(idx);
                     if (ast.composes.count() > 0) {
                         const composes = ast.composes.getPtr(ref) orelse return;
                         // while parsing we check that we only allow `composes` on single class selectors
-                        bun.assert(css_ref.tag.class);
+                        fun.assert(css_ref.tag.class);
 
                         for (composes.composes.slice()) |*compose| {
                             // it is imported
                             if (compose.from != null) {
                                 if (compose.from.? == .import_record_index) {
                                     const import_record_idx = compose.from.?.import_record_index;
-                                    const import_records: *const BabyList(bun.css.ImportRecord) = &visitor.all_import_records[idx];
+                                    const import_records: *const BabyList(fun.css.ImportRecord) = &visitor.all_import_records[idx];
                                     const import_record = import_records.at(import_record_idx);
                                     if (import_record.source_index.isValid()) {
                                         const other_file = visitor.all_css_asts[import_record.source_index.get()] orelse {
@@ -145,8 +145,8 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                                                 compose.loc,
                                                 visitor.allocator,
                                                 "Cannot use the \"composes\" property with the {f} file (it is not a CSS file)",
-                                                .{bun.fmt.quote(visitor.all_sources[import_record.source_index.get()].path.pretty)},
-                                            ) catch |err| bun.handleOom(err);
+                                                .{fun.fmt.quote(visitor.all_sources[import_record.source_index.get()].path.pretty)},
+                                            ) catch |err| fun.handleOom(err);
                                             continue;
                                         };
                                         for (compose.names.slice()) |name| {
@@ -177,7 +177,7 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                                                 },
                                                 .tail_loc = visitor.loc,
                                             },
-                                        ) catch |err| bun.handleOom(err);
+                                        ) catch |err| fun.handleOom(err);
                                     }
                                 }
                             } else {
@@ -190,10 +190,10 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                                             visitor.allocator,
                                             "The name {f} never appears in {f} as a CSS modules locally scoped class name. Note that \"composes\" only works with single class selectors.",
                                             .{
-                                                bun.fmt.quote(name.v),
-                                                bun.fmt.quote(visitor.all_sources[idx].path.pretty),
+                                                fun.fmt.quote(name.v),
+                                                fun.fmt.quote(visitor.all_sources[idx].path.pretty),
                                             },
-                                        ) catch |err| bun.handleOom(err);
+                                        ) catch |err| fun.handleOom(err);
                                         continue;
                                     };
                                     const name_ref = name_entry.ref;
@@ -225,7 +225,7 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
 
             for (values) |entry| {
                 const ref = entry.ref;
-                bun.assert(ref.inner_index < symbols.len);
+                fun.assert(ref.inner_index < symbols.len);
 
                 var template_parts = std.array_list.Managed(E.TemplatePart).init(this.allocator());
                 var value = Expr.init(E.NameOfSymbol, E.NameOfSymbol{ .ref = ref.toRealRef(source_index) }, stmt.loc);
@@ -240,7 +240,7 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                         .value = value,
                         .tail_loc = stmt.loc,
                         .tail = .{ .cooked = E.String.init("") },
-                    }) catch |err| bun.handleOom(err);
+                    }) catch |err| fun.handleOom(err);
                     value = Expr.init(
                         E.Template,
                         E.Template{
@@ -318,7 +318,7 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
                     const name = property.key.?.data.e_string.slice(this.allocator());
 
                     // TODO: support non-identifier names
-                    if (!bun.js_lexer.isIdentifier(name))
+                    if (!fun.js_lexer.isIdentifier(name))
                         continue;
 
                     // This initializes the generated variable with a copy of the property
@@ -389,20 +389,20 @@ pub fn generateCodeForLazyExport(this: *LinkerContext, source_index: Index.Int) 
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const ImportRecord = bun.ImportRecord;
-const BitSet = bun.bit_set.DynamicBitSetUnmanaged;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const ImportRecord = fun.ImportRecord;
+const BitSet = fun.bit_set.DynamicBitSetUnmanaged;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -413,9 +413,9 @@ const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 const Symbol = js_ast.Symbol;
 
-const Index = bun.bundle_v2.Index;
-const LinkerContext = bun.bundle_v2.LinkerContext;
-const Ref = bun.bundle_v2.Ref;
+const Index = fun.bundle_v2.Index;
+const LinkerContext = fun.bundle_v2.LinkerContext;
+const Ref = fun.bundle_v2.Ref;
 
-const Logger = bun.logger;
+const Logger = fun.logger;
 const Loc = Logger.Loc;

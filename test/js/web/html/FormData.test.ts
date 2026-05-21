@@ -1,4 +1,4 @@
-import { describe, expect, it, test } from "bun:test";
+import { describe, expect, it, test } from "fun:test";
 import { join } from "path";
 
 describe("FormData", () => {
@@ -281,13 +281,13 @@ describe("FormData", () => {
     // This test verifies that FormData.from throws an exception instead of crashing
     // when given input larger than WebKit's String::MaxLength (INT32_MAX ~= 2GB).
     // We use a smaller test case with the synthetic limit to avoid actually allocating 2GB+.
-    const { setSyntheticAllocationLimitForTesting } = require("bun:internal-for-testing");
+    const { setSyntheticAllocationLimitForTesting } = require("fun:internal-for-testing");
     // Set a small limit so we can test the boundary without allocating gigabytes
     const originalLimit = setSyntheticAllocationLimitForTesting(1024 * 1024); // 1MB limit
     try {
       // Create a buffer larger than the limit
       const largeBuffer = new Uint8Array(2 * 1024 * 1024); // 2MB
-      // @ts-expect-error - FormData.from is a Bun extension
+      // @ts-expect-error - FormData.from is a Fun extension
       expect(() => FormData.from(largeBuffer)).toThrow("Cannot create a string longer than");
     } finally {
       setSyntheticAllocationLimitForTesting(originalLimit);
@@ -323,7 +323,7 @@ describe("FormData", () => {
   });
 
   it("file upload on HTTP server (receive)", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       development: false,
       async fetch(req) {
@@ -346,7 +346,7 @@ describe("FormData", () => {
   });
 
   it("file send on HTTP server (receive)", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       development: false,
       async fetch(req) {
@@ -387,10 +387,10 @@ describe("FormData", () => {
         { X: "Y" },
         { headers: { X: "Y" } },
       ]) {
-        describe("headers: " + Bun.inspect(headers).replaceAll(/([\n ])/gim, ""), () => {
+        describe("headers: " + Fun.inspect(headers).replaceAll(/([\n ])/gim, ""), () => {
           it("send on HTTP server with FormData & Blob (roundtrip)", async () => {
             let contentType = "";
-            using server = Bun.serve({
+            using server = Fun.serve({
               port: 0,
               development: false,
               async fetch(req) {
@@ -419,9 +419,9 @@ describe("FormData", () => {
             expect(body.get("bar")).toBe("baz");
           });
 
-          it("send on HTTP server with FormData & Bun.file (roundtrip)", async () => {
+          it("send on HTTP server with FormData & Fun.file (roundtrip)", async () => {
             let contentType = "";
-            using server = Bun.serve({
+            using server = Fun.serve({
               port: 0,
               development: false,
               async fetch(req) {
@@ -432,7 +432,7 @@ describe("FormData", () => {
             });
 
             const form = new FormData();
-            const file = Bun.file(import.meta.dir + "/form-data-fixture.txt");
+            const file = Fun.file(import.meta.dir + "/form-data-fixture.txt");
             const text = await file.text();
             form.append("foo", file);
             form.append("bar", "baz");
@@ -456,7 +456,7 @@ describe("FormData", () => {
 
           it("send on HTTP server with FormData (roundtrip)", async () => {
             let contentType = "";
-            using server = Bun.serve({
+            using server = Fun.serve({
               port: 0,
               development: false,
               async fetch(req) {
@@ -490,14 +490,14 @@ describe("FormData", () => {
       }
     });
   }
-  describe("Bun.file support", () => {
+  describe("Fun.file support", () => {
     describe("roundtrip", () => {
       const path = import.meta.dir + "/form-data-fixture.txt";
       for (const C of [Request, Response]) {
         it(`with ${C.name}`, async () => {
-          await Bun.write(path, "foo!");
+          await Fun.write(path, "foo!");
           const formData = new FormData();
-          formData.append("foo", Bun.file(path));
+          formData.append("foo", Fun.file(path));
           const response =
             C === Response ? new Response(formData) : new Request({ body: formData, url: "http://example.com" });
           expect(response.headers.get("content-type")?.startsWith("multipart/form-data;")).toBe(true);
@@ -512,18 +512,18 @@ describe("FormData", () => {
 
     it("doesnt crash when file is missing", async () => {
       const formData = new FormData();
-      formData.append("foo", Bun.file("missing"));
+      formData.append("foo", Fun.file("missing"));
       expect(() => new Response(formData)).toThrow();
     });
   });
 
-  it("Bun.inspect", () => {
+  it("Fun.inspect", () => {
     const formData = new FormData();
     formData.append("foo", "bar");
     formData.append("foo", new Blob(["bar"]));
     formData.append("bar", "baz");
-    formData.append("boop", Bun.file("missing"));
-    expect(Bun.inspect(formData).length > 0).toBe(true);
+    formData.append("boop", Fun.file("missing"));
+    expect(Fun.inspect(formData).length > 0).toBe(true);
   });
 
   describe("non-standard extensions", () => {
@@ -625,7 +625,7 @@ describe("FormData", () => {
     });
 
     it("should handle slices", async () => {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         async fetch(req) {
           const body = await req.formData();
@@ -634,7 +634,7 @@ describe("FormData", () => {
           });
         },
       });
-      const fileSlice = Bun.file(join(import.meta.dir, "..", "fetch", "fixture.html")).slice(5, 10);
+      const fileSlice = Fun.file(join(import.meta.dir, "..", "fetch", "fixture.html")).slice(5, 10);
       const form = new FormData();
       form.append("file", fileSlice);
       const result = await fetch(server.url, {
@@ -648,7 +648,7 @@ describe("FormData", () => {
 
   // The minimum repro for this was to not call the .name and .type getter on the Blob
   // But the crux of the issue is that we called dupe() on the Blob, without also incrementing the reference count of the name string.
-  // https://github.com/oven-sh/bun/issues/14918
+  // https://github.com/underdoc-org/fun/issues/14918
   it("should increment reference count of the name string on Blob", async () => {
     const buffer = new File([Buffer.from(Buffer.alloc(48 * 1024, "abcdefh").toString("base64"), "base64")], "ok.jpg");
     function test() {
@@ -666,15 +666,15 @@ describe("FormData", () => {
     for (let i = 0; i < 100000; i++) {
       test();
       if (i % 5000 === 0) {
-        Bun.gc();
+        Fun.gc();
       }
     }
   });
 });
 
-// https://github.com/oven-sh/bun/issues/14988
+// https://github.com/underdoc-org/fun/issues/14988
 describe("Content-Type header propagation", () => {
-  describe("https://github.com/oven-sh/bun/issues/21011", () => {
+  describe("https://github.com/underdoc-org/fun/issues/21011", () => {
     function createRequest() {
       const formData = new FormData();
       formData.append("key", "value");
@@ -701,7 +701,7 @@ describe("Content-Type header propagation", () => {
 
   // Shared test server that validates multipart/form-data content-type
   function createTestServer() {
-    return Bun.serve({
+    return Fun.serve({
       port: 0,
       async fetch(req) {
         if (!req.headers.get("content-type")?.includes("multipart/form-data")) {

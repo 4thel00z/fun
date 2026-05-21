@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 
 describe("issue #26143 - https GET request with body hangs", () => {
   test("http.request GET with body should complete", async () => {
@@ -144,7 +144,7 @@ describe("issue #26143 - https GET request with body hangs", () => {
     }
   });
 
-  test("Bun.fetch without allowGetBody should still throw", async () => {
+  test("Fun.fetch without allowGetBody should still throw", async () => {
     const http = require("http");
 
     const server = http.createServer((req: any, res: any) => {

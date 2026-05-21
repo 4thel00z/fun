@@ -15,7 +15,7 @@ using namespace WebCore;
 
 /* -- BEGIN DOMCall DEFINITIONS -- */
 
-// BUN_DECLARE_HOST_FUNCTION(FFI__ptr__slowpathWrapper);
+// FUN_DECLARE_HOST_FUNCTION(FFI__ptr__slowpathWrapper);
 // extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(FFI__ptr__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, JSC::JSUint8Array*));
 
 // JSC_DEFINE_JIT_OPERATION(FFI__ptr__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, JSC::JSUint8Array* arg1))
@@ -62,7 +62,7 @@ extern "C" void FFI__ptr__put(JSC::JSGlobalObject* globalObject, JSC::EncodedJSV
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__u8__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__u8__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__u8__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__u8__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -111,7 +111,7 @@ extern "C" void Reader__u8__put(JSC::JSGlobalObject* globalObject, JSC::EncodedJ
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__u16__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__u16__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__u16__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__u16__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -157,7 +157,7 @@ extern "C" void Reader__u16__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__u32__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__u32__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__u32__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__u32__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -203,7 +203,7 @@ extern "C" void Reader__u32__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__ptr__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__ptr__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__ptr__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__ptr__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -249,7 +249,7 @@ extern "C" void Reader__ptr__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__i8__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__i8__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__i8__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__i8__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -295,7 +295,7 @@ extern "C" void Reader__i8__put(JSC::JSGlobalObject* globalObject, JSC::EncodedJ
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__i16__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__i16__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__i16__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__i16__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -341,7 +341,7 @@ extern "C" void Reader__i16__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__i32__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__i32__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__i32__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__i32__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -387,7 +387,7 @@ extern "C" void Reader__i32__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__i64__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__i64__slowpathWrapper);
 extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__i64__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__i64__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -433,7 +433,7 @@ extern "C" void Reader__i64__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__u64__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__u64__slowpathWrapper);
 // extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__u64__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__u64__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -479,7 +479,7 @@ extern "C" void Reader__u64__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__intptr__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__intptr__slowpathWrapper);
 // extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__intptr__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__intptr__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -525,7 +525,7 @@ extern "C" void Reader__intptr__put(JSC::JSGlobalObject* globalObject, JSC::Enco
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__f32__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__f32__slowpathWrapper);
 // extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__f32__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__f32__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))
@@ -571,7 +571,7 @@ extern "C" void Reader__f32__put(JSC::JSGlobalObject* globalObject, JSC::Encoded
         function);
 }
 
-BUN_DECLARE_HOST_FUNCTION(Reader__f64__slowpathWrapper);
+FUN_DECLARE_HOST_FUNCTION(Reader__f64__slowpathWrapper);
 // extern "C" JSC_DECLARE_JIT_OPERATION_WITHOUT_WTF_INTERNAL(Reader__f64__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t, int32_t));
 
 // JSC_DEFINE_JIT_OPERATION(Reader__f64__fastpathWrapper, EncodedJSValue, (JSC::JSGlobalObject * lexicalGlobalObject, void* thisValue, int64_t arg1, int32_t arg2))

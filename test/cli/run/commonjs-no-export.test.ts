@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
 describe.concurrent("commonjs-no-export", () => {
   test("CommonJS entry point with no exports", async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--bun", join(import.meta.dir, "commonjs-no-exports-fixture.js")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--fun", join(import.meta.dir, "commonjs-no-exports-fixture.js")],
+      env: funEnv,
       stderr: "inherit",
       stdout: "pipe",
     });

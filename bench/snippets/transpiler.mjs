@@ -15,8 +15,8 @@ async function getWithName(name) {
   let transform;
   let opts;
 
-  if (name === "bun") {
-    const transpiler = new Bun.Transpiler({ loader: "jsx" });
+  if (name === "fun") {
+    const transpiler = new Fun.Transpiler({ loader: "jsx" });
     transformSync = transpiler.transformSync.bind(transpiler);
     transform = transpiler.transform.bind(transpiler);
     opts = "jsx";
@@ -66,12 +66,12 @@ async function getWithName(name) {
   };
 }
 
-const bun = process.isBun ? await getWithName("bun") : null;
+const fun = process.isFun ? await getWithName("fun") : null;
 const esbuild = await getWithName("esbuild");
 const swc = await getWithName("swc");
 const babel = await getWithName("babel");
 
-const transpilers = [bun, esbuild, swc, babel].filter(Boolean);
+const transpilers = [fun, esbuild, swc, babel].filter(Boolean);
 
 group("transformSync (" + ((code.length / 1024) | 0) + " KB jsx file)", () => {
   for (let { name, transformSync, opts } of transpilers) {

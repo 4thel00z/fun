@@ -8,7 +8,7 @@ pub fn ERR_toJS(globalThis: *jsc.JSGlobalObject, err_code: u32) jsc.JSValue {
 
     _ = boring.ERR_error_string_n(err_code, message_buf, message_buf.len);
 
-    const error_message: []const u8 = bun.sliceTo(outbuf[0..], 0);
+    const error_message: []const u8 = fun.sliceTo(outbuf[0..], 0);
     if (error_message.len == "BoringSSL ".len) {
         return globalThis.ERR(.BORINGSSL, "An unknown BoringSSL error occurred: {d}", .{err_code}).toJS();
     }
@@ -16,6 +16,6 @@ pub fn ERR_toJS(globalThis: *jsc.JSGlobalObject, err_code: u32) jsc.JSValue {
     return globalThis.ERR(.BORINGSSL, "{s}", .{error_message}).toJS();
 }
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const boring = bun.BoringSSL.c;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const boring = fun.BoringSSL.c;

@@ -5,7 +5,7 @@
 // importers.
 //
 // These tests communicate over jsonb.
-import { RedisClient } from "bun";
+import { RedisClient } from "fun";
 
 const CHANNEL = "error-callback-channel";
 
@@ -64,9 +64,9 @@ if (import.meta.main) {
   const subscriber = new RedisClient(runInfo.url, {
     tls: runInfo.tlsPaths
       ? {
-          cert: Bun.file(runInfo.tlsPaths.cert),
-          key: Bun.file(runInfo.tlsPaths.key),
-          ca: Bun.file(runInfo.tlsPaths.ca),
+          cert: Fun.file(runInfo.tlsPaths.cert),
+          key: Fun.file(runInfo.tlsPaths.key),
+          ca: Fun.file(runInfo.tlsPaths.ca),
           rejectUnauthorized: false,
         }
       : undefined,

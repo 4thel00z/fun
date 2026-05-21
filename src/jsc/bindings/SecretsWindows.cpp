@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <wincred.h>
 
-namespace Bun {
+namespace Fun {
 namespace Secrets {
 
 using namespace WTF;
@@ -246,6 +246,6 @@ bool deletePassword(const CString& service, const CString& name, Error& err)
 }
 
 } // namespace Secrets
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(WINDOWS)

@@ -1,11 +1,11 @@
 //! Some common commands (e.g. `ls`, `which`, `mv`, essentially coreutils) we make "built-in"
 //! to the shell and implement natively in Zig. We do this for a couple reasons:
 //!
-//! 1. We can re-use a lot of our existing code in Bun and often times it's
+//! 1. We can re-use a lot of our existing code in Fun and often times it's
 //!    faster (for example `cp` and `mv` can be implemented using our Node FS
 //!    logic)
 //!
-//! 2. Builtins run in the Bun process, so we can save a lot of time not having to
+//! 2. Builtins run in the Fun process, so we can save a lot of time not having to
 //!    spawn a new subprocess. A lot of the times, just spawning the shell can take
 //!    longer than actually running the command. This is especially noticeable and
 //!    important to consider for Windows.
@@ -19,8 +19,8 @@ exit_code: ?ExitCode = null,
 export_env: *EnvMap,
 cmd_local_env: *EnvMap,
 
-arena: *bun.ArenaAllocator,
-cwd: bun.FD,
+arena: *fun.ArenaAllocator,
+cwd: fun.FD,
 
 /// TODO: It would be nice to make this mutable so that certain commands (e.g.
 /// `export`) don't have to duplicate arguments. However, it is tricky because
@@ -29,7 +29,7 @@ cwd: bun.FD,
 args: *const std.array_list.Managed(?[*:0]const u8),
 /// Cached slice of `args`.
 ///
-/// This caches the result of calling `bun.span(this.args.items[i])` since the
+/// This caches the result of calling `fun.span(this.args.items[i])` since the
 /// items in `this.args` are sentinel terminated and don't carry their length.
 args_slice: ?[]const [:0]const u8 = null,
 
@@ -57,7 +57,7 @@ pub const Impl = union(Kind) {
     cp: Cp,
 };
 
-pub const Result = @import("../bun_core/result.zig").Result;
+pub const Result = @import("../fun_core/result.zig").Result;
 
 // Note: this enum uses @tagName, choose wisely!
 pub const Kind = enum {
@@ -112,12 +112,12 @@ pub const Kind = enum {
     }
 
     fn forceEnableOnPosix() bool {
-        return bun.feature_flag.BUN_ENABLE_EXPERIMENTAL_SHELL_BUILTINS.get();
+        return fun.feature_flag.FUN_ENABLE_EXPERIMENTAL_SHELL_BUILTINS.get();
     }
 
     pub fn fromStr(str: []const u8) ?Builtin.Kind {
         const result = std.meta.stringToEnum(Builtin.Kind, str) orelse return null;
-        if (bun.Environment.isWindows) return result;
+        if (fun.Environment.isWindows) return result;
         if (forceEnableOnPosix()) return result;
         inline for (Builtin.Kind.DISABLED_ON_POSIX) |disabled| {
             if (disabled == result) {
@@ -133,7 +133,7 @@ pub const BuiltinIO = struct {
     /// in the case of array buffer we simply need to write to the pointer
     /// in the case of blob, we write to the file descriptor
     pub const Output = union(enum) {
-        fd: struct { writer: *IOWriter, captured: ?*bun.ByteList = null },
+        fd: struct { writer: *IOWriter, captured: ?*fun.ByteList = null },
         buf: std.array_list.Managed(u8),
         arraybuf: ArrayBuf,
         blob: *Blob,
@@ -141,7 +141,7 @@ pub const BuiltinIO = struct {
 
         const FdOutput = struct {
             writer: *IOWriter,
-            captured: ?*bun.ByteList = null,
+            captured: ?*fun.ByteList = null,
 
             // pub fn
         };
@@ -257,12 +257,12 @@ pub const BuiltinIO = struct {
     };
 
     const Blob = struct {
-        const RefCount = bun.ptr.RefCount(@This(), "ref_count", @This().deinit, .{});
+        const RefCount = fun.ptr.RefCount(@This(), "ref_count", @This().deinit, .{});
         pub const ref = RefCount.ref;
         pub const deref = RefCount.deref;
 
         ref_count: RefCount,
-        blob: bun.webcore.Blob,
+        blob: fun.webcore.Blob,
 
         fn dupeRef(this: *Blob) *Blob {
             this.ref();
@@ -271,7 +271,7 @@ pub const BuiltinIO = struct {
 
         fn deinit(this: *Blob) void {
             this.blob.deinit();
-            bun.destroy(this);
+            fun.destroy(this);
         }
     };
 };
@@ -336,12 +336,12 @@ pub fn init(
     cmd: *Cmd,
     interpreter: *Interpreter,
     kind: Kind,
-    arena: *bun.ArenaAllocator,
+    arena: *fun.ArenaAllocator,
     node: *const ast.Cmd,
     args: *const std.array_list.Managed(?[*:0]const u8),
     export_env: *EnvMap,
     cmd_local_env: *EnvMap,
-    cwd: bun.FD,
+    cwd: fun.FD,
     io: *IO,
 ) ?Yield {
     const stdin: BuiltinIO.Input = switch (io.stdin) {
@@ -393,14 +393,14 @@ pub fn init(
         .ls => {
             cmd.exec.bltn.impl = .{
                 .ls = Ls{
-                    .alloc_scope = shell.AllocScope.beginScope(bun.default_allocator),
+                    .alloc_scope = shell.AllocScope.beginScope(fun.default_allocator),
                 },
             };
         },
         .yes => {
             cmd.exec.bltn.impl = .{
                 .yes = Yes{
-                    .alloc_scope = shell.AllocScope.beginScope(bun.default_allocator),
+                    .alloc_scope = shell.AllocScope.beginScope(fun.default_allocator),
                 },
             };
         },
@@ -422,11 +422,11 @@ fn initRedirections(
         switch (file) {
             .atom => {
                 if (cmd.redirection_file.items.len == 0) {
-                    return cmd.writeFailingError("bun: ambiguous redirect: at `{s}`\n", .{@tagName(kind)});
+                    return cmd.writeFailingError("fun: ambiguous redirect: at `{s}`\n", .{@tagName(kind)});
                 }
 
                 // Regular files are not pollable on linux and macos
-                const is_pollable: bool = if (bun.Environment.isPosix) false else true;
+                const is_pollable: bool = if (fun.Environment.isPosix) false else true;
 
                 const path = cmd.redirection_file.items[0..cmd.redirection_file.items.len -| 1 :0];
                 log("EXPANDED REDIRECT: {s}\n", .{cmd.redirection_file.items[0..]});
@@ -442,13 +442,13 @@ fn initRedirections(
                             .err => |e| {
                                 const sys_err = e.toShellSystemError();
                                 defer sys_err.deref();
-                                return cmd.writeFailingError("bun: {f}: {s}", .{ sys_err.message, path });
+                                return cmd.writeFailingError("fun: {f}: {s}", .{ sys_err.message, path });
                             },
                             .result => |f| f,
                         };
                     }
 
-                    const result = bun.io.openForWritingImpl(
+                    const result = fun.io.openForWritingImpl(
                         cmd.base.shell.cwd_fd,
                         path,
                         node.redirect.toFlags(),
@@ -470,15 +470,15 @@ fn initRedirections(
                         .err => |e| {
                             const sys_err = e.toShellSystemError();
                             defer sys_err.deref();
-                            return cmd.writeFailingError("bun: {f}: {s}", .{ sys_err.message, path });
+                            return cmd.writeFailingError("fun: {f}: {s}", .{ sys_err.message, path });
                         },
                         .result => |f| {
-                            if (bun.Environment.isWindows) {
+                            if (fun.Environment.isWindows) {
                                 switch (f.makeLibUVOwnedForSyscall(.open, .close_on_fail)) {
                                     .err => |e| {
                                         const sys_err = e.toShellSystemError();
                                         defer sys_err.deref();
-                                        return cmd.writeFailingError("bun: {f}: {s}", .{ sys_err.message, path });
+                                        return cmd.writeFailingError("fun: {f}: {s}", .{ sys_err.message, path });
                                     },
                                     .result => |f2| break :redirfd f2,
                                 }
@@ -562,7 +562,7 @@ fn initRedirections(
                         return null;
                     }
 
-                    const blob: *BuiltinIO.Blob = bun.new(BuiltinIO.Blob, .{
+                    const blob: *BuiltinIO.Blob = fun.new(BuiltinIO.Blob, .{
                         .ref_count = .init(),
                         .blob = original_blob.dupe(),
                     });
@@ -589,7 +589,7 @@ fn initRedirections(
                         return .failed;
                     }
 
-                    const theblob: *BuiltinIO.Blob = bun.new(BuiltinIO.Blob, .{
+                    const theblob: *BuiltinIO.Blob = fun.new(BuiltinIO.Blob, .{
                         .ref_count = .init(),
                         .blob = blob.dupe(),
                     });
@@ -630,7 +630,7 @@ pub inline fn eventLoop(this: *const Builtin) jsc.EventLoopHandle {
     return this.parentCmd().base.eventLoop();
 }
 
-pub inline fn throw(this: *const Builtin, err: *const bun.shell.ShellErr) void {
+pub inline fn throw(this: *const Builtin, err: *const fun.shell.ShellErr) void {
     this.parentCmd().base.throw(err) catch {};
 }
 
@@ -647,7 +647,7 @@ pub inline fn parentCmdMut(this: *Builtin) *Cmd {
 
 pub fn done(this: *Builtin, exit_code: anytype) Yield {
     const code: ExitCode = switch (@TypeOf(exit_code)) {
-        bun.sys.E => @intFromEnum(exit_code),
+        fun.sys.E => @intFromEnum(exit_code),
         u1, u8, u16 => exit_code,
         comptime_int => exit_code,
         else => @compileError("Invalid type: " ++ @typeName(@TypeOf(exit_code))),
@@ -660,15 +660,15 @@ pub fn done(this: *Builtin, exit_code: anytype) Yield {
 
     // Aggregate output data if shell state is piped and this cmd is piped
     if (cmd.io.stdout == .pipe and cmd.io.stdout == .pipe and this.stdout == .buf) {
-        bun.handleOom(cmd.base.shell.buffered_stdout().appendSlice(
-            bun.default_allocator,
+        fun.handleOom(cmd.base.shell.buffered_stdout().appendSlice(
+            fun.default_allocator,
             this.stdout.buf.items[0..],
         ));
     }
     // Aggregate output data if shell state is piped and this cmd is piped
     if (cmd.io.stderr == .pipe and cmd.io.stderr == .pipe and this.stderr == .buf) {
-        bun.handleOom(cmd.base.shell.buffered_stderr().appendSlice(
-            bun.default_allocator,
+        fun.handleOom(cmd.base.shell.buffered_stderr().appendSlice(
+            fun.default_allocator,
             this.stderr.buf.items[0..],
         ));
     }
@@ -695,7 +695,7 @@ pub fn deinit(this: *Builtin) void {
 }
 
 /// If the stdout/stderr is supposed to be captured then get the bytelist associated with that
-pub fn stdBufferedBytelist(this: *Builtin, comptime io_kind: @Type(.enum_literal)) ?*bun.ByteList {
+pub fn stdBufferedBytelist(this: *Builtin, comptime io_kind: @Type(.enum_literal)) ?*fun.ByteList {
     if (comptime io_kind != .stdout and io_kind != .stderr) {
         @compileError("Bad IO" ++ @tagName(io_kind));
     }
@@ -730,12 +730,12 @@ pub fn writeNoIO(this: *Builtin, comptime io_kind: @Type(.enum_literal), buf: []
         .fd => @panic("writeNoIO(. " ++ @tagName(io_kind) ++ ", buf) can't write to a file descriptor, did you check that needsIO(." ++ @tagName(io_kind) ++ ") was false?"),
         .buf => {
             log("{s} write to buf len={d} str={s}{s}\n", .{ @tagName(this.kind), buf.len, buf[0..@min(buf.len, 16)], if (buf.len > 16) "..." else "" });
-            bun.handleOom(io.buf.appendSlice(buf));
+            fun.handleOom(io.buf.appendSlice(buf));
             return Maybe(usize).initResult(buf.len);
         },
         .arraybuf => {
             if (io.arraybuf.i >= io.arraybuf.buf.array_buffer.byte_len) {
-                return Maybe(usize).initErr(bun.sys.Error.fromCode(bun.sys.E.NOSPC, .write));
+                return Maybe(usize).initErr(fun.sys.Error.fromCode(fun.sys.E.NOSPC, .write));
             }
 
             const len = buf.len;
@@ -763,7 +763,7 @@ pub fn taskErrorToString(this: *Builtin, comptime kind: Kind, err: anytype) []co
         Syscall.Error => {
             if (err.getErrorCodeTagName()) |entry| {
                 _, const sys_errno = entry;
-                if (bun.sys.coreutils_error_map.get(sys_errno)) |message| {
+                if (fun.sys.coreutils_error_map.get(sys_errno)) |message| {
                     if (err.path.len > 0) {
                         return this.fmtErrorArena(kind, "{s}: {s}\n", .{ err.path, message });
                     }
@@ -776,7 +776,7 @@ pub fn taskErrorToString(this: *Builtin, comptime kind: Kind, err: anytype) []co
             if (err.path.length() == 0) return this.fmtErrorArena(kind, "{s}\n", .{err.message.byteSlice()});
             return this.fmtErrorArena(kind, "{s}: {f}\n", .{ err.message.byteSlice(), err.path });
         },
-        bun.shell.ShellErr => return switch (err) {
+        fun.shell.ShellErr => return switch (err) {
             .sys => this.taskErrorToString(kind, err.sys),
             .custom => this.fmtErrorArena(kind, "{s}\n", .{err.custom}),
             .invalid_arguments => this.fmtErrorArena(kind, "{s}\n", .{err.invalid_arguments.val}),
@@ -789,7 +789,7 @@ pub fn taskErrorToString(this: *Builtin, comptime kind: Kind, err: anytype) []co
 pub fn fmtErrorArena(this: *Builtin, comptime kind: ?Kind, comptime fmt_: []const u8, args: anytype) []u8 {
     const cmd_str = comptime if (kind) |k| @tagName(k) ++ ": " else "";
     const fmt = cmd_str ++ fmt_;
-    return bun.handleOom(std.fmt.allocPrint(this.arena.allocator(), fmt, args));
+    return fun.handleOom(std.fmt.allocPrint(this.arena.allocator(), fmt, args));
 }
 
 // --- Shell Builtin Commands ---
@@ -817,11 +817,11 @@ pub const Mv = @import("./builtin/mv.zig");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
-const shell = bun.shell;
-const Yield = bun.shell.Yield;
+const shell = fun.shell;
+const Yield = fun.shell.Yield;
 const ast = shell.AST;
 const IO = shell.Interpreter.IO;
 
@@ -837,5 +837,5 @@ const Cmd = Interpreter.Cmd;
 const IOReader = Interpreter.IOReader;
 const IOWriter = Interpreter.IOWriter;
 
-const Syscall = bun.sys;
-const Maybe = bun.sys.Maybe;
+const Syscall = fun.sys;
+const Maybe = fun.sys.Maybe;

@@ -1,15 +1,15 @@
-/// Used for `bun build --compile`
+/// Used for `fun build --compile`
 ///
-/// This downloads and extracts the bun binary for the target platform
-/// It uses npm to download the bun binary from the npm registry
-/// It stores the downloaded binary into the bun install cache.
+/// This downloads and extracts the fun binary for the target platform
+/// It uses npm to download the fun binary from the npm registry
+/// It stores the downloaded binary into the fun install cache.
 ///
 const CompileTarget = @This();
 
 os: Environment.OperatingSystem = Environment.os,
 arch: Environment.Architecture = Environment.arch,
 baseline: bool = !Environment.enableSIMD,
-version: bun.Semver.Version = .{
+version: fun.Semver.Version = .{
     .major = @truncate(Environment.version.major),
     .minor = @truncate(Environment.version.minor),
     .patch = @truncate(Environment.version.patch),
@@ -25,7 +25,7 @@ const Libc = enum {
     /// bionic (Android)
     android,
 
-    /// npm package name, `@oven-sh/bun-{os}-{arch}`
+    /// npm package name, `@underdoc-org/fun-{os}-{arch}`
     pub fn npmName(this: Libc) []const u8 {
         return switch (this) {
             .default => "",
@@ -67,7 +67,7 @@ pub fn isDefault(this: *const CompileTarget) bool {
 }
 
 pub fn toNPMRegistryURL(this: *const CompileTarget, buf: []u8) ![]const u8 {
-    if (bun.env_var.BUN_COMPILE_TARGET_TARBALL_URL.get()) |url| {
+    if (fun.env_var.FUN_COMPILE_TARGET_TARBALL_URL.get()) |url| {
         if (strings.hasPrefixComptime(url, "http://") or strings.hasPrefixComptime(url, "https://"))
             return url;
     }
@@ -85,12 +85,12 @@ pub fn toNPMRegistryURLWithURL(this: *const CompileTarget, buf: []u8, registry_u
         inline else => |os| switch (this.arch) {
             inline else => |arch| switch (this.libc) {
                 inline else => |libc| switch (this.baseline) {
-                    // https://registry.npmjs.org/@oven/bun-linux-x64/-/bun-linux-x64-0.1.6.tgz
-                    inline else => |is_baseline| std.fmt.bufPrint(buf, comptime "{s}/@oven/bun-" ++
+                    // https://registry.npmjs.org/@underdoc-org/fun-linux-x64/-/fun-linux-x64-0.1.6.tgz
+                    inline else => |is_baseline| std.fmt.bufPrint(buf, comptime "{s}/@underdoc-org/fun-" ++
                         os.npmName() ++ "-" ++ arch.npmName() ++
                         libc.npmName() ++
                         (if (is_baseline) "-baseline" else "") ++
-                        "/-/bun-" ++
+                        "/-/fun-" ++
                         os.npmName() ++ "-" ++ arch.npmName() ++
                         libc.npmName() ++
                         (if (is_baseline) "-baseline" else "") ++
@@ -115,9 +115,9 @@ pub fn toNPMRegistryURLWithURL(this: *const CompileTarget, buf: []u8, registry_u
 
 pub fn format(this: @This(), writer: *std.Io.Writer) std.Io.Writer.Error!void {
     try writer.print(
-        // bun-darwin-x64-baseline-v1.0.0
+        // fun-darwin-x64-baseline-v1.0.0
         // This doesn't match up 100% with npm, but that's okay.
-        "bun-{s}-{s}{f}{f}-v{d}.{d}.{d}",
+        "fun-{s}-{s}{f}{f}-v{d}.{d}.{d}",
         .{
             this.os.npmName(),
             this.arch.npmName(),
@@ -130,40 +130,40 @@ pub fn format(this: @This(), writer: *std.Io.Writer) std.Io.Writer.Error!void {
     );
 }
 
-pub fn exePath(this: *const CompileTarget, buf: *bun.PathBuffer, version_str: [:0]const u8, env: *bun.DotEnv.Loader, needs_download: *bool) [:0]const u8 {
+pub fn exePath(this: *const CompileTarget, buf: *fun.PathBuffer, version_str: [:0]const u8, env: *fun.DotEnv.Loader, needs_download: *bool) [:0]const u8 {
     if (this.isDefault()) brk: {
-        const self_exe_path = bun.selfExePath() catch break :brk;
+        const self_exe_path = fun.selfExePath() catch break :brk;
         @memcpy(buf, self_exe_path);
         buf[self_exe_path.len] = 0;
         needs_download.* = false;
         return buf[0..self_exe_path.len :0];
     }
 
-    if (bun.FD.cwd().existsAt(version_str)) {
+    if (fun.FD.cwd().existsAt(version_str)) {
         needs_download.* = false;
         return version_str;
     }
 
-    const dest = bun.path.joinAbsStringBufZ(
-        bun.fs.FileSystem.instance.top_level_dir,
+    const dest = fun.path.joinAbsStringBufZ(
+        fun.fs.FileSystem.instance.top_level_dir,
         buf,
         &.{
-            bun.install.PackageManager.fetchCacheDirectoryPath(env, null).path,
+            fun.install.PackageManager.fetchCacheDirectoryPath(env, null).path,
             version_str,
         },
         .auto,
     );
 
-    if (bun.FD.cwd().existsAt(dest)) {
+    if (fun.FD.cwd().existsAt(dest)) {
         needs_download.* = false;
     }
 
     return dest;
 }
 
-pub fn downloadToPath(this: *const CompileTarget, env: *bun.DotEnv.Loader, allocator: std.mem.Allocator, dest_z: [:0]const u8) !void {
+pub fn downloadToPath(this: *const CompileTarget, env: *fun.DotEnv.Loader, allocator: std.mem.Allocator, dest_z: [:0]const u8) !void {
     HTTP.HTTPThread.init(&.{});
-    var refresher = bun.Progress{};
+    var refresher = fun.Progress{};
 
     {
         refresher.refresh();
@@ -177,12 +177,12 @@ pub fn downloadToPath(this: *const CompileTarget, env: *bun.DotEnv.Loader, alloc
             // Return error without printing - let caller decide how to handle
             return err;
         };
-        const url_str_copy = try bun.default_allocator.dupe(u8, url_str);
-        const url = bun.URL.parse(url_str_copy);
+        const url_str_copy = try fun.default_allocator.dupe(u8, url_str);
+        const url = fun.URL.parse(url_str_copy);
         {
             var progress = refresher.start("Downloading", 0);
             defer progress.end();
-            const http_proxy: ?bun.URL = env.getHttpProxyFor(url);
+            const http_proxy: ?fun.URL = env.getHttpProxyFor(url);
 
             async_http.* = HTTP.AsyncHTTP.initSync(
                 allocator,
@@ -228,7 +228,7 @@ pub fn downloadToPath(this: *const CompileTarget, env: *bun.DotEnv.Loader, alloc
             {
                 var node = refresher.start("Decompressing", 0);
                 defer node.end();
-                var gunzip = bun.zlib.ZlibReaderArrayList.init(compressed_archive_bytes.list.items, &tarball_bytes, allocator) catch {
+                var gunzip = fun.zlib.ZlibReaderArrayList.init(compressed_archive_bytes.list.items, &tarball_bytes, allocator) catch {
                     node.end();
                     // Return error without printing - let caller handle the messaging
                     return error.InvalidResponse;
@@ -246,9 +246,9 @@ pub fn downloadToPath(this: *const CompileTarget, env: *bun.DotEnv.Loader, alloc
                 var node = refresher.start("Extracting", 0);
                 defer node.end();
 
-                const libarchive = bun.libarchive;
+                const libarchive = fun.libarchive;
                 var tmpname_buf: [1024]u8 = undefined;
-                const tempdir_name = try bun.fs.FileSystem.tmpname("tmp", &tmpname_buf, bun.fastRandom());
+                const tempdir_name = try fun.fs.FileSystem.tmpname("tmp", &tmpname_buf, fun.fastRandom());
                 var tmpdir = try std.fs.cwd().makeOpenPath(tempdir_name, .{});
                 defer tmpdir.close();
                 defer std.fs.cwd().deleteTree(tempdir_name) catch {};
@@ -270,10 +270,10 @@ pub fn downloadToPath(this: *const CompileTarget, env: *bun.DotEnv.Loader, alloc
 
                 var did_retry = false;
                 while (true) {
-                    bun.sys.moveFileZ(.fromStdDir(tmpdir), if (this.os == .windows) "bun.exe" else "bun", bun.invalid_fd, dest_z) catch {
+                    fun.sys.moveFileZ(.fromStdDir(tmpdir), if (this.os == .windows) "fun.exe" else "fun", fun.invalid_fd, dest_z) catch {
                         if (!did_retry) {
                             did_retry = true;
-                            const dirname = bun.path.dirname(dest_z, .loose);
+                            const dirname = fun.path.dirname(dest_z, .loose);
                             if (dirname.len > 0) {
                                 std.fs.cwd().makePath(dirname) catch {};
                                 continue;
@@ -312,7 +312,7 @@ pub const ParseError = error{
 
 pub fn tryFrom(input_: []const u8) ParseError!CompileTarget {
     var this = CompileTarget{};
-    const input = bun.strings.trim(input_, " \t\r");
+    const input = fun.strings.trim(input_, " \t\r");
     if (input.len == 0) {
         return this;
     }
@@ -324,9 +324,9 @@ pub fn tryFrom(input_: []const u8) ParseError!CompileTarget {
     var found_libc = false;
 
     // Parse each of the supported values.
-    // The user shouldn't have to care about the order of the values. As long as it starts with "bun-".
-    // Nobody wants to remember whether its "bun-linux-x64" or "bun-x64-linux".
-    var splitter = bun.strings.split(input, "-");
+    // The user shouldn't have to care about the order of the values. As long as it starts with "fun-".
+    // Nobody wants to remember whether its "fun-linux-x64" or "fun-x64-linux".
+    var splitter = fun.strings.split(input, "-");
     while (input.len > 0) {
         const token = splitter.next() orelse break;
         if (token.len == 0) continue;
@@ -348,7 +348,7 @@ pub fn tryFrom(input_: []const u8) ParseError!CompileTarget {
             found_baseline = true;
             continue;
         } else if (strings.hasPrefixComptime(token, "v1.") or strings.hasPrefixComptime(token, "v0.")) {
-            const version = bun.Semver.Version.parse(bun.Semver.SlicedString.init(token[1..], token[1..]));
+            const version = fun.Semver.Version.parse(fun.Semver.SlicedString.init(token[1..], token[1..]));
             if (version.valid) {
                 if (version.version.major == null or version.version.minor == null or version.version.patch == null) {
                     return error.InvalidTarget;
@@ -376,7 +376,7 @@ pub fn tryFrom(input_: []const u8) ParseError!CompileTarget {
     }
 
     if (!found_libc and this.libc != .default and this.os != .linux) {
-        // "bun-windows-x64" should not implicitly be "bun-windows-x64-musl"
+        // "fun-windows-x64" should not implicitly be "fun-windows-x64-musl"
         this.libc = .default;
     }
 
@@ -407,8 +407,8 @@ pub fn from(input_: []const u8) CompileTarget {
     return tryFrom(input_) catch |err| {
         switch (err) {
             ParseError.UnsupportedTarget => {
-                const input = bun.strings.trim(input_, " \t\r");
-                var splitter = bun.strings.split(input, "-");
+                const input = fun.strings.trim(input_, " \t\r");
+                var splitter = fun.strings.split(input, "-");
                 var unsupported_token: ?[]const u8 = null;
                 while (splitter.next()) |token| {
                     if (token.len == 0) continue;
@@ -427,11 +427,11 @@ pub fn from(input_: []const u8) CompileTarget {
 
                 if (unsupported_token) |token| {
                     Output.errGeneric(
-                        \\Unsupported target {f} in "bun{s}"
+                        \\Unsupported target {f} in "fun{s}"
                         \\To see the supported targets:
-                        \\  https://bun.com/docs/bundler/executables
+                        \\  https://fun.dev/docs/bundler/executables
                     , .{
-                        bun.fmt.quote(token),
+                        fun.fmt.quote(token),
                         input_,
                     });
                 } else {
@@ -440,15 +440,15 @@ pub fn from(input_: []const u8) CompileTarget {
                 Global.exit(1);
             },
             ParseError.InvalidTarget => {
-                const input = bun.strings.trim(input_, " \t\r");
+                const input = fun.strings.trim(input_, " \t\r");
                 if (strings.containsComptime(input, "musl") and !strings.containsComptime(input, "linux")) {
                     Output.errGeneric("invalid target, musl libc only exists on linux", .{});
                 } else if (strings.containsComptime(input, "android") and !strings.containsComptime(input, "linux")) {
-                    Output.errGeneric("invalid target, android only exists with linux (use bun-linux-arm64-android)", .{});
+                    Output.errGeneric("invalid target, android only exists with linux (use fun-linux-arm64-android)", .{});
                 } else if (strings.containsComptime(input, "wasm")) {
                     Output.errGeneric("invalid target, WebAssembly is not supported. Sorry!", .{});
                 } else if (strings.containsComptime(input, "v")) {
-                    Output.errGeneric("Please pass a complete version number to --target. For example, --target=bun-v" ++ Environment.version_string, .{});
+                    Output.errGeneric("Please pass a complete version number to --target. For example, --target=fun-v" ++ Environment.version_string, .{});
                 } else {
                     Output.errGeneric("Invalid target: {s}", .{input_});
                 }
@@ -463,7 +463,7 @@ pub fn defineKeys(_: *const CompileTarget) []const []const u8 {
     return &.{
         "process.platform",
         "process.arch",
-        "process.versions.bun",
+        "process.versions.fun",
     };
 }
 
@@ -497,10 +497,10 @@ pub const fromSlice = @import("../bundler_jsc/options_jsc.zig").compileTargetFro
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const HTTP = bun.http;
-const MutableString = bun.MutableString;
-const Output = bun.Output;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const HTTP = fun.http;
+const MutableString = fun.MutableString;
+const Output = fun.Output;
+const strings = fun.strings;

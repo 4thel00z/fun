@@ -36,7 +36,7 @@ static call_register constructor1;
 static init_static constructor2;
 
 napi_value register_cb(napi_env env, napi_value exports) {
-  // should be called third, after dlopen returns and bun runs the callback
+  // should be called third, after dlopen returns and fun runs the callback
   // passed to napi_module_register
   (void)env;
   printf("register_cb\n");

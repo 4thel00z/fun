@@ -3,7 +3,7 @@
 
 const AnyRequestContext = @This();
 
-pub const Pointer = bun.TaggedPointerUnion(.{
+pub const Pointer = fun.TaggedPointerUnion(.{
     HTTPServer.RequestContext,
     HTTPSServer.RequestContext,
     DebugHTTPServer.RequestContext,
@@ -37,7 +37,7 @@ inline fn dispatch(self: AnyRequestContext, comptime Ret: type, default: Ret, co
 pub fn setAdditionalOnAbortCallback(self: AnyRequestContext, cb: ?AdditionalOnAbortCallback) void {
     self.dispatch(void, {}, struct {
         fn f(comptime _: type, ctx: anytype, c: ?AdditionalOnAbortCallback) void {
-            bun.assert(ctx.additional_on_abort == null);
+            fun.assert(ctx.additional_on_abort == null);
             ctx.additional_on_abort = c;
         }
     }.f, .{cb});
@@ -135,17 +135,17 @@ pub fn ref(self: AnyRequestContext) void {
     }.f, .{});
 }
 
-pub fn setSignalAborted(self: AnyRequestContext, reason: bun.jsc.CommonAbortReason) void {
+pub fn setSignalAborted(self: AnyRequestContext, reason: fun.jsc.CommonAbortReason) void {
     self.dispatch(void, {}, struct {
-        fn f(comptime _: type, ctx: anytype, r: bun.jsc.CommonAbortReason) void {
+        fn f(comptime _: type, ctx: anytype, r: fun.jsc.CommonAbortReason) void {
             ctx.setSignalAborted(r);
         }
     }.f, .{reason});
 }
 
-pub fn devServer(self: AnyRequestContext) ?*bun.bake.DevServer {
-    return self.dispatch(?*bun.bake.DevServer, null, struct {
-        fn f(comptime _: type, ctx: anytype) ?*bun.bake.DevServer {
+pub fn devServer(self: AnyRequestContext) ?*fun.bake.DevServer {
+    return self.dispatch(?*fun.bake.DevServer, null, struct {
+        fn f(comptime _: type, ctx: anytype) ?*fun.bake.DevServer {
             return ctx.devServer();
         }
     }.f, .{});
@@ -161,11 +161,11 @@ pub fn deref(self: AnyRequestContext) void {
 
 pub const AdditionalOnAbortCallback = @import("./RequestContext.zig").AdditionalOnAbortCallback;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const uws = bun.uws;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const uws = fun.uws;
 
-const DebugHTTPSServer = bun.api.DebugHTTPSServer;
-const DebugHTTPServer = bun.api.DebugHTTPServer;
-const HTTPSServer = bun.api.HTTPSServer;
-const HTTPServer = bun.api.HTTPServer;
+const DebugHTTPSServer = fun.api.DebugHTTPSServer;
+const DebugHTTPServer = fun.api.DebugHTTPServer;
+const HTTPSServer = fun.api.HTTPSServer;
+const HTTPServer = fun.api.HTTPServer;

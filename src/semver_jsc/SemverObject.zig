@@ -33,8 +33,8 @@ pub fn create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
 pub fn order(
     globalThis: *jsc.JSGlobalObject,
     callFrame: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
-    var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+) fun.JSError!jsc.JSValue {
+    var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
     var stack_fallback = std.heap.stackFallback(512, arena.allocator());
     const allocator = stack_fallback.get();
@@ -79,8 +79,8 @@ pub fn order(
     };
 }
 
-pub fn satisfies(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+pub fn satisfies(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
     var stack_fallback = std.heap.stackFallback(512, arena.allocator());
     const allocator = stack_fallback.get();
@@ -129,11 +129,11 @@ pub fn satisfies(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun
 
 const std = @import("std");
 
-const bun = @import("bun");
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const strings = bun.strings;
+const fun = @import("fun");
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const strings = fun.strings;
 
-const Query = bun.Semver.Query;
-const SlicedString = bun.Semver.SlicedString;
-const Version = bun.Semver.Version;
+const Query = fun.Semver.Query;
+const SlicedString = fun.Semver.SlicedString;
+const Version = fun.Semver.Version;

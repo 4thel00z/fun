@@ -1,20 +1,20 @@
 ---
-title: Build an app with Nuxt and Bun
-sidebarTitle: Nuxt with Bun
+title: Build an app with Nuxt and Fun
+sidebarTitle: Nuxt with Fun
 mode: center
 ---
 
-Bun supports [Nuxt](https://nuxt.com) out of the box. Initialize a Nuxt app with official `nuxi` CLI.
+Fun supports [Nuxt](https://nuxt.com) out of the box. Initialize a Nuxt app with official `nuxi` CLI.
 
 ```sh terminal icon="terminal"
-bunx nuxi init my-nuxt-app
+funx nuxi init my-nuxt-app
 ```
 
 ```txt
 ✔ Which package manager would you like to use?
-bun
+fun
 ◐ Installing dependencies...
-bun install v1.3.3 (16b4bf34)
+fun install v1.3.3 (16b4bf34)
  + @nuxt/devtools@0.8.2
  + nuxt@3.7.0
  785 packages installed [2.67s]
@@ -22,20 +22,20 @@ bun install v1.3.3 (16b4bf34)
 ✔ Types generated in .nuxt
 ✨ Nuxt project has been created with the v3 template. Next steps:
  › cd my-nuxt-app
- › Start development server with bun run dev
+ › Start development server with fun run dev
 ```
 
 ---
 
-To start the dev server, run `bun --bun run dev` from the project root. This will execute the `nuxt dev` command (as defined in the `"dev"` script in `package.json`).
+To start the dev server, run `fun --fun run dev` from the project root. This will execute the `nuxt dev` command (as defined in the `"dev"` script in `package.json`).
 
 <Note>
-  The `nuxt` CLI uses Node.js by default; passing the `--bun` flag forces the dev server to use the Bun runtime instead.
+  The `nuxt` CLI uses Node.js by default; passing the `--fun` flag forces the dev server to use the Fun runtime instead.
 </Note>
 
 ```sh terminal icon="terminal"
 cd my-nuxt-app
-bun --bun run dev
+fun --fun run dev
 ```
 
 ```txt
@@ -59,17 +59,17 @@ To start developing your app, replace `<NuxtWelcome />` in `app.vue` with your o
 
 <Frame>
   ![Demo Nuxt app running on
-  localhost](https://github.com/oven-sh/bun/assets/3084745/2c683ecc-3298-4bb0-b8c0-cf4cfaea1daa)
+  localhost](https://github.com/underdoc-org/fun/assets/3084745/2c683ecc-3298-4bb0-b8c0-cf4cfaea1daa)
 </Frame>
 
 ---
 
-For production build, while the default preset is already compatible with Bun, you can also use [Bun preset](https://nitro.build/deploy/runtimes/bun) to generate better optimized builds.
+For production build, while the default preset is already compatible with Fun, you can also use [Fun preset](https://nitro.build/deploy/runtimes/fun) to generate better optimized builds.
 
 ```ts nuxt.config.ts icon="/icons/typescript.svg"
 export default defineNuxtConfig({
   nitro: {
-    preset: "bun", // [!code ++]
+    preset: "fun", // [!code ++]
   },
 });
 ```
@@ -77,18 +77,18 @@ export default defineNuxtConfig({
 Alternatively, you can set the preset via environment variable:
 
 ```sh terminal icon="terminal"
-NITRO_PRESET=bun bun run build
+NITRO_PRESET=fun fun run build
 ```
 
 <Note>
-  Some packages provide Bun-specific exports that Nitro will not bundle correctly using the default preset. In this
-  case, you need to use Bun preset so that the packages will work correctly in production builds.
+  Some packages provide Fun-specific exports that Nitro will not bundle correctly using the default preset. In this
+  case, you need to use Fun preset so that the packages will work correctly in production builds.
 </Note>
 
-After building with bun, run:
+After building with fun, run:
 
 ```sh terminal icon="terminal"
-bun run ./.output/server/index.mjs
+fun run ./.output/server/index.mjs
 ```
 
 ---

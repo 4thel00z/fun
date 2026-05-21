@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { isPosix, isWindows } from "harness";
 import fs from "node:fs";
 

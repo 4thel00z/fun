@@ -5,10 +5,10 @@
 // - "DEV_SERVER_STRESS=ALL" will run all for 10 min each.
 //
 // Without this flag, each test is a "smoke test", running the iteration once.
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { devTest } from "../bake-harness";
 
-// https://github.com/oven-sh/bun/issues/18910
+// https://github.com/underdoc-org/fun/issues/18910
 devTest("crash #18910", {
   files: {
     "index.html": `<script src="./b.js"></script>`,
@@ -21,10 +21,10 @@ devTest("crash #18910", {
 
     await dev.stressTest(async () => {
       for (let i = 0; i < 10; i++) {
-        await Bun.write(absPath, "let a = 0;");
-        await Bun.sleep(10);
-        await Bun.write(absPath, "// let a = 0;");
-        await Bun.sleep(10);
+        await Fun.write(absPath, "let a = 0;");
+        await Fun.sleep(10);
+        await Fun.write(absPath, "// let a = 0;");
+        await Fun.sleep(10);
       }
     });
 

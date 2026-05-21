@@ -316,7 +316,7 @@ Socket.prototype.bind = function (port_, address_ /* , callback */) {
     // TODO flags
     const family = this.type === "udp4" ? "IPv4" : "IPv6";
     try {
-      Bun.udpSocket({
+      Fun.udpSocket({
         hostname: ip,
         port: port || 0,
         flags,

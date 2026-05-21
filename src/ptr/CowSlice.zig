@@ -69,7 +69,7 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
                 .ptr = data.ptr,
                 .flags = .{ .is_owned = true, .len = @intCast(data.len) },
                 .debug = if (comptime cow_str_assertions)
-                    bun.new(DebugData, .{
+                    fun.new(DebugData, .{
                         .allocator = allocator,
                     }),
             };
@@ -128,7 +128,7 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
         /// Mutably borrow this `Cow`'s slice, assuming it already owns its data.
         /// Calling this on a borrowed `Cow` invokes safety-checked Illegal Behavior.
         pub fn sliceMutUnsafe(str: *Self) SliceMut {
-            bun.assert(str.isOwned(), "CowSlice.sliceMutUnsafe cannot be called on Cows that borrow their data.", .{});
+            fun.assert(str.isOwned(), "CowSlice.sliceMutUnsafe cannot be called on Cows that borrow their data.", .{});
             return str.ptr[0..str.flags.len];
         }
 
@@ -143,7 +143,7 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
                 try str.intoOwned(allocator);
             }
             defer str.* = Self.empty;
-            defer if (cow_str_assertions and str.isOwned()) if (str.debug) |d| bun.destroy(d);
+            defer if (cow_str_assertions and str.isOwned()) if (str.debug) |d| fun.destroy(d);
             return str.ptr[0..str.flags.len];
         }
 
@@ -199,8 +199,8 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
 
         /// Make this Cow `owned` by duplicating its borrowed data. Panics if
         /// the Cow is already owned.
-        fn intoOwned(str: *Self, allocator: Allocator) callconv(bun.callconv_inline) Allocator.Error!void {
-            bun.assert(!str.isOwned());
+        fn intoOwned(str: *Self, allocator: Allocator) callconv(fun.callconv_inline) Allocator.Error!void {
+            fun.assert(!str.isOwned());
 
             const bytes = try if (comptime sentinel) |_| allocator.dupeZ(T, str.slice()) else allocator.dupe(T, str.slice());
             str.ptr = bytes.ptr;
@@ -210,11 +210,11 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
                 if (str.debug) |debug| {
                     debug.mutex.lock();
                     defer debug.mutex.unlock();
-                    bun.assert(debug.borrows > 0);
+                    fun.assert(debug.borrows > 0);
                     debug.borrows -= 1;
                     str.debug = null;
                 }
-                str.debug = bun.new(DebugData, .{ .allocator = allocator });
+                str.debug = fun.new(DebugData, .{ .allocator = allocator });
             }
         }
 
@@ -229,7 +229,7 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
         pub fn deinit(str: *const Self, allocator: Allocator) void {
             if (comptime cow_str_assertions) if (str.debug) |debug| {
                 debug.mutex.lock();
-                bun.assertf(
+                fun.assertf(
                     // We cannot compare `ptr` here, because allocator implementations with no
                     // associated data set the context pointer to `undefined`, therefore comparing
                     // `ptr` may be undefined behavior. See https://github.com/ziglang/zig/pull/22691
@@ -240,12 +240,12 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
                 );
                 if (str.isOwned()) {
                     // active borrows become invalid data
-                    bun.assertf(
+                    fun.assertf(
                         debug.borrows == 0,
                         "Cannot deinit() a CowSlice with active borrows. Current borrow count: {d}",
                         .{debug.borrows},
                     );
-                    bun.destroy(debug);
+                    fun.destroy(debug);
                 } else {
                     debug.borrows -= 1; // double deinit of a borrowed string
                     debug.mutex.unlock();
@@ -271,7 +271,7 @@ pub fn CowSliceZ(T: type, comptime sentinel: ?T) type {
 }
 
 const DebugData = if (cow_str_assertions) struct {
-    mutex: bun.Mutex = .{},
+    mutex: fun.Mutex = .{},
     allocator: Allocator,
     /// number of active borrows
     borrows: usize = 0,
@@ -279,7 +279,7 @@ const DebugData = if (cow_str_assertions) struct {
 
 comptime {
     const cow_size = @sizeOf(CowSlice(u8)) - if (cow_str_assertions) @sizeOf(?*DebugData) else 0;
-    bun.assertf(
+    fun.assertf(
         cow_size == @sizeOf([]const u8),
         "CowSlice should be the same size as a native slice, but it was {d} bytes instead of {d}",
         .{ cow_size, @sizeOf([]const u8) },
@@ -309,12 +309,12 @@ test CowSlice {
     try expectEqualStrings(borrow.slice(), "hello");
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const Environment = bun.Environment;
+const Environment = fun.Environment;
 const cow_str_assertions = Environment.isDebug;
 
-const allocation_scope = bun.allocators.allocation_scope;
+const allocation_scope = fun.allocators.allocation_scope;
 const AllocationScope = allocation_scope.AllocationScope;

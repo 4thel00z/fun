@@ -1,4 +1,4 @@
-//! One spawned `bun test --test-worker --isolate` process plus its three
+//! One spawned `fun test --test-worker --isolate` process plus its three
 //! pipes. Tightly coupled with `Coordinator` (which owns the worker slice and
 //! routes IPC frames); this file holds only the per-process state and the
 //! spawn/dispatch/shutdown mechanics.
@@ -7,7 +7,7 @@ pub const Worker = @This();
 
 coord: *Coordinator,
 idx: u32,
-process: ?*bun.spawn.Process = null,
+process: ?*fun.spawn.Process = null,
 
 /// Bidirectional IPC over fd 3. POSIX: usockets adopted from a socketpair.
 /// Windows: `uv.Pipe` (the parent end of `.buffer` extra-fd, full-duplex).
@@ -36,11 +36,11 @@ captured: std.ArrayListUnmanaged(u8) = .empty,
 alive: bool = false,
 /// Set when the process-exit notification arrives. Reaping waits for both
 /// this and `ipc.done` so trailing IPC frames are decoded first.
-exit_status: ?bun.spawn.Status = null,
-extra_fd_stdio: [1]bun.spawn.SpawnOptions.Stdio = .{.ignore},
+exit_status: ?fun.spawn.Status = null,
+extra_fd_stdio: [1]fun.spawn.SpawnOptions.Stdio = .{.ignore},
 
 pub fn start(this: *Worker) !void {
-    bun.assert(!this.alive);
+    fun.assert(!this.alive);
     const coord = this.coord;
 
     this.out.reader.setParent(&this.out);
@@ -71,7 +71,7 @@ pub fn start(this: *Worker) !void {
         // `.buffer` extra_fd creates an AF_UNIX socketpair; the parent end is
         // adopted into a usockets `Channel`.
         this.extra_fd_stdio = .{.buffer};
-        const options: bun.spawn.SpawnOptions = .{
+        const options: fun.spawn.SpawnOptions = .{
             .stdin = .ignore,
             .stdout = .buffer,
             .stderr = .buffer,
@@ -84,7 +84,7 @@ pub fn start(this: *Worker) !void {
             .new_process_group = true,
             .linux_pdeathsig = if (Environment.isLinux) std.posix.SIG.KILL else null,
         };
-        var spawned = try (try bun.spawn.spawnProcess(&options, coord.argv.ptr, coord.envps[this.idx].ptr)).unwrap();
+        var spawned = try (try fun.spawn.spawnProcess(&options, coord.argv.ptr, coord.envps[this.idx].ptr)).unwrap();
         defer spawned.extra_pipes.deinit();
         this.process = spawned.toProcess(coord.vm.eventLoop(), false);
         if (spawned.stdout) |fd| try this.out.reader.start(fd, true).unwrap();
@@ -98,26 +98,26 @@ pub fn start(this: *Worker) !void {
         // Windows: `.ipc` extra_fd creates a duplex `uv.Pipe` (named pipe
         // under the hood, UV_READABLE | UV_WRITABLE | UV_OVERLAPPED) and
         // initialises the parent end with uv_pipe_init(loop, ipc=1) — the
-        // same dance Bun.spawn({ipc}) / process.send() use. The child opens
+        // same dance Fun.spawn({ipc}) / process.send() use. The child opens
         // CRT fd 3 with uv_pipe_init(ipc=1) + uv_pipe_open in Channel.adopt.
         // Both ends agreeing on the libuv IPC framing is what matters; our
         // own [u32 len][u8 kind] frames ride inside it unchanged.
-        const uv = bun.windows.libuv;
+        const uv = fun.windows.libuv;
 
-        const ipc_pipe = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
+        const ipc_pipe = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
         errdefer if (this.ipc.backend.pipe == null) ipc_pipe.closeAndDestroy();
 
         this.extra_fd_stdio = .{.{ .ipc = ipc_pipe }};
-        const options: bun.spawn.SpawnOptions = .{
+        const options: fun.spawn.SpawnOptions = .{
             .stdin = .ignore,
-            .stdout = .{ .buffer = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) },
-            .stderr = .{ .buffer = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) },
+            .stdout = .{ .buffer = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) },
+            .stderr = .{ .buffer = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe)) },
             .extra_fds = &this.extra_fd_stdio,
             .cwd = coord.cwd,
             .windows = .{ .loop = jsc.EventLoopHandle.init(coord.vm) },
             .stream = true,
         };
-        var spawned = try (try bun.spawn.spawnProcess(&options, coord.argv.ptr, coord.envps[this.idx].ptr)).unwrap();
+        var spawned = try (try fun.spawn.spawnProcess(&options, coord.argv.ptr, coord.envps[this.idx].ptr)).unwrap();
         defer spawned.extra_pipes.deinit();
         this.process = spawned.toProcess(coord.vm.eventLoop(), false);
 
@@ -130,7 +130,7 @@ pub fn start(this: *Worker) !void {
     if (Environment.isWindows) {
         if (coord.windows_job) |job| {
             if (process.poller == .uv) {
-                _ = bun.windows.AssignProcessToJobObject(job, process.poller.uv.process_handle);
+                _ = fun.windows.AssignProcessToJobObject(job, process.poller.uv.process_handle);
             }
         }
     }
@@ -153,7 +153,7 @@ pub fn start(this: *Worker) !void {
     }
 }
 
-pub fn onProcessExit(this: *Worker, _: *bun.spawn.Process, status: bun.spawn.Status, _: *const bun.spawn.Rusage) void {
+pub fn onProcessExit(this: *Worker, _: *fun.spawn.Process, status: fun.spawn.Status, _: *const fun.spawn.Rusage) void {
     this.alive = false;
     this.coord.onWorkerExit(this, status);
 }
@@ -161,7 +161,7 @@ pub fn onProcessExit(this: *Worker, _: *bun.spawn.Process, status: bun.spawn.Sta
 pub fn eventLoop(this: *Worker) *jsc.EventLoop {
     return this.coord.vm.eventLoop();
 }
-pub fn loop(this: *Worker) *bun.Async.Loop {
+pub fn loop(this: *Worker) *fun.Async.Loop {
     return this.coord.vm.uvLoop();
 }
 
@@ -205,7 +205,7 @@ pub fn onChannelDone(this: *Worker) void {
 /// and flushes atomically with the next test result so console output from
 /// concurrent files never interleaves.
 pub const WorkerPipe = struct {
-    reader: bun.io.BufferedReader = bun.io.BufferedReader.init(WorkerPipe),
+    reader: fun.io.BufferedReader = fun.io.BufferedReader.init(WorkerPipe),
     worker: *Worker,
     role: enum { stdout, stderr },
     /// EOF or error observed.
@@ -215,20 +215,20 @@ pub const WorkerPipe = struct {
         this.reader.deinit();
     }
 
-    pub fn onReadChunk(this: *WorkerPipe, chunk: []const u8, _: bun.io.ReadState) bool {
-        bun.handleOom(this.worker.captured.appendSlice(bun.default_allocator, chunk));
+    pub fn onReadChunk(this: *WorkerPipe, chunk: []const u8, _: fun.io.ReadState) bool {
+        fun.handleOom(this.worker.captured.appendSlice(fun.default_allocator, chunk));
         return true;
     }
     pub fn onReaderDone(this: *WorkerPipe) void {
         this.done = true;
     }
-    pub fn onReaderError(this: *WorkerPipe, _: bun.sys.Error) void {
+    pub fn onReaderError(this: *WorkerPipe, _: fun.sys.Error) void {
         this.done = true;
     }
     pub fn eventLoop(this: *WorkerPipe) *jsc.EventLoop {
         return this.worker.coord.vm.eventLoop();
     }
-    pub fn loop(this: *WorkerPipe) *bun.Async.Loop {
+    pub fn loop(this: *WorkerPipe) *fun.Async.Loop {
         return this.worker.coord.vm.uvLoop();
     }
 };
@@ -239,7 +239,7 @@ const std = @import("std");
 const Channel = @import("./Channel.zig").Channel;
 const Coordinator = @import("./Coordinator.zig").Coordinator;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const jsc = fun.jsc;

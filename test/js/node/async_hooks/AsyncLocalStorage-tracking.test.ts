@@ -1,6 +1,6 @@
-import { Glob } from "bun";
-import { describe, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isBroken, isLinux, nodeExe } from "harness";
+import { Glob } from "fun";
+import { describe, test } from "fun:test";
+import { funEnv, funExe, isASAN, isBroken, isLinux, nodeExe } from "harness";
 import { basename, join } from "path";
 
 describe.concurrent("AsyncLocalStorage passes context to callbacks", () => {
@@ -17,11 +17,11 @@ describe.concurrent("AsyncLocalStorage passes context to callbacks", () => {
     const file = basename(filepath).replaceAll("async-context-", "").replaceAll(".js", "");
     test(file, async () => {
       async function run(exe) {
-        const { exited } = Bun.spawn({
+        const { exited } = Fun.spawn({
           cmd: [exe, filepath],
           stdout: "inherit",
           stderr: "inherit",
-          env: bunEnv,
+          env: funEnv,
         });
 
         if (await exited) {
@@ -29,7 +29,7 @@ describe.concurrent("AsyncLocalStorage passes context to callbacks", () => {
         }
       }
 
-      await Promise.all([run(bunExe()), run(nodeExe())]);
+      await Promise.all([run(funExe()), run(nodeExe())]);
     });
   }
 

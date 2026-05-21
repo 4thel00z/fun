@@ -32,10 +32,10 @@ pub fn writeInternal(this: *SSLRequest, comptime Context: type, writer: NewWrite
 
 pub const write = writeWrap(SSLRequest, writeInternal).write;
 
-const debug = bun.Output.scoped(.MySQLConnection, .hidden);
+const debug = fun.Output.scoped(.MySQLConnection, .hidden);
 
 const Capabilities = @import("../Capabilities.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const CharacterSet = @import("./CharacterSet.zig").CharacterSet;
 
 const NewWriter = @import("./NewWriter.zig").NewWriter;

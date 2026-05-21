@@ -1,11 +1,11 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { isWindows } from "harness";
 import { dedent, itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_dce_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/dce
+// For debug, all files are written to $TEMP/fun-bundle-tests/dce
 
 // To understand what `dce: true` is doing, see ../expectBundled.md's "dce: true" section
 
@@ -1303,7 +1303,7 @@ describe("bundler", () => {
     jsx: {
       runtime: "automatic",
     },
-    target: "bun",
+    target: "fun",
     dce: true,
     run: {
       stdout: `["F",{"children":[null,{"children":["div",{}]}]}]`,
@@ -2401,7 +2401,7 @@ describe("bundler", () => {
   itBundled("dce/InlineFunctionCallBehaviorChanges", {
     todo: true,
     files: {
-      // At the time of writing, using a template string here triggered a bug in bun's transpiler
+      // At the time of writing, using a template string here triggered a bug in fun's transpiler
       // making it impossible to run the test.
       "/entry.js":
         "function empty_REMOVE() { }\n" +

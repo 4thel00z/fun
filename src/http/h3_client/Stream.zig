@@ -6,7 +6,7 @@
 
 const Stream = @This();
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 session: *ClientSession,
 client: ?*HTTPClient,
@@ -26,10 +26,10 @@ is_streaming_body: bool = false,
 headers_delivered: bool = false,
 
 pub fn deinit(this: *Stream) void {
-    this.decoded_headers.deinit(bun.default_allocator);
-    this.body_buffer.deinit(bun.default_allocator);
+    this.decoded_headers.deinit(fun.default_allocator);
+    this.body_buffer.deinit(fun.default_allocator);
     _ = H3.live_streams.fetchSub(1, .monotonic);
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn abort(this: *Stream) void {
@@ -40,7 +40,7 @@ const ClientSession = @import("./ClientSession.zig");
 const H3 = @import("../H3Client.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const HTTPClient = bun.http;
-const picohttp = bun.picohttp;
-const quic = bun.uws.quic;
+const fun = @import("fun");
+const HTTPClient = fun.http;
+const picohttp = fun.picohttp;
+const quic = fun.uws.quic;

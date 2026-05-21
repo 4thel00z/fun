@@ -17,7 +17,7 @@ pub const AnyEventLoop = union(EventLoopKind) {
         this.loop().wakeup();
     }
 
-    pub fn filePolls(this: *AnyEventLoop) *bun.Async.FilePoll.Store {
+    pub fn filePolls(this: *AnyEventLoop) *fun.Async.FilePoll.Store {
         return switch (this.*) {
             .js => this.js.virtual_machine.rareData().filePolls(this.js.virtual_machine),
             .mini => this.mini.filePolls(),
@@ -94,10 +94,10 @@ pub const AnyEventLoop = union(EventLoopKind) {
     ) void {
         switch (this.*) {
             .js => {
-                bun.todoPanic(@src(), "AnyEventLoop.enqueueTaskConcurrent", .{});
+                fun.todoPanic(@src(), "AnyEventLoop.enqueueTaskConcurrent", .{});
                 // const TaskType = AnyTask.New(Context, Callback);
                 // @field(ctx, field) = TaskType.init(ctx);
-                // var concurrent = bun.default_allocator.create(ConcurrentTask) catch unreachable;
+                // var concurrent = fun.default_allocator.create(ConcurrentTask) catch unreachable;
                 // _ = concurrent.from(jsc.Task.init(&@field(ctx, field)));
                 // concurrent.auto_delete = true;
                 // this.virtual_machine.jsc.enqueueTaskConcurrent(concurrent);
@@ -111,11 +111,11 @@ pub const AnyEventLoop = union(EventLoopKind) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const uws = bun.uws;
+const fun = @import("fun");
+const Async = fun.Async;
+const uws = fun.uws;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const AnyTaskWithExtraContext = jsc.AnyTaskWithExtraContext;
 const EventLoop = jsc.EventLoop;
 const EventLoopKind = jsc.EventLoopKind;

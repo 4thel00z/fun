@@ -5,9 +5,9 @@ import { bench, group, run } from "../runner.mjs";
 const execa = execa$({ stdio: "ignore", cwd: import.meta.dirname });
 
 group("echo hi", () => {
-  if (typeof Bun !== "undefined")
+  if (typeof Fun !== "undefined")
     bench("$`echo hi`", async () => {
-      await Bun.$`echo hi`.quiet();
+      await Fun.$`echo hi`.quiet();
     });
 
   bench("execa`echo hi`", async () => {
@@ -20,9 +20,9 @@ group("echo hi", () => {
 });
 
 group("ls .", () => {
-  if (typeof Bun !== "undefined")
+  if (typeof Fun !== "undefined")
     bench("$`ls .`", async () => {
-      await Bun.$`ls .`.quiet();
+      await Fun.$`ls .`.quiet();
     });
 
   bench("execa`ls .`", async () => {

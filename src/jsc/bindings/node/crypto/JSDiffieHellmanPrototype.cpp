@@ -8,7 +8,7 @@
 #include <JavaScriptCore/TypedArrayInlines.h>
 #include <JavaScriptCore/JSCJSValueInlines.h>
 
-namespace Bun {
+namespace Fun {
 
 // Declare host function prototypes
 JSC_DECLARE_HOST_FUNCTION(jsDiffieHellmanProtoFuncGenerateKeys);
@@ -81,4 +81,4 @@ JSC_DEFINE_HOST_FUNCTION(jsDiffieHellmanProtoFuncSetPrivateKey, (JSC::JSGlobalOb
     return jsDiffieHellmanProtoFuncSetPrivateKeyTemplate<JSDiffieHellman>(globalObject, callFrame);
 }
 
-} // namespace Bun
+} // namespace Fun

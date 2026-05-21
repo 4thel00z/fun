@@ -854,7 +854,7 @@ void test_v8_array_new_with_callback(const FunctionCallbackInfo<Value> &info) {
   uint32_t i = 0;
 
   // TODO: check returning empty from the callback (we can't right now because
-  // V8 asserts that you have also thrown an exception when you do that, but Bun
+  // V8 asserts that you have also thrown an exception when you do that, but Fun
   // doesn't implement the V8 APIs to throw exceptions
   Local<Array> array =
       Array::New(context, 10, [&i, isolate]() -> MaybeLocal<Value> {

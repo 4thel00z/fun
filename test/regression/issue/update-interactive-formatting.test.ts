@@ -1,7 +1,7 @@
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
-describe("bun update --interactive formatting regression", () => {
+describe("fun update --interactive formatting regression", () => {
   it("should not underflow when dependency type text is longer than available space", async () => {
     // This test verifies the fix for the padding calculation underflow issue
     // in lines 745-750 of update_interactive_command.zig
@@ -13,7 +13,7 @@ describe("bun update --interactive formatting regression", () => {
           "a": "1.0.0", // Very short package name
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           "a": {
@@ -24,10 +24,10 @@ describe("bun update --interactive formatting regression", () => {
       }),
     });
 
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -61,7 +61,7 @@ describe("bun update --interactive formatting regression", () => {
           "optional-package": "1.0.0",
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           "regular-package": { "integrity": "sha512-fake", "version": "1.0.0" },
@@ -72,10 +72,10 @@ describe("bun update --interactive formatting regression", () => {
       }),
     });
 
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -100,7 +100,7 @@ describe("bun update --interactive formatting regression", () => {
           [longPackageName]: "1.0.0",
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           [longPackageName]: {
@@ -111,10 +111,10 @@ describe("bun update --interactive formatting regression", () => {
       }),
     });
 
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -140,7 +140,7 @@ describe("bun update --interactive formatting regression", () => {
           "package-with-long-version": longVersion,
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           "package-with-long-version": {
@@ -151,10 +151,10 @@ describe("bun update --interactive formatting regression", () => {
       }),
     });
 
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",
@@ -191,7 +191,7 @@ describe("bun update --interactive formatting regression", () => {
           [maxWidthPackage + "-optional"]: maxWidthVersion,
         },
       }),
-      "bun.lockb": JSON.stringify({
+      "fun.lockb": JSON.stringify({
         "lockfileVersion": 3,
         "packages": {
           [maxWidthPackage]: { "integrity": "sha512-fake", "version": maxWidthVersion },
@@ -202,10 +202,10 @@ describe("bun update --interactive formatting regression", () => {
       }),
     });
 
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "inherit",
       stdout: "pipe",
       stderr: "pipe",

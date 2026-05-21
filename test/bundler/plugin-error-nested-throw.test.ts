@@ -1,16 +1,16 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 // Regression test: when a bundler plugin throws a non-Error value whose string
 // conversion also throws, `logger.Msg.fromJS` fails with a JS exception. Prior
 // to the fix, `JSBundlerPlugin__addError` would return early without calling
 // `onLoadAsync`/`onResolveAsync`, so the bundler's pending-item counter was
-// never decremented and `Bun.build` would hang forever.
-describe("Bun.build plugin throws value whose toString also throws", () => {
+// never decremented and `Fun.build` would hang forever.
+describe("Fun.build plugin throws value whose toString also throws", () => {
   const fixture = (hook: "onLoad" | "onResolve") => /* js */ `
     import { join } from "path";
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [join(import.meta.dir, "entry.ts")],
       throw: false,
       plugins: [
@@ -20,7 +20,7 @@ describe("Bun.build plugin throws value whose toString also throws", () => {
             build.${hook}({ filter: ${hook === "onLoad" ? "/entry\\.ts$/" : "/^virtual:thing$/"} }, async () => {
               // force the rejection to go through the promise path so addError() is hit
               await Promise.resolve();
-              // Not an Error instance, so Msg.fromJS falls back to toBunString(),
+              // Not an Error instance, so Msg.fromJS falls back to toFunString(),
               // which invokes ToPrimitive -> Symbol.toPrimitive -> throws again.
               throw {
                 [Symbol.toPrimitive]() {
@@ -48,9 +48,9 @@ describe("Bun.build plugin throws value whose toString also throws", () => {
         "build.ts": fixture(hook),
       });
 
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "run", join(String(dir), "build.ts")],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "run", join(String(dir), "build.ts")],
+        env: funEnv,
         cwd: String(dir),
         stdout: "pipe",
         stderr: "pipe",

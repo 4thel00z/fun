@@ -6,15 +6,15 @@
 // catch rate without special env vars. On release builds, this is a best-effort
 // regression guard that will catch reintroduction across enough CI runs.
 //
-// For deterministic reproduction (debug+ASAN + BUN_DEBUG_SSLConfig=1), see #27863.
+// For deterministic reproduction (debug+ASAN + FUN_DEBUG_SSLConfig=1), see #27863.
 //
 // Structure: subprocess fixture runs a setImmediate loop calling fetch+abort
 // (intern on JS thread, deref on HTTP thread) while a serial driver loop
 // cycles the refcount through 0. If the race triggers, the subprocess crashes
 // (debugAssert / assertValid / ASAN) → non-zero exit → test fails.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tls as tlsCert } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tls as tlsCert } from "harness";
 import { once } from "node:events";
 import net from "node:net";
 import { join } from "node:path";
@@ -58,7 +58,7 @@ async function createConnectProxy() {
 }
 
 test("SSLConfig intern/deref race does not cause use-after-free", async () => {
-  using backend = Bun.serve({
+  using backend = Fun.serve({
     port: 0,
     tls: tlsCert,
     fetch() {
@@ -69,18 +69,18 @@ test("SSLConfig intern/deref race does not cause use-after-free", async () => {
   const proxy = await createConnectProxy();
 
   try {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), join(import.meta.dir, "fetch-proxy-tls-intern-race-fixture.ts")],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), join(import.meta.dir, "fetch-proxy-tls-intern-race-fixture.ts")],
       env: {
-        ...bunEnv,
+        ...funEnv,
         BACKEND_PORT: String(backend.port),
         PROXY_PORT: String(proxy.port),
         HARD_CAP_MS: "5000",
-        // bunEnv strips BUN_DEBUG_* vars. On debug builds, this scoped log
+        // funEnv strips FUN_DEBUG_* vars. On debug builds, this scoped log
         // widens the race window from ~10 cycles to ~100μs+ via stderr
         // writes in deref()/destroy(). No-op in release builds (enable_logs
         // is compile-time false).
-        BUN_DEBUG_SSLConfig: "1",
+        FUN_DEBUG_SSLConfig: "1",
       },
       stdout: "pipe",
       stderr: "pipe",

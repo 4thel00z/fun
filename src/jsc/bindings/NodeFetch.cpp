@@ -7,13 +7,13 @@
 #include "JavaScriptCore/ObjectConstructor.h"
 
 #include "helpers.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 #include "JavaScriptCore/AggregateError.h"
 #include "JavaScriptCore/JSFunction.h"
 #include "JSDOMFile.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;

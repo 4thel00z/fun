@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 app.post("/error", (req, res) => {
   try {
-    // This specific pattern causes the segfault in Bun v1.2.6
+    // This specific pattern causes the segfault in Fun v1.2.6
     const headers = { location: undefined };
     headers.location.split("*/")["2"].split(")")["0"];
   } catch (err) {

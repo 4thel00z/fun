@@ -2,7 +2,7 @@
 // Flags: --expose-internals
 
 const common = require('../common');
-common.skip('skipped because it tests a node internal irrelevant to bun');
+common.skip('skipped because it tests a node internal irrelevant to fun');
 const assert = require('assert');
 const fixtures = require('../common/fixtures');
 const { internalBinding } = require('internal/test/binding');

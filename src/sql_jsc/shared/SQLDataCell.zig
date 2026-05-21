@@ -26,7 +26,7 @@ pub const SQLDataCell = extern struct {
 
     pub const Value = extern union {
         null: u8,
-        string: ?bun.WTF.StringImpl,
+        string: ?fun.WTF.StringImpl,
         float8: f64,
         int4: i32,
         int8: i64,
@@ -34,7 +34,7 @@ pub const SQLDataCell = extern struct {
         date: f64,
         date_with_time_zone: f64,
         bytea: [2]usize,
-        json: ?bun.WTF.StringImpl,
+        json: ?fun.WTF.StringImpl,
         array: Array,
         typed_array: TypedArray,
         raw: Raw,
@@ -61,7 +61,7 @@ pub const SQLDataCell = extern struct {
             this.ptr = null;
             this.len = 0;
             this.cap = 0;
-            bun.default_allocator.free(allocated);
+            fun.default_allocator.free(allocated);
         }
     };
     pub const Raw = extern struct {
@@ -103,7 +103,7 @@ pub const SQLDataCell = extern struct {
             .bytea => {
                 if (this.value.bytea[1] == 0) return;
                 const slice = @as([*]u8, @ptrFromInt(this.value.bytea[0]))[0..this.value.bytea[1]];
-                bun.default_allocator.free(slice);
+                fun.default_allocator.free(slice);
             },
             .array => {
                 for (this.value.array.slice()) |*cell| {
@@ -112,7 +112,7 @@ pub const SQLDataCell = extern struct {
                 this.value.array.deinit();
             },
             .typed_array => {
-                bun.default_allocator.free(this.value.typed_array.byteSlice());
+                fun.default_allocator.free(this.value.typed_array.byteSlice());
             },
 
             else => {},
@@ -150,10 +150,10 @@ pub const SQLDataCell = extern struct {
         count: u32,
         flags: SQLDataCell.Flags,
         result_mode: u8,
-        namesPtr: ?[*]bun.jsc.JSObject.ExternColumnIdentifier,
+        namesPtr: ?[*]fun.jsc.JSObject.ExternColumnIdentifier,
         namesCount: u32,
     ) !jsc.JSValue {
-        if (comptime bun.Environment.ci_assert) {
+        if (comptime fun.Environment.ci_assert) {
             var scope: jsc.ExceptionValidationScope = undefined;
             scope.init(globalObject, @src());
             defer scope.deinit();
@@ -180,8 +180,8 @@ pub const SQLDataCell = extern struct {
     ) JSValue;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const Data = @import("../../sql/shared/Data.zig").Data;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

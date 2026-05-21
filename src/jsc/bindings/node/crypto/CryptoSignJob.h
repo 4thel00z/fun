@@ -4,7 +4,7 @@
 #include "CryptoUtil.h"
 #include "KeyObject.h"
 
-namespace Bun {
+namespace Fun {
 JSC_DECLARE_HOST_FUNCTION(jsSignOneShot);
 JSC_DECLARE_HOST_FUNCTION(jsVerifyOneShot);
 

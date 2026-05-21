@@ -23,14 +23,14 @@
 
 const todoOnWindows = process.platform === "win32" ? test.todo : test;
 
-if (typeof Bun !== "undefined") {
-  const aggressiveGC = Bun.unsafe.gcAggressionLevel();
+if (typeof Fun !== "undefined") {
+  const aggressiveGC = Fun.unsafe.gcAggressionLevel();
   beforeAll(() => {
-    Bun.unsafe.gcAggressionLevel(0);
+    Fun.unsafe.gcAggressionLevel(0);
   });
 
   afterAll(() => {
-    Bun.unsafe.gcAggressionLevel(aggressiveGC);
+    Fun.unsafe.gcAggressionLevel(aggressiveGC);
   });
 }
 
@@ -458,7 +458,7 @@ describe("v8 date parser", () => {
     // The regression: with calendar "iso8601" (which is proleptic Gregorian),
     // dates before the Oct 1582 Julian→Gregorian transition were getting a
     // 10-day Julian offset applied. The original V8 test asserted the en-US
-    // formatted string, but on macOS Bun links the system libicucore, whose
+    // formatted string, but on macOS Fun links the system libicucore, whose
     // CLDR data varies by OS release — older ICU formats the iso8601 calendar
     // as "1/1/1582", newer (macOS 26+, and current upstream V8) as
     // "1582-01-01". Assert the year/month/day values instead so the calendar

@@ -7,7 +7,7 @@
 namespace WebCore {
 }
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;

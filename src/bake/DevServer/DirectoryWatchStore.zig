@@ -10,7 +10,7 @@ const DirectoryWatchStore = @This();
 // TODO: when a file fixes its resolution, there is no code specifically to remove the watchers.
 
 /// List of active watchers. Can be re-ordered on removal
-watches: bun.StringArrayHashMapUnmanaged(Entry),
+watches: fun.StringArrayHashMapUnmanaged(Entry),
 dependencies: ArrayListUnmanaged(Dep),
 /// Dependencies cannot be re-ordered. This list tracks what indexes are free.
 dependencies_free_list: ArrayListUnmanaged(Dep.Index),
@@ -25,15 +25,15 @@ pub fn owner(store: *DirectoryWatchStore) *DevServer {
     return @alignCast(@fieldParentPtr("directory_watchers", store));
 }
 
-pub fn trackResolutionFailure(store: *DirectoryWatchStore, import_source: []const u8, specifier: []const u8, renderer: bake.Graph, loader: bun.options.Loader) bun.OOM!void {
+pub fn trackResolutionFailure(store: *DirectoryWatchStore, import_source: []const u8, specifier: []const u8, renderer: bake.Graph, loader: fun.options.Loader) fun.OOM!void {
     // When it does not resolve to a file path, there is nothing to track.
     if (specifier.len == 0) return;
     if (!std.fs.path.isAbsolute(import_source)) return;
 
     switch (loader) {
         .tsx, .ts, .jsx, .js => {
-            if (!(bun.strings.startsWith(specifier, "./") or
-                bun.strings.startsWith(specifier, "../"))) return;
+            if (!(fun.strings.startsWith(specifier, "./") or
+                fun.strings.startsWith(specifier, "../"))) return;
         },
 
         // Imports in CSS can resolve to relative files without './'
@@ -54,17 +54,17 @@ pub fn trackResolutionFailure(store: *DirectoryWatchStore, import_source: []cons
         .base64,
         .dataurl,
         .text,
-        .bunsh,
+        .funsh,
         .sqlite,
         .sqlite_embedded,
         .md,
-        => bun.debugAssert(false),
+        => fun.debugAssert(false),
     }
 
-    const buf = bun.path_buffer_pool.get();
-    defer bun.path_buffer_pool.put(buf);
-    const joined = bun.path.joinAbsStringBuf(bun.path.dirname(import_source, .auto), buf, &.{specifier}, .auto);
-    const dir = bun.path.dirname(joined, .auto);
+    const buf = fun.path_buffer_pool.get();
+    defer fun.path_buffer_pool.put(buf);
+    const joined = fun.path.joinAbsStringBuf(fun.path.dirname(import_source, .auto), buf, &.{specifier}, .auto);
+    const dir = fun.path.dirname(joined, .auto);
 
     // The `import_source` parameter is not a stable string. Since the
     // import source will be added to IncrementalGraph anyways, this is a
@@ -97,15 +97,15 @@ fn insert(
     const dev = store.owner();
 
     debug.log("DirectoryWatchStore.insert({f}, {f}, {f})", .{
-        bun.fmt.quote(dir_name_to_watch),
-        bun.fmt.quote(file_path),
-        bun.fmt.quote(specifier),
+        fun.fmt.quote(dir_name_to_watch),
+        fun.fmt.quote(file_path),
+        fun.fmt.quote(specifier),
     });
 
     if (store.dependencies_free_list.items.len == 0)
         try store.dependencies.ensureUnusedCapacity(dev.allocator(), 1);
 
-    const gop = try store.watches.getOrPut(dev.allocator(), bun.strings.withoutTrailingSlashWindowsPath(dir_name_to_watch));
+    const gop = try store.watches.getOrPut(dev.allocator(), fun.strings.withoutTrailingSlashWindowsPath(dir_name_to_watch));
     const specifier_cloned = if (specifier[0] == '.' or std.fs.path.isAbsolute(specifier))
         try dev.allocator().dupe(u8, specifier)
     else
@@ -132,11 +132,11 @@ fn insert(
 
     const fd, const owned_fd = if (Watcher.requires_file_descriptors) if (cache_fd) |fd|
         .{ fd, false }
-    else switch (bun.sys.open(
+    else switch (fun.sys.open(
         &(std.posix.toPosixPath(dir_name_to_watch) catch |err| switch (err) {
             error.NameTooLong => return error.Ignore, // wouldn't be able to open, ignore
         }),
-        bun.O.DIRECTORY | Watcher.watch_open_flags,
+        fun.O.DIRECTORY | Watcher.watch_open_flags,
         0,
     )) {
         .result => |fd| .{ fd, true },
@@ -145,19 +145,19 @@ fn insert(
             // on the parent directory. Then, if this directory is later
             // created, the watcher can be properly initialized. This would
             // happen if a specifier like `./dir/whatever/hello.tsx` and
-            // `dir` does not exist, Bun must place a watcher on `.`, see
+            // `dir` does not exist, Fun must place a watcher on `.`, see
             // the creation of `dir`, and repeat until it can open a watcher
             // on `whatever` to see the creation of `hello.tsx`
             .NOENT => {
-                // TODO: implement that. for now it ignores (BUN-10968)
+                // TODO: implement that. for now it ignores (FUN-10968)
                 return error.Ignore;
             },
             .NOTDIR => return error.Ignore, // ignore
             else => {
-                bun.todoPanic(@src(), "log watcher error", .{});
+                fun.todoPanic(@src(), "log watcher error", .{});
             },
         },
-    } else .{ bun.invalid_fd, false };
+    } else .{ fun.invalid_fd, false };
     errdefer if (Watcher.requires_file_descriptors) if (owned_fd) fd.close();
     if (Watcher.requires_file_descriptors)
         debug.log("-> fd: {f} ({s})", .{
@@ -168,9 +168,9 @@ fn insert(
     const dir_name = try dev.allocator().dupe(u8, dir_name_to_watch);
     errdefer dev.allocator().free(dir_name);
 
-    gop.key_ptr.* = bun.strings.withoutTrailingSlashWindowsPath(dir_name);
+    gop.key_ptr.* = fun.strings.withoutTrailingSlashWindowsPath(dir_name);
 
-    const watch_index = switch (dev.bun_watcher.addDirectory(fd, dir_name, bun.Watcher.getHash(dir_name), false)) {
+    const watch_index = switch (dev.fun_watcher.addDirectory(fd, dir_name, fun.Watcher.getHash(dir_name), false)) {
         .err => return error.Ignore,
         .result => |id| id,
     };
@@ -211,7 +211,7 @@ pub fn freeEntry(store: *DirectoryWatchStore, alloc: Allocator, entry_index: usi
         entry.dir,
     });
 
-    store.owner().bun_watcher.removeAtIndex(entry.watch_index, 0, &.{}, .file);
+    store.owner().fun_watcher.removeAtIndex(entry.watch_index, 0, &.{}, .file);
 
     defer if (entry.dir_fd_owned) entry.dir.close();
 
@@ -234,7 +234,7 @@ pub fn removeDependenciesForFile(store: *DirectoryWatchStore, alloc: Allocator, 
     if (store.watches.count() == 0) return;
 
     debug.log("DirectoryWatchStore.removeDependenciesForFile({f})", .{
-        bun.fmt.quote(file_path),
+        fun.fmt.quote(file_path),
     });
 
     // Iterate in reverse since `freeEntry` uses swapRemoveAt.
@@ -248,7 +248,7 @@ pub fn removeDependenciesForFile(store: *DirectoryWatchStore, alloc: Allocator, 
             const dep = &store.dependencies.items[index.get()];
             it = dep.next.unwrap();
             if (dep.source_file_path.ptr == file_path.ptr) {
-                bun.handleOom(store.freeDependencyIndex(alloc, index));
+                fun.handleOom(store.freeDependencyIndex(alloc, index));
             } else {
                 dep.next = new_chain;
                 new_chain = index.toOptional();
@@ -275,7 +275,7 @@ fn appendDepAssumeCapacity(store: *DirectoryWatchStore, dep: Dep) Dep.Index {
 
 pub const Entry = struct {
     /// The directory handle the watch is placed on
-    dir: bun.FD,
+    dir: fun.FD,
     dir_fd_owned: bool,
     /// Files which request this import index
     first_dep: Dep.Index,
@@ -297,13 +297,13 @@ pub const Dep = struct {
         .specifier = &.{},
     };
 
-    pub const Index = bun.GenericIndex(u32, Dep);
+    pub const Index = fun.GenericIndex(u32, Dep);
 };
 
-const bun = @import("bun");
-const Watcher = bun.Watcher;
-const assert = bun.assert;
-const bake = bun.bake;
+const fun = @import("fun");
+const Watcher = fun.Watcher;
+const assert = fun.assert;
+const bake = fun.bake;
 
 const DevServer = bake.DevServer;
 const debug = DevServer.debug;

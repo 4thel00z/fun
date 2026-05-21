@@ -1,5 +1,5 @@
 const vm = require("vm");
-const { describe, it, expect } = require("bun:test");
+const { describe, it, expect } = require("fun:test");
 
 describe("vm.Script", () => {
   it("shouldn't leak memory", () => {
@@ -18,7 +18,7 @@ describe("vm.Script", () => {
       }
     }
 
-    Bun.gc(true);
+    Fun.gc(true);
 
     const finalUsage = process.memoryUsage.rss();
     const megabytes = Math.round(((finalUsage - initialUsage) / 1024 / 1024) * 100) / 100;

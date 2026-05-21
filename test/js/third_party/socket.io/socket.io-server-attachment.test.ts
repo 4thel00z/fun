@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import request from "supertest";

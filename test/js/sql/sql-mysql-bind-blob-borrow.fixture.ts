@@ -15,12 +15,12 @@
 // duration of bind+execute, so `transfer()` hands the user a copy instead
 // of detaching and the original bytes reach the server.
 
-import { SQL, randomUUIDv7 } from "bun";
+import { SQL, randomUUIDv7 } from "fun";
 
 const url = process.env.MYSQL_URL;
 if (!url) throw new Error("MYSQL_URL is required");
 
-const tls = process.env.CA_PATH ? { ca: Bun.file(process.env.CA_PATH) } : undefined;
+const tls = process.env.CA_PATH ? { ca: Fun.file(process.env.CA_PATH) } : undefined;
 const sql = new SQL({ url, tls, max: 1 });
 
 try {

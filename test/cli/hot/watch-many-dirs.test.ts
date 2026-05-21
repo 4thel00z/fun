@@ -1,6 +1,6 @@
-import { spawn } from "bun";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, forEachLine, isASAN, isCI, tempDirWithFiles } from "harness";
+import { spawn } from "fun";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, forEachLine, isASAN, isCI, tempDirWithFiles } from "harness";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -44,11 +44,11 @@ if (globalThis.reloaded++ >= ${maxCount}) process.exit(0);
 `,
       );
 
-      // Start bun --hot
+      // Start fun --hot
       await using proc = spawn({
-        cmd: [bunExe(), "--hot", "entry.js"],
+        cmd: [funExe(), "--hot", "entry.js"],
         cwd: tmpdir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "inherit",
       });
@@ -74,7 +74,7 @@ if (globalThis.reloaded++ >= ${maxCount}) process.exit(0);
           const filePath = join(tmpdir, dirName, "index.js");
 
           updatePromises.push(
-            Bun.write(filePath, `export const value${i} = ${i};\nexport const timestamp${i} = ${timestamp};`),
+            Fun.write(filePath, `export const value${i} = ${i};\nexport const timestamp${i} = ${timestamp};`),
           );
         }
 

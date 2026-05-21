@@ -13,13 +13,13 @@ pub fn empty() Signature {
 
 pub fn deinit(this: *Signature) void {
     if (this.fields.len > 0) {
-        bun.default_allocator.free(this.fields);
+        fun.default_allocator.free(this.fields);
     }
     if (this.name.len > 0) {
-        bun.default_allocator.free(this.name);
+        fun.default_allocator.free(this.name);
     }
     if (this.query.len > 0) {
-        bun.default_allocator.free(this.query);
+        fun.default_allocator.free(this.query);
     }
 }
 
@@ -31,8 +31,8 @@ pub fn hash(this: *const Signature) u64 {
 }
 
 pub fn generate(globalObject: *jsc.JSGlobalObject, query: []const u8, array_value: JSValue, columns: JSValue) !Signature {
-    var fields = std.array_list.Managed(Param).init(bun.default_allocator);
-    var name = try std.array_list.Managed(u8).initCapacity(bun.default_allocator, query.len);
+    var fields = std.array_list.Managed(Param).init(fun.default_allocator);
+    var name = try std.array_list.Managed(u8).initCapacity(fun.default_allocator, query.len);
 
     name.appendSliceAssumeCapacity(query);
 
@@ -70,11 +70,11 @@ pub fn generate(globalObject: *jsc.JSGlobalObject, query: []const u8, array_valu
     return Signature{
         .name = name.items,
         .fields = fields.items,
-        .query = try bun.default_allocator.dupe(u8, query),
+        .query = try fun.default_allocator.dupe(u8, query),
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Param = @import("../MySQLStatement.zig").Param;
 const QueryBindingIterator = @import("../../shared/QueryBindingIterator.zig").QueryBindingIterator;
@@ -82,5 +82,5 @@ const QueryBindingIterator = @import("../../shared/QueryBindingIterator.zig").Qu
 const types = @import("../../../sql/mysql/MySQLTypes.zig");
 const FieldType = types.FieldType;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

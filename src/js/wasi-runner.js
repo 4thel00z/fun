@@ -5,7 +5,7 @@ import { WASI } from "node:wasi";
 
 const filePath = process.argv.at(1);
 if (!filePath) {
-  var err = new Error("To run a wasm file with Bun, the first argument must be a path to a .wasm file");
+  var err = new Error("To run a wasm file with Fun, the first argument must be a path to a .wasm file");
   err.name = "WasmFileNotFound";
   throw err;
 }

@@ -1,5 +1,5 @@
 import assert from "assert";
-import { expect, mock, test } from "bun:test";
+import { expect, mock, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 import path from "path";
 

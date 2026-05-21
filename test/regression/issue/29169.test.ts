@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/29169
+// https://github.com/underdoc-org/fun/issues/29169
 //
-// process.ppid was a lazy PropertyCallback in BunProcess.cpp, so
+// process.ppid was a lazy PropertyCallback in FunProcess.cpp, so
 // the value was captured once on first access and cached on the
 // process object. If the original parent died and the child was
 // reparented to init (or a subreaper), process.ppid stayed
@@ -21,7 +21,7 @@
 // descriptor check is synchronous and deterministic and tests
 // exactly the property the fix establishes: `process.ppid` is
 // a live accessor.
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isLinux } from "harness";
 import { readFileSync } from "node:fs";
 

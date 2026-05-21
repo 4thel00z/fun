@@ -1,7 +1,7 @@
-import type { Subprocess } from "bun";
-import { spawn } from "bun";
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, nodeExe } from "harness";
+import type { Subprocess } from "fun";
+import { spawn } from "fun";
+import { afterEach, beforeEach, describe, expect, it } from "fun:test";
+import { funEnv, funExe, nodeExe } from "harness";
 import * as path from "node:path";
 
 let servers: Subprocess[] = [];
@@ -25,9 +25,9 @@ async function createHeaderEchoServer(): Promise<URL> {
   const pathname = path.join(import.meta.dir, "./websocket-server-echo-headers-simple.mjs");
   const { promise, resolve, reject } = Promise.withResolvers<URL>();
   const server = spawn({
-    cmd: [nodeExe() ?? bunExe(), pathname],
+    cmd: [nodeExe() ?? funExe(), pathname],
     cwd: import.meta.dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "inherit",
     stderr: "inherit",
     serialization: "json",

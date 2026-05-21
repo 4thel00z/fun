@@ -1,5 +1,5 @@
-import { gc } from "bun";
-import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { gc } from "fun";
+import { beforeEach, describe, expect, mock, test } from "fun:test";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { channel, Channel, hasSubscribers, subscribe, unsubscribe } from "node:diagnostics_channel";
 
@@ -358,7 +358,7 @@ function mustNotCall<T>(fn: (...args: any[]) => T) {
 }
 
 // FIXME: remove this and use `afterEach` instead
-// Currently, `bun test` disallows `expect()` in `afterEach`
+// Currently, `fun test` disallows `expect()` in `afterEach`
 function checkCalls() {
   for (const [mock, expected] of mocks.entries()) {
     expect(mock).toHaveBeenCalledTimes(expected);

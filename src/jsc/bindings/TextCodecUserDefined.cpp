@@ -25,7 +25,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// config.h removed - not needed in Bun
+// config.h removed - not needed in Fun
 #include "TextCodecUserDefined.h"
 
 #include <array>

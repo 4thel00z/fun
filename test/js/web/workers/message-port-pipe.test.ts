@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug } from "harness";
 import { receiveMessageOnPort } from "node:worker_threads";
 
 // Exercises the MessagePortPipe layer that backs MessagePort/MessageChannel:
@@ -68,7 +68,7 @@ describe("MessagePort pipe", () => {
     };
     for (let i = 1; i <= 5; i++) port1.postMessage(i);
     await promise;
-    await Bun.sleep(0);
+    await Fun.sleep(0);
     expect(got).toEqual([1, 2]);
     port1.close();
   });
@@ -152,14 +152,14 @@ describe("MessagePort pipe", () => {
   // is kept alive by hasPendingActivity() while its peer is open, and released
   // once the peer closes.
   test("objectTypeCounts drop after close + GC; peer-open pins listening port", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
-          const { heapStats } = require("bun:jsc");
+          const { heapStats } = require("fun:jsc");
           const count = k => heapStats().objectTypeCounts[k] || 0;
-          async function settle() { for (let i = 0; i < 5; i++) { Bun.gc(true); await Bun.sleep(0); } }
+          async function settle() { for (let i = 0; i < 5; i++) { Fun.gc(true); await Fun.sleep(0); } }
 
           await settle();
           const base = { mc: count("MessageChannel"), mp: count("MessagePort"), bc: count("BroadcastChannel") };
@@ -218,7 +218,7 @@ describe("MessagePort pipe", () => {
           process.exit(0);
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -233,9 +233,9 @@ describe("MessagePort pipe", () => {
   // when the in-transit struct is dropped, otherwise the peer's
   // hasPendingActivity() pins it forever.
   test("port dropped in transit does not pin its peer", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const { port1: A, port2: B } = new MessageChannel();
@@ -248,7 +248,7 @@ describe("MessagePort pipe", () => {
             reg.register(D, "D");
             A.postMessage(null, [C]); // C dropped: B is closed
           }
-          for (let i = 0; i < 10; i++) { Bun.gc(true); await Bun.sleep(0); }
+          for (let i = 0; i < 10; i++) { Fun.gc(true); await Fun.sleep(0); }
           // If dropped-in-transit endpoints weren't closed, every D would
           // be pinned via isOtherSideOpen and finalized.count would be 0.
           console.log(JSON.stringify({ finalized: finalized.count }));
@@ -256,7 +256,7 @@ describe("MessagePort pipe", () => {
           process.exit(0);
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -276,9 +276,9 @@ describe("MessagePort pipe", () => {
   // Sanitizer-gated: the race being exercised is a memory-safety bug that
   // only surfaces deterministically under ASAN/UBSan.
   test.skipIf(!isDebug && !isASAN)("concurrent MessageChannel creation across workers is race-free", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const { Worker } = require("worker_threads");
@@ -311,7 +311,7 @@ describe("MessagePort pipe", () => {
           console.log("OK");
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -322,9 +322,9 @@ describe("MessagePort pipe", () => {
   });
 
   test.skipIf(!isDebug && !isASAN)("burst of postMessage across threads delivers every message in order", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const { Worker, MessageChannel } = require("worker_threads");
@@ -354,7 +354,7 @@ describe("MessagePort pipe", () => {
           });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -371,9 +371,9 @@ describe("MessagePort pipe", () => {
 // each, for both directions.
 describe("Worker postMessage inbox", () => {
   test.skipIf(!isDebug && !isASAN)("round-trip burst delivers in order with microtasks between each", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
           const { Worker, isMainThread, parentPort } = require("node:worker_threads");
@@ -429,7 +429,7 @@ describe("Worker postMessage inbox", () => {
           for (let i = 0; i < N; i++) w.postMessage(i);
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -440,9 +440,9 @@ describe("Worker postMessage inbox", () => {
   });
 
   test("messages sent before worker online are delivered once it starts", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const { Worker } = require("node:worker_threads");
@@ -469,7 +469,7 @@ describe("Worker postMessage inbox", () => {
         });
       `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

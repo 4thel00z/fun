@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 // Regression test for #27389: recvfrom() was called with MSG_NOSIGNAL which
 // is only valid for send operations. This caused EINVAL in strict environments
@@ -10,12 +10,12 @@ import { bunEnv, bunExe } from "harness";
 
 test("socket recv works without EINVAL from invalid flags", async () => {
   // Start a simple echo server and client that exercises the recv path
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
-      const server = Bun.listen({
+      const server = Fun.listen({
         hostname: "127.0.0.1",
         port: 0,
         socket: {
@@ -27,7 +27,7 @@ test("socket recv works without EINVAL from invalid flags", async () => {
           },
         },
       });
-      const client = await Bun.connect({
+      const client = await Fun.connect({
         hostname: "127.0.0.1",
         port: server.port,
         socket: {
@@ -45,7 +45,7 @@ test("socket recv works without EINVAL from invalid flags", async () => {
       });
     `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

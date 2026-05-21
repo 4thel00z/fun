@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("process.argv with many arguments doesn't double-free", async () => {
   // The stack fallback buffer in createArgv is 32 * @sizeOf(jsc.ZigString)
@@ -16,15 +16,15 @@ test("process.argv with many arguments doesn't double-free", async () => {
         // Check that all arguments are present and valid
         hasAllArgs: argv.slice(2).every((arg, i) => arg === \`arg\${i}\`),
         // The first two should be the executable and script path
-        hasExe: argv[0].includes("bun"),
+        hasExe: argv[0].includes("fun"),
         hasScript: argv[1].endsWith("check-argv.js")
       }));
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "check-argv.js", ...manyArgs],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "check-argv.js", ...manyArgs],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -54,7 +54,7 @@ test.todo("process.argv with many arguments in worker", async () => {
       parentPort.postMessage({
         length: argv.length,
         hasAllArgs: workerData.every((arg, i) => argv[i + 2] === arg),
-        hasExe: argv[0].includes("bun"),
+        hasExe: argv[0].includes("fun"),
         hasScript: argv[1] === "[worker eval]" || argv[1].endsWith("worker.js")
       });
     `,
@@ -79,9 +79,9 @@ test.todo("process.argv with many arguments in worker", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

@@ -23,14 +23,14 @@
 #include <lshpack.h>
 
 #if CPU(X86_64) && !OS(WINDOWS)
-extern "C" void bun_warn_avx_missing(const char* url)
+extern "C" void fun_warn_avx_missing(const char* url)
 {
     __builtin_cpu_init();
     if (__builtin_cpu_supports("avx")) {
         return;
     }
 
-    static constexpr const char* str = "warn: CPU lacks AVX support, strange crashes may occur. Reinstall Bun or use *-baseline build:\n  ";
+    static constexpr const char* str = "warn: CPU lacks AVX support, strange crashes may occur. Reinstall Fun or use *-baseline build:\n  ";
     const size_t len = strlen(str);
 
     char buf[512];
@@ -89,14 +89,14 @@ extern "C" bool is_executable_file(const char* path)
 }
 #endif
 
-extern "C" void bun_ignore_sigpipe()
+extern "C" void fun_ignore_sigpipe()
 {
 #if !OS(WINDOWS)
     // ignore SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
 }
-extern "C" ssize_t bun_sysconf__SC_CLK_TCK()
+extern "C" ssize_t fun_sysconf__SC_CLK_TCK()
 {
 #ifdef __APPLE__
     return sysconf(_SC_CLK_TCK);
@@ -107,7 +107,7 @@ extern "C" ssize_t bun_sysconf__SC_CLK_TCK()
 
 // Host CPU count, ignoring sched_getaffinity and cgroup cpu.max.
 // Used to size os.cpus() so it matches the native cpus() result count.
-extern "C" int32_t bun_sysconf__SC_NPROCESSORS_ONLN()
+extern "C" int32_t fun_sysconf__SC_NPROCESSORS_ONLN()
 {
 #if OS(WINDOWS)
     SYSTEM_INFO sysinfo;
@@ -118,7 +118,7 @@ extern "C" int32_t bun_sysconf__SC_NPROCESSORS_ONLN()
 #endif
 }
 
-#if OS(DARWIN) && BUN_DEBUG
+#if OS(DARWIN) && FUN_DEBUG
 #include <malloc/malloc.h>
 
 extern "C" void dump_zone_malloc_stats()
@@ -224,7 +224,7 @@ extern "C" void windows_enable_stdio_inheritance()
 #endif
 
 // close_range is glibc > 2.33, which is very new
-extern "C" ssize_t bun_close_range(unsigned int start, unsigned int end, unsigned int flags)
+extern "C" ssize_t fun_close_range(unsigned int start, unsigned int end, unsigned int flags)
 {
     return syscall(__NR_close_range, start, end, flags);
 }
@@ -232,7 +232,7 @@ extern "C" ssize_t bun_close_range(unsigned int start, unsigned int end, unsigne
 // FreeBSD 12.2+ libc has close_range; 14.0+ supports CLOSE_RANGE_CLOEXEC
 // (same value 1<<2 as Linux). Passing flags through means execveZ-failure
 // recovery keeps fds open (CLOEXEC) instead of closing them outright.
-extern "C" ssize_t bun_close_range(unsigned int start, unsigned int end, unsigned int flags)
+extern "C" ssize_t fun_close_range(unsigned int start, unsigned int end, unsigned int flags)
 {
     return close_range(start, end, flags);
 }
@@ -255,9 +255,9 @@ extern "C" void on_before_reload_process_linux()
     unset_cloexec(STDERR_FILENO);
 
     // close all file descriptors except stdin, stdout, stderr and possibly IPC.
-    // if you're passing additional file descriptors to Bun, you're probably not passing more than 8.
+    // if you're passing additional file descriptors to Fun, you're probably not passing more than 8.
     // If this fails, it's ultimately okay, we're just trying our best to avoid leaking file descriptors.
-    bun_close_range(3, ~0U, CLOSE_RANGE_CLOEXEC);
+    fun_close_range(3, ~0U, CLOSE_RANGE_CLOEXEC);
 
     // reset all signals to default
     sigset_t signal_set;
@@ -271,7 +271,7 @@ extern "C" void on_before_reload_process_linux()
 
 // Lazily heap-allocated so it doesn't land in the .tls section on Windows
 // (PE has no TLS BSS; a static thread_local char[65536] ships as 64 KB of
-// zeros in bun.exe and is copied into every thread's TLS block at creation).
+// zeros in fun.exe and is copied into every thread's TLS block at creation).
 // unique_ptr so the allocation is released when a Worker thread exits —
 // thread_local destructors run via __cxa_thread_atexit and are unaffected
 // by -fno-c++-static-destructors.
@@ -425,48 +425,48 @@ extern "C" ssize_t pwritev2(int fd, const struct iovec* iov, int iovcnt,
 
 #endif
 
-extern "C" void Bun__onExit();
-extern "C" int32_t bun_stdio_tty[3];
+extern "C" void Fun__onExit();
+extern "C" int32_t fun_stdio_tty[3];
 #if !OS(WINDOWS)
 static termios termios_to_restore_later[3];
-// Whether Bun itself has modified the termios of each stdio fd during this
+// Whether Fun itself has modified the termios of each stdio fd during this
 // process's lifetime (e.g. via process.stdin.setRawMode). Used to decide
-// whether the exit-time termios restore should fire when Bun is acting as a
+// whether the exit-time termios restore should fire when Fun is acting as a
 // pipeline producer (stdout is a pipe). See #29592 — writing our startup
 // snapshot back to a shared /dev/pts device clobbers raw mode set on the
 // same device by a downstream consumer (less, fzf, fx, ...).
 //
-// `volatile sig_atomic_t` because bun_restore_stdio() reads this from signal
-// context (onExitSignal, SIGINT/SIGTERM) while Bun__ttySetMode() writes it
+// `volatile sig_atomic_t` because fun_restore_stdio() reads this from signal
+// context (onExitSignal, SIGINT/SIGTERM) while Fun__ttySetMode() writes it
 // from normal execution; sig_atomic_t is the only integral type POSIX
 // guarantees can be accessed atomically across that boundary.
-extern "C" volatile sig_atomic_t bun_stdio_modified[3] = { 0, 0, 0 };
+extern "C" volatile sig_atomic_t fun_stdio_modified[3] = { 0, 0, 0 };
 #endif
 
-extern "C" void bun_restore_stdio()
+extern "C" void fun_restore_stdio()
 {
 
 #if !OS(WINDOWS)
 
-    // Only suppress the restore when Bun is a pipeline producer (stdout is a
+    // Only suppress the restore when Fun is a pipeline producer (stdout is a
     // pipe, not a TTY) and it didn't touch termios itself. That's the #29592
     // case — a downstream consumer on the same /dev/pts/* device has already
     // taken over termios and writing our startup snapshot back clobbers it.
     //
-    // For the interactive-wrapper case (stdout IS a TTY, e.g. `bun run vim`
+    // For the interactive-wrapper case (stdout IS a TTY, e.g. `fun run vim`
     // where the child put the terminal into raw mode and then crashed), we
     // keep the unconditional restore so the shell prompt comes back cooked.
     // Same for the crash-handler, --watch reload, and signal-death paths in
-    // run_command / bunx / lifecycle_script_runner — those are all cases
-    // where Bun is the foreground session owner and the startup snapshot is
+    // run_command / funx / lifecycle_script_runner — those are all cases
+    // where Fun is the foreground session owner and the startup snapshot is
     // the state the user expects back.
-    const bool pipeline_producer = bun_stdio_tty[1] == 0;
+    const bool pipeline_producer = fun_stdio_tty[1] == 0;
 
     // restore stdio
     for (int32_t fd = 0; fd < 3; fd++) {
-        if (!bun_stdio_tty[fd])
+        if (!fun_stdio_tty[fd])
             continue;
-        if (pipeline_producer && !bun_stdio_modified[fd])
+        if (pipeline_producer && !fun_stdio_modified[fd])
             continue;
 
         sigset_t sa;
@@ -489,34 +489,34 @@ extern "C" void bun_restore_stdio()
 #if !OS(WINDOWS)
 extern "C" void onExitSignal(int sig)
 {
-    bun_restore_stdio();
+    fun_restore_stdio();
     signal(sig, SIG_DFL);
     raise(sig);
 }
 #endif
 
 #if OS(WINDOWS)
-extern "C" void Bun__restoreWindowsStdio();
+extern "C" void Fun__restoreWindowsStdio();
 BOOL WINAPI Ctrlhandler(DWORD signal)
 {
 
     if (signal == CTRL_C_EVENT) {
-        Bun__restoreWindowsStdio();
+        Fun__restoreWindowsStdio();
         SetConsoleCtrlHandler(Ctrlhandler, FALSE);
     }
 
     return FALSE;
 }
 
-extern "C" void Bun__setCTRLHandler(BOOL add)
+extern "C" void Fun__setCTRLHandler(BOOL add)
 {
     SetConsoleCtrlHandler(Ctrlhandler, add);
 }
 #endif
 
-extern "C" int32_t bun_is_stdio_null[3] = { 0, 0, 0 };
+extern "C" int32_t fun_is_stdio_null[3] = { 0, 0, 0 };
 
-extern "C" void bun_initialize_process()
+extern "C" void fun_initialize_process()
 {
     // Disable printf() buffering. We buffer it ourselves.
     setvbuf(stdout, nullptr, _IONBF, 0);
@@ -527,7 +527,7 @@ extern "C" void bun_initialize_process()
     // This is less of an issue for macOS due to posix_spawn
     // This is best effort, not all linux kernels support close_range or CLOSE_RANGE_CLOEXEC
     // To avoid breaking --watch, we skip stdin, stdout, stderr and IPC.
-    bun_close_range(4, ~0U, CLOSE_RANGE_CLOEXEC);
+    fun_close_range(4, ~0U, CLOSE_RANGE_CLOEXEC);
 #endif
 
 #if OS(LINUX) || OS(DARWIN) || OS(FREEBSD)
@@ -536,7 +536,7 @@ extern "C" void bun_initialize_process()
     bool anyTTYs = false;
 
     const auto setDevNullFd = [&](int target_fd) -> void {
-        bun_is_stdio_null[target_fd] = 1;
+        fun_is_stdio_null[target_fd] = 1;
         if (devNullFd_ == -1) {
             do {
                 devNullFd_ = open("/dev/null", O_RDWR | O_CLOEXEC, 0);
@@ -567,7 +567,7 @@ extern "C" void bun_initialize_process()
                 setDevNullFd(fd);
             }
         } else {
-            bun_stdio_tty[fd] = 1;
+            fun_stdio_tty[fd] = 1;
             int err = 0;
 
             do {
@@ -604,7 +604,7 @@ extern "C" void bun_initialize_process()
             // Ignore _close result. If it fails or not depends on used Windows
             // version. We will just check _open result.
             _close(fd);
-            bun_is_stdio_null[fd] = 1;
+            fun_is_stdio_null[fd] = 1;
             if (fd != _open("nul", O_RDWR)) {
                 RELEASE_ASSERT_NOT_REACHED();
             } else {
@@ -633,13 +633,13 @@ extern "C" void bun_initialize_process()
     }
 
     // add ctrl+c handler on windows
-    Bun__setCTRLHandler(1);
+    Fun__setCTRLHandler(1);
 #endif
 
 #if OS(DARWIN) || ASAN_ENABLED
-    atexit(Bun__onExit);
+    atexit(Fun__onExit);
 #elif !OS(WINDOWS)
-    at_quick_exit(Bun__onExit);
+    at_quick_exit(Fun__onExit);
 #endif
 }
 
@@ -689,7 +689,7 @@ extern "C" int32_t open_as_nonblocking_tty(int32_t fd, int32_t mode)
 
 #endif
 
-extern "C" [[ZIG_EXPORT(nothrow)]] size_t Bun__ramSize()
+extern "C" [[ZIG_EXPORT(nothrow)]] size_t Fun__ramSize()
 {
     // This value is cached internally.
     return WTF::ramSize();
@@ -697,7 +697,7 @@ extern "C" [[ZIG_EXPORT(nothrow)]] size_t Bun__ramSize()
 
 #if !OS(WINDOWS)
 
-extern "C" void Bun__disableSOLinger(int fd)
+extern "C" void Fun__disableSOLinger(int fd)
 {
     struct linger l = { 1, 0 };
     setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l));
@@ -707,7 +707,7 @@ extern "C" void Bun__disableSOLinger(int fd)
 
 #include <winsock2.h>
 
-extern "C" void Bun__disableSOLinger(SOCKET fd)
+extern "C" void Fun__disableSOLinger(SOCKET fd)
 {
     struct linger l = { 1, 0 };
     setsockopt(fd, SOL_SOCKET, SO_LINGER, (char*)&l, sizeof(l));
@@ -835,15 +835,15 @@ extern "C" int ffi_fileno(FILE* file)
     return fileno(file);
 }
 
-// Handle signals in bun.spawnSync.
+// Handle signals in fun.spawnSync.
 // If we receive a signal, we want to forward the signal to the child process.
 #if OS(LINUX) || OS(DARWIN) || OS(FREEBSD)
 #include <signal.h>
 #include <pthread.h>
 
-// Note: We only ever use bun.spawnSync on the main thread.
-extern "C" int64_t Bun__currentSyncPID = 0;
-static int Bun__pendingSignalToSend = 0;
+// Note: We only ever use fun.spawnSync on the main thread.
+extern "C" int64_t Fun__currentSyncPID = 0;
+static int Fun__pendingSignalToSend = 0;
 static struct sigaction previous_actions[NSIG];
 
 // This list of signals is copied from npm.
@@ -882,7 +882,7 @@ static struct sigaction previous_actions[NSIG];
     FOR_EACH_LINUX_ONLY_SIGNAL(M)
 #endif
 
-static void Bun__forwardSignalFromParentToChildAndRestorePreviousAction(pid_t pid, int sig)
+static void Fun__forwardSignalFromParentToChildAndRestorePreviousAction(pid_t pid, int sig)
 {
     sigset_t restore_mask;
     sigset_t mask;
@@ -895,31 +895,31 @@ static void Bun__forwardSignalFromParentToChildAndRestorePreviousAction(pid_t pi
     pthread_sigmask(SIG_UNBLOCK, &restore_mask, nullptr);
 }
 
-extern "C" void Bun__sendPendingSignalIfNecessary()
+extern "C" void Fun__sendPendingSignalIfNecessary()
 {
-    int sig = Bun__pendingSignalToSend;
-    Bun__pendingSignalToSend = 0;
-    int pid = Bun__currentSyncPID;
+    int sig = Fun__pendingSignalToSend;
+    Fun__pendingSignalToSend = 0;
+    int pid = Fun__currentSyncPID;
     if (sig == 0 || pid == 0)
         return;
 
-    Bun__forwardSignalFromParentToChildAndRestorePreviousAction(pid, sig);
+    Fun__forwardSignalFromParentToChildAndRestorePreviousAction(pid, sig);
 }
 
-extern "C" void Bun__registerSignalsForForwarding()
+extern "C" void Fun__registerSignalsForForwarding()
 {
-    Bun__pendingSignalToSend = 0;
+    Fun__pendingSignalToSend = 0;
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESETHAND;
     sa.sa_handler = [](int sig) {
-        if (Bun__currentSyncPID == 0) {
-            Bun__pendingSignalToSend = sig;
+        if (Fun__currentSyncPID == 0) {
+            Fun__pendingSignalToSend = sig;
             return;
         }
 
-        Bun__forwardSignalFromParentToChildAndRestorePreviousAction(Bun__currentSyncPID, sig);
+        Fun__forwardSignalFromParentToChildAndRestorePreviousAction(Fun__currentSyncPID, sig);
     };
 
 #define REGISTER_SIGNAL(SIG)                                 \
@@ -931,9 +931,9 @@ extern "C" void Bun__registerSignalsForForwarding()
 #undef REGISTER_SIGNAL
 }
 
-extern "C" void Bun__unregisterSignalsForForwarding()
+extern "C" void Fun__unregisterSignalsForForwarding()
 {
-    Bun__currentSyncPID = 0;
+    Fun__currentSyncPID = 0;
 
 #define UNREGISTER_SIGNAL(SIG)                                \
     if (sigaction(SIG, &previous_actions[SIG], NULL) == -1) { \
@@ -949,11 +949,11 @@ extern "C" void Bun__unregisterSignalsForForwarding()
 #if OS(LINUX) || OS(DARWIN) || OS(FREEBSD)
 #include <paths.h>
 
-extern "C" const char* BUN_DEFAULT_PATH_FOR_SPAWN = _PATH_DEFPATH;
+extern "C" const char* FUN_DEFAULT_PATH_FOR_SPAWN = _PATH_DEFPATH;
 #elif OS(WINDOWS)
-extern "C" const char* BUN_DEFAULT_PATH_FOR_SPAWN = "C:\\Windows\\System32;C:\\Windows;";
+extern "C" const char* FUN_DEFAULT_PATH_FOR_SPAWN = "C:\\Windows\\System32;C:\\Windows;";
 #else
-extern "C" const char* BUN_DEFAULT_PATH_FOR_SPAWN = "/usr/bin:/bin";
+extern "C" const char* FUN_DEFAULT_PATH_FOR_SPAWN = "/usr/bin:/bin";
 #endif
 
 #if OS(DARWIN)
@@ -962,7 +962,7 @@ extern "C" const char* BUN_DEFAULT_PATH_FOR_SPAWN = "/usr/bin:/bin";
 
 // The event names have to be compile-time constants.
 // So we trick the compiler into thinking they are by using a macro.
-extern "C" void Bun__signpost_emit(os_log_t log, os_signpost_type_t type, os_signpost_id_t spid, int trace_event_id)
+extern "C" void Fun__signpost_emit(os_log_t log, os_signpost_type_t type, os_signpost_id_t spid, int trace_event_id)
 {
 #define EMIT_SIGNPOST(name, id)                                 \
     case id:                                                    \
@@ -995,20 +995,20 @@ struct BlobHeader {
 
 #if OS(DARWIN)
 
-extern "C" BlobHeader __attribute__((section("__BUN,__bun"))) BUN_COMPILED = { 0, 0 };
+extern "C" BlobHeader __attribute__((section("__FUN,__fun"))) FUN_COMPILED = { 0, 0 };
 
-extern "C" uint64_t* Bun__getStandaloneModuleGraphMachoLength()
+extern "C" uint64_t* Fun__getStandaloneModuleGraphMachoLength()
 {
-    return &BUN_COMPILED.size;
+    return &FUN_COMPILED.size;
 }
 
-#else // __linux__ / __FreeBSD__ — both ELF, same .bun section approach
+#else // __linux__ / __FreeBSD__ — both ELF, same .fun section approach
 
-extern "C" BlobHeader __attribute__((section(".bun"), aligned(BLOB_HEADER_ALIGNMENT), used)) BUN_COMPILED = { 0 };
+extern "C" BlobHeader __attribute__((section(".fun"), aligned(BLOB_HEADER_ALIGNMENT), used)) FUN_COMPILED = { 0 };
 
-extern "C" uint64_t* Bun__getStandaloneModuleGraphELFVaddr()
+extern "C" uint64_t* Fun__getStandaloneModuleGraphELFVaddr()
 {
-    return &BUN_COMPILED.size;
+    return &FUN_COMPILED.size;
 }
 
 #endif // OS(DARWIN) / __linux__
@@ -1021,7 +1021,7 @@ extern "C" uint64_t* Bun__getStandaloneModuleGraphELFVaddr()
 static uint64_t* pe_section_size = nullptr;
 static uint8_t* pe_section_data = nullptr;
 
-// Helper function to find and map the .bun section
+// Helper function to find and map the .fun section
 static bool initializePESection()
 {
     if (pe_section_size != nullptr) return true;
@@ -1038,8 +1038,8 @@ static bool initializePESection()
     PIMAGE_SECTION_HEADER sectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
 
     for (int i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++) {
-        if (strncmp((char*)sectionHeader->Name, ".bun", 4) == 0) {
-            // Found the .bun section
+        if (strncmp((char*)sectionHeader->Name, ".fun", 4) == 0) {
+            // Found the .fun section
             // Section format: 8 bytes size (uint64_t) + data
             BYTE* sectionData = (BYTE*)hModule + sectionHeader->VirtualAddress;
             pe_section_size = (uint64_t*)sectionData;
@@ -1052,13 +1052,13 @@ static bool initializePESection()
     return false;
 }
 
-extern "C" uint64_t Bun__getStandaloneModuleGraphPELength()
+extern "C" uint64_t Fun__getStandaloneModuleGraphPELength()
 {
     if (!initializePESection()) return 0;
     return pe_section_size ? *pe_section_size : 0;
 }
 
-extern "C" uint8_t* Bun__getStandaloneModuleGraphPEData()
+extern "C" uint8_t* Fun__getStandaloneModuleGraphPEData()
 {
     if (!initializePESection()) return nullptr;
     return pe_section_data;

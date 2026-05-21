@@ -376,8 +376,8 @@ pub fn ParseStmt(
                                 .{
                                     path_name.fmtIdentifier(),
                                 },
-                            ) catch |err| bun.handleOom(err),
-                        ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err),
+                        ) catch |err| fun.handleOom(err);
 
                         if (comptime track_symbol_usage_during_parse_pass) {
                             // In the scan pass, we need _some_ way of knowing *not* to mark as unused
@@ -1334,7 +1334,7 @@ pub fn ParseStmt(
 
         pub fn parseStmt(p: *P, opts: *ParseStatementOptions) anyerror!Stmt {
             if (!p.stack_check.isSafeToRecurse()) {
-                try bun.throwStackOverflow();
+                try fun.throwStackOverflow();
             }
 
             return switch (p.lexer.token) {
@@ -1369,12 +1369,12 @@ pub fn ParseStmt(
     };
 }
 
-const bun = @import("bun");
-const Output = bun.Output;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Output = fun.Output;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Binding = js_ast.Binding;
 const Expr = js_ast.Expr;
 const LocRef = js_ast.LocRef;
@@ -1388,10 +1388,10 @@ const Decl = G.Decl;
 const Op = js_ast.Op;
 const Level = js_ast.Op.Level;
 
-const js_lexer = bun.js_lexer;
+const js_lexer = fun.js_lexer;
 const T = js_lexer.T;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const DeferredTsDecorators = js_parser.DeferredTsDecorators;
 const ImportKind = js_parser.ImportKind;
 const JSXTransformType = js_parser.JSXTransformType;

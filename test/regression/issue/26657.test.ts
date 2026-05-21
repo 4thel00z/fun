@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { readFileSync } from "fs";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
-describe("bun update -i select all with 'A' key", () => {
+describe("fun update -i select all with 'A' key", () => {
   // Issue #26657: When pressing 'A' to select all packages in interactive update,
   // the UI shows "Selected X packages to update" but then shows "No packages selected for update"
   // because packages where current_version == update_version were silently filtered out.
@@ -21,11 +21,11 @@ describe("bun update -i select all with 'A' key", () => {
       }),
     });
 
-    // First, run bun install to create initial node_modules
-    await using installProc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    // First, run fun install to create initial node_modules
+    await using installProc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -48,10 +48,10 @@ describe("bun update -i select all with 'A' key", () => {
     expect(initialPackageJson.dependencies["is-even"]).toBe("0.1.0");
 
     // Now run update --interactive and press 'A' to select all, then Enter to confirm
-    await using updateProc = Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive"],
+    await using updateProc = Fun.spawn({
+      cmd: [funExe(), "update", "--interactive"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -97,7 +97,7 @@ describe("bun update -i select all with 'A' key", () => {
 
       // The installed version should NOT be the old version
       expect(installedVersion).not.toBe("0.1.0");
-      expect(Bun.semver.satisfies(installedVersion, ">0.1.0")).toBe(true);
+      expect(Fun.semver.satisfies(installedVersion, ">0.1.0")).toBe(true);
     } catch (err) {
       // Ensure cleanup on failure
       updateProc.stdin.end();
@@ -122,10 +122,10 @@ describe("bun update -i select all with 'A' key", () => {
     });
 
     // First install
-    await using installProc = Bun.spawn({
-      cmd: [bunExe(), "install"],
+    await using installProc = Fun.spawn({
+      cmd: [funExe(), "install"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -150,10 +150,10 @@ describe("bun update -i select all with 'A' key", () => {
     const currentVersion = installedPkgJson.version;
 
     // Now run update --interactive with 'A' to select all
-    await using updateProc = Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive"],
+    await using updateProc = Fun.spawn({
+      cmd: [funExe(), "update", "--interactive"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",

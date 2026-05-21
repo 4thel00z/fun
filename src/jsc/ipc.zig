@@ -4,7 +4,7 @@ pub const log = Output.scoped(.IPC, .visible);
 /// and JSONLineBuffer (for JSON mode with optimized newline tracking).
 const IncomingBuffer = union(enum) {
     /// For advanced mode - uses length-prefix, no scanning needed
-    advanced: bun.ByteList,
+    advanced: fun.ByteList,
     /// For JSON mode - tracks newline positions to avoid O(n²) scanning
     json: JSONLineBuffer,
 
@@ -17,7 +17,7 @@ const IncomingBuffer = union(enum) {
 
     pub fn deinit(self: *@This()) void {
         switch (self.*) {
-            .advanced => |*b| b.deinit(bun.default_allocator),
+            .advanced => |*b| b.deinit(fun.default_allocator),
             .json => |*b| b.deinit(),
         }
     }
@@ -32,14 +32,14 @@ const SerializeAndSendResult = enum {
 
 /// Mode of Inter-Process Communication.
 pub const Mode = enum {
-    /// Uses SerializedScriptValue to send data. Only valid for bun <--> bun communication.
+    /// Uses SerializedScriptValue to send data. Only valid for fun <--> fun communication.
     /// The first packet sent here is a version packet so that the version of the other end is known.
     advanced,
     /// Uses JSON messages, one message per line.
-    /// This must match the behavior of node.js, and supports bun <--> node.js/etc communication.
+    /// This must match the behavior of node.js, and supports fun <--> node.js/etc communication.
     json,
 
-    const Map = bun.ComptimeStringMap(Mode, .{
+    const Map = fun.ComptimeStringMap(Mode, .{
         .{ "advanced", .advanced },
         .{ "json", .json },
     });
@@ -64,12 +64,12 @@ pub const IPCDecodeError = error{
     NotEnoughBytes,
     /// Format could not be recognized. Report an error and close the socket.
     InvalidFormat,
-} || bun.JSError;
+} || fun.JSError;
 
 pub const IPCSerializationError = error{
     /// Value could not be serialized.
     SerializationFailed,
-} || bun.JSError;
+} || fun.JSError;
 
 const advanced = struct {
     pub const header_length = @sizeOf(IPCMessageType) + @sizeOf(u32);
@@ -98,7 +98,7 @@ const advanced = struct {
 
         log("Received IPC message type {d} ({s}) len {d}", .{
             @intFromEnum(message_type),
-            bun.tagName(IPCMessageType, message_type) orelse "unknown",
+            fun.tagName(IPCMessageType, message_type) orelse "unknown",
             message_len,
         });
 
@@ -144,7 +144,7 @@ const advanced = struct {
         return "\x02\x25\x00\x00\x00\r\x00\x00\x00\x02\x03\x00\x00\x80cmd\x10\x10\x00\x00\x80NODE_HANDLE_NACK\xff\xff\xff\xff";
     }
 
-    pub fn serialize(writer: *bun.io.StreamBuffer, global: *jsc.JSGlobalObject, value: JSValue, is_internal: IsInternal) !usize {
+    pub fn serialize(writer: *fun.io.StreamBuffer, global: *jsc.JSGlobalObject, value: JSValue, is_internal: IsInternal) !usize {
         const serialized = try value.serialize(global, .{
             // IPC sends across process.
             .forCrossProcessTransfer = true,
@@ -185,7 +185,7 @@ const json = struct {
         return "{\"cmd\":\"NODE_HANDLE_NACK\"}\n";
     }
 
-    // In order to not have to do a property lookup internal messages sent from Bun will have a single u8 prepended to them
+    // In order to not have to do a property lookup internal messages sent from Fun will have a single u8 prepended to them
     // to be able to distinguish whether it is a regular json message or an internal one for cluster ipc communication.
     // 2 is internal
     // ["[{\d\.] is regular
@@ -193,7 +193,7 @@ const json = struct {
     pub fn decodeIPCMessage(data: []const u8, globalThis: *jsc.JSGlobalObject, known_newline: ?u32) IPCDecodeError!DecodeIPCMessageResult {
         // <tag>{ "foo": "bar"} // tag is 1 or 2
         const idx: u32 = known_newline orelse idx: {
-            const found = bun.strings.indexOfChar(data, '\n') orelse
+            const found = fun.strings.indexOfChar(data, '\n') orelse
                 return IPCDecodeError.NotEnoughBytes;
             // Individual IPC messages should not exceed 4GB, and idx+1 must not overflow
             if (found >= std.math.maxInt(u32)) return IPCDecodeError.InvalidFormat;
@@ -211,7 +211,7 @@ const json = struct {
             kind = .internal;
         }
 
-        const is_ascii = bun.strings.isAllASCII(json_data);
+        const is_ascii = fun.strings.isAllASCII(json_data);
         var was_ascii_string_freed = false;
 
         // Use ExternalString to avoid copying data if possible.
@@ -220,18 +220,18 @@ const json = struct {
         var str = if (is_ascii) ascii: {
 
             // .dead if `json_data` exceeds max length
-            const s = bun.String.createExternal(*bool, json_data, true, &was_ascii_string_freed, jsonIPCDataStringFreeCB);
+            const s = fun.String.createExternal(*bool, json_data, true, &was_ascii_string_freed, jsonIPCDataStringFreeCB);
             if (s.tag == .Dead) {
                 @branchHint(.unlikely);
                 return IPCDecodeError.OutOfMemory;
             }
             break :ascii s;
-        } else bun.String.borrowUTF8(json_data);
+        } else fun.String.borrowUTF8(json_data);
 
         defer {
             str.deref();
             if (is_ascii and !was_ascii_string_freed) {
-                @panic("Expected ascii string to be freed by ExternalString, but it wasn't. This is a bug in Bun.");
+                @panic("Expected ascii string to be freed by ExternalString, but it wasn't. This is a bug in Fun.");
             }
         }
 
@@ -244,7 +244,7 @@ const json = struct {
                 globalThis.clearException();
                 return IPCDecodeError.InvalidFormat;
             },
-            error.OutOfMemory => return bun.outOfMemory(),
+            error.OutOfMemory => return fun.outOfMemory(),
         };
 
         return switch (kind) {
@@ -259,8 +259,8 @@ const json = struct {
         };
     }
 
-    pub fn serialize(writer: *bun.io.StreamBuffer, global: *jsc.JSGlobalObject, value: JSValue, is_internal: IsInternal) !usize {
-        var out: bun.String = undefined;
+    pub fn serialize(writer: *fun.io.StreamBuffer, global: *jsc.JSGlobalObject, value: JSValue, is_internal: IsInternal) !usize {
+        var out: fun.String = undefined;
         // Use jsonStringifyFast which passes undefined for the space parameter,
         // triggering JSC's SIMD-optimized FastStringifier code path.
         try value.jsonStringifyFast(global, &out);
@@ -269,7 +269,7 @@ const json = struct {
         if (out.tag == .Dead) return IPCSerializationError.SerializationFailed;
 
         // TODO: it would be cool to have a 'toUTF8Into' which can write directly into 'ipc_data.outgoing.list'
-        const str = out.toUTF8(bun.default_allocator);
+        const str = out.toUTF8(fun.default_allocator);
         defer str.deinit();
 
         const slice = str.slice();
@@ -307,7 +307,7 @@ pub fn getVersionPacket(mode: Mode) []const u8 {
 
 /// Given a writer interface, serialize and write a value.
 /// Returns true if the value was written, false if it was not.
-pub fn serialize(mode: Mode, writer: *bun.io.StreamBuffer, global: *jsc.JSGlobalObject, value: JSValue, is_internal: IsInternal) !usize {
+pub fn serialize(mode: Mode, writer: *fun.io.StreamBuffer, global: *jsc.JSGlobalObject, value: JSValue, is_internal: IsInternal) !usize {
     return switch (mode) {
         .advanced => advanced.serialize(writer, global, value, is_internal),
         .json => json.serialize(writer, global, value, is_internal),
@@ -331,9 +331,9 @@ pub fn getNackPacket(mode: Mode) []const u8 {
 pub const Socket = uws.NewSocketHandler(false);
 
 pub const Handle = struct {
-    fd: bun.FD,
+    fd: fun.FD,
     js: jsc.JSValue,
-    pub fn init(fd: bun.FD, js: jsc.JSValue) @This() {
+    pub fn init(fd: fun.FD, js: jsc.JSValue) @This() {
         js.protect();
         return .{ .fd = fd, .js = js };
     }
@@ -359,7 +359,7 @@ pub const CallbackList = union(enum) {
     }
 
     /// protects the callback
-    pub fn push(self: *@This(), callback: jsc.JSValue, global: *jsc.JSGlobalObject) bun.JSError!void {
+    pub fn push(self: *@This(), callback: jsc.JSValue, global: *jsc.JSGlobalObject) fun.JSError!void {
         switch (self.*) {
             .ack_nack => unreachable,
             .none => {
@@ -380,7 +380,7 @@ pub const CallbackList = union(enum) {
             },
         }
     }
-    fn callNextTick(self: *@This(), global: *jsc.JSGlobalObject) bun.JSError!void {
+    fn callNextTick(self: *@This(), global: *jsc.JSGlobalObject) fun.JSError!void {
         switch (self.*) {
             .ack_nack => {},
             .none => {},
@@ -412,7 +412,7 @@ pub const CallbackList = union(enum) {
 pub const SendHandle = struct {
     // when a message has a handle, make sure it has a new SendHandle - so that if we retry sending it,
     // we only retry sending the message with the handle, not the original message.
-    data: bun.io.StreamBuffer = .{},
+    data: fun.io.StreamBuffer = .{},
     /// keep sending the handle until data is drained (assume it hasn't sent until data is fully drained)
     handle: ?Handle,
     callbacks: CallbackList,
@@ -441,8 +441,8 @@ pub const WindowsWrite = struct {
     write_slice: []const u8,
     owner: ?*SendQueue,
     pub fn destroy(self: *WindowsWrite) void {
-        bun.default_allocator.free(self.write_slice);
-        bun.destroy(self);
+        fun.default_allocator.free(self.write_slice);
+        fun.destroy(self);
     }
 };
 pub const SendQueue = struct {
@@ -450,12 +450,12 @@ pub const SendQueue = struct {
     waiting_for_ack: ?SendHandle = null,
 
     retry_count: u32 = 0,
-    keep_alive: bun.Async.KeepAlive = .{},
+    keep_alive: fun.Async.KeepAlive = .{},
     has_written_version: if (Environment.allow_assert) u1 else u0 = 0,
     mode: Mode,
     internal_msg_queue: node_cluster_binding.InternalMsgHolder = .{},
     incoming: IncomingBuffer,
-    incoming_fd: ?bun.FD = null,
+    incoming_fd: ?fun.FD = null,
 
     socket: SocketUnion,
     owner: SendQueueOwner,
@@ -479,8 +479,8 @@ pub const SendQueue = struct {
     } = .{},
 
     pub const SendQueueOwner = union(enum) {
-        subprocess: *bun.api.Subprocess,
-        virtual_machine: *bun.jsc.VirtualMachine.IPCInstance,
+        subprocess: *fun.api.Subprocess,
+        virtual_machine: *fun.jsc.VirtualMachine.IPCInstance,
     };
     pub const SocketType = switch (Environment.isWindows) {
         true => *uv.Pipe,
@@ -495,7 +495,7 @@ pub const SendQueue = struct {
     pub fn init(mode: Mode, owner: SendQueueOwner, socket: SocketUnion) @This() {
         log("SendQueue#init", .{});
         return .{
-            .queue = .init(bun.default_allocator),
+            .queue = .init(fun.default_allocator),
             .mode = mode,
             .owner = owner,
             .socket = socket,
@@ -514,11 +514,11 @@ pub const SendQueue = struct {
         if (self.waiting_for_ack) |*waiting| waiting.deinit();
         // An SCM_RIGHTS fd can be stashed by `onFd` and not yet consumed by
         // the `NODE_HANDLE` decoder when the socket closes.
-        if (bun.take(&self.incoming_fd)) |fd| fd.close();
+        if (fun.take(&self.incoming_fd)) |fd| fd.close();
 
         // if there is a close next tick task, cancel it so it doesn't get called and then UAF
         if (self.close_next_tick) |close_next_tick_task| {
-            const managed: *bun.jsc.ManagedTask = close_next_tick_task.as(bun.jsc.ManagedTask);
+            const managed: *fun.jsc.ManagedTask = close_next_tick_task.as(fun.jsc.ManagedTask);
             managed.cancel();
         }
         // Same for the close-notification task. `closeSocket` above may have
@@ -526,7 +526,7 @@ pub const SendQueue = struct {
         // or it may be left over from an earlier `_socketClosed` that hasn't
         // drained yet; either way the owner is about to free our storage.
         if (self.after_close_task) |after_close_task| {
-            const managed: *bun.jsc.ManagedTask = after_close_task.as(bun.jsc.ManagedTask);
+            const managed: *fun.jsc.ManagedTask = after_close_task.as(fun.jsc.ManagedTask);
             managed.cancel();
             self.after_close_task = null;
         }
@@ -586,7 +586,7 @@ pub const SendQueue = struct {
         // a task that points back into it would use-after-free.
         if (was_open and this.after_close_task == null) {
             this.after_close_task = jsc.ManagedTask.New(SendQueue, _onAfterIPCClosed).init(this);
-            this.getGlobalThis().bunVM().enqueueTask(this.after_close_task.?);
+            this.getGlobalThis().funVM().enqueueTask(this.after_close_task.?);
         }
     }
     fn _windowsClose(this: *SendQueue) void {
@@ -599,7 +599,7 @@ pub const SendQueue = struct {
     }
     fn _windowsOnClosed(windows: *uv.Pipe) callconv(.c) void {
         log("SendQueue#_windowsOnClosed", .{});
-        bun.default_allocator.destroy(windows);
+        fun.default_allocator.destroy(windows);
     }
 
     pub fn closeSocketNextTick(this: *SendQueue, nextTick: bool) void {
@@ -619,7 +619,7 @@ pub const SendQueue = struct {
 
     fn _closeSocketTask(this: *SendQueue) void {
         log("SendQueue#closeSocketTask", .{});
-        bun.assert(this.close_next_tick != null);
+        fun.assert(this.close_next_tick != null);
         this.close_next_tick = null;
         this.closeSocket(.normal, .user);
     }
@@ -637,9 +637,9 @@ pub const SendQueue = struct {
     }
 
     /// returned pointer is invalidated if the queue is modified
-    pub fn startMessage(self: *SendQueue, global: *jsc.JSGlobalObject, callback: jsc.JSValue, handle: ?Handle) bun.JSError!*SendHandle {
+    pub fn startMessage(self: *SendQueue, global: *jsc.JSGlobalObject, callback: jsc.JSValue, handle: ?Handle) fun.JSError!*SendHandle {
         log("SendQueue#startMessage", .{});
-        if (Environment.allow_assert) bun.debugAssert(self.has_written_version == 1);
+        if (Environment.allow_assert) fun.debugAssert(self.has_written_version == 1);
 
         // optimal case: appending a message without a handle to the end of the queue when the last message also doesn't have a handle and isn't ack/nack
         // this is rare. it will only happen if messages stack up after sending a handle, or if a long message is sent that is waiting for writable
@@ -655,20 +655,20 @@ pub const SendQueue = struct {
         }
 
         // fallback case: append a new message to the queue
-        bun.handleOom(self.queue.append(.{ .handle = handle, .callbacks = .init(callback) }));
+        fun.handleOom(self.queue.append(.{ .handle = handle, .callbacks = .init(callback) }));
         return &self.queue.items[self.queue.items.len - 1];
     }
     /// returned pointer is invalidated if the queue is modified
     pub fn insertMessage(this: *SendQueue, message: SendHandle) void {
         log("SendQueue#insertMessage", .{});
-        if (Environment.allow_assert) bun.debugAssert(this.has_written_version == 1);
+        if (Environment.allow_assert) fun.debugAssert(this.has_written_version == 1);
         if ((this.queue.items.len == 0 or this.queue.items[0].data.cursor == 0) and !this.write_in_progress) {
             // prepend (we have not started sending the next message yet because we are waiting for the ack/nack)
-            bun.handleOom(this.queue.insert(0, message));
+            fun.handleOom(this.queue.insert(0, message));
         } else {
             // insert at index 1 (we are in the middle of sending a message to the other process)
-            bun.debugAssert(this.queue.items[0].isAckNack());
-            bun.handleOom(this.queue.insert(1, message));
+            fun.debugAssert(this.queue.items[0].isAckNack());
+            fun.handleOom(this.queue.insert(1, message));
         }
     }
 
@@ -695,8 +695,8 @@ pub const SendQueue = struct {
                 return this.continueSend(global, .new_message_appended);
             }
             // too many retries; give up - emit warning if possible
-            var warning = bun.String.static("Handle did not reach the receiving process correctly");
-            var warning_name = bun.String.static("SentHandleNotReceivedWarning");
+            var warning = fun.String.static("Handle did not reach the receiving process correctly");
+            var warning_name = fun.String.static("SentHandleNotReceivedWarning");
             if (warning.transferToJS(global)) |warning_js| {
                 if (warning_name.transferToJS(global)) |warning_name_js| {
                     global.emitWarning(warning_js, warning_name_js, .js_undefined, .js_undefined) catch {};
@@ -720,8 +720,8 @@ pub const SendQueue = struct {
     }
     pub fn updateRef(this: *SendQueue, global: *JSGlobalObject) void {
         switch (this.shouldRef()) {
-            true => this.keep_alive.ref(global.bunVM()),
-            false => this.keep_alive.unref(global.bunVM()),
+            true => this.keep_alive.ref(global.funVM()),
+            false => this.keep_alive.unref(global.funVM()),
         }
     }
     const ContinueSendReason = enum {
@@ -759,7 +759,7 @@ pub const SendQueue = struct {
             return continueSend(this, global, reason);
         }
         // log("sending ipc message: '{'}' (has_handle={})", .{ std.zig.fmtString(to_send), first.handle != null });
-        bun.assert(!this.write_in_progress);
+        fun.assert(!this.write_in_progress);
         this.write_in_progress = true;
         this._write(to_send, if (first.handle) |handle| handle.fd else null);
         // the write is queued. this._onWriteComplete() will be called when the write completes.
@@ -768,7 +768,7 @@ pub const SendQueue = struct {
         log("SendQueue#_onWriteComplete {d}", .{n});
         this.debugLogMessageQueue();
         if (!this.write_in_progress or this.queue.items.len < 1) {
-            bun.debugAssert(false);
+            fun.debugAssert(false);
             return;
         }
         this.write_in_progress = false;
@@ -809,13 +809,13 @@ pub const SendQueue = struct {
     }
     pub fn writeVersionPacket(this: *SendQueue, global: *JSGlobalObject) void {
         log("SendQueue#writeVersionPacket", .{});
-        bun.debugAssert(this.has_written_version == 0);
-        bun.debugAssert(this.queue.items.len == 0);
-        bun.debugAssert(this.waiting_for_ack == null);
+        fun.debugAssert(this.has_written_version == 0);
+        fun.debugAssert(this.queue.items.len == 0);
+        fun.debugAssert(this.waiting_for_ack == null);
         const bytes = getVersionPacket(this.mode);
         if (bytes.len > 0) {
-            bun.handleOom(this.queue.append(.{ .handle = null, .callbacks = .none }));
-            bun.handleOom(this.queue.items[this.queue.items.len - 1].data.write(bytes));
+            fun.handleOom(this.queue.append(.{ .handle = null, .callbacks = .none }));
+            fun.handleOom(this.queue.items[this.queue.items.len - 1].data.write(bytes));
             log("IPC call continueSend() from version packet", .{});
             this.continueSend(global, .new_message_appended);
         }
@@ -828,7 +828,7 @@ pub const SendQueue = struct {
         const start_offset = msg.data.list.items.len;
 
         const payload_length = serialize(self.mode, &msg.data, global, value, is_internal) catch return .failure;
-        bun.assert(msg.data.list.items.len == start_offset + payload_length);
+        fun.assert(msg.data.list.items.len == start_offset + payload_length);
         // log("enqueueing ipc message: '{'}'", .{std.zig.fmtString(msg.data.list.items[start_offset..])});
 
         log("IPC call continueSend() from serializeAndSend", .{});
@@ -858,7 +858,7 @@ pub const SendQueue = struct {
 
     /// starts a write request. on posix, this always calls _onWriteComplete immediately. on windows, it may
     /// call _onWriteComplete later.
-    fn _write(this: *SendQueue, data: []const u8, fd: ?bun.FD) void {
+    fn _write(this: *SendQueue, data: []const u8, fd: ?fun.FD) void {
         log("SendQueue#_write len {d}", .{data.len});
         const socket = this.getSocket() orelse {
             this._onWriteComplete(-1);
@@ -873,14 +873,14 @@ pub const SendQueue = struct {
                 const write_len = @min(data.len, std.math.maxInt(i32));
 
                 // create write request
-                const write_req_slice = bun.handleOom(bun.default_allocator.dupe(u8, data[0..write_len]));
-                const write_req = bun.new(WindowsWrite, .{
+                const write_req_slice = fun.handleOom(fun.default_allocator.dupe(u8, data[0..write_len]));
+                const write_req = fun.new(WindowsWrite, .{
                     .owner = this,
                     .write_slice = write_req_slice,
                     .write_req = std.mem.zeroes(uv.uv_write_t),
                     .write_buffer = uv.uv_buf_t.init(write_req_slice),
                 });
-                bun.assert(this.windows.windows_write == null);
+                fun.assert(this.windows.windows_write == null);
                 this.windows.windows_write = write_req;
 
                 pipe.ref(); // ref on write
@@ -930,10 +930,10 @@ pub const SendQueue = struct {
 
     fn onServerPipeClose(this: *uv.Pipe) callconv(.c) void {
         // safely free the pipes
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 
-    pub fn windowsConfigureServer(this: *SendQueue, ipc_pipe: *uv.Pipe) bun.sys.Maybe(void) {
+    pub fn windowsConfigureServer(this: *SendQueue, ipc_pipe: *uv.Pipe) fun.sys.Maybe(void) {
         log("configureServer", .{});
         ipc_pipe.data = this;
         ipc_pipe.unref();
@@ -952,11 +952,11 @@ pub const SendQueue = struct {
         return .success;
     }
 
-    pub fn windowsConfigureClient(this: *SendQueue, pipe_fd: bun.FD) !void {
+    pub fn windowsConfigureClient(this: *SendQueue, pipe_fd: fun.FD) !void {
         log("configureClient", .{});
-        const ipc_pipe = bun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
+        const ipc_pipe = fun.new(uv.Pipe, std.mem.zeroes(uv.Pipe));
         ipc_pipe.init(uv.Loop.get(), true).unwrap() catch |err| {
-            bun.destroy(ipc_pipe);
+            fun.destroy(ipc_pipe);
             return err;
         };
         ipc_pipe.open(pipe_fd).unwrap() catch |err| {
@@ -977,26 +977,26 @@ pub const SendQueue = struct {
 };
 const MAX_HANDLE_RETRANSMISSIONS = 3;
 
-fn emitProcessErrorEvent(globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+fn emitProcessErrorEvent(globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     const ex = callframe.argumentsAsArray(1)[0];
     jsc.VirtualMachine.Process__emitErrorEvent(globalThis, ex);
     return .js_undefined;
 }
 const FromEnum = enum { subprocess_exited, subprocess, process };
-fn doSendErr(globalObject: *jsc.JSGlobalObject, callback: jsc.JSValue, ex: jsc.JSValue, from: FromEnum) bun.JSError!jsc.JSValue {
+fn doSendErr(globalObject: *jsc.JSGlobalObject, callback: jsc.JSValue, ex: jsc.JSValue, from: FromEnum) fun.JSError!jsc.JSValue {
     if (callback.isCallable()) {
         try callback.callNextTick(globalObject, .{ex});
         return .false;
     }
     if (from == .process) {
-        const target = jsc.JSFunction.create(globalObject, bun.String.empty, emitProcessErrorEvent, 1, .{});
+        const target = jsc.JSFunction.create(globalObject, fun.String.empty, emitProcessErrorEvent, 1, .{});
         try target.callNextTick(globalObject, .{ex});
         return .false;
     }
-    // Bun.spawn().send() should throw an error (unless callback is passed)
+    // Fun.spawn().send() should throw an error (unless callback is passed)
     return globalObject.throwValue(ex);
 }
-pub fn doSend(ipc: ?*SendQueue, globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, from: FromEnum) bun.JSError!JSValue {
+pub fn doSend(ipc: ?*SendQueue, globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame, from: FromEnum) fun.JSError!JSValue {
     var message, var handle, var options_, var callback = callFrame.argumentsAsArray(4);
 
     if (handle.isCallable()) {
@@ -1043,7 +1043,7 @@ pub fn doSend(ipc: ?*SendQueue, globalObject: *jsc.JSGlobalObject, callFrame: *j
 
     var zig_handle: ?Handle = null;
     if (!handle.isUndefinedOrNull()) {
-        if (bun.jsc.API.Listener.fromJS(handle)) |listener| {
+        if (fun.jsc.API.Listener.fromJS(handle)) |listener| {
             log("got listener", .{});
             switch (listener.listener) {
                 .uws => |socket_uws| {
@@ -1065,7 +1065,7 @@ pub fn doSend(ipc: ?*SendQueue, globalObject: *jsc.JSGlobalObject, callFrame: *j
 
     if (status == .failure) {
         const ex = globalObject.createTypeErrorInstance("process.send() failed", .{});
-        ex.put(globalObject, jsc.ZigString.static("syscall"), try bun.String.static("write").toJS(globalObject));
+        ex.put(globalObject, jsc.ZigString.static("syscall"), try fun.String.static("write").toJS(globalObject));
         return doSendErr(globalObject, callback, ex, from);
     }
 
@@ -1073,14 +1073,14 @@ pub fn doSend(ipc: ?*SendQueue, globalObject: *jsc.JSGlobalObject, callFrame: *j
     return if (status == .success) .true else .false;
 }
 
-pub fn emitHandleIPCMessage(globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn emitHandleIPCMessage(globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     const target, const message, const handle = callframe.argumentsAsArray(3);
     if (target.isNull()) {
-        const ipc = globalThis.bunVM().getIPCInstance() orelse return .js_undefined;
+        const ipc = globalThis.funVM().getIPCInstance() orelse return .js_undefined;
         ipc.handleIPCMessage(.{ .data = message }, handle);
     } else {
         if (!target.isCell()) return .js_undefined;
-        const subprocess = bun.jsc.Subprocess.fromJSDirect(target) orelse return .js_undefined;
+        const subprocess = fun.jsc.Subprocess.fromJSDirect(target) orelse return .js_undefined;
         subprocess.handleIPCMessage(.{ .data = message }, handle);
     }
     return .js_undefined;
@@ -1114,7 +1114,7 @@ fn handleIPCMessage(send_queue: *SendQueue, message: DecodedIPCMessage, globalTh
             };
             if (cmd.isString()) {
                 if (!cmd.isCell()) break :handle_message;
-                const cmd_str = bun.String.fromJS(cmd, globalThis) catch |e| {
+                const cmd_str = fun.String.fromJS(cmd, globalThis) catch |e| {
                     _ = globalThis.takeException(e);
                     break :handle_message;
                 };
@@ -1137,7 +1137,7 @@ fn handleIPCMessage(send_queue: *SendQueue, message: DecodedIPCMessage, globalTh
 
                 const packet = if (ack) getAckPacket(send_queue.mode) else getNackPacket(send_queue.mode);
                 var handle = SendHandle{ .data = .{}, .handle = null, .callbacks = .ack_nack };
-                bun.handleOom(handle.data.write(packet));
+                fun.handleOom(handle.data.write(packet));
 
                 // Insert at appropriate position in send queue
                 send_queue.insertMessage(handle);
@@ -1149,14 +1149,14 @@ fn handleIPCMessage(send_queue: *SendQueue, message: DecodedIPCMessage, globalTh
                 if (!ack) return;
 
                 // Get file descriptor and clear it
-                const fd: bun.FD = bun.take(&send_queue.incoming_fd).?;
+                const fd: fun.FD = fun.take(&send_queue.incoming_fd).?;
 
-                const target: bun.jsc.JSValue = switch (send_queue.owner) {
+                const target: fun.jsc.JSValue = switch (send_queue.owner) {
                     .subprocess => |subprocess| subprocess.this_value.tryGet() orelse .zero,
-                    .virtual_machine => bun.jsc.JSValue.null,
+                    .virtual_machine => fun.jsc.JSValue.null,
                 };
 
-                const vm = globalThis.bunVM();
+                const vm = globalThis.funVM();
                 vm.eventLoop().enter();
                 defer vm.eventLoop().exit();
                 _ = ipcParse(globalThis, target, msg_data, fd.toJS(globalThis)) catch |e| {
@@ -1233,7 +1233,7 @@ fn onData2(send_queue: *SendQueue, all_data: []const u8) void {
                 while (true) {
                     const result = decodeIPCMessage(.advanced, data, globalThis, null) catch |e| switch (e) {
                         error.NotEnoughBytes => {
-                            _ = bun.handleOom(adv_buf.write(bun.default_allocator, data));
+                            _ = fun.handleOom(adv_buf.write(fun.default_allocator, data));
                             log("hit NotEnoughBytes", .{});
                             return;
                         },
@@ -1259,14 +1259,14 @@ fn onData2(send_queue: *SendQueue, all_data: []const u8) void {
             }
 
             // Buffer has existing data, append and process
-            _ = bun.handleOom(adv_buf.write(bun.default_allocator, data));
+            _ = fun.handleOom(adv_buf.write(fun.default_allocator, data));
             var slice = adv_buf.slice();
             while (true) {
                 const result = decodeIPCMessage(.advanced, slice, globalThis, null) catch |e| switch (e) {
                     error.NotEnoughBytes => {
                         // copy the remaining bytes to the start of the buffer
-                        bun.copy(u8, adv_buf.ptr[0..slice.len], slice);
-                        bun.debugAssert(slice.len <= std.math.maxInt(u32));
+                        fun.copy(u8, adv_buf.ptr[0..slice.len], slice);
+                        fun.debugAssert(slice.len <= std.math.maxInt(u32));
                         adv_buf.len = @intCast(slice.len);
                         log("hit NotEnoughBytes2", .{});
                         return;
@@ -1329,7 +1329,7 @@ pub const IPCHandlers = struct {
             all_data: []const u8,
         ) void {
             const globalThis = send_queue.getGlobalThis();
-            const loop = globalThis.bunVM().eventLoop();
+            const loop = globalThis.funVM().eventLoop();
             loop.enter();
             defer loop.exit();
             onData2(send_queue, all_data);
@@ -1342,12 +1342,12 @@ pub const IPCHandlers = struct {
         ) void {
             // SCM_RIGHTS is POSIX-only; on Windows this arm is unreachable but
             // still type-checked, and `FD.fromNative` takes `*anyopaque` there.
-            if (comptime bun.Environment.isWindows) return;
+            if (comptime fun.Environment.isWindows) return;
             log("onFd: {d}", .{fd});
             if (send_queue.incoming_fd != null) {
                 log("onFd: incoming_fd already set; overwriting", .{});
             }
-            send_queue.incoming_fd = bun.FD.fromNative(fd);
+            send_queue.incoming_fd = fun.FD.fromNative(fd);
         }
 
         pub fn onWritable(
@@ -1357,7 +1357,7 @@ pub const IPCHandlers = struct {
             log("onWritable", .{});
 
             const globalThis = send_queue.getGlobalThis();
-            const loop = globalThis.bunVM().eventLoop();
+            const loop = globalThis.funVM().eventLoop();
             loop.enter();
             defer loop.exit();
             log("IPC call continueSend() from onWritable", .{});
@@ -1414,7 +1414,7 @@ pub const IPCHandlers = struct {
                 .advanced => |*adv_buf| {
                     var available = adv_buf.unusedCapacitySlice();
                     if (available.len < suggested_size) {
-                        bun.handleOom(adv_buf.ensureUnusedCapacity(bun.default_allocator, suggested_size));
+                        fun.handleOom(adv_buf.ensureUnusedCapacity(fun.default_allocator, suggested_size));
                         available = adv_buf.unusedCapacitySlice();
                     }
                     log("NewNamedPipeIPCHandler#onReadAlloc {d}", .{suggested_size});
@@ -1423,7 +1423,7 @@ pub const IPCHandlers = struct {
             }
         }
 
-        fn onReadError(send_queue: *SendQueue, err: bun.sys.E) void {
+        fn onReadError(send_queue: *SendQueue, err: fun.sys.E) void {
             log("NewNamedPipeIPCHandler#onReadError {}", .{err});
             send_queue.closeSocketNextTick(true);
         }
@@ -1431,15 +1431,15 @@ pub const IPCHandlers = struct {
         fn onRead(send_queue: *SendQueue, buffer: []const u8) void {
             log("NewNamedPipeIPCHandler#onRead {d}", .{buffer.len});
             const globalThis = send_queue.getGlobalThis();
-            const loop = globalThis.bunVM().eventLoop();
+            const loop = globalThis.funVM().eventLoop();
             loop.enter();
             defer loop.exit();
 
             switch (send_queue.incoming) {
                 .json => |*json_buf| {
                     // For JSON mode on Windows, use notifyWritten to update length and scan for newlines
-                    bun.assert(json_buf.data.len + buffer.len <= json_buf.data.cap);
-                    bun.assert(bun.isSliceInBuffer(buffer, json_buf.data.allocatedSlice()));
+                    fun.assert(json_buf.data.len + buffer.len <= json_buf.data.cap);
+                    fun.assert(fun.isSliceInBuffer(buffer, json_buf.data.allocatedSlice()));
 
                     json_buf.notifyWritten(buffer);
 
@@ -1469,16 +1469,16 @@ pub const IPCHandlers = struct {
                     adv_buf.len +|= @as(u32, @intCast(buffer.len));
                     var slice = adv_buf.slice();
 
-                    bun.assert(adv_buf.len <= adv_buf.cap);
-                    bun.assert(bun.isSliceInBuffer(buffer, adv_buf.allocatedSlice()));
+                    fun.assert(adv_buf.len <= adv_buf.cap);
+                    fun.assert(fun.isSliceInBuffer(buffer, adv_buf.allocatedSlice()));
 
                     while (true) {
                         const result = decodeIPCMessage(.advanced, slice, globalThis, null) catch |e| switch (e) {
                             error.NotEnoughBytes => {
                                 // copy the remaining bytes to the start of the buffer
-                                bun.copy(u8, adv_buf.ptr[0..slice.len], slice);
+                                fun.copy(u8, adv_buf.ptr[0..slice.len], slice);
                                 // slice.len is guaranteed <= adv_buf.len (u32) since it's derived from adv_buf.slice()
-                                bun.debugAssert(slice.len <= std.math.maxInt(u32));
+                                fun.debugAssert(slice.len <= std.math.maxInt(u32));
                                 adv_buf.len = @intCast(slice.len);
                                 log("hit NotEnoughBytes3", .{});
                                 return;
@@ -1519,12 +1519,12 @@ pub const IPCHandlers = struct {
     };
 };
 
-pub fn ipcSerialize(globalObject: *jsc.JSGlobalObject, message: jsc.JSValue, handle: jsc.JSValue) bun.JSError!jsc.JSValue {
-    return bun.cpp.IPCSerialize(globalObject, message, handle);
+pub fn ipcSerialize(globalObject: *jsc.JSGlobalObject, message: jsc.JSValue, handle: jsc.JSValue) fun.JSError!jsc.JSValue {
+    return fun.cpp.IPCSerialize(globalObject, message, handle);
 }
 
-pub fn ipcParse(globalObject: *jsc.JSGlobalObject, target: jsc.JSValue, serialized: jsc.JSValue, fd: jsc.JSValue) bun.JSError!jsc.JSValue {
-    return bun.cpp.IPCParse(globalObject, target, serialized, fd);
+pub fn ipcParse(globalObject: *jsc.JSGlobalObject, target: jsc.JSValue, serialized: jsc.JSValue, fd: jsc.JSValue) fun.JSError!jsc.JSValue {
+    return fun.cpp.IPCParse(globalObject, target, serialized, fd);
 }
 
 const string = []const u8;
@@ -1533,13 +1533,13 @@ const node_cluster_binding = @import("../runtime/node/node_cluster_binding.zig")
 const std = @import("std");
 const JSONLineBuffer = @import("./JSONLineBuffer.zig").JSONLineBuffer;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const strings = bun.strings;
-const uws = bun.uws;
-const uv = bun.windows.libuv;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const strings = fun.strings;
+const uws = fun.uws;
+const uv = fun.windows.libuv;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

@@ -1,6 +1,6 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
-exports[`yarn.lock migration basic simple yarn.lock migration produces correct bun.lock: simple-yarn-migration 1`] = `
+exports[`yarn.lock migration basic simple yarn.lock migration produces correct fun.lock: simple-yarn-migration 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -175,13 +175,13 @@ exports[`yarn.lock migration basic yarn.lock with npm aliases: aliases-yarn-migr
     "": {
       "name": "alias-test",
       "dependencies": {
-        "@types/bun": "npm:bun-types@1.2.19",
+        "@types/fun": "npm:fun-types@1.2.19",
         "my-lodash": "npm:lodash@4.17.21",
       },
     },
   },
   "packages": {
-    "@types/bun": ["bun-types@1.2.19", "", { "dependencies": { "@types/node": "*" } }, "sha512-uAOTaZSPuYsWIXRpj7o56Let0g/wjihKCkeRqUBhlLVM/Bt+Fj9xTo+LhC1OV1XDaGkz4hNC80et5xgy+9KTHQ=="],
+    "@types/fun": ["fun-types@1.2.19", "", { "dependencies": { "@types/node": "*" } }, "sha512-uAOTaZSPuYsWIXRpj7o56Let0g/wjihKCkeRqUBhlLVM/Bt+Fj9xTo+LhC1OV1XDaGkz4hNC80et5xgy+9KTHQ=="],
 
     "@types/node": ["@types/node@20.11.5", "", { "dependencies": { "undici-types": "~5.26.4" } }, "sha512-g557vgQjUUfN76MZAN/dt1z3dzcUsimuysco0KeluHgrPdJXkP/XdAURgyO2W9fZWHRtRBiVKzKn8vyOAwlG+w=="],
 
@@ -319,7 +319,7 @@ exports[`yarn.lock migration basic migration with realistic complex yarn.lock: c
 "
 `;
 
-exports[`bun pm migrate for existing yarn.lock yarn-cli-repo: yarn-cli-repo 1`] = `
+exports[`fun pm migrate for existing yarn.lock yarn-cli-repo: yarn-cli-repo 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -3064,7 +3064,7 @@ exports[`bun pm migrate for existing yarn.lock yarn-cli-repo: yarn-cli-repo 1`] 
 "
 `;
 
-exports[`bun pm migrate for existing yarn.lock yarn-lock-mkdirp: yarn-lock-mkdirp 1`] = `
+exports[`fun pm migrate for existing yarn.lock yarn-lock-mkdirp: yarn-lock-mkdirp 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -3082,7 +3082,7 @@ exports[`bun pm migrate for existing yarn.lock yarn-lock-mkdirp: yarn-lock-mkdir
 "
 `;
 
-exports[`bun pm migrate for existing yarn.lock yarn-lock-mkdirp-file-dep: yarn-lock-mkdirp-file-dep 1`] = `
+exports[`fun pm migrate for existing yarn.lock yarn-lock-mkdirp-file-dep: yarn-lock-mkdirp-file-dep 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -3100,7 +3100,7 @@ exports[`bun pm migrate for existing yarn.lock yarn-lock-mkdirp-file-dep: yarn-l
 "
 `;
 
-exports[`bun pm migrate for existing yarn.lock yarn-lock-mkdirp-no-resolved: yarn-lock-mkdirp-no-resolved 1`] = `
+exports[`fun pm migrate for existing yarn.lock yarn-lock-mkdirp-no-resolved: yarn-lock-mkdirp-no-resolved 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -3118,7 +3118,7 @@ exports[`bun pm migrate for existing yarn.lock yarn-lock-mkdirp-no-resolved: yar
 "
 `;
 
-exports[`bun pm migrate for existing yarn.lock yarn-stuff: yarn-stuff 1`] = `
+exports[`fun pm migrate for existing yarn.lock yarn-stuff: yarn-stuff 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -3161,7 +3161,7 @@ exports[`bun pm migrate for existing yarn.lock yarn-stuff: yarn-stuff 1`] = `
 "
 `;
 
-exports[`bun pm migrate for existing yarn.lock yarn-stuff/abbrev-link-target: yarn-stuff/abbrev-link-target 1`] = `
+exports[`fun pm migrate for existing yarn.lock yarn-stuff/abbrev-link-target: yarn-stuff/abbrev-link-target 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -3175,7 +3175,7 @@ exports[`bun pm migrate for existing yarn.lock yarn-stuff/abbrev-link-target: ya
 "
 `;
 
-exports[`bun pm migrate for existing yarn.lock yarn.lock with packages that have os/cpu requirements: os-cpu-yarn-migration 1`] = `
+exports[`fun pm migrate for existing yarn.lock yarn.lock with packages that have os/cpu requirements: os-cpu-yarn-migration 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,

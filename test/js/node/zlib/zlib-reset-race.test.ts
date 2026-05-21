@@ -12,8 +12,8 @@
 // After the fix, reset() is deferred until the in-flight write completes
 // (mirroring pending_close).
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 const zstdFixture = /* js */ `
   const zlib = require("zlib");
@@ -101,9 +101,9 @@ const deflateFixture = /* js */ `
 // times highly variable under CPU contention. Sequential keeps each test
 // comfortably under the default timeout.
 async function run(fixture: string) {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", fixture],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", fixture],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

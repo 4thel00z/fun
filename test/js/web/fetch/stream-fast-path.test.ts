@@ -1,5 +1,5 @@
-import { readableStreamToArrayBuffer, readableStreamToBlob, readableStreamToBytes, readableStreamToText } from "bun";
-import { describe, expect, test } from "bun:test";
+import { readableStreamToArrayBuffer, readableStreamToBlob, readableStreamToBytes, readableStreamToText } from "fun";
+import { describe, expect, test } from "fun:test";
 
 describe("ByteBlobLoader", () => {
   const blobs = [
@@ -27,7 +27,7 @@ describe("ByteBlobLoader", () => {
         if (blob.size > 0) {
           // Don't waste microticks on this.
           if (result instanceof Promise) {
-            expect(Bun.peek.status(result)).toBe("fulfilled");
+            expect(Fun.peek.status(result)).toBe("fulfilled");
           }
         }
 

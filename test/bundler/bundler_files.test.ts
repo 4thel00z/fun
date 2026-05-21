@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tempDir } from "harness";
 
 describe("bundler files option", () => {
   test("basic in-memory file bundling", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `console.log("hello from memory");`,
@@ -18,7 +18,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with imports", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `
@@ -39,7 +39,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with relative imports (same directory)", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `
@@ -60,7 +60,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with relative imports (subdirectory)", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/src/entry.js"],
       files: {
         "/src/entry.js": `
@@ -81,7 +81,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with relative imports (parent directory)", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/src/app/entry.js"],
       files: {
         "/src/app/entry.js": `
@@ -102,7 +102,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with relative imports between multiple files", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/src/index.js"],
       files: {
         "/src/index.js": `
@@ -134,7 +134,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with nested imports", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `
@@ -162,7 +162,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with TypeScript", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.ts"],
       files: {
         "/entry.ts": `
@@ -180,7 +180,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with JSX", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.jsx"],
       files: {
         "/entry.jsx": `
@@ -204,7 +204,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with Blob content", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": new Blob([`console.log("hello from blob");`]),
@@ -220,7 +220,7 @@ describe("bundler files option", () => {
 
   test("in-memory file with Uint8Array content", async () => {
     const encoder = new TextEncoder();
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": encoder.encode(`console.log("hello from uint8array");`),
@@ -236,7 +236,7 @@ describe("bundler files option", () => {
 
   test("in-memory file with ArrayBuffer content", async () => {
     const encoder = new TextEncoder();
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": encoder.encode(`console.log("hello from arraybuffer");`).buffer,
@@ -251,7 +251,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with re-exports", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `
@@ -273,7 +273,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with default export", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `
@@ -294,7 +294,7 @@ describe("bundler files option", () => {
   });
 
   test("in-memory file with chained imports", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `
@@ -336,7 +336,7 @@ describe("bundler files option", () => {
     const libPath = `${dir}/lib.js`;
 
     // Bundle with in-memory file overriding the real lib.js
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [entryPath],
       files: {
         [libPath]: `export const value = "from memory";`,
@@ -365,7 +365,7 @@ describe("bundler files option", () => {
     const helperPath = `${dir}/helper.js`;
 
     // Bundle with entry from disk, but helper.js only in memory
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [entryPath],
       files: {
         [helperPath]: `export const helper = "helper from memory";`,
@@ -392,7 +392,7 @@ describe("bundler files option", () => {
     const utilPath = `${dir}/lib/util.js`;
 
     // Bundle with entry from disk, but lib/util.js only in memory
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [entryPath],
       files: {
         [utilPath]: `export const util = "nested util from memory";`,
@@ -434,7 +434,7 @@ describe("bundler files option", () => {
     // - a.js from disk (imports shared.js)
     // - b.js from memory (imports shared.js)
     // - shared.js overridden in memory
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [entryPath],
       files: {
         [bPath]: `
@@ -470,7 +470,7 @@ describe("bundler files option", () => {
 
     // Bundle with a relative key in files map that matches the import specifier
     // The key should be resolved relative to the entry point
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: [entryPath],
       files: {
         [`${dir}/config.js`]: `export const config = "from memory via relative key";`,
@@ -490,7 +490,7 @@ describe("bundler files option", () => {
     let loadCalled = false;
     let loadedPath = "";
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `import { value } from "./lib.js"; console.log(value);`,
@@ -525,7 +525,7 @@ describe("bundler files option", () => {
   test("onResolve plugin can redirect in-memory file imports", async () => {
     let resolveCalled = false;
 
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `import { value } from "virtual:data"; console.log(value);`,
@@ -555,7 +555,7 @@ describe("bundler files option", () => {
   });
 
   test("plugin can provide content for in-memory file via onLoad", async () => {
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["/entry.js"],
       files: {
         "/entry.js": `import data from "./data.json"; console.log(data.name);`,

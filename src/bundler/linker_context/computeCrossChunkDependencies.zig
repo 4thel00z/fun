@@ -1,4 +1,4 @@
-pub fn computeCrossChunkDependencies(c: *LinkerContext, chunks: []Chunk) bun.OOM!void {
+pub fn computeCrossChunkDependencies(c: *LinkerContext, chunks: []Chunk) fun.OOM!void {
     if (!c.graph.code_splitting) {
         // No need to compute cross-chunk dependencies if there can't be any
         return;
@@ -8,9 +8,9 @@ pub fn computeCrossChunkDependencies(c: *LinkerContext, chunks: []Chunk) bun.OOM
     for (chunk_metas) |*meta| {
         // these must be global allocator
         meta.* = .{
-            .imports = ChunkMeta.Map.init(bun.default_allocator),
-            .exports = ChunkMeta.Map.init(bun.default_allocator),
-            .dynamic_imports = std.AutoArrayHashMap(Index.Int, void).init(bun.default_allocator),
+            .imports = ChunkMeta.Map.init(fun.default_allocator),
+            .exports = ChunkMeta.Map.init(fun.default_allocator),
+            .dynamic_imports = std.AutoArrayHashMap(Index.Int, void).init(fun.default_allocator),
         };
     }
     defer {
@@ -57,7 +57,7 @@ const CrossChunkDependencies = struct {
     chunk_meta: []ChunkMeta,
     chunks: []Chunk,
     parts: []BabyList(Part),
-    import_records: []BabyList(bun.ImportRecord),
+    import_records: []BabyList(fun.ImportRecord),
     flags: []const JSMeta.Flags,
     entry_point_chunk_indices: []Index.Int,
     imports_to_bind: []RefImportData,
@@ -277,7 +277,7 @@ fn computeCrossChunkDependenciesWithChunkMetas(c: *LinkerContext, chunks: []Chun
             const dynamic_chunk_indices = chunk_meta.dynamic_imports.keys();
             std.sort.pdq(Index.Int, dynamic_chunk_indices, {}, std.sort.asc(Index.Int));
 
-            const new_imports = bun.handleOom(
+            const new_imports = fun.handleOom(
                 chunk.cross_chunk_imports.writableSlice(c.allocator(), dynamic_chunk_indices.len),
             );
             for (dynamic_chunk_indices, new_imports) |dynamic_chunk_index, *item| {
@@ -293,7 +293,7 @@ fn computeCrossChunkDependenciesWithChunkMetas(c: *LinkerContext, chunks: []Chun
     // imports because of export alias renaming, which must consider all export
     // aliases simultaneously to avoid collisions.
     {
-        bun.assert(chunk_metas.len == chunks.len);
+        fun.assert(chunk_metas.len == chunks.len);
         var r = renamer.ExportRenamer.init(c.allocator());
         defer r.deinit();
         debug("Generating cross-chunk exports", .{});
@@ -420,40 +420,40 @@ fn computeCrossChunkDependenciesWithChunkMetas(c: *LinkerContext, chunks: []Chun
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const Environment = bun.Environment;
-const ImportRecord = bun.ImportRecord;
-const default_allocator = bun.default_allocator;
-const renamer = bun.renamer;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const Environment = fun.Environment;
+const ImportRecord = fun.ImportRecord;
+const default_allocator = fun.default_allocator;
+const renamer = fun.renamer;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Part = js_ast.Part;
 const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 const Symbol = js_ast.Symbol;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const CrossChunkImport = bundler.CrossChunkImport;
-const Index = bun.bundle_v2.Index;
+const Index = fun.bundle_v2.Index;
 const JSMeta = bundler.JSMeta;
-const Ref = bun.bundle_v2.Ref;
+const Ref = fun.bundle_v2.Ref;
 const RefImportData = bundler.RefImportData;
 const ResolvedExports = bundler.ResolvedExports;
 const StableRef = bundler.StableRef;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const ChunkMeta = LinkerContext.ChunkMeta;
 const debug = LinkerContext.debug;
 
-const Logger = bun.logger;
+const Logger = fun.logger;
 const Loc = Logger.Loc;

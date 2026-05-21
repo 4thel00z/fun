@@ -39,7 +39,7 @@ pub fn stringify(global: *JSGlobalObject, callFrame: *jsc.CallFrame) JSError!JSV
         return global.throw("YAML.stringify does not support the replacer argument", .{});
     }
 
-    var scope: bun.AllocationScope = .init(bun.default_allocator);
+    var scope: fun.AllocationScope = .init(fun.default_allocator);
     defer scope.deinit();
 
     var stringifier: Stringifier = try .init(scope.allocator(), global, space_value);
@@ -59,13 +59,13 @@ pub fn stringify(global: *JSGlobalObject, callFrame: *jsc.CallFrame) JSError!JSV
 }
 
 const Stringifier = struct {
-    stack_check: bun.StackCheck,
+    stack_check: fun.StackCheck,
     builder: wtf.StringBuilder,
     indent: usize,
 
     known_collections: std.AutoHashMap(JSValue, AnchorAlias),
     array_item_counter: usize,
-    prop_names: bun.StringHashMap(usize),
+    prop_names: fun.StringHashMap(usize),
 
     space: Space,
 
@@ -85,7 +85,7 @@ const Stringifier = struct {
             }
 
             if (space.isString()) {
-                const str = try space.toBunString(global);
+                const str = try space.toFunString(global);
                 if (str.length() == 0) {
                     str.deref();
                     return .minified;
@@ -143,7 +143,7 @@ const Stringifier = struct {
     };
 
     pub fn init(allocator: std.mem.Allocator, global: *JSGlobalObject, space_value: JSValue) JSError!Stringifier {
-        var prop_names: bun.StringHashMap(usize) = .init(allocator);
+        var prop_names: fun.StringHashMap(usize) = .init(allocator);
         // always rename anchors named "root" to avoid collision with
         // root anchor/alias
         try prop_names.put("root", 0);
@@ -200,7 +200,7 @@ const Stringifier = struct {
         }
 
         if (comptime Environment.ci_assert) {
-            bun.assertWithLocation(unwrapped.isObject(), @src());
+            fun.assertWithLocation(unwrapped.isObject(), @src());
         }
 
         const object_entry = try this.known_collections.getOrPut(unwrapped);
@@ -264,7 +264,7 @@ const Stringifier = struct {
         }
     }
 
-    const StringifyError = JSError || bun.StackOverflow;
+    const StringifyError = JSError || fun.StackOverflow;
 
     pub fn stringify(this: *Stringifier, global: *JSGlobalObject, value: JSValue) StringifyError!void {
         if (!this.stack_check.isSafeToRecurse()) {
@@ -317,7 +317,7 @@ const Stringifier = struct {
         }
 
         if (unwrapped.isString()) {
-            const value_str = try unwrapped.toBunString(global);
+            const value_str = try unwrapped.toFunString(global);
             defer value_str.deref();
 
             this.appendString(value_str);
@@ -325,7 +325,7 @@ const Stringifier = struct {
         }
 
         if (comptime Environment.ci_assert) {
-            bun.assertWithLocation(unwrapped.isObject(), @src());
+            fun.assertWithLocation(unwrapped.isObject(), @src());
         }
 
         const has_anchor: ?*AnchorAlias = has_anchor: {
@@ -611,7 +611,7 @@ const Stringifier = struct {
             '\n',
             '\r',
             // trailing colon can be misinterpreted as a mapping indicator
-            // https://github.com/oven-sh/bun/issues/25439
+            // https://github.com/underdoc-org/fun/issues/25439
             ':',
             => return true,
             else => {},
@@ -909,30 +909,30 @@ const Stringifier = struct {
 pub fn parse(
     global: *jsc.JSGlobalObject,
     callFrame: *jsc.CallFrame,
-) bun.JSError!jsc.JSValue {
-    var arena: bun.ArenaAllocator = .init(bun.default_allocator);
+) fun.JSError!jsc.JSValue {
+    var arena: fun.ArenaAllocator = .init(fun.default_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var ast_memory_allocator = bun.handleOom(allocator.create(ast.ASTMemoryAllocator));
+    var ast_memory_allocator = fun.handleOom(allocator.create(ast.ASTMemoryAllocator));
     var ast_scope = ast_memory_allocator.enter(allocator);
     defer ast_scope.exit();
 
     const input_value = callFrame.argumentsAsArray(1)[0];
 
     const input: jsc.Node.BlobOrStringOrBuffer = try jsc.Node.BlobOrStringOrBuffer.fromJS(global, arena.allocator(), input_value) orelse input: {
-        var str = try input_value.toBunString(global);
+        var str = try input_value.toFunString(global);
         defer str.deref();
         break :input .{ .string_or_buffer = .{ .string = str.toSlice(arena.allocator()) } };
     };
     defer input.deinit();
 
-    var log = logger.Log.init(bun.default_allocator);
+    var log = logger.Log.init(fun.default_allocator);
     defer log.deinit();
 
     const source = &logger.Source.initPathString("input.yaml", input.slice());
 
-    const root = bun.interchange.yaml.YAML.parse(source, &log, arena.allocator()) catch |err| return switch (err) {
+    const root = fun.interchange.yaml.YAML.parse(source, &log, arena.allocator()) catch |err| return switch (err) {
         error.OutOfMemory => |oom| oom,
         error.StackOverflow => global.throwStackOverflow(),
         else => {
@@ -961,7 +961,7 @@ pub fn parse(
 
 const ParserCtx = struct {
     seen_objects: std.AutoHashMap(*const anyopaque, JSValue),
-    stack_check: bun.StackCheck,
+    stack_check: fun.StackCheck,
 
     global: *JSGlobalObject,
     root: Expr,
@@ -989,7 +989,7 @@ const ParserCtx = struct {
         };
     }
 
-    const ToJSError = JSError || bun.StackOverflow;
+    const ToJSError = JSError || fun.StackOverflow;
 
     pub fn toJS(ctx: *ParserCtx, args: *MarkedArgumentBuffer, expr: Expr) ToJSError!JSValue {
         if (!ctx.stack_check.isSafeToRecurse()) {
@@ -1000,7 +1000,7 @@ const ParserCtx = struct {
             .e_boolean => |boolean| return .jsBoolean(boolean.value),
             .e_number => |number| return .jsNumber(number.value),
             .e_string => |str| {
-                return str.toJS(bun.default_allocator, ctx.global);
+                return str.toJS(fun.default_allocator, ctx.global);
             },
             .e_array => {
                 if (ctx.seen_objects.get(expr.data.e_array)) |arr| {
@@ -1037,7 +1037,7 @@ const ParserCtx = struct {
                     const key = try ctx.toJS(args, key_expr);
                     const value = try ctx.toJS(args, value_expr);
 
-                    const key_str = try key.toBunString(ctx.global);
+                    const key_str = try key.toFunString(ctx.global);
                     defer key_str.deref();
 
                     try obj.putMayBeIndex(ctx.global, &key_str, value);
@@ -1055,20 +1055,20 @@ const ParserCtx = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const JSError = bun.JSError;
-const String = bun.String;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const YAML = bun.interchange.yaml.YAML;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const JSError = fun.JSError;
+const String = fun.String;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const YAML = fun.interchange.yaml.YAML;
 
-const ast = bun.ast;
+const ast = fun.ast;
 const Expr = ast.Expr;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const MarkedArgumentBuffer = jsc.MarkedArgumentBuffer;
 const ZigString = jsc.ZigString;
-const wtf = bun.jsc.wtf;
+const wtf = fun.jsc.wtf;

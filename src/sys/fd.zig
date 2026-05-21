@@ -30,7 +30,7 @@ pub const FD = packed struct(backing_int) {
         packed union { as_system: WindowsHandleNumber, as_uv: uv_file };
 
     /// An invalid file descriptor.
-    /// Avoid in new code. Prefer `bun.FD.Optional` and `.none` instead.
+    /// Avoid in new code. Prefer `fun.FD.Optional` and `.none` instead.
     pub const invalid: FD = .{ .kind = .system, .value = .{ .as_system = invalid_value } };
     const invalid_value = std.math.minInt(@FieldType(Value, "as_system"));
 
@@ -44,7 +44,7 @@ pub const FD = packed struct(backing_int) {
         if (os == .windows) {
             // the current process fd is max usize
             // https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess
-            bun.assert(@intFromPtr(value) <= std.math.maxInt(u63));
+            fun.assert(@intFromPtr(value) <= std.math.maxInt(u63));
         }
         return .{ .kind = .system, .value = .{ .as_system = handleToNumber(value) } };
     }
@@ -130,7 +130,7 @@ pub const FD = packed struct(backing_int) {
     }
 
     /// When calling fd function, you may not be able to close the returned fd.
-    /// To close the fd, you have to call `.close()` on the `bun.FD`.
+    /// To close the fd, you have to call `.close()` on the `fun.FD`.
     pub fn native(fd: FD) fd_t {
         // Do not assert that the fd is valid, as there are many syscalls where
         // we deliberately pass an invalid file descriptor.
@@ -165,7 +165,7 @@ pub const FD = packed struct(backing_int) {
                     if (isStdioHandle(std.os.windows.STD_OUTPUT_HANDLE, handle)) return 1;
                     if (isStdioHandle(std.os.windows.STD_ERROR_HANDLE, handle)) return 2;
                     std.debug.panic(
-                        \\Cast bun.FD.uv({f}) makes closing impossible!
+                        \\Cast fun.FD.uv({f}) makes closing impossible!
                         \\
                         \\The supplier of fd FD should call 'FD.makeLibUVOwned',
                         \\probably where open() was called.
@@ -188,7 +188,7 @@ pub const FD = packed struct(backing_int) {
     /// Assumes given a valid file descriptor
     /// If error, the handle has not been closed
     pub fn makeLibUVOwned(fd: FD) !FD {
-        if (allow_assert) bun.assert(fd.isValid());
+        if (allow_assert) fun.assert(fd.isValid());
         return switch (os) {
             else => fd,
             .windows => switch (fd.kind) {
@@ -200,10 +200,10 @@ pub const FD = packed struct(backing_int) {
         };
     }
     pub fn makeLibUVOwnedForSyscall(
-        maybe_windows_fd: bun.FD,
-        comptime syscall_tag: bun.sys.Tag,
+        maybe_windows_fd: fun.FD,
+        comptime syscall_tag: fun.sys.Tag,
         comptime error_case: enum { close_on_fail, leak_fd_on_fail },
-    ) bun.sys.Maybe(bun.FD) {
+    ) fun.sys.Maybe(fun.FD) {
         if (os != .windows) {
             return .{ .result = maybe_windows_fd };
         }
@@ -213,7 +213,7 @@ pub const FD = packed struct(backing_int) {
                     maybe_windows_fd.close();
                 }
                 return .{ .err = .{
-                    .errno = @intFromEnum(bun.sys.E.MFILE),
+                    .errno = @intFromEnum(fun.sys.E.MFILE),
                     .syscall = syscall_tag,
                 } };
             },
@@ -235,14 +235,14 @@ pub const FD = packed struct(backing_int) {
     /// closed.
     pub fn close(fd: FD) void {
         const err = fd.closeAllowingBadFileDescriptor(@returnAddress());
-        bun.debugAssert(err == null); // use after close!
+        fun.debugAssert(err == null); // use after close!
     }
 
     /// fd function will NOT CLOSE stdin/stdout/stderr.
     ///
     /// Use fd API to implement `node:fs` close.
     /// Prefer asserting that EBADF does not happen with `.close()`
-    pub fn closeAllowingBadFileDescriptor(fd: FD, return_address: ?usize) ?bun.sys.Error {
+    pub fn closeAllowingBadFileDescriptor(fd: FD, return_address: ?usize) ?fun.sys.Error {
         if (fd.stdioTag() != null) {
             log("close({f}) SKIPPED", .{fd});
             return null;
@@ -252,25 +252,25 @@ pub const FD = packed struct(backing_int) {
 
     /// fd allows you to close standard io. It also returns the error.
     /// Consider fd the raw close method.
-    pub fn closeAllowingStandardIo(fd: FD, return_address: ?usize) ?bun.sys.Error {
-        if (allow_assert) bun.assert(fd.isValid()); // probably a UAF
+    pub fn closeAllowingStandardIo(fd: FD, return_address: ?usize) ?fun.sys.Error {
+        if (allow_assert) fun.assert(fd.isValid()); // probably a UAF
 
         // Format the file descriptor for logging BEFORE closing it.
         // Otherwise the file descriptor is always invalid after closing it.
         var buf: if (Environment.isDebug) [1050]u8 else void = undefined;
         const fd_fmt = if (Environment.isDebug) std.fmt.bufPrint(&buf, "{f}", .{fd}) catch buf[0..];
 
-        const result: ?bun.sys.Error = switch (os) {
+        const result: ?fun.sys.Error = switch (os) {
             .linux, .freebsd => result: {
-                bun.assert(fd.native() >= 0);
-                break :result switch (bun.sys.getErrno(bun.sys.syscall.close(fd.native()))) {
+                fun.assert(fd.native() >= 0);
+                break :result switch (fun.sys.getErrno(fun.sys.syscall.close(fd.native()))) {
                     .BADF => .{ .errno = @intFromEnum(E.BADF), .syscall = .close, .fd = fd },
                     else => null,
                 };
             },
             .mac => result: {
-                bun.assert(fd.native() >= 0);
-                break :result switch (bun.sys.getErrno(bun.sys.syscall.@"close$NOCANCEL"(fd.native()))) {
+                fun.assert(fd.native() >= 0);
+                break :result switch (fun.sys.getErrno(fun.sys.syscall.@"close$NOCANCEL"(fd.native()))) {
                     .BADF => .{ .errno = @intFromEnum(E.BADF), .syscall = .close, .fd = fd },
                     else => null,
                 };
@@ -286,10 +286,10 @@ pub const FD = packed struct(backing_int) {
                         null;
                 },
                 .windows => |handle| result: {
-                    break :result switch (bun.c.NtClose(handle)) {
+                    break :result switch (fun.c.NtClose(handle)) {
                         .SUCCESS => null,
-                        else => |rc| bun.sys.Error{
-                            .errno = if (bun.windows.Win32Error.fromNTStatus(rc).toSystemErrno()) |errno| @intFromEnum(errno) else 1,
+                        else => |rc| fun.sys.Error{
+                            .errno = if (fun.windows.Win32Error.fromNTStatus(rc).toSystemErrno()) |errno| @intFromEnum(errno) else 1,
                             .syscall = .CloseHandle,
                             .fd = fd,
                         },
@@ -301,8 +301,8 @@ pub const FD = packed struct(backing_int) {
         if (Environment.isDebug) {
             if (result) |err| {
                 if (err.errno == @intFromEnum(E.BADF)) {
-                    bun.Output.debugWarn("close({s}) = EBADF. This is an indication of a file descriptor UAF", .{fd_fmt});
-                    bun.crash_handler.dumpCurrentStackTrace(return_address orelse @returnAddress(), .{ .frame_count = 4, .stop_at_jsc_llint = true });
+                    fun.Output.debugWarn("close({s}) = EBADF. This is an indication of a file descriptor UAF", .{fd_fmt});
+                    fun.crash_handler.dumpCurrentStackTrace(return_address orelse @returnAddress(), .{ .frame_count = 4, .stop_at_jsc_llint = true });
                 } else {
                     log("close({s}) = {f}", .{ fd_fmt, err });
                 }
@@ -408,8 +408,8 @@ pub const FD = packed struct(backing_int) {
                 const fd_native = fd.native();
                 try writer.print("{d}", .{fd_native});
                 if (Environment.isDebug and fd_native >= 3) print_with_path: {
-                    var path_buf: bun.PathBuffer = undefined;
-                    // NOTE: Bun's `fd.getFdPath`, while supporting some
+                    var path_buf: fun.PathBuffer = undefined;
+                    // NOTE: Fun's `fd.getFdPath`, while supporting some
                     // situations the standard library does not, hits EINVAL
                     // instead of gracefully handling invalid file descriptors.
                     // It is assumed that debug builds are ran on systems that
@@ -442,11 +442,11 @@ pub const FD = packed struct(backing_int) {
                         } else if (handle == peb.ProcessParameters.CurrentDirectory.Handle) {
                             return try writer.print("{d}[cwd handle]", .{fd.value.as_system});
                         } else print_with_path: {
-                            var fd_path: bun.WPathBuffer = undefined;
+                            var fd_path: fun.WPathBuffer = undefined;
                             const path = std.os.windows.GetFinalPathNameByHandle(handle, .{ .volume_name = .Nt }, &fd_path) catch break :print_with_path;
                             return try writer.print("{d}[{f}]", .{
                                 fd.value.as_system,
-                                bun.fmt.utf16(path),
+                                fun.fmt.utf16(path),
                             });
                         }
                     }
@@ -489,8 +489,8 @@ pub const FD = packed struct(backing_int) {
 
     pub fn makePath(dir: FD, comptime T: type, subpath: []const T) !void {
         return switch (T) {
-            u8 => bun.makePath(dir.stdDir(), subpath),
-            u16 => bun.makePathW(dir.stdDir(), subpath),
+            u8 => fun.makePath(dir.stdDir(), subpath),
+            u16 => fun.makePathW(dir.stdDir(), subpath),
             else => @compileError("unexpected type"),
         };
     }
@@ -500,67 +500,67 @@ pub const FD = packed struct(backing_int) {
         try dir.stdDir().deleteTree(subpath);
     }
 
-    // The following functions are from bun.sys but with the 'f' prefix dropped
+    // The following functions are from fun.sys but with the 'f' prefix dropped
     // where it is relevant. These functions all take FD as the first argument,
     // so that makes them Zig methods, even when declared in a separate file.
-    pub const chmod = bun.sys.fchmod;
-    pub const chmodat = bun.sys.fchmodat;
-    pub const chown = bun.sys.fchown;
-    pub const directoryExistsAt = bun.sys.directoryExistsAt;
-    pub const dup = bun.sys.dup;
-    pub const dupWithFlags = bun.sys.dupWithFlags;
-    pub const existsAt = bun.sys.existsAt;
-    pub const existsAtType = bun.sys.existsAtType;
-    pub const fcntl = bun.sys.fcntl;
-    pub const getFcntlFlags = bun.sys.getFcntlFlags;
-    pub const getFileSize = bun.sys.getFileSize;
-    pub const linkat = bun.sys.linkat;
-    pub const linkatTmpfile = bun.sys.linkatTmpfile;
-    pub const lseek = bun.sys.lseek;
-    pub const mkdirat = bun.sys.mkdirat;
-    pub const mkdiratA = bun.sys.mkdiratA;
-    pub const mkdiratW = bun.sys.mkdiratW;
-    pub const mkdiratZ = bun.sys.mkdiratZ;
-    pub const openat = bun.sys.openat;
-    pub const pread = bun.sys.pread;
-    pub const preadv = bun.sys.preadv;
-    pub const pwrite = bun.sys.pwrite;
-    pub const pwritev = bun.sys.pwritev;
-    pub const read = bun.sys.read;
-    pub const readNonblocking = bun.sys.readNonblocking;
-    pub const readlinkat = bun.sys.readlinkat;
-    pub const readv = bun.sys.readv;
-    pub const recv = bun.sys.recv;
-    pub const recvNonBlock = bun.sys.recvNonBlock;
-    pub const renameat = bun.sys.renameat;
-    pub const renameat2 = bun.sys.renameat2;
-    pub const send = bun.sys.send;
-    pub const sendNonBlock = bun.sys.sendNonBlock;
-    pub const sendfile = bun.sys.sendfile;
-    pub const stat = bun.sys.fstat;
-    pub const statat = bun.sys.fstatat;
-    pub const symlinkat = bun.sys.symlinkat;
-    pub const truncate = bun.sys.ftruncate;
-    pub const unlinkat = bun.sys.unlinkat;
-    pub const updateNonblocking = bun.sys.updateNonblocking;
-    pub const write = bun.sys.write;
-    pub const writeNonblocking = bun.sys.writeNonblocking;
-    pub const writev = bun.sys.writev;
+    pub const chmod = fun.sys.fchmod;
+    pub const chmodat = fun.sys.fchmodat;
+    pub const chown = fun.sys.fchown;
+    pub const directoryExistsAt = fun.sys.directoryExistsAt;
+    pub const dup = fun.sys.dup;
+    pub const dupWithFlags = fun.sys.dupWithFlags;
+    pub const existsAt = fun.sys.existsAt;
+    pub const existsAtType = fun.sys.existsAtType;
+    pub const fcntl = fun.sys.fcntl;
+    pub const getFcntlFlags = fun.sys.getFcntlFlags;
+    pub const getFileSize = fun.sys.getFileSize;
+    pub const linkat = fun.sys.linkat;
+    pub const linkatTmpfile = fun.sys.linkatTmpfile;
+    pub const lseek = fun.sys.lseek;
+    pub const mkdirat = fun.sys.mkdirat;
+    pub const mkdiratA = fun.sys.mkdiratA;
+    pub const mkdiratW = fun.sys.mkdiratW;
+    pub const mkdiratZ = fun.sys.mkdiratZ;
+    pub const openat = fun.sys.openat;
+    pub const pread = fun.sys.pread;
+    pub const preadv = fun.sys.preadv;
+    pub const pwrite = fun.sys.pwrite;
+    pub const pwritev = fun.sys.pwritev;
+    pub const read = fun.sys.read;
+    pub const readNonblocking = fun.sys.readNonblocking;
+    pub const readlinkat = fun.sys.readlinkat;
+    pub const readv = fun.sys.readv;
+    pub const recv = fun.sys.recv;
+    pub const recvNonBlock = fun.sys.recvNonBlock;
+    pub const renameat = fun.sys.renameat;
+    pub const renameat2 = fun.sys.renameat2;
+    pub const send = fun.sys.send;
+    pub const sendNonBlock = fun.sys.sendNonBlock;
+    pub const sendfile = fun.sys.sendfile;
+    pub const stat = fun.sys.fstat;
+    pub const statat = fun.sys.fstatat;
+    pub const symlinkat = fun.sys.symlinkat;
+    pub const truncate = fun.sys.ftruncate;
+    pub const unlinkat = fun.sys.unlinkat;
+    pub const updateNonblocking = fun.sys.updateNonblocking;
+    pub const write = fun.sys.write;
+    pub const writeNonblocking = fun.sys.writeNonblocking;
+    pub const writev = fun.sys.writev;
 
-    pub const getFdPath = bun.getFdPath;
-    pub const getFdPathW = bun.getFdPathW;
-    pub const getFdPathZ = bun.getFdPathZ;
+    pub const getFdPath = fun.getFdPath;
+    pub const getFdPathW = fun.getFdPathW;
+    pub const getFdPathZ = fun.getFdPathZ;
 
-    // TODO: move these methods defined in bun.sys.File to bun.sys. follow
-    // similar pattern as above. then delete bun.sys.File
-    pub fn quietWriter(fd: FD) bun.sys.File.QuietWriter {
+    // TODO: move these methods defined in fun.sys.File to fun.sys. follow
+    // similar pattern as above. then delete fun.sys.File
+    pub fn quietWriter(fd: FD) fun.sys.File.QuietWriter {
         return .{ .context = .{ .handle = fd } };
     }
 
     comptime {
         if (os == .windows) {
             // The conversion from FD to fd_t should be an integer truncate
-            bun.assert(@as(FD, @bitCast(@as(u64, 512))).value.as_system == 512);
+            fun.assert(@as(FD, @bitCast(@as(u64, 512))).value.as_system == 512);
         }
     }
 };
@@ -596,7 +596,7 @@ pub fn uv_get_osfhandle(in: c_int) libuv.uv_os_fd_t {
 
 pub fn uv_open_osfhandle(in: libuv.uv_os_fd_t) error{SystemFdQuotaExceeded}!c_int {
     const out = libuv_private.uv_open_osfhandle(in);
-    bun.assert(out >= -1);
+    fun.assert(out >= -1);
     if (out == -1) return error.SystemFdQuotaExceeded;
     return out;
 }
@@ -614,7 +614,7 @@ pub fn uv_open_osfhandle(in: libuv.uv_os_fd_t) error{SystemFdQuotaExceeded}!c_in
 pub const MovableIfWindowsFd = union(enum) {
     const Self = @This();
 
-    _inner: if (bun.Environment.isWindows) ?FD else FD,
+    _inner: if (fun.Environment.isWindows) ?FD else FD,
 
     pub fn init(fd: FD) Self {
         return .{ ._inner = fd };
@@ -625,14 +625,14 @@ pub const MovableIfWindowsFd = union(enum) {
     }
 
     pub fn getPosix(self: *const Self) FD {
-        if (comptime bun.Environment.isWindows)
+        if (comptime fun.Environment.isWindows)
             @compileError("MovableIfWindowsFd.getPosix is not available on Windows");
 
         return self._inner;
     }
 
     pub fn close(self: *Self) void {
-        if (comptime bun.Environment.isPosix) {
+        if (comptime fun.Environment.isPosix) {
             self._inner.close();
             self._inner = FD.invalid;
             return;
@@ -644,18 +644,18 @@ pub const MovableIfWindowsFd = union(enum) {
     }
 
     pub fn isValid(self: *const Self) bool {
-        if (comptime bun.Environment.isPosix) return self._inner.isValid();
+        if (comptime fun.Environment.isPosix) return self._inner.isValid();
         return self._inner != null and self._inner.?.isValid();
     }
 
     pub fn isOwned(self: *const Self) bool {
-        if (comptime bun.Environment.isPosix) return true;
+        if (comptime fun.Environment.isPosix) return true;
         return self._inner != null;
     }
 
     /// Takes the FD, leaving `self` in a "moved-from" state. Only available on Windows.
     pub fn take(self: *Self) ?FD {
-        if (comptime bun.Environment.isPosix) {
+        if (comptime fun.Environment.isPosix) {
             @compileError("MovableIfWindowsFd.take is not available on Posix");
         }
         const result = self._inner;
@@ -664,7 +664,7 @@ pub const MovableIfWindowsFd = union(enum) {
     }
 
     pub fn format(self: *const Self, writer: *std.Io.Writer) !void {
-        if (comptime bun.Environment.isPosix) {
+        if (comptime fun.Environment.isPosix) {
             try writer.print("{f}", .{self.get().?});
             return;
         }
@@ -703,18 +703,18 @@ const libuv_private = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const assert = bun.assert;
-const HANDLE = bun.windows.HANDLE;
-const log = bun.sys.syslog;
+const fun = @import("fun");
+const assert = fun.assert;
+const HANDLE = fun.windows.HANDLE;
+const log = fun.sys.syslog;
 
-const Environment = bun.Environment;
+const Environment = fun.Environment;
 const allow_assert = Environment.allow_assert;
 const is_posix = Environment.isPosix;
 const os = Environment.os;
 
-const libuv = bun.windows.libuv;
-const uv_file = bun.windows.libuv.uv_file;
+const libuv = fun.windows.libuv;
+const uv_file = fun.windows.libuv.uv_file;
 
 const E = std.posix.E;
 const fd_t = std.posix.fd_t;

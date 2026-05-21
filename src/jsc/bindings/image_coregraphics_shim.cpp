@@ -1,4 +1,4 @@
-// CoreGraphics / ImageIO backend for Bun.Image — implemented entirely in C++.
+// CoreGraphics / ImageIO backend for Fun.Image — implemented entirely in C++.
 //
 // Calling dlsym'd CG/ImageIO functions through Zig function pointers crashed
 // on x86_64 macOS (arm64 was fine). Rather than thunking call-by-call, this
@@ -177,17 +177,17 @@ const Syms* load()
 // Prefixed: the macOS PCH transitively includes CG headers, so the real
 // `kCGImageAlphaLast`/`kCFStringEncodingUTF8` are in scope and an
 // anonymous-namespace shadow is ambiguous at the use site.
-constexpr uint32_t kBunCGImageAlphaLast = 3; // straight RGBA, A in byte 3
-constexpr uint32_t kBunCFStringEncodingUTF8 = 0x08000100;
-constexpr int kBunCFNumberDoubleType = 13;
+constexpr uint32_t kFunCGImageAlphaLast = 3; // straight RGBA, A in byte 3
+constexpr uint32_t kFunCFStringEncodingUTF8 = 0x08000100;
+constexpr int kFunCFNumberDoubleType = 13;
 // vImage_Flags — values copied verbatim from <Accelerate/vImage_Types.h>;
 // keep them in sync, the kvImageNoAllocate one used to be wrong (4 vs 512)
 // and silently turned every CG decode into 0xAA garbage in debug builds.
-constexpr uint32_t kBunVImageEdgeExtend = 8;
-constexpr uint32_t kBunVImageDoNotTile = 16;
+constexpr uint32_t kFunVImageEdgeExtend = 8;
+constexpr uint32_t kFunVImageDoNotTile = 16;
 // (kvImageHighQualityResampling = 32 — unused; default kernel is already
 // Lanczos-3, which is what we route here.)
-constexpr uint32_t kBunVImageNoAllocate = 512;
+constexpr uint32_t kFunVImageNoAllocate = 512;
 
 // RAII pool so every early-return drains. Declared first in each entry point —
 // the framework calls beneath autorelease into it, and the WorkPool thread has
@@ -261,8 +261,8 @@ enum : int32_t { CG_OK = 0,
 // Decode `bytes[0..len)` into a caller-allocated RGBA8 buffer.
 // Two-phase: pass `out=nullptr` to get dimensions; then call again with a
 // buffer of `w*h*4` to fill it. Avoids allocating in C++ so the Zig side owns
-// the buffer in `bun.default_allocator` like every other decode path.
-int32_t bun_coregraphics_decode(const uint8_t* bytes, size_t len, uint64_t max_pixels,
+// the buffer in `fun.default_allocator` like every other decode path.
+int32_t fun_coregraphics_decode(const uint8_t* bytes, size_t len, uint64_t max_pixels,
     uint32_t* out_w, uint32_t* out_h, uint8_t* out)
 {
     auto s = load();
@@ -308,10 +308,10 @@ int32_t bun_coregraphics_decode(const uint8_t* bytes, size_t len, uint64_t max_p
     // vImage converts directly to the requested format — including
     // non-premultiplied alpha, which CGBitmapContext refuses — so the result
     // is straight RGBA with no premul→unpremul quantisation. kvImageNoAllocate
-    // makes it write into the caller's bun.default_allocator buffer.
+    // makes it write into the caller's fun.default_allocator buffer.
     VBuf buf { out, h, w, w * 4 };
-    VFmt fmt { 8, 32, r.cs, kBunCGImageAlphaLast, 0, nullptr, 0 };
-    auto rc = s->vImageBuffer_InitWithCGImage(&buf, &fmt, nullptr, r.img, kBunVImageNoAllocate);
+    VFmt fmt { 8, 32, r.cs, kFunCGImageAlphaLast, 0, nullptr, 0 };
+    auto rc = s->vImageBuffer_InitWithCGImage(&buf, &fmt, nullptr, r.img, kFunVImageNoAllocate);
     // The contract is that kvImageNoAllocate honours buf.data exactly, but be
     // defensive: an OS that ignored the flag would set buf.data to its own
     // malloc and leave `out` uninitialised, which on a Zig debug build is
@@ -326,7 +326,7 @@ int32_t bun_coregraphics_decode(const uint8_t* bytes, size_t len, uint64_t max_p
 // CFData until the next call so the second call can copy them out without
 // re-encoding. (One encode, one memcpy — same allocation count as the static
 // codecs after the recent Encoded refactor.)
-int32_t bun_coregraphics_encode(const uint8_t* rgba, uint32_t width, uint32_t height,
+int32_t fun_coregraphics_encode(const uint8_t* rgba, uint32_t width, uint32_t height,
     int32_t format, int32_t quality, uint8_t* out, size_t* out_len)
 {
     auto s = load();
@@ -384,10 +384,10 @@ int32_t bun_coregraphics_encode(const uint8_t* rgba, uint32_t width, uint32_t he
     r.prov = s->CGDataProviderCreateWithData(nullptr, rgba, n, nullptr);
     if (!r.prov) return CG_UNAVAILABLE;
     r.img = s->CGImageCreate(width, height, 8, 32, static_cast<size_t>(width) * 4,
-        r.cs, kBunCGImageAlphaLast, r.prov, nullptr, false, 0);
+        r.cs, kFunCGImageAlphaLast, r.prov, nullptr, false, 0);
     if (!r.img) return CG_ENCODE_FAILED;
 
-    r.ustr = s->CFStringCreateWithCString(nullptr, uti, kBunCFStringEncodingUTF8);
+    r.ustr = s->CFStringCreateWithCString(nullptr, uti, kFunCFStringEncodingUTF8);
     if (!r.ustr) return CG_UNAVAILABLE;
     r.sink = s->CFDataCreateMutable(nullptr, 0);
     if (!r.sink) return CG_UNAVAILABLE;
@@ -402,7 +402,7 @@ int32_t bun_coregraphics_encode(const uint8_t* rgba, uint32_t width, uint32_t he
         double q = static_cast<double>(quality < 1 ? 1 : quality > 100 ? 100
                                                                        : quality)
             / 100.0;
-        r.num = s->CFNumberCreate(nullptr, kBunCFNumberDoubleType, &q);
+        r.num = s->CFNumberCreate(nullptr, kFunCFNumberDoubleType, &q);
         const void* k = *s->kCGImageDestinationLossyCompressionQuality;
         const void* v = r.num;
         // CFType callbacks (NOT null) so CF retains/hashes the CFString key
@@ -426,7 +426,7 @@ int32_t bun_coregraphics_encode(const uint8_t* rgba, uint32_t width, uint32_t he
 // ── Geometry via vImage ────────────────────────────────────────────────────
 //
 // These take packed RGBA8 (rowBytes = w*4) on both ends so the Zig side can
-// keep allocating with `bun.default_allocator`. The ARGB8888 kernels are
+// keep allocating with `fun.default_allocator`. The ARGB8888 kernels are
 // channel-order agnostic for 4×u8, so RGBA works without a permute. They run
 // on Apple's AMX units on M-series — typically 2-4× the Highway path — and we
 // already have Accelerate dlopened for decode, so the only cost is four more
@@ -436,7 +436,7 @@ int32_t bun_coregraphics_encode(const uint8_t* rgba, uint32_t width, uint32_t he
 // tiny images the test suite uses). tempBuffer = nullptr lets vImage manage
 // its own scratch.
 
-int32_t bun_coregraphics_scale(const uint8_t* src, uint32_t sw, uint32_t sh,
+int32_t fun_coregraphics_scale(const uint8_t* src, uint32_t sw, uint32_t sh,
     uint8_t* dst, uint32_t dw, uint32_t dh)
 {
     auto s = load();
@@ -446,7 +446,7 @@ int32_t bun_coregraphics_scale(const uint8_t* src, uint32_t sw, uint32_t sh,
     // Apple's default vImageScale kernel is Lanczos-3; the high-quality flag
     // widens to Lanczos-5. We only route `.lanczos3` here, so HQ stays off.
     return s->vImageScale_ARGB8888(&in, &out, nullptr,
-               kBunVImageEdgeExtend | kBunVImageDoNotTile)
+               kFunVImageEdgeExtend | kFunVImageDoNotTile)
             == 0
         ? CG_OK
         : CG_UNAVAILABLE;
@@ -454,7 +454,7 @@ int32_t bun_coregraphics_scale(const uint8_t* src, uint32_t sw, uint32_t sh,
 
 // `quarters` is in CW quarter-turns (matching Sharp/CSS); vImage's constant is
 // CCW, so map 90→3, 180→2, 270→1.
-int32_t bun_coregraphics_rotate90(const uint8_t* src, uint32_t w, uint32_t h,
+int32_t fun_coregraphics_rotate90(const uint8_t* src, uint32_t w, uint32_t h,
     uint8_t* dst, uint32_t quarters)
 {
     auto s = load();
@@ -464,12 +464,12 @@ int32_t bun_coregraphics_rotate90(const uint8_t* src, uint32_t w, uint32_t h,
     bool swap = quarters & 1;
     VBuf in { const_cast<uint8_t*>(src), h, w, static_cast<size_t>(w) * 4 };
     VBuf out { dst, swap ? w : h, swap ? h : w, static_cast<size_t>(swap ? h : w) * 4 };
-    return s->vImageRotate90_ARGB8888(&in, &out, kCcw[quarters & 3], kBg, kBunVImageDoNotTile) == 0
+    return s->vImageRotate90_ARGB8888(&in, &out, kCcw[quarters & 3], kBg, kFunVImageDoNotTile) == 0
         ? CG_OK
         : CG_UNAVAILABLE;
 }
 
-int32_t bun_coregraphics_reflect(const uint8_t* src, uint32_t w, uint32_t h,
+int32_t fun_coregraphics_reflect(const uint8_t* src, uint32_t w, uint32_t h,
     uint8_t* dst, int32_t horizontal)
 {
     auto s = load();
@@ -477,7 +477,7 @@ int32_t bun_coregraphics_reflect(const uint8_t* src, uint32_t w, uint32_t h,
     VBuf in { const_cast<uint8_t*>(src), h, w, static_cast<size_t>(w) * 4 };
     VBuf out { dst, h, w, static_cast<size_t>(w) * 4 };
     auto fn = horizontal ? s->vImageHorizontalReflect_ARGB8888 : s->vImageVerticalReflect_ARGB8888;
-    return fn(&in, &out, kBunVImageDoNotTile) == 0 ? CG_OK : CG_UNAVAILABLE;
+    return fn(&in, &out, kFunVImageDoNotTile) == 0 ? CG_OK : CG_UNAVAILABLE;
 }
 
 // ── NSPasteboard image reader ──────────────────────────────────────────────
@@ -486,7 +486,7 @@ int32_t bun_coregraphics_reflect(const uint8_t* src, uint32_t w, uint32_t h,
 // objc-runtime calls (`objc_getClass` / `objc_msgSend`) rather than adding
 // AppKit to the dlopen list — `NSPasteboard` is the only symbol we need from
 // it, and AppKit is already loaded in any GUI process. We never decode here:
-// the pasteboard hands back a container (PNG, TIFF, HEIC, …) and Bun.Image's
+// the pasteboard hands back a container (PNG, TIFF, HEIC, …) and Fun.Image's
 // regular decode path handles it. NSPasteboard is documented as main-thread
 // safe to *read*; we still call it on the JS thread (via the static
 // `fromClipboard` accessor), not the WorkPool.
@@ -496,7 +496,7 @@ int32_t bun_coregraphics_reflect(const uint8_t* src, uint32_t w, uint32_t h,
 // releases it. `probe_only` skips the data fetch entirely for the cheap
 // `hasClipboardImage()` check.
 
-int32_t bun_coregraphics_clipboard(uint8_t* out, size_t* out_len, int32_t probe_only)
+int32_t fun_coregraphics_clipboard(uint8_t* out, size_t* out_len, int32_t probe_only)
 {
     auto s = load();
     if (!s) return CG_UNAVAILABLE;
@@ -521,7 +521,7 @@ int32_t bun_coregraphics_clipboard(uint8_t* out, size_t* out_len, int32_t probe_
     CFRef dataForType = s->sel_registerName("dataForType:");
 
     for (auto uti : kImageUti) {
-        CFRef ustr = s->CFStringCreateWithCString(nullptr, uti, kBunCFStringEncodingUTF8);
+        CFRef ustr = s->CFStringCreateWithCString(nullptr, uti, kFunCFStringEncodingUTF8);
         if (!ustr) continue;
         CFRef nsdata = msg<CFRef>(s, pb, dataForType, ustr);
         s->CFRelease(ustr);
@@ -543,7 +543,7 @@ int32_t bun_coregraphics_clipboard(uint8_t* out, size_t* out_len, int32_t probe_
 // pasteboard write system-wide. macOS has no clipboard-change notification, so
 // the documented pattern is to poll this and act only when it moves. -1 ⇔
 // AppKit unavailable (treat as "never changes").
-int64_t bun_coregraphics_clipboard_change_count()
+int64_t fun_coregraphics_clipboard_change_count()
 {
     auto s = load();
     if (!s) return -1;
@@ -557,11 +557,11 @@ int64_t bun_coregraphics_clipboard_change_count()
 #else
 // Non-Apple: stubs so the link succeeds; Zig only references these under
 // Environment.isMac so they're dead code, but LTO needs the definitions.
-extern "C" int bun_coregraphics_decode(const void*, unsigned long, unsigned long long, void*, void*, void*) { return 1; }
-extern "C" int bun_coregraphics_encode(const void*, unsigned, unsigned, int, int, void*, void*) { return 1; }
-extern "C" int bun_coregraphics_scale(const void*, unsigned, unsigned, void*, unsigned, unsigned) { return 1; }
-extern "C" int bun_coregraphics_rotate90(const void*, unsigned, unsigned, void*, unsigned) { return 1; }
-extern "C" int bun_coregraphics_reflect(const void*, unsigned, unsigned, void*, int) { return 1; }
-extern "C" int bun_coregraphics_clipboard(void*, void*, int) { return 1; }
-extern "C" long long bun_coregraphics_clipboard_change_count() { return -1; }
+extern "C" int fun_coregraphics_decode(const void*, unsigned long, unsigned long long, void*, void*, void*) { return 1; }
+extern "C" int fun_coregraphics_encode(const void*, unsigned, unsigned, int, int, void*, void*) { return 1; }
+extern "C" int fun_coregraphics_scale(const void*, unsigned, unsigned, void*, unsigned, unsigned) { return 1; }
+extern "C" int fun_coregraphics_rotate90(const void*, unsigned, unsigned, void*, unsigned) { return 1; }
+extern "C" int fun_coregraphics_reflect(const void*, unsigned, unsigned, void*, int) { return 1; }
+extern "C" int fun_coregraphics_clipboard(void*, void*, int) { return 1; }
+extern "C" long long fun_coregraphics_clipboard_change_count() { return -1; }
 #endif

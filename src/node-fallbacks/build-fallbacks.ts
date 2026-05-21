@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import * as fs from "fs";
 import * as Module from "module";
 import { basename, extname } from "path";
@@ -32,12 +34,12 @@ for (let fileIndex = 0; fileIndex < allFiles.length; fileIndex++) {
 
   // Create the build command with all the specified options
   const buildCommand =
-    Bun.$`bun build --define=process.env.NODE_DEBUG:"false" --define=process.env.READABLE_STREAM="'enable'" --define=global:globalThis --outdir=${outdir} ${name} --minify-syntax --minify-whitespace --format=${name.includes("stream") ? "cjs" : "esm"} --target=node ${{ raw: externalModules }}`.text();
+    Fun.$`fun build --define=process.env.NODE_DEBUG:"false" --define=process.env.READABLE_STREAM="'enable'" --define=global:globalThis --outdir=${outdir} ${name} --minify-syntax --minify-whitespace --format=${name.includes("stream") ? "cjs" : "esm"} --target=node ${{ raw: externalModules }}`.text();
 
   commands.push(
     buildCommand.then(async text => {
       // This is very brittle. But that should be okay for our usecase
-      let outfile = (await Bun.file(`${outdir}/${name}`).text())
+      let outfile = (await Fun.file(`${outdir}/${name}`).text())
         .replaceAll("__require(", "require(")
         .replaceAll("import.meta.url", "''")
         .replaceAll("createRequire", "")
@@ -73,7 +75,7 @@ for (let fileIndex = 0; fileIndex < allFiles.length; fileIndex++) {
         throw new Error("Unsupported function in " + name);
       }
 
-      await Bun.write(`${outdir}/${name}`, outfile);
+      await Fun.write(`${outdir}/${name}`, outfile);
     }),
   );
 }

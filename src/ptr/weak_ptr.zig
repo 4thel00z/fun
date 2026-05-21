@@ -8,7 +8,7 @@ pub const WeakPtrData = packed struct(u32) {
     };
 
     pub fn onFinalize(this: *WeakPtrData) bool {
-        bun.debugAssert(!this.finalized);
+        fun.debugAssert(!this.finalized);
         this.finalized = true;
         return this.reference_count == 0;
     }
@@ -28,7 +28,7 @@ pub fn WeakPtr(comptime T: type, data_field: []const u8) type {
         pub const empty: @This() = .{ .raw_ptr = null };
 
         pub fn initRef(req: *T) @This() {
-            bun.debugAssert(!data(req).finalized);
+            fun.debugAssert(!data(req).finalized);
             data(req).reference_count += 1;
             return .{ .raw_ptr = req };
         }
@@ -56,7 +56,7 @@ pub fn WeakPtr(comptime T: type, data_field: []const u8) type {
             const count = weak_data.reference_count - 1;
             weak_data.reference_count = count;
             if (weak_data.finalized and count == 0) {
-                bun.destroy(value);
+                fun.destroy(value);
             }
         }
 
@@ -66,4 +66,4 @@ pub fn WeakPtr(comptime T: type, data_field: []const u8) type {
     };
 }
 
-pub const bun = @import("bun");
+pub const fun = @import("fun");

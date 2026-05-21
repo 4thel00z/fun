@@ -1,4 +1,4 @@
-//! HTTP/2 path for Bun's fetch HTTP client.
+//! HTTP/2 path for Fun's fetch HTTP client.
 //!
 //! `ClientSession` owns the TLS socket once ALPN selects "h2" and is the
 //! `ActiveSocket` variant the HTTPContext handlers dispatch to. It holds the

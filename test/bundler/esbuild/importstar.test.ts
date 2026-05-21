@@ -1,10 +1,10 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_importstar_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/importstar
+// For debug, all files are written to $TEMP/fun-bundle-tests/importstar
 
 describe("bundler", () => {
   itBundled("importstar/ImportStarUnused", {
@@ -34,7 +34,7 @@ describe("bundler", () => {
       // esbuild:
       // stdout: '{"default":{"foo":123},"foo":123} 123 234',
 
-      // bun:
+      // fun:
       stdout: '{"foo":123} 123 234',
     },
   });

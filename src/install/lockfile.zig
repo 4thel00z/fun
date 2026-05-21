@@ -28,7 +28,7 @@ patched_dependencies: PatchedDependenciesMap = .{},
 overrides: OverrideMap = .{},
 catalogs: CatalogMap = .{},
 
-saved_config_version: ?bun.ConfigVersion,
+saved_config_version: ?fun.ConfigVersion,
 
 pub const DepSorter = struct {
     lockfile: *const Lockfile,
@@ -49,7 +49,7 @@ pub const DepSorter = struct {
 };
 
 pub const Stream = std.io.FixedBufferStream([]u8);
-pub const default_filename = "bun.lockb";
+pub const default_filename = "fun.lockb";
 
 pub const Scripts = struct {
     const MAX_PARALLEL_PROCESSES = 10;
@@ -125,8 +125,8 @@ pub const LoadResult = union(enum) {
 
         pub fn filename(this: LockfileFormat) stringZ {
             return switch (this) {
-                .text => "bun.lock",
-                .binary => "bun.lockb",
+                .text => "fun.lock",
+                .binary => "fun.lockb",
             };
         }
     };
@@ -158,7 +158,7 @@ pub const LoadResult = union(enum) {
         switch (this) {
             .not_found => {
                 // saving a lockfile for a new project. default to text lockfile
-                // unless saveTextLockfile is false in bunfig
+                // unless saveTextLockfile is false in funfig
                 const save_text_lockfile = options.save_text_lockfile orelse true;
                 return if (save_text_lockfile) .text else .binary;
             },
@@ -193,7 +193,7 @@ pub const LoadResult = union(enum) {
     }
 
     // configVersion and boolean for if the configVersion previously existed/needs to be saved to lockfile
-    pub fn chooseConfigVersion(this: *const LoadResult) struct { bun.ConfigVersion, bool } {
+    pub fn chooseConfigVersion(this: *const LoadResult) struct { fun.ConfigVersion, bool } {
         return switch (this.*) {
             .not_found, .err => .{ .current, true },
             .ok => |ok| switch (ok.migrated) {
@@ -202,7 +202,7 @@ pub const LoadResult = union(enum) {
                         return .{ config_version, false };
                     }
 
-                    // existing bun project without configVersion
+                    // existing fun project without configVersion
                     return .{ .v0, true };
                 },
                 .pnpm => .{ .v1, true },
@@ -222,12 +222,12 @@ pub fn loadFromCwd(
     log: *logger.Log,
     comptime attempt_loading_from_other_lockfile: bool,
 ) LoadResult {
-    return loadFromDir(this, bun.FD.cwd(), manager, allocator, log, attempt_loading_from_other_lockfile);
+    return loadFromDir(this, fun.FD.cwd(), manager, allocator, log, attempt_loading_from_other_lockfile);
 }
 
 pub fn loadFromDir(
     this: *Lockfile,
-    dir: bun.FD,
+    dir: fun.FD,
     manager: ?*PackageManager,
     allocator: Allocator,
     log: *logger.Log,
@@ -236,24 +236,24 @@ pub fn loadFromDir(
     if (comptime Environment.allow_assert) assert(FileSystem.instance_loaded);
 
     var lockfile_format: LoadResult.LockfileFormat = .text;
-    const file = File.openat(dir, "bun.lock", bun.O.RDONLY, 0).unwrap() catch |text_open_err| file: {
+    const file = File.openat(dir, "fun.lock", fun.O.RDONLY, 0).unwrap() catch |text_open_err| file: {
         if (text_open_err != error.ENOENT) {
             return .{ .err = .{
                 .step = .open_file,
                 .value = text_open_err,
-                .lockfile_path = "bun.lock",
+                .lockfile_path = "fun.lock",
                 .format = .text,
             } };
         }
 
         lockfile_format = .binary;
 
-        break :file File.openat(dir, "bun.lockb", bun.O.RDONLY, 0).unwrap() catch |binary_open_err| {
+        break :file File.openat(dir, "fun.lockb", fun.O.RDONLY, 0).unwrap() catch |binary_open_err| {
             if (binary_open_err != error.ENOENT) {
                 return .{ .err = .{
                     .step = .open_file,
                     .value = binary_open_err,
-                    .lockfile_path = "bun.lockb",
+                    .lockfile_path = "fun.lockb",
                     .format = .binary,
                 } };
             }
@@ -284,20 +284,20 @@ pub fn loadFromDir(
         return .{ .err = .{
             .step = .read_file,
             .value = err,
-            .lockfile_path = if (lockfile_format == .text) "bun.lock" else "bun.lockb",
+            .lockfile_path = if (lockfile_format == .text) "fun.lock" else "fun.lockb",
             .format = lockfile_format,
         } };
     };
 
     if (lockfile_format == .text) {
-        const source = &logger.Source.initPathString("bun.lock", buf);
+        const source = &logger.Source.initPathString("fun.lock", buf);
         initializeStore();
         const json = JSON.parsePackageJSONUTF8(source, log, allocator) catch |err| {
             return .{
                 .err = .{
                     .step = .parse_file,
                     .value = err,
-                    .lockfile_path = "bun.lock",
+                    .lockfile_path = "fun.lock",
                     .format = lockfile_format,
                 },
             };
@@ -305,13 +305,13 @@ pub fn loadFromDir(
 
         TextLockfile.parseIntoBinaryLockfile(this, allocator, json, source, log, manager) catch |err| {
             switch (err) {
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 else => {
                     return .{
                         .err = .{
                             .step = .parse_file,
                             .value = err,
-                            .lockfile_path = "bun.lock",
+                            .lockfile_path = "fun.lock",
                             .format = lockfile_format,
                         },
                     };
@@ -319,7 +319,7 @@ pub fn loadFromDir(
             }
         };
 
-        bun.analytics.Features.text_lockfile += 1;
+        fun.analytics.Features.text_lockfile += 1;
 
         return .{
             .ok = .{
@@ -335,7 +335,7 @@ pub fn loadFromDir(
 
     switch (result) {
         .ok => {
-            if (bun.env_var.BUN_DEBUG_TEST_TEXT_LOCKFILE.get() and manager != null) {
+            if (fun.env_var.FUN_DEBUG_TEST_TEXT_LOCKFILE.get() and manager != null) {
 
                 // Convert the loaded binary lockfile into a text lockfile in memory, then
                 // parse it back into a binary lockfile.
@@ -348,9 +348,9 @@ pub fn loadFromDir(
                     Output.panic("failed to convert binary lockfile to text lockfile: {s}", .{@errorName(err)});
                 };
 
-                const text_lockfile_bytes = bun.handleOom(writer_allocating.toOwnedSlice());
+                const text_lockfile_bytes = fun.handleOom(writer_allocating.toOwnedSlice());
 
-                const source = &logger.Source.initPathString("bun.lock", text_lockfile_bytes);
+                const source = &logger.Source.initPathString("fun.lock", text_lockfile_bytes);
                 initializeStore();
                 const json = JSON.parsePackageJSONUTF8(source, log, allocator) catch |err| {
                     Output.panic("failed to print valid json from binary lockfile: {s}", .{@errorName(err)});
@@ -360,7 +360,7 @@ pub fn loadFromDir(
                     Output.panic("failed to parse text lockfile converted from binary lockfile: {s}", .{@errorName(err)});
                 };
 
-                bun.analytics.Features.text_lockfile += 1;
+                fun.analytics.Features.text_lockfile += 1;
             }
         },
         else => {},
@@ -382,7 +382,7 @@ pub fn loadFromBytes(this: *Lockfile, pm: ?*PackageManager, buf: []u8, allocator
     this.patched_dependencies = .{};
 
     const load_result = Lockfile.Serializer.load(this, &stream, allocator, log, pm) catch |err| {
-        return LoadResult{ .err = .{ .step = .parse_file, .value = err, .lockfile_path = "bun.lockb", .format = .binary } };
+        return LoadResult{ .err = .{ .step = .parse_file, .value = err, .lockfile_path = "fun.lockb", .format = .binary } };
     };
 
     if (Environment.allow_assert) {
@@ -560,10 +560,10 @@ pub fn clean(
     log_level: PackageManager.Options.LogLevel,
 ) !*Lockfile {
     // This is wasteful, but we rarely log anything so it's fine.
-    var log = logger.Log.init(bun.default_allocator);
+    var log = logger.Log.init(fun.default_allocator);
     defer {
         for (log.msgs.items) |*item| {
-            item.deinit(bun.default_allocator);
+            item.deinit(fun.default_allocator);
         }
         log.deinit();
     }
@@ -658,7 +658,7 @@ pub fn cleanWithLogger(
     // preinstall state before linking stage.
     manager.ensurePreinstallStateListCapacity(old.packages.len);
     var preinstall_state = manager.preinstall_state;
-    var old_preinstall_state = bun.handleOom(preinstall_state.clone(old.allocator));
+    var old_preinstall_state = fun.handleOom(preinstall_state.clone(old.allocator));
     defer old_preinstall_state.deinit(old.allocator);
     @memset(preinstall_state.items, .unknown);
 
@@ -770,7 +770,7 @@ pub fn cleanWithLogger(
         try new.workspace_paths.reIndex(z_allocator);
     }
 
-    // When you run `"bun add react"
+    // When you run `"fun add react"
     // This is where we update it in the lockfile from "latest" to "^17.0.2"
     try cloner.flush();
 
@@ -783,7 +783,7 @@ pub fn cleanWithLogger(
         for (old.patched_dependencies.values()) |patched_dep| builder.count(patched_dep.path.slice(old.buffers.string_bytes.items));
         try builder.allocate();
         for (old.patched_dependencies.keys(), old.patched_dependencies.values()) |k, v| {
-            bun.assert(!v.patchfile_hash_is_null);
+            fun.assert(!v.patchfile_hash_is_null);
             var patchdep = v;
             patchdep.path = builder.append(String, patchdep.path.slice(old.buffers.string_bytes.items));
             try new.patched_dependencies.put(new.allocator, k, patchdep);
@@ -824,7 +824,7 @@ pub fn cleanWithLogger(
         Output.prettyErrorln("Clean lockfile: {d} packages -> {d} packages in {f}\n", .{
             old.packages.len,
             new.packages.len,
-            bun.fmt.fmtDurationOneDecimal(timer.read()),
+            fun.fmt.fmtDurationOneDecimal(timer.read()),
         });
     }
 
@@ -1091,15 +1091,15 @@ pub const Printer = struct {
         @branchHint(.cold);
 
         // We truncate longer than allowed paths. We should probably throw an error instead.
-        const path = input_lockfile_path[0..@min(input_lockfile_path.len, bun.MAX_PATH_BYTES)];
+        const path = input_lockfile_path[0..@min(input_lockfile_path.len, fun.MAX_PATH_BYTES)];
 
-        var lockfile_path_buf1: bun.PathBuffer = undefined;
-        var lockfile_path_buf2: bun.PathBuffer = undefined;
+        var lockfile_path_buf1: fun.PathBuffer = undefined;
+        var lockfile_path_buf2: fun.PathBuffer = undefined;
 
         var lockfile_path: stringZ = "";
 
         if (!std.fs.path.isAbsolute(path)) {
-            const cwd = try bun.getcwd(&lockfile_path_buf1);
+            const cwd = try fun.getcwd(&lockfile_path_buf1);
             var parts = [_]string{path};
             const lockfile_path__ = Path.joinAbsStringBuf(cwd, &lockfile_path_buf2, &parts, .auto);
             lockfile_path_buf2[lockfile_path__.len] = 0;
@@ -1111,7 +1111,7 @@ pub const Printer = struct {
         }
 
         if (lockfile_path.len > 0 and lockfile_path[0] == std.fs.path.sep)
-            _ = bun.sys.chdir("", std.fs.path.dirname(lockfile_path) orelse std.fs.path.sep_str);
+            _ = fun.sys.chdir("", std.fs.path.dirname(lockfile_path) orelse std.fs.path.sep_str);
 
         _ = try FileSystem.init(null);
 
@@ -1141,7 +1141,7 @@ pub const Printer = struct {
             },
             .not_found => {
                 Output.prettyErrorln("<r><red>lockfile not found:<r> {f}", .{
-                    bun.fmt.QuotedFormatter{ .text = std.mem.sliceAsBytes(lockfile_path) },
+                    fun.fmt.QuotedFormatter{ .text = std.mem.sliceAsBytes(lockfile_path) },
                 });
                 Global.crash();
             },
@@ -1151,7 +1151,7 @@ pub const Printer = struct {
 
         const writer = Output.writerBuffered();
         printWithLockfile(allocator, lockfile, format, @TypeOf(writer), writer) catch |err| switch (err) {
-            error.OutOfMemory => bun.outOfMemory(),
+            error.OutOfMemory => fun.outOfMemory(),
             error.BrokenPipe, error.WriteFailed => return,
             else => |e| return e,
         };
@@ -1243,22 +1243,22 @@ pub fn saveToDisk(this: *Lockfile, load_result: *const LoadResult, options: *con
 
     const bytes = bytes: {
         if (save_format == .text) {
-            var writer_allocating = std.Io.Writer.Allocating.init(bun.default_allocator);
+            var writer_allocating = std.Io.Writer.Allocating.init(fun.default_allocator);
             defer writer_allocating.deinit();
             const writer = &writer_allocating.writer;
 
-            TextLockfile.Stringifier.saveFromBinary(bun.default_allocator, this, load_result, options, writer) catch |err| switch (err) {
-                error.WriteFailed => bun.outOfMemory(),
+            TextLockfile.Stringifier.saveFromBinary(fun.default_allocator, this, load_result, options, writer) catch |err| switch (err) {
+                error.WriteFailed => fun.outOfMemory(),
             };
 
             writer.flush() catch |err| switch (err) {
-                error.WriteFailed => bun.outOfMemory(),
+                error.WriteFailed => fun.outOfMemory(),
             };
 
-            break :bytes bun.handleOom(writer_allocating.toOwnedSlice());
+            break :bytes fun.handleOom(writer_allocating.toOwnedSlice());
         }
 
-        var bytes = std.array_list.Managed(u8).init(bun.default_allocator);
+        var bytes = std.array_list.Managed(u8).init(fun.default_allocator);
 
         var total_size: usize = 0;
         var end_pos: usize = 0;
@@ -1270,17 +1270,17 @@ pub fn saveToDisk(this: *Lockfile, load_result: *const LoadResult, options: *con
             bytes.items[end_pos..][0..@sizeOf(usize)].* = @bitCast(total_size);
         break :bytes bytes.items;
     };
-    defer bun.default_allocator.free(bytes);
+    defer fun.default_allocator.free(bytes);
 
     var tmpname_buf: [512]u8 = undefined;
     var base64_bytes: [8]u8 = undefined;
-    bun.csprng(&base64_bytes);
+    fun.csprng(&base64_bytes);
     const tmpname = if (save_format == .text)
         std.fmt.bufPrintZ(&tmpname_buf, ".lock-{x}.tmp", .{&base64_bytes}) catch unreachable
     else
         std.fmt.bufPrintZ(&tmpname_buf, ".lockb-{x}.tmp", .{&base64_bytes}) catch unreachable;
 
-    const file = switch (File.openat(.cwd(), tmpname, bun.O.CREAT | bun.O.WRONLY, 0o777)) {
+    const file = switch (File.openat(.cwd(), tmpname, fun.O.CREAT | fun.O.WRONLY, 0o777)) {
         .err => |err| {
             Output.err(err, "failed to create temporary file to save lockfile", .{});
             Global.crash();
@@ -1291,7 +1291,7 @@ pub fn saveToDisk(this: *Lockfile, load_result: *const LoadResult, options: *con
     switch (file.writeAll(bytes)) {
         .err => |e| {
             file.close();
-            _ = bun.sys.unlink(tmpname);
+            _ = fun.sys.unlink(tmpname);
             Output.err(e, "failed to write lockfile", .{});
             Global.crash();
         },
@@ -1300,14 +1300,14 @@ pub fn saveToDisk(this: *Lockfile, load_result: *const LoadResult, options: *con
 
     if (comptime Environment.isPosix) {
         // chmod 755 for binary, 644 for plaintext
-        var filemode: bun.Mode = 0o755;
+        var filemode: fun.Mode = 0o755;
         if (save_format == .text) {
             filemode = 0o644;
         }
-        switch (bun.sys.fchmod(file.handle, filemode)) {
+        switch (fun.sys.fchmod(file.handle, filemode)) {
             .err => |err| {
                 file.close();
-                _ = bun.sys.unlink(tmpname);
+                _ = fun.sys.unlink(tmpname);
                 Output.err(err, "failed to change lockfile permissions", .{});
                 Global.crash();
             },
@@ -1316,10 +1316,10 @@ pub fn saveToDisk(this: *Lockfile, load_result: *const LoadResult, options: *con
     }
 
     file.closeAndMoveTo(tmpname, save_format.filename()) catch |err| {
-        bun.handleErrorReturnTrace(err, @errorReturnTrace());
+        fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
         // note: file is already closed here.
-        _ = bun.sys.unlink(tmpname);
+        _ = fun.sys.unlink(tmpname);
 
         Output.err(err, "Failed to replace old lockfile with new lockfile on disk", .{});
         Global.crash();
@@ -1563,7 +1563,7 @@ pub fn stringBuf(this: *Lockfile) String.Buf {
 
 pub const Scratch = struct {
     pub const DuplicateCheckerMap = std.HashMap(PackageNameHash, logger.Loc, IdentityContext(PackageNameHash), 80);
-    pub const DependencyQueue = bun.LinearFifo(DependencySlice, .Dynamic);
+    pub const DependencyQueue = fun.LinearFifo(DependencySlice, .Dynamic);
 
     duplicate_checker_map: DuplicateCheckerMap = undefined,
     dependency_list_queue: DependencyQueue = undefined,
@@ -1600,7 +1600,7 @@ pub const StringBuilder = struct {
     inline fn assertNotAllocated(this: *const StringBuilder) void {
         if (comptime Environment.allow_assert) {
             if (this.ptr != null) {
-                Output.panic("StringBuilder.count called after StringBuilder.allocate. This is a bug in Bun. Please make sure to call StringBuilder.count before allocating.", .{});
+                Output.panic("StringBuilder.count called after StringBuilder.allocate. This is a bug in Fun. Please make sure to call StringBuilder.count before allocating.", .{});
             }
         }
     }
@@ -1641,7 +1641,7 @@ pub const StringBuilder = struct {
     }
 
     pub fn append(this: *StringBuilder, comptime Type: type, slice: string) Type {
-        return @call(bun.callmod_inline, appendWithHash, .{ this, Type, slice, String.Builder.stringHash(slice) });
+        return @call(fun.callmod_inline, appendWithHash, .{ this, Type, slice, String.Builder.stringHash(slice) });
     }
 
     // SlicedString is not supported due to inline strings.
@@ -1658,7 +1658,7 @@ pub const StringBuilder = struct {
             assert(this.ptr != null); // must call allocate first
         }
 
-        bun.copy(u8, this.ptr.?[this.len..this.cap], slice);
+        fun.copy(u8, this.ptr.?[this.len..this.cap], slice);
         const final_slice = this.ptr.?[this.len..this.cap][0..slice.len];
         this.len += slice.len;
 
@@ -1687,7 +1687,7 @@ pub const StringBuilder = struct {
 
         const string_entry = this.lockfile.string_pool.getOrPut(hash) catch unreachable;
         if (!string_entry.found_existing) {
-            bun.copy(u8, this.ptr.?[this.len..this.cap], slice);
+            fun.copy(u8, this.ptr.?[this.len..this.cap], slice);
             const final_slice = this.ptr.?[this.len..this.cap][0..slice.len];
             this.len += slice.len;
 
@@ -1722,9 +1722,9 @@ pub const PackageIndex = struct {
 
 pub const FormatVersion = enum(u32) {
     v0 = 0,
-    // bun v0.0.x - bun v0.1.6
+    // fun v0.0.x - fun v0.1.6
     v1 = 1,
-    // bun v0.1.7+
+    // fun v0.1.7+
     // This change added tarball URLs to npm-resolved packages
     v2 = 2,
     // Changed semver major/minor/patch to each use u64 instead of u32
@@ -1748,7 +1748,7 @@ pub const ExternalStringBuffer = std.ArrayListUnmanaged(ExternalString);
 pub const jsonStringify = @import("./lockfile/lockfile_json_stringify_for_debugging.zig").jsonStringify;
 pub const assertNoUninitializedPadding = @import("./padding_checker.zig").assertNoUninitializedPadding;
 pub const Buffers = @import("./lockfile/Buffers.zig");
-pub const Serializer = @import("./lockfile/bun.lockb.zig");
+pub const Serializer = @import("./lockfile/fun.lockb.zig");
 pub const CatalogMap = @import("./lockfile/CatalogMap.zig");
 pub const OverrideMap = @import("./lockfile/OverrideMap.zig");
 pub const Package = @import("./lockfile/Package.zig").Package(u64);
@@ -1811,7 +1811,7 @@ pub fn eql(l: *const Lockfile, r: *const Lockfile, cut_off_pkg_id: usize, alloca
     var l_buf = sort_buf[0..l_len];
     var r_buf = sort_buf[r_len..];
 
-    var path_buf: bun.PathBuffer = undefined;
+    var path_buf: fun.PathBuffer = undefined;
     var depth_buf: Tree.DepthBuf = undefined;
 
     var i: usize = 0;
@@ -2065,7 +2065,7 @@ const max_default_trusted_dependencies = 512;
 
 // TODO
 pub const default_trusted_dependencies_list: []const []const u8 = brk: {
-    // This file contains a list of dependencies that Bun runs `postinstall` on by default.
+    // This file contains a list of dependencies that Fun runs `postinstall` on by default.
     const data = @embedFile("./default-trusted-dependencies.txt");
     @setEvalBranchQuota(999999);
     var buf: [max_default_trusted_dependencies][]const u8 = undefined;
@@ -2083,7 +2083,7 @@ pub const default_trusted_dependencies_list: []const []const u8 = brk: {
         }
     };
 
-    // alphabetical so we don't need to sort in `bun pm trusted --default`
+    // alphabetical so we don't need to sort in `fun pm trusted --default`
     std.sort.pdq([]const u8, buf[0..i], {}, Sorter.lessThan);
 
     var names: [i][]const u8 = undefined;
@@ -2165,7 +2165,7 @@ const Dependency = @import("./dependency.zig");
 const DotEnv = @import("../dotenv/env_loader.zig");
 const Npm = @import("./npm.zig");
 const Path = @import("../paths/resolve_path.zig");
-const TextLockfile = @import("./lockfile/bun.lock.zig");
+const TextLockfile = @import("./lockfile/fun.lock.zig");
 const migration = @import("./migration.zig");
 const std = @import("std");
 const Crypto = @import("../sha_hmac/sha.zig").Hashers;
@@ -2180,27 +2180,27 @@ const IdentityContext = @import("../collections/identity_context.zig").IdentityC
 const Fs = @import("../resolver/fs.zig");
 const FileSystem = Fs.FileSystem;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const GlobalStringBuilder = bun.StringBuilder;
-const JSON = bun.json;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
-const z_allocator = bun.z_allocator;
-const Bitset = bun.bit_set.DynamicBitSetUnmanaged;
-const File = bun.sys.File;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const GlobalStringBuilder = fun.StringBuilder;
+const JSON = fun.json;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;
+const z_allocator = fun.z_allocator;
+const Bitset = fun.bit_set.DynamicBitSetUnmanaged;
+const File = fun.sys.File;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const ExternalString = Semver.ExternalString;
 const SlicedString = Semver.SlicedString;
 const String = Semver.String;
 
-const Install = bun.install;
+const Install = fun.install;
 const DependencyID = Install.DependencyID;
 const ExternalSlice = Install.ExternalSlice;
 const Features = Install.Features;

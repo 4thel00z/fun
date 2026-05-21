@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import path from "node:path";
 
 describe("process.stdout.end() flushes pending writes before callback", () => {
@@ -12,11 +12,11 @@ describe("process.stdout.end() flushes pending writes before callback", () => {
       `,
     });
 
-    // Use a shell pipe to detect truncation — Bun.spawn's own pipe reader
+    // Use a shell pipe to detect truncation — Fun.spawn's own pipe reader
     // doesn't reproduce the issue because it drains fully after child exit.
-    const result = Bun.spawnSync({
-      cmd: ["sh", "-c", `"${bunExe()}" "${path.join(String(dir), "test.js")}" 2>/dev/null | wc -c`],
-      env: bunEnv,
+    const result = Fun.spawnSync({
+      cmd: ["sh", "-c", `"${funExe()}" "${path.join(String(dir), "test.js")}" 2>/dev/null | wc -c`],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -47,9 +47,9 @@ describe("process.stdout.end() flushes pending writes before callback", () => {
       `,
     });
 
-    const result = Bun.spawnSync({
-      cmd: ["sh", "-c", `"${bunExe()}" "${path.join(String(dir), "test.js")}" 2>/dev/null | wc -c`],
-      env: bunEnv,
+    const result = Fun.spawnSync({
+      cmd: ["sh", "-c", `"${funExe()}" "${path.join(String(dir), "test.js")}" 2>/dev/null | wc -c`],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

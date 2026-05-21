@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { expect, test } from "bun:test";
+import { serve } from "fun";
+import { expect, test } from "fun:test";
 
 // Simple test to verify basic permessage-deflate functionality
 test("WebSocket client basic permessage-deflate support", async () => {

@@ -1,23 +1,23 @@
 ---
 title: Benchmarking
-description: How to benchmark Bun
+description: How to benchmark Fun
 ---
 
-Bun is designed for speed. Hot paths are extensively profiled and benchmarked. The source code for all of Bun's public benchmarks can be found in the [`/bench`](https://github.com/oven-sh/bun/tree/main/bench) directory of the Bun repo.
+Fun is designed for speed. Hot paths are extensively profiled and benchmarked. The source code for all of Fun's public benchmarks can be found in the [`/bench`](https://github.com/underdoc-org/fun/tree/main/bench) directory of the Fun repo.
 
 ## Measuring time
 
-To precisely measure time, Bun offers two runtime APIs functions:
+To precisely measure time, Fun offers two runtime APIs functions:
 
 1. The Web-standard [`performance.now()`](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now) function
-2. `Bun.nanoseconds()` which is similar to `performance.now()` except it returns the current time since the application started in nanoseconds. You can use `performance.timeOrigin` to convert this to a Unix timestamp.
+2. `Fun.nanoseconds()` which is similar to `performance.now()` except it returns the current time since the application started in nanoseconds. You can use `performance.timeOrigin` to convert this to a Unix timestamp.
 
 ## Benchmarking tools
 
 When writing your own benchmarks, it's important to choose the right tool.
 
 - For microbenchmarks, a great general-purpose tool is [`mitata`](https://github.com/evanwashere/mitata).
-- For load testing, you _must use_ an HTTP benchmarking tool that is at least as fast as `Bun.serve()`, or your results will be skewed. Some popular Node.js-based benchmarking tools like [`autocannon`](https://github.com/mcollina/autocannon) are not fast enough. We recommend one of the following:
+- For load testing, you _must use_ an HTTP benchmarking tool that is at least as fast as `Fun.serve()`, or your results will be skewed. Some popular Node.js-based benchmarking tools like [`autocannon`](https://github.com/mcollina/autocannon) are not fast enough. We recommend one of the following:
   - [`bombardier`](https://github.com/codesenberg/bombardier)
   - [`oha`](https://github.com/hatoo/oha)
   - [`http_load_test`](https://github.com/uNetworking/uSockets/blob/master/examples/http_load_test.c)
@@ -25,14 +25,14 @@ When writing your own benchmarks, it's important to choose the right tool.
 
 ## Measuring memory usage
 
-Bun has two heaps. One heap is for the JavaScript runtime and the other heap is for everything else.
+Fun has two heaps. One heap is for the JavaScript runtime and the other heap is for everything else.
 
 ### JavaScript heap stats
 
-The `bun:jsc` module exposes a few functions for measuring memory usage:
+The `fun:jsc` module exposes a few functions for measuring memory usage:
 
 ```ts
-import { heapStats } from "bun:jsc";
+import { heapStats } from "fun:jsc";
 console.log(heapStats());
 ```
 
@@ -148,17 +148,17 @@ JavaScript is a garbage-collected language, not reference counted. It's normal a
 To force garbage collection to run manually:
 
 ```ts
-Bun.gc(true); // synchronous
-Bun.gc(false); // asynchronous
+Fun.gc(true); // synchronous
+Fun.gc(false); // asynchronous
 ```
 
-Heap snapshots let you inspect what objects are not being freed. You can use the `bun:jsc` module to take a heap snapshot and then view it with Safari or WebKit GTK developer tools. To generate a heap snapshot:
+Heap snapshots let you inspect what objects are not being freed. You can use the `fun:jsc` module to take a heap snapshot and then view it with Safari or WebKit GTK developer tools. To generate a heap snapshot:
 
 ```ts
-import { generateHeapSnapshot } from "bun";
+import { generateHeapSnapshot } from "fun";
 
 const snapshot = generateHeapSnapshot();
-await Bun.write("heap.json", JSON.stringify(snapshot, null, 2));
+await Fun.write("heap.json", JSON.stringify(snapshot, null, 2));
 ```
 
 To view the snapshot, open the `heap.json` file in Safari's Developer Tools (or WebKit GTK)
@@ -189,10 +189,10 @@ Once imported, you should see something like this:
 
 ### Native heap stats
 
-Bun uses mimalloc for the other heap. To report a summary of non-JavaScript memory usage, set the `MIMALLOC_SHOW_STATS=1` environment variable. and stats will print on exit.
+Fun uses mimalloc for the other heap. To report a summary of non-JavaScript memory usage, set the `MIMALLOC_SHOW_STATS=1` environment variable. and stats will print on exit.
 
 ```sh terminal icon="terminal"
-MIMALLOC_SHOW_STATS=1 bun script.js
+MIMALLOC_SHOW_STATS=1 fun script.js
 ```
 
 ```txt
@@ -222,7 +222,7 @@ numa nodes:       1
 Profile JavaScript execution to identify performance bottlenecks with the `--cpu-prof` flag.
 
 ```sh terminal icon="terminal"
-bun --cpu-prof script.js
+fun --cpu-prof script.js
 ```
 
 This generates a `.cpuprofile` file you can open in Chrome DevTools (Performance tab → Load profile) or VS Code's CPU profiler.
@@ -232,26 +232,26 @@ This generates a `.cpuprofile` file you can open in Chrome DevTools (Performance
 Use `--cpu-prof-md` to generate a markdown CPU profile, which is grep-friendly and designed for LLM analysis:
 
 ```sh terminal icon="terminal"
-bun --cpu-prof-md script.js
+fun --cpu-prof-md script.js
 ```
 
 Both `--cpu-prof` and `--cpu-prof-md` can be used together to generate both formats at once:
 
 ```sh terminal icon="terminal"
-bun --cpu-prof --cpu-prof-md script.js
+fun --cpu-prof --cpu-prof-md script.js
 ```
 
-You can also trigger profiling via the `BUN_OPTIONS` environment variable:
+You can also trigger profiling via the `FUN_OPTIONS` environment variable:
 
 ```sh terminal icon="terminal"
-BUN_OPTIONS="--cpu-prof-md" bun script.js
+FUN_OPTIONS="--cpu-prof-md" fun script.js
 ```
 
 ### Options
 
 ```sh terminal icon="terminal"
-bun --cpu-prof --cpu-prof-name my-profile.cpuprofile script.js
-bun --cpu-prof --cpu-prof-dir ./profiles script.js
+fun --cpu-prof --cpu-prof-name my-profile.cpuprofile script.js
+fun --cpu-prof --cpu-prof-dir ./profiles script.js
 ```
 
 | Flag                         | Description                                                 |
@@ -266,7 +266,7 @@ bun --cpu-prof --cpu-prof-dir ./profiles script.js
 Generate heap snapshots on exit to analyze memory usage and find memory leaks.
 
 ```sh terminal icon="terminal"
-bun --heap-prof script.js
+fun --heap-prof script.js
 ```
 
 This generates a V8 `.heapsnapshot` file that can be loaded in Chrome DevTools (Memory tab → Load).
@@ -276,7 +276,7 @@ This generates a V8 `.heapsnapshot` file that can be loaded in Chrome DevTools (
 Use `--heap-prof-md` to generate a markdown heap profile for CLI analysis:
 
 ```sh terminal icon="terminal"
-bun --heap-prof-md script.js
+fun --heap-prof-md script.js
 ```
 
 <Note>If both `--heap-prof` and `--heap-prof-md` are specified, the markdown format is used.</Note>
@@ -284,8 +284,8 @@ bun --heap-prof-md script.js
 ### Options
 
 ```sh terminal icon="terminal"
-bun --heap-prof --heap-prof-name my-snapshot.heapsnapshot script.js
-bun --heap-prof --heap-prof-dir ./profiles script.js
+fun --heap-prof --heap-prof-name my-snapshot.heapsnapshot script.js
+fun --heap-prof --heap-prof-dir ./profiles script.js
 ```
 
 | Flag                          | Description                                |

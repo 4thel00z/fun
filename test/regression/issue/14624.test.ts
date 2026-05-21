@@ -1,24 +1,24 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("uncaught promise rejection in async test should not hang", async () => {
   using dir = tempDir("issue-14624", {
     "hang.test.js": `
-      import { test } from 'bun:test'
+      import { test } from 'fun:test'
 
       test('async test with uncaught rejection', async () => {
         console.log('test start');
         // This creates an unhandled promise rejection
         (async () => { throw new Error('uncaught error'); })();
-        await Bun.sleep(1);
+        await Fun.sleep(1);
         console.log('test end');
       })
     `,
   });
 
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "test", "hang.test.js"],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "test", "hang.test.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",

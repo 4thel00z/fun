@@ -8,7 +8,7 @@ const RefString = @This();
 ptr: [*]const u8 = undefined,
 len: usize = 0,
 hash: Hash = 0,
-impl: bun.WTF.StringImpl,
+impl: fun.WTF.StringImpl,
 
 allocator: std.mem.Allocator,
 
@@ -16,10 +16,10 @@ ctx: ?*anyopaque = null,
 onBeforeDeinit: ?*const Callback = null,
 
 pub const Hash = u32;
-pub const Map = std.HashMap(Hash, *RefString, bun.IdentityContext(Hash), 80);
+pub const Map = std.HashMap(Hash, *RefString, fun.IdentityContext(Hash), 80);
 
 pub fn toJS(this: *RefString, global: *jsc.JSGlobalObject) jsc.JSValue {
-    return bun.String.init(this.impl).toJS(global);
+    return fun.String.init(this.impl).toJS(global);
 }
 
 pub const Callback = fn (ctx: *anyopaque, str: *RefString) void;
@@ -58,5 +58,5 @@ pub fn deinit(this: *RefString) void {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

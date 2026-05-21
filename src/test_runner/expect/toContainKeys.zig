@@ -2,7 +2,7 @@ pub fn toContainKeys(
     this: *Expect,
     globalThis: *JSGlobalObject,
     callFrame: *CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     defer this.postMatch(globalThis);
     const thisValue = callFrame.this();
     const arguments_ = callFrame.arguments_old(1);
@@ -64,12 +64,12 @@ pub fn toContainKeys(
     return this.throw(globalThis, signature, "\n\n" ++ expected_line ++ received_line, .{ expected_fmt, value_fmt });
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
-const CallFrame = bun.jsc.CallFrame;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
+const jsc = fun.jsc;
+const CallFrame = fun.jsc.CallFrame;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
 
-const Expect = bun.jsc.Expect.Expect;
+const Expect = fun.jsc.Expect.Expect;
 const getSignature = Expect.getSignature;

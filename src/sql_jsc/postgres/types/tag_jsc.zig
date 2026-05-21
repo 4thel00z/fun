@@ -65,7 +65,7 @@ pub fn toJS(
     return toJSWithType(tag, globalObject, @TypeOf(value), value);
 }
 
-pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) bun.JSError!Tag {
+pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) fun.JSError!Tag {
     if (value.isEmptyOrUndefinedOrNull()) {
         return Tag.numeric;
     }
@@ -142,7 +142,7 @@ pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) bun.JSError!Tag
 
 const @"bool" = @import("./bool.zig");
 
-const bun = @import("bun");
+const fun = @import("fun");
 const bytea = @import("./bytea.zig");
 const date = @import("./date.zig");
 const json = @import("./json.zig");
@@ -151,5 +151,5 @@ const string = @import("./PostgresString.zig");
 const AnyPostgresError = @import("../../../sql/postgres/AnyPostgresError.zig").AnyPostgresError;
 const Tag = @import("../../../sql/postgres/types/Tag.zig").Tag;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

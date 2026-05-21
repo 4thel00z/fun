@@ -1,30 +1,30 @@
 ---
 title: JSON5
-description: Use Bun's built-in support for JSON5 files through both runtime APIs and bundler integration
+description: Use Fun's built-in support for JSON5 files through both runtime APIs and bundler integration
 ---
 
-In Bun, JSON5 is a first-class citizen alongside JSON, TOML, and YAML. You can:
+In Fun, JSON5 is a first-class citizen alongside JSON, TOML, and YAML. You can:
 
-- Parse and stringify JSON5 with `Bun.JSON5.parse` and `Bun.JSON5.stringify`
+- Parse and stringify JSON5 with `Fun.JSON5.parse` and `Fun.JSON5.stringify`
 - `import` & `require` JSON5 files as modules at runtime (including hot reloading & watch mode support)
-- `import` & `require` JSON5 files in frontend apps via Bun's bundler
+- `import` & `require` JSON5 files in frontend apps via Fun's bundler
 
 ---
 
 ## Conformance
 
-Bun's JSON5 parser passes 100% of the [official JSON5 test suite](https://github.com/json5/json5-tests). The parser is written in Zig for optimal performance. You can view our [translated test suite](https://github.com/oven-sh/bun/blob/main/test/js/bun/json5/json5-test-suite.test.ts) to see every test case.
+Fun's JSON5 parser passes 100% of the [official JSON5 test suite](https://github.com/json5/json5-tests). The parser is written in Zig for optimal performance. You can view our [translated test suite](https://github.com/underdoc-org/fun/blob/main/test/js/fun/json5/json5-test-suite.test.ts) to see every test case.
 
 ---
 
 ## Runtime API
 
-### `Bun.JSON5.parse()`
+### `Fun.JSON5.parse()`
 
 Parse a JSON5 string into a JavaScript value.
 
 ```ts
-import { JSON5 } from "bun";
+import { JSON5 } from "fun";
 
 const data = JSON5.parse(`{
   // JSON5 supports comments
@@ -85,7 +85,7 @@ line 2',
 
 #### Error Handling
 
-`Bun.JSON5.parse()` throws a `SyntaxError` if the input is invalid JSON5:
+`Fun.JSON5.parse()` throws a `SyntaxError` if the input is invalid JSON5:
 
 ```ts
 try {
@@ -95,12 +95,12 @@ try {
 }
 ```
 
-### `Bun.JSON5.stringify()`
+### `Fun.JSON5.stringify()`
 
 Stringify a JavaScript value to a JSON5 string.
 
 ```ts
-import { JSON5 } from "bun";
+import { JSON5 } from "fun";
 
 const str = JSON5.stringify({ name: "my-app", version: "1.0.0" });
 console.log(str);
@@ -210,7 +210,7 @@ const { database, features } = require("./config.json5");
 
 ## Hot Reloading with JSON5
 
-When you run your application with `bun --hot`, changes to JSON5 files are automatically detected and reloaded:
+When you run your application with `fun --hot`, changes to JSON5 files are automatically detected and reloaded:
 
 ```json5 config.json5
 {
@@ -228,7 +228,7 @@ When you run your application with `bun --hot`, changes to JSON5 files are autom
 ```ts server.ts icon="/icons/typescript.svg"
 import { server, features } from "./config.json5";
 
-Bun.serve({
+Fun.serve({
   port: server.port,
   hostname: server.host,
   fetch(req) {
@@ -243,17 +243,17 @@ Bun.serve({
 Run with hot reloading:
 
 ```bash terminal icon="terminal"
-bun --hot server.ts
+fun --hot server.ts
 ```
 
 ---
 
 ## Bundler Integration
 
-When you import JSON5 files and bundle with Bun, the JSON5 is parsed at build time and included as a JavaScript module:
+When you import JSON5 files and bundle with Fun, the JSON5 is parsed at build time and included as a JavaScript module:
 
 ```bash terminal icon="terminal"
-bun build app.ts --outdir=dist
+fun build app.ts --outdir=dist
 ```
 
 This means:

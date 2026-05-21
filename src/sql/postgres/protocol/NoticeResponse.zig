@@ -5,7 +5,7 @@ pub fn deinit(this: *NoticeResponse) void {
     for (this.messages.items) |*message| {
         message.deinit();
     }
-    this.messages.deinit(bun.default_allocator);
+    this.messages.deinit(fun.default_allocator);
 }
 pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReader(Container)) !void {
     var remaining_bytes = try reader.length();
@@ -21,7 +21,7 @@ pub const decode = DecoderWrap(NoticeResponse, decodeInternal).decode;
 
 pub const toJS = @import("../../../sql_jsc/postgres/protocol/notice_response_jsc.zig").toJS;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const DecoderWrap = @import("./DecoderWrap.zig").DecoderWrap;
 const FieldMessage = @import("./FieldMessage.zig").FieldMessage;

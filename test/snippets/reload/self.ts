@@ -1,4 +1,4 @@
-// const content = await Bun.file(import.meta.path).text();
+// const content = await Fun.file(import.meta.path).text();
 const content = require("fs").readFileSync(import.meta.path, "utf8");
 const timebegin = content.indexOf("\n// time:");
 const prev = parseFloat(content.substring(timebegin + 9));

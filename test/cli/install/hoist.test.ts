@@ -1,5 +1,5 @@
-import { afterAll, beforeAll, test } from "bun:test";
-import { VerdaccioRegistry, bunEnv, runBunInstall } from "harness";
+import { afterAll, beforeAll, test } from "fun:test";
+import { VerdaccioRegistry, funEnv, runFunInstall } from "harness";
 
 const registry = new VerdaccioRegistry();
 
@@ -26,5 +26,5 @@ test("should handle resolving optional peer from multiple instances of same pack
   });
 
   // this shouldn't hit an assertion
-  await runBunInstall(bunEnv, packageDir);
+  await runFunInstall(funEnv, packageDir);
 });

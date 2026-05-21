@@ -12,7 +12,7 @@ if (mode !== "clear" && mode !== "refresh" && mode !== "repeat") {
 const BATCH = 2_000;
 
 function gc() {
-  if (typeof Bun !== "undefined") Bun.gc(true);
+  if (typeof Fun !== "undefined") Fun.gc(true);
   else if (typeof globalThis.gc !== "undefined") globalThis.gc();
 }
 
@@ -67,8 +67,8 @@ console.log("initial RSS:", (initial / 1024 / 1024) | 0, "MB");
 console.log("final RSS:", (final / 1024 / 1024) | 0, "MB");
 console.log("delta:", deltaMB.toFixed(1), "MB");
 
-if (globalThis.Bun) {
-  const heapStats = require("bun:jsc").heapStats();
+if (globalThis.Fun) {
+  const heapStats = require("fun:jsc").heapStats();
   if (heapStats.protectedObjectTypeCounts.Timeout) {
     throw new Error("Expected 0 protected Timeout but received " + heapStats.protectedObjectTypeCounts.Timeout);
   }

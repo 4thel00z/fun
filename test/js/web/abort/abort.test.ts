@@ -1,18 +1,18 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { writeFileSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { tmpdir } from "os";
 import { join } from "path";
 
 describe("AbortSignal", () => {
   test("spawn test", async () => {
     const fileName = `/abort.test.ts`;
-    const testFileContents = await Bun.file(join(import.meta.dir, "abort.ts")).arrayBuffer();
+    const testFileContents = await Fun.file(join(import.meta.dir, "abort.ts")).arrayBuffer();
 
     writeFileSync(join(tmpdirSync(), fileName), testFileContents, "utf8");
-    const { stderr } = Bun.spawnSync({
-      cmd: [bunExe(), "test", fileName],
-      env: bunEnv,
+    const { stderr } = Fun.spawnSync({
+      cmd: [funExe(), "test", fileName],
+      env: funEnv,
       cwd: tmpdir(),
     });
 
@@ -22,9 +22,9 @@ describe("AbortSignal", () => {
   test("AbortSignal.timeout(n) should not freeze the process", async () => {
     const fileName = join(import.meta.dir, "abort.signal.ts");
 
-    await using server = Bun.spawn({
-      cmd: [bunExe(), fileName],
-      env: bunEnv,
+    await using server = Fun.spawn({
+      cmd: [funExe(), fileName],
+      env: funEnv,
       cwd: tmpdir(),
       stdout: "inherit",
       stderr: "inherit",
@@ -82,7 +82,7 @@ describe("AbortSignal", () => {
   });
   test(".signal.reason should be a DOMException for timeout", async () => {
     const ac = AbortSignal.timeout(0);
-    await Bun.sleep(10);
+    await Fun.sleep(10);
     expect(ac.reason).toBeInstanceOf(DOMException);
     expect(fmt(ac.reason)).toEqual(fmt(new DOMException("The operation timed out.", "TimeoutError")));
     expect(ac.reason.code).toBe(23);

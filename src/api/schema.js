@@ -13,7 +13,7 @@ const Loader = {
   "12": "base64",
   "13": "dataurl",
   "14": "text",
-  "15": "bunsh",
+  "15": "funsh",
   "16": "sqlite",
   "17": "sqlite_embedded",
   "18": "html",
@@ -32,7 +32,7 @@ const Loader = {
   base64: 12,
   dataurl: 13,
   text: 14,
-  bunsh: 15,
+  funsh: 15,
   sqlite: 16,
   sqlite_embedded: 17,
   html: 18,
@@ -53,7 +53,7 @@ const LoaderKeys = {
   "12": "base64",
   "13": "dataurl",
   "14": "text",
-  "15": "bunsh",
+  "15": "funsh",
   "16": "sqlite",
   "17": "sqlite_embedded",
   "18": "html",
@@ -72,7 +72,7 @@ const LoaderKeys = {
   base64: "base64",
   dataurl: "dataurl",
   text: "text",
-  bunsh: "bunsh",
+  funsh: "funsh",
   sqlite: "sqlite",
   sqlite_embedded: "sqlite_embedded",
   html: "html",
@@ -574,18 +574,18 @@ const Target = {
   "4": 4,
   "browser": 1,
   "node": 2,
-  "bun": 3,
-  "bun_macro": 4,
+  "fun": 3,
+  "fun_macro": 4,
 };
 const TargetKeys = {
   "1": "browser",
   "2": "node",
-  "3": "bun",
-  "4": "bun_macro",
+  "3": "fun",
+  "4": "fun_macro",
   "browser": "browser",
   "node": "node",
-  "bun": "bun",
-  "bun_macro": "bun_macro",
+  "fun": "fun",
+  "fun_macro": "fun_macro",
 };
 const CSSInJSBehavior = {
   "1": 1,
@@ -2989,7 +2989,7 @@ function encodeNPMRegistryMap(message, bb) {
   }
 }
 
-function decodeBunInstall(bb) {
+function decodeFunInstall(bb) {
   var result = {};
 
   while (true) {
@@ -3089,7 +3089,7 @@ function decodeBunInstall(bb) {
   }
 }
 
-function encodeBunInstall(message, bb) {
+function encodeFunInstall(message, bb) {
   var value = message["default_registry"];
   if (value != null) {
     bb.writeByte(1);
@@ -3493,7 +3493,7 @@ export {
   WebsocketCommandKindKeys,
   WebsocketMessageKind,
   WebsocketMessageKindKeys,
-  decodeBunInstall,
+  decodeFunInstall,
   decodeClientServerModule,
   decodeClientServerModuleManifest,
   decodeEnvConfig,
@@ -3551,7 +3551,7 @@ export {
   decodeWebsocketMessageFileChangeNotification,
   decodeWebsocketMessageResolveID,
   decodeWebsocketMessageWelcome,
-  encodeBunInstall,
+  encodeFunInstall,
   encodeClientServerModule,
   encodeClientServerModuleManifest,
   encodeEnvConfig,

@@ -1,12 +1,12 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 import { join } from "path";
 import { Readable } from "stream";
 describe("#09555", () => {
   test("fetch() Response body", async () => {
     const full = crypto.getRandomValues(new Uint8Array(1024 * 3));
-    const sha = Bun.hash(full);
-    using server = Bun.serve({
+    const sha = Fun.hash(full);
+    using server = Fun.serve({
       port: 0,
       async fetch() {
         const chunks = [full.slice(0, 1024), full.slice(1024, 1024 * 2), full.slice(1024 * 2)];
@@ -19,7 +19,7 @@ describe("#09555", () => {
                 return;
               }
               controller.enqueue(chunks.shift());
-              await Bun.sleep(100);
+              await Fun.sleep(100);
             },
           }),
         );
@@ -35,15 +35,15 @@ describe("#09555", () => {
       chunks.push(chunk);
     }
 
-    const out = Bun.hash(Buffer.concat(chunks));
+    const out = Fun.hash(Buffer.concat(chunks));
     expect(out).toBe(sha);
     expect(total).toBe(1024 * 3);
   });
 
-  test("Bun.serve() Request body streaming", async () => {
+  test("Fun.serve() Request body streaming", async () => {
     const full = crypto.getRandomValues(new Uint8Array(1024 * 3));
-    const sha = Bun.CryptoHasher.hash("sha256", full, "base64");
-    using server = Bun.serve({
+    const sha = Fun.CryptoHasher.hash("sha256", full, "base64");
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         const readable = Readable.fromWeb(req.body);
@@ -53,7 +53,7 @@ describe("#09555", () => {
           chunks.push(chunk);
         }
 
-        const out = Bun.CryptoHasher.hash("sha256", Buffer.concat(chunks), "base64");
+        const out = Fun.CryptoHasher.hash("sha256", Buffer.concat(chunks), "base64");
         console.log(out);
         return new Response(out);
       },
@@ -61,7 +61,7 @@ describe("#09555", () => {
 
     const { promise, resolve } = Promise.withResolvers();
     const chunks = [];
-    await Bun.connect({
+    await Fun.connect({
       hostname: server.url.hostname,
       port: server.url.port,
 
@@ -81,7 +81,7 @@ describe("#09555", () => {
 
           for (const chunk of chunks) {
             socket.write(chunk);
-            await Bun.sleep(100);
+            await Fun.sleep(100);
           }
         },
         drain() {},
@@ -98,10 +98,10 @@ describe("#09555", () => {
     expect(out).toEqual(sha);
   });
 
-  test("Bun.serve() Request body buffered", async () => {
+  test("Fun.serve() Request body buffered", async () => {
     const full = crypto.getRandomValues(new Uint8Array(1024 * 3));
-    const sha = Bun.CryptoHasher.hash("sha256", full, "base64");
-    using server = Bun.serve({
+    const sha = Fun.CryptoHasher.hash("sha256", full, "base64");
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         const readable = Readable.fromWeb(req.body);
@@ -111,7 +111,7 @@ describe("#09555", () => {
           chunks.push(chunk);
         }
 
-        const out = Bun.CryptoHasher.hash("sha256", Buffer.concat(chunks), "base64");
+        const out = Fun.CryptoHasher.hash("sha256", Buffer.concat(chunks), "base64");
         return new Response(out);
       },
     });
@@ -124,14 +124,14 @@ describe("#09555", () => {
     expect(out).toEqual(sha);
   });
 
-  test("Bun.file() NativeReadable", async () => {
+  test("Fun.file() NativeReadable", async () => {
     const full = crypto.getRandomValues(new Uint8Array(1024 * 3));
-    const sha = Bun.CryptoHasher.hash("sha256", full, "base64");
+    const sha = Fun.CryptoHasher.hash("sha256", full, "base64");
     const dir = tempDirWithFiles("09555", {
       "/file.blob": full,
     });
-    await Bun.write(join(dir, "file.blob"), full);
-    const web = Bun.file(join(dir, "file.blob")).stream();
+    await Fun.write(join(dir, "file.blob"), full);
+    const web = Fun.file(join(dir, "file.blob")).stream();
     const stream = Readable.fromWeb(web);
 
     const chunks = [];
@@ -141,7 +141,7 @@ describe("#09555", () => {
       total += chunk.length;
     }
 
-    const out = Bun.CryptoHasher.hash("sha256", Buffer.concat(chunks), "base64");
+    const out = Fun.CryptoHasher.hash("sha256", Buffer.concat(chunks), "base64");
     expect(out).toEqual(sha);
     expect(total).toBe(1024 * 3);
   });

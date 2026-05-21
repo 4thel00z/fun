@@ -32,7 +32,7 @@ import {
 } from "@grpc/grpc-js/build/src/subchannel-address";
 import { GrpcUri, parseUri } from "@grpc/grpc-js/build/src/uri-parser";
 import assert from "assert";
-import { beforeAll as before, describe, it } from "bun:test";
+import { beforeAll as before, describe, it } from "fun:test";
 import { isIPv6 } from "harness";
 
 function hasMatchingAddress(endpointList: Endpoint[], expectedAddress: SubchannelAddress): boolean {

@@ -1,28 +1,28 @@
 /// <reference path="../../src/bake/bake.d.ts" />
-/* Dev server tests can be run with `bun test` or in interactive mode with `bun run test.ts "name filter"`
+/* Dev server tests can be run with `fun test` or in interactive mode with `fun run test.ts "name filter"`
  *
  * Env vars:
  *
  * To run with an out-of-path node.js:
- * export BUN_DEV_SERVER_CLIENT_EXECUTABLE="/Users/clo/.local/share/nvm/v22.13.1/bin/node"
+ * export FUN_DEV_SERVER_CLIENT_EXECUTABLE="/Users/clo/.local/share/nvm/v22.13.1/bin/node"
  *
  * To write files to a stable location:
- * export BUN_DEV_SERVER_TEST_TEMP="/Users/clo/scratch/dev"
+ * export FUN_DEV_SERVER_TEST_TEMP="/Users/clo/scratch/dev"
  */
-import { Bake, BunFile, Subprocess } from "bun";
-import { Matchers } from "bun:test";
+import { Bake, FunFile, Subprocess } from "fun";
+import { Matchers } from "fun:test";
 import assert from "node:assert";
 import { EventEmitter } from "node:events";
 import fs, { readFileSync, realpathSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 // @ts-ignore
-import { expect } from "bun:test";
-import { bunEnv, bunExe, isASAN, isCI, isWindows, mergeWindowEnvs, tempDirWithFiles } from "harness";
+import { expect } from "fun:test";
+import { funEnv, funExe, isASAN, isCI, isWindows, mergeWindowEnvs, tempDirWithFiles } from "harness";
 import { dedent } from "../bundler/expectBundled.ts";
 import { exitCodeMapStrings } from "./exit-code-map.mjs";
 
-const isDebugBuild = Bun.version.includes("debug");
+const isDebugBuild = Fun.version.includes("debug");
 
 /**
  * Multiplier for internal wait timeouts (waitForLine, expectMessage, etc.)
@@ -33,7 +33,7 @@ const isDebugBuild = Bun.version.includes("debug");
  */
 export const WAIT_MULTIPLIER = (isDebugBuild ? 3 : 1) * (isASAN ? 3 : 1) * (isCI ? 2 : 1);
 
-const verboseSynchronization = process.env.BUN_DEV_SERVER_VERBOSE_SYNC
+const verboseSynchronization = process.env.FUN_DEV_SERVER_VERBOSE_SYNC
   ? (arg: string) => {
       console.log("\x1b[36m" + arg + "\x1b[0m");
     }
@@ -46,7 +46,7 @@ const verboseSynchronization = process.env.BUN_DEV_SERVER_VERBOSE_SYNC
  *
  * Needs much more investigation.
  */
-const fastBatches = !!process.env.BUN_DEV_SERVER_FAST_BATCHES;
+const fastBatches = !!process.env.FUN_DEV_SERVER_FAST_BATCHES;
 
 /**
  * Set to `ALL` to run all stress tests for 10 minutes each.
@@ -71,7 +71,7 @@ export const minimalFramework: Bake.Framework = {
 };
 
 export const imageFixtures = {
-  bun: imageFixture("test/integration/sharp/bun.png"),
+  fun: imageFixture("test/integration/sharp/fun.png"),
   bun2: imageFixture("test/bundler/fixtures/with-assets/img.png"),
 };
 
@@ -114,17 +114,17 @@ export interface DevServerTest {
   htmlFiles?: string[];
   /**
    * Framework to use. Consider `minimalFramework` if possible.
-   * Provide this object or `files['bun.app.ts']` for a dynamic one.
+   * Provide this object or `files['fun.app.ts']` for a dynamic one.
    */
   framework?: Bake.Framework | "react";
   /**
-   * Source code for a TSX file that `export default`s an array of BunPlugin,
+   * Source code for a TSX file that `export default`s an array of FunPlugin,
    * combined with the `framework` option.
    */
   pluginFile?: string;
   /**
    * Copy all files from test/bake/fixtures/<name>
-   * This directory must contain `bun.app.ts` or `index.html` to allow hacking on fixtures manually via `bun run .`
+   * This directory must contain `fun.app.ts` or `index.html` to allow hacking on fixtures manually via `fun run .`
    */
   fixture?: string;
   /**
@@ -179,11 +179,11 @@ async function maybeWaitInteractive(message: string) {
   }
 }
 
-const hmrClientInitRegex = /\[Bun\] (Live|Hot-module)-reloading socket connected, waiting for changes/;
+const hmrClientInitRegex = /\[Fun\] (Live|Hot-module)-reloading socket connected, waiting for changes/;
 
 type ErrorSpec = string;
 
-type FileObject = Record<string, string | Buffer | BunFile>;
+type FileObject = Record<string, string | Buffer | FunFile>;
 
 enum WatchSynchronization {
   // Callback for starting a batch
@@ -238,7 +238,7 @@ export class Dev extends EventEmitter {
 
   connectSocket() {
     const connected = Promise.withResolvers<void>();
-    this.socket = new WebSocket(this.baseUrl + "/_bun/hmr");
+    this.socket = new WebSocket(this.baseUrl + "/_fun/hmr");
     this.socket.onmessage = event => {
       const data = new Uint8Array(event.data as any);
       if (data[0] === "V".charCodeAt(0)) {
@@ -331,7 +331,7 @@ export class Dev extends EventEmitter {
         }
         if (!fastBatches) {
           // Wait an extra delay to avoid double-triggering events.
-          await Bun.sleep(300);
+          await Fun.sleep(300);
         }
 
         dev.off("watch_synchronization", onSeenFiles);
@@ -365,7 +365,7 @@ export class Dev extends EventEmitter {
           })
         : null;
 
-      await Bun.write(
+      await Fun.write(
         this.join(file),
         ((typeof contents === "string" && options.dedent) ?? true) ? dedent(contents) : contents,
       );
@@ -438,7 +438,7 @@ export class Dev extends EventEmitter {
       if (contents === source) {
         throw new Error(`Couldn't find and replace ${JSON.stringify(find)} in ${file}`);
       }
-      await Bun.write(filename, typeof contents === "string" && shouldDedent ? dedent(contents) : contents);
+      await Fun.write(filename, typeof contents === "string" && shouldDedent ? dedent(contents) : contents);
     });
   }
 
@@ -507,7 +507,7 @@ export class Dev extends EventEmitter {
           }
         } else if (kind === WatchSynchronization.ResultDidNotBundle) {
           if (wantsHmrEvent) {
-            await Bun.sleep(500);
+            await Fun.sleep(500);
             if (seenMainEvent) return;
             console.warn(
               "\x1b[33mWARN: Dev Server did not pick up any changed files. Consider wrapping this call in expectNoWebSocketActivity\x1b[35m",
@@ -638,7 +638,7 @@ export class Dev extends EventEmitter {
   async stressTest(round: () => Promise<void> | void) {
     if (!this.stressTestEndurance) {
       await round();
-      await Bun.sleep(250);
+      await Fun.sleep(250);
       if (this.output.panicked) {
         throw new Error("DevServer panicked in stress test");
       }
@@ -664,7 +664,7 @@ export class Dev extends EventEmitter {
       }
     }
 
-    await Bun.sleep(250);
+    await Fun.sleep(250);
     if (this.output.panicked) {
       throw new Error("DevServer panicked in stress test");
     }
@@ -766,7 +766,7 @@ class DevFetchPromise extends Promise<Response> {
           }
           actual = new TextDecoder("utf8").decode(actual);
           if ((expected as any).sourcePath) {
-            expected[Bun.inspect.custom] = () => `[File] ${(expected as any).sourcePath}`;
+            expected[Fun.inspect.custom] = () => `[File] ${(expected as any).sourcePath}`;
           }
           expect(actual).toEqual(expected);
         }
@@ -809,7 +809,7 @@ class StylePromise extends Promise<Record<string, string>> {
   }
 }
 
-const node = process.env.BUN_DEV_SERVER_CLIENT_EXECUTABLE ?? Bun.which("node");
+const node = process.env.FUN_DEV_SERVER_CLIENT_EXECUTABLE ?? Fun.which("node");
 expect(node, "test will fail if this is not node").not.toBe(process.execPath);
 
 const danglingProcesses = new Set<Subprocess>();
@@ -817,7 +817,7 @@ const danglingProcesses = new Set<Subprocess>();
 /**
  * Controls a subprocess that uses happy-dom as a lightweight browser. It is
  * sandboxed in a separate process because happy-dom is a terrible mess to work
- * with, and has some compatibility issues with Bun.
+ * with, and has some compatibility issues with Fun.
  */
 export class Client extends EventEmitter {
   #proc: Subprocess;
@@ -837,7 +837,7 @@ export class Client extends EventEmitter {
   ) {
     super();
     activeClient = this;
-    const proc = Bun.spawn({
+    const proc = Fun.spawn({
       cmd: [
         node,
         "--no-warnings",
@@ -848,7 +848,7 @@ export class Client extends EventEmitter {
         options.expectErrors ? "--expect-errors" : "",
         options.allowUnlimitedReloads ? "--allow-unlimited-reloads" : "",
       ].filter(Boolean) as string[],
-      env: bunEnv,
+      env: funEnv,
       serialization: "json",
       ipc: (message, subprocess) => {
         this.emit(message.type, ...message.args);
@@ -1045,9 +1045,9 @@ export class Client extends EventEmitter {
       let retries = 0;
       let hasVisibleModal = false;
       while (retries < 5) {
-        hasVisibleModal = await this.js`document.querySelector("bun-hmr")?.style.display === "block"`;
+        hasVisibleModal = await this.js`document.querySelector("fun-hmr")?.style.display === "block"`;
         if (hasVisibleModal) break;
-        await Bun.sleep(200);
+        await Fun.sleep(200);
         retries++;
       }
       this.suppressInteractivePrompt = false;
@@ -1431,8 +1431,8 @@ async function withAnnotatedStack<T>(stackLine: string, cb: () => Promise<T>): P
 }
 
 const tempDir =
-  process.env.BUN_DEV_SERVER_TEST_TEMP ||
-  fs.mkdtempSync(path.join(process.platform === "darwin" && !process.env.CI ? "/tmp" : os.tmpdir(), "bun-dev-test-"));
+  process.env.FUN_DEV_SERVER_TEST_TEMP ||
+  fs.mkdtempSync(path.join(process.platform === "darwin" && !process.env.CI ? "/tmp" : os.tmpdir(), "fun-dev-test-"));
 
 // Ensure temp directory exists
 if (!fs.existsSync(tempDir)) {
@@ -1455,7 +1455,7 @@ function cleanTestDir(dir: string) {
 }
 
 async function installReactWithCache(root: string) {
-  const cacheFiles = ["node_modules", "package.json", "bun.lock"];
+  const cacheFiles = ["node_modules", "package.json", "fun.lock"];
   const cacheValid = cacheFiles.every(file => fs.existsSync(path.join(reactCacheDir, file)));
 
   if (cacheValid) {
@@ -1471,9 +1471,9 @@ async function installReactWithCache(root: string) {
     }
   } else {
     // Install fresh and populate cache
-    await Bun.$`${bunExe()} i --linker=hoisted react@experimental react-dom@experimental react-server-dom-bun react-refresh@experimental && ${bunExe()} install --linker=hoisted`
+    await Fun.$`${funExe()} i --linker=hoisted react@experimental react-dom@experimental react-server-dom-fun react-refresh@experimental && ${funExe()} install --linker=hoisted`
       .cwd(root)
-      .env({ ...bunEnv })
+      .env({ ...funEnv })
       .throws(true);
 
     // Copy to cache for future use
@@ -1501,7 +1501,7 @@ let reactCachePromise: Promise<void> | null = null;
 export async function ensureReactCache(): Promise<void> {
   if (!reactCachePromise) {
     reactCachePromise = (async () => {
-      const cacheFiles = ["node_modules", "package.json", "bun.lock"];
+      const cacheFiles = ["node_modules", "package.json", "fun.lock"];
       const cacheValid = cacheFiles.every(file => fs.existsSync(path.join(reactCacheDir, file)));
 
       if (!cacheValid) {
@@ -1520,9 +1520,9 @@ export async function ensureReactCache(): Promise<void> {
 
         try {
           // Install React packages
-          await Bun.$`${bunExe()} i --linker=hoisted react@experimental react-dom@experimental react-server-dom-bun react-refresh@experimental && ${bunExe()} install --linker=hoisted`
+          await Fun.$`${funExe()} i --linker=hoisted react@experimental react-dom@experimental react-server-dom-fun react-refresh@experimental && ${funExe()} install --linker=hoisted`
             .cwd(tempInstallDir)
-            .env({ ...bunEnv })
+            .env({ ...funEnv })
             .throws(true);
 
           // Copy to cache
@@ -1588,8 +1588,8 @@ async function writeAll(root: string, files: FileObject) {
     fs.mkdirSync(path.dirname(filename), { recursive: true });
     const formattedContents =
       typeof contents === "string" ? dedent(contents).replaceAll("{{root}}", root.replaceAll("\\", "\\\\")) : contents;
-    // @ts-expect-error the type of Bun.write is too strict
-    promises.push(Bun.write(filename, formattedContents));
+    // @ts-expect-error the type of Fun.write is too strict
+    promises.push(Fun.write(filename, formattedContents));
   }
   await Promise.all(promises);
 }
@@ -1613,9 +1613,9 @@ class OutputLineStream extends EventEmitter {
 
     this.name = name;
 
-    // @ts-ignore TODO: fix broken type definitions in @types/bun
+    // @ts-ignore TODO: fix broken type definitions in @types/fun
     const reader1 = (this.reader1 = readable1.getReader());
-    // @ts-ignore TODO: fix broken type definitions in @types/bun
+    // @ts-ignore TODO: fix broken type definitions in @types/fun
     const reader2 = (this.reader2 = readable2.getReader());
 
     for (const reader of [reader1, reader2]) {
@@ -1797,17 +1797,17 @@ function testImpl<T extends DevServerTest>(
 ): T {
   if (interactive) return options;
 
-  const jest = (Bun as any).jest(caller);
+  const jest = (Fun as any).jest(caller);
 
   const basename = path.basename(caller, ".test" + path.extname(caller));
   const count = (counts[basename] = (counts[basename] ?? 0) + 1);
 
   const name = `${
     NODE_ENV === "development" //
-      ? Bun.enableANSIColors
+      ? Fun.enableANSIColors
         ? " \x1b[35mDEV\x1b[0m"
         : " DEV"
-      : Bun.enableANSIColors
+      : Fun.enableANSIColors
         ? "\x1b[36mPROD\x1b[0m"
         : "PROD"
   }:${basename}-${count}: ${description}`;
@@ -1831,15 +1831,15 @@ function testImpl<T extends DevServerTest>(
         // await copyCachedReactDeps(root);
         await installReactWithCache(root);
       }
-      if (options.files["bun.app.ts"] == undefined && htmlFiles.length === 0) {
+      if (options.files["fun.app.ts"] == undefined && htmlFiles.length === 0) {
         if (!options.framework) {
-          throw new Error("Must specify one of: `options.framework`, `*.html`, or `bun.app.ts`");
+          throw new Error("Must specify one of: `options.framework`, `*.html`, or `fun.app.ts`");
         }
         if (options.pluginFile) {
           fs.writeFileSync(path.join(root, "pluginFile.ts"), dedent(options.pluginFile));
         }
         fs.writeFileSync(
-          path.join(root, "bun.app.ts"),
+          path.join(root, "fun.app.ts"),
           dedent`
             ${options.pluginFile ? `import plugins from './pluginFile.ts';` : "let plugins = undefined;"}
             export default {
@@ -1851,11 +1851,11 @@ function testImpl<T extends DevServerTest>(
           `,
         );
       } else if (htmlFiles.length > 0) {
-        if (options.files["bun.app.ts"]) {
-          throw new Error("Cannot provide both bun.app.ts and index.html");
+        if (options.files["fun.app.ts"]) {
+          throw new Error("Cannot provide both fun.app.ts and index.html");
         }
-        await Bun.write(
-          path.join(mainDir, "bun.app.ts"),
+        await Fun.write(
+          path.join(mainDir, "fun.app.ts"),
           indexHtmlScript(htmlFiles.map(file => path.relative(mainDir, file))),
         );
       }
@@ -1866,21 +1866,21 @@ function testImpl<T extends DevServerTest>(
       const fixture = path.join(devTestRoot, "../fixtures", options.fixture);
       fs.cpSync(fixture, root, { recursive: true });
 
-      if (!fs.existsSync(path.join(mainDir, "bun.app.ts"))) {
+      if (!fs.existsSync(path.join(mainDir, "fun.app.ts"))) {
         if (!fs.existsSync(path.join(mainDir, "index.html"))) {
-          throw new Error(`Fixture ${fixture} must contain a bun.app.ts or index.html file.`);
+          throw new Error(`Fixture ${fixture} must contain a fun.app.ts or index.html file.`);
         } else {
-          await Bun.write(path.join(root, "bun.app.ts"), indexHtmlScript(["index.html"]));
+          await Fun.write(path.join(root, "fun.app.ts"), indexHtmlScript(["index.html"]));
         }
       }
       if (!fs.existsSync(path.join(root, "node_modules"))) {
-        if (fs.existsSync(path.join(root, "bun.lock"))) {
-          // run bun install
-          Bun.spawnSync({
+        if (fs.existsSync(path.join(root, "fun.lock"))) {
+          // run fun install
+          Fun.spawnSync({
             cmd: [process.execPath, "install", "--linker=hoisted"],
             cwd: root,
             stdio: ["inherit", "inherit", "inherit"],
-            env: bunEnv,
+            env: funEnv,
           });
         } else {
           // link the node_modules directory from test/node_modules to the temp directory
@@ -1891,11 +1891,11 @@ function testImpl<T extends DevServerTest>(
     fs.writeFileSync(
       path.join(root, "harness_start.ts"),
       dedent`
-        import appConfig from ${JSON.stringify(path.join(mainDir, "bun.app.ts"))};
-        import { fullGC } from "bun:jsc";
+        import appConfig from ${JSON.stringify(path.join(mainDir, "fun.app.ts"))};
+        import { fullGC } from "fun:jsc";
 
         const routes = appConfig.static ?? (appConfig.routes ??= {});
-        if (!routes) throw new Error("No routes found in bun.app.ts");
+        if (!routes) throw new Error("No routes found in fun.app.ts");
         let extractedServer = null;
         routes['/_dev_server_test_set'] = async (req, server) => (extractedServer = server, new Response(""));
         
@@ -1909,7 +1909,7 @@ function testImpl<T extends DevServerTest>(
             if (!extractedServer) {
               throw new Error("Server not found");
             }
-            const { getDevServerDeinitCount } = require("bun:internal-for-testing")
+            const { getDevServerDeinitCount } = require("fun:internal-for-testing")
             const before = getDevServerDeinitCount();
             if (!extractedServer.development) {
               extractedServer.stop(true);
@@ -1920,12 +1920,12 @@ function testImpl<T extends DevServerTest>(
             extractedServer = null!;
             let attempts = 0;
             while (getDevServerDeinitCount() === before) {
-              Bun.gc(true);
+              Fun.gc(true);
               await new Promise(resolve => setTimeout(resolve, 1));
               fullGC();
               attempts++;
               if (attempts > 100) {
-                throw new Error("Failed to trigger deinit. Check with BUN_DEBUG_Server=1 and see why it does not free itself.");
+                throw new Error("Failed to trigger deinit. Check with FUN_DEBUG_Server=1 and see why it does not free itself.");
               }
             }
             process.exit(0); 
@@ -1942,22 +1942,22 @@ function testImpl<T extends DevServerTest>(
       },
     };
 
-    await using devProcess = Bun.spawn({
+    await using devProcess = Fun.spawn({
       cwd: root,
       cmd: [process.execPath, "./harness_start.ts"],
       env: mergeWindowEnvs([
-        bunEnv,
+        funEnv,
         {
           FORCE_COLOR: "1",
-          BUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
-          BUN_DEV_SERVER_TEST_RUNNER: "1",
-          BUN_DUMP_STATE_ON_CRASH: "1",
+          FUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
+          FUN_DEV_SERVER_TEST_RUNNER: "1",
+          FUN_DUMP_STATE_ON_CRASH: "1",
           NODE_ENV,
-          // BUN_DEBUG_QUIET_LOGS: "0",
-          // BUN_DEBUG_DEVSERVER: isDebugBuild && interactive ? "1" : undefined,
-          // BUN_DEBUG_INCREMENTALGRAPH: isDebugBuild && interactive ? "1" : undefined,
-          // BUN_DEBUG_WATCHER: isDebugBuild && interactive ? "1" : undefined,
-          BUN_ASSUME_PERFECT_INCREMENTAL: "0",
+          // FUN_DEBUG_QUIET_LOGS: "0",
+          // FUN_DEBUG_DEVSERVER: isDebugBuild && interactive ? "1" : undefined,
+          // FUN_DEBUG_INCREMENTALGRAPH: isDebugBuild && interactive ? "1" : undefined,
+          // FUN_DEBUG_WATCHER: isDebugBuild && interactive ? "1" : undefined,
+          FUN_ASSUME_PERFECT_INCREMENTAL: "0",
         },
       ]),
       stdio: ["pipe", "pipe", "pipe"],
@@ -2027,16 +2027,16 @@ function testImpl<T extends DevServerTest>(
     );
     return options;
   } catch {
-    // not in bun test. allow interactive use
+    // not in fun test. allow interactive use
     let arg = process.argv.slice(2).join(" ").trim();
     if (arg.startsWith("-t")) {
       arg = arg.slice(2).trim();
     }
     if (!arg) {
-      const mainFile = Bun.$.escape(path.relative(process.cwd(), process.argv[1]));
+      const mainFile = Fun.$.escape(path.relative(process.cwd(), process.argv[1]));
       console.error("Options for running Dev Server tests:");
-      console.error(" - automated:   bun test " + mainFile);
-      console.error(" - interactive: bun " + mainFile + " [-t] <filter or number for test>");
+      console.error(" - automated:   fun test " + mainFile);
+      console.error(" - interactive: fun " + mainFile + " [-t] <filter or number for test>");
       process.exit(1);
     }
     if (name.includes(arg)) {

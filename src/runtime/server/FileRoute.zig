@@ -3,9 +3,9 @@ const FileRoute = @This();
 ref_count: RefCount,
 server: ?AnyServer = null,
 blob: Blob,
-headers: Headers = .{ .allocator = bun.default_allocator },
+headers: Headers = .{ .allocator = fun.default_allocator },
 status_code: u16,
-stat_hash: bun.fs.StatHash = .{},
+stat_hash: fun.fs.StatHash = .{},
 has_last_modified_header: bool,
 has_content_length_header: bool,
 has_content_range_header: bool,
@@ -16,12 +16,12 @@ pub const InitOptions = struct {
     headers: ?*jsc.WebCore.FetchHeaders = null,
 };
 
-pub fn lastModifiedDate(this: *const FileRoute) bun.JSError!?u64 {
+pub fn lastModifiedDate(this: *const FileRoute) fun.JSError!?u64 {
     if (this.has_last_modified_header) {
         if (this.headers.get("last-modified")) |last_modified| {
-            var string = bun.String.init(last_modified);
+            var string = fun.String.init(last_modified);
             defer string.deref();
-            const date_f64 = try bun.String.parseDate(&string, bun.jsc.VirtualMachine.get().global);
+            const date_f64 = try fun.String.parseDate(&string, fun.jsc.VirtualMachine.get().global);
             if (!std.math.isNan(date_f64) and std.math.isFinite(date_f64)) {
                 return @intFromFloat(date_f64);
             }
@@ -36,8 +36,8 @@ pub fn lastModifiedDate(this: *const FileRoute) bun.JSError!?u64 {
 }
 
 pub fn initFromBlob(blob: Blob, opts: InitOptions) *FileRoute {
-    const headers = bun.handleOom(Headers.from(opts.headers, bun.default_allocator, .{ .body = &.{ .Blob = blob } }));
-    return bun.new(FileRoute, .{
+    const headers = fun.handleOom(Headers.from(opts.headers, fun.default_allocator, .{ .body = &.{ .Blob = blob } }));
+    return fun.new(FileRoute, .{
         .ref_count = .init(),
         .server = opts.server,
         .blob = blob,
@@ -52,14 +52,14 @@ pub fn initFromBlob(blob: Blob, opts: InitOptions) *FileRoute {
 fn deinit(this: *FileRoute) void {
     this.blob.deinit();
     this.headers.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn memoryCost(this: *const FileRoute) usize {
     return @sizeOf(FileRoute) + this.headers.memoryCost() + this.blob.reported_estimated_size;
 }
 
-pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSError!?*FileRoute {
+pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) fun.JSError!?*FileRoute {
     if (argument.as(jsc.WebCore.Response)) |response| {
         const bodyValue = response.getBodyValue();
         bodyValue.toBlobIfPossible();
@@ -71,11 +71,11 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSErro
             var blob = bodyValue.use();
 
             blob.globalThis = globalThis;
-            bun.assertf(!blob.isHeapAllocated(), "expected blob not to be heap-allocated", .{});
+            fun.assertf(!blob.isHeapAllocated(), "expected blob not to be heap-allocated", .{});
             bodyValue.* = .{ .Blob = blob.dupe() };
-            const headers = bun.handleOom(Headers.from(response.getInitHeaders(), bun.default_allocator, .{ .body = &.{ .Blob = blob } }));
+            const headers = fun.handleOom(Headers.from(response.getInitHeaders(), fun.default_allocator, .{ .body = &.{ .Blob = blob } }));
 
-            return bun.new(FileRoute, .{
+            return fun.new(FileRoute, .{
                 .ref_count = .init(),
                 .server = null,
                 .blob = blob,
@@ -91,12 +91,12 @@ pub fn fromJS(globalThis: *jsc.JSGlobalObject, argument: jsc.JSValue) bun.JSErro
         if (blob.needsToReadFile()) {
             var b = blob.dupe();
             b.globalThis = globalThis;
-            bun.assertf(!b.isHeapAllocated(), "expected blob not to be heap-allocated", .{});
-            return bun.new(FileRoute, .{
+            fun.assertf(!b.isHeapAllocated(), "expected blob not to be heap-allocated", .{});
+            return fun.new(FileRoute, .{
                 .ref_count = .init(),
                 .server = null,
                 .blob = b,
-                .headers = bun.handleOom(Headers.from(null, bun.default_allocator, .{ .body = &.{ .Blob = b } })),
+                .headers = fun.handleOom(Headers.from(null, fun.default_allocator, .{ .body = &.{ .Blob = b } })),
                 .has_content_length_header = false,
                 .has_last_modified_header = false,
                 .has_content_range_header = false,
@@ -146,17 +146,17 @@ fn writeStatusCode(_: *FileRoute, status: u16, resp: AnyResponse) void {
 }
 
 pub fn onHEADRequest(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse) void {
-    bun.debugAssert(this.server != null);
+    fun.debugAssert(this.server != null);
 
     this.on(req, resp, .HEAD);
 }
 
 pub fn onRequest(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse) void {
-    this.on(req, resp, bun.http.Method.find(req.method()) orelse .GET);
+    this.on(req, resp, fun.http.Method.find(req.method()) orelse .GET);
 }
 
-pub fn on(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse, method: bun.http.Method) void {
-    bun.debugAssert(this.server != null);
+pub fn on(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse, method: fun.http.Method) void {
+    fun.debugAssert(this.server != null);
     this.ref();
     if (this.server) |server| {
         server.onPendingRequest();
@@ -168,20 +168,20 @@ pub fn on(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse, method: bun.
         return;
     };
 
-    const open_flags = bun.O.RDONLY | bun.O.CLOEXEC | bun.O.NONBLOCK;
+    const open_flags = fun.O.RDONLY | fun.O.CLOEXEC | fun.O.NONBLOCK;
 
     const fd_result = brk: {
-        if (bun.Environment.isWindows) {
-            var path_buffer: bun.PathBuffer = undefined;
+        if (fun.Environment.isWindows) {
+            var path_buffer: fun.PathBuffer = undefined;
             @memcpy(path_buffer[0..path.len], path);
             path_buffer[path.len] = 0;
-            break :brk bun.sys.open(
+            break :brk fun.sys.open(
                 path_buffer[0..path.len :0],
                 open_flags,
                 0,
             );
         }
-        break :brk bun.sys.openA(
+        break :brk fun.sys.openA(
             path,
             open_flags,
             0,
@@ -206,14 +206,14 @@ pub fn on(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse, method: bun.
     // before handing ownership to `FileResponseStream`.
     var fd_owned = true;
     defer if (fd_owned) {
-        bun.Async.Closer.close(fd, if (bun.Environment.isWindows) bun.windows.libuv.Loop.get());
+        fun.Async.Closer.close(fd, if (fun.Environment.isWindows) fun.windows.libuv.Loop.get());
         this.onResponseComplete(resp);
     };
 
     const input_if_modified_since_date: ?u64 = req.dateForHeader("if-modified-since") catch return; // TODO: properly propagate exception upwards
 
-    const can_serve_file: bool, const size: u64, const file_type: bun.io.FileType, const pollable: bool = brk: {
-        const stat = switch (bun.sys.fstat(fd)) {
+    const can_serve_file: bool, const size: u64, const file_type: fun.io.FileType, const pollable: bool = brk: {
+        const stat = switch (fun.sys.fstat(fd)) {
             .result => |s| s,
             .err => break :brk .{ false, 0, undefined, false },
         };
@@ -221,17 +221,17 @@ pub fn on(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse, method: bun.
         const stat_size: u64 = @intCast(@max(stat.size, 0));
         const _size: u64 = @min(stat_size, @as(u64, this.blob.size));
 
-        if (bun.S.ISDIR(@intCast(stat.mode))) {
+        if (fun.S.ISDIR(@intCast(stat.mode))) {
             break :brk .{ false, 0, undefined, false };
         }
 
         this.stat_hash.hash(stat, path);
 
-        if (bun.S.ISFIFO(@intCast(stat.mode)) or bun.S.ISCHR(@intCast(stat.mode))) {
+        if (fun.S.ISFIFO(@intCast(stat.mode)) or fun.S.ISCHR(@intCast(stat.mode))) {
             break :brk .{ true, _size, .pipe, true };
         }
 
-        if (bun.S.ISSOCK(@intCast(stat.mode))) {
+        if (fun.S.ISSOCK(@intCast(stat.mode))) {
             break :brk .{ true, _size, .socket, true };
         }
 
@@ -244,7 +244,7 @@ pub fn on(this: *FileRoute, req: uws.AnyRequest, resp: AnyResponse, method: bun.
     }
 
     // Range applies to the slice the route was configured with, not the
-    // underlying file: a Bun.file(p).slice(a,b) route exposes only [a,b).
+    // underlying file: a Fun.file(p).slice(a,b) route exposes only [a,b).
     // RFC 9110 §14.2: Range is only defined for GET (HEAD mirrors GET's
     // headers). Skip if the route has a non-200 status or the user already
     // set Content-Range — they're managing partial responses themselves.
@@ -355,7 +355,7 @@ fn onStreamComplete(ctx: *anyopaque, resp: AnyResponse) void {
     this.onResponseComplete(resp);
 }
 
-fn onStreamError(ctx: *anyopaque, resp: AnyResponse, _: bun.sys.Error) void {
+fn onStreamError(ctx: *anyopaque, resp: AnyResponse, _: fun.sys.Error) void {
     const this: *FileRoute = @ptrCast(@alignCast(ctx));
     this.onResponseComplete(resp);
 }
@@ -370,21 +370,21 @@ fn onResponseComplete(this: *FileRoute, resp: AnyResponse) void {
     this.deref();
 }
 
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const Headers = bun.http.Headers;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const Headers = fun.http.Headers;
 const AnyServer = jsc.API.AnyServer;
 const Blob = jsc.WebCore.Blob;
 
-const FileResponseStream = bun.api.server.FileResponseStream;
-const RangeRequest = bun.api.server.RangeRequest;
-const writeStatus = bun.api.server.writeStatus;
+const FileResponseStream = fun.api.server.FileResponseStream;
+const RangeRequest = fun.api.server.RangeRequest;
+const writeStatus = fun.api.server.writeStatus;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const AnyResponse = uws.AnyResponse;

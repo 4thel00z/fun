@@ -1,6 +1,6 @@
 //! This is a copy-pasta of std.Thread.Mutex with some changes.
 //! - No assert with unreachable
-//! - uses bun.Futex instead of std.Thread.Futex
+//! - uses fun.Futex instead of std.Thread.Futex
 //! Synchronized with std as of Zig 0.14.1
 //!
 //! Mutex is a synchronization primitive which enforces atomic access to a shared region of code known as the "critical section".
@@ -205,22 +205,22 @@ const FutexImpl = struct {
 pub fn spinCycle() void {}
 
 // These have to be a size known to C.
-export fn Bun__lock(ptr: *ReleaseImpl) void {
+export fn Fun__lock(ptr: *ReleaseImpl) void {
     ptr.lock();
 }
 
 // These have to be a size known to C.
-export fn Bun__unlock(ptr: *ReleaseImpl) void {
+export fn Fun__unlock(ptr: *ReleaseImpl) void {
     ptr.unlock();
 }
 
-export const Bun__lock__size: usize = @sizeOf(ReleaseImpl);
+export const Fun__lock__size: usize = @sizeOf(ReleaseImpl);
 
 const builtin = @import("builtin");
 
-const bun = @import("bun");
-const Futex = bun.Futex;
-const assert = bun.assert;
+const fun = @import("fun");
+const Futex = fun.Futex;
+const assert = fun.assert;
 
 const std = @import("std");
 const Thread = std.Thread;

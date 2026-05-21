@@ -14,7 +14,7 @@ extern "C" JSC::EncodedJSValue ByteBlob__JSReadableStreamSource__load(JSC::JSGlo
 extern "C" JSC::EncodedJSValue FileReader__JSReadableStreamSource__load(JSC::JSGlobalObject* global);
 extern "C" JSC::EncodedJSValue ByteStream__JSReadableStreamSource__load(JSC::JSGlobalObject* global);
 
-namespace Bun {
+namespace Fun {
 namespace JS2Native {
 
 // This is the implementation of the generated $lazy
@@ -29,11 +29,11 @@ JSC_DEFINE_HOST_FUNCTION(jsDollarLazy, (JSC::JSGlobalObject * lexicalGlobalObjec
     int id = target.asInt32();
     RELEASE_ASSERT(
         id <= JS2NATIVE_COUNT && id >= 0,
-        "In call to $lazy, got invalid id '%d'. This is a bug in Bun's JS2Native code generator.",
+        "In call to $lazy, got invalid id '%d'. This is a bug in Fun's JS2Native code generator.",
         id);
     Zig::GlobalObject* ptr = uncheckedDowncast<Zig::GlobalObject>(lexicalGlobalObject);
     return JSValue::encode(JS2NativeGenerated::callJS2Native(id, ptr));
 }
 
 } // namespace JS2Native
-} // namespace Bun
+} // namespace Fun

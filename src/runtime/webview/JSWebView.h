@@ -1,7 +1,7 @@
 #pragma once
 
 #include "root.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "JSEventTarget.h"
 #include "WebViewEventTarget.h"
 #include <JavaScriptCore/JSGlobalObject.h>
@@ -9,7 +9,7 @@
 #include <JavaScriptCore/LazyClassStructure.h>
 #include <atomic>
 
-namespace Bun {
+namespace Fun {
 
 namespace WebViewProto {
 enum class VirtualKey : uint8_t;
@@ -119,7 +119,7 @@ public:
     JSC::WriteBarrier<JSC::JSObject> m_onNavigationFailed;
     // Console capture. If the user passed `console: globalThis.console`,
     // m_consoleIsGlobal is set and dispatch goes straight to the
-    // ConsoleClient (Bun__ConsoleObject__messageWithTypeAndLevel) — no JS
+    // ConsoleClient (Fun__ConsoleObject__messageWithTypeAndLevel) — no JS
     // call. Otherwise m_onConsole holds a (type, ...args) callback. Chrome
     // fires from Runtime.consoleAPICalled; WebKit from a WKScriptMessage
     // handler receiving a user-script wrap of console.*.
@@ -245,4 +245,4 @@ void settleSlot(JSC::JSGlobalObject*, JSWebView*,
 JSC::JSObject* createJSWebViewPrototype(JSC::VM&, JSC::JSGlobalObject*);
 JSC::InternalFunction* createJSWebViewConstructor(JSC::VM&, JSC::JSGlobalObject*, JSC::JSObject* prototype);
 
-} // namespace Bun
+} // namespace Fun

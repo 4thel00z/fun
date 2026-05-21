@@ -1,6 +1,6 @@
 *.exe
 *.ll
 *.obj
-*.bunx
+*.funx
 /build
-!bun_shim_impl.exe
+!fun_shim_impl.exe

@@ -1,5 +1,5 @@
-import { S3Client } from "bun";
-import { describe, expect, it } from "bun:test";
+import { S3Client } from "fun";
+import { describe, expect, it } from "fun:test";
 import { getSecret } from "harness";
 
 const s3Options = {
@@ -16,7 +16,7 @@ describe.skipIf(!s3Options.accessKeyId)("issue#27272 - S3 .slice().stream() igno
     const filename = `test-issue-27272-${crypto.randomUUID()}`;
     const s3file = client.file(filename);
     try {
-      await s3file.write("Hello Bun! This is a longer string for testing.");
+      await s3file.write("Hello Fun! This is a longer string for testing.");
 
       const sliced = s3file.slice(0, 5);
       const stream = sliced.stream();
@@ -42,7 +42,7 @@ describe.skipIf(!s3Options.accessKeyId)("issue#27272 - S3 .slice().stream() igno
     const filename = `test-issue-27272-consistency-${crypto.randomUUID()}`;
     const s3file = client.file(filename);
     try {
-      await s3file.write("Hello Bun! This is a longer string for testing.");
+      await s3file.write("Hello Fun! This is a longer string for testing.");
 
       const textResult = await s3file.slice(0, 10).text();
 
@@ -57,7 +57,7 @@ describe.skipIf(!s3Options.accessKeyId)("issue#27272 - S3 .slice().stream() igno
       const streamResult = Buffer.concat(chunks).toString();
 
       expect(streamResult).toBe(textResult);
-      expect(streamResult).toBe("Hello Bun!");
+      expect(streamResult).toBe("Hello Fun!");
     } finally {
       await s3file.unlink();
     }

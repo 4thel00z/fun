@@ -1,14 +1,14 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
-// When targeting Bun's runtime,
+// When targeting Fun's runtime,
 // We must escape latin1 characters in raw template literals
 // This is somewhat brittle
 test("template literal", () => {
-  const { stdout, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "run", join(import.meta.dir, "template-literal-fixture-test.js")],
-    env: bunEnv,
+  const { stdout, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "run", join(import.meta.dir, "template-literal-fixture-test.js")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "inherit",
   });

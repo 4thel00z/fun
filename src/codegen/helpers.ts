@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { isAscii } from "buffer";
 import fs from "fs";
 import path from "path";
@@ -59,7 +61,7 @@ export function readdirRecursive(root: string): string[] {
 
 export function resolveSyncOrNull(specifier: string, from: string) {
   try {
-    return Bun.resolveSync(specifier, from);
+    return Fun.resolveSync(specifier, from);
   } catch {
     return null;
   }

@@ -1,4 +1,4 @@
-import { dlopen, ptr } from "bun:ffi";
+import { dlopen, ptr } from "fun:ffi";
 import { libcPathForDlopen } from "harness";
 
 var lazyMkfifo: any;

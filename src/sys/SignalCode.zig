@@ -99,7 +99,7 @@ pub const SignalCode = enum(u8) {
         return @enumFromInt(std.mem.asBytes(&value)[0]);
     }
 
-    // This wrapper struct is lame, what if bun's color formatter was more versatile
+    // This wrapper struct is lame, what if fun's color formatter was more versatile
     const Fmt = struct {
         signal: SignalCode,
         enable_ansi_colors: bool,
@@ -126,7 +126,7 @@ pub const SignalCode = enum(u8) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const ComptimeEnumMap = bun.ComptimeEnumMap;
-const Output = bun.Output;
-const asByteSlice = bun.asByteSlice;
+const fun = @import("fun");
+const ComptimeEnumMap = fun.ComptimeEnumMap;
+const Output = fun.Output;
+const asByteSlice = fun.asByteSlice;

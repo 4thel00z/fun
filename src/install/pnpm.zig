@@ -76,16 +76,16 @@ pub fn migratePnpmLockfile(
     allocator: std.mem.Allocator,
     log: *logger.Log,
     data: []const u8,
-    dir: bun.FD,
+    dir: fun.FD,
 ) MigratePnpmLockfileError!LoadResult {
     var buf: std.array_list.Managed(u8) = .init(allocator);
     defer buf.deinit();
 
     lockfile.initEmpty(allocator);
-    bun.install.initializeStore();
-    bun.analytics.Features.pnpm_migration += 1;
+    fun.install.initializeStore();
+    fun.analytics.Features.pnpm_migration += 1;
 
-    var yaml_arena = bun.ArenaAllocator.init(allocator);
+    var yaml_arena = fun.ArenaAllocator.init(allocator);
     defer yaml_arena.deinit();
 
     const yaml_source = &logger.Source.initPathString("pnpm-lock.yaml", data);
@@ -133,7 +133,7 @@ pub fn migratePnpmLockfile(
         return error.PnpmLockfileTooOld;
     }
 
-    var found_patches: bun.StringArrayHashMap([]const u8) = .init(allocator);
+    var found_patches: fun.StringArrayHashMap([]const u8) = .init(allocator);
     defer found_patches.deinit();
 
     const pkg_map, const importer_dep_res_versions, const workspace_pkgs_off, const workspace_pkgs_end = build: {
@@ -188,7 +188,7 @@ pub fn migratePnpmLockfile(
             path: String,
             dep_name: []const u8,
         };
-        var patches: bun.StringArrayHashMap(Patch) = .init(allocator);
+        var patches: fun.StringArrayHashMap(Patch) = .init(allocator);
         defer patches.deinit();
         var patch_join_buf: std.array_list.Managed(u8) = .init(allocator);
         defer patch_join_buf.deinit();
@@ -242,7 +242,7 @@ pub fn migratePnpmLockfile(
                 continue;
             }
 
-            var pkg_json_path: bun.AutoAbsPath = .initTopLevelDir();
+            var pkg_json_path: fun.AutoAbsPath = .initTopLevelDir();
             defer pkg_json_path.deinit();
 
             pkg_json_path.append(importer_path);
@@ -282,10 +282,10 @@ pub fn migratePnpmLockfile(
             return error.PnpmLockfileMissingRootPackage;
         };
 
-        var importer_dep_res_versions: bun.StringArrayHashMap(bun.StringArrayHashMap([]const u8)) = .init(allocator);
+        var importer_dep_res_versions: fun.StringArrayHashMap(fun.StringArrayHashMap([]const u8)) = .init(allocator);
 
         {
-            var pkg_json_path: bun.AutoAbsPath = .initTopLevelDir();
+            var pkg_json_path: fun.AutoAbsPath = .initTopLevelDir();
             defer pkg_json_path.deinit();
 
             pkg_json_path.append("package.json");
@@ -327,9 +327,9 @@ pub fn migratePnpmLockfile(
             try lockfile.getOrPutID(0, root_pkg.name_hash);
         }
 
-        var pkg_map: bun.StringArrayHashMap(PackageID) = .init(allocator);
+        var pkg_map: fun.StringArrayHashMap(PackageID) = .init(allocator);
 
-        try pkg_map.putNoClobber(bun.fs.FileSystem.instance.top_level_dir, 0);
+        try pkg_map.putNoClobber(fun.fs.FileSystem.instance.top_level_dir, 0);
 
         const workspace_pkgs_off = lockfile.packages.len;
 
@@ -350,7 +350,7 @@ pub fn migratePnpmLockfile(
                     .value = .{ .workspace = try string_buf.append(path) },
                 };
 
-                var path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                var path_buf: fun.AutoAbsPath = .initTopLevelDir();
                 defer path_buf.deinit();
 
                 path_buf.append(path);
@@ -447,13 +447,13 @@ pub fn migratePnpmLockfile(
                         if (strings.withoutPrefixIfPossibleComptime(version_without_suffix, "link:")) |link_path| {
                             // create a link package for the workspace dependency only if it doesn't already exist
                             if (dep.version.tag == .workspace) {
-                                var link_path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                                var link_path_buf: fun.AutoAbsPath = .initTopLevelDir();
                                 defer link_path_buf.deinit();
                                 link_path_buf.append(workspace_path);
                                 link_path_buf.join(&.{link_path});
 
                                 for (lockfile.workspace_paths.values()) |existing_workspace_path| {
-                                    var workspace_path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                                    var workspace_path_buf: fun.AutoAbsPath = .initTopLevelDir();
                                     defer workspace_path_buf.deinit();
                                     workspace_path_buf.append(existing_workspace_path.slice(string_buf.bytes.items));
 
@@ -471,7 +471,7 @@ pub fn migratePnpmLockfile(
                                 .resolution = .init(.{ .symlink = try string_buf.append(link_path) }),
                             };
 
-                            var abs_link_path: bun.AutoAbsPath = .initTopLevelDir();
+                            var abs_link_path: fun.AutoAbsPath = .initTopLevelDir();
                             defer abs_link_path.deinit();
 
                             abs_link_path.join(&.{ workspace_path, link_path });
@@ -502,7 +502,7 @@ pub fn migratePnpmLockfile(
         const SnapshotEntry = struct {
             obj: Expr,
         };
-        var snapshots: bun.StringArrayHashMap(SnapshotEntry) = .init(allocator);
+        var snapshots: fun.StringArrayHashMap(SnapshotEntry) = .init(allocator);
         defer snapshots.deinit();
 
         if (root.getObject("packages")) |packages_obj| {
@@ -687,7 +687,7 @@ pub fn migratePnpmLockfile(
             // implicit workspace dependencies
             if (dep.behavior.isWorkspace()) {
                 const workspace_path = dep.version.value.workspace.slice(string_buf);
-                var path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                var path_buf: fun.AutoAbsPath = .initTopLevelDir();
                 defer path_buf.deinit();
                 path_buf.join(&.{workspace_path});
                 if (pkg_map.get(path_buf.slice())) |workspace_pkg_id| {
@@ -708,7 +708,7 @@ pub fn migratePnpmLockfile(
             const version_without_suffix = removeSuffix(version);
 
             if (strings.withoutPrefixIfPossibleComptime(version_without_suffix, "link:")) |maybe_symlink_or_folder_or_workspace_path| {
-                var path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                var path_buf: fun.AutoAbsPath = .initTopLevelDir();
                 defer path_buf.deinit();
                 path_buf.join(&.{maybe_symlink_or_folder_or_workspace_path});
                 if (pkg_map.get(path_buf.slice())) |pkg_id| {
@@ -757,7 +757,7 @@ pub fn migratePnpmLockfile(
             const version_without_suffix = removeSuffix(version);
 
             if (strings.withoutPrefixIfPossibleComptime(version_without_suffix, "link:")) |maybe_symlink_or_folder_or_workspace_path| {
-                var path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                var path_buf: fun.AutoAbsPath = .initTopLevelDir();
                 defer path_buf.deinit();
                 path_buf.join(&.{ workspace_path, maybe_symlink_or_folder_or_workspace_path });
                 if (pkg_map.get(path_buf.slice())) |link_pkg_id| {
@@ -797,7 +797,7 @@ pub fn migratePnpmLockfile(
             switch (dep.version.tag) {
                 .folder, .symlink, .workspace => {
                     const maybe_symlink_or_folder_or_workspace_path = strings.withoutPrefixComptime(version_without_suffix, "link:");
-                    var path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                    var path_buf: fun.AutoAbsPath = .initTopLevelDir();
                     defer path_buf.deinit();
                     path_buf.join(&.{maybe_symlink_or_folder_or_workspace_path});
                     if (pkg_map.get(path_buf.slice())) |link_pkg_id| {
@@ -1069,7 +1069,7 @@ fn parseAppendImporterDependencies(
     log: *logger.Log,
     is_root: bool,
     importers_obj: *const Expr,
-    importer_versions: *bun.StringArrayHashMap([]const u8),
+    importer_versions: *fun.StringArrayHashMap([]const u8),
 ) ParseAppendDependenciesError!struct { u32, u32 } {
     const importer_dependency_groups = [3]struct { []const u8, Dependency.Behavior }{
         .{ "dependencies", .{ .prod = true } },
@@ -1177,7 +1177,7 @@ fn parseAppendImporterDependencies(
                     continue;
                 }
 
-                var path_buf: bun.AutoAbsPath = .initTopLevelDir();
+                var path_buf: fun.AutoAbsPath = .initTopLevelDir();
                 defer path_buf.deinit();
 
                 path_buf.append(path);
@@ -1221,8 +1221,8 @@ fn parseAppendImporterDependencies(
 }
 
 /// Updates package.json with workspace and catalog information after migration
-fn updatePackageJsonAfterMigration(allocator: Allocator, manager: *PackageManager, log: *logger.Log, dir: bun.FD, patches: bun.StringArrayHashMap([]const u8)) OOM!void {
-    var pkg_json_path: bun.AbsPath(.{}) = .initTopLevelDir();
+fn updatePackageJsonAfterMigration(allocator: Allocator, manager: *PackageManager, log: *logger.Log, dir: fun.FD, patches: fun.StringArrayHashMap([]const u8)) OOM!void {
+    var pkg_json_path: fun.AbsPath(.{}) = .initTopLevelDir();
     defer pkg_json_path.deinit();
 
     pkg_json_path.append("package.json");
@@ -1346,7 +1346,7 @@ fn updatePackageJsonAfterMigration(allocator: Allocator, manager: *PackageManage
     var workspace_overrides_obj: ?Expr = null;
     var workspace_patched_deps_obj: ?Expr = null;
 
-    switch (bun.sys.File.readFrom(bun.FD.cwd(), "pnpm-workspace.yaml", allocator)) {
+    switch (fun.sys.File.readFrom(fun.FD.cwd(), "pnpm-workspace.yaml", allocator)) {
         .result => |contents| read_pnpm_workspace_yaml: {
             const yaml_source = logger.Source.initPathString("pnpm-workspace.yaml", contents);
             const root = YAML.parse(&yaml_source, log, allocator) catch {
@@ -1541,7 +1541,7 @@ fn updatePackageJsonAfterMigration(allocator: Allocator, manager: *PackageManage
         root_pkg_json.source.contents = try allocator.dupe(u8, package_json_writer.ctx.writtenWithoutTrailingZero());
 
         // Write the updated package.json
-        const write_file = bun.sys.File.openat(dir, "package.json", bun.O.WRONLY | bun.O.TRUNC, 0).unwrap() catch return;
+        const write_file = fun.sys.File.openat(dir, "package.json", fun.O.WRONLY | fun.O.TRUNC, 0).unwrap() catch return;
         defer write_file.close();
         _ = write_file.write(root_pkg_json.source.contents).unwrap() catch return;
     }
@@ -1556,29 +1556,29 @@ const Resolution = @import("./resolution.zig").Resolution;
 const Lockfile = @import("./lockfile.zig");
 const LoadResult = Lockfile.LoadResult;
 
-const bun = @import("bun");
-const JSPrinter = bun.js_printer;
-const OOM = bun.OOM;
-const logger = bun.logger;
-const strings = bun.strings;
-const sys = bun.sys;
-const YAML = bun.interchange.yaml.YAML;
+const fun = @import("fun");
+const JSPrinter = fun.js_printer;
+const OOM = fun.OOM;
+const logger = fun.logger;
+const strings = fun.strings;
+const sys = fun.sys;
+const YAML = fun.interchange.yaml.YAML;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const ExternalString = Semver.ExternalString;
 const String = Semver.String;
 const stringHash = String.Builder.stringHash;
 
-const JSAst = bun.ast;
+const JSAst = fun.ast;
 const E = JSAst.E;
 const Expr = JSAst.Expr;
 
-const DependencyID = bun.install.DependencyID;
-const ExtractTarball = bun.install.ExtractTarball;
-const PackageID = bun.install.PackageID;
-const PackageManager = bun.install.PackageManager;
-const invalid_package_id = bun.install.invalid_package_id;
-const Negatable = bun.install.Npm.Negatable;
+const DependencyID = fun.install.DependencyID;
+const ExtractTarball = fun.install.ExtractTarball;
+const PackageID = fun.install.PackageID;
+const PackageManager = fun.install.PackageManager;
+const invalid_package_id = fun.install.invalid_package_id;
+const Negatable = fun.install.Npm.Negatable;
 
 const std = @import("std");
 const os = std.os;

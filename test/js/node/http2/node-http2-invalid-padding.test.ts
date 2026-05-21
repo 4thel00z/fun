@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import http2 from "node:http2";
 import net from "node:net";
 import http2utils from "./helpers";
 
 // These tests craft malformed PADDED frames from a raw TCP server and feed them
-// to Bun's node:http2 client. Before the fix, `payload.len - padding` in
+// to Fun's node:http2 client. Before the fix, `payload.len - padding` in
 // handleHeadersFrame would wrap around when Pad Length exceeded the payload
 // length, producing an out-of-bounds slice that was handed to the HPACK decoder
 // in release builds (and an `integer overflow` panic in debug/safe builds).

@@ -7,7 +7,7 @@ pub fn decodeInternal(
     reader: NewReader(Container),
 ) !void {
     const length = try reader.length();
-    bun.assert(length >= 4);
+    fun.assert(length >= 4);
 
     const version = try reader.int4();
     this.* = .{
@@ -15,12 +15,12 @@ pub fn decodeInternal(
     };
 
     const unrecognized_options_count: u32 = @intCast(@max(try reader.int4(), 0));
-    try this.unrecognized_options.ensureTotalCapacity(bun.default_allocator, unrecognized_options_count);
+    try this.unrecognized_options.ensureTotalCapacity(fun.default_allocator, unrecognized_options_count);
     errdefer {
         for (this.unrecognized_options.items) |*option| {
             option.deinit();
         }
-        this.unrecognized_options.deinit(bun.default_allocator);
+        this.unrecognized_options.deinit(fun.default_allocator);
     }
     for (0..unrecognized_options_count) |_| {
         var option = try reader.readZ();
@@ -38,5 +38,5 @@ const NewReader = @import("./NewReader.zig").NewReader;
 const int_types = @import("../types/int_types.zig");
 const int4 = int_types.int4;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;

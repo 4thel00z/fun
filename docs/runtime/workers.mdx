@@ -1,6 +1,6 @@
 ---
 title: Workers
-description: Use Bun's Workers API to create and communicate with a new JavaScript instance running on a separate thread while sharing I/O resources with the main thread
+description: Use Fun's Workers API to create and communicate with a new JavaScript instance running on a separate thread while sharing I/O resources with the main thread
 ---
 
 <Warning>
@@ -10,7 +10,7 @@ description: Use Bun's Workers API to create and communicate with a new JavaScri
 
 [`Worker`](https://developer.mozilla.org/en-US/docs/Web/API/Worker) lets you start and communicate with a new JavaScript instance running on a separate thread while sharing I/O resources with the main thread.
 
-Bun implements a minimal version of the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) with extensions that make it work better for server-side use cases. Like the rest of Bun, `Worker` in Bun support CommonJS, ES Modules, TypeScript, JSX, TSX and more out of the box. No extra build steps are necessary.
+Fun implements a minimal version of the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) with extensions that make it work better for server-side use cases. Like the rest of Fun, `Worker` in Fun support CommonJS, ES Modules, TypeScript, JSX, TSX and more out of the box. No extra build steps are necessary.
 
 ## Creating a `Worker`
 
@@ -54,7 +54,7 @@ const worker = new Worker("/not-found.js");
 // throws an error immediately
 ```
 
-The specifier passed to `Worker` is resolved relative to the project root (like typing `bun ./path/to/file.js`).
+The specifier passed to `Worker` is resolved relative to the project root (like typing `fun ./path/to/file.js`).
 
 ### `preload` - load modules before the worker starts
 
@@ -88,7 +88,7 @@ const url = URL.createObjectURL(blob);
 const worker = new Worker(url);
 ```
 
-Like the rest of Bun, workers created from `blob:` URLs support TypeScript, JSX, and other file types out of the box. You can communicate it should be loaded via typescript either via `type` or by passing a `filename` to the `File` constructor.
+Like the rest of Fun, workers created from `blob:` URLs support TypeScript, JSX, and other file types out of the box. You can communicate it should be loaded via typescript either via `type` or by passing a `filename` to the `File` constructor.
 
 ```ts
 const file = new File([`self.onmessage = (event: MessageEvent) => postMessage(event.data)`], "worker.ts");
@@ -116,11 +116,11 @@ To send messages, use [`worker.postMessage`](https://developer.mozilla.org/en-US
 
 ### Performance optimizations
 
-Bun includes optimized fast paths for `postMessage` to dramatically improve performance for common data types:
+Fun includes optimized fast paths for `postMessage` to dramatically improve performance for common data types:
 
-**String fast path** - When posting pure string values, Bun bypasses the structured clone algorithm entirely, achieving significant performance gains with no serialization overhead.
+**String fast path** - When posting pure string values, Fun bypasses the structured clone algorithm entirely, achieving significant performance gains with no serialization overhead.
 
-**Simple object fast path** - For plain objects containing only primitive values (strings, numbers, booleans, null, undefined), Bun uses an optimized serialization path that stores properties directly without full structured cloning.
+**Simple object fast path** - For plain objects containing only primitive values (strings, numbers, booleans, null, undefined), Fun uses an optimized serialization path that stores properties directly without full structured cloning.
 
 The simple object fast path activates when the object:
 
@@ -129,9 +129,9 @@ The simple object fast path activates when the object:
 - Has no indexed properties or getter/setter methods
 - All property values are primitives or strings
 
-With these fast paths, Bun's `postMessage` performs **2-241x faster** because the message length no longer has a meaningful impact on performance.
+With these fast paths, Fun's `postMessage` performs **2-241x faster** because the message length no longer has a meaningful impact on performance.
 
-**Bun (with fast paths):**
+**Fun (with fast paths):**
 
 ```ts
 postMessage({ prop: 11 chars string, ...9 more props }) - 648ns
@@ -262,7 +262,7 @@ Note: `worker.ref()` is not available in browsers.
 
 ## Memory usage with `smol`
 
-JavaScript instances can use a lot of memory. Bun's `Worker` supports a `smol` mode that reduces memory usage, at a cost of performance. To enable `smol` mode, pass `smol: true` to the `options` object in the `Worker` constructor.
+JavaScript instances can use a lot of memory. Fun's `Worker` supports a `smol` mode that reduces memory usage, at a cost of performance. To enable `smol` mode, pass `smol: true` to the `options` object in the `Worker` constructor.
 
 ```ts index.ts icon="/icons/typescript.svg"
 const worker = new Worker("./i-am-smol.ts", {
@@ -299,12 +299,12 @@ process.on("worker", worker => {
 });
 ```
 
-## `Bun.isMainThread`
+## `Fun.isMainThread`
 
-You can check if you're in the main thread by checking `Bun.isMainThread`.
+You can check if you're in the main thread by checking `Fun.isMainThread`.
 
 ```ts
-if (Bun.isMainThread) {
+if (Fun.isMainThread) {
   console.log("I'm the main thread");
 } else {
   console.log("I'm in a worker");

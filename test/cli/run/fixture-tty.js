@@ -1,5 +1,5 @@
 const onlyCheck = process.env.ONLY_CHECK_TTY === "0";
-import { dlopen } from "bun:ffi";
+import { dlopen } from "fun:ffi";
 
 const suffix = process.platform === "darwin" ? "dylib" : "so.6";
 const { tcgetattr, tcsetattr } = dlopen(`libc.${suffix}`, {
@@ -15,4 +15,4 @@ if (rc === 0) {
   throw new Error("tcgetattr failed");
 }
 
-await Bun.write(1, termios.toString("hex"));
+await Fun.write(1, termios.toString("hex"));

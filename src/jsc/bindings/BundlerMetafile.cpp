@@ -7,14 +7,14 @@
  */
 
 #include "root.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ZigGlobalObject.h"
 
 #include <JavaScriptCore/CustomGetterSetter.h>
 #include <JavaScriptCore/JSCJSValueInlines.h>
 #include <JavaScriptCore/JSONObject.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -56,7 +56,7 @@ JSC_DEFINE_CUSTOM_GETTER(bundlerMetafileLazyGetter, (JSGlobalObject * globalObje
 
 // Helper to set up the lazy metafile on a BuildOutput object
 // For backward compatibility, metafile is the parsed JSON directly (not wrapped in { json: ... })
-extern "C" SYSV_ABI void Bun__setupLazyMetafile(
+extern "C" SYSV_ABI void Fun__setupLazyMetafile(
     JSC::JSGlobalObject* globalObject,
     JSC::EncodedJSValue buildOutputEncoded,
     JSC::EncodedJSValue metafileJsonStringEncoded,
@@ -81,4 +81,4 @@ extern "C" SYSV_ABI void Bun__setupLazyMetafile(
         PropertyAttribute::CustomValue | 0);
 }
 
-} // namespace Bun
+} // namespace Fun

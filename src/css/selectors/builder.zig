@@ -89,7 +89,7 @@ pub fn SelectorBuilder(comptime Impl: type) type {
 
         /// Pushes a simple selector onto the current compound selector.
         pub fn pushSimpleSelector(this: *This, ss: GenericComponent(Impl)) void {
-            bun.assert(!ss.isCombinator());
+            fun.assert(!ss.isCombinator());
             this.simple_selectors.append(this.allocator, ss);
             this.current_len += 1;
         }
@@ -196,7 +196,7 @@ pub fn SelectorBuilder(comptime Impl: type) type {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 
 const std = @import("std");
 const ArrayList = std.ArrayListUnmanaged;

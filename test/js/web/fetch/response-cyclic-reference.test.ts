@@ -1,5 +1,5 @@
-import { heapStats } from "bun:jsc";
-import { expect, test } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { expect, test } from "fun:test";
 
 test("stream should not leak when response is cyclic reference to itself", async () => {
   function leak() {
@@ -14,8 +14,8 @@ test("stream should not leak when response is cyclic reference to itself", async
     leak();
   }
 
-  await Bun.sleep(0);
-  Bun.gc(true);
+  await Fun.sleep(0);
+  Fun.gc(true);
   expect(heapStats().objectTypeCounts.ReadableStream || 0).toBeLessThanOrEqual(100);
 });
 
@@ -34,7 +34,7 @@ test("stream should not leak when creating a stream contained in another respons
     leak();
   }
 
-  await Bun.sleep(0);
-  Bun.gc(true);
+  await Fun.sleep(0);
+  Fun.gc(true);
   expect(heapStats().objectTypeCounts.ReadableStream || 0).toBeLessThanOrEqual(100);
 });

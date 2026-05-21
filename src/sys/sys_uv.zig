@@ -1,29 +1,29 @@
-//! bun.sys.sys_uv is a polyfill of bun.sys but with libuv.
-//! TODO: Probably should merge this into bun.sys itself with isWindows checks
+//! fun.sys.sys_uv is a polyfill of fun.sys but with libuv.
+//! TODO: Probably should merge this into fun.sys itself with isWindows checks
 
 comptime {
-    bun.assert(Environment.isWindows);
+    fun.assert(Environment.isWindows);
 }
 
-pub const log = bun.sys.syslog;
-pub const Error = bun.sys.Error;
-pub const PosixStat = bun.sys.PosixStat;
+pub const log = fun.sys.syslog;
+pub const Error = fun.sys.Error;
+pub const PosixStat = fun.sys.PosixStat;
 
 // libuv dont support openat (https://github.com/libuv/libuv/issues/4167)
-pub const openat = bun.sys.openat;
-pub const getFdPath = bun.sys.getFdPath;
-pub const setFileOffset = bun.sys.setFileOffset;
-pub const openatOSPath = bun.sys.openatOSPath;
-pub const mkdirOSPath = bun.sys.mkdirOSPath;
-pub const access = bun.sys.access;
+pub const openat = fun.sys.openat;
+pub const getFdPath = fun.sys.getFdPath;
+pub const setFileOffset = fun.sys.setFileOffset;
+pub const openatOSPath = fun.sys.openatOSPath;
+pub const mkdirOSPath = fun.sys.mkdirOSPath;
+pub const access = fun.sys.access;
 
 // Note: `req = undefined; req.deinit()` has a safety-check in a debug build
 
-pub fn open(file_path: [:0]const u8, c_flags: i32, _perm: bun.Mode) Maybe(bun.FD) {
+pub fn open(file_path: [:0]const u8, c_flags: i32, _perm: fun.Mode) Maybe(fun.FD) {
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
 
-    const flags = uv.O.fromBunO(c_flags);
+    const flags = uv.O.fromFunO(c_flags);
 
     var perm = _perm;
     if (perm == 0) {
@@ -39,7 +39,7 @@ pub fn open(file_path: [:0]const u8, c_flags: i32, _perm: bun.Mode) Maybe(bun.FD
         .{ .result = req.result.toFD() };
 }
 
-pub fn mkdir(file_path: [:0]const u8, flags: bun.Mode) Maybe(void) {
+pub fn mkdir(file_path: [:0]const u8, flags: fun.Mode) Maybe(void) {
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
     const rc = uv.uv_fs_mkdir(uv.Loop.get(), &req, file_path.ptr, flags, null);
@@ -51,7 +51,7 @@ pub fn mkdir(file_path: [:0]const u8, flags: bun.Mode) Maybe(void) {
         .success;
 }
 
-pub fn chmod(file_path: [:0]const u8, flags: bun.Mode) Maybe(void) {
+pub fn chmod(file_path: [:0]const u8, flags: fun.Mode) Maybe(void) {
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
 
@@ -64,7 +64,7 @@ pub fn chmod(file_path: [:0]const u8, flags: bun.Mode) Maybe(void) {
         .success;
 }
 
-pub fn fchmod(fd: FD, flags: bun.Mode) Maybe(void) {
+pub fn fchmod(fd: FD, flags: fun.Mode) Maybe(void) {
     const uv_fd = fd.uv();
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
@@ -77,7 +77,7 @@ pub fn fchmod(fd: FD, flags: bun.Mode) Maybe(void) {
         .success;
 }
 
-pub fn statfs(file_path: [:0]const u8) Maybe(bun.StatFS) {
+pub fn statfs(file_path: [:0]const u8) Maybe(fun.StatFS) {
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
     const rc = uv.uv_fs_statfs(uv.Loop.get(), &req, file_path.ptr, null);
@@ -86,7 +86,7 @@ pub fn statfs(file_path: [:0]const u8) Maybe(bun.StatFS) {
     return if (rc.errno()) |errno|
         .{ .err = .{ .errno = errno, .syscall = .statfs, .path = file_path } }
     else
-        .{ .result = bun.StatFS.init(req.ptrAs(*align(1) bun.StatFS)) };
+        .{ .result = fun.StatFS.init(req.ptrAs(*align(1) fun.StatFS)) };
 }
 
 pub fn chown(file_path: [:0]const u8, uid: uv.uv_uid_t, gid: uv.uv_uid_t) Maybe(void) {
@@ -150,14 +150,14 @@ pub fn readlink(file_path: [:0]const u8, buf: []u8) Maybe([:0]u8) {
         return .{ .err = .{ .errno = errno, .syscall = .readlink, .path = file_path } };
     } else {
         // Seems like `rc` does not contain the size?
-        bun.assert(rc.int() == 0);
+        fun.assert(rc.int() == 0);
         const result_ptr: ?[*:0]u8 = req.ptrAs(?[*:0]u8);
-        const slice = bun.span(result_ptr orelse return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.NOENT), .syscall = .readlink, .path = file_path } });
+        const slice = fun.span(result_ptr orelse return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.NOENT), .syscall = .readlink, .path = file_path } });
         // Reserve one byte for the NUL sentinel below. When slice.len == buf.len
         // there is no room for it and buf[slice.len] = 0 would be out of bounds.
         if (slice.len >= buf.len) {
             log("uv readlink({s}) = {d}, {s} TRUNCATED", .{ file_path, rc.int(), slice });
-            return .{ .err = .{ .errno = @intFromEnum(bun.sys.E.NAMETOOLONG), .syscall = .readlink, .path = file_path } };
+            return .{ .err = .{ .errno = @intFromEnum(fun.sys.E.NAMETOOLONG), .syscall = .readlink, .path = file_path } };
         }
         log("uv readlink({s}) = {d}, {s}", .{ file_path, rc.int(), slice });
         @memcpy(buf[0..slice.len], slice);
@@ -216,7 +216,7 @@ pub fn ftruncate(fd: FD, size: isize) Maybe(void) {
         .success;
 }
 
-pub fn fstat(fd: FD) Maybe(bun.Stat) {
+pub fn fstat(fd: FD) Maybe(fun.Stat) {
     const uv_fd = fd.uv();
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
@@ -255,7 +255,7 @@ pub fn fsync(fd: FD) Maybe(void) {
         .success;
 }
 
-pub fn stat(path: [:0]const u8) Maybe(bun.Stat) {
+pub fn stat(path: [:0]const u8) Maybe(fun.Stat) {
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
     const rc = uv.uv_fs_stat(uv.Loop.get(), &req, path.ptr, null);
@@ -267,7 +267,7 @@ pub fn stat(path: [:0]const u8) Maybe(bun.Stat) {
         .{ .result = req.statbuf };
 }
 
-pub fn lstat(path: [:0]const u8) Maybe(bun.Stat) {
+pub fn lstat(path: [:0]const u8) Maybe(fun.Stat) {
     var req: uv.fs_t = uv.fs_t.uninitialized;
     defer req.deinit();
     const rc = uv.uv_fs_lstat(uv.Loop.get(), &req, path.ptr, null);
@@ -279,11 +279,11 @@ pub fn lstat(path: [:0]const u8) Maybe(bun.Stat) {
         .{ .result = req.statbuf };
 }
 
-pub fn close(fd: FD) ?bun.sys.Error {
+pub fn close(fd: FD) ?fun.sys.Error {
     return fd.closeAllowingBadFileDescriptor(@returnAddress());
 }
 
-pub fn closeAllowingStdoutAndStderr(fd: FD) ?bun.sys.Error {
+pub fn closeAllowingStdoutAndStderr(fd: FD) ?fun.sys.Error {
     return fd.closeAllowingStandardIo(@returnAddress());
 }
 
@@ -296,7 +296,7 @@ const max_iovec_count: usize = std.math.maxInt(c_uint);
 const max_buf_len: usize = std.math.maxInt(u32);
 
 /// Returns the total byte capacity of a slice of iovec buffers.
-fn sumBufsLen(bufs: []const bun.PlatformIOVec) usize {
+fn sumBufsLen(bufs: []const fun.PlatformIOVec) usize {
     var total: usize = 0;
     for (bufs) |buf| {
         total += buf.len;
@@ -304,11 +304,11 @@ fn sumBufsLen(bufs: []const bun.PlatformIOVec) usize {
     return total;
 }
 
-pub fn preadv(fd: FD, bufs: []const bun.PlatformIOVec, position: i64) Maybe(usize) {
+pub fn preadv(fd: FD, bufs: []const fun.PlatformIOVec, position: i64) Maybe(usize) {
     const uv_fd = fd.uv();
-    comptime bun.assert(bun.PlatformIOVec == uv.uv_buf_t);
+    comptime fun.assert(fun.PlatformIOVec == uv.uv_buf_t);
 
-    const debug_timer = bun.Output.DebugTimer.start();
+    const debug_timer = fun.Output.DebugTimer.start();
 
     var total_read: usize = 0;
     var remaining_bufs = bufs;
@@ -362,11 +362,11 @@ pub fn preadv(fd: FD, bufs: []const bun.PlatformIOVec, position: i64) Maybe(usiz
     return .{ .result = total_read };
 }
 
-pub fn pwritev(fd: FD, bufs: []const bun.PlatformIOVecConst, position: i64) Maybe(usize) {
+pub fn pwritev(fd: FD, bufs: []const fun.PlatformIOVecConst, position: i64) Maybe(usize) {
     const uv_fd = fd.uv();
-    comptime bun.assert(bun.PlatformIOVec == uv.uv_buf_t);
+    comptime fun.assert(fun.PlatformIOVec == uv.uv_buf_t);
 
-    const debug_timer = bun.Output.DebugTimer.start();
+    const debug_timer = fun.Output.DebugTimer.start();
 
     var total_written: usize = 0;
     var remaining_bufs = bufs;
@@ -420,14 +420,14 @@ pub fn pwritev(fd: FD, bufs: []const bun.PlatformIOVecConst, position: i64) Mayb
     return .{ .result = total_written };
 }
 
-pub inline fn readv(fd: FD, bufs: []bun.PlatformIOVec) Maybe(usize) {
+pub inline fn readv(fd: FD, bufs: []fun.PlatformIOVec) Maybe(usize) {
     return preadv(fd, bufs, -1);
 }
 
 pub fn pread(fd: FD, buf: []u8, position: i64) Maybe(usize) {
     // If buffer fits in a single uv_buf_t, use the simple path
     if (buf.len <= max_buf_len) {
-        var bufs: [1]bun.PlatformIOVec = .{bun.platformIOVecCreate(buf)};
+        var bufs: [1]fun.PlatformIOVec = .{fun.platformIOVecCreate(buf)};
         return preadv(fd, &bufs, position);
     }
 
@@ -438,7 +438,7 @@ pub fn pread(fd: FD, buf: []u8, position: i64) Maybe(usize) {
 
     while (remaining.len > 0) {
         const chunk_len = @min(remaining.len, max_buf_len);
-        var bufs: [1]bun.PlatformIOVec = .{bun.platformIOVecCreate(remaining[0..chunk_len])};
+        var bufs: [1]fun.PlatformIOVec = .{fun.platformIOVecCreate(remaining[0..chunk_len])};
 
         switch (preadv(fd, &bufs, current_position)) {
             .err => |err| return .{ .err = err },
@@ -463,7 +463,7 @@ pub fn pread(fd: FD, buf: []u8, position: i64) Maybe(usize) {
 pub fn read(fd: FD, buf: []u8) Maybe(usize) {
     // If buffer fits in a single uv_buf_t, use the simple path
     if (buf.len <= max_buf_len) {
-        var bufs: [1]bun.PlatformIOVec = .{bun.platformIOVecCreate(buf)};
+        var bufs: [1]fun.PlatformIOVec = .{fun.platformIOVecCreate(buf)};
         return readv(fd, &bufs);
     }
 
@@ -473,7 +473,7 @@ pub fn read(fd: FD, buf: []u8) Maybe(usize) {
 
     while (remaining.len > 0) {
         const chunk_len = @min(remaining.len, max_buf_len);
-        var bufs: [1]bun.PlatformIOVec = .{bun.platformIOVecCreate(remaining[0..chunk_len])};
+        var bufs: [1]fun.PlatformIOVec = .{fun.platformIOVecCreate(remaining[0..chunk_len])};
 
         switch (readv(fd, &bufs)) {
             .err => |err| return .{ .err = err },
@@ -492,14 +492,14 @@ pub fn read(fd: FD, buf: []u8) Maybe(usize) {
     return .{ .result = total_read };
 }
 
-pub inline fn writev(fd: FD, bufs: []bun.PlatformIOVec) Maybe(usize) {
+pub inline fn writev(fd: FD, bufs: []fun.PlatformIOVec) Maybe(usize) {
     return pwritev(fd, bufs, -1);
 }
 
 pub fn pwrite(fd: FD, buf: []const u8, position: i64) Maybe(usize) {
     // If buffer fits in a single uv_buf_t, use the simple path
     if (buf.len <= max_buf_len) {
-        var bufs: [1]bun.PlatformIOVecConst = .{bun.platformIOVecConstCreate(buf)};
+        var bufs: [1]fun.PlatformIOVecConst = .{fun.platformIOVecConstCreate(buf)};
         return pwritev(fd, &bufs, position);
     }
 
@@ -510,7 +510,7 @@ pub fn pwrite(fd: FD, buf: []const u8, position: i64) Maybe(usize) {
 
     while (remaining.len > 0) {
         const chunk_len = @min(remaining.len, max_buf_len);
-        var bufs: [1]bun.PlatformIOVecConst = .{bun.platformIOVecConstCreate(remaining[0..chunk_len])};
+        var bufs: [1]fun.PlatformIOVecConst = .{fun.platformIOVecConstCreate(remaining[0..chunk_len])};
 
         switch (pwritev(fd, &bufs, current_position)) {
             .err => |err| return .{ .err = err },
@@ -535,7 +535,7 @@ pub fn pwrite(fd: FD, buf: []const u8, position: i64) Maybe(usize) {
 pub fn write(fd: FD, buf: []const u8) Maybe(usize) {
     // If buffer fits in a single uv_buf_t, use the simple path
     if (buf.len <= max_buf_len) {
-        var bufs: [1]bun.PlatformIOVecConst = .{bun.platformIOVecConstCreate(buf)};
+        var bufs: [1]fun.PlatformIOVecConst = .{fun.platformIOVecConstCreate(buf)};
         return writev(fd, &bufs);
     }
 
@@ -545,7 +545,7 @@ pub fn write(fd: FD, buf: []const u8) Maybe(usize) {
 
     while (remaining.len > 0) {
         const chunk_len = @min(remaining.len, max_buf_len);
-        var bufs: [1]bun.PlatformIOVecConst = .{bun.platformIOVecConstCreate(remaining[0..chunk_len])};
+        var bufs: [1]fun.PlatformIOVecConst = .{fun.platformIOVecConstCreate(remaining[0..chunk_len])};
 
         switch (writev(fd, &bufs)) {
             .err => |err| return .{ .err = err },
@@ -568,8 +568,8 @@ pub const Tag = @import("./sys.zig").Tag;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const Maybe = bun.sys.Maybe;
-const uv = bun.windows.libuv;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const Maybe = fun.sys.Maybe;
+const uv = fun.windows.libuv;

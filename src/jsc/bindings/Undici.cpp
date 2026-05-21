@@ -12,7 +12,7 @@
 #include "JavaScriptCore/ObjectConstructor.h"
 
 #include "helpers.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 #include "JavaScriptCore/AggregateError.h"
 #include "JavaScriptCore/JSFunction.h"
@@ -23,7 +23,7 @@
 #include "JSMessageEvent.h"
 #include <tuple>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebCore;
@@ -50,7 +50,7 @@ JSC::JSValue createUndiciInternalBinding(Zig::GlobalObject* globalObject)
     auto* obj = constructEmptyObject(globalObject, globalObject->objectPrototype(),
         std::tuple_size_v<decltype(fields)>);
 
-    Bun::Algo::Tuple::forEachIndexed(std::move(fields), [&](std::size_t index, auto&& field) {
+    Fun::Algo::Tuple::forEachIndexed(std::move(fields), [&](std::size_t index, auto&& field) {
         obj->putDirectIndex(globalObject, index, field);
     });
 

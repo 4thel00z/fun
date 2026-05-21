@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -31,7 +31,7 @@ function checkServerIdentity(hostname: string, cert: any) {
 
 async function connect(options: any) {
   {
-    using server = Bun.serve({
+    using server = Fun.serve({
       tls: options.server,
       port: 0,
       fetch(req) {

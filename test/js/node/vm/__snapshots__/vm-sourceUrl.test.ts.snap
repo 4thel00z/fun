@@ -1,4 +1,4 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`can get sourceURL from eval inside node:vm 1`] = `
 "evalmachine.<anonymous>:2
@@ -9,7 +9,7 @@ Error: hello
 `;
 
 exports[`can get sourceURL inside node:vm 1`] = `
-"4 |     return Bun.inspect(new Error("hello"));
+"4 |     return Fun.inspect(new Error("hello"));
                            ^
 error: hello
       at hello (hellohello.js:4:24)
@@ -19,7 +19,7 @@ error: hello
 `;
 
 exports[`eval sourceURL is correct 1`] = `
-"4 |     return Bun.inspect(new Error("hello"));
+"4 |     return Fun.inspect(new Error("hello"));
                            ^
 error: hello
       at hello (hellohello.js:4:24)

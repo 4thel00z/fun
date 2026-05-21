@@ -252,9 +252,9 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
 
-const Query = bun.Semver.Query;
-const Version = bun.Semver.Version;
+const Query = fun.Semver.Query;
+const Version = fun.Semver.Version;

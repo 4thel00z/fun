@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import "reflect-metadata";
 function Abc() {
   return (target: any, field: string) => {};
@@ -15,6 +15,6 @@ class M {
 test("basic metadata works", () => {
   expect(Reflect.getMetadata("design:type", M.prototype, "myval")).toBe(Number);
 });
-test.todo("bun can't support complex metadata", () => {
+test.todo("fun can't support complex metadata", () => {
   expect(Reflect.getMetadata("design:type", M.prototype, "myval2")).toBe(Number);
 });

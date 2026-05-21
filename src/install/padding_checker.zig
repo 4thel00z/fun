@@ -1,9 +1,9 @@
-/// In some parts of lockfile serialization, Bun will use `std.mem.sliceAsBytes` to convert a struct into raw
+/// In some parts of lockfile serialization, Fun will use `std.mem.sliceAsBytes` to convert a struct into raw
 /// bytes to write. This makes lockfile serialization/deserialization much simpler/faster, at the cost of not
 /// having any pointers within these structs.
 ///
 /// One major caveat of this is that if any of these structs have uninitialized memory, then that can leak
-/// garbage memory into the lockfile. See https://github.com/oven-sh/bun/issues/4319
+/// garbage memory into the lockfile. See https://github.com/underdoc-org/fun/issues/4319
 ///
 /// The obvious way to introduce undefined memory into a struct is via `.field = undefined`, but a much more
 /// subtle way is to have implicit padding in an extern struct. For example:

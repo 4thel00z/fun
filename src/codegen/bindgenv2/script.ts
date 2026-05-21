@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 import * as helpers from "../helpers";
 import { NamedType, Type } from "./internal/base";
 

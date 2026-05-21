@@ -1,22 +1,22 @@
 ---
-title: "bun update"
+title: "fun update"
 description: "Update dependencies to latest versions"
 ---
 
 import Update from "/snippets/cli/update.mdx";
 
-<Note>To upgrade your Bun CLI version, see [`bun upgrade`](/installation#upgrading).</Note>
+<Note>To upgrade your Fun CLI version, see [`fun upgrade`](/installation#upgrading).</Note>
 
 To update all dependencies to the latest version:
 
 ```sh terminal icon="terminal"
-bun update
+fun update
 ```
 
 To update a specific dependency to the latest version:
 
 ```sh terminal icon="terminal"
-bun update [package]
+fun update [package]
 ```
 
 ## `--interactive`
@@ -24,8 +24,8 @@ bun update [package]
 For a more controlled update experience, use the `--interactive` flag to select which packages to update:
 
 ```sh terminal icon="terminal"
-bun update --interactive
-bun update -i
+fun update --interactive
+fun update -i
 ```
 
 This launches an interactive terminal interface that shows all outdated packages with their current and target versions. You can then select which packages to update.
@@ -104,20 +104,20 @@ Within each section, individual packages may have additional suffixes (` dev`, `
 Use the `--recursive` flag with `--interactive` to update dependencies across all workspaces in a monorepo:
 
 ```sh terminal icon="terminal"
-bun update --interactive --recursive
-bun update -i -r
+fun update --interactive --recursive
+fun update -i -r
 ```
 
 This displays an additional "Workspace" column showing which workspace each dependency belongs to.
 
 ## `--latest`
 
-By default, `bun update` will update to the latest version of a dependency that satisfies the version range specified in your `package.json`.
+By default, `fun update` will update to the latest version of a dependency that satisfies the version range specified in your `package.json`.
 
 To update to the latest version, regardless of if it's compatible with the current version range, use the `--latest` flag:
 
 ```sh terminal icon="terminal"
-bun update --latest
+fun update --latest
 ```
 
 In interactive mode, you can toggle individual packages between their target version (respecting semver) and latest version using the **l** key.
@@ -132,8 +132,8 @@ For example, with the following `package.json`:
 }
 ```
 
-- `bun update` would update to a version that matches `17.x`.
-- `bun update --latest` would update to a version that matches `18.x` or later.
+- `fun update` would update to a version that matches `17.x`.
+- `fun update --latest` would update to a version that matches `18.x` or later.
 
 ---
 

@@ -1,33 +1,33 @@
 // TODO: full server-side support
-// import { SveltePlugin } from "bun-plugin-svelte";
+// import { SveltePlugin } from "fun-plugin-svelte";
 // import { render } from "svelte/server";
-// import { bunRun, bunEnv, bunExe } from "harness";
+// import { funRun, funEnv, funExe } from "harness";
 // import path from "path";
-// // import { describe, beforeEach, afterEach, it, expect } from "bun:test";
+// // import { describe, beforeEach, afterEach, it, expect } from "fun:test";
 
 // const fixturePath = (...segs: string[]) => path.join(__dirname, "fixtures", ...segs);
 
-// // await Bun.plugin(SveltePlugin({ development: true }));
+// // await Fun.plugin(SveltePlugin({ development: true }));
 
 // // import TodoApp from "./fixtures/todo-list.svelte";
 
 // // afterAll(() => {
-// //   Bun.plugin.clearAll();
+// //   Fun.plugin.clearAll();
 // // })
 
-// describe("When bun-plugin-svelte is enabled via Bun.plugin()", () => {
+// describe("When fun-plugin-svelte is enabled via Fun.plugin()", () => {
 //   // beforeEach(async () => {
-//   //   await Bun.plugin(SveltePlugin({ development: true }));
+//   //   await Fun.plugin(SveltePlugin({ development: true }));
 //   // });
 
 //   // afterEach(() => {
-//   //   Bun.plugin.clearAll();
+//   //   Fun.plugin.clearAll();
 //   // });
 
 //   it("can render() production builds", async () => {
-//     const result = Bun.spawnSync([bunExe(), "--preload=./server-imports.preload.ts", "server-imports.ts"], {
+//     const result = Fun.spawnSync([funExe(), "--preload=./server-imports.preload.ts", "server-imports.ts"], {
 //       cwd: fixturePath(),
-//       env: bunEnv,
+//       env: funEnv,
 //     });
 //     if (result.exitCode !== 0) {
 //       console.error(result.stderr.toString("utf8"));
@@ -43,10 +43,10 @@
 //   });
 
 //   it("can render() development builds", async () => {
-//     const result = Bun.spawnSync([bunExe(), "--preload=./server-imports.preload.ts", "server-imports.ts"], {
+//     const result = Fun.spawnSync([funExe(), "--preload=./server-imports.preload.ts", "server-imports.ts"], {
 //       cwd: fixturePath(),
 //       env: {
-//         ...bunEnv,
+//         ...funEnv,
 //         NODE_ENV: "development",
 //       }
 //     });
@@ -63,11 +63,11 @@
 //   });
 
 //   // FIXME: onResolve is not called for CSS imports on server-side
-//   it.skip("if forced to use client-side generation, could be used with happy-dom in Bun", () => {
-//     expect(() => bunRun(fixturePath("client-code-on-server.ts"), { NODE_ENV: "development" })).not.toThrow();
+//   it.skip("if forced to use client-side generation, could be used with happy-dom in Fun", () => {
+//     expect(() => funRun(fixturePath("client-code-on-server.ts"), { NODE_ENV: "development" })).not.toThrow();
 //   })
 // });
 
-// // describe("When using Bun.build()", () => {
+// // describe("When using Fun.build()", () => {
 
 // // });

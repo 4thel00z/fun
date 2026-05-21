@@ -49,7 +49,7 @@ pub fn read(this: StackReader, count: usize) AnyPostgresError!Data {
 }
 pub fn readZ(this: StackReader) AnyPostgresError!Data {
     const remaining = this.peek();
-    if (bun.strings.indexOfChar(remaining, 0)) |zero| {
+    if (fun.strings.indexOfChar(remaining, 0)) |zero| {
         this.skip(zero + 1);
         return Data{
             .temporary = remaining[0..zero],
@@ -59,7 +59,7 @@ pub fn readZ(this: StackReader) AnyPostgresError!Data {
     return error.ShortRead;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const AnyPostgresError = @import("../AnyPostgresError.zig").AnyPostgresError;
 const Data = @import("../../shared/Data.zig").Data;
 const NewReader = @import("./NewReader.zig").NewReader;

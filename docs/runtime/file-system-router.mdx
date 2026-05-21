@@ -1,6 +1,6 @@
 ---
 title: File System Router
-description: Bun provides a fast API for resolving routes against file-system paths
+description: Fun provides a fast API for resolving routes against file-system paths
 ---
 
 This API is primarily intended for library authors. At the moment only Next.js-style file-system routing is supported, but other styles may be added in the future.
@@ -22,7 +22,7 @@ pages
 The `FileSystemRouter` can be used to resolve routes against this directory:
 
 ```ts router.ts
-const router = new Bun.FileSystemRouter({
+const router = new Fun.FileSystemRouter({
   style: "nextjs",
   dir: "./pages",
   origin: "https://mydomain.com",
@@ -48,7 +48,7 @@ router.match("/settings?foo=bar");
 
 // =>
 {
-  filePath: "/Users/colinmcd94/Documents/bun/fun/pages/settings.tsx",
+  filePath: "/Users/colinmcd94/Documents/fun/fun/pages/settings.tsx",
   kind: "dynamic",
   name: "/settings",
   pathname: "/settings?foo=bar",
@@ -66,7 +66,7 @@ router.match("/blog/my-cool-post");
 
 // =>
 {
-  filePath: "/Users/colinmcd94/Documents/bun/fun/pages/blog/[slug].tsx",
+  filePath: "/Users/colinmcd94/Documents/fun/fun/pages/blog/[slug].tsx",
   kind: "dynamic",
   name: "/blog/[slug]",
   pathname: "/blog/my-cool-post",
@@ -92,7 +92,7 @@ router.reload();
 ## Reference
 
 ```ts
-interface Bun {
+interface Fun {
   class FileSystemRouter {
     constructor(params: {
       dir: string;

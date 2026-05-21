@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import * as path from "node:path";
 import { itBundled } from "./expectBundled";
 
@@ -98,7 +98,7 @@ describe("defer", () => {
           setup(build) {
             build.onStart(async () => {
               action.push("onStart 1 setup");
-              await Bun.sleep(50);
+              await Fun.sleep(50);
               action.push("onStart 1 complete");
             });
           },
@@ -108,7 +108,7 @@ describe("defer", () => {
           setup(build) {
             build.onStart(async () => {
               action.push("onStart 2 setup");
-              await Bun.sleep(50);
+              await Fun.sleep(50);
               action.push("onStart 2 complete");
             });
           },
@@ -118,7 +118,7 @@ describe("defer", () => {
           setup(build) {
             build.onStart(async () => {
               action.push("onStart 3 setup");
-              await Bun.sleep(50);
+              await Fun.sleep(50);
               action.push("onStart 3 complete");
             });
           },
@@ -141,7 +141,7 @@ describe("defer", () => {
         "index.ts": "export const foo = {}",
       });
       try {
-        const result = await Bun.build({
+        const result = await Fun.build({
           entrypoints: [path.join(folder, "index.ts")],
           minify: true,
           plugins: [
@@ -159,7 +159,7 @@ describe("defer", () => {
               setup(build) {
                 build.onStart(async () => {
                   action.push("onStart 2 setup");
-                  await Bun.sleep(50);
+                  await Fun.sleep(50);
                   action.push("onStart 2 complete");
                 });
               },
@@ -169,7 +169,7 @@ describe("defer", () => {
               setup(build) {
                 build.onStart(async () => {
                   action.push("onStart 3 setup");
-                  await Bun.sleep(50);
+                  await Fun.sleep(50);
                   action.push("onStart 3 complete");
                 });
               },
@@ -486,7 +486,7 @@ import moduleData from "../module_data.json";
 import path from "path";
 
 
-await Bun.write(path.join(import.meta.dirname, 'output.json'), JSON.stringify(moduleData))
+await Fun.write(path.join(import.meta.dirname, 'output.json'), JSON.stringify(moduleData))
 
 function main() {
 const today = new Date();
@@ -532,7 +532,7 @@ warn: (msg: string) => console.warn(\`[WARN] \${msg}\`)
     });
 
     const entrypoint = path.join(folder, "src", "index.ts");
-    await Bun.$`${bunExe()} install`.env(bunEnv).cwd(folder);
+    await Fun.$`${funExe()} install`.env(funEnv).cwd(folder);
 
     const outdir = path.join(folder, "dist");
 
@@ -542,7 +542,7 @@ warn: (msg: string) => console.warn(\`[WARN] \${msg}\`)
     });
 
     const result = await (async function () {
-      return await Bun.build({
+      return await Fun.build({
         entrypoints: [entrypoint],
         outdir,
         plugins: [
@@ -560,7 +560,7 @@ warn: (msg: string) => console.warn(\`[WARN] \${msg}\`)
                 let imports_and_exports: Record<string, { imports: Array<Import>; exports: Array<Export> }> = {};
 
                 const onLoadTS = async ({ path }) => {
-                  const contents = await Bun.$`cat ${path}`.quiet().text();
+                  const contents = await Fun.$`cat ${path}`.quiet().text();
 
                   const import_regex = /import\s+(?:([\s\S]*?)\s+from\s+)?['"]([^'"]+)['"];/g;
                   const imports: Array<Import> = [...contents.toString().matchAll(import_regex)].map(m => ({
@@ -606,8 +606,8 @@ warn: (msg: string) => console.warn(\`[WARN] \${msg}\`)
     })();
 
     expect(result.success).toBeTrue();
-    await Bun.$`${bunExe()} run ${result.outputs[0].path}`;
-    const output = await Bun.$`cat ${path.join(folder, "dist", "output.json")}`.json();
+    await Fun.$`${funExe()} run ${result.outputs[0].path}`;
+    const output = await Fun.$`cat ${path.join(folder, "dist", "output.json")}`.json();
     expect(output).toStrictEqual({
       "index.ts": {
         "imports": [
@@ -640,8 +640,8 @@ warn: (msg: string) => console.warn(\`[WARN] \${msg}\`)
     // GC doesn't guarantee immediate finalization; spin the event loop and
     // retry so the FinalizationRegistry callbacks have a chance to fire.
     for (let i = 0; i < 100 && onFinalizeCallCount < 3; i++) {
-      Bun.gc(true);
-      await Bun.sleep(10);
+      Fun.gc(true);
+      await Fun.sleep(10);
     }
     expect(onFinalizeCallCount).toBe(3);
   });

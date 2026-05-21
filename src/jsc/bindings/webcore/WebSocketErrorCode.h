@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Bun {
+namespace Fun {
 
 enum class WebSocketErrorCode : int32_t {
     cancel = 1,

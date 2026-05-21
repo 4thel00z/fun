@@ -48,10 +48,10 @@ pub const MacroContext = struct {
         else
             import_record_path;
 
-        bun.assert(!isMacroPath(import_record_path_without_macro_prefix));
+        fun.assert(!isMacroPath(import_record_path_without_macro_prefix));
 
         const input_specifier = brk: {
-            if (jsc.ModuleLoader.HardcodedModule.Alias.get(import_record_path, .bun, .{})) |replacement| {
+            if (jsc.ModuleLoader.HardcodedModule.Alias.get(import_record_path, .fun, .{})) |replacement| {
                 break :brk replacement.path;
             }
 
@@ -218,7 +218,7 @@ pub const Runner = struct {
 
     threadlocal var args_buf: [3]js.JSObjectRef = undefined;
     threadlocal var exception_holder: jsc.ZigException.Holder = undefined;
-    pub const MacroError = error{ MacroFailed, OutOfMemory } || ToJSError || bun.JSError;
+    pub const MacroError = error{ MacroFailed, OutOfMemory } || ToJSError || fun.JSError;
 
     pub const Run = struct {
         caller: Expr,
@@ -295,7 +295,7 @@ pub const Runner = struct {
                         this.source,
                         this.caller.loc,
                         this.allocator,
-                        "cannot coerce {s} ({s}) to Bun's AST. Please return a simpler type",
+                        "cannot coerce {s} ({s}) to Fun's AST. Please return a simpler type",
                         .{ name, @tagName(value.jsType()) },
                     ) catch unreachable;
                     break :brk error.MacroFailed;
@@ -334,7 +334,7 @@ pub const Runner = struct {
                             return this.run(try resp.getBlobWithoutCallFrame(this.global));
                         } else if (value.as(jsc.WebCore.Blob)) |resp| {
                             blob_ = resp;
-                        } else if (value.as(bun.api.ResolveMessage) != null or value.as(bun.api.BuildMessage) != null) {
+                        } else if (value.as(fun.api.ResolveMessage) != null or value.as(fun.api.BuildMessage) != null) {
                             _ = this.macro.vm.uncaughtException(this.global, value, false);
                             return error.MacroFailed;
                         }
@@ -414,7 +414,7 @@ pub const Runner = struct {
                     defer object_iter.deinit();
 
                     // Build properties list
-                    var properties = bun.handleOom(
+                    var properties = fun.handleOom(
                         G.Property.List.initCapacity(this.allocator, object_iter.len),
                     );
                     errdefer properties.clearAndFree(this.allocator);
@@ -429,7 +429,7 @@ pub const Runner = struct {
                                 this.caller.loc,
                             ),
                             .value = object_value,
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                     }
 
                     expr.data.e_object.properties = properties;
@@ -460,12 +460,12 @@ pub const Runner = struct {
                     return Expr.init(E.Number, E.Number{ .value = value.asNumber() }, this.caller.loc);
                 },
                 .String => {
-                    var bun_str = try value.toBunString(this.global);
-                    defer bun_str.deref();
+                    var fun_str = try value.toFunString(this.global);
+                    defer fun_str.deref();
 
                     // encode into utf16 so the printer escapes the string correctly
-                    var utf16_bytes = this.allocator.alloc(u16, bun_str.length()) catch unreachable;
-                    const out_slice = utf16_bytes[0 .. (bun_str.encodeInto(std.mem.sliceAsBytes(utf16_bytes), .utf16le) catch 0) / 2];
+                    var utf16_bytes = this.allocator.alloc(u16, fun_str.length()) catch unreachable;
+                    const out_slice = utf16_bytes[0 .. (fun_str.encodeInto(std.mem.sliceAsBytes(utf16_bytes), .utf16le) catch 0) / 2];
                     return Expr.init(E.String, E.String.init(out_slice), this.caller.loc);
                 },
                 .Promise => {
@@ -502,7 +502,7 @@ pub const Runner = struct {
                 this.source,
                 this.caller.loc,
                 this.allocator,
-                "cannot coerce {s} to Bun's AST. Please return a simpler type",
+                "cannot coerce {s} to Fun's AST. Please return a simpler type",
                 .{@tagName(value.jsType())},
             ) catch unreachable;
             return error.MacroFailed;
@@ -578,7 +578,7 @@ pub const Runner = struct {
             pub fn callWrapper(args: CallArgs) MacroError!Expr {
                 jsc.markBinding(@src());
                 call_args = args;
-                Bun__startMacro(&call, jsc.VirtualMachine.get().global);
+                Fun__startMacro(&call, jsc.VirtualMachine.get().global);
                 return result;
             }
 
@@ -601,7 +601,7 @@ pub const Runner = struct {
         });
     }
 
-    extern "c" fn Bun__startMacro(function: *const anyopaque, *anyopaque) void;
+    extern "c" fn Fun__startMacro(function: *const anyopaque, *anyopaque) void;
 };
 
 const string = []const u8;
@@ -616,18 +616,18 @@ const ResolveResult = @import("../resolver/resolver.zig").Result;
 const Resolver = @import("../resolver/resolver.zig").Resolver;
 const isPackagePath = @import("../resolver/resolver.zig").isPackagePath;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const Transpiler = bun.Transpiler;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
-const Loader = bun.options.Loader;
-const MimeType = bun.http.MimeType;
-const MacroEntryPoint = bun.transpiler.EntryPoints.MacroEntryPoint;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const Transpiler = fun.Transpiler;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;
+const Loader = fun.options.Loader;
+const MimeType = fun.http.MimeType;
+const MacroEntryPoint = fun.transpiler.EntryPoints.MacroEntryPoint;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const ExprNodeList = js_ast.ExprNodeList;
@@ -637,6 +637,6 @@ const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 const ToJSError = js_ast.ToJSError;
 
-const JavaScript = bun.jsc;
-const jsc = bun.jsc;
-const js = bun.jsc.C;
+const JavaScript = fun.jsc;
+const jsc = fun.jsc;
+const js = fun.jsc.C;

@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "node:path";
 
 // Blob.fromDOMFormData pushes each FormData entry's bytes — including the
-// full NodeFS.readFile result for Bun.file() entries — into a StringJoiner.
+// full NodeFS.readFile result for Fun.file() entries — into a StringJoiner.
 // If a subsequent entry's read fails (e.g. ENOENT), the failure path used to
 // return an empty Blob without calling joiner.deinit(). The arena defer only
 // frees the joiner's Node structs; each node's data slice has its own owner
-// allocator (bun.default_allocator / the readFile buffer) that is only freed
+// allocator (fun.default_allocator / the readFile buffer) that is only freed
 // by StringJoiner.done() or StringJoiner.deinit(), so every file buffer read
 // for earlier entries was leaked.
 test("FormData serialization does not leak prior file buffers when a later file read fails", async () => {
@@ -21,10 +21,10 @@ test("FormData serialization does not leak prior file buffers when a later file 
     "real.bin": Buffer.alloc(fileSize, "a"),
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--smol", join(import.meta.dir, "FormData-file-error-leak-fixture.ts")],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--smol", join(import.meta.dir, "FormData-file-error-leak-fixture.ts")],
     env: {
-      ...bunEnv,
+      ...funEnv,
       REAL_PATH: join(String(dir), "real.bin"),
       MISSING_PATH: join(String(dir), "missing.bin"),
       ITERATIONS: String(iterations),

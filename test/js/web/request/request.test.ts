@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("undefined args don't throw", () => {
   const request = new Request("https://example.com/", {
@@ -16,36 +16,36 @@ test("request can receive undefined signal", async () => {
   const request = new Request("http://example.com/", {
     method: "POST",
     headers: {
-      "Content-Type": "text/bun;charset=utf-8",
+      "Content-Type": "text/fun;charset=utf-8",
     },
-    body: "bun",
+    body: "fun",
     signal: undefined,
   });
   expect(request.method).toBe("POST");
   // @ts-ignore
   const clone = new Request(request);
   expect(clone.method).toBe("POST");
-  expect(clone.headers.get("content-type")).toBe("text/bun;charset=utf-8");
-  expect(await request.text()).toBe("bun");
-  expect(await clone.text()).toBe("bun");
+  expect(clone.headers.get("content-type")).toBe("text/fun;charset=utf-8");
+  expect(await request.text()).toBe("fun");
+  expect(await clone.text()).toBe("fun");
 });
 
 test("request can receive null signal", async () => {
   const request = new Request("http://example.com/", {
     method: "POST",
     headers: {
-      "Content-Type": "text/bun;charset=utf-8",
+      "Content-Type": "text/fun;charset=utf-8",
     },
-    body: "bun",
+    body: "fun",
     signal: null,
   });
   expect(request.method).toBe("POST");
   // @ts-ignore
   const clone = new Request(request);
   expect(clone.method).toBe("POST");
-  expect(clone.headers.get("content-type")).toBe("text/bun;charset=utf-8");
-  expect(await request.text()).toBe("bun");
-  expect(await clone.text()).toBe("bun");
+  expect(clone.headers.get("content-type")).toBe("text/fun;charset=utf-8");
+  expect(await request.text()).toBe("fun");
+  expect(await clone.text()).toBe("fun");
 });
 
 test("clone() does not lock original body when body was accessed before clone", async () => {

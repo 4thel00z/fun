@@ -1,5 +1,5 @@
 /**
- * All tests in this file run in both Bun and Node.js.
+ * All tests in this file run in both Fun and Node.js.
  *
  * Test that TLS options can be inherited from agent.options and agent.connectOpts.
  * This is important for compatibility with libraries like https-proxy-agent.
@@ -670,9 +670,9 @@ describe("http.request agent options", () => {
   });
 });
 
-// Only run in Bun to avoid infinite loop when Node.js runs this file
-if (typeof Bun !== "undefined") {
-  const { bunEnv, nodeExe } = await import("harness");
+// Only run in Fun to avoid infinite loop when Node.js runs this file
+if (typeof Fun !== "undefined") {
+  const { funEnv, nodeExe } = await import("harness");
 
   describe("Node.js compatibility", () => {
     test("all tests pass in Node.js", async () => {
@@ -683,9 +683,9 @@ if (typeof Bun !== "undefined") {
 
       const testFile = fileURLToPath(import.meta.url);
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [node, "--test", testFile],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });

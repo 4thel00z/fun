@@ -2,7 +2,7 @@
 //! Do not edit manually
 //! To regenerate, run:
 //! ```
-//!   bun run src/codegen/generate-compact-string-table.ts src/http/mime_type_list.txt src/http/mime_type_list_enum.zig MimeTypeList
+//!   fun run src/codegen/generate-compact-string-table.ts src/http/mime_type_list.txt src/http/mime_type_list_enum.zig MimeTypeList
 //! ```
 pub const MimeTypeList = enum(u14) {
     const LengthGroupBits = 7;

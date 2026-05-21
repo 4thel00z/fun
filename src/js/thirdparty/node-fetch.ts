@@ -6,7 +6,7 @@ const Blob: typeof globalThis.Blob = bindings[2];
 const WebHeaders: typeof globalThis.Headers = bindings[3];
 const FormData: typeof globalThis.FormData = bindings[4];
 const File: typeof globalThis.File = bindings[5];
-const nativeFetch = Bun.fetch;
+const nativeFetch = Fun.fetch;
 
 // node-fetch extends from URLSearchParams in their implementation...
 // https://github.com/node-fetch/node-fetch/blob/8b3320d2a7c07bce4afc6b2bf6c3bbddda85b01f/src/headers.js#L44
@@ -123,7 +123,7 @@ class Request extends WebRequest {
   constructor(input, init) {
     // node-fetch is relaxed with the URL, for example, it allows "/" as a valid URL.
     // If it's not a valid URL, use a placeholder URL during construction.
-    // See: https://github.com/oven-sh/bun/issues/4947
+    // See: https://github.com/underdoc-org/fun/issues/4947
     if (typeof input === "string" && !URL.canParse(input)) {
       super(new URL(input, "http://localhost/"), init);
       this[kUrl] = input;
@@ -142,7 +142,7 @@ class Request extends WebRequest {
  * and uses node streams instead of web streams.
  *
  * It's overall a positive on speed to override the implementation, since most people will use something
- * like `.json()` or `.text()`, which is faster in Bun's native fetch, vs `node-fetch` going
+ * like `.json()` or `.text()`, which is faster in Fun's native fetch, vs `node-fetch` going
  * through `node:http`, a node stream, then processing the data.
  */
 async function fetch(
@@ -197,11 +197,11 @@ class FetchError extends FetchBaseError {
 }
 
 function blobFrom(path, options) {
-  return Promise.$resolve(Bun.file(path, options));
+  return Promise.$resolve(Fun.file(path, options));
 }
 
 function blobFromSync(path, options) {
-  return Bun.file(path, options);
+  return Fun.file(path, options);
 }
 
 var fileFrom = blobFrom;

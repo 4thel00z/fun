@@ -1,12 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "fun:test";
 import { isDockerEnabled } from "harness";
 import * as dockerCompose from "../../../docker/index.ts";
 
 let url: string = "";
-const agent = encodeURIComponent("bun/1.0.0");
+const agent = encodeURIComponent("fun/1.0.0");
 async function load() {
-  if (process.env.BUN_AUTOBAHN_URL) {
-    url = process.env.BUN_AUTOBAHN_URL;
+  if (process.env.FUN_AUTOBAHN_URL) {
+    url = process.env.FUN_AUTOBAHN_URL;
     return true;
   }
 
@@ -22,7 +22,7 @@ async function load() {
   // If we're on a different port, we'll need to pass a Host header
   if (actualPort !== 9002) {
     // Store for later use in WebSocket connections
-    process.env.BUN_AUTOBAHN_HOST_HEADER = `${autobahnInfo.host}:9002`;
+    process.env.FUN_AUTOBAHN_HOST_HEADER = `${autobahnInfo.host}:9002`;
   }
 
   return true;
@@ -39,8 +39,8 @@ describe.skipIf(!isDockerEnabled())("autobahn", () => {
     console.log("URL after load:", url);
 
     // Prepare WebSocket options with Host header if needed
-    wsOptions = process.env.BUN_AUTOBAHN_HOST_HEADER
-      ? { headers: { Host: process.env.BUN_AUTOBAHN_HOST_HEADER } }
+    wsOptions = process.env.FUN_AUTOBAHN_HOST_HEADER
+      ? { headers: { Host: process.env.FUN_AUTOBAHN_HOST_HEADER } }
       : undefined;
   });
 

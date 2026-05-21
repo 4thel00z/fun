@@ -7,7 +7,7 @@
 #include "BufferEncodingType.h"
 #include "JavaScriptCore/JSCJSValue.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(jsFunction_validateInteger);
 JSC_DECLARE_HOST_FUNCTION(jsFunction_validateNumber);

@@ -1,7 +1,7 @@
 // This test ensures that when a TLS connection is established, the server
 // selects the most recently added SecureContext that matches the servername.
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 import { readFileSync } from "node:fs";
 import { AddressInfo } from "node:net";
@@ -357,7 +357,7 @@ describe("tls.Server", () => {
   });
 });
 
-describe("Bun.serve SNI", () => {
+describe("Fun.serve SNI", () => {
   function doClientRequest(options: any) {
     return new Promise((resolve, reject) => {
       const client = tls.connect(
@@ -378,7 +378,7 @@ describe("Bun.serve SNI", () => {
   }
   it("single SNI", async () => {
     {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         tls: {
           ...SNIContexts["asterisk.test.com"],
@@ -407,7 +407,7 @@ describe("Bun.serve SNI", () => {
       }
     }
     {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         tls: {
           ...goodSecureContext,
@@ -438,7 +438,7 @@ describe("Bun.serve SNI", () => {
   });
   it("multiple SNI", async () => {
     {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         tls: [
           serverOptions,

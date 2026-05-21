@@ -32,7 +32,7 @@ describe('net.SocketAddress...', () => {
     strictEqual(sa.family, 'ipv4');
     strictEqual(sa.flowlabel, 0);
 
-    // NOTE: bun does not support `kClone` yet.
+    // NOTE: fun does not support `kClone` yet.
     // const mc = new MessageChannel();
     // mc.port1.onmessage = common.mustCall(({ data }) => {
     //   ok(SocketAddress.isSocketAddress(data));

@@ -33,7 +33,7 @@ import {
 } from "@grpc/grpc-js/build/src/server-call";
 
 import { CompressionAlgorithms } from "@grpc/grpc-js/build/src/compression-algorithms";
-import { afterAll as after, beforeAll as before, beforeEach, describe, it } from "bun:test";
+import { afterAll as after, beforeAll as before, beforeEach, describe, it } from "fun:test";
 import { loadProtoFile } from "./common";
 
 const protoFile = join(__dirname, "fixtures", "test_service.proto");

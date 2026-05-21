@@ -1,4 +1,4 @@
-import { serve } from "bun";
+import { serve } from "fun";
 
 // This is obviously incomplete but these are probably the most common status codes + the ones we need for testing
 type ValidStatusCode = 200 | 201 | 400 | 404 | 405 | 500;
@@ -147,7 +147,7 @@ export function createServer() {
           if (rawDelay) {
             const delay = parseInt(rawDelay);
             if (!isNaN(delay) && delay >= 0) {
-              await Bun.sleep(delay * 1000);
+              await Fun.sleep(delay * 1000);
               response = makeTestJsonResponse(req, { status: 200 }, { data: "Delayed" });
               break;
             }

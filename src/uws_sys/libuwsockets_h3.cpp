@@ -7,9 +7,9 @@
 #include "_libusockets.h"
 #include "quic.h"
 
-#include <bun-uws/src/Http3App.h>
-#include <bun-uws/src/Http3Response.h>
-#include <bun-uws/src/Http3Request.h>
+#include <fun-uws/src/Http3App.h>
+#include <fun-uws/src/Http3Response.h>
+#include <fun-uws/src/Http3Request.h>
 #include <string_view>
 #include <string.h>
 // clang-format on
@@ -34,7 +34,7 @@ typedef void (*uws_h3_listen_handler)(us_quic_listen_socket_t*, void*);
 
 /* ───── app ───── */
 
-uws_h3_app_t* uws_h3_create_app(struct us_bun_socket_context_options_t options, unsigned int idle_timeout_s)
+uws_h3_app_t* uws_h3_create_app(struct us_fun_socket_context_options_t options, unsigned int idle_timeout_s)
 {
     static int once = (us_quic_global_init(), 1);
     (void)once;
@@ -51,7 +51,7 @@ void uws_h3_app_clear_routes(uws_h3_app_t* app) { ((H3App*)app)->clearRoutes(); 
 void* uws_h3_get_native_handle(uws_h3_app_t* app) { return ((H3App*)app)->getNativeHandle(); }
 
 bool uws_h3_app_add_server_name(uws_h3_app_t* app, const char* hostname,
-    struct us_bun_socket_context_options_t options)
+    struct us_fun_socket_context_options_t options)
 {
     uWS::SocketContextOptions sco;
     memcpy(&sco, &options, sizeof(sco));

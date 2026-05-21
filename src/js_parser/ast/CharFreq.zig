@@ -43,7 +43,7 @@ fn scanBig(out: *align(1) Buffer, text: string, delta: i32) void {
     var deltas: [256]i32 = [_]i32{0} ** 256;
     var remain = text;
 
-    bun.assert(remain.len >= scan_big_chunk_size);
+    fun.assert(remain.len >= scan_big_chunk_size);
 
     const unrolled = remain.len - (remain.len % scan_big_chunk_size);
     const remain_end = remain.ptr + unrolled;
@@ -128,10 +128,10 @@ pub const Class = G.Class;
 
 const string = []const u8;
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const CharFreq = js_ast.CharFreq;
 const G = js_ast.G;
 const NameMinifier = js_ast.NameMinifier;

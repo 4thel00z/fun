@@ -127,7 +127,7 @@ const Precompute = struct {
             }
         }
 
-        bun.assert(@sizeOf(@TypeOf(result)) == 8192);
+        fun.assert(@sizeOf(@TypeOf(result)) == 8192);
         break :precompute result;
     };
 };
@@ -326,6 +326,6 @@ fn isExtendedPictographic(gb: GraphemeBreakNoControl) bool {
     return gb == .extended_pictographic or gb == .emoji_modifier_base;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const grapheme_tables = @import("./grapheme_tables.zig");
 const std = @import("std");

@@ -1,10 +1,10 @@
 /// <reference lib="dom" />
 
-import { SveltePlugin } from "bun-plugin-svelte";
+import { SveltePlugin } from "fun-plugin-svelte";
 import { Window } from "happy-dom";
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 
-Bun.plugin(SveltePlugin({ forceSide: "client", development: true }));
+Fun.plugin(SveltePlugin({ forceSide: "client", development: true }));
 
 const { mount } = await import("svelte");
 

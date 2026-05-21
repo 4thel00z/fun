@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("console.log with %j should format as JSON", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log('%j', {foo: 'bar'})"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log('%j', {foo: 'bar'})"],
+    env: funEnv,
     stderr: "pipe",
   });
 
@@ -16,9 +16,9 @@ test("console.log with %j should format as JSON", async () => {
 });
 
 test("console.log with %j should handle arrays", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log('%j', [1, 2, 3])"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log('%j', [1, 2, 3])"],
+    env: funEnv,
     stderr: "pipe",
   });
 
@@ -30,9 +30,9 @@ test("console.log with %j should handle arrays", async () => {
 });
 
 test("console.log with %j should handle nested objects", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log('%j', {a: {b: {c: 123}}})"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log('%j', {a: {b: {c: 123}}})"],
+    env: funEnv,
     stderr: "pipe",
   });
 
@@ -44,9 +44,9 @@ test("console.log with %j should handle nested objects", async () => {
 });
 
 test("console.log with %j should handle primitives", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log('%j %j %j %j', 'string', 123, true, null)"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log('%j %j %j %j', 'string', 123, true, null)"],
+    env: funEnv,
     stderr: "pipe",
   });
 
@@ -58,9 +58,9 @@ test("console.log with %j should handle primitives", async () => {
 });
 
 test("console.log with %j and additional text", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "console.log('Result: %j', {status: 'ok'})"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "console.log('Result: %j', {status: 'ok'})"],
+    env: funEnv,
     stderr: "pipe",
   });
 

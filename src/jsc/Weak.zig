@@ -6,30 +6,30 @@ pub const WeakRefType = enum(u32) {
 const WeakImpl = opaque {
     pub fn init(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue, refType: WeakRefType, ctx: ?*anyopaque) *WeakImpl {
         jsc.markBinding(@src());
-        return Bun__WeakRef__new(globalThis, value, refType, ctx);
+        return Fun__WeakRef__new(globalThis, value, refType, ctx);
     }
 
     pub fn get(this: *WeakImpl) jsc.JSValue {
         jsc.markBinding(@src());
-        return Bun__WeakRef__get(this);
+        return Fun__WeakRef__get(this);
     }
 
     pub fn clear(this: *WeakImpl) void {
         jsc.markBinding(@src());
-        Bun__WeakRef__clear(this);
+        Fun__WeakRef__clear(this);
     }
 
     pub fn deinit(
         this: *WeakImpl,
     ) void {
         jsc.markBinding(@src());
-        Bun__WeakRef__delete(this);
+        Fun__WeakRef__delete(this);
     }
 
-    extern fn Bun__WeakRef__delete(this: *WeakImpl) void;
-    extern fn Bun__WeakRef__new(*jsc.JSGlobalObject, jsc.JSValue, refType: WeakRefType, ctx: ?*anyopaque) *WeakImpl;
-    extern fn Bun__WeakRef__get(this: *WeakImpl) jsc.JSValue;
-    extern fn Bun__WeakRef__clear(this: *WeakImpl) void;
+    extern fn Fun__WeakRef__delete(this: *WeakImpl) void;
+    extern fn Fun__WeakRef__new(*jsc.JSGlobalObject, jsc.JSValue, refType: WeakRefType, ctx: ?*anyopaque) *WeakImpl;
+    extern fn Fun__WeakRef__get(this: *WeakImpl) jsc.JSValue;
+    extern fn Fun__WeakRef__clear(this: *WeakImpl) void;
 };
 
 pub fn Weak(comptime T: type) type {
@@ -111,5 +111,5 @@ pub fn Weak(comptime T: type) type {
     };
 }
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

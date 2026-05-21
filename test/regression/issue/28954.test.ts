@@ -1,19 +1,19 @@
-// https://github.com/oven-sh/bun/issues/28954
+// https://github.com/underdoc-org/fun/issues/28954
 //
 // MKADDRESSBOOK is a CardDAV extension method (analogous to MKCALENDAR for
-// CalDAV) that was missing from Bun's HTTP method allowlist. Bun.serve would
+// CalDAV) that was missing from Fun's HTTP method allowlist. Fun.serve would
 // drop the request entirely and fetch() would silently rewrite the method to
 // GET.
 //
-// Note: Bun's node:http.METHODS (a hand-maintained array in
+// Note: Fun's node:http.METHODS (a hand-maintained array in
 // src/js/internal/http.ts) intentionally mirrors Node.js's list for API
 // compatibility, and Node derives that list from llhttp which doesn't know
 // about MKADDRESSBOOK — so METHODS is deliberately left alone here.
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { connect } from "node:net";
 
-test("Bun.serve receives MKADDRESSBOOK via fetch()", async () => {
-  await using server = Bun.serve({
+test("Fun.serve receives MKADDRESSBOOK via fetch()", async () => {
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       return new Response(req.method);
@@ -25,10 +25,10 @@ test("Bun.serve receives MKADDRESSBOOK via fetch()", async () => {
   expect(res.status).toBe(200);
 });
 
-test("Bun.serve receives MKADDRESSBOOK from a raw TCP request", async () => {
+test("Fun.serve receives MKADDRESSBOOK from a raw TCP request", async () => {
   const { promise, resolve, reject } = Promise.withResolvers<string>();
 
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       resolve(req.method);

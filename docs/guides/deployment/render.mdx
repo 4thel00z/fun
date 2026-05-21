@@ -1,5 +1,5 @@
 ---
-title: Deploy a Bun application on Render
+title: Deploy a Fun application on Render
 sidebarTitle: Deploy on Render
 mode: center
 ---
@@ -8,7 +8,7 @@ mode: center
 
 It offers features like auto deploys from GitHub, a global CDN, private networks, automatic HTTPS setup, and managed PostgreSQL and Redis.
 
-Render supports Bun natively. You can deploy Bun apps as web services, background workers, cron jobs, and more.
+Render supports Fun natively. You can deploy Fun apps as web services, background workers, cron jobs, and more.
 
 ---
 
@@ -27,7 +27,7 @@ As an example, let's deploy an Express HTTP server to Render.
     	Add the Express library.
 
     	```sh
-    	bun add express
+    	fun add express
     	```
 
     </Step>
@@ -55,7 +55,7 @@ As an example, let's deploy an Express HTTP server to Render.
     	Commit your changes and push to GitHub.
 
     	```sh terminal icon="terminal"
-    	git add app.ts bun.lock package.json
+    	git add app.ts fun.lock package.json
     	git commit -m "Create simple Express app"
     	git push origin main
     	```
@@ -70,8 +70,8 @@ As an example, let's deploy an Express HTTP server to Render.
     	|                   |               |
     	| ----------------- | ------------- |
     	| **Runtime**       | `Node`        |
-    	| **Build Command** | `bun install` |
-    	| **Start Command** | `bun app.ts`  |
+    	| **Build Command** | `fun install` |
+    	| **Start Command** | `fun app.ts`  |
 
     </Step>
 

@@ -1,9 +1,9 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/24157
+// https://github.com/underdoc-org/fun/issues/24157
 // Without reuseAddr, a second process should not be able to bind to the same
-// UDP port. Previously, Bun unconditionally set SO_REUSEADDR on all UDP sockets
+// UDP port. Previously, Fun unconditionally set SO_REUSEADDR on all UDP sockets
 // when port != 0, allowing duplicate binds and masking EADDRINUSE errors from
 // addMembership.
 test("UDP bind throws EADDRINUSE without reuseAddr when port is in use", async () => {
@@ -49,10 +49,10 @@ test("UDP bind throws EADDRINUSE without reuseAddr when port is in use", async (
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -117,10 +117,10 @@ test("addMembership succeeds with reuseAddr: true", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "main.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "main.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

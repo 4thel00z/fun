@@ -856,7 +856,7 @@ enum class DOMConstructorID : uint16_t {
     XPathResult,
     XSLTProcessor,
 
-    // --bun--
+    // --fun--
     Cookie,
     CookieMap,
     EventEmitter,
@@ -865,9 +865,9 @@ enum class DOMConstructorID : uint16_t {
 
 static constexpr unsigned numberOfDOMConstructorsBase = 848;
 
-static constexpr unsigned bunExtraConstructors = 4;
+static constexpr unsigned funExtraConstructors = 4;
 
-static constexpr unsigned numberOfDOMConstructors = numberOfDOMConstructorsBase + bunExtraConstructors;
+static constexpr unsigned numberOfDOMConstructors = numberOfDOMConstructorsBase + funExtraConstructors;
 
 class DOMConstructors {
     WTF_MAKE_NONCOPYABLE(DOMConstructors);

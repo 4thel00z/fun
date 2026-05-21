@@ -1,12 +1,12 @@
-import { expect, test } from "bun:test";
-import { bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funExe } from "harness";
 import path from "node:path";
 
 // test does still leak but not as bad
 // prettier-ignore
 test.todo("http.Server + compression integration", async () => {
   const { promise, resolve } = Promise.withResolvers();
-  const proc = Bun.spawn([bunExe(), path.resolve(import.meta.dir, "fixtures", "http.compress.leak.server.ts")], {
+  const proc = Fun.spawn([funExe(), path.resolve(import.meta.dir, "fixtures", "http.compress.leak.server.ts")], {
     stdio: ["ignore", "inherit", "inherit"],
     async ipc(message) {
       if (typeof message === "string") {

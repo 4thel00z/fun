@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/30493
+// https://github.com/underdoc-org/fun/issues/30493
 //
 // `require()` of an ESM module whose graph contains a diamond dependency
 // through a barrel deadlocked (release) / aborted on `ASSERTION FAILED:
@@ -12,8 +12,8 @@
 // This is the dependency-free reduction of #30281; it subsumes the
 // react + MUI repro from #30283.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir } from "harness";
 
 test("require() of ESM with diamond dependency through barrel does not deadlock", async () => {
   using dir = tempDir("issue-30493", {
@@ -30,10 +30,10 @@ test("require() of ESM with diamond dependency through barrel does not deadlock"
     "entry.js": `const mod = require('./app.js');\nconsole.log(JSON.stringify(mod.default));\n`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "entry.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "entry.js"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
     // Before the fix: release builds deadlock indefinitely; debug builds
@@ -44,7 +44,7 @@ test("require() of ESM with diamond dependency through barrel does not deadlock"
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  expect(normalizeBunSnapshot(stdout, dir)).toMatchInlineSnapshot(`"{"a":"/","b":"barrel","shared":"/"}"`);
+  expect(normalizeFunSnapshot(stdout, dir)).toMatchInlineSnapshot(`"{"a":"/","b":"barrel","shared":"/"}"`);
   // null ⇒ exited on its own; non-null ⇒ killed by the spawn timeout (deadlocked).
   expect(proc.signalCode).toBeNull();
   expect(exitCode).toBe(0);

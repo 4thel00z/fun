@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("WebSocket should emit error event before close event on handshake failure (issue #14338)", async () => {
   const { promise: errorPromise, resolve: resolveError } = Promise.withResolvers<Event>();
@@ -6,7 +6,7 @@ test("WebSocket should emit error event before close event on handshake failure 
   const events: string[] = [];
 
   // Create a server that returns a 302 redirect response instead of a WebSocket upgrade
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       // Return a 302 redirect response to simulate handshake failure
@@ -50,7 +50,7 @@ test("WebSocket successful connection should NOT emit error event", async () => 
   const events: string[] = [];
 
   // Create a proper WebSocket server
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     websocket: {
       message(ws, message) {
@@ -114,7 +114,7 @@ test("WebSocket should emit error and close events on connection to non-WebSocke
   const events: string[] = [];
 
   // Create a regular HTTP server (not WebSocket)
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req) {
       // Return a normal HTTP response

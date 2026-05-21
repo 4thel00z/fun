@@ -1,13 +1,13 @@
 ---
-title: Use snapshot testing in `bun test`
+title: Use snapshot testing in `fun test`
 sidebarTitle: Snapshot testing
 mode: center
 ---
 
-Bun's test runner supports Jest-style snapshot testing via `.toMatchSnapshot()`.
+Fun's test runner supports Jest-style snapshot testing via `.toMatchSnapshot()`.
 
 ```ts snap.test.ts icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("snapshot", () => {
   expect({ foo: "bar" }).toMatchSnapshot();
@@ -16,10 +16,10 @@ test("snapshot", () => {
 
 ---
 
-The first time this test is executed, Bun will evaluate the value passed into `expect()` and write it to disk in a directory called `__snapshots__` that lives alongside the test file. (Note the `snapshots: +1 added` line in the output.)
+The first time this test is executed, Fun will evaluate the value passed into `expect()` and write it to disk in a directory called `__snapshots__` that lives alongside the test file. (Note the `snapshots: +1 added` line in the output.)
 
 ```sh terminal icon="terminal"
-bun test test/snap
+fun test test/snap
 ```
 
 ```txt
@@ -49,7 +49,7 @@ test
 The `snap.test.ts.snap` file is a JavaScript file that exports a serialized version of the value passed into `expect()`. The `{foo: "bar"}` object has been serialized to JSON.
 
 ```js snap.test.ts.snap icon="file-code"
-// Bun Snapshot v1, https://bun.com/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
 exports[`snapshot 1`] = `
 {
@@ -60,14 +60,14 @@ exports[`snapshot 1`] = `
 
 ---
 
-Later, when this test file is executed again, Bun will read the snapshot file and compare it to the value passed into `expect()`. If the values are different, the test will fail.
+Later, when this test file is executed again, Fun will read the snapshot file and compare it to the value passed into `expect()`. If the values are different, the test will fail.
 
 ```sh terminal icon="terminal"
-bun test
+fun test
 ```
 
 ```txt
-bun test v1.3.3 (9c68abdb)
+fun test v1.3.3 (9c68abdb)
 test/snap.test.ts:
 ✓ snapshot [1.05ms]
 
@@ -82,11 +82,11 @@ Ran 1 tests across 1 files. [101.00ms]
 To update snapshots, use the `--update-snapshots` flag.
 
 ```sh terminal icon="terminal"
-bun test --update-snapshots
+fun test --update-snapshots
 ```
 
 ```txt
-bun test v1.3.3 (9c68abdb)
+fun test v1.3.3 (9c68abdb)
 test/snap.test.ts:
 ✓ snapshot [0.86ms]
 
@@ -99,4 +99,4 @@ Ran 1 tests across 1 files. [102.00ms]
 
 ---
 
-See [Docs > Test Runner > Snapshots](/test/snapshots) for complete documentation on snapshots with the Bun test runner.
+See [Docs > Test Runner > Snapshots](/test/snapshots) for complete documentation on snapshots with the Fun test runner.

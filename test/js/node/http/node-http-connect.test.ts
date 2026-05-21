@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, nodeExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, nodeExe } from "harness";
 import http from "http";
 
 import { once } from "node:events";
@@ -30,7 +30,7 @@ function connectClient(proxyAddress: AddressInfo, targetAddress: AddressInfo, ad
   return promise;
 }
 
-const BIG_DATA = Buffer.alloc(1024 * 1024 * 64, "bun").toString();
+const BIG_DATA = Buffer.alloc(1024 * 1024 * 64, "fun").toString();
 describe("HTTP server CONNECT", () => {
   test("should handle backpressure", async () => {
     const responseHeader = "HTTP/1.1 200 OK\r\nConnection: close\r\n\r\n";
@@ -41,7 +41,7 @@ describe("HTTP server CONNECT", () => {
       socket.write(responseHeader, () => {
         socket.write(BIG_DATA, () => {
           //TODO: is this a net bug? on windows the connection is closed before everything is sended
-          Bun.sleep(100).then(() => {
+          Fun.sleep(100).then(() => {
             socket.end();
           });
         });
@@ -182,7 +182,7 @@ describe("HTTP server CONNECT", () => {
     expect(response).toContain("502 Bad Gateway");
   });
 
-  // TODO: timeout is not supported in bun socket yet
+  // TODO: timeout is not supported in fun socket yet
   test.todo("should handle socket timeout", async () => {
     await using proxyServer = http.createServer();
     let timeoutFired = false;
@@ -221,7 +221,7 @@ describe("HTTP server CONNECT", () => {
     expect(response).toContain("408 Request Timeout");
   });
 
-  //TODO pause and resume only not supported in bun socket yet
+  //TODO pause and resume only not supported in fun socket yet
   test.todo("should handle socket pause and resume", async () => {
     await using proxyServer = http.createServer();
     let pauseCount = 0;
@@ -330,7 +330,7 @@ describe("HTTP server CONNECT", () => {
 
 /**
  * Test variations using normal HTTP requests and res.socket
- * These tests should run in both Node.js and Bun
+ * These tests should run in both Node.js and Fun
  */
 
 describe("HTTP server socket access via normal requests", () => {
@@ -442,22 +442,22 @@ describe("HTTP server socket access via normal requests", () => {
 
 describe("Should be compatible with node.js", () => {
   test("tests should run on node.js", async () => {
-    const process = Bun.spawn({
+    const process = Fun.spawn({
       cmd: [nodeExe(), "--test", join(import.meta.dir, "node-http-connect.node.mts")],
       stdout: "inherit",
       stderr: "inherit",
       stdin: "ignore",
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await process.exited).toBe(0);
   });
-  test("tests should run on bun", async () => {
-    const process = Bun.spawn({
-      cmd: [bunExe(), "test", join(import.meta.dir, "node-http-connect.node.mts")],
+  test("tests should run on fun", async () => {
+    const process = Fun.spawn({
+      cmd: [funExe(), "test", join(import.meta.dir, "node-http-connect.node.mts")],
       stdout: "inherit",
       stderr: "inherit",
       stdin: "ignore",
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await process.exited).toBe(0);
   });

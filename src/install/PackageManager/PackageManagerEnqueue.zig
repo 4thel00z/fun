@@ -66,7 +66,7 @@ pub fn enqueueDependencyList(
         ) catch |err| {
             const note = .{
                 .fmt = "error occurred while resolving {f}",
-                .args = .{bun.fmt.fmtPath(u8, lockfile.str(&dependency.realname()), .{
+                .args = .{fun.fmt.fmtPath(u8, lockfile.str(&dependency.realname()), .{
                     .path_sep = switch (dependency.version.tag) {
                         .folder => .auto,
                         else => .any,
@@ -239,7 +239,7 @@ pub fn enqueuePackageForDownload(
     name: []const u8,
     dependency_id: DependencyID,
     package_id: PackageID,
-    version: bun.Semver.Version,
+    version: fun.Semver.Version,
     url: []const u8,
     task_context: TaskCallbackContext,
     patch_name_and_version_hash: ?u64,
@@ -313,7 +313,7 @@ pub fn enqueueDependencyToRoot(
         const index = this.lockfile.buffers.dependencies.items.len;
         this.lockfile.buffers.dependencies.append(this.allocator, dep) catch unreachable;
         this.lockfile.buffers.resolutions.append(this.allocator, invalid_package_id) catch unreachable;
-        if (comptime Environment.allow_assert) bun.assert(this.lockfile.buffers.dependencies.items.len == this.lockfile.buffers.resolutions.items.len);
+        if (comptime Environment.allow_assert) fun.assert(this.lockfile.buffers.dependencies.items.len == this.lockfile.buffers.resolutions.items.len);
         break :brk index;
     }));
 
@@ -733,7 +733,7 @@ pub fn enqueueDependencyWithMainAndSuccessFn(
                         const name_str = this.lockfile.str(&name);
                         const task_id = Task.Id.forManifest(name_str);
 
-                        if (comptime Environment.allow_assert) bun.assert(task_id.get() != 0);
+                        if (comptime Environment.allow_assert) fun.assert(task_id.get() != 0);
 
                         if (comptime Environment.allow_assert)
                             debug(
@@ -1017,14 +1017,14 @@ pub fn enqueueDependencyWithMainAndSuccessFn(
                 \\
                 \\Searched in <b>{[search_path]f}<r>
                 \\
-                \\Workspace documentation: https://bun.com/docs/install/workspaces
+                \\Workspace documentation: https://fun.dev/docs/install/workspaces
                 \\
             ;
             const link_not_found_fmt =
                 \\Package "{[name]s}" is not linked
                 \\
                 \\To install a linked package:
-                \\   <cyan>bun link my-pkg-name-from-package-json<r>
+                \\   <cyan>fun link my-pkg-name-from-package-json<r>
                 \\
                 \\Tip: the package name is from package.json, which can differ from the folder name.
                 \\
@@ -1049,7 +1049,7 @@ pub fn enqueueDependencyWithMainAndSuccessFn(
                 }
 
                 // should not trigger a network call
-                if (comptime Environment.allow_assert) bun.assert(result.task == null);
+                if (comptime Environment.allow_assert) fun.assert(result.task == null);
 
                 if (comptime Environment.allow_assert)
                     debug(
@@ -1306,7 +1306,7 @@ fn enqueueGitClone(
 pub fn enqueueGitCheckout(
     this: *PackageManager,
     task_id: Task.Id,
-    dir: bun.FD,
+    dir: fun.FD,
     dependency_id: DependencyID,
     name: string,
     resolution: Resolution,
@@ -1374,7 +1374,7 @@ fn enqueueLocalTarball(
     // can be reallocated concurrently by the main thread while processing
     // other dependencies (e.g. `appendPackage` / `StringBuilder.allocate`
     // in `Package.fromNPM`).
-    var abs_buf: bun.PathBuffer = undefined;
+    var abs_buf: fun.PathBuffer = undefined;
     const tarball_path, const normalize = tarball_path: {
         const workspace_pkg_id = this.lockfile.getWorkspacePkgIfWorkspaceDep(dependency_id);
         if (workspace_pkg_id == invalid_package_id) break :tarball_path .{ path, true };
@@ -1487,7 +1487,7 @@ fn getOrPutResolvedPackageWithFindResult(
     const should_update = this.to_update and
         // If updating, only update packages in the current workspace
         this.lockfile.isRootDependency(this, dependency_id) and
-        // no need to do a look up if update requests are empty (`bun update` with no args)
+        // no need to do a look up if update requests are empty (`fun update` with no args)
         (this.update_requests.len == 0 or
             this.updating_packages.contains(dependency.name.slice(this.lockfile.buffers.string_bytes.items)));
 
@@ -1526,7 +1526,7 @@ fn getOrPutResolvedPackageWithFindResult(
         Features.npm,
     ));
 
-    if (comptime Environment.allow_assert) bun.assert(package.meta.id != invalid_package_id);
+    if (comptime Environment.allow_assert) fun.assert(package.meta.id != invalid_package_id);
     defer successFn(this, dependency_id, package.meta.id);
 
     // non-null if the package is in "patchedDependencies"
@@ -1550,7 +1550,7 @@ fn getOrPutResolvedPackageWithFindResult(
             }
 
             const task_id = Task.Id.forNPMPackage(this.lockfile.str(&name), package.resolution.value.npm.version);
-            bun.debugAssert(!this.network_dedupe_map.contains(task_id));
+            fun.debugAssert(!this.network_dedupe_map.contains(task_id));
 
             break :extract .{
                 .package = package,
@@ -1579,7 +1579,7 @@ fn getOrPutResolvedPackageWithFindResult(
                     .{
                         .pkg_id = package.meta.id,
                         .dependency_id = dependency_id,
-                        .url = bun.handleOom(this.allocator.dupe(u8, manifest.str(&find_result.package.tarball_url))),
+                        .url = fun.handleOom(this.allocator.dupe(u8, manifest.str(&find_result.package.tarball_url))),
                     },
                 ),
             },
@@ -1703,7 +1703,7 @@ fn getOrPutResolvedPackage(
                     const buf = this.lockfile.buffers.string_bytes.items;
                     if (this.options.link_workspace_packages and
                         (((workspace_version != null and version.value.npm.version.satisfies(workspace_version.?, buf, buf)) or
-                            // https://github.com/oven-sh/bun/pull/10899#issuecomment-2099609419
+                            // https://github.com/underdoc-org/fun/pull/10899#issuecomment-2099609419
                             // if the workspace doesn't have a version, it can still be used if
                             // dependency version is wildcard
                             (workspace_path != null and version.value.npm.version.@"is *"()))))
@@ -1837,7 +1837,7 @@ fn getOrPutResolvedPackage(
                 if (this.lockfile.isWorkspaceDependency(dependency_id)) {
                     // relative to cwd
                     const folder_path = this.lockfile.str(&version.value.folder);
-                    var buf2: bun.PathBuffer = undefined;
+                    var buf2: fun.PathBuffer = undefined;
                     const folder_path_abs = if (std.fs.path.isAbsolute(folder_path)) folder_path else blk: {
                         break :blk Path.joinAbsStringBuf(
                             FileSystem.instance.top_level_dir,
@@ -1873,7 +1873,7 @@ fn getOrPutResolvedPackage(
                     builder.count(name_slice);
                     builder.count(folder_path);
 
-                    bun.handleOom(builder.allocate());
+                    fun.handleOom(builder.allocate());
 
                     name_slice = this.lockfile.str(&name);
                     folder_path = this.lockfile.str(&version.value.folder);
@@ -1892,7 +1892,7 @@ fn getOrPutResolvedPackage(
                 }
 
                 // these are always new
-                package = bun.handleOom(this.lockfile.appendPackage(package));
+                package = fun.handleOom(this.lockfile.appendPackage(package));
 
                 break :res .{
                     .new_package_id = package.meta.id,
@@ -1916,7 +1916,7 @@ fn getOrPutResolvedPackage(
             // package name hash should be used to find workspace path from map
             const workspace_path_raw: *const String = this.lockfile.workspace_paths.getPtr(name_hash) orelse &version.value.workspace;
             const workspace_path = this.lockfile.str(workspace_path_raw);
-            var buf2: bun.PathBuffer = undefined;
+            var buf2: fun.PathBuffer = undefined;
             const workspace_path_u8 = if (std.fs.path.isAbsolute(workspace_path)) workspace_path else blk: {
                 break :blk Path.joinAbsStringBuf(FileSystem.instance.top_level_dir, &buf2, &[_]string{workspace_path}, .auto);
             };
@@ -1978,45 +1978,45 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const Path = bun.path;
-const ThreadPool = bun.ThreadPool;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const Path = fun.path;
+const ThreadPool = fun.ThreadPool;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const Fs = bun.fs;
+const Fs = fun.fs;
 const FileSystem = Fs.FileSystem;
 
-const Behavior = bun.install.Behavior;
-const Dependency = bun.install.Dependency;
-const DependencyID = bun.install.DependencyID;
-const ExtractTarball = bun.install.ExtractTarball;
-const Features = bun.install.Features;
-const FolderResolution = bun.install.FolderResolution;
-const Integrity = bun.install.Integrity;
-const Npm = bun.install.Npm;
-const PackageID = bun.install.PackageID;
-const PackageNameHash = bun.install.PackageNameHash;
-const PatchTask = bun.install.PatchTask;
-const Repository = bun.install.Repository;
-const Resolution = bun.install.Resolution;
-const Task = bun.install.Task;
-const TaskCallbackContext = bun.install.TaskCallbackContext;
-const invalid_package_id = bun.install.invalid_package_id;
+const Behavior = fun.install.Behavior;
+const Dependency = fun.install.Dependency;
+const DependencyID = fun.install.DependencyID;
+const ExtractTarball = fun.install.ExtractTarball;
+const Features = fun.install.Features;
+const FolderResolution = fun.install.FolderResolution;
+const Integrity = fun.install.Integrity;
+const Npm = fun.install.Npm;
+const PackageID = fun.install.PackageID;
+const PackageNameHash = fun.install.PackageNameHash;
+const PatchTask = fun.install.PatchTask;
+const Repository = fun.install.Repository;
+const Resolution = fun.install.Resolution;
+const Task = fun.install.Task;
+const TaskCallbackContext = fun.install.TaskCallbackContext;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;
 
-const NetworkTask = bun.install.NetworkTask;
+const NetworkTask = fun.install.NetworkTask;
 const EnqueuePackageForDownloadError = NetworkTask.ForTarballError;
 const EnqueueTarballForDownloadError = NetworkTask.ForTarballError;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const FailFn = PackageManager.FailFn;
 const SuccessFn = PackageManager.SuccessFn;
 const TaskCallbackList = PackageManager.TaskCallbackList;

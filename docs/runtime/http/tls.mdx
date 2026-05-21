@@ -1,28 +1,28 @@
 ---
 title: TLS
-description: Enable TLS in Bun.serve
+description: Enable TLS in Fun.serve
 ---
 
-Bun supports TLS out of the box, powered by [BoringSSL](https://boringssl.googlesource.com/boringssl). Enable TLS by passing in a value for `key` and `cert`; both are required to enable TLS.
+Fun supports TLS out of the box, powered by [BoringSSL](https://boringssl.googlesource.com/boringssl). Enable TLS by passing in a value for `key` and `cert`; both are required to enable TLS.
 
 ```ts
-Bun.serve({
+Fun.serve({
   tls: {
-    key: Bun.file("./key.pem"), // [!code ++]
-    cert: Bun.file("./cert.pem"), // [!code ++]
+    key: Fun.file("./key.pem"), // [!code ++]
+    cert: Fun.file("./cert.pem"), // [!code ++]
   },
 });
 ```
 
-The `key` and `cert` fields expect the _contents_ of your TLS key and certificate, _not a path to it_. This can be a string, `BunFile`, `TypedArray`, or `Buffer`.
+The `key` and `cert` fields expect the _contents_ of your TLS key and certificate, _not a path to it_. This can be a string, `FunFile`, `TypedArray`, or `Buffer`.
 
 ```ts
-Bun.serve({
+Fun.serve({
   tls: {
-    key: Bun.file("./key.pem"), // BunFile
+    key: Fun.file("./key.pem"), // FunFile
     key: fs.readFileSync("./key.pem"), // Buffer
     key: fs.readFileSync("./key.pem", "utf8"), // string
-    key: [Bun.file("./key1.pem"), Bun.file("./key2.pem")], // array of above
+    key: [Fun.file("./key1.pem"), Fun.file("./key2.pem")], // array of above
   },
 });
 ```
@@ -32,10 +32,10 @@ Bun.serve({
 If your private key is encrypted with a passphrase, provide a value for `passphrase` to decrypt it.
 
 ```ts
-Bun.serve({
+Fun.serve({
   tls: {
-    key: Bun.file("./key.pem"),
-    cert: Bun.file("./cert.pem"),
+    key: Fun.file("./key.pem"),
+    cert: Fun.file("./cert.pem"),
     passphrase: "my-secret-passphrase", // [!code ++]
   },
 });
@@ -46,11 +46,11 @@ Bun.serve({
 Optionally, you can override the trusted CA certificates by passing a value for `ca`. By default, the server will trust the list of well-known CAs curated by Mozilla. When `ca` is specified, the Mozilla list is overwritten.
 
 ```ts
-Bun.serve({
+Fun.serve({
   tls: {
-    key: Bun.file("./key.pem"), // path to TLS key
-    cert: Bun.file("./cert.pem"), // path to TLS cert
-    ca: Bun.file("./ca.pem"), // path to root CA certificate  // [!code ++]
+    key: Fun.file("./key.pem"), // path to TLS key
+    cert: Fun.file("./cert.pem"), // path to TLS cert
+    ca: Fun.file("./ca.pem"), // path to root CA certificate  // [!code ++]
   },
 });
 ```
@@ -60,7 +60,7 @@ Bun.serve({
 To override Diffie-Hellman parameters:
 
 ```ts
-Bun.serve({
+Fun.serve({
   tls: {
     dhParamsFile: "/path/to/dhparams.pem", // path to Diffie Hellman parameters // [!code ++]
   },
@@ -74,7 +74,7 @@ Bun.serve({
 To configure the server name indication (SNI) for the server, set the `serverName` field in the `tls` object.
 
 ```ts
-Bun.serve({
+Fun.serve({
   tls: {
     serverName: "my-server.com", // SNI // [!code ++]
   },
@@ -84,16 +84,16 @@ Bun.serve({
 To allow multiple server names, pass an array of objects to `tls`, each with a `serverName` field.
 
 ```ts
-Bun.serve({
+Fun.serve({
   tls: [
     {
-      key: Bun.file("./key1.pem"),
-      cert: Bun.file("./cert1.pem"),
+      key: Fun.file("./key1.pem"),
+      cert: Fun.file("./cert1.pem"),
       serverName: "my-server1.com", // [!code ++]
     },
     {
-      key: Bun.file("./key2.pem"),
-      cert: Bun.file("./cert2.pem"),
+      key: Fun.file("./key2.pem"),
+      cert: Fun.file("./cert2.pem"),
       serverName: "my-server2.com", // [!code ++]
     },
   ],

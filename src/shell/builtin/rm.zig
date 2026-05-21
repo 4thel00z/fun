@@ -16,7 +16,7 @@ state: union(enum) {
         filepath_args: []const [*:0]const u8,
         total_tasks: usize,
         err: ?Syscall.Error = null,
-        lock: bun.Mutex = bun.Mutex{},
+        lock: fun.Mutex = fun.Mutex{},
         error_signal: std.atomic.Value(bool) = .{ .raw = false },
         output_done: std.atomic.Value(usize) = .{ .raw = 0 },
         output_count: std.atomic.Value(usize) = .{ .raw = 0 },
@@ -170,7 +170,7 @@ pub noinline fn next(this: *Rm) Yield {
 
                                 // Check that non of the paths will delete the root
                                 {
-                                    var buf: bun.PathBuffer = undefined;
+                                    var buf: fun.PathBuffer = undefined;
                                     const cwd = switch (Syscall.getcwd(&buf)) {
                                         .err => |err| {
                                             const errbuf = this.bltn().fmtErrorArena(
@@ -184,10 +184,10 @@ pub noinline fn next(this: *Rm) Yield {
                                     };
 
                                     for (filepath_args) |filepath| {
-                                        const path = filepath[0..bun.len(filepath)];
-                                        const resolved_path = if (ResolvePath.Platform.auto.isAbsolute(path)) path else bun.path.join(&[_][]const u8{ cwd, path }, .auto);
+                                        const path = filepath[0..fun.len(filepath)];
+                                        const resolved_path = if (ResolvePath.Platform.auto.isAbsolute(path)) path else fun.path.join(&[_][]const u8{ cwd, path }, .auto);
                                         const is_root = brk: {
-                                            const normalized = bun.path.normalizeString(resolved_path, false, .auto);
+                                            const normalized = fun.path.normalizeString(resolved_path, false, .auto);
                                             const dirname = ResolvePath.dirname(normalized, .auto);
                                             const is_root = std.mem.eql(u8, dirname, "");
                                             break :brk is_root;
@@ -273,7 +273,7 @@ pub noinline fn next(this: *Rm) Yield {
                     this.state.exec.state = .{ .waiting = .{} };
                     for (this.state.exec.filepath_args) |root_raw| {
                         const root = root_raw[0..std.mem.len(root_raw)];
-                        const root_path_string = bun.PathString.init(root[0..root.len]);
+                        const root_path_string = fun.PathString.init(root[0..root.len]);
                         const is_absolute = ResolvePath.Platform.auto.isAbsolute(root);
                         var task = ShellRmTask.create(root_path_string, this, cwd, &this.state.exec.error_signal, is_absolute);
                         task.schedule();
@@ -298,7 +298,7 @@ pub noinline fn next(this: *Rm) Yield {
 pub fn onIOWriterChunk(this: *Rm, _: usize, e: ?jsc.SystemError) Yield {
     log("Rm(0x{x}).onIOWriterChunk()", .{@intFromPtr(this)});
     defer if (e) |err| err.deref();
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert((this.state == .parse_opts and this.state.parse_opts.state == .wait_write_err) or
             (this.state == .exec and this.state.exec.state == .waiting and this.state.exec.output_count.load(.seq_cst) > 0) or
             this.state == .waiting_write_err);
@@ -342,28 +342,28 @@ fn parseFlag(this: *Opts, _: *Builtin, flag: []const u8) ParseFlagsResult {
     if (flag.len == 0) return .done;
     if (flag[0] != '-') return .done;
     if (flag.len > 2 and flag[1] == '-') {
-        if (bun.strings.eqlComptime(flag, "--preserve-root")) {
+        if (fun.strings.eqlComptime(flag, "--preserve-root")) {
             this.preserve_root = true;
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--no-preserve-root")) {
+        } else if (fun.strings.eqlComptime(flag, "--no-preserve-root")) {
             this.preserve_root = false;
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--recursive")) {
+        } else if (fun.strings.eqlComptime(flag, "--recursive")) {
             this.recursive = true;
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--verbose")) {
+        } else if (fun.strings.eqlComptime(flag, "--verbose")) {
             this.verbose = true;
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--dir")) {
+        } else if (fun.strings.eqlComptime(flag, "--dir")) {
             this.remove_empty_dirs = true;
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--interactive=never")) {
+        } else if (fun.strings.eqlComptime(flag, "--interactive=never")) {
             this.prompt_behaviour = .never;
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--interactive=once")) {
+        } else if (fun.strings.eqlComptime(flag, "--interactive=once")) {
             this.prompt_behaviour = .{ .once = .{} };
             return .continue_parsing;
-        } else if (bun.strings.eqlComptime(flag, "--interactive=always")) {
+        } else if (fun.strings.eqlComptime(flag, "--interactive=always")) {
             this.prompt_behaviour = .always;
             return .continue_parsing;
         }
@@ -464,20 +464,20 @@ fn writeVerbose(this: *Rm, verbose: *ShellRmTask.DirTask) Yield {
 }
 
 pub const ShellRmTask = struct {
-    const debug = bun.Output.scoped(.AsyncRmTask, .hidden);
+    const debug = fun.Output.scoped(.AsyncRmTask, .hidden);
 
     rm: *Rm,
     opts: Opts,
 
-    cwd: bun.FD,
-    cwd_path: ?CwdPath = if (bun.Environment.isPosix) 0 else null,
+    cwd: fun.FD,
+    cwd_path: ?CwdPath = if (fun.Environment.isPosix) 0 else null,
 
     root_task: DirTask,
-    root_path: bun.PathString = bun.PathString.empty,
+    root_path: fun.PathString = fun.PathString.empty,
     root_is_absolute: bool,
 
     error_signal: *std.atomic.Value(bool),
-    err_mutex: bun.Mutex = .{},
+    err_mutex: fun.Mutex = .{},
     /// Main-thread callbacks that must complete before this task can be freed:
     /// always one for onShellRmTaskDone (via finishConcurrently), plus one per DirTask whose
     /// verbose output was queued. Decremented by decrPendingAndMaybeDeinit.
@@ -499,8 +499,8 @@ pub const ShellRmTask = struct {
         posix,
         windows,
 
-        pub fn fromPath(p: bun.PathString) JoinStyle {
-            if (comptime bun.Environment.isPosix) return .posix;
+        pub fn fromPath(p: fun.PathString) JoinStyle {
+            if (comptime fun.Environment.isPosix) return .posix;
             const backslash = std.mem.indexOfScalar(u8, p.slice(), '\\') orelse std.math.maxInt(usize);
             const forwardslash = std.mem.indexOfScalar(u8, p.slice(), '/') orelse std.math.maxInt(usize);
             if (forwardslash <= backslash)
@@ -509,7 +509,7 @@ pub const ShellRmTask = struct {
         }
     };
 
-    const CwdPath = if (bun.Environment.isWindows) [:0]const u8 else u0;
+    const CwdPath = if (fun.Environment.isWindows) [:0]const u8 else u0;
 
     const ParentRmTask = @This();
 
@@ -557,11 +557,11 @@ pub const ShellRmTask = struct {
             }
 
             // Root, get cwd path on windows
-            if (bun.Environment.isWindows) {
+            if (fun.Environment.isWindows) {
                 if (this.parent_task == null) {
-                    var buf: bun.PathBuffer = undefined;
+                    var buf: fun.PathBuffer = undefined;
                     const cwd_path = switch (Syscall.getFdPath(this.task_manager.cwd, &buf)) {
-                        .result => |p| bun.handleOom(bun.default_allocator.dupeZ(u8, p)),
+                        .result => |p| fun.handleOom(fun.default_allocator.dupeZ(u8, p)),
                         .err => |err| {
                             debug("[runFromThreadPoolImpl:getcwd] DirTask({x}) failed: {s}: {s}", .{ @intFromPtr(this), @tagName(err.getErrno()), err.path });
                             this.task_manager.err_mutex.lock();
@@ -675,7 +675,7 @@ pub const ShellRmTask = struct {
                     if (this.task_manager.err == null) {
                         this.task_manager.err = e;
                     } else {
-                        bun.default_allocator.free(e.path);
+                        fun.default_allocator.free(e.path);
                     }
                 },
                 .result => |deleted| {
@@ -704,14 +704,14 @@ pub const ShellRmTask = struct {
             // The root's path string is from Rm's argv so don't deallocate it
             // And the root task is actually a field on the struct of the AsyncRmTask so don't deallocate it either
             if (this.parent_task != null) {
-                bun.default_allocator.free(this.path);
-                bun.default_allocator.destroy(this);
+                fun.default_allocator.free(this.path);
+                fun.default_allocator.destroy(this);
             }
         }
     };
 
-    pub fn create(root_path: bun.PathString, rm: *Rm, cwd: bun.FD, error_signal: *std.atomic.Value(bool), is_absolute: bool) *ShellRmTask {
-        const task = bun.handleOom(bun.default_allocator.create(ShellRmTask));
+    pub fn create(root_path: fun.PathString, rm: *Rm, cwd: fun.FD, error_signal: *std.atomic.Value(bool), is_absolute: bool) *ShellRmTask {
+        const task = fun.handleOom(fun.default_allocator.create(ShellRmTask));
         task.* = ShellRmTask{
             .rm = rm,
             .opts = rm.opts,
@@ -723,7 +723,7 @@ pub const ShellRmTask = struct {
                 .path = root_path.sliceAssumeZ(),
                 .subtask_count = std.atomic.Value(usize).init(1),
                 .kind_hint = .idk,
-                .deleted_entries = std.array_list.Managed(u8).init(bun.default_allocator),
+                .deleted_entries = std.array_list.Managed(u8).init(fun.default_allocator),
                 .concurrent_task = jsc.EventLoopTask.fromEventLoop(rm.bltn().eventLoop()),
             },
             .event_loop = rm.bltn().eventLoop(),
@@ -744,7 +744,7 @@ pub const ShellRmTask = struct {
             return;
         }
         const new_path = this.join(
-            bun.default_allocator,
+            fun.default_allocator,
             &[_][]const u8{
                 parent_dir.path[0..parent_dir.path.len],
                 path[0..path.len],
@@ -759,30 +759,30 @@ pub const ShellRmTask = struct {
         debug("enqueue: {s} {s}", .{ path, @tagName(kind_hint) });
 
         if (this.error_signal.load(.seq_cst)) {
-            bun.default_allocator.free(path);
+            fun.default_allocator.free(path);
             return;
         }
 
-        var subtask: *DirTask = bun.handleOom(bun.default_allocator.create(DirTask));
+        var subtask: *DirTask = fun.handleOom(fun.default_allocator.create(DirTask));
         subtask.* = DirTask{
             .task_manager = this,
             .path = path,
             .parent_task = parent_task,
             .subtask_count = std.atomic.Value(usize).init(1),
             .kind_hint = kind_hint,
-            .deleted_entries = std.array_list.Managed(u8).init(bun.default_allocator),
+            .deleted_entries = std.array_list.Managed(u8).init(fun.default_allocator),
             .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.event_loop),
         };
 
         const count = parent_task.subtask_count.fetchAdd(1, .monotonic);
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             assert(count > 0);
         }
 
         jsc.WorkPool.schedule(&subtask.task);
     }
 
-    pub fn getcwd(this: *ShellRmTask) bun.FD {
+    pub fn getcwd(this: *ShellRmTask) fun.FD {
         return this.cwd;
     }
 
@@ -793,8 +793,8 @@ pub const ShellRmTask = struct {
             debug("DirTask(0x{x}, {s}) Incrementing output count (deleted={s})", .{ @intFromPtr(dir_task), dir_task.path, path });
             _ = this.rm.state.exec.incrementOutputCount(.output_count);
         }
-        bun.handleOom(dir_task.deleted_entries.appendSlice(path[0..path.len]));
-        bun.handleOom(dir_task.deleted_entries.append('\n'));
+        fun.handleOom(dir_task.deleted_entries.appendSlice(path[0..path.len]));
+        fun.handleOom(dir_task.deleted_entries.append('\n'));
         return .success;
     }
 
@@ -807,7 +807,7 @@ pub const ShellRmTask = struct {
         }
     }
 
-    pub fn bufJoin(this: *ShellRmTask, buf: *bun.PathBuffer, parts: []const []const u8, _: Syscall.Tag) Maybe([:0]const u8) {
+    pub fn bufJoin(this: *ShellRmTask, buf: *fun.PathBuffer, parts: []const []const u8, _: Syscall.Tag) Maybe([:0]const u8) {
         if (this.join_style == .posix) {
             return .{ .result = ResolvePath.joinZBuf(buf, parts, .posix) };
         } else return .{ .result = ResolvePath.joinZBuf(buf, parts, .windows) };
@@ -818,14 +818,14 @@ pub const ShellRmTask = struct {
             .task = this,
             .child_of_dir = false,
         };
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
         switch (dir_task.kind_hint) {
             .idk, .file => return this.removeEntryFile(dir_task, dir_task.path, is_absolute, &buf, &remove_child_vtable),
             .dir => return this.removeEntryDir(dir_task, is_absolute, &buf),
         }
     }
 
-    fn removeEntryDir(this: *ShellRmTask, dir_task: *DirTask, is_absolute: bool, buf: *bun.PathBuffer) Maybe(void) {
+    fn removeEntryDir(this: *ShellRmTask, dir_task: *DirTask, is_absolute: bool, buf: *fun.PathBuffer) Maybe(void) {
         const path = dir_task.path;
         const dirfd = this.cwd;
         debug("removeEntryDir({s})", .{path});
@@ -862,10 +862,10 @@ pub const ShellRmTask = struct {
         }
 
         if (!this.opts.recursive) {
-            return Maybe(void).initErr(Syscall.Error.fromCode(bun.sys.E.ISDIR, .TODO).withPath(bun.handleOom(bun.default_allocator.dupeZ(u8, dir_task.path))));
+            return Maybe(void).initErr(Syscall.Error.fromCode(fun.sys.E.ISDIR, .TODO).withPath(fun.handleOom(fun.default_allocator.dupeZ(u8, dir_task.path))));
         }
 
-        const flags = bun.O.DIRECTORY | bun.O.RDONLY;
+        const flags = fun.O.DIRECTORY | fun.O.RDONLY;
         const fd = switch (ShellSyscall.openat(dirfd, path, flags, 0)) {
             .result => |fd| fd,
             .err => |e| {
@@ -950,7 +950,7 @@ pub const ShellRmTask = struct {
 
         if (this.error_signal.load(.seq_cst)) return .success;
 
-        if (bun.Environment.isWindows) {
+        if (fun.Environment.isWindows) {
             close_fd = false;
             fd.close();
         }
@@ -986,7 +986,7 @@ pub const ShellRmTask = struct {
     const DummyRemoveFile = struct {
         var dummy: @This() = std.mem.zeroes(@This());
 
-        pub fn onIsDir(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *bun.PathBuffer) Maybe(void) {
+        pub fn onIsDir(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *fun.PathBuffer) Maybe(void) {
             _ = this; // autofix
             _ = parent_dir_task; // autofix
             _ = path; // autofix
@@ -996,7 +996,7 @@ pub const ShellRmTask = struct {
             return .success;
         }
 
-        pub fn onDirNotEmpty(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *bun.PathBuffer) Maybe(void) {
+        pub fn onDirNotEmpty(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *fun.PathBuffer) Maybe(void) {
             _ = this; // autofix
             _ = parent_dir_task; // autofix
             _ = path; // autofix
@@ -1011,16 +1011,16 @@ pub const ShellRmTask = struct {
         task: *ShellRmTask,
         child_of_dir: bool,
 
-        pub fn onIsDir(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *bun.PathBuffer) Maybe(void) {
+        pub fn onIsDir(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *fun.PathBuffer) Maybe(void) {
             if (this.child_of_dir) {
-                this.task.enqueueNoJoin(parent_dir_task, bun.handleOom(bun.default_allocator.dupeZ(u8, path)), .dir);
+                this.task.enqueueNoJoin(parent_dir_task, fun.handleOom(fun.default_allocator.dupeZ(u8, path)), .dir);
                 return .success;
             }
             return this.task.removeEntryDir(parent_dir_task, is_absolute, buf);
         }
 
-        pub fn onDirNotEmpty(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *bun.PathBuffer) Maybe(void) {
-            if (this.child_of_dir) return .{ .result = this.task.enqueueNoJoin(parent_dir_task, bun.handleOom(bun.default_allocator.dupeZ(u8, path)), .dir) };
+        pub fn onDirNotEmpty(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *fun.PathBuffer) Maybe(void) {
+            if (this.child_of_dir) return .{ .result = this.task.enqueueNoJoin(parent_dir_task, fun.handleOom(fun.default_allocator.dupeZ(u8, path)), .dir) };
             return this.task.removeEntryDir(parent_dir_task, is_absolute, buf);
         }
     };
@@ -1031,7 +1031,7 @@ pub const ShellRmTask = struct {
         allow_enqueue: bool = true,
         enqueued: bool = false,
 
-        pub fn onIsDir(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *bun.PathBuffer) Maybe(void) {
+        pub fn onIsDir(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *fun.PathBuffer) Maybe(void) {
             _ = parent_dir_task; // autofix
             _ = path; // autofix
             _ = is_absolute; // autofix
@@ -1041,13 +1041,13 @@ pub const ShellRmTask = struct {
             return .success;
         }
 
-        pub fn onDirNotEmpty(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *bun.PathBuffer) Maybe(void) {
+        pub fn onDirNotEmpty(this: *@This(), parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *fun.PathBuffer) Maybe(void) {
             _ = is_absolute; // autofix
             _ = buf; // autofix
 
             this.treat_as_dir = true;
             if (this.allow_enqueue) {
-                this.task.enqueueNoJoin(parent_dir_task, bun.handleOom(bun.default_allocator.dupeZ(u8, path)), .dir);
+                this.task.enqueueNoJoin(parent_dir_task, fun.handleOom(fun.default_allocator.dupeZ(u8, path)), .dir);
                 this.enqueued = true;
             }
             return .success;
@@ -1087,7 +1087,7 @@ pub const ShellRmTask = struct {
                     },
                 }
             } else {
-                var buf: bun.PathBuffer = undefined;
+                var buf: fun.PathBuffer = undefined;
                 if (this.removeEntryFile(dir_task, dir_task.path, dir_task.is_absolute, &buf, &state).asErr()) |e| {
                     return .{ .err = e };
                 }
@@ -1098,17 +1098,17 @@ pub const ShellRmTask = struct {
         }
     }
 
-    fn removeEntryFile(this: *ShellRmTask, parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *bun.PathBuffer, vtable: anytype) Maybe(void) {
+    fn removeEntryFile(this: *ShellRmTask, parent_dir_task: *DirTask, path: [:0]const u8, is_absolute: bool, buf: *fun.PathBuffer, vtable: anytype) Maybe(void) {
         const VTable = std.meta.Child(@TypeOf(vtable));
         const Handler = struct {
-            pub fn onIsDir(vtable_: anytype, parent_dir_task_: *DirTask, path_: [:0]const u8, is_absolute_: bool, buf_: *bun.PathBuffer) Maybe(void) {
+            pub fn onIsDir(vtable_: anytype, parent_dir_task_: *DirTask, path_: [:0]const u8, is_absolute_: bool, buf_: *fun.PathBuffer) Maybe(void) {
                 if (@hasDecl(VTable, "onIsDir")) {
                     return VTable.onIsDir(vtable_, parent_dir_task_, path_, is_absolute_, buf_);
                 }
                 return .success;
             }
 
-            pub fn onDirNotEmpty(vtable_: anytype, parent_dir_task_: *DirTask, path_: [:0]const u8, is_absolute_: bool, buf_: *bun.PathBuffer) Maybe(void) {
+            pub fn onDirNotEmpty(vtable_: anytype, parent_dir_task_: *DirTask, path_: [:0]const u8, is_absolute_: bool, buf_: *fun.PathBuffer) Maybe(void) {
                 if (@hasDecl(VTable, "onDirNotEmpty")) {
                     return VTable.onDirNotEmpty(vtable_, parent_dir_task_, path_, is_absolute_, buf_);
                 }
@@ -1121,17 +1121,17 @@ pub const ShellRmTask = struct {
             .err => |e| {
                 debug("unlinkatWithFlags({s}) = {s}", .{ path, @tagName(e.getErrno()) });
                 switch (e.getErrno()) {
-                    bun.sys.E.NOENT => {
+                    fun.sys.E.NOENT => {
                         if (this.opts.force)
                             return this.verboseDeleted(parent_dir_task, path);
 
                         return .{ .err = this.errorWithPath(e, path) };
                     },
-                    bun.sys.E.ISDIR => {
+                    fun.sys.E.ISDIR => {
                         return Handler.onIsDir(vtable, parent_dir_task, path, is_absolute, buf);
                     },
                     // This might happen if the file is actually a directory
-                    bun.sys.E.PERM => {
+                    fun.sys.E.PERM => {
                         switch (builtin.os.tag) {
                             // non-Linux POSIX systems and Windows return EPERM when trying to delete a directory, so
                             // we need to handle that case specifically and translate the error
@@ -1175,7 +1175,7 @@ pub const ShellRmTask = struct {
 
     fn errorWithPath(this: *ShellRmTask, err: Syscall.Error, path: [:0]const u8) Syscall.Error {
         _ = this;
-        return err.withPath(bun.handleOom(bun.default_allocator.dupeZ(u8, path[0..path.len])));
+        return err.withPath(fun.handleOom(fun.default_allocator.dupeZ(u8, path[0..path.len])));
     }
 
     inline fn join(this: *ShellRmTask, alloc: Allocator, subdir_parts: []const []const u8, is_absolute: bool) [:0]const u8 {
@@ -1183,10 +1183,10 @@ pub const ShellRmTask = struct {
         if (!is_absolute) {
             // If relative paths enabled, stdlib join is preferred over
             // ResolvePath.joinBuf because it doesn't try to normalize the path
-            return bun.handleOom(std.fs.path.joinZ(alloc, subdir_parts));
+            return fun.handleOom(std.fs.path.joinZ(alloc, subdir_parts));
         }
 
-        const out = bun.handleOom(alloc.dupeZ(u8, bun.path.join(subdir_parts, .auto)));
+        const out = fun.handleOom(alloc.dupeZ(u8, fun.path.join(subdir_parts, .auto)));
 
         return out;
     }
@@ -1211,14 +1211,14 @@ pub const ShellRmTask = struct {
     }
 
     pub fn deinit(this: *ShellRmTask) void {
-        if (bun.Environment.isWindows) {
-            if (this.cwd_path) |p| bun.default_allocator.free(p);
+        if (fun.Environment.isWindows) {
+            if (this.cwd_path) |p| fun.default_allocator.free(p);
         }
         if (this.err) |*e| {
-            if (e.path.len > 0) bun.default_allocator.free(e.path);
+            if (e.path.len > 0) fun.default_allocator.free(e.path);
         }
         this.root_task.deleted_entries.deinit();
-        bun.default_allocator.destroy(this);
+        fun.default_allocator.destroy(this);
     }
 };
 
@@ -1242,7 +1242,7 @@ pub fn writeFailingError(this: *Rm, buf: []const u8, exit_code: ExitCode) Yield 
     return this.bltn().done(exit_code);
 }
 
-const log = bun.Output.scoped(.Rm, .hidden);
+const log = fun.Output.scoped(.Rm, .hidden);
 
 const builtin = @import("builtin");
 const std = @import("std");
@@ -1254,15 +1254,15 @@ const ShellSyscall = interpreter.ShellSyscall;
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const DirIterator = bun.DirIterator;
-const ResolvePath = bun.path;
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const DirIterator = fun.DirIterator;
+const ResolvePath = fun.path;
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
 const Yield = shell.Yield;
 
-const Syscall = bun.sys;
-const Maybe = bun.sys.Maybe;
+const Syscall = fun.sys;
+const Maybe = fun.sys.Maybe;

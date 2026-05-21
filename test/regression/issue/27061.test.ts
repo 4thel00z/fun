@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import http from "node:http";
 
-// Regression test for https://github.com/oven-sh/bun/issues/27061
+// Regression test for https://github.com/underdoc-org/fun/issues/27061
 // When http.ClientRequest.write() is called more than once (streaming data in chunks),
-// Bun was stripping the explicitly-set Content-Length header and switching to
+// Fun was stripping the explicitly-set Content-Length header and switching to
 // Transfer-Encoding: chunked. Node.js preserves Content-Length in all cases.
 
 describe("node:http ClientRequest preserves explicit Content-Length", () => {

@@ -1,6 +1,6 @@
-import { $, randomUUIDv7, sql, SQL } from "bun";
-import { afterAll, describe, expect, mock, test } from "bun:test";
-import { bunEnv, bunExe, isCI, isDockerEnabled, tempDirWithFiles } from "harness";
+import { $, randomUUIDv7, sql, SQL } from "fun";
+import { afterAll, describe, expect, mock, test } from "fun:test";
+import { funEnv, funExe, isCI, isDockerEnabled, tempDirWithFiles } from "harness";
 import * as net from "node:net";
 import path from "path";
 const postgres = (...args) => new SQL(...args);
@@ -21,11 +21,11 @@ if (isDockerEnabled()) {
   describe("PostgreSQL tests", async () => {
     let container: { port: number; host: string };
     let socketProxy: UnixDomainSocketProxy;
-    let login: Bun.SQL.PostgresOrMySQLOptions;
-    let login_domain_socket: Bun.SQL.PostgresOrMySQLOptions;
-    let login_md5: Bun.SQL.PostgresOrMySQLOptions;
-    let login_scram: Bun.SQL.PostgresOrMySQLOptions;
-    let options: Bun.SQL.PostgresOrMySQLOptions;
+    let login: Fun.SQL.PostgresOrMySQLOptions;
+    let login_domain_socket: Fun.SQL.PostgresOrMySQLOptions;
+    let login_md5: Fun.SQL.PostgresOrMySQLOptions;
+    let login_scram: Fun.SQL.PostgresOrMySQLOptions;
+    let options: Fun.SQL.PostgresOrMySQLOptions;
 
     const info = await dockerCompose.ensure("postgres_plain");
     console.log("PostgreSQL container ready at:", info.host + ":" + info.ports[5432]);
@@ -33,41 +33,41 @@ if (isDockerEnabled()) {
       port: info.ports[5432],
       host: info.host,
     };
-    process.env.DATABASE_URL = `postgres://bun_sql_test@${container.host}:${container.port}/bun_sql_test`;
+    process.env.DATABASE_URL = `postgres://fun_sql_test@${container.host}:${container.port}/fun_sql_test`;
 
     // Create Unix socket proxy for PostgreSQL
     socketProxy = await UnixDomainSocketProxy.create("PostgreSQL", container.host, container.port);
 
     login = {
-      username: "bun_sql_test",
+      username: "fun_sql_test",
       host: container.host,
       port: container.port,
       path: socketProxy.path,
     };
 
     login_domain_socket = {
-      username: "bun_sql_test",
+      username: "fun_sql_test",
       host: container.host,
       port: container.port,
       path: socketProxy.path,
     };
 
     login_md5 = {
-      username: "bun_sql_test_md5",
-      password: "bun_sql_test_md5",
+      username: "fun_sql_test_md5",
+      password: "fun_sql_test_md5",
       host: container.host,
       port: container.port,
     };
 
     login_scram = {
-      username: "bun_sql_test_scram",
-      password: "bun_sql_test_scram",
+      username: "fun_sql_test_scram",
+      password: "fun_sql_test_scram",
       host: container.host,
       port: container.port,
     };
 
     options = {
-      db: "bun_sql_test",
+      db: "fun_sql_test",
       username: login.username,
       password: login.password,
       host: container.host,
@@ -77,7 +77,7 @@ if (isDockerEnabled()) {
 
     afterAll(async () => {
       // Containers persist - managed by docker-compose
-      if (!process.env.BUN_KEEP_DOCKER) {
+      if (!process.env.FUN_KEEP_DOCKER) {
         await dockerCompose.down();
       }
     });
@@ -88,22 +88,22 @@ if (isDockerEnabled()) {
     // --- Expected pg_hba.conf ---
     // local all ${USERNAME} trust
     // local all postgres trust
-    // local all bun_sql_test_scram scram-sha-256
-    // local all bun_sql_test trust
-    // local all bun_sql_test_md5 md5
+    // local all fun_sql_test_scram scram-sha-256
+    // local all fun_sql_test trust
+    // local all fun_sql_test_md5 md5
 
     // # IPv4 local connections:
     // host all ${USERNAME} 127.0.0.1/32 trust
     // host all postgres 127.0.0.1/32 trust
-    // host all bun_sql_test_scram 127.0.0.1/32 scram-sha-256
-    // host all bun_sql_test 127.0.0.1/32 trust
-    // host all bun_sql_test_md5 127.0.0.1/32 md5
+    // host all fun_sql_test_scram 127.0.0.1/32 scram-sha-256
+    // host all fun_sql_test 127.0.0.1/32 trust
+    // host all fun_sql_test_md5 127.0.0.1/32 md5
     // # IPv6 local connections:
     // host all ${USERNAME} ::1/128 trust
     // host all postgres ::1/128 trust
-    // host all bun_sql_test ::1/128 trust
-    // host all bun_sql_test_scram ::1/128 scram-sha-256
-    // host all bun_sql_test_md5 ::1/128 md5
+    // host all fun_sql_test ::1/128 trust
+    // host all fun_sql_test_scram ::1/128 scram-sha-256
+    // host all fun_sql_test_md5 ::1/128 md5
     // # Allow replication connections from localhost, by a user with the
     // # replication privilege.
     // local replication all trust
@@ -430,9 +430,9 @@ if (isDockerEnabled()) {
 
         try {
           // Create test table with time and timetz columns
-          await db`DROP TABLE IF EXISTS bun_time_test`;
+          await db`DROP TABLE IF EXISTS fun_time_test`;
           await db`
-      CREATE TABLE bun_time_test (
+      CREATE TABLE fun_time_test (
         id SERIAL PRIMARY KEY,
         regular_time TIME,
         time_with_tz TIMETZ
@@ -441,7 +441,7 @@ if (isDockerEnabled()) {
 
           // Insert test data with various time values
           await db`
-      INSERT INTO bun_time_test (regular_time, time_with_tz) VALUES
+      INSERT INTO fun_time_test (regular_time, time_with_tz) VALUES
         ('09:00:00', '09:00:00+00'),
         ('10:30:45.123456', '10:30:45.123456-05'),
         ('23:59:59.999999', '23:59:59.999999+08:30'),
@@ -455,7 +455,7 @@ if (isDockerEnabled()) {
         id,
         regular_time,
         time_with_tz
-      FROM bun_time_test
+      FROM fun_time_test
       ORDER BY id
     `;
 
@@ -489,7 +489,7 @@ if (isDockerEnabled()) {
           }
 
           // Clean up
-          await db`DROP TABLE bun_time_test`;
+          await db`DROP TABLE fun_time_test`;
         } finally {
           await db.end();
         }
@@ -500,9 +500,9 @@ if (isDockerEnabled()) {
 
         try {
           // Create test table with time array
-          await db`DROP TABLE IF EXISTS bun_time_array_test`;
+          await db`DROP TABLE IF EXISTS fun_time_array_test`;
           await db`
-      CREATE TABLE bun_time_array_test (
+      CREATE TABLE fun_time_array_test (
         id SERIAL PRIMARY KEY,
         time_values TIME[],
         timetz_values TIMETZ[]
@@ -511,7 +511,7 @@ if (isDockerEnabled()) {
 
           // Insert test data
           await db`
-      INSERT INTO bun_time_array_test (time_values, timetz_values) VALUES
+      INSERT INTO fun_time_array_test (time_values, timetz_values) VALUES
         (ARRAY['09:00:00'::time, '17:00:00'::time], ARRAY['09:00:00+00'::timetz, '17:00:00-05'::timetz]),
         (ARRAY['10:30:00'::time, '18:30:00'::time, '20:00:00'::time], ARRAY['10:30:00+02'::timetz]),
         (NULL, NULL),
@@ -523,7 +523,7 @@ if (isDockerEnabled()) {
         id,
         time_values,
         timetz_values
-      FROM bun_time_array_test
+      FROM fun_time_array_test
       ORDER BY id
     `;
 
@@ -557,7 +557,7 @@ if (isDockerEnabled()) {
           }
 
           // Clean up
-          await db`DROP TABLE bun_time_array_test`;
+          await db`DROP TABLE fun_time_array_test`;
         } finally {
           await db.end();
         }
@@ -567,9 +567,9 @@ if (isDockerEnabled()) {
         const db = postgres(options);
 
         try {
-          await db`DROP TABLE IF EXISTS bun_time_json_test`;
+          await db`DROP TABLE IF EXISTS fun_time_json_test`;
           await db`
-      CREATE TABLE bun_time_json_test (
+      CREATE TABLE fun_time_json_test (
         id SERIAL PRIMARY KEY,
         schedule JSONB
       )
@@ -577,7 +577,7 @@ if (isDockerEnabled()) {
 
           // Insert test data with times in JSONB
           await db`
-      INSERT INTO bun_time_json_test (schedule) VALUES
+      INSERT INTO fun_time_json_test (schedule) VALUES
         ('{"dayOfWeek": 1, "timeBlocks": [{"startTime": "09:00:00", "endTime": "17:00:00"}]}'::jsonb),
         ('{"dayOfWeek": 2, "timeBlocks": [{"startTime": "10:30:00", "endTime": "18:30:00"}]}'::jsonb)
     `;
@@ -586,7 +586,7 @@ if (isDockerEnabled()) {
       SELECT
         id,
         schedule
-      FROM bun_time_json_test
+      FROM fun_time_json_test
       ORDER BY id
     `;
 
@@ -600,7 +600,7 @@ if (isDockerEnabled()) {
           expect(result[1].schedule.timeBlocks[0].endTime).toBe("18:30:00");
 
           // Clean up
-          await db`DROP TABLE bun_time_json_test`;
+          await db`DROP TABLE fun_time_json_test`;
         } finally {
           await db.end();
         }
@@ -608,13 +608,13 @@ if (isDockerEnabled()) {
     });
 
     test("should handle encoded chars in password and username when using url #17155", () => {
-      const sql = new Bun.SQL("postgres://bun%40bunbun:bunbun%40bun@127.0.0.1:5432/bun%40bun");
-      expect(sql.options.username).toBe("bun@bunbun");
-      expect(sql.options.password).toBe("bunbun@bun");
-      expect(sql.options.database).toBe("bun@bun");
+      const sql = new Fun.SQL("postgres://fun%40bunfun:funfun%40fun@127.0.0.1:5432/fun%40fun");
+      expect(sql.options.username).toBe("fun@funfun");
+      expect(sql.options.password).toBe("funfun@fun");
+      expect(sql.options.database).toBe("fun@fun");
     });
 
-    test("Minimal reproduction of Bun.SQL PostgreSQL hang bug (#22395)", async () => {
+    test("Minimal reproduction of Fun.SQL PostgreSQL hang bug (#22395)", async () => {
       for (let i = 0; i < 10; i++) {
         await using sql = new SQL({
           ...options,
@@ -706,8 +706,8 @@ if (isDockerEnabled()) {
       const onclose = mock();
       const onconnect = mock();
       await using sql = postgres({
-        db: "bun_sql_test",
-        username: "bun_sql_test",
+        db: "fun_sql_test",
+        username: "fun_sql_test",
         host: "example.com",
         port: 5432,
         connection_timeout: 4,
@@ -839,12 +839,12 @@ if (isDockerEnabled()) {
 
       expect(Object.keys(result[0])).toEqual(["0", "1", "2", "3"]);
       // Sanity check: ensure iterating through the properties doesn't crash.
-      Bun.inspect(result);
+      Fun.inspect(result);
     });
 
     test("query string memory leak test", async () => {
       await using sql = postgres(options);
-      Bun.gc(true);
+      Fun.gc(true);
       const rss = process.memoryUsage.rss();
       for (let potato of Array.from({ length: 8 * 1024 }, a => "okkk" + a)) {
         await sql`
@@ -853,7 +853,7 @@ if (isDockerEnabled()) {
     `;
       }
 
-      Bun.gc(true);
+      Fun.gc(true);
       const after = process.memoryUsage.rss();
       console.log({ after, rss });
       // Previously:
@@ -870,21 +870,21 @@ if (isDockerEnabled()) {
       const result = await sql`select 1 as "1", 2 as "1", 3 as "1"`;
       expect(result).toEqual([{ "1": 3 }]);
       // Sanity check: ensure iterating through the properties doesn't crash.
-      Bun.inspect(result);
+      Fun.inspect(result);
     });
 
     test("Basic handles mixed column names", async () => {
       const result = await sql`select 1 as "1", 2 as "2", 3 as "3", 4 as x`;
       expect(result).toEqual([{ "1": 1, "2": 2, "3": 3, x: 4 }]);
       // Sanity check: ensure iterating through the properties doesn't crash.
-      Bun.inspect(result);
+      Fun.inspect(result);
     });
 
     test("Handles mixed column names with duplicates", async () => {
       const result = await sql`select 1 as "1", 2 as "2", 3 as "3", 4 as "1", 1 as x, 2 as x`;
       expect(result).toEqual([{ "1": 4, "2": 2, "3": 3, x: 2 }]);
       // Sanity check: ensure iterating through the properties doesn't crash.
-      Bun.inspect(result);
+      Fun.inspect(result);
 
       // Named columns are inserted first, but they appear from JS as last.
       expect(Object.keys(result[0])).toEqual(["1", "2", "3", "x"]);
@@ -895,14 +895,14 @@ if (isDockerEnabled()) {
       expect(result).toEqual([{ "1": 4, "2": 2, "3": 3, x: 3, y: 4 }]);
 
       // Sanity check: ensure iterating through the properties doesn't crash.
-      Bun.inspect(result);
+      Fun.inspect(result);
     });
 
     test("Handles mixed column names with duplicates at the start", async () => {
       const result = await sql`select 1 as "1", 2 as "1", 3 as "2", 4 as "3", 1 as x, 2 as x, 3 as x`;
       expect(result).toEqual([{ "1": 2, "2": 3, "3": 4, x: 3 }]);
       // Sanity check: ensure iterating through the properties doesn't crash.
-      Bun.inspect(result);
+      Fun.inspect(result);
     });
 
     test("Uses default database without slash", async () => {
@@ -1253,8 +1253,8 @@ if (isDockerEnabled()) {
       expect(
         (
           await sql.begin(sql => [
-            sql`select set_config('bun_sql.test', 'testing', true)`,
-            sql`select current_setting('bun_sql.test') as x`,
+            sql`select set_config('fun_sql.test', 'testing', true)`,
+            sql`select current_setting('fun_sql.test') as x`,
           ])
         )[1][0].x,
       ).toBe("testing");
@@ -1263,7 +1263,7 @@ if (isDockerEnabled()) {
     test("Idle timeout retry works", async () => {
       await using sql = postgres({ ...options, idleTimeout: 1 });
       await sql`select 1`;
-      await Bun.sleep(1100); // 1.1 seconds so it should retry
+      await Fun.sleep(1100); // 1.1 seconds so it should retry
       await sql`select 1`;
       expect().pass();
     });
@@ -1272,7 +1272,7 @@ if (isDockerEnabled()) {
       const sql = postgres(options);
       process.nextTick(() => sql.close({ timeout: 1 }));
       const error = await sql
-        .begin(sql => [sql`select wat`, sql`select current_setting('bun_sql.test') as x, ${1} as a`])
+        .begin(sql => [sql`select wat`, sql`select current_setting('fun_sql.test') as x, ${1} as a`])
         .catch(e => e);
       expect(error).toBeInstanceOf(SQL.SQLError);
       expect(error).toBeInstanceOf(SQL.PostgresError);
@@ -1360,7 +1360,7 @@ if (isDockerEnabled()) {
     });
 
     test("Undefined values throws", async () => {
-      // in bun case undefined is null should we fix this? null is a better DX
+      // in fun case undefined is null should we fix this? null is a better DX
 
       // let error;
 
@@ -1576,7 +1576,7 @@ if (isDockerEnabled()) {
     });
 
     test("Support dynamic password function", async () => {
-      await using sql = postgres({ ...options, ...login_scram, password: () => "bun_sql_test_scram", max: 1 });
+      await using sql = postgres({ ...options, ...login_scram, password: () => "fun_sql_test_scram", max: 1 });
       return expect((await sql`select true as x`)[0].x).toBe(true);
     });
 
@@ -1584,7 +1584,7 @@ if (isDockerEnabled()) {
       await using sql = postgres({
         ...options,
         ...login_scram,
-        password: () => Promise.resolve("bun_sql_test_scram"),
+        password: () => Promise.resolve("fun_sql_test_scram"),
         max: 1,
       });
       return expect((await sql`select true as x`)[0].x).toBe(true);
@@ -1596,8 +1596,8 @@ if (isDockerEnabled()) {
         ...login_scram,
         max: 1,
         password: async () => {
-          await Bun.sleep(10);
-          return "bun_sql_test_scram";
+          await Fun.sleep(10);
+          return "fun_sql_test_scram";
         },
       });
       return expect((await sql`select true as x`)[0].x).toBe(true);
@@ -1622,7 +1622,7 @@ if (isDockerEnabled()) {
         ...login_scram,
         max: 1,
         password: async () => {
-          await Bun.sleep(10);
+          await Fun.sleep(10);
           throw new Error("password error");
         },
       });
@@ -3263,7 +3263,7 @@ if (isDockerEnabled()) {
 
     // t('subscribe', { timeout: 2 }, async() => {
     //   const sql = postgres({
-    //     database: 'bun_sql_test',
+    //     database: 'fun_sql_test',
     //     publications: 'alltables'
     //   })
 
@@ -3312,7 +3312,7 @@ if (isDockerEnabled()) {
     //         to: postgres.fromCamel
     //       }
     //     },
-    //     database: 'bun_sql_test',
+    //     database: 'fun_sql_test',
     //     publications: 'alltables'
     //   })
 
@@ -3353,7 +3353,7 @@ if (isDockerEnabled()) {
 
     // t('subscribe reconnects and calls onsubscribe', { timeout: 4 }, async() => {
     //   const sql = postgres({
-    //     database: 'bun_sql_test',
+    //     database: 'fun_sql_test',
     //     publications: 'alltables',
     //     fetch_types: false
     //   })
@@ -3786,7 +3786,7 @@ if (isDockerEnabled()) {
     test("limits of types", async () => {
       await sql
         .transaction(async reserved => {
-          const table_name = sql(Bun.randomUUIDv7("hex").replaceAll("-", "_"));
+          const table_name = sql(Fun.randomUUIDv7("hex").replaceAll("-", "_"));
           // we need a lot of types
           for (let i = 0; i < 1000; i++) {
             const type_name = sql(`${table_name}${i}`);
@@ -3815,7 +3815,7 @@ CREATE TABLE ${table_name} (
       using reserved = await sql.reserve();
       // this test should return the same result in text and binary mode, using text mode for this types
       {
-        const table_name = sql(Bun.randomUUIDv7("hex").replaceAll("-", "_"));
+        const table_name = sql(Fun.randomUUIDv7("hex").replaceAll("-", "_"));
 
         await reserved`
     CREATE TEMPORARY TABLE ${table_name} (
@@ -3830,7 +3830,7 @@ CREATE TABLE ${table_name} (
         expect(text_mode).toEqual([{ a: 1, b: 23, c: 256 }]);
       }
       {
-        const table_name = sql(Bun.randomUUIDv7("hex").replaceAll("-", "_"));
+        const table_name = sql(Fun.randomUUIDv7("hex").replaceAll("-", "_"));
 
         await reserved`
     CREATE TEMPORARY TABLE ${table_name} (
@@ -3846,7 +3846,7 @@ CREATE TABLE ${table_name} (
       }
 
       {
-        const table_name = sql(Bun.randomUUIDv7("hex").replaceAll("-", "_"));
+        const table_name = sql(Fun.randomUUIDv7("hex").replaceAll("-", "_"));
 
         await reserved`
     CREATE TEMPORARY TABLE ${table_name} (
@@ -3862,7 +3862,7 @@ CREATE TABLE ${table_name} (
       }
 
       {
-        const table_name = sql(Bun.randomUUIDv7("hex").replaceAll("-", "_"));
+        const table_name = sql(Fun.randomUUIDv7("hex").replaceAll("-", "_"));
 
         await reserved`
     CREATE TEMPORARY TABLE ${table_name} (
@@ -3882,7 +3882,7 @@ CREATE TABLE ${table_name} (
       }
       // this is supported in binary mode and also in text mode
       {
-        const table_name = sql(Bun.randomUUIDv7("hex").replaceAll("-", "_"));
+        const table_name = sql(Fun.randomUUIDv7("hex").replaceAll("-", "_"));
         await reserved`CREATE TEMPORARY TABLE ${table_name} (a integer[] null, b smallint not null)`;
         await reserved`insert into ${table_name} values (null, 1), (array[1, 2, 3], 2), (array[4, 5, 6], 3)`;
         const text_mode = await reserved`select * from ${table_name}`;
@@ -3915,7 +3915,7 @@ CREATE TABLE ${table_name} (
 
     test("keeps process alive when it should", async () => {
       const file = path.posix.join(__dirname, "sql-fixture-ref.ts");
-      const result = await $`DATABASE_URL=${process.env.DATABASE_URL} ${bunExe()} ${file}`;
+      const result = await $`DATABASE_URL=${process.env.DATABASE_URL} ${funExe()} ${file}`;
       expect(result.exitCode).toBe(0);
       expect(result.stdout.toString().split("\n")).toEqual(["1", "2", ""]);
     });
@@ -11315,14 +11315,14 @@ CREATE TABLE ${table_name} (
       test("aclitem[] system databases", async () => {
         await using sql = postgres({ ...options, max: 1 });
         const result = await sql`SELECT datacl FROM pg_database ORDER BY datname;`;
-        // Find the bun_sql_test database - it should be near the end
-        const bunDb = result.find(
-          (r: any) => r.datacl && r.datacl.some((acl: string) => acl.includes("bun_sql_test=CTc/bun_sql_test")),
+        // Find the fun_sql_test database - it should be near the end
+        const funDb = result.find(
+          (r: any) => r.datacl && r.datacl.some((acl: string) => acl.includes("fun_sql_test=CTc/fun_sql_test")),
         );
-        expect(bunDb).toBeDefined();
+        expect(funDb).toBeDefined();
         // Check that it has the expected ACL entries (may have additional users in postgres_auth)
-        expect(bunDb.datacl).toContain("=Tc/bun_sql_test");
-        expect(bunDb.datacl).toContain("bun_sql_test=CTc/bun_sql_test");
+        expect(funDb.datacl).toContain("=Tc/fun_sql_test");
+        expect(funDb.datacl).toContain("fun_sql_test=CTc/fun_sql_test");
       });
 
       test("aclitem[] - null values", async () => {
@@ -11694,7 +11694,7 @@ CREATE TABLE ${table_name} (
         )
       `;
         {
-          const { email, ...data } = { email: "bunny@bun.com", foo: "hello" };
+          const { email, ...data } = { email: "bunny@fun.dev", foo: "hello" };
           await sql`
         INSERT INTO ${sql(random_name)}
         ${sql({ ...data, email })}
@@ -11704,11 +11704,11 @@ CREATE TABLE ${table_name} (
           const result = await sql`SELECT * FROM ${sql(random_name)}`;
           expect(result[0].id).toBeDefined();
           expect(result[0].foo).toBe("hello");
-          expect(result[0].email).toBe("bunny@bun.com");
+          expect(result[0].email).toBe("bunny@fun.dev");
         }
 
         {
-          const { email, ...data } = { email: "bunny@bun.com", foo: "hello2" };
+          const { email, ...data } = { email: "bunny@fun.dev", foo: "hello2" };
           await sql`
         INSERT INTO ${sql(random_name)}
         ${sql({ ...data, email })}
@@ -11718,7 +11718,7 @@ CREATE TABLE ${table_name} (
           const result = await sql`SELECT * FROM ${sql(random_name)}`;
           expect(result[0].id).toBeDefined();
           expect(result[0].foo).toBe("hello2");
-          expect(result[0].email).toBe("bunny@bun.com");
+          expect(result[0].email).toBe("bunny@fun.dev");
         }
       });
 
@@ -11864,9 +11864,9 @@ CREATE TABLE ${table_name} (
 
     describe("should proper handle connection errors", () => {
       test("should not crash if connection fails", async () => {
-        const result = Bun.spawnSync([bunExe(), path.join(import.meta.dirname, "socket.fail.fixture.ts")], {
+        const result = Fun.spawnSync([funExe(), path.join(import.meta.dirname, "socket.fail.fixture.ts")], {
           cwd: import.meta.dir,
-          env: bunEnv,
+          env: funEnv,
           stdin: "ignore",
           stdout: "inherit",
           stderr: "pipe",
@@ -11876,24 +11876,24 @@ CREATE TABLE ${table_name} (
     });
 
     describe("Misc", () => {
-      test("The Bun.SQL.*Error classes exist", () => {
-        expect(Bun.SQL.SQLError).toBeDefined();
-        expect(Bun.SQL.PostgresError).toBeDefined();
-        expect(Bun.SQL.SQLiteError).toBeDefined();
+      test("The Fun.SQL.*Error classes exist", () => {
+        expect(Fun.SQL.SQLError).toBeDefined();
+        expect(Fun.SQL.PostgresError).toBeDefined();
+        expect(Fun.SQL.SQLiteError).toBeDefined();
 
-        expect(Bun.SQL.SQLError.name).toBe("SQLError");
-        expect(Bun.SQL.PostgresError.name).toBe("PostgresError");
-        expect(Bun.SQL.SQLiteError.name).toBe("SQLiteError");
+        expect(Fun.SQL.SQLError.name).toBe("SQLError");
+        expect(Fun.SQL.PostgresError.name).toBe("PostgresError");
+        expect(Fun.SQL.SQLiteError.name).toBe("SQLiteError");
 
-        expect(Bun.SQL.SQLError.prototype).toBeInstanceOf(Error);
-        expect(Bun.SQL.PostgresError.prototype).toBeInstanceOf(Bun.SQL.SQLError);
-        expect(Bun.SQL.SQLiteError.prototype).toBeInstanceOf(Bun.SQL.SQLError);
+        expect(Fun.SQL.SQLError.prototype).toBeInstanceOf(Error);
+        expect(Fun.SQL.PostgresError.prototype).toBeInstanceOf(Fun.SQL.SQLError);
+        expect(Fun.SQL.SQLiteError.prototype).toBeInstanceOf(Fun.SQL.SQLError);
       });
 
       describe("Adapter override URL parsing", () => {
         test("explicit adapter='sqlite' overrides postgres:// URL", async () => {
           // Even though URL suggests postgres, explicit adapter should win
-          const sql = new Bun.SQL("postgres://localhost:5432/testdb", {
+          const sql = new Fun.SQL("postgres://localhost:5432/testdb", {
             adapter: "sqlite",
             filename: ":memory:",
           });
@@ -11911,11 +11911,11 @@ CREATE TABLE ${table_name} (
         });
 
         test("explicit adapter='postgres' with sqlite:// URL should throw as invalid url", async () => {
-          let sql: Bun.SQL | undefined;
+          let sql: Fun.SQL | undefined;
           let error: unknown;
 
           try {
-            sql = new Bun.SQL("sqlite://:memory:", {
+            sql = new Fun.SQL("sqlite://:memory:", {
               adapter: "postgres",
               hostname: "localhost",
               port: 5432,
@@ -11939,7 +11939,7 @@ CREATE TABLE ${table_name} (
 
         test("explicit adapter='sqlite' with sqlite:// URL works", async () => {
           // Both URL and adapter agree on sqlite
-          const sql = new Bun.SQL("sqlite://:memory:", {
+          const sql = new Fun.SQL("sqlite://:memory:", {
             adapter: "sqlite",
           });
 
@@ -11961,7 +11961,7 @@ CREATE TABLE ${table_name} (
           }
 
           // Both URL and adapter agree on postgres
-          const sql = new Bun.SQL(process.env.DATABASE_URL, {
+          const sql = new Fun.SQL(process.env.DATABASE_URL, {
             adapter: "postgres",
             max: 1,
           });
@@ -11980,7 +11980,7 @@ CREATE TABLE ${table_name} (
 
         test("explicit adapter overrides even with conflicting connection string patterns", async () => {
           // Test that adapter explicitly set to sqlite works even with postgres-like connection info
-          const sql = new Bun.SQL(undefined as never, {
+          const sql = new Fun.SQL(undefined as never, {
             adapter: "sqlite",
             filename: ":memory:",
             hostname: "localhost", // These would normally suggest postgres
@@ -12370,7 +12370,7 @@ CREATE TABLE ${table_name} (
       expect(Array.from(result1[0].numbers)).toEqual([]);
 
       // Second read to trigger connection reuse issue
-      // This is where it fails with ERR_POSTGRES_INVALID_BINARY_DATA in bun 1.3.5
+      // This is where it fails with ERR_POSTGRES_INVALID_BINARY_DATA in fun 1.3.5
       const result2 = await db`SELECT * FROM ${db(tableName)}`;
       expect(result2).toBeArray();
       expect(Array.from(result2[0].numbers)).toEqual([]);

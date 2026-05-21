@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import path from "path";
 
 test("should not leak memory with already aborted signals", async () => {

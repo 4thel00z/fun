@@ -1,11 +1,11 @@
-//! Bun's filesystem watcher implementation for windows using kernel32
+//! Fun's filesystem watcher implementation for windows using kernel32
 
 const WindowsWatcher = @This();
 
 mutex: Mutex = .{},
 iocp: w.HANDLE = undefined,
 watcher: DirWatcher = undefined,
-buf: bun.PathBuffer = undefined,
+buf: fun.PathBuffer = undefined,
 base_idx: usize = 0,
 
 pub const EventListIndex = c_int;
@@ -38,13 +38,13 @@ const DirWatcher = struct {
     dirHandle: w.HANDLE,
 
     // invalidates any EventIterators
-    fn prepare(this: *DirWatcher) bun.sys.Maybe(void) {
+    fn prepare(this: *DirWatcher) fun.sys.Maybe(void) {
         const filter: w.FileNotifyChangeFilter = .{ .file_name = true, .dir_name = true, .last_write = true, .creation = true };
         if (w.kernel32.ReadDirectoryChangesW(this.dirHandle, &this.buf, this.buf.len, 1, filter, null, &this.overlapped, null) == 0) {
             const err = w.kernel32.GetLastError();
             log("failed to start watching directory: {s}", .{@tagName(err)});
             return .{ .err = .{
-                .errno = @intFromEnum(bun.sys.SystemErrno.init(err) orelse bun.sys.SystemErrno.EINVAL),
+                .errno = @intFromEnum(fun.sys.SystemErrno.init(err) orelse fun.sys.SystemErrno.EINVAL),
                 .syscall = .watch,
             } };
         }
@@ -81,8 +81,8 @@ const EventIterator = struct {
 };
 
 pub fn init(this: *WindowsWatcher, root: []const u8) !void {
-    var pathbuf: bun.WPathBuffer = undefined;
-    const wpath = bun.strings.toNTPath(&pathbuf, root);
+    var pathbuf: fun.WPathBuffer = undefined;
+    const wpath = fun.strings.toNTPath(&pathbuf, root);
     const path_len_bytes: u16 = @truncate(wpath.len * 2);
     var nt_name = w.UNICODE_STRING{
         .Length = path_len_bytes,
@@ -114,19 +114,19 @@ pub fn init(this: *WindowsWatcher, root: []const u8) !void {
     );
 
     if (rc != .SUCCESS) {
-        const err = bun.windows.Win32Error.fromNTStatus(rc);
+        const err = fun.windows.Win32Error.fromNTStatus(rc);
         log("failed to open directory for watching: {s}", .{@tagName(err)});
         return Error.CreateFileFailed;
     }
-    errdefer _ = bun.windows.CloseHandle(handle);
+    errdefer _ = fun.windows.CloseHandle(handle);
 
     this.iocp = try w.CreateIoCompletionPort(handle, null, 0, 1);
-    errdefer _ = bun.windows.CloseHandle(this.iocp);
+    errdefer _ = fun.windows.CloseHandle(this.iocp);
 
     this.watcher = .{ .dirHandle = handle };
 
     @memcpy(this.buf[0..root.len], root);
-    const needs_slash = root.len == 0 or !bun.strings.charIsAnySlash(root[root.len - 1]);
+    const needs_slash = root.len == 0 or !fun.strings.charIsAnySlash(root[root.len - 1]);
     if (needs_slash) {
         this.buf[root.len] = '\\';
     }
@@ -140,7 +140,7 @@ const Timeout = enum(w.DWORD) {
 };
 
 // wait until new events are available
-pub fn next(this: *WindowsWatcher, timeout: Timeout) bun.sys.Maybe(?EventIterator) {
+pub fn next(this: *WindowsWatcher, timeout: Timeout) fun.sys.Maybe(?EventIterator) {
     switch (this.watcher.prepare()) {
         .err => |err| {
             log("prepare() returned error", .{});
@@ -161,7 +161,7 @@ pub fn next(this: *WindowsWatcher, timeout: Timeout) bun.sys.Maybe(?EventIterato
             } else {
                 log("GetQueuedCompletionStatus failed: {s}", .{@tagName(err)});
                 return .{ .err = .{
-                    .errno = @intFromEnum(bun.sys.SystemErrno.init(err) orelse bun.sys.SystemErrno.EINVAL),
+                    .errno = @intFromEnum(fun.sys.SystemErrno.init(err) orelse fun.sys.SystemErrno.EINVAL),
                     .syscall = .watch,
                 } };
             }
@@ -177,7 +177,7 @@ pub fn next(this: *WindowsWatcher, timeout: Timeout) bun.sys.Maybe(?EventIterato
                 // TODO close handles?
                 log("shutdown notification in WindowsWatcher.next", .{});
                 return .{ .err = .{
-                    .errno = @intFromEnum(bun.sys.SystemErrno.ESHUTDOWN),
+                    .errno = @intFromEnum(fun.sys.SystemErrno.ESHUTDOWN),
                     .syscall = .watch,
                 } };
             }
@@ -185,7 +185,7 @@ pub fn next(this: *WindowsWatcher, timeout: Timeout) bun.sys.Maybe(?EventIterato
         } else {
             log("GetQueuedCompletionStatus returned no overlapped event", .{});
             return .{ .err = .{
-                .errno = @truncate(@intFromEnum(bun.sys.E.INVAL)),
+                .errno = @truncate(@intFromEnum(fun.sys.E.INVAL)),
                 .syscall = .watch,
             } };
         }
@@ -197,7 +197,7 @@ pub fn stop(this: *WindowsWatcher) void {
     w.CloseHandle(this.iocp);
 }
 
-pub fn watchLoopCycle(this: *bun.Watcher) bun.sys.Maybe(void) {
+pub fn watchLoopCycle(this: *fun.Watcher) fun.sys.Maybe(void) {
     const buf = &this.platform.buf;
     const base_idx = this.platform.base_idx;
 
@@ -217,7 +217,7 @@ pub fn watchLoopCycle(this: *bun.Watcher) bun.sys.Maybe(void) {
         const item_paths = this.watchlist.items(.file_path);
         log("number of watched items: {d}", .{item_paths.len});
         while (iter.next()) |event| {
-            const convert_res = bun.strings.copyUTF16IntoUTF8(buf[base_idx..], event.filename);
+            const convert_res = fun.strings.copyUTF16IntoUTF8(buf[base_idx..], event.filename);
             const eventpath = buf[0 .. base_idx + convert_res.written];
 
             log("watcher update event: (filename: {s}, action: {s}", .{ eventpath, @tagName(event.action) });
@@ -233,7 +233,7 @@ pub fn watchLoopCycle(this: *bun.Watcher) bun.sys.Maybe(void) {
             for (item_paths, 0..) |path, item_idx| {
                 // check if the current change applies to this item
                 // if so, add it to the eventlist
-                const rel = bun.path.isParentOrEqual(path, eventpath);
+                const rel = fun.path.isParentOrEqual(path, eventpath);
                 log("checking path: {s} = .{s}", .{ path, @tagName(rel) });
                 // skip unrelated items
                 if (rel == .unrelated) continue;
@@ -267,7 +267,7 @@ pub fn watchLoopCycle(this: *bun.Watcher) bun.sys.Maybe(void) {
     return .success;
 }
 
-fn processWatchEventBatch(this: *bun.Watcher, event_count: usize) bun.sys.Maybe(void) {
+fn processWatchEventBatch(this: *fun.Watcher, event_count: usize) fun.sys.Maybe(void) {
     if (event_count == 0) {
         return .success;
     }
@@ -315,9 +315,9 @@ const log = Output.scoped(.watcher, .visible);
 const std = @import("std");
 const w = std.os.windows;
 
-const bun = @import("bun");
-const Mutex = bun.Mutex;
-const Output = bun.Output;
+const fun = @import("fun");
+const Mutex = fun.Mutex;
+const Output = fun.Output;
 
-const WatchEvent = bun.Watcher.WatchEvent;
-const WatchItemIndex = bun.Watcher.WatchItemIndex;
+const WatchEvent = fun.Watcher.WatchEvent;
+const WatchItemIndex = fun.Watcher.WatchItemIndex;

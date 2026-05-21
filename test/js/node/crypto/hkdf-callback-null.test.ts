@@ -1,8 +1,8 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import crypto from "node:crypto";
 
 // Test that callback receives null (not undefined) for error on success
-// https://github.com/oven-sh/bun/issues/23211
+// https://github.com/underdoc-org/fun/issues/23211
 test("crypto.hkdf callback should pass null (not undefined) on success", async () => {
   const secret = new Uint8Array([7, 158, 216, 197, 25, 77, 201, 5, 73, 119]);
   const salt = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 1]);

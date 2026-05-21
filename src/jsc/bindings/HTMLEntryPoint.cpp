@@ -6,9 +6,9 @@
 #include "ModuleLoader.h"
 #include "ZigGlobalObject.h"
 #include <JavaScriptCore/JSPromise.h>
-namespace Bun {
+namespace Fun {
 using namespace JSC;
-extern "C" JSPromise* Bun__loadHTMLEntryPoint(Zig::GlobalObject* globalObject)
+extern "C" JSPromise* Fun__loadHTMLEntryPoint(Zig::GlobalObject* globalObject)
 {
     auto& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -20,7 +20,7 @@ extern "C" JSPromise* Bun__loadHTMLEntryPoint(Zig::GlobalObject* globalObject)
 
     JSObject* htmlModuleObject = htmlModule.getObject();
     if (!htmlModuleObject) [[unlikely]] {
-        BUN_PANIC("Failed to load HTML entry point");
+        FUN_PANIC("Failed to load HTML entry point");
     }
 
     MarkedArgumentBuffer args;
@@ -35,7 +35,7 @@ extern "C" JSPromise* Bun__loadHTMLEntryPoint(Zig::GlobalObject* globalObject)
 
     JSPromise* promise = dynamicDowncast<JSC::JSPromise>(result);
     if (!promise) [[unlikely]] {
-        BUN_PANIC("Failed to load HTML entry point");
+        FUN_PANIC("Failed to load HTML entry point");
     }
     return promise;
 }

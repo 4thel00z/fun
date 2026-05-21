@@ -1,8 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import path from "node:path";
 
-describe("bun run --tsconfig-override", () => {
+describe("fun run --tsconfig-override", () => {
   test("should use custom tsconfig for path resolution", async () => {
     const dir = tempDirWithFiles("run-tsconfig-override", {
       "index.ts": `
@@ -34,9 +34,9 @@ describe("bun run --tsconfig-override", () => {
       `,
     });
 
-    await using failProc = Bun.spawn({
-      cmd: [bunExe(), "run", path.join(dir, "index.ts")],
-      env: bunEnv,
+    await using failProc = Fun.spawn({
+      cmd: [funExe(), "run", path.join(dir, "index.ts")],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -47,9 +47,9 @@ describe("bun run --tsconfig-override", () => {
     expect(failStderr).toContain("Cannot find module");
     expect(failExitCode).not.toBe(0);
 
-    await using successProc = Bun.spawn({
-      cmd: [bunExe(), "run", "--tsconfig-override", path.join(dir, "custom-tsconfig.json"), path.join(dir, "index.ts")],
-      env: bunEnv,
+    await using successProc = Fun.spawn({
+      cmd: [funExe(), "run", "--tsconfig-override", path.join(dir, "custom-tsconfig.json"), path.join(dir, "index.ts")],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -92,9 +92,9 @@ describe("bun run --tsconfig-override", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--tsconfig-override", "./config/custom.json", "./src/main.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--tsconfig-override", "./config/custom.json", "./src/main.ts"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -138,9 +138,9 @@ describe("bun run --tsconfig-override", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--tsconfig-override", "./apps/web/tsconfig.json", "./apps/web/src/index.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--tsconfig-override", "./apps/web/tsconfig.json", "./apps/web/src/index.ts"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -187,9 +187,9 @@ describe("bun run --tsconfig-override", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--tsconfig-override", "./frontend/tsconfig.json", "./frontend/src/pages/home.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--tsconfig-override", "./frontend/tsconfig.json", "./frontend/src/pages/home.ts"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -243,9 +243,9 @@ describe("bun run --tsconfig-override", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--tsconfig-override", "./tsconfig.dev.json", "./src/app.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--tsconfig-override", "./tsconfig.dev.json", "./src/app.ts"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -285,9 +285,9 @@ describe("bun run --tsconfig-override", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "--tsconfig-override", "project/tsconfig.json", "project/src/main.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "--tsconfig-override", "project/tsconfig.json", "project/src/main.ts"],
+      env: funEnv,
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",

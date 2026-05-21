@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir } from "harness";
 
 test("#12042 curl verbose fetch logs form-urlencoded body", async () => {
   using dir = tempDir("issue-12042", {
     "form.ts": `
-const server = Bun.serve({
+const server = Fun.serve({
   port: 0,
   fetch() {
     return new Response(JSON.stringify({ ok: true }), {
@@ -30,9 +30,9 @@ await server.stop();
 
   const dirPath = String(dir);
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "form.ts"],
-    env: { ...bunEnv, BUN_CONFIG_VERBOSE_FETCH: "curl" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "form.ts"],
+    env: { ...funEnv, FUN_CONFIG_VERBOSE_FETCH: "curl" },
     cwd: dirPath,
     stdout: "pipe",
     stderr: "pipe",
@@ -41,7 +41,7 @@ await server.stop();
   const [stdout, stderr] = await Promise.all([proc.stdout.text(), proc.stderr.text()]);
 
   const output = stdout + stderr;
-  const normalized = normalizeBunSnapshot(output, dirPath);
+  const normalized = normalizeFunSnapshot(output, dirPath);
 
   expect(normalized).toContain('--data-raw "grant_type=client_credentials&client_id=abc&client_secret=xyz');
 });

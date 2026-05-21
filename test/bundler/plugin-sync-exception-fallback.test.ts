@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { join } from "path";
 
 // Regression: the C++ synchronous-exception fallback in JSBundlerPlugin__matchOnLoad /
@@ -12,7 +12,7 @@ import { join } from "path";
 // synchronous throw there to reach that fallback deterministically. Before the fix:
 // onLoad crashes (null deref in JSGlobalObject under ASAN, SIGSEGV on release) and
 // onResolve hangs (wrong completion handler leaves the resolve counter un-decremented).
-describe.each(["onLoad", "onResolve"] as const)("Bun.build plugin %s builtin throws synchronously", hook => {
+describe.each(["onLoad", "onResolve"] as const)("Fun.build plugin %s builtin throws synchronously", hook => {
   test.concurrent("addError receives the correct context type", async () => {
     const fixture = /* js */ `
       const originalThen = Promise.prototype.then;
@@ -26,8 +26,8 @@ describe.each(["onLoad", "onResolve"] as const)("Bun.build plugin %s builtin thr
         return originalThen.apply(this, args);
       };
 
-      const result = await Bun.build({
-        entrypoints: [Bun.fileURLToPath(new URL("./entry.ts", import.meta.url))],
+      const result = await Fun.build({
+        entrypoints: [Fun.fileURLToPath(new URL("./entry.ts", import.meta.url))],
         throw: false,
         plugins: [
           {
@@ -61,9 +61,9 @@ describe.each(["onLoad", "onResolve"] as const)("Bun.build plugin %s builtin thr
       "build.ts": fixture,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", join(String(dir), "build.ts")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", join(String(dir), "build.ts")],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",

@@ -61,7 +61,7 @@
 #include <wtf/PointerPreparations.h>
 #include <wtf/URL.h>
 #include "SerializedScriptValue.h"
-#include "BunProcess.h"
+#include "FunProcess.h"
 #include <JavaScriptCore/JSMap.h>
 
 namespace WebCore {
@@ -138,7 +138,7 @@ template<> JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSWorkerDOMConstructor::
     } else if (argument0.value().isString()) {
         scriptUrl = argument0.value().getString(lexicalGlobalObject);
     } else {
-        return Bun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "filename"_s, "string or an instance of URL"_s, argument0.value());
+        return Fun::ERR::INVALID_ARG_TYPE(throwScope, lexicalGlobalObject, "filename"_s, "string or an instance of URL"_s, argument0.value());
     }
     RETURN_IF_EXCEPTION(throwScope, {});
     EnsureStillAliveScope argument1 = callFrame->argument(1);
@@ -235,7 +235,7 @@ template<> JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSWorkerDOMConstructor::
         RETURN_IF_EXCEPTION(throwScope, {});
         // for now, we don't permit SHARE_ENV, because the behavior isn't implemented
         if (envValue && !(envValue.isObject() || envValue.isUndefinedOrNull())) {
-            return Bun::ERR::INVALID_ARG_TYPE(throwScope, globalObject, "options.env"_s, "object or one of undefined, null, or worker_threads.SHARE_ENV"_s, envValue);
+            return Fun::ERR::INVALID_ARG_TYPE(throwScope, globalObject, "options.env"_s, "object or one of undefined, null, or worker_threads.SHARE_ENV"_s, envValue);
         }
         JSObject* envObject = nullptr;
 
@@ -279,7 +279,7 @@ template<> JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSWorkerDOMConstructor::
         JSValue argvValue = optionsObject->getIfPropertyExists(lexicalGlobalObject, Identifier::fromString(vm, "argv"_s));
         RETURN_IF_EXCEPTION(throwScope, {});
         if (argvValue && argvValue.pureToBoolean() != TriState::False) {
-            Bun::V::validateArray(throwScope, globalObject, argvValue, "options.argv"_s, jsNumber(0));
+            Fun::V::validateArray(throwScope, globalObject, argvValue, "options.argv"_s, jsNumber(0));
             RETURN_IF_EXCEPTION(throwScope, {});
             forEachInIterable(lexicalGlobalObject, argvValue, [&options, &coerceToIsolatedString](JSC::VM& vm, JSC::JSGlobalObject* lexicalGlobalObject, JSC::JSValue nextValue) {
                 auto scope = DECLARE_THROW_SCOPE(vm);
@@ -294,7 +294,7 @@ template<> JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSWorkerDOMConstructor::
         RETURN_IF_EXCEPTION(throwScope, {});
         if (execArgvValue && execArgvValue.pureToBoolean() != TriState::False) {
             Vector<String> execArgv;
-            Bun::V::validateArray(throwScope, globalObject, execArgvValue, "options.execArgv"_s, jsNumber(0));
+            Fun::V::validateArray(throwScope, globalObject, execArgvValue, "options.execArgv"_s, jsNumber(0));
             RETURN_IF_EXCEPTION(throwScope, {});
             forEachInIterable(lexicalGlobalObject, execArgvValue, [&execArgv, &coerceToIsolatedString](JSC::VM& vm, JSC::JSGlobalObject* lexicalGlobalObject, JSC::JSValue nextValue) {
                 auto scope = DECLARE_THROW_SCOPE(vm);
@@ -656,18 +656,18 @@ static inline JSC::EncodedJSValue jsWorkerPrototypeFunction_getHeapSnapshotBody(
     auto& worker = castedThis->wrapped();
 
     if (!options.isUndefined()) {
-        Bun::V::validateObject(scope, globalObject, options, "options"_s);
+        Fun::V::validateObject(scope, globalObject, options, "options"_s);
         RETURN_IF_EXCEPTION(scope, {});
         auto exposeInternals = options.get(globalObject, Identifier::fromString(vm, "exposeInternals"_s));
         RETURN_IF_EXCEPTION(scope, {});
         if (!exposeInternals.isUndefined()) {
-            Bun::V::validateBoolean(scope, globalObject, exposeInternals, "options.exposeInternals"_s);
+            Fun::V::validateBoolean(scope, globalObject, exposeInternals, "options.exposeInternals"_s);
             RETURN_IF_EXCEPTION(scope, {});
         }
         auto exposeNumericValues = options.get(globalObject, Identifier::fromString(vm, "exposeNumericValues"_s));
         RETURN_IF_EXCEPTION(scope, {});
         if (!exposeNumericValues.isUndefined()) {
-            Bun::V::validateBoolean(scope, globalObject, exposeNumericValues, "options.exposeNumericValues"_s);
+            Fun::V::validateBoolean(scope, globalObject, exposeNumericValues, "options.exposeNumericValues"_s);
             RETURN_IF_EXCEPTION(scope, {});
         }
     }
@@ -675,8 +675,8 @@ static inline JSC::EncodedJSValue jsWorkerPrototypeFunction_getHeapSnapshotBody(
     auto* promise = JSC::JSPromise::create(vm, globalObject->promiseStructure());
     if (!worker.isOnline()) {
         promise->reject(vm, globalObject,
-            Bun::createError(globalObject,
-                Bun::ErrorCode::ERR_WORKER_NOT_RUNNING,
+            Fun::createError(globalObject,
+                Fun::ErrorCode::ERR_WORKER_NOT_RUNNING,
                 "Worker instance not running"_s));
         return JSValue::encode(promise);
     }
@@ -719,8 +719,8 @@ static inline JSC::EncodedJSValue jsWorkerPrototypeFunction_getHeapSnapshotBody(
         // Still on the parent thread — safe to destroy the handle here.
         delete promiseHandle;
         promise->reject(vm, globalObject,
-            Bun::createError(globalObject,
-                Bun::ErrorCode::ERR_WORKER_NOT_RUNNING,
+            Fun::createError(globalObject,
+                Fun::ErrorCode::ERR_WORKER_NOT_RUNNING,
                 "Worker instance not running"_s));
     }
     return JSValue::encode(promise);

@@ -1,18 +1,18 @@
-// https://github.com/oven-sh/bun/issues/29780
+// https://github.com/underdoc-org/fun/issues/29780
 //
-// Bun's fetch HTTP client used to enable ECH GREASE (encrypted_client_hello
+// Fun's fetch HTTP client used to enable ECH GREASE (encrypted_client_hello
 // extension, type 0xfe0d, RFC 9460/9180 draft) on every TLS ClientHello.
 // That extension carries ~200-300 bytes of random-looking payload that some
 // servers and middleboxes treat as hostile: the TCP + TLS handshake completes,
 // the request bytes arrive, but the server silently holds the connection open
-// without responding. curl, Node's undici, and Bun's own node:tls all omit
+// without responding. curl, Node's undici, and Fun's own node:tls all omit
 // ECH GREASE, so our fetch was the outlier.
 //
 // Regression surfaced in 1.3.13 after the BoringSSL upgrade — reporter
-// observed node:tls against the same host worked on the same Bun process.
+// observed node:tls against the same host worked on the same Fun process.
 //
 // This verifies fetch's ClientHello no longer advertises extension 0xfe0d.
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import net from "node:net";
 
 // Parses a TLS ClientHello out of a raw TCP byte stream and returns the

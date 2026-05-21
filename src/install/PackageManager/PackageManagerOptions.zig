@@ -3,11 +3,11 @@ const Options = @This();
 log_level: LogLevel = .default,
 global: bool = false,
 
-global_bin_dir: std.fs.Dir = bun.FD.invalid.stdDir(),
+global_bin_dir: std.fs.Dir = fun.FD.invalid.stdDir(),
 explicit_global_directory: string = "",
 /// destination directory to link bins into
-// must be a variable due to global installs and bunx
-bin_path: stringZ = bun.pathLiteral("node_modules/.bin"),
+// must be a variable due to global installs and funx
+bin_path: stringZ = fun.pathLiteral("node_modules/.bin"),
 
 did_override_default_scope: bool = false,
 scope: Npm.Registry.Scope = undefined,
@@ -52,27 +52,27 @@ publish_config: PublishConfig = .{},
 ca: []const string = &.{},
 ca_file_name: string = &.{},
 
-// if set to `false` in bunfig, save a binary lockfile
+// if set to `false` in funfig, save a binary lockfile
 save_text_lockfile: ?bool = null,
 
 lockfile_only: bool = false,
 
-// `bun pm version` command options
+// `fun pm version` command options
 git_tag_version: bool = true,
 allow_same_version: bool = false,
 preid: string = "",
 message: ?string = null,
 force: bool = false,
 
-// `bun pm why` command options
+// `fun pm why` command options
 top_only: bool = false,
 depth: ?usize = null,
 
 /// isolated installs (pnpm-like) or hoisted installs (yarn-like, original)
 node_linker: NodeLinker = .auto,
 
-public_hoist_pattern: ?bun.install.PnpmMatcher = null,
-hoist_pattern: ?bun.install.PnpmMatcher = null,
+public_hoist_pattern: ?fun.install.PnpmMatcher = null,
+hoist_pattern: ?fun.install.PnpmMatcher = null,
 
 // Security scanner module path
 security_scanner: ?[]const u8 = null,
@@ -88,7 +88,7 @@ cpu: Npm.Architecture = Npm.Architecture.current,
 /// Override OS for optional dependencies filtering
 os: Npm.OperatingSystem = Npm.OperatingSystem.current,
 
-config_version: ?bun.ConfigVersion = null,
+config_version: ?fun.ConfigVersion = null,
 
 pub const PublishConfig = struct {
     access: ?Access = null,
@@ -102,7 +102,7 @@ pub const Access = enum {
     public,
     restricted,
 
-    const map = bun.ComptimeEnumMap(Access);
+    const map = fun.ComptimeEnumMap(Access);
 
     pub fn fromStr(str: string) ?Access {
         return map.get(str);
@@ -113,7 +113,7 @@ pub const AuthType = enum {
     legacy,
     web,
 
-    const map = bun.ComptimeEnumMap(AuthType);
+    const map = fun.ComptimeEnumMap(AuthType);
 
     pub fn fromStr(str: string) ?AuthType {
         return map.get(str);
@@ -155,7 +155,7 @@ pub const Update = struct {
 };
 
 pub fn openGlobalDir(explicit_global_dir: string) !std.fs.Dir {
-    if (bun.env_var.BUN_INSTALL_GLOBAL_DIR.get()) |home_dir| {
+    if (fun.env_var.FUN_INSTALL_GLOBAL_DIR.get()) |home_dir| {
         return try std.fs.cwd().makeOpenPath(home_dir, .{});
     }
 
@@ -163,16 +163,16 @@ pub fn openGlobalDir(explicit_global_dir: string) !std.fs.Dir {
         return try std.fs.cwd().makeOpenPath(explicit_global_dir, .{});
     }
 
-    if (bun.env_var.BUN_INSTALL.get()) |home_dir| {
-        var buf: bun.PathBuffer = undefined;
+    if (fun.env_var.FUN_INSTALL.get()) |home_dir| {
+        var buf: fun.PathBuffer = undefined;
         var parts = [_]string{ "install", "global" };
         const path = Path.joinAbsStringBuf(home_dir, &buf, &parts, .auto);
         return try std.fs.cwd().makeOpenPath(path, .{});
     }
 
-    if (bun.env_var.XDG_CACHE_HOME.get() orelse bun.env_var.HOME.get()) |home_dir| {
-        var buf: bun.PathBuffer = undefined;
-        var parts = [_]string{ ".bun", "install", "global" };
+    if (fun.env_var.XDG_CACHE_HOME.get() orelse fun.env_var.HOME.get()) |home_dir| {
+        var buf: fun.PathBuffer = undefined;
+        var parts = [_]string{ ".fun", "install", "global" };
         const path = Path.joinAbsStringBuf(home_dir, &buf, &parts, .auto);
         return try std.fs.cwd().makeOpenPath(path, .{});
     }
@@ -180,8 +180,8 @@ pub fn openGlobalDir(explicit_global_dir: string) !std.fs.Dir {
     return error.@"No global directory found";
 }
 
-pub fn openGlobalBinDir(opts_: ?*const Api.BunInstall) !std.fs.Dir {
-    if (bun.env_var.BUN_INSTALL_BIN.get()) |home_dir| {
+pub fn openGlobalBinDir(opts_: ?*const Api.FunInstall) !std.fs.Dir {
+    if (fun.env_var.FUN_INSTALL_BIN.get()) |home_dir| {
         return try std.fs.cwd().makeOpenPath(home_dir, .{});
     }
 
@@ -193,8 +193,8 @@ pub fn openGlobalBinDir(opts_: ?*const Api.BunInstall) !std.fs.Dir {
         }
     }
 
-    if (bun.env_var.BUN_INSTALL.get()) |home_dir| {
-        var buf: bun.PathBuffer = undefined;
+    if (fun.env_var.FUN_INSTALL.get()) |home_dir| {
+        var buf: fun.PathBuffer = undefined;
         var parts = [_]string{
             "bin",
         };
@@ -202,17 +202,17 @@ pub fn openGlobalBinDir(opts_: ?*const Api.BunInstall) !std.fs.Dir {
         return try std.fs.cwd().makeOpenPath(path, .{});
     }
 
-    if (bun.env_var.XDG_CACHE_HOME.get() orelse bun.env_var.HOME.get()) |home_dir| {
-        var buf: bun.PathBuffer = undefined;
+    if (fun.env_var.XDG_CACHE_HOME.get() orelse fun.env_var.HOME.get()) |home_dir| {
+        var buf: fun.PathBuffer = undefined;
         var parts = [_]string{
-            ".bun",
+            ".fun",
             "bin",
         };
         const path = Path.joinAbsStringBuf(home_dir, &buf, &parts, .auto);
         return try std.fs.cwd().makeOpenPath(path, .{});
     }
 
-    return error.@"Missing global bin directory: try setting $BUN_INSTALL";
+    return error.@"Missing global bin directory: try setting $FUN_INSTALL";
 }
 
 pub fn load(
@@ -221,9 +221,9 @@ pub fn load(
     log: *logger.Log,
     env: *DotEnv.Loader,
     maybe_cli: ?CommandLineArguments,
-    bun_install_: ?*Api.BunInstall,
+    fun_install_: ?*Api.FunInstall,
     subcommand: Subcommand,
-) bun.OOM!void {
+) fun.OOM!void {
     var base = Api.NpmRegistry{
         .url = "",
         .username = "",
@@ -231,7 +231,7 @@ pub fn load(
         .token = "",
         .email = "",
     };
-    if (bun_install_) |config| {
+    if (fun_install_) |config| {
         if (config.default_registry) |registry| {
             base = registry;
         }
@@ -245,7 +245,7 @@ pub fn load(
     defer {
         this.did_override_default_scope = this.scope.url_hash != Npm.Registry.default_url_hash;
     }
-    if (bun_install_) |config| {
+    if (fun_install_) |config| {
         if (config.cache_directory) |cache_directory| {
             this.cache_directory = cache_directory;
         }
@@ -380,12 +380,12 @@ pub fn load(
         this.explicit_global_directory = config.global_dir orelse this.explicit_global_directory;
     }
 
-    if (env.get("BUN_INSTALL_GLOBAL_STORE")) |val| {
+    if (env.get("FUN_INSTALL_GLOBAL_STORE")) |val| {
         this.enable.global_virtual_store = !strings.eqlComptime(val, "0");
     }
 
     const default_disable_progress_bar: bool = brk: {
-        if (env.get("BUN_INSTALL_PROGRESS")) |prog| {
+        if (env.get("FUN_INSTALL_PROGRESS")) |prog| {
             break :brk strings.eqlComptime(prog, "0");
         }
 
@@ -400,7 +400,7 @@ pub fn load(
     // load_registry:
     {
         const registry_keys = [_]string{
-            "BUN_CONFIG_REGISTRY",
+            "FUN_CONFIG_REGISTRY",
             "NPM_CONFIG_REGISTRY",
             "npm_config_registry",
         };
@@ -427,7 +427,7 @@ pub fn load(
 
     {
         const token_keys = [_]string{
-            "BUN_CONFIG_TOKEN",
+            "FUN_CONFIG_TOKEN",
             "NPM_CONFIG_TOKEN",
             "npm_config_token",
         };
@@ -447,29 +447,29 @@ pub fn load(
         }
     }
 
-    if (env.get("BUN_CONFIG_YARN_LOCKFILE") != null) {
+    if (env.get("FUN_CONFIG_YARN_LOCKFILE") != null) {
         this.do.save_yarn_lock = true;
     }
 
-    if (env.get("BUN_CONFIG_HTTP_RETRY_COUNT")) |retry_count| {
+    if (env.get("FUN_CONFIG_HTTP_RETRY_COUNT")) |retry_count| {
         if (std.fmt.parseInt(u16, retry_count, 10)) |int| this.max_retry_count = int else |_| {}
     }
 
     AsyncHTTP.loadEnv(allocator, log, env);
 
-    if (env.get("BUN_CONFIG_SKIP_SAVE_LOCKFILE")) |check_bool| {
+    if (env.get("FUN_CONFIG_SKIP_SAVE_LOCKFILE")) |check_bool| {
         this.do.save_lockfile = strings.eqlComptime(check_bool, "0");
     }
 
-    if (env.get("BUN_CONFIG_SKIP_LOAD_LOCKFILE")) |check_bool| {
+    if (env.get("FUN_CONFIG_SKIP_LOAD_LOCKFILE")) |check_bool| {
         this.do.load_lockfile = strings.eqlComptime(check_bool, "0");
     }
 
-    if (env.get("BUN_CONFIG_SKIP_INSTALL_PACKAGES")) |check_bool| {
+    if (env.get("FUN_CONFIG_SKIP_INSTALL_PACKAGES")) |check_bool| {
         this.do.install_packages = strings.eqlComptime(check_bool, "0");
     }
 
-    if (env.get("BUN_CONFIG_NO_VERIFY")) |check_bool| {
+    if (env.get("FUN_CONFIG_NO_VERIFY")) |check_bool| {
         this.do.verify_integrity = !strings.eqlComptime(check_bool, "0");
     }
 
@@ -668,14 +668,14 @@ pub fn load(
             this.ca_file_name = cli.ca_file_name;
         }
 
-        // `bun pm version` command options
+        // `fun pm version` command options
         this.git_tag_version = cli.git_tag_version;
         this.allow_same_version = cli.allow_same_version;
         this.preid = cli.preid;
         this.message = cli.message;
         this.force = cli.force;
 
-        // `bun pm why` command options
+        // `fun pm why` command options
         this.top_only = cli.top_only;
         this.depth = cli.depth;
     } else {
@@ -724,10 +724,10 @@ pub const Enable = packed struct(u16) {
     exact_versions: bool = false,
     only_missing: bool = false,
     /// Isolated linker only: materialize package entries once into a shared
-    /// `<cache>/links/` directory and symlink `node_modules/.bun/<pkg>` into
+    /// `<cache>/links/` directory and symlink `node_modules/.fun/<pkg>` into
     /// it, instead of clonefiling every package into every project on every
-    /// install. Off by default; set BUN_INSTALL_GLOBAL_STORE=1 or
-    /// `install.globalStore = true` in bunfig to enable.
+    /// install. Off by default; set FUN_INSTALL_GLOBAL_STORE=1 or
+    /// `install.globalStore = true` in funfig to enable.
     global_virtual_store: bool = false,
     _: u6 = 0,
 };
@@ -738,24 +738,24 @@ const stringZ = [:0]const u8;
 const CommandLineArguments = @import("./CommandLineArguments.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const DotEnv = bun.DotEnv;
-const FD = bun.FD;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const Path = bun.path;
-const URL = bun.URL;
-const logger = bun.logger;
-const strings = bun.strings;
-const Api = bun.schema.api;
+const fun = @import("fun");
+const DotEnv = fun.DotEnv;
+const FD = fun.FD;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const Path = fun.path;
+const URL = fun.URL;
+const logger = fun.logger;
+const strings = fun.strings;
+const Api = fun.schema.api;
 
-const HTTP = bun.http;
+const HTTP = fun.http;
 const AsyncHTTP = HTTP.AsyncHTTP;
 
-const Features = bun.install.Features;
-const Npm = bun.install.Npm;
-const PackageInstall = bun.install.PackageInstall;
-const patch = bun.install.patch;
+const Features = fun.install.Features;
+const Npm = fun.install.Npm;
+const PackageInstall = fun.install.PackageInstall;
+const patch = fun.install.patch;
 
-const PackageManager = bun.install.PackageManager;
-const Subcommand = bun.install.PackageManager.Subcommand;
+const PackageManager = fun.install.PackageManager;
+const Subcommand = fun.install.PackageManager.Subcommand;

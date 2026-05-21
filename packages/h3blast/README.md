@@ -1,7 +1,7 @@
 # h3blast
 
 A small, very fast HTTP/3 load generator built directly on **lsquic**. It exists
-to stress `Bun.serve({ http3: true })` without going through curl or a Node QUIC
+to stress `Fun.serve({ http3: true })` without going through curl or a Node QUIC
 shim — same lsquic, same BoringSSL, same packet path as the server side.
 
 ```
@@ -37,11 +37,11 @@ No TLS verification by default (it's a load tester).
 ## Build
 
 h3blast links the **already-compiled** lsquic / BoringSSL / HdrHistogram / zlib
-object files from Bun's build tree, so you need a Bun release build first:
+object files from Fun's build tree, so you need a Fun release build first:
 
 ```sh
 cd ../..               # repo root
-bun run build:release  # populates build/release/obj/vendor/**
+fun run build:release  # populates build/release/obj/vendor/**
 cd packages/h3blast
 make                   # → ./h3blast
 ```
@@ -56,7 +56,7 @@ make                   # → ./h3blast
 ./h3blast --json -d 5 https://host/ | jq '.[0].req_per_sec'
 
 # compare two servers side-by-side — each positional is [label=]url
-./h3blast -c 4 -m 32 -d 10 bun=https://127.0.0.1:3443/ node=https://127.0.0.1:3444/
+./h3blast -c 4 -m 32 -d 10 fun=https://127.0.0.1:3443/ node=https://127.0.0.1:3444/
 ```
 
 When multiple URLs are given they are benchmarked **sequentially** (same
@@ -82,9 +82,9 @@ shows just `body B/req` and `p50/p99`.
 | `--no-color`, `-q`         | disable color / live UI                       |
 | `H3BLAST_DEBUG=debug`      | turn on lsquic's internal logger              |
 
-## Against a local Bun H3 server
+## Against a local Fun H3 server
 
 ```sh
-bun test-server.js 3443 &
+fun test-server.js 3443 &
 ./h3blast -t 2 -c 4 -m 32 -d 10 https://127.0.0.1:3443/
 ```

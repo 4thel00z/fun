@@ -1,10 +1,10 @@
 # Version: 19
-# A script that installs the dependencies needed to build and test Bun on Windows.
+# A script that installs the dependencies needed to build and test Fun on Windows.
 # Supports both x64 and ARM64 using Scoop for package management.
 # Used by Azure [build images] pipeline.
 
 # If this script does not work on your machine, please open an issue:
-# https://github.com/oven-sh/bun/issues
+# https://github.com/underdoc-org/fun/issues
 
 # If you need to make a change to this script, such as upgrading a dependency,
 # increment the version comment to indicate that a new image should be built.
@@ -215,7 +215,7 @@ function Install-Git {
 }
 
 function Install-NodeJs {
-  # Pin to match the ABI version Bun expects (NODE_MODULE_VERSION 137).
+  # Pin to match the ABI version Fun expects (NODE_MODULE_VERSION 137).
   # Latest Node (25.x) uses ABI 141 which breaks node-gyp tests.
   $nodejsVersion = "24.3.0"
   Install-Scoop-Package "nodejs@$nodejsVersion" -Command node
@@ -365,10 +365,10 @@ function Install-OpenSSH {
   Write-Output "OpenSSH Server installed and configured"
 
   # Register a startup task that fetches oven-sh GitHub org members' SSH keys
-  # on every boot so any bun dev can SSH in.
+  # on every boot so any fun dev can SSH in.
   $fetchScript = @'
 try {
-  $members = Invoke-RestMethod -Uri "https://api.github.com/orgs/oven-sh/members" -Headers @{ "User-Agent" = "bun-ci" }
+  $members = Invoke-RestMethod -Uri "https://api.github.com/orgs/oven-sh/members" -Headers @{ "User-Agent" = "fun-ci" }
   $keys = @()
   foreach ($member in $members) {
     if ($member.type -ne "User" -or -not $member.login) { continue }
@@ -413,21 +413,21 @@ function Install-Ccache {
   Add-To-Path $installDir
 }
 
-function Install-Bun {
-  if (Which bun) {
+function Install-Fun {
+  if (Which fun) {
     return
   }
 
-  Write-Output "Installing Bun..."
-  $installScript = Download-File "https://bun.sh/install.ps1" -Name "bun-install.ps1"
+  Write-Output "Installing Fun..."
+  $installScript = Download-File "https://fun.dev/install.ps1" -Name "fun-install.ps1"
   $pwsh = Which pwsh powershell -Required
   & $pwsh $installScript
   Refresh-Path
   # Copy to System32 so it survives Sysprep (user profile PATH is lost)
-  $bunPath = Which bun
-  if ($bunPath) {
-    Copy-Item $bunPath "C:\Windows\System32\bun.exe" -Force
-    Write-Output "Bun copied to C:\Windows\System32\bun.exe"
+  $funPath = Which fun
+  if ($funPath) {
+    Copy-Item $funPath "C:\Windows\System32\fun.exe" -Force
+    Write-Output "Fun copied to C:\Windows\System32\fun.exe"
   }
 }
 
@@ -486,7 +486,7 @@ function Install-Visual-Studio {
 
 function Install-CurlH3 {
   # Installs a static curl built with nghttp3/ngtcp2 as `curl-h3.exe` so the
-  # HTTP/3 server tests (test/js/bun/http/serve-http3.test.ts, fetch-h3.ts)
+  # HTTP/3 server tests (test/js/fun/http/serve-http3.test.ts, fetch-h3.ts)
   # can run in CI. The bundled C:\Windows\System32\curl.exe has no HTTP/3.
   # Tests discover this via $env:CURL_HTTP3, then `curl-h3` in PATH.
   if (Which curl-h3) {
@@ -512,7 +512,7 @@ function Install-CurlH3 {
 
 function Install-PdbAddr2line {
   cargo install --examples "pdb-addr2line@0.11.2"
-  # Also copy to System32 so it's always on PATH (like bun.exe)
+  # Also copy to System32 so it's always on PATH (like fun.exe)
   $src = Join-Path $env:CARGO_HOME "bin\pdb-addr2line.exe"
   if (Test-Path $src) {
     Copy-Item $src "C:\Windows\System32\pdb-addr2line.exe" -Force
@@ -530,7 +530,7 @@ function Install-Nssm {
 
   if (-not (Which nssm)) {
     Write-Output "Scoop install of nssm failed, downloading from mirror..."
-    $zip = Download-File "https://buncistore.blob.core.windows.net/artifacts/nssm-2.24-103-gdee49fc.zip" -Name "nssm.zip"
+    $zip = Download-File "https://funcistore.blob.core.windows.net/artifacts/nssm-2.24-103-gdee49fc.zip" -Name "nssm.zip"
     Expand-Archive -Path $zip -DestinationPath "C:\Windows\Temp\nssm" -Force
     $nssm = Get-ChildItem "C:\Windows\Temp\nssm" -Recurse -Filter "nssm.exe" | Where-Object { $_.DirectoryName -like "*win64*" } | Select-Object -First 1
     if ($nssm) {
@@ -705,7 +705,7 @@ if (-not $script:IsARM64) {
 # Manual installs (not in Scoop or need special handling)
 Install-Pwsh
 Install-OpenSSH
-Install-Bun
+Install-Fun
 Install-CurlH3
 Install-Ccache
 Install-Rust
@@ -714,23 +714,23 @@ Install-PdbAddr2line
 
 function Prefetch-Build-Deps {
   # Bake a read-only download cache for scripts/build/download.ts
-  # (BUN_BUILD_PREFETCH_DIR). Content-addressed by URL/identity, so a dep
+  # (FUN_BUILD_PREFETCH_DIR). Content-addressed by URL/identity, so a dep
   # version bump in scripts/build/deps/ just misses the cache for that one
   # dep — no image rebuild needed.
-  $prefetchDir = "C:\bun-prefetch"
+  $prefetchDir = "C:\fun-prefetch"
   New-Item -ItemType Directory -Force -Path $prefetchDir | Out-Null
 
   # Only bootstrap.ps1 is uploaded to the bake VM, so the repo (and the
   # prefetch script + scripts/build/deps/*.ts version pins) has to be cloned.
-  # BUN_BOOTSTRAP_REPO_REF lets the orchestrator pin to its triggering commit.
-  $repoRef = if ($env:BUN_BOOTSTRAP_REPO_REF) { $env:BUN_BOOTSTRAP_REPO_REF } else { "main" }
-  $cloneDir = Join-Path $env:TEMP "bun-prefetch-clone"
+  # FUN_BOOTSTRAP_REPO_REF lets the orchestrator pin to its triggering commit.
+  $repoRef = if ($env:FUN_BOOTSTRAP_REPO_REF) { $env:FUN_BOOTSTRAP_REPO_REF } else { "main" }
+  $cloneDir = Join-Path $env:TEMP "fun-prefetch-clone"
   Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $cloneDir
   # Best-effort: a fork-PR branch that doesn't exist on the upstream remote,
   # a deleted branch, or a transient network blip shouldn't abort the whole
   # image bake — the build just falls through to the network with no warm
   # cache. Same for a ref that predates the prefetch script.
-  & git clone --depth=1 --branch $repoRef https://github.com/oven-sh/bun.git $cloneDir
+  & git clone --depth=1 --branch $repoRef https://github.com/underdoc-org/fun.git $cloneDir
   if ($LASTEXITCODE -ne 0) {
     Write-Output "warning: clone of $repoRef failed; skipping warm cache"
     Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $cloneDir
@@ -746,7 +746,7 @@ function Prefetch-Build-Deps {
   # the clone.
   Push-Location $cloneDir
   try {
-    & bun scripts\prefetch-deps.ts $prefetchDir
+    & fun scripts\prefetch-deps.ts $prefetchDir
     if ($LASTEXITCODE -ne 0) { throw "prefetch-deps.ts failed" }
   } finally {
     Pop-Location
@@ -758,7 +758,7 @@ function Prefetch-Build-Deps {
   # same runner.
   & attrib +R "$prefetchDir\*" /S /D
 
-  Set-Env "BUN_BUILD_PREFETCH_DIR" $prefetchDir
+  Set-Env "FUN_BUILD_PREFETCH_DIR" $prefetchDir
 }
 
 if ($CI) {

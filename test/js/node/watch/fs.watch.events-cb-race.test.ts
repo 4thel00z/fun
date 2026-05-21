@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isMacOS, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isMacOS, tempDir } from "harness";
 
 // Regression test for FSEvents `_events_cb` iterating `loop.watchers`
 // without holding `loop.mutex`.
@@ -84,9 +84,9 @@ test.skipIf(!isMacOS)(
     wd.unref();
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script, String(dir)],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script, String(dir)],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

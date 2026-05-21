@@ -23,7 +23,7 @@ namespace Zig {
 class GlobalObject;
 }
 
-namespace Bun {
+namespace Fun {
 
 class JSWebView;
 enum class ScreenshotFormat : uint8_t;
@@ -38,7 +38,7 @@ enum class VirtualKey : uint8_t;
 namespace WK {
 
 // One per process. Lazy-spawned on first WebView construction via
-// Bun__WebViewHost__ensure (Zig side, reuses bun.spawn.Process).
+// Fun__WebViewHost__ensure (Zig side, reuses fun.spawn.Process).
 struct HostClient {
     us_socket_t* sock = nullptr;
     Zig::GlobalObject* global = nullptr;
@@ -87,6 +87,6 @@ void close(JSWebView*);
 
 } // namespace WK
 
-} // namespace Bun
+} // namespace Fun
 
 #endif // OS(DARWIN)

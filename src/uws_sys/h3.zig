@@ -39,11 +39,11 @@ pub const Request = opaque {
         const n = c.uws_h3_req_get_header(this, name.ptr, name.len, &p);
         return if (n == 0) null else p[0..n];
     }
-    pub fn dateForHeader(this: *Request, name: []const u8) bun.JSError!?u64 {
+    pub fn dateForHeader(this: *Request, name: []const u8) fun.JSError!?u64 {
         const value = this.header(name) orelse return null;
-        var s = bun.String.init(value);
+        var s = fun.String.init(value);
         defer s.deref();
-        const ms = try s.parseDate(bun.jsc.VirtualMachine.get().global);
+        const ms = try s.parseDate(fun.jsc.VirtualMachine.get().global);
         if (!std.math.isNan(ms) and std.math.isFinite(ms) and ms >= 0) return @intFromFloat(ms);
         return null;
     }
@@ -244,10 +244,10 @@ pub const Response = opaque {
 };
 
 pub const App = opaque {
-    pub fn create(opts: uws.SocketContext.BunSocketContextOptions, idle_timeout_s: u32) ?*App {
+    pub fn create(opts: uws.SocketContext.FunSocketContextOptions, idle_timeout_s: u32) ?*App {
         return c.uws_h3_create_app(opts, idle_timeout_s);
     }
-    pub fn addServerNameWithOptions(this: *App, hostname: [:0]const u8, opts: uws.SocketContext.BunSocketContextOptions) !void {
+    pub fn addServerNameWithOptions(this: *App, hostname: [:0]const u8, opts: uws.SocketContext.FunSocketContextOptions) !void {
         if (!c.uws_h3_app_add_server_name(this, hostname.ptr, opts)) return error.FailedToAddServerName;
     }
     pub fn destroy(this: *App) void {
@@ -315,7 +315,7 @@ pub const App = opaque {
     }
     pub fn method(
         this: *App,
-        m: bun.http.Method,
+        m: fun.http.Method,
         p: []const u8,
         comptime UD: type,
         ud: UD,
@@ -362,11 +362,11 @@ const c = struct {
     const ListenHandler = ?*const fn (?*ListenSocket, ?*anyopaque) callconv(.c) void;
     const HeaderCb = *const fn ([*]const u8, usize, [*]const u8, usize, ?*anyopaque) callconv(.c) void;
 
-    extern fn uws_h3_create_app(uws.SocketContext.BunSocketContextOptions, u32) ?*App;
+    extern fn uws_h3_create_app(uws.SocketContext.FunSocketContextOptions, u32) ?*App;
     extern fn uws_h3_app_destroy(*App) void;
     extern fn uws_h3_app_close(*App) void;
     extern fn uws_h3_app_clear_routes(*App) void;
-    extern fn uws_h3_app_add_server_name(*App, [*:0]const u8, uws.SocketContext.BunSocketContextOptions) bool;
+    extern fn uws_h3_app_add_server_name(*App, [*:0]const u8, uws.SocketContext.FunSocketContextOptions) bool;
     extern fn uws_h3_res_write_continue(*Response) void;
     extern fn uws_h3_app_get(*App, [*]const u8, usize, Handler, ?*anyopaque) void;
     extern fn uws_h3_app_post(*App, [*]const u8, usize, Handler, ?*anyopaque) void;
@@ -424,11 +424,11 @@ const c = struct {
     extern fn uws_h3_req_for_each_header(*Request, HeaderCb, ?*anyopaque) void;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
 const State = @import("./Response.zig").State;
 const WriteResult = @import("./Response.zig").WriteResult;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const SocketAddress = uws.SocketAddress;

@@ -15,7 +15,7 @@ pub const AsyncModule = struct {
     loader: api.Loader,
     hash: u32 = std.math.maxInt(u32),
     globalThis: *JSGlobalObject = undefined,
-    arena: *bun.ArenaAllocator,
+    arena: *fun.ArenaAllocator,
 
     // This is the specific state for making it async
     poll_ref: Async.KeepAlive = .{},
@@ -60,7 +60,7 @@ pub const AsyncModule = struct {
         }
 
         pub fn onDependencyError(ctx: *anyopaque, dependency: Dependency, root_dependency_id: Install.DependencyID, err: anyerror) void {
-            var this = bun.cast(*Queue, ctx);
+            var this = fun.cast(*Queue, ctx);
             debug("onDependencyError: {s}", .{this.vm().packageManager().lockfile.str(&dependency.name)});
 
             var modules: []AsyncModule = this.map.items;
@@ -90,7 +90,7 @@ pub const AsyncModule = struct {
         }
         pub fn onWakeHandler(ctx: *anyopaque, _: *PackageManager) void {
             debug("onWake", .{});
-            var this = bun.cast(*Queue, ctx);
+            var this = fun.cast(*Queue, ctx);
             this.vm().enqueueTaskConcurrent(jsc.ConcurrentTask.createFrom(this));
         }
 
@@ -264,7 +264,7 @@ pub const AsyncModule = struct {
                     }
 
                     const package = pm.lockfile.packages.get(package_id);
-                    bun.assert(package.resolution.tag != .root);
+                    fun.assert(package.resolution.tag != .root);
 
                     var name_and_version_hash: ?u64 = null;
                     var patchfile_hash: ?u64 = null;
@@ -323,12 +323,12 @@ pub const AsyncModule = struct {
         const this_promise = JSValue.createInternalPromise(globalObject);
         const promise = jsc.Strong.Optional.create(this_promise, globalObject);
 
-        var buf = bun.StringBuilder{};
+        var buf = fun.StringBuilder{};
         buf.count(opts.referrer);
         buf.count(opts.specifier);
         buf.count(opts.path.text);
 
-        try buf.allocate(bun.default_allocator);
+        try buf.allocate(fun.default_allocator);
         opts.promise_ptr.?.* = this_promise.asInternalPromise().?;
         const referrer = buf.append(opts.referrer);
         const specifier = buf.append(opts.specifier);
@@ -361,7 +361,7 @@ pub const AsyncModule = struct {
 
     pub fn onDone(this: *AsyncModule) void {
         jsc.markBinding(@src());
-        var jsc_vm = this.globalThis.bunVM();
+        var jsc_vm = this.globalThis.funVM();
         jsc_vm.modules.scheduled -= 1;
         if (jsc_vm.modules.scheduled == 0) {
             jsc_vm.packageManager().endProgressBar();
@@ -380,8 +380,8 @@ pub const AsyncModule = struct {
                     else => {
                         VirtualMachine.processFetchLog(
                             this.globalThis,
-                            bun.String.init(this.specifier),
-                            bun.String.init(this.referrer),
+                            fun.String.init(this.specifier),
+                            fun.String.init(this.referrer),
                             &log,
                             &errorable,
                             err,
@@ -392,9 +392,9 @@ pub const AsyncModule = struct {
             });
         }
 
-        var spec = bun.String.init(ZigString.init(this.specifier).withEncoding());
-        var ref = bun.String.init(ZigString.init(this.referrer).withEncoding());
-        bun.jsc.fromJSHostCallGeneric(this.globalThis, @src(), Bun__onFulfillAsyncModule, .{
+        var spec = fun.String.init(ZigString.init(this.specifier).withEncoding());
+        var ref = fun.String.init(ZigString.init(this.referrer).withEncoding());
+        fun.jsc.fromJSHostCallGeneric(this.globalThis, @src(), Fun__onFulfillAsyncModule, .{
             this.globalThis,
             this.promise.get().?,
             &errorable,
@@ -410,10 +410,10 @@ pub const AsyncModule = struct {
         promise: JSValue,
         resolved_source: *ResolvedSource,
         err: ?anyerror,
-        specifier_: bun.String,
-        referrer_: bun.String,
+        specifier_: fun.String,
+        referrer_: fun.String,
         log: *logger.Log,
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         jsc.markBinding(@src());
         var specifier = specifier_;
         var referrer = referrer_;
@@ -453,7 +453,7 @@ pub const AsyncModule = struct {
 
         debug("fulfill: {f}", .{specifier});
 
-        try bun.jsc.fromJSHostCallGeneric(globalThis, @src(), Bun__onFulfillAsyncModule, .{
+        try fun.jsc.fromJSHostCallGeneric(globalThis, @src(), Fun__onFulfillAsyncModule, .{
             globalThis,
             promise,
             &errorable,
@@ -467,37 +467,37 @@ pub const AsyncModule = struct {
 
         const msg: []u8 = try switch (result.err) {
             error.PackageManifestHTTP400 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 400 while resolving package '{s}' at '{s}'",
                 .{ result.name, result.url },
             ),
             error.PackageManifestHTTP401 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 401 while resolving package '{s}' at '{s}'",
                 .{ result.name, result.url },
             ),
             error.PackageManifestHTTP402 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 402 while resolving package '{s}' at '{s}'",
                 .{ result.name, result.url },
             ),
             error.PackageManifestHTTP403 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 403 while resolving package '{s}' at '{s}'",
                 .{ result.name, result.url },
             ),
             error.PackageManifestHTTP404 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "Package '{s}' was not found",
                 .{result.name},
             ),
             error.PackageManifestHTTP4xx => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 4xx while resolving package '{s}' at '{s}'",
                 .{ result.name, result.url },
             ),
             error.PackageManifestHTTP5xx => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 5xx while resolving package '{s}' at '{s}'",
                 .{ result.name, result.url },
             ),
@@ -510,18 +510,18 @@ pub const AsyncModule = struct {
                     "No match found";
 
                 break :brk std.fmt.allocPrint(
-                    bun.default_allocator,
+                    fun.default_allocator,
                     "{s} '{s}' for package '{s}' (but package exists)",
                     .{ prefix, vm.packageManager().lockfile.str(&result.version.literal), result.name },
                 );
             },
             else => |err| std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "{s} resolving package '{s}' at '{s}'",
-                .{ bun.asByteSlice(@errorName(err)), result.name, result.url },
+                .{ fun.asByteSlice(@errorName(err)), result.name, result.url },
             ),
         };
-        defer bun.default_allocator.free(msg);
+        defer fun.default_allocator.free(msg);
 
         const name: []const u8 = switch (result.err) {
             error.NoMatchingVersion => "PackageVersionNotFound",
@@ -565,56 +565,56 @@ pub const AsyncModule = struct {
 
         const msg: []u8 = try switch (result.err) {
             error.TarballHTTP400 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 400 downloading package '{s}@{f}'",
                 msg_args,
             ),
             error.TarballHTTP401 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 401 downloading package '{s}@{f}'",
                 msg_args,
             ),
             error.TarballHTTP402 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 402 downloading package '{s}@{f}'",
                 msg_args,
             ),
             error.TarballHTTP403 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 403 downloading package '{s}@{f}'",
                 msg_args,
             ),
             error.TarballHTTP404 => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 404 downloading package '{s}@{f}'",
                 msg_args,
             ),
             error.TarballHTTP4xx => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 4xx downloading package '{s}@{f}'",
                 msg_args,
             ),
             error.TarballHTTP5xx => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "HTTP 5xx downloading package '{s}@{f}'",
                 msg_args,
             ),
             error.TarballFailedToExtract => std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "Failed to extract tarball for package '{s}@{f}'",
                 msg_args,
             ),
             else => |err| std.fmt.allocPrint(
-                bun.default_allocator,
+                fun.default_allocator,
                 "{s} downloading package '{s}@{f}'",
                 .{
-                    bun.asByteSlice(@errorName(err)),
+                    fun.asByteSlice(@errorName(err)),
                     result.name,
                     result.resolution.fmt(vm.packageManager().lockfile.buffers.string_bytes.items, .any),
                 },
             ),
         };
-        defer bun.default_allocator.free(msg);
+        defer fun.default_allocator.free(msg);
 
         const name: []const u8 = switch (result.err) {
             error.TarballFailedToExtract => "PackageExtractionError",
@@ -703,11 +703,11 @@ pub const AsyncModule = struct {
         }
 
         if (jsc_vm.isWatcherEnabled()) {
-            var resolved_source = jsc_vm.refCountedResolvedSource(printer.ctx.written, bun.String.init(specifier), path.text, null, false);
+            var resolved_source = jsc_vm.refCountedResolvedSource(printer.ctx.written, fun.String.init(specifier), path.text, null, false);
 
             if (parse_result.input_fd) |fd_| {
                 if (std.fs.path.isAbsolute(path.text) and !strings.contains(path.text, "node_modules")) {
-                    _ = jsc_vm.bun_watcher.addFile(
+                    _ = jsc_vm.fun_watcher.addFile(
                         fd_,
                         path.text,
                         this.hash,
@@ -726,7 +726,7 @@ pub const AsyncModule = struct {
 
         return ResolvedSource{
             .allocator = null,
-            .source_code = bun.String.cloneLatin1(printer.ctx.getWritten()),
+            .source_code = fun.String.cloneLatin1(printer.ctx.getWritten()),
             .specifier = String.init(specifier),
             .source_url = String.init(path.text),
             .is_commonjs_module = parse_result.ast.has_commonjs_export_names or parse_result.ast.exports_kind == .cjs,
@@ -737,19 +737,19 @@ pub const AsyncModule = struct {
         this.promise.deinit();
         this.parse_result.deinit();
         this.arena.deinit();
-        this.globalThis.bunVM().allocator.destroy(this.arena);
-        // bun.default_allocator.free(this.stmt_blocks);
-        // bun.default_allocator.free(this.expr_blocks);
+        this.globalThis.funVM().allocator.destroy(this.arena);
+        // fun.default_allocator.free(this.stmt_blocks);
+        // fun.default_allocator.free(this.expr_blocks);
 
-        bun.default_allocator.free(this.string_buf);
+        fun.default_allocator.free(this.string_buf);
     }
 
-    extern "c" fn Bun__onFulfillAsyncModule(
+    extern "c" fn Fun__onFulfillAsyncModule(
         globalObject: *JSGlobalObject,
         promiseValue: JSValue,
         res: *jsc.ErrorableResolvedSource,
-        specifier: *bun.String,
-        referrer: *bun.String,
+        specifier: *fun.String,
+        referrer: *fun.String,
     ) void;
 };
 
@@ -763,20 +763,20 @@ const dumpSource = @import("./RuntimeTranspilerStore.zig").dumpSource;
 const Install = @import("../install/install.zig");
 const PackageManager = @import("../install/install.zig").PackageManager;
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
-const FD = bun.FD;
-const Output = bun.Output;
-const String = bun.String;
-const logger = bun.logger;
-const strings = bun.strings;
-const ParseResult = bun.transpiler.ParseResult;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;
+const FD = fun.FD;
+const Output = fun.Output;
+const String = fun.String;
+const logger = fun.logger;
+const strings = fun.strings;
+const ParseResult = fun.transpiler.ParseResult;
+const api = fun.schema.api;
 
-const jsc = bun.jsc;
-const JSGlobalObject = bun.jsc.JSGlobalObject;
-const JSValue = bun.jsc.JSValue;
-const ResolvedSource = bun.jsc.ResolvedSource;
-const VirtualMachine = bun.jsc.VirtualMachine;
-const ZigString = bun.jsc.ZigString;
+const jsc = fun.jsc;
+const JSGlobalObject = fun.jsc.JSGlobalObject;
+const JSValue = fun.jsc.JSValue;
+const ResolvedSource = fun.jsc.ResolvedSource;
+const VirtualMachine = fun.jsc.VirtualMachine;
+const ZigString = fun.jsc.ZigString;

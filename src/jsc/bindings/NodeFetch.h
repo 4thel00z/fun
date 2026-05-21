@@ -1,6 +1,6 @@
 #include "config.h"
 
-namespace Bun {
+namespace Fun {
 
 JSC::JSValue createNodeFetchInternalBinding(Zig::GlobalObject*);
 

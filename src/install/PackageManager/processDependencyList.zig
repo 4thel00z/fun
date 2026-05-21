@@ -121,7 +121,7 @@ pub fn processExtractedTarballPackage(
                     builder.count(new_name);
                     resolver.count(*Lockfile.StringBuilder, &builder, undefined);
 
-                    bun.handleOom(builder.allocate());
+                    fun.handleOom(builder.allocate());
 
                     const name = builder.append(ExternalString, new_name);
                     pkg.name = name.value;
@@ -143,7 +143,7 @@ pub fn processExtractedTarballPackage(
             package_id.* = package.meta.id;
 
             if (package.dependencies.len > 0) {
-                bun.handleOom(manager.lockfile.scratch.dependency_list_queue.writeItem(package.dependencies));
+                fun.handleOom(manager.lockfile.scratch.dependency_list_queue.writeItem(package.dependencies));
             }
 
             return package;
@@ -201,7 +201,7 @@ pub fn processExtractedTarballPackage(
             package_id.* = package.meta.id;
 
             if (package.dependencies.len > 0) {
-                bun.handleOom(manager.lockfile.scratch.dependency_list_queue.writeItem(package.dependencies));
+                fun.handleOom(manager.lockfile.scratch.dependency_list_queue.writeItem(package.dependencies));
             }
 
             return package;
@@ -230,7 +230,7 @@ pub fn processExtractedTarballPackage(
             var builder = manager.lockfile.stringBuilder();
             Lockfile.Package.Scripts.parseCount(manager.allocator, &builder, json_root);
             builder.allocate() catch unreachable;
-            if (comptime Environment.allow_assert) bun.assert(package_id.* != invalid_package_id);
+            if (comptime Environment.allow_assert) fun.assert(package_id.* != invalid_package_id);
             var scripts = manager.lockfile.packages.items(.scripts)[package_id.*];
             scripts.parseAlloc(manager.allocator, &builder, json_root);
             scripts.filled = true;
@@ -326,34 +326,34 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSAst = bun.ast;
-const JSON = bun.json;
-const Output = bun.Output;
-const Path = bun.path;
-const Syscall = bun.sys;
-const logger = bun.logger;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSAst = fun.ast;
+const JSON = fun.json;
+const Output = fun.Output;
+const Path = fun.path;
+const Syscall = fun.sys;
+const logger = fun.logger;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const ExternalString = Semver.ExternalString;
 const String = Semver.String;
 
-const DependencyID = bun.install.DependencyID;
-const ExtractData = bun.install.ExtractData;
-const Features = bun.install.Features;
-const PackageID = bun.install.PackageID;
-const Repository = bun.install.Repository;
-const Resolution = bun.install.Resolution;
-const TaskCallbackContext = bun.install.TaskCallbackContext;
-const initializeStore = bun.install.initializeStore;
-const invalid_package_id = bun.install.invalid_package_id;
+const DependencyID = fun.install.DependencyID;
+const ExtractData = fun.install.ExtractData;
+const Features = fun.install.Features;
+const PackageID = fun.install.PackageID;
+const Repository = fun.install.Repository;
+const Resolution = fun.install.Resolution;
+const TaskCallbackContext = fun.install.TaskCallbackContext;
+const initializeStore = fun.install.initializeStore;
+const invalid_package_id = fun.install.invalid_package_id;
 
-const Lockfile = bun.install.Lockfile;
+const Lockfile = fun.install.Lockfile;
 const Package = Lockfile.Package;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const Options = PackageManager.Options;
 const TaskCallbackList = PackageManager.TaskCallbackList;
 const assignRootResolution = PackageManager.assignRootResolution;

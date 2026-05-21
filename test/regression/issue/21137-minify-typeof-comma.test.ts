@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import path from "path";
 
 // Regression test for minification bug where typeof comparison in comma operator
@@ -33,12 +33,12 @@ console.log(result);
 `;
 
   const testFile = path.join(String(dir), "test.js");
-  await Bun.write(testFile, testCode);
+  await Fun.write(testFile, testCode);
 
   // Build with minify-syntax flag
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "--minify-syntax", testFile],
-    env: bunEnv,
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "--minify-syntax", testFile],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -62,11 +62,11 @@ console.log(result);
 
   // Verify the minified code runs without syntax errors
   const minifiedFile = path.join(String(dir), "minified.js");
-  await Bun.write(minifiedFile, buildOutput);
+  await Fun.write(minifiedFile, buildOutput);
 
-  await using runProc = Bun.spawn({
-    cmd: [bunExe(), minifiedFile],
-    env: bunEnv,
+  await using runProc = Fun.spawn({
+    cmd: [funExe(), minifiedFile],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -85,7 +85,7 @@ console.log(result);
   expect(lines[0]).toBe("false"); // testFunc() returns false
   expect(lines[1]).toBe("true"); // testFunc2() returns true
   expect(lines[2]).toBe("2"); // testFunc3() returns 2
-  expect(lines[3]).toBe("false"); // result is false (no window in Node/Bun)
+  expect(lines[3]).toBe("false"); // result is false (no window in Node/Fun)
 });
 
 // Additional test for the specific optimization that was causing the bug
@@ -113,11 +113,11 @@ console.log(JSON.stringify({a, b, c, d, e, f, check: check()}));
 `;
 
   const testFile = path.join(String(dir), "optimize.js");
-  await Bun.write(testFile, testCode);
+  await Fun.write(testFile, testCode);
 
-  await using buildProc = Bun.spawn({
-    cmd: [bunExe(), "build", "--minify-syntax", testFile],
-    env: bunEnv,
+  await using buildProc = Fun.spawn({
+    cmd: [funExe(), "build", "--minify-syntax", testFile],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -139,11 +139,11 @@ console.log(JSON.stringify({a, b, c, d, e, f, check: check()}));
 
   // Run the minified code to ensure it's valid
   const minifiedFile = path.join(String(dir), "minified.js");
-  await Bun.write(minifiedFile, buildOutput);
+  await Fun.write(minifiedFile, buildOutput);
 
-  await using runProc = Bun.spawn({
-    cmd: [bunExe(), minifiedFile],
-    env: bunEnv,
+  await using runProc = Fun.spawn({
+    cmd: [funExe(), minifiedFile],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

@@ -19,7 +19,7 @@ pub const PasswordObject = struct {
                 .argon2id = .{},
             };
 
-            pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: jsc.JSValue) bun.JSError!Value {
+            pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: jsc.JSValue) fun.JSError!Value {
                 if (value.isObject()) {
                     if (try value.getTruthy(globalObject, "algorithm")) |algorithm_value| {
                         if (!algorithm_value.isString()) {
@@ -142,7 +142,7 @@ pub const PasswordObject = struct {
 
         pub const argon2 = Algorithm.argon2id;
 
-        pub const label = bun.ComptimeStringMap(
+        pub const label = fun.ComptimeStringMap(
             Algorithm,
             .{
                 .{ "argon2i", .argon2i },
@@ -219,12 +219,12 @@ pub const PasswordObject = struct {
                 // bcrypt silently truncates passwords longer than 72 bytes
                 // we use SHA512 to hash the password if it's longer than 72 bytes
                 if (password.len > 72) {
-                    var sha_512 = bun.sha.SHA512.init();
+                    var sha_512 = fun.sha.SHA512.init();
                     defer sha_512.deinit();
                     sha_512.update(password);
-                    sha_512.final(outbuf[0..bun.sha.SHA512.digest]);
-                    password_to_use = outbuf[0..bun.sha.SHA512.digest];
-                    outbuf_slice = outbuf[bun.sha.SHA512.digest..];
+                    sha_512.final(outbuf[0..fun.sha.SHA512.digest]);
+                    password_to_use = outbuf[0..fun.sha.SHA512.digest];
+                    outbuf_slice = outbuf[fun.sha.SHA512.digest..];
                 }
 
                 const hash_options = pwhash.bcrypt.HashOptions{
@@ -278,12 +278,12 @@ pub const PasswordObject = struct {
             },
             .bcrypt => {
                 var password_to_use = password;
-                var outbuf: [bun.sha.SHA512.digest]u8 = undefined;
+                var outbuf: [fun.sha.SHA512.digest]u8 = undefined;
 
                 // bcrypt silently truncates passwords longer than 72 bytes
                 // we use SHA512 to hash the password if it's longer than 72 bytes
                 if (password.len > 72) {
-                    var sha_512 = bun.sha.SHA512.init();
+                    var sha_512 = fun.sha.SHA512.init();
                     defer sha_512.deinit();
                     sha_512.update(password);
                     sha_512.final(&outbuf);
@@ -340,7 +340,7 @@ pub const JSPasswordObject = struct {
         ref: Async.KeepAlive = .{},
         task: jsc.WorkPoolTask = .{ .callback = &run },
 
-        pub const new = bun.TrivialNew(@This());
+        pub const new = fun.TrivialNew(@This());
 
         pub const Result = struct {
             value: Value,
@@ -350,37 +350,37 @@ pub const JSPasswordObject = struct {
             promise: jsc.JSPromise.Strong,
             global: *jsc.JSGlobalObject,
 
-            pub const new = bun.TrivialNew(@This());
+            pub const new = fun.TrivialNew(@This());
 
             pub const Value = union(enum) {
                 err: PasswordObject.HashError,
                 hash: []const u8,
 
                 pub fn toErrorInstance(this: Value, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
-                    const error_code = bun.handleOom(std.fmt.allocPrint(bun.default_allocator, "PASSWORD{f}", .{PascalToUpperUnderscoreCaseFormatter{ .input = @errorName(this.err) }}));
-                    defer bun.default_allocator.free(error_code);
+                    const error_code = fun.handleOom(std.fmt.allocPrint(fun.default_allocator, "PASSWORD{f}", .{PascalToUpperUnderscoreCaseFormatter{ .input = @errorName(this.err) }}));
+                    defer fun.default_allocator.free(error_code);
                     const instance = globalObject.createErrorInstance("Password hashing failed with error \"{s}\"", .{@errorName(this.err)});
                     instance.put(globalObject, ZigString.static("code"), jsc.ZigString.init(error_code).toJS(globalObject));
                     return instance;
                 }
             };
 
-            pub fn runFromJS(this: *Result) bun.JSTerminated!void {
+            pub fn runFromJS(this: *Result) fun.JSTerminated!void {
                 var promise = this.promise;
                 defer promise.deinit();
                 this.promise = .{};
-                this.ref.unref(this.global.bunVM());
+                this.ref.unref(this.global.funVM());
                 const global = this.global;
                 switch (this.value) {
                     .err => {
                         const error_instance = this.value.toErrorInstance(global);
-                        bun.destroy(this);
+                        fun.destroy(this);
                         try promise.rejectWithAsyncStack(global, error_instance);
                     },
                     .hash => |value| {
-                        defer bun.default_allocator.free(value);
+                        defer fun.default_allocator.free(value);
                         const js_string = jsc.ZigString.init(value).toJS(global);
-                        bun.destroy(this);
+                        fun.destroy(this);
                         try promise.resolve(global, js_string);
                     },
                 }
@@ -389,18 +389,18 @@ pub const JSPasswordObject = struct {
 
         pub fn deinit(this: *HashJob) void {
             this.promise.deinit();
-            bun.freeSensitive(bun.default_allocator, this.password);
-            bun.destroy(this);
+            fun.freeSensitive(fun.default_allocator, this.password);
+            fun.destroy(this);
         }
 
         pub fn getValue(password: []const u8, algorithm: PasswordObject.Algorithm.Value) Result.Value {
-            const value = PasswordObject.hash(bun.default_allocator, password, algorithm) catch |err| {
+            const value = PasswordObject.hash(fun.default_allocator, password, algorithm) catch |err| {
                 return Result.Value{ .err = err };
             };
             return Result.Value{ .hash = value };
         }
 
-        pub fn run(task: *bun.ThreadPool.Task) void {
+        pub fn run(task: *fun.ThreadPool.Task) void {
             var this: *HashJob = @fieldParentPtr("task", task);
 
             var result = Result.new(.{
@@ -419,7 +419,7 @@ pub const JSPasswordObject = struct {
         }
     };
 
-    pub fn hash(globalObject: *jsc.JSGlobalObject, password: []const u8, algorithm: PasswordObject.Algorithm.Value, comptime sync: bool) bun.JSError!jsc.JSValue {
+    pub fn hash(globalObject: *jsc.JSGlobalObject, password: []const u8, algorithm: PasswordObject.Algorithm.Value, comptime sync: bool) fun.JSError!jsc.JSValue {
         assert(password.len > 0); // caller must check
 
         if (comptime sync) {
@@ -430,7 +430,7 @@ pub const JSPasswordObject = struct {
                     return globalObject.throwValue(error_instance);
                 },
                 .hash => |h| {
-                    defer bun.default_allocator.free(h);
+                    defer fun.default_allocator.free(h);
                     return jsc.ZigString.init(h).toJS(globalObject);
                 },
             }
@@ -444,16 +444,16 @@ pub const JSPasswordObject = struct {
             .algorithm = algorithm,
             .password = password,
             .promise = promise,
-            .event_loop = globalObject.bunVM().eventLoop(),
+            .event_loop = globalObject.funVM().eventLoop(),
             .global = globalObject,
         });
-        job.ref.ref(globalObject.bunVM());
+        job.ref.ref(globalObject.funVM());
         jsc.WorkPool.schedule(&job.task);
 
         return promise.value();
     }
 
-    pub fn verify(globalObject: *jsc.JSGlobalObject, password: []const u8, prev_hash: []const u8, algorithm: ?PasswordObject.Algorithm, comptime sync: bool) bun.JSError!jsc.JSValue {
+    pub fn verify(globalObject: *jsc.JSGlobalObject, password: []const u8, prev_hash: []const u8, algorithm: ?PasswordObject.Algorithm, comptime sync: bool) fun.JSError!jsc.JSValue {
         assert(password.len > 0); // caller must check
 
         if (comptime sync) {
@@ -478,17 +478,17 @@ pub const JSPasswordObject = struct {
             .password = password,
             .prev_hash = prev_hash,
             .promise = promise,
-            .event_loop = globalObject.bunVM().eventLoop(),
+            .event_loop = globalObject.funVM().eventLoop(),
             .global = globalObject,
         });
-        job.ref.ref(globalObject.bunVM());
+        job.ref.ref(globalObject.funVM());
         jsc.WorkPool.schedule(&job.task);
 
         return promise.value();
     }
 
     // Once we have bindings generator, this should be replaced with a generated function
-    pub fn JSPasswordObject__hash(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn JSPasswordObject__hash(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
         const arguments = arguments_.ptr[0..arguments_.len];
 
@@ -507,8 +507,8 @@ pub const JSPasswordObject = struct {
         // fromJS(...) orelse {
         //   return globalObject.throwInvalidArgumentType("hash", "password", "string or TypedArray");
         // }
-        const password_to_hash = try jsc.Node.StringOrBuffer.fromJSToOwnedSlice(globalObject, arguments[0], bun.default_allocator);
-        errdefer bun.default_allocator.free(password_to_hash);
+        const password_to_hash = try jsc.Node.StringOrBuffer.fromJSToOwnedSlice(globalObject, arguments[0], fun.default_allocator);
+        errdefer fun.default_allocator.free(password_to_hash);
 
         if (password_to_hash.len == 0) {
             return globalObject.throwInvalidArguments("password must not be empty", .{});
@@ -518,7 +518,7 @@ pub const JSPasswordObject = struct {
     }
 
     // Once we have bindings generator, this should be replaced with a generated function
-    pub fn JSPasswordObject__hashSync(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn JSPasswordObject__hashSync(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
         const arguments = arguments_.ptr[0..arguments_.len];
 
@@ -532,7 +532,7 @@ pub const JSPasswordObject = struct {
             algorithm = try PasswordObject.Algorithm.Value.fromJS(globalObject, arguments[1]);
         }
 
-        var string_or_buffer = try jsc.Node.StringOrBuffer.fromJS(globalObject, bun.default_allocator, arguments[0]) orelse {
+        var string_or_buffer = try jsc.Node.StringOrBuffer.fromJS(globalObject, fun.default_allocator, arguments[0]) orelse {
             return globalObject.throwInvalidArgumentType("hash", "password", "string or TypedArray");
         };
         defer string_or_buffer.deinit();
@@ -554,7 +554,7 @@ pub const JSPasswordObject = struct {
         ref: Async.KeepAlive = .{},
         task: jsc.WorkPoolTask = .{ .callback = &run },
 
-        pub const new = bun.TrivialNew(@This());
+        pub const new = fun.TrivialNew(@This());
 
         pub const Result = struct {
             value: Value,
@@ -564,35 +564,35 @@ pub const JSPasswordObject = struct {
             promise: jsc.JSPromise.Strong,
             global: *jsc.JSGlobalObject,
 
-            pub const new = bun.TrivialNew(@This());
+            pub const new = fun.TrivialNew(@This());
 
             pub const Value = union(enum) {
                 err: PasswordObject.HashError,
                 pass: bool,
 
                 pub fn toErrorInstance(this: Value, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
-                    const error_code = bun.handleOom(std.fmt.allocPrint(bun.default_allocator, "PASSWORD{f}", .{PascalToUpperUnderscoreCaseFormatter{ .input = @errorName(this.err) }}));
-                    defer bun.default_allocator.free(error_code);
+                    const error_code = fun.handleOom(std.fmt.allocPrint(fun.default_allocator, "PASSWORD{f}", .{PascalToUpperUnderscoreCaseFormatter{ .input = @errorName(this.err) }}));
+                    defer fun.default_allocator.free(error_code);
                     const instance = globalObject.createErrorInstance("Password verification failed with error \"{s}\"", .{@errorName(this.err)});
                     instance.put(globalObject, ZigString.static("code"), jsc.ZigString.init(error_code).toJS(globalObject));
                     return instance;
                 }
             };
 
-            pub fn runFromJS(this: *Result) bun.JSTerminated!void {
+            pub fn runFromJS(this: *Result) fun.JSTerminated!void {
                 var promise = this.promise;
                 defer promise.deinit();
                 this.promise = .{};
-                this.ref.unref(this.global.bunVM());
+                this.ref.unref(this.global.funVM());
                 const global = this.global;
                 switch (this.value) {
                     .err => {
                         const error_instance = this.value.toErrorInstance(global);
-                        bun.destroy(this);
+                        fun.destroy(this);
                         try promise.rejectWithAsyncStack(global, error_instance);
                     },
                     .pass => |pass| {
-                        bun.destroy(this);
+                        fun.destroy(this);
                         try promise.resolve(global, jsc.JSValue.jsBoolean(pass));
                     },
                 }
@@ -602,20 +602,20 @@ pub const JSPasswordObject = struct {
         pub fn deinit(this: *VerifyJob) void {
             this.promise.deinit();
 
-            bun.freeSensitive(bun.default_allocator, this.password);
-            bun.freeSensitive(bun.default_allocator, this.prev_hash);
+            fun.freeSensitive(fun.default_allocator, this.password);
+            fun.freeSensitive(fun.default_allocator, this.prev_hash);
 
-            bun.destroy(this);
+            fun.destroy(this);
         }
 
         pub fn getValue(password: []const u8, prev_hash: []const u8, algorithm: ?PasswordObject.Algorithm) Result.Value {
-            const pass = PasswordObject.verify(bun.default_allocator, password, prev_hash, algorithm) catch |err| {
+            const pass = PasswordObject.verify(fun.default_allocator, password, prev_hash, algorithm) catch |err| {
                 return Result.Value{ .err = err };
             };
             return Result.Value{ .pass = pass };
         }
 
-        pub fn run(task: *bun.ThreadPool.Task) void {
+        pub fn run(task: *fun.ThreadPool.Task) void {
             var this: *VerifyJob = @fieldParentPtr("task", task);
 
             var result = Result.new(.{
@@ -635,7 +635,7 @@ pub const JSPasswordObject = struct {
     };
 
     // Once we have bindings generator, this should be replaced with a generated function
-    pub fn JSPasswordObject__verify(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn JSPasswordObject__verify(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(3);
         const arguments = arguments_.ptr[0..arguments_.len];
 
@@ -665,25 +665,25 @@ pub const JSPasswordObject = struct {
         // fromJS(...) orelse {
         //   return globalObject.throwInvalidArgumentType("hash", "password", "string or TypedArray");
         // }
-        const owned_password = try jsc.Node.StringOrBuffer.fromJSToOwnedSlice(globalObject, arguments[0], bun.default_allocator);
+        const owned_password = try jsc.Node.StringOrBuffer.fromJSToOwnedSlice(globalObject, arguments[0], fun.default_allocator);
 
         // TODO: this most likely should error like `verifySync` instead of stringifying.
         //
         // fromJS(...) orelse {
         //   return globalObject.throwInvalidArgumentType("hash", "password", "string or TypedArray");
         // }
-        const owned_hash = jsc.Node.StringOrBuffer.fromJSToOwnedSlice(globalObject, arguments[1], bun.default_allocator) catch |err| {
-            bun.default_allocator.free(owned_password);
+        const owned_hash = jsc.Node.StringOrBuffer.fromJSToOwnedSlice(globalObject, arguments[1], fun.default_allocator) catch |err| {
+            fun.default_allocator.free(owned_password);
             return err;
         };
 
         if (owned_hash.len == 0) {
-            bun.default_allocator.free(owned_password);
+            fun.default_allocator.free(owned_password);
             return jsc.JSPromise.resolvedPromiseValue(globalObject, .false);
         }
 
         if (owned_password.len == 0) {
-            bun.default_allocator.free(owned_hash);
+            fun.default_allocator.free(owned_hash);
             return jsc.JSPromise.resolvedPromiseValue(globalObject, .false);
         }
 
@@ -691,7 +691,7 @@ pub const JSPasswordObject = struct {
     }
 
     // Once we have bindings generator, this should be replaced with a generated function
-    pub fn JSPasswordObject__verifySync(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn JSPasswordObject__verifySync(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(3);
         const arguments = arguments_.ptr[0..arguments_.len];
 
@@ -716,11 +716,11 @@ pub const JSPasswordObject = struct {
             };
         }
 
-        var password = try jsc.Node.StringOrBuffer.fromJS(globalObject, bun.default_allocator, arguments[0]) orelse {
+        var password = try jsc.Node.StringOrBuffer.fromJS(globalObject, fun.default_allocator, arguments[0]) orelse {
             return globalObject.throwInvalidArgumentType("verify", "password", "string or TypedArray");
         };
 
-        var hash_ = try jsc.Node.StringOrBuffer.fromJS(globalObject, bun.default_allocator, arguments[1]) orelse {
+        var hash_ = try jsc.Node.StringOrBuffer.fromJS(globalObject, fun.default_allocator, arguments[1]) orelse {
             password.deinit();
             return globalObject.throwInvalidArgumentType("verify", "hash", "string or TypedArray");
         };
@@ -746,13 +746,13 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const assert = bun.assert;
-const default_allocator = bun.default_allocator;
-const strings = bun.strings;
+const fun = @import("fun");
+const Async = fun.Async;
+const assert = fun.assert;
+const default_allocator = fun.default_allocator;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const CallFrame = jsc.CallFrame;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

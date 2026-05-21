@@ -1,6 +1,6 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import { mkdirSync, rmSync, writeFileSync } from "fs";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import { join } from "path";
 
 it("imports tsconfig.json with abritary keys", async () => {
@@ -13,9 +13,9 @@ it("imports tsconfig.json with abritary keys", async () => {
   mkdirSync(testDir, { recursive: true });
   writeFileSync(join(testDir, "tsconfig.json"), '{ "key-with-hyphen": true }');
 
-  const { exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "-e", `require('${join(testDir, "tsconfig.json").replace(/\\/g, "\\\\")}').compilerOptions`],
-    env: bunEnv,
+  const { exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "-e", `require('${join(testDir, "tsconfig.json").replace(/\\/g, "\\\\")}').compilerOptions`],
+    env: funEnv,
     stderr: "inherit",
   });
 

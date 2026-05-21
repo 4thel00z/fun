@@ -1,4 +1,4 @@
-//! Resumable, non-blocking tarball extractor for `bun install`.
+//! Resumable, non-blocking tarball extractor for `fun install`.
 //!
 //! The HTTP thread hands each body chunk to `onChunk`, which appends to a
 //! small pending buffer and (if not already running) schedules
@@ -6,15 +6,15 @@
 //! libarchive to gunzip and untar whatever is available, writing files as
 //! their data arrives, until libarchive asks for more compressed bytes
 //! than are currently buffered. At that point the read callback returns
-//! `ARCHIVE_RETRY`, libarchive propagates it (see the BUN PATCHes in
+//! `ARCHIVE_RETRY`, libarchive propagates it (see the FUN PATCHes in
 //! `vendor/libarchive`), and the drain task returns — the worker is
 //! released. The next HTTP chunk reschedules the drain task, which calls
 //! back into libarchive and resumes exactly where it left off because the
 //! `struct archive *`, the gzip inflate state, the partially-read tar
-//! header and the open output `bun.FD` all live on the heap in this
+//! header and the open output `fun.FD` all live on the heap in this
 //! struct.
 //!
-//! This lets `bun install` overlap download and extraction on the normal
+//! This lets `fun install` overlap download and extraction on the normal
 //! resolve thread pool without ever parking a worker on a condvar, and
 //! without holding the full compressed or decompressed tarball in memory.
 
@@ -75,7 +75,7 @@ phase: enum {
 
 /// Output file for the entry currently being written. `null` while
 /// between entries or when the current entry is being skipped.
-out_fd: ?bun.FD = null,
+out_fd: ?fun.FD = null,
 use_pwrite: bool = Environment.isPosix,
 use_lseek: bool = true,
 /// Per-entry write cursors, carried across `writeDataBlock` calls so
@@ -88,7 +88,7 @@ entry_final_offset: i64 = 0,
 /// Temp directory files are written into before being renamed into the
 /// cache. Lazily opened on the first drain so the HTTP thread never
 /// touches the filesystem.
-dest: ?bun.FD = null,
+dest: ?fun.FD = null,
 /// Owned copy of the temp-directory name; freed in `deinit()`.
 tmpname: [:0]const u8 = "",
 
@@ -97,7 +97,7 @@ tmpname: [:0]const u8 = "",
 hasher: Integrity.Streaming,
 
 /// Resolved first-directory name for GitHub tarballs (written to
-/// `.bun-tag` and used for the cache folder name).
+/// `.fun-tag` and used for the cache folder name).
 resolved_github_dirname: []const u8 = "",
 want_first_dirname: bool = false,
 npm_mode: bool = true,
@@ -118,7 +118,7 @@ extract_task: *Task,
 network_task: *NetworkTask,
 package_manager: *PackageManager,
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 const log = Output.scoped(.TarballStream, .hidden);
 
@@ -127,7 +127,7 @@ const log = Output.scoped(.TarballStream, .hidden);
 /// state machine is only worth its per-chunk overhead for tarballs that
 /// would otherwise consume a noticeable amount of memory.
 pub fn minSize() usize {
-    return @intCast(bun.env_var.BUN_INSTALL_STREAMING_MIN_SIZE.get());
+    return @intCast(fun.env_var.FUN_INSTALL_STREAMING_MIN_SIZE.get());
 }
 
 pub fn init(
@@ -170,7 +170,7 @@ pub fn deinit(this: *TarballStream) void {
     if (this.tmpname.len > 0) this.allocator.free(this.tmpname);
     this.pending.deinit(this.allocator);
     this.reading.deinit(this.allocator);
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 /// Called from the HTTP thread for each response-body chunk. Returns
@@ -180,7 +180,7 @@ pub fn deinit(this: *TarballStream) void {
 pub fn onChunk(this: *TarballStream, chunk: []const u8, is_last: bool, err: ?anyerror) void {
     this.mutex.lock();
     if (chunk.len > 0) {
-        bun.handleOom(this.pending.appendSlice(this.allocator, chunk));
+        fun.handleOom(this.pending.appendSlice(this.allocator, chunk));
         this.bytes_received += chunk.len;
     }
     if (is_last) this.closed = true;
@@ -318,7 +318,7 @@ fn takePending(this: *TarballStream) bool {
         std.mem.copyForwards(u8, this.reading.items[0..remaining], this.reading.items[this.read_pos..]);
         this.reading.items.len = remaining;
         this.read_pos = 0;
-        bun.handleOom(this.reading.appendSlice(this.allocator, this.pending.items));
+        fun.handleOom(this.reading.appendSlice(this.allocator, this.pending.items));
         this.pending.clearRetainingCapacity();
     }
     return true;
@@ -414,15 +414,15 @@ fn openArchive(this: *TarballStream) !void {
 fn openDestination(this: *TarballStream) !void {
     const tarball = &this.extract_task.request.extract.tarball;
     _, const basename = tarball.nameAndBasename();
-    var buf: bun.PathBuffer = undefined;
+    var buf: fun.PathBuffer = undefined;
     const tmpname = try FileSystem.tmpname(
         basename[0..@min(basename.len, 32)],
         buf[0..],
-        bun.fastRandom(),
+        fun.fastRandom(),
     );
     this.tmpname = try this.allocator.dupeZ(u8, tmpname);
 
-    this.dest = .fromStdDir(try bun.MakePath.makeOpenPath(tarball.temp_dir, this.tmpname, .{}));
+    this.dest = .fromStdDir(try fun.MakePath.makeOpenPath(tarball.temp_dir, this.tmpname, .{}));
 }
 
 fn closeOutputFile(this: *TarballStream) void {
@@ -432,7 +432,7 @@ fn closeOutputFile(this: *TarballStream) void {
         // to write even if the pwrite/lseek fallback path left
         // `actual_offset` behind.
         if (this.entry_final_offset > this.entry_actual_offset) {
-            _ = bun.sys.ftruncate(fd, this.entry_final_offset);
+            _ = fun.sys.ftruncate(fd, this.entry_final_offset);
         }
         fd.close();
         this.out_fd = null;
@@ -484,7 +484,7 @@ fn archiveReadCallback(
         return 0;
     }
 
-    // Tell libarchive to unwind with a resumable status. The BUN PATCHes
+    // Tell libarchive to unwind with a resumable status. The FUN PATCHes
     // in vendor/libarchive make every layer (filter_ahead → gzip → tar)
     // preserve its state and propagate ARCHIVE_RETRY to our `step()`
     // loop, which then returns so this worker can be reused.
@@ -495,7 +495,7 @@ fn archiveReadCallback(
 /// output file (or creates the directory/symlink) and transitions to
 /// `.want_data` so the next `step()` iteration starts pulling its body.
 fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
-    var pathname: bun.OSPathSliceZ = if (comptime Environment.isWindows)
+    var pathname: fun.OSPathSliceZ = if (comptime Environment.isWindows)
         entry.pathnameW()
     else
         entry.pathname();
@@ -507,10 +507,10 @@ fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
         // relies on. Take only the leading component so a tarball
         // whose first member is `repo-sha/file` (no directory entry)
         // still yields the correct cache-folder name.
-        var root_it = std.mem.tokenizeScalar(bun.OSPathChar, pathname, '/');
+        var root_it = std.mem.tokenizeScalar(fun.OSPathChar, pathname, '/');
         const root = root_it.next() orelse pathname[0..0];
         if (comptime Environment.isWindows) {
-            const list = std.array_list.Managed(u8).init(bun.default_allocator);
+            const list = std.array_list.Managed(u8).init(fun.default_allocator);
             var result = try strings.toUTF8ListWithType(list, root);
             defer result.deinit();
             this.resolved_github_dirname = FileSystem.DirnameStore.instance.append(
@@ -520,12 +520,12 @@ fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
         } else {
             this.resolved_github_dirname = FileSystem.DirnameStore.instance.append(
                 []const u8,
-                bun.asByteSlice(root),
+                fun.asByteSlice(root),
             ) catch unreachable;
         }
     }
 
-    const kind = bun.sys.kindFromMode(entry.filetype());
+    const kind = fun.sys.kindFromMode(entry.filetype());
 
     if (this.npm_mode and kind != .file) {
         // npm tarballs only contain files; matching the libarchive path
@@ -538,7 +538,7 @@ fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
     // Strip the leading `package/` (or `<repo>-<sha>/` for GitHub) and
     // normalise. Same transformation as Archiver.extractToDir so both
     // paths produce identical on-disk layouts.
-    var tokenizer = std.mem.tokenizeScalar(bun.OSPathChar, pathname, '/');
+    var tokenizer = std.mem.tokenizeScalar(fun.OSPathChar, pathname, '/');
     if (tokenizer.next() == null) {
         this.phase = .want_data;
         this.out_fd = null;
@@ -547,10 +547,10 @@ fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
     const rest = tokenizer.rest();
     pathname = rest.ptr[0..rest.len :0];
 
-    var norm_buf: bun.OSPathBuffer = undefined;
-    const normalized = bun.path.normalizeBufT(bun.OSPathChar, pathname, &norm_buf, .auto);
+    var norm_buf: fun.OSPathBuffer = undefined;
+    const normalized = fun.path.normalizeBufT(fun.OSPathChar, pathname, &norm_buf, .auto);
     norm_buf[normalized.len] = 0;
-    const path: [:0]bun.OSPathChar = norm_buf[0..normalized.len :0];
+    const path: [:0]fun.OSPathChar = norm_buf[0..normalized.len :0];
     if (path.len == 0 or (path.len == 1 and path[0] == '.')) {
         this.phase = .want_data;
         this.out_fd = null;
@@ -577,7 +577,7 @@ fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
         if (this.npm_mode) applyWindowsNpmPathEscapes(path);
     }
 
-    const path_slice: bun.OSPathSlice = path.ptr[0..path.len];
+    const path_slice: fun.OSPathSlice = path.ptr[0..path.len];
     const dest = this.dest.?;
 
     switch (kind) {
@@ -592,14 +592,14 @@ fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
             this.out_fd = null;
         },
         .file => {
-            const mode: bun.Mode = if (comptime Environment.isWindows) 0 else @intCast(entry.perm() | 0o666);
+            const mode: fun.Mode = if (comptime Environment.isWindows) 0 else @intCast(entry.perm() | 0o666);
             const fd = try openOutputFile(dest, path, path_slice, mode);
             this.entry_count += 1;
 
             if (comptime Environment.isLinux) {
                 const size: usize = @intCast(@max(entry.size(), 0));
                 if (size > 1_000_000) {
-                    bun.sys.preallocate_file(fd.cast(), 0, @intCast(size)) catch {};
+                    fun.sys.preallocate_file(fd.cast(), 0, @intCast(size)) catch {};
                 }
             }
 
@@ -616,41 +616,41 @@ fn beginEntry(this: *TarballStream, entry: *lib.Archive.Entry) !void {
 }
 
 fn openOutputFile(
-    dest_fd: bun.FD,
-    path: [:0]bun.OSPathChar,
-    path_slice: bun.OSPathSlice,
-    mode: bun.Mode,
-) !bun.FD {
-    const flags = bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC;
+    dest_fd: fun.FD,
+    path: [:0]fun.OSPathChar,
+    path_slice: fun.OSPathSlice,
+    mode: fun.Mode,
+) !fun.FD {
+    const flags = fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC;
     if (comptime Environment.isWindows) {
-        return switch (bun.sys.openatWindows(dest_fd, path, flags, 0)) {
+        return switch (fun.sys.openatWindows(dest_fd, path, flags, 0)) {
             .result => |fd| fd,
             .err => |e| switch (e.errno) {
-                @intFromEnum(bun.sys.E.PERM), @intFromEnum(bun.sys.E.NOENT) => brk: {
-                    dest_fd.makePath(u16, bun.Dirname.dirname(u16, path_slice) orelse return bun.errnoToZigErr(e.errno)) catch {};
-                    break :brk try bun.sys.openatWindows(dest_fd, path, flags, 0).unwrap();
+                @intFromEnum(fun.sys.E.PERM), @intFromEnum(fun.sys.E.NOENT) => brk: {
+                    dest_fd.makePath(u16, fun.Dirname.dirname(u16, path_slice) orelse return fun.errnoToZigErr(e.errno)) catch {};
+                    break :brk try fun.sys.openatWindows(dest_fd, path, flags, 0).unwrap();
                 },
-                else => return bun.errnoToZigErr(e.errno),
+                else => return fun.errnoToZigErr(e.errno),
             },
         };
     }
-    return switch (bun.sys.openat(dest_fd, path, flags, mode)) {
+    return switch (fun.sys.openat(dest_fd, path, flags, mode)) {
         .result => |fd| fd,
         .err => |e| switch (e.getErrno()) {
             .ACCES, .NOENT => brk: {
-                dest_fd.makePath(u8, std.fs.path.dirname(path_slice) orelse return bun.errnoToZigErr(e.errno)) catch {};
-                break :brk try bun.sys.openat(dest_fd, path, flags, mode).unwrap();
+                dest_fd.makePath(u8, std.fs.path.dirname(path_slice) orelse return fun.errnoToZigErr(e.errno)) catch {};
+                break :brk try fun.sys.openat(dest_fd, path, flags, mode).unwrap();
             },
-            else => return bun.errnoToZigErr(e.errno),
+            else => return fun.errnoToZigErr(e.errno),
         },
     };
 }
 
 fn makeDirectory(
     entry: *lib.Archive.Entry,
-    dest_fd: bun.FD,
-    path: [:0]bun.OSPathChar,
-    path_slice: bun.OSPathSlice,
+    dest_fd: fun.FD,
+    path: [:0]fun.OSPathChar,
+    path_slice: fun.OSPathSlice,
 ) void {
     var mode = @as(i32, @intCast(entry.perm()));
     // if dirs are readable, then they should be listable
@@ -661,13 +661,13 @@ fn makeDirectory(
     if (comptime Environment.isWindows) {
         dest_fd.makePath(u16, path) catch {};
     } else {
-        switch (bun.sys.mkdiratZ(dest_fd, path, @intCast(mode))) {
+        switch (fun.sys.mkdiratZ(dest_fd, path, @intCast(mode))) {
             .result => {},
             .err => |e| switch (e.getErrno()) {
                 .EXIST, .NOTDIR => {},
                 else => {
                     dest_fd.makePath(u8, std.fs.path.dirname(path_slice) orelse return) catch {};
-                    _ = bun.sys.mkdiratZ(dest_fd, path, 0o777);
+                    _ = fun.sys.mkdiratZ(dest_fd, path, 0o777);
                 },
             },
         }
@@ -676,9 +676,9 @@ fn makeDirectory(
 
 fn makeSymlink(
     entry: *lib.Archive.Entry,
-    dest_fd: bun.FD,
-    path: [:0]bun.OSPathChar,
-    path_slice: bun.OSPathSlice,
+    dest_fd: fun.FD,
+    path: [:0]fun.OSPathChar,
+    path_slice: fun.OSPathSlice,
 ) void {
     const target = entry.symlink();
     // Same safety rule as `isSymlinkTargetSafe` in the buffered path:
@@ -686,25 +686,25 @@ fn makeSymlink(
     if (target.len == 0 or target[0] == '/') return;
     {
         const symlink_dir = std.fs.path.dirname(path_slice) orelse "";
-        var join_buf: bun.PathBuffer = undefined;
-        const resolved = bun.path.joinAbsStringBuf("/packages/", &join_buf, &.{ symlink_dir, target }, .posix);
+        var join_buf: fun.PathBuffer = undefined;
+        const resolved = fun.path.joinAbsStringBuf("/packages/", &join_buf, &.{ symlink_dir, target }, .posix);
         if (!strings.hasPrefix(resolved, "/packages/")) return;
     }
-    bun.sys.symlinkat(target, dest_fd, path).unwrap() catch |err| switch (err) {
+    fun.sys.symlinkat(target, dest_fd, path).unwrap() catch |err| switch (err) {
         error.EPERM, error.ENOENT => {
             dest_fd.makePath(u8, std.fs.path.dirname(path_slice) orelse return) catch {};
-            bun.sys.symlinkat(target, dest_fd, path).unwrap() catch {};
+            fun.sys.symlinkat(target, dest_fd, path).unwrap() catch {};
         },
         else => {},
     };
 }
 
-fn applyWindowsNpmPathEscapes(path: [:0]bun.OSPathChar) void {
+fn applyWindowsNpmPathEscapes(path: [:0]fun.OSPathChar) void {
     // Same transformation as Archiver.extractToDir: encode characters
     // Windows rejects in filenames into the 0xf000 private-use range so
     // the extraction round-trips with node-tar.
-    var remain: []bun.OSPathChar = path;
-    if (strings.startsWithWindowsDriveLetterT(bun.OSPathChar, remain)) remain = remain[2..];
+    var remain: []fun.OSPathChar = path;
+    if (strings.startsWithWindowsDriveLetterT(fun.OSPathChar, remain)) remain = remain[2..];
     for (remain) |*char| switch (char.*) {
         '|', '<', '>', '?', ':' => char.* += 0xf000,
         else => {},
@@ -717,8 +717,8 @@ fn applyWindowsNpmPathEscapes(path: [:0]bun.OSPathChar) void {
 /// `entry_actual_offset` / `entry_final_offset` persist across calls so
 /// `closeOutputFile` can perform the same trailing `ftruncate` the
 /// buffered path does after its block loop.
-fn writeDataBlock(this: *TarballStream, fd: bun.FD, block: lib.Archive.Block) !void {
-    const file = bun.sys.File{ .handle = fd };
+fn writeDataBlock(this: *TarballStream, fd: fun.FD, block: lib.Archive.Block) !void {
+    const file = fun.sys.File{ .handle = fd };
     const data = block.bytes;
     if (data.len == 0) return;
 
@@ -744,7 +744,7 @@ fn writeDataBlock(this: *TarballStream, fd: bun.FD, block: lib.Archive.Block) !v
 
     if (block.offset != this.entry_actual_offset) seek: {
         if (this.use_lseek) {
-            switch (bun.sys.setFileOffset(fd, @intCast(block.offset))) {
+            switch (fun.sys.setFileOffset(fd, @intCast(block.offset))) {
                 .result => {
                     this.entry_actual_offset = block.offset;
                     break :seek;
@@ -765,7 +765,7 @@ fn writeDataBlock(this: *TarballStream, fd: bun.FD, block: lib.Archive.Block) !v
 
     switch (file.writeAll(data)) {
         .result => this.entry_actual_offset += @intCast(data.len),
-        .err => |e| return bun.errnoToZigErr(e.errno),
+        .err => |e| return fun.errnoToZigErr(e.errno),
     }
 }
 
@@ -851,15 +851,15 @@ fn populateResult(this: *TarballStream, task: *Task) void {
 
     if (tarball.resolution.tag == .github) {
         if (this.resolved_github_dirname.len > 0) insert_tag: {
-            const gh_tag = bun.sys.openat(
+            const gh_tag = fun.sys.openat(
                 this.dest.?,
-                ".bun-tag",
-                bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC,
+                ".fun-tag",
+                fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC,
                 0o644,
             ).unwrap() catch break :insert_tag;
             defer gh_tag.close();
-            (bun.sys.File{ .handle = gh_tag }).writeAll(this.resolved_github_dirname).unwrap() catch {
-                _ = bun.sys.unlinkat(this.dest.?, @as([:0]const u8, ".bun-tag"));
+            (fun.sys.File{ .handle = gh_tag }).writeAll(this.resolved_github_dirname).unwrap() catch {
+                _ = fun.sys.unlinkat(this.dest.?, @as([:0]const u8, ".fun-tag"));
             };
         }
     }
@@ -898,7 +898,7 @@ fn populateResult(this: *TarballStream, task: *Task) void {
     if (PackageManager.verbose_install) {
         Output.prettyErrorln("[{s}] Streamed {f} tarball → {d} entries<r>", .{
             name,
-            bun.fmt.size(this.bytes_received, .{}),
+            fun.fmt.size(this.bytes_received, .{}),
             this.entry_count,
         });
         Output.flush();
@@ -929,12 +929,12 @@ const NetworkTask = install.NetworkTask;
 const PackageManager = install.PackageManager;
 const Task = install.Task;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const ThreadPool = bun.ThreadPool;
-const logger = bun.logger;
-const strings = bun.strings;
-const FileSystem = bun.fs.FileSystem;
-const Mutex = bun.threading.Mutex;
-const lib = bun.libarchive.lib;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const ThreadPool = fun.ThreadPool;
+const logger = fun.logger;
+const strings = fun.strings;
+const FileSystem = fun.fs.FileSystem;
+const Mutex = fun.threading.Mutex;
+const lib = fun.libarchive.lib;

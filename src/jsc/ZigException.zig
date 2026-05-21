@@ -129,8 +129,8 @@ pub const ZigException = extern struct {
         root_path: string,
         origin: ?*const ZigURL,
     ) !void {
-        const name_slice = this.name.toUTF8(bun.default_allocator);
-        const message_slice = this.message.toUTF8(bun.default_allocator);
+        const name_slice = this.name.toUTF8(fun.default_allocator);
+        const message_slice = this.message.toUTF8(fun.default_allocator);
 
         const _name = name_slice.slice();
         defer name_slice.deinit();
@@ -169,11 +169,11 @@ const string = []const u8;
 const std = @import("std");
 const ZigURL = @import("../url/url.zig").URL;
 
-const bun = @import("bun");
-const String = bun.String;
-const api = bun.schema.api;
+const fun = @import("fun");
+const String = fun.String;
+const api = fun.schema.api;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const Exception = jsc.Exception;
 const JSErrorCode = jsc.JSErrorCode;
 const JSGlobalObject = jsc.JSGlobalObject;

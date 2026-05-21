@@ -1,15 +1,15 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, tempDir, tmpdirSync } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, tempDir, tmpdirSync } from "harness";
 import fs, { mkdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import path, { join } from "node:path";
 
 describe.concurrent(
-  "bun build",
+  "fun build",
   () => {
     test("warnings dont return exit code 1", async () => {
-      const { stderr, exited } = Bun.spawn({
-        cmd: [bunExe(), "build", path.join(import.meta.dir, "./fixtures/jsx-warning/index.jsx")],
-        env: bunEnv,
+      const { stderr, exited } = Fun.spawn({
+        cmd: [funExe(), "build", path.join(import.meta.dir, "./fixtures/jsx-warning/index.jsx")],
+        env: funEnv,
         stderr: "pipe",
       });
       expect(await exited).toBe(0);
@@ -20,25 +20,25 @@ describe.concurrent(
 
     test("generating a standalone binary in nested path, issue #4195", async () => {
       async function testCompile(outfile: string) {
-        const { exited } = Bun.spawn({
+        const { exited } = Fun.spawn({
           cmd: [
-            bunExe(),
+            funExe(),
             "build",
             path.join(import.meta.dir, "./fixtures/trivial/index.js"),
             "--compile",
             "--outfile",
             outfile,
           ],
-          env: bunEnv,
+          env: funEnv,
           stdout: "inherit",
           stderr: "inherit",
         });
         expect(await exited).toBe(0);
       }
       async function testExec(outfile: string) {
-        const { exited, stderr } = Bun.spawn({
+        const { exited, stderr } = Fun.spawn({
           cmd: [outfile],
-          env: bunEnv,
+          env: funEnv,
           stdout: "inherit",
           stderr: "pipe",
         });
@@ -47,14 +47,14 @@ describe.concurrent(
       }
       const tmpdir = tmpdirSync();
       {
-        const baseDir = `${tmpdir}/bun-build-outfile-${Date.now()}`;
+        const baseDir = `${tmpdir}/fun-build-outfile-${Date.now()}`;
         const outfile = path.join(baseDir, "index.exe");
         await testCompile(outfile);
         await testExec(outfile);
         fs.rmSync(baseDir, { recursive: true, force: true });
       }
       {
-        const baseDir = `${tmpdir}/bun-build-outfile2-${Date.now()}`;
+        const baseDir = `${tmpdir}/fun-build-outfile2-${Date.now()}`;
         const outfile = path.join(baseDir, "b/u/n", "index.exe");
         await testCompile(outfile);
         await testExec(outfile);
@@ -66,9 +66,9 @@ describe.concurrent(
       const tmp = tmpdirSync();
       const src = path.join(tmp, "index.js");
       fs.writeFileSync(src, '\ufeffconsole.log("hello world");', { encoding: "utf8" });
-      const { exited } = Bun.spawn({
-        cmd: [bunExe(), "build", src],
-        env: bunEnv,
+      const { exited } = Fun.spawn({
+        cmd: [funExe(), "build", src],
+        env: funEnv,
         stdout: "inherit",
         stderr: "inherit",
       });
@@ -110,18 +110,18 @@ console.log(utils());`,
         }),
       );
 
-      const failResult = Bun.spawn({
-        cmd: [bunExe(), "build", path.join(baseDir, "index.ts"), "--outdir", path.join(baseDir, "out-fail")],
-        env: bunEnv,
+      const failResult = Fun.spawn({
+        cmd: [funExe(), "build", path.join(baseDir, "index.ts"), "--outdir", path.join(baseDir, "out-fail")],
+        env: funEnv,
         cwd: baseDir,
         stderr: "pipe",
       });
       expect(await failResult.exited).not.toBe(0);
       expect(await failResult.stderr?.text()).toContain("Could not resolve");
 
-      const successResult = Bun.spawn({
+      const successResult = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           path.join(baseDir, "index.ts"),
           "--tsconfig-override",
@@ -129,7 +129,7 @@ console.log(utils());`,
           "--outdir",
           path.join(baseDir, "out-success"),
         ],
-        env: bunEnv,
+        env: funEnv,
         cwd: baseDir,
         stderr: "pipe",
       });
@@ -166,9 +166,9 @@ console.log(utils());`,
         }),
       );
 
-      const result = Bun.spawn({
-        cmd: [bunExe(), "build", "index.ts", "--tsconfig-override", "../../custom-tsconfig.json", "--outdir", "out"],
-        env: bunEnv,
+      const result = Fun.spawn({
+        cmd: [funExe(), "build", "index.ts", "--tsconfig-override", "../../custom-tsconfig.json", "--outdir", "out"],
+        env: funEnv,
         cwd: nestedDir,
       });
       expect(await result.exited).toBe(0);
@@ -180,32 +180,32 @@ console.log(utils());`,
     });
 
     test("__dirname and __filename are printed correctly", async () => {
-      using baseDirPath = tempDir("bun-build-dirname-filename", {
+      using baseDirPath = tempDir("fun-build-dirname-filename", {
         "我": {
           "我.ts": "console.log(__dirname); console.log(__filename);",
         },
       });
       const baseDir = baseDirPath + "";
 
-      const { exited } = Bun.spawn({
+      const { exited } = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           path.join(baseDir, "我/我.ts"),
           "--compile",
           "--outfile",
           path.join(baseDir, "exe.exe"),
         ],
-        env: bunEnv,
+        env: funEnv,
         cwd: baseDir,
         stdout: "inherit",
         stderr: "inherit",
       });
       expect(await exited).toBe(0);
 
-      await using proc = Bun.spawn({
+      await using proc = Fun.spawn({
         cmd: [path.join(baseDir, "exe.exe")],
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -243,16 +243,16 @@ console.log(utils());`,
       );
       testDir = realpathSync(testDir);
 
-      await Bun.spawn({
-        cmd: [bunExe(), "x", "pnpm@9", "i"],
-        env: bunEnv,
+      await Fun.spawn({
+        cmd: [funExe(), "x", "pnpm@9", "i"],
+        env: funEnv,
         stderr: "pipe",
         cwd: testDir,
       }).exited;
-      // bun build --entrypoints ./index.ts --outdir ./dist --target node
-      const { stderr, exited } = Bun.spawn({
+      // fun build --entrypoints ./index.ts --outdir ./dist --target node
+      const { stderr, exited } = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "build",
           "--entrypoints",
           join(testDir, "index.ts"),
@@ -261,7 +261,7 @@ console.log(utils());`,
           "--target",
           "node",
         ],
-        env: bunEnv,
+        env: funEnv,
         stderr: "pipe",
         stdout: "pipe",
       });
@@ -292,8 +292,8 @@ test.skipIf(!isWindows)("should be able to handle pretty path on windows #13897"
   writeFileSync(join(testDir, "chalk.ts"), "function red(value){ consol.error(value); } export default { red };");
   testDir = realpathSync(testDir);
 
-  // bun build --entrypoints ./index.ts --outdir ./dist --target node
-  const buildOut = await Bun.build({
+  // fun build --entrypoints ./index.ts --outdir ./dist --target node
+  const buildOut = await Fun.build({
     entrypoints: [join(testDir, "index.ts")],
     outdir: join(testDir, "dist"),
     minify: true,
@@ -319,9 +319,9 @@ test("you can use --outfile=... and --sourcemap", async () => {
 
   const originalContent = fs.readFileSync(inputFile, "utf8");
 
-  const { exited, stdout } = Bun.spawn({
-    cmd: [bunExe(), "build", "--outfile=" + path.relative(tmpdir, outFile), "--sourcemap", inputFile],
-    env: bunEnv,
+  const { exited, stdout } = Fun.spawn({
+    cmd: [funExe(), "build", "--outfile=" + path.relative(tmpdir, outFile), "--sourcemap", inputFile],
+    env: funEnv,
     cwd: tmpdir,
     stdout: "pipe",
     stderr: "pipe",
@@ -360,9 +360,9 @@ test("some log cases", async () => {
   writeFileSync(inputFile, 'console.log("Hello, world!");');
 
   // absolute path
-  const { exited, stdout } = Bun.spawn({
-    cmd: [bunExe(), "build", "--outfile=" + outFile, "--sourcemap", inputFile],
-    env: bunEnv,
+  const { exited, stdout } = Fun.spawn({
+    cmd: [funExe(), "build", "--outfile=" + outFile, "--sourcemap", inputFile],
+    env: funEnv,
     cwd: tmpdir,
   });
   expect(await exited).toBe(0);
@@ -384,9 +384,9 @@ test("log case 1", async () => {
   writeFileSync(inputFile, 'console.log("Hello, world!");');
   writeFileSync(inputFile2, 'console.log("Hello, world!");');
 
-  const { exited, stdout } = Bun.spawn({
-    cmd: [bunExe(), "build", "--outdir=" + tmpdir + "/out", inputFile, inputFile2],
-    env: bunEnv,
+  const { exited, stdout } = Fun.spawn({
+    cmd: [funExe(), "build", "--outdir=" + tmpdir + "/out", inputFile, inputFile2],
+    env: funEnv,
     cwd: tmpdir,
   });
   expect(await exited).toBe(0);
@@ -406,9 +406,9 @@ test("log case 2", async () => {
 
   writeFileSync(inputFile, 'console.log("Hello, world!");');
 
-  const { exited, stdout } = Bun.spawn({
-    cmd: [bunExe(), "build", "--outdir=" + tmpdir + "/out", inputFile],
-    env: bunEnv,
+  const { exited, stdout } = Fun.spawn({
+    cmd: [funExe(), "build", "--outdir=" + tmpdir + "/out", inputFile],
+    env: funEnv,
     cwd: tmpdir,
   });
   expect(await exited).toBe(0);

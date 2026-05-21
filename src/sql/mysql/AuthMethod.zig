@@ -28,10 +28,10 @@ pub const AuthMethod = enum {
         };
     }
 
-    const Map = bun.ComptimeEnumMap(AuthMethod);
+    const Map = fun.ComptimeEnumMap(AuthMethod);
 
     pub const fromString = Map.get;
 };
 
 const Auth = @import("./protocol/Auth.zig");
-const bun = @import("bun");
+const fun = @import("fun");

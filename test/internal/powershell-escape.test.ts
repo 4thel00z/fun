@@ -1,4 +1,4 @@
-import { escapePowershell } from "bun:internal-for-testing";
+import { escapePowershell } from "fun:internal-for-testing";
 
 it("powershell escaping rules", () => {
   // This formatter does not include quotes around the string intentionally

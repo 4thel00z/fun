@@ -3,7 +3,7 @@ const common = require('../common');
 const assert = require('assert');
 
 const { spawn } = require('child_process');
-for (const args of typeof Bun != null ? [['-']] : [[], ['-']]) {
+for (const args of typeof Fun != null ? [['-']] : [[], ['-']]) {
   const child = spawn(process.execPath, args, {
     env: { ...process.env,
            NODE_DEBUG: process.argv[2] }

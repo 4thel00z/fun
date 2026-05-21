@@ -12,7 +12,7 @@
  * Source lists below are extracted verbatim from gen/sources.json. To regen
  * after a commit bump:
  *
- *   bun -e 'const j=require("./vendor/boringssl/gen/sources.json");
+ *   fun -e 'const j=require("./vendor/boringssl/gen/sources.json");
  *           const f=l=>l.map(JSON.stringify).join(", ");
  *           for(const k of ["bcm","crypto","ssl","decrepit"])
  *             console.log(k,"\n",f(j[k].srcs));
@@ -69,7 +69,7 @@ export const boringssl: Dependency = {
           ],
       // nasm needs -I with a trailing slash and CodeView debug info to
       // match cmake's `-gcv8`. Absolute path quoted — a checkout root
-      // with a space (C:\Users\John Doe\bun) would otherwise split argv.
+      // with a space (C:\Users\John Doe\fun) would otherwise split argv.
       nasmflags: ["-fwin64", "-gcv8", `-I${quote(depSourceDir(cfg, "boringssl") + "/gen/", true)}`],
     };
     return spec;

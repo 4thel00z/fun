@@ -5,8 +5,8 @@
 // (cached_structure / needs_duplicate_check / fields_flags) so later result
 // sets use the correct column names and the previous []FieldDescription is
 // not leaked.
-import { SQL } from "bun";
-import { expect, test } from "bun:test";
+import { SQL } from "fun";
+import { expect, test } from "fun:test";
 import net from "net";
 
 function pkt(type: string, body: Buffer): Buffer {

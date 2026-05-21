@@ -7,7 +7,7 @@ mode: center
 To add an npm package as a peer dependency, use the `--peer` flag.
 
 ```sh terminal icon="terminal"
-bun add @types/bun --peer
+fun add @types/fun --peer
 ```
 
 ---
@@ -17,23 +17,23 @@ This will add the package to `peerDependencies` in `package.json`.
 ```json package.json icon="file-json"
 {
   "peerDependencies": {
-    "@types/bun": "^1.3.3" // [!code ++]
+    "@types/fun": "^1.3.3" // [!code ++]
   }
 }
 ```
 
 ---
 
-Running `bun install` will install peer dependencies by default, unless marked optional in `peerDependenciesMeta`.
+Running `fun install` will install peer dependencies by default, unless marked optional in `peerDependenciesMeta`.
 
 {/* prettier-ignore */}
 ```json package.json icon="file-json"
 {
   "peerDependencies": {
-    "@types/bun": "^1.3.3"
+    "@types/fun": "^1.3.3"
   },
   "peerDependenciesMeta": {
-    "@types/bun": { // [!code ++]
+    "@types/fun": { // [!code ++]
       "optional": true // [!code ++]
     } // [!code ++]
   }
@@ -42,4 +42,4 @@ Running `bun install` will install peer dependencies by default, unless marked o
 
 ---
 
-See [Docs > Package manager](/pm/cli/install) for complete documentation of Bun's package manager.
+See [Docs > Package manager](/pm/cli/install) for complete documentation of Fun's package manager.

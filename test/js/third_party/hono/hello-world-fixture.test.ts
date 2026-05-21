@@ -1,13 +1,13 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
 test("Hono app export bug", async () => {
-  await using process = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "hello-world.fixture.ts")],
+  await using process = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "hello-world.fixture.ts")],
     env: {
-      ...bunEnv,
-      "BUN_PORT": "0",
+      ...funEnv,
+      "FUN_PORT": "0",
     },
     stdout: "pipe",
     stderr: "inherit",

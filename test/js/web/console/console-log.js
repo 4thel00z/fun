@@ -211,7 +211,7 @@ console.log([[[[Array(1000).fill(4)]]]]);
   // proxy custom inspect
   const proxy = new Proxy(
     {
-      [Bun.inspect.custom]: () => "custom inspect",
+      [Fun.inspect.custom]: () => "custom inspect",
     },
     {},
   );

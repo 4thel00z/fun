@@ -5,7 +5,7 @@
 #include "JSDOMExceptionHandling.h"
 #include <wtf/MathExtras.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -165,7 +165,7 @@ JSC_DEFINE_HOST_FUNCTION(jsHTTPParser_finish, (JSGlobalObject * globalObject, Ca
     return JSValue::encode(jsUndefined());
 }
 
-extern "C" size_t BUN_DEFAULT_MAX_HTTP_HEADER_SIZE;
+extern "C" size_t FUN_DEFAULT_MAX_HTTP_HEADER_SIZE;
 
 JSC_DEFINE_HOST_FUNCTION(jsHTTPParser_initialize, (JSGlobalObject * globalObject, CallFrame* callFrame))
 {
@@ -189,7 +189,7 @@ JSC_DEFINE_HOST_FUNCTION(jsHTTPParser_initialize, (JSGlobalObject * globalObject
     }
 
     if (maxHttpHeaderSize == 0) {
-        maxHttpHeaderSize = BUN_DEFAULT_MAX_HTTP_HEADER_SIZE;
+        maxHttpHeaderSize = FUN_DEFAULT_MAX_HTTP_HEADER_SIZE;
     }
 
     if (callFrame->argumentCount() > 3) {
@@ -352,4 +352,4 @@ JSC_DEFINE_HOST_FUNCTION(jsHTTPParser_headersCompleted, (JSGlobalObject * global
     return JSValue::encode(jsBoolean(parser->impl()->headersCompleted()));
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -26,9 +26,9 @@ pub const CSSNumberFns = struct {
             const str, _ = try css.dtoa_short(&dtoa_buf, number, 6);
             if (number < 0.0) {
                 try dest.writeChar('-');
-                try dest.writeStr(bun.strings.trimLeadingPattern2(str, '-', '0'));
+                try dest.writeStr(fun.strings.trimLeadingPattern2(str, '-', '0'));
             } else {
-                try dest.writeStr(bun.strings.trimLeadingChar(str, '0'));
+                try dest.writeStr(fun.strings.trimLeadingChar(str, '0'));
             }
         } else {
             return css.to_css.float32(number, dest) catch {
@@ -59,4 +59,4 @@ pub const CSSIntegerFns = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

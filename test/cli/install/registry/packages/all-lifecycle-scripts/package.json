@@ -5,12 +5,12 @@
 			"name": "all-lifecycle-scripts",
 			"version": "1.0.0",
 			"scripts": {
-				"preinstall": "bun preinstall.js",
-				"install": "bun install.js",
-				"postinstall": "bun postinstall.js",
-				"preprepare": "bun preprepare.js",
-				"prepare": "bun prepare.js",
-				"postprepare": "bun postprepare.js"
+				"preinstall": "fun preinstall.js",
+				"install": "fun install.js",
+				"postinstall": "fun postinstall.js",
+				"preprepare": "fun preprepare.js",
+				"prepare": "fun prepare.js",
+				"postprepare": "fun postprepare.js"
 			},
 			"_id": "all-lifecycle-scripts@1.0.0",
 			"_nodeVersion": "20.8.0",

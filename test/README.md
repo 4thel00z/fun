@@ -14,7 +14,7 @@ Tests are located in the [`test/`](test/) directory and are organized using the 
 The tests in [`test/js/`](js/) directory are further categorized by the type of API.
 
 * `test/js/`
-  * `bun/` - tests for `Bun`-specific APIs.
+  * `fun/` - tests for `Fun`-specific APIs.
   * `node/` - tests for Node.js APIs.
   * `web/` - tests for Web APIs, like `fetch()`.
   * `first_party/` - tests for npm packages that are built-in, like `undici`.
@@ -22,28 +22,28 @@ The tests in [`test/js/`](js/) directory are further categorized by the type of 
 
 ## Running tests
 
-To run a test, use Bun's built-in test command: `bun test`.
+To run a test, use Fun's built-in test command: `fun test`.
 
 ```sh
-bun test # Run all tests
-bun test js/bun # Only run tests in a directory
-bun test sqlite.test.ts # Only run a specific test
+fun test # Run all tests
+fun test js/fun # Only run tests in a directory
+fun test sqlite.test.ts # Only run a specific test
 ```
 
-If you encounter lots of errors, try running `bun install`, then trying again.
+If you encounter lots of errors, try running `fun install`, then trying again.
 
 ## Writing tests
 
 Tests are written in TypeScript (preferred) or JavaScript using Jest's `describe()`, `test()`, and `expect()` APIs.
 
 ```ts
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "fun:test";
 import { gcTick } from "harness";
 
 describe("TextEncoder", () => {
   test("can encode a string", async () => {
     const encoder = new TextEncoder();
-    const actual = encoder.encode("bun");
+    const actual = encoder.encode("fun");
     await gcTick();
     expect(actual).toBe(new Uint8Array([0x62, 0x75, 0x6E]));
   });
@@ -55,7 +55,7 @@ When fixing a bug, add the test to the existing test file for that code (e.g. a 
 ```ts
 // test/regression/issue/02005.test.ts
 
-import { it, expect } from "bun:test";
+import { it, expect } from "fun:test";
 
 it("regex literal should work with non-latin1", () => {
   const text = "这是一段要替换的文字";
@@ -68,13 +68,13 @@ In the future, a bot will automatically close or re-open issues when a regressio
 
 ## Zig tests
 
-These tests live in various `.zig` files throughout Bun's codebase, leveraging Zig's builtin `test` keyword.
+These tests live in various `.zig` files throughout Fun's codebase, leveraging Zig's builtin `test` keyword.
 
 Currently, they're not run automatically nor is there a simple way to run all of them. We will make this better soon.
 
 ## TypeScript
 
-Test files should be written in TypeScript. The types in `packages/bun-types` should be updated to support all new APIs. Changes to the `.d.ts` files in `packages/bun-types` will be immediately reflected in test files; no build step is necessary.
+Test files should be written in TypeScript. The types in `packages/fun-types` should be updated to support all new APIs. Changes to the `.d.ts` files in `packages/fun-types` will be immediately reflected in test files; no build step is necessary.
 
 Writing a test will often require using invalid syntax, e.g. when checking for errors when an invalid input is passed to a function. TypeScript provides a number of escape hatches here.
 

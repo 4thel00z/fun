@@ -1,23 +1,23 @@
 ---
 title: JSONL
-description: Parse newline-delimited JSON (JSONL) with Bun's built-in streaming parser
+description: Parse newline-delimited JSON (JSONL) with Fun's built-in streaming parser
 ---
 
-Bun has built-in support for parsing [JSONL](https://jsonlines.org/) (newline-delimited JSON), where each line is a separate JSON value. The parser is implemented in C++ using JavaScriptCore's optimized JSON parser and supports streaming use cases.
+Fun has built-in support for parsing [JSONL](https://jsonlines.org/) (newline-delimited JSON), where each line is a separate JSON value. The parser is implemented in C++ using JavaScriptCore's optimized JSON parser and supports streaming use cases.
 
 ```ts
-const results = Bun.JSONL.parse('{"name":"Alice"}\n{"name":"Bob"}\n');
+const results = Fun.JSONL.parse('{"name":"Alice"}\n{"name":"Bob"}\n');
 // [{ name: "Alice" }, { name: "Bob" }]
 ```
 
 ---
 
-## `Bun.JSONL.parse()`
+## `Fun.JSONL.parse()`
 
 Parse a complete JSONL input and return an array of all parsed values.
 
 ```ts
-import { JSONL } from "bun";
+import { JSONL } from "fun";
 
 const input = '{"id":1,"name":"Alice"}\n{"id":2,"name":"Bob"}\n{"id":3,"name":"Charlie"}\n';
 const records = JSONL.parse(input);
@@ -33,7 +33,7 @@ Input can be a string or a `Uint8Array`:
 
 ```ts
 const buffer = new TextEncoder().encode('{"a":1}\n{"b":2}\n');
-const results = Bun.JSONL.parse(buffer);
+const results = Fun.JSONL.parse(buffer);
 // [{ a: 1 }, { b: 2 }]
 ```
 
@@ -41,11 +41,11 @@ When passed a `Uint8Array`, a UTF-8 BOM at the start of the buffer is automatica
 
 ### Error handling
 
-If the input contains invalid JSON, `Bun.JSONL.parse()` throws a `SyntaxError`:
+If the input contains invalid JSON, `Fun.JSONL.parse()` throws a `SyntaxError`:
 
 ```ts
 try {
-  Bun.JSONL.parse('{"valid":true}\n{invalid}\n');
+  Fun.JSONL.parse('{"valid":true}\n{invalid}\n');
 } catch (error) {
   console.error(error); // SyntaxError: Failed to parse JSONL
 }
@@ -53,14 +53,14 @@ try {
 
 ---
 
-## `Bun.JSONL.parseChunk()`
+## `Fun.JSONL.parseChunk()`
 
 For streaming scenarios, `parseChunk` parses as many complete values as possible from the input and reports how far it got. This is useful when receiving data incrementally (e.g., from a network stream) and you need to know where to resume parsing.
 
 ```ts
 const chunk = '{"id":1}\n{"id":2}\n{"id":3';
 
-const result = Bun.JSONL.parseChunk(chunk);
+const result = Fun.JSONL.parseChunk(chunk);
 console.log(result.values); // [{ id: 1 }, { id: 2 }]
 console.log(result.read); // 17 — characters consumed
 console.log(result.done); // false — incomplete value remains
@@ -88,7 +88,7 @@ let buffer = "";
 async function processStream(stream: ReadableStream<string>) {
   for await (const chunk of stream) {
     buffer += chunk;
-    const result = Bun.JSONL.parseChunk(buffer);
+    const result = Fun.JSONL.parseChunk(buffer);
 
     for (const value of result.values) {
       handleRecord(value);
@@ -100,7 +100,7 @@ async function processStream(stream: ReadableStream<string>) {
 
   // Handle any remaining data
   if (buffer.length > 0) {
-    const final = Bun.JSONL.parseChunk(buffer);
+    const final = Fun.JSONL.parseChunk(buffer);
     for (const value of final.values) {
       handleRecord(value);
     }
@@ -119,12 +119,12 @@ When the input is a `Uint8Array`, you can pass optional `start` and `end` byte o
 const buf = new TextEncoder().encode('{"a":1}\n{"b":2}\n{"c":3}\n');
 
 // Parse starting from byte 8
-const result = Bun.JSONL.parseChunk(buf, 8);
+const result = Fun.JSONL.parseChunk(buf, 8);
 console.log(result.values); // [{ b: 2 }, { c: 3 }]
 console.log(result.read); // 24
 
 // Parse a specific range
-const partial = Bun.JSONL.parseChunk(buf, 0, 8);
+const partial = Fun.JSONL.parseChunk(buf, 0, 8);
 console.log(partial.values); // [{ a: 1 }]
 ```
 
@@ -141,7 +141,7 @@ async function processBinaryStream(stream: ReadableStream<Uint8Array>) {
     newBuf.set(chunk, buf.length);
     buf = newBuf;
 
-    const result = Bun.JSONL.parseChunk(buf);
+    const result = Fun.JSONL.parseChunk(buf);
 
     for (const value of result.values) {
       handleRecord(value);
@@ -159,7 +159,7 @@ Unlike `parse()`, `parseChunk()` does not throw on invalid JSON. Instead, it ret
 
 ```ts
 const input = '{"a":1}\n{invalid}\n{"b":2}\n';
-const result = Bun.JSONL.parseChunk(input);
+const result = Fun.JSONL.parseChunk(input);
 
 console.log(result.values); // [{ a: 1 }] — values parsed before the error
 console.log(result.error); // SyntaxError
@@ -174,7 +174,7 @@ Each line can be any valid JSON value, not just objects:
 
 ```ts
 const input = '42\n"hello"\ntrue\nnull\n[1,2,3]\n{"key":"value"}\n';
-const values = Bun.JSONL.parse(input);
+const values = Fun.JSONL.parse(input);
 // [42, "hello", true, null, [1, 2, 3], { key: "value" }]
 ```
 

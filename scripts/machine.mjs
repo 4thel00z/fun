@@ -1167,7 +1167,7 @@ async function buildWindowsImageWithPacker({ os, arch, release, command, ci, age
   const tenantId = await getSecret("AZURE_TENANT_ID");
   const resourceGroup = await getSecret("AZURE_RESOURCE_GROUP");
   const location = (await getSecret("AZURE_LOCATION")) || "eastus2";
-  const galleryName = (await getSecret("AZURE_GALLERY_NAME")) || "bunCIGallery2";
+  const galleryName = (await getSecret("AZURE_GALLERY_NAME")) || "funCIGallery2";
 
   // Image naming must match getImageName() in ci.mjs:
   //   [publish images] / normal CI: "windows-x64-2019-v13"
@@ -1193,7 +1193,7 @@ async function buildWindowsImageWithPacker({ os, arch, release, command, ci, age
         osState: "Generalized",
         hyperVGeneration: "V2",
         architecture: galleryArch,
-        identifier: { publisher: "bun", offer: `${os}-${arch}-ci`, sku: imageDefName },
+        identifier: { publisher: "fun", offer: `${os}-${arch}-ci`, sku: imageDefName },
         features: [
           { name: "DiskControllerTypes", value: "SCSI, NVMe" },
           { name: "SecurityType", value: "TrustedLaunch" },
@@ -1257,7 +1257,7 @@ async function buildWindowsImageWithPacker({ os, arch, release, command, ci, age
     `tenant_id=${tenantId}`,
     "-var",
     // Dedicated build RG in southcentralus so Packer's 4-core bake VMs don't
-    // contend with robobun CI runners for the eastus2 Ddsv6/Dpdsv6 quota.
+    // contend with robofun CI runners for the eastus2 Ddsv6/Dpdsv6 quota.
     `resource_group=${resourceGroup}-PACKER`,
     "-var",
     `gallery_resource_group=${resourceGroup}`,
@@ -1407,7 +1407,7 @@ async function main() {
   }
 
   const tags = {
-    "robobun": "true",
+    "robofun": "true",
     "robobun2": "true",
     // This tag controls the IAM role required to be able to write to the shared S3 build cache.
     // Don't want accidental polution from non-CI runs.
@@ -1474,9 +1474,9 @@ async function main() {
       throw new Error(`Script not found: ${bootstrapPath}`);
     }
     if (ci) {
-      const npx = which("bunx") || which("npx");
+      const npx = which("funx") || which("npx");
       if (!npx) {
-        throw new Error("Executable not found: bunx or npx");
+        throw new Error("Executable not found: funx or npx");
       }
       const entryPath = resolve(import.meta.dirname, "agent.mjs");
       const tmpPath = mkdtempSync(join(tmpdir(), "agent-"));
@@ -1601,7 +1601,7 @@ async function main() {
           // repoRef is already validated against /^[\w./-]+$/ above, so the
           // single-quoted literal can't break out.
           await machine.spawnSafe(
-            ["powershell", "-Command", `$env:BUN_BOOTSTRAP_REPO_REF='${repoRef}'; & '${remotePath}' ${args.join(" ")}`],
+            ["powershell", "-Command", `$env:FUN_BOOTSTRAP_REPO_REF='${repoRef}'; & '${remotePath}' ${args.join(" ")}`],
             { stdio: "inherit" },
           );
         });
@@ -1614,7 +1614,7 @@ async function main() {
           }
           await startGroup("Running bootstrap...", async () => {
             await machine.upload(bootstrapPath, remotePath);
-            await machine.spawnSafe(["env", `BUN_BOOTSTRAP_REPO_REF=${repoRef}`, "sh", remotePath, ...args], {
+            await machine.spawnSafe(["env", `FUN_BOOTSTRAP_REPO_REF=${repoRef}`, "sh", remotePath, ...args], {
               stdio: "inherit",
             });
           });
@@ -1630,7 +1630,7 @@ async function main() {
             console.log("Uploaded agent.mjs");
             agentPath = "";
             bootstrapPath = "";
-            await machine.spawnSafe(["sudo", "env", `BUN_BOOTSTRAP_REPO_REF=${repoRef}`, "bash", remotePath], {
+            await machine.spawnSafe(["sudo", "env", `FUN_BOOTSTRAP_REPO_REF=${repoRef}`, "bash", remotePath], {
               stdio: "inherit",
               cwd: "/tmp",
             });
@@ -1674,7 +1674,7 @@ async function main() {
             const { stdout } = await machine.spawn(["node", "-v"]);
             const version = parseInt(stdout.trim().replace(/^v/, ""));
             if (isNaN(version) || version < 20) {
-              command.push("bun");
+              command.push("fun");
             } else {
               command.push("node");
             }

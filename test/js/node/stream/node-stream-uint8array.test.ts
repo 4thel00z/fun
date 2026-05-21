@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it } from "fun:test";
 import { Readable, Writable, WritableOptions } from "stream";
 
 const ABC = new Uint8Array([0x41, 0x42, 0x43]);

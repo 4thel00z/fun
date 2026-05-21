@@ -1,15 +1,15 @@
-// https://github.com/oven-sh/bun/issues/23275
-// UTF-8 BOM in bunfig.toml should not cause parsing errors
+// https://github.com/underdoc-org/fun/issues/23275
+// UTF-8 BOM in funfig.toml should not cause parsing errors
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-test("bunfig.toml with UTF-8 BOM should parse correctly", async () => {
+test("funfig.toml with UTF-8 BOM should parse correctly", async () => {
   // UTF-8 BOM is the byte sequence: 0xEF 0xBB 0xBF
   const utf8BOM = "\uFEFF";
 
-  using dir = tempDir("bunfig-bom", {
-    "bunfig.toml":
+  using dir = tempDir("funfig-bom", {
+    "funfig.toml":
       utf8BOM +
       `
 [install]
@@ -22,10 +22,10 @@ exact = true
     }),
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -39,9 +39,9 @@ exact = true
   expect(exitCode).toBe(0);
 });
 
-test("bunfig.toml without BOM should still work", async () => {
-  using dir = tempDir("bunfig-no-bom", {
-    "bunfig.toml": `
+test("funfig.toml without BOM should still work", async () => {
+  using dir = tempDir("funfig-no-bom", {
+    "funfig.toml": `
 [install]
 exact = true
 `,
@@ -52,10 +52,10 @@ exact = true
     }),
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -68,11 +68,11 @@ exact = true
   expect(exitCode).toBe(0);
 });
 
-test("bunfig.toml with BOM and actual content should parse the content correctly", async () => {
+test("funfig.toml with BOM and actual content should parse the content correctly", async () => {
   const utf8BOM = "\uFEFF";
 
-  using dir = tempDir("bunfig-bom-content", {
-    "bunfig.toml":
+  using dir = tempDir("funfig-bom-content", {
+    "funfig.toml":
       utf8BOM +
       `
 logLevel = "debug"
@@ -83,10 +83,10 @@ production = true
     "index.ts": `console.log("hello");`,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "index.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "index.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

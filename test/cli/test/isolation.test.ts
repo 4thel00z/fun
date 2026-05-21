@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDir } from "harness";
 import fs from "node:fs";
 import net from "node:net";
 
@@ -7,12 +7,12 @@ import net from "node:net";
 // Under --isolate the second file must see a clean world.
 const fixtures = {
   "a-leaker.test.ts": `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
 
     test("leak global + server + interval", async () => {
       (globalThis as any).leakedFromA = "boom";
 
-      const server = Bun.serve({ port: 0, fetch: () => new Response("hi") });
+      const server = Fun.serve({ port: 0, fetch: () => new Response("hi") });
       (globalThis as any).leakedPort = server.port;
 
       setInterval(() => {
@@ -23,7 +23,7 @@ const fixtures = {
     });
   `,
   "b-observer.test.ts": `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
 
     test("globalThis is clean", () => {
       expect((globalThis as any).leakedFromA).toBeUndefined();
@@ -34,9 +34,9 @@ const fixtures = {
 };
 
 async function runTests(dir: string, extraArgs: string[], files = ["./a-leaker.test.ts", "./b-observer.test.ts"]) {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", ...extraArgs, ...files],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", ...extraArgs, ...files],
+    env: funEnv,
     cwd: dir,
     stderr: "pipe",
     stdout: "pipe",
@@ -45,7 +45,7 @@ async function runTests(dir: string, extraArgs: string[], files = ["./a-leaker.t
   return { stdout, stderr, exitCode };
 }
 
-describe.concurrent("bun test --isolate", () => {
+describe.concurrent("fun test --isolate", () => {
   test("without --isolate, leaked global is visible to next file", async () => {
     using dir = tempDir("isolate-off", fixtures);
     const { stderr, exitCode } = await runTests(String(dir), []);
@@ -56,15 +56,15 @@ describe.concurrent("bun test --isolate", () => {
   test("with --isolate, each file gets a fresh global", async () => {
     using dir = tempDir("isolate-on", fixtures);
     const { stderr, exitCode } = await runTests(String(dir), ["--isolate"]);
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("2 pass");
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("0 fail");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("2 pass");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("0 fail");
     expect(exitCode).toBe(0);
   });
 
   test("with --isolate, --preload re-runs in each file's fresh global", async () => {
     using dir = tempDir("isolate-preload", {
       "preload.ts": `
-        import { expect, beforeEach, beforeAll, afterAll } from "bun:test";
+        import { expect, beforeEach, beforeAll, afterAll } from "fun:test";
         expect.extend({
           toBeCustom() { return { pass: true, message: () => "" }; },
         });
@@ -73,7 +73,7 @@ describe.concurrent("bun test --isolate", () => {
         afterAll(() => { (globalThis as any).__afterAllRan = true; });
       `,
       "a.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         test("preload state present in a", () => {
           expect((globalThis as any).__preloadRan).toBe(true);
           expect((globalThis as any).__beforeAllRan).toBe(1);
@@ -81,7 +81,7 @@ describe.concurrent("bun test --isolate", () => {
         });
       `,
       "b.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         test("preload state present in b", () => {
           expect((globalThis as any).__preloadRan).toBe(true);
           expect((globalThis as any).__beforeAllRan).toBe(1);
@@ -94,27 +94,27 @@ describe.concurrent("bun test --isolate", () => {
       ["--isolate", "--preload", "./preload.ts"],
       ["./a.test.ts", "./b.test.ts"],
     );
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("2 pass");
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("0 fail");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("2 pass");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("0 fail");
     expect(exitCode).toBe(0);
   });
 
   test("without --isolate, --preload still runs once (regression)", async () => {
     using dir = tempDir("isolate-preload-off", {
       "preload.ts": `
-        import { beforeAll } from "bun:test";
+        import { beforeAll } from "fun:test";
         (globalThis as any).__preloadEvals = ((globalThis as any).__preloadEvals ?? 0) + 1;
         beforeAll(() => { (globalThis as any).__beforeAllRan = ((globalThis as any).__beforeAllRan ?? 0) + 1; });
       `,
       "a.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         test("a", () => {
           expect((globalThis as any).__preloadEvals).toBe(1);
           expect((globalThis as any).__beforeAllRan).toBe(1);
         });
       `,
       "b.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         test("b", () => {
           expect((globalThis as any).__preloadEvals).toBe(1);
           expect((globalThis as any).__beforeAllRan).toBe(1);
@@ -126,7 +126,7 @@ describe.concurrent("bun test --isolate", () => {
       ["--preload", "./preload.ts"],
       ["./a.test.ts", "./b.test.ts"],
     );
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("2 pass");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("2 pass");
     expect(exitCode).toBe(0);
   });
 
@@ -134,25 +134,25 @@ describe.concurrent("bun test --isolate", () => {
     using dir = tempDir("isolate-modules", {
       "shared.ts": `export let counter = { n: 0 };`,
       "a.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import { counter } from "./shared";
         test("bump", () => { counter.n++; expect(counter.n).toBe(1); });
       `,
       "b.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import { counter } from "./shared";
         test("fresh", () => { expect(counter.n).toBe(0); });
       `,
     });
     const { stderr, exitCode } = await runTests(String(dir), ["--isolate"], ["./a.test.ts", "./b.test.ts"]);
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("2 pass");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("2 pass");
     expect(exitCode).toBe(0);
   });
 
   test("with --isolate, leaked outbound socket is closed before next file", async () => {
     using dir = tempDir("isolate-socket", {
       "a-connect.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import net from "node:net";
 
         test("leak a net.Socket", async () => {
@@ -167,14 +167,14 @@ describe.concurrent("bun test --isolate", () => {
         });
       `,
       "b-check.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import fs from "node:fs";
 
         test("server saw the disconnect", async () => {
           const closeFile = process.env.CLOSE_FILE!;
           for (let i = 0; i < 200; i++) {
             if (fs.existsSync(closeFile)) break;
-            await Bun.sleep(10);
+            await Fun.sleep(10);
           }
           expect(fs.existsSync(closeFile)).toBe(true);
         });
@@ -190,16 +190,16 @@ describe.concurrent("bun test --isolate", () => {
     const port = (server.address() as any).port;
 
     try {
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test", "--isolate", "./a-connect.test.ts", "./b-check.test.ts"],
-        env: { ...bunEnv, PORT: String(port), CLOSE_FILE: closeFile },
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test", "--isolate", "./a-connect.test.ts", "./b-check.test.ts"],
+        env: { ...funEnv, PORT: String(port), CLOSE_FILE: closeFile },
         cwd: String(dir),
         stderr: "pipe",
         stdout: "pipe",
       });
       const [, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
-      expect(normalizeBunSnapshot(stderr, dir)).toContain("2 pass");
-      expect(normalizeBunSnapshot(stderr, dir)).toContain("0 fail");
+      expect(normalizeFunSnapshot(stderr, dir)).toContain("2 pass");
+      expect(normalizeFunSnapshot(stderr, dir)).toContain("0 fail");
       expect(exitCode).toBe(0);
     } finally {
       server.close();
@@ -210,7 +210,7 @@ describe.concurrent("bun test --isolate", () => {
     using dir = tempDir("isolate-fswatch", {
       "watched/.keep": "",
       "a-watch.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import fs from "node:fs";
 
         test("leak an fs.watch", () => {
@@ -223,7 +223,7 @@ describe.concurrent("bun test --isolate", () => {
         });
       `,
       "b-mutate.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import fs from "node:fs";
 
         test("watcher from prior file does not fire", async () => {
@@ -233,7 +233,7 @@ describe.concurrent("bun test --isolate", () => {
           // slow runner delivers the event after a fixed sleep).
           for (let i = 0; i < 25; i++) {
             if (fs.existsSync(process.env.FIRE_FILE!)) break;
-            await Bun.sleep(20);
+            await Fun.sleep(20);
           }
           expect(fs.existsSync(process.env.FIRE_FILE!)).toBe(false);
         });
@@ -243,48 +243,48 @@ describe.concurrent("bun test --isolate", () => {
     const watchDir = String(dir) + "/watched";
     const fireFile = String(dir) + "/fired.txt";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--isolate", "./a-watch.test.ts", "./b-mutate.test.ts"],
-      env: { ...bunEnv, WATCH_DIR: watchDir, FIRE_FILE: fireFile },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--isolate", "./a-watch.test.ts", "./b-mutate.test.ts"],
+      env: { ...funEnv, WATCH_DIR: watchDir, FIRE_FILE: fireFile },
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
     });
     const [, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("2 pass");
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("0 fail");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("2 pass");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("0 fail");
     expect(exitCode).toBe(0);
   });
 
   test("leaked subprocesses are killed for every isolated file, not just the first", async () => {
     using dir = tempDir("isolate-subprocess", {
       "a-spawn.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import fs from "node:fs";
         test("leak a sleeper from file A", () => {
-          const child = Bun.spawn({ cmd: [process.execPath, "-e", "setInterval(()=>{}, 1e6)"], stdout: "ignore", stderr: "ignore" });
+          const child = Fun.spawn({ cmd: [process.execPath, "-e", "setInterval(()=>{}, 1e6)"], stdout: "ignore", stderr: "ignore" });
           fs.writeFileSync(process.env.PID_FILE_A!, String(child.pid));
           expect(child.pid).toBeGreaterThan(0);
         });
       `,
       "b-spawn.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import fs from "node:fs";
         test("leak a sleeper from file B", () => {
-          const child = Bun.spawn({ cmd: [process.execPath, "-e", "setInterval(()=>{}, 1e6)"], stdout: "ignore", stderr: "ignore" });
+          const child = Fun.spawn({ cmd: [process.execPath, "-e", "setInterval(()=>{}, 1e6)"], stdout: "ignore", stderr: "ignore" });
           fs.writeFileSync(process.env.PID_FILE_B!, String(child.pid));
           expect(child.pid).toBeGreaterThan(0);
         });
       `,
       "c-check.test.ts": `
-        import { test, expect } from "bun:test";
+        import { test, expect } from "fun:test";
         import fs from "node:fs";
         const isAlive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
         test("both prior subprocesses were killed by isolation", async () => {
           const pidA = Number(fs.readFileSync(process.env.PID_FILE_A!, "utf8"));
           const pidB = Number(fs.readFileSync(process.env.PID_FILE_B!, "utf8"));
           // auto_killer sends SIGTERM at swap; allow a moment for the OS to reap.
-          for (let i = 0; i < 50 && (isAlive(pidA) || isAlive(pidB)); i++) await Bun.sleep(20);
+          for (let i = 0; i < 50 && (isAlive(pidA) || isAlive(pidB)); i++) await Fun.sleep(20);
           expect(isAlive(pidA)).toBe(false);
           expect(isAlive(pidB)).toBe(false);
         });
@@ -294,16 +294,16 @@ describe.concurrent("bun test --isolate", () => {
     const pidA = String(dir) + "/pid-a.txt";
     const pidB = String(dir) + "/pid-b.txt";
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--isolate", "./a-spawn.test.ts", "./b-spawn.test.ts", "./c-check.test.ts"],
-      env: { ...bunEnv, PID_FILE_A: pidA, PID_FILE_B: pidB },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--isolate", "./a-spawn.test.ts", "./b-spawn.test.ts", "./c-check.test.ts"],
+      env: { ...funEnv, PID_FILE_A: pidA, PID_FILE_B: pidB },
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
     });
     const [, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("3 pass");
-    expect(normalizeBunSnapshot(stderr, dir)).toContain("0 fail");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("3 pass");
+    expect(normalizeFunSnapshot(stderr, dir)).toContain("0 fail");
     expect(exitCode).toBe(0);
   });
 });
@@ -316,7 +316,7 @@ test.concurrent("--isolate: delete require.cache evicts the SourceProvider cache
   const sharedV1 = `export const v = "v1";\n`;
   const sharedV2 = `export const v = "v2";\n`;
   const aBody = (doDelete: boolean) => `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
     import { writeFileSync } from "node:fs";
     test("a sees v1 then rewrites", async () => {
       const { v } = await import("./shared.ts");
@@ -326,7 +326,7 @@ test.concurrent("--isolate: delete require.cache evicts the SourceProvider cache
     });
   `;
   const bBody = (expected: "v1" | "v2") => `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
     test("b sees ${expected}", async () => {
       const { v } = await import("./shared.ts");
       expect(v).toBe("${expected}");
@@ -344,9 +344,9 @@ test.concurrent("--isolate: delete require.cache evicts the SourceProvider cache
         "a.test.ts": aBody(false),
         "b.test.ts": bBody("v1"),
       });
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
         stdout: "pipe",
@@ -364,9 +364,9 @@ test.concurrent("--isolate: delete require.cache evicts the SourceProvider cache
         "a.test.ts": aBody(true),
         "b.test.ts": bBody("v2"),
       });
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
         stdout: "pipe",
@@ -383,7 +383,7 @@ test.concurrent("--isolate: SourceProvider cache covers CommonJS modules", async
   const sharedV1 = `module.exports = { v: "v1" };\n`;
   const sharedV2 = `module.exports = { v: "v2" };\n`;
   const aBody = (doDelete: boolean) => `
-    const { test, expect } = require("bun:test");
+    const { test, expect } = require("fun:test");
     const { writeFileSync } = require("node:fs");
     const path = require("node:path");
     test("a sees v1 then rewrites", () => {
@@ -395,7 +395,7 @@ test.concurrent("--isolate: SourceProvider cache covers CommonJS modules", async
     });
   `;
   const bBody = (expected: "v1" | "v2") => `
-    const { test, expect } = require("bun:test");
+    const { test, expect } = require("fun:test");
     test("b sees ${expected}", () => {
       // Under --isolate, a's global is gone; if b sees ${expected === "v1" ? "stale " : ""}v
       // it must be from the VM-level SourceProvider cache, not require.cache.
@@ -406,7 +406,7 @@ test.concurrent("--isolate: SourceProvider cache covers CommonJS modules", async
   `;
   // Same shared.cjs imported as ESM (import-CJS-from-ESM path).
   const cBody = (expected: "v1" | "v2") => `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
     test("c (esm import of cjs) sees ${expected}", async () => {
       const mod = await import("./shared.cjs");
       expect(mod.default.v).toBe("${expected}");
@@ -424,9 +424,9 @@ test.concurrent("--isolate: SourceProvider cache covers CommonJS modules", async
         "b.test.cjs": bBody("v1"),
         "c.test.ts": cBody("v1"),
       });
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test", "--isolate", "./a.test.cjs", "./b.test.cjs", "./c.test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test", "--isolate", "./a.test.cjs", "./b.test.cjs", "./c.test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
         stdout: "pipe",
@@ -444,9 +444,9 @@ test.concurrent("--isolate: SourceProvider cache covers CommonJS modules", async
         "b.test.cjs": bBody("v2"),
         "c.test.ts": cBody("v2"),
       });
-      await using proc = Bun.spawn({
-        cmd: [bunExe(), "test", "--isolate", "./a.test.cjs", "./b.test.cjs", "./c.test.ts"],
-        env: bunEnv,
+      await using proc = Fun.spawn({
+        cmd: [funExe(), "test", "--isolate", "./a.test.cjs", "./b.test.cjs", "./c.test.ts"],
+        env: funEnv,
         cwd: String(dir),
         stderr: "pipe",
         stdout: "pipe",
@@ -468,7 +468,7 @@ test.concurrent("--isolate: SourceProvider cache covers node_modules .mjs and ty
   const mkEsmPkg = (v: string) => `export const v = "${v}";\n`;
   const mkCjsPkg = (v: string) => `export const v: string = "${v}";\n`;
   const aBody = `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
     import { writeFileSync } from "node:fs";
     import * as path from "node:path";
     import { v as esm } from "fake-esm-pkg";
@@ -482,7 +482,7 @@ test.concurrent("--isolate: SourceProvider cache covers node_modules .mjs and ty
     });
   `;
   const bcBody = (name: string) => `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
     import { v as esm } from "fake-esm-pkg";
     import { v as cjs } from "fake-cjs-pkg";
     test("${name}", () => {
@@ -509,9 +509,9 @@ test.concurrent("--isolate: SourceProvider cache covers node_modules .mjs and ty
     "b.test.ts": bcBody("b"),
     "c.test.ts": bcBody("c"),
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts", "./c.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts", "./c.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -525,7 +525,7 @@ test.concurrent("--isolate: SourceProvider cache covers node_modules .mjs and ty
 test.concurrent("--isolate: cached SourceProvider's module_info rebuilds correct exports", async () => {
   // A wide module so the printer-generated module_info has thousands of
   // export entries. Under --isolate, file b hits the SourceProvider cache and
-  // rebuilds JSModuleRecord from the cached module_info (Bun__analyzeTranspiledModule)
+  // rebuilds JSModuleRecord from the cached module_info (Fun__analyzeTranspiledModule)
   // instead of re-parsing. If the record is wrong, named imports would be
   // undefined or the count would mismatch.
   const N = 2000;
@@ -534,7 +534,7 @@ test.concurrent("--isolate: cached SourceProvider's module_info rebuilds correct
   big += `export const COUNT = ${N};\n`;
 
   const tBody = (name: string) => `
-    import { test, expect } from "bun:test";
+    import { test, expect } from "fun:test";
     import { f0, f1, f${N - 1}, COUNT } from "./big";
     import * as all from "./big";
     test("${name}", () => {
@@ -552,9 +552,9 @@ test.concurrent("--isolate: cached SourceProvider's module_info rebuilds correct
     "b.test.ts": tBody("b"),
     "c.test.ts": tBody("c"),
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts", "./c.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--isolate", "./a.test.ts", "./b.test.ts", "./c.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -568,7 +568,7 @@ test.concurrent("--isolate: cached SourceProvider's module_info rebuilds correct
 test.concurrent(
   "--isolate: cached module_info handles `import * as ns; export { ns }` as a Namespace export",
   async () => {
-    // The zod pattern: re-exporting a namespace import binding. Bun's module_info
+    // The zod pattern: re-exporting a namespace import binding. Fun's module_info
     // must record this as a [Namespace] export entry (not [Local]) so the cached
     // analyze result matches JSC's ModuleAnalyzer. The debug build's
     // fallbackParse diff would print "BEGIN analyzeTranspiledModule" + a DIFF
@@ -576,7 +576,7 @@ test.concurrent(
     using dir = tempDir("isolate-ns-reexport", {
       "external.ts": `export const a = 1;\nexport const b = 2;\n`,
       "re.ts": `import * as ns from "./external";\nexport { ns };\nexport default ns;\nexport * from "./external";\n`,
-      "t1.test.ts": `import {test,expect} from "bun:test";
+      "t1.test.ts": `import {test,expect} from "fun:test";
 import { ns } from "./re";
 import def, * as all from "./re";
 test("t1", () => {
@@ -588,10 +588,10 @@ test("t1", () => {
   expect(Object.keys(ns).sort()).toEqual(["a","b"]);
 });
 `,
-      "t2.test.ts": `import {test,expect} from "bun:test";
+      "t2.test.ts": `import {test,expect} from "fun:test";
 import { ns } from "./re";
 test("t2", () => {
-  // Isolation sentinel: system bun ignores --isolate, so t2 would see t1's
+  // Isolation sentinel: system fun ignores --isolate, so t2 would see t1's
   // global mutation and fail here. Ensures this test depends on --isolate.
   expect((globalThis as any).__t1_ran).toBeUndefined();
   expect(ns.a).toBe(1);
@@ -600,9 +600,9 @@ test("t2", () => {
 `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test", "--isolate", "./t1.test.ts", "./t2.test.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test", "--isolate", "./t1.test.ts", "./t2.test.ts"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -619,7 +619,7 @@ test("t2", () => {
 test.concurrent("--isolate: leaked AbortSignal.timeout does not fire in next file", async () => {
   using dir = tempDir("isolate-abort-timeout", {
     "a-leak.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       import { writeFileSync } from "fs";
       test("leak AbortSignal.timeout", () => {
         const s = AbortSignal.timeout(100);
@@ -632,22 +632,22 @@ test.concurrent("--isolate: leaked AbortSignal.timeout does not fire in next fil
       });
     `,
     "b-check.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       import { existsSync } from "fs";
       test("AbortSignal from prior file did not fire here", async () => {
-        // Prove this file is isolated from a (fails under USE_SYSTEM_BUN=1).
+        // Prove this file is isolated from a (fails under USE_SYSTEM_FUN=1).
         expect((globalThis as any).__a_ran).toBeUndefined();
         for (let i = 0; i < 30; i++) {
           if (existsSync(process.env.FIRE_FILE!)) break;
-          await Bun.sleep(20);
+          await Fun.sleep(20);
         }
         expect(existsSync(process.env.FIRE_FILE!)).toBe(false);
       });
     `,
   });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--isolate", "./a-leak.test.ts", "./b-check.test.ts"],
-    env: { ...bunEnv, FIRE_FILE: String(dir) + "/fired.txt" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--isolate", "./a-leak.test.ts", "./b-check.test.ts"],
+    env: { ...funEnv, FIRE_FILE: String(dir) + "/fired.txt" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

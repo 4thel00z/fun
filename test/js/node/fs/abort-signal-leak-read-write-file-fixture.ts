@@ -1,7 +1,7 @@
 import fs from "fs";
 import { join } from "path";
 import { tmpdirSync } from "harness";
-import { heapStats } from "bun:jsc";
+import { heapStats } from "fun:jsc";
 
 const tmpdir = tmpdirSync();
 
@@ -25,7 +25,7 @@ for (let i = 0; i < 100_000; i++) {
   } catch (e) {}
 }
 
-Bun.gc(true);
+Fun.gc(true);
 
 const numAbortSignalObjects = heapStats().objectTypeCounts.AbortSignal;
 if (numAbortSignalObjects > 10) {

@@ -1,6 +1,6 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
-exports[`When bun-plugin-svelte is enabled via Bun.plugin() can be render()-ed 1`] = `
+exports[`When fun-plugin-svelte is enabled via Fun.plugin() can be render()-ed 1`] = `
 {
   "body": Any<String>,
   "head": Any<String>,

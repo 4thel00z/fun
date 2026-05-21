@@ -5,7 +5,7 @@
  #endif
  
 +#if LS_QPACK_USE_LARGE_TABLES && LS_HPACK_BSS_LARGE_TABLES
-+/* Bun: share lshpack's .bss-backed hencs/hdecs (same RFC 7541 Huffman code)
++/* Fun: share lshpack's .bss-backed hencs/hdecs (same RFC 7541 Huffman code)
 + * instead of carrying a second 768 KB copy in .rodata. */
 +struct henc { unsigned lens; uint32_t code; };
 +struct hdec { uint8_t lens; uint8_t out[3]; };

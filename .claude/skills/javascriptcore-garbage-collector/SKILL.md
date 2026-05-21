@@ -1,11 +1,11 @@
 ---
 name: javascriptcore-garbage-collector
-description: JSC GC reference for Bun. Use for use-after-free, JS object leaks, "collected too early", or when touching WriteBarrier, visitChildren, visitAdditionalChildren, JSRef, JSC::Strong/Weak, hasPendingActivity, ensureStillAlive, addOpaqueRoot, reportExtraMemoryAllocated, IsoSubspace, HeapAnalyzer, finalize.
+description: JSC GC reference for Fun. Use for use-after-free, JS object leaks, "collected too early", or when touching WriteBarrier, visitChildren, visitAdditionalChildren, JSRef, JSC::Strong/Weak, hasPendingActivity, ensureStillAlive, addOpaqueRoot, reportExtraMemoryAllocated, IsoSubspace, HeapAnalyzer, finalize.
 ---
 
 # JavaScriptCore's Garbage Collector (Riptide)
 
-Riptide is **non-moving, generational, parallel, mostly-concurrent, conservative-on-the-stack**. Understanding those five words prevents most GC bugs in Bun.
+Riptide is **non-moving, generational, parallel, mostly-concurrent, conservative-on-the-stack**. Understanding those five words prevents most GC bugs in Fun.
 
 ## The mental model
 
@@ -33,7 +33,7 @@ Roots are not a hardcoded list — they are **marking constraints** registered w
 | `Jw`  | JIT Worklist      | CodeBlocks queued for compilation                                                                                                                                       |
 | `Cb`  | CodeBlocks        | Executing/compiling CodeBlocks                                                                                                                                          |
 
-Bun registers an additional constraint, `DOMGCOutputConstraint` (`src/jsc/bindings/BunGCOutputConstraint.cpp`), which calls `visitOutputConstraints` on every marked cell in Bun's output-constraint subspaces (event targets, generated classes with `visitAdditionalChildren`, etc.).
+Fun registers an additional constraint, `DOMGCOutputConstraint` (`src/jsc/bindings/FunGCOutputConstraint.cpp`), which calls `visitOutputConstraints` on every marked cell in Fun's output-constraint subspaces (event targets, generated classes with `visitAdditionalChildren`, etc.).
 
 **Constraint volatility** controls when they re-run during the fixpoint:
 
@@ -89,7 +89,7 @@ if (obj->cellState <= blackThreshold)   // 0 normally, bumped while GC is markin
 - **`MarkedBlock`** — 16KB block, fixed cell size (segregated free list). Footer holds bitvectors. 16-byte minimum cell alignment. `addr & ~(16KB-1)` → block, so liveness checks are O(1).
 - **`PreciseAllocation`** — large objects (>~8KB), individually `malloc`'d, 96-byte GC header. Always returns addresses with `addr % 16 == 8` so `ptr & 8` distinguishes them from MarkedBlock cells.
 - **`CompleteSubspace`** — size-segregated set of `BlockDirectory`s for general JS objects.
-- **`IsoSubspace`** — one subspace per C++ type (security: a freed cell can only be reused for the _same_ type, defeating type-confusion UAF). **Every Bun class with native fields needs its own IsoSubspace** — `subspaceFor<T>` in the header, slot in `BunClientData`/`DOMIsoSubspaces`.
+- **`IsoSubspace`** — one subspace per C++ type (security: a freed cell can only be reused for the _same_ type, defeating type-confusion UAF). **Every Fun class with native fields needs its own IsoSubspace** — `subspaceFor<T>` in the header, slot in `FunClientData`/`DOMIsoSubspaces`.
 
 **Allocation may trigger GC.** A safepoint exists at every allocation. Never assume "I just allocated X, so Y from before is still alive" unless Y is rooted.
 
@@ -139,7 +139,7 @@ DEFINE_VISIT_CHILDREN(JSFoo);
 
 ## `visitAdditionalChildren` and output constraints
 
-`visitChildren` only sees the cell's own fields. When a JS wrapper's liveness should propagate to **other JS objects reachable through native state** (event listeners, observers, the JS values held inside a wrapped C++ object), Bun uses the WebCore pattern:
+`visitChildren` only sees the cell's own fields. When a JS wrapper's liveness should propagate to **other JS objects reachable through native state** (event listeners, observers, the JS values held inside a wrapped C++ object), Fun uses the WebCore pattern:
 
 ```cpp
 // Custom hook called from BOTH places:
@@ -166,7 +166,7 @@ void JSFoo::visitOutputConstraints(JSCell* cell, Visitor& visitor) {
 
 **Why two entry points?** `visitChildren` runs once when the cell turns grey. But marking may later discover that some _other_ native object (an opaque root) is live, which retroactively makes more of _this_ cell's references live. `visitOutputConstraints` is re-invoked by `DOMGCOutputConstraint` during the constraint fixpoint to catch that.
 
-To make a class participate, its IsoSubspace must be registered as an **output-constraint subspace** (`clientSubspaceFor*` with `outputConstraint` in `BunClientData` / generated `ZigGeneratedClasses.cpp`). The codegen does this automatically when `.classes.ts` has `hasPendingActivity`, `own` properties, or event-target semantics.
+To make a class participate, its IsoSubspace must be registered as an **output-constraint subspace** (`clientSubspaceFor*` with `outputConstraint` in `FunClientData` / generated `ZigGeneratedClasses.cpp`). The codegen does this automatically when `.classes.ts` has `hasPendingActivity`, `own` properties, or event-target semantics.
 
 ## Opaque roots — liveness through non-JSCell pointers
 
@@ -215,7 +215,7 @@ JSC::Weak<JSFoo> m_wrapper { jsFoo, &myOwnerSingleton, nativeThing };
 
 ## Zig: `jsc.JSRef` — the native↔wrapper reference pattern
 
-In Bun's Zig code, when a native object needs to hold a reference back to its own JS wrapper, **use `jsc.JSRef`** (`src/jsc/bindings/JSRef.zig`), not `gcProtect`, not a raw `JSValue` field, and usually not `jsc.Strong` directly.
+In Fun's Zig code, when a native object needs to hold a reference back to its own JS wrapper, **use `jsc.JSRef`** (`src/jsc/bindings/JSRef.zig`), not `gcProtect`, not a raw `JSValue` field, and usually not `jsc.Strong` directly.
 
 `JSRef` is a tagged union with three states:
 
@@ -249,7 +249,7 @@ See `ServerWebSocket`, `UDPSocket`, `MySQLConnection`, `ValkeyClient` for real e
 
 ## `gcProtect` / `JSValueProtect` — almost never
 
-`gcProtect()` / `JSValueProtect()` push into `Heap::m_protectedValues` (a ref-counted root map, visited by the `Msr` constraint). It's the legacy C-API mechanism. **Avoid it in Bun:**
+`gcProtect()` / `JSValueProtect()` push into `Heap::m_protectedValues` (a ref-counted root map, visited by the `Msr` constraint). It's the legacy C-API mechanism. **Avoid it in Fun:**
 
 - It's a raw global root with manual unprotect — easy to leak.
 - It has no owner, so heap snapshots can't attribute the retention.
@@ -280,7 +280,7 @@ In `.classes.ts`, `estimatedSize: true` generates the `reportExtraMemoryVisited`
 
 ## `HeapAnalyzer` — heap snapshots and labelling
 
-`vendor/WebKit/Source/JavaScriptCore/heap/HeapAnalyzer.h` is the abstract visitor used to build heap snapshots (Web Inspector "Heap Snapshot", and Bun's V8-compatible `BunV8HeapSnapshotBuilder`). When a snapshot is requested, marking runs with an analyzer attached and each cell's `analyzeHeap` static is called:
+`vendor/WebKit/Source/JavaScriptCore/heap/HeapAnalyzer.h` is the abstract visitor used to build heap snapshots (Web Inspector "Heap Snapshot", and Fun's V8-compatible `FunV8HeapSnapshotBuilder`). When a snapshot is requested, marking runs with an analyzer attached and each cell's `analyzeHeap` static is called:
 
 ```cpp
 void JSFoo::analyzeHeap(JSCell* cell, HeapAnalyzer& analyzer) {
@@ -331,20 +331,20 @@ If your class shows up as an opaque blob in heap snapshots, implement `analyzeHe
 
 ```bash
 # Force synchronous, frequent GC — turns rare races into immediate crashes
-BUN_JSC_collectContinuously=1 BUN_JSC_useConcurrentGC=0 bun-debug test.js
+FUN_JSC_collectContinuously=1 FUN_JSC_useConcurrentGC=0 fun-debug test.js
 
 # Zero free cells so UAF reads are obvious
-BUN_JSC_scribbleFreeCells=1
+FUN_JSC_scribbleFreeCells=1
 
 # Validate the GC's own bookkeeping
-BUN_JSC_verifyGC=1 BUN_JSC_verboseVerifyGC=1
+FUN_JSC_verifyGC=1 FUN_JSC_verboseVerifyGC=1
 
 # See what's being collected / heap growth
-BUN_JSC_logGC=2 BUN_JSC_showObjectStatistics=1
+FUN_JSC_logGC=2 FUN_JSC_showObjectStatistics=1
 
 # Force GC from JS
-Bun.gc(true)      // sync full GC
-require('bun:jsc').heapStats()
+Fun.gc(true)      // sync full GC
+require('fun:jsc').heapStats()
 ```
 
 If a bug only reproduces with concurrent GC **on** → missing write barrier or `visitChildren` race.
@@ -360,7 +360,7 @@ If GC runs constantly with little garbage → missing `reportExtraMemoryVisited`
 - `vendor/WebKit/Source/JavaScriptCore/heap/CellState.h`, `runtime/WriteBarrier.h`, `runtime/WriteBarrierInlines.h`
 - `vendor/WebKit/Source/JavaScriptCore/heap/ConservativeRoots.cpp`, `vendor/WebKit/Source/JavaScriptCore/heap/MachineStackMarker.cpp`
 - `vendor/WebKit/Source/JavaScriptCore/heap/Weak.h`, `vendor/WebKit/Source/JavaScriptCore/heap/WeakImpl.h`, `vendor/WebKit/Source/JavaScriptCore/heap/WeakBlock.h`, `vendor/WebKit/Source/JavaScriptCore/heap/WeakSet.h`, `vendor/WebKit/Source/JavaScriptCore/heap/WeakHandleOwner.h`
-- `vendor/WebKit/Source/JavaScriptCore/heap/HeapAnalyzer.h`, `vendor/WebKit/Source/JavaScriptCore/heap/HeapSnapshotBuilder.cpp`, Bun: `vendor/WebKit/Source/JavaScriptCore/heap/BunV8HeapSnapshotBuilder.cpp`
+- `vendor/WebKit/Source/JavaScriptCore/heap/HeapAnalyzer.h`, `vendor/WebKit/Source/JavaScriptCore/heap/HeapSnapshotBuilder.cpp`, Fun: `vendor/WebKit/Source/JavaScriptCore/heap/FunV8HeapSnapshotBuilder.cpp`
 - `vendor/WebKit/Source/JavaScriptCore/heap/DeferGC.h`, `vendor/WebKit/Source/JavaScriptCore/heap/Strong.h`, `vendor/WebKit/Source/JavaScriptCore/heap/HandleSet.h`
 - `runtime/JSCell.h` / `JSCellInlines.h` — header layout, `visitChildren` base
-- Bun: `src/jsc/bindings/BunGCOutputConstraint.cpp`, `ZigGeneratedClasses.cpp` (codegen'd `visitChildren` / `visitOutputConstraints`)
+- Fun: `src/jsc/bindings/FunGCOutputConstraint.cpp`, `ZigGeneratedClasses.cpp` (codegen'd `visitChildren` / `visitOutputConstraints`)

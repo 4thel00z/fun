@@ -1,5 +1,5 @@
-import { randomUUIDv7, SQL } from "bun";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import { randomUUIDv7, SQL } from "fun";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 import { existsSync } from "node:fs";
 import { rm, stat } from "node:fs/promises";
@@ -142,18 +142,18 @@ describe("Connection & Initialization", () => {
     let originalEnv: NodeJS.ProcessEnv;
 
     beforeEach(() => {
-      originalEnv = { ...Bun.env };
+      originalEnv = { ...Fun.env };
     });
 
     afterEach(() => {
       // Restore original env vars
-      for (const key in Bun.env) {
+      for (const key in Fun.env) {
         if (!(key in originalEnv)) {
-          delete Bun.env[key];
+          delete Fun.env[key];
         }
       }
       for (const key in originalEnv) {
-        Bun.env[key] = originalEnv[key];
+        Fun.env[key] = originalEnv[key];
       }
     });
 
@@ -161,7 +161,7 @@ describe("Connection & Initialization", () => {
       const dir = tempDirWithFiles("sqlite-env-test", {});
       const dbPath = path.join(dir, "env-test.db");
 
-      Bun.env.DATABASE_URL = `sqlite://${dbPath}`;
+      Fun.env.DATABASE_URL = `sqlite://${dbPath}`;
 
       const sql = new SQL();
       expect(sql.options.adapter).toBe("sqlite");
@@ -176,7 +176,7 @@ describe("Connection & Initialization", () => {
     });
 
     test("should handle DATABASE_URL with :memory:", async () => {
-      Bun.env.DATABASE_URL = "sqlite://:memory:";
+      Fun.env.DATABASE_URL = "sqlite://:memory:";
 
       const sql = new SQL();
       expect(sql.options.adapter).toBe("sqlite");
@@ -195,8 +195,8 @@ describe("Connection & Initialization", () => {
       const dbPath = path.join(dir, "sqlite-url.db");
 
       // This doesn't exist in the current implementation but testing anyway
-      Bun.env.SQLITE_URL = `sqlite://${dbPath}`;
-      Bun.env.DATABASE_URL = "postgres://localhost/test"; // Should be ignored when adapter is sqlite
+      Fun.env.SQLITE_URL = `sqlite://${dbPath}`;
+      Fun.env.DATABASE_URL = "postgres://localhost/test"; // Should be ignored when adapter is sqlite
 
       const sql = new SQL("sqlite://:memory:");
       expect(sql.options.adapter).toBe("sqlite");
@@ -207,7 +207,7 @@ describe("Connection & Initialization", () => {
     });
 
     test("should NOT use POSTGRES_URL for SQLite", async () => {
-      Bun.env.POSTGRES_URL = "postgres://user:pass@localhost:5432/mydb";
+      Fun.env.POSTGRES_URL = "postgres://user:pass@localhost:5432/mydb";
 
       // When explicitly using sqlite adapter, POSTGRES_URL should be ignored
       const sql = new SQL({ adapter: "sqlite", filename: ":memory:" });
@@ -218,7 +218,7 @@ describe("Connection & Initialization", () => {
     });
 
     test("should NOT use PGURL for SQLite", async () => {
-      Bun.env.PGURL = "postgres://user:pass@localhost:5432/mydb";
+      Fun.env.PGURL = "postgres://user:pass@localhost:5432/mydb";
 
       const sql = new SQL({ adapter: "sqlite", filename: ":memory:" });
       expect(sql.options.adapter).toBe("sqlite");
@@ -533,7 +533,7 @@ describe("Connection & Initialization", () => {
     test("should handle paths with ../", async () => {
       const parentDir = tempDirWithFiles("parent-test", {});
       const childDir = path.join(parentDir, "child");
-      await Bun.$`mkdir -p ${childDir}`;
+      await Fun.$`mkdir -p ${childDir}`;
       const originalCwd = process.cwd();
 
       try {
@@ -557,7 +557,7 @@ describe("Connection & Initialization", () => {
     test("should handle nested paths", async () => {
       const dir = tempDirWithFiles("nested-test", {});
       const nestedPath = path.join(dir, "data", "databases", "app.db");
-      await Bun.$`mkdir -p ${path.dirname(nestedPath)}`;
+      await Fun.$`mkdir -p ${path.dirname(nestedPath)}`;
 
       const sql = new SQL(`sqlite://${nestedPath}`);
       expect(sql.options.adapter).toBe("sqlite");
@@ -627,7 +627,7 @@ describe("Connection & Initialization", () => {
       const envPath = path.join(dir, "env.db");
       const explicitPath = path.join(dir, "explicit.db");
 
-      Bun.env.DATABASE_URL = `sqlite://${envPath}`;
+      Fun.env.DATABASE_URL = `sqlite://${envPath}`;
 
       const sql = new SQL(`sqlite://${explicitPath}`);
       expect(sql.options.adapter).toBe("sqlite");
@@ -638,7 +638,7 @@ describe("Connection & Initialization", () => {
       expect(existsSync(envPath)).toBe(false);
 
       await sql.close();
-      delete Bun.env.DATABASE_URL;
+      delete Fun.env.DATABASE_URL;
       await rm(dir, { recursive: true });
     });
 
@@ -1684,7 +1684,7 @@ describe("Helper argument validation", () => {
     ).toThrow("Insert needs to have at least one column with a defined value");
   });
 
-  // Exact regression test for https://github.com/oven-sh/bun/issues/25829
+  // Exact regression test for https://github.com/underdoc-org/fun/issues/25829
   // undefined values should be filtered out, allowing NOT NULL columns with DEFAULT to use their default
   test("insert with undefined on NOT NULL column with DEFAULT uses default value", async () => {
     await sql`CREATE TABLE issue_25829 (id TEXT PRIMARY KEY, foo TEXT NOT NULL DEFAULT 'default-foo')`;

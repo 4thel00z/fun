@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { afterEach, describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 // Tracks exit code from the last runMd() call so individual tests can
 // assert it after snapshotting stdout (giving a readable diff on failure).
@@ -7,9 +7,9 @@ let lastExitCode: number | null = null;
 
 async function runMd(source: string, env: Record<string, string> = {}) {
   using dir = tempDir("md-entry-", { "doc.md": source });
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "./doc.md"],
-    env: { ...bunEnv, FORCE_COLOR: "1", TERM: "xterm-256color", ...env },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "./doc.md"],
+    env: { ...funEnv, FORCE_COLOR: "1", TERM: "xterm-256color", ...env },
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -20,7 +20,7 @@ async function runMd(source: string, env: Record<string, string> = {}) {
   return stdout;
 }
 
-describe("bun <file.md>", () => {
+describe("fun <file.md>", () => {
   afterEach(() => {
     // Implicit exit-code assertion for every test that relies on runMd().
     if (lastExitCode !== null) {
@@ -78,38 +78,38 @@ describe("bun <file.md>", () => {
   });
 
   test("renders link text with url fallback when no TTY", async () => {
-    // runMd() spawns Bun with stdout:"pipe", so Output.isStdoutTTY() is
+    // runMd() spawns Fun with stdout:"pipe", so Output.isStdoutTTY() is
     // false and hyperlinks fall back to `text (url)`. The OSC 8 path fires
     // when stdout really is a TTY.
-    expect(await runMd("Visit [Bun](https://bun.com) today.\n")).toMatchSnapshot();
+    expect(await runMd("Visit [Fun](https://fun.dev) today.\n")).toMatchSnapshot();
   });
 
   test("emits OSC 8 escape for links when hyperlinks are enabled", async () => {
     // runMd() pipes stdout so the CLI path can't see a TTY; drive the
     // JS API directly with hyperlinks:true to cover the OSC 8 branch.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
-        `process.stdout.write(Bun.markdown.ansi("see [Bun](https://bun.com)\\n", { hyperlinks: true }))`,
+        `process.stdout.write(Fun.markdown.ansi("see [Fun](https://fun.dev)\\n", { hyperlinks: true }))`,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
     const [stdout, _stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
     // Output must contain the OSC 8 opener + closer around the link.
-    expect(stdout).toContain("\x1b]8;;https://bun.com\x1b\\");
+    expect(stdout).toContain("\x1b]8;;https://fun.dev\x1b\\");
     expect(stdout).toContain("\x1b]8;;\x1b\\");
     expect(exitCode).toBe(0);
   });
 
   test("renders link with text + url pair fallback", async () => {
-    expect(await runMd("see [Bun](https://bun.com)\n")).toMatchSnapshot();
+    expect(await runMd("see [Fun](https://fun.dev)\n")).toMatchSnapshot();
   });
 
   test("renders images as alt text with link", async () => {
-    expect(await runMd("![an image](https://bun.com/logo.png)\n")).toMatchSnapshot();
+    expect(await runMd("![an image](https://fun.dev/logo.png)\n")).toMatchSnapshot();
   });
 
   test("renders wikilinks", async () => {
@@ -182,7 +182,7 @@ describe("bun <file.md>", () => {
         "| Name  | Style     |",
         "|:------|:----------|",
         "| **Alice** | *editor* |",
-        "| `bob` | [link](https://bun.com) |",
+        "| `bob` | [link](https://fun.dev) |",
         "",
       ].join("\n"),
     );
@@ -203,7 +203,7 @@ describe("bun <file.md>", () => {
   });
 
   test("renders mixed inline styles with autolinks", async () => {
-    expect(await runMd("Check **https://bun.com** and <me@example.com>!\n")).toMatchSnapshot();
+    expect(await runMd("Check **https://fun.dev** and <me@example.com>!\n")).toMatchSnapshot();
   });
 
   test("renders nested lists", async () => {
@@ -216,11 +216,11 @@ describe("bun <file.md>", () => {
     using dir = tempDir("md-no-color-", {
       "doc.md": "# Hello\n\n**world**\n",
     });
-    const env = { ...bunEnv, NO_COLOR: "1" };
+    const env = { ...funEnv, NO_COLOR: "1" };
     // FORCE_COLOR set to anything (even "") forces colors on, so drop it.
     delete env.FORCE_COLOR;
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "./doc.md"],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "./doc.md"],
       env,
       cwd: String(dir),
       stdout: "pipe",
@@ -233,11 +233,11 @@ describe("bun <file.md>", () => {
     expect(exitCode).toBe(0);
   });
 
-  test("renders via `bun run ./file.md`", async () => {
+  test("renders via `fun run ./file.md`", async () => {
     using dir = tempDir("md-run-", { "doc.md": "# Title\n\nbody\n" });
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "run", "./doc.md"],
-      env: { ...bunEnv, FORCE_COLOR: "1", TERM: "xterm-256color" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "run", "./doc.md"],
+      env: { ...funEnv, FORCE_COLOR: "1", TERM: "xterm-256color" },
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -249,9 +249,9 @@ describe("bun <file.md>", () => {
 
   test("renders .markdown extension too", async () => {
     using dir = tempDir("md-ext-", { "doc.markdown": "# yep\n" });
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "./doc.markdown"],
-      env: { ...bunEnv, FORCE_COLOR: "1", TERM: "xterm-256color" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "./doc.markdown"],
+      env: { ...funEnv, FORCE_COLOR: "1", TERM: "xterm-256color" },
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -261,17 +261,17 @@ describe("bun <file.md>", () => {
     expect(exitCode).toBe(0);
   });
 
-  // Every emitted line must fit the terminal — checked via Bun.stringWidth
+  // Every emitted line must fit the terminal — checked via Fun.stringWidth
   // (visible width, ANSI-stripped) so escape sequences don't inflate the
   // count.
   function maxLineWidth(out: string): number {
-    return Math.max(0, ...out.split("\n").map(l => Bun.stringWidth(l)));
+    return Math.max(0, ...out.split("\n").map(l => Fun.stringWidth(l)));
   }
 
   test("wraps inline code spans within COLUMNS, never mid-word", async () => {
     const out = await runMd(
       "After modifying `coreBeeps.ts`, `controlBoops.ts`, or `toolBoops.ts`, run " +
-        "`bun run build:boop` to regenerate. **Do not edit `*.generated.ts` files directly.**\n",
+        "`fun run build:boop` to regenerate. **Do not edit `*.generated.ts` files directly.**\n",
       { COLUMNS: "45" },
     );
     expect(maxLineWidth(out)).toBeLessThanOrEqual(45);
@@ -302,7 +302,7 @@ describe("bun <file.md>", () => {
     // (or the matching corner/junction char for the top/bottom/separator).
     for (const line of out.split("\n")) {
       if (line.trim().length === 0) continue;
-      const stripped = Bun.stripANSI(line);
+      const stripped = Fun.stripANSI(line);
       expect(
         stripped.startsWith("│") || stripped.startsWith("┌") || stripped.startsWith("├") || stripped.startsWith("└"),
       ).toBe(true);
@@ -325,7 +325,7 @@ describe("bun <file.md>", () => {
   // nothing else to return.
   test("table link with space in URL keeps OSC 8 sequences intact", () => {
     const source = "| Col |\n" + "|---|\n" + "| [c](<https://host/my file.png>)longunbreakabletailtextxx |\n";
-    const out = Bun.markdown.ansi(source, { hyperlinks: true, columns: 25 });
+    const out = Fun.markdown.ansi(source, { hyperlinks: true, columns: 25 });
     // Full URL (including the space) must survive inside the opener.
     expect(out).toContain("\x1b]8;;https://host/my file.png\x1b\\");
     // Every OSC 8 opener must have its own ST before the next one starts

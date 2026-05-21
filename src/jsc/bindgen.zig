@@ -65,15 +65,15 @@ pub fn BindgenOptional(comptime Child: type) type {
             if (extern_value.tag == 0) {
                 return null;
             }
-            bun.assert_eql(extern_value.tag, 1);
+            fun.assert_eql(extern_value.tag, 1);
             return Child.convertFromExtern(extern_value.data.@"1");
         }
     };
 }
 
 pub const BindgenString = struct {
-    pub const ZigType = bun.string.WTFString;
-    pub const ExternType = ?bun.string.WTFStringImpl;
+    pub const ZigType = fun.string.WTFString;
+    pub const ExternType = ?fun.string.WTFStringImpl;
     pub const OptionalZigType = ZigType.Optional;
     pub const OptionalExternType = ExternType;
 
@@ -96,7 +96,7 @@ pub fn BindgenUnion(comptime children: []const type) type {
 
     const tagged_field_types_const = tagged_field_types;
     const untagged_field_types_const = untagged_field_types;
-    const zig_type = bun.meta.TaggedUnion(&tagged_field_types_const);
+    const zig_type = fun.meta.TaggedUnion(&tagged_field_types_const);
     const extern_type = ExternTaggedUnion(&untagged_field_types_const);
 
     return struct {
@@ -129,7 +129,7 @@ pub fn ExternTaggedUnion(comptime field_types: []const type) type {
 }
 
 fn ExternUnion(comptime field_types: []const type) type {
-    var info = @typeInfo(bun.meta.TaggedUnion(field_types));
+    var info = @typeInfo(fun.meta.TaggedUnion(field_types));
     info.@"union".tag_type = null;
     info.@"union".layout = .@"extern";
     info.@"union".decls = &.{};
@@ -138,7 +138,7 @@ fn ExternUnion(comptime field_types: []const type) type {
 
 pub fn BindgenArray(comptime Child: type) type {
     return struct {
-        pub const ZigType = bun.collections.ArrayListDefault(Child.ZigType);
+        pub const ZigType = fun.collections.ArrayListDefault(Child.ZigType);
         pub const ExternType = ExternArrayList(Child.ExternType);
 
         pub fn convertFromExtern(extern_value: ExternType) ZigType {
@@ -146,7 +146,7 @@ pub fn BindgenArray(comptime Child: type) type {
             const capacity: usize = @intCast(extern_value.capacity);
 
             const data = extern_value.data orelse return .init();
-            bun.assertf(
+            fun.assertf(
                 length <= capacity,
                 "length ({d}) should not exceed capacity ({d})",
                 .{ length, capacity },
@@ -156,12 +156,12 @@ pub fn BindgenArray(comptime Child: type) type {
                 .capacity = capacity,
             };
 
-            if (comptime !bun.use_mimalloc) {
+            if (comptime !fun.use_mimalloc) {
                 // Don't reuse memory in this case; it would be freed by the wrong allocator.
             } else if (comptime Child.ZigType == Child.ExternType) {
                 return .fromUnmanaged(.{}, unmanaged);
             } else if (comptime @sizeOf(Child.ZigType) <= @sizeOf(Child.ExternType) and
-                @alignOf(Child.ZigType) <= bun.allocators.mimalloc.MI_MAX_ALIGN_SIZE)
+                @alignOf(Child.ZigType) <= fun.allocators.mimalloc.MI_MAX_ALIGN_SIZE)
             {
                 // We can reuse the allocation, but we still need to convert the elements.
                 var storage: []u8 = @ptrCast(unmanaged.allocatedSlice());
@@ -192,8 +192,8 @@ pub fn BindgenArray(comptime Child: type) type {
                     if (new_alloc_size != storage.len) {
                         // Allocation isn't a multiple of `@sizeOf(Child.ZigType)`; we have to
                         // resize it.
-                        storage = bun.handleOom(
-                            bun.default_allocator.realloc(storage, new_alloc_size),
+                        storage = fun.handleOom(
+                            fun.default_allocator.realloc(storage, new_alloc_size),
                         );
                     }
                     break :blk new_capacity;
@@ -208,9 +208,9 @@ pub fn BindgenArray(comptime Child: type) type {
             }
 
             defer unmanaged.deinit(
-                if (bun.use_mimalloc) bun.default_allocator else std.heap.raw_c_allocator,
+                if (fun.use_mimalloc) fun.default_allocator else std.heap.raw_c_allocator,
             );
-            var result = bun.handleOom(ZigType.initCapacity(length));
+            var result = fun.handleOom(ZigType.initCapacity(length));
             for (unmanaged.items) |*item| {
                 result.appendAssumeCapacity(Child.convertFromExtern(item.*));
             }
@@ -229,7 +229,7 @@ fn ExternArrayList(comptime Child: type) type {
 
 fn BindgenExternalShared(comptime T: type) type {
     return struct {
-        pub const ZigType = bun.ptr.ExternalShared(T);
+        pub const ZigType = fun.ptr.ExternalShared(T);
         pub const ExternType = ?*T;
         pub const OptionalZigType = ZigType.Optional;
         pub const OptionalExternType = ExternType;
@@ -247,8 +247,8 @@ fn BindgenExternalShared(comptime T: type) type {
 pub const BindgenArrayBuffer = BindgenExternalShared(jsc.JSCArrayBuffer);
 pub const BindgenBlob = BindgenExternalShared(webcore.Blob);
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.bun_js.jsc;
-const webcore = bun.bun_js.webcore;
+const jsc = fun.fun_js.jsc;
+const webcore = fun.fun_js.webcore;

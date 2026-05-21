@@ -7,7 +7,7 @@ namespace JSC {
 class VM;
 }
 
-namespace Bun {
+namespace Fun {
 String base64URLEncodeToString(Vector<uint8_t> data);
 size_t toISOString(JSC::VM& vm, double date, char buffer[64]);
 }

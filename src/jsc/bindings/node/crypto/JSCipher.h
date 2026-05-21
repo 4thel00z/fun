@@ -6,10 +6,10 @@
 #include <JavaScriptCore/JSTypedArrays.h>
 #include <wtf/text/WTFString.h>
 #include "ncrypto.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "openssl/ssl.h"
 
-namespace Bun {
+namespace Fun {
 
 enum class CipherKind {
     Cipher,
@@ -124,4 +124,4 @@ JSC_DECLARE_HOST_FUNCTION(jsPublicDecrypt);
 JSC_DECLARE_HOST_FUNCTION(jsPrivateEncrypt);
 JSC_DECLARE_HOST_FUNCTION(jsPrivateDecrypt);
 
-} // namespace Bun
+} // namespace Fun

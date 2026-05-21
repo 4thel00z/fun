@@ -35,21 +35,21 @@ pub const JSModuleLoader = opaque {
         );
     }
     extern fn JSC__JSModuleLoader__loadAndEvaluateModule(arg0: *JSGlobalObject, arg1: ?*const String) *JSInternalPromise;
-    pub fn loadAndEvaluateModule(globalObject: *JSGlobalObject, module_name: ?*const bun.String) ?*JSInternalPromise {
+    pub fn loadAndEvaluateModule(globalObject: *JSGlobalObject, module_name: ?*const fun.String) ?*JSInternalPromise {
         return JSC__JSModuleLoader__loadAndEvaluateModule(globalObject, module_name);
     }
 
-    extern fn JSModuleLoader__import(*JSGlobalObject, *const bun.String) ?*JSInternalPromise;
-    pub fn import(globalObject: *JSGlobalObject, module_name: *const bun.String) bun.JSError!*JSInternalPromise {
+    extern fn JSModuleLoader__import(*JSGlobalObject, *const fun.String) ?*JSInternalPromise;
+    pub fn import(globalObject: *JSGlobalObject, module_name: *const fun.String) fun.JSError!*JSInternalPromise {
         return JSModuleLoader__import(globalObject, module_name) orelse error.JSError;
     }
 };
 
 const JSInternalPromise = @import("./JSInternalPromise.zig").JSInternalPromise;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

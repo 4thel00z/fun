@@ -1,5 +1,5 @@
 import assert from "assert";
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -194,7 +194,7 @@ describe("bundler", () => {
           vm,
           zlib,
         }
-        console.log(Bun.inspect(modules))
+        console.log(Fun.inspect(modules))
       `,
     },
     target: "browser",
@@ -215,7 +215,7 @@ describe("bundler", () => {
     external: Object.keys(nodePolyfillList),
     onAfterBundle(api) {
       const file = api.readFile("/out.js");
-      const imports = new Bun.Transpiler().scanImports(file);
+      const imports = new Fun.Transpiler().scanImports(file);
       expect(imports).toStrictEqual(
         Object.keys(nodePolyfillList).map(x => ({
           kind: "import-statement",
@@ -226,78 +226,78 @@ describe("bundler", () => {
   });
 
   // unsure: do we want polyfills or no-op stuff like node:* has
-  // right now all error except bun:wrap which errors at resolve time, but is included if external
-  const bunModules: Record<string, "no-op" | "polyfill" | "error"> = {
-    "bun": "error",
-    "bun:ffi": "error",
-    "bun:dns": "error",
-    "bun:test": "error",
-    "bun:sqlite": "error",
-    // "bun:wrap": "error",
-    "bun:internal": "error",
-    "bun:jsc": "error",
+  // right now all error except fun:wrap which errors at resolve time, but is included if external
+  const funModules: Record<string, "no-op" | "polyfill" | "error"> = {
+    "fun": "error",
+    "fun:ffi": "error",
+    "fun:dns": "error",
+    "fun:test": "error",
+    "fun:sqlite": "error",
+    // "fun:wrap": "error",
+    "fun:internal": "error",
+    "fun:jsc": "error",
   };
 
-  const nonErroringBunModules = Object.entries(bunModules)
+  const nonErroringFunModules = Object.entries(funModules)
     .filter(x => x[1] !== "error")
     .map(x => x[0]);
 
   // all of them are set to error so this test doesnt make sense to run
-  itBundled.skip("browser/BunPolyfill", {
+  itBundled.skip("browser/FunPolyfill", {
     skipOnEsbuild: true,
     files: {
       "/entry.js": `
-          ${nonErroringBunModules.map((x, i) => `import * as bun_${i} from "${x}";`).join("\n")}
+          ${nonErroringFunModules.map((x, i) => `import * as fun_${i} from "${x}";`).join("\n")}
           function scan(obj) {
             if (typeof obj === 'function') obj = obj()
             return Object.keys(obj).length === 0 ? 'no-op' : 'polyfill'
           }
-          ${nonErroringBunModules.map((x, i) => `console.log("${x.padEnd(12, " ")}:", scan(bun_${i}));`).join("\n")}
+          ${nonErroringFunModules.map((x, i) => `console.log("${x.padEnd(12, " ")}:", scan(fun_${i}));`).join("\n")}
         `,
     },
     target: "browser",
     onAfterBundle(api) {
       assert(!api.readFile("/out.js").includes("\0"), "bundle should not contain null bytes");
       const file = api.readFile("/out.js");
-      const imports = new Bun.Transpiler().scanImports(file);
+      const imports = new Fun.Transpiler().scanImports(file);
       expect(imports).toStrictEqual([]);
     },
     run: {
-      stdout: nonErroringBunModules.map(x => `${x.padEnd(12, " ")}: ${bunModules[x]}`).join("\n"),
+      stdout: nonErroringFunModules.map(x => `${x.padEnd(12, " ")}: ${funModules[x]}`).join("\n"),
     },
   });
 
-  const ImportBunError = itBundled("browser/ImportBunError", {
+  const ImportFunError = itBundled("browser/ImportFunError", {
     skipOnEsbuild: true,
     files: {
       "/entry.js": `
-        ${Object.keys(bunModules)
-          .map((x, i) => `import * as bun_${i} from "${x}";`)
+        ${Object.keys(funModules)
+          .map((x, i) => `import * as fun_${i} from "${x}";`)
           .join("\n")}
-        ${Object.keys(bunModules)
-          .map((x, i) => `console.log("${x.padEnd(12, " ")}:", !!bun_${i});`)
+        ${Object.keys(funModules)
+          .map((x, i) => `console.log("${x.padEnd(12, " ")}:", !!fun_${i});`)
           .join("\n")}
       `,
     },
     target: "browser",
     bundleErrors: {
-      "/entry.js": Object.keys(bunModules)
-        .filter(x => bunModules[x] === "error")
-        .map(x => `Browser build cannot import Bun builtin: "${x}". When bundling for Bun, set target to 'bun'`),
+      "/entry.js": Object.keys(funModules)
+        .filter(x => funModules[x] === "error")
+        .map(x => `Browser build cannot import Fun builtin: "${x}". When bundling for Fun, set target to 'fun'`),
     },
   });
 
   // not implemented right now
-  itBundled("browser/BunPolyfillExternal", {
+  itBundled("browser/FunPolyfillExternal", {
     skipOnEsbuild: true,
-    files: ImportBunError.options.files,
+    files: ImportFunError.options.files,
     target: "browser",
-    external: Object.keys(bunModules),
+    external: Object.keys(funModules),
     onAfterBundle(api) {
       const file = api.readFile("/out.js");
-      const imports = new Bun.Transpiler().scanImports(file);
+      const imports = new Fun.Transpiler().scanImports(file);
       expect(imports).toStrictEqual(
-        Object.keys(bunModules).map(x => ({
+        Object.keys(funModules).map(x => ({
           kind: "import-statement",
           path: x,
         })),
@@ -313,7 +313,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/entry.js": [`Could not resolve: "node:net1". Maybe you need to "bun install"?`],
+      "/entry.js": [`Could not resolve: "node:net1". Maybe you need to "fun install"?`],
     },
   });
   itBundled("browser/ImportNonExistentWithoutNodePrefix", {
@@ -324,7 +324,7 @@ describe("bundler", () => {
       `,
     },
     bundleErrors: {
-      "/entry.js": [`Could not resolve: "net1". Maybe you need to "bun install"?`],
+      "/entry.js": [`Could not resolve: "net1". Maybe you need to "fun install"?`],
     },
   });
   itBundled("browser/TargetNodeNonExistentBuiltinShouldBeExternal", {

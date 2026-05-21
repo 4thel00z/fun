@@ -30,13 +30,13 @@ pub const PublishCommand = struct {
                 RestrictedUnscopedPackage,
             };
 
-            /// Retrieve information for publishing from a tarball path, `bun publish path/to/tarball.tgz`
+            /// Retrieve information for publishing from a tarball path, `fun publish path/to/tarball.tgz`
             pub fn fromTarballPath(
                 ctx: Command.Context,
                 manager: *PackageManager,
                 tarball_path: string,
             ) FromTarballError!Context(directory_publish) {
-                var abs_buf: bun.PathBuffer = undefined;
+                var abs_buf: fun.PathBuffer = undefined;
                 const abs_tarball_path = path.joinAbsStringBufZ(
                     FileSystem.instance.top_level_dir,
                     &abs_buf,
@@ -44,7 +44,7 @@ pub const PublishCommand = struct {
                     .auto,
                 );
 
-                const tarball_bytes = File.readFrom(bun.invalid_fd, abs_tarball_path, ctx.allocator).unwrap() catch |err| {
+                const tarball_bytes = File.readFrom(fun.invalid_fd, abs_tarball_path, ctx.allocator).unwrap() catch |err| {
                     Output.err(err, "failed to read tarball: '{s}'", .{tarball_path});
                     Global.crash();
                 };
@@ -91,23 +91,23 @@ pub const PublishCommand = struct {
                     total_files += @intFromBool(next.kind == .file);
 
                     // this is option `strip: 1` (npm expects a `package/` prefix for all paths)
-                    if (strings.indexOfAnyT(bun.OSPathChar, pathname, "/\\")) |slash| {
+                    if (strings.indexOfAnyT(fun.OSPathChar, pathname, "/\\")) |slash| {
                         const stripped = pathname[slash + 1 ..];
                         if (stripped.len == 0) continue;
 
                         Output.pretty("<b><cyan>packed<r> {f} {f}\n", .{
-                            bun.fmt.size(size, .{ .space_between_number_and_unit = false }),
-                            bun.fmt.fmtOSPath(stripped, .{}),
+                            fun.fmt.size(size, .{ .space_between_number_and_unit = false }),
+                            fun.fmt.fmtOSPath(stripped, .{}),
                         });
 
                         if (next.kind != .file) continue;
 
-                        if (strings.indexOfAnyT(bun.OSPathChar, stripped, "/\\") == null) {
+                        if (strings.indexOfAnyT(fun.OSPathChar, stripped, "/\\") == null) {
 
                             // check for package.json, readme.md, ...
                             const filename = pathname[slash + 1 ..];
 
-                            if (maybe_package_json_contents == null and strings.eqlCaseInsensitiveT(bun.OSPathChar, filename, "package.json")) {
+                            if (maybe_package_json_contents == null and strings.eqlCaseInsensitiveT(fun.OSPathChar, filename, "package.json")) {
                                 maybe_package_json_contents = switch (try next.readEntryData(ctx.allocator, iter.archive)) {
                                     .err => |err| {
                                         Output.errGeneric("{s}: {s}", .{ err.message, err.archive.errorString() });
@@ -124,7 +124,7 @@ pub const PublishCommand = struct {
                                     },
                                     .result => |bytes| bytes,
                                 };
-                                const filename_utf8 = if (comptime bun.OSPathChar == u8)
+                                const filename_utf8 = if (comptime fun.OSPathChar == u8)
                                     try ctx.allocator.dupe(u8, filename)
                                 else
                                     try strings.toUTF8Alloc(ctx.allocator, filename);
@@ -133,8 +133,8 @@ pub const PublishCommand = struct {
                         }
                     } else {
                         Output.pretty("<b><cyan>packed<r> {f} {f}\n", .{
-                            bun.fmt.size(size, .{ .space_between_number_and_unit = false }),
-                            bun.fmt.fmtOSPath(pathname, .{}),
+                            fun.fmt.size(size, .{ .space_between_number_and_unit = false }),
+                            fun.fmt.fmtOSPath(pathname, .{}),
                         });
                     }
                 }
@@ -255,7 +255,7 @@ pub const PublishCommand = struct {
 
             const FromWorkspaceError = Pack.PackError(true);
 
-            /// `bun publish` without a tarball path. Automatically pack the current workspace and get
+            /// `fun publish` without a tarball path. Automatically pack the current workspace and get
             /// information required for publishing
             pub fn fromWorkspace(
                 ctx: Command.Context,
@@ -308,7 +308,7 @@ pub const PublishCommand = struct {
     }
 
     pub fn exec(ctx: Command.Context) !void {
-        Output.prettyln("<r><b>bun publish <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+        Output.prettyln("<r><b>fun publish <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
         Output.flush();
 
         const cli = try PackageManager.CommandLineArguments.parse(ctx.allocator, .publish);
@@ -318,7 +318,7 @@ pub const PublishCommand = struct {
                 if (err == error.MissingPackageJSON) {
                     Output.errGeneric("missing package.json, nothing to publish", .{});
                 }
-                Output.errGeneric("failed to initialize bun install: {s}", .{@errorName(err)});
+                Output.errGeneric("failed to initialize fun install: {s}", .{@errorName(err)});
             }
             Global.crash();
         };
@@ -327,7 +327,7 @@ pub const PublishCommand = struct {
         if (cli.positionals.len > 1) {
             const context = Context(false).fromTarballPath(ctx, manager, cli.positionals[1]) catch |err| {
                 switch (err) {
-                    error.OutOfMemory => bun.outOfMemory(),
+                    error.OutOfMemory => fun.outOfMemory(),
                     error.MissingPackageName => {
                         Output.errGeneric("missing `name` string in package.json", .{});
                     },
@@ -356,9 +356,9 @@ pub const PublishCommand = struct {
 
             publish(false, &context) catch |err| {
                 switch (err) {
-                    error.OutOfMemory => bun.outOfMemory(),
+                    error.OutOfMemory => fun.outOfMemory(),
                     error.NeedAuth => {
-                        Output.errGeneric("missing authentication (run <cyan>`bunx npm login`<r>)", .{});
+                        Output.errGeneric("missing authentication (run <cyan>`funx npm login`<r>)", .{});
                         Global.crash();
                     },
                 }
@@ -375,7 +375,7 @@ pub const PublishCommand = struct {
 
         const context = Context(true).fromWorkspace(ctx, manager) catch |err| {
             switch (err) {
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 error.MissingPackageName => {
                     Output.errGeneric("missing `name` string in package.json", .{});
                 },
@@ -399,13 +399,13 @@ pub const PublishCommand = struct {
         };
 
         // TODO: read this into memory
-        _ = bun.sys.unlink(context.abs_tarball_path);
+        _ = fun.sys.unlink(context.abs_tarball_path);
 
         publish(true, &context) catch |err| {
             switch (err) {
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 error.NeedAuth => {
-                    Output.errGeneric("missing authentication (run <cyan>`bunx npm login`<r>)", .{});
+                    Output.errGeneric("missing authentication (run <cyan>`funx npm login`<r>)", .{});
                     Global.crash();
                 },
             }
@@ -480,7 +480,7 @@ pub const PublishCommand = struct {
         var url_buf = std.array_list.Managed(u8).init(allocator);
         defer url_buf.deinit();
         const registry_url = strings.withoutTrailingSlash(registry.url.href);
-        const encoded_name = bun.fmt.dependencyUrl(package_name);
+        const encoded_name = fun.fmt.dependencyUrl(package_name);
 
         // Try to get package metadata to check if version exists
         url_buf.writer().print("{s}/{f}", .{ registry_url, encoded_name }) catch return false;
@@ -609,7 +609,7 @@ pub const PublishCommand = struct {
 
         try print_writer.print("{s}/{f}", .{
             strings.withoutTrailingSlash(registry.url.href),
-            bun.fmt.dependencyUrl(ctx.package_name),
+            fun.fmt.dependencyUrl(ctx.package_name),
         });
         const publish_url = URL.parse(try ctx.allocator.dupe(u8, print_buf.items));
         print_buf.clearRetainingCapacity();
@@ -754,18 +754,18 @@ pub const PublishCommand = struct {
     fn pressEnterToOpenInBrowser(auth_url: stringZ) void {
         // unset `ENABLE_VIRTUAL_TERMINAL_INPUT` on windows. This prevents backspace from
         // deleting the entire line
-        const original_mode: if (Environment.isWindows) ?bun.windows.DWORD else void = if (comptime Environment.isWindows)
-            bun.windows.updateStdioModeFlags(.std_in, .{ .unset = bun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT }) catch null;
+        const original_mode: if (Environment.isWindows) ?fun.windows.DWORD else void = if (comptime Environment.isWindows)
+            fun.windows.updateStdioModeFlags(.std_in, .{ .unset = fun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT }) catch null;
 
         defer if (comptime Environment.isWindows) {
             if (original_mode) |mode| {
-                _ = bun.c.SetConsoleMode(bun.FD.stdin().native(), mode);
+                _ = fun.c.SetConsoleMode(fun.FD.stdin().native(), mode);
             }
         };
 
         while ('\n' != Output.buffered_stdin.reader().readByte() catch return) {}
 
-        var child = std.process.Child.init(&.{ Open.opener, auth_url }, bun.default_allocator);
+        var child = std.process.Child.init(&.{ Open.opener, auth_url }, fun.default_allocator);
         _ = child.spawnAndWait() catch return;
     }
 
@@ -955,13 +955,13 @@ pub const PublishCommand = struct {
         integrity: sha.SHA512.Digest,
         readme: ?ReadmeInfo,
     ) OOM!string {
-        bun.assertWithLocation(json.isObject(), @src());
+        fun.assertWithLocation(json.isObject(), @src());
 
         const registry = manager.scopeForPackageName(package_name);
 
         const version_without_build_tag = Dependency.withoutBuildTag(package_version);
 
-        const integrity_fmt = try std.fmt.allocPrint(allocator, "{f}", .{bun.fmt.integrity(integrity, .full)});
+        const integrity_fmt = try std.fmt.allocPrint(allocator, "{f}", .{fun.fmt.integrity(integrity, .full)});
 
         try json.setString(allocator, "_id", try std.fmt.allocPrint(allocator, "{s}@{s}", .{ package_name, version_without_build_tag }));
         try json.setString(allocator, "_integrity", integrity_fmt);
@@ -990,7 +990,7 @@ pub const PublishCommand = struct {
             ),
             .value = Expr.init(
                 E.String,
-                .{ .data = try std.fmt.allocPrint(allocator, "{f}", .{bun.fmt.integrity(integrity, .full)}) },
+                .{ .data = try std.fmt.allocPrint(allocator, "{f}", .{fun.fmt.integrity(integrity, .full)}) },
                 logger.Loc.Empty,
             ),
         };
@@ -1034,9 +1034,9 @@ pub const PublishCommand = struct {
         ));
 
         {
-            const workspace_root = bun.sys.openA(
+            const workspace_root = fun.sys.openA(
                 strings.withoutSuffixComptime(manager.original_package_json_path, "package.json"),
-                bun.O.DIRECTORY,
+                fun.O.DIRECTORY,
                 0,
             ).unwrap() catch |err| {
                 Output.err(err, "failed to open workspace directory", .{});
@@ -1052,10 +1052,10 @@ pub const PublishCommand = struct {
             );
         }
 
-        const buffer_writer = bun.js_printer.BufferWriter.init(allocator);
-        var writer = bun.js_printer.BufferPrinter.init(buffer_writer);
+        const buffer_writer = fun.js_printer.BufferWriter.init(allocator);
+        var writer = fun.js_printer.BufferPrinter.init(buffer_writer);
 
-        const written = bun.js_printer.printJSON(
+        const written = fun.js_printer.printJSON(
             @TypeOf(&writer),
             &writer,
             json.*,
@@ -1092,8 +1092,8 @@ pub const PublishCommand = struct {
         return isReadmeFilenameT(u8, name);
     }
 
-    fn isReadmeOSPath(name: []const bun.OSPathChar) bool {
-        return isReadmeFilenameT(bun.OSPathChar, name);
+    fn isReadmeOSPath(name: []const fun.OSPathChar) bool {
+        return isReadmeFilenameT(fun.OSPathChar, name);
     }
 
     /// Searches `abs_workspace_path` for a README, matching `npm publish`. Returns
@@ -1106,14 +1106,14 @@ pub const PublishCommand = struct {
         var workspace_dir = std.fs.openDirAbsolute(abs_workspace_path, .{ .iterate = true }) catch return null;
         defer workspace_dir.close();
 
-        var iter = bun.DirIterator.iterate(.fromStdDir(workspace_dir), .u8);
+        var iter = fun.DirIterator.iterate(.fromStdDir(workspace_dir), .u8);
         while (iter.next().unwrap() catch null) |entry| {
             if (entry.kind == .directory) continue;
             const name = entry.name.slice();
             if (!isReadmeFilename(name)) continue;
 
             const name_dup = try allocator.dupe(u8, name);
-            const contents = switch (bun.sys.File.readFrom(bun.FD.fromStdDir(workspace_dir), name_dup, allocator)) {
+            const contents = switch (fun.sys.File.readFrom(fun.FD.fromStdDir(workspace_dir), name_dup, allocator)) {
                 .result => |bytes| bytes,
                 .err => {
                     allocator.free(name_dup);
@@ -1129,9 +1129,9 @@ pub const PublishCommand = struct {
         allocator: std.mem.Allocator,
         json: *Expr,
         package_name: string,
-        workspace_root: bun.FD,
+        workspace_root: fun.FD,
     ) OOM!void {
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
         if (json.asProperty("bin")) |bin_query| {
             switch (bin_query.expr.data) {
                 .e_string => |bin_str| {
@@ -1144,7 +1144,7 @@ pub const PublishCommand = struct {
                         ),
                         "./",
                     );
-                    if (!bun.sys.existsAt(workspace_root, normalized)) {
+                    if (!fun.sys.existsAt(workspace_root, normalized)) {
                         Output.warn("bin '{s}' does not exist", .{normalized});
                     }
 
@@ -1220,7 +1220,7 @@ pub const PublishCommand = struct {
                             continue;
                         }
 
-                        if (!bun.sys.existsAt(workspace_root, value)) {
+                        if (!fun.sys.existsAt(workspace_root, value)) {
                             Output.warn("bin '{s}' does not exist", .{value});
                         }
 
@@ -1270,7 +1270,7 @@ pub const PublishCommand = struct {
                     return;
                 }
 
-                const bin_dir = bun.sys.openat(workspace_root, normalized_bin_dir, bun.O.DIRECTORY, 0).unwrap() catch |err| {
+                const bin_dir = fun.sys.openat(workspace_root, normalized_bin_dir, fun.O.DIRECTORY, 0).unwrap() catch |err| {
                     if (err == error.ENOENT) {
                         Output.warn("bin directory '{s}' does not exist", .{normalized_bin_dir});
                         return;
@@ -1289,7 +1289,7 @@ pub const PublishCommand = struct {
                     var dir, const dir_subpath, const close_dir = dir_info;
                     defer if (close_dir) dir.close();
 
-                    var iter = bun.DirIterator.iterate(.fromStdDir(dir), .u8);
+                    var iter = fun.DirIterator.iterate(.fromStdDir(dir), .u8);
                     while (iter.next().unwrap() catch null) |entry| {
                         const name, const subpath = name_and_subpath: {
                             const name = entry.name.slice();
@@ -1355,7 +1355,7 @@ pub const PublishCommand = struct {
             if (auth_type) |auth| @tagName(auth) else "web"
         else
             "legacy";
-        const ci_name = bun.ci.detectCIName();
+        const ci_name = fun.ci.detectCIName();
 
         {
             headers.count("accept", "*/*");
@@ -1496,8 +1496,8 @@ pub const PublishCommand = struct {
 
             try buf.ensureUnusedCapacity(ctx.allocator, encoded_tarball_len);
             buf.items.len += encoded_tarball_len;
-            const count = bun.simdutf.base64.encode(ctx.tarball_bytes, buf.items[buf.items.len - encoded_tarball_len ..], false);
-            bun.assertWithLocation(count == encoded_tarball_len, @src());
+            const count = fun.simdutf.base64.encode(ctx.tarball_bytes, buf.items[buf.items.len - encoded_tarball_len ..], false);
+            fun.assertWithLocation(count == encoded_tarball_len, @src());
 
             try writer.print("\",\"length\":{d}}}}}}}", .{
                 ctx.tarball_bytes.len,
@@ -1514,37 +1514,37 @@ const stringZ = [:0]const u8;
 const Open = @import("./open.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const DotEnv = bun.DotEnv;
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSON = bun.json;
-const MutableString = bun.MutableString;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const URL = bun.URL;
-const logger = bun.logger;
-const path = bun.path;
-const sha = bun.sha;
-const strings = bun.strings;
-const Expr = bun.js_parser.Expr;
-const File = bun.sys.File;
-const FileSystem = bun.fs.FileSystem;
-const Archive = bun.libarchive.lib.Archive;
+const fun = @import("fun");
+const DotEnv = fun.DotEnv;
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSON = fun.json;
+const MutableString = fun.MutableString;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const URL = fun.URL;
+const logger = fun.logger;
+const path = fun.path;
+const sha = fun.sha;
+const strings = fun.strings;
+const Expr = fun.js_parser.Expr;
+const File = fun.sys.File;
+const FileSystem = fun.fs.FileSystem;
+const Archive = fun.libarchive.lib.Archive;
 
-const E = bun.ast.E;
-const G = bun.ast.G;
+const E = fun.ast.E;
+const G = fun.ast.G;
 
-const Command = bun.cli.Command;
-const Pack = bun.cli.PackCommand;
-const Run = bun.cli.RunCommand;
-const prompt = bun.cli.InitCommand.prompt;
+const Command = fun.cli.Command;
+const Pack = fun.cli.PackCommand;
+const Run = fun.cli.RunCommand;
+const prompt = fun.cli.InitCommand.prompt;
 
-const http = bun.http;
+const http = fun.http;
 const HeaderBuilder = http.HeaderBuilder;
 const MimeType = http.MimeType;
 
-const install = bun.install;
+const install = fun.install;
 const Dependency = install.Dependency;
 const Lockfile = install.Lockfile;
 const Npm = install.Npm;

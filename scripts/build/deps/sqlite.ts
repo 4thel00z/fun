@@ -1,10 +1,10 @@
 /**
- * SQLite — embedded SQL database. Backs bun:sqlite.
+ * SQLite — embedded SQL database. Backs fun:sqlite.
  *
- * Source lives IN THE BUN REPO at src/jsc/bindings/sqlite/ — it's the
+ * Source lives IN THE FUN REPO at src/jsc/bindings/sqlite/ — it's the
  * sqlite3 amalgamation (single .c file). No fetch step; tracked in git.
  *
- * Only built when staticSqlite=true. Otherwise bun dlopen()s the system
+ * Only built when staticSqlite=true. Otherwise fun dlopen()s the system
  * sqlite at runtime (macOS ships a recent sqlite; most linux distros don't,
  * so static is the default on linux).
  */
@@ -39,7 +39,7 @@ export const sqlite: Dependency = {
     },
     cflags: [
       "-Wno-incompatible-pointer-types-discards-qualifiers",
-      // Match the static CRT bun links; /U_DLL keeps sqlite from picking
+      // Match the static CRT fun links; /U_DLL keeps sqlite from picking
       // the dllimport annotations meant for the DLL build.
       ...(cfg.windows ? ["/MT", "/U_DLL"] : []),
     ],

@@ -62,13 +62,13 @@ pub const Result = struct {
     };
 
     const WatcherData = struct {
-        fd: bun.FD,
-        dir_fd: bun.FD,
+        fd: fun.FD,
+        dir_fd: fun.FD,
 
         /// When no files to watch, this encoding is used.
         pub const none: WatcherData = .{
-            .fd = bun.invalid_fd,
-            .dir_fd = bun.invalid_fd,
+            .fd = fun.invalid_fd,
+            .dir_fd = fun.invalid_fd,
         };
     };
 
@@ -140,10 +140,10 @@ fn getRuntimeSourceComptime(comptime target: options.Target) RuntimeSource {
     // and then that is either replaced with the module itself, or an import to the
     // runtime here.
     const runtime_require = switch (target) {
-        // Previously, Bun inlined `import.meta.require` at all usages. This broke
+        // Previously, Fun inlined `import.meta.require` at all usages. This broke
         // code that called `fn.toString()` and parsed the code outside a module
         // context.
-        .bun, .bun_macro =>
+        .fun, .fun_macro =>
         \\export var __require = import.meta.require;
         ,
 
@@ -178,12 +178,12 @@ fn getRuntimeSourceComptime(comptime target: options.Target) RuntimeSource {
     };
     const runtime_using_symbols = switch (target) {
         // JavaScriptCore supports `using` / `await using` natively (see
-        // `lower_using = !target.isBun()` below), so these helpers are unused
-        // when bundling for Bun and will be tree-shaken. They are still defined
+        // `lower_using = !target.isFun()` below), so these helpers are unused
+        // when bundling for Fun and will be tree-shaken. They are still defined
         // here so the runtime module exports a consistent shape across targets.
-        // Bun's WebKit also has Symbol.asyncDispose, Symbol.dispose, and
+        // Fun's WebKit also has Symbol.asyncDispose, Symbol.dispose, and
         // SuppressedError, so no polyfills are needed.
-        .bun =>
+        .fun =>
         \\export var __using = (stack, value, async) => {
         \\  if (value != null) {
         \\    if (typeof value !== 'object' && typeof value !== 'function') throw TypeError('Object expected to be assigned to "using" declaration')
@@ -258,7 +258,7 @@ fn getRuntimeSourceComptime(comptime target: options.Target) RuntimeSource {
 
     const parse_task = ParseTask{
         .ctx = undefined,
-        .path = Fs.Path.initWithNamespace("runtime", "bun:runtime"),
+        .path = Fs.Path.initWithNamespace("runtime", "fun:runtime"),
         .side_effects = .no_side_effects__pure_data,
         .jsx = .{
             .parse = false,
@@ -293,7 +293,7 @@ fn getEmptyCSSAST(
 ) !JSAst {
     const root = Expr.init(E.Object, E.Object{}, Logger.Loc{ .start = 0 });
     var ast = JSAst.init((try js_parser.newLazyExportAST(allocator, transpiler.options.define, opts, log, root, source, "")).?);
-    ast.css = bun.create(allocator, bun.css.BundlerStyleSheet, bun.css.BundlerStyleSheet.empty(allocator));
+    ast.css = fun.create(allocator, fun.css.BundlerStyleSheet, fun.css.BundlerStyleSheet.empty(allocator));
     return ast;
 }
 
@@ -321,7 +321,7 @@ fn getAST(
 ) !JSAst {
     switch (loader) {
         .jsx, .tsx, .js, .ts => {
-            const trace = bun.perf.trace("Bundler.ParseJS");
+            const trace = fun.perf.trace("Bundler.ParseJS");
             defer trace.end();
             return if (try resolver.caches.js.parse(
                 transpiler.allocator,
@@ -343,39 +343,39 @@ fn getAST(
             };
         },
         .json, .jsonc => |v| {
-            const trace = bun.perf.trace("Bundler.ParseJSON");
+            const trace = fun.perf.trace("Bundler.ParseJSON");
             defer trace.end();
             const root = (try resolver.caches.json.parseJSON(log, source, allocator, if (v == .jsonc) .jsonc else .json, true)) orelse Expr.init(E.Object, E.Object{}, Logger.Loc.Empty);
             return JSAst.init((try js_parser.newLazyExportAST(allocator, transpiler.options.define, opts, log, root, source, "")).?);
         },
         .toml => {
-            const trace = bun.perf.trace("Bundler.ParseTOML");
+            const trace = fun.perf.trace("Bundler.ParseTOML");
             defer trace.end();
-            var temp_log = bun.logger.Log.init(allocator);
+            var temp_log = fun.logger.Log.init(allocator);
             defer {
-                bun.handleOom(temp_log.cloneToWithRecycled(log, true));
+                fun.handleOom(temp_log.cloneToWithRecycled(log, true));
                 temp_log.msgs.clearAndFree();
             }
             const root = try TOML.parse(source, &temp_log, allocator, false);
             return JSAst.init((try js_parser.newLazyExportAST(allocator, transpiler.options.define, opts, &temp_log, root, source, "")).?);
         },
         .yaml => {
-            const trace = bun.perf.trace("Bundler.ParseYAML");
+            const trace = fun.perf.trace("Bundler.ParseYAML");
             defer trace.end();
-            var temp_log = bun.logger.Log.init(allocator);
+            var temp_log = fun.logger.Log.init(allocator);
             defer {
-                bun.handleOom(temp_log.cloneToWithRecycled(log, true));
+                fun.handleOom(temp_log.cloneToWithRecycled(log, true));
                 temp_log.msgs.clearAndFree();
             }
             const root = try YAML.parse(source, &temp_log, allocator);
             return JSAst.init((try js_parser.newLazyExportAST(allocator, transpiler.options.define, opts, &temp_log, root, source, "")).?);
         },
         .json5 => {
-            const trace = bun.perf.trace("Bundler.ParseJSON5");
+            const trace = fun.perf.trace("Bundler.ParseJSON5");
             defer trace.end();
-            var temp_log = bun.logger.Log.init(allocator);
+            var temp_log = fun.logger.Log.init(allocator);
             defer {
-                bun.handleOom(temp_log.cloneToWithRecycled(log, true));
+                fun.handleOom(temp_log.cloneToWithRecycled(log, true));
                 temp_log.msgs.clearAndFree();
             }
             const root = try JSON5.parse(source, &temp_log, allocator);
@@ -390,12 +390,12 @@ fn getAST(
             return ast;
         },
         .md => {
-            const html = bun.md.renderToHtml(source.contents, allocator) catch {
+            const html = fun.md.renderToHtml(source.contents, allocator) catch {
                 log.addError(
                     source,
                     Logger.Loc.Empty,
                     "Failed to render markdown to HTML",
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
                 return error.ParserError;
             };
             const root = Expr.init(E.String, E.String{
@@ -407,19 +407,19 @@ fn getAST(
         },
 
         .sqlite_embedded, .sqlite => {
-            if (!transpiler.options.target.isBun()) {
+            if (!transpiler.options.target.isFun()) {
                 log.addError(
                     source,
                     Logger.Loc.Empty,
-                    "To use the \"sqlite\" loader, set target to \"bun\"",
-                ) catch |err| bun.handleOom(err);
+                    "To use the \"sqlite\" loader, set target to \"fun\"",
+                ) catch |err| fun.handleOom(err);
                 return error.ParserError;
             }
 
             const path_to_use = brk: {
                 // Implements embedded sqlite
                 if (loader == .sqlite_embedded) {
-                    const embedded_path = std.fmt.allocPrint(allocator, "{f}A{d:0>8}", .{ bun.fmt.hexIntLower(unique_key_prefix), source.index.get() }) catch unreachable;
+                    const embedded_path = std.fmt.allocPrint(allocator, "{f}A{d:0>8}", .{ fun.fmt.hexIntLower(unique_key_prefix), source.index.get() }) catch unreachable;
                     unique_key_for_additional_file.* = .{
                         .key = embedded_path,
                         .content_hash = ContentHasher.run(source.contents),
@@ -478,12 +478,12 @@ fn getAST(
                 log.addError(
                     source,
                     Logger.Loc.Empty,
-                    "Loading .node files won't work in the browser. Make sure to set target to \"bun\" or \"node\"",
-                ) catch |err| bun.handleOom(err);
+                    "Loading .node files won't work in the browser. Make sure to set target to \"fun\" or \"node\"",
+                ) catch |err| fun.handleOom(err);
                 return error.ParserError;
             }
 
-            const unique_key = std.fmt.allocPrint(allocator, "{f}A{d:0>8}", .{ bun.fmt.hexIntLower(unique_key_prefix), source.index.get() }) catch unreachable;
+            const unique_key = std.fmt.allocPrint(allocator, "{f}A{d:0>8}", .{ fun.fmt.hexIntLower(unique_key_prefix), source.index.get() }) catch unreachable;
             // This injects the following code:
             //
             // require(unique_key)
@@ -560,22 +560,22 @@ fn getAST(
             // make css ast
             var import_records = BabyList(ImportRecord){};
             const source_code = source.contents;
-            var temp_log = bun.logger.Log.init(allocator);
+            var temp_log = fun.logger.Log.init(allocator);
             defer {
-                bun.handleOom(temp_log.appendToMaybeRecycled(log, source));
+                fun.handleOom(temp_log.appendToMaybeRecycled(log, source));
             }
 
             const css_module_suffix = ".module.css";
             const enable_css_modules = source.path.pretty.len > css_module_suffix.len and
                 strings.eqlComptime(source.path.pretty[source.path.pretty.len - css_module_suffix.len ..], css_module_suffix);
             const parser_options = if (enable_css_modules) init: {
-                var parseropts = bun.css.ParserOptions.default(allocator, &temp_log);
-                parseropts.filename = bun.path.basename(source.path.pretty);
-                parseropts.css_modules = bun.css.CssModuleConfig{};
+                var parseropts = fun.css.ParserOptions.default(allocator, &temp_log);
+                parseropts.filename = fun.path.basename(source.path.pretty);
+                parseropts.css_modules = fun.css.CssModuleConfig{};
                 break :init parseropts;
-            } else bun.css.ParserOptions.default(allocator, &temp_log);
+            } else fun.css.ParserOptions.default(allocator, &temp_log);
 
-            var css_ast, var extra = switch (bun.css.BundlerStyleSheet.parseBundler(
+            var css_ast, var extra = switch (fun.css.BundlerStyleSheet.parseBundler(
                 allocator,
                 source_code,
                 parser_options,
@@ -589,16 +589,16 @@ fn getAST(
                 },
             };
             // Make sure the css modules local refs have a valid tag
-            if (comptime bun.Environment.isDebug) {
+            if (comptime fun.Environment.isDebug) {
                 if (css_ast.local_scope.count() > 0) {
                     for (css_ast.local_scope.values()) |entry| {
                         const ref = entry.ref;
-                        bun.assert(ref.innerIndex() < extra.symbols.len);
+                        fun.assert(ref.innerIndex() < extra.symbols.len);
                     }
                 }
             }
-            if (css_ast.minify(allocator, bun.css.MinifyOptions{
-                .targets = bun.css.Targets.forBundlerTarget(transpiler.options.target),
+            if (css_ast.minify(allocator, fun.css.MinifyOptions{
+                .targets = fun.css.Targets.forBundlerTarget(transpiler.options.target),
                 .unused_symbols = .{},
             }, &extra).asErr()) |e| {
                 try e.addToLogger(&temp_log, source, allocator);
@@ -609,18 +609,18 @@ fn getAST(
             }
             // If this is a css module, the final exports object wil be set in `generateCodeForLazyExport`.
             const root = Expr.init(E.Object, E.Object{}, Logger.Loc{ .start = 0 });
-            const css_ast_heap = bun.create(allocator, bun.css.BundlerStyleSheet, css_ast);
+            const css_ast_heap = fun.create(allocator, fun.css.BundlerStyleSheet, css_ast);
             var ast = JSAst.init((try js_parser.newLazyExportASTImpl(allocator, transpiler.options.define, opts, &temp_log, root, source, "", extra.symbols)).?);
             ast.css = css_ast_heap;
             ast.import_records = import_records;
             return ast;
         },
         // TODO:
-        .dataurl, .base64, .bunsh => {
+        .dataurl, .base64, .funsh => {
             return try getEmptyAST(log, transpiler, opts, allocator, source, E.String);
         },
         .file, .wasm => {
-            bun.assert(loader.shouldCopyForBundling());
+            fun.assert(loader.shouldCopyForBundling());
 
             // Put a unique key in the AST to implement the URL loader. At the end
             // of the bundle, the key is replaced with the actual URL.
@@ -635,7 +635,7 @@ fn getAST(
                 // is done on the bundler thread.
                 try std.fmt.allocPrint(
                     allocator,
-                    bun.bake.DevServer.asset_prefix ++ "/{s}{s}",
+                    fun.bake.DevServer.asset_prefix ++ "/{s}{s}",
                     .{
                         &std.fmt.bytesToHex(std.mem.asBytes(&content_hash), .lower),
                         std.fs.path.extension(source.path.text),
@@ -645,7 +645,7 @@ fn getAST(
                 try std.fmt.allocPrint(
                     allocator,
                     "{f}A{d:0>8}",
-                    .{ bun.fmt.hexIntLower(unique_key_prefix), source.index.get() },
+                    .{ fun.fmt.hexIntLower(unique_key_prefix), source.index.get() },
                 );
             const root = Expr.init(E.String, .{ .data = unique_key }, .{ .start = 0 });
             unique_key_for_additional_file.* = .{
@@ -670,7 +670,7 @@ fn getCodeForParseTaskWithoutPlugins(
 ) !CacheEntry {
     return switch (task.contents_or_fd) {
         .fd => |contents| brk: {
-            const trace = bun.perf.trace("Bundler.readFile");
+            const trace = fun.perf.trace("Bundler.readFile");
             defer trace.end();
 
             // Check FileMap for in-memory files first
@@ -678,7 +678,7 @@ fn getCodeForParseTaskWithoutPlugins(
                 if (file_map.get(file_path.text)) |file_contents| {
                     break :brk .{
                         .contents = file_contents,
-                        .fd = bun.invalid_fd,
+                        .fd = fun.invalid_fd,
                     };
                 }
             }
@@ -687,7 +687,7 @@ fn getCodeForParseTaskWithoutPlugins(
                 if (task.ctx.framework) |f| {
                     if (f.built_in_modules.get(file_path.text)) |file| {
                         switch (file) {
-                            .code => |code| break :brk .{ .contents = code, .fd = bun.invalid_fd },
+                            .code => |code| break :brk .{ .contents = code, .fd = fun.invalid_fd },
                             .import => |path| {
                                 file_path.* = Fs.Path.init(path);
                                 break :lookup_builtin;
@@ -698,7 +698,7 @@ fn getCodeForParseTaskWithoutPlugins(
 
                 break :brk .{
                     .contents = NodeFallbackModules.contentsFromPath(file_path.text) orelse "",
-                    .fd = bun.invalid_fd,
+                    .fd = fun.invalid_fd,
                 };
             }
 
@@ -706,7 +706,7 @@ fn getCodeForParseTaskWithoutPlugins(
                 // TODO: this allocator may be wrong for native plugins
                 if (loader.shouldCopyForBundling())
                     // The OutputFile will own the memory for the contents
-                    bun.default_allocator
+                    fun.default_allocator
                 else
                     allocator,
                 transpiler.fs,
@@ -723,7 +723,7 @@ fn getCodeForParseTaskWithoutPlugins(
                             Logger.Loc.Empty,
                             allocator,
                             "File not found {f}",
-                            .{bun.fmt.quote(file_path.text)},
+                            .{fun.fmt.quote(file_path.text)},
                         ) catch {};
                         return error.FileNotFound;
                     },
@@ -733,7 +733,7 @@ fn getCodeForParseTaskWithoutPlugins(
                             Logger.Loc.Empty,
                             allocator,
                             "{s} reading file: {f}",
-                            .{ @errorName(err), bun.fmt.quote(file_path.text) },
+                            .{ @errorName(err), fun.fmt.quote(file_path.text) },
                         ) catch {};
                     },
                 }
@@ -742,7 +742,7 @@ fn getCodeForParseTaskWithoutPlugins(
         },
         .contents => |contents| .{
             .contents = contents,
-            .fd = bun.invalid_fd,
+            .fd = fun.invalid_fd,
         },
     };
 }
@@ -802,20 +802,20 @@ const OnBeforeParsePlugin = struct {
 
     result: ?*OnBeforeParseResult = null,
 
-    const headers = bun.c;
+    const headers = fun.c;
 
     comptime {
-        bun.assert(@sizeOf(OnBeforeParseArguments) == @sizeOf(headers.OnBeforeParseArguments));
-        bun.assert(@alignOf(OnBeforeParseArguments) == @alignOf(headers.OnBeforeParseArguments));
+        fun.assert(@sizeOf(OnBeforeParseArguments) == @sizeOf(headers.OnBeforeParseArguments));
+        fun.assert(@alignOf(OnBeforeParseArguments) == @alignOf(headers.OnBeforeParseArguments));
 
-        bun.assert(@sizeOf(BunLogOptions) == @sizeOf(headers.BunLogOptions));
-        bun.assert(@alignOf(BunLogOptions) == @alignOf(headers.BunLogOptions));
+        fun.assert(@sizeOf(FunLogOptions) == @sizeOf(headers.FunLogOptions));
+        fun.assert(@alignOf(FunLogOptions) == @alignOf(headers.FunLogOptions));
 
-        bun.assert(@sizeOf(OnBeforeParseResult) == @sizeOf(headers.OnBeforeParseResult));
-        bun.assert(@alignOf(OnBeforeParseResult) == @alignOf(headers.OnBeforeParseResult));
+        fun.assert(@sizeOf(OnBeforeParseResult) == @sizeOf(headers.OnBeforeParseResult));
+        fun.assert(@alignOf(OnBeforeParseResult) == @alignOf(headers.OnBeforeParseResult));
 
-        bun.assert(@sizeOf(BunLogOptions) == @sizeOf(headers.BunLogOptions));
-        bun.assert(@alignOf(BunLogOptions) == @alignOf(headers.BunLogOptions));
+        fun.assert(@sizeOf(FunLogOptions) == @sizeOf(headers.FunLogOptions));
+        fun.assert(@alignOf(FunLogOptions) == @alignOf(headers.FunLogOptions));
     }
 
     const OnBeforeParseArguments = extern struct {
@@ -829,8 +829,8 @@ const OnBeforeParsePlugin = struct {
         external: ?*anyopaque = null,
     };
 
-    const BunLogOptions = extern struct {
-        struct_size: usize = @sizeOf(BunLogOptions),
+    const FunLogOptions = extern struct {
+        struct_size: usize = @sizeOf(FunLogOptions),
         message_ptr: ?[*]const u8 = null,
         message_len: usize = 0,
         path_ptr: ?[*]const u8 = null,
@@ -843,7 +843,7 @@ const OnBeforeParsePlugin = struct {
         line_end: i32 = 0,
         column_end: i32 = 0,
 
-        pub fn sourceLineText(this: *const BunLogOptions) string {
+        pub fn sourceLineText(this: *const FunLogOptions) string {
             if (this.source_line_text_ptr) |ptr| {
                 if (this.source_line_text_len > 0) {
                     return ptr[0..this.source_line_text_len];
@@ -852,7 +852,7 @@ const OnBeforeParsePlugin = struct {
             return "";
         }
 
-        pub fn path(this: *const BunLogOptions) string {
+        pub fn path(this: *const FunLogOptions) string {
             if (this.path_ptr) |ptr| {
                 if (this.path_len > 0) {
                     return ptr[0..this.path_len];
@@ -861,7 +861,7 @@ const OnBeforeParsePlugin = struct {
             return "";
         }
 
-        pub fn message(this: *const BunLogOptions) string {
+        pub fn message(this: *const FunLogOptions) string {
             if (this.message_ptr) |ptr| {
                 if (this.message_len > 0) {
                     return ptr[0..this.message_len];
@@ -870,7 +870,7 @@ const OnBeforeParsePlugin = struct {
             return "";
         }
 
-        pub fn append(this: *const BunLogOptions, log: *Logger.Log, namespace: string) void {
+        pub fn append(this: *const FunLogOptions, log: *Logger.Log, namespace: string) void {
             const allocator = log.msgs.allocator;
             const source_line_text = this.sourceLineText();
             const location = Logger.Location.init(
@@ -879,9 +879,9 @@ const OnBeforeParsePlugin = struct {
                 @max(this.line, -1),
                 @max(this.column, -1),
                 @max(this.column_end - this.column, 0),
-                if (source_line_text.len > 0) bun.handleOom(allocator.dupe(u8, source_line_text)) else null,
+                if (source_line_text.len > 0) fun.handleOom(allocator.dupe(u8, source_line_text)) else null,
             );
-            var msg = Logger.Msg{ .data = .{ .location = location, .text = bun.handleOom(allocator.dupe(u8, this.message())) } };
+            var msg = Logger.Msg{ .data = .{ .location = location, .text = fun.handleOom(allocator.dupe(u8, this.message())) } };
             switch (this.level) {
                 .err => msg.kind = .err,
                 .warn => msg.kind = .warn,
@@ -894,12 +894,12 @@ const OnBeforeParsePlugin = struct {
             } else if (msg.kind == .warn) {
                 log.warnings += 1;
             }
-            bun.handleOom(log.addMsg(msg));
+            fun.handleOom(log.addMsg(msg));
         }
 
         pub fn logFn(
             args_: ?*OnBeforeParseArguments,
-            log_options_: ?*BunLogOptions,
+            log_options_: ?*FunLogOptions,
         ) callconv(.c) void {
             const args = args_ orelse return;
             const log_options = log_options_ orelse return;
@@ -910,9 +910,9 @@ const OnBeforeParsePlugin = struct {
     const OnBeforeParseResultWrapper = extern struct {
         original_source: ?[*]const u8 = null,
         original_source_len: usize = 0,
-        original_source_fd: bun.FD = bun.invalid_fd,
+        original_source_fd: fun.FD = fun.invalid_fd,
         loader: Loader,
-        check: if (bun.Environment.isDebug) u32 else u0 = if (bun.Environment.isDebug) 42069 else 0, // Value to ensure OnBeforeParseResult is wrapped in this struct
+        check: if (fun.Environment.isDebug) u32 else u0 = if (fun.Environment.isDebug) 42069 else 0, // Value to ensure OnBeforeParseResult is wrapped in this struct
         result: OnBeforeParseResult,
     };
 
@@ -929,12 +929,12 @@ const OnBeforeParsePlugin = struct {
 
         log: *const fn (
             args_: ?*OnBeforeParseArguments,
-            log_options_: ?*BunLogOptions,
-        ) callconv(.c) void = &BunLogOptions.logFn,
+            log_options_: ?*FunLogOptions,
+        ) callconv(.c) void = &FunLogOptions.logFn,
 
         pub fn getWrapper(result: *OnBeforeParseResult) *OnBeforeParseResultWrapper {
             const wrapper: *OnBeforeParseResultWrapper = @fieldParentPtr("result", result);
-            bun.debugAssert(wrapper.check == 42069);
+            fun.debugAssert(wrapper.check == 42069);
             return wrapper;
         }
     };
@@ -1026,12 +1026,12 @@ const OnBeforeParsePlugin = struct {
         this.result = &wrapper.result;
         const count = plugin.callOnBeforeParsePlugins(
             this,
-            if (bun.strings.eqlComptime(this.file_path.namespace, "file"))
-                &bun.String.empty
+            if (fun.strings.eqlComptime(this.file_path.namespace, "file"))
+                &fun.String.empty
             else
-                &bun.String.init(this.file_path.namespace),
+                &fun.String.init(this.file_path.namespace),
 
-            &bun.String.init(this.file_path.text),
+            &fun.String.init(this.file_path.text),
             &args,
             &wrapper.result,
             this.should_continue_running,
@@ -1050,13 +1050,13 @@ const OnBeforeParsePlugin = struct {
             // If the plugin sets the `free_user_context` function pointer, it _must_ set the `user_context` pointer.
             // Otherwise this is just invalid behavior.
             if (wrapper.result.user_context == null and wrapper.result.free_user_context != null) {
-                var msg = Logger.Msg{ .data = .{ .location = null, .text = bun.default_allocator.dupe(
+                var msg = Logger.Msg{ .data = .{ .location = null, .text = fun.default_allocator.dupe(
                     u8,
                     "Native plugin set the `free_plugin_source_code_context` field without setting the `plugin_source_code_context` field.",
-                ) catch |err| bun.handleOom(err) } };
+                ) catch |err| fun.handleOom(err) } };
                 msg.kind = .err;
                 args.context.log.errors += 1;
-                bun.handleOom(args.context.log.addMsg(msg));
+                fun.handleOom(args.context.log.addMsg(msg));
                 return error.InvalidNativePlugin;
             }
 
@@ -1133,11 +1133,11 @@ fn runWithSourceCode(
     //
     // Changing from `.contents` to `.fd` will cause a double free.
     // This was the case in the situation where the ParseTask receives its `.contents` from an onLoad plugin, which caused it to be
-    // allocated by `bun.default_allocator` and then freed in `BundleV2.deinit` (and also by `entry.deinit(allocator)` below).
-    const debug_original_variant_check: if (bun.Environment.isDebug) ContentsOrFd.Tag else void =
-        if (bun.Environment.isDebug) @as(ContentsOrFd.Tag, task.contents_or_fd);
+    // allocated by `fun.default_allocator` and then freed in `BundleV2.deinit` (and also by `entry.deinit(allocator)` below).
+    const debug_original_variant_check: if (fun.Environment.isDebug) ContentsOrFd.Tag else void =
+        if (fun.Environment.isDebug) @as(ContentsOrFd.Tag, task.contents_or_fd);
     errdefer {
-        if (comptime bun.Environment.isDebug) {
+        if (comptime fun.Environment.isDebug) {
             if (@as(ContentsOrFd.Tag, task.contents_or_fd) != debug_original_variant_check) {
                 std.debug.panic("BUG: `task.contents_or_fd` changed in a way that will cause a double free or memory to leak!\n\n    Original = {s}\n    New = {s}\n", .{
                     @tagName(debug_original_variant_check),
@@ -1151,17 +1151,17 @@ fn runWithSourceCode(
     const will_close_file_descriptor = task.contents_or_fd == .fd and
         entry.fd.isValid() and
         entry.fd.stdioTag() == null and
-        this.ctx.bun_watcher == null;
+        this.ctx.fun_watcher == null;
     if (will_close_file_descriptor) {
         _ = entry.closeFD();
         task.contents_or_fd = .{ .fd = .{
-            .file = bun.invalid_fd,
-            .dir = bun.invalid_fd,
+            .file = fun.invalid_fd,
+            .dir = fun.invalid_fd,
         } };
     } else if (task.contents_or_fd == .fd) {
         task.contents_or_fd = .{ .fd = .{
             .file = entry.fd,
-            .dir = bun.invalid_fd,
+            .dir = fun.invalid_fd,
         } };
     }
     step.* = .parse;
@@ -1230,8 +1230,8 @@ fn runWithSourceCode(
     opts.features.unwrap_commonjs_packages = transpiler.options.unwrap_commonjs_packages;
     opts.features.bundler_feature_flags = transpiler.options.bundler_feature_flags;
     // JavaScriptCore implements `using` / `await using` natively, so when
-    // targeting Bun there is no need to lower them.
-    opts.features.lower_using = !target.isBun();
+    // targeting Fun there is no need to lower them.
+    opts.features.lower_using = !target.isFun();
     opts.features.hot_module_reloading = output_format == .internal_bake_dev and !source.index.isRuntime();
     opts.features.auto_polyfill_require = output_format == .esm and !opts.features.hot_module_reloading;
     opts.features.react_fast_refresh = transpiler.options.react_fast_refresh and
@@ -1297,7 +1297,7 @@ fn runWithSourceCode(
         task.side_effects = .no_side_effects__empty_ast;
     }
 
-    // bun.debugAssert(ast.parts.len > 0); // when parts.len == 0, it is assumed to be pending/failed. empty ast has at least 1 part.
+    // fun.debugAssert(ast.parts.len > 0); // when parts.len == 0, it is assumed to be pending/failed. empty ast has at least 1 part.
 
     step.* = .resolve;
 
@@ -1334,7 +1334,7 @@ pub fn runFromThreadPool(this: *ParseTask) void {
 
     var step: ParseTask.Result.Error.Step = .pending;
     var log = Logger.Log.init(worker.allocator);
-    bun.assert(this.source_index.isValid()); // forgot to set source_index
+    fun.assert(this.source_index.isValid()); // forgot to set source_index
 
     const value: ParseTask.Result.Value = value: {
         if (this.stage == .needs_source_code) {
@@ -1400,7 +1400,7 @@ pub fn runFromThreadPool(this: *ParseTask) void {
         }
     };
 
-    const result = bun.handleOom(bun.default_allocator.create(Result));
+    const result = fun.handleOom(fun.default_allocator.create(Result));
 
     result.* = .{
         .ctx = this.ctx,
@@ -1433,12 +1433,12 @@ pub fn onComplete(result: *Result) void {
     BundleV2.onParseTaskComplete(result, result.ctx);
 }
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
 
 const string = []const u8;
 
@@ -1460,25 +1460,25 @@ const Resolver = _resolver.Resolver;
 const options = @import("./options.zig");
 const Loader = options.Loader;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FD = bun.FD;
-const FeatureFlags = bun.FeatureFlags;
-const ImportRecord = bun.ImportRecord;
-const Output = bun.Output;
-const ThreadPoolLib = bun.ThreadPool;
-const Transpiler = bun.Transpiler;
-const bake = bun.bake;
-const base64 = bun.base64;
-const default_allocator = bun.default_allocator;
-const js_parser = bun.js_parser;
-const strings = bun.strings;
-const BabyList = bun.collections.BabyList;
-const JSON5 = bun.interchange.json5.JSON5Parser;
-const TOML = bun.interchange.toml.TOML;
-const YAML = bun.interchange.yaml.YAML;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FD = fun.FD;
+const FeatureFlags = fun.FeatureFlags;
+const ImportRecord = fun.ImportRecord;
+const Output = fun.Output;
+const ThreadPoolLib = fun.ThreadPool;
+const Transpiler = fun.Transpiler;
+const bake = fun.bake;
+const base64 = fun.base64;
+const default_allocator = fun.default_allocator;
+const js_parser = fun.js_parser;
+const strings = fun.strings;
+const BabyList = fun.collections.BabyList;
+const JSON5 = fun.interchange.json5.JSON5Parser;
+const TOML = fun.interchange.toml.TOML;
+const YAML = fun.interchange.yaml.YAML;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
 const G = js_ast.G;
@@ -1486,11 +1486,11 @@ const JSAst = js_ast.BundledAst;
 const Part = js_ast.Part;
 const Symbol = js_ast.Symbol;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const BundleV2 = bundler.BundleV2;
 const ContentHasher = bundler.ContentHasher;
 const UseDirective = bundler.UseDirective;
 const targetFromHashbang = bundler.targetFromHashbang;
 
-const jsc = bun.jsc;
-const EventLoop = bun.jsc.AnyEventLoop;
+const jsc = fun.jsc;
+const EventLoop = fun.jsc.AnyEventLoop;

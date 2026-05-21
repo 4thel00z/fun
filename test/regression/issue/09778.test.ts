@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { runInNewContext } from "node:vm";
 
 test("issue #9778", () => {

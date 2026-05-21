@@ -5,7 +5,7 @@
 #include "ZigGeneratedClasses.h"
 #include "WebCoreJSBuiltins.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 using namespace WebCore;
 
@@ -96,4 +96,4 @@ private:
 
 void setupJSBakeResponseClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

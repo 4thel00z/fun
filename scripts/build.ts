@@ -1,12 +1,12 @@
 /**
  * Build entry point — configure + ninja exec.
  *
- *   bun scripts/build.ts --profile=debug
- *   bun scripts/build.ts --profile=release
- *   bun scripts/build.ts --asan=off test foo.test.ts    # override + build + run
- *   bun scripts/build.ts --target tinycc                # build one dep
- *   bun scripts/build.ts --configure-only               # emit ninja, don't run
- *   bun scripts/build.ts -- --target=browser x.ts       # `--` → rest to runtime
+ *   fun scripts/build.ts --profile=debug
+ *   fun scripts/build.ts --profile=release
+ *   fun scripts/build.ts --asan=off test foo.test.ts    # override + build + run
+ *   fun scripts/build.ts --target tinycc                # build one dep
+ *   fun scripts/build.ts --configure-only               # emit ninja, don't run
+ *   fun scripts/build.ts -- --target=browser x.ts       # `--` → rest to runtime
  *
  * Arg routing (see parseArgs): build flags first, then the FIRST arg that
  * isn't a recognized build/ninja flag starts exec-args — it and everything
@@ -204,7 +204,7 @@ async function main(): Promise<void> {
     }
 
     // Exec the built binary. result.output.exe is the linked (unstripped)
-    // binary — bun-debug for debug, bun-profile for release. That's the one
+    // binary — fun-debug for debug, fun-profile for release. That's the one
     // you want for dev iteration (has symbols + assertions in debug).
     const exe = result.output.exe;
     if (exe === undefined) {
@@ -318,7 +318,7 @@ interface CliArgs {
  *   <args...>                 Exec the built binary with these args
  *
  * First bare positional ends flag parsing — everything after goes to the
- * built binary verbatim, so `build.ts test -t foo` passes `-t foo` to bun,
+ * built binary verbatim, so `build.ts test -t foo` passes `-t foo` to fun,
  * not to this parser.
  *
  * Boolean overrides accept: on/off, true/false, yes/no, 1/0.
@@ -391,7 +391,7 @@ function parseArgs(argv: string[]): CliArgs {
 
     // `--` ends flag parsing — everything after goes to the built binary,
     // even args that would otherwise look like build flags. Use when a
-    // runtime flag collides with one of ours (e.g. bun-debug's --target).
+    // runtime flag collides with one of ours (e.g. fun-debug's --target).
     if (arg === "--") {
       inExec = true;
       continue;
@@ -414,7 +414,7 @@ function parseArgs(argv: string[]): CliArgs {
 
     // --<key>=<value> or --<key> <value>. Space form consumes next argv.
     // Unknown `--<key>` with no value (e.g. `--watch`) falls through to
-    // exec args — those are bun-debug flags, not ours.
+    // exec args — those are fun-debug flags, not ours.
     const eq = arg.match(/^--([a-zA-Z][a-zA-Z0-9-]*)(?:=(.*))?$/);
     if (!eq) {
       // Not a --flag at all: first bare positional ends flag parsing.
@@ -431,7 +431,7 @@ function parseArgs(argv: string[]): CliArgs {
     let value = eq[2];
     if (value === undefined) {
       // No `=`. If this is one of our flags, consume next arg as value.
-      // If not (e.g. --print, --watch), it's a bun-debug flag → exec args.
+      // If not (e.g. --print, --watch), it's a fun-debug flag → exec args.
       if (!isOurs) {
         execArgs.push(arg);
         inExec = true;
@@ -476,7 +476,7 @@ function parseBool(v: string): boolean {
 }
 
 const USAGE = `\
-Usage: bun scripts/build.ts [options] [exec-args...]
+Usage: fun scripts/build.ts [options] [exec-args...]
 
 Options:
   --profile=<name>        Build profile (default: debug)
@@ -495,14 +495,14 @@ Options:
   --help                  Show this help
 
 Any bare positional and everything after is passed to the built binary:
-  bun scripts/build.ts test foo.test.ts   → builds, then runs
-                                            ./build/debug/bun-debug test foo.test.ts
+  fun scripts/build.ts test foo.test.ts   → builds, then runs
+                                            ./build/debug/fun-debug test foo.test.ts
 
 Examples:
-  bun scripts/build.ts --profile=debug
-  bun scripts/build.ts --profile=release --lto=off
-  bun scripts/build.ts test foo.test.ts
-  bun scripts/build.ts --profile=debug-local run script.ts
-  bun scripts/build.ts --target=bun-zig
-  bun scripts/build.ts --configure-only
+  fun scripts/build.ts --profile=debug
+  fun scripts/build.ts --profile=release --lto=off
+  fun scripts/build.ts test foo.test.ts
+  fun scripts/build.ts --profile=debug-local run script.ts
+  fun scripts/build.ts --target=fun-zig
+  fun scripts/build.ts --configure-only
 `;

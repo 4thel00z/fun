@@ -15,8 +15,8 @@ class DOMClientIsoSubspaces {
 public:
     DOMClientIsoSubspaces() = default;
 
-    /* --- bun --- */
-    std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForBunClassConstructor;
+    /* --- fun --- */
+    std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForFunClassConstructor;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForBufferList;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForFFIFunction;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForWrappingFunction;
@@ -50,7 +50,7 @@ public:
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForProcessObject;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForInternalModuleRegistry;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForErrorCodeCache;
-    std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForBunInspectorConnection;
+    std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForFunInspectorConnection;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForJSNextTickQueue;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForNAPIFunction;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForJSDiffieHellman;
@@ -77,7 +77,7 @@ public:
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForJSWebView;
 
 #include "ZigGeneratedClasses+DOMClientIsoSubspaces.h"
-    /* --- bun --- */
+    /* --- fun --- */
 
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForDOMException;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForDOMFormData;
@@ -951,7 +951,7 @@ public:
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForJSPublicKeyObject;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForJSPrivateKeyObject;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForServerRouteList;
-    std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForBunRequest;
+    std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForFunRequest;
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForBakeResponse;
 
     std::unique_ptr<GCClient::IsoSubspace> m_clientSubspaceForJSConnectionsList;

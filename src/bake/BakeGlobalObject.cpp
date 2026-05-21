@@ -8,8 +8,8 @@
 #include "JavaScriptCore/Completion.h"
 #include "JavaScriptCore/JSSourceCode.h"
 
-extern "C" BunString BakeProdResolve(JSC::JSGlobalObject*, BunString a, BunString b);
-extern "C" BunString BakeToWindowsPath(BunString a);
+extern "C" FunString BakeProdResolve(JSC::JSGlobalObject*, FunString a, FunString b);
+extern "C" FunString BakeToWindowsPath(FunString a);
 
 namespace Bake {
 using namespace JSC;
@@ -40,7 +40,7 @@ bakeModuleLoaderImportModule(JSC::JSGlobalObject* global,
             return promise;
         }
 
-        BunString result = BakeProdResolve(global, Bun::toString(refererString), Bun::toString(keyString));
+        FunString result = BakeProdResolve(global, Fun::toString(refererString), Fun::toString(keyString));
         RETURN_IF_EXCEPTION(scope, nullptr);
 
         return JSC::importModule(global, JSC::Identifier::fromString(vm, result.toWTFString()),
@@ -67,10 +67,10 @@ JSC::Identifier bakeModuleLoaderResolve(JSC::JSGlobalObject* jsGlobal,
         RETURN_IF_EXCEPTION(scope, vm.propertyNames->emptyIdentifier);
 
         if (refererString.startsWith("bake:/"_s) || (refererString == "."_s && keyString.startsWith("bake:/"_s))) {
-            BunString result = BakeProdResolve(global, Bun::toString(referrer.getString(global)), Bun::toString(keyString));
+            FunString result = BakeProdResolve(global, Fun::toString(referrer.getString(global)), Fun::toString(keyString));
             RETURN_IF_EXCEPTION(scope, vm.propertyNames->emptyIdentifier);
 
-            return JSC::Identifier::fromString(vm, result.toWTFString(BunString::ZeroCopy));
+            return JSC::Identifier::fromString(vm, result.toWTFString(FunString::ZeroCopy));
         }
     }
 
@@ -79,7 +79,7 @@ JSC::Identifier bakeModuleLoaderResolve(JSC::JSGlobalObject* jsGlobal,
         RETURN_IF_EXCEPTION(scope, vm.propertyNames->emptyIdentifier);
 
         if (keyView.startsWith("bake:/"_s)) {
-            BunString result = BakeProdResolve(global, Bun::toString("bake:/"_s), Bun::toString(keyView.substringSharingImpl("bake:"_s.length())));
+            FunString result = BakeProdResolve(global, Fun::toString("bake:/"_s), Fun::toString(keyView.substringSharingImpl("bake:"_s.length())));
             RETURN_IF_EXCEPTION(scope, vm.propertyNames->emptyIdentifier);
 
             return JSC::Identifier::fromString(vm, result.transferToWTFString());
@@ -106,7 +106,7 @@ static JSC::JSPromise* resolvedInternalPromise(JSC::JSGlobalObject* globalObject
     return promise;
 }
 
-extern "C" BunString BakeProdLoad(void* perThreadData, BunString a);
+extern "C" FunString BakeProdLoad(void* perThreadData, FunString a);
 
 extern "C" bool BakeGlobalObject__isBakeGlobalObject(JSC::JSGlobalObject* global)
 {
@@ -132,8 +132,8 @@ JSC::JSPromise* bakeModuleLoaderFetch(JSC::JSGlobalObject* globalObject,
 
     if (moduleKey.startsWith("bake:/"_s)) {
         if (global->m_perThreadData) [[likely]] {
-            BunString source = BakeProdLoad(global->m_perThreadData, Bun::toString(moduleKey));
-            if (source.tag != BunStringTag::Dead) {
+            FunString source = BakeProdLoad(global->m_perThreadData, Fun::toString(moduleKey));
+            if (source.tag != FunStringTag::Dead) {
                 JSC::SourceOrigin origin = JSC::SourceOrigin(WTF::URL(moduleKey));
                 JSC::SourceCode sourceCode = JSC::SourceCode(Bake::SourceProvider::create(
                     globalObject,
@@ -158,7 +158,7 @@ JSC::JSPromise* bakeModuleLoaderFetch(JSC::JSGlobalObject* globalObject,
             // have to worry about platform paths. Now we have to worry about
             // it, because `moduleLoaderFetch(...)` may read the path from disk
             // and so we need to give a Windows path to it.
-            auto temp = BakeToWindowsPath(Bun::toString(bakePrefixRemoved));
+            auto temp = BakeToWindowsPath(Fun::toString(bakePrefixRemoved));
             bakePrefixRemoved = temp.toWTFString();
 #endif
             JSString* bakePrefixRemovedString = jsNontrivialString(vm, bakePrefixRemoved);
@@ -195,8 +195,8 @@ JSC::Structure* GlobalObject::createStructure(JSC::VM& vm)
     return structure;
 }
 
-struct BunVirtualMachine;
-extern "C" BunVirtualMachine* Bun__getVM();
+struct FunVirtualMachine;
+extern "C" FunVirtualMachine* Fun__getVM();
 
 const JSC::GlobalObjectMethodTable& GlobalObject::globalObjectMethodTable()
 {
@@ -237,7 +237,7 @@ extern "C" GlobalObject* BakeCreateProdGlobal(void* console)
 {
     RefPtr<JSC::VM> vmPtr = JSC::VM::tryCreate(JSC::HeapType::Large);
     if (!vmPtr) [[unlikely]] {
-        BUN_PANIC("Failed to allocate JavaScriptCore Virtual Machine. Did your computer run out of memory? Or maybe you compiled Bun with a mismatching libc++ version or compiler?");
+        FUN_PANIC("Failed to allocate JavaScriptCore Virtual Machine. Did your computer run out of memory? Or maybe you compiled Fun with a mismatching libc++ version or compiler?");
     }
     // We need to unsafely ref this so it stays alive, later in
     // `Zig__GlobalObject__destructOnExit` will call
@@ -247,16 +247,16 @@ extern "C" GlobalObject* BakeCreateProdGlobal(void* console)
 
     vm.heap.acquireAccess();
     JSC::JSLockHolder locker(vm);
-    BunVirtualMachine* bunVM = Bun__getVM();
-    WebCore::JSVMClientData::create(&vm, bunVM);
+    FunVirtualMachine* funVM = Fun__getVM();
+    WebCore::JSVMClientData::create(&vm, funVM);
 
     JSC::Structure* structure = Bake::GlobalObject::createStructure(vm);
     Bake::GlobalObject* global = Bake::GlobalObject::create(
         vm, structure, &Bake::GlobalObject::globalObjectMethodTable());
     if (!global)
-        BUN_PANIC("Failed to create BakeGlobalObject");
+        FUN_PANIC("Failed to create BakeGlobalObject");
 
-    global->m_bunVM = bunVM;
+    global->m_funVM = funVM;
 
     JSC::gcProtect(global);
 
@@ -274,8 +274,8 @@ extern "C" GlobalObject* BakeCreateProdGlobal(void* console)
     // vm.setOnEachMicrotaskTick([global](JSC::VM &vm) -> void {
     //   if (auto nextTickQueue = global->m_nextTickQueue.get()) {
     //     global->resetOnEachMicrotaskTick();
-    //     // Bun::JSNextTickQueue *queue =
-    //     //     uncheckedDowncast<Bun::JSNextTickQueue>(nextTickQueue);
+    //     // Fun::JSNextTickQueue *queue =
+    //     //     uncheckedDowncast<Fun::JSNextTickQueue>(nextTickQueue);
     //     // queue->drain(vm, global);
     //     return;
     //   }

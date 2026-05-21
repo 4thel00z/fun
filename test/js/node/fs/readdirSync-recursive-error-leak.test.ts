@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import path from "path";
 
 // Windows: self-referential symlinks behave differently and the recursive
@@ -7,9 +7,9 @@ import path from "path";
 test.skipIf(isWindows)(
   "readdirSync({recursive:true, withFileTypes:true}) error path does not leak Dirent.path",
   async () => {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), path.join(import.meta.dir, "readdirSync-recursive-error-leak-fixture.js")],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), path.join(import.meta.dir, "readdirSync-recursive-error-leak-fixture.js")],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

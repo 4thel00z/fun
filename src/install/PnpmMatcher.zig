@@ -27,7 +27,7 @@ pub fn fromExpr(allocator: std.mem.Allocator, expr: ast.Expr, log: *logger.Log, 
     var buf = std.Io.Writer.Allocating.init(allocator);
     defer buf.deinit();
 
-    bun.jsc.initialize(false);
+    fun.jsc.initialize(false);
 
     var matchers: collections.ArrayListDefault(Matcher) = .init();
 
@@ -194,11 +194,11 @@ pub fn isMatch(this: *const PnpmMatcher, name: []const u8) bool {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const String = bun.String;
-const ast = bun.ast;
-const collections = bun.collections;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const String = fun.String;
+const ast = fun.ast;
+const collections = fun.collections;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;

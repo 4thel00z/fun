@@ -25,11 +25,11 @@
 require('../common');
 const assert = require('assert');
 let binding;
-if (typeof Bun === 'undefined') {
+if (typeof Fun === 'undefined') {
   const { internalBinding } = require('internal/test/binding');
   binding = internalBinding('timers');
 } else {
-  binding = { getLibuvNow: require('bun:internal-for-testing').timerInternals.timerClockMs };
+  binding = { getLibuvNow: require('fun:internal-for-testing').timerInternals.timerClockMs };
 }
 
 const N = 30;

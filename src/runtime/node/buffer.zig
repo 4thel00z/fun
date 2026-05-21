@@ -55,7 +55,7 @@ pub const BufferVectorized = struct {
             inline 4, 8, 16 => |n| if (comptime Environment.isMac) {
                 const pattern = buf[0..n];
                 buf = buf[pattern.len..];
-                @field(bun.c, std.fmt.comptimePrint("memset_pattern{d}", .{n}))(buf.ptr, pattern.ptr, buf.len);
+                @field(fun.c, std.fmt.comptimePrint("memset_pattern{d}", .{n}))(buf.ptr, pattern.ptr, buf.len);
                 return true;
             },
             else => {},
@@ -65,13 +65,13 @@ pub const BufferVectorized = struct {
         buf = buf[written..];
 
         while (buf.len >= contents.len) {
-            bun.copy(u8, buf, contents);
+            fun.copy(u8, buf, contents);
             buf = buf[contents.len..];
             contents.len *= 2;
         }
 
         if (buf.len > 0) {
-            bun.copy(u8, buf, contents[0..buf.len]);
+            fun.copy(u8, buf, contents[0..buf.len]);
         }
 
         return true;
@@ -79,12 +79,12 @@ pub const BufferVectorized = struct {
 };
 
 comptime {
-    @export(&BufferVectorized.fill, .{ .name = "Bun__Buffer_fill" });
+    @export(&BufferVectorized.fill, .{ .name = "Fun__Buffer_fill" });
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;
 const Encoder = jsc.WebCore.encoding;

@@ -571,7 +571,7 @@ pub fn VersionType(comptime IntType: type) type {
                     pre = this.pre.value;
                 } else {
                     const pre_slice = this.pre.slice(slice);
-                    bun.copy(u8, buf.*, pre_slice);
+                    fun.copy(u8, buf.*, pre_slice);
                     pre = String.init(buf.*, buf.*[0..pre_slice.len]);
                     buf.* = buf.*[pre_slice.len..];
                 }
@@ -580,7 +580,7 @@ pub fn VersionType(comptime IntType: type) type {
                     build = this.build.value;
                 } else {
                     const build_slice = this.build.slice(slice);
-                    bun.copy(u8, buf.*, build_slice);
+                    fun.copy(u8, buf.*, build_slice);
                     build = String.init(buf.*, buf.*[0..build_slice.len]);
                     buf.* = buf.*[build_slice.len..];
                 }
@@ -983,13 +983,13 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
+const strings = fun.strings;
 
-const ExternalString = bun.Semver.ExternalString;
-const Query = bun.Semver.Query;
-const SlicedString = bun.Semver.SlicedString;
-const String = bun.Semver.String;
+const ExternalString = fun.Semver.ExternalString;
+const Query = fun.Semver.Query;
+const SlicedString = fun.Semver.SlicedString;
+const String = fun.Semver.String;

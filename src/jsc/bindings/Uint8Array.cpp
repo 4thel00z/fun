@@ -4,7 +4,7 @@
 #include "JavaScriptCore/TypedArrayType.h"
 #include "mimalloc.h"
 
-namespace Bun {
+namespace Fun {
 
 extern "C" JSC::EncodedJSValue JSUint8Array__fromDefaultAllocator(JSC::JSGlobalObject* lexicalGlobalObject, uint8_t* ptr, size_t length)
 {

@@ -1,9 +1,9 @@
 {
-  "name": "bun-integration-test-sharp",
+  "name": "fun-integration-test-sharp",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/fun": "latest"
   },
   "peerDependencies": {
     "typescript": "5.3.2"

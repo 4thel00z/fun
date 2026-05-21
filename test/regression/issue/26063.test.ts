@@ -1,8 +1,8 @@
-import { SQL, randomUUIDv7 } from "bun";
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { SQL, randomUUIDv7 } from "fun";
+import { afterAll, beforeAll, expect, test } from "fun:test";
 import { describeWithContainer, isDockerEnabled } from "harness";
 
-// Regression test for https://github.com/oven-sh/bun/issues/26063
+// Regression test for https://github.com/underdoc-org/fun/issues/26063
 // MySQL VARCHAR columns with binary collations (like utf8mb4_bin) were incorrectly
 // returned as Buffer instead of string since version 1.3.6.
 
@@ -19,7 +19,7 @@ if (isDockerEnabled()) {
       beforeAll(async () => {
         await container.ready;
         sql = new SQL({
-          url: `mysql://root@${container.host}:${container.port}/bun_sql_test`,
+          url: `mysql://root@${container.host}:${container.port}/fun_sql_test`,
           max: 1,
         });
       });

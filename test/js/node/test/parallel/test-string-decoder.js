@@ -201,7 +201,7 @@ assert.throws(
   }
 );
 
-// Skipped in Bun: JSC supports much larger strings, so it is extremely hard to
+// Skipped in Fun: JSC supports much larger strings, so it is extremely hard to
 // actually produce this exception.
 // if (common.enoughTestMem) {
 //   assert.throws(

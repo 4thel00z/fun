@@ -1,18 +1,18 @@
-// Shim that lets vendored undici test/fetch/http2.js run against Bun's
+// Shim that lets vendored undici test/fetch/http2.js run against Fun's
 // built-in fetch() with the experimental HTTP/2 client path. Test bodies are
 // byte-identical to upstream; this file supplies the handful of imports the
 // upstream require() block expects.
 
-import { test as bunTest, expect } from "bun:test";
+import { test as funTest, expect } from "fun:test";
 import * as nodeAssert from "node:assert";
 import { tls as harnessTls } from "harness";
 
-// Map undici's node:test surface (t.plan / t.assert / t.after) onto bun:test.
+// Map undici's node:test surface (t.plan / t.assert / t.after) onto fun:test.
 // t.plan(n) is enforced: every t.assert.* call is counted and the test fails
 // if the final tally doesn't match, so a callback that never fires can't
 // silently pass.
 export function test(name, fn) {
-  return bunTest(name, async () => {
+  return funTest(name, async () => {
     let planned = -1;
     let seen = 0;
     const cleanups = [];
@@ -45,7 +45,7 @@ export function test(name, fn) {
   });
 }
 
-// undici's fetch() takes a `dispatcher` (its own connection pool); Bun's
+// undici's fetch() takes a `dispatcher` (its own connection pool); Fun's
 // fetch() manages h2 sessions internally. Stub the dispatcher classes so
 // `new Client(...)` / `client.close()` in test setup/teardown are inert.
 class StubDispatcher {

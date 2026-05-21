@@ -38,14 +38,14 @@ pub const ImportWatcher = union(enum) {
 
     pub inline fn addFile(
         this: ImportWatcher,
-        fd: bun.FD,
+        fd: fun.FD,
         file_path: string,
         hash: Watcher.HashType,
         loader: options.Loader,
-        dir_fd: bun.FD,
-        package_json: ?*bun.PackageJSON,
+        dir_fd: fun.FD,
+        package_json: ?*fun.PackageJSON,
         comptime copy_file_path: bool,
-    ) bun.sys.Maybe(void) {
+    ) fun.sys.Maybe(void) {
         return switch (this) {
             inline .hot, .watch => |watcher| watcher.addFile(
                 fd,
@@ -65,7 +65,7 @@ pub const HotReloader = NewHotReloader(VirtualMachine, jsc.EventLoop, false);
 pub const WatchReloader = NewHotReloader(VirtualMachine, jsc.EventLoop, true);
 
 /// When non-null, `onFileUpdate` records the absolute path of every file
-/// it sees change before triggering a reload. Used by `bun test --changed
+/// it sees change before triggering a reload. Used by `fun test --changed
 /// --watch` so the restarted process can narrow its changed-file set to
 /// what the watcher actually observed (instead of re-querying git, which
 /// would re-run every test affected by any uncommitted change, not just
@@ -75,11 +75,11 @@ pub const WatchReloader = NewHotReloader(VirtualMachine, jsc.EventLoop, true);
 /// starts; after that point only the watcher thread touches it. Its
 /// contents are written to `watch_changed_trigger_file` immediately
 /// before `reloadProcess`; the new process reads and deletes that file.
-pub var watch_changed_paths: ?*bun.StringSet = null;
+pub var watch_changed_paths: ?*fun.StringSet = null;
 
 /// Absolute path of the temp file `flushChangedPathsForReload` writes
 /// the changed-path list into. The same path is exported via the
-/// `BUN_INTERNAL_TEST_CHANGED_TRIGGER_FILE` env var so the restarted
+/// `FUN_INTERNAL_TEST_CHANGED_TRIGGER_FILE` env var so the restarted
 /// process can find it. Set alongside `watch_changed_paths` by
 /// `test_command.zig`; the string must outlive the process.
 pub var watch_changed_trigger_file: ?[:0]const u8 = null;
@@ -87,7 +87,7 @@ pub var watch_changed_trigger_file: ?[:0]const u8 = null;
 fn recordChangedPath(path: []const u8) void {
     const set = watch_changed_paths orelse return;
     if (path.len == 0) return;
-    bun.handleOom(set.insert(path));
+    fun.handleOom(set.insert(path));
 }
 
 /// Write the recorded changed paths to the trigger file so the next
@@ -103,16 +103,16 @@ fn flushChangedPathsForReload() void {
     const dest = watch_changed_trigger_file orelse return;
     if (set.count() == 0) return;
 
-    var buf = std.array_list.Managed(u8).init(bun.default_allocator);
+    var buf = std.array_list.Managed(u8).init(fun.default_allocator);
     defer buf.deinit();
     for (set.keys()) |p| {
         buf.appendSlice(p) catch return;
         buf.append('\n') catch return;
     }
-    _ = bun.sys.File.writeFile(bun.FD.cwd(), dest, buf.items);
+    _ = fun.sys.File.writeFile(fun.FD.cwd(), dest, buf.items);
 }
 
-extern fn BunDebugger__willHotReload() void;
+extern fn FunDebugger__willHotReload() void;
 
 pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime reload_immediately: bool) type {
     return struct {
@@ -124,22 +124,22 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
 
         main: MainFile = .{},
 
-        tombstones: bun.StringHashMapUnmanaged(*bun.fs.FileSystem.RealFS.EntriesOption) = .{},
+        tombstones: fun.StringHashMapUnmanaged(*fun.fs.FileSystem.RealFS.EntriesOption) = .{},
 
-        pub fn init(ctx: *Ctx, fs: *bun.fs.FileSystem, verbose: bool, clear_screen_flag: bool) *Watcher {
-            const reloader = bun.handleOom(bun.default_allocator.create(Reloader));
+        pub fn init(ctx: *Ctx, fs: *fun.fs.FileSystem, verbose: bool, clear_screen_flag: bool) *Watcher {
+            const reloader = fun.handleOom(fun.default_allocator.create(Reloader));
             reloader.* = .{
                 .ctx = ctx,
                 .verbose = Environment.enable_logs or verbose,
             };
 
             clear_screen = clear_screen_flag;
-            const watcher = Watcher.init(Reloader, reloader, fs, bun.default_allocator) catch |err| {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+            const watcher = Watcher.init(Reloader, reloader, fs, fun.default_allocator) catch |err| {
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
                 Output.panic("Failed to enable File Watcher: {s}", .{@errorName(err)});
             };
             watcher.start() catch |err| {
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
                 Output.panic("Failed to start File Watcher: {s}", .{@errorName(err)});
             };
             return watcher;
@@ -194,8 +194,8 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
                 };
 
                 if (std.fs.path.dirname(file)) |dir| {
-                    bun.assert(bun.isSliceInBuffer(dir, file));
-                    bun.assert(file.len > dir.len + 1);
+                    fun.assert(fun.isSliceInBuffer(dir, file));
+                    fun.assert(file.len > dir.len + 1);
                     main.dir = file[0 .. dir.len + 1];
                     main.dir_hash = Watcher.getHash(main.dir);
                 }
@@ -207,7 +207,7 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
         pub const Task = struct {
             count: u8 = 0,
             hashes: [8]u32,
-            paths: if (Ctx == bun.bake.DevServer) [8][]const u8 else void,
+            paths: if (Ctx == fun.bake.DevServer) [8][]const u8 else void,
             /// Left uninitialized until .enqueue
             concurrent_task: jsc.ConcurrentTask,
             reloader: *Reloader,
@@ -217,7 +217,7 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
                     .reloader = reloader,
 
                     .hashes = [_]u32{0} ** 8,
-                    .paths = if (Ctx == bun.bake.DevServer) [_][]const u8{&.{}} ** 8,
+                    .paths = if (Ctx == fun.bake.DevServer) [_][]const u8{&.{}} ** 8,
                     .count = 0,
                     .concurrent_task = undefined,
                 };
@@ -260,14 +260,14 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
                             rare.closeAllListenSocketsForWatchMode();
                     }
                     flushChangedPathsForReload();
-                    bun.reloadProcess(bun.default_allocator, clear_screen, false);
+                    fun.reloadProcess(fun.default_allocator, clear_screen, false);
                     unreachable;
                 }
 
                 _ = this.reloader.pending_count.fetchAdd(1, .monotonic);
 
-                BunDebugger__willHotReload();
-                const that = bun.new(Task, .{
+                FunDebugger__willHotReload();
+                const that = fun.new(Task, .{
                     .reloader = this.reloader,
                     .count = this.count,
                     .paths = this.paths,
@@ -280,35 +280,35 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
             }
 
             pub fn deinit(this: *Task) void {
-                bun.destroy(this);
+                fun.destroy(this);
             }
         };
 
         pub fn enableHotModuleReloading(this: *Ctx, entry_path: ?[]const u8) void {
-            if (comptime @TypeOf(this.bun_watcher) == ImportWatcher) {
-                if (this.bun_watcher != .none)
+            if (comptime @TypeOf(this.fun_watcher) == ImportWatcher) {
+                if (this.fun_watcher != .none)
                     return;
             } else {
-                if (this.bun_watcher != null)
+                if (this.fun_watcher != null)
                     return;
             }
 
-            var reloader = bun.handleOom(bun.default_allocator.create(Reloader));
+            var reloader = fun.handleOom(fun.default_allocator.create(Reloader));
             reloader.* = .{
                 .ctx = this,
                 .verbose = Environment.enable_logs or if (@hasField(Ctx, "log")) this.log.level.atLeast(.info) else false,
                 .main = MainFile.init(entry_path orelse ""),
             };
 
-            if (comptime @TypeOf(this.bun_watcher) == ImportWatcher) {
-                this.bun_watcher = if (reload_immediately)
+            if (comptime @TypeOf(this.fun_watcher) == ImportWatcher) {
+                this.fun_watcher = if (reload_immediately)
                     .{ .watch = Watcher.init(
                         Reloader,
                         reloader,
                         this.transpiler.fs,
-                        bun.default_allocator,
+                        fun.default_allocator,
                     ) catch |err| {
-                        bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                        fun.handleErrorReturnTrace(err, @errorReturnTrace());
                         Output.panic("Failed to enable File Watcher: {s}", .{@errorName(err)});
                     } }
                 else
@@ -316,28 +316,28 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
                         Reloader,
                         reloader,
                         this.transpiler.fs,
-                        bun.default_allocator,
+                        fun.default_allocator,
                     ) catch |err| {
-                        bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                        fun.handleErrorReturnTrace(err, @errorReturnTrace());
                         Output.panic("Failed to enable File Watcher: {s}", .{@errorName(err)});
                     } };
 
                 if (reload_immediately) {
-                    this.transpiler.resolver.watcher = bun.resolver.ResolveWatcher(*Watcher, Watcher.onMaybeWatchDirectory).init(this.bun_watcher.watch);
+                    this.transpiler.resolver.watcher = fun.resolver.ResolveWatcher(*Watcher, Watcher.onMaybeWatchDirectory).init(this.fun_watcher.watch);
                 } else {
-                    this.transpiler.resolver.watcher = bun.resolver.ResolveWatcher(*Watcher, Watcher.onMaybeWatchDirectory).init(this.bun_watcher.hot);
+                    this.transpiler.resolver.watcher = fun.resolver.ResolveWatcher(*Watcher, Watcher.onMaybeWatchDirectory).init(this.fun_watcher.hot);
                 }
             } else {
-                this.bun_watcher = Watcher.init(
+                this.fun_watcher = Watcher.init(
                     Reloader,
                     reloader,
                     this.transpiler.fs,
-                    bun.default_allocator,
+                    fun.default_allocator,
                 ) catch |err| {
-                    bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                    fun.handleErrorReturnTrace(err, @errorReturnTrace());
                     Output.panic("Failed to enable File Watcher: {s}", .{@errorName(err)});
                 };
-                this.transpiler.resolver.watcher = bun.resolver.ResolveWatcher(*Watcher, Watcher.onMaybeWatchDirectory).init(this.bun_watcher.?);
+                this.transpiler.resolver.watcher = fun.resolver.ResolveWatcher(*Watcher, Watcher.onMaybeWatchDirectory).init(this.fun_watcher.?);
             }
 
             clear_screen = !this.transpiler.env.hasSetNoClearTerminalOnReload(!Output.enable_ansi_colors_stdout);
@@ -345,35 +345,35 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
             reloader.getContext().start() catch @panic("Failed to start File Watcher");
         }
 
-        fn putTombstone(this: *@This(), key: []const u8, value: *bun.fs.FileSystem.RealFS.EntriesOption) void {
-            this.tombstones.put(bun.default_allocator, key, value) catch unreachable;
+        fn putTombstone(this: *@This(), key: []const u8, value: *fun.fs.FileSystem.RealFS.EntriesOption) void {
+            this.tombstones.put(fun.default_allocator, key, value) catch unreachable;
         }
 
-        fn getTombstone(this: *@This(), key: []const u8) ?*bun.fs.FileSystem.RealFS.EntriesOption {
+        fn getTombstone(this: *@This(), key: []const u8) ?*fun.fs.FileSystem.RealFS.EntriesOption {
             return this.tombstones.get(key);
         }
 
         pub fn onError(
             _: *@This(),
-            err: bun.sys.Error,
+            err: fun.sys.Error,
         ) void {
-            Output.err(@as(bun.sys.E, @enumFromInt(err.errno)), "Watcher crashed", .{});
-            if (bun.Environment.isDebug) {
+            Output.err(@as(fun.sys.E, @enumFromInt(err.errno)), "Watcher crashed", .{});
+            if (fun.Environment.isDebug) {
                 @panic("Watcher crash");
             }
         }
 
         pub fn getContext(this: *@This()) *Watcher {
-            if (comptime @TypeOf(this.ctx.bun_watcher) == ImportWatcher) {
+            if (comptime @TypeOf(this.ctx.fun_watcher) == ImportWatcher) {
                 if (reload_immediately) {
-                    return this.ctx.bun_watcher.watch;
+                    return this.ctx.fun_watcher.watch;
                 } else {
-                    return this.ctx.bun_watcher.hot;
+                    return this.ctx.fun_watcher.hot;
                 }
-            } else if (@typeInfo(@TypeOf(this.ctx.bun_watcher)) == .optional) {
-                return this.ctx.bun_watcher.?;
+            } else if (@typeInfo(@TypeOf(this.ctx.fun_watcher)) == .optional) {
+                return this.ctx.fun_watcher.?;
             } else {
-                return this.ctx.bun_watcher;
+                return this.ctx.fun_watcher;
             }
         }
 
@@ -396,7 +396,7 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
 
             const fs: *Fs.FileSystem = &Fs.FileSystem.instance;
             const rfs: *Fs.FileSystem.RealFS = &fs.fs;
-            var _on_file_update_path_buf: bun.PathBuffer = undefined;
+            var _on_file_update_path_buf: fun.PathBuffer = undefined;
             var current_task = Task.initEmpty(this);
             defer current_task.enqueue();
 
@@ -476,7 +476,7 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
                                     // the file), this directory write event signals that the new
                                     // file has been re-created. Verify it exists and trigger reload.
                                     if (this.main.is_waiting_for_dir_change and this.main.dir_hash == current_hash) {
-                                        if (bun.sys.faccessat(file_descriptors[event.index], std.fs.path.basename(this.main.file)) == .result) {
+                                        if (fun.sys.faccessat(file_descriptors[event.index], std.fs.path.basename(this.main.file)) == .result) {
                                             this.main.is_waiting_for_dir_change = false;
                                             recordChangedPath(this.main.file);
                                             current_task.append(this.main.hash);
@@ -528,13 +528,13 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
                                 const changed_name: []const u8 = if (comptime Environment.isKqueue)
                                     changed_name_
                                 else
-                                    bun.asByteSlice(changed_name_.?);
+                                    fun.asByteSlice(changed_name_.?);
                                 if (changed_name.len == 0 or changed_name[0] == '~' or changed_name[0] == '.') continue;
 
                                 const loader = (this.ctx.getLoaders().get(Fs.PathName.findExtname(changed_name)) orelse .file);
                                 var prev_entry_id: usize = std.math.maxInt(usize);
                                 if (loader != .file) {
-                                    var path_string: bun.PathString = undefined;
+                                    var path_string: fun.PathString = undefined;
                                     var file_hash: Watcher.HashType = last_file_hash;
                                     const abs_path: string = brk: {
                                         if (dir_ent.entries.get(@as([]const u8, @ptrCast(changed_name)))) |file_ent| {
@@ -603,14 +603,14 @@ pub const Buffer = MarkedArrayBuffer;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Fs = bun.fs;
-const Output = bun.Output;
-const Watcher = bun.Watcher;
-const options = bun.options;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Fs = fun.fs;
+const Output = fun.Output;
+const Watcher = fun.Watcher;
+const options = fun.options;
+const strings = fun.strings;
 
-const jsc = bun.jsc;
-const MarkedArrayBuffer = bun.jsc.MarkedArrayBuffer;
+const jsc = fun.jsc;
+const MarkedArrayBuffer = fun.jsc.MarkedArrayBuffer;
 const VirtualMachine = jsc.VirtualMachine;

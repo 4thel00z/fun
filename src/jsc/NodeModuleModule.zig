@@ -3,13 +3,13 @@ export const NodeModuleModule__findPath = jsc.host_fn.wrap3(findPath);
 // https://github.com/nodejs/node/blob/40ef9d541ed79470977f90eb445c291b95ab75a0/lib/internal/modules/cjs/loader.js#L666
 fn findPath(
     global: *JSGlobalObject,
-    request_bun_str: bun.String,
+    request_fun_str: fun.String,
     paths_maybe: ?*jsc.JSArray,
-) bun.JSError!JSValue {
-    var stack_buf = std.heap.stackFallback(8192, bun.default_allocator);
+) fun.JSError!JSValue {
+    var stack_buf = std.heap.stackFallback(8192, fun.default_allocator);
     const alloc = stack_buf.get();
 
-    const request_slice = request_bun_str.toUTF8(alloc);
+    const request_slice = request_fun_str.toUTF8(alloc);
     defer request_slice.deinit();
     const request = request_slice.slice();
 
@@ -22,16 +22,16 @@ fn findPath(
     var found = if (paths_maybe) |paths| found: {
         var iter = try paths.iterator(global);
         while (try iter.next()) |path| {
-            const cur_path = try bun.String.fromJS(path, global);
+            const cur_path = try fun.String.fromJS(path, global);
             defer cur_path.deref();
 
-            if (findPathInner(request_bun_str, cur_path, global)) |found| {
+            if (findPathInner(request_fun_str, cur_path, global)) |found| {
                 break :found found;
             }
         }
 
         break :found null;
-    } else findPathInner(request_bun_str, bun.String.static(""), global);
+    } else findPathInner(request_fun_str, fun.String.static(""), global);
 
     if (found) |*str| {
         return str.transferToJS(global);
@@ -41,10 +41,10 @@ fn findPath(
 }
 
 fn findPathInner(
-    request: bun.String,
-    cur_path: bun.String,
+    request: fun.String,
+    cur_path: fun.String,
     global: *JSGlobalObject,
-) ?bun.String {
+) ?fun.String {
     var errorable: ErrorableString = undefined;
     jsc.VirtualMachine.resolveMaybeNeedsTrailingSlash(
         &errorable,
@@ -66,7 +66,7 @@ fn findPathInner(
 }
 
 pub fn _stat(path: []const u8) i32 {
-    const exists = bun.sys.existsAtType(.cwd(), path).unwrap() catch
+    const exists = fun.sys.existsAtType(.cwd(), path).unwrap() catch
         return -1; // Returns a negative integer for any other kind of strings.
     return switch (exists) {
         .file => 0, // Returns 0 for files.
@@ -75,7 +75,7 @@ pub fn _stat(path: []const u8) i32 {
 }
 
 pub const CustomLoader = union(enum) {
-    loader: bun.options.Loader,
+    loader: fun.options.Loader,
     custom: jsc.Strong,
 };
 
@@ -86,15 +86,15 @@ extern fn JSCommonJSExtensions__swapRemove(global: *jsc.JSGlobalObject, index: u
 
 // Memory management is complicated because JSValues are stored in gc-visitable
 // WriteBarriers in C++ but the hash map for extensions is in Zig for flexibility.
-fn onRequireExtensionModify(global: *jsc.JSGlobalObject, str: []const u8, loader: bun.schema.api.Loader, value: jsc.JSValue) bun.OOM!void {
-    const vm = global.bunVM();
+fn onRequireExtensionModify(global: *jsc.JSGlobalObject, str: []const u8, loader: fun.schema.api.Loader, value: jsc.JSValue) fun.OOM!void {
+    const vm = global.funVM();
     const list = &vm.commonjs_custom_extensions;
     defer vm.transpiler.resolver.opts.extra_cjs_extensions = list.keys();
-    const is_built_in = bun.options.defaultLoaders.get(str) != null;
+    const is_built_in = fun.options.defaultLoaders.get(str) != null;
 
-    const gop = try list.getOrPut(bun.default_allocator, str);
+    const gop = try list.getOrPut(fun.default_allocator, str);
     if (!gop.found_existing) {
-        gop.key_ptr.* = try bun.default_allocator.dupe(u8, str);
+        gop.key_ptr.* = try fun.default_allocator.dupe(u8, str);
         if (is_built_in) {
             vm.has_mutated_built_in_extensions += 1;
         }
@@ -119,14 +119,14 @@ fn onRequireExtensionModify(global: *jsc.JSGlobalObject, str: []const u8, loader
     }
 }
 
-fn onRequireExtensionModifyNonFunction(global: *JSGlobalObject, str: []const u8) bun.OOM!void {
-    const vm = global.bunVM();
+fn onRequireExtensionModifyNonFunction(global: *JSGlobalObject, str: []const u8) fun.OOM!void {
+    const vm = global.funVM();
     const list = &vm.commonjs_custom_extensions;
     defer vm.transpiler.resolver.opts.extra_cjs_extensions = list.keys();
-    const is_built_in = bun.options.defaultLoaders.get(str) != null;
+    const is_built_in = fun.options.defaultLoaders.get(str) != null;
 
     if (list.fetchSwapRemove(str)) |prev| {
-        bun.default_allocator.free(prev.key);
+        fun.default_allocator.free(prev.key);
         if (is_built_in) {
             vm.has_mutated_built_in_extensions -= 1;
         }
@@ -143,7 +143,7 @@ fn onRequireExtensionModifyNonFunction(global: *JSGlobalObject, str: []const u8)
 pub fn findLongestRegisteredExtension(vm: *jsc.VirtualMachine, filename: []const u8) ?CustomLoader {
     const basename = std.fs.path.basename(filename);
     var next: usize = 0;
-    while (bun.strings.indexOfCharPos(basename, '.', next)) |i| {
+    while (fun.strings.indexOfCharPos(basename, '.', next)) |i| {
         next = i + 1;
         if (i == 0) continue;
         const ext = basename[i..];
@@ -156,29 +156,29 @@ pub fn findLongestRegisteredExtension(vm: *jsc.VirtualMachine, filename: []const
 
 fn onRequireExtensionModifyBinding(
     global: *jsc.JSGlobalObject,
-    str: *const bun.String,
-    loader: bun.schema.api.Loader,
+    str: *const fun.String,
+    loader: fun.schema.api.Loader,
     value: jsc.JSValue,
 ) callconv(.c) void {
-    var sfa_state = std.heap.stackFallback(8192, bun.default_allocator);
+    var sfa_state = std.heap.stackFallback(8192, fun.default_allocator);
     const alloc = sfa_state.get();
     const str_slice = str.toUTF8(alloc);
     defer str_slice.deinit();
     onRequireExtensionModify(global, str_slice.slice(), loader, value) catch |err| switch (err) {
-        error.OutOfMemory => bun.outOfMemory(),
+        error.OutOfMemory => fun.outOfMemory(),
     };
 }
 
 fn onRequireExtensionModifyNonFunctionBinding(
     global: *jsc.JSGlobalObject,
-    str: *const bun.String,
+    str: *const fun.String,
 ) callconv(.c) void {
-    var sfa_state = std.heap.stackFallback(8192, bun.default_allocator);
+    var sfa_state = std.heap.stackFallback(8192, fun.default_allocator);
     const alloc = sfa_state.get();
     const str_slice = str.toUTF8(alloc);
     defer str_slice.deinit();
     onRequireExtensionModifyNonFunction(global, str_slice.slice()) catch |err| switch (err) {
-        error.OutOfMemory => bun.outOfMemory(),
+        error.OutOfMemory => fun.outOfMemory(),
     };
 }
 
@@ -187,10 +187,10 @@ comptime {
     @export(&onRequireExtensionModifyNonFunctionBinding, .{ .name = "NodeModuleModule__onRequireExtensionModifyNonFunction" });
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const ErrorableString = jsc.ErrorableString;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

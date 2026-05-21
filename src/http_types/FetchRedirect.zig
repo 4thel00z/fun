@@ -3,7 +3,7 @@ pub const FetchRedirect = enum(u2) {
     manual,
     @"error",
 
-    pub const Map = bun.ComptimeStringMap(FetchRedirect, .{
+    pub const Map = fun.ComptimeStringMap(FetchRedirect, .{
         .{ "follow", .follow },
         .{ "manual", .manual },
         .{ "error", .@"error" },
@@ -11,4 +11,4 @@ pub const FetchRedirect = enum(u2) {
     pub const toJS = @import("../http_jsc/fetch_enums_jsc.zig").fetchRedirectToJS;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

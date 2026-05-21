@@ -20,7 +20,7 @@
 
 #include "../vm/SigintWatcher.h"
 
-namespace Bun {
+namespace Fun {
 using namespace NodeVM;
 
 NodeVMSourceTextModule* NodeVMSourceTextModule::create(VM& vm, JSGlobalObject* globalObject, ArgList args)
@@ -62,7 +62,7 @@ NodeVMSourceTextModule* NodeVMSourceTextModule::create(VM& vm, JSGlobalObject* g
     JSValue cachedDataValue = args.at(5);
     WTF::Vector<uint8_t> cachedData;
     if (!cachedDataValue.isUndefined() && !extractCachedData(cachedDataValue, cachedData)) {
-        Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "options.cachedData"_s, "Buffer, TypedArray, or DataView"_s, cachedDataValue);
+        Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "options.cachedData"_s, "Buffer, TypedArray, or DataView"_s, cachedDataValue);
         return nullptr;
     }
 
@@ -502,4 +502,4 @@ DEFINE_VISIT_CHILDREN(NodeVMSourceTextModule);
 
 const JSC::ClassInfo NodeVMSourceTextModule::s_info = { "NodeVMSourceTextModule"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(NodeVMSourceTextModule) };
 
-} // namespace Bun
+} // namespace Fun

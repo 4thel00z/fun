@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("ENG-22243: RedisClient cannot be called without 'new'", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "const t8 = Bun.RedisClient; t8();"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "const t8 = Fun.RedisClient; t8();"],
+    env: funEnv,
     stderr: "pipe",
   });
 
@@ -15,9 +15,9 @@ test("ENG-22243: RedisClient cannot be called without 'new'", async () => {
 });
 
 test("ENG-22243: RedisClient works with 'new'", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", "try { new Bun.RedisClient(); } catch (e) { console.log('OK'); }"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", "try { new Fun.RedisClient(); } catch (e) { console.log('OK'); }"],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

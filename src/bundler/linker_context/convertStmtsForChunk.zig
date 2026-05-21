@@ -193,7 +193,7 @@ pub fn convertStmtsForChunk(
                                                     },
                                                     stmt.loc,
                                                 ),
-                                                .args = bun.BabyList(Expr).fromOwnedSlice(args),
+                                                .args = fun.BabyList(Expr).fromOwnedSlice(args),
                                             },
                                             stmt.loc,
                                         ),
@@ -392,7 +392,7 @@ pub fn convertStmtsForChunk(
                         );
                         stmt.data.s_local.is_export = false;
                     } else if (FeatureFlags.unwrap_commonjs_to_esm and s.was_commonjs_export and wrap == .cjs) {
-                        bun.assert(stmt.data.s_local.decls.len == 1);
+                        fun.assert(stmt.data.s_local.decls.len == 1);
                         const decl = stmt.data.s_local.decls.ptr[0];
                         if (decl.value) |decl_value| {
                             stmt = Stmt.alloc(
@@ -484,7 +484,7 @@ pub fn convertStmtsForChunk(
                                         stmt.data.s_class.class.class_name = s.default_name;
                                     },
 
-                                    else => bun.unreachablePanic(
+                                    else => fun.unreachablePanic(
                                         "Unexpected type in source file {s}",
                                         .{
                                             c.parse_graph.input_files.get(c.graph.files.get(source_index).input_file.get()).source.path.text,
@@ -527,17 +527,17 @@ pub fn convertStmtsForChunk(
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const FeatureFlags = bun.FeatureFlags;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const FeatureFlags = fun.FeatureFlags;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;
@@ -547,12 +547,12 @@ const JSAst = js_ast.BundledAst;
 const S = js_ast.S;
 const Stmt = js_ast.Stmt;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const WrapKind = bundler.WrapKind;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const StmtList = LinkerContext.StmtList;
 
-const Logger = bun.logger;
+const Logger = fun.logger;
 const Loc = Logger.Loc;

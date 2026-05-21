@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { Namespace, Server, Socket } from "socket.io";
 import type { SocketId } from "socket.io-adapter";
 import { createClient, createPartialDone, fail, success } from "./support/util.ts";

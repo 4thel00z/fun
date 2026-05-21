@@ -34,9 +34,9 @@ pub fn HslHwbColorGamut(comptime T: type, comptime a: []const u8, comptime b: []
             var result: T = this.*;
             // result.h = this.h % 360.0;
             result.h = @mod(this.h, 360.0);
-            @field(result, a) = bun.clamp(@field(this, a), 0.0, 1.0);
-            @field(result, b) = bun.clamp(@field(this, b), 0.0, 1.0);
-            result.alpha = bun.clamp(this.alpha, 0.0, 1.0);
+            @field(result, a) = fun.clamp(@field(this, a), 0.0, 1.0);
+            @field(result, b) = fun.clamp(@field(this, b), 0.0, 1.0);
+            result.alpha = fun.clamp(this.alpha, 0.0, 1.0);
             return result;
         }
     };
@@ -143,7 +143,7 @@ pub const CssColor = union(enum) {
 
                             // Try first with two decimal places, then with three.
                             var rounded_alpha = @round(color.alphaF32() * 100.0) / 100.0;
-                            const clamped: u8 = bun.intFromFloat(u8, @min(
+                            const clamped: u8 = fun.intFromFloat(u8, @min(
                                 @max(
                                     @round(rounded_alpha * 255.0),
                                     0.0,
@@ -219,12 +219,12 @@ pub const CssColor = union(enum) {
             },
             .light_dark => |*light_dark| {
                 if (!dest.targets.isCompatible(css.compat.Feature.light_dark)) {
-                    try dest.writeStr("var(--buncss-light");
+                    try dest.writeStr("var(--funcss-light");
                     try dest.delim(',', false);
                     try light_dark.light.toCss(dest);
                     try dest.writeChar(')');
                     try dest.whitespace();
-                    try dest.writeStr("var(--buncss-dark");
+                    try dest.writeStr("var(--funcss-dark");
                     try dest.delim(',', false);
                     try light_dark.dark.toCss(dest);
                     return dest.writeChar(')');
@@ -256,9 +256,9 @@ pub const CssColor = union(enum) {
                 } };
             },
             .ident => |value| {
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "currentcolor")) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "currentcolor")) {
                     return .{ .result = .current_color };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "transparent")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "transparent")) {
                     return .{ .result = .{
                         .rgba = RGBA.transparent(),
                     } };
@@ -306,13 +306,13 @@ pub const CssColor = union(enum) {
         return switch (this.*) {
             .current_color => .current_color,
             .rgba => |rgba| CssColor{ .rgba = rgba },
-            .lab => |lab| CssColor{ .lab = bun.create(allocator, LABColor, lab.*) },
-            .predefined => |pre| CssColor{ .predefined = bun.create(allocator, PredefinedColor, pre.*) },
-            .float => |float| CssColor{ .float = bun.create(allocator, FloatColor, float.*) },
+            .lab => |lab| CssColor{ .lab = fun.create(allocator, LABColor, lab.*) },
+            .predefined => |pre| CssColor{ .predefined = fun.create(allocator, PredefinedColor, pre.*) },
+            .float => |float| CssColor{ .float = fun.create(allocator, FloatColor, float.*) },
             .light_dark => CssColor{
                 .light_dark = .{
-                    .light = bun.create(allocator, CssColor, this.light_dark.light.deepClone(allocator)),
-                    .dark = bun.create(allocator, CssColor, this.light_dark.dark.deepClone(allocator)),
+                    .light = fun.create(allocator, CssColor, this.light_dark.light.deepClone(allocator)),
+                    .dark = fun.create(allocator, CssColor, this.light_dark.dark.deepClone(allocator)),
                 },
             },
             .system => |sys| CssColor{ .system = sys },
@@ -324,8 +324,8 @@ pub const CssColor = union(enum) {
             .light_dark => this.deepClone(allocator),
             else => .{
                 .light_dark = .{
-                    .light = bun.create(allocator, CssColor, this.deepClone(allocator)),
-                    .dark = bun.create(allocator, CssColor, this.deepClone(allocator)),
+                    .light = fun.create(allocator, CssColor, this.deepClone(allocator)),
+                    .dark = fun.create(allocator, CssColor, this.deepClone(allocator)),
                 },
             },
         };
@@ -362,12 +362,12 @@ pub const CssColor = union(enum) {
 
             return .{
                 .light_dark = .{
-                    .light = bun.create(
+                    .light = fun.create(
                         allocator,
                         CssColor,
                         al.interpolate(allocator, T, p1, bl, p2, method) orelse return null,
                     ),
-                    .dark = bun.create(
+                    .dark = fun.create(
                         allocator,
                         CssColor,
                         ad.interpolate(allocator, T, p1, bd, p2, method) orelse return null,
@@ -378,7 +378,7 @@ pub const CssColor = union(enum) {
 
         const check_converted = struct {
             fn run(color: *const CssColor) css.Result(bool) {
-                bun.debugAssert(color.* != .light_dark and color.* != .current_color);
+                fun.debugAssert(color.* != .light_dark and color.* != .current_color);
                 return switch (color.*) {
                     .rgba => .{ .result = T == RGBA },
                     .lab => |lab| .{ .result = switch (lab.*) {
@@ -477,8 +477,8 @@ pub const CssColor = union(enum) {
     pub fn lightDarkOwned(allocator: Allocator, light: CssColor, dark: CssColor) CssColor {
         return CssColor{
             .light_dark = .{
-                .light = bun.create(allocator, CssColor, light),
-                .dark = bun.create(allocator, CssColor, dark),
+                .light = fun.create(allocator, CssColor, light),
+                .dark = fun.create(allocator, CssColor, dark),
             },
         };
     }
@@ -490,7 +490,7 @@ pub const CssColor = union(enum) {
             ColorFallbackKind.RGB.asBits() => this.toRGB(allocator).?,
             ColorFallbackKind.P3.asBits() => this.toP3(allocator).?,
             ColorFallbackKind.LAB.asBits() => this.toLAB(allocator).?,
-            else => bun.unreachablePanic("Expected RGBA, P3, LAB fallback. This is a bug in Bun.", .{}),
+            else => fun.unreachablePanic("Expected RGBA, P3, LAB fallback. This is a bug in Fun.", .{}),
         };
     }
 
@@ -542,7 +542,7 @@ pub const CssColor = union(enum) {
                 return ColorFallbackKind{};
             },
             .light_dark => |*ld| {
-                return bun.bits.@"or"(ColorFallbackKind, ld.light.getPossibleFallbacks(targets), ld.dark.getPossibleFallbacks(targets));
+                return fun.bits.@"or"(ColorFallbackKind, ld.light.getPossibleFallbacks(targets), ld.dark.getPossibleFallbacks(targets));
             },
         };
 
@@ -602,8 +602,8 @@ pub const CssColor = union(enum) {
     pub fn toRGB(this: *const @This(), allocator: Allocator) ?CssColor {
         if (this.* == .light_dark) {
             return CssColor{ .light_dark = .{
-                .light = bun.create(allocator, CssColor, this.light_dark.light.toRGB(allocator) orelse return null),
-                .dark = bun.create(allocator, CssColor, this.light_dark.dark.toRGB(allocator) orelse return null),
+                .light = fun.create(allocator, CssColor, this.light_dark.light.toRGB(allocator) orelse return null),
+                .dark = fun.create(allocator, CssColor, this.light_dark.dark.toRGB(allocator) orelse return null),
             } };
         }
         return CssColor{ .rgba = RGBA.tryFromCssColor(this) orelse return null };
@@ -616,12 +616,12 @@ pub const CssColor = union(enum) {
                 const dark = ld.dark.toP3(allocator) orelse break :blk null;
                 break :blk .{
                     .light_dark = .{
-                        .light = bun.create(allocator, CssColor, light),
-                        .dark = bun.create(allocator, CssColor, dark),
+                        .light = fun.create(allocator, CssColor, light),
+                        .dark = fun.create(allocator, CssColor, dark),
                     },
                 };
             },
-            else => return .{ .predefined = bun.create(allocator, PredefinedColor, .{ .display_p3 = P3.tryFromCssColor(this) orelse return null }) },
+            else => return .{ .predefined = fun.create(allocator, PredefinedColor, .{ .display_p3 = P3.tryFromCssColor(this) orelse return null }) },
         };
     }
 
@@ -632,12 +632,12 @@ pub const CssColor = union(enum) {
                 const dark = ld.dark.toLAB(allocator) orelse break :blk null;
                 break :blk .{
                     .light_dark = .{
-                        .light = bun.create(allocator, CssColor, light),
-                        .dark = bun.create(allocator, CssColor, dark),
+                        .light = fun.create(allocator, CssColor, light),
+                        .dark = fun.create(allocator, CssColor, dark),
                     },
                 };
             },
-            else => .{ .lab = bun.create(allocator, LABColor, .{ .lab = LAB.tryFromCssColor(this) orelse return null }) },
+            else => .{ .lab = fun.create(allocator, LABColor, .{ .lab = LAB.tryFromCssColor(this) orelse return null }) },
         };
     }
 };
@@ -646,7 +646,7 @@ pub fn parseColorFunction(location: css.SourceLocation, function: []const u8, in
     var parser = ComponentParser.new(true);
 
     const ColorFunctions = enum { lab, oklab, lch, oklch, color, hsl, hsla, hwb, rgb, rgba, @"color-mix", @"light-dark" };
-    const Map = bun.ComptimeEnumMap(ColorFunctions);
+    const Map = fun.ComptimeEnumMap(ColorFunctions);
 
     if (Map.getASCIIICaseInsensitive(function)) |val| {
         return switch (val) {
@@ -677,7 +677,7 @@ pub fn parseColorFunction(location: css.SourceLocation, function: []const u8, in
                     if (!std.math.isNan(h) and !std.math.isNan(s) and !std.math.isNan(l) and !std.math.isNan(a)) {
                         return CssColor{ .rgba = hsl.into(.RGBA) };
                     } else {
-                        return CssColor{ .float = bun.create(allocator, FloatColor, .{ .hsl = hsl }) };
+                        return CssColor{ .float = fun.create(allocator, FloatColor, .{ .hsl = hsl }) };
                     }
                 }
             }.callback),
@@ -687,7 +687,7 @@ pub fn parseColorFunction(location: css.SourceLocation, function: []const u8, in
                     if (!std.math.isNan(h) and !std.math.isNan(w) and !std.math.isNan(b) and !std.math.isNan(a)) {
                         return CssColor{ .rgba = hwb.into(.RGBA) };
                     } else {
-                        return CssColor{ .float = bun.create(allocator, FloatColor, .{ .hwb = hwb }) };
+                        return CssColor{ .float = fun.create(allocator, FloatColor, .{ .hwb = hwb }) };
                     }
                 }
             }.callback),
@@ -704,7 +704,7 @@ pub fn parseColorFunction(location: css.SourceLocation, function: []const u8, in
                         .err => |e| return .{ .err = e },
                     }) {
                         .light_dark => |ld| ld.takeLightFreeDark(i.allocator()),
-                        else => |v| bun.create(i.allocator(), CssColor, v),
+                        else => |v| fun.create(i.allocator(), CssColor, v),
                     };
                     if (i.expectComma().asErr()) |e| return .{ .err = e };
                     const dark = switch (switch (CssColor.parse(i)) {
@@ -712,7 +712,7 @@ pub fn parseColorFunction(location: css.SourceLocation, function: []const u8, in
                         .err => |e| return .{ .err = e },
                     }) {
                         .light_dark => |ld| ld.takeDarkFreeLight(i.allocator()),
-                        else => |v| bun.create(i.allocator(), CssColor, v),
+                        else => |v| fun.create(i.allocator(), CssColor, v),
                     };
                     return .{ .result = .{
                         .light_dark = .{
@@ -739,28 +739,28 @@ pub fn parseRGBComponents(input: *css.Parser, parser: *ComponentParser) Result(s
 
     const r, const g, const b = if (is_legacy_syntax) switch (red) {
         .number => |v| brk: {
-            const r = bun.clamp(@round(v.value), 0.0, 255.0);
+            const r = fun.clamp(@round(v.value), 0.0, 255.0);
             const g = switch (parser.parseNumber(input)) {
                 .err => |e| return .{ .err = e },
-                .result => |vv| bun.clamp(@round(vv), 0.0, 255.0),
+                .result => |vv| fun.clamp(@round(vv), 0.0, 255.0),
             };
             if (input.expectComma().asErr()) |e| return .{ .err = e };
             const b = switch (parser.parseNumber(input)) {
                 .err => |e| return .{ .err = e },
-                .result => |vv| bun.clamp(@round(vv), 0.0, 255.0),
+                .result => |vv| fun.clamp(@round(vv), 0.0, 255.0),
             };
             break :brk .{ r, g, b };
         },
         .percentage => |v| brk: {
-            const r = bun.clamp(@round(v.unit_value * 255.0), 0.0, 255.0);
+            const r = fun.clamp(@round(v.unit_value * 255.0), 0.0, 255.0);
             const g = switch (parser.parsePercentage(input)) {
                 .err => |e| return .{ .err = e },
-                .result => |vv| bun.clamp(@round(vv * 255.0), 0.0, 255.0),
+                .result => |vv| fun.clamp(@round(vv * 255.0), 0.0, 255.0),
             };
             if (input.expectComma().asErr()) |e| return .{ .err = e };
             const b = switch (parser.parsePercentage(input)) {
                 .err => |e| return .{ .err = e },
-                .result => |vv| bun.clamp(@round(vv * 255.0), 0.0, 255.0),
+                .result => |vv| fun.clamp(@round(vv * 255.0), 0.0, 255.0),
             };
             break :brk .{ r, g, b };
         },
@@ -768,8 +768,8 @@ pub fn parseRGBComponents(input: *css.Parser, parser: *ComponentParser) Result(s
         const getComponent = struct {
             fn get(value: NumberOrPercentage) f32 {
                 return switch (value) {
-                    .number => |v| if (std.math.isNan(v.value)) v.value else bun.clamp(@round(v.value), 0.0, 255.0) / 255.0,
-                    .percentage => |v| bun.clamp(v.unit_value, 0.0, 1.0),
+                    .number => |v| if (std.math.isNan(v.value)) v.value else fun.clamp(@round(v.value), 0.0, 255.0) / 255.0,
+                    .percentage => |v| fun.clamp(v.unit_value, 0.0, 1.0),
                 };
             }
         }.get;
@@ -803,14 +803,14 @@ pub fn parseHSLHWBComponents(comptime T: type, input: *css.Parser, parser: *Comp
         !std.math.isNan(h) and
         input.tryParse(css.Parser.expectComma, .{}).isOk();
     const a = switch (parser.parsePercentage(input)) {
-        .result => |v| bun.clamp(v, 0.0, 1.0),
+        .result => |v| fun.clamp(v, 0.0, 1.0),
         .err => |e| return .{ .err = e },
     };
     if (is_legacy_syntax) {
         if (input.expectColon().asErr()) |e| return .{ .err = e };
     }
     const b = switch (parser.parsePercentage(input)) {
-        .result => |v| bun.clamp(v, 0.0, 1.0),
+        .result => |v| fun.clamp(v, 0.0, 1.0),
         .err => |e| return .{ .err = e },
     };
     if (is_legacy_syntax and (std.math.isNan(a) or std.math.isNan(b))) {
@@ -884,9 +884,9 @@ pub fn deltaEok(comptime T: type, _a: T, _b: OKLCH) f32 {
     const delta_b = a.b - b.b;
 
     return @sqrt(
-        bun.powf(delta_l, 2) +
-            bun.powf(delta_a, 2) +
-            bun.powf(delta_b, 2),
+        fun.powf(delta_l, 2) +
+            fun.powf(delta_a, 2) +
+            fun.powf(delta_b, 2),
     );
 }
 
@@ -905,7 +905,7 @@ pub fn parseLab(
 
         pub fn innerfn(i: *css.Parser, p: *ComponentParser) Result(CssColor) {
             // f32::max() does not propagate NaN, so use clamp for now until f32::maximum() is stable.
-            const l = bun.clamp(
+            const l = fun.clamp(
                 switch (p.parsePercentage(i)) {
                     .result => |v| v,
                     .err => |e| return .{ .err = e },
@@ -926,7 +926,7 @@ pub fn parseLab(
                 .err => |e| return .{ .err = e },
             };
             const lab = func(l, a, b, alpha);
-            const heap_lab = bun.create(i.allocator(), LABColor, lab);
+            const heap_lab = fun.create(i.allocator(), LABColor, lab);
             heap_lab.* = lab;
             return .{ .result = CssColor{ .lab = heap_lab } };
         }
@@ -972,7 +972,7 @@ pub fn parseLch(
                 }
             }
 
-            const l = bun.clamp(
+            const l = fun.clamp(
                 switch (p.parsePercentage(i)) {
                     .result => |vv| vv,
                     .err => |e| return .{ .err = e },
@@ -980,7 +980,7 @@ pub fn parseLch(
                 0.0,
                 std.math.floatMax(f32),
             );
-            const c = bun.clamp(
+            const c = fun.clamp(
                 switch (p.parseNumber(i)) {
                     .result => |vv| vv,
                     .err => |e| return .{ .err = e },
@@ -999,7 +999,7 @@ pub fn parseLch(
             const lab = func(l, c, h, alpha);
             return .{
                 .result = .{
-                    .lab = bun.create(i.allocator(), LABColor, lab),
+                    .lab = fun.create(i.allocator(), LABColor, lab),
                 },
             };
         }
@@ -1074,7 +1074,7 @@ pub fn parseHslHwbComponents(
         !std.math.isNan(h) and
         input.tryParse(css.Parser.expectComma, .{}).isOk();
 
-    const a = bun.clamp(
+    const a = fun.clamp(
         switch (parser.parsePercentage(input)) {
             .result => |vv| vv,
             .err => |e| return .{ .err = e },
@@ -1087,7 +1087,7 @@ pub fn parseHslHwbComponents(
         if (input.expectComma().asErr()) |e| return .{ .err = e };
     }
 
-    const b = bun.clamp(
+    const b = fun.clamp(
         switch (parser.parsePercentage(input)) {
             .result => |vv| vv,
             .err => |e| return .{ .err = e },
@@ -1145,9 +1145,9 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
                 if (is_legacy) return .{
                     .result = .{
                         .rgba = RGBA.new(
-                            bun.intFromFloat(u8, r),
-                            bun.intFromFloat(u8, g),
-                            bun.intFromFloat(u8, b),
+                            fun.intFromFloat(u8, r),
+                            fun.intFromFloat(u8, g),
+                            fun.intFromFloat(u8, b),
                             alpha,
                         ),
                     },
@@ -1166,7 +1166,7 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
             } else {
                 return .{
                     .result = .{
-                        .float = bun.create(
+                        .float = fun.create(
                             i.allocator(),
                             FloatColor,
                             .{
@@ -1203,8 +1203,8 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
 
 //     const r, const g, const b = if (is_legacy_syntax) switch (red) {
 //         .number => |num| brk: {
-//             const r = bun.clamp(@round(num.value), 0.0, 255.0);
-//             const g = bun.clamp(
+//             const r = fun.clamp(@round(num.value), 0.0, 255.0);
+//             const g = fun.clamp(
 //                 @round(
 //                     switch (parser.parseNumber(input)) {
 //                         .result => |vv| vv,
@@ -1215,7 +1215,7 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
 //                 255.0,
 //             );
 //             if (input.expectComma().asErr()) |e| return .{ .err = e };
-//             const b = bun.clamp(
+//             const b = fun.clamp(
 //                 @round(
 //                     switch (parser.parseNumber(input)) {
 //                         .result => |vv| vv,
@@ -1229,8 +1229,8 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
 //         },
 //         .percentage => |per| brk: {
 //             const unit_value = per.unit_value;
-//             const r = bun.clamp(@round(unit_value * 255.0), 0.0, 255.0);
-//             const g = bun.clamp(
+//             const r = fun.clamp(@round(unit_value * 255.0), 0.0, 255.0);
+//             const g = fun.clamp(
 //                 @round(
 //                     switch (parser.parsePercentage(input)) {
 //                         .result => |vv| vv,
@@ -1241,7 +1241,7 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
 //                 255.0,
 //             );
 //             if (input.expectComma().asErr()) |e| return .{ .err = e };
-//             const b = bun.clamp(
+//             const b = fun.clamp(
 //                 @round(
 //                     switch (parser.parsePercentage(input)) {
 //                         .result => |vv| vv,
@@ -1260,9 +1260,9 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
 //                     .number => |num| {
 //                         const v = num.value;
 //                         if (std.math.isNan(v)) return v;
-//                         return bun.clamp(@round(v), 0.0, 255.0) / 255.0;
+//                         return fun.clamp(@round(v), 0.0, 255.0) / 255.0;
 //                     },
-//                     .percentage => |per| bun.clamp(per.unit_value, 0.0, 1.0),
+//                     .percentage => |per| fun.clamp(per.unit_value, 0.0, 1.0),
 //                 };
 //             }
 //         };
@@ -1292,7 +1292,7 @@ fn parseRgb(input: *css.Parser, parser: *ComponentParser) Result(CssColor) {
 fn parseLegacyAlpha(input: *css.Parser, parser: *const ComponentParser) Result(f32) {
     if (!input.isExhausted()) {
         if (input.expectComma().asErr()) |e| return .{ .err = e };
-        return .{ .result = bun.clamp(
+        return .{ .result = fun.clamp(
             switch (parseNumberOrPercentage(input, parser)) {
                 .result => |vv| vv,
                 .err => |e| return .{ .err = e },
@@ -1306,7 +1306,7 @@ fn parseLegacyAlpha(input: *css.Parser, parser: *const ComponentParser) Result(f
 
 fn parseAlpha(input: *css.Parser, parser: *const ComponentParser) Result(f32) {
     const res = if (input.tryParse(css.Parser.expectDelim, .{'/'}).isOk())
-        bun.clamp(switch (parseNumberOrPercentage(input, parser)) {
+        fun.clamp(switch (parseNumberOrPercentage(input, parser)) {
             .result => |v| v,
             .err => |e| return .{ .err = e },
         }, 0.0, 1.0)
@@ -1423,7 +1423,7 @@ fn clamp_unit_f32(val: f32) u8 {
 }
 
 fn clamp_floor_256_f32(val: f32) u8 {
-    return bun.intFromFloat(u8, @min(255.0, @max(0.0, @round(val))));
+    return fun.intFromFloat(u8, @min(255.0, @max(0.0, @round(val))));
     //   val.round().max(0.).min(255.) as u8
 }
 
@@ -2310,7 +2310,7 @@ pub const ComponentParser = struct {
             return this.parseFrom(from, input, T, C, func, args_);
         }
 
-        const args = bun.meta.ConcatArgs2(func, input, this, args_);
+        const args = fun.meta.ConcatArgs2(func, input, this, args_);
         return @call(.auto, func, args);
     }
 
@@ -2341,7 +2341,7 @@ pub const ComponentParser = struct {
 
         this.from = RelativeComponentParser.new(&new_from);
 
-        const args = bun.meta.ConcatArgs2(func, input, this, args_);
+        const args = fun.meta.ConcatArgs2(func, input, this, args_);
         return @call(.auto, func, args);
     }
 
@@ -2705,25 +2705,25 @@ const RelativeComponentParser = struct {
         ident: []const u8,
         allowed_types: ChannelType,
     ) ?f32 {
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, this.names[0]) and
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, this.names[0]) and
             bits.intersects(ChannelType, allowed_types, this.types[0]))
         {
             return this.components[0];
         }
 
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, this.names[1]) and
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, this.names[1]) and
             bits.intersects(ChannelType, allowed_types, this.types[1]))
         {
             return this.components[1];
         }
 
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, this.names[2]) and
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, this.names[2]) and
             bits.intersects(ChannelType, allowed_types, this.types[2]))
         {
             return this.components[2];
         }
 
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "alpha") and allowed_types.percentage) {
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "alpha") and allowed_types.percentage) {
             return this.components[3];
         }
 
@@ -2778,12 +2778,12 @@ pub fn parsePredefined(input: *css.Parser, parser: *ComponentParser) Result(CssC
                     };
                     return .{ .result = CssColor{
                         .light_dark = .{
-                            .light = bun.create(
+                            .light = fun.create(
                                 i.allocator(),
                                 CssColor,
                                 light,
                             ),
-                            .dark = bun.create(
+                            .dark = fun.create(
                                 i.allocator(),
                                 CssColor,
                                 dark,
@@ -2813,36 +2813,36 @@ pub fn parsePredefinedRelative(
     if (_from) |from| {
         parser.from = set_from: {
             // todo_stuff.match_ignore_ascii_case
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("srgb", colorspace)) {
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("srgb", colorspace)) {
                 break :set_from RelativeComponentParser.new(
                     if (SRGB.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
                 );
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("srgb-linear", colorspace)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("srgb-linear", colorspace)) {
                 break :set_from RelativeComponentParser.new(
                     if (SRGBLinear.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
                 );
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("display-p3", colorspace)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("display-p3", colorspace)) {
                 break :set_from RelativeComponentParser.new(
                     if (P3.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
                 );
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("a98-rgb", colorspace)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("a98-rgb", colorspace)) {
                 break :set_from RelativeComponentParser.new(
                     if (A98.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
                 );
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("prophoto-rgb", colorspace)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("prophoto-rgb", colorspace)) {
                 break :set_from RelativeComponentParser.new(
                     if (ProPhoto.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
                 );
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("rec2020", colorspace)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("rec2020", colorspace)) {
                 break :set_from RelativeComponentParser.new(
                     if (Rec2020.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
                 );
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("xyz-d50", colorspace)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("xyz-d50", colorspace)) {
                 break :set_from RelativeComponentParser.new(
                     if (XYZd50.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
                 );
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("xyz", colorspace) or
-                bun.strings.eqlCaseInsensitiveASCIIICheckLength("xyz-d65", colorspace))
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("xyz", colorspace) or
+                fun.strings.eqlCaseInsensitiveASCIIICheckLength("xyz-d65", colorspace))
             {
                 break :set_from RelativeComponentParser.new(
                     if (XYZd65.tryFromCssColor(from)) |v| v.resolveMissing() else return .{ .err = input.newCustomError(css.ParserError.invalid_value) },
@@ -2884,7 +2884,7 @@ pub fn parsePredefinedRelative(
             @"xyz-d65",
             xyz,
         };
-        const Map = bun.ComptimeEnumMap(Variants);
+        const Map = fun.ComptimeEnumMap(Variants);
         if (Map.getAnyCase(colorspace)) |ret| {
             switch (ret) {
                 .srgb => break :predefined .{ .srgb = SRGB{
@@ -2940,7 +2940,7 @@ pub fn parsePredefinedRelative(
     };
 
     return .{ .result = .{
-        .predefined = bun.create(
+        .predefined = fun.create(
             input.allocator(),
             PredefinedColor,
             predefined,
@@ -2962,10 +2962,10 @@ pub const ColorFallbackKind = packed struct(u8) {
     pub const OKLAB = ColorFallbackKind{ .oklab = true };
 
     pub fn lowest(this: @This()) ColorFallbackKind {
-        return bun.bits.@"and"(
+        return fun.bits.@"and"(
             ColorFallbackKind,
             this,
-            fromBitsTruncate(bun.wrappingNegation(@as(u8, @bitCast(this)))),
+            fromBitsTruncate(fun.wrappingNegation(@as(u8, @bitCast(this)))),
         );
     }
 
@@ -2973,7 +2973,7 @@ pub const ColorFallbackKind = packed struct(u8) {
         // This finds the highest set bit.
         if (this.isEmpty()) return ColorFallbackKind{};
 
-        const zeroes: u3 = @intCast(@as(u4, 7) - bun.bits.leadingZeros(ColorFallbackKind, this));
+        const zeroes: u3 = @intCast(@as(u4, 7) - fun.bits.leadingZeros(ColorFallbackKind, this));
         return fromBitsTruncate(@as(u8, 1) << zeroes);
     }
 
@@ -2984,14 +2984,14 @@ pub const ColorFallbackKind = packed struct(u8) {
     pub fn andBelow(this: @This()) ColorFallbackKind {
         if (this.isEmpty()) return .{};
 
-        return bun.bits.@"or"(ColorFallbackKind, this, fromBitsTruncate(@as(u8, @bitCast(this)) - 1));
+        return fun.bits.@"or"(ColorFallbackKind, this, fromBitsTruncate(@as(u8, @bitCast(this)) - 1));
     }
 
     pub fn supportsCondition(this: @This()) css.SupportsCondition {
         const s = switch (this.asBits()) {
             ColorFallbackKind.P3.asBits() => "color(display-p3 0 0 0)",
             ColorFallbackKind.LAB.asBits() => "lab(0% 0 0)",
-            else => bun.unreachablePanic("Expected P3 or LAB. This is a bug in Bun.", .{}),
+            else => fun.unreachablePanic("Expected P3 or LAB. This is a bug in Fun.", .{}),
         };
 
         return css.SupportsCondition{
@@ -3203,7 +3203,7 @@ fn rectangularToPolar(l: f32, a: f32, b: f32) struct { f32, f32, f32 } {
 
     // const c = @sqrt(std.math.powi(f32, a, 2) + std.math.powi(f32, b, 2));
     // PERF: Zig does not have Rust's f32::powi
-    const c = @sqrt(bun.powf(a, 2) + bun.powf(b, 2));
+    const c = @sqrt(fun.powf(a, 2) + fun.powf(b, 2));
 
     // h = h % 360.0;
     h = @mod(h, 360.0);
@@ -3328,10 +3328,10 @@ pub fn BoundedColorGamut(comptime T: type) type {
 
         pub fn clip(this: *const T) T {
             var result: T = this.*;
-            @field(result, a) = bun.clamp(@field(this, a), 0.0, 1.0);
-            @field(result, b) = bun.clamp(@field(this, b), 0.0, 1.0);
-            @field(result, c) = bun.clamp(@field(this, c), 0.0, 1.0);
-            result.alpha = bun.clamp(this.alpha, 0.0, 1.0);
+            @field(result, a) = fun.clamp(@field(this, a), 0.0, 1.0);
+            @field(result, b) = fun.clamp(@field(this, b), 0.0, 1.0);
+            @field(result, c) = fun.clamp(@field(this, c), 0.0, 1.0);
+            result.alpha = fun.clamp(this.alpha, 0.0, 1.0);
             return result;
         }
     };
@@ -3610,11 +3610,11 @@ pub fn gamSrgb(r: f32, g: f32, b: f32) struct { f32, f32, f32 } {
             const abs = @abs(c);
             if (abs > 0.0031308) {
                 const sign: f32 = if (c < 0.0) @as(f32, -1.0) else @as(f32, 1.0);
-                // const x: f32 = bun.powf( abs,  1.0 / 2.4);
+                // const x: f32 = fun.powf( abs,  1.0 / 2.4);
                 const x: f32 = powf(abs, 1.0 / 2.4);
                 const y: f32 = 1.055 * x;
                 const z: f32 = y - 0.055;
-                // return sign * (1.055 * bun.powf( abs,  1.0 / 2.4) - 0.055);
+                // return sign * (1.055 * fun.powf( abs,  1.0 / 2.4) - 0.055);
                 return sign * z;
             }
 
@@ -3649,7 +3649,7 @@ pub fn linSrgb(r: f32, g: f32, b: f32) struct { f32, f32, f32 } {
             }
 
             const sign: f32 = if (c < 0.0) -1.0 else 1.0;
-            return sign * bun.powf(
+            return sign * fun.powf(
                 ((abs + 0.055) / 1.055),
                 2.4,
             );
@@ -3687,7 +3687,7 @@ const color_conversions = struct {
 
     pub const convert_LAB = struct {
         pub fn intoCssColor(c: *const LAB, allocator: Allocator) CssColor {
-            return CssColor{ .lab = bun.create(
+            return CssColor{ .lab = fun.create(
                 allocator,
                 LABColor,
                 LABColor{ .lab = c.* },
@@ -3721,15 +3721,15 @@ const color_conversions = struct {
             const f2: f32 = f1 - b / 200.0;
 
             // compute xyz
-            const x = if (bun.powf(f0, 3) > E)
-                bun.powf(f0, 3)
+            const x = if (fun.powf(f0, 3) > E)
+                fun.powf(f0, 3)
             else
                 (116.0 * f0 - 16.0) / K;
 
-            const y = if (l > K * E) bun.powf((l + 16.0) / 116.0, 3) else l / K;
+            const y = if (l > K * E) fun.powf((l + 16.0) / 116.0, 3) else l / K;
 
-            const z = if (bun.powf(f2, 3) > E)
-                bun.powf(f2, 3)
+            const z = if (fun.powf(f2, 3) > E)
+                fun.powf(f2, 3)
             else
                 (@as(f32, 116.0) * f2 - 16.0) / K;
 
@@ -3884,7 +3884,7 @@ const color_conversions = struct {
 
         pub fn intoCssColor(rgb: *const SRGBLinear, allocator: Allocator) CssColor {
             return CssColor{
-                .predefined = bun.create(
+                .predefined = fun.create(
                     allocator,
                     PredefinedColor,
                     rgb.into(.PredefinedColor),
@@ -3937,7 +3937,7 @@ const color_conversions = struct {
 
         pub fn intoCssColor(rgb: *const P3, allocator: Allocator) CssColor {
             return CssColor{
-                .predefined = bun.create(
+                .predefined = fun.create(
                     allocator,
                     PredefinedColor,
                     rgb.into(.PredefinedColor),
@@ -3981,7 +3981,7 @@ const color_conversions = struct {
 
         pub fn intoCssColor(rgb: *const A98, allocator: Allocator) CssColor {
             return CssColor{
-                .predefined = bun.create(
+                .predefined = fun.create(
                     allocator,
                     PredefinedColor,
                     rgb.into(.PredefinedColor),
@@ -3994,7 +3994,7 @@ const color_conversions = struct {
             const H = struct {
                 pub fn linA98rgbComponent(c: f32) f32 {
                     const sign: f32 = if (c < 0.0) @as(f32, -1.0) else @as(f32, 1.0);
-                    return sign * bun.powf(@abs(c), 563.0 / 256.0);
+                    return sign * fun.powf(@abs(c), 563.0 / 256.0);
                 }
             };
 
@@ -4042,7 +4042,7 @@ const color_conversions = struct {
 
         pub fn intoCssColor(rgb: *const ProPhoto, allocator: Allocator) CssColor {
             return CssColor{
-                .predefined = bun.create(
+                .predefined = fun.create(
                     allocator,
                     PredefinedColor,
                     rgb.into(.PredefinedColor),
@@ -4066,7 +4066,7 @@ const color_conversions = struct {
                         return c / 16.0;
                     }
                     const sign: f32 = if (c < 0.0) -1.0 else 1.0;
-                    return sign * bun.powf(abs, 1.8);
+                    return sign * fun.powf(abs, 1.8);
                 }
             };
 
@@ -4108,7 +4108,7 @@ const color_conversions = struct {
 
         pub fn intoCssColor(rgb: *const Rec2020, allocator: Allocator) CssColor {
             return CssColor{
-                .predefined = bun.create(
+                .predefined = fun.create(
                     allocator,
                     PredefinedColor,
                     rgb.into(.PredefinedColor),
@@ -4133,7 +4133,7 @@ const color_conversions = struct {
                     }
 
                     const sign: f32 = if (c < 0.0) -1.0 else 1.0;
-                    return sign * bun.powf(
+                    return sign * fun.powf(
                         (abs + A - 1.0) / A,
                         1.0 / 0.45,
                     );
@@ -4179,7 +4179,7 @@ const color_conversions = struct {
 
         pub fn intoCssColor(rgb: *const XYZd50, allocator: Allocator) CssColor {
             return CssColor{
-                .predefined = bun.create(
+                .predefined = fun.create(
                     allocator,
                     PredefinedColor,
                     rgb.into(.PredefinedColor),
@@ -4268,7 +4268,7 @@ const color_conversions = struct {
                     const abs = @abs(c);
                     if (abs >= ET) {
                         const sign: f32 = if (c < 0.0) -1.0 else 1.0;
-                        return sign * bun.powf(abs, 1.0 / 1.8);
+                        return sign * fun.powf(abs, 1.0 / 1.8);
                     }
                     return 16.0 * c;
                 }
@@ -4294,7 +4294,7 @@ const color_conversions = struct {
 
         pub fn intoCssColor(rgb: *const XYZd65, allocator: Allocator) CssColor {
             return CssColor{
-                .predefined = bun.create(
+                .predefined = fun.create(
                     allocator,
                     PredefinedColor,
                     rgb.into(.PredefinedColor),
@@ -4374,7 +4374,7 @@ const color_conversions = struct {
                     // to gamma corrected form
                     // negative values are also now accepted
                     const sign: f32 = if (c < 0.0) -1.0 else 1.0;
-                    return sign * bun.powf(@abs(c), 256.0 / 563.0);
+                    return sign * fun.powf(@abs(c), 256.0 / 563.0);
                 }
             };
 
@@ -4417,7 +4417,7 @@ const color_conversions = struct {
                     const abs = @abs(c);
                     if (abs > B) {
                         const sign: f32 = if (c < 0.0) -1.0 else 1.0;
-                        return sign * (A * bun.powf(abs, 0.45) - (A - 1.0));
+                        return sign * (A * fun.powf(abs, 0.45) - (A - 1.0));
                     }
 
                     return 4.5 * c;
@@ -4505,7 +4505,7 @@ const color_conversions = struct {
 
     pub const convert_LCH = struct {
         pub fn intoCssColor(c: *const LCH, allocator: Allocator) CssColor {
-            return CssColor{ .lab = bun.create(
+            return CssColor{ .lab = fun.create(
                 allocator,
                 LABColor,
                 LABColor{ .lch = c.* },
@@ -4526,7 +4526,7 @@ const color_conversions = struct {
 
     pub const convert_OKLAB = struct {
         pub fn intoCssColor(c: *const OKLAB, allocator: Allocator) CssColor {
-            return CssColor{ .lab = bun.create(
+            return CssColor{ .lab = fun.create(
                 allocator,
                 LABColor,
                 LABColor{ .oklab = c.* },
@@ -4578,9 +4578,9 @@ const color_conversions = struct {
             const a, const b, const c = multiplyMatrix(&OKLAB_TO_LMS, lab.l, lab.a, lab.b);
             const x, const y, const z = multiplyMatrix(
                 &LMS_TO_XYZ,
-                bun.powf(a, 3),
-                bun.powf(b, 3),
-                bun.powf(c, 3),
+                fun.powf(a, 3),
+                fun.powf(b, 3),
+                fun.powf(c, 3),
             );
 
             return XYZd65{
@@ -4594,7 +4594,7 @@ const color_conversions = struct {
 
     pub const convert_OKLCH = struct {
         pub fn intoCssColor(c: *const OKLCH, allocator: Allocator) CssColor {
-            return CssColor{ .lab = bun.create(
+            return CssColor{ .lab = fun.create(
                 allocator,
                 LABColor,
                 LABColor{ .oklch = c.* },
@@ -4636,7 +4636,7 @@ pub const ConvertTo = enum {
     OKLCH,
     PredefinedColor,
     pub fn fromType(comptime T: type) ConvertTo {
-        return @field(ConvertTo, bun.meta.typeName(T));
+        return @field(ConvertTo, fun.meta.typeName(T));
     }
     pub fn Type(comptime space: ConvertTo) type {
         return switch (space) {
@@ -4712,5 +4712,5 @@ const std = @import("std");
 const generated_color_conversions = @import("./color_generated.zig").generated_color_conversions;
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const bits = bun.bits;
+const fun = @import("fun");
+const bits = fun.bits;

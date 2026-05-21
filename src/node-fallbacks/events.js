@@ -1,4 +1,4 @@
-// NOTE: THIS IS A BROWSER POLYFILL - Bun's actual node:* modules are in src/js/node
+// NOTE: THIS IS A BROWSER POLYFILL - Fun's actual node:* modules are in src/js/node
 //
 // TODO: This file is copy pasted from that, and should be generated from that,
 // in a way that excludes async_hooks related functions. Those will never be

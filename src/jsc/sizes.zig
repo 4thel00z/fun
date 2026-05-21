@@ -4,5 +4,5 @@
 //!
 //! It is not reliable to interpret C++ classes as raw bytes, since the
 //! memory layout is not guaranteed by the compiler.
-pub const Bun_FFI_PointerOffsetToArgumentsList = 6;
-pub const Bun_FFI_PointerOffsetToTypedArrayVector = 16;
+pub const Fun_FFI_PointerOffsetToArgumentsList = 6;
+pub const Fun_FFI_PointerOffsetToTypedArrayVector = 16;

@@ -70,7 +70,7 @@ pub const TSNamespaceScope = struct {
     /// generated proxy symbols that represent the property access "x3.y". This
     /// map is unique per namespace block because "x3" is the argument symbol that
     /// is specific to that particular namespace block.
-    property_accesses: bun.StringArrayHashMapUnmanaged(Ref) = .{},
+    property_accesses: fun.StringArrayHashMapUnmanaged(Ref) = .{},
 
     /// Even though enums are like namespaces and both enums and namespaces allow
     /// implicit references to properties of sibling scopes, they behave like
@@ -100,7 +100,7 @@ pub const TSNamespaceScope = struct {
     is_enum_scope: bool,
 };
 
-pub const TSNamespaceMemberMap = bun.StringArrayHashMapUnmanaged(TSNamespaceMember);
+pub const TSNamespaceMemberMap = fun.StringArrayHashMapUnmanaged(TSNamespaceMember);
 
 pub const TSNamespaceMember = struct {
     loc: logger.Loc,
@@ -130,10 +130,10 @@ pub const Class = G.Class;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const E = js_ast.E;
 const G = js_ast.G;
 const Ref = js_ast.Ref;

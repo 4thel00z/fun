@@ -93,12 +93,12 @@ pub const JSRef = union(enum) {
     finalized: void,
 
     pub fn initWeak(value: jsc.JSValue) @This() {
-        bun.assert(!value.isEmptyOrUndefinedOrNull());
+        fun.assert(!value.isEmptyOrUndefinedOrNull());
         return .{ .weak = value };
     }
 
     pub fn initStrong(value: jsc.JSValue, globalThis: *jsc.JSGlobalObject) @This() {
-        bun.assert(!value.isEmptyOrUndefinedOrNull());
+        fun.assert(!value.isEmptyOrUndefinedOrNull());
         return .{ .strong = .create(value, globalThis) };
     }
 
@@ -114,7 +114,7 @@ pub const JSRef = union(enum) {
         };
     }
     pub fn setWeak(this: *@This(), value: jsc.JSValue) void {
-        bun.assert(!value.isEmptyOrUndefinedOrNull());
+        fun.assert(!value.isEmptyOrUndefinedOrNull());
         switch (this.*) {
             .weak => {},
             .strong => {
@@ -128,7 +128,7 @@ pub const JSRef = union(enum) {
     }
 
     pub fn setStrong(this: *@This(), value: jsc.JSValue, globalThis: *jsc.JSGlobalObject) void {
-        bun.assert(!value.isEmptyOrUndefinedOrNull());
+        fun.assert(!value.isEmptyOrUndefinedOrNull());
         if (this.* == .strong) {
             this.strong.set(globalThis, value);
             return;
@@ -139,13 +139,13 @@ pub const JSRef = union(enum) {
     pub fn upgrade(this: *@This(), globalThis: *jsc.JSGlobalObject) void {
         switch (this.*) {
             .weak => {
-                bun.assert(!this.weak.isEmptyOrUndefinedOrNull());
+                fun.assert(!this.weak.isEmptyOrUndefinedOrNull());
                 const weak = this.weak;
                 this.* = .{ .strong = .create(weak, globalThis) };
             },
             .strong => {},
             .finalized => {
-                bun.debugAssert(false);
+                fun.debugAssert(false);
             },
         }
     }
@@ -204,7 +204,7 @@ pub const JSRef = union(enum) {
     pub fn update(this: *@This(), globalThis: *jsc.JSGlobalObject, value: JSValue) void {
         switch (this.*) {
             .weak => {
-                bun.debugAssert(!value.isEmptyOrUndefinedOrNull());
+                fun.debugAssert(!value.isEmptyOrUndefinedOrNull());
                 this.weak = value;
             },
             .strong => {
@@ -213,13 +213,13 @@ pub const JSRef = union(enum) {
                 }
             },
             .finalized => {
-                bun.debugAssert(false);
+                fun.debugAssert(false);
             },
         }
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

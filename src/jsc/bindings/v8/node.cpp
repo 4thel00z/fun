@@ -7,7 +7,7 @@
 #include "node/node_version.h"
 
 static_assert(REPORTED_NODEJS_ABI_VERSION == NODE_MODULE_VERSION,
-    "Bun's Node.js ABI version is not the same as in the reported version of Node.js");
+    "Fun's Node.js ABI version is not the same as in the reported version of Node.js");
 
 using v8::Context;
 using v8::HandleScope;
@@ -45,7 +45,7 @@ void node_module_register(void* opaque_mod)
 
     auto keyStr = WTF::String::fromUTF8(mod->nm_modname);
 
-    // Append to GlobalObject vector so BunProcess.cpp can save ALL registrations after dlopen completes
+    // Append to GlobalObject vector so FunProcess.cpp can save ALL registrations after dlopen completes
     globalObject->m_pendingV8Modules.append(mod);
 
     globalObject->napiModuleRegisterCallCount++;
@@ -62,7 +62,7 @@ void node_module_register(void* opaque_mod)
                 keyStr,
                 "' was compiled against a different Node.js ABI version using NODE_MODULE_VERSION "_s,
                 mod->nm_version,
-                ". This version of Bun requires NODE_MODULE_VERSION "_s,
+                ". This version of Fun requires NODE_MODULE_VERSION "_s,
                 REPORTED_NODEJS_ABI_VERSION,
                 ". Please try re-compiling or re-installing the module."_s));
         globalObject->m_pendingNapiModuleAndExports[0].set(vm, globalObject, error);
@@ -73,7 +73,7 @@ void node_module_register(void* opaque_mod)
         auto* exportsObject = JSC::constructEmptyObject(globalObject);
         RETURN_IF_EXCEPTION(scope, void());
 
-        object = Bun::JSCommonJSModule::create(globalObject, keyStr, exportsObject, false, jsUndefined());
+        object = Fun::JSCommonJSModule::create(globalObject, keyStr, exportsObject, false, jsUndefined());
         strongExportsObject = { vm, exportsObject };
     } else {
         JSValue exportsObject = object->get(globalObject, WebCore::builtinNames(vm).exportsPublicName());

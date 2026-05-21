@@ -41,12 +41,12 @@ pub const WebsocketHeader = packed struct(u16) {
             stream.writer().writeInt(u16, @as(u16, @bitCast(header)), .big) catch unreachable;
             stream.pos = 0;
             const casted = stream.reader().readInt(u16, .big) catch unreachable;
-            bun.assert(casted == @as(u16, @bitCast(header)));
-            bun.assert(std.meta.eql(@as(WebsocketHeader, @bitCast(casted)), header));
+            fun.assert(casted == @as(u16, @bitCast(header)));
+            fun.assert(std.meta.eql(@as(WebsocketHeader, @bitCast(casted)), header));
         }
 
         try writer.writeInt(u16, @as(u16, @bitCast(header)), .big);
-        bun.assert(header.len == packLength(n));
+        fun.assert(header.len == packLength(n));
     }
 
     pub fn packLength(length: usize) u7 {
@@ -87,5 +87,5 @@ pub const WebsocketHeader = packed struct(u16) {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

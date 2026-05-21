@@ -277,10 +277,10 @@ test("cloneable and transferable equals", async () => {
   await promise;
 });
 
-test("cloneable and non-transferable equals (BunFile)", async () => {
+test("cloneable and non-transferable equals (FunFile)", async () => {
   const mc = new MessageChannel();
-  const file = Bun.file(import.meta.filename);
-  expect(file).toBeInstanceOf(Blob); // Bun.BunFile isnt exposed to JS
+  const file = Fun.file(import.meta.filename);
+  expect(file).toBeInstanceOf(Blob); // Fun.FunFile isnt exposed to JS
   expect(file.name).toEqual(import.meta.filename);
   expect(file.type).toEqual("text/javascript;charset=utf-8");
   const { promise, resolve, reject } = Promise.withResolvers();

@@ -1,14 +1,14 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { promises as fs } from "fs";
 import { tempDir } from "harness";
 import * as path from "path";
 
 // These tests verify that the resolver properly invalidates cache across multiple
-// Bun.build() calls in the same process when files/directories are deleted and recreated.
+// Fun.build() calls in the same process when files/directories are deleted and recreated.
 // This tests the fix in src/fs.zig and src/resolver/resolver.zig for generation > 0 behavior.
 
 // Note: Not using describe.concurrent because these tests specifically test
-// cache invalidation behavior across multiple Bun.build() calls in the same process,
+// cache invalidation behavior across multiple Fun.build() calls in the same process,
 // and the resolver generation counter is process-global state.
 describe("resolver cache invalidation", () => {
   test("directory with index.js deleted then recreated", async () => {
@@ -20,7 +20,7 @@ describe("resolver cache invalidation", () => {
     const subdirPath = path.join(String(dir), "subdir");
 
     // Build 1: Should succeed
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -34,7 +34,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "entry.js")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -49,7 +49,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(path.join(subdirPath, "index.js"), `export const value = 99;`);
 
     // Build 3: Should succeed with new value
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out3"),
     });
@@ -67,7 +67,7 @@ describe("resolver cache invalidation", () => {
     const utilsPath = path.join(String(dir), "utils");
 
     // Build 1: Should succeed
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.ts")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -79,7 +79,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "entry.ts")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -94,7 +94,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(path.join(utilsPath, "index.ts"), `export const add = (a: number, b: number) => a * b;`);
 
     // Build 3: Should succeed with new implementation
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.ts")],
       outdir: path.join(String(dir), "out3"),
     });
@@ -114,7 +114,7 @@ describe("resolver cache invalidation", () => {
     const configPath = path.join(String(dir), "config.js");
 
     // Build 1: Should succeed
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -128,7 +128,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "entry.js")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -142,7 +142,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(configPath, `export const config = { version: 2 };`);
 
     // Build 3: Should succeed with new content
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out3"),
     });
@@ -160,7 +160,7 @@ describe("resolver cache invalidation", () => {
     const deepPath = path.join(String(dir), "deep");
 
     // Build 1: Should succeed
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -172,7 +172,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "entry.js")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -189,7 +189,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(path.join(nestedPath, "module.js"), `export const value = "recreated";`);
 
     // Build 3: Should succeed
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out3"),
     });
@@ -208,7 +208,7 @@ describe("resolver cache invalidation", () => {
     const helperTsPath = path.join(String(dir), "helper.ts");
 
     // Build 1: Resolves to .js
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -222,7 +222,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "entry.js")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -236,7 +236,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(helperTsPath, `export const helper = "ts version";`);
 
     // Build 3: Should resolve to .ts
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out3"),
     });
@@ -261,7 +261,7 @@ describe("resolver cache invalidation", () => {
     const distPath = path.join(pkgPath, "dist");
 
     // Build 1: Should resolve via exports
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -275,7 +275,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "entry.js")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -290,7 +290,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(path.join(distPath, "index.js"), `export const value = "v2";`);
 
     // Build 3: Should succeed with new version
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out3"),
     });
@@ -309,7 +309,7 @@ describe("resolver cache invalidation", () => {
     const nodeModulesMylib = path.join(String(dir), "node_modules", "mylib");
 
     // Build 1: Should resolve to node_modules
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -323,7 +323,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail (no fallback for bare imports)
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "entry.js")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -339,7 +339,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(path.join(nodeModulesMylib, "index.js"), `export const value = "v2";`);
 
     // Build 3: Should succeed with new version
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "entry.js")],
       outdir: path.join(String(dir), "out3"),
     });
@@ -357,7 +357,7 @@ describe("resolver cache invalidation", () => {
     const libPath = path.join(String(dir), "lib");
 
     // Build 1: Should resolve sibling directory
-    const result1 = await Bun.build({
+    const result1 = await Fun.build({
       entrypoints: [path.join(String(dir), "src", "index.js")],
       outdir: path.join(String(dir), "out1"),
     });
@@ -369,7 +369,7 @@ describe("resolver cache invalidation", () => {
     // Build 2: Should fail
     let build2Failed = false;
     try {
-      const result2 = await Bun.build({
+      const result2 = await Fun.build({
         entrypoints: [path.join(String(dir), "src", "index.js")],
         outdir: path.join(String(dir), "out2"),
       });
@@ -384,7 +384,7 @@ describe("resolver cache invalidation", () => {
     await fs.writeFile(path.join(libPath, "helper.js"), `export const helper = "recreated";`);
 
     // Build 3: Should succeed
-    const result3 = await Bun.build({
+    const result3 = await Fun.build({
       entrypoints: [path.join(String(dir), "src", "index.js")],
       outdir: path.join(String(dir), "out3"),
     });

@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/issues/28914
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+// https://github.com/underdoc-org/fun/issues/28914
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe.concurrent("issue #28914 - bundler preserves top-level @layer statements", () => {
   test("Tailwind-style @layer statement with a @layer block", async () => {
@@ -16,9 +16,9 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "./entry.css", "--outdir=out"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "./entry.css", "--outdir=out"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -26,7 +26,7 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 
     const [stdout, , exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-    const out = await Bun.file(`${dir}/out/entry.css`).text();
+    const out = await Fun.file(`${dir}/out/entry.css`).text();
 
     // The statement carrying layer ordering must survive the bundle.
     expect(out).toContain("@layer theme, base, components, utilities;");
@@ -42,9 +42,9 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
       "entry.css": /* css */ `@layer theme, base, components, utilities;`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "./entry.css", "--outdir=out"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "./entry.css", "--outdir=out"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -52,7 +52,7 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 
     const [stdout, , exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-    const out = await Bun.file(`${dir}/out/entry.css`).text();
+    const out = await Fun.file(`${dir}/out/entry.css`).text();
     expect(out).toContain("@layer theme, base, components, utilities;");
     expect(stdout).toContain("Bundled");
     expect(exitCode).toBe(0);
@@ -67,9 +67,9 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "./entry.css", "--outdir=out"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "./entry.css", "--outdir=out"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -77,7 +77,7 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 
     const [stdout, , exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-    const out = await Bun.file(`${dir}/out/entry.css`).text();
+    const out = await Fun.file(`${dir}/out/entry.css`).text();
     expect(out).toContain("@layer reset, base, components, utilities;");
     expect(out).toContain(".foo");
     expect(stdout).toContain("Bundled");
@@ -95,9 +95,9 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "./entry.css", "--outdir=out"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "./entry.css", "--outdir=out"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -105,7 +105,7 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 
     const [stdout, , exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-    const out = await Bun.file(`${dir}/out/entry.css`).text();
+    const out = await Fun.file(`${dir}/out/entry.css`).text();
     expect(out).toContain("@layer theme;");
     expect(out).toContain("@layer base;");
     expect(out).toContain("@layer components;");
@@ -139,9 +139,9 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
       "nested.css": /* css */ `.nested { color: green; }`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "build", "./entry.css", "--outdir=out"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "build", "./entry.css", "--outdir=out"],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -149,7 +149,7 @@ describe.concurrent("issue #28914 - bundler preserves top-level @layer statement
 
     const [stdout, , exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-    const out = await Bun.file(`${dir}/out/entry.css`).text();
+    const out = await Fun.file(`${dir}/out/entry.css`).text();
 
     // Both layer-wrapped copies of shared.css must emit the rule. An
     // in-place compaction of the shared backing array would leave a stale

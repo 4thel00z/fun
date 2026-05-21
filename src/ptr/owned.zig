@@ -3,16 +3,16 @@ const owned = @This();
 /// An owned pointer or slice that was allocated using the default allocator.
 ///
 /// This type is a wrapper around a pointer or slice of type `Pointer` that was allocated using
-/// `bun.default_allocator`. Calling `deinit` on this type first calls `deinit` on the underlying
+/// `fun.default_allocator`. Calling `deinit` on this type first calls `deinit` on the underlying
 /// data, and then frees the memory.
 ///
 /// `Pointer` can be a single-item pointer, a slice, or an optional version of either of those;
 /// e.g., `Owned(*u8)`, `Owned([]u8)`, `Owned(?*u8)`, or `Owned(?[]u8)`.
 ///
-/// This type is an alias of `OwnedIn(Pointer, bun.DefaultAllocator)`, and thus has no overhead
-/// because `bun.DefaultAllocator` is a zero-sized type.
+/// This type is an alias of `OwnedIn(Pointer, fun.DefaultAllocator)`, and thus has no overhead
+/// because `fun.DefaultAllocator` is a zero-sized type.
 pub fn Owned(comptime Pointer: type) type {
-    return OwnedIn(Pointer, bun.DefaultAllocator);
+    return OwnedIn(Pointer, fun.DefaultAllocator);
 }
 
 /// An owned pointer or slice allocated using any `std.mem.Allocator`.
@@ -55,13 +55,13 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
         pub const alloc = switch (info.kind()) {
             .single => struct {
                 pub fn alloc(value: Child) AllocError!Self {
-                    return .allocIn(value, bun.memory.initDefault(Allocator));
+                    return .allocIn(value, fun.memory.initDefault(Allocator));
                 }
             },
             .slice => struct {
                 /// Note: this creates *shallow* copies of `elem`.
                 pub fn alloc(count: usize, elem: Child) AllocError!Self {
-                    return .allocIn(count, elem, bun.memory.initDefault(Allocator));
+                    return .allocIn(count, elem, fun.memory.initDefault(Allocator));
                 }
             },
         }.alloc;
@@ -70,9 +70,9 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
         pub const allocIn = switch (info.kind()) {
             .single => struct {
                 pub fn allocIn(value: Child, allocator_: Allocator) AllocError!Self {
-                    const data = try bun.memory.create(
+                    const data = try fun.memory.create(
                         Child,
-                        bun.allocators.asStd(allocator_),
+                        fun.allocators.asStd(allocator_),
                         value,
                     );
                     return .{
@@ -84,7 +84,7 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
             .slice => struct {
                 /// Note: this creates *shallow* copies of `elem`.
                 pub fn allocIn(count: usize, elem: Child, allocator_: Allocator) AllocError!Self {
-                    const data = try bun.allocators.asStd(allocator_).alloc(Child, count);
+                    const data = try fun.allocators.asStd(allocator_).alloc(Child, count);
                     @memset(data, elem);
                     return .{
                         .#pointer = data,
@@ -94,13 +94,13 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
             },
         }.allocIn;
 
-        /// Allocates an owned pointer for a single item, and calls `bun.outOfMemory` if allocation
+        /// Allocates an owned pointer for a single item, and calls `fun.outOfMemory` if allocation
         /// fails.
         ///
         /// It must be possible to default-initialize `Allocator`.
         pub const new = if (info.kind() == .single) struct {
             pub fn new(value: Child) Self {
-                return bun.handleOom(Self.alloc(value));
+                return fun.handleOom(Self.alloc(value));
             }
         }.new;
 
@@ -108,7 +108,7 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
         ///
         /// It must be possible to default-initialize `Allocator`.
         pub fn allocDupe(data: ConstPointer) AllocError!Self {
-            return .allocDupeIn(data, bun.memory.initDefault(Allocator));
+            return .allocDupeIn(data, fun.memory.initDefault(Allocator));
         }
 
         /// Creates an owned pointer by allocating memory with the given allocator and performing
@@ -121,7 +121,7 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
             return switch (comptime info.kind()) {
                 .single => .allocIn(unwrapped.*, allocator_),
                 .slice => .{
-                    .#pointer = try bun.allocators.asStd(allocator_).dupe(Child, unwrapped),
+                    .#pointer = try fun.allocators.asStd(allocator_).dupe(Child, unwrapped),
                     .#allocator = allocator_,
                 },
             };
@@ -132,19 +132,19 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
         /// Requirements:
         ///
         /// * It must be permissible to free `data` with a new instance of `Allocator` created
-        ///   with `bun.memory.initDefault(Allocator)`.
+        ///   with `fun.memory.initDefault(Allocator)`.
         /// * `data` must not be freed for the life of the owned pointer.
         ///
         /// NOTE: If `Allocator` is the default allocator, and `Pointer` is a single-item pointer,
-        /// `data` must have been allocated with `bun.new`, `bun.tryNew`, or `bun.memory.create`,
-        /// NOT `bun.default_allocator.create`. If `data` came from an owned pointer, this
+        /// `data` must have been allocated with `fun.new`, `fun.tryNew`, or `fun.memory.create`,
+        /// NOT `fun.default_allocator.create`. If `data` came from an owned pointer, this
         /// requirement is satisfied.
         ///
         /// `Allocator` is the default allocator if `Allocator.allocator` returns
-        /// `bun.default_allocator` when called on a default-initialized `Allocator` (created with
-        /// `bun.memory.initDefault`). Most notably, this is true for `bun.DefaultAllocator`.
+        /// `fun.default_allocator` when called on a default-initialized `Allocator` (created with
+        /// `fun.memory.initDefault`). Most notably, this is true for `fun.DefaultAllocator`.
         pub fn fromRaw(data: Pointer) Self {
-            return .fromRawIn(data, bun.memory.initDefault(Allocator));
+            return .fromRawIn(data, fun.memory.initDefault(Allocator));
         }
 
         /// Creates an owned pointer from a raw pointer and allocator.
@@ -155,13 +155,13 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
         /// * `data` must not be freed for the life of the owned pointer.
         ///
         /// NOTE: If `allocator` is the default allocator, and `Pointer` is a single-item pointer,
-        /// `data` must have been allocated with `bun.new`, `bun.tryNew`, or `bun.memory.create`,
-        /// NOT `bun.default_allocator.create`. If `data` came from `intoRaw` on another owned
+        /// `data` must have been allocated with `fun.new`, `fun.tryNew`, or `fun.memory.create`,
+        /// NOT `fun.default_allocator.create`. If `data` came from `intoRaw` on another owned
         /// pointer, this requirement is satisfied.
         ///
         /// `allocator` is the default allocator if either of the following is true:
-        /// * `allocator` is `bun.default_allocator`
-        /// * `allocator.allocator()` returns `bun.default_allocator`
+        /// * `allocator` is `fun.default_allocator`
+        /// * `allocator.allocator()` returns `fun.default_allocator`
         pub fn fromRawIn(data: Pointer, allocator_: Allocator) Self {
             return .{
                 .#pointer = data,
@@ -203,14 +203,14 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
         /// allocator, use `intoRawWithAllocator`.
         ///
         /// NOTE: If the current allocator is the default allocator, and `Pointer` is a single-item
-        /// pointer, the pointer must be freed with `bun.destroy` or `bun.memory.destroy`, NOT
-        /// `bun.default_allocator.destroy`. Or it can be turned back into an owned pointer.
+        /// pointer, the pointer must be freed with `fun.destroy` or `fun.memory.destroy`, NOT
+        /// `fun.default_allocator.destroy`. Or it can be turned back into an owned pointer.
         ///
         /// This method invalidates `self`.
         pub fn intoRaw(self: *Self) Pointer {
             defer self.* = undefined;
             if ((comptime !info.isOptional()) or self.#pointer != null) {
-                bun.memory.deinit(&self.#allocator);
+                fun.memory.deinit(&self.#allocator);
             }
             return self.#pointer;
         }
@@ -224,8 +224,8 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
         /// pointer.
         ///
         /// NOTE: If the current allocator is the default allocator, and `Pointer` is a single-item
-        /// pointer, the pointer must be freed with `bun.destroy` or `bun.memory.destroy`, NOT
-        /// `bun.default_allocator.destroy`. Or it can be turned back into an owned pointer.
+        /// pointer, the pointer must be freed with `fun.destroy` or `fun.memory.destroy`, NOT
+        /// `fun.default_allocator.destroy`. Or it can be turned back into an owned pointer.
         ///
         /// This method invalidates `self`.
         pub fn intoRawWithAllocator(self: *Self) PointerAndAllocator {
@@ -330,14 +330,14 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
                 self.#pointer orelse return .initNull()
             else
                 self.#pointer;
-            defer bun.memory.deinit(&self.#allocator);
+            defer fun.memory.deinit(&self.#allocator);
             return .fromRawIn(data, self.getStdAllocator());
         }
 
         const MaybeAllocator = if (info.isOptional())
-            ?bun.allocators.Borrowed(Allocator)
+            ?fun.allocators.Borrowed(Allocator)
         else
-            bun.allocators.Borrowed(Allocator);
+            fun.allocators.Borrowed(Allocator);
 
         /// Returns a borrowed version of the allocator.
         ///
@@ -348,11 +348,11 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
             return if ((comptime info.isOptional()) and self.#pointer == null)
                 null
             else
-                bun.allocators.borrow(self.#allocator);
+                fun.allocators.borrow(self.#allocator);
         }
 
         fn getStdAllocator(self: Self) std.mem.Allocator {
-            return bun.allocators.asStd(self.#allocator);
+            return fun.allocators.asStd(self.#allocator);
         }
 
         fn deinitImpl(self: *Self, comptime mode: enum { deep, shallow }) void {
@@ -362,13 +362,13 @@ pub fn OwnedIn(comptime Pointer: type, comptime Allocator: type) type {
             else
                 self.#pointer;
             if (comptime mode == .deep) {
-                bun.memory.deinit(data);
+                fun.memory.deinit(data);
             }
             switch (comptime info.kind()) {
-                .single => bun.memory.destroy(self.getStdAllocator(), data),
+                .single => fun.memory.destroy(self.getStdAllocator(), data),
                 .slice => self.getStdAllocator().free(data),
             }
-            bun.memory.deinit(&self.#allocator);
+            fun.memory.deinit(&self.#allocator);
         }
     };
 }
@@ -419,7 +419,7 @@ fn Unmanaged(comptime Pointer: type, comptime Allocator: type) type {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const AllocError = std.mem.Allocator.Error;
 

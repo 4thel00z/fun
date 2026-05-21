@@ -110,7 +110,7 @@ pub const Property = struct {
     pub fn deepClone(this: *const Property, allocator: std.mem.Allocator) !Property {
         var class_static_block: ?*ClassStaticBlock = null;
         if (this.class_static_block != null) {
-            class_static_block = bun.create(allocator, ClassStaticBlock, .{
+            class_static_block = fun.create(allocator, ClassStaticBlock, .{
                 .loc = this.class_static_block.?.loc,
                 .stmts = try this.class_static_block.?.stmts.clone(allocator),
             });
@@ -214,12 +214,12 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const logger = bun.logger;
-const TypeScript = bun.js_parser.TypeScript;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const logger = fun.logger;
+const TypeScript = fun.js_parser.TypeScript;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const BindingNodeIndex = js_ast.BindingNodeIndex;
 const Expr = js_ast.Expr;
 const ExprNodeIndex = js_ast.ExprNodeIndex;

@@ -1,9 +1,9 @@
-pub const SrcIndex = bun.bundle_v2.Index;
+pub const SrcIndex = fun.bundle_v2.Index;
 
-pub const SymbolList = bun.ast.Symbol.List;
+pub const SymbolList = fun.ast.Symbol.List;
 
-pub const ImportRecord = bun.ImportRecord;
-pub const ImportKind = bun.ImportKind;
+pub const ImportRecord = fun.ImportRecord;
+pub const ImportKind = fun.ImportKind;
 
 pub const prefixes = @import("./prefixes.zig");
 
@@ -89,7 +89,7 @@ pub const ImportInfo = css_printer.ImportInfo;
 pub const PropertyHandlerContext = context.PropertyHandlerContext;
 pub const DeclarationHandler = declaration.DeclarationHandler;
 
-pub const Maybe = bun.jsc.Node.Maybe;
+pub const Maybe = fun.jsc.Node.Maybe;
 // TODO: Remove existing Error defined here and replace it with these
 pub const Err = errors_.Err;
 pub const PrinterErrorKind = errors_.PrinterErrorKind;
@@ -121,10 +121,10 @@ pub const PrintErr = error{
 };
 
 pub fn OOM(e: anyerror) noreturn {
-    if (comptime bun.Environment.isDebug) {
+    if (comptime fun.Environment.isDebug) {
         std.debug.assert(e == std.mem.Allocator.Error.OutOfMemory);
     }
-    bun.outOfMemory();
+    fun.outOfMemory();
 }
 
 pub const SmallList = @import("./small_list.zig").SmallList;
@@ -217,7 +217,7 @@ pub const VendorPrefix = packed struct(u8) {
     }
 
     pub fn bitwiseAnd(a: @This(), b: @This()) @This() {
-        return bun.bits.@"and"(@This(), a, b);
+        return fun.bits.@"and"(@This(), a, b);
     }
 
     pub fn asBits(vp: @This()) u8 {
@@ -229,8 +229,8 @@ pub const SourceLocation = struct {
     line: u32,
     column: u32,
 
-    pub fn toLoggerLocation(this: SourceLocation, file: []const u8) bun.logger.Location {
-        return bun.logger.Location{
+    pub fn toLoggerLocation(this: SourceLocation, file: []const u8) fun.logger.Location {
+        return fun.logger.Location{
             .file = file,
             .line = @intCast(this.line),
             .column = @intCast(this.column),
@@ -285,7 +285,7 @@ pub fn PrintResult(comptime T: type) type {
 }
 
 pub fn todo(comptime fmt: []const u8, args: anytype) noreturn {
-    bun.analytics.Features.todo_panic = 1;
+    fun.analytics.Features.todo_panic = 1;
     std.debug.panic("TODO: " ++ fmt, args);
 }
 
@@ -565,7 +565,7 @@ pub fn DeriveParse(comptime T: type) type {
     const enum_type = if (comptime is_union_enum) @typeInfo(tyinfo.@"union".tag_type.?) else tyinfo;
     const enum_actual_type = if (comptime is_union_enum) tyinfo.@"union".tag_type.? else T;
 
-    const Map = bun.ComptimeEnumMap(enum_actual_type);
+    const Map = fun.ComptimeEnumMap(enum_actual_type);
 
     return struct {
         pub fn parse(input: *Parser) Result(T) {
@@ -603,8 +603,8 @@ pub fn DeriveParse(comptime T: type) type {
                 .result => |v| v,
                 .err => |e| return .{ .err = e },
             };
-            if (Map.getCaseInsensitiveWithEql(ident, bun.strings.eqlComptimeIgnoreLen)) |matched| {
-                inline for (bun.meta.EnumFields(enum_actual_type)) |field| {
+            if (Map.getCaseInsensitiveWithEql(ident, fun.strings.eqlComptimeIgnoreLen)) |matched| {
+                inline for (fun.meta.EnumFields(enum_actual_type)) |field| {
                     if (field.value == @intFromEnum(matched)) {
                         if (comptime is_union_enum) return .{ .result = @unionInit(T, field.name, void) };
                         return .{ .result = @enumFromInt(field.value) };
@@ -668,7 +668,7 @@ pub fn DeriveParse(comptime T: type) type {
 
             const first_void_index = maybe_first_void_index.?;
 
-            const void_fields = bun.meta.EnumFields(T)[first_void_index .. first_void_index + void_count];
+            const void_fields = fun.meta.EnumFields(T)[first_void_index .. first_void_index + void_count];
 
             if (comptime void_count == 1) {
                 const void_field = enum_type.@"enum".fields[first_void_index];
@@ -714,7 +714,7 @@ pub fn DeriveParse(comptime T: type) type {
                 // Multiple fields declared before the payload fields, use tryParse
                 const state = input.state();
                 if (input.tryParse(Parser.expectIdent, .{}).asValue()) |ident| {
-                    if (Map.getCaseInsensitiveWithEql(ident, bun.strings.eqlComptimeIgnoreLen)) |matched| {
+                    if (Map.getCaseInsensitiveWithEql(ident, fun.strings.eqlComptimeIgnoreLen)) |matched| {
                         inline for (void_fields) |field| {
                             if (field.value == @intFromEnum(matched)) {
                                 if (comptime is_union_enum) return .{ .result = @unionInit(T, field.name, {}) };
@@ -755,7 +755,7 @@ pub fn DeriveParse(comptime T: type) type {
                     .result => |v| v,
                     .err => |e| return .{ .err = e },
                 };
-                if (Map.getCaseInsensitiveWithEql(ident, bun.strings.eqlComptimeIgnoreLen)) |matched| {
+                if (Map.getCaseInsensitiveWithEql(ident, fun.strings.eqlComptimeIgnoreLen)) |matched| {
                     inline for (void_fields) |field| {
                         if (field.value == @intFromEnum(matched)) {
                             if (comptime is_union_enum) return .{ .result = @unionInit(T, field.name, {}) };
@@ -806,7 +806,7 @@ pub fn DeriveParse(comptime T: type) type {
 /// - anonymous structs, will automatically serialize it if it has a `__generateToCss` function
 pub fn DeriveToCss(comptime T: type) type {
     const tyinfo = @typeInfo(T);
-    const enum_fields = bun.meta.EnumFields(T);
+    const enum_fields = fun.meta.EnumFields(T);
     const is_enum_or_union_enum = tyinfo == .@"union" or tyinfo == .@"enum";
 
     return struct {
@@ -857,7 +857,7 @@ pub fn DeriveToCss(comptime T: type) type {
 pub const enum_property_util = struct {
     pub fn asStr(comptime T: type, this: *const T) []const u8 {
         const tag = @intFromEnum(this.*);
-        inline for (bun.meta.EnumFields(T)) |field| {
+        inline for (fun.meta.EnumFields(T)) |field| {
             if (tag == field.value) return field.name;
         }
         unreachable;
@@ -870,10 +870,10 @@ pub const enum_property_util = struct {
             .result => |v| v,
         };
 
-        const Map = comptime bun.ComptimeEnumMap(T);
+        const Map = comptime fun.ComptimeEnumMap(T);
         if (Map.getASCIIICaseInsensitive(ident)) |x| return .{ .result = x };
         // inline for (std.meta.fields(T)) |field| {
-        //     if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, field.name)) return .{ .result = @enumFromInt(field.value) };
+        //     if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, field.name)) return .{ .result = @enumFromInt(field.value) };
         // }
 
         return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
@@ -901,7 +901,7 @@ pub fn DefineEnumProperty(comptime T: type) type {
 
             // todo_stuff.match_ignore_ascii_case
             inline for (fields) |field| {
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, field.name)) return .{ .result = @enumFromInt(field.value) };
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, field.name)) return .{ .result = @enumFromInt(field.value) };
             }
 
             return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
@@ -996,7 +996,7 @@ fn parse_at_rule(
                     .result => |v| v,
                     .err => break :out,
                 };
-                if (tok.* != .open_curly and tok.* != .semicolon) bun.unreachablePanic("Should have consumed these delimiters", .{});
+                if (tok.* != .open_curly and tok.* != .semicolon) fun.unreachablePanic("Should have consumed these delimiters", .{});
                 break :out;
             }
             return .{ .err = e };
@@ -1043,7 +1043,7 @@ fn parse_at_rule(
             return parse_nested_block(input, P.AtRuleParser.AtRule, &another_closure, AnotherClosure.parsefn);
         },
         else => {
-            bun.unreachablePanic("", .{});
+            fun.unreachablePanic("", .{});
         },
     }
 }
@@ -1159,7 +1159,7 @@ fn parse_until_before(
     closure: anytype,
     comptime parse_fn: *const fn (@TypeOf(closure), *Parser) Result(T),
 ) Result(T) {
-    const delimiters = bun.bits.@"or"(Delimiters, parser.stop_before, delimiters_);
+    const delimiters = fun.bits.@"or"(Delimiters, parser.stop_before, delimiters_);
     const result = result: {
         var delimited_parser = Parser{
             .input = parser.input,
@@ -1184,7 +1184,7 @@ fn parse_until_before(
 
     // FIXME: have a special-purpose tokenizer method for this that does less work.
     while (true) {
-        if (bun.bits.contains(Delimiters, delimiters, Delimiters.fromByte(parser.input.tokenizer.nextByte()))) break;
+        if (fun.bits.contains(Delimiters, delimiters, Delimiters.fromByte(parser.input.tokenizer.nextByte()))) break;
 
         switch (parser.input.tokenizer.next()) {
             .result => |token| {
@@ -1215,8 +1215,8 @@ pub fn parse_until_after(
         return result;
     }
     const next_byte = parser.input.tokenizer.nextByte();
-    if (next_byte != null and !bun.bits.contains(Delimiters, parser.stop_before, .fromByte(next_byte))) {
-        if (bun.Environment.isDebug) bun.debugAssert(bun.bits.contains(Delimiters, delimiters, Delimiters.fromByte(next_byte)));
+    if (next_byte != null and !fun.bits.contains(Delimiters, parser.stop_before, .fromByte(next_byte))) {
+        if (fun.Environment.isDebug) fun.debugAssert(fun.bits.contains(Delimiters, delimiters, Delimiters.fromByte(next_byte)));
 
         // We know this byte is ASCII.
         parser.input.tokenizer.advance(1);
@@ -1323,7 +1323,7 @@ pub const DefaultAtRuleParser = struct {
 
         pub fn onImportRule(_: *This, _: *ImportRule, _: u32, _: u32) void {}
 
-        pub fn onLayerRule(_: *This, _: *const bun.css.SmallList(LayerName, 1)) void {}
+        pub fn onLayerRule(_: *This, _: *const fun.css.SmallList(LayerName, 1)) void {}
 
         pub fn enclosingLayerLength(_: *This) u32 {
             return 0;
@@ -1346,8 +1346,8 @@ pub const BundlerAtRule = if (ENABLE_TAILWIND_PARSING) TailwindAtRule else Defau
 pub const BundlerAtRuleParser = struct {
     const This = @This();
     allocator: Allocator,
-    import_records: *bun.BabyList(ImportRecord),
-    layer_names: bun.BabyList(LayerName) = .{},
+    import_records: *fun.BabyList(ImportRecord),
+    layer_names: fun.BabyList(LayerName) = .{},
     options: *const ParserOptions,
 
     /// Having _named_ layers nested inside of an _anonymous_ layer
@@ -1375,7 +1375,7 @@ pub const BundlerAtRuleParser = struct {
                 const PreludeNames = enum {
                     tailwind,
                 };
-                const Map = comptime bun.ComptimeEnumMap(PreludeNames);
+                const Map = comptime fun.ComptimeEnumMap(PreludeNames);
                 if (Map.getASCIIICaseInsensitive(name)) |prelude| return switch (prelude) {
                     .tailwind => {
                         const loc_ = input.currentSourceLocation();
@@ -1417,19 +1417,19 @@ pub const BundlerAtRuleParser = struct {
             const import_record_index = this.import_records.len;
             import_rule.import_record_idx = import_record_index;
             this.import_records.append(this.allocator, ImportRecord{
-                .path = bun.fs.Path.init(import_rule.url),
+                .path = fun.fs.Path.init(import_rule.url),
                 .kind = if (import_rule.supports != null) .at_conditional else .at,
-                .range = bun.logger.Range{
-                    .loc = bun.logger.Loc{ .start = @intCast(start_position) },
+                .range = fun.logger.Range{
+                    .loc = fun.logger.Loc{ .start = @intCast(start_position) },
                     .len = @intCast(end_position - start_position),
                 },
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
         }
 
-        pub fn onLayerRule(this: *This, layers: *const bun.css.SmallList(LayerName, 1)) void {
+        pub fn onLayerRule(this: *This, layers: *const fun.css.SmallList(LayerName, 1)) void {
             if (this.anon_layer_count > 0) return;
 
-            bun.handleOom(this.layer_names.ensureUnusedCapacity(this.allocator, layers.len()));
+            fun.handleOom(this.layer_names.ensureUnusedCapacity(this.allocator, layers.len()));
 
             for (layers.slice()) |*layer| {
                 if (this.enclosing_layer.v.len() > 0) {
@@ -1439,9 +1439,9 @@ pub const BundlerAtRuleParser = struct {
                     cloned.v.ensureTotalCapacity(this.allocator, this.enclosing_layer.v.len() + layer.v.len());
                     cloned.v.appendSliceAssumeCapacity(this.enclosing_layer.v.slice());
                     cloned.v.appendSliceAssumeCapacity(layer.v.slice());
-                    bun.handleOom(this.layer_names.append(this.allocator, cloned));
+                    fun.handleOom(this.layer_names.append(this.allocator, cloned));
                 } else {
-                    bun.handleOom(this.layer_names.append(this.allocator, layer.deepClone(this.allocator)));
+                    fun.handleOom(this.layer_names.append(this.allocator, layer.deepClone(this.allocator)));
                 }
             }
         }
@@ -1626,7 +1626,7 @@ pub fn AtRulePrelude(comptime T: type) type {
         },
         page: ArrayList(css_rules.page.PageSelector),
         moz_document,
-        layer: bun.css.SmallList(LayerName, 1),
+        layer: fun.css.SmallList(LayerName, 1),
         container: struct {
             name: ?css_rules.container.ContainerName,
             condition: css_rules.container.ContainerCondition,
@@ -1666,7 +1666,7 @@ pub fn TopLevelRuleParser(comptime AtRuleParserT: type) type {
         // TODO: think about memory management
         rules: *CssRuleList(AtRuleT),
         composes: *ComposesMap,
-        composes_refs: SmallList(bun.bundle_v2.Ref, 2) = .{},
+        composes_refs: SmallList(fun.bundle_v2.Ref, 2) = .{},
         local_properties: *LocalPropertyUsage,
 
         const State = enum(u8) {
@@ -1691,7 +1691,7 @@ pub fn TopLevelRuleParser(comptime AtRuleParserT: type) type {
                     @"custom-media",
                     property,
                 };
-                const Map = comptime bun.ComptimeEnumMap(PreludeEnum);
+                const Map = comptime fun.ComptimeEnumMap(PreludeEnum);
 
                 if (Map.getASCIIICaseInsensitive(name)) |prelude| {
                     switch (prelude) {
@@ -1828,7 +1828,7 @@ pub fn TopLevelRuleParser(comptime AtRuleParserT: type) type {
                         AtRuleParserT.CustomAtRuleParser.onImportRule(this.at_rule_parser, &import_rule, @intCast(start.position), @intCast(start.position + 1));
                         this.rules.v.append(this.allocator, .{
                             .import = import_rule,
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .namespace => {
@@ -1843,7 +1843,7 @@ pub fn TopLevelRuleParser(comptime AtRuleParserT: type) type {
                                 .url = url,
                                 .loc = loc,
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
 
                         return .success;
                     },
@@ -1860,7 +1860,7 @@ pub fn TopLevelRuleParser(comptime AtRuleParserT: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .layer => {
@@ -1882,7 +1882,7 @@ pub fn TopLevelRuleParser(comptime AtRuleParserT: type) type {
                             .prelude = prelude2,
                             .block = null,
                             .loc = loc,
-                        } }) catch |err| bun.handleOom(err);
+                        } }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .custom => {
@@ -1961,7 +1961,7 @@ pub fn NestedRuleParser(comptime T: type) type {
         allow_declarations: bool,
 
         composes_state: ComposesState = .disallow_entirely,
-        composes_refs: *SmallList(bun.bundle_v2.Ref, 2),
+        composes_refs: *SmallList(fun.bundle_v2.Ref, 2),
         composes: *ComposesMap,
         local_properties: *LocalPropertyUsage,
 
@@ -2012,7 +2012,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                         scope,
                         nest,
                     };
-                    const Map = comptime bun.ComptimeEnumMap(PreludeEnum);
+                    const Map = comptime fun.ComptimeEnumMap(PreludeEnum);
                     if (Map.getASCIIICaseInsensitive(name)) |kind| switch (kind) {
                         .media => {
                             const media = switch (MediaList.parse(input)) {
@@ -2044,7 +2044,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                             break :brk .{ .counter_style = custom_name };
                         },
                         .viewport, .@"-ms-viewport" => {
-                            const prefix: VendorPrefix = if (bun.strings.startsWithCaseInsensitiveAscii(name, "-ms")) VendorPrefix{ .ms = true } else VendorPrefix{ .none = true };
+                            const prefix: VendorPrefix = if (fun.strings.startsWithCaseInsensitiveAscii(name, "-ms")) VendorPrefix{ .ms = true } else VendorPrefix{ .none = true };
                             break :brk .{ .viewport = prefix };
                         },
                         inline .keyframes, .@"-webkit-keyframes", .@"-moz-keyframes", .@"-o-keyframes", .@"-ms-keyframes" => |n| {
@@ -2101,11 +2101,11 @@ pub fn NestedRuleParser(comptime T: type) type {
                             break :brk .moz_document;
                         },
                         .layer => {
-                            const names = switch (bun.css.SmallList(LayerName, 1).parse(input)) {
+                            const names = switch (fun.css.SmallList(LayerName, 1).parse(input)) {
                                 .result => |vv| vv,
                                 .err => |e| names: {
                                     if (e.kind == .basic and e.kind.basic == .end_of_input) {
-                                        break :names bun.css.SmallList(LayerName, 1){};
+                                        break :names fun.css.SmallList(LayerName, 1){};
                                     }
                                     return .{ .err = e };
                                 },
@@ -2213,7 +2213,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                 properties.append(
                                     input.allocator(),
                                     decl,
-                                ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err);
                             }
                         }
 
@@ -2225,7 +2225,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .font_palette_values => {
@@ -2237,7 +2237,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                         this.rules.v.append(
                             input.allocator(),
                             .{ .font_palette_values = rule },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .counter_style => {
@@ -2254,7 +2254,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .media => {
@@ -2272,7 +2272,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .supports => {
@@ -2287,7 +2287,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                 .rules = rules,
                                 .loc = loc,
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .container => {
@@ -2305,7 +2305,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .scope => {
@@ -2323,7 +2323,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .viewport => {
@@ -2336,7 +2336,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                 },
                                 .loc = loc,
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .keyframes => {
@@ -2350,7 +2350,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                 keyframes.append(
                                     input.allocator(),
                                     keyframe,
-                                ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err);
                             }
                         }
 
@@ -2361,7 +2361,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                 .vendor_prefix = prelude.keyframes.prefix,
                                 .loc = loc,
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .page => {
@@ -2373,7 +2373,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                         this.rules.v.append(
                             input.allocator(),
                             .{ .page = rule },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .moz_document => {
@@ -2386,7 +2386,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                 .rules = rules,
                                 .loc = loc,
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .layer => {
@@ -2414,7 +2414,7 @@ pub fn NestedRuleParser(comptime T: type) type {
 
                         this.rules.v.append(input.allocator(), .{
                             .layer_block = css_rules.layer.LayerBlockRule(T.CustomAtRuleParser.AtRule){ .name = name, .rules = rules, .loc = loc },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .property => {
@@ -2424,7 +2424,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                 .err => |e| return .{ .err = e },
                                 .result => |v| v,
                             },
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .import, .namespace, .custom_media, .charset => {
@@ -2444,7 +2444,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .nest => {
@@ -2469,10 +2469,10 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
-                    .font_feature_values => bun.unreachablePanic("", .{}),
+                    .font_feature_values => fun.unreachablePanic("", .{}),
                     .unknown => {
                         this.rules.v.append(
                             input.allocator(),
@@ -2487,7 +2487,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .custom => {
@@ -2499,7 +2499,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .result => |v| v,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                 }
@@ -2523,7 +2523,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .unknown => {
@@ -2537,7 +2537,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                                     .loc = loc,
                                 },
                             },
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     .custom => {
@@ -2551,7 +2551,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                         )) {
                             .err => |e| return .{ .err = e },
                             .result => |v| v,
-                        }) catch |err| bun.handleOom(err);
+                        }) catch |err| fun.handleOom(err);
                         return .success;
                     },
                     else => return .{ .err = {} },
@@ -2625,15 +2625,15 @@ pub fn NestedRuleParser(comptime T: type) type {
                 if (this.composes_state == .allow) {
                     const len = input.position() - location;
                     var usage = PropertyBitset.initEmpty();
-                    var custom_properties = bun.BabyList([]const u8){};
+                    var custom_properties = fun.BabyList([]const u8){};
                     fillPropertyBitSet(this.allocator, &usage, &declarations, &custom_properties);
 
                     const custom_properties_slice = custom_properties.slice();
 
                     for (this.composes_refs.slice()) |ref| {
-                        const entry = bun.handleOom(this.local_properties.getOrPut(this.allocator, ref));
+                        const entry = fun.handleOom(this.local_properties.getOrPut(this.allocator, ref));
                         const property_usage: *PropertyUsage = if (!entry.found_existing) brk: {
-                            entry.value_ptr.* = PropertyUsage{ .range = bun.logger.Range{ .loc = bun.logger.Loc{ .start = @intCast(location) }, .len = @intCast(len) } };
+                            entry.value_ptr.* = PropertyUsage{ .range = fun.logger.Range{ .loc = fun.logger.Loc{ .start = @intCast(location) }, .len = @intCast(len) } };
                             break :brk entry.value_ptr;
                         } else entry.value_ptr;
                         property_usage.fill(&usage, custom_properties_slice);
@@ -2648,7 +2648,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                         .rules = rules,
                         .loc = loc,
                     },
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
 
                 return .success;
             }
@@ -2684,11 +2684,11 @@ pub fn NestedRuleParser(comptime T: type) type {
         /// for the bundler so we can generate the lazy JS import object later.
         pub fn recordComposes(this: *This, allocator: Allocator, composes: *Composes) void {
             for (this.composes_refs.slice()) |ref| {
-                const entry = bun.handleOom(this.composes.getOrPut(allocator, ref));
+                const entry = fun.handleOom(this.composes.getOrPut(allocator, ref));
                 if (!entry.found_existing) {
                     entry.value_ptr.* = ComposesEntry{};
                 }
-                bun.handleOom(entry.value_ptr.*.composes.append(allocator, composes.deepClone(allocator)));
+                fun.handleOom(entry.value_ptr.*.composes.append(allocator, composes.deepClone(allocator)));
             }
         }
 
@@ -2727,7 +2727,7 @@ pub fn NestedRuleParser(comptime T: type) type {
                         errors.append(
                             this.allocator,
                             e,
-                        ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err);
                     } else {
                         if (iter.parser.options.error_recovery) {
                             iter.parser.options.warn(e);
@@ -2848,7 +2848,7 @@ pub fn StyleSheetParser(comptime P: type) type {
                     const first_stylesheet_rule = !this.any_rule_so_far;
                     this.any_rule_so_far = true;
 
-                    if (first_stylesheet_rule and bun.strings.eqlCaseInsensitiveASCII(name, "charset", true)) {
+                    if (first_stylesheet_rule and fun.strings.eqlCaseInsensitiveASCII(name, "charset", true)) {
                         const delimiters = Delimiters{
                             .semicolon = true,
                             .close_curly_bracket = true,
@@ -2916,10 +2916,10 @@ pub const BundlerCssRule = CssRule(BundlerAtRule);
 pub const BundlerLayerBlockRule = css_rules.layer.LayerBlockRule(BundlerAtRule);
 pub const BundlerSupportsRule = css_rules.supports.SupportsRule(BundlerAtRule);
 pub const BundlerMediaRule = css_rules.media.MediaRule(BundlerAtRule);
-pub const BundlerPrintResult = bun.css.PrintResult(BundlerAtRule);
+pub const BundlerPrintResult = fun.css.PrintResult(BundlerAtRule);
 pub const BundlerTailwindState = struct {
     source: []const u8,
-    index: bun.bundle_v2.Index,
+    index: fun.bundle_v2.Index,
     output_from_tailwind: ?[]const u8 = null,
 };
 
@@ -2973,8 +2973,8 @@ pub const CssRef = packed struct(u32) {
         return this.inner_index;
     }
 
-    pub fn toRealRef(this: @This(), source_index: u32) bun.bundle_v2.Ref {
-        return bun.bundle_v2.Ref{
+    pub fn toRealRef(this: @This(), source_index: u32) fun.bundle_v2.Ref {
+        return fun.bundle_v2.Ref{
             .inner_index = this.inner_index,
             .source_index = @intCast(source_index),
             .tag = .symbol,
@@ -2983,28 +2983,28 @@ pub const CssRef = packed struct(u32) {
 };
 const LocalEntry = struct {
     ref: CssRef,
-    loc: bun.logger.Loc,
+    loc: fun.logger.Loc,
 };
 /// If css modules is enabled, this maps locally scoped class names to their ref.
 ///
 /// We use this ref as a layer of indirection during the bundling stage because we don't
 /// know the final generated class names for local scope until print time.
-pub const LocalScope = bun.StringArrayHashMapUnmanaged(LocalEntry);
+pub const LocalScope = fun.StringArrayHashMapUnmanaged(LocalEntry);
 /// Local symbol renaming results go here
-pub const LocalsResultsMap = bun.bundle_v2.MangledProps;
+pub const LocalsResultsMap = fun.bundle_v2.MangledProps;
 /// Using `compose` and having conflicting properties is undefined behavior according
 /// to the css modules spec. We should warn the user about this.
-pub const LocalPropertyUsage = std.AutoArrayHashMapUnmanaged(bun.bundle_v2.Ref, PropertyUsage);
+pub const LocalPropertyUsage = std.AutoArrayHashMapUnmanaged(fun.bundle_v2.Ref, PropertyUsage);
 pub const Composes = css_properties.css_modules.Composes;
-pub const ComposesMap = std.AutoArrayHashMapUnmanaged(bun.bundle_v2.Ref, ComposesEntry);
+pub const ComposesMap = std.AutoArrayHashMapUnmanaged(fun.bundle_v2.Ref, ComposesEntry);
 
 pub const ComposesEntry = struct {
-    composes: bun.BabyList(Composes) = .{},
+    composes: fun.BabyList(Composes) = .{},
 };
 pub const PropertyUsage = struct {
     bitset: PropertyBitset = PropertyBitset.initEmpty(),
     custom_properties: []const []const u8 = &.{},
-    range: bun.logger.Range,
+    range: fun.logger.Range,
 
     pub inline fn fill(this: *PropertyUsage, used: *const PropertyBitset, custom_properties: []const []const u8) void {
         this.bitset.setUnion(used.*);
@@ -3012,12 +3012,12 @@ pub const PropertyUsage = struct {
     }
 };
 
-pub const PropertyBitset = std.bit_set.ArrayBitSet(usize, std.math.ceilPowerOfTwo(u16, bun.meta.EnumFields(PropertyIdTag).len) catch unreachable);
-pub fn fillPropertyBitSet(allocator: Allocator, bitset: *PropertyBitset, block: *const DeclarationBlock, custom_properties: *bun.BabyList([]const u8)) void {
+pub const PropertyBitset = std.bit_set.ArrayBitSet(usize, std.math.ceilPowerOfTwo(u16, fun.meta.EnumFields(PropertyIdTag).len) catch unreachable);
+pub fn fillPropertyBitSet(allocator: Allocator, bitset: *PropertyBitset, block: *const DeclarationBlock, custom_properties: *fun.BabyList([]const u8)) void {
     for (block.declarations.items) |*prop| {
         const tag = switch (prop.*) {
             .custom => {
-                bun.handleOom(custom_properties.append(allocator, prop.custom.name.asStr()));
+                fun.handleOom(custom_properties.append(allocator, prop.custom.name.asStr()));
                 continue;
             },
             .unparsed => |u| @as(PropertyIdTag, u.property_id),
@@ -3030,7 +3030,7 @@ pub fn fillPropertyBitSet(allocator: Allocator, bitset: *PropertyBitset, block: 
     for (block.important_declarations.items) |*prop| {
         const tag = switch (prop.*) {
             .custom => {
-                bun.handleOom(custom_properties.append(allocator, prop.custom.name.asStr()));
+                fun.handleOom(custom_properties.append(allocator, prop.custom.name.asStr()));
                 continue;
             },
             .unparsed => |u| @as(PropertyIdTag, u.property_id),
@@ -3051,7 +3051,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
         license_comments: ArrayList([]const u8),
         options: ParserOptions,
         tailwind: if (AtRule == BundlerAtRule) ?*BundlerTailwindState else u0 = if (AtRule == BundlerAtRule) null else 0,
-        layer_names: bun.BabyList(LayerName) = .{},
+        layer_names: fun.BabyList(LayerName) = .{},
 
         /// Used when css modules is enabled.
         ///
@@ -3071,7 +3071,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
         local_properties: LocalPropertyUsage = .{},
         /// Used whenn css modules is enabled.
         ///
-        /// `bun.bundle_v2.Ref` => `bun.BabyList(ComposesExtended)`
+        /// `fun.bundle_v2.Ref` => `fun.BabyList(ComposesExtended)`
         composes: ComposesMap,
 
         const This = @This();
@@ -3100,7 +3100,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
 
                 for (this.rules.v.items) |*rule| {
                     if (rule.* == .custom_media) {
-                        bun.handleOom(custom_media.put(allocator, rule.custom_media.name.v, rule.custom_media.deepClone(allocator)));
+                        fun.handleOom(custom_media.put(allocator, rule.custom_media.name.v, rule.custom_media.deepClone(allocator)));
                     }
                 }
 
@@ -3132,13 +3132,13 @@ pub fn StyleSheet(comptime AtRule: type) type {
             allocator: Allocator,
             writer: *std.Io.Writer,
             options: css_printer.PrinterOptions,
-            import_info: ?bun.css.ImportInfo,
+            import_info: ?fun.css.ImportInfo,
             local_names: ?*const LocalsResultsMap,
-            symbols: *const bun.ast.Symbol.Map,
+            symbols: *const fun.ast.Symbol.Map,
         ) PrintResult(ToCssResultInternal) {
             var printer = Printer.new(allocator, std.array_list.Managed(u8).init(allocator), writer, options, import_info, local_names, symbols);
             const result = this.toCssWithWriterImpl(allocator, &printer, options) catch {
-                bun.assert(printer.error_kind != null);
+                fun.assert(printer.error_kind != null);
                 return .{
                     .err = printer.error_kind.?,
                 };
@@ -3200,9 +3200,9 @@ pub fn StyleSheet(comptime AtRule: type) type {
             this: *const @This(),
             allocator: Allocator,
             options: css_printer.PrinterOptions,
-            import_info: ?bun.css.ImportInfo,
+            import_info: ?fun.css.ImportInfo,
             local_names: ?*const LocalsResultsMap,
-            symbols: *const bun.ast.Symbol.Map,
+            symbols: *const fun.ast.Symbol.Map,
         ) PrintResult(ToCssResult) {
             // TODO: this is not necessary
             // Make sure we always have capacity > 0: https://github.com/napi-rs/napi-rs/issues/1124.
@@ -3230,12 +3230,12 @@ pub fn StyleSheet(comptime AtRule: type) type {
             };
         }
 
-        pub fn parse(allocator: Allocator, code: []const u8, options: ParserOptions, import_records: ?*bun.BabyList(ImportRecord), source_index: SrcIndex) Maybe(struct { This, StylesheetExtra }, Err(ParserError)) {
+        pub fn parse(allocator: Allocator, code: []const u8, options: ParserOptions, import_records: ?*fun.BabyList(ImportRecord), source_index: SrcIndex) Maybe(struct { This, StylesheetExtra }, Err(ParserError)) {
             var default_at_rule_parser = DefaultAtRuleParser{};
             return parseWith(allocator, code, options, DefaultAtRuleParser, &default_at_rule_parser, import_records, source_index);
         }
 
-        pub fn parseBundler(allocator: Allocator, code: []const u8, options: ParserOptions, import_records: *bun.BabyList(ImportRecord), source_index: SrcIndex) Maybe(struct { This, StylesheetExtra }, Err(ParserError)) {
+        pub fn parseBundler(allocator: Allocator, code: []const u8, options: ParserOptions, import_records: *fun.BabyList(ImportRecord), source_index: SrcIndex) Maybe(struct { This, StylesheetExtra }, Err(ParserError)) {
             var at_rule_parser = BundlerAtRuleParser{
                 .import_records = import_records,
                 .allocator = allocator,
@@ -3252,7 +3252,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
             options: ParserOptions,
             comptime P: type,
             at_rule_parser: *P,
-            import_records: ?*bun.BabyList(ImportRecord),
+            import_records: ?*fun.BabyList(ImportRecord),
             source_index: SrcIndex,
         ) Maybe(struct { This, StylesheetExtra }, Err(ParserError)) {
             var composes = ComposesMap{};
@@ -3282,8 +3282,8 @@ pub fn StyleSheet(comptime AtRule: type) type {
                 switch (token.*) {
                     .whitespace => {},
                     .comment => |comment| {
-                        if (bun.strings.startsWithChar(comment, '!')) {
-                            bun.handleOom(license_comments.append(allocator, comment));
+                        if (fun.strings.startsWithChar(comment, '!')) {
+                            fun.handleOom(license_comments.append(allocator, comment));
                         }
                     },
                     else => break,
@@ -3309,9 +3309,9 @@ pub fn StyleSheet(comptime AtRule: type) type {
             }
 
             var sources = ArrayList([]const u8){};
-            bun.handleOom(sources.append(allocator, options.filename));
+            fun.handleOom(sources.append(allocator, options.filename));
             var source_map_urls = ArrayList(?[]const u8){};
-            bun.handleOom(source_map_urls.append(allocator, parser.currentSourceMapUrl()));
+            fun.handleOom(source_map_urls.append(allocator, parser.currentSourceMapUrl()));
 
             return .{
                 .result = .{
@@ -3334,7 +3334,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
         }
 
         pub fn debugLayerRuleSanityCheck(this: *const @This()) void {
-            if (comptime !bun.Environment.isDebug) return;
+            if (comptime !fun.Environment.isDebug) return;
 
             const layer_names_field_len = this.layer_names.len;
             _ = layer_names_field_len; // autofix
@@ -3348,7 +3348,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
                 }
             }
 
-            // bun.debugAssert()
+            // fun.debugAssert()
         }
 
         pub fn containsTailwindDirectives(this: *const @This()) bool {
@@ -3399,7 +3399,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
         ///
         /// We do this because Tailwind's compiler pipeline does not bundle imports, so we handle that
         /// ourselves in the bundler.
-        pub fn pluckImports(this: *const @This(), allocator: Allocator, out: *CssRuleList(AtRule), new_import_records: *bun.BabyList(ImportRecord)) void {
+        pub fn pluckImports(this: *const @This(), allocator: Allocator, out: *CssRuleList(AtRule), new_import_records: *fun.BabyList(ImportRecord)) void {
             if (comptime AtRule != BundlerAtRule) @compileError("Expected BundlerAtRule for this function.");
             const State = enum { count, exec };
 
@@ -3408,7 +3408,7 @@ pub fn StyleSheet(comptime AtRule: type) type {
             var count: u32 = 0;
             inline for (STATES[0..]) |state| {
                 if (comptime state == .exec) {
-                    bun.handleOom(out.v.ensureUnusedCapacity(allocator, count));
+                    fun.handleOom(out.v.ensureUnusedCapacity(allocator, count));
                 }
                 var saw_imports = false;
                 for (this.rules.v.items) |*rule| {
@@ -3425,16 +3425,16 @@ pub fn StyleSheet(comptime AtRule: type) type {
                                     const import_record_idx = new_import_records.len;
                                     import_rule.import_record_idx = import_record_idx;
                                     new_import_records.append(allocator, ImportRecord{
-                                        .path = bun.fs.Path.init(import_rule.url),
+                                        .path = fun.fs.Path.init(import_rule.url),
                                         .kind = if (import_rule.supports != null) .at_conditional else .at,
-                                        .range = bun.logger.Range.None,
-                                    }) catch |err| bun.handleOom(err);
+                                        .range = fun.logger.Range.None,
+                                    }) catch |err| fun.handleOom(err);
                                     rule.* = .ignored;
                                 },
                             }
                         },
                         .unknown => {
-                            if (bun.strings.eqlComptime(rule.unknown.name, "tailwind")) {
+                            if (fun.strings.eqlComptime(rule.unknown.name, "tailwind")) {
                                 continue;
                             }
                         },
@@ -3451,7 +3451,7 @@ pub const StyleAttribute = struct {
     declarations: DeclarationBlock,
     sources: ArrayList([]const u8),
 
-    pub fn parse(allocator: Allocator, code: []const u8, options: ParserOptions, import_records: *bun.BabyList(ImportRecord), source_index: SrcIndex) Maybe(StyleAttribute, Err(ParserError)) {
+    pub fn parse(allocator: Allocator, code: []const u8, options: ParserOptions, import_records: *fun.BabyList(ImportRecord), source_index: SrcIndex) Maybe(StyleAttribute, Err(ParserError)) {
         var parser_extra = ParserExtra{
             .local_scope = .{},
             .symbols = .{},
@@ -3467,7 +3467,7 @@ pub const StyleAttribute = struct {
             &parser_extra,
         );
         const sources = sources: {
-            var s = bun.handleOom(ArrayList([]const u8).initCapacity(allocator, 1));
+            var s = fun.handleOom(ArrayList([]const u8).initCapacity(allocator, 1));
             s.appendAssumeCapacity(options.filename);
             break :sources s;
         };
@@ -3487,7 +3487,7 @@ pub const StyleAttribute = struct {
         //   "Source maps are not supported for style attributes"
         // );
 
-        var symbols = bun.ast.Symbol.Map{};
+        var symbols = fun.ast.Symbol.Map{};
         var dest = std.Io.Writer.Allocating.init(allocator);
         const writer = &dest.writer;
         var printer = Printer.new(
@@ -3722,7 +3722,7 @@ pub const ParserOptions = struct {
         }
     }
 
-    pub fn warnFmtWithNotes(this: *const ParserOptions, comptime text: []const u8, args: anytype, line: u32, column: u32, notes: []bun.logger.Data) void {
+    pub fn warnFmtWithNotes(this: *const ParserOptions, comptime text: []const u8, args: anytype, line: u32, column: u32, notes: []fun.logger.Data) void {
         if (this.logger) |lg| {
             lg.addWarningFmtLineColWithNotes(
                 this.filename,
@@ -3736,11 +3736,11 @@ pub const ParserOptions = struct {
         }
     }
 
-    pub fn warnFmtWithNote(this: *const ParserOptions, comptime text: []const u8, args: anytype, line: u32, column: u32, note_fmt: []const u8, note_args: anytype, note_range: bun.logger.Range) void {
+    pub fn warnFmtWithNote(this: *const ParserOptions, comptime text: []const u8, args: anytype, line: u32, column: u32, note_fmt: []const u8, note_args: anytype, note_range: fun.logger.Range) void {
         if (this.logger) |lg| {
             lg.addRangeWarningFmtWithNote(
                 null,
-                bun.logger.Loc{ .start = @intCast(line), .end = @intCast(column) },
+                fun.logger.Loc{ .start = @intCast(line), .end = @intCast(column) },
                 this.allocator,
                 text,
                 args,
@@ -3781,14 +3781,14 @@ const ParseUntilErrorBehavior = enum {
 };
 
 // const ImportRecordHandler = union(enum) {
-//     list: *bun.BabyList(ImportRecord),
+//     list: *fun.BabyList(ImportRecord),
 //     // dummy: u32,
 
 //     pub fn add(this: *ImportRecordHandler, allocator: Allocator, record: ImportRecord) u32 {
 //         return switch (this.*) {
 //             .list => |list| {
 //                 const len = list.len;
-//                 bun.handleOom(list.append(allocator, record));
+//                 fun.handleOom(list.append(allocator, record));
 //                 return len;
 //             },
 //             // .dummy => |*d| {
@@ -3805,7 +3805,7 @@ pub const Parser = struct {
     at_start_of: ?BlockType = null,
     stop_before: Delimiters = Delimiters.NONE,
     flags: Opts,
-    import_records: ?*bun.BabyList(ImportRecord),
+    import_records: ?*fun.BabyList(ImportRecord),
     extra: ?*ParserExtra,
 
     const Opts = packed struct(u8) {
@@ -3813,18 +3813,18 @@ pub const Parser = struct {
         __unused: u7 = 0,
     };
 
-    pub fn addSymbolForName(this: *Parser, name: []const u8, tag: CssRef.Tag, loc: bun.logger.Loc) bun.bundle_v2.Ref {
+    pub fn addSymbolForName(this: *Parser, name: []const u8, tag: CssRef.Tag, loc: fun.logger.Loc) fun.bundle_v2.Ref {
         // don't call this if css modules is not enabled!
-        bun.assert(this.flags.css_modules);
-        bun.assert(this.extra != null);
-        if (comptime bun.Environment.allow_assert) {
+        fun.assert(this.flags.css_modules);
+        fun.assert(this.extra != null);
+        if (comptime fun.Environment.allow_assert) {
             // tag should only have one bit set, or none
-            bun.assert(@popCount(bun.bits.asInt(CssRef.Tag, tag)) <= 1);
+            fun.assert(@popCount(fun.bits.asInt(CssRef.Tag, tag)) <= 1);
         }
 
         const extra = this.extra.?;
 
-        const entry = bun.handleOom(extra.local_scope.getOrPut(this.allocator(), name));
+        const entry = fun.handleOom(extra.local_scope.getOrPut(this.allocator(), name));
         if (!entry.found_existing) {
             entry.value_ptr.* = LocalEntry{
                 .ref = CssRef{
@@ -3833,15 +3833,15 @@ pub const Parser = struct {
                 },
                 .loc = loc,
             };
-            extra.symbols.append(this.allocator(), bun.ast.Symbol{
+            extra.symbols.append(this.allocator(), fun.ast.Symbol{
                 .kind = .local_css,
                 .original_name = name,
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
         } else {
             const prev_tag = entry.value_ptr.ref.tag;
             if (!prev_tag.class and tag.class) {
                 entry.value_ptr.loc = loc;
-                entry.value_ptr.ref.tag = bun.bits.@"or"(CssRef.Tag, entry.value_ptr.ref.tag, tag);
+                entry.value_ptr.ref.tag = fun.bits.@"or"(CssRef.Tag, entry.value_ptr.ref.tag, tag);
             }
         }
 
@@ -3853,13 +3853,13 @@ pub const Parser = struct {
         if (this.import_records) |import_records| {
             const idx = import_records.len;
             import_records.append(this.allocator(), ImportRecord{
-                .path = bun.fs.Path.init(url),
+                .path = fun.fs.Path.init(url),
                 .kind = kind,
-                .range = bun.logger.Range{
-                    .loc = bun.logger.Loc{ .start = @intCast(start_position) },
+                .range = fun.logger.Range{
+                    .loc = fun.logger.Loc{ .start = @intCast(start_position) },
                     .len = @intCast(url.len), // TODO: technically this is not correct because the url could be escaped
                 },
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
             return .{ .result = idx };
         } else {
             return .{ .err = this.newBasicUnexpectedTokenError(.{ .unquoted_url = url }) };
@@ -3874,7 +3874,7 @@ pub const Parser = struct {
     ///
     /// Pass in `import_records` to track imports (`@import` rules, `url()` tokens). If this
     /// is `null`, calling `Parser.addImportRecord` will error.
-    pub fn new(input: *ParserInput, import_records: ?*bun.BabyList(ImportRecord), flags: Opts, extra: ?*ParserExtra) Parser {
+    pub fn new(input: *ParserInput, import_records: ?*fun.BabyList(ImportRecord), flags: Opts, extra: ?*ParserExtra) Parser {
         return Parser{
             .input = input,
             .flags = flags,
@@ -3990,11 +3990,11 @@ pub const Parser = struct {
                 .err => {
                     // need to clone off the stack
                     const needs_clone = values.items.len == 1;
-                    if (needs_clone) return .{ .result = bun.handleOom(values.clone(this.allocator())) };
+                    if (needs_clone) return .{ .result = fun.handleOom(values.clone(this.allocator())) };
                     return .{ .result = values };
                 },
             };
-            if (tok.* != .comma) bun.unreachablePanic("", .{});
+            if (tok.* != .comma) fun.unreachablePanic("", .{});
         }
     }
 
@@ -4004,7 +4004,7 @@ pub const Parser = struct {
     /// is restored to what it was before the call.
     ///
     /// func needs to be a function like this: `fn func(*Parser, ...@TypeOf(args_)) T`
-    pub inline fn tryParse(this: *Parser, comptime func: anytype, args_: anytype) bun.meta.ReturnOf(func) {
+    pub inline fn tryParse(this: *Parser, comptime func: anytype, args_: anytype) fun.meta.ReturnOf(func) {
         const start = this.state();
         const result = result: {
             const args = brk: {
@@ -4194,7 +4194,7 @@ pub const Parser = struct {
             .result => |v| v,
         };
         switch (tok.*) {
-            .ident => |i| if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, i)) return .success,
+            .ident => |i| if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, i)) return .success,
             else => {},
         }
         return .{ .err = start_location.newUnexpectedTokenError(tok.*) };
@@ -4220,7 +4220,7 @@ pub const Parser = struct {
             .result => |v| v,
         };
         switch (tok.*) {
-            .function => |fn_name| if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(name, fn_name)) return .success,
+            .function => |fn_name| if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(name, fn_name)) return .success,
             else => {},
         }
         return .{ .err = start_location.newUnexpectedTokenError(tok.*) };
@@ -4260,7 +4260,7 @@ pub const Parser = struct {
         switch (tok.*) {
             .unquoted_url => |value| return .{ .result = value },
             .function => |name| {
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("url", name)) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("url", name)) {
                     const result = this.parseNestedBlock([]const u8, {}, struct {
                         fn parse(_: void, parser: *Parser) Result([]const u8) {
                             return switch (parser.expectString()) {
@@ -4291,7 +4291,7 @@ pub const Parser = struct {
             .unquoted_url => |value| return .{ .result = value },
             .quoted_string => |value| return .{ .result = value },
             .function => |name| {
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("url", name)) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("url", name)) {
                     const result = this.parseNestedBlock([]const u8, {}, struct {
                         fn parse(_: void, parser: *Parser) Result([]const u8) {
                             return switch (parser.expectString()) {
@@ -4312,7 +4312,7 @@ pub const Parser = struct {
     }
 
     pub fn position(this: *Parser) usize {
-        bun.debugAssert(bun.strings.isOnCharBoundary(this.input.tokenizer.src, this.input.tokenizer.position));
+        fun.debugAssert(fun.strings.isOnCharBoundary(this.input.tokenizer.src, this.input.tokenizer.position));
         return this.input.tokenizer.position;
     }
 
@@ -4365,7 +4365,7 @@ pub const Parser = struct {
             .result => |t| .{ .err = start.sourceLocation().newUnexpectedTokenError(t.*) },
             .err => |e| brk: {
                 if (e.kind == .basic and e.kind.basic == .end_of_input) break :brk .success;
-                bun.unreachablePanic("Unexpected error encountered: {f}", .{e.kind});
+                fun.unreachablePanic("Unexpected error encountered: {f}", .{e.kind});
             },
         };
         this.reset(&start);
@@ -4408,7 +4408,7 @@ pub const Parser = struct {
 
     pub fn nextByte(this: *@This()) ?u8 {
         const byte = this.input.tokenizer.nextByte();
-        if (bun.bits.contains(Delimiters, this.stop_before, .fromByte(byte))) {
+        if (fun.bits.contains(Delimiters, this.stop_before, .fromByte(byte))) {
             return null;
         }
         return byte;
@@ -4443,7 +4443,7 @@ pub const Parser = struct {
         }
 
         const byte = this.input.tokenizer.nextByte();
-        if (bun.bits.contains(Delimiters, this.stop_before, .fromByte(byte))) {
+        if (fun.bits.contains(Delimiters, this.stop_before, .fromByte(byte))) {
             return .{ .err = this.newError(BasicParseErrorKind.end_of_input) };
         }
 
@@ -4616,9 +4616,9 @@ pub const nth = struct {
                 if (tok.dimension.num.int_value) |a| {
                     // @compileError(todo_stuff.match_ignore_ascii_case);
                     const unit = tok.dimension.unit;
-                    if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "n")) {
+                    if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "n")) {
                         return parse_b(input, a);
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "n-")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "n-")) {
                         return parse_signless_b(input, a, -1);
                     } else {
                         if (parse_n_dash_digits(input.allocator(), unit).asValue()) |b| {
@@ -4632,20 +4632,20 @@ pub const nth = struct {
             .ident => {
                 const value = tok.ident;
                 // @compileError(todo_stuff.match_ignore_ascii_case);
-                if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "even")) {
+                if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "even")) {
                     return .{ .result = .{ 2, 0 } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "odd")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "odd")) {
                     return .{ .result = .{ 2, 1 } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "n")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "n")) {
                     return parse_b(input, 1);
-                } else if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "-n")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "-n")) {
                     return parse_b(input, -1);
-                } else if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "n-")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "n-")) {
                     return parse_signless_b(input, 1, -1);
-                } else if (bun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "-n-")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIIgnoreLength(value, "-n-")) {
                     return parse_signless_b(input, -1, -1);
                 } else {
-                    const slice, const a: i32 = if (bun.strings.startsWithChar(value, '-')) .{ value[1..], -1 } else .{ value, 1 };
+                    const slice, const a: i32 = if (fun.strings.startsWithChar(value, '-')) .{ value[1..], -1 } else .{ value, 1 };
                     if (parse_n_dash_digits(input.allocator(), slice).asValue()) |b| return .{ .result = .{ a, b } };
                     return .{ .err = input.newUnexpectedTokenError(.{ .ident = value }) };
                 }
@@ -4657,9 +4657,9 @@ pub const nth = struct {
                 };
                 if (next_tok.* == .ident) {
                     const value = next_tok.ident;
-                    if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "n")) {
+                    if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "n")) {
                         return parse_b(input, 1);
-                    } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "-n")) {
+                    } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(value, "-n")) {
                         return parse_signless_b(input, 1, -1);
                     } else {
                         if (parse_n_dash_digits(input.allocator(), value).asValue()) |b| {
@@ -4709,7 +4709,7 @@ pub const nth = struct {
     fn parse_n_dash_digits(allocator: Allocator, str: []const u8) Maybe(i32, void) {
         const bytes = str;
         if (bytes.len >= 3 and
-            bun.strings.eqlCaseInsensitiveASCIIICheckLength(bytes[0..2], "n-") and
+            fun.strings.eqlCaseInsensitiveASCIIICheckLength(bytes[0..2], "n-") and
             brk: {
                 for (bytes[2..]) |b| {
                     if (b < '0' or b > '9') break :brk false;
@@ -4794,7 +4794,7 @@ const Tokenizer = struct {
     }
 
     pub fn getPosition(this: *const Tokenizer) usize {
-        bun.debugAssert(bun.strings.isOnCharBoundary(this.src, this.position));
+        fun.debugAssert(fun.strings.isOnCharBoundary(this.src, this.position));
         return this.position;
     }
 
@@ -4832,7 +4832,7 @@ const Tokenizer = struct {
     }
 
     pub fn prev(this: *Tokenizer) Token {
-        bun.assert(this.position > 0);
+        fun.assert(this.position > 0);
         return this.previous;
     }
 
@@ -5128,12 +5128,12 @@ const Tokenizer = struct {
                     this.advance(1);
                     if (this.isEof()) break;
                 }
-                value *= bun.pow(10, sign2 * exponent);
+                value *= fun.pow(10, sign2 * exponent);
             }
         }
 
         const int_value: ?i32 = if (is_integer)
-            bun.intFromFloat(i32, value)
+            fun.intFromFloat(i32, value)
         else
             null;
 
@@ -5727,7 +5727,7 @@ const Tokenizer = struct {
     }
 
     pub fn splitSourceMap(contents: []const u8) ?[]const u8 {
-        // FIXME: Use bun CodepointIterator
+        // FIXME: Use fun CodepointIterator
         var iter = std.unicode.Utf8Iterator{ .bytes = contents, .i = 0 };
         while (iter.nextCodepoint()) |c| {
             switch (c) {
@@ -5744,7 +5744,7 @@ const Tokenizer = struct {
 
     pub fn consumeNewline(this: *Tokenizer) void {
         const byte = this.nextByteUnchecked();
-        if (bun.Environment.allow_assert) {
+        if (fun.Environment.allow_assert) {
             std.debug.assert(byte == '\r' or byte == '\n' or byte == FORM_FEED_BYTE);
         }
         this.position += 1;
@@ -5765,7 +5765,7 @@ const Tokenizer = struct {
     /// 11110xxx  0xF0..0xF7   First byte of a 4-byte character encoding
     /// 10xxxxxx  0x80..0xBF   Continuation byte: one of 1-3 bytes following the first <--
     pub fn consumeContinuationByte(this: *Tokenizer) void {
-        if (bun.Environment.allow_assert) std.debug.assert(this.nextByteUnchecked() & 0xC0 == 0x80);
+        if (fun.Environment.allow_assert) std.debug.assert(this.nextByteUnchecked() & 0xC0 == 0x80);
         // Continuation bytes contribute to column overcount. Note
         // that due to the special case for the 4-byte sequence intro,
         // we must use wrapping add here.
@@ -5783,7 +5783,7 @@ const Tokenizer = struct {
     /// 11110xxx  0xF0..0xF7   First byte of a 4-byte character encoding <--
     /// 10xxxxxx  0x80..0xBF   Continuation byte: one of 1-3 bytes following the first
     pub fn consume4byteIntro(this: *Tokenizer) void {
-        if (bun.Environment.allow_assert) std.debug.assert(this.nextByteUnchecked() & 0xF0 == 0xF0);
+        if (fun.Environment.allow_assert) std.debug.assert(this.nextByteUnchecked() & 0xF0 == 0xF0);
         // This takes two UTF-16 characters to represent, so we
         // actually have an undercount.
         // this.current_line_start_position = self.current_line_start_position.wrapping_sub(1);
@@ -5822,14 +5822,14 @@ const Tokenizer = struct {
     }
 
     pub fn startsWith(this: *Tokenizer, comptime needle: []const u8) bool {
-        return bun.strings.hasPrefixComptime(this.src[this.position..], needle);
+        return fun.strings.hasPrefixComptime(this.src[this.position..], needle);
     }
 
     /// Advance over N bytes in the input.  This function can advance
     /// over ASCII bytes (excluding newlines), or UTF-8 sequence
     /// leaders (excluding leaders for 4-byte sequences).
     pub fn advance(this: *Tokenizer, n: usize) void {
-        if (bun.Environment.allow_assert) {
+        if (fun.Environment.allow_assert) {
             // Each byte must either be an ASCII byte or a sequence
             // leader, but not a 4-byte leader; also newlines are
             // rejected.
@@ -5844,7 +5844,7 @@ const Tokenizer = struct {
 
     /// Advance over any kind of byte, excluding newlines.
     pub fn consumeKnownByte(this: *Tokenizer, byte: u8) void {
-        if (bun.Environment.allow_assert) std.debug.assert(byte != '\r' and byte != '\n' and byte != FORM_FEED_BYTE);
+        if (fun.Environment.allow_assert) std.debug.assert(byte != '\r' and byte != '\n' and byte != FORM_FEED_BYTE);
         this.position += 1;
         // Continuation bytes contribute to column overcount.
         if (byte & 0xF0 == 0xF0) {
@@ -5868,8 +5868,8 @@ const Tokenizer = struct {
     }
 
     pub inline fn nextChar(this: *Tokenizer) u32 {
-        const len = bun.strings.utf8ByteSequenceLength(this.src[this.position]);
-        return bun.strings.decodeWTF8RuneT(this.src[this.position..].ptr[0..4], len, u32, bun.strings.unicode_replacement);
+        const len = fun.strings.utf8ByteSequenceLength(this.src[this.position]);
+        return fun.strings.decodeWTF8RuneT(this.src[this.position..].ptr[0..4], len, u32, fun.strings.unicode_replacement);
     }
 
     pub inline fn nextByteUnchecked(this: *Tokenizer) u8 {
@@ -6152,7 +6152,7 @@ pub const Token = union(TokenKind) {
             .delim => |value| {
                 // See comment for this variant in declaration of Token
                 // The value of delim is only ever ascii
-                bun.debugAssert(value <= 0x7F);
+                fun.debugAssert(value <= 0x7F);
                 try writer.writeByte(@truncate(value));
             },
             .number => |num| try serializer.writeNumeric(num.value, num.int_value, num.has_sign, writer),
@@ -6252,7 +6252,7 @@ pub const Token = union(TokenKind) {
                 try writer.writeAll(")");
             },
             .delim => |x| {
-                bun.assert(x <= 0x7F);
+                fun.assert(x <= 0x7F);
                 try writer.writeByte(@intCast(x));
             },
             .number => |n| {
@@ -6269,8 +6269,8 @@ pub const Token = union(TokenKind) {
                 // an unit of "E1m"...
                 if ((unit.len == 1 and unit[0] == 'e') or
                     (unit.len == 1 and unit[0] == 'E') or
-                    bun.strings.startsWith(unit, "e-") or
-                    bun.strings.startsWith(unit, "E-"))
+                    fun.strings.startsWith(unit, "e-") or
+                    fun.strings.startsWith(unit, "E-"))
                 {
                     try writer.writeAll("\\65 ");
                     try serializer.serializeName(unit[1..], writer);
@@ -6350,7 +6350,7 @@ pub const Token = union(TokenKind) {
             .delim => |value| {
                 // See comment for this variant in declaration of Token
                 // The value of delim is only ever ascii
-                bun.debugAssert(value <= 0x7F);
+                fun.debugAssert(value <= 0x7F);
                 return dest.writeChar(@truncate(value));
             },
             .number => |num| serializer.writeNumeric(num.value, num.int_value, num.has_sign, dest) catch return dest.addFmtError(),
@@ -6447,13 +6447,13 @@ const CopyOnWriteStr = union(enum) {
     pub fn append(this: *@This(), allocator: Allocator, slice: []const u8) void {
         switch (this.*) {
             .borrowed => {
-                var list = bun.handleOom(std.array_list.Managed(u8).initCapacity(allocator, this.borrowed.len + slice.len));
+                var list = fun.handleOom(std.array_list.Managed(u8).initCapacity(allocator, this.borrowed.len + slice.len));
                 list.appendSliceAssumeCapacity(this.borrowed);
                 list.appendSliceAssumeCapacity(slice);
                 this.* = .{ .owned = list };
             },
             .owned => {
-                bun.handleOom(this.owned.appendSlice(slice));
+                fun.handleOom(this.owned.appendSlice(slice));
             },
         }
     }
@@ -6489,7 +6489,7 @@ pub const color = struct {
     };
 
     const RGB = struct { u8, u8, u8 };
-    pub const named_colors = bun.ComptimeStringMap(RGB, .{
+    pub const named_colors = fun.ComptimeStringMap(RGB, .{
         .{ "aliceblue", .{ 240, 248, 255 } },
         .{ "antiquewhite", .{ 250, 235, 215 } },
         .{ "aqua", .{ 0, 255, 255 } },
@@ -6697,7 +6697,7 @@ pub const color = struct {
     /// <https://drafts.csswg.org/css-color/#hsl-color>
     /// except with h pre-multiplied by 3, to avoid some rounding errors.
     pub fn hslToRgb(hue: f32, saturation: f32, lightness: f32) struct { f32, f32, f32 } {
-        bun.debugAssert(saturation >= 0.0 and saturation <= 1.0);
+        fun.debugAssert(saturation >= 0.0 and saturation <= 1.0);
         const Helpers = struct {
             pub fn hueToRgb(m1: f32, m2: f32, _h3: f32) f32 {
                 var h3 = _h3;
@@ -6744,7 +6744,7 @@ pub const serializer = struct {
             const escaped: ?[]const u8 = switch (b) {
                 '0'...'9', 'A'...'Z', 'a'...'z', '_', '-' => continue,
                 // the unicode replacement character
-                0 => bun.strings.encodeUTF8Comptime(0xFFD),
+                0 => fun.strings.encodeUTF8Comptime(0xFFD),
                 else => if (!std.ascii.isAscii(b)) continue else null,
             };
 
@@ -6772,7 +6772,7 @@ pub const serializer = struct {
     pub fn serializeDimension(value: f32, unit: []const u8, dest: *Printer) PrintErr!void {
         // Check if the value is an integer - use Rust-compatible conversion
         const int_value: ?i32 = if (fract(value) == 0.0)
-            bun.intFromFloat(i32, value)
+            fun.intFromFloat(i32, value)
         else
             null;
         const token = Token{ .dimension = .{
@@ -6791,9 +6791,9 @@ pub const serializer = struct {
             const s = fbs.buffered();
             if (value < 0.0) {
                 try dest.writeStr("-");
-                return dest.writeStr(bun.strings.trimLeadingPattern2(s, '-', '0'));
+                return dest.writeStr(fun.strings.trimLeadingPattern2(s, '-', '0'));
             } else {
-                return dest.writeStr(bun.strings.trimLeadingChar(s, '0'));
+                return dest.writeStr(fun.strings.trimLeadingChar(s, '0'));
             }
         } else {
             return token.toCssGeneric(dest) catch return dest.addFmtError();
@@ -6806,10 +6806,10 @@ pub const serializer = struct {
             return;
         }
 
-        if (bun.strings.startsWith(value, "--")) {
+        if (fun.strings.startsWith(value, "--")) {
             try writer.writeAll("--");
             return serializeName(value[2..], writer);
-        } else if (bun.strings.eql(value, "-")) {
+        } else if (fun.strings.eql(value, "-")) {
             return writer.writeAll("\\-");
         } else {
             var slice = value;
@@ -6858,7 +6858,7 @@ pub const serializer = struct {
     //         }
     //     } else {
     //         var buf: [124]u8 = undefined;
-    //         const bytes = bun.fmt.FormatDouble.dtoa(&buf, @floatCast(value));
+    //         const bytes = fun.fmt.FormatDouble.dtoa(&buf, @floatCast(value));
     //         try writer.writeAll(bytes);
     //     }
     // }
@@ -6934,7 +6934,7 @@ pub const serializer = struct {
                         '"' => "\\\"",
                         '\\' => "\\\\",
                         // replacement character
-                        0 => bun.strings.encodeUTF8Comptime(0xFFD),
+                        0 => fun.strings.encodeUTF8Comptime(0xFFD),
                         0x01...0x1F, 0x7F => null,
                         else => continue,
                     };
@@ -6970,7 +6970,7 @@ pub const parse_utility = struct {
         comptime parse_one: *const fn (*Parser) Result(T),
     ) Result(T) {
         // I hope this is okay
-        var import_records = bun.BabyList(bun.ImportRecord){};
+        var import_records = fun.BabyList(fun.ImportRecord){};
         defer import_records.deinit(allocator);
         var i = ParserInput.new(allocator, input);
         var parser = Parser.new(&i, &import_records, .{}, null);
@@ -6994,7 +6994,7 @@ pub const to_css = struct {
         options: PrinterOptions,
         import_info: ?ImportInfo,
         local_names: ?*const LocalsResultsMap,
-        symbols: *const bun.ast.Symbol.Map,
+        symbols: *const fun.ast.Symbol.Map,
     ) PrintErr![]const u8 {
         var s = std.Io.Writer.Allocating.init(allocator);
         errdefer s.deinit();
@@ -7020,7 +7020,7 @@ pub const to_css = struct {
         return;
     }
 
-    pub fn fromBabyList(comptime T: type, this: *const bun.BabyList(T), dest: *Printer) PrintErr!void {
+    pub fn fromBabyList(comptime T: type, this: *const fun.BabyList(T), dest: *Printer) PrintErr!void {
         const len = this.len;
         for (this.sliceConst(), 0..) |*val, idx| {
             try val.toCss(dest);
@@ -7103,7 +7103,7 @@ pub inline fn copysign(self: f32, sign: f32) f32 {
 }
 
 pub fn deepClone(comptime V: type, allocator: Allocator, list: *const ArrayList(V)) ArrayList(V) {
-    var newlist = bun.handleOom(ArrayList(V).initCapacity(allocator, list.items.len));
+    var newlist = fun.handleOom(ArrayList(V).initCapacity(allocator, list.items.len));
 
     for (list.items) |*item| {
         newlist.appendAssumeCapacity(generic.deepClone(V, item, allocator));
@@ -7141,7 +7141,7 @@ pub fn dtoa_short(buf: *[129]u8, value: f32, comptime precision: u8) !struct { [
     // we'l handle them here.
     //
     // We need to print a valid finite number otherwise browsers like Safari will
-    // render certain things wrong (see https://github.com/oven-sh/bun/issues/18064)
+    // render certain things wrong (see https://github.com/underdoc-org/fun/issues/18064)
     //
     // We'll use 3.40282e38 which is approximately the largest finite number in 32-bit IEEE754 floating point
     if (std.math.isPositiveInf(value)) {
@@ -7154,15 +7154,15 @@ pub fn dtoa_short(buf: *[129]u8, value: f32, comptime precision: u8) !struct { [
     // We shouldn't receive NaN here.
     // NaN is not a valid CSS token and any inlined calculations from `calc()` we ensure
     // are not NaN.
-    bun.debugAssert(!std.math.isNan(value));
+    fun.debugAssert(!std.math.isNan(value));
     const str, const notation = dtoa_short_impl(buf, value, precision);
     return .{ str, notation };
 }
 
 pub fn dtoa_short_impl(buf: *[129]u8, value: f32, comptime precision: u8) struct { []u8, Notation } {
     buf[0] = '0';
-    bun.debugAssert(std.math.isFinite(value));
-    const buf_len = bun.fmt.FormatDouble.dtoa(@ptrCast(buf[1..].ptr), @floatCast(value)).len;
+    fun.debugAssert(std.math.isFinite(value));
+    const buf_len = fun.fmt.FormatDouble.dtoa(@ptrCast(buf[1..].ptr), @floatCast(value)).len;
     return restrict_prec(buf[0 .. buf_len + 1], precision);
 }
 
@@ -7171,7 +7171,7 @@ fn restrict_prec(buf: []u8, comptime prec: u8) struct { []u8, Notation } {
 
     // Put a leading zero to capture any carry.
     // Caller must prepare an empty byte for us;
-    bun.debugAssert(buf[0] == '0');
+    fun.debugAssert(buf[0] == '0');
     buf[0] = '0';
     // Remove the sign for now. We will put it back at the end.
     const sign = switch (buf[1]) {
@@ -7189,14 +7189,14 @@ fn restrict_prec(buf: []u8, comptime prec: u8) struct { []u8, Notation } {
     var _prec_start: ?u8 = null;
     for (1..len) |i| {
         if (buf[i] == '.') {
-            bun.debugAssert(_pos_dot == null);
+            fun.debugAssert(_pos_dot == null);
             _pos_dot = @intCast(i);
         } else if (buf[i] == 'e') {
             pos_exp = @intCast(i);
             // We don't change exponent part, so stop here.
             break;
         } else if (_prec_start == null and buf[i] != '0') {
-            bun.debugAssert(buf[i] >= '1' and buf[i] <= '9');
+            fun.debugAssert(buf[i] >= '1' and buf[i] <= '9');
             _prec_start = @intCast(i);
         }
     }
@@ -7279,7 +7279,7 @@ fn restrict_prec(buf: []u8, comptime prec: u8) struct { []u8, Notation } {
             buf[1] = sgn;
             break :brk buf[1..real_end];
         }
-        bun.debugAssert(buf[0] == '0');
+        fun.debugAssert(buf[0] == '0');
         buf[0] = sgn;
         break :brk buf[0..real_end];
     } else brk: {
@@ -7316,12 +7316,12 @@ pub fn f32_length_with_5_digits(n_input: f32) usize {
     return count;
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const context = @import("./context.zig");
 const css_decls = @import("./declaration.zig");
 const errors_ = @import("./error.zig");
 
-const logger = bun.logger;
+const logger = fun.logger;
 const Log = logger.Log;
 
 const std = @import("std");

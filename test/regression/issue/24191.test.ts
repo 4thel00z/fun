@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import url from "node:url";
 
 // Regression test for issue #24191

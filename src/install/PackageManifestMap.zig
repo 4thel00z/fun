@@ -14,7 +14,7 @@ pub fn byName(this: *PackageManifestMap, pm: *PackageManager, scope: *const Npm.
 }
 
 pub fn insert(this: *PackageManifestMap, name_hash: PackageNameHash, manifest: *const Npm.PackageManifest) !void {
-    try this.hash_map.put(bun.default_allocator, name_hash, .{ .manifest = manifest.* });
+    try this.hash_map.put(fun.default_allocator, name_hash, .{ .manifest = manifest.* });
 }
 
 pub fn byNameHash(this: *PackageManifestMap, pm: *PackageManager, scope: *const Npm.Registry.Scope, name_hash: PackageNameHash, cache_behavior: CacheBehavior, needs_extended_manifest: bool) ?*Npm.PackageManifest {
@@ -51,7 +51,7 @@ pub fn byNameHashAllowExpired(
         };
     }
 
-    const entry = bun.handleOom(this.hash_map.getOrPut(bun.default_allocator, name_hash));
+    const entry = fun.handleOom(this.hash_map.getOrPut(fun.default_allocator, name_hash));
     if (entry.found_existing) {
         if (entry.value_ptr.* == .manifest) {
             if (needs_extended_manifest and !entry.value_ptr.manifest.pkg.has_extended_manifest) {
@@ -117,8 +117,8 @@ const PackageManager = install.PackageManager;
 const PackageManifestMap = install.PackageManifestMap;
 const PackageNameHash = install.PackageNameHash;
 
-const bun = @import("bun");
-const IdentityContext = bun.IdentityContext;
+const fun = @import("fun");
+const IdentityContext = fun.IdentityContext;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;

@@ -6,7 +6,7 @@ pub const Socket = opaque {
     }
 
     pub fn send(this: *udp.Socket, payloads: []const [*]const u8, lengths: []const usize, addresses: []const ?*const anyopaque) c_int {
-        bun.assert(payloads.len == lengths.len and payloads.len == addresses.len);
+        fun.assert(payloads.len == lengths.len and payloads.len == addresses.len);
         return us_udp_socket_send(this, payloads.ptr, lengths.ptr, addresses.ptr, @intCast(payloads.len));
     }
 
@@ -111,8 +111,8 @@ pub const PacketBuffer = opaque {
     extern fn us_udp_packet_buffer_truncated(buf: ?*PacketBuffer, index: c_int) c_int;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const uws = bun.uws;
+const uws = fun.uws;
 const Loop = uws.Loop;

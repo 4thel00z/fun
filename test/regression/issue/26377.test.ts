@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
-// Test for https://github.com/oven-sh/bun/issues/26377
+// Test for https://github.com/underdoc-org/fun/issues/26377
 // controller.desiredSize should return null (not throw) when stream is detached
 
 test("controller.desiredSize does not throw after stream cleanup", async () => {

@@ -22,11 +22,11 @@ typedef struct ZigString {
 } ZigString;
 
 #ifndef __cplusplus
-typedef uint8_t BunStringTag;
-typedef union BunStringImpl {
+typedef uint8_t FunStringTag;
+typedef union FunStringImpl {
     ZigString zig;
     void* wtf;
-} BunStringImpl;
+} FunStringImpl;
 
 #else
 namespace WTF {
@@ -34,12 +34,12 @@ class StringImpl;
 class String;
 }
 
-typedef union BunStringImpl {
+typedef union FunStringImpl {
     ZigString zig;
     WTF::StringImpl* wtf;
-} BunStringImpl;
+} FunStringImpl;
 
-enum class BunStringTag : uint8_t {
+enum class FunStringTag : uint8_t {
     Dead = 0,
     WTFStringImpl = 1,
     ZigString = 2,
@@ -47,7 +47,7 @@ enum class BunStringTag : uint8_t {
     Empty = 4,
 };
 
-/// Mirrors `bun.uws.ResponseKind` in src/uws_sys/uws.zig.
+/// Mirrors `fun.uws.ResponseKind` in src/uws_sys/uws.zig.
 enum class UWSResponseKind : int32_t {
     TCP = 0,
     SSL = 1,
@@ -55,9 +55,9 @@ enum class UWSResponseKind : int32_t {
 };
 #endif
 
-typedef struct BunString {
-    BunStringTag tag;
-    BunStringImpl impl;
+typedef struct FunString {
+    FunStringTag tag;
+    FunStringImpl impl;
 
     enum ZeroCopyTag { ZeroCopy };
     enum NonNullTag { NonNull };
@@ -90,7 +90,7 @@ typedef struct BunString {
 
     void appendToBuilder(WTF::StringBuilder& builder) const;
 
-} BunString;
+} FunString;
 
 typedef struct ZigErrorType {
     ZigErrorCode code;
@@ -105,7 +105,7 @@ typedef struct ErrorableZigString {
     bool success;
 } ErrorableZigString;
 typedef union ErrorableStringResult {
-    BunString value;
+    FunString value;
     ZigErrorType err;
 } ErrorableStringResult;
 typedef struct ErrorableString {
@@ -113,9 +113,9 @@ typedef struct ErrorableString {
     bool success;
 } ErrorableString;
 typedef struct ResolvedSource {
-    BunString specifier;
-    BunString source_code;
-    BunString source_url;
+    FunString specifier;
+    FunString source_code;
+    FunString source_url;
     bool isCommonJSModule;
     JSC::EncodedJSValue cjsCustomExtension;
     void* allocator;
@@ -129,7 +129,7 @@ typedef struct ResolvedSource {
     void* module_info;
     // File path used as source origin for bytecode cache validation.
     // Converted to file:// URL. If empty, origin is derived from source_url.
-    BunString bytecode_origin_path;
+    FunString bytecode_origin_path;
 } ResolvedSource;
 static const uint32_t ResolvedSourceTagPackageJSONTypeModule = 1;
 typedef union ErrorableResolvedSourceResult {
@@ -143,23 +143,23 @@ typedef struct ErrorableResolvedSource {
 
 typedef struct SystemError {
     int errno_;
-    BunString code;
-    BunString message;
-    BunString path;
-    BunString syscall;
-    BunString hostname;
+    FunString code;
+    FunString message;
+    FunString path;
+    FunString syscall;
+    FunString hostname;
     /// MinInt if not specified
     int fd;
-    BunString dest;
+    FunString dest;
 } SystemError;
 
 typedef void* ArrayBufferSink;
 
-typedef uint8_t BunPluginTarget;
-const BunPluginTarget BunPluginTargetBun = 0;
-const BunPluginTarget BunPluginTargetBrowser = 1;
-const BunPluginTarget BunPluginTargetNode = 2;
-const BunPluginTarget BunPluginTargetMax = BunPluginTargetNode;
+typedef uint8_t FunPluginTarget;
+const FunPluginTarget FunPluginTargetFun = 0;
+const FunPluginTarget FunPluginTargetBrowser = 1;
+const FunPluginTarget FunPluginTargetNode = 2;
+const FunPluginTarget FunPluginTargetMax = FunPluginTargetNode;
 
 typedef uint8_t ZigStackFrameCode;
 const ZigStackFrameCode ZigStackFrameCodeNone = 0;
@@ -170,8 +170,8 @@ const ZigStackFrameCode ZigStackFrameCodeGlobal = 4;
 const ZigStackFrameCode ZigStackFrameCodeWasm = 5;
 const ZigStackFrameCode ZigStackFrameCodeConstructor = 6;
 
-extern "C" void __attribute((__noreturn__)) Bun__panic(const char* message, size_t length);
-#define BUN_PANIC(message) Bun__panic(message, sizeof(message) - 1)
+extern "C" void __attribute((__noreturn__)) Fun__panic(const char* message, size_t length);
+#define FUN_PANIC(message) Fun__panic(message, sizeof(message) - 1)
 
 typedef struct ZigStackFramePosition {
     int32_t line_zero_based;
@@ -189,8 +189,8 @@ typedef struct ZigStackFramePosition {
 } ZigStackFramePosition;
 
 typedef struct ZigStackFrame {
-    BunString function_name;
-    BunString source_url;
+    FunString function_name;
+    FunString source_url;
     ZigStackFramePosition position;
     ZigStackFrameCode code_type;
     bool is_async;
@@ -210,7 +210,7 @@ typedef struct ZigStackFrame {
 } ZigStackFrame;
 
 typedef struct ZigStackTrace {
-    BunString* source_lines_ptr;
+    FunString* source_lines_ptr;
     OrdinalNumber* source_lines_numbers;
     uint8_t source_lines_len;
     uint8_t source_lines_to_collect;
@@ -224,11 +224,11 @@ typedef struct ZigException {
     unsigned char type;
     uint16_t runtime_type;
     int errno_;
-    BunString syscall;
-    BunString system_code;
-    BunString path;
-    BunString name;
-    BunString message;
+    FunString syscall;
+    FunString system_code;
+    FunString path;
+    FunString name;
+    FunString message;
     ZigStackTrace stack;
     void* exception;
     bool remapped;
@@ -248,22 +248,22 @@ const JSErrorCode JSErrorCodeOutOfMemoryError = 8;
 const JSErrorCode JSErrorCodeStackOverflow = 253;
 const JSErrorCode JSErrorCodeUserErrorCode = 254;
 
-// Must be kept in sync with bun.schema.api.Loader in schema.zig
-typedef uint8_t BunLoaderType;
-const BunLoaderType BunLoaderTypeNone = 254;
-const BunLoaderType BunLoaderTypeJSX = 1;
-const BunLoaderType BunLoaderTypeJS = 2;
-const BunLoaderType BunLoaderTypeTS = 3;
-const BunLoaderType BunLoaderTypeTSX = 4;
-const BunLoaderType BunLoaderTypeCSS = 5;
-const BunLoaderType BunLoaderTypeFILE = 6;
-const BunLoaderType BunLoaderTypeJSON = 7;
-const BunLoaderType BunLoaderTypeJSONC = 8;
-const BunLoaderType BunLoaderTypeTOML = 9;
-const BunLoaderType BunLoaderTypeWASM = 10;
-const BunLoaderType BunLoaderTypeNAPI = 11;
-const BunLoaderType BunLoaderTypeYAML = 19;
-const BunLoaderType BunLoaderTypeMD = 20;
+// Must be kept in sync with fun.schema.api.Loader in schema.zig
+typedef uint8_t FunLoaderType;
+const FunLoaderType FunLoaderTypeNone = 254;
+const FunLoaderType FunLoaderTypeJSX = 1;
+const FunLoaderType FunLoaderTypeJS = 2;
+const FunLoaderType FunLoaderTypeTS = 3;
+const FunLoaderType FunLoaderTypeTSX = 4;
+const FunLoaderType FunLoaderTypeCSS = 5;
+const FunLoaderType FunLoaderTypeFILE = 6;
+const FunLoaderType FunLoaderTypeJSON = 7;
+const FunLoaderType FunLoaderTypeJSONC = 8;
+const FunLoaderType FunLoaderTypeTOML = 9;
+const FunLoaderType FunLoaderTypeWASM = 10;
+const FunLoaderType FunLoaderTypeNAPI = 11;
+const FunLoaderType FunLoaderTypeYAML = 19;
+const FunLoaderType FunLoaderTypeMD = 20;
 
 #pragma mark - Stream
 
@@ -314,34 +314,34 @@ typedef void WebSocketClient;
 typedef void WebSocketClientTLS;
 
 #ifndef __cplusplus
-typedef struct Bun__ArrayBuffer Bun__ArrayBuffer;
+typedef struct Fun__ArrayBuffer Fun__ArrayBuffer;
 typedef struct JSC::JSUint8Array JSC::JSUint8Array;
 #endif
 
 #ifdef __cplusplus
 
-extern "C" void Bun__WTFStringImpl__deref(WTF::StringImpl* impl);
-extern "C" void Bun__WTFStringImpl__ref(WTF::StringImpl* impl);
-extern "C" bool BunString__fromJS(JSC::JSGlobalObject*, JSC::EncodedJSValue, BunString*);
-extern "C" JSC::EncodedJSValue BunString__toJS(JSC::JSGlobalObject*, const BunString*);
-extern "C" void BunString__toWTFString(BunString*);
+extern "C" void Fun__WTFStringImpl__deref(WTF::StringImpl* impl);
+extern "C" void Fun__WTFStringImpl__ref(WTF::StringImpl* impl);
+extern "C" bool FunString__fromJS(JSC::JSGlobalObject*, JSC::EncodedJSValue, FunString*);
+extern "C" JSC::EncodedJSValue FunString__toJS(JSC::JSGlobalObject*, const FunString*);
+extern "C" void FunString__toWTFString(FunString*);
 
-namespace Bun {
-JSC::JSString* toJS(JSC::JSGlobalObject*, BunString);
-BunString toString(JSC::JSGlobalObject* globalObject, JSC::JSValue value);
-BunString toString(const char* bytes, size_t length);
-BunString toString(WTF::String& wtfString);
-BunString toString(const WTF::String& wtfString);
-BunString toString(WTF::StringImpl* wtfString);
+namespace Fun {
+JSC::JSString* toJS(JSC::JSGlobalObject*, FunString);
+FunString toString(JSC::JSGlobalObject* globalObject, JSC::JSValue value);
+FunString toString(const char* bytes, size_t length);
+FunString toString(WTF::String& wtfString);
+FunString toString(const WTF::String& wtfString);
+FunString toString(WTF::StringImpl* wtfString);
 
-BunString toStringRef(JSC::JSGlobalObject* globalObject, JSC::JSValue value);
-BunString toStringRef(WTF::String& wtfString);
-BunString toStringRef(const WTF::String& wtfString);
-BunString toStringRef(WTF::StringImpl* wtfString);
+FunString toStringRef(JSC::JSGlobalObject* globalObject, JSC::JSValue value);
+FunString toStringRef(WTF::String& wtfString);
+FunString toStringRef(const WTF::String& wtfString);
+FunString toStringRef(WTF::StringImpl* wtfString);
 
 // This creates a detached string view, which cannot be ref/unref.
 // Be very careful using this, and ensure the memory owner does not get destroyed.
-BunString toStringView(WTF::StringView view);
+FunString toStringView(WTF::StringView view);
 }
 
 typedef struct {
@@ -352,83 +352,83 @@ typedef struct {
     uint8_t cell_type;
     bool shared;
     bool resizable;
-} Bun__ArrayBuffer;
+} Fun__ArrayBuffer;
 
 #include "SyntheticModuleType.h"
 
-extern "C" const char* Bun__userAgent;
+extern "C" const char* Fun__userAgent;
 
 extern "C" ZigErrorCode Zig_ErrorCodeParserError;
 
 extern "C" void ZigString__free(const unsigned char* ptr, size_t len, void* allocator);
 
-extern "C" bool Bun__transpileVirtualModule(
+extern "C" bool Fun__transpileVirtualModule(
     JSC::JSGlobalObject* global,
-    const BunString* specifier,
-    const BunString* referrer,
+    const FunString* specifier,
+    const FunString* referrer,
     ZigString* sourceCode,
-    BunLoaderType loader,
+    FunLoaderType loader,
     ErrorableResolvedSource* result);
 
-extern "C" JSC::EncodedJSValue Bun__runVirtualModule(
+extern "C" JSC::EncodedJSValue Fun__runVirtualModule(
     JSC::JSGlobalObject* global,
-    const BunString* specifier);
+    const FunString* specifier);
 
-extern "C" JSC::JSPromise* Bun__transpileFile(
-    void* bunVM,
+extern "C" JSC::JSPromise* Fun__transpileFile(
+    void* funVM,
     JSC::JSGlobalObject* global,
-    BunString* specifier,
-    BunString* referrer,
-    const BunString* typeAttribute,
+    FunString* specifier,
+    FunString* referrer,
+    const FunString* typeAttribute,
     ErrorableResolvedSource* result,
     bool allowPromise,
     bool isCommonJSRequire,
-    BunLoaderType forceLoaderType);
+    FunLoaderType forceLoaderType);
 
-extern "C" bool Bun__fetchBuiltinModule(
-    void* bunVM,
+extern "C" bool Fun__fetchBuiltinModule(
+    void* funVM,
     JSC::JSGlobalObject* global,
-    const BunString* specifier,
-    const BunString* referrer,
+    const FunString* specifier,
+    const FunString* referrer,
     ErrorableResolvedSource* result);
-extern "C" bool Bun__resolveAndFetchBuiltinModule(
-    void* bunVM,
-    const BunString* specifier,
+extern "C" bool Fun__resolveAndFetchBuiltinModule(
+    void* funVM,
+    const FunString* specifier,
     ErrorableResolvedSource* result);
-extern "C" bool Bun__VM__useIsolationSourceProviderCache(void* bunVM);
+extern "C" bool Fun__VM__useIsolationSourceProviderCache(void* funVM);
 
 // Used in process.version
-extern "C" const char* Bun__version;
-extern "C" const char* Bun__version_with_sha;
+extern "C" const char* Fun__version;
+extern "C" const char* Fun__version_with_sha;
 
-// Version exports removed - now handled by CMake-generated header (bun_dependency_versions.h)
+// Version exports removed - now handled by CMake-generated header (fun_dependency_versions.h)
 // Only keep the ones still exported from Zig
-extern "C" const char* Bun__versions_uws;
-extern "C" const char* Bun__versions_usockets;
+extern "C" const char* Fun__versions_uws;
+extern "C" const char* Fun__versions_usockets;
 
-extern "C" const char* Bun__version_sha;
+extern "C" const char* Fun__version_sha;
 
 extern "C" void ZigString__freeGlobal(const unsigned char* ptr, size_t len);
 
-extern "C" size_t Bun__encoding__writeLatin1(const unsigned char* ptr, size_t len, unsigned char* to, size_t other_len, Encoding encoding);
-extern "C" size_t Bun__encoding__writeUTF16(const char16_t* ptr, size_t len, unsigned char* to, size_t other_len, Encoding encoding);
+extern "C" size_t Fun__encoding__writeLatin1(const unsigned char* ptr, size_t len, unsigned char* to, size_t other_len, Encoding encoding);
+extern "C" size_t Fun__encoding__writeUTF16(const char16_t* ptr, size_t len, unsigned char* to, size_t other_len, Encoding encoding);
 
-extern "C" size_t Bun__encoding__byteLengthLatin1AsUTF8(const unsigned char* ptr, size_t len);
-extern "C" size_t Bun__encoding__byteLengthUTF16AsUTF8(const char16_t* ptr, size_t len);
+extern "C" size_t Fun__encoding__byteLengthLatin1AsUTF8(const unsigned char* ptr, size_t len);
+extern "C" size_t Fun__encoding__byteLengthUTF16AsUTF8(const char16_t* ptr, size_t len);
 
-extern "C" JSC::EncodedJSValue Bun__encoding__constructFromLatin1(void*, const unsigned char* ptr, size_t len, Encoding encoding);
-extern "C" JSC::EncodedJSValue Bun__encoding__constructFromUTF16(void*, const char16_t* ptr, size_t len, Encoding encoding);
+extern "C" JSC::EncodedJSValue Fun__encoding__constructFromLatin1(void*, const unsigned char* ptr, size_t len, Encoding encoding);
+extern "C" JSC::EncodedJSValue Fun__encoding__constructFromUTF16(void*, const char16_t* ptr, size_t len, Encoding encoding);
 
-extern "C" void Bun__EventLoop__runCallback1(JSC::JSGlobalObject* global, JSC::EncodedJSValue callback, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue arg1);
-extern "C" void Bun__EventLoop__runCallback2(JSC::JSGlobalObject* global, JSC::EncodedJSValue callback, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue arg1, JSC::EncodedJSValue arg2);
-extern "C" void Bun__EventLoop__runCallback3(JSC::JSGlobalObject* global, JSC::EncodedJSValue callback, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue arg1, JSC::EncodedJSValue arg2, JSC::EncodedJSValue arg3);
+extern "C" void Fun__EventLoop__runCallback1(JSC::JSGlobalObject* global, JSC::EncodedJSValue callback, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue arg1);
+extern "C" void Fun__EventLoop__runCallback2(JSC::JSGlobalObject* global, JSC::EncodedJSValue callback, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue arg1, JSC::EncodedJSValue arg2);
+extern "C" void Fun__EventLoop__runCallback3(JSC::JSGlobalObject* global, JSC::EncodedJSValue callback, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue arg1, JSC::EncodedJSValue arg2, JSC::EncodedJSValue arg3);
 
 /// @note throws a JS exception and returns false if a stack overflow occurs
 template<bool isStrict, bool enableAsymmetricMatchers>
-bool Bun__deepEquals(JSC::JSGlobalObject* globalObject, JSC::JSValue v1, JSC::JSValue v2, JSC::MarkedArgumentBuffer&, Vector<std::pair<JSC::JSValue, JSC::JSValue>, 16>& stack, JSC::ThrowScope& scope, bool addToStack);
+bool Fun__deepEquals(JSC::JSGlobalObject* globalObject, JSC::JSValue v1, JSC::JSValue v2, JSC::MarkedArgumentBuffer&, Vector<std::pair<JSC::JSValue, JSC::JSValue>, 16>& stack, JSC::ThrowScope& scope, bool addToStack);
 
 /**
- * @brief `Bun.deepMatch(a, b)`
+ * @brief `Fun.deepMatch(a, b)`
  *
  * `object` and `subset` must be objects. In the future we should change the
  * signature of this function to only take `JSC::JSCell`. For now, panics
@@ -460,7 +460,7 @@ bool Bun__deepEquals(JSC::JSGlobalObject* globalObject, JSC::JSValue v1, JSC::JS
  * @return false
  */
 template<bool enableAsymmetricMatchers>
-bool Bun__deepMatch(
+bool Fun__deepMatch(
     JSC::JSValue object,
     std::set<JSC::EncodedJSValue>* seenObjProperties,
     JSC::JSValue subset,
@@ -471,7 +471,7 @@ bool Bun__deepMatch(
     bool replacePropsWithAsymmetricMatchers,
     bool isMatchingObjectContaining);
 
-extern "C" void Bun__remapStackFramePositions(void*, ZigStackFrame*, size_t);
+extern "C" void Fun__remapStackFramePositions(void*, ZigStackFrame*, size_t);
 
 namespace Inspector {
 class ScriptArguments;
@@ -479,15 +479,15 @@ class ScriptArguments;
 
 using ScriptArguments = Inspector::ScriptArguments;
 
-ALWAYS_INLINE void BunString::ref()
+ALWAYS_INLINE void FunString::ref()
 {
-    if (this->tag == BunStringTag::WTFStringImpl) {
+    if (this->tag == FunStringTag::WTFStringImpl) {
         this->impl.wtf->ref();
     }
 }
-ALWAYS_INLINE void BunString::deref()
+ALWAYS_INLINE void FunString::deref()
 {
-    if (this->tag == BunStringTag::WTFStringImpl) {
+    if (this->tag == FunStringTag::WTFStringImpl) {
         this->impl.wtf->deref();
     }
 }

@@ -9,7 +9,7 @@ bytes: [16]u8,
 pub fn init() UUID {
     var uuid = UUID{ .bytes = undefined };
 
-    bun.csprng(&uuid.bytes);
+    fun.csprng(&uuid.bytes);
     // Version 4
     uuid.bytes[6] = (uuid.bytes[6] & 0x0f) | 0x40;
     // Variant 1
@@ -130,7 +130,7 @@ pub fn newV4() UUID {
 pub const UUID7 = struct {
     bytes: [16]u8,
 
-    var uuid_v7_lock = bun.Mutex{};
+    var uuid_v7_lock = fun.Mutex{};
     var uuid_v7_last_timestamp: std.atomic.Value(u64) = .{ .raw = 0 };
     var uuid_v7_counter: std.atomic.Value(u32) = .{ .raw = 0 };
 
@@ -205,13 +205,13 @@ pub const UUID5 = struct {
         pub const x500: *const [16]u8 = &.{ 0x6b, 0xa7, 0xb8, 0x14, 0x9d, 0xad, 0x11, 0xd1, 0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8 };
 
         pub fn get(namespace: []const u8) ?*const [16]u8 {
-            if (bun.strings.eqlCaseInsensitiveASCII(namespace, "dns", true)) {
+            if (fun.strings.eqlCaseInsensitiveASCII(namespace, "dns", true)) {
                 return dns;
-            } else if (bun.strings.eqlCaseInsensitiveASCII(namespace, "url", true)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCII(namespace, "url", true)) {
                 return url;
-            } else if (bun.strings.eqlCaseInsensitiveASCII(namespace, "oid", true)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCII(namespace, "oid", true)) {
                 return oid;
-            } else if (bun.strings.eqlCaseInsensitiveASCII(namespace, "x500", true)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCII(namespace, "x500", true)) {
                 return x500;
             }
 
@@ -222,7 +222,7 @@ pub const UUID5 = struct {
     /// Generate a UUID v5 from a namespace UUID and name data
     pub fn init(namespace: *const [16]u8, name: []const u8) UUID5 {
         const hash = brk: {
-            var sha1_hasher = bun.sha.SHA1.init();
+            var sha1_hasher = fun.sha.SHA1.init();
             defer sha1_hasher.deinit();
 
             sha1_hasher.update(namespace);
@@ -266,5 +266,5 @@ pub const UUID5 = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

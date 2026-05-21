@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
@@ -15,15 +15,15 @@ import { join } from "node:path";
 // `fromNPM` reallocates the single-entry dependencies buffer.
 test("auto-install with cached manifest but missing tarball does not read a dangling dependency pointer", async () => {
   using dir = tempDir("autoinstall-cached-manifest", {});
-  const cacheDir = join(String(dir), ".bun-cache");
+  const cacheDir = join(String(dir), ".fun-cache");
 
   const env = {
-    ...bunEnv,
-    BUN_INSTALL_CACHE_DIR: cacheDir,
+    ...funEnv,
+    FUN_INSTALL_CACHE_DIR: cacheDir,
   };
 
   // Use `-e` so the `require()` is resolved at runtime through
-  // `Bun__resolveSync` → `enqueueDependencyToRoot` (the code path that was
+  // `Fun__resolveSync` → `enqueueDependencyToRoot` (the code path that was
   // passing a pointer directly into the lockfile buffer). Loading from a
   // file instead lets the transpiler resolve the import through a
   // different path that already used a stack copy.
@@ -33,8 +33,8 @@ test("auto-install with cached manifest but missing tarball does not read a dang
   // isn't cached yet, so the safe `processDependencyListItem` path (stack
   // copy) is taken.
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--install=force", "-e", script],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--install=force", "-e", script],
       env,
       cwd: String(dir),
       stdout: "pipe",
@@ -62,8 +62,8 @@ test("auto-install with cached manifest but missing tarball does not read a dang
   // dependencies (reallocating the buffer), then the tarball download path
   // runs. Previously this read `dependency.behavior` from the freed buffer.
   {
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--install=force", "-e", script],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--install=force", "-e", script],
       env,
       cwd: String(dir),
       stdout: "pipe",

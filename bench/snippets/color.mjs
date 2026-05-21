@@ -6,9 +6,9 @@ const inputs = ["#f00", "rgb(255, 0, 0)", "rgba(255, 0, 0, 1)", "hsl(0, 100%, 50
 
 for (const input of inputs) {
   group(`${input}`, () => {
-    if (typeof Bun !== "undefined") {
-      bench(`Bun.color() (${input})`, () => {
-        Bun.color(input, "css");
+    if (typeof Fun !== "undefined") {
+      bench(`Fun.color() (${input})`, () => {
+        Fun.color(input, "css");
       });
     }
 

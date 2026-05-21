@@ -1,6 +1,6 @@
 fn get(comptime name: []const u8) comptime_int {
-    return if (@hasDecl(bun.O, name))
-        return @field(bun.O, name)
+    return if (@hasDecl(fun.O, name))
+        return @field(fun.O, name)
     else
         @compileError("Unknown Constant: " ++ name);
 }
@@ -48,27 +48,27 @@ pub const COPYFILE_FICLONE: i32 = Copyfile.clone;
 pub const COPYFILE_FICLONE_FORCE: i32 = Copyfile.force;
 // File Open Constants
 /// Constant for fs.open(). Flag indicating to open a file for read-only access.
-pub const O_RDONLY = bun.O.RDONLY;
+pub const O_RDONLY = fun.O.RDONLY;
 /// Constant for fs.open(). Flag indicating to open a file for write-only access.
-pub const O_WRONLY = bun.O.WRONLY;
+pub const O_WRONLY = fun.O.WRONLY;
 /// Constant for fs.open(). Flag indicating to open a file for read-write access.
-pub const O_RDWR = bun.O.RDWR;
+pub const O_RDWR = fun.O.RDWR;
 /// Constant for fs.open(). Flag indicating to create the file if it does not already exist.
-pub const O_CREAT = bun.O.CREAT;
+pub const O_CREAT = fun.O.CREAT;
 /// Constant for fs.open(). Flag indicating that opening a file should fail if the O_CREAT flag is set and the file already exists.
-pub const O_EXCL = bun.O.EXCL;
+pub const O_EXCL = fun.O.EXCL;
 
 ///
 /// Constant for fs.open(). Flag indicating that if path identifies a terminal device,
 /// opening the path shall not cause that terminal to become the controlling terminal for the process
 /// (if the process does not already have one).
-pub const O_NOCTTY = bun.O.NOCTTY;
+pub const O_NOCTTY = fun.O.NOCTTY;
 /// Constant for fs.open(). Flag indicating that if the file exists and is a regular file, and the file is opened successfully for write access, its length shall be truncated to zero.
-pub const O_TRUNC = bun.O.TRUNC;
+pub const O_TRUNC = fun.O.TRUNC;
 /// Constant for fs.open(). Flag indicating that data will be appended to the end of the file.
-pub const O_APPEND = bun.O.APPEND;
+pub const O_APPEND = fun.O.APPEND;
 /// Constant for fs.open(). Flag indicating that the open should fail if the path is not a directory.
-pub const O_DIRECTORY = bun.O.DIRECTORY;
+pub const O_DIRECTORY = fun.O.DIRECTORY;
 
 ///
 /// constant for fs.open().
@@ -77,17 +77,17 @@ pub const O_DIRECTORY = bun.O.DIRECTORY;
 /// This flag is available on Linux operating systems only.
 pub const O_NOATIME = get("NOATIME");
 /// Constant for fs.open(). Flag indicating that the open should fail if the path is a symbolic link.
-pub const O_NOFOLLOW = bun.O.NOFOLLOW;
+pub const O_NOFOLLOW = fun.O.NOFOLLOW;
 /// Constant for fs.open(). Flag indicating that the file is opened for synchronous I/O.
-pub const O_SYNC = bun.O.SYNC;
+pub const O_SYNC = fun.O.SYNC;
 /// Constant for fs.open(). Flag indicating that the file is opened for synchronous I/O with write operations waiting for data integrity.
-pub const O_DSYNC = bun.O.DSYNC;
+pub const O_DSYNC = fun.O.DSYNC;
 /// Constant for fs.open(). Flag indicating to open the symbolic link itself rather than the resource it is pointing to.
 pub const O_SYMLINK = get("SYMLINK");
 /// Constant for fs.open(). When set, an attempt will be made to minimize caching effects of file I/O.
 pub const O_DIRECT = get("DIRECT");
 /// Constant for fs.open(). Flag indicating to open the file in nonblocking mode when possible.
-pub const O_NONBLOCK = bun.O.NONBLOCK;
+pub const O_NONBLOCK = fun.O.NONBLOCK;
 // File Type Constants
 /// Constant for fs.Stats mode property for determining a file's type. Bit mask used to extract the file type code.
 pub const S_IFMT = std.posix.S.IFMT;
@@ -139,5 +139,5 @@ pub const UV_FS_O_FILEMAP = 536870912;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;

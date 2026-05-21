@@ -4,13 +4,13 @@
 
 const ClientSession = @This();
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 /// Ref holders: the socket-ext tag while the session is the ActiveSocket
 /// (1), the context's active_h2_sessions registry while listed (1), and
 /// the keep-alive pool while parked (1). Hand-offs between socket and
 /// pool transfer a ref rather than touching the count.
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -30,7 +30,7 @@ did_have_handshaking_error: bool,
 
 /// Queued bytes for the socket; whole frames are written here and
 /// `flush()` drains as much as the socket accepts.
-write_buffer: bun.io.StreamBuffer = .{},
+write_buffer: fun.io.StreamBuffer = .{},
 
 /// Inbound bytes until a full 9-byte header + declared payload is
 /// available, so frame handlers always see complete frames.
@@ -99,7 +99,7 @@ pub fn create(ctx: *NewHTTPContext(true), socket: Socket, client: *const HTTPCli
         .hpack = lshpack.HPACK.init(4096),
         .socket = socket,
         .ctx = ctx,
-        .hostname = bun.handleOom(bun.default_allocator.dupe(u8, client.connected_url.hostname)),
+        .hostname = fun.handleOom(fun.default_allocator.dupe(u8, client.connected_url.hostname)),
         .port = client.connected_url.getPortAuto(),
         .ssl_config = if (client.tls_props) |p| p.clone() else null,
         .did_have_handshaking_error = client.flags.did_have_handshaking_error,
@@ -111,19 +111,19 @@ pub fn create(ctx: *NewHTTPContext(true), socket: Socket, client: *const HTTPCli
 
 fn deinit(this: *ClientSession) void {
     _ = H2.live_sessions.fetchSub(1, .monotonic);
-    bun.debugAssert(this.registry_index == std.math.maxInt(u32));
+    fun.debugAssert(this.registry_index == std.math.maxInt(u32));
     this.hpack.deinit();
     this.write_buffer.deinit();
-    this.read_buffer.deinit(bun.default_allocator);
+    this.read_buffer.deinit(fun.default_allocator);
     var it = this.streams.iterator();
     while (it.next()) |e| e.value_ptr.*.deinit();
-    this.streams.deinit(bun.default_allocator);
-    this.pending_attach.deinit(bun.default_allocator);
-    this.orphan_header_block.deinit(bun.default_allocator);
-    this.encode_scratch.deinit(bun.default_allocator);
-    bun.default_allocator.free(this.hostname);
+    this.streams.deinit(fun.default_allocator);
+    this.pending_attach.deinit(fun.default_allocator);
+    this.orphan_header_block.deinit(fun.default_allocator);
+    this.encode_scratch.deinit(fun.default_allocator);
+    fun.default_allocator.free(this.hostname);
     if (this.ssl_config) |*s| s.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn hasHeadroom(this: *const ClientSession) bool {
@@ -147,7 +147,7 @@ pub fn adopt(this: *ClientSession, client: *HTTPClient) void {
     // shouldn't risk a REFUSED_STREAM. The leader bypasses adopt() and
     // attaches directly so the preface still goes out.
     if (this.delivering or !this.settings_received) {
-        bun.handleOom(this.pending_attach.append(bun.default_allocator, client));
+        fun.handleOom(this.pending_attach.append(fun.default_allocator, client));
         this.rearmTimeout();
         return;
     }
@@ -171,7 +171,7 @@ pub fn adopt(this: *ClientSession, client: *HTTPClient) void {
 /// is routed via the session socket so `abortByHttpId` can find it.
 pub fn enqueue(this: *ClientSession, client: *HTTPClient) void {
     client.registerAbortTracker(true, this.socket);
-    bun.handleOom(this.pending_attach.append(bun.default_allocator, client));
+    fun.handleOom(this.pending_attach.append(fun.default_allocator, client));
     this.rearmTimeout();
 }
 
@@ -179,7 +179,7 @@ fn drainPending(this: *ClientSession) void {
     if (!this.settings_received or this.pending_attach.items.len == 0) return;
     var waiters = this.pending_attach;
     this.pending_attach = .{};
-    defer waiters.deinit(bun.default_allocator);
+    defer waiters.deinit(fun.default_allocator);
     for (waiters.items) |client| {
         if (this.fatal_error) |err| {
             client.failFromH2(err);
@@ -209,7 +209,7 @@ pub fn canPool(this: *const ClientSession) bool {
 }
 
 pub fn queue(this: *ClientSession, bytes: []const u8) void {
-    bun.handleOom(this.write_buffer.write(bytes));
+    fun.handleOom(this.write_buffer.write(bytes));
 }
 
 pub fn writeFrame(this: *ClientSession, frame_type: wire.FrameType, flags: u8, stream_id: u32, payload: []const u8) void {
@@ -227,7 +227,7 @@ pub fn writeFrame(this: *ClientSession, frame_type: wire.FrameType, flags: u8, s
 /// Allocate a stream for `client`, serialise its request as HEADERS +
 /// DATA, and flush.
 pub fn attach(this: *ClientSession, client: *HTTPClient) void {
-    bun.debugAssert(this.hasHeadroom());
+    fun.debugAssert(this.hasHeadroom());
 
     const stream = Stream.new(.{
         .id = this.next_stream_id,
@@ -237,7 +237,7 @@ pub fn attach(this: *ClientSession, client: *HTTPClient) void {
     });
     _ = H2.live_streams.fetchAdd(1, .monotonic);
     this.next_stream_id +|= 2;
-    bun.handleOom(this.streams.put(bun.default_allocator, stream.id, stream));
+    fun.handleOom(this.streams.put(fun.default_allocator, stream.id, stream));
     client.h2 = stream;
     client.flags.protocol = .http2;
     client.allow_retry = false;
@@ -293,7 +293,7 @@ pub fn attach(this: *ClientSession, client: *HTTPClient) void {
 /// suffix alone desyncs the dynamic table for every sibling stream.
 fn removeStream(this: *ClientSession, stream: *Stream) void {
     if (this.expecting_continuation == stream.id) {
-        this.orphan_header_block.deinit(bun.default_allocator);
+        this.orphan_header_block.deinit(fun.default_allocator);
         this.orphan_header_block = stream.header_block;
         stream.header_block = .{};
     }
@@ -417,10 +417,10 @@ pub fn onData(this: *ClientSession, incoming: []const u8) void {
     if (this.read_buffer.items.len == 0) {
         const consumed = dispatch.parseFrames(this, incoming);
         if (consumed < incoming.len and this.fatal_error == null) {
-            bun.handleOom(this.read_buffer.appendSlice(bun.default_allocator, incoming[consumed..]));
+            fun.handleOom(this.read_buffer.appendSlice(fun.default_allocator, incoming[consumed..]));
         }
     } else {
-        bun.handleOom(this.read_buffer.appendSlice(bun.default_allocator, incoming));
+        fun.handleOom(this.read_buffer.appendSlice(fun.default_allocator, incoming));
         const consumed = dispatch.parseFrames(this, this.read_buffer.items);
         const tail = this.read_buffer.items.len - consumed;
         if (tail > 0 and consumed > 0) {
@@ -501,7 +501,7 @@ pub fn onWritable(this: *ClientSession) void {
 /// Called while the socket is parked in the pool with no clients; answers
 /// PING/SETTINGS, records GOAWAY, discards anything stream-addressed.
 pub fn onIdleData(this: *ClientSession, incoming: []const u8) void {
-    bun.handleOom(this.read_buffer.appendSlice(bun.default_allocator, incoming));
+    fun.handleOom(this.read_buffer.appendSlice(fun.default_allocator, incoming));
     const consumed = dispatch.parseFrames(this, this.read_buffer.items);
     const tail = this.read_buffer.items.len - consumed;
     if (tail > 0 and consumed > 0) {
@@ -804,10 +804,10 @@ const wire = @import("../H2FrameParser.zig");
 const H2 = @import("../H2Client.zig");
 const local_initial_window_size = H2.local_initial_window_size;
 
-const bun = @import("bun");
-const picohttp = bun.picohttp;
-const strings = bun.strings;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const picohttp = fun.picohttp;
+const strings = fun.strings;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
-const HTTPClient = bun.http;
+const HTTPClient = fun.http;
 const NewHTTPContext = HTTPClient.NewHTTPContext;

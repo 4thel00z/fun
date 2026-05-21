@@ -1,7 +1,7 @@
 /**
  * Node.js gRPC server fixture for testing HTTP/2 FRAME_SIZE_ERROR
  * This server configures large frame sizes and can return large responses
- * to test Bun's HTTP/2 client handling of large frames.
+ * to test Fun's HTTP/2 client handling of large frames.
  */
 
 const grpc = require("@grpc/grpc-js");

@@ -9,7 +9,7 @@ const {
   threadId,
 } = require('worker_threads');
 
-// BUN: skip using this internal module, it doesn't actually affect behavior of the test
+// FUN: skip using this internal module, it doesn't actually affect behavior of the test
 // const { assignEnvironmentData } = require('internal/worker');
 
 const {

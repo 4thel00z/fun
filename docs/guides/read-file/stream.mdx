@@ -4,11 +4,11 @@ sidebarTitle: Read as stream
 mode: center
 ---
 
-The `Bun.file()` function accepts a path and returns a `BunFile` instance. The `BunFile` class extends `Blob` and allows you to lazily read the file in a variety of formats. Use `.stream()` to consume the file incrementally as a `ReadableStream`.
+The `Fun.file()` function accepts a path and returns a `FunFile` instance. The `FunFile` class extends `Blob` and allows you to lazily read the file in a variety of formats. Use `.stream()` to consume the file incrementally as a `ReadableStream`.
 
 ```ts
 const path = "/path/to/package.json";
-const file = Bun.file(path);
+const file = Fun.file(path);
 
 const stream = file.stream();
 ```
@@ -25,4 +25,4 @@ for await (const chunk of stream) {
 
 ---
 
-Refer to the [Streams](/runtime/streams) documentation for more information on working with streams in Bun.
+Refer to the [Streams](/runtime/streams) documentation for more information on working with streams in Fun.

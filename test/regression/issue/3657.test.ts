@@ -1,7 +1,7 @@
-// https://github.com/oven-sh/bun/issues/3657
+// https://github.com/underdoc-org/fun/issues/3657
 // fs.watch on a directory should emit 'change' events for files created after the watch is established
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { isLinux, tempDirWithFiles } from "harness";
 import fs from "node:fs";
 import path from "node:path";
@@ -26,13 +26,13 @@ describe.skipIf(!isLinux)("GitHub Issue #3657", () => {
     });
 
     // Give the watcher time to initialize
-    await Bun.sleep(100);
+    await Fun.sleep(100);
 
     // Create the file - should emit 'rename' event
     fs.writeFileSync(testFile, "hello");
 
     // Wait a bit for the event to be processed
-    await Bun.sleep(100);
+    await Fun.sleep(100);
 
     // Modify the file - should emit 'change' event
     fs.appendFileSync(testFile, " world");
@@ -75,18 +75,18 @@ describe.skipIf(!isLinux)("GitHub Issue #3657", () => {
     });
 
     // Give the watcher time to initialize
-    await Bun.sleep(100);
+    await Fun.sleep(100);
 
     // Create the file - should emit 'rename' event
     fs.writeFileSync(testFile, "line1\n");
-    await Bun.sleep(100);
+    await Fun.sleep(100);
 
     // Multiple modifications - should emit 'change' events
     fs.appendFileSync(testFile, "line2\n");
-    await Bun.sleep(100);
+    await Fun.sleep(100);
 
     fs.appendFileSync(testFile, "line3\n");
-    await Bun.sleep(100);
+    await Fun.sleep(100);
 
     fs.appendFileSync(testFile, "line4\n");
 

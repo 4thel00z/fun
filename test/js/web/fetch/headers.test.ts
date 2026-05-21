@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "fun:test";
 
 beforeAll(() => {
   // expect(Headers).toBeDefined();
@@ -27,14 +27,14 @@ describe("Headers", () => {
     test("deleted key in header constructor is not kept", () => {
       const record = {
         "content-type": "text/plain",
-        "user-agent": "bun",
+        "user-agent": "fun",
       };
       // @ts-expect-error
       delete record["content-type"];
 
       const headers = new Headers(record);
       expect(headers.get("content-type")).toBeNull();
-      expect(headers.get("user-agent")).toBe("bun");
+      expect(headers.get("user-agent")).toBe("fun");
     });
     test("can create headers from object with duplicates", () => {
       const headers = new Headers({
@@ -90,10 +90,10 @@ describe("Headers", () => {
     test("can create headers from headers", () => {
       const headers = new Headers(
         new Headers({
-          "user-agent": "bun",
+          "user-agent": "fun",
         }),
       );
-      expect(headers.get("user-agent")).toBe("bun");
+      expect(headers.get("user-agent")).toBe("fun");
     });
     test("can create headers from headers with duplicates", () => {
       const headers = new Headers(
@@ -107,11 +107,11 @@ describe("Headers", () => {
     });
     test("can create headers from headers with copying", () => {
       const headers = new Headers({
-        "user-agent": "bun",
+        "user-agent": "fun",
       });
       const copy = new Headers(headers);
       headers.delete("user-agent");
-      expect(copy.get("user-agent")).toBe("bun");
+      expect(copy.get("user-agent")).toBe("fun");
     });
     test("can create headers from empty iterator", () => {
       expect(() => new Headers((function* () {})())).not.toThrow();
@@ -119,11 +119,11 @@ describe("Headers", () => {
     test("can create headers from iterator", () => {
       const headers = new Headers(
         (function* () {
-          yield ["server", "bun"];
+          yield ["server", "fun"];
           yield ["content-type", "application/json"];
         })(),
       );
-      expect(headers.get("server")).toBe("bun");
+      expect(headers.get("server")).toBe("fun");
       expect(headers.get("content-type")).toBe("application/json");
     });
     test("cannot create headers from iterator that throws", () => {
@@ -210,7 +210,7 @@ describe("Headers", () => {
   describe("delete()", () => {
     test("can delete header", () => {
       const headers = new Headers({
-        "user-agent": "bun",
+        "user-agent": "fun",
       });
       headers.delete("user-agent");
       expect(headers.get("user-agent")).toBeNull();
@@ -237,11 +237,11 @@ describe("Headers", () => {
   describe("get()", () => {
     test("can get header", () => {
       const headers = new Headers({
-        "user-agent": "bun",
+        "user-agent": "fun",
       });
-      expect(headers.get("user-agent")).toBe("bun");
-      expect(headers.get("User-Agent")).toBe("bun");
-      expect(headers.get("USER-AGENT")).toBe("bun");
+      expect(headers.get("user-agent")).toBe("fun");
+      expect(headers.get("User-Agent")).toBe("fun");
+      expect(headers.get("USER-AGENT")).toBe("fun");
       expect(headers.get("user-agen")).toBeNull();
     });
     const cookies = new Headers([
@@ -302,10 +302,10 @@ describe("Headers", () => {
     });
     test("can get header entries", () => {
       const headers = new Headers({
-        "user-agent": "bun",
+        "user-agent": "fun",
       });
       const entries = Array.from(headers.entries());
-      expect(entries).toEqual([["user-agent", "bun"]]);
+      expect(entries).toEqual([["user-agent", "fun"]]);
     });
     test("can get header entries when sorted and normalized", () => {
       const headers = new Headers([
@@ -330,16 +330,16 @@ describe("Headers", () => {
     });
     test("can get header keys", () => {
       const headers = new Headers({
-        "user-agent": "bun",
-        "User-Agent": "bun",
+        "user-agent": "fun",
+        "User-Agent": "fun",
       });
       const keys = Array.from(headers.keys());
       expect(keys).toEqual(["user-agent"]);
     });
     test("can get header keys when sorted and normalized", () => {
       const headers = new Headers({
-        "user-agent": "bun",
-        "User-Agent": "bun",
+        "user-agent": "fun",
+        "User-Agent": "fun",
         "Age": "60",
       });
       const keys = Array.from(headers.keys());
@@ -381,7 +381,7 @@ describe("Headers", () => {
     });
     test("can iterate over header entries when sorted and normalized", () => {
       const entries: [string, string][] = [
-        ["user-agent", "bun"],
+        ["user-agent", "fun"],
         ["Cache-Control", "private"],
         ["Expires", "0"],
       ];
@@ -394,7 +394,7 @@ describe("Headers", () => {
       expect(results).toEqual([
         ["cache-control", "private"],
         ["expires", "0"],
-        ["user-agent", "bun"],
+        ["user-agent", "fun"],
       ]);
     });
   });
@@ -406,49 +406,49 @@ describe("Headers", () => {
     });
     test("can iterate over header object", () => {
       const headers = new Headers({
-        "user-agent": "bun",
+        "user-agent": "fun",
       });
       const entries = Array.from(headers);
-      expect(entries).toEqual([["user-agent", "bun"]]);
+      expect(entries).toEqual([["user-agent", "fun"]]);
     });
     test("can iterate over header object when sorted and normalized", () => {
       const headers = new Headers([
-        ["User-Agent", "bun"],
+        ["User-Agent", "fun"],
         ["Cache-Control", "max-age=60"],
         ["cache-control", "s-maxage=60"],
       ]);
       const entries = Array.from(headers);
       expect(entries).toEqual([
         ["cache-control", "max-age=60, s-maxage=60"],
-        ["user-agent", "bun"],
+        ["user-agent", "fun"],
       ]);
     });
   });
-  describe("Bun.inspect()", () => {
+  describe("Fun.inspect()", () => {
     const it = "toJSON" in new Headers() ? test : test.skip;
     it("can convert to json when empty", () => {
       const headers = new Headers();
-      expect(Bun.inspect(headers)).toStrictEqual(`Headers {}`);
+      expect(Fun.inspect(headers)).toStrictEqual(`Headers {}`);
     });
     it("can convert to json", () => {
       const headers = new Headers({
         "cache-control": "public, immutable",
       });
-      expect(Bun.inspect(headers)).toStrictEqual(
+      expect(Fun.inspect(headers)).toStrictEqual(
         "Headers {" + "\n  " + `"cache-control": "public, immutable",` + "\n" + "}",
       );
     });
     it("can convert to json normalized", () => {
       const headers = new Headers({
-        "user-agent": "bun",
+        "user-agent": "fun",
         "X-Custom-Header": "1",
         "cache-control": "public, immutable",
       });
-      expect(Bun.inspect(headers)).toStrictEqual(
+      expect(Fun.inspect(headers)).toStrictEqual(
         "Headers " +
           JSON.stringify(
             {
-              "user-agent": "bun",
+              "user-agent": "fun",
               "cache-control": "public, immutable",
               "x-custom-header": "1",
             },
@@ -476,13 +476,13 @@ describe("Headers", () => {
     });
     it("can convert to json when sorted and normalized", () => {
       const headers = new Headers({
-        "user-agent": "bun",
+        "user-agent": "fun",
         "X-Custom-Header": "1",
         "cache-control": "public, immutable",
       });
       expect(headers.toJSON()).toStrictEqual({
         "cache-control": "public, immutable",
-        "user-agent": "bun",
+        "user-agent": "fun",
         "x-custom-header": "1",
       });
     });
@@ -496,7 +496,7 @@ describe("Headers", () => {
     });
     it("can count headers", () => {
       const headers = new Headers([
-        ["user-agent", "bun"],
+        ["user-agent", "fun"],
         ["cache-control", "public, immutable"],
         ["Cache-Control", "no-transform"],
       ]);

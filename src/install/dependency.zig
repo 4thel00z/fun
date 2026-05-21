@@ -314,7 +314,7 @@ pub const Version = struct {
     }
 
     pub fn isLessThan(string_buf: []const u8, lhs: Dependency.Version, rhs: Dependency.Version) bool {
-        if (comptime Environment.allow_assert) bun.assert(lhs.tag == rhs.tag);
+        if (comptime Environment.allow_assert) fun.assert(lhs.tag == rhs.tag);
         return strings.cmpStringsAsc({}, lhs.literal.slice(string_buf), rhs.literal.slice(string_buf));
     }
 
@@ -412,7 +412,7 @@ pub const Version = struct {
 
         catalog = 9,
 
-        pub const map = bun.ComptimeStringMap(Tag, .{
+        pub const map = fun.ComptimeStringMap(Tag, .{
             .{ "npm", .npm },
             .{ "dist_tag", .dist_tag },
             .{ "tarball", .tarball },
@@ -444,7 +444,7 @@ pub const Version = struct {
             }
 
             // Allocator necessary for slow paths.
-            var stackFallback = std.heap.stackFallback(1024, bun.default_allocator);
+            var stackFallback = std.heap.stackFallback(1024, fun.default_allocator);
             const allocator = stackFallback.get();
 
             switch (dependency[0]) {
@@ -885,7 +885,7 @@ pub fn parseWithTag(
                 sliced.sub(input),
             ) catch |err| {
                 switch (err) {
-                    error.OutOfMemory => bun.outOfMemory(),
+                    error.OutOfMemory => fun.outOfMemory(),
                 }
             };
 
@@ -940,7 +940,7 @@ pub fn parseWithTag(
                 alias;
 
             // name should never be empty
-            if (comptime Environment.allow_assert) bun.assert(!actual.isEmpty());
+            if (comptime Environment.allow_assert) fun.assert(!actual.isEmpty());
 
             return .{
                 .literal = sliced.value(),
@@ -973,7 +973,7 @@ pub fn parseWithTag(
             };
         },
         .github => {
-            const info = bun.handleOom(
+            const info = fun.handleOom(
                 hosted_git_info.HostedGitInfo.fromUrl(allocator, dependency),
             ) catch {
                 return null;
@@ -1171,7 +1171,7 @@ pub fn parseWithTag(
             };
         },
         .catalog => {
-            bun.assert(strings.hasPrefixComptime(dependency, "catalog:"));
+            fun.assert(strings.hasPrefixComptime(dependency, "catalog:"));
 
             const group = dependency["catalog:".len..];
 
@@ -1304,11 +1304,11 @@ pub const Behavior = packed struct(u8) {
     }
 
     comptime {
-        bun.assert(@as(u8, @bitCast(Behavior{ .prod = true })) == (1 << 1));
-        bun.assert(@as(u8, @bitCast(Behavior{ .optional = true })) == (1 << 2));
-        bun.assert(@as(u8, @bitCast(Behavior{ .dev = true })) == (1 << 3));
-        bun.assert(@as(u8, @bitCast(Behavior{ .peer = true })) == (1 << 4));
-        bun.assert(@as(u8, @bitCast(Behavior{ .workspace = true })) == (1 << 5));
+        fun.assert(@as(u8, @bitCast(Behavior{ .prod = true })) == (1 << 1));
+        fun.assert(@as(u8, @bitCast(Behavior{ .optional = true })) == (1 << 2));
+        fun.assert(@as(u8, @bitCast(Behavior{ .dev = true })) == (1 << 3));
+        fun.assert(@as(u8, @bitCast(Behavior{ .peer = true })) == (1 << 4));
+        fun.assert(@as(u8, @bitCast(Behavior{ .workspace = true })) == (1 << 5));
     }
 };
 
@@ -1321,7 +1321,7 @@ fn hgiToTag(info: hosted_git_info.HostedGitInfo) Version.Tag {
 
 const string = []const u8;
 
-const Environment = @import("../bun_core/env.zig");
+const Environment = @import("../fun_core/env.zig");
 const hosted_git_info = @import("./hosted_git_info.zig");
 const std = @import("std");
 const Repository = @import("./repository.zig").Repository;
@@ -1331,10 +1331,10 @@ const Features = Install.Features;
 const PackageManager = Install.PackageManager;
 const PackageNameHash = Install.PackageNameHash;
 
-const bun = @import("bun");
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const logger = fun.logger;
+const strings = fun.strings;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const SlicedString = Semver.SlicedString;
 const String = Semver.String;

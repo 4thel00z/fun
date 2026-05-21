@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { tmpdirSync } from "harness";
 
 import { ok } from "node:assert/strict";
@@ -58,7 +58,7 @@ describe("WebAssembly.compileStreaming", () => {
 
   test("compiles a pending Promise to a non-streaming Response", async () => {
     const response = await fetch(simpleWasmUri);
-    const promise = Bun.sleep(100).then(() => response);
+    const promise = Fun.sleep(100).then(() => response);
     expect(WebAssembly.compileStreaming(promise)).resolves.toBeInstanceOf(WebAssembly.Module);
   });
 
@@ -172,7 +172,7 @@ describe("WebAssembly.instantiateStreaming", () => {
 
   const instantiateAndGetExports = async (
     responseOrPromise: Response | PromiseLike<Response>,
-    importsMaybe?: Bun.WebAssembly.Imports,
+    importsMaybe?: Fun.WebAssembly.Imports,
   ) => {
     const { instance } = await WebAssembly.instantiateStreaming(responseOrPromise, importsMaybe);
     return instance.exports;
@@ -190,15 +190,15 @@ describe("WebAssembly.instantiateStreaming", () => {
 
   test("instantiates a pending Promise to a non-streaming response", async () => {
     const response = await fetch(simpleWasmUri);
-    const promise = Bun.sleep(100).then(() => response);
+    const promise = Fun.sleep(100).then(() => response);
     expect(instantiateAndGetExports(promise, imports)).resolves.toHaveProperty("div");
   });
 
-  test("instantiates a Bun.file() response", async () => {
+  test("instantiates a Fun.file() response", async () => {
     const path = tmpdirSync() + "/simple.wasm";
-    await Bun.write(path, Buffer.from(simpleWasm, "base64"));
+    await Fun.write(path, Buffer.from(simpleWasm, "base64"));
 
-    const response = new Response(Bun.file(path));
+    const response = new Response(Fun.file(path));
     expect(instantiateAndGetExports(response, imports)).resolves.toHaveProperty("div");
   });
 
@@ -208,7 +208,7 @@ describe("WebAssembly.instantiateStreaming", () => {
     const response = responseFromStream(async controller => {
       const chunkSize = 10;
 
-      await Bun.sleep(10);
+      await Fun.sleep(10);
       controller.enqueue(buffer.subarray(i, i + chunkSize));
 
       i += chunkSize;

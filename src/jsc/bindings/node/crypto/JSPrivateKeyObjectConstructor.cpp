@@ -15,7 +15,7 @@ using namespace JSC;
 using namespace WebCore;
 using namespace ncrypto;
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSPrivateKeyObjectConstructor::s_info = { "PrivateKeyObject"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSPrivateKeyObjectConstructor) };
 
@@ -37,4 +37,4 @@ JSC_DEFINE_HOST_FUNCTION(constructPrivateKeyObject, (JSC::JSGlobalObject * lexic
     return ERR::INVALID_ARG_TYPE(scope, lexicalGlobalObject, "handle"_s, "object"_s, handleValue);
 }
 
-} // namespace Bun
+} // namespace Fun

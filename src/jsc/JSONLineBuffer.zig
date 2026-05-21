@@ -8,7 +8,7 @@
 /// When we consume a message, we just advance `head` instead of copying.
 /// Compaction only happens when head exceeds a threshold.
 pub const JSONLineBuffer = struct {
-    data: bun.ByteList = .{},
+    data: fun.ByteList = .{},
     /// Offset into data where unconsumed content starts.
     head: u32 = 0,
     /// Position of a known upcoming newline relative to head, if any.
@@ -31,13 +31,13 @@ pub const JSONLineBuffer = struct {
         if (self.scanned_pos >= slice.len) return;
 
         const unscanned = slice[self.scanned_pos..];
-        if (bun.strings.indexOfChar(unscanned, '\n')) |local_idx| {
-            bun.debugAssert(local_idx <= std.math.maxInt(u32));
+        if (fun.strings.indexOfChar(unscanned, '\n')) |local_idx| {
+            fun.debugAssert(local_idx <= std.math.maxInt(u32));
             const pos = self.scanned_pos +| @as(u32, @intCast(local_idx));
             self.newline_pos = pos;
             self.scanned_pos = pos +| 1; // Only scanned up to (and including) the newline
         } else {
-            bun.debugAssert(slice.len <= std.math.maxInt(u32));
+            fun.debugAssert(slice.len <= std.math.maxInt(u32));
             self.scanned_pos = @intCast(slice.len); // No newline, scanned everything
         }
     }
@@ -46,15 +46,15 @@ pub const JSONLineBuffer = struct {
     fn compact(self: *@This()) void {
         if (self.head == 0) return;
         const slice = self.activeSlice();
-        bun.copy(u8, self.data.ptr[0..slice.len], slice);
-        bun.debugAssert(slice.len <= std.math.maxInt(u32));
+        fun.copy(u8, self.data.ptr[0..slice.len], slice);
+        fun.debugAssert(slice.len <= std.math.maxInt(u32));
         self.data.len = @intCast(slice.len);
         self.head = 0;
     }
 
     /// Append bytes to the buffer, scanning only new data for newline.
     pub fn append(self: *@This(), bytes: []const u8) void {
-        _ = bun.handleOom(self.data.write(bun.default_allocator, bytes));
+        _ = fun.handleOom(self.data.write(fun.default_allocator, bytes));
         self.scanForNewline();
     }
 
@@ -90,7 +90,7 @@ pub const JSONLineBuffer = struct {
         if (self.head >= self.data.len) {
             // Free memory if capacity exceeds threshold, otherwise just reset
             if (self.data.cap >= compaction_threshold) {
-                self.data.deinit(bun.default_allocator);
+                self.data.deinit(fun.default_allocator);
                 self.data = .{};
             } else {
                 self.data.len = 0;
@@ -116,20 +116,20 @@ pub const JSONLineBuffer = struct {
     }
 
     pub fn ensureUnusedCapacity(self: *@This(), additional: usize) void {
-        bun.handleOom(self.data.ensureUnusedCapacity(bun.default_allocator, additional));
+        fun.handleOom(self.data.ensureUnusedCapacity(fun.default_allocator, additional));
     }
 
     /// Notify the buffer that data was written directly (e.g., via pre-allocated slice).
     pub fn notifyWritten(self: *@This(), new_data: []const u8) void {
-        bun.debugAssert(new_data.len <= std.math.maxInt(u32));
+        fun.debugAssert(new_data.len <= std.math.maxInt(u32));
         self.data.len +|= @as(u32, @intCast(new_data.len));
         self.scanForNewline();
     }
 
     pub fn deinit(self: *@This()) void {
-        self.data.deinit(bun.default_allocator);
+        self.data.deinit(fun.default_allocator);
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

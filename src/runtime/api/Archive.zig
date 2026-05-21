@@ -22,16 +22,16 @@ compress: Compression = .none,
 pub fn finalize(this: *Archive) void {
     jsc.markBinding(@src());
     this.store.deref();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 /// Pretty-print for console.log
 pub fn writeFormat(this: *const Archive, comptime Formatter: type, formatter: *Formatter, writer: anytype, comptime enable_ansi_colors: bool) !void {
     const Writer = @TypeOf(writer);
-    const Output = bun.Output;
+    const Output = fun.Output;
     const data = this.store.sharedView();
 
-    try writer.print(comptime Output.prettyFmt("Archive ({f}) {{\n", enable_ansi_colors), .{bun.fmt.size(data.len, .{})});
+    try writer.print(comptime Output.prettyFmt("Archive ({f}) {{\n", enable_ansi_colors), .{fun.fmt.size(data.len, .{})});
 
     {
         formatter.indent += 1;
@@ -84,7 +84,7 @@ fn countFilesInArchive(data: []const u8) u32 {
 /// - compress: "gzip" - Enable gzip compression
 /// - level: number (1-12) - Compression level (default 6)
 /// When no options are provided, no compression is applied
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*Archive {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*Archive {
     const data_arg, const options_arg = callframe.argumentsAsArray(2);
     if (data_arg == .zero) {
         return globalThis.throwInvalidArguments("new Archive() requires an argument", .{});
@@ -97,13 +97,13 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
     if (data_arg.as(jsc.WebCore.Blob)) |blob_ptr| {
         if (blob_ptr.store) |store| {
             store.ref();
-            return bun.new(Archive, .{ .store = store, .compress = compress });
+            return fun.new(Archive, .{ .store = store, .compress = compress });
         }
     }
 
     // For ArrayBuffer/TypedArray, copy the data
     if (data_arg.asArrayBuffer(globalThis)) |array_buffer| {
-        const data = try bun.default_allocator.dupe(u8, array_buffer.slice());
+        const data = try fun.default_allocator.dupe(u8, array_buffer.slice());
         return createArchive(data, compress);
     }
 
@@ -118,7 +118,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
 
 /// Parse compression options from JS value
 /// Returns .none if no compression specified, caller must handle defaults
-fn parseCompressionOptions(globalThis: *jsc.JSGlobalObject, options_arg: jsc.JSValue) bun.JSError!Compression {
+fn parseCompressionOptions(globalThis: *jsc.JSGlobalObject, options_arg: jsc.JSValue) fun.JSError!Compression {
     // No options provided means no compression (caller handles defaults)
     if (options_arg.isUndefinedOrNull()) {
         return .none;
@@ -135,10 +135,10 @@ fn parseCompressionOptions(globalThis: *jsc.JSGlobalObject, options_arg: jsc.JSV
             return globalThis.throwInvalidArguments("Archive: compress option must be a string", .{});
         }
 
-        const compress_str = try compress_val.toSlice(globalThis, bun.default_allocator);
+        const compress_str = try compress_val.toSlice(globalThis, fun.default_allocator);
         defer compress_str.deinit();
 
-        if (!bun.strings.eqlComptime(compress_str.slice(), "gzip")) {
+        if (!fun.strings.eqlComptime(compress_str.slice(), "gzip")) {
             return globalThis.throwInvalidArguments("Archive: compress option must be \"gzip\"", .{});
         }
 
@@ -163,13 +163,13 @@ fn parseCompressionOptions(globalThis: *jsc.JSGlobalObject, options_arg: jsc.JSV
 }
 
 fn createArchive(data: []u8, compress: Compression) *Archive {
-    const store = jsc.WebCore.Blob.Store.init(data, bun.default_allocator);
-    return bun.new(Archive, .{ .store = store, .compress = compress });
+    const store = jsc.WebCore.Blob.Store.init(data, fun.default_allocator);
+    return fun.new(Archive, .{ .store = store, .compress = compress });
 }
 
 /// Shared helper that builds tarball bytes from a JS object
-fn buildTarballFromObject(globalThis: *jsc.JSGlobalObject, obj: jsc.JSValue) bun.JSError![]u8 {
-    const allocator = bun.default_allocator;
+fn buildTarballFromObject(globalThis: *jsc.JSGlobalObject, obj: jsc.JSValue) fun.JSError![]u8 {
+    const allocator = fun.default_allocator;
     const lib = libarchive.lib;
 
     const js_obj = obj.getObject() orelse {
@@ -256,7 +256,7 @@ fn buildTarballFromObject(globalThis: *jsc.JSGlobalObject, obj: jsc.JSValue) bun
 }
 
 /// Returns data as a ZigString.Slice (handles ownership automatically via deinit)
-fn getEntryData(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue, allocator: std.mem.Allocator) bun.JSError!jsc.ZigString.Slice {
+fn getEntryData(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue, allocator: std.mem.Allocator) fun.JSError!jsc.ZigString.Slice {
     // For Blob, use sharedView (no copy needed)
     if (value.as(jsc.WebCore.Blob)) |blob_ptr| {
         return jsc.ZigString.Slice.fromUTF8NeverFree(blob_ptr.sharedView());
@@ -276,7 +276,7 @@ fn getEntryData(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue, allocator: 
 /// For Archive instances, uses the archive's compression settings unless overridden by options.
 /// Options:
 ///   - gzip: { level?: number } - Override compression settings
-pub fn write(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn write(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const path_arg, const data_arg, const options_arg = callframe.argumentsAsArray(3);
     if (data_arg == .zero) {
         return globalThis.throwInvalidArguments("Archive.write requires 2 arguments (path, data)", .{});
@@ -287,7 +287,7 @@ pub fn write(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
         return globalThis.throwInvalidArguments("Archive.write: first argument must be a string path", .{});
     }
 
-    const path_slice = try path_arg.toSlice(globalThis, bun.default_allocator);
+    const path_slice = try path_arg.toSlice(globalThis, fun.default_allocator);
     defer path_slice.deinit();
 
     // Parse options for compression override
@@ -308,7 +308,7 @@ pub fn write(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
 
     // For ArrayBuffer/TypedArray, copy the data with options compression
     if (data_arg.asArrayBuffer(globalThis)) |array_buffer| {
-        const data = try bun.default_allocator.dupe(u8, array_buffer.slice());
+        const data = try fun.default_allocator.dupe(u8, array_buffer.slice());
         return startWriteTask(globalThis, .{ .owned = data }, path_slice.slice(), options_compress);
     }
 
@@ -326,13 +326,13 @@ pub fn write(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSE
 /// Options:
 ///   - glob: string | string[] - Only extract files matching the glob pattern(s). Supports negative patterns with "!".
 /// Returns Promise<number> with count of extracted files
-pub fn extract(this: *Archive, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn extract(this: *Archive, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const path_arg, const options_arg = callframe.argumentsAsArray(2);
     if (path_arg == .zero or !path_arg.isString()) {
         return globalThis.throwInvalidArguments("Archive.extract requires a path argument", .{});
     }
 
-    const path_slice = try path_arg.toSlice(globalThis, bun.default_allocator);
+    const path_slice = try path_arg.toSlice(globalThis, fun.default_allocator);
     defer path_slice.deinit();
 
     // Parse options
@@ -357,8 +357,8 @@ pub fn extract(this: *Archive, globalThis: *jsc.JSGlobalObject, callframe: *jsc.
 
 /// Parse a string or array of strings into a pattern list.
 /// Returns null for empty strings or empty arrays (treated as "no filter").
-fn parsePatternArg(globalThis: *jsc.JSGlobalObject, arg: jsc.JSValue, api_name: []const u8, name: []const u8) bun.JSError!?[]const []const u8 {
-    const allocator = bun.default_allocator;
+fn parsePatternArg(globalThis: *jsc.JSGlobalObject, arg: jsc.JSValue, api_name: []const u8, name: []const u8) fun.JSError!?[]const []const u8 {
+    const allocator = fun.default_allocator;
 
     // Single string
     if (arg.isString()) {
@@ -413,25 +413,25 @@ fn parsePatternArg(globalThis: *jsc.JSGlobalObject, arg: jsc.JSValue, api_name: 
 }
 
 fn freePatterns(patterns: []const []const u8) void {
-    for (patterns) |p| bun.default_allocator.free(p);
-    bun.default_allocator.free(patterns);
+    for (patterns) |p| fun.default_allocator.free(p);
+    fun.default_allocator.free(patterns);
 }
 
 /// Instance method: archive.blob()
 /// Returns Promise<Blob> with the archive data (compressed if gzip was set in options)
-pub fn blob(this: *Archive, globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn blob(this: *Archive, globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return startBlobTask(globalThis, this.store, this.compress, .blob);
 }
 
 /// Instance method: archive.bytes()
 /// Returns Promise<Uint8Array> with the archive data (compressed if gzip was set in options)
-pub fn bytes(this: *Archive, globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn bytes(this: *Archive, globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     return startBlobTask(globalThis, this.store, this.compress, .bytes);
 }
 
 /// Instance method: archive.files(glob?)
 /// Returns Promise<Map<string, File>> with archive file contents
-pub fn files(this: *Archive, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn files(this: *Archive, globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const glob_arg = callframe.argument(0);
 
     var glob_patterns: ?[]const []const u8 = null;
@@ -452,7 +452,7 @@ const PromiseResult = union(enum) {
     resolve: jsc.JSValue,
     reject: jsc.JSValue,
 
-    fn fulfill(this: PromiseResult, globalThis: *jsc.JSGlobalObject, promise: *jsc.JSPromise) bun.JSTerminated!void {
+    fn fulfill(this: PromiseResult, globalThis: *jsc.JSGlobalObject, promise: *jsc.JSPromise) fun.JSTerminated!void {
         switch (this) {
             .resolve => |v| try promise.resolve(globalThis, v),
             .reject => |v| try promise.rejectWithAsyncStack(globalThis, v),
@@ -474,11 +474,11 @@ fn AsyncTask(comptime Context: type) type {
         vm: *jsc.VirtualMachine,
         task: jsc.WorkPoolTask = .{ .callback = &run },
         concurrent_task: jsc.ConcurrentTask = .{},
-        ref: bun.Async.KeepAlive = .{},
+        ref: fun.Async.KeepAlive = .{},
 
         fn create(globalThis: *jsc.JSGlobalObject, ctx: Context) error{OutOfMemory}!*Self {
-            const vm = globalThis.bunVM();
-            const self = bun.new(Self, .{
+            const vm = globalThis.funVM();
+            const self = fun.new(Self, .{
                 .ctx = ctx,
                 .promise = jsc.JSPromise.Strong.init(globalThis),
                 .vm = vm,
@@ -504,12 +504,12 @@ fn AsyncTask(comptime Context: type) type {
             );
         }
 
-        pub fn runFromJS(this: *Self) bun.JSTerminated!void {
+        pub fn runFromJS(this: *Self) fun.JSTerminated!void {
             this.ref.unref(this.vm);
 
             defer {
                 Context.deinit(&this.ctx);
-                bun.destroy(this);
+                fun.destroy(this);
             }
 
             if (this.vm.isShuttingDown()) return;
@@ -563,7 +563,7 @@ const ExtractContext = struct {
         return .{ .success = count };
     }
 
-    fn runFromJS(this: *ExtractContext, globalThis: *jsc.JSGlobalObject) bun.JSError!PromiseResult {
+    fn runFromJS(this: *ExtractContext, globalThis: *jsc.JSGlobalObject) fun.JSError!PromiseResult {
         return switch (this.result) {
             .success => |count| .{ .resolve = jsc.JSValue.jsNumber(count) },
             .err => |e| .{ .reject = globalThis.createErrorInstance("{s}", .{@errorName(e)}) },
@@ -572,7 +572,7 @@ const ExtractContext = struct {
 
     fn deinit(this: *ExtractContext) void {
         this.store.deref();
-        bun.default_allocator.free(this.path);
+        fun.default_allocator.free(this.path);
         if (this.glob_patterns) |patterns| freePatterns(patterns);
     }
 };
@@ -584,9 +584,9 @@ fn startExtractTask(
     store: *jsc.WebCore.Blob.Store,
     path: []const u8,
     glob_patterns: ?[]const []const u8,
-) bun.JSError!jsc.JSValue {
-    const path_copy = try bun.default_allocator.dupe(u8, path);
-    errdefer bun.default_allocator.free(path_copy);
+) fun.JSError!jsc.JSValue {
+    const path_copy = try fun.default_allocator.dupe(u8, path);
+    errdefer fun.default_allocator.free(path_copy);
 
     store.ref();
     errdefer store.deref();
@@ -625,13 +625,13 @@ const BlobContext = struct {
         }
     }
 
-    fn runFromJS(this: *BlobContext, globalThis: *jsc.JSGlobalObject) bun.JSError!PromiseResult {
+    fn runFromJS(this: *BlobContext, globalThis: *jsc.JSGlobalObject) fun.JSError!PromiseResult {
         switch (this.result) {
             .err => |e| return .{ .reject = globalThis.createErrorInstance("{s}", .{@errorName(e)}) },
             .compressed => |data| {
                 this.result = .{ .uncompressed = {} }; // Ownership transferred
                 return .{ .resolve = switch (this.output_type) {
-                    .blob => jsc.WebCore.Blob.new(jsc.WebCore.Blob.createWithBytesAndAllocator(data, bun.default_allocator, globalThis, false)).toJS(globalThis),
+                    .blob => jsc.WebCore.Blob.new(jsc.WebCore.Blob.createWithBytesAndAllocator(data, fun.default_allocator, globalThis, false)).toJS(globalThis),
                     .bytes => jsc.JSValue.createBuffer(globalThis, data),
                 } };
             },
@@ -640,20 +640,20 @@ const BlobContext = struct {
                     this.store.ref();
                     break :blk .{ .resolve = jsc.WebCore.Blob.new(jsc.WebCore.Blob.initWithStore(this.store, globalThis)).toJS(globalThis) };
                 },
-                .bytes => .{ .resolve = jsc.JSValue.createBuffer(globalThis, bun.default_allocator.dupe(u8, this.store.sharedView()) catch return .{ .reject = globalThis.createOutOfMemoryError() }) },
+                .bytes => .{ .resolve = jsc.JSValue.createBuffer(globalThis, fun.default_allocator.dupe(u8, this.store.sharedView()) catch return .{ .reject = globalThis.createOutOfMemoryError() }) },
             },
         }
     }
 
     fn deinit(this: *BlobContext) void {
         this.store.deref();
-        if (this.result == .compressed) bun.default_allocator.free(this.result.compressed);
+        if (this.result == .compressed) fun.default_allocator.free(this.result.compressed);
     }
 };
 
 pub const BlobTask = AsyncTask(BlobContext);
 
-fn startBlobTask(globalThis: *jsc.JSGlobalObject, store: *jsc.WebCore.Blob.Store, compress: Compression, output_type: BlobContext.OutputType) bun.JSError!jsc.JSValue {
+fn startBlobTask(globalThis: *jsc.JSGlobalObject, store: *jsc.WebCore.Blob.Store, compress: Compression, output_type: BlobContext.OutputType) fun.JSError!jsc.JSValue {
     store.ref();
     errdefer store.deref();
 
@@ -673,7 +673,7 @@ const WriteContext = struct {
     const Result = union(enum) {
         success: void,
         err: Error,
-        sys_err: bun.sys.Error,
+        sys_err: fun.sys.Error,
     };
     const Data = union(enum) {
         owned: []u8,
@@ -694,21 +694,21 @@ const WriteContext = struct {
             .gzip => |opts| compressGzip(source_data, opts.level) catch |e| return .{ .err = e },
             .none => source_data,
         };
-        defer if (this.compress != .none) bun.default_allocator.free(data_to_write);
+        defer if (this.compress != .none) fun.default_allocator.free(data_to_write);
 
-        const file = switch (bun.sys.File.openat(.cwd(), this.path, bun.O.CREAT | bun.O.WRONLY | bun.O.TRUNC, 0o644)) {
-            .err => |err| return .{ .sys_err = err.clone(bun.default_allocator) },
+        const file = switch (fun.sys.File.openat(.cwd(), this.path, fun.O.CREAT | fun.O.WRONLY | fun.O.TRUNC, 0o644)) {
+            .err => |err| return .{ .sys_err = err.clone(fun.default_allocator) },
             .result => |f| f,
         };
         defer file.close();
 
         return switch (file.writeAll(data_to_write)) {
-            .err => |err| .{ .sys_err = err.clone(bun.default_allocator) },
+            .err => |err| .{ .sys_err = err.clone(fun.default_allocator) },
             .result => .{ .success = {} },
         };
     }
 
-    fn runFromJS(this: *WriteContext, globalThis: *jsc.JSGlobalObject) bun.JSError!PromiseResult {
+    fn runFromJS(this: *WriteContext, globalThis: *jsc.JSGlobalObject) fun.JSError!PromiseResult {
         return switch (this.result) {
             .success => .{ .resolve = .js_undefined },
             .err => |e| .{ .reject = globalThis.createErrorInstance("{s}", .{@errorName(e)}) },
@@ -718,10 +718,10 @@ const WriteContext = struct {
 
     fn deinit(this: *WriteContext) void {
         switch (this.data) {
-            .owned => |d| bun.default_allocator.free(d),
+            .owned => |d| fun.default_allocator.free(d),
             .store => |s| s.deref(),
         }
-        bun.default_allocator.free(this.path);
+        fun.default_allocator.free(this.path);
         if (this.result == .sys_err) {
             var sys_err = this.result.sys_err;
             sys_err.deinit();
@@ -736,16 +736,16 @@ fn startWriteTask(
     data: WriteContext.Data,
     path: []const u8,
     compress: Compression,
-) bun.JSError!jsc.JSValue {
-    const path_z = try bun.default_allocator.dupeZ(u8, path);
-    errdefer bun.default_allocator.free(path_z);
+) fun.JSError!jsc.JSValue {
+    const path_z = try fun.default_allocator.dupeZ(u8, path);
+    errdefer fun.default_allocator.free(path_z);
 
     // Ref store if using store reference
     if (data == .store) {
         data.store.ref();
     }
     errdefer if (data == .store) data.store.deref();
-    errdefer if (data == .owned) bun.default_allocator.free(data.owned);
+    errdefer if (data == .owned) fun.default_allocator.free(data.owned);
 
     const task = try WriteTask.create(globalThis, .{
         .data = data,
@@ -769,7 +769,7 @@ const FilesContext = struct {
 
         fn deinit(self: *Result) void {
             switch (self.*) {
-                .libarchive_err => |s| bun.default_allocator.free(std.mem.span(s)),
+                .libarchive_err => |s| fun.default_allocator.free(std.mem.span(s)),
                 .success => |*list| freeEntries(list),
                 .err => {},
             }
@@ -778,10 +778,10 @@ const FilesContext = struct {
 
     fn freeEntries(list: *FileEntryList) void {
         for (list.items) |e| {
-            bun.default_allocator.free(e.path);
-            if (e.data.len > 0) bun.default_allocator.free(e.data);
+            fun.default_allocator.free(e.path);
+            if (e.data.len > 0) fun.default_allocator.free(e.data);
         }
-        list.deinit(bun.default_allocator);
+        list.deinit(fun.default_allocator);
     }
 
     store: *jsc.WebCore.Blob.Store,
@@ -791,7 +791,7 @@ const FilesContext = struct {
     fn cloneErrorString(archive: *libarchive.lib.Archive) ?[*:0]u8 {
         const err_str = archive.errorString();
         if (err_str.len == 0) return null;
-        return bun.default_allocator.dupeZ(u8, err_str) catch null;
+        return fun.default_allocator.dupeZ(u8, err_str) catch null;
     }
 
     fn run(this: *FilesContext) std.mem.Allocator.Error!Result {
@@ -823,7 +823,7 @@ const FilesContext = struct {
             // Read data first before allocating path
             var data: []u8 = &.{};
             if (size > 0) {
-                data = try bun.default_allocator.alloc(u8, size);
+                data = try fun.default_allocator.alloc(u8, size);
                 var total_read: usize = 0;
                 while (total_read < size) {
                     const read = archive.readData(data[total_read..]);
@@ -831,7 +831,7 @@ const FilesContext = struct {
                         // Read error - returned as a normal Result (not a Zig error), so the
                         // errdefer above won't fire. Free the current buffer and all previously
                         // collected entries manually to avoid leaking them.
-                        bun.default_allocator.free(data);
+                        fun.default_allocator.free(data);
                         freeEntries(&entries);
                         return if (cloneErrorString(archive)) |err| .{ .libarchive_err = err } else .{ .err = error.ReadError };
                     }
@@ -839,18 +839,18 @@ const FilesContext = struct {
                     total_read += @intCast(read);
                 }
             }
-            errdefer if (data.len > 0) bun.default_allocator.free(data);
+            errdefer if (data.len > 0) fun.default_allocator.free(data);
 
-            const path_copy = try bun.default_allocator.dupe(u8, pathname);
-            errdefer bun.default_allocator.free(path_copy);
+            const path_copy = try fun.default_allocator.dupe(u8, pathname);
+            errdefer fun.default_allocator.free(path_copy);
 
-            try entries.append(bun.default_allocator, .{ .path = path_copy, .data = data, .mtime = mtime });
+            try entries.append(fun.default_allocator, .{ .path = path_copy, .data = data, .mtime = mtime });
         }
 
         return .{ .success = entries };
     }
 
-    fn runFromJS(this: *FilesContext, globalThis: *jsc.JSGlobalObject) bun.JSError!PromiseResult {
+    fn runFromJS(this: *FilesContext, globalThis: *jsc.JSGlobalObject) fun.JSError!PromiseResult {
         switch (this.result) {
             .success => |*entries| {
                 const map = jsc.JSMap.create(globalThis);
@@ -859,10 +859,10 @@ const FilesContext = struct {
                 };
 
                 for (entries.items) |*entry| {
-                    const blob_ptr = jsc.WebCore.Blob.new(jsc.WebCore.Blob.createWithBytesAndAllocator(entry.data, bun.default_allocator, globalThis, false));
+                    const blob_ptr = jsc.WebCore.Blob.new(jsc.WebCore.Blob.createWithBytesAndAllocator(entry.data, fun.default_allocator, globalThis, false));
                     entry.data = &.{}; // Ownership transferred
                     blob_ptr.is_jsdom_file = true;
-                    blob_ptr.name = bun.String.cloneUTF8(entry.path);
+                    blob_ptr.name = fun.String.cloneUTF8(entry.path);
                     blob_ptr.last_modified = @floatFromInt(entry.mtime * 1000);
 
                     try map_ptr.set(globalThis, try blob_ptr.name.toJS(globalThis), blob_ptr.toJS(globalThis));
@@ -884,7 +884,7 @@ const FilesContext = struct {
 
 pub const FilesTask = AsyncTask(FilesContext);
 
-fn startFilesTask(globalThis: *jsc.JSGlobalObject, store: *jsc.WebCore.Blob.Store, glob_patterns: ?[]const []const u8) bun.JSError!jsc.JSValue {
+fn startFilesTask(globalThis: *jsc.JSGlobalObject, store: *jsc.WebCore.Blob.Store, glob_patterns: ?[]const []const u8) fun.JSError!jsc.JSValue {
     store.ref();
     errdefer store.deref();
     // Ownership: On error, caller's errdefer frees glob_patterns.
@@ -919,16 +919,16 @@ fn compressGzip(data: []const u8, level: u8) ![]u8 {
     if (max_size <= stack_threshold) {
         const result = compressor.gzip(data, &stack_buf);
         if (result.status != .success) return error.GzipCompressFailed;
-        return bun.default_allocator.dupe(u8, stack_buf[0..result.written]);
+        return fun.default_allocator.dupe(u8, stack_buf[0..result.written]);
     }
 
-    const output = try bun.default_allocator.alloc(u8, max_size);
-    errdefer bun.default_allocator.free(output);
+    const output = try fun.default_allocator.alloc(u8, max_size);
+    errdefer fun.default_allocator.free(output);
 
     const result = compressor.gzip(data, output);
     if (result.status != .success) return error.GzipCompressFailed;
 
-    return bun.default_allocator.realloc(output, result.written) catch output[0..result.written];
+    return fun.default_allocator.realloc(output, result.written) catch output[0..result.written];
 }
 
 /// Check if a path is safe (no absolute paths or path traversal)
@@ -969,13 +969,13 @@ fn matchGlobPatterns(patterns: []const []const u8, pathname: []const u8) bool {
         if (pattern.len > 0 and pattern[0] == '!') {
             // Negative pattern - if it matches, exclude the file
             const neg_pattern = pattern[1..];
-            if (neg_pattern.len > 0 and bun.glob.match(neg_pattern, pathname).matches()) {
+            if (neg_pattern.len > 0 and fun.glob.match(neg_pattern, pathname).matches()) {
                 return false;
             }
         } else {
             // Positive pattern - at least one must match
             has_positive_patterns = true;
-            if (bun.glob.match(pattern, pathname).matches()) {
+            if (fun.glob.match(pattern, pathname).matches()) {
                 matches_positive = true;
             }
         }
@@ -1002,14 +1002,14 @@ fn extractToDiskFiltered(
         return error.ReadError;
     }
 
-    // Open/create target directory using bun.sys
-    const cwd = bun.FD.cwd();
+    // Open/create target directory using fun.sys
+    const cwd = fun.FD.cwd();
     cwd.makePath(u8, root) catch {};
-    const dir_fd: bun.FD = brk: {
+    const dir_fd: fun.FD = brk: {
         if (std.fs.path.isAbsolute(root)) {
-            break :brk bun.sys.openA(root, bun.O.RDONLY | bun.O.DIRECTORY, 0).unwrap() catch return error.OpenError;
+            break :brk fun.sys.openA(root, fun.O.RDONLY | fun.O.DIRECTORY, 0).unwrap() catch return error.OpenError;
         } else {
-            break :brk bun.sys.openatA(cwd, root, bun.O.RDONLY | bun.O.DIRECTORY, 0).unwrap() catch return error.OpenError;
+            break :brk fun.sys.openatA(cwd, root, fun.O.RDONLY | fun.O.DIRECTORY, 0).unwrap() catch return error.OpenError;
         }
     };
     defer _ = dir_fd.close();
@@ -1031,7 +1031,7 @@ fn extractToDiskFiltered(
         }
 
         const filetype = entry.filetype();
-        const kind = bun.sys.kindFromMode(filetype);
+        const kind = fun.sys.kindFromMode(filetype);
 
         switch (kind) {
             .directory => {
@@ -1046,7 +1046,7 @@ fn extractToDiskFiltered(
                 const size: usize = @intCast(@max(entry.size(), 0));
                 // Sanitize permissions: use entry perms masked to 0o777, or default 0o644
                 const entry_perm = entry.perm();
-                const mode: bun.Mode = if (entry_perm != 0)
+                const mode: fun.Mode = if (entry_perm != 0)
                     @intCast(entry_perm & 0o777)
                 else
                     0o644;
@@ -1063,11 +1063,11 @@ fn extractToDiskFiltered(
                     };
                 }
 
-                // Create and write the file using bun.sys
-                const file_fd: bun.FD = bun.sys.openat(
+                // Create and write the file using fun.sys
+                const file_fd: fun.FD = fun.sys.openat(
                     dir_fd,
                     pathname,
-                    bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC,
+                    fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC,
                     mode,
                 ).unwrap() catch continue;
 
@@ -1116,14 +1116,14 @@ fn extractToDiskFiltered(
                 if (!isSafePath(link_target)) continue;
                 // Symlinks are only extracted on POSIX systems (Linux/macOS).
                 // On Windows, symlinks are skipped since they require elevated privileges.
-                if (bun.Environment.isPosix) {
-                    bun.sys.symlinkat(link_target, dir_fd, pathname).unwrap() catch |err| {
+                if (fun.Environment.isPosix) {
+                    fun.sys.symlinkat(link_target, dir_fd, pathname).unwrap() catch |err| {
                         switch (err) {
                             error.EPERM, error.ENOENT => {
                                 if (std.fs.path.dirname(pathname)) |parent| {
                                     dir_fd.makePath(u8, parent) catch {};
                                 }
-                                _ = bun.sys.symlinkat(link_target, dir_fd, pathname).unwrap() catch continue;
+                                _ = fun.sys.symlinkat(link_target, dir_fd, pathname).unwrap() catch continue;
                             },
                             else => continue,
                         }
@@ -1142,5 +1142,5 @@ const libarchive = @import("../../libarchive/libarchive.zig");
 const libdeflate = @import("../../libdeflate_sys/libdeflate.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

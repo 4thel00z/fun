@@ -309,17 +309,17 @@ pub const ZlibError = error{
 
 const ZlibAllocator = struct {
     pub fn alloc(_: *anyopaque, items: uInt, len: uInt) callconv(.c) *anyopaque {
-        if (bun.heap_breakdown.enabled) {
-            const zone = bun.heap_breakdown.getZone("zlib");
-            return zone.malloc_zone_calloc(items, len) orelse bun.outOfMemory();
+        if (fun.heap_breakdown.enabled) {
+            const zone = fun.heap_breakdown.getZone("zlib");
+            return zone.malloc_zone_calloc(items, len) orelse fun.outOfMemory();
         }
 
-        return mimalloc.mi_calloc(items, len) orelse bun.outOfMemory();
+        return mimalloc.mi_calloc(items, len) orelse fun.outOfMemory();
     }
 
     pub fn free(_: *anyopaque, data: *anyopaque) callconv(.c) void {
-        if (bun.heap_breakdown.enabled) {
-            const zone = bun.heap_breakdown.getZone("zlib");
+        if (fun.heap_breakdown.enabled) {
+            const zone = fun.heap_breakdown.getZone("zlib");
             zone.malloc_zone_free(data);
             return;
         }
@@ -958,8 +958,8 @@ pub const ZlibCompressorArrayList = struct {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const mimalloc = bun.mimalloc;
+const fun = @import("fun");
+const mimalloc = fun.mimalloc;
 
 const internal = @import("zlib-internal");
 const DataType = @import("zlib-internal").DataType;

@@ -38,13 +38,13 @@ pub var active_requests_count = std.atomic.Value(usize).init(0);
 pub var max_simultaneous_requests = std.atomic.Value(usize).init(256);
 
 pub fn loadEnv(allocator: std.mem.Allocator, logger: *Log, env: *DotEnv.Loader) void {
-    if (env.get("BUN_CONFIG_MAX_HTTP_REQUESTS")) |max_http_requests| {
+    if (env.get("FUN_CONFIG_MAX_HTTP_REQUESTS")) |max_http_requests| {
         const max = std.fmt.parseInt(u16, max_http_requests, 10) catch {
             logger.addErrorFmt(
                 null,
                 Loc.Empty,
                 allocator,
-                "BUN_CONFIG_MAX_HTTP_REQUESTS value \"{s}\" is not a valid integer between 1 and 65535",
+                "FUN_CONFIG_MAX_HTTP_REQUESTS value \"{s}\" is not a valid integer between 1 and 65535",
                 .{max_http_requests},
             ) catch unreachable;
             return;
@@ -54,7 +54,7 @@ pub fn loadEnv(allocator: std.mem.Allocator, logger: *Log, env: *DotEnv.Loader) 
                 null,
                 Loc.Empty,
                 allocator,
-                "BUN_CONFIG_MAX_HTTP_REQUESTS value must be a number between 1 and 65535",
+                "FUN_CONFIG_MAX_HTTP_REQUESTS value must be a number between 1 and 65535",
                 .{},
             ) catch unreachable;
             return;
@@ -108,20 +108,20 @@ pub const Options = struct {
 const Preconnect = struct {
     async_http: AsyncHTTP,
     response_buffer: MutableString,
-    url: bun.URL,
+    url: fun.URL,
     is_url_owned: bool,
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     pub fn onResult(this: *Preconnect, _: *AsyncHTTP, _: HTTPClientResult) void {
         this.response_buffer.deinit();
         this.async_http.clearData();
         this.async_http.client.deinit();
         if (this.is_url_owned) {
-            bun.default_allocator.free(this.url.href);
+            fun.default_allocator.free(this.url.href);
         }
 
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
@@ -131,7 +131,7 @@ pub fn preconnect(
 ) void {
     if (!FeatureFlags.is_fetch_preconnect_supported) {
         if (is_url_owned) {
-            bun.default_allocator.free(url.href);
+            fun.default_allocator.free(url.href);
         }
 
         return;
@@ -139,15 +139,15 @@ pub fn preconnect(
 
     var this = Preconnect.new(.{
         .async_http = undefined,
-        .response_buffer = MutableString{ .allocator = bun.http.default_allocator, .list = .{} },
+        .response_buffer = MutableString{ .allocator = fun.http.default_allocator, .list = .{} },
         .url = url,
         .is_url_owned = is_url_owned,
     });
 
-    this.async_http = AsyncHTTP.init(bun.default_allocator, .GET, url, .{}, "", &this.response_buffer, "", HTTPClientResult.Callback.New(*Preconnect, Preconnect.onResult).init(this), .manual, .{});
+    this.async_http = AsyncHTTP.init(fun.default_allocator, .GET, url, .{}, "", &this.response_buffer, "", HTTPClientResult.Callback.New(*Preconnect, Preconnect.onResult).init(this), .manual, .{});
     this.async_http.client.flags.is_preconnect_only = true;
 
-    bun.http.http_thread.schedule(Batch.from(&this.async_http.task));
+    fun.http.http_thread.schedule(Batch.from(&this.async_http.task));
 }
 
 pub fn init(
@@ -173,7 +173,7 @@ pub fn init(
         .result_callback = callback,
         .http_proxy = options.http_proxy,
         .signals = options.signals orelse .{},
-        .async_http_id = if (options.signals != null and options.signals.?.aborted != null) bun.http.async_http_id_monotonic.fetchAdd(1, .monotonic) else 0,
+        .async_http_id = if (options.signals != null and options.signals.?.aborted != null) fun.http.async_http_id_monotonic.fetchAdd(1, .monotonic) else 0,
     };
 
     this.client = .{
@@ -343,16 +343,16 @@ fn sendSyncCallback(this: *SingleHTTPChannel, async_http: *AsyncHTTP, result: HT
 pub fn sendSync(this: *AsyncHTTP) anyerror!picohttp.Response {
     HTTPThread.init(&.{});
 
-    var ctx = try bun.default_allocator.create(SingleHTTPChannel);
+    var ctx = try fun.default_allocator.create(SingleHTTPChannel);
     ctx.* = SingleHTTPChannel.init();
     this.result_callback = HTTPClientResult.Callback.New(
         *SingleHTTPChannel,
         sendSyncCallback,
     ).init(ctx);
 
-    var batch = bun.ThreadPool.Batch{};
-    this.schedule(bun.default_allocator, &batch);
-    bun.http.http_thread.schedule(batch);
+    var batch = fun.ThreadPool.Batch{};
+    this.schedule(fun.default_allocator, &batch);
+    fun.http.http_thread.schedule(batch);
 
     const result = ctx.channel.readItem() catch unreachable;
     if (result.fail) |err| {
@@ -366,7 +366,7 @@ pub fn onAsyncHTTPCallback(this: *AsyncHTTP, async_http: *AsyncHTTP, result: HTT
     assert(this.real != null);
 
     var callback = this.result_callback;
-    this.elapsed = bun.http.http_thread.timer.read() -| this.elapsed;
+    this.elapsed = fun.http.http_thread.timer.read() -| this.elapsed;
 
     // TODO: this condition seems wrong: if we started with a non-default value, we might
     // report a redirect even if none happened
@@ -384,13 +384,13 @@ pub fn onAsyncHTTPCallback(this: *AsyncHTTP, async_http: *AsyncHTTP, result: HTT
     }
 
     if (comptime Environment.enable_logs) {
-        if (bun.http.socket_async_http_abort_tracker.count() > 0) {
-            log("bun.http.socket_async_http_abort_tracker count: {d}", .{bun.http.socket_async_http_abort_tracker.count()});
+        if (fun.http.socket_async_http_abort_tracker.count() > 0) {
+            log("fun.http.socket_async_http_abort_tracker count: {d}", .{fun.http.socket_async_http_abort_tracker.count()});
         }
     }
 
-    if (bun.http.socket_async_http_abort_tracker.capacity() > 10_000 and bun.http.socket_async_http_abort_tracker.count() < 100) {
-        bun.http.socket_async_http_abort_tracker.shrinkAndFree(bun.http.socket_async_http_abort_tracker.count());
+    if (fun.http.socket_async_http_abort_tracker.capacity() > 10_000 and fun.http.socket_async_http_abort_tracker.count() < 100) {
+        fun.http.socket_async_http_abort_tracker.shrinkAndFree(fun.http.socket_async_http_abort_tracker.count());
     }
 
     if (result.has_more) {
@@ -398,7 +398,7 @@ pub fn onAsyncHTTPCallback(this: *AsyncHTTP, async_http: *AsyncHTTP, result: HTT
     } else {
         {
             this.client.deinit();
-            var threadlocal_http: *bun.http.ThreadlocalAsyncHTTP = @fieldParentPtr("async_http", async_http);
+            var threadlocal_http: *fun.http.ThreadlocalAsyncHTTP = @fieldParentPtr("async_http", async_http);
             defer threadlocal_http.deinit();
             log("onAsyncHTTPCallback: {D}", .{this.elapsed});
             callback.function(callback.ctx, async_http, result);
@@ -408,8 +408,8 @@ pub fn onAsyncHTTPCallback(this: *AsyncHTTP, async_http: *AsyncHTTP, result: HTT
         assert(active_requests > 0);
     }
 
-    if ((!bun.http.http_thread.queued_tasks.isEmpty() or bun.http.http_thread.deferred_tasks.items.len > 0) and AsyncHTTP.active_requests_count.load(.monotonic) < AsyncHTTP.max_simultaneous_requests.load(.monotonic)) {
-        bun.http.http_thread.loop.loop.wakeup();
+    if ((!fun.http.http_thread.queued_tasks.isEmpty() or fun.http.http_thread.deferred_tasks.items.len > 0) and AsyncHTTP.active_requests_count.load(.monotonic) < AsyncHTTP.max_simultaneous_requests.load(.monotonic)) {
+        fun.http.http_thread.loop.loop.wakeup();
     }
 }
 
@@ -426,14 +426,14 @@ pub fn onStart(this: *AsyncHTTP) void {
         this,
     );
 
-    this.elapsed = bun.http.http_thread.timer.read();
+    this.elapsed = fun.http.http_thread.timer.read();
     if (this.response_buffer.list.capacity == 0) {
-        this.response_buffer.allocator = bun.http.default_allocator;
+        this.response_buffer.allocator = fun.http.default_allocator;
     }
     this.client.start(this.request_body, this.response_buffer);
 }
 
-const log = bun.Output.scoped(.AsyncHTTP, .visible);
+const log = fun.Output.scoped(.AsyncHTTP, .visible);
 
 const HTTPCallbackPair = .{ *AsyncHTTP, HTTPClientResult };
 pub const HTTPChannel = Channel(HTTPCallbackPair, .{ .Static = 1000 });
@@ -468,21 +468,21 @@ const Encoding = @import("../http_types/Encoding.zig").Encoding;
 const PercentEncoding = @import("../url/url.zig").PercentEncoding;
 const URL = @import("../url/url.zig").URL;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const MutableString = bun.MutableString;
-const assert = bun.assert;
-const jsc = bun.jsc;
-const picohttp = bun.picohttp;
-const Channel = bun.threading.Channel;
-const SSLConfig = bun.api.server.ServerConfig.SSLConfig;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const MutableString = fun.MutableString;
+const assert = fun.assert;
+const jsc = fun.jsc;
+const picohttp = fun.picohttp;
+const Channel = fun.threading.Channel;
+const SSLConfig = fun.api.server.ServerConfig.SSLConfig;
 
-const ThreadPool = bun.ThreadPool;
-const Batch = bun.ThreadPool.Batch;
+const ThreadPool = fun.ThreadPool;
+const Batch = fun.ThreadPool.Batch;
 const Task = ThreadPool.Task;
 
-const HTTPClient = bun.http;
+const HTTPClient = fun.http;
 const FetchRedirect = HTTPClient.FetchRedirect;
 const HTTPClientResult = HTTPClient.HTTPClientResult;
 const HTTPRequestBody = HTTPClient.HTTPRequestBody;
@@ -490,5 +490,5 @@ const HTTPVerboseLevel = HTTPClient.HTTPVerboseLevel;
 const Method = HTTPClient.Method;
 const Signals = HTTPClient.Signals;
 
-const Loc = bun.logger.Loc;
-const Log = bun.logger.Log;
+const Loc = fun.logger.Loc;
+const Log = fun.logger.Log;

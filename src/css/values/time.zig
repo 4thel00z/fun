@@ -54,9 +54,9 @@ pub const Time = union(Tag) {
         };
         switch (token.*) {
             .dimension => |*dim| {
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("s", dim.unit)) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("s", dim.unit)) {
                     return .{ .result = .{ .seconds = dim.num.value } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("ms", dim.unit)) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("ms", dim.unit)) {
                     return .{ .result = .{ .milliseconds = dim.num.value } };
                 } else {
                     return .{ .err = location.newUnexpectedTokenError(css.Token{ .ident = dim.unit }) };
@@ -110,9 +110,9 @@ pub const Time = union(Tag) {
         switch (token.*) {
             .dimension => |*dim| {
                 // todo_stuff.match_ignore_ascii_case
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("s", dim.unit)) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("s", dim.unit)) {
                     return .{ .result = .{ .seconds = dim.num.value } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("ms", dim.unit)) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("ms", dim.unit)) {
                     return .{ .result = .{ .milliseconds = dim.num.value } };
                 }
             },
@@ -138,7 +138,7 @@ pub const Time = union(Tag) {
     }
 
     pub fn intoCalc(this: Time, allocator: std.mem.Allocator) Calc(Time) {
-        return Calc(Time){ .value = bun.create(allocator, Time, this) };
+        return Calc(Time){ .value = fun.create(allocator, Time, this) };
     }
 
     pub fn add(this: @This(), _: std.mem.Allocator, other: @This()) Time {
@@ -211,5 +211,5 @@ pub const Time = union(Tag) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

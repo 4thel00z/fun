@@ -29,9 +29,9 @@ pub const TrackSizing = union(enum) {
 /// See [TrackSizing](TrackSizing).
 pub const TrackList = struct {
     /// A list of line names.
-    line_names: bun.BabyList(CustomIdentList),
+    line_names: fun.BabyList(CustomIdentList),
     /// A list of grid track items.
-    items: bun.BabyList(TrackListItem),
+    items: fun.BabyList(TrackListItem),
 
     pub fn parse(input: *css.Parser) css.Result(@This()) {
         var line_names = BabyList(CustomIdentList){};
@@ -39,14 +39,14 @@ pub const TrackList = struct {
 
         while (true) {
             const line_name = input.tryParse(parseLineNames, .{}).asValue() orelse CustomIdentList{};
-            bun.handleOom(line_names.append(input.allocator(), line_name));
+            fun.handleOom(line_names.append(input.allocator(), line_name));
 
             if (input.tryParse(TrackSize.parse, .{}).asValue()) |track_size| {
                 // TODO: error handling
-                bun.handleOom(items.append(.{ .track_size = track_size }));
+                fun.handleOom(items.append(.{ .track_size = track_size }));
             } else if (input.tryParse(TrackRepeat.parse, .{}).asValue()) |repeat| {
                 // TODO: error handling
-                bun.handleOom(items.append(.{ .track_repeat = repeat }));
+                fun.handleOom(items.append(.{ .track_repeat = repeat }));
             } else {
                 break;
             }
@@ -183,7 +183,7 @@ pub const TrackSizeList = struct {
     pub fn parse(input: *css.Parser) css.Result(@This()) {
         var res = SmallList(TrackSize, 1){};
         while (input.tryParse(TrackSize.parse, .{}).asValue()) |size| {
-            bun.handleOom(res.append(input.allocator(), size));
+            fun.handleOom(res.append(input.allocator(), size));
         }
 
         if (res.len() == 1 and res.at(0).eql(&TrackSize.default())) {
@@ -247,11 +247,11 @@ pub const TrackBreadth = union(enum) {
             .err => |e| return .{ .err = e },
         };
 
-        if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "auto")) {
+        if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "auto")) {
             return .{ .result = .auto };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "min-content")) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "min-content")) {
             return .{ .result = .min_content };
-        } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "max-content")) {
+        } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(ident, "max-content")) {
             return .{ .result = .max_content };
         }
 
@@ -266,7 +266,7 @@ pub const TrackBreadth = union(enum) {
         };
 
         if (token == .dimension) {
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(token.dimension.unit, "fr") and token.dimension.value >= 0.0) {
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(token.dimension.unit, "fr") and token.dimension.value >= 0.0) {
                 return .{ .result = token.dimension.value };
             }
         }
@@ -293,9 +293,9 @@ pub const TrackRepeat = struct {
     /// The repeat count.
     count: RepeatCount,
     /// The line names to repeat.
-    line_names: bun.BabyList(CustomIdentList),
+    line_names: fun.BabyList(CustomIdentList),
     /// The track sizes to repeat.
-    track_sizes: bun.BabyList(TrackSize),
+    track_sizes: fun.BabyList(TrackSize),
 
     pub fn parse(input: *css.Parser) css.Result(@This()) {
         if (input.expectFunctionMatching("repeat").asErr()) |e| return .{ .err = e };
@@ -310,16 +310,16 @@ pub const TrackRepeat = struct {
                 if (i.expectComma().asErr()) |e| return .{ .err = e };
 
                 // TODO: this code will not compile if used
-                var line_names = bun.BabyList(CustomIdentList).init(i.allocator);
-                var track_sizes = bun.BabyList(TrackSize).init(i.allocator);
+                var line_names = fun.BabyList(CustomIdentList).init(i.allocator);
+                var track_sizes = fun.BabyList(TrackSize).init(i.allocator);
 
                 while (true) {
                     const line_name = i.tryParse(parseLineNames, .{}).unwrapOr(CustomIdentList{});
-                    bun.handleOom(line_names.append(i.allocator(), line_name));
+                    fun.handleOom(line_names.append(i.allocator(), line_name));
 
                     if (input.tryParse(TrackSize.parse, .{}).asValue()) |track_size| {
                         // TODO: error handling
-                        bun.handleOom(track_sizes.append(i.allocator(), track_size));
+                        fun.handleOom(track_sizes.append(i.allocator(), track_size));
                     } else {
                         break;
                     }
@@ -402,7 +402,7 @@ fn parseLineNames(input: *css.Parser) css.Result(CustomIdentList) {
             var values = CustomIdentList{};
 
             while (input.tryParse(CustomIdent.parse, .{}).asValue()) |ident| {
-                bun.handleOom(values.append(i.allocator(), ident));
+                fun.handleOom(values.append(i.allocator(), ident));
             }
 
             return .{ .result = values };
@@ -478,12 +478,12 @@ pub const GridTemplateAreas = union(enum) {
 
     const HTML_SPACE_CHARACTERS: []const u8 = &.{ 0x0020, 0x0009, 0x000a, 0x000c, 0x000d };
 
-    fn parseString(allocator: Allocator, s: []const u8, tokens: *SmallList(?[]const u8, 1)) bun.Maybe(u32, void) {
+    fn parseString(allocator: Allocator, s: []const u8, tokens: *SmallList(?[]const u8, 1)) fun.Maybe(u32, void) {
         var string = s;
         var column = 0;
 
         while (true) {
-            const rest = bun.strings.trim(string, HTML_SPACE_CHARACTERS);
+            const rest = fun.strings.trim(string, HTML_SPACE_CHARACTERS);
             if (rest.len == 0) {
                 // Each string must produce a valid token.
                 if (column == 0) return .{ .err = {} };
@@ -492,7 +492,7 @@ pub const GridTemplateAreas = union(enum) {
 
             column += 1;
 
-            if (bun.strings.startsWithChar(rest, '.')) {
+            if (fun.strings.startsWithChar(rest, '.')) {
                 const idx = idx: {
                     for (rest, 0..) |*c, i| {
                         if (c.* != '.') {
@@ -520,7 +520,7 @@ pub const GridTemplateAreas = union(enum) {
                 break :token_len rest.len;
             };
             const token = rest[0..token_len];
-            bun.handleOom(tokens.append(allocator, token));
+            fun.handleOom(tokens.append(allocator, token));
             string = rest[token_len..];
         }
 
@@ -536,5 +536,5 @@ fn isNameCodepoint(c: u8) bool {
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
+const fun = @import("fun");
+const BabyList = fun.BabyList;

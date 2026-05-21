@@ -131,7 +131,7 @@ pub const Chunk = struct {
         /// constructed later when merging the pieces together.
         ///
         /// See OutputPiece's documentation comment for more details.
-        pieces: bun.BabyList(OutputPiece),
+        pieces: fun.BabyList(OutputPiece),
 
         /// If the chunk doesn't have any references to other chunks, then
         /// `joiner` contains the contents of the chunk. This is more efficient
@@ -144,7 +144,7 @@ pub const Chunk = struct {
             if (size >= 512 * 1024)
                 return std.heap.page_allocator
             else
-                return bun.default_allocator;
+                return fun.default_allocator;
         }
 
         /// Count occurrences of a closing HTML tag (e.g. `</script`, `</style`) in content.
@@ -225,7 +225,7 @@ pub const Chunk = struct {
             display_size: ?*usize,
             force_absolute_path: bool,
             enable_source_map_shifts: bool,
-        ) bun.OOM!CodeResult {
+        ) fun.OOM!CodeResult {
             return switch (enable_source_map_shifts) {
                 inline else => |source_map_shifts| this.codeWithSourceMapShifts(
                     allocator_to_use,
@@ -258,7 +258,7 @@ pub const Chunk = struct {
             force_absolute_path: bool,
             enable_source_map_shifts: bool,
             standalone_chunk_contents: []const ?[]const u8,
-        ) bun.OOM!CodeResult {
+        ) fun.OOM!CodeResult {
             return switch (enable_source_map_shifts) {
                 inline else => |source_map_shifts| this.codeWithSourceMapShifts(
                     allocator_to_use,
@@ -287,11 +287,11 @@ pub const Chunk = struct {
             force_absolute_path: bool,
             comptime enable_source_map_shifts: bool,
             standalone_chunk_contents: ?[]const ?[]const u8,
-        ) bun.OOM!CodeResult {
+        ) fun.OOM!CodeResult {
             const additional_files = graph.input_files.items(.additional_files);
             const unique_key_for_additional_files = graph.input_files.items(.unique_key_for_additional_file);
-            const relative_platform_buf = bun.path_buffer_pool.get();
-            defer bun.path_buffer_pool.put(relative_platform_buf);
+            const relative_platform_buf = fun.path_buffer_pool.get();
+            defer fun.path_buffer_pool.put(relative_platform_buf);
             switch (this.*) {
                 .pieces => |*pieces| {
                     const entry_point_chunks_for_scb = linker_graph.files.items(.entry_point_chunk_index);
@@ -302,7 +302,7 @@ pub const Chunk = struct {
                             .before = .{},
                         };
                     var shifts = if (enable_source_map_shifts)
-                        try std.ArrayList(SourceMap.SourceMapShifts).initCapacity(bun.default_allocator, pieces.len + 1);
+                        try std.ArrayList(SourceMap.SourceMapShifts).initCapacity(fun.default_allocator, pieces.len + 1);
 
                     if (enable_source_map_shifts)
                         shifts.appendAssumeCapacity(shift);
@@ -373,7 +373,7 @@ pub const Chunk = struct {
                                     if (from_chunk_dir.len == 0 or force_absolute_path)
                                         file_path
                                     else
-                                        bun.path.relativePlatformBuf(relative_platform_buf, from_chunk_dir, file_path, .posix, false),
+                                        fun.path.relativePlatformBuf(relative_platform_buf, from_chunk_dir, file_path, .posix, false),
                                 );
                                 count += cheap_normalizer[0].len + cheap_normalizer[1].len;
                             },
@@ -386,7 +386,7 @@ pub const Chunk = struct {
                     }
 
                     const debug_id_len = if (enable_source_map_shifts and FeatureFlags.source_map_debug_id)
-                        std.fmt.count("\n//# debugId={f}\n", .{bun.SourceMap.DebugIDFormatter{ .id = chunk.isolated_hash }})
+                        std.fmt.count("\n//# debugId={f}\n", .{fun.SourceMap.DebugIDFormatter{ .id = chunk.isolated_hash }})
                     else
                         0;
 
@@ -445,7 +445,7 @@ pub const Chunk = struct {
                                 const file_path = switch (piece.query.kind) {
                                     .asset => brk: {
                                         const files = additional_files[index];
-                                        bun.assert(files.len > 0);
+                                        fun.assert(files.len > 0);
 
                                         const output_file = files.last().?.output_file;
 
@@ -490,13 +490,13 @@ pub const Chunk = struct {
                                 };
 
                                 // normalize windows paths to '/'
-                                bun.path.platformToPosixInPlace(u8, @constCast(file_path));
+                                fun.path.platformToPosixInPlace(u8, @constCast(file_path));
                                 const cheap_normalizer = cheapPrefixNormalizer(
                                     import_prefix,
                                     if (from_chunk_dir.len == 0 or force_absolute_path)
                                         file_path
                                     else
-                                        bun.path.relativePlatformBuf(relative_platform_buf, from_chunk_dir, file_path, .posix, false),
+                                        fun.path.relativePlatformBuf(relative_platform_buf, from_chunk_dir, file_path, .posix, false),
                                 );
 
                                 if (cheap_normalizer[0].len > 0) {
@@ -525,7 +525,7 @@ pub const Chunk = struct {
                         remain = remain[(std.fmt.bufPrint(
                             remain,
                             "\n//# debugId={f}\n",
-                            .{bun.SourceMap.DebugIDFormatter{ .id = chunk.isolated_hash }},
+                            .{fun.SourceMap.DebugIDFormatter{ .id = chunk.isolated_hash }},
                         ) catch |err| switch (err) {
                             error.NoSpaceLeft => std.debug.panic(
                                 "unexpected NoSpaceLeft error from bufPrint",
@@ -534,8 +534,8 @@ pub const Chunk = struct {
                         }).len..];
                     }
 
-                    bun.assert(remain.len == 0);
-                    bun.assert(total_buf.len == count + debug_id_len);
+                    fun.assert(remain.len == 0);
+                    fun.assert(total_buf.len == count + debug_id_len);
 
                     return .{
                         .buffer = total_buf,
@@ -558,8 +558,8 @@ pub const Chunk = struct {
                             const debug_id_fmt = std.fmt.allocPrint(
                                 graph.heap.allocator(),
                                 "\n//# debugId={f}\n",
-                                .{bun.SourceMap.DebugIDFormatter{ .id = chunk.isolated_hash }},
-                            ) catch |err| bun.handleOom(err);
+                                .{fun.SourceMap.DebugIDFormatter{ .id = chunk.isolated_hash }},
+                            ) catch |err| fun.handleOom(err);
 
                             break :brk try joiner.doneWithEnd(allocator, debug_id_fmt);
                         }
@@ -678,7 +678,7 @@ pub const Chunk = struct {
         ///
         /// When we go through the `prepareCssAstsForChunk()` step, each import will
         /// create a shallow copy of the file's AST (just dereferencing the pointer).
-        asts: []bun.css.BundlerStyleSheet,
+        asts: []fun.css.BundlerStyleSheet,
     };
 
     const CssImportKind = enum {
@@ -688,7 +688,7 @@ pub const Chunk = struct {
     };
 
     pub const CssImportOrder = struct {
-        conditions: BabyList(bun.css.ImportConditions) = .{},
+        conditions: BabyList(fun.css.ImportConditions) = .{},
         condition_import_records: BabyList(ImportRecord) = .{},
 
         kind: union(enum) {
@@ -697,12 +697,12 @@ pub const Chunk = struct {
             /// BUT, the imports may include layers.
             /// We'll just print layer name declarations so that the original ordering is preserved.
             layers: Layers,
-            external_path: bun.fs.Path,
+            external_path: fun.fs.Path,
             source_index: Index,
         },
 
-        pub const Layers = bun.ptr.Cow(bun.BabyList(bun.css.LayerName), struct {
-            const Self = bun.BabyList(bun.css.LayerName);
+        pub const Layers = fun.ptr.Cow(fun.BabyList(fun.css.LayerName), struct {
+            const Self = fun.BabyList(fun.css.LayerName);
             pub fn copy(self: *const Self, allocator: std.mem.Allocator) Self {
                 return self.deepCloneInfallible(allocator);
             }
@@ -717,7 +717,7 @@ pub const Chunk = struct {
         pub fn hash(this: *const CssImportOrder, hasher: anytype) void {
             // TODO: conditions, condition_import_records
 
-            bun.writeAnyToHasher(hasher, std.meta.activeTag(this.kind));
+            fun.writeAnyToHasher(hasher, std.meta.activeTag(this.kind));
             switch (this.kind) {
                 .layers => |layers| {
                     for (layers.inner().sliceConst()) |layer| {
@@ -734,7 +734,7 @@ pub const Chunk = struct {
                     hasher.update("\x00");
                 },
                 .external_path => |path| hasher.update(path.text),
-                .source_index => |idx| bun.writeAnyToHasher(hasher, idx),
+                .source_index => |idx| fun.writeAnyToHasher(hasher, idx),
             }
         }
 
@@ -807,13 +807,13 @@ pub const Chunk = struct {
     };
 };
 
-pub const Ref = bun.ast.Ref;
+pub const Ref = fun.ast.Ref;
 
-pub const Index = bun.ast.Index;
+pub const Index = fun.ast.Index;
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const string = []const u8;
 
@@ -824,23 +824,23 @@ const std = @import("std");
 const options = @import("./options.zig");
 const Loader = options.Loader;
 
-const bun = @import("bun");
-const FeatureFlags = bun.FeatureFlags;
-const ImportKind = bun.ImportKind;
-const ImportRecord = bun.ImportRecord;
-const Output = bun.Output;
-const SourceMap = bun.SourceMap;
-const StringJoiner = bun.StringJoiner;
-const default_allocator = bun.default_allocator;
-const renamer = bun.renamer;
-const strings = bun.strings;
-const AutoBitSet = bun.bit_set.AutoBitSet;
-const BabyList = bun.collections.BabyList;
+const fun = @import("fun");
+const FeatureFlags = fun.FeatureFlags;
+const ImportKind = fun.ImportKind;
+const ImportRecord = fun.ImportRecord;
+const Output = fun.Output;
+const SourceMap = fun.SourceMap;
+const StringJoiner = fun.StringJoiner;
+const default_allocator = fun.default_allocator;
+const renamer = fun.renamer;
+const strings = fun.strings;
+const AutoBitSet = fun.bit_set.AutoBitSet;
+const BabyList = fun.collections.BabyList;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Stmt = js_ast.Stmt;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const BundleV2 = bundler.BundleV2;
 const CompileResult = bundler.CompileResult;
 const CrossChunkImport = bundler.CrossChunkImport;

@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import path, { dirname, join, resolve } from "node:path";
 import { itBundled } from "./expectBundled";
 
@@ -44,7 +44,7 @@ describe("bundler", () => {
     files: loadFixture,
     plugins(builder) {
       builder.onLoad({ filter: /\.magic$/ }, async args => {
-        const text = await Bun.file(args.path).text();
+        const text = await Fun.file(args.path).text();
         return {
           contents: `export const foo = ${JSON.stringify(text.toUpperCase())};`,
           loader: "ts",
@@ -59,7 +59,7 @@ describe("bundler", () => {
     files: loadFixture,
     plugins(builder) {
       builder.onLoad({ filter: /\.magic$/ }, async args => {
-        const text = await Bun.file(args.path).text();
+        const text = await Fun.file(args.path).text();
         return {
           contents: `export const foo = ${JSON.stringify(text.toUpperCase())};`,
         };
@@ -1031,7 +1031,7 @@ describe("bundler", () => {
   });
 
   itBundled("plugin/OnEndWithBuildResult", () => {
-    let buildResult: Bun.BuildOutput | null = null;
+    let buildResult: Fun.BuildOutput | null = null;
     let callbackExecuted = false;
 
     return {
@@ -1073,7 +1073,7 @@ describe("bundler", () => {
             buildTime: new Date().toISOString(),
             files: ["index.js"],
           };
-          await Bun.write(join(root, "out", "build-metadata.json"), JSON.stringify(metadata, null, 2));
+          await Fun.write(join(root, "out", "build-metadata.json"), JSON.stringify(metadata, null, 2));
           fileWritten = true;
         });
       },
@@ -1300,7 +1300,7 @@ describe("bundler", () => {
       plugins(builder) {
         builder.onEnd(async () => {
           onEndCalled = true;
-          await Bun.sleep(0); // Actual async
+          await Fun.sleep(0); // Actual async
           asyncCompleted = true;
         });
       },
@@ -1355,7 +1355,7 @@ describe("bundler", () => {
       plugins(builder) {
         builder.onEnd(async () => {
           onEndCalled = true;
-          await Bun.sleep(0); // Actual async
+          await Fun.sleep(0); // Actual async
           // Test actual async completion
           asyncCompleted = true;
         });
@@ -1381,9 +1381,9 @@ describe("bundler", () => {
       plugins(builder) {
         builder.onEnd(async () => {
           onEndCalled = true;
-          Bun.gc(true); // Force GC before await
-          await Bun.sleep(0);
-          Bun.gc(true); // Force GC after await
+          Fun.gc(true); // Force GC before await
+          await Fun.sleep(0);
+          Fun.gc(true); // Force GC after await
         });
       },
       onAfterBundle(api) {
@@ -1430,7 +1430,7 @@ describe("bundler", () => {
 
         builder.onEnd(async () => {
           events.push("fifth-throw");
-          await Bun.sleep(0);
+          await Fun.sleep(0);
           // Shouldn't reach here, promise should have already rejected elsewhere
           events.push("fifth-throw-after-await");
           errorCount++;
@@ -1438,7 +1438,7 @@ describe("bundler", () => {
         });
       },
       bundleErrors: {
-        "<bun>": ["second callback error"],
+        "<fun>": ["second callback error"],
       },
       onAfterApiBundle(build) {
         expect(build.success).toBe(false);
@@ -1488,7 +1488,7 @@ describe("bundler", () => {
         });
       },
       bundleErrors: {
-        "<bun>": ["first callback error"],
+        "<fun>": ["first callback error"],
       },
       onAfterApiBundle(build) {
         expect(build.success).toBe(false);
@@ -1510,23 +1510,23 @@ describe("bundler", () => {
       plugins(builder) {
         builder.onEnd(async () => {
           events.push("first-start");
-          Bun.gc(true);
-          await Bun.sleep(0);
+          Fun.gc(true);
+          await Fun.sleep(0);
           events.push("first-end");
         });
 
         builder.onEnd(async () => {
           events.push("second-start");
           await Promise.resolve();
-          Bun.gc(true);
+          Fun.gc(true);
           events.push("second-end");
         });
 
         builder.onEnd(async () => {
           events.push("third-start");
-          Bun.gc(true);
-          await Bun.sleep(0);
-          Bun.gc(true);
+          Fun.gc(true);
+          await Fun.sleep(0);
+          Fun.gc(true);
           events.push("third-end");
         });
       },
@@ -1561,7 +1561,7 @@ describe("bundler", () => {
 
         builder.onEnd(async () => {
           events.push("third-async");
-          await Bun.sleep(0);
+          await Fun.sleep(0);
           throw new Error("third throws async");
         });
 
@@ -1570,7 +1570,7 @@ describe("bundler", () => {
         });
       },
       bundleErrors: {
-        "<bun>": ["second throws"],
+        "<fun>": ["second throws"],
       },
       onAfterApiBundle(build) {
         expect(build.success).toBe(false);
@@ -1593,13 +1593,13 @@ describe("bundler", () => {
       plugins(builder) {
         builder.onEnd(async () => {
           asyncStarted = true;
-          await Bun.sleep(5);
+          await Fun.sleep(5);
           asyncCompleted = true;
           throw new Error("async error after delay");
         });
       },
       bundleErrors: {
-        "<bun>": ["async error after delay"],
+        "<fun>": ["async error after delay"],
       },
       onAfterApiBundle(build) {
         expect(build.success).toBe(false);

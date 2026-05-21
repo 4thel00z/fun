@@ -1,7 +1,7 @@
 /**
  * All tests in this file should also run in Node.js.
  *
- * Do not add any tests that only run in Bun.
+ * Do not add any tests that only run in Fun.
  */
 
 import { describe, test } from "node:test";

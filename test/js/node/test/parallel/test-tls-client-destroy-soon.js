@@ -26,7 +26,7 @@
 
 const isCI = process.env.CI !== undefined;
 const common = require('../common');
-if (common.isWindows && isCI) return; // TODO: BUN
+if (common.isWindows && isCI) return; // TODO: FUN
 if (!common.hasCrypto)
   common.skip('missing crypto');
 

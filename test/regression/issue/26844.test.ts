@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { execFileSync, execSync } from "child_process";
 
 test("execFileSync error should not have self-referencing cycle", () => {

@@ -17,7 +17,7 @@
 
 import * as grpc from "@grpc/grpc-js/build/src";
 import assert from "assert";
-import { afterAll as after, beforeAll as before, beforeEach, describe, it } from "bun:test";
+import { afterAll as after, beforeAll as before, beforeEach, describe, it } from "fun:test";
 import * as path from "path";
 import { TestClient, loadProtoFile } from "./common";
 

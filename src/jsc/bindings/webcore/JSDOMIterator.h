@@ -216,7 +216,7 @@ template<typename JSIterator> JSC::JSValue iteratorForEach(JSC::JSGlobalObject& 
 
     auto callData = JSC::getCallData(callback);
     if (callData.type == JSC::CallData::Type::None) {
-        Bun::throwError(&lexicalGlobalObject, scope, Bun::ErrorCode::ERR_INVALID_ARG_TYPE, "Cannot call callback on a non-function"_s);
+        Fun::throwError(&lexicalGlobalObject, scope, Fun::ErrorCode::ERR_INVALID_ARG_TYPE, "Cannot call callback on a non-function"_s);
         return {};
     }
 
@@ -263,7 +263,7 @@ JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSDOMIteratorPrototype<JSWrapper, I
 
     auto iterator = dynamicDowncast<JSDOMIteratorBase<JSWrapper, IteratorTraits>>(callFrame->thisValue());
     if (!iterator) {
-        return Bun::throwError(globalObject, scope, Bun::ErrorCode::ERR_INVALID_THIS, "Cannot call next() on a non-Iterator object"_s);
+        return Fun::throwError(globalObject, scope, Fun::ErrorCode::ERR_INVALID_THIS, "Cannot call next() on a non-Iterator object"_s);
     }
 
     RELEASE_AND_RETURN(scope, JSC::JSValue::encode(iterator->next(*globalObject)));

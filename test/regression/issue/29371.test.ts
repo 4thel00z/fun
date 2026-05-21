@@ -1,13 +1,13 @@
-// https://github.com/oven-sh/bun/issues/29371
+// https://github.com/underdoc-org/fun/issues/29371
 //
-// Bun was unconditionally inserting `:80` (or `:443`) into the absolute-form
+// Fun was unconditionally inserting `:80` (or `:443`) into the absolute-form
 // request-URI sent to an HTTP proxy, even when the target URL had no explicit
 // port. That turned e.g. `http://example.com/path` into
 // `POST http://example.com:80/path HTTP/1.1`, which breaks proxies that do
 // strict Host/authority matching. Per RFC 7230 §5.3.2 the default port should
 // be omitted; curl and Node's `http.request` both do this.
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { once } from "node:events";
 import net from "node:net";
 

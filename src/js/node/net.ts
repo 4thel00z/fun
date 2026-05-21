@@ -27,7 +27,7 @@ let dns: typeof import("node:dns");
 
 const normalizedArgsSymbol = Symbol("normalizedArgs");
 const { ExceptionWithHostPort, ConnResetException, NodeAggregateError, ErrnoException } = require("internal/shared");
-import type { Socket, SocketHandler, SocketListener } from "bun";
+import type { Socket, SocketHandler, SocketListener } from "fun";
 import type { Server as NetServer, Socket as NetSocket, ServerOpts } from "node:net";
 import type { TLSSocket } from "node:tls";
 const { kTimeout, getTimerDuration } = require("internal/timers");
@@ -55,13 +55,13 @@ const upgradeDuplexToTLS = $newZigFunction("runtime/socket/socket.zig", "jsUpgra
 const isNamedPipeSocket = $newZigFunction("runtime/socket/socket.zig", "jsIsNamedPipeSocket", 1);
 const getBufferedAmount = $newZigFunction("runtime/socket/socket.zig", "jsGetBufferedAmount", 1);
 
-const bunTlsSymbol = Symbol.for("::buntls::");
-const bunSocketServerOptions = Symbol.for("::bunnetserveroptions::");
+const funTlsSymbol = Symbol.for("::funtls::");
+const funSocketServerOptions = Symbol.for("::funnetserveroptions::");
 const owner_symbol = Symbol("owner_symbol");
 
 const kServerSocket = Symbol("kServerSocket");
 const kBytesWritten = Symbol("kBytesWritten");
-const bunTLSConnectOptions = Symbol.for("::buntlsconnectoptions::");
+const funTLSConnectOptions = Symbol.for("::funtlsconnectoptions::");
 const kReinitializeHandle = Symbol("kReinitializeHandle");
 
 const kRealListen = Symbol("kRealListen");
@@ -210,7 +210,7 @@ const SocketHandlers: SocketHandler = {
     }
     self._handle = socket;
     self.connecting = false;
-    const options = self[bunTLSConnectOptions];
+    const options = self[funTLSConnectOptions];
 
     if (options) {
       const { session } = options;
@@ -251,7 +251,7 @@ const SocketHandlers: SocketHandler = {
 
     self.emit("secure", self);
     self.alpnProtocol = socket.alpnProtocol;
-    const { checkServerIdentity } = self[bunTLSConnectOptions];
+    const { checkServerIdentity } = self[funTLSConnectOptions];
     if (!verifyError && typeof checkServerIdentity === "function") {
       const hostname = self.servername || self._host || "localhost";
       const cert = self.getPeerCertificate(true);
@@ -311,7 +311,7 @@ const ServerHandlers: SocketHandler<NetSocket> = {
     }
   },
   close(socket, err) {
-    $debug("Bun.Server close");
+    $debug("Fun.Server close");
     const data = this.data;
     if (!data) return;
 
@@ -330,10 +330,10 @@ const ServerHandlers: SocketHandler<NetSocket> = {
     SocketHandlers.end(socket);
   },
   open(socket) {
-    $debug("Bun.Server open");
+    $debug("Fun.Server open");
     const self = socket.data as any as NetServer;
     socket[kServerSocket] = self._handle;
-    const options = self[bunSocketServerOptions];
+    const options = self[funSocketServerOptions];
     const { pauseOnConnect, connectionListener, [kSocketClass]: SClass, requestCert, rejectUnauthorized } = options;
     const _socket = new SClass({}) as NetSocket | TLSSocket;
     _socket.isServer = true;
@@ -373,8 +373,8 @@ const ServerHandlers: SocketHandler<NetSocket> = {
       return;
     }
 
-    const bunTLS = _socket[bunTlsSymbol];
-    const isTLS = typeof bunTLS === "function";
+    const funTLS = _socket[funTlsSymbol];
+    const isTLS = typeof funTLS === "function";
 
     self._connections++;
     _socket.server = self;
@@ -429,7 +429,7 @@ const ServerHandlers: SocketHandler<NetSocket> = {
     } else {
       self.authorized = true;
     }
-    const connectionListener = server[bunSocketServerOptions]?.connectionListener;
+    const connectionListener = server[funSocketServerOptions]?.connectionListener;
     if (typeof connectionListener === "function") {
       server.prependOnceListener("secureConnection", connectionListener);
     }
@@ -449,9 +449,9 @@ const ServerHandlers: SocketHandler<NetSocket> = {
 
     if (data._hadError) return;
     data._hadError = true;
-    const bunTLS = this[bunTlsSymbol];
+    const funTLS = this[funTlsSymbol];
 
-    if (typeof bunTLS === "function") {
+    if (typeof funTLS === "function") {
       // Destroy socket if error happened before handshake's finish
       if (!data._secureEstablished) {
         data.destroy(error);
@@ -486,7 +486,7 @@ const ServerHandlers: SocketHandler<NetSocket> = {
 // TODO: SocketHandlers2 is a bad name but its temporary. reworking the Server in a followup PR
 const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_handle"]>["data"]> = {
   open(socket) {
-    $debug("Bun.Socket open");
+    $debug("Fun.Socket open");
     let { self, req } = socket.data;
     socket[owner_symbol] = self;
     $debug("self[kupgraded]", String(self[kupgraded]));
@@ -497,7 +497,7 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
     }
     if (self[kupgraded]) {
       self.connecting = false;
-      const options = self[bunTLSConnectOptions];
+      const options = self[funTLSConnectOptions];
       if (options) {
         const { session } = options;
         if (session) {
@@ -508,14 +508,14 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
     }
   },
   data(socket, buffer) {
-    $debug("Bun.Socket data");
+    $debug("Fun.Socket data");
     const { self } = socket.data;
     self._unrefTimer();
     self.bytesRead += buffer.length;
     if (!self.push(buffer)) socket.pause();
   },
   drain(socket) {
-    $debug("Bun.Socket drain");
+    $debug("Fun.Socket drain");
     const { self } = socket.data;
     const callback = self[kwriteCallback];
     self.connecting = false;
@@ -532,7 +532,7 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
     }
   },
   end(socket) {
-    $debug("Bun.Socket end");
+    $debug("Fun.Socket end");
     const { self } = socket.data;
     if (self[kended]) return;
     self[kended] = true;
@@ -541,7 +541,7 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
     self.read(0);
   },
   close(socket, err) {
-    $debug("Bun.Socket close");
+    $debug("Fun.Socket close");
     let { self } = socket.data;
     if (err) $debug(err);
     if (self[kclosed]) return;
@@ -553,7 +553,7 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
     self.read(0);
   },
   handshake(socket, success, verifyError) {
-    $debug("Bun.Socket handshake");
+    $debug("Fun.Socket handshake");
     const { self } = socket.data;
     if (!success && verifyError?.code === "ECONNRESET") {
       // will be handled in onConnectEnd
@@ -566,7 +566,7 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
 
     self.emit("secure", self);
     self.alpnProtocol = socket.alpnProtocol;
-    const { checkServerIdentity } = self[bunTLSConnectOptions];
+    const { checkServerIdentity } = self[funTLSConnectOptions];
     if (!verifyError && typeof checkServerIdentity === "function") {
       const hostname = self.servername || self._host || "localhost";
       const cert = self.getPeerCertificate(true);
@@ -592,7 +592,7 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
     self.removeListener("end", onConnectEnd);
   },
   error(socket, error) {
-    $debug("Bun.Socket error");
+    $debug("Fun.Socket error");
     if (socket.data === undefined) return;
     const { self } = socket.data;
     if (self._hadError) return;
@@ -607,12 +607,12 @@ const SocketHandlers2: SocketHandler<NonNullable<import("node:net").Socket["_han
     if (!self.destroyed) process.nextTick(destroyNT, self, error);
   },
   timeout(socket) {
-    $debug("Bun.Socket timeout");
+    $debug("Fun.Socket timeout");
     const { self } = socket.data;
     self.emit("timeout", self);
   },
   connectError(socket, error) {
-    $debug("Bun.Socket connectError");
+    $debug("Fun.Socket connectError");
     let { self, req } = socket.data;
     socket[owner_symbol] = self;
     req!.oncomplete(error.errno, self._handle, req, true, true);
@@ -712,7 +712,7 @@ function Socket(options?) {
   this.connecting = false;
   this._host = undefined;
   this._port = undefined;
-  this[bunTLSConnectOptions] = null;
+  this[funTLSConnectOptions] = null;
   this.timeout = 0;
   this[kwriteCallback] = undefined;
   this._pendingData = undefined;
@@ -920,10 +920,10 @@ Socket.prototype.connect = function connect(...args) {
     ) {
       throw $ERR_MISSING_ARGS(["options", "port", "path"]);
     }
-    const bunTLS = this[bunTlsSymbol];
+    const funTLS = this[funTlsSymbol];
     var tls: any | undefined = undefined;
-    if (typeof bunTLS === "function") {
-      tls = bunTLS.$call(this, port, host, true);
+    if (typeof funTLS === "function") {
+      tls = funTLS.$call(this, port, host, true);
       // Client always request Cert
       this._requestCert = true;
       if (tls) {
@@ -937,7 +937,7 @@ Socket.prototype.connect = function connect(...args) {
         tls.session = session || tls.session;
         this.servername = tls.servername;
         tls.checkServerIdentity = checkServerIdentity || tls.checkServerIdentity;
-        this[bunTLSConnectOptions] = tls;
+        this[funTLSConnectOptions] = tls;
         if (!connection && tls.socket) {
           connection = tls.socket;
         }
@@ -946,7 +946,7 @@ Socket.prototype.connect = function connect(...args) {
         if (
           typeof connection !== "object" ||
           !(connection instanceof Socket) ||
-          typeof connection[bunTlsSymbol] === "function"
+          typeof connection[funTlsSymbol] === "function"
         ) {
           if (connection instanceof Duplex) {
             upgradeDuplex = true;
@@ -1058,7 +1058,7 @@ Socket.prototype.connect = function connect(...args) {
 
   const [options, cb] = $isArray(args[0]) && args[0][normalizedArgsSymbol] ? args[0] : normalizeArgs(args);
 
-  if (typeof this[bunTlsSymbol] === "function" && cb !== null) {
+  if (typeof this[funTlsSymbol] === "function" && cb !== null) {
     this.once("secureConnect", cb);
   } else if (cb !== null) {
     this.once("connect", cb);
@@ -1082,7 +1082,7 @@ Socket.prototype.connect = function connect(...args) {
   $debug("pipe", pipe, path);
 
   if (!this._handle) {
-    this._handle = newDetachedSocket(typeof this[bunTlsSymbol] === "function");
+    this._handle = newDetachedSocket(typeof this[funTlsSymbol] === "function");
     initSocketHandle(this);
   }
 
@@ -1725,9 +1725,9 @@ function internalConnect(self, options, address, port, addressType, localAddress
     connection = options.socket;
   }
   let tls = undefined;
-  const bunTLS = self[bunTlsSymbol];
-  if (typeof bunTLS === "function") {
-    tls = bunTLS.$call(self, port, self._host, true);
+  const funTLS = self[funTlsSymbol];
+  if (typeof funTLS === "function") {
+    tls = funTLS.$call(self, port, self._host, true);
     self._requestCert = true; // Client always request Cert
     if (tls) {
       const { rejectUnauthorized, session, checkServerIdentity } = options;
@@ -1741,7 +1741,7 @@ function internalConnect(self, options, address, port, addressType, localAddress
       tls.session = session || tls.session;
       self.servername = tls.servername;
       tls.checkServerIdentity = checkServerIdentity || tls.checkServerIdentity;
-      self[bunTLSConnectOptions] = tls;
+      self[funTLSConnectOptions] = tls;
       if (!connection && tls.socket) {
         connection = tls.socket;
       }
@@ -1813,7 +1813,7 @@ function internalConnectMultiple(context, canceled?) {
   const current = context.current++;
 
   if (current > 0) {
-    self[kReinitializeHandle](newDetachedSocket(typeof self[bunTlsSymbol] === "function"));
+    self[kReinitializeHandle](newDetachedSocket(typeof self[funTlsSymbol] === "function"));
   }
 
   const { localPort, port, _flags } = context;
@@ -1862,9 +1862,9 @@ function internalConnectMultiple(context, canceled?) {
     connection = context.options.socket;
   }
   let tls = undefined;
-  const bunTLS = self[bunTlsSymbol];
-  if (typeof bunTLS === "function") {
-    tls = bunTLS.$call(self, port, self._host, true);
+  const funTLS = self[funTlsSymbol];
+  if (typeof funTLS === "function") {
+    tls = funTLS.$call(self, port, self._host, true);
     self._requestCert = true; // Client always request Cert
     if (tls) {
       const { rejectUnauthorized, session, checkServerIdentity } = context.options;
@@ -1878,7 +1878,7 @@ function internalConnectMultiple(context, canceled?) {
       tls.session = session || tls.session;
       self.servername = tls.servername;
       tls.checkServerIdentity = checkServerIdentity || tls.checkServerIdentity;
-      self[bunTLSConnectOptions] = tls;
+      self[funTLSConnectOptions] = tls;
       if (!connection && tls.socket) {
         connection = tls.socket;
       }
@@ -2086,7 +2086,7 @@ function Server(options?, connectionListener?) {
   this._unref = false;
   this.listeningId = 1;
 
-  this[bunSocketServerOptions] = undefined;
+  this[funSocketServerOptions] = undefined;
   this.allowHalfOpen = allowHalfOpen;
   this.keepAlive = keepAlive;
   this.keepAliveInitialDelay = keepAliveInitialDelay;
@@ -2095,7 +2095,7 @@ function Server(options?, connectionListener?) {
   this.noDelay = noDelay;
 
   options.connectionListener = connectionListener;
-  this[bunSocketServerOptions] = options;
+  this[funSocketServerOptions] = options;
 
   if (options.blockList) {
     if (!BlockList.isBlockList(options.blockList)) {
@@ -2181,8 +2181,8 @@ Server.prototype.address = function address() {
 
 Server.prototype.getConnections = function getConnections(callback) {
   if (typeof callback === "function") {
-    //in Bun case we will never error on getConnections
-    //node only errors if in the middle of the couting the server got disconnected, what never happens in Bun
+    //in Fun case we will never error on getConnections
+    //node only errors if in the middle of the couting the server got disconnected, what never happens in Fun
     //if disconnected will only pass null as well and 0 connected
     callback(null, this._handle ? this._connections : 0);
   }
@@ -2311,11 +2311,11 @@ Server.prototype.listen = function listen(port, hostname, onListen) {
   try {
     var tls = undefined;
     var TLSSocketClass = undefined;
-    const bunTLS = this[bunTlsSymbol];
-    const options = this[bunSocketServerOptions];
+    const funTLS = this[funTlsSymbol];
+    const options = this[funSocketServerOptions];
     let contexts: Map<string, any> | null = null;
-    if (typeof bunTLS === "function") {
-      [tls, TLSSocketClass] = bunTLS.$call(this, port, hostname, false);
+    if (typeof funTLS === "function") {
+      [tls, TLSSocketClass] = funTLS.$call(this, port, hostname, false);
       options.servername = tls.serverName;
       options[kSocketClass] = TLSSocketClass;
       contexts = tls.contexts;
@@ -2365,37 +2365,37 @@ Server.prototype[kRealListen] = function (
   fd,
 ) {
   if (path) {
-    this._handle = Bun.listen({
+    this._handle = Fun.listen({
       unix: path,
       tls,
-      allowHalfOpen: allowHalfOpen || this[bunSocketServerOptions]?.allowHalfOpen || false,
-      reusePort: reusePort || this[bunSocketServerOptions]?.reusePort || false,
-      ipv6Only: ipv6Only || this[bunSocketServerOptions]?.ipv6Only || false,
-      exclusive: exclusive || this[bunSocketServerOptions]?.exclusive || false,
+      allowHalfOpen: allowHalfOpen || this[funSocketServerOptions]?.allowHalfOpen || false,
+      reusePort: reusePort || this[funSocketServerOptions]?.reusePort || false,
+      ipv6Only: ipv6Only || this[funSocketServerOptions]?.ipv6Only || false,
+      exclusive: exclusive || this[funSocketServerOptions]?.exclusive || false,
       socket: ServerHandlers,
       data: this,
     });
   } else if (fd != null) {
-    this._handle = Bun.listen({
+    this._handle = Fun.listen({
       fd,
       hostname,
       tls,
-      allowHalfOpen: allowHalfOpen || this[bunSocketServerOptions]?.allowHalfOpen || false,
-      reusePort: reusePort || this[bunSocketServerOptions]?.reusePort || false,
-      ipv6Only: ipv6Only || this[bunSocketServerOptions]?.ipv6Only || false,
-      exclusive: exclusive || this[bunSocketServerOptions]?.exclusive || false,
+      allowHalfOpen: allowHalfOpen || this[funSocketServerOptions]?.allowHalfOpen || false,
+      reusePort: reusePort || this[funSocketServerOptions]?.reusePort || false,
+      ipv6Only: ipv6Only || this[funSocketServerOptions]?.ipv6Only || false,
+      exclusive: exclusive || this[funSocketServerOptions]?.exclusive || false,
       socket: ServerHandlers,
       data: this,
     });
   } else {
-    this._handle = Bun.listen({
+    this._handle = Fun.listen({
       port,
       hostname,
       tls,
-      allowHalfOpen: allowHalfOpen || this[bunSocketServerOptions]?.allowHalfOpen || false,
-      reusePort: reusePort || this[bunSocketServerOptions]?.reusePort || false,
-      ipv6Only: ipv6Only || this[bunSocketServerOptions]?.ipv6Only || false,
-      exclusive: exclusive || this[bunSocketServerOptions]?.exclusive || false,
+      allowHalfOpen: allowHalfOpen || this[funSocketServerOptions]?.allowHalfOpen || false,
+      reusePort: reusePort || this[funSocketServerOptions]?.reusePort || false,
+      ipv6Only: ipv6Only || this[funSocketServerOptions]?.ipv6Only || false,
+      exclusive: exclusive || this[funSocketServerOptions]?.exclusive || false,
       socket: ServerHandlers,
       data: this,
     });

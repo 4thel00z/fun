@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/22743
+// https://github.com/underdoc-org/fun/issues/22743
 //
 // Regressed 1.2.20 → 1.2.21: dynamic-importing path X that throws,
 // then a *different* error-throwing path Y, then X again — the third
@@ -8,15 +8,15 @@
 // Fixed in the module-loader rewrite window (#29393 → #30262); this
 // test pins the network-free reduction.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("re-importing an error-throwing module after a different error-throwing import re-throws instead of hanging", async () => {
   using dir = tempDir("issue-22743", {
     "bad1.json": `{ "a": nope }`,
     "bad2.json": `{ "b": also nope }`,
     "entry.ts": `
-      // Original repro used two https:// URLs (which Bun rejects without
+      // Original repro used two https:// URLs (which Fun rejects without
       // a network call); two unparseable JSON files give the same
       // throws-on-load shape without depending on the https-import error
       // message staying stable.
@@ -33,10 +33,10 @@ test("re-importing an error-throwing module after a different error-throwing imp
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "entry.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "entry.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
     // Pre-fix the third import never settles; bound the subprocess so the

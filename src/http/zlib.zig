@@ -2,7 +2,7 @@ fn initMutableString(allocator: std.mem.Allocator) anyerror!MutableString {
     return MutableString.initEmpty(allocator);
 }
 
-const BufferPool = bun.ObjectPool(MutableString, initMutableString, false, 4);
+const BufferPool = fun.ObjectPool(MutableString, initMutableString, false, 4);
 pub fn get(allocator: std.mem.Allocator) *MutableString {
     return &BufferPool.get(allocator).data;
 }
@@ -30,5 +30,5 @@ pub fn decompress(compressed_data: []const u8, output: *MutableString, allocator
 const Zlib = @import("../zlib/zlib.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const MutableString = bun.MutableString;
+const fun = @import("fun");
+const MutableString = fun.MutableString;

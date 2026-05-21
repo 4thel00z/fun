@@ -1,6 +1,6 @@
 #include "JSHash.h"
 #include "CryptoUtil.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/ArrayBuffer.h>
 #include <JavaScriptCore/Error.h>
 #include <JavaScriptCore/Exception.h>
@@ -13,7 +13,7 @@
 #include "NodeValidator.h"
 #include <JavaScriptCore/FunctionPrototype.h>
 
-namespace Bun {
+namespace Fun {
 
 static const HashTableValue JSHashPrototypeTableValues[] = {
     { "update"_s, static_cast<unsigned>(PropertyAttribute::Function), NoIntrinsic, { HashTableValue::NativeFunctionType, jsHashProtoFuncUpdate, 1 } },
@@ -147,14 +147,14 @@ JSC_DEFINE_HOST_FUNCTION(jsHashProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
     JSValue thisHash = callFrame->thisValue();
     JSHash* hash = dynamicDowncast<JSHash>(thisHash);
     if (!hash) [[unlikely]] {
-        return Bun::ERR::INVALID_THIS(scope, globalObject, "Hash"_s);
+        return Fun::ERR::INVALID_THIS(scope, globalObject, "Hash"_s);
     }
 
     JSValue hashWrapper = callFrame->argument(0);
 
     // Check if the Hash is already finalized
     if (hash->m_finalized) {
-        return Bun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
+        return Fun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
     }
 
     JSC::JSValue inputValue = callFrame->argument(1);
@@ -173,7 +173,7 @@ JSC_DEFINE_HOST_FUNCTION(jsHashProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
 
         // Validate encoding
         if (encoding == WebCore::BufferEncodingType::hex && inputString->length() % 2 != 0) {
-            return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, inputString->length()));
+            return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, inputString->length()));
         }
 
         auto inputView = inputString->view(globalObject);
@@ -185,22 +185,22 @@ JSC_DEFINE_HOST_FUNCTION(jsHashProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
         auto* convertedView = dynamicDowncast<JSC::JSArrayBufferView>(converted);
 
         if (!hash->update(std::span { reinterpret_cast<const uint8_t*>(convertedView->vector()), convertedView->byteLength() })) {
-            return Bun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
+            return Fun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
         }
 
         return JSValue::encode(hashWrapper);
     } else if (auto* view = dynamicDowncast<JSArrayBufferView>(inputValue)) {
         if (view->isDetached()) [[unlikely]] {
-            return Bun::ERR::INVALID_STATE(scope, globalObject, "Cannot hash a detached buffer"_s);
+            return Fun::ERR::INVALID_STATE(scope, globalObject, "Cannot hash a detached buffer"_s);
         }
         if (!hash->update(view->span())) {
-            return Bun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
+            return Fun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
         }
 
         return JSValue::encode(hashWrapper);
     }
 
-    return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, inputValue);
+    return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, inputValue);
 }
 
 JSC_DEFINE_HOST_FUNCTION(jsHashProtoFuncDigest, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callFrame))
@@ -212,12 +212,12 @@ JSC_DEFINE_HOST_FUNCTION(jsHashProtoFuncDigest, (JSC::JSGlobalObject * lexicalGl
     // Get the Hash instance
     JSHash* hash = dynamicDowncast<JSHash>(callFrame->thisValue());
     if (!hash) [[unlikely]] {
-        return Bun::ERR::INVALID_THIS(scope, lexicalGlobalObject, "Hash"_s);
+        return Fun::ERR::INVALID_THIS(scope, lexicalGlobalObject, "Hash"_s);
     }
 
     // Check if already finalized
     if (hash->m_finalized) {
-        return Bun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
+        return Fun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
     }
 
     // Handle encoding if provided
@@ -313,7 +313,7 @@ JSC_DEFINE_HOST_FUNCTION(constructHash, (JSC::JSGlobalObject * globalObject, JSC
     if (algorithmOrHashInstanceValue.inherits(JSHash::info())) {
         original = dynamicDowncast<JSHash>(algorithmOrHashInstanceValue);
         if (!original || original->m_finalized) {
-            return Bun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
+            return Fun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
         }
 
         if (original->m_zigHasher) {
@@ -322,7 +322,7 @@ JSC_DEFINE_HOST_FUNCTION(constructHash, (JSC::JSGlobalObject * globalObject, JSC
             md = original->m_ctx.getDigest();
         }
     } else {
-        Bun::V::validateString(scope, globalObject, algorithmOrHashInstanceValue, "algorithm"_s);
+        Fun::V::validateString(scope, globalObject, algorithmOrHashInstanceValue, "algorithm"_s);
         RETURN_IF_EXCEPTION(scope, {});
 
         WTF::String algorithm = algorithmOrHashInstanceValue.toWTFString(globalObject);
@@ -346,7 +346,7 @@ JSC_DEFINE_HOST_FUNCTION(constructHash, (JSC::JSGlobalObject * globalObject, JSC
         RETURN_IF_EXCEPTION(scope, {});
 
         if (!outputLengthValue.isUndefined()) {
-            Bun::V::validateUint32(scope, globalObject, outputLengthValue, "options.outputLength"_s, jsUndefined());
+            Fun::V::validateUint32(scope, globalObject, outputLengthValue, "options.outputLength"_s, jsUndefined());
             RETURN_IF_EXCEPTION(scope, {});
             xofLen = outputLengthValue.toUInt32(globalObject);
             RETURN_IF_EXCEPTION(scope, {});
@@ -404,4 +404,4 @@ void setupJSHashClassStructure(JSC::LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

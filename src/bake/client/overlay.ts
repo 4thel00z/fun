@@ -132,7 +132,7 @@ declare const OVERLAY_CSS: string;
  */
 function mountModal() {
   if (domModalTitle) return;
-  domShadowRoot = elem("bun-hmr", {
+  domShadowRoot = elem("fun-hmr", {
     style:
       "position:fixed!important;" +
       "display:none!important;" +
@@ -177,7 +177,7 @@ function mountModal() {
       elem("footer", null, [
         (domFooterText = elemText("div", null, "")),
         elem("div", { class: "flex" }),
-        elemText("div", null, "Bun v" + config.bun),
+        elemText("div", null, "Fun v" + config.fun),
       ]),
     ]),
   ]);
@@ -263,7 +263,7 @@ export async function onRuntimeError(err: any, fatal = false, async = false) {
     }
 
     // Request the error to be reported and remapped.
-    const response = await fetch("/_bun/report_error", {
+    const response = await fetch("/_fun/report_error", {
       method: "POST",
       body: writer.view.buffer,
     });
@@ -607,7 +607,7 @@ function renderTraceFrame(frame: Frame, className: string) {
 
 function renderErrorMessageLine(level: BundlerMessageLevel, text: string) {
   const levelName = bundleLogLevelToName[level];
-  if (IS_BUN_DEVELOPMENT && !levelName) {
+  if (IS_FUN_DEVELOPMENT && !levelName) {
     throw new Error("Unknown log level: " + level);
   }
   return elem("div", { class: "message-desc " + levelName }, [
@@ -666,7 +666,7 @@ function onNextError() {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bun-hmr": HTMLElement;
+    "fun-hmr": HTMLElement;
   }
 }
 

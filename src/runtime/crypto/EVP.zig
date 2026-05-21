@@ -62,16 +62,16 @@ pub const Algorithm = enum {
         };
     }
 
-    pub const names: std.EnumArray(Algorithm, bun.String) = brk: {
-        var all = std.EnumArray(Algorithm, bun.String).initUndefined();
+    pub const names: std.EnumArray(Algorithm, fun.String) = brk: {
+        var all = std.EnumArray(Algorithm, fun.String).initUndefined();
         var iter = all.iterator();
         while (iter.next()) |entry| {
-            entry.value.* = bun.String.init(@tagName(entry.key));
+            entry.value.* = fun.String.init(@tagName(entry.key));
         }
         break :brk all;
     };
 
-    pub const map = bun.ComptimeStringMap(Algorithm, .{
+    pub const map = fun.ComptimeStringMap(Algorithm, .{
         .{ "blake2b256", .blake2b256 },
         .{ "blake2b512", .blake2b512 },
         .{ "blake2s256", .blake2s256 },
@@ -121,7 +121,7 @@ pub const Algorithm = enum {
 };
 
 pub fn init(algorithm: Algorithm, md: *const BoringSSL.EVP_MD, engine: *BoringSSL.ENGINE) EVP {
-    bun.BoringSSL.load();
+    fun.BoringSSL.load();
 
     var ctx: BoringSSL.EVP_MD_CTX = undefined;
     BoringSSL.EVP_MD_CTX_init(&ctx);
@@ -199,11 +199,11 @@ pub fn byNameAndEngine(engine: *BoringSSL.ENGINE, name: []const u8) ?EVP {
 pub fn byName(name: ZigString, global: *jsc.JSGlobalObject) ?EVP {
     var name_str = name.toSlice(global.allocator());
     defer name_str.deinit();
-    return byNameAndEngine(global.bunVM().rareData().boringEngine(), name_str.slice());
+    return byNameAndEngine(global.funVM().rareData().boringEngine(), name_str.slice());
 }
 
 pub fn deinit(this: *EVP) void {
-    // https://github.com/oven-sh/bun/issues/3250
+    // https://github.com/underdoc-org/fun/issues/3250
     _ = BoringSSL.EVP_MD_CTX_cleanup(&this.ctx);
 }
 
@@ -213,10 +213,10 @@ pub const pbkdf2 = PBKDF2.pbkdf2;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const strings = fun.strings;
+const BoringSSL = fun.BoringSSL.c;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const ZigString = jsc.ZigString;

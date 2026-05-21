@@ -2,7 +2,7 @@
 # https://buildkite.com/docs/pipelines/defining-steps
 #
 # Changes to this file must be manually edited here:
-# https://buildkite.com/bun/bun/settings/steps
+# https://buildkite.com/fun/fun/settings/steps
 steps:
   - if: "build.pull_request.repository.fork"
     block: ":eyes:"

@@ -4,7 +4,7 @@
 #include <wtf/text/WTFString.h>
 #include <wtf/SIMDHelpers.h>
 #include <wtf/SIMDUTF.h>
-namespace Bun {
+namespace Fun {
 using namespace WTF;
 
 ALWAYS_INLINE static uint8_t hexToInt(uint8_t c)

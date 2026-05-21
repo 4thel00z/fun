@@ -1,9 +1,9 @@
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 
 test.each(["stdin_fell_asleep.js", "stdin_fell_asleep_2.js"])("make sure stdin wakes up (%s)", async file => {
-  const res = Bun.spawn({
-    cmd: [bunExe(), import.meta.dir + "/" + file],
-    env: bunEnv,
+  const res = Fun.spawn({
+    cmd: [funExe(), import.meta.dir + "/" + file],
+    env: funEnv,
     stdio: ["pipe", "pipe", "pipe"],
   });
   // wait for ready signal from stdin

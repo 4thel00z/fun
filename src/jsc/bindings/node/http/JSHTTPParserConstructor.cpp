@@ -3,7 +3,7 @@
 #include "ZigGlobalObject.h"
 #include "ProcessBindingHTTPParser.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -56,4 +56,4 @@ void JSHTTPParserConstructor::finishCreation(VM& vm, JSObject* prototype)
     putDirect(vm, Identifier::fromString(vm, "kLenientAll"_s), jsNumber(kLenientAll));
 }
 
-} // namespace Bun
+} // namespace Fun

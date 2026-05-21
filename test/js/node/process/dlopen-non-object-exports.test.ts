@@ -1,9 +1,9 @@
-import { spawnSync } from "bun";
-import { beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { spawnSync } from "fun";
+import { beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
-// This test verifies that Bun properly handles non-object exports when loading native modules
+// This test verifies that Fun properly handles non-object exports when loading native modules
 // Previously, this would cause a segfault when exports was null, undefined, or a primitive
 
 describe("process.dlopen with non-object exports", () => {
@@ -69,9 +69,9 @@ NODE_MODULE_CONTEXT_AWARE(addon, demo::Initialize)
 
     // Build the addon
     const build = spawnSync({
-      cmd: [bunExe(), "install"],
+      cmd: [funExe(), "install"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -94,9 +94,9 @@ NODE_MODULE_CONTEXT_AWARE(addon, demo::Initialize)
       }
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", testScript],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", testScript],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -119,9 +119,9 @@ NODE_MODULE_CONTEXT_AWARE(addon, demo::Initialize)
       }
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", testScript],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", testScript],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -142,9 +142,9 @@ NODE_MODULE_CONTEXT_AWARE(addon, demo::Initialize)
       console.log("Value:", m.exports);
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", testScript],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", testScript],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

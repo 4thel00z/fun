@@ -13,11 +13,11 @@ class Data;
 
 namespace api_internal {
 
-BUN_EXPORT void ToLocalEmpty();
-BUN_EXPORT void FromJustIsNothing();
-BUN_EXPORT uintptr_t* GlobalizeReference(v8::internal::Isolate* isolate, uintptr_t address);
-BUN_EXPORT void DisposeGlobal(uintptr_t* location);
-BUN_EXPORT Local<Value> GetFunctionTemplateData(Isolate* isolate, Local<Data> target);
+FUN_EXPORT void ToLocalEmpty();
+FUN_EXPORT void FromJustIsNothing();
+FUN_EXPORT uintptr_t* GlobalizeReference(v8::internal::Isolate* isolate, uintptr_t address);
+FUN_EXPORT void DisposeGlobal(uintptr_t* location);
+FUN_EXPORT Local<Value> GetFunctionTemplateData(Isolate* isolate, Local<Data> target);
 
 } // namespace api_internal
 } // namespace v8

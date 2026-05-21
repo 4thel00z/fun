@@ -62,7 +62,7 @@ pub fn watcherAcquireEvent(self: *Self) *HotReloadEvent {
     const ev = &self.events[index];
 
     if (comptime Environment.allow_assert) {
-        bun.assertf(
+        fun.assertf(
             self.dbg_watcher_event == null,
             "must call `watcherReleaseEvent` before calling `watcherAcquireEvent` again",
             .{},
@@ -74,7 +74,7 @@ pub fn watcherAcquireEvent(self: *Self) *HotReloadEvent {
     if (ev.isEmpty())
         ev.timer = std.time.Timer.start() catch unreachable;
 
-    ev.owner.bun_watcher.thread_lock.assertLocked();
+    ev.owner.fun_watcher.thread_lock.assertLocked();
 
     if (comptime Environment.isDebug)
         assert(ev.debug_mutex.tryLock());
@@ -86,14 +86,14 @@ pub fn watcherAcquireEvent(self: *Self) *HotReloadEvent {
 ///
 /// Called from watcher thread.
 pub fn watcherReleaseAndSubmitEvent(self: *Self, ev: *HotReloadEvent) void {
-    ev.owner.bun_watcher.thread_lock.assertLocked();
+    ev.owner.fun_watcher.thread_lock.assertLocked();
 
     if (comptime Environment.allow_assert) {
         const dbg_event = self.dbg_watcher_event orelse std.debug.panic(
             "must call `watcherAcquireEvent` before `watcherReleaseAndSubmitEvent`",
             .{},
         );
-        bun.assertf(
+        fun.assertf(
             dbg_event == ev,
             "watcherReleaseAndSubmitEvent: event is not from last `watcherAcquireEvent` call" ++
                 " (expected {*}, got {*})",
@@ -123,7 +123,7 @@ pub fn watcherReleaseAndSubmitEvent(self: *Self, ev: *HotReloadEvent) void {
             // (could technically be made non-atomic)
             self.next_event.store(.waiting, .monotonic);
             if (comptime Environment.allow_assert) {
-                bun.assertf(
+                fun.assertf(
                     self.dbg_server_event == null,
                     "no event should be running right now",
                     .{},
@@ -148,7 +148,7 @@ pub fn watcherReleaseAndSubmitEvent(self: *Self, ev: *HotReloadEvent) void {
         else => {
             // This is an index into the `events` array.
             const old_index: u2 = @intCast(@intFromEnum(old_next));
-            bun.assertf(
+            fun.assertf(
                 self.pending_event == old_index,
                 "watcherReleaseAndSubmitEvent: expected `pending_event` to be {d}; got {?d}",
                 .{ old_index, self.pending_event },
@@ -171,7 +171,7 @@ pub fn recycleEventFromDevServer(self: *Self, old_event: *HotReloadEvent) ?*HotR
         // Not atomic because watcher won't modify this value while an event is running.
         const dbg_event = self.dbg_server_event;
         self.dbg_server_event = null;
-        bun.assertf(
+        fun.assertf(
             dbg_event == old_event,
             "recycleEventFromDevServer: old_event: expected {*}, got {*}",
             .{ dbg_event, old_event },
@@ -203,11 +203,11 @@ pub fn recycleEventFromDevServer(self: *Self, old_event: *HotReloadEvent) ?*HotR
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const assert = bun.assert;
-const bake = bun.bake;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const assert = fun.assert;
+const bake = fun.bake;
+const jsc = fun.jsc;
 
 const DevServer = bake.DevServer;
 const HotReloadEvent = DevServer.HotReloadEvent;

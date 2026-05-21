@@ -4,7 +4,7 @@ sidebarTitle: Escape HTML
 mode: center
 ---
 
-The `Bun.escapeHTML()` utility can be used to escape HTML characters in a string. The following replacements are made.
+The `Fun.escapeHTML()` utility can be used to escape HTML characters in a string. The following replacements are made.
 
 - `"` becomes `"&quot;"`
 - `&` becomes `"&amp;"`
@@ -15,7 +15,7 @@ The `Bun.escapeHTML()` utility can be used to escape HTML characters in a string
 This function is optimized for large input. Non-string types will be converted to a string before escaping.
 
 ```ts
-Bun.escapeHTML("<script>alert('Hello World!')</script>");
+Fun.escapeHTML("<script>alert('Hello World!')</script>");
 // &lt;script&gt;alert(&#x27;Hello World!&#x27;)&lt;&#x2F;script&gt;
 ```
 

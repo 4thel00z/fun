@@ -1,11 +1,11 @@
 pub const ResolvedSource = extern struct {
     /// Specifier's lifetime is the caller from C++
-    /// https://github.com/oven-sh/bun/issues/9521
-    specifier: bun.String = bun.String.empty,
-    source_code: bun.String = bun.String.empty,
+    /// https://github.com/underdoc-org/fun/issues/9521
+    specifier: fun.String = fun.String.empty,
+    source_code: fun.String = fun.String.empty,
 
     /// source_url is eventually deref'd on success
-    source_url: bun.String = bun.String.empty,
+    source_url: fun.String = fun.String.empty,
 
     is_commonjs_module: bool = false,
 
@@ -33,12 +33,12 @@ pub const ResolvedSource = extern struct {
     /// JSC validates bytecode by checking if the origin URL matches exactly what
     /// was used at build time. If empty, the origin is derived from source_url.
     /// This is converted to a file:// URL on the C++ side.
-    bytecode_origin_path: bun.String = bun.String.empty,
+    bytecode_origin_path: fun.String = fun.String.empty,
 
     pub const Tag = @import("ResolvedSourceTag").ResolvedSourceTag;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

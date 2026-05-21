@@ -1,4 +1,4 @@
-// Ensure this test runs in both Node.js & Bun to verify compatibility.
+// Ensure this test runs in both Node.js & Fun to verify compatibility.
 import assert from "node:assert";
 import { Readable, Transform } from "node:stream";
 import { test } from "node:test";

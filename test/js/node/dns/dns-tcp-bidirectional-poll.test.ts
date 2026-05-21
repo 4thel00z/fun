@@ -9,14 +9,14 @@
 // The server and resolver run together in a subprocess: the assertion aborts
 // the whole process, and the busy-loop on EPOLLOUT (pre-fix) would otherwise
 // starve the test runner.
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 import { join } from "node:path";
 
 test.skipIf(isWindows)("c-ares TCP DNS fd registers readable+writable on one FilePoll without asserting", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "dns-tcp-bidirectional-poll-fixture.ts")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "dns-tcp-bidirectional-poll-fixture.ts")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

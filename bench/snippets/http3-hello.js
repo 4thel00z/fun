@@ -42,7 +42,7 @@ if (process.argv[2] && process.argv[3]) {
 const TOTAL = 10_000_000;
 var i = 0;
 
-const server = Bun.serve({
+const server = Fun.serve({
   port: 3001,
   http3: true,
   http1: true,

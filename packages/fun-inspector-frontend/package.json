@@ -1,0 +1,14 @@
+{
+  "name": "web-inspector-fun",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/fun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.0"
+  },
+  "dependencies": {
+    "esbuild": "^0.19.2"
+  }
+}

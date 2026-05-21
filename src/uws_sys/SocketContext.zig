@@ -1,9 +1,9 @@
 //! Legacy home of the `us_socket_context_t` opaque, which is gone — sockets
 //! now belong to embedded `SocketGroup`s and dispatch by `kind`. What remains
-//! here is the `us_bun_socket_context_options_t` extern mirror, kept under its
+//! here is the `us_fun_socket_context_options_t` extern mirror, kept under its
 //! old name so `SSLConfig.asUSockets()` callers don't churn.
 
-pub const BunSocketContextOptions = extern struct {
+pub const FunSocketContextOptions = extern struct {
     key_file_name: [*c]const u8 = null,
     cert_file_name: [*c]const u8 = null,
     passphrase: [*c]const u8 = null,
@@ -34,7 +34,7 @@ pub const BunSocketContextOptions = extern struct {
     /// chain validation, populate verify_error) is applied in
     /// `us_internal_ssl_attach`, so a server reusing this ctx never sends
     /// CertificateRequest unless these options asked it to.
-    pub fn createSSLContext(options: BunSocketContextOptions, err: *uws.create_bun_socket_error_t) ?*BoringSSL.SSL_CTX {
+    pub fn createSSLContext(options: FunSocketContextOptions, err: *uws.create_fun_socket_error_t) ?*BoringSSL.SSL_CTX {
         return c.us_ssl_ctx_from_options(options, err);
     }
 
@@ -42,25 +42,25 @@ pub const BunSocketContextOptions = extern struct {
     /// pointers so the digest is content-addressed (not pointer-addressed).
     /// Two option structs that build the same `SSL_CTX*` produce the same
     /// digest. Used as the key for `SSLContextCache`.
-    pub fn digest(self: BunSocketContextOptions) [32]u8 {
-        var h = bun.sha.Hashers.SHA256.init();
+    pub fn digest(self: FunSocketContextOptions) [32]u8 {
+        var h = fun.sha.Hashers.SHA256.init();
         const feedZ = struct {
-            fn f(hp: *bun.sha.Hashers.SHA256, s: [*c]const u8) void {
+            fn f(hp: *fun.sha.Hashers.SHA256, s: [*c]const u8) void {
                 // Presence byte so null ≠ "" — both would otherwise feed only
                 // the trailing 0. In practice "" usually fails createSSLContext
                 // and never caches, but injectivity is cheap to guarantee.
                 hp.update(&.{@intFromBool(s != null)});
-                if (s) |p| hp.update(bun.sliceTo(p, 0));
+                if (s) |p| hp.update(fun.sliceTo(p, 0));
                 hp.update(&.{0}); // terminator so {a:"xy"} ≠ {a:"x",b:"y"}
             }
         }.f;
         const feedArr = struct {
-            fn f(hp: *bun.sha.Hashers.SHA256, arr: ?[*]const ?[*:0]const u8, n: u32) void {
+            fn f(hp: *fun.sha.Hashers.SHA256, arr: ?[*]const ?[*:0]const u8, n: u32) void {
                 hp.update(&.{@intFromBool(arr != null)});
                 hp.update(std.mem.asBytes(&n));
                 if (arr) |a| for (a[0..n]) |s| {
                     hp.update(&.{@intFromBool(s != null)});
-                    if (s) |p| hp.update(bun.sliceTo(p, 0));
+                    if (s) |p| hp.update(fun.sliceTo(p, 0));
                     hp.update(&.{0});
                 };
                 hp.update(&.{0});
@@ -68,17 +68,17 @@ pub const BunSocketContextOptions = extern struct {
         }.f;
         // File-backed fields: feed path + (mtime, size) so an in-place cert
         // rotation produces a fresh digest. stat() is ~1µs and only runs when
-        // the file form is used (Bun-specific; node:tls always passes inline
+        // the file form is used (Fun-specific; node:tls always passes inline
         // bytes). On stat failure we feed zeros — `createSSLContext` will fail
         // on the same path and the entry never reaches the cache.
         const feedPath = struct {
-            fn f(hp: *bun.sha.Hashers.SHA256, s: [*c]const u8) void {
+            fn f(hp: *fun.sha.Hashers.SHA256, s: [*c]const u8) void {
                 hp.update(&.{@intFromBool(s != null)});
                 if (s) |p| {
                     const path = std.mem.span(@as([*:0]const u8, @ptrCast(p)));
                     hp.update(path);
                     var meta: [3]i64 = @splat(0);
-                    if (path.len > 0) switch (bun.sys.stat(path)) {
+                    if (path.len > 0) switch (fun.sys.stat(path)) {
                         .result => |st| {
                             const mt = st.mtime();
                             meta = .{ @intCast(mt.sec), @intCast(mt.nsec), @intCast(st.size) };
@@ -112,28 +112,28 @@ pub const BunSocketContextOptions = extern struct {
 
     /// Best-effort byte count of cert/key/CA material — fed into
     /// `SecureContext.memoryCost` so the GC sees the off-heap allocation.
-    pub fn approxCertBytes(self: BunSocketContextOptions) usize {
+    pub fn approxCertBytes(self: FunSocketContextOptions) usize {
         var n: usize = 0;
         if (self.key) |arr| for (arr[0..self.key_count]) |k| {
-            if (k) |s| n += bun.sliceTo(s, 0).len;
+            if (k) |s| n += fun.sliceTo(s, 0).len;
         };
         if (self.cert) |arr| for (arr[0..self.cert_count]) |k| {
-            if (k) |s| n += bun.sliceTo(s, 0).len;
+            if (k) |s| n += fun.sliceTo(s, 0).len;
         };
         if (self.ca) |arr| for (arr[0..self.ca_count]) |k| {
-            if (k) |s| n += bun.sliceTo(s, 0).len;
+            if (k) |s| n += fun.sliceTo(s, 0).len;
         };
         return n;
     }
 };
 
 pub const c = struct {
-    pub extern fn us_ssl_ctx_from_options(BunSocketContextOptions, *uws.create_bun_socket_error_t) ?*BoringSSL.SSL_CTX;
+    pub extern fn us_ssl_ctx_from_options(FunSocketContextOptions, *uws.create_fun_socket_error_t) ?*BoringSSL.SSL_CTX;
     pub extern fn us_ssl_ctx_live_count() c_long;
 };
 
 const std = @import("std");
 
-const bun = @import("bun");
-const uws = bun.uws;
-const BoringSSL = bun.BoringSSL.c;
+const fun = @import("fun");
+const uws = fun.uws;
+const BoringSSL = fun.BoringSSL.c;

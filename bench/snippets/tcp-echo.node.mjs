@@ -77,7 +77,7 @@ if (process.env.IS_SERVER) {
       counter = 0;
     }, 1000);
 
-    const server = Bun.listen({
+    const server = Fun.listen({
       socket: handlers,
       hostname: "0.0.0.0",
       port: 8000,

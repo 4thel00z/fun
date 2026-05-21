@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 import { gc as gcTrace, withoutAggressiveGC } from "harness";
 
 const getByteLength = str => {
@@ -583,7 +583,7 @@ it("should not crash with a getter that throws", () => {
 it("reads the input after the options.stream getter runs", () => {
   // The Encoding spec processes options before pushing a copy of the input to
   // the I/O queue, and Node.js matches that: a `stream` getter that detaches
-  // the input buffer causes decode() to see an empty input. Previously Bun
+  // the input buffer causes decode() to see an empty input. Previously Fun
   // cached the byte pointer before evaluating the getter and then read through
   // it afterwards — a stale pointer into memory that no longer belongs to the
   // input buffer.
@@ -639,9 +639,9 @@ it.each(["utf-16le", "utf-16be"])("TextDecoder(%s).decode() should not leak the 
   const run = batches => {
     for (let i = 0; i < batches; i++) {
       for (let j = 0; j < 128; j++) decoder.decode(input);
-      Bun.gc();
+      Fun.gc();
     }
-    Bun.gc(true);
+    Fun.gc(true);
   };
 
   // Warm up so allocator arenas / JIT reach steady state, then snapshot RSS.

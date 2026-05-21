@@ -133,7 +133,7 @@ pub const PropertyRuleDeclarationParser = struct {
 
     pub const DeclarationParser = struct {
         pub const Declaration = void;
-        const Map = bun.ComptimeStringMap(std.meta.FieldEnum(PropertyRuleDeclarationParser), .{
+        const Map = fun.ComptimeStringMap(std.meta.FieldEnum(PropertyRuleDeclarationParser), .{
             .{ "syntax", .syntax },
             .{ "inherits", .inherits },
             .{ "initial-value", .initial_value },
@@ -147,26 +147,26 @@ pub const PropertyRuleDeclarationParser = struct {
             //     return switch (field) {
             //         .syntax => |syntax| {
 
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("syntax", name)) {
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("syntax", name)) {
                 const syntax = switch (SyntaxString.parse(input)) {
                     .result => |vv| vv,
                     .err => |e| return .{ .err = e },
                 };
                 this.syntax = syntax;
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("inherits", name)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("inherits", name)) {
                 const location = input.currentSourceLocation();
                 const ident = switch (input.expectIdent()) {
                     .result => |vv| vv,
                     .err => |e| return .{ .err = e },
                 };
-                const inherits = if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("true", ident))
+                const inherits = if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("true", ident))
                     true
-                else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("false", ident))
+                else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("false", ident))
                     false
                 else
                     return .{ .err = location.newUnexpectedTokenError(.{ .ident = ident }) };
                 this.inherits = inherits;
-            } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength("initial-value", name)) {
+            } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength("initial-value", name)) {
                 // Buffer the value into a string. We will parse it later.
                 const start = input.position();
                 while (input.next().isOk()) {}
@@ -221,5 +221,5 @@ pub const PropertyRuleDeclarationParser = struct {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

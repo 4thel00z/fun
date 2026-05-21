@@ -1,4 +1,4 @@
-import { heapStats } from "bun:jsc";
+import { heapStats } from "fun:jsc";
 
 const { SERVER } = process.env;
 
@@ -9,7 +9,7 @@ if (typeof SERVER === "undefined" || !SERVER?.length) {
 const COUNT = parseInt(process.env.COUNT || "50", 10);
 var oks = 0;
 var textLength = 0;
-Bun.gc(true);
+Fun.gc(true);
 async function getBaseline() {
   async function iterate() {
     const tls =
@@ -30,7 +30,7 @@ async function getBaseline() {
     await iterate();
   }
 
-  Bun.gc(true);
+  Fun.gc(true);
 
   return process.memoryUsage.rss();
 }
@@ -58,8 +58,8 @@ if (oks !== COUNT) {
   throw new Error("Not all requests succeeded");
 }
 
-await Bun.sleep(10);
-Bun.gc(true);
+await Fun.sleep(10);
+Fun.gc(true);
 const delta = process.memoryUsage.rss() - baseline;
 if ((heapStats().objectTypeCounts.Response ?? 0) > 5) {
   throw new Error("Too many Response objects: " + heapStats().objectTypeCounts.Response);

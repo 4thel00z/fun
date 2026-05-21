@@ -1,38 +1,38 @@
 ---
 title: DNS
-description: Use Bun's DNS module to resolve DNS records
+description: Use Fun's DNS module to resolve DNS records
 ---
 
-Bun implements it's own `dns` module, and the `node:dns` module.
+Fun implements it's own `dns` module, and the `node:dns` module.
 
 ```ts
 import * as dns from "node:dns";
 
-const addrs = await dns.promises.resolve4("bun.com", { ttl: true });
+const addrs = await dns.promises.resolve4("fun.dev", { ttl: true });
 console.log(addrs);
 // => [{ address: "172.67.161.226", family: 4, ttl: 0 }, ...]
 ```
 
 ```ts
-import { dns } from "bun";
+import { dns } from "fun";
 
-dns.prefetch("bun.com", 443);
+dns.prefetch("fun.dev", 443);
 ```
 
 ---
 
-## DNS caching in Bun
+## DNS caching in Fun
 
-Bun supports DNS caching. This cache makes repeated connections to the same hosts faster.
+Fun supports DNS caching. This cache makes repeated connections to the same hosts faster.
 
 At the time of writing, we cache up to 255 entries for a maximum of 30 seconds (each). If any connections to a host fail, we remove the entry from the cache. When multiple connections are made to the same host simultaneously, DNS lookups are deduplicated to avoid making multiple requests for the same host.
 
 This cache is automatically used by:
 
-- `bun install`
+- `fun install`
 - `fetch()`
 - `node:http` (client)
-- `Bun.connect`
+- `Fun.connect`
 - `node:net`
 - `node:tls`
 
@@ -40,10 +40,10 @@ This cache is automatically used by:
 
 Web browsers expose [`<link rel="dns-prefetch">`](https://developer.mozilla.org/en-US/docs/Web/Performance/dns-prefetch) to allow developers to prefetch DNS entries. This is useful when you know you'll need to connect to a host in the near future and want to avoid the initial DNS lookup.
 
-In Bun, you can use the `dns.prefetch` API to achieve the same effect.
+In Fun, you can use the `dns.prefetch` API to achieve the same effect.
 
 ```ts
-import { dns } from "bun";
+import { dns } from "fun";
 
 dns.prefetch("my.database-host.com", 5432);
 ```
@@ -63,12 +63,12 @@ dns.prefetch(hostname: string, port: number): void;
 Here's an example:
 
 ```ts
-import { dns } from "bun";
+import { dns } from "fun";
 
-dns.prefetch("bun.com", 443);
+dns.prefetch("fun.dev", 443);
 //
 // ... sometime later ...
-await fetch("https://bun.com");
+await fetch("https://fun.dev");
 ```
 
 ### `dns.getCacheStats()`
@@ -91,7 +91,7 @@ To get the current cache stats, you can use the `dns.getCacheStats` API. This AP
 Example:
 
 ```ts
-import { dns } from "bun";
+import { dns } from "fun";
 
 const stats = dns.getCacheStats();
 console.log(stats);
@@ -100,10 +100,10 @@ console.log(stats);
 
 ### Configuring DNS cache TTL
 
-Bun defaults to 30 seconds for the TTL of DNS cache entries. To change this, you can set the environment variable `$BUN_CONFIG_DNS_TIME_TO_LIVE_SECONDS`. For example, to set the TTL to 5 seconds:
+Fun defaults to 30 seconds for the TTL of DNS cache entries. To change this, you can set the environment variable `$FUN_CONFIG_DNS_TIME_TO_LIVE_SECONDS`. For example, to set the TTL to 5 seconds:
 
 ```sh
-BUN_CONFIG_DNS_TIME_TO_LIVE_SECONDS=5 bun run my-script.ts
+FUN_CONFIG_DNS_TIME_TO_LIVE_SECONDS=5 fun run my-script.ts
 ```
 
 #### Why is 30 seconds the default?

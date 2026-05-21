@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, isLinux, tempDirWithFiles } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, isLinux, tempDirWithFiles } from "harness";
 import { spawnSync } from "node:child_process";
 import { existsSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
@@ -102,13 +102,13 @@ int main(int argc, char **argv) {
 
   const helperBin = tryBuild();
 
-  // Run `snippet` in a bun subprocess guarded by the seccomp helper.
+  // Run `snippet` in a fun subprocess guarded by the seccomp helper.
   // Returns { stdout, stderr, exitCode } on success, or null if the
   // environment refused to install the seccomp filter (skip).
   async function runUnderSeccomp(bin: string, snippet: string) {
-    await using proc = Bun.spawn({
-      cmd: [bin, bunExe(), "-e", snippet],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [bin, funExe(), "-e", snippet],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
   for (const c of cases) {
     test(`${c.name} succeeds when statx is blocked by seccomp`, async () => {
       if (helperBin == null) {
-        // bun:test has no runtime-skip; log loudly so CI output distinguishes
+        // fun:test has no runtime-skip; log loudly so CI output distinguishes
         // this from a real pass. Happens when cc or the seccomp headers are
         // missing on the test host.
         console.warn(`SKIP fs.${c.name} seccomp: cc or seccomp headers not available`);

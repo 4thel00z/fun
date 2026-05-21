@@ -1,5 +1,5 @@
 # Basic filesystem with FUSE
-# Used to ensure bun can run files mounted on FUSE
+# Used to ensure fun can run files mounted on FUSE
 # The filesystem will appear to have `main.js` containing:
 # console.log("hello world");
 # and `main-symlink.js` as a symlink to `main.js`.
@@ -58,7 +58,7 @@ class TestingFs(fuse.Fuse):
 def main():
     server = TestingFs(
         version=fuse.__version__,
-        usage="\nSmall filesystem made for testing Bun's ability to run files off of FUSE",
+        usage="\nSmall filesystem made for testing Fun's ability to run files off of FUSE",
         dash_s_do="setsingle",
     )
     server.parse(errex=1)

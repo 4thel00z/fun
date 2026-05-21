@@ -9,9 +9,9 @@ namespace v8 {
 
 class Number : public Primitive {
 public:
-    BUN_EXPORT static Local<Number> New(Isolate* isolate, double value);
+    FUN_EXPORT static Local<Number> New(Isolate* isolate, double value);
 
-    BUN_EXPORT double Value() const;
+    FUN_EXPORT double Value() const;
 };
 
 } // namespace v8

@@ -6,7 +6,7 @@ pub const JSObject = opaque {
     }
 
     extern fn JSC__JSObject__getIndex(this: JSValue, globalThis: *JSGlobalObject, i: u32) JSValue;
-    extern fn Bun__JSObject__getCodePropertyVMInquiry(global: *JSGlobalObject, obj: *JSObject) JSValue;
+    extern fn Fun__JSObject__getCodePropertyVMInquiry(global: *JSGlobalObject, obj: *JSObject) JSValue;
     extern fn JSC__createStructure(global: *jsc.JSGlobalObject, owner: *jsc.JSCell, length: u32, names: [*]ExternColumnIdentifier) jsc.JSValue;
     extern fn JSC__JSObject__create(global_object: *JSGlobalObject, length: usize, ctx: *anyopaque, initializer: InitializeCallback) JSValue;
 
@@ -21,7 +21,7 @@ pub const JSObject = opaque {
     ///
     /// This method is equivalent to `Object.create(...)` + setting properties,
     /// and is only intended for creating POJOs.
-    pub fn create(pojo: anytype, global: *JSGlobalObject) bun.JSError!*JSObject {
+    pub fn create(pojo: anytype, global: *JSGlobalObject) fun.JSError!*JSObject {
         return createFromStructWithPrototype(@TypeOf(pojo), pojo, global, false);
     }
     /// Marshall a struct into a JSObject, copying its properties. It's
@@ -32,7 +32,7 @@ pub const JSObject = opaque {
     ///
     /// This is roughly equivalent to creating an object with
     /// `Object.create(null)` and adding properties to it.
-    pub fn createNullProto(pojo: anytype, global: *JSGlobalObject) bun.JSError!*JSObject {
+    pub fn createNullProto(pojo: anytype, global: *JSGlobalObject) fun.JSError!*JSObject {
         return createFromStructWithPrototype(@TypeOf(pojo), pojo, global, true);
     }
 
@@ -48,7 +48,7 @@ pub const JSObject = opaque {
     /// depending on whether `null_prototype` is set. Prefer using the object
     /// prototype (`null_prototype = false`) unless you have a good reason not
     /// to.
-    fn createFromStructWithPrototype(comptime T: type, pojo: T, global: *JSGlobalObject, comptime null_prototype: bool) bun.JSError!*JSObject {
+    fn createFromStructWithPrototype(comptime T: type, pojo: T, global: *JSGlobalObject, comptime null_prototype: bool) fun.JSError!*JSObject {
         const info: std.builtin.Type.Struct = @typeInfo(T).@"struct";
 
         const obj = obj: {
@@ -56,8 +56,8 @@ pub const JSObject = opaque {
                 JSValue.createEmptyObjectWithNullPrototype(global)
             else
                 JSValue.createEmptyObject(global, comptime info.fields.len);
-            if (bun.Environment.isDebug)
-                bun.assert(val.isObject());
+            if (fun.Environment.isDebug)
+                fun.assert(val.isObject());
             break :obj val.uncheckedPtrCast(JSObject);
         };
 
@@ -98,10 +98,10 @@ pub const JSObject = opaque {
         tag: u8 = 0,
         value: extern union {
             index: u32,
-            name: bun.String,
+            name: fun.String,
         },
 
-        pub fn string(this: *ExternColumnIdentifier) ?*bun.String {
+        pub fn string(this: *ExternColumnIdentifier) ?*fun.String {
             return switch (this.tag) {
                 2 => &this.value.name,
                 else => null,
@@ -122,10 +122,10 @@ pub const JSObject = opaque {
 
     const InitializeCallback = *const fn (ctx: *anyopaque, obj: *JSObject, global: *JSGlobalObject) callconv(.c) void;
 
-    pub fn Initializer(comptime Ctx: type, comptime func: fn (*Ctx, obj: *JSObject, global: *JSGlobalObject) bun.JSError!void) type {
+    pub fn Initializer(comptime Ctx: type, comptime func: fn (*Ctx, obj: *JSObject, global: *JSGlobalObject) fun.JSError!void) type {
         return struct {
             pub fn call(this: *anyopaque, obj: *JSObject, global: *JSGlobalObject) callconv(.c) void {
-                func(@ptrCast(@alignCast(this)), obj, global) catch |err| bun.jsc.host_fn.voidFromJSError(err, global);
+                func(@ptrCast(@alignCast(this)), obj, global) catch |err| fun.jsc.host_fn.voidFromJSError(err, global);
             }
         };
     }
@@ -145,17 +145,17 @@ pub const JSObject = opaque {
         defer scope.deinit();
         const value = JSC__JSObject__getIndex(this, globalThis, i);
         try scope.returnIfException();
-        bun.assert(value != .zero);
+        fun.assert(value != .zero);
         return value;
     }
 
-    pub fn putRecord(this: *JSObject, global: *JSGlobalObject, key: *ZigString, values: []ZigString) bun.JSError!void {
-        return bun.cpp.JSC__JSObject__putRecord(this, global, key, values.ptr, values.len);
+    pub fn putRecord(this: *JSObject, global: *JSGlobalObject, key: *ZigString, values: []ZigString) fun.JSError!void {
+        return fun.cpp.JSC__JSObject__putRecord(this, global, key, values.ptr, values.len);
     }
 
     /// This will not call getters or be observable from JavaScript.
     pub fn getCodePropertyVMInquiry(obj: *JSObject, global: *JSGlobalObject) ?JSValue {
-        const v = Bun__JSObject__getCodePropertyVMInquiry(global, obj);
+        const v = Fun__JSObject__getCodePropertyVMInquiry(global, obj);
         if (v == .zero) return null;
         return v;
     }
@@ -163,10 +163,10 @@ pub const JSObject = opaque {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
+const fun = @import("fun");
+const JSError = fun.JSError;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

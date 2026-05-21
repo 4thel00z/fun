@@ -2,7 +2,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "allowJs": true,
-    "types": ["bun", "react"],
+    "types": ["fun", "react"],
 
     // Bundler mode
     "moduleResolution": "bundler",

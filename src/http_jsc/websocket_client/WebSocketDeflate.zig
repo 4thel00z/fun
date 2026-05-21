@@ -34,13 +34,13 @@ pub const RareData = struct {
             }
         }
 
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     pub fn allocator(this: *RareData) std.mem.Allocator {
         this.stack_fallback = .{
             .buffer = undefined,
-            .fallback_allocator = bun.default_allocator,
+            .fallback_allocator = fun.default_allocator,
             .fixed_buffer_allocator = undefined,
         };
         return this.stack_fallback.get();
@@ -132,7 +132,7 @@ pub fn deinit(self: *PerMessageDeflate) void {
 }
 
 fn canUseLibDeflate(len: usize) bool {
-    if (bun.feature_flag.BUN_FEATURE_FLAG_NO_LIBDEFLATE.get()) {
+    if (fun.feature_flag.FUN_FEATURE_FLAG_NO_LIBDEFLATE.get()) {
         return false;
     }
 
@@ -230,7 +230,7 @@ pub fn compress(self: *PerMessageDeflate, in_buf: []const u8, out: *std.array_li
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const libdeflate = bun.libdeflate;
-const zlib = bun.zlib;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const libdeflate = fun.libdeflate;
+const zlib = fun.zlib;

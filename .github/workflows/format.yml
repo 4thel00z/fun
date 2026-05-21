@@ -9,7 +9,7 @@ on:
   pull_request:
   merge_group:
 env:
-  BUN_VERSION: "1.3.2"
+  FUN_VERSION: "1.3.2"
   LLVM_VERSION: "21.1.8"
   LLVM_VERSION_MAJOR: "21"
 
@@ -28,18 +28,18 @@ jobs:
           git config --global core.autocrlf true
           git config --global core.ignorecase true
           git config --global core.precomposeUnicode true
-      - name: Setup Bun
-        uses: ./.github/actions/setup-bun
+      - name: Setup Fun
+        uses: ./.github/actions/setup-fun
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          fun-version: ${{ env.FUN_VERSION }}
       - name: Setup Dependencies
         run: |
-          bun install
+          fun install
       - name: Format Code
         run: |
           # Start prettier in background with prefixed output
           echo "::group::Prettier"
-          (bun run prettier 2>&1 | sed 's/^/[prettier] /' || echo "[prettier] Failed with exit code $?") &
+          (fun run prettier 2>&1 | sed 's/^/[prettier] /' || echo "[prettier] Failed with exit code $?") &
           PRETTIER_PID=$!
 
           # Start clang-format installation and formatting in background with prefixed output
@@ -103,5 +103,5 @@ jobs:
           echo "✅ All formatters completed successfully"
       - name: Ban Words
         run: |
-          bun ./test/internal/ban-words.test.ts
+          fun ./test/internal/ban-words.test.ts
       - uses: autofix-ci/action@635ffb0c9798bd160680f18fd73371e355b85f27

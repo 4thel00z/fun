@@ -93,7 +93,7 @@ assert.throws(
   }
 );
 
-if (typeof Bun === 'undefined') {
+if (typeof Fun === 'undefined') {
   // V8 Fast API
   const foo = Buffer.from('foo');
   const bar = Buffer.from('bar');

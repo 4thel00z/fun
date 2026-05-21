@@ -1,14 +1,14 @@
-// Regression for https://github.com/oven-sh/bun/issues/29524
+// Regression for https://github.com/underdoc-org/fun/issues/29524
 // Atomic writes (temp-file + rename) to multiple imported files under
-// `bun --hot` stopped propagating after the first eviction on macOS:
+// `fun --hot` stopped propagating after the first eviction on macOS:
 // kqueue `udata` was stale after `flushEvictions` did `swapRemove` on
 // the watchlist. kqueue-specific, so skipped off macOS.
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, forEachLine, isDebug, isMacOS, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, forEachLine, isDebug, isMacOS, tempDir } from "harness";
 import { renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Default bun:test timeout (5s) is not enough: we spawn a subprocess,
+// Default fun:test timeout (5s) is not enough: we spawn a subprocess,
 // wait for it to boot, then drive four hot-reload cycles. Infinity on
 // debug/ASAN where hot-reload codegen is much slower.
 const testTimeout = isDebug ? Infinity : 60_000;
@@ -28,10 +28,10 @@ test.skipIf(!isMacOS)(
     });
     const cwd = String(dir);
 
-    await using runner = Bun.spawn({
-      cmd: [bunExe(), "--hot", "run", join(cwd, "entry.js")],
+    await using runner = Fun.spawn({
+      cmd: [funExe(), "--hot", "run", join(cwd, "entry.js")],
       cwd,
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "inherit",
       stdin: "ignore",

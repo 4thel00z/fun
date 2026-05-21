@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { readableStreamFromArray } from "harness";
 
 // META: global=window,worker
@@ -132,7 +132,7 @@ for (const { input, output, description } of testCases) {
   test(description, async () => {
     const inputStream = readableStreamFromArray(input);
     const outputStream = inputStream.pipeThrough(new TextEncoderStream());
-    const chunkArray = await Bun.readableStreamToArray(outputStream);
+    const chunkArray = await Fun.readableStreamToArray(outputStream);
     expect(chunkArray.length, "number of chunks should match").toBe(output.length);
     for (let i = 0; i < output.length; ++i) {
       expect(chunkArray[i].constructor).toBe(Uint8Array);

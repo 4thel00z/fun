@@ -94,7 +94,7 @@ pub fn endProgressBar(manager: *PackageManager) void {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Output = bun.Output;
-const Progress = bun.Progress;
-const PackageManager = bun.install.PackageManager;
+const fun = @import("fun");
+const Output = fun.Output;
+const Progress = fun.Progress;
+const PackageManager = fun.install.PackageManager;

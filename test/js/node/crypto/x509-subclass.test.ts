@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { X509Certificate } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";

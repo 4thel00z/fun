@@ -7,10 +7,10 @@ globals, a `node:http2` server emulating the wptserve endpoints they hit, and a
 
 | Build | pass | todo | fail | total |
 |---|---|---|---|---|
-| `bun bd` (this branch) | 20 | 4 | 0 | 24 |
-| `USE_SYSTEM_BUN=1` | 3 | 4 | 17 | 24 |
+| `fun bd` (this branch) | 20 | 4 | 0 | 24 |
+| `USE_SYSTEM_FUN=1` | 3 | 4 | 17 | 24 |
 
-The three system-Bun passes are the protocol-agnostic feature-detect cases
+The three system-Fun passes are the protocol-agnostic feature-detect cases
 (data: URLs, `Request` header inspection); the seventeen that flip from fail to
 pass are the actual h2 path coverage.
 
@@ -36,6 +36,6 @@ are HTTP/2 client regressions.
 | Test | Cause |
 |---|---|
 | Synchronous feature detect | `Request` constructor doesn't read `RequestInit.duplex`, so the getter never fires |
-| Streaming upload with body containing a String | Bun coerces string chunks instead of rejecting with TypeError |
-| Streaming upload with body containing null | Bun treats a `null` chunk as empty instead of rejecting with TypeError |
-| Streaming upload should fail on a 401 response | Spec step 14 of HTTP-network-or-cache fetch only applies when "request's window is an environment settings object" — i.e. browsers with credential prompting. Server runtimes (Node/undici, Deno, Bun) return the 401 as-is. Intentionally not changing. |
+| Streaming upload with body containing a String | Fun coerces string chunks instead of rejecting with TypeError |
+| Streaming upload with body containing null | Fun treats a `null` chunk as empty instead of rejecting with TypeError |
+| Streaming upload should fail on a 401 response | Spec step 14 of HTTP-network-or-cache fetch only applies when "request's window is an environment settings object" — i.e. browsers with credential prompting. Server runtimes (Node/undici, Deno, Fun) return the 401 as-is. Intentionally not changing. |

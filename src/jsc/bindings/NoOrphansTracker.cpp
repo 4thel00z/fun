@@ -1,4 +1,4 @@
-// macOS-only descendant tracker for `bun run --no-orphans`.
+// macOS-only descendant tracker for `fun run --no-orphans`.
 //
 // Problem: a script that `setsid()`s and double-forks produces a grandchild
 // that has left our process group AND reparented to launchd, so neither
@@ -27,7 +27,7 @@
 // `killTracked()` but cannot be fully closed from userspace.
 //
 // All state is process-global; spawnSync is single-threaded by design (see
-// Bun__currentSyncPID), so no locking.
+// Fun__currentSyncPID), so no locking.
 
 #include "root.h"
 
@@ -41,7 +41,7 @@
 #include <wtf/HashSet.h>
 #include <wtf/Vector.h>
 
-namespace Bun {
+namespace Fun {
 
 // Private flavor + struct from xnu bsd/sys/proc_info_private.h. The header
 // `_Static_assert`s sizeof == 56, so the layout is ABI.
@@ -66,7 +66,7 @@ class NoOrphansTracker {
 public:
     // Function-local static: lazy first-use construction, no global ctor,
     // thread-safe per C++11 [stmt.dcl]. spawnSync is single-threaded anyway
-    // (see Bun__currentSyncPID), but this keeps the binary's static-init
+    // (see Fun__currentSyncPID), but this keeps the binary's static-init
     // section clean.
     static NoOrphansTracker& get()
     {
@@ -260,20 +260,20 @@ private:
     int m_kq = -1; // borrowed; owned by Zig's spawnPosix
 };
 
-} // namespace Bun
+} // namespace Fun
 
-extern "C" void Bun__noOrphans_begin(int kq, pid_t root) { Bun::NoOrphansTracker::get().begin(kq, root); }
-extern "C" void Bun__noOrphans_releaseKq() { Bun::NoOrphansTracker::get().releaseKq(); }
-extern "C" void Bun__noOrphans_onFork() { Bun::NoOrphansTracker::get().scan(); }
-extern "C" void Bun__noOrphans_onExit(pid_t pid) { Bun::NoOrphansTracker::get().onExit(pid); }
-extern "C" void Bun__noOrphans_killTracked() { Bun::NoOrphansTracker::get().killTracked(); }
+extern "C" void Fun__noOrphans_begin(int kq, pid_t root) { Fun::NoOrphansTracker::get().begin(kq, root); }
+extern "C" void Fun__noOrphans_releaseKq() { Fun::NoOrphansTracker::get().releaseKq(); }
+extern "C" void Fun__noOrphans_onFork() { Fun::NoOrphansTracker::get().scan(); }
+extern "C" void Fun__noOrphans_onExit(pid_t pid) { Fun::NoOrphansTracker::get().onExit(pid); }
+extern "C" void Fun__noOrphans_killTracked() { Fun::NoOrphansTracker::get().killTracked(); }
 
 #else // !OS(DARWIN)
 
-extern "C" void Bun__noOrphans_begin(int, int) {}
-extern "C" void Bun__noOrphans_releaseKq() {}
-extern "C" void Bun__noOrphans_onFork() {}
-extern "C" void Bun__noOrphans_onExit(int) {}
-extern "C" void Bun__noOrphans_killTracked() {}
+extern "C" void Fun__noOrphans_begin(int, int) {}
+extern "C" void Fun__noOrphans_releaseKq() {}
+extern "C" void Fun__noOrphans_onFork() {}
+extern "C" void Fun__noOrphans_onExit(int) {}
+extern "C" void Fun__noOrphans_killTracked() {}
 
 #endif

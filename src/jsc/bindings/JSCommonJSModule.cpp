@@ -1,7 +1,7 @@
 /**
  * How this works
  *
- * CommonJS modules are transpiled by Bun's transpiler to the following:
+ * CommonJS modules are transpiled by Fun's transpiler to the following:
  *
  * (function (exports, require, module) { ... code })(exports, require, module)
  *
@@ -29,7 +29,7 @@
  * different value. In that case, it will have a stale value.
  */
 
-#include "BunString.h"
+#include "FunString.h"
 #include "headers.h"
 
 #include "JavaScriptCore/CallData.h"
@@ -49,7 +49,7 @@
 #include <JavaScriptCore/SourceOrigin.h>
 #include <JavaScriptCore/StackFrame.h>
 #include <JavaScriptCore/StackVisitor.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "IsolatedModuleCache.h"
 #include <JavaScriptCore/Identifier.h>
 #include "ImportMetaObject.h"
@@ -83,9 +83,9 @@
 #include "ErrorCode.h"
 #include "WebCoreJSBuiltins.h"
 
-extern "C" bool Bun__isBunMain(JSC::JSGlobalObject* global, const BunString*);
+extern "C" bool Fun__isFunMain(JSC::JSGlobalObject* global, const FunString*);
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 JSC_DECLARE_HOST_FUNCTION(jsFunctionRequireCommonJS);
@@ -108,8 +108,8 @@ static bool canPerformFastEnumeration(Structure* s)
     return true;
 }
 
-extern "C" bool Bun__VM__specifierIsEvalEntryPoint(void*, EncodedJSValue);
-extern "C" void Bun__VM__setEntryPointEvalResultCJS(void*, EncodedJSValue);
+extern "C" bool Fun__VM__specifierIsEvalEntryPoint(void*, EncodedJSValue);
+extern "C" void Fun__VM__setEntryPointEvalResultCJS(void*, EncodedJSValue);
 
 static bool evaluateCommonJSModuleOnce(JSC::VM& vm, Zig::GlobalObject* globalObject, JSCommonJSModule* moduleObject, JSString* dirname, JSValue filename)
 {
@@ -147,7 +147,7 @@ static bool evaluateCommonJSModuleOnce(JSC::VM& vm, Zig::GlobalObject* globalObj
         moduleObject->hasEvaluated = true;
     };
 
-    if (Bun__VM__specifierIsEvalEntryPoint(globalObject->bunVM(), JSValue::encode(filename))) [[unlikely]] {
+    if (Fun__VM__specifierIsEvalEntryPoint(globalObject->funVM(), JSValue::encode(filename))) [[unlikely]] {
         initializeModuleObject();
         scope.assertNoExceptionExceptTermination();
 
@@ -165,7 +165,7 @@ static bool evaluateCommonJSModuleOnce(JSC::VM& vm, Zig::GlobalObject* globalObj
         RETURN_IF_EXCEPTION(scope, false);
         ASSERT(result);
 
-        Bun__VM__setEntryPointEvalResultCJS(globalObject->bunVM(), JSValue::encode(result));
+        Fun__VM__setEntryPointEvalResultCJS(globalObject->funVM(), JSValue::encode(result));
 
         RELEASE_AND_RETURN(scope, true);
     }
@@ -176,13 +176,13 @@ static bool evaluateCommonJSModuleOnce(JSC::VM& vm, Zig::GlobalObject* globalObj
 
     JSObject* fn = fnValue.getObject();
     if (!fn) [[unlikely]] {
-        scope.throwException(globalObject, createTypeError(globalObject, "Expected CommonJS module to have a function wrapper. If you weren't messing around with Bun's internals, this is a bug in Bun"_s));
+        scope.throwException(globalObject, createTypeError(globalObject, "Expected CommonJS module to have a function wrapper. If you weren't messing around with Fun's internals, this is a bug in Fun"_s));
         RELEASE_AND_RETURN(scope, false);
     }
 
     JSC::CallData callData = JSC::getCallData(fn);
     if (callData.type == CallData::Type::None) [[unlikely]] {
-        scope.throwException(globalObject, createTypeError(globalObject, "Expected CommonJS module to have a function wrapper. If you weren't messing around with Bun's internals, this is a bug in Bun"_s));
+        scope.throwException(globalObject, createTypeError(globalObject, "Expected CommonJS module to have a function wrapper. If you weren't messing around with Fun's internals, this is a bug in Fun"_s));
         RELEASE_AND_RETURN(scope, false);
     }
 
@@ -285,7 +285,7 @@ JSC_DEFINE_HOST_FUNCTION(requireResolvePathsFunction, (JSGlobalObject * globalOb
     JSValue request = callframe->argument(0);
 
     if (!request.isString()) {
-        Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "request"_s, "string"_s, request);
+        Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "request"_s, "string"_s, request);
         scope.release();
         return {};
     }
@@ -317,8 +317,8 @@ JSC_DEFINE_HOST_FUNCTION(requireResolvePathsFunction, (JSGlobalObject * globalOb
         return JSValue::encode(constructEmptyArray(globalObject, nullptr, 0));
     }
     RETURN_IF_EXCEPTION(scope, {});
-    Bun::PathResolveModule parent = { .paths = nullptr, .filename = filename, .pathsArrayLazy = true };
-    RELEASE_AND_RETURN(scope, JSValue::encode(Bun::resolveLookupPaths(globalObject, requestStr, parent)));
+    Fun::PathResolveModule parent = { .paths = nullptr, .filename = filename, .pathsArrayLazy = true };
+    RELEASE_AND_RETURN(scope, JSValue::encode(Fun::resolveLookupPaths(globalObject, requestStr, parent)));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsRequireCacheGetter, (JSC::JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, JSC::PropertyName))
@@ -516,7 +516,7 @@ JSC_DEFINE_CUSTOM_GETTER(getterPaths, (JSC::JSGlobalObject * globalObject, JSC::
         ASSERT(filename);
         auto filenameWtfStr = filename.toWTFString(globalObject);
         RETURN_IF_EXCEPTION(scope, {});
-        BunString filenameStr = Bun::toString(filenameWtfStr);
+        FunString filenameStr = Fun::toString(filenameWtfStr);
         JSValue paths = JSValue::decode(Resolver__nodeModulePathsJSValue(filenameStr, globalObject, true));
         RETURN_IF_EXCEPTION(scope, {});
         thisObject->m_paths.set(globalObject->vm(), thisObject, paths);
@@ -733,9 +733,9 @@ JSC_DEFINE_HOST_FUNCTION(functionJSCommonJSModule_compile, (JSGlobalObject * glo
 
     EncodedJSValue encodedFilename = JSValue::encode(filenameValue);
 #if OS(WINDOWS)
-    JSValue dirnameValue = JSValue::decode(Bun__Path__dirname(globalObject, true, &encodedFilename, 1));
+    JSValue dirnameValue = JSValue::decode(Fun__Path__dirname(globalObject, true, &encodedFilename, 1));
 #else
-    JSValue dirnameValue = JSValue::decode(Bun__Path__dirname(globalObject, false, &encodedFilename, 1));
+    JSValue dirnameValue = JSValue::decode(Fun__Path__dirname(globalObject, false, &encodedFilename, 1));
 #endif
     RETURN_IF_EXCEPTION(throwScope, {});
 
@@ -957,7 +957,7 @@ void populateESMExports(
     auto& vm = JSC::getVM(globalObject);
     const Identifier& esModuleMarker = vm.propertyNames->__esModule;
 
-    // Bun's interpretation of the "__esModule" annotation:
+    // Fun's interpretation of the "__esModule" annotation:
     //
     //   - If a "default" export does not exist OR the __esModule annotation is not present, then we
     //   set the default export to the exports object
@@ -969,7 +969,7 @@ void populateESMExports(
     // https://github.com/nodejs/node/issues/40891
     // https://github.com/evanw/bundler-esm-cjs-tests
     // https://github.com/evanw/esbuild/issues/1591
-    // https://github.com/oven-sh/bun/issues/3383
+    // https://github.com/underdoc-org/fun/issues/3383
     //
     // Note that this interpretation is slightly different
     //
@@ -1050,7 +1050,7 @@ void populateESMExports(
                     if (!has) continue;
 
                     // Allow DontEnum properties which are not getter/setters
-                    // https://github.com/oven-sh/bun/issues/4432
+                    // https://github.com/underdoc-org/fun/issues/4432
                     if (slot.attributes() & PropertyAttribute::DontEnum) {
                         if (!(slot.isValue() || slot.isCustom())) {
                             continue;
@@ -1109,7 +1109,7 @@ void populateESMExports(
 
                 if (slot.attributes() & PropertyAttribute::DontEnum) {
                     // Allow DontEnum properties which are not getter/setters
-                    // https://github.com/oven-sh/bun/issues/4432
+                    // https://github.com/underdoc-org/fun/issues/4432
                     if (!(slot.isValue() || slot.isCustom())) {
                         continue;
                     }
@@ -1191,7 +1191,7 @@ void JSCommonJSModule::analyzeHeap(JSCell* cell, HeapAnalyzer& analyzer)
 
     Base::analyzeHeap(cell, analyzer);
     auto& vm = cell->vm();
-    auto& builtinNames = Bun::builtinNames(vm);
+    auto& builtinNames = Fun::builtinNames(vm);
     if (auto* id = thisObject->m_id.get()) {
         analyzer.analyzePropertyNameEdge(cell, id, vm.propertyNames->id.impl());
     }
@@ -1270,8 +1270,8 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionRequireCommonJS, (JSGlobalObject * lexicalGlo
     // This is always a new JSCommonJSModule object; cast cannot fail.
     JSCommonJSModule* child = uncheckedDowncast<JSCommonJSModule>(callframe->uncheckedArgument(1));
 
-    BunString referrerStr = Bun::toString(referrer);
-    BunString typeAttributeStr = { BunStringTag::Dead };
+    FunString referrerStr = Fun::toString(referrer);
+    FunString typeAttributeStr = { FunStringTag::Dead };
     String typeAttribute = String();
 
     // We need to be able to wire in the "type" import attribute from bundled code..
@@ -1290,14 +1290,14 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionRequireCommonJS, (JSGlobalObject * lexicalGlo
                 if (typeValue.isString()) {
                     typeAttribute = typeValue.toWTFString(globalObject);
                     REQUIRE_CJS_RETURN_IF_EXCEPTION;
-                    typeAttributeStr = Bun::toString(typeAttribute);
+                    typeAttributeStr = Fun::toString(typeAttribute);
                 }
             }
         }
     }
 
     // Load the module
-    JSValue fetchResult = Bun::fetchCommonJSModule(
+    JSValue fetchResult = Fun::fetchCommonJSModule(
         globalObject,
         child,
         specifierValue,
@@ -1327,7 +1327,7 @@ JSC_DEFINE_HOST_FUNCTION(jsFunctionRequireNativeModule, (JSGlobalObject * lexica
     ErrorableResolvedSource res;
     res.success = false;
     memset(&res.result, 0, sizeof res.result);
-    BunString specifierStr = Bun::toString(specifier);
+    FunString specifierStr = Fun::toString(specifier);
     auto result = fetchBuiltinModuleWithoutResolution(globalObject, &specifierStr, &res);
     RETURN_IF_EXCEPTION(throwScope, {});
     if (result) {
@@ -1356,7 +1356,7 @@ void JSCommonJSModule::evaluate(
     auto& vm = JSC::getVM(globalObject);
 
     if (globalObject->hasOverriddenModuleWrapper) [[unlikely]] {
-        auto string = source.source_code.toWTFString(BunString::ZeroCopy);
+        auto string = source.source_code.toWTFString(FunString::ZeroCopy);
         auto trimStart = string.find('\n');
         if (trimStart != WTF::notFound) {
             if (source.needsDeref && !isBuiltIn) {
@@ -1365,7 +1365,7 @@ void JSCommonJSModule::evaluate(
             }
             auto wrapperStart = globalObject->m_moduleWrapperStart;
             auto wrapperEnd = globalObject->m_moduleWrapperEnd;
-            source.source_code = Bun::toStringRef(makeString(
+            source.source_code = Fun::toStringRef(makeString(
                 wrapperStart,
                 string.substring(trimStart, string.length() - trimStart - 4),
                 wrapperEnd));
@@ -1375,8 +1375,8 @@ void JSCommonJSModule::evaluate(
 
     auto sourceProvider = Zig::SourceProvider::create(globalObject, source, JSC::SourceProviderSourceType::Program, isBuiltIn);
     this->ignoreESModuleAnnotation = source.tag == ResolvedSourceTagPackageJSONTypeModule;
-    if (!isBuiltIn && !globalObject->hasOverriddenModuleWrapper && Bun::IsolatedModuleCache::canUse(vm, globalObject->bunVM())) {
-        Bun::IsolatedModuleCache::insert(vm, key, sourceProvider.get());
+    if (!isBuiltIn && !globalObject->hasOverriddenModuleWrapper && Fun::IsolatedModuleCache::canUse(vm, globalObject->funVM())) {
+        Fun::IsolatedModuleCache::insert(vm, key, sourceProvider.get());
     }
     if (this->hasEvaluated)
         return;
@@ -1417,7 +1417,7 @@ void JSCommonJSModule::evaluateWithPotentiallyOverriddenCompile(
             throwTypeError(globalObject, scope, "overridden module._compile is not a function (called from overridden Module._extensions)"_s);
             return;
         }
-        WTF::String sourceString = source.source_code.toWTFString(BunString::ZeroCopy);
+        WTF::String sourceString = source.source_code.toWTFString(FunString::ZeroCopy);
         RETURN_IF_EXCEPTION(scope, );
         if (source.needsDeref) {
             source.needsDeref = false;
@@ -1486,15 +1486,15 @@ std::optional<JSC::SourceCode> createCommonJSModule(
         if (globalObject->hasOverriddenModuleWrapper) [[unlikely]] {
             auto concat = makeString(
                 globalObject->m_moduleWrapperStart,
-                source.source_code.toWTFString(BunString::ZeroCopy),
+                source.source_code.toWTFString(FunString::ZeroCopy),
                 globalObject->m_moduleWrapperEnd);
             source.source_code.deref();
-            source.source_code = Bun::toStringRef(concat);
+            source.source_code = Fun::toStringRef(concat);
         }
 
         auto sourceProvider = Zig::SourceProvider::create(globalObject, source, JSC::SourceProviderSourceType::Program, isBuiltIn);
-        if (!isBuiltIn && !globalObject->hasOverriddenModuleWrapper && Bun::IsolatedModuleCache::canUse(vm, globalObject->bunVM())) {
-            Bun::IsolatedModuleCache::insert(vm, sourceURL, sourceProvider.get());
+        if (!isBuiltIn && !globalObject->hasOverriddenModuleWrapper && Fun::IsolatedModuleCache::canUse(vm, globalObject->funVM())) {
+            Fun::IsolatedModuleCache::insert(vm, sourceURL, sourceProvider.get());
         }
         sourceOrigin = sourceProvider->sourceOrigin();
         moduleObject = JSCommonJSModule::create(
@@ -1635,7 +1635,7 @@ JSObject* JSCommonJSModule::createBoundRequireFunction(VM& vm, JSGlobalObject* l
         dirname = jsEmptyString(vm);
     }
 
-    auto moduleObject = Bun::JSCommonJSModule::create(
+    auto moduleObject = Fun::JSCommonJSModule::create(
         vm,
         globalObject->CommonJSModuleObjectStructure(),
         filename, filename, dirname, SourceCode());
@@ -1663,4 +1663,4 @@ JSObject* JSCommonJSModule::createBoundRequireFunction(VM& vm, JSGlobalObject* l
     return requireFunction;
 }
 
-} // namespace Bun
+} // namespace Fun

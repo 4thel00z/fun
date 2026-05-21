@@ -9,14 +9,14 @@
 import { globSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { globAllSources } from "../glob-sources.ts";
-import { type BunOutput, bunExeName, emitBun, shouldStrip, validateBunConfig } from "./bun.ts";
+import { type FunOutput, funExeName, emitFun, shouldStrip, validateFunConfig } from "./fun.ts";
 import { type Config, type PartialConfig, type Toolchain, detectHost, findRepoRoot, resolveConfig } from "./config.ts";
 import { BuildError } from "./error.ts";
 import { mkdirAll, writeIfChanged } from "./fs.ts";
 import { Ninja } from "./ninja.ts";
 import { registerAllRules } from "./rules.ts";
 import { quote } from "./shell.ts";
-import { findBun, findCargo, findMsvcLinker, findSystemTool, resolveLlvmToolchain } from "./tools.ts";
+import { findFun, findCargo, findMsvcLinker, findSystemTool, resolveLlvmToolchain } from "./tools.ts";
 import { checkWorkarounds } from "./workarounds.ts";
 
 /**
@@ -46,9 +46,9 @@ export function resolveToolchain(): Toolchain {
   // ninja's generator rule invokes reconfigure, cwd is the build dir.
   const repoRoot = findRepoRoot();
 
-  // esbuild — comes from the root bun install. Path is deterministic.
+  // esbuild — comes from the root fun install. Path is deterministic.
   // If not present, the first codegen build will fail with a clear error
-  // (and the build itself runs `bun install` first via the root install
+  // (and the build itself runs `fun install` first via the root install
   // stamp, so this path will exist by the time esbuild rules fire).
   const esbuild = resolve(repoRoot, "node_modules", ".bin", host.os === "windows" ? "esbuild.exe" : "esbuild");
 
@@ -56,21 +56,21 @@ export function resolveToolchain(): Toolchain {
   // Same deal: path is deterministic, download happens at build time.
   const zig = resolve(repoRoot, "vendor", "zig", host.os === "windows" ? "zig.exe" : "zig");
 
-  const bun = findBun(host.os);
+  const fun = findFun(host.os);
 
   // jsRuntime: shell-ready prefix for running .ts subprocesses. Propagate
   // whatever's running us — if node, the strip-types flag comes along; if
-  // bun, it's just the path. process.versions.bun distinguishes (undefined
+  // fun, it's just the path. process.versions.fun distinguishes (undefined
   // in node). Pre-quoted so rule commands can splice it directly.
   const q = (p: string) => quote(p, host.os === "windows");
   const jsRuntime =
-    process.versions.bun !== undefined ? q(process.execPath) : `${q(process.execPath)} --experimental-strip-types`;
+    process.versions.fun !== undefined ? q(process.execPath) : `${q(process.execPath)} --experimental-strip-types`;
 
   return {
     ...llvm,
     cmake,
     zig,
-    bun,
+    fun,
     jsRuntime,
     esbuild,
     cargo: rust?.cargo,
@@ -82,7 +82,7 @@ export function resolveToolchain(): Toolchain {
 
 export interface ConfigureResult {
   cfg: Config;
-  output: BunOutput;
+  output: FunOutput;
   /** Build.ninja absolute path. */
   ninjaFile: string;
   /** Env vars the caller should set before spawning ninja. */
@@ -91,7 +91,7 @@ export interface ConfigureResult {
   elapsed: number;
   /** True if build.ninja actually changed (vs an idempotent re-run). */
   changed: boolean;
-  /** Final executable name (e.g. "bun-debug"). For status messages. */
+  /** Final executable name (e.g. "fun-debug"). For status messages. */
   exe: string;
 }
 
@@ -193,7 +193,7 @@ function ccacheEnv(cfg: Config): Record<string, string> {
  */
 export async function configure(partial: PartialConfig): Promise<ConfigureResult> {
   const start = performance.now();
-  const trace = process.env.BUN_BUILD_TRACE === "1";
+  const trace = process.env.FUN_BUILD_TRACE === "1";
   const mark = (label: string) => {
     if (trace) process.stderr.write(`  ${label}: ${Math.round(performance.now() - start)}ms\n`);
   };
@@ -202,7 +202,7 @@ export async function configure(partial: PartialConfig): Promise<ConfigureResult
   mark("resolveToolchain");
   const cfg = resolveConfig(partial, toolchain);
 
-  validateBunConfig(cfg);
+  validateFunConfig(cfg);
   checkWorkarounds(cfg);
 
   // Perl check: LUT codegen (create-hash-table.ts) shells out to the
@@ -227,18 +227,18 @@ export async function configure(partial: PartialConfig): Promise<ConfigureResult
   const n = new Ninja({ buildDir: cfg.buildDir });
   registerAllRules(n, cfg);
   emitGeneratorRule(n, cfg, partial);
-  const output = emitBun(n, cfg, sources);
-  mark("emitBun");
+  const output = emitFun(n, cfg, sources);
+  mark("emitFun");
 
-  // Default targets. cpp-only sets its own default inside emitBun (archive,
-  // no smoke test). Full/link-only: `bun` phony (or stripped file) + `check`.
-  // Release builds produce both bun-profile and stripped bun; `bun` is the
-  // stripped one. Debug produces bun-debug; `bun` is a phony pointing at it.
+  // Default targets. cpp-only sets its own default inside emitFun (archive,
+  // no smoke test). Full/link-only: `fun` phony (or stripped file) + `check`.
+  // Release builds produce both fun-profile and stripped fun; `fun` is the
+  // stripped one. Debug produces fun-debug; `fun` is a phony pointing at it.
   // dsym: darwin release only — pulled into defaults so ninja actually builds
   // it (no other node depends on it, and unlike cmake's POST_BUILD it doesn't
   // auto-trigger).
   if (output.exe !== undefined) {
-    const defaultTarget = output.strippedExe !== undefined ? n.rel(output.strippedExe) : "bun";
+    const defaultTarget = output.strippedExe !== undefined ? n.rel(output.strippedExe) : "fun";
     const targets = [defaultTarget, "check"];
     if (output.dsym !== undefined) targets.push(n.rel(output.dsym));
     n.default(targets);
@@ -257,7 +257,7 @@ export async function configure(partial: PartialConfig): Promise<ConfigureResult
   const ninjaFile = resolve(cfg.buildDir, "build.ninja");
 
   const elapsed = Math.round(performance.now() - start);
-  const exe = bunExeName(cfg) + (shouldStrip(cfg) ? " → bun (stripped)" : "");
+  const exe = funExeName(cfg) + (shouldStrip(cfg) ? " → fun (stripped)" : "");
 
   return { cfg, output, ninjaFile, env: ccacheEnv(cfg), elapsed, changed, exe };
 }

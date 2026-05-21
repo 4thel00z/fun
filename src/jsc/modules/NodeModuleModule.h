@@ -16,11 +16,11 @@
 using namespace Zig;
 using namespace JSC;
 
-namespace Bun {
+namespace Fun {
 JSC_DECLARE_HOST_FUNCTION(jsFunctionIsModuleResolveFilenameSlowPathEnabled);
 void addNodeModuleConstructorProperties(JSC::VM &vm, Zig::GlobalObject *globalObject);
 
-extern "C" JSC::EncodedJSValue Resolver__nodeModulePathsJSValue(BunString specifier, JSC::JSGlobalObject*, bool use_dirname);
+extern "C" JSC::EncodedJSValue Resolver__nodeModulePathsJSValue(FunString specifier, JSC::JSGlobalObject*, bool use_dirname);
 extern "C" bool ModuleLoader__isBuiltin(const char* data, size_t len);
 
 struct PathResolveModule {

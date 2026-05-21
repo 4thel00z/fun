@@ -16,9 +16,9 @@ loop_ptr: *uws.Loop,
 next: ?*PendingConnect = null,
 
 pub fn register(session: *ClientSession, pc: *quic.PendingConnect, l: *uws.Loop) void {
-    const self = bun.new(PendingConnect, .{ .session = session, .pc = pc, .loop_ptr = l });
+    const self = fun.new(PendingConnect, .{ .session = session, .pc = pc, .loop_ptr = l });
     session.ref();
-    bun.dns.internal.registerQuic(@ptrCast(@alignCast(pc.addrinfo())), self);
+    fun.dns.internal.registerQuic(@ptrCast(@alignCast(pc.addrinfo())), self);
 }
 
 pub fn loop(this: *PendingConnect) *uws.Loop {
@@ -29,7 +29,7 @@ pub fn onDNSResolved(this: *PendingConnect) void {
     const session = this.session;
     defer {
         session.deref();
-        bun.destroy(this);
+        fun.destroy(this);
     }
     if (session.closed or session.pending.items.len == 0) {
         // Every waiter was aborted while DNS was in flight; don't open a
@@ -83,13 +83,13 @@ pub fn failSession(session: *ClientSession, err: anyerror) void {
     session.deref();
 }
 
-var resolved_mutex: bun.Mutex = .{};
+var resolved_mutex: fun.Mutex = .{};
 var resolved_head: ?*PendingConnect = null;
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const H3 = bun.http.H3;
+const H3 = fun.http.H3;
 const ClientSession = H3.ClientSession;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const quic = uws.quic;

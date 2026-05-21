@@ -82,7 +82,7 @@ static int64_t getExpiresValue(JSGlobalObject* lexicalGlobalObject, JSC::ThrowSc
         }
     }
 
-    return Bun::ERR::INVALID_ARG_VALUE(throwScope, lexicalGlobalObject, "expires"_s, expiresValue, "Invalid expires value. Must be a Date or a number"_s);
+    return Fun::ERR::INVALID_ARG_VALUE(throwScope, lexicalGlobalObject, "expires"_s, expiresValue, "Invalid expires value. Must be a Date or a number"_s);
 }
 
 template<bool checkName>
@@ -309,7 +309,7 @@ template<> JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSCookieDOMConstructor::
 
     // Static method: parse(cookieString)
     if (callFrame->argumentCount() == 1 && callFrame->argument(0).isString()) {
-        // new Bun.Cookie.parse("foo=bar")
+        // new Fun.Cookie.parse("foo=bar")
         auto cookieString = convert<IDLUSVString>(*lexicalGlobalObject, callFrame->argument(0));
         RETURN_IF_EXCEPTION(throwScope, {});
 
@@ -328,7 +328,7 @@ template<> JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSCookieDOMConstructor::
         auto* globalObject = castedThis->globalObject();
         RELEASE_AND_RETURN(throwScope, JSValue::encode(toJS(lexicalGlobalObject, globalObject, WTF::move(cookie))));
     } else if (callFrame->argumentCount() == 1 && callFrame->argument(0).isObject()) {
-        // new Bun.Cooke({
+        // new Fun.Cooke({
         //     name: "name",
         //     value: "value",
         //     domain: "domain",
@@ -349,7 +349,7 @@ template<> JSC::EncodedJSValue JSC_HOST_CALL_ATTRIBUTES JSCookieDOMConstructor::
         auto* globalObject = castedThis->globalObject();
         RELEASE_AND_RETURN(throwScope, JSValue::encode(toJS(lexicalGlobalObject, globalObject, WTF::move(cookie))));
     } else if (callFrame->argumentCount() >= 2) {
-        // new Bun.Cookie("name", "value", {
+        // new Fun.Cookie("name", "value", {
         //     domain: "domain",
         //     path: "path",
         //     expires: "expires",

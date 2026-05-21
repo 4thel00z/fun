@@ -292,6 +292,6 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;

@@ -1,20 +1,20 @@
-/// Bun.cron - in-process and OS-level cron scheduling.
+/// Fun.cron - in-process and OS-level cron scheduling.
 ///
-/// Bun.cron(schedule, handler)       - run a callback on a schedule (returns CronJob)
-/// Bun.cron(path, schedule, title)   - register an OS-level job (returns Promise)
-/// Bun.cron.remove(title)            - remove an OS-level job (returns Promise)
-/// Bun.cron.parse(expr, from?)       - next-occurrence calculator (returns Date | null)
+/// Fun.cron(schedule, handler)       - run a callback on a schedule (returns CronJob)
+/// Fun.cron(path, schedule, title)   - register an OS-level job (returns Promise)
+/// Fun.cron.remove(title)            - remove an OS-level job (returns Promise)
+/// Fun.cron.parse(expr, from?)       - next-occurrence calculator (returns Date | null)
 ///
 /// OS-level uses crontab (Linux), launchctl + launchd plist (macOS), or
-/// schtasks (Windows). Async, event-loop-integrated via bun.spawn.
+/// schtasks (Windows). Async, event-loop-integrated via fun.spawn.
 /// Shared base for CronRegisterJob and CronRemoveJob.
 fn CronJobBase(comptime Self: type) type {
     return struct {
-        pub fn loop(_: *const Self) *bun.Async.Loop {
-            if (comptime bun.Environment.isWindows)
+        pub fn loop(_: *const Self) *fun.Async.Loop {
+            if (comptime fun.Environment.isWindows)
                 return jsc.VirtualMachine.get().uvLoop()
             else
-                return bun.uws.Loop.get();
+                return fun.uws.Loop.get();
         }
 
         pub fn eventLoop(_: *const Self) *jsc.EventLoop {
@@ -22,20 +22,20 @@ fn CronJobBase(comptime Self: type) type {
         }
 
         pub fn onReaderDone(this: *Self) void {
-            bun.assert(this.remaining_fds > 0);
+            fun.assert(this.remaining_fds > 0);
             this.remaining_fds -= 1;
             this.maybeFinished();
         }
 
-        pub fn onReaderError(this: *Self, err: bun.sys.Error) void {
-            bun.assert(this.remaining_fds > 0);
+        pub fn onReaderError(this: *Self, err: fun.sys.Error) void {
+            fun.assert(this.remaining_fds > 0);
             this.remaining_fds -= 1;
             if (this.err_msg == null)
-                this.err_msg = std.fmt.allocPrint(bun.default_allocator, "Failed to read process output: {s}", .{@tagName(err.getErrno())}) catch null;
+                this.err_msg = std.fmt.allocPrint(fun.default_allocator, "Failed to read process output: {s}", .{@tagName(err.getErrno())}) catch null;
             this.maybeFinished();
         }
 
-        pub fn onProcessExit(this: *Self, _: *Process, status: bun.spawn.Status, _: *const bun.spawn.Rusage) void {
+        pub fn onProcessExit(this: *Self, _: *Process, status: fun.spawn.Status, _: *const fun.spawn.Rusage) void {
             this.has_called_process_exit = true;
             this.exit_status = status;
             this.maybeFinished();
@@ -50,9 +50,9 @@ fn CronJobBase(comptime Self: type) type {
 pub const CronRegisterJob = struct {
     promise: jsc.JSPromise.Strong = .empty,
     global: *jsc.JSGlobalObject,
-    poll: bun.Async.KeepAlive = .{},
+    poll: fun.Async.KeepAlive = .{},
 
-    bun_exe: [:0]const u8,
+    fun_exe: [:0]const u8,
     abs_path: [:0]const u8,
     schedule: [:0]const u8, // normalized numeric form for crontab/launchd
     title: [:0]const u8,
@@ -64,7 +64,7 @@ pub const CronRegisterJob = struct {
     stderr_reader: OutputReader = OutputReader.init(CronRegisterJob),
     remaining_fds: i8 = 0,
     has_called_process_exit: bool = false,
-    exit_status: ?bun.spawn.Status = null,
+    exit_status: ?fun.spawn.Status = null,
     err_msg: ?[]const u8 = null,
     tmp_path: ?[:0]const u8 = null,
 
@@ -78,7 +78,7 @@ pub const CronRegisterJob = struct {
 
     fn setErr(this: *CronRegisterJob, comptime fmt: []const u8, args: anytype) void {
         if (this.err_msg == null)
-            this.err_msg = std.fmt.allocPrint(bun.default_allocator, fmt, args) catch null;
+            this.err_msg = std.fmt.allocPrint(fun.default_allocator, fmt, args) catch null;
     }
 
     fn maybeFinished(this: *CronRegisterJob) void {
@@ -96,20 +96,20 @@ pub const CronRegisterJob = struct {
         switch (status) {
             .exited => |exited| {
                 if (exited.code != 0 and !(this.state == .reading_crontab and exited.code == 1) and this.state != .booting_out) {
-                    const stderr_output = if (comptime bun.Environment.isWindows)
+                    const stderr_output = if (comptime fun.Environment.isWindows)
                         std.mem.trim(u8, this.stderr_reader.finalBuffer().items, &std.ascii.whitespace)
                     else
                         "";
                     // On Windows, detect the SID resolution error and provide
                     // a clear message instead of the raw schtasks output.
-                    if (comptime bun.Environment.isWindows) {
+                    if (comptime fun.Environment.isWindows) {
                         if (this.state == .installing_crontab and
                             std.mem.indexOf(u8, stderr_output, "No mapping between account names") != null)
                         {
                             this.setErr(
                                 "Failed to register cron job: your Windows account's Security Identifier (SID) could not be resolved. " ++
                                     "This typically happens on headless servers or CI where the process runs under a service account. " ++
-                                    "To fix this, either run Bun as a regular user account, or create the scheduled task manually with: " ++
+                                    "To fix this, either run Fun as a regular user account, or create the scheduled task manually with: " ++
                                     "schtasks /create /xml <file> /tn <name> /ru SYSTEM /f",
                                 .{},
                             );
@@ -142,7 +142,7 @@ pub const CronRegisterJob = struct {
     }
 
     fn advanceState(this: *CronRegisterJob) void {
-        if (comptime bun.Environment.isMac) {
+        if (comptime fun.Environment.isMac) {
             switch (this.state) {
                 .writing_plist => this.spawnBootout(),
                 .booting_out => this.spawnBootstrap(),
@@ -184,17 +184,17 @@ pub const CronRegisterJob = struct {
             proc.deref();
         }
         if (this.tmp_path) |p| {
-            _ = bun.sys.unlink(p);
-            bun.default_allocator.free(p);
+            _ = fun.sys.unlink(p);
+            fun.default_allocator.free(p);
         }
-        if (this.err_msg) |msg| bun.default_allocator.free(msg);
-        bun.default_allocator.free(this.abs_path);
-        bun.default_allocator.free(this.schedule);
-        bun.default_allocator.free(this.title);
-        bun.default_allocator.destroy(this);
+        if (this.err_msg) |msg| fun.default_allocator.free(msg);
+        fun.default_allocator.free(this.abs_path);
+        fun.default_allocator.free(this.schedule);
+        fun.default_allocator.free(this.title);
+        fun.default_allocator.destroy(this);
     }
 
-    fn spawnCmd(this: *CronRegisterJob, argv: anytype, stdin_opt: bun.spawn.SpawnOptions.Stdio, stdout_opt: bun.spawn.SpawnOptions.Stdio) void {
+    fn spawnCmd(this: *CronRegisterJob, argv: anytype, stdin_opt: fun.spawn.SpawnOptions.Stdio, stdout_opt: fun.spawn.SpawnOptions.Stdio) void {
         spawnCmdGeneric(CronRegisterJob, this, argv, stdin_opt, stdout_opt);
     }
 
@@ -215,7 +215,7 @@ pub const CronRegisterJob = struct {
 
     fn processCrontabAndInstall(this: *CronRegisterJob) void {
         const existing_content = this.stdout_reader.finalBuffer().items;
-        var result = std.array_list.Managed(u8).init(bun.default_allocator);
+        var result = std.array_list.Managed(u8).init(fun.default_allocator);
         defer result.deinit();
 
         filterCrontab(existing_content, this.title, &result) catch {
@@ -225,28 +225,28 @@ pub const CronRegisterJob = struct {
         };
 
         // Build new entry with single-quoted paths to prevent shell injection
-        const new_entry = std.fmt.allocPrint(bun.default_allocator, "# bun-cron: {s}\n{s} '{s}' run --cron-title={s} --cron-period='{s}' '{s}'\n", .{
-            this.title, this.schedule, this.bun_exe, this.title, this.schedule, this.abs_path,
+        const new_entry = std.fmt.allocPrint(fun.default_allocator, "# fun-cron: {s}\n{s} '{s}' run --cron-title={s} --cron-period='{s}' '{s}'\n", .{
+            this.title, this.schedule, this.fun_exe, this.title, this.schedule, this.abs_path,
         }) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(new_entry);
+        defer fun.default_allocator.free(new_entry);
         result.appendSlice(new_entry) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
 
-        const tmp_path = makeTempPath("bun-cron-") catch {
+        const tmp_path = makeTempPath("fun-cron-") catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
         this.tmp_path = tmp_path;
 
-        const file = bun.sys.File.openat(bun.FD.cwd(), tmp_path, bun.O.WRONLY | bun.O.CREAT | bun.O.EXCL, 0o600).unwrap() catch {
+        const file = fun.sys.File.openat(fun.FD.cwd(), tmp_path, fun.O.WRONLY | fun.O.CREAT | fun.O.EXCL, 0o600).unwrap() catch {
             this.setErr("Failed to create temp file", .{});
             this.finish();
             return;
@@ -280,27 +280,27 @@ pub const CronRegisterJob = struct {
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(calendar_xml);
+        defer fun.default_allocator.free(calendar_xml);
 
-        const home = bun.env_var.HOME.get() orelse {
+        const home = fun.env_var.HOME.get() orelse {
             this.setErr("HOME environment variable not set", .{});
             this.finish();
             return;
         };
 
-        const launch_agents_dir = std.fmt.allocPrint(bun.default_allocator, "{s}/Library/LaunchAgents", .{home}) catch {
+        const launch_agents_dir = std.fmt.allocPrint(fun.default_allocator, "{s}/Library/LaunchAgents", .{home}) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(launch_agents_dir);
-        bun.FD.cwd().makePath(u8, launch_agents_dir) catch {
+        defer fun.default_allocator.free(launch_agents_dir);
+        fun.FD.cwd().makePath(u8, launch_agents_dir) catch {
             this.setErr("Failed to create ~/Library/LaunchAgents directory", .{});
             this.finish();
             return;
         };
 
-        const plist_path = allocPrintZ(bun.default_allocator, "{s}/Library/LaunchAgents/bun.cron.{s}.plist", .{ home, this.title }) catch {
+        const plist_path = allocPrintZ(fun.default_allocator, "{s}/Library/LaunchAgents/fun.cron.{s}.plist", .{ home, this.title }) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
@@ -313,33 +313,33 @@ pub const CronRegisterJob = struct {
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(xml_title);
-        const xml_bun = xmlEscape(this.bun_exe) catch {
+        defer fun.default_allocator.free(xml_title);
+        const xml_fun = xmlEscape(this.fun_exe) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(xml_bun);
+        defer fun.default_allocator.free(xml_fun);
         const xml_path = xmlEscape(this.abs_path) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(xml_path);
+        defer fun.default_allocator.free(xml_path);
         const xml_sched = xmlEscape(this.schedule) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(xml_sched);
+        defer fun.default_allocator.free(xml_sched);
 
-        const plist = std.fmt.allocPrint(bun.default_allocator,
+        const plist = std.fmt.allocPrint(fun.default_allocator,
             \\<?xml version="1.0" encoding="UTF-8"?>
             \\<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
             \\<plist version="1.0">
             \\<dict>
             \\    <key>Label</key>
-            \\    <string>bun.cron.{s}</string>
+            \\    <string>fun.cron.{s}</string>
             \\    <key>ProgramArguments</key>
             \\    <array>
             \\        <string>{s}</string>
@@ -351,20 +351,20 @@ pub const CronRegisterJob = struct {
             \\    <key>StartCalendarInterval</key>
             \\{s}
             \\    <key>StandardOutPath</key>
-            \\    <string>/tmp/bun.cron.{s}.stdout.log</string>
+            \\    <string>/tmp/fun.cron.{s}.stdout.log</string>
             \\    <key>StandardErrorPath</key>
-            \\    <string>/tmp/bun.cron.{s}.stderr.log</string>
+            \\    <string>/tmp/fun.cron.{s}.stderr.log</string>
             \\</dict>
             \\</plist>
             \\
-        , .{ xml_title, xml_bun, xml_title, xml_sched, xml_path, calendar_xml, xml_title, xml_title }) catch {
+        , .{ xml_title, xml_fun, xml_title, xml_sched, xml_path, calendar_xml, xml_title, xml_title }) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(plist);
+        defer fun.default_allocator.free(plist);
 
-        const file = bun.sys.File.openat(bun.FD.cwd(), plist_path, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o644).unwrap() catch {
+        const file = fun.sys.File.openat(fun.FD.cwd(), plist_path, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o644).unwrap() catch {
             this.setErr("Failed to create plist file", .{});
             this.finish();
             return;
@@ -381,12 +381,12 @@ pub const CronRegisterJob = struct {
 
     fn spawnBootout(this: *CronRegisterJob) void {
         this.state = .booting_out;
-        const uid_str = allocPrintZ(bun.default_allocator, "gui/{d}/bun.cron.{s}", .{ getUid(), this.title }) catch {
+        const uid_str = allocPrintZ(fun.default_allocator, "gui/{d}/fun.cron.{s}", .{ getUid(), this.title }) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(uid_str);
+        defer fun.default_allocator.free(uid_str);
         var argv = [_:null]?[*:0]const u8{ "/bin/launchctl", "bootout", uid_str.ptr, null };
         this.spawnCmd(&argv, .ignore, .ignore);
     }
@@ -398,12 +398,12 @@ pub const CronRegisterJob = struct {
             this.finish();
             return;
         };
-        const uid_str = allocPrintZ(bun.default_allocator, "gui/{d}", .{getUid()}) catch {
+        const uid_str = allocPrintZ(fun.default_allocator, "gui/{d}", .{getUid()}) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(uid_str);
+        defer fun.default_allocator.free(uid_str);
         var argv = [_:null]?[*:0]const u8{ "/bin/launchctl", "bootstrap", uid_str.ptr, plist_path.ptr, null };
         this.tmp_path = null; // don't delete the installed plist
         this.spawnCmd(&argv, .ignore, .ignore);
@@ -411,31 +411,31 @@ pub const CronRegisterJob = struct {
 
     // -- JS entry point --
 
-    pub fn cronRegister(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn cronRegister(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const args = callframe.argumentsAsArray(3);
 
-        // In-process callback cron: Bun.cron(schedule, handler)
+        // In-process callback cron: Fun.cron(schedule, handler)
         if (args[1].isCallable())
             return CronJob.register(globalObject, args[0], args[1]);
         if (args[0].isString() and args[2].isUndefined())
-            return globalObject.throwInvalidArguments("Bun.cron(schedule, handler) expects a function handler as the second argument", .{});
+            return globalObject.throwInvalidArguments("Fun.cron(schedule, handler) expects a function handler as the second argument", .{});
 
-        if (!args[0].isString()) return globalObject.throwInvalidArguments("Bun.cron() expects a string path as the first argument", .{});
-        if (!args[1].isString()) return globalObject.throwInvalidArguments("Bun.cron() expects a string schedule as the second argument", .{});
-        if (!args[2].isString()) return globalObject.throwInvalidArguments("Bun.cron() expects a string title as the third argument", .{});
+        if (!args[0].isString()) return globalObject.throwInvalidArguments("Fun.cron() expects a string path as the first argument", .{});
+        if (!args[1].isString()) return globalObject.throwInvalidArguments("Fun.cron() expects a string schedule as the second argument", .{});
+        if (!args[2].isString()) return globalObject.throwInvalidArguments("Fun.cron() expects a string title as the third argument", .{});
 
-        const path_str = try args[0].toBunString(globalObject);
+        const path_str = try args[0].toFunString(globalObject);
         defer path_str.deref();
-        const schedule_str = try args[1].toBunString(globalObject);
+        const schedule_str = try args[1].toFunString(globalObject);
         defer schedule_str.deref();
-        const title_str = try args[2].toBunString(globalObject);
+        const title_str = try args[2].toFunString(globalObject);
         defer title_str.deref();
 
-        const path_slice = path_str.toUTF8(bun.default_allocator);
+        const path_slice = path_str.toUTF8(fun.default_allocator);
         defer path_slice.deinit();
-        const schedule_slice = schedule_str.toUTF8(bun.default_allocator);
+        const schedule_slice = schedule_str.toUTF8(fun.default_allocator);
         defer schedule_slice.deinit();
-        const title_slice = title_str.toUTF8(bun.default_allocator);
+        const title_slice = title_str.toUTF8(fun.default_allocator);
         defer title_slice.deinit();
 
         // Validate title: only [a-zA-Z0-9_-]
@@ -456,30 +456,30 @@ pub const CronRegisterJob = struct {
         // percent signs (cron interprets % as newline before the shell sees it)
         for (abs_path) |c| {
             if (c == '\'') {
-                bun.default_allocator.free(abs_path);
+                fun.default_allocator.free(abs_path);
                 return globalObject.throwInvalidArguments("Path must not contain single quotes", .{});
             }
             if (c == '%') {
-                bun.default_allocator.free(abs_path);
+                fun.default_allocator.free(abs_path);
                 return globalObject.throwInvalidArguments("Path must not contain percent signs (cron interprets % as newline)", .{});
             }
         }
 
-        const bun_exe = bun.selfExePath() catch {
-            bun.default_allocator.free(abs_path);
-            return globalObject.throw("Failed to get bun executable path", .{});
+        const fun_exe = fun.selfExePath() catch {
+            fun.default_allocator.free(abs_path);
+            return globalObject.throw("Failed to get fun executable path", .{});
         };
-        if (bun.strings.indexOfAny(bun_exe, "'%") != null) {
-            bun.default_allocator.free(abs_path);
-            return globalObject.throwInvalidArguments("Bun executable path '{s}' contains characters (' or %) that cannot be safely embedded in a crontab entry", .{bun_exe});
+        if (fun.strings.indexOfAny(fun_exe, "'%") != null) {
+            fun.default_allocator.free(abs_path);
+            return globalObject.throwInvalidArguments("Fun executable path '{s}' contains characters (' or %) that cannot be safely embedded in a crontab entry", .{fun_exe});
         }
-        const job = bun.handleOom(bun.default_allocator.create(CronRegisterJob));
+        const job = fun.handleOom(fun.default_allocator.create(CronRegisterJob));
         job.* = .{
             .global = globalObject,
-            .bun_exe = bun_exe,
+            .fun_exe = fun_exe,
             .abs_path = abs_path,
-            .schedule = bun.handleOom(bun.default_allocator.dupeZ(u8, normalized_schedule)),
-            .title = bun.handleOom(bun.default_allocator.dupeZ(u8, title_slice.slice())),
+            .schedule = fun.handleOom(fun.default_allocator.dupeZ(u8, normalized_schedule)),
+            .title = fun.handleOom(fun.default_allocator.dupeZ(u8, title_slice.slice())),
             .parsed_cron = parsed,
             .promise = jsc.JSPromise.Strong.init(globalObject),
         };
@@ -487,9 +487,9 @@ pub const CronRegisterJob = struct {
         const promise_value = job.promise.value();
         job.poll.ref(jsc.VirtualMachine.get());
 
-        if (comptime bun.Environment.isMac)
+        if (comptime fun.Environment.isMac)
             job.startMac()
-        else if (comptime bun.Environment.isWindows)
+        else if (comptime fun.Environment.isWindows)
             job.startWindows()
         else
             job.startLinux();
@@ -502,14 +502,14 @@ pub const CronRegisterJob = struct {
     fn startWindows(this: *CronRegisterJob) void {
         this.state = .installing_crontab;
 
-        const task_name = allocPrintZ(bun.default_allocator, "bun-cron-{s}", .{this.title}) catch {
+        const task_name = allocPrintZ(fun.default_allocator, "fun-cron-{s}", .{this.title}) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(task_name);
+        defer fun.default_allocator.free(task_name);
 
-        const xml = cronToTaskXml(this.parsed_cron, this.bun_exe, this.title, this.schedule, this.abs_path) catch |err| {
+        const xml = cronToTaskXml(this.parsed_cron, this.fun_exe, this.title, this.schedule, this.abs_path) catch |err| {
             if (err == error.TooManyTriggers) {
                 this.setErr("This cron expression requires too many triggers for Windows Task Scheduler (max 48). Simplify the expression or use fewer restricted fields.", .{});
             } else {
@@ -518,16 +518,16 @@ pub const CronRegisterJob = struct {
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(xml);
+        defer fun.default_allocator.free(xml);
 
-        const xml_path = makeTempPath("bun-cron-xml-") catch {
+        const xml_path = makeTempPath("fun-cron-xml-") catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
         this.tmp_path = xml_path;
 
-        const file = bun.sys.File.openat(bun.FD.cwd(), xml_path, bun.O.WRONLY | bun.O.CREAT | bun.O.EXCL, 0o600).unwrap() catch {
+        const file = fun.sys.File.openat(fun.FD.cwd(), xml_path, fun.O.WRONLY | fun.O.CREAT | fun.O.EXCL, 0o600).unwrap() catch {
             this.setErr("Failed to create temp XML file", .{});
             this.finish();
             return;
@@ -551,7 +551,7 @@ pub const CronRegisterJob = struct {
 pub const CronRemoveJob = struct {
     promise: jsc.JSPromise.Strong = .empty,
     global: *jsc.JSGlobalObject,
-    poll: bun.Async.KeepAlive = .{},
+    poll: fun.Async.KeepAlive = .{},
     title: [:0]const u8,
 
     state: State = .reading_crontab,
@@ -560,7 +560,7 @@ pub const CronRemoveJob = struct {
     stderr_reader: OutputReader = OutputReader.init(CronRemoveJob),
     remaining_fds: i8 = 0,
     has_called_process_exit: bool = false,
-    exit_status: ?bun.spawn.Status = null,
+    exit_status: ?fun.spawn.Status = null,
     err_msg: ?[]const u8 = null,
     tmp_path: ?[:0]const u8 = null,
 
@@ -574,7 +574,7 @@ pub const CronRemoveJob = struct {
 
     fn setErr(this: *CronRemoveJob, comptime fmt: []const u8, args: anytype) void {
         if (this.err_msg == null)
-            this.err_msg = std.fmt.allocPrint(bun.default_allocator, fmt, args) catch null;
+            this.err_msg = std.fmt.allocPrint(fun.default_allocator, fmt, args) catch null;
     }
 
     fn maybeFinished(this: *CronRemoveJob) void {
@@ -595,9 +595,9 @@ pub const CronRemoveJob = struct {
                     this.state == .booting_out or
                     // On Windows, schtasks /delete exits non-zero when the task doesn't exist;
                     // removal of a non-existent job should resolve without error.
-                    (if (comptime bun.Environment.isWindows) this.state == .installing_crontab else false);
+                    (if (comptime fun.Environment.isWindows) this.state == .installing_crontab else false);
                 if (exited.code != 0 and !is_acceptable_nonzero) {
-                    const stderr_output = if (comptime bun.Environment.isWindows)
+                    const stderr_output = if (comptime fun.Environment.isWindows)
                         std.mem.trim(u8, this.stderr_reader.finalBuffer().items, &std.ascii.whitespace)
                     else
                         "";
@@ -626,21 +626,21 @@ pub const CronRemoveJob = struct {
     }
 
     fn advanceState(this: *CronRemoveJob) void {
-        if (comptime bun.Environment.isMac) {
+        if (comptime fun.Environment.isMac) {
             switch (this.state) {
                 .booting_out => {
-                    const home = bun.env_var.HOME.get() orelse {
+                    const home = fun.env_var.HOME.get() orelse {
                         this.setErr("HOME not set", .{});
                         this.finish();
                         return;
                     };
-                    const plist_path = allocPrintZ(bun.default_allocator, "{s}/Library/LaunchAgents/bun.cron.{s}.plist", .{ home, this.title }) catch {
+                    const plist_path = allocPrintZ(fun.default_allocator, "{s}/Library/LaunchAgents/fun.cron.{s}.plist", .{ home, this.title }) catch {
                         this.setErr("Out of memory", .{});
                         this.finish();
                         return;
                     };
-                    _ = bun.sys.unlink(plist_path);
-                    bun.default_allocator.free(plist_path);
+                    _ = fun.sys.unlink(plist_path);
+                    fun.default_allocator.free(plist_path);
                     this.finish();
                 },
                 else => {
@@ -680,15 +680,15 @@ pub const CronRemoveJob = struct {
             proc.deref();
         }
         if (this.tmp_path) |p| {
-            _ = bun.sys.unlink(p);
-            bun.default_allocator.free(p);
+            _ = fun.sys.unlink(p);
+            fun.default_allocator.free(p);
         }
-        if (this.err_msg) |msg| bun.default_allocator.free(msg);
-        bun.default_allocator.free(this.title);
-        bun.default_allocator.destroy(this);
+        if (this.err_msg) |msg| fun.default_allocator.free(msg);
+        fun.default_allocator.free(this.title);
+        fun.default_allocator.destroy(this);
     }
 
-    fn spawnCmd(this: *CronRemoveJob, argv: anytype, stdin_opt: bun.spawn.SpawnOptions.Stdio, stdout_opt: bun.spawn.SpawnOptions.Stdio) void {
+    fn spawnCmd(this: *CronRemoveJob, argv: anytype, stdin_opt: fun.spawn.SpawnOptions.Stdio, stdout_opt: fun.spawn.SpawnOptions.Stdio) void {
         spawnCmdGeneric(CronRemoveJob, this, argv, stdin_opt, stdout_opt);
     }
 
@@ -707,7 +707,7 @@ pub const CronRemoveJob = struct {
 
     fn removeCrontabEntry(this: *CronRemoveJob) void {
         const existing_content = this.stdout_reader.finalBuffer().items;
-        var result = std.array_list.Managed(u8).init(bun.default_allocator);
+        var result = std.array_list.Managed(u8).init(fun.default_allocator);
         defer result.deinit();
 
         filterCrontab(existing_content, this.title, &result) catch {
@@ -716,14 +716,14 @@ pub const CronRemoveJob = struct {
             return;
         };
 
-        const tmp_path = makeTempPath("bun-cron-rm-") catch {
+        const tmp_path = makeTempPath("fun-cron-rm-") catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
         this.tmp_path = tmp_path;
 
-        const file = bun.sys.File.openat(bun.FD.cwd(), tmp_path, bun.O.WRONLY | bun.O.CREAT | bun.O.EXCL, 0o600).unwrap() catch {
+        const file = fun.sys.File.openat(fun.FD.cwd(), tmp_path, fun.O.WRONLY | fun.O.CREAT | fun.O.EXCL, 0o600).unwrap() catch {
             this.setErr("Failed to create temp file", .{});
             this.finish();
             return;
@@ -749,40 +749,40 @@ pub const CronRemoveJob = struct {
 
     fn startMac(this: *CronRemoveJob) void {
         this.state = .booting_out;
-        const uid_str = allocPrintZ(bun.default_allocator, "gui/{d}/bun.cron.{s}", .{ getUid(), this.title }) catch {
+        const uid_str = allocPrintZ(fun.default_allocator, "gui/{d}/fun.cron.{s}", .{ getUid(), this.title }) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(uid_str);
+        defer fun.default_allocator.free(uid_str);
         var argv = [_:null]?[*:0]const u8{ "/bin/launchctl", "bootout", uid_str.ptr, null };
         this.spawnCmd(&argv, .ignore, .ignore);
     }
 
-    pub fn cronRemove(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn cronRemove(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const args = callframe.argumentsAsArray(1);
-        if (!args[0].isString()) return globalObject.throwInvalidArguments("Bun.cron.remove() expects a string title", .{});
+        if (!args[0].isString()) return globalObject.throwInvalidArguments("Fun.cron.remove() expects a string title", .{});
 
-        const title_str = try args[0].toBunString(globalObject);
+        const title_str = try args[0].toFunString(globalObject);
         defer title_str.deref();
-        const title_slice = title_str.toUTF8(bun.default_allocator);
+        const title_slice = title_str.toUTF8(fun.default_allocator);
         defer title_slice.deinit();
 
         if (!validateTitle(title_slice.slice()))
             return globalObject.throwInvalidArguments("Cron title must contain only alphanumeric characters, hyphens, and underscores", .{});
 
-        const job = bun.handleOom(bun.default_allocator.create(CronRemoveJob));
+        const job = fun.handleOom(fun.default_allocator.create(CronRemoveJob));
         job.* = .{
             .global = globalObject,
-            .title = bun.handleOom(bun.default_allocator.dupeZ(u8, title_slice.slice())),
+            .title = fun.handleOom(fun.default_allocator.dupeZ(u8, title_slice.slice())),
             .promise = jsc.JSPromise.Strong.init(globalObject),
         };
 
         const promise_value = job.promise.value();
         job.poll.ref(jsc.VirtualMachine.get());
-        if (comptime bun.Environment.isMac)
+        if (comptime fun.Environment.isMac)
             job.startMac()
-        else if (comptime bun.Environment.isWindows)
+        else if (comptime fun.Environment.isWindows)
             job.startWindows()
         else
             job.startLinux();
@@ -791,23 +791,23 @@ pub const CronRemoveJob = struct {
 
     fn startWindows(this: *CronRemoveJob) void {
         this.state = .installing_crontab;
-        const task_name = allocPrintZ(bun.default_allocator, "bun-cron-{s}", .{this.title}) catch {
+        const task_name = allocPrintZ(fun.default_allocator, "fun-cron-{s}", .{this.title}) catch {
             this.setErr("Out of memory", .{});
             this.finish();
             return;
         };
-        defer bun.default_allocator.free(task_name);
+        defer fun.default_allocator.free(task_name);
         var argv = [_:null]?[*:0]const u8{ "schtasks", "/delete", "/tn", task_name.ptr, "/f", null };
         this.spawnCmd(&argv, .ignore, .ignore);
     }
 };
 
 // ============================================================================
-// CronJob — in-process callback-style cron (Bun.cron(expr, cb))
+// CronJob — in-process callback-style cron (Fun.cron(expr, cb))
 // ============================================================================
 
 pub const CronJob = struct {
-    const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+    const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
 
@@ -820,7 +820,7 @@ pub const CronJob = struct {
     event_loop_timer: EventLoopTimer = .{ .tag = .CronJob, .next = .epoch },
     global: *jsc.JSGlobalObject,
     parsed: CronExpression,
-    poll_ref: bun.Async.KeepAlive = .{},
+    poll_ref: fun.Async.KeepAlive = .{},
     this_value: jsc.JSRef = jsc.JSRef.empty(),
     stopped: bool = false,
     /// Last computed wall-clock fire target (ms epoch); floors the next search
@@ -903,7 +903,7 @@ pub const CronJob = struct {
 
     fn deinit(this: *CronJob) void {
         this.this_value.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
     pub fn finalize(this: *CronJob) void {
@@ -911,7 +911,7 @@ pub const CronJob = struct {
         this.deref();
     }
 
-    fn computeNextTimespec(this: *CronJob) ?bun.timespec {
+    fn computeNextTimespec(this: *CronJob) ?fun.timespec {
         // Cron occurrences are calendar-based (real epoch); the timer heap is
         // monotonic. Anchor both to real time so fake timers don't half-apply.
         const now_ms: f64 = @floatFromInt(std.time.milliTimestamp());
@@ -922,7 +922,7 @@ pub const CronJob = struct {
         const next_ms = (this.parsed.next(this.global, from_ms) catch return null) orelse return null;
         this.last_next_ms = next_ms;
         const delta: i64 = @intFromFloat(@max(1.0, next_ms - now_ms));
-        return bun.timespec.msFromNow(.force_real_time, delta);
+        return fun.timespec.msFromNow(.force_real_time, delta);
     }
 
     fn scheduleNext(this: *CronJob, vm: *jsc.VirtualMachine) void {
@@ -1019,25 +1019,25 @@ pub const CronJob = struct {
         this.scheduleNext(vm);
     }
 
-    pub export const Bun__CronJob__onPromiseResolve = jsc.toJSHostFn(onPromiseResolve);
-    pub export const Bun__CronJob__onPromiseReject = jsc.toJSHostFn(onPromiseReject);
+    pub export const Fun__CronJob__onPromiseResolve = jsc.toJSHostFn(onPromiseResolve);
+    pub export const Fun__CronJob__onPromiseReject = jsc.toJSHostFn(onPromiseReject);
 
-    fn onPromiseResolve(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    fn onPromiseResolve(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const args = callframe.arguments();
         var this: *CronJob = args[args.len - 1].asPromisePtr(CronJob);
         defer this.releasePendingRef();
-        const vm = this.global.bunVM();
+        const vm = this.global.funVM();
         if (this.this_value.tryGet()) |js_this|
             js.pendingPromiseSetCached(js_this, this.global, .js_undefined);
         this.scheduleNext(vm);
         return .js_undefined;
     }
 
-    fn onPromiseReject(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    fn onPromiseReject(_: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         const args = callframe.arguments();
         var this: *CronJob = args[args.len - 1].asPromisePtr(CronJob);
         defer this.releasePendingRef();
-        const vm = this.global.bunVM();
+        const vm = this.global.funVM();
         const err = args[0];
         var promise_value: jsc.JSValue = .js_undefined;
         if (this.this_value.tryGet()) |js_this| {
@@ -1049,40 +1049,40 @@ pub const CronJob = struct {
         return .js_undefined;
     }
 
-    pub fn stop(this: *CronJob, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-        this.selfStop(this.global.bunVM());
+    pub fn stop(this: *CronJob, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+        this.selfStop(this.global.funVM());
         return callframe.this();
     }
 
-    pub fn doRef(this: *CronJob, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-        if (!this.stopped) this.poll_ref.ref(this.global.bunVM());
+    pub fn doRef(this: *CronJob, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+        if (!this.stopped) this.poll_ref.ref(this.global.funVM());
         return callframe.this();
     }
 
-    pub fn doUnref(this: *CronJob, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-        this.poll_ref.unref(this.global.bunVM());
+    pub fn doUnref(this: *CronJob, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+        this.poll_ref.unref(this.global.funVM());
         return callframe.this();
     }
 
-    pub fn getCron(_: *CronJob, _: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn getCron(_: *CronJob, _: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         return .js_undefined; // unreachable — register() pre-populates the cache via cronSetCached
     }
 
-    pub fn register(globalObject: *jsc.JSGlobalObject, schedule_arg: jsc.JSValue, callback_arg: jsc.JSValue) bun.JSError!jsc.JSValue {
+    pub fn register(globalObject: *jsc.JSGlobalObject, schedule_arg: jsc.JSValue, callback_arg: jsc.JSValue) fun.JSError!jsc.JSValue {
         if (!schedule_arg.isString())
-            return globalObject.throwInvalidArguments("Bun.cron() expects a string cron expression", .{});
+            return globalObject.throwInvalidArguments("Fun.cron() expects a string cron expression", .{});
 
-        const schedule_str = try schedule_arg.toBunString(globalObject);
+        const schedule_str = try schedule_arg.toFunString(globalObject);
         defer schedule_str.deref();
-        const schedule_slice = schedule_str.toUTF8(bun.default_allocator);
+        const schedule_slice = schedule_str.toUTF8(fun.default_allocator);
         defer schedule_slice.deinit();
 
         const parsed = CronExpression.parse(schedule_slice.slice()) catch |e|
             return globalObject.throwInvalidArguments("{s}", .{CronExpression.errorMessage(e)});
 
-        const vm = globalObject.bunVM();
+        const vm = globalObject.funVM();
 
-        const job = bun.new(CronJob, .{
+        const job = fun.new(CronJob, .{
             .ref_count = .init(),
             .global = globalObject,
             .parsed = parsed,
@@ -1098,7 +1098,7 @@ pub const CronJob = struct {
         // so skip the list ref + append entirely.
         if (vm.hot_reload == .hot or vm.worker != null) {
             job.ref(); // owned by cron_jobs entry
-            bun.handleOom(vm.rareData().cron_jobs.append(bun.default_allocator, job));
+            fun.handleOom(vm.rareData().cron_jobs.append(fun.default_allocator, job));
         }
 
         const js_value = job.toJS(globalObject);
@@ -1114,27 +1114,27 @@ pub const CronJob = struct {
 };
 
 // ============================================================================
-// Bun.cron object builder
+// Fun.cron object builder
 // ============================================================================
 
 pub fn getCronObject(globalThis: *jsc.JSGlobalObject, _: *jsc.JSObject) jsc.JSValue {
     const cron_fn = jsc.JSFunction.create(globalThis, "cron", CronRegisterJob.cronRegister, 3, .{});
     const remove_fn = jsc.JSFunction.create(globalThis, "remove", CronRemoveJob.cronRemove, 1, .{});
     const parse_fn = jsc.JSFunction.create(globalThis, "parse", cronParse, 1, .{});
-    cron_fn.put(globalThis, bun.String.static("remove"), remove_fn);
-    cron_fn.put(globalThis, bun.String.static("parse"), parse_fn);
+    cron_fn.put(globalThis, fun.String.static("remove"), remove_fn);
+    cron_fn.put(globalThis, fun.String.static("parse"), parse_fn);
     return cron_fn;
 }
 
-pub fn cronParse(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn cronParse(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.argumentsAsArray(2);
 
     if (!args[0].isString())
-        return globalObject.throwInvalidArguments("Bun.cron.parse() expects a string cron expression as the first argument", .{});
+        return globalObject.throwInvalidArguments("Fun.cron.parse() expects a string cron expression as the first argument", .{});
 
-    const expr_str = try args[0].toBunString(globalObject);
+    const expr_str = try args[0].toFunString(globalObject);
     defer expr_str.deref();
-    const expr_slice = expr_str.toUTF8(bun.default_allocator);
+    const expr_slice = expr_str.toUTF8(fun.default_allocator);
     defer expr_slice.deinit();
 
     const parsed = CronExpression.parse(expr_slice.slice()) catch |e|
@@ -1146,7 +1146,7 @@ pub fn cronParse(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
         } else if (args[1].jsType() == .JSDate) {
             break :blk try args[1].toNumber(globalObject);
         } else {
-            return globalObject.throwInvalidArguments("Bun.cron.parse() expects the second argument to be a Date or number (ms since epoch)", .{});
+            return globalObject.throwInvalidArguments("Fun.cron.parse() expects the second argument to be a Date or number (ms since epoch)", .{});
         }
     } else @as(f64, @floatFromInt(std.time.milliTimestamp()));
 
@@ -1162,40 +1162,40 @@ pub fn cronParse(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
 // ============================================================================
 
 /// Generic spawn used by both CronRegisterJob and CronRemoveJob.
-fn spawnCmdGeneric(comptime Self: type, this: *Self, argv: anytype, stdin_opt: bun.spawn.SpawnOptions.Stdio, stdout_opt: bun.spawn.SpawnOptions.Stdio) void {
+fn spawnCmdGeneric(comptime Self: type, this: *Self, argv: anytype, stdin_opt: fun.spawn.SpawnOptions.Stdio, stdout_opt: fun.spawn.SpawnOptions.Stdio) void {
     this.has_called_process_exit = false;
     this.exit_status = null;
     this.remaining_fds = 0;
 
     var resolved_argv0: ?[*:0]const u8 = null;
-    if (comptime bun.Environment.isWindows) {
-        // Resolve the executable via bun.which, matching Bun.spawn's behavior.
-        var path_buf: bun.PathBuffer = undefined;
+    if (comptime fun.Environment.isWindows) {
+        // Resolve the executable via fun.which, matching Fun.spawn's behavior.
+        var path_buf: fun.PathBuffer = undefined;
         const PATH = jsc.VirtualMachine.get().transpiler.env.map.get("PATH") orelse "";
-        resolved_argv0 = bun.which(&path_buf, PATH, "", bun.sliceTo(argv[0].?, 0)) orelse {
-            this.setErr("Could not find '{s}' in PATH", .{bun.sliceTo(argv[0].?, 0)});
+        resolved_argv0 = fun.which(&path_buf, PATH, "", fun.sliceTo(argv[0].?, 0)) orelse {
+            this.setErr("Could not find '{s}' in PATH", .{fun.sliceTo(argv[0].?, 0)});
             this.finish();
             return;
         };
     }
-    if (comptime bun.Environment.isWindows) {
-        this.stderr_reader.source = .{ .pipe = bun.new(bun.windows.libuv.Pipe, std.mem.zeroes(bun.windows.libuv.Pipe)) };
+    if (comptime fun.Environment.isWindows) {
+        this.stderr_reader.source = .{ .pipe = fun.new(fun.windows.libuv.Pipe, std.mem.zeroes(fun.windows.libuv.Pipe)) };
     }
     const cwd = jsc.VirtualMachine.get().transpiler.fs.top_level_dir;
-    const spawn_options = bun.spawn.SpawnOptions{
+    const spawn_options = fun.spawn.SpawnOptions{
         .stdin = stdin_opt,
         .stdout = stdout_opt,
-        .stderr = if (comptime bun.Environment.isWindows) .{ .buffer = this.stderr_reader.source.?.pipe } else .ignore,
+        .stderr = if (comptime fun.Environment.isWindows) .{ .buffer = this.stderr_reader.source.?.pipe } else .ignore,
         .cwd = cwd,
         .argv0 = resolved_argv0,
-        .windows = if (comptime bun.Environment.isWindows) .{
+        .windows = if (comptime fun.Environment.isWindows) .{
             .loop = jsc.EventLoopHandle.init(jsc.VirtualMachine.get().eventLoop()),
         },
     };
 
-    var envp_arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+    var envp_arena = std.heap.ArenaAllocator.init(fun.default_allocator);
     defer envp_arena.deinit();
-    const envp: [*:null]?[*:0]const u8 = if (comptime bun.Environment.isPosix)
+    const envp: [*:null]?[*:0]const u8 = if (comptime fun.Environment.isPosix)
         @ptrCast(@constCast(std.c.environ))
     else
         @ptrCast((jsc.VirtualMachine.get().transpiler.env.map.createNullDelimitedEnvMap(envp_arena.allocator()) catch {
@@ -1203,7 +1203,7 @@ fn spawnCmdGeneric(comptime Self: type, this: *Self, argv: anytype, stdin_opt: b
             this.finish();
             return;
         }).ptr);
-    var spawned = (bun.spawn.spawnProcess(&spawn_options, @ptrCast(argv), envp) catch |e| {
+    var spawned = (fun.spawn.spawnProcess(&spawn_options, @ptrCast(argv), envp) catch |e| {
         this.setErr("Failed to spawn process: {s}", .{@errorName(e)});
         this.finish();
         return;
@@ -1213,11 +1213,11 @@ fn spawnCmdGeneric(comptime Self: type, this: *Self, argv: anytype, stdin_opt: b
         return;
     };
 
-    if (comptime bun.Environment.isPosix) {
+    if (comptime fun.Environment.isPosix) {
         if (spawned.stdout) |stdout| {
             if (!spawned.memfds[1]) {
                 this.stdout_reader.setParent(this);
-                _ = bun.sys.setNonblocking(stdout);
+                _ = fun.sys.setNonblocking(stdout);
                 this.remaining_fds += 1;
                 this.stdout_reader.flags.nonblocking = true;
                 this.stdout_reader.flags.socket = true;
@@ -1236,7 +1236,7 @@ fn spawnCmdGeneric(comptime Self: type, this: *Self, argv: anytype, stdin_opt: b
             }
         }
     }
-    if (comptime bun.Environment.isWindows) {
+    if (comptime fun.Environment.isWindows) {
         if (spawned.stderr == .buffer) {
             this.stderr_reader.parent = this;
             this.remaining_fds += 1;
@@ -1253,25 +1253,25 @@ fn spawnCmdGeneric(comptime Self: type, this: *Self, argv: anytype, stdin_opt: b
     process.setExitHandler(this);
     switch (process.watchOrReap()) {
         .err => |err| {
-            if (!process.hasExited()) process.onExit(.{ .err = err }, &std.mem.zeroes(bun.spawn.Rusage));
+            if (!process.hasExited()) process.onExit(.{ .err = err }, &std.mem.zeroes(fun.spawn.Rusage));
         },
         .result => {},
     }
 }
 
-/// Find crontab binary using bun.which (searches PATH).
+/// Find crontab binary using fun.which (searches PATH).
 fn findCrontab() ?[*:0]const u8 {
-    if (comptime bun.Environment.isWindows) return null;
+    if (comptime fun.Environment.isWindows) return null;
     const static = struct {
-        var buf: bun.PathBuffer = undefined;
+        var buf: fun.PathBuffer = undefined;
     };
-    const path_env = bun.env_var.PATH.get() orelse "/usr/bin:/bin";
-    return (bun.which(&static.buf, path_env, "", "crontab") orelse return null).ptr;
+    const path_env = fun.env_var.PATH.get() orelse "/usr/bin:/bin";
+    return (fun.which(&static.buf, path_env, "", "crontab") orelse return null).ptr;
 }
 
 /// Get the current user ID portably.
 fn getUid() u32 {
-    return if (comptime bun.Environment.isPosix) bun.c.getuid() else 0;
+    return if (comptime fun.Environment.isPosix) fun.c.getuid() else 0;
 }
 
 /// Validate title: only [a-zA-Z0-9_-], non-empty.
@@ -1285,8 +1285,8 @@ fn validateTitle(title: []const u8) bool {
 
 /// Filter crontab content, removing any entry with matching title marker.
 fn filterCrontab(content: []const u8, title: [:0]const u8, result: *std.array_list.Managed(u8)) !void {
-    const marker = try std.fmt.allocPrint(bun.default_allocator, "# bun-cron: {s}", .{title});
-    defer bun.default_allocator.free(marker);
+    const marker = try std.fmt.allocPrint(fun.default_allocator, "# fun-cron: {s}", .{title});
+    defer fun.default_allocator.free(marker);
     var skip_next = false;
     var lines = std.mem.splitScalar(u8, content, '\n');
     while (lines.next()) |line| {
@@ -1294,7 +1294,7 @@ fn filterCrontab(content: []const u8, title: [:0]const u8, result: *std.array_li
             skip_next = false;
             continue;
         }
-        if (bun.strings.eql(bun.strings.trim(line, " \t"), marker)) {
+        if (fun.strings.eql(fun.strings.trim(line, " \t"), marker)) {
             skip_next = true;
             continue;
         }
@@ -1306,16 +1306,16 @@ fn filterCrontab(content: []const u8, title: [:0]const u8, result: *std.array_li
 }
 
 fn resolvePath(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, path: []const u8) ![:0]const u8 {
-    const vm = globalObject.bunVM();
+    const vm = globalObject.funVM();
     const srcloc = callframe.getCallerSrcLoc(globalObject);
     defer srcloc.str.deref();
-    const caller_utf8 = srcloc.str.toUTF8(bun.default_allocator);
+    const caller_utf8 = srcloc.str.toUTF8(fun.default_allocator);
     defer caller_utf8.deinit();
-    const raw_dir = bun.path.dirname(caller_utf8.slice(), .auto);
+    const raw_dir = fun.path.dirname(caller_utf8.slice(), .auto);
     const source_dir = if (raw_dir.len == 0) "." else raw_dir;
     var resolved = vm.transpiler.resolver.resolve(source_dir, path, .entry_point_run) catch return error.ModuleNotFound;
     const entry_path = resolved.path() orelse return error.ModuleNotFound;
-    return bun.default_allocator.dupeZ(u8, entry_path.text);
+    return fun.default_allocator.dupeZ(u8, entry_path.text);
 }
 
 /// XML-escape a string for safe embedding in plist XML.
@@ -1327,9 +1327,9 @@ fn xmlEscape(input: []const u8) ![]const u8 {
             break;
         }
     }
-    if (!needs_escape) return bun.default_allocator.dupe(u8, input);
+    if (!needs_escape) return fun.default_allocator.dupe(u8, input);
 
-    var result = std.array_list.Managed(u8).init(bun.default_allocator);
+    var result = std.array_list.Managed(u8).init(fun.default_allocator);
     errdefer result.deinit();
     for (input) |c| {
         switch (c) {
@@ -1358,11 +1358,11 @@ fn cronToCalendarInterval(schedule: []const u8) ![]const u8 {
     // Parse each field into a list of integer values (or null for "*")
     var field_values: [5]?[]const i32 = .{ null, null, null, null, null };
     defer for (&field_values) |*fv| {
-        if (fv.*) |v| bun.default_allocator.free(v);
+        if (fv.*) |v| fun.default_allocator.free(v);
     };
     for (fields[0..5], &field_values) |field, *fv| {
-        if (bun.strings.eql(field, "*")) continue;
-        var vals = std.array_list.Managed(i32).init(bun.default_allocator);
+        if (fun.strings.eql(field, "*")) continue;
+        var vals = std.array_list.Managed(i32).init(fun.default_allocator);
         errdefer vals.deinit();
         var parts = std.mem.splitScalar(u8, field, ',');
         while (parts.next()) |part| {
@@ -1379,7 +1379,7 @@ fn cronToCalendarInterval(schedule: []const u8) ![]const u8 {
     // the job fires when EITHER matches. launchd ANDs keys within a single dict, so we
     // emit two separate sets of dicts: one with Day (no Weekday) and one with Weekday
     // (no Day). launchd fires when ANY dict matches, achieving OR behavior.
-    var result = std.array_list.Managed(u8).init(bun.default_allocator);
+    var result = std.array_list.Managed(u8).init(fun.default_allocator);
     errdefer result.deinit();
 
     const has_dom = field_values[2] != null;
@@ -1424,8 +1424,8 @@ fn cronToCalendarInterval(schedule: []const u8) ![]const u8 {
 }
 
 fn appendCalendarKey(result: *std.array_list.Managed(u8), key: []const u8, val: i32) !void {
-    const line = try std.fmt.allocPrint(bun.default_allocator, "        <key>{s}</key>\n        <integer>{d}</integer>\n", .{ key, val });
-    defer bun.default_allocator.free(line);
+    const line = try std.fmt.allocPrint(fun.default_allocator, "        <key>{s}</key>\n        <integer>{d}</integer>\n", .{ key, val });
+    defer fun.default_allocator.free(line);
     try result.appendSlice(line);
 }
 
@@ -1474,12 +1474,12 @@ fn emitCalendarDicts(result: *std.array_list.Managed(u8), field_values: [5]?[]co
 /// Uses TimeTrigger+Repetition for simple intervals, CalendarTrigger for complex schedules.
 fn cronToTaskXml(
     cron: CronExpression,
-    bun_exe: []const u8,
+    fun_exe: []const u8,
     title: []const u8,
     schedule: []const u8,
     abs_path: []const u8,
 ) ![]const u8 {
-    const allocator = bun.default_allocator;
+    const allocator = fun.default_allocator;
     var xml = std.array_list.Managed(u8).init(allocator);
     errdefer xml.deinit();
 
@@ -1601,8 +1601,8 @@ fn cronToTaskXml(
     }
 
     // Close triggers, add action
-    const xml_bun = try xmlEscape(bun_exe);
-    defer allocator.free(xml_bun);
+    const xml_fun = try xmlEscape(fun_exe);
+    defer allocator.free(xml_fun);
     const xml_title = try xmlEscape(title);
     defer allocator.free(xml_title);
     const xml_sched = try xmlEscape(schedule);
@@ -1633,7 +1633,7 @@ fn cronToTaskXml(
         \\  </Actions>
         \\</Task>
         \\
-    , .{ xml_bun, xml_title, xml_sched, xml_path });
+    , .{ xml_fun, xml_title, xml_sched, xml_path });
     defer allocator.free(action_xml);
     try xml.appendSlice(action_xml);
 
@@ -1755,9 +1755,9 @@ fn allocPrintZ(allocator: std.mem.Allocator, comptime fmt: []const u8, args: any
 
 /// Create a temp file path with a random suffix to avoid TOCTOU/symlink attacks.
 fn makeTempPath(comptime prefix: []const u8) ![:0]const u8 {
-    var name_buf: bun.PathBuffer = undefined;
-    const name = bun.fs.FileSystem.tmpname(prefix ++ "tmp", &name_buf, bun.fastRandom()) catch return error.OutOfMemory;
-    return bun.default_allocator.dupeZ(u8, bun.path.joinAbsString(bun.fs.FileSystem.RealFS.platformTempDir(), &.{name}, .auto));
+    var name_buf: fun.PathBuffer = undefined;
+    const name = fun.fs.FileSystem.tmpname(prefix ++ "tmp", &name_buf, fun.fastRandom()) catch return error.OutOfMemory;
+    return fun.default_allocator.dupeZ(u8, fun.path.joinAbsString(fun.fs.FileSystem.RealFS.platformTempDir(), &.{name}, .auto));
 }
 
 const std = @import("std");
@@ -1765,8 +1765,8 @@ const std = @import("std");
 const cron_parser = @import("./cron_parser.zig");
 const CronExpression = cron_parser.CronExpression;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const OutputReader = bun.io.BufferedReader;
-const Process = bun.spawn.Process;
-const EventLoopTimer = bun.api.Timer.EventLoopTimer;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const OutputReader = fun.io.BufferedReader;
+const Process = fun.spawn.Process;
+const EventLoopTimer = fun.api.Timer.EventLoopTimer;

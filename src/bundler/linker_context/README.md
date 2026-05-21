@@ -6,7 +6,7 @@ Many of the functions/files represent a pass or step over the bundle graph or ch
 
 ## Overview
 
-The `LinkerContext` is the central orchestrator for Bun's bundling process. After the parser has created an AST representation of all input files, the `LinkerContext` takes over to perform linking, optimization, code splitting, and final code generation.
+The `LinkerContext` is the central orchestrator for Fun's bundling process. After the parser has created an AST representation of all input files, the `LinkerContext` takes over to perform linking, optimization, code splitting, and final code generation.
 
 The LinkerContext operates in several main phases:
 
@@ -446,7 +446,7 @@ if (targetModule.needsWrapper) {
 - Dependency graph updates use pre-allocated capacity
 - Export star cycle detection prevents infinite loops
 
-This function is the foundation of Bun's module compatibility system, ensuring that mixed ES6/CommonJS codebases work correctly while enabling optimal bundling strategies.
+This function is the foundation of Fun's module compatibility system, ensuring that mixed ES6/CommonJS codebases work correctly while enabling optimal bundling strategies.
 
 #### `doStep5.zig`
 
@@ -465,7 +465,7 @@ This function is the foundation of Bun's module compatibility system, ensuring t
 
 **Purpose**: Performs symbol renaming within individual chunks to eliminate naming conflicts, enable minification, and ensure proper scoping isolation. This function is critical for generating final output code where variables can be safely renamed without breaking references.
 
-**Why Symbol Management is Necessary**: When bundling multiple JavaScript files, Bun faces several fundamental challenges:
+**Why Symbol Management is Necessary**: When bundling multiple JavaScript files, Fun faces several fundamental challenges:
 
 1. **Namespace Collisions**: Multiple files may use the same variable names, creating conflicts when combined:
 
@@ -483,7 +483,7 @@ This function is the foundation of Bun's module compatibility system, ensuring t
 
 4. **Minification Optimization**: For production builds, identifier names should be shortened for maximum compression while preserving program semantics.
 
-**Why the Ref System Exists**: Bun's `Ref` struct solves the parallel parsing problem that occurs when processing thousands of files simultaneously:
+**Why the Ref System Exists**: Fun's `Ref` struct solves the parallel parsing problem that occurs when processing thousands of files simultaneously:
 
 ```zig
 pub const Ref = packed struct(u64) {
@@ -870,7 +870,7 @@ The function resolves `composes` relationships by visiting the referenced classe
 **Purpose**: Converts and transforms AST statements for final inclusion in output chunks, handling the critical process of adapting module-level statements for different output formats and wrapper contexts.
 
 **Why this function is necessary**:
-When bundling modules, Bun often needs to wrap module code in runtime functions to preserve module semantics (like namespace objects, CommonJS compatibility, etc.). This creates a challenge: ES module import/export statements MUST remain at the top level of the output file, but the module's actual code might need to be wrapped in a function. This function solves this by carefully separating statements that must stay at the top level from those that can be wrapped.
+When bundling modules, Fun often needs to wrap module code in runtime functions to preserve module semantics (like namespace objects, CommonJS compatibility, etc.). This creates a challenge: ES module import/export statements MUST remain at the top level of the output file, but the module's actual code might need to be wrapped in a function. This function solves this by carefully separating statements that must stay at the top level from those that can be wrapped.
 
 **Core responsibilities**:
 

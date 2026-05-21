@@ -3,7 +3,7 @@
 #include "root.h"
 #include <JavaScriptCore/InternalFunction.h>
 
-namespace Bun {
+namespace Fun {
 
 JSC_DECLARE_HOST_FUNCTION(callConnectionsList);
 JSC_DECLARE_HOST_FUNCTION(constructConnectionsList);
@@ -46,4 +46,4 @@ private:
     }
 };
 
-} // namespace Bun
+} // namespace Fun

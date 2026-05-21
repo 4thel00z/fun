@@ -6,7 +6,7 @@
 #include <JavaScriptCore/VM.h>
 
 #include "headers-handwritten.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/CallFrame.h>
 #include "node_api.h"
 #include <JavaScriptCore/JSWeakValue.h>
@@ -25,7 +25,7 @@
 
 extern "C" void napi_internal_register_cleanup_zig(napi_env env);
 extern "C" void napi_internal_suppress_crash_on_abort_if_desired();
-extern "C" void Bun__crashHandler(const char* message, size_t message_len);
+extern "C" void Fun__crashHandler(const char* message, size_t message_len);
 
 static bool equal(napi_async_cleanup_hook_handle, napi_async_cleanup_hook_handle);
 
@@ -150,7 +150,7 @@ static bool equal(napi_async_cleanup_hook_handle one, napi_async_cleanup_hook_ha
 #define NAPI_ABORT(message)                                    \
     do {                                                       \
         napi_internal_suppress_crash_on_abort_if_desired();    \
-        Bun__crashHandler(message "", sizeof(message "") - 1); \
+        Fun__crashHandler(message "", sizeof(message "") - 1); \
     } while (0)
 
 #define NAPI_PERISH(...)                                                      \
@@ -207,7 +207,7 @@ public:
         // ListHashSet iteration is safe against concurrent inserts, and m_isFinishingFinalizers
         // routes all removals to active=false, so the only unsafe op (erase-current) can't occur.
         for (auto it = m_finalizers.rbegin(); it != m_finalizers.rend(); ++it) {
-            Bun::NapiHandleScope handle_scope(m_globalObject);
+            Fun::NapiHandleScope handle_scope(m_globalObject);
             it->call(this);
         }
         m_finalizers.clear();
@@ -380,7 +380,7 @@ public:
     }
 
     inline Zig::GlobalObject* globalObject() const { return m_globalObject; }
-    // `bun test --isolate` creates a fresh Zig::GlobalObject per file and
+    // `fun test --isolate` creates a fresh Zig::GlobalObject per file and
     // gcUnprotect()s the previous one. NapiEnv outlives its owning global —
     // GC-enqueued NapiFinalizerTasks hold a Ref<NapiEnv> and run on the event
     // loop *after* the swap. Finalizer.run opens a NapiHandleScope via
@@ -419,15 +419,15 @@ public:
     // they return it
     napi_extended_error_info m_lastNapiErrorInfo = {
         .error_message = "",
-        // Not currently used by Bun -- always nullptr
+        // Not currently used by Fun -- always nullptr
         .engine_reserved = nullptr,
-        // Not currently used by Bun -- always zero
+        // Not currently used by Fun -- always zero
         .engine_error_code = 0,
         .error_code = napi_ok,
     };
 
     void* instanceData = nullptr;
-    Bun::NapiFinalizer instanceDataFinalizer;
+    Fun::NapiFinalizer instanceDataFinalizer;
     char* filename = nullptr;
 
     struct BoundFinalizer {
@@ -440,7 +440,7 @@ public:
 
         BoundFinalizer() = default;
 
-        BoundFinalizer(const Bun::NapiFinalizer& finalizer, void* data)
+        BoundFinalizer(const Fun::NapiFinalizer& finalizer, void* data)
             : callback(finalizer.callback())
             , hint(finalizer.hint())
             , data(data)
@@ -690,7 +690,7 @@ public:
     void unref();
     void clear();
 
-    NapiRef(Ref<NapiEnv>&& env, uint32_t count, Bun::NapiFinalizer finalizer)
+    NapiRef(Ref<NapiEnv>&& env, uint32_t count, Fun::NapiFinalizer finalizer)
         : env(env)
         , globalObject(JSC::Weak<JSC::JSGlobalObject>(env->globalObject()))
         , finalizer(WTF::move(finalizer))
@@ -737,7 +737,7 @@ public:
     {
         // Calling the finalizer may delete `this`, so we have to do state changes on `this` before
         // calling the finalizer
-        Bun::NapiFinalizer saved_finalizer = this->finalizer;
+        Fun::NapiFinalizer saved_finalizer = this->finalizer;
         this->finalizer.clear();
         saved_finalizer.call(env.ptr(), nativeObject, !env->mustDeferFinalizers() || !env->inGC());
     }
@@ -763,7 +763,7 @@ public:
     JSC::Weak<JSC::JSGlobalObject> globalObject;
     NapiWeakValue weakValueRef;
     JSC::Strong<JSC::Unknown> strongRef;
-    Bun::NapiFinalizer finalizer;
+    Fun::NapiFinalizer finalizer;
     const NapiEnv::BoundFinalizer* boundCleanup = nullptr;
     void* nativeObject = nullptr;
     uint32_t refCount = 0;

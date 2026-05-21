@@ -10,21 +10,21 @@
 #include <JavaScriptCore/JSString.h>
 #include <JavaScriptCore/JSStringInlines.h>
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "wtf/Compiler.h"
 #include "wtf/Forward.h"
 #include "WebCoreJSBuiltins.h"
 
 using namespace JSC;
 
-extern "C" size_t Bun__getEnvCount(JSGlobalObject* globalObject, void** list_ptr);
-extern "C" size_t Bun__getEnvKey(void* list, size_t index, unsigned char** out);
+extern "C" size_t Fun__getEnvCount(JSGlobalObject* globalObject, void** list_ptr);
+extern "C" size_t Fun__getEnvKey(void* list, size_t index, unsigned char** out);
 
-extern "C" bool Bun__getEnvValue(JSGlobalObject* globalObject, ZigString* name, ZigString* value);
-extern "C" bool Bun__getEnvValueBunString(JSGlobalObject* globalObject, BunString* name, BunString* value);
-extern "C" void Bun__setEnvValue(JSGlobalObject* globalObject, BunString* name, BunString* value);
+extern "C" bool Fun__getEnvValue(JSGlobalObject* globalObject, ZigString* name, ZigString* value);
+extern "C" bool Fun__getEnvValueFunString(JSGlobalObject* globalObject, FunString* name, FunString* value);
+extern "C" void Fun__setEnvValue(JSGlobalObject* globalObject, FunString* name, FunString* value);
 
-namespace Bun {
+namespace Fun {
 
 using namespace WebCore;
 
@@ -43,7 +43,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsGetterEnvironmentVariable, (JSGlobalObject * globalOb
     if (name.len == 0) [[unlikely]]
         return JSValue::encode(jsUndefined());
 
-    if (!Bun__getEnvValue(globalObject, &name, &value)) {
+    if (!Fun__getEnvValue(globalObject, &name, &value)) {
         return JSValue::encode(jsUndefined());
     }
 
@@ -81,9 +81,9 @@ JSC_DEFINE_CUSTOM_GETTER(jsGetterProxyEnvironmentVariable, (JSGlobalObject * glo
     if (!thisObject) [[unlikely]]
         return JSValue::encode(jsUndefined());
 
-    BunString name = Bun::toStringView(propertyName.publicName());
-    BunString value = { BunStringTag::Dead };
-    if (!Bun__getEnvValueBunString(globalObject, &name, &value)) {
+    FunString name = Fun::toStringView(propertyName.publicName());
+    FunString value = { FunStringTag::Dead };
+    if (!Fun__getEnvValueFunString(globalObject, &name, &value)) {
         return JSValue::encode(jsUndefined());
     }
     RELEASE_AND_RETURN(scope, JSValue::encode(jsString(vm, value.toWTFString())));
@@ -105,9 +105,9 @@ JSC_DEFINE_CUSTOM_SETTER(jsSetterProxyEnvironmentVariable, (JSGlobalObject * glo
     auto view = string->view(globalObject);
     RETURN_IF_EXCEPTION(scope, false);
 
-    BunString name = Bun::toStringView(propertyName.publicName());
-    BunString val = Bun::toStringView(view);
-    Bun__setEnvValue(globalObject, &name, &val);
+    FunString name = Fun::toStringView(propertyName.publicName());
+    FunString val = Fun::toStringView(view);
+    Fun__setEnvValue(globalObject, &name, &val);
     return true;
 }
 
@@ -131,7 +131,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsTimeZoneEnvironmentVariableGetter, (JSGlobalObject * 
         return JSValue::encode(hasExistingValue);
     }
 
-    if (!Bun__getEnvValue(globalObject, &name, &value) || value.len == 0) {
+    if (!Fun__getEnvValue(globalObject, &name, &value) || value.len == 0) {
         return JSValue::encode(jsUndefined());
     }
 
@@ -143,7 +143,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsTimeZoneEnvironmentVariableGetter, (JSGlobalObject * 
 
 // In Node.js, the "TZ" environment variable is special.
 // Setting it automatically updates the timezone.
-// We also expose an explicit setTimeZone function in bun:jsc
+// We also expose an explicit setTimeZone function in fun:jsc
 JSC_DEFINE_CUSTOM_SETTER(jsTimeZoneEnvironmentVariableSetter, (JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue value, PropertyName propertyName))
 {
     VM& vm = globalObject->vm();
@@ -172,10 +172,10 @@ JSC_DEFINE_CUSTOM_SETTER(jsTimeZoneEnvironmentVariableSetter, (JSGlobalObject * 
     return true;
 }
 
-extern "C" int Bun__getTLSRejectUnauthorizedValue();
-extern "C" int Bun__setTLSRejectUnauthorizedValue(int value);
-extern "C" int Bun__getVerboseFetchValue();
-extern "C" int Bun__setVerboseFetchValue(int value);
+extern "C" int Fun__getTLSRejectUnauthorizedValue();
+extern "C" int Fun__setTLSRejectUnauthorizedValue(int value);
+extern "C" int Fun__getVerboseFetchValue();
+extern "C" int Fun__setVerboseFetchValue(int value);
 
 ALWAYS_INLINE static Identifier NODE_TLS_REJECT_UNAUTHORIZED_PRIVATE_PROPERTY(VM& vm)
 {
@@ -186,7 +186,7 @@ ALWAYS_INLINE static Identifier NODE_TLS_REJECT_UNAUTHORIZED_PRIVATE_PROPERTY(VM
     return builtinNames.textDecoderStreamDecoderPrivateName();
 }
 
-ALWAYS_INLINE static Identifier BUN_CONFIG_VERBOSE_FETCH_PRIVATE_PROPERTY(VM& vm)
+ALWAYS_INLINE static Identifier FUN_CONFIG_VERBOSE_FETCH_PRIVATE_PROPERTY(VM& vm)
 {
     auto* clientData = WebCore::clientData(vm);
     auto& builtinNames = clientData->builtinNames();
@@ -213,7 +213,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsNodeTLSRejectUnauthorizedGetter, (JSGlobalObject * gl
     ZigString name = toZigString(propertyName.publicName());
     ZigString value = { nullptr, 0 };
 
-    if (!Bun__getEnvValue(globalObject, &name, &value) || value.len == 0) {
+    if (!Fun__getEnvValue(globalObject, &name, &value) || value.len == 0) {
         return JSValue::encode(jsUndefined());
     }
 
@@ -233,11 +233,11 @@ JSC_DEFINE_CUSTOM_SETTER(jsNodeTLSRejectUnauthorizedSetter, (JSGlobalObject * gl
     RETURN_IF_EXCEPTION(scope, false);
 
     // TODO: only check "0". Node doesn't check both. But we already did. So we
-    // should wait to do that until Bun v1.2.0.
+    // should wait to do that until Fun v1.2.0.
     if (str == "0"_s || str == "false"_s) {
-        Bun__setTLSRejectUnauthorizedValue(0);
+        Fun__setTLSRejectUnauthorizedValue(0);
     } else {
-        Bun__setTLSRejectUnauthorizedValue(1);
+        Fun__setTLSRejectUnauthorizedValue(1);
     }
 
     const auto& privateName = NODE_TLS_REJECT_UNAUTHORIZED_PRIVATE_PROPERTY(vm);
@@ -249,7 +249,7 @@ JSC_DEFINE_CUSTOM_SETTER(jsNodeTLSRejectUnauthorizedSetter, (JSGlobalObject * gl
     return true;
 }
 
-JSC_DEFINE_CUSTOM_GETTER(jsBunConfigVerboseFetchGetter, (JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, PropertyName propertyName))
+JSC_DEFINE_CUSTOM_GETTER(jsFunConfigVerboseFetchGetter, (JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, PropertyName propertyName))
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -258,7 +258,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsBunConfigVerboseFetchGetter, (JSGlobalObject * global
     if (!thisObject) [[unlikely]]
         return JSValue::encode(jsUndefined());
 
-    const auto& privateName = BUN_CONFIG_VERBOSE_FETCH_PRIVATE_PROPERTY(vm);
+    const auto& privateName = FUN_CONFIG_VERBOSE_FETCH_PRIVATE_PROPERTY(vm);
     JSValue result = thisObject->getDirect(vm, privateName);
     if (result) [[unlikely]] {
         return JSValue::encode(result);
@@ -267,14 +267,14 @@ JSC_DEFINE_CUSTOM_GETTER(jsBunConfigVerboseFetchGetter, (JSGlobalObject * global
     ZigString name = toZigString(propertyName.publicName());
     ZigString value = { nullptr, 0 };
 
-    if (!Bun__getEnvValue(globalObject, &name, &value) || value.len == 0) {
+    if (!Fun__getEnvValue(globalObject, &name, &value) || value.len == 0) {
         return JSValue::encode(jsUndefined());
     }
 
     return JSValue::encode(jsString(vm, Zig::toStringCopy(value)));
 }
 
-JSC_DEFINE_CUSTOM_SETTER(jsBunConfigVerboseFetchSetter, (JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue value, PropertyName propertyName))
+JSC_DEFINE_CUSTOM_SETTER(jsFunConfigVerboseFetchSetter, (JSGlobalObject * globalObject, JSC::EncodedJSValue thisValue, JSC::EncodedJSValue value, PropertyName propertyName))
 {
     VM& vm = globalObject->vm();
     JSC::JSObject* object = JSValue::decode(thisValue).getObject();
@@ -287,14 +287,14 @@ JSC_DEFINE_CUSTOM_SETTER(jsBunConfigVerboseFetchSetter, (JSGlobalObject * global
     RETURN_IF_EXCEPTION(scope, false);
 
     if (str == "1"_s || str == "true"_s) {
-        Bun__setVerboseFetchValue(1);
+        Fun__setVerboseFetchValue(1);
     } else if (str == "curl"_s) {
-        Bun__setVerboseFetchValue(2);
+        Fun__setVerboseFetchValue(2);
     } else {
-        Bun__setVerboseFetchValue(0);
+        Fun__setVerboseFetchValue(0);
     }
 
-    const auto& privateName = BUN_CONFIG_VERBOSE_FETCH_PRIVATE_PROPERTY(vm);
+    const auto& privateName = FUN_CONFIG_VERBOSE_FETCH_PRIVATE_PROPERTY(vm);
     object->putDirect(vm, privateName, JSValue::decode(value), 0);
 
     // TODO: this is an assertion failure
@@ -304,7 +304,7 @@ JSC_DEFINE_CUSTOM_SETTER(jsBunConfigVerboseFetchSetter, (JSGlobalObject * global
 }
 
 #if OS(WINDOWS)
-extern "C" void Bun__Process__editWindowsEnvVar(BunString, BunString);
+extern "C" void Fun__Process__editWindowsEnvVar(FunString, FunString);
 
 JSC_DEFINE_HOST_FUNCTION(jsEditWindowsEnvVar, (JSGlobalObject * global, JSC::CallFrame* callFrame))
 {
@@ -318,9 +318,9 @@ JSC_DEFINE_HOST_FUNCTION(jsEditWindowsEnvVar, (JSGlobalObject * global, JSC::Cal
     if (arg2.isCell()) {
         WTF::String string2 = arg2.toWTFString(global);
         RETURN_IF_EXCEPTION(scope, {});
-        Bun__Process__editWindowsEnvVar(Bun::toString(string1), Bun::toString(string2));
+        Fun__Process__editWindowsEnvVar(Fun::toString(string1), Fun::toString(string2));
     } else {
-        Bun__Process__editWindowsEnvVar(Bun::toString(string1), { .tag = BunStringTag::Dead });
+        Fun__Process__editWindowsEnvVar(Fun::toString(string1), { .tag = FunStringTag::Dead });
     }
     RELEASE_AND_RETURN(scope, JSValue::encode(jsUndefined()));
 }
@@ -332,7 +332,7 @@ JSValue createEnvironmentVariablesMap(Zig::GlobalObject* globalObject)
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     void* list;
-    size_t count = Bun__getEnvCount(globalObject, &list);
+    size_t count = Fun__getEnvCount(globalObject, &list);
     JSC::JSObject* object = nullptr;
     if (count < 63) {
         object = constructEmptyObject(globalObject, globalObject->objectPrototype(), count);
@@ -347,10 +347,10 @@ JSValue createEnvironmentVariablesMap(Zig::GlobalObject* globalObject)
 
     static NeverDestroyed<String> TZ = MAKE_STATIC_STRING_IMPL("TZ");
     String NODE_TLS_REJECT_UNAUTHORIZED = String("NODE_TLS_REJECT_UNAUTHORIZED"_s);
-    String BUN_CONFIG_VERBOSE_FETCH = String("BUN_CONFIG_VERBOSE_FETCH"_s);
+    String FUN_CONFIG_VERBOSE_FETCH = String("FUN_CONFIG_VERBOSE_FETCH"_s);
     bool hasTZ = false;
     bool hasNodeTLSRejectUnauthorized = false;
-    bool hasBunConfigVerboseFetch = false;
+    bool hasFunConfigVerboseFetch = false;
 
     // Proxy-related env vars need write-back to the Zig env map so that
     // fetch()'s getHttpProxyFor() observes runtime changes.
@@ -377,7 +377,7 @@ JSValue createEnvironmentVariablesMap(Zig::GlobalObject* globalObject)
 
     for (size_t i = 0; i < count; i++) {
         unsigned char* chars;
-        size_t len = Bun__getEnvKey(list, i, &chars);
+        size_t len = Fun__getEnvKey(list, i, &chars);
         // We can't really trust that the OS gives us valid UTF-8
         auto name = String::fromUTF8ReplacingInvalidSequences(std::span { chars, len });
 #if OS(WINDOWS)
@@ -391,8 +391,8 @@ JSValue createEnvironmentVariablesMap(Zig::GlobalObject* globalObject)
             hasNodeTLSRejectUnauthorized = true;
             continue;
         }
-        if (name == BUN_CONFIG_VERBOSE_FETCH) {
-            hasBunConfigVerboseFetch = true;
+        if (name == FUN_CONFIG_VERBOSE_FETCH) {
+            hasFunConfigVerboseFetch = true;
             continue;
         }
         if (auto idx = isProxyVar(name)) {
@@ -413,7 +413,7 @@ JSValue createEnvironmentVariablesMap(Zig::GlobalObject* globalObject)
             if (auto index = parseIndex(identifier)) {
                 ZigString valueString = { nullptr, 0 };
                 ZigString nameStr = toZigString(name);
-                if (Bun__getEnvValue(globalObject, &nameStr, &valueString)) {
+                if (Fun__getEnvValue(globalObject, &nameStr, &valueString)) {
                     JSValue value = jsString(vm, Zig::toStringCopy(valueString));
                     RETURN_IF_EXCEPTION(scope, {});
                     object->putDirectIndex(globalObject, *index, value, 0, PutDirectIndexLikePutDirect);
@@ -446,13 +446,13 @@ JSValue createEnvironmentVariablesMap(Zig::GlobalObject* globalObject)
         vm,
         Identifier::fromString(vm, NODE_TLS_REJECT_UNAUTHORIZED), JSC::CustomGetterSetter::create(vm, jsNodeTLSRejectUnauthorizedGetter, jsNodeTLSRejectUnauthorizedSetter), NODE_TLS_REJECT_UNAUTHORIZED_Attrs);
 
-    unsigned int BUN_CONFIG_VERBOSE_FETCH_Attrs = JSC::PropertyAttribute::CustomAccessor | 0;
-    if (!hasBunConfigVerboseFetch) {
-        BUN_CONFIG_VERBOSE_FETCH_Attrs |= JSC::PropertyAttribute::DontEnum;
+    unsigned int FUN_CONFIG_VERBOSE_FETCH_Attrs = JSC::PropertyAttribute::CustomAccessor | 0;
+    if (!hasFunConfigVerboseFetch) {
+        FUN_CONFIG_VERBOSE_FETCH_Attrs |= JSC::PropertyAttribute::DontEnum;
     }
     object->putDirectCustomAccessor(
         vm,
-        Identifier::fromString(vm, BUN_CONFIG_VERBOSE_FETCH), JSC::CustomGetterSetter::create(vm, jsBunConfigVerboseFetchGetter, jsBunConfigVerboseFetchSetter), BUN_CONFIG_VERBOSE_FETCH_Attrs);
+        Identifier::fromString(vm, FUN_CONFIG_VERBOSE_FETCH), JSC::CustomGetterSetter::create(vm, jsFunConfigVerboseFetchGetter, jsFunConfigVerboseFetchSetter), FUN_CONFIG_VERBOSE_FETCH_Attrs);
 
     for (size_t j = 0; j < proxyVarCount; j++) {
         // Known limitation: `delete process.env.NO_PROXY` removes the accessor

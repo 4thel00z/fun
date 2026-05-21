@@ -15,7 +15,7 @@ using namespace JSC;
 using namespace WebCore;
 using namespace ncrypto;
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSSecretKeyObjectConstructor::s_info = { "SecretKeyObject"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSSecretKeyObjectConstructor) };
 
@@ -36,4 +36,4 @@ JSC_DEFINE_HOST_FUNCTION(constructSecretKeyObject, (JSC::JSGlobalObject * lexica
     return ERR::INVALID_ARG_TYPE(scope, lexicalGlobalObject, "handle"_s, "object"_s, handleValue);
 }
 
-} // namespace Bun
+} // namespace Fun

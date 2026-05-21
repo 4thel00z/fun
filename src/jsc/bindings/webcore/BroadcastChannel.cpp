@@ -26,14 +26,14 @@
 #include "config.h"
 #include "BroadcastChannel.h"
 
-#include "BunBroadcastChannelRegistry.h"
-#include "BunClientData.h"
+#include "FunBroadcastChannelRegistry.h"
+#include "FunClientData.h"
 #include "EventNames.h"
 #include "MessageEvent.h"
 #include "SerializedScriptValue.h"
 #include <wtf/TZoneMallocInlines.h>
 
-extern "C" void Bun__eventLoop__incrementRefConcurrently(void* bunVM, int delta);
+extern "C" void Fun__eventLoop__incrementRefConcurrently(void* funVM, int delta);
 
 namespace WebCore {
 
@@ -45,7 +45,7 @@ BroadcastChannel::BroadcastChannel(ScriptExecutionContext& context, const String
     , m_contextId(context.identifier())
 {
     initializeWeakPtrFactory();
-    BunBroadcastChannelRegistry::singleton().subscribe(m_name, m_contextId, *this);
+    FunBroadcastChannelRegistry::singleton().subscribe(m_name, m_contextId, *this);
     jsRef(context.jsGlobalObject());
 }
 
@@ -65,7 +65,7 @@ ExceptionOr<void> BroadcastChannel::postMessage(JSC::JSGlobalObject& globalObjec
         return serialized.releaseException();
     ASSERT(dummyPorts.isEmpty());
 
-    BunBroadcastChannelRegistry::singleton().post(m_name, *this, serialized.releaseReturnValue());
+    FunBroadcastChannelRegistry::singleton().post(m_name, *this, serialized.releaseReturnValue());
     return {};
 }
 
@@ -97,7 +97,7 @@ void BroadcastChannel::close()
     uint64_t prev = m_state.fetch_or(Closed, std::memory_order_acq_rel);
     if (prev & Closed)
         return;
-    BunBroadcastChannelRegistry::singleton().unsubscribe(m_name, *this);
+    FunBroadcastChannelRegistry::singleton().unsubscribe(m_name, *this);
 }
 
 void BroadcastChannel::contextDestroyed()
@@ -131,7 +131,7 @@ void BroadcastChannel::jsRef(JSGlobalObject* lexicalGlobalObject)
 {
     if (!m_hasRef) {
         m_hasRef = true;
-        Bun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->bunVM, 1);
+        Fun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->funVM, 1);
     }
 }
 
@@ -139,7 +139,7 @@ void BroadcastChannel::jsUnref(JSGlobalObject* lexicalGlobalObject)
 {
     if (m_hasRef) {
         m_hasRef = false;
-        Bun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->bunVM, -1);
+        Fun__eventLoop__incrementRefConcurrently(WebCore::clientData(lexicalGlobalObject->vm())->funVM, -1);
     }
 }
 

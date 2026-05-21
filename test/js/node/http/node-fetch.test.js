@@ -3,7 +3,7 @@ import * as iso from "isomorphic-fetch";
 import fetch2, { fetch, Headers, Request, Response } from "node-fetch";
 import * as stream from "stream";
 
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, test } from "fun:test";
 
 const originalResponse = globalThis.Response;
 const originalRequest = globalThis.Request;
@@ -12,7 +12,7 @@ afterEach(() => {
   globalThis.Response = originalResponse;
   globalThis.Request = originalRequest;
   globalThis.Headers = originalHeaders;
-  globalThis.fetch = Bun.fetch;
+  globalThis.fetch = Fun.fetch;
 });
 
 test("node-fetch", () => {
@@ -44,7 +44,7 @@ for (const [impl, name] of [
   [vercelFetch.default(fetch), "@vercel/fetch.default"],
 ]) {
   test(name + " fetches", async () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch(req, server) {
         server.stop();
@@ -56,7 +56,7 @@ for (const [impl, name] of [
 }
 
 test("node-fetch uses node streams instead of web streams", async () => {
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req, server) {
       const body = await req.text();
@@ -100,7 +100,7 @@ test("node-fetch request body streams properly", async () => {
   let receivedChunks = [];
   let requestBodyComplete = false;
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     async fetch(req, server) {
       const reader = req.body.getReader();

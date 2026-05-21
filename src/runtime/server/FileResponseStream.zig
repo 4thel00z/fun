@@ -13,17 +13,17 @@ const FileResponseStream = @This();
 ref_count: RefCount,
 resp: AnyResponse,
 vm: *jsc.VirtualMachine,
-fd: bun.FD,
+fd: fun.FD,
 auto_close: bool,
 idle_timeout: u8,
 
 ctx: *anyopaque,
 on_complete: *const fn (*anyopaque, AnyResponse) void,
 on_abort: ?*const fn (*anyopaque, AnyResponse) void,
-on_error: *const fn (*anyopaque, AnyResponse, bun.sys.Error) void,
+on_error: *const fn (*anyopaque, AnyResponse, fun.sys.Error) void,
 
 mode: Mode,
-reader: bun.io.BufferedReader = bun.io.BufferedReader.init(FileResponseStream),
+reader: fun.io.BufferedReader = fun.io.BufferedReader.init(FileResponseStream),
 max_size: ?u64 = null,
 eof_task: ?jsc.AnyTask = null,
 sendfile: Sendfile = .{},
@@ -39,18 +39,18 @@ state: packed struct(u8) {
 const Mode = enum { reader, sendfile };
 
 const Sendfile = struct {
-    socket_fd: bun.FD = bun.invalid_fd,
+    socket_fd: fun.FD = fun.invalid_fd,
     remain: u64 = 0,
     offset: u64 = 0,
     has_set_on_writable: bool = false,
 };
 
 pub const StartOptions = struct {
-    fd: bun.FD,
+    fd: fun.FD,
     auto_close: bool = true,
     resp: AnyResponse,
     vm: *jsc.VirtualMachine,
-    file_type: bun.io.FileType,
+    file_type: fun.io.FileType,
     pollable: bool,
     /// Byte offset into the file to begin reading from.
     offset: u64 = 0,
@@ -63,13 +63,13 @@ pub const StartOptions = struct {
     /// Fires instead of `on_complete` when the client disconnects mid-stream.
     /// If null, abort is reported via `on_complete`.
     on_abort: ?*const fn (*anyopaque, AnyResponse) void = null,
-    on_error: *const fn (*anyopaque, AnyResponse, bun.sys.Error) void,
+    on_error: *const fn (*anyopaque, AnyResponse, fun.sys.Error) void,
 };
 
 pub fn start(opts: StartOptions) void {
     const use_sendfile = canSendfile(opts.resp, opts.file_type, opts.length);
 
-    var this = bun.new(FileResponseStream, .{
+    var this = fun.new(FileResponseStream, .{
         .ref_count = .init(),
         .resp = opts.resp,
         .vm = opts.vm,
@@ -104,7 +104,7 @@ pub fn start(opts: StartOptions) void {
     this.reader.flags.close_handle = false; // we own fd via auto_close
     this.reader.flags.pollable = opts.pollable;
     this.reader.flags.nonblocking = opts.file_type != .file;
-    if (comptime bun.Environment.isPosix) {
+    if (comptime fun.Environment.isPosix) {
         if (opts.file_type == .socket) this.reader.flags.socket = true;
     }
     this.reader.setParent(this);
@@ -125,7 +125,7 @@ pub fn start(opts: StartOptions) void {
 
     this.reader.updateRef(true);
 
-    if (comptime bun.Environment.isPosix) {
+    if (comptime fun.Environment.isPosix) {
         if (this.reader.handle.getPoll()) |poll| {
             if (this.reader.flags.nonblocking) poll.flags.insert(.nonblocking);
             switch (opts.file_type) {
@@ -141,8 +141,8 @@ pub fn start(opts: StartOptions) void {
     this.reader.read();
 }
 
-fn canSendfile(resp: AnyResponse, file_type: bun.io.FileType, length: ?u64) bool {
-    if (comptime bun.Environment.isWindows) return false;
+fn canSendfile(resp: AnyResponse, file_type: fun.io.FileType, length: ?u64) bool {
+    if (comptime fun.Environment.isWindows) return false;
     // sendfile() needs a real socket fd; SSL writes go through BIO and H3
     // through lsquic stream frames — neither has one.
     if (resp != .TCP) return false;
@@ -154,7 +154,7 @@ fn canSendfile(resp: AnyResponse, file_type: bun.io.FileType, length: ?u64) bool
 
 // ───────────────────────── reader backend ─────────────────────────
 
-pub fn onReadChunk(this: *FileResponseStream, chunk_: []const u8, state_: bun.io.ReadState) bool {
+pub fn onReadChunk(this: *FileResponseStream, chunk_: []const u8, state_: fun.io.ReadState) bool {
     this.ref();
     defer this.deref();
 
@@ -165,7 +165,7 @@ pub fn onReadChunk(this: *FileResponseStream, chunk_: []const u8, state_: bun.io
             const c = chunk_[0..@min(chunk_.len, max.*)];
             max.* -|= c.len;
             if (state_ != .eof and max.* == 0) {
-                if (comptime !bun.Environment.isPosix) this.reader.pause();
+                if (comptime !fun.Environment.isPosix) this.reader.pause();
                 this.eof_task = jsc.AnyTask.New(FileResponseStream, FileResponseStream.onReaderDone).init(this);
                 this.vm.eventLoop().enqueueTask(jsc.Task.init(&this.eof_task.?));
                 break :brk .{ c, .eof };
@@ -190,7 +190,7 @@ pub fn onReadChunk(this: *FileResponseStream, chunk_: []const u8, state_: bun.io
             // release the read ref; onWritable re-takes it
             defer this.deref();
             this.resp.onWritable(*FileResponseStream, onWritable, this);
-            if (comptime !bun.Environment.isPosix) this.reader.pause();
+            if (comptime !fun.Environment.isPosix) this.reader.pause();
             return false;
         },
         .want_more => return true,
@@ -202,7 +202,7 @@ pub fn onReaderDone(this: *FileResponseStream) void {
     this.finish();
 }
 
-pub fn onReaderError(this: *FileResponseStream, err: bun.sys.Error) void {
+pub fn onReaderError(this: *FileResponseStream, err: fun.sys.Error) void {
     defer this.deref();
     this.failWith(err);
 }
@@ -233,7 +233,7 @@ fn onSendfile(this: *FileResponseStream) bool {
         return false;
     }
 
-    if (comptime bun.Environment.isLinux) {
+    if (comptime fun.Environment.isLinux) {
         while (true) {
             const adjusted = @min(this.sendfile.remain, @as(u64, std.math.maxInt(i32)));
             var off: i64 = @intCast(this.sendfile.offset);
@@ -243,7 +243,7 @@ fn onSendfile(this: *FileResponseStream) bool {
                 &off,
                 adjusted,
             );
-            const errno = bun.sys.getErrno(rc);
+            const errno = fun.sys.getErrno(rc);
             const sent: u64 = @intCast(@max(@as(i64, @intCast(off)) - @as(i64, @intCast(this.sendfile.offset)), 0));
             this.sendfile.offset = @intCast(off);
             this.sendfile.remain -|= sent;
@@ -264,10 +264,10 @@ fn onSendfile(this: *FileResponseStream) bool {
                 },
             }
         }
-    } else if (comptime bun.Environment.isMac) {
+    } else if (comptime fun.Environment.isMac) {
         while (true) {
             var sbytes: std.posix.off_t = @intCast(@min(this.sendfile.remain, @as(u64, std.math.maxInt(i32))));
-            const errno = bun.sys.getErrno(std.c.sendfile(
+            const errno = fun.sys.getErrno(std.c.sendfile(
                 this.fd.cast(),
                 this.sendfile.socket_fd.cast(),
                 @intCast(this.sendfile.offset),
@@ -336,7 +336,7 @@ fn onAborted(this: *FileResponseStream, _: AnyResponse) void {
     this.finish();
 }
 
-fn failWith(this: *FileResponseStream, err: bun.sys.Error) void {
+fn failWith(this: *FileResponseStream, err: fun.sys.Error) void {
     if (!this.state.response_done) {
         this.state.response_done = true;
         this.state.errored = true;
@@ -379,9 +379,9 @@ fn deinit(this: *FileResponseStream) void {
     log("deinit", .{});
     if (this.mode == .reader) this.reader.deinit();
     if (this.auto_close) {
-        bun.Async.Closer.close(this.fd, if (comptime bun.Environment.isWindows) bun.windows.libuv.Loop.get());
+        fun.Async.Closer.close(this.fd, if (comptime fun.Environment.isWindows) fun.windows.libuv.Loop.get());
     }
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn eventLoop(this: *FileResponseStream) jsc.EventLoopHandle {
@@ -389,23 +389,23 @@ pub fn eventLoop(this: *FileResponseStream) jsc.EventLoopHandle {
 }
 
 pub fn loop(this: *FileResponseStream) *Async.Loop {
-    if (comptime bun.Environment.isWindows) {
+    if (comptime fun.Environment.isWindows) {
         return this.eventLoop().loop().uv_loop;
     }
     return this.eventLoop().loop();
 }
 
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
-const log = bun.Output.scoped(.FileResponseStream, .hidden);
+const log = fun.Output.scoped(.FileResponseStream, .hidden);
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Async = bun.Async;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Async = fun.Async;
+const jsc = fun.jsc;
 
-const uws = bun.uws;
+const uws = fun.uws;
 const AnyResponse = uws.AnyResponse;

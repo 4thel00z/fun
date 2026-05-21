@@ -16,5 +16,5 @@ const app = (
   </StrictMode>
 );
 
-// https://bun.com/docs/bundler/hot-reloading#import-meta-hot-data
+// https://fun.dev/docs/bundler/hot-reloading#import-meta-hot-data
 (import.meta.hot.data.root ??= createRoot(elem)).render(app);

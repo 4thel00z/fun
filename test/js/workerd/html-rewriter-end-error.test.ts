@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 describe("HTMLRewriter", () => {
   // When transforming a string or ArrayBuffer, lol-html may invoke the text
@@ -17,7 +17,7 @@ describe("HTMLRewriter", () => {
         },
       });
       expect(() => rewriter.transform(new Uint8Array([97, 98, 99]).buffer)).toThrow();
-      Bun.gc(true);
+      Fun.gc(true);
     }
   });
 
@@ -32,7 +32,7 @@ describe("HTMLRewriter", () => {
         },
       });
       expect(() => rewriter.transform("abc")).toThrow();
-      Bun.gc(true);
+      Fun.gc(true);
     }
   });
 });

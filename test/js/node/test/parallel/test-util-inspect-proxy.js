@@ -1,7 +1,7 @@
 // Flags: --expose-internals
 'use strict';
 
-// tests testing proxy internals are skipped, as getProxyDetails is not available in bun
+// tests testing proxy internals are skipped, as getProxyDetails is not available in fun
 
 require('../common');
 const assert = require('assert');

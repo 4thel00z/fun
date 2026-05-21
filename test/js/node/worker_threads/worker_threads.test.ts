@@ -1,4 +1,4 @@
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { once } from "node:events";
 import fs from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -209,7 +209,7 @@ test("support require in eval", async () => {
     worker.on("message", resolve);
     worker.on("error", resolve);
   });
-  expect(result).toBe(Bun.argv[0]);
+  expect(result).toBe(Fun.argv[0]);
   await worker.terminate();
 });
 
@@ -226,7 +226,7 @@ test("support require in eval for a file", async () => {
     worker.on("message", resolve);
     worker.on("error", resolve);
   });
-  expect(result).toBe(Bun.argv[0]);
+  expect(result).toBe(Fun.argv[0]);
   await worker.terminate();
 });
 
@@ -255,10 +255,10 @@ describe("execArgv option", async () => {
   // otherwise we could not distinguish between the worker inheriting the parent's execArgv
   // vs. the worker getting a fresh empty execArgv
   async function run(execArgv: string, expected: string) {
-    const proc = Bun.spawn({
+    const proc = Fun.spawn({
       // pass --smol so that the parent thread has some known, non-empty execArgv
-      cmd: [bunExe(), "--smol", "fixture-execargv.js", execArgv],
-      env: bunEnv,
+      cmd: [funExe(), "--smol", "fixture-execargv.js", execArgv],
+      env: funEnv,
       cwd: __dirname,
     });
     await proc.exited;
@@ -281,9 +281,9 @@ describe("execArgv option", async () => {
 });
 
 test("eval does not leak source code", async () => {
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "eval-source-leak-fixture.js"],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "eval-source-leak-fixture.js"],
+    env: funEnv,
     cwd: __dirname,
     stderr: "pipe",
     stdout: "ignore",
@@ -335,9 +335,9 @@ describe("worker event", () => {
   });
 
   test("throws if process.emit is not a function", async () => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "emit-non-function-fixture.js"],
-      env: bunEnv,
+    const proc = Fun.spawn({
+      cmd: [funExe(), "emit-non-function-fixture.js"],
+      env: funEnv,
       cwd: __dirname,
       stderr: "pipe",
       stdout: "ignore",
@@ -371,9 +371,9 @@ describe("environmentData", () => {
   });
 
   test("is deeply inherited", async () => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "environmentdata-inherit-fixture.js"],
-      env: bunEnv,
+    const proc = Fun.spawn({
+      cmd: [funExe(), "environmentdata-inherit-fixture.js"],
+      env: funEnv,
       cwd: __dirname,
       stderr: "pipe",
       stdout: "pipe",
@@ -387,9 +387,9 @@ describe("environmentData", () => {
   });
 
   test("can be used if parent thread had not imported worker_threads", async () => {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "environmentdata-empty-fixture.js"],
-      env: bunEnv,
+    const proc = Fun.spawn({
+      cmd: [funExe(), "environmentdata-empty-fixture.js"],
+      env: funEnv,
       cwd: __dirname,
       stderr: "pipe",
       stdout: "ignore",

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("TextDecoder - Shift_JIS encoding", () => {
   const decoder = new TextDecoder("shift_jis");

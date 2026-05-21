@@ -60,7 +60,7 @@ commonjs_named_exports: CommonJSNamedExports = .{},
 redirect_import_record_index: ?u32 = null,
 
 /// Only populated when bundling
-target: bun.options.Target = .browser,
+target: fun.options.Target = .browser,
 // const_values: ConstValuesMap = .{},
 ts_enums: TsEnumsMap = .{},
 
@@ -75,12 +75,12 @@ pub const CommonJSNamedExport = struct {
     loc_ref: LocRef,
     needs_decl: bool = true,
 };
-pub const CommonJSNamedExports = bun.StringArrayHashMapUnmanaged(CommonJSNamedExport);
+pub const CommonJSNamedExports = fun.StringArrayHashMapUnmanaged(CommonJSNamedExport);
 
 pub const NamedImports = std.ArrayHashMapUnmanaged(Ref, NamedImport, RefHashCtx, true);
-pub const NamedExports = bun.StringArrayHashMapUnmanaged(NamedExport);
+pub const NamedExports = fun.StringArrayHashMapUnmanaged(NamedExport);
 pub const ConstValuesMap = std.ArrayHashMapUnmanaged(Ref, Expr, RefHashCtx, false);
-pub const TsEnumsMap = std.ArrayHashMapUnmanaged(Ref, bun.StringHashMapUnmanaged(InlinedEnumValue), RefHashCtx, false);
+pub const TsEnumsMap = std.ArrayHashMapUnmanaged(Ref, fun.StringHashMapUnmanaged(InlinedEnumValue), RefHashCtx, false);
 
 pub fn fromParts(parts: []Part) Ast {
     return Ast{
@@ -108,9 +108,9 @@ pub fn toJSON(self: *const Ast, _: std.mem.Allocator, stream: anytype) !void {
 /// Do not call this if it wasn't globally allocated!
 pub fn deinit(this: *Ast) void {
     // TODO: assert mimalloc-owned memory
-    this.parts.deinit(bun.default_allocator);
-    this.symbols.deinit(bun.default_allocator);
-    this.import_records.deinit(bun.default_allocator);
+    this.parts.deinit(fun.default_allocator);
+    this.symbols.deinit(fun.default_allocator);
+    this.import_records.deinit(fun.default_allocator);
 }
 
 pub const Class = G.Class;
@@ -120,12 +120,12 @@ const string = []const u8;
 const std = @import("std");
 const Runtime = @import("../runtime.zig").Runtime;
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const ImportRecord = bun.ImportRecord;
-const logger = bun.logger;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const ImportRecord = fun.ImportRecord;
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const Ast = js_ast.Ast;
 const CharFreq = js_ast.CharFreq;
 const ExportsKind = js_ast.ExportsKind;

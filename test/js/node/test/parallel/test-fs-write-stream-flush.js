@@ -4,7 +4,7 @@ const tmpdir = require('../common/tmpdir');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
-const { test, describe, jest } = require('bun:test');
+const { test, describe, jest } = require('fun:test');
 const data = 'foo';
 let cnt = 0;
 

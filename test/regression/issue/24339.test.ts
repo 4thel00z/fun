@@ -1,16 +1,16 @@
-// https://github.com/oven-sh/bun/issues/24339
+// https://github.com/underdoc-org/fun/issues/24339
 //
 // tls.getCACertificates('system') must return the OS trust store regardless
 // of --use-system-ca / NODE_USE_SYSTEM_CA. The flag only controls whether
 // system certs are merged into the 'default' set used for connections.
 //
-// Uses node:test + node:assert and no Bun-specific imports so this file can
+// Uses node:test + node:assert and no Fun-specific imports so this file can
 // also be run under Node.js (`node --test`) to verify parity.
 import assert from "node:assert";
 import { test } from "node:test";
 import tls from "node:tls";
 
-// On macOS, Bun's loader queries the default keychain search list, which does
+// On macOS, Fun's loader queries the default keychain search list, which does
 // not include SystemRootCertificates.keychain — so the result depends on what
 // is explicitly trusted in login/System.keychain (often nothing on clean/CI
 // Macs). Node v25's loader has the same property on this platform, and Node's

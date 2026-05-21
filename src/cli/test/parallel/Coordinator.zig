@@ -1,4 +1,4 @@
-//! Process-pool coordinator for `bun test --parallel`. Owns the worker slice,
+//! Process-pool coordinator for `fun test --parallel`. Owns the worker slice,
 //! drives the event loop, routes IPC frames to per-test output, and handles
 //! crash accounting / panic-abort / bail / lazy scale-up. Construction and
 //! the run loop entry live in `runner.zig`; this file is the per-run state
@@ -11,7 +11,7 @@ pub const Coordinator = struct {
     cwd: [:0]const u8,
     argv: [:null]?[*:0]const u8,
     /// One envp per worker slot — same base, with that slot's JEST_WORKER_ID
-    /// and BUN_TEST_WORKER_ID appended.
+    /// and FUN_TEST_WORKER_ID appended.
     envps: []const [:null]?[*:0]const u8,
 
     workers: []Worker,
@@ -71,7 +71,7 @@ pub const Coordinator = struct {
             if (this.isDone()) break;
             if (this.spawned_count < this.parallel_limit and this.hasUndispatchedFiles() and !this.bailed) {
                 // Bound the wait so we wake to scale up even if no I/O arrives.
-                var ts = bun.timespec{
+                var ts = fun.timespec{
                     .sec = @divTrunc(this.scale_up_after_ms, std.time.ms_per_s),
                     .nsec = @mod(this.scale_up_after_ms, std.time.ms_per_s) * std.time.ns_per_ms,
                 };
@@ -99,12 +99,12 @@ pub const Coordinator = struct {
                 }
             }
         }
-        if (this.worker_tmpdir) |d| bun.FD.cwd().deleteTree(d) catch {};
-        bun.Global.exit(130);
+        if (this.worker_tmpdir) |d| fun.FD.cwd().deleteTree(d) catch {};
+        fun.Global.exit(130);
     }
 
     fn spawnWorker(this: *Coordinator) bool {
-        bun.assert(this.spawned_count < this.parallel_limit);
+        fun.assert(this.spawned_count < this.parallel_limit);
         const w = &this.workers[this.spawned_count];
         // A prior failed start()'s errdefer leaves ipc.done = true; reset so a
         // retry on the same slot starts with a fresh channel.
@@ -113,7 +113,7 @@ pub const Coordinator = struct {
         w.err = .{ .role = .stderr, .worker = w };
         w.start() catch |e| {
             Output.err(e, "failed to spawn test worker", .{});
-            if (this.live_workers == 0) bun.Global.exit(1);
+            if (this.live_workers == 0) fun.Global.exit(1);
             return false;
         };
         this.spawned_count += 1;
@@ -172,7 +172,7 @@ pub const Coordinator = struct {
     }
 
     pub fn relPath(this: *Coordinator, file_idx: u32) []const u8 {
-        return bun.path.relative(bun.fs.FileSystem.instance.top_level_dir, this.files[file_idx].slice());
+        return fun.path.relative(fun.fs.FileSystem.instance.top_level_dir, this.files[file_idx].slice());
     }
 
     fn ensureHeader(this: *Coordinator, file_idx: u32) void {
@@ -194,7 +194,7 @@ pub const Coordinator = struct {
         this.breakDots();
         if (w.inflight) |idx| this.ensureHeader(idx);
         Output.errorWriter().writeAll(w.captured.items) catch {};
-        if (!bun.strings.endsWithChar(w.captured.items, '\n')) {
+        if (!fun.strings.endsWithChar(w.captured.items, '\n')) {
             Output.errorWriter().writeByte('\n') catch {};
         }
         w.captured.clearRetainingCapacity();
@@ -212,7 +212,7 @@ pub const Coordinator = struct {
                 if (formatted.len == 0) return; // e.g. pass under --only-failures
                 // dots-mode failures print a full line (writeTestStatusLine);
                 // dots themselves are unterminated.
-                const is_dot = this.dots and !bun.strings.endsWithChar(formatted, '\n');
+                const is_dot = this.dots and !fun.strings.endsWithChar(formatted, '\n');
                 if (!is_dot) {
                     this.breakDots();
                     this.ensureHeader(idx);
@@ -259,20 +259,20 @@ pub const Coordinator = struct {
                     &this.reporter.skips_to_repeat_buf,
                     &this.reporter.todos_to_repeat_buf,
                 }) |dest| {
-                    bun.handleOom(dest.appendSlice(bun.default_allocator, rd.str()));
+                    fun.handleOom(dest.appendSlice(fun.default_allocator, rd.str()));
                 }
             },
             .junit_file, .coverage_file => {
                 const path = rd.str();
                 if (path.len == 0) return;
                 const list = if (kind == .junit_file) &this.junit_fragments else &this.coverage_fragments;
-                bun.handleOom(list.append(bun.default_allocator, bun.handleOom(bun.default_allocator.dupe(u8, path))));
+                fun.handleOom(list.append(fun.default_allocator, fun.handleOom(fun.default_allocator.dupe(u8, path))));
             },
             .run, .shutdown => {},
         }
     }
 
-    pub fn onWorkerExit(this: *Coordinator, w: *Worker, status: bun.spawn.Status) void {
+    pub fn onWorkerExit(this: *Coordinator, w: *Worker, status: fun.spawn.Status) void {
         w.exit_status = status;
         // The Channel delivers any remaining buffered data then close (which
         // sets ipc.done and calls tryReap), so no explicit drain is needed —
@@ -287,7 +287,7 @@ pub const Coordinator = struct {
         this.reapWorker(w, status);
     }
 
-    fn reapWorker(this: *Coordinator, w: *Worker, status: bun.spawn.Status) void {
+    fn reapWorker(this: *Coordinator, w: *Worker, status: fun.spawn.Status) void {
         // Decrement here (not in onProcessExit) so drive() keeps pumping until
         // the IPC pipe has been drained and this reap actually runs.
         this.live_workers -= 1;
@@ -298,9 +298,9 @@ pub const Coordinator = struct {
             // A worker dying mid-file is never silently retried. If a test
             // intentionally exits (process.exit) that file is marked failed
             // and the run continues in a fresh worker. If the worker was
-            // killed by a fatal signal — SIGILL/SIGTRAP from Bun's own panic
+            // killed by a fatal signal — SIGILL/SIGTRAP from Fun's own panic
             // handler, SIGSEGV/SIGBUS/SIGFPE from native code, SIGABRT from a
-            // JSC/WTF assertion — that's a Bun or addon bug and must not be
+            // JSC/WTF assertion — that's a Fun or addon bug and must not be
             // masked by the rest of the suite passing: abort the whole run so
             // the exit status reflects the crash. SIGKILL is treated as a
             // regular failure (commonly the OOM killer or the user).
@@ -336,11 +336,11 @@ pub const Coordinator = struct {
             w.ipc.deinit();
             w.out.deinit();
             w.err.deinit();
-            w.captured.deinit(bun.default_allocator);
+            w.captured.deinit(fun.default_allocator);
         }
     }
 
-    fn accountCrash(this: *Coordinator, file_idx: u32, status: bun.spawn.Status) void {
+    fn accountCrash(this: *Coordinator, file_idx: u32, status: fun.spawn.Status) void {
         this.breakDots();
         var buf: [32]u8 = undefined;
         Output.prettyError("<r><red>✗<r> <b>{s}<r> <d>(worker crashed: {s})<r>\n", .{
@@ -349,21 +349,21 @@ pub const Coordinator = struct {
         });
         this.reporter.summary().fail += 1;
         this.reporter.summary().files += 1;
-        bun.handleOom(this.crashed_files.append(bun.default_allocator, file_idx));
+        fun.handleOom(this.crashed_files.append(fun.default_allocator, file_idx));
         this.files_done += 1;
         if (this.bail > 0 and this.reporter.summary().fail >= this.bail) this.bailOut();
     }
 
-    /// Fatal signals that indicate Bun itself (or a native addon) crashed,
+    /// Fatal signals that indicate Fun itself (or a native addon) crashed,
     /// as opposed to the test calling process.exit() or being SIGKILL'd by
-    /// the OOM killer. Bun's panic handler ends in @trap() → SIGILL on
+    /// the OOM killer. Fun's panic handler ends in @trap() → SIGILL on
     /// POSIX; JSC/WTF assertion failures abort() → SIGABRT. On Windows
     /// neither surfaces as a signal — abort() is exit code 3 and NTSTATUS
     /// fault codes arrive as a plain exit status, both indistinguishable
     /// from process.exit(N) — so this classification is effectively
     /// POSIX-only and Windows worker crashes fall into the non-panic
     /// per-file-failure branch.
-    fn isPanicStatus(status: bun.spawn.Status) bool {
+    fn isPanicStatus(status: fun.spawn.Status) bool {
         const sig = status.signalCode() orelse return false;
         return switch (sig) {
             .SIGILL, .SIGTRAP, .SIGABRT, .SIGBUS, .SIGFPE, .SIGSEGV, .SIGSYS => true,
@@ -371,7 +371,7 @@ pub const Coordinator = struct {
         };
     }
 
-    fn describeStatus(buf: []u8, status: bun.spawn.Status) []const u8 {
+    fn describeStatus(buf: []u8, status: fun.spawn.Status) []const u8 {
         return switch (status) {
             .exited => |e| std.fmt.bufPrint(buf, "exit code {d}", .{e.code}) catch unreachable,
             // SignalCode is non-exhaustive (`_`); @tagName on an unnamed value
@@ -383,18 +383,18 @@ pub const Coordinator = struct {
         };
     }
 
-    /// A worker was killed by a crash signal — treat this as a Bun bug, not
+    /// A worker was killed by a crash signal — treat this as a Fun bug, not
     /// a test failure. Print the panic banner (even if --bail already set
     /// `bailed`), terminate every other worker, and mark all remaining
     /// files as aborted so the run ends immediately with a non-zero exit
     /// and the panic's stderr (already flushed via flushCaptured) is the
     /// last meaningful output, not buried under hundreds of later passes.
-    fn abortOnWorkerPanic(this: *Coordinator, file_idx: u32, status: bun.spawn.Status) void {
+    fn abortOnWorkerPanic(this: *Coordinator, file_idx: u32, status: fun.spawn.Status) void {
         this.breakDots();
         var buf: [32]u8 = undefined;
         Output.prettyError(
             "\n<red>error<r>: a test worker process crashed with <b>{s}<r> while running <b>{s}<r>.\n" ++
-                "This indicates a bug in Bun or in a native addon, not in the test itself. Aborting.\n",
+                "This indicates a bug in Fun or in a native addon, not in the test itself. Aborting.\n",
             .{ describeStatus(&buf, status), this.relPath(file_idx) },
         );
         Output.flush();
@@ -428,7 +428,7 @@ pub const Coordinator = struct {
                 Output.prettyError("<r><red>✗<r> <b>{s}<r> <d>({s})<r>\n", .{ this.relPath(idx), reason });
                 this.reporter.summary().fail += 1;
                 this.reporter.summary().files += 1;
-                bun.handleOom(this.crashed_files.append(bun.default_allocator, idx));
+                fun.handleOom(this.crashed_files.append(fun.default_allocator, idx));
                 this.files_done += 1;
             }
         }
@@ -449,8 +449,8 @@ pub const Coordinator = struct {
     /// this (SIGKILL).
     pub const AbortHandler = struct {
         var should_abort: std.atomic.Value(bool) = .init(false);
-        var prev_int: if (Environment.isPosix) bun.sys.Sigaction else void = undefined;
-        var prev_term: if (Environment.isPosix) bun.sys.Sigaction else void = undefined;
+        var prev_int: if (Environment.isPosix) fun.sys.Sigaction else void = undefined;
+        var prev_term: if (Environment.isPosix) fun.sys.Sigaction else void = undefined;
 
         fn posixHandler(_: i32, _: *const std.posix.siginfo_t, _: ?*const anyopaque) callconv(.c) void {
             should_abort.store(true, .release);
@@ -468,38 +468,38 @@ pub const Coordinator = struct {
 
         pub fn install() void {
             if (Environment.isPosix) {
-                const act = bun.sys.Sigaction{
+                const act = fun.sys.Sigaction{
                     .handler = .{ .sigaction = posixHandler },
-                    .mask = bun.sys.sigemptyset(),
+                    .mask = fun.sys.sigemptyset(),
                     .flags = std.posix.SA.SIGINFO,
                 };
-                bun.sys.sigaction(std.posix.SIG.INT, &act, &prev_int);
-                bun.sys.sigaction(std.posix.SIG.TERM, &act, &prev_term);
+                fun.sys.sigaction(std.posix.SIG.INT, &act, &prev_int);
+                fun.sys.sigaction(std.posix.SIG.TERM, &act, &prev_term);
             } else {
-                _ = bun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.TRUE);
+                _ = fun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.TRUE);
             }
         }
 
         pub fn uninstall() void {
             if (Environment.isPosix) {
-                bun.sys.sigaction(std.posix.SIG.INT, &prev_int, null);
-                bun.sys.sigaction(std.posix.SIG.TERM, &prev_term, null);
+                fun.sys.sigaction(std.posix.SIG.INT, &prev_int, null);
+                fun.sys.sigaction(std.posix.SIG.TERM, &prev_term, null);
             } else {
-                _ = bun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.FALSE);
+                _ = fun.c.SetConsoleCtrlHandler(windowsCtrlHandler, std.os.windows.FALSE);
             }
         }
     };
 
     pub fn createWindowsKillOnCloseJob() ?std.os.windows.HANDLE {
         if (!Environment.isWindows) return null;
-        const job = bun.windows.CreateJobObjectA(null, null) orelse return null;
-        var jeli = std.mem.zeroes(bun.c.JOBOBJECT_EXTENDED_LIMIT_INFORMATION);
-        jeli.BasicLimitInformation.LimitFlags = bun.c.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-        if (bun.c.SetInformationJobObject(
+        const job = fun.windows.CreateJobObjectA(null, null) orelse return null;
+        var jeli = std.mem.zeroes(fun.c.JOBOBJECT_EXTENDED_LIMIT_INFORMATION);
+        jeli.BasicLimitInformation.LimitFlags = fun.c.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        if (fun.c.SetInformationJobObject(
             job,
-            bun.c.JobObjectExtendedLimitInformation,
+            fun.c.JobObjectExtendedLimitInformation,
             &jeli,
-            @sizeOf(bun.c.JOBOBJECT_EXTENDED_LIMIT_INFORMATION),
+            @sizeOf(fun.c.JOBOBJECT_EXTENDED_LIMIT_INFORMATION),
         ) == 0) {
             std.os.windows.CloseHandle(job);
             return null;
@@ -515,8 +515,8 @@ const std = @import("std");
 const test_command = @import("../../test_command.zig");
 const CommandLineReporter = test_command.CommandLineReporter;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const PathString = bun.PathString;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const PathString = fun.PathString;
+const jsc = fun.jsc;

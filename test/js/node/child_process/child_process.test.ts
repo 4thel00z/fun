@@ -1,7 +1,7 @@
-import { semver, write } from "bun";
-import { afterAll, beforeEach, describe, expect, it } from "bun:test";
+import { semver, write } from "fun";
+import { afterAll, beforeEach, describe, expect, it } from "fun:test";
 import fs from "fs";
-import { bunEnv, bunExe, isWindows, nodeExe, runBunInstall, shellExe, tmpdirSync } from "harness";
+import { funEnv, funExe, isWindows, nodeExe, runFunInstall, shellExe, tmpdirSync } from "harness";
 import { ChildProcess, exec, execFile, execFileSync, execSync, spawn, spawnSync } from "node:child_process";
 import { promisify } from "node:util";
 import path from "path";
@@ -9,7 +9,7 @@ const debug = process.env.DEBUG ? console.log : () => {};
 
 const originalProcessEnv = process.env;
 beforeEach(() => {
-  process.env = { ...bunEnv };
+  process.env = { ...funEnv };
   // Github actions might filter these out
   for (const key in process.env) {
     if (key.toUpperCase().startsWith("TLS_")) {
@@ -41,7 +41,7 @@ describe("ChildProcess.spawn()", () => {
         resolve(true);
       });
       // @ts-ignore
-      proc.spawn({ file: bunExe(), args: [bunExe(), "-v"] });
+      proc.spawn({ file: funExe(), args: [funExe(), "-v"] });
     });
     expect(result).toBe(true);
   });
@@ -53,7 +53,7 @@ describe("ChildProcess.spawn()", () => {
         resolve(true);
       });
       // @ts-ignore
-      proc.spawn({ file: bunExe(), args: [bunExe(), "-v"] });
+      proc.spawn({ file: funExe(), args: [funExe(), "-v"] });
       proc.kill();
     });
     expect(result).toBe(true);
@@ -62,7 +62,7 @@ describe("ChildProcess.spawn()", () => {
 
 describe("spawn()", () => {
   it("should spawn a process", () => {
-    const child = spawn("bun", ["-v"]);
+    const child = spawn("fun", ["-v"]);
     expect(!!child).toBe(true);
   });
 
@@ -80,17 +80,17 @@ describe("spawn()", () => {
       ),
       fs.promises.cp(path.join(import.meta.dir, "fixtures", "foo-1.2.3.tgz"), path.join(tmpdir, "foo-1.2.3.tgz")),
     ]);
-    await runBunInstall(bunEnv, tmpdir);
+    await runFunInstall(funEnv, tmpdir);
 
     console.error({ tmpdir });
     const { exitCode, out } = await new Promise<any>(resolve => {
-      const child = spawn("./node_modules/.bin/foo", { cwd: tmpdir, env: bunEnv });
+      const child = spawn("./node_modules/.bin/foo", { cwd: tmpdir, env: funEnv });
       child.on("exit", async exitCode => {
         const out = await new Response(child.stdout).text();
         resolve({ exitCode, out });
       });
     });
-    expect(out).toBe("hello bun!\n");
+    expect(out).toBe("hello fun!\n");
     expect(exitCode).toBe(0);
   });
 
@@ -103,7 +103,7 @@ describe("spawn()", () => {
   });
 
   it("should allow stdout to be read via Node stream.Readable `data` events", async () => {
-    const child = spawn(bunExe(), ["-v"]);
+    const child = spawn(funExe(), ["-v"]);
     const result: string = await new Promise(resolve => {
       child.stdout.on("error", e => {
         console.error(e);
@@ -120,7 +120,7 @@ describe("spawn()", () => {
   });
 
   it("should allow stdout to be read via .read() API", async () => {
-    const child = spawn(bunExe(), ["-v"]);
+    const child = spawn(funExe(), ["-v"]);
     const result: string = await new Promise((resolve, reject) => {
       let finalData = "";
       child.stdout.on("error", e => {
@@ -139,10 +139,10 @@ describe("spawn()", () => {
   });
 
   it("should accept stdio option with 'ignore' for no stdio fds", async () => {
-    const child1 = spawn(bunExe(), ["-v"], {
+    const child1 = spawn(funExe(), ["-v"], {
       stdio: "ignore",
     });
-    const child2 = spawn(bunExe(), ["-v"], {
+    const child2 = spawn(funExe(), ["-v"], {
       stdio: ["ignore", "ignore", "ignore"],
     });
 
@@ -160,7 +160,7 @@ describe("spawn()", () => {
   it("should allow us to set cwd", async () => {
     const tmpdir = tmpdirSync();
     const result: string = await new Promise(resolve => {
-      const child = spawn(bunExe(), ["-e", "console.log(process.cwd())"], { cwd: tmpdir, env: bunEnv });
+      const child = spawn(funExe(), ["-e", "console.log(process.cwd())"], { cwd: tmpdir, env: funEnv });
       child.stdout.on("data", data => {
         resolve(data.toString());
       });
@@ -170,7 +170,7 @@ describe("spawn()", () => {
 
   it("should allow us to write to stdin", async () => {
     const result: string = await new Promise(resolve => {
-      const child = spawn(bunExe(), ["-e", "process.stdin.pipe(process.stdout)"], { env: bunEnv });
+      const child = spawn(funExe(), ["-e", "process.stdin.pipe(process.stdout)"], { env: funEnv });
       child.stdin.write("hello");
       child.stdout.on("data", data => {
         resolve(data.toString());
@@ -196,7 +196,7 @@ describe("spawn()", () => {
   it("should allow us to set env", async () => {
     async function getChildEnv(env: any): Promise<object> {
       const result: string = await new Promise(resolve => {
-        const child = spawn(bunExe(), ["-e", "process.stderr.write(JSON.stringify(process.env))"], { env });
+        const child = spawn(funExe(), ["-e", "process.stderr.write(JSON.stringify(process.env))"], { env });
         child.stderr.on("data", data => {
           resolve(data.toString());
         });
@@ -225,14 +225,14 @@ describe("spawn()", () => {
     });
     process.env.NO_COLOR = "1";
     const node = nodeExe();
-    const bun = bunExe();
+    const fun = funExe();
     const child = spawn(
-      node || bun,
+      node || fun,
       ["-e", "console.log(JSON.stringify([process.argv0, fs.realpathSync(process.argv[0])]))"],
       {
-        argv0: bun,
+        argv0: fun,
         stdio: ["inherit", "pipe", "inherit"],
-        env: bunEnv,
+        env: funEnv,
       },
     );
     delete process.env.NO_COLOR;
@@ -247,7 +247,7 @@ describe("spawn()", () => {
     });
 
     const result = await promise;
-    expect(JSON.parse(result)).toStrictEqual([bun, fs.realpathSync(node || bun)]);
+    expect(JSON.parse(result)).toStrictEqual([fun, fs.realpathSync(node || fun)]);
   });
 
   it("should allow us to spawn in the default shell", async () => {
@@ -278,31 +278,31 @@ describe("spawn()", () => {
   });
 
   it("should spawn a process synchronously", () => {
-    const { stdout } = spawnSync("bun", ["-v"], { encoding: "utf8" });
+    const { stdout } = spawnSync("fun", ["-v"], { encoding: "utf8" });
     expect(isValidSemver(stdout.trim())).toBe(true);
   });
 
   describe("stdio", () => {
     it("ignore", () => {
-      const child = spawn(bunExe(), ["-v"], { stdio: "ignore" });
+      const child = spawn(funExe(), ["-v"], { stdio: "ignore" });
       expect(!!child).toBe(true);
       expect(child.stdout).toBeNull();
       expect(child.stderr).toBeNull();
     });
     it("inherit", () => {
-      const child = spawn(bunExe(), ["-v"], { stdio: "inherit" });
+      const child = spawn(funExe(), ["-v"], { stdio: "inherit" });
       expect(!!child).toBe(true);
       expect(child.stdout).toBeNull();
       expect(child.stderr).toBeNull();
     });
     it("pipe", () => {
-      const child = spawn(bunExe(), ["-v"], { stdio: "pipe" });
+      const child = spawn(funExe(), ["-v"], { stdio: "pipe" });
       expect(!!child).toBe(true);
       expect(child.stdout).not.toBeNull();
       expect(child.stderr).not.toBeNull();
     });
     it.todo("overlapped", () => {
-      const child = spawn(bunExe(), ["-v"], { stdio: "overlapped" });
+      const child = spawn(funExe(), ["-v"], { stdio: "overlapped" });
       expect(!!child).toBe(true);
       expect(child.stdout).not.toBeNull();
       expect(child.stderr).not.toBeNull();
@@ -313,7 +313,7 @@ describe("spawn()", () => {
 describe("execFile()", () => {
   it("should execute a file", async () => {
     const result: Buffer = await new Promise((resolve, reject) => {
-      execFile(bunExe(), ["-v"], { encoding: "buffer" }, (error, stdout, stderr) => {
+      execFile(funExe(), ["-v"], { encoding: "buffer" }, (error, stdout, stderr) => {
         if (error) {
           reject(error);
         }
@@ -327,7 +327,7 @@ describe("execFile()", () => {
 describe("exec()", () => {
   it("should execute a command in a shell", async () => {
     const result: Buffer = await new Promise((resolve, reject) => {
-      exec("bun -v", { encoding: "buffer" }, (error, stdout, stderr) => {
+      exec("fun -v", { encoding: "buffer" }, (error, stdout, stderr) => {
         if (error) {
           reject(error);
         }
@@ -338,7 +338,7 @@ describe("exec()", () => {
   });
 
   it("should return an object w/ stdout and stderr when promisified", async () => {
-    const result = await promisify(exec)("bun -v");
+    const result = await promisify(exec)("fun -v");
     expect(typeof result).toBe("object");
     expect(typeof result.stdout).toBe("string");
     expect(typeof result.stderr).toBe("string");
@@ -351,14 +351,14 @@ describe("exec()", () => {
 
 describe("spawnSync()", () => {
   it("should spawn a process synchronously", () => {
-    const { stdout } = spawnSync("bun", ["-v"], { encoding: "utf8" });
+    const { stdout } = spawnSync("fun", ["-v"], { encoding: "utf8" });
     expect(isValidSemver(stdout.trim())).toBe(true);
   });
 });
 
 describe("execFileSync()", () => {
   it("should execute a file synchronously", () => {
-    const result = execFileSync(bunExe(), ["-v"], { encoding: "utf8", env: process.env });
+    const result = execFileSync(funExe(), ["-v"], { encoding: "utf8", env: process.env });
     expect(isValidSemver(result.trim())).toBe(true);
   });
 
@@ -374,16 +374,16 @@ describe("execFileSync()", () => {
 
 describe("execSync()", () => {
   it("should execute a command in the shell synchronously", () => {
-    const result = execSync(bunExe() + " -v", { encoding: "utf8", env: bunEnv });
+    const result = execSync(funExe() + " -v", { encoding: "utf8", env: funEnv });
     expect(isValidSemver(result.trim())).toBe(true);
   });
 });
 
 it("should call close and exit before process exits", async () => {
-  const proc = Bun.spawn({
-    cmd: [bunExe(), path.join("fixtures", "child-process-exit-event.js")],
+  const proc = Fun.spawn({
+    cmd: [funExe(), path.join("fixtures", "child-process-exit-event.js")],
     cwd: import.meta.dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stdin: "inherit",
     stderr: "inherit",
@@ -414,22 +414,22 @@ it("it accepts stdio passthrough", async () => {
     }),
   );
 
-  await using installProc = Bun.spawn({
-    cmd: [bunExe(), "install"],
+  await using installProc = Fun.spawn({
+    cmd: [funExe(), "install"],
     cwd: package_dir,
     stdio: ["inherit", "pipe", "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
   const [installStderr, installExitCode] = await Promise.all([installProc.stderr.text(), installProc.exited]);
   if (installExitCode !== 0) {
-    throw new Error(`bun install failed with exit code ${installExitCode}:\n${installStderr}`);
+    throw new Error(`fun install failed with exit code ${installExitCode}:\n${installStderr}`);
   }
 
-  await using runProc = Bun.spawn({
-    cmd: [bunExe(), "--bun", "run", "all"],
+  await using runProc = Fun.spawn({
+    cmd: [funExe(), "--fun", "run", "all"],
     cwd: package_dir,
     stdio: ["ignore", "pipe", "pipe"],
-    env: bunEnv,
+    env: funEnv,
   });
   const [err, out, exitCode] = await Promise.all([runProc.stderr.text(), runProc.stdout.text(), runProc.exited]);
   try {
@@ -453,9 +453,9 @@ it.if(!isWindows)("spawnSync correctly reports signal codes", () => {
     process.kill(process.pid, "SIGTRAP");
   `;
 
-  const { signal } = spawnSync(bunExe(), ["-e", trapCode], {
+  const { signal } = spawnSync(funExe(), ["-e", trapCode], {
     // @ts-expect-error
-    env: { ...bunEnv, BUN_INTERNAL_SUPPRESS_CRASH_ON_PROCESS_KILL_SELF: "1" },
+    env: { ...funEnv, FUN_INTERNAL_SUPPRESS_CRASH_ON_PROCESS_KILL_SELF: "1" },
   });
 
   expect(signal).toBe("SIGTRAP");

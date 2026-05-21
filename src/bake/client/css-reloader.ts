@@ -2,7 +2,7 @@
 // is managed is put in the hands of the framework implementation, but it is
 // assumed that some basic things always hold true:
 //
-// - SSR injects <link> elements with the URLs that Bun provided
+// - SSR injects <link> elements with the URLs that Fun provided
 // - CSR will remove or append new <link> elements
 // - These link elements are direct children of <head>
 // - The URL bar contains the current route reflected by the UI
@@ -60,7 +60,7 @@ const headObserver = new MutationObserver(list => {
   for (const mutation of list) {
     if (mutation.type === "childList") {
       // This allows frameworks to add and remove link tags. Removing a link tag
-      // that Bun had reloaded needs to disable the wrapped sheet. The wrapper
+      // that Fun had reloaded needs to disable the wrapped sheet. The wrapper
       // is kept around in case the framework re-adds the link tag.
       let i = 0;
       let len = mutation.removedNodes.length;
@@ -108,8 +108,8 @@ const headObserver = new MutationObserver(list => {
 
 function maybeAddCssLink(link: HTMLLinkElement) {
   const pathname = new URL(link.href).pathname;
-  if (pathname.startsWith("/_bun/asset/")) {
-    const id = pathname.slice("/_bun/asset/".length).slice(0, 16);
+  if (pathname.startsWith("/_fun/asset/")) {
+    const id = pathname.slice("/_fun/asset/".length).slice(0, 16);
     if (!/^[a-f0-9]{16}$/.test(id)) {
       return;
     }
@@ -146,7 +146,7 @@ document.querySelectorAll<HTMLLinkElement>("head>link[rel=stylesheet]").forEach(
 export function editCssArray(array: string[]) {
   const removedCssKeys = new Set(cssStore.keys());
   for (const css of array) {
-    if (IS_BUN_DEVELOPMENT) validateCssId(css);
+    if (IS_FUN_DEVELOPMENT) validateCssId(css);
     const existing = cssStore.get(css);
     removedCssKeys.delete(css);
     if (existing) {

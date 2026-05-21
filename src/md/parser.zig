@@ -17,7 +17,7 @@ pub const Parser = struct {
     doc_ends_with_newline: bool,
 
     // Mark character map — bitset of characters that need special handling
-    mark_char_map: bun.bit_set.StaticBitSet(256) = bun.bit_set.StaticBitSet(256).initEmpty(),
+    mark_char_map: fun.bit_set.StaticBitSet(256) = fun.bit_set.StaticBitSet(256).initEmpty(),
 
     // Dynamic arrays
     marks: std.ArrayListUnmanaged(Mark) = .{},
@@ -61,7 +61,7 @@ pub const Parser = struct {
     max_ref_def_output: u64 = 0,
 
     // Stack overflow protection for recursive inline processing
-    stack_check: bun.StackCheck,
+    stack_check: fun.StackCheck,
 
     pub const BlockHeader = extern struct {
         block_type: BlockType,
@@ -75,7 +75,7 @@ pub const Parser = struct {
     pub const MAX_EMPH_MATCHES = inlines_mod.MAX_EMPH_MATCHES;
     pub const RefDef = ref_defs_mod.RefDef;
 
-    pub const Error = bun.JSError || bun.StackOverflow;
+    pub const Error = fun.JSError || fun.StackOverflow;
 
     fn init(allocator: Allocator, text: []const u8, flags: Flags, rend: Renderer) Parser {
         const size: OFF = @intCast(text.len);
@@ -88,7 +88,7 @@ pub const Parser = struct {
             .code_indent_offset = if (flags.no_indented_code_blocks) std.math.maxInt(u32) else 4,
             .doc_ends_with_newline = size > 0 and helpers.isNewline(text[size - 1]),
             .max_ref_def_output = @min(@min(16 * @as(u64, size), 1024 * 1024), std.math.maxInt(u32)),
-            .stack_check = bun.StackCheck.init(),
+            .stack_check = fun.StackCheck.init(),
         };
         p.buildMarkCharMap();
         return p;
@@ -261,7 +261,7 @@ pub fn renderWithRenderer(text: []const u8, allocator: Allocator, flags: Flags, 
 }
 
 const blocks_mod = @import("./blocks.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const containers_mod = @import("./containers.zig");
 const helpers = @import("./helpers.zig");
 const inlines_mod = @import("./inlines.zig");

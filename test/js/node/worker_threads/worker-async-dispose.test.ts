@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { Worker } from "worker_threads";
 
 test("Worker implements Symbol.asyncDispose", async () => {

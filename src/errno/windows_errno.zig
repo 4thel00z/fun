@@ -283,15 +283,15 @@ pub const S = struct {
 };
 
 pub fn getErrno(rc: anytype) E {
-    if (comptime @TypeOf(rc) == bun.windows.NTSTATUS) {
-        return bun.windows.translateNTStatusToErrno(rc);
+    if (comptime @TypeOf(rc) == fun.windows.NTSTATUS) {
+        return fun.windows.translateNTStatusToErrno(rc);
     }
 
     if (Win32Error.get().toSystemErrno()) |sys| {
         return sys.toE();
     }
 
-    if (bun.windows.WSAGetLastError()) |wsa| {
+    if (fun.windows.WSAGetLastError()) |wsa| {
         return wsa.toE();
     }
 
@@ -980,8 +980,8 @@ pub const SystemErrno = enum(u16) {
                         }
                     }
                 }
-                if (comptime bun.Environment.allow_assert)
-                    bun.Output.debugWarn("Unknown error code: {d}\n", .{code});
+                if (comptime fun.Environment.allow_assert)
+                    fun.Output.debugWarn("Unknown error code: {d}\n", .{code});
 
                 return null;
             }
@@ -1173,8 +1173,8 @@ pub const UV_E = struct {
     pub const NOEXEC = -uv.UV_ENOEXEC;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const Win32Error = bun.windows.Win32Error;
-const uv = bun.windows.libuv;
+const Win32Error = fun.windows.Win32Error;
+const uv = fun.windows.libuv;

@@ -132,7 +132,7 @@ pub fn backendFromJS(value: jsc.JSValue, globalObject: *jsc.JSGlobalObject) Back
 
     return error.InvalidBackend;
 }
-pub fn resultAnyToJS(this: *const Result.Any, globalThis: *jsc.JSGlobalObject) bun.JSError!?jsc.JSValue {
+pub fn resultAnyToJS(this: *const Result.Any, globalThis: *jsc.JSGlobalObject) fun.JSError!?jsc.JSValue {
     return switch (this.*) {
         .addrinfo => |addrinfo| try addrInfoToJSArray(addrinfo orelse return null, globalThis),
         .list => |list| brk: {
@@ -147,7 +147,7 @@ pub fn resultAnyToJS(this: *const Result.Any, globalThis: *jsc.JSGlobalObject) b
         },
     };
 }
-pub fn resultToJS(this: *const Result, globalThis: *jsc.JSGlobalObject) bun.JSError!JSValue {
+pub fn resultToJS(this: *const Result, globalThis: *jsc.JSGlobalObject) fun.JSError!JSValue {
     const obj = jsc.JSValue.createEmptyObject(globalThis, 3);
     obj.put(globalThis, jsc.ZigString.static("address"), try addressToJS(&this.address, globalThis));
     obj.put(globalThis, jsc.ZigString.static("family"), switch (this.address.any.family) {
@@ -158,11 +158,11 @@ pub fn resultToJS(this: *const Result, globalThis: *jsc.JSGlobalObject) bun.JSEr
     obj.put(globalThis, jsc.ZigString.static("ttl"), JSValue.jsNumber(this.ttl));
     return obj;
 }
-pub fn addressToJS(address: *const std.net.Address, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn addressToJS(address: *const std.net.Address, globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     var str = addressToString(address) catch return globalThis.throwOutOfMemory();
     return str.transferToJS(globalThis);
 }
-pub fn addrInfoToJSArray(addr_info: *std.c.addrinfo, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn addrInfoToJSArray(addr_info: *std.c.addrinfo, globalThis: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     const array = try jsc.JSValue.createEmptyArray(
         globalThis,
         addrInfoCount(addr_info),
@@ -189,13 +189,13 @@ pub fn addrInfoToJSArray(addr_info: *std.c.addrinfo, globalThis: *jsc.JSGlobalOb
 
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
+const fun = @import("fun");
+const JSError = fun.JSError;
 
-const addrInfoCount = bun.dns.addrInfoCount;
-const addressToString = bun.dns.addressToString;
+const addrInfoCount = fun.dns.addrInfoCount;
+const addressToString = fun.dns.addressToString;
 
-const GetAddrInfo = bun.dns.GetAddrInfo;
+const GetAddrInfo = fun.dns.GetAddrInfo;
 const Backend = GetAddrInfo.Backend;
 const Family = GetAddrInfo.Family;
 const Protocol = GetAddrInfo.Protocol;
@@ -205,5 +205,5 @@ const SocketType = GetAddrInfo.SocketType;
 const Options = GetAddrInfo.Options;
 const FromJSError = Options.FromJSError;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

@@ -1,4 +1,4 @@
-fn requireNotSubscriber(this: *JSValkeyClient, function_name: []const u8) bun.JSError!void {
+fn requireNotSubscriber(this: *JSValkeyClient, function_name: []const u8) fun.JSError!void {
     const fmt_string = "RedisClient.prototype.{s} cannot be called while in subscriber mode.";
 
     if (this.isSubscriber()) {
@@ -6,7 +6,7 @@ fn requireNotSubscriber(this: *JSValkeyClient, function_name: []const u8) bun.JS
     }
 }
 
-fn requireSubscriber(this: *JSValkeyClient, function_name: []const u8) bun.JSError!void {
+fn requireSubscriber(this: *JSValkeyClient, function_name: []const u8) fun.JSError!void {
     const fmt_string = "RedisClient.prototype.{s} can only be called while in subscriber mode.";
 
     if (!this.isSubscriber()) {
@@ -14,8 +14,8 @@ fn requireSubscriber(this: *JSValkeyClient, function_name: []const u8) bun.JSErr
     }
 }
 
-pub fn jsSend(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
-    const command = try callframe.argument(0).toBunString(globalObject);
+pub fn jsSend(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
+    const command = try callframe.argument(0).toFunString(globalObject);
     defer command.deref();
 
     const args_array = callframe.argument(1);
@@ -23,7 +23,7 @@ pub fn jsSend(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfram
         return globalObject.throw("Arguments must be an array", .{});
     }
     var iter = try args_array.arrayIterator(globalObject);
-    var args = try std.array_list.Managed(JSArgument).initCapacity(bun.default_allocator, iter.len);
+    var args = try std.array_list.Managed(JSArgument).initCapacity(fun.default_allocator, iter.len);
     defer {
         for (args.items) |*item| {
             item.deinit();
@@ -37,7 +37,7 @@ pub fn jsSend(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfram
         });
     }
 
-    const cmd_str = command.toUTF8WithoutRef(bun.default_allocator);
+    const cmd_str = command.toUTF8WithoutRef(fun.default_allocator);
     defer cmd_str.deinit();
     var cmd: Command = .{
         .command = cmd_str.slice(),
@@ -56,7 +56,7 @@ pub fn jsSend(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfram
     return promise.toJS();
 }
 
-pub fn get(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn get(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -78,7 +78,7 @@ pub fn get(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: 
     return promise.toJS();
 }
 
-pub fn getBuffer(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn getBuffer(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -100,11 +100,11 @@ pub fn getBuffer(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callf
     return promise.toJS();
 }
 
-pub fn set(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn set(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var args = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), args_view.len);
     defer {
         for (args.items) |*item| {
@@ -148,7 +148,7 @@ pub fn set(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: 
     return promise.toJS();
 }
 
-pub fn incr(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn incr(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -170,7 +170,7 @@ pub fn incr(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
     return promise.toJS();
 }
 
-pub fn decr(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn decr(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -192,7 +192,7 @@ pub fn decr(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
     return promise.toJS();
 }
 
-pub fn exists(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn exists(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -215,7 +215,7 @@ pub fn exists(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfram
     return promise.toJS();
 }
 
-pub fn expire(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn expire(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -248,7 +248,7 @@ pub fn expire(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfram
     return promise.toJS();
 }
 
-pub fn ttl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn ttl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -271,7 +271,7 @@ pub fn ttl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: 
 }
 
 // Implement srem (remove value from a set)
-pub fn srem(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn srem(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
@@ -279,7 +279,7 @@ pub fn srem(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
         return globalObject.throw("SREM requires at least a key and one member", .{});
     }
 
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var args = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), args_view.len);
     defer {
         for (args.items) |*item| {
@@ -318,11 +318,11 @@ pub fn srem(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
 }
 
 // Implement srandmember (get random member from set)
-pub fn srandmember(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn srandmember(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var args = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), args_view.len);
     defer {
         for (args.items) |*item| {
@@ -359,7 +359,7 @@ pub fn srandmember(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, cal
 }
 
 // Implement smembers (get all members of a set)
-pub fn smembers(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn smembers(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -382,11 +382,11 @@ pub fn smembers(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfr
 }
 
 // Implement spop (pop a random member from a set)
-pub fn spop(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn spop(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var args = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), args_view.len);
     defer {
         for (args.items) |*item| {
@@ -423,7 +423,7 @@ pub fn spop(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
 }
 
 // Implement sadd (add member to a set)
-pub fn sadd(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn sadd(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
@@ -431,7 +431,7 @@ pub fn sadd(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
         return globalObject.throw("SADD requires at least a key and one member", .{});
     }
 
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var args = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), args_view.len);
     defer {
         for (args.items) |*item| {
@@ -470,7 +470,7 @@ pub fn sadd(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
 }
 
 // Implement sismember (check if value is member of a set)
-pub fn sismember(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn sismember(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -498,7 +498,7 @@ pub fn sismember(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callf
 }
 
 // Implement hmget (get multiple values from hash)
-pub fn hmget(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn hmget(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
@@ -506,7 +506,7 @@ pub fn hmget(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe
         return globalObject.throw("HMGET requires at least a key and one field", .{});
     }
 
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var args = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), args_view.len);
     defer {
         for (args.items) |*item| {
@@ -561,21 +561,21 @@ pub fn hmget(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe
 }
 
 // Implement hincrby (increment hash field by integer value)
-pub fn hincrby(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn hincrby(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
-    const key = try callframe.argument(0).toBunString(globalObject);
+    const key = try callframe.argument(0).toFunString(globalObject);
     defer key.deref();
-    const field = try callframe.argument(1).toBunString(globalObject);
+    const field = try callframe.argument(1).toFunString(globalObject);
     defer field.deref();
-    const value = try callframe.argument(2).toBunString(globalObject);
+    const value = try callframe.argument(2).toFunString(globalObject);
     defer value.deref();
 
-    const key_slice = key.toUTF8WithoutRef(bun.default_allocator);
+    const key_slice = key.toUTF8WithoutRef(fun.default_allocator);
     defer key_slice.deinit();
-    const field_slice = field.toUTF8WithoutRef(bun.default_allocator);
+    const field_slice = field.toUTF8WithoutRef(fun.default_allocator);
     defer field_slice.deinit();
-    const value_slice = value.toUTF8WithoutRef(bun.default_allocator);
+    const value_slice = value.toUTF8WithoutRef(fun.default_allocator);
     defer value_slice.deinit();
 
     // Send HINCRBY command
@@ -593,21 +593,21 @@ pub fn hincrby(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfra
 }
 
 // Implement hincrbyfloat (increment hash field by float value)
-pub fn hincrbyfloat(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn hincrbyfloat(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
-    const key = try callframe.argument(0).toBunString(globalObject);
+    const key = try callframe.argument(0).toFunString(globalObject);
     defer key.deref();
-    const field = try callframe.argument(1).toBunString(globalObject);
+    const field = try callframe.argument(1).toFunString(globalObject);
     defer field.deref();
-    const value = try callframe.argument(2).toBunString(globalObject);
+    const value = try callframe.argument(2).toFunString(globalObject);
     defer value.deref();
 
-    const key_slice = key.toUTF8WithoutRef(bun.default_allocator);
+    const key_slice = key.toUTF8WithoutRef(fun.default_allocator);
     defer key_slice.deinit();
-    const field_slice = field.toUTF8WithoutRef(bun.default_allocator);
+    const field_slice = field.toUTF8WithoutRef(fun.default_allocator);
     defer field_slice.deinit();
-    const value_slice = value.toUTF8WithoutRef(bun.default_allocator);
+    const value_slice = value.toUTF8WithoutRef(fun.default_allocator);
     defer value_slice.deinit();
 
     // Send HINCRBYFLOAT command
@@ -624,21 +624,21 @@ pub fn hincrbyfloat(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, ca
     return promise.toJS();
 }
 
-fn hsetImpl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, comptime command: []const u8) bun.JSError!JSValue {
+fn hsetImpl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, comptime command: []const u8) fun.JSError!JSValue {
     try requireNotSubscriber(this, command);
 
-    const key = try callframe.argument(0).toBunString(globalObject);
+    const key = try callframe.argument(0).toFunString(globalObject);
     defer key.deref();
 
     const second_arg = callframe.argument(1);
 
-    var args = std.array_list.Managed(jsc.ZigString.Slice).init(bun.default_allocator);
+    var args = std.array_list.Managed(jsc.ZigString.Slice).init(fun.default_allocator);
     defer {
         for (args.items) |item| item.deinit();
         args.deinit();
     }
 
-    try args.append(key.toUTF8(bun.default_allocator));
+    try args.append(key.toUTF8(fun.default_allocator));
 
     if (second_arg.isObject() and !second_arg.isArray()) {
         // Pattern 1: Object/Record - hset(key, {field: value, ...})
@@ -655,13 +655,13 @@ fn hsetImpl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
         try args.ensureTotalCapacity(1 + object_iter.len * 2);
 
         while (try object_iter.next()) |field_name| {
-            const field_slice = field_name.toUTF8(bun.default_allocator);
+            const field_slice = field_name.toUTF8(fun.default_allocator);
             args.appendAssumeCapacity(field_slice);
 
-            const value_str = try object_iter.value.toBunString(globalObject);
+            const value_str = try object_iter.value.toFunString(globalObject);
             defer value_str.deref();
 
-            const value_slice = value_str.toUTF8(bun.default_allocator);
+            const value_slice = value_str.toUTF8(fun.default_allocator);
             args.appendAssumeCapacity(value_slice);
         }
     } else if (second_arg.isArray()) {
@@ -674,15 +674,15 @@ fn hsetImpl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
         try args.ensureTotalCapacity(1 + iter.len);
 
         while (try iter.next()) |field_js| {
-            const field_str = try field_js.toBunString(globalObject);
-            args.appendAssumeCapacity(field_str.toUTF8(bun.default_allocator));
+            const field_str = try field_js.toFunString(globalObject);
+            args.appendAssumeCapacity(field_str.toUTF8(fun.default_allocator));
             field_str.deref();
 
             const value_js = try iter.next() orelse {
                 return globalObject.throw("Array must have an even number of elements (field-value pairs)", .{});
             };
-            const value_str = try value_js.toBunString(globalObject);
-            args.appendAssumeCapacity(value_str.toUTF8(bun.default_allocator));
+            const value_str = try value_js.toFunString(globalObject);
+            args.appendAssumeCapacity(value_str.toUTF8(fun.default_allocator));
             value_str.deref();
         }
     } else {
@@ -701,8 +701,8 @@ fn hsetImpl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
 
         var i: u32 = 1;
         while (i < args_count) : (i += 1) {
-            const arg_str = try callframe.argument(i).toBunString(globalObject);
-            args.appendAssumeCapacity(arg_str.toUTF8(bun.default_allocator));
+            const arg_str = try callframe.argument(i).toFunString(globalObject);
+            args.appendAssumeCapacity(arg_str.toUTF8(fun.default_allocator));
             arg_str.deref();
         }
     }
@@ -719,18 +719,18 @@ fn hsetImpl(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe:
             .args = .{ .slices = args.items },
         },
     ) catch |err| {
-        const msg = if (bun.strings.eqlComptime(command, "HSET")) "Failed to send HSET command" else "Failed to send HMSET command";
+        const msg = if (fun.strings.eqlComptime(command, "HSET")) "Failed to send HSET command" else "Failed to send HMSET command";
         return protocol.valkeyErrorToJS(globalObject, msg, err);
     };
 
     return promise.toJS();
 }
 
-pub fn hset(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn hset(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     return hsetImpl(this, globalObject, callframe, "HSET");
 }
 
-pub fn hmset(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn hmset(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     return hsetImpl(this, globalObject, callframe, "HMSET");
 }
 
@@ -750,7 +750,7 @@ pub const hpexpiretime = compile.@"(...strings: string[])"("hpexpiretime", "HPEX
 pub const hpttl = compile.@"(...strings: string[])"("hpttl", "HPTTL", .not_subscriber).call;
 pub const httl = compile.@"(...strings: string[])"("httl", "HTTL", .not_subscriber).call;
 
-pub fn hsetnx(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn hsetnx(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, "hsetnx");
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -780,7 +780,7 @@ pub fn hsetnx(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfram
     return promise.toJS();
 }
 
-pub fn hexists(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn hexists(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, "hexists");
 
     const key = (try fromJS(globalObject, callframe.argument(0))) orelse
@@ -806,7 +806,7 @@ pub fn hexists(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callfra
 }
 
 // Implement ping (send a PING command with an optional message)
-pub fn ping(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn ping(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     var message_buf: [1]JSArgument = undefined;
     var args_slice: []JSArgument = &.{};
 
@@ -938,7 +938,7 @@ pub const msetnx = compile.@"(...strings: string[])"("msetnx", "MSETNX", .not_su
 pub const script = compile.@"(...strings: string[])"("script", "SCRIPT", .not_subscriber).call;
 pub const select = compile.@"(...strings: string[])"("select", "SELECT", .not_subscriber).call;
 pub const spublish = compile.@"(key: RedisKey, value: RedisValue)"("spublish", "SPUBLISH", "channel", "message", .not_subscriber).call;
-pub fn smove(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+pub fn smove(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const source = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -989,11 +989,11 @@ pub fn publish(
     this: *JSValkeyClient,
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     try requireNotSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var args = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), args_view.len);
     defer {
         for (args.items) |*item| {
@@ -1035,9 +1035,9 @@ pub fn subscribe(
     this: *JSValkeyClient,
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     const channel_or_many, const handler_callback = callframe.argumentsAsArray(2);
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var redis_channels = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), 1);
     defer {
         for (redis_channels.items) |*item| {
@@ -1133,13 +1133,13 @@ pub fn unsubscribe(
     this: *JSValkeyClient,
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     // Check if we're in subscription mode
     try requireSubscriber(this, @src().fn_name);
 
     const args_view = callframe.arguments();
 
-    var stack_fallback = std.heap.stackFallback(512, bun.default_allocator);
+    var stack_fallback = std.heap.stackFallback(512, fun.default_allocator);
     var redis_channels = try std.array_list.Managed(JSArgument).initCapacity(stack_fallback.get(), 1);
     defer {
         for (redis_channels.items) |*item| {
@@ -1257,7 +1257,7 @@ pub fn duplicate(
     this: *JSValkeyClient,
     globalObject: *jsc.JSGlobalObject,
     callframe: *jsc.CallFrame,
-) bun.JSError!JSValue {
+) fun.JSError!JSValue {
     _ = callframe;
 
     var new_client: *JSValkeyClient = try this.cloneWithoutConnecting(globalObject);
@@ -1301,7 +1301,7 @@ const compile = struct {
         this: *JSValkeyClient,
         js_client_prototype_function_name: []const u8,
         comptime client_state_requirement: ClientStateRequirement,
-    ) bun.JSError!void {
+    ) fun.JSError!void {
         return switch (client_state_requirement) {
             .subscriber => requireSubscriber(this, js_client_prototype_function_name),
             .not_subscriber => requireNotSubscriber(this, js_client_prototype_function_name),
@@ -1315,7 +1315,7 @@ const compile = struct {
         comptime client_state_requirement: ClientStateRequirement,
     ) type {
         return struct {
-            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
                 try testCorrectState(this, name, client_state_requirement);
 
                 const promise = this.send(
@@ -1340,7 +1340,7 @@ const compile = struct {
         comptime client_state_requirement: ClientStateRequirement,
     ) type {
         return struct {
-            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
                 try testCorrectState(this, name, client_state_requirement);
 
                 const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -1370,7 +1370,7 @@ const compile = struct {
         comptime client_state_requirement: ClientStateRequirement,
     ) type {
         return struct {
-            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
                 try testCorrectState(this, name, client_state_requirement);
 
                 if (callframe.argument(0).isUndefinedOrNull()) {
@@ -1378,7 +1378,7 @@ const compile = struct {
                 }
 
                 const arguments = callframe.arguments();
-                var args = try std.array_list.Managed(JSArgument).initCapacity(bun.default_allocator, arguments.len);
+                var args = try std.array_list.Managed(JSArgument).initCapacity(fun.default_allocator, arguments.len);
                 defer {
                     for (args.items) |*item| {
                         item.deinit();
@@ -1419,7 +1419,7 @@ const compile = struct {
         comptime client_state_requirement: ClientStateRequirement,
     ) type {
         return struct {
-            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
                 try testCorrectState(this, name, client_state_requirement);
 
                 const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -1455,7 +1455,7 @@ const compile = struct {
         comptime client_state_requirement: ClientStateRequirement,
     ) type {
         return struct {
-            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
                 try testCorrectState(this, name, client_state_requirement);
 
                 const key = (try fromJS(globalObject, callframe.argument(0))) orelse {
@@ -1492,10 +1492,10 @@ const compile = struct {
         comptime client_state_requirement: ClientStateRequirement,
     ) type {
         return struct {
-            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
                 try testCorrectState(this, name, client_state_requirement);
 
-                var args = try std.array_list.Managed(JSArgument).initCapacity(bun.default_allocator, callframe.arguments().len);
+                var args = try std.array_list.Managed(JSArgument).initCapacity(fun.default_allocator, callframe.arguments().len);
                 defer {
                     for (args.items) |*item| {
                         item.deinit();
@@ -1531,10 +1531,10 @@ const compile = struct {
         comptime client_state_requirement: ClientStateRequirement,
     ) type {
         return struct {
-            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
+            pub fn call(this: *JSValkeyClient, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!JSValue {
                 try testCorrectState(this, name, client_state_requirement);
 
-                var args = try std.array_list.Managed(JSArgument).initCapacity(bun.default_allocator, callframe.arguments().len);
+                var args = try std.array_list.Managed(JSArgument).initCapacity(fun.default_allocator, callframe.arguments().len);
                 defer {
                     for (args.items) |*item| {
                         item.deinit();
@@ -1577,23 +1577,23 @@ fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) !?JSArgument {
     if (value.isNumber()) {
         // Allow numbers to be passed as strings.
         const str = try value.toJSString(globalObject);
-        return try JSArgument.fromJSMaybeFile(globalObject, bun.default_allocator, str.toJS(), true);
+        return try JSArgument.fromJSMaybeFile(globalObject, fun.default_allocator, str.toJS(), true);
     }
 
-    return try JSArgument.fromJSMaybeFile(globalObject, bun.default_allocator, value, false);
+    return try JSArgument.fromJSMaybeFile(globalObject, fun.default_allocator, value, false);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
 const JSValkeyClient = @import("./js_valkey.zig").JSValkeyClient;
 const SubscriptionCtx = @import("./js_valkey.zig").SubscriptionCtx;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 const JSArgument = jsc.Node.BlobOrStringOrBuffer;
 const Slice = jsc.ZigString.Slice;
 
-const valkey = bun.valkey;
+const valkey = fun.valkey;
 const Command = valkey.Command;
 const protocol = valkey.protocol;

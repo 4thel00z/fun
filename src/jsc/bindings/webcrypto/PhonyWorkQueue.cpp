@@ -3,7 +3,7 @@
 #include <wtf/text/ASCIILiteral.h>
 #include "EventLoopTaskNoContext.h"
 
-namespace Bun {
+namespace Fun {
 
 Ref<PhonyWorkQueue> PhonyWorkQueue::create(WTF::ASCIILiteral name)
 {
@@ -18,4 +18,4 @@ void PhonyWorkQueue::dispatch(JSC::JSGlobalObject* globalObject, WTF::Function<v
     ConcurrentCppTask__createAndRun(new EventLoopTaskNoContext(globalObject, WTF::move(function)));
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -1,9 +1,9 @@
 #pragma once
 #include "root.h"
 #include "headers-handwritten.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
-namespace Bun {
+namespace Fun {
 
 // require.extensions & Module._extensions
 class JSCommonJSExtensions : public JSC::JSDestructibleObject {
@@ -57,4 +57,4 @@ private:
     void finishCreation(JSC::VM&);
 };
 
-} // namespace Bun
+} // namespace Fun

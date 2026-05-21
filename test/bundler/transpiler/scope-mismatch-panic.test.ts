@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe("scope mismatch panic regression test", () => {
   test("should not panic with scope mismatch when arrow function is followed by array literal", async () => {
@@ -26,9 +26,9 @@ const Layout = () => {
 
     // With the bug, this would panic with "Scope mismatch while visiting"
     // With the fix, it should fail with a normal ReferenceError for 'app'
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.tsx"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.tsx"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -55,9 +55,9 @@ const fn = () => {
 ['a', 'b'].forEach(x => console.log(x))`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -79,9 +79,9 @@ const fn = () => {
       "test.js": `const fn = () => {return 1}['x']`,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",

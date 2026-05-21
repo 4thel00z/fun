@@ -1,5 +1,5 @@
-import { expect, it } from "bun:test";
-import { bunRunAsScript, tempDirWithFiles } from "harness";
+import { expect, it } from "fun:test";
+import { funRunAsScript, tempDirWithFiles } from "harness";
 
 it("should handle quote escapes", () => {
   const package_json = JSON.stringify({
@@ -10,6 +10,6 @@ it("should handle quote escapes", () => {
   expect(package_json).toContain('\\"');
   expect(package_json).toContain("\\\\");
   const dir = tempDirWithFiles("run-quote", { "package.json": package_json });
-  const { stdout } = bunRunAsScript(dir, "test");
+  const { stdout } = funRunAsScript(dir, "test");
   expect(stdout).toBe(`test\\${dir}`);
 });

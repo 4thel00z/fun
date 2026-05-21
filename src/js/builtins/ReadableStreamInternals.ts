@@ -898,7 +898,7 @@ export async function readStreamIntoSink(stream: ReadableStream, sink, isNative)
       // Some time may pass before this Promise is fulfilled. The sink may
       // abort, for example. So we have to start it, if only so that we can
       // receive a notification when it closes or cancels.
-      // https://github.com/oven-sh/bun/issues/6758
+      // https://github.com/underdoc-org/fun/issues/6758
       if (isNative) $startDirectStream.$call(sink, stream, undefined, onSinkClose, stream.$asyncContext);
       sink.start({ highWaterMark });
       started = true;
@@ -1106,7 +1106,7 @@ export function onReadableStreamDirectControllerClosed(_reason) {
 
 export function tryUseReadableStreamBufferedFastPath(stream, method) {
   // -- Fast path for Blob.prototype.stream(), fetch body streams, and incoming Request body streams --
-  const ptr = stream.$bunNativePtr;
+  const ptr = stream.$funNativePtr;
   if (
     // only available on native streams
     ptr &&
@@ -1123,7 +1123,7 @@ export function tryUseReadableStreamBufferedFastPath(stream, method) {
     $putByIdDirectPrivate(stream, "start", undefined);
     $putByIdDirectPrivate(stream, "reader", {});
 
-    if (Bun.peek.status(promise) === "fulfilled") {
+    if (Fun.peek.status(promise) === "fulfilled") {
       stream.$reader = undefined;
       $readableStreamCloseIfPossible(stream);
       return promise;
@@ -1331,12 +1331,12 @@ export function createTextStream(_highWaterMark: number) {
       }
 
       if (hasBuffer && !hasString) {
-        return new globalThis.TextDecoder("utf-8", { ignoreBOM: true }).decode(Bun.concatArrayBuffers(array));
+        return new globalThis.TextDecoder("utf-8", { ignoreBOM: true }).decode(Fun.concatArrayBuffers(array));
       }
 
       // worst case: mixed content
 
-      var arrayBufferSink = new Bun.ArrayBufferSink();
+      var arrayBufferSink = new Fun.ArrayBufferSink();
       arrayBufferSink.start({
         highWaterMark: estimatedLength,
         asUint8Array: true,
@@ -1467,7 +1467,7 @@ export function initializeArrayBufferStream(underlyingSource, highWaterMark: num
     highWaterMark && typeof highWaterMark === "number"
       ? { highWaterMark, stream: true, asUint8Array: true }
       : { stream: true, asUint8Array: true };
-  var sink = new Bun.ArrayBufferSink();
+  var sink = new Fun.ArrayBufferSink();
   sink.start(opts);
 
   var controller = {
@@ -1577,7 +1577,7 @@ export function isReadableStreamLocked(stream) {
     !!$getByIdDirectPrivate(stream, "reader") ||
     // Case 2. Has the native reader been released?
     // Case 3. Has it been converted into a Node.js NativeReadable?
-    stream.$bunNativePtr === -1
+    stream.$funNativePtr === -1
   );
 }
 
@@ -1769,7 +1769,7 @@ export function readableStreamReaderGenericRelease(reader) {
   $markPromiseAsHandled(promise);
 
   var stream = $getByIdDirectPrivate(reader, "ownerReadableStream");
-  if (stream.$bunNativePtr) {
+  if (stream.$funNativePtr) {
     $getByIdDirectPrivate($getByIdDirectPrivate(stream, "readableStreamController"), "underlyingSource").$resume(false);
   }
   $putByIdDirectPrivate(stream, "reader", undefined);
@@ -1947,7 +1947,7 @@ export function createLazyLoadedStreamPrototype(): typeof ReadableStreamDefaultC
     }
   }
 
-  // This was a type: "bytes" until Bun v1.1.44, but pendingPullIntos was not really
+  // This was a type: "bytes" until Fun v1.1.44, but pendingPullIntos was not really
   // compatible with how we send data to the stream, and "mode: 'byob'" wasn't
   // supported so changing it isn't an observable change.
   //
@@ -2091,7 +2091,7 @@ export function createLazyLoadedStreamPrototype(): typeof ReadableStreamDefaultC
       }
 
       $debug("Unknown result type", result);
-      throw $ERR_INVALID_STATE("Internal error: invalid result from pull. This is a bug in Bun. Please report it.");
+      throw $ERR_INVALID_STATE("Internal error: invalid result from pull. This is a bug in Fun. Please report it.");
     }
 
     #pull(controller) {
@@ -2168,7 +2168,7 @@ export function createLazyLoadedStreamPrototype(): typeof ReadableStreamDefaultC
 
 export function lazyLoadStream(stream, autoAllocateChunkSize) {
   $debug("lazyLoadStream", stream, autoAllocateChunkSize);
-  var handle = stream.$bunNativePtr;
+  var handle = stream.$funNativePtr;
   if (handle === -1) return;
   var Prototype = $lazyStreamPrototypeMap.$get($getPrototypeOf(handle));
   if (Prototype === undefined) {
@@ -2277,7 +2277,7 @@ export function readableStreamToArrayBufferDirect(
   underlyingSource: any,
   asUint8Array: boolean,
 ) {
-  var sink = new Bun.ArrayBufferSink();
+  var sink = new Fun.ArrayBufferSink();
   $putByIdDirectPrivate(stream, "underlyingSource", null);
   $putByIdDirectPrivate(stream, "start", undefined);
   $putByIdDirectPrivate(stream, "reader", {});
@@ -2427,7 +2427,7 @@ export function readableStreamDefineLazyIterators(prototype) {
 
       if (!preventCancel && !$isReadableStreamLocked(stream)) {
         const promise = stream.cancel(deferredError);
-        if (Bun.peek.status(promise) === "rejected") {
+        if (Fun.peek.status(promise) === "rejected") {
           $markPromiseAsHandled(promise);
         }
       }

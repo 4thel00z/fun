@@ -1,15 +1,15 @@
 ---
 title: Hot reloading
-description: Hot Module Replacement (HMR) for Bun's development server
+description: Hot Module Replacement (HMR) for Fun's development server
 ---
 
 Hot Module Replacement (HMR) allows you to update modules in a running application without needing a full page reload. This preserves the application state and improves the development experience.
 
-<Note>HMR is enabled by default when using Bun's full-stack development server.</Note>
+<Note>HMR is enabled by default when using Fun's full-stack development server.</Note>
 
 ## `import.meta.hot` API Reference
 
-Bun implements a client-side HMR API modeled after [Vite's `import.meta.hot` API](https://vite.dev/guide/api-hmr). It can be checked for with `if (import.meta.hot)`, tree-shaking it in production.
+Fun implements a client-side HMR API modeled after [Vite's `import.meta.hot` API](https://vite.dev/guide/api-hmr). It can be checked for with `if (import.meta.hot)`, tree-shaking it in production.
 
 ```ts title="index.ts" icon="/icons/typescript.svg"
 if (import.meta.hot) {
@@ -17,7 +17,7 @@ if (import.meta.hot) {
 }
 ```
 
-However, this check is often not needed as Bun will dead-code-eliminate calls to all of the HMR APIs in production builds.
+However, this check is often not needed as Fun will dead-code-eliminate calls to all of the HMR APIs in production builds.
 
 ```ts title="index.ts" icon="/icons/typescript.svg"
 // This entire function call will be removed in production!
@@ -27,7 +27,7 @@ import.meta.hot.dispose(() => {
 ```
 
 <Warning>
-For this to work, Bun forces these APIs to be called without indirection. That means the following do not work:
+For this to work, Fun forces these APIs to be called without indirection. That means the following do not work:
 
 ```ts title="index.ts" icon="/icons/typescript.svg"
 // INVALID: Assigning `hot` to a variable
@@ -52,7 +52,7 @@ doSomething(import.meta.hot.data);
 </Warning>
 
 <Note>
-The HMR API is still a work in progress. Some features are missing. HMR can be disabled in `Bun.serve` by setting the development option to `{ hmr: false }`.
+The HMR API is still a work in progress. Some features are missing. HMR can be disabled in `Fun.serve` by setting the development option to `{ hmr: false }`.
 </Note>
 
 ## API Methods
@@ -142,7 +142,7 @@ Indicates that multiple dependencies' modules can be accepted. This variant acce
 
 ## import.meta.hot.data
 
-`import.meta.hot.data` maintains state between module instances during hot replacement, enabling data transfer from previous to new versions. When `import.meta.hot.data` is written into, Bun will also mark this module as capable of self-accepting (equivalent of calling `import.meta.hot.accept()`).
+`import.meta.hot.data` maintains state between module instances during hot replacement, enabling data transfer from previous to new versions. When `import.meta.hot.data` is written into, Fun will also mark this module as capable of self-accepting (equivalent of calling `import.meta.hot.accept()`).
 
 ```tsx title="index.tsx" icon="/icons/typescript.svg"
 import { createRoot } from "react-dom/client";
@@ -155,7 +155,7 @@ root.render(<App />); // re-use an existing root
 In production, `data` is inlined to be `{}`, meaning it cannot be used as a state holder.
 
 <Tip>
-  The above pattern is recommended for stateful modules because Bun knows it can minify `{}.prop ??= value` into `value`
+  The above pattern is recommended for stateful modules because Fun knows it can minify `{}.prop ??= value` into `value`
   in production.
 </Tip>
 
@@ -206,7 +206,7 @@ import.meta.hot.prune(() => {
 `on()` and `off()` are used to listen for events from the HMR runtime. Event names are prefixed with a prefix so that plugins do not conflict with each other.
 
 ```ts title="index.ts" icon="/icons/typescript.svg"
-import.meta.hot.on("bun:beforeUpdate", () => {
+import.meta.hot.on("fun:beforeUpdate", () => {
   console.log("before a hot update");
 });
 ```
@@ -217,13 +217,13 @@ When a file is replaced, all of its event listeners are automatically removed.
 
 | Event                  | Emitted when                                                                                    |
 | ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `bun:beforeUpdate`     | before a hot update is applied.                                                                 |
-| `bun:afterUpdate`      | after a hot update is applied.                                                                  |
-| `bun:beforeFullReload` | before a full page reload happens.                                                              |
-| `bun:beforePrune`      | before prune callbacks are called.                                                              |
-| `bun:invalidate`       | when a module is invalidated with `import.meta.hot.invalidate()`                                |
-| `bun:error`            | when a build or runtime error occurs                                                            |
-| `bun:ws:disconnect`    | when the HMR WebSocket connection is lost. This can indicate the development server is offline. |
-| `bun:ws:connect`       | when the HMR WebSocket connects or re-connects.                                                 |
+| `fun:beforeUpdate`     | before a hot update is applied.                                                                 |
+| `fun:afterUpdate`      | after a hot update is applied.                                                                  |
+| `fun:beforeFullReload` | before a full page reload happens.                                                              |
+| `fun:beforePrune`      | before prune callbacks are called.                                                              |
+| `fun:invalidate`       | when a module is invalidated with `import.meta.hot.invalidate()`                                |
+| `fun:error`            | when a build or runtime error occurs                                                            |
+| `fun:ws:disconnect`    | when the HMR WebSocket connection is lost. This can indicate the development server is offline. |
+| `fun:ws:connect`       | when the HMR WebSocket connects or re-connects.                                                 |
 
-<Note>For compatibility with Vite, the above events are also available via `vite:*` prefix instead of `bun:*`.</Note>
+<Note>For compatibility with Vite, the above events are also available via `vite:*` prefix instead of `fun:*`.</Note>

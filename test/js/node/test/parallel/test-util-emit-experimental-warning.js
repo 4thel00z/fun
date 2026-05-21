@@ -1,5 +1,5 @@
 'use strict';
-// emitExperimentalWarning is a node internal not used by bun, so this test is skipped
+// emitExperimentalWarning is a node internal not used by fun, so this test is skipped
 
 // // Flags: --expose-internals
 // const common = require('../common');

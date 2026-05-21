@@ -1,4 +1,4 @@
-// @bun
+// @fun
 var { require } = import.meta;
 const entrypointPath = "./p.js";
 let listener;

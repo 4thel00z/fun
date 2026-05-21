@@ -23,7 +23,7 @@
 
 #include "root.h"
 #include "ErrorCode.h"
-#include "BunCommonStrings.h"
+#include "FunCommonStrings.h"
 #include "JavaScriptCore/JSArrayBufferView.h"
 #include "JavaScriptCore/JSCJSValue.h"
 #include "JavaScriptCore/JSCast.h"
@@ -63,7 +63,7 @@
 #include "ncrypto.h"
 #include "AsymmetricKeyValue.h"
 using namespace JSC;
-using namespace Bun;
+using namespace Fun;
 using JSGlobalObject = JSC::JSGlobalObject;
 using Exception = JSC::Exception;
 using JSValue = JSC::JSValue;

@@ -1,8 +1,8 @@
 #include "root.h"
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "JSDOMOperation.h"
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 
 // JSDOMOperation.h #defines createNotEnoughArgumentsError → our wrapper.
 // Suspend it here so the wrapper can call the real JSC function, then
@@ -14,7 +14,7 @@
 
 namespace WebCore {
 
-JSC::JSObject* createNotEnoughArgumentsErrorBun(JSC::JSGlobalObject* globalObject)
+JSC::JSObject* createNotEnoughArgumentsErrorFun(JSC::JSGlobalObject* globalObject)
 {
     JSC::JSObject* error = JSC::createNotEnoughArgumentsError(globalObject);
     if (error) [[likely]] {
@@ -33,7 +33,7 @@ void throwNodeRangeError(JSGlobalObject* lexicalGlobalObject, ThrowScope& scope,
     auto* error = createRangeError(lexicalGlobalObject, message);
     if (error) [[likely]] {
         auto& vm = getVM(lexicalGlobalObject);
-        auto& builtinNames = Bun::builtinNames(vm);
+        auto& builtinNames = Fun::builtinNames(vm);
         error->putDirect(vm, builtinNames.codePublicName(), jsString(vm, String("ERR_OUT_OF_RANGE"_s)));
         scope.throwException(lexicalGlobalObject, error);
     }
@@ -44,7 +44,7 @@ void throwNodeRangeError(JSGlobalObject* lexicalGlobalObject, ThrowScope& scope,
     auto* error = createRangeError(lexicalGlobalObject, message);
     if (error) [[likely]] {
         auto& vm = getVM(lexicalGlobalObject);
-        auto& builtinNames = Bun::builtinNames(vm);
+        auto& builtinNames = Fun::builtinNames(vm);
         error->putDirect(vm, builtinNames.codePublicName(), jsString(vm, String("ERR_OUT_OF_RANGE"_s)));
         scope.throwException(lexicalGlobalObject, error);
     }

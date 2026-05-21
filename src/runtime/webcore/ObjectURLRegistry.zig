@@ -1,12 +1,12 @@
 const ObjectURLRegistry = @This();
 
-lock: bun.Mutex = .{},
-map: std.AutoHashMap(UUID, *Entry) = std.AutoHashMap(UUID, *Entry).init(bun.default_allocator),
+lock: fun.Mutex = .{},
+map: std.AutoHashMap(UUID, *Entry) = std.AutoHashMap(UUID, *Entry).init(fun.default_allocator),
 
 pub const Entry = struct {
     blob: jsc.WebCore.Blob,
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
     pub fn init(blob: *const jsc.WebCore.Blob) *Entry {
         return Entry.new(.{
             .blob = blob.dupeWithContentType(true),
@@ -15,7 +15,7 @@ pub const Entry = struct {
 
     pub fn deinit(this: *Entry) void {
         this.blob.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
@@ -25,7 +25,7 @@ pub fn register(this: *ObjectURLRegistry, vm: *jsc.VirtualMachine, blob: *const 
 
     this.lock.lock();
     defer this.lock.unlock();
-    bun.handleOom(this.map.put(uuid, entry));
+    fun.handleOom(this.map.put(uuid, entry));
     return uuid;
 }
 
@@ -84,10 +84,10 @@ pub fn has(this: *ObjectURLRegistry, pathname: []const u8) bool {
 }
 
 comptime {
-    const Bun__createObjectURL = jsc.toJSHostFn(Bun__createObjectURL_);
-    @export(&Bun__createObjectURL, .{ .name = "Bun__createObjectURL" });
+    const Fun__createObjectURL = jsc.toJSHostFn(Fun__createObjectURL_);
+    @export(&Fun__createObjectURL, .{ .name = "Fun__createObjectURL" });
 }
-fn Bun__createObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn Fun__createObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1);
     if (arguments.len < 1) {
         return globalObject.throwNotEnoughArguments("createObjectURL", 1, arguments.len);
@@ -96,16 +96,16 @@ fn Bun__createObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.Call
         return globalObject.throwInvalidArguments("createObjectURL expects a Blob object", .{});
     };
     const registry = ObjectURLRegistry.singleton();
-    const uuid = registry.register(globalObject.bunVM(), blob);
-    var str = bun.handleOom(bun.String.createFormat("blob:{f}", .{uuid}));
+    const uuid = registry.register(globalObject.funVM(), blob);
+    var str = fun.handleOom(fun.String.createFormat("blob:{f}", .{uuid}));
     return str.transferToJS(globalObject);
 }
 
 comptime {
-    const Bun__revokeObjectURL = jsc.toJSHostFn(Bun__revokeObjectURL_);
-    @export(&Bun__revokeObjectURL, .{ .name = "Bun__revokeObjectURL" });
+    const Fun__revokeObjectURL = jsc.toJSHostFn(Fun__revokeObjectURL_);
+    @export(&Fun__revokeObjectURL, .{ .name = "Fun__revokeObjectURL" });
 }
-fn Bun__revokeObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn Fun__revokeObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1);
     if (arguments.len < 1) {
         return globalObject.throwNotEnoughArguments("revokeObjectURL", 1, arguments.len);
@@ -113,12 +113,12 @@ fn Bun__revokeObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.Call
     if (!arguments.ptr[0].isString()) {
         return globalObject.throwInvalidArguments("revokeObjectURL expects a string", .{});
     }
-    const str = arguments.ptr[0].toBunString(globalObject) catch @panic("unreachable");
+    const str = arguments.ptr[0].toFunString(globalObject) catch @panic("unreachable");
     if (!str.hasPrefixComptime("blob:")) {
         return .js_undefined;
     }
 
-    const slice = str.toUTF8WithoutRef(bun.default_allocator);
+    const slice = str.toUTF8WithoutRef(fun.default_allocator);
     defer slice.deinit();
     defer str.deref();
 
@@ -134,7 +134,7 @@ comptime {
     const jsFunctionResolveObjectURL = jsc.toJSHostFn(jsFunctionResolveObjectURL_);
     @export(&jsFunctionResolveObjectURL, .{ .name = "jsFunctionResolveObjectURL" });
 }
-fn jsFunctionResolveObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn jsFunctionResolveObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1);
 
     // Errors are ignored.
@@ -143,7 +143,7 @@ fn jsFunctionResolveObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *js
     if (arguments.len < 1) {
         return .js_undefined;
     }
-    const str = try arguments.ptr[0].toBunString(globalObject);
+    const str = try arguments.ptr[0].toFunString(globalObject);
     defer str.deref();
 
     if (globalObject.hasException()) {
@@ -154,7 +154,7 @@ fn jsFunctionResolveObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *js
         return .js_undefined;
     }
 
-    const slice = str.toUTF8WithoutRef(bun.default_allocator);
+    const slice = str.toUTF8WithoutRef(fun.default_allocator);
     defer slice.deinit();
     const sliced = slice.slice();
 
@@ -166,11 +166,11 @@ fn jsFunctionResolveObjectURL_(globalObject: *jsc.JSGlobalObject, callframe: *js
 pub const specifier_len = "blob:".len + UUID.stringLength;
 
 pub fn isBlobURL(url: []const u8) bool {
-    return url.len >= specifier_len and bun.strings.hasPrefixComptime(url, "blob:");
+    return url.len >= specifier_len and fun.strings.hasPrefixComptime(url, "blob:");
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const UUID = bun.UUID;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const UUID = fun.UUID;
+const jsc = fun.jsc;

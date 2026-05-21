@@ -1,4 +1,4 @@
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -29,7 +29,7 @@ pending_reset: bool = false,
 closed: bool = false,
 task: jsc.WorkPoolTask = .{ .callback = undefined },
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*@This() {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*@This() {
     const arguments = callframe.argumentsUndef(1).ptr;
 
     var mode = arguments[0];
@@ -45,7 +45,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
         return globalThis.throwRangeError(mode_int, .{ .field_name = "mode", .min = 8, .max = 9 });
     }
 
-    const ptr = bun.new(@This(), .{
+    const ptr = fun.new(@This(), .{
         .ref_count = .init(),
         .globalThis = globalThis,
     });
@@ -63,7 +63,7 @@ pub fn estimatedSize(this: *const @This()) usize {
     };
 }
 
-pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsUndef(3).slice();
     const this_value = callframe.this();
     if (arguments.len != 3) {
@@ -101,7 +101,7 @@ pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.Cal
     return .true;
 }
 
-pub fn params(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn params(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     _ = this;
     _ = globalThis;
     _ = callframe;
@@ -116,14 +116,14 @@ fn deinit(this: *@This()) void {
         .BROTLI_ENCODE, .BROTLI_DECODE => this.stream.close(),
         else => {},
     }
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 const Context = struct {
-    const c = bun.brotli.c;
-    const Op = bun.brotli.c.BrotliEncoder.Operation;
+    const c = fun.brotli.c;
+    const Op = fun.brotli.c.BrotliEncoder.Operation;
 
-    mode: bun.zlib.NodeMode = .NONE,
+    mode: fun.zlib.NodeMode = .NONE,
     state: ?*anyopaque = null,
 
     next_in: ?[*]const u8 = null,
@@ -139,8 +139,8 @@ const Context = struct {
     pub fn init(this: *Context) Error {
         switch (this.mode) {
             .BROTLI_ENCODE => {
-                const alloc = &bun.brotli.BrotliAllocator.alloc;
-                const free = &bun.brotli.BrotliAllocator.free;
+                const alloc = &fun.brotli.BrotliAllocator.alloc;
+                const free = &fun.brotli.BrotliAllocator.free;
                 const state = c.BrotliEncoderCreateInstance(alloc, free, null);
                 if (state == null) {
                     return Error.init("Could not initialize Brotli instance", -1, "ERR_ZLIB_INITIALIZATION_FAILED");
@@ -149,8 +149,8 @@ const Context = struct {
                 return Error.ok;
             },
             .BROTLI_DECODE => {
-                const alloc = &bun.brotli.BrotliAllocator.alloc;
-                const free = &bun.brotli.BrotliAllocator.free;
+                const alloc = &fun.brotli.BrotliAllocator.alloc;
+                const free = &fun.brotli.BrotliAllocator.free;
                 const state = c.BrotliDecoderCreateInstance(alloc, free, null);
                 if (state == null) {
                     return Error.init("Could not initialize Brotli instance", -1, "ERR_ZLIB_INITIALIZATION_FAILED");
@@ -245,7 +245,7 @@ const Context = struct {
                 if (this.error_ != .NO_ERROR) {
                     return Error.init("Decompression failed", @intFromEnum(this.error_), code_for_error(this.error_));
                 } else if (this.flush == .finish and this.last_result.d == .needs_more_input) {
-                    return Error.init("unexpected end of file", @intFromEnum(bun.zlib.ReturnCode.BufError), "Z_BUF_ERROR");
+                    return Error.init("unexpected end of file", @intFromEnum(fun.zlib.ReturnCode.BufError), "Z_BUF_ERROR");
                 }
                 return Error.ok;
             },
@@ -278,5 +278,5 @@ const CompressionStream = @import("../node_zlib_binding.zig").CompressionStream;
 const CountedKeepAlive = @import("../node_zlib_binding.zig").CountedKeepAlive;
 const Error = @import("../node_zlib_binding.zig").Error;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

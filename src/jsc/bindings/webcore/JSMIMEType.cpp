@@ -16,8 +16,8 @@
 #include "wtf/text/WTFString.h"
 #include "wtf/ASCIICType.h"
 #include "ZigGlobalObject.h"
-#include "NodeValidator.h" // For Bun::V::
-#include "ErrorCode.h" // For Bun::ERR::
+#include "NodeValidator.h" // For Fun::V::
+#include "ErrorCode.h" // For Fun::ERR::
 #include "JavaScriptCore/JSMapInlines.h"
 
 namespace WebCore {
@@ -232,7 +232,7 @@ static std::tuple<String, String, size_t> parseTypeAndSubtype(JSGlobalObject* gl
         size_t invalidIndex = findFirstInvalidHTTPTokenChar(remaining);
         // Adjust index relative to original string
         size_t originalIndex = (invalidIndex == -1) ? notFound : position + invalidIndex;
-        Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "type"_s, input->toString(), originalIndex);
+        Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "type"_s, input->toString(), originalIndex);
         return {};
     }
 
@@ -240,7 +240,7 @@ static std::tuple<String, String, size_t> parseTypeAndSubtype(JSGlobalObject* gl
     int invalidTypeIndex = findFirstInvalidHTTPTokenChar(typeView);
     if (typeView.isEmpty() || invalidTypeIndex != -1) {
         size_t originalIndex = (invalidTypeIndex == -1) ? position : position + invalidTypeIndex;
-        Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "type"_s, input->toString(), originalIndex);
+        Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "type"_s, input->toString(), originalIndex);
         return {};
     }
     String type = typeView.convertToASCIILowercase();
@@ -266,7 +266,7 @@ static std::tuple<String, String, size_t> parseTypeAndSubtype(JSGlobalObject* gl
     int invalidSubtypeIndex = findFirstInvalidHTTPTokenChar(subtypeView);
     if (subtypeView.isEmpty() || invalidSubtypeIndex != -1) {
         size_t originalIndex = (invalidSubtypeIndex == -1) ? position : position + invalidSubtypeIndex;
-        Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "subtype"_s, input->toString(), originalIndex);
+        Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "subtype"_s, input->toString(), originalIndex);
         return {};
     }
     String subtype = subtypeView.convertToASCIILowercase();
@@ -346,7 +346,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsMIMETypeProtoGetterType, (JSGlobalObject * globalObje
 
     auto* thisObject = dynamicDowncast<JSMIMEType>(JSC::JSValue::decode(thisValue));
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
         return {};
     }
 
@@ -360,7 +360,7 @@ JSC_DEFINE_CUSTOM_SETTER(jsMIMETypeProtoSetterType, (JSGlobalObject * globalObje
 
     auto* thisObject = dynamicDowncast<JSMIMEType>(JSC::JSValue::decode(thisValue));
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
         return {};
     }
 
@@ -371,7 +371,7 @@ JSC_DEFINE_CUSTOM_SETTER(jsMIMETypeProtoSetterType, (JSGlobalObject * globalObje
     // Validate type
     int invalidIndex = findFirstInvalidHTTPTokenChar(typeStr);
     if (typeStr.isEmpty() || invalidIndex != -1) {
-        Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "type"_s, typeStr, invalidIndex);
+        Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "type"_s, typeStr, invalidIndex);
         return {};
     }
 
@@ -386,7 +386,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsMIMETypeProtoGetterSubtype, (JSGlobalObject * globalO
 
     auto* thisObject = dynamicDowncast<JSMIMEType>(JSC::JSValue::decode(thisValue));
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
         return {};
     }
 
@@ -400,7 +400,7 @@ JSC_DEFINE_CUSTOM_SETTER(jsMIMETypeProtoSetterSubtype, (JSGlobalObject * globalO
 
     auto* thisObject = dynamicDowncast<JSMIMEType>(JSC::JSValue::decode(thisValue));
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
         return {};
     }
 
@@ -411,7 +411,7 @@ JSC_DEFINE_CUSTOM_SETTER(jsMIMETypeProtoSetterSubtype, (JSGlobalObject * globalO
     // Validate subtype
     int invalidIndex = findFirstInvalidHTTPTokenChar(subtypeStr);
     if (subtypeStr.isEmpty() || invalidIndex != -1) {
-        Bun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "subtype"_s, subtypeStr, invalidIndex);
+        Fun::ERR::INVALID_MIME_SYNTAX(scope, globalObject, "subtype"_s, subtypeStr, invalidIndex);
         return {};
     }
 
@@ -426,7 +426,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsMIMETypeProtoGetterEssence, (JSGlobalObject * globalO
 
     auto* thisObject = dynamicDowncast<JSMIMEType>(JSC::JSValue::decode(thisValue));
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
         return {};
     }
 
@@ -441,7 +441,7 @@ JSC_DEFINE_CUSTOM_GETTER(jsMIMETypeProtoGetterParams, (JSGlobalObject * globalOb
 
     auto* thisObject = dynamicDowncast<JSMIMEType>(JSC::JSValue::decode(thisValue));
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
         return {};
     }
 
@@ -455,7 +455,7 @@ JSC_DEFINE_HOST_FUNCTION(jsMIMETypeProtoFuncToString, (JSGlobalObject * globalOb
 
     auto* thisObject = dynamicDowncast<JSMIMEType>(callFrame->thisValue());
     if (!thisObject) [[unlikely]] {
-        scope.throwException(globalObject, Bun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
+        scope.throwException(globalObject, Fun::createInvalidThisError(globalObject, thisObject, "MIMEType"));
         return {};
     }
 

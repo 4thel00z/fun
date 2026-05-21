@@ -1,13 +1,13 @@
-// This is the file that loads when you pass a '.html' entry point to Bun.
+// This is the file that loads when you pass a '.html' entry point to Fun.
 // It imports the entry points and initializes a server.
-import type { HTMLBundle, Server } from "bun";
+import type { HTMLBundle, Server } from "fun";
 const initial = performance.now();
 const argv = process.argv;
 
-// `import` cannot be used in this file and only Bun builtin modules can be used.
+// `import` cannot be used in this file and only Fun builtin modules can be used.
 const path = require("node:path");
 
-const env = Bun.env;
+const env = Fun.env;
 
 // This function is called at startup.
 async function start() {
@@ -45,10 +45,10 @@ async function start() {
 
       if (arg === "--help") {
         console.log(`
-Bun v${Bun.version} (html)
+Fun v${Fun.version} (html)
 
 Usage:
-  bun [...html-files] [options]
+  fun [...html-files] [options]
 
 Options:
 
@@ -58,17 +58,17 @@ Options:
   --no-console # don't print console logs from browser
 Examples:
 
-  bun index.html
-  bun ./index.html ./about.html --port=3000
-  bun index.html --host=localhost:3000
-  bun index.html --hostname=localhost:3000
-  bun ./*.html
-  bun index.html --console
+  fun index.html
+  fun ./index.html ./about.html --port=3000
+  fun index.html --host=localhost:3000
+  fun index.html --hostname=localhost:3000
+  fun ./*.html
+  fun index.html --console
 
-This is a small wrapper around Bun.serve() that automatically serves the HTML files you pass in without
-having to manually call Bun.serve() or write the boilerplate yourself. This runs Bun's bundler on
+This is a small wrapper around Fun.serve() that automatically serves the HTML files you pass in without
+having to manually call Fun.serve() or write the boilerplate yourself. This runs Fun's bundler on
 the HTML files, their JavaScript, and CSS, and serves them up. This doesn't do anything you can't do
-yourself with Bun.serve().
+yourself with Fun.serve().
 `);
         process.exit(0);
       }
@@ -77,7 +77,7 @@ yourself with Bun.serve().
     }
 
     if (arg.includes("*") || arg.includes("**") || arg.includes("{")) {
-      const glob = new Bun.Glob(arg);
+      const glob = new Fun.Glob(arg);
 
       for (const file of glob.scanSync(cwd)) {
         let resolved = path.resolve(cwd, file);
@@ -85,9 +85,9 @@ yourself with Bun.serve().
           continue;
         }
         try {
-          resolved = Bun.resolveSync(resolved, cwd);
+          resolved = Fun.resolveSync(resolved, cwd);
         } catch {
-          resolved = Bun.resolveSync("./" + resolved, cwd);
+          resolved = Fun.resolveSync("./" + resolved, cwd);
         }
 
         if (resolved.includes(path.sep + "node_modules" + path.sep)) {
@@ -99,9 +99,9 @@ yourself with Bun.serve().
     } else {
       let resolved = arg;
       try {
-        resolved = Bun.resolveSync(arg, cwd);
+        resolved = Fun.resolveSync(arg, cwd);
       } catch {
-        resolved = Bun.resolveSync("./" + arg, cwd);
+        resolved = Fun.resolveSync("./" + arg, cwd);
       }
 
       if (resolved.includes(path.sep + "node_modules" + path.sep)) {
@@ -117,7 +117,7 @@ yourself with Bun.serve().
   }
 
   if (args.length === 0) {
-    throw new Error("No HTML files found matching " + JSON.stringify(Bun.main));
+    throw new Error("No HTML files found matching " + JSON.stringify(Fun.main));
   }
 
   args.sort((a, b) => {
@@ -219,7 +219,7 @@ yourself with Bun.serve().
   var server: Server;
   getServer: {
     try {
-      server = Bun.serve({
+      server = Fun.serve({
         static: staticRoutes,
         development:
           env.NODE_ENV !== "production"
@@ -242,10 +242,10 @@ yourself with Bun.serve().
       break getServer;
     } catch (error: any) {
       if (error?.code === "EADDRINUSE") {
-        let defaultPort = port || parseInt(env.PORT || env.BUN_PORT || env.NODE_PORT || "3000", 10);
+        let defaultPort = port || parseInt(env.PORT || env.FUN_PORT || env.NODE_PORT || "3000", 10);
         for (let remainingTries = 5; remainingTries > 0; remainingTries--) {
           try {
-            server = Bun.serve({
+            server = Fun.serve({
               static: staticRoutes,
               development:
                 env.NODE_ENV !== "production"
@@ -278,7 +278,7 @@ yourself with Bun.serve().
     }
   }
   const elapsed = (performance.now() - initial).toFixed(2);
-  const enableANSIColors = Bun.enableANSIColors;
+  const enableANSIColors = Fun.enableANSIColors;
   function printInitialMessage(isFirst: boolean) {
     let pathnameToPrint;
     if (servePaths.length === 1) {
@@ -296,17 +296,17 @@ yourself with Bun.serve().
     }
 
     if (enableANSIColors) {
-      let topLine = `${server.development ? "\x1b[34;7m DEV \x1b[0m " : ""}\x1b[1;34m\x1b[5mBun\x1b[0m \x1b[1;34mv${Bun.version}\x1b[0m`;
+      let topLine = `${server.development ? "\x1b[34;7m DEV \x1b[0m " : ""}\x1b[1;34m\x1b[5mFun\x1b[0m \x1b[1;34mv${Fun.version}\x1b[0m`;
       if (isFirst) {
         topLine += ` \x1b[2mready in\x1b[0m \x1b[1m${elapsed}\x1b[0m ms`;
       }
-      if (IS_BUN_DEVELOPMENT && process.env.BUN_DEBUG_DevServer) {
+      if (IS_FUN_DEVELOPMENT && process.env.FUN_DEBUG_DevServer) {
         topLine += `\x1b[2m (PID ${process.pid})\x1b[0m`;
       }
       console.log(topLine + "\n");
       console.log(`\x1b[1;34m➜\x1b[0m \x1b[36m${new URL(pathnameToPrint, server!.url)}\x1b[0m`);
     } else {
-      let topLine = `Bun v${Bun.version}`;
+      let topLine = `Fun v${Fun.version}`;
       if (isFirst) {
         if (server.development) {
           topLine += " dev server";
@@ -381,15 +381,15 @@ yourself with Bun.serve().
 
           if (process.platform === "darwin") {
             // TODO: copy the AppleScript from create-react-app or Vite.
-            Bun.spawn(["open", url]).exited.catch(() => {});
+            Fun.spawn(["open", url]).exited.catch(() => {});
           } else if (process.platform === "win32") {
-            Bun.spawn(["start", url]).exited.catch(() => {});
+            Fun.spawn(["start", url]).exited.catch(() => {});
           } else if (process.platform === "android") {
-            Bun.spawn(["/system/bin/am", "start", "-a", "android.intent.action.VIEW", "-d", url]).exited.catch(
+            Fun.spawn(["/system/bin/am", "start", "-a", "android.intent.action.VIEW", "-d", url]).exited.catch(
               () => {},
             );
           } else {
-            Bun.spawn(["xdg-open", url]).exited.catch(() => {});
+            Fun.spawn(["xdg-open", url]).exited.catch(() => {});
           }
           break;
 

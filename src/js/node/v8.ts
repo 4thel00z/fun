@@ -2,7 +2,7 @@
 
 // This is a stub! None of this is actually implemented yet.
 const { hideFromStack, throwNotImplemented } = require("internal/shared");
-const jsc: typeof import("bun:jsc") = require("bun:jsc");
+const jsc: typeof import("fun:jsc") = require("fun:jsc");
 
 function notimpl(message) {
   throwNotImplemented("node:v8 " + message);
@@ -36,7 +36,7 @@ function getHeapSnapshot() {
     class HeapSnapshotReadable extends Readable {
       constructor() {
         super();
-        this.push(Bun.generateHeapSnapshot("v8"));
+        this.push(Fun.generateHeapSnapshot("v8"));
         this.push(null);
       }
     }
@@ -142,7 +142,7 @@ function writeHeapSnapshot(path, _options) {
   if (!fs) {
     fs = require("node:fs");
   }
-  fs.writeFileSync(path, Bun.generateHeapSnapshot("v8"), "utf-8");
+  fs.writeFileSync(path, Fun.generateHeapSnapshot("v8"), "utf-8");
 
   return path;
 }

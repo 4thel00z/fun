@@ -1,6 +1,6 @@
-// MySQLQuery.init() used to `query.ref()` the bun.String it was handed, but
+// MySQLQuery.init() used to `query.ref()` the fun.String it was handed, but
 // the only caller (JSMySQLQuery.createInstance) already passes a +1-ref'd
-// string from `JSValue.toBunString()`. That left every query string at
+// string from `JSValue.toFunString()`. That left every query string at
 // refcount 2 after construction; MySQLQuery.cleanup() only deref'd once, so
 // the underlying WTFStringImpl for every MySQL query string was leaked.
 //
@@ -9,14 +9,14 @@
 // lets the MySQLQuery wrappers be finalized, and checks RSS didn't retain the
 // query-string bytes.
 
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("MySQL: query string is not leaked across query lifecycle", async () => {
   using dir = tempDir("mysql-query-string-leak", {
     "fixture.js": /* js */ `
       const net = require("net");
-      const { SQL } = require("bun");
+      const { SQL } = require("fun");
 
       function u16le(n) { return Buffer.from([n & 0xff, (n >> 8) & 0xff]); }
       function u24le(n) { return Buffer.from([n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff]); }
@@ -74,7 +74,7 @@ test("MySQL: query string is not leaked across query lifecycle", async () => {
       const ITERATIONS = 200;
       const CHUNK = 512 * 1024;
 
-      Bun.gc(true);
+      Fun.gc(true);
       const rssBefore = process.memoryUsage.rss();
 
       for (let i = 0; i < ITERATIONS; i++) {
@@ -83,7 +83,7 @@ test("MySQL: query string is not leaked across query lifecycle", async () => {
         // regardless of content; suffix makes every string unique.
         const q = "select 1 /* " + pad + " " + i + " */";
         await sql.unsafe(q).simple();
-        if ((i & 15) === 15) Bun.gc(true);
+        if ((i & 15) === 15) Fun.gc(true);
       }
 
       await sql.close({ timeout: 0 }).catch(() => {});
@@ -93,7 +93,7 @@ test("MySQL: query string is not leaked across query lifecycle", async () => {
       // runs and drops its (single) ref on each query string.
       for (let i = 0; i < 8; i++) {
         await new Promise(r => setImmediate(r));
-        Bun.gc(true);
+        Fun.gc(true);
       }
 
       const rssAfter = process.memoryUsage.rss();
@@ -102,9 +102,9 @@ test("MySQL: query string is not leaked across query lifecycle", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "fixture.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "fixture.js"],
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -119,7 +119,7 @@ test("MySQL: query string is not leaked across query lifecycle", async () => {
   // strings are freed as each MySQLQuery is finalized and growth stays small.
   expect(deltaMiB).toBeLessThan(50);
   expect(exitCode).toBe(0);
-  // 200 × 512 KiB round-trips plus ~20 Bun.gc(true) calls in an ASAN debug
+  // 200 × 512 KiB round-trips plus ~20 Fun.gc(true) calls in an ASAN debug
   // subprocess take ~6–17s; the 5s default is too tight. Same reason as
   // postgres-tls-ctx-leak.test.ts.
 }, 60_000);

@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isASAN, isDebug, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isASAN, isDebug, isWindows } from "harness";
 
 // Regression test for a data race in MessageEvent between the mutator thread
 // (initMessageEvent() reassigning m_data) and the GC marker thread
@@ -57,9 +57,9 @@ test.skipIf(isWindows)(
     console.log("OK");
   `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "-e", script],
-      env: { ...bunEnv, BUN_JSC_collectContinuously: "1" },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "-e", script],
+      env: { ...funEnv, FUN_JSC_collectContinuously: "1" },
       stderr: "pipe",
       stdout: "pipe",
     });

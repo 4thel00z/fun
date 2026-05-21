@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("--retry retries failed tests", async () => {
   using dir = tempDir("retry-flag", {
     "flaky.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       let count = 0;
       test("flaky test", () => {
         count++;
@@ -14,9 +14,9 @@ test("--retry retries failed tests", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--retry", "3", "flaky.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--retry", "3", "flaky.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -31,7 +31,7 @@ test("--retry retries failed tests", async () => {
 test("per-test { retry } overrides --retry", async () => {
   using dir = tempDir("retry-override", {
     "override.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       let countA = 0;
       let countB = 0;
 
@@ -50,9 +50,9 @@ test("per-test { retry } overrides --retry", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--retry", "5", "override.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--retry", "5", "override.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -67,7 +67,7 @@ test("per-test { retry } overrides --retry", async () => {
 test("--retry works with describe blocks and beforeEach/afterEach hooks", async () => {
   using dir = tempDir("retry-hooks", {
     "hooks.test.ts": `
-      import { test, expect, describe, beforeEach, afterEach } from "bun:test";
+      import { test, expect, describe, beforeEach, afterEach } from "fun:test";
       let hookLog: string[] = [];
       let attempt = 0;
 
@@ -95,9 +95,9 @@ test("--retry works with describe blocks and beforeEach/afterEach hooks", async 
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--retry", "3", "hooks.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--retry", "3", "hooks.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -111,7 +111,7 @@ test("--retry works with describe blocks and beforeEach/afterEach hooks", async 
 test("--retry with multiple tests where only some need retries", async () => {
   using dir = tempDir("retry-multi", {
     "multi.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       let flakyCount = 0;
 
       test("always passes", () => {
@@ -134,9 +134,9 @@ test("--retry with multiple tests where only some need retries", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--retry", "3", "multi.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--retry", "3", "multi.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -155,21 +155,21 @@ test("--retry with multiple tests where only some need retries", async () => {
 test("--retry with async tests", async () => {
   using dir = tempDir("retry-async", {
     "async.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       let count = 0;
 
       test("async flaky test", async () => {
         count++;
-        await Bun.sleep(1);
+        await Fun.sleep(1);
         if (count < 3) throw new Error("async fail attempt " + count);
         expect(true).toBe(true);
       });
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--retry", "3", "async.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--retry", "3", "async.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -184,7 +184,7 @@ test("--retry with async tests", async () => {
 test("--retry with nested describe blocks", async () => {
   using dir = tempDir("retry-nested", {
     "nested.test.ts": `
-      import { test, expect, describe, beforeEach } from "bun:test";
+      import { test, expect, describe, beforeEach } from "fun:test";
       let outerSetup = 0;
       let innerSetup = 0;
       let attempt = 0;
@@ -207,9 +207,9 @@ test("--retry with nested describe blocks", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--retry", "3", "nested.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--retry", "3", "nested.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -223,7 +223,7 @@ test("--retry with nested describe blocks", async () => {
 test("--retry past MAX_FLAKY_ATTEMPTS (16) still retries correctly", async () => {
   using dir = tempDir("retry-max", {
     "max.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       let count = 0;
 
       // Fails 19 times, passes on attempt 20 -- well past the 16-entry buffer
@@ -235,9 +235,9 @@ test("--retry past MAX_FLAKY_ATTEMPTS (16) still retries correctly", async () =>
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "max.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "max.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -251,7 +251,7 @@ test("--retry past MAX_FLAKY_ATTEMPTS (16) still retries correctly", async () =>
 test("--retry with test.skip and test.todo does not retry them", async () => {
   using dir = tempDir("retry-skip-todo", {
     "skip-todo.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
 
       test.skip("skipped test", () => {
         throw new Error("should not run");
@@ -268,9 +268,9 @@ test("--retry with test.skip and test.todo does not retry them", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "--retry", "3", "skip-todo.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "--retry", "3", "skip-todo.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
@@ -283,16 +283,16 @@ test("--retry with test.skip and test.todo does not retry them", async () => {
   expect(exitCode).toBe(0);
 });
 
-test("bunfig.toml retry works equivalently", async () => {
-  using dir = tempDir("retry-bunfig", {
-    "bunfig.toml": `
+test("funfig.toml retry works equivalently", async () => {
+  using dir = tempDir("retry-funfig", {
+    "funfig.toml": `
 [test]
 retry = 3
 `,
     "flaky.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       let count = 0;
-      test("flaky via bunfig", () => {
+      test("flaky via funfig", () => {
         count++;
         if (count < 3) throw new Error("fail attempt " + count);
         expect(true).toBe(true);
@@ -300,16 +300,16 @@ retry = 3
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "flaky.test.ts"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "flaky.test.ts"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
   });
 
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
-  expect(stderr).toContain("flaky via bunfig");
+  expect(stderr).toContain("flaky via funfig");
   expect(stderr).toContain("attempt 3");
   expect(exitCode).toBe(0);
 });

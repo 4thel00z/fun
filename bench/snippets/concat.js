@@ -43,8 +43,8 @@ const chunkGroups = [
 for (const chunks of chunkGroups) {
   const name = `${chunks.reduce((prev, curr, i, a) => prev + curr.byteLength, 0)} bytes for ${chunks.length} chunks`
   group(name, () => {
-    bench(`Bun.concatArrayBuffers (${name})`, () => {
-      Bun.concatArrayBuffers(chunks);
+    bench(`Fun.concatArrayBuffers (${name})`, () => {
+      Fun.concatArrayBuffers(chunks);
     });
     bench(`Uint8Array.set (${name})`, () => {
       polyfill(chunks);

@@ -139,10 +139,10 @@ module.exports = {
   },
   // opensslCli defined lazily to reduce overhead of spawnSync
   get opensslCli() {
-    if (typeof Bun === "object") {
+    if (typeof Fun === "object") {
       if (opensslCli !== null) return opensslCli;
   
-      opensslCli = Bun.which('openssl');
+      opensslCli = Fun.which('openssl');
       
       return opensslCli;
     }

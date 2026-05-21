@@ -6,7 +6,7 @@ pub fn deinit(this: *@This()) void {
         field.deinit();
     }
 
-    bun.default_allocator.free(this.fields);
+    fun.default_allocator.free(this.fields);
 }
 
 pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReader(Container)) !void {
@@ -14,7 +14,7 @@ pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReade
     remaining_bytes -|= 4;
 
     const field_count: usize = @intCast(@max(try reader.short(), 0));
-    var fields = try bun.default_allocator.alloc(
+    var fields = try fun.default_allocator.alloc(
         FieldDescription,
         field_count,
     );
@@ -24,7 +24,7 @@ pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReade
             field.deinit();
         }
 
-        bun.default_allocator.free(fields);
+        fun.default_allocator.free(fields);
     }
     while (remaining.len > 0) {
         try remaining[0].decodeInternal(Container, reader);
@@ -38,6 +38,6 @@ pub fn decodeInternal(this: *@This(), comptime Container: type, reader: NewReade
 pub const decode = DecoderWrap(RowDescription, decodeInternal).decode;
 
 const FieldDescription = @import("./FieldDescription.zig");
-const bun = @import("bun");
+const fun = @import("fun");
 const DecoderWrap = @import("./DecoderWrap.zig").DecoderWrap;
 const NewReader = @import("./NewReader.zig").NewReader;

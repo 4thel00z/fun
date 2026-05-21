@@ -23,10 +23,10 @@ app.get("/response-body", (req, res) => {
 
 // Special RSS endpoint to check memory usage from inside the process
 app.get("/rss", (req, res) => {
-  typeof Bun !== "undefined" && Bun.gc(true);
+  typeof Fun !== "undefined" && Fun.gc(true);
   res.json({
     rss: process.memoryUsage.rss(),
-    objects: smallAssign(typeof Bun !== "undefined" ? require("bun:jsc").heapStats().objectTypeCounts : {}),
+    objects: smallAssign(typeof Fun !== "undefined" ? require("fun:jsc").heapStats().objectTypeCounts : {}),
   });
 });
 

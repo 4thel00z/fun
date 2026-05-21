@@ -26,7 +26,7 @@
 #include "JSDOMWrapper.h"
 #include "root.h"
 
-#include "BunBuiltinNames.h"
+#include "FunBuiltinNames.h"
 
 // #include "DOMWindow.h"
 // #include "DOMWrapperWorld.h"

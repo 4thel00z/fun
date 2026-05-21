@@ -3,7 +3,7 @@
 #include "ErrorCode.h"
 #include "headers.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -18,7 +18,7 @@ JSC_DEFINE_HOST_FUNCTION(functionSetTimeout,
     auto scope = DECLARE_THROW_SCOPE(globalObject->vm());
     switch (argumentCount) {
     case 0: {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setTimeout requires 1 argument (a function)"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setTimeout requires 1 argument (a function)"_s);
         return {};
     }
     case 1:
@@ -44,11 +44,11 @@ JSC_DEFINE_HOST_FUNCTION(functionSetTimeout,
     }
 
     if (!job.isObject() || !job.getObject()->isCallable()) [[unlikely]] {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setTimeout expects a function"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setTimeout expects a function"_s);
         return {};
     }
 
-#ifdef BUN_DEBUG
+#ifdef FUN_DEBUG
     /** View the file name of the JS file that called this function
      * from a debugger */
     SourceOrigin sourceOrigin = callFrame->callerSourceOrigin(vm);
@@ -60,7 +60,7 @@ JSC_DEFINE_HOST_FUNCTION(functionSetTimeout,
     }
 #endif
 
-    return Bun__Timer__setTimeout(globalObject, JSC::JSValue::encode(job), JSC::JSValue::encode(arguments), JSValue::encode(num));
+    return Fun__Timer__setTimeout(globalObject, JSC::JSValue::encode(job), JSC::JSValue::encode(arguments), JSValue::encode(num));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionSetInterval,
@@ -75,7 +75,7 @@ JSC_DEFINE_HOST_FUNCTION(functionSetInterval,
 
     switch (argumentCount) {
     case 0: {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setInterval requires 1 argument (a function)"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setInterval requires 1 argument (a function)"_s);
         return {};
     }
     case 1:
@@ -101,11 +101,11 @@ JSC_DEFINE_HOST_FUNCTION(functionSetInterval,
     }
 
     if (!job.isObject() || !job.getObject()->isCallable()) [[unlikely]] {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setInterval expects a function"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setInterval expects a function"_s);
         return {};
     }
 
-#ifdef BUN_DEBUG
+#ifdef FUN_DEBUG
     /** View the file name of the JS file that called this function
      * from a debugger */
     SourceOrigin sourceOrigin = callFrame->callerSourceOrigin(vm);
@@ -117,7 +117,7 @@ JSC_DEFINE_HOST_FUNCTION(functionSetInterval,
     }
 #endif
 
-    return Bun__Timer__setInterval(globalObject, JSC::JSValue::encode(job), JSC::JSValue::encode(arguments), JSValue::encode(num));
+    return Fun__Timer__setInterval(globalObject, JSC::JSValue::encode(job), JSC::JSValue::encode(arguments), JSValue::encode(num));
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/setImmediate
@@ -129,14 +129,14 @@ JSC_DEFINE_HOST_FUNCTION(functionSetImmediate,
 
     auto argCount = callFrame->argumentCount();
     if (argCount == 0) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setImmediate requires 1 argument (a function)"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setImmediate requires 1 argument (a function)"_s);
         return {};
     }
 
     auto job = callFrame->argument(0);
 
     if (!job.isObject() || !job.getObject()->isCallable()) {
-        Bun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setImmediate expects a function"_s);
+        Fun::throwError(globalObject, scope, ErrorCode::ERR_INVALID_ARG_TYPE, "setImmediate expects a function"_s);
         return {};
     }
 
@@ -163,7 +163,7 @@ JSC_DEFINE_HOST_FUNCTION(functionSetImmediate,
     }
     }
 
-    return Bun__Timer__setImmediate(globalObject, JSC::JSValue::encode(job), JSValue::encode(arguments));
+    return Fun__Timer__setImmediate(globalObject, JSC::JSValue::encode(job), JSValue::encode(arguments));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionClearImmediate,
@@ -173,7 +173,7 @@ JSC_DEFINE_HOST_FUNCTION(functionClearImmediate,
 
     JSC::JSValue timer_or_num = callFrame->argument(0);
 
-#ifdef BUN_DEBUG
+#ifdef FUN_DEBUG
     /** View the file name of the JS file that called this function
      * from a debugger */
     SourceOrigin sourceOrigin = callFrame->callerSourceOrigin(vm);
@@ -185,7 +185,7 @@ JSC_DEFINE_HOST_FUNCTION(functionClearImmediate,
     }
 #endif
 
-    return Bun__Timer__clearImmediate(globalObject, JSC::JSValue::encode(timer_or_num));
+    return Fun__Timer__clearImmediate(globalObject, JSC::JSValue::encode(timer_or_num));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionClearInterval,
@@ -195,7 +195,7 @@ JSC_DEFINE_HOST_FUNCTION(functionClearInterval,
 
     JSC::JSValue timer_or_num = callFrame->argument(0);
 
-#ifdef BUN_DEBUG
+#ifdef FUN_DEBUG
     /** View the file name of the JS file that called this function
      * from a debugger */
     SourceOrigin sourceOrigin = callFrame->callerSourceOrigin(vm);
@@ -207,7 +207,7 @@ JSC_DEFINE_HOST_FUNCTION(functionClearInterval,
     }
 #endif
 
-    return Bun__Timer__clearInterval(globalObject, JSC::JSValue::encode(timer_or_num));
+    return Fun__Timer__clearInterval(globalObject, JSC::JSValue::encode(timer_or_num));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionClearTimeout,
@@ -217,7 +217,7 @@ JSC_DEFINE_HOST_FUNCTION(functionClearTimeout,
 
     JSC::JSValue timer_or_num = callFrame->argument(0);
 
-#ifdef BUN_DEBUG
+#ifdef FUN_DEBUG
     /** View the file name of the JS file that called this function
      * from a debugger */
     SourceOrigin sourceOrigin = callFrame->callerSourceOrigin(vm);
@@ -229,7 +229,7 @@ JSC_DEFINE_HOST_FUNCTION(functionClearTimeout,
     }
 #endif
 
-    return Bun__Timer__clearTimeout(globalObject, JSC::JSValue::encode(timer_or_num));
+    return Fun__Timer__clearTimeout(globalObject, JSC::JSValue::encode(timer_or_num));
 }
 
-} // namespace Bun
+} // namespace Fun

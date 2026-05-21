@@ -1,7 +1,7 @@
 // Flags: --expose-internals
 'use strict';
 const common = require('../common');
-common.skip("skipped because it tests node internals irrelevant to bun");
+common.skip("skipped because it tests node internals irrelevant to fun");
 const assert = require('assert');
 const { sleep } = require('internal/util');
 

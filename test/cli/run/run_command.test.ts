@@ -1,16 +1,16 @@
-import { spawnSync } from "bun";
-import { describe, expect, test } from "bun:test";
+import { spawnSync } from "fun";
+import { describe, expect, test } from "fun:test";
 import { rmSync, writeFileSync } from "fs";
-import { bunEnv, bunExe, bunRun, isWindows } from "harness";
+import { funEnv, funExe, funRun, isWindows } from "harness";
 
 let cwd: string;
 
-describe("bun", () => {
+describe("fun", () => {
   test("should error with missing script", () => {
     const { exitCode, stdout, stderr } = spawnSync({
       cwd,
-      cmd: [bunExe(), "run", "dev"],
-      env: bunEnv,
+      cmd: [funExe(), "run", "dev"],
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -24,7 +24,7 @@ test.if(isWindows)("[windows] A file in drive root runs", () => {
   const path = "C:\\root-file" + Math.random().toString().slice(2) + ".js";
   try {
     writeFileSync(path, "console.log(`PASS`);");
-    const { stdout } = bunRun("C:\\root-file.js", {});
+    const { stdout } = funRun("C:\\root-file.js", {});
     expect(stdout).toBe("PASS");
   } catch {
     rmSync(path);

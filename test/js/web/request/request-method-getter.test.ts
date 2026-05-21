@@ -1,5 +1,5 @@
-import { heapStats } from "bun:jsc";
-import { expect, test } from "bun:test";
+import { heapStats } from "fun:jsc";
+import { expect, test } from "fun:test";
 
 const requestOptions = [
   ["http://localhost:3000/"],
@@ -18,7 +18,7 @@ const requestOptions = [
 ] as const;
 test.each(requestOptions)("new Request(%s).clone().method doesnt create a new JSString every time", function () {
   // Start at a clean state.
-  Bun.gc(true);
+  Fun.gc(true);
 
   // @ts-expect-error
   const request = new Request(...arguments);
@@ -38,7 +38,7 @@ test.each(requestOptions)("new Request(%s).clone().method doesnt create a new JS
 
 test.each(requestOptions)("new Request(%s).method doesnt create a new JSString every time", function () {
   // Start at a clean state.
-  Bun.gc(true);
+  Fun.gc(true);
 
   const {
     objectTypeCounts: { string: initialStrings },

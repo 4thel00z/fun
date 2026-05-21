@@ -18,7 +18,7 @@ should_ignore: bool = true,
 
 pub fn initEmpty() Chunk {
     return .{
-        .buffer = MutableString.initEmpty(bun.default_allocator),
+        .buffer = MutableString.initEmpty(fun.default_allocator),
         .mappings_count = 0,
         .end_state = .{},
         .final_generated_column = 0,
@@ -50,7 +50,7 @@ pub fn printSourceMapContentsFromInternal(
     comptime ascii_only: bool,
 ) !void {
     const ism: InternalSourceMap = .{ .data = chunk.buffer.list.items.ptr };
-    var vlq = MutableString.initEmpty(bun.default_allocator);
+    var vlq = MutableString.initEmpty(fun.default_allocator);
     defer vlq.deinit();
     ism.appendVLQTo(&vlq);
     try printSourceMapContentsJSON(source, mutable, include_sources_contents, vlq.list.items, ascii_only);
@@ -63,7 +63,7 @@ fn printSourceMapContentsJSON(
     mappings: []const u8,
     comptime ascii_only: bool,
 ) !void {
-    var filename_buf: bun.PathBuffer = undefined;
+    var filename_buf: fun.PathBuffer = undefined;
     var filename = source.path.text;
     if (strings.hasPrefix(source.path.text, FileSystem.instance.top_level_dir)) {
         filename = filename[FileSystem.instance.top_level_dir.len - 1 ..];
@@ -224,7 +224,7 @@ pub fn NewBuilder(comptime SourceMapFormatType: type) type {
 
         approximate_input_line_count: usize = 0,
 
-        /// When generating sourcemappings for bun, we store a count of how many mappings there were
+        /// When generating sourcemappings for fun, we store a count of how many mappings there were
         prepend_count: bool = false,
 
         pub const SourceMapper = SourceMapFormat(SourceMapFormatType);
@@ -392,9 +392,9 @@ const LineOffsetTable = SourceMap.LineOffsetTable;
 const SourceMapState = SourceMap.SourceMapState;
 const appendMappingToBuffer = SourceMap.appendMappingToBuffer;
 
-const bun = @import("bun");
-const JSPrinter = bun.js_printer;
-const Logger = bun.logger;
-const MutableString = bun.MutableString;
-const strings = bun.strings;
-const FileSystem = bun.fs.FileSystem;
+const fun = @import("fun");
+const JSPrinter = fun.js_printer;
+const Logger = fun.logger;
+const MutableString = fun.MutableString;
+const strings = fun.strings;
+const FileSystem = fun.fs.FileSystem;

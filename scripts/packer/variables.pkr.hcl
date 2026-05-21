@@ -42,7 +42,7 @@ variable "location" {
 
 variable "gallery_name" {
   type    = string
-  default = "bunCIGallery2"
+  default = "funCIGallery2"
 }
 
 variable "build_number" {
@@ -70,11 +70,11 @@ variable "agent_script" {
 variable "repo_ref" {
   type        = string
   default     = "main"
-  description = "Branch/tag of oven-sh/bun for bootstrap's Prefetch-Build-Deps to shallow-clone (dep version pins live in scripts/build/deps/)."
+  description = "Branch/tag of underdoc-org/fun for bootstrap's Prefetch-Build-Deps to shallow-clone (dep version pins live in scripts/build/deps/)."
 }
 
 variable "gallery_resource_group" {
   type    = string
-  default = "BUN-CI"
+  default = "FUN-CI"
   description = "Resource group containing the Compute Gallery (may differ from build RG)"
 }

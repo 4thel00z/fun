@@ -10,7 +10,7 @@ pub const Store = struct {
 
     const log = Output.scoped(.Store, .visible);
 
-    pub const modules_dir_name = ".bun";
+    pub const modules_dir_name = ".fun";
 
     fn NewId(comptime T: type) type {
         return enum(u32) {
@@ -25,12 +25,12 @@ pub const Store = struct {
             const max = std.math.maxInt(u32);
 
             pub fn from(id: u32) @This() {
-                bun.debugAssert(id != max);
+                fun.debugAssert(id != max);
                 return @enumFromInt(id);
             }
 
             pub fn get(id: @This()) u32 {
-                bun.debugAssert(id != .invalid);
+                fun.debugAssert(id != .invalid);
                 return @intFromEnum(id);
             }
 
@@ -45,8 +45,8 @@ pub const Store = struct {
     }
 
     comptime {
-        bun.assert(NewId(Entry) != NewId(Node));
-        bun.assert(NewId(Entry) == NewId(Entry));
+        fun.assert(NewId(Entry) != NewId(Node));
+        fun.assert(NewId(Entry) == NewId(Entry));
     }
 
     pub const Installer = @import("./Installer.zig").Installer;
@@ -65,7 +65,7 @@ pub const Store = struct {
             if (parent_id == maybe_parent_id) {
                 return true;
             }
-            bun.handleOom(parent_dedupe.put(parent_id, {}));
+            fun.handleOom(parent_dedupe.put(parent_id, {}));
         }
 
         len = parent_dedupe.count();
@@ -77,7 +77,7 @@ pub const Store = struct {
                 if (parent_id == maybe_parent_id) {
                     return true;
                 }
-                bun.handleOom(parent_dedupe.put(parent_id, {}));
+                fun.handleOom(parent_dedupe.put(parent_id, {}));
                 len = parent_dedupe.count();
             }
             i += 1;
@@ -87,9 +87,9 @@ pub const Store = struct {
     }
 
     // A unique entry in the store. As a path looks like:
-    //   './node_modules/.bun/name@version/node_modules/name'
+    //   './node_modules/.fun/name@version/node_modules/name'
     // or if peers are involved:
-    //   './node_modules/.bun/name@version_peer1@version+peer2@version/node_modules/name'
+    //   './node_modules/.fun/name@version_peer1@version+peer2@version/node_modules/name'
     //
     // Entries are created for workspaces (including the root), but only in memory. If
     // a module depends on a workspace, a symlink is created pointing outside the store
@@ -103,7 +103,7 @@ pub const Store = struct {
         parents: std.ArrayListUnmanaged(Id) = .empty,
         step: std.atomic.Value(Installer.Task.Step) = .init(.link_package),
 
-        // if true this entry gets symlinked to `node_modules/.bun/node_modules`
+        // if true this entry gets symlinked to `node_modules/.fun/node_modules`
         hoisted: bool,
 
         peer_hash: PeerHash,
@@ -159,7 +159,7 @@ pub const Store = struct {
                 switch (pkg_res.tag) {
                     .root => {
                         if (pkg_name.isEmpty()) {
-                            try writer.writeAll(std.fs.path.basename(bun.fs.FileSystem.instance.top_level_dir));
+                            try writer.writeAll(std.fs.path.basename(fun.fs.FileSystem.instance.top_level_dir));
                         } else {
                             try writer.print("{f}@root", .{
                                 pkg_name.fmtStorePath(string_buf),
@@ -182,7 +182,7 @@ pub const Store = struct {
 
                 if (peer_hash != .none) {
                     try writer.print("+{f}", .{
-                        bun.fmt.hexIntLower(peer_hash.cast()),
+                        fun.fmt.hexIntLower(peer_hash.cast()),
                     });
                 }
             }
@@ -198,7 +198,7 @@ pub const Store = struct {
 
             pub fn format(this: @This(), writer: *std.Io.Writer) std.Io.Writer.Error!void {
                 try this.inner.format(writer);
-                try writer.print("-{f}", .{bun.fmt.hexIntLower(this.entry_hash)});
+                try writer.print("-{f}", .{fun.fmt.hexIntLower(this.entry_hash)});
             }
         };
 
@@ -219,13 +219,13 @@ pub const Store = struct {
             const entry_parents = store.entries.items(.parents);
 
             var parents: std.AutoArrayHashMapUnmanaged(Entry.Id, void) = .empty;
-            // defer parents.deinit(bun.default_allocator);
+            // defer parents.deinit(fun.default_allocator);
 
             for (entry_parents[entry_id.get()].items) |parent_id| {
                 if (parent_id == .invalid) {
                     continue;
                 }
-                bun.handleOom(parents.put(bun.default_allocator, parent_id, {}));
+                fun.handleOom(parents.put(fun.default_allocator, parent_id, {}));
             }
 
             len = parents.count();
@@ -234,7 +234,7 @@ pub const Store = struct {
                     if (parent_id == .invalid) {
                         continue;
                     }
-                    bun.handleOom(parents.put(bun.default_allocator, parent_id, {}));
+                    fun.handleOom(parents.put(fun.default_allocator, parent_id, {}));
                     len = parents.count();
                 }
                 i += 1;
@@ -243,7 +243,7 @@ pub const Store = struct {
             return parents.keys();
         }
 
-        pub const List = bun.MultiArrayList(Entry);
+        pub const List = fun.MultiArrayList(Entry);
 
         const DependenciesItem = struct {
             entry_id: Id,
@@ -468,7 +468,7 @@ pub const Store = struct {
             };
         };
 
-        pub const List = bun.MultiArrayList(Node);
+        pub const List = fun.MultiArrayList(Node);
 
         pub fn deinitList(list: *const List, allocator: std.mem.Allocator) void {
             list.deinit(allocator);
@@ -573,14 +573,14 @@ const string = []const u8;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const OOM = bun.OOM;
-const Output = bun.Output;
+const fun = @import("fun");
+const OOM = fun.OOM;
+const Output = fun.Output;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 
-const install = bun.install;
+const install = fun.install;
 const Dependency = install.Dependency;
 const DependencyID = install.DependencyID;
 const PackageID = install.PackageID;

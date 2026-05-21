@@ -5,21 +5,21 @@
   It stores the number of occurrences in the External struct.
 */
 #include <atomic>
-#include <bun-native-bundler-plugin-api/bundler_plugin.h>
+#include <fun-native-bundler-plugin-api/bundler_plugin.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <node_api.h>
 
 #ifdef _WIN32
-#define BUN_PLUGIN_EXPORT __declspec(dllexport)
+#define FUN_PLUGIN_EXPORT __declspec(dllexport)
 #else
-#define BUN_PLUGIN_EXPORT
+#define FUN_PLUGIN_EXPORT
 #include <signal.h>
 #include <unistd.h>
 #endif
 
-extern "C" BUN_PLUGIN_EXPORT const char *BUN_PLUGIN_NAME = "native_plugin_test";
+extern "C" FUN_PLUGIN_EXPORT const char *FUN_PLUGIN_NAME = "native_plugin_test";
 
 struct External {
   std::atomic<size_t> foo_count;
@@ -59,9 +59,9 @@ void compilation_ctx_free(CompilationCtx *ctx) {
 }
 
 void log_error(const OnBeforeParseArguments *args,
-               const OnBeforeParseResult *result, BunLogLevel level,
+               const OnBeforeParseResult *result, FunLogLevel level,
                const char *message, size_t message_len) {
-  BunLogOptions options;
+  FunLogOptions options;
   options.message_ptr = (uint8_t *)message;
   options.message_len = message_len;
   options.path_ptr = args->path_ptr;
@@ -76,20 +76,20 @@ void log_error(const OnBeforeParseArguments *args,
   (result->log)(args, &options);
 }
 
-extern "C" BUN_PLUGIN_EXPORT void
+extern "C" FUN_PLUGIN_EXPORT void
 plugin_impl_with_needle(const OnBeforeParseArguments *args,
                         OnBeforeParseResult *result, const char *needle) {
   if (args->__struct_size < sizeof(OnBeforeParseArguments)) {
-    const char *msg = "This plugin is built for a newer version of Bun than "
+    const char *msg = "This plugin is built for a newer version of Fun than "
                       "the one currently running.";
-    log_error(args, result, BUN_LOG_LEVEL_ERROR, msg, strlen(msg));
+    log_error(args, result, FUN_LOG_LEVEL_ERROR, msg, strlen(msg));
     return;
   }
 
   if (args->external) {
     External *external = (External *)args->external;
     if (external->throws_an_error.load()) {
-      log_error(args, result, BUN_LOG_LEVEL_ERROR, "Throwing an error",
+      log_error(args, result, FUN_LOG_LEVEL_ERROR, "Throwing an error",
                 sizeof("Throwing an error") - 1);
       return;
     } else if (external->simulate_crash.load()) {
@@ -162,18 +162,18 @@ plugin_impl_with_needle(const OnBeforeParseArguments *args,
   }
 }
 
-extern "C" BUN_PLUGIN_EXPORT void
+extern "C" FUN_PLUGIN_EXPORT void
 plugin_impl(const OnBeforeParseArguments *args, OnBeforeParseResult *result) {
   plugin_impl_with_needle(args, result, "foo");
 }
 
-extern "C" BUN_PLUGIN_EXPORT void
+extern "C" FUN_PLUGIN_EXPORT void
 plugin_impl_bar(const OnBeforeParseArguments *args,
                 OnBeforeParseResult *result) {
   plugin_impl_with_needle(args, result, "bar");
 }
 
-extern "C" BUN_PLUGIN_EXPORT void
+extern "C" FUN_PLUGIN_EXPORT void
 plugin_impl_baz(const OnBeforeParseArguments *args,
                 OnBeforeParseResult *result) {
   plugin_impl_with_needle(args, result, "baz");
@@ -560,13 +560,13 @@ napi_value Init(napi_env env, napi_value exports) {
     return nullptr;
   }
   // this should be the same as returning `exports`, but it would crash in
-  // previous versions of Bun
+  // previous versions of Fun
   return nullptr;
 }
 
 struct NewOnBeforeParseArguments {
   size_t __struct_size;
-  void *bun;
+  void *fun;
   const uint8_t *path_ptr;
   size_t path_len;
   const uint8_t *namespace_ptr;
@@ -587,16 +587,16 @@ struct NewOnBeforeParseResult {
                          struct NewOnBeforeParseResult *result);
   void *plugin_source_code_context;
   void (*free_plugin_source_code_context)(void *ctx);
-  void (*log)(const NewOnBeforeParseArguments *args, BunLogOptions *options);
+  void (*log)(const NewOnBeforeParseArguments *args, FunLogOptions *options);
   size_t new_field_one;
   size_t new_field_two;
   size_t new_field_three;
 };
 
 void new_log_error(const NewOnBeforeParseArguments *args,
-                   const NewOnBeforeParseResult *result, BunLogLevel level,
+                   const NewOnBeforeParseResult *result, FunLogLevel level,
                    const char *message, size_t message_len) {
-  BunLogOptions options;
+  FunLogOptions options;
   options.message_ptr = (uint8_t *)message;
   options.message_len = message_len;
   options.path_ptr = args->path_ptr;
@@ -611,20 +611,20 @@ void new_log_error(const NewOnBeforeParseArguments *args,
   (result->log)(args, &options);
 }
 
-extern "C" BUN_PLUGIN_EXPORT void
+extern "C" FUN_PLUGIN_EXPORT void
 incompatible_version_plugin_impl(const NewOnBeforeParseArguments *args,
                                  NewOnBeforeParseResult *result) {
   if (args->__struct_size < sizeof(NewOnBeforeParseArguments)) {
-    const char *msg = "This plugin is built for a newer version of Bun than "
+    const char *msg = "This plugin is built for a newer version of Fun than "
                       "the one currently running.";
-    new_log_error(args, result, BUN_LOG_LEVEL_ERROR, msg, strlen(msg));
+    new_log_error(args, result, FUN_LOG_LEVEL_ERROR, msg, strlen(msg));
     return;
   }
 
   if (result->__struct_size < sizeof(NewOnBeforeParseResult)) {
-    const char *msg = "This plugin is built for a newer version of Bun than "
+    const char *msg = "This plugin is built for a newer version of Fun than "
                       "the one currently running.";
-    new_log_error(args, result, BUN_LOG_LEVEL_ERROR, msg, strlen(msg));
+    new_log_error(args, result, FUN_LOG_LEVEL_ERROR, msg, strlen(msg));
     return;
   }
 }
@@ -634,11 +634,11 @@ struct RandomUserContext {
   size_t bar;
 };
 
-extern "C" BUN_PLUGIN_EXPORT void random_user_context_free(void *ptr) {
+extern "C" FUN_PLUGIN_EXPORT void random_user_context_free(void *ptr) {
   free(ptr);
 }
 
-extern "C" BUN_PLUGIN_EXPORT void
+extern "C" FUN_PLUGIN_EXPORT void
 plugin_impl_bad_free_function_pointer(const OnBeforeParseArguments *args,
                                       OnBeforeParseResult *result) {
 

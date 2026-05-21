@@ -7,7 +7,7 @@
 #include <JavaScriptCore/LazyProperty.h>
 #include <JavaScriptCore/LazyPropertyInlines.h>
 
-namespace Bun {
+namespace Fun {
 
 class JSVerify;
 class JSVerifyPrototype;
@@ -82,4 +82,4 @@ private:
 
 void setupJSVerifyClassStructure(JSC::LazyClassStructure::Initializer& init);
 
-} // namespace Bun
+} // namespace Fun

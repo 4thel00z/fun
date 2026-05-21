@@ -207,7 +207,7 @@ ExceptionOr<void> FetchHeaders::append(const String& name, const String& value)
 // https://fetch.spec.whatwg.org/#dom-headers-delete
 ExceptionOr<void> FetchHeaders::remove(const StringView name)
 {
-    ASSERT_WITH_MESSAGE(m_guard == FetchHeaders::Guard::None, "We don't use guards in Bun");
+    ASSERT_WITH_MESSAGE(m_guard == FetchHeaders::Guard::None, "We don't use guards in Fun");
 
     HTTPHeaderName headerName;
     if (findHTTPHeaderName(name, headerName)) {

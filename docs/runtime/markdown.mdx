@@ -1,33 +1,33 @@
 ---
 title: Markdown
-description: Parse and render Markdown with Bun's built-in Markdown API, supporting GFM extensions and custom rendering callbacks
+description: Parse and render Markdown with Fun's built-in Markdown API, supporting GFM extensions and custom rendering callbacks
 ---
 
 <Callout type="note">
-  **Unstable API** — This API is under active development and may change in future versions of Bun.
+  **Unstable API** — This API is under active development and may change in future versions of Fun.
 </Callout>
 
-Bun includes a fast, built-in Markdown parser written in Zig. It supports GitHub Flavored Markdown (GFM) extensions and provides three APIs:
+Fun includes a fast, built-in Markdown parser written in Zig. It supports GitHub Flavored Markdown (GFM) extensions and provides three APIs:
 
-- `Bun.markdown.html()` — render Markdown to an HTML string
-- `Bun.markdown.render()` — render Markdown with custom callbacks for each element
-- `Bun.markdown.react()` — render Markdown to React JSX elements
+- `Fun.markdown.html()` — render Markdown to an HTML string
+- `Fun.markdown.render()` — render Markdown with custom callbacks for each element
+- `Fun.markdown.react()` — render Markdown to React JSX elements
 
 ---
 
-## `Bun.markdown.html()`
+## `Fun.markdown.html()`
 
 Convert a Markdown string to HTML.
 
 ```ts
-const html = Bun.markdown.html("# Hello **world**");
+const html = Fun.markdown.html("# Hello **world**");
 // "<h1>Hello <strong>world</strong></h1>\n"
 ```
 
 GFM extensions like tables, strikethrough, and task lists are enabled by default:
 
 ```ts
-const html = Bun.markdown.html(`
+const html = Fun.markdown.html(`
 | Feature      | Status |
 |-------------|--------|
 | Tables       | ~~done~~ |
@@ -41,7 +41,7 @@ const html = Bun.markdown.html(`
 Pass an options object as the second argument to configure the parser:
 
 ```ts
-const html = Bun.markdown.html("some markdown", {
+const html = Fun.markdown.html("some markdown", {
   tables: true, // GFM tables (default: true)
   strikethrough: true, // GFM strikethrough (default: true)
   tasklists: true, // GFM task lists (default: true)
@@ -76,10 +76,10 @@ Pass `true` to enable all autolink types, or an object for granular control:
 
 ```ts
 // Enable all autolinks (URL, WWW, email)
-Bun.markdown.html("Visit www.example.com", { autolinks: true });
+Fun.markdown.html("Visit www.example.com", { autolinks: true });
 
 // Enable only specific types
-Bun.markdown.html("Visit www.example.com", {
+Fun.markdown.html("Visit www.example.com", {
   autolinks: { url: true, www: true },
 });
 ```
@@ -90,22 +90,22 @@ Pass `true` to enable both heading IDs and autolink headings, or an object for g
 
 ```ts
 // Enable heading IDs and autolink headings
-Bun.markdown.html("## Hello World", { headings: true });
+Fun.markdown.html("## Hello World", { headings: true });
 // '<h2 id="hello-world"><a href="#hello-world">Hello World</a></h2>\n'
 
 // Enable only heading IDs (no autolink)
-Bun.markdown.html("## Hello World", { headings: { ids: true } });
+Fun.markdown.html("## Hello World", { headings: { ids: true } });
 // '<h2 id="hello-world">Hello World</h2>\n'
 ```
 
 ---
 
-## `Bun.markdown.render()`
+## `Fun.markdown.render()`
 
 Parse Markdown and render it using custom JavaScript callbacks. This gives you full control over the output format — you can generate HTML with custom classes, React elements, ANSI terminal output, or any other string format.
 
 ```ts
-const result = Bun.markdown.render("# Hello **world**", {
+const result = Fun.markdown.render("# Hello **world**", {
   heading: (children, { level }) => `<h${level} class="title">${children}</h${level}>`,
   strong: children => `<b>${children}</b>`,
   paragraph: children => `<p>${children}</p>`,
@@ -168,7 +168,7 @@ The `listItem` callback receives everything needed to render markers directly:
 #### Custom HTML with classes
 
 ```ts
-const html = Bun.markdown.render("# Title\n\nHello **world**", {
+const html = Fun.markdown.render("# Title\n\nHello **world**", {
   heading: (children, { level }) => `<h${level} class="heading heading-${level}">${children}</h${level}>`,
   paragraph: children => `<p class="body">${children}</p>`,
   strong: children => `<strong class="bold">${children}</strong>`,
@@ -178,7 +178,7 @@ const html = Bun.markdown.render("# Title\n\nHello **world**", {
 #### Stripping all formatting
 
 ```ts
-const plaintext = Bun.markdown.render("# Hello **world**", {
+const plaintext = Fun.markdown.render("# Hello **world**", {
   heading: children => children,
   paragraph: children => children,
   strong: children => children,
@@ -196,7 +196,7 @@ const plaintext = Bun.markdown.render("# Hello **world**", {
 Return `null` or `undefined` to remove an element from the output:
 
 ```ts
-const result = Bun.markdown.render("# Title\n\n![logo](img.png)\n\nHello", {
+const result = Fun.markdown.render("# Title\n\n![logo](img.png)\n\nHello", {
   image: () => null, // Remove all images
   heading: children => children,
   paragraph: children => children + "\n",
@@ -207,7 +207,7 @@ const result = Bun.markdown.render("# Title\n\n![logo](img.png)\n\nHello", {
 #### ANSI terminal output
 
 ```ts
-const ansi = Bun.markdown.render("# Hello\n\nThis is **bold** and *italic*", {
+const ansi = Fun.markdown.render("# Hello\n\nThis is **bold** and *italic*", {
   heading: (children, { level }) => `\x1b[1;4m${children}\x1b[0m\n`,
   paragraph: children => children + "\n",
   strong: children => `\x1b[1m${children}\x1b[22m`,
@@ -220,7 +220,7 @@ const ansi = Bun.markdown.render("# Hello\n\nThis is **bold** and *italic*", {
 The `listItem` callback receives everything needed to render markers directly — no post-processing:
 
 ```ts
-const result = Bun.markdown.render("1. first\n   1. sub-a\n   2. sub-b\n2. second", {
+const result = Fun.markdown.render("1. first\n   1. sub-a\n   2. sub-b\n2. second", {
   listItem: (children, { index, depth, ordered, start }) => {
     const n = (start ?? 1) + index;
     // 1. 2. 3. at depth 0, a. b. c. at depth 1, i. ii. iii. at depth 2
@@ -245,7 +245,7 @@ const result = Bun.markdown.render("1. first\n   1. sub-a\n   2. sub-b\n2. secon
 #### Code block syntax highlighting
 
 ````ts
-const result = Bun.markdown.render("```js\nconsole.log('hi')\n```", {
+const result = Fun.markdown.render("```js\nconsole.log('hi')\n```", {
   code: (children, meta) => {
     const lang = meta?.language ?? "";
     return `<pre><code class="language-${lang}">${children}</code></pre>`;
@@ -258,7 +258,7 @@ const result = Bun.markdown.render("```js\nconsole.log('hi')\n```", {
 Parser options are passed as a separate third argument:
 
 ```ts
-const result = Bun.markdown.render(
+const result = Fun.markdown.render(
   "Visit www.example.com",
   {
     link: (children, { href }) => `[${children}](${href})`,
@@ -270,13 +270,13 @@ const result = Bun.markdown.render(
 
 ---
 
-## `Bun.markdown.react()`
+## `Fun.markdown.react()`
 
 Render Markdown directly to React elements. Returns a `<Fragment>` that you can use as a component return value.
 
 ```tsx
 function Markdown({ text }: { text: string }) {
-  return Bun.markdown.react(text);
+  return Fun.markdown.react(text);
 }
 ```
 
@@ -287,7 +287,7 @@ Works with `renderToString()` and React Server Components:
 ```tsx
 import { renderToString } from "react-dom/server";
 
-const html = renderToString(Bun.markdown.react("# Hello **world**"));
+const html = renderToString(Fun.markdown.react("# Hello **world**"));
 // "<h1>Hello <strong>world</strong></h1>"
 ```
 
@@ -320,7 +320,7 @@ function Heading({ id, children }) {
   );
 }
 
-const el = Bun.markdown.react(
+const el = Fun.markdown.react(
   content,
   {
     pre: Code,
@@ -365,7 +365,7 @@ By default, elements use `Symbol.for('react.transitional.element')` as the `$$ty
 
 ```tsx
 function Markdown({ text }: { text: string }) {
-  return Bun.markdown.react(text, undefined, { reactVersion: 18 });
+  return Fun.markdown.react(text, undefined, { reactVersion: 18 });
 }
 ```
 
@@ -374,7 +374,7 @@ function Markdown({ text }: { text: string }) {
 All [parser options](#options) are passed as the third argument:
 
 ```tsx
-const el = Bun.markdown.react("## Hello World", undefined, {
+const el = Fun.markdown.react("## Hello World", undefined, {
   headings: { ids: true },
   autolinks: true,
 });

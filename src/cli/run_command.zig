@@ -1,5 +1,5 @@
-var path_buf: bun.PathBuffer = undefined;
-var path_buf2: bun.PathBuffer = undefined;
+var path_buf: fun.PathBuffer = undefined;
+var path_buf2: fun.PathBuffer = undefined;
 const NpmArgs = struct {
     // https://github.com/npm/rfcs/blob/main/implemented/0021-reduce-lifecycle-script-environment.md#detailed-explanation
     pub const package_name: string = "npm_package_name";
@@ -26,7 +26,7 @@ pub const RunCommand = struct {
 
         const Try = struct {
             pub fn shell(str: stringZ) bool {
-                return bun.sys.isExecutableFilePath(str);
+                return fun.sys.isExecutableFilePath(str);
             }
         };
 
@@ -53,8 +53,8 @@ pub const RunCommand = struct {
     /// Cached to only run once
     pub fn findShell(PATH: string, cwd: string) ?stringZ {
         const Once = struct {
-            var shell_buf: bun.PathBuffer = undefined;
-            pub var once = bun.once(struct {
+            var shell_buf: fun.PathBuffer = undefined;
+            pub var once = fun.once(struct {
                 pub fn run(PATH_: string, cwd_: string) ?stringZ {
                     if (findShellImpl(PATH_, cwd_)) |found| {
                         if (found.len < shell_buf.len) {
@@ -72,17 +72,17 @@ pub const RunCommand = struct {
         return Once.once.call(.{ PATH, cwd });
     }
 
-    const BUN_BIN_NAME = if (Environment.isDebug) "bun-debug" else "bun";
-    const BUN_RUN = std.fmt.comptimePrint("{s} run", .{BUN_BIN_NAME});
+    const FUN_BIN_NAME = if (Environment.isDebug) "fun-debug" else "fun";
+    const FUN_RUN = std.fmt.comptimePrint("{s} run", .{FUN_BIN_NAME});
 
-    const BUN_RUN_USING_BUN = std.fmt.comptimePrint("{s} --bun run", .{BUN_BIN_NAME});
+    const FUN_RUN_USING_FUN = std.fmt.comptimePrint("{s} --fun run", .{FUN_BIN_NAME});
 
     // Look for invocations of any:
     // - yarn run
     // - yarn $cmdName
     // - pnpm run
     // - npm run
-    // Replace them with "bun run"
+    // Replace them with "fun run"
 
     pub inline fn replacePackageManagerRun(
         copy_script: *std.array_list.Managed(u8),
@@ -105,7 +105,7 @@ pub const RunCommand = struct {
                             if (strings.indexOfChar(next, ' ')) |space| {
                                 const yarn_cmd = next[0..space];
                                 if (strings.eqlComptime(yarn_cmd, "run")) {
-                                    try copy_script.appendSlice(BUN_RUN);
+                                    try copy_script.appendSlice(FUN_RUN);
                                     entry_i += "yarn run".len;
                                     continue;
                                 }
@@ -127,7 +127,7 @@ pub const RunCommand = struct {
 
                                 // implicit yarn commands
                                 if (!yarn_commands.has(yarn_cmd)) {
-                                    try copy_script.appendSlice(BUN_RUN);
+                                    try copy_script.appendSlice(FUN_RUN);
                                     try copy_script.append(' ');
                                     try copy_script.appendSlice(yarn_cmd);
                                     entry_i += "yarn ".len + yarn_cmd.len;
@@ -154,14 +154,14 @@ pub const RunCommand = struct {
                 'n' => {
                     if (delimiter > 0) {
                         if (strings.hasPrefixComptime(script[start..], "npm run ")) {
-                            try copy_script.appendSlice(BUN_RUN ++ " ");
+                            try copy_script.appendSlice(FUN_RUN ++ " ");
                             entry_i += "npm run ".len;
                             delimiter = 0;
                             continue;
                         }
 
                         if (strings.hasPrefixComptime(script[start..], "npx ")) {
-                            try copy_script.appendSlice(BUN_BIN_NAME ++ " x ");
+                            try copy_script.appendSlice(FUN_BIN_NAME ++ " x ");
                             entry_i += "npx ".len;
                             delimiter = 0;
                             continue;
@@ -173,19 +173,19 @@ pub const RunCommand = struct {
                 'p' => {
                     if (delimiter > 0) {
                         if (strings.hasPrefixComptime(script[start..], "pnpm run ")) {
-                            try copy_script.appendSlice(BUN_RUN ++ " ");
+                            try copy_script.appendSlice(FUN_RUN ++ " ");
                             entry_i += "pnpm run ".len;
                             delimiter = 0;
                             continue;
                         }
                         if (strings.hasPrefixComptime(script[start..], "pnpm dlx ")) {
-                            try copy_script.appendSlice(BUN_BIN_NAME ++ " x ");
+                            try copy_script.appendSlice(FUN_BIN_NAME ++ " x ");
                             entry_i += "pnpm dlx ".len;
                             delimiter = 0;
                             continue;
                         }
                         if (strings.hasPrefixComptime(script[start..], "pnpx ")) {
-                            try copy_script.appendSlice(BUN_BIN_NAME ++ " x ");
+                            try copy_script.appendSlice(FUN_BIN_NAME ++ " x ");
                             entry_i += "pnpx ".len;
                             delimiter = 0;
                             continue;
@@ -232,8 +232,8 @@ pub const RunCommand = struct {
 
         for (passthrough) |part| {
             try copy_script.append(' ');
-            if (bun.shell.needsEscapeUtf8AsciiLatin1(part)) {
-                try bun.shell.escape8Bit(part, &copy_script, true);
+            if (fun.shell.needsEscapeUtf8AsciiLatin1(part)) {
+                try fun.shell.escape8Bit(part, &copy_script, true);
             } else {
                 try copy_script.appendSlice(part);
             }
@@ -247,8 +247,8 @@ pub const RunCommand = struct {
         }
 
         if (!use_system_shell) {
-            const mini = bun.jsc.MiniEventLoop.initGlobal(env, cwd);
-            const code = bun.shell.Interpreter.initAndRunFromSource(ctx, mini, name, copy_script.items, cwd) catch |err| {
+            const mini = fun.jsc.MiniEventLoop.initGlobal(env, cwd);
+            const code = fun.shell.Interpreter.initAndRunFromSource(ctx, mini, name, copy_script.items, cwd) catch |err| {
                 if (!silent) {
                     Output.prettyErrorln("<r><red>error<r>: Failed to run script <b>{s}<r> due to error <b>{s}<r>", .{ name, @errorName(err) });
                 }
@@ -274,19 +274,19 @@ pub const RunCommand = struct {
             copy_script.items,
         };
 
-        const ipc_fd: ?bun.FD = if (!Environment.isWindows) blk: {
-            const node_ipc_fd = bun.env_var.NODE_CHANNEL_FD.get() orelse break :blk null;
+        const ipc_fd: ?fun.FD = if (!Environment.isWindows) blk: {
+            const node_ipc_fd = fun.env_var.NODE_CHANNEL_FD.get() orelse break :blk null;
             const fd = std.fmt.parseInt(u31, node_ipc_fd, 10) catch break :blk null;
-            break :blk bun.FD.fromNative(fd);
+            break :blk fun.FD.fromNative(fd);
         } else null; // TODO: implement on Windows
 
-        const spawn_result = switch ((bun.spawnSync(&.{
+        const spawn_result = switch ((fun.spawnSync(&.{
             .argv = &argv,
             .argv0 = shell_bin.ptr,
 
             // TODO: remember to free this when we add --filter or --concurrent
             // in the meantime we don't need to free it.
-            .envp = try env.map.createNullDelimitedEnvMap(bun.default_allocator),
+            .envp = try env.map.createNullDelimitedEnvMap(fun.default_allocator),
 
             .cwd = cwd,
             .stderr = .inherit,
@@ -322,8 +322,8 @@ pub const RunCommand = struct {
                     Output.prettyErrorln("<r><red>error<r><d>:<r> script <b>\"{s}\"<r> was terminated by signal {f}<r>", .{ name, exit_code.signal.fmt(Output.enable_ansi_colors_stderr) });
                     Output.flush();
 
-                    if (bun.feature_flag.BUN_INTERNAL_SUPPRESS_CRASH_IN_BUN_RUN.get()) {
-                        bun.crash_handler.suppressReporting();
+                    if (fun.feature_flag.FUN_INTERNAL_SUPPRESS_CRASH_IN_FUN_RUN.get()) {
+                        fun.crash_handler.suppressReporting();
                     }
 
                     Global.raiseIgnoringPanicHandler(exit_code.signal);
@@ -345,8 +345,8 @@ pub const RunCommand = struct {
                     Output.flush();
                 }
 
-                if (bun.feature_flag.BUN_INTERNAL_SUPPRESS_CRASH_IN_BUN_RUN.get()) {
-                    bun.crash_handler.suppressReporting();
+                if (fun.feature_flag.FUN_INTERNAL_SUPPRESS_CRASH_IN_FUN_RUN.get()) {
+                    fun.crash_handler.suppressReporting();
                 }
 
                 Global.raiseIgnoringPanicHandler(signal);
@@ -367,21 +367,21 @@ pub const RunCommand = struct {
         return;
     }
 
-    /// When printing error messages from 'bun run', attribute bun overridden node.js to bun
-    /// This prevents '"node" exited with ...' when it was actually bun.
+    /// When printing error messages from 'fun run', attribute fun overridden node.js to fun
+    /// This prevents '"node" exited with ...' when it was actually fun.
     /// As of writing this is only used for 'runBinary'
-    fn basenameOrBun(str: []const u8) []const u8 {
+    fn basenameOrFun(str: []const u8) []const u8 {
         // The full path is not used here, because on windows it is dependant on the
-        // username. Before windows we checked bun_node_dir, but this is not allowed on Windows.
-        if (strings.hasSuffixComptime(str, "/bun-node/node" ++ bun.exe_suffix) or (Environment.isWindows and strings.hasSuffixComptime(str, "\\bun-node\\node" ++ bun.exe_suffix))) {
-            return "bun";
+        // username. Before windows we checked fun_node_dir, but this is not allowed on Windows.
+        if (strings.hasSuffixComptime(str, "/fun-node/node" ++ fun.exe_suffix) or (Environment.isWindows and strings.hasSuffixComptime(str, "\\fun-node\\node" ++ fun.exe_suffix))) {
+            return "fun";
         }
         return std.fs.path.basename(str);
     }
 
-    /// On windows, this checks for a `.bunx` file in the same directory as the
+    /// On windows, this checks for a `.funx` file in the same directory as the
     /// script If it exists, it will be run instead of the script which is
-    /// assumed to `bun_shim_impl.exe`
+    /// assumed to `fun_shim_impl.exe`
     ///
     /// This function only returns if an error starting the process is
     /// encountered, most other errors are handled by printing and exiting.
@@ -392,26 +392,26 @@ pub const RunCommand = struct {
         cwd: string,
         env: *DotEnv.Loader,
         passthrough: []const string,
-        original_script_for_bun_run: ?[]const u8,
+        original_script_for_fun_run: ?[]const u8,
     ) !noreturn {
-        // Attempt to find a ".bunx" file on disk, and run it, skipping the
+        // Attempt to find a ".funx" file on disk, and run it, skipping the
         // wrapper exe.  we build the full exe path even though we could do
         // a relative lookup, because in the case we do find it, we have to
         // generate this full path anyways.
-        if (Environment.isWindows and bun.FeatureFlags.windows_bunx_fast_path and bun.strings.hasSuffixComptime(executable, ".exe")) {
-            bun.assert(std.fs.path.isAbsolute(executable));
+        if (Environment.isWindows and fun.FeatureFlags.windows_bunx_fast_path and fun.strings.hasSuffixComptime(executable, ".exe")) {
+            fun.assert(std.fs.path.isAbsolute(executable));
 
             // Using @constCast is safe because we know that
             // `direct_launch_buffer` is the data destination that assumption is
             // backed by the immediate assertion.
-            var wpath = @constCast(bun.strings.toNTPath(&BunXFastPath.direct_launch_buffer, executable));
-            bun.assert(bun.isSliceInBufferT(u16, wpath, &BunXFastPath.direct_launch_buffer));
+            var wpath = @constCast(fun.strings.toNTPath(&FunXFastPath.direct_launch_buffer, executable));
+            fun.assert(fun.isSliceInBufferT(u16, wpath, &FunXFastPath.direct_launch_buffer));
 
-            bun.assert(wpath.len > bun.windows.nt_object_prefix.len + ".exe".len);
-            wpath.len += ".bunx".len - ".exe".len;
-            @memcpy(wpath[wpath.len - "bunx".len ..], comptime bun.strings.w("bunx"));
+            fun.assert(wpath.len > fun.windows.nt_object_prefix.len + ".exe".len);
+            wpath.len += ".funx".len - ".exe".len;
+            @memcpy(wpath[wpath.len - "funx".len ..], comptime fun.strings.w("funx"));
 
-            BunXFastPath.tryLaunch(ctx, wpath, env, passthrough);
+            FunXFastPath.tryLaunch(ctx, wpath, env, passthrough);
         }
 
         try runBinaryWithoutBunxPath(
@@ -421,13 +421,13 @@ pub const RunCommand = struct {
             cwd,
             env,
             passthrough,
-            original_script_for_bun_run,
+            original_script_for_fun_run,
         );
     }
 
-    fn runBinaryGenericError(executable: []const u8, silent: bool, err: bun.sys.Error) noreturn {
+    fn runBinaryGenericError(executable: []const u8, silent: bool, err: fun.sys.Error) noreturn {
         if (!silent) {
-            Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to:\n{f}", .{ basenameOrBun(executable), err.withPath(executable) });
+            Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to:\n{f}", .{ basenameOrFun(executable), err.withPath(executable) });
         }
 
         Global.exit(1);
@@ -440,7 +440,7 @@ pub const RunCommand = struct {
         cwd: string,
         env: *DotEnv.Loader,
         passthrough: []const string,
-        original_script_for_bun_run: ?[]const u8,
+        original_script_for_fun_run: ?[]const u8,
     ) !noreturn {
         var argv_ = [_]string{executable};
         var argv: []const string = &argv_;
@@ -453,13 +453,13 @@ pub const RunCommand = struct {
         }
 
         const silent = ctx.debug.silent;
-        const spawn_result = bun.spawnSync(&.{
+        const spawn_result = fun.spawnSync(&.{
             .argv = argv,
             .argv0 = executableZ,
 
             // TODO: remember to free this when we add --filter or --concurrent
             // in the meantime we don't need to free it.
-            .envp = try env.map.createNullDelimitedEnvMap(bun.default_allocator),
+            .envp = try env.map.createNullDelimitedEnvMap(fun.default_allocator),
 
             .cwd = cwd,
             .stderr = .inherit,
@@ -471,23 +471,23 @@ pub const RunCommand = struct {
                 .loop = jsc.EventLoopHandle.init(jsc.MiniEventLoop.initGlobal(env, null)),
             },
         }) catch |err| {
-            bun.handleErrorReturnTrace(err, @errorReturnTrace());
+            fun.handleErrorReturnTrace(err, @errorReturnTrace());
 
             // an error occurred before the process was spawned
             print_error: {
                 if (!silent) {
                     if (comptime Environment.isPosix) {
-                        switch (bun.sys.stat(executable[0.. :0])) {
+                        switch (fun.sys.stat(executable[0.. :0])) {
                             .result => |stat| {
-                                if (bun.S.ISDIR(stat.mode)) {
-                                    Output.prettyErrorln("<r><red>error<r>: Failed to run directory \"<b>{s}<r>\"\n", .{basenameOrBun(executable)});
+                                if (fun.S.ISDIR(stat.mode)) {
+                                    Output.prettyErrorln("<r><red>error<r>: Failed to run directory \"<b>{s}<r>\"\n", .{basenameOrFun(executable)});
                                     break :print_error;
                                 }
                             },
                             .err => |err2| {
                                 switch (err2.getErrno()) {
                                     .NOENT, .PERM, .NOTDIR => {
-                                        Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to error:\n{f}", .{ basenameOrBun(executable), err2 });
+                                        Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to error:\n{f}", .{ basenameOrFun(executable), err2 });
                                         break :print_error;
                                     },
                                     else => {},
@@ -496,7 +496,7 @@ pub const RunCommand = struct {
                         }
                     }
 
-                    Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to <r><red>{s}<r>", .{ basenameOrBun(executable), @errorName(err) });
+                    Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to <r><red>{s}<r>", .{ basenameOrFun(executable), @errorName(err) });
                 }
             }
             Global.exit(1);
@@ -517,13 +517,13 @@ pub const RunCommand = struct {
                     .signaled => |signal| {
                         if (signal.valid() and signal != .SIGINT and !silent) {
                             Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to signal <b>{s}<r>", .{
-                                basenameOrBun(executable),
+                                basenameOrFun(executable),
                                 signal.name() orelse "unknown",
                             });
                         }
 
-                        if (bun.feature_flag.BUN_INTERNAL_SUPPRESS_CRASH_IN_BUN_RUN.get()) {
-                            bun.crash_handler.suppressReporting();
+                        if (fun.feature_flag.FUN_INTERNAL_SUPPRESS_CRASH_IN_FUN_RUN.get()) {
+                            fun.crash_handler.suppressReporting();
                         }
 
                         Global.raiseIgnoringPanicHandler(signal);
@@ -534,13 +534,13 @@ pub const RunCommand = struct {
                         if (exit_code.signal.valid()) {
                             if (!silent) {
                                 Output.prettyErrorln("<r><red>error<r>: \"<b>{s}<r>\" exited with signal <b>{s}<r>", .{
-                                    basenameOrBun(executable),
+                                    basenameOrFun(executable),
                                     exit_code.signal.name() orelse "unknown",
                                 });
                             }
 
-                            if (bun.feature_flag.BUN_INTERNAL_SUPPRESS_CRASH_IN_BUN_RUN.get()) {
-                                bun.crash_handler.suppressReporting();
+                            if (fun.feature_flag.FUN_INTERNAL_SUPPRESS_CRASH_IN_FUN_RUN.get()) {
+                                fun.crash_handler.suppressReporting();
                             }
 
                             Global.raiseIgnoringPanicHandler(exit_code.signal);
@@ -550,30 +550,30 @@ pub const RunCommand = struct {
                         if (code != 0) {
                             if (!silent) {
                                 const is_probably_trying_to_run_a_pkg_script =
-                                    original_script_for_bun_run != null and
-                                    ((code == 1 and bun.strings.eqlComptime(original_script_for_bun_run.?, "test")) or
-                                        (code == 2 and bun.strings.eqlAnyComptime(original_script_for_bun_run.?, &.{
+                                    original_script_for_fun_run != null and
+                                    ((code == 1 and fun.strings.eqlComptime(original_script_for_fun_run.?, "test")) or
+                                        (code == 2 and fun.strings.eqlAnyComptime(original_script_for_fun_run.?, &.{
                                             "install",
                                             "kill",
                                             "link",
                                         }) and ctx.positionals.len == 1));
 
                                 if (is_probably_trying_to_run_a_pkg_script) {
-                                    // if you run something like `bun run test`, you get a confusing message because
+                                    // if you run something like `fun run test`, you get a confusing message because
                                     // you don't usually think about your global path, let alone "/bin/test"
                                     //
                                     // test exits with code 1, the other ones i listed exit with code 2
                                     //
                                     // so for these script names, print the entire exe name.
                                     Output.errGeneric("\"<b>{s}<r>\" exited with code {d}", .{ executable, code });
-                                    Output.note("a package.json script \"{s}\" was not found", .{original_script_for_bun_run.?});
+                                    Output.note("a package.json script \"{s}\" was not found", .{original_script_for_fun_run.?});
                                 }
                                 // 128 + 2 is the exit code of a process killed by SIGINT, which is caused by CTRL + C
                                 else if (code > 0 and code != 130) {
-                                    Output.errGeneric("\"<b>{s}<r>\" exited with code {d}", .{ basenameOrBun(executable), code });
+                                    Output.errGeneric("\"<b>{s}<r>\" exited with code {d}", .{ basenameOrFun(executable), code });
                                 } else {
                                     Output.prettyErrorln("<r><red>error<r>: Failed to run \"<b>{s}<r>\" due to exit code <b>{d}<r>", .{
-                                        basenameOrBun(executable),
+                                        basenameOrFun(executable),
                                         code,
                                     });
                                 }
@@ -600,25 +600,25 @@ pub const RunCommand = struct {
         this_transpiler.configureLinker();
     }
 
-    pub const bun_node_dir = switch (Environment.os) {
+    pub const fun_node_dir = switch (Environment.os) {
         // This path is almost always a path to a user directory. So it cannot be inlined like
         // our uses of /tmp. You can use one of these functions instead:
-        // - bun.windows.GetTempPathW (native)
-        // - bun.fs.FileSystem.RealFS.platformTempDir (any platform)
-        .windows => @compileError("Do not use RunCommand.bun_node_dir on Windows"),
+        // - fun.windows.GetTempPathW (native)
+        // - fun.fs.FileSystem.RealFS.platformTempDir (any platform)
+        .windows => @compileError("Do not use RunCommand.fun_node_dir on Windows"),
 
         .mac => "/private/tmp",
         else => if (Environment.isAndroid) "/data/local/tmp" else "/tmp",
     } ++ if (!Environment.isDebug)
-        "/bun-node" ++ if (Environment.git_sha_short.len > 0) "-" ++ Environment.git_sha_short else ""
+        "/fun-node" ++ if (Environment.git_sha_short.len > 0) "-" ++ Environment.git_sha_short else ""
     else
-        "/bun-node-debug";
+        "/fun-node-debug";
 
-    pub fn bunNodeFileUtf8(allocator: std.mem.Allocator) ![:0]const u8 {
-        if (!Environment.isWindows) return bun_node_dir;
-        var temp_path_buffer: bun.WPathBuffer = undefined;
-        var target_path_buffer: bun.PathBuffer = undefined;
-        const len = bun.windows.GetTempPathW(
+    pub fn funNodeFileUtf8(allocator: std.mem.Allocator) ![:0]const u8 {
+        if (!Environment.isWindows) return fun_node_dir;
+        var temp_path_buffer: fun.WPathBuffer = undefined;
+        var target_path_buffer: fun.PathBuffer = undefined;
+        const len = fun.windows.GetTempPathW(
             temp_path_buffer.len,
             @ptrCast(&temp_path_buffer),
         );
@@ -626,12 +626,12 @@ pub const RunCommand = struct {
             return error.FailedToGetTempPath;
         }
 
-        const converted = try bun.strings.convertUTF16toUTF8InBuffer(
+        const converted = try fun.strings.convertUTF16toUTF8InBuffer(
             &target_path_buffer,
             temp_path_buffer[0..len],
         );
 
-        const dir_name = "bun-node" ++ if (Environment.git_sha_short.len > 0) "-" ++ Environment.git_sha_short else "";
+        const dir_name = "fun-node" ++ if (Environment.git_sha_short.len > 0) "-" ++ Environment.git_sha_short else "";
         const file_name = dir_name ++ "\\node.exe";
         @memcpy(target_path_buffer[converted.len..][0..file_name.len], file_name);
 
@@ -642,36 +642,36 @@ pub const RunCommand = struct {
 
     pub fn createFakeTemporaryNodeExecutable(
         PATH: *std.array_list.Managed(u8),
-        optional_bun_path: *string,
+        optional_fun_path: *string,
     ) (OOM || std.fs.SelfExePathError)!void {
         // If we are already running as "node", the path should exist
         if (CLI.pretend_to_be_node) return;
 
         if (Environment.isPosix) {
-            var argv0 = @as([*:0]const u8, @ptrCast(optional_bun_path.ptr));
+            var argv0 = @as([*:0]const u8, @ptrCast(optional_fun_path.ptr));
 
             // if we are already an absolute path, use that
             // if the user started the application via a shebang, it's likely that the path is absolute already
-            if (bun.argv[0][0] == '/') {
-                optional_bun_path.* = bun.argv[0];
-                argv0 = bun.argv[0];
-            } else if (optional_bun_path.len == 0) {
+            if (fun.argv[0][0] == '/') {
+                optional_fun_path.* = fun.argv[0];
+                argv0 = fun.argv[0];
+            } else if (optional_fun_path.len == 0) {
                 // otherwise, ask the OS for the absolute path
-                const self = try bun.selfExePath();
+                const self = try fun.selfExePath();
                 if (self.len > 0) {
                     argv0 = self.ptr;
-                    optional_bun_path.* = self;
+                    optional_fun_path.* = self;
                 }
             }
 
-            if (optional_bun_path.len == 0) {
-                argv0 = bun.argv[0];
+            if (optional_fun_path.len == 0) {
+                argv0 = fun.argv[0];
             }
 
             if (Environment.isDebug) {
-                std.fs.deleteTreeAbsolute(bun_node_dir) catch {};
+                std.fs.deleteTreeAbsolute(fun_node_dir) catch {};
             }
-            const paths = .{ bun_node_dir ++ "/node", bun_node_dir ++ "/bun" };
+            const paths = .{ fun_node_dir ++ "/node", fun_node_dir ++ "/fun" };
             inline for (paths) |path| {
                 var retried = false;
                 while (true) {
@@ -681,7 +681,7 @@ pub const RunCommand = struct {
                             if (retried)
                                 return;
 
-                            std.fs.makeDirAbsoluteZ(bun_node_dir) catch {};
+                            std.fs.makeDirAbsoluteZ(fun_node_dir) catch {};
 
                             retried = true;
                             continue;
@@ -695,15 +695,15 @@ pub const RunCommand = struct {
             }
 
             // The reason for the extra delim is because we are going to append the system PATH
-            // later on. this is done by the caller, and explains why we are adding bun_node_dir
+            // later on. this is done by the caller, and explains why we are adding fun_node_dir
             // to the end of the path slice rather than the start.
-            try PATH.appendSlice(bun_node_dir ++ .{std.fs.path.delimiter});
+            try PATH.appendSlice(fun_node_dir ++ .{std.fs.path.delimiter});
         } else if (Environment.isWindows) {
-            var target_path_buffer: bun.WPathBuffer = undefined;
+            var target_path_buffer: fun.WPathBuffer = undefined;
 
-            const prefix = comptime bun.strings.w("\\??\\");
+            const prefix = comptime fun.strings.w("\\??\\");
 
-            const len = bun.windows.GetTempPathW(
+            const len = fun.windows.GetTempPathW(
                 target_path_buffer.len - prefix.len,
                 @ptrCast(&target_path_buffer[prefix.len]),
             );
@@ -714,41 +714,41 @@ pub const RunCommand = struct {
 
             @memcpy(target_path_buffer[0..prefix.len], prefix);
 
-            const dir_name = "bun-node" ++ if (Environment.isDebug)
+            const dir_name = "fun-node" ++ if (Environment.isDebug)
                 "-debug"
             else if (Environment.git_sha_short.len > 0)
                 "-" ++ Environment.git_sha_short
             else
                 "";
-            @memcpy(target_path_buffer[prefix.len..][len..].ptr, comptime bun.strings.w(dir_name));
+            @memcpy(target_path_buffer[prefix.len..][len..].ptr, comptime fun.strings.w(dir_name));
             const dir_slice = target_path_buffer[0 .. prefix.len + len + dir_name.len];
 
             if (Environment.isDebug) {
-                const dir_slice_u8 = std.unicode.utf16LeToUtf8Alloc(bun.default_allocator, dir_slice) catch @panic("oom");
-                defer bun.default_allocator.free(dir_slice_u8);
+                const dir_slice_u8 = std.unicode.utf16LeToUtf8Alloc(fun.default_allocator, dir_slice) catch @panic("oom");
+                defer fun.default_allocator.free(dir_slice_u8);
                 std.fs.deleteTreeAbsolute(dir_slice_u8) catch {};
                 std.fs.makeDirAbsolute(dir_slice_u8) catch @panic("huh?");
             }
 
-            const image_path = bun.windows.exePathW();
-            inline for (.{ "node.exe", "bun.exe" }) |name| {
+            const image_path = fun.windows.exePathW();
+            inline for (.{ "node.exe", "fun.exe" }) |name| {
                 const file_name = dir_name ++ "\\" ++ name ++ "\x00";
-                @memcpy(target_path_buffer[len + prefix.len ..][0..file_name.len], comptime bun.strings.w(file_name));
+                @memcpy(target_path_buffer[len + prefix.len ..][0..file_name.len], comptime fun.strings.w(file_name));
 
                 const file_slice = target_path_buffer[0 .. prefix.len + len + file_name.len - "\x00".len];
 
-                if (bun.windows.CreateHardLinkW(@ptrCast(file_slice.ptr), image_path.ptr, null) == 0) {
+                if (fun.windows.CreateHardLinkW(@ptrCast(file_slice.ptr), image_path.ptr, null) == 0) {
                     switch (std.os.windows.kernel32.GetLastError()) {
                         .ALREADY_EXISTS => {},
                         else => {
                             {
-                                bun.assert(target_path_buffer[dir_slice.len] == '\\');
+                                fun.assert(target_path_buffer[dir_slice.len] == '\\');
                                 target_path_buffer[dir_slice.len] = 0;
                                 std.posix.mkdirW(target_path_buffer[0..dir_slice.len :0], 0) catch {};
                                 target_path_buffer[dir_slice.len] = '\\';
                             }
 
-                            if (bun.windows.CreateHardLinkW(@ptrCast(file_slice.ptr), image_path.ptr, null) == 0) {
+                            if (fun.windows.CreateHardLinkW(@ptrCast(file_slice.ptr), image_path.ptr, null) == 0) {
                                 return;
                             }
                         },
@@ -760,14 +760,14 @@ pub const RunCommand = struct {
             }
 
             // The reason for the extra delim is because we are going to append the system PATH
-            // later on. this is done by the caller, and explains why we are adding bun_node_dir
+            // later on. this is done by the caller, and explains why we are adding fun_node_dir
             // to the end of the path slice rather than the start.
-            try bun.strings.toUTF8AppendToList(PATH, dir_slice[prefix.len..]);
+            try fun.strings.toUTF8AppendToList(PATH, dir_slice[prefix.len..]);
             try PATH.append(std.fs.path.delimiter);
         }
     }
 
-    pub const Filter = enum { script, bin, all, bun_js, all_plus_bun_js, script_and_descriptions, script_exclude };
+    pub const Filter = enum { script, bin, all, fun_js, all_plus_fun_js, script_and_descriptions, script_exclude };
     const DirInfo = @import("../resolver/dir_info.zig");
     pub fn configureEnvForRun(
         ctx: Command.Context,
@@ -794,7 +794,7 @@ pub const RunCommand = struct {
         const root_dir_info = this_transpiler.resolver.readDirInfo(this_transpiler.fs.top_level_dir) catch |err| {
             if (!log_errors) return error.CouldntReadCurrentDirectory;
             ctx.log.print(Output.errorWriter()) catch {};
-            Output.prettyErrorln("<r><red>error<r><d>:<r> <b>{s}<r> loading directory {f}", .{ @errorName(err), bun.fmt.QuotedFormatter{ .text = this_transpiler.fs.top_level_dir } });
+            Output.prettyErrorln("<r><red>error<r><d>:<r> <b>{s}<r> loading directory {f}", .{ @errorName(err), fun.fmt.QuotedFormatter{ .text = this_transpiler.fs.top_level_dir } });
             Output.flush();
             return err;
         } orelse {
@@ -816,18 +816,18 @@ pub const RunCommand = struct {
             }
 
             // Always skip default .env files for package.json script runner
-            // (see comment in env_loader.zig:542-548 - the script's own bun instance loads .env)
+            // (see comment in env_loader.zig:542-548 - the script's own fun instance loads .env)
             this_transpiler.runEnvLoader(true) catch {};
         }
 
         this_transpiler.env.map.putDefault("npm_config_local_prefix", this_transpiler.fs.top_level_dir) catch unreachable;
 
         // Propagate --no-orphans / [run] noOrphans to the script's env so any
-        // Bun process the script spawns enables its own watchdog. The env
+        // Fun process the script spawns enables its own watchdog. The env
         // loader snapshots `environ` before flag parsing runs, so the
         // `setenv()` in `enable()` isn't reflected here.
-        if (bun.ParentDeathWatchdog.isEnabled()) {
-            this_transpiler.env.map.put("BUN_FEATURE_FLAG_NO_ORPHANS", "1") catch unreachable;
+        if (fun.ParentDeathWatchdog.isEnabled()) {
+            this_transpiler.env.map.put("FUN_FEATURE_FLAG_NO_ORPHANS", "1") catch unreachable;
         }
 
         // we have no way of knowing what version they're expecting without running the node executable
@@ -838,12 +838,12 @@ pub const RunCommand = struct {
             // the use of npm/? is copying yarn
             // e.g.
             // > "yarn/1.22.4 npm/? node/v12.16.3 darwin x64",
-            "bun/" ++ Global.package_json_version ++ " npm/? node/v" ++ Environment.reported_nodejs_version ++ " " ++ Global.os_name ++ " " ++ Global.arch_name,
+            "fun/" ++ Global.package_json_version ++ " npm/? node/v" ++ Environment.reported_nodejs_version ++ " " ++ Global.os_name ++ " " ++ Global.arch_name,
         ) catch unreachable;
 
         if (this_transpiler.env.get("npm_execpath") == null) {
             // we don't care if this fails
-            if (bun.selfExePath()) |self_exe_path| {
+            if (fun.selfExePath()) |self_exe_path| {
                 this_transpiler.env.map.putDefault("npm_execpath", self_exe_path) catch unreachable;
             } else |_| {}
         }
@@ -866,7 +866,7 @@ pub const RunCommand = struct {
             if (package_json.config) |config| {
                 try this_transpiler.env.map.ensureUnusedCapacity(config.count());
                 for (config.keys(), config.values()) |k, v| {
-                    const key = try bun.strings.concat(bun.default_allocator, &.{ "npm_package_config_", k });
+                    const key = try fun.strings.concat(fun.default_allocator, &.{ "npm_package_config_", k });
                     this_transpiler.env.map.putAssumeCapacity(key, v);
                 }
             }
@@ -881,22 +881,22 @@ pub const RunCommand = struct {
         this_transpiler: *transpiler.Transpiler,
         ORIGINAL_PATH: ?*string,
         cwd: string,
-        force_using_bun: bool,
+        force_using_fun: bool,
     ) ![]u8 {
         const PATH = this_transpiler.env.get("PATH") orelse "";
         if (ORIGINAL_PATH) |original_path| {
             original_path.* = PATH;
         }
 
-        const bun_node_exe = try bunNodeFileUtf8(ctx.allocator);
-        const bun_node_dir_win = bun.Dirname.dirname(u8, bun_node_exe) orelse return error.FailedToGetTempPath;
+        const fun_node_exe = try funNodeFileUtf8(ctx.allocator);
+        const fun_node_dir_win = fun.Dirname.dirname(u8, fun_node_exe) orelse return error.FailedToGetTempPath;
         const found_node = this_transpiler.env.loadNodeJSConfig(
             this_transpiler.fs,
-            if (force_using_bun) bun_node_exe else "",
+            if (force_using_fun) fun_node_exe else "",
         ) catch false;
 
-        var needs_to_force_bun = force_using_bun or !found_node;
-        var optional_bun_self_path: string = "";
+        var needs_to_force_fun = force_using_fun or !found_node;
+        var optional_fun_self_path: string = "";
 
         var new_path_len: usize = PATH.len + 2;
 
@@ -914,31 +914,31 @@ pub const RunCommand = struct {
             }
         }
 
-        if (needs_to_force_bun) {
-            new_path_len += bun_node_dir_win.len + 1;
+        if (needs_to_force_fun) {
+            new_path_len += fun_node_dir_win.len + 1;
         }
 
         var new_path = try std.array_list.Managed(u8).initCapacity(ctx.allocator, new_path_len);
 
-        if (needs_to_force_bun) {
+        if (needs_to_force_fun) {
             createFakeTemporaryNodeExecutable(
                 &new_path,
-                &optional_bun_self_path,
+                &optional_fun_self_path,
             ) catch |err| switch (err) {
-                error.OutOfMemory => bun.outOfMemory(),
+                error.OutOfMemory => fun.outOfMemory(),
                 else => |other| std.debug.panic(
                     "unexpected error from createFakeTemporaryNodeExecutable: {}",
                     .{other},
                 ),
             };
 
-            if (!force_using_bun) {
-                bun.handleOom(this_transpiler.env.map.put("NODE", bun_node_exe));
-                bun.handleOom(this_transpiler.env.map.put("npm_node_execpath", bun_node_exe));
-                bun.handleOom(this_transpiler.env.map.put("npm_execpath", optional_bun_self_path));
+            if (!force_using_fun) {
+                fun.handleOom(this_transpiler.env.map.put("NODE", fun_node_exe));
+                fun.handleOom(this_transpiler.env.map.put("npm_node_execpath", fun_node_exe));
+                fun.handleOom(this_transpiler.env.map.put("npm_execpath", optional_fun_self_path));
             }
 
-            needs_to_force_bun = false;
+            needs_to_force_fun = false;
         }
 
         {
@@ -950,12 +950,12 @@ pub const RunCommand = struct {
             var remain = cwd;
             while (strings.lastIndexOfChar(remain, std.fs.path.sep)) |i| {
                 try new_path.appendSlice(strings.withoutTrailingSlash(remain));
-                try new_path.appendSlice(bun.pathLiteral("/node_modules/.bin"));
+                try new_path.appendSlice(fun.pathLiteral("/node_modules/.bin"));
                 try new_path.append(std.fs.path.delimiter);
                 remain = remain[0..i];
             } else {
                 try new_path.appendSlice(strings.withoutTrailingSlash(remain));
-                try new_path.appendSlice(bun.pathLiteral("/node_modules/.bin"));
+                try new_path.appendSlice(fun.pathLiteral("/node_modules/.bin"));
                 try new_path.append(std.fs.path.delimiter);
             }
 
@@ -971,7 +971,7 @@ pub const RunCommand = struct {
         this_transpiler: *transpiler.Transpiler,
         ORIGINAL_PATH: ?*string,
         cwd: string,
-        force_using_bun: bool,
+        force_using_fun: bool,
     ) !void {
         var package_json_dir: string = "";
 
@@ -983,8 +983,8 @@ pub const RunCommand = struct {
             }
         }
 
-        const new_path = try configurePathForRunWithPackageJsonDir(ctx, package_json_dir, this_transpiler, ORIGINAL_PATH, cwd, force_using_bun);
-        bun.handleOom(this_transpiler.env.map.put("PATH", new_path));
+        const new_path = try configurePathForRunWithPackageJsonDir(ctx, package_json_dir, this_transpiler, ORIGINAL_PATH, cwd, force_using_fun);
+        fun.handleOom(this_transpiler.env.map.put("PATH", new_path));
     }
 
     pub fn completions(ctx: Command.Context, default_completions: ?[]const string, reject_list: []const string, comptime filter: Filter) !ShellCompletions {
@@ -1023,7 +1023,7 @@ pub const RunCommand = struct {
             }
         }
 
-        const ResultList = bun.StringArrayHashMap(void);
+        const ResultList = fun.StringArrayHashMap(void);
 
         if (this_transpiler.env.get("SHELL")) |shell| {
             shell_out.shell = ShellCompletions.Shell.fromEnv(@TypeOf(shell), shell);
@@ -1041,7 +1041,7 @@ pub const RunCommand = struct {
             }
         }
 
-        if (filter == Filter.bin or filter == Filter.all or filter == Filter.all_plus_bun_js) {
+        if (filter == Filter.bin or filter == Filter.all or filter == Filter.all_plus_fun_js) {
             for (this_transpiler.resolver.binDirs()) |bin_path| {
                 if (this_transpiler.resolver.readDirInfo(bin_path) catch null) |bin_dir| {
                     if (bin_dir.getEntriesConst()) |entries| {
@@ -1052,7 +1052,7 @@ pub const RunCommand = struct {
                             const value = entry.value_ptr.*;
                             if (value.kind(&this_transpiler.fs.fs, true) == .file) {
                                 if (!has_copied) {
-                                    bun.copy(u8, &path_buf, value.dir);
+                                    fun.copy(u8, &path_buf, value.dir);
                                     dir_slice = path_buf[0..value.dir.len];
                                     if (!strings.endsWithCharOrIsZeroLength(value.dir, std.fs.path.sep)) {
                                         dir_slice = path_buf[0 .. value.dir.len + 1];
@@ -1061,10 +1061,10 @@ pub const RunCommand = struct {
                                 }
 
                                 const base = value.base();
-                                bun.copy(u8, path_buf[dir_slice.len..], base);
+                                fun.copy(u8, path_buf[dir_slice.len..], base);
                                 path_buf[dir_slice.len + base.len] = 0;
                                 const slice = path_buf[0 .. dir_slice.len + base.len :0];
-                                if (!(bun.sys.isExecutableFilePath(slice))) continue;
+                                if (!(fun.sys.isExecutableFilePath(slice))) continue;
                                 // we need to dupe because the string pay point to a pointer that only exists in the current scope
                                 _ = try results.getOrPut(this_transpiler.fs.filename_store.append(@TypeOf(base), base) catch continue);
                             }
@@ -1074,7 +1074,7 @@ pub const RunCommand = struct {
             }
         }
 
-        if (filter == Filter.all_plus_bun_js or filter == Filter.bun_js) {
+        if (filter == Filter.all_plus_fun_js or filter == Filter.fun_js) {
             if (this_transpiler.resolver.readDirInfo(this_transpiler.fs.top_level_dir) catch null) |dir_info| {
                 if (dir_info.getEntriesConst()) |entries| {
                     var iter = entries.data.iterator();
@@ -1082,7 +1082,7 @@ pub const RunCommand = struct {
                     while (iter.next()) |entry| {
                         const value = entry.value_ptr.*;
                         const name = value.base();
-                        if (name[0] != '.' and this_transpiler.options.loader(std.fs.path.extension(name)).canBeRunByBun() and
+                        if (name[0] != '.' and this_transpiler.options.loader(std.fs.path.extension(name)).canBeRunByFun() and
                             !strings.contains(name, ".config") and
                             !strings.contains(name, ".d.ts") and
                             !strings.contains(name, ".d.mts") and
@@ -1096,7 +1096,7 @@ pub const RunCommand = struct {
             }
         }
 
-        if (filter == Filter.script_exclude or filter == Filter.script or filter == Filter.all or filter == Filter.all_plus_bun_js or filter == Filter.script_and_descriptions) {
+        if (filter == Filter.script_exclude or filter == Filter.script or filter == Filter.all or filter == Filter.all_plus_fun_js or filter == Filter.script_and_descriptions) {
             if (root_dir_info.enclosing_package_json) |package_json| {
                 if (package_json.scripts) |scripts| {
                     try results.ensureUnusedCapacity(scripts.count());
@@ -1195,20 +1195,20 @@ pub const RunCommand = struct {
 
     pub fn printHelp(package_json: ?*PackageJSON) void {
         const intro_text =
-            \\<b>Usage<r>: <b><green>bun run<r> <cyan>[flags]<r> \<file or script\>
+            \\<b>Usage<r>: <b><green>fun run<r> <cyan>[flags]<r> \<file or script\>
         ;
 
         const examples_text =
             \\<b>Examples:<r>
             \\  <d>Run a JavaScript or TypeScript file<r>
-            \\  <b><green>bun run<r> <blue>./index.js<r>
-            \\  <b><green>bun run<r> <blue>./index.tsx<r>
+            \\  <b><green>fun run<r> <blue>./index.js<r>
+            \\  <b><green>fun run<r> <blue>./index.tsx<r>
             \\
             \\  <d>Run a package.json script<r>
-            \\  <b><green>bun run<r> <blue>dev<r>
-            \\  <b><green>bun run<r> <blue>lint<r>
+            \\  <b><green>fun run<r> <blue>dev<r>
+            \\  <b><green>fun run<r> <blue>lint<r>
             \\
-            \\Full documentation is available at <magenta>https://bun.com/docs/cli/run<r>
+            \\Full documentation is available at <magenta>https://fun.dev/docs/cli/run<r>
             \\
         ;
 
@@ -1234,7 +1234,7 @@ pub const RunCommand = struct {
                     // Output.prettyln("<r><blue><b>{s}<r> scripts:<r>\n", .{display_name});
                     while (iterator.next()) |entry| {
                         Output.prettyln("\n", .{});
-                        Output.prettyln("  <d>$</r> bun run<r> <blue>{s}<r>\n", .{entry.key_ptr.*});
+                        Output.prettyln("  <d>$</r> fun run<r> <blue>{s}<r>\n", .{entry.key_ptr.*});
                         Output.prettyln("  <d>  {s}<r>\n", .{entry.value_ptr.*});
                     }
 
@@ -1261,14 +1261,14 @@ pub const RunCommand = struct {
         // prefetchRemoteImages (can't be set in the literal because
         // AsyncHTTP.init needs a pointer to response_buffer, which only
         // has a stable address once the owning struct is live).
-        async_http: bun.http.AsyncHTTP,
-        response_buffer: bun.MutableString,
+        async_http: fun.http.AsyncHTTP,
+        response_buffer: fun.MutableString,
         url: []const u8,
         done: *DoneChannel,
 
-        const DoneChannel = bun.threading.Channel(u32, .{ .Static = 256 });
+        const DoneChannel = fun.threading.Channel(u32, .{ .Static = 256 });
 
-        fn onDone(self: *RemoteImageDownload, async_http: *bun.http.AsyncHTTP, _: bun.http.HTTPClientResult) void {
+        fn onDone(self: *RemoteImageDownload, async_http: *fun.http.AsyncHTTP, _: fun.http.HTTPClientResult) void {
             // Mirror sendSyncCallback from AsyncHTTP.zig: the worker's
             // ThreadlocalAsyncHTTP is about to be freed, so copy its
             // mutated state back into our owned AsyncHTTP before writing
@@ -1287,32 +1287,32 @@ pub const RunCommand = struct {
     /// can't be downloaded just falls back to alt-text rendering.
     fn prefetchRemoteImages(
         contents: []const u8,
-        md_opts: bun.md.Options,
-        out_map: *bun.StringHashMapUnmanaged([]const u8),
+        md_opts: fun.md.Options,
+        out_map: *fun.StringHashMapUnmanaged([]const u8),
     ) void {
-        const allocator = bun.default_allocator;
-        var collector = bun.md.ImageUrlCollector.init(allocator);
+        const allocator = fun.default_allocator;
+        var collector = fun.md.ImageUrlCollector.init(allocator);
         defer collector.deinit();
-        bun.md.renderWithRenderer(contents, allocator, md_opts, collector.renderer()) catch return;
+        fun.md.renderWithRenderer(contents, allocator, md_opts, collector.renderer()) catch return;
         if (collector.urls.items.len == 0) return;
 
         // Walk the collected URLs once, deduping and picking out the
         // http(s) ones. If there are no remote URLs we never spawn the
         // HTTP worker or allocate any Download structs.
-        var seen = bun.StringHashMapUnmanaged(void){};
+        var seen = fun.StringHashMapUnmanaged(void){};
         defer seen.deinit(allocator);
         var remote_urls = std.ArrayListUnmanaged([]const u8){};
         defer remote_urls.deinit(allocator);
         for (collector.urls.items) |u| {
-            if (!bun.strings.hasPrefixComptime(u, "http://") and
-                !bun.strings.hasPrefixComptime(u, "https://")) continue;
+            if (!fun.strings.hasPrefixComptime(u, "http://") and
+                !fun.strings.hasPrefixComptime(u, "https://")) continue;
             const gop = seen.getOrPut(allocator, u) catch continue;
             if (gop.found_existing) continue;
             remote_urls.append(allocator, u) catch continue;
         }
         if (remote_urls.items.len == 0) return;
 
-        const HTTP = bun.http;
+        const HTTP = fun.http;
         HTTP.HTTPThread.init(&.{});
 
         // Heap-allocate each Download so AsyncHTTP.task has a stable
@@ -1332,12 +1332,12 @@ pub const RunCommand = struct {
         // single ThreadPool.Batch, then ship the whole batch to the
         // HTTP thread in one schedule() call — worker picks up and runs
         // them concurrently.
-        var batch = bun.ThreadPool.Batch{};
+        var batch = fun.ThreadPool.Batch{};
         for (remote_urls.items) |raw_url| {
             const d = allocator.create(RemoteImageDownload) catch continue;
             d.* = .{
                 .async_http = undefined,
-                .response_buffer = bun.MutableString.init(allocator, 8 * 1024) catch {
+                .response_buffer = fun.MutableString.init(allocator, 8 * 1024) catch {
                     allocator.destroy(d);
                     continue;
                 },
@@ -1347,7 +1347,7 @@ pub const RunCommand = struct {
             d.async_http = HTTP.AsyncHTTP.init(
                 allocator,
                 .GET,
-                bun.URL.parse(raw_url),
+                fun.URL.parse(raw_url),
                 .{},
                 "",
                 &d.response_buffer,
@@ -1378,7 +1378,7 @@ pub const RunCommand = struct {
         // Second pass: walk completed downloads, write successful
         // bodies to temp files, populate out_map. All disk I/O is done
         // AFTER every network request has settled.
-        const tmpdir = bun.fs.FileSystem.RealFS.tmpdirPath();
+        const tmpdir = fun.fs.FileSystem.RealFS.tmpdirPath();
         for (downloads.items) |d| {
             if (d.async_http.err != null) continue;
             const status = if (d.async_http.response) |r| r.status_code else 0;
@@ -1388,19 +1388,19 @@ pub const RunCommand = struct {
 
             // Extension is best-effort from the URL path; Kitty inspects
             // the file's magic bytes regardless.
-            const ext: []const u8 = if (bun.strings.endsWith(d.url, ".png")) ".png" else if (bun.strings.endsWith(d.url, ".jpg") or bun.strings.endsWith(d.url, ".jpeg")) ".jpg" else if (bun.strings.endsWith(d.url, ".gif")) ".gif" else if (bun.strings.endsWith(d.url, ".webp")) ".webp" else ".bin";
+            const ext: []const u8 = if (fun.strings.endsWith(d.url, ".png")) ".png" else if (fun.strings.endsWith(d.url, ".jpg") or fun.strings.endsWith(d.url, ".jpeg")) ".jpg" else if (fun.strings.endsWith(d.url, ".gif")) ".gif" else if (fun.strings.endsWith(d.url, ".webp")) ".webp" else ".bin";
             var name_buf: [64]u8 = undefined;
-            const name = std.fmt.bufPrint(&name_buf, "bun-md-{x}{s}", .{ bun.fastRandom(), ext }) catch continue;
+            const name = std.fmt.bufPrint(&name_buf, "fun-md-{x}{s}", .{ fun.fastRandom(), ext }) catch continue;
             const path = std.fmt.allocPrint(allocator, "{s}/{s}", .{ tmpdir, name }) catch continue;
 
-            const fd = switch (bun.sys.openA(path, bun.O.WRONLY | bun.O.CREAT | bun.O.TRUNC, 0o600)) {
+            const fd = switch (fun.sys.openA(path, fun.O.WRONLY | fun.O.CREAT | fun.O.TRUNC, 0o600)) {
                 .result => |f| f,
                 .err => {
                     allocator.free(path);
                     continue;
                 },
             };
-            const ok = (bun.sys.File{ .handle = fd }).writeAll(bytes) == .result;
+            const ok = (fun.sys.File{ .handle = fd }).writeAll(bytes) == .result;
             fd.close();
             if (!ok) {
                 // openA + TRUNC leaves an orphan even on zero-byte
@@ -1430,17 +1430,17 @@ pub const RunCommand = struct {
 
     /// Null-terminate `path` on the stack and unlink it. Never allocates.
     fn unlinkStagedPath(path: []const u8) void {
-        var buf: bun.PathBuffer = undefined;
-        _ = bun.sys.unlink(bun.path.z(path, &buf));
+        var buf: fun.PathBuffer = undefined;
+        _ = fun.sys.unlink(fun.path.z(path, &buf));
     }
 
     /// Read a markdown file, render it to ANSI, print to stdout, and exit.
     /// Runs without a JavaScript VM — much faster than booting JSC.
     fn renderMarkdownFileAndExit(path: string) noreturn {
         // No explicit free() on contents / rendered below: every path out
-        // of this function calls Global.exit() or bun.outOfMemory() (both
+        // of this function calls Global.exit() or fun.outOfMemory() (both
         // noreturn), so the OS reclaims the allocations on process exit.
-        const contents = switch (bun.sys.File.readFrom(bun.FD.cwd(), path, bun.default_allocator)) {
+        const contents = switch (fun.sys.File.readFrom(fun.FD.cwd(), path, fun.default_allocator)) {
             .result => |bytes| bytes,
             .err => |err| {
                 Output.prettyErrorln("<r><red>error<r>: {f}", .{err});
@@ -1456,17 +1456,17 @@ pub const RunCommand = struct {
             // Output.terminal_size is never populated; query stdout
             // directly. Honor COLUMNS so piped output and tests can
             // pin a width.
-            if (bun.getenvZ("COLUMNS")) |env| {
+            if (fun.getenvZ("COLUMNS")) |env| {
                 if (std.fmt.parseInt(u16, env, 10) catch null) |n| {
                     if (n > 0) break :brk n;
                 }
             }
-            if (comptime bun.Environment.isPosix) {
+            if (comptime fun.Environment.isPosix) {
                 var size: std.posix.winsize = undefined;
                 if (std.posix.system.ioctl(std.posix.STDOUT_FILENO, std.posix.T.IOCGWINSZ, @intFromPtr(&size)) == 0) {
                     if (size.col > 0) break :brk size.col;
                 }
-            } else if (comptime bun.Environment.isWindows) {
+            } else if (comptime fun.Environment.isWindows) {
                 if (windows.GetStdHandle(windows.STD_OUTPUT_HANDLE) catch null) |handle| {
                     var csbi: windows.CONSOLE_SCREEN_BUFFER_INFO = undefined;
                     if (windows.kernel32.GetConsoleScreenBufferInfo(handle, &csbi) != windows.FALSE) {
@@ -1478,42 +1478,42 @@ pub const RunCommand = struct {
             break :brk 80;
         };
         const is_tty = Output.isStdoutTTY();
-        const kitty_graphics = colors and is_tty and bun.md.detectKittyGraphics();
+        const kitty_graphics = colors and is_tty and fun.md.detectKittyGraphics();
 
-        const md_opts: bun.md.Options = .terminal;
+        const md_opts: fun.md.Options = .terminal;
 
         // Pre-scan for http(s) image URLs so Kitty can display them
         // inline. Only runs when kitty_graphics is on and the document
         // actually contains an image marker — otherwise the whole block
         // is a no-op.
-        var remote_map: bun.StringHashMapUnmanaged([]const u8) = .{};
-        if (kitty_graphics and bun.strings.contains(contents, "![")) {
+        var remote_map: fun.StringHashMapUnmanaged([]const u8) = .{};
+        if (kitty_graphics and fun.strings.contains(contents, "![")) {
             prefetchRemoteImages(contents, md_opts, &remote_map);
         }
 
         // Relative image paths in the markdown should resolve against
         // the document's directory, not the process cwd — otherwise
-        // `bun ./docs/README.md` from `/home/user` can't find `./img.png`
+        // `fun ./docs/README.md` from `/home/user` can't find `./img.png`
         // that sits next to README.md. Resolve to an absolute dir first
         // so joinAbsString downstream doesn't double-apply cwd.
-        var base_buf: bun.PathBuffer = undefined;
-        var cwd_buf: bun.PathBuffer = undefined;
+        var base_buf: fun.PathBuffer = undefined;
+        var cwd_buf: fun.PathBuffer = undefined;
         const abs_md_path: []const u8 = blk: {
             if (std.fs.path.isAbsolute(path)) break :blk path;
-            const cwd = switch (bun.sys.getcwd(&cwd_buf)) {
+            const cwd = switch (fun.sys.getcwd(&cwd_buf)) {
                 .result => |c| c,
                 .err => break :blk path,
             };
-            break :blk bun.path.joinAbsStringBuf(cwd, &base_buf, &.{path}, .auto);
+            break :blk fun.path.joinAbsStringBuf(cwd, &base_buf, &.{path}, .auto);
         };
-        const dir = bun.path.dirname(abs_md_path, .auto);
+        const dir = fun.path.dirname(abs_md_path, .auto);
         // When dirname returns empty (bare filename + getcwd failed), fall
         // back to "." instead of abs_md_path — otherwise joinAbsString
         // downstream would treat the file path itself as a directory.
         const image_base_dir = if (dir.len > 0) dir else ".";
 
-        const theme: bun.md.AnsiTheme = .{
-            .light = bun.md.detectLightBackground(),
+        const theme: fun.md.AnsiTheme = .{
+            .light = fun.md.detectLightBackground(),
             .columns = columns,
             .colors = colors,
             .hyperlinks = colors and is_tty,
@@ -1522,13 +1522,13 @@ pub const RunCommand = struct {
             .image_base_dir = image_base_dir,
         };
 
-        const rendered = bun.md.renderToAnsi(
+        const rendered = fun.md.renderToAnsi(
             contents,
-            bun.default_allocator,
+            fun.default_allocator,
             md_opts,
             theme,
         ) catch |err| switch (err) {
-            error.OutOfMemory => bun.outOfMemory(),
+            error.OutOfMemory => fun.outOfMemory(),
             error.StackOverflow => {
                 Output.prettyErrorln("<r><red>error<r>: markdown rendering exceeded the stack — input is too deeply nested", .{});
                 Output.flush();
@@ -1549,12 +1549,12 @@ pub const RunCommand = struct {
         // this process races Kitty's open() and typically drops images
         // silently (q=2 suppresses the error). System tmp cleanup
         // (systemd-tmpfiles, /tmp reboot wipe) eventually removes the
-        // bun-md-*.png files, which are small (~100KB each) and rare.
+        // fun-md-*.png files, which are small (~100KB each) and rare.
         Global.exit(0);
     }
 
-    fn _bootAndHandleError(ctx: Command.Context, path: string, loader: ?bun.options.Loader) bool {
-        const resolved_loader: ?bun.options.Loader = loader orelse bun.options.defaultLoaders.get(std.fs.path.extension(path));
+    fn _bootAndHandleError(ctx: Command.Context, path: string, loader: ?fun.options.Loader) bool {
+        const resolved_loader: ?fun.options.Loader = loader orelse fun.options.defaultLoaders.get(std.fs.path.extension(path));
         if (resolved_loader) |l| {
             if (l == .md) renderMarkdownFileAndExit(path);
         }
@@ -1566,15 +1566,15 @@ pub const RunCommand = struct {
                 std.fs.path.basename(path),
                 @errorName(err),
             });
-            bun.handleErrorReturnTrace(err, @errorReturnTrace());
+            fun.handleErrorReturnTrace(err, @errorReturnTrace());
             Global.exit(1);
         };
         return true;
     }
-    fn maybeOpenWithBunJS(ctx: Command.Context) bool {
+    fn maybeOpenWithFunJS(ctx: Command.Context) bool {
         if (ctx.args.entry_points.len == 0)
             return false;
-        var script_name_buf: bun.PathBuffer = undefined;
+        var script_name_buf: fun.PathBuffer = undefined;
 
         const script_name_to_search = ctx.args.entry_points[0];
 
@@ -1583,14 +1583,14 @@ pub const RunCommand = struct {
         // TODO: optimize this pass for Windows. we can make better use of system apis available
         var file_path = script_name_to_search;
         {
-            const file = bun.FD.fromStdFile((brk: {
+            const file = fun.FD.fromStdFile((brk: {
                 if (std.fs.path.isAbsolute(script_name_to_search)) {
                     var win_resolver = resolve_path.PosixToWinNormalizer{};
                     var resolved = win_resolver.resolveCWD(script_name_to_search) catch @panic("Could not resolve path");
                     if (comptime Environment.isWindows) {
                         resolved = resolve_path.normalizeString(resolved, false, .windows);
                     }
-                    break :brk bun.openFile(
+                    break :brk fun.openFile(
                         resolved,
                         .{ .mode = .read_only },
                     );
@@ -1601,10 +1601,10 @@ pub const RunCommand = struct {
                         break :brk2 script_name_buf[0..file_path.len :0];
                     };
 
-                    break :brk bun.openFileZ(file_pathZ, .{ .mode = .read_only });
+                    break :brk fun.openFileZ(file_pathZ, .{ .mode = .read_only });
                 } else {
-                    var path_buf_2: bun.PathBuffer = undefined;
-                    const cwd = bun.getcwd(&path_buf_2) catch return false;
+                    var path_buf_2: fun.PathBuffer = undefined;
+                    const cwd = fun.getcwd(&path_buf_2) catch return false;
                     path_buf_2[cwd.len] = std.fs.path.sep;
                     var parts = [_]string{script_name_to_search};
                     file_path = resolve_path.joinAbsStringBuf(
@@ -1616,15 +1616,15 @@ pub const RunCommand = struct {
                     if (file_path.len == 0) return false;
                     script_name_buf[file_path.len] = 0;
                     const file_pathZ = script_name_buf[0..file_path.len :0];
-                    break :brk bun.openFileZ(file_pathZ, .{ .mode = .read_only });
+                    break :brk fun.openFileZ(file_pathZ, .{ .mode = .read_only });
                 }
             }) catch return false).makeLibUVOwnedForSyscall(.open, .close_on_fail).unwrap() catch return false;
             defer file.close();
 
-            switch (bun.sys.fstat(file)) {
+            switch (fun.sys.fstat(file)) {
                 .result => |stat| {
                     // directories cannot be run. if only there was a faster way to check this
-                    if (bun.S.ISDIR(@intCast(stat.mode))) return false;
+                    if (fun.S.ISDIR(@intCast(stat.mode))) return false;
                 },
                 .err => return false,
             }
@@ -1632,10 +1632,10 @@ pub const RunCommand = struct {
             Global.configureAllocator(.{ .long_running = true });
 
             absolute_script_path = brk: {
-                if (comptime !Environment.isWindows) break :brk bun.getFdPath(file, &script_name_buf) catch return false;
+                if (comptime !Environment.isWindows) break :brk fun.getFdPath(file, &script_name_buf) catch return false;
 
-                var fd_path_buf: bun.PathBuffer = undefined;
-                break :brk bun.getFdPath(file, &fd_path_buf) catch return false;
+                var fd_path_buf: fun.PathBuffer = undefined;
+                break :brk fun.getFdPath(file, &fd_path_buf) catch return false;
             };
         }
 
@@ -1678,24 +1678,24 @@ pub const RunCommand = struct {
         } else if (cfg.allow_fast_run_for_extensions) {
             const ext = std.fs.path.extension(target_name);
             const default_loader = options.defaultLoaders.get(ext);
-            if (default_loader != null and (default_loader.?.canBeRunByBun() or default_loader.? == .md)) {
+            if (default_loader != null and (default_loader.?.canBeRunByFun() or default_loader.? == .md)) {
                 try_fast_run = true;
             }
         }
 
         if (!ctx.debug.loaded_bunfig) {
-            bun.cli.Arguments.loadConfigPath(ctx.allocator, true, "bunfig.toml", ctx, .RunCommand) catch {};
+            fun.cli.Arguments.loadConfigPath(ctx.allocator, true, "funfig.toml", ctx, .RunCommand) catch {};
         }
 
         // try fast run (check if the file exists and is not a folder, then run it)
-        if (try_fast_run and maybeOpenWithBunJS(ctx)) return true;
+        if (try_fast_run and maybeOpenWithFunJS(ctx)) return true;
 
         // setup
-        const force_using_bun = ctx.debug.run_in_bun;
+        const force_using_fun = ctx.debug.run_in_fun;
         var ORIGINAL_PATH: string = "";
         var this_transpiler: transpiler.Transpiler = undefined;
         const root_dir_info = try configureEnvForRun(ctx, &this_transpiler, null, log_errors, false);
-        try configurePathForRun(ctx, root_dir_info, &this_transpiler, &ORIGINAL_PATH, root_dir_info.abs_path, force_using_bun);
+        try configurePathForRun(ctx, root_dir_info, &this_transpiler, &ORIGINAL_PATH, root_dir_info.abs_path, force_using_fun);
         this_transpiler.env.map.put("npm_command", "run-script") catch unreachable;
 
         // check for empty command
@@ -1718,7 +1718,7 @@ pub const RunCommand = struct {
             log("Executing from stdin", .{});
 
             // read from stdin
-            var stack_fallback = std.heap.stackFallback(2048, bun.default_allocator);
+            var stack_fallback = std.heap.stackFallback(2048, fun.default_allocator);
             var list = std.Io.Writer.Allocating.init(stack_fallback.get());
             errdefer list.deinit();
 
@@ -1726,8 +1726,8 @@ pub const RunCommand = struct {
             _ = file_reader.interface.streamRemaining(&list.writer) catch return false;
             ctx.runtime_options.eval.script = list.written();
 
-            const trigger = bun.pathLiteral("/[stdin]");
-            var entry_point_buf: [bun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
+            const trigger = fun.pathLiteral("/[stdin]");
+            var entry_point_buf: [fun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
             const cwd = try std.posix.getcwd(&entry_point_buf);
             @memcpy(entry_point_buf[cwd.len..][0..trigger.len], trigger);
             const entry_path = entry_point_buf[0 .. cwd.len + trigger.len];
@@ -1744,7 +1744,7 @@ pub const RunCommand = struct {
                     std.fs.path.basename(target_name),
                     @errorName(err),
                 });
-                bun.handleErrorReturnTrace(err, @errorReturnTrace());
+                fun.handleErrorReturnTrace(err, @errorReturnTrace());
                 Global.exit(1);
             };
             return true;
@@ -1822,7 +1822,7 @@ pub const RunCommand = struct {
             const preserve_symlinks = this_transpiler.resolver.opts.preserve_symlinks;
             defer this_transpiler.resolver.opts.preserve_symlinks = preserve_symlinks;
             this_transpiler.resolver.opts.preserve_symlinks = ctx.runtime_options.preserve_symlinks_main or
-                bun.env_var.NODE_PRESERVE_SYMLINKS_MAIN.get();
+                fun.env_var.NODE_PRESERVE_SYMLINKS_MAIN.get();
             break :brk this_transpiler.resolver.resolve(
                 this_transpiler.fs.top_level_dir,
                 target_name,
@@ -1834,13 +1834,13 @@ pub const RunCommand = struct {
                     .entry_point_run,
                 );
         };
-        var resolved_to_unrunnable_file: ?struct { path: []const u8, loader: bun.options.Loader } = null;
+        var resolved_to_unrunnable_file: ?struct { path: []const u8, loader: fun.options.Loader } = null;
         if (resolution) |resolved| {
             var resolved_mutable = resolved;
             const path = resolved_mutable.path().?;
-            const loader: bun.options.Loader = this_transpiler.options.loaders.get(path.name.ext) orelse
-                bun.options.defaultLoaders.get(path.name.ext) orelse .tsx;
-            if (loader.canBeRunByBun() or loader == .html or loader == .md) {
+            const loader: fun.options.Loader = this_transpiler.options.loaders.get(path.name.ext) orelse
+                fun.options.defaultLoaders.get(path.name.ext) orelse .tsx;
+            if (loader.canBeRunByFun() or loader == .html or loader == .md) {
                 log("Resolved to: `{s}`", .{path.text});
                 return _bootAndHandleError(ctx, path.text, loader);
             } else {
@@ -1858,33 +1858,33 @@ pub const RunCommand = struct {
 
         // execute a node_modules/.bin/<X> command, or (run only) a system command like 'ls'
 
-        if (Environment.isWindows and bun.FeatureFlags.windows_bunx_fast_path) try_bunx_file: {
-            // Attempt to find a ".bunx" file on disk, and run it, skipping the
+        if (Environment.isWindows and fun.FeatureFlags.windows_bunx_fast_path) try_bunx_file: {
+            // Attempt to find a ".funx" file on disk, and run it, skipping the
             // wrapper exe.  we build the full exe path even though we could do
             // a relative lookup, because in the case we do find it, we have to
             // generate this full path anyways.
-            var ptr: []u16 = &BunXFastPath.direct_launch_buffer;
-            const root = comptime bun.strings.w("\\??\\");
+            var ptr: []u16 = &FunXFastPath.direct_launch_buffer;
+            const root = comptime fun.strings.w("\\??\\");
             @memcpy(ptr[0..root.len], root);
             ptr = ptr[4..];
             const cwd_len = windows.kernel32.GetCurrentDirectoryW(
-                BunXFastPath.direct_launch_buffer.len - 4,
+                FunXFastPath.direct_launch_buffer.len - 4,
                 ptr.ptr,
             );
             if (cwd_len == 0) break :try_bunx_file;
             ptr = ptr[cwd_len..];
-            const prefix = comptime bun.strings.w("\\node_modules\\.bin\\");
+            const prefix = comptime fun.strings.w("\\node_modules\\.bin\\");
             @memcpy(ptr[0..prefix.len], prefix);
             ptr = ptr[prefix.len..];
-            const encoded = bun.strings.convertUTF8toUTF16InBuffer(ptr[0..], target_name);
+            const encoded = fun.strings.convertUTF8toUTF16InBuffer(ptr[0..], target_name);
             ptr = ptr[encoded.len..];
-            const ext = comptime bun.strings.w(".bunx");
+            const ext = comptime fun.strings.w(".funx");
             @memcpy(ptr[0..ext.len], ext);
             ptr[ext.len] = 0;
 
             const l = root.len + cwd_len + prefix.len + encoded.len + ext.len;
-            const path_to_use = BunXFastPath.direct_launch_buffer[0..l :0];
-            BunXFastPath.tryLaunch(ctx, path_to_use, this_transpiler.env, ctx.passthrough);
+            const path_to_use = FunXFastPath.direct_launch_buffer[0..l :0];
+            FunXFastPath.tryLaunch(ctx, path_to_use, this_transpiler.env, ctx.passthrough);
         }
 
         const PATH = this_transpiler.env.get("PATH") orelse "";
@@ -1899,7 +1899,7 @@ pub const RunCommand = struct {
 
         if (path_for_which.len > 0) {
             if (which(&path_buf, path_for_which, this_transpiler.fs.top_level_dir, target_name)) |destination| {
-                const out = bun.asByteSlice(destination);
+                const out = fun.asByteSlice(destination);
                 return try runBinaryWithoutBunxPath(
                     ctx,
                     try this_transpiler.fs.dirname_store.append(@TypeOf(out), out),
@@ -1919,15 +1919,15 @@ pub const RunCommand = struct {
         }
 
         if (ctx.filters.len == 0 and !ctx.workspaces and CLI.Cli.cmd != null and CLI.Cli.cmd.? == .AutoCommand) {
-            if (bun.strings.eqlComptime(target_name, "feedback")) {
-                try @"bun feedback"(ctx);
+            if (fun.strings.eqlComptime(target_name, "feedback")) {
+                try @"fun feedback"(ctx);
             }
         }
 
         if (log_errors) {
             if (resolved_to_unrunnable_file) |info| {
                 Output.prettyError("<r><red>error<r><d>:<r> <b>Cannot run \"{s}\"<r>\n", .{info.path});
-                Output.prettyError("<r><d>note<r><d>:<r> Bun cannot run {s} files directly\n", .{@tagName(info.loader)});
+                Output.prettyError("<r><d>note<r><d>:<r> Fun cannot run {s} files directly\n", .{@tagName(info.loader)});
             } else {
                 const ext = std.fs.path.extension(target_name);
                 const default_loader = options.defaultLoaders.get(ext);
@@ -1947,11 +1947,11 @@ pub const RunCommand = struct {
     }
 
     pub fn execAsIfNode(ctx: Command.Context) !void {
-        bun.assert(CLI.pretend_to_be_node);
+        fun.assert(CLI.pretend_to_be_node);
 
         if (ctx.runtime_options.eval.script.len > 0) {
-            const trigger = bun.pathLiteral("/[eval]");
-            var entry_point_buf: [bun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
+            const trigger = fun.pathLiteral("/[eval]");
+            var entry_point_buf: [fun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
             const cwd = try std.posix.getcwd(&entry_point_buf);
             @memcpy(entry_point_buf[cwd.len..][0..trigger.len], trigger);
             try Run.boot(ctx, entry_point_buf[0 .. cwd.len + trigger.len], null);
@@ -1959,7 +1959,7 @@ pub const RunCommand = struct {
         }
 
         if (ctx.positionals.len == 0) {
-            Output.errGeneric("Missing script to execute. Bun's provided 'node' cli wrapper does not support a repl.", .{});
+            Output.errGeneric("Missing script to execute. Fun's provided 'node' cli wrapper does not support a repl.", .{});
             Global.exit(1);
         }
 
@@ -1970,10 +1970,10 @@ pub const RunCommand = struct {
 
         const normalized_filename = if (std.fs.path.isAbsolute(filename))
             // TODO(@paperclover): merge windows branch
-            // try win_resolver.resolveCWD("/dev/bun/test/etc.js");
+            // try win_resolver.resolveCWD("/dev/fun/test/etc.js");
             filename
         else brk: {
-            const cwd = try bun.getcwd(&path_buf);
+            const cwd = try fun.getcwd(&path_buf);
             path_buf[cwd.len] = std.fs.path.sep_posix;
             var parts = [_]string{filename};
             break :brk resolve_path.joinAbsStringBuf(
@@ -1992,26 +1992,26 @@ pub const RunCommand = struct {
         };
     }
 
-    fn @"bun feedback"(ctx: Command.Context) !noreturn {
-        const trigger = bun.pathLiteral("/[eval]");
-        var entry_point_buf: [bun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
+    fn @"fun feedback"(ctx: Command.Context) !noreturn {
+        const trigger = fun.pathLiteral("/[eval]");
+        var entry_point_buf: [fun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
         const cwd = try std.posix.getcwd(&entry_point_buf);
         @memcpy(entry_point_buf[cwd.len..][0..trigger.len], trigger);
-        ctx.runtime_options.eval.script = if (bun.Environment.codegen_embed)
+        ctx.runtime_options.eval.script = if (fun.Environment.codegen_embed)
             @embedFile("eval/feedback.ts")
         else
-            bun.runtimeEmbedFile(.codegen, "eval/feedback.ts");
+            fun.runtimeEmbedFile(.codegen, "eval/feedback.ts");
         try Run.boot(ctx, entry_point_buf[0 .. cwd.len + trigger.len], null);
         Global.exit(0);
     }
 };
 
-pub const BunXFastPath = struct {
-    const shim_impl = @import("../install/windows-shim/bun_shim_impl.zig");
-    const debug = Output.scoped(.BunXFastPath, .visible);
+pub const FunXFastPath = struct {
+    const shim_impl = @import("../install/windows-shim/fun_shim_impl.zig");
+    const debug = Output.scoped(.FunXFastPath, .visible);
 
-    var direct_launch_buffer: bun.WPathBuffer = undefined;
-    var environment_buffer: bun.WPathBuffer = undefined;
+    var direct_launch_buffer: fun.WPathBuffer = undefined;
+    var environment_buffer: fun.WPathBuffer = undefined;
 
     /// Append a single UTF-8 argument to a Windows command line (UTF-16), with proper quoting and escaping.
     /// Returns the number of UTF-16 code units written.
@@ -2027,7 +2027,7 @@ pub const BunXFastPath = struct {
         var temp_buf: [2048]u16 = undefined;
 
         // Convert UTF-8 to UTF-16
-        const utf16_result = bun.strings.convertUTF8toUTF16InBuffer(&temp_buf, arg);
+        const utf16_result = fun.strings.convertUTF8toUTF16InBuffer(&temp_buf, arg);
         const source = temp_buf[0..utf16_result.len];
         const len = source.len;
 
@@ -2101,17 +2101,17 @@ pub const BunXFastPath = struct {
 
     /// If this returns, it implies the fast path cannot be taken
     fn tryLaunch(ctx: Command.Context, path_to_use: [:0]u16, env: *DotEnv.Loader, passthrough: []const []const u8) void {
-        if (!bun.FeatureFlags.windows_bunx_fast_path) return;
+        if (!fun.FeatureFlags.windows_bunx_fast_path) return;
 
-        bun.assert(bun.isSliceInBufferT(u16, path_to_use, &BunXFastPath.direct_launch_buffer));
-        var command_line = BunXFastPath.direct_launch_buffer[path_to_use.len..];
+        fun.assert(fun.isSliceInBufferT(u16, path_to_use, &FunXFastPath.direct_launch_buffer));
+        var command_line = FunXFastPath.direct_launch_buffer[path_to_use.len..];
 
-        debug("Attempting to find and load bunx file: '{f}'", .{bun.fmt.utf16(path_to_use)});
+        debug("Attempting to find and load funx file: '{f}'", .{fun.fmt.utf16(path_to_use)});
         if (Environment.allow_assert) {
-            bun.assert(std.fs.path.isAbsoluteWindowsWTF16(path_to_use));
+            fun.assert(std.fs.path.isAbsoluteWindowsWTF16(path_to_use));
         }
-        const handle = (bun.sys.openFileAtWindows(
-            bun.invalid_fd, // absolute path is given
+        const handle = (fun.sys.openFileAtWindows(
+            fun.invalid_fd, // absolute path is given
             path_to_use,
             .{
                 .access_mask = windows.STANDARD_RIGHTS_READ | windows.FILE_READ_DATA | windows.FILE_READ_ATTRIBUTES | windows.FILE_READ_EA | windows.SYNCHRONIZE,
@@ -2119,7 +2119,7 @@ pub const BunXFastPath = struct {
                 .options = windows.FILE_NON_DIRECTORY_FILE | windows.FILE_SYNCHRONOUS_IO_NONALERT,
             },
         ).unwrap() catch |err| {
-            debug("Failed to open bunx file: '{}'", .{err});
+            debug("Failed to open funx file: '{}'", .{err});
             return;
         }).cast();
 
@@ -2138,31 +2138,31 @@ pub const BunXFastPath = struct {
         }
         ctx.passthrough = passthrough;
 
-        const run_ctx = shim_impl.FromBunRunContext{
+        const run_ctx = shim_impl.FromFunRunContext{
             .handle = handle,
             .base_path = path_to_use[4..],
             .arguments = command_line[0..i],
-            .force_use_bun = ctx.debug.run_in_bun,
-            .direct_launch_with_bun_js = &directLaunchCallback,
+            .force_use_fun = ctx.debug.run_in_fun,
+            .direct_launch_with_fun_js = &directLaunchCallback,
             .cli_context = ctx,
             .environment = env.map.writeWindowsEnvBlock(&environment_buffer) catch return,
         };
 
         if (Environment.isDebug) {
-            debug("run_ctx.handle: '{f}'", .{bun.FD.fromSystem(handle)});
-            debug("run_ctx.base_path: '{f}'", .{bun.fmt.utf16(run_ctx.base_path)});
-            debug("run_ctx.arguments: '{f}'", .{bun.fmt.utf16(run_ctx.arguments)});
-            debug("run_ctx.force_use_bun: '{}'", .{run_ctx.force_use_bun});
+            debug("run_ctx.handle: '{f}'", .{fun.FD.fromSystem(handle)});
+            debug("run_ctx.base_path: '{f}'", .{fun.fmt.utf16(run_ctx.base_path)});
+            debug("run_ctx.arguments: '{f}'", .{fun.fmt.utf16(run_ctx.arguments)});
+            debug("run_ctx.force_use_fun: '{}'", .{run_ctx.force_use_fun});
         }
 
-        shim_impl.tryStartupFromBunJS(run_ctx);
+        shim_impl.tryStartupFromFunJS(run_ctx);
 
         debug("did not start via shim", .{});
     }
 
     fn directLaunchCallback(wpath: []u16, ctx: Command.Context) void {
-        const utf8 = bun.strings.convertUTF16toUTF8InBuffer(
-            bun.reinterpretSlice(u8, &direct_launch_buffer),
+        const utf8 = fun.strings.convertUTF16toUTF8InBuffer(
+            fun.reinterpretSlice(u8, &direct_launch_buffer),
             wpath,
         ) catch return;
         Run.boot(ctx, utf8, null) catch |err| {
@@ -2186,19 +2186,19 @@ const which = @import("../which/which.zig").which;
 const yarn_commands = @import("./list-of-yarn-commands.zig").all_yarn_commands;
 const windows = std.os.windows;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const clap = bun.clap;
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const strings = bun.strings;
-const transpiler = bun.transpiler;
-const Run = bun.bun_js.Run;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const clap = fun.clap;
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const strings = fun.strings;
+const transpiler = fun.transpiler;
+const Run = fun.fun_js.Run;
+const api = fun.schema.api;
 
-const CLI = bun.cli;
+const CLI = fun.cli;
 const Arguments = CLI.Arguments;
 const Command = CLI.Command;

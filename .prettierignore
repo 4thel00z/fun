@@ -1,4 +1,4 @@
-src/bun.js/WebKit
+src/fun.js/WebKit
 vendor
 test/snapshots
 test/js/deno
@@ -8,7 +8,7 @@ src/react-refresh.js
 test/snippets
 test/js/node/test
 test/napi/node-napi-tests
-bun.lock
+fun.lock
 
 # the output codeblocks need to stay minified
 docs/bundler/minifier.mdx

@@ -1,11 +1,11 @@
-import { heapStats } from "bun:jsc";
+import { heapStats } from "fun:jsc";
 
-// This file is meant to be able to run in node and bun
+// This file is meant to be able to run in node and fun
 const http2 = require("http2");
 const { TLS_OPTIONS, nodeEchoServer } = require("./http2-helpers.cjs");
 function getHeapStats() {
-  if (globalThis.Bun) {
-    const heapStats = require("bun:jsc").heapStats;
+  if (globalThis.Fun) {
+    const heapStats = require("fun:jsc").heapStats;
     return heapStats().objectTypeCounts;
   } else {
     return {
@@ -16,14 +16,14 @@ function getHeapStats() {
     };
   }
 }
-const gc = globalThis.gc || globalThis.Bun?.gc || (() => {});
+const gc = globalThis.gc || globalThis.Fun?.gc || (() => {});
 const sleep = dur => new Promise(resolve => setTimeout(resolve, dur));
 const ASAN_MULTIPLIER = process.env.ASAN_OPTIONS ? 1 / 10 : 1;
 
 // X iterations should be enough to detect a leak
 const ITERATIONS = 20 * ASAN_MULTIPLIER;
 // lets send a bigish payload
-// const PAYLOAD = Buffer.from("BUN".repeat((1024 * 128) / 3));
+// const PAYLOAD = Buffer.from("FUN".repeat((1024 * 128) / 3));
 const PAYLOAD = Buffer.alloc(1024 * 128, "b");
 const MULTIPLEX = 50 * ASAN_MULTIPLIER;
 

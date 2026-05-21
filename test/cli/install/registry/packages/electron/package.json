@@ -5,7 +5,7 @@
 			"name": "electron",
 			"version": "1.0.0",
 			"scripts": {
-				"preinstall": "bun index.js"
+				"preinstall": "fun index.js"
 			},
 			"_id": "electron@1.0.0",
 			"_nodeVersion": "21.6.0",

@@ -1,7 +1,7 @@
 /// Represents a position in source code with line and column information
 pub const ZigStackFramePosition = extern struct {
-    line: bun.Ordinal,
-    column: bun.Ordinal,
+    line: fun.Ordinal,
+    column: fun.Ordinal,
     /// -1 if not present
     line_start_byte: c_int,
 
@@ -17,8 +17,8 @@ pub const ZigStackFramePosition = extern struct {
 
     pub fn decode(reader: anytype) !@This() {
         return .{
-            .line = bun.Ordinal.fromZeroBased(try reader.readValue(i32)),
-            .column = bun.Ordinal.fromZeroBased(try reader.readValue(i32)),
+            .line = fun.Ordinal.fromZeroBased(try reader.readValue(i32)),
+            .column = fun.Ordinal.fromZeroBased(try reader.readValue(i32)),
         };
     }
 
@@ -28,5 +28,5 @@ pub const ZigStackFramePosition = extern struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

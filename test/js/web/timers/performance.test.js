@@ -1,4 +1,4 @@
-import { expect, it } from "bun:test";
+import { expect, it } from "fun:test";
 import { isWindows } from "harness";
 
 it("performance.clearResourceTimings()", () => {
@@ -29,18 +29,18 @@ it("performance.now() should be monotonic", () => {
   if (isWindows) {
     // Timer precision is monotonic on Windows, but it is 100ns of precision
     // making it extremely easy to hit overlapping timer values here.
-    Bun.sleepSync(0.001);
+    Fun.sleepSync(0.001);
   }
-  expect(Bun.nanoseconds()).toBeGreaterThan(0);
-  expect(Bun.nanoseconds()).toBeGreaterThan(sixth);
-  expect(Bun.nanoseconds()).toBeNumber(true);
+  expect(Fun.nanoseconds()).toBeGreaterThan(0);
+  expect(Fun.nanoseconds()).toBeGreaterThan(sixth);
+  expect(Fun.nanoseconds()).toBeNumber(true);
 });
 
 it("performance.timeOrigin + performance.now() should be similar to Date.now()", () => {
   expect(Math.abs(performance.timeOrigin + performance.now() - Date.now()) < 1000).toBe(true);
 });
 
-// https://github.com/oven-sh/bun/issues/5604
+// https://github.com/underdoc-org/fun/issues/5604
 it("performance.now() DOMJIT", () => {
   // This test is very finnicky.
   // It has to return true || return false to reproduce. Throwing an error doesn't work.

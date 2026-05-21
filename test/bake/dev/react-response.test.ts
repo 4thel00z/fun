@@ -1,4 +1,4 @@
-import { expect } from "bun:test";
+import { expect } from "fun:test";
 import { ByteBuffer } from "peechy";
 import { decodeFallbackMessageContainer } from "../../../src/api/schema";
 import { devTest } from "../bake-harness";

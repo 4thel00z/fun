@@ -44,8 +44,8 @@
 #include <wtf/ListHashSet.h>
 #include <wtf/Seconds.h>
 
-extern "C" uint64_t Bun__readOriginTimer(void*);
-extern "C" double Bun__readOriginTimerStart(void*);
+extern "C" uint64_t Fun__readOriginTimer(void*);
+extern "C" double Fun__readOriginTimerStart(void*);
 
 namespace JSC {
 class JSGlobalObject;

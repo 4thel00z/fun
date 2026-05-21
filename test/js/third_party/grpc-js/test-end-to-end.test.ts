@@ -25,7 +25,7 @@ import {
   sendUnaryData,
 } from "@grpc/grpc-js";
 import { ServiceClient, ServiceClientConstructor } from "@grpc/grpc-js/build/src/make-client";
-import { afterEach, describe, it } from "bun:test";
+import { afterEach, describe, it } from "fun:test";
 import assert from "node:assert";
 import * as path from "path";
 import { loadProtoFile } from "./common";

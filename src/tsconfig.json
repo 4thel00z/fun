@@ -1,7 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    // baseUrl needed until resolver fix propagates to system Bun used during build
+    // baseUrl needed until resolver fix propagates to system Fun used during build
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
@@ -11,5 +11,5 @@
   },
   "include": ["**/*.ts", "**/*.tsx"],
   // separate projects have extra settings that only apply in those scopes
-  "exclude": ["js", "bake", "init", "create", "bun.js/bindings/libuv"]
+  "exclude": ["js", "bake", "init", "create", "fun.js/bindings/libuv"]
 }

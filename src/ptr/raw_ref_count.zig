@@ -11,13 +11,13 @@ pub const DecrementResult = enum {
 /// A simple wrapper around an integer reference count. This type doesn't do any memory management
 /// itself.
 ///
-/// This type may be useful for implementing the interface required by `bun.ptr.ExternalShared`.
+/// This type may be useful for implementing the interface required by `fun.ptr.ExternalShared`.
 pub fn RawRefCount(comptime Int: type, comptime thread_safety: ThreadSafety) type {
     return struct {
         const Self = @This();
 
         raw_value: if (thread_safety == .thread_safe) std.atomic.Value(Int) else Int,
-        #thread_lock: if (thread_safety == .single_threaded) bun.safety.ThreadLock else void,
+        #thread_lock: if (thread_safety == .single_threaded) fun.safety.ThreadLock else void,
 
         /// Usually the initial count should be 1.
         pub fn init(initial_count: Int) Self {
@@ -41,7 +41,7 @@ pub fn RawRefCount(comptime Int: type, comptime thread_safety: ThreadSafety) typ
                 },
                 .thread_safe => {
                     const old = self.raw_value.fetchAdd(1, .monotonic);
-                    bun.assertf(
+                    fun.assertf(
                         old != std.math.maxInt(Int),
                         "overflow of thread-safe ref count",
                         .{},
@@ -59,7 +59,7 @@ pub fn RawRefCount(comptime Int: type, comptime thread_safety: ThreadSafety) typ
                 },
                 .thread_safe => {
                     const old = self.raw_value.fetchSub(1, .acq_rel);
-                    bun.assertf(old != 0, "underflow of thread-safe ref count", .{});
+                    fun.assertf(old != 0, "underflow of thread-safe ref count", .{});
                     break :blk old - 1;
                 },
             };
@@ -70,5 +70,5 @@ pub fn RawRefCount(comptime Int: type, comptime thread_safety: ThreadSafety) typ
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

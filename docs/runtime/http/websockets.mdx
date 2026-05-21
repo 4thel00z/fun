@@ -1,22 +1,22 @@
 ---
 title: WebSockets
-description: Server-side WebSockets in Bun
+description: Server-side WebSockets in Fun
 ---
 
-`Bun.serve()` supports server-side WebSockets, with on-the-fly compression, TLS support, and a Bun-native publish-subscribe API.
+`Fun.serve()` supports server-side WebSockets, with on-the-fly compression, TLS support, and a Fun-native publish-subscribe API.
 
 <Info>
 
 **⚡️ 7x more throughput**
 
-Bun's WebSockets are fast. For a [simple chatroom](https://github.com/oven-sh/bun/tree/main/bench/websocket-server/README.md) on Linux x64, Bun can handle 7x more requests per second than Node.js + [`"ws"`](https://github.com/websockets/ws).
+Fun's WebSockets are fast. For a [simple chatroom](https://github.com/underdoc-org/fun/tree/main/bench/websocket-server/README.md) on Linux x64, Fun can handle 7x more requests per second than Node.js + [`"ws"`](https://github.com/websockets/ws).
 
 | **Messages sent per second** | **Runtime**                    | **Clients** |
 | ---------------------------- | ------------------------------ | ----------- |
-| ~700,000                     | (`Bun.serve`) Bun v0.2.1 (x64) | 16          |
+| ~700,000                     | (`Fun.serve`) Fun v0.2.1 (x64) | 16          |
 | ~100,000                     | (`ws`) Node v18.10.0 (x64)     | 16          |
 
-Internally Bun's WebSocket implementation is built on [uWebSockets](https://github.com/uNetworking/uWebSockets).
+Internally Fun's WebSocket implementation is built on [uWebSockets](https://github.com/uNetworking/uWebSockets).
 
 </Info>
 
@@ -24,10 +24,10 @@ Internally Bun's WebSocket implementation is built on [uWebSockets](https://gith
 
 ## Start a WebSocket server
 
-Below is a WebSocket server built with `Bun.serve`, in which all incoming requests are [upgraded](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) to WebSocket connections in the `fetch` handler. The socket handlers are declared in the `websocket` parameter.
+Below is a WebSocket server built with `Fun.serve`, in which all incoming requests are [upgraded](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism) to WebSocket connections in the `fetch` handler. The socket handlers are declared in the `websocket` parameter.
 
 ```ts server.ts icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   fetch(req, server) {
     // upgrade the request to a WebSocket
     if (server.upgrade(req)) {
@@ -42,7 +42,7 @@ Bun.serve({
 The following WebSocket event handlers are supported:
 
 ```ts server.ts icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   fetch(req, server) {}, // upgrade logic
   websocket: {
     message(ws, message) {}, // a message is received
@@ -55,9 +55,9 @@ Bun.serve({
 
 <Accordion title="An API designed for speed">
 
-In Bun, handlers are declared once per server, instead of per socket.
+In Fun, handlers are declared once per server, instead of per socket.
 
-`ServerWebSocket` expects you to pass a `WebSocketHandler` object to the `Bun.serve()` method which has methods for `open`, `message`, `close`, `drain`, and `error`. This is different than the client-side `WebSocket` class which extends `EventTarget` (onmessage, onopen, onclose),
+`ServerWebSocket` expects you to pass a `WebSocketHandler` object to the `Fun.serve()` method which has methods for `open`, `message`, `close`, `drain`, and `error`. This is different than the client-side `WebSocket` class which extends `EventTarget` (onmessage, onopen, onclose),
 
 Clients tend to not have many socket connections open so an event-based API makes sense.
 
@@ -67,16 +67,16 @@ But servers tend to have **many** socket connections open, which means:
 - Extra memory spent on storing references to callbacks function for each connection
 - Usually, people create new functions for each connection, which also means more memory
 
-So, instead of using an event-based API, `ServerWebSocket` expects you to pass a single object with methods for each event in `Bun.serve()` and it is reused for each connection.
+So, instead of using an event-based API, `ServerWebSocket` expects you to pass a single object with methods for each event in `Fun.serve()` and it is reused for each connection.
 
 This leads to less memory usage and less time spent adding/removing event listeners.
 
 </Accordion>
 
-The first argument to each handler is the instance of `ServerWebSocket` handling the event. The `ServerWebSocket` class is a fast, Bun-native implementation of [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) with some additional features.
+The first argument to each handler is the instance of `ServerWebSocket` handling the event. The `ServerWebSocket` class is a fast, Fun-native implementation of [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) with some additional features.
 
 ```ts server.ts icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   fetch(req, server) {}, // upgrade logic
   websocket: {
     message(ws, message) {
@@ -91,7 +91,7 @@ Bun.serve({
 Each `ServerWebSocket` instance has a `.send()` method for sending messages to the client. It supports a range of input types.
 
 ```ts server.ts icon="/icons/typescript.svg" focus={4-6}
-Bun.serve({
+Fun.serve({
   fetch(req, server) {}, // upgrade logic
   websocket: {
     message(ws, message) {
@@ -105,11 +105,11 @@ Bun.serve({
 
 ### Headers
 
-Once the upgrade succeeds, Bun will send a `101 Switching Protocols` response per the [spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism). Additional `headers` can be attached to this `Response` in the call to `server.upgrade()`.
+Once the upgrade succeeds, Fun will send a `101 Switching Protocols` response per the [spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism). Additional `headers` can be attached to this `Response` in the call to `server.upgrade()`.
 
 {/* prettier-ignore */}
 ```ts server.ts icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   fetch(req, server) {
     const sessionId = await generateSessionId();
     server.upgrade(req, {
@@ -135,9 +135,9 @@ type WebSocketData = {
   authToken: string;
 };
 
-Bun.serve({
+Fun.serve({
   fetch(req, server) {
-    const cookies = new Bun.CookieMap(req.headers.get("cookie")!);
+    const cookies = new Fun.CookieMap(req.headers.get("cookie")!);
 
     server.upgrade(req, {
       // this object must conform to WebSocketData
@@ -169,7 +169,7 @@ Bun.serve({
 ```
 
 <Info>
-**Note:** Previously, you could specify the type of `ws.data` using a type parameter on `Bun.serve`, like `Bun.serve<MyData>({...})`. This pattern was removed due to [a limitation in TypeScript](https://github.com/microsoft/TypeScript/issues/26242) in favor of the `data` property shown above.
+**Note:** Previously, you could specify the type of `ws.data` using a type parameter on `Fun.serve`, like `Fun.serve<MyData>({...})`. This pattern was removed due to [a limitation in TypeScript](https://github.com/microsoft/TypeScript/issues/26242) in favor of the `data` property shown above.
 </Info>
 
 To connect to this server from the browser, create a new `WebSocket`.
@@ -191,10 +191,10 @@ The cookies that are currently set on the page will be sent with the WebSocket u
 
 ### Pub/Sub
 
-Bun's `ServerWebSocket` implementation implements a native publish-subscribe API for topic-based broadcasting. Individual sockets can `.subscribe()` to a topic (specified with a string identifier) and `.publish()` messages to all other subscribers to that topic (excluding itself). This topic-based broadcast API is similar to [MQTT](https://en.wikipedia.org/wiki/MQTT) and [Redis Pub/Sub](https://redis.io/topics/pubsub).
+Fun's `ServerWebSocket` implementation implements a native publish-subscribe API for topic-based broadcasting. Individual sockets can `.subscribe()` to a topic (specified with a string identifier) and `.publish()` messages to all other subscribers to that topic (excluding itself). This topic-based broadcast API is similar to [MQTT](https://en.wikipedia.org/wiki/MQTT) and [Redis Pub/Sub](https://redis.io/topics/pubsub).
 
 ```ts server.ts icon="/icons/typescript.svg"
-const server = Bun.serve({
+const server = Fun.serve({
   fetch(req, server) {
     const url = new URL(req.url);
     if (url.pathname === "/chat") {
@@ -236,7 +236,7 @@ console.log(`Listening on ${server.hostname}:${server.port}`);
 Calling `.publish(data)` will send the message to all subscribers of a topic _except_ the socket that called `.publish()`. To send a message to all subscribers of a topic, use the `.publish()` method on the `Server` instance.
 
 ```ts
-const server = Bun.serve({
+const server = Fun.serve({
   websocket: {
     // ...
   },
@@ -251,7 +251,7 @@ server.publish("the-group-chat", "Hello world");
 Per-message [compression](https://websockets.readthedocs.io/en/stable/topics/compression.html) can be enabled with the `perMessageDeflate` parameter.
 
 ```ts server.ts icon="/icons/typescript.svg"
-Bun.serve({
+Fun.serve({
   websocket: {
     perMessageDeflate: true, // [!code ++]
   },
@@ -278,10 +278,10 @@ This gives you better control over backpressure in your server.
 
 ### Timeouts and limits
 
-By default, Bun will close a WebSocket connection if it is idle for 120 seconds. This can be configured with the `idleTimeout` parameter.
+By default, Fun will close a WebSocket connection if it is idle for 120 seconds. This can be configured with the `idleTimeout` parameter.
 
 ```ts
-Bun.serve({
+Fun.serve({
   fetch(req, server) {}, // upgrade logic
   websocket: {
     idleTimeout: 60, // 60 seconds  // [!code ++]
@@ -289,10 +289,10 @@ Bun.serve({
 });
 ```
 
-Bun will also close a WebSocket connection if it receives a message that is larger than 16 MB. This can be configured with the `maxPayloadLength` parameter.
+Fun will also close a WebSocket connection if it receives a message that is larger than 16 MB. This can be configured with the `maxPayloadLength` parameter.
 
 ```ts
-Bun.serve({
+Fun.serve({
   fetch(req, server) {}, // upgrade logic
   websocket: {
     maxPayloadLength: 1024 * 1024, // 1 MB  // [!code ++]
@@ -304,7 +304,7 @@ Bun.serve({
 
 ## Connect to a `Websocket` server
 
-Bun implements the `WebSocket` class. To create a WebSocket client that connects to a `ws://` or `wss://` server, create an instance of `WebSocket`, as you would in the browser.
+Fun implements the `WebSocket` class. To create a WebSocket client that connects to a `ws://` or `wss://` server, create an instance of `WebSocket`, as you would in the browser.
 
 ```ts
 const socket = new WebSocket("ws://localhost:3000");
@@ -315,7 +315,7 @@ const socket2 = new WebSocket("ws://localhost:3000", ["soap", "wamp"]);
 
 In browsers, the cookies that are currently set on the page will be sent with the WebSocket upgrade request. This is a standard feature of the `WebSocket` API.
 
-For convenience, Bun lets you setting custom headers directly in the constructor. This is a Bun-specific extension of the `WebSocket` standard. _This will not work in browsers._
+For convenience, Fun lets you setting custom headers directly in the constructor. This is a Fun-specific extension of the `WebSocket` standard. _This will not work in browsers._
 
 ```ts
 const socket = new WebSocket("ws://localhost:3000", {
@@ -346,7 +346,7 @@ socket.addEventListener("error", event => {});
 ## Reference
 
 ```ts See Typescript Definitions expandable
-namespace Bun {
+namespace Fun {
   export function serve(params: {
     fetch: (req: Request, server: Server) => Response | Promise<Response>;
     websocket?: {

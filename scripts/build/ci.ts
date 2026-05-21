@@ -13,7 +13,7 @@ import { basename, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 // @ts-ignore — utils.mjs has JSDoc types but no .d.ts
 import * as utils from "../utils.mjs";
-import { bunExeName, shouldStrip, type BunOutput } from "./bun.ts";
+import { funExeName, shouldStrip, type FunOutput } from "./fun.ts";
 import type { Config } from "./config.ts";
 import { BuildError } from "./error.ts";
 
@@ -198,9 +198,9 @@ export async function spawnWithAnnotations(
 // Buildkite artifacts — split-build upload/download
 //
 // CI splits builds per-platform into three parallel steps:
-//   build-cpp  → libbun.a + all dep libs (this node uploads)
-//   build-zig  → bun-zig.o (this node uploads)
-//   build-bun  → downloads both, links (this node downloads first)
+//   build-cpp  → libfun.a + all dep libs (this node uploads)
+//   build-zig  → fun-zig.o (this node uploads)
+//   build-fun  → downloads both, links (this node downloads first)
 //
 // Paths are uploaded RELATIVE TO buildDir. buildkite-agent recreates the
 // directory structure on download. The link-only ninja graph expects files
@@ -212,7 +212,7 @@ export async function spawnWithAnnotations(
  * Upload build artifacts after a successful cpp-only or zig-only build.
  * Runs `buildkite-agent artifact upload` with paths relative to buildDir.
  *
- * Large archives (libbun-*.a, >1GB) are gzipped — buildkite artifact
+ * Large archives (libfun-*.a, >1GB) are gzipped — buildkite artifact
  * storage is fine but upload/download is faster. link-only gunzips.
  *
  * ORDER MATTERS: upload dep libs FIRST (some live in cache/ — WebKit
@@ -221,7 +221,7 @@ export async function spawnWithAnnotations(
  * old cmake had this ordering implicitly — each dep's build uploaded
  * its libs immediately; rm only ran when the archive target fired.
  */
-export function uploadArtifacts(cfg: Config, output: BunOutput): void {
+export function uploadArtifacts(cfg: Config, output: FunOutput): void {
   if (!isBuildkite) {
     console.log("Not in Buildkite — skipping artifact upload");
     return;
@@ -241,7 +241,7 @@ export function uploadArtifacts(cfg: Config, output: BunOutput): void {
 
   // ─── Phase 1: upload dep libs (before we rm anything) ───
   // In Buildkite, ninja already uploaded these via the bk_upload edge in
-  // bun.ts (overlapped with the cxx compile). The stamp is the witness; if
+  // fun.ts (overlapped with the cxx compile). The stamp is the witness; if
   // it's missing (agent unavailable mid-build, or running cpp-only outside
   // a real BK job), fall back to uploading here so link-only still gets them.
   if (existsSync(resolve(cfg.buildDir, ".dep-libs-uploaded"))) {
@@ -270,7 +270,7 @@ export function uploadArtifacts(cfg: Config, output: BunOutput): void {
     rmSync(resolve(cfg.buildDir, "obj"), { recursive: true, force: true });
     rmSync(cfg.cacheDir, { recursive: true, force: true });
 
-    // gzip: posix only (matches cmake — only libbun-*.a are gzipped,
+    // gzip: posix only (matches cmake — only libfun-*.a are gzipped,
     // Windows .lib archives uploaded uncompressed). gzip isn't a
     // standard Windows tool anyway; the .lib is smaller (PDB is separate).
     // downloadArtifacts() only gunzips .gz files it finds, so Windows
@@ -300,40 +300,40 @@ function upload(paths: string[], cwd: string): void {
 // ───────────────────────────────────────────────────────────────────────────
 // Link-only post-link: features.json + packaging + upload
 //
-// The zip contract (matching cmake's BuildBun.cmake packaging — test steps
+// The zip contract (matching cmake's BuildFun.cmake packaging — test steps
 // download these by exact name):
 //
-//   ${bunTriplet}-profile.zip   (plain release)
-//     └── ${bunTriplet}-profile/
-//           ├── bun-profile[.exe]
+//   ${funTriplet}-profile.zip   (plain release)
+//     └── ${funTriplet}-profile/
+//           ├── fun-profile[.exe]
 //           ├── features.json
-//           ├── bun-profile.linker-map   (linux/mac non-asan)
-//           ├── bun-profile.pdb          (windows)
-//           └── bun-profile.dSYM         (mac)
+//           ├── fun-profile.linker-map   (linux/mac non-asan)
+//           ├── fun-profile.pdb          (windows)
+//           └── fun-profile.dSYM         (mac)
 //
-//   ${bunTriplet}.zip           (stripped, plain release only)
-//     └── ${bunTriplet}/
-//           └── bun[.exe]
+//   ${funTriplet}.zip           (stripped, plain release only)
+//     └── ${funTriplet}/
+//           └── fun[.exe]
 //
-//   ${bunTriplet}-asan.zip      (asan — single zip, no strip)
-//     └── ${bunTriplet}-asan/
-//           ├── bun-asan
+//   ${funTriplet}-asan.zip      (asan — single zip, no strip)
+//     └── ${funTriplet}-asan/
+//           ├── fun-asan
 //           └── features.json
 //
-// bunTriplet = bun-${os}-${arch}[-musl][-baseline]
+// funTriplet = fun-${os}-${arch}[-musl][-baseline]
 //
-// Test steps (runner.node.mjs) download '**' from build-bun and pick any
-// bun*.zip; baseline-verification step downloads ${triplet}.zip specifically
-// and expects ${triplet}/bun inside.
+// Test steps (runner.node.mjs) download '**' from build-fun and pick any
+// fun*.zip; baseline-verification step downloads ${triplet}.zip specifically
+// and expects ${triplet}/fun inside.
 // ───────────────────────────────────────────────────────────────────────────
 
 /**
- * Base triplet (bun-os-arch[-musl][-baseline]). Variant suffix (-profile,
+ * Base triplet (fun-os-arch[-musl][-baseline]). Variant suffix (-profile,
  * -asan) is added by the caller. Matches ci.mjs getTargetTriplet() and
- * cmake's bunTriplet — any drift breaks test-step downloads.
+ * cmake's funTriplet — any drift breaks test-step downloads.
  */
-function computeBunTriplet(cfg: Config): string {
-  let t = `bun-${cfg.os}-${cfg.arch}`;
+function computeFunTriplet(cfg: Config): string {
+  let t = `fun-${cfg.os}-${cfg.arch}`;
   if (cfg.abi === "musl") t += "-musl";
   if (cfg.abi === "android") t += "-android";
   if (cfg.baseline) t += "-baseline";
@@ -342,12 +342,12 @@ function computeBunTriplet(cfg: Config): string {
 
 /**
  * Post-link packaging and upload for link-only mode. Runs AFTER ninja
- * succeeds — at that point bun-profile (and stripped bun) exist.
+ * succeeds — at that point fun-profile (and stripped fun) exist.
  *
  * Generates features.json, packages into zips,
  * uploads. Contract with test steps: see block comment above.
  */
-export function packageAndUpload(cfg: Config, output: BunOutput): void {
+export function packageAndUpload(cfg: Config, output: FunOutput): void {
   if (!isBuildkite || cfg.mode !== "link-only") return;
 
   const exe = output.exe;
@@ -356,12 +356,12 @@ export function packageAndUpload(cfg: Config, output: BunOutput): void {
   }
 
   const buildDir = cfg.buildDir;
-  const exeName = bunExeName(cfg); // bun-profile, bun-asan, etc.
-  const bunTriplet = computeBunTriplet(cfg);
+  const exeName = funExeName(cfg); // fun-profile, fun-asan, etc.
+  const funTriplet = computeFunTriplet(cfg);
 
   // ─── features.json ───
-  // Run the built bun with features.mjs to dump its feature flags.
-  // Env vars match cmake's (BuildBun.cmake ~1462).
+  // Run the built fun with features.mjs to dump its feature flags.
+  // Env vars match cmake's (BuildFun.cmake ~1462).
   // No setarch wrapper — cmake doesn't use one for features.mjs either
   // (only for the --revision smoke test).
   // Cross-compiled binaries can't run on the build host — write a stub.
@@ -371,19 +371,19 @@ export function packageAndUpload(cfg: Config, output: BunOutput): void {
   } else {
     console.log("Generating features.json...");
     run([exe, resolve(cfg.cwd, "scripts", "features.mjs")], buildDir, {
-      BUN_GARBAGE_COLLECTOR_LEVEL: "1",
-      BUN_DEBUG_QUIET_LOGS: "1",
-      BUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
+      FUN_GARBAGE_COLLECTOR_LEVEL: "1",
+      FUN_DEBUG_QUIET_LOGS: "1",
+      FUN_FEATURE_FLAG_INTERNAL_FOR_TESTING: "1",
     });
   }
 
   const zipPaths: string[] = [];
 
   // ─── Profile/variant zip ───
-  // cmake's bunPath: string(REPLACE bun ${bunTriplet} bunPath ${bun})
-  // where ${bun} is the target name (bun-profile, bun-asan, ...).
-  // Result: bun-linux-x64-profile, bun-linux-x64-asan, etc.
-  const bunPath = exeName.replace(/^bun/, bunTriplet);
+  // cmake's funPath: string(REPLACE fun ${funTriplet} funPath ${fun})
+  // where ${fun} is the target name (fun-profile, fun-asan, ...).
+  // Result: fun-linux-x64-profile, fun-linux-x64-asan, etc.
+  const funPath = exeName.replace(/^fun/, funTriplet);
   const files: string[] = [basename(exe), "features.json"];
   // Debug symbols / linker map — platform-specific extras.
   if (cfg.windows) {
@@ -395,15 +395,15 @@ export function packageAndUpload(cfg: Config, output: BunOutput): void {
   if (cfg.unix && !cfg.asan) {
     files.push(`${exeName}.linker-map`);
   }
-  zipPaths.push(makeZip(cfg, bunPath, files));
+  zipPaths.push(makeZip(cfg, funPath, files));
 
   // ─── Stripped zip ───
-  // Only for plain release (shouldStrip). Just the stripped `bun` binary.
-  // cmake: bunStripPath = string(REPLACE bun ${bunTriplet} bunStripPath bun) = bunTriplet.
+  // Only for plain release (shouldStrip). Just the stripped `fun` binary.
+  // cmake: funStripPath = string(REPLACE fun ${funTriplet} funStripPath fun) = funTriplet.
   if (shouldStrip(cfg) && output.strippedExe !== undefined) {
-    zipPaths.push(makeZip(cfg, bunTriplet, [basename(output.strippedExe)]));
+    zipPaths.push(makeZip(cfg, funTriplet, [basename(output.strippedExe)]));
     const bytes = statSync(output.strippedExe).size;
-    run(["buildkite-agent", "meta-data", "set", `binary-size:${bunTriplet}`, String(bytes)], buildDir);
+    run(["buildkite-agent", "meta-data", "set", `binary-size:${funTriplet}`, String(bytes)], buildDir);
   }
 
   // ─── Upload ───
@@ -419,7 +419,7 @@ export function packageAndUpload(cfg: Config, output: BunOutput): void {
  * --format=zip; bsdtar does but isn't guaranteed on Linux. cmake is
  * already a required tool (we use it for nested dep builds), so this
  * adds no new dependency. Identical to cmake's own packaging approach
- * (BuildBun.cmake:1544).
+ * (BuildFun.cmake:1544).
  *
  * Files that don't exist are silently skipped (e.g., .pdb on a clean build).
  * Returns the zip path relative to buildDir (for the upload call).
@@ -450,7 +450,7 @@ function makeZip(cfg: Config, name: string, files: string[]): string {
 
   console.log(`Creating ${zip} (${copied} files)...`);
   // Relative path `name` puts `name/` prefix inside the zip — what test
-  // steps expect: they extract → `chmod +x ${triplet}/bun`.
+  // steps expect: they extract → `chmod +x ${triplet}/fun`.
   run([cfg.cmake, "-E", "tar", "cfv", zip, "--format=zip", name], buildDir);
 
   // Clean up the staging dir.
@@ -461,7 +461,7 @@ function makeZip(cfg: Config, name: string, files: string[]): string {
 
 /**
  * Download artifacts from sibling buildkite steps before a link-only build.
- * Derives sibling step keys from BUILDKITE_STEP_KEY (swap `-build-bun` →
+ * Derives sibling step keys from BUILDKITE_STEP_KEY (swap `-build-fun` →
  * `-build-cpp` / `-build-zig`). Gunzips any .gz files after download.
  *
  * Call BEFORE ninja — the downloaded files are ninja's link inputs.
@@ -476,11 +476,11 @@ export async function downloadArtifacts(cfg: Config): Promise<void> {
     });
   }
 
-  // step key is `<target>-build-bun`; siblings are `<target>-build-{cpp,zig}`.
-  const m = stepKey.match(/^(.+)-build-bun$/);
+  // step key is `<target>-build-fun`; siblings are `<target>-build-{cpp,zig}`.
+  const m = stepKey.match(/^(.+)-build-fun$/);
   if (m === null) {
     throw new BuildError(`Unexpected BUILDKITE_STEP_KEY: ${stepKey}`, {
-      hint: "Expected format: <target>-build-bun",
+      hint: "Expected format: <target>-build-fun",
     });
   }
   const targetKey = m[1]!;

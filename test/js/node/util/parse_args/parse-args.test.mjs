@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { parseArgs } from "node:util";
 
 describe("parseArgs", () => {
@@ -1059,7 +1059,7 @@ describe("parseArgs extra tests", () => {
               return `--arg${i}`;
             }),
         });
-        Bun.gc();
+        Fun.gc();
       }
       expect(Object.keys(result.values)).toHaveLength(93);
     });

@@ -10,8 +10,8 @@ pub const PatchCommand = struct {
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Command = bun.cli.Command;
+const fun = @import("fun");
+const Command = fun.cli.Command;
 
-const PackageManager = bun.install.PackageManager;
+const PackageManager = fun.install.PackageManager;
 const updatePackageJSONAndInstallCatchError = PackageManager.updatePackageJSONAndInstallCatchError;

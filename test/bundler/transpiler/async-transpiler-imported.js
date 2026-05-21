@@ -1,4 +1,4 @@
-// @bun
+// @fun
 export default 42;
 
 if (import.meta.main) {

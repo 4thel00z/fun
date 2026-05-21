@@ -1,4 +1,4 @@
-import { describe, test } from "bun:test";
+import { describe, test } from "fun:test";
 import assert from "node:assert";
 
 describe("path.posix", () => {

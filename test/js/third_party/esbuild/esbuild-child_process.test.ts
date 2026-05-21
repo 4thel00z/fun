@@ -1,11 +1,11 @@
-import { spawnSync } from "bun";
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { spawnSync } from "fun";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("esbuild", () => {
-  const { exitCode } = spawnSync([bunExe(), import.meta.dir + "/esbuild-test.js"], {
+  const { exitCode } = spawnSync([funExe(), import.meta.dir + "/esbuild-test.js"], {
     env: {
-      ...bunEnv,
+      ...funEnv,
     },
     detached: true,
     stdout: "inherit",

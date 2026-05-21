@@ -1,4 +1,4 @@
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
@@ -29,7 +29,7 @@ pending_reset: bool = false,
 closed: bool = false,
 task: jsc.WorkPoolTask = .{ .callback = undefined },
 
-pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*@This() {
+pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!*@This() {
     const arguments = callframe.argumentsUndef(4).ptr;
 
     var mode = arguments[0];
@@ -45,7 +45,7 @@ pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
         return globalThis.throwRangeError(mode_int, .{ .field_name = "mode", .min = 1, .max = 7 });
     }
 
-    const ptr = bun.new(@This(), .{
+    const ptr = fun.new(@This(), .{
         .ref_count = .init(),
         .globalThis = globalThis,
     });
@@ -59,7 +59,7 @@ pub fn estimatedSize(_: *const @This()) usize {
     return @sizeOf(@This()) + internal_state_size;
 }
 
-pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsUndef(7).slice();
     const this_value = callframe.this();
 
@@ -89,7 +89,7 @@ pub fn init(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.Cal
     return .js_undefined;
 }
 
-pub fn params(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn params(this: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const arguments = callframe.argumentsUndef(2).slice();
 
     if (arguments.len != 2) {
@@ -110,11 +110,11 @@ fn deinit(this: *@This()) void {
     this.this_value.deinit();
     this.poll_ref.deinit();
     this.stream.close();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 const Context = struct {
-    const c = bun.zlib;
+    const c = fun.zlib;
     const GZIP_HEADER_ID1: u8 = 0x1f;
     const GZIP_HEADER_ID2: u8 = 0x8b;
 
@@ -278,7 +278,7 @@ const Context = struct {
                     }
                     return this.doWorkInflate();
                 }
-                bun.assert(false); // invalid number of gzip magic number bytes read
+                fun.assert(false); // invalid number of gzip magic number bytes read
             },
             .INFLATE, .GUNZIP, .INFLATERAW => {
                 return this.doWorkInflate();
@@ -353,7 +353,7 @@ const Context = struct {
             .BROTLI_ENCODE, .BROTLI_DECODE => {},
             .ZSTD_COMPRESS, .ZSTD_DECOMPRESS => {},
         }
-        bun.assert(status == .Ok or status == .DataError);
+        fun.assert(status == .Ok or status == .DataError);
         this.mode = .NONE;
     }
 };
@@ -365,5 +365,5 @@ const CompressionStream = @import("../node_zlib_binding.zig").CompressionStream;
 const CountedKeepAlive = @import("../node_zlib_binding.zig").CountedKeepAlive;
 const Error = @import("../node_zlib_binding.zig").Error;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

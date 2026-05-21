@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 test("write(value >= 0x80)", () => {
   const buffer = Buffer.alloc(1);

@@ -1,7 +1,7 @@
 import fs from "fs";
 import tty from "tty";
 
-import { dlopen } from "bun:ffi";
+import { dlopen } from "fun:ffi";
 
 const suffix = process.platform === "darwin" ? "dylib" : "so.6";
 const libc = `libc.${suffix}`;

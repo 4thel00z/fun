@@ -1,12 +1,12 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
-// https://github.com/oven-sh/bun/issues/26669
+// https://github.com/underdoc-org/fun/issues/26669
 // WebSocket client crashes ("Pure virtual function called!") when binaryType = "blob"
 // and no event listener is attached. The missing incPendingActivityCount() allows the
 // WebSocket to be GC'd before the postTask callback runs.
 test("WebSocket with binaryType blob should not crash when GC'd before postTask", async () => {
-  await using server = Bun.serve({
+  await using server = Fun.serve({
     port: 0,
     fetch(req, server) {
       if (server.upgrade(req)) return undefined;
@@ -24,9 +24,9 @@ test("WebSocket with binaryType blob should not crash when GC'd before postTask"
     },
   });
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
 const url = process.argv[1];
@@ -42,22 +42,22 @@ async function run() {
   }
   // Force GC to collect the unreferenced WebSocket objects while postTask
   // callbacks are still pending.
-  Bun.gc(true);
-  await Bun.sleep(50);
-  Bun.gc(true);
-  await Bun.sleep(50);
-  Bun.gc(true);
-  await Bun.sleep(100);
+  Fun.gc(true);
+  await Fun.sleep(50);
+  Fun.gc(true);
+  await Fun.sleep(50);
+  Fun.gc(true);
+  await Fun.sleep(100);
 }
 await run();
-Bun.gc(true);
-await Bun.sleep(200);
+Fun.gc(true);
+await Fun.sleep(200);
 console.log("OK");
 process.exit(0);
 `,
       `ws://localhost:${server.port}`,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

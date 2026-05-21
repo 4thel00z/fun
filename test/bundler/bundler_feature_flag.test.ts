@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 import { itBundled } from "./expectBundled";
 
 describe("bundler feature flags", () => {
@@ -10,7 +10,7 @@ describe("bundler feature flags", () => {
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("SUPER_SECRET")) {
   console.log("feature enabled");
 } else {
@@ -23,7 +23,7 @@ if (feature("SUPER_SECRET")) {
           // The output should contain `true` since the feature is enabled
           api.expectFile("out.js").toInclude("true");
           api.expectFile("out.js").not.toInclude("feature(");
-          api.expectFile("out.js").not.toInclude("bun:bundle");
+          api.expectFile("out.js").not.toInclude("fun:bundle");
         },
       });
 
@@ -31,7 +31,7 @@ if (feature("SUPER_SECRET")) {
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("SUPER_SECRET")) {
   console.log("feature enabled");
 } else {
@@ -44,7 +44,7 @@ if (feature("SUPER_SECRET")) {
           // The output should contain `false` since the feature is not enabled
           api.expectFile("out.js").toInclude("false");
           api.expectFile("out.js").not.toInclude("feature(");
-          api.expectFile("out.js").not.toInclude("bun:bundle");
+          api.expectFile("out.js").not.toInclude("fun:bundle");
         },
       });
 
@@ -52,7 +52,7 @@ if (feature("SUPER_SECRET")) {
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("FLAG_A")) console.log("FLAG_A");
 if (feature("FLAG_B")) console.log("FLAG_B");
 if (feature("FLAG_C")) console.log("FLAG_C");
@@ -70,7 +70,7 @@ if (feature("FLAG_C")) console.log("FLAG_C");
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("ENABLED_FEATURE")) {
   console.log("this should be kept");
 }
@@ -92,7 +92,7 @@ if (feature("DISABLED_FEATURE")) {
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("TEST")) {
   console.log("test enabled");
 }
@@ -100,7 +100,7 @@ if (feature("TEST")) {
         },
         onAfterBundle(api) {
           // The import should be completely removed
-          api.expectFile("out.js").not.toInclude("bun:bundle");
+          api.expectFile("out.js").not.toInclude("fun:bundle");
         },
       });
 
@@ -108,7 +108,7 @@ if (feature("TEST")) {
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 function expensiveComputation() {
   return "expensive result";
 }
@@ -133,7 +133,7 @@ console.log("This should remain");
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("DISABLED")) {
   console.log("if branch - should be removed");
 } else {
@@ -152,7 +152,7 @@ if (feature("DISABLED")) {
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("ENABLED")) {
   console.log("if branch - should be kept");
 } else {
@@ -172,7 +172,7 @@ if (feature("ENABLED")) {
         backend,
         files: {
           "/a.js": `
-import { feature as checkFeature } from "bun:bundle";
+import { feature as checkFeature } from "fun:bundle";
 if (checkFeature("ALIASED")) {
   console.log("aliased feature enabled");
 } else {
@@ -191,7 +191,7 @@ if (checkFeature("ALIASED")) {
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const result = feature("TERNARY_FLAG") ? "ternary_enabled" : "ternary_disabled";
 console.log(result);
 `,
@@ -207,7 +207,7 @@ console.log(result);
         backend,
         files: {
           "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const result = feature("TERNARY_FLAG") ? "ternary_enabled" : "ternary_disabled";
 console.log(result);
 `,
@@ -227,7 +227,7 @@ console.log(result);
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const flag = "DYNAMIC";
 if (feature(flag)) {
   console.log("dynamic");
@@ -243,7 +243,7 @@ if (feature(flag)) {
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature()) {
   console.log("no args");
 }
@@ -259,13 +259,13 @@ if (feature()) {
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const x = feature("FLAG");
 console.log(x);
 `,
     },
     bundleErrors: {
-      "/a.js": ['feature() from "bun:bundle" can only be used directly in an if statement or ternary condition'],
+      "/a.js": ['feature() from "fun:bundle" can only be used directly in an if statement or ternary condition'],
     },
   });
 
@@ -273,13 +273,13 @@ console.log(x);
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 let x = feature("FLAG");
 console.log(x);
 `,
     },
     bundleErrors: {
-      "/a.js": ['feature() from "bun:bundle" can only be used directly in an if statement or ternary condition'],
+      "/a.js": ['feature() from "fun:bundle" can only be used directly in an if statement or ternary condition'],
     },
   });
 
@@ -287,12 +287,12 @@ console.log(x);
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 export default feature("FLAG");
 `,
     },
     bundleErrors: {
-      "/a.js": ['feature() from "bun:bundle" can only be used directly in an if statement or ternary condition'],
+      "/a.js": ['feature() from "fun:bundle" can only be used directly in an if statement or ternary condition'],
     },
   });
 
@@ -300,12 +300,12 @@ export default feature("FLAG");
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 console.log(feature("FLAG"));
 `,
     },
     bundleErrors: {
-      "/a.js": ['feature() from "bun:bundle" can only be used directly in an if statement or ternary condition'],
+      "/a.js": ['feature() from "fun:bundle" can only be used directly in an if statement or ternary condition'],
     },
   });
 
@@ -313,14 +313,14 @@ console.log(feature("FLAG"));
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 function foo() {
   return feature("FLAG");
 }
 `,
     },
     bundleErrors: {
-      "/a.js": ['feature() from "bun:bundle" can only be used directly in an if statement or ternary condition'],
+      "/a.js": ['feature() from "fun:bundle" can only be used directly in an if statement or ternary condition'],
     },
   });
 
@@ -328,12 +328,12 @@ function foo() {
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const arr = [feature("FLAG")];
 `,
     },
     bundleErrors: {
-      "/a.js": ['feature() from "bun:bundle" can only be used directly in an if statement or ternary condition'],
+      "/a.js": ['feature() from "fun:bundle" can only be used directly in an if statement or ternary condition'],
     },
   });
 
@@ -341,12 +341,12 @@ const arr = [feature("FLAG")];
     backend: "cli",
     files: {
       "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const obj = { flag: feature("FLAG") };
 `,
     },
     bundleErrors: {
-      "/a.js": ['feature() from "bun:bundle" can only be used directly in an if statement or ternary condition'],
+      "/a.js": ['feature() from "fun:bundle" can only be used directly in an if statement or ternary condition'],
     },
   });
 
@@ -356,7 +356,7 @@ const obj = { flag: feature("FLAG") };
       backend,
       files: {
         "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("FLAG")) {
   console.log("enabled");
 }
@@ -373,7 +373,7 @@ if (feature("FLAG")) {
       backend,
       files: {
         "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const x = feature("FLAG") ? "yes" : "no";
 console.log(x);
 `,
@@ -390,7 +390,7 @@ console.log(x);
       backend,
       files: {
         "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 if (feature("A")) {
   console.log("A");
 } else if (feature("B")) {
@@ -412,7 +412,7 @@ if (feature("A")) {
       backend,
       files: {
         "/a.js": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const x = feature("A") ? "A" : feature("B") ? "B" : "C";
 console.log(x);
 `,
@@ -426,11 +426,11 @@ console.log(x);
     });
   }
 
-  // Runtime tests - these must remain as manual tests since they test bun run and bun test
-  test("works correctly at runtime with bun run", async () => {
+  // Runtime tests - these must remain as manual tests since they test fun run and fun test
+  test("works correctly at runtime with fun run", async () => {
     using dir = tempDir("bundler-feature-flag", {
       "index.ts": `
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 
 if (feature("RUNTIME_FLAG")) {
   console.log("runtime flag enabled");
@@ -441,10 +441,10 @@ if (feature("RUNTIME_FLAG")) {
     });
 
     // First, test without the flag
-    await using proc1 = Bun.spawn({
-      cmd: [bunExe(), "run", "./index.ts"],
+    await using proc1 = Fun.spawn({
+      cmd: [funExe(), "run", "./index.ts"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -459,10 +459,10 @@ if (feature("RUNTIME_FLAG")) {
     expect(exitCode1).toBe(0);
 
     // Now test with the flag enabled
-    await using proc2 = Bun.spawn({
-      cmd: [bunExe(), "run", "--feature=RUNTIME_FLAG", "./index.ts"],
+    await using proc2 = Fun.spawn({
+      cmd: [funExe(), "run", "--feature=RUNTIME_FLAG", "./index.ts"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -477,11 +477,11 @@ if (feature("RUNTIME_FLAG")) {
     expect(exitCode2).toBe(0);
   });
 
-  test("works correctly in bun test", async () => {
+  test("works correctly in fun test", async () => {
     using dir = tempDir("bundler-feature-flag", {
       "test.test.ts": `
-import { test, expect } from "bun:test";
-import { feature } from "bun:bundle";
+import { test, expect } from "fun:test";
+import { feature } from "fun:bundle";
 
 test("feature flag in test", () => {
   if (feature("TEST_FLAG")) {
@@ -495,10 +495,10 @@ test("feature flag in test", () => {
     });
 
     // First, test without the flag
-    await using proc1 = Bun.spawn({
-      cmd: [bunExe(), "test", "./test.test.ts"],
+    await using proc1 = Fun.spawn({
+      cmd: [funExe(), "test", "./test.test.ts"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -514,10 +514,10 @@ test("feature flag in test", () => {
     expect(exitCode1).toBe(0);
 
     // Now test with the flag enabled
-    await using proc2 = Bun.spawn({
-      cmd: [bunExe(), "test", "--feature=TEST_FLAG", "./test.test.ts"],
+    await using proc2 = Fun.spawn({
+      cmd: [funExe(), "test", "--feature=TEST_FLAG", "./test.test.ts"],
       cwd: String(dir),
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

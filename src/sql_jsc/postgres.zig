@@ -23,8 +23,8 @@ pub const PostgresSQLQuery = @import("./postgres/PostgresSQLQuery.zig");
 pub const protocol = @import("../sql/postgres/PostgresProtocol.zig");
 pub const types = @import("../sql/postgres/PostgresTypes.zig");
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;
 const ZigString = jsc.ZigString;

@@ -1,6 +1,6 @@
 #include "root.h"
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ZigGlobalObject.h"
 #include "JavaScriptCore/JSType.h"
 #include "JavaScriptCore/EnumerationMode.h"
@@ -14,7 +14,7 @@
 #include "headers-handwritten.h"
 #include "ObjectBindings.h"
 
-namespace Bun {
+namespace Fun {
 using namespace JSC;
 
 class JSPropertyIterator {
@@ -36,7 +36,7 @@ public:
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(JSPropertyIterator);
 };
 
-extern "C" JSPropertyIterator* Bun__JSPropertyIterator__create(JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue, size_t* count, bool own_properties_only, bool only_non_index_properties)
+extern "C" JSPropertyIterator* Fun__JSPropertyIterator__create(JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue, size_t* count, bool own_properties_only, bool only_non_index_properties)
 {
     auto& vm = JSC::getVM(globalObject);
     JSC::JSValue value = JSValue::decode(encodedValue);
@@ -97,7 +97,7 @@ extern "C" JSPropertyIterator* Bun__JSPropertyIterator__create(JSC::JSGlobalObje
     return JSPropertyIterator::create(vm, array.releaseData());
 }
 
-extern "C" size_t Bun__JSPropertyIterator__getLongestPropertyName(JSPropertyIterator* iter, JSC::JSGlobalObject* globalObject, JSC::JSObject* object)
+extern "C" size_t Fun__JSPropertyIterator__getLongestPropertyName(JSPropertyIterator* iter, JSC::JSGlobalObject* globalObject, JSC::JSObject* object)
 {
     size_t longest = 0;
     for (const auto& prop : iter->properties->propertyNameVector()) {
@@ -109,7 +109,7 @@ extern "C" size_t Bun__JSPropertyIterator__getLongestPropertyName(JSPropertyIter
     return longest;
 }
 
-static EncodedJSValue getOwnProxyObject(JSPropertyIterator* iter, JSObject* object, const JSC::Identifier& prop, BunString* propertyName)
+static EncodedJSValue getOwnProxyObject(JSPropertyIterator* iter, JSObject* object, const JSC::Identifier& prop, FunString* propertyName)
 {
     auto& vm = iter->vm;
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -124,11 +124,11 @@ static EncodedJSValue getOwnProxyObject(JSPropertyIterator* iter, JSObject* obje
     JSValue result = slot.getValue(globalObject, prop);
     RETURN_IF_EXCEPTION(scope, {});
 
-    *propertyName = Bun::toString(prop.impl());
+    *propertyName = Fun::toString(prop.impl());
     return JSValue::encode(result);
 }
 
-extern "C" EncodedJSValue Bun__JSPropertyIterator__getNameAndValue(JSPropertyIterator* iter, JSC::JSGlobalObject* globalObject, JSC::JSObject* object, BunString* propertyName, size_t i)
+extern "C" EncodedJSValue Fun__JSPropertyIterator__getNameAndValue(JSPropertyIterator* iter, JSC::JSGlobalObject* globalObject, JSC::JSObject* object, FunString* propertyName, size_t i)
 {
     auto& vm = iter->vm;
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -149,11 +149,11 @@ extern "C" EncodedJSValue Bun__JSPropertyIterator__getNameAndValue(JSPropertyIte
     JSValue result = slot.getValue(globalObject, prop);
     RETURN_IF_EXCEPTION(scope, {});
 
-    *propertyName = Bun::toString(prop.impl());
+    *propertyName = Fun::toString(prop.impl());
     return JSValue::encode(result);
 }
 
-extern "C" EncodedJSValue Bun__JSPropertyIterator__getNameAndValueNonObservable(JSPropertyIterator* iter, JSC::JSGlobalObject* globalObject, JSC::JSObject* object, BunString* propertyName, size_t i)
+extern "C" EncodedJSValue Fun__JSPropertyIterator__getNameAndValueNonObservable(JSPropertyIterator* iter, JSC::JSGlobalObject* globalObject, JSC::JSObject* object, FunString* propertyName, size_t i)
 {
     auto& vm = iter->vm;
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -176,17 +176,17 @@ extern "C" EncodedJSValue Bun__JSPropertyIterator__getNameAndValueNonObservable(
     JSValue result = slot.getPureResult();
     RETURN_IF_EXCEPTION(scope, {});
 
-    *propertyName = Bun::toString(prop.impl());
+    *propertyName = Fun::toString(prop.impl());
     return JSValue::encode(result);
 }
 
-extern "C" void Bun__JSPropertyIterator__getName(JSPropertyIterator* iter, BunString* propertyName, size_t i)
+extern "C" void Fun__JSPropertyIterator__getName(JSPropertyIterator* iter, FunString* propertyName, size_t i)
 {
     const auto& prop = iter->properties->propertyNameVector()[i];
-    *propertyName = Bun::toString(prop.impl());
+    *propertyName = Fun::toString(prop.impl());
 }
 
-extern "C" void Bun__JSPropertyIterator__deinit(JSPropertyIterator* iter)
+extern "C" void Fun__JSPropertyIterator__deinit(JSPropertyIterator* iter)
 {
     delete iter;
 }

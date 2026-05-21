@@ -1,18 +1,18 @@
-import { spawnSync } from "bun";
-import { beforeAll, expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot, tempDirWithFiles } from "harness";
+import { spawnSync } from "fun";
+import { beforeAll, expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot, tempDirWithFiles } from "harness";
 
 let testEnv: NodeJS.Dict<string>;
 
 beforeAll(() => {
-  testEnv = { ...bunEnv };
+  testEnv = { ...funEnv };
   delete testEnv.AGENT;
 });
 
 test("CLAUDECODE=1 shows quiet test output (only failures)", async () => {
   const dir = tempDirWithFiles("claudecode-test-quiet", {
     "test2.test.js": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
 
       test("passing test", () => {
         expect(1).toBe(1);
@@ -30,8 +30,8 @@ test("CLAUDECODE=1 shows quiet test output (only failures)", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "test2.test.js"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "test2.test.js"],
     env: { ...testEnv, CLAUDECODE: "1" },
     cwd: dir,
     stderr: "pipe",
@@ -41,7 +41,7 @@ test("CLAUDECODE=1 shows quiet test output (only failures)", async () => {
   const [stdout, stderr] = await Promise.all([proc.stdout.text(), proc.stderr.text()]);
 
   const output = stderr + stdout;
-  const normalized = normalizeBunSnapshot(output, dir);
+  const normalized = normalizeFunSnapshot(output, dir);
 
   expect(normalized).toMatchSnapshot();
 });
@@ -49,7 +49,7 @@ test("CLAUDECODE=1 shows quiet test output (only failures)", async () => {
 test("CLAUDECODE=1 vs CLAUDECODE=0 comparison", async () => {
   const dir = tempDirWithFiles("claudecode-test-compare", {
     "test3.test.js": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
 
       test("passing test", () => {
         expect(1).toBe(1);
@@ -69,7 +69,7 @@ test("CLAUDECODE=1 vs CLAUDECODE=0 comparison", async () => {
 
   // Run with CLAUDECODE=0 (normal output)
   const result1 = spawnSync({
-    cmd: [bunExe(), "test", "test3.test.js"],
+    cmd: [funExe(), "test", "test3.test.js"],
     env: { ...testEnv, CLAUDECODE: "0" },
     cwd: dir,
     stderr: "pipe",
@@ -78,7 +78,7 @@ test("CLAUDECODE=1 vs CLAUDECODE=0 comparison", async () => {
 
   // Run with CLAUDECODE=1 (quiet output)
   const result2 = spawnSync({
-    cmd: [bunExe(), "test", "test3.test.js"],
+    cmd: [funExe(), "test", "test3.test.js"],
     env: { ...testEnv, CLAUDECODE: "1" },
     cwd: dir,
     stderr: "pipe",
@@ -107,8 +107,8 @@ test("CLAUDECODE=1 vs CLAUDECODE=0 comparison", async () => {
   expect(quietOutput).toContain("1 skip");
   expect(quietOutput).toContain("1 todo");
 
-  expect(normalizeBunSnapshot(normalOutput, dir)).toMatchSnapshot("normal");
-  expect(normalizeBunSnapshot(quietOutput, dir)).toMatchSnapshot("quiet");
+  expect(normalizeFunSnapshot(normalOutput, dir)).toMatchSnapshot("normal");
+  expect(normalizeFunSnapshot(quietOutput, dir)).toMatchSnapshot("quiet");
 });
 
 test("CLAUDECODE flag handles no test files found", () => {
@@ -122,7 +122,7 @@ test("CLAUDECODE flag handles no test files found", () => {
 
   // Run with CLAUDECODE=0 (normal output) - no test files
   const result1 = spawnSync({
-    cmd: [bunExe(), "test"],
+    cmd: [funExe(), "test"],
     env: { ...testEnv, CLAUDECODE: "0" },
     cwd: dir,
     stderr: "pipe",
@@ -131,7 +131,7 @@ test("CLAUDECODE flag handles no test files found", () => {
 
   // Run with CLAUDECODE=1 (quiet output) - no test files
   const result2 = spawnSync({
-    cmd: [bunExe(), "test"],
+    cmd: [funExe(), "test"],
     env: { ...testEnv, CLAUDECODE: "1" },
     cwd: dir,
     stderr: "pipe",
@@ -141,6 +141,6 @@ test("CLAUDECODE flag handles no test files found", () => {
   const normalOutput = result1.stderr.toString() + result1.stdout.toString();
   const quietOutput = result2.stderr.toString() + result2.stdout.toString();
 
-  expect(normalizeBunSnapshot(normalOutput, dir)).toMatchSnapshot("no-tests-normal");
-  expect(normalizeBunSnapshot(quietOutput, dir)).toMatchSnapshot("no-tests-quiet");
+  expect(normalizeFunSnapshot(normalOutput, dir)).toMatchSnapshot("no-tests-normal");
+  expect(normalizeFunSnapshot(quietOutput, dir)).toMatchSnapshot("no-tests-quiet");
 });

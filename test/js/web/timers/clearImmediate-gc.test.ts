@@ -1,18 +1,18 @@
-import { expect, it } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, it } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 it("clearImmediate then GC does not crash when the queued immediate is skipped", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
         clearImmediate(setImmediate(() => {}));
-        Bun.gc(true);
+        Fun.gc(true);
         setTimeout(() => {}, 1);
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

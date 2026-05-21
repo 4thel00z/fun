@@ -51,7 +51,7 @@ pub const OSLog = opaque {
     extern "C" fn os_log_create(subsystem: ?[*:0]const u8, category: ?[*:0]const u8) ?*OSLog;
 
     pub fn init() ?*OSLog {
-        return os_log_create("com.bun.bun", "PointsOfInterest");
+        return os_log_create("com.fun.fun", "PointsOfInterest");
     }
 
     // anything except 0 and ~0 is a valid signpost id
@@ -71,7 +71,7 @@ pub const OSLog = opaque {
         IntervalEnd = 2,
     };
 
-    pub extern "C" fn Bun__signpost_emit(log: *OSLog, id: u64, signpost_type: SignpostType, name: i32, category: u8) void;
+    pub extern "C" fn Fun__signpost_emit(log: *OSLog, id: u64, signpost_type: SignpostType, name: i32, category: u8) void;
 
     pub const Signpost = struct {
         id: u64,
@@ -79,7 +79,7 @@ pub const OSLog = opaque {
         log: *OSLog,
 
         pub fn emit(this: *const Signpost, category: Category) void {
-            Bun__signpost_emit(this.log, this.id, .Event, this.name, @intFromEnum(category));
+            Fun__signpost_emit(this.log, this.id, .Event, this.name, @intFromEnum(category));
         }
 
         pub const Interval = struct {
@@ -87,12 +87,12 @@ pub const OSLog = opaque {
             category: Category,
 
             pub fn end(this: *const Interval) void {
-                Bun__signpost_emit(this.signpost.log, this.signpost.id, .IntervalEnd, this.signpost.name, @intFromEnum(this.category));
+                Fun__signpost_emit(this.signpost.log, this.signpost.id, .IntervalEnd, this.signpost.name, @intFromEnum(this.category));
             }
         };
 
         pub fn interval(this: Signpost, category: Category) Interval {
-            Bun__signpost_emit(this.log, this.id, .IntervalBegin, this.name, @intFromEnum(category));
+            Fun__signpost_emit(this.log, this.id, .IntervalBegin, this.name, @intFromEnum(category));
             return Interval{
                 .signpost = this,
                 .category = category,
@@ -101,5 +101,5 @@ pub const OSLog = opaque {
     };
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

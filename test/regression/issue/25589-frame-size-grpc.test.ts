@@ -2,14 +2,14 @@
  * Test for GitHub Issue #25589: NGHTTP2_FRAME_SIZE_ERROR with gRPC
  * Tests using @grpc/grpc-js client
  *
- * This test verifies that Bun's HTTP/2 client correctly handles:
+ * This test verifies that Fun's HTTP/2 client correctly handles:
  * 1. Large response headers from server
  * 2. Large trailers (gRPC status details)
  * 3. Large request headers from client
  * 4. Large DATA frames
  */
 
-import { afterAll, beforeAll, describe, test } from "bun:test";
+import { afterAll, beforeAll, describe, test } from "fun:test";
 import assert from "node:assert";
 import { spawn, type ChildProcess } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -202,7 +202,7 @@ describe("HTTP/2 FRAME_SIZE_ERROR with @grpc/grpc-js", () => {
     const client = createClient(serverAddress);
     const metadata = new grpc.Metadata();
     // Add many custom headers to test large header handling.
-    // Bun supports CONTINUATION frames for headers exceeding MAX_FRAME_SIZE,
+    // Fun supports CONTINUATION frames for headers exceeding MAX_FRAME_SIZE,
     // but we limit to 97 headers (~19KB) as a reasonable test bound.
     for (let i = 0; i < 97; i++) {
       metadata.add(`x-custom-header-${i}`, "A".repeat(200));

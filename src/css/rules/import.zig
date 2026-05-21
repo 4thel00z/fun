@@ -99,7 +99,7 @@ pub const ImportConditions = struct {
     ///
     /// But this could change in the future, so still keeping this function.
     ///
-    pub fn cloneWithImportRecords(this: *const @This(), allocator: std.mem.Allocator, import_records: *bun.BabyList(bun.ImportRecord)) ImportConditions {
+    pub fn cloneWithImportRecords(this: *const @This(), allocator: std.mem.Allocator, import_records: *fun.BabyList(fun.ImportRecord)) ImportConditions {
         return ImportConditions{
             .layer = if (this.layer) |layer| if (layer.v) |l| .{ .v = l.cloneWithImportRecords(allocator, import_records) } else .{ .v = null } else null,
             .supports = if (this.supports) |*supp| supp.cloneWithImportRecords(allocator, import_records) else null,
@@ -194,7 +194,7 @@ pub const ImportRule = struct {
     }
 
     /// The `import_records` here is preserved from esbuild in the case that we do need it, it doesn't seem necessary now
-    pub fn conditionsWithImportRecords(this: *const This, allocator: std.mem.Allocator, import_records: *bun.BabyList(bun.ImportRecord)) ImportConditions {
+    pub fn conditionsWithImportRecords(this: *const This, allocator: std.mem.Allocator, import_records: *fun.BabyList(fun.ImportRecord)) ImportConditions {
         return ImportConditions{
             .layer = if (this.layer) |layer| if (layer.v) |l| .{ .v = l.cloneWithImportRecords(allocator, import_records) } else .{ .v = null } else null,
             .supports = if (this.supports) |*supp| supp.cloneWithImportRecords(allocator, import_records) else null,
@@ -264,5 +264,5 @@ pub const ImportRule = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

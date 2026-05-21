@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { Stats, statSync } from "node:fs";
 
 // Node.js's Stats constructor signature (deprecated, DEP0180):

@@ -10,10 +10,10 @@
 //   - O_NONBLOCK fd: read() → EAGAIN → loop → EAGAIN → 100% CPU spin.
 // Either way the process stops making progress after the parent "dies".
 //
-// The fix re-evaluates bun.isReadable() before looping back and re-arms the
+// The fix re-evaluates fun.isReadable() before looping back and re-arms the
 // poll on EAGAIN, so the event loop stays live.
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isPosix, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isPosix, tempDir } from "harness";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -35,9 +35,9 @@ test.skipIf(!isPosix)(
     const readFd = fs.openSync(fifo, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
     const writeFd = fs.openSync(fifo, fs.constants.O_WRONLY);
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), fixture, fifo],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), fixture, fifo],
+      env: funEnv,
       stdin: readFd,
       stdout: "pipe",
       stderr: "pipe",
@@ -65,7 +65,7 @@ test.skipIf(!isPosix)(
     // prints OK and never exits; the race resolves via the timeout path.
     // The fixture's own setTimeout fires at 500ms, so in the passing case
     // the child exits well under a second after we closed the writer.
-    const exited = await Promise.race([proc.exited, Bun.sleep(3000).then(() => "timeout" as const)]);
+    const exited = await Promise.race([proc.exited, Fun.sleep(3000).then(() => "timeout" as const)]);
 
     if (exited === "timeout") {
       proc.kill(9);
@@ -85,7 +85,7 @@ test.skipIf(!isPosix)(
     expect(stderrBuf).toContain("opened writer fd=");
     expect({ stdout: stdout.trim(), exited }).toEqual({ stdout: "OK", exited: 0 });
   },
-  // Debug-bun child startup + the 3s hang-detection race above can approach
+  // Debug-fun child startup + the 3s hang-detection race above can approach
   // the default 5s test timeout on slow CI; give explicit headroom.
   15000,
 );

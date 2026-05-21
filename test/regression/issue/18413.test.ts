@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { expect, test } from "bun:test";
+import { serve } from "fun";
+import { expect, test } from "fun:test";
 import { Readable } from "node:stream";
 import { createGzip } from "node:zlib";
 
@@ -7,7 +7,7 @@ import { createGzip } from "node:zlib";
  * Regression test for issue #18413
  * "Decompression error: ShortRead - empty chunked gzip response breaks fetch()"
  *
- * The issue was in Bun's zlib.zig implementation, which was incorrectly returning
+ * The issue was in Fun's zlib.zig implementation, which was incorrectly returning
  * error.ShortRead when encountering empty gzip streams (when avail_in == 0).
  *
  * The fix is to call inflate() even when avail_in == 0, as this could be a valid
@@ -49,7 +49,7 @@ test("empty gzip response without chunked encoding", async () => {
     port: 0,
     async fetch(req) {
       // Create an empty gzip buffer
-      const emptyGzip = Bun.gzipSync(Buffer.alloc(0));
+      const emptyGzip = Fun.gzipSync(Buffer.alloc(0));
 
       return new Response(emptyGzip, {
         headers: {

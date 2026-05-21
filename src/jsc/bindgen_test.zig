@@ -1,6 +1,6 @@
 //! This namespace is used to test binding generator
 
-pub fn getBindgenTestFunctions(global: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn getBindgenTestFunctions(global: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     return (try jsc.JSObject.create(.{
         .add = gen.createAddCallback(global),
         .requiredAndOptionalArg = gen.createRequiredAndOptionalArgCallback(global),
@@ -32,6 +32,6 @@ pub fn requiredAndOptionalArg(a: bool, b: ?usize, c: i32, d: ?u8) i32 {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const gen = bun.gen.bindgen_test;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const gen = fun.gen.bindgen_test;

@@ -8,17 +8,17 @@ pub fn toJSWithType(
 ) AnyPostgresError!JSValue {
     switch (comptime Type) {
         [:0]u8, []u8, []const u8, [:0]const u8 => {
-            var str = bun.String.borrowUTF8(value);
+            var str = fun.String.borrowUTF8(value);
             defer str.deinit();
             return str.toJS(globalThis);
         },
 
-        bun.String => {
+        fun.String => {
             return value.toJS(globalThis);
         },
 
         *Data => {
-            var str = bun.String.borrowUTF8(value.slice());
+            var str = fun.String.borrowUTF8(value.slice());
             defer str.deinit();
             defer value.deinit();
             return str.toJS(globalThis);
@@ -39,12 +39,12 @@ pub fn toJS(
     return str.toJS(globalThis);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const AnyPostgresError = @import("../../../sql/postgres/AnyPostgresError.zig").AnyPostgresError;
 const Data = @import("../../../sql/shared/Data.zig").Data;
 
 const int_types = @import("../../../sql/postgres/types/int_types.zig");
 const short = int_types.short;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

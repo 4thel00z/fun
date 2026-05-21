@@ -3,7 +3,7 @@
 pub const DeferredError = struct {
     kind: Kind,
     code: jsc.Node.ErrorCode,
-    msg: bun.String,
+    msg: fun.String,
 
     pub const Kind = enum { plainerror, typeerror, rangeerror };
 
@@ -11,7 +11,7 @@ pub const DeferredError = struct {
         return .{
             .kind = kind,
             .code = code,
-            .msg = bun.handleOom(bun.String.createFormat(fmt, args)),
+            .msg = fun.handleOom(fun.String.createFormat(fmt, args)),
         };
     }
 
@@ -26,9 +26,9 @@ pub const DeferredError = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const ZigString = @import("./ZigString.zig").ZigString;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;

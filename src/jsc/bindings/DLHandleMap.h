@@ -14,7 +14,7 @@
 #include <windows.h>
 #endif
 
-namespace Bun {
+namespace Fun {
 
 // A module can be either V8 C++ style or NAPI style
 using DLModuleRegistration = std::variant<node::node_module*, napi_module*>;
@@ -94,4 +94,4 @@ private:
     WTF::HashMap<DLHandle, WTF::Vector<DLModuleRegistration>> m_map;
 };
 
-} // namespace Bun
+} // namespace Fun

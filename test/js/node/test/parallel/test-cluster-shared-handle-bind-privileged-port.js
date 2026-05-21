@@ -21,7 +21,7 @@
 
 'use strict';
 const common = require('../common');
-if (common.isLinux) return; // TODO: BUN
+if (common.isLinux) return; // TODO: FUN
 
 // Skip on macOS Mojave. https://github.com/nodejs/node/issues/21679
 if (common.isMacOS)

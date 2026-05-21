@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunExe, isWindows, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funExe, isWindows, tempDir } from "harness";
 import { join } from "path";
 
 test("spawn should handle cwd paths >= MAX_PATH on Windows", async () => {
@@ -28,7 +28,7 @@ test("spawn should handle cwd paths >= MAX_PATH on Windows", async () => {
   let deepPath = String(dir);
   for (const segment of segments) {
     deepPath = join(deepPath, segment);
-    await Bun.write(join(deepPath, ".keep"), "");
+    await Fun.write(join(deepPath, ".keep"), "");
   }
 
   console.log(`Created deep path (length: ${deepPath.length}): ${deepPath}`);
@@ -39,8 +39,8 @@ test("spawn should handle cwd paths >= MAX_PATH on Windows", async () => {
   // 2. Fail gracefully with an error (not panic with UV_ENOTCONN)
   let err;
   try {
-    await Bun.spawn({
-      cmd: [bunExe(), "--version"],
+    await Fun.spawn({
+      cmd: [funExe(), "--version"],
       cwd: deepPath,
       stdout: "pipe",
       stderr: "pipe",
@@ -66,7 +66,7 @@ test("spawn should handle cwd paths with disabled 8.3 names on Windows", async (
   let deepPath = String(dir);
   for (const segment of segments) {
     deepPath = join(deepPath, segment);
-    await Bun.write(join(deepPath, ".keep"), "");
+    await Fun.write(join(deepPath, ".keep"), "");
   }
 
   console.log(`Created path for 8.3 test (length: ${deepPath.length}): ${deepPath}`);
@@ -74,7 +74,7 @@ test("spawn should handle cwd paths with disabled 8.3 names on Windows", async (
   // Attempt to copy test.js to the deep path
   let err;
   try {
-    await Bun.write(join(deepPath, "test.js"), `console.log("hello");`);
+    await Fun.write(join(deepPath, "test.js"), `console.log("hello");`);
   } catch (e) {
     err = e;
   }
@@ -83,8 +83,8 @@ test("spawn should handle cwd paths with disabled 8.3 names on Windows", async (
   // This should not panic, even if GetShortPathNameW fails
   err = undefined;
   try {
-    const proc = Bun.spawn({
-      cmd: [bunExe(), "test.js"],
+    const proc = Fun.spawn({
+      cmd: [funExe(), "test.js"],
       cwd: deepPath,
       stdout: "inherit",
       stderr: "inherit",

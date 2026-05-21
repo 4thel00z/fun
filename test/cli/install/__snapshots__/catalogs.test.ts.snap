@@ -1,6 +1,6 @@
-// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
 
-exports[`basic detect changes (bun.lock) 1`] = `
+exports[`basic detect changes (fun.lock) 1`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -35,7 +35,7 @@ exports[`basic detect changes (bun.lock) 1`] = `
 "
 `;
 
-exports[`basic detect changes (bun.lock) 2`] = `
+exports[`basic detect changes (fun.lock) 2`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,
@@ -70,7 +70,7 @@ exports[`basic detect changes (bun.lock) 2`] = `
 "
 `;
 
-exports[`basic detect changes (bun.lock) 3`] = `
+exports[`basic detect changes (fun.lock) 3`] = `
 "{
   "lockfileVersion": 1,
   "configVersion": 1,

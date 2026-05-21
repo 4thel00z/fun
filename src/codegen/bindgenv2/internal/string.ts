@@ -8,13 +8,13 @@ export const String = new (class extends Type {
   }
 
   get idlType() {
-    return "::Bun::IDLStrictString";
+    return "::Fun::IDLStrictString";
   }
   get bindgenType() {
     return "bindgen.BindgenString";
   }
   zigType(style?: CodeStyle) {
-    return "bun.string.WTFString";
+    return "fun.string.WTFString";
   }
   optionalZigType(style?: CodeStyle) {
     return this.zigType(style) + ".Optional";
@@ -27,7 +27,7 @@ export const String = new (class extends Type {
 
 export const LooseString = new (class extends Type {
   get idlType() {
-    return "::Bun::IDLDOMString";
+    return "::Fun::IDLDOMString";
   }
   get bindgenType() {
     return String.bindgenType;

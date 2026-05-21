@@ -4,7 +4,7 @@
 #include <JavaScriptCore/ObjectConstructor.h>
 #include <JavaScriptCore/JSObject.h>
 
-namespace Bun {
+namespace Fun {
 
 class JSDiffieHellmanGroupPrototype final : public JSC::JSNonFinalObject {
 public:
@@ -42,4 +42,4 @@ private:
     void finishCreation(JSC::VM&);
 };
 
-} // namespace Bun
+} // namespace Fun

@@ -1,18 +1,18 @@
 pub const S3Stat = struct {
-    const log = bun.Output.scoped(.S3Stat, .visible);
+    const log = fun.Output.scoped(.S3Stat, .visible);
     pub const js = jsc.Codegen.JSS3Stat;
     pub const toJS = js.toJS;
     pub const fromJS = js.fromJS;
     pub const fromJSDirect = js.fromJSDirect;
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
 
     size: u64,
-    etag: bun.String,
-    contentType: bun.String,
+    etag: fun.String,
+    contentType: fun.String,
     lastModified: f64,
 
-    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!*@This() {
+    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!*@This() {
         return globalThis.throwInvalidArguments("S3Stat is not constructable", .{});
     }
 
@@ -22,15 +22,15 @@ pub const S3Stat = struct {
         contentType: []const u8,
         lastModified: []const u8,
         globalThis: *jsc.JSGlobalObject,
-    ) bun.JSError!*@This() {
-        var date_str = bun.String.init(lastModified);
+    ) fun.JSError!*@This() {
+        var date_str = fun.String.init(lastModified);
         defer date_str.deref();
         const last_modified = try date_str.parseDate(globalThis);
 
         return S3Stat.new(.{
             .size = size,
-            .etag = bun.String.cloneUTF8(etag),
-            .contentType = bun.String.cloneUTF8(contentType),
+            .etag = fun.String.cloneUTF8(etag),
+            .contentType = fun.String.cloneUTF8(contentType),
             .lastModified = last_modified,
         });
     }
@@ -39,11 +39,11 @@ pub const S3Stat = struct {
         return jsc.JSValue.jsNumber(this.size);
     }
 
-    pub fn getEtag(this: *@This(), globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn getEtag(this: *@This(), globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         return this.etag.toJS(globalObject);
     }
 
-    pub fn getContentType(this: *@This(), globalObject: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+    pub fn getContentType(this: *@This(), globalObject: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
         return this.contentType.toJS(globalObject);
     }
 
@@ -54,9 +54,9 @@ pub const S3Stat = struct {
     pub fn finalize(this: *@This()) void {
         this.etag.deref();
         this.contentType.deref();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 };
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

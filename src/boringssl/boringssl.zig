@@ -8,7 +8,7 @@ pub fn load() void {
     if (loaded) return;
     loaded = true;
     boring.CRYPTO_library_init();
-    bun.assert(boring.SSL_library_init() > 0);
+    fun.assert(boring.SSL_library_init() > 0);
     boring.SSL_load_error_strings();
     boring.ERR_load_BIO_strings();
     boring.OpenSSL_add_all_algorithms();
@@ -59,21 +59,21 @@ pub fn initClient() *boring.SSL {
 // may result in deadlocks, crashes, or memory corruption.
 
 export fn OPENSSL_memory_alloc(size: usize) ?*anyopaque {
-    return bun.mimalloc.mi_malloc(size);
+    return fun.mimalloc.mi_malloc(size);
 }
 
 // BoringSSL always expects memory to be zero'd
 export fn OPENSSL_memory_free(ptr: *anyopaque) void {
-    const len = bun.mimalloc.mi_usable_size(ptr);
+    const len = fun.mimalloc.mi_usable_size(ptr);
     @memset(@as([*]u8, @ptrCast(ptr))[0..len], 0);
-    bun.mimalloc.mi_free(ptr);
+    fun.mimalloc.mi_free(ptr);
 }
 
 export fn OPENSSL_memory_get_size(ptr: ?*const anyopaque) usize {
-    return bun.mimalloc.mi_usable_size(ptr);
+    return fun.mimalloc.mi_usable_size(ptr);
 }
 
-const INET6_ADDRSTRLEN = if (bun.Environment.isWindows) 65 else 46;
+const INET6_ADDRSTRLEN = if (fun.Environment.isWindows) 65 else 46;
 
 /// converts IP string to canonicalized IP string
 /// return null when the IP is invalid
@@ -83,7 +83,7 @@ pub fn canonicalizeIP(addr_str: []const u8, outIP: *[INET6_ADDRSTRLEN + 1]u8) ?[
     }
     var ip_std_text: [INET6_ADDRSTRLEN + 1]u8 = undefined;
     // we need a null terminated string as input
-    bun.copy(u8, outIP, addr_str);
+    fun.copy(u8, outIP, addr_str);
     outIP[addr_str.len] = 0;
 
     var af: c_int = std.posix.AF.INET;
@@ -99,7 +99,7 @@ pub fn canonicalizeIP(addr_str: []const u8, outIP: *[INET6_ADDRSTRLEN + 1]u8) ?[
         return null;
     }
     // use the null-terminated size to return the string
-    const size = bun.len(bun.cast([*:0]u8, outIP));
+    const size = fun.len(fun.cast([*:0]u8, outIP));
     return outIP[0..size];
 }
 
@@ -112,7 +112,7 @@ pub fn ip2String(ip: *boring.ASN1_OCTET_STRING, outIP: *[INET6_ADDRSTRLEN + 1]u8
     }
 
     // use the null-terminated size to return the string
-    const size = bun.len(bun.cast([*:0]u8, outIP));
+    const size = fun.len(fun.cast([*:0]u8, outIP));
     return outIP[0..size];
 }
 
@@ -176,7 +176,7 @@ pub fn checkX509ServerIdentity(
                 const host_ip = canonicalizeIP(hostname, &canonicalIPBuf) orelse hostname;
 
                 if (boring.X509V3_EXT_d2i(ext)) |names_| {
-                    const names: *boring.struct_stack_st_GENERAL_NAME = bun.cast(*boring.struct_stack_st_GENERAL_NAME, names_);
+                    const names: *boring.struct_stack_st_GENERAL_NAME = fun.cast(*boring.struct_stack_st_GENERAL_NAME, names_);
                     defer boring.sk_GENERAL_NAME_pop_free(names, boring.sk_GENERAL_NAME_free);
                     for (0..boring.sk_GENERAL_NAME_num(names)) |i| {
                         const gen = boring.sk_GENERAL_NAME_value(names, i);
@@ -198,7 +198,7 @@ pub fn checkX509ServerIdentity(
                 }
             } else {
                 if (boring.X509V3_EXT_d2i(ext)) |names_| {
-                    const names: *boring.struct_stack_st_GENERAL_NAME = bun.cast(*boring.struct_stack_st_GENERAL_NAME, names_);
+                    const names: *boring.struct_stack_st_GENERAL_NAME = fun.cast(*boring.struct_stack_st_GENERAL_NAME, names_);
                     defer boring.sk_GENERAL_NAME_pop_free(names, boring.sk_GENERAL_NAME_free);
                     for (0..boring.sk_GENERAL_NAME_num(names)) |i| {
                         const gen = boring.sk_GENERAL_NAME_value(names, i);
@@ -262,11 +262,11 @@ pub fn checkServerIdentity(
 
 pub const ERR_toJS = @import("../runtime/crypto/boringssl_jsc.zig").ERR_toJS;
 
-const X509 = @import("../runtime/api/bun/x509.zig");
+const X509 = @import("../runtime/api/fun/x509.zig");
 const boring = @import("../boringssl_sys/boringssl.zig");
 const builtin = @import("builtin");
 const c_ares = @import("../cares_sys/c_ares.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;

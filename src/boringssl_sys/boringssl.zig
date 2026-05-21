@@ -1,4 +1,4 @@
-const pthread_rwlock_t = if (bun.Environment.isPosix) std.c.pthread_rwlock_t else *anyopaque;
+const pthread_rwlock_t = if (fun.Environment.isPosix) std.c.pthread_rwlock_t else *anyopaque;
 /// `isize` alias. Kept for clarity.
 ///
 /// Docs from OpenSSL:
@@ -18812,7 +18812,7 @@ pub const struct_bio_st = extern struct {
 
     pub fn slice(this: *struct_bio_st) []u8 {
         var buf_mem: ?*BUF_MEM = null;
-        bun.assert(BIO_get_mem_ptr(this, &buf_mem) > -1);
+        fun.assert(BIO_get_mem_ptr(this, &buf_mem) > -1);
         if (buf_mem) |buf| {
             if (buf.data == null) return &[_]u8{};
 
@@ -19008,8 +19008,8 @@ pub const SSL = opaque {
         WantRenegotiate,
         HandshakeHintsReady,
     };
-    extern fn us_ssl_socket_verify_error_from_ssl(ssl: *SSL) bun.uws.us_bun_verify_error_t;
-    pub fn getVerifyError(this: *SSL) bun.uws.us_bun_verify_error_t {
+    extern fn us_ssl_socket_verify_error_from_ssl(ssl: *SSL) fun.uws.us_fun_verify_error_t;
+    pub fn getVerifyError(this: *SSL) fun.uws.us_fun_verify_error_t {
         return us_ssl_socket_verify_error_from_ssl(this);
     }
 
@@ -19076,7 +19076,7 @@ pub const SSL = opaque {
             .h1_or_h2 => alpn_h2_h1,
             .h2_only => alpn_h2,
         };
-        bun.assert(SSL_set_alpn_protos(ssl, alpns.ptr, alpns.len) == 0);
+        fun.assert(SSL_set_alpn_protos(ssl, alpns.ptr, alpns.len) == 0);
 
         SSL_enable_signed_cert_timestamps(ssl);
         SSL_enable_ocsp_stapling(ssl);
@@ -19108,8 +19108,8 @@ pub const SSL = opaque {
         };
     }
 
-    const Output = bun.Output;
-    const Environment = bun.Environment;
+    const Output = fun.Output;
+    const Environment = fun.Environment;
 
     pub fn read(this: *SSL, buf: []u8) Error!usize {
         const rc = SSL_read(this, buf.ptr, @as(c_int, @intCast(buf.len)));
@@ -19242,22 +19242,22 @@ pub const BIOMethod = struct {
     ) *BIO_METHOD {
         const method = BIO_meth_new(BIO_get_new_index() | BIO_TYPE_SOURCE_SINK, name);
         if (comptime create__) |create_| {
-            bun.assert(BIO_meth_set_create(method, create_) > 0);
+            fun.assert(BIO_meth_set_create(method, create_) > 0);
         }
         if (comptime destroy__) |destroy_| {
-            bun.assert(BIO_meth_set_destroy(method, destroy_) > 0);
+            fun.assert(BIO_meth_set_destroy(method, destroy_) > 0);
         }
         if (comptime write__) |write_| {
-            bun.assert(BIO_meth_set_write(method, write_) > 0);
+            fun.assert(BIO_meth_set_write(method, write_) > 0);
         }
         if (comptime read__) |read_| {
-            bun.assert(BIO_meth_set_read(method, read_) > 0);
+            fun.assert(BIO_meth_set_read(method, read_) > 0);
         }
         if (comptime gets__) |gets_| {
-            bun.assert(BIO_meth_set_gets(method, gets_) > 0);
+            fun.assert(BIO_meth_set_gets(method, gets_) > 0);
         }
         if (comptime ctrl__) |ctrl_| {
-            bun.assert(BIO_meth_set_ctrl(method, ctrl_) > 0);
+            fun.assert(BIO_meth_set_ctrl(method, ctrl_) > 0);
         }
 
         return method;
@@ -19289,7 +19289,7 @@ pub fn getError(this: *SSL, rc: c_int) SSL.Error!u32 {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
 const C = @import("std").zig.c_builtins;

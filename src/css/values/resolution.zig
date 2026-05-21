@@ -35,9 +35,9 @@ pub const Resolution = union(enum) {
             const value = tok.dimension.num.value;
             const unit = tok.dimension.unit;
             // css.todo_stuff.match_ignore_ascii_case
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpi")) return .{ .result = .{ .dpi = value } };
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpcm")) return .{ .result = .{ .dpcm = value } };
-            if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dppx") or bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "x")) return .{ .result = .{ .dppx = value } };
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpi")) return .{ .result = .{ .dpi = value } };
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpcm")) return .{ .result = .{ .dpcm = value } };
+            if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dppx") or fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "x")) return .{ .result = .{ .dppx = value } };
             return .{ .err = location.newUnexpectedTokenError(.{ .ident = unit }) };
         }
         return .{ .err = location.newUnexpectedTokenError(tok.*) };
@@ -49,12 +49,12 @@ pub const Resolution = union(enum) {
                 const value = dim.num.value;
                 const unit = dim.unit;
                 // todo_stuff.match_ignore_ascii_case
-                if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpi")) {
+                if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpi")) {
                     return .{ .result = .{ .dpi = value } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpcm")) {
+                } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dpcm")) {
                     return .{ .result = .{ .dpcm = value } };
-                } else if (bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dppx") or
-                    bun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "x"))
+                } else if (fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "dppx") or
+                    fun.strings.eqlCaseInsensitiveASCIIICheckLength(unit, "x"))
                 {
                     return .{ .result = .{ .dppx = value } };
                 } else {
@@ -87,5 +87,5 @@ pub const Resolution = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

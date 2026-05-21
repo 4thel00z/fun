@@ -1,17 +1,17 @@
-//! Windows-only `uv_signal_t` lifecycle exported for `BunProcess.cpp`.
+//! Windows-only `uv_signal_t` lifecycle exported for `FunProcess.cpp`.
 //! Lives under `runtime/` because `init` takes a `*JSGlobalObject` to reach
 //! the VM's libuv loop; the rest of `sys/windows/` is JSC-free.
 
-fn Bun__UVSignalHandle__init(
-    global: *bun.jsc.JSGlobalObject,
+fn Fun__UVSignalHandle__init(
+    global: *fun.jsc.JSGlobalObject,
     signal_num: i32,
     callback: *const fn (sig: *libuv.uv_signal_t, num: c_int) callconv(.c) void,
 ) callconv(.c) ?*libuv.uv_signal_t {
-    const signal = bun.new(libuv.uv_signal_t, undefined);
+    const signal = fun.new(libuv.uv_signal_t, undefined);
 
-    var rc = libuv.uv_signal_init(global.bunVM().uvLoop(), signal);
+    var rc = libuv.uv_signal_init(global.funVM().uvLoop(), signal);
     if (rc.errno()) |_| {
-        bun.destroy(signal);
+        fun.destroy(signal);
         return null;
     }
 
@@ -27,20 +27,20 @@ fn Bun__UVSignalHandle__init(
 }
 
 fn freeWithDefaultAllocator(signal: *anyopaque) callconv(.c) void {
-    bun.destroy(@as(*libuv.uv_signal_t, @ptrCast(@alignCast(signal))));
+    fun.destroy(@as(*libuv.uv_signal_t, @ptrCast(@alignCast(signal))));
 }
 
-fn Bun__UVSignalHandle__close(signal: *libuv.uv_signal_t) callconv(.c) void {
+fn Fun__UVSignalHandle__close(signal: *libuv.uv_signal_t) callconv(.c) void {
     _ = libuv.uv_signal_stop(signal);
     libuv.uv_close(@ptrCast(signal), &freeWithDefaultAllocator);
 }
 
 comptime {
-    if (bun.Environment.isWindows) {
-        @export(&Bun__UVSignalHandle__init, .{ .name = "Bun__UVSignalHandle__init" });
-        @export(&Bun__UVSignalHandle__close, .{ .name = "Bun__UVSignalHandle__close" });
+    if (fun.Environment.isWindows) {
+        @export(&Fun__UVSignalHandle__init, .{ .name = "Fun__UVSignalHandle__init" });
+        @export(&Fun__UVSignalHandle__close, .{ .name = "Fun__UVSignalHandle__close" });
     }
 }
 
-const bun = @import("bun");
-const libuv = bun.windows.libuv;
+const fun = @import("fun");
+const libuv = fun.windows.libuv;

@@ -1,7 +1,7 @@
 const strings = @This();
 
 /// memmem is provided by libc on posix, but implemented in zig for windows.
-pub const memmem = bun.sys.workaround_symbols.memmem;
+pub const memmem = fun.sys.workaround_symbols.memmem;
 
 pub const Encoding = enum {
     ascii,
@@ -30,11 +30,11 @@ pub const EncodingNonAscii = enum {
     latin1,
 };
 
-pub fn containsChar(self: string, char: u8) callconv(bun.callconv_inline) bool {
+pub fn containsChar(self: string, char: u8) callconv(fun.callconv_inline) bool {
     return indexOfChar(self, char) != null;
 }
 
-pub fn containsCharT(comptime T: type, self: []const T, char: u8) callconv(bun.callconv_inline) bool {
+pub fn containsCharT(comptime T: type, self: []const T, char: u8) callconv(fun.callconv_inline) bool {
     return switch (T) {
         u8 => containsChar(self, char),
         u16 => std.mem.indexOfScalar(u16, self, char) != null,
@@ -42,15 +42,15 @@ pub fn containsCharT(comptime T: type, self: []const T, char: u8) callconv(bun.c
     };
 }
 
-pub fn contains(self: string, str: string) callconv(bun.callconv_inline) bool {
+pub fn contains(self: string, str: string) callconv(fun.callconv_inline) bool {
     return containsT(u8, self, str);
 }
 
-pub fn containsT(comptime T: type, self: []const T, str: []const T) callconv(bun.callconv_inline) bool {
+pub fn containsT(comptime T: type, self: []const T, str: []const T) callconv(fun.callconv_inline) bool {
     return indexOfT(T, self, str) != null;
 }
 
-pub fn containsCaseInsensitiveASCII(self: string, str: string) callconv(bun.callconv_inline) bool {
+pub fn containsCaseInsensitiveASCII(self: string, str: string) callconv(fun.callconv_inline) bool {
     var start: usize = 0;
     while (start + str.len <= self.len) {
         if (eqlCaseInsensitiveASCIIIgnoreLength(self[start..][0..str.len], str)) {
@@ -66,7 +66,7 @@ pub fn indexOfAny(slice: string, comptime str: []const u8) ?OptionalUsize {
     return switch (comptime str.len) {
         0 => @compileError("str cannot be empty"),
         1 => return indexOfChar(slice, str[0]),
-        else => if (bun.highway.indexOfAnyChar(slice, str)) |i|
+        else => if (fun.highway.indexOfAnyChar(slice, str)) |i|
             @intCast(i)
         else
             null,
@@ -91,7 +91,7 @@ pub fn indexOfAnyT(comptime T: type, str: []const T, comptime chars: anytype) ?O
     return null;
 }
 
-pub fn containsComptime(self: string, comptime str: string) callconv(bun.callconv_inline) bool {
+pub fn containsComptime(self: string, comptime str: string) callconv(fun.callconv_inline) bool {
     if (comptime str.len == 0) @compileError("Don't call this with an empty string plz.");
 
     const start = std.mem.indexOfScalar(u8, self, str[0]) orelse return false;
@@ -112,11 +112,11 @@ pub fn containsComptime(self: string, comptime str: string) callconv(bun.callcon
 pub const includes = contains;
 
 pub fn inMapCaseInsensitive(self: []const u8, comptime ComptimeStringMap: anytype) ?ComptimeStringMap.Value {
-    return bun.String.ascii(self).inMapCaseInsensitive(ComptimeStringMap);
+    return fun.String.ascii(self).inMapCaseInsensitive(ComptimeStringMap);
 }
 
-pub fn containsAny(in: anytype, target: anytype) callconv(bun.callconv_inline) bool {
-    for (in) |str| if (contains(if (@TypeOf(str) == u8) &[1]u8{str} else bun.span(str), target)) return true;
+pub fn containsAny(in: anytype, target: anytype) callconv(fun.callconv_inline) bool {
+    for (in) |str| if (contains(if (@TypeOf(str) == u8) &[1]u8{str} else fun.span(str), target)) return true;
     return false;
 }
 
@@ -420,28 +420,28 @@ pub fn lastIndexBeforeChar(in: []const u8, char: u8, before: u8) ?usize {
     return lastIndexOfChar(in[0..before_pos], char);
 }
 
-pub fn lastIndexOfChar(self: []const u8, char: u8) callconv(bun.callconv_inline) ?usize {
+pub fn lastIndexOfChar(self: []const u8, char: u8) callconv(fun.callconv_inline) ?usize {
     if (comptime Environment.isLinux) {
         if (@inComptime()) {
             return lastIndexOfCharT(u8, self, char);
         }
-        const start = bun.c.memrchr(self.ptr, char, self.len) orelse return null;
+        const start = fun.c.memrchr(self.ptr, char, self.len) orelse return null;
         const i = @intFromPtr(start) - @intFromPtr(self.ptr);
         return @intCast(i);
     }
     return lastIndexOfCharT(u8, self, char);
 }
 
-pub fn lastIndexOfCharT(comptime T: type, self: []const T, char: T) callconv(bun.callconv_inline) ?usize {
+pub fn lastIndexOfCharT(comptime T: type, self: []const T, char: T) callconv(fun.callconv_inline) ?usize {
     return std.mem.lastIndexOfScalar(T, self, char);
 }
 
-pub fn lastIndexOf(self: string, str: string) callconv(bun.callconv_inline) ?usize {
+pub fn lastIndexOf(self: string, str: string) callconv(fun.callconv_inline) ?usize {
     return std.mem.lastIndexOf(u8, self, str);
 }
 
 pub fn indexOf(self: string, str: string) ?usize {
-    if (comptime !bun.Environment.isNative) {
+    if (comptime !fun.Environment.isNative) {
         return std.mem.indexOf(u8, self, str);
     }
 
@@ -464,7 +464,7 @@ pub fn indexOf(self: string, str: string) ?usize {
     const start = memmem(self_ptr, self_len, str_ptr, str_len) orelse return null;
 
     const i = @intFromPtr(start) - @intFromPtr(self_ptr);
-    bun.unsafeAssert(i < self_len);
+    fun.unsafeAssert(i < self_len);
     return @as(usize, @intCast(i));
 }
 
@@ -491,7 +491,7 @@ pub const SplitIterator = struct {
     /// Returns a slice of the first field. This never fails.
     /// Call this only to get the first field and then use `next` to get all subsequent fields.
     pub fn first(self: *Self) []const u8 {
-        bun.unsafeAssert(self.index.? == 0);
+        fun.unsafeAssert(self.index.? == 0);
         return self.next().?;
     }
 
@@ -525,8 +525,8 @@ pub const SplitIterator = struct {
 
 pub fn cat(allocator: std.mem.Allocator, first: string, second: string) !string {
     var out = try allocator.alloc(u8, first.len + second.len);
-    bun.copy(u8, out, first);
-    bun.copy(u8, out[first.len..], second);
+    fun.copy(u8, out, first);
+    fun.copy(u8, out[first.len..], second);
     return out;
 }
 
@@ -542,10 +542,10 @@ pub const StringOrTinyString = struct {
     } = .{},
 
     comptime {
-        bun.unsafeAssert(@sizeOf(@This()) == 32);
+        fun.unsafeAssert(@sizeOf(@This()) == 32);
     }
 
-    pub fn slice(this: *const StringOrTinyString) callconv(bun.callconv_inline) []const u8 {
+    pub fn slice(this: *const StringOrTinyString) callconv(fun.callconv_inline) []const u8 {
         // This is a switch expression instead of a statement to make sure it uses the faster assembly
         return switch (this.meta.is_tiny_string) {
             1 => this.remainder_buf[0..this.meta.remainder_len],
@@ -643,7 +643,7 @@ pub fn copyLowercase(in: string, out: []u8) string {
         for (in_slice, 0..) |c, i| {
             switch (c) {
                 'A'...'Z' => {
-                    bun.copy(u8, out_slice, in_slice[0..i]);
+                    fun.copy(u8, out_slice, in_slice[0..i]);
                     out_slice[i] = std.ascii.toLower(c);
                     const end = i + 1;
                     in_slice = in_slice[end..];
@@ -654,7 +654,7 @@ pub fn copyLowercase(in: string, out: []u8) string {
             }
         }
 
-        bun.copy(u8, out_slice, in_slice);
+        fun.copy(u8, out_slice, in_slice);
         break :begin;
     }
 
@@ -670,7 +670,7 @@ pub fn copyLowercaseIfNeeded(in: string, out: []u8) string {
         for (in_slice, 0..) |c, i| {
             switch (c) {
                 'A'...'Z' => {
-                    bun.copy(u8, out_slice, in_slice[0..i]);
+                    fun.copy(u8, out_slice, in_slice[0..i]);
                     out_slice[i] = std.ascii.toLower(c);
                     const end = i + 1;
                     in_slice = in_slice[end..];
@@ -682,7 +682,7 @@ pub fn copyLowercaseIfNeeded(in: string, out: []u8) string {
             }
         }
 
-        if (any) bun.copy(u8, out_slice, in_slice);
+        if (any) fun.copy(u8, out_slice, in_slice);
         break :begin;
     }
 
@@ -751,26 +751,26 @@ pub fn startsWithGeneric(comptime T: type, self: []const T, str: []const T) bool
         return false;
     }
 
-    return eqlLong(bun.reinterpretSlice(u8, self[0..str.len]), bun.reinterpretSlice(u8, str[0..str.len]), false);
+    return eqlLong(fun.reinterpretSlice(u8, self[0..str.len]), fun.reinterpretSlice(u8, str[0..str.len]), false);
 }
 
-pub fn endsWith(self: string, str: string) callconv(bun.callconv_inline) bool {
-    return str.len == 0 or @call(bun.callmod_inline, std.mem.endsWith, .{ u8, self, str });
+pub fn endsWith(self: string, str: string) callconv(fun.callconv_inline) bool {
+    return str.len == 0 or @call(fun.callmod_inline, std.mem.endsWith, .{ u8, self, str });
 }
 
-pub fn endsWithComptime(self: string, comptime str: anytype) callconv(bun.callconv_inline) bool {
+pub fn endsWithComptime(self: string, comptime str: anytype) callconv(fun.callconv_inline) bool {
     return self.len >= str.len and eqlComptimeIgnoreLen(self[self.len - str.len .. self.len], comptime str);
 }
 
-pub fn startsWithChar(self: string, char: u8) callconv(bun.callconv_inline) bool {
+pub fn startsWithChar(self: string, char: u8) callconv(fun.callconv_inline) bool {
     return self.len > 0 and self[0] == char;
 }
 
-pub fn endsWithChar(self: string, char: u8) callconv(bun.callconv_inline) bool {
+pub fn endsWithChar(self: string, char: u8) callconv(fun.callconv_inline) bool {
     return self.len > 0 and self[self.len - 1] == char;
 }
 
-pub fn endsWithCharOrIsZeroLength(self: string, char: u8) callconv(bun.callconv_inline) bool {
+pub fn endsWithCharOrIsZeroLength(self: string, char: u8) callconv(fun.callconv_inline) bool {
     return self.len == 0 or self[self.len - 1] == char;
 }
 
@@ -895,7 +895,7 @@ pub fn hasPrefixComptimeUTF16(self: []const u16, comptime alt: []const u8) bool 
 pub fn hasPrefixComptimeType(comptime T: type, self: []const T, comptime alt: anytype) bool {
     const rhs = comptime switch (T) {
         u8 => alt,
-        u16 => switch (bun.meta.Item(@TypeOf(alt))) {
+        u16 => switch (fun.meta.Item(@TypeOf(alt))) {
             u16 => alt,
             else => w(alt),
         },
@@ -908,7 +908,7 @@ pub fn hasSuffixComptime(self: string, comptime alt: anytype) bool {
     return self.len >= alt.len and eqlComptimeCheckLenWithType(u8, self[self.len - alt.len ..], alt, false);
 }
 
-const eqlComptimeCheckLenU8 = if (bun.Environment.isDebug) eqlComptimeDebugRuntimeFallback else eqlComptimeCheckLenU8Impl;
+const eqlComptimeCheckLenU8 = if (fun.Environment.isDebug) eqlComptimeDebugRuntimeFallback else eqlComptimeCheckLenU8Impl;
 
 fn eqlComptimeDebugRuntimeFallback(a: []const u8, b: []const u8, check_len: bool) bool {
     return std.mem.eql(u8, if (check_len) a else a.ptr[0..b.len], b);
@@ -988,10 +988,10 @@ pub fn eqlCaseInsensitiveASCII(a: string, b: string, comptime check_len: bool) b
         if (a.len == 0) return true;
     }
 
-    bun.unsafeAssert(b.len > 0);
-    bun.unsafeAssert(a.len > 0);
+    fun.unsafeAssert(b.len > 0);
+    fun.unsafeAssert(a.len > 0);
 
-    return bun.c.strncasecmp(a.ptr, b.ptr, a.len) == 0;
+    return fun.c.strncasecmp(a.ptr, b.ptr, a.len) == 0;
 }
 
 pub fn eqlCaseInsensitiveT(comptime T: type, a: []const T, b: []const u8) bool {
@@ -1029,7 +1029,7 @@ pub fn eqlLongT(comptime T: type, a_str: []const T, b_str: []const T, comptime c
             return false;
         }
     }
-    return eqlLong(bun.reinterpretSlice(u8, a_str), bun.reinterpretSlice(u8, b_str), false);
+    return eqlLong(fun.reinterpretSlice(u8, a_str), fun.reinterpretSlice(u8, b_str), false);
 }
 
 pub fn eqlLong(a_str: string, b_str: string, comptime check_len: bool) bool {
@@ -1092,7 +1092,7 @@ pub fn eqlLong(a_str: string, b_str: string, comptime check_len: bool) bool {
     return true;
 }
 
-pub fn append(allocator: std.mem.Allocator, self: string, other: string) callconv(bun.callconv_inline) ![]u8 {
+pub fn append(allocator: std.mem.Allocator, self: string, other: string) callconv(fun.callconv_inline) ![]u8 {
     var buf = try allocator.alloc(u8, self.len + other.len);
     if (self.len > 0)
         @memcpy(buf[0..self.len], self);
@@ -1101,7 +1101,7 @@ pub fn append(allocator: std.mem.Allocator, self: string, other: string) callcon
     return buf;
 }
 
-pub fn concatAllocT(comptime T: type, allocator: std.mem.Allocator, strs: anytype) callconv(bun.callconv_inline) ![]T {
+pub fn concatAllocT(comptime T: type, allocator: std.mem.Allocator, strs: anytype) callconv(fun.callconv_inline) ![]T {
     const buf = try allocator.alloc(T, len: {
         var len: usize = 0;
         inline for (strs) |s| {
@@ -1115,7 +1115,7 @@ pub fn concatAllocT(comptime T: type, allocator: std.mem.Allocator, strs: anytyp
     };
 }
 
-pub fn concatBufT(comptime T: type, out: []T, strs: anytype) callconv(bun.callconv_inline) ![]T {
+pub fn concatBufT(comptime T: type, out: []T, strs: anytype) callconv(fun.callconv_inline) ![]T {
     var remain = out;
     var n: usize = 0;
     inline for (strs) |s| {
@@ -1164,7 +1164,7 @@ pub const AsciiU16Vector = @Vector(ascii_u16_vector_size, u16);
 pub const max_4_ascii: @Vector(4, u8) = @splat(@as(u8, 127));
 
 pub fn firstNonASCII(slice: []const u8) ?u32 {
-    const result = bun.simdutf.validate.with_errors.ascii(slice);
+    const result = fun.simdutf.validate.with_errors.ascii(slice);
     if (result.status == .success) {
         return null;
     }
@@ -1190,7 +1190,7 @@ pub fn indexOfSpaceOrNewlineOrNonASCII(slice_: []const u8, offset: u32) ?u32 {
         return offset;
     }
 
-    const i = bun.highway.indexOfSpaceOrNewlineOrNonASCII(remaining) orelse return null;
+    const i = fun.highway.indexOfSpaceOrNewlineOrNonASCII(remaining) orelse return null;
     return @as(u32, @truncate(i)) + offset;
 }
 
@@ -1208,12 +1208,12 @@ pub fn indexOfNewlineOrNonASCIICheckStart(slice_: []const u8, offset: u32, compt
         }
     }
 
-    const i = bun.highway.indexOfNewlineOrNonASCII(remaining) orelse return null;
+    const i = fun.highway.indexOfNewlineOrNonASCII(remaining) orelse return null;
     return @as(u32, @truncate(i)) + offset;
 }
 
 pub fn containsNewlineOrNonASCIIOrQuote(text: []const u8) bool {
-    return bun.highway.containsNewlineOrNonASCIIOrQuote(text);
+    return fun.highway.containsNewlineOrNonASCIIOrQuote(text);
 }
 
 /// Supports:
@@ -1224,7 +1224,7 @@ pub fn indexOfNeedsEscapeForJavaScriptString(slice: []const u8, quote_char: u8) 
     if (slice.len == 0)
         return null;
 
-    return bun.highway.indexOfNeedsEscapeForJavaScriptString(slice, quote_char);
+    return fun.highway.indexOfNeedsEscapeForJavaScriptString(slice, quote_char);
 }
 
 pub fn indexOfNeedsURLEncode(slice: []const u8) ?u32 {
@@ -1297,7 +1297,7 @@ pub fn indexOfNeedsURLEncode(slice: []const u8) ?u32 {
 }
 
 pub fn indexOfCharZ(sliceZ: [:0]const u8, char: u8) ?u63 {
-    return @truncate(bun.highway.indexOfChar(sliceZ, char) orelse return null);
+    return @truncate(fun.highway.indexOfChar(sliceZ, char) orelse return null);
 }
 
 pub fn indexOfChar(slice: []const u8, char: u8) ?u32 {
@@ -1309,7 +1309,7 @@ pub fn indexOfCharUsize(slice: []const u8, char: u8) ?usize {
         return std.mem.indexOfScalar(u8, slice, char);
     }
 
-    return bun.highway.indexOfChar(slice, char);
+    return fun.highway.indexOfChar(slice, char);
 }
 
 pub fn indexOfCharPos(slice: []const u8, char: u8, start_index: usize) ?usize {
@@ -1319,8 +1319,8 @@ pub fn indexOfCharPos(slice: []const u8, char: u8, start_index: usize) ?usize {
 
     if (start_index >= slice.len) return null;
 
-    const result = bun.highway.indexOfChar(slice[start_index..], char) orelse return null;
-    bun.debugAssert(slice.len > result + start_index);
+    const result = fun.highway.indexOfChar(slice[start_index..], char) orelse return null;
+    fun.debugAssert(slice.len > result + start_index);
     return result + start_index;
 }
 
@@ -1401,7 +1401,7 @@ pub fn decodeHexToBytesTruncate(destination: []u8, comptime Char: type, source: 
     return _decodeHexToBytes(destination, Char, source, true) catch 0;
 }
 
-fn _decodeHexToBytes(destination: []u8, comptime Char: type, source: []const Char, comptime truncate: bool) callconv(bun.callconv_inline) !usize {
+fn _decodeHexToBytes(destination: []u8, comptime Char: type, source: []const Char, comptime truncate: bool) callconv(fun.callconv_inline) !usize {
     var remain = destination;
     var input = source;
 
@@ -1441,8 +1441,8 @@ fn byte2hex(char: u8) u8 {
 
 pub fn encodeBytesToHex(destination: []u8, source: []const u8) usize {
     if (comptime Environment.allow_assert) {
-        bun.unsafeAssert(destination.len > 0);
-        bun.unsafeAssert(source.len > 0);
+        fun.unsafeAssert(destination.len > 0);
+        fun.unsafeAssert(source.len > 0);
     }
     const to_write = if (destination.len < source.len * 2)
         destination.len - destination.len % 2
@@ -1581,11 +1581,11 @@ const LineRange = struct {
     start: u32,
     end: u32,
 };
-pub fn indexOfLineRanges(text: []const u8, target_line: u32, comptime line_range_count: usize) bun.BoundedArray(LineRange, line_range_count) {
+pub fn indexOfLineRanges(text: []const u8, target_line: u32, comptime line_range_count: usize) fun.BoundedArray(LineRange, line_range_count) {
     const remaining = text;
     if (remaining.len == 0) return .{};
 
-    var ranges = bun.BoundedArray(LineRange, line_range_count){};
+    var ranges = fun.BoundedArray(LineRange, line_range_count){};
 
     var current_line: u32 = 0;
     const first_newline_or_nonascii_i = strings.indexOfNewlineOrNonASCIICheckStart(text, 0, true) orelse {
@@ -1648,7 +1648,7 @@ pub fn indexOfLineRanges(text: []const u8, target_line: u32, comptime line_range
         cursor.i = current_i;
         cursor.width = 0;
         const current_line_range: LineRange = brk: {
-            bun.assert(iter.next(&cursor)); // cursor points to current_i where we know there is some character
+            fun.assert(iter.next(&cursor)); // cursor points to current_i where we know there is some character
             const codepoint = cursor.c;
             switch (codepoint) {
                 '\n' => {
@@ -1679,7 +1679,7 @@ pub fn indexOfLineRanges(text: []const u8, target_line: u32, comptime line_range
         };
 
         if (ranges.len == line_range_count and current_line <= target_line) {
-            var new_ranges = bun.BoundedArray(LineRange, line_range_count){};
+            var new_ranges = fun.BoundedArray(LineRange, line_range_count){};
             new_ranges.appendSliceAssumeCapacity(ranges.slice()[1..]);
             ranges = new_ranges;
         }
@@ -1693,7 +1693,7 @@ pub fn indexOfLineRanges(text: []const u8, target_line: u32, comptime line_range
     }
 
     if (ranges.len == line_range_count and current_line <= target_line) {
-        var new_ranges = bun.BoundedArray(LineRange, line_range_count){};
+        var new_ranges = fun.BoundedArray(LineRange, line_range_count){};
         new_ranges.appendSliceAssumeCapacity(ranges.slice()[1..]);
         ranges = new_ranges;
     }
@@ -1702,10 +1702,10 @@ pub fn indexOfLineRanges(text: []const u8, target_line: u32, comptime line_range
 }
 
 /// Get N lines from the start of the text
-pub fn getLinesInText(text: []const u8, line: u32, comptime line_range_count: usize) ?bun.BoundedArray([]const u8, line_range_count) {
+pub fn getLinesInText(text: []const u8, line: u32, comptime line_range_count: usize) ?fun.BoundedArray([]const u8, line_range_count) {
     const ranges = indexOfLineRanges(text, line, line_range_count);
     if (ranges.len == 0) return null;
-    var results = bun.BoundedArray([]const u8, line_range_count){};
+    var results = fun.BoundedArray([]const u8, line_range_count){};
     results.len = ranges.len;
 
     for (results.slice()[0..ranges.len], ranges.slice()) |*chunk, range| {
@@ -1739,12 +1739,12 @@ pub fn firstNonASCII16(slice: []const u16) ?u32 {
                     if (comptime Environment.isDebug) {
                         for (0..index_of_first_nonascii_in_vector) |i| {
                             if (vec[i] > 127) {
-                                bun.Output.panic("firstNonASCII16: found non-ASCII character in ASCII vector before the first non-ASCII character", .{});
+                                fun.Output.panic("firstNonASCII16: found non-ASCII character in ASCII vector before the first non-ASCII character", .{});
                             }
                         }
 
                         if (slice[out] <= 127) {
-                            bun.Output.panic("firstNonASCII16: Expected non-ascii character", .{});
+                            fun.Output.panic("firstNonASCII16: Expected non-ascii character", .{});
                         }
                     }
 
@@ -1756,7 +1756,7 @@ pub fn firstNonASCII16(slice: []const u16) ?u32 {
             remaining.len -= (@intFromPtr(remaining.ptr) - @intFromPtr(remaining_start)) / 2;
         }
 
-        bun.unsafeAssert(remaining.len < ascii_u16_vector_size);
+        fun.unsafeAssert(remaining.len < ascii_u16_vector_size);
     }
 
     var i: usize = (@intFromPtr(remaining.ptr) - @intFromPtr(remaining_start)) / 2;
@@ -1809,7 +1809,7 @@ pub fn join(slices: []const string, delimiter: string, allocator: std.mem.Alloca
 pub fn order(a: []const u8, b: []const u8) std.math.Order {
     const len = @min(a.len, b.len);
 
-    const cmp = if (comptime Environment.isNative) bun.c.memcmp(a.ptr, b.ptr, len) else return std.mem.order(u8, a, b);
+    const cmp = if (comptime Environment.isNative) fun.c.memcmp(a.ptr, b.ptr, len) else return std.mem.order(u8, a, b);
     return switch (std.math.sign(cmp)) {
         0 => std.math.order(a.len, b.len),
         1 => .gt,
@@ -1949,14 +1949,14 @@ pub fn moveAllSlices(comptime Type: type, container: *Type, from: string, to: st
 
 pub fn moveSlice(slice: string, from: string, to: string) string {
     if (comptime Environment.allow_assert) {
-        bun.unsafeAssert(from.len <= to.len and from.len >= slice.len);
+        fun.unsafeAssert(from.len <= to.len and from.len >= slice.len);
         // assert we are in bounds
-        bun.unsafeAssert(
+        fun.unsafeAssert(
             (@intFromPtr(from.ptr) + from.len) >=
                 @intFromPtr(slice.ptr) + slice.len and
                 (@intFromPtr(from.ptr) <= @intFromPtr(slice.ptr)),
         );
-        bun.unsafeAssert(eqlLong(from, to[0..from.len], false)); // data should be identical
+        fun.unsafeAssert(eqlLong(from, to[0..from.len], false)); // data should be identical
     }
 
     const ptr_offset = @intFromPtr(slice.ptr) - @intFromPtr(from.ptr);
@@ -1987,7 +1987,7 @@ pub fn isIPAddress(input: []const u8) bool {
 
     const ip_addr_str: [:0]const u8 = max_ip_address_buffer[0..input.len :0];
 
-    return bun.c_ares.ares_inet_pton(std.posix.AF.INET, ip_addr_str.ptr, &sockaddr) > 0 or bun.c_ares.ares_inet_pton(std.posix.AF.INET6, ip_addr_str.ptr, &sockaddr) > 0;
+    return fun.c_ares.ares_inet_pton(std.posix.AF.INET, ip_addr_str.ptr, &sockaddr) > 0 or fun.c_ares.ares_inet_pton(std.posix.AF.INET6, ip_addr_str.ptr, &sockaddr) > 0;
 }
 
 pub fn isIPV6Address(input: []const u8) bool {
@@ -2000,7 +2000,7 @@ pub fn isIPV6Address(input: []const u8) bool {
     max_ip_address_buffer[input.len] = 0;
 
     const ip_addr_str: [:0]const u8 = max_ip_address_buffer[0..input.len :0];
-    return bun.c_ares.ares_inet_pton(std.posix.AF.INET6, ip_addr_str.ptr, &sockaddr) > 0;
+    return fun.c_ares.ares_inet_pton(std.posix.AF.INET6, ip_addr_str.ptr, &sockaddr) > 0;
 }
 
 pub fn leftHasAnyInRight(to_check: []const string, against: []const string) bool {
@@ -2034,7 +2034,7 @@ pub fn hasPrefixWithWordBoundary(input: []const u8, comptime prefix: []const u8)
             if (next.len > 3) next[3] else 0,
         };
 
-        if (!bun.js_lexer.isIdentifierContinue(decodeWTF8RuneT(&bytes, wtf8ByteSequenceLength(next[0]), i32, -1))) {
+        if (!fun.js_lexer.isIdentifierContinue(decodeWTF8RuneT(&bytes, wtf8ByteSequenceLength(next[0]), i32, -1))) {
             return true;
         }
     }
@@ -2046,21 +2046,21 @@ pub fn concatWithLength(
     allocator: std.mem.Allocator,
     args: []const string,
     length: usize,
-) bun.OOM![]u8 {
+) fun.OOM![]u8 {
     const out = try allocator.alloc(u8, length);
     var remain = out;
     for (args) |arg| {
         @memcpy(remain[0..arg.len], arg);
         remain = remain[arg.len..];
     }
-    bun.unsafeAssert(remain.len == 0); // all bytes should be used
+    fun.unsafeAssert(remain.len == 0); // all bytes should be used
     return out;
 }
 
 pub fn concat(
     allocator: std.mem.Allocator,
     args: []const string,
-) bun.OOM![]u8 {
+) fun.OOM![]u8 {
     var length: usize = 0;
     for (args) |arg| {
         length += arg.len;
@@ -2127,7 +2127,7 @@ pub fn concatIfNeeded(
 
         remain = remain[arg.len..];
     }
-    bun.unsafeAssert(remain.len == 0);
+    fun.unsafeAssert(remain.len == 0);
 }
 
 pub fn mustEscapeYAMLString(contents: []const u8) bool {
@@ -2156,13 +2156,13 @@ fn QuoteEscapeFormat(comptime flags: QuoteEscapeFormatFlags) type {
         data: []const u8,
 
         pub fn format(self: @This(), writer: *std.Io.Writer) !void {
-            try bun.js_printer.writePreQuotedString(self.data, @TypeOf(writer), writer, flags.quote_char, false, flags.json, flags.str_encoding);
+            try fun.js_printer.writePreQuotedString(self.data, @TypeOf(writer), writer, flags.quote_char, false, flags.json, flags.str_encoding);
         }
     };
 }
 
 /// Generic. Works on []const u8, []const u16, etc
-pub fn indexOfScalar(input: anytype, scalar: std.meta.Child(@TypeOf(input))) callconv(bun.callconv_inline) ?usize {
+pub fn indexOfScalar(input: anytype, scalar: std.meta.Child(@TypeOf(input))) callconv(fun.callconv_inline) ?usize {
     if (comptime std.meta.Child(@TypeOf(input)) == u8) {
         return strings.indexOfCharUsize(input, scalar);
     } else {
@@ -2317,7 +2317,7 @@ pub const toUTF8AppendToList = unicode.toUTF8AppendToList;
 pub const toUTF8FromLatin1 = unicode.toUTF8FromLatin1;
 pub const toUTF8FromLatin1Z = unicode.toUTF8FromLatin1Z;
 pub const toUTF8ListWithType = unicode.toUTF8ListWithType;
-pub const toUTF8ListWithTypeBun = unicode.toUTF8ListWithTypeBun;
+pub const toUTF8ListWithTypeFun = unicode.toUTF8ListWithTypeFun;
 pub const u16GetSupplementary = unicode.u16GetSupplementary;
 pub const u16IsLead = unicode.u16IsLead;
 pub const u16IsTrail = unicode.u16IsTrail;
@@ -2381,7 +2381,7 @@ pub const withoutTrailingSlash = paths_.withoutTrailingSlash;
 pub const withoutTrailingSlashWindowsPath = paths_.withoutTrailingSlashWindowsPath;
 pub const basename = paths_.basename;
 
-pub const log = bun.Output.scoped(.STR, .hidden);
+pub const log = fun.Output.scoped(.STR, .hidden);
 pub const grapheme = @import("./immutable/grapheme.zig");
 pub const CodePoint = i32;
 
@@ -2408,13 +2408,13 @@ pub const ANSIIterator = extern struct {
 
     /// Returns the next slice of non-ANSI text, or null when done.
     pub fn next(self: *ANSIIterator) ?[]const u8 {
-        if (Bun__ANSI__next(self)) {
+        if (Fun__ANSI__next(self)) {
             return (self.slice_ptr orelse return null)[0..self.slice_len];
         }
         return null;
     }
 
-    extern fn Bun__ANSI__next(it: *ANSIIterator) bool;
+    extern fn Fun__ANSI__next(it: *ANSIIterator) bool;
 };
 
 const escapeHTML_ = @import("./immutable/escapeHTML.zig");
@@ -2424,8 +2424,8 @@ const std = @import("std");
 const unicode = @import("./immutable/unicode.zig");
 const visible_ = @import("./immutable/visible.zig");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const assert = bun.assert;
-const js_lexer = bun.js_lexer;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const assert = fun.assert;
+const js_lexer = fun.js_lexer;

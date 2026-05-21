@@ -2,29 +2,29 @@ pub const ExecCommand = struct {
     pub fn exec(ctx: Command.Context) !void {
         const script = ctx.positionals[1];
         // this is a hack: make dummy bundler so we can use its `.runEnvLoader()` function to populate environment variables probably should split out the functionality
-        var bundle = try bun.Transpiler.init(
+        var bundle = try fun.Transpiler.init(
             ctx.allocator,
             ctx.log,
-            try @import("../jsc/config.zig").configureTransformOptionsForBunVM(ctx.allocator, ctx.args),
+            try @import("../jsc/config.zig").configureTransformOptionsForFunVM(ctx.allocator, ctx.args),
             null,
         );
         try bundle.runEnvLoader(bundle.options.env.disable_default_env_files);
-        var buf: bun.PathBuffer = undefined;
-        const cwd = switch (bun.sys.getcwd(&buf)) {
+        var buf: fun.PathBuffer = undefined;
+        const cwd = switch (fun.sys.getcwd(&buf)) {
             .result => |p| p,
             .err => |e| {
                 Output.err(e, "failed to run script <b>{s}<r>", .{script});
                 Global.exit(1);
             },
         };
-        const mini = bun.jsc.MiniEventLoop.initGlobal(bundle.env, cwd);
+        const mini = fun.jsc.MiniEventLoop.initGlobal(bundle.env, cwd);
         const parts: []const []const u8 = &[_][]const u8{
             cwd,
             "[eval]",
         };
-        const script_path = bun.path.join(parts, .auto);
+        const script_path = fun.path.join(parts, .auto);
 
-        const code = bun.shell.Interpreter.initAndRunFromSource(ctx, mini, script_path, script, null) catch |err| {
+        const code = fun.shell.Interpreter.initAndRunFromSource(ctx, mini, script_path, script, null) catch |err| {
             Output.err(err, "failed to run script <b>{s}<r>", .{script_path});
             Global.exit(1);
         };
@@ -40,7 +40,7 @@ pub const ExecCommand = struct {
     }
 };
 
-const bun = @import("bun");
-const Global = bun.Global;
-const Output = bun.Output;
-const Command = bun.cli.Command;
+const fun = @import("fun");
+const Global = fun.Global;
+const Output = fun.Output;
+const Command = fun.cli.Command;

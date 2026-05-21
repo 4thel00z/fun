@@ -14,7 +14,7 @@ pub const Int = u16;
 pub const oom = fromCode(E.NOMEM, .read);
 
 errno: Int = todo_errno,
-fd: bun.FD = bun.invalid_fd,
+fd: fun.FD = fun.invalid_fd,
 from_libuv: if (Environment.isWindows) bool else void = if (Environment.isWindows) false else undefined,
 path: []const u8 = "",
 syscall: sys.Tag = sys.Tag.TODO,
@@ -22,8 +22,8 @@ dest: []const u8 = "",
 
 pub fn clone(this: *const Error, allocator: std.mem.Allocator) Error {
     var copy = this.*;
-    copy.path = bun.handleOom(allocator.dupe(u8, copy.path));
-    copy.dest = bun.handleOom(allocator.dupe(u8, copy.dest));
+    copy.path = fun.handleOom(allocator.dupe(u8, copy.path));
+    copy.dest = fun.handleOom(allocator.dupe(u8, copy.dest));
     return copy;
 }
 
@@ -47,12 +47,12 @@ pub fn format(self: Error, writer: *std.Io.Writer) std.Io.Writer.Error!void {
     // because we're intending to pass them to writer.print()
     // which will convert them back into UTF*.
     var that = self.withoutPath().toShellSystemError();
-    bun.debugAssert(that.path.tag != .WTFStringImpl);
-    bun.debugAssert(that.dest.tag != .WTFStringImpl);
-    that.path = bun.String.borrowUTF8(self.path);
-    that.dest = bun.String.borrowUTF8(self.dest);
-    bun.debugAssert(that.path.tag != .WTFStringImpl);
-    bun.debugAssert(that.dest.tag != .WTFStringImpl);
+    fun.debugAssert(that.path.tag != .WTFStringImpl);
+    fun.debugAssert(that.dest.tag != .WTFStringImpl);
+    that.path = fun.String.borrowUTF8(self.path);
+    that.dest = fun.String.borrowUTF8(self.dest);
+    fun.debugAssert(that.path.tag != .WTFStringImpl);
+    fun.debugAssert(that.dest.tag != .WTFStringImpl);
 
     return that.format(writer);
 }
@@ -71,7 +71,7 @@ pub const retry = Error{
 };
 
 pub inline fn withFd(this: Error, fd: anytype) Error {
-    if (Environment.allow_assert) bun.assert(fd != bun.invalid_fd);
+    if (Environment.allow_assert) fun.assert(fd != fun.invalid_fd);
     return Error{
         .errno = this.errno,
         .syscall = this.syscall,
@@ -86,7 +86,7 @@ pub inline fn withPath(this: Error, path: anytype) Error {
     return Error{
         .errno = this.errno,
         .syscall = this.syscall,
-        .path = bun.span(path),
+        .path = fun.span(path),
     };
 }
 
@@ -97,12 +97,12 @@ pub inline fn withPathAndSyscall(this: Error, path: anytype, syscall_: sys.Tag) 
     return Error{
         .errno = this.errno,
         .syscall = syscall_,
-        .path = bun.span(path),
+        .path = fun.span(path),
     };
 }
 
 pub fn deinit(this: *Error) void {
-    this.deinitWithAllocator(bun.default_allocator);
+    this.deinitWithAllocator(fun.default_allocator);
 }
 
 /// Only call this after it's been .clone()'d
@@ -127,8 +127,8 @@ pub inline fn withPathDest(this: Error, path: anytype, dest: anytype) Error {
     return Error{
         .errno = this.errno,
         .syscall = this.syscall,
-        .path = bun.span(path),
-        .dest = bun.span(dest),
+        .path = fun.span(path),
+        .dest = fun.span(dest),
     };
 }
 
@@ -153,17 +153,17 @@ pub fn name(this: *const Error) []const u8 {
             // setRuntimeSafety(false) because we use tagName function, which will be null on invalid enum value.
             @setRuntimeSafety(false);
             if (this.from_libuv) {
-                break :brk @as(SystemErrno, @enumFromInt(@intFromEnum(bun.windows.libuv.translateUVErrorToE(-@as(c_int, this.errno)))));
+                break :brk @as(SystemErrno, @enumFromInt(@intFromEnum(fun.windows.libuv.translateUVErrorToE(-@as(c_int, this.errno)))));
             }
 
             break :brk @as(SystemErrno, @enumFromInt(this.errno));
         };
-        if (bun.tagName(SystemErrno, system_errno)) |errname| {
+        if (fun.tagName(SystemErrno, system_errno)) |errname| {
             return errname;
         }
     } else if (this.errno > 0 and this.errno < SystemErrno.max) {
         const system_errno = @as(SystemErrno, @enumFromInt(this.errno));
-        if (bun.tagName(SystemErrno, system_errno)) |errname| {
+        if (fun.tagName(SystemErrno, system_errno)) |errname| {
             return errname;
         }
     }
@@ -172,7 +172,7 @@ pub fn name(this: *const Error) []const u8 {
 }
 
 pub fn toZigErr(this: Error) anyerror {
-    return bun.errnoToZigErr(this.errno);
+    return fun.errnoToZigErr(this.errno);
 }
 
 /// 1. Convert libuv errno values into libc ones.
@@ -188,12 +188,12 @@ pub fn getErrorCodeTagName(err: *const Error) ?struct { [:0]const u8, SystemErrn
             // setRuntimeSafety(false) because we use tagName function, which will be null on invalid enum value.
             @setRuntimeSafety(false);
             if (err.from_libuv) {
-                break :brk @enumFromInt(@intFromEnum(bun.windows.libuv.translateUVErrorToE(@as(c_int, err.errno) * -1)));
+                break :brk @enumFromInt(@intFromEnum(fun.windows.libuv.translateUVErrorToE(@as(c_int, err.errno) * -1)));
             }
 
             break :brk @enumFromInt(err.errno);
         };
-        if (bun.tagName(SystemErrno, system_errno)) |errname| {
+        if (fun.tagName(SystemErrno, system_errno)) |errname| {
             return .{ errname, system_errno };
         }
     }
@@ -216,25 +216,25 @@ pub fn toShellSystemError(this: Error) SystemError {
     @setEvalBranchQuota(1_000_000);
     var err = SystemError{
         .errno = @as(c_int, this.errno) * -1,
-        .syscall = bun.String.static(@tagName(this.syscall)),
+        .syscall = fun.String.static(@tagName(this.syscall)),
         .message = .empty,
     };
 
     // errno label
     if (this.getErrorCodeTagName()) |resolved_errno| {
         const code, const system_errno = resolved_errno;
-        err.code = bun.String.static(code);
+        err.code = fun.String.static(code);
         if (coreutils_error_map.get(system_errno)) |label| {
-            err.message = bun.String.static(label);
+            err.message = fun.String.static(label);
         }
     }
 
     if (this.path.len > 0) {
-        err.path = bun.String.cloneUTF8(this.path);
+        err.path = fun.String.cloneUTF8(this.path);
     }
 
     if (this.dest.len > 0) {
-        err.dest = bun.String.cloneUTF8(this.dest);
+        err.dest = fun.String.cloneUTF8(this.dest);
     }
 
     if (this.fd.unwrapValid()) |valid| {
@@ -252,7 +252,7 @@ pub fn toShellSystemError(this: Error) SystemError {
 pub fn toSystemError(this: Error) SystemError {
     var err = SystemError{
         .errno = -%@as(c_int, this.errno),
-        .syscall = bun.String.static(@tagName(this.syscall)),
+        .syscall = fun.String.static(@tagName(this.syscall)),
         .message = .empty,
     };
 
@@ -261,7 +261,7 @@ pub fn toSystemError(this: Error) SystemError {
     var label: ?[]const u8 = null;
     if (this.getErrorCodeTagName()) |resolved_errno| {
         maybe_code, const system_errno = resolved_errno;
-        err.code = bun.String.static(maybe_code.?);
+        err.code = fun.String.static(maybe_code.?);
         label = libuv_error_map.get(system_errno);
     }
 
@@ -293,14 +293,14 @@ pub fn toSystemError(this: Error) SystemError {
         }
         break :message stream.getWritten();
     };
-    err.message = bun.String.cloneUTF8(message);
+    err.message = fun.String.cloneUTF8(message);
 
     if (this.path.len > 0) {
-        err.path = bun.String.cloneUTF8(this.path);
+        err.path = fun.String.cloneUTF8(this.path);
     }
 
     if (this.dest.len > 0) {
-        err.dest = bun.String.cloneUTF8(this.dest);
+        err.dest = fun.String.cloneUTF8(this.dest);
     }
 
     if (this.fd.unwrapValid()) |valid| {
@@ -326,11 +326,11 @@ pub const TestingAPIs = @import("../sys_jsc/error_jsc.zig").TestingAPIs;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const SystemError = bun.jsc.SystemError;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const SystemError = fun.jsc.SystemError;
 
-const sys = bun.sys;
+const sys = fun.sys;
 const E = sys.E;
 const SystemErrno = sys.SystemErrno;
 const coreutils_error_map = sys.coreutils_error_map;

@@ -10,7 +10,7 @@ napi_value test_function(napi_env env, napi_callback_info info) {
     
     // Try to remove a hook that was never added
     // In Node.js, this should silently do nothing
-    // In Bun currently, this causes NAPI_PERISH crash
+    // In Fun currently, this causes NAPI_PERISH crash
     napi_status status = napi_remove_env_cleanup_hook(env, dummy_hook, NULL);
     
     if (status == napi_ok) {

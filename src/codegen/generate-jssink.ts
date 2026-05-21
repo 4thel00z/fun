@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { join, resolve } from "path";
 
 const classes = [
@@ -232,7 +234,7 @@ async function implementation() {
 //
 #include "root.h"
 #include "headers.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 #include "JSSink.h"
 #include "AsyncContextFrame.h"
@@ -277,11 +279,11 @@ async function implementation() {
 #include <JavaScriptCore/JSArrayBufferViewInlines.h>
 
 #include "JSReadableStream.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/Weak.h>
 #include <JavaScriptCore/WeakInlines.h>
 
-extern "C" void Bun__onSinkDestroyed(uintptr_t destructor, void* sinkPtr);
+extern "C" void Fun__onSinkDestroyed(uintptr_t destructor, void* sinkPtr);
 
 namespace WebCore {
 using namespace JSC;
@@ -340,7 +342,7 @@ JSC_DEFINE_HOST_FUNCTION(functionStartDirectStream, (JSC::JSGlobalObject * lexic
 
   templ += `
     else {
-        scope.throwException(globalObject, JSC::createTypeError(globalObject, "Unknown direct controller. This is a bug in Bun."_s));
+        scope.throwException(globalObject, JSC::createTypeError(globalObject, "Unknown direct controller. This is a bug in Fun."_s));
         return JSC::JSValue::encode(JSC::jsUndefined());
     }
 
@@ -619,7 +621,7 @@ const ClassInfo ${controller}::s_info = { "${controllerName}"_s, &Base::s_info, 
 ${className}::~${className}()
 {
     if (m_onDestroy) {
-        Bun__onSinkDestroyed(m_onDestroy, m_sinkPtr);
+        Fun__onSinkDestroyed(m_onDestroy, m_sinkPtr);
     }
 
     if (m_sinkPtr) {
@@ -631,7 +633,7 @@ ${className}::~${className}()
 ${controller}::~${controller}()
 {
     if (m_onDestroy) {
-        Bun__onSinkDestroyed(m_onDestroy, m_sinkPtr);
+        Fun__onSinkDestroyed(m_onDestroy, m_sinkPtr);
     }
 
     if (m_sinkPtr) {
@@ -653,7 +655,7 @@ void JS${controllerName}::detach() {
     if (m_onDestroy) {
         auto destroy = m_onDestroy;
         m_onDestroy = 0;
-        Bun__onSinkDestroyed(destroy, m_sinkPtr);
+        Fun__onSinkDestroyed(destroy, m_sinkPtr);
     }
 
     m_sinkPtr = nullptr;
@@ -1056,11 +1058,11 @@ function lutInput() {
 
 const outDir = resolve(process.argv[2]);
 
-await Bun.write(resolve(outDir + "/JSSink.h"), header());
-await Bun.write(resolve(outDir + "/JSSink.cpp"), await implementation());
-await Bun.write(resolve(outDir + "/JSSink.lut.txt"), lutInput());
+await Fun.write(resolve(outDir + "/JSSink.h"), header());
+await Fun.write(resolve(outDir + "/JSSink.cpp"), await implementation());
+await Fun.write(resolve(outDir + "/JSSink.lut.txt"), lutInput());
 
-Bun.spawnSync(
+Fun.spawnSync(
   [
     process.execPath,
     "run",

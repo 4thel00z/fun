@@ -1,11 +1,11 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 describe.concurrent("writeEarlyHints", () => {
   test("rejects CRLF injection in header name", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const http = require("node:http");
@@ -35,7 +35,7 @@ describe.concurrent("writeEarlyHints", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
@@ -47,9 +47,9 @@ describe.concurrent("writeEarlyHints", () => {
   });
 
   test("rejects CRLF injection in header value", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const http = require("node:http");
@@ -79,7 +79,7 @@ describe.concurrent("writeEarlyHints", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 
@@ -91,9 +91,9 @@ describe.concurrent("writeEarlyHints", () => {
   });
 
   test("allows valid non-link headers in early hints", async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const http = require("node:http");
@@ -124,7 +124,7 @@ describe.concurrent("writeEarlyHints", () => {
         });
         `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 

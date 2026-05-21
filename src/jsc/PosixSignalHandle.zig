@@ -9,9 +9,9 @@ tail: std.atomic.Value(u16) = std.atomic.Value(u16).init(0),
 // Consumer index (main thread reads).
 head: std.atomic.Value(u16) = std.atomic.Value(u16).init(0),
 
-const log = bun.Output.scoped(.PosixSignalHandle, .hidden);
+const log = fun.Output.scoped(.PosixSignalHandle, .hidden);
 
-pub const new = bun.TrivialNew(@This());
+pub const new = fun.TrivialNew(@This());
 
 /// Called by the signal handler (single producer).
 /// Returns `true` if enqueued successfully, or `false` if the ring is full.
@@ -45,7 +45,7 @@ pub fn enqueue(this: *PosixSignalHandle, signal: u8) bool {
 
 /// This is the signal handler entry point. Calls enqueue on the ring buffer.
 /// Note: Must be minimal logic here. Only do atomics & signal‐safe calls.
-export fn Bun__onPosixSignal(number: i32) void {
+export fn Fun__onPosixSignal(number: i32) void {
     if (comptime Environment.isPosix) {
         const vm = VirtualMachine.getMainThreadVM().?;
         _ = vm.eventLoop().signal_handler.?.enqueue(@intCast(number));
@@ -88,15 +88,15 @@ pub fn drain(this: *PosixSignalHandle, event_loop: *jsc.EventLoop) void {
 
 pub const PosixSignalTask = struct {
     number: u8,
-    extern "c" fn Bun__onSignalForJS(number: i32, globalObject: *jsc.JSGlobalObject) void;
+    extern "c" fn Fun__onSignalForJS(number: i32, globalObject: *jsc.JSGlobalObject) void;
 
-    pub const new = bun.TrivialNew(@This());
+    pub const new = fun.TrivialNew(@This());
     pub fn runFromJSThread(number: u8, globalObject: *jsc.JSGlobalObject) void {
-        Bun__onSignalForJS(number, globalObject);
+        Fun__onSignalForJS(number, globalObject);
     }
 };
 
-export fn Bun__ensureSignalHandler() void {
+export fn Fun__ensureSignalHandler() void {
     if (comptime Environment.isPosix) {
         if (VirtualMachine.getMainThreadVM()) |vm| {
             const this = vm.eventLoop();
@@ -110,15 +110,15 @@ export fn Bun__ensureSignalHandler() void {
 
 comptime {
     if (Environment.isPosix) {
-        _ = Bun__ensureSignalHandler;
-        _ = Bun__onPosixSignal;
+        _ = Fun__ensureSignalHandler;
+        _ = Fun__onPosixSignal;
     }
 }
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
+const fun = @import("fun");
+const Environment = fun.Environment;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const VirtualMachine = jsc.VirtualMachine;

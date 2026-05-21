@@ -1,24 +1,24 @@
 ---
 title: Bundler
-description: Bun's fast native bundler for JavaScript, TypeScript, JSX, and more
+description: Fun's fast native bundler for JavaScript, TypeScript, JSX, and more
 ---
 
 import Build from "/snippets/cli/build.mdx";
 
-Bun's fast native bundler can be used via the `bun build` CLI command or the `Bun.build()` JavaScript API.
+Fun's fast native bundler can be used via the `fun build` CLI command or the `Fun.build()` JavaScript API.
 
 ### At a Glance
 
-- JS API: `await Bun.build({ entrypoints, outdir })`
-- CLI: `bun build <entry> --outdir ./out`
+- JS API: `await Fun.build({ entrypoints, outdir })`
+- CLI: `fun build <entry> --outdir ./out`
 - Watch: `--watch` for incremental rebuilds
-- Targets: `--target browser|bun|node`
+- Targets: `--target browser|fun|node`
 - Formats: `--format esm|cjs|iife` (experimental for cjs/iife)
 
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './build',
     });
@@ -26,12 +26,12 @@ Bun's fast native bundler can be used via the `bun build` CLI command or the `Bu
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./build
+    fun build ./index.tsx --outdir ./build
     ```
   </Tab>
 </Tabs>
 
-It's fast. The numbers below represent performance on esbuild's [three.js benchmark](https://github.com/oven-sh/bun/tree/main/bench/bundle).
+It's fast. The numbers below represent performance on esbuild's [three.js benchmark](https://github.com/underdoc-org/fun/tree/main/bench/bundle).
 
 <Frame>
   <img
@@ -47,11 +47,11 @@ The bundler is a key piece of infrastructure in the JavaScript ecosystem. As a b
 - **Reducing HTTP requests.** A single package in `node_modules` may consist of hundreds of files, and large applications may have dozens of such dependencies. Loading each of these files with a separate HTTP request becomes untenable very quickly, so bundlers are used to convert our application source code into a smaller number of self-contained "bundles" that can be loaded with a single request.
 - **Code transforms.** Modern apps are commonly built with languages or tools like TypeScript, JSX, and CSS modules, all of which must be converted into plain JavaScript and CSS before they can be consumed by a browser. The bundler is the natural place to configure these transformations.
 - **Framework features.** Frameworks rely on bundler plugins & code transformations to implement common patterns like file-system routing, client-server code co-location (think `getServerSideProps` or Remix loaders), and server components.
-- **Full-stack Applications.** Bun's bundler can handle both server and client code in a single command, enabling optimized production builds and single-file executables. With build-time HTML imports, you can bundle your entire application — frontend assets and backend server — into a single deployable unit.
+- **Full-stack Applications.** Fun's bundler can handle both server and client code in a single command, enabling optimized production builds and single-file executables. With build-time HTML imports, you can bundle your entire application — frontend assets and backend server — into a single deployable unit.
 
 Let's jump into the bundler API.
 
-<Note>The Bun bundler is not intended to replace `tsc` for typechecking or generating type declarations.</Note>
+<Note>The Fun bundler is not intended to replace `tsc` for typechecking or generating type declarations.</Note>
 
 ## Basic example
 
@@ -82,19 +82,19 @@ To create our bundle:
 <CodeGroup>
 
 ```ts build.ts icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./index.tsx"],
   outdir: "./out",
 });
 ```
 
 ```bash terminal icon="terminal"
-bun build ./index.tsx --outdir ./out
+fun build ./index.tsx --outdir ./out
 ```
 
 </CodeGroup>
 
-For each file specified in `entrypoints`, Bun will generate a new bundle. This bundle will be written to disk in the `./out` directory (as resolved from the current working directory). After running the build, the file system looks like this:
+For each file specified in `entrypoints`, Fun will generate a new bundle. This bundle will be written to disk in the `./out` directory (as resolved from the current working directory). After running the build, the file system looks like this:
 
 ```text title="file system" icon="folder-tree"
 .
@@ -149,24 +149,24 @@ root.render(
 Like the runtime and test runner, the bundler supports watch mode natively.
 
 ```bash terminal icon="terminal"
-bun build ./index.tsx --outdir ./out --watch
+fun build ./index.tsx --outdir ./out --watch
 ```
 
 ## Content types
 
-Like the Bun runtime, the bundler supports an array of file types out of the box. The following table breaks down the bundler's set of standard "loaders". Refer to [Bundler > File types](/bundler/loaders) for full documentation.
+Like the Fun runtime, the bundler supports an array of file types out of the box. The following table breaks down the bundler's set of standard "loaders". Refer to [Bundler > File types](/bundler/loaders) for full documentation.
 
 | Extensions                                            | Details                                                                                                                                                                                                                                                                                                                                                      |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `.js` `.jsx` `.cjs` `.mjs` `.mts` `.cts` `.ts` `.tsx` | Uses Bun's built-in transpiler to parse the file and transpile TypeScript/JSX syntax to vanilla JavaScript. The bundler executes a set of default transforms including dead code elimination and tree shaking. At the moment Bun does not attempt to down-convert syntax; if you use recently ECMAScript syntax, that will be reflected in the bundled code. |
+| `.js` `.jsx` `.cjs` `.mjs` `.mts` `.cts` `.ts` `.tsx` | Uses Fun's built-in transpiler to parse the file and transpile TypeScript/JSX syntax to vanilla JavaScript. The bundler executes a set of default transforms including dead code elimination and tree shaking. At the moment Fun does not attempt to down-convert syntax; if you use recently ECMAScript syntax, that will be reflected in the bundled code. |
 | `.json`                                               | JSON files are parsed and inlined into the bundle as a JavaScript object.<br/><br/>`js<br/>import pkg from "./package.json";<br/>pkg.name; // => "my-package"<br/>`                                                                                                                                                                                          |
 | `.jsonc`                                              | JSON with comments. Files are parsed and inlined into the bundle as a JavaScript object.<br/><br/>`js<br/>import config from "./config.jsonc";<br/>config.name; // => "my-config"<br/>`                                                                                                                                                                      |
-| `.toml`                                               | TOML files are parsed and inlined into the bundle as a JavaScript object.<br/><br/>`js<br/>import config from "./bunfig.toml";<br/>config.logLevel; // => "debug"<br/>`                                                                                                                                                                                      |
+| `.toml`                                               | TOML files are parsed and inlined into the bundle as a JavaScript object.<br/><br/>`js<br/>import config from "./funfig.toml";<br/>config.logLevel; // => "debug"<br/>`                                                                                                                                                                                      |
 | `.yaml` `.yml`                                        | YAML files are parsed and inlined into the bundle as a JavaScript object.<br/><br/>`js<br/>import config from "./config.yaml";<br/>config.name; // => "my-app"<br/>`                                                                                                                                                                                         |
 | `.txt`                                                | The contents of the text file are read and inlined into the bundle as a string.<br/><br/>`js<br/>import contents from "./file.txt";<br/>console.log(contents); // => "Hello, world!"<br/>`                                                                                                                                                                   |
 | `.html`                                               | HTML files are processed and any referenced assets (scripts, stylesheets, images) are bundled.                                                                                                                                                                                                                                                               |
 | `.css`                                                | CSS files are bundled together into a single `.css` file in the output directory.                                                                                                                                                                                                                                                                            |
-| `.node` `.wasm`                                       | These files are supported by the Bun runtime, but during bundling they are treated as assets.                                                                                                                                                                                                                                                                |
+| `.node` `.wasm`                                       | These files are supported by the Fun runtime, but during bundling they are treated as assets.                                                                                                                                                                                                                                                                |
 
 ### Assets
 
@@ -207,7 +207,7 @@ An array of paths corresponding to the entrypoints of our application. One bundl
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ["./index.ts"],
     });
     // => { success: boolean, outputs: BuildArtifact[], logs: BuildMessage[] }
@@ -215,7 +215,7 @@ An array of paths corresponding to the entrypoints of our application. One bundl
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.ts
+    fun build ./index.ts
     ```
   </Tab>
 </Tabs>
@@ -231,7 +231,7 @@ File contents can be provided as a `string`, `Blob`, `TypedArray`, or `ArrayBuff
 You can bundle code without any files on disk by providing all sources via `files`:
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints: ["/app/index.ts"],
   files: {
     "/app/index.ts": `
@@ -258,7 +258,7 @@ In-memory files take priority over files on disk. This lets you override specifi
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
 // Assume ./src/config.ts exists on disk with development settings
-await Bun.build({
+await Fun.build({
   entrypoints: ["./src/index.ts"],
   files: {
     // Override config.ts with production values
@@ -277,7 +277,7 @@ Real files on disk can import virtual files, and virtual files can import real f
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
 // ./src/index.ts exists on disk and imports "./generated.ts"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./src/index.ts"],
   files: {
     // Provide a virtual file that index.ts imports
@@ -299,7 +299,7 @@ The directory where output files will be written.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ['./index.ts'],
       outdir: './out'
     });
@@ -308,7 +308,7 @@ The directory where output files will be written.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.ts --outdir ./out
+    fun build ./index.ts --outdir ./out
     ```
   </Tab>
 </Tabs>
@@ -316,7 +316,7 @@ The directory where output files will be written.
 If `outdir` is not passed to the JavaScript API, bundled code will not be written to disk. Bundled files are returned in an array of `BuildArtifact` objects. These objects are Blobs with extra properties; see [Outputs](#outputs) for complete documentation.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints: ["./index.ts"],
 });
 
@@ -324,11 +324,11 @@ for (const res of result.outputs) {
   // Can be consumed as blobs
   await res.text();
 
-  // Bun will set Content-Type and Etag headers
+  // Fun will set Content-Type and Etag headers
   new Response(res);
 
   // Can be written manually, but you should use `outdir` in this case.
-  Bun.write(path.join("out", res.path), res);
+  Fun.write(path.join("out", res.path), res);
 }
 ```
 
@@ -341,7 +341,7 @@ The intended execution environment for the bundle.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.ts'],
       outdir: './out',
       target: 'browser', // default
@@ -350,12 +350,12 @@ The intended execution environment for the bundle.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.ts --outdir ./out --target browser
+    fun build ./index.ts --outdir ./out --target browser
     ```
   </Tab>
 </Tabs>
 
-Depending on the target, Bun will apply different module resolution rules and optimizations.
+Depending on the target, Fun will apply different module resolution rules and optimizations.
 
 <Card title="browser" icon="globe">
   **Default.** For generating bundles that are intended for execution by a browser. Prioritizes the `"browser"` export
@@ -363,28 +363,28 @@ Depending on the target, Bun will apply different module resolution rules and op
   calling some functions, like `fs.readFile` will not work.
 </Card>
 
-<Card title="bun" icon="server">
-For generating bundles that are intended to be run by the Bun runtime. In many cases, it isn't necessary to bundle server-side code; you can directly execute the source code without modification. However, bundling your server code can reduce startup times and improve running performance. This is the target to use for building full-stack applications with build-time HTML imports, where both server and client code are bundled together.
+<Card title="fun" icon="server">
+For generating bundles that are intended to be run by the Fun runtime. In many cases, it isn't necessary to bundle server-side code; you can directly execute the source code without modification. However, bundling your server code can reduce startup times and improve running performance. This is the target to use for building full-stack applications with build-time HTML imports, where both server and client code are bundled together.
 
-All bundles generated with `target: "bun"` are marked with a special `// @bun` pragma, which indicates to the Bun runtime that there's no need to re-transpile the file before execution.
+All bundles generated with `target: "fun"` are marked with a special `// @fun` pragma, which indicates to the Fun runtime that there's no need to re-transpile the file before execution.
 
-If any entrypoints contains a Bun shebang (`#!/usr/bin/env bun`) the bundler will default to `target: "bun"` instead of `"browser"`.
+If any entrypoints contains a Fun shebang (`#!/usr/bin/env fun`) the bundler will default to `target: "fun"` instead of `"browser"`.
 
-When using `target: "bun"` and `format: "cjs"` together, the `// @bun @bun-cjs` pragma is added and the CommonJS wrapper function is not compatible with Node.js.
+When using `target: "fun"` and `format: "cjs"` together, the `// @fun @fun-cjs` pragma is added and the CommonJS wrapper function is not compatible with Node.js.
 
 </Card>
 
 <Card title="node" icon="node">
   For generating bundles that are intended to be run by Node.js. Prioritizes the `"node"` export condition when
-  resolving imports, and outputs `.mjs`. In the future, this will automatically polyfill the Bun global and other
-  built-in `bun:*` modules, though this is not yet implemented.
+  resolving imports, and outputs `.mjs`. In the future, this will automatically polyfill the Fun global and other
+  built-in `fun:*` modules, though this is not yet implemented.
 </Card>
 
 ### format
 
 Specifies the module format to be used in the generated bundles.
 
-Bun defaults to `"esm"`, and provides experimental support for `"cjs"` and `"iife"`.
+Fun defaults to `"esm"`, and provides experimental support for `"cjs"` and `"iife"`.
 
 #### format: "esm" - ES Module
 
@@ -393,7 +393,7 @@ This is the default format, which supports ES Module syntax including top-level 
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       format: "esm",
@@ -402,7 +402,7 @@ This is the default format, which supports ES Module syntax including top-level 
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --format esm
+    fun build ./index.tsx --outdir ./out --format esm
     ```
   </Tab>
 </Tabs>
@@ -411,12 +411,12 @@ To use ES Module syntax in browsers, set `format` to `"esm"` and make sure your 
 
 #### format: "cjs" - CommonJS
 
-To build a CommonJS module, set `format` to `"cjs"`. When choosing `"cjs"`, the default target changes from `"browser"` (esm) to `"node"` (cjs). CommonJS modules transpiled with `format: "cjs"`, `target: "node"` can be executed in both Bun and Node.js (assuming the APIs in use are supported by both).
+To build a CommonJS module, set `format` to `"cjs"`. When choosing `"cjs"`, the default target changes from `"browser"` (esm) to `"node"` (cjs). CommonJS modules transpiled with `format: "cjs"`, `target: "node"` can be executed in both Fun and Node.js (assuming the APIs in use are supported by both).
 
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       format: "cjs",
@@ -425,7 +425,7 @@ To build a CommonJS module, set `format` to `"cjs"`. When choosing `"cjs"`, the 
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --format cjs
+    fun build ./index.tsx --outdir ./out --format cjs
     ```
   </Tab>
 </Tabs>
@@ -443,7 +443,7 @@ Configure JSX transform behavior. Allows fine-grained control over how JSX is co
 <CodeGroup>
 
 ```ts index.ts icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./app.tsx"],
   outdir: "./out",
   jsx: {
@@ -455,8 +455,8 @@ await Bun.build({
 ```
 
 ```bash terminal icon="terminal"
-# JSX configuration is handled via bunfig.toml or tsconfig.json
-bun build ./app.tsx --outdir ./out
+# JSX configuration is handled via funfig.toml or tsconfig.json
+fun build ./app.tsx --outdir ./out
 ```
 
 </CodeGroup>
@@ -466,7 +466,7 @@ bun build ./app.tsx --outdir ./out
 <CodeGroup>
 
 ```ts index.ts icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./app.tsx"],
   outdir: "./out",
   jsx: {
@@ -477,8 +477,8 @@ await Bun.build({
 ```
 
 ```bash terminal icon="terminal"
-# JSX configuration is handled via bunfig.toml or tsconfig.json
-bun build ./app.tsx --outdir ./out
+# JSX configuration is handled via funfig.toml or tsconfig.json
+fun build ./app.tsx --outdir ./out
 ```
 
 </CodeGroup>
@@ -490,7 +490,7 @@ Whether to enable code splitting.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       splitting: false, // default
@@ -499,7 +499,7 @@ Whether to enable code splitting.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --splitting
+    fun build ./index.tsx --outdir ./out --splitting
     ```
   </Tab>
 </Tabs>
@@ -527,7 +527,7 @@ To bundle `entry-a.ts` and `entry-b.ts` with code-splitting enabled:
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./entry-a.ts', './entry-b.ts'],
       outdir: './out',
       splitting: true,
@@ -536,7 +536,7 @@ To bundle `entry-a.ts` and `entry-b.ts` with code-splitting enabled:
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./entry-a.ts ./entry-b.ts --outdir ./out --splitting
+    fun build ./entry-a.ts ./entry-b.ts --outdir ./out --splitting
     ```
   </Tab>
 </Tabs>
@@ -561,7 +561,7 @@ The generated `chunk-2fce6291bf86559d.js` file contains the shared code. To avoi
 A list of plugins to use during bundling.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./index.tsx"],
   outdir: "./out",
   plugins: [
@@ -570,7 +570,7 @@ await Bun.build({
 });
 ```
 
-Bun implements a universal plugin system for both Bun's runtime and bundler. Refer to the [plugin documentation](/bundler/plugins) for complete documentation.
+Fun implements a universal plugin system for both Fun's runtime and bundler. Refer to the [plugin documentation](/bundler/plugins) for complete documentation.
 
 ### env
 
@@ -583,7 +583,7 @@ Injects environment variables into the bundled output by converting `process.env
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       env: "inline",
@@ -592,7 +592,7 @@ Injects environment variables into the bundled output by converting `process.env
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --env inline
+    fun build ./index.tsx --outdir ./out --env inline
     ```
   </Tab>
 </Tabs>
@@ -620,7 +620,7 @@ Inlines environment variables matching the given prefix (the part before the `*`
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       
@@ -631,7 +631,7 @@ Inlines environment variables matching the given prefix (the part before the `*`
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --env ACME_PUBLIC_*
+    fun build ./index.tsx --outdir ./out --env ACME_PUBLIC_*
     ```
   </Tab>
 </Tabs>
@@ -669,7 +669,7 @@ Specifies the type of sourcemap to generate.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       sourcemap: 'linked', // default 'none'
@@ -678,7 +678,7 @@ Specifies the type of sourcemap to generate.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --sourcemap linked
+    fun build ./index.tsx --outdir ./out --sourcemap linked
     ```
   </Tab>
 </Tabs>
@@ -696,14 +696,14 @@ The associated `*.js.map` sourcemap will be a JSON file containing an equivalent
 
 Whether to enable minification. Default `false`.
 
-<Note>When targeting `bun`, identifiers will be minified by default.</Note>
+<Note>When targeting `fun`, identifiers will be minified by default.</Note>
 
 To enable all minification options:
 
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       minify: true, // default false
@@ -712,7 +712,7 @@ To enable all minification options:
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --minify
+    fun build ./index.tsx --outdir ./out --minify
     ```
   </Tab>
 </Tabs>
@@ -722,7 +722,7 @@ To granularly enable certain minifications:
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       minify: {
@@ -735,7 +735,7 @@ To granularly enable certain minifications:
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --minify-whitespace --minify-identifiers --minify-syntax
+    fun build ./index.tsx --outdir ./out --minify-whitespace --minify-identifiers --minify-syntax
     ```
   </Tab>
 </Tabs>
@@ -747,7 +747,7 @@ A list of import paths to consider external. Defaults to `[]`.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       external: ["lodash", "react"], // default: []
@@ -756,7 +756,7 @@ A list of import paths to consider external. Defaults to `[]`.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --external lodash --external react
+    fun build ./index.tsx --outdir ./out --external lodash --external react
     ```
   </Tab>
 </Tabs>
@@ -778,7 +778,7 @@ Normally, bundling `index.tsx` would generate a bundle containing the entire sou
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       external: ['zod'],
@@ -787,7 +787,7 @@ Normally, bundling `index.tsx` would generate a bundle containing the entire sou
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --external zod
+    fun build ./index.tsx --outdir ./out --external zod
     ```
   </Tab>
 </Tabs>
@@ -810,7 +810,7 @@ To mark all imports as external, use the wildcard `*`:
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       external: ['*'],
@@ -819,19 +819,19 @@ To mark all imports as external, use the wildcard `*`:
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --external '*'
+    fun build ./index.tsx --outdir ./out --external '*'
     ```
   </Tab>
 </Tabs>
 
 ### packages
 
-Control whether package dependencies are included to bundle or not. Possible values: `bundle` (default), `external`. Bun treats any import which path do not start with `.`, `..` or `/` as package.
+Control whether package dependencies are included to bundle or not. Possible values: `bundle` (default), `external`. Fun treats any import which path do not start with `.`, `..` or `/` as package.
 
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.ts'],
       packages: 'external',
     })
@@ -839,7 +839,7 @@ Control whether package dependencies are included to bundle or not. Possible val
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.ts --packages external
+    fun build ./index.ts --packages external
     ```
   </Tab>
 </Tabs>
@@ -851,7 +851,7 @@ Customizes the generated file names. Defaults to `./[dir]/[name].[ext]`.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       naming: "[dir]/[name].[ext]", // default
@@ -860,7 +860,7 @@ Customizes the generated file names. Defaults to `./[dir]/[name].[ext]`.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --entry-naming "[dir]/[name].[ext]"
+    fun build ./index.tsx --outdir ./out --entry-naming "[dir]/[name].[ext]"
     ```
   </Tab>
 </Tabs>
@@ -906,7 +906,7 @@ We can combine these tokens to create a template string. For instance, to includ
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       naming: 'files/[dir]/[name]-[hash].[ext]',
@@ -915,7 +915,7 @@ We can combine these tokens to create a template string. For instance, to includ
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --entry-naming 'files/[dir]/[name]-[hash].[ext]'
+    fun build ./index.tsx --outdir ./out --entry-naming 'files/[dir]/[name]-[hash].[ext]'
     ```
   </Tab>
 </Tabs>
@@ -935,7 +935,7 @@ When a string is provided for the `naming` field, it is used only for bundles th
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       naming: {
@@ -949,7 +949,7 @@ When a string is provided for the `naming` field, it is used only for bundles th
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out \
+    fun build ./index.tsx --outdir ./out \
       --entry-naming '[dir]/[name].[ext]' \
       --chunk-naming '[name]-[hash].[ext]' \
       --asset-naming '[name]-[hash].[ext]'
@@ -964,7 +964,7 @@ The root directory of the project.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./pages/a.tsx', './pages/b.tsx'],
       outdir: './out',
       root: '.',
@@ -973,7 +973,7 @@ The root directory of the project.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./pages/a.tsx ./pages/b.tsx --outdir ./out --root .
+    fun build ./pages/a.tsx ./pages/b.tsx --outdir ./out --root .
     ```
   </Tab>
 </Tabs>
@@ -992,7 +992,7 @@ We can build both entrypoints in the `pages` directory:
 <Tabs>
   <Tab title="JavaScript">
     ```js
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./pages/index.tsx', './pages/settings.tsx'],
       outdir: './out',
     })
@@ -1000,7 +1000,7 @@ We can build both entrypoints in the `pages` directory:
   </Tab>
   <Tab title="CLI">
     ```bash
-    bun build ./pages/index.tsx ./pages/settings.tsx --outdir ./out
+    fun build ./pages/index.tsx ./pages/settings.tsx --outdir ./out
     ```
   </Tab>
 </Tabs>
@@ -1024,7 +1024,7 @@ This behavior can be overridden by specifying the `root` option:
 <Tabs>
   <Tab title="JavaScript">
     ```js
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./pages/index.tsx', './pages/settings.tsx'],
       outdir: './out',
       root: '.',
@@ -1033,7 +1033,7 @@ This behavior can be overridden by specifying the `root` option:
   </Tab>
   <Tab title="CLI">
     ```bash
-    bun build ./pages/index.tsx ./pages/settings.tsx --outdir ./out --root .
+    fun build ./pages/index.tsx ./pages/settings.tsx --outdir ./out --root .
     ```
   </Tab>
 </Tabs>
@@ -1082,7 +1082,7 @@ Setting `publicPath` will prefix all file paths with the specified value.
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       publicPath: 'https://cdn.example.com/', // default is undefined
@@ -1091,7 +1091,7 @@ Setting `publicPath` will prefix all file paths with the specified value.
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --public-path 'https://cdn.example.com/'
+    fun build ./index.tsx --outdir ./out --public-path 'https://cdn.example.com/'
     ```
   </Tab>
 </Tabs>
@@ -1109,7 +1109,7 @@ A map of global identifiers to be replaced at build time. Keys of this object ar
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       define: {
@@ -1121,7 +1121,7 @@ A map of global identifiers to be replaced at build time. Keys of this object ar
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --define STRING='"value"' --define nested.boolean=true
+    fun build ./index.tsx --outdir ./out --define STRING='"value"' --define nested.boolean=true
     ```
   </Tab>
 </Tabs>
@@ -1133,7 +1133,7 @@ A map of file extensions to built-in loader names. Use this to customize how cer
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       loader: {
@@ -1145,7 +1145,7 @@ A map of file extensions to built-in loader names. Use this to customize how cer
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --loader .png:dataurl --loader .txt:file
+    fun build ./index.tsx --outdir ./out --loader .png:dataurl --loader .txt:file
     ```
   </Tab>
 </Tabs>
@@ -1157,7 +1157,7 @@ A banner to be added to the final bundle, this can be a directive like `"use cli
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       banner: '"use client";'
@@ -1166,7 +1166,7 @@ A banner to be added to the final bundle, this can be a directive like `"use cli
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --banner '"use client";'
+    fun build ./index.tsx --outdir ./out --banner '"use client";'
     ```
   </Tab>
 </Tabs>
@@ -1178,7 +1178,7 @@ A footer to be added to the final bundle. This can be a comment block for a lice
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       footer: '// built with love in SF'
@@ -1187,7 +1187,7 @@ A footer to be added to the final bundle. This can be a comment block for a lice
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --footer '// built with love in SF'
+    fun build ./index.tsx --outdir ./out --footer '// built with love in SF'
     ```
   </Tab>
 </Tabs>
@@ -1199,7 +1199,7 @@ Remove function calls from a bundle. For example, `--drop=console` will remove a
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./index.tsx'],
       outdir: './out',
       drop: ["console", "debugger", "anyIdentifier.or.propertyAccess"],
@@ -1208,17 +1208,17 @@ Remove function calls from a bundle. For example, `--drop=console` will remove a
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./index.tsx --outdir ./out --drop console --drop debugger
+    fun build ./index.tsx --outdir ./out --drop console --drop debugger
     ```
   </Tab>
 </Tabs>
 
 ### features
 
-Enable compile-time feature flags for dead-code elimination. This provides a way to conditionally include or exclude code paths at bundle time using `import { feature } from "bun:bundle"`.
+Enable compile-time feature flags for dead-code elimination. This provides a way to conditionally include or exclude code paths at bundle time using `import { feature } from "fun:bundle"`.
 
 ```ts title="app.ts" icon="/icons/typescript.svg"
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 
 if (feature("PREMIUM")) {
   // Only included when PREMIUM flag is enabled
@@ -1234,7 +1234,7 @@ if (feature("DEBUG")) {
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    await Bun.build({
+    await Fun.build({
       entrypoints: ['./app.ts'],
       outdir: './out',
       features: ["PREMIUM"],  // PREMIUM=true, DEBUG=false
@@ -1243,7 +1243,7 @@ if (feature("DEBUG")) {
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./app.ts --outdir ./out --feature PREMIUM
+    fun build ./app.ts --outdir ./out --feature PREMIUM
     ```
   </Tab>
 </Tabs>
@@ -1251,7 +1251,7 @@ if (feature("DEBUG")) {
 The `feature()` function is replaced with `true` or `false` at bundle time. Combined with minification, unreachable code is eliminated:
 
 ```ts title="Input" icon="/icons/typescript.svg"
-import { feature } from "bun:bundle";
+import { feature } from "fun:bundle";
 const mode = feature("PREMIUM") ? "premium" : "free";
 ```
 
@@ -1266,8 +1266,8 @@ var mode = "free";
 **Key behaviors:**
 
 - `feature()` requires a string literal argument — dynamic values are not supported
-- The `bun:bundle` import is completely removed from the output
-- Works with `bun build`, `bun run`, and `bun test`
+- The `fun:bundle` import is completely removed from the output
+- Works with `fun build`, `fun run`, and `fun test`
 - Multiple flags can be enabled: `--feature FLAG_A --feature FLAG_B`
 - For type safety, augment the `Registry` interface to restrict `feature()` to known flags (see below)
 
@@ -1282,7 +1282,7 @@ var mode = "free";
 **Type safety:** By default, `feature()` accepts any string. To get autocomplete and catch typos at compile time, create an `env.d.ts` file (or add to an existing `.d.ts`) and augment the `Registry` interface:
 
 ```ts title="env.d.ts" icon="/icons/typescript.svg"
-declare module "bun:bundle" {
+declare module "fun:bundle" {
   interface Registry {
     features: "DEBUG" | "PREMIUM" | "BETA_FEATURES";
   }
@@ -1296,7 +1296,7 @@ Ensure the file is included in your `tsconfig.json` (e.g., `"include": ["src", "
 Skip parsing unused submodules of barrel files (re-export index files). When you import only a few named exports from a large library, normally the bundler parses every file the barrel re-exports. With `optimizeImports`, only the submodules you actually use are parsed.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-await Bun.build({
+await Fun.build({
   entrypoints: ["./app.ts"],
   outdir: "./out",
   optimizeImports: ["antd", "@mui/material", "lodash-es"],
@@ -1325,7 +1325,7 @@ Generate metadata about the build in a structured format. The metafile contains 
 <Tabs>
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
-    const result = await Bun.build({
+    const result = await Fun.build({
       entrypoints: ['./src/index.ts'],
       outdir: './dist',
       metafile: true,
@@ -1343,14 +1343,14 @@ Generate metadata about the build in a structured format. The metafile contains 
       }
 
       // Save for external analysis tools
-      await Bun.write('./dist/meta.json', JSON.stringify(result.metafile));
+      await Fun.write('./dist/meta.json', JSON.stringify(result.metafile));
     }
     ```
 
   </Tab>
   <Tab title="CLI">
     ```bash terminal icon="terminal"
-    bun build ./src/index.ts --outdir ./dist --metafile ./dist/meta.json
+    fun build ./src/index.ts --outdir ./dist --metafile ./dist/meta.json
     ```
   </Tab>
 </Tabs>
@@ -1360,13 +1360,13 @@ Generate metadata about the build in a structured format. The metafile contains 
 Use `--metafile-md` to generate a markdown metafile, which is LLM-friendly and readable in the terminal:
 
 ```bash terminal icon="terminal"
-bun build ./src/index.ts --outdir ./dist --metafile-md ./dist/meta.md
+fun build ./src/index.ts --outdir ./dist --metafile-md ./dist/meta.md
 ```
 
 Both `--metafile` and `--metafile-md` can be used together:
 
 ```bash terminal icon="terminal"
-bun build ./src/index.ts --outdir ./dist --metafile ./dist/meta.json --metafile-md ./dist/meta.md
+fun build ./src/index.ts --outdir ./dist --metafile ./dist/meta.json --metafile-md ./dist/meta.md
 ```
 
 #### `metafile` option formats
@@ -1375,21 +1375,21 @@ In the JavaScript API, `metafile` accepts several forms:
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
 // Boolean — include metafile in the result object
-await Bun.build({
+await Fun.build({
   entrypoints: ["./src/index.ts"],
   outdir: "./dist",
   metafile: true,
 });
 
 // String — write JSON metafile to a specific path
-await Bun.build({
+await Fun.build({
   entrypoints: ["./src/index.ts"],
   outdir: "./dist",
   metafile: "./dist/meta.json",
 });
 
 // Object — specify separate paths for JSON and markdown output
-await Bun.build({
+await Fun.build({
   entrypoints: ["./src/index.ts"],
   outdir: "./dist",
   metafile: {
@@ -1432,7 +1432,7 @@ interface BuildMetafile {
 
 ## Outputs
 
-The `Bun.build` function returns a `Promise<BuildOutput>`, defined as:
+The `Fun.build` function returns a `Promise<BuildOutput>`, defined as:
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
 interface BuildOutput {
@@ -1454,7 +1454,7 @@ interface BuildArtifact extends Blob {
 The `outputs` array contains all the files that were generated by the build. Each artifact implements the Blob interface.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-const build = await Bun.build({
+const build = await Fun.build({
   /* */
 });
 
@@ -1471,14 +1471,14 @@ Each artifact also contains the following properties:
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `kind`      | What kind of build output this file is. A build generates bundled entrypoints, code-split "chunks", sourcemaps, bytecode, and copied assets (like images).   |
 | `path`      | Absolute path to the file on disk                                                                                                                            |
-| `loader`    | The loader was used to interpret the file. See [Bundler > Loaders](/bundler/loaders) to see how Bun maps file extensions to the appropriate built-in loader. |
+| `loader`    | The loader was used to interpret the file. See [Bundler > Loaders](/bundler/loaders) to see how Fun maps file extensions to the appropriate built-in loader. |
 | `hash`      | The hash of the file contents. Always defined for assets.                                                                                                    |
 | `sourcemap` | The sourcemap file corresponding to this file, if generated. Only defined for entrypoints and chunks.                                                        |
 
-Similar to `BunFile`, `BuildArtifact` objects can be passed directly into `new Response()`.
+Similar to `FunFile`, `BuildArtifact` objects can be passed directly into `new Response()`.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-const build = await Bun.build({
+const build = await Fun.build({
   /* */
 });
 
@@ -1488,13 +1488,13 @@ const artifact = build.outputs[0];
 return new Response(artifact);
 ```
 
-The Bun runtime implements special pretty-printing of `BuildArtifact` object to make debugging easier.
+The Fun runtime implements special pretty-printing of `BuildArtifact` object to make debugging easier.
 
 <CodeGroup>
 
 ```ts build.ts icon="/icons/typescript.svg"
 // build.ts
-const build = await Bun.build({
+const build = await Fun.build({
   /* */
 });
 
@@ -1503,7 +1503,7 @@ console.log(artifact);
 ```
 
 ```bash Shell output
-bun run build.ts
+fun run build.ts
 
 BuildArtifact (entry-point) {
   path: "./index.js",
@@ -1530,7 +1530,7 @@ BuildArtifact (entry-point) {
 
 ## Bytecode
 
-The `bytecode: boolean` option can be used to generate bytecode for any JavaScript/TypeScript entrypoints. This can greatly improve startup times for large applications. Requires `"target": "bun"` and is dependent on a matching version of Bun.
+The `bytecode: boolean` option can be used to generate bytecode for any JavaScript/TypeScript entrypoints. This can greatly improve startup times for large applications. Requires `"target": "fun"` and is dependent on a matching version of Fun.
 
 - **CommonJS**: Works with or without `compile: true`. Generates a `.jsc` file alongside each entrypoint.
 - **ESM**: Requires `compile: true`. Bytecode and module metadata are embedded in the standalone executable.
@@ -1541,14 +1541,14 @@ Without an explicit `format`, bytecode defaults to CommonJS.
   <Tab title="JavaScript">
     ```ts title="build.ts" icon="/icons/typescript.svg"
     // CommonJS bytecode (generates .jsc files)
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.tsx"],
       outdir: "./out",
       bytecode: true,
     })
 
     // ESM bytecode (requires compile)
-    await Bun.build({
+    await Fun.build({
       entrypoints: ["./index.tsx"],
       outfile: "./mycli",
       bytecode: true,
@@ -1561,10 +1561,10 @@ Without an explicit `format`, bytecode defaults to CommonJS.
   <Tab title="CLI">
     ```bash terminal icon="terminal"
     # CommonJS bytecode
-    bun build ./index.tsx --outdir ./out --bytecode
+    fun build ./index.tsx --outdir ./out --bytecode
 
     # ESM bytecode (requires --compile)
-    bun build ./index.tsx --outfile ./mycli --bytecode --format=esm --compile
+    fun build ./index.tsx --outfile ./mycli --bytecode --format=esm --compile
     ```
 
   </Tab>
@@ -1572,10 +1572,10 @@ Without an explicit `format`, bytecode defaults to CommonJS.
 
 ## Executables
 
-Bun supports "compiling" a JavaScript/TypeScript entrypoint into a standalone executable. This executable contains a copy of the Bun binary.
+Fun supports "compiling" a JavaScript/TypeScript entrypoint into a standalone executable. This executable contains a copy of the Fun binary.
 
 ```bash terminal icon="terminal"
-bun build ./cli.tsx --outfile mycli --compile
+fun build ./cli.tsx --outfile mycli --compile
 ./mycli
 ```
 
@@ -1583,11 +1583,11 @@ Refer to [Bundler > Executables](/bundler/executables) for complete documentatio
 
 ## Logs and errors
 
-On failure, `Bun.build` returns a rejected promise with an `AggregateError`. This can be logged to the console for pretty printing of the error list, or programmatically read with a try/catch block.
+On failure, `Fun.build` returns a rejected promise with an `AggregateError`. This can be logged to the console for pretty printing of the error list, or programmatically read with a try/catch block.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
 try {
-  const result = await Bun.build({
+  const result = await Fun.build({
     entrypoints: ["./index.tsx"],
     outdir: "./out",
   });
@@ -1604,7 +1604,7 @@ try {
 }
 ```
 
-Most of the time, an explicit try/catch is not needed, as Bun will neatly print uncaught exceptions. You can use a top-level await on the `Bun.build` call instead.
+Most of the time, an explicit try/catch is not needed, as Fun will neatly print uncaught exceptions. You can use a top-level await on the `Fun.build` call instead.
 
 Each item in `error.errors` is an instance of `BuildMessage` or `ResolveMessage` (subclasses of `Error`), containing detailed information for each error.
 
@@ -1627,7 +1627,7 @@ class ResolveMessage extends BuildMessage {
 On build success, the returned object contains a `logs` property, which contains bundler warnings and info messages.
 
 ```ts title="build.ts" icon="/icons/typescript.svg"
-const result = await Bun.build({
+const result = await Fun.build({
   entrypoints: ["./index.tsx"],
   outdir: "./out",
 });
@@ -1635,7 +1635,7 @@ const result = await Bun.build({
 if (result.logs.length > 0) {
   console.warn("Build succeeded with warnings:");
   for (const message of result.logs) {
-    // Bun will pretty print the message object
+    // Fun will pretty print the message object
     console.warn(message);
   }
 }
@@ -1644,7 +1644,7 @@ if (result.logs.length > 0) {
 ## Reference
 
 ```ts Typescript Definitions icon="/icons/typescript.svg" expandable
-interface Bun {
+interface Fun {
   build(options: BuildOptions): Promise<BuildOutput>;
 }
 
@@ -1683,7 +1683,7 @@ interface BuildConfig {
       };
   root?: string; // project root
   splitting?: boolean; // default true, enable code splitting
-  plugins?: BunPlugin[];
+  plugins?: FunPlugin[];
   external?: string[];
   packages?: "bundle" | "external";
   publicPath?: string;
@@ -1693,7 +1693,7 @@ interface BuildConfig {
   /**
    * package.json `exports` conditions used when resolving imports
    *
-   * Equivalent to `--conditions` in `bun build` or `bun run`.
+   * Equivalent to `--conditions` in `fun build` or `fun run`.
    *
    * https://nodejs.org/api/packages.html#exports
    */
@@ -1738,7 +1738,7 @@ interface BuildConfig {
    *
    * Without an explicit `format`, defaults to CommonJS.
    *
-   * Must be `target: "bun"`
+   * Must be `target: "fun"`
    * @default false
    */
   bytecode?: boolean;
@@ -1749,7 +1749,7 @@ interface BuildConfig {
   /**
    * Add a footer to the bundled code such as a comment block like
    *
-   * `// made with bun!`
+   * `// made with fun!`
    */
   footer?: string;
 

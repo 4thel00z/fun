@@ -51,7 +51,7 @@ jobs:
           esac
 
           enc=$(jq -rn --arg b "$BK_BRANCH" '$b|@uri')
-          api="https://api.buildkite.com/v2/organizations/bun/pipelines/bun"
+          api="https://api.buildkite.com/v2/organizations/fun/pipelines/fun"
 
           builds=$(curl -fsS -H "Authorization: Bearer ${BUILDKITE_BUILDS_TOKEN}" \
             "${api}/builds?branch=${enc}&state[]=running&state[]=scheduled&state[]=failing&per_page=30")

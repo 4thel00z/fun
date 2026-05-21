@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 test("stream.finished callback preserves AsyncLocalStorage context", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
 const asyncHooks = require('async_hooks');
@@ -36,7 +36,7 @@ const server = http.createServer(function (req, res) {
 });
 `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stderr: "pipe",
   });
 

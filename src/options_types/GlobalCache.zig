@@ -6,7 +6,7 @@ pub const GlobalCache = enum {
     fallback,
     disable,
 
-    pub const Map = bun.ComptimeStringMap(GlobalCache, .{
+    pub const Map = fun.ComptimeStringMap(GlobalCache, .{
         .{ "auto", GlobalCache.auto },
         .{ "force", GlobalCache.force },
         .{ "disable", GlobalCache.disable },
@@ -46,4 +46,4 @@ pub const GlobalCache = enum {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

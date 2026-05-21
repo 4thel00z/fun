@@ -661,10 +661,10 @@ pub fn NewSizeHandler(
 
             this.has_any = false;
 
-            const top = bun.take(&this.top);
-            const bottom = bun.take(&this.bottom);
-            const left = bun.take(&this.left);
-            const right = bun.take(&this.right);
+            const top = fun.take(&this.top);
+            const bottom = fun.take(&this.bottom);
+            const left = fun.take(&this.left);
+            const right = fun.take(&this.right);
             const logical_supported = if (comptime shorthand_extra != null) !context.shouldCompileLogical(shorthand_extra.?.feature) else true;
 
             if ((shorthand_category != .logical or logical_supported) and top != null and bottom != null and left != null and right != null) {
@@ -680,41 +680,41 @@ pub fn NewSizeHandler(
                             .right = right.?,
                         },
                     ),
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             } else {
                 if (top) |t| {
                     dest.append(
                         context.allocator,
                         @unionInit(Property, @tagName(top_prop), t),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
 
                 if (bottom) |b| {
                     dest.append(
                         context.allocator,
                         @unionInit(Property, @tagName(bottom_prop), b),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
 
                 if (left) |b| {
                     dest.append(
                         context.allocator,
                         @unionInit(Property, @tagName(left_prop), b),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
 
                 if (right) |b| {
                     dest.append(
                         context.allocator,
                         @unionInit(Property, @tagName(right_prop), b),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             }
 
-            var block_start = bun.take(&this.block_start);
-            var block_end = bun.take(&this.block_end);
-            var inline_start = bun.take(&this.inline_start);
-            var inline_end = bun.take(&this.inline_end);
+            var block_start = fun.take(&this.block_start);
+            var block_end = fun.take(&this.block_end);
+            var inline_start = fun.take(&this.inline_start);
+            var inline_end = fun.take(&this.inline_end);
 
             if (logical_supported) {
                 this.logicalSideHelper(&block_start, &block_end, "block_start", "block_end", block_shorthand, block_start_prop, block_end_prop, logical_supported, dest, context);
@@ -804,13 +804,13 @@ pub fn NewSizeHandler(
                     Property,
                     @tagName(shorthand_property),
                     value,
-                )) catch |err| bun.handleOom(err);
+                )) catch |err| fun.handleOom(err);
             } else {
                 if (start.* != null) {
-                    bun.handleOom(dest.append(context.allocator, start.*.?));
+                    fun.handleOom(dest.append(context.allocator, start.*.?));
                 }
                 if (end.* != null) {
-                    bun.handleOom(dest.append(context.allocator, end.*.?));
+                    fun.handleOom(dest.append(context.allocator, end.*.?));
                 }
             }
         }
@@ -833,20 +833,20 @@ pub fn NewSizeHandler(
                             @tagName(physical),
                             @field(v, @tagName(logical)),
                         ),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 } else if (v.* == .unparsed) {
                     dest.append(
                         context.allocator,
                         Property{
                             .unparsed = v.unparsed.withPropertyId(context.allocator, physical),
                         },
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             }
         }
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;

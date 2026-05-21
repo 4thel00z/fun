@@ -1,10 +1,10 @@
-// https://github.com/oven-sh/bun/issues/25231
-// Bun.FFI.CString should be callable as a constructor (new CString(ptr))
+// https://github.com/underdoc-org/fun/issues/25231
+// Fun.FFI.CString should be callable as a constructor (new CString(ptr))
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
-test("Bun.FFI.CString is callable with new", () => {
-  const { CString, ptr } = Bun.FFI;
+test("Fun.FFI.CString is callable with new", () => {
+  const { CString, ptr } = Fun.FFI;
 
   // Create a buffer with a null-terminated string
   const buf = Buffer.from("hello\0");
@@ -17,8 +17,8 @@ test("Bun.FFI.CString is callable with new", () => {
   expect(String(result)).toBe("hello");
 });
 
-test("Bun.FFI.CString can be called without new", () => {
-  const { CString, ptr } = Bun.FFI;
+test("Fun.FFI.CString can be called without new", () => {
+  const { CString, ptr } = Fun.FFI;
 
   // Create a buffer with a null-terminated string
   const buf = Buffer.from("hello\0");

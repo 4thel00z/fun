@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tls as COMMON_CERT, gc, isCI } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tls as COMMON_CERT, gc, isCI } from "harness";
 import { once } from "node:events";
 import { createServer } from "node:http";
 import { join } from "node:path";
@@ -8,7 +8,7 @@ describe("fetch doesn't leak", () => {
   test("fixture #1", async () => {
     const body = new Blob(["some body in here!".repeat(100)]);
     var count = 0;
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       idleTimeout: 0,
       fetch(req) {
@@ -17,15 +17,15 @@ describe("fetch doesn't leak", () => {
       },
     });
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       env: {
-        ...bunEnv,
+        ...funEnv,
         SERVER: server.url.href,
         COUNT: "200",
       },
       stderr: "inherit",
       stdout: "inherit",
-      cmd: [bunExe(), "--smol", join(import.meta.dir, "fetch-leak-test-fixture.js")],
+      cmd: [funExe(), "--smol", join(import.meta.dir, "fetch-leak-test-fixture.js")],
     });
 
     const exitCode = await proc.exited;
@@ -37,7 +37,7 @@ describe("fetch doesn't leak", () => {
   async function runTest(compressed, name) {
     const body = !compressed
       ? new Blob(["some body in here!".repeat(2000000)])
-      : new Blob([Bun.deflateSync(crypto.getRandomValues(new Buffer(65123)))]);
+      : new Blob([Fun.deflateSync(crypto.getRandomValues(new Buffer(65123)))]);
 
     const tls = name.includes("tls");
     const headers = {
@@ -59,12 +59,12 @@ describe("fetch doesn't leak", () => {
       serveOptions.tls = { ...COMMON_CERT };
     }
 
-    using server = Bun.serve(serveOptions);
+    using server = Fun.serve(serveOptions);
 
     const env = {
-      ...bunEnv,
+      ...funEnv,
       SERVER: server.url.href,
-      BUN_JSC_forceRAMSize: (1024 * 1024 * 64).toString(10),
+      FUN_JSC_forceRAMSize: (1024 * 1024 * 64).toString(10),
       NAME: name,
     };
 
@@ -76,11 +76,11 @@ describe("fetch doesn't leak", () => {
       env.COUNT = "1000";
     }
 
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       env,
       stderr: "inherit",
       stdout: "inherit",
-      cmd: [bunExe(), "--smol", join(import.meta.dir, "fetch-leak-test-fixture-2.js")],
+      cmd: [funExe(), "--smol", join(import.meta.dir, "fetch-leak-test-fixture-2.js")],
     });
 
     const exitCode = await proc.exited;
@@ -104,7 +104,7 @@ describe.each(["FormData", "Blob", "Buffer", "String", "URLSearchParams", "strea
   test(
     "does not leak",
     async () => {
-      using server = Bun.serve({
+      using server = Fun.serve({
         port: 0,
         idleTimeout: 0,
         fetch(req) {
@@ -114,9 +114,9 @@ describe.each(["FormData", "Blob", "Buffer", "String", "URLSearchParams", "strea
 
       const rss = [];
 
-      await using process = Bun.spawn({
+      await using process = Fun.spawn({
         cmd: [
-          bunExe(),
+          funExe(),
           "--smol",
           join(import.meta.dir, "fetch-leak-test-fixture-5.js"),
           server.url.href,
@@ -127,7 +127,7 @@ describe.each(["FormData", "Blob", "Buffer", "String", "URLSearchParams", "strea
         stdout: "inherit",
         stderr: "inherit",
         env: {
-          ...bunEnv,
+          ...funEnv,
         },
         ipc(message) {
           rss.push(message.rss);
@@ -188,7 +188,7 @@ test("do not leak", async () => {
 test("fetch(data:) with percent-encoding does not leak", async () => {
   // DataURL.decodeData leaked the intermediate percent-decoded buffer (and the
   // base64 output buffer on decode error). Each fetch of a percent-encoded
-  // data: URL leaked ~len(url.data) bytes from bun.default_allocator.
+  // data: URL leaked ~len(url.data) bytes from fun.default_allocator.
   const script = `
     // ~240KB of percent-encoded payload; the intermediate percent-decoded
     // buffer is allocated at url.data.len bytes and was previously leaked.
@@ -207,11 +207,11 @@ test("fetch(data:) with percent-encoding does not leak", async () => {
     }
 
     for (let i = 0; i < 40; i++) await hit();
-    Bun.gc(true);
+    Fun.gc(true);
     const baseline = process.memoryUsage.rss();
 
     for (let i = 0; i < 200; i++) await hit();
-    Bun.gc(true);
+    Fun.gc(true);
     const final = process.memoryUsage.rss();
 
     const deltaMB = (final - baseline) / 1024 / 1024;
@@ -221,9 +221,9 @@ test("fetch(data:) with percent-encoding does not leak", async () => {
     }
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--smol", "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--smol", "-e", script],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -235,14 +235,14 @@ test("fetch(data:) with percent-encoding does not leak", async () => {
 
 test("should not leak using readable stream", async () => {
   const buffer = Buffer.alloc(1024 * 128, "b");
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     routes: { "/*": new Response(buffer) },
   });
 
-  await using proc = Bun.spawn([bunExe(), join(import.meta.dir, "fetch-leak-test-fixture-6.js")], {
+  await using proc = Fun.spawn([funExe(), join(import.meta.dir, "fetch-leak-test-fixture-6.js")], {
     env: {
-      ...bunEnv,
+      ...funEnv,
       SERVER_URL: server.url.href,
       MAX_MEMORY_INCREASE: "5", // in MB
     },

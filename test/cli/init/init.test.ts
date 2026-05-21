@@ -1,17 +1,17 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import fs, { readdirSync } from "fs";
-import { bunEnv, bunExe, isWindows, tempDirWithFiles } from "harness";
+import { funEnv, funExe, isWindows, tempDirWithFiles } from "harness";
 import path from "path";
 
-(isWindows ? describe : describe.concurrent)("bun init", () => {
-  test("bun init works", async () => {
-    const temp = tempDirWithFiles("bun-init-works", {});
+(isWindows ? describe : describe.concurrent)("fun init", () => {
+  test("fun init works", async () => {
+    const temp = tempDirWithFiles("fun-init-works", {});
 
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "-y"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "-y"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await exited).toBe(0);
@@ -23,7 +23,7 @@ import path from "path";
       "type": "module",
       "private": true,
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/fun": "latest",
       },
       "peerDependencies": {
         "typescript": "^5",
@@ -31,7 +31,7 @@ import path from "path";
     });
     const readme = fs.readFileSync(path.join(temp, "README.md"), "utf8");
     expect(readme).toStartWith("# " + path.basename(temp).toLowerCase().replaceAll(" ", "-") + "\n");
-    expect(readme).toInclude("v" + Bun.version.replaceAll("-debug", ""));
+    expect(readme).toInclude("v" + Fun.version.replaceAll("-debug", ""));
     expect(readme).toInclude("index.ts");
 
     expect(fs.existsSync(path.join(temp, "index.ts"))).toBe(true);
@@ -40,14 +40,14 @@ import path from "path";
     expect(fs.existsSync(path.join(temp, "tsconfig.json"))).toBe(true);
   }, 30_000);
 
-  test("bun init with piped cli", async () => {
-    const temp = tempDirWithFiles("bun-init-with-piped-cli", {});
+  test("fun init with piped cli", async () => {
+    const temp = tempDirWithFiles("fun-init-with-piped-cli", {});
 
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init"],
       cwd: temp,
       stdio: [new Blob(["\n\n\n\n\n\n\n\n\n\n\n\n"]), "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await exited).toBe(0);
@@ -59,7 +59,7 @@ import path from "path";
       "private": true,
       "type": "module",
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/fun": "latest",
       },
       "peerDependencies": {
         "typescript": "^5",
@@ -67,7 +67,7 @@ import path from "path";
     });
     const readme = fs.readFileSync(path.join(temp, "README.md"), "utf8");
     expect(readme).toStartWith("# " + path.basename(temp).toLowerCase().replaceAll(" ", "-") + "\n");
-    expect(readme).toInclude("v" + Bun.version.replaceAll("-debug", ""));
+    expect(readme).toInclude("v" + Fun.version.replaceAll("-debug", ""));
     expect(readme).toInclude("index.ts");
 
     expect(fs.existsSync(path.join(temp, "index.ts"))).toBe(true);
@@ -76,8 +76,8 @@ import path from "path";
     expect(fs.existsSync(path.join(temp, "tsconfig.json"))).toBe(true);
   }, 30_000);
 
-  test("bun init in folder", async () => {
-    const temp = tempDirWithFiles("bun-init-in-folder", {
+  test("fun init in folder", async () => {
+    const temp = tempDirWithFiles("fun-init-in-folder", {
       "mydir": {
         "index.ts": "// mydir/index.ts",
         "README.md": "// mydir/README.md",
@@ -86,11 +86,11 @@ import path from "path";
         "tsconfig.json": "// mydir/tsconfig.json",
       },
     });
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "-y", "mydir"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "-y", "mydir"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await exited).toBe(0);
     expect(readdirSync(temp).sort()).toEqual(["mydir"]);
@@ -98,7 +98,7 @@ import path from "path";
     [
       ".gitignore",
       "README.md",
-      "bun.lock",
+      "fun.lock",
       "index.ts",
       "node_modules",
       "package.json",
@@ -107,28 +107,28 @@ import path from "path";
   `);
   });
 
-  test("bun init error rather than overwriting file", async () => {
-    const temp = tempDirWithFiles("bun-init-error-rather-than-overwriting-file", {
+  test("fun init error rather than overwriting file", async () => {
+    const temp = tempDirWithFiles("fun-init-error-rather-than-overwriting-file", {
       "mydir": "don't delete me!!!",
     });
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "-y", "mydir"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "-y", "mydir"],
       cwd: temp,
       stdio: ["ignore", "pipe", "pipe"],
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await exited).not.toBe(0);
     expect(readdirSync(temp).sort()).toEqual(["mydir"]);
-    expect(await Bun.file(path.join(temp, "mydir")).text()).toBe("don't delete me!!!");
+    expect(await Fun.file(path.join(temp, "mydir")).text()).toBe("don't delete me!!!");
   });
 
-  test("bun init utf-8", async () => {
-    const temp = tempDirWithFiles("bun-init-utf-8", {});
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "-y", "u t f ∞™/subpath"],
+  test("fun init utf-8", async () => {
+    const temp = tempDirWithFiles("fun-init-utf-8", {});
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "-y", "u t f ∞™/subpath"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await exited).toBe(0);
     expect(readdirSync(temp).sort()).toEqual(["u t f ∞™"]);
@@ -137,7 +137,7 @@ import path from "path";
     [
       ".gitignore",
       "README.md",
-      "bun.lock",
+      "fun.lock",
       "index.ts",
       "node_modules",
       "package.json",
@@ -146,13 +146,13 @@ import path from "path";
   `);
   });
 
-  test("bun init twice", async () => {
-    const temp = tempDirWithFiles("bun-init-twice", {});
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "-y", "mydir"],
+  test("fun init twice", async () => {
+    const temp = tempDirWithFiles("fun-init-twice", {});
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "-y", "mydir"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await exited).toBe(0);
     expect(readdirSync(temp).sort()).toEqual(["mydir"]);
@@ -160,29 +160,29 @@ import path from "path";
     [
       ".gitignore",
       "README.md",
-      "bun.lock",
+      "fun.lock",
       "index.ts",
       "node_modules",
       "package.json",
       "tsconfig.json",
     ]
   `);
-    await Bun.write(path.join(temp, "mydir/index.ts"), "my edited index.ts");
-    await Bun.write(path.join(temp, "mydir/README.md"), "my edited README.md");
-    await Bun.write(path.join(temp, "mydir/.gitignore"), "my edited .gitignore");
-    await Bun.write(
+    await Fun.write(path.join(temp, "mydir/index.ts"), "my edited index.ts");
+    await Fun.write(path.join(temp, "mydir/README.md"), "my edited README.md");
+    await Fun.write(path.join(temp, "mydir/.gitignore"), "my edited .gitignore");
+    await Fun.write(
       path.join(temp, "mydir/package.json"),
       JSON.stringify({
-        ...(await Bun.file(path.join(temp, "mydir/package.json")).json()),
+        ...(await Fun.file(path.join(temp, "mydir/package.json")).json()),
         name: "my edited package.json",
       }),
     );
-    await Bun.write(path.join(temp, "mydir/tsconfig.json"), `my edited tsconfig.json`);
-    const { exited: exited2, stderr } = Bun.spawn({
-      cmd: [bunExe(), "init", "mydir"],
+    await Fun.write(path.join(temp, "mydir/tsconfig.json"), `my edited tsconfig.json`);
+    const { exited: exited2, stderr } = Fun.spawn({
+      cmd: [funExe(), "init", "mydir"],
       cwd: temp,
       stdio: ["ignore", "pipe", "pipe"],
-      env: bunEnv,
+      env: funEnv,
     });
     expect(await exited2).toBe(0);
     expect(await stderr.text()).toMatchInlineSnapshot(`
@@ -195,20 +195,20 @@ import path from "path";
     [
       ".gitignore",
       "README.md",
-      "bun.lock",
+      "fun.lock",
       "index.ts",
       "node_modules",
       "package.json",
       "tsconfig.json",
     ]
   `);
-    expect(await Bun.file(path.join(temp, "mydir/index.ts")).text()).toMatchInlineSnapshot(`"my edited index.ts"`);
-    expect(await Bun.file(path.join(temp, "mydir/README.md")).text()).toMatchInlineSnapshot(`"my edited README.md"`);
-    expect(await Bun.file(path.join(temp, "mydir/.gitignore")).text()).toMatchInlineSnapshot(`"my edited .gitignore"`);
-    expect(await Bun.file(path.join(temp, "mydir/package.json")).json()).toMatchInlineSnapshot(`
+    expect(await Fun.file(path.join(temp, "mydir/index.ts")).text()).toMatchInlineSnapshot(`"my edited index.ts"`);
+    expect(await Fun.file(path.join(temp, "mydir/README.md")).text()).toMatchInlineSnapshot(`"my edited README.md"`);
+    expect(await Fun.file(path.join(temp, "mydir/.gitignore")).text()).toMatchInlineSnapshot(`"my edited .gitignore"`);
+    expect(await Fun.file(path.join(temp, "mydir/package.json")).json()).toMatchInlineSnapshot(`
     {
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/fun": "latest",
       },
       "module": "index.ts",
       "name": "my edited package.json",
@@ -219,19 +219,19 @@ import path from "path";
       "type": "module",
     }
   `);
-    expect(await Bun.file(path.join(temp, "mydir/tsconfig.json")).text()).toMatchInlineSnapshot(
+    expect(await Fun.file(path.join(temp, "mydir/tsconfig.json")).text()).toMatchInlineSnapshot(
       `"my edited tsconfig.json"`,
     );
   });
 
-  test("bun init --react works", async () => {
-    const temp = tempDirWithFiles("bun-init--react-works", {});
+  test("fun init --react works", async () => {
+    const temp = tempDirWithFiles("fun-init--react-works", {});
 
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "--react"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "--react"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await exited).toBe(0);
@@ -247,14 +247,14 @@ import path from "path";
     expect(fs.existsSync(path.join(temp, "tsconfig.json"))).toBe(true);
   }, 30_000);
 
-  test("bun init --react=tailwind works", async () => {
-    const temp = tempDirWithFiles("bun-init--react=tailwind-works", {});
+  test("fun init --react=tailwind works", async () => {
+    const temp = tempDirWithFiles("fun-init--react=tailwind-works", {});
 
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "--react=tailwind"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "--react=tailwind"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await exited).toBe(0);
@@ -264,20 +264,20 @@ import path from "path";
     expect(pkg).toHaveProperty("dependencies.react-dom");
     expect(pkg).toHaveProperty("devDependencies.@types/react");
     expect(pkg).toHaveProperty("devDependencies.@types/react-dom");
-    expect(pkg).toHaveProperty("dependencies.bun-plugin-tailwind");
+    expect(pkg).toHaveProperty("dependencies.fun-plugin-tailwind");
 
     expect(fs.existsSync(path.join(temp, "src"))).toBe(true);
     expect(fs.existsSync(path.join(temp, "src/index.ts"))).toBe(true);
   }, 30_000);
 
-  test("bun init --react=shadcn works", async () => {
-    const temp = tempDirWithFiles("bun-init--react=shadcn-works", {});
+  test("fun init --react=shadcn works", async () => {
+    const temp = tempDirWithFiles("fun-init--react=shadcn-works", {});
 
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "--react=shadcn"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "--react=shadcn"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
-      env: bunEnv,
+      env: funEnv,
     });
 
     expect(await exited).toBe(0);
@@ -288,7 +288,7 @@ import path from "path";
     expect(pkg).toHaveProperty("dependencies.@radix-ui/react-slot");
     expect(pkg).toHaveProperty("dependencies.class-variance-authority");
     expect(pkg).toHaveProperty("dependencies.clsx");
-    expect(pkg).toHaveProperty("dependencies.bun-plugin-tailwind");
+    expect(pkg).toHaveProperty("dependencies.fun-plugin-tailwind");
 
     expect(fs.existsSync(path.join(temp, "src"))).toBe(true);
     expect(fs.existsSync(path.join(temp, "src/index.ts"))).toBe(true);
@@ -296,17 +296,17 @@ import path from "path";
     expect(fs.existsSync(path.join(temp, "src/components/ui"))).toBe(true);
   }, 30_000);
 
-  test("bun init --minimal only creates package.json and tsconfig.json", async () => {
-    // Regression test for https://github.com/oven-sh/bun/issues/26050
+  test("fun init --minimal only creates package.json and tsconfig.json", async () => {
+    // Regression test for https://github.com/underdoc-org/fun/issues/26050
     // --minimal should not create .cursor/, CLAUDE.md, .gitignore, or README.md
-    const temp = tempDirWithFiles("bun-init-minimal", {});
+    const temp = tempDirWithFiles("fun-init-minimal", {});
 
-    const { exited } = Bun.spawn({
-      cmd: [bunExe(), "init", "--minimal", "-y"],
+    const { exited } = Fun.spawn({
+      cmd: [funExe(), "init", "--minimal", "-y"],
       cwd: temp,
       stdio: ["ignore", "inherit", "inherit"],
       env: {
-        ...bunEnv,
+        ...funEnv,
         // Simulate Cursor being installed via CURSOR_TRACE_ID env var
         CURSOR_TRACE_ID: "test-trace-id",
       },

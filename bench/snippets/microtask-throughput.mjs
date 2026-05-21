@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { bench, group, run } from "../runner.mjs";
 
 // Benchmark 1: queueMicrotask throughput
-// Tests the BunPerformMicrotaskJob handler path directly.
+// Tests the FunPerformMicrotaskJob handler path directly.
 // The optimization removes the JS trampoline and uses callMicrotask.
 group("queueMicrotask throughput", () => {
   bench("queueMicrotask 1k", () => {

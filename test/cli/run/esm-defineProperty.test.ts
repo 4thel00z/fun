@@ -1,19 +1,19 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import * as CJSArrayLike from "./cjs-defineProperty-arraylike.cjs";
 import * as CJS from "./cjs-defineProperty-fixture.cjs";
 import * as Self from "./esm-defineProperty.test.ts";
-// https://github.com/oven-sh/bun/issues/4432
+// https://github.com/underdoc-org/fun/issues/4432
 test("defineProperty", () => {
   expect(CJS.a).toBe(1);
   expect(CJS.b).toBe(2);
   // non-enumerable getter/setter are not copied, matching node.js
   expect(CJS.c).toBe(undefined);
 
-  expect(Bun.inspect(CJS.default)).toBe(`{\n  a: 1,\n  b: 2,\n  c: [Getter],\n}`);
+  expect(Fun.inspect(CJS.default)).toBe(`{\n  a: 1,\n  b: 2,\n  c: [Getter],\n}`);
 });
 export const __esModule = true;
 test("shows __esModule if it was exported", () => {
-  expect(Bun.inspect(Self)).toBe(`Module {
+  expect(Fun.inspect(Self)).toBe(`Module {
   __esModule: true,
 }`);
   expect(Object.getOwnPropertyNames(Self)).toContain("__esModule");
@@ -28,7 +28,7 @@ test("arraylike", () => {
   expect(CJSArrayLike).toHaveProperty("4");
   expect(Object.getOwnPropertyNames(CJSArrayLike)).not.toContain("__esModule");
   expect(Object.getOwnPropertyNames(CJSArrayLike.default)).not.toContain("__esModule");
-  expect(Bun.inspect(CJSArrayLike)).toBe(`Module {
+  expect(Fun.inspect(CJSArrayLike)).toBe(`Module {
   "0": 0,
   "1": 1,
   "2": 3,

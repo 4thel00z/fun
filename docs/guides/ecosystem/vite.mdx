@@ -1,20 +1,20 @@
 ---
-title: Build a frontend using Vite and Bun
-sidebarTitle: "Vite with Bun"
+title: Build a frontend using Vite and Fun
+sidebarTitle: "Vite with Fun"
 mode: center
 ---
 
 <Note>
-  You can use Vite with Bun, but many projects get faster builds & drop hundreds of dependencies by switching to [HTML
+  You can use Vite with Fun, but many projects get faster builds & drop hundreds of dependencies by switching to [HTML
   imports](/bundler/html-static).
 </Note>
 
 ---
 
-Vite works out of the box with Bun. Get started with one of Vite's templates.
+Vite works out of the box with Fun. Get started with one of Vite's templates.
 
 ```bash terminal icon="terminal"
-bun create vite my-app
+fun create vite my-app
 ```
 
 ```txt
@@ -29,17 +29,17 @@ Then `cd` into the project directory and install dependencies.
 
 ```bash terminal icon="terminal"
 cd my-app
-bun install
+fun install
 ```
 
 ---
 
-Start the development server with the `vite` CLI using `bunx`.
+Start the development server with the `vite` CLI using `funx`.
 
-The `--bun` flag tells Bun to run Vite's CLI using `bun` instead of `node`; by default Bun respects Vite's `#!/usr/bin/env node` [shebang line](<https://en.wikipedia.org/wiki/Shebang_(Unix)>).
+The `--fun` flag tells Fun to run Vite's CLI using `fun` instead of `node`; by default Fun respects Vite's `#!/usr/bin/env node` [shebang line](<https://en.wikipedia.org/wiki/Shebang_(Unix)>).
 
 ```bash terminal icon="terminal"
-bunx --bun vite
+funx --fun vite
 ```
 
 ---
@@ -49,7 +49,7 @@ To simplify this command, update the `"dev"` script in `package.json` to the fol
 ```json package.json icon="file-json"
   "scripts": {
     "dev": "vite", // [!code --]
-    "dev": "bunx --bun vite", // [!code ++]
+    "dev": "funx --fun vite", // [!code ++]
     "build": "vite build",
     "serve": "vite preview"
   },
@@ -58,10 +58,10 @@ To simplify this command, update the `"dev"` script in `package.json` to the fol
 
 ---
 
-Now you can start the development server with `bun run dev`.
+Now you can start the development server with `fun run dev`.
 
 ```bash terminal icon="terminal"
-bun run dev
+fun run dev
 ```
 
 ---
@@ -69,9 +69,9 @@ bun run dev
 The following command will build your app for production.
 
 ```sh terminal icon="terminal"
-bunx --bun vite build
+funx --fun vite build
 ```
 
 ---
 
-This is a stripped down guide to get you started with Vite + Bun. For more information, see the [Vite documentation](https://vite.dev/guide/).
+This is a stripped down guide to get you started with Vite + Fun. For more information, see the [Vite documentation](https://vite.dev/guide/).

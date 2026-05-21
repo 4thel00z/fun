@@ -24,7 +24,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
     const Visitor = struct {
         allocator: std.mem.Allocator,
         temp_allocator: std.mem.Allocator,
-        css_asts: []?*bun.css.BundlerStyleSheet,
+        css_asts: []?*fun.css.BundlerStyleSheet,
         all_import_records: []const BabyList(ImportRecord),
 
         graph: *LinkerGraph,
@@ -37,7 +37,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
         pub fn visit(
             visitor: *@This(),
             source_index: Index,
-            wrapping_conditions: *BabyList(bun.css.ImportConditions),
+            wrapping_conditions: *BabyList(fun.css.ImportConditions),
             wrapping_import_records: *BabyList(ImportRecord),
         ) void {
             debug(
@@ -66,9 +66,9 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
             visitor.visited.append(
                 visitor.temp_allocator,
                 source_index,
-            ) catch |err| bun.handleOom(err);
+            ) catch |err| fun.handleOom(err);
 
-            const repr: *const bun.css.BundlerStyleSheet = visitor.css_asts[source_index.get()] orelse return; // Sanity check
+            const repr: *const fun.css.BundlerStyleSheet = visitor.css_asts[source_index.get()] orelse return; // Sanity check
             const top_level_rules = &repr.rules;
 
             // TODO: should we even do this? @import rules have to be the first rules in the stylesheet, why even allow pre-import layers?
@@ -100,10 +100,10 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                         if (rule.import.hasConditions()) {
                             // Fork our state
                             var nested_conditions = wrapping_conditions.deepCloneInfallible(visitor.allocator);
-                            var nested_import_records = bun.handleOom(wrapping_import_records.clone(visitor.allocator));
+                            var nested_import_records = fun.handleOom(wrapping_import_records.clone(visitor.allocator));
 
                             // Clone these import conditions and append them to the state
-                            bun.handleOom(nested_conditions.append(visitor.allocator, rule.import.conditionsWithImportRecords(visitor.allocator, &nested_import_records)));
+                            fun.handleOom(nested_conditions.append(visitor.allocator, rule.import.conditionsWithImportRecords(visitor.allocator, &nested_import_records)));
                             visitor.visit(record.source_index, &nested_conditions, wrapping_import_records);
                             continue;
                         }
@@ -114,14 +114,14 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                     // Record external depednencies
                     if (!record.flags.is_internal) {
                         var all_conditions = wrapping_conditions.deepCloneInfallible(visitor.allocator);
-                        var all_import_records = bun.handleOom(wrapping_import_records.clone(visitor.allocator));
+                        var all_import_records = fun.handleOom(wrapping_import_records.clone(visitor.allocator));
                         // If this import has conditions, append it to the list of overall
                         // conditions for this external import. Note that an external import
                         // may actually have multiple sets of conditions that can't be
                         // merged. When this happens we need to generate a nested imported
                         // CSS file using a data URL.
                         if (rule.import.hasConditions()) {
-                            bun.handleOom(all_conditions.append(visitor.allocator, rule.import.conditionsWithImportRecords(visitor.allocator, &all_import_records)));
+                            fun.handleOom(all_conditions.append(visitor.allocator, rule.import.conditionsWithImportRecords(visitor.allocator, &all_import_records)));
                             visitor.order.append(
                                 visitor.allocator,
                                 Chunk.CssImportOrder{
@@ -131,7 +131,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                                     .conditions = all_conditions,
                                     .condition_import_records = all_import_records,
                                 },
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
                         } else {
                             visitor.order.append(
                                 visitor.allocator,
@@ -142,7 +142,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                                     .conditions = wrapping_conditions.*,
                                     .condition_import_records = wrapping_import_records.*,
                                 },
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
                         }
                         debug(
                             "Push external: {d}={s}",
@@ -162,7 +162,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                 }
             }
 
-            if (comptime bun.Environment.isDebug) {
+            if (comptime fun.Environment.isDebug) {
                 debug(
                     "Push file: {d}={s}",
                     .{ source_index.get(), visitor.parse_graph.input_files.items(.source)[source_index.get()].path.pretty },
@@ -172,7 +172,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
             visitor.order.append(visitor.allocator, Chunk.CssImportOrder{
                 .kind = .{ .source_index = source_index },
                 .conditions = wrapping_conditions.*,
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
         }
     };
 
@@ -181,11 +181,11 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
         .temp_allocator = temp_allocator,
         .graph = &this.graph,
         .parse_graph = this.parse_graph,
-        .visited = bun.handleOom(BabyList(Index).initCapacity(temp_allocator, 16)),
+        .visited = fun.handleOom(BabyList(Index).initCapacity(temp_allocator, 16)),
         .css_asts = this.graph.ast.items(.css),
         .all_import_records = this.graph.ast.items(.import_records),
     };
-    var wrapping_conditions: BabyList(bun.css.ImportConditions) = .{};
+    var wrapping_conditions: BabyList(fun.css.ImportConditions) = .{};
     var wrapping_import_records: BabyList(ImportRecord) = .{};
     // Include all files reachable from any entry point
     for (entry_points) |entry_point| {
@@ -193,9 +193,9 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
     }
 
     var order = visitor.order;
-    var wip_order = bun.handleOom(BabyList(Chunk.CssImportOrder).initCapacity(temp_allocator, order.len));
+    var wip_order = fun.handleOom(BabyList(Chunk.CssImportOrder).initCapacity(temp_allocator, order.len));
 
-    const css_asts: []const ?*bun.css.BundlerStyleSheet = this.graph.ast.items(.css);
+    const css_asts: []const ?*fun.css.BundlerStyleSheet = this.graph.ast.items(.css);
 
     debugCssOrder(this, &order, .BEFORE_HOISTING);
 
@@ -208,7 +208,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
         var is_at_layer_prefix = true;
         for (order.slice()) |*entry| {
             if ((entry.kind == .layers and is_at_layer_prefix) or entry.kind == .external_path) {
-                bun.handleOom(wip_order.append(temp_allocator, entry.*));
+                fun.handleOom(wip_order.append(temp_allocator, entry.*));
             }
             if (entry.kind != .layers) {
                 is_at_layer_prefix = false;
@@ -219,7 +219,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
         is_at_layer_prefix = true;
         for (order.slice()) |*entry| {
             if ((entry.kind != .layers or !is_at_layer_prefix) and entry.kind != .external_path) {
-                bun.handleOom(wip_order.append(temp_allocator, entry.*));
+                fun.handleOom(wip_order.append(temp_allocator, entry.*));
             }
             if (entry.kind != .layers) {
                 is_at_layer_prefix = false;
@@ -246,7 +246,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
             const entry = visitor.order.at(i);
             switch (entry.kind) {
                 .source_index => |idx| {
-                    const gop = bun.handleOom(source_index_duplicates.getOrPut(idx.get()));
+                    const gop = fun.handleOom(source_index_duplicates.getOrPut(idx.get()));
                     if (!gop.found_existing) {
                         gop.value_ptr.* = BabyList(u32){};
                     }
@@ -261,10 +261,10 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                             continue :next_backward;
                         }
                     }
-                    bun.handleOom(gop.value_ptr.append(temp_allocator, i));
+                    fun.handleOom(gop.value_ptr.append(temp_allocator, i));
                 },
                 .external_path => |p| {
-                    const gop = bun.handleOom(external_path_duplicates.getOrPut(p.text));
+                    const gop = fun.handleOom(external_path_duplicates.getOrPut(p.text));
                     if (!gop.found_existing) {
                         gop.value_ptr.* = BabyList(u32){};
                     }
@@ -279,7 +279,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                             continue :next_backward;
                         }
                     }
-                    bun.handleOom(gop.value_ptr.append(temp_allocator, i));
+                    fun.handleOom(gop.value_ptr.append(temp_allocator, i));
                 },
                 .layers => {},
             }
@@ -292,10 +292,10 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
     // copy instead of the last copy like other things in CSS.
     {
         const DuplicateEntry = struct {
-            layers: []const bun.css.LayerName,
-            indices: bun.BabyList(u32) = .{},
+            layers: []const fun.css.LayerName,
+            indices: fun.BabyList(u32) = .{},
         };
-        var layer_duplicates = bun.BabyList(DuplicateEntry){};
+        var layer_duplicates = fun.BabyList(DuplicateEntry){};
 
         next_forward: for (order.slice()) |*entry| {
             debugCssOrder(this, &wip_order, .WHILE_OPTIMIZING_REDUNDANT_LAYER_RULES);
@@ -304,7 +304,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                 .layers => |*layers| {
                     // Truncate the conditions at the first anonymous layer
                     for (entry.conditions.slice(), 0..) |*condition_, i| {
-                        const conditions: *bun.css.ImportConditions = condition_;
+                        const conditions: *fun.css.ImportConditions = condition_;
                         // The layer is anonymous if it's a "layer" token without any
                         // children instead of a "layer(...)" token with children:
                         //
@@ -377,7 +377,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
             // that this tests all import order entries (not just layer ones) because
             // sometimes non-layer ones can make following layer ones redundant.
             // layers_post_import
-            const layers_key: []const bun.css.LayerName = switch (entry.kind) {
+            const layers_key: []const fun.css.LayerName = switch (entry.kind) {
                 .source_index => css_asts[entry.kind.source_index.get()].?.layer_names.sliceConst(),
                 .layers => entry.kind.layers.inner().sliceConst(),
                 .external_path => &.{},
@@ -407,7 +407,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                 // Allocate a new set of duplicate indices to track this combination.
                 layer_duplicates.append(temp_allocator, DuplicateEntry{
                     .layers = layers_key,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
             }
             var duplicates = layer_duplicates.at(index).indices.slice();
             var j = duplicates.len;
@@ -449,7 +449,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
 
                         // Non-layer entries still need to be present because they have
                         // other side effects beside inserting things in the layer order
-                        bun.handleOom(wip_order.append(temp_allocator, entry.*));
+                        fun.handleOom(wip_order.append(temp_allocator, entry.*));
                     }
 
                     // Don't add this to the duplicate list below because it's redundant
@@ -460,8 +460,8 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
             layer_duplicates.mut(index).indices.append(
                 temp_allocator,
                 wip_order.len,
-            ) catch |err| bun.handleOom(err);
-            bun.handleOom(wip_order.append(temp_allocator, entry.*));
+            ) catch |err| fun.handleOom(err);
+            fun.handleOom(wip_order.append(temp_allocator, entry.*));
         }
 
         debugCssOrder(this, &wip_order, .WHILE_OPTIMIZING_REDUNDANT_LAYER_RULES);
@@ -487,7 +487,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
                     wip_order.mut(prev_index).kind.layers.toOwned(temp_allocator).appendSlice(
                         temp_allocator,
                         entry.kind.layers.inner().sliceConst(),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             }
         }
@@ -497,7 +497,7 @@ pub fn findImportedFilesInCSSOrder(this: *LinkerContext, temp_allocator: std.mem
     return order;
 }
 
-fn importConditionsAreEqual(a: []const bun.css.ImportConditions, b: []const bun.css.ImportConditions) bool {
+fn importConditionsAreEqual(a: []const fun.css.ImportConditions, b: []const fun.css.ImportConditions) bool {
     if (a.len != b.len) {
         return false;
     }
@@ -538,7 +538,7 @@ fn importConditionsAreEqual(a: []const bun.css.ImportConditions, b: []const bun.
 ///
 /// Note that all of this deliberately ignores the existence of "@layer" because
 /// that is handled separately. All of this is only for handling unlayered styles.
-pub fn isConditionalImportRedundant(earlier: *const BabyList(bun.css.ImportConditions), later: *const BabyList(bun.css.ImportConditions)) bool {
+pub fn isConditionalImportRedundant(earlier: *const BabyList(fun.css.ImportConditions), later: *const BabyList(fun.css.ImportConditions)) bool {
     if (later.len > earlier.len) return false;
 
     for (0..later.len) |i| {
@@ -602,19 +602,19 @@ const CssOrderDebugStep = enum {
 };
 
 fn debugCssOrder(this: *LinkerContext, order: *const BabyList(Chunk.CssImportOrder), comptime step: CssOrderDebugStep) void {
-    if (comptime bun.Environment.isDebug) {
-        const env_var = "BUN_DEBUG_CSS_ORDER_" ++ @tagName(step);
-        const enable_all = bun.env_var.BUN_DEBUG_CSS_ORDER.get();
-        if (enable_all or bun.getenvTruthy(env_var)) {
+    if (comptime fun.Environment.isDebug) {
+        const env_var = "FUN_DEBUG_CSS_ORDER_" ++ @tagName(step);
+        const enable_all = fun.env_var.FUN_DEBUG_CSS_ORDER.get();
+        if (enable_all or fun.getenvTruthy(env_var)) {
             debugCssOrderImpl(this, order, step);
         }
     }
 }
 
 fn debugCssOrderImpl(this: *LinkerContext, order: *const BabyList(Chunk.CssImportOrder), comptime step: CssOrderDebugStep) void {
-    if (comptime bun.Environment.isDebug) {
+    if (comptime fun.Environment.isDebug) {
         debug("CSS order {s}:\n", .{@tagName(step)});
-        var arena = bun.ArenaAllocator.init(bun.default_allocator);
+        var arena = fun.ArenaAllocator.init(fun.default_allocator);
         defer arena.deinit();
         for (order.slice(), 0..) |entry, i| {
             const conditions_str = if (entry.conditions.len > 0) conditions_str: {
@@ -623,13 +623,13 @@ fn debugCssOrderImpl(this: *LinkerContext, order: *const BabyList(Chunk.CssImpor
                 writer.writeAll("[") catch unreachable;
                 var symbols = Symbol.Map{};
                 for (entry.conditions.sliceConst(), 0..) |*condition_, j| {
-                    const condition: *const bun.css.ImportConditions = condition_;
+                    const condition: *const fun.css.ImportConditions = condition_;
                     const scratchbuf = std.array_list.Managed(u8).init(arena.allocator());
-                    var printer = bun.css.Printer.new(
+                    var printer = fun.css.Printer.new(
                         arena.allocator(),
                         scratchbuf,
                         writer,
-                        bun.css.PrinterOptions.default(),
+                        fun.css.PrinterOptions.default(),
                         .{
                             .import_records = &entry.condition_import_records,
                             .ast_urls_for_css = this.parse_graph.ast.items(.url_for_css),
@@ -653,27 +653,27 @@ fn debugCssOrderImpl(this: *LinkerContext, order: *const BabyList(Chunk.CssImpor
     }
 }
 
-pub const DeferredBatchTask = bun.bundle_v2.DeferredBatchTask;
-pub const ThreadPool = bun.bundle_v2.ThreadPool;
-pub const ParseTask = bun.bundle_v2.ParseTask;
+pub const DeferredBatchTask = fun.bundle_v2.DeferredBatchTask;
+pub const ThreadPool = fun.bundle_v2.ThreadPool;
+pub const ParseTask = fun.bundle_v2.ParseTask;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const BabyList = bun.BabyList;
-const Environment = bun.Environment;
-const ImportRecord = bun.ImportRecord;
-const default_allocator = bun.default_allocator;
+const fun = @import("fun");
+const BabyList = fun.BabyList;
+const Environment = fun.Environment;
+const ImportRecord = fun.ImportRecord;
+const default_allocator = fun.default_allocator;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Symbol = js_ast.Symbol;
 
-const bundler = bun.bundle_v2;
+const bundler = fun.bundle_v2;
 const Chunk = bundler.Chunk;
 const Graph = bundler.Graph;
-const Index = bun.bundle_v2.Index;
+const Index = fun.bundle_v2.Index;
 const LinkerGraph = bundler.LinkerGraph;
 
-const LinkerContext = bun.bundle_v2.LinkerContext;
+const LinkerContext = fun.bundle_v2.LinkerContext;
 const debug = LinkerContext.debug;

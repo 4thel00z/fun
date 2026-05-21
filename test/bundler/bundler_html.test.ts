@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 describe("bundler", () => {
@@ -846,7 +846,7 @@ body {
 
   // Test that multiple HTML entrypoints sharing the same CSS file both get
   // the CSS link tag in production mode (css_chunking deduplication).
-  // Regression test for https://github.com/oven-sh/bun/issues/23668
+  // Regression test for https://github.com/underdoc-org/fun/issues/23668
   itBundled("html/SharedCSSProductionMultipleEntries", {
     outdir: "out/",
     production: true,

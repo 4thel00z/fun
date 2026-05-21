@@ -9,7 +9,7 @@ export const bool = new (class extends Type {
   }
 
   get idlType() {
-    return "::Bun::IDLStrictBoolean";
+    return "::Fun::IDLStrictBoolean";
   }
   get bindgenType() {
     return `bindgen.BindgenBool`;
@@ -52,7 +52,7 @@ function makeUnsignedType(width: number): IntegerType {
     }
 
     get idlType() {
-      return `::Bun::IDLStrictInteger<${this.cppType}>`;
+      return `::Fun::IDLStrictInteger<${this.cppType}>`;
     }
     get bindgenType() {
       return `bindgen.BindgenU${width}`;
@@ -83,7 +83,7 @@ function makeSignedType(width: number): IntegerType {
     }
 
     get idlType() {
-      return `::Bun::IDLStrictInteger<${this.cppType}>`;
+      return `::Fun::IDLStrictInteger<${this.cppType}>`;
     }
     get bindgenType() {
       return `bindgen.BindgenI${width}`;
@@ -125,7 +125,7 @@ export abstract class LooseIntegerType extends Type {}
 function makeLooseIntegerType(strict: IntegerType): LooseIntegerType {
   return new (class extends LooseIntegerType {
     get idlType() {
-      return `::Bun::IDLLooseInteger<${strict.cppType}>`;
+      return `::Fun::IDLLooseInteger<${strict.cppType}>`;
     }
     get bindgenType() {
       return strict.bindgenType;
@@ -174,7 +174,7 @@ export const f64 = new (class extends Type {
   }
 
   get idlType() {
-    return "::Bun::IDLStrictDouble";
+    return "::Fun::IDLStrictDouble";
   }
   get bindgenType() {
     return `bindgen.BindgenF64`;
@@ -198,7 +198,7 @@ export const f64 = new (class extends Type {
 
 export const FiniteF64 = new (class extends Type {
   get idlType() {
-    return "::Bun::IDLFiniteDouble";
+    return "::Fun::IDLFiniteDouble";
   }
   get bindgenType() {
     return f64.bindgenType;

@@ -17,8 +17,8 @@ function test() {
 
 async function reallyGC() {
   for (let i = 0; i < 3; i++) {
-    await Bun.sleep(5);
-    Bun.gc(true);
+    await Fun.sleep(5);
+    Fun.gc(true);
   }
 }
 

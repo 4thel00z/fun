@@ -1,16 +1,16 @@
 // The types in this file are not publicly defined, but do exist.
-// Stuff like `Bun.fs()` and so on.
+// Stuff like `Fun.fs()` and so on.
 
-type BunFSWatchOptions = { encoding?: BufferEncoding; persistent?: boolean; recursive?: boolean; signal?: AbortSignal };
-type BunWatchEventType = "rename" | "change" | "error" | "close";
-type BunWatchListener<T> = (event: WatchEventType, filename: T | undefined) => void;
+type FunFSWatchOptions = { encoding?: BufferEncoding; persistent?: boolean; recursive?: boolean; signal?: AbortSignal };
+type FunWatchEventType = "rename" | "change" | "error" | "close";
+type FunWatchListener<T> = (event: WatchEventType, filename: T | undefined) => void;
 
 /**
  * If this is not tree-shaken away, the bundle will fail.
  */
 declare function $bundleError(...message: any[]): never;
 
-declare module "bun" {
+declare module "fun" {
   namespace SQL.__internal {
     type Define<T, K extends keyof T = never> = T extends any
       ? T & {
@@ -18,44 +18,44 @@ declare module "bun" {
         } & {}
       : never;
 
-    type Adapter = NonNullable<Bun.SQL.Options["adapter"]>;
+    type Adapter = NonNullable<Fun.SQL.Options["adapter"]>;
 
     /**
      * Represents the result of the `parseOptions()` function in the sqlite path
      */
-    type DefinedSQLiteOptions = Define<Bun.SQL.SQLiteOptions, "filename">;
+    type DefinedSQLiteOptions = Define<Fun.SQL.SQLiteOptions, "filename">;
 
     /**
      * Represents the result of the `parseOptions()` function in the postgres, mysql or mariadb path
      */
-    type DefinedPostgresOrMySQLOptions = Define<Bun.SQL.PostgresOrMySQLOptions, "max" | "prepare" | "max"> & {
+    type DefinedPostgresOrMySQLOptions = Define<Fun.SQL.PostgresOrMySQLOptions, "max" | "prepare" | "max"> & {
       sslMode: import("internal/sql/shared").SSLMode;
       query: string;
     };
 
     type DefinedOptions = DefinedSQLiteOptions | DefinedPostgresOrMySQLOptions;
-    type OptionsWithDefinedAdapter = Define<Bun.SQL.Options, "adapter">;
+    type OptionsWithDefinedAdapter = Define<Fun.SQL.Options, "adapter">;
   }
 }
 
-interface BunFSWatcher {
+interface FunFSWatcher {
   /**
-   * Stop watching for changes on the given `BunFSWatcher`. Once stopped, the `BunFSWatcher` object is no longer usable.
+   * Stop watching for changes on the given `FunFSWatcher`. Once stopped, the `FunFSWatcher` object is no longer usable.
    * @since v0.6.8
    */
   close(): void;
 
   /**
-   * When called, requests that the Node.js event loop not exit so long as the <BunFSWatcher> is active. Calling watcher.ref() multiple times will have no effect.
+   * When called, requests that the Node.js event loop not exit so long as the <FunFSWatcher> is active. Calling watcher.ref() multiple times will have no effect.
    */
   ref(): void;
 
   /**
-   * When called, the active <BunFSWatcher> object will not require the Node.js event loop to remain active. If there is no other activity keeping the event loop running, the process may exit before the <BunFSWatcher> object's callback is invoked. Calling watcher.unref() multiple times will have no effect.
+   * When called, the active <FunFSWatcher> object will not require the Node.js event loop to remain active. If there is no other activity keeping the event loop running, the process may exit before the <FunFSWatcher> object's callback is invoked. Calling watcher.unref() multiple times will have no effect.
    */
   unref(): void;
 }
-type BunFS = Omit<typeof import("node:fs") & typeof import("node:fs/promises"), "watch" | "cp" | "cpSync"> & {
+type FunFS = Omit<typeof import("node:fs") & typeof import("node:fs/promises"), "watch" | "cp" | "cpSync"> & {
   /**
    * Watch for changes on `filename`, where `filename` is either a file or a
    * directory.
@@ -71,7 +71,7 @@ type BunFS = Omit<typeof import("node:fs") & typeof import("node:fs/promises"), 
    *
    *
    * If a `signal` is passed, aborting the corresponding AbortController will close
-   * the returned `BunFSWatcher`.
+   * the returned `FunFSWatcher`.
    * @since v0.6.8
    * @param listener
    */
@@ -82,10 +82,10 @@ type BunFS = Omit<typeof import("node:fs") & typeof import("node:fs/promises"), 
           encoding: "buffer";
         })
       | "buffer",
-    listener?: BunWatchListener<Buffer>,
-  ): BunFSWatcher;
+    listener?: FunWatchListener<Buffer>,
+  ): FunFSWatcher;
   /**
-   * Watch for changes on `filename`, where `filename` is either a file or a directory, returning an `BunFSWatcher`.
+   * Watch for changes on `filename`, where `filename` is either a file or a directory, returning an `FunFSWatcher`.
    * @param filename A path to a file or directory. If a URL is provided, it must use the `file:` protocol.
    * @param options Either the encoding for the filename provided to the listener, or an object optionally specifying encoding, persistent, and recursive options.
    * If `encoding` is not supplied, the default of `'utf8'` is used.
@@ -95,10 +95,10 @@ type BunFS = Omit<typeof import("node:fs") & typeof import("node:fs/promises"), 
   watch(
     filename: string,
     options?: WatchOptions | BufferEncoding | null,
-    listener?: BunWatchListener<string>,
-  ): BunFSWatcher;
+    listener?: FunWatchListener<string>,
+  ): FunFSWatcher;
   /**
-   * Watch for changes on `filename`, where `filename` is either a file or a directory, returning an `BunFSWatcher`.
+   * Watch for changes on `filename`, where `filename` is either a file or a directory, returning an `FunFSWatcher`.
    * @param filename A path to a file or directory. If a URL is provided, it must use the `file:` protocol.
    * @param options Either the encoding for the filename provided to the listener, or an object optionally specifying encoding, persistent, and recursive options.
    * If `encoding` is not supplied, the default of `'utf8'` is used.
@@ -107,14 +107,14 @@ type BunFS = Omit<typeof import("node:fs") & typeof import("node:fs/promises"), 
    */
   watch(
     filename: string,
-    options: BunWatchListener | string,
-    listener?: BunWatchListener<string | Buffer>,
-  ): BunFSWatcher;
+    options: FunWatchListener | string,
+    listener?: FunWatchListener<string | Buffer>,
+  ): FunFSWatcher;
   /**
-   * Watch for changes on `filename`, where `filename` is either a file or a directory, returning an `BunFSWatcher`.
+   * Watch for changes on `filename`, where `filename` is either a file or a directory, returning an `FunFSWatcher`.
    * @param filename A path to a file or directory. If a URL is provided, it must use the `file:` protocol.
    */
-  watch(filename: string, listener?: BunWatchListener<string>): BunFSWatcher;
+  watch(filename: string, listener?: FunWatchListener<string>): FunFSWatcher;
 
   // internal api is for fs.cp and fs.cpSync that is limited to a few options.
   // there is a js implementation for options like `filter` in `src/js/internal/fs/cp*`
@@ -129,11 +129,11 @@ type BunFS = Omit<typeof import("node:fs") & typeof import("node:fs/promises"), 
   cp(source: string, dest: string, recursive?: boolean, errorOnExist?: boolean, force?: boolean, mode?: number): void;
 };
 
-declare module "bun" {
+declare module "fun" {
   var TOML: {
     parse(contents: string): any;
   };
-  function jest(path: string): typeof import("bun:test");
+  function jest(path: string): typeof import("fun:test");
   var main: string;
   var tty: Array<{ hasColors: boolean }>;
   var FFI: any;
@@ -245,7 +245,7 @@ declare function $newZigFunction<T = (...args: any) => any>(
 /**
  * Retrieves a handle to a function defined in Zig or C++, defined in a
  * `.bind.ts` file. For more information on how to define bindgen functions, see
- * [bindgen's documentation](https://bun.com/docs/project/bindgen).
+ * [bindgen's documentation](https://fun.dev/docs/project/bindgen).
  * @param filename - The basename of the `.bind.ts` file.
  * @param symbol - The name of the function to call.
  */
@@ -256,12 +256,12 @@ declare module "node:net" {
   function _normalizeArgs(options: any[]): [Record<PropertyKey, any>, Function | null];
 
   interface Socket {
-    _handle: Bun.Socket<{ self: Socket; req?: object }> | null;
+    _handle: Fun.Socket<{ self: Socket; req?: object }> | null;
     server: Server | null;
   }
 
   interface Server {
-    _handle: Bun.SocketListener<Socket> | null;
+    _handle: Fun.SocketListener<Socket> | null;
     _connections: number;
   }
 }

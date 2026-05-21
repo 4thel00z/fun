@@ -7,7 +7,7 @@
 #include "CryptoAlgorithmRegistry.h"
 #include "JSBufferEncodingType.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 

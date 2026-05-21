@@ -14,13 +14,13 @@ const fs = std.fs;
 const Version = std.SemanticVersion;
 const Arch = std.Target.Cpu.Arch;
 
-const OperatingSystem = @import("src/bun_core/env.zig").OperatingSystem;
+const OperatingSystem = @import("src/fun_core/env.zig").OperatingSystem;
 
 const pathRel = fs.path.relative;
 
 const zero_sha = "0000000000000000000000000000000000000000";
 
-const BunBuildOptions = struct {
+const FunBuildOptions = struct {
     target: ResolvedTarget,
     optimize: OptimizeMode,
     os: OperatingSystem,
@@ -60,16 +60,16 @@ const BunBuildOptions = struct {
     windows_shim: ?WindowsShim = null,
     llvm_codegen_threads: ?u32 = null,
 
-    pub fn isBaseline(this: *const BunBuildOptions) bool {
+    pub fn isBaseline(this: *const FunBuildOptions) bool {
         return this.arch.isX86() and
             !Target.x86.featureSetHas(this.target.result.cpu.features, .avx2);
     }
 
-    pub fn shouldEmbedCode(opts: *const BunBuildOptions) bool {
+    pub fn shouldEmbedCode(opts: *const FunBuildOptions) bool {
         return opts.optimize != .Debug or opts.codegen_embed;
     }
 
-    pub fn buildOptionsModule(this: *BunBuildOptions, b: *Build) *Module {
+    pub fn buildOptionsModule(this: *FunBuildOptions, b: *Build) *Module {
         if (this.cached_options_module) |mod| {
             return mod;
         }
@@ -99,7 +99,7 @@ const BunBuildOptions = struct {
         return mod;
     }
 
-    pub fn windowsShim(this: *BunBuildOptions, b: *Build) WindowsShim {
+    pub fn windowsShim(this: *FunBuildOptions, b: *Build) WindowsShim {
         return this.windows_shim orelse {
             this.windows_shim = WindowsShim.create(b, this.arch);
             return this.windows_shim.?;
@@ -139,7 +139,7 @@ pub fn getOSGlibCVersion(os: OperatingSystem) ?Version {
 }
 
 pub fn getCpuModel(os: OperatingSystem, arch: Arch) ?Target.Query.CpuModel {
-    // https://github.com/oven-sh/bun/issues/12076
+    // https://github.com/underdoc-org/fun/issues/12076
     if (os == .linux and arch == .aarch64) {
         return .{ .explicit = &Target.aarch64.cpu.cortex_a35 };
     }
@@ -203,7 +203,7 @@ pub fn build(b: *Build) !void {
         else => true,
     };
 
-    const bun_version = b.option([]const u8, "version", "Value of `Bun.version`") orelse "0.0.0";
+    const fun_version = b.option([]const u8, "version", "Value of `Fun.version`") orelse "0.0.0";
 
     // Lower the default reference trace for incremental
     b.reference_trace = b.reference_trace orelse if (b.graph.incremental == true) 8 else 16;
@@ -231,7 +231,7 @@ pub fn build(b: *Build) !void {
         std.debug.panic("-Dfreebsd_sysroot is required when cross-compiling to FreeBSD (zig does not bundle FreeBSD libc headers)", .{});
     }
 
-    var build_options = BunBuildOptions{
+    var build_options = FunBuildOptions{
         .target = target,
         .optimize = optimize,
         .os = os,
@@ -241,7 +241,7 @@ pub fn build(b: *Build) !void {
         .no_llvm = no_llvm,
         .lto = lto,
         .override_no_export_cpp_apis = override_no_export_cpp_apis,
-        .version = try Version.parse(bun_version),
+        .version = try Version.parse(fun_version),
         .canary_revision = canary: {
             const rev = b.option(u32, "canary", "Treat this as a canary build") orelse 0;
             break :canary if (rev == 0) null else rev;
@@ -299,18 +299,18 @@ pub fn build(b: *Build) !void {
 
     // zig build obj
     {
-        var step = b.step("obj", "Build Bun's Zig code as a .o file");
-        var bun_obj = addBunObject(b, &build_options);
-        step.dependOn(&bun_obj.step);
-        step.dependOn(addInstallObjectFile(b, bun_obj, "bun-zig", obj_format));
+        var step = b.step("obj", "Build Fun's Zig code as a .o file");
+        var fun_obj = addFunObject(b, &build_options);
+        step.dependOn(&fun_obj.step);
+        step.dependOn(addInstallObjectFile(b, fun_obj, "fun-zig", obj_format));
     }
 
     // zig build test
     {
-        var step = b.step("test", "Build Bun's unit test suite");
+        var step = b.step("test", "Build Fun's unit test suite");
         var o = build_options;
         var unit_tests = b.addTest(.{
-            .name = "bun-test",
+            .name = "fun-test",
             .test_runner = .{ .path = b.path("src/main_test.zig"), .mode = .simple },
             .root_module = b.createModule(.{
                 .optimize = build_options.optimize,
@@ -336,32 +336,32 @@ pub fn build(b: *Build) !void {
         unit_tests.bundle_ubsan_rt = false;
 
         const bin = unit_tests.getEmittedBin();
-        const obj = bin.dirname().path(b, "bun-test.o");
-        const cpy_obj = b.addInstallFile(obj, "bun-test.o");
+        const obj = bin.dirname().path(b, "fun-test.o");
+        const cpy_obj = b.addInstallFile(obj, "fun-test.o");
         step.dependOn(&cpy_obj.step);
     }
 
     // zig build windows-shim
     {
-        var step = b.step("windows-shim", "Build the Windows shim (bun_shim_impl.exe + bun_shim_debug.exe)");
+        var step = b.step("windows-shim", "Build the Windows shim (fun_shim_impl.exe + fun_shim_debug.exe)");
         var windows_shim = build_options.windowsShim(b);
-        step.dependOn(&b.addInstallFile(windows_shim.exe.getEmittedBin(), "bun_shim_impl.exe").step);
-        step.dependOn(&b.addInstallFile(windows_shim.dbg.getEmittedBin(), "bun_shim_debug.exe").step);
+        step.dependOn(&b.addInstallFile(windows_shim.exe.getEmittedBin(), "fun_shim_impl.exe").step);
+        step.dependOn(&b.addInstallFile(windows_shim.dbg.getEmittedBin(), "fun_shim_debug.exe").step);
     }
 
     // zig build check
     {
         var step = b.step("check", "Check for semantic analysis errors");
-        var bun_check_obj = addBunObject(b, &build_options);
-        bun_check_obj.generated_bin = null;
-        // bun_check_obj.use_llvm = false;
-        step.dependOn(&bun_check_obj.step);
+        var fun_check_obj = addFunObject(b, &build_options);
+        fun_check_obj.generated_bin = null;
+        // fun_check_obj.use_llvm = false;
+        step.dependOn(&fun_check_obj.step);
 
         // The default install step will run zig build check. This is so ZLS
         // identifies the codebase, as well as performs checking if build on
         // save is enabled.
 
-        // For building Bun itself, one should run `bun setup`
+        // For building Fun itself, one should run `fun setup`
         b.default_step.dependOn(step);
     }
 
@@ -693,14 +693,14 @@ const TargetDescription = struct {
 fn addMultiCheck(
     b: *Build,
     parent_step: *Step,
-    root_build_options: BunBuildOptions,
+    root_build_options: FunBuildOptions,
     to_check: []const TargetDescription,
     optimize: []const std.builtin.OptimizeMode,
 ) void {
     for (to_check) |check| {
         for (optimize) |mode| {
             const check_target = check.resolveTarget(b);
-            var options: BunBuildOptions = .{
+            var options: FunBuildOptions = .{
                 .target = check_target,
                 .os = check.os,
                 .arch = check_target.result.cpu.arch,
@@ -724,7 +724,7 @@ fn addMultiCheck(
                 .freebsd_sysroot = root_build_options.freebsd_sysroot,
             };
 
-            var obj = addBunObject(b, &options);
+            var obj = addFunObject(b, &options);
             obj.generated_bin = null;
             parent_step.dependOn(&obj.step);
         }
@@ -805,13 +805,13 @@ fn getTranslateC(b: *Build, initial_target: std.Build.ResolvedTarget, optimize: 
     return translate_c.getOutput();
 }
 
-pub fn addBunObject(b: *Build, opts: *BunBuildOptions) *Compile {
-    // Create `@import("bun")`, containing most of Bun's code.
-    const bun = b.createModule(.{
-        .root_source_file = b.path("src/bun.zig"),
+pub fn addFunObject(b: *Build, opts: *FunBuildOptions) *Compile {
+    // Create `@import("fun")`, containing most of Fun's code.
+    const fun = b.createModule(.{
+        .root_source_file = b.path("src/fun.zig"),
     });
-    bun.addImport("bun", bun); // allow circular "bun" import
-    addInternalImports(b, bun, opts);
+    fun.addImport("fun", fun); // allow circular "fun" import
+    addInternalImports(b, fun, opts);
 
     const root = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
@@ -820,10 +820,10 @@ pub fn addBunObject(b: *Build, opts: *BunBuildOptions) *Compile {
         .target = opts.target,
         .optimize = opts.optimize,
     });
-    root.addImport("bun", bun);
+    root.addImport("fun", fun);
 
     const obj = b.addObject(.{
-        .name = if (opts.optimize == .Debug) "bun-debug" else "bun",
+        .name = if (opts.optimize == .Debug) "fun-debug" else "fun",
         .root_module = root,
     });
     configureObj(b, opts, obj);
@@ -832,11 +832,11 @@ pub fn addBunObject(b: *Build, opts: *BunBuildOptions) *Compile {
 }
 
 fn enableFastBuild(b: *Build) bool {
-    const val = b.graph.env_map.get("BUN_BUILD_FAST") orelse return false;
+    const val = b.graph.env_map.get("FUN_BUILD_FAST") orelse return false;
     return std.mem.eql(u8, val, "1");
 }
 
-fn configureObj(b: *Build, opts: *BunBuildOptions, obj: *Compile) void {
+fn configureObj(b: *Build, opts: *FunBuildOptions, obj: *Compile) void {
     // Flags on root module get used for the compilation
     obj.root_module.omit_frame_pointer = false;
     obj.root_module.strip = false; // stripped at the end
@@ -857,7 +857,7 @@ fn configureObj(b: *Build, opts: *BunBuildOptions, obj: *Compile) void {
     // single-threaded and dominated wall time at high shard counts
     // (~9min for 64 × ~8MB shards). With this set, shards are emitted
     // directly as `{out}.{i}.o`; addInstallObjectFile installs them
-    // all and the bun link step (lld, parallel) consumes them. Only
+    // all and the fun link step (lld, parallel) consumes them. Only
     // for the main object — `zig build test` reuses configureObj and
     // its install path expects a single artifact.
     if (@hasField(std.meta.Child(@TypeOf(obj)), "llvm_no_merge_shards"))
@@ -916,7 +916,7 @@ const ObjectFormat = enum {
     /// LLVM 18.1.7 does not compatible with what bitcode Zig 0.13 outputs (has LLVM 18.1.7)
     /// Change to "bc" to experiment, "Invalid record" means it is not valid output.
     bc,
-    /// Emit a .o / .obj file for the bun-zig object.
+    /// Emit a .o / .obj file for the fun-zig object.
     obj,
 };
 
@@ -935,7 +935,7 @@ pub fn addInstallObjectFile(
         compile.llvm_codegen_threads > 1)
     {
         // Install every shard as `{name}.{i}.o`; scripts/build/zig.ts
-        // declares the matching outputs and the bun link step (lld)
+        // declares the matching outputs and the fun link step (lld)
         // consumes them all. The merged `{name}.o` does not exist in
         // this configuration. Shard `i` is at `{out_filename - ".o"}.{i}.o`
         // in the emitted-bin directory (see Compilation.zig:3475).
@@ -974,7 +974,7 @@ fn exists(path: []const u8) bool {
     return true;
 }
 
-fn addInternalImports(b: *Build, mod: *Module, opts: *BunBuildOptions) void {
+fn addInternalImports(b: *Build, mod: *Module, opts: *FunBuildOptions) void {
     const os = opts.os;
 
     mod.addImport("build_options", opts.buildOptionsModule(b));
@@ -1012,8 +1012,8 @@ fn addInternalImports(b: *Build, mod: *Module, opts: *BunBuildOptions) void {
         .{ .file = "bake.client.js", .import = "bake-codegen/bake.client.js", .enable = opts.shouldEmbedCode() },
         .{ .file = "bake.error.js", .import = "bake-codegen/bake.error.js", .enable = opts.shouldEmbedCode() },
         .{ .file = "bake.server.js", .import = "bake-codegen/bake.server.js", .enable = opts.shouldEmbedCode() },
-        .{ .file = "bun-error/index.js", .enable = opts.shouldEmbedCode() },
-        .{ .file = "bun-error/bun-error.css", .enable = opts.shouldEmbedCode() },
+        .{ .file = "fun-error/index.js", .enable = opts.shouldEmbedCode() },
+        .{ .file = "fun-error/fun-error.css", .enable = opts.shouldEmbedCode() },
         .{ .file = "fallback-decoder.js", .enable = opts.shouldEmbedCode() },
         .{ .file = "node-fallbacks/react-refresh.js", .enable = opts.shouldEmbedCode() },
         .{ .file = "node-fallbacks/assert.js", .enable = opts.shouldEmbedCode() },
@@ -1058,19 +1058,19 @@ fn addInternalImports(b: *Build, mod: *Module, opts: *BunBuildOptions) void {
             .root_source_file = (std.Build.LazyPath{ .cwd_relative = opts.codegen_path }).path(b, "cpp.zig"),
         });
         mod.addImport("cpp", cppImport);
-        cppImport.addImport("bun", mod);
+        cppImport.addImport("fun", mod);
     }
     {
         const ciInfoImport = b.createModule(.{
             .root_source_file = (std.Build.LazyPath{ .cwd_relative = opts.codegen_path }).path(b, "ci_info.zig"),
         });
         mod.addImport("ci_info", ciInfoImport);
-        ciInfoImport.addImport("bun", mod);
+        ciInfoImport.addImport("fun", mod);
     }
     inline for (.{
-        .{ .import = "completions-bash", .file = b.path("completions/bun.bash") },
-        .{ .import = "completions-zsh", .file = b.path("completions/bun.zsh") },
-        .{ .import = "completions-fish", .file = b.path("completions/bun.fish") },
+        .{ .import = "completions-bash", .file = b.path("completions/fun.bash") },
+        .{ .import = "completions-zsh", .file = b.path("completions/fun.zsh") },
+        .{ .import = "completions-fish", .file = b.path("completions/fun.fish") },
     }) |entry| {
         mod.addAnonymousImport(entry.import, .{
             .root_source_file = entry.file,
@@ -1078,7 +1078,7 @@ fn addInternalImports(b: *Build, mod: *Module, opts: *BunBuildOptions) void {
     }
 
     if (os == .windows) {
-        mod.addAnonymousImport("bun_shim_impl.exe", .{
+        mod.addAnonymousImport("fun_shim_impl.exe", .{
             .root_source_file = opts.windowsShim(b).exe.getEmittedBin(),
         });
     }
@@ -1133,10 +1133,10 @@ const WindowsShim = struct {
             .os_version_min = getOSVersionMin(.windows),
         });
 
-        const path = b.path("src/install/windows-shim/bun_shim_impl.zig");
+        const path = b.path("src/install/windows-shim/fun_shim_impl.zig");
 
         const exe = b.addExecutable(.{
-            .name = "bun_shim_impl",
+            .name = "fun_shim_impl",
             .root_module = b.createModule(.{
                 .root_source_file = path,
                 .target = target,
@@ -1154,7 +1154,7 @@ const WindowsShim = struct {
         });
 
         const dbg = b.addExecutable(.{
-            .name = "bun_shim_debug",
+            .name = "fun_shim_debug",
             .root_module = b.createModule(.{
                 .root_source_file = path,
                 .target = target,

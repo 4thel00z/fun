@@ -1,7 +1,7 @@
 /**
  * All new tests in this file should also run in Node.js.
  *
- * Do not add any tests that only run in Bun.
+ * Do not add any tests that only run in Fun.
  *
  * A handful of older tests do not run in Node in this file. These tests should be updated to run in Node, or deleted.
  */
@@ -82,7 +82,7 @@ function connectClient(proxyAddress: AddressInfo, targetAddress: AddressInfo, ad
   return promise;
 }
 
-const BIG_DATA = Buffer.alloc(1024 * 64, "bun").toString();
+const BIG_DATA = Buffer.alloc(1024 * 64, "fun").toString();
 
 describe("HTTP server CONNECT", () => {
   test("should work with proxy package", async () => {

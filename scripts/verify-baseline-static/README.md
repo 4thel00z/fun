@@ -1,6 +1,6 @@
 # verify-baseline-static
 
-Static ISA verifier for Bun baseline builds. Disassembles every instruction in
+Static ISA verifier for Fun baseline builds. Disassembles every instruction in
 `.text` and flags anything requiring CPU features beyond the baseline target.
 
 | Target  | Baseline                           | Flags                                                                        |
@@ -20,7 +20,7 @@ everything the compiler _emitted_.
 cargo build --release --manifest-path scripts/verify-baseline-static/Cargo.toml
 
 ./scripts/verify-baseline-static/target/release/verify-baseline-static \
-  --binary path/to/bun-linux-x64-baseline/bun-profile \
+  --binary path/to/fun-linux-x64-baseline/fun-profile \
   --allowlist scripts/verify-baseline-static/allowlist-x64.txt
 ```
 

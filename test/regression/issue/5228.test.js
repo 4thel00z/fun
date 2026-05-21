@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 // Test for issue #5228: Implement xit, xtest, xdescribe aliases for test.skip
 test("xit, xtest, and xdescribe aliases should work as test.skip/describe.skip", async () => {
@@ -38,9 +38,9 @@ describe("normal describe block", () => {
     "test.js": testFile,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "./test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "./test.js"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -82,9 +82,9 @@ test("passing test", () => {
     "test.js": testFile,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "./test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "./test.js"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -133,9 +133,9 @@ describe("normal describe", () => {
     "test.js": testFile,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "./test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "./test.js"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",
@@ -153,9 +153,9 @@ describe("normal describe", () => {
   expect(stderr).not.toContain("Should not run");
 });
 
-test("aliases should be available in bun:test import", async () => {
+test("aliases should be available in fun:test import", async () => {
   const testFile = `
-import { test, expect, xit, xtest, xdescribe } from "bun:test";
+import { test, expect, xit, xtest, xdescribe } from "fun:test";
 
 // These should all be functions
 test("aliases should be functions", () => {
@@ -184,9 +184,9 @@ xdescribe("imported xdescribe should work", () => {
     "test.js": testFile,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "./test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "./test.js"],
+    env: funEnv,
     cwd: dir,
     stdout: "pipe",
     stderr: "pipe",

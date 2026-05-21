@@ -1,9 +1,9 @@
-import type { Subprocess } from "bun";
-import { spawn } from "bun";
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import type { Subprocess } from "fun";
+import { spawn } from "fun";
+import { afterEach, beforeEach, describe, expect, it } from "fun:test";
 import crypto from "crypto";
 import { once } from "events";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { createServer } from "http";
 import { AddressInfo, connect } from "net";
 import path from "node:path";
@@ -370,7 +370,7 @@ it("onmessage", done => {
   };
 });
 
-// https://github.com/oven-sh/bun/issues/7896
+// https://github.com/underdoc-org/fun/issues/7896
 it("close event", async () => {
   const via = [
     function once(ws) {
@@ -415,11 +415,11 @@ it("close event", async () => {
   wss.close();
 });
 
-// https://github.com/oven-sh/bun/issues/14345
+// https://github.com/underdoc-org/fun/issues/14345
 it("WebSocket finishRequest mocked", async () => {
   const { promise, resolve, reject } = Promise.withResolvers();
 
-  using server = Bun.serve({
+  using server = Fun.serve({
     port: 0,
     websocket: {
       open() {},
@@ -483,9 +483,9 @@ async function listen(): Promise<URL> {
   const pathname = path.resolve(import.meta.dir, "../../web/websocket/websocket-server-echo.mjs");
   const { promise, resolve, reject } = Promise.withResolvers();
   const server = spawn({
-    cmd: [bunExe(), pathname],
+    cmd: [funExe(), pathname],
     cwd: import.meta.dir,
-    env: bunEnv,
+    env: funEnv,
     stdout: "inherit",
     stderr: "inherit",
     serialization: "json",
@@ -525,7 +525,7 @@ it("WebSocketServer should handle backpressure", async () => {
         reject(err);
         return;
       }
-      await Bun.sleep(10);
+      await Fun.sleep(10);
 
       if (i < ITERATIONS) {
         i++;
@@ -789,8 +789,8 @@ it("Server should be able to send empty pings", async () => {
   }
   {
     // test with some payload
-    const pingMessage = await checkPing("Hello", "bun");
-    expect(pingMessage).toBe("bun");
+    const pingMessage = await checkPing("Hello", "fun");
+    expect(pingMessage).toBe("fun");
   }
   {
     // test limits

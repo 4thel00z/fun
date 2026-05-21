@@ -19,12 +19,12 @@ nonblocking: bool = false,
 force_sync: bool = false,
 
 is_socket: bool = false,
-fd: bun.FD = bun.invalid_fd,
+fd: fun.FD = fun.invalid_fd,
 
 auto_flusher: webcore.AutoFlusher = .{},
 run_pending_later: FlushPendingTask = .{},
 
-/// Currently, only used when `stdin` in `Bun.spawn` is a ReadableStream.
+/// Currently, only used when `stdin` in `Fun.spawn` is a ReadableStream.
 readable_stream: jsc.WebCore.ReadableStream.Strong = .{},
 
 /// Strong reference to the JS wrapper object to prevent GC from collecting it
@@ -34,23 +34,23 @@ js_sink_ref: jsc.Strong.Optional = .empty,
 
 const log = Output.scoped(.FileSink, .visible);
 
-pub const RefCount = bun.ptr.RefCount(FileSink, "ref_count", deinit, .{});
+pub const RefCount = fun.ptr.RefCount(FileSink, "ref_count", deinit, .{});
 pub const ref = RefCount.ref;
 pub const deref = RefCount.deref;
 
 /// Count of live native FileSink instances. Incremented at allocation,
-/// decremented in `deinit`. Exposed to tests via `bun:internal-for-testing`
+/// decremented in `deinit`. Exposed to tests via `fun:internal-for-testing`
 /// so leak tests can detect native FileSink leaks that are invisible to
 /// `heapStats()` (which only counts JS wrapper objects).
 pub var live_count = std.atomic.Value(i32).init(0);
 
 pub const TestingAPIs = struct {
-    pub fn fileSinkLiveCount(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+    pub fn fileSinkLiveCount(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) fun.JSError!jsc.JSValue {
         return .jsNumber(live_count.load(.monotonic));
     }
 };
 
-pub const IOWriter = bun.io.StreamingWriter(@This(), opaque {
+pub const IOWriter = fun.io.StreamingWriter(@This(), opaque {
     pub const onClose = FileSink.onClose;
     pub const onWritable = FileSink.onReady;
     pub const onError = FileSink.onError;
@@ -63,12 +63,12 @@ pub const Options = struct {
     input_path: webcore.PathOrFileDescriptor,
     truncate: bool = true,
     close: bool = false,
-    mode: bun.Mode = 0o664,
+    mode: fun.Mode = 0o664,
 
     pub fn flags(this: *const Options) i32 {
         _ = this;
 
-        return bun.O.NONBLOCK | bun.O.CLOEXEC | bun.O.CREAT | bun.O.WRONLY;
+        return fun.O.NONBLOCK | fun.O.CLOEXEC | fun.O.CREAT | fun.O.WRONLY;
     }
 };
 
@@ -77,14 +77,14 @@ pub fn memoryCost(this: *const FileSink) usize {
     return this.writer.memoryCost();
 }
 
-fn Bun__ForceFileSinkToBeSynchronousForProcessObjectStdio(_: *jsc.JSGlobalObject, jsvalue: jsc.JSValue) callconv(.c) void {
+fn Fun__ForceFileSinkToBeSynchronousForProcessObjectStdio(_: *jsc.JSGlobalObject, jsvalue: jsc.JSValue) callconv(.c) void {
     var this: *FileSink = @ptrCast(@alignCast(JSSink.fromJS(jsvalue) orelse return));
 
     if (comptime !Environment.isWindows) {
         this.force_sync = true;
         this.writer.force_sync = true;
-        if (this.fd != bun.invalid_fd) {
-            _ = bun.sys.updateNonblocking(this.fd, false);
+        if (this.fd != fun.invalid_fd) {
+            _ = fun.sys.updateNonblocking(this.fd, false);
         }
     } else {
         if (this.writer.source) |*source| {
@@ -110,10 +110,10 @@ fn Bun__ForceFileSinkToBeSynchronousForProcessObjectStdio(_: *jsc.JSGlobalObject
 }
 
 comptime {
-    @export(&Bun__ForceFileSinkToBeSynchronousForProcessObjectStdio, .{ .name = "Bun__ForceFileSinkToBeSynchronousForProcessObjectStdio" });
+    @export(&Fun__ForceFileSinkToBeSynchronousForProcessObjectStdio, .{ .name = "Fun__ForceFileSinkToBeSynchronousForProcessObjectStdio" });
 }
 
-pub fn onAttachedProcessExit(this: *FileSink, status: *const bun.spawn.Status) void {
+pub fn onAttachedProcessExit(this: *FileSink, status: *const fun.spawn.Status) void {
     log("onAttachedProcessExit()", .{});
 
     // `writer.close()` below re-enters `onClose` which releases the
@@ -130,7 +130,7 @@ pub fn onAttachedProcessExit(this: *FileSink, status: *const bun.spawn.Status) v
         if (this.event_loop_handle.globalObject()) |global| {
             if (readable_stream.get(global)) |*stream| {
                 if (!status.isOK()) {
-                    const event_loop = global.bunVM().eventLoop();
+                    const event_loop = global.funVM().eventLoop();
                     event_loop.enter();
                     defer event_loop.exit();
                     stream.cancel(global);
@@ -170,7 +170,7 @@ fn runPending(this: *FileSink) void {
     this.js_sink_ref.deinit();
 }
 
-pub fn onWrite(this: *FileSink, amount: usize, status: bun.io.WriteStatus) void {
+pub fn onWrite(this: *FileSink, amount: usize, status: fun.io.WriteStatus) void {
     log("onWrite({d}, {any})", .{ amount, status });
 
     // `runPending()` below drains microtasks and may drop the JS wrapper's
@@ -190,7 +190,7 @@ pub fn onWrite(this: *FileSink, amount: usize, status: bun.io.WriteStatus) void 
     this.writer.updateRef(this.eventLoop(), has_pending_data);
 
     if (has_pending_data) {
-        if (this.event_loop_handle.bunVM()) |vm| {
+        if (this.event_loop_handle.funVM()) |vm| {
             if (!vm.is_inside_deferred_task_queue) {
                 webcore.AutoFlusher.registerDeferredMicrotaskWithType(@This(), this, vm);
             }
@@ -234,11 +234,11 @@ pub fn onWrite(this: *FileSink, amount: usize, status: bun.io.WriteStatus) void 
     }
 }
 
-pub fn onError(this: *FileSink, err: bun.sys.Error) void {
+pub fn onError(this: *FileSink, err: fun.sys.Error) void {
     log("onError({f})", .{err});
     if (this.pending.state == .pending) {
         this.pending.result = .{ .err = err };
-        if (this.eventLoop().bunVM()) |vm| {
+        if (this.eventLoop().funVM()) |vm| {
             if (vm.is_inside_deferred_task_queue) {
                 this.runPendingLater();
                 if (comptime Environment.isWindows) this.clearKeepAliveRef();
@@ -309,7 +309,7 @@ pub fn createWithPipe(
         else => jsc.EventLoopHandle.init(event_loop_),
     };
 
-    var this = bun.new(FileSink, .{
+    var this = fun.new(FileSink, .{
         .ref_count = .init(),
         .event_loop_handle = jsc.EventLoopHandle.init(evtloop),
         .fd = pipe.fd(),
@@ -322,13 +322,13 @@ pub fn createWithPipe(
 
 pub fn create(
     event_loop_: anytype,
-    fd: bun.FD,
+    fd: fun.FD,
 ) *FileSink {
     const evtloop = switch (@TypeOf(event_loop_)) {
         jsc.EventLoopHandle => event_loop_,
         else => jsc.EventLoopHandle.init(event_loop_),
     };
-    var this = bun.new(FileSink, .{
+    var this = fun.new(FileSink, .{
         .ref_count = .init(),
         .event_loop_handle = jsc.EventLoopHandle.init(evtloop),
         .fd = fd,
@@ -338,14 +338,14 @@ pub fn create(
     return this;
 }
 
-pub fn setup(this: *FileSink, options: *const FileSink.Options) bun.sys.Maybe(void) {
+pub fn setup(this: *FileSink, options: *const FileSink.Options) fun.sys.Maybe(void) {
     if (this.readable_stream.has()) {
         // Already started.
         return .success;
     }
 
-    const result = bun.io.openForWriting(
-        bun.FD.cwd(),
+    const result = fun.io.openForWriting(
+        fun.FD.cwd(),
         options.input_path,
         options.flags(),
         options.mode,
@@ -357,13 +357,13 @@ pub fn setup(this: *FileSink, options: *const FileSink.Options) bun.sys.Maybe(vo
         this,
         struct {
             fn onForceSyncOrIsaTTY(fs: *FileSink) void {
-                if (comptime bun.Environment.isPosix) {
+                if (comptime fun.Environment.isPosix) {
                     fs.force_sync = true;
                     fs.writer.force_sync = true;
                 }
             }
         }.onForceSyncOrIsaTTY,
-        bun.sys.isPollable,
+        fun.sys.isPollable,
     );
 
     const fd = switch (result) {
@@ -420,8 +420,8 @@ pub fn setup(this: *FileSink, options: *const FileSink.Options) bun.sys.Maybe(vo
     return .success;
 }
 
-pub fn loop(this: *FileSink) *bun.Async.Loop {
-    if (comptime bun.Environment.isWindows) {
+pub fn loop(this: *FileSink) *fun.Async.Loop {
+    if (comptime fun.Environment.isWindows) {
         return this.event_loop_handle.loop().uv_loop;
     } else {
         return this.event_loop_handle.loop();
@@ -436,7 +436,7 @@ pub fn connect(this: *FileSink, signal: streams.Signal) void {
     this.signal = signal;
 }
 
-pub fn start(this: *FileSink, stream_start: streams.Start) bun.sys.Maybe(void) {
+pub fn start(this: *FileSink, stream_start: streams.Start) fun.sys.Maybe(void) {
     switch (stream_start) {
         .FileSink => |*file| {
             switch (this.setup(file)) {
@@ -500,11 +500,11 @@ pub fn onAutoFlush(this: *FileSink) bool {
     return is_registered;
 }
 
-pub fn flush(_: *FileSink) bun.sys.Maybe(void) {
+pub fn flush(_: *FileSink) fun.sys.Maybe(void) {
     return .success;
 }
 
-pub fn flushFromJS(this: *FileSink, globalThis: *JSGlobalObject, wait: bool) bun.sys.Maybe(JSValue) {
+pub fn flushFromJS(this: *FileSink, globalThis: *JSGlobalObject, wait: bool) fun.sys.Maybe(JSValue) {
     _ = wait;
 
     if (this.pending.state == .pending) {
@@ -550,8 +550,8 @@ pub fn protectJSWrapper(this: *FileSink, globalThis: *jsc.JSGlobalObject, js_wra
     this.js_sink_ref.set(globalThis, js_wrapper);
 }
 
-pub fn init(fd: bun.FD, event_loop_handle: anytype) *FileSink {
-    var this = bun.new(FileSink, .{
+pub fn init(fd: fun.FD, event_loop_handle: anytype) *FileSink {
+    var this = fun.new(FileSink, .{
         .ref_count = .init(),
         .writer = .{},
         .fd = fd,
@@ -594,7 +594,7 @@ pub fn writeUTF16(this: *@This(), data: streams.Result) streams.Result.Writable 
     return this.toResult(this.writer.writeUTF16(data.slice16()));
 }
 
-pub fn end(this: *FileSink, _: ?bun.sys.Error) bun.sys.Maybe(void) {
+pub fn end(this: *FileSink, _: ?fun.sys.Error) fun.sys.Maybe(void) {
     if (this.done) {
         return .success;
     }
@@ -633,9 +633,9 @@ fn deinit(this: *FileSink) void {
     this.readable_stream.deinit();
     this.js_sink_ref.deinit();
     if (this.event_loop_handle.globalObject()) |global| {
-        webcore.AutoFlusher.unregisterDeferredMicrotaskWithType(@This(), this, global.bunVM());
+        webcore.AutoFlusher.unregisterDeferredMicrotaskWithType(@This(), this, global.funVM());
     }
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn toJS(this: *FileSink, globalThis: *JSGlobalObject) JSValue {
@@ -646,7 +646,7 @@ pub fn toJSWithDestructor(this: *FileSink, globalThis: *JSGlobalObject, destruct
     return JSSink.createObject(globalThis, this, if (destructor) |dest| @intFromPtr(dest.ptr()) else 0);
 }
 
-pub fn endFromJS(this: *FileSink, globalThis: *JSGlobalObject) bun.sys.Maybe(JSValue) {
+pub fn endFromJS(this: *FileSink, globalThis: *JSGlobalObject) fun.sys.Maybe(JSValue) {
     if (this.done) {
         if (this.pending.state == .pending) {
             return .{ .result = this.pending.future.promise.strong.value() };
@@ -711,7 +711,7 @@ fn getFd(this: *const @This()) i32 {
     return this.fd.cast();
 }
 
-fn toResult(this: *FileSink, write_result: bun.io.WriteResult) streams.Result.Writable {
+fn toResult(this: *FileSink, write_result: fun.io.WriteResult) streams.Result.Writable {
     switch (write_result) {
         .done => |amt| {
             if (amt > 0)
@@ -776,7 +776,7 @@ fn handleRejectStream(this: *FileSink, globalThis: *jsc.JSGlobalObject, _: jsc.J
     }
 }
 
-fn onResolveStream(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn onResolveStream(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     log("onResolveStream", .{});
     var args = callframe.arguments();
     var this: *@This() = args[args.len - 1].asPromisePtr(@This());
@@ -784,7 +784,7 @@ fn onResolveStream(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) b
     this.handleResolveStream(globalThis);
     return .js_undefined;
 }
-fn onRejectStream(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+fn onRejectStream(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     log("onRejectStream", .{});
     const args = callframe.arguments();
     var this = args[args.len - 1].asPromisePtr(@This());
@@ -838,8 +838,8 @@ pub fn assignToStream(this: *FileSink, stream: *jsc.WebCore.ReadableStream, glob
 }
 
 comptime {
-    const export_prefix = "Bun__FileSink";
-    if (bun.Environment.export_cpp_apis) {
+    const export_prefix = "Fun__FileSink";
+    if (fun.Environment.export_cpp_apis) {
         @export(&jsc.toJSHostFn(onResolveStream), .{ .name = export_prefix ++ "__onResolveStream" });
         @export(&jsc.toJSHostFn(onRejectStream), .{ .name = export_prefix ++ "__onRejectStream" });
     }
@@ -847,16 +847,16 @@ comptime {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const uv = bun.windows.libuv;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const uv = fun.windows.libuv;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 
-const webcore = bun.webcore;
+const webcore = fun.webcore;
 const Blob = webcore.Blob;
 const Sink = webcore.Sink;
 const streams = webcore.streams;

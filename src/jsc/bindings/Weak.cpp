@@ -1,10 +1,10 @@
 #include "root.h"
 #include <JavaScriptCore/StrongInlines.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/Weak.h>
 #include <JavaScriptCore/Strong.h>
 
-namespace Bun {
+namespace Fun {
 
 enum class WeakRefType : uint32_t {
     None = 0,
@@ -22,7 +22,7 @@ typedef void (*WeakRefFinalizeFn)(void* context);
 // clang-format on
 
 #define DECLARE_WEAK_REF_OWNER(X) \
-    extern "C" void Bun__##X##_finalize(void* context);
+    extern "C" void Fun__##X##_finalize(void* context);
 
 FOR_EACH_WEAK_REF_TYPE(DECLARE_WEAK_REF_OWNER);
 
@@ -34,10 +34,10 @@ public:
         if (context) [[likely]] {
             switch (T) {
             case WeakRefType::FetchResponse:
-                Bun__FetchResponse_finalize(context);
+                Fun__FetchResponse_finalize(context);
                 break;
             case WeakRefType::PostgreSQLQueryClient:
-                // Bun__PostgreSQLQueryClient_finalize(context);
+                // Fun__PostgreSQLQueryClient_finalize(context);
                 break;
             default:
                 break;
@@ -93,23 +93,23 @@ public:
 
 }
 
-extern "C" void Bun__WeakRef__clear(Bun::WeakRef* weakRef)
+extern "C" void Fun__WeakRef__clear(Fun::WeakRef* weakRef)
 {
     weakRef->m_cell.clear();
 }
 
-extern "C" void Bun__WeakRef__delete(Bun::WeakRef* weakRef)
+extern "C" void Fun__WeakRef__delete(Fun::WeakRef* weakRef)
 {
-    Bun__WeakRef__clear(weakRef);
+    Fun__WeakRef__clear(weakRef);
     delete weakRef;
 }
 
-extern "C" Bun::WeakRef* Bun__WeakRef__new(JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue, Bun::WeakRefType kind, void* ctx)
+extern "C" Fun::WeakRef* Fun__WeakRef__new(JSC::JSGlobalObject* globalObject, JSC::EncodedJSValue encodedValue, Fun::WeakRefType kind, void* ctx)
 {
-    return new Bun::WeakRef(globalObject->vm(), JSC::JSValue::decode(encodedValue), kind, ctx);
+    return new Fun::WeakRef(globalObject->vm(), JSC::JSValue::decode(encodedValue), kind, ctx);
 }
 
-extern "C" JSC::EncodedJSValue Bun__WeakRef__get(Bun::WeakRef* weakRef)
+extern "C" JSC::EncodedJSValue Fun__WeakRef__get(Fun::WeakRef* weakRef)
 {
     if (auto* cell = weakRef->m_cell.get()) {
         return JSC::JSValue::encode(cell);

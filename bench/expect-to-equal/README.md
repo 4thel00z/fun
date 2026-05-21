@@ -3,14 +3,14 @@
 To install dependencies:
 
 ```bash
-bun install
+fun install
 ```
 
-To run in Bun:
+To run in Fun:
 
 ```bash
 # so it doesn't run the vitest one
-bun test expect-to-equal.test.js
+fun test expect-to-equal.test.js
 ```
 
 To run in Jest:
@@ -28,7 +28,7 @@ To run in Vitest:
 
 Output on my machine (M1):
 
-bun:test (bun v0.3.0):
+fun:test (fun v0.3.0):
 
 > [36.40ms] expect().toEqual() x 10000
 
@@ -40,4 +40,4 @@ vitest (node v18.11.0)
 
 > expect().toEqual() x 10000: 401.08ms
 
-This project was created using `bun init` in bun v0.3.0. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+This project was created using `fun init` in fun v0.3.0. [Fun](https://fun.dev) is a fast all-in-one JavaScript runtime.

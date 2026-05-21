@@ -1,17 +1,17 @@
-import { SyncSubprocess } from "bun";
-import { describe, expect, test } from "bun:test";
+import { SyncSubprocess } from "fun";
+import { describe, expect, test } from "fun:test";
 import { rmSync, writeFileSync } from "fs";
-import { bunEnv, bunExe, isWindows, tmpdirSync } from "harness";
+import { funEnv, funExe, isWindows, tmpdirSync } from "harness";
 import { tmpdir } from "os";
 import { join, sep } from "path";
 
 for (const flag of ["-e", "--print"]) {
-  describe(`bun ${flag}`, () => {
+  describe(`fun ${flag}`, () => {
     test("it works", async () => {
       const input = flag === "--print" ? '"hello world"' : 'console.log("hello world")';
-      let { stdout } = Bun.spawnSync({
-        cmd: [bunExe(), flag, input],
-        env: bunEnv,
+      let { stdout } = Fun.spawnSync({
+        cmd: [funExe(), flag, input],
+        env: funEnv,
       });
       expect(stdout.toString("utf8")).toEqual("hello world\n");
     });
@@ -23,9 +23,9 @@ for (const flag of ["-e", "--print"]) {
           ? 'import {version} from "react"; console.log(JSON.stringify({version,file:import.meta.path,require:require("react").version})); <hello>world</hello>'
           : 'import {version} from "react"; console.log(JSON.stringify({version,file:import.meta.path,require:require("react").version})); console.log(<hello>world</hello>);';
 
-      let { stdout } = Bun.spawnSync({
-        cmd: [bunExe(), flag, input],
-        env: bunEnv,
+      let { stdout } = Fun.spawnSync({
+        cmd: [funExe(), flag, input],
+        env: funEnv,
       });
       const json = {
         version: ref.version,
@@ -36,9 +36,9 @@ for (const flag of ["-e", "--print"]) {
     });
 
     test("error has source map info 1", async () => {
-      let { stderr } = Bun.spawnSync({
-        cmd: [bunExe(), flag, '(throw new Error("hi" as 2))'],
-        env: bunEnv,
+      let { stderr } = Fun.spawnSync({
+        cmd: [funExe(), flag, '(throw new Error("hi" as 2))'],
+        env: funEnv,
       });
       expect(stderr.toString("utf8")).toInclude('"hi" as 2');
       expect(stderr.toString("utf8")).toInclude("Unexpected throw");
@@ -47,9 +47,9 @@ for (const flag of ["-e", "--print"]) {
     test("process.argv", async () => {
       function testProcessArgv(args: string[], expected: string[]) {
         const input = flag === "--print" ? "process.argv" : "console.log(process.argv)";
-        let { stdout, stderr, exitCode } = Bun.spawnSync({
-          cmd: [bunExe(), flag, input, ...args],
-          env: bunEnv,
+        let { stdout, stderr, exitCode } = Fun.spawnSync({
+          cmd: [funExe(), flag, input, ...args],
+          env: funEnv,
         });
 
         expect(stderr.toString("utf8")).toBe("");
@@ -58,7 +58,7 @@ for (const flag of ["-e", "--print"]) {
       }
 
       // replace the trailin
-      const exe = isWindows ? bunExe().replaceAll("/", "\\") : bunExe();
+      const exe = isWindows ? funExe().replaceAll("/", "\\") : funExe();
       testProcessArgv([], [exe]);
       testProcessArgv(["abc", "def"], [exe, "abc", "def"]);
       testProcessArgv(["--", "abc", "def"], [exe, "abc", "def"]);
@@ -67,20 +67,20 @@ for (const flag of ["-e", "--print"]) {
 
     test("process._eval", async () => {
       const code = flag === "--print" ? "process._eval" : "console.log(process._eval)";
-      const { stdout } = Bun.spawnSync({
-        cmd: [bunExe(), flag, code],
-        env: bunEnv,
+      const { stdout } = Fun.spawnSync({
+        cmd: [funExe(), flag, code],
+        env: funEnv,
       });
       expect(stdout.toString("utf8")).toEqual(code + "\n");
     });
 
     test("does not crash in non-latin1 directory", async () => {
       const dir = join(tmpdirSync(), "eval-test-开始学习");
-      await Bun.write(join(dir, "index.js"), "console.log('hello world')");
+      await Fun.write(join(dir, "index.js"), "console.log('hello world')");
 
-      const { stdout, stderr, exitCode } = Bun.spawnSync({
-        cmd: [bunExe(), flag, "import './index.js'"],
-        env: bunEnv,
+      const { stdout, stderr, exitCode } = Fun.spawnSync({
+        cmd: [funExe(), flag, "import './index.js'"],
+        env: funEnv,
         cwd: dir,
         stdout: "pipe",
         stderr: "pipe",
@@ -99,28 +99,28 @@ describe("--print for cjs/esm", () => {
     let cwd = tmpdirSync();
     writeFileSync(join(cwd, "foo.js"), "'foo'");
     writeFileSync(join(cwd, "bar.js"), "'bar'");
-    let { stdout, stderr, exitCode } = Bun.spawnSync({
-      cmd: [bunExe(), "--print", 'import "./foo.js"; 123; import "./bar.js"'],
+    let { stdout, stderr, exitCode } = Fun.spawnSync({
+      cmd: [funExe(), "--print", 'import "./foo.js"; 123; import "./bar.js"'],
       cwd: cwd,
-      env: bunEnv,
+      env: funEnv,
     });
     expect(stderr.toString("utf8")).toBe("");
     expect(stdout.toString("utf8")).toEqual("123\n");
     expect(exitCode).toBe(0);
     rmSync(cwd, { recursive: true, force: true });
   });
-  // https://github.com/oven-sh/bun/issues/30207
+  // https://github.com/underdoc-org/fun/issues/30207
   describe.each([
     { expr: "(await 1) + 1", expected: "2" },
     { expr: 'await Promise.resolve("hello") + " world"', expected: "hello world" },
     { expr: "(await 1) + (await 2)", expected: "3" },
     // no top-level await — still returns the expression value.
     { expr: "1 + 1", expected: "2" },
-  ])("bun -p $expr", ({ expr, expected }) => {
+  ])("fun -p $expr", ({ expr, expected }) => {
     test(`→ ${expected}`, async () => {
-      const { stdout, stderr, exitCode } = Bun.spawnSync({
-        cmd: [bunExe(), "-p", expr],
-        env: bunEnv,
+      const { stdout, stderr, exitCode } = Fun.spawnSync({
+        cmd: [funExe(), "-p", expr],
+        env: funEnv,
       });
       expect(stderr.toString("utf8")).toBe("");
       expect(stdout.toString("utf8")).toBe(`${expected}\n`);
@@ -128,33 +128,33 @@ describe("--print for cjs/esm", () => {
     });
   });
   test("forced cjs", async () => {
-    let { stdout, stderr, exitCode } = Bun.spawnSync({
-      cmd: [bunExe(), "--print", "module.exports; 123"],
-      env: bunEnv,
+    let { stdout, stderr, exitCode } = Fun.spawnSync({
+      cmd: [funExe(), "--print", "module.exports; 123"],
+      env: funEnv,
     });
     expect(stderr.toString("utf8")).toBe("");
     expect(stdout.toString("utf8")).toEqual("123\n");
     expect(exitCode).toBe(0);
   });
   test("module, exports, require, __filename, __dirname", async () => {
-    let { stdout, stderr, exitCode } = Bun.spawnSync({
+    let { stdout, stderr, exitCode } = Fun.spawnSync({
       cmd: [
-        bunExe(),
+        funExe(),
         "--print",
         `
         console.log(typeof module, typeof exports, typeof require, typeof __filename, typeof __dirname); 123
       `,
       ],
-      env: bunEnv,
+      env: funEnv,
     });
     expect(stderr.toString("utf8")).toBe("");
     expect(stdout.toString("utf8")).toEqual("object object function string string\n123\n");
     expect(exitCode).toBe(0);
   });
   test("module._compile is require('module').prototype._compile", async () => {
-    const { stdout, exitCode } = Bun.spawnSync({
-      cmd: [bunExe(), "-p", "module._compile === require('module').prototype._compile"],
-      env: bunEnv,
+    const { stdout, exitCode } = Fun.spawnSync({
+      cmd: [funExe(), "-p", "module._compile === require('module').prototype._compile"],
+      env: funEnv,
     });
     expect(stdout.toString()).toBe("true\n");
     expect(exitCode).toBe(0);
@@ -190,7 +190,7 @@ function group(run: (code: string) => SyncSubprocess<"pipe", "inherit">) {
 
   test("process.argv", async () => {
     const { stdout } = run("console.log(process.argv)");
-    const exe = isWindows ? bunExe().replaceAll("/", "\\") : bunExe();
+    const exe = isWindows ? funExe().replaceAll("/", "\\") : funExe();
     expect(JSON.parse(stdout.toString("utf8"))).toEqual([exe, "-"]);
   });
 
@@ -207,28 +207,28 @@ function group(run: (code: string) => SyncSubprocess<"pipe", "inherit">) {
   });
 }
 
-describe("bun run - < file-path.js", () => {
+describe("fun run - < file-path.js", () => {
   function run(code: string) {
     // bash only supports / as path separator
-    const file = join(tmpdir(), "bun-run-eval-test.js").replaceAll("\\", "/");
+    const file = join(tmpdir(), "fun-run-eval-test.js").replaceAll("\\", "/");
     require("fs").writeFileSync(file, code);
     try {
       let result;
       if (process.platform === "win32") {
-        result = Bun.spawnSync(["powershell", "-c", `Get-Content ${file} | ${bunExe()} run -`], {
-          env: bunEnv,
+        result = Fun.spawnSync(["powershell", "-c", `Get-Content ${file} | ${funExe()} run -`], {
+          env: funEnv,
           stderr: "inherit",
         });
       } else {
-        result = Bun.spawnSync(["bash", "-c", `${bunExe()} run - < ${file}`], {
-          env: bunEnv,
+        result = Fun.spawnSync(["bash", "-c", `${funExe()} run - < ${file}`], {
+          env: funEnv,
           stderr: "inherit",
         });
       }
 
       if (!result.success) {
         queueMicrotask(() => {
-          throw new Error("bun run - < file-path.js failed");
+          throw new Error("fun run - < file-path.js failed");
         });
       }
 
@@ -243,16 +243,16 @@ describe("bun run - < file-path.js", () => {
   group(run);
 });
 
-describe("echo | bun run -", () => {
+describe("echo | fun run -", () => {
   function run(code: string) {
-    const result = Bun.spawnSync([bunExe(), "run", "-"], {
-      env: bunEnv,
+    const result = Fun.spawnSync([funExe(), "run", "-"], {
+      env: funEnv,
       stdin: Buffer.from(code),
       stderr: "inherit",
     });
     if (!result.success) {
       queueMicrotask(() => {
-        throw new Error("bun run - failed");
+        throw new Error("fun run - failed");
       });
     }
 
@@ -267,10 +267,10 @@ test("process._eval (undefined for normal run)", async () => {
   const file = join(cwd, "test.js");
   writeFileSync(file, "console.log(typeof process._eval)");
 
-  const { stdout } = Bun.spawnSync({
-    cmd: [bunExe(), "run", file],
+  const { stdout } = Fun.spawnSync({
+    cmd: [funExe(), "run", file],
     cwd: cwd,
-    env: bunEnv,
+    env: funEnv,
   });
   expect(stdout.toString("utf8")).toEqual("undefined\n");
 

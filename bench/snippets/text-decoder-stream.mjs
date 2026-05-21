@@ -48,8 +48,8 @@ function create(src) {
 }
 create(latin1);
 create(
-  // bun's old readme was extremely long
-  await fetch("https://web.archive.org/web/20230119110956/https://github.com/oven-sh/bun").then(res => res.text()),
+  // fun's old readme was extremely long
+  await fetch("https://web.archive.org/web/20230119110956/https://github.com/underdoc-org/fun").then(res => res.text()),
 );
 
 await run();

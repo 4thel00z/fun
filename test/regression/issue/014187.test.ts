@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { EventEmitter, on } from "events";
 
 test("issue-14187", async () => {

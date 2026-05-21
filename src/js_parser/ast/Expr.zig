@@ -42,7 +42,7 @@ pub fn wrapInArrow(this: Expr, allocator: std.mem.Allocator) !Expr {
 pub fn canBeInlinedFromPropertyAccess(this: Expr) bool {
     return switch (this.data) {
         // if the array has a spread we must keep it
-        // https://github.com/oven-sh/bun/issues/2594
+        // https://github.com/underdoc-org/fun/issues/2594
         .e_spread => false,
 
         .e_missing => false,
@@ -194,7 +194,7 @@ pub fn getByIndex(expr: *const Expr, index: u32, index_str: string, allocator: s
             if (str.len() > index) {
                 var slice = str.slice(allocator);
                 // TODO: this is not correct since .length refers to UTF-16 code units and not UTF-8 bytes
-                // However, since this is only used in the JSON prettifier for `bun pm view`, it's not a blocker for shipping.
+                // However, since this is only used in the JSON prettifier for `fun pm view`, it's not a blocker for shipping.
                 if (slice.len > index) {
                     return Expr.init(E.String, .{ .data = slice[index..][0..1] }, expr.loc);
                 }
@@ -234,7 +234,7 @@ pub fn getPathMayBeIndex(expr: *const Expr, name: string) ?Expr {
                 const index_str = name[idx + 1 .. end_idx];
                 const index = std.fmt.parseInt(u32, index_str, 10) catch return null;
                 const rest = if (name.len > end_idx) name[end_idx + 1 ..] else "";
-                const result = &(base_expr.getByIndex(index, index_str, bun.default_allocator) orelse return null);
+                const result = &(base_expr.getByIndex(index, index_str, fun.default_allocator) orelse return null);
                 if (rest.len > 0) return result.getPathMayBeIndex(rest);
                 return result.*;
             },
@@ -260,7 +260,7 @@ pub fn getPathMayBeIndex(expr: *const Expr, name: string) ?Expr {
 /// Sets the value of a property, creating it if it doesn't exist.
 /// `expr` must be an object.
 pub fn set(expr: *Expr, allocator: std.mem.Allocator, name: string, value: Expr) OOM!void {
-    bun.assertWithLocation(expr.isObject(), @src());
+    fun.assertWithLocation(expr.isObject(), @src());
     for (0..expr.data.e_object.properties.len) |i| {
         const prop = &expr.data.e_object.properties.ptr[i];
         const key = prop.key orelse continue;
@@ -282,7 +282,7 @@ pub fn set(expr: *Expr, allocator: std.mem.Allocator, name: string, value: Expr)
 /// Sets the value of a property to a string, creating it if it doesn't exist.
 /// `expr` must be an object.
 pub fn setString(expr: *Expr, allocator: std.mem.Allocator, name: string, value: string) OOM!void {
-    bun.assertWithLocation(expr.isObject(), @src());
+    fun.assertWithLocation(expr.isObject(), @src());
     for (0..expr.data.e_object.properties.len) |i| {
         const prop = &expr.data.e_object.properties.ptr[i];
         const key = prop.key orelse continue;
@@ -400,7 +400,7 @@ pub fn asProperty(expr: *const Expr, name: string) ?Query {
     return obj.asProperty(name);
 }
 
-pub fn asPropertyStringMap(expr: *const Expr, name: string, allocator: std.mem.Allocator) ?*bun.StringArrayHashMap(string) {
+pub fn asPropertyStringMap(expr: *const Expr, name: string, allocator: std.mem.Allocator) ?*fun.StringArrayHashMap(string) {
     if (expr.data != .e_object) return null;
     const obj_ = expr.data.e_object;
     if (obj_.properties.len == 0) return null;
@@ -416,7 +416,7 @@ pub fn asPropertyStringMap(expr: *const Expr, name: string, allocator: std.mem.A
     }
 
     if (count == 0) return null;
-    var map = bun.StringArrayHashMap(string).init(allocator);
+    var map = fun.StringArrayHashMap(string).init(allocator);
     map.ensureUnusedCapacity(count) catch return null;
 
     for (obj.properties.slice()) |prop| {
@@ -428,7 +428,7 @@ pub fn asPropertyStringMap(expr: *const Expr, name: string, allocator: std.mem.A
         map.putAssumeCapacity(key, value);
     }
 
-    const ptr = allocator.create(bun.StringArrayHashMap(string)) catch unreachable;
+    const ptr = allocator.create(fun.StringArrayHashMap(string)) catch unreachable;
     ptr.* = map;
     return ptr;
 }
@@ -456,7 +456,7 @@ pub fn asArray(expr: *const Expr) ?ArrayIterator {
 
 pub inline fn asUtf8StringLiteral(expr: *const Expr) ?string {
     if (expr.data == .e_string) {
-        bun.debugAssert(expr.data.e_string.next == null);
+        fun.debugAssert(expr.data.e_string.next == null);
         return expr.data.e_string.data;
     }
     return null;
@@ -476,7 +476,7 @@ pub inline fn isString(expr: *const Expr) bool {
 
 pub inline fn asString(expr: *const Expr, allocator: std.mem.Allocator) ?string {
     switch (expr.data) {
-        .e_string => |str| return bun.handleOom(str.string(allocator)),
+        .e_string => |str| return fun.handleOom(str.string(allocator)),
         else => return null,
     }
 }
@@ -590,7 +590,7 @@ pub fn joinWithComma(a: Expr, b: Expr, _: std.mem.Allocator) Expr {
 }
 
 pub fn joinAllWithComma(all: []Expr, allocator: std.mem.Allocator) Expr {
-    bun.assert(all.len > 0);
+    fun.assert(all.len > 0);
     switch (all.len) {
         1 => {
             return all[0];
@@ -670,10 +670,10 @@ pub fn extractNumericValuesInSafeRange(left: Expr.Data, right: Expr.Data) ?[2]f6
         return .{ l_value, r_value };
     }
 
-    if (l_value > bun.jsc.MAX_SAFE_INTEGER or r_value > bun.jsc.MAX_SAFE_INTEGER) {
+    if (l_value > fun.jsc.MAX_SAFE_INTEGER or r_value > fun.jsc.MAX_SAFE_INTEGER) {
         return null;
     }
-    if (l_value < bun.jsc.MIN_SAFE_INTEGER or r_value < bun.jsc.MIN_SAFE_INTEGER) {
+    if (l_value < fun.jsc.MIN_SAFE_INTEGER or r_value < fun.jsc.MIN_SAFE_INTEGER) {
         return null;
     }
 
@@ -998,7 +998,7 @@ pub fn allocate(allocator: std.mem.Allocator, comptime Type: type, st: Type, loc
             if (comptime Environment.isDebug) {
                 // Sanity check: assert string is not a null ptr
                 if (st.data.len > 0 and st.isUTF8()) {
-                    bun.assert(@intFromPtr(st.data.ptr) > 0);
+                    fun.assert(@intFromPtr(st.data.ptr) > 0);
                 }
             }
             return Expr{
@@ -1120,7 +1120,7 @@ pub fn allocate(allocator: std.mem.Allocator, comptime Type: type, st: Type, loc
     }
 }
 
-pub const Disabler = bun.DebugOnlyDisabler(@This());
+pub const Disabler = fun.DebugOnlyDisabler(@This());
 
 pub fn init(comptime Type: type, st: Type, loc: logger.Loc) Expr {
     icount += 1;
@@ -1361,7 +1361,7 @@ pub fn init(comptime Type: type, st: Type, loc: logger.Loc) Expr {
             if (comptime Environment.isDebug) {
                 // Sanity check: assert string is not a null ptr
                 if (st.data.len > 0 and st.isUTF8()) {
-                    bun.assert(@intFromPtr(st.data.ptr) > 0);
+                    fun.assert(@intFromPtr(st.data.ptr) > 0);
                 }
             }
             return Expr{
@@ -1497,7 +1497,7 @@ pub const Tag = enum {
     e_private_identifier,
     e_commonjs_export_identifier,
     e_boolean,
-    /// Like e_boolean, but produced by `feature()` from `bun:bundle`.
+    /// Like e_boolean, but produced by `feature()` from `fun:bundle`.
     /// This tag ensures feature() can only be used directly in conditional
     /// contexts (if statements, ternaries). Invalid usage is caught during
     /// the visit phase when this expression appears outside a branch condition.
@@ -2063,7 +2063,7 @@ pub fn toStringExprWithoutSideEffects(expr: *const Expr, allocator: std.mem.Allo
         .e_reg_exp => |regexp| regexp.value,
         .e_dot => |dot| @as(?[]const u8, brk: {
             // This is dumb but some JavaScript obfuscators use this to generate string literals
-            if (bun.strings.eqlComptime(dot.name, "constructor")) {
+            if (fun.strings.eqlComptime(dot.name, "constructor")) {
                 break :brk switch (dot.target.data) {
                     .e_string => "function String() { [native code] }",
                     .e_reg_exp => "function RegExp() { [native code] }",
@@ -2186,7 +2186,7 @@ pub const Data = union(Tag) {
     e_name_of_symbol: *E.NameOfSymbol,
 
     comptime {
-        bun.assert_eql(@sizeOf(Data), 24); // Do not increase the size of Expr
+        fun.assert_eql(@sizeOf(Data), 24); // Do not increase the size of Expr
     }
 
     pub fn as(data: Data, comptime tag: Tag) ?@FieldType(Data, @tagName(tag)) {
@@ -2313,7 +2313,7 @@ pub const Data = union(Tag) {
         return switch (this) {
             .e_array => |el| {
                 const items = try el.items.deepClone(allocator);
-                const item = bun.create(allocator, E.Array, .{
+                const item = fun.create(allocator, E.Array, .{
                     .items = items,
                     .comma_after_spread = el.comma_after_spread,
                     .was_originally_macro = el.was_originally_macro,
@@ -2324,7 +2324,7 @@ pub const Data = union(Tag) {
                 return .{ .e_array = item };
             },
             .e_unary => |el| {
-                const item = bun.create(allocator, E.Unary, .{
+                const item = fun.create(allocator, E.Unary, .{
                     .op = el.op,
                     .value = try el.value.deepClone(allocator),
                     .flags = el.flags,
@@ -2332,7 +2332,7 @@ pub const Data = union(Tag) {
                 return .{ .e_unary = item };
             },
             .e_binary => |el| {
-                const item = bun.create(allocator, E.Binary, .{
+                const item = fun.create(allocator, E.Binary, .{
                     .op = el.op,
                     .left = try el.left.deepClone(allocator),
                     .right = try el.right.deepClone(allocator),
@@ -2345,7 +2345,7 @@ pub const Data = union(Tag) {
                     properties[i] = try prop.deepClone(allocator);
                 }
 
-                const item = bun.create(allocator, E.Class, .{
+                const item = fun.create(allocator, E.Class, .{
                     .class_keyword = el.class_keyword,
                     .ts_decorators = try el.ts_decorators.deepClone(allocator),
                     .class_name = el.class_name,
@@ -2358,7 +2358,7 @@ pub const Data = union(Tag) {
                 return .{ .e_class = item };
             },
             .e_new => |el| {
-                const item = bun.create(allocator, E.New, .{
+                const item = fun.create(allocator, E.New, .{
                     .target = try el.target.deepClone(allocator),
                     .args = try el.args.deepClone(allocator),
                     .can_be_unwrapped_if_unused = el.can_be_unwrapped_if_unused,
@@ -2368,13 +2368,13 @@ pub const Data = union(Tag) {
                 return .{ .e_new = item };
             },
             .e_function => |el| {
-                const item = bun.create(allocator, E.Function, .{
+                const item = fun.create(allocator, E.Function, .{
                     .func = try el.func.deepClone(allocator),
                 });
                 return .{ .e_function = item };
             },
             .e_call => |el| {
-                const item = bun.create(allocator, E.Call, .{
+                const item = fun.create(allocator, E.Call, .{
                     .target = try el.target.deepClone(allocator),
                     .args = try el.args.deepClone(allocator),
                     .optional_chain = el.optional_chain,
@@ -2386,7 +2386,7 @@ pub const Data = union(Tag) {
                 return .{ .e_call = item };
             },
             .e_dot => |el| {
-                const item = bun.create(allocator, E.Dot, .{
+                const item = fun.create(allocator, E.Dot, .{
                     .target = try el.target.deepClone(allocator),
                     .name = el.name,
                     .name_loc = el.name_loc,
@@ -2397,7 +2397,7 @@ pub const Data = union(Tag) {
                 return .{ .e_dot = item };
             },
             .e_index => |el| {
-                const item = bun.create(allocator, E.Index, .{
+                const item = fun.create(allocator, E.Index, .{
                     .target = try el.target.deepClone(allocator),
                     .index = try el.index.deepClone(allocator),
                     .optional_chain = el.optional_chain,
@@ -2409,7 +2409,7 @@ pub const Data = union(Tag) {
                 for (0..args.len) |i| {
                     args[i] = try el.args[i].deepClone(allocator);
                 }
-                const item = bun.create(allocator, E.Arrow, .{
+                const item = fun.create(allocator, E.Arrow, .{
                     .args = args,
                     .body = el.body,
                     .is_async = el.is_async,
@@ -2420,7 +2420,7 @@ pub const Data = union(Tag) {
                 return .{ .e_arrow = item };
             },
             .e_jsx_element => |el| {
-                const item = bun.create(allocator, E.JSXElement, .{
+                const item = fun.create(allocator, E.JSXElement, .{
                     .tag = if (el.tag) |tag| try tag.deepClone(allocator) else null,
                     .properties = try el.properties.deepClone(allocator),
                     .children = try el.children.deepClone(allocator),
@@ -2431,7 +2431,7 @@ pub const Data = union(Tag) {
                 return .{ .e_jsx_element = item };
             },
             .e_object => |el| {
-                const item = bun.create(allocator, E.Object, .{
+                const item = fun.create(allocator, E.Object, .{
                     .properties = try el.properties.deepClone(allocator),
                     .comma_after_spread = el.comma_after_spread,
                     .is_single_line = el.is_single_line,
@@ -2442,13 +2442,13 @@ pub const Data = union(Tag) {
                 return .{ .e_object = item };
             },
             .e_spread => |el| {
-                const item = bun.create(allocator, E.Spread, .{
+                const item = fun.create(allocator, E.Spread, .{
                     .value = try el.value.deepClone(allocator),
                 });
                 return .{ .e_spread = item };
             },
             .e_template => |el| {
-                const item = bun.create(allocator, E.Template, .{
+                const item = fun.create(allocator, E.Template, .{
                     .tag = if (el.tag) |tag| try tag.deepClone(allocator) else null,
                     .parts = el.parts,
                     .head = el.head,
@@ -2456,27 +2456,27 @@ pub const Data = union(Tag) {
                 return .{ .e_template = item };
             },
             .e_reg_exp => |el| {
-                const item = bun.create(allocator, E.RegExp, .{
+                const item = fun.create(allocator, E.RegExp, .{
                     .value = el.value,
                     .flags_offset = el.flags_offset,
                 });
                 return .{ .e_reg_exp = item };
             },
             .e_await => |el| {
-                const item = bun.create(allocator, E.Await, .{
+                const item = fun.create(allocator, E.Await, .{
                     .value = try el.value.deepClone(allocator),
                 });
                 return .{ .e_await = item };
             },
             .e_yield => |el| {
-                const item = bun.create(allocator, E.Yield, .{
+                const item = fun.create(allocator, E.Yield, .{
                     .value = if (el.value) |value| try value.deepClone(allocator) else null,
                     .is_star = el.is_star,
                 });
                 return .{ .e_yield = item };
             },
             .e_if => |el| {
-                const item = bun.create(allocator, E.If, .{
+                const item = fun.create(allocator, E.If, .{
                     .test_ = try el.test_.deepClone(allocator),
                     .yes = try el.yes.deepClone(allocator),
                     .no = try el.no.deepClone(allocator),
@@ -2484,7 +2484,7 @@ pub const Data = union(Tag) {
                 return .{ .e_if = item };
             },
             .e_import => |el| {
-                const item = bun.create(allocator, E.Import, .{
+                const item = fun.create(allocator, E.Import, .{
                     .expr = try el.expr.deepClone(allocator),
                     .options = try el.options.deepClone(allocator),
                     .import_record_index = el.import_record_index,
@@ -2492,13 +2492,13 @@ pub const Data = union(Tag) {
                 return .{ .e_import = item };
             },
             .e_big_int => |el| {
-                const item = bun.create(allocator, E.BigInt, .{
+                const item = fun.create(allocator, E.BigInt, .{
                     .value = el.value,
                 });
                 return .{ .e_big_int = item };
             },
             .e_string => |el| {
-                const item = bun.create(allocator, E.String, .{
+                const item = fun.create(allocator, E.String, .{
                     .data = el.data,
                     .prefer_template = el.prefer_template,
                     .next = el.next,
@@ -2509,7 +2509,7 @@ pub const Data = union(Tag) {
                 return .{ .e_string = item };
             },
             .e_inlined_enum => |el| {
-                const item = bun.create(allocator, E.InlinedEnum, .{
+                const item = fun.create(allocator, E.InlinedEnum, .{
                     .value = el.value,
                     .comment = el.comment,
                 });
@@ -2608,7 +2608,7 @@ pub const Data = union(Tag) {
                     if (current.isUTF8()) {
                         hasher.update(current.data);
                     } else {
-                        hasher.update(bun.reinterpretSlice(u8, current.slice16()));
+                        hasher.update(fun.reinterpretSlice(u8, current.slice16()));
                     }
                     next = current.next;
                     hasher.update("\x00");
@@ -2668,7 +2668,7 @@ pub const Data = union(Tag) {
         return switch (data) {
             // TODO: identifiers can be removed if unused, however code that
             // moves expressions around sometimes does so incorrectly when
-            // doing destructures. test case: https://github.com/oven-sh/bun/issues/14027
+            // doing destructures. test case: https://github.com/underdoc-org/fun/issues/14027
             // .e_identifier => |id| id.can_be_removed_if_unused,
 
             .e_class => |class| class.canBeMoved(),
@@ -2917,7 +2917,7 @@ pub const Data = union(Tag) {
         ///
         /// We want to replace this with the dedicated import_meta_main node, which:
         /// - Stops this module from having p.require_ref, allowing conversion to ESM
-        /// - Allows us to inline `import.meta.main`'s value, if it is known (bun build --compile)
+        /// - Allows us to inline `import.meta.main`'s value, if it is known (fun build --compile)
         is_require_main_and_module: bool = false,
 
         pub const @"true" = Equality{ .ok = true, .equal = true };
@@ -2934,7 +2934,7 @@ pub const Data = union(Tag) {
         p: anytype,
         comptime kind: enum { loose, strict },
     ) Equality {
-        comptime bun.assert(@typeInfo(@TypeOf(p)).pointer.size == .one); // pass *Parser
+        comptime fun.assert(@typeInfo(@TypeOf(p)).pointer.size == .one); // pass *Parser
 
         // https://dorey.github.io/JavaScript-Equality-Table/
         switch (left) {
@@ -3170,7 +3170,7 @@ pub const Data = union(Tag) {
         pub inline fn assert() void {
             if (comptime Environment.isDebug or Environment.enable_asan) {
                 if (instance == null and memory_allocator == null)
-                    bun.unreachablePanic("Store must be init'd", .{});
+                    fun.unreachablePanic("Store must be init'd", .{});
             }
         }
 
@@ -3212,9 +3212,9 @@ pub fn StoredData(tag: Tag) type {
 fn stringToEquivalentNumberValue(str: []const u8) f64 {
     // +"" -> 0
     if (str.len == 0) return 0;
-    if (!bun.strings.isAllASCII(str))
+    if (!fun.strings.isAllASCII(str))
         return std.math.nan(f64);
-    return bun.cpp.JSC__jsToNumber(str.ptr, str.len);
+    return fun.cpp.JSC__jsToNumber(str.ptr, str.len);
 }
 
 const string = []const u8;
@@ -3223,19 +3223,19 @@ const stringZ = [:0]const u8;
 const JSPrinter = @import("../../js_printer/js_printer.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const JSONParser = bun.json;
-const MutableString = bun.MutableString;
-const OOM = bun.OOM;
-const default_allocator = bun.default_allocator;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const strings = bun.strings;
-const writeAnyToHasher = bun.writeAnyToHasher;
-const MimeType = bun.http.MimeType;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const JSONParser = fun.json;
+const MutableString = fun.MutableString;
+const OOM = fun.OOM;
+const default_allocator = fun.default_allocator;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const strings = fun.strings;
+const writeAnyToHasher = fun.writeAnyToHasher;
+const MimeType = fun.http.MimeType;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const ASTMemoryAllocator = js_ast.ASTMemoryAllocator;
 const E = js_ast.E;
 const Expr = js_ast.Expr;

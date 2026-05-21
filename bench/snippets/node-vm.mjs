@@ -1,4 +1,4 @@
-// @runtime node, bun
+// @runtime node, fun
 import * as vm from "node:vm";
 import { bench, run } from "../runner.mjs";
 

@@ -26,12 +26,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// config.h removed - not needed in Bun
+// config.h removed - not needed in Fun
 #include "TextEncodingRegistry.h"
 
-// #include "Logging.h" - not available in Bun. On platforms where
+// #include "Logging.h" - not available in Fun. On platforms where
 // RELEASE_LOG is enabled (Android), RELEASE_LOG_ERROR references the
-// PAL TextEncoding log channel which Bun doesn't compile, so route it
+// PAL TextEncoding log channel which Fun doesn't compile, so route it
 // to plain LOG_ERROR (the same expansion non-Android platforms get).
 #undef RELEASE_LOG_ERROR
 #define RELEASE_LOG_ERROR(channel, ...) LOG_ERROR(__VA_ARGS__)
@@ -209,7 +209,7 @@ static void buildBaseTextCodecMaps() WTF_REQUIRES_LOCK(encodingRegistryLock)
     ASSERT(textCodecMap().isEmpty());
     ASSERT(textEncodingNameMap().isEmpty());
 
-    // Native UTF-8, UTF-16, Latin1 support in Bun - not registering here
+    // Native UTF-8, UTF-16, Latin1 support in Fun - not registering here
 
     TextCodecUserDefined::registerEncodingNames(addToTextEncodingNameMap);
     TextCodecUserDefined::registerCodecs(addToTextCodecMap);
@@ -274,7 +274,7 @@ static void extendTextCodecMaps() WTF_REQUIRES_LOCK(encodingRegistryLock)
     TextCodecReplacement::registerEncodingNames(addToTextEncodingNameMap);
     TextCodecReplacement::registerCodecs(addToTextCodecMap);
 
-    // TextCodecICU removed - ICU converter data not available in Bun
+    // TextCodecICU removed - ICU converter data not available in Fun
     // The following encodings are not supported:
     // ISO-8859-2, 4, 5, 10, 13, 14, 15, 16
     // Windows-1250, 1251, 1254, 1256, 1258
@@ -298,16 +298,16 @@ std::unique_ptr<TextCodec> newTextCodec(const TextEncoding& encoding)
     ASSERT(!textCodecMap.isEmpty());
     if (!encoding.isValid()) {
         RELEASE_LOG_ERROR(TextEncoding, "Trying to create new text codec with invalid (null) encoding name. Will default to UTF-8.");
-        return nullptr; // UTF-8 handled natively in Bun
+        return nullptr; // UTF-8 handled natively in Fun
     }
     auto result = textCodecMap.find(encoding.name());
     if (result == textCodecMap.end()) {
         RELEASE_LOG_ERROR(TextEncoding, "Can't find codec for valid encoding %" PUBLIC_LOG_STRING ". Will default to UTF-8.", encoding.name().characters());
-        return nullptr; // UTF-8 handled natively in Bun
+        return nullptr; // UTF-8 handled natively in Fun
     }
     if (!result->value) {
         RELEASE_LOG_ERROR(TextEncoding, "Codec for encoding %" PUBLIC_LOG_STRING " is null. Will default to UTF-8", encoding.name().characters());
-        return nullptr; // UTF-8 handled natively in Bun
+        return nullptr; // UTF-8 handled natively in Fun
     }
     return result->value();
 }

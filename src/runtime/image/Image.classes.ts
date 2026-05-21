@@ -23,7 +23,7 @@ export default [
     JSType: "0b11101110",
     klass: {
       // Process-global backend selector: "system" (CoreGraphics/WIC + vImage,
-      // default where available) or "bun" (static libjpeg-turbo/spng/libwebp +
+      // default where available) or "fun" (static libjpeg-turbo/spng/libwebp +
       // Highway resize, byte-identical across platforms). Set BEFORE awaiting a
       // pipeline; in-flight tasks read whatever was set when they launched.
       backend: { getter: "getBackend", setter: "setBackend" },

@@ -1,18 +1,18 @@
 ---
 title: "Runtime behavior"
-description: "Learn about Bun test's runtime integration, environment variables, timeouts, and error handling"
+description: "Learn about Fun test's runtime integration, environment variables, timeouts, and error handling"
 ---
 
-`bun test` is deeply integrated with Bun's runtime. This integration is part of what makes `bun test` fast.
+`fun test` is deeply integrated with Fun's runtime. This integration is part of what makes `fun test` fast.
 
 ## Environment Variables
 
 ### NODE_ENV
 
-`bun test` automatically sets `$NODE_ENV` to `"test"` unless it's already set in the environment or via `.env` files. This is standard behavior for most test runners and helps ensure consistent test behavior.
+`fun test` automatically sets `$NODE_ENV` to `"test"` unless it's already set in the environment or via `.env` files. This is standard behavior for most test runners and helps ensure consistent test behavior.
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("NODE_ENV is set to test", () => {
   expect(process.env.NODE_ENV).toBe("test");
@@ -22,15 +22,15 @@ test("NODE_ENV is set to test", () => {
 You can override this by setting `NODE_ENV` explicitly:
 
 ```bash terminal icon="terminal"
-NODE_ENV=development bun test
+NODE_ENV=development fun test
 ```
 
 ### TZ (Timezone)
 
-By default, all `bun test` runs use UTC (`Etc/UTC`) as the time zone unless overridden by the `TZ` environment variable. This ensures consistent date and time behavior across different development environments.
+By default, all `fun test` runs use UTC (`Etc/UTC`) as the time zone unless overridden by the `TZ` environment variable. This ensures consistent date and time behavior across different development environments.
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("timezone is UTC by default", () => {
   const date = new Date();
@@ -41,7 +41,7 @@ test("timezone is UTC by default", () => {
 To test with a specific timezone:
 
 ```bash terminal icon="terminal"
-TZ=America/New_York bun test
+TZ=America/New_York fun test
 ```
 
 ## Test Timeouts
@@ -53,7 +53,7 @@ Each test has a default timeout of 5000ms (5 seconds) if not explicitly overridd
 Change the timeout globally with the `--timeout` flag:
 
 ```bash terminal icon="terminal"
-bun test --timeout 10000  # 10 seconds
+fun test --timeout 10000  # 10 seconds
 ```
 
 ### Per-Test Timeout
@@ -61,7 +61,7 @@ bun test --timeout 10000  # 10 seconds
 Set timeout per test as the third parameter to the test function:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("fast test", () => {
   expect(1 + 1).toBe(2);
@@ -87,12 +87,12 @@ test("test without timeout", async () => {
 
 ### Unhandled Errors
 
-`bun test` tracks unhandled promise rejections and errors that occur between tests. If such errors occur, the final exit code will be non-zero (specifically, the count of such errors), even if all tests pass.
+`fun test` tracks unhandled promise rejections and errors that occur between tests. If such errors occur, the final exit code will be non-zero (specifically, the count of such errors), even if all tests pass.
 
 This helps catch errors in asynchronous code that might otherwise go unnoticed:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test("test 1", () => {
   // This test passes
@@ -118,7 +118,7 @@ test("test 2", () => {
 Unhandled promise rejections are also caught:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 test("passing test", () => {
   expect(1).toBe(1);
@@ -146,68 +146,68 @@ process.on("unhandledRejection", (reason, promise) => {
 
 ## CLI Flags Integration
 
-Several Bun CLI flags can be used with `bun test` to modify its behavior:
+Several Fun CLI flags can be used with `fun test` to modify its behavior:
 
 ### Memory Usage
 
 ```bash terminal icon="terminal"
 # Reduces memory usage for the test runner VM
-bun test --smol
+fun test --smol
 ```
 
 ### Debugging
 
 ```bash terminal icon="terminal"
 # Attaches the debugger to the test runner process
-bun test --inspect
-bun test --inspect-brk
+fun test --inspect
+fun test --inspect-brk
 ```
 
 ### Module Loading
 
 ```bash terminal icon="terminal"
 # Runs scripts before test files (useful for global setup/mocks)
-bun test --preload ./setup.ts
+fun test --preload ./setup.ts
 
 # Sets compile-time constants
-bun test --define "process.env.API_URL='http://localhost:3000'"
+fun test --define "process.env.API_URL='http://localhost:3000'"
 
 # Configures custom loaders
-bun test --loader .special:special-loader
+fun test --loader .special:special-loader
 
 # Uses a different tsconfig
-bun test --tsconfig-override ./test-tsconfig.json
+fun test --tsconfig-override ./test-tsconfig.json
 
 # Sets package.json conditions for module resolution
-bun test --conditions development
+fun test --conditions development
 
 # Loads environment variables for tests
-bun test --env-file .env.test
+fun test --env-file .env.test
 ```
 
 ### Installation-related Flags
 
 ```bash
 # Affect any network requests or auto-installs during test execution
-bun test --prefer-offline
-bun test --frozen-lockfile
+fun test --prefer-offline
+fun test --frozen-lockfile
 ```
 
 ## Watch and Hot Reloading
 
 ### Watch Mode
 
-When running `bun test` with the `--watch` flag, the test runner will watch for file changes and re-run affected tests.
+When running `fun test` with the `--watch` flag, the test runner will watch for file changes and re-run affected tests.
 
 ```bash terminal icon="terminal"
-bun test --watch
+fun test --watch
 ```
 
 The test runner is smart about which tests to re-run:
 
 ```ts title="math.test.ts" icon="/icons/typescript.svg"
 import { add } from "./math.js";
-import { test, expect } from "bun:test";
+import { test, expect } from "fun:test";
 
 test("addition", () => {
   expect(add(2, 3)).toBe(5);
@@ -221,14 +221,14 @@ If you modify `math.js`, only `math.test.ts` will re-run, not all tests.
 The `--hot` flag provides similar functionality but is more aggressive about trying to preserve state between runs:
 
 ```bash terminal icon="terminal"
-bun test --hot
+fun test --hot
 ```
 
 For most test scenarios, `--watch` is the recommended option as it provides better isolation between test runs.
 
 ## Global Variables
 
-The following globals are automatically available in test files without importing (though they can be imported from `bun:test` if preferred):
+The following globals are automatically available in test files without importing (though they can be imported from `fun:test` if preferred):
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
 // All of these are available globally
@@ -256,14 +256,14 @@ vi.fn();
 You can also import them explicitly if you prefer:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { test, it, describe, expect, beforeAll, beforeEach, afterAll, afterEach, jest, vi } from "bun:test";
+import { test, it, describe, expect, beforeAll, beforeEach, afterAll, afterEach, jest, vi } from "fun:test";
 ```
 
 ## Process Integration
 
 ### Exit Codes
 
-`bun test` uses standard exit codes:
+`fun test` uses standard exit codes:
 
 - `0`: All tests passed, no unhandled errors
 - `1`: Test failures occurred
@@ -283,12 +283,12 @@ kill -SIGKILL <test-process-pid>
 
 ### Environment Detection
 
-Bun automatically detects certain environments and adjusts behavior:
+Fun automatically detects certain environments and adjusts behavior:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
 // GitHub Actions detection
 if (process.env.GITHUB_ACTIONS) {
-  // Bun automatically emits GitHub Actions annotations
+  // Fun automatically emits GitHub Actions annotations
 }
 
 // CI detection
@@ -317,11 +317,11 @@ However, this means:
 
 ```bash terminal icon="terminal"
 # Monitor memory usage
-bun test --smol  # Reduces memory footprint
+fun test --smol  # Reduces memory footprint
 
 # For large test suites, consider splitting files
-bun test src/unit/
-bun test src/integration/
+fun test src/unit/
+fun test src/integration/
 ```
 
 ### Test Isolation
@@ -329,7 +329,7 @@ bun test src/integration/
 Since tests run in the same process, ensure proper cleanup:
 
 ```ts title="test.ts" icon="/icons/typescript.svg"
-import { afterEach } from "bun:test";
+import { afterEach } from "fun:test";
 
 afterEach(() => {
   // Clean up global state

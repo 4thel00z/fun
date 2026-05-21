@@ -2,7 +2,7 @@
 #include "ZigGlobalObject.h"
 #include "llhttp/llhttp.h"
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 
@@ -81,4 +81,4 @@ void ProcessBindingHTTPParser::finishCreation(VM& vm)
     ASSERT(inherits(info()));
 }
 
-} // namespace Bun
+} // namespace Fun

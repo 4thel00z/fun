@@ -1,18 +1,18 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, normalizeBunSnapshot } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, normalizeFunSnapshot } from "harness";
 import { join } from "node:path";
 
 test("snapshot", () => {
-  const { stdout, stderr, exitCode } = Bun.spawnSync({
-    cmd: [bunExe(), "test", join(import.meta.dirname, "test-filter-lifecycle.js"), "-t", "should run test"],
+  const { stdout, stderr, exitCode } = Fun.spawnSync({
+    cmd: [funExe(), "test", join(import.meta.dirname, "test-filter-lifecycle.js"), "-t", "should run test"],
     stdout: "pipe",
     stderr: "pipe",
     stdin: "ignore",
-    env: bunEnv,
+    env: funEnv,
   });
 
-  expect(normalizeBunSnapshot(stdout.toString() + stderr.toString())).toMatchInlineSnapshot(`
-    "bun test <version> (<revision>)
+  expect(normalizeFunSnapshot(stdout.toString() + stderr.toString())).toMatchInlineSnapshot(`
+    "fun test <version> (<revision>)
     <parent beforeAll>
     <beforeAll>
     <parent beforeEach>

@@ -1,14 +1,14 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
-// https://github.com/oven-sh/bun/issues/28756
+// https://github.com/underdoc-org/fun/issues/28756
 // AbortSignal.timeout() + util.aborted() causes unbounded memory growth
 // because the extra ref() taken in timeout() is never released when all
 // listeners are removed before the timer fires.
 test("AbortSignal.timeout + util.aborted does not leak memory", async () => {
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: [
-      bunExe(),
+      funExe(),
       "-e",
       `
       const { aborted } = require("util");
@@ -27,9 +27,9 @@ test("AbortSignal.timeout + util.aborted does not leak memory", async () => {
         aborted(sig, {});
       }
       await new Promise(r => setTimeout(r, 0));
-      Bun.gc(true);
+      Fun.gc(true);
       await new Promise(r => setTimeout(r, 50));
-      Bun.gc(true);
+      Fun.gc(true);
       const baselineRSS = process.memoryUsage().rss;
 
       for (let iter = 0; iter < iterations; iter++) {
@@ -41,13 +41,13 @@ test("AbortSignal.timeout + util.aborted does not leak memory", async () => {
           sig.removeEventListener("abort", lis);
         }
         await new Promise(r => setTimeout(r, 0));
-        Bun.gc(true);
+        Fun.gc(true);
       }
 
       await new Promise(r => setTimeout(r, 100));
-      Bun.gc(true);
+      Fun.gc(true);
       await new Promise(r => setTimeout(r, 100));
-      Bun.gc(true);
+      Fun.gc(true);
 
       const finalRSS = process.memoryUsage().rss;
       const growth = finalRSS - baselineRSS;
@@ -57,7 +57,7 @@ test("AbortSignal.timeout + util.aborted does not leak memory", async () => {
       process.exit(growth < 50 * 1024 * 1024 ? 0 : 1);
       `,
     ],
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

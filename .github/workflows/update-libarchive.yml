@@ -7,7 +7,7 @@ on:
 
 jobs:
   check-update:
-    if: github.repository == 'oven-sh/bun'
+    if: github.repository == 'underdoc-org/fun'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -98,4 +98,4 @@ jobs:
 
             Compare: https://github.com/libarchive/libarchive/compare/${{ steps.check-version.outputs.current }}...${{ steps.check-version.outputs.latest }}
 
-            Auto-updated by [this workflow](https://github.com/oven-sh/bun/actions/workflows/update-libarchive.yml)
+            Auto-updated by [this workflow](https://github.com/underdoc-org/fun/actions/workflows/update-libarchive.yml)

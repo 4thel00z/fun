@@ -1,6 +1,6 @@
 import {
 __require
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import * as $75175720 from "http://localhost:8080/node_modules/lodash/lodash.js";
 var { shuffle} = __require($75175720);
 export function test() {

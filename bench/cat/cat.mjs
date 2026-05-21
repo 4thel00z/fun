@@ -1,4 +1,4 @@
-// works in both bun & node
+// works in both fun & node
 import { readFileSync } from "node:fs";
 const count = parseInt(process.env.ITERATIONS || "1", 10) || 1;
 

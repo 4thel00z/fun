@@ -1,4 +1,4 @@
-// Runs the vendored WPT fetch .h2.any.js tests against Bun's fetch() over
+// Runs the vendored WPT fetch .h2.any.js tests against Fun's fetch() over
 // the experimental HTTP/2 client path. The .any.js files are byte-identical
 // to upstream; this driver supplies the testharness globals, a wptserve
 // stand-in, and a fetch() wrapper that forces ALPN h2.
@@ -8,7 +8,7 @@
 //   fetch/api/basic/request-upload.h2.any.js
 //   fetch/api/redirect/redirect-upload.h2.any.js
 
-import { afterAll } from "bun:test";
+import { afterAll } from "fun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { startServer } from "./server";
@@ -50,7 +50,7 @@ g.fetch = (input: any, init: any = {}) => {
   return realFetch(input, init);
 };
 
-// bun:test injects its own `test` binding into every imported module, which
+// fun:test injects its own `test` binding into every imported module, which
 // would shadow the WPT-style test(fn, name) global. Load each vendored file
 // as text and run it inside a Function whose `test` parameter is the shim.
 // All other testharness identifiers resolve via globalThis.

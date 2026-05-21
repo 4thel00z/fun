@@ -9,13 +9,13 @@ export function Array(elemType: Type): ArrayType {
   }
   return new (class extends ArrayType {
     get idlType() {
-      return `::Bun::IDLArray<${elemType.idlType}>`;
+      return `::Fun::IDLArray<${elemType.idlType}>`;
     }
     get bindgenType() {
       return `bindgen.BindgenArray(${elemType.bindgenType})`;
     }
     zigType(style?: CodeStyle) {
-      return `bun.collections.ArrayListDefault(${elemType.zigType(style)})`;
+      return `fun.collections.ArrayListDefault(${elemType.zigType(style)})`;
     }
     toCpp(value: any[]): string {
       const args = `${value.map(elem => elemType.toCpp(elem)).join(", ")}`;

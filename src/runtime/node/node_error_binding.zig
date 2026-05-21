@@ -3,9 +3,9 @@ pub const ERR_CHILD_CLOSED_BEFORE_REPLY = createSimpleError(createError, .ERR_CH
 
 fn createSimpleError(comptime createFn: anytype, comptime code: jsc.Node.ErrorCode, comptime message: string) jsc.JS2NativeFunctionType {
     const R = struct {
-        pub fn cbb(global: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        pub fn cbb(global: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
             const S = struct {
-                fn cb(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+                fn cb(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
                     _ = callframe;
                     return createFn(globalThis, code, message, .{});
                 }
@@ -18,8 +18,8 @@ fn createSimpleError(comptime createFn: anytype, comptime code: jsc.Node.ErrorCo
 
 const string = []const u8;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;
 
 const createError = jsc.JSGlobalObject.createErrorInstanceWithCode;
 const createTypeError = jsc.JSGlobalObject.createTypeErrorInstanceWithCode;

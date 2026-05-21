@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Bun {
+namespace Fun {
 
 JSC::Structure* createUtilInspectOptionsStructure(JSC::VM& vm, JSC::JSGlobalObject* globalObject);
 

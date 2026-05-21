@@ -2,13 +2,13 @@ import { CodeStyle, Type } from "./base";
 
 export const RawAny = new (class extends Type {
   get idlType() {
-    return "::Bun::IDLRawAny";
+    return "::Fun::IDLRawAny";
   }
   get bindgenType() {
     return "bindgen.BindgenRawAny";
   }
   zigType(style?: CodeStyle) {
-    return "bun.bun_js.jsc.JSValue";
+    return "fun.fun_js.jsc.JSValue";
   }
   toCpp(value: any): string {
     throw RangeError("`RawAny` cannot have a default value");
@@ -17,13 +17,13 @@ export const RawAny = new (class extends Type {
 
 export const StrongAny = new (class extends Type {
   get idlType() {
-    return "::Bun::Bindgen::IDLStrongAny";
+    return "::Fun::Bindgen::IDLStrongAny";
   }
   get bindgenType() {
     return "bindgen.BindgenStrongAny";
   }
   zigType(style?: CodeStyle) {
-    return "bun.bun_js.jsc.Strong";
+    return "fun.fun_js.jsc.Strong";
   }
   optionalZigType(style?: CodeStyle) {
     return this.zigType(style) + ".Optional";

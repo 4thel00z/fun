@@ -49,7 +49,7 @@ pub const TopExceptionScope = struct {
     /// Only intended to be called when there is a pending exception.
     fn assertionFailure(self: *TopExceptionScope, proof: *jsc.Exception) noreturn {
         _ = proof;
-        bun.assert(self.location == &self.bytes[0]);
+        fun.assert(self.location == &self.bytes[0]);
         TopExceptionScope__assertNoException(&self.bytes);
         @panic("assertionFailure called without a pending exception");
     }
@@ -60,18 +60,18 @@ pub const TopExceptionScope = struct {
 
     /// Get the thrown exception if it exists (like scope.exception() in C++)
     pub fn exception(self: *TopExceptionScope) ?*jsc.Exception {
-        if (comptime Environment.ci_assert) bun.assert(self.location == &self.bytes[0]);
+        if (comptime Environment.ci_assert) fun.assert(self.location == &self.bytes[0]);
         return TopExceptionScope__pureException(&self.bytes);
     }
 
     pub fn clearException(self: *TopExceptionScope) void {
-        if (comptime Environment.ci_assert) bun.assert(self.location == &self.bytes[0]);
+        if (comptime Environment.ci_assert) fun.assert(self.location == &self.bytes[0]);
         return TopExceptionScope__clearException(&self.bytes);
     }
 
     /// Get the thrown exception if it exists, or if an unhandled trap causes an exception to be thrown
     pub fn exceptionIncludingTraps(self: *TopExceptionScope) ?*jsc.Exception {
-        if (comptime Environment.ci_assert) bun.assert(self.location == &self.bytes[0]);
+        if (comptime Environment.ci_assert) fun.assert(self.location == &self.bytes[0]);
         return TopExceptionScope__exceptionIncludingTraps(&self.bytes);
     }
 
@@ -101,7 +101,7 @@ pub const TopExceptionScope = struct {
     pub fn assertExceptionPresenceMatches(self: *TopExceptionScope, should_have_exception: bool) void {
         if (comptime Environment.ci_assert) {
             if (should_have_exception) {
-                bun.assertf(self.hasException(), "Expected an exception to be thrown", .{});
+                fun.assertf(self.hasException(), "Expected an exception to be thrown", .{});
             } else {
                 self.assertNoException();
             }
@@ -111,7 +111,7 @@ pub const TopExceptionScope = struct {
     /// If no exception, returns.
     /// If termination exception, returns JSTerminated (so you can `try`)
     /// If non-termination exception, assertion failure.
-    pub fn assertNoExceptionExceptTermination(self: *TopExceptionScope) bun.JSTerminated!void {
+    pub fn assertNoExceptionExceptTermination(self: *TopExceptionScope) fun.JSTerminated!void {
         if (self.exception()) |e| {
             if (jsc.JSValue.fromCell(e).isTerminationException())
                 return error.JSTerminated
@@ -122,7 +122,7 @@ pub const TopExceptionScope = struct {
     }
 
     pub fn deinit(self: *TopExceptionScope) void {
-        if (comptime Environment.ci_assert) bun.assert(self.location == &self.bytes[0]);
+        if (comptime Environment.ci_assert) fun.assert(self.location == &self.bytes[0]);
         TopExceptionScope__destruct(&self.bytes);
         self.bytes = undefined;
     }
@@ -175,7 +175,7 @@ pub const ExceptionValidationScope = struct {
     /// If no exception, returns.
     /// If termination exception, returns JSTerminated (so you can `try`)
     /// If non-termination exception, assertion failure.
-    pub fn assertNoExceptionExceptTermination(self: *ExceptionValidationScope) bun.JSTerminated!void {
+    pub fn assertNoExceptionExceptTermination(self: *ExceptionValidationScope) fun.JSTerminated!void {
         if (Environment.ci_assert) {
             return self.scope.assertNoExceptionExceptTermination();
         }
@@ -211,6 +211,6 @@ extern fn TopExceptionScope__destruct(ptr: *align(alignment) [size]u8) void;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const jsc = fun.jsc;

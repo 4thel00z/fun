@@ -228,16 +228,16 @@ pub fn VisitExpr(
                         // That would reduce the amount of allocations a little
                         if (runtime == .classic or is_key_after_spread) {
                             // Arguments to createElement()
-                            var args = bun.BabyList(Expr).initCapacity(
+                            var args = fun.BabyList(Expr).initCapacity(
                                 p.allocator,
                                 2 + children_count,
-                            ) catch |err| bun.handleOom(err);
+                            ) catch |err| fun.handleOom(err);
                             args.appendAssumeCapacity(tag);
 
                             const num_props = e_.properties.len;
                             if (num_props > 0) {
                                 const props = p.allocator.alloc(G.Property, num_props) catch unreachable;
-                                bun.copy(G.Property, props, e_.properties.slice());
+                                fun.copy(G.Property, props, e_.properties.slice());
                                 args.appendAssumeCapacity(p.newExpr(
                                     E.Object{ .properties = G.Property.List.fromOwnedSlice(props) },
                                     expr.loc,
@@ -315,12 +315,12 @@ pub fn VisitExpr(
                                         .items = e_.children,
                                         .is_single_line = e_.children.len < 2,
                                     }, e_.close_tag_loc),
-                                }) catch |err| bun.handleOom(err);
+                                }) catch |err| fun.handleOom(err);
                             } else if (e_.children.len == 1) {
                                 props.append(allocator, G.Property{
                                     .key = children_key,
                                     .value = e_.children.ptr[0],
-                                }) catch |err| bun.handleOom(err);
+                                }) catch |err| fun.handleOom(err);
                             }
 
                             // Either:
@@ -494,7 +494,7 @@ pub fn VisitExpr(
                     // Note that we only append to the stack (and therefore allocate memory
                     // on the heap) when there are nested binary expressions. A single binary
                     // expression doesn't add anything to the stack.
-                    bun.handleOom(p.binary_expression_stack.append(v));
+                    fun.handleOom(p.binary_expression_stack.append(v));
                     v = BinaryExpressionVisitor{
                         .e = left_binary.?,
                         .loc = left.loc,
@@ -650,7 +650,7 @@ pub fn VisitExpr(
                                     const literal = str.slice(p.allocator);
                                     const num: usize = index.data.e_number.toUsize();
                                     if (Environment.allow_assert) {
-                                        bun.assert(bun.strings.isAllASCII(literal));
+                                        fun.assert(fun.strings.isAllASCII(literal));
                                     }
                                     if (num < literal.len) {
                                         return p.newExpr(E.String{ .data = literal[num .. num + 1] }, expr.loc);
@@ -1145,7 +1145,7 @@ pub fn VisitExpr(
                 // even when minification is disabled, so that if we have an
                 // import based on a string template, it does not cause a
                 // bundle error. This is especially relevant for bundling NAPI
-                // modules with 'bun build --compile':
+                // modules with 'fun build --compile':
                 //
                 // const binding = await import(`./${process.platform}-${process.arch}.node`);
                 //
@@ -1310,7 +1310,7 @@ pub fn VisitExpr(
                     }
                 }
 
-                // Handle `feature("FLAG_NAME")` calls from `import { feature } from "bun:bundle"`
+                // Handle `feature("FLAG_NAME")` calls from `import { feature } from "fun:bundle"`
                 // Check if the bundler_feature_flag_ref is set before calling the function
                 // to avoid stack memory usage from copying values back and forth.
                 if (p.bundler_feature_flag_ref.isValid()) {
@@ -1358,7 +1358,7 @@ pub fn VisitExpr(
                     }
 
                     if (e_.args.len >= 1) {
-                        bun.handleOom(p.checkDynamicSpecifier(e_.args.slice()[0], e_.target.loc, "require()"));
+                        fun.handleOom(p.checkDynamicSpecifier(e_.args.slice()[0], e_.target.loc, "require()"));
                     }
 
                     if (p.options.features.allow_runtime) {
@@ -1394,7 +1394,7 @@ pub fn VisitExpr(
                     }
 
                     if (e_.args.len >= 1) {
-                        bun.handleOom(p.checkDynamicSpecifier(e_.args.slice()[0], e_.target.loc, "require.resolve()"));
+                        fun.handleOom(p.checkDynamicSpecifier(e_.args.slice()[0], e_.target.loc, "require.resolve()"));
                     }
 
                     return expr;
@@ -1501,13 +1501,13 @@ pub fn VisitExpr(
                         if (e_.target.data == .e_dot and e_.target.data.e_dot.target.data == .e_import_identifier) {
                             const id = e_.target.data.e_dot.target.data.e_import_identifier;
                             const name = p.symbols.items[id.ref.innerIndex()].original_name;
-                            break :check_for_usestate bun.strings.eqlComptime(name, "React");
+                            break :check_for_usestate fun.strings.eqlComptime(name, "React");
                         }
                         break :check_for_usestate false;
                     }) {
-                        bun.assert(p.options.features.server_components.isServerSide());
-                        if (!bun.strings.startsWith(p.source.path.pretty, "node_modules") and
-                            bun.strings.eqlComptime(original_name, "useState"))
+                        fun.assert(p.options.features.server_components.isServerSide());
+                        if (!fun.strings.startsWith(p.source.path.pretty, "node_modules") and
+                            fun.strings.eqlComptime(original_name, "useState"))
                         {
                             p.log.addError(
                                 p.source,
@@ -1516,8 +1516,8 @@ pub fn VisitExpr(
                                     p.allocator,
                                     "\"useState\" is not available in a server component. If you need interactivity, consider converting part of this to a Client Component (by adding `\"use client\";` to the top of the file).",
                                     .{},
-                                ) catch |err| bun.handleOom(err),
-                            ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err),
+                            ) catch |err| fun.handleOom(err);
                         }
                     }
                 }
@@ -1526,7 +1526,7 @@ pub fn VisitExpr(
                 if (e_.args.len == 1) if (e_.target.data.as(.e_dot)) |dot| {
                     if (dot.target.data == .e_string and
                         dot.target.data.e_string.isUTF8() and
-                        bun.strings.eqlComptime(dot.name, "charCodeAt"))
+                        fun.strings.eqlComptime(dot.name, "charCodeAt"))
                     {
                         const str = dot.target.data.e_string.data;
                         const arg1 = e_.args.at(0).unwrapInlined();
@@ -1611,7 +1611,7 @@ pub fn VisitExpr(
 
                 if (react_hook_data) |*hook| try_mark_hook: {
                     const stmts = p.nearest_stmt_list orelse break :try_mark_hook;
-                    bun.handleOom(stmts.append(p.getReactRefreshHookSignalDecl(hook.signature_cb)));
+                    fun.handleOom(stmts.append(p.getReactRefreshHookSignalDecl(hook.signature_cb)));
 
                     p.handleReactRefreshPostVisitFunctionBody(&stmts_list, hook);
                     e_.body.stmts = stmts_list.items;
@@ -1649,7 +1649,7 @@ pub fn VisitExpr(
 
                 if (react_hook_data) |*hook| try_mark_hook: {
                     const stmts = p.nearest_stmt_list orelse break :try_mark_hook;
-                    bun.handleOom(stmts.append(p.getReactRefreshHookSignalDecl(hook.signature_cb)));
+                    fun.handleOom(stmts.append(p.getReactRefreshHookSignalDecl(hook.signature_cb)));
                     final_expr = p.getReactRefreshHookSignalInit(hook, expr);
                 }
 
@@ -1691,7 +1691,7 @@ pub fn VisitExpr(
                 return expr;
             }
 
-            /// Handles `feature("FLAG_NAME")` calls from `import { feature } from "bun:bundle"`.
+            /// Handles `feature("FLAG_NAME")` calls from `import { feature } from "fun:bundle"`.
             /// This enables statically analyzable dead-code elimination through feature gating.
             ///
             /// When a feature flag is enabled via `--feature=FLAG_NAME`, `feature("FLAG_NAME")`
@@ -1701,7 +1701,7 @@ pub fn VisitExpr(
             /// Returns the replacement expression if this is a feature() call, or null otherwise.
             /// Note: Caller must check `p.bundler_feature_flag_ref.isValid()` before calling.
             fn maybeReplaceBundlerFeatureCall(p: *P, e_: *E.Call, loc: logger.Loc) ?Expr {
-                // Check if the target is the `feature` function from "bun:bundle"
+                // Check if the target is the `feature` function from "fun:bundle"
                 // It could be e_identifier (for unbound) or e_import_identifier (for imports)
                 const target_ref: ?Ref = switch (e_.target.data) {
                     .e_identifier => |ident| ident.ref,
@@ -1743,7 +1743,7 @@ pub fn VisitExpr(
 
                 // feature() can only be used directly in an if statement or ternary condition
                 if (!p.in_branch_condition) {
-                    p.log.addError(p.source, loc, "feature() from \"bun:bundle\" can only be used directly in an if statement or ternary condition") catch unreachable;
+                    p.log.addError(p.source, loc, "feature() from \"fun:bundle\" can only be used directly in an if statement or ternary condition") catch unreachable;
                     return p.newExpr(E.Boolean{ .value = false }, loc);
                 }
 
@@ -1758,15 +1758,15 @@ var jsxChildrenKeyData = Expr.Data{ .e_string = &Prefill.String.Children };
 
 const string = []const u8;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Output = bun.Output;
-const assert = bun.assert;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Output = fun.Output;
+const assert = fun.assert;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const E = js_ast.E;
 const Expr = js_ast.Expr;
@@ -1779,7 +1779,7 @@ const Symbol = js_ast.Symbol;
 const G = js_ast.G;
 const Property = G.Property;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const ExprIn = js_parser.ExprIn;
 const FnOrArrowDataVisit = js_parser.FnOrArrowDataVisit;
 const IdentifierOpts = js_parser.IdentifierOpts;

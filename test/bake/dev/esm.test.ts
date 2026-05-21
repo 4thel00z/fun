@@ -273,7 +273,7 @@ devTest("ESM <-> CJS (async)", {
   },
 });
 devTest("cannot require a module with top level await", {
-  // TODO: after the module-loader rewrite the dev server's /_bun/report_error
+  // TODO: after the module-loader rewrite the dev server's /_fun/report_error
   // handler can hang (never responds), so the client overlay never mounts and
   // expectErrorOverlay times out. The error itself is thrown correctly.
   // Previously gated on !(isCI && isASAN) for the same symptom. Tracked for
@@ -367,7 +367,7 @@ devTest("function that is assigned to should become a live binding", {
 devTest("browser field is used", {
   files: {
     // Ensure the package.json gets parsed before the HTML is bundled.
-    "bunfig.toml": `
+    "funfig.toml": `
       preload = [
         "axios/lib/utils.js",
       ]

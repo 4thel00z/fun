@@ -1,12 +1,12 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isDebug } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isDebug } from "harness";
 
 // Each .on() / .onDocument() call heap-allocates an ElementHandler / DocumentHandler
-// struct via bun.default_allocator. When the HTMLRewriter is garbage-collected,
+// struct via fun.default_allocator. When the HTMLRewriter is garbage-collected,
 // LOLHTMLContext.deinit() must destroy those allocations. Previously it only
 // unprotected the held JSValues and leaked the struct memory.
 //
-// RSS is a high-water mark — Bun.gc(true) collects every wrapper and its
+// RSS is a high-water mark — Fun.gc(true) collects every wrapper and its
 // lol-html builder, but the allocators don't promptly hand pages back to the
 // OS. So warmup runs the *same* workload as the measured phase: the allocator
 // footprint is established before the baseline, and any growth past that is
@@ -31,7 +31,7 @@ test.skipIf(isDebug)(
       const N = 4000;
       function pass() {
         for (let i = 0; i < N; i++) once();
-        Bun.gc(true);
+        Fun.gc(true);
         return process.memoryUsage.rss();
       }
 
@@ -45,15 +45,15 @@ test.skipIf(isDebug)(
       );
     `;
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "--smol", "-e", code],
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "--smol", "-e", code],
       env: {
-        ...bunEnv,
+        ...funEnv,
         // Don't inherit the runner's GC_LEVEL=1 — it changes the per-pass live set.
-        BUN_GARBAGE_COLLECTOR_LEVEL: "0",
+        FUN_GARBAGE_COLLECTOR_LEVEL: "0",
         // ASAN's freed-block quarantine is exactly the thing that pins RSS at
         // peak; disable it so freed lol-html builders get reused across passes.
-        ASAN_OPTIONS: [bunEnv.ASAN_OPTIONS, "quarantine_size_mb=0", "thread_local_quarantine_size_kb=0"]
+        ASAN_OPTIONS: [funEnv.ASAN_OPTIONS, "quarantine_size_mb=0", "thread_local_quarantine_size_kb=0"]
           .filter(Boolean)
           .join(":"),
       },

@@ -1,4 +1,4 @@
-class SQLError extends Error implements Bun.SQL.SQLError {
+class SQLError extends Error implements Fun.SQL.SQLError {
   constructor(message: string) {
     super(message);
     this.name = "SQLError";
@@ -45,7 +45,7 @@ interface PostgresError {
   routine?: string | undefined;
 }
 
-class PostgresError extends SQLError implements Bun.SQL.PostgresError {
+class PostgresError extends SQLError implements Fun.SQL.PostgresError {
   public readonly code: string;
 
   constructor(message: string, options: PostgresErrorOptions) {
@@ -84,7 +84,7 @@ interface SQLiteError {
   byteOffset?: number | undefined;
 }
 
-class SQLiteError extends SQLError implements Bun.SQL.SQLiteError {
+class SQLiteError extends SQLError implements Fun.SQL.SQLiteError {
   public readonly code: string;
   public readonly errno: number;
 
@@ -112,7 +112,7 @@ interface MySQLError {
   sqlState?: string | undefined;
 }
 
-class MySQLError extends SQLError implements Bun.SQL.MySQLError {
+class MySQLError extends SQLError implements Fun.SQL.MySQLError {
   public readonly code: string;
 
   constructor(message: string, options: MySQLErrorOptions) {

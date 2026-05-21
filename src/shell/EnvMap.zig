@@ -7,16 +7,16 @@ pub const Iterator = MapType.Iterator;
 const MapType = std.ArrayHashMap(EnvStr, EnvStr, struct {
     pub fn hash(self: @This(), s: EnvStr) u32 {
         _ = self;
-        if (bun.Environment.isWindows) {
-            return bun.CaseInsensitiveASCIIStringContext.hash(undefined, s.slice());
+        if (fun.Environment.isWindows) {
+            return fun.CaseInsensitiveASCIIStringContext.hash(undefined, s.slice());
         }
         return std.array_hash_map.hashString(s.slice());
     }
     pub fn eql(self: @This(), a: EnvStr, b: EnvStr, b_index: usize) bool {
         _ = self;
         _ = b_index;
-        if (bun.Environment.isWindows) {
-            return bun.CaseInsensitiveASCIIStringContext.eql(undefined, a.slice(), b.slice(), undefined);
+        if (fun.Environment.isWindows) {
+            return fun.CaseInsensitiveASCIIStringContext.eql(undefined, a.slice(), b.slice(), undefined);
         }
         return std.array_hash_map.eqlString(a.slice(), b.slice());
     }
@@ -39,7 +39,7 @@ pub fn memoryCost(this: *const EnvMap) usize {
 
 pub fn initWithCapacity(alloc: Allocator, cap: usize) EnvMap {
     var map = MapType.init(alloc);
-    bun.handleOom(map.ensureTotalCapacity(cap));
+    fun.handleOom(map.ensureTotalCapacity(cap));
     return .{ .map = map };
 }
 
@@ -51,7 +51,7 @@ pub fn deinit(this: *EnvMap) void {
 /// NOTE: This will `.ref()` value, so you should `defer value.deref()` it
 /// before handing it to this function!!!
 pub fn insert(this: *EnvMap, key: EnvStr, val: EnvStr) void {
-    const result = bun.handleOom(this.map.getOrPut(key));
+    const result = fun.handleOom(this.map.getOrPut(key));
     if (!result.found_existing) {
         key.ref();
     } else {
@@ -71,7 +71,7 @@ pub fn clearRetainingCapacity(this: *EnvMap) void {
 }
 
 pub fn ensureTotalCapacity(this: *EnvMap, new_capacity: usize) void {
-    bun.handleOom(this.map.ensureTotalCapacity(new_capacity));
+    fun.handleOom(this.map.ensureTotalCapacity(new_capacity));
 }
 
 /// NOTE: Make sure you deref the string when done!
@@ -83,7 +83,7 @@ pub fn get(this: *EnvMap, key: EnvStr) ?EnvStr {
 
 pub fn clone(this: *EnvMap) EnvMap {
     var new: EnvMap = .{
-        .map = bun.handleOom(this.map.clone()),
+        .map = fun.handleOom(this.map.clone()),
     };
     new.refStrings();
     return new;
@@ -91,7 +91,7 @@ pub fn clone(this: *EnvMap) EnvMap {
 
 pub fn cloneWithAllocator(this: *EnvMap, allocator: Allocator) EnvMap {
     var new: EnvMap = .{
-        .map = bun.handleOom(this.map.cloneWithAllocator(allocator)),
+        .map = fun.handleOom(this.map.cloneWithAllocator(allocator)),
     };
     new.refStrings();
     return new;
@@ -113,7 +113,7 @@ fn derefStrings(this: *EnvMap) void {
     }
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const EnvStr = bun.shell.EnvStr;
+const EnvStr = fun.shell.EnvStr;

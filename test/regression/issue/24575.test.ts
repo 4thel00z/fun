@@ -1,6 +1,6 @@
-// https://github.com/oven-sh/bun/pull/24575
+// https://github.com/underdoc-org/fun/pull/24575
 // Tests that socket._handle.fd property is available
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import net from "node:net";
 import tls from "node:tls";
 

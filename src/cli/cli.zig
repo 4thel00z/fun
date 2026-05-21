@@ -2,7 +2,7 @@ const debug = Output.scoped(.CLI, .hidden);
 
 pub var start_time: i128 = undefined;
 
-pub var Bun__Node__ProcessTitle: ?string = null;
+pub var Fun__Node__ProcessTitle: ?string = null;
 
 pub const Cli = struct {
     pub const CompileTarget = @import("../options_types/CompileTarget.zig");
@@ -20,7 +20,7 @@ pub const Cli = struct {
         Command.start(allocator, log) catch |err| {
             log.print(Output.errorWriter()) catch {};
 
-            bun.crash_handler.handleRootError(err, @errorReturnTrace());
+            fun.crash_handler.handleRootError(err, @errorReturnTrace());
         };
     }
 
@@ -80,7 +80,7 @@ pub const RunCommand = @import("./run_command.zig").RunCommand;
 pub const ShellCompletions = @import("./shell_completions.zig");
 pub const UpdateCommand = @import("./update_command.zig").UpdateCommand;
 pub const UpgradeCommand = @import("./upgrade_command.zig").UpgradeCommand;
-pub const BunxCommand = @import("./bunx_command.zig").BunxCommand;
+pub const FunxCommand = @import("./funx_command.zig").FunxCommand;
 pub const ExecCommand = @import("./exec_command.zig").ExecCommand;
 pub const PatchCommand = @import("./patch_command.zig").PatchCommand;
 pub const PatchCommitCommand = @import("./patch_commit_command.zig").PatchCommitCommand;
@@ -142,7 +142,7 @@ pub const HelpCommand = struct {
     };
 
     pub const packages_to_x_filler = [_]string{
-        "bun-repl",
+        "fun-repl",
         "next",
         "vite",
         "prisma",
@@ -161,19 +161,19 @@ pub const HelpCommand = struct {
 
     // the spacing between commands here is intentional
     pub const cli_helptext_fmt =
-        \\<b>Usage:<r> <b>bun \<command\> <cyan>[...flags]<r> <b>[...args]<r>
+        \\<b>Usage:<r> <b>fun \<command\> <cyan>[...flags]<r> <b>[...args]<r>
         \\
         \\<b>Commands:<r>
-        \\  <b><magenta>run<r>       <d>./my-script.ts<r>       Execute a file with Bun
+        \\  <b><magenta>run<r>       <d>./my-script.ts<r>       Execute a file with Fun
         \\            <d>lint<r>                 Run a package.json script
-        \\  <b><magenta>test<r>                           Run unit tests with Bun
-        \\  <b><magenta>x<r>         <d>{s:<16}<r>     Execute a package binary (CLI), installing if needed <d>(bunx)<r>
-        \\  <b><magenta>repl<r>                           Start a REPL session with Bun
-        \\  <b><magenta>exec<r>                           Run a shell script directly with Bun
+        \\  <b><magenta>test<r>                           Run unit tests with Fun
+        \\  <b><magenta>x<r>         <d>{s:<16}<r>     Execute a package binary (CLI), installing if needed <d>(funx)<r>
+        \\  <b><magenta>repl<r>                           Start a REPL session with Fun
+        \\  <b><magenta>exec<r>                           Run a shell script directly with Fun
         \\
-        \\  <b><blue>install<r>                        Install dependencies for a package.json <d>(bun i)<r>
-        \\  <b><blue>add<r>       <d>{s:<16}<r>     Add a dependency to package.json <d>(bun a)<r>
-        \\  <b><blue>remove<r>    <d>{s:<16}<r>     Remove a dependency from package.json <d>(bun rm)<r>
+        \\  <b><blue>install<r>                        Install dependencies for a package.json <d>(fun i)<r>
+        \\  <b><blue>add<r>       <d>{s:<16}<r>     Add a dependency to package.json <d>(fun a)<r>
+        \\  <b><blue>remove<r>    <d>{s:<16}<r>     Remove a dependency from package.json <d>(fun rm)<r>
         \\  <b><blue>update<r>    <d>{s:<16}<r>     Update outdated dependencies
         \\  <b><blue>audit<r>                          Check installed packages for vulnerabilities
         \\  <b><blue>outdated<r>                       Display latest versions of outdated dependencies
@@ -187,18 +187,18 @@ pub const HelpCommand = struct {
         \\
         \\  <b><yellow>build<r>     <d>./a.ts ./b.jsx<r>       Bundle TypeScript & JavaScript into a single file
         \\
-        \\  <b><cyan>init<r>                           Start an empty Bun project from a built-in template
-        \\  <b><cyan>create<r>    <d>{s:<16}<r>     Create a new project from a template <d>(bun c)<r>
-        \\  <b><cyan>upgrade<r>                        Upgrade to latest version of Bun.
-        \\  <b><cyan>feedback<r>  <d>./file1 ./file2<r>      Provide feedback to the Bun team.
+        \\  <b><cyan>init<r>                           Start an empty Fun project from a built-in template
+        \\  <b><cyan>create<r>    <d>{s:<16}<r>     Create a new project from a template <d>(fun c)<r>
+        \\  <b><cyan>upgrade<r>                        Upgrade to latest version of Fun.
+        \\  <b><cyan>feedback<r>  <d>./file1 ./file2<r>      Provide feedback to the Fun team.
         \\
         \\  <d>\<command\><r> <b><cyan>--help<r>               Print help text for command.
         \\
     ;
     const cli_helptext_footer =
         \\
-        \\Learn more about Bun:            <magenta>https://bun.com/docs<r>
-        \\Join our Discord community:      <blue>https://bun.com/discord<r>
+        \\Learn more about Fun:            <magenta>https://fun.dev/docs<r>
+        \\Join our Discord community:      <blue>https://fun.dev/discord<r>
         \\
     ;
 
@@ -224,13 +224,13 @@ pub const HelpCommand = struct {
         switch (reason) {
             .explicit => {
                 if (comptime Environment.isDebug) {
-                    if (bun.argv.len == 1) {
-                        if (bun.Output.isAIAgent()) {
-                            if (bun.env_var.npm_lifecycle_event.get()) |event| {
-                                if (bun.strings.hasPrefixComptime(event, "bd")) {
+                    if (fun.argv.len == 1) {
+                        if (fun.Output.isAIAgent()) {
+                            if (fun.env_var.npm_lifecycle_event.get()) |event| {
+                                if (fun.strings.hasPrefixComptime(event, "bd")) {
                                     // claude gets very confused by the help menu
                                     // let's give claude some self confidence.
-                                    Output.println("BUN COMPILED SUCCESSFULLY! 🎉", .{});
+                                    Output.println("FUN COMPILED SUCCESSFULLY! 🎉", .{});
                                     Global.exit(0);
                                 }
                             }
@@ -239,7 +239,7 @@ pub const HelpCommand = struct {
                 }
 
                 Output.pretty(
-                    "<r><b><magenta>Bun<r> is a fast JavaScript runtime, package manager, bundler, and test runner. <d>(" ++
+                    "<r><b><magenta>Fun<r> is a fast JavaScript runtime, package manager, bundler, and test runner. <d>(" ++
                         Global.package_json_version_with_revision ++
                         ")<r>\n\n" ++
                         cli_helptext_fmt,
@@ -249,8 +249,8 @@ pub const HelpCommand = struct {
                     Output.pretty("\n<b>Flags:<r>", .{});
 
                     const flags = Arguments.runtime_params_ ++ Arguments.auto_only_params ++ Arguments.base_params_;
-                    clap.simpleHelpBunTopLevel(comptime &flags);
-                    Output.pretty("\n\n(more flags in <b>bun install --help<r>, <b>bun test --help<r>, and <b>bun build --help<r>)\n", .{});
+                    clap.simpleHelpFunTopLevel(comptime &flags);
+                    Output.pretty("\n\n(more flags in <b>fun install --help<r>, <b>fun test --help<r>, and <b>fun build --help<r>)\n", .{});
                 }
                 Output.pretty(cli_helptext_footer, .{});
             },
@@ -277,14 +277,14 @@ pub const HelpCommand = struct {
 pub const ReservedCommand = struct {
     pub fn exec(_: std.mem.Allocator) !void {
         @branchHint(.cold);
-        const command_name = for (bun.argv[1..]) |arg| {
+        const command_name = for (fun.argv[1..]) |arg| {
             if (arg.len > 1 and arg[0] == '-') continue;
             break arg;
-        } else bun.argv[1];
+        } else fun.argv[1];
         Output.prettyError(
-            \\<r><red>Uh-oh<r>. <b><yellow>bun {s}<r> is a subcommand reserved for future use by Bun.
+            \\<r><red>Uh-oh<r>. <b><yellow>fun {s}<r> is a subcommand reserved for future use by Fun.
             \\
-            \\If you were trying to run a package.json script called {s}, use <b><magenta>bun run {s}<r>.
+            \\If you were trying to run a package.json script called {s}, use <b><magenta>fun run {s}<r>.
             \\
         , .{ command_name, command_name, command_name });
         Output.flush();
@@ -295,12 +295,12 @@ pub const ReservedCommand = struct {
 /// This is set `true` during `Command.which()` if argv0 is "node", in which the CLI is going
 /// to pretend to be node.js by always choosing RunCommand with a relative filepath.
 ///
-/// Examples of how this differs from bun alone:
-/// - `node build`               -> `bun run ./build`
-/// - `node scripts/postinstall` -> `bun run ./scripts/postinstall`
+/// Examples of how this differs from fun alone:
+/// - `node build`               -> `fun run ./build`
+/// - `node scripts/postinstall` -> `fun run ./scripts/postinstall`
 pub var pretend_to_be_node = false;
 
-/// This is set `true` during `Command.which()` if argv0 is "bunx"
+/// This is set `true` during `Command.which()` if argv0 is "funx"
 pub var is_bunx_exe = false;
 
 pub const Command = struct {
@@ -342,11 +342,11 @@ pub const Command = struct {
 
         if (comptime Environment.isWindows) {
             if (global_cli_ctx.debug.hot_reload == .watch) {
-                if (!bun.windows.isWatcherChild()) {
+                if (!fun.windows.isWatcherChild()) {
                     // this is noreturn
-                    bun.windows.becomeWatcherManager(allocator);
+                    fun.windows.becomeWatcherManager(allocator);
                 } else {
-                    bun.auto_reload_on_crash = true;
+                    fun.auto_reload_on_crash = true;
                 }
             }
         }
@@ -373,11 +373,11 @@ pub const Command = struct {
         }
     };
 
-    pub fn isBunX(argv0: []const u8) bool {
+    pub fn isFunX(argv0: []const u8) bool {
         if (Environment.isWindows) {
-            return strings.endsWithComptime(argv0, "bunx.exe") or strings.endsWithComptime(argv0, "bunx");
+            return strings.endsWithComptime(argv0, "funx.exe") or strings.endsWithComptime(argv0, "funx");
         }
-        return strings.endsWithComptime(argv0, "bunx");
+        return strings.endsWithComptime(argv0, "funx");
     }
 
     pub fn isNode(argv0: []const u8) bool {
@@ -388,23 +388,23 @@ pub const Command = struct {
     }
 
     pub fn which() Tag {
-        var args_iter = ArgsIterator{ .buf = bun.argv };
+        var args_iter = ArgsIterator{ .buf = fun.argv };
 
         const argv0 = args_iter.next() orelse return .HelpCommand;
 
-        if (isBunX(argv0)) {
-            // if we are bunx, but NOT a symlink to bun. when we run `<self> install`, we dont
-            // want to recursively run bunx. so this check lets us peek back into bun install.
+        if (isFunX(argv0)) {
+            // if we are funx, but NOT a symlink to fun. when we run `<self> install`, we dont
+            // want to recursively run funx. so this check lets us peek back into fun install.
             if (args_iter.next()) |next| {
-                if (bun.strings.eqlComptime(next, "add") and bun.feature_flag.BUN_INTERNAL_BUNX_INSTALL.get()) {
+                if (fun.strings.eqlComptime(next, "add") and fun.feature_flag.FUN_INTERNAL_FUNX_INSTALL.get()) {
                     return .AddCommand;
-                } else if (bun.strings.eqlComptime(next, "exec") and bun.feature_flag.BUN_INTERNAL_BUNX_INSTALL.get()) {
+                } else if (fun.strings.eqlComptime(next, "exec") and fun.feature_flag.FUN_INTERNAL_FUNX_INSTALL.get()) {
                     return .ExecCommand;
                 }
             }
 
             is_bunx_exe = true;
-            return .BunxCommand;
+            return .FunxCommand;
         }
 
         if (isNode(argv0)) {
@@ -423,14 +423,14 @@ pub const Command = struct {
 
         return switch (RootCommandMatcher.match(first_arg_name)) {
             RootCommandMatcher.case("init") => .InitCommand,
-            RootCommandMatcher.case("build"), RootCommandMatcher.case("bun") => .BuildCommand,
+            RootCommandMatcher.case("build"), RootCommandMatcher.case("fun") => .BuildCommand,
             RootCommandMatcher.case("discord") => .DiscordCommand,
             RootCommandMatcher.case("upgrade") => .UpgradeCommand,
             RootCommandMatcher.case("completions") => .InstallCompletionsCommand,
             RootCommandMatcher.case("getcompletes") => .GetCompletionsCommand,
             RootCommandMatcher.case("link") => .LinkCommand,
             RootCommandMatcher.case("unlink") => .UnlinkCommand,
-            RootCommandMatcher.case("x") => .BunxCommand,
+            RootCommandMatcher.case("x") => .FunxCommand,
             RootCommandMatcher.case("repl") => .ReplCommand,
 
             RootCommandMatcher.case("i"),
@@ -473,8 +473,8 @@ pub const Command = struct {
             RootCommandMatcher.case("audit") => .AuditCommand,
             RootCommandMatcher.case("info") => .InfoCommand,
 
-            // These are reserved for future use by Bun, so that someone
-            // doing `bun deploy` to run a script doesn't accidentally break
+            // These are reserved for future use by Fun, so that someone
+            // doing `fun deploy` to run a script doesn't accidentally break
             // when we add our actual command
             RootCommandMatcher.case("deploy") => .ReservedCommand,
             RootCommandMatcher.case("cloud") => .ReservedCommand,
@@ -487,7 +487,7 @@ pub const Command = struct {
             RootCommandMatcher.case("prune") => .ReservedCommand,
             RootCommandMatcher.case("list") => .PackageManagerCommand,
             RootCommandMatcher.case("why") => .WhyCommand,
-            RootCommandMatcher.case("fuzzilli") => if (bun.Environment.enable_fuzzilli)
+            RootCommandMatcher.case("fuzzilli") => if (fun.Environment.enable_fuzzilli)
                 .FuzzilliCommand
             else
                 .AutoCommand,
@@ -508,7 +508,7 @@ pub const Command = struct {
         "unlink",
         "remove",
         "create",
-        "bun",
+        "fun",
         "upgrade",
         "discord",
         "test",
@@ -531,58 +531,58 @@ pub const Command = struct {
     /// function or that stack space is used up forever.
     pub fn start(allocator: std.mem.Allocator, log: *logger.Log) !void {
         if (comptime Environment.allow_assert) {
-            if (!bun.env_var.MI_VERBOSE.get()) {
-                bun.mimalloc.mi_option_set_enabled(.verbose, false);
+            if (!fun.env_var.MI_VERBOSE.get()) {
+                fun.mimalloc.mi_option_set_enabled(.verbose, false);
             }
         }
 
         // WebView host subprocess entry. Must be before StandaloneModuleGraph,
         // before JSC init, before anything that touches a JS engine. The child
-        // runs CFRunLoopRun() as its real main loop — no Bun runtime past this.
+        // runs CFRunLoopRun() as its real main loop — no Fun runtime past this.
         if (comptime Environment.isMac) {
-            if (bun.env_var.BUN_INTERNAL_WEBVIEW_HOST.get()) |fd_str| {
+            if (fun.env_var.FUN_INTERNAL_WEBVIEW_HOST.get()) |fd_str| {
                 const fd = std.fmt.parseInt(u31, fd_str, 10) catch {
-                    Output.panic("Invalid BUN_INTERNAL_WEBVIEW_HOST fd: {s}", .{fd_str});
+                    Output.panic("Invalid FUN_INTERNAL_WEBVIEW_HOST fd: {s}", .{fd_str});
                 };
                 const hostMain = @extern(
                     *const fn (i32) callconv(.c) noreturn,
-                    .{ .name = "Bun__WebView__hostMain" },
+                    .{ .name = "Fun__WebView__hostMain" },
                 );
                 hostMain(fd);
             }
         }
 
-        // bun build --compile entry point
-        if (!bun.feature_flag.BUN_BE_BUN.get()) {
-            if (try bun.StandaloneModuleGraph.fromExecutable(bun.default_allocator)) |graph| {
+        // fun build --compile entry point
+        if (!fun.feature_flag.FUN_BE_FUN.get()) {
+            if (try fun.StandaloneModuleGraph.fromExecutable(fun.default_allocator)) |graph| {
                 var offset_for_passthrough: usize = 0;
 
                 const ctx: *ContextData = brk: {
-                    if (graph.compile_exec_argv.len > 0 or bun.bun_options_argc > 0) {
-                        const original_argv_len = bun.argv.len;
-                        var argv_list = std.array_list.Managed([:0]const u8).fromOwnedSlice(bun.default_allocator, bun.argv);
+                    if (graph.compile_exec_argv.len > 0 or fun.fun_options_argc > 0) {
+                        const original_argv_len = fun.argv.len;
+                        var argv_list = std.array_list.Managed([:0]const u8).fromOwnedSlice(fun.default_allocator, fun.argv);
                         if (graph.compile_exec_argv.len > 0) {
-                            try bun.appendOptionsEnv(graph.compile_exec_argv, [:0]const u8, &argv_list);
+                            try fun.appendOptionsEnv(graph.compile_exec_argv, [:0]const u8, &argv_list);
                         }
 
                         // Store the full argv including user arguments
                         const full_argv = argv_list.items;
                         const num_exec_argv_options = full_argv.len -| original_argv_len;
 
-                        // Calculate offset: skip executable name + all exec argv options + BUN_OPTIONS args
-                        const num_parsed_options = num_exec_argv_options + bun.bun_options_argc;
+                        // Calculate offset: skip executable name + all exec argv options + FUN_OPTIONS args
+                        const num_parsed_options = num_exec_argv_options + fun.fun_options_argc;
                         offset_for_passthrough = if (full_argv.len > 1) 1 + num_parsed_options else 0;
 
-                        // Temporarily set bun.argv to only include executable name + exec_argv options + BUN_OPTIONS args.
+                        // Temporarily set fun.argv to only include executable name + exec_argv options + FUN_OPTIONS args.
                         // This prevents user arguments like --version/--help from being intercepted
-                        // by Bun's argument parser (they should be passed through to user code).
-                        bun.argv = full_argv[0..@min(1 + num_parsed_options, full_argv.len)];
+                        // by Fun's argument parser (they should be passed through to user code).
+                        fun.argv = full_argv[0..@min(1 + num_parsed_options, full_argv.len)];
 
                         // Handle actual options to parse.
                         const result = try Command.init(allocator, log, .AutoCommand);
 
                         // Restore full argv so passthrough calculation works correctly
-                        bun.argv = full_argv;
+                        fun.argv = full_argv;
 
                         break :brk result;
                     }
@@ -591,23 +591,23 @@ pub const Command = struct {
                         .args = std.mem.zeroes(api.TransformOptions),
                         .log = log,
                         .start_time = start_time,
-                        .allocator = bun.default_allocator,
+                        .allocator = fun.default_allocator,
                     };
                     global_cli_ctx = &context_data;
 
                     // If no compile_exec_argv, skip executable name if present
-                    offset_for_passthrough = @min(1, bun.argv.len);
+                    offset_for_passthrough = @min(1, fun.argv.len);
 
                     break :brk global_cli_ctx;
                 };
 
-                ctx.args.target = .bun;
+                ctx.args.target = .fun;
                 if (ctx.debug.global_cache == .auto)
                     ctx.debug.global_cache = .disable;
 
-                ctx.passthrough = bun.argv[offset_for_passthrough..];
+                ctx.passthrough = fun.argv[offset_for_passthrough..];
 
-                try bun_js.Run.bootStandalone(
+                try fun_js.Run.bootStandalone(
                     ctx,
                     graph.entryPoint().name,
                     graph,
@@ -616,7 +616,7 @@ pub const Command = struct {
             }
         }
 
-        debug("argv: [{f}]", .{bun.fmt.fmtSlice(bun.argv, ", ")});
+        debug("argv: [{f}]", .{fun.fmt.fmtSlice(fun.argv, ", ")});
 
         const tag = which();
 
@@ -624,9 +624,9 @@ pub const Command = struct {
             .DiscordCommand => return try DiscordCommand.exec(allocator),
             .HelpCommand => return try HelpCommand.exec(allocator),
             .ReservedCommand => return try ReservedCommand.exec(allocator),
-            .InitCommand => return try InitCommand.exec(allocator, bun.argv[@min(2, bun.argv.len)..]),
+            .InitCommand => return try InitCommand.exec(allocator, fun.argv[@min(2, fun.argv.len)..]),
             .InfoCommand => {
-                try @"bun info"(allocator, log);
+                try @"fun info"(allocator, log);
                 return;
             },
             .BuildCommand => {
@@ -694,10 +694,10 @@ pub const Command = struct {
                 try WhyCommand.exec(ctx);
                 return;
             },
-            .BunxCommand => {
-                const ctx = try Command.init(allocator, log, .BunxCommand);
+            .FunxCommand => {
+                const ctx = try Command.init(allocator, log, .FunxCommand);
 
-                try BunxCommand.exec(ctx, bun.argv[if (is_bunx_exe) 0 else 1..]);
+                try FunxCommand.exec(ctx, fun.argv[if (is_bunx_exe) 0 else 1..]);
                 return;
             },
             .ReplCommand => {
@@ -736,16 +736,16 @@ pub const Command = struct {
                 return;
             },
             .GetCompletionsCommand => {
-                try @"bun getcompletes"(allocator, log);
+                try @"fun getcompletes"(allocator, log);
                 return;
             },
             .CreateCommand => {
-                try @"bun create"(allocator, log);
+                try @"fun create"(allocator, log);
                 return;
             },
             .RunCommand => {
                 const ctx = try Command.init(allocator, log, .RunCommand);
-                ctx.args.target = .bun;
+                ctx.args.target = .fun;
 
                 if (ctx.parallel or ctx.sequential) {
                     MultiRun.run(ctx) catch |err| {
@@ -771,7 +771,7 @@ pub const Command = struct {
             },
             .RunAsNodeCommand => {
                 const ctx = try Command.init(allocator, log, .RunAsNodeCommand);
-                bun.assert(pretend_to_be_node);
+                fun.assert(pretend_to_be_node);
                 try RunCommand.execAsIfNode(ctx);
             },
             .UpgradeCommand => {
@@ -791,7 +791,7 @@ pub const Command = struct {
                         },
                     }
                 };
-                ctx.args.target = .bun;
+                ctx.args.target = .fun;
 
                 if (ctx.parallel or ctx.sequential) {
                     MultiRun.run(ctx) catch |err| {
@@ -808,7 +808,7 @@ pub const Command = struct {
                 }
 
                 if (ctx.runtime_options.eval.script.len > 0) {
-                    return try @"bun --eval --print"(ctx);
+                    return try @"fun --eval --print"(ctx);
                 }
 
                 const extension: []const u8 = if (ctx.args.entry_points.len > 0)
@@ -818,7 +818,7 @@ pub const Command = struct {
                 // KEYWORDS: open file argv argv0
                 if (ctx.args.entry_points.len == 1) {
                     if (strings.eqlComptime(extension, ".lockb")) {
-                        return try @"bun ./bun.lockb"(ctx);
+                        return try @"fun ./fun.lockb"(ctx);
                     }
                 }
 
@@ -843,7 +843,7 @@ pub const Command = struct {
                 } else Tag.printHelp(.ExecCommand, true);
             },
             .FuzzilliCommand => {
-                if (bun.Environment.enable_fuzzilli) {
+                if (fun.Environment.enable_fuzzilli) {
                     const ctx = try Command.init(allocator, log, .FuzzilliCommand);
                     try FuzzilliCommand.exec(ctx);
                     return;
@@ -862,7 +862,7 @@ pub const Command = struct {
             .RunCommand, .RunAsNodeCommand => Arguments.run_params,
             .BuildCommand => Arguments.build_params,
             .TestCommand => Arguments.test_params,
-            .BunxCommand => Arguments.run_params,
+            .FunxCommand => Arguments.run_params,
             else => Arguments.base_params_ ++ Arguments.runtime_params_ ++ Arguments.transpiler_params_,
         };
     }
@@ -871,7 +871,7 @@ pub const Command = struct {
         switch (cmd) {
 
             // the output of --help uses the following syntax highlighting
-            // template: <b>Usage<r>: <b><green>bun <command><r> <cyan>[flags]<r> <blue>[arguments]<r>
+            // template: <b>Usage<r>: <b><green>fun <command><r> <cyan>[flags]<r> <blue>[arguments]<r>
             // use [foo] for multiple arguments or flags for foo.
             // use <bar> to emphasize 'bar'
 
@@ -899,9 +899,9 @@ pub const Command = struct {
 
             .InitCommand => {
                 const intro_text =
-                    \\<b>Usage<r>: <b><green>bun init<r> <cyan>[flags]<r> <blue>[\<folder\>]<r>
-                    \\  Initialize a Bun project in the current directory.
-                    \\  Creates a package.json, tsconfig.json, and bunfig.toml if they don't exist.
+                    \\<b>Usage<r>: <b><green>fun init<r> <cyan>[flags]<r> <blue>[\<folder\>]<r>
+                    \\  Initialize a Fun project in the current directory.
+                    \\  Creates a package.json, tsconfig.json, and funfig.toml if they don't exist.
                     \\
                     \\<b>Flags<r>:
                     \\      <cyan>--help<r>             Print this menu
@@ -912,33 +912,33 @@ pub const Command = struct {
                     \\      <cyan>--react=shadcn<r>     Initialize a React project with @shadcn/ui and TailwindCSS
                     \\
                     \\<b>Examples:<r>
-                    \\  <b><green>bun init<r>
-                    \\  <b><green>bun init<r> <cyan>--yes<r>
-                    \\  <b><green>bun init<r> <cyan>--react<r>
-                    \\  <b><green>bun init<r> <cyan>--react=tailwind<r> <blue>my-app<r>
+                    \\  <b><green>fun init<r>
+                    \\  <b><green>fun init<r> <cyan>--yes<r>
+                    \\  <b><green>fun init<r> <cyan>--react<r>
+                    \\  <b><green>fun init<r> <cyan>--react=tailwind<r> <blue>my-app<r>
                 ;
 
                 Output.pretty(intro_text ++ "\n", .{});
                 Output.flush();
             },
 
-            Command.Tag.BunxCommand => {
+            Command.Tag.FunxCommand => {
                 Output.prettyErrorln(
-                    \\<b>Usage<r>: <b><green>bunx<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r> [flags and arguments for the package]<r>
+                    \\<b>Usage<r>: <b><green>funx<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r> [flags and arguments for the package]<r>
                     \\Execute an npm package executable (CLI), automatically installing into a global shared cache if not installed in node_modules.
                     \\
                     \\Flags:
-                    \\  <cyan>--bun<r>                  Force the command to run with Bun instead of Node.js
+                    \\  <cyan>--fun<r>                  Force the command to run with Fun instead of Node.js
                     \\  <cyan>-p, --package <blue>\<package\><r>    Specify package to install when binary name differs from package name
                     \\  <cyan>--no-install<r>           Skip installation if package is not already installed
                     \\  <cyan>--verbose<r>              Enable verbose output during installation
                     \\  <cyan>--silent<r>               Suppress output during installation
                     \\
                     \\Examples<d>:<r>
-                    \\  <b><green>bunx<r> <blue>prisma<r> migrate<r>
-                    \\  <b><green>bunx<r> <blue>prettier<r> foo.js<r>
-                    \\  <b><green>bunx<r> <cyan>-p @angular/cli<r> <blue>ng<r> new my-app
-                    \\  <b><green>bunx<r> <cyan>--bun<r> <blue>vite<r> dev foo.js<r>
+                    \\  <b><green>funx<r> <blue>prisma<r> migrate<r>
+                    \\  <b><green>funx<r> <blue>prettier<r> foo.js<r>
+                    \\  <b><green>funx<r> <cyan>-p @angular/cli<r> <blue>ng<r> new my-app
+                    \\  <b><green>funx<r> <cyan>--fun<r> <blue>vite<r> dev foo.js<r>
                     \\
                 , .{});
             },
@@ -946,22 +946,22 @@ pub const Command = struct {
                 const intro_text =
                     \\<b>Usage<r>:
                     \\  Transpile and bundle one or more files.
-                    \\  <b><green>bun build<r> <cyan>[flags]<r> <blue>\<entrypoint\><r>
+                    \\  <b><green>fun build<r> <cyan>[flags]<r> <blue>\<entrypoint\><r>
                 ;
 
                 const outro_text =
                     \\<b>Examples:<r>
                     \\  <d>Frontend web apps:<r>
-                    \\  <b><green>bun build<r> <cyan>--outfile=bundle.js<r> <blue>./src/index.ts<r>
-                    \\  <b><green>bun build<r> <cyan>--minify --splitting --outdir=out<r> <blue>./index.jsx ./lib/worker.ts<r>
+                    \\  <b><green>fun build<r> <cyan>--outfile=bundle.js<r> <blue>./src/index.ts<r>
+                    \\  <b><green>fun build<r> <cyan>--minify --splitting --outdir=out<r> <blue>./index.jsx ./lib/worker.ts<r>
                     \\
-                    \\  <d>Bundle code to be run in Bun (reduces server startup time)<r>
-                    \\  <b><green>bun build<r> <cyan>--target=bun --outfile=server.js<r> <blue>./server.ts<r>
+                    \\  <d>Bundle code to be run in Fun (reduces server startup time)<r>
+                    \\  <b><green>fun build<r> <cyan>--target=fun --outfile=server.js<r> <blue>./server.ts<r>
                     \\
-                    \\  <d>Creating a standalone executable (see https://bun.com/docs/bundler/executables)<r>
-                    \\  <b><green>bun build<r> <cyan>--compile --outfile=my-app<r> <blue>./cli.ts<r>
+                    \\  <d>Creating a standalone executable (see https://fun.dev/docs/bundler/executables)<r>
+                    \\  <b><green>fun build<r> <cyan>--compile --outfile=my-app<r> <blue>./cli.ts<r>
                     \\
-                    \\A full list of flags is available at <magenta>https://bun.com/docs/bundler<r>
+                    \\A full list of flags is available at <magenta>https://fun.dev/docs/bundler<r>
                     \\
                 ;
 
@@ -975,21 +975,21 @@ pub const Command = struct {
             },
             Command.Tag.TestCommand => {
                 const intro_text =
-                    \\<b>Usage<r>: <b><green>bun test<r> <cyan>[flags]<r> <blue>[\<patterns\>]<r>
+                    \\<b>Usage<r>: <b><green>fun test<r> <cyan>[flags]<r> <blue>[\<patterns\>]<r>
                     \\  Run all matching test files and print the results to stdout
                 ;
                 const outro_text =
                     \\<b>Examples:<r>
                     \\  <d>Run all test files<r>
-                    \\  <b><green>bun test<r>
+                    \\  <b><green>fun test<r>
                     \\
                     \\  <d>Run all test files with "foo" or "bar" in the file name<r>
-                    \\  <b><green>bun test<r> <blue>foo bar<r>
+                    \\  <b><green>fun test<r> <blue>foo bar<r>
                     \\
                     \\  <d>Run all test files, only including tests whose names includes "baz"<r>
-                    \\  <b><green>bun test<r> <cyan>--test-name-pattern<r> <blue>baz<r>
+                    \\  <b><green>fun test<r> <cyan>--test-name-pattern<r> <blue>baz<r>
                     \\
-                    \\Full documentation is available at <magenta>https://bun.com/docs/cli/test<r>
+                    \\Full documentation is available at <magenta>https://fun.dev/docs/cli/test<r>
                     \\
                 ;
 
@@ -1005,15 +1005,15 @@ pub const Command = struct {
             Command.Tag.CreateCommand => {
                 const intro_text =
                     \\<b>Usage<r><d>:<r>
-                    \\  <b><green>bun create<r> <magenta>\<MyReactComponent.(jsx|tsx)\><r>
-                    \\  <b><green>bun create<r> <magenta>\<template\><r> <cyan>[...flags]<r> <blue>dest<r>
-                    \\  <b><green>bun create<r> <magenta>\<github-org/repo\><r> <cyan>[...flags]<r> <blue>dest<r>
+                    \\  <b><green>fun create<r> <magenta>\<MyReactComponent.(jsx|tsx)\><r>
+                    \\  <b><green>fun create<r> <magenta>\<template\><r> <cyan>[...flags]<r> <blue>dest<r>
+                    \\  <b><green>fun create<r> <magenta>\<github-org/repo\><r> <cyan>[...flags]<r> <blue>dest<r>
                     \\
                     \\<b>Environment variables<r><d>:<r>
                     \\  <cyan>GITHUB_TOKEN<r>         <d>Supply a token to download code from GitHub with a higher rate limit<r>
                     \\  <cyan>GITHUB_API_DOMAIN<r>    <d>Configure custom/enterprise GitHub domain. Default "api.github.com"<r>
                     \\  <cyan>NPM_CLIENT<r>           <d>Absolute path to the npm client executable<r>
-                    \\  <cyan>BUN_CREATE_DIR<r>       <d>Custom path for global templates (default: $HOME/.bun-create)<r>
+                    \\  <cyan>FUN_CREATE_DIR<r>       <d>Custom path for global templates (default: $HOME/.fun-create)<r>
                 ;
 
                 const outro_text =
@@ -1022,14 +1022,14 @@ pub const Command = struct {
                     \\  • Automatically starts a hot-reloading dev server
                     \\  • Auto-detects & configures TailwindCSS and shadcn/ui
                     \\
-                    \\  <b><magenta>bun create \<MyReactComponent.(jsx|tsx)\><r>
+                    \\  <b><magenta>fun create \<MyReactComponent.(jsx|tsx)\><r>
                     \\
                     \\<b>Templates<r><d>:<r>
-                    \\  • NPM: Runs <b><magenta>bunx create-\<template\><r> with given arguments
+                    \\  • NPM: Runs <b><magenta>funx create-\<template\><r> with given arguments
                     \\  • GitHub: Downloads repository contents as template
-                    \\  • Local: Uses templates from $HOME/.bun-create/\<name\> or ./.bun-create/\<name\>
+                    \\  • Local: Uses templates from $HOME/.fun-create/\<name\> or ./.fun-create/\<name\>
                     \\
-                    \\Learn more: <magenta>https://bun.com/docs/cli/bun-create<r>
+                    \\Learn more: <magenta>https://fun.dev/docs/cli/fun-create<r>
                     \\
                 ;
 
@@ -1043,24 +1043,24 @@ pub const Command = struct {
             },
             Command.Tag.UpgradeCommand => {
                 const intro_text =
-                    \\<b>Usage<r>: <b><green>bun upgrade<r> <cyan>[flags]<r>
-                    \\  Upgrade Bun
+                    \\<b>Usage<r>: <b><green>fun upgrade<r> <cyan>[flags]<r>
+                    \\  Upgrade Fun
                 ;
                 const outro_text =
                     \\<b>Examples:<r>
                     \\  <d>Install the latest {s} version<r>
-                    \\  <b><green>bun upgrade<r>
+                    \\  <b><green>fun upgrade<r>
                     \\
                     \\  <d>{s}<r>
-                    \\  <b><green>bun upgrade<r> <cyan>--{s}<r>
+                    \\  <b><green>fun upgrade<r> <cyan>--{s}<r>
                     \\
-                    \\Full documentation is available at <magenta>https://bun.com/docs/installation#upgrading<r>
+                    \\Full documentation is available at <magenta>https://fun.dev/docs/installation#upgrading<r>
                     \\
                 ;
 
                 const args = comptime switch (Environment.is_canary) {
                     true => .{ "canary", "Switch from the canary version back to the latest stable release", "stable" },
-                    false => .{ "stable", "Install the most recent canary version of Bun", "canary" },
+                    false => .{ "stable", "Install the most recent canary version of Fun", "canary" },
                 };
 
                 Output.pretty(intro_text, .{});
@@ -1071,8 +1071,8 @@ pub const Command = struct {
             },
             Command.Tag.ReplCommand => {
                 const intro_text =
-                    \\<b>Usage<r>: <b><green>bun repl<r> <cyan>[flags]<r>
-                    \\  Open a Bun REPL
+                    \\<b>Usage<r>: <b><green>fun repl<r> <cyan>[flags]<r>
+                    \\  Open a Fun REPL
                     \\
                 ;
 
@@ -1081,11 +1081,11 @@ pub const Command = struct {
             },
 
             Command.Tag.GetCompletionsCommand => {
-                Output.pretty("<b>Usage<r>: <b><green>bun getcompletes<r>", .{});
+                Output.pretty("<b>Usage<r>: <b><green>fun getcompletes<r>", .{});
                 Output.flush();
             },
             Command.Tag.InstallCompletionsCommand => {
-                Output.pretty("<b>Usage<r>: <b><green>bun completions<r>", .{});
+                Output.pretty("<b>Usage<r>: <b><green>fun completions<r>", .{});
                 Output.flush();
             },
             Command.Tag.PatchCommand => {
@@ -1096,15 +1096,15 @@ pub const Command = struct {
             },
             Command.Tag.ExecCommand => {
                 Output.pretty(
-                    \\<b>Usage: bun exec <r><cyan>\<script\><r>
+                    \\<b>Usage: fun exec <r><cyan>\<script\><r>
                     \\
-                    \\Execute a shell script directly from Bun.
+                    \\Execute a shell script directly from Fun.
                     \\
                     \\<b><red>Note<r>: If executing this from a shell, make sure to escape the string!
                     \\
                     \\<b>Examples<d>:<r>
-                    \\  <b>bun exec "echo hi"<r>
-                    \\  <b>bun exec "echo \"hey friends\"!"<r>
+                    \\  <b>fun exec "echo hi"<r>
+                    \\  <b>fun exec "echo \"hey friends\"!"<r>
                     \\
                 , .{});
                 Output.flush();
@@ -1119,22 +1119,22 @@ pub const Command = struct {
             },
             .InfoCommand => {
                 const intro_text =
-                    \\<b>Usage<r>: <b><green>bun info<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r> <blue>[property path]<r>
+                    \\<b>Usage<r>: <b><green>fun info<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r> <blue>[property path]<r>
                     \\  Display package metadata from the registry.
                     \\
                     \\<b>Examples:<r>
                     \\  <d>View basic information about a package<r>
-                    \\  <b><green>bun info<r> <blue>react<r>
+                    \\  <b><green>fun info<r> <blue>react<r>
                     \\
                     \\  <d>View specific version<r>
-                    \\  <b><green>bun info<r> <blue>react@18.0.0<r>
+                    \\  <b><green>fun info<r> <blue>react@18.0.0<r>
                     \\
                     \\  <d>View specific property<r>
-                    \\  <b><green>bun info<r> <blue>react<r> version
-                    \\  <b><green>bun info<r> <blue>react<r> dependencies
-                    \\  <b><green>bun info<r> <blue>react<r> versions
+                    \\  <b><green>fun info<r> <blue>react<r> version
+                    \\  <b><green>fun info<r> <blue>react<r> dependencies
+                    \\  <b><green>fun info<r> <blue>react<r> versions
                     \\
-                    \\Full documentation is available at <magenta>https://bun.com/docs/cli/info<r>
+                    \\Full documentation is available at <magenta>https://fun.dev/docs/cli/info<r>
                     \\
                 ;
 
@@ -1143,7 +1143,7 @@ pub const Command = struct {
             },
             .WhyCommand => {
                 const intro_text =
-                    \\<b>Usage<r>: <b><green>bun why<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r> <blue>[property path]<r>
+                    \\<b>Usage<r>: <b><green>fun why<r> <cyan>[flags]<r> <blue>\<package\><r><d>\<@version\><r> <blue>[property path]<r>
                     \\Explain why a package is installed
                     \\
                     \\<b>Arguments:<r>
@@ -1154,11 +1154,11 @@ pub const Command = struct {
                     \\  <cyan>--depth<r> <blue>\<NUM\><r> <d>Maximum depth of the dependency tree to display<r>
                     \\
                     \\<b>Examples:<r>
-                    \\  <d>$<r> <b><green>bun why<r> <blue>react<r>
-                    \\  <d>$<r> <b><green>bun why<r> <blue>"@types/*"<r> <cyan>--depth<r> <blue>2<r>
-                    \\  <d>$<r> <b><green>bun why<r> <blue>"*-lodash"<r> <cyan>--top<r>
+                    \\  <d>$<r> <b><green>fun why<r> <blue>react<r>
+                    \\  <d>$<r> <b><green>fun why<r> <blue>"@types/*"<r> <cyan>--depth<r> <blue>2<r>
+                    \\  <d>$<r> <b><green>fun why<r> <blue>"*-lodash"<r> <cyan>--top<r>
                     \\
-                    \\Full documentation is available at <magenta>https://bun.com/docs/cli/why<r>
+                    \\Full documentation is available at <magenta>https://fun.dev/docs/cli/why<r>
                     \\
                 ;
 
@@ -1171,23 +1171,23 @@ pub const Command = struct {
         }
     }
 
-    fn @"bun --eval --print"(ctx: Context) !void {
-        const trigger = bun.pathLiteral("/[eval]");
-        var entry_point_buf: [bun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
+    fn @"fun --eval --print"(ctx: Context) !void {
+        const trigger = fun.pathLiteral("/[eval]");
+        var entry_point_buf: [fun.MAX_PATH_BYTES + trigger.len]u8 = undefined;
         const cwd = try std.posix.getcwd(&entry_point_buf);
         @memcpy(entry_point_buf[cwd.len..][0..trigger.len], trigger);
         ctx.passthrough = try std.mem.concat(ctx.allocator, []const u8, &.{ ctx.positionals, ctx.passthrough });
-        try bun_js.Run.boot(ctx, entry_point_buf[0 .. cwd.len + trigger.len], null);
+        try fun_js.Run.boot(ctx, entry_point_buf[0 .. cwd.len + trigger.len], null);
     }
 
-    fn @"bun ./bun.lockb"(ctx: Context) !void {
-        for (bun.argv) |arg| {
+    fn @"fun ./fun.lockb"(ctx: Context) !void {
+        for (fun.argv) |arg| {
             if (strings.eqlComptime(arg, "--hash")) {
-                var path_buf: bun.PathBuffer = undefined;
+                var path_buf: fun.PathBuffer = undefined;
                 @memcpy(path_buf[0..ctx.args.entry_points[0].len], ctx.args.entry_points[0]);
                 path_buf[ctx.args.entry_points[0].len] = 0;
                 const lockfile_path = path_buf[0..ctx.args.entry_points[0].len :0];
-                const file = File.open(lockfile_path, bun.O.RDONLY, 0).unwrap() catch |err| {
+                const file = File.open(lockfile_path, fun.O.RDONLY, 0).unwrap() catch |err| {
                     Output.err(err, "failed to open lockfile", .{});
                     Global.crash();
                 };
@@ -1204,7 +1204,7 @@ pub const Command = struct {
         );
     }
 
-    fn @"bun getcompletes"(allocator: std.mem.Allocator, log: *logger.Log) !void {
+    fn @"fun getcompletes"(allocator: std.mem.Allocator, log: *logger.Log) !void {
         const ctx = try Command.init(allocator, log, .GetCompletionsCommand);
         var filter = ctx.positionals;
 
@@ -1233,9 +1233,9 @@ pub const Command = struct {
         } else if (strings.eqlComptime(filter[0], "r")) {
             completions = try RunCommand.completions(ctx, null, &reject_list, .all);
         } else if (strings.eqlComptime(filter[0], "g")) {
-            completions = try RunCommand.completions(ctx, null, &reject_list, .all_plus_bun_js);
+            completions = try RunCommand.completions(ctx, null, &reject_list, .all_plus_fun_js);
         } else if (strings.eqlComptime(filter[0], "j")) {
-            completions = try RunCommand.completions(ctx, null, &reject_list, .bun_js);
+            completions = try RunCommand.completions(ctx, null, &reject_list, .fun_js);
         } else if (strings.eqlComptime(filter[0], "z")) {
             completions = try RunCommand.completions(ctx, null, &reject_list, .script_and_descriptions);
         } else if (strings.eqlComptime(filter[0], "a")) {
@@ -1272,7 +1272,7 @@ pub const Command = struct {
                         'z' => FirstLetter.z,
                         else => break :outer,
                     };
-                    bun.handleOom(AddCompletions.init(bun.default_allocator));
+                    fun.handleOom(AddCompletions.init(fun.default_allocator));
                     const results = AddCompletions.getPackages(first_letter);
 
                     var prefilled_i: usize = 0;
@@ -1289,16 +1289,16 @@ pub const Command = struct {
         completions.print();
     }
 
-    fn @"bun create"(allocator: std.mem.Allocator, log: *logger.Log) !void {
-        // These are templates from the legacy `bun create`
+    fn @"fun create"(allocator: std.mem.Allocator, log: *logger.Log) !void {
+        // These are templates from the legacy `fun create`
         // most of them aren't useful but these few are kinda nice.
-        const HardcodedNonBunXList = bun.ComptimeStringMap(void, .{
+        const HardcodedNonFunXList = fun.ComptimeStringMap(void, .{
             .{"elysia"},
             .{"elysia-buchta"},
             .{"stric"},
         });
 
-        // Create command wraps bunx
+        // Create command wraps funx
         const ctx = try Command.init(allocator, log, .CreateCommand);
 
         var args = try std.process.argsAlloc(allocator);
@@ -1313,13 +1313,13 @@ pub const Command = struct {
         var positionals: [2]string = .{ "", "" };
         var positional_i: usize = 0;
 
-        var dash_dash_bun = false;
+        var dash_dash_fun = false;
         var print_help = false;
         if (args.len > 2) {
             const remainder = args[1..];
             var remainder_i: usize = 0;
             while (remainder_i < remainder.len and positional_i < positionals.len) : (remainder_i += 1) {
-                const slice = std.mem.trim(u8, bun.asByteSlice(remainder[remainder_i]), " \t\n");
+                const slice = std.mem.trim(u8, fun.asByteSlice(remainder[remainder_i]), " \t\n");
                 if (slice.len > 0) {
                     if (!strings.hasPrefixComptime(slice, "--")) {
                         if (positional_i == 1) {
@@ -1329,8 +1329,8 @@ pub const Command = struct {
                         positional_i += 1;
                     }
                     if (slice[0] == '-') {
-                        if (strings.eqlComptime(slice, "--bun")) {
-                            dash_dash_bun = true;
+                        if (strings.eqlComptime(slice, "--fun")) {
+                            dash_dash_fun = true;
                         } else if (strings.eqlComptime(slice, "--help") or strings.eqlComptime(slice, "-h")) {
                             print_help = true;
                         }
@@ -1340,8 +1340,8 @@ pub const Command = struct {
         }
 
         if (print_help or
-            // "bun create --"
-            // "bun create -abc --"
+            // "fun create --"
+            // "fun create -abc --"
             positional_i == 0 or
             positionals[1].len == 0)
         {
@@ -1353,7 +1353,7 @@ pub const Command = struct {
         const template_name = positionals[1];
 
         // if template_name is "react"
-        // print message telling user to use "bun create vite" instead
+        // print message telling user to use "fun create vite" instead
         if (strings.eqlComptime(template_name, "react")) {
             Output.prettyErrorln(
                 \\The "react" template has been deprecated.
@@ -1361,11 +1361,11 @@ pub const Command = struct {
                 \\
                 \\To create a project using Create React App, run
                 \\
-                \\  <d>bun create react-app<r>
+                \\  <d>fun create react-app<r>
                 \\
                 \\To create a React project using Vite, run
                 \\
-                \\  <d>bun create vite<r>
+                \\  <d>fun create vite<r>
                 \\
                 \\Then select "React" from the list of frameworks.
                 \\
@@ -1375,12 +1375,12 @@ pub const Command = struct {
         }
 
         // if template_name is "next"
-        // print message telling user to use "bun create next-app" instead
+        // print message telling user to use "fun create next-app" instead
         if (strings.eqlComptime(template_name, "next")) {
             Output.prettyErrorln(
                 \\<yellow>warn: No template <b>create-next<r> found.
                 \\To create a project with the official Next.js scaffolding tool, run
-                \\  <b>bun create next-app <cyan>[destination]<r>
+                \\  <b>fun create next-app <cyan>[destination]<r>
             , .{});
             Global.exit(1);
             return;
@@ -1390,30 +1390,30 @@ pub const Command = struct {
         const template = create_command_info.template;
         const example_tag = create_command_info.example_tag;
 
-        const use_bunx = !HardcodedNonBunXList.has(template_name) and
+        const use_bunx = !HardcodedNonFunXList.has(template_name) and
             (!strings.containsComptime(template_name, "/") or
                 strings.startsWithChar(template_name, '@')) and
             example_tag != CreateCommandExample.Tag.local_folder;
 
         if (use_bunx) {
-            const bunx_args = try allocator.alloc([:0]const u8, 2 + args.len - template_name_start + @intFromBool(dash_dash_bun));
-            bunx_args[0] = "bunx";
-            if (dash_dash_bun) {
-                bunx_args[1] = "--bun";
+            const funx_args = try allocator.alloc([:0]const u8, 2 + args.len - template_name_start + @intFromBool(dash_dash_fun));
+            funx_args[0] = "funx";
+            if (dash_dash_fun) {
+                funx_args[1] = "--fun";
             }
-            bunx_args[1 + @as(usize, @intFromBool(dash_dash_bun))] = try BunxCommand.addCreatePrefix(allocator, template_name);
-            for (bunx_args[2 + @as(usize, @intFromBool(dash_dash_bun)) ..], args[template_name_start..]) |*dest, src| {
+            funx_args[1 + @as(usize, @intFromBool(dash_dash_fun))] = try FunxCommand.addCreatePrefix(allocator, template_name);
+            for (funx_args[2 + @as(usize, @intFromBool(dash_dash_fun)) ..], args[template_name_start..]) |*dest, src| {
                 dest.* = src;
             }
 
-            try BunxCommand.exec(ctx, bunx_args);
+            try FunxCommand.exec(ctx, funx_args);
             return;
         }
 
         try CreateCommand.exec(ctx, example_tag, template);
     }
 
-    fn @"bun info"(allocator: std.mem.Allocator, log: *logger.Log) !void {
+    fn @"fun info"(allocator: std.mem.Allocator, log: *logger.Log) !void {
         // Parse arguments manually since the standard flow doesn't work for standalone commands
         const cli = try PackageManager.CommandLineArguments.parse(allocator, .info);
         const ctx = try Command.init(allocator, log, .InfoCommand);
@@ -1427,12 +1427,12 @@ pub const Command = struct {
         var package_name: []const u8 = "";
         var property_path: ?[]const u8 = null;
 
-        // Find non-flag arguments starting from argv[2] (after "bun info")
+        // Find non-flag arguments starting from argv[2] (after "fun info")
         var arg_idx: usize = 2;
         var found_package = false;
 
-        while (arg_idx < bun.argv.len) : (arg_idx += 1) {
-            const arg = bun.argv[arg_idx];
+        while (arg_idx < fun.argv.len) : (arg_idx += 1) {
+            const arg = fun.argv[arg_idx];
 
             // Skip flags
             if (arg.len > 0 and arg[0] == '-') {
@@ -1480,14 +1480,14 @@ const TestCommand = @import("./test_command.zig").TestCommand;
 const Install = @import("../install/install.zig");
 const PackageManager = Install.PackageManager;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const bun_js = bun.bun_js;
-const clap = bun.clap;
-const default_allocator = bun.default_allocator;
-const logger = bun.logger;
-const strings = bun.strings;
-const File = bun.sys.File;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const fun_js = fun.fun_js;
+const clap = fun.clap;
+const default_allocator = fun.default_allocator;
+const logger = fun.logger;
+const strings = fun.strings;
+const File = fun.sys.File;
+const api = fun.schema.api;

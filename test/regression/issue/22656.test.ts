@@ -12,8 +12,8 @@
  * 3. Removes overly strict circular reference checks that incorrectly triggered on shared refs
  */
 
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 describe("issue #22656 - macro array/object handling", () => {
   test("handles collections with 3+ arrays without crashing", async () => {
@@ -38,9 +38,9 @@ describe("issue #22656 - macro array/object handling", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.ts"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -76,9 +76,9 @@ describe("issue #22656 - macro array/object handling", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.ts"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -124,9 +124,9 @@ describe("issue #22656 - macro array/object handling", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.ts"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -175,9 +175,9 @@ describe("issue #22656 - macro array/object handling", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.ts"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",
@@ -218,9 +218,9 @@ describe("issue #22656 - macro array/object handling", () => {
       `,
     });
 
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), "index.ts"],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), "index.ts"],
+      env: funEnv,
       cwd: String(dir),
       stderr: "pipe",
       stdout: "pipe",

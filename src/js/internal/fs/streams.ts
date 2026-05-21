@@ -1,5 +1,5 @@
 // fs.ReadStream and fs.WriteStream are lazily loaded to avoid importing 'node:stream' until required
-import type { FileSink } from "bun";
+import type { FileSink } from "fun";
 const { Readable, Writable, finished } = require("node:stream");
 const fs: typeof import("node:fs") = require("node:fs");
 const { read, write, fsync, writev } = fs;
@@ -36,13 +36,13 @@ type FD = number;
 
 const { validateInteger, validateInt32, validateFunction } = require("internal/validators");
 
-// Bun supports a fast path for `createReadStream("path.txt")` with `.pipe(res)`,
+// Fun supports a fast path for `createReadStream("path.txt")` with `.pipe(res)`,
 // where the entire stream implementation can be bypassed, effectively making it
-// `new Response(Bun.file("path.txt"))`.
+// `new Response(Fun.file("path.txt"))`.
 // This makes an idomatic Node.js pattern much faster.
 const kReadStreamFastPath = Symbol("kReadStreamFastPath");
-// Bun supports a fast path for `createWriteStream("path.txt")` where instead of
-// using `node:fs`, `Bun.file(...).writer()` is used instead.
+// Fun supports a fast path for `createWriteStream("path.txt")` where instead of
+// using `node:fs`, `Fun.file(...).writer()` is used instead.
 const kWriteStreamFastPath = Symbol("kWriteStreamFastPath");
 const kFs = Symbol("kFs");
 
@@ -92,7 +92,7 @@ function streamFileHandleClose(this: FileHandle, fd: FD, cb: (err?: any) => void
 }
 
 function getValidatedPath(p: any) {
-  if (p instanceof URL) return Bun.fileURLToPath(p as URL);
+  if (p instanceof URL) return Fun.fileURLToPath(p as URL);
   if (typeof p !== "string") throw $ERR_INVALID_ARG_TYPE("path", "string or URL", p);
   return require("node:path").resolve(p);
 }
@@ -273,7 +273,7 @@ function streamConstruct(this: FSStream, callback: (e?: any) => void) {
       //     break fast;
       //   }
       //   // @ts-expect-error
-      //   this.fd = (this[kWriteStreamFastPath] = Bun.file(this.path).writer())._getFd();
+      //   this.fd = (this[kWriteStreamFastPath] = Fun.file(this.path).writer())._getFd();
       // }
       callback();
       this.emit("open", this.fd);
@@ -477,7 +477,7 @@ function WriteStream(this: FSStream, path: string | null, options?: any): void {
 
   // Enable fast path
   if (fastPath) {
-    this[kWriteStreamFastPath] = fd ? Bun.file(fd).writer() : true;
+    this[kWriteStreamFastPath] = fd ? Fun.file(fd).writer() : true;
     this._write = underscoreWriteFast;
     this._writev = undefined;
     this.write = writeFast as any;
@@ -598,7 +598,7 @@ function underscoreWriteFast(this: FSStream, data: any, encoding: any, cb: any) 
   const hasCallback = typeof cb === "function";
   try {
     if (fileSink === true) {
-      fileSink = this[kWriteStreamFastPath] = Bun.file(this.path).writer();
+      fileSink = this[kWriteStreamFastPath] = Fun.file(this.path).writer();
       // @ts-expect-error
       this.fd = fileSink._getFd();
     }

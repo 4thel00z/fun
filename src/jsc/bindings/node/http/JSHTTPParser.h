@@ -3,10 +3,10 @@
 #include "root.h"
 #include <JavaScriptCore/JSDestructibleObject.h>
 #include <JavaScriptCore/JSObject.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "NodeHTTPParser.h"
 
-namespace Bun {
+namespace Fun {
 
 class JSHTTPParser final : public JSC::JSDestructibleObject {
 public:
@@ -67,4 +67,4 @@ private:
 
 void setupHTTPParserClassStructure(JSC::LazyClassStructure::Initializer&);
 
-} // namespace Bun
+} // namespace Fun

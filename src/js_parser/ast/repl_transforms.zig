@@ -29,7 +29,7 @@ pub fn ReplTransforms(comptime P: type) type {
             }
 
             // Collect all statements into a single array
-            var all_stmts = bun.handleOom(allocator.alloc(Stmt, total_stmts_count));
+            var all_stmts = fun.handleOom(allocator.alloc(Stmt, total_stmts_count));
             var stmt_idx: usize = 0;
             for (parts.items) |part| {
                 for (part.stmts) |stmt| {
@@ -108,7 +108,7 @@ pub fn ReplTransforms(comptime P: type) type {
                         if (func.func.name) |name_loc| {
                             try hoisted_stmts.append(p.s(S.Local{
                                 .kind = .k_var,
-                                .decls = Decl.List.fromOwnedSlice(bun.handleOom(allocator.dupe(G.Decl, &.{
+                                .decls = Decl.List.fromOwnedSlice(fun.handleOom(allocator.dupe(G.Decl, &.{
                                     G.Decl{
                                         .binding = p.b(B.Identifier{ .ref = name_loc.ref.? }, name_loc.loc),
                                         .value = null,
@@ -141,7 +141,7 @@ pub fn ReplTransforms(comptime P: type) type {
                         if (class.class.class_name) |name_loc| {
                             try hoisted_stmts.append(p.s(S.Local{
                                 .kind = .k_var,
-                                .decls = Decl.List.fromOwnedSlice(bun.handleOom(allocator.dupe(G.Decl, &.{
+                                .decls = Decl.List.fromOwnedSlice(fun.handleOom(allocator.dupe(G.Decl, &.{
                                     G.Decl{
                                         .binding = p.b(B.Identifier{ .ref = name_loc.ref.? }, name_loc.loc),
                                         .value = null,
@@ -179,7 +179,7 @@ pub fn ReplTransforms(comptime P: type) type {
                             // import * as X from 'mod' -> var X = await import('mod')
                             try hoisted_stmts.append(p.s(S.Local{
                                 .kind = .k_var,
-                                .decls = Decl.List.fromOwnedSlice(bun.handleOom(allocator.dupe(G.Decl, &.{
+                                .decls = Decl.List.fromOwnedSlice(fun.handleOom(allocator.dupe(G.Decl, &.{
                                     G.Decl{
                                         .binding = p.b(B.Identifier{ .ref = import_data.namespace_ref }, stmt.loc),
                                         .value = null,
@@ -197,7 +197,7 @@ pub fn ReplTransforms(comptime P: type) type {
                             // import X, { a } from 'mod' -> var __ns = await import('mod'); var X = __ns.default; var a = __ns.a;
                             try hoisted_stmts.append(p.s(S.Local{
                                 .kind = .k_var,
-                                .decls = Decl.List.fromOwnedSlice(bun.handleOom(allocator.dupe(G.Decl, &.{
+                                .decls = Decl.List.fromOwnedSlice(fun.handleOom(allocator.dupe(G.Decl, &.{
                                     G.Decl{
                                         .binding = p.b(B.Identifier{ .ref = default_name.ref.? }, default_name.loc),
                                         .value = null,
@@ -270,7 +270,7 @@ pub fn ReplTransforms(comptime P: type) type {
 
             // Final output: hoisted declarations + IIFE call
             const final_stmts_count = hoisted_stmts.items.len + 1;
-            var final_stmts = bun.handleOom(allocator.alloc(Stmt, final_stmts_count));
+            var final_stmts = fun.handleOom(allocator.alloc(Stmt, final_stmts_count));
             for (hoisted_stmts.items, 0..) |stmt, j| {
                 final_stmts[j] = stmt;
             }
@@ -300,7 +300,7 @@ pub fn ReplTransforms(comptime P: type) type {
             // Store the module in the namespace ref: var __ns = await import('mod')
             try hoisted_stmts.append(p.s(S.Local{
                 .kind = .k_var,
-                .decls = Decl.List.fromOwnedSlice(bun.handleOom(allocator.dupe(G.Decl, &.{
+                .decls = Decl.List.fromOwnedSlice(fun.handleOom(allocator.dupe(G.Decl, &.{
                     G.Decl{
                         .binding = p.b(B.Identifier{ .ref = import_data.namespace_ref }, loc),
                         .value = null,
@@ -318,7 +318,7 @@ pub fn ReplTransforms(comptime P: type) type {
             for (import_data.items) |item| {
                 try hoisted_stmts.append(p.s(S.Local{
                     .kind = .k_var,
-                    .decls = Decl.List.fromOwnedSlice(bun.handleOom(allocator.dupe(G.Decl, &.{
+                    .decls = Decl.List.fromOwnedSlice(fun.handleOom(allocator.dupe(G.Decl, &.{
                         G.Decl{
                             .binding = p.b(B.Identifier{ .ref = item.name.ref.? }, item.name.loc),
                             .value = null,
@@ -387,7 +387,7 @@ pub fn ReplTransforms(comptime P: type) type {
         /// Create { __proto__: null, value: expr } wrapper object
         /// Uses null prototype to create a clean data object
         fn wrapExprInValueObject(p: *P, expr: Expr, allocator: Allocator) Expr {
-            var properties = bun.handleOom(allocator.alloc(G.Property, 2));
+            var properties = fun.handleOom(allocator.alloc(G.Property, 2));
             // __proto__: null - creates null-prototype object
             properties[0] = G.Property{
                 .key = p.newExpr(E.String{ .data = "__proto__" }, expr.loc),
@@ -444,7 +444,7 @@ pub fn ReplTransforms(comptime P: type) type {
                     return p.newExpr(E.Identifier{ .ref = ident.ref }, binding.loc);
                 },
                 .b_array => |arr| {
-                    var items = bun.handleOom(allocator.alloc(Expr, arr.items.len));
+                    var items = fun.handleOom(allocator.alloc(Expr, arr.items.len));
                     for (arr.items, 0..) |item, i| {
                         const expr = convertBindingToExpr(p, item.binding, allocator);
                         // Check for spread pattern: if has_spread and this is the last element
@@ -466,7 +466,7 @@ pub fn ReplTransforms(comptime P: type) type {
                     }, binding.loc);
                 },
                 .b_object => |obj| {
-                    var properties = bun.handleOom(allocator.alloc(G.Property, obj.properties.len));
+                    var properties = fun.handleOom(allocator.alloc(G.Property, obj.properties.len));
                     for (obj.properties, 0..) |prop, i| {
                         properties[i] = G.Property{
                             .flags = prop.flags,
@@ -494,10 +494,10 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ListManaged = std.array_list.Managed;
 
-const bun = @import("bun");
-const logger = bun.logger;
+const fun = @import("fun");
+const logger = fun.logger;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const E = js_ast.E;

@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
 describe("console.Console getter", () => {
   test("handles exception from internal call without crashing", async () => {
@@ -7,9 +7,9 @@ describe("console.Console getter", () => {
     // profiledCall to createConsoleConstructor, which throws StackOverflow.
     // The C++ getter must return early after throwException, not continue
     // to putDirect with an invalid result.
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         // Exhaust most of the stack, then try to access console.Console
@@ -36,7 +36,7 @@ describe("console.Console getter", () => {
         console.log("OK");
       `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stderr: "pipe",
     });
 

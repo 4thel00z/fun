@@ -9,7 +9,7 @@
 #include "WebKitBackend.h"
 #include "ipc_protocol.h"
 #include "ZigGlobalObject.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "ScriptExecutionContext.h"
 #include "ScriptWrappableInlines.h"
 #include <JavaScriptCore/JSCInlines.h>
@@ -21,7 +21,7 @@
 #include <JavaScriptCore/WeakHandleOwner.h>
 #include <wtf/NeverDestroyed.h>
 
-namespace Bun {
+namespace Fun {
 
 using namespace JSC;
 using namespace WebViewProto;
@@ -30,7 +30,7 @@ using namespace WebViewProto;
 // Shared weak owner. Both backends (WebKit's HostClient.viewsById and
 // Chrome's Transport.m_pending/.m_sessions) hold Weak<JSWebView>. The
 // isReachableFromOpaqueRoots predicate reads the atomic activity count:
-// under `bun test` the closure → view → m_pendingNavigate → promise →
+// under `fun test` the closure → view → m_pendingNavigate → promise →
 // reaction → closure cycle has no external root (the test-function promise
 // goes out of Zig scope after runTestCallback returns). This IS the root.
 // ---------------------------------------------------------------------------
@@ -321,7 +321,7 @@ JSWebView* JSWebView::createAndSend(JSGlobalObject* g, Structure* structure,
 // Reads DevToolsActivePort from default profile locations. Returns 0
 // if no file found, else writes ws://127.0.0.1:<port>/devtools/... into
 // out and returns the length. Sync file read — instant.
-extern "C" size_t Bun__Chrome__autoDetect(char* out, size_t cap);
+extern "C" size_t Fun__Chrome__autoDetect(char* out, size_t cap);
 
 JSWebView* JSWebView::createChrome(JSGlobalObject* g, Structure* structure,
     uint32_t width, uint32_t height, const WTF::String& userDataDir,
@@ -349,7 +349,7 @@ JSWebView* JSWebView::createChrome(JSGlobalObject* g, Structure* structure,
         // Auto-detect. DevToolsActivePort URL caps at
         // ws://127.0.0.1:65535/devtools/browser/<36-char-uuid> ≈ 70B.
         char buf[128];
-        size_t len = Bun__Chrome__autoDetect(buf, sizeof(buf));
+        size_t len = Fun__Chrome__autoDetect(buf, sizeof(buf));
         if (len > 0) {
             ok = t.ensureConnected(zig,
                 WTF::String::fromUTF8(std::span<const char>(buf, len)),
@@ -387,11 +387,11 @@ void setupJSWebViewClassStructure(LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun
 
 // ---------------------------------------------------------------------------
 // Termination hook. Called from dispatchOnExit (same path as SQLite's
-// Bun__closeAllSQLiteDatabasesForTermination) and from WebView.closeAll().
+// Fun__closeAllSQLiteDatabasesForTermination) and from WebView.closeAll().
 // SIGKILLs both browser subprocesses — no CDP Browser.close, no promise
 // rejection, no socket teardown. At dispatchOnExit the event loop is past
 // the point of processing any reply; the only thing that matters is the
@@ -401,11 +401,11 @@ void setupJSWebViewClassStructure(LazyClassStructure::Initializer& init)
 // on a reaped pid returns ESRCH and we discard it.
 // ---------------------------------------------------------------------------
 
-extern "C" void Bun__Chrome__kill();
-extern "C" void Bun__WebViewHost__kill();
+extern "C" void Fun__Chrome__kill();
+extern "C" void Fun__WebViewHost__kill();
 
-extern "C" void Bun__WebView__closeAllForTermination()
+extern "C" void Fun__WebView__closeAllForTermination()
 {
-    Bun__Chrome__kill();
-    Bun__WebViewHost__kill();
+    Fun__Chrome__kill();
+    Fun__WebViewHost__kill();
 }

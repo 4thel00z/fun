@@ -5,7 +5,7 @@ pub var autoSelectFamilyDefault: bool = true;
 
 pub fn getDefaultAutoSelectFamily(global: *jsc.JSGlobalObject) jsc.JSValue {
     return jsc.JSFunction.create(global, "getDefaultAutoSelectFamily", (struct {
-        fn getter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        fn getter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             _ = globalThis;
             _ = callframe;
             return .jsBoolean(autoSelectFamilyDefault);
@@ -15,7 +15,7 @@ pub fn getDefaultAutoSelectFamily(global: *jsc.JSGlobalObject) jsc.JSValue {
 
 pub fn setDefaultAutoSelectFamily(global: *jsc.JSGlobalObject) jsc.JSValue {
     return jsc.JSFunction.create(global, "setDefaultAutoSelectFamily", (struct {
-        fn setter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        fn setter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(1);
             if (arguments.len < 1) {
                 return globalThis.throw("missing argument", .{});
@@ -42,7 +42,7 @@ pub threadlocal var autoSelectFamilyAttemptTimeoutDefault: u32 = 250;
 
 pub fn getDefaultAutoSelectFamilyAttemptTimeout(global: *jsc.JSGlobalObject) jsc.JSValue {
     return jsc.JSFunction.create(global, "getDefaultAutoSelectFamilyAttemptTimeout", (struct {
-        fn getter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        fn getter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             _ = globalThis;
             _ = callframe;
             return .jsNumber(autoSelectFamilyAttemptTimeoutDefault);
@@ -52,7 +52,7 @@ pub fn getDefaultAutoSelectFamilyAttemptTimeout(global: *jsc.JSGlobalObject) jsc
 
 pub fn setDefaultAutoSelectFamilyAttemptTimeout(global: *jsc.JSGlobalObject) jsc.JSValue {
     return jsc.JSFunction.create(global, "setDefaultAutoSelectFamilyAttemptTimeout", (struct {
-        fn setter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+        fn setter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(1);
             if (arguments.len < 1) {
                 return globalThis.throw("missing argument", .{});
@@ -66,16 +66,16 @@ pub fn setDefaultAutoSelectFamilyAttemptTimeout(global: *jsc.JSGlobalObject) jsc
     }).setter, 1, .{});
 }
 
-pub const SocketAddress = bun.jsc.Codegen.JSSocketAddress.getConstructor;
+pub const SocketAddress = fun.jsc.Codegen.JSSocketAddress.getConstructor;
 
 pub const BlockList = jsc.Codegen.JSBlockList.getConstructor;
 
-pub fn newDetachedSocket(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn newDetachedSocket(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const args = callframe.argumentsAsArray(1);
     const is_ssl = args[0].toBoolean();
 
     if (!is_ssl) {
-        const socket = bun.api.TCPSocket.new(.{
+        const socket = fun.api.TCPSocket.new(.{
             .socket = .detached,
             .ref_count = .init(),
             .protos = null,
@@ -83,7 +83,7 @@ pub fn newDetachedSocket(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFr
         });
         return socket.getThisValue(globalThis);
     } else {
-        const socket = bun.api.TLSSocket.new(.{
+        const socket = fun.api.TLSSocket.new(.{
             .socket = .detached,
             .ref_count = .init(),
             .protos = null,
@@ -93,14 +93,14 @@ pub fn newDetachedSocket(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFr
     }
 }
 
-pub fn doConnect(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
+pub fn doConnect(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
     const prev, const opts = callframe.argumentsAsArray(2);
-    const maybe_tcp = prev.as(bun.api.TCPSocket);
-    const maybe_tls = prev.as(bun.api.TLSSocket);
-    return bun.api.Listener.connectInner(globalThis, maybe_tcp, maybe_tls, opts);
+    const maybe_tcp = prev.as(fun.api.TCPSocket);
+    const maybe_tls = prev.as(fun.api.TLSSocket);
+    return fun.api.Listener.connectInner(globalThis, maybe_tcp, maybe_tls, opts);
 }
 
 const validators = @import("./util/validators.zig");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "fun:test";
 import inspector from "node:inspector";
 import inspectorPromises from "node:inspector/promises";
 

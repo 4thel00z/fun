@@ -1,6 +1,6 @@
-pub const AI_V4MAPPED: c_int = if (bun.Environment.isWindows) 2048 else bun.c.AI_V4MAPPED;
-pub const AI_ADDRCONFIG: c_int = if (bun.Environment.isWindows) 1024 else bun.c.AI_ADDRCONFIG;
-pub const AI_ALL: c_int = if (bun.Environment.isWindows) 256 else bun.c.AI_ALL;
+pub const AI_V4MAPPED: c_int = if (fun.Environment.isWindows) 2048 else fun.c.AI_V4MAPPED;
+pub const AI_ADDRCONFIG: c_int = if (fun.Environment.isWindows) 1024 else fun.c.AI_ADDRCONFIG;
+pub const AI_ALL: c_int = if (fun.Environment.isWindows) 256 else fun.c.AI_ALL;
 
 pub const GetAddrInfo = struct {
     name: []const u8 = "",
@@ -9,15 +9,15 @@ pub const GetAddrInfo = struct {
 
     pub fn clone(this: GetAddrInfo) GetAddrInfo {
         return GetAddrInfo{
-            .name = bun.default_allocator.dupe(u8, this.name) catch unreachable,
+            .name = fun.default_allocator.dupe(u8, this.name) catch unreachable,
             .port = this.port,
             .options = this.options,
         };
     }
 
-    pub fn toCAres(this: GetAddrInfo) bun.c_ares.AddrInfo_hints {
-        var hints: bun.c_ares.AddrInfo_hints = undefined;
-        @memset(std.mem.asBytes(&hints)[0..@sizeOf(bun.c_ares.AddrInfo_hints)], 0);
+    pub fn toCAres(this: GetAddrInfo) fun.c_ares.AddrInfo_hints {
+        var hints: fun.c_ares.AddrInfo_hints = undefined;
+        @memset(std.mem.asBytes(&hints)[0..@sizeOf(fun.c_ares.AddrInfo_hints)], 0);
 
         hints.ai_family = this.options.family.toLibC();
         hints.ai_socktype = this.options.socktype.toLibC();
@@ -84,7 +84,7 @@ pub const GetAddrInfo = struct {
         inet6,
         unix,
 
-        pub const map = bun.ComptimeStringMap(Family, .{
+        pub const map = fun.ComptimeStringMap(Family, .{
             .{ "IPv4", Family.inet },
             .{ "IPv6", Family.inet6 },
             .{ "ipv4", Family.inet },
@@ -113,7 +113,7 @@ pub const GetAddrInfo = struct {
         stream,
         dgram,
 
-        pub const map = bun.ComptimeStringMap(SocketType, .{
+        pub const map = fun.ComptimeStringMap(SocketType, .{
             .{ "stream", SocketType.stream },
             .{ "dgram", SocketType.dgram },
             .{ "tcp", SocketType.stream },
@@ -140,7 +140,7 @@ pub const GetAddrInfo = struct {
         tcp,
         udp,
 
-        pub const map = bun.ComptimeStringMap(Protocol, .{
+        pub const map = fun.ComptimeStringMap(Protocol, .{
             .{ "tcp", Protocol.tcp },
             .{ "udp", Protocol.udp },
         });
@@ -165,7 +165,7 @@ pub const GetAddrInfo = struct {
         system,
         libc,
 
-        pub const label = bun.ComptimeStringMap(GetAddrInfo.Backend, .{
+        pub const label = fun.ComptimeStringMap(GetAddrInfo.Backend, .{
             .{ "c-ares", .c_ares },
             .{ "c_ares", .c_ares },
             .{ "cares", .c_ares },
@@ -175,12 +175,12 @@ pub const GetAddrInfo = struct {
             .{ "getaddrinfo", .libc },
         });
 
-        pub const default: GetAddrInfo.Backend = switch (bun.Environment.os) {
+        pub const default: GetAddrInfo.Backend = switch (fun.Environment.os) {
             .mac, .windows => .system,
             // Android: c-ares can't discover nameservers (no /etc/resolv.conf,
             // no JNI for ares_library_init_android). bionic getaddrinfo proxies
             // through netd which knows the real resolvers.
-            else => if (bun.Environment.isAndroid) .system else .c_ares,
+            else => if (fun.Environment.isAndroid) .system else .c_ares,
         };
 
         pub const FromJSError = JSError || error{
@@ -239,7 +239,7 @@ pub const GetAddrInfo = struct {
         pub const toJS = options_jsc.resultToJS;
     };
 };
-pub fn addressToString(address: *const std.net.Address) bun.OOM!bun.String {
+pub fn addressToString(address: *const std.net.Address) fun.OOM!fun.String {
     switch (address.any.family) {
         std.posix.AF.INET => {
             var self = address.in;
@@ -285,12 +285,12 @@ pub fn addrInfoCount(addrinfo: *std.c.addrinfo) u32 {
 
 pub const addrInfoToJSArray = options_jsc.addrInfoToJSArray;
 
-pub const internal = bun.api.dns.internal;
+pub const internal = fun.api.dns.internal;
 
 const options_jsc = @import("../runtime/dns_jsc/options_jsc.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const String = bun.String;
-const default_allocator = bun.default_allocator;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const String = fun.String;
+const default_allocator = fun.default_allocator;

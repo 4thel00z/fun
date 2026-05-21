@@ -1,7 +1,7 @@
-import { describe, expect, it } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { describe, expect, it } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
-describe("bun update --interactive snapshots", () => {
+describe("fun update --interactive snapshots", () => {
   it("should not crash with various package name lengths", async () => {
     const dir = tempDirWithFiles("update-interactive-snapshot-test", {
       "package.json": JSON.stringify({
@@ -31,10 +31,10 @@ describe("bun update --interactive snapshots", () => {
     });
 
     // Test that the command doesn't crash with mixed package lengths
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -72,10 +72,10 @@ describe("bun update --interactive snapshots", () => {
       }),
     });
 
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -108,10 +108,10 @@ describe("bun update --interactive snapshots", () => {
       }),
     });
 
-    const result = await Bun.spawn({
-      cmd: [bunExe(), "update", "--interactive", "--dry-run"],
+    const result = await Fun.spawn({
+      cmd: [funExe(), "update", "--interactive", "--dry-run"],
       cwd: dir,
-      env: bunEnv,
+      env: funEnv,
       stdin: "pipe",
       stdout: "pipe",
       stderr: "pipe",
@@ -133,8 +133,8 @@ describe("bun update --interactive snapshots", () => {
 });
 
 function normalizeOutput(output: string): string {
-  // Remove Bun version to avoid test flakiness
-  let normalized = output.replace(/bun update --interactive v\d+\.\d+\.\d+[^\n]*/g, "bun update --interactive vX.X.X");
+  // Remove Fun version to avoid test flakiness
+  let normalized = output.replace(/fun update --interactive v\d+\.\d+\.\d+[^\n]*/g, "fun update --interactive vX.X.X");
 
   // Normalize any absolute paths
   normalized = normalized.replace(/\/tmp\/[^\/\s]+/g, "/tmp/test-dir");

@@ -10,9 +10,9 @@
 //! Floyd–Steinberg error diffusion (`dither: true`).
 
 pub const Result = struct {
-    /// `[colors][4]u8` RGBA palette, `bun.default_allocator`-owned.
+    /// `[colors][4]u8` RGBA palette, `fun.default_allocator`-owned.
     palette: []u8,
-    /// One palette index per input pixel, `bun.default_allocator`-owned.
+    /// One palette index per input pixel, `fun.default_allocator`-owned.
     indices: []u8,
     /// Actual palette length (≤ requested `colors`).
     colors: u16,
@@ -20,8 +20,8 @@ pub const Result = struct {
     has_alpha: bool,
 
     pub fn deinit(self: *Result) void {
-        bun.default_allocator.free(self.palette);
-        bun.default_allocator.free(self.indices);
+        fun.default_allocator.free(self.palette);
+        fun.default_allocator.free(self.indices);
     }
 };
 
@@ -46,7 +46,7 @@ const Box = struct {
     }
 };
 
-extern fn bun_image_nearest_palette(palette: [*]const u8, k: u32, r: i32, g: i32, b: i32, a: i32) u32;
+extern fn fun_image_nearest_palette(palette: [*]const u8, k: u32, r: i32, g: i32, b: i32, a: i32) u32;
 
 pub const Options = struct {
     max_colors: u16,
@@ -63,12 +63,12 @@ pub fn quantize(rgba: []const u8, w: u32, h: u32, opts: Options) error{OutOfMemo
 
     // `order` is a permutation of pixel indices that we partition in-place;
     // each Box owns a contiguous [lo,hi) slice of it.
-    var order = try bun.default_allocator.alloc(u32, n);
-    defer bun.default_allocator.free(order);
+    var order = try fun.default_allocator.alloc(u32, n);
+    defer fun.default_allocator.free(order);
     for (order, 0..) |*o, i| o.* = @intCast(i);
 
-    var boxes = try std.ArrayList(Box).initCapacity(bun.default_allocator, want);
-    defer boxes.deinit(bun.default_allocator);
+    var boxes = try std.ArrayList(Box).initCapacity(fun.default_allocator, want);
+    defer boxes.deinit(fun.default_allocator);
     boxes.appendAssumeCapacity(shrink(rgba, order, 0, n));
 
     while (boxes.items.len < want) {
@@ -98,8 +98,8 @@ pub fn quantize(rgba: []const u8, w: u32, h: u32, opts: Options) error{OutOfMemo
     }
 
     const k: u16 = @intCast(boxes.items.len);
-    var palette = try bun.default_allocator.alloc(u8, @as(usize, k) * 4);
-    errdefer bun.default_allocator.free(palette);
+    var palette = try fun.default_allocator.alloc(u8, @as(usize, k) * 4);
+    errdefer fun.default_allocator.free(palette);
     var has_alpha = false;
     for (boxes.items, 0..) |b, i| {
         var sum: [4]u64 = .{ 0, 0, 0, 0 };
@@ -111,8 +111,8 @@ pub fn quantize(rgba: []const u8, w: u32, h: u32, opts: Options) error{OutOfMemo
         if (palette[i * 4 + 3] < 255) has_alpha = true;
     }
 
-    var indices = try bun.default_allocator.alloc(u8, n);
-    errdefer bun.default_allocator.free(indices);
+    var indices = try fun.default_allocator.alloc(u8, n);
+    errdefer fun.default_allocator.free(indices);
     if (opts.dither) {
         try mapFloydSteinberg(rgba, w, h, palette, k, indices);
     } else {
@@ -120,7 +120,7 @@ pub fn quantize(rgba: []const u8, w: u32, h: u32, opts: Options) error{OutOfMemo
         // highway-dispatched kernel so it runs under the best -march.
         for (0..n) |px| {
             const p = rgba[px * 4 ..][0..4];
-            indices[px] = @intCast(bun_image_nearest_palette(palette.ptr, k, p[0], p[1], p[2], p[3]));
+            indices[px] = @intCast(fun_image_nearest_palette(palette.ptr, k, p[0], p[1], p[2], p[3]));
         }
     }
 
@@ -154,10 +154,10 @@ fn mapFloydSteinberg(
     // `cur` carries error pushed *into* the current row from the row above;
     // `nxt` collects error for the row below.
     const stride: usize = @as(usize, w) * 4;
-    var cur = try bun.default_allocator.alloc(i32, stride);
-    defer bun.default_allocator.free(cur);
-    var nxt = try bun.default_allocator.alloc(i32, stride);
-    defer bun.default_allocator.free(nxt);
+    var cur = try fun.default_allocator.alloc(i32, stride);
+    defer fun.default_allocator.free(cur);
+    var nxt = try fun.default_allocator.alloc(i32, stride);
+    defer fun.default_allocator.free(nxt);
     @memset(cur, 0);
     @memset(nxt, 0);
 
@@ -176,7 +176,7 @@ fn mapFloydSteinberg(
             var cand: [4]i32 = undefined;
             inline for (0..4) |c| cand[c] = @as(i32, rgba[px * 4 + c]) + cur[off + c];
 
-            const idx: u8 = @intCast(bun_image_nearest_palette(
+            const idx: u8 = @intCast(fun_image_nearest_palette(
                 palette.ptr,
                 k,
                 clamp255(cand[0]),
@@ -230,5 +230,5 @@ fn shrink(rgba: []const u8, order: []const u32, lo: u32, hi: u32) Box {
     return .{ .lo = lo, .hi = hi, .min = min, .max = max };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

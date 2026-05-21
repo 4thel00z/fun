@@ -19,7 +19,7 @@ state: union(enum) {
     braces,
     glob,
     done,
-    err: bun.shell.ShellErr,
+    err: fun.shell.ShellErr,
 },
 child_state: union(enum) {
     idle,
@@ -70,22 +70,22 @@ pub const Result = union(enum) {
     };
 
     pub fn pushResultSliceOwned(this: *Result, buf: [:0]const u8) PushAction {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             assert(buf[buf.len] == 0);
         }
 
         switch (this.*) {
             .array_of_slice => {
-                bun.handleOom(this.array_of_slice.append(buf));
+                fun.handleOom(this.array_of_slice.append(buf));
                 return .moved;
             },
             .array_of_ptr => {
-                bun.handleOom(this.array_of_ptr.append(@as([*:0]const u8, @ptrCast(buf.ptr))));
+                fun.handleOom(this.array_of_ptr.append(@as([*:0]const u8, @ptrCast(buf.ptr))));
                 return .moved;
             },
             .single => {
                 if (this.single.done) return .copied;
-                bun.handleOom(this.single.list.appendSlice(buf[0 .. buf.len + 1]));
+                fun.handleOom(this.single.list.appendSlice(buf[0 .. buf.len + 1]));
                 this.single.done = true;
                 return .copied;
             },
@@ -93,22 +93,22 @@ pub const Result = union(enum) {
     }
 
     pub fn pushResult(this: *Result, buf: *std.array_list.Managed(u8)) PushAction {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             assert(buf.items[buf.items.len - 1] == 0);
         }
 
         switch (this.*) {
             .array_of_slice => {
-                bun.handleOom(this.array_of_slice.append(buf.items[0 .. buf.items.len - 1 :0]));
+                fun.handleOom(this.array_of_slice.append(buf.items[0 .. buf.items.len - 1 :0]));
                 return .moved;
             },
             .array_of_ptr => {
-                bun.handleOom(this.array_of_ptr.append(@as([*:0]const u8, @ptrCast(buf.items.ptr))));
+                fun.handleOom(this.array_of_ptr.append(@as([*:0]const u8, @ptrCast(buf.items.ptr))));
                 return .moved;
             },
             .single => {
                 if (this.single.done) return .copied;
-                bun.handleOom(this.single.list.appendSlice(buf.items[0..]));
+                fun.handleOom(this.single.list.appendSlice(buf.items[0..]));
                 return .copied;
             },
         }
@@ -157,7 +157,7 @@ pub fn deinit(expansion: *Expansion) void {
 }
 
 pub fn start(this: *Expansion) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.child_state == .idle);
         assert(this.word_idx == 0);
     }
@@ -175,7 +175,7 @@ pub fn next(this: *Expansion) Yield {
                     var has_unknown = false;
                     // + 1 for sentinel
                     const string_size = this.expansionSizeHint(this.node, &has_unknown);
-                    bun.handleOom(this.current_out.ensureUnusedCapacity(string_size + 1));
+                    fun.handleOom(this.current_out.ensureUnusedCapacity(string_size + 1));
                 }
 
                 while (this.word_idx < this.node.atomsLen()) {
@@ -189,16 +189,16 @@ pub fn next(this: *Expansion) Yield {
                         if (this.current_out.items.len > 0) {
                             switch (this.current_out.items[0]) {
                                 '/', '\\' => {
-                                    bun.handleOom(this.current_out.insertSlice(0, homedir.slice()));
+                                    fun.handleOom(this.current_out.insertSlice(0, homedir.slice()));
                                 },
                                 else => {
                                     // TODO: Handle username
-                                    bun.handleOom(this.current_out.insert(0, '~'));
+                                    fun.handleOom(this.current_out.insert(0, '~'));
                                 },
                             }
                         } else if (this.has_quoted_empty) {
                             // ~"" or ~'' should expand to the home directory
-                            bun.handleOom(this.current_out.appendSlice(homedir.slice()));
+                            fun.handleOom(this.current_out.appendSlice(homedir.slice()));
                         }
                     }
 
@@ -229,11 +229,11 @@ pub fn next(this: *Expansion) Yield {
                 defer arena.deinit();
                 const arena_allocator = arena.allocator();
                 const brace_str = this.current_out.items[0..];
-                var lexer_output = if (bun.strings.isAllASCII(brace_str)) lexer_output: {
+                var lexer_output = if (fun.strings.isAllASCII(brace_str)) lexer_output: {
                     @branchHint(.likely);
-                    break :lexer_output bun.handleOom(Braces.Lexer.tokenize(arena_allocator, brace_str));
+                    break :lexer_output fun.handleOom(Braces.Lexer.tokenize(arena_allocator, brace_str));
                 } else lexer_output: {
-                    break :lexer_output bun.handleOom(Braces.NewLexer(.wtf8).tokenize(arena_allocator, brace_str));
+                    break :lexer_output fun.handleOom(Braces.NewLexer(.wtf8).tokenize(arena_allocator, brace_str));
                 };
                 const expansion_count = Braces.calculateExpandedAmount(lexer_output.tokens.items[0..]);
 
@@ -243,7 +243,7 @@ pub fn next(this: *Expansion) Yield {
                 }
                 var maybe_stack_alloc = std.heap.stackFallback(@sizeOf([]std.array_list.Managed(u8)) * stack_max, arena_allocator);
                 const stack_alloc = maybe_stack_alloc.get();
-                const expanded_strings = bun.handleOom(stack_alloc.alloc(std.array_list.Managed(u8), expansion_count));
+                const expanded_strings = fun.handleOom(stack_alloc.alloc(std.array_list.Managed(u8), expansion_count));
 
                 for (0..expansion_count) |i| {
                     expanded_strings[i] = std.array_list.Managed(u8).init(this.base.allocator());
@@ -255,7 +255,7 @@ pub fn next(this: *Expansion) Yield {
                     expanded_strings,
                     lexer_output.contains_nested,
                 ) catch |err| switch (err) {
-                    error.OutOfMemory => bun.outOfMemory(),
+                    error.OutOfMemory => fun.outOfMemory(),
                     error.UnexpectedToken => std.debug.panic(
                         "unexpected error from Braces.expand: UnexpectedToken",
                         .{},
@@ -266,7 +266,7 @@ pub fn next(this: *Expansion) Yield {
 
                 // Add sentinel values
                 for (0..expansion_count) |i| {
-                    bun.handleOom(expanded_strings[i].append(0));
+                    fun.handleOom(expanded_strings[i].append(0));
                     switch (this.out.pushResult(&expanded_strings[i])) {
                         .copied => {
                             expanded_strings[i].deinit();
@@ -319,12 +319,12 @@ fn transitionToGlobState(this: *Expansion) Yield {
         false,
         false,
         false,
-    ) catch |err| bun.handleOom(err)) {
+    ) catch |err| fun.handleOom(err)) {
         .result => {},
         .err => |e| {
             arena.deinit();
             this.child_state = .idle;
-            this.state = .{ .err = bun.shell.ShellErr.newSys(e) };
+            this.state = .{ .err = fun.shell.ShellErr.newSys(e) };
             return .{ .expansion = this };
         },
     }
@@ -348,7 +348,7 @@ pub fn expandVarAndCmdSubst(this: *Expansion, start_word_idx: u32) ?Yield {
                     .result => |s| s,
                     .err => |e| {
                         io.deref();
-                        this.base.throw(&bun.shell.ShellErr.newSys(e));
+                        this.base.throw(&fun.shell.ShellErr.newSys(e));
                         return .failed;
                     },
                 };
@@ -385,7 +385,7 @@ pub fn expandVarAndCmdSubst(this: *Expansion, start_word_idx: u32) ?Yield {
                         .result => |s| s,
                         .err => |e| {
                             io.deref();
-                            this.base.throw(&bun.shell.ShellErr.newSys(e));
+                            this.base.throw(&fun.shell.ShellErr.newSys(e));
                             return .failed;
                         },
                     };
@@ -446,13 +446,13 @@ fn postSubshellExpansion(this: *Expansion, stdout_: []u8) void {
         if (c == ' ') {
             b = i;
             prev_whitespace = true;
-            bun.handleOom(this.current_out.appendSlice(stdout[a..b]));
+            fun.handleOom(this.current_out.appendSlice(stdout[a..b]));
             this.pushCurrentOut();
         }
     }
     // "aa bbb"
 
-    bun.handleOom(this.current_out.appendSlice(stdout[a..b]));
+    fun.handleOom(this.current_out.appendSlice(stdout[a..b]));
 }
 
 fn convertNewlinesToSpaces(stdout_: []u8) []u8 {
@@ -493,14 +493,14 @@ fn convertNewlinesToSpacesSlow(i: usize, stdout: []u8) void {
 }
 
 pub fn childDone(this: *Expansion, child: ChildPtr, exit_code: ExitCode) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.state != .done and this.state != .err);
         assert(this.child_state != .idle);
     }
 
     // Command substitution
     if (child.ptr.is(Script)) {
-        if (comptime bun.Environment.allow_assert) {
+        if (comptime fun.Environment.allow_assert) {
             assert(this.child_state == .cmd_subst);
         }
 
@@ -524,7 +524,7 @@ pub fn childDone(this: *Expansion, child: ChildPtr, exit_code: ExitCode) Yield {
             this.postSubshellExpansion(stdout);
         } else {
             const trimmed = std.mem.trimRight(u8, stdout, " \n\t\r");
-            bun.handleOom(this.current_out.appendSlice(trimmed));
+            fun.handleOom(this.current_out.appendSlice(trimmed));
         }
 
         this.word_idx += 1;
@@ -533,23 +533,23 @@ pub fn childDone(this: *Expansion, child: ChildPtr, exit_code: ExitCode) Yield {
         return .{ .expansion = this };
     }
 
-    @panic("Invalid child to Expansion, this indicates a bug in Bun. Please file a report on Github.");
+    @panic("Invalid child to Expansion, this indicates a bug in Fun. Please file a report on Github.");
 }
 
 fn onGlobWalkDone(this: *Expansion, task: *ShellGlobTask) Yield {
     log("{f} onGlobWalkDone", .{this});
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.child_state == .glob);
     }
 
     if (task.err) |*err| {
         switch (err.*) {
             .syscall => {
-                this.base.throw(&bun.shell.ShellErr.newSys(task.err.?.syscall));
+                this.base.throw(&fun.shell.ShellErr.newSys(task.err.?.syscall));
             },
             .unknown => |errtag| {
                 this.base.throw(&.{
-                    .custom = bun.handleOom(this.base.allocator().dupe(u8, @errorName(errtag))),
+                    .custom = fun.handleOom(this.base.allocator().dupe(u8, @errorName(errtag))),
                 });
             },
         }
@@ -565,9 +565,9 @@ fn onGlobWalkDone(this: *Expansion, task: *ShellGlobTask) Yield {
             return .{ .expansion = this };
         }
 
-        const msg = bun.handleOom(std.fmt.allocPrint(this.base.allocator(), "no matches found: {s}", .{this.child_state.glob.walker.pattern}));
+        const msg = fun.handleOom(std.fmt.allocPrint(this.base.allocator(), "no matches found: {s}", .{this.child_state.glob.walker.pattern}));
         this.state = .{
-            .err = bun.shell.ShellErr{
+            .err = fun.shell.ShellErr{
                 .custom = msg,
             },
         };
@@ -578,7 +578,7 @@ fn onGlobWalkDone(this: *Expansion, task: *ShellGlobTask) Yield {
 
     for (task.result.items) |sentinel_str| {
         // The string is allocated in the glob walker arena and will be freed, so needs to be duped here
-        const duped = bun.handleOom(this.base.allocator().dupeZ(u8, sentinel_str[0..sentinel_str.len]));
+        const duped = fun.handleOom(this.base.allocator().dupeZ(u8, sentinel_str[0..sentinel_str.len]));
         switch (this.out.pushResultSliceOwned(duped)) {
             .copied => {
                 this.base.allocator().free(duped);
@@ -598,7 +598,7 @@ fn onGlobWalkDone(this: *Expansion, task: *ShellGlobTask) Yield {
 pub fn expandSimpleNoIO(this: *Expansion, atom: *const ast.SimpleAtom, str_list: *std.array_list.Managed(u8), comptime expand_tilde: bool) bool {
     switch (atom.*) {
         .Text => |txt| {
-            bun.handleOom(str_list.appendSlice(txt));
+            fun.handleOom(str_list.appendSlice(txt));
         },
         .quoted_empty => {
             // A quoted empty string ("", '', or ${''}). We must ensure the word
@@ -606,32 +606,32 @@ pub fn expandSimpleNoIO(this: *Expansion, atom: *const ast.SimpleAtom, str_list:
             this.has_quoted_empty = true;
         },
         .Var => |label| {
-            bun.handleOom(str_list.appendSlice(this.expandVar(label)));
+            fun.handleOom(str_list.appendSlice(this.expandVar(label)));
         },
         .VarArgv => |int| {
-            bun.handleOom(str_list.appendSlice(this.expandVarArgv(int)));
+            fun.handleOom(str_list.appendSlice(this.expandVarArgv(int)));
         },
         .asterisk => {
-            bun.handleOom(str_list.append('*'));
+            fun.handleOom(str_list.append('*'));
         },
         .double_asterisk => {
-            bun.handleOom(str_list.appendSlice("**"));
+            fun.handleOom(str_list.appendSlice("**"));
         },
         .brace_begin => {
-            bun.handleOom(str_list.append('{'));
+            fun.handleOom(str_list.append('{'));
         },
         .brace_end => {
-            bun.handleOom(str_list.append('}'));
+            fun.handleOom(str_list.append('}'));
         },
         .comma => {
-            bun.handleOom(str_list.append(','));
+            fun.handleOom(str_list.append(','));
         },
         .tilde => {
             if (expand_tilde) {
                 const homedir = this.base.shell.getHomedir();
                 defer homedir.deref();
-                bun.handleOom(str_list.appendSlice(homedir.slice()));
-            } else bun.handleOom(str_list.append('~'));
+                fun.handleOom(str_list.appendSlice(homedir.slice()));
+            } else fun.handleOom(str_list.append('~'));
         },
         .cmd_subst => {
             // TODO:
@@ -645,12 +645,12 @@ pub fn expandSimpleNoIO(this: *Expansion, atom: *const ast.SimpleAtom, str_list:
 
 pub fn appendSlice(this: *Expansion, buf: *std.array_list.Managed(u8), slice: []const u8) void {
     _ = this;
-    bun.handleOom(buf.appendSlice(slice));
+    fun.handleOom(buf.appendSlice(slice));
 }
 
 pub fn pushCurrentOut(this: *Expansion) void {
     if (this.current_out.items.len == 0 and !this.has_quoted_empty) return;
-    if (this.current_out.items.len == 0 or this.current_out.items[this.current_out.items.len - 1] != 0) bun.handleOom(this.current_out.append(0));
+    if (this.current_out.items.len == 0 or this.current_out.items[this.current_out.items.len - 1] != 0) fun.handleOom(this.current_out.append(0));
     switch (this.out.pushResult(&this.current_out)) {
         .copied => {
             this.current_out.clearRetainingCapacity();
@@ -673,7 +673,7 @@ fn expandVarArgv(this: *const Expansion, original_int: u8) []const u8 {
     var int = original_int;
     switch (this.base.interpreter.event_loop) {
         .js => |event_loop| {
-            if (int == 0) return bun.selfExePath() catch "";
+            if (int == 0) return fun.selfExePath() catch "";
             int -= 1;
 
             const vm = event_loop.virtual_machine;
@@ -753,17 +753,17 @@ fn expansionSizeHintSimple(this: *const Expansion, simple: *const ast.SimpleAtom
 fn outEnsureUnusedCapacity(this: *Expansion, additional: usize) void {
     switch (this.out) {
         .array_of_ptr => {
-            bun.handleOom(this.out.array_of_ptr.ensureUnusedCapacity(additional));
+            fun.handleOom(this.out.array_of_ptr.ensureUnusedCapacity(additional));
         },
         .array_of_slice => {
-            bun.handleOom(this.out.array_of_slice.ensureUnusedCapacity(additional));
+            fun.handleOom(this.out.array_of_slice.ensureUnusedCapacity(additional));
         },
         .single => {},
     }
 }
 
 pub const ShellGlobTask = struct {
-    const debug = bun.Output.scoped(.ShellGlobTask, .hidden);
+    const debug = fun.Output.scoped(.ShellGlobTask, .hidden);
 
     task: WorkPoolTask = .{ .callback = &runFromThreadPool },
 
@@ -776,9 +776,9 @@ pub const ShellGlobTask = struct {
     event_loop: jsc.EventLoopHandle,
     concurrent_task: jsc.EventLoopTask,
     // This is a poll because we want it to enter the uSockets loop
-    ref: bun.Async.KeepAlive = .{},
+    ref: fun.Async.KeepAlive = .{},
     err: ?Err = null,
-    alloc_scope: bun.AllocationScope,
+    alloc_scope: fun.AllocationScope,
 
     const This = @This();
 
@@ -796,8 +796,8 @@ pub const ShellGlobTask = struct {
 
     pub fn createOnMainThread(walker: *GlobWalker, expansion: *Expansion) *This {
         debug("createOnMainThread", .{});
-        var alloc_scope = bun.AllocationScope.init(bun.default_allocator);
-        var this = bun.handleOom(alloc_scope.allocator().create(This));
+        var alloc_scope = fun.AllocationScope.init(fun.default_allocator);
+        var this = fun.handleOom(alloc_scope.allocator().create(This));
         this.* = .{
             .alloc_scope = alloc_scope,
             .event_loop = expansion.base.eventLoop(),
@@ -829,7 +829,7 @@ pub const ShellGlobTask = struct {
 
         var iter = GlobWalker.Iterator{ .walker = this.walker };
         defer iter.deinit();
-        switch (bun.handleOom(iter.init())) {
+        switch (fun.handleOom(iter.init())) {
             .err => |err| return .{ .err = err },
             else => {},
         }
@@ -838,7 +838,7 @@ pub const ShellGlobTask = struct {
             .err => |err| return .{ .err = err },
             .result => |matched_path| matched_path,
         }) |path| {
-            bun.handleOom(this.result.append(path));
+            fun.handleOom(this.result.append(path));
         }
 
         return .success;
@@ -880,35 +880,35 @@ pub const ShellGlobTask = struct {
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const Maybe = bun.sys.Maybe;
+const fun = @import("fun");
+const assert = fun.assert;
+const Maybe = fun.sys.Maybe;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSGlobalObject = jsc.JSGlobalObject;
 const JSValue = jsc.JSValue;
 
-const ExitCode = bun.shell.ExitCode;
-const Yield = bun.shell.Yield;
-const ast = bun.shell.AST;
+const ExitCode = fun.shell.ExitCode;
+const Yield = fun.shell.Yield;
+const ast = fun.shell.AST;
 
-const Interpreter = bun.shell.Interpreter;
-const Assigns = bun.shell.Interpreter.Assigns;
-const Cmd = bun.shell.Interpreter.Cmd;
-const CondExpr = bun.shell.Interpreter.CondExpr;
-const IO = bun.shell.Interpreter.IO;
-const Script = bun.shell.Interpreter.Script;
+const Interpreter = fun.shell.Interpreter;
+const Assigns = fun.shell.Interpreter.Assigns;
+const Cmd = fun.shell.Interpreter.Cmd;
+const CondExpr = fun.shell.Interpreter.CondExpr;
+const IO = fun.shell.Interpreter.IO;
+const Script = fun.shell.Interpreter.Script;
 const ShellExecEnv = Interpreter.ShellExecEnv;
-const State = bun.shell.Interpreter.State;
-const Subshell = bun.shell.Interpreter.Subshell;
+const State = fun.shell.Interpreter.State;
+const Subshell = fun.shell.Interpreter.Subshell;
 
-const Arena = bun.shell.interpret.Arena;
-const Braces = bun.shell.interpret.Braces;
-const EnvStr = bun.shell.interpret.EnvStr;
-const GlobWalker = bun.shell.interpret.GlobWalker;
-const OOM = bun.shell.interpret.OOM;
-const StatePtrUnion = bun.shell.interpret.StatePtrUnion;
-const Syscall = bun.shell.interpret.Syscall;
-const WorkPool = bun.shell.interpret.WorkPool;
-const WorkPoolTask = bun.shell.interpret.WorkPoolTask;
-const log = bun.shell.interpret.log;
+const Arena = fun.shell.interpret.Arena;
+const Braces = fun.shell.interpret.Braces;
+const EnvStr = fun.shell.interpret.EnvStr;
+const GlobWalker = fun.shell.interpret.GlobWalker;
+const OOM = fun.shell.interpret.OOM;
+const StatePtrUnion = fun.shell.interpret.StatePtrUnion;
+const Syscall = fun.shell.interpret.Syscall;
+const WorkPool = fun.shell.interpret.WorkPool;
+const WorkPoolTask = fun.shell.interpret.WorkPoolTask;
+const log = fun.shell.interpret.log;

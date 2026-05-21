@@ -1,13 +1,13 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { join } from "path";
 import { fakeNodeRun, tempDirWithFiles } from "../../harness";
 
 describe("fake node cli", () => {
   test("the node cli actually works", () => {
     const temp = tempDirWithFiles("fake-node", {
-      "index.ts": "console.log(Bun.version)",
+      "index.ts": "console.log(Fun.version)",
     });
-    expect(fakeNodeRun(temp, join(temp, "index.ts")).stdout).toBe(Bun.version);
+    expect(fakeNodeRun(temp, join(temp, "index.ts")).stdout).toBe(Fun.version);
   });
   test("doesnt resolve bins", () => {
     const temp = tempDirWithFiles("fake-node", {
@@ -32,7 +32,7 @@ describe("fake node cli", () => {
     expect(fakeNodeRun(temp, "run").stdout).toBe("pass");
   });
   describe("entrypoint file extension picking", () => {
-    // Bun supports JSX and TS, and node doesnt, so our behavior here differs a bit
+    // Fun supports JSX and TS, and node doesnt, so our behavior here differs a bit
     // Hopefully these priorization rules will not break any node apps.
     test("picks tsx over any other ext", () => {
       const temp = tempDirWithFiles("fake-node", {

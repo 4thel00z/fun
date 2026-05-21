@@ -7,7 +7,7 @@ const Entry = struct {
     value: EnvStr,
 
     pub fn compare(context: void, this: @This(), other: @This()) bool {
-        return bun.strings.cmpStringsAsc(context, this.key.slice(), other.key.slice());
+        return fun.strings.cmpStringsAsc(context, this.key.slice(), other.key.slice());
     }
 };
 
@@ -24,7 +24,7 @@ pub fn writeOutput(this: *Export, comptime io_kind: @Type(.enum_literal), compti
 }
 
 pub fn onIOWriterChunk(this: *Export, _: usize, e: ?jsc.SystemError) Yield {
-    if (comptime bun.Environment.allow_assert) {
+    if (comptime fun.Environment.allow_assert) {
         assert(this.printing);
     }
 
@@ -49,7 +49,7 @@ pub fn start(this: *Export) Yield {
             keys.append(.{
                 .key = entry.key_ptr.*,
                 .value = entry.value_ptr.*,
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
         }
 
         std.mem.sort(Entry, keys.items[0..], {}, Entry.compare);
@@ -61,7 +61,7 @@ pub fn start(this: *Export) Yield {
             }
             break :brk len;
         };
-        var buf = bun.handleOom(arena.allocator().alloc(u8, len));
+        var buf = fun.handleOom(arena.allocator().alloc(u8, len));
         {
             var i: usize = 0;
             for (keys.items) |entry| {
@@ -123,7 +123,7 @@ pub inline fn bltn(this: *Export) *Builtin {
 }
 
 // --
-const debug = bun.Output.scoped(.ShellExport, .hidden);
+const debug = fun.Output.scoped(.ShellExport, .hidden);
 const log = debug;
 
 const std = @import("std");
@@ -135,10 +135,10 @@ const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 const BuiltinIO = Interpreter.Builtin.BuiltinIO;
 
-const bun = @import("bun");
-const assert = bun.assert;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const assert = fun.assert;
+const jsc = fun.jsc;
 
-const shell = bun.shell;
+const shell = fun.shell;
 const ExitCode = shell.ExitCode;
-const Yield = bun.shell.Yield;
+const Yield = fun.shell.Yield;

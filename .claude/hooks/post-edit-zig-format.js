@@ -1,8 +1,8 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 import { extname } from "path";
 import { spawnSync } from "child_process";
 
-const input = await Bun.stdin.json();
+const input = await Fun.stdin.json();
 
 const toolName = input.tool_name;
 const toolInput = input.tool_input || {};
@@ -47,7 +47,7 @@ function formatTypeScriptFile() {
   try {
     // Format only — NO organize-imports plugin. That plugin strips imports
     // it thinks are unused, which breaks split edits (add import → use it
-    // in next edit). CI's `bun run prettier` runs the plugin, so imports
+    // in next edit). CI's `fun run prettier` runs the plugin, so imports
     // still get cleaned up before merge.
     const result = spawnSync("./node_modules/.bin/prettier", ["--config", ".prettierrc", "--write", filePath], {
       cwd: process.env.CLAUDE_PROJECT_DIR || process.cwd(),

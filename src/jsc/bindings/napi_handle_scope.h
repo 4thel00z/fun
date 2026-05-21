@@ -1,11 +1,11 @@
 #pragma once
 
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include "root.h"
 
 typedef struct NapiEnv* napi_env;
 
-namespace Bun {
+namespace Fun {
 
 // An array of write barriers (so that newly-added objects are not lost by GC) to JSValues. Unlike
 // the V8 version, pointer stability is not required (because napi_values don't point into this
@@ -104,4 +104,4 @@ extern "C" void NapiHandleScope__append(napi_env env, JSC::EncodedJSValue value)
 // called on it.
 extern "C" bool NapiHandleScope__escape(NapiHandleScopeImpl* handle_scope, JSC::EncodedJSValue value);
 
-} // namespace Bun
+} // namespace Fun

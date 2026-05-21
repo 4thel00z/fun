@@ -1,4 +1,4 @@
-import { $ } from "bun";
+import { $ } from "fun";
 import { join } from "path";
 test("09041", async () => {
   const len = 1024 * 1024;
@@ -9,11 +9,11 @@ test("09041", async () => {
     j += 1;
     i += buffer.write(Number(j).toString(10) + ",", i);
   }
-  const buns = Array.from({ length: 5 }, (_, i) =>
+  const funs = Array.from({ length: 5 }, (_, i) =>
     $`${process.argv0} run ${join(import.meta.dir, "09041-fixture.mjs")} < ${buffer}`.quiet(),
   );
 
-  const runs = await Promise.all(buns);
+  const runs = await Promise.all(funs);
   for (let i = 0; i < runs.length; i++) {
     console.log("check ", i);
     const run = runs[i];

@@ -73,7 +73,7 @@ let normalizeWebSocketURL = (url: string) => {
 
 export function initWebSocket(
   handlers: Record<number, (dv: DataView<ArrayBuffer>, ws: WebSocket) => void>,
-  { url = "/_bun/hmr", onStatusChange }: { url?: string; onStatusChange?: (connected: boolean) => void } = {},
+  { url = "/_fun/hmr", onStatusChange }: { url?: string; onStatusChange?: (connected: boolean) => void } = {},
 ): WebSocketWrapper {
   url = normalizeWebSocketURL(url);
   let firstConnection = true;
@@ -120,7 +120,7 @@ export function initWebSocket(
   }
 
   function onFirstOpen() {
-    console.info("[Bun] Hot-module-reloading socket connected, waiting for changes...");
+    console.info("[Fun] Hot-module-reloading socket connected, waiting for changes...");
     onStatusChange?.(true);
 
     // Drain the send queue.
@@ -136,7 +136,7 @@ export function initWebSocket(
     const { data } = ev;
     if (typeof data === "object") {
       const view = new DataView(data);
-      if (IS_BUN_DEVELOPMENT) {
+      if (IS_FUN_DEVELOPMENT) {
         console.info("[WS] receive message '" + String.fromCharCode(view.getUint8(0)) + "',", new Uint8Array(data));
       }
       handlers[view.getUint8(0)]?.(view, ws);
@@ -152,7 +152,7 @@ export function initWebSocket(
 
   async function onClose() {
     onStatusChange?.(false);
-    console.warn("[Bun] Hot-module-reloading socket disconnected, reconnecting...");
+    console.warn("[Fun] Hot-module-reloading socket disconnected, reconnecting...");
 
     await new Promise(done => setTimeout(done, 1000));
 
@@ -169,7 +169,7 @@ export function initWebSocket(
       ws = wsProxy.wrapped = new WebSocket(url);
       ws.binaryType = "arraybuffer";
       ws.onopen = () => {
-        console.info("[Bun] Reconnected");
+        console.info("[Fun] Reconnected");
         done(true);
         onStatusChange?.(true);
         ws.onerror = onError;

@@ -10,7 +10,7 @@
 #include <JavaScriptCore/FunctionPrototype.h>
 #include <JavaScriptCore/ObjectPrototype.h>
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSPublicKeyObject::s_info = { "PublicKeyObject"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSPublicKeyObject) };
 
@@ -46,4 +46,4 @@ void setupPublicKeyObjectClassStructure(JSC::LazyClassStructure::Initializer& in
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -2,18 +2,18 @@
 //! `ModuleInfoDeserialized` into a `JSC::JSModuleRecord`. Aliased back so the
 //! `export fn` symbol names are still discoverable from C++.
 
-export fn zig__renderDiff(expected_ptr: [*:0]const u8, expected_len: usize, received_ptr: [*:0]const u8, received_len: usize, globalThis: *bun.jsc.JSGlobalObject) void {
+export fn zig__renderDiff(expected_ptr: [*:0]const u8, expected_len: usize, received_ptr: [*:0]const u8, received_len: usize, globalThis: *fun.jsc.JSGlobalObject) void {
     const formatter = DiffFormatter{
         .received_string = received_ptr[0..received_len],
         .expected_string = expected_ptr[0..expected_len],
         .globalThis = globalThis,
     };
-    bun.Output.errorWriter().print("DIFF:\n{any}\n", .{formatter}) catch {};
+    fun.Output.errorWriter().print("DIFF:\n{any}\n", .{formatter}) catch {};
 }
 
 export fn zig__ModuleInfoDeserialized__toJSModuleRecord(
-    globalObject: *bun.jsc.JSGlobalObject,
-    vm: *bun.jsc.VM,
+    globalObject: *fun.jsc.JSGlobalObject,
+    vm: *fun.jsc.VM,
     module_key: *const IdentifierArray,
     source_code: *const SourceCode,
     declared_variables: *VariableEnvironment,
@@ -21,7 +21,7 @@ export fn zig__ModuleInfoDeserialized__toJSModuleRecord(
     res: *ModuleInfoDeserialized,
 ) ?*JSModuleRecord {
     // Ownership of `res` stays with the caller; this function only reads it.
-    // The caller (BunAnalyzeTranspiledModule.cpp) decides whether to free
+    // The caller (FunAnalyzeTranspiledModule.cpp) decides whether to free
     // immediately or keep it alive on the SourceProvider for the isolation
     // SourceProvider cache.
 
@@ -87,7 +87,7 @@ export fn zig__ModuleInfoDeserialized__toJSModuleRecord(
 }
 
 const VariableEnvironment = opaque {
-    extern fn JSC__VariableEnvironment__add(environment: *VariableEnvironment, vm: *bun.jsc.VM, identifier_array: *IdentifierArray, identifier_index: StringID) void;
+    extern fn JSC__VariableEnvironment__add(environment: *VariableEnvironment, vm: *fun.jsc.VM, identifier_array: *IdentifierArray, identifier_index: StringID) void;
     pub const add = JSC__VariableEnvironment__add;
 };
 const IdentifierArray = opaque {
@@ -97,14 +97,14 @@ const IdentifierArray = opaque {
     extern fn JSC__IdentifierArray__destroy(identifier_array: *IdentifierArray) void;
     pub const destroy = JSC__IdentifierArray__destroy;
 
-    extern fn JSC__IdentifierArray__setFromUtf8(identifier_array: *IdentifierArray, n: usize, vm: *bun.jsc.VM, str: [*]const u8, len: usize) void;
-    pub fn setFromUtf8(self: *IdentifierArray, n: usize, vm: *bun.jsc.VM, str: []const u8) void {
+    extern fn JSC__IdentifierArray__setFromUtf8(identifier_array: *IdentifierArray, n: usize, vm: *fun.jsc.VM, str: [*]const u8, len: usize) void;
+    pub fn setFromUtf8(self: *IdentifierArray, n: usize, vm: *fun.jsc.VM, str: []const u8) void {
         JSC__IdentifierArray__setFromUtf8(self, n, vm, str.ptr, str.len);
     }
 };
 const SourceCode = opaque {};
 const JSModuleRecord = opaque {
-    extern fn JSC_JSModuleRecord__create(global_object: *bun.jsc.JSGlobalObject, vm: *bun.jsc.VM, module_key: *const IdentifierArray, source_code: *const SourceCode, declared_variables: *VariableEnvironment, lexical_variables: *VariableEnvironment, has_import_meta: bool, is_typescript: bool, has_tla: bool) *JSModuleRecord;
+    extern fn JSC_JSModuleRecord__create(global_object: *fun.jsc.JSGlobalObject, vm: *fun.jsc.VM, module_key: *const IdentifierArray, source_code: *const SourceCode, declared_variables: *VariableEnvironment, lexical_variables: *VariableEnvironment, has_import_meta: bool, is_typescript: bool, has_tla: bool) *JSModuleRecord;
     pub const create = JSC_JSModuleRecord__create;
 
     extern fn JSC_JSModuleRecord__declaredVariables(module_record: *JSModuleRecord) *VariableEnvironment;
@@ -140,7 +140,7 @@ const JSModuleRecord = opaque {
     pub const addImportEntryNamespace = JSC_JSModuleRecord__addImportEntryNamespace;
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const DiffFormatter = @import("../test_runner/diff_format.zig").DiffFormatter;
 
 const analyze = @import("../bundler/analyze_transpiled_module.zig");

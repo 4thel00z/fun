@@ -1,6 +1,6 @@
-import { spawn } from "bun";
-import { describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { spawn } from "fun";
+import { describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 import { join } from "path";
 
 describe("NODE_EXTRA_CA_CERTS", () => {
@@ -25,8 +25,8 @@ xAz7TbGPHUBH5dqMzlWqEkZxcY9u9GL19SJPpC7dl8K8V5dKBwvgOubcLp4qLvZU
 
     // Test that NODE_EXTRA_CA_CERTS loads the certificate
     await using proc = spawn({
-      cmd: [bunExe(), "test.js"],
-      env: { ...bunEnv, NODE_EXTRA_CA_CERTS: certPath },
+      cmd: [funExe(), "test.js"],
+      env: { ...funEnv, NODE_EXTRA_CA_CERTS: certPath },
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -47,8 +47,8 @@ xAz7TbGPHUBH5dqMzlWqEkZxcY9u9GL19SJPpC7dl8K8V5dKBwvgOubcLp4qLvZU
 
     // Test that missing file doesn't crash the process
     await using proc = spawn({
-      cmd: [bunExe(), "test.js"],
-      env: { ...bunEnv, NODE_EXTRA_CA_CERTS: nonExistentPath },
+      cmd: [funExe(), "test.js"],
+      env: { ...funEnv, NODE_EXTRA_CA_CERTS: nonExistentPath },
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",
@@ -59,7 +59,7 @@ xAz7TbGPHUBH5dqMzlWqEkZxcY9u9GL19SJPpC7dl8K8V5dKBwvgOubcLp4qLvZU
     // Process should still run successfully even with missing cert file
     expect(exitCode).toBe(0);
     expect(stdout.trim()).toBe("OK");
-    // Bun may or may not warn about the missing file in stderr
+    // Fun may or may not warn about the missing file in stderr
     // The important thing is that the process doesn't crash
   });
 
@@ -79,8 +79,8 @@ aWRnaXRzIFB0eSBMdGQwHhcNMTgwNDEwMDgwNzQ4WhcNMjgwNDA3MDgwNzQ4WjBF
 
     // Test that both work together
     await using proc = spawn({
-      cmd: [bunExe(), "--use-system-ca", "test.js"],
-      env: { ...bunEnv, NODE_EXTRA_CA_CERTS: certPath },
+      cmd: [funExe(), "--use-system-ca", "test.js"],
+      env: { ...funEnv, NODE_EXTRA_CA_CERTS: certPath },
       cwd: dir,
       stdout: "pipe",
       stderr: "pipe",

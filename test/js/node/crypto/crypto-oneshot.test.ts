@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import crypto from "crypto";
 import { readFileSync } from "fs";
 import { path } from "../test/common/fixtures";

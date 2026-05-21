@@ -45,7 +45,7 @@ pub const FieldMessage = union(FieldType) {
             defer message.deinit();
             if (message.slice().len == 0) break;
 
-            try messages.append(bun.default_allocator, FieldMessage.init(field, message.slice()) catch continue);
+            try messages.append(fun.default_allocator, FieldMessage.init(field, message.slice()) catch continue);
         }
 
         return messages;
@@ -81,5 +81,5 @@ const std = @import("std");
 const FieldType = @import("./FieldType.zig").FieldType;
 const NewReader = @import("./NewReader.zig").NewReader;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;

@@ -2,6 +2,6 @@
 
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 JSC::JSObject* createJSDOMFileConstructor(JSC::VM&, JSC::JSGlobalObject*);
 }

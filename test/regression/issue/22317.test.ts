@@ -1,9 +1,9 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { tempDirWithFiles } from "harness";
 import { join } from "node:path";
 
-// Regression test for https://github.com/oven-sh/bun/issues/22317
-// bun build crashes with "index out of bounds" when CSS files are passed as
+// Regression test for https://github.com/underdoc-org/fun/issues/22317
+// fun build crashes with "index out of bounds" when CSS files are passed as
 // entry points alongside multiple JS/TS entry points. This happens when glob
 // expansion (e.g. ./public/**/*) includes CSS files.
 test("issue 22317: build with CSS file entry points mixed with JS should not crash", async () => {
@@ -13,7 +13,7 @@ test("issue 22317: build with CSS file entry points mixed with JS should not cra
     "public/assets/index.css": `body { color: red; }`,
   });
 
-  const result = await Bun.build({
+  const result = await Fun.build({
     entrypoints: [join(dir, "src/index.ts"), join(dir, "public/assets/index.css"), join(dir, "src/server.worker.ts")],
     outdir: join(dir, "build"),
   });

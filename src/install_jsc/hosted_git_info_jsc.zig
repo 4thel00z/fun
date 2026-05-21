@@ -1,47 +1,47 @@
 //! JSC bridges for `src/install/hosted_git_info.zig`. Aliased back so call
 //! sites and `$newZigFunction("hosted_git_info.zig", …)` are unchanged.
 
-pub fn hostedGitInfoToJS(self: *const hgi.HostedGitInfo, go: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+pub fn hostedGitInfoToJS(self: *const hgi.HostedGitInfo, go: *jsc.JSGlobalObject) fun.JSError!jsc.JSValue {
     const obj = jsc.JSValue.createEmptyObject(go, 6);
     obj.put(
         go,
         jsc.ZigString.static("type"),
-        try bun.String.fromBytes(self.host_provider.typeStr()).toJS(go),
+        try fun.String.fromBytes(self.host_provider.typeStr()).toJS(go),
     );
     obj.put(
         go,
         jsc.ZigString.static("domain"),
-        try bun.String.fromBytes(self.host_provider.domain()).toJS(go),
+        try fun.String.fromBytes(self.host_provider.domain()).toJS(go),
     );
     obj.put(
         go,
         jsc.ZigString.static("project"),
-        try bun.String.fromBytes(self.project).toJS(go),
+        try fun.String.fromBytes(self.project).toJS(go),
     );
     obj.put(
         go,
         jsc.ZigString.static("user"),
-        if (self.user) |user| try bun.String.fromBytes(user).toJS(go) else .null,
+        if (self.user) |user| try fun.String.fromBytes(user).toJS(go) else .null,
     );
     obj.put(
         go,
         jsc.ZigString.static("committish"),
         if (self.committish) |committish|
-            try bun.String.fromBytes(committish).toJS(go)
+            try fun.String.fromBytes(committish).toJS(go)
         else
             .null,
     );
     obj.put(
         go,
         jsc.ZigString.static("default"),
-        try bun.String.fromBytes(@tagName(self.default_representation)).toJS(go),
+        try fun.String.fromBytes(@tagName(self.default_representation)).toJS(go),
     );
 
     return obj;
 }
 
-pub fn jsParseUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const allocator = bun.default_allocator;
+pub fn jsParseUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const allocator = fun.default_allocator;
 
     if (callframe.argumentsCount() != 1) {
         return go.throw("hostedGitInfo.prototype.parseUrl takes exactly 1 argument", .{});
@@ -58,7 +58,7 @@ pub fn jsParseUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSErro
 
     // TODO(markovejnovic): This feels like there's too much going on all
     // to give us a slice. Maybe there's a better way to code this up.
-    const npa_str = try arg0.toBunString(go);
+    const npa_str = try arg0.toFunString(go);
     defer npa_str.deref();
     var as_utf8 = npa_str.toUTF8(allocator);
     defer as_utf8.deinit();
@@ -70,8 +70,8 @@ pub fn jsParseUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSErro
     return parsed.url.href().toJS(go);
 }
 
-pub fn jsFromUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
-    const allocator = bun.default_allocator;
+pub fn jsFromUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) fun.JSError!jsc.JSValue {
+    const allocator = fun.default_allocator;
 
     // TODO(markovejnovic): The original hosted-git-info actually takes another argument that
     //                      allows you to inject options. Seems untested so we didn't implement
@@ -90,7 +90,7 @@ pub fn jsFromUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError
 
     // TODO(markovejnovic): This feels like there's too much going on all to give us a slice.
     // Maybe there's a better way to code this up.
-    const npa_str = try arg0.toBunString(go);
+    const npa_str = try arg0.toFunString(go);
     defer npa_str.deref();
     var as_utf8 = npa_str.toUTF8(allocator);
     defer as_utf8.deinit();
@@ -105,5 +105,5 @@ pub fn jsFromUrl(go: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError
 
 const hgi = @import("../install/hosted_git_info.zig");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

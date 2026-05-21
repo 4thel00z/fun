@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import process from "process";
 
 test("the constructor of process can be called", () => {

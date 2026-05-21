@@ -74,7 +74,7 @@ pub const InKind = union(enum) {
         }
     }
 
-    pub fn to_subproc_stdio(this: InKind, stdio: *bun.shell.subproc.Stdio) void {
+    pub fn to_subproc_stdio(this: InKind, stdio: *fun.shell.subproc.Stdio) void {
         switch (this) {
             .fd => {
                 stdio.* = .{ .fd = this.fd.fd };
@@ -100,7 +100,7 @@ pub const OutKind = union(enum) {
     /// in the Interpreter struct
     fd: struct {
         writer: *Interpreter.IOWriter,
-        captured: ?*bun.ByteList = null,
+        captured: ?*fun.ByteList = null,
         pub fn memoryCost(this: *const @This()) usize {
             var cost: usize = this.writer.memoryCost();
             if (this.captured) |captured| {
@@ -167,7 +167,7 @@ pub const OutKind = union(enum) {
         }
     }
 
-    fn to_subproc_stdio(this: OutKind, shellio: *?*shell.IOWriter) bun.shell.subproc.Stdio {
+    fn to_subproc_stdio(this: OutKind, shellio: *?*shell.IOWriter) fun.shell.subproc.Stdio {
         return switch (this) {
             .fd => |val| brk: {
                 shellio.* = val.writer.dupeRef();
@@ -191,18 +191,18 @@ pub const OutKind = union(enum) {
     }
 };
 
-pub fn to_subproc_stdio(this: IO, stdio: *[3]bun.shell.subproc.Stdio, shellio: *shell.subproc.ShellIO) void {
+pub fn to_subproc_stdio(this: IO, stdio: *[3]fun.shell.subproc.Stdio, shellio: *shell.subproc.ShellIO) void {
     this.stdin.to_subproc_stdio(&stdio[0]);
     stdio[stdout_no] = this.stdout.to_subproc_stdio(&shellio.stdout);
     stdio[stderr_no] = this.stderr.to_subproc_stdio(&shellio.stderr);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const shell = bun.shell;
-const Interpreter = bun.shell.Interpreter;
+const shell = fun.shell;
+const Interpreter = fun.shell.Interpreter;
 
-const OutputNeedsIOSafeGuard = bun.shell.interpret.OutputNeedsIOSafeGuard;
-const stderr_no = bun.shell.interpret.stderr_no;
-const stdout_no = bun.shell.interpret.stdout_no;
+const OutputNeedsIOSafeGuard = fun.shell.interpret.OutputNeedsIOSafeGuard;
+const stderr_no = fun.shell.interpret.stderr_no;
+const stdout_no = fun.shell.interpret.stdout_no;

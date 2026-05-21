@@ -1,5 +1,5 @@
 const MySQLStatement = @This();
-const RefCount = bun.ptr.RefCount(@This(), "ref_count", deinit, .{});
+const RefCount = fun.ptr.RefCount(@This(), "ref_count", deinit, .{});
 
 cached_structure: CachedStructure = .{},
 ref_count: RefCount = RefCount.init(),
@@ -52,25 +52,25 @@ pub fn deinit(this: *MySQLStatement) void {
         column.deinit();
     }
     if (this.columns.len > 0) {
-        bun.default_allocator.free(this.columns);
+        fun.default_allocator.free(this.columns);
     }
     if (this.params.len > 0) {
-        bun.default_allocator.free(this.params);
+        fun.default_allocator.free(this.params);
     }
     this.cached_structure.deinit();
     this.error_response.deinit();
     this.signature.deinit();
-    bun.destroy(this);
+    fun.destroy(this);
 }
 
 pub fn checkForDuplicateFields(this: *@This()) void {
     if (!this.execution_flags.needs_duplicate_check) return;
     this.execution_flags.needs_duplicate_check = false;
 
-    var seen_numbers = std.array_list.Managed(u32).init(bun.default_allocator);
+    var seen_numbers = std.array_list.Managed(u32).init(fun.default_allocator);
     defer seen_numbers.deinit();
-    var seen_fields = bun.StringHashMap(void).init(bun.default_allocator);
-    bun.handleOom(seen_fields.ensureUnusedCapacity(@intCast(this.columns.len)));
+    var seen_fields = fun.StringHashMap(void).init(fun.default_allocator);
+    fun.handleOom(seen_fields.ensureUnusedCapacity(@intCast(this.columns.len)));
     defer seen_fields.deinit();
 
     // iterate backwards
@@ -95,7 +95,7 @@ pub fn checkForDuplicateFields(this: *@This()) void {
                     field.name_or_index = .duplicate;
                     flags.has_duplicate_columns = true;
                 } else {
-                    bun.handleOom(seen_numbers.append(index));
+                    fun.handleOom(seen_numbers.append(index));
                 }
 
                 flags.has_indexed_columns = true;
@@ -124,7 +124,7 @@ pub fn structure(this: *MySQLStatement, owner: JSValue, globalObject: *jsc.JSGlo
             nonDuplicatedCount -= 1;
         }
     }
-    const ids = if (nonDuplicatedCount <= jsc.JSObject.maxInlineCapacity()) stack_ids[0..nonDuplicatedCount] else bun.handleOom(bun.default_allocator.alloc(jsc.JSObject.ExternColumnIdentifier, nonDuplicatedCount));
+    const ids = if (nonDuplicatedCount <= jsc.JSObject.maxInlineCapacity()) stack_ids[0..nonDuplicatedCount] else fun.handleOom(fun.default_allocator.alloc(jsc.JSObject.ExternColumnIdentifier, nonDuplicatedCount));
 
     var i: usize = 0;
     for (this.columns) |*column| {
@@ -168,7 +168,7 @@ const _ParamUnused = struct {
     type: types.FieldType,
     flags: ColumnDefinition41.ColumnFlags,
 };
-const debug = bun.Output.scoped(.MySQLStatement, .hidden);
+const debug = fun.Output.scoped(.MySQLStatement, .hidden);
 
 const CachedStructure = @import("../shared/CachedStructure.zig");
 const ColumnDefinition41 = @import("../../sql/mysql/protocol/ColumnDefinition41.zig");
@@ -178,8 +178,8 @@ const std = @import("std");
 const types = @import("../../sql/mysql/MySQLTypes.zig");
 const SQLDataCell = @import("../shared/SQLDataCell.zig").SQLDataCell;
 
-const bun = @import("bun");
-const String = bun.String;
+const fun = @import("fun");
+const String = fun.String;
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

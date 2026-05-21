@@ -62,7 +62,7 @@
 #include "DOMJITIDLTypeFilter.h"
 #include "DOMJITHelpers.h"
 #include <JavaScriptCore/DFGAbstractHeap.h>
-#include "BunClientData.h"
+#include "FunClientData.h"
 
 namespace WebCore {
 using namespace JSC;
@@ -218,7 +218,7 @@ template<> void JSTextEncoderDOMConstructor::initializeProperties(VM& vm, JSDOMG
 // static const JSC::DOMJIT::Signature DOMJITSignatureForJSTextEncoderEncodeWithoutTypeCheck(
 //     jsTextEncoderEncodeWithoutTypeCheck,
 //     JSTextEncoder::info(),
-//     // https://github.com/oven-sh/bun/issues/9226
+//     // https://github.com/underdoc-org/fun/issues/9226
 //     // It's not totally clear what the correct side effects are for this function, so we just make it conservative for now.
 //     JSC::DOMJIT::Effect {},
 //     DOMJIT::IDLResultTypeFilter<IDLUint8Array>::value,
@@ -294,7 +294,7 @@ static const HashTableValue JSTextEncoderPrototypeTableValues[] = {
 //         res = TextEncoder__encodeInto8(source.span8().data(), source.length(), destination->vector(), destination->byteLength());
 //     }
 
-//     Bun::GlobalScope* globalScope = reinterpret_cast<Bun::GlobalScope*>(lexicalGlobalObject);
+//     Fun::GlobalScope* globalScope = reinterpret_cast<Fun::GlobalScope*>(lexicalGlobalObject);
 //     auto* result = JSC::constructEmptyObject(vm, globalScope->encodeIntoObjectStructure());
 //     result->putDirectOffset(vm, 0, JSC::jsNumber(static_cast<uint32_t>(res)));
 //     result->putDirectOffset(vm, 1, JSC::jsNumber(static_cast<uint32_t>(res >> 32)));
@@ -448,7 +448,7 @@ static inline JSC::EncodedJSValue jsTextEncoderPrototypeFunction_encodeIntoBody(
         res = TextEncoder__encodeInto8(span.data(), span.size(), destination->vector(), destination->byteLength());
     }
 
-    Bun::GlobalScope* globalScope = reinterpret_cast<Bun::GlobalScope*>(lexicalGlobalObject);
+    Fun::GlobalScope* globalScope = reinterpret_cast<Fun::GlobalScope*>(lexicalGlobalObject);
     auto* result = JSC::constructEmptyObject(vm, globalScope->encodeIntoObjectStructure());
     result->putDirectOffset(vm, 0, JSC::jsNumber(static_cast<uint32_t>(res)));
     result->putDirectOffset(vm, 1, JSC::jsNumber(static_cast<uint32_t>(res >> 32)));

@@ -116,26 +116,26 @@ pub const Renderer = struct {
     vtable: *const VTable,
 
     pub const VTable = struct {
-        enterBlock: *const fn (ptr: *anyopaque, block_type: BlockType, data: u32, flags: u32) bun.JSError!void,
-        leaveBlock: *const fn (ptr: *anyopaque, block_type: BlockType, data: u32) bun.JSError!void,
-        enterSpan: *const fn (ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) bun.JSError!void,
-        leaveSpan: *const fn (ptr: *anyopaque, span_type: SpanType) bun.JSError!void,
-        text: *const fn (ptr: *anyopaque, text_type: TextType, content: []const u8) bun.JSError!void,
+        enterBlock: *const fn (ptr: *anyopaque, block_type: BlockType, data: u32, flags: u32) fun.JSError!void,
+        leaveBlock: *const fn (ptr: *anyopaque, block_type: BlockType, data: u32) fun.JSError!void,
+        enterSpan: *const fn (ptr: *anyopaque, span_type: SpanType, detail: SpanDetail) fun.JSError!void,
+        leaveSpan: *const fn (ptr: *anyopaque, span_type: SpanType) fun.JSError!void,
+        text: *const fn (ptr: *anyopaque, text_type: TextType, content: []const u8) fun.JSError!void,
     };
 
-    pub inline fn enterBlock(self: Renderer, block_type: BlockType, data: u32, flags: u32) bun.JSError!void {
+    pub inline fn enterBlock(self: Renderer, block_type: BlockType, data: u32, flags: u32) fun.JSError!void {
         return self.vtable.enterBlock(self.ptr, block_type, data, flags);
     }
-    pub inline fn leaveBlock(self: Renderer, block_type: BlockType, data: u32) bun.JSError!void {
+    pub inline fn leaveBlock(self: Renderer, block_type: BlockType, data: u32) fun.JSError!void {
         return self.vtable.leaveBlock(self.ptr, block_type, data);
     }
-    pub inline fn enterSpan(self: Renderer, span_type: SpanType, detail: SpanDetail) bun.JSError!void {
+    pub inline fn enterSpan(self: Renderer, span_type: SpanType, detail: SpanDetail) fun.JSError!void {
         return self.vtable.enterSpan(self.ptr, span_type, detail);
     }
-    pub inline fn leaveSpan(self: Renderer, span_type: SpanType) bun.JSError!void {
+    pub inline fn leaveSpan(self: Renderer, span_type: SpanType) fun.JSError!void {
         return self.vtable.leaveSpan(self.ptr, span_type);
     }
-    pub inline fn text(self: Renderer, text_type: TextType, content: []const u8) bun.JSError!void {
+    pub inline fn text(self: Renderer, text_type: TextType, content: []const u8) fun.JSError!void {
         return self.vtable.text(self.ptr, text_type, content);
     }
 };
@@ -384,4 +384,4 @@ pub fn isTaskChecked(task_mark: u8) bool {
     return task_mark != 0 and task_mark != ' ';
 }
 
-const bun = @import("bun");
+const fun = @import("fun");

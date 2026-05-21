@@ -1,6 +1,6 @@
-import { gzipSync, type Server } from "bun";
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir, tls } from "harness";
+import { gzipSync, type Server } from "fun";
+import { afterAll, beforeAll, describe, expect, test } from "fun:test";
+import { funEnv, funExe, tempDir, tls } from "harness";
 
 // In-process server with `http1: false` so the build under test binds UDP only.
 // A fetch that silently fell back to HTTP/1.1 would get ECONNREFUSED, which
@@ -10,7 +10,7 @@ let base: string;
 const big = Buffer.alloc(256 * 1024, "abcdefghijklmnop");
 
 beforeAll(async () => {
-  server = Bun.serve({
+  server = Fun.serve({
     port: 0,
     tls,
     http3: true,
@@ -64,7 +64,7 @@ beforeAll(async () => {
             type: "direct",
             async pull(ctrl) {
               ctrl.write("alpha;");
-              await Bun.sleep(1);
+              await Fun.sleep(1);
               ctrl.write("beta;");
               ctrl.write("gamma;");
               await ctrl.end();
@@ -266,7 +266,7 @@ describe("fetch protocol: http3", () => {
     const res = await fetch(`${base}/direct-big`, h3);
     const buf = await res.bytes();
     expect(buf.length).toBe(8 * 32 * 1024);
-    expect(Bun.hash(buf)).toBe(Bun.hash(Buffer.concat(Array.from({ length: 8 }, () => big.subarray(0, 32 * 1024)))));
+    expect(Fun.hash(buf)).toBe(Fun.hash(Buffer.concat(Array.from({ length: 8 }, () => big.subarray(0, 32 * 1024)))));
   });
 
   test("response consumed via reader", async () => {
@@ -353,7 +353,7 @@ describe("fetch protocol: http3", () => {
   });
 
   test("connection failure rejects", async () => {
-    using closed = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } });
+    using closed = Fun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } });
     const port = closed.port;
     closed.stop(true);
     await expect(fetch(`https://127.0.0.1:${port}/`, { ...h3, signal: AbortSignal.timeout(2000) })).rejects.toThrow();
@@ -394,7 +394,7 @@ describe("fetch protocol: http3", () => {
     // unusable so the next fetch (new port → new session) isn't disrupted by
     // the draining ones still on the shared UDP socket.
     for (let i = 0; i < 30; i++) {
-      const s = Bun.serve({ port: 0, tls, http3: true, http1: false, routes: { "/n": () => new Response(String(i)) } });
+      const s = Fun.serve({ port: 0, tls, http3: true, http1: false, routes: { "/n": () => new Response(String(i)) } });
       const res = await fetch(`https://127.0.0.1:${s.port}/n`, h3);
       expect(await res.text()).toBe(String(i));
       s.stop(true);
@@ -547,7 +547,7 @@ describe("fetch protocol: http3", () => {
 // port while A drains so the retry has somewhere to land.
 test("retries on a fresh session when a pooled session is stale (port reuse)", async () => {
   let release: () => void = () => {};
-  const a = Bun.serve({
+  const a = Fun.serve({
     port: 0,
     reusePort: true,
     tls,
@@ -564,8 +564,8 @@ test("retries on a fresh session when a pooled session is stale (port reuse)", a
   const port = a.port;
   expect(await fetch(`https://127.0.0.1:${port}/`, h3).then(r => r.text())).toBe("a");
   const inflight = fetch(`https://127.0.0.1:${port}/hang`, h3);
-  await Bun.sleep(50);
-  const b = Bun.serve({ port, reusePort: true, tls, http3: true, http1: false, fetch: () => new Response("b") });
+  await Fun.sleep(50);
+  const b = Fun.serve({ port, reusePort: true, tls, http3: true, http1: false, fetch: () => new Response("b") });
   // Abrupt stop sends CONNECTION_CLOSE then closes the fd, so /hang's
   // stream closes before any response — that's the retryOrFail trigger.
   a.stop(true);
@@ -588,9 +588,9 @@ describe("Alt-Svc upgrade (--experimental-http3-fetch)", () => {
   // fetch #1 goes over http/1.1 (sessions=0) and records Alt-Svc; fetch #2
   // goes over QUIC (sessions=1).
   const fixture = `
-    import { fetchH3Internals } from "bun:internal-for-testing";
+    import { fetchH3Internals } from "fun:internal-for-testing";
     const { liveCounts } = fetchH3Internals;
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       tls: ${JSON.stringify(tls)},
       http3: true,
@@ -612,9 +612,9 @@ describe("Alt-Svc upgrade (--experimental-http3-fetch)", () => {
 
   async function run(extra: { env?: Record<string, string>; args?: string[] }) {
     using dir = tempDir("h3-altsvc", { "fixture.ts": fixture });
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), ...(extra.args ?? []), "fixture.ts"],
-      env: { ...bunEnv, ...extra.env },
+    await using proc = Fun.spawn({
+      cmd: [funExe(), ...(extra.args ?? []), "fixture.ts"],
+      env: { ...funEnv, ...extra.env },
       cwd: String(dir),
       stderr: "pipe",
     });
@@ -622,8 +622,8 @@ describe("Alt-Svc upgrade (--experimental-http3-fetch)", () => {
     return { stdout, stderr, exitCode };
   }
 
-  test("env var: BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT=1", async () => {
-    const { stdout, stderr, exitCode } = await run({ env: { BUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT: "1" } });
+  test("env var: FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT=1", async () => {
+    const { stdout, stderr, exitCode } = await run({ env: { FUN_FEATURE_FLAG_EXPERIMENTAL_HTTP3_CLIENT: "1" } });
     expect(stderr).toBe("");
     expect(stdout).toMatch(/^first alt-svc=h3=":\d+"; ma=\d+ sessions=0\n/);
     expect(stdout).toMatch(/second status=200 sessions=1\n$/);

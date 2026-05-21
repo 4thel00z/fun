@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import path from "node:path";
 
 // H2FrameParser stored Stream by value in a HashMap. Any *Stream obtained
@@ -10,9 +10,9 @@ import path from "node:path";
 // These three tests cover the call sites where this was observed under ASAN.
 
 test("session.request() from a stream 'timeout' listener during forEachStream does not UAF on hashmap rehash", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--smol", path.join(import.meta.dir, "node-http2-foreach-rehash.fixture.js")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--smol", path.join(import.meta.dir, "node-http2-foreach-rehash.fixture.js")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -86,9 +86,9 @@ test("http2 client request() does not hold *Stream across user-controlled option
     });
   `;
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "-e", script],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "-e", script],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -97,9 +97,9 @@ test("http2 client request() does not hold *Stream across user-controlled option
 });
 
 test("http2 client write callback that opens new streams during flushQueue does not UAF", async () => {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), path.join(import.meta.dir, "node-http2-flush-rehash.fixture.js")],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), path.join(import.meta.dir, "node-http2-flush-rehash.fixture.js")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

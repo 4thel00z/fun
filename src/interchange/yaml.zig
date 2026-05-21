@@ -2,7 +2,7 @@ pub const YAML = struct {
     const ParseError = OOM || error{ SyntaxError, StackOverflow };
 
     pub fn parse(source: *const logger.Source, log: *logger.Log, allocator: std.mem.Allocator) ParseError!Expr {
-        bun.analytics.Features.yaml_parse += 1;
+        fun.analytics.Features.yaml_parse += 1;
 
         var parser: Parser(.utf8) = .init(allocator, source.contents);
 
@@ -19,7 +19,7 @@ pub const YAML = struct {
 
                 // multi-document yaml streams are converted into arrays
 
-                var items: bun.BabyList(Expr) = try .initCapacity(allocator, stream.docs.items.len);
+                var items: fun.BabyList(Expr) = try .initCapacity(allocator, stream.docs.items.len);
 
                 for (stream.docs.items) |doc| {
                     items.appendAssumeCapacity(doc.root);
@@ -73,7 +73,7 @@ pub const Context = enum {
 
         pub fn unset(this: *@This(), context: Context) void {
             const prev_context = this.list.pop();
-            bun.assert(prev_context != null and prev_context.? == context);
+            fun.assert(prev_context != null and prev_context.? == context);
         }
 
         pub fn get(this: *const @This()) Context {
@@ -172,7 +172,7 @@ pub const Indent = enum(usize) {
         }
 
         pub fn pop(this: *@This()) void {
-            bun.assert(this.list.items.len != 0);
+            fun.assert(this.list.items.len != 0);
             _ = this.list.pop();
         }
 
@@ -254,12 +254,12 @@ pub const Line = enum(usize) {
 };
 
 comptime {
-    bun.assert(Pos != Indent);
-    bun.assert(Pos != Line);
-    bun.assert(Pos == Pos);
-    bun.assert(Indent != Line);
-    bun.assert(Indent == Indent);
-    bun.assert(Line == Line);
+    fun.assert(Pos != Indent);
+    fun.assert(Pos != Line);
+    fun.assert(Pos == Pos);
+    fun.assert(Indent != Line);
+    fun.assert(Indent == Indent);
+    fun.assert(Line == Line);
 }
 
 pub fn Parser(comptime enc: Encoding) type {
@@ -281,10 +281,10 @@ pub fn Parser(comptime enc: Encoding) type {
         explicit_document_start_line: ?Line,
 
         // anchors: Anchors,
-        anchors: bun.StringHashMap(Expr),
+        anchors: fun.StringHashMap(Expr),
         // aliases: PendingAliases,
 
-        tag_handles: bun.StringHashMap(void),
+        tag_handles: fun.StringHashMap(void),
 
         // const PendingAliases = struct {
         //     list: std.array_list.Managed(State),
@@ -299,7 +299,7 @@ pub fn Parser(comptime enc: Encoding) type {
 
         whitespace_buf: std.array_list.Managed(Whitespace),
 
-        stack_check: bun.StackCheck,
+        stack_check: fun.StackCheck,
 
         const Whitespace = union(enum) {
             source: struct {
@@ -987,7 +987,7 @@ pub fn Parser(comptime enc: Encoding) type {
         }
 
         const MappingProps = struct {
-            #list: bun.collections.ArrayList(G.Property),
+            #list: fun.collections.ArrayList(G.Property),
 
             pub fn init(allocator: std.mem.Allocator) MappingProps {
                 return .{ .#list = .initIn(allocator) };
@@ -1248,7 +1248,7 @@ pub fn Parser(comptime enc: Encoding) type {
 
             pub fn implicitKeyAnchors(this: *NodeProperties, implicit_key_line: Line) ImplicitKeyAnchors {
                 if (this.has_mapping_anchor) |mapping_anchor| {
-                    bun.assert(this.has_anchor != null);
+                    fun.assert(this.has_anchor != null);
                     return .{
                         .key_anchor = if (this.has_anchor) |key_anchor| key_anchor.data.anchor else null,
                         .mapping_anchor = mapping_anchor.data.anchor,
@@ -1310,7 +1310,7 @@ pub fn Parser(comptime enc: Encoding) type {
 
         fn parseNode(self: *@This(), opts: ParseNodeOptions) ParseError!Expr {
             if (!self.stack_check.isSafeToRecurse()) {
-                try bun.throwStackOverflow();
+                try fun.throwStackOverflow();
             }
 
             // c-ns-properties
@@ -2250,7 +2250,7 @@ pub fn Parser(comptime enc: Encoding) type {
                             };
                             break :scalar .{ .number = @floatFromInt(unsigned) };
                         }
-                        const float = bun.jsc.wtf.parseDouble(parser.slice(start, end)) catch {
+                        const float = fun.jsc.wtf.parseDouble(parser.slice(start, end)) catch {
                             return;
                         };
 
@@ -4474,7 +4474,7 @@ pub fn Parser(comptime enc: Encoding) type {
 
                     if (comptime Environment.ci_assert) {
                         const actual = self.parser.input[pos.cast()];
-                        bun.assert(actual == unit);
+                        fun.assert(actual == unit);
                     }
                     switch (self.str) {
                         .range => |*range| {
@@ -4483,7 +4483,7 @@ pub fn Parser(comptime enc: Encoding) type {
                                 range.end = pos;
                             }
 
-                            bun.assert(range.end == pos);
+                            fun.assert(range.end == pos);
 
                             range.end = pos.add(1);
                         },
@@ -4502,7 +4502,7 @@ pub fn Parser(comptime enc: Encoding) type {
                             .source => |source| {
                                 if (comptime Environment.ci_assert) {
                                     const actual = self.parser.input[source.pos.cast()];
-                                    bun.assert(actual == source.unit);
+                                    fun.assert(actual == source.unit);
                                 }
 
                                 switch (self.str) {
@@ -4512,7 +4512,7 @@ pub fn Parser(comptime enc: Encoding) type {
                                             range.end = source.pos;
                                         }
 
-                                        bun.assert(range.end == source.pos);
+                                        fun.assert(range.end == source.pos);
 
                                         range.end = source.pos.add(1);
                                     },
@@ -4559,7 +4559,7 @@ pub fn Parser(comptime enc: Encoding) type {
                                 range.end = off;
                             }
 
-                            bun.assert(range.end == off);
+                            fun.assert(range.end == off);
 
                             range.end = end;
                         },
@@ -4574,7 +4574,7 @@ pub fn Parser(comptime enc: Encoding) type {
 
                     if (comptime Environment.ci_assert) {
                         const actual = self.parser.slice(off, end);
-                        bun.assert(std.mem.eql(enc.unit(), actual, expected));
+                        fun.assert(std.mem.eql(enc.unit(), actual, expected));
                     }
 
                     switch (self.str) {
@@ -4584,7 +4584,7 @@ pub fn Parser(comptime enc: Encoding) type {
                                 range.end = off;
                             }
 
-                            bun.assert(range.end == off);
+                            fun.assert(range.end == off);
 
                             range.end = end;
                         },
@@ -5732,12 +5732,12 @@ pub fn Token(comptime encoding: Encoding) type {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const OOM = bun.OOM;
-const logger = bun.logger;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const OOM = fun.OOM;
+const logger = fun.logger;
 
-const ast = bun.ast;
+const ast = fun.ast;
 const E = ast.E;
 const Expr = ast.Expr;
 const G = ast.G;

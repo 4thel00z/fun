@@ -1,6 +1,6 @@
 //! `us_quic_socket_context_t` — one lsquic engine + its event-loop wiring.
 //! For the client there is exactly one of these per HTTP-thread loop and it
-//! lives for the process; the server creates one per `Bun.serve({http3:true})`.
+//! lives for the process; the server creates one per `Fun.serve({http3:true})`.
 
 pub const Context = opaque {
     extern fn us_create_quic_client_context(loop: *uws.Loop, ext_size: c_uint, conn_ext: c_uint, stream_ext: c_uint) ?*Context;
@@ -14,7 +14,7 @@ pub const Context = opaque {
     pub const ConnectResult = union(enum) {
         /// IP literal or DNS-cache hit: handshake already in flight.
         socket: *Socket,
-        /// DNS cache miss: caller must register a `Bun__addrinfo` callback on
+        /// DNS cache miss: caller must register a `Fun__addrinfo` callback on
         /// `pending.addrinfo()` and call `pending.resolved()` when it fires.
         pending: *PendingConnect,
         err,
@@ -48,8 +48,8 @@ pub const Context = opaque {
     pub const onStreamClose = us_quic_socket_context_on_stream_close;
 };
 
-const bun = @import("bun");
-const uws = bun.uws;
+const fun = @import("fun");
+const uws = fun.uws;
 
 const PendingConnect = uws.quic.PendingConnect;
 const Socket = uws.quic.Socket;

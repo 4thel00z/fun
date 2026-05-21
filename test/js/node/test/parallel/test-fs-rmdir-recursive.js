@@ -14,7 +14,7 @@ const path = require('path');
 //   'DEP0147'
 // );
 
-// Bun does not have a validateRmdirOptions function
+// Fun does not have a validateRmdirOptions function
 // Instead, we can just remove a temp file.
 const pathForRmOptions = tmpdir.resolve('pathForRmOptions');
 function validateRmdirOptions(options) {
@@ -204,7 +204,7 @@ function removeAsync(dir) {
     });
   });
 
-  // Bun treats properties that are undefined as unset
+  // Fun treats properties that are undefined as unset
   // [undefined, null, 'foo', Infinity, function() {}].forEach((bad) => {
   [null, 'foo', Infinity, function() {}].forEach((bad) => {
     assert.throws(() => {

@@ -1,6 +1,6 @@
 import {
 __decorateClass as __decorateClass_4b4920c627822e1f
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {LitElement, html, css} from "http://localhost:8080/node_modules/lit/index.js";
 import {customElement, property, eventOptions} from "http://localhost:8080/node_modules/lit/decorators.js";
 var loadedResolve;

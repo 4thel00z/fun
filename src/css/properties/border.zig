@@ -185,7 +185,7 @@ pub const LineStyle = enum {
     pub const toCss = css_impl.toCss;
     pub const deepClone = css_impl.deepClone;
 
-    pub fn isCompatible(_: *const @This(), _: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(_: *const @This(), _: fun.css.targets.Browsers) bool {
         return true;
     }
 
@@ -208,7 +208,7 @@ pub const BorderSideWidth = union(enum) {
     pub const parse = css.DeriveParse(@This()).parse;
     pub const toCss = css.DeriveToCss(@This()).toCss;
 
-    pub fn isCompatible(this: *const @This(), browsers: bun.css.targets.Browsers) bool {
+    pub fn isCompatible(this: *const @This(), browsers: fun.css.targets.Browsers) bool {
         return switch (this.*) {
             .length => |len| len.isCompatible(browsers),
             else => true,
@@ -493,7 +493,7 @@ pub fn ImplFallbacks(comptime T: type) type {
             const ColorFallbackKind = css.css_values.color.ColorFallbackKind;
             var fallbacks = ColorFallbackKind{};
             inline for (fields) |field| {
-                bun.bits.insert(ColorFallbackKind, &fallbacks, @field(this, field.name).getNecessaryFallbacks(targets));
+                fun.bits.insert(ColorFallbackKind, &fallbacks, @field(this, field.name).getNecessaryFallbacks(targets));
             }
 
             var res = css.SmallList(T, 2){};
@@ -540,9 +540,9 @@ const BorderShorthand = struct {
     }
 
     fn reset(this: *@This(), allocator: std.mem.Allocator) void {
-        bun.clear(&this.width, allocator);
-        bun.clear(&this.style, allocator);
-        bun.clear(&this.color, allocator);
+        fun.clear(&this.width, allocator);
+        fun.clear(&this.style, allocator);
+        fun.clear(&this.color, allocator);
     }
 
     fn isValid(this: *const @This()) bool {
@@ -633,7 +633,7 @@ const BorderProperty = packed struct(u32) {
 
     pub fn tryFromPropertyId(property_id: css.PropertyIdTag) ?@This() {
         @setEvalBranchQuota(10000);
-        const fields = bun.meta.EnumFields(css.PropertyIdTag);
+        const fields = fun.meta.EnumFields(css.PropertyIdTag);
         inline for (fields) |field| {
             if (field.value == @intFromEnum(property_id)) {
                 if (comptime std.mem.startsWith(u8, field.name, "border") and @hasDecl(@This(), field.name)) {
@@ -773,10 +773,10 @@ pub const BorderHandler = struct {
                 propertyHelper(this, dest, context, "border_bottom", "width", &val.bottom, .physical);
                 propertyHelper(this, dest, context, "border_left", "width", &val.left, .physical);
 
-                bun.clear(&this.border_block_start.width, context.allocator);
-                bun.clear(&this.border_block_end.width, context.allocator);
-                bun.clear(&this.border_inline_start.width, context.allocator);
-                bun.clear(&this.border_inline_end.width, context.allocator);
+                fun.clear(&this.border_block_start.width, context.allocator);
+                fun.clear(&this.border_block_end.width, context.allocator);
+                fun.clear(&this.border_inline_start.width, context.allocator);
+                fun.clear(&this.border_inline_end.width, context.allocator);
                 this.has_any = true;
             },
             .@"border-style" => |*val| {
@@ -785,10 +785,10 @@ pub const BorderHandler = struct {
                 propertyHelper(this, dest, context, "border_bottom", "style", &val.bottom, .physical);
                 propertyHelper(this, dest, context, "border_left", "style", &val.left, .physical);
 
-                bun.clear(&this.border_block_start.style, context.allocator);
-                bun.clear(&this.border_block_end.style, context.allocator);
-                bun.clear(&this.border_inline_start.style, context.allocator);
-                bun.clear(&this.border_inline_end.style, context.allocator);
+                fun.clear(&this.border_block_start.style, context.allocator);
+                fun.clear(&this.border_block_end.style, context.allocator);
+                fun.clear(&this.border_inline_start.style, context.allocator);
+                fun.clear(&this.border_inline_end.style, context.allocator);
                 this.has_any = true;
             },
             .@"border-color" => |*val| {
@@ -797,10 +797,10 @@ pub const BorderHandler = struct {
                 propertyHelper(this, dest, context, "border_bottom", "color", &val.bottom, .physical);
                 propertyHelper(this, dest, context, "border_left", "color", &val.left, .physical);
 
-                bun.clear(&this.border_block_start.color, context.allocator);
-                bun.clear(&this.border_block_end.color, context.allocator);
-                bun.clear(&this.border_inline_start.color, context.allocator);
-                bun.clear(&this.border_inline_end.color, context.allocator);
+                fun.clear(&this.border_block_start.color, context.allocator);
+                fun.clear(&this.border_block_end.color, context.allocator);
+                fun.clear(&this.border_inline_start.color, context.allocator);
+                fun.clear(&this.border_inline_end.color, context.allocator);
                 this.has_any = true;
             },
             .border => |*val| {
@@ -861,16 +861,16 @@ pub const BorderHandler = struct {
         }
 
         inline fn push(f: *FlushContext, comptime p: []const u8, val: anytype) void {
-            bun.bits.insert(BorderProperty, &f.self.flushed_properties, @field(BorderProperty, p));
-            bun.handleOom(f.dest.append(f.ctx.allocator, @unionInit(css.Property, p, val.deepClone(f.ctx.allocator))));
+            fun.bits.insert(BorderProperty, &f.self.flushed_properties, @field(BorderProperty, p));
+            fun.handleOom(f.dest.append(f.ctx.allocator, @unionInit(css.Property, p, val.deepClone(f.ctx.allocator))));
         }
 
         inline fn fallbacks(f: *FlushContext, comptime p: []const u8, _val: anytype) void {
             var val = _val;
-            if (!bun.bits.contains(BorderProperty, f.self.flushed_properties, @field(BorderProperty, p))) {
+            if (!fun.bits.contains(BorderProperty, f.self.flushed_properties, @field(BorderProperty, p))) {
                 const fbs = val.getFallbacks(f.ctx.allocator, f.ctx.targets);
                 for (css.generic.slice(@TypeOf(fbs), &fbs)) |fallback| {
-                    bun.handleOom(f.dest.append(f.ctx.allocator, @unionInit(css.Property, p, fallback)));
+                    fun.handleOom(f.dest.append(f.ctx.allocator, @unionInit(css.Property, p, fallback)));
                 }
             }
             push(f, p, val);
@@ -1038,10 +1038,10 @@ pub const BorderHandler = struct {
                             css.generic.eql(@TypeOf(@field(s.inline_start, key)), &@field(s.inline_start, key), &@field(s.inline_end, key)))
                         {
                             const rect = p{
-                                .top = bun.take(&@field(s.block_start, key)).?,
-                                .right = bun.take(&@field(s.inline_end, key)).?,
-                                .bottom = bun.take(&@field(s.block_end, key)).?,
-                                .left = bun.take(&@field(s.inline_start, key)).?,
+                                .top = fun.take(&@field(s.block_start, key)).?,
+                                .right = fun.take(&@field(s.inline_end, key)).?,
+                                .bottom = fun.take(&@field(s.block_end, key)).?,
+                                .left = fun.take(&@field(s.inline_start, key)).?,
                             };
                             prop(s.f, prop_name, rect);
                         }
@@ -1059,10 +1059,10 @@ pub const BorderHandler = struct {
                     const has_prop = @field(start, key) != null and @field(end, key) != null;
                     if (has_prop) {
                         prop(s.f, prop_name, P{
-                            .start = bun.take(&@field(start, key)).?,
-                            .end = bun.take(&@field(end, key)).?,
+                            .start = fun.take(&@field(start, key)).?,
+                            .end = fun.take(&@field(end, key)).?,
                         });
-                        bun.clear(&@field(end, key), s.f.ctx.allocator);
+                        fun.clear(&@field(end, key), s.f.ctx.allocator);
                     }
                 }
 
@@ -1138,8 +1138,8 @@ pub const BorderHandler = struct {
                 // If both values of an inline logical property are equal, then we can just convert them to physical properties.
                 inline fn inlineProp(s: *@This(), comptime key: []const u8, comptime left: []const u8, comptime right: []const u8) void {
                     if (@field(s.inline_start, key) != null and css.generic.eql(@TypeOf(@field(s.inline_start, key)), &@field(s.inline_start, key), &@field(s.inline_end, key))) {
-                        s.f.prop(left, bun.take(&@field(s.inline_start, key)).?);
-                        s.f.prop(right, bun.take(&@field(s.inline_end, key)).?);
+                        s.f.prop(left, fun.take(&@field(s.inline_start, key)).?);
+                        s.f.prop(right, fun.take(&@field(s.inline_end, key)).?);
                     }
                 }
             };
@@ -1406,8 +1406,8 @@ pub const BorderHandler = struct {
         if (logical_supported) {
             var up = unparsed.deepClone(context.allocator);
             context.addUnparsedFallbacks(&up);
-            bun.bits.insert(BorderProperty, &this.flushed_properties, BorderProperty.tryFromPropertyId(up.property_id).?);
-            bun.handleOom(dest.append(context.allocator, .{ .unparsed = up }));
+            fun.bits.insert(BorderProperty, &this.flushed_properties, BorderProperty.tryFromPropertyId(up.property_id).?);
+            fun.handleOom(dest.append(context.allocator, .{ .unparsed = up }));
             return;
         }
 
@@ -1416,7 +1416,7 @@ pub const BorderHandler = struct {
                 _ = d; // autofix
                 var upppppppppp = up.withPropertyId(c.allocator, @unionInit(css.PropertyId, id, {}));
                 c.addUnparsedFallbacks(&upppppppppp);
-                bun.bits.insert(BorderProperty, &self.flushed_properties, @field(BorderProperty, id));
+                fun.bits.insert(BorderProperty, &self.flushed_properties, @field(BorderProperty, id));
             }
         }.prop;
 
@@ -1465,8 +1465,8 @@ pub const BorderHandler = struct {
             else => {
                 var up = unparsed.deepClone(context.allocator);
                 context.addUnparsedFallbacks(&up);
-                bun.bits.insert(BorderProperty, &this.flushed_properties, BorderProperty.tryFromPropertyId(up.property_id).?);
-                bun.handleOom(dest.append(context.allocator, .{ .unparsed = up }));
+                fun.bits.insert(BorderProperty, &this.flushed_properties, BorderProperty.tryFromPropertyId(up.property_id).?);
+                fun.handleOom(dest.append(context.allocator, .{ .unparsed = up }));
             },
         }
     }
@@ -1479,7 +1479,7 @@ fn isBorderProperty(property_id: css.PropertyIdTag) bool {
     };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 const BorderImageHandler = @import("./border_image.zig").BorderImageHandler;
 const BorderRadiusHandler = @import("./border_radius.zig").BorderRadiusHandler;

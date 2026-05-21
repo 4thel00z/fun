@@ -1,6 +1,6 @@
 #include "JSHmac.h"
 #include "CryptoUtil.h"
-#include "BunClientData.h"
+#include "FunClientData.h"
 #include <JavaScriptCore/ArrayBuffer.h>
 #include <JavaScriptCore/Error.h>
 #include <JavaScriptCore/Exception.h>
@@ -14,7 +14,7 @@
 #include <JavaScriptCore/FunctionPrototype.h>
 #include "KeyObject.h"
 
-namespace Bun {
+namespace Fun {
 
 static const HashTableValue JSHmacPrototypeTableValues[] = {
     { "update"_s, static_cast<unsigned>(PropertyAttribute::Function), NoIntrinsic, { HashTableValue::NativeFunctionType, jsHmacProtoFuncUpdate, 1 } },
@@ -70,7 +70,7 @@ void JSHmac::init(JSC::JSGlobalObject* globalObject, ThrowScope& scope, const St
     // Get the digest algorithm from the algorithm name
     const EVP_MD* md = ncrypto::getDigestByName(algorithm);
     if (!md) {
-        Bun::ERR::CRYPTO_INVALID_DIGEST(scope, globalObject, algorithm);
+        Fun::ERR::CRYPTO_INVALID_DIGEST(scope, globalObject, algorithm);
         return;
     }
 
@@ -119,7 +119,7 @@ JSC_DEFINE_HOST_FUNCTION(jsHmacProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
 
     // Check if the HMAC is already finalized
     if (hmac->m_finalized) {
-        return Bun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
+        return Fun::ERR::CRYPTO_HASH_FINALIZED(scope, globalObject);
     }
 
     JSValue wrappedHmac = callFrame->argument(0);
@@ -137,7 +137,7 @@ JSC_DEFINE_HOST_FUNCTION(jsHmacProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
 
         // validateEncoding()
         if (encoding == WebCore::BufferEncodingType::hex && inputString->length() % 2 != 0) {
-            return Bun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, inputString->length()));
+            return Fun::ERR::INVALID_ARG_VALUE(scope, globalObject, "encoding"_s, encodingValue, makeString("is invalid for data of length "_s, inputString->length()));
         }
 
         auto inputView = inputString->view(globalObject);
@@ -149,19 +149,19 @@ JSC_DEFINE_HOST_FUNCTION(jsHmacProtoFuncUpdate, (JSC::JSGlobalObject * globalObj
         auto* convertedView = dynamicDowncast<JSC::JSArrayBufferView>(converted);
 
         if (!hmac->update(std::span { reinterpret_cast<const uint8_t*>(convertedView->vector()), convertedView->byteLength() })) {
-            return Bun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
+            return Fun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
         }
 
         return JSValue::encode(wrappedHmac);
     } else if (auto* view = dynamicDowncast<JSArrayBufferView>(inputValue)) {
         if (!hmac->update(std::span { reinterpret_cast<const uint8_t*>(view->vector()), view->byteLength() })) {
-            return Bun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
+            return Fun::ERR::CRYPTO_HASH_UPDATE_FAILED(scope, globalObject);
         }
 
         return JSValue::encode(wrappedHmac);
     }
 
-    return Bun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, inputValue);
+    return Fun::ERR::INVALID_ARG_TYPE(scope, globalObject, "data"_s, "string or an instance of Buffer, TypedArray, or DataView"_s, inputValue);
 }
 
 JSC_DEFINE_HOST_FUNCTION(jsHmacProtoFuncDigest, (JSC::JSGlobalObject * lexicalGlobalObject, JSC::CallFrame* callFrame))
@@ -173,7 +173,7 @@ JSC_DEFINE_HOST_FUNCTION(jsHmacProtoFuncDigest, (JSC::JSGlobalObject * lexicalGl
     // Get the HMAC instance
     JSHmac* hmac = dynamicDowncast<JSHmac>(callFrame->thisValue());
     if (!hmac) [[unlikely]] {
-        return Bun::ERR::INVALID_THIS(scope, lexicalGlobalObject, "Hmac"_s);
+        return Fun::ERR::INVALID_THIS(scope, lexicalGlobalObject, "Hmac"_s);
     }
 
     // Check if already finalized, return empty buffer if already finalized
@@ -314,4 +314,4 @@ void setupJSHmacClassStructure(JSC::LazyClassStructure::Initializer& init)
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -1,4 +1,4 @@
-//! JSC bridge for `bun.SignalCode`. Keeps `src/sys/` free of JSC types.
+//! JSC bridge for `fun.SignalCode`. Keeps `src/sys/` free of JSC types.
 
 pub fn fromJS(arg: jsc.JSValue, globalThis: *jsc.JSGlobalObject) !SignalCode {
     if (arg.getNumber()) |sig64| {
@@ -37,6 +37,6 @@ pub fn fromJS(arg: jsc.JSValue, globalThis: *jsc.JSGlobalObject) !SignalCode {
 
 const std = @import("std");
 
-const bun = @import("bun");
-const SignalCode = bun.SignalCode;
-const jsc = bun.jsc;
+const fun = @import("fun");
+const SignalCode = fun.SignalCode;
+const jsc = fun.jsc;

@@ -3,8 +3,8 @@ const FileCloner = @This();
 // macOS clonefileat only
 
 cache_dir: FD,
-cache_dir_subpath: bun.AutoRelPath,
-dest_subpath: bun.Path(.{ .sep = .auto, .unit = .os }),
+cache_dir_subpath: fun.AutoRelPath,
+dest_subpath: fun.Path(.{ .sep = .auto, .unit = .os }),
 
 fn clonefileat(this: *FileCloner) sys.Maybe(void) {
     return sys.clonefileat(this.cache_dir, this.cache_dir_subpath.sliceZ(), FD.cwd(), this.dest_subpath.sliceZ());
@@ -42,6 +42,6 @@ pub fn clone(this: *FileCloner) sys.Maybe(void) {
     }
 }
 
-const bun = @import("bun");
-const FD = bun.FD;
-const sys = bun.sys;
+const fun = @import("fun");
+const FD = fun.FD;
+const sys = fun.sys;

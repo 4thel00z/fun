@@ -6,7 +6,7 @@
 // Typedefs for JSC intrinsics. Instead of @, we use $
 type TODO = any;
 
-declare module "bun" {
+declare module "fun" {
   interface Socket {
     $write(data: string | BufferSource, byteOffset?: number, byteLength?: number): number;
     $end(): void;
@@ -14,9 +14,9 @@ declare module "bun" {
 }
 
 /** $debug is a preprocessor macro that works like a templated console.log, and only runs in debug mode if you pass
- * BUN_DEBUG_JS=<module>
+ * FUN_DEBUG_JS=<module>
  *
- * So to get node stream to log, you pass BUN_DEBUG_JS=stream or BUN_DEBUG_JS=node:stream
+ * So to get node stream to log, you pass FUN_DEBUG_JS=stream or FUN_DEBUG_JS=node:stream
  *
  * This only works in debug builds, the log fn is completely removed in release builds.
  */
@@ -39,7 +39,7 @@ declare function $isPromiseRejected(promise: Promise<any>): boolean;
 /** Asserts the input is a promise. Returns `true` if the promise is pending */
 declare function $isPromisePending(promise: Promise<any>): boolean;
 
-declare const IS_BUN_DEVELOPMENT: boolean;
+declare const IS_FUN_DEVELOPMENT: boolean;
 
 /** Place this directly above a function declaration (like a decorator) to make it a getter. */
 declare const $getter: never;
@@ -94,7 +94,7 @@ class ReadableStreamDefaultController<R = any> extends _ReadableStreamDefaultCon
 
 interface ReadableStream<R = any> extends _ReadableStream<R> {
   $highWaterMark: number;
-  $bunNativePtr: undefined | TODO;
+  $funNativePtr: undefined | TODO;
   $asyncContext?: {};
   $disturbed: boolean;
   $state: $streamClosed | $streamErrored | $streamReadable | $streamWritable | $streamClosedAndErrored;
@@ -106,7 +106,7 @@ declare var ReadableStream: {
 };
 
 interface Console {
-  $writer: ReturnType<typeof Bun.stdout.writer>;
+  $writer: ReturnType<typeof Fun.stdout.writer>;
 }
 
 // JSC defines their intrinsics in a nice list here:
@@ -133,7 +133,7 @@ declare function $getPrototypeOf(value: any): any;
  *
  *  You can pass
  *  - {@link $promiseFieldFlags} - get a number with flags
- *  - {@link $promiseFieldReactionsOrResult} - get the result (like {@link Bun.peek})
+ *  - {@link $promiseFieldReactionsOrResult} - get the result (like {@link Fun.peek})
  *
  * @param promise the promise to get the field from
  * @param key an internal field id.
@@ -365,7 +365,7 @@ declare const $processBindingConstants: {
 };
 declare const $asyncContext: InternalFieldObject<[ReadonlyArray<any> | undefined]>;
 
-// We define our intrinsics in ./BunBuiltinNames.h. Some of those are globals.
+// We define our intrinsics in ./FunBuiltinNames.h. Some of those are globals.
 
 declare var $_events: TODO;
 declare function $abortAlgorithm(): TODO;
@@ -379,8 +379,8 @@ declare function $backpressure(): TODO;
 declare function $backpressureChangePromise(): TODO;
 declare function $basename(): TODO;
 declare function $body(): TODO;
-declare function $bunNativePtr(): TODO;
-declare function $bunNativeType(): TODO;
+declare function $funNativePtr(): TODO;
+declare function $funNativeType(): TODO;
 declare function $byobRequest(): TODO;
 declare function $cancel(): TODO;
 declare function $cancelAlgorithm(): TODO;
@@ -571,7 +571,7 @@ declare interface PromiseConstructor extends ClassWithIntrinsics<PromiseConstruc
 
 declare interface UnderlyingSource {
   $lazy?: boolean;
-  $bunNativePtr?: undefined | TODO;
+  $funNativePtr?: undefined | TODO;
   autoAllocateChunkSize?: number;
   $stream?: ReadableStream;
 }
@@ -596,10 +596,10 @@ declare class ReadableStreamBYOBReader {
 }
 
 // Inlining our enum types
-declare const $ImportKindIdToLabel: Array<import("bun").ImportKind>;
-declare const $ImportKindLabelToId: Record<import("bun").ImportKind, number>;
-declare const $LoaderIdToLabel: Array<import("bun").Loader>;
-declare const $LoaderLabelToId: Record<import("bun").Loader, number>;
+declare const $ImportKindIdToLabel: Array<import("fun").ImportKind>;
+declare const $ImportKindLabelToId: Record<import("fun").ImportKind, number>;
+declare const $LoaderIdToLabel: Array<import("fun").Loader>;
+declare const $LoaderLabelToId: Record<import("fun").Loader, number>;
 
 // not a builtin, but a build-time macro of our own
 /** Returns a not implemented error that points to a github issue. */

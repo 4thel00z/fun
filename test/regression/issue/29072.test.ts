@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/29072
+// https://github.com/underdoc-org/fun/issues/29072
 //
 // On Linux, os.freemem() used sysinfo.freeram which excludes reclaimable
 // page cache. On any system that's done real work it returned a number
@@ -6,11 +6,11 @@
 // the kernel's own estimate of memory available for new allocations,
 // which counts reclaimable cache/slab.
 //
-// Fix: Bun__Os__getFreeMemory on Linux now reads MemAvailable first and
+// Fix: Fun__Os__getFreeMemory on Linux now reads MemAvailable first and
 // only falls back to sysinfo.freeram when /proc/meminfo is unreadable,
 // matching libuv (and therefore Node.js).
 
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import { isLinux } from "harness";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { freemem, totalmem } from "node:os";

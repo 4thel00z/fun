@@ -13,8 +13,8 @@ class Number;
 
 class HandleScope {
 public:
-    BUN_EXPORT HandleScope(Isolate* isolate);
-    BUN_EXPORT ~HandleScope();
+    FUN_EXPORT HandleScope(Isolate* isolate);
+    FUN_EXPORT ~HandleScope();
 
     template<typename T> Local<T> createLocal(JSC::VM& vm, JSC::JSValue value)
     {
@@ -50,7 +50,7 @@ protected:
     shim::HandleScopeBuffer* m_buffer;
 
     // is protected in v8, which matters on windows
-    BUN_EXPORT static uintptr_t* CreateHandle(internal::Isolate* isolate, uintptr_t value);
+    FUN_EXPORT static uintptr_t* CreateHandle(internal::Isolate* isolate, uintptr_t value);
 };
 
 static_assert(sizeof(HandleScope) == 24, "HandleScope has wrong layout");

@@ -31,7 +31,7 @@ const Brace = struct {
     open_brace_idx: u32,
     branch_idx: u32,
 };
-const BraceStack = bun.BoundedArray(Brace, 10);
+const BraceStack = fun.BoundedArray(Brace, 10);
 
 const MatchResult = enum {
     no_match,
@@ -153,7 +153,7 @@ inline fn globMatchImpl(state: *State, glob: []const u8, glob_start: u32, path: 
                         }
 
                         state.wildcard.glob_index = state.glob_index;
-                        state.wildcard.path_index = state.path_index + if (state.path_index < path.len) bun.strings.wtf8ByteSequenceLength(path[state.path_index]) else 1;
+                        state.wildcard.path_index = state.path_index + if (state.path_index < path.len) fun.strings.wtf8ByteSequenceLength(path[state.path_index]) else 1;
                         state.wildcard.brace_depth = state.brace_depth;
 
                         var in_globstar = false;
@@ -192,7 +192,7 @@ inline fn globMatchImpl(state: *State, glob: []const u8, glob_start: u32, path: 
                     '?' => if (state.path_index < path.len) {
                         if (!isSeparator(path[state.path_index])) {
                             state.glob_index += 1;
-                            state.path_index += bun.strings.wtf8ByteSequenceLength(path[state.path_index]);
+                            state.path_index += fun.strings.wtf8ByteSequenceLength(path[state.path_index]);
                             continue;
                         }
                         break :fallthrough;
@@ -210,9 +210,9 @@ inline fn globMatchImpl(state: *State, glob: []const u8, glob_start: u32, path: 
                         var is_match = false;
 
                         // length of the unicode char in the path
-                        const len = bun.strings.wtf8ByteSequenceLength(path[state.path_index]);
+                        const len = fun.strings.wtf8ByteSequenceLength(path[state.path_index]);
                         // source unicode char to match against the target
-                        const c = bun.strings.decodeWTF8RuneT(path[state.path_index..].ptr[0..4], len, u32, 0xFFFD);
+                        const c = fun.strings.decodeWTF8RuneT(path[state.path_index..].ptr[0..4], len, u32, 0xFFFD);
 
                         while (state.glob_index < glob.len and (first or glob[state.glob_index] != ']')) {
                             // Get low ( ͡° ͜ʖ ͡°), and unescape it
@@ -282,7 +282,7 @@ inline fn globMatchImpl(state: *State, glob: []const u8, glob_start: u32, path: 
                 if (!unescape(&cc, glob, &state.glob_index)) {
                     return false; // Invalid pattern!
                 }
-                const cc_len = bun.strings.wtf8ByteSequenceLength(cc);
+                const cc_len = fun.strings.wtf8ByteSequenceLength(cc);
 
                 const is_match = if (cc == '/')
                     isSeparator(path[state.path_index])
@@ -432,7 +432,7 @@ inline fn unescape(c: *u8, glob: []const u8, glob_index: *u32) bool {
 /// `c` must point to a u32 initialized to `glob[glob_index]`
 /// `clen` must point to a u8 initialized to 1
 inline fn getUnicode(c: *u32, clen: *u8, glob: []const u8, glob_index: *u32) bool {
-    bun.debugAssert(clen.* == 1);
+    fun.debugAssert(clen.* == 1);
     switch (c.*) {
         // ascii range excluding backslash
         0x0...('\\' - 1), '\\' + 1...0x7F => {
@@ -450,22 +450,22 @@ inline fn getUnicode(c: *u32, clen: *u8, glob: []const u8, glob_index: *u32) boo
                 'r' => '\r',
                 't' => '\t',
                 else => |cc| brk: {
-                    const len = bun.strings.wtf8ByteSequenceLength(cc);
+                    const len = fun.strings.wtf8ByteSequenceLength(cc);
                     clen.* = len;
                     if (len == 1) {
                         break :brk cc;
                     }
 
-                    break :brk bun.strings.decodeWTF8RuneT(glob[glob_index.*..].ptr[0..4], len, u32, 0xFFFD);
+                    break :brk fun.strings.decodeWTF8RuneT(glob[glob_index.*..].ptr[0..4], len, u32, 0xFFFD);
                 },
             };
         },
         // multi-byte sequences
         else => {
-            const len = bun.strings.wtf8ByteSequenceLength(@truncate(c.*));
+            const len = fun.strings.wtf8ByteSequenceLength(@truncate(c.*));
             clen.* = len;
 
-            c.* = bun.strings.decodeWTF8RuneT(glob[glob_index.*..].ptr[0..4], len, u32, 0xFFFD);
+            c.* = fun.strings.decodeWTF8RuneT(glob[glob_index.*..].ptr[0..4], len, u32, 0xFFFD);
         },
     }
 
@@ -491,5 +491,5 @@ const BraceIndex = struct {
     end: u32 = 0,
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

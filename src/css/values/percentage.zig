@@ -27,7 +27,7 @@ pub const Percentage = struct {
     pub fn toCss(this: *const @This(), dest: *Printer) PrintErr!void {
         const x = this.v * 100.0;
         const int_value: ?i32 = if ((x - @trunc(x)) == 0.0)
-            bun.intFromFloat(i32, this.v)
+            fun.intFromFloat(i32, this.v)
         else
             null;
 
@@ -43,9 +43,9 @@ pub const Percentage = struct {
             percent.toCssGeneric(&writer) catch return dest.addFmtError();
             if (this.v < 0.0) {
                 try dest.writeChar('-');
-                try dest.writeStr(bun.strings.trimLeadingPattern2(writer.buffered(), '-', '0'));
+                try dest.writeStr(fun.strings.trimLeadingPattern2(writer.buffered(), '-', '0'));
             } else {
-                try dest.writeStr(bun.strings.trimLeadingChar(writer.buffered(), '0'));
+                try dest.writeStr(fun.strings.trimLeadingChar(writer.buffered(), '0'));
             }
         } else {
             try percent.toCss(dest);
@@ -65,7 +65,7 @@ pub const Percentage = struct {
     }
 
     pub fn intoCalc(this: Percentage, allocator: std.mem.Allocator) Calc(Percentage) {
-        return Calc(Percentage){ .value = bun.create(allocator, Percentage, this) };
+        return Calc(Percentage){ .value = fun.create(allocator, Percentage, this) };
     }
 
     pub fn mulF32(this: Percentage, _: std.mem.Allocator, other: f32) Percentage {
@@ -149,7 +149,7 @@ pub fn DimensionPercentage(comptime D: type) type {
             if (input.tryParse(Calc(This).parse, .{}).asValue()) |calc_value| {
                 if (calc_value == .value) return .{ .result = calc_value.value.* };
                 return .{ .result = .{
-                    .calc = bun.create(input.allocator(), Calc(DimensionPercentage(D)), calc_value),
+                    .calc = fun.create(input.allocator(), Calc(DimensionPercentage(D)), calc_value),
                 } };
             }
 
@@ -188,7 +188,7 @@ pub fn DimensionPercentage(comptime D: type) type {
             return switch (this.*) {
                 .dimension => |d| if (comptime needs_deepclone) .{ .dimension = d.deepClone(allocator) } else this.*,
                 .percentage => return this.*,
-                .calc => |calc| .{ .calc = bun.create(allocator, Calc(DimensionPercentage(D)), calc.deepClone(allocator)) },
+                .calc => |calc| .{ .calc = fun.create(allocator, Calc(DimensionPercentage(D)), calc.deepClone(allocator)) },
             };
         }
 
@@ -229,7 +229,7 @@ pub fn DimensionPercentage(comptime D: type) type {
             return switch (this) {
                 .dimension => |d| .{ .dimension = mulValueF32(d, allocator, other) },
                 .percentage => |p| .{ .percentage = p.mulF32(allocator, other) },
-                .calc => |c| .{ .calc = bun.create(allocator, Calc(DimensionPercentage(D)), c.mulF32(allocator, other)) },
+                .calc => |c| .{ .calc = fun.create(allocator, Calc(DimensionPercentage(D)), c.mulF32(allocator, other)) },
             };
         }
 
@@ -243,12 +243,12 @@ pub fn DimensionPercentage(comptime D: type) type {
                 .calc => |c| switch (c.*) {
                     .value => |l| l.*,
                     .function => |f| if (f.* != .calc) .{
-                        .calc = bun.create(allocator, Calc(DimensionPercentage(D)), .{
+                        .calc = fun.create(allocator, Calc(DimensionPercentage(D)), .{
                             .function = f,
                         }),
                     } else .{
-                        .calc = bun.create(allocator, Calc(DimensionPercentage(D)), .{
-                            .function = bun.create(
+                        .calc = fun.create(allocator, Calc(DimensionPercentage(D)), .{
+                            .function = fun.create(
                                 allocator,
                                 css.css_values.calc.MathFunction(DimensionPercentage(D)),
                                 .{ .calc = c.* },
@@ -256,8 +256,8 @@ pub fn DimensionPercentage(comptime D: type) type {
                         }),
                     },
                     else => .{
-                        .calc = bun.create(allocator, Calc(DimensionPercentage(D)), .{
-                            .function = bun.create(
+                        .calc = fun.create(allocator, Calc(DimensionPercentage(D)), .{
+                            .function = fun.create(
                                 allocator,
                                 css.css_values.calc.MathFunction(DimensionPercentage(D)),
                                 .{ .calc = c.* },
@@ -335,12 +335,12 @@ pub fn DimensionPercentage(comptime D: type) type {
                 return a.addImpl(allocator, b.calc.value.*);
             } else {
                 return .{
-                    .calc = bun.create(
+                    .calc = fun.create(
                         allocator,
                         Calc(DimensionPercentage(D)),
                         .{ .sum = .{
-                            .left = bun.create(allocator, Calc(DimensionPercentage(D)), a.intoCalc(allocator)),
-                            .right = bun.create(allocator, Calc(DimensionPercentage(D)), b.intoCalc(allocator)),
+                            .left = fun.create(allocator, Calc(DimensionPercentage(D)), a.intoCalc(allocator)),
+                            .right = fun.create(allocator, Calc(DimensionPercentage(D)), b.intoCalc(allocator)),
                         } },
                     ),
                 };
@@ -361,12 +361,12 @@ pub fn DimensionPercentage(comptime D: type) type {
             return switch (this) {
                 .calc => |calc| switch (calc.*) {
                     .function => |f| switch (f.*) {
-                        .calc => |c2| .{ .calc = bun.create(allocator, Calc(DimensionPercentage(D)), c2) },
-                        else => .{ .calc = bun.create(
+                        .calc => |c2| .{ .calc = fun.create(allocator, Calc(DimensionPercentage(D)), c2) },
+                        else => .{ .calc = fun.create(
                             allocator,
                             Calc(DimensionPercentage(D)),
                             .{
-                                .function = bun.create(
+                                .function = fun.create(
                                     allocator,
                                     css.css_values.calc.MathFunction(DimensionPercentage(D)),
                                     f.*,
@@ -425,7 +425,7 @@ pub fn DimensionPercentage(comptime D: type) type {
         pub fn intoCalc(this: This, allocator: std.mem.Allocator) Calc(DimensionPercentage(D)) {
             return switch (this) {
                 .calc => |calc| calc.*,
-                else => .{ .value = bun.create(allocator, This, this) },
+                else => .{ .value = fun.create(allocator, This, this) },
             };
         }
     };
@@ -469,5 +469,5 @@ pub const NumberOrPercentage = union(enum) {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
 test("--rerun-each should run tests exactly N times", async () => {
   using dir = tempDir("test-rerun-each", {
     "counter.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
 
       // Use a global counter that persists across module reloads
       if (!globalThis.testRunCounter) {
@@ -20,9 +20,9 @@ test("--rerun-each should run tests exactly N times", async () => {
   });
 
   // Test with --rerun-each=3
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "counter.test.ts", "--rerun-each=3"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "counter.test.ts", "--rerun-each=3"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -45,9 +45,9 @@ test("--rerun-each should run tests exactly N times", async () => {
   expect(combined).toMatch(/3 pass/);
 
   // Test with --rerun-each=1 (should run once)
-  await using proc2 = Bun.spawn({
-    cmd: [bunExe(), "test", "counter.test.ts", "--rerun-each=1"],
-    env: bunEnv,
+  await using proc2 = Fun.spawn({
+    cmd: [funExe(), "test", "counter.test.ts", "--rerun-each=1"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -63,7 +63,7 @@ test("--rerun-each should run tests exactly N times", async () => {
 test("--rerun-each should report correct file count", async () => {
   using dir = tempDir("test-rerun-each-file-count", {
     "test1.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       test("test in file 1", () => {
         expect(true).toBe(true);
       });
@@ -71,9 +71,9 @@ test("--rerun-each should report correct file count", async () => {
   });
 
   // Run with --rerun-each=3
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "test1.test.ts", "--rerun-each=3"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "test1.test.ts", "--rerun-each=3"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -92,7 +92,7 @@ test("--rerun-each should report correct file count", async () => {
 test("--rerun-each should handle test failures correctly", async () => {
   using dir = tempDir("test-rerun-each-fail", {
     "fail.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
 
       if (!globalThis.failCounter) {
         globalThis.failCounter = 0;
@@ -107,9 +107,9 @@ test("--rerun-each should handle test failures correctly", async () => {
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "fail.test.ts", "--rerun-each=3"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "fail.test.ts", "--rerun-each=3"],
+    env: funEnv,
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -131,22 +131,22 @@ test("--rerun-each should handle test failures correctly", async () => {
   expect(combined).toMatch(/1 fail/);
 });
 
-// https://github.com/oven-sh/bun/issues/23705
+// https://github.com/underdoc-org/fun/issues/23705
 test("--rerun-each resets the toMatchSnapshot() counter between reruns", async () => {
   using dir = tempDir("test-rerun-each-snapshot", {
     "snap.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       test("snap", () => {
         expect("hello").toMatchSnapshot();
       });
     `,
     "__snapshots__/snap.test.ts.snap":
-      "// Bun Snapshot v1, https://bun.sh/docs/test/snapshots\n" + '\nexports[`snap 1`] = `"hello"`;\n',
+      "// Fun Snapshot v1, https://fun.dev/docs/test/snapshots\n" + '\nexports[`snap 1`] = `"hello"`;\n',
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "snap.test.ts", "--rerun-each=3"],
-    env: { ...bunEnv, CI: "true" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "snap.test.ts", "--rerun-each=3"],
+    env: { ...funEnv, CI: "true" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",
@@ -161,11 +161,11 @@ test("--rerun-each resets the toMatchSnapshot() counter between reruns", async (
   expect(exitCode).toBe(0);
 });
 
-// https://github.com/oven-sh/bun/issues/23705 — same counter bug via { retry } / { repeats }
+// https://github.com/underdoc-org/fun/issues/23705 — same counter bug via { retry } / { repeats }
 test("toMatchSnapshot() counter is reset between per-test retry / repeats", async () => {
   using dir = tempDir("test-retry-snapshot", {
     "snap.test.ts": `
-      import { test, expect } from "bun:test";
+      import { test, expect } from "fun:test";
       let n = 0;
       test("retried", () => {
         expect("a").toMatchSnapshot();
@@ -180,16 +180,16 @@ test("toMatchSnapshot() counter is reset between per-test retry / repeats", asyn
       });
     `,
     "__snapshots__/snap.test.ts.snap":
-      "// Bun Snapshot v1, https://bun.sh/docs/test/snapshots\n" +
+      "// Fun Snapshot v1, https://fun.dev/docs/test/snapshots\n" +
       '\nexports[`retried 1`] = `"a"`;\n' +
       '\nexports[`repeated 1`] = `"b"`;\n' +
       '\nexports[`after 1`] = `"c"`;\n' +
       '\nexports[`after 2`] = `"d"`;\n',
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test", "snap.test.ts"],
-    env: { ...bunEnv, CI: "true" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test", "snap.test.ts"],
+    env: { ...funEnv, CI: "true" },
     cwd: String(dir),
     stderr: "pipe",
     stdout: "pipe",

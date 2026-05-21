@@ -1,33 +1,33 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDir } from "harness";
 
-// https://github.com/oven-sh/bun/issues/26360
-// Bug: Bun.build API hangs indefinitely when called from within a macro that is
-// evaluated during another Bun.build call. The CLI `bun build` works correctly.
+// https://github.com/underdoc-org/fun/issues/26360
+// Bug: Fun.build API hangs indefinitely when called from within a macro that is
+// evaluated during another Fun.build call. The CLI `fun build` works correctly.
 //
-// Root cause: The bundler uses a singleton thread for processing Bun.build calls.
-// When a macro is evaluated during bundling and that macro calls Bun.build:
-// 1. The singleton bundler thread is processing the outer Bun.build
-// 2. The macro runs on the bundler thread and calls Bun.build
-// 3. The inner Bun.build tries to enqueue to the same singleton thread
+// Root cause: The bundler uses a singleton thread for processing Fun.build calls.
+// When a macro is evaluated during bundling and that macro calls Fun.build:
+// 1. The singleton bundler thread is processing the outer Fun.build
+// 2. The macro runs on the bundler thread and calls Fun.build
+// 3. The inner Fun.build tries to enqueue to the same singleton thread
 // 4. The singleton thread is blocked waiting for the macro to complete -> deadlock
 //
-// Fix: Detect when Bun.build is called from within macro mode and throw a clear error.
+// Fix: Detect when Fun.build is called from within macro mode and throw a clear error.
 
-test("Bun.build from macro during bundling throws instead of hanging", async () => {
+test("Fun.build from macro during bundling throws instead of hanging", async () => {
   using dir = tempDir("issue-26360", {
     // A simple file that will be bundled by the macro
     "browser.ts": `console.log("browser code");
 export default "";
 `,
 
-    // A macro that calls Bun.build and catches the error
-    // The error should indicate that Bun.build cannot be called from macro context
+    // A macro that calls Fun.build and catches the error
+    // The error should indicate that Fun.build cannot be called from macro context
     "macro.ts": `import browserCode from "./browser" with { type: "file" };
 
 let errorMessage = "no error";
 try {
-  const built = await Bun.build({
+  const built = await Fun.build({
     entrypoints: [browserCode],
     format: "esm",
   });
@@ -42,8 +42,8 @@ export const getErrorMessage = (): string => errorMessage;
 console.log("ERROR_MSG:", getErrorMessage());
 `,
 
-    // Build script that uses Bun.build API (this would hang before the fix)
-    "build_script.ts": `const result = await Bun.build({
+    // Build script that uses Fun.build API (this would hang before the fix)
+    "build_script.ts": `const result = await Fun.build({
   entrypoints: ["./index.ts"],
 });
 
@@ -62,10 +62,10 @@ if (!result.success) {
   });
 
   // Run the build script - should complete (not hang) and the macro should have caught the error
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build_script.ts"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build_script.ts"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -74,22 +74,22 @@ if (!result.success) {
 
   // The build should succeed (the macro catches the error)
   expect(stdout).toContain("BUILD_SUCCESS");
-  // The macro should have received the error message about Bun.build not being allowed
-  expect(stdout).toContain("Bun.build cannot be called from within a macro");
+  // The macro should have received the error message about Fun.build not being allowed
+  expect(stdout).toContain("Fun.build cannot be called from within a macro");
 });
 
-test("CLI bun build with macro that calls Bun.build also throws", async () => {
+test("CLI fun build with macro that calls Fun.build also throws", async () => {
   using dir = tempDir("issue-26360-cli", {
     "browser.ts": `console.log("browser code");
 export default "";
 `,
 
-    // A macro that calls Bun.build and catches the error
+    // A macro that calls Fun.build and catches the error
     "macro.ts": `import browserCode from "./browser" with { type: "file" };
 
 let errorMessage = "";
 try {
-  const built = await Bun.build({
+  const built = await Fun.build({
     entrypoints: [browserCode],
     format: "esm",
   });
@@ -105,10 +105,10 @@ console.log("ERROR_MSG:", getErrorMessage());
   });
 
   // Run via CLI
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "build", "index.ts", "--target=node"],
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "build", "index.ts", "--target=node"],
     cwd: String(dir),
-    env: bunEnv,
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -116,10 +116,10 @@ console.log("ERROR_MSG:", getErrorMessage());
   const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
   // The CLI build should also work and show the error message was caught
-  expect(stdout).toContain("Bun.build cannot be called from within a macro");
+  expect(stdout).toContain("Fun.build cannot be called from within a macro");
 });
 
-test("regular Bun.build (not in macro) still works", async () => {
+test("regular Fun.build (not in macro) still works", async () => {
   using dir = tempDir("issue-26360-normal", {
     "entry.ts": `
       console.log("hello world");
@@ -127,7 +127,7 @@ test("regular Bun.build (not in macro) still works", async () => {
     `,
   });
 
-  const result = await Bun.build({
+  const result = await Fun.build({
     entrypoints: [`${dir}/entry.ts`],
     format: "esm",
   });

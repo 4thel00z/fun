@@ -41,7 +41,7 @@
     "build",
     "bench",
     "bench/react-hello-world/*.js",
-    "bun.lock",
+    "fun.lock",
 
     "test/js/node/**/parallel/**",
     "test/js/node/test/fixtures", // full of JS with intentional syntax errors
@@ -62,7 +62,7 @@
 
   "overrides": [
     {
-      "files": ["test/**", "examples/**", "packages/bun-internal/test/runners/**"],
+      "files": ["test/**", "examples/**", "packages/fun-internal/test/runners/**"],
       "rules": {
         "no-unused-vars": "off",
         "no-unused-private-class-members": "off",

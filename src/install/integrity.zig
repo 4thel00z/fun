@@ -29,9 +29,9 @@ pub const Integrity = extern struct {
         var i: usize = 0;
 
         // initializer should zero it out
-        if (comptime bun.Environment.isDebug) {
+        if (comptime fun.Environment.isDebug) {
             for (integrity.value) |c| {
-                bun.assert(c == 0);
+                fun.assert(c == 0);
             }
         }
 
@@ -265,7 +265,7 @@ pub const Integrity = extern struct {
     };
 
     pub fn verify(this: *const Integrity, bytes: []const u8) bool {
-        return @call(bun.callmod_inline, verifyByTag, .{ this.tag, bytes, &this.value });
+        return @call(fun.callmod_inline, verifyByTag, .{ this.tag, bytes, &this.value });
     }
 
     pub fn verifyByTag(tag: Tag, bytes: []const u8, sum: []const u8) bool {
@@ -315,5 +315,5 @@ pub const Integrity = extern struct {
 const std = @import("std");
 const Crypto = @import("../sha_hmac/sha.zig").Hashers;
 
-const bun = @import("bun");
-const strings = bun.strings;
+const fun = @import("fun");
+const strings = fun.strings;

@@ -1,18 +1,18 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
 // Fetch ALL feedback on a PR in one pass: issue comments, review summaries,
 // review approvals/change-requests, line-level review comments, and inline
 // suggestions. `gh pr view --comments` only returns the issue-stream comments,
 // which silently hides everything a reviewer leaves on the Files changed tab.
 //
 // Usage:
-//   bun run pr:comments                    # current branch's PR
-//   bun run pr:comments 28838              # by PR number
-//   bun run pr:comments '#28838'           # also works
-//   bun run pr:comments https://github.com/oven-sh/bun/pull/28838
-//   bun run pr:comments 28838 --include-resolved  # also show resolved threads
-//   bun run pr:comments 28838 --json              # machine-readable output for jq pipelines
+//   fun run pr:comments                    # current branch's PR
+//   fun run pr:comments 28838              # by PR number
+//   fun run pr:comments '#28838'           # also works
+//   fun run pr:comments https://github.com/underdoc-org/fun/pull/28838
+//   fun run pr:comments 28838 --include-resolved  # also show resolved threads
+//   fun run pr:comments 28838 --json              # machine-readable output for jq pipelines
 //
-// Default output is XML with resolved threads and bot noise (robobun's CI
+// Default output is XML with resolved threads and bot noise (robofun's CI
 // status comment, CodeRabbit body-level summaries/walkthroughs) filtered out.
 // Pass --include-resolved to restore resolved threads.
 //
@@ -24,7 +24,7 @@
 // any entry where the GraphQL fetch failed — so `resolved == false` in jq
 // unambiguously means "confirmed unresolved thread". You can filter with jq,
 // e.g. (the PR is optional, defaults to current branch):
-//   bun run pr:comments --json | jq '.[] | select(.user == "Jarred-Sumner")'
+//   fun run pr:comments --json | jq '.[] | select(.user == "Jarred-Sumner")'
 
 import { $ } from "bun";
 
@@ -171,7 +171,7 @@ async function resolvePr(arg: string | undefined): Promise<{ repo: string; numbe
   if (repoResult.exitCode !== 0) {
     console.error("Could not determine the GitHub repo for the current directory.");
     console.error("Run this inside a repo with a GitHub remote, or pass a PR URL instead:");
-    console.error("  bun run pr:comments https://github.com/oven-sh/bun/pull/28838");
+    console.error("  fun run pr:comments https://github.com/underdoc-org/fun/pull/28838");
     process.exit(1);
   }
   const repo = repoResult.stdout.toString().trim();
@@ -183,7 +183,7 @@ async function resolvePr(arg: string | undefined): Promise<{ repo: string; numbe
     const n = Number(arg.replace(/^#/, ""));
     if (!Number.isInteger(n) || n <= 0) {
       console.error(`Error: "${arg}" is not a PR number or URL.`);
-      console.error(`Usage: bun run pr:comments [<number> | #<number> | <url>]`);
+      console.error(`Usage: fun run pr:comments [<number> | #<number> | <url>]`);
       process.exit(1);
     }
     return { repo, number: n };
@@ -193,14 +193,14 @@ async function resolvePr(arg: string | undefined): Promise<{ repo: string; numbe
   const branch = (await $`git branch --show-current`.quiet().text()).trim();
   // Don't merge stderr into stdout — `gh` occasionally emits diagnostic lines
   // like "A new release of gh is available" to stderr, which would corrupt the
-  // JSON we're about to parse. Bun's $ already captures the two streams separately.
+  // JSON we're about to parse. Fun's $ already captures the two streams separately.
   const lookup = await $`gh pr view --json number`.quiet().nothrow();
   if (lookup.exitCode !== 0) {
     console.error(`No pull request found for the current branch (${branch || "detached HEAD"}).`);
     console.error("");
     console.error("Options:");
-    console.error("  - Pass a PR number:        bun run pr:comments 28838");
-    console.error("  - Pass a PR URL:           bun run pr:comments https://github.com/oven-sh/bun/pull/28838");
+    console.error("  - Pass a PR number:        fun run pr:comments 28838");
+    console.error("  - Pass a PR URL:           fun run pr:comments https://github.com/underdoc-org/fun/pull/28838");
     console.error("  - Push this branch and open a PR first");
     process.exit(1);
   }
@@ -347,10 +347,10 @@ const isLineLevel = (e: Entry) => e.tag === "line-comment" || e.tag === "reply";
 const coderabbitHasLineComments = entries.some(e => e.user === "coderabbitai[bot]" && isLineLevel(e));
 
 function isBotNoise(e: Entry): boolean {
-  // robobun's auto-updated CI status comment (the one it edits in place on
+  // robofun's auto-updated CI status comment (the one it edits in place on
   // every push) carries this watermark so the bot can find it again. Other
-  // robobun comments are kept.
-  if (e.user === "robobun" && e.body.includes("<!-- generated-comment ")) return true;
+  // robofun comments are kept.
+  if (e.user === "robofun" && e.body.includes("<!-- generated-comment ")) return true;
   if (e.user === "coderabbitai[bot]" && !isLineLevel(e)) {
     if (!aiPromptRe.test(e.body)) return true;
     if (coderabbitHasLineComments) return true;

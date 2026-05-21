@@ -27,7 +27,7 @@ pub const StorageClass = enum {
         };
     }
 
-    pub const Map = bun.ComptimeStringMap(StorageClass, .{
+    pub const Map = fun.ComptimeStringMap(StorageClass, .{
         .{ "STANDARD", .STANDARD },
         .{ "STANDARD_IA", .STANDARD_IA },
         .{ "INTELLIGENT_TIERING", .INTELLIGENT_TIERING },
@@ -42,4 +42,4 @@ pub const StorageClass = enum {
     });
 };
 
-const bun = @import("bun");
+const fun = @import("fun");

@@ -1,12 +1,12 @@
 #pragma once
-#include <BunIDLTypes.h>
+#include <FunIDLTypes.h>
 #include <StrongRef.h>
 
-namespace Bun::Bindgen {
+namespace Fun::Bindgen {
 
-// See also: Bun::IDLRawAny
-struct IDLStrongAny : WebCore::IDLType<Bun::StrongRef> {
-    using NullableType = Bun::StrongRef;
+// See also: Fun::IDLRawAny
+struct IDLStrongAny : WebCore::IDLType<Fun::StrongRef> {
+    using NullableType = Fun::StrongRef;
     using NullableInnerParameterType = NullableType;
 
     static inline std::nullptr_t nullValue() { return nullptr; }

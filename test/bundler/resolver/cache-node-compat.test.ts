@@ -1,11 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { promises as fs } from "fs";
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import * as os from "os";
 import * as path from "path";
 
 // These tests check if the resolver cache fix introduces any regressions
-// by comparing Bun's behavior with Node.js on edge cases involving module
+// by comparing Fun's behavior with Node.js on edge cases involving module
 // deletion and recreation.
 
 describe.concurrent("Node.js compatibility", () => {
@@ -58,10 +58,10 @@ console.log("SUCCESS: All checks passed");
       await fs.writeFile(path.join(tmpDir, "testmodule.js"), `module.exports = { value: 1 };`);
 
       // Run with Node.js
-      await using nodeProc = Bun.spawn({
+      await using nodeProc = Fun.spawn({
         cmd: ["node", "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -73,47 +73,47 @@ console.log("SUCCESS: All checks passed");
       ]);
       const nodeSuccess = nodeExit === 0;
 
-      // Reset the file to initial state before running Bun
+      // Reset the file to initial state before running Fun
       await fs.writeFile(path.join(tmpDir, "testmodule.js"), `module.exports = { value: 1 };`);
 
-      // Run with Bun
-      await using bunProc = Bun.spawn({
-        cmd: [bunExe(), "test.js"],
+      // Run with Fun
+      await using funProc = Fun.spawn({
+        cmd: [funExe(), "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
 
-      const [bunStdout, bunStderr, bunExit] = await Promise.all([
-        bunProc.stdout.text(),
-        bunProc.stderr.text(),
-        bunProc.exited,
+      const [funStdout, funStderr, funExit] = await Promise.all([
+        funProc.stdout.text(),
+        funProc.stderr.text(),
+        funProc.exited,
       ]);
-      const bunSuccess = bunExit === 0;
+      const funSuccess = funExit === 0;
 
       // Only log on failure
-      if (!nodeSuccess || !bunSuccess) {
+      if (!nodeSuccess || !funSuccess) {
         console.log("\n=== Node.js output ===");
         console.log(nodeStdout);
         if (!nodeSuccess) {
           console.log("Node.js stderr:", nodeStderr);
         }
-        console.log("\n=== Bun output ===");
-        console.log(bunStdout);
-        if (!bunSuccess) {
-          console.log("Bun stderr:", bunStderr);
+        console.log("\n=== Fun output ===");
+        console.log(funStdout);
+        if (!funSuccess) {
+          console.log("Fun stderr:", funStderr);
         }
       }
 
       // Both should succeed
       expect(nodeSuccess).toBe(true);
-      expect(bunSuccess).toBe(true);
+      expect(funSuccess).toBe(true);
 
       // If there's a discrepancy, fail the test
-      if (nodeSuccess !== bunSuccess) {
+      if (nodeSuccess !== funSuccess) {
         throw new Error(
-          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Bun ${bunSuccess ? "passed" : "failed"}`,
+          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Fun ${funSuccess ? "passed" : "failed"}`,
         );
       }
     } finally {
@@ -172,10 +172,10 @@ console.log("SUCCESS: All checks passed");
       await fs.writeFile(path.join(tmpDir, "mymodule", "index.js"), `module.exports = { name: "original" };`);
 
       // Run with Node.js
-      await using nodeProc = Bun.spawn({
+      await using nodeProc = Fun.spawn({
         cmd: ["node", "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -187,46 +187,46 @@ console.log("SUCCESS: All checks passed");
       ]);
       const nodeSuccess = nodeExit === 0;
 
-      // Reset to initial state before running Bun
+      // Reset to initial state before running Fun
       await fs.mkdir(path.join(tmpDir, "mymodule"), { recursive: true });
       await fs.writeFile(path.join(tmpDir, "mymodule", "index.js"), `module.exports = { name: "original" };`);
 
-      // Run with Bun
-      await using bunProc = Bun.spawn({
-        cmd: [bunExe(), "test.js"],
+      // Run with Fun
+      await using funProc = Fun.spawn({
+        cmd: [funExe(), "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
 
-      const [bunStdout, bunStderr, bunExit] = await Promise.all([
-        bunProc.stdout.text(),
-        bunProc.stderr.text(),
-        bunProc.exited,
+      const [funStdout, funStderr, funExit] = await Promise.all([
+        funProc.stdout.text(),
+        funProc.stderr.text(),
+        funProc.exited,
       ]);
-      const bunSuccess = bunExit === 0;
+      const funSuccess = funExit === 0;
 
       // Only log on failure
-      if (!nodeSuccess || !bunSuccess) {
+      if (!nodeSuccess || !funSuccess) {
         console.log("\n=== Node.js output ===");
         console.log(nodeStdout);
         if (!nodeSuccess) {
           console.log("Node.js stderr:", nodeStderr);
         }
-        console.log("\n=== Bun output ===");
-        console.log(bunStdout);
-        if (!bunSuccess) {
-          console.log("Bun stderr:", bunStderr);
+        console.log("\n=== Fun output ===");
+        console.log(funStdout);
+        if (!funSuccess) {
+          console.log("Fun stderr:", funStderr);
         }
       }
 
       expect(nodeSuccess).toBe(true);
-      expect(bunSuccess).toBe(true);
+      expect(funSuccess).toBe(true);
 
-      if (nodeSuccess !== bunSuccess) {
+      if (nodeSuccess !== funSuccess) {
         throw new Error(
-          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Bun ${bunSuccess ? "passed" : "failed"}`,
+          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Fun ${funSuccess ? "passed" : "failed"}`,
         );
       }
     } finally {
@@ -285,10 +285,10 @@ console.log("SUCCESS: All checks passed");
       await fs.writeFile(path.join(tmpDir, "mypkg", "main.js"), `module.exports = { value: "main" };`);
 
       // Run with Node.js
-      await using nodeProc = Bun.spawn({
+      await using nodeProc = Fun.spawn({
         cmd: ["node", "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -300,45 +300,45 @@ console.log("SUCCESS: All checks passed");
       ]);
       const nodeSuccess = nodeExit === 0;
 
-      // Reset to initial state before running Bun
+      // Reset to initial state before running Fun
       await fs.writeFile(path.join(tmpDir, "mypkg", "main.js"), `module.exports = { value: "main" };`);
 
-      // Run with Bun
-      await using bunProc = Bun.spawn({
-        cmd: [bunExe(), "test.js"],
+      // Run with Fun
+      await using funProc = Fun.spawn({
+        cmd: [funExe(), "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
 
-      const [bunStdout, bunStderr, bunExit] = await Promise.all([
-        bunProc.stdout.text(),
-        bunProc.stderr.text(),
-        bunProc.exited,
+      const [funStdout, funStderr, funExit] = await Promise.all([
+        funProc.stdout.text(),
+        funProc.stderr.text(),
+        funProc.exited,
       ]);
-      const bunSuccess = bunExit === 0;
+      const funSuccess = funExit === 0;
 
       // Only log on failure
-      if (!nodeSuccess || !bunSuccess) {
+      if (!nodeSuccess || !funSuccess) {
         console.log("\n=== Node.js output ===");
         console.log(nodeStdout);
         if (!nodeSuccess) {
           console.log("Node.js stderr:", nodeStderr);
         }
-        console.log("\n=== Bun output ===");
-        console.log(bunStdout);
-        if (!bunSuccess) {
-          console.log("Bun stderr:", bunStderr);
+        console.log("\n=== Fun output ===");
+        console.log(funStdout);
+        if (!funSuccess) {
+          console.log("Fun stderr:", funStderr);
         }
       }
 
       expect(nodeSuccess).toBe(true);
-      expect(bunSuccess).toBe(true);
+      expect(funSuccess).toBe(true);
 
-      if (nodeSuccess !== bunSuccess) {
+      if (nodeSuccess !== funSuccess) {
         throw new Error(
-          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Bun ${bunSuccess ? "passed" : "failed"}`,
+          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Fun ${funSuccess ? "passed" : "failed"}`,
         );
       }
     } finally {
@@ -349,7 +349,7 @@ console.log("SUCCESS: All checks passed");
   // These tests document that Node.js caches resolution paths, not just module contents.
   // Even after `delete require.cache[...]`, Node.js remembers which file path was resolved
   // and will try to load from that cached path. This means switching between file/directory
-  // is not supported in Node.js, so Bun matching this behavior is correct.
+  // is not supported in Node.js, so Fun matching this behavior is correct.
 
   test("directory path changes to direct file path (expected to fail)", async () => {
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "resolver-compat-dir-to-file-"));
@@ -389,10 +389,10 @@ console.log("SUCCESS: Confirmed resolution path caching");
       await fs.writeFile(path.join(tmpDir, "mymodule", "index.js"), `module.exports = { type: "directory" };`);
 
       // Run with Node.js
-      await using nodeProc = Bun.spawn({
+      await using nodeProc = Fun.spawn({
         cmd: ["node", "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -404,50 +404,50 @@ console.log("SUCCESS: Confirmed resolution path caching");
       ]);
       const nodeSuccess = nodeExit === 0;
 
-      // Reset to initial state before running Bun
+      // Reset to initial state before running Fun
       await fs.mkdir(path.join(tmpDir, "mymodule"), { recursive: true });
       await fs.writeFile(path.join(tmpDir, "mymodule", "index.js"), `module.exports = { type: "directory" };`);
       try {
         await fs.rm(path.join(tmpDir, "mymodule.js"));
       } catch (e) {}
 
-      // Run with Bun
-      await using bunProc = Bun.spawn({
-        cmd: [bunExe(), "test.js"],
+      // Run with Fun
+      await using funProc = Fun.spawn({
+        cmd: [funExe(), "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
 
-      const [bunStdout, bunStderr, bunExit] = await Promise.all([
-        bunProc.stdout.text(),
-        bunProc.stderr.text(),
-        bunProc.exited,
+      const [funStdout, funStderr, funExit] = await Promise.all([
+        funProc.stdout.text(),
+        funProc.stderr.text(),
+        funProc.exited,
       ]);
-      const bunSuccess = bunExit === 0;
+      const funSuccess = funExit === 0;
 
       // Only log on failure
-      if (!nodeSuccess || !bunSuccess) {
+      if (!nodeSuccess || !funSuccess) {
         console.log("\n=== Node.js output ===");
         console.log(nodeStdout);
         if (!nodeSuccess) {
           console.log("Node.js stderr:", nodeStderr);
         }
-        console.log("\n=== Bun output ===");
-        console.log(bunStdout);
-        if (!bunSuccess) {
-          console.log("Bun stderr:", bunStderr);
+        console.log("\n=== Fun output ===");
+        console.log(funStdout);
+        if (!funSuccess) {
+          console.log("Fun stderr:", funStderr);
         }
       }
 
       // Both should handle resolution path caching the same way
       expect(nodeSuccess).toBe(true);
-      expect(bunSuccess).toBe(true);
+      expect(funSuccess).toBe(true);
 
-      if (nodeSuccess !== bunSuccess) {
+      if (nodeSuccess !== funSuccess) {
         throw new Error(
-          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Bun ${bunSuccess ? "passed" : "failed"}`,
+          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Fun ${funSuccess ? "passed" : "failed"}`,
         );
       }
     } finally {
@@ -493,10 +493,10 @@ console.log("SUCCESS: Confirmed resolution path caching");
       await fs.writeFile(path.join(tmpDir, "mymodule.js"), `module.exports = { type: "file" };`);
 
       // Run with Node.js
-      await using nodeProc = Bun.spawn({
+      await using nodeProc = Fun.spawn({
         cmd: ["node", "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
@@ -508,49 +508,49 @@ console.log("SUCCESS: Confirmed resolution path caching");
       ]);
       const nodeSuccess = nodeExit === 0;
 
-      // Reset to initial state before running Bun
+      // Reset to initial state before running Fun
       try {
         await fs.rm(path.join(tmpDir, "mymodule"), { recursive: true });
       } catch (e) {}
       await fs.writeFile(path.join(tmpDir, "mymodule.js"), `module.exports = { type: "file" };`);
 
-      // Run with Bun
-      await using bunProc = Bun.spawn({
-        cmd: [bunExe(), "test.js"],
+      // Run with Fun
+      await using funProc = Fun.spawn({
+        cmd: [funExe(), "test.js"],
         cwd: tmpDir,
-        env: bunEnv,
+        env: funEnv,
         stdout: "pipe",
         stderr: "pipe",
       });
 
-      const [bunStdout, bunStderr, bunExit] = await Promise.all([
-        bunProc.stdout.text(),
-        bunProc.stderr.text(),
-        bunProc.exited,
+      const [funStdout, funStderr, funExit] = await Promise.all([
+        funProc.stdout.text(),
+        funProc.stderr.text(),
+        funProc.exited,
       ]);
-      const bunSuccess = bunExit === 0;
+      const funSuccess = funExit === 0;
 
       // Only log on failure
-      if (!nodeSuccess || !bunSuccess) {
+      if (!nodeSuccess || !funSuccess) {
         console.log("\n=== Node.js output ===");
         console.log(nodeStdout);
         if (!nodeSuccess) {
           console.log("Node.js stderr:", nodeStderr);
         }
-        console.log("\n=== Bun output ===");
-        console.log(bunStdout);
-        if (!bunSuccess) {
-          console.log("Bun stderr:", bunStderr);
+        console.log("\n=== Fun output ===");
+        console.log(funStdout);
+        if (!funSuccess) {
+          console.log("Fun stderr:", funStderr);
         }
       }
 
       // Both should handle resolution path caching the same way
       expect(nodeSuccess).toBe(true);
-      expect(bunSuccess).toBe(true);
+      expect(funSuccess).toBe(true);
 
-      if (nodeSuccess !== bunSuccess) {
+      if (nodeSuccess !== funSuccess) {
         throw new Error(
-          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Bun ${bunSuccess ? "passed" : "failed"}`,
+          `Behavior mismatch! Node.js ${nodeSuccess ? "passed" : "failed"} but Fun ${funSuccess ? "passed" : "failed"}`,
         );
       }
     } finally {

@@ -1,0 +1,36 @@
+{
+  "name": "fun-types",
+  "license": "MIT",
+  "types": "./index.d.ts",
+  "description": "Type definitions and documentation for Fun, an incredibly fast JavaScript runtime",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/underdoc-org/fun",
+    "directory": "packages/fun-types"
+  },
+  "files": [
+    "./*.d.ts",
+    "./CLAUDE.md",
+    "./docs/*.md",
+    "./docs/*.mdx",
+    "./docs/**/*.md",
+    "./docs/**/*.mdx",
+    "./README.md",
+    "./vendor/**/*.d.ts"
+  ],
+  "homepage": "https://fun.dev",
+  "dependencies": {
+    "@types/node": "*"
+  },
+  "scripts": {
+    "prebuild": "echo $(pwd)",
+    "build": "fun scripts/build.ts",
+    "test": "tsc",
+    "fmt": "echo $(which biome) && biome format --write ."
+  },
+  "keywords": [
+    "fun",
+    "fun.js",
+    "types"
+  ]
+}

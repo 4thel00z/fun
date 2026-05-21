@@ -1,10 +1,10 @@
-// Tests that Bun.SQL MySQL adapter handles multi-statement responses
+// Tests that Fun.SQL MySQL adapter handles multi-statement responses
 // against servers whose advertised capability set exercises the
 // newly-added legacy / deprecate-EOF branches (ManticoreSearch hits
 // this after #28005). Regressed in 1.3.12.
-// See: https://github.com/oven-sh/bun/issues/29268
-import { SQL } from "bun";
-import { expect, test } from "bun:test";
+// See: https://github.com/underdoc-org/fun/issues/29268
+import { SQL } from "fun";
+import { expect, test } from "fun:test";
 import net from "net";
 
 // --- MySQL wire protocol helpers ---

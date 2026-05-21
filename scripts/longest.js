@@ -72,8 +72,8 @@ function main() {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
-    console.error("Usage: bun longest.js <zig-file>");
-    console.error("Example: bun longest.js src/walker_skippable.zig");
+    console.error("Usage: fun longest.js <zig-file>");
+    console.error("Example: fun longest.js src/walker_skippable.zig");
     process.exit(1);
   }
 

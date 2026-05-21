@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 
-// See https://github.com/oven-sh/bun/pull/2939
+// See https://github.com/underdoc-org/fun/pull/2939
 test("non-ascii property name", () => {
-  const { stdout } = Bun.spawnSync({
-    cmd: [bunExe(), "run", require("path").join(import.meta.dir, "./property-non-ascii-fixture.js")],
-    env: bunEnv,
+  const { stdout } = Fun.spawnSync({
+    cmd: [funExe(), "run", require("path").join(import.meta.dir, "./property-non-ascii-fixture.js")],
+    env: funEnv,
   });
   const filtered = stdout.toString().replaceAll("\n", "").replaceAll(" ", "");
   expect(filtered).toBe(
@@ -22,7 +22,7 @@ test("non-ascii property name", () => {
       .replaceAll(" ", ""),
   );
   // just to be sure
-  expect(Buffer.from(Bun.CryptoHasher.hash("sha1", filtered) as Uint8Array).toString("hex")).toBe(
+  expect(Buffer.from(Fun.CryptoHasher.hash("sha1", filtered) as Uint8Array).toString("hex")).toBe(
     "0bf68c8c4a35576ca3e27240565582ddc7c3ed3f",
   );
 });

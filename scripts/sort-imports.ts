@@ -1,4 +1,6 @@
-#!/usr/bin/env bun
+#!/usr/bin/env fun
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { readdirSync } from "fs";
 import path from "path";
 
@@ -14,7 +16,7 @@ const usage = String.raw`
  /_____ \____/|__|   |__|   /_____ \__|__|_|  /   __/ \____/|__|   |__| /____  >
        \/                         \/        \/|__|                           \/
 
-Usage: bun scripts/sort-imports [options] <files...>
+Usage: fun scripts/sort-imports [options] <files...>
 
 Options:
   --help         Show this help message
@@ -22,7 +24,7 @@ Options:
   --keep-unused  Don't remove unused imports
 
 Examples:
-  bun scripts/sort-imports src
+  fun scripts/sort-imports src
 `.slice(1);
 if (args.includes("--help")) {
   console.log(usage);
@@ -311,7 +313,7 @@ const DELETED_LINE = "%DELETED_LINE%";
 
 // Main execution function for a single file
 async function processFile(filePath: string): Promise<void> {
-  const originalFileContents = await Bun.file(filePath).text();
+  const originalFileContents = await Fun.file(filePath).text();
   let fileContents = originalFileContents;
 
   if (config.normalizePaths === "") {
@@ -397,7 +399,7 @@ async function processFile(filePath: string): Promise<void> {
   }
 
   // Write the sorted file
-  await Bun.write(filePath, fileContents);
+  await Fun.write(filePath, fileContents);
 
   console.log(`✓ Done: ${filePath}`);
 }
@@ -408,7 +410,7 @@ async function main() {
   let errorCount = 0;
 
   for (const filePath of filePaths) {
-    const stat = await Bun.file(filePath).stat();
+    const stat = await Fun.file(filePath).stat();
     if (stat.isDirectory()) {
       const files = readdirSync(filePath, { recursive: true });
       for (const file of files) {

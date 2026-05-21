@@ -16,7 +16,7 @@ using namespace JSC;
 using namespace WebCore;
 using namespace ncrypto;
 
-namespace Bun {
+namespace Fun {
 
 const JSC::ClassInfo JSCipherConstructor::s_info = { "Cipher"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSCipherConstructor) };
 
@@ -222,4 +222,4 @@ JSC_DEFINE_HOST_FUNCTION(constructCipher, (JSC::JSGlobalObject * globalObject, J
     return JSC::JSValue::encode(JSCipher::create(vm, structure, globalObject, cipherKind, WTF::move(ctx), authTagLength, maxMessageSize));
 }
 
-} // namespace Bun
+} // namespace Fun

@@ -1,5 +1,5 @@
-import { setSyntheticAllocationLimitForTesting } from "bun:internal-for-testing";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { setSyntheticAllocationLimitForTesting } from "fun:internal-for-testing";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "fun:test";
 import { unlinkSync } from "fs";
 import { tempDirWithFiles } from "harness";
 import path from "path";
@@ -8,7 +8,7 @@ describe("Memory", () => {
     setSyntheticAllocationLimitForTesting(128 * 1024 * 1024);
   });
   afterEach(() => {
-    Bun.gc(true);
+    Fun.gc(true);
   });
 
   describe("Blob", () => {
@@ -103,7 +103,7 @@ describe("Memory", () => {
   });
 });
 
-describe("Bun.file", () => {
+describe("Fun.file", () => {
   let tmpFile;
   beforeAll(async () => {
     const buf = Buffer.allocUnsafe(8 * 1024 * 1024);
@@ -127,18 +127,18 @@ describe("Bun.file", () => {
   });
 
   test("text() should throw an OOM without crashing the process.", () => {
-    expect(async () => await Bun.file(tmpFile).text()).toThrow();
+    expect(async () => await Fun.file(tmpFile).text()).toThrow();
   });
 
   test("bytes() should throw an OOM without crashing the process.", () => {
-    expect(async () => await Bun.file(tmpFile).bytes()).toThrow();
+    expect(async () => await Fun.file(tmpFile).bytes()).toThrow();
   });
 
   test("json() should throw an OOM without crashing the process.", () => {
-    expect(async () => await Bun.file(tmpFile).json()).toThrow();
+    expect(async () => await Fun.file(tmpFile).json()).toThrow();
   });
 
   test("arrayBuffer() should NOT throw an OOM.", () => {
-    expect(async () => await Bun.file(tmpFile).arrayBuffer()).not.toThrow();
+    expect(async () => await Fun.file(tmpFile).arrayBuffer()).not.toThrow();
   });
 });

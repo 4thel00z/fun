@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 // test:
 // --randomize randomizes
@@ -8,8 +8,8 @@ import { bunEnv, bunExe, tempDirWithFiles } from "harness";
 
 const unsortedOrder = Array.from({ length: 100 }, (_, i) => i + 1);
 async function runFixture(flags: string[]): Promise<{ order: number[]; seed: number | null }> {
-  const proc = await Bun.spawn([bunExe(), "test", ...flags], {
-    env: bunEnv,
+  const proc = await Fun.spawn([funExe(), "test", ...flags], {
+    env: funEnv,
     stdio: ["pipe", "pipe", "pipe"],
   });
   const exitCode = await proc.exited;

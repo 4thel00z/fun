@@ -1,4 +1,4 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import path from "node:path";
 import { itBundled } from "../../bundler/expectBundled";
 

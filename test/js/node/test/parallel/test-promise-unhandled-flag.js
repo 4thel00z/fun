@@ -1,5 +1,5 @@
 'use strict';
-// Test modified because bun's error message has a capital letter
+// Test modified because fun's error message has a capital letter
 
 require('../common');
 const assert = require('assert');
@@ -14,5 +14,5 @@ const child = cp.spawnSync(
 
 assert.strictEqual(child.stdout.toString(), '');
 assert(child.stderr.includes(
-  (typeof Bun === "undefined" ? "i" : "I") +
+  (typeof Fun === "undefined" ? "i" : "I") +
   'nvalid value for --unhandled-rejections'), child.stderr);

@@ -408,5 +408,5 @@ pub const base64 = struct {
     }
 };
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

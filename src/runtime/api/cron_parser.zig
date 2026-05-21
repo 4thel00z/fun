@@ -33,7 +33,7 @@ pub const CronExpression = struct {
     pub fn errorMessage(e: Error) []const u8 {
         return switch (e) {
             error.TooFewFields => "Invalid cron expression: expected 5 space-separated fields (minute hour day month weekday)",
-            error.TooManyFields => "Invalid cron expression: too many fields. Bun.cron uses 5 fields (minute hour day month weekday) — seconds are not supported",
+            error.TooManyFields => "Invalid cron expression: too many fields. Fun.cron uses 5 fields (minute hour day month weekday) — seconds are not supported",
             error.InvalidStep => "Invalid cron expression: step value must be a positive integer",
             error.InvalidRange => "Invalid cron expression: range must be ascending (use 'a,b' or 'a-max,0-b' for wrap-around)",
             error.InvalidNumber => "Invalid cron expression: value out of range for field",
@@ -43,7 +43,7 @@ pub const CronExpression = struct {
 
     /// Parse a 5-field cron expression or predefined nickname into a CronExpression.
     pub fn parse(input: []const u8) Error!CronExpression {
-        const expr = bun.strings.trim(input, " \t");
+        const expr = fun.strings.trim(input, " \t");
 
         // Check for predefined nicknames
         if (expr.len > 0 and expr[0] == '@') {
@@ -66,8 +66,8 @@ pub const CronExpression = struct {
             .days = try parseField(u32, fields[2], 1, 31, .none),
             .months = try parseField(u16, fields[3], 1, 12, .month),
             .weekdays = try parseField(u8, fields[4], 0, 7, .weekday),
-            .days_is_wildcard = bun.strings.eql(fields[2], "*"),
-            .weekdays_is_wildcard = bun.strings.eql(fields[4], "*"),
+            .days_is_wildcard = fun.strings.eql(fields[2], "*"),
+            .weekdays_is_wildcard = fun.strings.eql(fields[4], "*"),
         };
     }
 
@@ -97,7 +97,7 @@ pub const CronExpression = struct {
     /// Compute the next UTC time (in ms since epoch) that matches this
     /// expression, strictly after `from_ms`. Returns null if no match found
     /// within 8 years.
-    pub fn next(self: CronExpression, globalObject: *jsc.JSGlobalObject, from_ms: f64) bun.JSError!?f64 {
+    pub fn next(self: CronExpression, globalObject: *jsc.JSGlobalObject, from_ms: f64) fun.JSError!?f64 {
         var dt = globalObject.msToGregorianDateTimeUTC(from_ms);
         const start_year = dt.year;
         dt.minute += 1;
@@ -154,7 +154,7 @@ pub const all_months: u16 = ((1 << 13) - 1) & ~@as(u16, 1);
 pub const all_weekdays: u8 = (1 << 7) - 1;
 
 fn parseNickname(expr: []const u8) ?CronExpression {
-    const eql = bun.strings.eqlCaseInsensitiveASCIIICheckLength;
+    const eql = fun.strings.eqlCaseInsensitiveASCIIICheckLength;
     if (eql(expr, "@yearly") or eql(expr, "@annually"))
         return .{ .minutes = 1, .hours = 1, .days = 1 << 1, .months = 1 << 1, .weekdays = all_weekdays, .days_is_wildcard = false, .weekdays_is_wildcard = true };
     if (eql(expr, "@monthly"))
@@ -168,7 +168,7 @@ fn parseNickname(expr: []const u8) ?CronExpression {
     return null;
 }
 
-const weekday_map = bun.ComptimeStringMap(u7, .{
+const weekday_map = fun.ComptimeStringMap(u7, .{
     .{ "sun", 0 },     .{ "mon", 1 },       .{ "tue", 2 },
     .{ "wed", 3 },     .{ "thu", 4 },       .{ "fri", 5 },
     .{ "sat", 6 },     .{ "sunday", 0 },    .{ "monday", 1 },
@@ -176,7 +176,7 @@ const weekday_map = bun.ComptimeStringMap(u7, .{
     .{ "friday", 5 },  .{ "saturday", 6 },
 });
 
-const month_map = bun.ComptimeStringMap(u7, .{
+const month_map = fun.ComptimeStringMap(u7, .{
     .{ "jan", 1 },       .{ "feb", 2 },       .{ "mar", 3 },
     .{ "apr", 4 },       .{ "may", 5 },       .{ "jun", 6 },
     .{ "jul", 7 },       .{ "aug", 8 },       .{ "sep", 9 },
@@ -215,7 +215,7 @@ fn parseField(comptime T: type, field: []const u8, min: u7, max: u7, kind: NameK
         var range_min: u7 = undefined;
         var range_max: u7 = undefined;
 
-        if (bun.strings.eql(base, "*")) {
+        if (fun.strings.eql(base, "*")) {
             range_min = min;
             range_max = max;
         } else {
@@ -247,10 +247,10 @@ fn parseField(comptime T: type, field: []const u8, min: u7, max: u7, kind: NameK
 
 /// Split a base expression on '-' for ranges, returning null if not a range.
 fn splitRange(base: []const u8) ?[2][]const u8 {
-    const idx = bun.strings.indexOfChar(base, '-') orelse return null;
+    const idx = fun.strings.indexOfChar(base, '-') orelse return null;
     if (idx == 0 or idx == base.len - 1) return null;
     const rest = base[idx + 1 ..];
-    if (bun.strings.indexOfChar(rest, '-') != null) return null;
+    if (fun.strings.indexOfChar(rest, '-') != null) return null;
     return .{ base[0..idx], rest };
 }
 
@@ -294,5 +294,5 @@ fn formatBitfield(w: anytype, comptime T: type, bits: T, min: u8, max: u8) void 
 
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
+const fun = @import("fun");
+const jsc = fun.jsc;

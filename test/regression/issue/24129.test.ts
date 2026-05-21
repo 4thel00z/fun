@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 import fs from "node:fs";
 
 // Test for GitHub issue #24129

@@ -1,10 +1,10 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows, normalizeBunSnapshot, tempDir } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows, normalizeFunSnapshot, tempDir } from "harness";
 import { join } from "path";
 
 // Skip on Windows as it doesn't have /dev/tty
 test.skipIf(isWindows)("can reopen /dev/tty after stdin EOF for interactive session", async () => {
-  // This test ensures that Bun can reopen /dev/tty after stdin reaches EOF,
+  // This test ensures that Fun can reopen /dev/tty after stdin reaches EOF,
   // which is needed for tools like Claude Code that read piped input then
   // switch to interactive mode.
 
@@ -57,15 +57,15 @@ test.skipIf(isWindows)("can reopen /dev/tty after stdin EOF for interactive sess
 
   using dir = tempDir("tty-reopen", {});
   const scriptPath = join(String(dir), "test.js");
-  await Bun.write(scriptPath, testScript);
+  await Fun.write(scriptPath, testScript);
 
   // Check if script command is available (might not be on Alpine by default)
-  const hasScript = Bun.which("script");
+  const hasScript = Fun.which("script");
   if (!hasScript) {
     // Try without script - if /dev/tty isn't available, test will fail appropriately
-    await using proc = Bun.spawn({
-      cmd: ["sh", "-c", `echo "test input" | ${bunExe()} ${scriptPath}`],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: ["sh", "-c", `echo "test input" | ${funExe()} ${scriptPath}`],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -81,7 +81,7 @@ test.skipIf(isWindows)("can reopen /dev/tty after stdin EOF for interactive sess
 
     // Otherwise check results - snapshot first to see what happened
     const output = stdout + (stderr ? "\nSTDERR:\n" + stderr : "");
-    expect(normalizeBunSnapshot(output, dir)).toMatchInlineSnapshot(`
+    expect(normalizeFunSnapshot(output, dir)).toMatchInlineSnapshot(`
       "GOT_INPUT:test input
       OPENED_TTY:true
       CREATED_STREAM:true
@@ -99,12 +99,12 @@ test.skipIf(isWindows)("can reopen /dev/tty after stdin EOF for interactive sess
   // macOS and Linux have different script command syntax
   const isMacOS = process.platform === "darwin";
   const scriptCmd = isMacOS
-    ? ["script", "-q", "/dev/null", "sh", "-c", `echo "test input" | ${bunExe()} ${scriptPath}`]
-    : ["script", "-q", "-c", `echo "test input" | ${bunExe()} ${scriptPath}`, "/dev/null"];
+    ? ["script", "-q", "/dev/null", "sh", "-c", `echo "test input" | ${funExe()} ${scriptPath}`]
+    : ["script", "-q", "-c", `echo "test input" | ${funExe()} ${scriptPath}`, "/dev/null"];
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: scriptCmd,
-    env: bunEnv,
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -115,7 +115,7 @@ test.skipIf(isWindows)("can reopen /dev/tty after stdin EOF for interactive sess
   // First snapshot the combined output to see what actually happened
   const output = stdout + (stderr ? "\nSTDERR:\n" + stderr : "");
   // Use JSON.stringify to make control characters visible
-  const jsonOutput = JSON.stringify(normalizeBunSnapshot(output, dir));
+  const jsonOutput = JSON.stringify(normalizeFunSnapshot(output, dir));
   // macOS script adds control characters, Linux doesn't
   const expected = isMacOS
     ? `"^D\\b\\bGOT_INPUT:test input\\nOPENED_TTY:true\\nCREATED_STREAM:true\\nPOS:undefined\\nSTART:undefined\\nSET_RAW_MODE:true\\nSUCCESS:true"`
@@ -176,15 +176,15 @@ test.skipIf(isWindows)("TTY ReadStream should not set position for character dev
 
   using dir = tempDir("tty-position", {});
   const scriptPath = join(String(dir), "test.js");
-  await Bun.write(scriptPath, testScript);
+  await Fun.write(scriptPath, testScript);
 
   // Check if script command is available
-  const hasScript = Bun.which("script");
+  const hasScript = Fun.which("script");
   if (!hasScript) {
     // Try without script
-    await using proc = Bun.spawn({
-      cmd: [bunExe(), scriptPath],
-      env: bunEnv,
+    await using proc = Fun.spawn({
+      cmd: [funExe(), scriptPath],
+      env: funEnv,
       cwd: String(dir),
       stdout: "pipe",
       stderr: "pipe",
@@ -199,7 +199,7 @@ test.skipIf(isWindows)("TTY ReadStream should not set position for character dev
 
     // Snapshot first to see what happened
     const output = stdout + (stderr ? "\nSTDERR:\n" + stderr : "");
-    expect(normalizeBunSnapshot(output, dir)).toMatchInlineSnapshot(`
+    expect(normalizeFunSnapshot(output, dir)).toMatchInlineSnapshot(`
       "POS_TYPE:undefined
       START_TYPE:undefined
       POSITION_PASSED:NOT_CALLED
@@ -214,12 +214,12 @@ test.skipIf(isWindows)("TTY ReadStream should not set position for character dev
   // macOS and Linux have different script command syntax
   const isMacOS = process.platform === "darwin";
   const scriptCmd = isMacOS
-    ? ["script", "-q", "/dev/null", bunExe(), scriptPath]
-    : ["script", "-q", "-c", `${bunExe()} ${scriptPath}`, "/dev/null"];
+    ? ["script", "-q", "/dev/null", funExe(), scriptPath]
+    : ["script", "-q", "-c", `${funExe()} ${scriptPath}`, "/dev/null"];
 
-  await using proc = Bun.spawn({
+  await using proc = Fun.spawn({
     cmd: scriptCmd,
-    env: bunEnv,
+    env: funEnv,
     cwd: String(dir),
     stdout: "pipe",
     stderr: "pipe",
@@ -230,7 +230,7 @@ test.skipIf(isWindows)("TTY ReadStream should not set position for character dev
   // First snapshot the combined output to see what actually happened
   const output = stdout + (stderr ? "\nSTDERR:\n" + stderr : "");
   // Use JSON.stringify to make control characters visible
-  const jsonOutput = JSON.stringify(normalizeBunSnapshot(output, dir));
+  const jsonOutput = JSON.stringify(normalizeFunSnapshot(output, dir));
   // macOS script adds control characters, Linux doesn't
   const expected = isMacOS
     ? `"^D\\b\\bPOS_TYPE:undefined\\nSTART_TYPE:undefined\\nPOSITION_PASSED:NOT_CALLED\\nPOSITION_TYPE:string\\nREAD_CALLED:false"`

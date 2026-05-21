@@ -1,10 +1,10 @@
-import { describe } from "bun:test";
+import { describe } from "fun:test";
 import { itBundled } from "../expectBundled";
 
 // Tests ported from:
 // https://github.com/evanw/esbuild/blob/main/internal/bundler_tests/bundler_loader_test.go
 
-// For debug, all files are written to $TEMP/bun-bundle-tests/loader
+// For debug, all files are written to $TEMP/fun-bundle-tests/loader
 
 describe("bundler", () => {
   itBundled("loader/JSONCommonJSAndES6", {
@@ -69,7 +69,7 @@ describe("bundler", () => {
         import path from 'path';
         const file = require('./test.svg');
         console.log(file);
-        const contents = await Bun.file(path.join(import.meta.dir, file)).text();
+        const contents = await Fun.file(path.join(import.meta.dir, file)).text();
         if(contents !== '<svg></svg>') throw new Error('Contents did not match');
       `,
       "/test.svg": `<svg></svg>`,
@@ -78,7 +78,7 @@ describe("bundler", () => {
     loader: {
       ".svg": "file",
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: /\.\/test-.*\.svg/,
     },
@@ -90,11 +90,11 @@ describe("bundler", () => {
         import path from 'path';
         const file1 = require('./a/test.svg');
         console.log(file1);
-        const contents = await Bun.file(path.join(import.meta.dir, file1)).text();
+        const contents = await Fun.file(path.join(import.meta.dir, file1)).text();
         if(contents !== '<svg></svg>') throw new Error('Contents did not match');
         const file2 = require('./b/test.svg');
         console.log(file2);
-        const contents2 = await Bun.file(path.join(import.meta.dir, file2)).text();
+        const contents2 = await Fun.file(path.join(import.meta.dir, file2)).text();
         if(contents2 !== '<svg></svg>') throw new Error('Contents did not match');
       `,
       "/a/test.svg": `<svg></svg>`,
@@ -103,7 +103,7 @@ describe("bundler", () => {
     loader: {
       ".svg": "file",
     },
-    target: "bun",
+    target: "fun",
     outdir: "/out",
     run: {
       stdout: /\.\/test-.*\.svg\n\.\/test-.*\.svg/,
@@ -116,11 +116,11 @@ describe("bundler", () => {
         import path from 'path';
         const file1 = require('./a/test.svg');
         console.log(file1);
-        const contents = await Bun.file(path.join(import.meta.dir, file1)).text();
+        const contents = await Fun.file(path.join(import.meta.dir, file1)).text();
         if(contents !== '<svg></svg>') throw new Error('Contents did not match');
         const file2 = require('./b/test.svg');
         console.log(file2);
-        const contents2 = await Bun.file(path.join(import.meta.dir, file2)).text();
+        const contents2 = await Fun.file(path.join(import.meta.dir, file2)).text();
         if(contents2 !== '<svg></svg>') throw new Error('Contents did not match');
       `,
       "/a/test.svg": `<svg></svg>`,
@@ -131,7 +131,7 @@ describe("bundler", () => {
     loader: {
       ".svg": "file",
     },
-    target: "bun",
+    target: "fun",
     run: {
       stdout: /\.\/assets\/test-.*\.svg\n\.\/assets\/test-.*\.svg/,
     },

@@ -141,9 +141,9 @@ pub fn decodeAssumeValid(encoded: []const u8, start: usize) VLQResult {
 
     // inlining helps for the 1 or 2 byte case, hurts a little for larger
     inline for (0..vlq_max_in_bytes + 1) |i| {
-        bun.assert(encoded_[i] < std.math.maxInt(u7)); // invalid base64 character
+        fun.assert(encoded_[i] < std.math.maxInt(u7)); // invalid base64 character
         const index = @as(u32, base64_lut[@as(u7, @truncate(encoded_[i]))]);
-        bun.assert(index != std.math.maxInt(u7)); // invalid base64 character
+        fun.assert(index != std.math.maxInt(u7)); // invalid base64 character
 
         // decode a byte
         vlq |= (index & 31) << @as(u5, @truncate(shift));
@@ -164,5 +164,5 @@ pub fn decodeAssumeValid(encoded: []const u8, start: usize) VLQResult {
     return .{ .start = start + encoded_.len, .value = 0 };
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");

@@ -55,34 +55,34 @@ int main() {
     cout << "pub const " << names[i] << " = " << sizes[i] << ";\n";
     cout << "pub const " << names[i] << "_align = " << aligns[i] << ";\n";
   }
-  cout << "pub const Bun_FFI_PointerOffsetToArgumentsList = "
+  cout << "pub const Fun_FFI_PointerOffsetToArgumentsList = "
        << JSC::CallFrame::argumentOffset(0) << ";\n";
-  cout << "pub const Bun_FFI_PointerOffsetToTypedArrayVector = "
+  cout << "pub const Fun_FFI_PointerOffsetToTypedArrayVector = "
        << JSC::JSArrayBufferView::offsetOfVector() << ";\n";
-  cout << "pub const Bun_FFI_PointerOffsetToTypedArrayLength = "
+  cout << "pub const Fun_FFI_PointerOffsetToTypedArrayLength = "
        << JSC::JSArrayBufferView::offsetOfLength() << ";\n";
-  cout << "pub const Bun_CallFrame__codeBlock = ";
+  cout << "pub const Fun_CallFrame__codeBlock = ";
 
   cout << static_cast<int>(JSC::CallFrameSlot::codeBlock) << ";\n";
-  cout << "pub const Bun_CallFrame__callee = ";
+  cout << "pub const Fun_CallFrame__callee = ";
 
   cout << static_cast<int>(JSC::CallFrameSlot::callee) << ";\n";
-  cout << "pub const Bun_CallFrame__argumentCountIncludingThis = ";
+  cout << "pub const Fun_CallFrame__argumentCountIncludingThis = ";
 
   cout << static_cast<int>(JSC::CallFrameSlot::argumentCountIncludingThis)
        << ";\n";
-  cout << "pub const Bun_CallFrame__thisArgument = ";
+  cout << "pub const Fun_CallFrame__thisArgument = ";
 
   cout << static_cast<int>(JSC::CallFrameSlot::thisArgument) << ";\n";
-  cout << "pub const Bun_CallFrame__firstArgument = ";
+  cout << "pub const Fun_CallFrame__firstArgument = ";
 
   cout << static_cast<int>(JSC::CallFrameSlot::firstArgument) << ";\n";
 
-  cout << "pub const Bun_CallFrame__size = ";
+  cout << "pub const Fun_CallFrame__size = ";
 
   cout << sizeof(JSC::CallFrame) << ";\n";
 
-  cout << "pub const Bun_CallFrame__align = ";
+  cout << "pub const Fun_CallFrame__align = ";
 
   cout << alignof(JSC::CallFrame) << ";\n";
   return 0;

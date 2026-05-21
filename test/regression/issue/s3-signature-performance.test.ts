@@ -1,5 +1,5 @@
-import { S3Client } from "bun";
-import { expect, test } from "bun:test";
+import { S3Client } from "fun";
+import { expect, test } from "fun:test";
 
 test("S3 presigned URL performance test with stack allocator", () => {
   const s3 = new S3Client({

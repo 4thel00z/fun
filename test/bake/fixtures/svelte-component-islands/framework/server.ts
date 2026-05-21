@@ -1,5 +1,5 @@
 /// <reference path="../../../../../src/bake/bake.d.ts" />
-import type { Bake } from "bun";
+import type { Bake } from "fun";
 import * as svelte from "svelte/server";
 import { uneval } from "devalue";
 

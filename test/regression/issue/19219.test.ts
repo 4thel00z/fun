@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
-// https://github.com/oven-sh/bun/issues/19219
+// https://github.com/underdoc-org/fun/issues/19219
 test("HTMLRewriter should throw proper errors instead of [native code: Exception]", () => {
   const rewriter = new HTMLRewriter().on("p", {
     element(element) {

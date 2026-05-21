@@ -1,5 +1,5 @@
-import { serve } from "bun";
-import { expect, test } from "bun:test";
+import { serve } from "fun";
+import { expect, test } from "fun:test";
 
 test("WebSocket client negotiates permessage-deflate", async () => {
   let serverReceivedExtensions = "";
@@ -35,7 +35,7 @@ test("WebSocket client negotiates permessage-deflate", async () => {
   });
 
   // Check that the client negotiated the extension
-  // Since we can't easily access request headers in Bun's server, we'll check client.extensions
+  // Since we can't easily access request headers in Fun's server, we'll check client.extensions
   expect(client.extensions).toContain("permessage-deflate");
 
   // Test sending and receiving compressed messages

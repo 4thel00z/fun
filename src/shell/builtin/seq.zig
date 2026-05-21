@@ -9,16 +9,16 @@ fixed_width: bool = false,
 
 pub fn start(this: *@This()) Yield {
     const args = this.bltn().argsSlice();
-    var iter = bun.SliceIterator([*:0]const u8).init(args);
+    var iter = fun.SliceIterator([*:0]const u8).init(args);
 
     if (args.len == 0) {
         return this.fail(Builtin.Kind.usageString(.seq));
     }
     while (iter.next()) |item| {
-        const arg = bun.sliceTo(item, 0);
+        const arg = fun.sliceTo(item, 0);
 
         if (std.mem.eql(u8, arg, "-s") or std.mem.eql(u8, arg, "--separator")) {
-            this.separator = bun.sliceTo(iter.next() orelse return this.fail("seq: option requires an argument -- s\n"), 0);
+            this.separator = fun.sliceTo(iter.next() orelse return this.fail("seq: option requires an argument -- s\n"), 0);
             continue;
         }
         if (std.mem.startsWith(u8, arg, "-s")) {
@@ -27,7 +27,7 @@ pub fn start(this: *@This()) Yield {
         }
 
         if (std.mem.eql(u8, arg, "-t") or std.mem.eql(u8, arg, "--terminator")) {
-            this.terminator = bun.sliceTo(iter.next() orelse return this.fail("seq: option requires an argument -- t\n"), 0);
+            this.terminator = fun.sliceTo(iter.next() orelse return this.fail("seq: option requires an argument -- t\n"), 0);
             continue;
         }
         if (std.mem.startsWith(u8, arg, "-t")) {
@@ -45,14 +45,14 @@ pub fn start(this: *@This()) Yield {
     }
 
     const maybe1 = iter.next() orelse return this.fail(Builtin.Kind.usageString(.seq));
-    const int1 = std.fmt.parseFloat(f32, bun.sliceTo(maybe1, 0)) catch return this.fail("seq: invalid argument\n");
+    const int1 = std.fmt.parseFloat(f32, fun.sliceTo(maybe1, 0)) catch return this.fail("seq: invalid argument\n");
     if (!std.math.isFinite(int1)) return this.fail("seq: invalid argument\n");
     this._end = int1;
     if (this._start > this._end) this.increment = -1;
 
     const maybe2 = iter.next();
     if (maybe2 == null) return this.do();
-    const int2 = std.fmt.parseFloat(f32, bun.sliceTo(maybe2.?, 0)) catch return this.fail("seq: invalid argument\n");
+    const int2 = std.fmt.parseFloat(f32, fun.sliceTo(maybe2.?, 0)) catch return this.fail("seq: invalid argument\n");
     if (!std.math.isFinite(int2)) return this.fail("seq: invalid argument\n");
     this._start = int1;
     this._end = int2;
@@ -61,7 +61,7 @@ pub fn start(this: *@This()) Yield {
 
     const maybe3 = iter.next();
     if (maybe3 == null) return this.do();
-    const int3 = std.fmt.parseFloat(f32, bun.sliceTo(maybe3.?, 0)) catch return this.fail("seq: invalid argument\n");
+    const int3 = std.fmt.parseFloat(f32, fun.sliceTo(maybe3.?, 0)) catch return this.fail("seq: invalid argument\n");
     if (!std.math.isFinite(int3)) return this.fail("seq: invalid argument\n");
     this._start = int1;
     this.increment = int2;
@@ -85,11 +85,11 @@ fn fail(this: *@This(), msg: []const u8) Yield {
 
 fn do(this: *@This()) Yield {
     var current = this._start;
-    var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
+    var arena = std.heap.ArenaAllocator.init(fun.default_allocator);
     defer arena.deinit();
 
     while (if (this.increment > 0) current <= this._end else current >= this._end) : (current += this.increment) {
-        const str = bun.handleOom(std.fmt.allocPrint(arena.allocator(), "{d}", .{current}));
+        const str = fun.handleOom(std.fmt.allocPrint(arena.allocator(), "{d}", .{current}));
         defer _ = arena.reset(.retain_capacity);
         _ = this.print(str);
         _ = this.print(this.separator);
@@ -105,7 +105,7 @@ fn do(this: *@This()) Yield {
 
 fn print(this: *@This(), msg: []const u8) void {
     if (this.bltn().stdout.needsIO() != null) {
-        bun.handleOom(this.buf.appendSlice(bun.default_allocator, msg));
+        fun.handleOom(this.buf.appendSlice(fun.default_allocator, msg));
         return;
     }
     _ = this.bltn().writeNoIO(.stdout, msg);
@@ -121,12 +121,12 @@ pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?jsc.SystemError) Yiel
     switch (this.state) {
         .done => return this.bltn().done(0),
         .err => return this.bltn().done(1),
-        .idle => bun.shell.unreachableState("Seq.onIOWriterChunk", "idle"),
+        .idle => fun.shell.unreachableState("Seq.onIOWriterChunk", "idle"),
     }
 }
 
 pub fn deinit(this: *@This()) void {
-    this.buf.deinit(bun.default_allocator);
+    this.buf.deinit(fun.default_allocator);
     //seq
 }
 
@@ -143,6 +143,6 @@ const std = @import("std");
 const Interpreter = interpreter.Interpreter;
 const Builtin = Interpreter.Builtin;
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const Yield = bun.shell.Yield;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const Yield = fun.shell.Yield;

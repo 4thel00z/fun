@@ -1,4 +1,4 @@
-//! `JSBundleCompletionTask` and the JS-facing entrypoints for `Bun.build()`.
+//! `JSBundleCompletionTask` and the JS-facing entrypoints for `Fun.build()`.
 //! Moved from inside `BundleV2` so `bundler/` is free of JSC types. Aliased
 //! back as `BundleV2.JSBundleCompletionTask` etc.
 
@@ -8,21 +8,21 @@ pub const Result = bv2.BundleV2.Result;
 pub const JSBundleThread = BundleThread(JSBundleCompletionTask);
 
 pub fn createAndScheduleCompletionTask(
-    config: bun.jsc.API.JSBundler.Config,
-    plugins: ?*bun.jsc.API.JSBundler.Plugin,
+    config: fun.jsc.API.JSBundler.Config,
+    plugins: ?*fun.jsc.API.JSBundler.Plugin,
     globalThis: *jsc.JSGlobalObject,
-    event_loop: *bun.jsc.EventLoop,
+    event_loop: *fun.jsc.EventLoop,
     _: std.mem.Allocator,
 ) OOM!*JSBundleCompletionTask {
-    const completion = bun.new(JSBundleCompletionTask, .{
+    const completion = fun.new(JSBundleCompletionTask, .{
         .ref_count = .init(),
         .config = config,
         .jsc_event_loop = event_loop,
         .globalThis = globalThis,
         .poll_ref = Async.KeepAlive.init(),
-        .env = globalThis.bunVM().transpiler.env,
+        .env = globalThis.funVM().transpiler.env,
         .plugins = plugins,
-        .log = Logger.Log.init(bun.default_allocator),
+        .log = Logger.Log.init(fun.default_allocator),
         .task = undefined,
     });
     completion.task = JSBundleCompletionTask.TaskCompletion.init(completion);
@@ -37,36 +37,36 @@ pub fn createAndScheduleCompletionTask(
 
     JSBundleThread.singleton.enqueue(completion);
 
-    completion.poll_ref.ref(globalThis.bunVM());
+    completion.poll_ref.ref(globalThis.funVM());
 
     return completion;
 }
 
 pub fn generateFromJavaScript(
-    config: bun.jsc.API.JSBundler.Config,
-    plugins: ?*bun.jsc.API.JSBundler.Plugin,
+    config: fun.jsc.API.JSBundler.Config,
+    plugins: ?*fun.jsc.API.JSBundler.Plugin,
     globalThis: *jsc.JSGlobalObject,
-    event_loop: *bun.jsc.EventLoop,
+    event_loop: *fun.jsc.EventLoop,
     alloc: std.mem.Allocator,
-) OOM!bun.jsc.JSValue {
+) OOM!fun.jsc.JSValue {
     const completion = try createAndScheduleCompletionTask(config, plugins, globalThis, event_loop, alloc);
     completion.promise = jsc.JSPromise.Strong.init(globalThis);
     return completion.promise.value();
 }
 
 pub const JSBundleCompletionTask = struct {
-    pub const RefCount = bun.ptr.ThreadSafeRefCount(@This(), "ref_count", @This().deinit, .{});
+    pub const RefCount = fun.ptr.ThreadSafeRefCount(@This(), "ref_count", @This().deinit, .{});
     pub const ref = RefCount.ref;
     pub const deref = RefCount.deref;
 
     ref_count: RefCount,
-    config: bun.jsc.API.JSBundler.Config,
-    jsc_event_loop: *bun.jsc.EventLoop,
-    task: bun.jsc.AnyTask,
+    config: fun.jsc.API.JSBundler.Config,
+    jsc_event_loop: *fun.jsc.EventLoop,
+    task: fun.jsc.AnyTask,
     globalThis: *jsc.JSGlobalObject,
     promise: jsc.JSPromise.Strong = .{},
     poll_ref: Async.KeepAlive = Async.KeepAlive.init(),
-    env: *bun.DotEnv.Loader,
+    env: *fun.DotEnv.Loader,
     log: Logger.Log,
     cancelled: bool = false,
 
@@ -76,7 +76,7 @@ pub const JSBundleCompletionTask = struct {
 
     next: ?*JSBundleCompletionTask = null,
     transpiler: *BundleV2 = undefined,
-    plugins: ?*bun.jsc.API.JSBundler.Plugin = null,
+    plugins: ?*fun.jsc.API.JSBundler.Plugin = null,
     started_at_ns: u64 = 0,
 
     pub fn configureBundler(
@@ -89,7 +89,7 @@ pub const JSBundleCompletionTask = struct {
         // JSX config is already in API format
         const jsx_api = config.jsx;
 
-        transpiler.* = try bun.Transpiler.init(
+        transpiler.* = try fun.Transpiler.init(
             alloc,
             &completion.log,
             api.TransformOptions{
@@ -108,7 +108,7 @@ pub const JSBundleCompletionTask = struct {
                 .conditions = config.conditions.map.keys(),
                 .ignore_dce_annotations = transpiler.options.ignore_dce_annotations,
                 .drop = config.drop.map.keys(),
-                .bunfig_path = transpiler.options.bunfig_path,
+                .funfig_path = transpiler.options.funfig_path,
                 .jsx = jsx_api,
             },
             completion.env,
@@ -162,7 +162,7 @@ pub const JSBundleCompletionTask = struct {
         // For compile mode, set the public_path to the target-specific base path
         // This ensures embedded resources like yoga.wasm are correctly found
         if (config.compile) |compile_opts| {
-            const base_public_path = bun.StandaloneModuleGraph.targetBasePublicPath(compile_opts.compile_target.os, "root/");
+            const base_public_path = fun.StandaloneModuleGraph.targetBasePublicPath(compile_opts.compile_target.os, "root/");
             transpiler.options.public_path = base_public_path;
         } else {
             transpiler.options.public_path = config.public_path.list.items;
@@ -186,11 +186,11 @@ pub const JSBundleCompletionTask = struct {
             if (config.compile == null or config.target != .browser) break :brk false;
             // Only activate standalone HTML when all entrypoints are HTML files
             for (config.entry_points.keys()) |ep| {
-                if (!bun.strings.hasSuffixComptime(ep, ".html")) break :brk false;
+                if (!fun.strings.hasSuffixComptime(ep, ".html")) break :brk false;
             }
             break :brk config.entry_points.count() > 0;
         };
-        // When compiling to standalone HTML, don't use the bun executable compile path
+        // When compiling to standalone HTML, don't use the fun executable compile path
         if (transpiler.options.compile_to_standalone_html) {
             transpiler.options.compile = false;
             config.compile = null;
@@ -224,7 +224,7 @@ pub const JSBundleCompletionTask = struct {
         completion.jsc_event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.create(completion.task.task()));
     }
 
-    pub const TaskCompletion = bun.jsc.AnyTask.New(JSBundleCompletionTask, onComplete);
+    pub const TaskCompletion = fun.jsc.AnyTask.New(JSBundleCompletionTask, onComplete);
 
     fn deinit(this: *JSBundleCompletionTask) void {
         this.result.deinit();
@@ -233,12 +233,12 @@ pub const JSBundleCompletionTask = struct {
         if (this.plugins) |plugin| {
             plugin.deinit();
         }
-        this.config.deinit(bun.default_allocator);
+        this.config.deinit(fun.default_allocator);
         this.promise.deinit();
-        bun.destroy(this);
+        fun.destroy(this);
     }
 
-    fn doCompilation(this: *JSBundleCompletionTask, output_files: *std.array_list.Managed(options.OutputFile)) bun.StandaloneModuleGraph.CompileResult {
+    fn doCompilation(this: *JSBundleCompletionTask, output_files: *std.array_list.Managed(options.OutputFile)) fun.StandaloneModuleGraph.CompileResult {
         const compile_options = &(this.config.compile orelse @panic("Unexpected: No compile options provided"));
 
         const entry_point_index: usize = brk: {
@@ -247,39 +247,39 @@ pub const JSBundleCompletionTask = struct {
                     break :brk i;
                 }
             }
-            return bun.StandaloneModuleGraph.CompileResult.fail(.no_entry_point);
+            return fun.StandaloneModuleGraph.CompileResult.fail(.no_entry_point);
         };
 
         const output_file = &output_files.items[entry_point_index];
-        const outbuf = bun.path_buffer_pool.get();
-        defer bun.path_buffer_pool.put(outbuf);
+        const outbuf = fun.path_buffer_pool.get();
+        defer fun.path_buffer_pool.put(outbuf);
 
         // Always get an absolute path for the outfile to ensure it works correctly with PE metadata operations
         var full_outfile_path = if (this.config.outdir.slice().len > 0) brk: {
             const outdir_slice = this.config.outdir.slice();
-            const top_level_dir = bun.fs.FileSystem.instance.top_level_dir;
-            break :brk bun.path.joinAbsStringBuf(top_level_dir, outbuf, &[_][]const u8{ outdir_slice, compile_options.outfile.slice() }, .auto);
+            const top_level_dir = fun.fs.FileSystem.instance.top_level_dir;
+            break :brk fun.path.joinAbsStringBuf(top_level_dir, outbuf, &[_][]const u8{ outdir_slice, compile_options.outfile.slice() }, .auto);
         } else if (std.fs.path.isAbsolute(compile_options.outfile.slice()))
             compile_options.outfile.slice()
         else brk: {
             // For relative paths, ensure we make them absolute relative to the current working directory
-            const top_level_dir = bun.fs.FileSystem.instance.top_level_dir;
-            break :brk bun.path.joinAbsStringBuf(top_level_dir, outbuf, &[_][]const u8{compile_options.outfile.slice()}, .auto);
+            const top_level_dir = fun.fs.FileSystem.instance.top_level_dir;
+            break :brk fun.path.joinAbsStringBuf(top_level_dir, outbuf, &[_][]const u8{compile_options.outfile.slice()}, .auto);
         };
 
         // Add .exe extension for Windows targets if not already present
         if (compile_options.compile_target.os == .windows and !strings.hasSuffixComptime(full_outfile_path, ".exe")) {
-            full_outfile_path = std.fmt.allocPrint(bun.default_allocator, "{s}.exe", .{full_outfile_path}) catch |err| bun.handleOom(err);
+            full_outfile_path = std.fmt.allocPrint(fun.default_allocator, "{s}.exe", .{full_outfile_path}) catch |err| fun.handleOom(err);
         } else {
-            full_outfile_path = bun.handleOom(bun.default_allocator.dupe(u8, full_outfile_path));
+            full_outfile_path = fun.handleOom(fun.default_allocator.dupe(u8, full_outfile_path));
         }
 
         const dirname = std.fs.path.dirname(full_outfile_path) orelse ".";
         const basename = std.fs.path.basename(full_outfile_path);
 
-        var root_dir = bun.FD.cwd().stdDir();
+        var root_dir = fun.FD.cwd().stdDir();
         defer {
-            if (bun.FD.fromStdDir(root_dir) != bun.FD.cwd()) {
+            if (fun.FD.fromStdDir(root_dir) != fun.FD.cwd()) {
                 root_dir.close();
             }
         }
@@ -291,21 +291,21 @@ pub const JSBundleCompletionTask = struct {
         if (Environment.isPosix and !(dirname.len == 0 or strings.eqlComptime(dirname, "."))) {
             // On POSIX, makeOpenPath and change root_dir
             root_dir = root_dir.makeOpenPath(dirname, .{}) catch |err| {
-                return bun.StandaloneModuleGraph.CompileResult.failFmt("Failed to open output directory {s}: {s}", .{ dirname, @errorName(err) });
+                return fun.StandaloneModuleGraph.CompileResult.failFmt("Failed to open output directory {s}: {s}", .{ dirname, @errorName(err) });
             };
         } else if (Environment.isWindows and !(dirname.len == 0 or strings.eqlComptime(dirname, "."))) {
             // On Windows, ensure directories exist but don't change root_dir
-            _ = bun.makePath(root_dir, dirname) catch |err| {
-                return bun.StandaloneModuleGraph.CompileResult.failFmt("Failed to create output directory {s}: {s}", .{ dirname, @errorName(err) });
+            _ = fun.makePath(root_dir, dirname) catch |err| {
+                return fun.StandaloneModuleGraph.CompileResult.failFmt("Failed to create output directory {s}: {s}", .{ dirname, @errorName(err) });
             };
         }
 
         // Use the target-specific base path for compile mode, not the user-configured public_path
-        const module_prefix = bun.StandaloneModuleGraph.targetBasePublicPath(compile_options.compile_target.os, "root/");
+        const module_prefix = fun.StandaloneModuleGraph.targetBasePublicPath(compile_options.compile_target.os, "root/");
 
-        const result = bun.StandaloneModuleGraph.toExecutable(
+        const result = fun.StandaloneModuleGraph.toExecutable(
             &compile_options.compile_target,
-            bun.default_allocator,
+            fun.default_allocator,
             output_files.items,
             root_dir,
             module_prefix,
@@ -351,7 +351,7 @@ pub const JSBundleCompletionTask = struct {
                 .disable_autoload_package_json = !compile_options.autoload_package_json,
             },
         ) catch |err| {
-            return bun.StandaloneModuleGraph.CompileResult.failFmt("{s}", .{@errorName(err)});
+            return fun.StandaloneModuleGraph.CompileResult.failFmt("{s}", .{@errorName(err)});
         };
 
         if (result == .success) {
@@ -373,19 +373,19 @@ pub const JSBundleCompletionTask = struct {
                     // Derive the .map filename from the sourcemap's own dest_path,
                     // placed in the same directory as the compiled executable.
                     const map_basename = if (current.dest_path.len > 0)
-                        bun.path.basename(current.dest_path)
+                        fun.path.basename(current.dest_path)
                     else
-                        bun.path.basename(bun.handleOom(std.fmt.allocPrint(bun.default_allocator, "{s}.map", .{full_outfile_path})));
+                        fun.path.basename(fun.handleOom(std.fmt.allocPrint(fun.default_allocator, "{s}.map", .{full_outfile_path})));
 
                     const sourcemap_full_path = if (dirname.len == 0 or strings.eqlComptime(dirname, "."))
-                        bun.handleOom(bun.default_allocator.dupe(u8, map_basename))
+                        fun.handleOom(fun.default_allocator.dupe(u8, map_basename))
                     else
-                        bun.handleOom(std.fmt.allocPrint(bun.default_allocator, "{s}{c}{s}", .{ dirname, std.fs.path.sep, map_basename }));
+                        fun.handleOom(std.fmt.allocPrint(fun.default_allocator, "{s}{c}{s}", .{ dirname, std.fs.path.sep, map_basename }));
 
                     // Write the sourcemap file to disk next to the executable
-                    var pathbuf: bun.PathBuffer = undefined;
+                    var pathbuf: fun.PathBuffer = undefined;
                     const write_path = if (Environment.isWindows) sourcemap_full_path else map_basename;
-                    switch (bun.jsc.Node.fs.NodeFS.writeFileWithPathBuffer(
+                    switch (fun.jsc.Node.fs.NodeFS.writeFileWithPathBuffer(
                         &pathbuf,
                         .{
                             .data = .{ .buffer = .{
@@ -398,12 +398,12 @@ pub const JSBundleCompletionTask = struct {
                             .encoding = .buffer,
                             .dirfd = .fromStdDir(root_dir),
                             .file = .{ .path = .{
-                                .string = bun.PathString.init(write_path),
+                                .string = fun.PathString.init(write_path),
                             } },
                         },
                     )) {
                         .err => |err| {
-                            bun.Output.err(err, "failed to write sourcemap file '{s}'", .{write_path});
+                            fun.Output.err(err, "failed to write sourcemap file '{s}'", .{write_path});
                             current.deinit();
                         },
                         .result => {
@@ -425,12 +425,12 @@ pub const JSBundleCompletionTask = struct {
     }
 
     /// Returns true if the promises were handled and resolved from BundlePlugin.ts, returns false if the caller should imediately resolve
-    fn runOnEndCallbacks(globalThis: *jsc.JSGlobalObject, plugin: *bun.jsc.API.JSBundler.Plugin, promise: *jsc.JSPromise, build_result: jsc.JSValue, rejection: bun.JSError!jsc.JSValue) bun.JSError!bool {
+    fn runOnEndCallbacks(globalThis: *jsc.JSGlobalObject, plugin: *fun.jsc.API.JSBundler.Plugin, promise: *jsc.JSPromise, build_result: jsc.JSValue, rejection: fun.JSError!jsc.JSValue) fun.JSError!bool {
         const value = try plugin.runOnEndCallbacks(globalThis, promise, build_result, rejection);
         return value != .js_undefined;
     }
 
-    fn toJSError(this: *JSBundleCompletionTask, promise: *jsc.JSPromise, globalThis: *jsc.JSGlobalObject) bun.JSTerminated!void {
+    fn toJSError(this: *JSBundleCompletionTask, promise: *jsc.JSPromise, globalThis: *jsc.JSGlobalObject) fun.JSTerminated!void {
         const throw_on_error = this.config.throw_on_error;
 
         const build_result = jsc.JSValue.createEmptyObject(globalThis, 3);
@@ -443,14 +443,14 @@ pub const JSBundleCompletionTask = struct {
         build_result.put(
             globalThis,
             jsc.ZigString.static("logs"),
-            this.log.toJSArray(globalThis, bun.default_allocator) catch |err| {
+            this.log.toJSArray(globalThis, fun.default_allocator) catch |err| {
                 return promise.reject(globalThis, err);
             },
         );
 
         const didHandleCallbacks = if (this.plugins) |plugin| blk: {
             if (throw_on_error) {
-                const aggregate_error = this.log.toJSAggregateError(globalThis, bun.String.static("Bundle failed"));
+                const aggregate_error = this.log.toJSAggregateError(globalThis, fun.String.static("Bundle failed"));
                 break :blk runOnEndCallbacks(globalThis, plugin, promise, build_result, aggregate_error) catch |err| {
                     return promise.reject(globalThis, err);
                 };
@@ -463,7 +463,7 @@ pub const JSBundleCompletionTask = struct {
 
         if (!didHandleCallbacks) {
             if (throw_on_error) {
-                const aggregate_error = this.log.toJSAggregateError(globalThis, bun.String.static("Bundle failed"));
+                const aggregate_error = this.log.toJSAggregateError(globalThis, fun.String.static("Bundle failed"));
                 return promise.reject(globalThis, aggregate_error);
             } else {
                 return promise.resolve(globalThis, build_result);
@@ -471,11 +471,11 @@ pub const JSBundleCompletionTask = struct {
         }
     }
 
-    pub fn onComplete(this: *JSBundleCompletionTask) bun.JSTerminated!void {
+    pub fn onComplete(this: *JSBundleCompletionTask) fun.JSTerminated!void {
         var globalThis = this.globalThis;
         defer this.deref();
 
-        this.poll_ref.unref(globalThis.bunVM());
+        this.poll_ref.unref(globalThis.funVM());
         if (this.cancelled) {
             return;
         }
@@ -494,7 +494,7 @@ pub const JSBundleCompletionTask = struct {
                 defer compile_result.deinit();
 
                 if (compile_result != .success) {
-                    bun.handleOom(this.log.addError(null, Logger.Loc.Empty, bun.handleOom(this.log.msgs.allocator.dupe(u8, compile_result.err.slice()))));
+                    fun.handleOom(this.log.addError(null, Logger.Loc.Empty, fun.handleOom(this.log.msgs.allocator.dupe(u8, compile_result.err.slice()))));
                     this.result.value.deinit();
                     this.result = .{ .err = error.CompilationFailed };
                 }
@@ -508,7 +508,7 @@ pub const JSBundleCompletionTask = struct {
                 const output_files = build.output_files.items;
                 const output_files_js = jsc.JSValue.createEmptyArray(globalThis, output_files.len) catch return promise.reject(globalThis, error.JSError);
                 if (output_files_js == .zero) {
-                    @panic("Unexpected pending JavaScript exception in JSBundleCompletionTask.onComplete. This is a bug in Bun.");
+                    @panic("Unexpected pending JavaScript exception in JSBundleCompletionTask.onComplete. This is a bug in Fun.");
                 }
 
                 var to_assign_on_sourcemap: jsc.JSValue = .zero;
@@ -516,25 +516,25 @@ pub const JSBundleCompletionTask = struct {
                     const result = output_file.toJS(
                         if (!this.config.outdir.isEmpty())
                             if (std.fs.path.isAbsolute(this.config.outdir.list.items))
-                                bun.default_allocator.dupe(
+                                fun.default_allocator.dupe(
                                     u8,
-                                    bun.path.joinAbsString(
+                                    fun.path.joinAbsString(
                                         this.config.outdir.slice(),
                                         &[_]string{output_file.dest_path},
                                         .auto,
                                     ),
                                 ) catch unreachable
                             else
-                                bun.default_allocator.dupe(
+                                fun.default_allocator.dupe(
                                     u8,
-                                    bun.path.joinAbsString(
-                                        bun.fs.FileSystem.instance.top_level_dir,
+                                    fun.path.joinAbsString(
+                                        fun.fs.FileSystem.instance.top_level_dir,
                                         &[_]string{ this.config.dir.slice(), this.config.outdir.slice(), output_file.dest_path },
                                         .auto,
                                     ),
                                 ) catch unreachable
                         else
-                            bun.default_allocator.dupe(
+                            fun.default_allocator.dupe(
                                 u8,
                                 output_file.dest_path,
                             ) catch unreachable,
@@ -562,7 +562,7 @@ pub const JSBundleCompletionTask = struct {
                 build_output.put(
                     globalThis,
                     jsc.ZigString.static("logs"),
-                    this.log.toJSArray(globalThis, bun.default_allocator) catch |err| {
+                    this.log.toJSArray(globalThis, fun.default_allocator) catch |err| {
                         return promise.reject(globalThis, err);
                     },
                 );
@@ -570,17 +570,17 @@ pub const JSBundleCompletionTask = struct {
                 // Add metafile if it was generated
                 // metafile: { json: <lazy parsed>, markdown?: string }
                 if (build.metafile) |metafile| {
-                    const metafile_js_str = bun.String.createUTF8ForJS(globalThis, metafile) catch |err| {
+                    const metafile_js_str = fun.String.createUTF8ForJS(globalThis, metafile) catch |err| {
                         return promise.reject(globalThis, err);
                     };
                     const metafile_md_str: jsc.JSValue = if (build.metafile_markdown) |md|
-                        (bun.String.createUTF8ForJS(globalThis, md) catch |err| {
+                        (fun.String.createUTF8ForJS(globalThis, md) catch |err| {
                             return promise.reject(globalThis, err);
                         })
                     else
                         .js_undefined;
                     // Set up metafile object with json (lazy) and markdown (if present)
-                    Bun__setupLazyMetafile(globalThis, build_output, metafile_js_str, metafile_md_str);
+                    Fun__setupLazyMetafile(globalThis, build_output, metafile_js_str, metafile_md_str);
                 }
 
                 const didHandleCallbacks = if (this.plugins) |plugin| runOnEndCallbacks(globalThis, plugin, promise, build_output, .js_undefined) catch |err| {
@@ -595,7 +595,7 @@ pub const JSBundleCompletionTask = struct {
     }
 };
 
-extern "C" fn Bun__setupLazyMetafile(globalThis: *jsc.JSGlobalObject, buildOutput: jsc.JSValue, metafileJsonString: jsc.JSValue, metafileMarkdownString: jsc.JSValue) callconv(jsc.conv) void;
+extern "C" fn Fun__setupLazyMetafile(globalThis: *jsc.JSGlobalObject, buildOutput: jsc.JSValue, metafileJsonString: jsc.JSValue, metafileMarkdownString: jsc.JSValue) callconv(jsc.conv) void;
 
 const string = []const u8;
 
@@ -605,17 +605,17 @@ const bv2 = @import("../bundler/bundle_v2.zig");
 const BundleThread = bv2.BundleThread;
 const BundleV2 = bv2.BundleV2;
 
-const bun = @import("bun");
-const Async = bun.Async;
-const Environment = bun.Environment;
-const Logger = bun.logger;
-const OOM = bun.OOM;
-const StandaloneModuleGraph = bun.StandaloneModuleGraph;
-const String = bun.String;
-const jsc = bun.jsc;
-const logger = bun.logger;
-const options = bun.options;
-const sourcemap = bun.sourcemap;
-const strings = bun.strings;
-const Transpiler = bun.transpiler.Transpiler;
-const api = bun.schema.api;
+const fun = @import("fun");
+const Async = fun.Async;
+const Environment = fun.Environment;
+const Logger = fun.logger;
+const OOM = fun.OOM;
+const StandaloneModuleGraph = fun.StandaloneModuleGraph;
+const String = fun.String;
+const jsc = fun.jsc;
+const logger = fun.logger;
+const options = fun.options;
+const sourcemap = fun.sourcemap;
+const strings = fun.strings;
+const Transpiler = fun.transpiler.Transpiler;
+const api = fun.schema.api;

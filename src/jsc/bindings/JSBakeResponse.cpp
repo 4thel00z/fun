@@ -21,7 +21,7 @@
 #define JSC_CALLCONV "C" SYSV_ABI
 #endif
 
-namespace Bun {
+namespace Fun {
 
 static JSC_DECLARE_CUSTOM_GETTER(jsBakeResponsePrototypeGetSymbolFor);
 static JSC_DECLARE_CUSTOM_GETTER(jsBakeResponsePrototypeGetType);
@@ -312,4 +312,4 @@ void setupJSBakeResponseClassStructure(JSC::LazyClassStructure::Initializer& ini
     init.setConstructor(constructor);
 }
 
-} // namespace Bun
+} // namespace Fun

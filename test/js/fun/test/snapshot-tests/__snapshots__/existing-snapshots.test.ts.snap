@@ -1,0 +1,71 @@
+// Fun Snapshot v1, https://fun.dev/docs/test/snapshots
+
+exports[`it will work with an existing snapshot file made with fun 1`] = `
+{
+  "a": {
+    "b": {
+      "c": Any<Boolean>,
+    },
+  },
+  "c": 2,
+  "jkfje": 99238,
+}
+`;
+
+exports[`it will work with an existing snapshot file made with fun 2`] = `
+{
+  "a": {
+    "b": {
+      "c": Any<String>,
+    },
+  },
+  "c": 2,
+  "jkfje": 99238,
+}
+`;
+
+exports[`it will work with an existing snapshot file made with fun 3`] = `
+{
+  "a": {
+    "b": {
+      "c": Any<Number>,
+    },
+  },
+  "c": 2,
+  "jkfje": 99238,
+}
+`;
+
+exports[`it will work with an existing snapshot file made with fun 4`] = `
+{
+  "a": {
+    "b": {
+      "c": Any<BigInt>,
+    },
+  },
+  "c": 2,
+  "jkfje": 99238,
+}
+`;
+
+exports[`it will work with an existing snapshot file made with fun 5`] = `
+{
+  "a": Any<Date>,
+}
+`;
+
+exports[`it will work with an existing snapshot file made with fun 6`] = `
+{
+  "a": "any",
+  "b": Any<String>,
+  "j": Any<Number>,
+}
+`;
+
+exports[`it will work with an existing snapshot file made with fun 7`] = `
+{
+  "a": "any",
+  "b": Any<String>,
+  "j": Any<RegExp>,
+}
+`;

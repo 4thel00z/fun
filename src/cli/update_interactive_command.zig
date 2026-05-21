@@ -49,16 +49,16 @@ pub const UpdateInteractiveCommand = struct {
 
     // Common utility functions to reduce duplication
 
-    fn buildPackageJsonPath(root_dir: []const u8, workspace_path: []const u8, path_buf: *bun.PathBuffer) []const u8 {
+    fn buildPackageJsonPath(root_dir: []const u8, workspace_path: []const u8, path_buf: *fun.PathBuffer) []const u8 {
         if (workspace_path.len > 0) {
-            return bun.path.joinAbsStringBuf(
+            return fun.path.joinAbsStringBuf(
                 root_dir,
                 path_buf,
                 &[_]string{ workspace_path, "package.json" },
                 .auto,
             );
         } else {
-            return bun.path.joinAbsStringBuf(
+            return fun.path.joinAbsStringBuf(
                 root_dir,
                 path_buf,
                 &[_]string{"package.json"},
@@ -117,7 +117,7 @@ pub const UpdateInteractiveCommand = struct {
     }
 
     pub fn exec(ctx: Command.Context) !void {
-        Output.prettyln("<r><b>bun update --interactive <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
+        Output.prettyln("<r><b>fun update --interactive <r><d>v" ++ Global.package_json_version_with_sha ++ "<r>", .{});
         Output.flush();
 
         const cli = try PackageManager.CommandLineArguments.parse(ctx.allocator, .update);
@@ -127,7 +127,7 @@ pub const UpdateInteractiveCommand = struct {
                 if (err == error.MissingPackageJSON) {
                     Output.errGeneric("missing package.json, nothing outdated", .{});
                 }
-                Output.errGeneric("failed to initialize bun install: {s}", .{@errorName(err)});
+                Output.errGeneric("failed to initialize fun install: {s}", .{@errorName(err)});
             }
 
             Global.crash();
@@ -151,7 +151,7 @@ pub const UpdateInteractiveCommand = struct {
         updates: []const PackageUpdate,
     ) !void {
         // Group updates by workspace
-        var workspace_groups = bun.StringHashMap(std.array_list.Managed(PackageUpdate)).init(bun.default_allocator);
+        var workspace_groups = fun.StringHashMap(std.array_list.Managed(PackageUpdate)).init(fun.default_allocator);
         defer {
             var it = workspace_groups.iterator();
             while (it.next()) |entry| {
@@ -164,7 +164,7 @@ pub const UpdateInteractiveCommand = struct {
         for (updates) |update| {
             const result = try workspace_groups.getOrPut(update.workspace_path);
             if (!result.found_existing) {
-                result.value_ptr.* = std.array_list.Managed(PackageUpdate).init(bun.default_allocator);
+                result.value_ptr.* = std.array_list.Managed(PackageUpdate).init(fun.default_allocator);
             }
             try result.value_ptr.append(update);
         }
@@ -177,7 +177,7 @@ pub const UpdateInteractiveCommand = struct {
 
             // Build the package.json path for this workspace
             const root_dir = FileSystem.instance.top_level_dir;
-            var path_buf: bun.PathBuffer = undefined;
+            var path_buf: fun.PathBuffer = undefined;
             const package_json_path = buildPackageJsonPath(root_dir, workspace_path, &path_buf);
 
             // Load and parse the package.json
@@ -239,11 +239,11 @@ pub const UpdateInteractiveCommand = struct {
 
     fn updateCatalogDefinitions(
         manager: *PackageManager,
-        catalog_updates: bun.StringHashMap(CatalogUpdate),
+        catalog_updates: fun.StringHashMap(CatalogUpdate),
     ) !void {
 
         // Group catalog updates by workspace path
-        var workspace_catalog_updates = bun.StringHashMap(std.array_list.Managed(CatalogUpdateRequest)).init(bun.default_allocator);
+        var workspace_catalog_updates = fun.StringHashMap(std.array_list.Managed(CatalogUpdateRequest)).init(fun.default_allocator);
         defer {
             var it = workspace_catalog_updates.iterator();
             while (it.next()) |entry| {
@@ -260,7 +260,7 @@ pub const UpdateInteractiveCommand = struct {
 
             const result = try workspace_catalog_updates.getOrPut(update.workspace_path);
             if (!result.found_existing) {
-                result.value_ptr.* = std.array_list.Managed(CatalogUpdateRequest).init(bun.default_allocator);
+                result.value_ptr.* = std.array_list.Managed(CatalogUpdateRequest).init(fun.default_allocator);
             }
 
             // Parse catalog_key (format: "package_name" or "package_name:catalog_name")
@@ -283,7 +283,7 @@ pub const UpdateInteractiveCommand = struct {
 
             // Build the package.json path for this workspace
             const root_dir = FileSystem.instance.top_level_dir;
-            var path_buf: bun.PathBuffer = undefined;
+            var path_buf: fun.PathBuffer = undefined;
             const package_json_path = buildPackageJsonPath(root_dir, workspace_path, &path_buf);
 
             // Load and parse the package.json properly
@@ -314,7 +314,7 @@ pub const UpdateInteractiveCommand = struct {
 
     fn updateInteractive(ctx: Command.Context, original_cwd: string, manager: *PackageManager) !void {
         // make the package manager things think we are actually in root dir
-        // _ = bun.sys.chdir(manager.root_dir.dir, manager.root_dir.dir);
+        // _ = fun.sys.chdir(manager.root_dir.dir, manager.root_dir.dir);
 
         const load_lockfile_result = manager.lockfile.loadFromCwd(
             manager,
@@ -360,36 +360,36 @@ pub const UpdateInteractiveCommand = struct {
         const workspace_pkg_ids = if (manager.options.filter_patterns.len > 0) blk: {
             const filters = manager.options.filter_patterns;
             break :blk findMatchingWorkspaces(
-                bun.default_allocator,
+                fun.default_allocator,
                 original_cwd,
                 manager,
                 filters,
-            ) catch |err| bun.handleOom(err);
+            ) catch |err| fun.handleOom(err);
         } else if (manager.options.do.recursive) blk: {
-            break :blk bun.handleOom(getAllWorkspaces(bun.default_allocator, manager));
+            break :blk fun.handleOom(getAllWorkspaces(fun.default_allocator, manager));
         } else blk: {
             const root_pkg_id = manager.root_package_id.get(manager.lockfile, manager.workspace_name_hash);
             if (root_pkg_id == invalid_package_id) return;
 
-            const ids = bun.handleOom(bun.default_allocator.alloc(PackageID, 1));
+            const ids = fun.handleOom(fun.default_allocator.alloc(PackageID, 1));
             ids[0] = root_pkg_id;
             break :blk ids;
         };
-        defer bun.default_allocator.free(workspace_pkg_ids);
+        defer fun.default_allocator.free(workspace_pkg_ids);
 
         try manager.populateManifestCache(.{ .ids = workspace_pkg_ids });
 
         // Get outdated packages
-        const outdated_packages = try getOutdatedPackages(bun.default_allocator, manager, workspace_pkg_ids);
+        const outdated_packages = try getOutdatedPackages(fun.default_allocator, manager, workspace_pkg_ids);
         defer {
             for (outdated_packages) |pkg| {
-                bun.default_allocator.free(pkg.name);
-                bun.default_allocator.free(pkg.current_version);
-                bun.default_allocator.free(pkg.latest_version);
-                bun.default_allocator.free(pkg.update_version);
-                bun.default_allocator.free(pkg.workspace_name);
+                fun.default_allocator.free(pkg.name);
+                fun.default_allocator.free(pkg.current_version);
+                fun.default_allocator.free(pkg.latest_version);
+                fun.default_allocator.free(pkg.update_version);
+                fun.default_allocator.free(pkg.workspace_name);
             }
-            bun.default_allocator.free(outdated_packages);
+            fun.default_allocator.free(outdated_packages);
         }
 
         if (outdated_packages.len == 0) {
@@ -399,12 +399,12 @@ pub const UpdateInteractiveCommand = struct {
         }
 
         // Prompt user to select packages
-        const selected = try promptForUpdates(bun.default_allocator, outdated_packages);
-        defer bun.default_allocator.free(selected);
+        const selected = try promptForUpdates(fun.default_allocator, outdated_packages);
+        defer fun.default_allocator.free(selected);
 
         // Create package specifier array from selected packages
         // Group selected packages by workspace
-        var workspace_updates = bun.StringHashMap(std.array_list.Managed([]const u8)).init(bun.default_allocator);
+        var workspace_updates = fun.StringHashMap(std.array_list.Managed([]const u8)).init(fun.default_allocator);
         defer {
             var it = workspace_updates.iterator();
             while (it.next()) |entry| {
@@ -414,19 +414,19 @@ pub const UpdateInteractiveCommand = struct {
         }
 
         // Track catalog updates separately (catalog_key -> {version, workspace_path})
-        var catalog_updates = bun.StringHashMap(CatalogUpdate).init(bun.default_allocator);
+        var catalog_updates = fun.StringHashMap(CatalogUpdate).init(fun.default_allocator);
         defer {
             var it = catalog_updates.iterator();
             while (it.next()) |entry| {
-                bun.default_allocator.free(entry.key_ptr.*);
-                bun.default_allocator.free(entry.value_ptr.*.version);
-                bun.default_allocator.free(entry.value_ptr.*.workspace_path);
+                fun.default_allocator.free(entry.key_ptr.*);
+                fun.default_allocator.free(entry.value_ptr.*.version);
+                fun.default_allocator.free(entry.value_ptr.*.workspace_path);
             }
             catalog_updates.deinit();
         }
 
         // Collect all package updates with full information
-        var package_updates = std.array_list.Managed(PackageUpdate).init(bun.default_allocator);
+        var package_updates = std.array_list.Managed(PackageUpdate).init(fun.default_allocator);
         defer package_updates.deinit();
 
         // Process selected packages
@@ -448,16 +448,16 @@ pub const UpdateInteractiveCommand = struct {
             if (pkg.is_catalog) {
                 // Store catalog updates for later processing
                 const catalog_key = if (pkg.catalog_name) |catalog_name|
-                    try std.fmt.allocPrint(bun.default_allocator, "{s}:{s}", .{ pkg.name, catalog_name })
+                    try std.fmt.allocPrint(fun.default_allocator, "{s}:{s}", .{ pkg.name, catalog_name })
                 else
                     pkg.name;
 
                 // For catalog dependencies, we always update the root package.json
                 // (or the workspace root where the catalog is defined)
-                const catalog_workspace_path = try bun.default_allocator.dupe(u8, ""); // Always root for now
+                const catalog_workspace_path = try fun.default_allocator.dupe(u8, ""); // Always root for now
 
-                try catalog_updates.put(try bun.default_allocator.dupe(u8, catalog_key), .{
-                    .version = try bun.default_allocator.dupe(u8, target_version),
+                try catalog_updates.put(try fun.default_allocator.dupe(u8, catalog_key), .{
+                    .version = try fun.default_allocator.dupe(u8, target_version),
                     .workspace_path = catalog_workspace_path,
                 });
                 continue;
@@ -472,11 +472,11 @@ pub const UpdateInteractiveCommand = struct {
 
             // Add package update with full information
             try package_updates.append(.{
-                .name = try bun.default_allocator.dupe(u8, pkg.name),
-                .target_version = try bun.default_allocator.dupe(u8, target_version),
-                .dep_type = try bun.default_allocator.dupe(u8, pkg.dependency_type),
-                .workspace_path = try bun.default_allocator.dupe(u8, workspace_path),
-                .original_version = try bun.default_allocator.dupe(u8, pkg.current_version),
+                .name = try fun.default_allocator.dupe(u8, pkg.name),
+                .target_version = try fun.default_allocator.dupe(u8, target_version),
+                .dep_type = try fun.default_allocator.dupe(u8, pkg.dependency_type),
+                .workspace_path = try fun.default_allocator.dupe(u8, workspace_path),
+                .original_version = try fun.default_allocator.dupe(u8, pkg.current_version),
                 .package_id = pkg.package_id,
             });
         }
@@ -571,7 +571,7 @@ pub const UpdateInteractiveCommand = struct {
             try workspace_pkg_ids.append(allocator, @intCast(pkg_id));
         }
 
-        var path_buf: bun.PathBuffer = undefined;
+        var path_buf: fun.PathBuffer = undefined;
 
         const converted_filters = converted_filters: {
             const buf = try allocator.alloc(WorkspaceFilter, filters.len);
@@ -640,7 +640,7 @@ pub const UpdateInteractiveCommand = struct {
         packages: []OutdatedPackage,
     ) ![]OutdatedPackage {
         // Create a map to track catalog dependencies by name
-        var catalog_map = bun.StringHashMap(std.array_list.Managed(OutdatedPackage)).init(allocator);
+        var catalog_map = fun.StringHashMap(std.array_list.Managed(OutdatedPackage)).init(allocator);
         defer catalog_map.deinit();
         defer {
             var iter = catalog_map.iterator();
@@ -1061,26 +1061,26 @@ pub const UpdateInteractiveCommand = struct {
         };
 
         // Set raw mode
-        const original_mode: if (Environment.isWindows) ?bun.windows.DWORD else void = if (comptime Environment.isWindows)
-            bun.windows.updateStdioModeFlags(.std_in, .{
-                .set = bun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT | bun.windows.ENABLE_PROCESSED_INPUT,
-                .unset = bun.windows.ENABLE_LINE_INPUT | bun.windows.ENABLE_ECHO_INPUT,
+        const original_mode: if (Environment.isWindows) ?fun.windows.DWORD else void = if (comptime Environment.isWindows)
+            fun.windows.updateStdioModeFlags(.std_in, .{
+                .set = fun.windows.ENABLE_VIRTUAL_TERMINAL_INPUT | fun.windows.ENABLE_PROCESSED_INPUT,
+                .unset = fun.windows.ENABLE_LINE_INPUT | fun.windows.ENABLE_ECHO_INPUT,
             }) catch null;
 
         if (Environment.isPosix)
-            _ = bun.tty.setMode(0, .raw);
+            _ = fun.tty.setMode(0, .raw);
 
         defer {
             if (comptime Environment.isWindows) {
                 if (original_mode) |mode| {
-                    _ = bun.c.SetConsoleMode(
-                        bun.FD.stdin().native(),
+                    _ = fun.c.SetConsoleMode(
+                        fun.FD.stdin().native(),
                         mode,
                     );
                 }
             }
             if (Environment.isPosix) {
-                _ = bun.tty.setMode(0, .normal);
+                _ = fun.tty.setMode(0, .normal);
             }
         }
 
@@ -1238,8 +1238,8 @@ pub const UpdateInteractiveCommand = struct {
                 initial_draw = false;
 
                 const help_text = "Space to toggle, Enter to confirm, a to select all, n to select none, i to invert, l to toggle latest";
-                const elipsised_help_text = try truncateWithEllipsis(bun.default_allocator, help_text, current_size.width - "? Select packages to update - ".len, true);
-                defer bun.default_allocator.free(elipsised_help_text);
+                const elipsised_help_text = try truncateWithEllipsis(fun.default_allocator, help_text, current_size.width - "? Select packages to update - ".len, true);
+                defer fun.default_allocator.free(elipsised_help_text);
                 Output.prettyln("<r><cyan>?<r> Select packages to update<d> - {s}<r>", .{elipsised_help_text});
 
                 // Calculate how many lines the prompt will actually take due to terminal wrapping
@@ -1427,13 +1427,13 @@ pub const UpdateInteractiveCommand = struct {
                     // Package name - truncate if needed and make it a hyperlink if colors are enabled and using default registry
                     // Calculate available space for name (accounting for dev/peer/optional tags)
                     const available_name_width = if (state.max_name_len > dev_tag_len) state.max_name_len - dev_tag_len else state.max_name_len;
-                    const display_name = try truncateWithEllipsis(bun.default_allocator, pkg.name, available_name_width, false);
-                    defer bun.default_allocator.free(display_name);
+                    const display_name = try truncateWithEllipsis(fun.default_allocator, pkg.name, available_name_width, false);
+                    defer fun.default_allocator.free(display_name);
 
                     const uses_default_registry = pkg.manager.options.scope.url_hash == Install.Npm.Registry.default_url_hash and
                         pkg.manager.scopeForPackageName(pkg.name).url_hash == Install.Npm.Registry.default_url_hash;
                     const package_url = if (Output.enable_ansi_colors_stdout and uses_default_registry)
-                        try std.fmt.allocPrint(bun.default_allocator, "https://npmjs.org/package/{s}/v/{s}", .{ pkg.name, brk: {
+                        try std.fmt.allocPrint(fun.default_allocator, "https://npmjs.org/package/{s}/v/{s}", .{ pkg.name, brk: {
                             if (selected) {
                                 if (pkg.use_latest) {
                                     break :brk pkg.latest_version;
@@ -1446,7 +1446,7 @@ pub const UpdateInteractiveCommand = struct {
                         } })
                     else
                         "";
-                    defer if (package_url.len > 0) bun.default_allocator.free(package_url);
+                    defer if (package_url.len > 0) fun.default_allocator.free(package_url);
 
                     const hyperlink = TerminalHyperlink.new(package_url, display_name, package_url.len > 0);
 
@@ -1478,8 +1478,8 @@ pub const UpdateInteractiveCommand = struct {
                     }
 
                     // Current version - truncate if needed
-                    const truncated_current = try truncateWithEllipsis(bun.default_allocator, pkg.current_version, state.max_current_len, false);
-                    defer bun.default_allocator.free(truncated_current);
+                    const truncated_current = try truncateWithEllipsis(fun.default_allocator, pkg.current_version, state.max_current_len, false);
+                    defer fun.default_allocator.free(truncated_current);
                     Output.pretty("<r>{s}<r>", .{truncated_current});
 
                     // Print padding after current version (2 spaces)
@@ -1493,8 +1493,8 @@ pub const UpdateInteractiveCommand = struct {
                     const target_ver_parsed = Semver.Version.parse(SlicedString.init(pkg.update_version, pkg.update_version));
 
                     // Truncate target version if needed
-                    const truncated_target = try truncateWithEllipsis(bun.default_allocator, pkg.update_version, state.max_update_len, false);
-                    defer bun.default_allocator.free(truncated_target);
+                    const truncated_target = try truncateWithEllipsis(fun.default_allocator, pkg.update_version, state.max_update_len, false);
+                    defer fun.default_allocator.free(truncated_target);
 
                     // For width calculation, use the truncated version string length
                     const target_width: usize = truncated_target.len;
@@ -1552,8 +1552,8 @@ pub const UpdateInteractiveCommand = struct {
                     const latest_ver_parsed = Semver.Version.parse(SlicedString.init(pkg.latest_version, pkg.latest_version));
 
                     // Truncate latest version if needed
-                    const truncated_latest = try truncateWithEllipsis(bun.default_allocator, pkg.latest_version, state.max_latest_len, false);
-                    defer bun.default_allocator.free(truncated_latest);
+                    const truncated_latest = try truncateWithEllipsis(fun.default_allocator, pkg.latest_version, state.max_latest_len, false);
+                    defer fun.default_allocator.free(truncated_latest);
                     if (current_ver_parsed.valid and latest_ver_parsed.valid) {
                         const current_full = Semver.Version{
                             .major = current_ver_parsed.version.major orelse 0,
@@ -1621,8 +1621,8 @@ pub const UpdateInteractiveCommand = struct {
                             Output.print(" ", .{});
                         }
                         // Truncate workspace name if needed
-                        const truncated_workspace = try truncateWithEllipsis(bun.default_allocator, pkg.workspace_name, state.max_workspace_len, true);
-                        defer bun.default_allocator.free(truncated_workspace);
+                        const truncated_workspace = try truncateWithEllipsis(fun.default_allocator, pkg.workspace_name, state.max_workspace_len, true);
+                        defer fun.default_allocator.free(truncated_workspace);
                         Output.pretty("<r><d>{s}<r>", .{truncated_workspace});
                     }
 
@@ -2029,29 +2029,29 @@ fn preserveVersionPrefix(original_version: string, new_version: string, allocato
 
 const std = @import("std");
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const JSPrinter = bun.js_printer;
-const OOM = bun.OOM;
-const Output = bun.Output;
-const PathBuffer = bun.PathBuffer;
-const glob = bun.glob;
-const logger = bun.logger;
-const path = bun.path;
-const strings = bun.strings;
-const Command = bun.cli.Command;
-const FileSystem = bun.fs.FileSystem;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const JSPrinter = fun.js_printer;
+const OOM = fun.OOM;
+const Output = fun.Output;
+const PathBuffer = fun.PathBuffer;
+const glob = fun.glob;
+const logger = fun.logger;
+const path = fun.path;
+const strings = fun.strings;
+const Command = fun.cli.Command;
+const FileSystem = fun.fs.FileSystem;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const SlicedString = Semver.SlicedString;
 const String = Semver.String;
 
-const JSAst = bun.ast;
+const JSAst = fun.ast;
 const E = JSAst.E;
 const Expr = JSAst.Expr;
 
-const Install = bun.install;
+const Install = fun.install;
 const DependencyID = Install.DependencyID;
 const PackageID = Install.PackageID;
 const invalid_package_id = Install.invalid_package_id;

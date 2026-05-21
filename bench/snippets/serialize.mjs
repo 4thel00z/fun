@@ -119,8 +119,8 @@ bench("deserialize", () => {
   deserialize(serialized);
 });
 
-if (typeof Bun !== "undefined") {
-  if (!Bun.deepEquals(obj, deserialize(serialized))) {
+if (typeof Fun !== "undefined") {
+  if (!Fun.deepEquals(obj, deserialize(serialized))) {
     throw new Error("not equal");
   }
 }

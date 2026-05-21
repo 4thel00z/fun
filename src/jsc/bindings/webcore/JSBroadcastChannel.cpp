@@ -170,7 +170,7 @@ JSC_DEFINE_HOST_FUNCTION(jsBroadcastChannelPrototype_inspectCustom, (JSC::JSGlob
 
     auto* channel = JSBroadcastChannel::toWrapped(vm, callFrame->thisValue());
     if (!channel) {
-        return Bun::ERR::INVALID_THIS(throwScope, lexicalGlobalObject, "BroadcastChannel"_s);
+        return Fun::ERR::INVALID_THIS(throwScope, lexicalGlobalObject, "BroadcastChannel"_s);
     }
 
     JSValue depthValue = callFrame->argument(0);
@@ -237,7 +237,7 @@ void JSBroadcastChannelPrototype::finishCreation(VM& vm, JSGlobalObject* globalO
     Base::finishCreation(vm);
     reifyStaticProperties(vm, JSBroadcastChannel::info(), JSBroadcastChannelPrototypeTableValues, *this);
     JSC_TO_STRING_TAG_WITHOUT_TRANSITION();
-    BunBuiltinNames& builtinNames = WebCore::builtinNames(vm);
+    FunBuiltinNames& builtinNames = WebCore::builtinNames(vm);
     putDirectNativeFunction(vm, globalObject, builtinNames.inspectCustomPublicName(), 2, jsBroadcastChannelPrototype_inspectCustom, ImplementationVisibility::Public, NoIntrinsic, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::DontDelete | 0);
 }
 

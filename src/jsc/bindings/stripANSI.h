@@ -2,8 +2,8 @@
 
 #include "root.h"
 
-namespace Bun {
+namespace Fun {
 
-JSC_DECLARE_HOST_FUNCTION(jsFunctionBunStripANSI);
+JSC_DECLARE_HOST_FUNCTION(jsFunctionFunStripANSI);
 
 }

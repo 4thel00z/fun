@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, tempDirWithFiles } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, tempDirWithFiles } from "harness";
 
 test("comma operator should strip 'this' binding in function calls", async () => {
   const dir = tempDirWithFiles("comma-operator-test", {
@@ -22,9 +22,9 @@ cool.logValue();
     `,
   });
 
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "test.js"],
-    env: bunEnv,
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "test.js"],
+    env: funEnv,
     cwd: dir,
     stderr: "pipe",
     stdout: "pipe",

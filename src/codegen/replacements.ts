@@ -1,3 +1,5 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 import { LoaderKeys } from "../api/schema";
 import NodeErrors from "../jsc/bindings/ErrorCode.ts";
 import jsclasses from "./../jsc/bindings/js_classes";
@@ -44,18 +46,18 @@ for (let id = 0; id < jsclasses.length; id++) {
 export const globalReplacements: ReplacementRule[] = [
   {
     from: /\bnotImplementedIssue\(\s*([0-9]+)\s*,\s*((?:"[^"]*"|'[^']+'))\s*\)/g,
-    toRaw: "__intrinsic__makeTypeError(`${$2} is not implemented yet. See https://github.com/oven-sh/bun/issues/$1`)",
+    toRaw: "__intrinsic__makeTypeError(`${$2} is not implemented yet. See https://github.com/underdoc-org/fun/issues/$1`)",
   },
   {
     from: /\bnotImplementedIssueFn\(\s*([0-9]+)\s*,\s*((?:"[^"]*"|'[^']+'))\s*\)/g,
     toRaw:
-      "() => void __intrinsic__throwTypeError(`${$2} is not implemented yet. See https://github.com/oven-sh/bun/issues/$1`)",
+      "() => void __intrinsic__throwTypeError(`${$2} is not implemented yet. See https://github.com/underdoc-org/fun/issues/$1`)",
   },
 ];
 
 // This is a list of globals we should access using @ notation
 // This prevents a global override attacks.
-// Note that the public `Bun` global is immutable.
+// Note that the public `Fun` global is immutable.
 // undefined -> __intrinsic__undefined -> @undefined
 export const globalsToPrefix = [
   "AbortSignal",
@@ -120,7 +122,7 @@ export const warnOnIdentifiersNotPresentAtRuntime = [
 const debug = process.argv[2] === "--debug=ON";
 export const define: Record<string, string> = {
   "process.env.NODE_ENV": JSON.stringify(debug ? "development" : "production"),
-  "IS_BUN_DEVELOPMENT": String(debug),
+  "IS_FUN_DEVELOPMENT": String(debug),
 
   $streamClosed: "1",
   $streamClosing: "2",
@@ -129,8 +131,8 @@ export const define: Record<string, string> = {
   $streamWaiting: "5",
   $streamWritable: "6",
 
-  "process.platform": JSON.stringify(Bun.env.TARGET_PLATFORM ?? process.platform),
-  "process.arch": JSON.stringify(Bun.env.TARGET_ARCH ?? process.arch),
+  "process.platform": JSON.stringify(Fun.env.TARGET_PLATFORM ?? process.platform),
+  "process.arch": JSON.stringify(Fun.env.TARGET_ARCH ?? process.arch),
 };
 
 // ------------------------------ //
@@ -193,7 +195,7 @@ export function applyReplacements(src: string, length: number) {
     if (name === "debug") {
       const innerSlice = sliceSourceCode(rest, true);
       return [
-        slice.slice(0, match.index) + "(IS_BUN_DEVELOPMENT?$debug_log" + innerSlice.result + ":void 0)",
+        slice.slice(0, match.index) + "(IS_FUN_DEVELOPMENT?$debug_log" + innerSlice.result + ":void 0)",
         innerSlice.rest,
         true,
       ];
@@ -208,7 +210,7 @@ export function applyReplacements(src: string, length: number) {
       }
       return [
         slice.slice(0, match.index) +
-          "!(IS_BUN_DEVELOPMENT?$assert(" +
+          "!(IS_FUN_DEVELOPMENT?$assert(" +
           checkSlice.result.slice(1, -1) +
           "," +
           JSON.stringify(

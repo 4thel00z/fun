@@ -160,7 +160,7 @@ pub fn NewParser_(
         fn_or_arrow_data_visit: FnOrArrowDataVisit = FnOrArrowDataVisit{},
         fn_only_data_visit: FnOnlyDataVisit = FnOnlyDataVisit{},
         allocated_names: List(string) = .{},
-        // allocated_names: ListManaged(string) = ListManaged(string).init(bun.default_allocator),
+        // allocated_names: ListManaged(string) = ListManaged(string).init(fun.default_allocator),
         // allocated_names_pool: ?*AllocatedNamesPool.Node = null,
         latest_arrow_arg_loc: logger.Loc = logger.Loc.Empty,
         forbid_suffix_after_as_loc: logger.Loc = logger.Loc.Empty,
@@ -177,20 +177,20 @@ pub fn NewParser_(
         hmr_api_ref: Ref = Ref.None,
 
         /// If bake is enabled and this is a server-side file, we want to use
-        /// special `Response` class inside the `bun:app` built-in module to
+        /// special `Response` class inside the `fun:app` built-in module to
         /// support syntax like `return Response(<jsx />, {...})` or `return Response.render("/my-page")`
         /// or `return Response.redirect("/other")`.
         ///
-        /// So we'll need to add a `import { Response } from 'bun:app'` to the
+        /// So we'll need to add a `import { Response } from 'fun:app'` to the
         /// top of the file
         ///
         /// We need to declare this `response_ref` upfront
         response_ref: Ref = Ref.None,
-        /// We also need to declare the namespace ref for `bun:app` and attach
+        /// We also need to declare the namespace ref for `fun:app` and attach
         /// it to the symbol so the code generated `e_import_identifier`'s
-        bun_app_namespace_ref: Ref = Ref.None,
+        fun_app_namespace_ref: Ref = Ref.None,
 
-        /// Used to track the `feature` function from `import { feature } from "bun:bundle"`.
+        /// Used to track the `feature` function from `import { feature } from "fun:bundle"`.
         /// When visiting e_call, if the target ref matches this, we replace the call with
         /// a boolean based on whether the feature flag is enabled.
         bundler_feature_flag_ref: Ref = Ref.None,
@@ -238,7 +238,7 @@ pub fn NewParser_(
         /// Used by commonjs_at_runtime
         has_commonjs_export_names: bool = false,
 
-        stack_check: bun.StackCheck,
+        stack_check: fun.StackCheck,
 
         /// When this flag is enabled, we attempt to fold all expressions that
         /// TypeScript would consider to be "constant expressions". This flag is
@@ -559,7 +559,7 @@ pub fn NewParser_(
                         "This " ++ kind ++ " expression will not be bundled because the argument is not a string literal",
                         .{},
                         "The specifier shape \"{s}\" does not match any --allow-unresolved pattern. " ++
-                            "To allow it, add a matching pattern: Bun.build({{ allowUnresolved: [\"{s}\"] }}) or --allow-unresolved '{s}'",
+                            "To allow it, add a matching pattern: Fun.build({{ allowUnresolved: [\"{s}\"] }}) or --allow-unresolved '{s}'",
                         .{ display, display, display },
                         r,
                     );
@@ -570,7 +570,7 @@ pub fn NewParser_(
                         p.allocator,
                         "This " ++ kind ++ " expression will not be bundled because the argument is not a string literal",
                         .{},
-                        "To allow opaque dynamic specifiers, use Bun.build({{ allowUnresolved: [\"\"] }}) or pass --allow-unresolved with an empty-string pattern",
+                        "To allow opaque dynamic specifiers, use Fun.build({{ allowUnresolved: [\"\"] }}) or pass --allow-unresolved with an empty-string pattern",
                         .{},
                         r,
                     );
@@ -614,7 +614,7 @@ pub fn NewParser_(
                 p.log.addRangeDebug(p.source, r, "This \"import\" expression cannot be bundled because the argument is not a string literal") catch unreachable;
             }
 
-            bun.handleOom(p.checkDynamicSpecifier(arg, state.loc, "import()"));
+            fun.handleOom(p.checkDynamicSpecifier(arg, state.loc, "import()"));
 
             return p.newExpr(E.Import{
                 .expr = arg,
@@ -635,7 +635,7 @@ pub fn NewParser_(
                 p.log.addRangeDebug(p.source, r, "This \"require.resolve\" expression cannot be bundled because the argument is not a string literal") catch unreachable;
             }
 
-            bun.handleOom(p.checkDynamicSpecifier(arg, arg.loc, "require.resolve()"));
+            fun.handleOom(p.checkDynamicSpecifier(arg, arg.loc, "require.resolve()"));
 
             const args = p.allocator.alloc(Expr, 1) catch unreachable;
             args[0] = arg;
@@ -647,7 +647,7 @@ pub fn NewParser_(
         }
 
         pub inline fn transposeRequireResolveKnownString(noalias p: *P, arg: Expr) Expr {
-            bun.assert(arg.data == .e_string);
+            fun.assert(arg.data == .e_string);
 
             // Ignore calls to import() if the control flow is provably dead here.
             // We don't want to spend time scanning the required files if they will
@@ -671,7 +671,7 @@ pub fn NewParser_(
 
         pub fn transposeRequire(noalias p: *P, arg: Expr, state: *const TransposeState) Expr {
             if (!p.options.features.allow_runtime) {
-                const args = bun.handleOom(p.allocator.alloc(Expr, 1));
+                const args = fun.handleOom(p.allocator.alloc(Expr, 1));
                 args[0] = arg;
                 return p.newExpr(
                     E.Call{
@@ -713,8 +713,8 @@ pub fn NewParser_(
 
                         // Note that this symbol may be completely removed later.
                         var path_name = fs.PathName.init(path.text);
-                        const name = bun.handleOom(path_name.nonUniqueNameString(p.allocator));
-                        const namespace_ref = bun.handleOom(p.newSymbol(.other, name));
+                        const name = fun.handleOom(path_name.nonUniqueNameString(p.allocator));
+                        const namespace_ref = fun.handleOom(p.newSymbol(.other, name));
 
                         p.imports_to_convert_from_require.append(p.allocator, .{
                             .namespace = .{
@@ -722,8 +722,8 @@ pub fn NewParser_(
                                 .loc = arg.loc,
                             },
                             .import_record_id = import_record_index,
-                        }) catch |err| bun.handleOom(err);
-                        bun.handleOom(p.import_items_for_namespace.put(p.allocator, namespace_ref, ImportItemForNamespaceMap.init(p.allocator)));
+                        }) catch |err| fun.handleOom(err);
+                        fun.handleOom(p.import_items_for_namespace.put(p.allocator, namespace_ref, ImportItemForNamespaceMap.init(p.allocator)));
                         p.recordUsage(namespace_ref);
 
                         if (!state.is_require_immediately_assigned_to_decl) {
@@ -748,7 +748,7 @@ pub fn NewParser_(
                     return p.newExpr(E.RequireString{ .import_record_index = import_record_index }, arg.loc);
                 },
                 else => {
-                    bun.handleOom(p.checkDynamicSpecifier(arg, arg.loc, "require()"));
+                    fun.handleOom(p.checkDynamicSpecifier(arg, arg.loc, "require()"));
                     p.recordUsageOfRuntimeRequire();
                     const args = p.allocator.alloc(Expr, 1) catch unreachable;
                     args[0] = arg;
@@ -823,7 +823,7 @@ pub fn NewParser_(
 
                         for (parts_) |part| {
                             if (part.tag == .none) {
-                                bun.copy(Stmt, stmts_remain, part.stmts);
+                                fun.copy(Stmt, stmts_remain, part.stmts);
                                 stmts_remain = stmts_remain[part.stmts.len..];
                             }
                         }
@@ -1331,11 +1331,11 @@ pub fn NewParser_(
             noalias p: *P,
             parts: *ListManaged(js_ast.Part),
         ) !void {
-            bun.assert(!p.response_ref.isNull());
-            bun.assert(!p.bun_app_namespace_ref.isNull());
+            fun.assert(!p.response_ref.isNull());
+            fun.assert(!p.fun_app_namespace_ref.isNull());
             const allocator = p.allocator;
 
-            const import_path = "bun:app";
+            const import_path = "fun:app";
 
             const import_record_i = p.addImportRecordByRange(.stmt, logger.Range.None, import_path);
 
@@ -1345,9 +1345,9 @@ pub fn NewParser_(
             var stmts = try allocator.alloc(Stmt, 1);
 
             declared_symbols.appendAssumeCapacity(
-                DeclaredSymbol{ .ref = p.bun_app_namespace_ref, .is_top_level = true },
+                DeclaredSymbol{ .ref = p.fun_app_namespace_ref, .is_top_level = true },
             );
-            try p.module_scope.generated.append(allocator, p.bun_app_namespace_ref);
+            try p.module_scope.generated.append(allocator, p.fun_app_namespace_ref);
 
             const clause_items = try allocator.dupe(js_ast.ClauseItem, &.{
                 js_ast.ClauseItem{
@@ -1366,7 +1366,7 @@ pub fn NewParser_(
             // ensure every e_import_identifier holds the namespace
             if (p.options.features.hot_module_reloading) {
                 const symbol = &p.symbols.items[p.response_ref.inner_index];
-                bun.assert(symbol.namespace_alias != null);
+                fun.assert(symbol.namespace_alias != null);
                 symbol.namespace_alias.?.import_record_index = import_record_i;
             }
 
@@ -1374,13 +1374,13 @@ pub fn NewParser_(
             try p.named_imports.put(allocator, p.response_ref, js_ast.NamedImport{
                 .alias = "Response",
                 .alias_loc = logger.Loc{},
-                .namespace_ref = p.bun_app_namespace_ref,
+                .namespace_ref = p.fun_app_namespace_ref,
                 .import_record_index = import_record_i,
             });
 
             stmts[0] = p.s(
                 S.Import{
-                    .namespace_ref = p.bun_app_namespace_ref,
+                    .namespace_ref = p.fun_app_namespace_ref,
                     .items = clause_items,
                     .import_record_index = import_record_i,
                     .is_single_line = true,
@@ -1397,7 +1397,7 @@ pub fn NewParser_(
             parts.append(js_ast.Part{
                 .stmts = stmts,
                 .declared_symbols = declared_symbols,
-                .import_record_indices = bun.BabyList(u32).fromOwnedSlice(import_records),
+                .import_record_indices = fun.BabyList(u32).fromOwnedSlice(import_records),
                 .tag = .runtime,
             }) catch unreachable;
         }
@@ -1424,8 +1424,8 @@ pub fn NewParser_(
             var stmts = try allocator.alloc(Stmt, 1 + if (additional_stmt != null) @as(usize, 1) else @as(usize, 0));
             var declared_symbols = DeclaredSymbol.List{};
             try declared_symbols.ensureTotalCapacity(allocator, imports.len + 1);
-            bun.copy(u8, namespace_identifier, prefix);
-            bun.copy(u8, namespace_identifier[prefix.len..], import_path_identifier);
+            fun.copy(u8, namespace_identifier, prefix);
+            fun.copy(u8, namespace_identifier[prefix.len..], import_path_identifier);
 
             const namespace_ref = try p.newSymbol(.other, namespace_identifier);
             declared_symbols.appendAssumeCapacity(.{
@@ -1487,7 +1487,7 @@ pub fn NewParser_(
             parts.append(js_ast.Part{
                 .stmts = stmts,
                 .declared_symbols = declared_symbols,
-                .import_record_indices = bun.BabyList(u32).fromOwnedSlice(import_records),
+                .import_record_indices = fun.BabyList(u32).fromOwnedSlice(import_records),
                 .tag = .runtime,
             }) catch unreachable;
         }
@@ -1590,7 +1590,7 @@ pub fn NewParser_(
             try parts.append(.{
                 .stmts = stmts,
                 .declared_symbols = declared_symbols,
-                .import_record_indices = try bun.BabyList(u32).fromSlice(allocator, &.{import_record_index}),
+                .import_record_indices = try fun.BabyList(u32).fromSlice(allocator, &.{import_record_index}),
                 .tag = .runtime,
             });
         }
@@ -2198,18 +2198,18 @@ pub fn NewParser_(
             }
 
             // Server-side components:
-            // Declare upfront the symbols for "Response" and "bun:app"
+            // Declare upfront the symbols for "Response" and "fun:app"
             switch (p.options.features.server_components) {
                 .none, .client_side => {},
                 else => {
                     p.response_ref = try p.declareGeneratedSymbol(.import, "Response");
-                    p.bun_app_namespace_ref = try p.newSymbol(
+                    p.fun_app_namespace_ref = try p.newSymbol(
                         .other,
-                        "import_bun_app",
+                        "import_fun_app",
                     );
                     const symbol = &p.symbols.items[p.response_ref.inner_index];
                     symbol.namespace_alias = .{
-                        .namespace_ref = p.bun_app_namespace_ref,
+                        .namespace_ref = p.fun_app_namespace_ref,
                         .alias = "Response",
                         .import_record_index = std.math.maxInt(u32),
                     };
@@ -2224,7 +2224,7 @@ pub fn NewParser_(
         fn ensureRequireSymbol(p: *P) void {
             if (p.runtime_imports.__require != null) return;
             const static_symbol = generatedSymbolName("__require");
-            p.runtime_imports.__require = bun.handleOom(declareSymbolMaybeGenerated(p, .other, logger.Loc.Empty, static_symbol, true));
+            p.runtime_imports.__require = fun.handleOom(declareSymbolMaybeGenerated(p, .other, logger.Loc.Empty, static_symbol, true));
             p.runtime_imports.put("__require", p.runtime_imports.__require.?);
         }
 
@@ -2315,7 +2315,7 @@ pub fn NewParser_(
                             //
                             const hoisted_ref = p.newSymbol(.hoisted, symbol.original_name) catch unreachable;
                             symbols = p.symbols.items;
-                            bun.handleOom(scope.generated.append(p.allocator, hoisted_ref));
+                            fun.handleOom(scope.generated.append(p.allocator, hoisted_ref));
                             p.hoisted_ref_for_sloppy_mode_block_fn.put(p.allocator, value.ref, hoisted_ref) catch unreachable;
                             value.ref = hoisted_ref;
                             symbol = &symbols[hoisted_ref.innerIndex()];
@@ -2432,13 +2432,13 @@ pub fn NewParser_(
             const order = p.nextScopeInOrderForVisitPass();
 
             // Sanity-check that the scopes generated by the first and second passes match
-            if (bun.Environment.allow_assert and
+            if (fun.Environment.allow_assert and
                 order.loc.start != loc.start or order.scope.kind != kind)
             {
                 p.log.level = .verbose;
 
-                bun.handleOom(p.log.addDebugFmt(p.source, loc, p.allocator, "Expected this scope (.{s})", .{@tagName(kind)}));
-                bun.handleOom(p.log.addDebugFmt(p.source, order.loc, p.allocator, "Found this scope (.{s})", .{@tagName(order.scope.kind)}));
+                fun.handleOom(p.log.addDebugFmt(p.source, loc, p.allocator, "Expected this scope (.{s})", .{@tagName(kind)}));
+                fun.handleOom(p.log.addDebugFmt(p.source, order.loc, p.allocator, "Found this scope (.{s})", .{@tagName(order.scope.kind)}));
 
                 p.panic("Scope mismatch while visiting", .{});
             }
@@ -2485,8 +2485,8 @@ pub fn NewParser_(
                     if (p.scopes_in_order.items[last_i]) |prev_scope| {
                         if (prev_scope.loc.start >= loc.start) {
                             p.log.level = .verbose;
-                            bun.handleOom(p.log.addDebugFmt(p.source, prev_scope.loc, p.allocator, "Previous Scope", .{}));
-                            bun.handleOom(p.log.addDebugFmt(p.source, loc, p.allocator, "Next Scope", .{}));
+                            fun.handleOom(p.log.addDebugFmt(p.source, prev_scope.loc, p.allocator, "Previous Scope", .{}));
+                            fun.handleOom(p.log.addDebugFmt(p.source, loc, p.allocator, "Next Scope", .{}));
                             p.panic("Scope location {d} must be greater than {d}", .{ loc.start, prev_scope.loc.start });
                         }
                     }
@@ -2745,10 +2745,10 @@ pub fn NewParser_(
                 return p.s(S.Empty{}, loc);
             }
 
-            // Handle `import { feature } from "bun:bundle"` - this is a special import
+            // Handle `import { feature } from "fun:bundle"` - this is a special import
             // that provides static feature flag checking at bundle time.
             // We handle it here at parse time (similar to macros) rather than at visit time.
-            if (strings.eqlComptime(path.text, "bun:bundle")) {
+            if (strings.eqlComptime(path.text, "fun:bundle")) {
                 // Look for the "feature" import and validate specifiers
                 for (stmt.items) |*item| {
                     // In ClauseItem from parseImportClause:
@@ -2758,7 +2758,7 @@ pub fn NewParser_(
                     if (strings.eqlComptime(item.alias, "feature")) {
                         // Check for duplicate imports of feature
                         if (p.bundler_feature_flag_ref.isValid()) {
-                            try p.log.addError(p.source, item.alias_loc, "`feature` from \"bun:bundle\" may only be imported once");
+                            try p.log.addError(p.source, item.alias_loc, "`feature` from \"fun:bundle\" may only be imported once");
                             continue;
                         }
                         // Declare the symbol and store the ref
@@ -2766,7 +2766,7 @@ pub fn NewParser_(
                         const ref = try p.declareSymbol(.other, item.name.loc, name);
                         p.bundler_feature_flag_ref = ref;
                     } else {
-                        try p.log.addErrorFmt(p.source, item.alias_loc, p.allocator, "\"bun:bundle\" has no export named \"{s}\"", .{item.alias});
+                        try p.log.addErrorFmt(p.source, item.alias_loc, p.allocator, "\"fun:bundle\" has no export named \"{s}\"", .{item.alias});
                     }
                 }
                 // Return empty statement - the import is completely removed
@@ -3175,7 +3175,7 @@ pub fn NewParser_(
             };
 
             if (map) |existing| {
-                return bun.create(p.allocator, js_ast.TSNamespaceScope, .{
+                return fun.create(p.allocator, js_ast.TSNamespaceScope, .{
                     .exported_members = existing,
                     .is_enum_scope = is_enum_scope,
                     .arg_ref = Ref.None,
@@ -3189,7 +3189,7 @@ pub fn NewParser_(
                 scope: js_ast.TSNamespaceScope,
             };
 
-            var pair = bun.handleOom(p.allocator.create(Pair));
+            var pair = fun.handleOom(p.allocator.create(Pair));
             pair.map = .{};
             pair.scope = .{
                 .exported_members = &pair.map,
@@ -3311,7 +3311,7 @@ pub fn NewParser_(
         }
 
         pub fn declareSymbol(p: *P, kind: Symbol.Kind, loc: logger.Loc, name: string) !Ref {
-            return try @call(bun.callmod_inline, declareSymbolMaybeGenerated, .{ p, kind, loc, name, false });
+            return try @call(fun.callmod_inline, declareSymbolMaybeGenerated, .{ p, kind, loc, name, false });
         }
 
         pub fn declareSymbolMaybeGenerated(p: *P, kind: Symbol.Kind, loc: logger.Loc, name: string, comptime is_generated: bool) !Ref {
@@ -3561,7 +3561,7 @@ pub fn NewParser_(
                     p.allocator,
                     "panic here",
                     .{},
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
             }
 
             p.log.level = .verbose;
@@ -3696,7 +3696,7 @@ pub fn NewParser_(
                     .symbol_uses = p.symbol_uses,
                     .import_symbol_property_uses = p.import_symbol_property_uses,
                     .declared_symbols = p.declared_symbols.toOwnedSlice(),
-                    .import_record_indices = bun.BabyList(u32).fromOwnedSlice(
+                    .import_record_indices = fun.BabyList(u32).fromOwnedSlice(
                         p.import_records_for_current_part.toOwnedSlice(
                             p.allocator,
                         ) catch unreachable,
@@ -3920,11 +3920,11 @@ pub fn NewParser_(
         }
 
         /// This is only allowed to be called if allow_runtime is true
-        /// If --target=bun, this does nothing.
+        /// If --target=fun, this does nothing.
         pub fn recordUsageOfRuntimeRequire(p: *P) void {
-            // target bun does not have __require
+            // target fun does not have __require
             if (p.options.features.auto_polyfill_require) {
-                bun.assert(p.options.features.allow_runtime);
+                fun.assert(p.options.features.allow_runtime);
 
                 p.ensureRequireSymbol();
                 p.recordUsage(p.runtimeIdentifierRef(logger.Loc.Empty, "__require"));
@@ -3933,14 +3933,14 @@ pub fn NewParser_(
 
         pub fn ignoreUsageOfRuntimeRequire(p: *P) void {
             if (p.options.features.auto_polyfill_require) {
-                bun.assert(p.runtime_imports.__require != null);
+                fun.assert(p.runtime_imports.__require != null);
                 p.ignoreUsage(p.runtimeIdentifierRef(logger.Loc.Empty, "__require"));
                 p.symbols.items[p.require_ref.innerIndex()].use_count_estimate -|= 1;
             }
         }
 
         pub inline fn valueForRequire(p: *P, loc: logger.Loc) Expr {
-            bun.assert(!p.isSourceRuntime());
+            fun.assert(!p.isSourceRuntime());
             return Expr{
                 .data = .{
                     .e_require_call_target = {},
@@ -4077,7 +4077,7 @@ pub fn NewParser_(
                     return p.classCanBeRemovedIfUnused(ex);
                 },
                 .e_identifier => |ex| {
-                    bun.assert(!ex.ref.isSourceContentsSlice()); // was not visited
+                    fun.assert(!ex.ref.isSourceContentsSlice()); // was not visited
 
                     if (ex.must_keep_due_to_with_stmt) {
                         return false;
@@ -4209,7 +4209,7 @@ pub fn NewParser_(
                         //
                         // Note that there *is* actually a case where "typeof x" can throw an error:
                         // when "x" is being referenced inside of its TDZ (temporal dead zone). TDZ
-                        // checks are not yet handled correctly by bun or esbuild, so this possibility is
+                        // checks are not yet handled correctly by fun or esbuild, so this possibility is
                         // currently ignored.
                         .un_typeof => {
                             if (ex.value.data == .e_identifier and ex.flags.was_originally_typeof_identifier) {
@@ -4415,7 +4415,7 @@ pub fn NewParser_(
         //                 //
         //                 // Note that there *is* actually a case where "typeof x" can throw an error:
         //                 // when "x" is being referenced inside of its TDZ (temporal dead zone). TDZ
-        //                 // checks are not yet handled correctly by bun or esbuild, so this possibility is
+        //                 // checks are not yet handled correctly by fun or esbuild, so this possibility is
         //                 // currently ignored.
         //                 .un_typeof => {
         //                     if (ex.value.data == .e_identifier) {
@@ -4580,7 +4580,7 @@ pub fn NewParser_(
                                 .ref = (p.declareGeneratedSymbol(.other, symbol_name) catch unreachable),
                             };
 
-                            bun.handleOom(p.module_scope.generated.append(p.allocator, loc_ref.ref.?));
+                            fun.handleOom(p.module_scope.generated.append(p.allocator, loc_ref.ref.?));
                             p.is_import_item.put(p.allocator, loc_ref.ref.?, {}) catch unreachable;
                             @field(p.jsx_imports, @tagName(field)) = loc_ref;
                             break :brk loc_ref.ref.?;
@@ -4815,9 +4815,9 @@ pub fn NewParser_(
             if ((symbol.kind == .ts_namespace or symbol.kind == .ts_enum) and
                 !p.emitted_namespace_vars.contains(name_ref))
             {
-                bun.handleOom(p.emitted_namespace_vars.putNoClobber(allocator, name_ref, {}));
+                fun.handleOom(p.emitted_namespace_vars.putNoClobber(allocator, name_ref, {}));
 
-                var decls = bun.handleOom(allocator.alloc(G.Decl, 1));
+                var decls = fun.handleOom(allocator.alloc(G.Decl, 1));
                 decls[0] = G.Decl{ .binding = p.b(B.Identifier{ .ref = name_ref }, name_loc) };
 
                 if (p.enclosing_namespace_arg_ref == null) {
@@ -4828,7 +4828,7 @@ pub fn NewParser_(
                             .decls = G.Decl.List.fromOwnedSlice(decls),
                             .is_export = is_export,
                         }, stmt_loc),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 } else {
                     // Nested namespace: "let"
                     stmts.append(
@@ -4836,7 +4836,7 @@ pub fn NewParser_(
                             .kind = .k_let,
                             .decls = G.Decl.List.fromOwnedSlice(decls),
                         }, stmt_loc),
-                    ) catch |err| bun.handleOom(err);
+                    ) catch |err| fun.handleOom(err);
                 }
             }
 
@@ -4875,10 +4875,10 @@ pub fn NewParser_(
                 }, name_loc);
             };
 
-            var func_args = bun.handleOom(allocator.alloc(G.Arg, 1));
+            var func_args = fun.handleOom(allocator.alloc(G.Arg, 1));
             func_args[0] = .{ .binding = p.b(B.Identifier{ .ref = arg_ref }, name_loc) };
 
-            var args_list = bun.handleOom(allocator.alloc(ExprNodeIndex, 1));
+            var args_list = fun.handleOom(allocator.alloc(ExprNodeIndex, 1));
             args_list[0] = arg_expr;
 
             // TODO: if unsupported features includes arrow functions
@@ -4988,7 +4988,7 @@ pub fn NewParser_(
                                                 decorators.append(
                                                     p.allocator,
                                                     p.callRuntime(arg_decorator.loc, "__legacyDecorateParamTS", args),
-                                                ) catch |err| bun.handleOom(err);
+                                                ) catch |err| fun.handleOom(err);
                                             }
                                         }
                                     },
@@ -5076,7 +5076,7 @@ pub fn NewParser_(
                                     .set => if (prop.flags.contains(.is_method)) {
                                         // typescript sets design:type to the return value & design:paramtypes to [arg].
                                         // note that typescript does not allow you to put a decorator on both the getter and the setter.
-                                        // if you do anyway, bun will set design:type and design:paramtypes twice, so it's fine.
+                                        // if you do anyway, fun will set design:type and design:paramtypes twice, so it's fine.
                                         if (prop.value) |prop_value| {
                                             const method_args = prop_value.data.e_function.func.args;
                                             {
@@ -5105,7 +5105,7 @@ pub fn NewParser_(
                                 }
                             }
 
-                            bun.handleOom(array.insertSlice(0, prop.ts_decorators.slice()));
+                            fun.handleOom(array.insertSlice(0, prop.ts_decorators.slice()));
                             const args = p.allocator.alloc(Expr, 4) catch unreachable;
                             args[0] = p.newExpr(E.Array{ .items = ExprNodeList.moveFromList(&array) }, loc);
                             args[1] = target;
@@ -5169,10 +5169,10 @@ pub fn NewParser_(
                             if (class.extends != null) {
                                 const target = p.newExpr(E.Super{}, stmt.loc);
                                 const arguments_ref = p.newSymbol(.unbound, arguments_str) catch unreachable;
-                                bun.handleOom(p.current_scope.generated.append(p.allocator, arguments_ref));
+                                fun.handleOom(p.current_scope.generated.append(p.allocator, arguments_ref));
 
                                 const super = p.newExpr(E.Spread{ .value = p.newExpr(E.Identifier{ .ref = arguments_ref }, stmt.loc) }, stmt.loc);
-                                const args = bun.handleOom(ExprNodeList.initOne(p.allocator, super));
+                                const args = fun.handleOom(ExprNodeList.initOne(p.allocator, super));
 
                                 constructor_stmts.append(p.s(S.SExpr{ .value = p.newExpr(E.Call{ .target = target, .args = args }, stmt.loc) }, stmt.loc)) catch unreachable;
                             }
@@ -5364,7 +5364,7 @@ pub fn NewParser_(
 
                 .m_dot => |_refs| {
                     var refs = _refs;
-                    bun.assert(refs.items.len >= 2);
+                    fun.assert(refs.items.len >= 2);
                     defer refs.deinit(p.allocator);
 
                     var dots = p.newExpr(
@@ -5489,7 +5489,7 @@ pub fn NewParser_(
         }
 
         pub fn wrapInlinedEnum(noalias p: *P, value: Expr, comment: string) Expr {
-            if (bun.strings.containsComptime(comment, "*/")) {
+            if (fun.strings.containsComptime(comment, "*/")) {
                 // Don't wrap with a comment
                 return value;
             }
@@ -5656,7 +5656,7 @@ pub fn NewParser_(
                         name,
                         loc_ref.ref.?,
                     );
-                    bun.handleOom(p.module_scope.generated.append(p.allocator, loc_ref.ref.?));
+                    fun.handleOom(p.module_scope.generated.append(p.allocator, loc_ref.ref.?));
                     return loc_ref.ref.?;
                 }
             } else {
@@ -5740,7 +5740,7 @@ pub fn NewParser_(
 
             for (to_flatten.children.slice()) |item| {
                 item.parent = parent;
-                bun.handleOom(parent.children.append(p.allocator, item));
+                fun.handleOom(parent.children.append(p.allocator, item));
             }
         }
 
@@ -5753,15 +5753,15 @@ pub fn NewParser_(
         pub fn generateTempRefWithScope(p: *P, default_name: ?string, scope: *Scope) Ref {
             const name = (if (p.willUseRenamer()) default_name else null) orelse brk: {
                 p.temp_ref_count += 1;
-                break :brk bun.handleOom(std.fmt.allocPrint(p.allocator, "__bun_temp_ref_{x}$", .{p.temp_ref_count}));
+                break :brk fun.handleOom(std.fmt.allocPrint(p.allocator, "__fun_temp_ref_{x}$", .{p.temp_ref_count}));
             };
-            const ref = bun.handleOom(p.newSymbol(.other, name));
+            const ref = fun.handleOom(p.newSymbol(.other, name));
 
             p.temp_refs_to_declare.append(p.allocator, .{
                 .ref = ref,
-            }) catch |err| bun.handleOom(err);
+            }) catch |err| fun.handleOom(err);
 
-            bun.handleOom(scope.generated.append(p.allocator, ref));
+            fun.handleOom(scope.generated.append(p.allocator, ref));
 
             return ref;
         }
@@ -5778,7 +5778,7 @@ pub fn NewParser_(
             for (p.top_level_enums.items) |ref| {
                 const entry = p.ref_to_ts_namespace_member.getEntry(ref).?;
                 const namespace = entry.value_ptr.namespace;
-                var inner_map: bun.StringHashMapUnmanaged(InlinedEnumValue) = .{};
+                var inner_map: fun.StringHashMapUnmanaged(InlinedEnumValue) = .{};
                 try inner_map.ensureTotalCapacity(allocator, @intCast(namespace.count()));
                 for (namespace.keys(), namespace.values()) |key, val| {
                     switch (val.data) {
@@ -5847,7 +5847,7 @@ pub fn NewParser_(
                                 if (decl.value) |*decl_value| {
                                     const value_loc = decl_value.loc;
                                     p.recordUsage(ctx.stack_ref);
-                                    const args = bun.handleOom(p.allocator.alloc(Expr, 3));
+                                    const args = fun.handleOom(p.allocator.alloc(Expr, 3));
                                     args[0] = Expr{
                                         .data = .{ .e_identifier = .{ .ref = ctx.stack_ref } },
                                         .loc = stmt.loc,
@@ -5881,14 +5881,14 @@ pub fn NewParser_(
                     switch (stmt.data) {
                         .s_directive, .s_import, .s_export_from, .s_export_star => {
                             // These can't go in a try/catch block
-                            bun.handleOom(result.append(stmt));
+                            fun.handleOom(result.append(stmt));
                             continue;
                         },
 
                         .s_class => {
                             if (stmt.data.s_class.is_export) {
                                 // can't go in try/catch; hoist out
-                                bun.handleOom(result.append(stmt));
+                                fun.handleOom(result.append(stmt));
                                 continue;
                             }
                         },
@@ -5899,14 +5899,14 @@ pub fn NewParser_(
 
                         .s_export_clause => |data| {
                             // Merge export clauses together
-                            bun.handleOom(exports.appendSlice(data.items));
+                            fun.handleOom(exports.appendSlice(data.items));
                             continue;
                         },
 
                         .s_function => {
                             if (should_hoist_fns) {
                                 // Hoist function declarations for cross-file ESM references
-                                bun.handleOom(result.append(stmt));
+                                fun.handleOom(result.append(stmt));
                                 continue;
                             }
                         },
@@ -5925,7 +5925,7 @@ pub fn NewParser_(
                                             },
                                             .alias = p.symbols.items[identifier.ref.inner_index].original_name,
                                             .alias_loc = decl.binding.loc,
-                                        }) catch |err| bun.handleOom(err);
+                                        }) catch |err| fun.handleOom(err);
                                         local.kind = .k_var;
                                     }
                                 }
@@ -5956,12 +5956,12 @@ pub fn NewParser_(
                     caught_ref,
                     err_ref,
                     has_err_ref,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
                 p.declared_symbols.ensureUnusedCapacity(
                     p.allocator,
                     // 5 to include the _promise decl later on:
                     if (ctx.has_await_using) 5 else 4,
-                ) catch |err| bun.handleOom(err);
+                ) catch |err| fun.handleOom(err);
                 p.declared_symbols.appendAssumeCapacity(.{ .is_top_level = is_top_level, .ref = ctx.stack_ref });
                 p.declared_symbols.appendAssumeCapacity(.{ .is_top_level = is_top_level, .ref = caught_ref });
                 p.declared_symbols.appendAssumeCapacity(.{ .is_top_level = is_top_level, .ref = err_ref });
@@ -5972,7 +5972,7 @@ pub fn NewParser_(
                     p.recordUsage(ctx.stack_ref);
                     p.recordUsage(err_ref);
                     p.recordUsage(has_err_ref);
-                    const args = bun.handleOom(p.allocator.alloc(Expr, 3));
+                    const args = fun.handleOom(p.allocator.alloc(Expr, 3));
                     args[0] = Expr{
                         .data = .{ .e_identifier = .{ .ref = ctx.stack_ref } },
                         .loc = loc,
@@ -5991,7 +5991,7 @@ pub fn NewParser_(
                 const finally_stmts = finally: {
                     if (ctx.has_await_using) {
                         const promise_ref = p.generateTempRef("_promise");
-                        bun.handleOom(scope.generated.append(p.allocator, promise_ref));
+                        fun.handleOom(scope.generated.append(p.allocator, promise_ref));
                         p.declared_symbols.appendAssumeCapacity(.{ .is_top_level = is_top_level, .ref = promise_ref });
 
                         const promise_ref_expr = p.newExpr(E.Identifier{ .ref = promise_ref }, loc);
@@ -6001,10 +6001,10 @@ pub fn NewParser_(
                         }, loc);
                         p.recordUsage(promise_ref);
 
-                        const statements = bun.handleOom(p.allocator.alloc(Stmt, 2));
+                        const statements = fun.handleOom(p.allocator.alloc(Stmt, 2));
                         statements[0] = p.s(S.Local{
                             .decls = decls: {
-                                const decls = bun.handleOom(p.allocator.alloc(Decl, 1));
+                                const decls = fun.handleOom(p.allocator.alloc(Decl, 1));
                                 decls[0] = .{
                                     .binding = p.b(B.Identifier{ .ref = promise_ref }, loc),
                                     .value = call_dispose,
@@ -6029,7 +6029,7 @@ pub fn NewParser_(
 
                         break :finally statements;
                     } else {
-                        const single = bun.handleOom(p.allocator.alloc(Stmt, 1));
+                        const single = fun.handleOom(p.allocator.alloc(Stmt, 1));
                         single[0] = p.s(S.SExpr{ .value = call_dispose }, call_dispose.loc);
                         break :finally single;
                     }
@@ -6037,10 +6037,10 @@ pub fn NewParser_(
 
                 // Wrap everything in a try/catch/finally block
                 p.recordUsage(caught_ref);
-                bun.handleOom(result.ensureUnusedCapacity(2 + @as(usize, @intFromBool(exports.items.len > 0))));
+                fun.handleOom(result.ensureUnusedCapacity(2 + @as(usize, @intFromBool(exports.items.len > 0))));
                 result.appendAssumeCapacity(p.s(S.Local{
                     .decls = decls: {
-                        const decls = bun.handleOom(p.allocator.alloc(Decl, 1));
+                        const decls = fun.handleOom(p.allocator.alloc(Decl, 1));
                         decls[0] = .{
                             .binding = p.b(B.Identifier{ .ref = ctx.stack_ref }, loc),
                             .value = p.newExpr(E.Array{}, loc),
@@ -6055,10 +6055,10 @@ pub fn NewParser_(
                     .catch_ = .{
                         .binding = p.b(B.Identifier{ .ref = caught_ref }, loc),
                         .body = catch_body: {
-                            const statements = bun.handleOom(p.allocator.alloc(Stmt, 1));
+                            const statements = fun.handleOom(p.allocator.alloc(Stmt, 1));
                             statements[0] = p.s(S.Local{
                                 .decls = decls: {
-                                    const decls = bun.handleOom(p.allocator.alloc(Decl, 2));
+                                    const decls = fun.handleOom(p.allocator.alloc(Decl, 2));
                                     decls[0] = .{
                                         .binding = p.b(B.Identifier{ .ref = err_ref }, loc),
                                         .value = p.newExpr(E.Identifier{ .ref = caught_ref }, loc),
@@ -6114,7 +6114,7 @@ pub fn NewParser_(
                 },
                 .e_array => |arr| for (arr.items.slice()) |*item| {
                     if (item.data != .e_string) {
-                        bun.handleOom(p.log.addError(p.source, item.loc, import_meta_hot_accept_err));
+                        fun.handleOom(p.log.addError(p.source, item.loc, import_meta_hot_accept_err));
                         continue;
                     }
                     item.data = p.rewriteImportMetaHotAcceptString(item.data.e_string, item.loc) orelse
@@ -6127,15 +6127,15 @@ pub fn NewParser_(
         }
 
         fn rewriteImportMetaHotAcceptString(p: *P, str: *E.String, loc: logger.Loc) ?Expr.Data {
-            bun.handleOom(str.toUTF8(p.allocator));
+            fun.handleOom(str.toUTF8(p.allocator));
             const specifier = str.data;
 
             const import_record_index = for (p.import_records.items, 0..) |import_record, i| {
-                if (bun.strings.eql(specifier, import_record.path.text)) {
+                if (fun.strings.eql(specifier, import_record.path.text)) {
                     break i;
                 }
             } else {
-                bun.handleOom(p.log.addError(p.source, loc, import_meta_hot_accept_err));
+                fun.handleOom(p.log.addError(p.source, loc, import_meta_hot_accept_err));
                 return null;
             };
 
@@ -6147,8 +6147,8 @@ pub fn NewParser_(
         const ReactRefreshExportKind = enum { named, default };
 
         pub fn handleReactRefreshRegister(p: *P, stmts: *ListManaged(Stmt), original_name: []const u8, ref: Ref, export_kind: ReactRefreshExportKind) !void {
-            bun.assert(p.options.features.react_fast_refresh);
-            bun.assert(p.current_scope == p.module_scope);
+            fun.assert(p.options.features.react_fast_refresh);
+            fun.assert(p.current_scope == p.module_scope);
 
             if (ReactRefresh.isComponentishName(original_name)) {
                 try p.emitReactRefreshRegister(stmts, original_name, ref, export_kind);
@@ -6156,8 +6156,8 @@ pub fn NewParser_(
         }
 
         pub fn emitReactRefreshRegister(p: *P, stmts: *ListManaged(Stmt), original_name: []const u8, ref: Ref, export_kind: ReactRefreshExportKind) !void {
-            bun.assert(p.options.features.react_fast_refresh);
-            bun.assert(p.current_scope == p.module_scope);
+            fun.assert(p.options.features.react_fast_refresh);
+            fun.assert(p.current_scope == p.module_scope);
 
             // $RefreshReg$(component, "file.ts:Original Name")
             const loc = logger.Loc.Empty;
@@ -6166,7 +6166,7 @@ pub fn NewParser_(
                 .args = try ExprNodeList.fromSlice(p.allocator, &.{
                     Expr.initIdentifier(ref, loc),
                     p.newExpr(E.String{
-                        .data = try bun.strings.concat(p.allocator, &.{
+                        .data = try fun.strings.concat(p.allocator, &.{
                             p.source.path.pretty,
                             ":",
                             switch (export_kind) {
@@ -6183,17 +6183,17 @@ pub fn NewParser_(
         }
 
         pub fn wrapValueForServerComponentReference(p: *P, val: Expr, original_name: []const u8) Expr {
-            bun.assert(p.options.features.server_components.wrapsExports());
-            bun.assert(p.current_scope == p.module_scope);
+            fun.assert(p.options.features.server_components.wrapsExports());
+            fun.assert(p.current_scope == p.module_scope);
 
             if (p.options.features.server_components == .wrap_exports_for_server_reference)
-                bun.todoPanic(@src(), "registerServerReference", .{});
+                fun.todoPanic(@src(), "registerServerReference", .{});
 
             const module_path = p.newExpr(E.String{
                 .data = if (p.options.jsx.development)
                     p.source.path.pretty
                 else
-                    bun.todoPanic(@src(), "TODO: unique_key here", .{}),
+                    fun.todoPanic(@src(), "TODO: unique_key here", .{}),
             }, logger.Loc.Empty);
 
             // registerClientReference(
@@ -6207,13 +6207,13 @@ pub fn NewParser_(
                     val,
                     module_path,
                     p.newExpr(E.String{ .data = original_name }, logger.Loc.Empty),
-                }) catch |err| bun.handleOom(err),
+                }) catch |err| fun.handleOom(err),
             }, logger.Loc.Empty);
         }
 
         pub fn handleReactRefreshHookCall(p: *P, hook_call: *E.Call, original_name: []const u8) void {
-            bun.assert(p.options.features.react_fast_refresh);
-            bun.assert(ReactRefresh.isHookName(original_name));
+            fun.assert(p.options.features.react_fast_refresh);
+            fun.assert(ReactRefresh.isHookName(original_name));
             const ctx_storage = p.react_refresh.hook_ctx_storage orelse
                 return; // not in a function, ignore this hook call.
 
@@ -6239,7 +6239,7 @@ pub fn NewParser_(
                 p.declared_symbols.append(p.allocator, .{
                     .is_top_level = true,
                     .ref = ctx_storage.*.?.signature_cb,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
 
                 break :init &(ctx_storage.*.?);
             };
@@ -6262,7 +6262,7 @@ pub fn NewParser_(
                 .e_import_identifier,
                 .e_commonjs_export_identifier,
                 => |id, tag| {
-                    const gop = bun.handleOom(ctx.user_hooks.getOrPut(p.allocator, id.ref));
+                    const gop = fun.handleOom(ctx.user_hooks.getOrPut(p.allocator, id.ref));
                     if (!gop.found_existing) {
                         gop.value_ptr.* = .{
                             .data = @unionInit(Expr.Data, @tagName(tag), id),
@@ -6277,7 +6277,7 @@ pub fn NewParser_(
         }
 
         pub fn handleReactRefreshPostVisitFunctionBody(p: *P, stmts: *ListManaged(Stmt), hook: *ReactRefresh.HookContext) void {
-            bun.assert(p.options.features.react_fast_refresh);
+            fun.assert(p.options.features.react_fast_refresh);
 
             // We need to prepend `_s();` as a statement.
             if (stmts.items.len == stmts.capacity) {
@@ -6285,7 +6285,7 @@ pub fn NewParser_(
                 // re-allocated entirely to fit. Only one slot of new capacity
                 // is used since we know this statement list is not going to be
                 // appended to afterwards; This function is a post-visit handler.
-                const new_stmts = bun.handleOom(p.allocator.alloc(Stmt, stmts.items.len + 1));
+                const new_stmts = fun.handleOom(p.allocator.alloc(Stmt, stmts.items.len + 1));
                 @memcpy(new_stmts[1..], stmts.items);
                 stmts.deinit();
                 stmts.* = ListManaged(Stmt).fromOwnedSlice(p.allocator, new_stmts);
@@ -6294,7 +6294,7 @@ pub fn NewParser_(
                 // allocation failure. We just move all of the statements over
                 // by one, and increase the length using `addOneAssumeCapacity`
                 _ = stmts.addOneAssumeCapacity();
-                bun.copy(Stmt, stmts.items[1..], stmts.items[0 .. stmts.items.len - 1]);
+                fun.copy(Stmt, stmts.items[1..], stmts.items[0 .. stmts.items.len - 1]);
             }
 
             const loc = logger.Loc.Empty;
@@ -6313,15 +6313,15 @@ pub fn NewParser_(
                 .value = p.newExpr(E.Call{
                     .target = Expr.initIdentifier(p.react_refresh.create_signature_ref, loc),
                 }, loc),
-            }}) catch |err| bun.handleOom(err) }, loc);
+            }}) catch |err| fun.handleOom(err) }, loc);
         }
 
         pub fn getReactRefreshHookSignalInit(p: *P, ctx: *ReactRefresh.HookContext, function_with_hook_calls: Expr) Expr {
             const loc = logger.Loc.Empty;
 
             const final = ctx.hasher.final();
-            const hash_data = bun.handleOom(p.allocator.alloc(u8, comptime bun.base64.encodeLenFromSize(@sizeOf(@TypeOf(final)))));
-            bun.assert(bun.base64.encode(hash_data, std.mem.asBytes(&final)) == hash_data.len);
+            const hash_data = fun.handleOom(p.allocator.alloc(u8, comptime fun.base64.encodeLenFromSize(@sizeOf(@TypeOf(final)))));
+            fun.assert(fun.base64.encode(hash_data, std.mem.asBytes(&final)) == hash_data.len);
 
             const have_custom_hooks = ctx.user_hooks.count() > 0;
             const have_force_arg = have_custom_hooks or p.react_refresh.force_reset;
@@ -6331,7 +6331,7 @@ pub fn NewParser_(
                 2 +
                     @as(usize, @intFromBool(have_force_arg)) +
                     @as(usize, @intFromBool(have_custom_hooks)),
-            ) catch |err| bun.handleOom(err);
+            ) catch |err| fun.handleOom(err);
 
             args[0] = function_with_hook_calls;
             args[1] = p.newExpr(E.String{ .data = hash_data }, loc);
@@ -6346,7 +6346,7 @@ pub fn NewParser_(
                             p.s(S.Return{ .value = p.newExpr(E.Array{
                                 .items = ExprNodeList.fromBorrowedSliceDangerous(ctx.user_hooks.values()),
                             }, loc) }, loc),
-                        }) catch |err| bun.handleOom(err),
+                        }) catch |err| fun.handleOom(err),
                         .loc = loc,
                     },
                     .prefer_expr = true,
@@ -6382,8 +6382,8 @@ pub fn NewParser_(
             // multiple instances of a module, each with different parts of
             // the file. That is also why tree-shaking is disabled.
             if (p.options.features.hot_module_reloading) {
-                bun.assert(!p.options.tree_shaking);
-                bun.assert(p.options.features.hot_module_reloading);
+                fun.assert(!p.options.tree_shaking);
+                fun.assert(p.options.features.hot_module_reloading);
 
                 var hmr_transform_ctx = ConvertESMExportsForHmr{
                     .last_part = &parts.items[parts.items.len - 1],
@@ -6437,14 +6437,14 @@ pub fn NewParser_(
                             }
 
                             if (part.import_record_indices.len == 0) {
-                                part.import_record_indices = .fromOwnedSlice(bun.handleOom(
+                                part.import_record_indices = .fromOwnedSlice(fun.handleOom(
                                     p.allocator.dupe(u32, p.import_records_for_current_part.items),
                                 ));
                             } else {
                                 part.import_record_indices.appendSlice(
                                     p.allocator,
                                     p.import_records_for_current_part.items,
-                                ) catch |err| bun.handleOom(err);
+                                ) catch |err| fun.handleOom(err);
                             }
 
                             parts.items[parts_end] = part;
@@ -6480,7 +6480,7 @@ pub fn NewParser_(
                 }
             }
 
-            if (wrap_mode == .bun_commonjs and !p.options.features.remove_cjs_module_wrapper) {
+            if (wrap_mode == .fun_commonjs and !p.options.features.remove_cjs_module_wrapper) {
                 // This transforms the user's code into.
                 //
                 //   (function (exports, require, module, __filename, __dirname) {
@@ -6488,7 +6488,7 @@ pub fn NewParser_(
                 //   })
                 //
                 //  which is then called in `evaluateCommonJSModuleOnce`
-                var args = bun.handleOom(allocator.alloc(Arg, 5 + @as(usize, @intFromBool(p.has_import_meta))));
+                var args = fun.handleOom(allocator.alloc(Arg, 5 + @as(usize, @intFromBool(p.has_import_meta))));
                 args[0..5].* = .{
                     Arg{ .binding = p.b(B.Identifier{ .ref = p.exports_ref }, logger.Loc.Empty) },
                     Arg{ .binding = p.b(B.Identifier{ .ref = p.require_ref }, logger.Loc.Empty) },
@@ -6497,7 +6497,7 @@ pub fn NewParser_(
                     Arg{ .binding = p.b(B.Identifier{ .ref = p.dirname_ref }, logger.Loc.Empty) },
                 };
                 if (p.has_import_meta) {
-                    p.import_meta_ref = bun.handleOom(p.newSymbol(.other, "$Bun_import_meta"));
+                    p.import_meta_ref = fun.handleOom(p.newSymbol(.other, "$Fun_import_meta"));
                     args[5] = Arg{ .binding = p.b(B.Identifier{ .ref = p.import_meta_ref }, logger.Loc.Empty) };
                 }
 
@@ -6513,7 +6513,7 @@ pub fn NewParser_(
 
                 total_stmts_count += @as(usize, @intCast(@intFromBool(preserve_strict_mode)));
 
-                const stmts_to_copy = bun.handleOom(allocator.alloc(Stmt, total_stmts_count));
+                const stmts_to_copy = fun.handleOom(allocator.alloc(Stmt, total_stmts_count));
                 {
                     var remaining_stmts = stmts_to_copy;
                     if (preserve_strict_mode) {
@@ -6547,7 +6547,7 @@ pub fn NewParser_(
                     logger.Loc.Empty,
                 );
 
-                var top_level_stmts = bun.handleOom(p.allocator.alloc(Stmt, 1));
+                var top_level_stmts = fun.handleOom(p.allocator.alloc(Stmt, 1));
                 top_level_stmts[0] = p.s(
                     S.SExpr{
                         .value = wrapper,
@@ -6590,7 +6590,7 @@ pub fn NewParser_(
                             entry.value_ptr.* = .{};
                         }
 
-                        bun.handleOom(entry.value_ptr.append(ctx.allocator, @as(u32, @truncate(ctx.part_index))));
+                        fun.handleOom(entry.value_ptr.append(ctx.allocator, @as(u32, @truncate(ctx.part_index))));
                     }
                 };
 
@@ -6616,7 +6616,7 @@ pub fn NewParser_(
                         entry.value_ptr.* = .{};
                     }
 
-                    bun.handleOom(entry.value_ptr.append(p.allocator, js_ast.namespace_export_part_index));
+                    fun.handleOom(entry.value_ptr.append(p.allocator, js_ast.namespace_export_part_index));
                 }
             }
 
@@ -6634,8 +6634,8 @@ pub fn NewParser_(
                             p.allocator,
                             "require_{f}",
                             .{p.source.fmtIdentifier()},
-                        ) catch |err| bun.handleOom(err),
-                    ) catch |err| bun.handleOom(err);
+                        ) catch |err| fun.handleOom(err),
+                    ) catch |err| fun.handleOom(err);
                 }
 
                 break :brk Ref.None;
@@ -6693,7 +6693,7 @@ pub fn NewParser_(
                 .import_meta_ref = p.import_meta_ref,
 
                 .symbols = js_ast.Symbol.List.moveFromList(&p.symbols),
-                .parts = bun.BabyList(js_ast.Part).moveFromList(parts),
+                .parts = fun.BabyList(js_ast.Part).moveFromList(parts),
                 .import_records = ImportRecord.List.moveFromList(&p.import_records),
             };
         }
@@ -6713,7 +6713,7 @@ pub fn NewParser_(
         /// The logic in this function must be in sync with the hoisting
         /// logic in `LinkerContext.generateCodeForFileInChunkJS`
         fn needsWrapperRef(p: *const P, parts: []const js_ast.Part) bool {
-            bun.assert(p.options.bundle);
+            fun.assert(p.options.bundle);
             for (parts) |part| {
                 for (part.stmts) |stmt| {
                     switch (stmt.data) {
@@ -6781,7 +6781,7 @@ pub fn NewParser_(
                 .named_imports = undefined,
                 .named_exports = .{},
                 .log = log,
-                .stack_check = bun.StackCheck.init(),
+                .stack_check = fun.StackCheck.init(),
                 .allocator = allocator,
                 .options = opts,
                 .then_catch_chain = ThenCatchChain{ .next_target = nullExprData },
@@ -6866,17 +6866,17 @@ const repl_transforms = @import("./repl_transforms.zig");
 const Define = @import("../../bundler/defines.zig").Define;
 const DefineData = @import("../../bundler/defines.zig").DefineData;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const FeatureFlags = bun.FeatureFlags;
-const ImportRecord = bun.ImportRecord;
-const Output = bun.Output;
-const assert = bun.assert;
-const js_lexer = bun.js_lexer;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const FeatureFlags = fun.FeatureFlags;
+const ImportRecord = fun.ImportRecord;
+const Output = fun.Output;
+const assert = fun.assert;
+const js_lexer = fun.js_lexer;
+const logger = fun.logger;
+const strings = fun.strings;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const B = js_ast.B;
 const Binding = js_ast.Binding;
 const BindingNodeIndex = js_ast.BindingNodeIndex;
@@ -6902,7 +6902,7 @@ const Property = G.Property;
 const SymbolPropertyUseMap = js_ast.Part.SymbolPropertyUseMap;
 const SymbolUseMap = js_ast.Part.SymbolUseMap;
 
-const js_parser = bun.js_parser;
+const js_parser = fun.js_parser;
 const ConvertESMExportsForHmr = js_parser.ConvertESMExportsForHmr;
 const DeferredArrowArgErrors = js_parser.DeferredArrowArgErrors;
 const DeferredErrors = js_parser.DeferredErrors;

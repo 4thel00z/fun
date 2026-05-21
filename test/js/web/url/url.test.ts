@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "fun:test";
 
 describe("url", () => {
   it("URL throws", () => {
@@ -81,7 +81,7 @@ describe("url", () => {
     expect(url.origin).toBe("file://");
   });
   it("prints", () => {
-    expect(Bun.inspect(new URL("https://example.com"))).toBe(`URL {
+    expect(Fun.inspect(new URL("https://example.com"))).toBe(`URL {
   href: "https://example.com/",
   origin: "https://example.com",
   protocol: "https:",
@@ -93,17 +93,17 @@ describe("url", () => {
   pathname: "/",
   hash: "",
   search: "",
-  searchParams: ${Bun.inspect(new URLSearchParams())},
+  searchParams: ${Fun.inspect(new URLSearchParams())},
   toJSON: [Function: toJSON],
   toString: [Function: toString],
 }`);
 
     expect(
-      Bun.inspect(
-        new URL("https://github.com/oven-sh/bun/issues/135?hello%20i%20have%20spaces%20thank%20you%20good%20night"),
+      Fun.inspect(
+        new URL("https://github.com/underdoc-org/fun/issues/135?hello%20i%20have%20spaces%20thank%20you%20good%20night"),
       ),
     ).toBe(`URL {
-  href: "https://github.com/oven-sh/bun/issues/135?hello%20i%20have%20spaces%20thank%20you%20good%20night",
+  href: "https://github.com/underdoc-org/fun/issues/135?hello%20i%20have%20spaces%20thank%20you%20good%20night",
   origin: "https://github.com",
   protocol: "https:",
   username: "",
@@ -111,7 +111,7 @@ describe("url", () => {
   host: "github.com",
   hostname: "github.com",
   port: "",
-  pathname: "/oven-sh/bun/issues/135",
+  pathname: "/underdoc-org/fun/issues/135",
   hash: "",
   search: "?hello%20i%20have%20spaces%20thank%20you%20good%20night",
   searchParams: URLSearchParams {\n    \"hello i have spaces thank you good night\": \"\",\n  },

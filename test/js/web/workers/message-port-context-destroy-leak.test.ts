@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { bunEnv, bunExe, isWindows } from "harness";
+import { expect, test } from "fun:test";
+import { funEnv, funExe, isWindows } from "harness";
 
 // MessagePort::jsRef() takes a self-ref() on the C++ MessagePort (plus an
 // event-loop ref) when .onmessage is assigned or .ref() is called. The only
@@ -15,9 +15,9 @@ import { bunEnv, bunExe, isWindows } from "harness";
 test.skipIf(isWindows)(
   "MessagePort self-ref is released when the owning context is destroyed",
   async () => {
-    await using proc = Bun.spawn({
+    await using proc = Fun.spawn({
       cmd: [
-        bunExe(),
+        funExe(),
         "-e",
         `
         const workerBody = ${JSON.stringify(`
@@ -44,13 +44,13 @@ test.skipIf(isWindows)(
         // Warm up so the allocator high-water mark and per-thread caches are
         // established before we start measuring.
         for (let i = 0; i < 3; i++) await runWorker();
-        Bun.gc(true);
-        Bun.gc(true);
+        Fun.gc(true);
+        Fun.gc(true);
 
         const rssBefore = process.memoryUsage().rss;
         for (let i = 0; i < 8; i++) await runWorker();
-        Bun.gc(true);
-        Bun.gc(true);
+        Fun.gc(true);
+        Fun.gc(true);
         const rssAfter = process.memoryUsage().rss;
 
         const deltaMB = (rssAfter - rssBefore) / 1024 / 1024;
@@ -64,7 +64,7 @@ test.skipIf(isWindows)(
         console.log("PASS delta=" + deltaMB.toFixed(2) + "MB");
       `,
       ],
-      env: bunEnv,
+      env: funEnv,
       stdout: "pipe",
       stderr: "pipe",
     });

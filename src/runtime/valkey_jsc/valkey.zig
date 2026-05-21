@@ -54,7 +54,7 @@ pub const Protocol = enum {
     standalone_tls,
     standalone_tls_unix,
 
-    pub const Map = bun.ComptimeStringMap(Protocol, .{
+    pub const Map = fun.ComptimeStringMap(Protocol, .{
         .{ "valkey", .standalone },
         .{ "valkeys", .standalone_tls },
         .{ "valkey+tls", .standalone_tls },
@@ -164,8 +164,8 @@ pub const ValkeyClient = struct {
     status: Status = Status.connecting,
 
     // Buffer management
-    write_buffer: bun.OffsetByteList = .{},
-    read_buffer: bun.OffsetByteList = .{},
+    write_buffer: fun.OffsetByteList = .{},
+    read_buffer: fun.OffsetByteList = .{},
 
     /// In-flight commands, after the data has been written to the network socket
     in_flight: Command.PromisePair.Queue,
@@ -284,7 +284,7 @@ pub const ValkeyClient = struct {
                 this.in_flight.writeItem(.{
                     .meta = command.meta,
                     .promise = command.promise,
-                }) catch |err| bun.handleOom(err);
+                }) catch |err| fun.handleOom(err);
 
                 total += 1;
                 total_bytelength += command.serialized_data.len;
@@ -292,9 +292,9 @@ pub const ValkeyClient = struct {
             break :brk to_process[0..total];
         };
 
-        bun.handleOom(this.write_buffer.byte_list.ensureUnusedCapacity(this.allocator, total_bytelength));
+        fun.handleOom(this.write_buffer.byte_list.ensureUnusedCapacity(this.allocator, total_bytelength));
         for (pipelineable_commands) |*command| {
-            bun.handleOom(this.write_buffer.write(this.allocator, command.serialized_data));
+            fun.handleOom(this.write_buffer.write(this.allocator, command.serialized_data));
             // Free the serialized data since we've copied it to the write buffer
             this.allocator.free(command.serialized_data);
         }
@@ -350,7 +350,7 @@ pub const ValkeyClient = struct {
     }
 
     /// Reject all pending commands with an error
-    fn rejectAllPendingCommands(pending_ptr: *Command.PromisePair.Queue, entries_ptr: *Command.Entry.Queue, globalThis: *jsc.JSGlobalObject, allocator: std.mem.Allocator, jsvalue: jsc.JSValue) bun.JSTerminated!void {
+    fn rejectAllPendingCommands(pending_ptr: *Command.PromisePair.Queue, entries_ptr: *Command.Entry.Queue, globalThis: *jsc.JSGlobalObject, allocator: std.mem.Allocator, jsvalue: jsc.JSValue) fun.JSTerminated!void {
         var pending = pending_ptr.*;
         var entries = entries_ptr.*;
         defer pending.deinit();
@@ -391,14 +391,14 @@ pub const ValkeyClient = struct {
         in_flight: Command.PromisePair.Queue,
         queue: Command.Entry.Queue,
 
-        pub fn run(this: *DeferredFailure) bun.JSTerminated!void {
+        pub fn run(this: *DeferredFailure) fun.JSTerminated!void {
             defer {
-                bun.default_allocator.free(this.message);
-                bun.destroy(this);
+                fun.default_allocator.free(this.message);
+                fun.destroy(this);
             }
             debug("running deferred failure", .{});
             const err = protocol.valkeyErrorToJS(this.globalThis, this.message, this.err);
-            try rejectAllPendingCommands(&this.in_flight, &this.queue, this.globalThis, bun.default_allocator, err);
+            try rejectAllPendingCommands(&this.in_flight, &this.queue, this.globalThis, fun.default_allocator, err);
         }
 
         pub fn enqueue(this: *DeferredFailure) void {
@@ -409,7 +409,7 @@ pub const ValkeyClient = struct {
     };
 
     /// Mark the connection as failed with error message
-    pub fn fail(this: *ValkeyClient, message: []const u8, err: protocol.RedisError) bun.JSTerminated!void {
+    pub fn fail(this: *ValkeyClient, message: []const u8, err: protocol.RedisError) fun.JSTerminated!void {
         debug("failed: {s}: {}", .{ message, err });
         if (this.flags.failed) return;
 
@@ -417,9 +417,9 @@ pub const ValkeyClient = struct {
             // We can't run promises inside finalizers.
             if (this.queue.count + this.in_flight.count > 0) {
                 const vm = this.vm;
-                const deferred_failure = bun.new(DeferredFailure, .{
+                const deferred_failure = fun.new(DeferredFailure, .{
                     // This memory is not owned by us.
-                    .message = bun.handleOom(bun.default_allocator.dupe(u8, message)),
+                    .message = fun.handleOom(fun.default_allocator.dupe(u8, message)),
 
                     .err = err,
                     .globalThis = vm.global,
@@ -439,7 +439,7 @@ pub const ValkeyClient = struct {
         try this.failWithJSValue(globalThis, protocol.valkeyErrorToJS(globalThis, message, err));
     }
 
-    pub fn failWithJSValue(this: *ValkeyClient, globalThis: *jsc.JSGlobalObject, jsvalue: jsc.JSValue) bun.JSTerminated!void {
+    pub fn failWithJSValue(this: *ValkeyClient, globalThis: *jsc.JSGlobalObject, jsvalue: jsc.JSValue) fun.JSTerminated!void {
         if (this.flags.failed) return;
         this.flags.failed = true;
         const val = rejectAllPendingCommands(&this.in_flight, &this.queue, globalThis, this.allocator, jsvalue);
@@ -458,7 +458,7 @@ pub const ValkeyClient = struct {
     }
 
     /// Handle connection closed event
-    pub fn onClose(this: *ValkeyClient) bun.JSTerminated!void {
+    pub fn onClose(this: *ValkeyClient) fun.JSTerminated!void {
         this.unregisterAutoFlusher();
         this.write_buffer.clearAndFree(this.allocator);
 
@@ -534,7 +534,7 @@ pub const ValkeyClient = struct {
     /// Process data received from socket
     ///
     /// Caller refs / derefs.
-    pub fn onData(this: *ValkeyClient, data: []const u8) bun.JSTerminated!void {
+    pub fn onData(this: *ValkeyClient, data: []const u8) fun.JSTerminated!void {
         debug("Low-level onData called with {d} bytes: {s}", .{ data.len, data });
         // Path 1: Buffer already has data, append and process from buffer
         if (this.read_buffer.remaining().len > 0) {
@@ -553,7 +553,7 @@ pub const ValkeyClient = struct {
                 var value = reader.readValue(this.allocator) catch |err| {
                     if (err == error.InvalidResponse) {
                         // Need more data in the buffer, wait for next onData call
-                        if (comptime bun.Environment.allow_assert) {
+                        if (comptime fun.Environment.allow_assert) {
                             debug("read_buffer: needs more data ({d} bytes available)", .{remaining_buffer.len});
                         }
                         return;
@@ -597,7 +597,7 @@ pub const ValkeyClient = struct {
                     // Partial message encountered on the stack-allocated path.
                     // Copy the *remaining* part of the stack data to the heap buffer
                     // and wait for more data.
-                    if (comptime bun.Environment.allow_assert) {
+                    if (comptime fun.Environment.allow_assert) {
                         debug("read_buffer: partial message on stack ({d} bytes), switching to buffer", .{current_data_slice.len - before_read_pos});
                     }
                     this.read_buffer.write(this.allocator, current_data_slice[before_read_pos..]) catch @panic("failed to write remaining stack data to buffer");
@@ -648,7 +648,7 @@ pub const ValkeyClient = struct {
         this: *ValkeyClient,
         value: *protocol.RESPValue,
         pair: ?*ValkeyCommand.PromisePair,
-    ) bun.JSError!enum { handled, fallthrough } {
+    ) fun.JSError!enum { handled, fallthrough } {
         // Resolve the promise with the potentially transformed value
         const globalThis = this.globalObject();
         const loop = this.vm.eventLoop();
@@ -716,7 +716,7 @@ pub const ValkeyClient = struct {
         };
     }
 
-    fn handleHelloResponse(this: *ValkeyClient, value: *protocol.RESPValue) bun.JSTerminated!void {
+    fn handleHelloResponse(this: *ValkeyClient, value: *protocol.RESPValue) fun.JSTerminated!void {
         debug("Processing HELLO response", .{});
 
         switch (value.*) {
@@ -914,7 +914,7 @@ pub const ValkeyClient = struct {
     }
 
     /// Send authentication command to Valkey server
-    fn authenticate(this: *ValkeyClient) bun.JSTerminated!void {
+    fn authenticate(this: *ValkeyClient) fun.JSTerminated!void {
         // First send HELLO command for RESP3 protocol
         debug("Sending HELLO 3 command", .{});
 
@@ -967,7 +967,7 @@ pub const ValkeyClient = struct {
     }
 
     /// Handle socket open event
-    pub fn onOpen(this: *ValkeyClient, socket: uws.AnySocket) bun.JSTerminated!void {
+    pub fn onOpen(this: *ValkeyClient, socket: uws.AnySocket) fun.JSTerminated!void {
         this.socket = socket;
         this.write_buffer.clearAndFree(this.allocator);
         this.read_buffer.clearAndFree(this.allocator);
@@ -988,7 +988,7 @@ pub const ValkeyClient = struct {
     }
 
     /// Start the connection process
-    pub fn start(this: *ValkeyClient) bun.JSTerminated!void {
+    pub fn start(this: *ValkeyClient) fun.JSTerminated!void {
         try this.authenticate();
         _ = this.flushData();
     }
@@ -1018,7 +1018,7 @@ pub const ValkeyClient = struct {
         this.in_flight.writeItem(.{
             .meta = offline_cmd.meta,
             .promise = offline_cmd.promise,
-        }) catch |err| bun.handleOom(err);
+        }) catch |err| fun.handleOom(err);
         const data = offline_cmd.serialized_data;
 
         if (this.connectionReady() and this.write_buffer.remaining().len == 0) {
@@ -1030,15 +1030,15 @@ pub const ValkeyClient = struct {
 
             if (unwritten.len > 0) {
                 // Handle incomplete write.
-                bun.handleOom(this.write_buffer.write(this.allocator, unwritten));
+                fun.handleOom(this.write_buffer.write(this.allocator, unwritten));
             }
 
             return true;
         }
 
         // Write the pre-serialized data directly to the output buffer
-        _ = bun.handleOom(this.write(data));
-        bun.default_allocator.free(data);
+        _ = fun.handleOom(this.write(data));
+        fun.default_allocator.free(data);
 
         return true;
     }
@@ -1185,7 +1185,7 @@ pub const ValkeyClient = struct {
         return this.parent().globalObject;
     }
 
-    pub fn onValkeyConnect(this: *ValkeyClient, value: *protocol.RESPValue) bun.JSTerminated!void {
+    pub fn onValkeyConnect(this: *ValkeyClient, value: *protocol.RESPValue) fun.JSTerminated!void {
         return this.parent().onValkeyConnect(value);
     }
 
@@ -1193,7 +1193,7 @@ pub const ValkeyClient = struct {
         this.parent().onValkeySubscribe(value);
     }
 
-    pub fn onValkeyUnsubscribe(this: *ValkeyClient) bun.JSError!void {
+    pub fn onValkeyUnsubscribe(this: *ValkeyClient) fun.JSError!void {
         return this.parent().onValkeyUnsubscribe();
     }
 
@@ -1205,7 +1205,7 @@ pub const ValkeyClient = struct {
         this.parent().onValkeyReconnect();
     }
 
-    pub fn onValkeyClose(this: *ValkeyClient) bun.JSTerminated!void {
+    pub fn onValkeyClose(this: *ValkeyClient) fun.JSTerminated!void {
         return this.parent().onValkeyClose();
     }
 
@@ -1215,14 +1215,14 @@ pub const ValkeyClient = struct {
 };
 
 // Auto-pipelining
-const debug = bun.Output.scoped(.Redis, .visible);
+const debug = fun.Output.scoped(.Redis, .visible);
 
 const ValkeyCommand = @import("./ValkeyCommand.zig");
 const protocol = @import("../../valkey/valkey_protocol.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const jsc = bun.jsc;
-const uws = bun.uws;
+const fun = @import("fun");
+const jsc = fun.jsc;
+const uws = fun.uws;
 const AutoFlusher = jsc.WebCore.AutoFlusher;
 const JSValkeyClient = jsc.API.Valkey;

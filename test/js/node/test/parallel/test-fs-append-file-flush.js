@@ -4,7 +4,7 @@ const tmpdir = require('../common/tmpdir');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
-const { describe, it, jest } = require('bun:test');
+const { describe, it, jest } = require('fun:test');
 const data = 'foo';
 let cnt = 0;
 
@@ -23,7 +23,7 @@ describe('synchronous version', () => {
     }
   });
 
-  // Bun: fsync is called in native code, so it is not possible to spy on it
+  // Fun: fsync is called in native code, so it is not possible to spy on it
   // it('performs flush', () => {
   //   const spy = jest.spyOn(fs, 'fsyncSync');
   //   const file = nextFile();
@@ -59,7 +59,7 @@ describe('callback version', () => {
     }
   });
 
-  // Bun: fsync is called in native code, so it is not possible to spy on it
+  // Fun: fsync is called in native code, so it is not possible to spy on it
   // it('performs flush', () => {
   //   const spy = jest.spyOn(fs, 'fsync');
   //   const file = nextFile();

@@ -1,5 +1,7 @@
+// @ts-expect-error - bootstrap shim: system bun exposes `Bun`; alias for build-time scripts run under upstream bun.
+(globalThis as any).Fun ??= (globalThis as any).Bun;
 /**
- * lsquic — Litespeed's QUIC and HTTP/3 implementation. Powers Bun.serve's
+ * lsquic — Litespeed's QUIC and HTTP/3 implementation. Powers Fun.serve's
  * `http3: true` listener.
  *
  * DirectBuild: ~85 .c files from src/liblsquic. The upstream build runs a
@@ -16,7 +18,7 @@ import { depBuildDir, depSourceDir } from "../source.ts";
 
 const LSQUIC_COMMIT = "3181911301b1aa4f54c1ed690901abc674ee08fb";
 
-// gQUIC (Google QUIC, pre-IETF) sources are excluded — Bun only negotiates
+// gQUIC (Google QUIC, pre-IETF) sources are excluded — Fun only negotiates
 // IETF QUIC. The unconditional engine/global references to gQUIC vtables are
 // satisfied by lsquic_gquic_stubs.c (added via patches/lsquic/disable-gquic.patch),
 // which lets --gc-sections drop ~175 KB of cert tables + handshake code.

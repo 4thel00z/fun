@@ -1,12 +1,12 @@
-import { S3Client } from "bun";
-import { describe, expect, test } from "bun:test";
+import { S3Client } from "fun";
+import { describe, expect, test } from "fun:test";
 
 // Test that CRLF characters in S3 options are rejected to prevent header injection.
 // See: HTTP Header Injection via S3 Content-Disposition Value
 
 describe("S3 header injection prevention", () => {
   test("contentDisposition with CRLF should throw", () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch() {
         return new Response("OK", { status: 200 });
@@ -28,7 +28,7 @@ describe("S3 header injection prevention", () => {
   });
 
   test("contentEncoding with CRLF should throw", () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch() {
         return new Response("OK", { status: 200 });
@@ -50,7 +50,7 @@ describe("S3 header injection prevention", () => {
   });
 
   test("type (content-type) with CRLF should throw", () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch() {
         return new Response("OK", { status: 200 });
@@ -72,7 +72,7 @@ describe("S3 header injection prevention", () => {
   });
 
   test("contentDisposition with only CR should throw", () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch() {
         return new Response("OK", { status: 200 });
@@ -94,7 +94,7 @@ describe("S3 header injection prevention", () => {
   });
 
   test("contentDisposition with only LF should throw", () => {
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       fetch() {
         return new Response("OK", { status: 200 });
@@ -118,7 +118,7 @@ describe("S3 header injection prevention", () => {
   test("valid contentDisposition without CRLF should not throw", async () => {
     const { promise: requestReceived, resolve: onRequestReceived } = Promise.withResolvers<Headers>();
 
-    using server = Bun.serve({
+    using server = Fun.serve({
       port: 0,
       async fetch(req) {
         onRequestReceived(req.headers);

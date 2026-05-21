@@ -1,12 +1,12 @@
-# JavaScript Builtins in Bun
+# JavaScript Builtins in Fun
 
-Write JS builtins for Bun's Node.js compatibility and APIs. Run `bun bd` after changes.
+Write JS builtins for Fun's Node.js compatibility and APIs. Run `fun bd` after changes.
 
 ## Directory Structure
 
 - `builtins/` - Individual functions (`*CodeGenerator(vm)` in C++)
 - `node/` - Node.js modules (`node:fs`, `node:path`)
-- `bun/` - Bun modules (`bun:ffi`, `bun:sqlite`)
+- `fun/` - Fun modules (`fun:ffi`, `fun:sqlite`)
 - `thirdparty/` - NPM replacements (`ws`, `node-fetch`)
 - `internal/` - Internal modules
 
@@ -103,4 +103,4 @@ ModuleLoader.zig loads modules by numeric ID via `InternalModuleRegistry.cpp`.
 - String literal `require()` only
 - Export via `export default {}`
 - Use JSC intrinsics for performance
-- Run `bun bd` after changes
+- Run `fun bd` after changes

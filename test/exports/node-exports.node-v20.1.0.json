@@ -3965,7 +3965,7 @@
         "_load": "function",
         "_nodeModulePaths": "function",
         "_pathCache": {
-          "/Users/jarred/Code/bun/test/exports/generate-exports.mjs\u0000": "string"
+          "/Users/jarred/Code/fun/test/exports/generate-exports.mjs\u0000": "string"
         },
         "_preloadModules": "function",
         "_resolveFilename": "function",
@@ -4065,7 +4065,7 @@
       "_load": "function",
       "_nodeModulePaths": "function",
       "_pathCache": {
-        "/Users/jarred/Code/bun/test/exports/generate-exports.mjs\u0000": "string"
+        "/Users/jarred/Code/fun/test/exports/generate-exports.mjs\u0000": "string"
       },
       "_preloadModules": "function",
       "_resolveFilename": "function",
@@ -4178,7 +4178,7 @@
         "_load": "function",
         "_nodeModulePaths": "function",
         "_pathCache": {
-          "/Users/jarred/Code/bun/test/exports/generate-exports.mjs\u0000": "string"
+          "/Users/jarred/Code/fun/test/exports/generate-exports.mjs\u0000": "string"
         },
         "_preloadModules": "function",
         "_resolveFilename": "function",
@@ -5245,7 +5245,7 @@
         "env": {
           "ALACRITTY_LOG": "string",
           "ALACRITTY_SOCKET": "string",
-          "BUN_INSTALL": "string",
+          "FUN_INSTALL": "string",
           "CC": "string",
           "CODESIGN_IDENTITY": "string",
           "COLORTERM": "string",
@@ -5680,7 +5680,7 @@
       "env": {
         "ALACRITTY_LOG": "string",
         "ALACRITTY_SOCKET": "string",
-        "BUN_INSTALL": "string",
+        "FUN_INSTALL": "string",
         "CC": "string",
         "CODESIGN_IDENTITY": "string",
         "COLORTERM": "string",
@@ -10320,7 +10320,7 @@
         "_load": "function",
         "_nodeModulePaths": "function",
         "_pathCache": {
-          "/Users/jarred/Code/bun/test/exports/generate-exports.mjs\u0000": "string"
+          "/Users/jarred/Code/fun/test/exports/generate-exports.mjs\u0000": "string"
         },
         "_preloadModules": "function",
         "_resolveFilename": "function",
@@ -10420,7 +10420,7 @@
       "_load": "function",
       "_nodeModulePaths": "function",
       "_pathCache": {
-        "/Users/jarred/Code/bun/test/exports/generate-exports.mjs\u0000": "string"
+        "/Users/jarred/Code/fun/test/exports/generate-exports.mjs\u0000": "string"
       },
       "_preloadModules": "function",
       "_resolveFilename": "function",
@@ -11203,7 +11203,7 @@
       "env": {
         "ALACRITTY_LOG": "string",
         "ALACRITTY_SOCKET": "string",
-        "BUN_INSTALL": "string",
+        "FUN_INSTALL": "string",
         "CC": "string",
         "CODESIGN_IDENTITY": "string",
         "COLORTERM": "string",

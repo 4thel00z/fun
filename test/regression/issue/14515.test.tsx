@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { test } from "fun:test";
 
 export function Input(a: InlineInputAttrs, ch: DocumentFragment) {
   const o_model = a.model;

@@ -4,10 +4,10 @@ pub const YarnLock = struct {
         version: string,
         resolved: ?string = null,
         integrity: ?string = null,
-        dependencies: ?bun.StringHashMap(string) = null,
-        optionalDependencies: ?bun.StringHashMap(string) = null,
-        peerDependencies: ?bun.StringHashMap(string) = null,
-        devDependencies: ?bun.StringHashMap(string) = null,
+        dependencies: ?fun.StringHashMap(string) = null,
+        optionalDependencies: ?fun.StringHashMap(string) = null,
+        peerDependencies: ?fun.StringHashMap(string) = null,
+        devDependencies: ?fun.StringHashMap(string) = null,
         commit: ?string = null,
         workspace: bool = false,
         file: ?string = null,
@@ -268,10 +268,10 @@ pub const YarnLock = struct {
         var current_specs = std.array_list.Managed([]const u8).init(self.allocator);
         defer current_specs.deinit();
 
-        var current_deps: ?bun.StringHashMap(string) = null;
-        var current_optional_deps: ?bun.StringHashMap(string) = null;
-        var current_peer_deps: ?bun.StringHashMap(string) = null;
-        var current_dev_deps: ?bun.StringHashMap(string) = null;
+        var current_deps: ?fun.StringHashMap(string) = null;
+        var current_optional_deps: ?fun.StringHashMap(string) = null;
+        var current_peer_deps: ?fun.StringHashMap(string) = null;
+        var current_dev_deps: ?fun.StringHashMap(string) = null;
         var current_dep_type: ?DependencyType = null;
 
         while (lines.next()) |line_| {
@@ -327,25 +327,25 @@ pub const YarnLock = struct {
             if (indent > 0) {
                 if (strings.eqlComptime(trimmed, "dependencies:")) {
                     current_dep_type = .production;
-                    current_deps = bun.StringHashMap(string).init(self.allocator);
+                    current_deps = fun.StringHashMap(string).init(self.allocator);
                     continue;
                 }
 
                 if (strings.eqlComptime(trimmed, "optionalDependencies:")) {
                     current_dep_type = .optional;
-                    current_optional_deps = bun.StringHashMap(string).init(self.allocator);
+                    current_optional_deps = fun.StringHashMap(string).init(self.allocator);
                     continue;
                 }
 
                 if (strings.eqlComptime(trimmed, "peerDependencies:")) {
                     current_dep_type = .peer;
-                    current_peer_deps = bun.StringHashMap(string).init(self.allocator);
+                    current_peer_deps = fun.StringHashMap(string).init(self.allocator);
                     continue;
                 }
 
                 if (strings.eqlComptime(trimmed, "devDependencies:")) {
                     current_dep_type = .development;
-                    current_dev_deps = bun.StringHashMap(string).init(self.allocator);
+                    current_dev_deps = fun.StringHashMap(string).init(self.allocator);
                     continue;
                 }
 
@@ -476,7 +476,7 @@ const DependencyType = enum {
     peer,
 };
 fn processDeps(
-    deps: bun.StringHashMap(string),
+    deps: fun.StringHashMap(string),
     dep_type: DependencyType,
     yarn_lock_: *YarnLock,
     string_buf_: *Semver.String.Buf,
@@ -488,7 +488,7 @@ fn processDeps(
 ) ![]Install.PackageID {
     var deps_it = deps.iterator();
     var count: usize = 0;
-    var dep_spec_name_stack = std.heap.stackFallback(1024, bun.default_allocator);
+    var dep_spec_name_stack = std.heap.stackFallback(1024, fun.default_allocator);
     const temp_allocator = dep_spec_name_stack.get();
 
     while (deps_it.next()) |dep| {
@@ -555,7 +555,7 @@ pub fn migrateYarnLockfile(
     allocator: Allocator,
     log: *logger.Log,
     data: string,
-    dir: bun.FD,
+    dir: fun.FD,
 ) !LoadResult {
     // todo yarn v2+ support
     if (!strings.containsComptime(data, "# yarn lockfile v1")) {
@@ -569,7 +569,7 @@ pub fn migrateYarnLockfile(
 
     this.initEmpty(allocator);
     Install.initializeStore();
-    bun.analytics.Features.yarn_migration += 1;
+    fun.analytics.Features.yarn_migration += 1;
 
     var string_buf = this.stringBuf();
 
@@ -588,14 +588,14 @@ pub fn migrateYarnLockfile(
 
     {
         // read package.json to get specified dependencies
-        const package_json_fd = bun.sys.File.openat(dir, "package.json", bun.O.RDONLY, 0).unwrap() catch return error.InvalidPackageJSON;
+        const package_json_fd = fun.sys.File.openat(dir, "package.json", fun.O.RDONLY, 0).unwrap() catch return error.InvalidPackageJSON;
         defer package_json_fd.close();
         const package_json_contents = package_json_fd.readToEnd(allocator).unwrap() catch return error.InvalidPackageJSON;
         defer allocator.free(package_json_contents);
 
         const package_json_source = brk: {
-            var package_json_path_buf: bun.PathBuffer = undefined;
-            const package_json_path = bun.getFdPath(package_json_fd.handle, &package_json_path_buf) catch return error.InvalidPackageJSON;
+            var package_json_path_buf: fun.PathBuffer = undefined;
+            const package_json_path = fun.getFdPath(package_json_fd.handle, &package_json_path_buf) catch return error.InvalidPackageJSON;
             break :brk logger.Source.initPathString(package_json_path, package_json_contents);
         };
         const package_json_expr = JSON.parsePackageJSONUTF8WithOpts(
@@ -731,10 +731,10 @@ pub fn migrateYarnLockfile(
         yarn_idx: usize,
     };
 
-    var package_versions = bun.StringHashMap(VersionInfo).init(allocator);
+    var package_versions = fun.StringHashMap(VersionInfo).init(allocator);
     defer package_versions.deinit();
 
-    var scoped_packages = bun.StringHashMap(std.array_list.Managed(VersionInfo)).init(allocator);
+    var scoped_packages = fun.StringHashMap(std.array_list.Managed(VersionInfo)).init(allocator);
     defer {
         var it = scoped_packages.iterator();
         while (it.next()) |entry| {
@@ -825,7 +825,7 @@ pub fn migrateYarnLockfile(
     defer allocator.free(package_id_to_yarn_idx);
     @memset(package_id_to_yarn_idx, std.math.maxInt(usize));
 
-    var created_packages = bun.StringHashMap(bool).init(allocator);
+    var created_packages = fun.StringHashMap(bool).init(allocator);
     defer created_packages.deinit();
 
     for (yarn_lock.entries.items, 0..) |entry, yarn_idx| {
@@ -1143,7 +1143,7 @@ pub fn migrateYarnLockfile(
     for (yarn_lock.entries.items, 0..) |entry, yarn_idx| {
         const parent_package_id = yarn_entry_to_package_id[yarn_idx];
 
-        const dep_maps = [_]?bun.StringHashMap(string){
+        const dep_maps = [_]?fun.StringHashMap(string){
             entry.dependencies,
             entry.optionalDependencies,
             entry.peerDependencies,
@@ -1277,10 +1277,10 @@ pub fn migrateYarnLockfile(
         }
     }
 
-    var root_packages = bun.StringHashMap(PackageID).init(allocator);
+    var root_packages = fun.StringHashMap(PackageID).init(allocator);
     defer root_packages.deinit();
 
-    var usage_count = bun.StringHashMap(u32).init(allocator);
+    var usage_count = fun.StringHashMap(u32).init(allocator);
     defer usage_count.deinit();
     for (yarn_lock.entries.items, 0..) |_, entry_idx| {
         const package_id = yarn_entry_to_package_id[entry_idx];
@@ -1404,7 +1404,7 @@ pub fn migrateYarnLockfile(
 
     this.buffers.trees.items[0].dependencies = .{ .off = 0, .len = 0 };
 
-    var spec_to_package_id = bun.StringHashMap(Install.PackageID).init(allocator);
+    var spec_to_package_id = fun.StringHashMap(Install.PackageID).init(allocator);
     defer spec_to_package_id.deinit();
 
     for (yarn_lock.entries.items, 0..) |entry, yarn_idx| {
@@ -1712,8 +1712,8 @@ const Lockfile = @import("./lockfile.zig");
 const LoadResult = Lockfile.LoadResult;
 const Tree = Lockfile.Tree;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const JSON = bun.json;
-const logger = bun.logger;
-const strings = bun.strings;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const JSON = fun.json;
+const logger = fun.logger;
+const strings = fun.strings;

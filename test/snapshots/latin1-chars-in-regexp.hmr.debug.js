@@ -1,13 +1,13 @@
 import {
-__HMRClient as Bun
-} from "http://localhost:8080/bun:wrap";
-Bun.activate(true);
+__HMRClient as Fun
+} from "http://localhost:8080/fun:wrap";
+Fun.activate(true);
 import {
 __FastRefreshModule as FastHMR
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 import {
 __FastRefreshRuntime as FastRefresh
-} from "http://localhost:8080/bun:wrap";
+} from "http://localhost:8080/fun:wrap";
 var hmr = new FastHMR(3390984578, "latin1-chars-in-regexp.js", FastRefresh), exports = hmr.exports;
 (hmr._load = function() {
   var re_utob = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g;

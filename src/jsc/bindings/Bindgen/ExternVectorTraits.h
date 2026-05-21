@@ -11,7 +11,7 @@
 #include <sanitizer/asan_interface.h>
 #endif
 
-namespace Bun::Bindgen {
+namespace Fun::Bindgen {
 
 template<typename T>
 struct ExternTraits;

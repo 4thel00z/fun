@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "fun:test";
 
 // a somewhat long source code string
 const source = `
@@ -219,7 +219,7 @@ test("09748", async () => {
   async function iter() {
     const promises: Promise<string>[] = [];
     for (let c = 0; c < concurrency; c++) {
-      promises.push(new Bun.Transpiler().transform(source));
+      promises.push(new Fun.Transpiler().transform(source));
     }
 
     const results = await Promise.all(promises);
@@ -231,6 +231,6 @@ test("09748", async () => {
 
   for (let i = 0; i < 20; i++) {
     await iter();
-    Bun.gc();
+    Fun.gc();
   }
 });

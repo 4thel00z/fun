@@ -1,4 +1,4 @@
-import { describe, expect } from "bun:test";
+import { describe, expect } from "fun:test";
 import { itBundled } from "./expectBundled";
 
 const fakeReactNodeModules = {
@@ -345,7 +345,7 @@ describe("bundler", () => {
     },
     run: true,
     minifyIdentifiers: true,
-    target: "bun",
+    target: "fun",
   });
   itBundled("cjs2esm/ModuleExportsRenamingNoDeopt", {
     files: {

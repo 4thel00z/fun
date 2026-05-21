@@ -60,8 +60,8 @@ pub fn wait(self: *Self) void {
         self.cond.wait(&self.mutex);
 }
 
-const bun = @import("bun");
+const fun = @import("fun");
 const std = @import("std");
 
-const Condition = bun.threading.Condition;
-const Mutex = bun.threading.Mutex;
+const Condition = fun.threading.Condition;
+const Mutex = fun.threading.Mutex;

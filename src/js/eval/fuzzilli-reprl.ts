@@ -1,6 +1,6 @@
-// Comprehensive REPRL wrapper for Bun fuzzing with all runtime APIs exposed
+// Comprehensive REPRL wrapper for Fun fuzzing with all runtime APIs exposed
 // Based on workerd's approach to maximize fuzzing coverage
-// https://bun.com/docs/runtime
+// https://fun.dev/docs/runtime
 
 const REPRL_CRFD = 100; // Control read FD
 const REPRL_CWFD = 101; // Control write FD

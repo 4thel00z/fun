@@ -1,11 +1,11 @@
-import { expect, test } from "bun:test";
-import { bunExe } from "harness";
+import { expect, test } from "fun:test";
+import { funExe } from "harness";
 
 const ok_repeated = "ok".repeat(16384);
 
 test("child_process_send_cb", () => {
-  const child = Bun.spawnSync({
-    cmd: [bunExe(), import.meta.dirname + "/fixtures/child-process-send-cb-more.js"],
+  const child = Fun.spawnSync({
+    cmd: [funExe(), import.meta.dirname + "/fixtures/child-process-send-cb-more.js"],
     stdout: "pipe",
     stderr: "pipe",
     env: {

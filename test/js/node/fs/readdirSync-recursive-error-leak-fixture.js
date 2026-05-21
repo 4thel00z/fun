@@ -54,7 +54,7 @@ for (let i = 0; i < 10000; i++) {
     fs.readdirSync(root, { recursive: true, withFileTypes: true });
   } catch {}
 }
-Bun.gc(true);
+Fun.gc(true);
 const before = process.memoryUsage.rss();
 
 for (let i = 0; i < 20000; i++) {
@@ -62,7 +62,7 @@ for (let i = 0; i < 20000; i++) {
     fs.readdirSync(root, { recursive: true, withFileTypes: true });
   } catch {}
 }
-Bun.gc(true);
+Fun.gc(true);
 const after = process.memoryUsage.rss();
 
 const deltaMB = Math.round((after - before) / 1024 / 1024);

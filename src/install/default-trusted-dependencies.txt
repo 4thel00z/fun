@@ -119,7 +119,7 @@ bigint-buffer
 blake-hash
 bs-platform
 bufferutil
-bun
+fun
 canvacord
 canvas
 cbor-extract

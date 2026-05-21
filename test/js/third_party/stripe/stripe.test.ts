@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "fun:test";
 import { getSecret } from "harness";
 import { Stripe } from "stripe";
 

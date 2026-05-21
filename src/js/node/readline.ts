@@ -47,8 +47,8 @@ const PromiseReject = Promise.$reject;
 
 var isWritable;
 
-var { inspect } = Bun;
-var debug = process.env.BUN_JS_DEBUG ? console.log : () => {};
+var { inspect } = Fun;
+var debug = process.env.FUN_JS_DEBUG ? console.log : () => {};
 
 // ----------------------------------------------------------------------------
 // Section: Preamble
@@ -100,7 +100,7 @@ var getStringWidth = function getStringWidth(str, removeControlChars = true) {
   return internalGetStringWidth(str, removeControlChars);
 };
 
-const stripANSI = Bun.stripANSI;
+const stripANSI = Fun.stripANSI;
 
 /**
  * Remove all VT control characters. Use to estimate displayed string width.
@@ -2722,7 +2722,7 @@ export default {
     },
   },
 
-  [SymbolFor("__BUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")]: {
+  [SymbolFor("__FUN_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED__")]: {
     CSI,
     utils: {
       getStringWidth,

@@ -1,7 +1,7 @@
-import { CryptoHasher, MD4, MD5, SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, gc } from "bun";
-import { describe, expect, it } from "bun:test";
+import { CryptoHasher, MD4, MD5, SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256, gc } from "fun";
+import { describe, expect, it } from "fun:test";
 import crypto from "crypto";
-import { bunEnv, bunExe, tmpdirSync } from "harness";
+import { funEnv, funExe, tmpdirSync } from "harness";
 import path from "path";
 import { hashesFixture } from "./fixtures/sign.fixture.ts";
 const HashClasses = [MD5, MD4, SHA1, SHA224, SHA256, SHA384, SHA512, SHA512_256];
@@ -221,7 +221,7 @@ describe("crypto.createSign()/.verifySign()", () => {
   it.each(hashesFixture)(
     "should create and verify digital signature for %s",
     async (alg, privKey, pubKey, expectedSign) => {
-      const p = await Bun.file(`${__dirname}/${privKey}`).text();
+      const p = await Fun.file(`${__dirname}/${privKey}`).text();
       const sign = crypto.createSign(alg).update("text").sign(p, "base64");
 
       expect(sign).toEqual(expectedSign);
@@ -229,7 +229,7 @@ describe("crypto.createSign()/.verifySign()", () => {
       const verify = crypto
         .createVerify(alg)
         .update("text")
-        .verify(await Bun.file(`${__dirname}/${pubKey}`).text(), sign, "base64");
+        .verify(await Fun.file(`${__dirname}/${pubKey}`).text(), sign, "base64");
       expect(verify).toBeTrue();
     },
   );
@@ -239,7 +239,7 @@ it("should send cipher events in the right order", async () => {
   const package_dir = tmpdirSync();
   const fixture_path = path.join(package_dir, "fixture.js");
 
-  await Bun.write(
+  await Fun.write(
     fixture_path,
     String.raw`
     function patchEmitter(emitter, prefix) {
@@ -276,12 +276,12 @@ it("should send cipher events in the right order", async () => {
     `,
   );
 
-  const { stdout, stderr } = Bun.spawn({
-    cmd: [bunExe(), "run", fixture_path],
+  const { stdout, stderr } = Fun.spawn({
+    cmd: [funExe(), "run", fixture_path],
     stdout: "pipe",
     stdin: "ignore",
     stderr: "pipe",
-    env: bunEnv,
+    env: funEnv,
   });
   const err = await stderr.text();
   expect(err).toBeEmpty();

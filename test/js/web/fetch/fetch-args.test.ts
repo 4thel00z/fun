@@ -1,10 +1,10 @@
-import { TCPSocketListener } from "bun";
-import { afterAll, beforeAll, describe, expect, mock, spyOn, test } from "bun:test";
+import { TCPSocketListener } from "fun";
+import { afterAll, beforeAll, describe, expect, mock, spyOn, test } from "fun:test";
 
 let server;
 let requestCount = 0;
 beforeAll(async () => {
-  server = Bun.serve({
+  server = Fun.serve({
     port: 0,
     fetch(request) {
       requestCount++;
@@ -92,7 +92,7 @@ describe("does not send a request when", () => {
   let url: string;
 
   beforeAll(async () => {
-    server = Bun.listen({
+    server = Fun.listen({
       port: 0,
       hostname: "127.0.0.1",
       socket: {
@@ -122,7 +122,7 @@ describe("does not send a request when", () => {
         }),
     ).toThrow();
     // Give it a chance to possibly send the request.
-    await Bun.sleep(2);
+    await Fun.sleep(2);
     expect(requestCount).toBe(prevCount);
   });
 
@@ -130,7 +130,7 @@ describe("does not send a request when", () => {
     const prevCount = requestCount;
     expect(async () => await fetch("😀")).toThrow();
     // Give it a chance to possibly send the request.
-    await Bun.sleep(2);
+    await Fun.sleep(2);
     expect(requestCount).toBe(prevCount);
   });
 
@@ -138,7 +138,7 @@ describe("does not send a request when", () => {
     const prevCount = requestCount;
     expect(async () => await fetch(url, { redirect: "😀" })).toThrow();
     // Give it a chance to possibly send the request.
-    await Bun.sleep(2);
+    await Fun.sleep(2);
     expect(requestCount).toBe(prevCount);
   });
 
@@ -146,7 +146,7 @@ describe("does not send a request when", () => {
     const prevCount = requestCount;
     expect(async () => await fetch(url, { proxy: url, unix: "/tmp/abc.sock" })).toThrow();
     // Give it a chance to possibly send the request.
-    await Bun.sleep(2);
+    await Fun.sleep(2);
     expect(requestCount).toBe(prevCount);
   });
 
@@ -154,7 +154,7 @@ describe("does not send a request when", () => {
     const prevCount = requestCount;
     expect(async () => await fetch(url, { tls: { ca: 123 } })).toThrow();
     // Give it a chance to possibly send the request.
-    await Bun.sleep(2);
+    await Fun.sleep(2);
     expect(requestCount).toBe(prevCount);
   });
 
@@ -184,7 +184,7 @@ describe("does not send a request when", () => {
         }),
     ).toThrow();
     // Give it a chance to possibly send the request.
-    await Bun.sleep(2);
+    await Fun.sleep(2);
     expect(requestCount).toBe(prevCount);
   });
 
@@ -200,7 +200,7 @@ describe("does not send a request when", () => {
           }),
       ).toThrow();
       // Give it a chance to possibly send the request.
-      await Bun.sleep(2);
+      await Fun.sleep(2);
       expect(requestCount).toBe(prevCount);
     });
 
@@ -216,7 +216,7 @@ describe("does not send a request when", () => {
           }),
       ).toThrow();
       // Give it a chance to possibly send the request.
-      await Bun.sleep(2);
+      await Fun.sleep(2);
       expect(requestCount).toBe(prevCount);
     });
 
@@ -232,7 +232,7 @@ describe("does not send a request when", () => {
       ).toThrow();
 
       // Give it a chance to possibly send the request.
-      await Bun.sleep(2);
+      await Fun.sleep(2);
       expect(requestCount).toBe(prevCount);
     });
   }

@@ -1,4 +1,4 @@
-/// Common strings from `BunCommonStrings.h`.
+/// Common strings from `FunCommonStrings.h`.
 ///
 /// All getters return a `JSC::JSString`;
 pub const CommonStrings = struct {
@@ -19,8 +19,8 @@ pub const CommonStrings = struct {
         binaryTypeNodeBuffer = 11,
         binaryTypeUint8Array = 12,
 
-        extern "c" fn Bun__CommonStringsForZig__toJS(commonString: CommonStringsForZig, globalObject: *jsc.JSGlobalObject) jsc.JSValue;
-        pub const toJS = Bun__CommonStringsForZig__toJS;
+        extern "c" fn Fun__CommonStringsForZig__toJS(commonString: CommonStringsForZig, globalObject: *jsc.JSGlobalObject) jsc.JSValue;
+        pub const toJS = Fun__CommonStringsForZig__toJS;
     };
 
     pub inline fn IPv4(this: CommonStrings) JSValue {
@@ -64,7 +64,7 @@ pub const CommonStrings = struct {
     }
 };
 
-const bun = @import("bun");
+const fun = @import("fun");
 
-const jsc = bun.jsc;
+const jsc = fun.jsc;
 const JSValue = jsc.JSValue;

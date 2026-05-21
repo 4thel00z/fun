@@ -1,4 +1,4 @@
-// https://github.com/oven-sh/bun/issues/2190
+// https://github.com/underdoc-org/fun/issues/2190
 import { createHash } from "node:crypto";
 import { bench, run } from "../runner.mjs";
 
@@ -22,13 +22,13 @@ for (const { alg, digest } of scenarios) {
     createHash(alg).update(data).digest(digest);
   });
 
-  if ("Bun" in globalThis) {
-    bench(`${alg}-${digest} (Bun.CryptoHasher)`, () => {
-      new Bun.CryptoHasher(alg).update(data).digest(digest);
+  if ("Fun" in globalThis) {
+    bench(`${alg}-${digest} (Fun.CryptoHasher)`, () => {
+      new Fun.CryptoHasher(alg).update(data).digest(digest);
     });
 
-    bench(`${alg}-${digest} (Bun.CryptoHasher.hash)`, () => {
-      return Bun.CryptoHasher.hash(alg, data, digest);
+    bench(`${alg}-${digest} (Fun.CryptoHasher.hash)`, () => {
+      return Fun.CryptoHasher.hash(alg, data, digest);
     });
   }
 }

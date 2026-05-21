@@ -56,7 +56,7 @@ pub const Entry = struct {
     meta: Meta = .{},
     promise: Promise,
 
-    pub const Queue = bun.LinearFifo(Entry, .Dynamic);
+    pub const Queue = fun.LinearFifo(Entry, .Dynamic);
 
     pub fn deinit(self: *@This(), allocator: std.mem.Allocator) void {
         allocator.free(self.serialized_data);
@@ -88,7 +88,7 @@ pub const Meta = packed struct(u8) {
     subscription_request: bool = false,
     _padding: u4 = 0,
 
-    const not_allowed_autopipeline_commands = bun.ComptimeStringMap(void, .{
+    const not_allowed_autopipeline_commands = fun.ComptimeStringMap(void, .{
         .{"AUTH"},
         .{"INFO"},
         .{"QUIT"},
@@ -127,7 +127,7 @@ pub const Promise = struct {
         };
     }
 
-    pub fn resolve(self: *Promise, globalObject: *jsc.JSGlobalObject, value: *protocol.RESPValue) bun.JSTerminated!void {
+    pub fn resolve(self: *Promise, globalObject: *jsc.JSGlobalObject, value: *protocol.RESPValue) fun.JSTerminated!void {
         const options = protocol.RESPValue.ToJSOptions{
             .return_as_buffer = self.meta.return_as_buffer,
         };
@@ -139,7 +139,7 @@ pub const Promise = struct {
         try self.promise.resolve(globalObject, js_value);
     }
 
-    pub fn reject(self: *Promise, globalObject: *jsc.JSGlobalObject, jsvalue: JSError!jsc.JSValue) bun.JSTerminated!void {
+    pub fn reject(self: *Promise, globalObject: *jsc.JSGlobalObject, jsvalue: JSError!jsc.JSValue) fun.JSTerminated!void {
         try self.promise.reject(globalObject, jsvalue);
     }
 
@@ -153,9 +153,9 @@ pub const PromisePair = struct {
     meta: Meta,
     promise: Promise,
 
-    pub const Queue = bun.LinearFifo(PromisePair, .Dynamic);
+    pub const Queue = fun.LinearFifo(PromisePair, .Dynamic);
 
-    pub fn rejectCommand(self: *PromisePair, globalObject: *jsc.JSGlobalObject, jsvalue: jsc.JSValue) bun.JSTerminated!void {
+    pub fn rejectCommand(self: *PromisePair, globalObject: *jsc.JSGlobalObject, jsvalue: jsc.JSValue) fun.JSTerminated!void {
         try self.promise.reject(globalObject, jsvalue);
     }
 };
@@ -163,8 +163,8 @@ pub const PromisePair = struct {
 const protocol = @import("../../valkey/valkey_protocol.zig");
 const std = @import("std");
 
-const bun = @import("bun");
-const JSError = bun.JSError;
-const jsc = bun.jsc;
-const node = bun.api.node;
+const fun = @import("fun");
+const JSError = fun.JSError;
+const jsc = fun.jsc;
+const node = fun.api.node;
 const Slice = jsc.ZigString.Slice;

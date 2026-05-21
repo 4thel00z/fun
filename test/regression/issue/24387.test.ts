@@ -1,10 +1,10 @@
-import { bunEnv, bunExe } from "harness";
+import { funEnv, funExe } from "harness";
 import { join } from "path";
 
 test("regression: require()ing a module with TLA should error and then wipe the module cache, so that importing it again works", async () => {
-  const proc = Bun.spawn({
-    cmd: [bunExe(), "run", "--smol", join(import.meta.dir, "24387", "entry.js")],
-    env: bunEnv,
+  const proc = Fun.spawn({
+    cmd: [funExe(), "run", "--smol", join(import.meta.dir, "24387", "entry.js")],
+    env: funEnv,
     stdout: "pipe",
     stderr: "pipe",
   });

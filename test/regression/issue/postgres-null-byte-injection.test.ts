@@ -1,5 +1,5 @@
-import { SQL } from "bun";
-import { expect, test } from "bun:test";
+import { SQL } from "fun";
+import { expect, test } from "fun:test";
 import net from "net";
 
 test("postgres connection rejects null bytes in username", async () => {

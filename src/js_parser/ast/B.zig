@@ -91,10 +91,10 @@ pub const Class = G.Class;
 
 const std = @import("std");
 
-const bun = @import("bun");
-const writeAnyToHasher = bun.writeAnyToHasher;
+const fun = @import("fun");
+const writeAnyToHasher = fun.writeAnyToHasher;
 
-const js_ast = bun.ast;
+const js_ast = fun.ast;
 const ArrayBinding = js_ast.ArrayBinding;
 const Binding = js_ast.Binding;
 const Expr = js_ast.Expr;

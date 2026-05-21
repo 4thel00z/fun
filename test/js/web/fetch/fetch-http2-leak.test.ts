@@ -1,19 +1,19 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
-import { bunEnv, bunExe } from "harness";
+import { afterAll, beforeAll, expect, test } from "fun:test";
+import { funEnv, funExe } from "harness";
 import { join } from "node:path";
 
 // The server runs in its own subprocess: when node:http2's event loop shares a
-// process with the test's Bun.spawn() pipe-reading, the server intermittently
+// process with the test's Fun.spawn() pipe-reading, the server intermittently
 // leaves a few streams unanswered under load (macOS 14 / aarch64 Linux). That's
 // a node:http2-server-side issue unrelated to the H2 client lifetimes this test
 // is measuring; isolating the server removes it.
-let serverProc: ReturnType<typeof Bun.spawn>;
+let serverProc: ReturnType<typeof Fun.spawn>;
 let url: string;
 
 beforeAll(async () => {
-  serverProc = Bun.spawn({
-    cmd: [bunExe(), join(import.meta.dir, "fetch-http2-leak-server.ts")],
-    env: bunEnv,
+  serverProc = Fun.spawn({
+    cmd: [funExe(), join(import.meta.dir, "fetch-http2-leak-server.ts")],
+    env: funEnv,
     stdin: "pipe",
     stdout: "pipe",
     stderr: "inherit",
@@ -34,9 +34,9 @@ afterAll(() => {
 });
 
 async function runFixture(scenario: string) {
-  await using proc = Bun.spawn({
-    cmd: [bunExe(), "--smol", join(import.meta.dir, "fetch-http2-leak-fixture.ts")],
-    env: { ...bunEnv, SERVER: url, SCENARIO: scenario, COUNT: "200", BATCH: "8" },
+  await using proc = Fun.spawn({
+    cmd: [funExe(), "--smol", join(import.meta.dir, "fetch-http2-leak-fixture.ts")],
+    env: { ...funEnv, SERVER: url, SCENARIO: scenario, COUNT: "200", BATCH: "8" },
     stdout: "pipe",
     stderr: "pipe",
   });

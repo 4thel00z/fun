@@ -2,7 +2,7 @@ const debug = Output.scoped(.migrate, .visible);
 
 pub fn detectAndLoadOtherLockfile(
     this: *Lockfile,
-    dir: bun.FD,
+    dir: fun.FD,
     manager: *Install.PackageManager,
     allocator: Allocator,
     log: *logger.Log,
@@ -12,10 +12,10 @@ pub fn detectAndLoadOtherLockfile(
 
     npm: {
         var timer = std.time.Timer.start() catch unreachable;
-        const lockfile = File.openat(dir, "package-lock.json", bun.O.RDONLY, 0).unwrap() catch break :npm;
+        const lockfile = File.openat(dir, "package-lock.json", fun.O.RDONLY, 0).unwrap() catch break :npm;
         defer lockfile.close();
-        var lockfile_path_buf: bun.PathBuffer = undefined;
-        const lockfile_path = bun.getFdPathZ(lockfile.handle, &lockfile_path_buf) catch break :npm;
+        var lockfile_path_buf: fun.PathBuffer = undefined;
+        const lockfile_path = fun.getFdPathZ(lockfile.handle, &lockfile_path_buf) catch break :npm;
         const data = lockfile.readToEnd(allocator).unwrap() catch break :npm;
         const migrate_result = migrateNPMLockfile(this, manager, allocator, log, data, lockfile_path) catch |err| {
             if (err == error.NPMLockfileVersionMismatch) {
@@ -46,7 +46,7 @@ pub fn detectAndLoadOtherLockfile(
 
     yarn: {
         var timer = std.time.Timer.start() catch unreachable;
-        const lockfile = File.openat(dir, "yarn.lock", bun.O.RDONLY, 0).unwrap() catch break :yarn;
+        const lockfile = File.openat(dir, "yarn.lock", fun.O.RDONLY, 0).unwrap() catch break :yarn;
         defer lockfile.close();
         const data = lockfile.readToEnd(allocator).unwrap() catch break :yarn;
         const migrate_result = @import("./yarn.zig").migrateYarnLockfile(this, manager, allocator, log, data, dir) catch |err| {
@@ -70,7 +70,7 @@ pub fn detectAndLoadOtherLockfile(
 
     pnpm: {
         var timer = std.time.Timer.start() catch unreachable;
-        const lockfile = File.openat(dir, "pnpm-lock.yaml", bun.O.RDONLY, 0).unwrap() catch break :pnpm;
+        const lockfile = File.openat(dir, "pnpm-lock.yaml", fun.O.RDONLY, 0).unwrap() catch break :pnpm;
         defer lockfile.close();
         const data = lockfile.readToEnd(allocator).unwrap() catch break :pnpm;
         const migrate_result = @import("./pnpm.zig").migratePnpmLockfile(this, manager, allocator, log, data, dir) catch |err| {
@@ -83,10 +83,10 @@ pub fn detectAndLoadOtherLockfile(
                     , .{});
                 },
                 error.NonExistentWorkspaceDependency => {
-                    Output.warn("Workspace link dependencies to non-existent folders aren't supported yet in pnpm-lock.yaml migration. Please follow along at <magenta>https://github.com/oven-sh/bun/issues/23026<r>", .{});
+                    Output.warn("Workspace link dependencies to non-existent folders aren't supported yet in pnpm-lock.yaml migration. Please follow along at <magenta>https://github.com/underdoc-org/fun/issues/23026<r>", .{});
                 },
                 error.RelativeLinkDependency => {
-                    Output.warn("Relative link dependencies aren't supported yet. Please follow along at <magenta>https://github.com/oven-sh/bun/issues/23026<r>", .{});
+                    Output.warn("Relative link dependencies aren't supported yet. Please follow along at <magenta>https://github.com/underdoc-org/fun/issues/23026<r>", .{});
                 },
                 error.WorkspaceNameMissing => {
                     if (log.hasErrors()) {
@@ -143,13 +143,13 @@ pub fn detectAndLoadOtherLockfile(
     return LoadResult{ .not_found = {} };
 }
 
-const ResolvedURLsMap = bun.StringHashMapUnmanaged(string);
+const ResolvedURLsMap = fun.StringHashMapUnmanaged(string);
 
-const IdMap = bun.StringHashMapUnmanaged(IdMapValue);
+const IdMap = fun.StringHashMapUnmanaged(IdMapValue);
 const IdMapValue = struct {
     /// index into the old package-lock.json package entries.
     old_json_index: u32,
-    /// this is the new package id for the bun lockfile
+    /// this is the new package id for the fun lockfile
     ///
     /// - if this new_package_id is set to `package_id_is_link`, it means it's a link
     /// and to get the actual package id, you need to lookup `.resolved` in the hashmap.
@@ -183,7 +183,7 @@ pub fn migrateNPMLockfile(
     Install.initializeStore();
 
     const json_src = logger.Source.initPathString(abs_path, data);
-    const json = bun.json.parseUTF8(&json_src, log, allocator) catch return error.InvalidNPMLockfile;
+    const json = fun.json.parseUTF8(&json_src, log, allocator) catch return error.InvalidNPMLockfile;
 
     if (json.data != .e_object) {
         return error.InvalidNPMLockfile;
@@ -199,7 +199,7 @@ pub fn migrateNPMLockfile(
         return error.InvalidNPMLockfile;
     }
 
-    bun.analytics.Features.lockfile_migration_from_package_lock += 1;
+    fun.analytics.Features.lockfile_migration_from_package_lock += 1;
 
     // Count pass
 
@@ -400,7 +400,7 @@ pub fn migrateNPMLockfile(
             const name_hash = stringHash(v.name);
 
             if (comptime Environment.allow_assert) {
-                bun.assert(!strings.containsChar(k, '\\'));
+                fun.assert(!strings.containsChar(k, '\\'));
             }
 
             this.workspace_paths.putAssumeCapacity(name_hash, try string_buf.append(k));
@@ -435,7 +435,7 @@ pub fn migrateNPMLockfile(
                             const pkg_name = packageNameFromPath(pkg_path);
                             if (!strings.eqlLong(wksp_entry.name, pkg_name, true)) {
                                 const pkg_name_hash = stringHash(pkg_name);
-                                const path_entry = bun.handleOom(this.workspace_paths.getOrPut(allocator, pkg_name_hash));
+                                const path_entry = fun.handleOom(this.workspace_paths.getOrPut(allocator, pkg_name_hash));
                                 if (!path_entry.found_existing) {
                                     // Package resolve path is an entry in the workspace map, but
                                     // the package name is different. This package doesn't exist
@@ -447,7 +447,7 @@ pub fn migrateNPMLockfile(
                                         const sliced_version = Semver.SlicedString.init(version_string, version_string);
                                         const result = Semver.Version.parse(sliced_version);
                                         if (result.valid and result.wildcard == .none) {
-                                            bun.handleOom(this.workspace_versions.put(allocator, pkg_name_hash, result.version.min()));
+                                            fun.handleOom(this.workspace_versions.put(allocator, pkg_name_hash, result.version.min()));
                                         }
                                     }
                                 }
@@ -478,7 +478,7 @@ pub fn migrateNPMLockfile(
         if (Environment.allow_assert) {
             // If this is false, then it means we wrote wrong resolved ids
             // During counting phase we assign all the packages an id.
-            bun.assert(package_id == id_map.get(pkg_path).?.new_package_id);
+            fun.assert(package_id == id_map.get(pkg_path).?.new_package_id);
         }
 
         // Instead of calling this.appendPackage, manually append
@@ -551,8 +551,8 @@ pub fn migrateNPMLockfile(
             },
             .bin = if (pkg.get("bin")) |bin| bin: {
                 // we already check these conditions during counting
-                bun.assert(bin.data == .e_object);
-                bun.assert(bin.data.e_object.properties.len > 0);
+                fun.assert(bin.data == .e_object);
+                fun.assert(bin.data.e_object.properties.len > 0);
 
                 // in npm lockfile, the bin is always an object, even if it is only a single one
                 // we need to detect if it's a single entry and lower it to a file.
@@ -594,8 +594,8 @@ pub fn migrateNPMLockfile(
                 }
 
                 if (Environment.allow_assert) {
-                    bun.assert(this.buffers.extern_strings.items.len == view.off + view.len);
-                    bun.assert(this.buffers.extern_strings.items.len <= this.buffers.extern_strings.capacity);
+                    fun.assert(this.buffers.extern_strings.items.len == view.off + view.len);
+                    fun.assert(this.buffers.extern_strings.items.len <= this.buffers.extern_strings.capacity);
                 }
 
                 break :bin .{
@@ -610,7 +610,7 @@ pub fn migrateNPMLockfile(
         });
 
         if (is_workspace) {
-            bun.assert(package_id != 0); // root package should not be in it's own workspace
+            fun.assert(package_id != 0); // root package should not be in it's own workspace
 
             // we defer doing getOrPutID for non-workspace packages because it depends on the resolution being set.
             try this.getOrPutID(package_id, name_hash);
@@ -618,7 +618,7 @@ pub fn migrateNPMLockfile(
     }
 
     if (Environment.allow_assert) {
-        bun.assert(this.packages.len == package_idx);
+        fun.assert(this.packages.len == package_idx);
     }
 
     // ignoring length check because we pre-allocated it. the length may shrink later
@@ -639,7 +639,7 @@ pub fn migrateNPMLockfile(
 
     if (Environment.allow_assert) {
         for (resolutions) |r| {
-            bun.assert(r.tag == .uninitialized or r.tag == .workspace);
+            fun.assert(r.tag == .uninitialized or r.tag == .workspace);
         }
     }
 
@@ -649,7 +649,7 @@ pub fn migrateNPMLockfile(
     try this.getOrPutID(0, this.packages.items(.name_hash)[0]);
 
     // made it longer than max path just in case something stupid happens
-    var name_checking_buf: [bun.MAX_PATH_BYTES * 2]u8 = undefined;
+    var name_checking_buf: [fun.MAX_PATH_BYTES * 2]u8 = undefined;
 
     // Dependency Linking Phase
     package_idx = 0;
@@ -675,8 +675,8 @@ pub fn migrateNPMLockfile(
                 // Calculate the offset + length by pointer arithmetic
                 const len: u32 = @truncate((@intFromPtr(resolutions_buf.ptr) - @intFromPtr(resolutions_start)) / @sizeOf(Install.PackageID));
                 if (Environment.allow_assert) {
-                    bun.assert(len > 0);
-                    bun.assert(len == ((@intFromPtr(dependencies_buf.ptr) - @intFromPtr(dependencies_start)) / @sizeOf(Dependency)));
+                    fun.assert(len > 0);
+                    fun.assert(len == ((@intFromPtr(dependencies_buf.ptr) - @intFromPtr(dependencies_start)) / @sizeOf(Dependency)));
                 }
                 dependencies_list[package_idx] = .{
                     .off = @truncate((@intFromPtr(dependencies_start) - @intFromPtr(this.buffers.dependencies.items.ptr)) / @sizeOf(Dependency)),
@@ -699,7 +699,7 @@ pub fn migrateNPMLockfile(
             }
             if (expr.data != .e_array) return error.InvalidNPMLockfile;
             const arr: *E.Array = expr.data.e_array;
-            var map = bun.StringArrayHashMapUnmanaged(void){};
+            var map = fun.StringArrayHashMapUnmanaged(void){};
             try map.ensureTotalCapacity(allocator, arr.items.len);
             for (arr.items.slice()) |item| {
                 map.putAssumeCapacity(item.asString(allocator) orelse return error.InvalidNPMLockfile, {});
@@ -776,7 +776,7 @@ pub fn migrateNPMLockfile(
                     debug("-> {s}, {}\n", .{ @tagName(version.tag), version.value });
 
                     if (Environment.allow_assert) {
-                        bun.assert(version.tag != .uninitialized);
+                        fun.assert(version.tag != .uninitialized);
                     }
 
                     const str_node_modules = if (pkg_path.len == 0) "node_modules/" else "/node_modules/";
@@ -787,9 +787,9 @@ pub fn migrateNPMLockfile(
                         return error.PathTooLong;
                     }
 
-                    bun.copy(u8, name_checking_buf[0..pkg_path.len], pkg_path);
-                    bun.copy(u8, name_checking_buf[pkg_path.len .. pkg_path.len + str_node_modules.len], str_node_modules);
-                    bun.copy(u8, name_checking_buf[pkg_path.len + str_node_modules.len .. pkg_path.len + suffix_len], name_bytes);
+                    fun.copy(u8, name_checking_buf[0..pkg_path.len], pkg_path);
+                    fun.copy(u8, name_checking_buf[pkg_path.len .. pkg_path.len + str_node_modules.len], str_node_modules);
+                    fun.copy(u8, name_checking_buf[pkg_path.len + str_node_modules.len .. pkg_path.len + suffix_len], name_bytes);
 
                     while (true) {
                         debug("checking {s}", .{name_checking_buf[0..buf_len]});
@@ -975,13 +975,13 @@ pub fn migrateNPMLockfile(
                         if (strings.lastIndexOf(name_checking_buf[0..buf_len -| ("node_modules/".len + name_bytes.len)], "node_modules/")) |idx| {
                             debug("found 'node_modules/' at {d}", .{idx});
                             buf_len = @intCast(idx + "node_modules/".len + name_bytes.len);
-                            bun.copy(u8, name_checking_buf[idx + "node_modules/".len .. idx + "node_modules/".len + name_bytes.len], name_bytes);
+                            fun.copy(u8, name_checking_buf[idx + "node_modules/".len .. idx + "node_modules/".len + name_bytes.len], name_bytes);
                         } else if (!strings.hasPrefixComptime(name_checking_buf[0..buf_len], "node_modules/")) {
                             // this is hit if you are at something like `packages/etc`, from `packages/etc/node_modules/xyz`
                             // we need to hit the root `node_modules/{name}`
                             buf_len = @intCast("node_modules/".len + name_bytes.len);
-                            bun.copy(u8, name_checking_buf[0..buf_len], "node_modules/");
-                            bun.copy(u8, name_checking_buf[buf_len - name_bytes.len .. buf_len], name_bytes);
+                            fun.copy(u8, name_checking_buf[0..buf_len], "node_modules/");
+                            fun.copy(u8, name_checking_buf[buf_len - name_bytes.len .. buf_len], name_bytes);
                         } else {
                             // optional peer dependencies can be ... optional
                             if (dep_key == .peerDependencies) {
@@ -1029,8 +1029,8 @@ pub fn migrateNPMLockfile(
     // In allow_assert, we prefill this buffer with uninitialized values that we can detect later
     // It is our fault if we hit an error here, making it safe to disable in release.
     if (Environment.allow_assert) {
-        bun.assert(this.buffers.dependencies.items.len == (@intFromPtr(dependencies_buf.ptr) - @intFromPtr(this.buffers.dependencies.items.ptr)) / @sizeOf(Dependency));
-        bun.assert(this.buffers.dependencies.items.len <= num_deps);
+        fun.assert(this.buffers.dependencies.items.len == (@intFromPtr(dependencies_buf.ptr) - @intFromPtr(this.buffers.dependencies.items.ptr)) / @sizeOf(Dependency));
+        fun.assert(this.buffers.dependencies.items.len <= num_deps);
         var crash = false;
         for (this.buffers.dependencies.items, 0..) |r, i| {
             // 'if behavior is uninitialized'
@@ -1062,7 +1062,7 @@ pub fn migrateNPMLockfile(
             // but after we write all the data, there is no excuse for this to fail.
             //
             // If this is hit, it means getOrPutID was not called on this package id. Look for where 'resolution[i]' is set
-            bun.assert(this.getPackageID(this.packages.items(.name_hash)[i], null, &r) != null);
+            fun.assert(this.getPackageID(this.packages.items(.name_hash)[i], null, &r) != null);
         }
     }
     if (is_missing_resolutions) {
@@ -1121,17 +1121,17 @@ const Allocator = std.mem.Allocator;
 const Lockfile = @import("./lockfile.zig");
 const LoadResult = Lockfile.LoadResult;
 
-const bun = @import("bun");
-const Environment = bun.Environment;
-const Global = bun.Global;
-const Output = bun.Output;
-const logger = bun.logger;
-const strings = bun.strings;
-const File = bun.sys.File;
+const fun = @import("fun");
+const Environment = fun.Environment;
+const Global = fun.Global;
+const Output = fun.Output;
+const logger = fun.logger;
+const strings = fun.strings;
+const File = fun.sys.File;
 
-const Semver = bun.Semver;
+const Semver = fun.Semver;
 const String = Semver.String;
 const stringHash = String.Builder.stringHash;
 
-const JSAst = bun.ast;
+const JSAst = fun.ast;
 const E = JSAst.E;
